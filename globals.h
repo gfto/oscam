@@ -27,7 +27,7 @@
 
 #ifndef CS_GLOBALS
 #define CS_GLOBALS
-#define CS_VERSION		"0.99.1"
+#define CS_VERSION		"0.99.2"
 
 #if defined(__GNUC__)
 #  define GCC_PACK __attribute__((packed))
