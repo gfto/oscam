@@ -128,6 +128,22 @@ cross-powerpc-tuxbox-linux:
 		DS_RL=powerpc-tuxbox-linux-gnu-ranlib \
 		DS_ST=powerpc-tuxbox-linux-gnu-strip
 
+cross-powerpc-tuxbox-linux-uclibc:
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		OS_LIBS="" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DPPC" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=powerpc-tuxbox-linux-uclibc-gcc \
+		DS_AR=powerpc-tuxbox-linux-uclibc-ar \
+		DS_LD=powerpc-tuxbox-linux-uclibc-ld \
+		DS_RL=powerpc-tuxbox-linux-uclibc-ranlib \
+		DS_ST=powerpc-tuxbox-linux-uclibc-strip
+
 
 ######################################################################
 #
