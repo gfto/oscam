@@ -1,13 +1,12 @@
 SHELL		= /bin/sh
 
-GENERAL		= Makefile cscrypt.h aes.h des.h bn.h
+GENERAL		= Makefile cscrypt.h des.h bn.h
 
 LIBDIR		= ../lib
 LIBFILE1	= $(LIBDIR)/libcscrypt-$(TYP).a
 
 OBJECTS1	= $(LIBFILE1)(md5.o) \
 		  $(LIBFILE1)(crc32.o) \
-		  $(LIBFILE1)(aes_core.o) \
 		  $(LIBFILE1)(des.o) \
 		  $(LIBFILE1)(bn_add.o) \
 		  $(LIBFILE1)(bn_asm.o) \

@@ -52,7 +52,7 @@ nptar:	clean
 i386-pc-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="" \
+		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DOS_LINUX" \
