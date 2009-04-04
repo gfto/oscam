@@ -63,11 +63,11 @@ static void show_class(const char *p, const uchar *b, int l)
         if (p)
           cs_log("%sclass: %02X, date: %04d/%02d/%02d - %04d/%02d/%02d", p, cls, 
                   vd.year_s+1980, vd.month_s, vd.day_s,
-                  vd.year_s+1980, vd.month_s, vd.day_e);
+                  vd.year_e+1980, vd.month_e, vd.day_e);
 	else
           cs_ri_log("class: %02X, date: %04d/%02d/%02d - %04d/%02d/%02d", cls, 
                   vd.year_s+1980, vd.month_s, vd.day_s,
-                  vd.year_s+1980, vd.month_s, vd.day_e);
+                  vd.year_e+1980, vd.month_e, vd.day_e);
       }
 }
 
