@@ -167,7 +167,7 @@ int irdeto_card_init(uchar *atr, int atrlen)
   /*
    * Check Nagra
    */
-  if ((!reader_cmd2icc(sc_GetROM, sizeof(sc_GetROM))) && (cta_res[cta_lr-2]==0x90))
+  /*if ((!reader_cmd2icc(sc_GetROM, sizeof(sc_GetROM))) && (cta_res[cta_lr-2]==0x90))
   {
     nagra=1;
     if (cta_res[0]==0x90)
@@ -181,7 +181,7 @@ int irdeto_card_init(uchar *atr, int atrlen)
           sprintf(buf+10, "(%c%c%c)", ptr[3], ptr[4], ptr[5]);
       }
     }
-  }
+  } */
 
   /*
    * ContryCode
