@@ -85,6 +85,7 @@ static	char	mloc[128]={0};
 static	int	shmid=0;		// Shared Memory ID
 static	int	cs_last_idx=0;		// client index of last fork (master only)
 static	char*	credit[] = {
+		"dukat for the great MpCS piece of code",
 		"all members of streamboard.de.vu for testing",
 		"scotty and aroureos for the first softcam (no longer used)",
 		"John Moore for the hsic-client (humax 5400) and the arm-support",
@@ -131,8 +132,9 @@ char *cs_platform(char *buf)
 static void usage()
 {
   int i;
-  fprintf(stderr, "\nstreamboard mp-cardserver v%s (%s) - (w) 2004-2007 by dukat\n\n", CS_VERSION_X, CS_OSTYPE);
-  fprintf(stderr, "cardserver [-b] [-c config-dir]");
+  fprintf(stderr, "\nOSCam cardserver v%s (%s) - (w) 2009 by smurzch\n", CS_VERSION_X, CS_OSTYPE);
+  fprintf(stderr, "\tbased on streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n\n");
+  fprintf(stderr, "oscam [-b] [-c config-dir]");
 #ifdef CS_NOSHM
   fprintf(stderr, " [-m memory-file]");
 #endif
