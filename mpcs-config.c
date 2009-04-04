@@ -201,8 +201,9 @@ static void chk_port_tab(char *portasc, PTAB *ptab)
   char *ptr1,*ptr2,*ptr3;
   char *ptr[CS_MAXPORTS] = {0};
   int  port[CS_MAXPORTS] = {0};
+  int previous_nports = ptab->nports;
 
-  for (nfilts=i=0, ptr1=strtok(portasc, ";"); (i<CS_MAXCAIDTAB) && (ptr1); ptr1=strtok(NULL, ";"), i++)
+  for (nfilts=i=previous_nports, ptr1=strtok(portasc, ";"); (i<CS_MAXCAIDTAB) && (ptr1); ptr1=strtok(NULL, ";"), i++)
   {
     ptr[i] = ptr1;
     if( (ptr2=strchr(trim(ptr1), '@')) ) 
@@ -221,8 +222,8 @@ static void chk_port_tab(char *portasc, PTAB *ptab)
     ptab->nports = 1;
   }
 
-  iport=ifilt = 0;
-  for (i=0; i<nfilts; i++) 
+  iport=ifilt = previous_nports;
+  for (i=previous_nports; i<nfilts; i++) 
   {
     if( port[i]!=0 ) iport = i;
     for (j=0, ptr3=strtok(ptr[i], ","); (j<CS_MAXPROV) && (ptr3); ptr3=strtok(NULL, ","), j++)
