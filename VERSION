@@ -1,3 +1,17 @@
-OSCam Version:
--0.99.1 log cleaning
--0.99 initial version from mpcs 0.99d
+OSCam Version History:
+---------------------
+
+-0.99.1:
+    - add all the patchs from the 0.9e mpcs Community Edition
+    - log cleaning
+
+-0.99:
+    - initial version from mpcs 0.9d
+    - support for reader with 6.00 MHz
+    - better support for Viaccess EMMs
+    - add support for videoguard2 cards (aka NDS)
+    - better support for Irdeto cards
+    - support for SECA PPV
+    - support Port entries in mpcs.conf on many lines
+    - misc. bugs correction
+
