@@ -253,6 +253,13 @@ int reader_checkhealth(void)
         reader[ridx].online=1;
         reader_card_info();
       }
+
+      int i;
+      for( i=1; i<CS_MAXPID; i++ ) {
+        if( client[i].pid && client[i].typ=='c' && client[i].usr[0] ) {
+          kill(client[i].pid, SIGQUIT);
+        }
+      }
     }
   }
   else
