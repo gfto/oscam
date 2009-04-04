@@ -21,7 +21,6 @@ struct s_module ph[CS_MAX_MOD];	// Protocols
 int	maxph=0;		// Protocols used
 int	cs_hw=0;		// hardware autodetect
 int	is_server=0;		// used in modules to specify function
-int	premhack=0;		// used to activate premiere hack 1801 -> 1702
 pid_t	master_pid=0;		// master pid OUTSIDE shm
 ushort	len4caid[256];		// table for guessing caid (by len)
 char	cs_confdir[128]=CS_CONFDIR;
@@ -349,6 +348,7 @@ static void cs_reinit_clients()
         client[i].sidtabok= account->sidtabok;   // services
         client[i].sidtabno= account->sidtabno;   // services
         memcpy(&client[i].ctab, &account->ctab, sizeof(client[i].ctab));
+        memcpy(&client[i].ttab, &account->ttab, sizeof(client[i].ttab));
 #ifdef CS_ANTICASC
         client[i].ac_idx     = account->ac_idx;
         client[i].ac_penalty = account->ac_penalty;
@@ -1086,7 +1086,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
           client[cs_idx].sidtabok= account->sidtabok;   // services
           client[cs_idx].sidtabno= account->sidtabno;   // services
           client[cs_idx].pcrc  = crc32(0L, MD5(account->pwd, strlen(account->pwd), NULL), 16);
-          premhack=account->premhack;
+          memcpy(&client[cs_idx].ttab, &account->ttab, sizeof(client[cs_idx].ttab));
 #ifdef CS_ANTICASC
           ac_init_client(account);
 #endif
@@ -1641,21 +1641,35 @@ void get_cw(ECM_REQUEST *er)
                 break;
       }
 
-    if (premhack)	// quickhack for 1801:000501
+    if (&client[cs_idx].ttab)  // Betatunneling
     // moved behind the check routines, because newcamd-ECM will fail if ecm is converted before
-      if (er->caid==0x1801 && er->ecm[3]==7 && er->ecm[5]==5 && er->ecm[6]==1)
+    {
+      int n;
+      ulong mask_all=0xFFFF;
+      TUNTAB *ttab;
+      ttab=&client[cs_idx].ttab;
+      for (n=0; (n<CS_MAXCAIDTAB); n++)
+      if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all))
       {
         int l;
-        char hack[13]={0x70, 0x51, 0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12, 0x07};
-        er->caid=0x1702;
+        char hack_n3[13]={0x70, 0x51, 0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12, 0x07};
+        char hack_n2[13]={0x70, 0x51, 0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12, 0x07};
+        er->caid=ttab->bt_caidto[n];
         er->prid=0;
         er->l=(er->ecm[2]+3);
         memmove(er->ecm+14, er->ecm+4, er->l-1);
-        memcpy(er->ecm+1, hack, 13);
+        if (er->l > 0x88)
+        {
+           memcpy(er->ecm+1, hack_n3, 13);
+           if (er->ecm[0]==0x81) er->ecm[12]+= 1;
+        }
+        else memcpy(er->ecm+1, hack_n2, 13);
         er->l+=10;
         er->ecm[2]=er->l-3;
-        cs_debug("ecm converted 1801:000501 -> 1702:000000");
+        cs_debug("ecm converted from: 0x%X to betacrypt: 0x%X for service id:0x%X",
+                 ttab->bt_caidfrom[n], ttab->bt_caidto[n], ttab->bt_srvid[n]);
       }
+    }
 
     memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
 

@@ -52,5 +52,13 @@ Hostname      = dns-name fuer diesen account.
                 wenn gesetzt, dann ist der account nur in verbindung mit
                 diesem dns-namen gueltig.
                 dieser parameter ist optional.
-1801to1702    = kann 0 oder 1 sein, wobei 1 bedeutet, dass premiere 1801-requests
-                auf 1702 konvertiert werden. (default: 0)
+Betatunnel    = liste der caid's und service id's die intern mit einem
+                Betatunnel versehen (und damit gemapped) werden sollen:
+                  Betatunnel = 1833.0081:1702,1833.0082:1702
+                  (trifft bei SAT Empfang auf die beiden P-HD Kanaele zu)
+                  Betatunnel = 1834.0081:1722,1834.0082:1722
+                  (trifft bei KDG auf die beiden P-HD Kanaele zu)
+                  Betatunnel = 1801.0081:1722,1801.0082:1722
+                  (trifft bei SAT Empfang auf die beiden P-HD Kanaele zu)
+                  Betatunnel = 1801.797D:1722
+                  (trifft bei KABELim Unitymedia Netz fuer P-HD zu)

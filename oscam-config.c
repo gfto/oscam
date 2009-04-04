@@ -123,6 +123,32 @@ static void chk_caidtab(char *caidasc, CAIDTAB *ctab)
   }
 }
 
+static void chk_tuntab(char *tunasc, TUNTAB *ttab)
+{
+  int i;
+  char *ptr1, *ptr2, *ptr3;
+  for (i=0, ptr1=strtok(tunasc, ","); (i<CS_MAXTUNTAB) && (ptr1); ptr1=strtok(NULL, ","))
+  {
+    ulong bt_caidfrom, bt_caidto, bt_srvid;
+    if( (ptr3=strchr(trim(ptr1), ':')) )
+      *ptr3++='\0';
+    else
+      ptr3="";
+    if( (ptr2=strchr(trim(ptr1), '.')) )
+      *ptr2++='\0';
+    else
+      ptr2="";
+    if ((bt_caidfrom=a2i(ptr1, 2))|(bt_srvid=a2i(ptr2,-2))|(bt_caidto=a2i(ptr3, 2)))
+    {
+      ttab->bt_caidfrom[i]=bt_caidfrom;
+      ttab->bt_caidto[i]=bt_caidto;
+      ttab->bt_srvid[i++]=bt_srvid;
+    }
+//    else
+//      cs_log("WARNING: wrong Betatunnel in %s -> ignored", cs_user);
+  }
+}
+
 static void chk_services(char *labels, ulong *sidok, ulong *sidno)
 {
   int i;
@@ -607,7 +633,7 @@ static void chk_account(char *token, char *value, struct s_auth *account)
   if (!strcmp(token, "user")) strncpy(account->usr, value, sizeof(account->usr)-1);
   if (!strcmp(token, "pwd")) strncpy(account->pwd, value, sizeof(account->pwd)-1);
   if (!strcmp(token, "hostname")) strncpy(account->dyndns, value, sizeof(account->dyndns)-1);
-  if (!strcmp(token, "1801to1702")) account->premhack=atoi(value);
+  if (!strcmp(token, "betatunnel")) chk_tuntab(value, &account->ttab);
   if (!strcmp(token, "uniq")) account->uniq=atoi(value);
   if (!strcmp(token, "sleep")) account->tosleep=atoi(value);
   if (!strcmp(token, "monlevel")) account->monlvl=atoi(value);
@@ -707,6 +733,7 @@ int init_userdb()
       account->monlvl=cfg->mon_level;
       account->tosleep=cfg->tosleep;
       for (i=1; i<CS_MAXCAIDTAB; account->ctab.mask[i++]=0xffff);
+      for (i=1; i<CS_MAXTUNTAB; account->ttab.bt_srvid[i++]=0x0000);
       nr++;
 #ifdef CS_ANTICASC
       account->ac_users=cfg->ac_users;

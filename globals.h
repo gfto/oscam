@@ -52,6 +52,7 @@
 #define CS_QLEN			128	// size of request queue
 #define CS_MAXQLEN		128	// size of request queue for cardreader
 #define CS_MAXCAIDTAB		32	// max. caid-defs/user
+#define CS_MAXTUNTAB        4   // max. betatunnel mappings
 #define CS_MAXPROV		32
 #define CS_MAXPORTS		32	// max server ports
 #define CS_MAXFILTERS		16
@@ -180,6 +181,13 @@ typedef	struct s_caidtab
   ushort cmap[CS_MAXCAIDTAB];
 } GCC_PACK CAIDTAB;
 
+typedef struct s_tuntab
+{
+  ushort bt_caidfrom[CS_MAXTUNTAB];
+  ushort bt_caidto[CS_MAXTUNTAB];
+  ushort bt_srvid[CS_MAXTUNTAB];
+} GCC_PACK TUNTAB;
+
 typedef struct s_sidtab
 {
   char     label[33];
@@ -284,6 +292,7 @@ struct s_client
   int       monlvl;
   int       dbglvl;
   CAIDTAB   ctab;
+  TUNTAB    ttab;
   ulong     sidtabok;	// positiv services
   ulong     sidtabno;	// negative services
   int       typ;
@@ -422,6 +431,7 @@ struct s_auth
   FTAB     fchid;
   FTAB     ftab;       // user [caid] and ident filter
   CLASSTAB cltab;
+  TUNTAB   ttab;
 #ifdef CS_ANTICASC
   int      ac_idx;
   int      ac_users;   // 0 - unlimited
@@ -429,7 +439,6 @@ struct s_auth
 #endif
   in_addr_t dynip;
   uchar     dyndns[64];
-  int       premhack;
   struct   s_auth *next;
 };
 
