@@ -111,7 +111,7 @@ static void show_subs(const uchar *emm)
       char szGeo[256];
 
       memset(szGeo, 0, 256);
-      strncpy(szGeo, emm+2, emm[1]);
+      strncpy(szGeo, (char *)emm+2, emm[1]);
       cs_log("nano A6: geo %s", szGeo);
       break;
     }
@@ -207,7 +207,7 @@ int viaccess_card_init(uchar *atr, int atrsize)
     reader[ridx].prid[i][0]=0;
     memcpy(&reader[ridx].prid[i][1], cta_res, 3);
     memcpy(&reader[ridx].availkeys[i][0], cta_res+10, 16);
-    sprintf(buf+strlen(buf), ",%06X", b2i(3, &reader[ridx].prid[i][1]));
+    sprintf((char *)buf+strlen((char *)buf), ",%06lX", b2i(3, &reader[ridx].prid[i][1]));
 //cs_log("buf: %s", buf);
 
     insac[2]=0xa5; write_cmd(insac, NULL); // request sa
@@ -259,7 +259,7 @@ int viaccess_do_ecm(ECM_REQUEST *er)
     keynr=ecm88Data[4]&0x0F;
     if (!chk_prov(ident, keynr))
     {
-      cs_debug("smartcardviaccess: provider or key not found on card");
+      cs_debug("smartcardviaccess ecm: provider or key not found on card");
       return(0);
     }
     ecm88Data+=5;
@@ -319,86 +319,180 @@ int viaccess_do_emm(EMM_PACKET *ep)
 {
   static unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
   static unsigned char insf0[] = { 0xca,0xf0,0x00,0x01,0x22 }; // set adf
+  static unsigned char insf4[] = { 0xca,0xf4,0x00,0x01,0x00 }; // set adf, encrypted
   static unsigned char ins18[] = { 0xca,0x18,0x01,0x01,0x00 }; // set subscription
+  static unsigned char ins1c[] = { 0xca,0x1c,0x01,0x01,0x00 }; // set subscription, encrypted
+  static unsigned char insc8[] = { 0xca,0xc8,0x00,0x00,0x02 }; // read extended status
+  static unsigned char insc8Data[] = { 0x00,0x00 }; // data for read extended status
 
-  uchar *emmData=ep->emm+7;
   int emmLen=SCT_LEN(ep->emm)-7;
   int rc=0;
 
-  if (emmData[0]==0x90 && emmData[1]==0x03)
-  {
-    uchar soid[3], ident[3], keynr, i;
-    //uchar buff[256]; // MAX_LEN
-    //uchar *ecmf8Data=0;
-    //int ecmf8Len=0;
+  ///cs_dump(ep->emm, emmLen+7, "RECEIVED EMM VIACCESS");
 
-    for( i=0; i<3; i++ )
-      soid[i]=ident[i]=emmData[2+i];
-    ident[2]&=0xF0;
-    keynr=soid[2]&0x0F;
-    if (!chk_prov(ident, keynr))
-    {
-      cs_log("smartcardviaccess: provider or key not found on card");
-      return(0);
+  int emmUpToEnd;
+  uchar *emmParsed = ep->emm+7;
+  int provider_ok = 0;
+  uchar keynr = 0;
+  int ins18Len = 0;
+  uchar ins18Data[512];
+  uchar insData[512];
+  uchar *nano81Data = 0;
+  uchar *nano91Data = 0;
+  uchar *nano92Data = 0;
+  uchar *nano9EData = 0;
+  uchar *nanoF0Data = 0;
+
+  for (emmUpToEnd=emmLen; (emmParsed[1] != 0) && (emmUpToEnd > 0); emmUpToEnd -= (2 + emmParsed[1]), emmParsed += (2 + emmParsed[1])) {
+    ///cs_dump (emmParsed, emmParsed[1] + 2, "NANO");
+
+    if (emmParsed[0]==0x90 && emmParsed[1]==0x03) {
+      /* identification of the service operator */
+
+      uchar soid[3], ident[3], i;
+
+      for (i=0; i<3; i++) {
+        soid[i]=ident[i]=emmParsed[2+i];
+      }
+      ident[2]&=0xF0;
+      keynr=soid[2]&0x0F;
+      if (chk_prov(ident, keynr)) {
+        provider_ok = 1;
+      } else {
+        cs_log("smartcardviaccess emm: provider or key not found on card (%x, %x)", ident, keynr);
+        return 0;
+      }
+
+      // set provider
+      write_cmd(insa4, soid);             
+      if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
+        cs_dump(insa4, 5, "set provider cmd:");
+        cs_dump(soid, 3, "set provider data:");
+        cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+        return 0;
+      }
+    } else if (emmParsed[0]==0x9e && emmParsed[1]==0x20) {
+      /* adf */
+
+      if (!nano91Data) {
+        /* adf is not crypted, so test it */
+
+        uchar custwp;
+        uchar *afd;
+
+        custwp=reader[ridx].sa[0][3];
+        afd=(uchar*)emmParsed+2;
+
+        if( afd[31-custwp/8] & (1 << (custwp & 7)) )
+          cs_log("emm for our card %08X", b2i(4, &reader[ridx].sa[0][0]));
+        else
+          return 2; // skipped
+      }
+
+      // memorize
+      nano9EData = emmParsed;
+
+    } else if (emmParsed[0]==0x81 && emmParsed[1]==0x07) {
+      nano81Data = emmParsed;
+    } else if (emmParsed[0]==0x91 && emmParsed[1]==0x08) {
+      nano91Data = emmParsed;
+    } else if (emmParsed[0]==0x92 && emmParsed[1]==0x08) {
+      nano92Data = emmParsed;
+    } else if (emmParsed[0]==0xF0 && emmParsed[1]==0x08) {
+      nanoF0Data = emmParsed;
+    } else if (emmParsed[0]==0x1D && emmParsed[0]==0x01 && emmParsed[0]==0x01) {
+      /* from cccam... skip it... */
+    } else {
+      /* other nanos */
+      show_subs(emmParsed);
+   
+      memcpy(ins18Data+ins18Len, emmParsed, emmParsed[1] + 2);
+      ins18Len += emmParsed [1] + 2;
     }
-    emmData+=5;
-    emmLen-=5;
-    if( emmData[0]==0x9e || emmData[1]==0x20) 
-    {
-      uchar custwp;
-      uchar *afd;
+  }
 
-      custwp=reader[ridx].sa[0][3];
-      afd=(uchar*)emmData+2;
-      if( afd[31-custwp/8] & (1 << (custwp & 7)) )
-        cs_log("emm for our card %08X", b2i(4, &reader[ridx].sa[0][0]));
-      else
-        return 2; // skipped
-    }
-    else{
-      cs_dump(ep->emm, ep->l, "can't find 0x9e in emm, confidential used?");
-      return 0; // error
-    }
-    show_subs(emmData+0x22);
+  if (!provider_ok) {
+    cs_log("viaccess: provider not found in emm... continue anyway...");
+    // force key to 1...
+    keynr = 1;
+    ///return 0;
+  }
 
-    memset(&last_geo, 0, sizeof(last_geo));
+  if (!nano9EData) {
+    cs_dump(ep->emm, ep->l, "can't find 0x9e in emm, confidential used?");
+    return 0; // error
+  }
 
-    // set provider
-    write_cmd(insa4, soid);             
-    if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 )
-    {
-      cs_dump(insa4, 5, "set provider cmd:");
-      cs_dump(soid, 3, "set provider data:");
-      cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
-      return 0;
-    }
-
+  if (!nano91Data) {
     // set adf
     insf0[3] = keynr;  // key
-    write_cmd(insf0, (uchar*)emmData);  
-    if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 )
-    {
+    write_cmd(insf0, nano9EData); 
+    if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
       cs_dump(insf0, 5, "set adf cmd:");
-      cs_dump(emmData, 0x22, "set adf data:");
+      cs_dump(nano9EData, 0x22, "set adf data:");
       cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
       return 0;
     }
+  } else {
+    // set adf crypte
+    insf4[3] = keynr;  // key
+    insf4[4] = nano91Data[1] + 2 + nano9EData[1] + 2;
+    memcpy (insData, nano91Data, nano91Data[1] + 2);
+    memcpy (insData + nano91Data[1] + 2, nano9EData, nano9EData[1] + 2);
+    write_cmd(insf4, insData); 
+    if(( cta_res[cta_lr-2]!=0x90 && cta_res[cta_lr-2]!=0x91) || cta_res[cta_lr-1]!=0x00 ) {
+      cs_dump(insf4, 5, "set adf encrypted cmd:");
+      cs_dump(insData, insf4[4], "set adf encrypted data:");
+      cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+      return 0;
+    }
+  }
 
-    // set subscription
-    emmData+=0x22;
-    emmLen-=0x22;
-    ins18[4]=emmLen;
-    write_cmd(ins18, (uchar*)emmData);
-    if( cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0x00 )
-    {
+  if (!nano92Data) {
+    // send subscription
+    ins18[4] = ins18Len + nanoF0Data[1] + 2;
+    memcpy (insData, ins18Data, ins18Len);
+    memcpy (insData + ins18Len, nanoF0Data, nanoF0Data[1] + 2);
+    write_cmd(ins18, insData);
+    if( cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0x00 ) {
       cs_log("update successfully written");
       rc=1; // written
     } else {
       cs_dump(ins18, 5, "set subscription cmd:");
-      cs_dump(emmData, emmLen, "set subscription data:");
+      cs_dump(insData, ins18[4], "set subscription data:");
       cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
     }
+    
+  } else {
+    // send subscription encrypted
+    ins1c[3] = keynr;  // key
+    ins1c[4] = nano92Data[1] + 2 + nano81Data[1] + 2 + nanoF0Data[1] + 2;
+    memcpy (insData, nano92Data, nano92Data[1] + 2);
+    memcpy (insData + nano92Data[1] + 2, nano81Data, nano81Data[1] + 2);
+    memcpy (insData + nano92Data[1] + 2 + nano81Data[1] + 2, nanoF0Data, nanoF0Data[1] + 2);
+    write_cmd(ins1c, insData); 
+    if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
+      /* maybe a 2nd level status, so read it */
+      ///cs_dump(ins1c, 5, "set subscription encrypted cmd:");
+      ///cs_dump(insData, ins1c[4], "set subscription encrypted data:");
+      ///cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+
+      read_cmd(insc8, insc8Data); 
+      if( cta_res[0] != 0x00 || cta_res[1] != 00 || cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
+        cs_dump(cta_res, cta_lr, "extended status error:");
+        return 0;
+      } else {
+        cs_log("update successfully written (with extended status OK)");
+        rc=1; // written
+      }
+    } else {
+      cs_log("update successfully written");
+      rc=1; // written
+    }
   }
+
+  memset(&last_geo, 0, sizeof(last_geo));
+
   /*
   Sub Main()
     Sc.Write("CA A4 04 00 03")
@@ -463,9 +557,9 @@ int viaccess_card_info(void)
     l=cta_res[1];
     insb8[4]=l; read_cmd(insb8, NULL); // read name
     cta_res[l]=0;
-    trim(cta_res);
+    trim((char *)cta_res);
     if (cta_res[0])
-      snprintf(l_name, sizeof(l_name), ", name: %s", cta_res);
+      snprintf((char *)l_name, sizeof(l_name), ", name: %s", cta_res);
     else
       l_name[0]=0;
 
