@@ -1,0 +1,84 @@
+SHELL		= /bin/sh
+
+ifeq ($(wildcard mpcs-boxkeys.np), mpcs-boxkeys.np)
+  KFLAG		= -DCS_WITH_BOXKEYS
+endif
+
+CC		= $(DS_CC)
+AR		= $(DS_AR)
+STRIP		= $(DS_ST)
+RANLIB		= $(DS_RL)
+CFLAGS		= $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
+LDFLAGS		= $(DS_OPTS) $(DS_LDFLAGS)
+ARFLAGS		= $(DS_ARFLAGS)
+LIBS		= $(DS_LIBS) $(OS_LIBS) $(OS_PTLI)
+export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS
+
+GENERAL		= Makefile Maketype globals.h mpcs-config.h
+ifeq ($(wildcard csgbox), csgbox)
+ VERX	= -gbx-$(subst ",,$(filter-out \#define GBXVERSION,$(shell grep GBXVERSION csgbox/gbox.h)))
+endif
+EXEFILE1	= Distribution/mpcs-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TYP))
+
+
+LIBDIR		= lib
+LIBFILE1	= $(LIBDIR)/libcs-$(TYP).a
+LIBFILE2	= $(LIBDIR)/libcscrypt-$(TYP).a
+LIBFILE3	= $(LIBDIR)/libcsctapi-$(TYP).a
+
+OBJECTS1	= $(LIBFILE1)(mpcs-simples.o) \
+		  $(LIBFILE1)(mpcs-config.o) \
+		  $(LIBFILE1)(mpcs-log.o) \
+		  $(LIBFILE1)(mpcs-reader.o) \
+		  $(LIBFILE1)(reader-common.o) \
+		  $(LIBFILE1)(reader-irdeto.o) \
+		  $(LIBFILE1)(reader-viaccess.o) \
+		  $(LIBFILE1)(reader-seca.o) \
+		  $(LIBFILE1)(reader-cryptoworks.o) \
+		  $(LIBFILE1)(reader-conax.o) \
+		  $(LIBFILE1)(module-camd33.o) \
+		  $(LIBFILE1)(module-camd35.o) \
+		  $(LIBFILE1)(module-radegast.o) \
+		  $(LIBFILE1)(module-serial.o) \
+		  $(LIBFILE1)(module-monitor.o) \
+		  $(LIBFILE1)(module-newcamd.o) \
+		  $(LIBFILE1)(mpcs-nano.o) \
+		  $(LIBFILE1)(mpcs-chk.o) \
+		  $(LIBFILE1)(mpcs-ac.o)
+
+all:		prepare $(EXEFILE1)
+
+prepare:
+		@-echo "-----------------------------------------------------"
+		@-echo "Build for platform $(TYP)"
+		@-echo "-----------------------------------------------------"
+		@echo "$(TYP)" | awk -F- ' \
+		  { \
+		    printf("#define CS_OSTYPE \"%s\"\n", $$0);  \
+		    printf("#define CS_OS_CPU \"%s\"\n", $$1);  \
+		    printf("#define CS_OS_HW  \"%s\"\n", $$2);  \
+		    printf("#define CS_OS_SYS \"%s\"\n", $$3);  \
+		  }' > mpcs-ostype.h
+		@[ -d "$(LIBDIR)" ] || mkdir "$(LIBDIR)"
+ifeq ($(wildcard csgbox), csgbox)
+		@-echo "#define CS_WITH_GBOX 1" >> mpcs-ostype.h
+		$(MAKE) -C csgbox
+endif
+		$(MAKE) -C cscrypt
+		$(MAKE) -C csctapi
+
+$(EXEFILE1):	mpcs.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(GENERAL)
+		$(CC) $(LDFLAGS) mpcs.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) -o "$@" $(LIBS)
+		$(STRIP) $@
+
+$(LIBFILE1):	$(OBJECTS1)
+		-$(RANLIB) $@
+
+$(OBJECTS1):	$(GENERAL)
+
+.c.a:
+		$(CC) $(CFLAGS) -Icsctapi $<
+		$(AR) $(ARFLAGS) $@ $*.o
+		-@rm -f $*.o
+
+.SUFFIXES:	.o .c .a

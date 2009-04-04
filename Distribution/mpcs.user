@@ -1,0 +1,13 @@
+[account]
+User  = tuner
+Pwd   = tuner
+#Uniq  = 1
+Group = 1
+#IDENT = 0500:020710
+#Hostname = valid-only.from.hier
+
+#[account]
+#User  = au
+#Pwd   = password
+#Group = 1
+#AU    = mouse

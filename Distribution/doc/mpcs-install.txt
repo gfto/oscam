@@ -1,0 +1,93 @@
+mp-cardserver v0.8j unterstuetzt:
+=================================
+cardreader...............: 6mhz mouse-mode fuer pw
+clients .................: camd 3.3x, camd3.5x/3.6x, radegast, hsic
+cascading (remote server): camd 3.5x/3.6x (ecm only)
+betriebssysteme..........: linux i386, linux dbox2, linux dreambox,
+                           windows, arm-systeme, mips-systeme
+
+
+system-vorraussetzung:
+======================
+linux i386    : glibc >= 2.2
+linux dbox2   : glibc >= 2.2 + geladenes multicam.o
+linux dreambox: glibc >= 2.2
+windows       : cygwin1.dll
+
+
+client-unterstuetzung uebersicht:
+=================================
+protokoll  | caid  | auth  | crypt |  au   |
+--------------------------------------------
+camd 3.3x  |   X   |   X   |   X   |   X   |
+camd 3.5x  |   X   |   X   |   X   |   X   |
+radegast   |   X   |   -   |   -   |   -   |
+hsic       |   X   |   X   |   -   |   -   |
+
+mir bekannte getestete clients:
+linux dbox2: camd 3.38, camd 3.5x-3.6x, hsic
+linux dream: camd 3.34, camd 3.6x, radegast
+linux i386 : hsic, vdr-sc mit folgenden protokollen:
+                   camd 3.3x, camd 3.5x, radegast
+windows    : ProgDVB (Cardclient 1.61)
+
+
+installation
+============
+
+linux i386:
+(dieses beispiel ist fuer anfaenger gedacht und erfordert root-rechte)
+paket in /tmp einspielen.
+dann folgende kommandos ausfuehren:
+- bunzip2 mpcs.8j.tar.bz2
+- tar xvf mpcs.8j.tar
+- mkdir /usr/local/sbin /usr/local/etc
+- mv mpcs-0.8j-i386-pc-linux /usr/local/sbin/mpcs
+- mv mpcs.* /usr/local/etc
+danach die dateien mpcs.conf, mpcs.user und mpcs.server in 
+/usr/local/etc mit texteditor anpassen.
+dann "/usr/local/sbin/mpcs" eingeben, um mp-cardserver zu starten.
+falls die config-files NICHT /usr/local/etc sind, dann das
+verzeichnis mit der option -c beim start von mp-cardserver mit angeben.
+um mp-cardserver in hintergrund zu starten (wenn alles klappt)
+mpcs mit "-b" starten.
+siehe auch "mpcs -h". 
+
+linux dbox2/dreambox:
+paket in /tmp einspielen.
+dann folgende kommandos ausfuehren:
+- busybox bunzip2 mpcs.8j.tar.bz2
+- tar xvf mpcs.8j.tar
+- mv mpcs-0.8j-powerpc-tuxbox-linux /var/bin/mpcs
+- mv mpcs.* /var/tuxbox/config
+danach die dateien mpcs.conf, mpcs.user und mpcs.server in 
+/var/tuxbox/config mit texteditor anpassen.
+dann "/var/bin/mpcs" eingeben, um mp-cardserver zu starten.
+falls die config-files NICHT /var/tuxbox/config sind, dann das
+verzeichnis mit der option -c beim start von mp-cardserver mit angeben.
+um mp-cardserver in hintergrund zu starten (wenn alles klappt)
+mpcs mit "-b" starten.
+siehe auch "mpcs -h". 
+
+windows:
+paket in neuem ordner auspacken.
+cygwin1.dll in diesem ordern dazukopieren
+(falls nicht schon im system vorhanden).
+danach die dateien mpcs.conf, mpcs.user
+und mpcs.server mit texteditor anpassen.
+mp-cardserver mit "mpcs" starten.
+ 
+
+fuer die anpassungen der einzelnen config-files
+die entsprechenden txt-files lesen
+
+NEU:
+bei systemen ohne shared memory wird eine datei benoetigt
+um das zu simulieren. diese kann nun als parameter beim
+starten eingestellt werden.
+z.b.: "mpcs -m /var/tmp/mpcs.mem"
+
+dies betrifft alle embedded systeme und windows.
+
+im zweifelsfall "mpcs -h" aufrufen und nachlesen,
+ob der parameter "-m" in der hilfe angezeigt wird.
