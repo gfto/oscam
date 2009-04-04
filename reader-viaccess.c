@@ -359,7 +359,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
       if (chk_prov(ident, keynr)) {
         provider_ok = 1;
       } else {
-        cs_log("smartcardviaccess emm: provider or key not found on card (%x, %x)", ident, keynr);
+        cs_debug("smartcardviaccess emm: provider or key not found on card (%x, %x)", ident, keynr);
         return 0;
       }
 
@@ -384,7 +384,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
         afd=(uchar*)emmParsed+2;
 
         if( afd[31-custwp/8] & (1 << (custwp & 7)) )
-          cs_log("emm for our card %08X", b2i(4, &reader[ridx].sa[0][0]));
+          cs_debug("emm for our card %08X", b2i(4, &reader[ridx].sa[0][0]));
         else
           return 2; // skipped
       }
@@ -412,7 +412,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
   }
 
   if (!provider_ok) {
-    cs_log("viaccess: provider not found in emm... continue anyway...");
+    cs_debug("viaccess: provider not found in emm... continue anyway...");
     // force key to 1...
     keynr = 1;
     ///return 0;
@@ -460,7 +460,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
     memcpy (insData + ins18Len, nanoF0Data, nanoF0Data[1] + 2);
     write_cmd(ins18, insData);
     if( cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0x00 ) {
-      cs_log("update successfully written");
+      cs_debug("update successfully written");
       rc=1; // written
     } else {
       cs_dump(ins18, 5, "set subscription cmd:");
@@ -490,14 +490,14 @@ int viaccess_do_emm(EMM_PACKET *ep)
 
       read_cmd(insc8, insc8Data); 
       if( cta_res[0] != 0x00 || cta_res[1] != 00 || cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
-        cs_dump(cta_res, cta_lr, "extended status error:");
+        ///cs_dump(cta_res, cta_lr, "extended status error:");
         return 0;
       } else {
-        cs_log("update successfully written (with extended status OK)");
+        cs_debug("update successfully written (with extended status OK)");
         rc=1; // written
       }
     } else {
-      cs_log("update successfully written");
+      cs_debug("update successfully written");
       rc=1; // written
     }
   }
