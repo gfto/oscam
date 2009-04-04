@@ -44,6 +44,7 @@
 #include <time.h>
 #include "io_serial.h"
 #include "mc_global.h"
+#include <linux/serial.h>
 
 #define IO_SERIAL_FILENAME_LENGTH 	32
 
@@ -498,9 +499,27 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 //	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, props->input_bitrate, props->bits, props->parity == IO_SERIAL_PARITY_EVEN ? "Even" : props->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", props->stopbits, props->dtr, props->rts);
 	memset (&newtio, 0, sizeof (newtio));
 	/* Set the bitrate */
-	cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-	cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-	
+
+    extern int mhz;
+    if (mhz == 600) {
+        /* for 6MHz */
+        struct serial_struct nuts;
+        ioctl(io->fd, TIOCGSERIAL, &nuts);
+        nuts.custom_divisor = nuts.baud_base / 9600 * 3.57 / 6;
+        nuts.flags &= ~ASYNC_SPD_MASK;
+        nuts.flags |= ASYNC_SPD_CUST;
+        ioctl(io->fd, TIOCSSERIAL, &nuts);
+	    cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
+	    cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+    } else if (mhz == 357 || mhz == 358) {
+        /* for 3.57 MHz */
+        cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
+        cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
+    } else {
+        /* invalid */
+        return FALSE;
+    }
+        
 	/* Set the character size */
 	switch (props->bits)
 	{

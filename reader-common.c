@@ -3,6 +3,7 @@
 
 char mpcs_device[128];
 int  mpcs_card_detect;
+int  mhz;
 
 uchar cta_cmd[272], cta_res[256], atr[64];
 ushort cta_lr, atr_size=0;
@@ -219,6 +220,7 @@ int reader_device_init(char *device, int typ)
 {
   int rc;
   mpcs_card_detect=reader[ridx].detect;
+  mhz=reader[ridx].mhz;
   cs_ptyp_orig=cs_ptyp;
   cs_ptyp=D_DEVICE;
   snprintf(mpcs_device, sizeof(mpcs_device), "%s", device);

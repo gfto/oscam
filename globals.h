@@ -330,6 +330,7 @@ struct s_reader
   char      label[32];
   char      device[128];
   int       detect;
+  int       mhz;
   int       r_port;
   char      r_usr[64];
   char      r_pwd[64];
