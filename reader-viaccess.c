@@ -392,7 +392,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
       // memorize
       nano9EData = emmParsed;
 
-    } else if (emmParsed[0]==0x81 && emmParsed[1]==0x07) {
+    } else if (emmParsed[0]==0x81) {
       nano81Data = emmParsed;
     } else if (emmParsed[0]==0x91 && emmParsed[1]==0x08) {
       nano91Data = emmParsed;
@@ -420,6 +420,11 @@ int viaccess_do_emm(EMM_PACKET *ep)
 
   if (!nano9EData) {
     cs_dump(ep->emm, ep->l, "can't find 0x9e in emm, confidential used?");
+    return 0; // error
+  }
+
+  if (!nanoF0Data) {
+    cs_dump(ep->emm, ep->l, "can't find 0xf0 in emm...");
     return 0; // error
   }
 
@@ -465,6 +470,12 @@ int viaccess_do_emm(EMM_PACKET *ep)
     
   } else {
     // send subscription encrypted
+
+    if (!nano81Data) {
+      cs_dump(ep->emm, ep->l, "0x92 found, but can't find 0x81 in emm...");
+      return 0; // error
+    }
+
     ins1c[3] = keynr;  // key
     ins1c[4] = nano92Data[1] + 2 + nano81Data[1] + 2 + nanoF0Data[1] + 2;
     memcpy (insData, nano92Data, nano92Data[1] + 2);
