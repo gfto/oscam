@@ -4,6 +4,7 @@
 char mpcs_device[128];
 int  mpcs_card_detect;
 int  mhz;
+int  reader_irdeto_mode;
 
 uchar cta_cmd[272], cta_res[260], atr[64];
 ushort cta_lr, atr_size=0;
@@ -137,6 +138,7 @@ static int reader_activate_card()
 //  for (i=0; (i<5) && ((ret!=OK)||(cta_res[cta_lr-2]!=0x90)); i++)
   for (i=0; i<5; i++)
   {
+    reader_irdeto_mode = i%2 == 1;
     cta_cmd[0] = CTBCS_CLA;
     cta_cmd[1] = CTBCS_INS_REQUEST;
     cta_cmd[2] = CTBCS_P1_INTERFACE1;

@@ -504,20 +504,37 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 	/* Set the bitrate */
 
     extern int mhz;
+    extern int reader_irdeto_mode;
     if (mhz == 600) {
         /* for 6MHz */
-        struct serial_struct nuts;
-        ioctl(io->fd, TIOCGSERIAL, &nuts);
-        nuts.custom_divisor = nuts.baud_base / 9600 * 3.57 / 6;
-        nuts.flags &= ~ASYNC_SPD_MASK;
-        nuts.flags |= ASYNC_SPD_CUST;
-        ioctl(io->fd, TIOCSSERIAL, &nuts);
-	    cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
-	    cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+        if (reader_irdeto_mode) {
+            cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
+            cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
+		} else {
+        	struct serial_struct nuts;
+        	ioctl(io->fd, TIOCGSERIAL, &nuts);
+        	nuts.custom_divisor = nuts.baud_base / 9600 * 3.57 / 6;
+        	nuts.flags &= ~ASYNC_SPD_MASK;
+        	nuts.flags |= ASYNC_SPD_CUST;
+        	ioctl(io->fd, TIOCSSERIAL, &nuts);
+	    	cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
+	    	cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+		}
     } else if (mhz == 357 || mhz == 358) {
         /* for 3.57 MHz */
-        cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-        cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
+        if (reader_irdeto_mode) {
+        	struct serial_struct nuts;
+        	ioctl(io->fd, TIOCGSERIAL, &nuts);
+        	nuts.custom_divisor = nuts.baud_base / 5713;
+        	nuts.flags &= ~ASYNC_SPD_MASK;
+        	nuts.flags |= ASYNC_SPD_CUST;
+        	ioctl(io->fd, TIOCSSERIAL, &nuts);
+		    cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
+		    cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+        } else {
+            cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
+            cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
+        }
     } else {
         /* invalid */
         return FALSE;
