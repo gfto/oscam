@@ -387,14 +387,14 @@ static int reader_listen(int fd1, int fd2)
   
   if (master_pid!=getppid()) cs_exit(0);
   tcp_toflag=(fd2 && is_tcp && reader[ridx].tcp_ito && reader[ridx].tcp_connected);
+  tv.tv_sec = 0;
+  tv.tv_usec = 100000L;
   if (tcp_toflag)
   {
     tv.tv_sec = reader[ridx].tcp_ito*60;
     tv.tv_usec = 0;
     use_tv = 1;
   } 
-  tv.tv_sec = 0;
-  tv.tv_usec = 100000L;
   FD_ZERO(&fds);
   FD_SET(fd1, &fds);
   if (fd2) FD_SET(fd2, &fds);
