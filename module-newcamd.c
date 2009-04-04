@@ -786,14 +786,13 @@ static int newcamd_auth_client(in_addr_t ip)
       
       mbuf[4] = (uchar)(pufilt->caid>>8);
       mbuf[5] = (uchar)(pufilt->caid);
+      mbuf[6] = 0x00;
+      mbuf[7] = 0x00;
       if (au != -1) {
-        if (((pufilt->caid >= 0x1700) && (pufilt->caid <= 0x1799))  || // Betacrypt
-            ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699)))    // Irdeto
+        if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
         {
           // only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
           // first 2 Byte always 00
-          mbuf[6]=0x00; //serial only 4 bytes
-          mbuf[7]=0x00; //serial only 4 bytes
           mbuf[8]=0x00; //serial only 4 bytes
           mbuf[9]=0x00; //serial only 4 bytes
           // 1 Byte Hex Base (see reader-irdeto.c how this is stored in "reader[au].hexserial")
@@ -803,34 +802,28 @@ static int newcamd_auth_client(in_addr_t ip)
           mbuf[12]=reader[au].hexserial[1];
           mbuf[13]=reader[au].hexserial[2];
         } else if (((pufilt->caid >> 8) == 0x05) || ((pufilt->caid >> 8) == 0x0D)) {
-          mbuf[6] = 0x00;
-          mbuf[7] = 0x00;
           mbuf[8] = 0x00;
-	  mbuf[9] = reader[au].hexserial[0];
+	      mbuf[9] = reader[au].hexserial[0];
           mbuf[10] = reader[au].hexserial[1];
           mbuf[11] = reader[au].hexserial[2];
           mbuf[12] = reader[au].hexserial[3];
           mbuf[13] = reader[au].hexserial[4];
         } else {
-          mbuf[6] = reader[au].hexserial[0];
-	  mbuf[7] = reader[au].hexserial[1];
-          mbuf[8] = reader[au].hexserial[2];
-	  mbuf[9] = reader[au].hexserial[3];
-          mbuf[10] = reader[au].hexserial[4];
-          mbuf[11] = reader[au].hexserial[5];
-          mbuf[12] = reader[au].hexserial[6];
-          mbuf[13] = reader[au].hexserial[7];
+          mbuf[8] = reader[au].hexserial[0];
+	      mbuf[9] = reader[au].hexserial[1];
+          mbuf[10] = reader[au].hexserial[2];
+	      mbuf[11] = reader[au].hexserial[3];
+          mbuf[12] = reader[au].hexserial[4];
+          mbuf[13] = reader[au].hexserial[5];
         }
       } else {
       	client[cs_idx].au = -1;
-      mbuf[6] = 0x00;
-      mbuf[7] = 0x00;
-      mbuf[8] = 0x00;
-      mbuf[9] = 0x00;
-      mbuf[10] = 0x00;
-      mbuf[11] = 0x00;
-      mbuf[12] = 0x00;
-      mbuf[13] = 0x00;
+        mbuf[8] = 0x00;
+        mbuf[9] = 0x00;
+        mbuf[10] = 0x00;
+        mbuf[11] = 0x00;
+        mbuf[12] = 0x00;
+        mbuf[13] = 0x00;
       	// send "faked" Hexserial to client
 /*
         if (((pufilt->caid >= 0x1700) && (pufilt->caid <= 0x1799))  || // Betacrypt
