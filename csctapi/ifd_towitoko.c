@@ -149,10 +149,10 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 	int ret;
 
 #ifdef USE_GPIO	     	
-	extern int mpcs_card_detect;
-	if (mpcs_card_detect>4)
+	extern int oscam_card_detect;
+	if (oscam_card_detect>4)
 	{
-		gpio_detect=mpcs_card_detect-3;
+		gpio_detect=oscam_card_detect-3;
 		pin = 1<<gpio_detect;
 		gpio_outen=open("/dev/gpio/outen",O_RDWR);
 		gpio_out=open("/dev/gpio/out",O_RDWR);
@@ -390,10 +390,10 @@ int IFD_Towitoko_GetStatus (IFD * ifd, BYTE * result)
 	else
 #endif
 	{
-		extern int mpcs_card_detect;
+		extern int oscam_card_detect;
 		if (ioctl(ifd->io->fd, TIOCMGET,&modembits)<0)
 			return IFD_TOWITOKO_IO_ERROR;
-		switch(mpcs_card_detect&0x7f)
+		switch(oscam_card_detect&0x7f)
 		{
 			case  0: in=(modembits & TIOCM_CAR);	break;
 			case  1: in=(modembits & TIOCM_DSR);	break;
@@ -401,7 +401,7 @@ int IFD_Towitoko_GetStatus (IFD * ifd, BYTE * result)
 			case  3: in=(modembits & TIOCM_RNG);	break;
 			default: in=0;		// dummy
 		}
-		if (!(mpcs_card_detect&0x80))
+		if (!(oscam_card_detect&0x80))
 			in=!in;
 	}
 

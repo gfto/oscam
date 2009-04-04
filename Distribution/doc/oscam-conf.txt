@@ -1,8 +1,8 @@
-mpcs.conf anpassen
-==================
+oscam.conf anpassen
+===================
 
 [global]
-Nice          = systemprioritaet. der mpcs braucht fast keine cpu-leistung,
+Nice          = systemprioritaet. der oscam braucht fast keine cpu-leistung,
                 nur wenn er sie braucht, sollte es sofort sein.
                 bei stark ausgelasteten system kann dies nuetzlich sein.
                 wird der parameter auskommentiert, wird diese funktion nicht
@@ -34,15 +34,15 @@ LogFile       = hier kann die logdatei eingestellt werden.
                 /dev/tty  (es erscheint das log als bildschirmausgabe)
                 spezialfall: bei "LogFile=syslog" wird
                 di ausgabe an den syslogd uebergeben
-                empfehlung: /var/log/mpcs.log       (linux i386)
-                            /dev/null oder /dev/tty (linux dbox)
-                            mpcs.log                (windows)
+                empfehlung: /var/log/oscam.log       (linux i386)
+                            /dev/null oder /dev/tty  (linux dbox)
+                            oscam.log                (windows)
 PidFile       = hier kann ein pidfile angegeben werden.
                 das ist eine ascii-datei, in der die prozess-id vom
                 hauptprozess des cardserver drinsteht.
                 das kann benutzt werden, um den cardserver wieder
                 "sauber" anzuhalten, wenn er im hintergrund laeuft.
-                empfehlung: /var/run/mpcs.pid (linux)
+                empfehlung: /var/run/oscam.pid (linux)
 UsrFile       = hier kann eine datei angegeben werden,
                 in der ganze sitzungen protokolliert werden.
                 wenn alles prima funktioniert, kann dies auch
@@ -50,7 +50,7 @@ UsrFile       = hier kann eine datei angegeben werden,
                 werden, da hier die daten auf das wesentliche
                 reduziert sind. (siehe auch UsrFile Satzbeschreibung)
 Sleep         = system-globaler standard-wert fuer alle acounts.
-                (siehe mpcs.user)
+                (siehe oscam.user)
 ServerIP      = listener auf bestimmte ip binden. dies ist dann
                 zunaechst der standard-wert fuer alle listener.
                 dieser parameter kann in allen netz-serverdiensten
@@ -83,7 +83,7 @@ MonLevel      = standard-einstellung fuer monitor-zugang (default=2).
                 2 = client sieht alle prozesse, kann aber keine aktion ausloesen.
                 3 = client sieht alle prozesse und kann die userdb neu laden.
                 4 = uneingeschraenkter zugriff auf monitor-funktion.
-                diese einstellung kann pro user in mpcs.user
+                diese einstellung kann pro user in oscam.user
                 ueberschrieben werden
 
 [camd33]
@@ -142,12 +142,12 @@ Device        = <user>@<device>[:baud][?option1=value1[&option2=value2]]
                         delay  : zusaetzliche pause in ms beim senden zwischen
                                  jedem einzelnen zeichen (default=0)
                                  
-[gbox]			Das GB*X-Modul im MPCS arbeitet als GB*X Server, CS2GB*X und GBOX2CS.
+[gbox]			Das GB*X-Modul im OSCam arbeitet als GB*X Server, CS2GB*X und GBOX2CS.
 				Es können also mehrere GB*X-Server miteinander verbunden werden
-				(GB*X-Server), Von clients des MPCS auf die GB*X-Karten zugegriffen
+				(GB*X-Server), Von clients des OSCam auf die GB*X-Karten zugegriffen
 				werden und Lokale Karten oder Karten/EMUS von remote-Servern ins
 				GB*X-Netzwerk zurück geshared werden.
-				Die einzelnen GB*X-Server werden als Reader in der mpcs.server eingetragen
+				Die einzelnen GB*X-Server werden als Reader in der oscam.server eingetragen
 Password        = Eigenes Passwort der gbox. Dieses Passwort muss in der D-Line
 				  des GB*x-Servers eingetragen werden.
 MaxDist	    	= Bis zu welcher Distanz sollen Karten von GB*x-Servern angenommen

@@ -1,5 +1,5 @@
-mpcs.server anpassen
-====================
+oscam.server anpassen
+=====================
 
 es koennen mehrere [reader]-sections erstellt werden.
 jede vollstaendige section wird dann als reader verwendet.
@@ -8,7 +8,7 @@ es muss auf jeden fall "Label" und "Device" gesetzt sein.
 [reader]
 Label         = name des readers. muss gesetzt sein !
                 wird benutzt, um die zuordnung fuer auto-update
-                in mpcs.user zu machen.
+                in oscam.user zu machen.
 Protokoll     = kommunikationsprotokoll zum reader. muss gesetzt sein !
                 derzeit "mouse" oder "internal" fuer localen cardreader.
                 im regelfall ist fuer alle cardreader mit einem
@@ -29,11 +29,11 @@ Device        = bei localem reader (mouse-mode) das device an dem der
                 wenn lport angegeben wird, muss er sich von allen anderen
                 ports in der config unterscheiden. beispiel:
                   Device=cardserver.remote.tld,20248
-                  (mpcs befragt cardserver.remote.tld:20248)
+                  (oscam befragt cardserver.remote.tld:20248)
                   Device=192.168.0.1,20410
-                  (mpcs befragt 192.168.0.1:20410)
+                  (oscam befragt 192.168.0.1:20410)
                   Device=cs.rem.inf,20248,20251
-                  (mpcs befragt cs.rem.inf:20248, lokaler port 20251)
+                  (oscam befragt cs.rem.inf:20248, lokaler port 20251)
 Detect        = statusleitung fuer "karte ist drin"
                 normalerweise CD (Carrier Detect) oder DSR (Data Set Ready)
                 alternativ auch CTS (Clear To Send) oder RING (Ring Indicator)

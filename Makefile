@@ -26,23 +26,23 @@ all:	\
 
 
 dist:	std
-	@cd Distribution && tar cvf "../mpcs$(VER).tar" *
-	@bzip2 -9f "mpcs$(VER).tar"
+	@cd Distribution && tar cvf "../oscam$(VER).tar" *
+	@bzip2 -9f "oscam$(VER).tar"
 
 extra:	all
-	@cd Distribution && tar cvf "../mpcs$(VER)-extra.tar" *
-	@bzip2 -9f "mpcs$(VER)-extra.tar"
+	@cd Distribution && tar cvf "../oscam$(VER)-extra.tar" *
+	@bzip2 -9f "oscam$(VER)-extra.tar"
 
 clean:
-	@-rm -rf mpcs-ostype.h lib Distribution/mpcs-*
+	@-rm -rf oscam-ostype.h lib Distribution/oscam-*
 
 tar:	clean
-	@tar cvf "mpcs$(VER)-src.tar" Distribution Make* *.c *.h cscrypt csctapi
-	@bzip2 -9f "mpcs$(VER)-src.tar"
+	@tar cvf "oscam$(VER)-src.tar" Distribution Make* *.c *.h cscrypt csctapi
+	@bzip2 -9f "oscam$(VER)-src.tar"
 
 nptar:	clean
-	@tar cvf "mpcs$(VER)-nonpublic-src.tar" Distribution Make* *.c *.np *.h cscrypt csctapi csgbox
-	@bzip2 -9f "mpcs$(VER)-nonpublic-src.tar"
+	@tar cvf "oscam$(VER)-nonpublic-src.tar" Distribution Make* *.c *.np *.h cscrypt csctapi csgbox
+	@bzip2 -9f "oscam$(VER)-nonpublic-src.tar"
 
 ######################################################################
 #

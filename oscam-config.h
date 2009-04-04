@@ -37,7 +37,7 @@
 #ifdef OS_CYGWIN32
 #  define CS_NOSHM
 #  define CS_CONFDIR "."
-#  define CS_MMAPFILE "mpcs.mem"
+#  define CS_MMAPFILE "oscam.mem"
 #  define CS_LOGFILE "/dev/tty"
 #  define NO_ENDIAN_H
 #  ifndef NO_PAR_SWITCH

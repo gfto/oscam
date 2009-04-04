@@ -1,5 +1,5 @@
 #
-#	mpcs caid guessing table (by len)
+#	oscam caid guessing table (by len)
 #	caid 0500 and 1801 not needed
 #	format: <len>:<caid>
 #	where <len> is length of ecm in hex

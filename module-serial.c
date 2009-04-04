@@ -37,12 +37,12 @@ static char *dsrproto_txt[]={"unknown", "samsung", "openbox", "pioneer",
 static char *incomplete="incomplete request (%d bytes)";
 static int connected=0;
 static struct timeb tps, tpe;
-static char mpcser_usr[32]={0};
-static char mpcser_device[64]={0};
-static speed_t mpcser_baud=0;
-static int mpcser_delay=0;
-static int mpcser_timeout=50;
-static int mpcser_proto=0;
+static char oscam_ser_usr[32]={0};
+static char oscam_ser_device[64]={0};
+static speed_t oscam_ser_baud=0;
+static int oscam_ser_delay=0;
+static int oscam_ser_timeout=50;
+static int oscam_ser_proto=0;
 int serial_errors=0;
 static int dsr9500type=P_DSR_AUTO;
 static int samsung_0a=0;   // number of 0A in ALL dcw sent into samsung
@@ -68,7 +68,7 @@ SSSP_TAB sssp_tab[SSSP_MAX_PID];
 ushort sssp_srvid;
 int sssp_num=0, sssp_fix=0;
 
-static int mpcser_alpha_convert(uchar *buf, int l)
+static int oscam_ser_alpha_convert(uchar *buf, int l)
 {
   int i;
   if (buf[0]==0x7E)		// normalize
@@ -98,13 +98,13 @@ static int mpcser_alpha_convert(uchar *buf, int l)
   return(l);
 }
 
-static void mpcser_disconnect(void);
+static void oscam_ser_disconnect(void);
 
-static int mpcser_parse_url(char *url)
+static int oscam_ser_parse_url(char *url)
 {
   char *service, *usr, *dev, *baud=NULL, *dummy, *para;
 
-  mpcser_proto=P_AUTO;
+  oscam_ser_proto=P_AUTO;
   if( (dummy=strstr(url, "://")) )
   {
     int i;
@@ -113,32 +113,32 @@ static int mpcser_parse_url(char *url)
     *dummy=0;
     for (i=1; i<=P_MAX; i++)
       if (!strcmp(service, proto_txt[i]))
-        mpcser_proto=i;
+        oscam_ser_proto=i;
   }
-  if ((!is_server) && (mpcser_proto==P_AUTO)) return(0);
-  switch(mpcser_proto)	// set the defaults
+  if ((!is_server) && (oscam_ser_proto==P_AUTO)) return(0);
+  switch(oscam_ser_proto)	// set the defaults
   {
     case P_GS:
-      mpcser_timeout=500;
-      mpcser_baud=B19200;
+      oscam_ser_timeout=500;
+      oscam_ser_baud=B19200;
       break;
     default:
-      mpcser_timeout=50;
+      oscam_ser_timeout=50;
 #ifdef B115200
-      mpcser_baud=B115200;
+      oscam_ser_baud=B115200;
 #else
-      mpcser_baud=B9600;
+      oscam_ser_baud=B9600;
 #endif
   }
 
-  switch( mpcser_proto )
+  switch( oscam_ser_proto )
   {
     case P_DSR95:
       dsr9500type=(is_server)?P_DSR_AUTO:P_DSR_WITHSID;
       break;
     case P_DSR95_OLD:
       dsr9500type=P_DSR_AUTO;
-      mpcser_proto=P_DSR95;
+      oscam_ser_proto=P_DSR95;
   }
 
   usr=url;
@@ -166,8 +166,8 @@ static int mpcser_parse_url(char *url)
       if (!(ptr2=strchr(ptr1, '='))) continue;
       *ptr2++='\0';
       strtolower(ptr1);
-      if (!strcmp("delay"  , ptr1)) mpcser_delay  =atoi(ptr2);
-      if (!strcmp("timeout", ptr1)) mpcser_timeout=atoi(ptr2);
+      if (!strcmp("delay"  , ptr1)) oscam_ser_delay  =atoi(ptr2);
+      if (!strcmp("timeout", ptr1)) oscam_ser_timeout=atoi(ptr2);
     }
   }
   if (baud)
@@ -175,33 +175,33 @@ static int mpcser_parse_url(char *url)
     trim(baud);
 #ifdef B115200
     if (!strcmp(baud, "115200"))
-      mpcser_baud=B115200;
+      oscam_ser_baud=B115200;
     else
 #endif
 #ifdef B57600
     if (!strcmp(baud, "57600"))
-      mpcser_baud=B57600;
+      oscam_ser_baud=B57600;
     else
 #endif
     if (!strcmp(baud, "38400"))
-      mpcser_baud=B38400;
+      oscam_ser_baud=B38400;
     else if (!strcmp(baud, "19200"))
-      mpcser_baud=B19200;
+      oscam_ser_baud=B19200;
     else if (!strcmp(baud, "9600"))
-      mpcser_baud=B9600;
+      oscam_ser_baud=B9600;
   }
-  strncpy(mpcser_usr, usr, sizeof(mpcser_usr)-1);
-  strncpy(mpcser_device, dev, sizeof(mpcser_device)-1);
-  return(mpcser_baud);
+  strncpy(oscam_ser_usr, usr, sizeof(oscam_ser_usr)-1);
+  strncpy(oscam_ser_device, dev, sizeof(oscam_ser_device)-1);
+  return(oscam_ser_baud);
 }
 
-static void mpcser_set_baud(struct termios *tio, speed_t baud)
+static void oscam_ser_set_baud(struct termios *tio, speed_t baud)
 {
   cfsetospeed(tio, baud);
   cfsetispeed(tio, baud);
 }
 
-static int mpcser_set_serial_device(int fd)
+static int oscam_ser_set_serial_device(int fd)
 {
   struct termios tio;
 
@@ -212,15 +212,15 @@ static int mpcser_set_serial_device(int fd)
   tio.c_cc[VMIN] = 1;
   tio.c_cc[VTIME] = 0;
 //#if !defined(OS_CYGWIN32)
-  mpcser_set_baud(&tio, B1200);
+  oscam_ser_set_baud(&tio, B1200);
   tcsetattr(fd, TCSANOW, &tio);
   cs_sleepms(500);
 //#endif
-  mpcser_set_baud(&tio, mpcser_baud);
+  oscam_ser_set_baud(&tio, oscam_ser_baud);
   return(tcsetattr(fd, TCSANOW, &tio));
 }
 
-static int mpcser_poll(int event)
+static int oscam_ser_poll(int event)
 {
   int msec;
   struct pollfd pfds;
@@ -238,29 +238,29 @@ static int mpcser_poll(int event)
     return(((pfds.revents)&event)==event);
 }
 
-static int mpcser_write(uchar *buf, int n)
+static int oscam_ser_write(uchar *buf, int n)
 {
   int i;
-  for (i=0; (i<n) && (mpcser_poll(POLLOUT)); i++)
+  for (i=0; (i<n) && (oscam_ser_poll(POLLOUT)); i++)
   {
-    if (mpcser_delay)
-      cs_sleepms(mpcser_delay);
+    if (oscam_ser_delay)
+      cs_sleepms(oscam_ser_delay);
     if (write(pfd, buf+i, 1)<1)
       break;
   }
   return(i);
 }
 
-static int mpcser_send(uchar *buf, int l)
+static int oscam_ser_send(uchar *buf, int l)
 {
   int n;
   if (!pfd) return(0);
   cs_ftime(&tps);
   tpe=tps;
-  tpe.millitm+=mpcser_timeout+(l*(mpcser_delay+1));
+  tpe.millitm+=oscam_ser_timeout+(l*(oscam_ser_delay+1));
   tpe.time+=(tpe.millitm/1000);
   tpe.millitm%=1000;
-  n=mpcser_write(buf, l);
+  n=oscam_ser_write(buf, l);
   cs_ftime(&tpe);
   cs_ddump(buf, l, "send %d of %d bytes to %s in %d msec", n, l, remote_txt(),
                     1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
@@ -269,13 +269,13 @@ static int mpcser_send(uchar *buf, int l)
   return(n);
 }
 
-static int mpcser_selrec(uchar *buf, int n, int l, int *c)
+static int oscam_ser_selrec(uchar *buf, int n, int l, int *c)
 {
   int i;
   if (*c+n>l)
     n=l-*c;
   if (n<=0) return(0);
-  for (i=0; (i<n) && (mpcser_poll(POLLIN)); i++)
+  for (i=0; (i<n) && (oscam_ser_poll(POLLIN)); i++)
     if (read(pfd, buf+*c, 1)<1 )
       return(0);
     else
@@ -283,7 +283,7 @@ static int mpcser_selrec(uchar *buf, int n, int l, int *c)
   return(i==n);
 }
 
-static int mpcser_recv(uchar *xbuf, int l)
+static int oscam_ser_recv(uchar *xbuf, int l)
 {
   int s, p, n, r;
   uchar job=IS_BAD;
@@ -294,7 +294,7 @@ static int mpcser_recv(uchar *xbuf, int l)
   if (!pfd) return(-1);
   cs_ftime(&tps);
   tpe=tps;
-  tpe.millitm+=mpcser_timeout;
+  tpe.millitm+=oscam_ser_timeout;
   tpe.time+=(tpe.millitm/1000);
   tpe.millitm%=1000;
   buf[0]=lb;
@@ -303,7 +303,7 @@ static int mpcser_recv(uchar *xbuf, int l)
     switch(s)
     {
       case 0:		// STAGE 0: skip known garbage from DSR9500
-        if (mpcser_selrec(buf, 2-n, l, &n))
+        if (oscam_ser_selrec(buf, 2-n, l, &n))
         {
           if ((buf[0]==0x0A) && (buf[1]==0x0D))
             p=(-4);
@@ -316,7 +316,7 @@ static int mpcser_recv(uchar *xbuf, int l)
         break;
       case 1:		// STAGE 1: identify protocol
         p=(-3);
-        if (mpcser_selrec(buf, 1, l, &n)) // now we have 3 bytes in buf
+        if (oscam_ser_selrec(buf, 1, l, &n)) // now we have 3 bytes in buf
         {
           p=(-2);
           if (is_server)		 // HERE IS SERVER
@@ -330,11 +330,11 @@ static int mpcser_recv(uchar *xbuf, int l)
                          else  {p=P_SSSP; job=IS_PMT;}
                          break;	// pmt-request
               case 0x02: p=P_HSIC; break;
-              case 0x03: switch(mpcser_proto)
+              case 0x03: switch(oscam_ser_proto)
                          {
                            case P_SSSP  :
                            case P_GS    :
-                           case P_DSR95 : p=mpcser_proto; break;
+                           case P_DSR95 : p=oscam_ser_proto; break;
                            case P_AUTO  : p=(buf[1]<0x30) ? P_SSSP : P_DSR95;
                                           break;	// auto for GS is useless !!
                          } break;
@@ -347,7 +347,7 @@ static int mpcser_recv(uchar *xbuf, int l)
           else				// HERE IS CLIENT
           {
             job=IS_DCW;		// assume DCW
-            switch(mpcser_proto)
+            switch(oscam_ser_proto)
             {
               case P_HSIC : if ((buf[0]==4) && (buf[1]==4)) p=P_HSIC; break;
               case P_BOMBA: p=P_BOMBA; break;
@@ -355,7 +355,7 @@ static int mpcser_recv(uchar *xbuf, int l)
               case P_ALPHA: if (buf[0]==0x88) p=P_ALPHA; break;
             }
           }
-          if ((mpcser_proto!=p) && (mpcser_proto!=P_AUTO))
+          if ((oscam_ser_proto!=p) && (oscam_ser_proto!=P_AUTO))
             p=(-2);
         }
         break;
@@ -364,7 +364,7 @@ static int mpcser_recv(uchar *xbuf, int l)
         {
           case P_SSSP  : r=(buf[1]<<8)|buf[2]; break;
           case P_BOMBA : r=buf[2]; break;
-          case P_HSIC  : if (mpcser_selrec(buf, 12, l, &n)) r=buf[14];
+          case P_HSIC  : if (oscam_ser_selrec(buf, 12, l, &n)) r=buf[14];
                          else p=(-1);
                          break;
           case P_DSR95 : if( job==IS_ECHO )
@@ -374,7 +374,7 @@ static int mpcser_recv(uchar *xbuf, int l)
                          }
                          else 
                          {
-                           if (mpcser_selrec(buf, 16, l, &n))
+                           if (oscam_ser_selrec(buf, 16, l, &n))
                            {
                              uchar b;
                              if (cs_atob(&b, buf+17, 1)<0)
@@ -391,7 +391,7 @@ static int mpcser_recv(uchar *xbuf, int l)
                            r=5;
                          else
                          {
-                           if (mpcser_selrec(buf, 1, l, &n))
+                           if (oscam_ser_selrec(buf, 1, l, &n))
                              r=(buf[3]<<8)|buf[2];
                            else p=(-1);
                          }
@@ -415,18 +415,18 @@ static int mpcser_recv(uchar *xbuf, int l)
         if (r>0)	// read r additional bytes
         {
           int all = n+r;
-          if( !mpcser_selrec(buf, r, l, &n) )
+          if( !oscam_ser_selrec(buf, r, l, &n) )
           {
             cs_debug("not all data received, waiting another 50 ms");
             tpe.millitm+=50;
-            if( !mpcser_selrec(buf, all-n, l, &n) )
+            if( !oscam_ser_selrec(buf, all-n, l, &n) )
               p=(-1);
           }
           // auto detect DSR9500 protocol
           if( is_server && p==P_DSR95 && dsr9500type==P_DSR_AUTO )
           {
             tpe.millitm+=20;
-            if( mpcser_selrec(buf, 2, l, &n) ) 
+            if( oscam_ser_selrec(buf, 2, l, &n) ) 
             {
               if( cs_atoi(buf+n-2, 1, 1)==0xFFFFFFFF )
               {
@@ -437,7 +437,7 @@ static int mpcser_recv(uchar *xbuf, int l)
                   default     : dsr9500type=P_DSR_UNKNOWN; break;
                 }
               }else{
-                if( mpcser_selrec(buf, 2, l, &n) )
+                if( oscam_ser_selrec(buf, 2, l, &n) )
                   if( cs_atoi(buf+n-2, 1, 1)==0xFFFFFFFF )
                     dsr9500type=P_DSR_UNKNOWN;
                   else
@@ -462,19 +462,19 @@ static int mpcser_recv(uchar *xbuf, int l)
               switch( j )
               {
                 case 0: // PMT head
-                  if( !mpcser_selrec(buf, 3, l, &n) )
+                  if( !oscam_ser_selrec(buf, 3, l, &n) )
                     p=(-1);
                   else if( !(buf[n-3]==0x02 && (buf[n-2]&0xf0)==0xb0) )
                     p=(-2);
                   break;
                 case 1: // PMT + ECM header
                   gbox_lens.pmt_len=((buf[n-2]&0xf)<<8)|buf[n-1];
-                  if( !mpcser_selrec(buf, gbox_lens.pmt_len+3, l, &n) ) 
+                  if( !oscam_ser_selrec(buf, gbox_lens.pmt_len+3, l, &n) ) 
                     p=(-1);
                   break;
                 case 2: // ECM + ECM PID
                   gbox_lens.ecm_len=((buf[n-2]&0xf)<<8)|buf[n-1];
-                  if( !mpcser_selrec(buf, gbox_lens.ecm_len+4, l, &n) ) 
+                  if( !oscam_ser_selrec(buf, gbox_lens.ecm_len+4, l, &n) ) 
                     p=(-1);
               }
           } // gbox
@@ -482,14 +482,14 @@ static int mpcser_recv(uchar *xbuf, int l)
         else if (r<0)	// read until specified char (-r)
         {
           while((buf[n-1]!=(-r)) && (p>0))
-            if (!mpcser_selrec(buf, 1, l, &n))
+            if (!oscam_ser_selrec(buf, 1, l, &n))
               p=(-1);
         }
         break;
     }
   }
   if (p==(-2) || p==(-1)) {
-    mpcser_selrec(buf, l-n, l, &n);	// flush buffer
+    oscam_ser_selrec(buf, l-n, l, &n);	// flush buffer
     serial_errors++;
   }
   cs_ftime(&tpe);
@@ -500,7 +500,7 @@ static int mpcser_recv(uchar *xbuf, int l)
   {
     case (-1): if (is_server&&(n>2)&&(buf[0]==2)&&(buf[1]==2)&&(buf[2]==2))
                {
-                 mpcser_disconnect();
+                 oscam_ser_disconnect();
                  cs_log("humax powered on");	// this is nice ;)
                }
                else
@@ -517,47 +517,47 @@ static int mpcser_recv(uchar *xbuf, int l)
  *	server functions
  */
 
-static void mpcser_disconnect_client()
+static void oscam_ser_disconnect_client()
 {
-  switch(connected ? connected : mpcser_proto)
+  switch(connected ? connected : oscam_ser_proto)
   {
     case P_GS:
       mbuf[0] = 0x01;
       mbuf[1] = 0x00;
       mbuf[2] = 0x00;
       mbuf[3] = 0x00;
-      mpcser_send(mbuf, 4);
+      oscam_ser_send(mbuf, 4);
       break;
   }
   dsr9500type=P_DSR_AUTO;
   serial_errors=0;
 }
 
-static void mpcser_init_client()
+static void oscam_ser_init_client()
 {
-  switch(mpcser_proto)		// sure, does not work in auto-mode
+  switch(oscam_ser_proto)		// sure, does not work in auto-mode
   {
     case P_GS:
-      mpcser_disconnect_client(); // send disconnect first
+      oscam_ser_disconnect_client(); // send disconnect first
       cs_sleepms(300);		        // wait a little bit
       mbuf[0] = 0x00;
       mbuf[1] = 0x00;
       mbuf[2] = 0x00;
       mbuf[3] = 0x00;
-      mpcser_send(mbuf, 4);	// send connect
+      oscam_ser_send(mbuf, 4);	// send connect
       break;
   }
 }
 
-static void mpcser_disconnect()
+static void oscam_ser_disconnect()
 {
-  mpcser_disconnect_client();
+  oscam_ser_disconnect_client();
   if (connected)
     cs_log("%s disconnected (%s)", username(cs_idx), proto_txt[connected]);
   connected=0;
 }
 
-static void mpcser_auth_client(int proto)
+static void oscam_ser_auth_client(int proto)
 {
   int ok;
   // After reload base account ptrs may be placed in other address,
@@ -568,19 +568,19 @@ static void mpcser_auth_client(int proto)
   if (connected==proto)
     return;
   if (connected)
-    mpcser_disconnect();
+    oscam_ser_disconnect();
   connected=proto;
   if( !account )
   {
     client[cs_idx].usr[0]=0;
     for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
-      if( (ok=!strcmp(mpcser_usr, account->usr)) )
+      if( (ok=!strcmp(oscam_ser_usr, account->usr)) )
         break;
   }
   cs_auth_client(ok ? account : (struct s_auth *)(-1), proto_txt[connected]);
 }
 
-static void mpcser_send_dcw(ECM_REQUEST *er)
+static void oscam_ser_send_dcw(ECM_REQUEST *er)
 {
   int i;
   uchar crc;
@@ -595,32 +595,32 @@ static void mpcser_send_dcw(ECM_REQUEST *er)
         memcpy(mbuf+4 , er->cw, 16);
         memcpy(mbuf+20, &crc  ,  1);
         memset(mbuf+21, 0x1b  ,  2);
-        mpcser_send(mbuf, 23);
+        oscam_ser_send(mbuf, 23);
         break;
       case P_SSSP:
         mbuf[0]=0xF2;
         mbuf[1]=0;
         mbuf[2]=16;
         memcpy(mbuf+3, er->cw, 16);
-        mpcser_send(mbuf, 19);
+        oscam_ser_send(mbuf, 19);
         if (!sssp_fix)
         {
           mbuf[0]=0xF1;
           mbuf[1]=0;
           mbuf[2]=2;
           memcpy(mbuf+3, i2b(2, er->pid), 2);
-          mpcser_send(mbuf, 5);
+          oscam_ser_send(mbuf, 5);
           sssp_fix=1;
         }
         break;
       case P_GBOX:
       case P_BOMBA:
-        mpcser_send(er->cw, 16);
+        oscam_ser_send(er->cw, 16);
         break;
       case P_DSR95:
         mbuf[0]=4;
         memcpy(mbuf+1, er->cw, 16);
-        mpcser_send(mbuf, 17);
+        oscam_ser_send(mbuf, 17);
         if( dsr9500type==P_DSR_GNUSMAS )
         {
           int i;
@@ -637,14 +637,14 @@ static void mpcser_send_dcw(ECM_REQUEST *er)
         mbuf[2]=0x10;
         mbuf[3]=0x00;
         memcpy(mbuf+4, er->cw, 16);
-        mpcser_send(mbuf, 20);
+        oscam_ser_send(mbuf, 20);
         break;
       case P_ALPHA:
         mbuf[0]=0x88;
         mbuf[1]=0x00;
         mbuf[2]=0x10;
         memcpy(mbuf+3, er->cw, 16);
-        mpcser_send(mbuf, 19);
+        oscam_ser_send(mbuf, 19);
         break;
     } 
   else			// not found
@@ -655,13 +655,13 @@ static void mpcser_send_dcw(ECM_REQUEST *er)
         mbuf[1]=0x09;
         mbuf[2]=0x00;
         mbuf[3]=0x00;
-        mpcser_send(mbuf, 4);
+        oscam_ser_send(mbuf, 4);
         break;
     }
   serial_errors=0; // clear error counter
 }
 
-static void mpcser_process_pmt(uchar *buf, int l)
+static void oscam_ser_process_pmt(uchar *buf, int l)
 {
   int i;
   uchar sbuf[32];
@@ -682,12 +682,12 @@ static void mpcser_process_pmt(uchar *buf, int l)
       sbuf[0]=0xF1;
       sbuf[1]=0;
       sbuf[2]=(sssp_num<<1);
-      mpcser_send(sbuf, sbuf[2]+3);
+      oscam_ser_send(sbuf, sbuf[2]+3);
       break;
   }
 }
 
-static void mpcser_client_logon(uchar *buf, int l)
+static void oscam_ser_client_logon(uchar *buf, int l)
 {
   uchar gs_logon[]={0, 1, 0, 0, 2, 1, 0, 0};
   switch(connected)
@@ -699,13 +699,13 @@ static void mpcser_client_logon(uchar *buf, int l)
         buf[1] = 0x04;
         buf[2] = 0x00;
         buf[3] = 0x00;
-        mpcser_send(buf, 4);
+        oscam_ser_send(buf, 4);
       }
       break;
   }
 }
 
-static int mpcser_check_ecm(ECM_REQUEST *er, uchar *buf, int l)
+static int oscam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int l)
 {
   int i;
 
@@ -769,7 +769,7 @@ static int mpcser_check_ecm(ECM_REQUEST *er, uchar *buf, int l)
       memcpy(er->ecm, buf+10, er->l);
       break;
     case P_ALPHA:
-      l=mpcser_alpha_convert(buf, l);
+      l=oscam_ser_alpha_convert(buf, l);
       er->l     = b2i(2, buf+1 )-2;
       er->caid  = b2i(2, buf+3 );
       if ((er->l!=l-5) || (er->l>257))
@@ -788,14 +788,14 @@ static int mpcser_check_ecm(ECM_REQUEST *er, uchar *buf, int l)
   return(0);
 }
 
-static void mpcser_process_ecm(uchar *buf, int l)
+static void oscam_ser_process_ecm(uchar *buf, int l)
 {
   ECM_REQUEST *er;
 
   if (!(er=get_ecmtask()))
     return;
 
-  switch(mpcser_check_ecm(er, buf, l))
+  switch(oscam_ser_check_ecm(er, buf, l))
   {
     case 2: er->rc=9; return;	// error without log
     case 1: er->rc=9;		      // error with log
@@ -804,12 +804,12 @@ static void mpcser_process_ecm(uchar *buf, int l)
 }
 
 
-static void mpcser_server()
+static void oscam_ser_server()
 {
   int n;
 
   connected=0;
-  mpcser_init_client();
+  oscam_ser_init_client();
 
   while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>=0)
   {
@@ -820,25 +820,25 @@ static void mpcser_server()
     }
     if (n>0)
     {
-      mpcser_auth_client(mbuf[0] & 0xF);
+      oscam_ser_auth_client(mbuf[0] & 0xF);
       switch (mbuf[0]>>4)
       {
         case IS_ECM:
-          mpcser_process_ecm(mbuf+1, n-1);
+          oscam_ser_process_ecm(mbuf+1, n-1);
           break;
         case IS_PMT:
-          mpcser_process_pmt(mbuf+1, n-1);
+          oscam_ser_process_pmt(mbuf+1, n-1);
           break;
         case IS_LGO:
-          mpcser_client_logon(mbuf+1, n-1);
+          oscam_ser_client_logon(mbuf+1, n-1);
           break;
       }
     }
   }
-  mpcser_disconnect();
+  oscam_ser_disconnect();
 }
 
-static int init_mpcser_device(char *device)
+static int init_oscam_ser_device(char *device)
 {
   int fd;
 
@@ -846,7 +846,7 @@ static int init_mpcser_device(char *device)
   if (fd>0)
   {
     fcntl(fd, F_SETFL, 0);
-    if (mpcser_set_serial_device(fd)<0) cs_log("ERROR ioctl");
+    if (oscam_ser_set_serial_device(fd)<0) cs_log("ERROR ioctl");
     if (tcflush(fd, TCIOFLUSH)<0) cs_log("ERROR flush");
   }
   else
@@ -857,15 +857,15 @@ static int init_mpcser_device(char *device)
   return(fd);
 }
 
-static void mpcser_fork(int idx, char *url)
+static void oscam_ser_fork(int idx, char *url)
 {
   static char logtxt[32];
 
   is_server=1;
   if ((!url) || (!url[0])) return;
-  if (!mpcser_parse_url(url)) return;
+  if (!oscam_ser_parse_url(url)) return;
   snprintf(logtxt, sizeof(logtxt)-1, ", %s@%s",
-           mpcser_proto>P_MAX ? "auto" : proto_txt[mpcser_proto], mpcser_device);
+           oscam_ser_proto>P_MAX ? "auto" : proto_txt[oscam_ser_proto], oscam_ser_device);
   ph[idx].logtxt=logtxt;
   switch(cs_fork(0, idx))
   {
@@ -880,40 +880,40 @@ static void mpcser_fork(int idx, char *url)
     client[cs_idx].au=(-1);
     client[cs_idx].usr[0]='\0';
     client[cs_idx].login=time((time_t *)0);
-    if (pfd=init_mpcser_device(mpcser_device))
-      mpcser_server();
+    if (pfd=init_oscam_ser_device(oscam_ser_device))
+      oscam_ser_server();
     else
       sleep(60);	// retry in 1 min. (USB-Device ?)
     if (pfd) close(pfd);
   }
 }
 
-void init_mpcser(int idx)
+void init_oscam_ser(int idx)
 {
   char *p;
   while( (p=strrchr(cfg->ser_device, 1)) )
   {
     *p=0;
-    mpcser_fork(idx, p+1);
+    oscam_ser_fork(idx, p+1);
   }
-  mpcser_fork(idx, cfg->ser_device);
+  oscam_ser_fork(idx, cfg->ser_device);
 }
 
 /*
  *	client functions
  */
 
-static int mpcser_client_init()
+static int oscam_ser_client_init()
 {
   if ((!reader[ridx].device[0])) cs_exit(1);
-  if (!mpcser_parse_url(reader[ridx].device)) cs_exit(1);
-  pfd=init_mpcser_device(mpcser_device);
+  if (!oscam_ser_parse_url(reader[ridx].device)) cs_exit(1);
+  pfd=init_oscam_ser_device(oscam_ser_device);
   return((pfd>0) ? 0 : 1);
 }
 
-static int mpcser_send_ecm(ECM_REQUEST *er, uchar *buf)
+static int oscam_ser_send_ecm(ECM_REQUEST *er, uchar *buf)
 {
-  switch(mpcser_proto)
+  switch(oscam_ser_proto)
   {
     case P_HSIC:
       memset(buf, 0, 12);
@@ -923,23 +923,23 @@ static int mpcser_send_ecm(ECM_REQUEST *er, uchar *buf)
       memcpy(buf+ 6, i2b(2, er->pid  ), 2);
       memcpy(buf+10, i2b(2, er->srvid), 2);
       memcpy(buf+12, er->ecm, er->l);
-      mpcser_send(buf, 12+er->l);
+      oscam_ser_send(buf, 12+er->l);
       break;
     case P_BOMBA:
-      mpcser_send(er->ecm, er->l);
+      oscam_ser_send(er->ecm, er->l);
       break;
     case P_DSR95:
       if( dsr9500type==P_DSR_WITHSID )
       {
         sprintf(buf, "%c%08X%04X%s%04X\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l), er->srvid);
-        mpcser_send(buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
+        oscam_ser_send(buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
       }
       else
       {
         sprintf(buf, "%c%08X%04X%s\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l));
-        mpcser_send(buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
+        oscam_ser_send(buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
       }
       break;
     case P_ALPHA:
@@ -947,15 +947,15 @@ static int mpcser_send_ecm(ECM_REQUEST *er, uchar *buf)
       memcpy(buf+1, i2b(2, 2+er->l), 2);
       memcpy(buf+3, i2b(2, er->caid), 2);
       memcpy(buf+5, er->ecm, er->l);
-      mpcser_send(buf, mpcser_alpha_convert(buf, 5+er->l));
+      oscam_ser_send(buf, oscam_ser_alpha_convert(buf, 5+er->l));
       break;
   }
   return(0);
 }
 
-static void mpcser_process_dcw(uchar *dcw, int *rc, uchar *buf, int l)
+static void oscam_ser_process_dcw(uchar *dcw, int *rc, uchar *buf, int l)
 {
-  switch(mpcser_proto)
+  switch(oscam_ser_proto)
   {
     case P_HSIC:
       if ((l>=23) && (buf[2]==0x3A) && (buf[3]==0x3A))
@@ -995,13 +995,13 @@ static void mpcser_process_dcw(uchar *dcw, int *rc, uchar *buf, int l)
   }
 }
 
-static int mpcser_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
+static int oscam_ser_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
 {
   *rc=(-1);
   switch (buf[0]>>4)
   {
     case IS_DCW:
-      mpcser_process_dcw(dcw, rc, buf+1, n-1);
+      oscam_ser_process_dcw(dcw, rc, buf+1, n-1);
       break;
   }
   return((*rc<0) ? (-1) : 0);	// idx not supported in serial module
@@ -1011,17 +1011,17 @@ static int mpcser_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
  *	protocol structure
  */
 
-void module_mpcser(struct s_module *ph)
+void module_oscam_ser(struct s_module *ph)
 {
   strcpy(ph->desc, "serial");
   ph->type=MOD_CONN_SERIAL;
   ph->multi=1;
   ph->watchdog=0;
-  ph->s_handler=init_mpcser;
-  ph->recv=mpcser_recv;
-  ph->send_dcw=mpcser_send_dcw;
+  ph->s_handler=init_oscam_ser;
+  ph->recv=oscam_ser_recv;
+  ph->send_dcw=oscam_ser_send_dcw;
   ph->c_multi=0;
-  ph->c_init=mpcser_client_init;
-  ph->c_recv_chk=mpcser_recv_chk;
-  ph->c_send_ecm=mpcser_send_ecm;
+  ph->c_init=oscam_ser_client_init;
+  ph->c_recv_chk=oscam_ser_recv_chk;
+  ph->c_send_ecm=oscam_ser_send_ecm;
 }

@@ -1,6 +1,6 @@
 SHELL		= /bin/sh
 
-ifeq ($(wildcard mpcs-boxkeys.np), mpcs-boxkeys.np)
+ifeq ($(wildcard oscam-boxkeys.np), oscam-boxkeys.np)
   KFLAG		= -DCS_WITH_BOXKEYS
 endif
 
@@ -14,11 +14,11 @@ ARFLAGS		= $(DS_ARFLAGS)
 LIBS		= $(DS_LIBS) $(OS_LIBS) $(OS_PTLI)
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS
 
-GENERAL		= Makefile Maketype globals.h mpcs-config.h
+GENERAL		= Makefile Maketype globals.h oscam-config.h
 ifeq ($(wildcard csgbox), csgbox)
  VERX	= -gbx-$(subst ",,$(filter-out \#define GBXVERSION,$(shell grep GBXVERSION csgbox/gbox.h)))
 endif
-EXEFILE1	= Distribution/mpcs-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TYP))
+EXEFILE1	= Distribution/oscam-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TYP))
 
 
 LIBDIR		= lib
@@ -26,10 +26,10 @@ LIBFILE1	= $(LIBDIR)/libcs-$(TYP).a
 LIBFILE2	= $(LIBDIR)/libcscrypt-$(TYP).a
 LIBFILE3	= $(LIBDIR)/libcsctapi-$(TYP).a
 
-OBJECTS1	= $(LIBFILE1)(mpcs-simples.o) \
-		  $(LIBFILE1)(mpcs-config.o) \
-		  $(LIBFILE1)(mpcs-log.o) \
-		  $(LIBFILE1)(mpcs-reader.o) \
+OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
+		  $(LIBFILE1)(oscam-config.o) \
+		  $(LIBFILE1)(oscam-log.o) \
+		  $(LIBFILE1)(oscam-reader.o) \
 		  $(LIBFILE1)(reader-common.o) \
 		  $(LIBFILE1)(reader-irdeto.o) \
 		  $(LIBFILE1)(reader-viaccess.o) \
@@ -43,9 +43,9 @@ OBJECTS1	= $(LIBFILE1)(mpcs-simples.o) \
 		  $(LIBFILE1)(module-serial.o) \
 		  $(LIBFILE1)(module-monitor.o) \
 		  $(LIBFILE1)(module-newcamd.o) \
-		  $(LIBFILE1)(mpcs-nano.o) \
-		  $(LIBFILE1)(mpcs-chk.o) \
-		  $(LIBFILE1)(mpcs-ac.o)
+		  $(LIBFILE1)(oscam-nano.o) \
+		  $(LIBFILE1)(oscam-chk.o) \
+		  $(LIBFILE1)(oscam-ac.o)
 
 all:		prepare $(EXEFILE1)
 
@@ -59,17 +59,17 @@ prepare:
 		    printf("#define CS_OS_CPU \"%s\"\n", $$1);  \
 		    printf("#define CS_OS_HW  \"%s\"\n", $$2);  \
 		    printf("#define CS_OS_SYS \"%s\"\n", $$3);  \
-		  }' > mpcs-ostype.h
+		  }' > oscam-ostype.h
 		@[ -d "$(LIBDIR)" ] || mkdir "$(LIBDIR)"
 ifeq ($(wildcard csgbox), csgbox)
-		@-echo "#define CS_WITH_GBOX 1" >> mpcs-ostype.h
+		@-echo "#define CS_WITH_GBOX 1" >> oscam-ostype.h
 		$(MAKE) -C csgbox
 endif
 		$(MAKE) -C cscrypt
 		$(MAKE) -C csctapi
 
-$(EXEFILE1):	mpcs.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(GENERAL)
-		$(CC) $(LDFLAGS) mpcs.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) -o "$@" $(LIBS)
+$(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(GENERAL)
+		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) -o "$@" $(LIBS)
 		$(STRIP) $@
 
 $(LIBFILE1):	$(OBJECTS1)

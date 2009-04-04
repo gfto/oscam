@@ -1,11 +1,11 @@
 # generated config header file
-mpcs-ostype.h
+oscam-ostype.h
 
 # generated libraries
 *.a
 
 # generated binaries
-Distribution/mpcs-*
+Distribution/oscam-*
 
 # backup/swap file for vi
 *~

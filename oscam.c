@@ -37,7 +37,7 @@ struct s_acasc ac_stat[CS_MAXPID];
 *****************************************************************************/
 int			*ecmidx;	// Shared Memory
 int			*logidx;	// Shared Memory
-int			*mpcs_sem;	// sem (multicam.o)
+int			*oscam_sem;	// sem (multicam.o)
 int			*c_start;	// idx of 1st client
 int			*log_fd;	// log-process is running
 struct	s_ecm		  *ecmcache;  // Shared Memory
@@ -661,8 +661,8 @@ static void init_shm()
   logidx=(int *)((void *)mcl+sizeof(int));
   c_start=(int *)((void *)logidx+sizeof(int));
   log_fd=(int *)((void *)c_start+sizeof(int));
-  mpcs_sem=(int *)((void *)log_fd+sizeof(int));
-  client=(struct s_client *)((void *)mpcs_sem+sizeof(int));
+  oscam_sem=(int *)((void *)log_fd+sizeof(int));
+  client=(struct s_client *)((void *)oscam_sem+sizeof(int));
   reader=(struct s_reader *)&client[CS_MAXPID];
 #ifdef CS_WITH_GBOX
   Cards=(struct card_struct*)&reader[CS_MAXREADER];
@@ -681,8 +681,8 @@ static void init_shm()
   printf("SHM ALLOC: %x\n", shmsize);
   printf("SHM START: %p\n", (void *) ecmcache);
   printf("SHM ST1: %p %x (%x)\n", (void *) ecmidx, ((void *) ecmidx) - ((void *) ecmcache), CS_ECMCACHESIZE*(sizeof(struct s_ecm)));
-  printf("SHM ST2: %p %x (%x)\n", (void *) mpcs_sem, ((void *) mpcs_sem) - ((void *) ecmidx), sizeof(int));
-  printf("SHM ST3: %p %x (%x)\n", (void *) client, ((void *) client) - ((void *) mpcs_sem), sizeof(int));
+  printf("SHM ST2: %p %x (%x)\n", (void *) oscam_sem, ((void *) oscam_sem) - ((void *) ecmidx), sizeof(int));
+  printf("SHM ST3: %p %x (%x)\n", (void *) client, ((void *) client) - ((void *) oscam_sem), sizeof(int));
   printf("SHM ST4: %p %x (%x)\n", (void *) reader, ((void *) reader) - ((void *) client), CS_MAXPID*(sizeof(struct s_client)));
   printf("SHM ST5: %p %x (%x)\n", (void *) cfg, ((void *) cfg) - ((void *) reader), CS_MAXREADER*(sizeof(struct s_reader)));
   printf("SHM ST6: %p %x (%x)\n", ((void *) cfg)+sizeof(struct s_config), sizeof(struct s_config), sizeof(struct s_config));
@@ -693,7 +693,7 @@ static void init_shm()
 
   *ecmidx=0;
   *logidx=0;
-  *mpcs_sem=0;
+  *oscam_sem=0;
   client[0].pid=getpid();
   client[0].login=time((time_t *)0);
   client[0].ip=cs_inet_addr("127.0.0.1");
@@ -1493,7 +1493,7 @@ void guess_irdeto(ECM_REQUEST *er)
     {
       if( er->srvid && (er->srvid!=ptr->sid) )
       {
-        cs_debug("sid mismatched (ecm: %04X, guess: %04X), wrong mpcs.ird file?",
+        cs_debug("sid mismatched (ecm: %04X, guess: %04X), wrong oscam.ird file?",
                   er->srvid, ptr->sid);
         return;
       }
@@ -1914,7 +1914,7 @@ int main (int argc, char *argv[])
            module_gbox,
 #endif
            module_radegast,
-           module_mpcser,
+           module_oscam_ser,
            0
   };
 
@@ -2010,7 +2010,7 @@ int main (int argc, char *argv[])
 #endif
 
   for (i=0; i<CS_MAX_MOD; i++)
-    if (ph[i].type & MOD_CONN_SERIAL)		// for now: mpcser only
+    if (ph[i].type & MOD_CONN_SERIAL)		// for now: oscam_ser only
       if (ph[i].s_handler)
         ph[i].s_handler(i);
 

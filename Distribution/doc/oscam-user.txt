@@ -1,5 +1,5 @@
-mpcs.user anpassen
-==================
+oscam.user anpassen
+===================
 
 es koennen mehrere [account]-sections erstellt werden.
 jede vollstaendige section wird dann als account verwendet.
@@ -12,12 +12,12 @@ Uniq          = uniq kann 0 oder 1 sein, wobei 1 bedeutet, dass dieser benutzer
                 dieser parameter ist optional (default: Uniq=0)
 MonLevel      = individuelle einstellung des zugangs zur monitor-funktion.
                 dieser wert ueberschreibt die standard-einstellung
-                in mpcs.conf (siehe auch mpcs.conf).
+                in oscam.conf (siehe auch oscam.conf).
 Sleep         = falls >0 aktiviert sleep-mode nach n Minuten.
                 damit kann man schnarchzapfen vom system ausblenden,
                 die tagelang die box anlassen und nur die glotze ausschalten.
                 dieser parameter ist optional
-                (default: siehe "Sleep=" in mpcs.conf)
+                (default: siehe "Sleep=" in oscam.conf)
 AU            = auto-update. hier kann der name (Label) des readers
                 eingetragen werden, an den dieser account emm's schickt.
                 achtung: wenn AU aktiviert ist, werden bei den meisten protokollen

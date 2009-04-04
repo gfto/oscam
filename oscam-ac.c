@@ -137,7 +137,7 @@ static int ac_dw_weight(ECM_REQUEST *er)
         (cpmap->chid  ==0 || cpmap->chid  ==er->chid) )
       return (cpmap->dwtime*100/60);
 
-  cs_debug("WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in mpcs.ac", 
+  cs_debug("WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in oscam.ac", 
            er->caid, er->prid, er->srvid, er->chid);
   cs_debug("set DW lifetime 10 sec");
   return 16; // 10*100/60

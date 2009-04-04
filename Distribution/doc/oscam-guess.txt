@@ -1,5 +1,5 @@
-mpcs.guess anpassen
-===================
+oscam.guess anpassen
+====================
 
 erstmal:
 diese datei wird ueberhaupt NUR bei clients benoetigt,

@@ -98,7 +98,7 @@ int cs_init_log(char *file)
   }
   else
   {
-    openlog("mpcs", LOG_NDELAY, LOG_DAEMON);
+    openlog("oscam", LOG_NDELAY, LOG_DAEMON);
     use_syslog=1;
     cs_log(head);
     return(0);

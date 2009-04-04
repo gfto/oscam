@@ -78,15 +78,15 @@ int fdmc=(-1);
 #if defined(TUXBOX) && defined(PPC)
 void IO_Serial_Ioctl_Lock(IO_Serial * io, int flag)
 {
-  extern int *mpcs_sem;
+  extern int *oscam_sem;
   if ((io->com!=RTYP_DB2COM1) && (io->com!=RTYP_DB2COM2)) return;
   if (!flag)
-    *mpcs_sem=0;
-  else while (*mpcs_sem!=io->com)
+    *oscam_sem=0;
+  else while (*oscam_sem!=io->com)
   {
-    while (*mpcs_sem)
+    while (*oscam_sem)
     usleep((io->com)*2000);
-    *mpcs_sem=io->com;
+    *oscam_sem=io->com;
     usleep(1000);
   }
 }
@@ -992,8 +992,8 @@ static void IO_Serial_ClearPropertiesCache (IO_Serial * io)
 
 static void IO_Serial_DeviceName (unsigned com, bool usbserial, char * filename, unsigned length)
 {
-	extern char mpcs_device[];
-        snprintf (filename, length, "%s", mpcs_device);
+	extern char oscam_device[];
+        snprintf (filename, length, "%s", oscam_device);
 //	if(com==1)
 //		snprintf (filename, length, "/dev/tts/%d", com - 1);
 //	else

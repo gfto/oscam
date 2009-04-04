@@ -1,18 +1,18 @@
 #include "globals.h"
 #ifdef CS_WITH_BOXKEYS
-#  include "mpcs-boxkeys.np"
+#  include "oscam-boxkeys.np"
 #endif
 
-static char *cs_conf="mpcs.conf";
-static char *cs_user="mpcs.user";
-static char *cs_srvr="mpcs.server";
-static char *cs_srid="mpcs.srvid";
-static char *cs_l4ca="mpcs.guess";
-static char *cs_cert="mpcs.cert";
-static char *cs_sidt="mpcs.services";
-//static char *cs_ird="mpcs.ird";
+static char *cs_conf="oscam.conf";
+static char *cs_user="oscam.user";
+static char *cs_srvr="oscam.server";
+static char *cs_srid="oscam.srvid";
+static char *cs_l4ca="oscam.guess";
+static char *cs_cert="oscam.cert";
+static char *cs_sidt="oscam.services";
+//static char *cs_ird="oscam.ird";
 #ifdef CS_ANTICASC
-static char *cs_ac="mpcs.ac";
+static char *cs_ac="oscam.ac";
 #endif
 
 static char token[4096];
@@ -511,7 +511,7 @@ int search_boxkey(ushort caid, ulong provid, char *key)
     }
     fclose(fp);
   }
-#ifdef MPCS_INBUILD_KEYS
+#ifdef OSCAM_INBUILD_KEYS
   for(i=0; (!rc) && (npkey[i].keylen); i++)
     if (rc=((caid==npkey[i].caid) && (provid==npkey[i].provid)))
       memcpy(key, npkey[i].key, npkey[i].keylen);
@@ -549,7 +549,7 @@ int init_config()
   cfg->ac_samples=10;
   cfg->ac_denysamples=8;
   cfg->ac_fakedelay=1000;
-  strcpy(cfg->ac_logfile, "./mpcs_ac.log");
+  strcpy(cfg->ac_logfile, "./oscam_ac.log");
 #endif
   sprintf(token, "%s%s", cs_confdir, cs_conf);
   if (!(fp=fopen(token, "r")))
