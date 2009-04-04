@@ -1,0 +1,64 @@
+oscam.user anpassen
+===================
+
+es koennen mehrere [account]-sections erstellt werden.
+jede vollstaendige section wird dann als account verwendet.
+
+[account]
+User          = username. muss gesetzt sein !
+Pwd           = passwort. muss gesetzt sein !
+Uniq          = uniq kann 0 oder 1 sein, wobei 1 bedeutet, dass dieser benutzer
+                sich nicht zweimal zur gleichen zeit anmelden kann.
+                dieser parameter ist optional (default: Uniq=0)
+MonLevel      = individuelle einstellung des zugangs zur monitor-funktion.
+                dieser wert ueberschreibt die standard-einstellung
+                in oscam.conf (siehe auch oscam.conf).
+Sleep         = falls >0 aktiviert sleep-mode nach n Minuten.
+                damit kann man schnarchzapfen vom system ausblenden,
+                die tagelang die box anlassen und nur die glotze ausschalten.
+                dieser parameter ist optional
+                (default: siehe "Sleep=" in oscam.conf)
+AU            = auto-update. hier kann der name (Label) des readers
+                eingetragen werden, an den dieser account emm's schickt.
+                achtung: wenn AU aktiviert ist, werden bei den meisten protokollen
+                die kartendaten an den client uebermittelt, damit dieser die
+                "richtigen" update-kommandos herausfiltert (sicherheit !).
+                beispiel: AU=mycard
+Group         = jeder user muss in eine oder mehrere gruppen
+                eingetragen sein. darueber laesst sich dann bestimmen,
+                auf welche reader dieser client dann zugriff hat.
+                format Group=<grp>[,<grp][,<grp>]...
+                wobei <grp> zwischen 1 und 32 liegen muss. beispiel:
+                  Group=1,2
+CAID          = liste gueltiger caid's und mapping fuer diesen account.
+                format: CAID=<caid>[&<mask>][:<new caid>],...
+                wird <mask> nicht angegeben ist <mask> automatisch FFFF.
+                wird <new caid> nicht angegeben wird caid nicht veraendert.
+                beispiel:
+                  CAID=1702,1722
+                  (dieser account wird nur fuer caid 1702 und 1722 bedient)
+                  CAID=1702&FFDF
+                  (hat genau die gleiche wirkung wie das erste beispiel,
+                  dieser account wird nur fuer caid 1702 und 1722 bedient)
+                  CAID=1702&FFDF:1702
+                  (dieser account wird nur fuer caid 1702 und 1722 bedient
+                  und die caid wird auf 1702 gemapped)
+                  CAID=0100,0600&FF00
+                  (dieser account wird fuer caid 0100 und 0600-06FF bedient)
+                dieser parameter ist optional.
+                wird dieser parameter nicht gesetzt sind alle caid's
+                zunaechst erstmal gueltig und werden nicht gemapped.
+Hostname      = dns-name fuer diesen account.
+                wenn gesetzt, dann ist der account nur in verbindung mit
+                diesem dns-namen gueltig.
+                dieser parameter ist optional.
+Betatunnel    = liste der caid's und service id's die intern mit einem
+                Betatunnel versehen (und damit gemapped) werden sollen:
+                  Betatunnel = 1833.0081:1702,1833.0082:1702
+                  (trifft bei SAT Empfang auf die beiden P-HD Kanaele zu)
+                  Betatunnel = 1834.0081:1722,1834.0082:1722
+                  (trifft bei KDG auf die beiden P-HD Kanaele zu)
+                  Betatunnel = 1801.0081:1722,1801.0082:1722
+                  (trifft bei SAT Empfang auf die beiden P-HD Kanaele zu)
+                  Betatunnel = 1801.797D:1722
+                  (trifft bei KABELim Unitymedia Netz fuer P-HD zu)

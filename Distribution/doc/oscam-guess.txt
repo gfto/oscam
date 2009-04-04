@@ -1,0 +1,12 @@
+oscam.guess anpassen
+====================
+
+erstmal:
+diese datei wird ueberhaupt NUR bei clients benoetigt,
+deren protokoll keine CAID uebertraegt.
+dies ist derzeit nur das serielle BOMBA-protokoll.
+format ist ganz einfach:
+
+len:caid
+
+wobei len ist die laenge des ecm's in hex.
