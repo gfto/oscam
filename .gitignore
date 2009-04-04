@@ -1,0 +1,12 @@
+# generated config header file
+mpcs-ostype.h
+
+# generated libraries
+*.a
+
+# generated binaries
+Distribution/mpcs-*
+
+# backup/swap file for vi
+*~
+*.swp
