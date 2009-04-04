@@ -183,6 +183,8 @@ void reader_card_info()
         rc=cryptoworks_card_info(); break;
       case SC_VIACCESS:
         rc=viaccess_card_info(); break;
+      case SC_CONAX:
+        rc=conax_card_info(); break;
       case SC_VIDEOGUARD2:
         rc=videoguard_card_info(); break;
       default: rc=0;
