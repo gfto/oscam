@@ -109,7 +109,9 @@ int seca_card_init(uchar *atr, int atrsize)
   reader[ridx].caid[0]=0x0100;
   memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
   read_cmd(ins0e, NULL); // read unique id
-  memcpy(reader[ridx].hexserial, cta_res+2, 6);
+  reader[ridx].hexserial[0]=0;
+  reader[ridx].hexserial[1]=0;
+  memcpy(reader[ridx].hexserial+2, cta_res+2, 6);
   cs_ri_log("type: seca, caid: %04X, serial: %llu, card: %s v%d.%d",
          reader[ridx].caid[0], b2ll(5, cta_res+3), card, atr[9]&0x0F, atr[9]>>4);
   read_cmd(ins16, NULL); // read nr of providers
@@ -169,6 +171,18 @@ int seca_do_ecm(ECM_REQUEST *er)
   memcpy(ins3cdata,er->ecm+8,256-8);
   cs_debug("do_ecm:ins3c=%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x.",ins3c[0],ins3c[1],ins3c[2],ins3c[3],ins3c[4],ins3cdata[0],ins3cdata[1],ins3cdata[2],ins3cdata[3],ins3cdata[4],ins3cdata[5],ins3cdata[6],ins3cdata[7],ins3cdata[8],ins3cdata[9]);
   write_cmd(ins3c, ins3cdata); //ecm request
+  cs_debug("do_ecm_answer:%02x%02x",cta_res[0], cta_res[1]);
+
+  static unsigned char ins30[] = { 0xC1, 0x30, 0x00, 0x02, 0x09 };
+  static unsigned char ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF };
+  /* We need to use a token */
+  if (cta_res[0] == 0x90 && cta_res[1] == 0x1a) {
+    write_cmd(ins30, ins30data);
+    cs_debug("do_ins30_answer:%02x%02x",cta_res[0], cta_res[1]);
+    write_cmd(ins3c, ins3cdata); //ecm request
+    cs_debug("do_ecm_answer2:%02x%02x",cta_res[0], cta_res[1]);
+  }
+
   if ((cta_res[0] != 0x90) || (cta_res[1] != 0x00)) return (0);
   read_cmd(ins3a, NULL); //get cw's
   cs_debug("cwdump:%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x.",cta_res[0],cta_res[1],cta_res[2],cta_res[3],cta_res[4],cta_res[5],cta_res[6],cta_res[7],cta_res[8],cta_res[9],cta_res[10],cta_res[11],cta_res[12],cta_res[13],cta_res[14],cta_res[15],cta_res[16],cta_res[17]);
@@ -209,17 +223,17 @@ int seca_do_emm(EMM_PACKET *ep)
   else
         if (ep->emm[0] == 0x82) { //unique EMM
 	  //first test if UA matches
-	        if ((reader[ridx].hexserial[0] != ep->emm[3]) ||
-			  (reader[ridx].hexserial[1] != ep->emm[4]) ||
-			  (reader[ridx].hexserial[2] != ep->emm[5]) ||
-			  (reader[ridx].hexserial[3] != ep->emm[6]) ||
-			  (reader[ridx].hexserial[4] != ep->emm[7]) ||
-	  		  (reader[ridx].hexserial[5] != ep->emm[8])) {
-			cs_log("EMM: Unique update did not match; EMM Serial:%02X%02X%02X%02X, Reader Serial:%02X%02X%02X%02X.",ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], reader[ridx].hexserial[1], reader[ridx].hexserial[2], reader[ridx].hexserial[3], reader[ridx].hexserial[4], reader[ridx].hexserial[5]);
+	        if ((reader[ridx].hexserial[2] != ep->emm[3]) ||
+			  (reader[ridx].hexserial[3] != ep->emm[4]) ||
+			  (reader[ridx].hexserial[4] != ep->emm[5]) ||
+			  (reader[ridx].hexserial[5] != ep->emm[6]) ||
+			  (reader[ridx].hexserial[6] != ep->emm[7]) ||
+	  		  (reader[ridx].hexserial[7] != ep->emm[8])) {
+			cs_log("EMM: Unique update did not match; EMM Serial:%02X%02X%02X%02X%02X%02X, Reader Serial:%02X%02X%02X%02X%02X%02X.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], reader[ridx].hexserial[2], reader[ridx].hexserial[3], reader[ridx].hexserial[4], reader[ridx].hexserial[5], reader[ridx].hexserial[6], reader[ridx].hexserial[7]);
 			return(0);
 		}
 		else {
-			cs_log("EMM: Unique update matched EMM Serial:%02X%02X%02X%02X.",ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8]);
+			cs_log("EMM: Unique update matched EMM Serial:%02X%02X%02X%02X%02X.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8]);
 			//first find out prov id
 //			i=get_prov_index(ep->emm[9],ep->emm[10]);
 			i=get_prov_index(ep->emm+9);
