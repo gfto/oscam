@@ -157,6 +157,41 @@ static int read_record(uchar rec)
   return(cta_lr-2);
 }
 
+int cryptoworks_send_pin(void)
+{
+  unsigned char insPIN[] = { 0xA4, 0x20, 0x00, 0x00, 0x04, 0x00,0x00,0x00,0x00 }; //Verify PIN  
+  
+  if(reader[ridx].pincode[0] && (reader[ridx].pincode[0]&0xF0)==0x30)
+  {
+	  memcpy(insPIN+5,reader[ridx].pincode,4);
+	
+	  write_cmd(insPIN, insPIN+5);
+	  cs_ri_log("[cryptoworks]-sending pincode to card");  
+	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log("[cryptoworks]-bad pincode");
+	  	 
+	  return(1);
+  }
+  
+  return(0);
+}
+
+int cryptoworks_disbale_pin(void)
+{
+  unsigned char insPIN[] = { 0xA4, 0x26, 0x00, 0x00, 0x04, 0x00,0x00,0x00,0x00 }; //disable PIN  
+  
+  if(reader[ridx].pincode[0] && (reader[ridx].pincode[0]&0xF0)==0x30)
+  {
+	  memcpy(insPIN+5,reader[ridx].pincode,4);
+	
+	  write_cmd(insPIN, insPIN+5);
+	  cs_ri_log("[cryptoworks]-disable pincode to card");
+	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log("[cryptoworks]-bad pincode");
+	  return(1);
+  }
+  
+  return(0);
+}
+
 int cryptoworks_card_init(uchar *atr, int atrsize)
 {
   int i;
@@ -199,8 +234,8 @@ int cryptoworks_card_init(uchar *atr, int atrsize)
 
   if (read_record(0x80)>=7)		// read serial
     memcpy(reader[ridx].hexserial, cta_res+2, 5);
-  cs_ri_log("type: cryptoworks, caid: %04X, serial: %llu",
-            reader[ridx].caid[0], b2ll(5, reader[ridx].hexserial));
+  cs_ri_log("type: cryptoworks, caid: %04X, ascii serial: %llu, hex serial: %s",
+            reader[ridx].caid[0], b2ll(5, reader[ridx].hexserial),cs_hexdump(0, reader[ridx].hexserial, 5));
 
   if (read_record(0x9E)>=66)	// read ISK
   {
@@ -251,6 +286,9 @@ int cryptoworks_card_init(uchar *atr, int atrsize)
   cs_ri_log("issuer: %s, id: %02X, bios: v%d, pin: %s, mfid: %04X", issuer, issuerid, atr[7], pin, mfid);
   cs_ri_log("providers: %d (%s)", reader[ridx].nprov, ptxt+1);
   cs_log("ready for requests");
+  
+  cryptoworks_disbale_pin(); //by KrazyIvan
+  	
   return(1);
 }
 
@@ -432,16 +470,96 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
 
 int cryptoworks_do_emm(EMM_PACKET *ep)
 {
+  uchar insEMM_GA[] = {0xA4, 0x44, 0x00, 0x00, 0x00};
+  uchar insEMM_SA[] = {0xA4, 0x48, 0x00, 0x00, 0x00};
+  uchar insEMM_UA[] = {0xA4, 0x42, 0x00, 0x00, 0x00};
   int rc=0;
   uchar *emm=ep->emm;
-
+  
+  /* this original    
   if ((emm[0]==0x8f) && (emm[3]==0xa4))		// emm via camd3.5x
-  {
+  {    
     ep->type=emm[4];
     write_cmd(emm+3, emm+3+CMD_LEN);
     if ((cta_lr==2) && (cta_res[0]==0x90) && (cta_res[1]==0))
       rc=1;
   }
+  */
+   
+  //by KrazyIvan 
+  ep->type=emm[0];
+  //cs_log("EMM Dump:..: %s",cs_hexdump(1, emm, emm[2])); 
+  switch(emm[0])
+  {
+  	 // emm via camd3.5x
+  	 case 0x8F:  	 	  
+		  if(emm[3]==0xA4)
+		  {		    
+		    ep->type=emm[4];
+		    //cs_log("EMM Dump: CMD: %s", cs_hexdump(1, emm+3, 5)); 
+			 //cs_log("EMM Dump: DATA: %s",cs_hexdump(1, emm+8, emm[7]));
+		    write_cmd(emm+3, emm+3+CMD_LEN);
+		    rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));	
+		  }
+  	 	break;
+
+  	 //GA    	 
+  	 case 0x88:
+  	 case 0x89:
+  	 	  if(emm[3]==0xA9 && emm[4]==0xFF && emm[8]==0x83 && emm[9]==0x01)
+		  {
+				ep->type=insEMM_GA[1];
+				insEMM_GA[4]=ep->emm[2]-2;
+				//cs_log("EMM Dump: CMD: %s", cs_hexdump(1, insEMM_GA, 5)); 
+				//cs_log("EMM Dump: DATA: %s",cs_hexdump(1, emm+5, insEMM_GA[4])); 				
+				//cs_log("EMM Dump: IF: %02X == %02X",emm[7],(insEMM_GA[4]-3)); 								
+				
+				if(emm[7]==insEMM_GA[4]-3)
+				{
+					write_cmd(insEMM_GA, emm+5);
+					rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));					
+				}
+		  }
+  	 	break;
+  	 
+  	 //SA
+  	 case 0x84:
+  	 	  if(emm[3]==0xA9 && emm[4]==0xFF && emm[12]==0x80 && emm[13]==0x04)
+		  {
+				ep->type=insEMM_SA[1];
+				insEMM_SA[4]=ep->emm[2]-6;
+				//cs_log("EMM Dump: CMD: %s", cs_hexdump(1, insEMM_SA, 5)); 
+				//cs_log("EMM Dump: DATA: %s",cs_hexdump(1, emm+9, insEMM_SA[4])); 				
+				//cs_log("EMM Dump: IF: %02X == %02X",emm[11],(insEMM_SA[4]-3)); 								
+				
+				if(emm[11]==insEMM_SA[4]-3)
+				{
+					write_cmd(insEMM_SA, emm+9);
+					rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));					
+				}
+		  }
+  	 	break;
+  	 
+  	 //UA	  	 
+  	 case 0x82:
+  	 	if(emm[3]==0xA9 && emm[4]==0xFF && emm[13]==0x80 && emm[14]==0x05)
+		{
+			ep->type=insEMM_UA[1];
+			insEMM_UA[4]=ep->emm[2]-7;
+			//cs_log("EMM Dump: CMD: %s", cs_hexdump(1, insEMM_UA, 5)); 
+			//cs_log("EMM Dump: DATA: %s",cs_hexdump(1, emm+10, insEMM_UA[4])); 				
+			//cs_log("EMM Dump: IF: %02X == %02X",emm[12],(insEMM_UA[4]-3)); 								
+			
+			if(emm[12]==insEMM_UA[4]-3)
+			{
+				//cryptoworks_send_pin(); //?? may be 
+				write_cmd(insEMM_UA, emm+10);
+				rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));					
+			}
+		}			
+  	 	break;  	
+  }
+
   return(rc);
 }
 
@@ -483,6 +601,29 @@ int cryptoworks_card_info(void)
         }
       }
     }
+    //================================================================================
+    //by KrazyIvan
+    select_file(0x0f, 0x00);		// select provider channel 
+    write_cmd(insA21, insA21+5);
+    if (cta_res[0]==0x9f)
+    {
+      insB2[4]=cta_res[1];
+      for(insB2[3]=0; (cta_res[0]!=0x94)||(cta_res[1]!=0x2); insB2[3]=1)
+      {
+        read_cmd(insB2, NULL);		// read chid
+        if (cta_res[0]!=0x94)
+        {
+          char ds[16], de[16];
+          chid_date(cta_res+28, ds, sizeof(ds)-1);
+          chid_date(cta_res+30, de, sizeof(de)-1);
+          cta_res[27]=0;
+          cs_ri_log("chid: %02X%02X, date: %s - %s, name: %s",
+                    cta_res[6], cta_res[7], ds, de, trim(cta_res+10));
+        }
+      }
+    }
+    //================================================================================
+    
   }
   return(1);
 }
