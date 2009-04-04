@@ -331,6 +331,7 @@ struct s_reader
   char      device[128];
   int       detect;
   int       mhz;
+  int       custom_speed;
   int       r_port;
   char      r_usr[64];
   char      r_pwd[64];
@@ -705,6 +706,12 @@ extern int viaccess_card_init(uchar *, int);
 extern int viaccess_do_ecm(ECM_REQUEST *);
 extern int viaccess_do_emm(EMM_PACKET *);
 extern int viaccess_card_info(void);
+
+// reader-videoguard
+extern int videoguard_card_init(uchar *, int);
+extern int videoguard_do_ecm(ECM_REQUEST *);
+extern int videoguard_do_emm(EMM_PACKET *);
+extern int videoguard_card_info(void);
 
 // reader-cryptoworks
 extern int cryptoworks_card_init(uchar *, int);

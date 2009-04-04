@@ -70,6 +70,9 @@ static void IO_Serial_SetPropertiesCache(IO_Serial * io, IO_Serial_Properties * 
 
 static void IO_Serial_ClearPropertiesCache (IO_Serial * io);
 
+static int _in_echo_read = 0;
+int io_serial_need_dummy_char = 0;
+
 int fdmc=(-1);
 
 #if defined(TUXBOX) && defined(PPC)
@@ -646,7 +649,7 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 	printf ("IO: Receiving: ");
 	fflush (stdout);
 #endif
-	for (count = 0; count < size; count++)
+	for (count = 0; count < size * (_in_echo_read ? (1+io_serial_need_dummy_char) : 1); count++)
 	{
 		if (IO_Serial_WaitToRead (io->fd, 0, timeout))
 		{
@@ -658,7 +661,7 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 #endif
 				return FALSE;
 			}
-			data[count] = c;
+			data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;
 			
 #ifdef DEBUG_IO
 			printf ("%X ", c);
@@ -676,6 +679,8 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 		}
 	}
 	
+    _in_echo_read = 0;
+
 #ifdef DEBUG_IO
 	printf ("\n");
 	fflush (stdout);
@@ -687,6 +692,8 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE * data)
 {
 	unsigned count, to_send;
+    BYTE data_w[512];
+    int i_w;
 #ifdef DEBUG_IO
 	unsigned i;
 	
@@ -705,8 +712,15 @@ bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE * data
 		
 		if (IO_Serial_WaitToWrite (io, delay, 1000))
 		{
-			unsigned int u = write (io->fd, data + count, to_send);
-			if (u != to_send)
+            for (i_w=0; i_w < to_send; i_w++) {
+            data_w [(1+io_serial_need_dummy_char)*i_w] = data [count + i_w];
+            if (io_serial_need_dummy_char) {
+              data_w [2*i_w+1] = 0x00;
+              }
+            }
+            unsigned int u = write (io->fd, data_w, (1+io_serial_need_dummy_char)*to_send);
+            _in_echo_read = 1;
+            if (u != (1+io_serial_need_dummy_char)*to_send)
 			{
 #ifdef DEBUG_IO
 				printf ("ERROR\n");
@@ -721,8 +735,8 @@ bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE * data
 				io->wr += to_send;
 			
 #ifdef DEBUG_IO
-			for (i=0; i<to_send; i++)
-				printf ("%X ", data[count + i]);
+			for (i=0; i<(1+io_serial_need_dummy_char)*to_send; i++)
+				printf ("%X ", data_w[count + i]);
 			fflush (stdout);
 #endif
 		}

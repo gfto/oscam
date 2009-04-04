@@ -5,7 +5,7 @@ char mpcs_device[128];
 int  mpcs_card_detect;
 int  mhz;
 
-uchar cta_cmd[272], cta_res[256], atr[64];
+uchar cta_cmd[272], cta_res[260], atr[64];
 ushort cta_lr, atr_size=0;
 static int cs_ptyp_orig; //reinit=1, 
 static int card_status=0;
@@ -15,6 +15,7 @@ static int card_status=0;
 #define SC_VIACCESS 3
 #define SC_CONAX 4
 #define SC_SECA 5
+#define SC_VIDEOGUARD2 6
 
 static int reader_device_type(char *device, int typ)
 {
@@ -180,6 +181,8 @@ void reader_card_info()
         rc=cryptoworks_card_info(); break;
       case SC_VIACCESS:
         rc=viaccess_card_info(); break;
+      case SC_VIDEOGUARD2:
+        rc=videoguard_card_info(); break;
       default: rc=0;
     }
   }
@@ -193,6 +196,7 @@ static int reader_get_cardsystem(void)
   if (cryptoworks_card_init(atr, atr_size))	reader[ridx].card_system=SC_CRYPTOWORKS;
   if (seca_card_init(atr, atr_size))	reader[ridx].card_system=SC_SECA;
   if (viaccess_card_init(atr, atr_size))	reader[ridx].card_system=SC_VIACCESS;
+  if (videoguard_card_init(atr, atr_size))  reader[ridx].card_system=SC_VIDEOGUARD2;
   if (!reader[ridx].card_system)	cs_ri_log("card system not supported");
   cs_ri_brk(1);
   return(reader[ridx].card_system);
@@ -257,6 +261,8 @@ int reader_checkhealth(void)
       client[cs_idx].lastemm=0;
       client[cs_idx].lastecm=0;
       client[cs_idx].au=-1;
+      extern int io_serial_need_dummy_char;
+      io_serial_need_dummy_char=0;
       cs_log("card ejected");
     }
     card_status=0;
@@ -287,6 +293,8 @@ int reader_ecm(ECM_REQUEST *er)
           rc=(conax_do_ecm(er)) ? 1 : 0; break;
         case SC_SECA:
           rc=(seca_do_ecm(er)) ? 1 : 0; break;
+        case SC_VIDEOGUARD2:
+          rc=(videoguard_do_ecm(er)) ? 1 : 0; break;
         default: rc=0;
       }
     }
@@ -314,6 +322,8 @@ int reader_emm(EMM_PACKET *ep)
         rc=conax_do_emm(ep); break;
       case SC_SECA:
         rc=seca_do_emm(ep); break;
+      case SC_VIDEOGUARD2:
+        rc=videoguard_do_emm(ep); break;
       default: rc=0;
     }
   }
