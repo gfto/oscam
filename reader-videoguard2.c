@@ -3,7 +3,9 @@
 
 #include <termios.h>
 #include <unistd.h>
+#ifndef OS_CYGWIN32
 #include <linux/serial.h>
+#endif
 
 #define MAX_ATR_LEN 33         // max. ATR length
 #define MAX_HIST    15         // max. number of historical characters
@@ -472,6 +474,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
     return (0);
   }
 
+#ifndef OS_CYGWIN32
   int bconst=B38400;
   int baud=64516;
   int fd=open(reader[ridx].device,O_RDWR|O_NONBLOCK|O_NOCTTY);
@@ -511,6 +514,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
     cs_log ("%s: tcsetattr failed: %s",reader[ridx].device,strerror(errno));
     return 0;
     }
+#endif
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
   int l;

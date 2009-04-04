@@ -44,7 +44,10 @@
 #include <time.h>
 #include "io_serial.h"
 #include "mc_global.h"
+
+#ifndef OS_CYGWIN32
 #include <linux/serial.h>
+#endif
 
 #define IO_SERIAL_FILENAME_LENGTH 	32
 
@@ -511,6 +514,7 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
             cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
             cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
 		} else {
+#ifndef OS_CYGWIN32
         	struct serial_struct nuts;
         	ioctl(io->fd, TIOCGSERIAL, &nuts);
         	nuts.custom_divisor = nuts.baud_base / 9600 * 3.57 / 6;
@@ -519,10 +523,15 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
         	ioctl(io->fd, TIOCSSERIAL, &nuts);
 	    	cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
 	    	cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+#else
+	    	cfsetospeed(&newtio, IO_Serial_Bitrate(9600 / 3.57 * 6));
+	    	cfsetispeed(&newtio, IO_Serial_Bitrate(9600 / 3.57 * 6));
+#endif
 		}
     } else if (mhz == 357 || mhz == 358) {
         /* for 3.57 MHz */
         if (reader_irdeto_mode) {
+#ifndef OS_CYGWIN32
         	struct serial_struct nuts;
         	ioctl(io->fd, TIOCGSERIAL, &nuts);
         	nuts.custom_divisor = nuts.baud_base / 5713;
@@ -531,6 +540,10 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
         	ioctl(io->fd, TIOCSSERIAL, &nuts);
 		    cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
 		    cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+#else
+	    	cfsetospeed(&newtio, IO_Serial_Bitrate(5713));
+	    	cfsetispeed(&newtio, IO_Serial_Bitrate(5713));
+#endif
         } else {
             cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
             cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
