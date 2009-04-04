@@ -921,6 +921,8 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
         case 1: strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd)-1); break;
       }
     }
+  if( !strcmp(token, "pincode") )
+      strncpy(rdr->pincode, value, sizeof(rdr->pincode)-1);
   /*
    *	case insensitive
    */
@@ -1027,6 +1029,7 @@ int init_readerdb()
       reader[nr].maxqlen = CS_MAXQLEN;
       reader[nr].mhz = 357;
       reader[nr].custom_speed = 1;
+      strcpy(reader[nr].pincode, "none");
       for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
       continue;
     }
