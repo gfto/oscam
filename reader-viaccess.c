@@ -61,11 +61,11 @@ static void show_class(const char *p, const uchar *b, int l)
         parse_via_date(b-4, &vd, 1);
         cls=(l-(j+1))*8+i;
         if (p)
-          cs_log("%sclass: %02X, date: %04d/%02d/%02d - %04d/%02d/%02d", p, cls, 
+          cs_log("%sclass: %02X, expiry date: %04d/%02d/%02d - %04d/%02d/%02d", p, cls, 
                   vd.year_s+1980, vd.month_s, vd.day_s,
                   vd.year_e+1980, vd.month_e, vd.day_e);
 	else
-          cs_ri_log("class: %02X, date: %04d/%02d/%02d - %04d/%02d/%02d", cls, 
+          cs_ri_log("class: %02X, expiry date: %04d/%02d/%02d - %04d/%02d/%02d", cls, 
                   vd.year_s+1980, vd.month_s, vd.day_s,
                   vd.year_e+1980, vd.month_e, vd.day_e);
       }
@@ -98,7 +98,7 @@ static void show_subs(const uchar *emm)
             struct via_date vd;
             parse_via_date(emm-4, &vd, 1);
             cls=(byts-(j+1))*8+i;
-            cs_log("%sclass %02X: %02d/%02d/%04d - %02d/%02d/%04d",
+            cs_log("%sclass %02X: expiry date: %02d/%02d/%04d - %02d/%02d/%04d",
                     fnano?"nano A9: ":"", cls, 
                     vd.day_s, vd.month_s, vd.year_s+1980, 
                     vd.day_e, vd.month_e, vd.year_e+1980);

@@ -451,7 +451,7 @@ static void read_tiers(void)
     if(cta_res[2]==0 && cta_res[3]==0) break;
     int y,m,d,H,M,S;
     rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S);
-    cs_log("Tier %02x%02x expires %04d/%02d/%02d-%02d:%02d:%02d",cta_res[2],cta_res[3],y,m,d,H,M,S);
+    cs_log("Tier: %02x%02x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d",cta_res[2],cta_res[3],y,m,d,H,M,S);
     }
 }
 
@@ -625,7 +625,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
     return 0;
     }
 
-  cs_log("Type: Videoguard, CAID: %04X, Serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
+  cs_log("type: Videoguard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
          reader[ridx].caid[0],
          reader[ridx].hexserial[4],reader[ridx].hexserial[5],reader[ridx].hexserial[6],reader[ridx].hexserial[7],
          boxID[0],boxID[1],boxID[2],boxID[3]);

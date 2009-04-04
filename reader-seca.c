@@ -74,8 +74,8 @@ int set_provider_info(int i)
   trim(l_name+8);
   l_name[0]=(l_name[8]) ? ',' : 0;
   reader[ridx].availkeys[i][0]=valid; //misusing availkeys to register validity of provider
-  cs_log("provider: %d, valid: %i, expiry date:%4d/%02d/%02d%s",
-         i+1, valid, year, month, day, l_name);
+  cs_log("provider: %d, valid: %i%s, expiry date: %4d/%02d/%02d",
+         i+1, valid,l_name, year, month, day);
   memcpy(&reader[ridx].sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
     cs_log("SA: %s", cs_hexdump(0, cta_res+18, 4));
@@ -313,7 +313,7 @@ int seca_card_info(void)
   trim(l_name+8);
   l_name[0]=(l_name[8]) ? ',' : 0;
   reader[ridx].availkeys[i][0]=valid; //misusing availkeys to register validity of provider
-  cs_log("provider: %d, valid: %i, expiry date:%i/%i/%i%s",i+1,valid,year,month,day,l_name);
+  cs_log("provider: %d, valid: %i, expiry date: %i/%i/%i%s",i+1,valid,year,month,day,l_name);
   memcpy(&reader[ridx].sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
     cs_log("SA:%02X%02X%02X%02X.",cta_res[18],cta_res[19],cta_res[20],cta_res[21]);
