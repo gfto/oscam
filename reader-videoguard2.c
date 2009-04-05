@@ -3,7 +3,7 @@
 
 #include <termios.h>
 #include <unistd.h>
-#ifndef OS_CYGWIN32
+#ifdef OS_LINUX
 #include <linux/serial.h>
 #endif
 
@@ -474,7 +474,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
     return (0);
   }
 
-#ifndef OS_CYGWIN32
+#ifdef OS_LINUX
   int bconst=B38400;
   int baud=64516;
   int fd=open(reader[ridx].device,O_RDWR|O_NONBLOCK|O_NOCTTY);

@@ -7,7 +7,7 @@ typedef unsigned char uchar;
 
 //typedef unsigned short ushort;
 
-#if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)
+#if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)  || defined(OS_MACOSX)
 typedef unsigned long ulong;
 #endif
 
@@ -16,8 +16,12 @@ typedef unsigned long long ullong;
 #endif // _TYPES_H_
 
 #ifndef NO_ENDIAN_H
-#include <endian.h>
-#include <byteswap.h>
+ #ifdef OS_MACOSX
+    #include <machine/endian.h>
+ #else
+    #include <endian.h>
+    #include <byteswap.h>
+ #endif
 #endif
 
 #if defined(CS_EMBEDDED) || defined(OS_LINUX)

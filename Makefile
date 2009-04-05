@@ -1,4 +1,4 @@
-	SHELL	= /bin/sh
+SHELL	= /bin/sh
 
 VER	= $(subst ",,$(filter-out \#define CS_VERSION,$(shell grep CS_VERSION globals.h)))
 export VER
@@ -8,8 +8,10 @@ freebsd:	i386-pc-freebsd
 tuxbox:	cross-powerpc-tuxbox-linux
 win:	cross-i386-pc-cygwin
 cygwin: i386-pc-cygwin
+macosx: macosx-native
 
 std:	linux \
+   macosx \
 	cross-i386-pc-cygwin \
 	cross-powerpc-tuxbox-linux \
 	cross-i386-pc-freebsd \
@@ -64,6 +66,28 @@ i386-pc-linux:
 		DS_LD=ld \
 		DS_RL=ranlib \
 		DS_ST=strip
+
+######################################################################
+#
+#       MacOSX native
+#
+######################################################################
+macosx-native:
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		OS_LIBS="-lcrypto" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-O2 -DOS_MACOSX" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=gcc \
+		DS_AR=ar \
+		DS_LD=ld \
+		DS_RL=ranlib \
+		DS_ST=strip
+
 
 ######################################################################
 #
