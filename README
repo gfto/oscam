@@ -15,3 +15,11 @@ Pointers
 
 - wiki:
     http://streamboard.gmc.to:8001/oscam/wiki
+
+Get sources from SVN, and build
+-------------------------------
+
+    svn co http://streamboard.gmc.to/svn/oscam/trunk oscam
+    cd oscam
+    make
+
