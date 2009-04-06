@@ -185,7 +185,7 @@ int recv_from_udpipe(uchar *buf, int l)
 {
   unsigned short n;
   if (!pfd) return(-9);
-  read(pfd, buf, 3);
+  if (!read(pfd, buf, 3)) cs_exit(1);
   if (buf[0]!='U')
   {
     cs_log("INTERNAL PIPE-ERROR");
@@ -732,7 +732,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   if (ph->s_ip)
   {
     sad.sin_addr.s_addr=ph->s_ip;
-    sprintf(ptxt[0], ", ip=%s", inet_ntoa(ph->s_ip));
+    sprintf(ptxt[0], ", ip=%s", inet_ntoa(sad.sin_addr));
   }
   else
     sad.sin_addr.s_addr=INADDR_ANY;
@@ -776,7 +776,7 @@ static int start_listener(struct s_module *ph, int port_idx)
 #ifdef SO_PRIORITY
   if (cfg->netprio)
     if (!setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg->netprio, sizeof(ulong)))
-      sprintf(ptxt[1], ", prio=%d", cfg->netprio);
+      sprintf(ptxt[1], ", prio=%ld", cfg->netprio);
 #endif
 
   if( !is_udp )
@@ -1252,7 +1252,7 @@ int read_from_pipe(int fd, uchar **data, int redir)
         ECM_REQUEST *er;
         er=(ECM_REQUEST *)(buf+3+sizeof(int));
         if( er->cidx && client[er->cidx].fd_m2c )
-            write(client[er->cidx].fd_m2c, buf, l+3+sizeof(int));
+            if (!write(client[er->cidx].fd_m2c, buf, l+3+sizeof(int))) cs_exit(1);
         rc=PIP_ID_DIR;
       }
     }
@@ -2110,7 +2110,7 @@ int main (int argc, char *argv[])
                   rl=n;
                   buf[0]='U';
                   memcpy(buf+1, &rl, 2);
-                  write(client[idx].ufd, buf, n+3);
+                  if (!write(client[idx].ufd, buf, n+3)) cs_exit(1);
                 }
               }
             }

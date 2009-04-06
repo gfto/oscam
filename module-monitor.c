@@ -145,7 +145,7 @@ static int monitor_recv(uchar *buf, int l)
 // cs_log("DO >>>> copy-back");
       memcpy(bbuf, buf+bsize, bpos=n-bsize);
       n=bsize;
-      write(client[cs_idx].ufd, nbuf, sizeof(nbuf));	// trigger new event
+      if (!write(client[cs_idx].ufd, nbuf, sizeof(nbuf))) cs_exit(1);	// trigger new event
     }
     else if (n<bsize)
     {
@@ -170,7 +170,7 @@ static int monitor_recv(uchar *buf, int l)
     {
       memcpy(bbuf, p+1, bpos);
       n=p-buf;
-      write(client[cs_idx].ufd, nbuf, sizeof(nbuf));	// trigger new event
+      if (!write(client[cs_idx].ufd, nbuf, sizeof(nbuf))) cs_exit(1);	// trigger new event
     }
   }
   buf[n]='\0';
@@ -193,7 +193,7 @@ static void monitor_send_info(char *txt, int last)
     }
     else
       counter++;
-    sprintf(buf, "%03.3d", counter);
+    sprintf(buf, "%03d", counter);
     memcpy(txt+4, buf, 3);
     txt[3]='0'+seq;
   }
@@ -387,7 +387,7 @@ static void monitor_process_details_master(char *buf, int pid)
   sprintf(buf, "max. logsize=%s", buf+200);
   monitor_send_details(buf, pid);
 
-  sprintf(buf, "client timeout=%d sec, cache delay=%d msec", cfg->ctimeout, cfg->delay);
+  sprintf(buf, "client timeout=%d sec, cache delay=%ld msec", cfg->ctimeout, cfg->delay);
   monitor_send_details(buf, pid);
 
 //#ifdef CS_NOSHM
@@ -484,7 +484,7 @@ static void monitor_logsend(char *flag)
        ((client[cs_idx].monlvl>1) || (!strcmp(p_usr, client[cs_idx].usr))))
     {
       char sbuf[8];
-      sprintf(sbuf, "%03.3d", client[cs_idx].logcounter);
+      sprintf(sbuf, "%03d", client[cs_idx].logcounter);
       client[cs_idx].logcounter=(client[cs_idx].logcounter+1) % 1000;
       memcpy(p_txt+4, sbuf, 3);
       monitor_send(p_txt);

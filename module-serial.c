@@ -931,13 +931,13 @@ static int oscam_ser_send_ecm(ECM_REQUEST *er, uchar *buf)
     case P_DSR95:
       if( dsr9500type==P_DSR_WITHSID )
       {
-        sprintf(buf, "%c%08X%04X%s%04X\n\r",
+        sprintf(buf, "%c%08lX%04X%s%04X\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l), er->srvid);
         oscam_ser_send(buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
       }
       else
       {
-        sprintf(buf, "%c%08X%04X%s\n\r",
+        sprintf(buf, "%c%08lX%04X%s\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l));
         oscam_ser_send(buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
       }

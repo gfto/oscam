@@ -275,7 +275,9 @@ static void camd35_server()
         cs_log("unknown command !");
     }
   }
-  free(req);
+  
+  if(req) { free(req); req=0;}
+  	
   cs_disconnect_client();
 }
 

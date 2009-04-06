@@ -109,7 +109,7 @@ static char *get_log_header(int m, char *txt)
 {
   if (m)
   {
-    sprintf(txt, "%6ld ", getpid());
+    sprintf(txt, "%6d ", getpid());
     if (cs_idx)
       switch (client[cs_idx].typ)
       {
@@ -183,7 +183,7 @@ static void write_to_log(int flag, char *txt)
         if (strcmp(client[cs_idx].usr, client[i].usr))
           continue;
       }
-      sprintf(sbuf, "%03.3d", client[i].logcounter);
+      sprintf(sbuf, "%03d", client[i].logcounter);
       client[i].logcounter=(client[i].logcounter+1) % 1000;
       memcpy(buf+4, sbuf, 3);
       monitor_send_idx(i, buf);
@@ -299,7 +299,7 @@ void cs_statistics(int idx)
     else
       cwps=0;
 
-    fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %s\n", 
+    fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %ld %ld %s\n", 
                   lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
                   lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
                   client[idx].usr[0] ? client[idx].usr : "-",
