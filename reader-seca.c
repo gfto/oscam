@@ -281,6 +281,7 @@ int seca_do_emm(EMM_PACKET *ep)
   return(0);
   
 }
+#ifndef LALL
 int seca_card_info(void)
 {
 int i;
@@ -293,6 +294,7 @@ int i;
         return(0);
     }
 }
+#endif
 #ifdef LALL
 int seca_card_info(void)
 {
