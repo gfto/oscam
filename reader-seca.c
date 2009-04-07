@@ -136,7 +136,7 @@ int seca_card_init(uchar *atr, int atrsize)
       if (!set_provider_info(i))
         return(0);
       else
-        sprintf(buf+strlen(buf), ",%04X", b2i(2, &reader[ridx].prid[i][2]));
+	sprintf(buf+strlen(buf), ",%04lX", b2i(2, &reader[ridx].prid[i][2])); 
     }
 
   cs_ri_log("providers: %d (%s)", reader[ridx].nprov, buf+1);
