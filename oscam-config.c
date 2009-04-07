@@ -293,6 +293,7 @@ static void chk_t_global(char *token, char *value)
   if (!strcmp(token, "netprio")) cfg->netprio=atoi(value);
   if (!strcmp(token, "resolvedelay")) cfg->resolvedelay=atoi(value);
   if (!strcmp(token, "sleep")) cfg->tosleep=atoi(value);
+  if (!strcmp(token, "unlockparental")) cfg->ulparent=atoi(value);
   if (!strcmp(token, "nice"))
   {
     cfg->nice=atoi(value);
@@ -568,6 +569,7 @@ int init_config()
   cfg->mon_level=2;
   cfg->mon_hideclient_to=0;
   cfg->srtimeout=1500;
+  cfg->ulparent=0;
 #ifdef CS_ANTICASC
   cfg->ac_enabled=0;
   cfg->ac_users=0;

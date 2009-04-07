@@ -463,6 +463,7 @@ struct s_config
   int       ctimeout;
   int       ftimeout;
   int       cmaxidle;
+  int	    ulparent;
   ulong     delay;
   int       bindwait;
   int       resolvedelay;

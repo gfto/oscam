@@ -187,6 +187,8 @@ void reader_card_info()
         rc=conax_card_info(); break;
       case SC_VIDEOGUARD2:
         rc=videoguard_card_info(); break;
+      case SC_SECA:
+         rc=seca_card_info(); break;
       default: rc=0;
     }
   }

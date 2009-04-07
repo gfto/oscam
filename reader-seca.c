@@ -4,6 +4,8 @@
 extern uchar cta_cmd[], cta_res[];
 extern ushort cta_lr;
 static unsigned short pmap=0;	// provider-maptable
+unsigned long long serial ;
+char *card;
 
 #define CMD_LEN 5
 
@@ -86,10 +88,15 @@ int set_provider_info(int i)
 int seca_card_init(uchar *atr, int atrsize)
 {
   uchar buf[256];
-  char *card;
   static uchar ins0e[] = { 0xc1, 0x0e, 0x00, 0x00, 0x08 }; // get serial number (UA)
   static uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x07 }; // get nr. of prividers
   int i;
+
+// Unlock parental control
+// c1 30 00 01 09
+// 00 00 00 00 00 00 00 00 ff
+  static uchar ins30[] = { 0xc1, 0x30, 0x00, 0x01, 0x09 };
+  static uchar ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff };
 
   buf[0]=0x00;
   if ((atr[10]!=0x0e) || (atr[11]!=0x6c) || (atr[12]!=0xb6) || (atr[13]!=0xd6)) return(0);
@@ -112,8 +119,9 @@ int seca_card_init(uchar *atr, int atrsize)
   reader[ridx].hexserial[0]=0;
   reader[ridx].hexserial[1]=0;
   memcpy(reader[ridx].hexserial+2, cta_res+2, 6);
+  serial = b2ll(5, cta_res+3) ;
   cs_ri_log("type: seca, caid: %04X, serial: %llu, card: %s v%d.%d",
-         reader[ridx].caid[0], b2ll(5, cta_res+3), card, atr[9]&0x0F, atr[9]>>4);
+         reader[ridx].caid[0], serial, card, atr[9]&0x0F, atr[9]>>4);
   read_cmd(ins16, NULL); // read nr of providers
   pmap=cta_res[2]<<8|cta_res[3];
   for (reader[ridx].nprov=0, i=pmap; i; i>>=1)
@@ -128,10 +136,17 @@ int seca_card_init(uchar *atr, int atrsize)
       if (!set_provider_info(i))
         return(0);
       else
-        sprintf(buf+strlen(buf), ",%04lX", b2i(2, &reader[ridx].prid[i][2]));
+        sprintf(buf+strlen(buf), ",%04X", b2i(2, &reader[ridx].prid[i][2]));
     }
 
   cs_ri_log("providers: %d (%s)", reader[ridx].nprov, buf+1);
+// Unlock parental control
+  if( cfg->ulparent != 0 ){
+	  write_cmd(ins30, ins30data); 
+	  cs_log("ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
+  }else {
+	  cs_log("parental locked");
+  }	
   cs_log("ready for requests");
   return(1);
 }
@@ -265,6 +280,18 @@ int seca_do_emm(EMM_PACKET *ep)
 	  return(1);
   return(0);
   
+}
+int seca_card_info(void)
+{
+int i;
+  cs_ri_log("type: seca, caid: %04X, serial: %llu, card: %s ",
+         reader[ridx].caid[0], serial , card);
+ for (i=0; i<16; i++)
+    if (pmap&(1<<i))
+    {
+      if (!set_provider_info(i))
+        return(0);
+    }
 }
 #ifdef LALL
 int seca_card_info(void)
