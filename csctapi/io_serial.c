@@ -515,6 +515,7 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
             cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
 		} else {
 #ifdef OS_LINUX
+            /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
         	struct serial_struct nuts;
         	ioctl(io->fd, TIOCGSERIAL, &nuts);
         	nuts.custom_divisor = nuts.baud_base / 9600 * 3.57 / 6;
@@ -532,6 +533,7 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
         /* for 3.57 MHz */
         if (reader_irdeto_mode) {
 #ifdef OS_LINUX
+            /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
         	struct serial_struct nuts;
         	ioctl(io->fd, TIOCGSERIAL, &nuts);
         	nuts.custom_divisor = nuts.baud_base / 5713;
