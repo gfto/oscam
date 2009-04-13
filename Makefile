@@ -255,6 +255,27 @@ cross-sparc-sun-solaris2.7:
 
 ######################################################################
 #
+#	OpenSolaris native compiler
+#
+######################################################################
+opensolaris:
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		OS_LIBS="-lcrypto -lnsl" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-O2 -DOS_SOLARIS -DOS_SOLARIS7 -DBSD_COMP -static-libgcc" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="-lsocket" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=gcc \
+		DS_AR=ar \
+		DS_LD=ld \
+		DS_RL=ranlib \
+		DS_ST=strip
+
+######################################################################
+#
 #	AIX 4.2 crosscompiler
 #
 ######################################################################
