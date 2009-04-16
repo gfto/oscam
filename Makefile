@@ -78,7 +78,7 @@ macosx-native:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_MACOSX" \
+		DS_OPTS="-O2 -DOS_MACOSX -DCS_NOSHM" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
