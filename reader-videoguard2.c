@@ -475,6 +475,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
   }
 
 #ifdef OS_LINUX
+#ifndef TUXBOX
   int bconst=B38400;
   int baud=64516;
   int fd=open(reader[ridx].device,O_RDWR|O_NONBLOCK|O_NOCTTY);
@@ -514,6 +515,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
     cs_log ("%s: tcsetattr failed: %s",reader[ridx].device,strerror(errno));
     return 0;
     }
+#endif
 #endif
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
