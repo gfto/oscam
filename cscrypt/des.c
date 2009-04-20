@@ -516,7 +516,7 @@ static void des_random_get(byte *buffer, byte len)
   }
 }
 
-#define CWS_NETMSGSIZE 256
+#define CWS_NETMSGSIZE 272
 
 int des_encrypt(byte *buffer, int len, byte *deskey)
 {

@@ -1,6 +1,6 @@
 #include "globals.h"
 
-#define CWS_NETMSGSIZE 256
+#define CWS_NETMSGSIZE 272
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
