@@ -213,7 +213,8 @@ void cs_debug(char *fmt,...)
 {
   char txt[256];
 
-//cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d", cs_ptyp, cs_dblevel);
+//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, client[cs_idx].dbglvl ,cs_ptyp & client[cs_idx].dbglvl);
+  
 //  if ((cs_ptyp & cs_dblevel)==cs_ptyp)
   if ((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp)
   {

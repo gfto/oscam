@@ -632,308 +632,373 @@ static FILTER mk_user_ftab()
 
 static int newcamd_auth_client(in_addr_t ip)
 {
-  int i, ok = 0;
-  uchar *usr=NULL, *pwd=NULL;
-  struct s_auth *account;
-  uchar buf[14];
-  uchar *key=0;
-  uint8 *passwdcrypt = NULL;
-  int au;
+    int i, ok = 0;
+    uchar *usr=NULL, *pwd=NULL;
+    struct s_auth *account;
+    uchar buf[14];
+    uchar *key=0;
+    uint8 *passwdcrypt = NULL;
+    int au;
 
-  // make random 14 bytes
-  seed = (unsigned int) time((time_t*)0);
-  for( i=0; i<14; i++ ) buf[i]=fast_rnd();
+    // make random 14 bytes
+    seed = (unsigned int) time((time_t*)0);
+    for( i=0; i<14; i++ ) buf[i]=fast_rnd();
 
-  // send init sequence
-  send(client[cs_idx].udp_fd, buf, 14, 0);
-  key = des_login_key_get(buf, cfg->ncd_key, 14);
-  memcpy(client[cs_idx].ncd_skey, key, 16);
-  client[cs_idx].ncd_msgid = 0;
+    // send init sequence
+    send(client[cs_idx].udp_fd, buf, 14, 0);
+    key = des_login_key_get(buf, cfg->ncd_key, 14);
+    memcpy(client[cs_idx].ncd_skey, key, 16);
+    client[cs_idx].ncd_msgid = 0;
 
-  i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
-  if ( i>0 )
-  {
-    if( mbuf[2] != MSG_CLIENT_2_SERVER_LOGIN ) {
-      cs_debug("expected MSG_CLIENT_2_SERVER_LOGIN (%02X), received %02X", 
-               MSG_CLIENT_2_SERVER_LOGIN, mbuf[2]);
-      if(req) { free(req); req=0;}
-      cs_exit(0);
-    }
-    usr=mbuf+5;
-    pwd=usr+strlen(usr)+1;
-    //cs_debug("usr=%s,pwd=%s", usr, pwd);
-  }
-  else {
-    cs_debug("bad client login request");
-    if(req) { free(req); req=0;}
-    cs_exit(0);
-  }
+    i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
+    if ( i>0 )
+        {
+        if( mbuf[2] != MSG_CLIENT_2_SERVER_LOGIN )
+            {
+            cs_debug("expected MSG_CLIENT_2_SERVER_LOGIN (%02X), received %02X", 
+            MSG_CLIENT_2_SERVER_LOGIN, mbuf[2]);
+            if(req)
+                {
+                free(req);
+                req=0;
+                }
+            cs_exit(0);
+            }
+        usr=mbuf+5;
+        pwd=usr+strlen(usr)+1;
+        //cs_debug("usr=%s,pwd=%s", usr, pwd);
+        }
+    else
+        {
+        cs_debug("bad client login request");
+        if(req)
+            {
+            free(req);
+            req=0;
+            }
+        cs_exit(0);
+        }
 
-  for (ok=0, account=cfg->account; (usr) && (account) && (!ok); account=account->next) 
-  {
-    cs_debug("account->usr=%s", account->usr);
-    if (strcmp(usr, account->usr) == 0) {
-      passwdcrypt = (uint8*)__md5_crypt(account->pwd, "$1$abcdefgh$");
-      cs_debug("account->pwd=%s", passwdcrypt);
-      if (strcmp(pwd, passwdcrypt) == 0) {
-        client[cs_idx].crypted=1;
-        cs_auth_client(account, NULL);
-        cs_log("user %s authenticated successfully (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
-        ok = 1;
-        break;
-      } else {
-        cs_log("user %s is providing a wrong password (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
-      }
-    }
-  }
-  if (!ok && !account) {
-   cs_log("user %s is trying to connect but doesnt exist ! (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
-   usr = 0;
-  }
+    for (ok=0, account=cfg->account; (usr) && (account) && (!ok); account=account->next) 
+        {
+        cs_debug("account->usr=%s", account->usr);
+        if (strcmp(usr, account->usr) == 0)
+            {
+            passwdcrypt = (uint8*)__md5_crypt(account->pwd, "$1$abcdefgh$");
+            cs_debug("account->pwd=%s", passwdcrypt);
+            if (strcmp(pwd, passwdcrypt) == 0)
+                {
+                client[cs_idx].crypted=1;
+                cs_auth_client(account, NULL);
+                cs_log("user %s authenticated successfully (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
+                ok = 1;
+                break;
+                }
+            else
+                {
+                cs_log("user %s is providing a wrong password (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
+                }
+            }
+        }
+	
+    if (!ok && !account)
+        {
+        cs_log("user %s is trying to connect but doesnt exist ! (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
+        usr = 0;
+        }
 
-  if (ok)
-  {
-    au = client[cs_idx].au;
-    if (au != -1) {
-      if (cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid != reader[au].caid[0]
-      &&  cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid != reader[au].ftab.filts[0].caid) {
-	// AU wont be used on this port -> disable AU
-	au = -1;
-      }
-      else if (reader[au].card_system <= 0 && !(reader[au].typ & R_IS_CASCADING))
-		  {
-		  	// Init for AU enabled card not finished, reject Client
-        ok=0;
-		  	au = -2; // Flag zur Logausgabe
-		  }
-    }
-  }
+    if (ok)
+        {
+        au = client[cs_idx].au;
+        if (au != -1)
+            {
+            if (cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid != reader[au].caid[0]
+                &&  cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid != reader[au].ftab.filts[0].caid) 
+                {
+                cs_log("AU wont be used on this port -> disable AU");
+                au = -1;
+                }
+            else if (reader[au].card_system <= 0 && !(reader[au].typ & R_IS_CASCADING))
+                {
+                // Init for AU enabled card not finished, reject Client
+                ok=0;
+                au = -2; // Flag zur Logausgabe
+                }
+            else
+                {
+                cs_log("AU %d  for user %s",au,usr);
+                }
+            }
+        else
+            {
+            cs_log("AU disabled for user %s",usr);
+            }
+        }
 
-  network_cmd_no_data_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid, 
+    network_cmd_no_data_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid, 
               (ok)?MSG_CLIENT_2_SERVER_LOGIN_ACK:MSG_CLIENT_2_SERVER_LOGIN_NAK,
               client[cs_idx].ncd_skey, COMMTYPE_SERVER);
 
-  if (ok) 
-  {
-	  FILTER pufilt_noau = { 0 };
-	  FILTER *pufilt = 0;
-	  
-    key = des_login_key_get(cfg->ncd_key, passwdcrypt, strlen(passwdcrypt));
-    memcpy(client[cs_idx].ncd_skey, key, 16);
-
-    i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
-    if( i>0 )
-    {
-      int j,len=15;
-      if( mbuf[2] != MSG_CARD_DATA_REQ) {
-        cs_debug("expected MSG_CARD_DATA_REQ (%02X), received %02X", 
-                 MSG_CARD_DATA_REQ, mbuf[2]);
-        if(req) { free(req); req=0;}
-        cs_exit(0);
-      }
-
-      client[cs_idx].ftab.filts[0] = mk_user_ftab();
-		  pufilt = &client[cs_idx].ftab.filts[0];
-		
-      if (au != -1) {
-	unsigned char equal = 1;
-
-		  // remember user filter
-		  memcpy(&pufilt_noau, pufilt, sizeof(FILTER));
-		  
-        client[cs_idx].ftab.filts[0] = mk_user_au_ftab(au);
-      pufilt = &client[cs_idx].ftab.filts[0];
-
-		    // check if user filter CAID and PROVID is the same as CAID and PROVID of the AU reader
-		
-	if ((pufilt->caid != pufilt_noau.caid)) {
-//		      cs_log("CAID server: %04X, CAID card: %04X, not equal, AU disabled",pufilt_noau.caid,pufilt->caid);
-//        equal = 0;
-		    }
-		
-		    for( j=0; equal && j<pufilt_noau.nprids && j<pufilt->nprids; j++)
-		    {
-		      if (pufilt->prids[j] != pufilt_noau.prids[j])
-		      {
-//		        cs_log("PROVID%d server: %04X, PROVID%d card: %04X, not equal, AU disabled",j,pufilt_noau.prids[j],j,pufilt->prids[j]);
-//weird//	        equal = 0;
-		      }
-		    }  
-		    
-		    if (!equal)
-		    {
-		      // Not equal -> AU must set to disabled -> set back to user filter
-		      memcpy(pufilt, &pufilt_noau, sizeof(FILTER));
-		      au = -1;
-		    }
-		  }
-      client[cs_idx].ftab.nfilts = 1;
-
-      mbuf[0] = MSG_CARD_DATA;
-      mbuf[1] = 0x00;
-      mbuf[2] = 0x00;
-
-      // AU always set to true because some clients cannot handle "non-AU"
-      // For security reason don't send the real hexserial (see below)
-      // if a non-AU-client sends an EMM-request it will be thrown away
-      // (see function "newcamd_process_emm")
-      //mbuf[3] = 1;
-      if( au!=-1 )
-        mbuf[3] = 1;
-      else
-        mbuf[3] = cs_idx+10; // Unique user number
-      
-      mbuf[4] = (uchar)(pufilt->caid>>8);
-      mbuf[5] = (uchar)(pufilt->caid);
-      mbuf[6] = 0x00;
-      mbuf[7] = 0x00;
-      if (au != -1) {
-        if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
+    // we need to add a test to make sure all card reader are ready before allowing more interaction with the user.
+    // cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid old the CAID for this port
+    // we need to check all ready for a match and check if they are ready
+    // if they arent ready, disconnect the user.
+    // it will reconnect in a few second.
+    
+    if (ok) 
         {
-          // only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
-          // first 2 Byte always 00
-          mbuf[8]=0x00; //serial only 4 bytes
-          mbuf[9]=0x00; //serial only 4 bytes
-          // 1 Byte Hex Base (see reader-irdeto.c how this is stored in "reader[au].hexserial")
-          mbuf[10]=reader[au].hexserial[3];
-          // 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "reader[au].hexserial")
-          mbuf[11]=reader[au].hexserial[0];
-          mbuf[12]=reader[au].hexserial[1];
-          mbuf[13]=reader[au].hexserial[2];
-        } else if (((pufilt->caid >> 8) == 0x05) || ((pufilt->caid >> 8) == 0x0D)) {
-          mbuf[8] = 0x00;
-	      mbuf[9] = reader[au].hexserial[0];
-          mbuf[10] = reader[au].hexserial[1];
-          mbuf[11] = reader[au].hexserial[2];
-          mbuf[12] = reader[au].hexserial[3];
-          mbuf[13] = reader[au].hexserial[4];
-        } else {
-          mbuf[8] = reader[au].hexserial[0];
-	      mbuf[9] = reader[au].hexserial[1];
-          mbuf[10] = reader[au].hexserial[2];
-	      mbuf[11] = reader[au].hexserial[3];
-          mbuf[12] = reader[au].hexserial[4];
-          mbuf[13] = reader[au].hexserial[5];
-        }
-      } else {
-      	client[cs_idx].au = -1;
-        mbuf[8] = 0x00;
-        mbuf[9] = 0x00;
-        mbuf[10] = 0x00;
-        mbuf[11] = 0x00;
-        mbuf[12] = 0x00;
-        mbuf[13] = 0x00;
-      	// send "faked" Hexserial to client
-/*
-        if (((pufilt->caid >= 0x1700) && (pufilt->caid <= 0x1799))  || // Betacrypt
-            ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699)))    // Irdeto 
-      {
-          mbuf[6] = 0x00;
-          mbuf[7] = 0x00;
-          mbuf[8] = 0x00;
-          mbuf[9] = 0x00;
-          mbuf[10] = fast_rnd();
-          mbuf[11] = fast_rnd();
-          mbuf[12] = fast_rnd();
-          mbuf[13] = fast_rnd();
-        } else {
-          mbuf[6] = fast_rnd();
-          mbuf[7] = fast_rnd();
-          mbuf[8] = fast_rnd();
-          mbuf[9] = fast_rnd();
-          mbuf[10] = fast_rnd();
-          mbuf[11] = fast_rnd();
-          mbuf[12] = fast_rnd();
-          mbuf[13] = fast_rnd();
-        }
-*/
-      }
-      mbuf[14] = pufilt->nprids;
-      for( j=0; j<pufilt->nprids; j++) 
-      {
-      	if ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699))    // Irdeto
-      	{
-          mbuf[15+11*j] = 0;
-          mbuf[16+11*j] = 0;
-          mbuf[17+11*j] = j;
-        } else {
-        mbuf[15+11*j] = (uchar)(pufilt->prids[j]>>16);
-        mbuf[16+11*j] = (uchar)(pufilt->prids[j]>>8);
-        mbuf[17+11*j] = (uchar)(pufilt->prids[j]);
-        }
-        mbuf[18+11*j] = 0x00;
-        mbuf[19+11*j] = 0x00;
-        mbuf[20+11*j] = 0x00;
-        mbuf[21+11*j] = 0x00;
-        if( au!=-1 ) 
-        { // check if user provid from IDENT exists on card
-          int k, found;
-          ulong rprid;
-          found=0;
-          if( pufilt->caid==reader[au].caid[0] )
-          {
-            for( k=0; (k<reader[au].nprov); k++ )
-            {
-              rprid=b2i(3, &reader[au].prid[k][1]);
-              if( rprid==pufilt->prids[j] )
-              {
-                if ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699))    // Irdeto
-                {
-                  mbuf[22+11*j] = reader[au].prid[k][0];
-                  mbuf[23+11*j] = reader[au].prid[k][1];
-                  mbuf[24+11*j] = reader[au].prid[k][2];
-                  mbuf[25+11*j] = reader[au].prid[k][3];
-                } else {
-                mbuf[22+11*j] = reader[au].sa[k][0];
-                mbuf[23+11*j] = reader[au].sa[k][1];
-                mbuf[24+11*j] = reader[au].sa[k][2];
-                mbuf[25+11*j] = reader[au].sa[k][3];
-                }
-                found=1;
-                break;
-              }
-            }
-          }
-          if( !found ) 
-          {
-            mbuf[22+11*j] = 0x00;
-            mbuf[23+11*j] = 0x00;
-            mbuf[24+11*j] = 0x00;
-            mbuf[25+11*j] = 0x00;
-          }
-        } else {
-          if ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699))    // Irdeto
-          {
-            mbuf[22+11*j] = 0x00;
-            mbuf[23+11*j] = (uchar)(pufilt->prids[j]>>16);
-            mbuf[24+11*j] = (uchar)(pufilt->prids[j]>>8);
-            mbuf[25+11*j] = (uchar)(pufilt->prids[j]);
-          } else {
-          mbuf[22+11*j] = 0x00;
-          mbuf[23+11*j] = 0x00;
-          mbuf[24+11*j] = 0x00;
-          mbuf[25+11*j] = 0x00;
-        }
-        }
-        len+=11;
-      }
+        FILTER pufilt_noau = { 0 };
+        FILTER *pufilt = 0;
 
-      if( network_message_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid, 
-                               mbuf, len, key, COMMTYPE_SERVER, 0 ) <0 ) {
-        if(req) { free(req); req=0;}
-        cs_exit(0);
-      }
-    }
-  }
-  else
-  {
-    if (au == -2)
-     cs_auth_client(0, "Init for AU enabled card not finished");
+        key = des_login_key_get(cfg->ncd_key, passwdcrypt, strlen(passwdcrypt));
+        memcpy(client[cs_idx].ncd_skey, key, 16);
+
+        i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
+        if( i>0 )
+            {
+            int j,len=15;
+            if( mbuf[2] != MSG_CARD_DATA_REQ)
+                {
+                cs_debug("expected MSG_CARD_DATA_REQ (%02X), received %02X", 
+                         MSG_CARD_DATA_REQ, mbuf[2]);
+                if(req)
+                    {
+                    free(req); req=0;
+                    }
+                cs_exit(0);
+                }
+
+            client[cs_idx].ftab.filts[0] = mk_user_ftab();
+            pufilt = &client[cs_idx].ftab.filts[0];
+            
+            if (au != -1)
+                {
+                unsigned char equal = 1;
+
+                // remember user filter
+                memcpy(&pufilt_noau, pufilt, sizeof(FILTER));
+
+                client[cs_idx].ftab.filts[0] = mk_user_au_ftab(au);
+                pufilt = &client[cs_idx].ftab.filts[0];
+
+                // check if user filter CAID and PROVID is the same as CAID and PROVID of the AU reader
+            
+                if ((pufilt->caid != pufilt_noau.caid))
+                    {
+                    // cs_log("CAID server: %04X, CAID card: %04X, not equal, AU disabled",pufilt_noau.caid,pufilt->caid);
+                    // equal = 0;
+                    }
+            
+                for( j=0; equal && j<pufilt_noau.nprids && j<pufilt->nprids; j++)
+                    {
+                    if (pufilt->prids[j] != pufilt_noau.prids[j])
+                        {
+                        // cs_log("PROVID%d server: %04X, PROVID%d card: %04X, not equal, AU disabled",j,pufilt_noau.prids[j],j,pufilt->prids[j]);
+                        //weird// equal = 0;
+                        }
+                    }  
+                
+                if (!equal)
+                    {
+                    // Not equal -> AU must set to disabled -> set back to user filter
+                    memcpy(pufilt, &pufilt_noau, sizeof(FILTER));
+                    au = -1;
+                    }
+                }
+
+            client[cs_idx].ftab.nfilts = 1;
+            mbuf[0] = MSG_CARD_DATA;
+            mbuf[1] = 0x00;
+            mbuf[2] = 0x00;
+
+            // AU always set to true because some clients cannot handle "non-AU"
+            // For security reason don't send the real hexserial (see below)
+            // if a non-AU-client sends an EMM-request it will be thrown away
+            // (see function "newcamd_process_emm")
+            //mbuf[3] = 1;
+            if( au!=-1 )
+                mbuf[3] = 1;
+            else
+                mbuf[3] = cs_idx+10; // Unique user number
+
+            mbuf[4] = (uchar)(pufilt->caid>>8);
+            mbuf[5] = (uchar)(pufilt->caid);
+            mbuf[6] = 0x00;
+            mbuf[7] = 0x00;
+
+            if (au != -1)
+                {
+                if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
+                    {
+                    // only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
+                    // first 2 Byte always 00
+                    mbuf[8]=0x00; //serial only 4 bytes
+                    mbuf[9]=0x00; //serial only 4 bytes
+                    // 1 Byte Hex Base (see reader-irdeto.c how this is stored in "reader[au].hexserial")
+                    mbuf[10]=reader[au].hexserial[3];
+                    // 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "reader[au].hexserial")
+                    mbuf[11]=reader[au].hexserial[0];
+                    mbuf[12]=reader[au].hexserial[1];
+                    mbuf[13]=reader[au].hexserial[2];
+                    }
+                else if (((pufilt->caid >> 8) == 0x05) || ((pufilt->caid >> 8) == 0x0D))
+                    {
+                    mbuf[8] = 0x00;
+                    mbuf[9] = reader[au].hexserial[0];
+                    mbuf[10] = reader[au].hexserial[1];
+                    mbuf[11] = reader[au].hexserial[2];
+                    mbuf[12] = reader[au].hexserial[3];
+                    mbuf[13] = reader[au].hexserial[4];
+                    }
+                else
+                    {
+                    mbuf[8] = reader[au].hexserial[0];
+                    mbuf[9] = reader[au].hexserial[1];
+                    mbuf[10] = reader[au].hexserial[2];
+                    mbuf[11] = reader[au].hexserial[3];
+                    mbuf[12] = reader[au].hexserial[4];
+                    mbuf[13] = reader[au].hexserial[5];
+                    }
+                }
+            else 
+                {
+                client[cs_idx].au = -1;
+                mbuf[8] = 0x00;
+                mbuf[9] = 0x00;
+                mbuf[10] = 0x00;
+                mbuf[11] = 0x00;
+                mbuf[12] = 0x00;
+                mbuf[13] = 0x00;
+                // send "faked" Hexserial to client
+                /*
+                if (((pufilt->caid >= 0x1700) && (pufilt->caid <= 0x1799))  || // Betacrypt
+                ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699)))    // Irdeto 
+                    {
+                    mbuf[6] = 0x00;
+                    mbuf[7] = 0x00;
+                    mbuf[8] = 0x00;
+                    mbuf[9] = 0x00;
+                    mbuf[10] = fast_rnd();
+                    mbuf[11] = fast_rnd();
+                    mbuf[12] = fast_rnd();
+                    mbuf[13] = fast_rnd();
+                    }
+                 else
+                    {
+                    mbuf[6] = fast_rnd();
+                    mbuf[7] = fast_rnd();
+                    mbuf[8] = fast_rnd();
+                    mbuf[9] = fast_rnd();
+                    mbuf[10] = fast_rnd();
+                    mbuf[11] = fast_rnd();
+                    mbuf[12] = fast_rnd();
+                    mbuf[13] = fast_rnd();
+                    }
+                */
+                }
+
+            mbuf[14] = pufilt->nprids;
+            for( j=0; j<pufilt->nprids; j++) 
+                {
+                if ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699))    // Irdeto
+                    {
+                    mbuf[15+11*j] = 0;
+                    mbuf[16+11*j] = 0;
+                    mbuf[17+11*j] = j;
+                    }
+                else
+                    {
+                    mbuf[15+11*j] = (uchar)(pufilt->prids[j]>>16);
+                    mbuf[16+11*j] = (uchar)(pufilt->prids[j]>>8);
+                    mbuf[17+11*j] = (uchar)(pufilt->prids[j]);
+                    }
+                mbuf[18+11*j] = 0x00;
+                mbuf[19+11*j] = 0x00;
+                mbuf[20+11*j] = 0x00;
+                mbuf[21+11*j] = 0x00;
+                if( au!=-1 ) 
+                    { // check if user provid from IDENT exists on card
+                    int k, found;
+                    ulong rprid;
+                    found=0;
+                    if( pufilt->caid==reader[au].caid[0] )
+                        {
+                        for( k=0; (k<reader[au].nprov); k++ )
+                            {
+                            rprid=b2i(3, &reader[au].prid[k][1]);
+                            if( rprid==pufilt->prids[j] )
+                                {
+                                if ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699))    // Irdeto
+                                    {
+                                    mbuf[22+11*j] = reader[au].prid[k][0];
+                                    mbuf[23+11*j] = reader[au].prid[k][1];
+                                    mbuf[24+11*j] = reader[au].prid[k][2];
+                                    mbuf[25+11*j] = reader[au].prid[k][3];
+                                    }
+                                else
+                                    {
+                                    mbuf[22+11*j] = reader[au].sa[k][0];
+                                    mbuf[23+11*j] = reader[au].sa[k][1];
+                                    mbuf[24+11*j] = reader[au].sa[k][2];
+                                    mbuf[25+11*j] = reader[au].sa[k][3];
+                                    }
+                                found=1;
+                                break;
+                                }
+                            }
+                        }
+                    if( !found ) 
+                        {
+                        mbuf[22+11*j] = 0x00;
+                        mbuf[23+11*j] = 0x00;
+                        mbuf[24+11*j] = 0x00;
+                        mbuf[25+11*j] = 0x00;
+                        }
+                    }
+                else 
+                    {
+                    if ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699))    // Irdeto
+                        {
+                        mbuf[22+11*j] = 0x00;
+                        mbuf[23+11*j] = (uchar)(pufilt->prids[j]>>16);
+                        mbuf[24+11*j] = (uchar)(pufilt->prids[j]>>8);
+                        mbuf[25+11*j] = (uchar)(pufilt->prids[j]);
+                        }
+                    else
+                        {
+                        mbuf[22+11*j] = 0x00;
+                        mbuf[23+11*j] = 0x00;
+                        mbuf[24+11*j] = 0x00;
+                        mbuf[25+11*j] = 0x00;
+                        }
+                    }
+                len+=11;
+                }
+
+            if( network_message_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid,  mbuf, len, key, COMMTYPE_SERVER, 0 ) <0 )
+                {
+                if(req)
+                    {
+                    free(req);
+                    req=0;
+                    }
+                cs_exit(0);
+                }
+            }
+        }
     else
-     cs_auth_client(0, usr ? "login failure" : "no such user");
-    if(req) { free(req); req=0;}
-    cs_exit(0);
-  }
+        {
+        if (au == -2)
+            cs_auth_client(0, "Init for AU enabled card not finished");
+        else
+            cs_auth_client(0, usr ? "login failure" : "no such user");
+        if(req)
+            {
+            free(req);
+            req=0;
+            }
+        cs_exit(0);
+        }
 }
 
 static void newcamd_send_dcw(ECM_REQUEST *er)
