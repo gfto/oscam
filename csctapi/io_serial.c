@@ -194,8 +194,13 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial, bool pnp)
 		io->fd = open (filename, O_RDWR);
 	else
 #endif
+
+#ifdef OS_MACOSX
+		io->fd = open (filename,  O_RDWR | O_NOCTTY | O_NDELAY );
+#else
 		io->fd = open (filename, O_RDWR | O_NOCTTY | O_SYNC);
-	
+#endif
+
 	if (io->fd < 0)
 		return FALSE;
 
@@ -494,71 +499,81 @@ bool IO_Serial_GetProperties (IO_Serial * io, IO_Serial_Properties * props)
 
 bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 {
-	struct termios newtio;
-	unsigned int modembits;
+   struct termios newtio;
+   unsigned int modembits;
 	
 #ifdef SCI_DEV
-	if(io->com==RTYP_SCI)
-		return FALSE;
+   if(io->com==RTYP_SCI)
+      return FALSE;
 #endif
 
-//	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, props->input_bitrate, props->bits, props->parity == IO_SERIAL_PARITY_EVEN ? "Even" : props->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", props->stopbits, props->dtr, props->rts);
-	memset (&newtio, 0, sizeof (newtio));
-	/* Set the bitrate */
-
-    extern int mhz;
-    extern int reader_irdeto_mode;
-    if (mhz == 600) {
-        /* for 6MHz */
-        if (reader_irdeto_mode) {
-            cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-            cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-		} else {
+   //	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, props->input_bitrate, props->bits, props->parity == IO_SERIAL_PARITY_EVEN ? "Even" : props->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", props->stopbits, props->dtr, props->rts);
+   memset (&newtio, 0, sizeof (newtio));
+   /* Set the bitrate */
+   
+   extern int mhz;
+   extern int reader_irdeto_mode;
+   if (mhz == 600)
+   {
+      /* for 6MHz */
+      if (reader_irdeto_mode)
+      {
+         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
+         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
+      } 
+      else 
+      {
 #ifdef OS_LINUX
-            /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-        	struct serial_struct nuts;
-        	ioctl(io->fd, TIOCGSERIAL, &nuts);
-        	nuts.custom_divisor = nuts.baud_base / 9600 * 3.57 / 6;
-        	nuts.flags &= ~ASYNC_SPD_MASK;
-        	nuts.flags |= ASYNC_SPD_CUST;
-        	ioctl(io->fd, TIOCSSERIAL, &nuts);
-	    	cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
-	    	cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
+         struct serial_struct nuts;
+         ioctl(io->fd, TIOCGSERIAL, &nuts);
+         nuts.custom_divisor = nuts.baud_base / 9600 * 3.57 / 6;
+         nuts.flags &= ~ASYNC_SPD_MASK;
+         nuts.flags |= ASYNC_SPD_CUST;
+         ioctl(io->fd, TIOCSSERIAL, &nuts);
+         cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
+         cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
 #else
-	        cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-	        cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
+         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
+         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
 #endif
-		}
-    } else if (mhz == 357 || mhz == 358) {
-        /* for 3.57 MHz */
-        if (reader_irdeto_mode) {
+      }
+   }
+   else if (mhz == 357 || mhz == 358)
+   {
+      /* for 3.57 MHz */
+      if (reader_irdeto_mode)
+      {
 #ifdef OS_LINUX
-            /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-        	struct serial_struct nuts;
-        	ioctl(io->fd, TIOCGSERIAL, &nuts);
-        	nuts.custom_divisor = nuts.baud_base / 5713;
-        	nuts.flags &= ~ASYNC_SPD_MASK;
-        	nuts.flags |= ASYNC_SPD_CUST;
-        	ioctl(io->fd, TIOCSSERIAL, &nuts);
-		    cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
-		    cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
+         struct serial_struct nuts;
+         ioctl(io->fd, TIOCGSERIAL, &nuts);
+         nuts.custom_divisor = nuts.baud_base / 5713;
+         nuts.flags &= ~ASYNC_SPD_MASK;
+         nuts.flags |= ASYNC_SPD_CUST;
+         ioctl(io->fd, TIOCSSERIAL, &nuts);
+         cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
+         cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
 #else
-	        cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-	        cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
+         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
+         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
 #endif
-        } else {
-            cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-            cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-        }
-    } else {
-        /* invalid */
-        return FALSE;
-    }
+      }
+      else 
+      {
+         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
+         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
+      }
+   }
+   else
+   {
+      /* invalid */
+      return FALSE;
+   }
         
-	/* Set the character size */
-	switch (props->bits)
-	{
-			
+   /* Set the character size */
+   switch (props->bits)
+   {
 		case 5:
 			newtio.c_cflag |= CS5;
 			break;
@@ -642,7 +657,13 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 void IO_Serial_Flush (IO_Serial * io)
 {
 	BYTE b;
+	printf("IO_Serial_Flush\n");
+#ifdef OS_MACOSX
+	while(IO_Serial_Read_MacOSX(io, 1000, 1, &b));
+#else
 	while(IO_Serial_Read(io, 1000, 1, &b));
+#endif
+	printf("IO_Serial_Flush done\n");
 
 }
 
@@ -656,6 +677,110 @@ void IO_Serial_GetPnPId (IO_Serial * io, BYTE * pnp_id, unsigned *length)
 unsigned IO_Serial_GetCom (IO_Serial * io)
 {
 	return io->com;
+}
+
+//
+// read "size" Byte from the port.
+// return true if all data were read, false on error or timeout
+// 
+
+bool IO_Serial_Read_MacOSX(IO_Serial * io, unsigned timeout, unsigned size, BYTE * data)
+
+{
+    
+   int nByte;
+   int totalRead;
+   int m_timeout;
+   int length;
+   BYTE c;
+   
+   totalRead=0;
+   m_timeout=0;
+   nByte=0;
+   length= size * (_in_echo_read ? (1+io_serial_need_dummy_char) : 1);
+#ifdef DEBUG_IO
+    printf("size = %d\n", size);
+    printf("length = %d\n", length);
+    printf("timeout = %d\n", timeout);
+#endif
+   while(TRUE)
+   {
+      nByte=read(io->fd,&c,1);
+      if(nByte<=0)
+      {
+         usleep (1000L); // 1ms
+         m_timeout++;
+         if(m_timeout==timeout)
+         {
+            tcflush (io->fd, TCIFLUSH);
+            return FALSE;
+         }
+      }
+      else
+      {
+         m_timeout=0;
+#ifdef DEBUG_IO
+         printf("value read : %c\n",c);
+         fflush (stdout);
+#endif
+         data[_in_echo_read ? totalRead/(1+io_serial_need_dummy_char) : totalRead] = c;
+         totalRead+=nByte;
+#ifdef DEBUG_IO
+         printf("value totalRead : %d\n",totalRead);
+
+#endif
+         if(length == totalRead)
+            break;
+      }
+   }
+   
+   printf("exiting IO_Serial_Read_MacOSX [true]\n" );
+   return TRUE;
+}
+
+//
+// Send "size" Byte data present in data 
+// return true if data was correctly send
+// 
+bool IO_Serial_Write_MacOSX (IO_Serial * io, unsigned delay, unsigned size, BYTE * data)
+{
+   int nByte;
+   int m_delay;
+   BYTE data_w[512];
+   int i_w;
+   unsigned count, to_send;
+   
+   m_delay=0;
+   nByte=0;
+   to_send = (delay? 1: size);
+    
+   // send the data
+   for (count = 0; count < size; count += to_send)
+   {
+      for (i_w=0; i_w < to_send; i_w++)
+      {
+         data_w [(1+io_serial_need_dummy_char)*i_w] = data [count + i_w];
+         if (io_serial_need_dummy_char)
+         {
+            data_w [2*i_w+1] = 0x00;
+         }
+      }
+      
+      nByte=write(io->fd,data_w,(1+io_serial_need_dummy_char)*to_send);
+      _in_echo_read = 1;
+      
+      if(nByte<=0 || nByte!=(1+io_serial_need_dummy_char)*to_send)
+      {
+         tcflush (io->fd, TCIFLUSH);
+         printf("exiting IO_Serial_Write_MacOSX [false]\n" );
+         return FALSE;
+      }
+      if(delay)
+         usleep(delay*1000L);
+      
+   }
+
+	return TRUE;
 }
 
 
@@ -720,6 +845,9 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 	
 	return TRUE;
 }
+
+
+
 
 bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE * data)
 {
@@ -1008,7 +1136,7 @@ static void IO_Serial_ClearPropertiesCache (IO_Serial * io)
 static void IO_Serial_DeviceName (unsigned com, bool usbserial, char * filename, unsigned length)
 {
 	extern char oscam_device[];
-        snprintf (filename, length, "%s", oscam_device);
+   snprintf (filename, length, "%s", oscam_device);
 //	if(com==1)
 //		snprintf (filename, length, "/dev/tts/%d", com - 1);
 //	else
@@ -1030,10 +1158,15 @@ static bool IO_Serial_InitPnP (IO_Serial * io)
 	
 	if (!IO_Serial_SetProperties (io, &props))
 		return FALSE;
-	
+
+#ifdef OS_MACOSX
+	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read_MacOSX (io, 200, 1, &(io->PnP_id[i])))
+      i++;
+#else	
 	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (io, 200, 1, &(io->PnP_id[i])))
-		i++;
-	
+      i++;
+#endif
+
 	io->PnP_id_size = i;
 		return TRUE;
 }

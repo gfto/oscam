@@ -104,6 +104,8 @@ extern void IO_Serial_Ioctl_Lock(IO_Serial *, int);
 /* Input and output */
 extern bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * data);
 extern bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE * data);
+extern bool IO_Serial_Read_MacOSX (IO_Serial * io, unsigned timeout, unsigned size, BYTE * data);
+extern bool IO_Serial_Write_MAcOSX (IO_Serial * io, unsigned delay, unsigned size, BYTE * data);
 
 /* Serial port atributes */
 extern unsigned IO_Serial_GetCom (IO_Serial * io);
