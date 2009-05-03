@@ -657,14 +657,11 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 void IO_Serial_Flush (IO_Serial * io)
 {
 	BYTE b;
-	printf("IO_Serial_Flush\n");
 #ifdef OS_MACOSX
 	while(IO_Serial_Read_MacOSX(io, 1000, 1, &b));
 #else
 	while(IO_Serial_Read(io, 1000, 1, &b));
 #endif
-	printf("IO_Serial_Flush done\n");
-
 }
 
 
