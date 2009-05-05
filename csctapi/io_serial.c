@@ -695,10 +695,23 @@ bool IO_Serial_Read_MacOSX(IO_Serial * io, unsigned timeout, unsigned size, BYTE
    m_timeout=0;
    nByte=0;
    length= size * (_in_echo_read ? (1+io_serial_need_dummy_char) : 1);
+
+	if((io->com!=RTYP_SCI) && (io->wr>0))
+	{
+		BYTE buf[256];
+		int n = io->wr;
+		io->wr = 0;
+	
+		if(!IO_Serial_Read_MacOSX (io, timeout, n, buf))
+		{
+			return FALSE;
+		}
+	}
+
 #ifdef DEBUG_IO
-    printf("size = %d\n", size);
-    printf("length = %d\n", length);
-    printf("timeout = %d\n", timeout);
+   printf ("IO: IO_Serial_Read_MacOSX\n");
+	printf ("IO: Receiving %d byte(s): ",size);
+	fflush (stdout);
 #endif
    while(TRUE)
    {
@@ -709,6 +722,10 @@ bool IO_Serial_Read_MacOSX(IO_Serial * io, unsigned timeout, unsigned size, BYTE
          m_timeout++;
          if(m_timeout==timeout)
          {
+#ifdef DEBUG_IO
+			printf ("TIMEOUT\n");
+			fflush (stdout);
+#endif
             tcflush (io->fd, TCIFLUSH);
             return FALSE;
          }
@@ -717,21 +734,23 @@ bool IO_Serial_Read_MacOSX(IO_Serial * io, unsigned timeout, unsigned size, BYTE
       {
          m_timeout=0;
 #ifdef DEBUG_IO
-         printf("value read : %c\n",c);
-         fflush (stdout);
+			printf ("%02X ", c);
+			fflush (stdout);
 #endif
          data[_in_echo_read ? totalRead/(1+io_serial_need_dummy_char) : totalRead] = c;
          totalRead+=nByte;
-#ifdef DEBUG_IO
-         printf("value totalRead : %d\n",totalRead);
-
-#endif
          if(length == totalRead)
             break;
       }
    }
    
+   _in_echo_read = 0;
+
+#ifdef DEBUG_IO
+   printf ("\n");
+   fflush (stdout);
    printf("exiting IO_Serial_Read_MacOSX [true]\n" );
+#endif
    return TRUE;
 }
 
@@ -746,6 +765,13 @@ bool IO_Serial_Write_MacOSX (IO_Serial * io, unsigned delay, unsigned size, BYTE
    BYTE data_w[512];
    int i_w;
    unsigned count, to_send;
+
+#ifdef DEBUG_IO
+	unsigned i;
+	printf ("IO: IO_Serial_Write_MacOSX\n");
+	printf ("IO: Sending %d byte(s) : ",size);
+	fflush (stdout);
+#endif
    
    m_delay=0;
    nByte=0;
@@ -769,16 +795,37 @@ bool IO_Serial_Write_MacOSX (IO_Serial * io, unsigned delay, unsigned size, BYTE
       if(nByte<=0 || nByte!=(1+io_serial_need_dummy_char)*to_send)
       {
          tcflush (io->fd, TCIFLUSH);
+         if(io->com!=RTYP_SCI)
+            io->wr += nByte;
+
+#ifdef DEBUG_IO
+         printf ("ERROR\n");
          printf("exiting IO_Serial_Write_MacOSX [false]\n" );
+         fflush (stdout);
+#endif
          return FALSE;
       }
       if(delay)
          usleep(delay*1000L);
+
+      if(io->com!=RTYP_SCI)
+         io->wr += to_send;
+
+#ifdef DEBUG_IO
+      for (i=0; i<(1+io_serial_need_dummy_char)*to_send; i++)
+         printf ("%02 X ", data_w[count + i]);
+      fflush (stdout);
+#endif
       
    }
 
+#ifdef DEBUG_IO
+	printf ("\n");
+	fflush (stdout);
+#endif
 	return TRUE;
 }
+
 
 
 bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * data)
