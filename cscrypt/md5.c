@@ -567,22 +567,22 @@ char * __md5_crypt( const char *pw, const char *salt)
 
 	/* The password first, since that is what is most unknown */
 	pw_len = strlen(pw);
-	__md5_Update(&ctx,pw,pw_len);
+	__md5_Update(&ctx,(const unsigned char *)pw,pw_len);
 
 	/* Then our magic string */
-	__md5_Update(&ctx,__md5__magic,__md5__magic_len);
+	__md5_Update(&ctx,(const unsigned char *)__md5__magic,__md5__magic_len);
 
 	/* Then the raw salt */
-	__md5_Update(&ctx,sp,sl);
+	__md5_Update(&ctx,(const unsigned char *)sp,sl);
 
 	/* Then just as many characters of the MD5(pw,salt,pw) */
 	__md5_Init(&ctx1);
-	__md5_Update(&ctx1,pw,pw_len);
-	__md5_Update(&ctx1,sp,sl);
-	__md5_Update(&ctx1,pw,pw_len);
+	__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
+	__md5_Update(&ctx1,(const unsigned char *)sp,sl);
+	__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
 	__md5_Final(final,&ctx1);
 	for(pl = pw_len; pl > 0; pl -= 16)
-		__md5_Update(&ctx,final,pl>16 ? 16 : pl);
+		__md5_Update(&ctx,(const unsigned char *)final,pl>16 ? 16 : pl);
 
 	/* Don't leave anything around in vm they could use. */
 	memset(final,0,sizeof final);
@@ -607,20 +607,20 @@ char * __md5_crypt( const char *pw, const char *salt)
 	for(i=0;i<1000;i++) {
 		__md5_Init(&ctx1);
 		if(i & 1)
-			__md5_Update(&ctx1,pw,pw_len);
+			__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
 		else
-			__md5_Update(&ctx1,final,16);
+			__md5_Update(&ctx1,(const unsigned char *)final,16);
 
 		if(i % 3)
-			__md5_Update(&ctx1,sp,sl);
+			__md5_Update(&ctx1,(const unsigned char *)sp,sl);
 
 		if(i % 7)
-			__md5_Update(&ctx1,pw,pw_len);
+			__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
 
 		if(i & 1)
-			__md5_Update(&ctx1,final,16);
+			__md5_Update(&ctx1,(const unsigned char *)final,16);
 		else
-			__md5_Update(&ctx1,pw,pw_len);
+			__md5_Update(&ctx1,(const unsigned char *)pw,pw_len);
 		__md5_Final(final,&ctx1);
 	}
 

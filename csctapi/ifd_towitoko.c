@@ -554,11 +554,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			
 		if(ioctl(ifd->io->fd, IOCTL_SET_ATR_READY)<0)
 			return IFD_TOWITOKO_IO_ERROR;
-#ifdef OS_MACOSX
-		while(n<SCI_MAX_ATR_SIZE && IO_Serial_Read_MacOSX(ifd->io, IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
-#else			
 		while(n<SCI_MAX_ATR_SIZE && IO_Serial_Read(ifd->io, IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
-#endif
 		{
 			n++;
 		}
@@ -759,27 +755,15 @@ int IFD_Towitoko_Transmit (IFD * ifd, IFD_Timings * timings, unsigned size, BYTE
 		/* Send data */
 		if ((sent == 0) && (block_delay != char_delay))
 		{
-#ifdef OS_MACOSX
-			if (!IO_Serial_Write_MacOSX (ifd->io, block_delay, 1, buffer))
-#else
 			if (!IO_Serial_Write (ifd->io, block_delay, 1, buffer))
-#endif
 				return IFD_TOWITOKO_IO_ERROR;
 			
-#ifdef OS_MACOSX
-			if (!IO_Serial_Write_MacOSX (ifd->io, char_delay, to_send-1, buffer+1))
-#else
 			if (!IO_Serial_Write (ifd->io, char_delay, to_send-1, buffer+1))
-#endif
 				return IFD_TOWITOKO_IO_ERROR;
 		}
 		else
 		{
-#ifdef OS_MACOSX
-			if (!IO_Serial_Write_MacOSX (ifd->io, char_delay, to_send, buffer+sent))
-#else
 			if (!IO_Serial_Write (ifd->io, char_delay, to_send, buffer+sent))
-#endif
 				return IFD_TOWITOKO_IO_ERROR;
 		}
 	}
@@ -805,32 +789,20 @@ int IFD_Towitoko_Receive (IFD * ifd, IFD_Timings * timings, unsigned size, BYTE 
 	if (block_timeout != char_timeout)
 	{
 		/* Read first byte using block timeout */
-#ifdef OS_MACOSX
-		if (!IO_Serial_Read_MacOSX (ifd->io, block_timeout, 1, buffer))
-#else
 		if (!IO_Serial_Read (ifd->io, block_timeout, 1, buffer))
-#endif
 			return IFD_TOWITOKO_IO_ERROR;
 		
 		if (size > 1)
 		{
 			/* Read remaining data bytes using char timeout */
-#ifdef OS_MACOSX
-			if (!IO_Serial_Read_MacOSX (ifd->io, char_timeout, size - 1, buffer + 1))
-#else
 			if (!IO_Serial_Read (ifd->io, char_timeout, size - 1, buffer + 1))
-#endif
 				return IFD_TOWITOKO_IO_ERROR;
 		}
 	}
 	else
 	{
 		/* Read all data bytes with the same timeout */
-#ifdef OS_MACOSX
-		if (!IO_Serial_Read_MacOSX (ifd->io, char_timeout, size, buffer))
-#else
 		if (!IO_Serial_Read (ifd->io, char_timeout, size, buffer))
-#endif
 			return IFD_TOWITOKO_IO_ERROR;
 	}
 #ifdef USE_GPIO

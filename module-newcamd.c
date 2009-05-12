@@ -336,7 +336,7 @@ static int connect_newcamd_server()
 
   // 1. Connect
   //
-  handle = network_tcp_connection_open(reader[ridx].device, reader[ridx].r_port);
+  handle = network_tcp_connection_open((uint8 *)reader[ridx].device, reader[ridx].r_port);
   if(handle < 0) return -1;
   
   // 2. Get init sequence
@@ -355,15 +355,15 @@ static int connect_newcamd_server()
   index = 3;
   buf[0] = MSG_CLIENT_2_SERVER_LOGIN;
   buf[1] = 0;
-  strcpy(buf+index, reader[ridx].r_usr);
+  strcpy((char *)buf+index, reader[ridx].r_usr);
   passwdcrypt = (uint8*)__md5_crypt(reader[ridx].r_pwd, "$1$abcdefgh$");
   index += strlen(reader[ridx].r_usr)+1;
-  strcpy(buf+index, passwdcrypt);
+  strcpy((char *)buf+index, (const char *)passwdcrypt);
 
   //cs_debug("login to server %s:%d user=%s, pwd=%s, len=%d", reader[ridx].device,
   //          reader[ridx].r_port, reader[ridx].r_usr, reader[ridx].r_pwd,
   //          index+strlen(passwdcrypt)+1);
-  network_message_send(handle, 0, buf, index+strlen(passwdcrypt)+1, key, 
+  network_message_send(handle, 0, buf, index+strlen((char *)passwdcrypt)+1, key, 
                        COMMTYPE_CLIENT, 0x8888);
 
   // 3.1 Get login answer
@@ -386,7 +386,7 @@ static int connect_newcamd_server()
 
   // 4. Send MSG_CARD_DATE_REQ
   //
-  key = des_login_key_get(reader[ridx].ncd_key, passwdcrypt, strlen(passwdcrypt));
+  key = des_login_key_get(reader[ridx].ncd_key, passwdcrypt, strlen((char *)passwdcrypt));
 
   network_cmd_no_data_send(handle, &reader[ridx].ncd_msgid, MSG_CARD_DATA_REQ, 
                            key, COMMTYPE_CLIENT);
@@ -665,7 +665,7 @@ static int newcamd_auth_client(in_addr_t ip)
             cs_exit(0);
             }
         usr=mbuf+5;
-        pwd=usr+strlen(usr)+1;
+        pwd=usr+strlen((char *)usr)+1;
         //cs_debug("usr=%s,pwd=%s", usr, pwd);
         }
     else
@@ -682,11 +682,11 @@ static int newcamd_auth_client(in_addr_t ip)
     for (ok=0, account=cfg->account; (usr) && (account) && (!ok); account=account->next) 
         {
         cs_debug("account->usr=%s", account->usr);
-        if (strcmp(usr, account->usr) == 0)
+        if (strcmp((char *)usr, account->usr) == 0)
             {
             passwdcrypt = (uint8*)__md5_crypt(account->pwd, "$1$abcdefgh$");
             cs_debug("account->pwd=%s", passwdcrypt);
-            if (strcmp(pwd, passwdcrypt) == 0)
+            if (strcmp((char *)pwd, (const char *)passwdcrypt) == 0)
                 {
                 client[cs_idx].crypted=1;
                 cs_auth_client(account, NULL);
@@ -750,7 +750,7 @@ static int newcamd_auth_client(in_addr_t ip)
         FILTER pufilt_noau = { 0 };
         FILTER *pufilt = 0;
 
-        key = des_login_key_get(cfg->ncd_key, passwdcrypt, strlen(passwdcrypt));
+        key = des_login_key_get(cfg->ncd_key, passwdcrypt, strlen((char *)passwdcrypt));
         memcpy(client[cs_idx].ncd_skey, key, 16);
 
         i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);

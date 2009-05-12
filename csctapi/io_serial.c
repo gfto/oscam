@@ -1,4 +1,4 @@
-/*
+   /*
     io_serial.c
     Serial port input/output functions
 
@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #ifdef OS_HPUX
 #include <sys/modem.h>
 #endif
@@ -657,11 +658,7 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 void IO_Serial_Flush (IO_Serial * io)
 {
 	BYTE b;
-#ifdef OS_MACOSX
-	while(IO_Serial_Read_MacOSX(io, 1000, 1, &b));
-#else
 	while(IO_Serial_Read(io, 1000, 1, &b));
-#endif
 }
 
 
@@ -675,157 +672,6 @@ unsigned IO_Serial_GetCom (IO_Serial * io)
 {
 	return io->com;
 }
-
-//
-// read "size" Byte from the port.
-// return true if all data were read, false on error or timeout
-// 
-
-bool IO_Serial_Read_MacOSX(IO_Serial * io, unsigned timeout, unsigned size, BYTE * data)
-
-{
-    
-   int nByte;
-   int totalRead;
-   int m_timeout;
-   int length;
-   BYTE c;
-   
-   totalRead=0;
-   m_timeout=0;
-   nByte=0;
-   length= size * (_in_echo_read ? (1+io_serial_need_dummy_char) : 1);
-
-	if((io->com!=RTYP_SCI) && (io->wr>0))
-	{
-		BYTE buf[256];
-		int n = io->wr;
-		io->wr = 0;
-	
-		if(!IO_Serial_Read_MacOSX (io, timeout, n, buf))
-		{
-			return FALSE;
-		}
-	}
-
-#ifdef DEBUG_IO
-   printf ("IO: IO_Serial_Read_MacOSX\n");
-	printf ("IO: Receiving %d byte(s): ",size);
-	fflush (stdout);
-#endif
-   while(TRUE)
-   {
-      nByte=read(io->fd,&c,1);
-      if(nByte<=0)
-      {
-         usleep (1000L); // 1ms
-         m_timeout++;
-         if(m_timeout==timeout)
-         {
-#ifdef DEBUG_IO
-			printf ("TIMEOUT\n");
-			fflush (stdout);
-#endif
-            tcflush (io->fd, TCIFLUSH);
-            return FALSE;
-         }
-      }
-      else
-      {
-         m_timeout=0;
-#ifdef DEBUG_IO
-			printf ("%02X ", c);
-			fflush (stdout);
-#endif
-         data[_in_echo_read ? totalRead/(1+io_serial_need_dummy_char) : totalRead] = c;
-         totalRead+=nByte;
-         if(length == totalRead)
-            break;
-      }
-   }
-   
-   _in_echo_read = 0;
-
-#ifdef DEBUG_IO
-   printf ("\n");
-   fflush (stdout);
-   printf("exiting IO_Serial_Read_MacOSX [true]\n" );
-#endif
-   return TRUE;
-}
-
-//
-// Send "size" Byte data present in data 
-// return true if data was correctly send
-// 
-bool IO_Serial_Write_MacOSX (IO_Serial * io, unsigned delay, unsigned size, BYTE * data)
-{
-   int nByte;
-   int m_delay;
-   BYTE data_w[512];
-   int i_w;
-   unsigned count, to_send;
-
-#ifdef DEBUG_IO
-	unsigned i;
-	printf ("IO: IO_Serial_Write_MacOSX\n");
-	printf ("IO: Sending %d byte(s) : ",size);
-	fflush (stdout);
-#endif
-   
-   m_delay=0;
-   nByte=0;
-   to_send = (delay? 1: size);
-    
-   // send the data
-   for (count = 0; count < size; count += to_send)
-   {
-      for (i_w=0; i_w < to_send; i_w++)
-      {
-         data_w [(1+io_serial_need_dummy_char)*i_w] = data [count + i_w];
-         if (io_serial_need_dummy_char)
-         {
-            data_w [2*i_w+1] = 0x00;
-         }
-      }
-      
-      nByte=write(io->fd,data_w,(1+io_serial_need_dummy_char)*to_send);
-      _in_echo_read = 1;
-      
-      if(nByte<=0 || nByte!=(1+io_serial_need_dummy_char)*to_send)
-      {
-         tcflush (io->fd, TCIFLUSH);
-         if(io->com!=RTYP_SCI)
-            io->wr += nByte;
-
-#ifdef DEBUG_IO
-         printf ("ERROR\n");
-         printf("exiting IO_Serial_Write_MacOSX [false]\n" );
-         fflush (stdout);
-#endif
-         return FALSE;
-      }
-      if(delay)
-         usleep(delay*1000L);
-
-      if(io->com!=RTYP_SCI)
-         io->wr += to_send;
-
-#ifdef DEBUG_IO
-      for (i=0; i<(1+io_serial_need_dummy_char)*to_send; i++)
-         printf ("%02 X ", data_w[count + i]);
-      fflush (stdout);
-#endif
-      
-   }
-
-#ifdef DEBUG_IO
-	printf ("\n");
-	fflush (stdout);
-#endif
-	return TRUE;
-}
-
 
 
 bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * data)
@@ -1061,65 +907,112 @@ static int IO_Serial_Bitrate(int bitrate)
 
 static bool IO_Serial_WaitToRead (int hnd, unsigned delay_ms, unsigned timeout_ms)
 {
-	int rval;
-	struct pollfd ufds;
-	
-	if (delay_ms > 0)
-	{
+   fd_set rfds;
+   fd_set erfds;
+   struct timeval tv;
+   int select_ret;
+   int in_fd;
+   
+   if (delay_ms > 0)
+   {
 #ifdef HAVE_NANOSLEEP
-		struct timespec req_ts;
-		
-		req_ts.tv_sec = delay_ms / 1000;
-		req_ts.tv_nsec = (delay_ms % 1000) * 1000000L;
-		nanosleep (&req_ts, NULL);
+      struct timespec req_ts;
+      
+      req_ts.tv_sec = delay_ms / 1000;
+      req_ts.tv_nsec = (delay_ms % 1000) * 1000000L;
+      nanosleep (&req_ts, NULL);
 #else
-		usleep (delay_ms * 1000L);
+      usleep (delay_ms * 1000L);
 #endif
-	}
-	
-	ufds.fd = hnd;
-	ufds.events = POLLIN;
-	ufds.revents = 0x0000;
-	
-	rval = poll (&ufds, 1, timeout_ms);
-	if (rval != 1)
-		return (FALSE);
-	
-	return (((ufds.revents) & POLLIN) == POLLIN);
+   }
+   
+   in_fd=hnd;
+   
+   FD_ZERO(&rfds);
+   FD_SET(in_fd, &rfds);
+   
+   FD_ZERO(&erfds);
+   FD_SET(in_fd, &erfds);
+   
+   tv.tv_sec = timeout_ms/1000;
+   tv.tv_usec = (timeout_ms % 1000) * 1000L;
+   select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
+   if(select_ret==-1)
+   {
+      printf("select_ret=%i\n" , select_ret);
+      printf("errno =%d\n", errno);
+      fflush(stdout);
+      return (FALSE);
+   }
+
+   if (FD_ISSET(in_fd, &erfds))
+   {
+      printf("fd is in error fds\n");
+      printf("errno =%d\n", errno);
+      fflush(stdout);
+      return (FALSE);
+   }
+
+   return(FD_ISSET(in_fd,&rfds));
 }
 
 static bool IO_Serial_WaitToWrite (IO_Serial *io, unsigned delay_ms, unsigned timeout_ms)
 {
-	int rval;
-	struct pollfd ufds;
-
+   fd_set wfds;
+   fd_set ewfds;
+   struct timeval tv;
+   int select_ret;
+   int out_fd;
+   
 #ifdef SCI_DEV
-	if(io->com==RTYP_SCI)
-		return TRUE;
+   if(io->com==RTYP_SCI)
+      return TRUE;
 #endif
 		
-	if (delay_ms > 0)
+   if (delay_ms > 0)
 	{
 #ifdef HAVE_NANOSLEEP
-		struct timespec req_ts;
-		
-		req_ts.tv_sec = delay_ms / 1000;
-		req_ts.tv_nsec = (delay_ms % 1000) * 1000000L;
-		nanosleep (&req_ts, NULL);
+      struct timespec req_ts;
+      
+      req_ts.tv_sec = delay_ms / 1000;
+      req_ts.tv_nsec = (delay_ms % 1000) * 1000000L;
+      nanosleep (&req_ts, NULL);
 #else
-		usleep (delay_ms * 1000L);
+      usleep (delay_ms * 1000L);
 #endif
-	}
-	
-	ufds.fd = io->fd;
-	ufds.events = POLLOUT;
-	ufds.revents = 0x0000;
-	
-	rval = poll (&ufds, 1, timeout_ms);
-	if (rval != 1)
-		return (FALSE);
-	
-	return (((ufds.revents) & POLLOUT) == POLLOUT);
+   }
+
+   out_fd=io->fd;
+    
+   FD_ZERO(&wfds);
+   FD_SET(out_fd, &wfds);
+   
+   FD_ZERO(&ewfds);
+   FD_SET(out_fd, &ewfds);
+   
+   tv.tv_sec = timeout_ms/1000L;
+   tv.tv_usec = (timeout_ms % 1000) * 1000L;
+
+   select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
+
+   if(select_ret==-1)
+   {
+      printf("select_ret=%d\n" , select_ret);
+      printf("errno =%d\n", errno);
+      fflush(stdout);
+      return (FALSE);
+   }
+
+   if (FD_ISSET(out_fd, &ewfds))
+   {
+      printf("fd is in ewfds\n");
+      printf("errno =%d\n", errno);
+      fflush(stdout);
+      return (FALSE);
+   }
+
+   return(FD_ISSET(out_fd,&wfds));
+    
 }
 
 static void IO_Serial_Clear (IO_Serial * io)
@@ -1203,13 +1096,8 @@ static bool IO_Serial_InitPnP (IO_Serial * io)
 	if (!IO_Serial_SetProperties (io, &props))
 		return FALSE;
 
-#ifdef OS_MACOSX
-	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read_MacOSX (io, 200, 1, &(io->PnP_id[i])))
-      i++;
-#else	
 	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (io, 200, 1, &(io->PnP_id[i])))
       i++;
-#endif
 
 	io->PnP_id_size = i;
 		return TRUE;

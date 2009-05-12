@@ -377,7 +377,7 @@ static int oscam_ser_recv(uchar *xbuf, int l)
                            if (oscam_ser_selrec(buf, 16, l, &n))
                            {
                              uchar b;
-                             if (cs_atob(&b, buf+17, 1)<0)
+                             if (cs_atob(&b, (char *)buf+17, 1)<0)
                                p=(-2);
                              else {
                                r=(b<<1);
@@ -428,7 +428,7 @@ static int oscam_ser_recv(uchar *xbuf, int l)
             tpe.millitm+=20;
             if( oscam_ser_selrec(buf, 2, l, &n) ) 
             {
-              if( cs_atoi(buf+n-2, 1, 1)==0xFFFFFFFF )
+              if( cs_atoi((char *)buf+n-2, 1, 1)==0xFFFFFFFF )
               {
                 switch( (buf[n-2]<<8)|buf[n-1] )
                 {
@@ -438,7 +438,7 @@ static int oscam_ser_recv(uchar *xbuf, int l)
                 }
               }else{
                 if( oscam_ser_selrec(buf, 2, l, &n) )
-                  if( cs_atoi(buf+n-2, 1, 1)==0xFFFFFFFF )
+                  if( cs_atoi((char *)buf+n-2, 1, 1)==0xFFFFFFFF )
                     dsr9500type=P_DSR_UNKNOWN;
                   else
                     dsr9500type=P_DSR_WITHSID;
@@ -745,11 +745,11 @@ static int oscam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int l)
       break;
     case P_DSR95:
       buf[l]='\0';	// prepare for trim
-      trim(buf+13);	// strip spc, nl, cr ...
-      er->l=strlen(buf+13)>>1;
-      er->prid=cs_atoi(buf+3, 3, 0);	// ignore errors
-      er->caid=cs_atoi(buf+9, 2, 0);	// ignore errors
-      if (cs_atob(er->ecm, buf+13, er->l)<0)
+      trim((char *)buf+13);	// strip spc, nl, cr ...
+      er->l=strlen((char *)buf+13)>>1;
+      er->prid=cs_atoi((char *)buf+3, 3, 0);	// ignore errors
+      er->caid=cs_atoi((char *)buf+9, 2, 0);	// ignore errors
+      if (cs_atob(er->ecm, (char *)buf+13, er->l)<0)
       {
         cs_log("illegal characters in ecm-request");
         return(1);
@@ -757,7 +757,7 @@ static int oscam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int l)
       if( dsr9500type==P_DSR_WITHSID )
       {
         er->l-=2;
-        er->srvid=cs_atoi(buf+13+(er->l<<1), 2, 0);
+        er->srvid=cs_atoi((char *)buf+13+(er->l<<1), 2, 0);
       }
       break;
     case P_GS:
@@ -931,13 +931,13 @@ static int oscam_ser_send_ecm(ECM_REQUEST *er, uchar *buf)
     case P_DSR95:
       if( dsr9500type==P_DSR_WITHSID )
       {
-        sprintf(buf, "%c%08lX%04X%s%04X\n\r",
+        sprintf((char *)buf, "%c%08lX%04X%s%04X\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l), er->srvid);
         oscam_ser_send(buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
       }
       else
       {
-        sprintf(buf, "%c%08lX%04X%s\n\r",
+        sprintf((char *)buf, "%c%08lX%04X%s\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l));
         oscam_ser_send(buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
       }

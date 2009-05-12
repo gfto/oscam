@@ -241,7 +241,7 @@ int cryptoworks_card_init(uchar *atr, int atrsize)
   {
     uchar keybuf[256];
     BIGNUM *ipk;
-    if (search_boxkey(reader[ridx].caid[0], 0, keybuf))
+    if (search_boxkey(reader[ridx].caid[0], 0, (char *)keybuf))
     {
       ipk=BN_new();
       BN_bin2bn(cwexp, sizeof(cwexp), &exp);
@@ -270,7 +270,7 @@ int cryptoworks_card_init(uchar *atr, int atrsize)
     issuerid=cta_res[2];
   if (read_record(0xC0)>=16)
   {
-    strncpy(issuer, cta_res+2, sizeof(issuer)-1);
+    strncpy(issuer, (const char *)cta_res+2, sizeof(issuer)-1);
     trim(issuer);
   }
   else
@@ -281,7 +281,7 @@ int cryptoworks_card_init(uchar *atr, int atrsize)
   if (read_record(atr[8])>=7)
   {
     cta_res[6]=0;
-    pin=cta_res+2;
+    pin=(char *)cta_res+2;
   }
   cs_ri_log("issuer: %s, id: %02X, bios: v%d, pin: %s, mfid: %04X", issuer, issuerid, atr[7], pin, mfid);
   cs_ri_log("providers: %d (%s)", reader[ridx].nprov, ptxt+1);
@@ -577,7 +577,7 @@ int cryptoworks_card_info(void)
     select_file(0x0e, 0x11);		// read provider name
     if (read_record(0xD6)>=16)
     {
-      strncpy(l_name+8, cta_res+2, sizeof(l_name)-9);
+      strncpy(l_name+8, (const char *)cta_res+2, sizeof(l_name)-9);
       l_name[sizeof(l_name)]=0;
       trim(l_name+8);
     }
@@ -597,7 +597,7 @@ int cryptoworks_card_info(void)
           chid_date(cta_res+28, ds, sizeof(ds)-1);
           chid_date(cta_res+30, de, sizeof(de)-1);
           cs_ri_log("chid: %02X%02X, date: %s - %s, name: %s",
-                    cta_res[6], cta_res[7], ds, de, trim(cta_res+10));
+                    cta_res[6], cta_res[7], ds, de, trim((char *) cta_res+10));
         }
       }
     }
@@ -618,7 +618,7 @@ int cryptoworks_card_info(void)
           chid_date(cta_res+30, de, sizeof(de)-1);
           cta_res[27]=0;
           cs_ri_log("chid: %02X%02X, date: %s - %s, name: %s",
-                    cta_res[6], cta_res[7], ds, de, trim(cta_res+10));
+                    cta_res[6], cta_res[7], ds, de, trim((char *)cta_res+10));
         }
       }
     }

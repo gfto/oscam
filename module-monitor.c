@@ -65,10 +65,10 @@ static int secmon_auth_client(uchar *ucrc)
   crc=(ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3];
   for (account=cfg->account; (account) && (!auth); account=account->next)
     if ((account->monlvl) &&
-       (crc==crc32(0L, MD5(account->usr, strlen(account->usr), NULL), 16)))
+       (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), NULL), 16)))
     {
       memcpy(client[cs_idx].ucrc, ucrc, 4);
-      aes_set_key(MD5(account->pwd, strlen(account->pwd), NULL));
+      aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), NULL));
       if (cs_auth_client(account, NULL))
         cs_exit(0);
       auth=1;
@@ -96,7 +96,7 @@ int monitor_send_idx(int idx, char *txt)
   buf[9]=l=strlen(txt);
   l=boundary(4, l+5)+5;
   memcpy(buf+1, client[idx].ucrc, 4);
-  strcpy(buf+10, txt);
+  strcpy((char *)buf+10, txt);
   memcpy(buf+5, i2b(4, crc32(0L, buf+10, l-10)), 4);
   aes_encrypt_idx(idx, buf+5, l-5);
   return(sendto(client[idx].udp_fd, buf, l, 0,
@@ -166,7 +166,7 @@ static int monitor_recv(uchar *buf, int l)
     uchar *p;
     monitor_check_ip();
     buf[n]='\0';
-    if ((p=strchr(buf, 10)) && (bpos=n-(p-buf)-1))
+    if ((p=(uchar *)strchr((char *)buf, 10)) && (bpos=n-(p-buf)-1))
     {
       memcpy(bbuf, p+1, bpos);
       n=p-buf;
@@ -174,7 +174,7 @@ static int monitor_recv(uchar *buf, int l)
     }
   }
   buf[n]='\0';
-  if (n=strlen(trim(buf)))
+  if (n=strlen(trim((char *)buf)))
     client[cs_idx].last=time((time_t *) 0);
   return(n);
 }
@@ -404,7 +404,7 @@ static void monitor_process_details_reader(int pid, int idx)
   int r_idx;
   char *p;
   if ((r_idx=cs_idx2ridx(idx))>=0)
-    for (p=reader[r_idx].init_history; *p; p+=strlen(p)+1)
+    for (p=(char *)reader[r_idx].init_history; *p; p+=strlen(p)+1)
       monitor_send_details(p, pid);
   else
     monitor_send_details("Missing reader index !", pid);
@@ -536,7 +536,7 @@ static void monitor_server()
   int n;
   client[cs_idx].typ='m';
   while (((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>=0) &&
-           monitor_process_request(mbuf));
+           monitor_process_request((char *)mbuf));
   cs_disconnect_client();
 }
 

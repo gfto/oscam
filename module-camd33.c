@@ -62,7 +62,7 @@ static int camd33_auth_client(in_addr_t ip)
         client[cs_idx].crypted=0;
   }
   if (client[cs_idx].crypted)
-    aes_set_key(cfg->c33_key);
+    aes_set_key((char *) cfg->c33_key);
 
   mbuf[0]=0;
   camd33_send(mbuf, 1);	// send login-request
@@ -73,13 +73,13 @@ static int camd33_auth_client(in_addr_t ip)
     if ((i>0) && (!mbuf[0]))
     {
       usr=mbuf+1;
-      pwd=usr+strlen(usr)+2;
+      pwd=usr+strlen((char *)usr)+2;
     }
     else
       memcpy(camdbug+1, mbuf, camdbug[0]=i);
   }
   for (rc=-1, account=cfg->account; (usr) && (account) && (rc<0); account=account->next)
-    if ((!strcmp(usr, account->usr)) && (!strcmp(pwd, account->pwd)))
+    if ((!strcmp((char *)usr, account->usr)) && (!strcmp((char *)pwd, account->pwd)))
       rc=cs_auth_client(account, NULL);
   if (!rc)
     camd33_request_emm();

@@ -360,7 +360,7 @@ int irdeto_card_info(void)
       {
         reader[ridx].prid[i][4]=p++;
         memcpy(&reader[ridx].prid[i][0], cta_res, 4);
-        sprintf(buf+strlen(buf), ",%06lx", b2i(3, &reader[ridx].prid[i][1]));
+        sprintf((char *) buf+strlen((char *)buf), ",%06lx", b2i(3, &reader[ridx].prid[i][1]));
       }
       else
         reader[ridx].prid[i][0]=0xf;

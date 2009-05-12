@@ -136,7 +136,7 @@ int seca_card_init(uchar *atr, int atrsize)
       if (!set_provider_info(i))
         return(0);
       else
-	sprintf(buf+strlen(buf), ",%04lX", b2i(2, &reader[ridx].prid[i][2])); 
+	sprintf((char *) buf+strlen((char *)buf), ",%04lX", b2i(2, &reader[ridx].prid[i][2])); 
     }
 
   cs_ri_log("providers: %d (%s)", reader[ridx].nprov, buf+1);
@@ -176,7 +176,7 @@ int seca_do_ecm(ECM_REQUEST *er)
   int i;
 
 //  i=get_prov_index(er->ecm[3],er->ecm[4]);
-  i=get_prov_index(er->ecm+3);
+  i=get_prov_index((char *) er->ecm+3);
   if ((i == -1) || (reader[ridx].availkeys[i][0] == 0)) //if provider not found or expired
   	return (0);
   ins3c[2]=i;
@@ -217,7 +217,7 @@ int seca_do_emm(EMM_PACKET *ep)
 	//to test if SA matches
 	//first find out prov id
 //	i=get_prov_index(ep->emm[3],ep->emm[4]);
-	i=get_prov_index(ep->emm+3);
+	i=get_prov_index((char *) ep->emm+3);
 	if (i == -1) 
 		return(0);
 	else //prov id found, now test for SA (only first 3 bytes, custom byte does not count)
@@ -251,7 +251,7 @@ int seca_do_emm(EMM_PACKET *ep)
 			cs_log("EMM: Unique update matched EMM Serial:%02X%02X%02X%02X%02X.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8]);
 			//first find out prov id
 //			i=get_prov_index(ep->emm[9],ep->emm[10]);
-			i=get_prov_index(ep->emm+9);
+			i=get_prov_index((char *) ep->emm+9);
 			if (i==-1) 
 				return(0);
 			ins40[3]=ep->emm[12];

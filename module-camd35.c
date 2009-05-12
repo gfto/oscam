@@ -39,11 +39,11 @@ static int camd35_auth_client(uchar *ucrc)
   client[cs_idx].crypted=1;
   crc=(ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3];
   for (account=cfg->account; (account) && (!upwd[0]); account=account->next)
-    if (crc==crc32(0L, MD5(account->usr, strlen(account->usr), NULL), 16))
+    if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), NULL), 16))
     {
       memcpy(client[cs_idx].ucrc, ucrc, 4);
-      strcpy(upwd, account->pwd);
-      aes_set_key(MD5(upwd, strlen(upwd), NULL));
+      strcpy((char *)upwd, account->pwd);
+      aes_set_key((char *) MD5(upwd, strlen((char *)upwd), NULL));
       rc=cs_auth_client(account, NULL);
     }
   return(rc);
@@ -287,9 +287,9 @@ static void camd35_server()
 
 static void casc_set_account()
 {
-  strcpy(upwd, reader[ridx].r_pwd);
-  memcpy(client[cs_idx].ucrc, i2b(4, crc32(0L, MD5(reader[ridx].r_usr, strlen(reader[ridx].r_usr), NULL), 16)), 4);
-  aes_set_key(MD5(upwd, strlen(upwd), NULL));
+  strcpy((char *)upwd, reader[ridx].r_pwd);
+  memcpy(client[cs_idx].ucrc, i2b(4, crc32(0L, MD5((unsigned char *)reader[ridx].r_usr, strlen(reader[ridx].r_usr), NULL), 16)), 4);
+  aes_set_key((char *)MD5(upwd, strlen((char *)upwd), NULL));
   client[cs_idx].crypted=1;
 }
 
@@ -463,21 +463,21 @@ static int camd35_recv_log(ushort *caid, ulong *provid, ushort *srvid)
   if ((i=recv(logfd, buf, sizeof(buf), 0))<=0) return(-1);
   buf[i]=0;
 
-  if (!(ptr=strstr(buf, " -> "))) return(-1);
+  if (!(ptr=(uchar *)strstr((char *)buf, " -> "))) return(-1);
   ptr+=4;
-  if (strstr(ptr, " decoded ")) return(-1);	// skip "found"s
-  if (!(ptr2=strchr(ptr, ' '))) return(-1);	// corrupt
+  if (strstr((char *)ptr, " decoded ")) return(-1);	// skip "found"s
+  if (!(ptr2=(uchar *)strchr((char *)ptr, ' '))) return(-1);	// corrupt
   *ptr2=0;
   
-  for (i=0, ptr2=strtok(ptr, ":"); ptr2; i++, ptr2=strtok(NULL, ":"))
+  for (i=0, ptr2=(uchar *)strtok((char *)ptr, ":"); ptr2; i++, ptr2=(uchar *)strtok(NULL, ":"))
   {
-    trim(ptr2);
+    trim((char *)ptr2);
     switch(i)
     {
-      case 0: *caid  =cs_atoi(ptr2, strlen(ptr2)>>1, 0); break;
-      case 1: *provid=cs_atoi(ptr2, strlen(ptr2)>>1, 0); break;
-      case 2: *srvid =cs_atoi(ptr2, strlen(ptr2)>>1, 0); break;
-      case 3: idx    =cs_atoi(ptr2, strlen(ptr2)>>1, 0); break;
+      case 0: *caid  =cs_atoi((char *)ptr2, strlen((char *)ptr2)>>1, 0); break;
+      case 1: *provid=cs_atoi((char *)ptr2, strlen((char *)ptr2)>>1, 0); break;
+      case 2: *srvid =cs_atoi((char *)ptr2, strlen((char *)ptr2)>>1, 0); break;
+      case 3: idx    =cs_atoi((char *)ptr2, strlen((char *)ptr2)>>1, 0); break;
     }
     if (errno) return(-1);
   }

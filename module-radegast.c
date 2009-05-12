@@ -95,7 +95,7 @@ static void radegast_process_ecm(uchar *buf, int l)
         break;
       case  6:		// PROVID (ASCII)
         n=(sl>6) ? 3 : (sl>>1);
-        er->prid=cs_atoi(buf+i+2+sl-(n<<1), n, 0);
+        er->prid=cs_atoi((char *) buf+i+2+sl-(n<<1), n, 0);
         break;
       case  7:		// KEYNR (ASCII), not needed
         break;

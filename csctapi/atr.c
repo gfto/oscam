@@ -572,11 +572,7 @@ int ATR_GetFsMax (ATR * atr, unsigned long *fsmax)
 static bool ATR_GetNextByte (IO_Serial * io, unsigned timeout, BYTE * byte, bool invert)
 {
 	bool ret;
-#ifdef OS_MACOSX
-	ret = IO_Serial_Read_MacOSX (io, timeout, 1, byte);
-#else	
 	ret = IO_Serial_Read (io, timeout, 1, byte);
-#endif
 	/* Para tarjetas inversas quiza */
 	if (invert)
 		(*byte) = ~(INVERT_BYTE (*byte));

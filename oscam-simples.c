@@ -4,8 +4,8 @@ static AES_KEY	aeskey;
 
 void aes_set_key(char *key)
 {
-  AES_set_decrypt_key(key, 128, &aeskey);
-  AES_set_encrypt_key(key, 128, &client[cs_idx].aeskey);
+  AES_set_decrypt_key((const unsigned char *)key, 128, &aeskey);
+  AES_set_encrypt_key((const unsigned char *)key, 128, &client[cs_idx].aeskey);
 }
 
 void aes_decrypt(uchar *buf, int n)

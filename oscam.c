@@ -152,7 +152,12 @@ static void usage()
 }
 
 #ifdef NEED_DAEMON
+#ifdef OS_MACOSX
+// this is done because daemon is being deprecated starting with 10.5 and -Werror will always trigger an error
+static int daemon_compat(int nochdir, int noclose)
+#else
 static int daemon(int nochdir, int noclose)
+#endif
 {
   int fd;
 
@@ -336,7 +341,7 @@ static void cs_reinit_clients()
           break;
 
       if (account && 
-          client[i].pcrc==crc32(0L, MD5(account->pwd, strlen(account->pwd), NULL), 16)) 
+          client[i].pcrc==crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), NULL), 16)) 
       {
         client[i].grp     = account->grp;
         client[i].au      = account->au;
@@ -839,7 +844,7 @@ static void *cs_client_resolve(void *dummy)
     for (account=cfg->account; account; account=account->next)
       if (account->dyndns[0])
       {
-        if (rht=gethostbyname(account->dyndns))
+        if (rht=gethostbyname((const char *)account->dyndns))
         {
           memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
           account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
@@ -994,6 +999,10 @@ static void init_cardreader()
 
 static void init_service(int srv)
 {
+#ifdef USE_PTHREAD
+   uchar dummy[1]={0x00};
+#endif
+
   switch(cs_fork(0, srv))
   {
     case -1:
@@ -1007,7 +1016,11 @@ static void init_service(int srv)
 #ifdef CS_ANTICASC
         case 96: start_anticascader();
 #endif
+#ifdef USE_PTHREAD
+        case 97: cs_logger(dummy);
+#else
         case 97: cs_logger();
+#endif
         case 98: start_resolver();
       }
   }
@@ -1085,7 +1098,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
           client[cs_idx].fchid = account->fchid;  // CHID filter
           client[cs_idx].sidtabok= account->sidtabok;   // services
           client[cs_idx].sidtabno= account->sidtabno;   // services
-          client[cs_idx].pcrc  = crc32(0L, MD5(account->pwd, strlen(account->pwd), NULL), 16);
+          client[cs_idx].pcrc  = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), NULL), 16);
           memcpy(&client[cs_idx].ttab, &account->ttab, sizeof(client[cs_idx].ttab));
 #ifdef CS_ANTICASC
           ac_init_client(account);
@@ -1885,10 +1898,10 @@ void cs_log_config()
   uchar buf[2048];
 
   if (cfg->nice!=99)
-    sprintf(buf, ", nice=%d", cfg->nice);
+    sprintf((char *)buf, ", nice=%d", cfg->nice);
   else
     buf[0]='\0';
-  cs_log("version=%s, system=%s%s", CS_VERSION_X, cs_platform(buf+64), buf);
+  cs_log("version=%s, system=%s%s", CS_VERSION_X, cs_platform((char *)buf+64), buf);
   cs_log("max. clients=%d, client max. idle=%d sec",
 #ifdef CS_ANTICASC
          CS_MAXPID-3, cfg->cmaxidle);
@@ -1896,9 +1909,9 @@ void cs_log_config()
          CS_MAXPID-2, cfg->cmaxidle);
 #endif
   if( cfg->max_log_size )
-    sprintf(buf, "%d Kb", cfg->max_log_size);
+    sprintf((char *)buf, "%d Kb", cfg->max_log_size);
   else
-    strcpy(buf, "unlimited");
+    strcpy((char *)buf, "unlimited");
   cs_log("max. logsize=%s", buf);
   cs_log("client timeout=%d sec, cache delay=%d msec",
          cfg->ctimeout, cfg->delay);
@@ -1984,7 +1997,11 @@ int main (int argc, char *argv[])
   fd_c2m=fdp[1];
   gfd=mfdr+1;
 
+#ifdef OS_MACOSX
+  if (bg && daemon_compat(1,0))
+#else
   if (bg && daemon(1,0))
+#endif
   {
     cs_log("Error starting in background (errno=%d)", errno);
     cs_exit(1);
@@ -2070,7 +2087,7 @@ int main (int argc, char *argv[])
             if (ph[i].type==MOD_CONN_UDP)
             {
               cs_set_mloc(-1, "event: udp-socket");
-              if ((n=recvfrom(ph[i].ptab->ports[j].fd, buf+3, sizeof(buf)-3, 0, (struct sockaddr *)&cad, &scad))>0)
+              if ((n=recvfrom(ph[i].ptab->ports[j].fd, buf+3, sizeof(buf)-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0)
               {
                 int idx;
                 idx=idx_from_ip(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
@@ -2117,7 +2134,7 @@ int main (int argc, char *argv[])
             else
             {
               cs_set_mloc(-1, "event: tcp-socket");
-              if ((pfd=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, &scad))>0)
+              if ((pfd=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0)
               {
                 switch(cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port)))
                 {

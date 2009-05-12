@@ -442,9 +442,9 @@ static void chk_t_gbox(char *token, char *value)
 //  if (!strcmp(token, "password")) strncpy(cfg->gbox_pwd, i2b(4, a2i(value, 4)), 4);
   if (!strcmp(token, "password")) cs_atob(cfg->gbox_pwd, value, 4);
   if (!strcmp(token, "maxdist")) cfg->maxdist=atoi(value);
-  if (!strcmp(token, "ignorelist")) strncpy(cfg->ignorefile, value, sizeof(cfg->ignorefile)-1);
-  if (!strcmp(token, "onlineinfos")) strncpy(cfg->gbxShareOnl, value, sizeof(cfg->gbxShareOnl)-1);
-  if (!strcmp(token, "cardinfos")) strncpy(cfg->cardfile, value, sizeof(cfg->cardfile)-1);
+  if (!strcmp(token, "ignorelist")) strncpy((char *)cfg->ignorefile, value, sizeof(cfg->ignorefile)-1);
+  if (!strcmp(token, "onlineinfos")) strncpy((char *)cfg->gbxShareOnl, value, sizeof(cfg->gbxShareOnl)-1);
+  if (!strcmp(token, "cardinfos")) strncpy((char *)cfg->cardfile, value, sizeof(cfg->cardfile)-1);
   if (!strcmp(token, "locals"))
   {
     char *ptr1;
@@ -529,7 +529,7 @@ int search_boxkey(ushort caid, ulong provid, char *key)
       *c_key++='\0';
       if (word_atob(trim(c_caid))!=caid) continue;
       if ((i=(strlen(trim(c_key))>>1))>256) continue;
-      if (cs_atob(key, c_key, i)<0)
+      if (cs_atob((uchar *)key, c_key, i)<0)
       {
         cs_log("wrong key in \"%s\"", cs_cert);
         continue;
@@ -634,7 +634,7 @@ static void chk_account(char *token, char *value, struct s_auth *account)
   char *ptr1;//, *ptr2;
   if (!strcmp(token, "user")) strncpy(account->usr, value, sizeof(account->usr)-1);
   if (!strcmp(token, "pwd")) strncpy(account->pwd, value, sizeof(account->pwd)-1);
-  if (!strcmp(token, "hostname")) strncpy(account->dyndns, value, sizeof(account->dyndns)-1);
+  if (!strcmp(token, "hostname")) strncpy((char *)account->dyndns, value, sizeof(account->dyndns)-1);
   if (!strcmp(token, "betatunnel")) chk_tuntab(value, &account->ttab);
   if (!strcmp(token, "uniq")) account->uniq=atoi(value);
   if (!strcmp(token, "sleep")) account->tosleep=atoi(value);
@@ -938,7 +938,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       exit(1);
     }
   }
-  if (!strcmp(token, "password")) strncpy(rdr->gbox_pwd, i2b(4, a2i(value, 4)), 4);
+  if (!strcmp(token, "password")) strncpy((char *)rdr->gbox_pwd, (const char *)i2b(4, a2i(value, 4)), 4);
   if (!strcmp(token, "premium")) rdr->gbox_prem=1;
   if (!strcmp(token, "account"))
     for (i=0, ptr=strtok(value, ","); (i<2)&&(ptr); ptr=strtok(NULL, ","), i++)

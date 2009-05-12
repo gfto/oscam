@@ -165,7 +165,7 @@ static void write_to_log(int flag, char *txt)
     {
 */
       if ((*log_fd) && (client[cs_idx].typ!='l') && (client[cs_idx].typ!='a'))
-        write_to_pipe(*log_fd, PIP_ID_LOG, buf+8, strlen(buf+8));
+        write_to_pipe(*log_fd, PIP_ID_LOG, (uchar *) buf+8, strlen(buf+8));
       else
         cs_write_log(buf+8);
 //    }

@@ -80,7 +80,7 @@ macosx-native:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_MACOSX -DCS_NOSHM -DCS_CONFDIR=${CS_CONFDIR}" \
+		DS_OPTS="-O2 -DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD -DCS_CONFDIR=${CS_CONFDIR} -Winline -Werror -finline-functions -fomit-frame-pointer" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
