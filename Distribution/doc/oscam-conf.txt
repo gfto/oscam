@@ -60,6 +60,7 @@ ServerIP      = listener auf bestimmte ip binden. dies ist dann
                 um zugriffe zu reglementieren sollte eine firewall dienen.
                 wer mit dieser info nichts anfangen kann brauchts nicht.
                 empfehlung: diesen Parameter nicht verwenden.
+UnlockParental = unlock parental mode
 
 
 [monitor]
