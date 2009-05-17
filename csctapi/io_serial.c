@@ -39,8 +39,8 @@
 #else
 #include <sys/signal.h>
 #include <sys/types.h>
-#include <sys/time.h>
 #endif
+#include <sys/time.h>
 #include <sys/ioctl.h>
 #include <time.h>
 #include "io_serial.h"
