@@ -522,7 +522,7 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 #ifdef DEBUG_IO
       printf("IO: SMARTREADER .. switching to frequency to %2.2fMHz\n", (float)mhz/100.0);
 #endif
-      if(!IO_Serial_Set_Smartreader_Freq(io,mhz))
+      if(!IO_Serial_Set_Smartreader_Freq(io,mhz,reader_irdeto_mode))
       {
 #ifdef DEBUG_IO
          printf("IO: SMARTREADER .. ERROR switching to 6MHz\n");
@@ -1122,7 +1122,7 @@ static bool IO_Serial_InitPnP (IO_Serial * io)
 }
 
 
-bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq)
+bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq, int irdeto_mode)
  {
    struct termios term;
    struct termios orig;
@@ -1149,6 +1149,9 @@ bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq)
 
    // printf("fr = %02x %02x %02x\n" , fr[0],fr[1],fr[2]);
    
+   if(irdeto_mode)
+      nn[1]=0x01;
+      
    // send the commands
    IO_Serial_Write (io, 0, 4, fi_di);
    IO_Serial_Flush(io);
