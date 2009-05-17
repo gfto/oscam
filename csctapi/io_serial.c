@@ -163,7 +163,7 @@ bool IO_Serial_DTR_RTS(IO_Serial * io, int dtr, int set)
  * Public functions definition
  */
 
-IO_Serial * IO_Serial_New (void)
+IO_Serial * IO_Serial_New (int reader_type)
 {
 	IO_Serial *io;
 	
@@ -171,6 +171,8 @@ IO_Serial * IO_Serial_New (void)
 	
 	if (io != NULL)
 		IO_Serial_Clear (io);
+	
+	io->reader_type=reader_type;
 	
 	return io;
 }
@@ -507,15 +509,31 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
    if(io->com==RTYP_SCI)
       return FALSE;
 #endif
-
+   
    //	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, props->input_bitrate, props->bits, props->parity == IO_SERIAL_PARITY_EVEN ? "Even" : props->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", props->stopbits, props->dtr, props->rts);
    memset (&newtio, 0, sizeof (newtio));
    /* Set the bitrate */
    
    extern int mhz;
    extern int reader_irdeto_mode;
+
+   if(io->reader_type==RTYP_SMART)
+   {
+#ifdef DEBUG_IO
+      printf("IO: SMARTREADER .. switching to frequency to %2.2fMHz\n", (float)mhz/100.0);
+#endif
+      if(!IO_Serial_Set_Smartreader_Freq(io,mhz))
+      {
+#ifdef DEBUG_IO
+         printf("IO: SMARTREADER .. ERROR switching to 6MHz\n");
+#endif
+         return FALSE;
+      }
+   }
+
    if (mhz == 600)
    {
+      
       /* for 6MHz */
       if (reader_irdeto_mode)
       {
@@ -1102,3 +1120,57 @@ static bool IO_Serial_InitPnP (IO_Serial * io)
 	io->PnP_id_size = i;
 		return TRUE;
 }
+
+
+bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq)
+ {
+   struct termios term;
+   struct termios orig;
+   unsigned int u;
+   unsigned char fi_di[4]={0x01, 0x01, 0x74, 0x01};
+   unsigned char fr[3]={0x02, 0x00, 0x00};
+   unsigned char nn[2]={0x03, 0x00};
+   unsigned char pr[2]={0x04, 0x00};
+   unsigned char in[2]={0x05, 0x00};
+   
+   orig=term;
+     
+   /* set smartreader in CMD mode */
+   tcgetattr(io->fd, &term);
+   
+   term.c_cflag &= ~CSIZE;
+   term.c_cflag |= CS5;
+   cfsetospeed(&term, 9600);
+   cfsetispeed(&term, 9600);
+   tcsetattr(io->fd, TCSANOW, &term);
+   freq*=10;
+   fr[1]=(unsigned char)((freq & 0xff00)>>8);
+   fr[2]=(unsigned char)(freq & 0x00ff);
+
+   // printf("fr = %02x %02x %02x\n" , fr[0],fr[1],fr[2]);
+   
+   // send the commands
+   IO_Serial_Write (io, 0, 4, fi_di);
+   IO_Serial_Flush(io);
+   
+   IO_Serial_Write (io, 0, 3, fr);
+   IO_Serial_Flush(io);
+
+   IO_Serial_Write (io, 0, 2, nn);
+   IO_Serial_Flush(io);
+
+   IO_Serial_Write (io, 0, 3, pr);
+   IO_Serial_Flush(io);
+
+   IO_Serial_Write (io, 0, 2, in);
+   IO_Serial_Flush(io);
+      
+   /* set smartreader in DATA mode */
+   tcgetattr(io->fd, &orig);
+   orig.c_cflag &= ~CSIZE;
+   orig.c_cflag |= CS8;
+   tcsetattr(io->fd, TCSANOW, &orig);
+
+   return TRUE;
+ }
+ 

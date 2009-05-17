@@ -539,7 +539,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
                               pid, reader[ridx].device);
                      else
                      {
-                       if (reader[ridx].typ==R_MOUSE)
+                       if (reader[ridx].typ==R_MOUSE || reader[ridx].typ==R_SMART)
                          cs_log("reader started (pid=%d, device=%s, detect=%s%s, mhz=%d)",
                                 pid, reader[ridx].device,
                                 reader[ridx].detect&0x80 ? "!" : "",

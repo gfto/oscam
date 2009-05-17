@@ -28,6 +28,7 @@ static int reader_device_type(char *device, int typ)
   switch(reader[ridx].typ)
   {
     case R_MOUSE:
+    case R_SMART:
       rc=PORT_STD;
 #ifdef TUXBOX
       if (!stat(device, &sb))
@@ -234,7 +235,7 @@ int reader_device_init(char *device, int typ)
   cs_ptyp_orig=cs_ptyp;
   cs_ptyp=D_DEVICE;
   snprintf(oscam_device, sizeof(oscam_device), "%s", device);
-  if ((rc=CT_init(1, reader_device_type(device, typ)))!=OK)
+  if ((rc=CT_init(1, reader_device_type(device, typ),reader[ridx].typ))!=OK)
     cs_log("Cannot open device: %s", device);
   cs_debug("ct_init on %s: %d", device, rc);
   cs_ptyp=cs_ptyp_orig;

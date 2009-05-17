@@ -67,7 +67,7 @@ CardTerminal_New ();
 
 /* Intialice a CardTerminal in a given port */
 extern char 
-CardTerminal_Init (CardTerminal * ct, unsigned short pn);
+CardTerminal_Init (CardTerminal * ct, unsigned short pn, int reader_type);
 
 /* Send a CT-BCS command to a CardTerminal */
 extern char

@@ -112,6 +112,7 @@
 
 #define R_MOUSE			0x1	// Reader smartcard mouse
 #define R_INTERN		0x2	// Reader smartcard intern
+#define R_SMART		0x5	// Smartreader+
 #define R_CAMD35		0x10	// Reader cascading camd 3.5x
 #define R_CAMD33		0x11	// Reader cascading camd 3.3x
 #define R_NEWCAMD		0x12	// Reader cascading newcamd

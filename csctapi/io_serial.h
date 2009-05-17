@@ -74,6 +74,7 @@ typedef struct
 	unsigned PnP_id_size;			/* Length of PnP Id */
 	bool usbserial;			/* Is serial USB device */
 	int wr;
+	int reader_type;
 }
 IO_Serial;
 
@@ -84,7 +85,7 @@ IO_Serial;
 /* IO_Serial creation and deletion */
 //extern void IO_Serial_Reopen (IO_Serial * io);
 extern void IO_Serial_Flush (IO_Serial * io);
-extern IO_Serial *IO_Serial_New (void);
+extern IO_Serial *IO_Serial_New (int reader_type);
 extern void IO_Serial_Delete (IO_Serial * io);
 
 /* Initialization and closing */
@@ -104,11 +105,12 @@ extern void IO_Serial_Ioctl_Lock(IO_Serial *, int);
 /* Input and output */
 extern bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * data);
 extern bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE * data);
-extern bool IO_Serial_Read_MacOSX (IO_Serial * io, unsigned timeout, unsigned size, BYTE * data);
-extern bool IO_Serial_Write_MAcOSX (IO_Serial * io, unsigned delay, unsigned size, BYTE * data);
 
 /* Serial port atributes */
 extern unsigned IO_Serial_GetCom (IO_Serial * io);
 extern void IO_Serial_GetPnPId (IO_Serial * io, BYTE * pnp_id, unsigned *length);
+
+/* smartreader Frequency set */
+extern bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq);
 
 #endif /* IO_SERIAL */
