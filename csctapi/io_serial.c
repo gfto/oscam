@@ -1143,12 +1143,13 @@ bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq, int irdeto_mode)
    cfsetospeed(&term, 9600);
    cfsetispeed(&term, 9600);
    tcsetattr(io->fd, TCSANOW, &term);
+   
+   // our freq comes in as 358, 357 or 600 so it needs this to be in KHz for the FR command
    freq*=10;
    fr[1]=(unsigned char)((freq & 0xff00)>>8);
    fr[2]=(unsigned char)(freq & 0x00ff);
 
-   // printf("fr = %02x %02x %02x\n" , fr[0],fr[1],fr[2]);
-   
+   // Irdeto card supposedly need NN set to 1 .. to be confirmed
    if(irdeto_mode)
       nn[1]=0x01;
       
@@ -1162,7 +1163,7 @@ bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq, int irdeto_mode)
    IO_Serial_Write (io, 0, 2, nn);
    IO_Serial_Flush(io);
 
-   IO_Serial_Write (io, 0, 3, pr);
+   IO_Serial_Write (io, 0, 2, pr);
    IO_Serial_Flush(io);
 
    IO_Serial_Write (io, 0, 2, in);
