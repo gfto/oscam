@@ -362,7 +362,7 @@ static int status_ok(const unsigned char *status){
                || status[1] == 0xa0 || status[1] == 0xa1);
 }
 
-static int card_write(uchar *cmd, uchar *data, int wflag)
+static int card_write(const uchar *cmd, const uchar *data, int wflag)
 {
   int l;
   uchar buf[256];
@@ -412,7 +412,7 @@ static int do_cmd(const unsigned char *ins, const unsigned char *txbuff, unsigne
     memcpy(rxbuff+5+len,cta_res+len,2);
     }
   else {
-    if(!write_cmd(ins2,(unsigned char *)txbuff) || !status_ok(cta_res)) return -2;
+    if(!write_cmd(ins2,txbuff) || !status_ok(cta_res)) return -2;
     memcpy(rxbuff,ins2,5);
     memcpy(rxbuff+5,txbuff,len);
     memcpy(rxbuff+5+len,cta_res,2);

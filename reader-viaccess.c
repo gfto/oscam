@@ -141,7 +141,7 @@ static int chk_prov(uchar *id, uchar keynr)
   return(rc);
 }
 
-static int card_write(uchar *cmd, uchar *data, int wflag)
+static int card_write(const uchar *cmd, const uchar *data, int wflag)
 {
   int l;
   uchar buf[256];
@@ -297,7 +297,7 @@ int viaccess_do_ecm(ECM_REQUEST *er)
     ins88[2]=ecmf8Len?1:0;
     ins88[3]=keynr;
     ins88[4]=ecm88Len;
-    write_cmd(ins88, (uchar *)ecm88Data);	// request dcw
+    write_cmd(ins88, ecm88Data);	// request dcw
     read_cmd(insc0, NULL);	// read dcw
     switch(cta_res[0])
     {
