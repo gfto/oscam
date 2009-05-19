@@ -462,14 +462,24 @@ int videoguard_card_init(uchar *atr, int atrsize)
   /* known atrs */
   unsigned char atr_bskyb[] = { 0x3F, 0x7F, 0x13, 0x25, 0x03, 0x33, 0xB0, 0x06, 0x69, 0xFF, 0x4A, 0x50, 0xD0, 0x00, 0x00, 0x53, 0x59, 0x00, 0x00, 0x00 };
   unsigned char atr_skyitalia[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
+  unsigned char atr_directv[] = { 0x3F, 0x78, 0x13, 0x25, 0x03, 0x40, 0xB0, 0x20, 0xFF, 0xFF, 0x4A, 0x50, 0x00 };
 
-  if ((atrsize == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atrsize) == 0)) {
-    cs_log("Type: Videoguard BSkyB");
-    /* BSkyB seems to need one additionnal byte in the serial communication... */
-    io_serial_need_dummy_char = 1;
-  } else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0)) {
-    cs_log("Type: Videoguard Sky Italia");
-  } else {
+   if ((atrsize == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atrsize) == 0))
+   {
+      cs_log("Type: Videoguard BSkyB");
+      /* BSkyB seems to need one additionnal byte in the serial communication... */
+      io_serial_need_dummy_char = 1;
+   }
+   else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
+   {
+      cs_log("Type: Videoguard Sky Italia");
+   }
+   else if ((atrsize == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atrsize) == 0))
+   {
+      cs_log("Type: Videoguard DirecTV");
+   }
+   else
+   {
     /* not a known videoguard */
     return (0);
   }
