@@ -966,6 +966,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   if (!strcmp(token, "fallback")) rdr->fallback=atoi(value) ? 1 : 0;
   if (!strcmp(token, "logport")) rdr->log_port=atoi(value);
   if (!strcmp(token, "caid")) chk_caidtab(value, &rdr->ctab);
+  if (!strcmp(token, "boxid")) rdr->boxid=a2i(value,4);
   if (!strcmp(token, "detect"))
     for (i=0; RDR_CD_TXT[i]; i++)
     {

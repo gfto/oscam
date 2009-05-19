@@ -461,28 +461,33 @@ int videoguard_card_init(uchar *atr, int atrsize)
 {
   /* known atrs */
   unsigned char atr_bskyb[] = { 0x3F, 0x7F, 0x13, 0x25, 0x03, 0x33, 0xB0, 0x06, 0x69, 0xFF, 0x4A, 0x50, 0xD0, 0x00, 0x00, 0x53, 0x59, 0x00, 0x00, 0x00 };
+  unsigned char atr_bskyb_new[] = { 0x3F, 0xFD, 0x13, 0x25, 0x02, 0x50, 0x00, 0x0F, 0x33, 0xB0, 0x0F, 0x69, 0xFF, 0x4A, 0x50, 0xD0, 0x00, 0x00, 0x53, 0x59, 0x02 };
   unsigned char atr_skyitalia[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
   unsigned char atr_directv[] = { 0x3F, 0x78, 0x13, 0x25, 0x03, 0x40, 0xB0, 0x20, 0xFF, 0xFF, 0x4A, 0x50, 0x00 };
 
-   if ((atrsize == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atrsize) == 0))
-   {
-      cs_log("Type: Videoguard BSkyB");
-      /* BSkyB seems to need one additionnal byte in the serial communication... */
-      io_serial_need_dummy_char = 1;
-   }
-   else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
-   {
-      cs_log("Type: Videoguard Sky Italia");
-   }
-   else if ((atrsize == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atrsize) == 0))
-   {
-      cs_log("Type: Videoguard DirecTV");
-   }
-   else
-   {
-    /* not a known videoguard */
-    return (0);
-  }
+    if ((atrsize == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atrsize) == 0))
+    {
+        cs_log("Type: Videoguard BSkyB");
+        /* BSkyB seems to need one additionnal byte in the serial communication... */
+        io_serial_need_dummy_char = 1;
+    }
+    else if ((atrsize == sizeof (atr_bskyb_new)) && (memcmp (atr, atr_bskyb_new, atrsize) == 0))
+    {
+        cs_log("Type: Videoguard BSkyB - New");
+    }
+    else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
+    {
+        cs_log("Type: Videoguard Sky Italia");
+    }
+    else if ((atrsize == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atrsize) == 0))
+    {
+        cs_log("Type: Videoguard DirecTV");
+    }
+    else
+    {
+        /* not a known videoguard */
+        return (0);
+    }
 
 #ifdef OS_LINUX
 #ifndef TUXBOX
@@ -547,25 +552,34 @@ int videoguard_card_init(uchar *atr, int atrsize)
     }
 
   unsigned char ins36[5] = { 0xD0,0x36,0x00,0x00,0x00 };
-  int boxidOK=0;
   unsigned char boxID [4];
 
-  l=do_cmd(ins36, NULL, buff);
-  if(l>=0) {
+  if (reader[ridx].boxid > 0) {
+    /* the boxid is specified in the config */
     int i;
-    for(i=0; i<l ;i++) {
-      if(buff[i]==0x00 && buff[i+1]==0xF3) {
-        memcpy(&boxID,&buff[i+2],sizeof(boxID));
-        boxidOK=1;
-        break;
+    for (i=0; i < 4; i++) {
+        boxID[i] = (reader[ridx].boxid >> (8 * (3 - i))) % 0x100;
+    }
+  } else {
+    /* we can try to get the boxid from the card */
+    int boxidOK=0;
+    l=do_cmd(ins36, NULL, buff);
+    if(l>=0) {
+      int i;
+      for(i=0; i<l ;i++) {
+        if(buff[i]==0x00 && buff[i+1]==0xF3) {
+          memcpy(&boxID,&buff[i+2],sizeof(boxID));
+          boxidOK=1;
+          break;
+          }
         }
       }
-    }
 
-  if(!boxidOK) {
-    cs_log ("no boxID available");
-    return 0;
-    }
+    if(!boxidOK) {
+      cs_log ("no boxID available");
+      return 0;
+      }
+  }
 
   unsigned char ins4C[5] = { 0xD0,0x4C,0x00,0x00,0x09 };
   unsigned char payload4C[9] = { 0,0,0,0, 3,0,0,2,4 };

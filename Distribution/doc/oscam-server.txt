@@ -92,3 +92,4 @@ CAID          = liste gueltiger caid's und mapping fuer diesen reader.
                 dieser parameter ist optional.
                 wird dieser parameter nicht gesetzt sind alle caid's
                 zunaechst erstmal gueltig und werden nicht gemapped.
+BoxID         = boxid für NDS
