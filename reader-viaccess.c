@@ -245,7 +245,7 @@ int viaccess_do_ecm(ECM_REQUEST *er)
   int ecm88Len=SCT_LEN(er->ecm)-4;
   ulong provid;
   int rc=0;
-  if(ecm88Data[0]==0xd2)
+  if(ecm88Data[0]==0xd2 && ecm88Data[1]==0x02)
   {
     // so what do we do with this TNTSAT / TNtop crap !!
     ecm88Data+=4;
