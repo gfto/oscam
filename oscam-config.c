@@ -978,6 +978,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
   if (!strcmp(token, "mhz"))
   {
+    if (!strcmp(value, "1000")) rdr->mhz=1000;
     if (!strcmp(value, "600")) rdr->mhz=600;
     if (!strcmp(value, "357")) rdr->mhz=357;
     if (!strcmp(value, "358")) rdr->mhz=358;
