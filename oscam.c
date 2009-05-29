@@ -1040,16 +1040,27 @@ void wait4master()
             cs_idx-cdiff, cs_inet_ntoa(client[cs_idx].ip));
 }
 
-static void cs_fake_client(char *usr)
+static void cs_fake_client(char *usr, int uniq, in_addr_t ip)
 {
-  int i;
-  for (i=cdiff+1; i<CS_MAXPID; i++)
-    if ((client[i].pid) && (client[i].typ=='c') &&
-        (!client[i].dup) && (!strcmp(client[i].usr, usr)))
-    {
-      client[i].dup=1;
-      client[i].au=(-1);
-      cs_log("client %d duplicate user '%s', set to fake", i-cdiff, usr);
+    /* - Uniq = 1: only one connection per user
+     * - Uniq = 2: set user only to fake if source ip is different (e.g. for
+     *             newcamd clients with different CAID's -> Ports)
+    */
+
+    int i;
+
+    for (i=cdiff+1; i<CS_MAXPID; i++) {
+        if (client[i].pid
+                && (client[i].typ == 'c')
+                && !client[i].dup
+                && !strcmp(client[i].usr, usr)
+                && ((uniq == 1)  || (client[i].ip != ip)))
+        {
+            client[cs_idx].dup = 1;
+            client[cs_idx].au = -1;
+            cs_log("client(%d) duplicate user '%s' from %s set to fake (uniq=%d)", cs_idx-cdiff, usr, cs_inet_ntoa(ip), uniq);
+            break;
+        }
     }
 }
 
@@ -1092,7 +1103,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
           client[cs_idx].tosleep=(60*account->tosleep);
           memcpy(&client[cs_idx].ctab, &account->ctab, sizeof(client[cs_idx].ctab));
           if (account->uniq)
-            cs_fake_client(account->usr);
+            cs_fake_client(account->usr, account->uniq, client[cs_idx].ip);
           client[cs_idx].ftab  = account->ftab;   // IDENT filter
           client[cs_idx].cltab = account->cltab;  // CLASS filter
           client[cs_idx].fchid = account->fchid;  // CHID filter

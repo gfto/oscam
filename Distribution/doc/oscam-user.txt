@@ -7,9 +7,10 @@ jede vollstaendige section wird dann als account verwendet.
 [account]
 User          = username. muss gesetzt sein !
 Pwd           = passwort. muss gesetzt sein !
-Uniq          = uniq kann 0 oder 1 sein, wobei 1 bedeutet, dass dieser benutzer
+Uniq          = uniq kann 0, 1 oder 2 sein, wobei 1 bedeutet, dass dieser benutzer
                 sich nicht zweimal zur gleichen zeit anmelden kann.
                 dieser parameter ist optional (default: Uniq=0)
+                uniq=2: same IP is OK
 MonLevel      = individuelle einstellung des zugangs zur monitor-funktion.
                 dieser wert ueberschreibt die standard-einstellung
                 in oscam.conf (siehe auch oscam.conf).
