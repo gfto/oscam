@@ -200,7 +200,7 @@ int casc_process_ecm(ECM_REQUEST *er)
   t=time((time_t *)0);
   for (n=0, i=sflag=1; i<CS_MAXPENDING; i++)
   {
-    if ((t-ecmtask[i].tps.time>cfg->ctimeout+1) &&
+    if ((t-ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
         (ecmtask[i].rc>=10))			// drop timeouts
         {
         	ecmtask[i].rc=0;
@@ -376,7 +376,7 @@ static int reader_listen(int fd1, int fd2)
 	cs_ftime(&tpe);
 	for(x=0;x<CS_MAXPENDING;x++){
 		ms=1000*(tpe.time-ecmtask[x].tps.time)+tpe.millitm-ecmtask[x].tps.millitm;
-		if(ecmtask[x].rc==10&& ms>(cfg->ctimeout*1000)&&ridx==ecmtask[x].gbxRidx){
+		if(ecmtask[x].rc == 10 && ms > cfg->ctimeout && ridx == ecmtask[x].gbxRidx){
 			//cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",ecmtask[x].rc,ecmtask[x].idx,x,ridx,ecmtask[x].gbxRidx);
 			ecmtask[x].rc=5;
 			send_dcw(&ecmtask[x]);

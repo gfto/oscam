@@ -388,7 +388,7 @@ static void monitor_process_details_master(char *buf, int pid)
   sprintf(buf, "max. logsize=%s", buf+200);
   monitor_send_details(buf, pid);
 
-  sprintf(buf, "client timeout=%d sec, cache delay=%ld msec", cfg->ctimeout, cfg->delay);
+  sprintf(buf, "client timeout=%lu ms, cache delay=%ld ms", cfg->ctimeout, cfg->delay);
   monitor_send_details(buf, pid);
 
 //#ifdef CS_NOSHM

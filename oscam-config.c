@@ -285,8 +285,19 @@ static void chk_t_global(char *token, char *value)
   if (!strcmp(token, "logfile")) strncpy(logfile, value, sizeof(logfile)-1);
   if (!strcmp(token, "pidfile")) strncpy(cfg->pidfile, value, sizeof(cfg->pidfile)-1);
   if (!strcmp(token, "usrfile")) strncpy(cfg->usrfile, value, sizeof(cfg->usrfile)-1);
-  if (!strcmp(token, "clienttimeout")) cfg->ctimeout=atoi(value);
-  if (!strcmp(token, "fallbacktimeout")) cfg->ftimeout=atoi(value);
+  if (!strcmp(token, "clienttimeout")) 
+  {
+      cfg->ctimeout = atoi(value);
+      if (cfg->ctimeout < 100)
+          cfg->ctimeout *= 1000;
+  }
+  if (!strcmp(token, "fallbacktimeout")) 
+  {
+      cfg->ftimeout = atoi(value);
+      if (cfg->ftimeout < 100)
+          cfg->ftimeout *= 1000;
+  }
+
   if (!strcmp(token, "clientmaxidle")) cfg->cmaxidle=atoi(value);
   if (!strcmp(token, "cachedelay")) cfg->delay=atoi(value);
   if (!strcmp(token, "bindwait")) cfg->bindwait=atoi(value);
@@ -302,7 +313,10 @@ static void chk_t_global(char *token, char *value)
   }
   if (!strcmp(token, "serialreadertimeout")) 
   {
-    cfg->srtimeout=atoi(value)*1000;
+    if (cfg->srtimeout < 100)
+      cfg->srtimeout = atoi(value) * 1000;
+    else
+      cfg->srtimeout = atoi(value);
     if( cfg->srtimeout <=0 )
       cfg->srtimeout=1500;
   }
@@ -561,7 +575,7 @@ int init_config()
 #endif
   cfg->nice=99;
   cfg->ctimeout=CS_CLIENT_TIMEOUT;
-  cfg->ftimeout=2;
+  cfg->ftimeout=CS_CLIENT_TIMEOUT / 2;
   cfg->cmaxidle=CS_CLIENT_MAXIDLE;
   cfg->delay=CS_DELAY;
   cfg->bindwait=CS_BIND_TIMEOUT;
@@ -605,18 +619,18 @@ int init_config()
   cs_init_log(logfile);
   if (cfg->ftimeout>=cfg->ctimeout)
   {
-    cfg->ftimeout=cfg->ctimeout+1;
-    cs_log("WARNING: fallbacktimeout adjusted to %d", cfg->ftimeout);
+    cfg->ftimeout = cfg->ctimeout - 100;
+    cs_log("WARNING: fallbacktimeout adjusted to %lu ms (must be smaller than clienttimeout (%lu ms))", cfg->ftimeout, cfg->ctimeout);
   }
-  if( cfg->ftimeout<(cfg->srtimeout/1000) )
+  if(cfg->ftimeout < cfg->srtimeout)
   {
-    cfg->ftimeout=(cfg->srtimeout/1000)+1;
-    cs_log("WARNING: fallbacktimeout adjusted to %d", cfg->ftimeout);
+    cfg->ftimeout = cfg->srtimeout + 100;
+    cs_log("WARNING: fallbacktimeout adjusted to %lu ms (must be greater than serialreadertimeout (%lu ms))", cfg->ftimeout, cfg->srtimeout);
   }
-  if( cfg->ctimeout<(cfg->srtimeout/1000) )
+  if(cfg->ctimeout < cfg->srtimeout)
   {
-    cfg->ctimeout=(cfg->srtimeout/1000)+1;
-    cs_log("WARNING: clienttimeout adjusted to %d", cfg->ctimeout);
+    cfg->ctimeout = cfg->srtimeout + 100;
+    cs_log("WARNING: clienttimeout adjusted to %lu ms (must be greater than serialreadertimeout (%lu ms))", cfg->ctimeout, cfg->srtimeout);
   }
 #ifdef CS_ANTICASC
   if( cfg->ac_denysamples+1>cfg->ac_samples )

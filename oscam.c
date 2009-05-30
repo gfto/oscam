@@ -1801,7 +1801,9 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
       int act, j;
       er=&ecmtask[i];
       tpc=er->tps;
-      tpc.time+=(er->stage) ? cfg->ctimeout : cfg->ftimeout;
+      tpc.millitm += (er->stage) ? cfg->ctimeout : cfg->ftimeout;
+      tpc.time += tpc.millitm / 1000;
+      tpc.millitm = tpc.millitm % 1000;
       if (!er->stage)
       {
         for (j=0, act=1; (act) && (j<CS_MAXREADER); j++)
@@ -1814,7 +1816,9 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
         {
           er->stage++;
           request_cw(er, er->stage);
-          tpc.time+=cfg->ctimeout-cfg->ftimeout;
+          tpc.millitm += (cfg->ctimeout-cfg->ftimeout);
+          tpc.time += tpc.millitm / 1000;
+          tpc.millitm = tpc.millitm % 1000;
         }
       }
       if (comp_timeb(&tpn, &tpc)>0) // action needed
@@ -1831,7 +1835,9 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
         {
           er->stage++;
           request_cw(er, er->stage);
-          tpc.time+=cfg->ctimeout-cfg->ftimeout;
+          tpc.millitm += (cfg->ctimeout-cfg->ftimeout);
+          tpc.time += tpc.millitm / 1000;
+          tpc.millitm = tpc.millitm % 1000;
         }
       }
       build_delay(&tpe, &tpc);
@@ -1854,7 +1860,7 @@ int process_input(uchar *buf, int l, int timeout)
   cs_ftime(&tp);
   tp.time+=timeout;
   if (ph[client[cs_idx].ctyp].watchdog)
-    alarm(cfg->cmaxidle+2);
+      alarm(cfg->cmaxidle + (cfg->ctimeout + 500) / 1000 + 1);
   while (1)
   {
     FD_ZERO(&fds);
@@ -1884,7 +1890,7 @@ int process_input(uchar *buf, int l, int timeout)
     }
   }
   if (ph[client[cs_idx].ctyp].watchdog)
-    alarm(cfg->cmaxidle+2);
+      alarm(cfg->cmaxidle + (cfg->ctimeout + 500) / 1000 + 1);
   return(rc);
 }
 
@@ -1924,8 +1930,8 @@ void cs_log_config()
   else
     strcpy((char *)buf, "unlimited");
   cs_log("max. logsize=%s", buf);
-  cs_log("client timeout=%d sec, cache delay=%d msec",
-         cfg->ctimeout, cfg->delay);
+  cs_log("client timeout=%lu ms, fallback timeout=%lu ms, cache delay=%d ms",
+         cfg->ctimeout, cfg->ftimeout, cfg->delay);
 #ifdef CS_NOSHM
   cs_log("shared memory initialized (size=%d, fd=%d)", shmsize, shmid);
 #else
@@ -2128,7 +2134,7 @@ int main (int argc, char *argv[])
                     client[cs_idx].udp_fd=ph[i].ptab->ports[j].fd;
                     client[cs_idx].udp_sa=cad;
                     if (ph[client[cs_idx].ctyp].watchdog)
-                      alarm(cfg->cmaxidle<<2);
+                        alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
                     ph[i].s_handler(cad);		// never return
                   }
                 }
@@ -2159,7 +2165,7 @@ int main (int argc, char *argv[])
                   client[cs_idx].udp_fd=pfd;
                   client[cs_idx].port_idx=j; 
                   if (ph[client[cs_idx].ctyp].watchdog)
-                    alarm(cfg->cmaxidle<<2);
+                      alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
                   ph[i].s_handler();
                 }
               }

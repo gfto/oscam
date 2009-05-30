@@ -63,7 +63,7 @@
 #define CS_MAXLOCALS    16
 #define CS_ECMSTORESIZE		16	// use MD5()
 #define CS_EMMSTORESIZE		270
-#define CS_CLIENT_TIMEOUT	5
+#define CS_CLIENT_TIMEOUT	5000
 #define CS_CLIENT_MAXIDLE	120
 #define CS_BIND_TIMEOUT		120
 #define CS_DELAY		0
@@ -463,8 +463,8 @@ struct s_config
 {
   int       nice;
   ulong     netprio;
-  int       ctimeout;
-  int       ftimeout;
+  ulong     ctimeout;
+  ulong     ftimeout;
   int       cmaxidle;
   int	    ulparent;
   ulong     delay;
