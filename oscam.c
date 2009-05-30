@@ -1570,14 +1570,36 @@ void guess_cardsystem(ECM_REQUEST *er)
     er->caid=last_hope;
 }
 
-void request_cw(ECM_REQUEST *er, int flag)
+void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 {
   int i;
-  er->level=flag;
+  if ((reader_types == 0) || (reader_types == 2))
+    er->level=flag;
   flag=(flag)?3:1;		// flag specifies with/without fallback-readers
   for (i=0; i<CS_MAXREADER; i++)
-    if (er->reader[i]&flag)
-      write_ecm_request(reader[i].fd, er);
+  {
+      switch (reader_types)
+      {
+          // network and local cards
+          default:
+          case 0:  
+              if (er->reader[i]&flag)
+                  write_ecm_request(reader[i].fd, er);
+              break;
+              // only local cards  
+          case 1:  
+              if (!(reader[i].typ & R_IS_NETWORK))
+                  if (er->reader[i]&flag)
+                      write_ecm_request(reader[i].fd, er);
+              break;
+              // only network
+          case 2:  
+              if ((reader[i].typ & R_IS_NETWORK))
+                  if (er->reader[i]&flag)
+                      write_ecm_request(reader[i].fd, er);
+              break;
+      }
+  }
 }
 
 void get_cw(ECM_REQUEST *er)
@@ -1730,7 +1752,7 @@ void get_cw(ECM_REQUEST *er)
   }
 
   er->rcEx=0; 
-  request_cw(er, 0);
+  request_cw(er, 0, cfg->preferlocalcards ? 1 : 0);
 }
 
 void log_emm_request(int auidx)
@@ -1807,18 +1829,60 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
       if (!er->stage)
       {
         for (j=0, act=1; (act) && (j<CS_MAXREADER); j++)
-          if (er->reader[j]&1)
-            act=0;
+        {
+            if (cfg->preferlocalcards && !er->locals_done)
+            {
+                if ((er->reader[j]&1) && !(reader[j].typ & R_IS_NETWORK))
+                    act=0;
+            }
+            else if (cfg->preferlocalcards && er->locals_done)
+            {
+                if ((er->reader[j]&1) && (reader[j].typ & R_IS_NETWORK))
+                    act=0;
+            }
+            else
+            {
+                if (er->reader[j]&1)
+                    act=0;
+            }
+        }
 //cs_log("stage 0, act=%d r0=%d, r1=%d, r2=%d, r3=%d, r4=%d r5=%d", act,
 //		er->reader[0], er->reader[1], er->reader[2],
 //		er->reader[3], er->reader[4], er->reader[5]);
         if (act)
         {
-          er->stage++;
-          request_cw(er, er->stage);
-          tpc.millitm += (cfg->ctimeout-cfg->ftimeout);
-          tpc.time += tpc.millitm / 1000;
-          tpc.millitm = tpc.millitm % 1000;
+          int inc_stage = 1;
+
+          if (cfg->preferlocalcards && !er->locals_done)
+          {
+              int i;
+
+              er->locals_done = 1;
+              for (i = 0; i < CS_MAXREADER; i++)
+              {
+                  if (reader[i].typ & R_IS_NETWORK)
+                  {
+                      inc_stage = 0;
+                  }
+              }
+          }
+          if (!inc_stage)
+          {
+              request_cw(er, er->stage, 2);
+              tpc.millitm += 1000 * (tpn.time - er->tps.time) + tpn.millitm - er->tps.millitm;
+              tpc.time += tpc.millitm / 1000;
+              tpc.millitm = tpc.millitm % 1000;
+          }
+          else
+          {
+              er->locals_done = 0;
+              er->stage++;
+              request_cw(er, er->stage, cfg->preferlocalcards ? 1 : 0); 
+
+              tpc.millitm += (cfg->ctimeout-cfg->ftimeout);
+              tpc.time += tpc.millitm / 1000;
+              tpc.millitm = tpc.millitm % 1000;
+          }
         }
       }
       if (comp_timeb(&tpn, &tpc)>0) // action needed
@@ -1834,7 +1898,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
         else
         {
           er->stage++;
-          request_cw(er, er->stage);
+          request_cw(er, er->stage, 0);
           tpc.millitm += (cfg->ctimeout-cfg->ftimeout);
           tpc.time += tpc.millitm / 1000;
           tpc.millitm = tpc.millitm % 1000;

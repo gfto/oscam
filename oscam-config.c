@@ -331,6 +331,8 @@ static void chk_t_global(char *token, char *value)
 
   if( !strcmp(token, "waitforcards") )
     cfg->waitforcards = atoi(value);
+  if( !strcmp(token, "preferlocalcards") )
+    cfg->preferlocalcards = atoi(value);
 }
 
 #ifdef CS_ANTICASC

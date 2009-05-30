@@ -63,6 +63,9 @@ ServerIP      = listener auf bestimmte ip binden. dies ist dann
 UnlockParental = unlock parental mode
 WaitForCards   = 1: wait for local cards on oscam startup before oening network ports,
                  0: no wait
+PreferLocalCards = 1: try decoding first on local cards before sending ECM to
+                      network readers (only for not Fallback Readers)
+                   0: no preferences
 
 [monitor]
 Port          = gibt den udp-port fuer monitor-funktion an.

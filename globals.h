@@ -511,6 +511,7 @@ struct s_config
   int       max_log_size;
   int       show_ecm_dw;
   int       waitforcards;
+  int       preferlocalcards;
   uchar      gbox_pwd[8];
   uchar		ignorefile[512];
   uchar     cardfile[512];
@@ -556,6 +557,7 @@ typedef struct ecm_request_t
   int           rc;
   uchar         rcEx;
   struct timeb  tps;		// incoming time stamp
+  uchar         locals_done;
   ushort		gbxCWFrom;
   ushort 		gbxFrom;
   ushort		gbxTo;
@@ -653,7 +655,7 @@ extern void guess_irdeto(ECM_REQUEST *);
 extern void get_cw(ECM_REQUEST *);
 extern void do_emm(EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
-extern void request_cw(ECM_REQUEST *, int);
+extern void request_cw(ECM_REQUEST *, int, int);
 extern int send_dcw(ECM_REQUEST *);
 extern int process_input(uchar *, int, int);
 extern int chk_srvid(ECM_REQUEST *, int);
