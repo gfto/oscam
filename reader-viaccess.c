@@ -231,7 +231,7 @@ cs_log("name: %s", cta_res);
   cs_ri_log("providers: %d (%s)", reader[ridx].nprov, buf+1);
 
   /* init the maybe existing aes key */
-  aes_set_key(reader[ridx].aes_key);
+  aes_set_key((char *)reader[ridx].aes_key);
 
   cs_log("ready for requests");
   memset(&last_geo, 0, sizeof(last_geo));
