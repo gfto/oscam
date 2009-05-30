@@ -93,3 +93,4 @@ CAID          = liste gueltiger caid's und mapping fuer diesen reader.
                 wird dieser parameter nicht gesetzt sind alle caid's
                 zunaechst erstmal gueltig und werden nicht gemapped.
 BoxID         = boxid für NDS
+AESKey        = AES Key für Viaccess

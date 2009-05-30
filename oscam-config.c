@@ -967,6 +967,14 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   if (!strcmp(token, "logport")) rdr->log_port=atoi(value);
   if (!strcmp(token, "caid")) chk_caidtab(value, &rdr->ctab);
   if (!strcmp(token, "boxid")) rdr->boxid=a2i(value,4);
+  if (!strcmp(token, "aeskey"))
+  {
+    if (key_atob(value, rdr->aes_key))
+    {
+      fprintf(stderr, "Configuration reader: Error in AES Key\n");
+      exit(1);
+    }
+  }
   if (!strcmp(token, "detect"))
     for (i=0; RDR_CD_TXT[i]; i++)
     {

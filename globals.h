@@ -351,6 +351,7 @@ struct s_reader
   int       log_port;
   CAIDTAB   ctab;
   ulong     boxid;
+  uchar     aes_key[16];
   ulong     sidtabok;	// positiv services
   ulong     sidtabno;	// negative services
   uchar     hexserial[8];

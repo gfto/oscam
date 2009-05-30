@@ -229,6 +229,10 @@ cs_log("name: %s", cta_res);
   }
   reader[ridx].nprov=i;
   cs_ri_log("providers: %d (%s)", reader[ridx].nprov, buf+1);
+
+  /* init the maybe existing aes key */
+  aes_set_key(reader[ridx].aes_key);
+
   cs_log("ready for requests");
   memset(&last_geo, 0, sizeof(last_geo));
   return(1);
@@ -245,11 +249,15 @@ int viaccess_do_ecm(ECM_REQUEST *er)
   int ecm88Len=SCT_LEN(er->ecm)-4;
   ulong provid;
   int rc=0;
-  if(ecm88Data[0]==0xd2 && ecm88Data[1]==0x02)
+  int hasD2 = 0;
+
+  if(ecm88Data[0]==0xd2)
   {
-    // so what do we do with this TNTSAT / TNtop crap !!
-    ecm88Data+=4;
-    ecm88Len-=4;
+      // FIXME: use the d2 arguments
+      int len = ecm88Data[1] + 2;
+      ecm88Data += len;
+      ecm88Len -= len;
+      hasD2 = 1;
   }
 
   if ((ecm88Data[0]==0x90 || ecm88Data[0]==0x40) && ecm88Data[1]==0x03)
@@ -318,6 +326,11 @@ int viaccess_do_ecm(ECM_REQUEST *er)
         break;
     }
   }
+
+  if (hasD2) {
+    aes_decrypt(er->cw, 16);
+  }
+
   return(rc?1:0);
 }
 
