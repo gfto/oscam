@@ -293,6 +293,10 @@ int i;
       if (!set_provider_info(i))
         return(0);
     }
+
+  reader[ridx].online = 1;
+
+  return 1;
 }
 #endif
 #ifdef LALL
@@ -346,6 +350,9 @@ int seca_card_info(void)
   memcpy(&reader[ridx].sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
     cs_log("SA:%02X%02X%02X%02X.",cta_res[18],cta_res[19],cta_res[20],cta_res[21]);
+
+  reader[ridx].online = 1;
+
   return(1);
 }
 #endif

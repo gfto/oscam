@@ -629,5 +629,7 @@ int viaccess_card_info(void)
     write_cmd(insa4, NULL); // select next provider
   }
 
+  reader[ridx].online = 1;
+
   return 0;
 }

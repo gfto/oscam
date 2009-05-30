@@ -61,7 +61,8 @@ ServerIP      = listener auf bestimmte ip binden. dies ist dann
                 wer mit dieser info nichts anfangen kann brauchts nicht.
                 empfehlung: diesen Parameter nicht verwenden.
 UnlockParental = unlock parental mode
-
+WaitForCards   = 1: wait for local cards on oscam startup before oening network ports,
+                 0: no wait
 
 [monitor]
 Port          = gibt den udp-port fuer monitor-funktion an.

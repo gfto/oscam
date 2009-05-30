@@ -9,7 +9,6 @@ int  reader_irdeto_mode;
 uchar cta_cmd[272], cta_res[260], atr[64];
 ushort cta_lr, atr_size=0;
 static int cs_ptyp_orig; //reinit=1, 
-static int card_status=0;
 
 #define SC_IRDETO 1
 #define SC_CRYPTOWORKS 2
@@ -246,16 +245,18 @@ int reader_checkhealth(void)
 {
   if (reader_card_inserted())
   {
-    if (!(card_status & CARD_INSERTED))
+    if (!(reader[ridx].card_status & CARD_INSERTED))
     {
       cs_log("card detected");
-      card_status=CARD_INSERTED | (reader_reset() ? 0 : CARD_FAILURE);
-      if (card_status & CARD_FAILURE)
+      reader[ridx].card_status  = CARD_NEED_INIT;
+      reader[ridx].card_status = CARD_INSERTED | (reader_reset() ? 0 : CARD_FAILURE);
+      if (reader[ridx].card_status & CARD_FAILURE)
+      {
         cs_log("card initializing error");
+      }
       else
       {
         client[cs_idx].au=ridx;
-        reader[ridx].online=1;
         reader_card_info();
       }
 
@@ -269,7 +270,7 @@ int reader_checkhealth(void)
   }
   else
   {
-    if (card_status&CARD_INSERTED)
+    if (reader[ridx].card_status & CARD_INSERTED)
     {
       reader_nullcard();
       client[cs_idx].lastemm=0;
@@ -279,10 +280,10 @@ int reader_checkhealth(void)
       io_serial_need_dummy_char=0;
       cs_log("card ejected");
     }
-    card_status=0;
+    reader[ridx].card_status=0;
     reader[ridx].online=0;
   }
-  return(card_status==CARD_INSERTED);
+  return reader[ridx].card_status==CARD_INSERTED;
 }
 
 int reader_ecm(ECM_REQUEST *er)

@@ -796,5 +796,8 @@ int videoguard_card_info(void)
 {
   /* info is displayed in init, or when processing info */
   read_tiers ();
+
+  reader[ridx].online = 1;
+
   return(1);
 }

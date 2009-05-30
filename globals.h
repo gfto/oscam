@@ -161,6 +161,11 @@ extern char *RDR_CD_TXT[];
 
 #define CS_ANTICASC
 
+// moved from reader-common.h
+#define CARD_INSERTED  1
+#define CARD_NEED_INIT 2
+#define CARD_FAILURE   4
+
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
       E2_EA_LEN, E2_F0_LEN, E2_OFFLINE, E2_SID};
@@ -367,6 +372,7 @@ struct s_reader
   int       cachemm;
   int       rewritemm;
   int       online;
+  int       card_status;
   struct    s_module ph;
   uchar     ncd_key[16];
   uchar     ncd_skey[16];
@@ -504,6 +510,7 @@ struct s_config
   int       srtimeout;  // SerialReaderTimeount in millisec
   int       max_log_size;
   int       show_ecm_dw;
+  int       waitforcards;
   uchar      gbox_pwd[8];
   uchar		ignorefile[512];
   uchar     cardfile[512];

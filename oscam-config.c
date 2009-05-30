@@ -328,6 +328,9 @@ static void chk_t_global(char *token, char *value)
   }
   if( !strcmp(token, "showecmdw") )
     cfg->show_ecm_dw = atoi(value);
+
+  if( !strcmp(token, "waitforcards") )
+    cfg->waitforcards = atoi(value);
 }
 
 #ifdef CS_ANTICASC

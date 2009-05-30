@@ -2049,6 +2049,43 @@ int main (int argc, char *argv[])
   init_service(97); // logger
   init_service(98); // resolver
   init_cardreader();
+  
+  if (cfg->waitforcards)
+  {
+      int card_init_done;
+
+      cs_log("Waiting for local card init ....");
+
+      sleep(3);  // short sleep for card detect to work proberly
+
+      for(;;)
+      {
+          card_init_done = 1;
+
+          for (i = 0; i < CS_MAXREADER; i++)
+          {
+              if (!reader[i].online && reader[i].card_status)
+              {
+                  if (!(reader[i].card_status & CARD_FAILURE))
+                  {
+                      card_init_done = 0;
+                      break;
+                  }
+              }
+          }
+
+          if (card_init_done)
+              break;
+
+          cs_sleepms(300);              // wait a little bit
+
+          alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1); 
+      }
+
+      cs_log("Init for all local cards done !");
+  }
+  
+
 #ifdef CS_ANTICASC
   if( !cfg->ac_enabled )
     cs_log("anti cascading disabled");

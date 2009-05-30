@@ -413,5 +413,8 @@ int irdeto_card_info(void)
       }
     }
   }
+
+  reader[ridx].online = 1;
+
   return(1);
 }
