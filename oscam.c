@@ -1485,7 +1485,7 @@ ulong chk_provid(uchar *ecm, ushort caid)
       provid=b2i(2, ecm+3);
       break;
     case 0x500:			// viaccess
-      i=(ecm[4]==0xD2) ? 3 : 0;	// tpsflag -> offset+3
+      i=(ecm[4]==0xD2) ? ecm[5] + 2 : 0;	// skip d2 nano
       if ((ecm[5+i]==3) && ((ecm[4+i]==0x90) || (ecm[4+i]==0x40)))
         provid=(b2i(3, ecm+6+i) & 0xFFFFF0);
     default:
