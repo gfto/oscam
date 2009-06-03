@@ -795,6 +795,8 @@ int videoguard_do_emm(EMM_PACKET *ep)
 int videoguard_card_info(void)
 {
   /* info is displayed in init, or when processing info */
+  cs_log("card detected");
+  cs_log("type: Videoguard" );
   read_tiers ();
 
   reader[ridx].online = 1;

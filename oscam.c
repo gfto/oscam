@@ -411,8 +411,9 @@ static void cs_card_info(int i)
 {
   uchar dummy[1]={0x00};
   for( i=1; i<CS_MAXPID; i++ )
-    if( client[i].pid && client[i].typ=='r' && client[i].fd_m2c )
+    if( client[i].pid && client[i].typ=='r' && client[i].fd_m2c ){
       write_to_pipe(client[i].fd_m2c, PIP_ID_CIN, dummy, 1);
+    }
 
       //kill(client[i].pid, SIGUSR2);
 }

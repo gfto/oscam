@@ -262,6 +262,9 @@ int conax_card_info(void)
   char *txt[] = { "Package", "PPV-Event" };
   uchar *cmd[] = { insC6, ins26 };
 
+  cs_log("card detected");
+  cs_log("type: conax");
+
   for (type=0; type<2; type++)
   {
     n=0;

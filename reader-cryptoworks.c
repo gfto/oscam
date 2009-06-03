@@ -569,6 +569,8 @@ int cryptoworks_card_info(void)
   uchar insA21[]= {0xA4, 0xA2, 0x01, 0x00, 0x05, 0x8C, 0x00, 0x00, 0x00, 0x00};
   uchar insB2[] = {0xA4, 0xB2, 0x00, 0x00, 0x00};
   char l_name[20+8]=", name: ";
+  cs_log("card detected");
+  cs_log("type: cryptoworks");
 
   for (i=0; i<reader[ridx].nprov; i++)
   {

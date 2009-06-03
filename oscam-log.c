@@ -40,6 +40,14 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(char*))
       }
       else if( pfinit(file)) 
         cs_exit(0);
+
+      int i;
+      for( i=1; i<CS_MAXPID; i++ ) {
+        if( client[i].pid && client[i].typ=='c' && client[i].usr[0] ) {
+          kill(client[i].pid, SIGUSR2);
+        }
+      }
+	
     }
   }
 }

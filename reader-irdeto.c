@@ -327,6 +327,8 @@ int irdeto_card_info(void)
   int i, p;
   uchar buf[256]={0};
   uchar sc_GetChid[]        = { 0xA0, 0xCA, 0x00, 0x00, 4, 0x22, 1, 5, 0x20};
+  cs_log("card detected");
+  cs_log("type: irdeto");
 
   if (nagra)
   {

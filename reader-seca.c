@@ -285,6 +285,7 @@ int seca_do_emm(EMM_PACKET *ep)
 int seca_card_info(void)
 {
 int i;
+  cs_log("card detected");
   cs_ri_log("type: seca, caid: %04X, serial: %llu, card: %s ",
          reader[ridx].caid[0], serial , card);
  for (i=0; i<16; i++)
