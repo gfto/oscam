@@ -726,7 +726,7 @@ static int newcamd_auth_client(in_addr_t ip)
                 }
             else
                 {
-                cs_log("AU %d  for user %s",au,usr);
+                cs_log("AU flag %d for user %s",au,usr);
                 }
             }
         else
@@ -1121,25 +1121,33 @@ static void newcamd_server()
 
   n=-9;
   while(n==-9)
-    while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
-    {
-      switch(mbuf[2])
-      {
-        case 0x80:
-        case 0x81:
-          newcamd_process_ecm(mbuf, n);
-          break;
-        case MSG_KEEPALIVE:
-          newcamd_reply_ka();
-          break;
-        default:
-          if( mbuf[2]>0x81 && mbuf[2]<0x90 )
-            newcamd_process_emm(mbuf+2, n-2);
-          else
-            cs_debug("unknown command !");
-      }
-    }
-  free(req);
+  {	  
+	  while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
+	  {
+	    switch(mbuf[2])
+	    {
+	      case 0x80:
+	      case 0x81:
+	        newcamd_process_ecm(mbuf, n);
+	        break;
+	      case MSG_KEEPALIVE:
+	        newcamd_reply_ka();
+	        break;
+	      default:
+	        if( mbuf[2]>0x81 && mbuf[2]<0x90 )
+	          newcamd_process_emm(mbuf+2, n-2);
+	        else
+	          cs_debug("unknown command !");
+	    }
+	  }
+		if(n==-9)
+		{
+	  		newcamd_reply_ka();
+	  	}
+	}
+	
+  if(req) { free(req); req=0;}
+
   cs_disconnect_client();
 }
 

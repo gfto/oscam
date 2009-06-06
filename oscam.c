@@ -1129,12 +1129,27 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
         else
           sprintf(t_msg[0], "au=%d", client[cs_idx].au+1);
       }
-      cs_log("%s %s-client %s%s (%s, %s)",
+
+      if(client[cs_idx].ncd_server)
+      {
+        cs_log("%s %s:%d-client %s%s (%s, %s)",
              client[cs_idx].crypted ? t_crypt : t_plain,
              e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,
+             cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port,
+             client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
+             client[cs_idx].ip ? t_grant : t_grant+1,   
+             username(cs_idx), t_msg[rc]);
+      }
+      else
+      {
+        cs_log("%s %s-client %s%s (%s, %s)",
+             client[cs_idx].crypted ? t_crypt : t_plain,
+             e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,          
              client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
              client[cs_idx].ip ? t_grant : t_grant+1,
              username(cs_idx), t_msg[rc]);
+      }
+
       break;
   }
   return(rc);
