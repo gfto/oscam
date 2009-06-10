@@ -558,6 +558,8 @@ int viaccess_card_info(void)
   show_cls=reader[ridx].show_cls;
   memset(&last_geo, 0, sizeof(last_geo));
 
+  cs_log("card detected"); 
+  
   // set pin
   write_cmd(ins24, pin);
 
