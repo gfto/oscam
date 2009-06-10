@@ -437,38 +437,35 @@ int viaccess_do_emm(EMM_PACKET *ep)
     ///return 0;
   }
 
-  if (!nano9EData) {
-    cs_dump(ep->emm, ep->l, "can't find 0x9e in emm, confidential used?");
-    return 0; // error
-  }
-
   if (!nanoF0Data) {
     cs_dump(ep->emm, ep->l, "can't find 0xf0 in emm...");
     return 0; // error
   }
 
-  if (!nano91Data) {
-    // set adf
-    insf0[3] = keynr;  // key
-    write_cmd(insf0, nano9EData); 
-    if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
-      cs_dump(insf0, 5, "set adf cmd:");
-      cs_dump(nano9EData, 0x22, "set adf data:");
-      cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
-      return 0;
-    }
-  } else {
-    // set adf crypte
-    insf4[3] = keynr;  // key
-    insf4[4] = nano91Data[1] + 2 + nano9EData[1] + 2;
-    memcpy (insData, nano91Data, nano91Data[1] + 2);
-    memcpy (insData + nano91Data[1] + 2, nano9EData, nano9EData[1] + 2);
-    write_cmd(insf4, insData); 
-    if(( cta_res[cta_lr-2]!=0x90 && cta_res[cta_lr-2]!=0x91) || cta_res[cta_lr-1]!=0x00 ) {
-      cs_dump(insf4, 5, "set adf encrypted cmd:");
-      cs_dump(insData, insf4[4], "set adf encrypted data:");
-      cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
-      return 0;
+  if (nano9EData) {
+    if (!nano91Data) {
+      // set adf
+      insf0[3] = keynr;  // key
+      write_cmd(insf0, nano9EData); 
+      if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
+        cs_dump(insf0, 5, "set adf cmd:");
+        cs_dump(nano9EData, 0x22, "set adf data:");
+        cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+        return 0;
+      }
+    } else {
+      // set adf crypte
+      insf4[3] = keynr;  // key
+      insf4[4] = nano91Data[1] + 2 + nano9EData[1] + 2;
+      memcpy (insData, nano91Data, nano91Data[1] + 2);
+      memcpy (insData + nano91Data[1] + 2, nano9EData, nano9EData[1] + 2);
+      write_cmd(insf4, insData); 
+      if(( cta_res[cta_lr-2]!=0x90 && cta_res[cta_lr-2]!=0x91) || cta_res[cta_lr-1]!=0x00 ) {
+        cs_dump(insf4, 5, "set adf encrypted cmd:");
+        cs_dump(insData, insf4[4], "set adf encrypted data:");
+        cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+        return 0;
+      }
     }
   }
 
@@ -560,7 +557,6 @@ int viaccess_card_info(void)
 
   show_cls=reader[ridx].show_cls;
   memset(&last_geo, 0, sizeof(last_geo));
-  cs_log("card detected");
 
   // set pin
   write_cmd(ins24, pin);
