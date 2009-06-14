@@ -21,6 +21,7 @@ std:	linux \
 	cross-mipsel-router-linux-uclibc927 \
 	cross-mipsel-router-linux-uclibc928 \
 	cross-mipsel-tuxbox-linux-glibc \
+    cross-mipsel-fonera2 \
 	cross-sh4-linux
 
 all:	\
@@ -362,6 +363,27 @@ cross-mipsel-router-linux-uclibc928:
 		DS_LD=mipsel-linux-uclibc-ld \
 		DS_RL=mipsel-linux-uclibc-ranlib \
 		DS_ST=mipsel-linux-uclibc-strip
+
+######################################################################
+#
+#	Linux MIPS(LE) crosscompiler for La Fonera 2.0
+#
+######################################################################
+cross-mipsel-fonera2:
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		OS_LIBS="-Lopenssl-lib -lcrypto" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-Iopenssl-include -O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=mips-linux-gcc \
+		DS_AR=mips-linux-ar \
+		DS_LD=mips-linux-ld \
+		DS_RL=mips-linux-ranlib \
+		DS_ST=mips-linux-strip
 
 ######################################################################
 #
