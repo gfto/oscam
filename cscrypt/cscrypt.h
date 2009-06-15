@@ -1,4 +1,9 @@
+#ifdef HAVE_AES
 #include <openssl/aes.h>
+#else
+#include "aes/aes.h"
+#endif
+
 #include "des.h"
 #include "bn.h"
 

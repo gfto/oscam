@@ -82,6 +82,17 @@ add_definitions ("-DCS_OS_SYS=\"${CS_OS_SYS}\"")
 
 #----------------------- subdirectories ------------------------------
 
+include (CheckIncludeFile)
+check_include_file ("openssl/aes.h" HAVE_AES)
+if (HAVE_AES)
+    set (HAVE_AES 1)
+    add_definitions ("-DHAVE_AES")
+else (HAVE_AES)
+    set (HAVE_AES 0)
+endif (HAVE_AES)
+
+#----------------------- subdirectories ------------------------------
+
 add_subdirectory (csctapi)
 add_subdirectory (cscrypt)
 
@@ -116,7 +127,10 @@ add_library (${csoscam} STATIC ${csoscam_srcs} ${csoscam_hdrs})
 
 set (exe_name "oscam")
 add_executable (${exe_name} ${exe_srcs} ${exe_hdrs})
-target_link_libraries (${exe_name} crypto pthread ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt)
+if (HAVE_AES)
+    target_link_libraries (${exe_name} crypto)
+endif (HAVE_AES)
+target_link_libraries (${exe_name} pthread ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt)
 add_dependencies (${exe_name} ${csoscam} ${csreaders} ${csmodules})
 
 #----------------------- specific options ------------------------------
@@ -148,4 +162,9 @@ message (STATUS "  system type: ${CS_OSTYPE}")
 message (STATUS "  system: ${CS_OS_SYS}")
 message (STATUS "  cpu: ${CS_OS_CPU}")
 message (STATUS "  hw: ${CS_OS_HW}")
+if (HAVE_AES)
+    message (STATUS "  use system aes functions")
+else (HAVE_AES)
+    message (STATUS "  use built-in aes functions")
+endif (HAVE_AES)
 message (STATUS "")
