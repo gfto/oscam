@@ -104,6 +104,15 @@ endif (OSCamOperatingSystem MATCHES "Linux")
 
 set_source_files_properties (${all_srcs} PROPERTIES COMPILE_FLAGS "-O3 -Winline -Werror -finline-functions -fomit-frame-pointer")
 
+#----------------------- installation -----------------------------
+
+file (GLOB config_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/oscam.*")
+file (GLOB doc_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/*.txt")
+
+install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${exe_name} DESTINATION bin COMPONENT bin)
+install (FILES ${config_files} DESTINATION etc COMPONENT config)
+install (FILES ${doc_files} DESTINATION share/doc/oscam COMPONENT doc)
+
 #----------------------- printout resume -----------------------------
 
 message (STATUS "")

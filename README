@@ -39,8 +39,15 @@ Change build parameters (on command line)
 -----------------------------------------
 
     cmake -DCS_CONFDIR=/where/is/config/files ..
+    cmake -DCMAKE_INSTALL_PREFIX=/where/to/installed ..
+    cmake -DCS_CONFDIR=/where/is/config/files -DCMAKE_INSTALL_PREFIX=/where/to/installed ..
 
 Change build parameters (with interface)
 ----------------------------------------
 
     ccmake ..
+
+Install
+-------
+
+    make install
