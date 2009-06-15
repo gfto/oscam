@@ -8,10 +8,8 @@
 
 #ifdef TUXBOX
 #  ifdef MIPSEL
-#    define CS_CONFDIR "/etc/tuxbox"
 #    define CS_LOGFILE "/dev/null"
 #  else
-#    define CS_CONFDIR "/var/tuxbox/config"
 #    define CS_LOGFILE "/dev/tty"
 #  endif
 #  define CS_EMBEDDED
@@ -36,7 +34,6 @@
 
 #ifdef OS_CYGWIN32
 #  define CS_NOSHM
-#  define CS_CONFDIR "."
 #  define CS_MMAPFILE "oscam.mem"
 #  define CS_LOGFILE "/dev/tty"
 #  define NO_ENDIAN_H

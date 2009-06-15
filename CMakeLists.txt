@@ -38,20 +38,25 @@ link_directories (${OPTIONAL_LINK_DIR})
 
 #----------------------- global options ------------------------------
 
-set (CS_CONFDIR "/usr/local/etc" CACHE STRING "Default path for the config files")
-add_definitions ("-DCS_CONFDIR=\"${CS_CONFDIR}\"")
-
 if (OSCamOperatingSystem MATCHES "Linux")
     add_definitions ("-DOS_LINUX")
+    set (DEFAULT_CS_CONFDIR "/usr/local/etc")
 elseif (OSCamOperatingSystem MATCHES "Mac OS X")
     add_definitions ("-DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD")
+    set (DEFAULT_CS_CONFDIR "/usr/local/etc")
 elseif (OSCamOperatingSystem MATCHES "Tuxbox")
     add_definitions ("-DOS_LINUX -DTUXBOX -DPPC")
+    set (DEFAULT_CS_CONFDIR "/var/tuxbox/config")
 elseif (OSCamOperatingSystem MATCHES "Fonera2")
     add_definitions ("-DOS_LINUX -DMIPSEL -DUCLIBC")
+    set (DEFAULT_CS_CONFDIR "/var/etc")
 elseif (OSCamOperatingSystem MATCHES "Amino")
     add_definitions ("-DOS_LINUX")
+    set (DEFAULT_CS_CONFDIR "/usr/local/etc")
 endif (OSCamOperatingSystem MATCHES "Linux")
+
+set (CS_CONFDIR ${DEFAULT_CS_CONFDIR} CACHE STRING "Default path for the config files")
+add_definitions ("-DCS_CONFDIR=\"${CS_CONFDIR}\"")
 
 #----------------------- subdirectories ------------------------------
 
