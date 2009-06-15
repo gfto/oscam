@@ -38,6 +38,9 @@ link_directories (${OPTIONAL_LINK_DIR})
 
 #----------------------- global options ------------------------------
 
+set (CS_CONFDIR "/usr/local/etc" CACHE STRING "Default path for the config files")
+add_definitions ("-DCS_CONFDIR=\"${CS_CONFDIR}\"")
+
 if (OSCamOperatingSystem MATCHES "Linux")
     add_definitions ("-DOS_LINUX")
 elseif (OSCamOperatingSystem MATCHES "Mac OS X")
