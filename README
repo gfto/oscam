@@ -16,10 +16,31 @@ Pointers
 - wiki:
     http://streamboard.gmc.to:8001/oscam/wiki
 
-Get sources from SVN, and build
--------------------------------
+Get sources from SVN
+--------------------
 
     svn co http://streamboard.gmc.to/svn/oscam/trunk oscam
     cd oscam
+
+Build with CMake (new solution for building)
+--------------------------------------------
+
+    mkdir build_dir
+    cd build_dir
+    cmake ..
     make
 
+Build with different toolchain (cross-compilation)
+--------------------------------------------------
+
+    cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/toolchain-powerpc-tuxbox.cmake ..
+
+Change build parameters (on command line)
+-----------------------------------------
+
+    cmake -DCS_CONFDIR=/where/is/config/files ..
+
+Change build parameters (with interface)
+----------------------------------------
+
+    ccmake ..
