@@ -75,6 +75,7 @@ add_definitions ("-DCS_CONFDIR=\"${CS_CONFDIR}\"")
 set (CS_OS_CPU ${CMAKE_SYSTEM_PROCESSOR})
 set (CS_OSTYPE ${CS_OS_CPU}-${CS_OS_HW}-${CS_OS_SYS})
 
+add_definitions ("-DUSE_CMAKE")
 add_definitions ("-DCS_OSTYPE=\"${CS_OSTYPE}\"")
 add_definitions ("-DCS_OS_CPU=\"${CS_OS_CPU}\"")
 add_definitions ("-DCS_OS_HW=\"${CS_OS_HW}\"")
