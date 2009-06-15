@@ -37,7 +37,6 @@
 #endif
 
 #include "oscam-config.h"
-#include "oscam-ostype.h"
 #include "oscam-types.h"
 #include "cscrypt/cscrypt.h"
 
