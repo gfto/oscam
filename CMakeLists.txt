@@ -85,10 +85,7 @@ add_definitions ("-DCS_OS_SYS=\"${CS_OS_SYS}\"")
 include (CheckIncludeFile)
 check_include_file ("openssl/aes.h" HAVE_AES)
 if (HAVE_AES)
-    set (HAVE_AES 1)
     add_definitions ("-DHAVE_AES")
-else (HAVE_AES)
-    set (HAVE_AES 0)
 endif (HAVE_AES)
 
 #----------------------- subdirectories ------------------------------
