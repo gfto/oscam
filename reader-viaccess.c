@@ -250,6 +250,7 @@ int viaccess_do_ecm(ECM_REQUEST *er)
   ulong provid;
   int rc=0;
   int hasD2 = 0;
+  uchar DE04[256];
 
   if(ecm88Data[0]==0xd2)
   {
@@ -278,6 +279,14 @@ int viaccess_do_ecm(ECM_REQUEST *er)
     }
     ecm88Data+=5;
     ecm88Len-=5;
+
+    // DE04
+    if (ecm88Data[0]==0xDE && ecm88Data[1]==0x04)
+    {
+        memcpy (DE04, &ecm88Data[0], 6);
+        ecm88Data+=6;
+    }
+    //
 
     if( last_geo.provid != provid ) 
     {
@@ -311,7 +320,19 @@ int viaccess_do_ecm(ECM_REQUEST *er)
     ins88[2]=ecmf8Len?1:0;
     ins88[3]=keynr;
     ins88[4]=ecm88Len;
-    write_cmd(ins88, ecm88Data);	// request dcw
+
+    // DE04
+    if (DE04[0]==0xDE)
+    {
+        memcpy(DE04+6, (uchar *)ecm88Data, ecm88Len-6);
+        write_cmd(ins88, DE04); // request dcw
+    }
+    else
+    {
+        write_cmd(ins88, (uchar *)ecm88Data); // request dcw
+    }
+    //
+    
     read_cmd(insc0, NULL);	// read dcw
     switch(cta_res[0])
     {
