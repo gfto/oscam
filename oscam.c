@@ -1710,7 +1710,7 @@ void get_cw(ECM_REQUEST *er)
       ulong mask_all=0xFFFF;
       TUNTAB *ttab;
       ttab=&client[cs_idx].ttab;
-      for (n=0; (n<CS_MAXCAIDTAB); n++)
+      for (n=0; (n<CS_MAXTUNTAB); n++)
       if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all))
       {
         int l;

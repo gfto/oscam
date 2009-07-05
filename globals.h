@@ -55,7 +55,7 @@
 #define CS_QLEN			128	// size of request queue
 #define CS_MAXQLEN		128	// size of request queue for cardreader
 #define CS_MAXCAIDTAB		32	// max. caid-defs/user
-#define CS_MAXTUNTAB        4   // max. betatunnel mappings
+#define CS_MAXTUNTAB		16	// max. betatunnel mappings
 #define CS_MAXPROV		32
 #define CS_MAXPORTS		32	// max server ports
 #define CS_MAXFILTERS		16
