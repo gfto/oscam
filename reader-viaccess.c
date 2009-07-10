@@ -233,6 +233,17 @@ cs_log("name: %s", cta_res);
   /* init the maybe existing aes key */
   aes_set_key((char *)reader[ridx].aes_key);
 
+  /* disabling parental lock. assuming pin "0000" */
+  if (cfg->ulparent) {
+      static uchar inDPL[] = {0xca, 0x24, 0x02, 0x00, 0x09};
+      static uchar cmDPL[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F};
+      write_cmd(inDPL,cmDPL);
+      if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) )
+          cs_log("Can't disable parental lock. Wrong PIN? I assumed 0000!");
+      else
+          cs_log("Parental lock disabled");
+  }
+
   cs_log("ready for requests");
   memset(&last_geo, 0, sizeof(last_geo));
   return(1);
