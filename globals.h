@@ -47,10 +47,10 @@
 #define CS_CONFDIR 		"/usr/local/etc"
 #endif
 #ifndef CS_MMAPFILE
-#define CS_MMAPFILE 		"/tmp/mcps.mem"
+#define CS_MMAPFILE 		"/tmp/oscam.mem"
 #endif
 #ifndef CS_LOGFILE
-#define CS_LOGFILE		"/var/log/mcps.log"
+#define CS_LOGFILE		"/var/log/oscam.log"
 #endif
 #define CS_QLEN			128	// size of request queue
 #define CS_MAXQLEN		128	// size of request queue for cardreader
