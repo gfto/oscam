@@ -242,7 +242,7 @@ static char *monitor_get_srvname(int id)
 {
   struct s_srvid *this=cfg->srvid;
   static char name[83];
-  for (name[0]=0; this && (this->next) && (!name[0]); this=this->next)
+  for (name[0]=0; this && (!name[0]); this=this->next)
     if (this->srvid==id)
       strncpy(name, this->name, 32);
   if (!name[0]) sprintf(name, "[%04X]", id);
