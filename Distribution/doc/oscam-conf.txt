@@ -49,6 +49,8 @@ UsrFile       = hier kann eine datei angegeben werden,
                 alternativ zum logfile zur auswertung herangezogen
                 werden, da hier die daten auf das wesentliche
                 reduziert sind. (siehe auch UsrFile Satzbeschreibung)
+CWLogDir      = in which directory to save the correct CW (no save if not
+                defined)
 Sleep         = system-globaler standard-wert fuer alle acounts.
                 (siehe oscam.user)
 ServerIP      = listener auf bestimmte ip binden. dies ist dann

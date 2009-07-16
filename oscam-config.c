@@ -285,6 +285,7 @@ static void chk_t_global(char *token, char *value)
   if (!strcmp(token, "logfile")) strncpy(logfile, value, sizeof(logfile)-1);
   if (!strcmp(token, "pidfile")) strncpy(cfg->pidfile, value, sizeof(cfg->pidfile)-1);
   if (!strcmp(token, "usrfile")) strncpy(cfg->usrfile, value, sizeof(cfg->usrfile)-1);
+  if (!strcmp(token, "cwlogdir")) strncpy(cfg->cwlogdir, value, sizeof(cfg->cwlogdir)-1);
   if (!strcmp(token, "clienttimeout")) 
   {
       cfg->ctimeout = atoi(value);
