@@ -1355,7 +1355,12 @@ void logCWtoFile(ECM_REQUEST *er)
         {
             /* open failed, assuming file does not exist, yet */
             writeheader = 1;
+        } else
+        {
+            /* we need to close the file if it was opened correctly */
+            fclose(pfCWL);
         }
+
         if ((pfCWL=fopen(buf, "a+")) == NULL)
         {
             /* maybe this fails because the subdir does not exist. Is there a common function to create it? */
