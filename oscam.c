@@ -1321,10 +1321,10 @@ void logCWtoFile(ECM_REQUEST *er)
        each call. If not file exists, a header is prepended */
 
     FILE *pfCWL;
-    unsigned char srvname[23];
+    char srvname[23];
     /* %s / %s   _I  %04X  _  %s  .cwl  */
-    unsigned char buf[sizeof(cfg->cwlogdir)+1+6+2+4+1+sizeof(srvname)+5];
-    unsigned char date[7];
+    char buf[sizeof(cfg->cwlogdir)+1+6+2+4+1+sizeof(srvname)+5];
+    char date[7];
     unsigned char  i, parity, writeheader = 0;
     time_t t;
     struct tm *timeinfo;
