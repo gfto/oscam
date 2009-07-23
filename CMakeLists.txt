@@ -172,6 +172,32 @@ install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${exe_name}${CMAKE_EXECUTABLE_SUFF
 install (FILES ${config_files} DESTINATION etc COMPONENT config)
 install (FILES ${doc_files} DESTINATION share/doc/oscam COMPONENT doc)
 
+#----------------------- we can use CPack to build pacakges --------------------------
+
+# get version from source file
+execute_process (COMMAND grep CS_VERSION ${CMAKE_CURRENT_SOURCE_DIR}/globals.h
+    OUTPUT_VARIABLE CS_VERSION)
+string (REGEX REPLACE ".*\"\(.*\)\".*" "\\1" CS_VERSION ${CS_VERSION})
+string (REGEX REPLACE "\(.*\)\\..*\\..*" "\\1" CPACK_PACKAGE_VERSION_MAJOR ${CS_VERSION})
+string (REGEX REPLACE ".*\\.\(.*\)\\..*" "\\1" CPACK_PACKAGE_VERSION_MINOR ${CS_VERSION})
+string (REGEX REPLACE ".*\\..*\\.\(.*\)" "\\1" CPACK_PACKAGE_VERSION_PATCH ${CS_VERSION})
+set (CPACK_PACKAGE_VERSION
+     "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+
+# compute my filename
+set (CPACK_PACKAGE_FILE_NAME
+     "${PROJECT_NAME}-${CPACK_PACKAGE_VERSION}-${CS_OSTYPE}")
+
+# wich archive we want to generate
+set (CPACK_GENERATOR "TGZ")
+
+# what to put in the archive
+set (CPACK_STRIP_FILES TRUE)
+set (CPACK_COMPONENTS_ALL bin)# config doc)
+
+# ok, we can now use CPack
+include (CPack)
+
 #----------------------- printout resume -----------------------------
 
 message (STATUS "")
