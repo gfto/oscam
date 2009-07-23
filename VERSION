@@ -1,6 +1,30 @@
 OSCam Version History:
 ---------------------
 
+- 0.99.4:
+    - videoguard BoxID can be specified in the config file
+    - support of the viaccess nano d2 (assuming you have the correct
+      AES key in the config)
+    - add support for 10MHz readers
+    - extend uniq configuration option to check multi-user on
+      the same IP
+    - Change timeouts from seconds to milliseconds
+    - wait for local cards on oscam startup before opening network ports
+      (see WaitForCards config option)
+    - Try decoding first on local cards
+    - add CMake build system
+    - use our own AES functions if target don't have them (at compile time)
+    - added patch for TVN ECM
+    - increase maxtuntab
+    - setup UnLockParental for viaccess too
+    - Add logging of CW in files for offline decrypting.
+
+- 0.99.3:
+    - Mac OS X support
+    - Add UnLockParental option for seca
+    - Increment msgsize to 272
+    - bug fixes
+
 - 0.99.2:
     - now compile on cygwin
 
