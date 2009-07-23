@@ -152,7 +152,16 @@ elseif (OSCamOperatingSystem MATCHES "Amino")
 elseif (OSCamOperatingSystem MATCHES "Windows/cygwin")
 endif (OSCamOperatingSystem MATCHES "Linux")
 
-set_source_files_properties (${all_srcs} PROPERTIES COMPILE_FLAGS "-O3 -Winline -Werror -finline-functions -fomit-frame-pointer")
+#----------------------- global compile and link options ------------------------------
+
+# some optimisations
+add_definitions ("-O3 -Winline -Werror -finline-functions -fomit-frame-pointer")
+
+# we don't want the '-rdynamic' in the link command
+set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+
+# we want to strip
+set (CMAKE_EXE_LINKER_FLAGS "-s")
 
 #----------------------- installation -----------------------------
 
