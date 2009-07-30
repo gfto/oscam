@@ -1,0 +1,93 @@
+.TH oscam 1
+.SH NAME
+\fBoscam\fR - SC server
+.SH SYNOPSIS
+oscam
+.SH DESCRIPTIONS
+The oscam software is an \fIopen source\fR multi-protocol/multi-plattform SC server.
+
+oscam supports the following protocols:
+.TP 3n
+\(bu
+camd 3.3x
+.TP 3n
+\(bu
+camd 3.5x
+.TP 3n
+\(bu
+newcamd with AU support, cascading/remote server ECM support
+.TP 3n
+\(bu
+radegast
+.TP 3n
+\(bu
+serial (HSIC, SSSP, BOMBA, DSR 9500)
+.TP 3n
+\(bu
+camd 3.57x with AU support, cascading/remote server ECM support
+.TP 3n
+\(bu
+camd 3.78x with AU support, cascading/remote server ECM support
+.TP 3n
+\(bu
+gbox with AU support, cascading/remote server ECM support
+.TP 3n
+oscam works on the following plattforms:
+.TP 3n
+\(bu
+Linux (tuxbox, arm, mips, mipsel, sh4, powerpc, ...)
+.TP 3n
+\(bu
+Windows (based on cygwin1.dll)
+.SH OPTIONS
+.PP
+\fB-b\fP
+.RS 3n
+starts in background
+.RE
+.PP
+\fB-c\fP <directory>
+.RS 3n
+read configuration from <directory>, default: see CS_CONFDIR in \fBglobals.h\fR
+.RE
+.PP
+\fB-d\fP <level>
+.RS 3n
+debug level mask:
+  0 = no debugging (default)
+  1 = debug dumps
+  2 = debug master process
+  4 = debug reader/proxy process
+  8 = debug client process
+ 16 = debug reader I/O
+ 32 = debug watchdog
+ 63 = debug all
+.RE
+.PP
+\fB-m\fP <filename>
+.RS 3n
+use <filename> as mmaped memory file, default: see CS_MMAPFILE in \fBglobals.h\fR, needed for embedded systems without shared memory and windows
+.RE
+.PP
+\fB-h\fP
+.RS 3n
+usage
+.RE
+.SH SIGNALS
+.PP
+\fBSIGHUP\fP
+.RS 3n
+reinit user db, clients and anti-cascading
+.RE
+.PP
+\fBSIGUSR1\fP
+.RS 3n
+switch debug level to 63 (debug all)/switch debug level to 0 (no debugging)
+.RE
+.PP
+\fBSIGUSR2\fP
+.RS 3n
+get reader SC info
+.RE
+.SH "SEE ALSO"
+\fBoscam.conf\fR(5), \fBoscam.user\fR(5), \fBoscam.server\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5)

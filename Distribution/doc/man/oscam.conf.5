@@ -1,0 +1,359 @@
+.TH oscam.conf 5
+.SH NAME
+\fBoscam.conf\fR - main configuration file for oscam
+.SH SYNOPSIS
+The main configuration file for oscam contais global parameters 
+such as debugging, logging, monitor, protocols and anti-cascading. 
+sections in \fBoscam.conf\fR are \fInonrecurring\fR. The [global] 
+section is \fIrequired\fR. All other sections are optional.
+.SH SECTION DESCRIPTIONS
+.SS "The [global] section"
+.PP
+\fBserverip\fP = \fBIP address\fP          
+.RS 3n
+bind service to specified IP address, default:all
+.RE
+.PP
+\fBlogfile\fP = \fBfilename\fP|\fB/dev/null\fP|\fB/dev/tty\fP|\fBsyslog\fP              
+.RS 3n
+logging target, default: /var/log/oscam.log
+.RE
+.PP
+\fBpidfile\fP = \fBfilename\fP
+.RS 3n
+PID file, default:no PID file
+.RE
+.PP
+\fBusrfile\fP = \fBfilename\fP
+.RS 3n
+log file for user logging, default:none
+.RE
+.PP
+\fBcwlogdir\fP = \fBpath\fP
+.RS 3n
+directory for CW logging, default:none
+.RE
+.PP
+\fBclienttimeout\fP = \fBseconds\fP
+.RS 3n
+value for client process to wait for key, default:5
+.RE
+.PP
+\fBfallbacktimeout\fP = \fBseconds\fP
+.RS 3n
+time falling back to fallback reader, default:2
+.RE
+.PP
+\fBclientmaxidle\fP = \fBseconds\fP
+.RS 3n
+value for client process being idle before disconnect, default:120
+.RE
+.PP
+\fBcachedelay\fP = \fBmilli-seconds\fP
+.RS 3n
+value to delay cached requests , default:0
+.RE
+.PP
+\fBbindwait\fP = \fBseconds\fP
+.RS 3n
+value to wait for bind request to complete, default:120
+.RE
+.PP
+\fBnetprio\fP = \fBpriority\fP
+.RS 3n
+network priority, default:system given
+.RE
+.PP
+\fBresolvedelay\fP = \fBseconds\fP
+.RS 3n
+delay for DNS resolving, default:30
+.RE
+.PP
+\fBsleep\fP = \fBminutes\fP
+.RS 3n                
+time waiting for inactive users, default:none, can be overwritten per user in \fBoscam.user\fR
+.RE
+.PP
+\fBunlockparental\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = unlock parental mode option to disable Seca pin code request for adult movie, default:0
+.RE
+.PP
+\fBnice\fP = \fB-20\fP..\fB+20\fP
+.RS 3n
+system priority, default:system given
+.RE
+.PP
+\fBserialreadertimeout\fP = \fBmilli-seconds\fP
+.RS 3n
+timeout for serial reader, default:1500
+.RE
+.PP
+\fBmaxlogsize\fP = \fBkbytes\fP
+.RS 3n
+max log file size, default:10
+.RE
+.PP
+\fBshowecmdw\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = show DW in log file, default:0
+.RE
+.PP
+\fBwaitforcards\fP = \fB0\fP|\fB1\fP 
+.RS 3n
+1 = wait for local SCs on startup before opening network ports, default:0
+.RE
+.PP
+\fBpreferlocalcards\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = try decoding on local cards first, default:0
+.RE
+.SS "The [monitor] section"
+.PP
+\fBport\fP = \fB0\fP|\fBport\fP
+.RS 3n
+UDP port for monitor, port=0 monitor disabled, default:0
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
+.RE
+.PP
+\fBnocrypt\fP = \fBIP address\fP|\fBIP address range\fP
+.RS 3n
+unsecured monitor connection, default:none
+
+ example: nocrypt = 192.168.0.0-192.168.255.255
+.RE
+.PP
+\fBaulow\fP = \fBminutes\fP
+.RS 3n
+time no EMM occurs so that client is set to low, default:30
+.RE
+.PP
+\fBmonlevel\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB4\fP|\fB4\fP
+.RS 3n
+monitor level:
+
+ 0 = no access to monitor
+ 1 = only server and own procs
+ 2 = all procs, but viewing only, default
+ 3 = all procs, reload of \fBoscam.user\fR possible
+ 4 = complete access
+
+monlevel can be overwritten per user in \fBoscam.user\fR
+.RE
+.PP
+\fBhideclient_to\fP = \fBminutes\fP
+.RS 3n
+time to hide clients in the monitor if not sending requests, 0 = disabled, default:0
+.RE
+.SS "The [camd33] section"
+.PP
+\fBport\fP = \fB0\fP|\fBport\fP
+.RS 3n
+TCP/IP port for camd 3.3x clients, 0 = disabled, default:0
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
+.RE
+.PP
+\fBnocrypt\fP = \fBIP address\fP|\fBIP address range\fP
+.RS 3n
+unsecured camd 3.3x client connection, default:none
+
+ example: nocrypt = 192.168.0.0-192.168.255.255
+.RE
+.PP
+\fBpassive\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1=force passive camd 3.3x client, default:0
+.RE
+.PP
+\fBkey\fP = \fB128 bit key\fP
+.RS 3n
+key for camd 3.3x client encryption, default:none
+
+ example key = 01020304050607080910111213141516
+.RE
+.SS "The [camd35] section"
+.PP
+\fBport\fP = \fB0\fP|\fBport\fP
+.RS 3n
+TCP/IP port for camd 3.5x clients, 0 = disabled, default:0
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
+.RE
+.SS "The [newcamd] section"
+.PP
+\fBport\fP = \fBport@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
+.RS 3n
+port/CAID/ident definitions, default:none
+
+ example: port = 10000@0100:100000;20000@0200:200000,300000,400000
+ 
+Each CAID requires a separate port.
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
+.RE
+.PP
+\fBkey\fP = \fBDES key\fP
+.RS 3n
+key for newcamd client encryption, default:none
+
+ example key = 0102030405060708091011121314
+.RE
+.SS "The [radegast] section"
+.PP
+\fBport\fP = \fB0\fP|\fBport\fP
+.RS 3n
+TCP/IP port for radegast clients, 0=disabled, default:0
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
+.RE
+.PP
+\fBallowed\fP = \fBIP address\fP|\fBIP address range\fP
+.RS 3n
+client connections allowed from, default:none
+
+ example: allowed = 192.168.0.0-192.168.255.255
+.RE
+.PP
+\fBuser\fP = \fBusername\fP
+.RS 3n
+user name for radegast client
+.RE
+.SS "The [serial] section"
+.PP
+\fBdevice\fP = \fB<user>@<device>[:baud][?option1=value1[&option2=value2]]\fP
+.RS 3n
+parameters:
+ user   = account
+ device = serial device name
+ option = timeout = milli-seconds,timeout for connection, default:50
+          delay   = milli-seconds,additional delay between two
+                    characters, default:0
+
+supported serial devices:
+ HSIC    (humax sharing interface client)
+ SSSP    (simple serial sharing protocol)
+ bomba   (BOMBA firmware)
+ dsr9500 (DSR 9500)
+.RE 
+.SS "The [cs357x] section"
+.PP
+\fBport\fP = \fB0\fP|\fBport\fP
+.RS 3n
+TCP/IP port for camd 3.57x clients, 0 = disabled, default:0
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
+.RE	  
+.SS "The [cs378x] section"
+.PP
+\fBport\fP = \fB0\fP|\fBport\fP
+.RS 3n
+TCP/IP port for camd 3.78x clients, 0 = disabled, default:0
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
+.RE
+.SS "The [gbox] section"
+.PP
+\fBpassword\fP = \fBpassword\fP
+.RS 3n
+password for gbox server
+.RE
+.PP
+\fBmaxdist\fP = \fBdistance\fP
+.RS 3n
+maximum distance to gbox servers, default:5
+.RE
+.PP
+\fBignorelist\fP = \fBfilename\fP
+.RS 3n
+listing of providers to be ignored, format: G:{<CAID><provider ID>}, default:none
+
+ example: G:{01001234}
+.RE
+.PP
+\fBonlineinfos\fP = \fBfilename\fP
+.RS 3n
+file to store online information, default:none
+.RE
+.PP
+\fBcardinfos\fP = \fBfilename\fP
+.RS 3n
+file to store card information, default:none
+.RE
+.PP
+\fBlocals\fP = \fB<CAID><provider ID>[,<CAID><provider ID>]\fP...
+.RS 3n
+backwards sharing of local cards,default:none
+
+ example: locals = 01001234,02005678
+.RE
+.SS "The [anticasc] section"
+.PP
+\fBenabled\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1=enabled anti-cascading, default:0
+.RE
+.PP
+\fBnumusers\fP = \fBquantity\fP
+.RS 3n
+user per account, default:0
+.RE
+.PP
+\fBsampletime\fP = \fBminutes\fP
+.RS 3n
+duration of sample, default:2
+.RE
+.PP
+\fBsamples\fP = \fBquantity\fP
+.RS 3n
+quantity of samples over limit, default:10
+.RE
+.PP
+\fBpenalty\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+level of penalty:
+ 0 = only logging
+ 1 = send fake CWs
+ 2 = disbable user temporary
+
+default:0, penalty can be overwritten per user in \fBoscam.user\fR
+.RE
+.PP
+\fBaclogfile\fP = \fBfilename\fP
+.RS 3n
+file for anti-cascading logging, default:none
+.RE
+.PP
+\fBfakedelay\fP = \fBmilli-seconds\fP
+.RS 3n
+fake delay time, default:1000
+.RE
+.PP
+\fBdenysamples\fP = \fBquantity\fP
+.RS 3n
+How many samples should be penalized?, default:8
+.RE
+.SH "SEE ALSO"
+\fBoscam\fR(1), \fBoscam.user\fR(5), \fBoscam.server\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)

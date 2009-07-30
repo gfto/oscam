@@ -1,0 +1,136 @@
+oscam.server(5) 					       oscam.server(5)
+
+
+
+NAME
+       oscam.server - reader configuration file for oscam
+
+SYNOPSIS
+       The  server  configuration  file  for  oscam contais reader parameters.
+       sections in oscam.server are recurring (more than one reader possible).
+       At least one [reader] section is required.
+
+SECTION DESCRIPTIONS
+   The [reader] section
+       device = device|<ip|hostname>,<port>[,<lport>]
+	  define local or remote reader (lport: remapping to local port)
+
+       key = DES key
+	  key for newcamd remote reader encryption
+
+       password = password
+	  password for remote gbox reader
+
+       premium = ???
+	  for gbox reader
+
+       account = user,password
+	  user and password for remote reader
+
+       pincode = pincode
+	  pincode for Conax SCs
+
+       services = services[,<services>]...
+	  reader assingment to service group, default=none
+
+       inactivitytimeout = minutes
+	  inactivity timeout for newcamd reader, default:none
+
+       reconnecttimeout = minutes
+	  TCP reconnect, if missing answers, default:none
+
+       disableserverfilter = 0|1
+	  1 = ignore "caid" and "ident" settings of reader due faulty clients,
+	  default=0
+
+       label = name
+	  name for reader, required
+
+       fallback = 0|1
+	  1 = define reader as fallback, standard  and	fallback  reader  must
+	  have the same group, default:0
+
+       logport = 0|port
+	  camd3  reader  logport,  camd3  UDP must be activated, only works if
+	  theres no camd3 cascading, 0=disabled, default=0
+
+       caid = CAID
+	  define CAID for reader
+
+       boxid = NDS box ID
+	  NDS receiver box id
+
+       aeskey = AES key
+	  AES key for Viaccess SCs
+
+       detect = CD|DSR|CTS|RING|NONE|gpio[2-7]
+	  status detect of card (NONE = no detection), default:CD
+
+       mhz = 357|358|600|1000
+	  set serial speed in mhz, default:none
+
+       customspeed = 0,1
+	  use "mhz" parameter to set serial speed, default:0
+
+       protocol = reader protocol
+	  reader protocol, required:
+	   mouse
+	   smartreader
+	   internal
+	   intern
+	   serial
+	   camd35
+	   cs378x
+	   cs357x
+	   gbox
+	   newcamd
+	   newcamd525
+	   newcamd524
+
+       ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
+	  define CAID and ident for reader
+
+	  exmaple: ident = 0100:123456,234567;0200:345678,456789
+
+       provid = ID
+	  define provider ID for reader
+
+       class = [!]class[,[!]class]...
+	  define class in hex for reader
+
+	  example: class = 01,02,!1b,!2b
+
+       chid = CAID:ChID
+	  define Irdeto ChID for reader
+
+	  example: chid = 0100:12
+
+       showcls = quantity
+	  number of classes subscriptions to show for Viaccess SCs, default=10
+
+       maxqlen = size
+	  size of request queue for reader, default:128
+
+       group = groupname
+	  reader assingment to group, required
+
+       emmcache = usecache,rewrite,logging
+	  set EMM cache of local reader:
+	   usecache = 0|1  1=enable EMM chaching, default:0
+	   rewrite  = determines how often one and the same EMM is written
+	   logging  = 0 = log errors only
+		      1 = log all EEMs except the double EMMs
+		      2 = log all EMMs
+
+       blocknano = nano[,nano]...
+	  list of EMM-nanos to block (in hex w/o 0x)
+
+	   example: blocknano = 45,93,7a,ff
+
+SEE ALSO
+       oscam(1), oscam.conf(5), oscam.user(5), oscam.srvid(5), oscam.guess(5),
+       oscam.cert(5), oscam.services(5), oscam.ird(5), oscam.ac(5)
+
+
+
+							       oscam.server(5)

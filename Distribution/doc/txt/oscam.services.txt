@@ -1,0 +1,36 @@
+oscam.services(5)					     oscam.services(5)
+
+
+
+NAME
+       oscam.services - definition of services for oscam
+
+SYNOPSIS
+       service definitions
+
+DESCRIPTIONS
+   The [<service name>] section
+       service name section, service name sections are recurring, required
+
+       caid = CAID[,CAID]...
+	  listing of CAIDs in hex
+
+       provid = provider ID[,provider ID]...
+	  listing of provider IDs in hex
+
+       srvid = service ID[,service ID]...
+	  listing of service IDs in hex
+
+EXAMPLE
+	[myservice]
+	CAID=0100,0200,000A
+	provid=000001,ABCDEF
+	srvid=0001,0002,000A,000B
+
+SEE ALSO
+       oscam(1), oscam.conf(5), oscam.user(5) oscam.server(5), oscam.srvid(5),
+       oscam.guess(5), oscam.cert(5), oscam.ird(5), oscam.ac(5)
+
+
+
+							     oscam.services(5)

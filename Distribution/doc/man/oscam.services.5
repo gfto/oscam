@@ -1,0 +1,32 @@
+.TH oscam.services 5
+.SH NAME
+\fBoscam.services\fR - definition of services for oscam
+.SH SYNOPSIS
+service definitions
+.SH DESCRIPTIONS
+.SS "The [<service name>] section"
+service name section, service name sections are recurring, \fIrequired\fR
+.PP
+\fBcaid\fP = \fBCAID[,CAID]...\fP
+.RS 3n
+listing of CAIDs in hex
+.RE
+.RE
+.PP
+\fBprovid\fP = \fBprovider ID[,provider ID]...\fP
+.RS 3n
+listing of provider IDs in hex
+.RE
+.RE
+.PP
+\fBsrvid\fP = \fBservice ID[,service ID]...\fP
+.RS 3n
+listing of service IDs in hex
+.RE
+.SH EXAMPLE
+ [myservice]
+ CAID=0100,0200,000A
+ provid=000001,ABCDEF
+ srvid=0001,0002,000A,000B
+.SH "SEE ALSO"
+\fBoscam\fR(1), \fBoscam.conf\fR(5), \fBoscam.user\fR(5) \fBoscam.server\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)

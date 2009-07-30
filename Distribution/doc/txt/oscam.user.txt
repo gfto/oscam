@@ -1,0 +1,82 @@
+oscam.user(5)							 oscam.user(5)
+
+
+
+NAME
+       oscam.user - user configuration file for oscam
+
+SYNOPSIS
+       The  user  configuration  file  for  oscam  contains  user definitions.
+       [account] sections in oscam.user are recurring (more than one account).
+
+SECTION DESCRIPTIONS
+   The [account] section
+       user = name
+	  account name, required
+
+       pwd = password
+	  password for account, required
+
+       hostname = hostname
+	  host from which user connection is allowed
+
+       betatunnel   =	<CAID>.<ServiceID>:<target  CAID>[,<CAID>.<ServiceID>:
+       <target CAID>]...
+	  define Betacrypt tunneling (max. see CS_MAXTUNTAB in globals.h)
+
+	   example: betatunnel = 0100:0001:0200,0300.0004:0500
+
+       uniq = 0|1|2
+	  unique level:
+	   0 = disabled, default
+	   1 = only one connection per user is allowed
+	   2 = set user to fake if source ip is different
+	       (e.g. for newcamd clients with different CAIDs and ports)
+
+       sleep = minutes
+	  time waiting for inactive user, default:none
+
+       caid = <CAID>[&<mask>][:<CAID>[&<mask>]...
+	  limit CAIDs, default:all CAIDs
+
+	  example: caid = 0100&ffff:0200:0300&ff00
+
+       au = label of reader
+	  AU for/sending EMMs to specified reader (security issue: client  can
+	  see SC data!), default:none
+
+       group = group[,<group>]...
+	  user assingment to reader group, default=none, required
+
+       services = services[,<services>]...
+	  user assingment to service group, default:none
+
+       ident = <CAID>:<ident>[,<CAID>:<ident>]...
+	  user assingment to idents, default:none
+
+       class = [!]class[,[!]class]...
+	  user [de]assingment to classes, default=none
+
+	   example: class = 01,02,!03,!04
+
+       chid = <CAID>:<ChID>[,<CAID>:<ChID>]...
+	  user assingment to Irdeto ChID, default:none
+
+       numusers = quantity
+	  anti-cascading:  user  per  account,	0  = anti-cascading permitted,
+	  default:none
+
+       penalty = 0|1|2
+	  anti-cascading: level of penalty:
+	   0 = only logging, default
+	   1 = send fake CWs
+	   2 = disbable user temporary
+
+SEE ALSO
+       oscam(1),     oscam.conf(5),	 oscam.server(5),      oscam.srvid(5),
+       oscam.guess(5),	  oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
+       oscam.ac(5)
+
+
+
+								 oscam.user(5)

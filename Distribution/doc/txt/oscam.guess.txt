@@ -1,0 +1,25 @@
+oscam.guess(5)							oscam.guess(5)
+
+
+
+NAME
+       oscam.guess - CAID guessing table for oscam
+
+SYNOPSIS
+       CAID guessing table
+
+DESCRIPTIONS
+       <length of ECM>:<CAID>
+	  CAID guessing table by len in hex, only needed for protocols (at the
+	  moment BOMBA protocol only) that does not pass CAIDs
+
+EXAMPLE
+	12:3456
+
+SEE ALSO
+       oscam(1), oscam.conf(5), oscam.user(5) oscam.server(5), oscam.srvid(5),
+       oscam.cert(5), oscam.services(5), oscam.ird(5), oscam.ac(5)
+
+
+
+								oscam.guess(5)

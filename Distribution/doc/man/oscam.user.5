@@ -1,0 +1,99 @@
+.TH oscam.user 5
+.SH NAME
+\fBoscam.user\fR - user configuration file for oscam
+.SH SYNOPSIS
+The user configuration file for oscam contains user definitions. [account]
+sections in \fBoscam.user\fR are \fIrecurring\fR (more than one account).
+.SH SECTION DESCRIPTIONS
+.SS "The [account] section"
+.PP
+\fBuser\fP = \fBname\fP
+.RS 3n
+account name, \fIrequired\fR
+.RE
+.PP
+\fBpwd\fP = \fBpassword\fP
+.RS 3n
+password for account, \fIrequired\fR
+.RE
+.PP
+\fBhostname\fP = \fBhostname\fP
+.RS 3n
+host from which user connection is allowed
+.RE
+.PP
+\fBbetatunnel\fP = \fB<CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>:
+<target CAID>]...\fP
+.RS 3n
+define Betacrypt tunneling (max. see CS_MAXTUNTAB in \fBglobals.h\fP)
+
+ example: betatunnel = 0100:0001:0200,0300.0004:0500 
+.RE
+.PP
+\fBuniq\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+unique level:
+ \fB0\fP = disabled, default
+ \fB1\fP = only one connection per user is allowed
+ \fB2\fP = set user to fake if source ip is different 
+     (e.g. for newcamd clients with different CAIDs and ports)
+.RE
+.PP
+\fBsleep\fP = \fBminutes\fP
+.RS 3n
+time waiting for inactive user, default:none
+.RE
+.PP
+\fBcaid\fP = \fB<CAID>[&<mask>][:<CAID>[&<mask>]...\fP
+.RS 3n
+limit CAIDs, default:all CAIDs
+
+example: caid = 0100&ffff:0200:0300&ff00
+.RE
+.PP
+\fBau\fP = \fBlabel of reader\fP
+.RS 3n
+AU for/sending EMMs to specified reader (security issue: client can see SC data!), default:none
+.RE
+.PP
+\fBgroup\fP = \fBgroup[,<group>]...\fP
+.RS 3n
+user assingment to reader group, default=none, \fIrequired\fR
+.RE
+.PP
+\fBservices\fP = \fBservices[,<services>]...\fP
+.RS 3n
+user assingment to service group, default:none
+.RE
+.PP
+\fBident\fP = \fB<CAID>:<ident>[,<CAID>:<ident>]...\fP
+.RS 3n
+user assingment to idents, default:none
+.RE
+.PP
+\fBclass\fP = \fB[!]class[,[!]class]...\fP
+.RS 3n
+user [de]assingment to classes, default=none
+
+ example: class = 01,02,!03,!04
+.RE
+.PP
+\fBchid\fP = \fB<CAID>:<ChID>[,<CAID>:<ChID>]...\fP
+.RS 3n
+user assingment to Irdeto ChID, default:none
+.RE
+.PP
+\fBnumusers\fP = \fBquantity\fP
+.RS 3n
+anti-cascading: user per account, 0 = anti-cascading permitted, default:none
+.RE
+.PP
+\fBpenalty\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+anti-cascading: level of penalty:
+ \fB0\fP = only logging, default
+ \fB1\fP = send fake CWs
+ \fB2\fP = disbable user temporary
+.RE
+.SH "SEE ALSO"
+\fBoscam\fR(1), \fBoscam.conf\fR(5), \fBoscam.server\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)

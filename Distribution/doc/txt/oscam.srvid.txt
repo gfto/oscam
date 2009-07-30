@@ -1,0 +1,25 @@
+oscam.srvid(5)							oscam.srvid(5)
+
+
+
+NAME
+       oscam.srvid - service ID configuration file for oscam
+
+SYNOPSIS
+       service ID mappings
+
+DESCRIPTIONS
+       <srvid>:<name of service>
+	  mapping between service ID and name of service
+
+EXAMPLE
+	000A:my service 1
+	00FF:my service 2
+
+SEE ALSO
+       oscam(1), oscam.conf(5), oscam.user(5) oscam.server(5), oscam.guess(5),
+       oscam.cert(5), oscam.services(5), oscam.ird(5), oscam.ac(5)
+
+
+
+								oscam.srvid(5)
