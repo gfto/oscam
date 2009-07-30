@@ -166,11 +166,15 @@ set (CMAKE_EXE_LINKER_FLAGS "-s")
 #----------------------- installation -----------------------------
 
 file (GLOB config_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/oscam.*")
-file (GLOB doc_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/*.txt")
+file (GLOB doc_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/txt/*.txt")
+file (GLOB man1_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/man/*.1")
+file (GLOB man5_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/man/*.5")
 
 install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${exe_name}${CMAKE_EXECUTABLE_SUFFIX} DESTINATION bin COMPONENT bin)
 install (FILES ${config_files} DESTINATION etc COMPONENT config)
 install (FILES ${doc_files} DESTINATION share/doc/oscam COMPONENT doc)
+install (FILES ${man1_files} DESTINATION share/man/man1 COMPONENT doc)
+install (FILES ${man5_files} DESTINATION share/man/man5 COMPONENT doc)
 
 #----------------------- we can use CPack to build pacakges --------------------------
 
