@@ -127,6 +127,48 @@ SECTION DESCRIPTIONS
 
 	   example: blocknano = 45,93,7a,ff
 
+EXAMPLES
+	 serial mouse compatible reader
+
+	   [reader]
+	   label    = myserialmousereader
+	   detect   = cd
+	   protocol = mouse
+	   device   = /dev/ttyS1
+	   group    = 1
+	   caid     = 0100
+	   services = myservice
+
+	 USB mouse compatible reader
+
+	   [reader]
+	   label    = myusbmousereader
+	   detect   = cd
+	   protocol = mouse
+	   device   = /dev/ttyUSB0
+	   aeskey   = 0102030405060708090a0b0c0d0e0f10
+	   group    = 2
+	   caid     = 0200
+
+	 camd 3.78x reader
+
+	   [reader]
+	   label    = mycamd378xreader
+	   protocol = cs378x
+	   device   = 192.168.0.1,1234
+	   account  = user,password
+	   group    = 3
+
+	 newcamd reader
+
+	   [reader]
+	   label    = mynewcamdreader
+	   protocol = newcamd
+	   key	    = 0102030405060708091011121314
+	   device   = 192.168.0.2,2345
+	   account  = user,password
+	   group    = 4
+
 SEE ALSO
        oscam(1), oscam.conf(5), oscam.user(5), oscam.srvid(5), oscam.guess(5),
        oscam.cert(5), oscam.services(5), oscam.ird(5), oscam.ac(5)

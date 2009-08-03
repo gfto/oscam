@@ -12,7 +12,7 @@ DESCRIPTIONS
        <byte3>:<byte4-7>:<CAID>:<SID>
 	  Irdeto guessing table by signature
 
-EXAMPLE
+EXAMPLES
 	12:0000000a:12ab:cd01
 
 SEE ALSO

@@ -12,7 +12,7 @@ DESCRIPTIONS
        <srvid>:<name of service>
 	  mapping between service ID and name of service
 
-EXAMPLE
+EXAMPLES
 	000A:my service 1
 	00FF:my service 2
 

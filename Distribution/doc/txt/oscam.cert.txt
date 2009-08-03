@@ -13,7 +13,8 @@ DESCRIPTIONS
 	  mapping  between  CAID  and  IPK/sessions keys in hex, currently for
 	  Cryptoworks only
 
-	  example: 0100:00000000:0102030405060708090A0B0C0D0E0F
+EXAMPLES
+	0100:00000000:0102030405060708090A0B0C0D0E0F
 
 SEE ALSO
        oscam(1), oscam.conf(5), oscam.user(5) oscam.server(5), oscam.srvid(5),

@@ -36,6 +36,8 @@ DESCRIPTIONS
 
 	 Windows (based on cygwin1.dll)
 
+	 Mac OS X
+
 OPTIONS
        -b
 	  starts in background

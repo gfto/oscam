@@ -21,7 +21,7 @@ DESCRIPTIONS
        srvid = service ID[,service ID]...
 	  listing of service IDs in hex
 
-EXAMPLE
+EXAMPLES
 	[myservice]
 	CAID=0100,0200,000A
 	provid=000001,ABCDEF

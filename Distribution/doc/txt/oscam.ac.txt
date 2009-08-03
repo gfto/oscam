@@ -16,7 +16,7 @@ DESCRIPTIONS
        *=<seconds>
 	  default time cycles between CWs changes, required
 
-EXAMPLE
+EXAMPLES
 	0100:000000=10
 	*=7
 

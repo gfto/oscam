@@ -120,11 +120,11 @@ UDP port for monitor, port=0 monitor disabled, default:0
 bind service to specified IP address, default:all
 .RE
 .PP
-\fBnocrypt\fP = \fBIP address\fP|\fBIP address range\fP
+\fBnocrypt\fP = \fBIP address\fP|\fBIP address range\fP[,\fBIP address\fP|\fBIP address range]\fP...
 .RS 3n
 unsecured monitor connection, default:none
 
- example: nocrypt = 192.168.0.0-192.168.255.255
+ example: nocrypt = 127.0.0.1,192.168.0.0-192.168.255.255
 .RE
 .PP
 \fBaulow\fP = \fBminutes\fP
@@ -161,11 +161,11 @@ TCP/IP port for camd 3.3x clients, 0 = disabled, default:0
 bind service to specified IP address, default:all
 .RE
 .PP
-\fBnocrypt\fP = \fBIP address\fP|\fBIP address range\fP
+\fBnocrypt\fP = \fBIP address\fP|\fBIP address range\fP[,\fBIP address\fP|\fBIP address range]\fP...
 .RS 3n
 unsecured camd 3.3x client connection, default:none
 
- example: nocrypt = 192.168.0.0-192.168.255.255
+ example: nocrypt = 127.0.0.1,192.168.0.0-192.168.255.255
 .RE
 .PP
 \fBpassive\fP = \fB0\fP|\fB1\fP
@@ -177,13 +177,13 @@ unsecured camd 3.3x client connection, default:none
 .RS 3n
 key for camd 3.3x client encryption, default:none
 
- example key = 01020304050607080910111213141516
+ example: key = 01020304050607080910111213141516
 .RE
 .SS "The [camd35] section"
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
-TCP/IP port for camd 3.5x clients, 0 = disabled, default:0
+UDP port for camd 3.5x clients, 0 = disabled, default:0
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
@@ -194,7 +194,7 @@ bind service to specified IP address, default:all
 .PP
 \fBport\fP = \fBport@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
 .RS 3n
-port/CAID/ident definitions, default:none
+TCP port/CAID/ident definitions, default:none
 
  example: port = 10000@0100:100000;20000@0200:200000,300000,400000
  
@@ -224,11 +224,11 @@ TCP/IP port for radegast clients, 0=disabled, default:0
 bind service to specified IP address, default:all
 .RE
 .PP
-\fBallowed\fP = \fBIP address\fP|\fBIP address range\fP
+\fBallowed\fP = \fBIP address\fP|\fBIP address range\fP[,\fBIP address\fP|\fBIP address range]\fP...
 .RS 3n
 client connections allowed from, default:none
 
- example: allowed = 192.168.0.0-192.168.255.255
+ example: allowed = 127.0.0.1,192.168.0.0-192.168.255.255
 .RE
 .PP
 \fBuser\fP = \fBusername\fP
@@ -240,10 +240,11 @@ user name for radegast client
 \fBdevice\fP = \fB<user>@<device>[:baud][?option1=value1[&option2=value2]]\fP
 .RS 3n
 parameters:
- user   = account
- device = serial device name
- option = timeout = milli-seconds,timeout for connection, default:50
-          delay   = milli-seconds,additional delay between two
+ \fBuser\fP   = \fBaccount\fP
+ \fBdevice\fP = \fBserial device name\fP
+ \fBoption\fP = \fBtimeout\fP = milli-seconds, timeout for connection, 
+                    default:50
+          \fBdelay\fP   = milli-seconds, additional delay between two
                     characters, default:0
 
 supported serial devices:
@@ -256,7 +257,7 @@ supported serial devices:
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
-TCP/IP port for camd 3.57x clients, 0 = disabled, default:0
+UDP port for camd 3.57x clients, 0 = disabled, default:0
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
@@ -265,9 +266,13 @@ bind service to specified IP address, default:all
 .RE	  
 .SS "The [cs378x] section"
 .PP
-\fBport\fP = \fB0\fP|\fBport\fP
+\fBport\fP = \fB0\fP|\fBport@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
 .RS 3n
-TCP/IP port for camd 3.78x clients, 0 = disabled, default:0
+TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled, default:0
+
+ example: port = 10000@0100:100000;20000@0200:200000,300000,400000
+
+ Each CAID requires a separate port.
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
@@ -355,5 +360,34 @@ fake delay time, default:1000
 .RS 3n
 How many samples should be penalized?, default:8
 .RE
+.SH EXAMPLES
+ [global]
+ logfile      = /var/log/oscam/oscam.log
+ usrfile      = /var/log/oscam/oscamuser.log
+ pidfile      = /var/run/oscam.pid
+
+ waitforcards = 1
+
+ [monitor]
+ port         = 988
+ monlevel     = 1
+ nocrypt      = 127.0.0.1
+ 
+ [newcamd]
+ key          = 0102030405060708091011121314
+ port         = 10000@0100:100000;20000@0200:200000,300000,400000
+ 
+ [radegast]
+ port         = 30000
+ user         = radegastuser
+ allowed      = 127.0.0.1,192.168.0.0-192.168.255.255
+
+ [camd33]
+ port         = 40000
+ serverip     = 192.168.0.1
+ key          = 01020304050607080910111213141516
+    
+ [cs378x]
+ port         = 50000@0300:600000
 .SH "SEE ALSO"
 \fBoscam\fR(1), \fBoscam.user\fR(5), \fBoscam.server\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)

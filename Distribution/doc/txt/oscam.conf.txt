@@ -83,10 +83,10 @@ SECTION DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
-       nocrypt = IP address|IP address range
+       nocrypt	= IP address|IP address range[,IP address|IP address range]...
 	  unsecured monitor connection, default:none
 
-	   example: nocrypt = 192.168.0.0-192.168.255.255
+	   example: nocrypt = 127.0.0.1,192.168.0.0-192.168.255.255
 
        aulow = minutes
 	  time no EMM occurs so that client is set to low, default:30
@@ -103,7 +103,7 @@ SECTION DESCRIPTIONS
 	  monlevel can be overwritten per user in oscam.user
 
        hideclient_to = minutes
-	  time	to  hide  clients  in the monitor if not sending requests, 0 =
+	  time to hide clients in the monitor if not  sending  requests,  0  =
 	  disabled, default:0
 
    The [camd33] section
@@ -113,10 +113,10 @@ SECTION DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
-       nocrypt = IP address|IP address range
+       nocrypt	= IP address|IP address range[,IP address|IP address range]...
 	  unsecured camd 3.3x client connection, default:none
 
-	   example: nocrypt = 192.168.0.0-192.168.255.255
+	   example: nocrypt = 127.0.0.1,192.168.0.0-192.168.255.255
 
        passive = 0|1
 	  1=force passive camd 3.3x client, default:0
@@ -124,18 +124,18 @@ SECTION DESCRIPTIONS
        key = 128 bit key
 	  key for camd 3.3x client encryption, default:none
 
-	   example key = 01020304050607080910111213141516
+	   example: key = 01020304050607080910111213141516
 
    The [camd35] section
        port = 0|port
-	  TCP/IP port for camd 3.5x clients, 0 = disabled, default:0
+	  UDP port for camd 3.5x clients, 0 = disabled, default:0
 
        serverip = IP address
 	  bind service to specified IP address, default:all
 
    The [newcamd] section
        port = port@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...
-	  port/CAID/ident definitions, default:none
+	  TCP port/CAID/ident definitions, default:none
 
 	   example: port = 10000@0100:100000;20000@0200:200000,300000,400000
 
@@ -156,10 +156,10 @@ SECTION DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
-       allowed = IP address|IP address range
+       allowed = IP address|IP address range[,IP address|IP address  range]...
 	  client connections allowed from, default:none
 
-	   example: allowed = 192.168.0.0-192.168.255.255
+	   example: allowed = 127.0.0.1,192.168.0.0-192.168.255.255
 
        user = username
 	  user name for radegast client
@@ -169,8 +169,9 @@ SECTION DESCRIPTIONS
 	  parameters:
 	   user   = account
 	   device = serial device name
-	   option = timeout = milli-seconds,timeout for connection, default:50
-		    delay   = milli-seconds,additional delay between two
+	   option = timeout = milli-seconds, timeout for connection,
+			      default:50
+		    delay   = milli-seconds, additional delay between two
 			      characters, default:0
 
 	  supported serial devices:
@@ -181,14 +182,19 @@ SECTION DESCRIPTIONS
 
    The [cs357x] section
        port = 0|port
-	  TCP/IP port for camd 3.57x clients, 0 = disabled, default:0
+	  UDP port for camd 3.57x clients, 0 = disabled, default:0
 
        serverip = IP address
 	  bind service to specified IP address, default:all
 
    The [cs378x] section
-       port = 0|port
-	  TCP/IP port for camd 3.78x clients, 0 = disabled, default:0
+       port = 0|port@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...
+	  TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled,
+	  default:0
+
+	   example: port = 10000@0100:100000;20000@0200:200000,300000,400000
+
+	   Each CAID requires a separate port.
 
        serverip = IP address
 	  bind service to specified IP address, default:all
@@ -246,6 +252,36 @@ SECTION DESCRIPTIONS
 
        denysamples = quantity
 	  How many samples should be penalized?, default:8
+
+EXAMPLES
+	[global]
+	logfile      = /var/log/oscam/oscam.log
+	usrfile      = /var/log/oscam/oscamuser.log
+	pidfile      = /var/run/oscam.pid
+
+	waitforcards = 1
+
+	[monitor]
+	port	     = 988
+	monlevel     = 1
+	nocrypt      = 127.0.0.1
+
+	[newcamd]
+	key	     = 0102030405060708091011121314
+	port	     = 10000@0100:100000;20000@0200:200000,300000,400000
+
+	[radegast]
+	port	     = 30000
+	user	     = radegastuser
+	allowed      = 127.0.0.1,192.168.0.0-192.168.255.255
+
+	[camd33]
+	port	     = 40000
+	serverip     = 192.168.0.1
+	key	     = 01020304050607080910111213141516
+
+	[cs378x]
+	port	     = 50000@0300:600000
 
 SEE ALSO
        oscam(1),     oscam.user(5),	 oscam.server(5),      oscam.srvid(5),

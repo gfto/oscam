@@ -164,9 +164,9 @@ reader assingment to group, \fIrequired\fR
 \fBemmcache\fP = \fBusecache,rewrite,logging\fP
 .RS 3n
 set EMM cache of local reader:
- usecache = \fB0\fP|\fB1\fP  1=enable EMM chaching, default:0
- rewrite  = determines how often one and the same EMM is written
- logging  = \fB0\fP = log errors only
+ \fBusecache\fP = \fB0\fP|\fB1\fP  1=enable EMM chaching, default:0
+ \fBrewrite\fP  = determines how often one and the same EMM is written
+ \fBlogging\fP  = \fB0\fP = log errors only
             \fB1\fP = log all EEMs except the double EMMs
             \fB2\fP = log all EMMs
 .RE
@@ -177,5 +177,51 @@ list of EMM-nanos to block (in hex w/o 0x)
 
  example: blocknano = 45,93,7a,ff
 .RE
+.SH EXAMPLES
+.TP 3n
+\(bu
+serial mouse compatible reader
+ 
+ [reader]
+ label    = myserialmousereader
+ detect   = cd
+ protocol = mouse
+ device   = /dev/ttyS1
+ group    = 1
+ caid     = 0100
+ services = myservice
+.TP 3n
+\(bu
+USB mouse compatible reader
+ 
+ [reader]
+ label    = myusbmousereader
+ detect   = cd
+ protocol = mouse
+ device   = /dev/ttyUSB0
+ aeskey   = 0102030405060708090a0b0c0d0e0f10
+ group    = 2
+ caid     = 0200
+.TP 3n
+\(bu
+camd 3.78x reader
+ 
+ [reader]
+ label    = mycamd378xreader
+ protocol = cs378x
+ device   = 192.168.0.1,1234
+ account  = user,password
+ group    = 3
+.TP 3n
+\(bu
+newcamd reader
+ 
+ [reader]
+ label    = mynewcamdreader
+ protocol = newcamd
+ key      = 0102030405060708091011121314
+ device   = 192.168.0.2,2345
+ account  = user,password
+ group    = 4
 .SH "SEE ALSO"
 \fBoscam\fR(1), \fBoscam.conf\fR(5), \fBoscam.user\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)

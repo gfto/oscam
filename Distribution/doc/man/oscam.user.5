@@ -95,5 +95,16 @@ anti-cascading: level of penalty:
  \fB1\fP = send fake CWs
  \fB2\fP = disbable user temporary
 .RE
+.SH EXAMPLES
+ [account]
+ user       = username
+ pwd        = password
+ group      = 1
+ au         = myserialmousereader
+ services   = myservice
+ betatunnel = 0100.0001:0101,0100.0002:0101
+ caid       = 0100 
+ ident      = 0100:000000
+ uniq       = 1
 .SH "SEE ALSO"
 \fBoscam\fR(1), \fBoscam.conf\fR(5), \fBoscam.server\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)

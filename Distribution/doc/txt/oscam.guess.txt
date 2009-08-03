@@ -13,7 +13,7 @@ DESCRIPTIONS
 	  CAID guessing table by len in hex, only needed for protocols (at the
 	  moment BOMBA protocol only) that does not pass CAIDs
 
-EXAMPLE
+EXAMPLES
 	12:3456
 
 SEE ALSO
