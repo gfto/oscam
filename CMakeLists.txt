@@ -1,6 +1,16 @@
 project (OSCam C)
 
-cmake_minimum_required (VERSION 2.6)
+#----------------------- minimum version of cmake to use ------------
+
+# if you want to switch to 2.6 min, please look at the escaped definitions
+# later in this file (the add_definitions in 2.6 don't need to be escaped),
+# and remove the CMP0005 policy.
+# the CMP0003 could also be removed for cmake 2.6
+cmake_minimum_required (VERSION 2.4)
+if(COMMAND cmake_policy)
+    cmake_policy(SET CMP0005 OLD)
+    cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
 
 #----------------------- detect system ------------------------------
 
@@ -80,16 +90,16 @@ elseif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 endif (OSCamOperatingSystem MATCHES "Linux")
 
 set (CS_CONFDIR ${DEFAULT_CS_CONFDIR} CACHE STRING "Default path for the config files")
-add_definitions ("-DCS_CONFDIR=\"${CS_CONFDIR}\"")
+add_definitions ("-DCS_CONFDIR=\\\"${CS_CONFDIR}\\\"")
 
 set (CS_OS_CPU ${CMAKE_SYSTEM_PROCESSOR})
 set (CS_OSTYPE ${CS_OS_CPU}-${CS_OS_HW}-${CS_OS_SYS})
 
 add_definitions ("-DUSE_CMAKE")
-add_definitions ("-DCS_OSTYPE=\"${CS_OSTYPE}\"")
-add_definitions ("-DCS_OS_CPU=\"${CS_OS_CPU}\"")
-add_definitions ("-DCS_OS_HW=\"${CS_OS_HW}\"")
-add_definitions ("-DCS_OS_SYS=\"${CS_OS_SYS}\"")
+add_definitions ("-DCS_OSTYPE=\\\"${CS_OSTYPE}\\\"")
+add_definitions ("-DCS_OS_CPU=\\\"${CS_OS_CPU}\\\"")
+add_definitions ("-DCS_OS_HW=\\\"${CS_OS_HW}\\\"")
+add_definitions ("-DCS_OS_SYS=\\\"${CS_OS_SYS}\\\"")
 
 #----------------------- subdirectories ------------------------------
 
