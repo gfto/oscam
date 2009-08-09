@@ -86,7 +86,7 @@ elseif (OSCamOperatingSystem MATCHES "Amino")
     set (DEFAULT_CS_CONFDIR "/usr/local/etc")
 elseif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
     add_definitions ("-DOS_CYGWIN32")
-    set (DEFAULT_CS_CONFDIR "/usr/local/etc")
+    set (DEFAULT_CS_CONFDIR ".")
 endif (OSCamOperatingSystem MATCHES "Linux")
 
 set (CS_CONFDIR ${DEFAULT_CS_CONFDIR} CACHE STRING "Default path for the config files")
