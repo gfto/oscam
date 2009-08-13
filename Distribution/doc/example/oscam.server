@@ -1,0 +1,58 @@
+#
+# reader configuration
+#
+
+# serial reader
+
+[reader]
+label    = reader1
+protocol = mouse
+detect   = CD
+device   = /dev/ttyS0
+group    = 1
+emmcache = 1,3,2
+services = services1
+caid     = 0100
+
+# USB serial reader
+
+[reader]
+label    = reader2
+protocol = mouse
+detect   = CD
+device   = /dev/ttyUSB0
+aeskey   = 000102030405060708090A0B0C0D0E0F
+group    = 2
+emmcache = 1,3,2
+services = services2
+caid     = 0200
+
+# remote newcamd reader 
+
+[reader]
+label    = remote1
+protocol = newcamd
+key      = 0102030405060708091011121314
+device   = 192.168.0.2,66666
+account  = login1,password1
+group    = 3
+
+# remote camd 3.78x reader 
+
+[reader]
+label    = remote2
+protocol = cs378x
+device   = 192.168.0.3,23456
+account  = login2,password2
+group    = 4
+caid     = 0400
+
+# remote gbox reader 
+
+[reader]
+label    = remote3
+protocol = gbox
+device   = 192.168.0.4,34567,45678
+account  = login3,password3
+group    = 5
+caid     = 0500

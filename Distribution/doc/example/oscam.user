@@ -1,0 +1,30 @@
+#
+# user configuration
+#
+
+# user with Betacrypt tunnel, no monitoring, only one connection possible
+
+[account]
+user       = user1
+pwd        = password1
+monlevel   = 0
+uniq       = 1
+group      = 1
+au         = reader1
+services   = services1
+betatunnel = 0300:0001:0100,0400.0005:0100
+ident 	   = 0100:000000
+caid       = 0100
+
+# user with monitor access
+
+[account]
+user       = user2
+pwd        = password2
+monlevel   = 1
+uniq       = 0
+group      = 2
+au         = reader2
+services   = services2
+ident 	   = 0200:000000
+caid       = 0200
