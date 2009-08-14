@@ -2,7 +2,7 @@
 # user configuration
 #
 
-# user with Betacrypt tunnel, no monitoring, only one connection possible
+# user for group 1 with Betacrypt tunnel, no monitoring, only one connection possible, AU enabled
 
 [account]
 user       = user1
@@ -16,7 +16,7 @@ betatunnel = 0300:0001:0100,0400.0005:0100
 ident 	   = 0100:000000
 caid       = 0100
 
-# user with monitor access
+# user for group 2 with monitor access, AU enabled
 
 [account]
 user       = user2
@@ -28,3 +28,24 @@ au         = reader2
 services   = services2
 ident 	   = 0200:000000
 caid       = 0200
+
+# user for group 2 without monitor access, AU disabled
+
+[account]
+user       = user3
+pwd        = password3
+group      = 2
+services   = services2
+ident 	   = 0200:000000
+caid       = 0200
+
+# user for group 3 without monitor access, only one connection possible, AU disabled
+
+[account]
+user       = user4
+pwd        = password4
+monlevel   = 0
+uniq       = 1
+group      = 3
+ident 	   = 0300:000000
+caid       = 0300
