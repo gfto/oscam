@@ -166,7 +166,8 @@ static void cCamCryptVG2_Process_D1(const unsigned char *ins, unsigned char *dat
   int iblock;
   for(i=0,iblock=0; i<blocklen+2; i++,iblock+=16) {
     unsigned char in[16];
-    if(blocklen==i) {
+    int docalc=1;
+    if(blocklen==i && (docalc=datalen&0xf)) {
       memset(in,0,sizeof(in));
       memcpy(in,&data[iblock],datalen-(datalen1&~0xf));
       }
@@ -177,9 +178,11 @@ static void cCamCryptVG2_Process_D1(const unsigned char *ins, unsigned char *dat
     else
       memcpy(in,&data[iblock],sizeof(in));
 
-    xor16(iter,in,tmp);
-    cCamCryptVG2_ReorderAndEncrypt(tmp);
-    xor16(tmp,stateD3A,iter);
+    if(docalc) {
+      xor16(iter,in,tmp);
+      cCamCryptVG2_ReorderAndEncrypt(tmp);
+      xor16(tmp,stateD3A,iter);
+      }
     }
   memcpy(stateD3A,tmp,16);
 }
@@ -465,6 +468,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
   unsigned char atr_skyitalia[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
   unsigned char atr_premiere[] = { 0x3F, 0xFF, 0x11, 0x25, 0x03, 0x10, 0x80, 0x41, 0xB0, 0x07, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x50, 0x31, 0x01, 0x00, 0x11 };
   unsigned char atr_directv[] = { 0x3F, 0x78, 0x13, 0x25, 0x03, 0x40, 0xB0, 0x20, 0xFF, 0xFF, 0x4A, 0x50, 0x00 };
+  unsigned char atr_yes[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x11, 0x69, 0xFF, 0x4A, 0x50, 0x50, 0x00, 0x00, 0x47, 0x54, 0x01, 0x00, 0x00 };
 
     if ((atrsize == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atrsize) == 0))
     {
@@ -487,6 +491,10 @@ int videoguard_card_init(uchar *atr, int atrsize)
     else if ((atrsize == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atrsize) == 0))
     {
         cs_log("Type: Videoguard DirecTV");
+    }
+    else if ((atrsize == sizeof (atr_yes)) && (memcmp (atr, atr_yes, atrsize) == 0))
+    {
+        cs_log("Type: Videoguard YES DBS Israel");
     }
     else
     {
@@ -572,7 +580,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
     if(l>=0) {
       int i;
       for(i=0; i<l ;i++) {
-        if(buff[i]==0x00 && buff[i+1]==0xF3) {
+        if(buff[i+1]==0xF3 && (buff[i]==0x00 || buff[i]==0x0A)) {
           memcpy(&boxID,&buff[i+2],sizeof(boxID));
           boxidOK=1;
           break;
@@ -587,7 +595,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
   }
 
   unsigned char ins4C[5] = { 0xD0,0x4C,0x00,0x00,0x09 };
-  unsigned char payload4C[9] = { 0,0,0,0, 3,0,0,2,4 };
+  unsigned char payload4C[9] = { 0,0,0,0, 3,0,0,0,4 };
   memcpy(payload4C,boxID,4);
   if(!write_cmd(ins4C,payload4C) || !status_ok(cta_res+l)) {
     cs_log("sending boxid failed");
@@ -680,7 +688,7 @@ int videoguard_do_ecm(ECM_REQUEST *er)
   int lenECMpart2=er->ecm[posECMpart2]+1;
   unsigned char tbuff[264];
   tbuff[0]=0;
-  memcpy(&tbuff[1],&(er->ecm[posECMpart2+1]),lenECMpart2);
+  memcpy(&tbuff[1],&(er->ecm[posECMpart2+1]),lenECMpart2-1);
   ins40[4]=lenECMpart2;
   int l;
   l = do_cmd(ins40,tbuff,NULL);
