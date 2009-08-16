@@ -179,12 +179,25 @@ file (GLOB config_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/oscam.*")
 file (GLOB doc_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/txt/*.txt")
 file (GLOB man1_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/man/*.1")
 file (GLOB man5_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/man/*.5")
+file (GLOB example_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/oscam.ac"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/oscam.cert"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/oscam.conf"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/oscam.guess"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/oscam.ird"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/oscam.server"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/oscam.services"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/oscam.srvid"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/doc/example/oscam.user")
+file (GLOB monitor_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/monitor/mpcs*.sh"
+                         "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/monitor/mpcs*.tar")
 
 install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${exe_name}${CMAKE_EXECUTABLE_SUFFIX} DESTINATION bin COMPONENT bin)
 install (FILES ${config_files} DESTINATION etc COMPONENT config)
 install (FILES ${doc_files} DESTINATION share/doc/oscam COMPONENT doc)
 install (FILES ${man1_files} DESTINATION share/man/man1 COMPONENT doc)
 install (FILES ${man5_files} DESTINATION share/man/man5 COMPONENT doc)
+install (FILES ${example_files} DESTINATION share/doc/oscam/example COMPONENT doc)
+install (FILES ${monitor_files} DESTINATION share/doc/oscam/monitor COMPONENT doc)
 
 #----------------------- we can use CPack to build pacakges --------------------------
 
