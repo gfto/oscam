@@ -369,6 +369,7 @@ struct s_reader
   ushort    acs;		// irdeto
   ushort    caid[16];
   uchar     b_nano[256];
+  uchar     emmfile[128];
   char      pincode[5];
   int       logemm;
   int       cachemm;

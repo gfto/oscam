@@ -972,6 +972,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
   if( !strcmp(token, "pincode") )
       strncpy(rdr->pincode, value, sizeof(rdr->pincode)-1);
+  if (!strcmp(token, "readnano")) strncpy(rdr->emmfile, value, sizeof(rdr->emmfile)-1);
   /*
    *	case insensitive
    */
@@ -1055,10 +1056,25 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
         case 1: rdr->rewritemm=atoi(ptr); break;
         case 2: rdr->logemm=atoi(ptr);    break;
       }
+
   if (!strcmp(token, "blocknano"))
-    for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
-      if ((i=byte_atob(ptr))>=0)
-        rdr->b_nano[i]=1;
+    if (!strcmp(value,"all")) //wildcard is used
+      for (i=0 ; i<256; i++)
+	rdr->b_nano[i] |= 0x01; //set all lsb's to block all nanos
+    else
+      for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
+	if ((i=byte_atob(ptr))>=0)
+	  rdr->b_nano[i]|= 0x01; //lsb is set when to block nano
+
+  if (!strcmp(token, "savenano"))
+    if (!strcmp(value,"all")) //wildcard is used
+      for (i=0 ; i<256; i++)
+	rdr->b_nano[i] |= 0x02; //set all lsb+1 to save all nanos to file
+    else
+      for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
+	if ((i=byte_atob(ptr))>=0)
+	  rdr->b_nano[i]|= 0x02; //lsb+1 is set when to save nano to file
+
 }
 
 int init_readerdb()

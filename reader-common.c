@@ -168,6 +168,43 @@ static int reader_activate_card()
   return(1);
 }
 
+void do_emm_from_file(void)
+{
+  //now here check whether we have EMM's on file to load and write to card:
+  if (reader[ridx].emmfile[0]) {//readnano has something filled in
+
+    //handling emmfile
+    char token[256];
+    FILE *fp;
+    if ((reader[ridx].emmfile[0] == '/'))
+      sprintf (token, "%s", reader[ridx].emmfile); //pathname included
+    else
+      sprintf (token, "%s%s", cs_confdir, reader[ridx].emmfile); //only file specified, look in confdir for this file
+    
+    if (!(fp = fopen (token, "rb")))
+      cs_log ("ERROR: Cannot open EMM file '%s' (errno=%d)\n", token, errno);
+    else {
+      EMM_PACKET *eptmp;
+      eptmp = malloc (sizeof(EMM_PACKET));
+      fread (eptmp, sizeof (EMM_PACKET), 1, fp);
+      fclose (fp);
+
+      uchar old_b_nano = reader[ridx].b_nano[eptmp->emm[0]]; //save old b_nano value
+      reader[ridx].b_nano[eptmp->emm[0]] &= 0xfc; //clear lsb and lsb+1, so no blocking, and no saving for this nano      
+          
+      //if (!reader_do_emm (eptmp))
+      if (!reader_emm (eptmp))
+        cs_log ("ERROR: EMM read from write.emm NOT processed correctly!");
+
+      reader[ridx].b_nano[eptmp->emm[0]] = old_b_nano; //restore old block/save settings
+      reader[ridx].emmfile[0] = 0; //clear emmfile, so no reading anymore
+
+      free(eptmp);
+      eptmp = NULL;
+    }
+  }
+}
+
 void reader_card_info()
 {
   int rc=-1;
@@ -175,6 +212,7 @@ void reader_card_info()
   {
     client[cs_idx].last=time((time_t)0);
     cs_ri_brk(0);
+    do_emm_from_file();
     switch(reader[ridx].card_system)
     {
       case SC_IRDETO:
@@ -205,6 +243,7 @@ static int reader_get_cardsystem(void)
   if (videoguard_card_init(atr, atr_size))  reader[ridx].card_system=SC_VIDEOGUARD2;
   if (!reader[ridx].card_system)	cs_ri_log("card system not supported");
   cs_ri_brk(1);
+
   return(reader[ridx].card_system);
 }
 
@@ -325,6 +364,42 @@ int reader_emm(EMM_PACKET *ep)
   if (rc=reader_checkhealth())
   {
     client[cs_idx].last=time((time_t)0);
+    if (reader[ridx].b_nano[ep->emm[0]] & 0x02) //should this nano be saved?
+    {
+      char token[256];
+      FILE *fp;
+
+      time_t rawtime;
+      time (&rawtime);
+      struct tm *timeinfo;
+      timeinfo = localtime (&rawtime);	/* to access LOCAL date/time info */
+      char buf[80];
+      strftime (buf, 80, "%Y%m%d_%H_%M_%S", timeinfo);
+
+      sprintf (token, "%swrite_%s_%s.%s", cs_confdir, (ep->emm[0] == 0x82) ? "UNIQ" : "SHARED", buf, "txt");
+      if (!(fp = fopen (token, "w")))
+	cs_log ("ERROR: Cannot open EMM.txt file '%s' (errno=%d)\n", token, errno);
+      else {
+	cs_log ("Succesfully written text EMM to %s.", token);
+	int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
+	fprintf (fp, "%s", cs_hexdump (0, ep->emm, emm_length + 3));
+	fclose (fp);
+      }
+
+      //sprintf (token, "%s%s.%s", cs_confdir, buf,"emm");
+      sprintf (token, "%swrite_%s_%s.%s", cs_confdir, (ep->emm[0] == 0x82) ? "UNIQ" : "SHARED", buf, "emm");
+      if (!(fp = fopen (token, "wb")))
+	cs_log ("ERROR: Cannot open EMM.emm file '%s' (errno=%d)\n", token, errno);
+      else {
+	cs_log ("Succesfully written binary EMM to %s.", token);
+	fwrite (ep, sizeof (*ep), 1, fp);
+	fclose (fp);
+      }
+    }
+
+    if (reader[ridx].b_nano[ep->emm[0]] & 0x01) //should this nano be blcoked?
+      return 3;
+
     switch(reader[ridx].card_system)
     {
       case SC_IRDETO:

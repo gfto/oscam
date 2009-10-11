@@ -122,10 +122,27 @@ SECTION DESCRIPTIONS
 		      1 = log all EEMs except the double EMMs
 		      2 = log all EMMs
 
-       blocknano = nano[,nano]...
-	  list of EMM-nanos to block (in hex w/o 0x)
+       blocknano = nano[,nano]...|all
+	  list	of  EMM-nanos  to block (in hex w/o 0x) or all EMM-nanos, only
+	  valid for physical readers
 
 	   example: blocknano = 45,93,7a,ff
+		    blocknano = all
+
+       savenano = nano[,nano]....|all
+	  list of EMM-nanos to save (in hex w/o 0x)  or  all  EMM-nanos,  only
+	  valid for physical readers
+
+	   example: savenano = 45,93,7a,ff
+		    savenano = all
+
+       readnano = [path]filename
+	  write  file  (usually  a  copy  of a file saved by savenano) to your
+	  smartcard, if no path is specified, the specified file  is  searched
+	  for in the configuration directory, only valid for physical readers
+
+	   example: readnano = write.emm
+		    readnano = /var/oscam/write.emm
 
 EXAMPLES
 	 serial mouse compatible reader

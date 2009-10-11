@@ -171,11 +171,28 @@ set EMM cache of local reader:
             \fB2\fP = log all EMMs
 .RE
 .PP
-\fBblocknano\fP = \fBnano[,nano]...\fP
+\fBblocknano\fP = \fBnano[,nano]...\fP|\fPall\fP
 .RS 3n
-list of EMM-nanos to block (in hex w/o 0x)
+list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, only valid for physical readers
 
  example: blocknano = 45,93,7a,ff
+          blocknano = all
+.RE
+.PP
+\fBsavenano\fP = \fBnano[,nano]....\fP|\fPall\fP
+.RS 3n
+list of EMM-nanos to save (in hex w/o 0x) or all EMM-nanos, only valid for physical readers
+
+ example: savenano = 45,93,7a,ff
+          savenano = all
+.RE
+.PP
+\fBreadnano\fP = \fB[path]filename\fP
+.RS 3n
+write file (usually a copy of a file saved by savenano) to your smartcard, if no path is specified, the specified file is searched for in the configuration directory, only valid for physical readers
+
+ example: readnano = write.emm
+          readnano = /var/oscam/write.emm
 .RE
 .SH EXAMPLES
 .TP 3n

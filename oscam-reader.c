@@ -319,7 +319,7 @@ static void reader_send_DCW(ECM_REQUEST *er)
 static int reader_do_emm(EMM_PACKET *ep)
 {
   int i, no, rc, ecs;
-  char *rtxt[]={ "error", "written", "skipped" };
+  char *rtxt[] = { "error", "written", "skipped", "blocked" };
   struct timeb tps, tpe;
 
   cs_ftime(&tps);
