@@ -34,6 +34,7 @@ OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(reader-irdeto.o) \
 		  $(LIBFILE1)(reader-viaccess.o) \
 		  $(LIBFILE1)(reader-videoguard2.o) \
+		  $(LIBFILE1)(reader-nds.o) \
 		  $(LIBFILE1)(reader-seca.o) \
 		  $(LIBFILE1)(reader-cryptoworks.o) \
 		  $(LIBFILE1)(reader-conax.o) \

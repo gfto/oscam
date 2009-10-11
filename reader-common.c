@@ -229,7 +229,7 @@ void reader_card_info()
       case SC_SECA:
          rc=seca_card_info(); break;
       case SC_NDS:
-	 rc=videoguard_card_info(); break;
+	 rc=nds_card_info(); break;
       default: rc=0;
     }
   }
@@ -244,7 +244,7 @@ static int reader_get_cardsystem(void)
   if (seca_card_init(atr, atr_size))	reader[ridx].card_system=SC_SECA;
   if (viaccess_card_init(atr, atr_size))	reader[ridx].card_system=SC_VIACCESS;
   if (videoguard_card_init(atr, atr_size))  reader[ridx].card_system=SC_VIDEOGUARD2;
-  if (videoguard_card_init(atr, atr_size))  reader[ridx].card_system=SC_NDS;
+  if (nds_card_init(atr, atr_size))  reader[ridx].card_system=SC_NDS;
   if (!reader[ridx].card_system)	cs_ri_log("card system not supported");
   cs_ri_brk(1);
 
@@ -354,7 +354,7 @@ int reader_ecm(ECM_REQUEST *er)
         case SC_VIDEOGUARD2:
           rc=(videoguard_do_ecm(er)) ? 1 : 0; break;
 	case SC_NDS:
-	  rc=(videoguard_do_ecm(er)) ? 1: 0; break;
+	  rc=(nds_do_ecm(er)) ? 1: 0; break;
         default: rc=0;
       }
     }
@@ -421,7 +421,7 @@ int reader_emm(EMM_PACKET *ep)
       case SC_VIDEOGUARD2:
         rc=videoguard_do_emm(ep); break;
       case SC_NDS:
-	rc=videoguard_do_emm(ep); break;
+	rc=nds_do_emm(ep); break;
       default: rc=0;
     }
   }
