@@ -16,6 +16,7 @@ static int cs_ptyp_orig; //reinit=1,
 #define SC_CONAX 4
 #define SC_SECA 5
 #define SC_VIDEOGUARD2 6
+#define SC_NDS 7
 
 static int reader_device_type(char *device, int typ)
 {
@@ -227,6 +228,8 @@ void reader_card_info()
         rc=videoguard_card_info(); break;
       case SC_SECA:
          rc=seca_card_info(); break;
+      case SC_NDS:
+	 rc=nds_card_info(); break;
       default: rc=0;
     }
   }
@@ -241,6 +244,7 @@ static int reader_get_cardsystem(void)
   if (seca_card_init(atr, atr_size))	reader[ridx].card_system=SC_SECA;
   if (viaccess_card_init(atr, atr_size))	reader[ridx].card_system=SC_VIACCESS;
   if (videoguard_card_init(atr, atr_size))  reader[ridx].card_system=SC_VIDEOGUARD2;
+  if (nds_card_init(atr, atr_size))  reader[ridx].card_system=SC_NDS;
   if (!reader[ridx].card_system)	cs_ri_log("card system not supported");
   cs_ri_brk(1);
 
@@ -349,6 +353,8 @@ int reader_ecm(ECM_REQUEST *er)
           rc=(seca_do_ecm(er)) ? 1 : 0; break;
         case SC_VIDEOGUARD2:
           rc=(videoguard_do_ecm(er)) ? 1 : 0; break;
+	case SC_NDS:
+	  rc=(nds_do_ecm(er)) ? 1: 0; break;
         default: rc=0;
       }
     }
@@ -414,6 +420,8 @@ int reader_emm(EMM_PACKET *ep)
         rc=seca_do_emm(ep); break;
       case SC_VIDEOGUARD2:
         rc=videoguard_do_emm(ep); break;
+      case SC_NDS:
+	rc=nds_do_emm(ep); break;
       default: rc=0;
     }
   }
