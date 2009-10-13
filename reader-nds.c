@@ -1,6 +1,8 @@
 #include "globals.h"
 #include "reader-common.h"
 
+typedef unsigned long u32;
+
 extern uchar cta_cmd[], cta_res[];
 extern ushort cta_lr;
 
@@ -155,7 +157,7 @@ static AES_KEY aeskey;
 
 static void nds_aes_set_key (char *key)
 {
-  AES_set_encrypt_key (key, 128, &aeskey);
+  AES_set_encrypt_key ((unsigned char *)key, 128, &aeskey);
 }
 
 static int CommandSendCardCAM(unsigned char *command, char *answer_payload)
@@ -434,7 +436,7 @@ static void processD0BC (unsigned char exp_seedBuffer[0x86], unsigned char *outb
     outbuffer[(i * 2) + 1] = (dataBuffer[i] >> 8) & 0xFF;
   }
   nSwap (outbuffer, d0BCKey);
-  nds_aes_set_key (d0BCKey);
+  nds_aes_set_key ((char *)d0BCKey);
 }
 
 
@@ -567,7 +569,7 @@ static void handle_d3_Class (unsigned char *msgFrmCard, unsigned char *msgBody, 
 
   if (msgFrmCard[1] == 0xBE) {
     nSwap (dispBuffer, d3BEKey);
-    nds_aes_set_key (d3BEKey);
+    nds_aes_set_key ((char *)d3BEKey);
   }
 
 }

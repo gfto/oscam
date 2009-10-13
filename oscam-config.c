@@ -972,7 +972,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
   if( !strcmp(token, "pincode") )
       strncpy(rdr->pincode, value, sizeof(rdr->pincode)-1);
-  if (!strcmp(token, "readnano")) strncpy(rdr->emmfile, value, sizeof(rdr->emmfile)-1);
+  if (!strcmp(token, "readnano")) strncpy((char *)rdr->emmfile, value, sizeof(rdr->emmfile)-1);
   /*
    *	case insensitive
    */
