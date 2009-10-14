@@ -1,7 +1,9 @@
 #include "globals.h"
 #include "reader-common.h"
 
+#ifdef HAVE_AES
 typedef unsigned long u32;
+#endif
 
 extern uchar cta_cmd[], cta_res[];
 extern ushort cta_lr;
