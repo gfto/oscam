@@ -180,7 +180,7 @@ cross-powerpc-tuxbox-linux-uclibc:
 cross-sh4-linux:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="" \
+		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR}" \
