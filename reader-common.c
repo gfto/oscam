@@ -177,6 +177,7 @@ void do_emm_from_file(void)
     //handling emmfile
     char token[256];
     FILE *fp;
+    size_t result;
     if ((reader[ridx].emmfile[0] == '/'))
       sprintf (token, "%s", reader[ridx].emmfile); //pathname included
     else
@@ -187,7 +188,7 @@ void do_emm_from_file(void)
     else {
       EMM_PACKET *eptmp;
       eptmp = malloc (sizeof(EMM_PACKET));
-      fread (eptmp, sizeof (EMM_PACKET), 1, fp);
+      result = fread (eptmp, sizeof(EMM_PACKET), 1, fp);      
       fclose (fp);
 
       uchar old_b_nano = reader[ridx].b_nano[eptmp->emm[0]]; //save old b_nano value
