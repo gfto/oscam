@@ -936,5 +936,7 @@ int nds_card_info (void)
     cs_ri_log ("chid: %02x%02x, date: %04d-%02d-%02d %02d:%02d:%02d", cta_res[5 + 2], cta_res[5 + 3], y, m, d, H, M, S);
   }
 
+  reader[ridx].online = 1;
+  
   return (1);
 }
