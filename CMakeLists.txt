@@ -92,7 +92,7 @@ elseif (OSCamOperatingSystem MATCHES "Amino")
     add_definitions ("-DOS_LINUX")
     set (DEFAULT_CS_CONFDIR "/usr/local/etc")
 elseif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-    add_definitions ("-DOS_CYGWIN32")
+    add_definitions ("-DOS_CYGWIN32 -static")
     set (DEFAULT_CS_CONFDIR ".")
 endif (OSCamOperatingSystem MATCHES "Linux")
 
