@@ -658,24 +658,16 @@ static void nds_parseUAInfo (unsigned char *uaInsData)
 
 static void nds_parseBoxIDInfo (unsigned char *boxIDData)
 {
-  if (reader[ridx].pincode[0])
+  if (reader[ridx].boxid)
     return;
 
   int i;
-  //int index=0;
   for (i = 0; i < 0x8F; i++) {
     if ((boxIDData[i] == 0x00) && (boxIDData[i + 1] == 0xF3)) {
-      //index=i+1;
       memcpy (&nds_IRD_BoxID, &boxIDData[i + 2], sizeof (nds_IRD_BoxID));
     }
   }
-
-  //nds_IRD_BoxID[0]=boxIDData[index+1];
-  //nds_IRD_BoxID[1]=boxIDData[index+2];
-  //nds_IRD_BoxID[2]=boxIDData[index+3];
-  //nds_IRD_BoxID[3]=boxIDData[index+4];  
 }
-
 
 static unsigned int nds_getSupportedIns (void)
 {
@@ -776,16 +768,31 @@ static int ndsBoot (void)
 
 
 ///====================================================================================================
+
 int nds_card_init (uchar * atr, int atrsize)
 {
   if (atrsize < 14 || (atr[10] != 0x69 && atr[11] != 0xFF && atr[12] != 0x4A && atr[13] != 0x50))
     return (0);
-
+    
+  unsigned char atr_premiere[] = { 0x3F, 0xFF, 0x11, 0x25, 0x03, 0x10, 0x80, 0x41, 0xB0, 0x07, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x50, 0x31, 0x01, 0x00, 0x11 };
+  if (!(atrsize == sizeof (atr_premiere)) || (!memcmp (atr, atr_premiere, atrsize) == 0))
+    {
+	return 0; //for all other nds videoguard2 should be used
+    }
+/*
   if (reader[ridx].pincode[0]) {
     nds_IRD_BoxID[0] = (gethexval (reader[ridx].pincode[0]) << 4) | gethexval (reader[ridx].pincode[1]);
     nds_IRD_BoxID[1] = (gethexval (reader[ridx].pincode[2]) << 4) | gethexval (reader[ridx].pincode[3]);
     nds_IRD_BoxID[2] = (gethexval (reader[ridx].pincode[4]) << 4) | gethexval (reader[ridx].pincode[5]);
     nds_IRD_BoxID[3] = (gethexval (reader[ridx].pincode[6]) << 4) | gethexval (reader[ridx].pincode[7]);
+  }
+*/
+  if (reader[ridx].boxid > 0) {
+    /* the boxid is specified in the config */
+    int i;
+    for (i=0; i < 4; i++) {
+        nds_IRD_BoxID[i] = (reader[ridx].boxid >> (8 * (3 - i))) % 0x100;
+    }
   }
 
   ndsBoot ();
