@@ -414,7 +414,7 @@ static void monitor_process_details_reader(int pid, int idx)
 
 static void monitor_process_details(char *arg)
 {
-  int pid, idx, val;
+  int pid, idx;
   char sbuf[256];
   if (!arg) return;
   if ((idx=idx_from_pid(pid=atoi(arg)))<0)

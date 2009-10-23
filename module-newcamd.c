@@ -572,7 +572,7 @@ static FILTER mk_user_ftab()
   // 2. PROVID
   if( !client[cs_idx].ftab.nfilts )
   {
-    int r,f, add;
+    int r, add;
     for (i=0; i<psfilt->nprids; i++) {
       // use server PROVID(s) (and only those which are in user's groups)
       add = 0;
@@ -630,7 +630,7 @@ static FILTER mk_user_ftab()
   return filt;
 }
 
-static int newcamd_auth_client(in_addr_t ip)
+static void newcamd_auth_client(in_addr_t ip)
 {
     int i, ok = 0;
     uchar *usr=NULL, *pwd=NULL;

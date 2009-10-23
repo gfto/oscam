@@ -156,9 +156,9 @@ static int irdeto_do_cmd(uchar *buf, ushort good)
 
 int irdeto_card_init(uchar *atr, int atrlen)
 {
-  int i, p, camkey=0, cs_ptyp_orig=cs_ptyp;
+  int i, camkey=0, cs_ptyp_orig=cs_ptyp;
   uchar buf[256]={0};
-  uchar sc_GetROM[]         = { 0xA0, 0xCA, 0x00, 0x00, 3, 0x10, 0, 0x11};
+  //uchar sc_GetROM[]         = { 0xA0, 0xCA, 0x00, 0x00, 3, 0x10, 0, 0x11};
 
   if (memcmp(atr+4, "IRDETO", 6))
     return(0);

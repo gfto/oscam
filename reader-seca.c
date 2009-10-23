@@ -67,7 +67,7 @@ int set_provider_info(int i)
      valid = (lt->tm_mday < day);
 
   memcpy(l_name+8, cta_res+2, 16);
-  l_name[sizeof(l_name)]=0;
+  l_name[sizeof(l_name)-1]=0;
   trim(l_name+8);
   l_name[0]=(l_name[8]) ? ',' : 0;
   reader[ridx].availkeys[i][0]=valid; //misusing availkeys to register validity of provider
@@ -277,10 +277,7 @@ int seca_card_info (void)
   static unsigned char ins32[] = {
     0xc1, 0x32, 0x00, 0x00, 0x20
   };				// get PBM
-  //uchar ins32data[64];
   int prov;
-  uchar result[260];
-  ushort result_size;
 
   for (prov = 0; prov < reader[ridx].nprov; prov++) {
     ins32[2] = prov;

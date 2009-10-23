@@ -876,7 +876,7 @@ void cs_resolve()
 {
   int i, idx;
   struct hostent *rht;
-  struct s_auth *account;
+  struct s_auth;
   for (i=0; i<CS_MAXREADER; i++)
     if ((idx=reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK))
     {
@@ -1791,7 +1791,6 @@ void get_cw(ECM_REQUEST *er)
       for (n=0; (n<CS_MAXTUNTAB); n++)
       if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all))
       {
-        int l;
         char hack_n3[13]={0x70, 0x51, 0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12, 0x07};
         char hack_n2[13]={0x70, 0x51, 0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12, 0x07};
         er->caid=ttab->bt_caidto[n];

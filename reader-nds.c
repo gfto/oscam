@@ -96,7 +96,6 @@ static unsigned char d3BEKey[0x10];
 
 
 static void nSwap (unsigned char i_key[16], unsigned char o_key[16]);
-static void eSwap (unsigned char i_key[16], unsigned char o_key[16]);
 static void nLookup (unsigned char i_key[16], unsigned char o_key[16]);
 
 static void xor16 (unsigned char i_val1[16], unsigned char i_val2[16], unsigned char o_val[16]);
@@ -127,7 +126,6 @@ static unsigned char ndsCommand[0xFF];
 
 static unsigned char CardAnswer[0xFF];
 static unsigned char d3BEKey[0x10];
-static char DCW1[19];
 
 ///====================================================================================================
 /*
@@ -327,7 +325,7 @@ static void extractModule (unsigned char seedBuffer[0x86], unsigned char *outBuf
   }
 
 }
-
+/*
 static void extractExponent (unsigned char seedBuffer[0x86], unsigned char *outBuffer)
 {
   int i;
@@ -336,7 +334,7 @@ static void extractExponent (unsigned char seedBuffer[0x86], unsigned char *outB
     outBuffer[i + 1] = seedBuffer[i + 0x46];
     i = i + 2;
   }
-}
+}*/
 
 static unsigned short lmul (unsigned short value)
 {

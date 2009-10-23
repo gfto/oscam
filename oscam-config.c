@@ -879,7 +879,7 @@ static void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
 
 int init_sidtab()
 {
-  int tag=0, nr, nro;
+  int nr, nro;
   FILE *fp;
   char *value;
   struct s_sidtab *ptr;
@@ -904,7 +904,7 @@ int init_sidtab()
   nr=0;
   while (fgets(token, sizeof(token), fp))
   {
-    int i, l;
+    int l;
     void *ptr;
     if ((l=strlen(trim(token)))<3) continue;
     if ((token[0]=='[') && (token[l-1]==']'))
@@ -986,7 +986,6 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
   int i;
   char *ptr;
-  unsigned long tmp;
   /*
    *	case sensitive first
    */
@@ -1078,20 +1077,20 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   if (!strcmp(token, "customspeed")) { rdr->custom_speed=atoi(value); return; }
   if (!strcmp(token, "protocol"))
   {
-    if (!strcmp(value, "mouse"))       rdr->typ=R_MOUSE;
-    if (!strcmp(value, "smartreader"))       rdr->typ=R_SMART;
-    if (!strcmp(value, "internal"))    rdr->typ=R_INTERN;
-    if (!strcmp(value, "intern"))      rdr->typ=R_INTERN;
-    if (!strcmp(value, "serial"))      rdr->typ=R_SERIAL;
-    if (!strcmp(value, "camd35"))      rdr->typ=R_CAMD35;
-    if (!strcmp(value, "cs378x"))      rdr->typ=R_CS378X;
-    if (!strcmp(value, "cs357x"))      rdr->typ=R_CAMD35;
-    if (!strcmp(value, "gbox"))        rdr->typ=R_GBOX;
+    if (!strcmp(value, "mouse")) {      rdr->typ=R_MOUSE; return; }
+    if (!strcmp(value, "smartreader")) {      rdr->typ=R_SMART; return; }
+    if (!strcmp(value, "internal")) {   rdr->typ=R_INTERN; return; }
+    if (!strcmp(value, "intern")) {     rdr->typ=R_INTERN; return; }
+    if (!strcmp(value, "serial")) {     rdr->typ=R_SERIAL; return; }
+    if (!strcmp(value, "camd35")) {     rdr->typ=R_CAMD35; return; }
+    if (!strcmp(value, "cs378x")) {     rdr->typ=R_CS378X; return; }
+    if (!strcmp(value, "cs357x")) {     rdr->typ=R_CAMD35; return; }
+    if (!strcmp(value, "gbox")) {       rdr->typ=R_GBOX; return; }
     if (!strcmp(value, "newcamd") || 
         !strcmp(value, "newcamd525")) {rdr->typ=R_NEWCAMD; 
-                                       rdr->ncd_proto=NCD_525;}
+                                       rdr->ncd_proto=NCD_525; return; }
     if (!strcmp(value, "newcamd524")) {rdr->typ=R_NEWCAMD; 
-                                       rdr->ncd_proto=NCD_524;}
+                                       rdr->ncd_proto=NCD_524; return; }
     fprintf(stderr, "Warning: value '%s' in protocol-line not recognized\n",value);
     return;
   }

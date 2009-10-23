@@ -48,7 +48,7 @@ static void camd33_request_emm()
   }
 }
 
-static int camd33_auth_client(in_addr_t ip)
+static void camd33_auth_client(in_addr_t ip)
 {
   int i, rc;
   uchar *usr=NULL, *pwd=NULL;

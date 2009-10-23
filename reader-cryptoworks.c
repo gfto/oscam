@@ -1,7 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
 
-static uchar ISK[0x40];
 static uchar cwexp[] = { 1, 0 , 1};
 static BIGNUM exp, ucpk;
 static int ucpk_valid = 0;
@@ -366,8 +365,7 @@ bool cSmartCardCryptoworks::Decode(const cEcmInfo *ecm, const unsigned char *dat
 
 int cryptoworks_do_ecm(ECM_REQUEST *er)
 {
-  int rc=0;
-      int r=0;
+  int r=0;
   static unsigned char ins4C[] = { 0xA4,0x4C,0x00,0x00,0x00 };
   static unsigned char insC0[] = { 0xA4,0xC0,0x00,0x00,0x1C };
   unsigned char nanoD4[10];
@@ -580,7 +578,7 @@ int cryptoworks_card_info(void)
     if (read_record(0xD6)>=16)
     {
       strncpy(l_name+8, (const char *)cta_res+2, sizeof(l_name)-9);
-      l_name[sizeof(l_name)]=0;
+      l_name[sizeof(l_name)-1]=0;
       trim(l_name+8);
     }
     l_name[0]=(l_name[8]) ? ',' : 0;

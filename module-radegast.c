@@ -8,7 +8,7 @@ static int radegast_send(uchar *buf)
 
 static int radegast_recv(uchar *buf, int l)
 {
-  int i, n;
+  int n;
   if (!pfd) return(-1);
   if ((n=recv(pfd, buf, l, 0))>0)
     client[cs_idx].last=time((time_t *) 0);

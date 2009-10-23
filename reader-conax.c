@@ -5,9 +5,9 @@ extern uchar cta_cmd[], cta_res[];
 extern ushort cta_lr;
 
 #define CMD_LEN 5
-
+/*
 static unsigned int Conax_ToDate(char data0, char data1) 
-{ /* decimal: yyyymmdd */
+{ // decimal: yyyymmdd
   int y,m,d;
   unsigned int l;
 
@@ -16,7 +16,7 @@ static unsigned int Conax_ToDate(char data0, char data1)
   d= data0&0x1f;
   l=  (y*100+m)*100+d;
   return l;
-}
+}*/
 
 static char *chid_date(uchar *ptr, char *buf, int l)
 {

@@ -28,7 +28,6 @@ static int chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
 int chk_srvid(ECM_REQUEST *er, int idx)
 {
   int nr, rc=0;
-  char *ptr;
   SIDTAB *sidtab;
 
   if (!client[idx].sidtabok)
@@ -158,8 +157,9 @@ int chk_ufilters(ECM_REQUEST *er)
     }
   }
 
-  if( !(rc=chk_class(er, &client[cs_idx].cltab, "user", client[cs_idx].usr)) )
+  if( !(rc=chk_class(er, &client[cs_idx].cltab, "user", client[cs_idx].usr)) ) {
     if( !er->rcEx ) er->rcEx=(E1_USER<<4)|E2_CLASS;
+  }
   else if( !(rc=chk_chid(er, &client[cs_idx].fchid, "user", client[cs_idx].usr)) )
     if( !er->rcEx ) er->rcEx=(E1_USER<<4)|E2_CHID;
 
