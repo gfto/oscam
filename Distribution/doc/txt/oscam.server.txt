@@ -28,7 +28,7 @@ SECTION DESCRIPTIONS
 	  user and password for remote reader
 
        pincode = pincode
-	  pincode for Conax SCs
+	  pincode for Conax and Cryptoworks SCs
 
        services = services[,<services>]...
 	  reader assingment to service group, default=none
