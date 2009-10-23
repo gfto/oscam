@@ -497,7 +497,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
     {
         cs_log("Type: Videoguard Viasat new (093E)");
     }
-    else if ((atrsize == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
+    else if ((atrsize == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atrsize) == 0))
     {
         cs_log("Type: Videoguard Sky Italia new (093B)");
     }
