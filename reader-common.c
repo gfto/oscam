@@ -209,8 +209,9 @@ void do_emm_from_file(void)
 
 void reader_card_info()
 {
-  int rc=-1;
-  if (rc=reader_checkhealth())
+//  int rc=-1;
+  if (reader_checkhealth())
+  //if (rc=reader_checkhealth())
   {
     client[cs_idx].last=time((time_t)0);
     cs_ri_brk(0);
@@ -218,23 +219,23 @@ void reader_card_info()
     switch(reader[ridx].card_system)
     {
       case SC_IRDETO:
-        rc=irdeto_card_info(); break;
+        irdeto_card_info(); break;
       case SC_CRYPTOWORKS:
-        rc=cryptoworks_card_info(); break;
+        cryptoworks_card_info(); break;
       case SC_VIACCESS:
-        rc=viaccess_card_info(); break;
+        viaccess_card_info(); break;
       case SC_CONAX:
-        rc=conax_card_info(); break;
+        conax_card_info(); break;
       case SC_VIDEOGUARD2:
-        rc=videoguard_card_info(); break;
+        videoguard_card_info(); break;
       case SC_SECA:
-         rc=seca_card_info(); break;
+         seca_card_info(); break;
       case SC_NDS:
-	 rc=nds_card_info(); break;
-      default: rc=0;
+	 nds_card_info(); break;
+      //default: rc=0;
     }
+    reader[ridx].online = 1; //do not check on rc, because error in cardinfo should not be fatal
   }
-//  return(rc);
 }
 
 static int reader_get_cardsystem(void)

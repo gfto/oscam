@@ -281,36 +281,39 @@ static void chk_srvip(char *value, in_addr_t *ip)
 
 static void chk_t_global(char *token, char *value)
 {
-  if (!strcmp(token, "serverip")) cfg->srvip=inet_addr(value);
-  if (!strcmp(token, "logfile")) strncpy(logfile, value, sizeof(logfile)-1);
-  if (!strcmp(token, "pidfile")) strncpy(cfg->pidfile, value, sizeof(cfg->pidfile)-1);
-  if (!strcmp(token, "usrfile")) strncpy(cfg->usrfile, value, sizeof(cfg->usrfile)-1);
-  if (!strcmp(token, "cwlogdir")) strncpy(cfg->cwlogdir, value, sizeof(cfg->cwlogdir)-1);
+  if (!strcmp(token, "serverip")) { cfg->srvip=inet_addr(value); return; }
+  if (!strcmp(token, "logfile")) { strncpy(logfile, value, sizeof(logfile)-1); return; }
+  if (!strcmp(token, "pidfile")) { strncpy(cfg->pidfile, value, sizeof(cfg->pidfile)-1); return; }
+  if (!strcmp(token, "usrfile")) { strncpy(cfg->usrfile, value, sizeof(cfg->usrfile)-1); return; }
+  if (!strcmp(token, "cwlogdir")) { strncpy(cfg->cwlogdir, value, sizeof(cfg->cwlogdir)-1); return; }
   if (!strcmp(token, "clienttimeout")) 
   {
       cfg->ctimeout = atoi(value);
       if (cfg->ctimeout < 100)
           cfg->ctimeout *= 1000;
+      return;
   }
   if (!strcmp(token, "fallbacktimeout")) 
   {
       cfg->ftimeout = atoi(value);
       if (cfg->ftimeout < 100)
           cfg->ftimeout *= 1000;
+      return;
   }
 
-  if (!strcmp(token, "clientmaxidle")) cfg->cmaxidle=atoi(value);
-  if (!strcmp(token, "cachedelay")) cfg->delay=atoi(value);
-  if (!strcmp(token, "bindwait")) cfg->bindwait=atoi(value);
-  if (!strcmp(token, "netprio")) cfg->netprio=atoi(value);
-  if (!strcmp(token, "resolvedelay")) cfg->resolvedelay=atoi(value);
-  if (!strcmp(token, "sleep")) cfg->tosleep=atoi(value);
-  if (!strcmp(token, "unlockparental")) cfg->ulparent=atoi(value);
+  if (!strcmp(token, "clientmaxidle")) { cfg->cmaxidle=atoi(value); return; }
+  if (!strcmp(token, "cachedelay")) { cfg->delay=atoi(value); return; }
+  if (!strcmp(token, "bindwait")) { cfg->bindwait=atoi(value); return; }
+  if (!strcmp(token, "netprio")) { cfg->netprio=atoi(value); return; }
+  if (!strcmp(token, "resolvedelay")) { cfg->resolvedelay=atoi(value); return; }
+  if (!strcmp(token, "sleep")) { cfg->tosleep=atoi(value); return; }
+  if (!strcmp(token, "unlockparental")) { cfg->ulparent=atoi(value); return; }
   if (!strcmp(token, "nice"))
   {
     cfg->nice=atoi(value);
     if ((cfg->nice<-20) || (cfg->nice>20)) cfg->nice=99;
     if (cfg->nice!=99) cs_setpriority(cfg->nice);  // ignore errors
+    return;
   }
   if (!strcmp(token, "serialreadertimeout")) 
   {
@@ -320,20 +323,20 @@ static void chk_t_global(char *token, char *value)
       cfg->srtimeout = atoi(value);
     if( cfg->srtimeout <=0 )
       cfg->srtimeout=1500;
+    return;
   }
   if (!strcmp(token, "maxlogsize")) 
   {
     cfg->max_log_size=atoi(value);
     if( cfg->max_log_size <=10 )
       cfg->max_log_size=10;
+    return;
   }
-  if( !strcmp(token, "showecmdw") )
-    cfg->show_ecm_dw = atoi(value);
-
-  if( !strcmp(token, "waitforcards") )
-    cfg->waitforcards = atoi(value);
-  if( !strcmp(token, "preferlocalcards") )
-    cfg->preferlocalcards = atoi(value);
+  if( !strcmp(token, "showecmdw")) { cfg->show_ecm_dw = atoi(value); return; }
+  if( !strcmp(token, "waitforcards")) { cfg->waitforcards = atoi(value); return; }
+  if( !strcmp(token, "preferlocalcards")) { cfg->preferlocalcards = atoi(value); return; }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n",token);
 }
 
 #ifdef CS_ANTICASC
@@ -344,62 +347,76 @@ static void chk_t_ac(char *token, char *value)
     cfg->ac_enabled=atoi(value);
     if( cfg->ac_enabled<=0 ) cfg->ac_enabled=0;
     else cfg->ac_enabled=1;
+    return;
   }
 
   if (!strcmp(token, "numusers")) 
   {
     cfg->ac_users=atoi(value);
     if( cfg->ac_users<0 ) cfg->ac_users=0;
+    return;
   }
   if (!strcmp(token, "sampletime")) 
   {
     cfg->ac_stime=atoi(value);
     if( cfg->ac_stime<0 ) cfg->ac_stime=2;
+    return;
   }
   if (!strcmp(token, "samples")) 
   {
     cfg->ac_samples=atoi(value);
     if( cfg->ac_samples<2 || cfg->ac_samples>10) cfg->ac_samples=10;
+    return;
   }
   if (!strcmp(token, "penalty")) 
   {
     cfg->ac_penalty=atoi(value);
     if( cfg->ac_penalty<0 ) cfg->ac_penalty=0;
-
+    return;
   }
-  if (!strcmp(token, "aclogfile")) 
+  if (!strcmp(token, "aclogfile"))
+  {
     strncpy(cfg->ac_logfile, value, sizeof(cfg->ac_logfile)-1);
+    return;
+  }
   if( !strcmp(token, "fakedelay") )
   {
     cfg->ac_fakedelay=atoi(value);
     if( cfg->ac_fakedelay<100 || cfg->ac_fakedelay>1000 )
       cfg->ac_fakedelay=1000;
+    return;
   }
   if( !strcmp(token, "denysamples") )
   {
     cfg->ac_denysamples=atoi(value);
     if( cfg->ac_denysamples<2 || cfg->ac_denysamples>cfg->ac_samples-1 )
       cfg->ac_denysamples=cfg->ac_samples-1;
+    return;
   }
-#endif
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in anticascading section not recognized\n",token);
+//#endif moved this endif up two lines, I think this was erroneous - dingo35
 }
+#endif
 
 static void chk_t_monitor(char *token, char *value)
 {
-  if (!strcmp(token, "port")) cfg->mon_port=atoi(value);
-  if (!strcmp(token, "serverip")) cfg->mon_srvip=inet_addr(value);
-  if (!strcmp(token, "nocrypt")) chk_iprange(value, &cfg->mon_allowed);
-  if (!strcmp(token, "aulow")) cfg->mon_aulow=atoi(value);
-  if (!strcmp(token, "monlevel")) cfg->mon_level=atoi(value);
-  if (!strcmp(token, "hideclient_to")) cfg->mon_hideclient_to=atoi(value);
+  if (!strcmp(token, "port")) { cfg->mon_port=atoi(value); return; }
+  if (!strcmp(token, "serverip")) { cfg->mon_srvip=inet_addr(value); return; }
+  if (!strcmp(token, "nocrypt")) { chk_iprange(value, &cfg->mon_allowed); return; }
+  if (!strcmp(token, "aulow")) { cfg->mon_aulow=atoi(value); return; }
+  if (!strcmp(token, "monlevel")) { cfg->mon_level=atoi(value); return; }
+  if (!strcmp(token, "hideclient_to")) { cfg->mon_hideclient_to=atoi(value); return; }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in monitor section not recognized\n",token);
 }
 
 static void chk_t_camd33(char *token, char *value)
 {
-  if (!strcmp(token, "port")) cfg->c33_port=atoi(value);
-  if (!strcmp(token, "serverip")) cfg->c33_srvip=inet_addr(value);
-  if (!strcmp(token, "nocrypt")) chk_iprange(value, &cfg->c33_plain);
-  if (!strcmp(token, "passive")) cfg->c33_passive=(value[0]!='0');
+  if (!strcmp(token, "port")) { cfg->c33_port=atoi(value); return; }
+  if (!strcmp(token, "serverip")) { cfg->c33_srvip=inet_addr(value); return; }
+  if (!strcmp(token, "nocrypt")) { chk_iprange(value, &cfg->c33_plain); return; }
+  if (!strcmp(token, "passive")) { cfg->c33_passive=(value[0]!='0'); return; }
   if (!strcmp(token, "key"))
   {
     if (key_atob(value, cfg->c33_key))
@@ -408,25 +425,32 @@ static void chk_t_camd33(char *token, char *value)
       exit(1);
     }
     cfg->c33_crypted=1;
+    return;
   }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in camd33 section not recognized\n",token);
 }
 
 static void chk_t_camd35(char *token, char *value)
 {
-  if (!strcmp(token, "port")) cfg->c35_port=atoi(value);
-  if (!strcmp(token, "serverip")) cfg->c35_tcp_srvip=inet_addr(value);
+  if (!strcmp(token, "port")) { cfg->c35_port=atoi(value); return; }
+  if (!strcmp(token, "serverip")) { cfg->c35_tcp_srvip=inet_addr(value); return; }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in camd35 section not recognized\n",token);
 }
 
 static void chk_t_camd35_tcp(char *token, char *value)
 {
-  if (!strcmp(token, "port")) chk_port_tab(value, &cfg->c35_tcp_ptab);
-  if (!strcmp(token, "serverip")) cfg->c35_tcp_srvip=inet_addr(value);
+  if (!strcmp(token, "port")) { chk_port_tab(value, &cfg->c35_tcp_ptab); return; }
+  if (!strcmp(token, "serverip")) { cfg->c35_tcp_srvip=inet_addr(value); return; }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in camd35 tcp section not recognized\n",token);
 }
 
 static void chk_t_newcamd(char *token, char *value)
 {
-  if (!strcmp(token, "port")) chk_port_tab(value, &cfg->ncd_ptab);
-  if (!strcmp(token, "serverip")) cfg->ncd_srvip=inet_addr(value);
+  if (!strcmp(token, "port")) { chk_port_tab(value, &cfg->ncd_ptab); return; }
+  if (!strcmp(token, "serverip")) { cfg->ncd_srvip=inet_addr(value); return; }
   if (!strcmp(token, "key"))
   {
     if (key_atob14(value, cfg->ncd_key))
@@ -434,16 +458,21 @@ static void chk_t_newcamd(char *token, char *value)
       fprintf(stderr, "Configuration newcamd: Error in Key\n");
       exit(1);
     }
+    return;
   }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n",token);
 
 }
 
 static void chk_t_radegast(char *token, char *value)
 {
-  if (!strcmp(token, "port")) cfg->rad_port=atoi(value);
-  if (!strcmp(token, "serverip")) cfg->rad_srvip=inet_addr(value);
-  if (!strcmp(token, "allowed")) chk_iprange(value, &cfg->rad_allowed);
-  if (!strcmp(token, "user")) strncpy(cfg->rad_usr, value, sizeof(cfg->rad_usr)-1);
+  if (!strcmp(token, "port")) { cfg->rad_port=atoi(value); return; }
+  if (!strcmp(token, "serverip")) { cfg->rad_srvip=inet_addr(value); return; }
+  if (!strcmp(token, "allowed")) { chk_iprange(value, &cfg->rad_allowed); return; }
+  if (!strcmp(token, "user")) { strncpy(cfg->rad_usr, value, sizeof(cfg->rad_usr)-1); return; }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in radegast section not recognized\n",token);
 }
 
 static void chk_t_serial(char *token, char *value)
@@ -454,17 +483,20 @@ static void chk_t_serial(char *token, char *value)
     l=strlen(cfg->ser_device);
     if (l) cfg->ser_device[l++]=1;	// use ctrl-a as delimiter
     strncpy(cfg->ser_device+l, value, sizeof(cfg->ser_device)-1-l);
+    return;
   }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in serial section not recognized\n",token);
 }
 
 static void chk_t_gbox(char *token, char *value)
 {
 //  if (!strcmp(token, "password")) strncpy(cfg->gbox_pwd, i2b(4, a2i(value, 4)), 4);
-  if (!strcmp(token, "password")) cs_atob(cfg->gbox_pwd, value, 4);
-  if (!strcmp(token, "maxdist")) cfg->maxdist=atoi(value);
-  if (!strcmp(token, "ignorelist")) strncpy((char *)cfg->ignorefile, value, sizeof(cfg->ignorefile)-1);
-  if (!strcmp(token, "onlineinfos")) strncpy((char *)cfg->gbxShareOnl, value, sizeof(cfg->gbxShareOnl)-1);
-  if (!strcmp(token, "cardinfos")) strncpy((char *)cfg->cardfile, value, sizeof(cfg->cardfile)-1);
+  if (!strcmp(token, "password")) { cs_atob(cfg->gbox_pwd, value, 4); return; }
+  if (!strcmp(token, "maxdist")) { cfg->maxdist=atoi(value); return; }
+  if (!strcmp(token, "ignorelist")) { strncpy((char *)cfg->ignorefile, value, sizeof(cfg->ignorefile)-1); return; }
+  if (!strcmp(token, "onlineinfos")) { strncpy((char *)cfg->gbxShareOnl, value, sizeof(cfg->gbxShareOnl)-1); return; }
+  if (!strcmp(token, "cardinfos")) { strncpy((char *)cfg->cardfile, value, sizeof(cfg->cardfile)-1); return; }
   if (!strcmp(token, "locals"))
   {
     char *ptr1;
@@ -475,7 +507,10 @@ static void chk_t_gbox(char *token, char *value)
       //printf("%i %08X",n,cfg->locals[n-1]);
     }
     cfg->num_locals=n;
+    return;
   }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized\n",token);
 }
 
 static void chk_token(char *token, char *value, int tag)
@@ -652,41 +687,55 @@ static void chk_account(char *token, char *value, struct s_auth *account)
 {
   int i;
   char *ptr1;//, *ptr2;
-  if (!strcmp(token, "user")) strncpy(account->usr, value, sizeof(account->usr)-1);
-  if (!strcmp(token, "pwd")) strncpy(account->pwd, value, sizeof(account->pwd)-1);
-  if (!strcmp(token, "hostname")) strncpy((char *)account->dyndns, value, sizeof(account->dyndns)-1);
-  if (!strcmp(token, "betatunnel")) chk_tuntab(value, &account->ttab);
-  if (!strcmp(token, "uniq")) account->uniq=atoi(value);
-  if (!strcmp(token, "sleep")) account->tosleep=atoi(value);
-  if (!strcmp(token, "monlevel")) account->monlvl=atoi(value);
-  if (!strcmp(token, "caid")) chk_caidtab(value, &account->ctab);
+  if (!strcmp(token, "user")) { strncpy(account->usr, value, sizeof(account->usr)-1); return; }
+  if (!strcmp(token, "pwd")) { strncpy(account->pwd, value, sizeof(account->pwd)-1); return; }
+  if (!strcmp(token, "hostname")) { strncpy((char *)account->dyndns, value, sizeof(account->dyndns)-1); return; }
+  if (!strcmp(token, "betatunnel")) { chk_tuntab(value, &account->ttab); return; }
+  if (!strcmp(token, "uniq")) { account->uniq=atoi(value); return; }
+  if (!strcmp(token, "sleep")) { account->tosleep=atoi(value); return; }
+  if (!strcmp(token, "monlevel")) { account->monlvl=atoi(value); return; }
+  if (!strcmp(token, "caid")) { chk_caidtab(value, &account->ctab); return; }
   /*
    *	case insensitive
    */
   strtolower(value);
   if (!strcmp(token, "au"))
+  {
     for (i=0; i<CS_MAXREADER; i++)
       if ((reader[i].label[0]) &&
           (!strncmp(reader[i].label, value, strlen(reader[i].label))))
         account->au=i;
-  if (!strcmp(token, "group"))
+    return;
+  }
+  if (!strcmp(token, "group"))\
+  {
     for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ","))
     {
       int g;
       g=atoi(ptr1);
       if ((g>0) && (g<33)) account->grp|=(1<<(g-1));
     }
-  if(!strcmp(token, "services")) chk_services(value, &account->sidtabok, &account->sidtabno);
-  if(!strcmp(token, "ident")) chk_ftab(value, &account->ftab, "user", account->usr, "provid");
-  if(!strcmp(token, "class")) chk_cltab(value, &account->cltab);
-  if(!strcmp(token, "chid"))  chk_ftab(value, &account->fchid, "user", account->usr, "chid");
+    return;
+  }
+  if(!strcmp(token, "services")) { chk_services(value, &account->sidtabok, &account->sidtabno); return; }
+  if(!strcmp(token, "ident")) { chk_ftab(value, &account->ftab, "user", account->usr, "provid"); return; }
+  if(!strcmp(token, "class")) { chk_cltab(value, &account->cltab); return; }
+  if(!strcmp(token, "chid")) {  chk_ftab(value, &account->fchid, "user", account->usr, "chid"); return; }
 
 #ifdef CS_ANTICASC
   if( !strcmp(token, "numusers") )
+  {
     account->ac_users = atoi(value);
+    return;
+  }
   if( !strcmp(token, "penalty") ) 
+  {
     account->ac_penalty = atoi(value);
+    return;
+  }
 #endif
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in account section not recognized\n",token);
 
 //  if (!strcmp(token, "caid"))
 //  {
@@ -820,10 +869,12 @@ static ushort *chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
 
 static void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
 {
-  if (!strcmp(token, "caid")) chk_entry4sidtab(value, sidtab, 0);
-  if (!strcmp(token, "provid")) chk_entry4sidtab(value, sidtab, 1);
-  if (!strcmp(token, "ident")) chk_entry4sidtab(value, sidtab, 1);
-  if (!strcmp(token, "srvid")) chk_entry4sidtab(value, sidtab, 2);
+  if (!strcmp(token, "caid")) { chk_entry4sidtab(value, sidtab, 0); return; }
+  if (!strcmp(token, "provid")) { chk_entry4sidtab(value, sidtab, 1); return; }
+  if (!strcmp(token, "ident")) { chk_entry4sidtab(value, sidtab, 1); return; }
+  if (!strcmp(token, "srvid")) { chk_entry4sidtab(value, sidtab, 2); return; }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in sidtab section not recognized\n",token);
 }
 
 int init_sidtab()
@@ -940,6 +991,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
    *	case sensitive first
    */
   if (!strcmp(token, "device"))
+  {
     for (i=0, ptr=strtok(value, ","); (i<3)&&(ptr); ptr=strtok(NULL, ","), i++)
     {
       trim(ptr);
@@ -950,6 +1002,8 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
         case 2: rdr->l_port=atoi(ptr); break;
       }
     }
+    return;
+  }
   if (!strcmp(token, "key"))
   {
     if (key_atob14(value, rdr->ncd_key))
@@ -957,10 +1011,12 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       fprintf(stderr, "Configuration newcamd: Error in Key\n");
       exit(1);
     }
+    return;
   }
-  if (!strcmp(token, "password")) strncpy((char *)rdr->gbox_pwd, (const char *)i2b(4, a2i(value, 4)), 4);
-  if (!strcmp(token, "premium")) rdr->gbox_prem=1;
+  if (!strcmp(token, "password")) { strncpy((char *)rdr->gbox_pwd, (const char *)i2b(4, a2i(value, 4)), 4); return; }
+  if (!strcmp(token, "premium")) { rdr->gbox_prem=1; return; }
   if (!strcmp(token, "account"))
+  {
     for (i=0, ptr=strtok(value, ","); (i<2)&&(ptr); ptr=strtok(NULL, ","), i++)
     {
       trim(ptr);
@@ -970,24 +1026,25 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
         case 1: strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd)-1); break;
       }
     }
-  if( !strcmp(token, "pincode") )
-      strncpy(rdr->pincode, value, sizeof(rdr->pincode)-1);
-  if (!strcmp(token, "readnano")) strncpy((char *)rdr->emmfile, value, sizeof(rdr->emmfile)-1);
+    return;
+  }
+  if( !strcmp(token, "pincode")) { strncpy(rdr->pincode, value, sizeof(rdr->pincode)-1); return; }
+  if (!strcmp(token, "readnano")) { strncpy((char *)rdr->emmfile, value, sizeof(rdr->emmfile)-1); return; }
   /*
    *	case insensitive
    */
   strtolower(value);
 
-  if (!strcmp(token, "services")) chk_services(value, &rdr->sidtabok, &rdr->sidtabno);
-  if (!strcmp(token, "inactivitytimeout"))   rdr->tcp_ito = atoi(value); 
-  if (!strcmp(token, "reconnecttimeout"))    rdr->tcp_rto = atoi(value); 
-  if (!strcmp(token, "disableserverfilter")) rdr->ncd_disable_server_filt = atoi(value); 
+  if (!strcmp(token, "services")) { chk_services(value, &rdr->sidtabok, &rdr->sidtabno); return; }
+  if (!strcmp(token, "inactivitytimeout")) {   rdr->tcp_ito = atoi(value);  return; }
+  if (!strcmp(token, "reconnecttimeout")) {    rdr->tcp_rto = atoi(value);  return; }
+  if (!strcmp(token, "disableserverfilter")) { rdr->ncd_disable_server_filt = atoi(value);  return; }
 
-  if (!strcmp(token, "label")) strncpy(rdr->label, value, sizeof(rdr->label)-1);
-  if (!strcmp(token, "fallback")) rdr->fallback=atoi(value) ? 1 : 0;
-  if (!strcmp(token, "logport")) rdr->log_port=atoi(value);
-  if (!strcmp(token, "caid")) chk_caidtab(value, &rdr->ctab);
-  if (!strcmp(token, "boxid")) rdr->boxid=a2i(value,4);
+  if (!strcmp(token, "label")) { strncpy(rdr->label, value, sizeof(rdr->label)-1); return; }
+  if (!strcmp(token, "fallback")) { rdr->fallback=atoi(value) ? 1 : 0; return; }
+  if (!strcmp(token, "logport")) { rdr->log_port=atoi(value); return; }
+  if (!strcmp(token, "caid")) { chk_caidtab(value, &rdr->ctab); return; }
+  if (!strcmp(token, "boxid")) { rdr->boxid=a2i(value,4); return; }
   if (!strcmp(token, "aeskey"))
   {
     if (key_atob(value, rdr->aes_key))
@@ -995,8 +1052,10 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       fprintf(stderr, "Configuration reader: Error in AES Key\n");
       exit(1);
     }
+    return;
   }
   if (!strcmp(token, "detect"))
+  {
     for (i=0; RDR_CD_TXT[i]; i++)
     {
       if (!strcmp(value, RDR_CD_TXT[i]))
@@ -1005,18 +1064,18 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
         if ((value[0]=='!') && (!strcmp(value+1, RDR_CD_TXT[i])))
           rdr->detect=i|0x80;
     }
+    return;
+  }
   if (!strcmp(token, "mhz"))
   {
-    if (!strcmp(value, "1000")) rdr->mhz=1000;
-    if (!strcmp(value, "600")) rdr->mhz=600;
-    if (!strcmp(value, "357")) rdr->mhz=357;
-    if (!strcmp(value, "358")) rdr->mhz=358;
+    if (!strcmp(value, "1000")) { rdr->mhz=1000; return; }
+    if (!strcmp(value, "600")) { rdr->mhz=600; return; }
+    if (!strcmp(value, "357")) { rdr->mhz=357; return; }
+    if (!strcmp(value, "358")) { rdr->mhz=358; return; }
+    fprintf(stderr, "Warning: value '%s' in mhz-line not recognized\n",value);
+    return;
   }
-  if (!strcmp(token, "customspeed"))
-  {
-    if (!strcmp(value, "0")) rdr->custom_speed=0;
-    if (!strcmp(value, "1"))rdr->custom_speed=1;
-  }
+  if (!strcmp(token, "customspeed")) { rdr->custom_speed=atoi(value); return; }
   if (!strcmp(token, "protocol"))
   {
     if (!strcmp(value, "mouse"))       rdr->typ=R_MOUSE;
@@ -1033,22 +1092,32 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
                                        rdr->ncd_proto=NCD_525;}
     if (!strcmp(value, "newcamd524")) {rdr->typ=R_NEWCAMD; 
                                        rdr->ncd_proto=NCD_524;}
+    fprintf(stderr, "Warning: value '%s' in protocol-line not recognized\n",value);
+    return;
   }
-  if (!strcmp(token, "ident")) chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid");
-  if (!strcmp(token, "class")) chk_cltab(value, &rdr->cltab);
-  if (!strcmp(token, "chid"))  chk_ftab(value, &rdr->fchid,"reader",rdr->label,"chid");
-  if (!strcmp(token, "showcls")) rdr->show_cls = atoi(value);
-  if (!strcmp(token, "maxqlen")) rdr->maxqlen = atoi(value);
-  if( rdr->maxqlen<0 || rdr->maxqlen>CS_MAXQLEN ) rdr->maxqlen=CS_MAXQLEN;
-
+  if (!strcmp(token, "ident")) { chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid"); return; }
+  if (!strcmp(token, "class")) { chk_cltab(value, &rdr->cltab); return; }
+  if (!strcmp(token, "chid")) {  chk_ftab(value, &rdr->fchid,"reader",rdr->label,"chid"); return; }
+  if (!strcmp(token, "showcls")) { rdr->show_cls = atoi(value); return; }
+  if (!strcmp(token, "maxqlen"))
+  {
+    rdr->maxqlen = atoi(value);
+    if( rdr->maxqlen<0 || rdr->maxqlen>CS_MAXQLEN )
+      rdr->maxqlen=CS_MAXQLEN;
+    return;
+  }
   if (!strcmp(token, "group"))
+  {
     for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
     {
       int g;
       g=atoi(ptr);
       if ((g>0) && (g<33)) rdr->grp|=(1<<(g-1));
     }
+    return;
+  }
   if (!strcmp(token, "emmcache"))
+  {
     for (i=0, ptr=strtok(value, ","); (i<3)&&(ptr); ptr=strtok(NULL, ","), i++)
       switch(i)
       {
@@ -1056,8 +1125,11 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
         case 1: rdr->rewritemm=atoi(ptr); break;
         case 2: rdr->logemm=atoi(ptr);    break;
       }
+    return;
+  }
 
   if (!strcmp(token, "blocknano"))
+  {
     if (!strcmp(value,"all")) //wildcard is used
       for (i=0 ; i<256; i++)
 	rdr->b_nano[i] |= 0x01; //set all lsb's to block all nanos
@@ -1065,8 +1137,10 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
 	if ((i=byte_atob(ptr))>=0)
 	  rdr->b_nano[i]|= 0x01; //lsb is set when to block nano
-
+    return;
+  }
   if (!strcmp(token, "savenano"))
+  {
     if (!strcmp(value,"all")) //wildcard is used
       for (i=0 ; i<256; i++)
 	rdr->b_nano[i] |= 0x02; //set all lsb+1 to save all nanos to file
@@ -1074,6 +1148,10 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
 	if ((i=byte_atob(ptr))>=0)
 	  rdr->b_nano[i]|= 0x02; //lsb+1 is set when to save nano to file
+    return;
+  }
+  if (token[0] != '#')
+    fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
 
 }
 

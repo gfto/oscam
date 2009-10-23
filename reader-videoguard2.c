@@ -811,8 +811,5 @@ int videoguard_card_info(void)
   cs_log("card detected");
   cs_log("type: Videoguard" );
   read_tiers ();
-
-  reader[ridx].online = 1;
-
   return(1);
 }

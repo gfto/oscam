@@ -299,8 +299,6 @@ int seca_card_info (void)
       cs_log ("ERROR: PBM returns unknown byte %02x", cta_res[0]);
     }
   }
-
-  reader[ridx].online = 1;	// by okmikel
   return (1);
 }
 
