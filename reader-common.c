@@ -96,11 +96,11 @@ int reader_cmd2api(uchar *buf, int l)
 
 int reader_cmd2icc(uchar *buf, int l)
 {
-//  int rc;
-//  if ((rc=reader_doapi(0, buf, l, D_DEVICE))<0)
-    return(reader_doapi(0, buf, l, D_DEVICE));
-//  else
-//    return(rc);
+    int rc;
+    cs_ddump(buf, l, "write to cardreader %s:",reader[ridx].label);
+    rc = reader_doapi(0, buf, l, D_DEVICE);
+    cs_ddump(cta_res, cta_lr, "answer from cardreader %s:", reader[ridx].label);
+    return rc;
 }
 
 static int reader_activate_card()

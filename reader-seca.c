@@ -48,7 +48,6 @@ int set_provider_info(int i)
 
   ins12[2]=i;//select provider
   read_cmd(ins12, NULL); // show provider properties
-  cs_debug("hexdump:%s", cs_hexdump (0, cta_res, 27));
   
   if ((cta_res[25] != 0x90) || (cta_res[26] != 0x00)) return (0);
   reader[ridx].prid[i][0]=0;
@@ -168,23 +167,18 @@ int seca_do_ecm(ECM_REQUEST *er)
   ins3c[4]=(((er->ecm[1]&0x0f) << 8) | er->ecm[2])-0x05;
   
   //memcpy(ins3cdata,er->ecm+8,256-8);
-  cs_debug("do_ecm:ins3c=%s", cs_hexdump (0, ins3c, 10));
   write_cmd(ins3c, er->ecm+8); //ecm request
-  cs_debug("do_ecm_answer:%02x%02x",cta_res[0], cta_res[1]);
 
   static unsigned char ins30[] = { 0xC1, 0x30, 0x00, 0x02, 0x09 };
   static unsigned char ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF };
   /* We need to use a token */
   if (cta_res[0] == 0x90 && cta_res[1] == 0x1a) {
     write_cmd(ins30, ins30data);
-    cs_debug("do_ins30_answer:%02x%02x",cta_res[0], cta_res[1]);
     write_cmd(ins3c, er->ecm+8); //ecm request
-    cs_debug("do_ecm_answer2:%02x%02x",cta_res[0], cta_res[1]);
   }
 
   if ((cta_res[0] != 0x90) || (cta_res[1] != 0x00)) return (0);
   read_cmd(ins3a, NULL); //get cw's
-  cs_debug("cwdump:%s", cs_hexdump(0, cta_res,18));
   if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) return (0);//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
   memcpy(er->cw,cta_res,16);
   return(1);
@@ -254,9 +248,7 @@ int seca_do_emm(EMM_PACKET *ep)
   }	//end of switch
 
   ins40[2]=i;
-  cs_debug("do_emm:ins40=%02x%02x%02x%02x%02x first 16 bytes of ins40data=%s", ins40[0], ins40[1], ins40[2], ins40[3], ins40[4], cs_hexdump (0, ep->emm + ins40data_offset, 16));
   write_cmd(ins40, ep->emm + ins40data_offset); //emm request
-  cs_debug("emmdump:%s", cs_hexdump(0, cta_res, 18));
 //TODO  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) return (0);
 //  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x19))
 //	  seca_card_init(); //if return code = 90 19 then PPUA changed. //untested!!
@@ -300,8 +292,6 @@ int seca_card_info (void)
       cs_log ("No PBM for provider %i", prov + 1);
       break;
     case 0x83:
-      cs_debug ("PBM dump for provider%i: %s", prov + 1, cs_hexdump (0, cta_res, 32));
-      //cs_log ("PBM dump for provider%i: %s", prov + 1, cs_hexdump (0, cta_res, l));
       memcpy (pbm, cta_res + 1, 8);
       cs_log ("PBM for provider %i: %s", prov + 1, cs_hexdump (0, pbm, 8));
       break;
