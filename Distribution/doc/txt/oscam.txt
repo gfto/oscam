@@ -44,7 +44,7 @@ OPTIONS
 
        -c <directory>
 	  read configuration from  <directory>,  default:  see	CS_CONFDIR  in
-	  globals.h
+	  globals.h, oscam prints warnings on invalid keywords while starting.
 
        -d <level>
 	  debug level mask:
@@ -58,8 +58,8 @@ OPTIONS
 	   63 = debug all
 
        -m <filename>
-	  use  <filename>  as  mmaped memory file, default: see CS_MMAPFILE in
-	  globals.h, needed for embedded systems  without  shared  memory  and
+	  use <filename> as mmaped memory file, default:  see  CS_MMAPFILE  in
+	  globals.h,  needed  for  embedded  systems without shared memory and
 	  windows
 
        -h
@@ -70,7 +70,7 @@ SIGNALS
 	  reinit user db, clients and anti-cascading
 
        SIGUSR1
-	  switch  debug  level	to  63 (debug all)/switch debug level to 0 (no
+	  switch debug level to 63 (debug all)/switch debug  level  to	0  (no
 	  debugging)
 
        SIGUSR2
