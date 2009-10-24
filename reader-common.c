@@ -103,6 +103,20 @@ int reader_cmd2icc(uchar *buf, int l)
     return rc;
 }
 
+#define CMD_LEN 5
+
+int card_write(uchar *cmd, uchar *data)
+{
+  if (data) {
+    uchar buf[256]; //only allocate buffer when its needed
+    memcpy(buf, cmd, CMD_LEN);
+    if (cmd[4]) memcpy(buf+CMD_LEN, data, cmd[4]);
+    return(reader_cmd2icc(buf, CMD_LEN+cmd[4]));
+  }
+  else
+    return(reader_cmd2icc(cmd, CMD_LEN));
+}
+
 static int reader_activate_card()
 {
   int i;

@@ -127,32 +127,6 @@ static unsigned char ndsCommand[0xFF];
 static unsigned char CardAnswer[0xFF];
 static unsigned char d3BEKey[0x10];
 
-///====================================================================================================
-/*
-static int card_write(uchar *cmd, const uchar *data, int wflag)
-{
-  int l;
-  uchar buf[MAX_LEN];
-  memcpy(buf, cmd, CMD_LEN);
-  l=wflag ? cmd[4] : 0;
-  if (l && data) memcpy(buf+CMD_LEN, data, l);
-  //cs_log("EMM: %s",cs_hexdump(1,buf,CMD_LEN+l));
-  l=reader_cmd2icc(buf, CMD_LEN+l);
-  return(l);
-}
-
-#define write_cmd(cmd, data) \
-{ \
-        if (card_write(cmd, data, 1)) return(0); \
-}
-
-#define read_cmd(cmd) \
-{ \
-        if (card_write(cmd, NULL, 0)) return(0); \
-}
-*/
-//==============================================================
-
 static AES_KEY aeskey;
 
 static void nds_aes_set_key (char *key)

@@ -354,8 +354,6 @@ int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned c
   return 0;
 }
 
-#define CMD_LEN 5
-
 static int status_ok(const unsigned char *status){
     //cs_log("check status %02x%02x", status[0],status[1]);
     return (status[0] == 0x90 || status[0] == 0x91)
@@ -365,19 +363,8 @@ static int status_ok(const unsigned char *status){
                || status[1] == 0xa0 || status[1] == 0xa1);
 }
 
-static int card_write(const uchar *cmd, const uchar *data, int wflag)
-{
-  int l;
-  uchar buf[256];
-  memcpy(buf, cmd, CMD_LEN);
-  l=wflag ? cmd[4] : 0;
-  if (l && data) memcpy(buf+CMD_LEN, data, l);
-  l=reader_cmd2icc(buf, CMD_LEN+l);
-  return(l);
-}
-
-#define write_cmd(cmd, data) (card_write(cmd, data, 1) == 0)
-#define read_cmd(cmd, data) (card_write(cmd, data, 0) == 0)
+#define write_cmd(cmd, data) (card_write(cmd, data) == 0)
+#define read_cmd(cmd, data) (card_write(cmd, NULL) == 0)
 
 static int read_cmd_len(const unsigned char *cmd) 
 { 

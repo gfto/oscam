@@ -187,9 +187,10 @@ static void camd35_request_emm(ECM_REQUEST *er)
       mbuf[128]=(reader[au].b_nano[0xd0])?0:1;
       mbuf[129]=(reader[au].b_nano[0xd2])?0:1;
       mbuf[130]=(reader[au].b_nano[0xd3])?0:1;*/
-      mbuf[128]=1; //we think client/server protocols should deliver all information, and only readers should discard EMM 
-      mbuf[129]=1;
-      mbuf[130]=1;
+      //we think client/server protocols should deliver all information, and only readers should discard EMM 
+      mbuf[128]=1; //if 0, GA EMM is blocked
+      mbuf[129]=1; //if 0, SA EMM is blocked
+      mbuf[130]=1; //if 0, UA EMM is blocked
     }
     else		// disable emm
       mbuf[20]=mbuf[39]=mbuf[40]=mbuf[47]=mbuf[49]=1;

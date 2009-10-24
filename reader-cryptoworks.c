@@ -99,26 +99,14 @@ int CheckSctLen(const uchar *data, int off)
   return(l);
 }
 
-static int card_write(uchar *cmd, uchar *data, int wflag)
-{
-  int l;
-  uchar buf[MAX_LEN];
-  memcpy(buf, cmd, CMD_LEN);
-  l=wflag ? cmd[4] : 0;
-  if (l && data)
-    memcpy(buf+CMD_LEN, data, l);
-  l=reader_cmd2icc(buf, CMD_LEN+l);
-  return(l);
-}
-
 #define write_cmd(cmd, data) \
 { \
-        if (card_write(cmd, data, 1)) return(0); \
+        if (card_write(cmd, data)) return(0); \
 }
 
 #define read_cmd(cmd, data) \
 { \
-        if (card_write(cmd, data, 0)) return(0); \
+        if (card_write(cmd, NULL)) return(0); \
 }
 
 static char *chid_date(uchar *ptr, char *buf, int l)

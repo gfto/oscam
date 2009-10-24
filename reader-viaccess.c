@@ -4,8 +4,6 @@
 extern uchar cta_cmd[], cta_res[];
 extern ushort cta_lr;
 
-#define CMD_LEN 5
-
 struct geo_cache
 {
   ulong provid;
@@ -141,25 +139,14 @@ static int chk_prov(uchar *id, uchar keynr)
   return(rc);
 }
 
-static int card_write(const uchar *cmd, const uchar *data, int wflag)
-{
-  int l;
-  uchar buf[256];
-  memcpy(buf, cmd, CMD_LEN);
-  l=wflag ? cmd[4] : 0;
-  if (l && data) memcpy(buf+CMD_LEN, data, l);
-  l=reader_cmd2icc(buf, CMD_LEN+l);
-  return(l);
-}
-
 #define write_cmd(cmd, data) \
 { \
-  if (card_write(cmd, data, 1)) return(0); \
+  if (card_write(cmd, data)) return(0); \
 }
 
 #define read_cmd(cmd, data) \
 { \
-  if (card_write(cmd, data, 0)) return(0); \
+  if (card_write(cmd, NULL)) return(0); \
 }
 
 int viaccess_card_init(uchar *atr, int atrsize)
@@ -536,7 +523,8 @@ int viaccess_do_emm(EMM_PACKET *ep)
       ///cs_dump(insData, ins1c[4], "set subscription encrypted data:");
       ///cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
 
-      read_cmd(insc8, insc8Data); 
+      //read_cmd(insc8, insc8Data); this cannot be right, insc8Data would be ignored -- dingo35
+      write_cmd(insc8, insc8Data); 
       if( cta_res[0] != 0x00 || cta_res[1] != 00 || cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
         ///cs_dump(cta_res, cta_lr, "extended status error:");
         return 0;
