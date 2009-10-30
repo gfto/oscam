@@ -1392,19 +1392,17 @@ void logCWtoFile(ECM_REQUEST *er)
 
 int write_ecm_answer(int fd, ECM_REQUEST *er)
 {
-  int i, f;
+  int i;
   uchar c;
-  for (i=f=0; i<16; i+=4)
+  for (i=0; i<16; i+=4)
   {
     c=((er->cw[i]+er->cw[i+1]+er->cw[i+2]) & 0xff);
     if (er->cw[i+3]!=c)
     {
-      f=1;
+      cs_debug("notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, er->cw[i+3],c);
       er->cw[i+3]=c;
     }
   }
-  if (f)
-    cs_debug("notice: changed dcw checksum bytes");
 
   er->reader[0]=ridx;
 //cs_log("answer from reader %d (rc=%d)", er->reader[0], er->rc);
@@ -1529,8 +1527,8 @@ int send_dcw(ECM_REQUEST *er)
   ac_chk(er, 1);
 #endif
 
-  if( cfg->show_ecm_dw && !client[cs_idx].dbglvl )
-    cs_dump(er->cw, 16, 0);
+  if( cfg->show_ecm_dw || client[cs_idx].dbglvl )
+    cs_dump(er->cw, 16, "cw:");
   if (er->rc==7) er->rc=0;
   ph[client[cs_idx].ctyp].send_dcw(er);
   return 0;
