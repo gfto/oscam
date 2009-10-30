@@ -564,22 +564,8 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			
 		if(ioctl(ifd->io->fd, IOCTL_GET_PARAMETERS, &params)<0)
 			return IFD_TOWITOKO_IO_ERROR;
-/*			
-		printf("T=%d\n", (int)params.T);
-		printf("f=%d\n", (int)params.f);
-		printf("ETU=%d\n", (int)params.ETU);
-		printf("WWT=%d\n", (int)params.WWT);
-		printf("CWT=%d\n", (int)params.CWT);
-		printf("BWT=%d\n", (int)params.BWT);
-		printf("EGT=%d\n", (int)params.EGT);
-		printf("clock=%d\n", (int)params.clock_stop_polarity);
-		printf("check=%d\n", (int)params.check);
-		printf("P=%d\n", (int)params.P);
-		printf("I=%d\n", (int)params.I);
-		printf("U=%d\n", (int)params.U);
-*/
-
-//		print_hex_data(buf, n);
+		
+//              cs_dump(buf, n, "BUF:");
 		if(n>9 && !memcmp(buf+4, irdeto, 6))
 		{
 			params.T = 14;
@@ -602,13 +588,17 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			struct timespec req_ts;
 			double a;
 			
+			ATR_GetParameter(*atr, ATR_PARAMETER_D, &a);
+//			printf("atr D=%f\n", a);
+			params.ETU /= (unsigned char)a;
+			ATR_GetParameter(*atr, ATR_PARAMETER_N, &a);
+			params.EGT = (unsigned char)a;
 			ATR_GetParameter(*atr, ATR_PARAMETER_P, &a);
 //			printf("atr P=%f\n", a);
 			params.P = (unsigned char)a;
 			ATR_GetParameter(*atr, ATR_PARAMETER_I, &a);
 //			printf("atr I=%f\n", a);
 			params.I = (unsigned char)a;
-
 
 			if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
 			{
@@ -617,24 +607,9 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 				return IFD_TOWITOKO_IO_ERROR;
 			}
 			
-
-/*
 			ioctl(ifd->io->fd, IOCTL_GET_PARAMETERS, &params);
 			
-		printf("T=%d\n", (int)params.T);
-		printf("f=%d\n", (int)params.f);
-		printf("ETU=%d\n", (int)params.ETU);
-		printf("WWT=%d\n", (int)params.WWT);
-		printf("CWT=%d\n", (int)params.CWT);
-		printf("BWT=%d\n", (int)params.BWT);
-		printf("EGT=%d\n", (int)params.EGT);
-		printf("clock=%d\n", (int)params.clock_stop_polarity);
-		printf("check=%d\n", (int)params.check);
-		printf("P=%d\n", (int)params.P);
-		printf("I=%d\n", (int)params.I);
-		printf("U=%d\n", (int)params.U);*/
-
-
+			cs_debug("T=%d f=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, (int)params.f, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
 			
 			req_ts.tv_sec = 0;
 			req_ts.tv_nsec = 50000000;
