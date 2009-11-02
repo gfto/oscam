@@ -38,6 +38,7 @@ OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(reader-seca.o) \
 		  $(LIBFILE1)(reader-cryptoworks.o) \
 		  $(LIBFILE1)(reader-conax.o) \
+		  $(LIBFILE1)(reader-dre.o) \
 		  $(LIBFILE1)(module-camd33.o) \
 		  $(LIBFILE1)(module-camd35.o) \
 		  $(LIBFILE1)(module-radegast.o) \
