@@ -856,6 +856,9 @@ unsigned long
 IFD_Towitoko_GetClockRate (IFD * ifd)
 {
  	return IFD_TOWITOKO_CLOCK_RATE;
+/*	extern int mhz; 
+	cs_log("CLOCK RATE IS %i in 10kHz steps",mhz);
+ 	return mhz * 10000; */
 }
 
 unsigned long 
