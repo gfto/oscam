@@ -120,7 +120,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	{
 		PPS_SelectFirstProtocol (pps);
 		
-#ifndef PPS_USE_DEFAULT_TIMINGS
+#ifndef PTS_USE_DEFAULT_TIMINGS
 		atr = ICC_Async_GetAtr (pps->icc);
 		
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(pps->parameters.n));
