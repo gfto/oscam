@@ -1091,7 +1091,8 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
                                        rdr->ncd_proto=NCD_525; return; }
     if (!strcmp(value, "newcamd524")) {rdr->typ=R_NEWCAMD; 
                                        rdr->ncd_proto=NCD_524; return; }
-    fprintf(stderr, "Warning: value '%s' in protocol-line not recognized\n",value);
+    fprintf(stderr, "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE\n",value);
+    rdr->typ=R_MOUSE;
     return;
   }
   if (!strcmp(token, "ident")) { chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid"); return; }
