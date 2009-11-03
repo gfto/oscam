@@ -54,7 +54,7 @@
 #define IFD_TOWITOKO_TIMEOUT             1000
 #define IFD_TOWITOKO_DELAY               0
 #define IFD_TOWITOKO_BAUDRATE            9600
-#define IFD_TOWITOKO_PS                  15
+//#define IFD_TOWITOKO_PS                  15
 #define IFD_TOWITOKO_MAX_TRANSMIT        255
 //#define IFD_TOWITOKO_ATR_TIMEOUT	 200
 //#define IFD_TOWITOKO_ATR_TIMEOUT	 400
@@ -855,10 +855,10 @@ IFD_Towitoko_GetNumSlots (IFD * ifd)
 unsigned long
 IFD_Towitoko_GetClockRate (IFD * ifd)
 {
- 	return IFD_TOWITOKO_CLOCK_RATE;
-/*	extern int mhz; 
+ 	//return IFD_TOWITOKO_CLOCK_RATE;
+	extern int mhz; 
 	cs_log("CLOCK RATE IS %i in 10kHz steps",mhz);
- 	return mhz * 10000; */
+ 	return mhz * 10000L; 
 }
 
 unsigned long 
