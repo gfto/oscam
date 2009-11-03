@@ -98,9 +98,7 @@ int seca_card_init(uchar *atr, int atrsize)
   reader[ridx].caid[0]=0x0100;
   memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
   read_cmd(ins0e, NULL); // read unique id
-  reader[ridx].hexserial[0]=0;
-  reader[ridx].hexserial[1]=0;
-  memcpy(reader[ridx].hexserial+2, cta_res+2, 6);
+  memcpy(reader[ridx].hexserial, cta_res+2, 6);
   serial = b2ll(5, cta_res+3) ;
   cs_ri_log("type: seca, caid: %04X, serial: %llu, card: %s v%d.%d",
          reader[ridx].caid[0], serial, card, atr[9]&0x0F, atr[9]>>4);
@@ -206,8 +204,8 @@ int seca_do_emm(EMM_PACKET *ep)
     case 0x82:	//unique EMM
       {
 	//first test if UA matches
- 	if (memcmp (reader[ridx].hexserial + 2, ep->emm + 3, 6)) {
-		cs_log("EMM: Unique update did not match; EMM Serial:%02X%02X%02X%02X%02X%02X, Reader Serial:%s.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], cs_hexdump (0, reader[ridx].hexserial + 2, 6));
+ 	if (memcmp (reader[ridx].hexserial, ep->emm + 3, 6)) {
+		cs_log("EMM: Unique update did not match; EMM Serial:%02X%02X%02X%02X%02X%02X, Reader Serial:%s.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], cs_hexdump (0, reader[ridx].hexserial, 6));
 		return(0);
 	}
 	else {
