@@ -118,7 +118,7 @@ int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be chan
       cs_log ("DRECRYPT wrong signature: %s.", cs_hexdump (0, cta_res, cta_lr));
       break;
     default:
-      cs_log ("DRECRYPT unknown error: %s.", cs_hexdump (0, cta_res, cta_lr));
+      cs_debug ("DRECRYPT unknown error: %s.", cs_hexdump (0, cta_res, cta_lr));
       break;
     }
     return 0;			//error
@@ -332,6 +332,7 @@ int dre_do_ecm (ECM_REQUEST * er)
     ecmcmd41[22] = provider;
     memcpy (ecmcmd41 + 4, er->ecm + 8, 16);
     ecmcmd41[20] = er->ecm[6];	//keynumber
+    ecmcmd41[21] = 0x58 + er->ecm[25];
     cs_debug ("DEBUG: unused ECM info front:%s", cs_hexdump (0, er->ecm, 8));
     cs_debug ("DEBUG: unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2]+2-24));
     if ((dre_cmd (ecmcmd41))) {	//ecm request
