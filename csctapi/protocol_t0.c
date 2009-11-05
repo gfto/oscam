@@ -129,7 +129,7 @@ int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters 
 	ICC_Async_SetTimings (t0->icc, &timings);
 	
 #ifdef DEBUG_PROTOCOL
-	printf ("Protocol: T=0: WWT=%d\n", (int)(t0->wwt));
+	printf ("Protocol: T=0: WWT=%d, Clockrate=%lu\n", (int)(t0->wwt),ICC_Async_GetClockRate(t0->icc));
 #endif
 	
 	return PROTOCOL_T0_OK;
