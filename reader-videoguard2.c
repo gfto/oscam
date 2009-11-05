@@ -35,6 +35,22 @@ static int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt
 
 //////  ====================================================================================
 
+// SIFTEAM funzione per cambio endianness
+static void swap_lb (unsigned char *buff, int len)
+{
+
+#if __BYTE_ORDER != __BIG_ENDIAN
+  return;
+
+#endif /*  */
+  int i;
+  unsigned short *tmp;
+  for (i = 0; i < len / 2; i++) {
+    tmp = (unsigned short *) buff + i;
+    *tmp = ((*tmp << 8) & 0xff00) | ((*tmp >> 8) & 0x00ff);
+  }
+} 
+
 static inline void __xxor(unsigned char *data, int len, const unsigned char *v1, const unsigned char *v2)
 {
   switch(len) { // looks ugly, but the compiler can optimize it very well ;)
@@ -66,13 +82,17 @@ static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *dat
 static void cCamCryptVG2_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG2_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2);
-static void cCamCryptVG2_SetSeed(const unsigned char *Key1, const unsigned char *Key2);
+static void cCamCryptVG2_SetSeed(unsigned char *Key1, unsigned char *Key2);
 static void cCamCryptVG2_GetCamKey(unsigned char *buff);
 
-static void cCamCryptVG2_SetSeed(const unsigned char *Key1, const unsigned char *Key2)
+static void cCamCryptVG2_SetSeed(unsigned char *Key1, unsigned char *Key2)
 {
+  swap_lb (Key1, 64);
+  swap_lb (Key2, 64);
   memcpy(cardkeys[1],Key1,sizeof(cardkeys[1]));
   memcpy(cardkeys[2],Key2,sizeof(cardkeys[2]));
+  swap_lb (Key1, 64);
+  swap_lb (Key2, 64);
 }
 
 static void cCamCryptVG2_GetCamKey(unsigned char *buff)
@@ -82,6 +102,7 @@ static void cCamCryptVG2_GetCamKey(unsigned char *buff)
   tb2[0]=1;
   int i;
   for(i=0; i<32; i++) cCamCryptVG2_LongMult(tb2,&c,cardkeys[1][i],0);
+  swap_lb (buff, 64);
 }
 
 static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2)
@@ -115,10 +136,12 @@ static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *dat
 {
   switch(ins[1]) {
     case 0xb4:
+      swap_lb (data, 64);
       memcpy(cardkeys[0],data,sizeof(cardkeys[0]));
       break;
     case 0xbc: 
       {
+      swap_lb (data, 64);
       unsigned short *idata=(unsigned short *)data;
       const unsigned short *key1=(const unsigned short *)cardkeys[1];
       unsigned short key2[32];
@@ -142,6 +165,7 @@ static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *dat
       unsigned short idatacount=0;
       int i;
       for(i=31; i>=0; i--) cCamCryptVG2_LongMult(idata,&idatacount,key1[i],key2[i]);
+      swap_lb (data, 64);
       unsigned char stateD1[16];
       cCamCryptVG2_Reorder16A(stateD1,data);
       cAES_SetKey(stateD1);
@@ -410,6 +434,12 @@ static int do_cmd(const unsigned char *ins, const unsigned char *txbuff, unsigne
 
   cCamCryptVG2_PostProcess_Decrypt(rxbuff,len,CW1,CW2);
 
+  // Log decrypted INS54
+  if (rxbuff[1] == 0x54) {
+    cs_dump (rxbuff, 5, "Decrypted INS54:");
+    cs_dump (rxbuff + 5, rxbuff[4], "");
+  }
+
   return len;
 }
 
@@ -594,6 +624,7 @@ if (reader[ridx].typ != R_INTERN) {
     return 0;
     }
 
+  short int SWIRDstatus = cta_res[1];
   unsigned char ins58[5] = { 0xD0,0x58,0x00,0x00,0x00 };
   l=do_cmd(ins58, NULL, buff);
   if(l<0) {
@@ -608,14 +639,20 @@ if (reader[ridx].typ != R_INTERN) {
   reader[ridx].nprov = 1;
   memset(reader[ridx].prid, 0x00, sizeof(reader[ridx].prid));
 
+  /*
+  cs_log ("INS58 : Fuse byte=0x%02X, IRDStatus=0x%02X", cta_res[2],SWIRDstatus);
+  if (SWIRDstatus==4)  {
+  // If swMarriage=4, not married then exchange for BC Key
+  cs_log ("Card not married, exchange for BC Keys");
+   */
 
-  const unsigned char seed1[] = {
+  unsigned char seed1[] = {
     0xb9, 0xd5, 0xef, 0xd5, 0xf5, 0xd5, 0xfb, 0xd5, 0x31, 0xd6, 0x43, 0xd6, 0x55, 0xd6, 0x61, 0xd6,
     0x85, 0xd6, 0x9d, 0xd6, 0xaf, 0xd6, 0xc7, 0xd6, 0xd9, 0xd6, 0x09, 0xd7, 0x15, 0xd7, 0x21, 0xd7,
     0x27, 0xd7, 0x3f, 0xd7, 0x45, 0xd7, 0xb1, 0xd7, 0xbd, 0xd7, 0xdb, 0xd7, 0x11, 0xd8, 0x23, 0xd8,
     0x29, 0xd8, 0x2f, 0xd8, 0x4d, 0xd8, 0x8f, 0xd8, 0xa1, 0xd8, 0xad, 0xd8, 0xbf, 0xd8, 0xd7, 0xd8
     };
-  const unsigned char seed2[] = {
+  unsigned char seed2[] = {
     0x01, 0x00, 0xcf, 0x13, 0xe0, 0x60, 0x54, 0xac, 0xab, 0x99, 0xe6, 0x0c, 0x9f, 0x5b, 0x91, 0xb9,
     0x72, 0x72, 0x4d, 0x5b, 0x5f, 0xd3, 0xb7, 0x5b, 0x01, 0x4d, 0xef, 0x9e, 0x6b, 0x8a, 0xb9, 0xd1,
     0xc9, 0x9f, 0xa1, 0x2a, 0x8d, 0x86, 0xb6, 0xd6, 0x39, 0xb4, 0x64, 0x65, 0x13, 0x77, 0xa1, 0x0a,
@@ -674,7 +711,7 @@ if (reader[ridx].typ != R_INTERN) {
 
 int videoguard_do_ecm(ECM_REQUEST *er)
 {
-  static unsigned char ins40[5] = { 0xD1,0x40,0x40,0x80,0xFF };
+  static unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
   static const unsigned char ins54[5] = { 0xD3,0x54,0x00,0x00,0x00};
   int posECMpart2=er->ecm[6]+7;
   int lenECMpart2=er->ecm[posECMpart2]+1;
