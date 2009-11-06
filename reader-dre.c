@@ -4,7 +4,6 @@
 
 extern uchar cta_cmd[], cta_res[];
 extern ushort cta_lr;
-static unsigned short pmap = 0;	// provider-maptable
 unsigned long long serial;
 char *card;
 static uchar provider;
@@ -180,7 +179,6 @@ int dre_card_init (uchar * atr, int atrsize)
     break;
   }
 
-  memset (reader[ridx].prid, 0xff, sizeof (reader[ridx].prid));
   memset (reader[ridx].prid, 0x00, 8);
 
   static uchar cmd30[] =
@@ -216,11 +214,11 @@ FE 48 */
   ua[1] = provider;
   dre_cmd (ua);			//error would not be fatal
 
-  for (i = 0; i < 8; i++)
-    reader[ridx].hexserial[i] = 0;
-  int hexlength = cta_res[1] - 2;	//discard first and last byte, last byte is always checksum, first is always rubbish?
+  int hexlength = cta_res[1] - 2;	//discard first and last byte, last byte is always checksum, first is answer code
 
-  memcpy (reader[ridx].hexserial + 8 - hexlength, cta_res + 3, hexlength);
+  reader[ridx].hexserial[0] = 0;
+  reader[ridx].hexserial[1] = 0;
+  memcpy (reader[ridx].hexserial + 2, cta_res + 3, hexlength);
 
   int low_dre_id = ((cta_res[4] << 16) | (cta_res[5] << 8) | cta_res[6]) - 48608;
   int dre_chksum = 0;
@@ -234,12 +232,18 @@ FE 48 */
 
   //cs_ri_log("type: DRECrypt, caid: %04X, serial: %llu, card: v%x",
   cs_log ("type: DRECrypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
-	  reader[ridx].caid[0], cs_hexdump (0, reader[ridx].hexserial, 8), dre_chksum, provider - 16, major_version + 1,
-	  low_dre_id, geocode, card, major_version, minor_version);
+	  reader[ridx].caid[0], cs_hexdump (0, reader[ridx].hexserial + 2, 4), dre_chksum, provider - 16,
+	  major_version + 1, low_dre_id, geocode, card, major_version, minor_version);
   cs_log ("Provider name:%s.", provname);
 
 
-  memcpy (&reader[ridx].sa[0][0], &reader[ridx].hexserial + 4, 4);	//copy unique address also in shared address, because we dont know what it is...
+  memset (reader[ridx].sa, 0, sizeof (reader[ridx].sa));
+  memcpy (reader[ridx].sa[0], reader[ridx].hexserial + 2, 1);	//copy first byte of unique address also in shared address, because we dont know what it is...
+
+  cs_log ("DEBUG: SA = %02X%02X%02X%02X, UA = %s", reader[ridx].sa[0][0], reader[ridx].sa[0][1], reader[ridx].sa[0][2],
+	  reader[ridx].sa[0][3], cs_hexdump (0, reader[ridx].hexserial + 2, 4));
+
+  //reader[ridx].nprov = 1; TODO doesnt seem necessary
 
   if (!dre_set_provider_info ())
     return 0;			//fatal error
@@ -303,11 +307,18 @@ FE 48 */
 //  ecmtest[index] = save;
 //}
 
+  EMM_PACKET *eptmp;
+  eptmp = malloc (sizeof (EMM_PACKET));
+//  static unsigned char tempser[] = { 0, 0, 0xC8, 0x4D, 0x25, 0x5A };
+//  memcpy (reader[ridx].hexserial, tempser, 8);
+  dre_do_emm (eptmp);
+  free (eptmp);
 //############### PLAYGROUND ////
   cs_log ("ready for requests");
   return (1);
 }
 
+/*
 static int get_prov_index (char *provid)	//returns provider id or -1 if not found
 {
   int prov;
@@ -316,7 +327,7 @@ static int get_prov_index (char *provid)	//returns provider id or -1 if not foun
       return (prov);
   return (-1);
 }
-
+*/
 
 int dre_do_ecm (ECM_REQUEST * er)
 {
@@ -332,9 +343,9 @@ int dre_do_ecm (ECM_REQUEST * er)
     ecmcmd41[22] = provider;
     memcpy (ecmcmd41 + 4, er->ecm + 8, 16);
     ecmcmd41[20] = er->ecm[6];	//keynumber
-    ecmcmd41[21] = 0x58 + er->ecm[25];
+    ecmcmd41[21] = 0x58 + er->ecm[25];	//package number
     cs_debug ("DEBUG: unused ECM info front:%s", cs_hexdump (0, er->ecm, 8));
-    cs_debug ("DEBUG: unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2]+2-24));
+    cs_debug ("DEBUG: unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2] + 2 - 24));
     if ((dre_cmd (ecmcmd41))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
 	return (0);		//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
@@ -379,7 +390,179 @@ int dre_do_ecm (ECM_REQUEST * er)
 
 int dre_do_emm (EMM_PACKET * ep)
 {
-  return 0;			//FIXME STUB
+  //return 0;                   //FIXME STUB
+  /*
+  uchar emmtest[] = { 0x87, 0x00, 0x8C, 0xC8, 0x4D, 0x25, 0x5A, 0x02, 0xA9, 0xA5, 0x34, 0x31, 0xAB, 0x9C, 0x9B, 0x59,
+    0x5D, 0x47, 0x95, 0xB3, 0xB1, 0x61, 0x47, 0xE6, 0x85, 0xE0, 0x17, 0xC8, 0x25, 0x70, 0x59, 0x73,
+    0x12, 0x1F, 0x2B, 0x9B, 0x02, 0x5A, 0x9D, 0x3A, 0x05, 0x56, 0x85, 0x58, 0x00, 0xC8, 0x4D, 0x25,
+    0x5A, 0x06, 0x02, 0x23, 0xB4, 0x37, 0x1E, 0xE0, 0x7E, 0x59, 0xFC, 0x38, 0xCA, 0x13, 0x21, 0x0D,
+    0x3E, 0x09, 0xDF, 0xB4, 0x45, 0x6C, 0x99, 0x7E, 0x3E, 0xDA, 0xA4, 0xC7, 0xB9, 0x7B, 0xAB, 0x4A,
+    0xB5, 0xE2, 0x1D, 0xA3, 0xCD, 0x03, 0xAF, 0xDA, 0xBA, 0xEA, 0x3B, 0x85, 0x58, 0x00, 0xC8, 0x4D,
+    0x25, 0x5A, 0x05, 0xF4, 0xAF, 0x8B, 0x8F, 0x2F, 0x6C, 0xF2, 0x43, 0x8C, 0x86, 0x03, 0xFD, 0x1C,
+    0xDF, 0x7A, 0xE4, 0xB6, 0x0B, 0xF9, 0x70, 0x72, 0xFC, 0x2A, 0xEC, 0x0F, 0x6D, 0x8D, 0x82, 0xC6,
+    0x4C, 0x16, 0x81, 0xDC, 0xC9, 0x3C, 0x34, 0x84, 0x35, 0x9A, 0xA7, 0xED, 0xB1, 0x39, 0xBC
+  }; //UNIQE EMM
+*/
+
+  uchar emmtest[] = { 0x89, 0x00, 0x68, 0x00, 0x4D, 0x56, 0x85, 0x58, 0x01, 0x00, 0x00, 0x00, 0x00, 0x06, 0x29, 0x58,
+    0x89, 0x04, 0x3A, 0xEE, 0x15, 0xB1, 0x38, 0x4A, 0x75, 0x5A, 0x21, 0xEE, 0x4D, 0x37, 0xF3, 0x53,
+    0xF8, 0xAC, 0x1F, 0x8D, 0xEA, 0xDF, 0x12, 0x73, 0x00, 0x69, 0xBB, 0x67, 0x5D, 0x8A, 0x96, 0x2D,
+    0x1C, 0x08, 0xEB, 0xF1, 0xCA, 0x40, 0x3B, 0x85, 0x58, 0x01, 0x00, 0x00, 0x00, 0x00, 0x05, 0x85,
+    0xF2, 0xE1, 0xD9, 0x86, 0xEA, 0x19, 0x6A, 0xEF, 0x3B, 0x9D, 0x0C, 0xEA, 0xF3, 0x7B, 0x74, 0xE5,
+    0xF7, 0x4F, 0xD6, 0x9C, 0x85, 0x6C, 0x7E, 0x79, 0xDF, 0x18, 0xD1, 0xC3, 0x54, 0xA9, 0x47, 0xCB,
+    0xAC, 0xB6, 0x18, 0x71, 0xC8, 0x69, 0x6B, 0x10, 0xFF, 0x9D, 0x11 }; //GLOBAL EMM
+
+  memcpy (ep->emm, emmtest, 0x8f);
+
+  int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
+
+  cs_ddump (ep->emm, emm_length + 3, "EMM:");
+  ep->type = ep->emm[0];
+  cs_debug ("ep->type%x", ep->type);
+
+  if (mode != 41) {
+    cs_log ("EMM Mode not implemented yet");
+    return 0;
+  }
+
+  static uchar emmcmd42[] =
+    { 0x42, 0x85, 0x58, 0x01, 0xC8, 0x00, 0x00, 0x00, 0x05, 0xB8, 0x0C, 0xBD, 0x7B, 0x07, 0x04, 0xC8,
+    0x77, 0x31, 0x95, 0xF2, 0x30, 0xB7, 0xE9, 0xEE, 0x0F, 0x81, 0x39, 0x1C, 0x1F, 0xA9, 0x11, 0x3E,
+    0xE5, 0x0E, 0x8E, 0x50, 0xA4, 0x31, 0xBB, 0x01, 0x00, 0xD6, 0xAF, 0x69, 0x60, 0x04, 0x70, 0x3A,
+    0x91,
+    0x56, 0x58, 0x11
+  };
+
+  switch (ep->type) {
+  case 0x88:			//shared EMM
+    {
+      cs_debug ("HANS: checkpoint 1");
+      if (memcmp (ep->emm + 9, reader[ridx].sa[0], 1)) {	//in case of SHARED EMM, only first byte has to match?
+	cs_log ("EMM: Shared update did not match; EMM SA:%02X%02X%02X%02X, Reader SA:%s.", ep->emm[9], ep->emm[10],
+		ep->emm[11], ep->emm[12], cs_hexdump (0, reader[ridx].sa[0], 4));
+	return (0);
+      }
+      else {
+	cs_log ("EMM: Shared update matched for EMM SA %02X%02X%02X%02X.", ep->emm[9], ep->emm[19], ep->emm[11],
+		ep->emm[12]);
+      }
+      /*
+         01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16
+         88 00 68 C8 4D 56 85 58 01 C8 00 00 00 05 B8 0C 
+
+         17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 -- 
+         BD 7B 07 04 C8 77 31 95 F2 30 B7 E9 EE 0F 81 39 
+
+         33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 -- 
+         1C 1F A9 11 3E E5 0E 8E 50 A4 31 BB 01 00 D6 AF 
+
+         49 50 51 52 53 54X55 56 57 58 59 60 61 62 63 64 -- 
+         69 60 04 70 3A 91 3B 85 58 01 C8 00 00 00 05 B1 
+
+         65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 -- 
+         3F BF A0 05 6E BD AB 0A 70 77 30 C2 AC EC 06 C2 
+
+         81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 -- 
+         3D 47 50 8D B1 77 68 62 6B 26 6B CE A9 EF 1B 6A 
+
+         97 98 99 00 01 02 03 04 05 06 07 08 09 10 11 12 -- 
+         DF 7B 39 52 A4 5A 0E B0 A6 ED 7B DC 82 3C AE A3 
+
+         Here we have: 
+
+         Bytes ... 
+         01 (88) - EMM filter can be a value 87 
+         03 (68) - length of data EMM 
+         04 (C8) - the number of SA for the filter (C8 - is a map) 
+         06 (56) - index kriptodannyh (56/3B alternate) are likely key number 
+
+         07 (85) - choice of algorithm (8x - MSP / 4x - Atmel), in the cards until only 85 
+         08 (01) - the type of EMM (00 - EMM_U, solo / 01 - EMM_S, group) 
+         10 - 13 (C8 00 00 00) - here only for SA EMM_S 
+         14 (05) - additional flags 
+         15 - 54 (V8. .. 91) own body EMM, information about the key.
+         55 (3B) may be a checksum. 
+
+         Bytes 56 - 104 - for the second key. 
+         Appointment of the remaining bytes is unknown. 
+       */
+    }				// end shared EMM NO BREAK so rest happens in global EMM
+  case 0x89:			//global EMM ??
+    {
+      if (ep->type == 0x89)
+	cs_log ("EMM: Global update");
+      /* 89 00 68 00 4D 56 85 58 01 00 00 00 00 06 29 58
+       * 89 04 3A EE 15 B1 38 4A 75 5A 21 EE 4D 37 F3 53
+       * F8 AC 1F 8D EA DF 12 73 00 69 BB 67 5D 8A 96 2D
+       * 1C 08 EB F1 CA 40X3BX85 58 01 00 00 00 00 05 85
+       * F2 E1 D9 86 EA 19 6A EF 3B 9D 0C EA F3 7B 74 E5
+       * F7 4F D6 9C 85 6C 7E 79 DF 18 D1 C3 54 A9 47 CB
+       * AC B6 18 71 C8 69 6B 10 FF 9D 11 
+       */
+      memcpy (emmcmd42 + 1, ep->emm + 6, 48);
+      emmcmd42[51] = provider;
+      //emmcmd42[50] = ecmcmd42[2]; //TODO package nr could also be fixed 0x58
+      emmcmd42[49] = ep->emm[5];	//keynr
+      /* response: 
+         59 05 A2 02 05 01 5B 
+         90 00 */
+      cs_debug ("HANS: checkpoint 5");
+      if ((dre_cmd (emmcmd42))) {	//first emm request
+	if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
+	  return (0);		//exit if response is not 90 00
+
+	cs_debug ("HANS: checkpoint 6");
+	memcpy (emmcmd42 + 1, ep->emm + 55, 7);
+	memcpy (emmcmd42 + 8, ep->emm + 67, 41);
+	emmcmd42[51] = provider;
+	//emmcmd42[50] = ecmcmd42[2]; //TODO package nr could also be fixed 0x58
+	emmcmd42[49] = ep->emm[54];	//keynr
+	if ((dre_cmd (emmcmd42))) {	//second emm request
+	  if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
+	    return (0);		//exit if response is not 90 00
+	  return 1;		//success
+	}
+      }
+
+      break;
+    }				//end global EMM
+  case 0x87:			//unique EMM
+    {
+      /*
+         0x87, 0x00, 0x8C, ser1, ser2, ser3, ser4, 0x02, 0xA9, 0xA5, 0x34, 0x31, 0xAB, 0x9C, 0x9B, 0x59,
+         0x5D, 0x47, 0x95, 0xB3, 0xB1, 0x61, 0x47, 0xE6, 0x85, 0xE0, 0x17, 0xC8, 0x25, 0x70, 0x59, 0x73,
+         0x12, 0x1F, 0x2B, 0x9B, 0x02, 0x5A, 0x9D, 0x3A, 0x05, 0x56, 0x85, 0x58, 0x00, 0xC8, 0x4D, 0x25,
+         0x5A, 0x06, 0x02, 0x23, 0xB4, 0x37, 0x1E, 0xE0, 0x7E, 0x59, 0xFC, 0x38, 0xCA, 0x13, 0x21, 0x0D,
+         0x3E, 0x09, 0xDF, 0xB4, 0x45, 0x6C, 0x99, 0x7E, 0x3E, 0xDA, 0xA4, 0xC7, 0xB9, 0x7B, 0xAB, 0x4A,
+         0xB5, 0xE2, 0x1D, 0xA3, 0xCD, 0x03, 0xAF, 0xDA, 0xBA, 0xEA, 0x3B, 0x85, 0x58, 0x00, 0xC8, 0x4D,
+         0x25, 0x5A, 0x05, 0xF4, 0xAF, 0x8B, 0x8F, 0x2F, 0x6C, 0xF2, 0x43, 0x8C, 0x86, 0x03, 0xFD, 0x1C,
+         0xDF, 0x7A, 0xE4, 0xB6, 0x0B, 0xF9, 0x70, 0x72, 0xFC, 0x2A, 0xEC, 0x0F, 0x6D, 0x8D, 0x82, 0xC6,
+         0x4C, 0x16, 0x81, 0xDC, 0xC9, 0x3C, 0x34, 0x84, 0x35, 0x9A, 0xA7, 0xED, 0xB1, 0x39, 0xBC
+       */
+      cs_debug ("HANS: checkpoint 2");
+      //first test if UA matches
+      if (memcmp (reader[ridx].hexserial + 2, ep->emm + 3, 4)) {
+	cs_log ("EMM: Unique update did not match; EMM Serial:%02X%02X%02X%02X, Reader Serial:%s.", ep->emm[3],
+		ep->emm[4], ep->emm[5], ep->emm[6], cs_hexdump (0, reader[ridx].hexserial + 2, 4));
+	return (0);
+      }
+      else {
+	cs_log ("EMM: Unique update matched EMM Serial:%02X%02X%02X%02X.", ep->emm[3], ep->emm[4], ep->emm[5],
+		ep->emm[6]);
+	cs_log ("EMM: layout of EMM 0x87 unknown, cannot be processed yet.");
+      }
+      break;
+    }				//end unique EMM
+  default:
+    cs_log
+      ("EMM: Congratulations, you have discovered a new EMM type on DRECRYPT. This has not been decoded yet, so send this output to authors:");
+    cs_dump (ep->emm, emm_length + 3, "EMM:");
+    return 0;			//unknown
+  }				//end of switch
+
+
+  cs_debug ("HANS: checkpoint 3");
+  return 0;
 }
 
 int dre_card_info (void)
