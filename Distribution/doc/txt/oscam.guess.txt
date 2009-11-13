@@ -3,7 +3,7 @@ oscam.guess(5)							oscam.guess(5)
 
 
 NAME
-       oscam.guess - CAID guessing table for oscam
+       oscam.guess - CAID guessing table for OSCam
 
 SYNOPSIS
        CAID guessing table

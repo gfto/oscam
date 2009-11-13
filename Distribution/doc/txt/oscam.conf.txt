@@ -3,12 +3,12 @@ oscam.conf(5)							 oscam.conf(5)
 
 
 NAME
-       oscam.conf - main configuration file for oscam
+       oscam.conf - main configuration file for OSCam
 
 SYNOPSIS
-       The main configuration file for oscam contais global parameters such as
-       debugging, logging, monitor, protocols and anti-cascading.  sections in
-       oscam.conf  are	nonrecurring.  The  [global]  section is required. All
+       The  main  configuration file for OSCam contains global parameters such
+       as debugging, logging, monitor, protocols and anti-cascading.  sections
+       in  oscam.conf  are nonrecurring. The [global] section is required. All
        other sections are optional.
 
 SECTION DESCRIPTIONS

@@ -3,10 +3,10 @@ oscam.user(5)							 oscam.user(5)
 
 
 NAME
-       oscam.user - user configuration file for oscam
+       oscam.user - user configuration file for OSCam
 
 SYNOPSIS
-       The  user  configuration  file  for  oscam  contains  user definitions.
+       The  user  configuration  file  for  OSCam  contains  user definitions.
        [account] sections in oscam.user are recurring (more than one account).
 
 SECTION DESCRIPTIONS
@@ -22,9 +22,11 @@ SECTION DESCRIPTIONS
 
        betatunnel   =	<CAID>.<ServiceID>:<target  CAID>[,<CAID>.<ServiceID>:
        <target CAID>]...
-	  define Betacrypt tunneling (max. see CS_MAXTUNTAB in globals.h)
+	  define Betacrypt tunneling (max.  see  CS_MAXTUNTAB  in  globals.h).
+	  Use FFFF as ServiceID for wildcarded ServiceIDs.
 
 	   example: betatunnel = 0100:0001:0200,0300.0004:0500
+		    betatunnel = 0600:FFFF:0700
 
        uniq = 0|1|2
 	  unique level:
@@ -42,7 +44,7 @@ SECTION DESCRIPTIONS
 	  example: caid = 0100&ffff:0200:0300&ff00
 
        au = label of reader
-	  AU for/sending EMMs to specified reader (security issue: client  can
+	  AU  for/sending EMMs to specified reader (security issue: client can
 	  see SC data!), default:none
 
        group = group[,<group>]...
@@ -63,7 +65,7 @@ SECTION DESCRIPTIONS
 	  user assingment to Irdeto ChID, default:none
 
        numusers = quantity
-	  anti-cascading:  user  per  account,	0  = anti-cascading permitted,
+	  anti-cascading: user per  account,  0  =  anti-cascading  permitted,
 	  default:none
 
        penalty = 0|1|2
@@ -85,8 +87,8 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       oscam(1),     oscam.conf(5),	 oscam.server(5),      oscam.srvid(5),
-       oscam.guess(5),	  oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
+       oscam(1),      oscam.conf(5),	  oscam.server(5),     oscam.srvid(5),
+       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
        oscam.ac(5)
 
 

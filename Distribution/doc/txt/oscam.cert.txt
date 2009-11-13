@@ -3,7 +3,7 @@ oscam.cert(5)							 oscam.cert(5)
 
 
 NAME
-       oscam.cert - Issuer Public Keys (IPK) for oscam
+       oscam.cert - Issuer Public Keys (IPK) for OSCam
 
 SYNOPSIS
        Issuer Public Keys (IPK)

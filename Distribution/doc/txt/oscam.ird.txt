@@ -3,7 +3,7 @@ oscam.ird(5)							  oscam.ird(5)
 
 
 NAME
-       oscam.ird - Irdeto guessing table for oscam
+       oscam.ird - Irdeto guessing table for OSCam
 
 SYNOPSIS
        Irdeto guessing table

@@ -3,16 +3,16 @@ oscam(1)							      oscam(1)
 
 
 NAME
-       oscam - SC server
+       OSCam - SC server
 
 SYNOPSIS
        oscam
 
 DESCRIPTIONS
-       The  oscam software is an open source multi-protocol/multi-plattform SC
+       The  OSCam software is an open source multi-protocol/multi-plattform SC
        server.
 
-       oscam supports the following protocols:
+       OSCam supports the following protocols:
 
 	 camd 3.3x
 
@@ -30,7 +30,7 @@ DESCRIPTIONS
 
 	 gbox with AU support, cascading/remote server ECM support
 
-       oscam works on the following plattforms:
+       OSCam works on the following plattforms:
 
 	 Linux (tuxbox, arm, mips, mipsel, sh4, powerpc, ...)
 
@@ -44,7 +44,7 @@ OPTIONS
 
        -c <directory>
 	  read configuration from  <directory>,  default:  see	CS_CONFDIR  in
-	  globals.h, while starting oscam prints warnings on invalid keywords,
+	  globals.h, while starting OSCam prints warnings on invalid keywords,
 	  comment lines start with # character.
 
        -d <level>

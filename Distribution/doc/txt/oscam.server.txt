@@ -3,10 +3,10 @@ oscam.server(5) 					       oscam.server(5)
 
 
 NAME
-       oscam.server - reader configuration file for oscam
+       oscam.server - reader configuration file for OSCam
 
 SYNOPSIS
-       The  server  configuration  file  for  oscam contais reader parameters.
+       The  server  configuration  file  for OSCam contains reader parameters.
        sections in oscam.server are recurring (more than one reader possible).
        At least one [reader] section is required.
 

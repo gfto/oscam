@@ -1,8 +1,8 @@
 .TH oscam.user 5
 .SH NAME
-\fBoscam.user\fR - user configuration file for oscam
+\fBoscam.user\fR - user configuration file for OSCam
 .SH SYNOPSIS
-The user configuration file for oscam contains user definitions. [account]
+The user configuration file for OSCam contains user definitions. [account]
 sections in \fBoscam.user\fR are \fIrecurring\fR (more than one account).
 .SH SECTION DESCRIPTIONS
 .SS "The [account] section"
@@ -25,9 +25,11 @@ host from which user connection is allowed
 \fBbetatunnel\fP = \fB<CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>:
 <target CAID>]...\fP
 .RS 3n
-define Betacrypt tunneling (max. see CS_MAXTUNTAB in \fBglobals.h\fP)
+define Betacrypt tunneling (max. see CS_MAXTUNTAB in \fBglobals.h\fP).
+Use FFFF as ServiceID for wildcarded ServiceIDs.
 
- example: betatunnel = 0100:0001:0200,0300.0004:0500 
+ example: betatunnel = 0100:0001:0200,0300.0004:0500
+          betatunnel = 0600:FFFF:0700
 .RE
 .PP
 \fBuniq\fP = \fB0\fP|\fB1\fP|\fB2\fP

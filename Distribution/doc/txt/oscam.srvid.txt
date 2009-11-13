@@ -3,7 +3,7 @@ oscam.srvid(5)							oscam.srvid(5)
 
 
 NAME
-       oscam.srvid - service ID configuration file for oscam
+       oscam.srvid - service ID configuration file for OSCam
 
 SYNOPSIS
        service ID mappings

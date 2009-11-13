@@ -3,7 +3,7 @@ oscam.services(5)					     oscam.services(5)
 
 
 NAME
-       oscam.services - definition of services for oscam
+       oscam.services - definition of services for OSCam
 
 SYNOPSIS
        service definitions

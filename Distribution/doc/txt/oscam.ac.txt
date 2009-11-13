@@ -3,7 +3,7 @@ oscam.ac(5)							   oscam.ac(5)
 
 
 NAME
-       oscam.ac - anti-cascading table for oscam
+       oscam.ac - anti-cascading table for OSCam
 
 SYNOPSIS
        anti-cascading table
