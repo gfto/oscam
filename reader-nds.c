@@ -810,11 +810,15 @@ int nds_do_ecm (ECM_REQUEST * er)
   nds_sendCommandToCard (insHeader, ndsCommand, CardAnswer);
   nds_sendCommandToCard (ndsEcm_GetDW, NULL, CardAnswer);
 
-  if (er->ecm[0] == 0x80)
+  if (er->ecm[0] == 0x80) {
     memcpy (er->cw, cw1, 8);
+    memcpy (er->cw + 8, cw2, 8);
+  }
 
-  if (er->ecm[0] == 0x81)
+  if (er->ecm[0] == 0x81) {
     memcpy (er->cw + 8, cw1, 8);
+    memcpy (er->cw    , cw2, 8);
+  }
 
   if (er->cw[0] == 0 && er->cw[8] == 0)
     return 0;

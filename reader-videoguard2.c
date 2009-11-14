@@ -738,8 +738,10 @@ int videoguard_do_ecm(ECM_REQUEST *er)
     if(l>0 && status_ok(cta_res+l)) {
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
+        memcpy(er->cw+0,CW2,8);
       } else {
         memcpy(er->cw+0,CW1,8);
+        memcpy(er->cw+8,CW2,8);
         }
       return 1;
       }
