@@ -298,6 +298,7 @@ struct s_client
   int       crypted;
   int       dup;
   int       au;
+  char      autoau;
   int       monlvl;
   int       dbglvl;
   CAIDTAB   ctab;
@@ -435,6 +436,7 @@ struct s_auth
   char     pwd[33];
   int      uniq;
   int      au;
+  int      autoau;
   int      monlvl;
   ulong    grp;
   int      tosleep;

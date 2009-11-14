@@ -43,9 +43,13 @@ SECTION DESCRIPTIONS
 
 	  example: caid = 0100&ffff:0200:0300&ff00
 
-       au = label of reader
-	  AU  for/sending EMMs to specified reader (security issue: client can
-	  see SC data!), default:none
+       au = label of reader|1
+	  AU setting:
+	    label of reader = sending EMMs to specified reader
+			      (security issue: client can see SC data!)
+	    1		    = auto AU is sending EMMs to all readers
+			      (security issue: client can see SC data!)
+	    default:none
 
        group = group[,<group>]...
 	  user assingment to reader group, default=none, required
@@ -65,7 +69,7 @@ SECTION DESCRIPTIONS
 	  user assingment to Irdeto ChID, default:none
 
        numusers = quantity
-	  anti-cascading: user per  account,  0  =  anti-cascading  permitted,
+	  anti-cascading:  user  per  account,	0  = anti-cascading permitted,
 	  default:none
 
        penalty = 0|1|2
@@ -87,8 +91,8 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       oscam(1),      oscam.conf(5),	  oscam.server(5),     oscam.srvid(5),
-       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
+       oscam(1),     oscam.conf(5),	 oscam.server(5),      oscam.srvid(5),
+       oscam.guess(5),	  oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
        oscam.ac(5)
 
 

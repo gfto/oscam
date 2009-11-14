@@ -53,9 +53,14 @@ limit CAIDs, default:all CAIDs
 example: caid = 0100&ffff:0200:0300&ff00
 .RE
 .PP
-\fBau\fP = \fBlabel of reader\fP
+\fBau\fP = \fBlabel of reader\fP|\fB1\fP
 .RS 3n
-AU for/sending EMMs to specified reader (security issue: client can see SC data!), default:none
+AU setting:
+  \fBlabel of reader\fP = sending EMMs to specified reader 
+                    (security issue: client can see SC data!)
+  \fB1\fP               = auto AU is sending EMMs to all readers
+                    (security issue: client can see SC data!)
+  default:none       
 .RE
 .PP
 \fBgroup\fP = \fBgroup[,<group>]...\fP

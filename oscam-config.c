@@ -701,6 +701,7 @@ static void chk_account(char *token, char *value, struct s_auth *account)
   strtolower(value);
   if (!strcmp(token, "au"))
   {
+    if(value && value[0]=='1') account->autoau=1;
     for (i=0; i<CS_MAXREADER; i++)
       if ((reader[i].label[0]) &&
           (!strncmp(reader[i].label, value, strlen(reader[i].label))))

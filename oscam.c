@@ -345,6 +345,7 @@ static void cs_reinit_clients()
       {
         client[i].grp     = account->grp;
         client[i].au      = account->au;
+	client[i].autoau  = account->autoau;
         client[i].tosleep = (60*account->tosleep);
         client[i].monlvl  = account->monlvl;
         client[i].fchid   = account->fchid;  // CHID filters
@@ -1101,6 +1102,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
         {
           client[cs_idx].grp=account->grp;
           client[cs_idx].au=account->au;
+	  client[cs_idx].autoau=account->autoau;
           client[cs_idx].tosleep=(60*account->tosleep);
           memcpy(&client[cs_idx].ctab, &account->ctab, sizeof(client[cs_idx].ctab));
           if (account->uniq)
@@ -1127,9 +1129,35 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
         if (client[cs_idx].typ=='m')
           sprintf(t_msg[0], "lvl=%d", client[cs_idx].monlvl);
         else
-          sprintf(t_msg[0], "au=%d", client[cs_idx].au+1);
-      }
-
+        {
+        	if(client[cs_idx].autoau) 
+     		{
+     			if(client[cs_idx].ncd_server)
+  				{
+  					int r=0;
+  					for(r=0;r<CS_MAXREADER;r++)
+				  	{
+				  		if(reader[r].typ==R_MOUSE && reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
+			  			{
+			  				client[cs_idx].au=r;
+			  				break;
+			  			}
+					}
+  					if(client[cs_idx].au<0) sprintf(t_msg[0], "au(auto)=%d", client[cs_idx].au+1);
+          		else sprintf(t_msg[0], "au(auto)=%s", reader[client[cs_idx].au].label);
+  				}
+     			else
+     			{
+     				sprintf(t_msg[0], "au=auto");
+     			}
+     		}
+        	else
+        	{
+         	  if(client[cs_idx].au<0) sprintf(t_msg[0], "au=%d", client[cs_idx].au+1);
+          	  else sprintf(t_msg[0], "au=%s", reader[client[cs_idx].au].label);
+                }
+          }
+      }  
       if(client[cs_idx].ncd_server)
       {
         cs_log("%s %s:%d-client %s%s (%s, %s)",
