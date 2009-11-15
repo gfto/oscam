@@ -1890,8 +1890,8 @@ void do_emm(EMM_PACKET *ep)
   if ((au<0) || (au>=CS_MAXREADER))
     return;
   client[cs_idx].lastemm=time((time_t)0);
-  cs_ddump(reader[au].hexserial, 8, "reader serial:");
-  cs_ddump(ep->hexserial, 8, "emm SA:");
+  cs_debug("reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
+  cs_ddump(ep->hexserial, 8, "emm UA:");
 //  if ((!reader[au].fd) || (reader[au].b_nano[ep->emm[3]])) // blocknano is obsolete
   if ((!reader[au].fd) ||				// reader has no fd
       (reader[au].caid[0]!=b2i(2,ep->caid)) ||		// wrong caid

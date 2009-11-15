@@ -177,7 +177,7 @@ int seca_do_emm(EMM_PACKET *ep)
   int i,ins40data_offset;
   int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
 
-  cs_debug("EMM:%s", cs_hexdump (0, ep->emm, emm_length + 3));
+  cs_ddump (ep->emm, emm_length + 3, "EMM:");
   ep->type = ep->emm[0];
   switch (ep->type) {
     case 0x84:	//shared EMM
@@ -222,14 +222,21 @@ int seca_do_emm(EMM_PACKET *ep)
 	}
 	break;
       } //end unique EMM
+    case 0x83:  //new unknown EMM
+      {
+  /*
+EMM:
+tp   len       shared-- cust
+83 00 74 00 00 00 00 00 38  84C745CB7BFADA4E08F5FB8D0B6A26FA533682D83E6E594F778585F55F4784EF70495B3458C104D3D3F55FEA0F3BD47EC29265E8B2AAC83EBAA396A3890EA87154F41ED16DA6AB46C28E8935B55E4EFAB8215792A1BF61657BDEFAD02050E27F21E62AE29519F4815AB062340B7 */
+    //    break;
+      } //end 0x83 EMM
     case 0x88:			//GA???
     case 0x89:			//GA???
-	cs_log("EMM: Congratulations, you have discovered a Global EMM on SECA. This has not been decoded yet, so send this output to authors:");
-    	cs_log("EMM: %s", cs_hexdump (0, ep->emm, emm_length));
-  	return 0;			//no update took place
   	break;
     default:
-  	return 0;	//unknown
+	cs_log("EMM: Congratulations, you have discovered a new EMM on SECA. This has not been decoded yet, so send this output to authors:");
+        cs_dump (ep->emm, emm_length + 3, "EMM:");
+  	return 0;	//unknown, no update
   }	//end of switch
 
   ins40[2]=i;

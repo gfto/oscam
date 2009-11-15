@@ -211,7 +211,7 @@ void do_emm_from_file(void)
           
       //if (!reader_do_emm (eptmp))
       if (!reader_emm (eptmp))
-        cs_log ("ERROR: EMM read from write.emm NOT processed correctly!");
+        cs_log ("ERROR: EMM read from file %s NOT processed correctly!", token);
 
       reader[ridx].b_nano[eptmp->emm[0]] = old_b_nano; //restore old block/save settings
       reader[ridx].emmfile[0] = 0; //clear emmfile, so no reading anymore
