@@ -256,15 +256,15 @@ void reader_card_info()
 
 static int reader_get_cardsystem(void)
 {
-  if (irdeto_card_init(atr, atr_size))	reader[ridx].card_system=SC_IRDETO;
-  if (conax_card_init(atr, atr_size))	reader[ridx].card_system=SC_CONAX;
-  if (cryptoworks_card_init(atr, atr_size))	reader[ridx].card_system=SC_CRYPTOWORKS;
-  if (seca_card_init(atr, atr_size))	reader[ridx].card_system=SC_SECA;
-  if (viaccess_card_init(atr, atr_size))	reader[ridx].card_system=SC_VIACCESS;
-  if (videoguard_card_init(atr, atr_size))  reader[ridx].card_system=SC_VIDEOGUARD2;
-  if (nds_card_init(atr, atr_size))  reader[ridx].card_system=SC_NDS;
-  if (dre_card_init(atr, atr_size))  reader[ridx].card_system=SC_DRE;
-  if (!reader[ridx].card_system)	cs_ri_log("card system not supported");
+  if (irdeto_card_init(atr, atr_size))		reader[ridx].card_system=SC_IRDETO; else
+  if (conax_card_init(atr, atr_size))		reader[ridx].card_system=SC_CONAX; else
+  if (cryptoworks_card_init(atr, atr_size))	reader[ridx].card_system=SC_CRYPTOWORKS; else
+  if (seca_card_init(atr, atr_size))	reader[ridx].card_system=SC_SECA; else
+  if (viaccess_card_init(atr, atr_size))	reader[ridx].card_system=SC_VIACCESS; else
+  if (videoguard_card_init(atr, atr_size))  reader[ridx].card_system=SC_VIDEOGUARD2; else
+  if (nds_card_init(atr, atr_size))  reader[ridx].card_system=SC_NDS; else
+  if (dre_card_init(atr, atr_size))  reader[ridx].card_system=SC_DRE; else
+    cs_ri_log("card system not supported");
   cs_ri_brk(1);
 
   return(reader[ridx].card_system);

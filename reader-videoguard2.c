@@ -397,7 +397,7 @@ static int read_cmd_len(const unsigned char *cmd)
   cmd2[3]=0x80; 
   cmd2[4]=1; 
   if(!read_cmd(cmd2,NULL) || cta_res[1] != 0x90 || cta_res[2] != 0x00) { 
-    cs_log("failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]); 
+    cs_debug("failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]); 
     return -1;
     } 
   return cta_res[0];   
@@ -487,6 +487,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
   unsigned char atr_directv[] = { 0x3F, 0x78, 0x13, 0x25, 0x03, 0x40, 0xB0, 0x20, 0xFF, 0xFF, 0x4A, 0x50, 0x00 };
   unsigned char atr_yes[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x11, 0x69, 0xFF, 0x4A, 0x50, 0x50, 0x00, 0x00, 0x47, 0x54, 0x01, 0x00, 0x00 };
   unsigned char atr_viasat_new[] = { 0x3F, 0x7D, 0x11, 0x25, 0x02, 0x41, 0xB0, 0x03, 0x69, 0xFF, 0x4A, 0x50, 0xF0, 0x80, 0x00, 0x56, 0x54, 0x03};
+  unsigned char atr_premiere[] = { 0x3F, 0xFF, 0x11, 0x25, 0x03, 0x10, 0x80, 0x41, 0xB0, 0x07, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x50, 0x31, 0x01, 0x00, 0x11 };
 
     if ((atrsize == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atrsize) == 0))
     {
@@ -530,11 +531,18 @@ int videoguard_card_init(uchar *atr, int atrsize)
 	if (reader[ridx].mhz != 357)
 	  cs_log("Warning: for Sky Italia currently only 'mhz = 357' is known to work! Device %s has mhz = %i",reader[ridx].device,reader[ridx].mhz);
     }
-    else
+    else if ((atrsize == sizeof (atr_premiere)) && (memcmp (atr, atr_premiere, atrsize) == 0))
     {
-        /* not a known videoguard */
-        return (0);
+        cs_log("Type: Videoguard Sky Germany");
     }
+/*    else
+    {
+        // not a known videoguard 
+        return (0);
+    }*/ 
+    //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
+    //this way also unknown videoguard2/NDS cards will work
+
 
 #ifdef OS_LINUX
 if (reader[ridx].typ != R_INTERN) {
@@ -582,7 +590,7 @@ if (reader[ridx].typ != R_INTERN) {
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
   int l;
-  if((l=read_cmd_len(ins7401))<0) return 0;
+  if((l=read_cmd_len(ins7401))<0) return 0; //not a videoguard2/NDS card or communication error
   ins7401[4]=l;
   if(!read_cmd(ins7401,NULL) || !status_ok(cta_res+l)) {
     cs_log ("failed to read cmd list");
