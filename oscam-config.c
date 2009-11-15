@@ -1126,6 +1126,10 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
         case 1: rdr->rewritemm=atoi(ptr); break;
         case 2: rdr->logemm=atoi(ptr);    break;
       }
+    if (rdr->rewritemm <=0) {
+      fprintf(stderr, "Notice: Setting EMMCACHE to %i,1,%i instead of %i,%i,%i. Zero or negative number of rewrites is silly\n", rdr->cachemm,rdr->logemm,rdr->cachemm,rdr->rewritemm,rdr->logemm);
+      rdr->rewritemm = 1;
+    }
     return;
   }
 
