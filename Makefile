@@ -13,15 +13,17 @@ cygwin: i386-pc-cygwin
 macosx: macosx-native
 
 std:	linux \
-   macosx \
+	macosx \
 	cross-i386-pc-cygwin \
 	cross-powerpc-tuxbox-linux \
 	cross-i386-pc-freebsd \
 	cross-arm-nslu2-linux \
 	cross-mipsel-router-linux-uclibc927 \
 	cross-mipsel-router-linux-uclibc928 \
+	cross-mipsel-router-linux-uclibc929 \
+	cross-mipsel-router-linux-uclibc929-static \
 	cross-mipsel-tuxbox-linux-glibc \
-    cross-mipsel-fonera2 \
+	cross-mipsel-fonera2 \
 	cross-sh4-linux
 
 all:	\
@@ -319,7 +321,7 @@ cross-mips-sgi-irix6.5:
 		DS_RL=mips-sgi-irix6.5-ranlib \
 		DS_ST=mips-sgi-irix6.5-strip
 
-cross-mipsel-router-linux-uclibc: cross-mipsel-router-linux-uclibc928
+cross-mipsel-router-linux-uclibc: cross-mipsel-router-linux-uclibc929
 ######################################################################
 #
 #	Linux MIPS(LE) crosscompiler with ucLibc 0.9.27
@@ -357,6 +359,50 @@ cross-mipsel-router-linux-uclibc928:
 		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=mipsel-linux-uclibc-gcc \
+		DS_AR=mipsel-linux-uclibc-ar \
+		DS_LD=mipsel-linux-uclibc-ld \
+		DS_RL=mipsel-linux-uclibc-ranlib \
+		DS_ST=mipsel-linux-uclibc-strip
+
+######################################################################
+#
+#	Linux MIPS(LE) crosscompiler with ucLibc 0.9.29
+#
+######################################################################
+cross-mipsel-router-linux-uclibc929:
+	@-mipsel-linux-uclibc-setlib 0.9.29
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		OS_LIBS="-lcrypto" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=mipsel-linux-uclibc-gcc \
+		DS_AR=mipsel-linux-uclibc-ar \
+		DS_LD=mipsel-linux-uclibc-ld \
+		DS_RL=mipsel-linux-uclibc-ranlib \
+		DS_ST=mipsel-linux-uclibc-strip
+
+######################################################################
+#
+#	Linux MIPS(LE) crosscompiler with ucLibc 0.9.29 (static)
+#
+######################################################################
+cross-mipsel-router-linux-uclibc929-static:
+	@-mipsel-linux-uclibc-setlib 0.9.29
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		OS_LIBS="-lcrypto" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="-static" \
 		DS_ARFLAGS="-rvsl" \
 		DS_CC=mipsel-linux-uclibc-gcc \
 		DS_AR=mipsel-linux-uclibc-ar \
