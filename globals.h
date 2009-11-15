@@ -402,7 +402,7 @@ struct s_reader
   int       gbox_fd;
   struct timeb  gbox_lasthello;		// incoming time stamp
 #ifdef CS_RDR_INIT_HIST
-  uchar     init_history[1024];
+  uchar     init_history[4096];
   int       init_history_pos;
 #endif
 };
