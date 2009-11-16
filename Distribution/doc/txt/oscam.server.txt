@@ -66,7 +66,7 @@ SECTION DESCRIPTIONS
        detect = CD|DSR|CTS|RING|NONE|gpio[2-7]
 	  status detect of card (NONE = no detection), default:CD
 
-       mhz = 357|358|600|1000
+       mhz = 357|358|600|800|1000
 	  set reader clock speed in mhz, default:357
 
        customspeed = 0,1
