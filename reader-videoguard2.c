@@ -119,13 +119,14 @@ static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsig
       if(buff[1]==0x54) {
         memcpy(cw1,buff+5,8);
         int ind;
-        for(ind=14; ind<len+5;) {
+        for(ind=13; ind<len; ind++) {
           if(buff[ind]==0x25) {
-            memcpy(cw2,buff+5+ind+2,8);
+            //memcpy(cw2,buff+5+ind+2,8);
+            memcpy(cw2,buff+ind+3,8); //tested on viasat 093E, sky uk 0963
             break;
             }
-          if(buff[ind+1]==0) break;
-          ind+=buff[ind+1];
+/*          if(buff[ind+1]==0) break;
+          ind+=buff[ind+1];*/
           }
         }
       break;
