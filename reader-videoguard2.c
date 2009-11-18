@@ -857,7 +857,6 @@ int videoguard_do_ecm(ECM_REQUEST *er)
   if(l>0 && status_ok(cta_res)) {
     l = do_cmd(ins54,NULL,NULL);
     if(l>0 && status_ok(cta_res+l)) {
-      postprocess_cw(er, posECMpart2);
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
         memcpy(er->cw+0,CW2,8);
@@ -865,6 +864,7 @@ int videoguard_do_ecm(ECM_REQUEST *er)
         memcpy(er->cw+0,CW1,8);
         memcpy(er->cw+8,CW2,8);
         }
+      postprocess_cw(er, posECMpart2);
       return 1;
       }
     }
