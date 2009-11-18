@@ -74,8 +74,8 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
   }
   if (posB0 == -1) return;
 
-  //b= (er->ecm[0]&1) * 8;
-  for (b=0 ; b<=8; b+=8) {
+  b= (er->ecm[0]&1) * 8;
+  //for (b=0 ; b<=8; b+=8) {
     memset(Hash48,0,0x48);
     Hash48[0] = er->cw[b + 0];
     Hash48[1] = er->cw[b + 1];
@@ -141,7 +141,7 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
 #endif
   
     cs_dump (er->cw+b, 8, "Postprocessed DW:");
-  }//end for b
+//  }//end for b
 }
 
 
@@ -859,10 +859,10 @@ int videoguard_do_ecm(ECM_REQUEST *er)
     if(l>0 && status_ok(cta_res+l)) {
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
-        memcpy(er->cw+0,CW2,8);
+        //memcpy(er->cw+0,CW2,8);
       } else {
         memcpy(er->cw+0,CW1,8);
-        memcpy(er->cw+8,CW2,8);
+        //memcpy(er->cw+8,CW2,8);
         }
       postprocess_cw(er, posECMpart2);
       return 1;
