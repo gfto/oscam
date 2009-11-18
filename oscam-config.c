@@ -1069,9 +1069,10 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   if (!strcmp(token, "mhz"))
   {
     if (!strcmp(value, "1000")) { rdr->mhz=1000; return; }
-    if (!strcmp(value, "600")) { rdr->mhz=600; return; }
-    if (!strcmp(value, "357")) { rdr->mhz=357; return; }
     if (!strcmp(value, "800")) { rdr->mhz=800; return; }
+    if (!strcmp(value, "600")) { rdr->mhz=600; return; }
+    if (!strcmp(value, "358")) { rdr->mhz=358; return; }
+    if (!strcmp(value, "357")) { rdr->mhz=357; return; }
     fprintf(stderr, "Warning: value '%s' in mhz-line not recognized\n",value);
     return;
   }
