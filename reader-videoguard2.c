@@ -34,8 +34,120 @@ static int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt
 }
 
 //////  ====================================================================================
+//////  special thanks to an "italian forum" !!!!
 
-// SIFTEAM funzione per cambio endianness
+void postprocess_cw(ECM_REQUEST *er, int posECMbody)
+{
+#if __BYTE_ORDER == __BIG_ENDIAN
+  static unsigned char Tb1[0xC]={0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF,0xF8,0x61,0xCB,0x52};
+  static unsigned char Tb2[0x40]= {
+    0xC5,0x39,0xF5,0xB9,0x90,0x99,0x01,0x3A,0xD4,0xB9,0x6A,0xB5,0xEA,0x67,0x7E,0xB4,
+    0x6C,0x30,0x4B,0xF0,0xB8,0x10,0xB0,0xB5,0xB7,0x6D,0xA7,0x51,0x1A,0xE7,0x14,0xCA,
+    0x4F,0x4F,0x15,0x86,0x26,0x08,0x10,0xB1,0xE7,0xE1,0x48,0xBE,0x7D,0xDD,0x5E,0xCB,
+    0xcF,0xBF,0x32,0x3B,0x8B,0x31,0xB1,0x31,0x0F,0x1A,0x66,0x4B,0x01,0x40,0x01,0x00
+  };
+#else
+  static unsigned char Tb1[0xC]={0x23,0x01,0x67,0x45,0xAB,0x89,0xEF,0xCD,0x61,0xF8,0x52,0xCB};
+  static unsigned char Tb2[0x40]= {
+    0x39,0xC5,0xB9,0xF5,0x99,0x90,0x3A,0x01,0xB9,0xD4,0xB5,0x6A,0x67,0xEA,0xB4,0x7E,
+    0x30,0x6C,0xF0,0x4B,0x10,0xB8,0xB5,0xB0,0x6D,0xB7,0x51,0xA7,0xE7,0x1A,0xCA,0x14,
+    0x4F,0x4F,0x86,0x15,0x08,0x26,0xB1,0x10,0xE1,0xE7,0xBE,0x48,0xDD,0x7D,0xCB,0x5E,
+    0xBF,0xCF,0x3B,0x32,0x31,0x8B,0x31,0xB1,0x1A,0x0F,0x4B,0x66,0x40,0x01,0x00,0x01
+  };
+#endif
+  unsigned char tabletmp2[0x10] = {0x0B,0x04,0x07,0x08,0x05,0x09,0x0B,0x0A,0x07,0x02,0x0A,0x05,0x04,0x08,0x0D,0x0F};
+  unsigned char table40[0x40];
+  unsigned char Hash48[0x48];
+  unsigned char Hash14[0x14];
+  unsigned char counter=0,counter2=0;
+  int tmp1;
+  int a,b,h,j,k,l,m = 0;
+  int i;
+  int posB0 = -1;
+  for (i = 6; i < posECMbody; i++)
+  {
+    if (er->ecm[i] == 0xB0)
+    {
+      posB0 = i;
+      break;
+    }
+  }
+  if (posB0 == -1) return;
+
+  //b= (er->ecm[0]&1) * 8;
+  for (b=0 ; b<=8; b+=8) {
+    memset(Hash48,0,0x48);
+    Hash48[0] = er->cw[b + 0];
+    Hash48[1] = er->cw[b + 1];
+    Hash48[2] = er->cw[b + 2];
+    Hash48[3] = er->cw[b + 3];
+    Hash48[4] = er->cw[b + 4];
+    Hash48[5] = er->cw[b + 5];
+    Hash48[6] = er->cw[b + 6];
+    Hash48[7] = er->cw[b + 7];
+    Hash48[8]=0x80;
+    //for(a=9;a<0x48;a++)
+    //  Hash48[a]=0;
+    //table40=(unsigned char*)malloc(0x40);
+    memcpy(table40,Tb2,0x40);
+  
+    for(i = 0; i < 12; i++) Hash14[i] = Tb1[i];
+  
+    int k1 = *((short*) &Hash14);  int k2 = *((short*) &Hash14+1);  int k3 = *((short*) &Hash14+2);
+    int k4 = *((short*) &Hash14+3);  int k5 = *((short*) &Hash14+4);  int k6 = *((short*) &Hash14+5);
+    for (m = 0; m < 2; m++) {
+      int loop;
+      for (loop = 0; loop < 0x24; loop++) {
+        h=((Hash48[(loop<<1) +1]<<8)+Hash48[loop<<1])&0xFFFF;
+        if(m)
+          tmp1 = (((k2 & k4) | ((~k4) & k3)) & 0xFFFF);
+        else
+          tmp1 = (((k2 & k3) | ((~k2) & k4)) & 0xFFFF);
+        if((counter & 1))
+          k = *(((short *) table40)+(counter>>1))>>8;
+        else
+          k = *(((short *) table40)+(counter>>1));
+        l = k1;  j = k2;
+        k1 = k2;  k2 = k3;  k3 = k4;  k4 = k5;  k5 = k6;
+        k6 = ((tmp1 + l + h + (k & 0xFF)) & 0xFFFF);
+        tmp1 = tabletmp2[counter2];
+        k6 = ((((k6 << tmp1) | (k6 >> (0x10 - tmp1))) + j) & 0xFFFF);
+        counter2++;
+        if(counter2 == 0x10) counter2 = 0;
+        counter++;
+        if(counter == 0x40) counter = 0;
+      }
+      //free(table40);
+    }
+  
+#if __BYTE_ORDER == __BIG_ENDIAN
+    er->cw[b + 0] = (k1 + *((short *)&Hash14)) & 0xFF;
+    er->cw[b + 1] = (k1 + *((short *)&Hash14))>>8;
+    er->cw[b + 2] = (k2 + *((short *)&Hash14+1)) & 0xFF;
+    er->cw[b + 3] = (er->cw[b + 0] + er->cw[b + 1] + er->cw[b + 2]) & 0xFF;
+    er->cw[b + 4] = (k3 + *((short *)&Hash14+2)) & 0xFF;
+    er->cw[b + 5] = (k3 + *((short *)&Hash14+2))>>8;
+    er->cw[b + 6] = (k4 + *((short *)&Hash14+3)) & 0xFF;
+    er->cw[b + 7] = (er->cw[b + 4] + er->cw[b + 5] + er->cw[b + 6]) & 0xFF;
+#else
+    er->cw[b + 0] = (k1 + *((short *)&Hash14))>>8;
+    er->cw[b + 1] = (k1 + *((short *)&Hash14)) & 0xFF;
+    er->cw[b + 2] = (k2 + *((short *)&Hash14+1))>>8;
+    er->cw[b + 3] = (er->cw[b + 0] + er->cw[b + 1] + er->cw[b + 2]) & 0xFF;
+    er->cw[b + 4] = (k3 + *((short *)&Hash14+2))>>8;
+    er->cw[b + 5] = (k3 + *((short *)&Hash14+2)) & 0xFF;
+    er->cw[b + 6] = (k4 + *((short *)&Hash14+3))>>8;
+    er->cw[b + 7] = (er->cw[b + 4] + er->cw[b + 5] + er->cw[b + 6]) & 0xFF;
+#endif
+  
+    cs_dump (er->cw+b, 8, "Postprocessed DW:");
+  }//end for b
+}
+
+
+
+//////  ====================================================================================
+
 static void swap_lb (unsigned char *buff, int len)
 {
 
@@ -745,6 +857,7 @@ int videoguard_do_ecm(ECM_REQUEST *er)
   if(l>0 && status_ok(cta_res)) {
     l = do_cmd(ins54,NULL,NULL);
     if(l>0 && status_ok(cta_res+l)) {
+      postprocess_cw(er, posECMpart2);
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
         memcpy(er->cw+0,CW2,8);
