@@ -38,9 +38,9 @@ user and password for remote reader
 pincode for Conax and Cryptoworks SCs
 .RE
 .PP
-\fBservices\fP = \fBservices[,<services>]...\fP
+\fBservices\fP = \fB[!]services[,[!]<services>]...\fP
 .RS 3n
-reader assingment to service group, default=none
+reader [de]assingment to service group, default=none
 .RE
 .PP
 \fBinactivitytimeout\fP = \fBminutes\fP
@@ -206,7 +206,7 @@ serial mouse compatible reader
  device   = /dev/ttyS1
  group    = 1
  caid     = 0100
- services = myservice
+ services = myservice,!thisservice
 .TP 3n
 \(bu
 USB mouse compatible reader

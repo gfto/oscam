@@ -30,8 +30,8 @@ SECTION DESCRIPTIONS
        pincode = pincode
 	  pincode for Conax and Cryptoworks SCs
 
-       services = services[,<services>]...
-	  reader assingment to service group, default=none
+       services = [!]services[,[!]<services>]...
+	  reader [de]assingment to service group, default=none
 
        inactivitytimeout = minutes
 	  inactivity timeout for newcamd reader, default:none
@@ -156,7 +156,7 @@ EXAMPLES
 	   device   = /dev/ttyS1
 	   group    = 1
 	   caid     = 0100
-	   services = myservice
+	   services = myservice,!thisservice
 
 	 USB mouse compatible reader
 
