@@ -1137,7 +1137,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
   					int r=0;
   					for(r=0;r<CS_MAXREADER;r++)
 				  	{
-				  		if(reader[r].typ==R_MOUSE && reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
+				  		if((reader[r].typ==R_MOUSE || reader[ridx].typ==R_SMART) && reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
 			  			{
 			  				client[cs_idx].au=r;
 			  				break;
@@ -1540,6 +1540,47 @@ int send_dcw(ECM_REQUEST *er)
          uname, er->caid, er->prid, er->srvid, er->l, lc, 
          er->rcEx?erEx:stxt[er->rc],
          1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm, sby);
+
+  if(!client[cs_idx].ncd_server && client[cs_idx].autoau && er->rcEx==0)
+  {
+          int typ=reader[er->reader[0]].typ;
+          if(er->rc!=0) typ=0;
+
+          if(client[cs_idx].au>=0 && er->caid!=reader[client[cs_idx].au].caid[0])
+          {
+                        client[cs_idx].au=(-1);
+          }
+
+          switch(typ)
+          {
+                case R_MOUSE:
+                        client[cs_idx].au=er->reader[0];
+                        break;
+                case R_SMART:
+                        client[cs_idx].au=er->reader[0];
+                        break;
+                default:
+                        {
+                                if(client[cs_idx].au<0)
+                                {
+                                        int r=0;
+                                        for(r=0;r<CS_MAXREADER;r++)
+                                        {
+                                                if((reader[r].typ==R_MOUSE || reader[r].typ==R_SMART) && er->caid==reader[r].caid[0])
+                                                {
+                                                        client[cs_idx].au=r;
+                                                        break;
+                                                }
+                                        }
+                                        if(r==CS_MAXREADER)
+                                        {
+                                                client[cs_idx].au=(-1);
+                                        }
+                                }
+                        }
+          }
+  }
+
   er->caid=er->ocaid;
   switch(er->rc)
   {
