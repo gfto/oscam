@@ -223,7 +223,7 @@ FE 48 */
   int low_dre_id = ((cta_res[4] << 16) | (cta_res[5] << 8) | cta_res[6]) - 48608;
   int dre_chksum = 0;
   uchar buf[32];
-  sprintf (buf, "%i%i%08i", provider - 16, major_version + 1, low_dre_id);
+  sprintf ((char *)buf, "%i%i%08i", provider - 16, major_version + 1, low_dre_id);
   for (i = 0; i < 32; i++) {
     if (buf[i] == 0x00)
       break;
