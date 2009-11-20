@@ -120,7 +120,7 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
       //free(table40);
     }
   
-#if __BYTE_ORDER == __BIG_ENDIAN
+//#if __BYTE_ORDER != __BIG_ENDIAN
     er->cw[b + 0] = (k1 + *((short *)&Hash14)) & 0xFF;
     er->cw[b + 1] = (k1 + *((short *)&Hash14))>>8;
     er->cw[b + 2] = (k2 + *((short *)&Hash14+1)) & 0xFF;
@@ -129,7 +129,7 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
     er->cw[b + 5] = (k3 + *((short *)&Hash14+2))>>8;
     er->cw[b + 6] = (k4 + *((short *)&Hash14+3)) & 0xFF;
     er->cw[b + 7] = (er->cw[b + 4] + er->cw[b + 5] + er->cw[b + 6]) & 0xFF;
-#else
+/*#else
     er->cw[b + 0] = (k1 + *((short *)&Hash14))>>8;
     er->cw[b + 1] = (k1 + *((short *)&Hash14)) & 0xFF;
     er->cw[b + 2] = (k2 + *((short *)&Hash14+1))>>8;
@@ -138,7 +138,7 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
     er->cw[b + 5] = (k3 + *((short *)&Hash14+2)) & 0xFF;
     er->cw[b + 6] = (k4 + *((short *)&Hash14+3))>>8;
     er->cw[b + 7] = (er->cw[b + 4] + er->cw[b + 5] + er->cw[b + 6]) & 0xFF;
-#endif
+#endif*/
   
     cs_dump (er->cw+b, 8, "Postprocessed DW:");
 //  }//end for b
