@@ -472,13 +472,13 @@ int IFD_Towitoko_ActivateICC (IFD * ifd)
 	{
 		int in;
 
-#if defined(TUXBOX) && defined(MIPSEL)
+#if defined(TUXBOX) && (defined(MIPSEL) || defined(SH4))
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
 #else
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
 #endif
 			return IFD_TOWITOKO_IO_ERROR;
-			
+
 		if(in)
 		{
 			struct timespec req_ts;
@@ -510,7 +510,7 @@ int IFD_Towitoko_DeactivateICC (IFD * ifd)
 	{
 		int in;
 		
-#if defined(TUXBOX) && defined(MIPSEL)
+#if defined(TUXBOX) && (defined(MIPSEL) || defined(SH4))
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
 #else
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
@@ -543,22 +543,71 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 	if(ifd->io->com==RTYP_SCI)
 	{
 		unsigned char buf[SCI_MAX_ATR_SIZE];
-		int n = 0;
+		int n = 0, atr_size = 2, TDi_exists = 0;
 		SCI_PARAMETERS params;
+		struct timeval tv, tv_spent;
 		static char irdeto[] = "IRDETO";
 		
 		(*atr) = NULL;
 		
+		memset(&params,0,sizeof(SCI_PARAMETERS));
+		
+		params.ETU = 372;
+		params.EGT = 3;
+		params.f = 9;
+		params.T = 0;
+		
+		if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
+			return IFD_TOWITOKO_IO_ERROR;
+
 		if(ioctl(ifd->io->fd, IOCTL_SET_RESET)<0)
 			return IFD_TOWITOKO_IO_ERROR;
 			
 		if(ioctl(ifd->io->fd, IOCTL_SET_ATR_READY)<0)
 			return IFD_TOWITOKO_IO_ERROR;
-		while(n<SCI_MAX_ATR_SIZE && IO_Serial_Read(ifd->io, IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
+
+		gettimeofday(&tv,0);
+		memcpy(&tv_spent,&tv,sizeof(struct timeval));
+
+		while(n<atr_size && (tv_spent.tv_sec-tv.tv_sec)<10)
 		{
-			n++;
+			if(IO_Serial_Read(ifd->io, IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
+				n++;
+			gettimeofday(&tv_spent,0);
+			if(n==2) // format character
+			{
+				// high nibble = TA1 , TB1 , TC1 , TD1
+				if(buf[n-1] & 0x10)
+					atr_size++;
+				if(buf[n-1] & 0x20)
+					atr_size++;
+				if(buf[n-1] & 0x40)
+					atr_size++;
+				if(buf[n-1] & 0x80)
+				{
+					atr_size++;
+					TDi_exists=atr_size;
+				}
+				atr_size+=(buf[n-1] & 0x0F); // historical bytes
+			}
+			if( (TDi_exists>0) && (n==TDi_exists) )
+			{
+				TDi_exists=0;
+				// high nibble = TA1 , TB1 , TC1 , TD1
+				if(buf[n-1] & 0x10)
+					atr_size++;
+				if(buf[n-1] & 0x20)
+					atr_size++;
+				if(buf[n-1] & 0x40)
+					atr_size++;
+				if(buf[n-1] & 0x80)
+				{
+					atr_size++;
+					TDi_exists=atr_size;
+				}
+			}
 		}
-		
+
 		if(n==0)
 			return IFD_TOWITOKO_IO_ERROR;
 			

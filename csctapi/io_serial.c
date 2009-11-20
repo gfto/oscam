@@ -194,7 +194,7 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial, bool pnp)
 
 #ifdef SCI_DEV
 	if (com==RTYP_SCI)
-		io->fd = open (filename, O_RDWR);
+		io->fd = open (filename, O_RDWR|O_NONBLOCK|O_NOCTTY);
 	else
 #endif
 
@@ -750,7 +750,8 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 {
 	BYTE c;
 	int count = 0;
-	
+	bool readed;
+	struct timeval tv, tv_spent;
 	
 	if((io->com!=RTYP_SCI) && (io->wr>0))
 	{
@@ -768,34 +769,29 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 	printf ("IO: Receiving: ");
 	fflush (stdout);
 #endif
+
 	for (count = 0; count < size * (_in_echo_read ? (1+io_serial_need_dummy_char) : 1); count++)
 	{
-		if (IO_Serial_WaitToRead (io->fd, 0, timeout))
+		gettimeofday(&tv,0);
+		memcpy(&tv_spent,&tv,sizeof(struct timeval));
+		readed=FALSE;
+		while( (((tv_spent.tv_sec-tv.tv_sec)*1000) + ((tv_spent.tv_usec-tv.tv_usec)/1000L))<timeout )
 		{
-			if (read (io->fd, &c, 1) != 1)
+			if (read (io->fd, &c, 1) == 1)
 			{
-#ifdef DEBUG_IO
-				printf ("ERROR\n");
-				fflush (stdout);
-#endif
-				return FALSE;
+				readed=TRUE;
+				break;
 			}
-			data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;
+			gettimeofday(&tv_spent,0);
+		}
+		if(!readed) return FALSE;
+		
+		data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;	
 			
 #ifdef DEBUG_IO
-			printf ("%X ", c);
-			fflush (stdout);
+		printf ("%X ", c);
+		fflush (stdout);
 #endif
-		}
-		else
-		{
-#ifdef DEBUG_IO
-			printf ("TIMEOUT\n");
-			fflush (stdout);
-#endif
-			tcflush (io->fd, TCIFLUSH);
-			return FALSE;
-		}
 	}
 	
     _in_echo_read = 0;
