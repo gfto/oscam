@@ -140,7 +140,7 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
     er->cw[b + 7] = (er->cw[b + 4] + er->cw[b + 5] + er->cw[b + 6]) & 0xFF;
 #endif*/
   
-    cs_dump (er->cw+b, 8, "Postprocessed DW:");
+    //cs_dump (er->cw+b, 8, "Postprocessed DW:");
 //  }//end for b
 }
 
@@ -548,10 +548,10 @@ static int do_cmd(const unsigned char *ins, const unsigned char *txbuff, unsigne
   cCamCryptVG2_PostProcess_Decrypt(rxbuff,len,CW1,CW2);
 
   // Log decrypted INS54
-  if (rxbuff[1] == 0x54) {
-    cs_dump (rxbuff, 5, "Decrypted INS54:");
-    cs_dump (rxbuff + 5, rxbuff[4], "");
-  }
+  ///if (rxbuff[1] == 0x54) {
+  ///  cs_dump (rxbuff, 5, "Decrypted INS54:");
+  ///  cs_dump (rxbuff + 5, rxbuff[4], "");
+  ///}
 
   return len;
 }
