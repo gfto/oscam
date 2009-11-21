@@ -771,6 +771,7 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 #endif
 
 	for (count = 0; count < size * (_in_echo_read ? (1+io_serial_need_dummy_char) : 1); count++)
+#ifdef SH4
 	{
 		gettimeofday(&tv,0);
 		memcpy(&tv_spent,&tv,sizeof(struct timeval));
@@ -794,6 +795,36 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 #endif
 	}
 	
+#else //no SH4 
+	{
+		if (IO_Serial_WaitToRead (io->fd, 0, timeout))
+		{
+			if (read (io->fd, &c, 1) != 1)
+			{
+#ifdef DEBUG_IO
+				printf ("ERROR\n");
+				fflush (stdout);
+#endif
+				return FALSE;
+			}
+			data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;
+			
+#ifdef DEBUG_IO
+			printf ("%X ", c);
+			fflush (stdout);
+#endif
+		}
+		else
+		{
+#ifdef DEBUG_IO
+			printf ("TIMEOUT\n");
+			fflush (stdout);
+#endif
+			tcflush (io->fd, TCIFLUSH);
+			return FALSE;
+		}
+	}
+#endif //endif else SH4	
     _in_echo_read = 0;
 
 #ifdef DEBUG_IO
