@@ -472,7 +472,7 @@ int IFD_Towitoko_ActivateICC (IFD * ifd)
 	{
 		int in;
 
-#if defined(TUXBOX) && (defined(MIPSEL) || defined(SH4))
+#if defined(TUXBOX) && (defined(MIPSEL) || defined(SH4)|| defined(PPC))
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
 #else
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
@@ -510,7 +510,7 @@ int IFD_Towitoko_DeactivateICC (IFD * ifd)
 	{
 		int in;
 		
-#if defined(TUXBOX) && (defined(MIPSEL) || defined(SH4))
+#if defined(TUXBOX) && (defined(MIPSEL) || defined(SH4)|| defined(PPC))
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
 #else
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
@@ -648,15 +648,24 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			ATR_GetParameter(*atr, ATR_PARAMETER_I, &a);
 //			printf("atr I=%f\n", a);
 			params.I = (unsigned char)a;
+			double atrparam_f = 0;
+			double atrparam_d = 0;
 
-			if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
+			if (ATR_GetParameter(*atr,ATR_PARAMETER_F,&atrparam_f)!=ATR_OK)
 			{
-				ATR_Delete (*atr);
-				(*atr) = NULL;
-				return IFD_TOWITOKO_IO_ERROR;
+			cs_log ("Error getting ATR parameter (F)");
+			ATR_Delete (*atr);
+			(*atr) = NULL;
+			return IFD_TOWITOKO_IO_ERROR;
 			}
-			
-			ioctl(ifd->io->fd, IOCTL_GET_PARAMETERS, &params);
+			if (ATR_GetParameter(*atr,ATR_PARAMETER_D,&atrparam_d)!=ATR_OK)
+			{
+			cs_log ("Error getting ATR parameter (D)");
+			ATR_Delete (*atr);
+			(*atr) = NULL;
+			return IFD_TOWITOKO_IO_ERROR;
+			}
+			params.ETU=atrparam_f/atrparam_d;
 			
 			cs_debug("T=%d f=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, (int)params.f, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
 			
