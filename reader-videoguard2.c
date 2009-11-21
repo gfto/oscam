@@ -14,6 +14,7 @@
 
 int aes_active=0;
 AES_KEY dkey, ekey;
+int cw2_active = 0; //false
 
 static void cAES_SetKey(const unsigned char *key)
 {
@@ -75,20 +76,9 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
   if (posB0 == -1) return;
 
   b= (er->ecm[0]&1) * 8;
-  //for (b=0 ; b<=8; b+=8) {
-    memset(Hash48,0,0x48);
-    Hash48[0] = er->cw[b + 0];
-    Hash48[1] = er->cw[b + 1];
-    Hash48[2] = er->cw[b + 2];
-    Hash48[3] = er->cw[b + 3];
-    Hash48[4] = er->cw[b + 4];
-    Hash48[5] = er->cw[b + 5];
-    Hash48[6] = er->cw[b + 6];
-    Hash48[7] = er->cw[b + 7];
+  memset(Hash48,0,0x48);
+  for(i = 0; i < 8; i++) Hash48[i] = er->cw[b + i];
     Hash48[8]=0x80;
-    //for(a=9;a<0x48;a++)
-    //  Hash48[a]=0;
-    //table40=(unsigned char*)malloc(0x40);
     memcpy(table40,Tb2,0x40);
   
     for(i = 0; i < 12; i++) Hash14[i] = Tb1[i];
@@ -117,7 +107,6 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
         counter++;
         if(counter == 0x40) counter = 0;
       }
-      //free(table40);
     }
   
 //#if __BYTE_ORDER != __BIG_ENDIAN
@@ -140,8 +129,7 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
     er->cw[b + 7] = (er->cw[b + 4] + er->cw[b + 5] + er->cw[b + 6]) & 0xFF;
 #endif*/
   
-    //cs_dump (er->cw+b, 8, "Postprocessed DW:");
-//  }//end for b
+    cs_ddump (er->cw+b, 8, "Postprocessed DW:");
 }
 
 
@@ -231,18 +219,26 @@ static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsig
       if(buff[1]==0x54) {
         memcpy(cw1,buff+5,8);
         int ind;
-        for(ind=13; ind<len; ind++) {
+	cw2_active = 0; //false
+        for(ind=13; ind<len+13-8; ind++) {
           if(buff[ind]==0x25) {
-            //memcpy(cw2,buff+5+ind+2,8);
-            memcpy(cw2,buff+ind+3,8); //tested on viasat 093E, sky uk 0963
+	    int i;
+	    for (i = 0; i < 8; i++)
+	      if (buff[ind+3+i] != 0) {//test if cw = 00
+		cw2_active = 1;
+		break;
+	      }
+	    if (cw2_active)
+              //memcpy(cw2,buff+5+ind+2,8);
+              memcpy(cw2,buff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919
             break;
-            }
+          }
 /*          if(buff[ind+1]==0) break;
           ind+=buff[ind+1];*/
-          }
         }
+      }
       break;
-    }
+  }
 }
 
 static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data, const unsigned char *status)
@@ -859,15 +855,23 @@ int videoguard_do_ecm(ECM_REQUEST *er)
     if(l>0 && status_ok(cta_res+l)) {
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
-        //memcpy(er->cw+0,CW2,8);
+	if (cw2_active) {
+          memcpy(er->cw+0,CW2,8);
+	}
       } else {
         memcpy(er->cw+0,CW1,8);
-        //memcpy(er->cw+8,CW2,8);
+	if (cw2_active)
+          memcpy(er->cw+8,CW2,8);
         }
-      postprocess_cw(er, posECMpart2);
-      return 1;
+      postprocess_cw(er, posECMpart2); //processes cw1
+      if (cw2_active) {
+	er->ecm[0] ^= 1; //FIXME this is really dirty
+        postprocess_cw(er, posECMpart2); //processes cw2
+	er->ecm[0] ^= 1; //FIXME this is really dirty
       }
+      return 1;
     }
+  }
   return 0;
 }
 
