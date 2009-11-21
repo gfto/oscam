@@ -34,11 +34,25 @@ static int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt
   return -1;
 }
 
+static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 if cw is all zeros
+{
+  int i;
+  for (i = 0; i < 8; i++)
+    if (cw[i] != 0) {//test if cw = 00
+      return 1;
+    }
+  return 0;
+}
+
 //////  ====================================================================================
 //////  special thanks to an "italian forum" !!!!
 
-void postprocess_cw(ECM_REQUEST *er, int posECMbody)
+
+void postprocess_cw(ECM_REQUEST *er, int posECMbody, unsigned char *cw)
 {
+
+  if (!cw_is_valid(cw)) //if cw is all zero, keep it that way
+    return; 
 #if __BYTE_ORDER == __BIG_ENDIAN
   static unsigned char Tb1[0xC]={0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF,0xF8,0x61,0xCB,0x52};
   static unsigned char Tb2[0x40]= {
@@ -62,7 +76,7 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
   unsigned char Hash14[0x14];
   unsigned char counter=0,counter2=0;
   int tmp1;
-  int a,b,h,j,k,l,m = 0;
+  int a,h,j,k,l,m = 0;
   int i;
   int posB0 = -1;
   for (i = 6; i < posECMbody; i++)
@@ -75,63 +89,62 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody)
   }
   if (posB0 == -1) return;
 
-  b= (er->ecm[0]&1) * 8;
   memset(Hash48,0,0x48);
-  for(i = 0; i < 8; i++) Hash48[i] = er->cw[b + i];
-    Hash48[8]=0x80;
-    memcpy(table40,Tb2,0x40);
-  
-    for(i = 0; i < 12; i++) Hash14[i] = Tb1[i];
-  
-    int k1 = *((short*) &Hash14);  int k2 = *((short*) &Hash14+1);  int k3 = *((short*) &Hash14+2);
-    int k4 = *((short*) &Hash14+3);  int k5 = *((short*) &Hash14+4);  int k6 = *((short*) &Hash14+5);
-    for (m = 0; m < 2; m++) {
-      int loop;
-      for (loop = 0; loop < 0x24; loop++) {
-        h=((Hash48[(loop<<1) +1]<<8)+Hash48[loop<<1])&0xFFFF;
-        if(m)
-          tmp1 = (((k2 & k4) | ((~k4) & k3)) & 0xFFFF);
-        else
-          tmp1 = (((k2 & k3) | ((~k2) & k4)) & 0xFFFF);
-        if((counter & 1))
-          k = *(((short *) table40)+(counter>>1))>>8;
-        else
-          k = *(((short *) table40)+(counter>>1));
-        l = k1;  j = k2;
-        k1 = k2;  k2 = k3;  k3 = k4;  k4 = k5;  k5 = k6;
-        k6 = ((tmp1 + l + h + (k & 0xFF)) & 0xFFFF);
-        tmp1 = tabletmp2[counter2];
-        k6 = ((((k6 << tmp1) | (k6 >> (0x10 - tmp1))) + j) & 0xFFFF);
-        counter2++;
-        if(counter2 == 0x10) counter2 = 0;
-        counter++;
-        if(counter == 0x40) counter = 0;
-      }
-    }
-  
-//#if __BYTE_ORDER != __BIG_ENDIAN
-    er->cw[b + 0] = (k1 + *((short *)&Hash14)) & 0xFF;
-    er->cw[b + 1] = (k1 + *((short *)&Hash14))>>8;
-    er->cw[b + 2] = (k2 + *((short *)&Hash14+1)) & 0xFF;
-    er->cw[b + 3] = (er->cw[b + 0] + er->cw[b + 1] + er->cw[b + 2]) & 0xFF;
-    er->cw[b + 4] = (k3 + *((short *)&Hash14+2)) & 0xFF;
-    er->cw[b + 5] = (k3 + *((short *)&Hash14+2))>>8;
-    er->cw[b + 6] = (k4 + *((short *)&Hash14+3)) & 0xFF;
-    er->cw[b + 7] = (er->cw[b + 4] + er->cw[b + 5] + er->cw[b + 6]) & 0xFF;
-/*#else
-    er->cw[b + 0] = (k1 + *((short *)&Hash14))>>8;
-    er->cw[b + 1] = (k1 + *((short *)&Hash14)) & 0xFF;
-    er->cw[b + 2] = (k2 + *((short *)&Hash14+1))>>8;
-    er->cw[b + 3] = (er->cw[b + 0] + er->cw[b + 1] + er->cw[b + 2]) & 0xFF;
-    er->cw[b + 4] = (k3 + *((short *)&Hash14+2))>>8;
-    er->cw[b + 5] = (k3 + *((short *)&Hash14+2)) & 0xFF;
-    er->cw[b + 6] = (k4 + *((short *)&Hash14+3))>>8;
-    er->cw[b + 7] = (er->cw[b + 4] + er->cw[b + 5] + er->cw[b + 6]) & 0xFF;
-#endif*/
-  
-    cs_ddump (er->cw+b, 8, "Postprocessed DW:");
-}
+  for (i = 0; i < 8; i++)
+    Hash48[i] = cw[i];
+  Hash48[8]=0x80;
+  memcpy(table40,Tb2,0x40);
 
+  for(i = 0; i < 12; i++) Hash14[i] = Tb1[i];
+
+  int k1 = *((short*) &Hash14);  int k2 = *((short*) &Hash14+1);  int k3 = *((short*) &Hash14+2);
+  int k4 = *((short*) &Hash14+3);  int k5 = *((short*) &Hash14+4);  int k6 = *((short*) &Hash14+5);
+  for (m = 0; m < 2; m++) {
+    int loop;
+    for (loop = 0; loop < 0x24; loop++) {
+      h=((Hash48[(loop<<1) +1]<<8)+Hash48[loop<<1])&0xFFFF;
+      if(m)
+        tmp1 = (((k2 & k4) | ((~k4) & k3)) & 0xFFFF);
+      else
+        tmp1 = (((k2 & k3) | ((~k2) & k4)) & 0xFFFF);
+      if((counter & 1))
+        k = *(((short *) table40)+(counter>>1))>>8;
+      else
+        k = *(((short *) table40)+(counter>>1));
+      l = k1;  j = k2;
+      k1 = k2;  k2 = k3;  k3 = k4;  k4 = k5;  k5 = k6;
+      k6 = ((tmp1 + l + h + (k & 0xFF)) & 0xFFFF);
+      tmp1 = tabletmp2[counter2];
+      k6 = ((((k6 << tmp1) | (k6 >> (0x10 - tmp1))) + j) & 0xFFFF);
+      counter2++;
+      if(counter2 == 0x10) counter2 = 0;
+      counter++;
+      if(counter == 0x40) counter = 0;
+    }
+  }
+
+//#if __BYTE_ORDER != __BIG_ENDIAN
+  cw[0] = (k1 + *((short *)&Hash14)) & 0xFF;
+  cw[1] = (k1 + *((short *)&Hash14))>>8;
+  cw[2] = (k2 + *((short *)&Hash14+1)) & 0xFF;
+  cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
+  cw[4] = (k3 + *((short *)&Hash14+2)) & 0xFF;
+  cw[5] = (k3 + *((short *)&Hash14+2))>>8;
+  cw[6] = (k4 + *((short *)&Hash14+3)) & 0xFF;
+  cw[7] = (cw[4] + cw[5] + cw[6]) & 0xFF;
+/*#else
+  cw[0] = (k1 + *((short *)&Hash14))>>8;
+  cw[1] = (k1 + *((short *)&Hash14)) & 0xFF;
+  cw[2] = (k2 + *((short *)&Hash14+1))>>8;
+  cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
+  cw[4] = (k3 + *((short *)&Hash14+2))>>8;
+  cw[5] = (k3 + *((short *)&Hash14+2)) & 0xFF;
+  cw[6] = (k4 + *((short *)&Hash14+3))>>8;
+  cw[7] = (cw[4] + cw[5] + cw[6]) & 0xFF;
+#endif*/
+
+  cs_ddump (cw, 8, "Postprocessed DW:");
+}
 
 
 //////  ====================================================================================
@@ -222,12 +235,7 @@ static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsig
 	cw2_active = 0; //false
         for(ind=13; ind<len+13-8; ind++) {
           if(buff[ind]==0x25) {
-	    int i;
-	    for (i = 0; i < 8; i++)
-	      if (buff[ind+3+i] != 0) {//test if cw = 00
-		cw2_active = 1;
-		break;
-	      }
+	    cw2_active = cw_is_valid(buff+ind+3);
 	    if (cw2_active)
               //memcpy(cw2,buff+5+ind+2,8);
               memcpy(cw2,buff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919
@@ -855,20 +863,20 @@ int videoguard_do_ecm(ECM_REQUEST *er)
     if(l>0 && status_ok(cta_res+l)) {
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
-	if (cw2_active) {
+	if (cw2_active)
           memcpy(er->cw+0,CW2,8);
-	}
-      } else {
+	else
+	  memset(er->cw+0,0,8); //set cw to 0 so no postprocessing and clients recog cw is not valid
+      }
+      else {
         memcpy(er->cw+0,CW1,8);
 	if (cw2_active)
           memcpy(er->cw+8,CW2,8);
-        }
-      postprocess_cw(er, posECMpart2); //processes cw1
-      if (cw2_active) {
-	er->ecm[0] ^= 1; //FIXME this is really dirty
-        postprocess_cw(er, posECMpart2); //processes cw2
-	er->ecm[0] ^= 1; //FIXME this is really dirty
+	else
+	  memset(er->cw+8,0,8);// set cw to 0 so no postprocessing and clients recog cw is not valid
       }
+      postprocess_cw(er, posECMpart2,er->cw+0);
+      postprocess_cw(er, posECMpart2,er->cw+8);
       return 1;
     }
   }
