@@ -69,9 +69,10 @@ SECTION DESCRIPTIONS
        mhz = 357|358|600|800|1000
 	  set reader clock speed in mhz, default:357
 
-       customspeed = 0,1
-	  supported by the Videoguard 2 module only: calculate and use a  cus
-	  tom baudrate to communicate with SC reader, default:1
+       customspeed = 0|1
+	  supported by the Videoguard 2 module only: 1 = calculate and	use  a
+	  custom  baudrate  to	communicate  with SC reader, customspeed over
+	  writes mhz, default:1
 
        protocol = reader protocol
 	  reader protocol, required:
@@ -124,22 +125,22 @@ SECTION DESCRIPTIONS
 		      2 = log all EMMs
 
        blocknano = nano[,nano]...|all
-	  list of EMM-nanos to block (in hex w/o 0x) or  all  EMM-nanos,  only
+	  list	of  EMM-nanos  to block (in hex w/o 0x) or all EMM-nanos, only
 	  valid for physical readers, default:none
 
 	   example: blocknano = 45,93,7a,ff
 		    blocknano = all
 
        savenano = nano[,nano]....|all
-	  list	of  EMM-nanos  to  save (in hex w/o 0x) or all EMM-nanos, only
+	  list of EMM-nanos to save (in hex w/o 0x)  or  all  EMM-nanos,  only
 	  valid for physical readers, default:none
 
 	   example: savenano = 45,93,7a,ff
 		    savenano = all
 
        readnano = [path]filename
-	  write file (usually a copy of a file	saved  by  savenano)  to  your
-	  smartcard,  if  no path is specified, the specified file is searched
+	  write  file  (usually  a  copy  of a file saved by savenano) to your
+	  smartcard, if no path is specified, the specified file  is  searched
 	  for in the configuration directory, only valid for physical readers,
 	  default:none
 

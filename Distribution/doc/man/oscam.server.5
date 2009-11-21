@@ -98,9 +98,9 @@ status detect of card (NONE = no detection), default:CD
 set reader clock speed in mhz, default:357
 .RE
 .PP
-\fBcustomspeed\fP = \fB0\fP,\fB1\fP
+\fBcustomspeed\fP = \fB0\fP|\fB1\fP
 .RS 3n
-supported by the Videoguard 2 module only: calculate and use a custom baudrate to communicate with SC reader, default:1
+supported by the Videoguard 2 module only: 1 = calculate and use a custom baudrate to communicate with SC reader, \fBcustomspeed\fP overwrites \fBmhz\fP, default:1
 .RE
 .PP
 \fBprotocol\fP = \fBreader protocol\fP
