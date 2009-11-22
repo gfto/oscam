@@ -14,7 +14,6 @@
 
 int aes_active=0;
 AES_KEY dkey, ekey;
-int cw2_active = 0; //false
 
 static void cAES_SetKey(const unsigned char *key)
 {
@@ -231,14 +230,12 @@ static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsig
       cCamCryptVG2_Decrypt_D3(buff,buff+5,buff+buff[4]+5);
       if(buff[1]==0x54) {
         memcpy(cw1,buff+5,8);
+	memset(cw2,0,8); //set to 0 so client will know it is not valid if not overwritten with valid cw
         int ind;
-	cw2_active = 0; //false
         for(ind=13; ind<len+13-8; ind++) {
           if(buff[ind]==0x25) {
-	    cw2_active = cw_is_valid(buff+ind+3);
-	    if (cw2_active)
-              //memcpy(cw2,buff+5+ind+2,8);
-              memcpy(cw2,buff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919
+            //memcpy(cw2,buff+5+ind+2,8);
+            memcpy(cw2,buff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919  //don't care whether cw is 0 or not
             break;
           }
 /*          if(buff[ind+1]==0) break;
@@ -863,17 +860,11 @@ int videoguard_do_ecm(ECM_REQUEST *er)
     if(l>0 && status_ok(cta_res+l)) {
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
-	if (cw2_active)
-          memcpy(er->cw+0,CW2,8);
-	else
-	  memset(er->cw+0,0,8); //set cw to 0 so no postprocessing and clients recog cw is not valid
+        memcpy(er->cw+0,CW2,8);
       }
       else {
         memcpy(er->cw+0,CW1,8);
-	if (cw2_active)
-          memcpy(er->cw+8,CW2,8);
-	else
-	  memset(er->cw+8,0,8);// set cw to 0 so no postprocessing and clients recog cw is not valid
+        memcpy(er->cw+8,CW2,8);
       }
       postprocess_cw(er, posECMpart2,er->cw+0);
       postprocess_cw(er, posECMpart2,er->cw+8);
