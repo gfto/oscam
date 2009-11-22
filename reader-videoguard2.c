@@ -858,6 +858,8 @@ int videoguard_do_ecm(ECM_REQUEST *er)
   if(l>0 && status_ok(cta_res)) {
     l = do_cmd(ins54,NULL,NULL);
     if(l>0 && status_ok(cta_res+l)) {
+      if (!cw_is_valid(CW1)) //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
+	return 0;
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
         memcpy(er->cw+0,CW2,8);
