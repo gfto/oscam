@@ -562,7 +562,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		params.T = 0;
 		
 		if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
-			return IFD_TOWITOKO_IO_ERROR
+			return IFD_TOWITOKO_IO_ERROR;
 #endif
 		
 		if(ioctl(ifd->io->fd, IOCTL_SET_RESET)<0)
@@ -611,7 +611,8 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 					atr_size++;
 					TDi_exists=atr_size;
 				}
-			}			
+			}
+		}			
 #else
 		while(n<SCI_MAX_ATR_SIZE && IO_Serial_Read(ifd->io, IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
 		{
