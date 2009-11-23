@@ -62,7 +62,7 @@ i386-pc-linux:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O3 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -Winline -Werror -finline-functions -fomit-frame-pointer" \
+		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -Winline -Werror -finline-functions -fomit-frame-pointer" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
