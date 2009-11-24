@@ -78,7 +78,7 @@ SECTION DESCRIPTIONS
 	  reader protocol, required:
 	   mouse
 	   smartreader
-	   internal|intern
+	   internal
 	   serial
 	   camd35
 	   cs378x

@@ -1082,7 +1082,6 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     if (!strcmp(value, "mouse")) {      rdr->typ=R_MOUSE; return; }
     if (!strcmp(value, "smartreader")) {      rdr->typ=R_SMART; return; }
     if (!strcmp(value, "internal")) {   rdr->typ=R_INTERN; return; }
-    if (!strcmp(value, "intern")) {     rdr->typ=R_INTERN; return; }
     if (!strcmp(value, "serial")) {     rdr->typ=R_SERIAL; return; }
     if (!strcmp(value, "camd35")) {     rdr->typ=R_CAMD35; return; }
     if (!strcmp(value, "cs378x")) {     rdr->typ=R_CS378X; return; }
