@@ -54,7 +54,7 @@
 #define IFD_TOWITOKO_TIMEOUT             1000
 #define IFD_TOWITOKO_DELAY               0
 #define IFD_TOWITOKO_BAUDRATE            9600
-//#define IFD_TOWITOKO_PS                  15
+#define IFD_TOWITOKO_PS                  15
 #define IFD_TOWITOKO_MAX_TRANSMIT        255
 //#define IFD_TOWITOKO_ATR_TIMEOUT	 200
 //#define IFD_TOWITOKO_ATR_TIMEOUT	 400
@@ -472,7 +472,7 @@ int IFD_Towitoko_ActivateICC (IFD * ifd)
 	{
 		int in;
 
-#if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
+#if defined(TUXBOX) && defined(MIPSEL)
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
 #else
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
@@ -510,7 +510,7 @@ int IFD_Towitoko_DeactivateICC (IFD * ifd)
 	{
 		int in;
 		
-#if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
+#if defined(TUXBOX) && defined(MIPSEL)
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
 #else
 		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
@@ -546,87 +546,40 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		int n = 0;
 		SCI_PARAMETERS params;
 		static char irdeto[] = "IRDETO";
-#ifdef SH4
-		struct timeval tv, tv_spent;
-		int atr_size = 2, TDi_exists = 0;
-#endif
 		
 		(*atr) = NULL;
-
-#ifdef SH4		
-		memset(&params,0,sizeof(SCI_PARAMETERS));
-		
-		params.ETU = 372;
-		params.EGT = 3;
-		params.f = 9;
-		params.T = 0;
-		
-		if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
-			return IFD_TOWITOKO_IO_ERROR;
-#endif
 		
 		if(ioctl(ifd->io->fd, IOCTL_SET_RESET)<0)
 			return IFD_TOWITOKO_IO_ERROR;
 			
 		if(ioctl(ifd->io->fd, IOCTL_SET_ATR_READY)<0)
 			return IFD_TOWITOKO_IO_ERROR;
-			
-#ifdef SH4
-		gettimeofday(&tv,0);
-		memcpy(&tv_spent,&tv,sizeof(struct timeval));
-
-		while(n<atr_size && (tv_spent.tv_sec-tv.tv_sec)<10)
- 		{
-			if(IO_Serial_Read(ifd->io, IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
-				n++;
-			gettimeofday(&tv_spent,0);
-			if(n==2) // format character
-			{
-				// high nibble = TA1 , TB1 , TC1 , TD1
-				if(buf[n-1] & 0x10)
-					atr_size++;
-				if(buf[n-1] & 0x20)
-					atr_size++;
-				if(buf[n-1] & 0x40)
-					atr_size++;
-				if(buf[n-1] & 0x80)
-				{
-					atr_size++;
-					TDi_exists=atr_size;
-				}
-				atr_size+=(buf[n-1] & 0x0F); // historical bytes
-			}
-			if( (TDi_exists>0) && (n==TDi_exists) )
-			{
-				TDi_exists=0;
-				// high nibble = TA1 , TB1 , TC1 , TD1
-				if(buf[n-1] & 0x10)
-					atr_size++;
-				if(buf[n-1] & 0x20)
-					atr_size++;
-				if(buf[n-1] & 0x40)
-					atr_size++;
-				if(buf[n-1] & 0x80)
-				{
-					atr_size++;
-					TDi_exists=atr_size;
-				}
-			}
-		}			
-#else
 		while(n<SCI_MAX_ATR_SIZE && IO_Serial_Read(ifd->io, IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
 		{
 			n++;
 		}
-#endif
 		
 		if(n==0)
 			return IFD_TOWITOKO_IO_ERROR;
 			
 		if(ioctl(ifd->io->fd, IOCTL_GET_PARAMETERS, &params)<0)
 			return IFD_TOWITOKO_IO_ERROR;
-		
-//              cs_dump(buf, n, "BUF:");
+/*			
+		printf("T=%d\n", (int)params.T);
+		printf("f=%d\n", (int)params.f);
+		printf("ETU=%d\n", (int)params.ETU);
+		printf("WWT=%d\n", (int)params.WWT);
+		printf("CWT=%d\n", (int)params.CWT);
+		printf("BWT=%d\n", (int)params.BWT);
+		printf("EGT=%d\n", (int)params.EGT);
+		printf("clock=%d\n", (int)params.clock_stop_polarity);
+		printf("check=%d\n", (int)params.check);
+		printf("P=%d\n", (int)params.P);
+		printf("I=%d\n", (int)params.I);
+		printf("U=%d\n", (int)params.U);
+*/
+
+//		print_hex_data(buf, n);
 		if(n>9 && !memcmp(buf+4, irdeto, 6))
 		{
 			params.T = 14;
@@ -649,13 +602,6 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			struct timespec req_ts;
 			double a;
 			
-			double atrparam_d = 0;
-			
-			if (ATR_GetParameter(*atr,ATR_PARAMETER_D,&atrparam_d)!=ATR_OK)
-//			printf("atr D=%f\n", a);
-			params.ETU /= (unsigned char)a;
-			ATR_GetParameter(*atr, ATR_PARAMETER_N, &a);
-			params.EGT = (unsigned char)a;
 			ATR_GetParameter(*atr, ATR_PARAMETER_P, &a);
 //			printf("atr P=%f\n", a);
 			params.P = (unsigned char)a;
@@ -663,23 +609,6 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 //			printf("atr I=%f\n", a);
 			params.I = (unsigned char)a;
 
-			double atrparam_f = 0;
-
-			if (ATR_GetParameter(*atr,ATR_PARAMETER_F,&atrparam_f)!=ATR_OK)
-			{
-				cs_log ("Error getting ATR parameter (F)");
-				ATR_Delete (*atr);
-				(*atr) = NULL;
-				return IFD_TOWITOKO_IO_ERROR;
-			}
-			if (ATR_GetParameter(*atr,ATR_PARAMETER_D,&atrparam_d)!=ATR_OK)
-			{
-				cs_log ("Error getting ATR parameter (D)");
-				ATR_Delete (*atr);
-				(*atr) = NULL;
-				return IFD_TOWITOKO_IO_ERROR;
-			}
-			params.ETU=atrparam_f/atrparam_d;
 
 			if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
 			{
@@ -688,9 +617,24 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 				return IFD_TOWITOKO_IO_ERROR;
 			}
 			
+
+/*
 			ioctl(ifd->io->fd, IOCTL_GET_PARAMETERS, &params);
 			
-			cs_debug("T=%d f=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, (int)params.f, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
+		printf("T=%d\n", (int)params.T);
+		printf("f=%d\n", (int)params.f);
+		printf("ETU=%d\n", (int)params.ETU);
+		printf("WWT=%d\n", (int)params.WWT);
+		printf("CWT=%d\n", (int)params.CWT);
+		printf("BWT=%d\n", (int)params.BWT);
+		printf("EGT=%d\n", (int)params.EGT);
+		printf("clock=%d\n", (int)params.clock_stop_polarity);
+		printf("check=%d\n", (int)params.check);
+		printf("P=%d\n", (int)params.P);
+		printf("I=%d\n", (int)params.I);
+		printf("U=%d\n", (int)params.U);*/
+
+
 			
 			req_ts.tv_sec = 0;
 			req_ts.tv_nsec = 50000000;
@@ -936,10 +880,7 @@ IFD_Towitoko_GetNumSlots (IFD * ifd)
 unsigned long
 IFD_Towitoko_GetClockRate (IFD * ifd)
 {
- 	//return IFD_TOWITOKO_CLOCK_RATE;
-	extern int mhz; 
-	cs_debug("CLOCK RATE IS %i in 10kHz steps",mhz);
- 	return mhz * 10000L; 
+ 	return IFD_TOWITOKO_CLOCK_RATE;
 }
 
 unsigned long 
