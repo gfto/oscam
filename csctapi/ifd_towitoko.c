@@ -649,7 +649,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			struct timespec req_ts;
 			double a;
 			
-			ATR_GetParameter(*atr, ATR_PARAMETER_D, &a);
+			if (ATR_GetParameter(*atr,ATR_PARAMETER_D,&atrparam_d)!=ATR_OK)
 //			printf("atr D=%f\n", a);
 			params.ETU /= (unsigned char)a;
 			ATR_GetParameter(*atr, ATR_PARAMETER_N, &a);
