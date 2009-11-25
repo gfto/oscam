@@ -80,12 +80,10 @@ SECTION DESCRIPTIONS
 	   smartreader
 	   internal
 	   serial
-	   camd35
+	   camd35|cs357x
 	   cs378x
-	   cs357x
 	   gbox
-	   newcamd
-	   newcamd525
+	   newcamd|newcamd525
 	   newcamd524
 
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
