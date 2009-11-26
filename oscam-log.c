@@ -67,7 +67,7 @@ void cs_write_log(char *txt)
 
 int cs_init_log(char *file) 
 {
-  static char *head = ">> OSCam <<  cardserver started";
+  static char *head = ">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")";
 
   if (!strcmp(file, "stdout"))
   {

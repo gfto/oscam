@@ -178,6 +178,28 @@ elseif (OSCamOperatingSystem MATCHES "Amino")
 elseif (OSCamOperatingSystem MATCHES "Windows/cygwin")
 endif (OSCamOperatingSystem MATCHES "Linux")
 
+#----------------------- put svnversion in the build ------------------------------
+# at every target rebuild, we re-build the oscam.c compilation...
+
+# add the needed dependency
+add_dependencies (${exe_name} svnversion)
+add_dependencies (${csoscam} svnversion-log)
+
+# how to re-build the files which printout the version
+add_custom_target (
+    svnversion
+    ALL
+    touch ${CMAKE_CURRENT_SOURCE_DIR}/oscam.c
+)
+add_custom_target (
+    svnversion-log
+    ALL
+    touch ${CMAKE_CURRENT_SOURCE_DIR}/oscam-log.c
+)
+
+# pass the version to the compilations as a define
+add_definitions ("-D'CS_SVN_VERSION=\"$(shell svnversion -n ${CMAKE_CURRENT_SOURCE_DIR})\"'")
+
 #----------------------- global compile and link options ------------------------------
 
 # some optimisations

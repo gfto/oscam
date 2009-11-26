@@ -131,7 +131,7 @@ char *cs_platform(char *buf)
 static void usage()
 {
   int i;
-  fprintf(stderr, "\nOSCam cardserver v%s (%s) - (w) 2009 by smurzch\n", CS_VERSION_X, CS_OSTYPE);
+  fprintf(stderr, "\nOSCam cardserver v%s, build #%s (%s) - (w) 2009 by smurzch\n", CS_VERSION_X, CS_SVN_VERSION, CS_OSTYPE);
   fprintf(stderr, "\tbased on streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n\n");
   fprintf(stderr, "oscam [-b] [-c config-dir]");
 #ifdef CS_NOSHM
