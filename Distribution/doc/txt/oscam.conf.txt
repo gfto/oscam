@@ -73,7 +73,7 @@ SECTION DESCRIPTIONS
 	  adult movie, default:0
 
        nice = -20..+20
-	  system priority, default:system given
+	  system priority, default:99
 
        serialreadertimeout = milli-seconds
 	  timeout for serial reader, default:1500

@@ -118,7 +118,7 @@ SECTION DESCRIPTIONS
 	   usecache = 0|1  1=enable EMM chaching, default:0
 	   rewrite  = determines how often one and the same EMM is written
 	   logging  = 0 = log errors only
-		      1 = log all EEMs except the double EMMs
+		      1 = log all EMMs except the double EMMs
 		      2 = log all EMMs
 
        blocknano = nano[,nano]...|all
