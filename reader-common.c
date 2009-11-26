@@ -292,7 +292,8 @@ int reader_device_init(char *device, int typ)
   cs_ptyp_orig=cs_ptyp;
   cs_ptyp=D_DEVICE;
   snprintf(oscam_device, sizeof(oscam_device), "%s", device);
-  if ((rc=CT_init(1, reader_device_type(device, typ),reader[ridx].typ))!=OK)
+
+  if ((rc=CT_init(1, reader_device_type(device, typ),mhz*10000,reader[ridx].typ))!=OK)
     cs_log("Cannot open device: %s", device);
   cs_debug("ct_init on %s: %d", device, rc);
   cs_ptyp=cs_ptyp_orig;
