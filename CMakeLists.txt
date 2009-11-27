@@ -198,7 +198,7 @@ add_custom_target (
 )
 
 # pass the version to the compilations as a define
-add_definitions ("-D'CS_SVN_VERSION=\"$(shell svnversion -n ${CMAKE_CURRENT_SOURCE_DIR})\"'")
+add_definitions ("-D'CS_SVN_VERSION=\"$(shell svnversion -n ${CMAKE_CURRENT_SOURCE_DIR} | sed 's/.$$//')\"'")
 
 #----------------------- global compile and link options ------------------------------
 
