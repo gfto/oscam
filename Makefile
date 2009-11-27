@@ -62,7 +62,7 @@ i386-pc-linux:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -Winline -Werror -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -Winline -Werror -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -83,7 +83,7 @@ macosx-native:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD -DCS_CONFDIR=${CS_CONFDIR} -Winline -Werror -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD -DCS_CONFDIR=${CS_CONFDIR} -Winline -Werror -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -105,7 +105,7 @@ i386-pc-freebsd:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_FREEBSD -DBSD_COMP  -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_FREEBSD -DBSD_COMP  -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -126,7 +126,7 @@ cross-i386-pc-freebsd:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_FREEBSD -DBSD_COMP -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_FREEBSD -DBSD_COMP -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -147,7 +147,7 @@ cross-powerpc-tuxbox-linux:
 		OS_LIBS="-lcrypto -ldl" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DPPC -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DPPC -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -163,7 +163,7 @@ cross-powerpc-tuxbox-linux-uclibc:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DPPC -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DPPC -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -185,7 +185,7 @@ cross-sh4-linux:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DSH4 -DTUXBOX -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DSH4 -DTUXBOX -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -206,7 +206,7 @@ cross-i386-pc-cygwin:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_CYGWIN32 -DCS_CONFDIR=${CS_CONFDIR} -static -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_CYGWIN32 -DCS_CONFDIR=${CS_CONFDIR} -static -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -227,7 +227,7 @@ i386-pc-cygwin:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_CYGWIN32 -DCS_CONFDIR=${CS_CONFDIR} -I /tmp/include -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_CYGWIN32 -DCS_CONFDIR=${CS_CONFDIR} -I /tmp/include -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -248,7 +248,7 @@ cross-sparc-sun-solaris2.7:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_SOLARIS -DOS_SOLARIS7 -DBSD_COMP -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_SOLARIS -DOS_SOLARIS7 -DBSD_COMP -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="-lsocket" \
 		DS_ARFLAGS="-rvsl" \
@@ -269,7 +269,7 @@ opensolaris:
 		OS_LIBS="-lcrypto -lnsl" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_SOLARIS -DOS_SOLARIS7 -DBSD_COMP -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_SOLARIS -DOS_SOLARIS7 -DBSD_COMP -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="-lsocket" \
 		DS_ARFLAGS="-rvsl" \
@@ -290,7 +290,7 @@ cross-rs6000-ibm-aix4.2:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthreads" \
-		DS_OPTS="-O2 -DOS_AIX -DOS_AIX42 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_AIX -DOS_AIX42 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -311,7 +311,7 @@ cross-mips-sgi-irix6.5:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_IRIX -DOS_IRIX65 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_IRIX -DOS_IRIX65 -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -334,7 +334,7 @@ cross-mipsel-router-linux-uclibc927:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -356,7 +356,7 @@ cross-mipsel-router-linux-uclibc928:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -378,7 +378,7 @@ cross-mipsel-router-linux-uclibc929:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -400,7 +400,7 @@ cross-mipsel-router-linux-uclibc929-static:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="-static" \
 		DS_ARFLAGS="-rvsl" \
@@ -421,7 +421,7 @@ cross-mipsel-fonera2:
 		OS_LIBS="-Lopenssl-lib -lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-Iopenssl-include -O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-Iopenssl-include -O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -442,7 +442,7 @@ cross-mipsel-tuxbox-linux-glibc:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DMIPSEL -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DMIPSEL -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -458,7 +458,7 @@ cross-mipsel-tuxbox-linux:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DMIPSEL -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DTUXBOX -DMIPSEL -DCS_CONFDIR='\"/var/tuxbox/config\"' -static-libgcc -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -479,7 +479,7 @@ hppa1.1-hp-hpux10.20:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_HPUX -DOS_HPUX10 -D_XOPEN_SOURCE_EXTENDED -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_HPUX -DOS_HPUX10 -D_XOPEN_SOURCE_EXTENDED -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -500,7 +500,7 @@ alpha-dec-osf5.1:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_OSF -DOS_OSF5 -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-O2 -DOS_OSF -DOS_OSF5 -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		XDS_CFLAGS="-I/usr/include -c" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
@@ -522,7 +522,7 @@ cross-arm-nslu2-linux:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-DOS_LINUX -O2 -DARM -DALIGNMENT -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-DOS_LINUX -O2 -DARM -DALIGNMENT -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -544,7 +544,7 @@ cross-armBE-unkown-linux:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-DOS_LINUX -O2 -DARM -DALIGNMENT -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-DOS_LINUX -O2 -DARM -DALIGNMENT -DCS_CONFDIR=${CS_CONFDIR} -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -566,7 +566,7 @@ cross-armLE-unkown-linux:
 		OS_LIBS="" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-DOS_LINUX -O2 -DARM -DALIGNMENT -DCS_CONFDIR=${CS_CONFDIR}  -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//')"'"'" \
+		DS_OPTS="-DOS_LINUX -O2 -DARM -DALIGNMENT -DCS_CONFDIR=${CS_CONFDIR}  -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
