@@ -193,7 +193,7 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial,unsigned long 
 	strncpy(io->filename,filename,IO_SERIAL_FILENAME_LENGTH);
 	
 #ifdef DEBUG_IO
-	printf ("IO: Opening serial port %s\n", filename);
+	printf ("IO: Opening serial port %s of type %d at freq %2.2fMHz\n", filename,io->reader_type,(float)(io->frequency)/1000000);
 #endif
 	
 	if (com < 1)
@@ -250,7 +250,6 @@ bool IO_Serial_GetProperties(IO_Serial * io, IO_Serial_Properties * props, SR_Co
 	if(io->com==RTYP_SCI)
 		return FALSE;
 #endif
-	
 	if (IO_Serial_GetPropertiesCache(io, props,sr_config))
 		return TRUE;
 	
@@ -770,22 +769,27 @@ static int IO_Serial_Bitrate_to_Speed(int bitrate)
 		{   1200, B1200   }, {  2400, B2400  }, {  4800, B4800  },
 		{   9600, B9600   }, {  19200, B19200  }, {  38400, B38400  },
 		{  57600, B57600  }, { 115200, B115200 }, { 230400, B230400 }
-    };
+		};
 
 	int i;
 	
-	for(i=0; i<(int)(sizeof(BaudRateTab)/sizeof(struct BaudRates)); i++) {
+	for(i=0; i<(int)(sizeof(BaudRateTab)/sizeof(struct BaudRates)); i++)
+	{
 		int b=BaudRateTab[i].real;
 		int d=((b-bitrate)*10000)/b;
-		if(abs(d)<=300) {
+		if(abs(d)<=300)
+		{
 			return BaudRateTab[i].apival;
 		}
-    }
+	}
 	return B0;
 }
+
 static int IO_Serial_Bitrate_from_Speed(int speed)
 {
-	switch (speed) {
+
+	switch (speed)
+	{
 #ifdef B0
 		case B0:
 			return 0;
@@ -1007,9 +1011,10 @@ static void IO_Serial_SetPropertiesCache(IO_Serial * io, IO_Serial_Properties * 
 #ifdef DEBUG_IO
 	printf ("IO: Catching properties\n");
 #endif
-	
-	memcpy (io->props, props, sizeof (IO_Serial_Properties)); 
-	memcpy(io->SmartReaderConf, sr_config, sizeof (SR_Config));
+	if(props)
+		memcpy (io->props, props, sizeof (IO_Serial_Properties)); 
+	if(sr_config)
+		memcpy(io->SmartReaderConf, sr_config, sizeof (SR_Config));
 }
 
 static bool IO_Serial_GetPropertiesCache(IO_Serial * io, IO_Serial_Properties * props, SR_Config *sr_config)
@@ -1018,7 +1023,7 @@ static bool IO_Serial_GetPropertiesCache(IO_Serial * io, IO_Serial_Properties * 
 	
 	ok_props=FALSE;
 	ok_sr=FALSE;
-	if (io->props != NULL)
+	if (io->props != NULL && props != NULL)
 		{
 		memcpy(props, io->props, sizeof (IO_Serial_Properties));
 #  ifdef DEBUG_IO
@@ -1032,7 +1037,7 @@ static bool IO_Serial_GetPropertiesCache(IO_Serial * io, IO_Serial_Properties * 
 		ok_props=TRUE;
 		}
 
-	if (io->SmartReaderConf != NULL)
+	if (io->SmartReaderConf != NULL && sr_config != NULL)
 		{
 		memcpy(sr_config, io->SmartReaderConf, sizeof (SR_Config));
 #  ifdef DEBUG_IO
@@ -1046,8 +1051,16 @@ static bool IO_Serial_GetPropertiesCache(IO_Serial * io, IO_Serial_Properties * 
 #  endif
 		ok_sr=TRUE;
 		}
+	else 
+		{
+		// no props so they are ok by default
+		ok_sr=TRUE;
+		}
+		
 
-
+#  ifdef DEBUG_IO
+                printf("IO: Getting properties (catched): done\n");
+#  endif
 	return ok_props && ok_sr;
 }
 

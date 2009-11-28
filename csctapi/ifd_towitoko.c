@@ -186,29 +186,29 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 	props.stopbits = 2;
 	props.parity = IO_SERIAL_PARITY_EVEN;
 	props.dtr = IO_SERIAL_HIGH;
-	if (io->reader_type == RTYP_SMART)
-	{
-		props.rts = IO_SERIAL_HIGH;
-	}
-	else
-	{
-		props.rts = IO_SERIAL_LOW;
-	}
+        if (io->reader_type == RTYP_SMART)
+        {
+                props.rts = IO_SERIAL_HIGH;
+        }
+        else
+        {
+                props.rts = IO_SERIAL_LOW;
+        }
 	
 		
-	// set smartreader+ default values
-	// for Irdeto card, the Frequency is 6.00MHz and the F parameter need to be set to 558
-	// test have shown that an irdeto card still reply to an ATR at 9600 with a Freq of 3.5712 MHz
-	// we need to do more test to see if this work with irdeto cards so I'm reverting my changes
-	// to use the original default smartreader+ values 
-	sr_config.F=372;
-	sr_config.D=1.0;
-	sr_config.fs=3571200;
-	sr_config.N=0;
-	sr_config.T=0;
-	sr_config.inv=0;
+        // set smartreader+ default values
+        // for Irdeto card, the Frequency is 6.00MHz and the F parameter need to be set to 558
+        // test have shown that an irdeto card still reply to an ATR at 9600 with a Freq of 3.5712 MHz
+        // we need to do more test to see if this work with irdeto cards so I'm reverting my changes
+        // to use the original default smartreader+ values 
+        sr_config.F=372;
+        sr_config.D=1.0;
+        sr_config.fs=3571200;
+        sr_config.N=0;
+        sr_config.T=0;
+        sr_config.inv=0;
 
-	if (!IO_Serial_SetProperties(io, &props, &sr_config))
+	if (!IO_Serial_SetProperties (io, &props,&sr_config))
 		return IFD_TOWITOKO_IO_ERROR;
 		
 	/* Default ifd settings */
@@ -278,7 +278,6 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 {
 	IO_Serial_Properties props;
 	SR_Config sr_config;
-
 	
 	if(ifd->io->com==RTYP_SCI)
 	{
@@ -298,7 +297,7 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 #endif
 	
 	/* Get current settings */
-	if (!IO_Serial_GetProperties(ifd->io, &props, &sr_config))
+	if (!IO_Serial_GetProperties (ifd->io, &props, &sr_config))
 		return IFD_TOWITOKO_IO_ERROR;
 	
 	if (props.output_bitrate == baudrate)
@@ -309,7 +308,7 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 	props.output_bitrate = baudrate;
 	props.input_bitrate = baudrate;
 	
-	if (!IO_Serial_SetProperties(ifd->io, &props, &sr_config))
+	if (!IO_Serial_SetProperties (ifd->io, &props, &sr_config))
 		return IFD_TOWITOKO_IO_ERROR;
 	
 	return IFD_TOWITOKO_OK;
@@ -319,14 +318,14 @@ int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate)
 {
 	IO_Serial_Properties props;
 	SR_Config sr_config;
-	
+
 	if(ifd->io->com==RTYP_SCI)
 	{
 		return IFD_TOWITOKO_OK;
 	}
 	
 	/* Get current settings */
-	if (!IO_Serial_GetProperties(ifd->io, &props, &sr_config))
+	if (!IO_Serial_GetProperties (ifd->io, &props, &sr_config))
 		return IFD_TOWITOKO_IO_ERROR;
 	
 	(*baudrate) = props.output_bitrate;
@@ -338,7 +337,7 @@ extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity)
 {
 	IO_Serial_Properties props;
 	SR_Config sr_config;
-		
+	
 	if(ifd->io->com==RTYP_SCI)
 	{
 		return IFD_TOWITOKO_OK;
@@ -354,14 +353,14 @@ extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity)
 		return IFD_TOWITOKO_PARAM_ERROR;
 	
 	/* Get current settings */
-	if (!IO_Serial_GetProperties(ifd->io, &props, &sr_config))
+	if (!IO_Serial_GetProperties (ifd->io, &props, &sr_config))
 		return IFD_TOWITOKO_IO_ERROR;
 	
 	if (props.parity !=parity)
 	{
 		props.parity = parity;
 		
-		if (!IO_Serial_SetProperties(ifd->io, &props, &sr_config))
+		if (!IO_Serial_SetProperties (ifd->io, &props, &sr_config))
 			return IFD_TOWITOKO_IO_ERROR;
 	}
 	
@@ -734,9 +733,6 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 	else
 #endif
 	{
-		double tmp_param;
-		BYTE tmp;
-
 		int ret;
 		int parity;
 		int i;
@@ -810,21 +806,26 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 #ifndef NO_PAR_SWITCH
 		IFD_Towitoko_SetParity (ifd, IFD_TOWITOKO_PARITY_NONE);
 #endif
-		// if we get here we have a valid ATR and can init the IO->SmartReaderConf structure.
-		ATR_GetParameter((*atr), ATR_PARAMETER_F, &tmp_param);
-		((ifd->io)->SmartReaderConf)->F=(int)tmp_param;
-		
-		ATR_GetParameter((*atr), ATR_PARAMETER_D, &tmp_param);
-		((ifd->io)->SmartReaderConf)->D=(float)tmp_param;
+                if(atr!=NULL && ret == IFD_TOWITOKO_OK)
+                {
+                        double tmp_param;
+                        BYTE tmp;
+                        // if we get here we have a valid ATR and can init the IO->SmartReaderConf structure.
+                        ATR_GetParameter((*atr), ATR_PARAMETER_F, &tmp_param);
+                        ((ifd->io)->SmartReaderConf)->F=(int)tmp_param;
 
-		((ifd->io)->SmartReaderConf)->fs = (ifd->io)->frequency;
+                        ATR_GetParameter((*atr), ATR_PARAMETER_D, &tmp_param);
+                        ((ifd->io)->SmartReaderConf)->D=(float)tmp_param;
 
-		ATR_GetParameter((*atr), ATR_PARAMETER_N, &tmp_param);
-		((ifd->io)->SmartReaderConf)->N=(int)tmp_param;
+                        ((ifd->io)->SmartReaderConf)->fs = (ifd->io)->frequency;
 
-		ATR_GetProtocolType((*atr), 2, &tmp);
-		((ifd->io)->SmartReaderConf)->T = (int)tmp_param && 0xFF;
-		ATR_GetConvention((*atr), &((ifd->io)->SmartReaderConf)->inv);
+                        ATR_GetParameter((*atr), ATR_PARAMETER_N, &tmp_param);
+                        ((ifd->io)->SmartReaderConf)->N=(int)tmp_param;
+
+                        ATR_GetProtocolType((*atr), 2, &tmp);
+                        ((ifd->io)->SmartReaderConf)->T = (int)tmp_param && 0xFF;
+                        ATR_GetConvention((*atr), &((ifd->io)->SmartReaderConf)->inv);
+                }
 		return ret;
 	}
 }
@@ -982,8 +983,9 @@ unsigned long
 IFD_Towitoko_GetClockRate (IFD * ifd)
 {
  	//return IFD_TOWITOKO_CLOCK_RATE;
-	cs_debug("CLOCK RATE IS %i MHz",ifd->io->frequency);
-	return ifd->io->frequency;
+	extern int mhz; 
+	cs_debug("CLOCK RATE IS %i in 10kHz steps",mhz);
+ 	return mhz * 10000L; 
 }
 
 unsigned long 
