@@ -1,6 +1,6 @@
 SHELL	= /bin/sh
 
-VER	= $(subst ",,$(filter-out \#define CS_VERSION,$(shell grep CS_VERSION globals.h)))
+VER	= $(subst ",,$(filter-out \#define CS_VERSION,$(shell grep CS_VERSION globals.h)))$(shell svnversion -n . | sed 's/.$$//' )
 CS_CONFDIR = '\"/usr/local/etc\"'
 
 export VER
