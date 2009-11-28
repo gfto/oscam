@@ -50,7 +50,6 @@
 #include <linux/serial.h>
 #endif
 
-#define IO_SERIAL_FILENAME_LENGTH 	32
 
 /*
  * Internal functions declaration
@@ -190,6 +189,8 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial,unsigned long 
 	io->reader_type = reader_type;
 	
 	IO_Serial_DeviceName (com, usbserial, filename, IO_SERIAL_FILENAME_LENGTH);
+	
+	strncpy(io->filename,filename,IO_SERIAL_FILENAME_LENGTH);
 	
 #ifdef DEBUG_IO
 	printf ("IO: Opening serial port %s\n", filename);
@@ -1119,7 +1120,7 @@ static bool IO_Serial_Set_Smartreader_Config(IO_Serial * io, SR_Config *sr_confi
 
 	fs/=1000; // convert to kHz.
 #  ifdef DEBUG_IO
-	printf("IO: Smartreader+ on %s: SR+ options F=%d D=%f fs=%d N=%d T=%d inv=%d\n",io->device,F,D,fs,N,T,inv);
+	printf("IO: Smartreader+ on %s: SR+ options F=%d D=%f fs=%d N=%d T=%d inv=%d\n",io->filename,F,D,fs,N,T,inv);
 #  endif
 
 	// Set SmartReader+ in CMD mode.
@@ -1127,7 +1128,7 @@ static bool IO_Serial_Set_Smartreader_Config(IO_Serial * io, SR_Config *sr_confi
 	if(tcgetattr(io->fd,&term)==-1)
 		{
 #  ifdef DEBUG_IO
-		printf("%s: tcgetattr failed: %s",io->device,strerror(errno));
+		printf("%s: tcgetattr failed: %s",io->filename,strerror(errno));
 #endif
 		return FALSE;
 		}
@@ -1137,7 +1138,7 @@ static bool IO_Serial_Set_Smartreader_Config(IO_Serial * io, SR_Config *sr_confi
 	if(tcsetattr(io->fd,TCSADRAIN,&term)==-1)
 		{
 #  ifdef DEBUG_IO
-		printf("%s: tcsetattr failed: %s",io->device,strerror(errno));
+		printf("%s: tcsetattr failed: %s",io->filename,strerror(errno));
 #endif
 		return FALSE;
 		}
@@ -1169,7 +1170,7 @@ static bool IO_Serial_Set_Smartreader_Config(IO_Serial * io, SR_Config *sr_confi
 	if(tcsendbreak(io->fd,0)==-1)
 		{
 #  ifdef DEBUG_IO
-		printf("%s: tcsendbreak failed: %s",io->device,strerror(errno));
+		printf("%s: tcsendbreak failed: %s",io->filename,strerror(errno));
 #endif
 		return FALSE;
 		}
@@ -1183,7 +1184,7 @@ static bool IO_Serial_Set_Smartreader_Config(IO_Serial * io, SR_Config *sr_confi
 	if(tcsetattr(io->fd,TCSADRAIN,&term)==-1)
 		{
 #  ifdef DEBUG_IO
-		printf("%s: tcsetattr failed: %s",io->device,strerror(errno));
+		printf("%s: tcsetattr failed: %s",io->filename,strerror(errno));
 #endif
 		return FALSE;
 		}

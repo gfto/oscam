@@ -105,6 +105,7 @@ int PPS_PreformPTS(PPS *pps)
     req[3]=PPS_GetPCK(req,len_request-1);
 	
 #ifdef DEBUG_PROTOCOL
+	int i;
 	printf("PTS: Sending request: ");
 	for (i = 0; i < len_request; i++)
 		printf("%X ", req[i]);

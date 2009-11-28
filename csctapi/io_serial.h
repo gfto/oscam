@@ -47,6 +47,8 @@
 /* Maximum size of PnP Com ID */
 #define IO_SERIAL_PNPID_SIZE 		256
 
+#define IO_SERIAL_FILENAME_LENGTH 	32
+
 /*
  * Exported datatypes definition
  */
@@ -76,6 +78,7 @@ typedef struct {
 /* IO_Serial exported datatype */
 typedef struct
 {
+	char filename[IO_SERIAL_FILENAME_LENGTH];
 	int fd;				/* Handle of the serial device */
 	IO_Serial_Properties * props;
 	unsigned com;				/* Com port number (1..4) */
