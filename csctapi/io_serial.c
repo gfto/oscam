@@ -380,8 +380,8 @@ bool IO_Serial_SetProperties(IO_Serial * io, IO_Serial_Properties * props, SR_Co
     ioctl(io->fd, TIOCSSERIAL, &nuts);
     cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
     cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
-#endif
    }
+#endif
         
    /* Set the character size */
    switch (props->bits)
