@@ -47,8 +47,6 @@
 /* Maximum size of PnP Com ID */
 #define IO_SERIAL_PNPID_SIZE 		256
 
-#define IO_SERIAL_FILENAME_LENGTH 	32
-
 /*
  * Exported datatypes definition
  */
@@ -65,20 +63,10 @@ typedef struct
 	int rts;	
 }
 IO_Serial_Properties;
-/* structure holding ATR value to be used for the smargo smartreader+ */
-typedef struct {
-	int F;
-	float D;
-	int fs;
-	int N;
-	int T;
-	int inv;
-} SR_Config;
 
 /* IO_Serial exported datatype */
 typedef struct
 {
-	char filename[IO_SERIAL_FILENAME_LENGTH];
 	int fd;				/* Handle of the serial device */
 	IO_Serial_Properties * props;
 	unsigned com;				/* Com port number (1..4) */
@@ -87,8 +75,6 @@ typedef struct
 	bool usbserial;			/* Is serial USB device */
 	int wr;
 	int reader_type;
-	unsigned long frequency;	/* Frequency (Hz) */
-	SR_Config *SmartReaderConf;
 }
 IO_Serial;
 
@@ -103,12 +89,12 @@ extern IO_Serial *IO_Serial_New (int reader_type);
 extern void IO_Serial_Delete (IO_Serial * io);
 
 /* Initialization and closing */
-extern bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial,unsigned long frequency, unsigned short reader_type, bool pnp);
+extern bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial, bool pnp);
 extern bool IO_Serial_Close (IO_Serial * io);
 
 /* Transmission properties */
-extern bool IO_Serial_SetProperties(IO_Serial * io, IO_Serial_Properties * props, SR_Config *sr_config);
-extern bool IO_Serial_GetProperties(IO_Serial * io, IO_Serial_Properties * props, SR_Config *sr_config);
+extern bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props);
+extern bool IO_Serial_GetProperties (IO_Serial * io, IO_Serial_Properties * props);
 extern bool IO_Serial_DTR_RTS(IO_Serial * io, int, int);
 #if defined(TUXBOX) && defined(PPC)
 extern void IO_Serial_Ioctl_Lock(IO_Serial *, int);
@@ -123,5 +109,8 @@ extern bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE
 /* Serial port atributes */
 extern unsigned IO_Serial_GetCom (IO_Serial * io);
 extern void IO_Serial_GetPnPId (IO_Serial * io, BYTE * pnp_id, unsigned *length);
+
+/* smartreader Frequency set */
+extern bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq, int irdeto_mode);
 
 #endif /* IO_SERIAL */

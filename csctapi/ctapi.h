@@ -21,7 +21,6 @@ extern "C" {
 extern char CT_init (
       unsigned short Ctn,                  /* Terminal Number */
       unsigned short pn,                    /* Port Number */
-      unsigned long frequency,				/* smartreader+ freq */
       int reader_type                        /* reader type (mouse, smartreader)
       );
 

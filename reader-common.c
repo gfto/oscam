@@ -4,7 +4,7 @@
 char oscam_device[128];
 int  oscam_card_detect;
 int  mhz;
-int  reader_has_irdeto_card;
+int  reader_irdeto_mode;
 
 uchar cta_cmd[272], cta_res[260], atr[64];
 ushort cta_lr, atr_size=0;
@@ -153,7 +153,7 @@ static int reader_activate_card()
 //  for (i=0; (i<5) && ((ret!=OK)||(cta_res[cta_lr-2]!=0x90)); i++)
   for (i=0; i<5; i++)
   {
-    //reader_irdeto_mode = i%2 == 1;  //only works when not overclocking
+    reader_irdeto_mode = i%2 == 1;
     cta_cmd[0] = CTBCS_CLA;
     cta_cmd[1] = CTBCS_INS_REQUEST;
     cta_cmd[2] = CTBCS_P1_INTERFACE1;
@@ -179,10 +179,6 @@ static int reader_activate_card()
   memset(reader[ridx].init_history, 0, sizeof(reader[ridx].init_history));
 #endif
   cs_ri_log("ATR: %s", cs_hexdump(1, atr, atr_size));
-  if (!memcmp(atr+4, "IRDETO", 6))
-    reader_has_irdeto_card = 1;
-  else
-    reader_has_irdeto_card = 0;
   sleep(1);
   return(1);
 }
@@ -296,8 +292,7 @@ int reader_device_init(char *device, int typ)
   cs_ptyp_orig=cs_ptyp;
   cs_ptyp=D_DEVICE;
   snprintf(oscam_device, sizeof(oscam_device), "%s", device);
-
-  if ((rc=CT_init(1, reader_device_type(device, typ),mhz*10000,reader[ridx].typ))!=OK)
+  if ((rc=CT_init(1, reader_device_type(device, typ),reader[ridx].typ))!=OK)
     cs_log("Cannot open device: %s", device);
   cs_debug("ct_init on %s: %d", device, rc);
   cs_ptyp=cs_ptyp_orig;
