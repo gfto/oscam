@@ -337,7 +337,8 @@ bool IO_Serial_SetProperties(IO_Serial * io, IO_Serial_Properties * props, SR_Co
    /* Set the bitrate */
    
    extern int mhz;
-   extern int reader_irdeto_mode;
+   extern int reader_has_irdeto_card;
+
 
    if(io->reader_type==RTYP_SMART)
    {
@@ -353,117 +354,33 @@ bool IO_Serial_SetProperties(IO_Serial * io, IO_Serial_Properties * props, SR_Co
 		}
    }
 
-   if (mhz == 600)
-   {
-      
-      /* for 6MHz */
-      if (reader_irdeto_mode)
-      {
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(props->input_bitrate));
-      } 
-      else 
-      {
 #ifdef OS_LINUX
-         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-         struct serial_struct nuts;
-         ioctl(io->fd, TIOCGSERIAL, &nuts);
-         nuts.custom_divisor = nuts.baud_base / 9600 * 3.57 / 6;
-         nuts.flags &= ~ASYNC_SPD_MASK;
-         nuts.flags |= ASYNC_SPD_CUST;
-         ioctl(io->fd, TIOCSSERIAL, &nuts);
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
-#else
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(props->input_bitrate));
-#endif
-      }
-   }
-   else if (mhz == 357 || mhz == 358)
-   {
-      /* for 3.57 MHz */
-      if (reader_irdeto_mode)
-      {
-#ifdef OS_LINUX
-         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-         struct serial_struct nuts;
-         ioctl(io->fd, TIOCGSERIAL, &nuts);
-         nuts.custom_divisor = nuts.baud_base / 5713;
-         nuts.flags &= ~ASYNC_SPD_MASK;
-         nuts.flags |= ASYNC_SPD_CUST;
-         ioctl(io->fd, TIOCSSERIAL, &nuts);
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
-#else
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(props->input_bitrate));
-#endif
-      }
-      else 
-      {
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(props->input_bitrate));
-      }
-   }
-   else if (mhz == 800)
-   {
-      
-      /* for 8MHz */
-      if (reader_irdeto_mode)
-      {
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(props->input_bitrate));
-      } 
-      else 
-      {
-#ifdef OS_LINUX
-         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-         struct serial_struct nuts;
-         ioctl(io->fd, TIOCGSERIAL, &nuts);
-         nuts.custom_divisor = nuts.baud_base / 9600 * 6 / 8;
-         nuts.flags &= ~ASYNC_SPD_MASK;
-         nuts.flags |= ASYNC_SPD_CUST;
-         ioctl(io->fd, TIOCSSERIAL, &nuts);
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
-#else
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(props->input_bitrate));
-#endif
-      }
-   }
-   else if (mhz == 1000)
-   {
-      
-      /* for 10MHz */
-      if (reader_irdeto_mode)
-      {
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(props->input_bitrate));
-      } 
-      else 
-      {
-#ifdef OS_LINUX
-         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-         struct serial_struct nuts;
-         ioctl(io->fd, TIOCGSERIAL, &nuts);
-         nuts.custom_divisor = nuts.baud_base / 9600 * 6 / 10;
-         nuts.flags &= ~ASYNC_SPD_MASK;
-         nuts.flags |= ASYNC_SPD_CUST;
-         ioctl(io->fd, TIOCSSERIAL, &nuts);
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
-#else
-         cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(props->input_bitrate));
-#endif
-      }
-   }
+   int standard_card_clock; //contains non-overclocked, standard clockrate of the card in 10kHz steps
+   if (reader_has_irdeto_card)
+     standard_card_clock = 600;
    else
-   {
-      /* invalid */
-      return FALSE;
+     standard_card_clock = 357;
+   if (mhz == standard_card_clock) 
+#endif
+   { //no overclocking
+     cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(props->output_bitrate));
+     cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(props->input_bitrate));
+   }
+#ifdef OS_LINUX
+   else { //over or underclocking
+    /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
+    struct serial_struct nuts;
+    ioctl(io->fd, TIOCGSERIAL, &nuts);
+    int custom_baud = 9600 * mhz / standard_card_clock;
+    nuts.custom_divisor = (nuts.baud_base + (custom_baud/2))/ custom_baud;
+    cs_debug("customspeed: standardclock=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
+	                      standard_card_clock, mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
+    nuts.flags &= ~ASYNC_SPD_MASK;
+    nuts.flags |= ASYNC_SPD_CUST;
+    ioctl(io->fd, TIOCSSERIAL, &nuts);
+    cfsetospeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
+    cfsetispeed(&newtio, IO_Serial_Bitrate_to_Speed(38400));
+#endif
    }
         
    /* Set the character size */
@@ -1114,7 +1031,8 @@ static bool IO_Serial_InitPnP (IO_Serial * io)
 	if (!IO_Serial_SetProperties(io, &props, &srConfig))
 		return FALSE;
 
-	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (io, 200, 1, &(io->PnP_id[i])))
+	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (io, 1000, 1, &(io->PnP_id[i])))
+	//while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (io, 200, 1, &(io->PnP_id[i])))
       i++;
 
 	io->PnP_id_size = i;

@@ -4,7 +4,7 @@
 char oscam_device[128];
 int  oscam_card_detect;
 int  mhz;
-int  reader_irdeto_mode;
+int  reader_has_irdeto_card;
 
 uchar cta_cmd[272], cta_res[260], atr[64];
 ushort cta_lr, atr_size=0;
@@ -153,7 +153,7 @@ static int reader_activate_card()
 //  for (i=0; (i<5) && ((ret!=OK)||(cta_res[cta_lr-2]!=0x90)); i++)
   for (i=0; i<5; i++)
   {
-    reader_irdeto_mode = i%2 == 1;
+    //reader_irdeto_mode = i%2 == 1;  //only works when not overclocking
     cta_cmd[0] = CTBCS_CLA;
     cta_cmd[1] = CTBCS_INS_REQUEST;
     cta_cmd[2] = CTBCS_P1_INTERFACE1;
@@ -179,6 +179,10 @@ static int reader_activate_card()
   memset(reader[ridx].init_history, 0, sizeof(reader[ridx].init_history));
 #endif
   cs_ri_log("ATR: %s", cs_hexdump(1, atr, atr_size));
+  if (!memcmp(atr+4, "IRDETO", 6))
+    reader_has_irdeto_card = 1;
+  else
+    reader_has_irdeto_card = 0;
   sleep(1);
   return(1);
 }
