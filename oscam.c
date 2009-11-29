@@ -2142,7 +2142,7 @@ void cs_log_config()
     sprintf((char *)buf, ", nice=%d", cfg->nice);
   else
     buf[0]='\0';
-  cs_log("version=%s, system=%s%s", CS_VERSION_X, cs_platform((char *)buf+64), buf);
+  cs_log("version=%s, build #%s, system=%s%s", CS_VERSION_X, CS_SVN_VERSION, cs_platform((char *)buf+64), buf);
   cs_log("max. clients=%d, client max. idle=%d sec",
 #ifdef CS_ANTICASC
          CS_MAXPID-3, cfg->cmaxidle);
