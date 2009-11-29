@@ -47,7 +47,7 @@ static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 
 //////  special thanks to an "italian forum" !!!!
 
 
-void postprocess_cw(ECM_REQUEST *er, int posECMbody, unsigned char *cw)
+void postprocess_cw(unsigned char *cw)
 {
 
   if (!cw_is_valid(cw)) //if cw is all zero, keep it that way
@@ -77,16 +77,6 @@ void postprocess_cw(ECM_REQUEST *er, int posECMbody, unsigned char *cw)
   int tmp1;
   int a,h,j,k,l,m = 0;
   int i;
-  int posB0 = -1;
-  for (i = 6; i < posECMbody; i++)
-  {
-    if (er->ecm[i] == 0xB0)
-    {
-      posB0 = i;
-      break;
-    }
-  }
-  if (posB0 == -1) return;
 
   memset(Hash48,0,0x48);
   for (i = 0; i < 8; i++)
@@ -770,8 +760,8 @@ if (reader[ridx].typ != R_INTERN) {
     cs_log("cmd ins58 failed");
     return 0;
     }
-  memset(reader[ridx].hexserial, 0, 4);
-  memcpy(reader[ridx].hexserial+4, cta_res+3, 4);
+  memset(reader[ridx].hexserial, 0, 8);
+  memcpy(reader[ridx].hexserial+2, cta_res+3, 4);
   reader[ridx].caid[0] = cta_res[24]*0x100+cta_res[25];
 
   /* we have one provider, 0x0000 */
@@ -838,7 +828,7 @@ if (reader[ridx].typ != R_INTERN) {
 
   cs_log("type: Videoguard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
          reader[ridx].caid[0],
-         reader[ridx].hexserial[4],reader[ridx].hexserial[5],reader[ridx].hexserial[6],reader[ridx].hexserial[7],
+         reader[ridx].hexserial[2],reader[ridx].hexserial[3],reader[ridx].hexserial[4],reader[ridx].hexserial[5],
          boxID[0],boxID[1],boxID[2],boxID[3]);
 
   ///read_tiers();
@@ -873,8 +863,22 @@ int videoguard_do_ecm(ECM_REQUEST *er)
         memcpy(er->cw+0,CW1,8);
         memcpy(er->cw+8,CW2,8);
       }
-      postprocess_cw(er, posECMpart2,er->cw+0);
-      postprocess_cw(er, posECMpart2,er->cw+8);
+
+      //test for postprocessing marker
+      int posB0 = -1;
+      int i;
+      for (i = 6; i < posECMpart2; i++)
+      {
+        if (er->ecm[i] == 0xB0 && er->ecm[i+1] == 0x01 && er->ecm[i+2] == 0x01 )
+	{
+	  posB0 = i;
+      	  break;
+	}
+      }
+      if (posB0 != -1) {
+	postprocess_cw(er->cw+0);
+	postprocess_cw(er->cw+8);
+      }
       return 1;
     }
   }
@@ -909,7 +913,7 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
 
   int position=-1;
   for(l=0;l<num_addr(data);l++) {
-    if(!memcmp(&data[l*4+4],a+4,s)) {
+    if(!memcmp(&data[l*4+4],a+2,s)) {
       position=l;
       break;
       }
