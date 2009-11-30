@@ -20,7 +20,6 @@ void cs_ri_brk(int flag)
 
 void cs_ri_log(char *fmt,...)
 {
-  int val;
   char txt[256];
 
   va_list params;
