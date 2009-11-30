@@ -51,9 +51,11 @@
  * Exported datatypes definition
  */
 
-/* Settings than can be modified to the serial device */
+/* IO_Serial exported datatype */
 typedef struct
 {
+	int fd;				/* Handle of the serial device */
+	/* Settings that can be modified */
 	unsigned long input_bitrate;
 	unsigned long  output_bitrate;
 	unsigned bits;
@@ -61,14 +63,7 @@ typedef struct
 	int parity;
 	int dtr;
 	int rts;	
-}
-IO_Serial_Properties;
-
-/* IO_Serial exported datatype */
-typedef struct
-{
-	int fd;				/* Handle of the serial device */
-	IO_Serial_Properties * props;
+	/* end settings that can be modified */
 	unsigned com;				/* Com port number (1..4) */
 	BYTE PnP_id[IO_SERIAL_PNPID_SIZE];	/* PnP Id of the serial device */
 	unsigned PnP_id_size;			/* Length of PnP Id */
@@ -94,8 +89,8 @@ extern bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial, bool p
 extern bool IO_Serial_Close (IO_Serial * io);
 
 /* Transmission properties */
-extern bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props);
-extern bool IO_Serial_GetProperties (IO_Serial * io, IO_Serial_Properties * props);
+extern bool IO_Serial_SetProperties (IO_Serial * io);
+extern bool IO_Serial_GetProperties (IO_Serial * io);
 extern bool IO_Serial_DTR_RTS(IO_Serial * io, int, int);
 #if defined(TUXBOX) && defined(PPC)
 extern void IO_Serial_Ioctl_Lock(IO_Serial *, int);

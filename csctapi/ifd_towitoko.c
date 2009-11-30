@@ -145,7 +145,6 @@ void IFD_Towitoko_Delete (IFD * ifd)
 
 int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 {
-	IO_Serial_Properties props;
 	int ret;
 
 #ifdef USE_GPIO	     	
@@ -179,18 +178,18 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 
 	
 	/* Default serial port settings */
-	props.input_bitrate = IFD_TOWITOKO_BAUDRATE;
-	props.output_bitrate = IFD_TOWITOKO_BAUDRATE;
-	props.bits = 8;
-	props.stopbits = 2;
-	props.parity = IO_SERIAL_PARITY_EVEN;
-	props.dtr = IO_SERIAL_HIGH;
-//	props.dtr = IO_SERIAL_LOW;
-//	props.rts = IO_SERIAL_HIGH;
-	props.rts = IO_SERIAL_LOW;
+	io->input_bitrate = IFD_TOWITOKO_BAUDRATE;
+	io->output_bitrate = IFD_TOWITOKO_BAUDRATE;
+	io->bits = 8;
+	io->stopbits = 2;
+	io->parity = IO_SERIAL_PARITY_EVEN;
+	io->dtr = IO_SERIAL_HIGH;
+//	io->dtr = IO_SERIAL_LOW;
+//	io->rts = IO_SERIAL_HIGH;
+	io->rts = IO_SERIAL_LOW;
 	
 		
-	if (!IO_Serial_SetProperties (io, &props))
+	if (!IO_Serial_SetProperties (io))
 		return IFD_TOWITOKO_IO_ERROR;
 		
 	/* Default ifd settings */
@@ -258,8 +257,6 @@ int IFD_Towitoko_Close (IFD * ifd)
 
 int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 {
-	IO_Serial_Properties props;
-	
 	if(ifd->io->com==RTYP_SCI)
 	{
 		return IFD_TOWITOKO_OK;
@@ -278,18 +275,18 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 #endif
 	
 	/* Get current settings */
-	if (!IO_Serial_GetProperties (ifd->io, &props))
+	if (!IO_Serial_GetProperties (ifd->io))
 		return IFD_TOWITOKO_IO_ERROR;
 	
-	if (props.output_bitrate == baudrate)
+	if (ifd->io->output_bitrate == baudrate)
 		return IFD_TOWITOKO_OK;
 
 	
 	/* Set serial device bitrate */
-	props.output_bitrate = baudrate;
-	props.input_bitrate = baudrate;
+	ifd->io->output_bitrate = baudrate;
+	ifd->io->input_bitrate = baudrate;
 	
-	if (!IO_Serial_SetProperties (ifd->io, &props))
+	if (!IO_Serial_SetProperties (ifd->io))
 		return IFD_TOWITOKO_IO_ERROR;
 	
 	return IFD_TOWITOKO_OK;
@@ -297,26 +294,22 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 
 int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate)
 {
-	IO_Serial_Properties props;
-	
 	if(ifd->io->com==RTYP_SCI)
 	{
 		return IFD_TOWITOKO_OK;
 	}
 	
 	/* Get current settings */
-	if (!IO_Serial_GetProperties (ifd->io, &props))
+	if (!IO_Serial_GetProperties (ifd->io))
 		return IFD_TOWITOKO_IO_ERROR;
 	
-	(*baudrate) = props.output_bitrate;
+	(*baudrate) = ifd->io->output_bitrate;
 	
 	return IFD_TOWITOKO_OK;
 }
 
 extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity)
 {
-	IO_Serial_Properties props;
-		
 	if(ifd->io->com==RTYP_SCI)
 	{
 		return IFD_TOWITOKO_OK;
@@ -332,14 +325,14 @@ extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity)
 		return IFD_TOWITOKO_PARAM_ERROR;
 	
 	/* Get current settings */
-	if (!IO_Serial_GetProperties (ifd->io, &props))
+	if (!IO_Serial_GetProperties (ifd->io))
 		return IFD_TOWITOKO_IO_ERROR;
 	
-	if (props.parity !=parity)
+	if (ifd->io->parity !=parity)
 	{
-		props.parity = parity;
+		ifd->io->parity = parity;
 		
-		if (!IO_Serial_SetProperties (ifd->io, &props))
+		if (!IO_Serial_SetProperties (ifd->io))
 			return IFD_TOWITOKO_IO_ERROR;
 	}
 	

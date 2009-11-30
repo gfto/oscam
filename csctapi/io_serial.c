@@ -68,12 +68,6 @@ static bool IO_Serial_InitPnP (IO_Serial * io);
 
 static void IO_Serial_Clear (IO_Serial * io);
 
-static bool IO_Serial_GetPropertiesCache(IO_Serial * io, IO_Serial_Properties * props);
-
-static void IO_Serial_SetPropertiesCache(IO_Serial * io, IO_Serial_Properties * props);
-
-static void IO_Serial_ClearPropertiesCache (IO_Serial * io);
-
 static int _in_echo_read = 0;
 int io_serial_need_dummy_char = 0;
 
@@ -232,7 +226,7 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial, bool pnp)
 	return TRUE;
 }
 
-bool IO_Serial_GetProperties (IO_Serial * io, IO_Serial_Properties * props)
+bool IO_Serial_GetProperties (IO_Serial * io)
 {
 	struct termios currtio;
 	speed_t i_speed, o_speed;
@@ -242,9 +236,9 @@ bool IO_Serial_GetProperties (IO_Serial * io, IO_Serial_Properties * props)
 	if(io->com==RTYP_SCI)
 		return FALSE;
 #endif
-	
-	if (IO_Serial_GetPropertiesCache(io, props))
-		return TRUE;
+
+	if (io->input_bitrate != 0 && io->output_bitrate != 0) //properties are already filled
+	  return TRUE;
 	
 	if (tcgetattr (io->fd, &currtio) != 0)
 		return FALSE;
@@ -255,101 +249,101 @@ bool IO_Serial_GetProperties (IO_Serial * io, IO_Serial_Properties * props)
 	{
 #ifdef B0
 		case B0:
-			props->output_bitrate = 0;
+			io->output_bitrate = 0;
 			break;
 #endif
 #ifdef B50
 		case B50:
-			props->output_bitrate = 50;
+			io->output_bitrate = 50;
 			break;
 #endif
 #ifdef B75
 		case B75:
-			props->output_bitrate = 75;
+			io->output_bitrate = 75;
 			break;
 #endif
 #ifdef B110
 		case B110:
-			props->output_bitrate = 110;
+			io->output_bitrate = 110;
 			break;
 #endif
 #ifdef B134
 		case B134:
-			props->output_bitrate = 134;
+			io->output_bitrate = 134;
 			break;
 #endif
 #ifdef B150
 		case B150:
-			props->output_bitrate = 150;
+			io->output_bitrate = 150;
 			break;
 #endif
 #ifdef B200
 		case B200:
-			props->output_bitrate = 200;
+			io->output_bitrate = 200;
 			break;
 #endif
 #ifdef B300
 		case B300:
-			props->output_bitrate = 300;
+			io->output_bitrate = 300;
 			break;
 #endif
 #ifdef B600
 		case B600:
-			props->output_bitrate = 600;
+			io->output_bitrate = 600;
 			break;
 #endif
 #ifdef B1200
 		case B1200:
-			props->output_bitrate = 1200;
+			io->output_bitrate = 1200;
 			break;
 #endif
 #ifdef B1800
 		case B1800:
-			props->output_bitrate = 1800;
+			io->output_bitrate = 1800;
 			break;
 #endif
 #ifdef B2400
 		case B2400:
-			props->output_bitrate = 2400;
+			io->output_bitrate = 2400;
 			break;
 #endif
 #ifdef B4800
 		case B4800:
-			props->output_bitrate = 4800;
+			io->output_bitrate = 4800;
 			break;
 #endif
 #ifdef B9600
 		case B9600:
-			props->output_bitrate = 9600;
+			io->output_bitrate = 9600;
 			break;
 #endif
 #ifdef B19200
 		case B19200:
-			props->output_bitrate = 19200;
+			io->output_bitrate = 19200;
 			break;
 #endif
 #ifdef B38400
 		case B38400:
-			props->output_bitrate = 38400;
+			io->output_bitrate = 38400;
 			break;
 #endif
 #ifdef B57600
 		case B57600:
-			props->output_bitrate = 57600;
+			io->output_bitrate = 57600;
 			break;
 #endif
 #ifdef B115200
 		case B115200:
-			props->output_bitrate = 115200;
+			io->output_bitrate = 115200;
 			break;
 #endif
 #ifdef B230400
 		case B230400:
-			props->output_bitrate = 230400;
+			io->output_bitrate = 230400;
 			break;
 #endif
 		default:
-			props->output_bitrate = 1200;
+			io->output_bitrate = 1200;
 			break;
 	}
 
@@ -359,153 +353,151 @@ bool IO_Serial_GetProperties (IO_Serial * io, IO_Serial_Properties * props)
 	{
 #ifdef B0
 		case B0:
-			props->input_bitrate = 0;
+			io->input_bitrate = 0;
 			break;
 #endif
 #ifdef B50
 		case B50:
-			props->input_bitrate = 50;
+			io->input_bitrate = 50;
 			break;
 #endif
 #ifdef B75
 		case B75:
-			props->input_bitrate = 75;
+			io->input_bitrate = 75;
 			break;
 #endif
 #ifdef B110
 		case B110:
-			props->input_bitrate = 110;
+			io->input_bitrate = 110;
 			break;
 #endif
 #ifdef B134
 		case B134:
-			props->input_bitrate = 134;
+			io->input_bitrate = 134;
 			break;
 #endif
 #ifdef B150
 		case B150:
-			props->input_bitrate = 150;
+			io->input_bitrate = 150;
 			break;
 #endif
 #ifdef B200
 		case B200:
-			props->input_bitrate = 200;
+			io->input_bitrate = 200;
 			break;
 #endif
 #ifdef B300
 		case B300:
-			props->input_bitrate = 300;
+			io->input_bitrate = 300;
 			break;
 #endif
 #ifdef B600
 		case B600:
-			props->input_bitrate = 600;
+			io->input_bitrate = 600;
 			break;
 #endif
 #ifdef B1200
 		case B1200:
-			props->input_bitrate = 1200;
+			io->input_bitrate = 1200;
 			break;
 #endif
 #ifdef B1800
 		case B1800:
-			props->input_bitrate = 1800;
+			io->input_bitrate = 1800;
 			break;
 #endif
 #ifdef B2400
 		case B2400:
-			props->input_bitrate = 2400;
+			io->input_bitrate = 2400;
 			break;
 #endif
 #ifdef B4800
 		case B4800:
-			props->input_bitrate = 4800;
+			io->input_bitrate = 4800;
 			break;
 #endif
 #ifdef B9600
 		case B9600:
-			props->input_bitrate = 9600;
+			io->input_bitrate = 9600;
 			break;
 #endif
 #ifdef B19200
 		case B19200:
-			props->input_bitrate = 19200;
+			io->input_bitrate = 19200;
 			break;
 #endif
 #ifdef B38400
 		case B38400:
-			props->input_bitrate = 38400;
+			io->input_bitrate = 38400;
 			break;
 #endif
 #ifdef B57600
 		case B57600:
-			props->input_bitrate = 57600;
+			io->input_bitrate = 57600;
 			break;
 #endif
 #ifdef B115200
 		case B115200:
-			props->input_bitrate = 115200;
+			io->input_bitrate = 115200;
 			break;
 #endif
 #ifdef B230400
 		case B230400:
-			props->input_bitrate = 230400;
+			io->input_bitrate = 230400;
 			break;
 #endif
 		default:
-			props->input_bitrate = 1200;
+			io->input_bitrate = 1200;
 			break;
 	}
 	
 	switch (currtio.c_cflag & CSIZE)
 	{
 		case CS5:
-			props->bits = 5;
+			io->bits = 5;
 			break;
 		case CS6:
-			props->bits = 6;
+			io->bits = 6;
 			break;
 		case CS7:
-			props->bits = 7;
+			io->bits = 7;
 			break;
 		case CS8:
-			props->bits = 8;
+			io->bits = 8;
 			break;
 	}
 	
 	if (((currtio.c_cflag) & PARENB) == PARENB)
 	{
 		if (((currtio.c_cflag) & PARODD) == PARODD)
-			props->parity = IO_SERIAL_PARITY_ODD;
+			io->parity = IO_SERIAL_PARITY_ODD;
 		else
-			props->parity = IO_SERIAL_PARITY_EVEN;
+			io->parity = IO_SERIAL_PARITY_EVEN;
 	}
 	else
 	{
-		props->parity = IO_SERIAL_PARITY_NONE;
+		io->parity = IO_SERIAL_PARITY_NONE;
 	}
 	
 	if (((currtio.c_cflag) & CSTOPB) == CSTOPB)
-		props->stopbits = 2;
+		io->stopbits = 2;
 	else
-		props->stopbits = 1;
+		io->stopbits = 1;
 	
 	if (ioctl (io->fd, TIOCMGET, &mctl) < 0)
 		return FALSE;
 	
-	props->dtr = ((mctl & TIOCM_DTR) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
-	props->rts = ((mctl & TIOCM_RTS) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
-	
-	IO_Serial_SetPropertiesCache (io, props);
+	io->dtr = ((mctl & TIOCM_DTR) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
+	io->rts = ((mctl & TIOCM_RTS) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
 	
 #ifdef DEBUG_IO
-	printf("IO: Getting properties: %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", props->input_bitrate, props->bits, props->parity == IO_SERIAL_PARITY_EVEN ? "Even" : props->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", props->stopbits, props->dtr, props->rts);
+	printf("IO: Getting properties: %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
 #endif
 	
 	return TRUE;
 }
 
-bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
+bool IO_Serial_SetProperties (IO_Serial * io)
 {
    struct termios newtio;
    unsigned int modembits;
@@ -515,7 +507,7 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
       return FALSE;
 #endif
    
-   //	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, props->input_bitrate, props->bits, props->parity == IO_SERIAL_PARITY_EVEN ? "Even" : props->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", props->stopbits, props->dtr, props->rts);
+   //	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
    memset (&newtio, 0, sizeof (newtio));
    /* Set the bitrate */
    
@@ -547,8 +539,8 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
    if (mhz == standard_card_clock) 
 #endif
    { //no overclocking
-     cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-     cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
+     cfsetospeed(&newtio, IO_Serial_Bitrate(io->output_bitrate));
+     cfsetispeed(&newtio, IO_Serial_Bitrate(io->input_bitrate));
    }
 #ifdef OS_LINUX
    else { //over or underclocking
@@ -568,7 +560,7 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 #endif
         
    /* Set the character size */
-   switch (props->bits)
+   switch (io->bits)
    {
 		case 5:
 			newtio.c_cflag |= CS5;
@@ -588,7 +580,7 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 	}
 	
 	/* Set the parity */
-	switch (props->parity)
+	switch (io->parity)
 	{
 		case IO_SERIAL_PARITY_ODD:
 			newtio.c_cflag |= PARENB;
@@ -606,7 +598,7 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 	}
 	
 	/* Set the number of stop bits */
-	switch (props->stopbits)
+	switch (io->stopbits)
 	{
 		case 1:
 			newtio.c_cflag &= (~CSTOPB);
@@ -638,14 +630,12 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
 //		return FALSE;
 
 	IO_Serial_Ioctl_Lock(io, 1);
-	IO_Serial_DTR_RTS(io, 0, props->rts == IO_SERIAL_HIGH);
-	IO_Serial_DTR_RTS(io, 1, props->dtr == IO_SERIAL_HIGH);
+	IO_Serial_DTR_RTS(io, 0, io->rts == IO_SERIAL_HIGH);
+	IO_Serial_DTR_RTS(io, 1, io->dtr == IO_SERIAL_HIGH);
 	IO_Serial_Ioctl_Lock(io, 0);
 	
-	IO_Serial_SetPropertiesCache (io, props);
-	
 #ifdef DEBUG_IO
-	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, props->input_bitrate, props->bits, props->parity == IO_SERIAL_PARITY_EVEN ? "Even" : props->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", props->stopbits, props->dtr, props->rts);
+	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
 #endif
 	return TRUE;
 }
@@ -845,18 +835,9 @@ bool IO_Serial_Close (IO_Serial * io)
 	if (close (io->fd) != 0)
 		return FALSE;
 	
-	IO_Serial_ClearPropertiesCache (io);
 	IO_Serial_Clear (io);
 	
 	return TRUE;
-}
-
-void IO_Serial_Delete (IO_Serial * io)
-{
-	if (io->props != NULL)
-		free (io->props);
-	
-	free (io);
 }
 
 /*
@@ -1038,56 +1019,19 @@ static bool IO_Serial_WaitToWrite (IO_Serial *io, unsigned delay_ms, unsigned ti
 static void IO_Serial_Clear (IO_Serial * io)
 {
 	io->fd = -1;
-	io->props = NULL;
 	io->com = 0;
 	memset (io->PnP_id, 0, IO_SERIAL_PNPID_SIZE);
 	io->PnP_id_size = 0;
 	io->usbserial = FALSE;
 	io->wr = 0;
-}
-
-static void IO_Serial_SetPropertiesCache(IO_Serial * io, IO_Serial_Properties * props)
-{
-#ifdef SCI_DEV
-	if(io->com==RTYP_SCI)
-		return;
-#endif
-		
-	if (io->props == NULL)
-		io->props = (IO_Serial_Properties *) malloc (sizeof (IO_Serial_Properties));
-#ifdef DEBUG_IO
-	printf ("IO: Catching properties\n");
-#endif
-	
-	memcpy (io->props, props, sizeof (IO_Serial_Properties)); 
-}
-
-static bool IO_Serial_GetPropertiesCache(IO_Serial * io, IO_Serial_Properties * props)
-{
-	if (io->props != NULL)
-	{
-		memcpy (props, io->props, sizeof (IO_Serial_Properties)); 
-#if 0
-#ifdef DEBUG_IO
-		printf("IO: Getting properties (catched): %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", props->input_bitrate, props->bits, props->parity == IO_SERIAL_PARITY_EVEN ? "Even" : props->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", props->stopbits, props->dtr, props->rts);
-#endif
-#endif
-		return TRUE;
-	}
-	
-	return FALSE;
-}
-
-static void IO_Serial_ClearPropertiesCache (IO_Serial * io)
-{
-#ifdef DEBUG_IO
-	printf ("IO: Clearing properties cache\n");
-#endif
-	if (io->props != NULL)
-	{
-		free (io->props);
-		io->props = NULL;
-	}
+	//modifyable properties:
+	io->input_bitrate = 0;
+	io->output_bitrate = 0;
+	io->bits = 0;
+	io->stopbits = 0;
+	io->parity = 0;
+	io->dtr = 0;
+	io->rts = 0;
 }
 
 static void IO_Serial_DeviceName (unsigned com, bool usbserial, char * filename, unsigned length)
@@ -1102,18 +1046,17 @@ static void IO_Serial_DeviceName (unsigned com, bool usbserial, char * filename,
 
 static bool IO_Serial_InitPnP (IO_Serial * io)
 {
-	IO_Serial_Properties props;
 	int i = 0;
-	props.input_bitrate = 1200;
-	props.output_bitrate = 1200;
-	props.parity = IO_SERIAL_PARITY_NONE;
-	props.bits = 7;
-	props.stopbits = 1;
-	props.dtr = IO_SERIAL_HIGH;
-//	props.rts = IO_SERIAL_HIGH;
-	props.rts = IO_SERIAL_LOW;
+	io->input_bitrate = 1200;
+	io->output_bitrate = 1200;
+	io->parity = IO_SERIAL_PARITY_NONE;
+	io->bits = 7;
+	io->stopbits = 1;
+	io->dtr = IO_SERIAL_HIGH;
+//	io->rts = IO_SERIAL_HIGH;
+	io->rts = IO_SERIAL_LOW;
 	
-	if (!IO_Serial_SetProperties (io, &props))
+	if (!IO_Serial_SetProperties (io))
 		return FALSE;
 
 	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (io, 200, 1, &(io->PnP_id[i])))
