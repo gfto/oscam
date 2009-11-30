@@ -835,7 +835,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   return(ph->ptab->ports[port_idx].fd);
 }
 
-static void *cs_client_resolve(void *dummy)
+static void cs_client_resolve(void *dummy)
 {
   while (1)
   {
@@ -864,7 +864,7 @@ static void start_client_resolver()
   int i;
   pthread_t tid;
 
-  if (i=pthread_create(&tid, (pthread_attr_t *)0, cs_client_resolve, (void *) 0))
+  if (i=pthread_create(&tid, (pthread_attr_t *)0, (void *)&cs_client_resolve, (void *) 0))
     cs_log("ERROR: can't create resolver-thread (err=%d)", i);
   else
   {
@@ -895,7 +895,7 @@ void cs_resolve()
 }
 
 #ifdef USE_PTHREAD
-static void *cs_logger(void *dummy)
+static void cs_logger(void *dummy)
 #else
 static void cs_logger(void)
 #endif
@@ -935,7 +935,7 @@ static void start_resolver()
   int i;
 #ifdef USE_PTHREAD
   pthread_t tid;
-  if (i=pthread_create(&tid, (pthread_attr_t *)0, cs_logger, (void *) 0))
+  if (i=pthread_create(&tid, (pthread_attr_t *)0, (void *) &cs_logger, (void *) 0))
     cs_log("ERROR: can't create logging-thread (err=%d)", i);
   else
   {
