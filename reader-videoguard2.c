@@ -75,7 +75,7 @@ void postprocess_cw(unsigned char *cw)
   unsigned char Hash14[0x14];
   unsigned char counter=0,counter2=0;
   int tmp1;
-  int a,h,j,k,l,m = 0;
+  int h,j,k,l,m = 0;
   int i;
 
   memset(Hash48,0,0x48);
@@ -753,7 +753,7 @@ if (reader[ridx].typ != R_INTERN) {
     return 0;
     }
 
-  short int SWIRDstatus = cta_res[1];
+  //short int SWIRDstatus = cta_res[1];
   unsigned char ins58[5] = { 0xD0,0x58,0x00,0x00,0x00 };
   l=do_cmd(ins58, NULL, buff);
   if(l<0) {

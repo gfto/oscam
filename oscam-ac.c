@@ -46,7 +46,7 @@ int idx_from_ac_idx(int ac_idx)
 
 void ac_do_stat()
 {
-  int i, j, idx, exceeds, maxval, prev_deny;
+  int i, j, idx, exceeds, maxval, prev_deny=0;
   int cl_idx;
 
   for( i=0; i<CS_MAXPID; i++ ) 

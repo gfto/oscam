@@ -156,7 +156,7 @@ i386-pc-linux:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -Winline -Werror -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
+		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -177,7 +177,7 @@ macosx-native:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD -DCS_CONFDIR=${CS_CONFDIR} -Winline -Werror -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
+		DS_OPTS="-O2 -DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD -DCS_CONFDIR=${CS_CONFDIR} -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/.$$//' )"'"'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \

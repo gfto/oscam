@@ -51,7 +51,7 @@ static int camd35_auth_client(uchar *ucrc)
 
 static int camd35_recv(uchar *buf, int l)
 {
-  int rc, n, s, rs;
+  int rc, s, rs, n=0;
   unsigned char recrc[4];
   for (rc=rs=s=0; !rc; s++) switch(s)
   {
@@ -463,7 +463,7 @@ static int camd35_recv_log(ushort *caid, ulong *provid, ushort *srvid)
 {
   int i;
   uchar buf[512], *ptr, *ptr2;
-  ushort idx;
+  ushort idx=0;
   if (!logfd) return(-1);
   if ((i=recv(logfd, buf, sizeof(buf), 0))<=0) return(-1);
   buf[i]=0;

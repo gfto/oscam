@@ -500,7 +500,6 @@ bool IO_Serial_GetProperties (IO_Serial * io)
 bool IO_Serial_SetProperties (IO_Serial * io)
 {
    struct termios newtio;
-   unsigned int modembits;
 	
 #ifdef SCI_DEV
    if(io->com==RTYP_SCI)
@@ -1071,7 +1070,6 @@ bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq, int irdeto_mode)
  {
    struct termios term;
    struct termios orig;
-   unsigned int u;
    unsigned char fi_di[4]={0x01, 0x01, 0x74, 0x01};
    unsigned char fr[3]={0x02, 0x00, 0x00};
    unsigned char nn[2]={0x03, 0x00};

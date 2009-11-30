@@ -824,7 +824,7 @@ int init_userdb()
   return(0);
 }
 
-static ushort *chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
+static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
 {
   int i, b;
   char *ptr;
@@ -839,7 +839,7 @@ static ushort *chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
     caid=a2i(ptr, b);
     if (!errno) i++;
   }
-  if (!i) return(0);
+  //if (!i) return(0);
   if (b==sizeof(ushort))
     slist=malloc(i*sizeof(ushort));
   else

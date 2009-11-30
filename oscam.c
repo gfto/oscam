@@ -446,9 +446,9 @@ static void cs_child_chk(int i)
         {
 #ifdef CS_ANTICASC
           char usr[32];
-          ushort    ac_idx;
-          ushort    ac_limit;
-          uchar     ac_penalty;
+          ushort    ac_idx=0;
+          ushort    ac_limit=0;
+          uchar     ac_penalty=0;
           if( cfg->ac_enabled )
           {
             strncpy(usr, client[i].usr, sizeof(usr)-1);
@@ -1442,7 +1442,7 @@ int write_ecm_answer(int fd, ECM_REQUEST *er)
   
   return(write_ecm_request(fd, er));
 }
-
+/*
 static int cs_read_timer(int fd, uchar *buf, int l, int msec)
 {
   struct timeval tv;
@@ -1463,7 +1463,7 @@ static int cs_read_timer(int fd, uchar *buf, int l, int msec)
       rc=-1;
 
   return(rc);
-}
+}*/
 
 ECM_REQUEST *get_ecmtask()
 {

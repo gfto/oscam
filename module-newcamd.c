@@ -638,7 +638,7 @@ static void newcamd_auth_client(in_addr_t ip)
     uchar buf[14];
     uchar *key=0;
     uint8 *passwdcrypt = NULL;
-    int au;
+    int au=0;
 
     // make random 14 bytes
     seed = (unsigned int) time((time_t*)0);

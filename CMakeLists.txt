@@ -203,7 +203,7 @@ add_definitions ("-D'CS_SVN_VERSION=\"$(shell svnversion -n ${CMAKE_CURRENT_SOUR
 #----------------------- global compile and link options ------------------------------
 
 # some optimisations
-add_definitions ("-O3 -Winline -Werror -finline-functions -fomit-frame-pointer")
+add_definitions ("-O3 -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses -finline-functions -fomit-frame-pointer")
 
 # we don't want the '-rdynamic' in the link command
 set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
