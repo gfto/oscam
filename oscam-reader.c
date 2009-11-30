@@ -28,6 +28,7 @@ void cs_ri_log(char *fmt,...)
   va_end(params);
   cs_log("%s", txt);
 #ifdef CS_RDR_INIT_HIST
+  int val;
   val=sizeof(reader[ridx].init_history)-reader[ridx].init_history_pos-1;
   if (val>0)
     snprintf((char *) reader[ridx].init_history+reader[ridx].init_history_pos, val, "%s", txt);
