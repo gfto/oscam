@@ -21,7 +21,8 @@ extern "C" {
 extern char CT_init (
       unsigned short Ctn,                  /* Terminal Number */
       unsigned short pn,                    /* Port Number */
-      int reader_type                        /* reader type (mouse, smartreader)
+      int reader_type,                      /* reader type (mouse, smartreader) */
+      int mhz
       );
 
 extern char CT_close(

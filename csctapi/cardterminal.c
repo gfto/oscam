@@ -70,14 +70,14 @@ CardTerminal * CardTerminal_New (void)
 	return ct;
 }
 
-char CardTerminal_Init (CardTerminal * ct, unsigned short pn, int reader_type)
+char CardTerminal_Init (CardTerminal * ct, unsigned short pn, int reader_type, int mhz)
 {
 	char ret;
 	int i;
 	bool usbserial;
 	
 	/* Create a new IO_Serial */
-	ct->io = IO_Serial_New (reader_type);
+	ct->io = IO_Serial_New (reader_type, mhz);
 	
 	/* Memory error */
 	if (ct->io == NULL)

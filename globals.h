@@ -349,8 +349,8 @@ struct s_reader
   char      label[32];
   char      device[128];
   int       detect;
-  int       mhz;
-  int       custom_speed;
+  int	    mhz;	    //actual clock rate of reader in 10khz steps
+  int       custom_speed;   //request immediate baudrate adaption after ATR; no PTS/PPS will be executed
   int       r_port;
   char      r_usr[64];
   char      r_pwd[64];

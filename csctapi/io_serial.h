@@ -75,6 +75,7 @@ typedef struct
 	bool usbserial;			/* Is serial USB device */
 	int wr;
 	int reader_type;
+	int mhz;			/* mhz specified in config = actual reader clock speed */
 }
 IO_Serial;
 
@@ -85,7 +86,7 @@ IO_Serial;
 /* IO_Serial creation and deletion */
 //extern void IO_Serial_Reopen (IO_Serial * io);
 extern void IO_Serial_Flush (IO_Serial * io);
-extern IO_Serial *IO_Serial_New (int reader_type);
+extern IO_Serial *IO_Serial_New (int reader_type, int mhz);
 extern void IO_Serial_Delete (IO_Serial * io);
 
 /* Initialization and closing */

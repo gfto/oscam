@@ -163,7 +163,7 @@ bool IO_Serial_DTR_RTS(IO_Serial * io, int dtr, int set)
  * Public functions definition
  */
 
-IO_Serial * IO_Serial_New (int reader_type)
+IO_Serial * IO_Serial_New (int reader_type, int mhz)
 {
 	IO_Serial *io;
 	
@@ -173,6 +173,7 @@ IO_Serial * IO_Serial_New (int reader_type)
 		IO_Serial_Clear (io);
 	
 	io->reader_type=reader_type;
+	io->mhz=mhz;
 	
 	return io;
 }
@@ -518,7 +519,8 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
    memset (&newtio, 0, sizeof (newtio));
    /* Set the bitrate */
    
-   extern int mhz;
+
+   int mhz = io->mhz;
    extern int reader_irdeto_mode;
 
    if(io->reader_type==RTYP_SMART)
@@ -535,118 +537,35 @@ bool IO_Serial_SetProperties (IO_Serial * io, IO_Serial_Properties * props)
       }
    }
 
-   if (mhz == 600)
-   {
-      
-      /* for 6MHz */
-      if (reader_irdeto_mode)
-      {
-         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-      } 
-      else 
-      {
+
 #ifdef OS_LINUX
-         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-         struct serial_struct nuts;
-         ioctl(io->fd, TIOCGSERIAL, &nuts);
-         nuts.custom_divisor = nuts.baud_base / 9600 * 3.57 / 6;
-         nuts.flags &= ~ASYNC_SPD_MASK;
-         nuts.flags |= ASYNC_SPD_CUST;
-         ioctl(io->fd, TIOCSSERIAL, &nuts);
-         cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
-#else
-         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-#endif
-      }
-   }
-   else if (mhz == 357 || mhz == 358)
-   {
-      /* for 3.57 MHz */
-      if (reader_irdeto_mode)
-      {
-#ifdef OS_LINUX
-         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-         struct serial_struct nuts;
-         ioctl(io->fd, TIOCGSERIAL, &nuts);
-         nuts.custom_divisor = nuts.baud_base / 5713;
-         nuts.flags &= ~ASYNC_SPD_MASK;
-         nuts.flags |= ASYNC_SPD_CUST;
-         ioctl(io->fd, TIOCSSERIAL, &nuts);
-         cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
-#else
-         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-#endif
-      }
-      else 
-      {
-         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-      }
-   }
-   else if (mhz == 800)
-   {
-      
-      /* for 8MHz */
-      if (reader_irdeto_mode)
-      {
-         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-      } 
-      else 
-      {
-#ifdef OS_LINUX
-         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-         struct serial_struct nuts;
-         ioctl(io->fd, TIOCGSERIAL, &nuts);
-         nuts.custom_divisor = nuts.baud_base / 9600 * 6 / 8;
-         nuts.flags &= ~ASYNC_SPD_MASK;
-         nuts.flags |= ASYNC_SPD_CUST;
-         ioctl(io->fd, TIOCSSERIAL, &nuts);
-         cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
-#else
-         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-#endif
-      }
-   }
-   else if (mhz == 1000)
-   {
-      
-      /* for 10MHz */
-      if (reader_irdeto_mode)
-      {
-         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-      } 
-      else 
-      {
-#ifdef OS_LINUX
-         /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
-         struct serial_struct nuts;
-         ioctl(io->fd, TIOCGSERIAL, &nuts);
-         nuts.custom_divisor = nuts.baud_base / 9600 * 6 / 10;
-         nuts.flags &= ~ASYNC_SPD_MASK;
-         nuts.flags |= ASYNC_SPD_CUST;
-         ioctl(io->fd, TIOCSSERIAL, &nuts);
-         cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
-#else
-         cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
-         cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
-#endif
-      }
-   }
+   int standard_card_clock; //contains non-overclocked, standard clockrate of the card in 10kHz steps
+   if (reader_irdeto_mode)
+     standard_card_clock = 600;
    else
-   {
-      /* invalid */
-      return FALSE;
+     standard_card_clock = 357;
+   if (mhz == standard_card_clock) 
+#endif
+   { //no overclocking
+     cfsetospeed(&newtio, IO_Serial_Bitrate(props->output_bitrate));
+     cfsetispeed(&newtio, IO_Serial_Bitrate(props->input_bitrate));
    }
+#ifdef OS_LINUX
+   else { //over or underclocking
+    /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
+    struct serial_struct nuts;
+    ioctl(io->fd, TIOCGSERIAL, &nuts);
+    int custom_baud = 9600 * mhz / standard_card_clock;
+    nuts.custom_divisor = (nuts.baud_base + (custom_baud/2))/ custom_baud;
+    cs_debug("customspeed: standardclock=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
+	                      standard_card_clock, mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
+    nuts.flags &= ~ASYNC_SPD_MASK;
+    nuts.flags |= ASYNC_SPD_CUST;
+    ioctl(io->fd, TIOCSSERIAL, &nuts);
+    cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
+    cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+   }
+#endif
         
    /* Set the character size */
    switch (props->bits)
