@@ -359,7 +359,9 @@ struct s_reader
   int       log_port;
   CAIDTAB   ctab;
   ulong     boxid;
+  uchar	    nagra_boxkey[8];
   uchar     aes_key[16];
+  uchar     rsa_mod[64]; //rsa modulus for nagra cards
   ulong     sidtabok;	// positiv services
   ulong     sidtabno;	// negative services
   uchar     hexserial[8];
@@ -760,6 +762,11 @@ extern int nds_card_init(uchar *, int);
 extern int nds_do_ecm(ECM_REQUEST *);
 extern int nds_do_emm(EMM_PACKET *);
 extern int nds_card_info(void);
+
+// reader nagra2/3
+extern int nagra2_card_init(uchar *, int);
+extern int nagra2_do_ecm(ECM_REQUEST *er);
+extern int nagra2_card_info(void);
  
 // protocol modules
 extern int  monitor_send_idx(int, char *);

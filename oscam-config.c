@@ -1054,6 +1054,24 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
     return;
   }
+  if (!strcmp(token, "n3_rsakey"))
+  {
+    if (key_atob_l(value, rdr->rsa_mod, 128))
+    {
+      fprintf(stderr, "Configuration reader: Error in RSA Key\n");
+      exit(1);
+    }
+    return;
+  }
+  if (!strcmp(token, "n3_boxkey"))
+  {
+    if (key_atob_l(value, rdr->nagra_boxkey, 16))
+    {
+      fprintf(stderr, "Configuration reader: Error in Nagra Boxkey\n");
+      exit(1);
+    }
+    return;
+  }
   if (!strcmp(token, "detect"))
   {
     for (i=0; RDR_CD_TXT[i]; i++)
@@ -1071,6 +1089,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     if (!strcmp(value, "1000")) { rdr->mhz=1000; return; }
     if (!strcmp(value, "800")) { rdr->mhz=800; return; }
     if (!strcmp(value, "600")) { rdr->mhz=600; return; }
+    if (!strcmp(value, "368")) { rdr->mhz=368; return; }
     if (!strcmp(value, "358")) { rdr->mhz=358; return; }
     if (!strcmp(value, "357")) { rdr->mhz=357; return; }
     fprintf(stderr, "Warning: value '%s' in mhz-line not recognized\n",value);

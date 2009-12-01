@@ -16,6 +16,7 @@ static int cs_ptyp_orig; //reinit=1,
 #define SC_SECA 5
 #define SC_VIDEOGUARD2 6
 #define SC_DRE 7
+#define SC_NAGRA 8
 
 static int reader_device_type(char *device, int typ)
 {
@@ -235,6 +236,8 @@ void reader_card_info()
     do_emm_from_file();
     switch(reader[ridx].card_system)
     {
+      case SC_NAGRA:
+        nagra2_card_info(); break;
       case SC_IRDETO:
         irdeto_card_info(); break;
       case SC_CRYPTOWORKS:
@@ -256,6 +259,7 @@ void reader_card_info()
 
 static int reader_get_cardsystem(void)
 {
+  if (nagra2_card_init(atr, atr_size))		reader[ridx].card_system=SC_NAGRA; else
   if (irdeto_card_init(atr, atr_size))		reader[ridx].card_system=SC_IRDETO; else
   if (conax_card_init(atr, atr_size))		reader[ridx].card_system=SC_CONAX; else
   if (cryptoworks_card_init(atr, atr_size))	reader[ridx].card_system=SC_CRYPTOWORKS; else
@@ -358,6 +362,8 @@ int reader_ecm(ECM_REQUEST *er)
       client[cs_idx].last=time((time_t)0);
       switch(reader[ridx].card_system)
       {
+      	case SC_NAGRA:
+          rc=(nagra2_do_ecm(er)) ? 1 : 0; break;
         case SC_IRDETO:
           rc=(irdeto_do_ecm(er)) ? 1 : 0; break;
         case SC_CRYPTOWORKS:
