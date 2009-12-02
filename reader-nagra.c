@@ -522,7 +522,7 @@ int setBaudrate(void)
 
 int nagra2_card_init(uchar *atr, int atrlen)
 {
-	memset(rom, 0, 14);
+	memset(rom, 0, 15);
 	// hardcoded for testing only
 	reader[ridx].nprov = 1;
 	memset (reader[ridx].prid, 0, sizeof (reader[ridx].prid));
@@ -594,7 +594,7 @@ int nagra2_card_init(uchar *atr, int atrlen)
 int nagra2_card_info(void)
 {
 	cs_log("ROM:  %c %c %c %c %c %c %c %c", rom[0], rom[1], rom[2],rom[3], rom[4], rom[5], rom[6], rom[7]);
-	cs_log("REV:  %c %c %c %c %c %c %c", rom[9], rom[10], rom[11], rom[12], rom[13], rom[14], rom[15]);
+	cs_log("REV:  %c %c %c %c %c %c %c", rom[8], rom[9], rom[10], rom[11], rom[12], rom[13], rom[14]);
 	cs_log("SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
 	cs_log("CAID: %04X",reader[ridx].caid[0]);
 	cs_log("ready for requests"); 
