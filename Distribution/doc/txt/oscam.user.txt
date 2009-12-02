@@ -23,7 +23,7 @@ SECTION DESCRIPTIONS
        betatunnel   =	<CAID>.<ServiceID>:<target  CAID>[,<CAID>.<ServiceID>:
        <target CAID>]...
 	  define Betacrypt tunneling (max.  see  CS_MAXTUNTAB  in  globals.h).
-	  Use FFFF as ServiceID for wildcarded ServiceIDs.
+	  The ServiceID can also be used for wildcarded CAIDs.
 
 	   example: betatunnel = 0100:0001:0200,0300.0004:0500
 		    betatunnel = 0600:FFFF:0700

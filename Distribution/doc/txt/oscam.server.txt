@@ -66,7 +66,7 @@ SECTION DESCRIPTIONS
        detect = CD|DSR|CTS|RING|NONE|gpio[2-7]
 	  status detect of card (NONE = no detection), default:CD
 
-       mhz = 357|358|368|600|800|1000
+       mhz = 357|358|600|800|1000
 	  set reader clock speed in mhz, default:357
 
        customspeed = 0|1
@@ -143,6 +143,12 @@ SECTION DESCRIPTIONS
 
 	   example: readnano = write.emm
 		    readnano = /var/oscam/write.emm
+
+       n3_rsakey = RSA key
+	  RSA key for Nagravision SCs
+
+       n3_boxkey = box key
+	  box key for Nagravision SCs
 
 EXAMPLES
 	 serial mouse compatible reader
