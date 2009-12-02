@@ -157,7 +157,7 @@ bool IO_Serial_DTR_RTS(IO_Serial * io, int dtr, int set)
  * Public functions definition
  */
 
-IO_Serial * IO_Serial_New (int reader_type, int mhz)
+IO_Serial * IO_Serial_New (int reader_type, int mhz, int cardmhz)
 {
 	IO_Serial *io;
 	
@@ -168,6 +168,7 @@ IO_Serial * IO_Serial_New (int reader_type, int mhz)
 	
 	io->reader_type=reader_type;
 	io->mhz=mhz;
+	io->cardmhz=cardmhz;
 	
 	return io;
 }
@@ -508,18 +509,15 @@ bool IO_Serial_SetProperties (IO_Serial * io)
    
    //	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
    memset (&newtio, 0, sizeof (newtio));
+
+
    /* Set the bitrate */
-   
-
-   int mhz = io->mhz;
-   extern int reader_irdeto_mode;
-
    if(io->reader_type==RTYP_SMART)
    {
 #ifdef DEBUG_IO
-      printf("IO: SMARTREADER .. switching to frequency to %2.2fMHz\n", (float)mhz/100.0);
+      printf("IO: SMARTREADER .. switching to frequency to %2.2fMHz\n", (float)io->mhz/100.0);
 #endif
-      if(!IO_Serial_Set_Smartreader_Freq(io,mhz,reader_irdeto_mode))
+      if(!IO_Serial_Set_Smartreader_Freq(io))
       {
 #ifdef DEBUG_IO
          printf("IO: SMARTREADER .. ERROR switching to 6MHz\n");
@@ -528,14 +526,8 @@ bool IO_Serial_SetProperties (IO_Serial * io)
       }
    }
 
-
 #ifdef OS_LINUX
-   int standard_card_clock; //contains non-overclocked, standard clockrate of the card in 10kHz steps
-   if (reader_irdeto_mode)
-     standard_card_clock = 600;
-   else
-     standard_card_clock = 357;
-   if (mhz == standard_card_clock) 
+   if (io->mhz == io->cardmhz)
 #endif
    { //no overclocking
      cfsetospeed(&newtio, IO_Serial_Bitrate(io->output_bitrate));
@@ -546,10 +538,10 @@ bool IO_Serial_SetProperties (IO_Serial * io)
     /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
     struct serial_struct nuts;
     ioctl(io->fd, TIOCGSERIAL, &nuts);
-    int custom_baud = 9600 * mhz / standard_card_clock;
+    int custom_baud = 9600 * io->mhz / io->cardmhz;
     nuts.custom_divisor = (nuts.baud_base + (custom_baud/2))/ custom_baud;
     cs_debug("customspeed: standardclock=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
-	                      standard_card_clock, mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
+	                      io->cardmhz, io->mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
     nuts.flags &= ~ASYNC_SPD_MASK;
     nuts.flags |= ASYNC_SPD_CUST;
     ioctl(io->fd, TIOCSSERIAL, &nuts);
@@ -1066,10 +1058,11 @@ static bool IO_Serial_InitPnP (IO_Serial * io)
 }
 
 
-bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq, int irdeto_mode)
+bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io)
  {
    struct termios term;
    struct termios orig;
+   int freq = io->mhz;
    unsigned char fi_di[4]={0x01, 0x01, 0x74, 0x01};
    unsigned char fr[3]={0x02, 0x00, 0x00};
    unsigned char nn[2]={0x03, 0x00};
@@ -1093,7 +1086,7 @@ bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq, int irdeto_mode)
    fr[2]=(unsigned char)(freq & 0x00ff);
 
    // Irdeto card supposedly need NN set to 1 .. to be confirmed
-   if(irdeto_mode)
+   if(io->cardmhz == 600)
       nn[1]=0x01;
       
    // send the commands

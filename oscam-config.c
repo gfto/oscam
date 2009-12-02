@@ -1095,6 +1095,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     fprintf(stderr, "Warning: value '%s' in mhz-line not recognized\n",value);
     return;
   }
+  if (!strcmp(token, "cardmhz")) { rdr->cardmhz=atoi(value); return; }
   if (!strcmp(token, "customspeed")) { rdr->custom_speed=atoi(value); return; }
   if (!strcmp(token, "protocol"))
   {
@@ -1206,6 +1207,7 @@ int init_readerdb()
       reader[nr].show_cls = 10;
       reader[nr].maxqlen = CS_MAXQLEN;
       reader[nr].mhz = 357;
+      reader[nr].cardmhz = 357;
       reader[nr].custom_speed = 1;
       strcpy(reader[nr].pincode, "none");
       for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);

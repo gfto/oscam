@@ -71,6 +71,7 @@ typedef struct
 	int wr;
 	int reader_type;
 	int mhz;			/* mhz specified in config = actual reader clock speed */
+	int cardmhz;			/* mhz specified in config = standard (non overclocked) clock speed of card*/
 }
 IO_Serial;
 
@@ -81,7 +82,7 @@ IO_Serial;
 /* IO_Serial creation and deletion */
 //extern void IO_Serial_Reopen (IO_Serial * io);
 extern void IO_Serial_Flush (IO_Serial * io);
-extern IO_Serial *IO_Serial_New (int reader_type, int mhz);
+extern IO_Serial *IO_Serial_New (int reader_type, int mhz, int cardmhz);
 extern void IO_Serial_Delete (IO_Serial * io);
 
 /* Initialization and closing */
@@ -107,6 +108,6 @@ extern unsigned IO_Serial_GetCom (IO_Serial * io);
 extern void IO_Serial_GetPnPId (IO_Serial * io, BYTE * pnp_id, unsigned *length);
 
 /* smartreader Frequency set */
-extern bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io, int freq, int irdeto_mode);
+extern bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io);
 
 #endif /* IO_SERIAL */

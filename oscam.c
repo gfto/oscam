@@ -542,11 +542,12 @@ int cs_fork(in_addr_t ip, in_port_t port)
                      else
                      {
                        if (reader[ridx].typ==R_MOUSE || reader[ridx].typ==R_SMART)
-                         cs_log("reader started (pid=%d, device=%s, detect=%s%s, mhz=%d)",
+                         cs_log("reader started (pid=%d, device=%s, detect=%s%s, mhz=%d, cardmhz=%d)",
                                 pid, reader[ridx].device,
                                 reader[ridx].detect&0x80 ? "!" : "",
                                 RDR_CD_TXT[reader[ridx].detect&0x7f],
-                                reader[ridx].mhz);
+                                reader[ridx].mhz,
+				reader[ridx].cardmhz);
 		                    else
                          cs_log("reader started (pid=%d, device=%s)",
                                 pid, reader[ridx].device);

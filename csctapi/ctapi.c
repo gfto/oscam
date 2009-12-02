@@ -49,7 +49,7 @@ static pthread_mutex_t ct_list_mutex = PTHREAD_MUTEX_INITIALIZER;
  * Exported functions definition
  */
 
-char CT_init (unsigned short ctn, unsigned short pn, int reader_type, int mhz)
+char CT_init (unsigned short ctn, unsigned short pn, int reader_type, int mhz, int cardmhz)
 {
 	CardTerminal *ct;
 	char ret;
@@ -68,7 +68,7 @@ char CT_init (unsigned short ctn, unsigned short pn, int reader_type, int mhz)
 		if (ct != NULL)
 		{   
 			/* Initialize CardTerminal */
-			ret = CardTerminal_Init (ct, pn, reader_type, mhz);
+			ret = CardTerminal_Init (ct, pn, reader_type, mhz, cardmhz);
 			
 			/* Add CardTerminal to list */
 			if (ret == OK)
