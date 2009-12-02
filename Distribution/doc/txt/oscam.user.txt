@@ -9,7 +9,7 @@ SYNOPSIS
        The  user  configuration  file  for  OSCam  contains  user definitions.
        [account] sections in oscam.user are recurring (more than one account).
 
-SECTION DESCRIPTIONS
+DESCRIPTIONS
    The [account] section
        user = name
 	  account name, required

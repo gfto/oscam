@@ -11,7 +11,7 @@ SYNOPSIS
        in  oscam.conf  are nonrecurring. The [global] section is required. All
        other sections are optional.
 
-SECTION DESCRIPTIONS
+DESCRIPTIONS
    The [global] section
        serverip = IP address
 	  bind service to specified IP address, default:all

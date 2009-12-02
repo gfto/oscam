@@ -5,7 +5,7 @@
 The server configuration file for OSCam contains reader parameters. 
 sections in \fBoscam.server\fR are \fIrecurring\fR (more than one reader possible).
 At least one [reader] section is \fIrequired\fR.
-.SH SECTION DESCRIPTIONS
+.SH DESCRIPTIONS
 .SS "The [reader] section"
 .PP
 \fBdevice\fP = \fBdevice\fP|\fB<ip|hostname>,<port>[,<lport>]\fP
@@ -93,14 +93,14 @@ AES key for Viaccess SCs
 status detect of card (NONE = no detection), default:CD
 .RE
 .PP
-\fBmhz\fP = \fBmhz\fP
+\fBmhz\fP = \fBfrequency\fP
 .RS 3n
-set reader clock speed in mhz, default:357
+set reader frequency in mhz, refer to OVERCLOCKING, default:357
 .RE
 .PP
 \fBcustomspeed\fP = \fB0\fP|\fB1\fP
 .RS 3n
-supported by the Videoguard 2 module only: 1 = calculate and use a custom baudrate to communicate with SC reader, \fBcustomspeed\fP overwrites \fBmhz\fP and \fBcardmhz\fP, default:1
+supported by the Videoguard 2 module only: 1 = calculate and use a custom baudrate to communicate with SC reader, \fBfBcustomspeed\fP overwrites \fBmhz\fP and \fBcardmhz\fP, default:1
 .RE
 .PP
 \fBprotocol\fP = \fBreader protocol\fP
@@ -204,13 +204,13 @@ box key for Nagravision SCs
 .PP
 \fBcardmhz\fP = \fBmhz\fP
 .RS 3n
-set standard clock speed of SC, default:357
+set standard frequency of SC, refer to OVERCLOCKING, default:357
 .SH OVERCLOCKING
 .TP 3n
 \(bu
 Dreambox reader
 
-For SC overclocking set the clock speed with the \fBmhz\fR parameter. 
+For SC overclocking set \fBmhz\fR to 600. 
 If \fBmhz\fR is unset, the default value will be used and nothing will be happen.
 .TP 3n 
 \(bu
