@@ -679,6 +679,11 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			else
 				params.ETU=372;
 
+			if (ifd->io->mhz == 600) { //overclock works on Sky It 919
+			  params.f = 5;
+			  cs_log("Forcing params.f to 5");
+			}
+
 			if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
 			{
 				ATR_Delete (*atr);
