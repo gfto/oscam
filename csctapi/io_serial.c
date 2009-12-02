@@ -540,7 +540,7 @@ bool IO_Serial_SetProperties (IO_Serial * io)
     ioctl(io->fd, TIOCGSERIAL, &nuts);
     int custom_baud = 9600 * io->mhz / io->cardmhz;
     nuts.custom_divisor = (nuts.baud_base + (custom_baud/2))/ custom_baud;
-    cs_debug("customspeed: cardmhz=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
+    cs_debug("custom baudrate: cardmhz=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
 	                      io->cardmhz, io->mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
     nuts.flags &= ~ASYNC_SPD_MASK;
     nuts.flags |= ASYNC_SPD_CUST;
