@@ -150,6 +150,9 @@ SECTION DESCRIPTIONS
        n3_boxkey = box key
 	  box key for Nagravision SCs
 
+       cardmhz = mhz
+	  set standard clock speed of SC, default:357
+
 EXAMPLES
 	 serial mouse compatible reader
 
