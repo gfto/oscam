@@ -656,7 +656,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
 #ifdef OS_LINUX
 if (reader[ridx].typ != R_INTERN) {
   int bconst=B38400;
-  int baud=64516;
+  int baud=64516 * reader[ridx].mhz/reader[ridx].cardmhz;
   int fd=open(reader[ridx].device,O_RDWR|O_NONBLOCK|O_NOCTTY);
 
   struct termios tio;
