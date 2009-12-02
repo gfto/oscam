@@ -1084,17 +1084,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
     return;
   }
-  if (!strcmp(token, "mhz"))
-  {
-    if (!strcmp(value, "1000")) { rdr->mhz=1000; return; }
-    if (!strcmp(value, "800")) { rdr->mhz=800; return; }
-    if (!strcmp(value, "600")) { rdr->mhz=600; return; }
-    if (!strcmp(value, "368")) { rdr->mhz=368; return; }
-    if (!strcmp(value, "358")) { rdr->mhz=358; return; }
-    if (!strcmp(value, "357")) { rdr->mhz=357; return; }
-    fprintf(stderr, "Warning: value '%s' in mhz-line not recognized\n",value);
-    return;
-  }
+  if (!strcmp(token, "mhz")) { rdr->mhz=atoi(value); return; }
   if (!strcmp(token, "cardmhz")) { rdr->cardmhz=atoi(value); return; }
   if (!strcmp(token, "customspeed")) { rdr->custom_speed=atoi(value); return; }
   if (!strcmp(token, "protocol"))
