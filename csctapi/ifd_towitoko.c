@@ -650,6 +650,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 //			printf("atr D=%f\n", a);
 			ATR_GetParameter(*atr, ATR_PARAMETER_N, &a);
 			params.EGT = (unsigned char)a;
+			if (params.EGT==255) params.EGT=0;
 			ATR_GetParameter(*atr, ATR_PARAMETER_P, &a);
 //			printf("atr P=%f\n", a);
 			params.P = (unsigned char)a;
