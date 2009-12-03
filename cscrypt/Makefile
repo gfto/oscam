@@ -19,6 +19,8 @@ OBJECTS1	= $(LIBFILE1)(md5.o) \
 		  $(LIBFILE1)(bn_shift.o) \
 		  $(LIBFILE1)(bn_sqr.o) \
 		  $(LIBFILE1)(bn_word.o) \
+		  $(LIBFILE1)(i_cbc.o) \
+		  $(LIBFILE1)(i_skey.o) \
 		  $(LIBFILE1)(mem.o)
 
 all:		$(LIBFILE1)
