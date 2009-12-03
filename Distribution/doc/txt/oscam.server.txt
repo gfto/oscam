@@ -93,11 +93,15 @@ DESCRIPTIONS
 	   cccam
 	   radegast
 
-       version = CCcam version
-	  define CCcam version to be identified as, e.g. 2.0.11
+       cccversion = <main version>.<version>.<sub version>
+	  define CCcam version, default:none
 
-       build = CCcam build
-	  define CCcam build number to be identified as, e.g. 2892
+	  exmaple: cccversion = 1.2.34
+
+       cccbuild = <4-digit number>
+	  define CCcam build, default:none
+
+	  exmaple: cccbuild = 5678
 
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader

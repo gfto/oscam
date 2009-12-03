@@ -30,6 +30,8 @@ DESCRIPTIONS
 
 	 gbox with AU support, cascading/remote server ECM support
 
+	 CCcam with AU support, cascading/remote server ECM support
+
        OSCam works on the following plattforms:
 
 	 Linux (tuxbox, arm, mips, mipsel, sh4, powerpc, ...)

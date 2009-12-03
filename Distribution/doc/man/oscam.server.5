@@ -125,14 +125,18 @@ reader protocol, \fIrequired\fR:
  \fBradegast\fP
 .RE
 .PP
-\fBversion\fP = \fBCCcam version\fP
+\fBcccversion\fP = \fB<main version>.<version>.<sub version>\fP
 .RS 3n
-define CCcam version to be identified as, e.g. 2.0.11
+define CCcam version, default:none
+
+exmaple: cccversion = 1.2.34
 .RE
 .PP
-\fBbuild\fP = \fBCCcam build\fP
+\fBcccbuild\fP = \fB<4-digit number>\fP
 .RS 3n
-define CCcam build number to be identified as, e.g. 2892
+define CCcam build, default:none
+
+exmaple: cccbuild = 5678
 .RE
 .PP
 \fBident\fP = \fB<CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...\fP

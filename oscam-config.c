@@ -1173,7 +1173,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     rdr->b_nano[i]|= 0x02; //lsb+1 is set when to save nano to file
     return;
   }
-  if (!strcmp(token, "version")) {  // cccam version
+  if (!strcmp(token, "cccversion")) {  // cccam version
     if (strlen(value)>sizeof(rdr->cc_version)-1) {
       fprintf(stderr, "cccam config: version too long\n");
       exit(1);
@@ -1182,7 +1182,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     strncpy(rdr->cc_version, value, sizeof(rdr->cc_version)-1);
     return;
   }
-  if (!strcmp(token, "build")) {  // cccam build number
+  if (!strcmp(token, "cccbuild")) {  // cccam build number
     if (strlen(value)>sizeof(rdr->cc_build)-1) {
       fprintf(stderr, "cccam config build number too long\n");
       exit(1);
