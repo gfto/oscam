@@ -332,7 +332,7 @@ static int connect_nonb(int sockfd, const struct sockaddr *saptr, socklen_t sale
     cs_debug("cccam: conn_nb 2 (fd=%d)", sockfd);
     if (errno != EINPROGRESS) {
       cs_debug("cccam: conn_nb 3 (fd=%d)", sockfd);
-      return(-1);
+    //  return(-1);
     }
   }
 
