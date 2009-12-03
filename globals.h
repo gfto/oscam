@@ -28,7 +28,7 @@
 
 #ifndef CS_GLOBALS
 #define CS_GLOBALS
-#define CS_VERSION		"0.99.4svn"
+#define CS_VERSION    "0.99.4svn"
 
 #if defined(__GNUC__)
 #  define GCC_PACK __attribute__((packed))
@@ -44,92 +44,93 @@
 #include "cscrypt/cscrypt.h"
 
 #ifndef CS_CONFDIR
-#define CS_CONFDIR 		"/usr/local/etc"
+#define CS_CONFDIR    "/usr/local/etc"
 #endif
 #ifndef CS_MMAPFILE
-#define CS_MMAPFILE 		"/tmp/oscam.mem"
+#define CS_MMAPFILE   "/tmp/oscam.mem"
 #endif
 #ifndef CS_LOGFILE
-#define CS_LOGFILE		"/var/log/oscam.log"
+#define CS_LOGFILE    "/var/log/oscam.log"
 #endif
-#define CS_QLEN			128	// size of request queue
-#define CS_MAXQLEN		128	// size of request queue for cardreader
-#define CS_MAXCAIDTAB		32	// max. caid-defs/user
-#define CS_MAXTUNTAB		16	// max. betatunnel mappings
-#define CS_MAXPROV		32
-#define CS_MAXPORTS		32	// max server ports
-#define CS_MAXFILTERS		16
+#define CS_QLEN       128 // size of request queue
+#define CS_MAXQLEN    128 // size of request queue for cardreader
+#define CS_MAXCAIDTAB 32  // max. caid-defs/user
+#define CS_MAXTUNTAB  16  // max. betatunnel mappings
+#define CS_MAXPROV    32
+#define CS_MAXPORTS   32  // max server ports
+#define CS_MAXFILTERS   16
 
-#define CS_MAXCARDS		4096
-#define CS_MAXIGNORE	1024
-#define CS_MAXLOCALS    16
-#define CS_ECMSTORESIZE		16	// use MD5()
-#define CS_EMMSTORESIZE		270
-#define CS_CLIENT_TIMEOUT	5000
-#define CS_CLIENT_MAXIDLE	120
-#define CS_BIND_TIMEOUT		120
-#define CS_DELAY		0
-#define CS_RESOLVE_DELAY	30
-#define CS_MAXLOGHIST		30
-#define CS_LOGHISTSIZE		160	// 32+128: username + logline
+#define CS_MAXCARDS       4096
+#define CS_MAXIGNORE      1024
+#define CS_MAXLOCALS      16
+#define CS_ECMSTORESIZE   16  // use MD5()
+#define CS_EMMSTORESIZE   270
+#define CS_CLIENT_TIMEOUT 5000
+#define CS_CLIENT_MAXIDLE 120
+#define CS_BIND_TIMEOUT   120
+#define CS_DELAY          0
+#define CS_RESOLVE_DELAY  30
+#define CS_MAXLOGHIST     30
+#define CS_LOGHISTSIZE    160 // 32+128: username + logline
 
 #ifdef OLD_DEFS
 #ifdef  CS_EMBEDDED
-#define CS_MAXPENDING		32
-#define CS_ECMCACHESIZE		32
-#define CS_EMMCACHESIZE		64
-#define CS_MAXPID		32
-#define CS_MAXREADER		8
+#define CS_MAXPENDING   32
+#define CS_ECMCACHESIZE   32
+#define CS_EMMCACHESIZE   64
+#define CS_MAXPID   32
+#define CS_MAXREADER    8
 #else
-#define CS_MAXPENDING		128
-#define CS_ECMCACHESIZE		128
-#define CS_EMMCACHESIZE		256
-#define CS_MAXPID		128
-#define CS_MAXREADER		64
+#define CS_MAXPENDING   128
+#define CS_ECMCACHESIZE   128
+#define CS_EMMCACHESIZE   256
+#define CS_MAXPID   128
+#define CS_MAXREADER    64
 #endif
 #endif
 
 #ifdef  CS_EMBEDDED
-#define CS_MAXPID		32
-#define CS_MAXREADER		(CS_MAXPID>>1)
-#define CS_MAXPENDING		CS_MAXPID
-#define CS_ECMCACHESIZE		CS_MAXPID
-#define CS_EMMCACHESIZE		(CS_MAXPID<<1)
+#define CS_MAXPID   32
+#define CS_MAXREADER    (CS_MAXPID>>1)
+#define CS_MAXPENDING   CS_MAXPID
+#define CS_ECMCACHESIZE   CS_MAXPID
+#define CS_EMMCACHESIZE   (CS_MAXPID<<1)
 #else
-#define CS_MAXPID		512
-#define CS_MAXREADER		(CS_MAXPID>>2)
-#define CS_MAXPENDING		(CS_MAXPID<<1)
-#define CS_ECMCACHESIZE		CS_MAXPID
-#define CS_EMMCACHESIZE		(CS_MAXPID<<1)
+#define CS_MAXPID   512
+#define CS_MAXREADER    (CS_MAXPID>>2)
+#define CS_MAXPENDING   (CS_MAXPID<<1)
+#define CS_ECMCACHESIZE   CS_MAXPID
+#define CS_EMMCACHESIZE   (CS_MAXPID<<1)
 #define CS_RDR_INIT_HIST
 #endif
 
-#define D_DUMP			1	// Debug Dumps
-#define D_MASTER		2	// Debug Master Process
-#define D_READER		4	// Debug Reader/Proxy Process
-#define D_CLIENT		8	// Debug Client Process
-#define D_DEVICE		16	// Debug Reader I/O
-#define D_WATCHDOG		32	// Debug Watchdog
-#define D_ALL_DUMP		63
+#define D_DUMP      1 // Debug Dumps
+#define D_MASTER    2 // Debug Master Process
+#define D_READER    4 // Debug Reader/Proxy Process
+#define D_CLIENT    8 // Debug Client Process
+#define D_DEVICE    16  // Debug Reader I/O
+#define D_WATCHDOG  32  // Debug Watchdog
+#define D_ALL_DUMP  63
 
-#define R_MOUSE			0x1	// Reader smartcard mouse
-#define R_INTERN		0x2	// Reader smartcard intern
-#define R_SMART		0x5	// Smartreader+
-#define R_CAMD35		0x10	// Reader cascading camd 3.5x
-#define R_CAMD33		0x11	// Reader cascading camd 3.3x
-#define R_NEWCAMD		0x12	// Reader cascading newcamd
-#define R_RADEGAST		0x13	// Reader cascading radegast
-#define R_CS378X		0x14	// Reader cascading camd 3.5x TCP
-#define R_GBOX		0x20	// Reader cascading gbox
-#define R_SERIAL		0x80	// Reader serial
-#define R_IS_NETWORK		0x70
-#define R_IS_CASCADING		0xF0
+#define R_MOUSE     0x1 // Reader smartcard mouse
+#define R_INTERN    0x2 // Reader smartcard intern
+#define R_SMART     0x5 // Smartreader+
+#define R_CAMD35    0x10  // Reader cascading camd 3.5x
+#define R_CAMD33    0x11  // Reader cascading camd 3.3x
+#define R_NEWCAMD   0x12  // Reader cascading newcamd
+#define R_RADEGAST  0x13  // Reader cascading radegast
+#define R_CS378X    0x14  // Reader cascading camd 3.5x TCP
+#define R_GBOX      0x20  // Reader cascading gbox
+#define R_CCCAM     0x25  // Reader cascading cccam
+#define R_SERIAL    0x80  // Reader serial
+#define R_IS_NETWORK    0x70
+#define R_IS_CASCADING  0xF0
 
 #define CS_MAX_MOD 8
-#define MOD_CONN_TCP		1
-#define MOD_CONN_UDP		2
-#define MOD_CONN_NET		3
-#define MOD_CONN_SERIAL		4
+#define MOD_CONN_TCP    1
+#define MOD_CONN_UDP    2
+#define MOD_CONN_NET    3
+#define MOD_CONN_SERIAL 4
 
 #ifdef CS_CORE
 char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", NULL };
@@ -143,23 +144,23 @@ extern char *PIP_ID_TXT[];
 extern char *RDR_CD_TXT[];
 #endif
 
-#define	PIP_ID_ECM		0
-#define	PIP_ID_EMM		1
-#define	PIP_ID_LOG		2
-#define PIP_ID_CIN		3  // CARD_INFO
-#define PIP_ID_HUP		4
-#define	PIP_ID_MAX		PIP_ID_HUP
-#define	PIP_ID_DCW		5
+#define PIP_ID_ECM    0
+#define PIP_ID_EMM    1
+#define PIP_ID_LOG    2
+#define PIP_ID_CIN    3  // CARD_INFO
+#define PIP_ID_HUP    4
+#define PIP_ID_MAX    PIP_ID_HUP
+#define PIP_ID_DCW    5
 
-#define	PIP_ID_ERR		(-1)
-#define	PIP_ID_DIR		(-2)
-#define	PIP_ID_NUL		(-3)
+#define PIP_ID_ERR    (-1)
+#define PIP_ID_DIR    (-2)
+#define PIP_ID_NUL    (-3)
 
 #define cdiff *c_start
 
-#define NCD_AUTO		0
-#define NCD_524			1
-#define NCD_525			2
+#define NCD_AUTO    0
+#define NCD_524     1
+#define NCD_525     2
 
 #define CS_ANTICASC
 
@@ -183,7 +184,7 @@ typedef struct s_classtab
   uchar bclass[31];
 } GCC_PACK CLASSTAB;
 
-typedef	struct s_caidtab
+typedef struct s_caidtab
 {
   ushort caid[CS_MAXCAIDTAB];
   ushort mask[CS_MAXCAIDTAB];
@@ -223,14 +224,14 @@ typedef struct s_ftab
   FILTER filts[CS_MAXFILTERS];
 } GCC_PACK FTAB;
 
-typedef	struct s_port
+typedef struct s_port
 {
   int    fd;
   int    s_port;
   FTAB   ftab;
 } GCC_PACK PORT;
 
-typedef	struct s_ptab
+typedef struct s_ptab
 {
   int    nports;
   PORT   ports[CS_MAXPORTS];
@@ -243,7 +244,7 @@ struct s_ecm
   ushort caid;
   ulong  prid;
   ulong  grp;
-//  int	level;
+//  int level;
 };
 
 struct s_emm
@@ -266,6 +267,7 @@ struct s_module
   void (*s_handler)();
   int  (*recv)();
   void (*send_dcw)();
+  void (*cleanup)();
   int  c_multi;
   int  (*c_recv_chk)();
   int  (*c_init)();
@@ -303,8 +305,8 @@ struct s_client
   int       dbglvl;
   CAIDTAB   ctab;
   TUNTAB    ttab;
-  ulong     sidtabok;	// positiv services
-  ulong     sidtabno;	// negative services
+  ulong     sidtabok; // positiv services
+  ulong     sidtabno; // negative services
   int       typ;
   int       ctyp;
   int       stat;
@@ -321,9 +323,9 @@ struct s_client
   int       cwfound;
   int       cwcache;
   int       cwnot;
-  uchar     ucrc[4];		 // needed by monitor and used by camd35
+  uchar     ucrc[4];     // needed by monitor and used by camd35
   ulong     pcrc;        // pwd crc
-  AES_KEY   aeskey;		   // needed by monitor and used by camd33, camd35
+  AES_KEY   aeskey;      // needed by monitor and used by camd33, camd35
   ushort    ncd_msgid;
   uchar     ncd_skey[16];
   int       port_idx;    // index in server ptab
@@ -349,7 +351,7 @@ struct s_reader
   char      label[32];
   char      device[128];
   int       detect;
-  int	    mhz;	    //actual clock rate of reader in 10khz steps
+  int     mhz;      //actual clock rate of reader in 10khz steps
   int	    cardmhz;	    //standard clock speed your card should have in 10khz steps; normally 357 but for Irdeto cards 600
   int       custom_speed;   //request immediate baudrate adaption after ATR; no PTS/PPS will be executed
   int       r_port;
@@ -368,9 +370,9 @@ struct s_reader
   uchar     hexserial[8];
   int       nprov;
   uchar     prid[CS_MAXPROV][8];
-  uchar     availkeys[CS_MAXPROV][16];	// viaccess; misused in seca, if availkeys[PROV][0]=0 then expired, 1 then valid.
-  uchar     sa[CS_MAXPROV][4];		// viaccess & seca
-  ushort    acs;		// irdeto
+  uchar     availkeys[CS_MAXPROV][16];  // viaccess; misused in seca, if availkeys[PROV][0]=0 then expired, 1 then valid.
+  uchar     sa[CS_MAXPROV][4];    // viaccess & seca
+  ushort    acs;    // irdeto
   ushort    caid[16];
   uchar     b_nano[256];
   uchar     emmfile[128];
@@ -386,6 +388,9 @@ struct s_reader
   int       ncd_disable_server_filt;
   ushort    ncd_msgid;
   int       ncd_proto;
+  char      cc_version[7];  // cccam version
+  char      cc_build[5];    // cccam build number
+  void      *cc;            // ptr to cccam internal data struct
   uchar     tcp_connected;
   int       tcp_ito;      // inactivity timeout
   int       tcp_rto;      // reconnect timeout
@@ -403,11 +408,12 @@ struct s_reader
   uchar     gbox_vers;
   uchar     gbox_prem;
   int       gbox_fd;
-  struct timeb  gbox_lasthello;		// incoming time stamp
+  struct timeb  gbox_lasthello;   // incoming time stamp
 #ifdef CS_RDR_INIT_HIST
   uchar     init_history[4096];
   int       init_history_pos;
 #endif
+  int       msg_idx;
 };
 
 #ifdef CS_ANTICASC
@@ -444,8 +450,8 @@ struct s_auth
   ulong    grp;
   int      tosleep;
   CAIDTAB  ctab;
-  ulong    sidtabok;	// positiv services
-  ulong    sidtabno;	// negative services
+  ulong    sidtabok;  // positiv services
+  ulong    sidtabno;  // negative services
   FTAB     fchid;
   FTAB     ftab;       // user [caid] and ident filter
   CLASSTAB cltab;
@@ -480,7 +486,7 @@ struct s_config
   ulong     ctimeout;
   ulong     ftimeout;
   int       cmaxidle;
-  int	    ulparent;
+  int     ulparent;
   ulong     delay;
   int       bindwait;
   int       resolvedelay;
@@ -511,6 +517,7 @@ struct s_config
   PTAB      ncd_ptab;
   in_addr_t ncd_srvip;
   uchar     ncd_key[16];
+  PTAB      cc_ptab;
   int       rad_port;
   in_addr_t rad_srvip;
   struct s_ip *rad_allowed;
@@ -522,10 +529,10 @@ struct s_config
   int       waitforcards;
   int       preferlocalcards;
   uchar      gbox_pwd[8];
-  uchar		ignorefile[512];
+  uchar   ignorefile[512];
   uchar     cardfile[512];
   uchar     gbxShareOnl[512];
-  int 		maxdist;
+  int     maxdist;
   int       num_locals;
   unsigned long locals[CS_MAXLOCALS];
   //struct s_irdeto_quess *itab[0xff];
@@ -559,20 +566,20 @@ typedef struct ecm_request_t
   ushort        idx;
   ulong         prid;
   int           reader[CS_MAXREADER];
-  int           cidx;		// client index
-  int           cpti;		// client pending table index
-  int           stage;		// processing stage in server module
-  int           level;		// send-level in client module
+  int           cidx;   // client index
+  int           cpti;   // client pending table index
+  int           stage;    // processing stage in server module
+  int           level;    // send-level in client module
   int           rc;
   uchar         rcEx;
-  struct timeb  tps;		// incoming time stamp
+  struct timeb  tps;    // incoming time stamp
   uchar         locals_done;
-  ushort		gbxCWFrom;
-  ushort 		gbxFrom;
-  ushort		gbxTo;
+  ushort    gbxCWFrom;
+  ushort    gbxFrom;
+  ushort    gbxTo;
   
-  uchar     	gbxForward[16];
-  int			gbxRidx;
+  uchar       gbxForward[16];
+  int     gbxRidx;
 } GCC_PACK      ECM_REQUEST;
 
 typedef struct emm_packet_t
@@ -705,6 +712,7 @@ extern void cs_ri_brk(int);
 extern void cs_ri_log(char *,...);
 extern void start_cardreader(void);
 extern void reader_card_info(void);
+extern void network_tcp_connection_close(int);
 
 // oscam-log
 extern int  cs_init_log(char *);
@@ -779,5 +787,6 @@ extern void module_newcamd(struct s_module *);
 extern void module_radegast(struct s_module *);
 extern void module_oscam_ser(struct s_module *);
 extern void module_gbox(struct s_module *);
+extern void module_cccam(struct s_module *);
 extern struct timeval *chk_pending(struct timeb tp_ctimeout);
-#endif	// CS_GLOBALS
+#endif  // CS_GLOBALS

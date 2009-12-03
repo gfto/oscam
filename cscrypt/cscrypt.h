@@ -6,6 +6,7 @@
 
 #include "des.h"
 #include "bn.h"
+#include "sha1.h"
 
 #ifndef HEADER_CSCRYPT_H
 #define HEADER_CSCRYPT_H

@@ -10,9 +10,35 @@ static int radegast_recv(uchar *buf, int l)
 {
   int n;
   if (!pfd) return(-1);
-  if ((n=recv(pfd, buf, l, 0))>0)
-    client[cs_idx].last=time((time_t *) 0);
+  if (is_server) {  // server code
+    if ((n=recv(pfd, buf, l, 0))>0)
+      client[cs_idx].last=time((time_t *) 0);
+  } else {  // client code
+    if ((n=recv(pfd, buf, l, 0))>0) {
+      cs_ddump(buf, n, "radegast: received %d bytes from %s", n, remote_txt());
+      client[cs_idx].last = time((time_t *) 0);
+
+      if (buf[0] == 2) {  // dcw received
+        if (buf[3] != 0x10) {  // dcw ok
+          cs_log("radegast: no dcw");
+          n = -1;
+        }
+      }
+    }
+  }
   return(n);
+}
+
+static int radegast_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
+{
+  if ((buf[0] == 2) && (buf[1] == 0x12)) {
+    memcpy(dcw, buf+4, 16);
+    cs_debug("radegast: recv chk - %s", cs_hexdump(0, dcw, 16));
+    *rc = 1;
+    return(reader[ridx].msg_idx);
+  }
+
+  return (-1);
 }
 
 static void radegast_auth_client(in_addr_t ip)
@@ -135,6 +161,210 @@ static void radegast_server()
   cs_disconnect_client();
 }
 
+static int radegast_send_ecm(ECM_REQUEST *er, uchar *buf)
+{
+  int n;
+  uchar provid_buf[8];
+  uchar header[22] = "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";
+  uchar *ecmbuf = malloc(er->l + 30);
+  bzero(ecmbuf, er->l + 30);
+
+  ecmbuf[0] = 1;
+  ecmbuf[1] = er->l + 30 - 2;
+  memcpy(ecmbuf + 2, header, sizeof(header));
+  for(n = 0; n < 4; n++) {
+    sprintf((char*)provid_buf+(n*2), "%02X", ((uchar *)(&er->prid))[4 - 1 - n]);
+  }
+  ecmbuf[7] = provid_buf[0];
+  ecmbuf[8] = provid_buf[1];
+  ecmbuf[9] = provid_buf[2];
+  ecmbuf[10] = provid_buf[3];
+  ecmbuf[11] = provid_buf[4];
+  ecmbuf[12] = provid_buf[5];
+  ecmbuf[13] = provid_buf[6];
+  ecmbuf[14] = provid_buf[7];
+  ecmbuf[2 + sizeof(header)] = 0xa;
+  ecmbuf[3 + sizeof(header)] = 2;
+  ecmbuf[4 + sizeof(header)] = er->caid >> 8;
+  ecmbuf[5 + sizeof(header)] = er->caid & 0xff;
+  ecmbuf[6 + sizeof(header)] = 3;
+  ecmbuf[7 + sizeof(header)] = er->l;
+  memcpy(ecmbuf + 8 + sizeof(header), er->ecm, er->l);
+  ecmbuf[4] = er->caid >> 8;
+
+  reader[ridx].msg_idx = er->idx;
+  n = send(pfd, ecmbuf, er->l + 30, 0);
+
+  cs_log("radegast: sending ecm");
+  cs_ddump(ecmbuf, er->l + 30, "ecm:");
+
+  free(ecmbuf);
+
+  return 0;
+}
+
+static int connect_nonb(int sockfd, const struct sockaddr *saptr, socklen_t salen, int nsec)
+{
+  int             flags, n, error;
+  socklen_t       len;
+  fd_set          rset, wset;
+  struct timeval  tval;
+
+  flags = fcntl(sockfd, F_GETFL, 0);
+  fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+  error = 0;
+  cs_debug("radegast: conn_nb 1 (fd=%d)", sockfd);
+
+  if ( (n = connect(sockfd, saptr, salen)) < 0) {
+    if( errno==EALREADY ) {
+      cs_debug("radegast: conn_nb in progress, errno=%d", errno);
+      return(-1);
+    }
+    else if( errno==EISCONN ) {
+      cs_debug("radegast: conn_nb already connected, errno=%d", errno);
+      goto done;
+    }
+    cs_debug("radegast: conn_nb 2 (fd=%d)", sockfd);
+    if (errno != EINPROGRESS) {
+      cs_debug("radegast: conn_nb 3 (fd=%d)", sockfd);
+      return(-1);
+    }
+  }
+
+  cs_debug("radegast: n = %d\n", n);
+
+  /* Do whatever we want while the connect is taking place. */
+  if (n == 0)
+    goto done;  /* connect completed immediately */
+
+  FD_ZERO(&rset);
+  FD_SET(sockfd, &rset);
+  wset = rset;
+  tval.tv_sec = nsec;
+  tval.tv_usec = 0;
+
+  if ( (n = select(sockfd+1, &rset, &wset, 0, nsec ? &tval : 0)) == 0) {
+      //close(sockfd);    // timeout
+    cs_debug("radegast: conn_nb 4 (fd=%d)", sockfd);
+      errno = ETIMEDOUT;
+      return(-1);
+  }
+
+  cs_debug("radegast: conn_nb 5 (fd=%d)", sockfd);
+
+  if (FD_ISSET(sockfd, &rset) || FD_ISSET(sockfd, &wset)) {
+    cs_debug("radegast: conn_nb 6 (fd=%d)", sockfd);
+    len = sizeof(error);
+    if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+      cs_debug("radegast: conn_nb 7 (fd=%d)", sockfd);
+      return(-1);     // Solaris pending error
+    }
+  } else {
+    cs_debug("radegast: conn_nb 8 (fd=%d)", sockfd);
+    return -2;
+  }
+
+done:
+cs_debug("radegast: conn_nb 9 (fd=%d)", sockfd);
+  fcntl(sockfd, F_SETFL, flags);  /* restore file status flags */
+
+  if (error) {
+    cs_debug("cccam: conn_nb 10 (fd=%d)", sockfd);
+    //close(sockfd);    /* just in case */
+    errno = error;
+    return(-1);
+  }
+  return(0);
+}
+
+static int network_tcp_connection_open(unsigned char *hostname, unsigned short port)
+{
+
+  int flags;
+  if( connect_nonb(client[cs_idx].udp_fd,
+      (struct sockaddr *)&client[cs_idx].udp_sa,
+      sizeof(client[cs_idx].udp_sa), 5) < 0)
+  {
+    cs_log("radegast: connect(fd=%d) failed: (errno=%d)", client[cs_idx].udp_fd, errno);
+    return -1;
+  }
+  flags = fcntl(client[cs_idx].udp_fd, F_GETFL, 0);
+  flags &=~ O_NONBLOCK;
+  fcntl(client[cs_idx].udp_fd, F_SETFL, flags );
+
+  return client[cs_idx].udp_fd;
+}
+
+int radegast_cli_init(void)
+{
+  static struct sockaddr_in loc_sa;
+  struct protoent *ptrp;
+  int p_proto, handle;
+
+  pfd=0;
+  if (reader[ridx].r_port<=0)
+  {
+    cs_log("radegast: invalid port %d for server %s", reader[ridx].r_port, reader[ridx].device);
+    return(1);
+  }
+  if( (ptrp=getprotobyname("tcp")) )
+    p_proto=ptrp->p_proto;
+  else
+    p_proto=6;
+
+  client[cs_idx].ip=0;
+  memset((char *)&loc_sa,0,sizeof(loc_sa));
+  loc_sa.sin_family = AF_INET;
+#ifdef LALL
+  if (cfg->serverip[0])
+    loc_sa.sin_addr.s_addr = inet_addr(cfg->serverip);
+  else
+#endif
+    loc_sa.sin_addr.s_addr = INADDR_ANY;
+  loc_sa.sin_port = htons(reader[ridx].l_port);
+
+  if ((client[cs_idx].udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
+  {
+    cs_log("cccam: Socket creation failed (errno=%d)", errno);
+    cs_exit(1);
+  }
+
+#ifdef SO_PRIORITY
+  if (cfg->netprio)
+    setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_PRIORITY,
+               (void *)&cfg->netprio, sizeof(ulong));
+#endif
+  if (!reader[ridx].tcp_ito) {
+    ulong keep_alive = reader[ridx].tcp_ito?1:0;
+    setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_KEEPALIVE,
+    (void *)&keep_alive, sizeof(ulong));
+  }
+
+  memset((char *)&client[cs_idx].udp_sa,0,sizeof(client[cs_idx].udp_sa));
+  client[cs_idx].udp_sa.sin_family = AF_INET;
+  client[cs_idx].udp_sa.sin_port = htons((u_short)reader[ridx].r_port);
+
+  struct hostent *server;
+  server = gethostbyname(reader[ridx].device);
+  bcopy((char *)server->h_addr, (char *)&client[cs_idx].udp_sa.sin_addr.s_addr, server->h_length);
+
+  cs_log("radegast: proxy %s:%d (fd=%d)",
+          reader[ridx].device, reader[ridx].r_port, client[cs_idx].udp_fd);
+
+  handle = network_tcp_connection_open((unsigned char *)reader[ridx].device, reader[ridx].r_port);
+  if(handle < 0) return -1;
+
+  reader[ridx].tcp_connected = 1;
+  reader[ridx].last_g = reader[ridx].last_s = time((time_t *)0);
+
+  cs_debug("radegast: last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
+
+  pfd=client[cs_idx].udp_fd;
+
+  return(0);
+}
+
 void module_radegast(struct s_module *ph)
 {
   static PTAB ptab;
@@ -150,4 +380,8 @@ void module_radegast(struct s_module *ph)
   ph->s_handler=radegast_server;
   ph->recv=radegast_recv;
   ph->send_dcw=radegast_send_dcw;
+  ph->c_multi=0;
+  ph->c_init=radegast_cli_init;
+  ph->c_recv_chk=radegast_recv_chk;
+  ph->c_send_ecm=radegast_send_ecm;
 }
