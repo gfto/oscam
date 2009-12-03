@@ -92,7 +92,7 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
     	if (is_pure_nagra==0) msg[4]+=1;
     	if(!reader_cmd2icc(msg,msglen))
   	{
-  		cs_sleepms(50);
+  		cs_sleepms(10);
 		if(cta_res[0]!=res) 
 	      	{
 	      		cs_debug("[nagra-reader] result not expected (%02x != %02x)",cta_res[0],res);
@@ -539,7 +539,7 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	if (memcmp(atr+11, "DNASP", 5)==0)
 	{
 		//if(SetIFS(0xFE) != 1) return 0;
-		//if (!setBaudrate()) return 0;
+		if (!setBaudrate()) return 0;
 		cs_debug("[nagra-reader] detect pure nagra card T1 protocol");
 		is_pure_nagra=1;
 		memcpy(rom,atr+11,15);
