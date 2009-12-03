@@ -19,13 +19,13 @@ unsigned char irdId[] = {0xff,0xff,0xff,0xff};
 unsigned char camid[] = {0xff,0xff,0xff,0xff};
 unsigned char sessi[16];
 unsigned char signature[8];
-unsigned char cam_state[4];
+unsigned char cam_state[3];
 unsigned char static_dt08[73];
 
-#define SYSTEM_NAGRA 0x1800
 // Card Status checks
-//#define HAS_CW      ((cam_state[1]==0x10)&&((cam_state[3]&6)==6))
-#define HAS_CW      ((cam_state[3]&6)==6)
+#define HAS_CW      ((cam_state[2]&6)==6)
+#define RENEW_SESSIONKEY ((cam_state[0]&64)==64 ||  (cam_state[0]&32)==32)
+#define SENDDATETIME ((cam_state[0]&16)==16)
 // Datatypes
 #define DT01        0x01
 #define IRDINFO     0x00
@@ -34,6 +34,7 @@ unsigned char static_dt08[73];
 #define CAMDATA     0x08
 
 #define MAX_REC     20
+#define SYSTEM_NAGRA 0x1800
 
 unsigned char XorSum(const unsigned char *mem, int len)
 {
@@ -89,9 +90,9 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
     		return 0;
     	}
     	if (is_pure_nagra==0) msg[4]+=1;
-    	cs_sleepms(50);
     	if(!reader_cmd2icc(msg,msglen))
   	{
+  		cs_sleepms(50);
 		if(cta_res[0]!=res) 
 	      	{
 	      		cs_debug("[nagra-reader] result not expected (%02x != %02x)",cta_res[0],res);
@@ -168,22 +169,8 @@ int CamStateRequest(void)
 {
 	if(do_cmd(0xC0,0x02,0xB0,0x06,NULL))
 	{
-		memcpy(cam_state,cta_res+2,4);
-		switch(cam_state[1])
-		{
-			case 0xb0: cs_debug("[nagra-reader] CamStateRequest: request [%X]", cam_state[1]); break;
-			case 0x30: cs_debug("[nagra-reader] CamStateRequest: request [%X]", cam_state[1]); break;
-			case 0x90: cs_debug("[nagra-reader] CamStateRequest: request [%X]", cam_state[1]); break;
-			//case 0x10: cs_debug("[nagra-reader] CamStateRequest: has_cw"); break;
-			case 0xc3: cs_debug("[nagra-reader] CamStateRequest: cam has been reseted"); break;
-			case 0xc1: 
-			case 0xd1: cs_debug("[nagra-reader] CamStateRequest: dump DT"); break; //DumpDatatypes(); break;
-			case 0xd0: cs_debug("[nagra-reader] CamStateRequest: NegotiateSessionKey"); NegotiateSessionKey(); break;
-			case 0x00:
-			case 0x11:
-			case 0xc0: cs_debug("[nagra-reader] CamStateRequest: ready for requests"); break;
-			default:   cs_debug("[nagra-reader] CamStateRequest: unknown request [%X]", cam_state[1]); break;
-		}
+		memcpy(cam_state,cta_res+3,3);
+		cs_debug("[nagra-reader] Camstate: %s",cs_hexdump (1, cam_statel, 3));
 	}
 	else
 	{
@@ -191,6 +178,17 @@ int CamStateRequest(void)
 		return 0;
 	}
 	return (1);
+}
+
+void DateTimeCMD(void)
+{
+	do_cmd(0xC8,0x02,0xB8,0x06,NULL);
+	
+	/*
+	[sci0] <- 21 00 08 a0 ca 00 00 02 c8 00 06 8f 
+	[sci0] -> 12 00 08 
+	[sci0] -> b8 04 19 90 7b f4 90 00 
+	*/
 }
 
 int NegotiateSessionKey(void)
@@ -261,6 +259,12 @@ int NegotiateSessionKey(void)
 		return 0;
 	}
 	cs_ri_log("[nagra-reader] Session Key: %s", cs_hexdump(1, sessi, 16));
+	if (!CamStateRequest())
+	{
+		cs_debug("[nagra-reader] CamStateRequest failed");
+		return 0;
+	}
+	if SENDDATETIME DateTimeCMD();
 	return 1;
 }
 
@@ -346,7 +350,7 @@ void decryptDT08(void)
 		hasMod=0;
 	}  	
 }
-/*
+
 int DumpDatatype(unsigned char dtbyte)
 {
 	static unsigned char cmd22[] = {0x21, 0x00, 0x09, 0xA0, 0xCA, 0x00, 0x00, 0x04, 0x22, 0x01, 0x01, 0x0E};
@@ -396,22 +400,26 @@ int DumpDatatypes(void)
 			break;
 		for(dtbyte; dtbyte < 16; dtbyte++)
 			if(dtflags & (0x01 << dtbyte))
-				if (!DumpDatatype(dtbyte)) break;
+				//if (dtbyte == 0x01 || dtbyte == 0x08 || dtbyte == 0x00) break;
+					if (!DumpDatatype(dtbyte)) break;
 	}
 	return 1;
 }
-*/
+
 int ParseDataType(unsigned char dt)
 {
-	unsigned short irdProvId;
 	switch(dt) 
 	{
 		case IRDINFO:
 		{
-     			irdProvId=(cta_res[10]*256)|cta_res[11];
+			reader[ridx].prid[0][0]=0x00;
+			reader[ridx].prid[0][1]=0x00;
+			reader[ridx].prid[0][2]=cta_res[7];
+			reader[ridx].prid[0][3]=cta_res[8];
      			reader[ridx].caid[0] =(SYSTEM_NAGRA|cta_res[11]);
      			memcpy(irdId,cta_res+14,4);
      			cs_debug("[nagra-reader] CAID: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
+     			cs_debug("[nagra-reader] ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
      			return 1;
      		}
    		case TIERS:
@@ -469,7 +477,8 @@ int setBaudrate(void)
 	if (reader[ridx].typ != R_INTERN) 
 	{
 	  	int bconst=B38400;
-	  	int baud=115200;
+	  	int baud=115200 * reader[ridx].mhz/reader[ridx].cardmhz;
+
 	  	int fd=open(reader[ridx].device,O_RDWR|O_NONBLOCK|O_NOCTTY);
 	
 	  	struct termios tio;
@@ -524,9 +533,7 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	memset(rom, 0, 15);
 	// hardcoded for testing only
 	reader[ridx].nprov = 1;
-	memset (reader[ridx].prid, 0, sizeof (reader[ridx].prid));
-	memset (reader[ridx].sa, 0xFF, sizeof (reader[ridx].sa));
-	reader[ridx].sa[0][3] = 0;
+	memset (reader[ridx].sa, 0xff, sizeof (reader[ridx].sa));
 	reader[ridx].caid[0]=SYSTEM_NAGRA;
 	
 	if (memcmp(atr+11, "DNASP", 5)==0)
@@ -561,15 +568,18 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	}
 	memcpy(reader[ridx].hexserial, cta_res+2, 4);
 	cs_debug("[nagra-reader] SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
+	memcpy(reader[ridx].sa[0], cta_res+2, 4);
 	
 	if(!GetDataType(DT01,0x0E,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT01 DONE");
+	CamStateRequest();
 	if(!GetDataType(CAMDATA,0x55,10)) return 0;
 	cs_debug("[nagra-reader] CAMDATA Done");
-
+	CamStateRequest();
 	if(!GetDataType(IRDINFO,0x39,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] IRDINFO DONE");
 	/*
+	//DumpDatatypes();
 	if(!GetDataType(0x04,0x44,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT04 DONE");
 	if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
@@ -577,14 +587,10 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	if(!GetDataType(DT06,0x16,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT06 DONE");
 	*/
+	CamStateRequest();
 	if (!NegotiateSessionKey())
 	{
 		cs_debug("[nagra-reader] NegotiateSessionKey failed");
-		return 0;
-	}
-	if (!CamStateRequest())
-	{
-		cs_debug("[nagra-reader] CamStateRequest failed");
 		return 0;
 	}
 	return(1);
@@ -602,12 +608,20 @@ int nagra2_card_info(void)
 
 int nagra2_do_ecm(ECM_REQUEST *er)
 {
-	if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2))
+	int retry;
+	if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2)) 
 	{
 		cs_debug("[nagra-reader] nagra2_do_ecm failed");
 		return (0);
 	}
-	if (CamStateRequest() && HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
+	cs_sleepms(100);
+	for(retry = 0;;retry++)
+	{
+		if(CamStateRequest()) break;
+		if( retry == 7 ) return 0;
+	}
+	
+	if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
 	{
 		unsigned char v[8];
 		memset(v,0,sizeof(v));
@@ -617,4 +631,16 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 		return (1);
 	}
 	return(0);
+}
+
+int nagra2_do_emm(EMM_PACKET *ep)
+{
+	if(!do_cmd(ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2))
+	{
+		cs_debug("[nagra-reader] nagra2_do_emm failed");
+		return (0);
+	}
+	cs_sleepms(500);
+	cs_dump(ep->emm, 64, "[nagra-reader]EMM:");
+	return 1;
 }
