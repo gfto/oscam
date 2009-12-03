@@ -66,13 +66,18 @@ DESCRIPTIONS
        detect = CD|DSR|CTS|RING|NONE|gpio[2-7]
 	  status detect of card (NONE = no detection), default:CD
 
+       cardmhz = mhz
+	  set standard SC frequency in units of 10 kHz, for Irdeto SC  set  to
+	  600, refer to OVERCLOCKING, default:357
+
        mhz = frequency
-	  set reader frequency in mhz, refer to OVERCLOCKING, default:357
+	  set reader frequency in units of 10 kHz, if mhz > cardmhz you are in
+	  overclocking mode, refer to OVERCLOCKING, default:357
 
        customspeed = 0|1
 	  supported by the Videoguard 2 module only: 1 = calculate and	use  a
-	  custom  baudrate  to communicate with SC reader, fBcustomspeed over
-	  writes mhz and cardmhz, default:1
+	  custom  baudrate  to	communicate  with  SC  reader  after  the ATR,
+	  default:1
 
        protocol = reader protocol
 	  reader protocol, required:
@@ -87,12 +92,12 @@ DESCRIPTIONS
 	   newcamd524
 	   cccam
 	   radegast
-	   
+
        version = CCcam version
-    define CCcam version to be identified as, e.g. 2.0.11
-    
+	  define CCcam version to be identified as, e.g. 2.0.11
+
        build = CCcam build
-    define CCcam build number to be identified as, e.g. 2892
+	  define CCcam build number to be identified as, e.g. 2892
 
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader
@@ -158,35 +163,33 @@ DESCRIPTIONS
        n3_boxkey = box key
 	  box key for Nagravision SCs
 
-       cardmhz = mhz
-	  set standard frequency of SC, refer to OVERCLOCKING, default:357
-
 OVERCLOCKING
 	 Dreambox reader
 
-	  For SC overclocking set mhz to 600.  If mhz is  unset,  the  default
-	  value will be used and nothing will be happen.
+	  For SC overclocking set to 600. If mhz is unset or any other	value,
+	  the default value will be used and behaviour will be standard.
 
 	 Phoenix / Smartmouse reader
 
 	  Overclocking	does  not  work  with  Windows	and Mac OS X.  Set mhz
 	  equivalent to the frequency of the reader.  OSCam can  not  set  the
-	  frequency of the reader.  When using a Irdeto SC set cardmhz to 600.
+	  frequency of the reader.
 
 	 Smargo Smartreader+
 
-	  Set the reader frequency with the native  Smargo  Smartreader+  tool
+	  Set  the  reader  frequency with the native Smargo Smartreader+ tool
 	  (srp_tools).	Do not set mhz and cardmhz.
 
-       OSCam  tries to set the baudrate automatically.	A standard serial port
-       has a fixed baudrate of 115200, so that SC overclocking does not  work.
-       When  using  a serial reader the best way is it to connect it to a FTDI
-       USB to serial port adapter for overclocking.  Verify the effective bau
-       drate in the logfile.
+       OSCam tries to set the baudrate automatically.  A standard serial  port
+       has limited baudrate settings, so SC overclocking might not work.  When
+       using a serial reader the best way for overclocking is connecting it to
+       a FTDI based USB to serial port adapter.
 
-       Often there is no one-to-one mapping between the requested baudrate and
-       the effective baudrate, but there is a small leeway.   The  higher  the
-       baudrate, the more accurate the effective baudrate can be.
+       If  overclocking  does  not  work, verify the effective baudrate in the
+       logfile.  If it deviates too much from the requested baudrate,  the  SC
+       will  not  be  recognized  (no  ATR)  and  the  value for mhz should be
+       adjusted again.	The higher the baudrate, the more accurate the	effec
+       tive baudrate can be.
 
 EXAMPLES
 	 serial mouse compatible reader

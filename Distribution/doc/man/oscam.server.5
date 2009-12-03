@@ -93,14 +93,20 @@ AES key for Viaccess SCs
 status detect of card (NONE = no detection), default:CD
 .RE
 .PP
+\fBcardmhz\fP = \fBmhz\fP
+.RS 3n
+set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, refer to OVERCLOCKING, default:357
+.RE
+.PP
 \fBmhz\fP = \fBfrequency\fP
 .RS 3n
-set reader frequency in mhz, refer to OVERCLOCKING, default:357
+set reader frequency in units of 10 kHz, if \fBmhz\fP > \fBcardmhz\fP you are in overclocking mode, 
+refer to OVERCLOCKING, default:357 
 .RE
 .PP
 \fBcustomspeed\fP = \fB0\fP|\fB1\fP
 .RS 3n
-supported by the Videoguard 2 module only: 1 = calculate and use a custom baudrate to communicate with SC reader, \fBfBcustomspeed\fP overwrites \fBmhz\fP and \fBcardmhz\fP, default:1
+supported by the Videoguard 2 module only: 1 = calculate and use a custom baudrate to communicate with SC reader after the ATR, default:1
 .RE
 .PP
 \fBprotocol\fP = \fBreader protocol\fP
@@ -213,17 +219,13 @@ RSA key for Nagravision SCs
 .RS 3n
 box key for Nagravision SCs
 .RE
-.PP
-\fBcardmhz\fP = \fBmhz\fP
-.RS 3n
-set standard frequency of SC, refer to OVERCLOCKING, default:357
 .SH OVERCLOCKING
 .TP 3n
 \(bu
 Dreambox reader
 
-For SC overclocking set \fBmhz\fR to 600. 
-If \fBmhz\fR is unset, the default value will be used and nothing will be happen.
+For SC overclocking set to 600. If \fBmhz\fR is unset or any other value, 
+the default value will be used and behaviour will be standard.
 .TP 3n 
 \(bu
 Phoenix / Smartmouse reader
@@ -231,7 +233,6 @@ Phoenix / Smartmouse reader
 Overclocking does not work with Windows and Mac OS X. 
 Set \fBmhz\fR equivalent to the frequency of the reader. 
 OSCam can not set the frequency of the reader. 
-When using a Irdeto SC set \fBcardmhz\fR to 600. 
 .TP 3n 
 \(bu
 Smargo Smartreader+
@@ -240,12 +241,13 @@ Set the reader frequency with the native Smargo Smartreader+ tool (srp_tools).
 Do not set \fBmhz\fR and \fBcardmhz\fR.
 .PP
 OSCam tries to set the baudrate automatically. 
-A standard serial port has a fixed baudrate of 115200, so that SC overclocking does not work. 
-When using a serial reader the best way is it to connect it to a FTDI USB to serial port adapter for overclocking. 
-Verify the effective baudrate in the logfile. 
+A standard serial port has limited baudrate settings, so SC overclocking might not work.
+When using a serial reader the best way for overclocking is connecting it to a FTDI based USB to serial port adapter. 
 
-Often there is no one-to-one mapping between the requested baudrate and the effective baudrate, but there is a small leeway. 
-The higher the baudrate, the more accurate the effective baudrate can be.
+If overclocking does not work, verify the effective baudrate in the logfile. 
+If it deviates too much from the requested baudrate, the SC will not be recognized (no ATR) 
+and the value for \fBmhz\fR should be adjusted again. 
+The higher the baudrate, the more accurate the effective baudrate can be. 
 .SH EXAMPLES
 .TP 3n
 \(bu
