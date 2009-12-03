@@ -1,7 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
-#include "cscrypt/i_cbc.c"
-#include "cscrypt/i_skey.c"
+#include "cscrypt/idea.h"
 #include <termios.h>
 #include <unistd.h>
 #ifdef OS_LINUX
