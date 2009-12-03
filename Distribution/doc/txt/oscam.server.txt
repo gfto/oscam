@@ -85,6 +85,14 @@ DESCRIPTIONS
 	   gbox
 	   newcamd|newcamd525
 	   newcamd524
+	   cccam
+	   radegast
+	   
+       version = CCcam version
+    define CCcam version to be identified as, e.g. 2.0.11
+    
+       build = CCcam build
+    define CCcam build number to be identified as, e.g. 2892
 
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader

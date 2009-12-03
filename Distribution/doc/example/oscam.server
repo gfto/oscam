@@ -57,3 +57,24 @@ device   = 192.168.0.4,34567,45678
 account  = login3,password3
 group    = 3
 caid     = 0300
+
+# remote cccam reader
+
+[reader]
+label    = remote4
+protocol = cccam
+device   = 192.168.0.5,12000
+account  = login4,password4
+group    = 4
+caid     = 0300
+version  = 2.0.11
+build    = 2892
+
+# remote radegast reader
+
+[reader]
+label    = remote5
+protocol = radegast
+device   = 192.168.0.6,50000
+group    = 5
+caid     = 0300
