@@ -9,24 +9,24 @@
 /*****************************************************************************
         Globals
 *****************************************************************************/
-int	pfd=0;			// Primary FD, must be closed on exit
-int	mfdr=0;			// Master FD (read)
-int	fd_m2c=0;		// FD Master -> Client (for clients / read )
-int	fd_c2m=0;		// FD Client -> Master (for clients / write )
-int	fd_c2l=0;		// FD Client -> Logger (for clients / write )
-int	cs_dblevel=0;		// Debug Level (TODO !!)
-int	cs_idx=0;		// client index (0=master, ...)
-int	cs_ptyp=D_MASTER;	// process-type
-struct s_module ph[CS_MAX_MOD];	// Protocols
-int	maxph=0;		// Protocols used
-int	cs_hw=0;		// hardware autodetect
-int	is_server=0;		// used in modules to specify function
-pid_t	master_pid=0;		// master pid OUTSIDE shm
-ushort	len4caid[256];		// table for guessing caid (by len)
-char	cs_confdir[128]=CS_CONFDIR;
-uchar	mbuf[1024];		// global buffer
-ECM_REQUEST	*ecmtask;
-EMM_PACKET	epg;
+int pfd=0;      // Primary FD, must be closed on exit
+int mfdr=0;     // Master FD (read)
+int fd_m2c=0;   // FD Master -> Client (for clients / read )
+int fd_c2m=0;   // FD Client -> Master (for clients / write )
+int fd_c2l=0;   // FD Client -> Logger (for clients / write )
+int cs_dblevel=0;   // Debug Level (TODO !!)
+int cs_idx=0;   // client index (0=master, ...)
+int cs_ptyp=D_MASTER; // process-type
+struct s_module ph[CS_MAX_MOD]; // Protocols
+int maxph=0;    // Protocols used
+int cs_hw=0;    // hardware autodetect
+int is_server=0;    // used in modules to specify function
+pid_t master_pid=0;   // master pid OUTSIDE shm
+ushort  len4caid[256];    // table for guessing caid (by len)
+char  cs_confdir[128]=CS_CONFDIR;
+uchar mbuf[1024];   // global buffer
+ECM_REQUEST *ecmtask;
+EMM_PACKET  epg;
 #ifdef CS_ANTICASC
 struct s_acasc ac_stat[CS_MAXPID];
 #endif
@@ -34,26 +34,26 @@ struct s_acasc ac_stat[CS_MAXPID];
 /*****************************************************************************
         Shared Memory
 *****************************************************************************/
-int			*ecmidx;	// Shared Memory
-int			*logidx;	// Shared Memory
-int			*oscam_sem;	// sem (multicam.o)
-int			*c_start;	// idx of 1st client
-int			*log_fd;	// log-process is running
-struct	s_ecm		  *ecmcache;  // Shared Memory
-struct	s_client	*client;	  // Shared Memory
-struct	s_reader	*reader;	  // Shared Memory
+int     *ecmidx;  // Shared Memory
+int     *logidx;  // Shared Memory
+int     *oscam_sem; // sem (multicam.o)
+int     *c_start; // idx of 1st client
+int     *log_fd;  // log-process is running
+struct  s_ecm     *ecmcache;  // Shared Memory
+struct  s_client  *client;    // Shared Memory
+struct  s_reader  *reader;    // Shared Memory
 
-struct	card_struct	*Cards;	  // Shared Memory
-struct	idstore_struct	*idstore;	  // Shared Memory
-unsigned long	*IgnoreList;	  // Shared Memory
+struct  card_struct *Cards;   // Shared Memory
+struct  idstore_struct  *idstore;   // Shared Memory
+unsigned long *IgnoreList;    // Shared Memory
 
-struct	s_config	*cfg;		    // Shared Memory
+struct  s_config  *cfg;       // Shared Memory
 #ifdef CS_ANTICASC
 struct  s_acasc_shm   *acasc; // anti-cascading table indexed by account.ac_idx
 #endif
 #ifdef CS_LOGHISTORY
-int			*loghistidx;	// ptr to current entry
-char		*loghist;	    // ptr of log-history
+int     *loghistidx;  // ptr to current entry
+char    *loghist;     // ptr of log-history
 #endif
 int     *mcl=0;       // Master close log?
 
@@ -74,28 +74,28 @@ static  int  shmsize =  CS_ECMCACHESIZE*(sizeof(struct s_ecm)) +
                         sizeof(struct s_config)+(6*sizeof(int));
 
 #ifdef CS_NOSHM
-char	cs_memfile[128]=CS_MMAPFILE;
+char  cs_memfile[128]=CS_MMAPFILE;
 #endif
 
 /*****************************************************************************
         Statics
 *****************************************************************************/
-static	char	mloc[128]={0};
-static	int	shmid=0;		// Shared Memory ID
-static	int	cs_last_idx=0;		// client index of last fork (master only)
-static	char*	credit[] = {
-		"dukat for the great MpCS piece of code",
-		"all members of streamboard.de.vu for testing",
-		"scotty and aroureos for the first softcam (no longer used)",
-		"John Moore for the hsic-client (humax 5400) and the arm-support",
-		"doz21 for the sio-routines and his support on camd3-protocol",
-		"kindzadza for his support on radegast-protocol",
-		"DS and ago for several modules in mpcs development",
-		"dingo35 for seca reader-support",
-		"dingo35 and okmikel for newcamd-support",
-		"hellmaster1024 for gb*x-support",
-		"the vdr-sc team for several good ideas :-)",
-		NULL };
+static  char  mloc[128]={0};
+static  int shmid=0;    // Shared Memory ID
+static  int cs_last_idx=0;    // client index of last fork (master only)
+static  char* credit[] = {
+    "dukat for the great MpCS piece of code",
+    "all members of streamboard.de.vu for testing",
+    "scotty and aroureos for the first softcam (no longer used)",
+    "John Moore for the hsic-client (humax 5400) and the arm-support",
+    "doz21 for the sio-routines and his support on camd3-protocol",
+    "kindzadza for his support on radegast-protocol",
+    "DS and ago for several modules in mpcs development",
+    "dingo35 for seca reader-support",
+    "dingo35 and okmikel for newcamd-support",
+    "hellmaster1024 for gb*x-support",
+    "the vdr-sc team for several good ideas :-)",
+    NULL };
 
 static void cs_set_mloc(int ato, char *txt)
 {
@@ -112,8 +112,8 @@ char *cs_platform(char *buf)
   {
 #ifdef TUXBOX
     struct stat st;
-    cs_hw=CS_HW_DBOX2;					// dbox2, default for now
-    if (!stat("/dev/sci0", &st)) cs_hw=CS_HW_DREAM;	// dreambox
+    cs_hw=CS_HW_DBOX2;          // dbox2, default for now
+    if (!stat("/dev/sci0", &st)) cs_hw=CS_HW_DREAM; // dreambox
     switch(cs_hw)
     {
 #ifdef PPC
@@ -323,7 +323,7 @@ void cs_exit(int sig)
 #ifdef CS_NOSHM
   munmap((void *)ecmcache, (size_t)shmsize);
   if (shmid) close(shmid);
-  unlink(CS_MMAPFILE);		// ignore errors, last process must succeed
+  unlink(CS_MMAPFILE);    // ignore errors, last process must succeed
 #endif
   exit(sig);
 }
@@ -345,7 +345,7 @@ static void cs_reinit_clients()
       {
         client[i].grp     = account->grp;
         client[i].au      = account->au;
-	client[i].autoau  = account->autoau;
+  client[i].autoau  = account->autoau;
         client[i].tosleep = (60*account->tosleep);
         client[i].monlvl  = account->monlvl;
         client[i].fchid   = account->fchid;  // CHID filters
@@ -434,10 +434,10 @@ static void cs_child_chk(int i)
 #ifdef CS_ANTICASC
             case 'a': txt="anticascader"; break;
 #endif
-            case 'l': txt="logger";	break;
-            case 'p': txt="proxy";	break;
-            case 'r': txt="reader";	break;
-            case 'n': txt="resolver";	break;
+            case 'l': txt="logger"; break;
+            case 'p': txt="proxy";  break;
+            case 'r': txt="reader"; break;
+            case 'n': txt="resolver"; break;
           }
           cs_log("PANIC: %s lost !! (pid=%d)", txt, client[i].pid);
           cs_exit(1);
@@ -495,14 +495,14 @@ int cs_fork(in_addr_t ip, in_port_t port)
       case -1:
         cs_log("PANIC: Cannot fork() (errno=%d)", errno);
         cs_exit(1);
-      case  0:					// HERE is client
+      case  0:          // HERE is client
         alarm(0);
         set_signal_handler(SIGALRM, 0, cs_alarm);
         set_signal_handler(SIGCHLD, 1, SIG_IGN);
         set_signal_handler(SIGHUP , 1, SIG_IGN);
         set_signal_handler(SIGINT , 1, SIG_IGN);
         set_signal_handler(SIGUSR1, 1, cs_debug_level);
-      	is_server=((ip) || (port<90)) ? 1 : 0;
+        is_server=((ip) || (port<90)) ? 1 : 0;
         fd_m2c=fdp[0];
         close(fdp[1]);
         close(mfdr);
@@ -514,13 +514,13 @@ int cs_fork(in_addr_t ip, in_port_t port)
         shmid=0;
 #endif
         break;
-      default:					// HERE is master
+      default:          // HERE is master
         client[i].fd_m2c=fdp[1];
         client[i].dbglvl=cs_dblevel;
         close(fdp[0]);
         if (ip)
         {
-          client[i].typ='c';			// dynamic client
+          client[i].typ='c';      // dynamic client
           client[i].ip=ip;
           client[i].port=port;
           cs_log("client(%d) connect from %s (pid=%d, pipfd=%d)",
@@ -531,7 +531,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
           client[i].stat=1;
           switch(port)
           {
-            case 99: client[i].typ='r';		// reader
+            case 99: client[i].typ='r';   // reader
                      client[i].sidtabok=reader[ridx].sidtabok;
                      client[i].sidtabno=reader[ridx].sidtabno;
                      reader[ridx].fd=client[i].fd_m2c;
@@ -548,7 +548,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
                                 RDR_CD_TXT[reader[ridx].detect&0x7f],
                                 reader[ridx].mhz,
 				reader[ridx].cardmhz);
-		                    else
+                        else
                          cs_log("reader started (pid=%d, device=%s)",
                                 pid, reader[ridx].device);
                        client[i].ip=client[0].ip;
@@ -556,14 +556,14 @@ int cs_fork(in_addr_t ip, in_port_t port)
                      }
                      cdiff=i;
                      break;
-            case 98: client[i].typ='n';		// resolver
+            case 98: client[i].typ='n';   // resolver
                      client[i].ip=client[0].ip;
                      strcpy(client[i].usr, client[0].usr);
                      cs_log("resolver started (pid=%d, delay=%d sec)",
                              pid, cfg->resolvedelay);
                      cdiff=i;
                      break;
-            case 97: client[i].typ='l';		// logger
+            case 97: client[i].typ='l';   // logger
                      client[i].ip=client[0].ip;
                      strcpy(client[i].usr, client[0].usr);
                      cs_log("logger started (pid=%d)", pid);
@@ -578,7 +578,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
                      cdiff=i;
                      break;
 #endif
-            default: client[i].typ='c';		// static client
+            default: client[i].typ='c';   // static client
                      client[i].ip=client[0].ip;
                      client[i].ctyp=port;
                      cs_log("%s: initialized (pid=%d%s)", ph[port].desc,
@@ -587,7 +587,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
           }
         }
         client[i].login=client[i].last=time((time_t *)0);
-        client[i].pid=pid;		// MUST be last -> wait4master()
+        client[i].pid=pid;    // MUST be last -> wait4master()
         cs_last_idx=i;
         i=0;
     }
@@ -761,7 +761,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   if( (ptrp=getprotobyname(is_udp ? "udp" : "tcp")) )
     ov=ptrp->p_proto;
   else
-    ov=(is_udp) ? 17 : 6;	// use defaults on error
+    ov=(is_udp) ? 17 : 6; // use defaults on error
 
   if ((ph->ptab->ports[port_idx].fd=socket(PF_INET,is_udp ? SOCK_DGRAM : SOCK_STREAM, ov))<0)
   {
@@ -944,7 +944,7 @@ static void start_resolver()
     pthread_detach(tid);
   }
 #endif
-  sleep(1);	// wait for reader
+  sleep(1); // wait for reader
   while(1)
   {
     if (master_pid!=getppid())
@@ -1080,10 +1080,10 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
   client[cs_idx].au=(-1);
   switch((long)account)
   {
-    case -2:						// gbx-dummy
+    case -2:            // gbx-dummy
       client[cs_idx].dup=0;
       break;
-    case 0:						// reject access
+    case 0:           // reject access
       rc=1;
       cs_log("%s %s-client %s%s (%s)",
              client[cs_idx].crypted ? t_crypt : t_plain,
@@ -1092,7 +1092,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
              client[cs_idx].ip ? t_reject : t_reject+1,
              e_txt ? e_txt : t_msg[rc]);
       break;
-    default:						// grant/check access
+    default:            // grant/check access
       if (client[cs_idx].ip && account->dyndns[0])
         if (client[cs_idx].ip != account->dynip)
           rc=2;
@@ -1103,7 +1103,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
         {
           client[cs_idx].grp=account->grp;
           client[cs_idx].au=account->au;
-	  client[cs_idx].autoau=account->autoau;
+    client[cs_idx].autoau=account->autoau;
           client[cs_idx].tosleep=(60*account->tosleep);
           memcpy(&client[cs_idx].ctab, &account->ctab, sizeof(client[cs_idx].ctab));
           if (account->uniq)
@@ -1122,7 +1122,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
       }
       client[cs_idx].monlvl=account->monlvl;
       strcpy(client[cs_idx].usr, account->usr);
-    case -1:						// anonymous grant access
+    case -1:            // anonymous grant access
       if (rc)
         t_grant=t_reject;
       else
@@ -1131,31 +1131,31 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
           sprintf(t_msg[0], "lvl=%d", client[cs_idx].monlvl);
         else
         {
-        	if(client[cs_idx].autoau) 
-     		{
-     			if(client[cs_idx].ncd_server)
-  				{
-  					int r=0;
-  					for(r=0;r<CS_MAXREADER;r++)
-				  	{
-				  		if((reader[r].typ==R_MOUSE || reader[ridx].typ==R_SMART) && reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
-			  			{
-			  				client[cs_idx].au=r;
-			  				break;
-			  			}
-					}
-  					if(client[cs_idx].au<0) sprintf(t_msg[0], "au(auto)=%d", client[cs_idx].au+1);
-          		else sprintf(t_msg[0], "au(auto)=%s", reader[client[cs_idx].au].label);
-  				}
-     			else
-     			{
-     				sprintf(t_msg[0], "au=auto");
-     			}
-     		}
-        	else
-        	{
-         	  if(client[cs_idx].au<0) sprintf(t_msg[0], "au=%d", client[cs_idx].au+1);
-          	  else sprintf(t_msg[0], "au=%s", reader[client[cs_idx].au].label);
+          if(client[cs_idx].autoau)
+        {
+          if(client[cs_idx].ncd_server)
+          {
+            int r=0;
+            for(r=0;r<CS_MAXREADER;r++)
+            {
+              if((reader[r].typ==R_MOUSE || reader[ridx].typ==R_SMART) && reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
+              {
+                client[cs_idx].au=r;
+                break;
+              }
+          }
+            if(client[cs_idx].au<0) sprintf(t_msg[0], "au(auto)=%d", client[cs_idx].au+1);
+              else sprintf(t_msg[0], "au(auto)=%s", reader[client[cs_idx].au].label);
+          }
+          else
+          {
+            sprintf(t_msg[0], "au=auto");
+          }
+        }
+          else
+          {
+            if(client[cs_idx].au<0) sprintf(t_msg[0], "au=%d", client[cs_idx].au+1);
+              else sprintf(t_msg[0], "au=%s", reader[client[cs_idx].au].label);
                 }
           }
       }  
@@ -1226,7 +1226,7 @@ void store_logentry(char *txt)
 #ifdef CS_LOGHISTORY
   char *ptr;
   ptr=(char *)(loghist+(*loghistidx*CS_LOGHISTSIZE));
-  ptr[0]='\1';		// make username unusable
+  ptr[0]='\1';    // make username unusable
   ptr[1]='\0';
   if ((client[cs_idx].typ=='c') || (client[cs_idx].typ=='m'))
     strncpy(ptr, client[cs_idx].usr, 31);
@@ -1612,11 +1612,11 @@ static void chk_dcw(int fd)
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100)
-    return;	// already done
+    return; // already done
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
-    return;	// obsolete
+    return; // obsolete
   ert->rcEx=er->rcEx;
-  if (er->rc>0)	// found
+  if (er->rc>0) // found
   {
     ert->rc=(er->rc==2)?2:0;
     ert->rcEx=0;
@@ -1624,12 +1624,12 @@ static void chk_dcw(int fd)
     memcpy(ert->cw , er->cw , sizeof(er->cw));
     ert->gbxCWFrom=er->gbxCWFrom;
   }
-  else		// not found (from ONE of the readers !)
+  else    // not found (from ONE of the readers !)
   {
     int i;
     ert->reader[er->reader[0]]=0;
     for (i=0; (ert) && (i<CS_MAXREADER); i++)
-      if (ert->reader[i])	// we have still another chance
+      if (ert->reader[i]) // we have still another chance
         ert=(ECM_REQUEST *)0;
     if (ert) ert->rc=4;
   }
@@ -1643,11 +1643,11 @@ ulong chk_provid(uchar *ecm, ushort caid)
   ulong provid=0;
   switch(caid)
   {
-    case 0x100:			// seca
+    case 0x100:     // seca
       provid=b2i(2, ecm+3);
       break;
-    case 0x500:			// viaccess
-      i=(ecm[4]==0xD2) ? ecm[5] + 2 : 0;	// skip d2 nano
+    case 0x500:     // viaccess
+      i=(ecm[4]==0xD2) ? ecm[5] + 2 : 0;  // skip d2 nano
       if ((ecm[5+i]==3) && ((ecm[4+i]==0x90) || (ecm[4+i]==0x40)))
         provid=(b2i(3, ecm+6+i) & 0xFFFFF0);
     default:
@@ -1725,7 +1725,7 @@ void guess_cardsystem(ECM_REQUEST *er)
     guess_irdeto(er);
 */
 
-  if (!er->caid)		// guess by len ..
+  if (!er->caid)    // guess by len ..
     er->caid=len4caid[er->ecm[2]+3];
 
   if (!er->caid)
@@ -1737,7 +1737,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
   int i;
   if ((reader_types == 0) || (reader_types == 2))
     er->level=flag;
-  flag=(flag)?3:1;		// flag specifies with/without fallback-readers
+  flag=(flag)?3:1;    // flag specifies with/without fallback-readers
   for (i=0; i<CS_MAXREADER; i++)
   {
       switch (reader_types)
@@ -1798,7 +1798,7 @@ void get_cw(ECM_REQUEST *er)
 //cs_log("caid IS NOW .. %04X, provid %06X", er->caid, er->prid);
 
   rejected=0;
-  if (er->rc>99)		// rc<100 -> ecm error
+  if (er->rc>99)    // rc<100 -> ecm error
   {
     now=time((time_t *) 0);
     m=er->caid;
@@ -1809,7 +1809,7 @@ void get_cw(ECM_REQUEST *er)
       client[cs_idx].lastswitch=now;
     if ((client[cs_idx].tosleep) &&
         (now-client[cs_idx].lastswitch>client[cs_idx].tosleep))
-      er->rc=6;	// sleeping
+      er->rc=6; // sleeping
     client[cs_idx].last_srvid=i;
     client[cs_idx].last_caid=m;
 
@@ -1817,12 +1817,12 @@ void get_cw(ECM_REQUEST *er)
       switch(j) 
       {
         case 0: if (client[cs_idx].dup)
-                  er->rc=7;	// fake
+                  er->rc=7; // fake
                 break;
         case 1: if (!chk_bcaid(er, &client[cs_idx].ctab)) 
                 {
 //                  cs_log("chk_bcaid failed");
-                  er->rc=8;	// invalid
+                  er->rc=8; // invalid
                   er->rcEx=E2_CAID;
                 }
                 break;
@@ -1844,7 +1844,7 @@ void get_cw(ECM_REQUEST *er)
                     er->l=(er->ecm[2]+3);
                   }
                   else
-                    er->rc=9;	// corrupt
+                    er->rc=9; // corrupt
                 }
                 break;
       }
@@ -1881,7 +1881,7 @@ void get_cw(ECM_REQUEST *er)
     memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
 
     if (check_ecmcache(er, client[cs_idx].grp))
-      er->rc=1;	// cache1
+      er->rc=1; // cache1
 
 #ifdef CS_ANTICASC
     ac_chk(er, 0);
@@ -1900,8 +1900,8 @@ void get_cw(ECM_REQUEST *er)
     {
       case 0: er->rc=4;                         // no reader -> not found
               if (!er->rcEx) er->rcEx=E2_GROUP; 
-              break;	                        
-      case 2: for (i=0; i<CS_MAXREADER; i++)	// fallbacks only, switch them.
+              break;
+      case 2: for (i=0; i<CS_MAXREADER; i++)  // fallbacks only, switch them.
                 er->reader[i]>>=1;
     }
   }
@@ -1935,9 +1935,9 @@ void do_emm(EMM_PACKET *ep)
   cs_debug("reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
   cs_ddump(ep->hexserial, 8, "emm UA:");
 //  if ((!reader[au].fd) || (reader[au].b_nano[ep->emm[3]])) // blocknano is obsolete
-  if ((!reader[au].fd) ||				// reader has no fd
-      (reader[au].caid[0]!=b2i(2,ep->caid)) ||		// wrong caid
-      (memcmp(reader[au].hexserial, ep->hexserial, 8)))	// wrong serial
+  if ((!reader[au].fd) ||       // reader has no fd
+      (reader[au].caid[0]!=b2i(2,ep->caid)) ||    // wrong caid
+      (memcmp(reader[au].hexserial, ep->hexserial, 8))) // wrong serial
     return;
 
   ep->cidx=cs_idx;
@@ -1966,12 +1966,12 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 {
   int i;
   ulong td;
-  struct timeb tpn, tpe, tpc;	// <n>ow, <e>nd, <c>heck
+  struct timeb tpn, tpe, tpc; // <n>ow, <e>nd, <c>heck
   static struct timeval tv;
 
   ECM_REQUEST *er;
   cs_ftime(&tpn);
-  tpe=tp_ctimeout;		// latest delay -> disconnect
+  tpe=tp_ctimeout;    // latest delay -> disconnect
 
   if (ecmtask)
     i=(ph[client[cs_idx].ctyp].multi)?CS_MAXPENDING:1;
@@ -1979,7 +1979,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
     i=0;
 //cs_log("num pend=%d", i);
   for (--i; i>=0; i--)
-    if (ecmtask[i].rc>=100)	// check all pending ecm-requests
+    if (ecmtask[i].rc>=100) // check all pending ecm-requests
     {
       int act, j;
       er=&ecmtask[i];
@@ -2008,8 +2008,8 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
             }
         }
 //cs_log("stage 0, act=%d r0=%d, r1=%d, r2=%d, r3=%d, r4=%d r5=%d", act,
-//		er->reader[0], er->reader[1], er->reader[2],
-//		er->reader[3], er->reader[4], er->reader[5]);
+//    er->reader[0], er->reader[1], er->reader[2],
+//    er->reader[3], er->reader[4], er->reader[5]);
         if (act)
         {
           int inc_stage = 1;
@@ -2052,7 +2052,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 //cs_log("           %d.%03d", tpc.time, tpc.millitm);
         if (er->stage)
         {
-          er->rc=5;	// timeout
+          er->rc=5; // timeout
           send_dcw(er);
           continue;
         }
@@ -2100,15 +2100,15 @@ int process_input(uchar *buf, int l, int timeout)
       else return(0);
     }
 
-    if (FD_ISSET(fd_m2c, &fds))		// read from pipe
+    if (FD_ISSET(fd_m2c, &fds))   // read from pipe
       chk_dcw(fd_m2c);
 
-    if (FD_ISSET(pfd, &fds))		// read from client
+    if (FD_ISSET(pfd, &fds))    // read from client
     {
       rc=ph[client[cs_idx].ctyp].recv(buf, l);
       break;
     }
-    if (tp.time<=time((time_t *)0))	// client maxidle reached
+    if (tp.time<=time((time_t *)0)) // client maxidle reached
     {
       rc=(-9);
       break;
@@ -2181,6 +2181,7 @@ int main (int argc, char *argv[])
            module_camd35,
            module_camd35_tcp,
            module_newcamd,
+           module_cccam,
 #ifdef CS_WITH_GBOX
            module_gbox,
 #endif
@@ -2211,7 +2212,7 @@ int main (int argc, char *argv[])
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
   init_shm();
   init_config();
-  for (i=0; mod_def[i]; i++)	// must be later BEFORE init_config()
+  for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {
     memset(&ph[i], 0, sizeof(struct s_module));
     mod_def[i](&ph[i]);
@@ -2322,7 +2323,7 @@ int main (int argc, char *argv[])
 #endif
 
   for (i=0; i<CS_MAX_MOD; i++)
-    if (ph[i].type & MOD_CONN_SERIAL)		// for now: oscam_ser only
+    if (ph[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only
       if (ph[i].s_handler)
         ph[i].s_handler(i);
 
@@ -2388,7 +2389,7 @@ int main (int argc, char *argv[])
                     close(fdp[0]);
                     break;
                   default:
-//                    close(fdp[1]);	// now used to simulate event
+//                    close(fdp[1]);  // now used to simulate event
                     pfd=fdp[0];
                     wait4master();
                     client[cs_idx].ctyp=i;
@@ -2397,7 +2398,7 @@ int main (int argc, char *argv[])
                     client[cs_idx].udp_sa=cad;
                     if (ph[client[cs_idx].ctyp].watchdog)
                         alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
-                    ph[i].s_handler(cad);		// never return
+                    ph[i].s_handler(cad);   // never return
                   }
                 }
                 if (idx)

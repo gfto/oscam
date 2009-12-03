@@ -19,23 +19,24 @@ static char token[4096];
 
 typedef enum cs_proto_type
 {
-  TAG_GLOBAL,	  // must be first !
-  TAG_MONITOR,	// monitor
-  TAG_CAMD33,	  // camd 3.3x
-  TAG_CAMD35,	  // camd 3.5x UDP
-  TAG_NEWCAMD,	// newcamd
-  TAG_RADEGAST,	// radegast
+  TAG_GLOBAL,   // must be first !
+  TAG_MONITOR,  // monitor
+  TAG_CAMD33,   // camd 3.3x
+  TAG_CAMD35,   // camd 3.5x UDP
+  TAG_NEWCAMD,  // newcamd
+  TAG_RADEGAST, // radegast
   TAG_SERIAL,   // serial (static)
   TAG_CS357X,   // camd 3.5x UDP
   TAG_CS378X,    // camd 3.5x TCP
-  TAG_GBOX	// gbox
+  TAG_GBOX, // gbox
+  TAG_CCCAM  // cccam
 #ifdef CS_ANTICASC
   ,TAG_ANTICASC // anti-cascading
 #endif
 } cs_proto_type_t;
 
 static char *cctag[]={"global", "monitor", "camd33", "camd35", 
-                      "newcamd", "radegast", "serial", "cs357x", "cs378x", "gbox", 
+                      "newcamd", "radegast", "serial", "cs357x", "cs378x", "gbox", "cccam",
 #ifdef CS_ANTICASC
                       "anticasc",
 #endif
@@ -462,7 +463,6 @@ static void chk_t_newcamd(char *token, char *value)
   }
   if (token[0] != '#')
     fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n",token);
-
 }
 
 static void chk_t_radegast(char *token, char *value)
@@ -481,7 +481,7 @@ static void chk_t_serial(char *token, char *value)
   {
     int l;
     l=strlen(cfg->ser_device);
-    if (l) cfg->ser_device[l++]=1;	// use ctrl-a as delimiter
+    if (l) cfg->ser_device[l++]=1;  // use ctrl-a as delimiter
     strncpy(cfg->ser_device+l, value, sizeof(cfg->ser_device)-1-l);
     return;
   }
@@ -513,6 +513,11 @@ static void chk_t_gbox(char *token, char *value)
     fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized\n",token);
 }
 
+static void chk_t_cccam(char *token, char *value)
+{
+  // placeholder for ccam server support
+}
+
 static void chk_token(char *token, char *value, int tag)
 {
   switch(tag)
@@ -527,6 +532,7 @@ static void chk_token(char *token, char *value, int tag)
     case TAG_SERIAL  : chk_t_serial(token, value); break;
     case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
     case TAG_GBOX    : chk_t_gbox(token, value); break;
+    case TAG_CCCAM   : chk_t_cccam(token, value); break;
 #ifdef CS_ANTICASC
     case TAG_ANTICASC: chk_t_ac(token, value); break;
 #endif
@@ -696,7 +702,7 @@ static void chk_account(char *token, char *value, struct s_auth *account)
   if (!strcmp(token, "monlevel")) { account->monlvl=atoi(value); return; }
   if (!strcmp(token, "caid")) { chk_caidtab(value, &account->ctab); return; }
   /*
-   *	case insensitive
+   *  case insensitive
    */
   strtolower(value);
   if (!strcmp(token, "au"))
@@ -988,7 +994,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   int i;
   char *ptr;
   /*
-   *	case sensitive first
+   *  case sensitive first
    */
   if (!strcmp(token, "device"))
   {
@@ -1031,7 +1037,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   if( !strcmp(token, "pincode")) { strncpy(rdr->pincode, value, sizeof(rdr->pincode)-1); return; }
   if (!strcmp(token, "readnano")) { strncpy((char *)rdr->emmfile, value, sizeof(rdr->emmfile)-1); return; }
   /*
-   *	case insensitive
+   *  case insensitive
    */
   strtolower(value);
 
@@ -1097,6 +1103,8 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     if (!strcmp(value, "cs378x")) {     rdr->typ=R_CS378X; return; }
     if (!strcmp(value, "cs357x")) {     rdr->typ=R_CAMD35; return; }
     if (!strcmp(value, "gbox")) {       rdr->typ=R_GBOX; return; }
+    if (!strcmp(value, "cccam")) {       rdr->typ=R_CCCAM; return; }
+    if (!strcmp(value, "radegast")) {       rdr->typ=R_RADEGAST; return; }
     if (!strcmp(value, "newcamd") || 
         !strcmp(value, "newcamd525")) {rdr->typ=R_NEWCAMD; 
                                        rdr->ncd_proto=NCD_525; return; }
@@ -1147,27 +1155,44 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   {
     if (!strcmp(value,"all")) //wildcard is used
       for (i=0 ; i<256; i++)
-	rdr->b_nano[i] |= 0x01; //set all lsb's to block all nanos
+  rdr->b_nano[i] |= 0x01; //set all lsb's to block all nanos
     else
       for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
-	if ((i=byte_atob(ptr))>=0)
-	  rdr->b_nano[i]|= 0x01; //lsb is set when to block nano
+  if ((i=byte_atob(ptr))>=0)
+    rdr->b_nano[i]|= 0x01; //lsb is set when to block nano
     return;
   }
   if (!strcmp(token, "savenano"))
   {
     if (!strcmp(value,"all")) //wildcard is used
       for (i=0 ; i<256; i++)
-	rdr->b_nano[i] |= 0x02; //set all lsb+1 to save all nanos to file
+  rdr->b_nano[i] |= 0x02; //set all lsb+1 to save all nanos to file
     else
       for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
-	if ((i=byte_atob(ptr))>=0)
-	  rdr->b_nano[i]|= 0x02; //lsb+1 is set when to save nano to file
+  if ((i=byte_atob(ptr))>=0)
+    rdr->b_nano[i]|= 0x02; //lsb+1 is set when to save nano to file
+    return;
+  }
+  if (!strcmp(token, "version")) {  // cccam version
+    if (strlen(value)>sizeof(rdr->cc_version)-1) {
+      fprintf(stderr, "cccam config: version too long\n");
+      exit(1);
+    }
+    bzero(rdr->cc_version, sizeof(rdr->cc_version));
+    strncpy(rdr->cc_version, value, sizeof(rdr->cc_version)-1);
+    return;
+  }
+  if (!strcmp(token, "build")) {  // cccam build number
+    if (strlen(value)>sizeof(rdr->cc_build)-1) {
+      fprintf(stderr, "cccam config build number too long\n");
+      exit(1);
+    }
+    bzero(rdr->cc_build, sizeof(rdr->cc_build));
+    strncpy(rdr->cc_build, value, sizeof(rdr->cc_build)-1);
     return;
   }
   if (token[0] != '#')
     fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
-
 }
 
 int init_readerdb()

@@ -117,7 +117,7 @@ static void casc_do_sock_log()
 
   idx=reader[ridx].ph.c_recv_log(&caid, &provid, &srvid);
   client[cs_idx].last=time((time_t)0);
-  if (idx<0) return;				// no dcw-msg received
+  if (idx<0) return;        // no dcw-msg received
 
   for (i=1; i<CS_MAXPENDING; i++)
   {
@@ -127,7 +127,7 @@ static void casc_do_sock_log()
        && (ecmtask[i].prid==provid)
        && (ecmtask[i].srvid==srvid))
     {
-      casc_check_dcw(i, 0, ecmtask[i].cw);	// send "not found"
+      casc_check_dcw(i, 0, ecmtask[i].cw);  // send "not found"
       break;
     }
   }
@@ -141,7 +141,7 @@ static void casc_do_sock(int w)
 
   if ((n=casc_recv_timer(buf, sizeof(buf), w))<=0)
   {
-    if (reader[ridx].ph.type==MOD_CONN_TCP)
+    if (reader[ridx].ph.type==MOD_CONN_TCP && reader[ridx].typ != R_RADEGAST)
     {
       cs_debug("casc_do_sock: close connection");
       network_tcp_connection_close(client[cs_idx].udp_fd);
@@ -150,14 +150,15 @@ static void casc_do_sock(int w)
   }
   client[cs_idx].last=time((time_t)0);
   idx=reader[ridx].ph.c_recv_chk(dcw, &rc, buf, n);
-  if (idx<0) return;	// no dcw received
+
+  if (idx<0) return;  // no dcw received
   reader[ridx].last_g=time((time_t*)0); // for reconnect timeout
 //cs_log("casc_do_sock: last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
   if (!idx) idx=last_idx;
   j=0;
   for (i=1; i<CS_MAXPENDING; i++)
   {
-           
+
    if (ecmtask[i].idx==idx)
     {
       casc_check_dcw(i, rc, dcw);
@@ -172,7 +173,7 @@ static void casc_get_dcw(int n)
   int w;
   struct timeb tps, tpe;
   tpe=ecmtask[n].tps;
-  //tpe.millitm+=1500;		// TODO: timeout of 1500 should be config
+  //tpe.millitm+=1500;    // TODO: timeout of 1500 should be config
   tpe.millitm+=cfg->srtimeout;
   tpe.time+=(tpe.millitm/1000);
   tpe.millitm%=1000;
@@ -185,7 +186,7 @@ static void casc_get_dcw(int n)
     cs_ftime(&tps);
   }
   if (ecmtask[n].rc>=10)
-    casc_check_dcw(n, 0, ecmtask[n].cw);	// simulate "not found"
+    casc_check_dcw(n, 0, ecmtask[n].cw);  // simulate "not found"
 }
 
 
@@ -201,15 +202,15 @@ int casc_process_ecm(ECM_REQUEST *er)
   for (n=0, i=sflag=1; i<CS_MAXPENDING; i++)
   {
     if ((t-ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
-        (ecmtask[i].rc>=10))			// drop timeouts
+        (ecmtask[i].rc>=10))      // drop timeouts
         {
-        	ecmtask[i].rc=0;
-        }	
-    if ((!n) && (ecmtask[i].rc<10))		// free slot found
+          ecmtask[i].rc=0;
+        }
+    if ((!n) && (ecmtask[i].rc<10))   // free slot found
       n=i;
-    if ((ecmtask[i].rc>=10) &&			// ecm already pending
+    if ((ecmtask[i].rc>=10) &&      // ecm already pending
         (!memcmp(er->ecmd5, ecmtask[i].ecmd5, CS_ECMSTORESIZE)) &&
-        (er->level<=ecmtask[i].level))		// ... this level at least
+        (er->level<=ecmtask[i].level))    // ... this level at least
       sflag=0;
   }
   if (!n)
@@ -241,11 +242,11 @@ int casc_process_ecm(ECM_REQUEST *er)
   rc=0;
   if (sflag)
   {
-    if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
+    if (!client[cs_idx].udp_sa.sin_addr.s_addr) // once resolved at least
       cs_resolve();
 
     if ((rc=reader[ridx].ph.c_send_ecm(&ecmtask[n], buf)))
-      casc_check_dcw(n, 0, ecmtask[n].cw);	// simulate "not found"
+      casc_check_dcw(n, 0, ecmtask[n].cw);  // simulate "not found"
     else
       last_idx = ecmtask[n].idx;
     reader[ridx].last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
@@ -373,19 +374,19 @@ static int reader_listen(int fd1, int fd2)
   struct timeval tv;
  
   if(reader[ridx].typ==R_GBOX){
-  	struct timeb tpe;
-	int ms,x;
-	cs_ftime(&tpe);
-	for(x=0;x<CS_MAXPENDING;x++){
-		ms=1000*(tpe.time-ecmtask[x].tps.time)+tpe.millitm-ecmtask[x].tps.millitm;
-		if(ecmtask[x].rc == 10 && ms > cfg->ctimeout && ridx == ecmtask[x].gbxRidx){
-			//cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",ecmtask[x].rc,ecmtask[x].idx,x,ridx,ecmtask[x].gbxRidx);
-			ecmtask[x].rc=5;
-			send_dcw(&ecmtask[x]);
-			
-		}		
-	}
-  }	
+    struct timeb tpe;
+  int ms,x;
+  cs_ftime(&tpe);
+  for(x=0;x<CS_MAXPENDING;x++){
+    ms=1000*(tpe.time-ecmtask[x].tps.time)+tpe.millitm-ecmtask[x].tps.millitm;
+    if(ecmtask[x].rc == 10 && ms > cfg->ctimeout && ridx == ecmtask[x].gbxRidx){
+      //cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",ecmtask[x].rc,ecmtask[x].idx,x,ridx,ecmtask[x].gbxRidx);
+      ecmtask[x].rc=5;
+      send_dcw(&ecmtask[x]);
+
+    }
+  }
+  }
   
   if (master_pid!=getppid()) cs_exit(0);
   tcp_toflag=(fd2 && is_tcp && reader[ridx].tcp_ito && reader[ridx].tcp_connected);
@@ -465,7 +466,7 @@ static void reader_do_pipe()
       break;
     case PIP_ID_CIN: 
       reader_card_info(); 
-      break;	
+      break;
   }
 }
 
@@ -499,6 +500,7 @@ void start_cardreader()
       case R_RADEGAST: module_radegast(&reader[ridx].ph); break;
       case R_SERIAL  : module_oscam_ser(&reader[ridx].ph); break;
       case R_CS378X  : module_camd35_tcp(&reader[ridx].ph); break;
+      case R_CCCAM  : module_cccam(&reader[ridx].ph); break;
 #ifdef CS_WITH_GBOX
       case R_GBOX    : module_gbox(&reader[ridx].ph);strcpy(client[cs_idx].usr, reader[ridx].label); break;
 #endif
