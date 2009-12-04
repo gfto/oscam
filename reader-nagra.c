@@ -24,7 +24,7 @@ unsigned char static_dt08[73];
 
 // Card Status checks
 #define HAS_CW      ((cam_state[2]&6)==6)
-#define RENEW_SESSIONKEY ((cam_state[0]&64)==64 ||  (cam_state[0]&32)==32)
+#define RENEW_SESSIONKEY ((cam_state[0]&64)==128 || (cam_state[0]&64)==64 ||  (cam_state[0]&32)==32)
 #define SENDDATETIME ((cam_state[0]&16)==16)
 // Datatypes
 #define DT01        0x01
@@ -35,6 +35,7 @@ unsigned char static_dt08[73];
 
 #define MAX_REC     20
 #define SYSTEM_NAGRA 0x1800
+#define SYSTEM_MASK 0xFF00
 
 unsigned char XorSum(const unsigned char *mem, int len)
 {
@@ -303,7 +304,7 @@ void decryptDT08(void)
   	//cs_debug("[nagra-reader] DT08 decrypted rsa: %s", cs_hexdump (1, static_dt08+33, 32));
   	
   	// RSA data can never be bigger than the modulo
-  	//decryptedRsaDT08[63] |= static_dt08[0] & 0x80;
+  	static_dt08[64] |= static_dt08[0] & 0x80;
   	
   	// IdeaCamKey
   	memcpy (&IdeaCamKey[0], reader[ridx].nagra_boxkey, 8);
@@ -460,22 +461,25 @@ int GetDataType(unsigned char dt, int len, int shots)
   	return 1;
 }
 
-int chk_caid(ushort caid, CAIDTAB *ctab)
+
+int chk_caid(CAIDTAB *ctab)
 {
 	int n;
 	for (n=0; (n<CS_MAXCAIDTAB); n++)
-	if (caid == ctab->caid[n])
 	{
-		cs_debug("[nagra-reader] switching back to Betacrypt mode");
-    		return 1;
+		if ((ctab->caid[n]&SYSTEM_MASK)==SYSTEM_NAGRA && (ctab->caid[n]&0xFF)>0)
+		{
+			cs_debug("[nagra-reader] using nagra mode");
+    			return 1;
+    		}
     	}
+    	cs_debug("[nagra-reader] using irdeto mode");
     	return 0;
 }
 
 int nagra2_card_init(uchar *atr, int atrlen)
 {
 	memset(rom, 0, 15);
-	// hardcoded for testing only
 	reader[ridx].nprov = 1;
 	memset (reader[ridx].sa, 0xff, sizeof (reader[ridx].sa));
 	reader[ridx].caid[0]=SYSTEM_NAGRA;
@@ -490,10 +494,12 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	}
 	else if (!memcmp(atr+4, "IRDETO", 6))
 	{
+		/*
 		cs_debug("[nagra-reader] support for non native nagra cards not finished Switching back to irdeto mode");
 		return 0;
-		/*
-		cs_debug("[nagra-reader] detect tunneled nagra card T14 protocol");
+		*/
+		cs_debug("[nagra-reader] detect Irdeto tunneled nagra card");
+		if(!chk_caid(&reader[ridx].ctab)) return 0;
 		is_pure_nagra=0;
 		if(!do_cmd(0x10,0x02,0x90,0x11,0))
 		{
@@ -501,7 +507,6 @@ int nagra2_card_init(uchar *atr, int atrlen)
 			return 0;
 		}
 		memcpy(rom,cta_res+2,15);
-		*/
 	}
 	else return 0;
 	CamStateRequest();
@@ -526,8 +531,6 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	//DumpDatatypes();
 	if(!GetDataType(0x04,0x44,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT04 DONE");
-	if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
-	cs_debug("[nagra-reader] TIERS DONE");
 	if(!GetDataType(DT06,0x16,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT06 DONE");
 	*/
@@ -542,6 +545,8 @@ int nagra2_card_init(uchar *atr, int atrlen)
 
 int nagra2_card_info(void)
 {
+	if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
+	cs_debug("[nagra-reader] TIERS DONE");
 	cs_log("ROM:  %c %c %c %c %c %c %c %c", rom[0], rom[1], rom[2],rom[3], rom[4], rom[5], rom[6], rom[7]);
 	cs_log("REV:  %c %c %c %c %c %c %c", rom[8], rom[9], rom[10], rom[11], rom[12], rom[13], rom[14]);
 	cs_log("SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
@@ -552,18 +557,15 @@ int nagra2_card_info(void)
 
 int nagra2_do_ecm(ECM_REQUEST *er)
 {
-	int retry;
+	if RENEW_SESSIONKEY NegotiateSessionKey();
+	if SENDDATETIME DateTimeCMD();
 	if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2)) 
 	{
 		cs_debug("[nagra-reader] nagra2_do_ecm failed");
 		return (0);
 	}
-	cs_sleepms(100);
-	for(retry = 0;;retry++)
-	{
-		if(CamStateRequest()) break;
-		if( retry == 7 ) return 0;
-	}
+	//cs_sleepms(100);
+	CamStateRequest();
 	
 	if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
 	{
@@ -572,6 +574,11 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 		idea_cbc_encrypt(&cta_res[4],er->cw,8,&ksSession,v,IDEA_DECRYPT);
 		memset(v,0,sizeof(v));
 		idea_cbc_encrypt(&cta_res[30],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
+		// after cw received. //Todo: Do not block!//
+		CamStateRequest();
+		//cs_sleepms(20);
+		if RENEW_SESSIONKEY NegotiateSessionKey();
+		if SENDDATETIME DateTimeCMD();
 		return (1);
 	}
 	return(0);
