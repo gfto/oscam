@@ -355,11 +355,11 @@ void decryptDT08(void)
 int DumpDatatype(unsigned char dtbyte)
 {
 	static unsigned char cmd22[] = {0x21, 0x00, 0x09, 0xA0, 0xCA, 0x00, 0x00, 0x04, 0x22, 0x01, 0x01, 0x0E};
-	int r;
+	// int r;
 	unsigned char dtactualsize;
-	ushort chid;
-      	char ds[16], de[16];
-      	cmd22[0x0A] = dtbyte;
+	// ushort chid;
+	// char ds[16], de[16];
+	// cmd22[0x0A] = dtbyte;
 
 	while(1)
 	{
@@ -386,7 +386,7 @@ int DumpDatatype(unsigned char dtbyte)
 
 int DumpDatatypes(void)
 {
-	int r;
+	//int r;
 	unsigned char dtbyte = 0;
 	unsigned short dtflags;
 	while(1)
@@ -399,7 +399,7 @@ int DumpDatatypes(void)
 		memcpy(&dtflags,cta_res+2,2);
 		if(!dtflags)
 			break;
-		for(dtbyte; dtbyte < 16; dtbyte++)
+		for(dtbyte=0; dtbyte < 16; dtbyte++)
 			if(dtflags & (0x01 << dtbyte))
 				//if (dtbyte == 0x01 || dtbyte == 0x08 || dtbyte == 0x00) break;
 					if (!DumpDatatype(dtbyte)) break;

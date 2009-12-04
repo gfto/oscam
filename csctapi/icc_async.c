@@ -175,7 +175,7 @@ int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate)
 int ICC_Async_GetBaudrate (ICC_Async * icc, unsigned long * baudrate)
 {
 	(*baudrate) = icc->baudrate;
-	printf ("ENTERED GetBaudrate = %lu", baudrate);
+	printf ("ENTERED GetBaudrate = %lu", (*baudrate));
 	
 	return ICC_ASYNC_OK;  
 }
