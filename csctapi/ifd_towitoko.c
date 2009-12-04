@@ -261,19 +261,18 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 	{
 		return IFD_TOWITOKO_OK;
 	}
-	
+/*	
 	if (IFD_Towitoko_GetMaxBaudrate (ifd) < baudrate)
 	{
 #ifdef DEBUG_IFD
 		printf ("IFD: Tried to set unsupported baudrate: %lu", baudrate);
 #endif
 		return IFD_TOWITOKO_PARAM_ERROR;
-	}
+	}*/
 	
 #ifdef DEBUG_IFD
 	printf ("IFD: Setting baudrate to %lu\n", baudrate);
 #endif
-	
 	/* Get current settings */
 	if (!IO_Serial_GetProperties (ifd->io))
 		return IFD_TOWITOKO_IO_ERROR;
@@ -722,6 +721,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		req_ts.tv_nsec = 50000000;
 #endif
 		
+		(*atr) = NULL;
 		for(i=0; i<3; i++)
 		{
 			parity = par[i];
@@ -785,6 +785,32 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 #ifndef NO_PAR_SWITCH
 		IFD_Towitoko_SetParity (ifd, IFD_TOWITOKO_PARITY_NONE);
 #endif
+
+		if (*atr) { //if valid ATR switch to post-ATR baudrate
+		  double atrparam_f,atrparam_d;
+		  if (ATR_GetParameter(*atr,ATR_PARAMETER_F,&atrparam_f)!=ATR_OK) {
+			cs_log ("Error getting ATR parameter (F)");
+			ATR_Delete (*atr);
+			(*atr) = NULL;
+			return IFD_TOWITOKO_IO_ERROR;
+		  }  
+		  if (ATR_GetParameter(*atr,ATR_PARAMETER_D,&atrparam_d)!=ATR_OK) {
+			cs_log ("Error getting ATR parameter (D)");
+			ATR_Delete (*atr);
+			(*atr) = NULL;
+			return IFD_TOWITOKO_IO_ERROR;
+		  }
+
+		  if (atrparam_f && atrparam_d) { //both should be valid
+		    int baudrate = (int)(IFD_TOWITOKO_BAUDRATE * ATR_DEFAULT_F * atrparam_d / atrparam_f);
+
+		    if (baudrate != IFD_TOWITOKO_BAUDRATE) {
+		      cs_debug("After ATR switching to baudrate %i. F=%.0f, D=%f",baudrate, atrparam_f, atrparam_d);
+		      if (IFD_Towitoko_SetBaudrate (ifd, baudrate) !=  IFD_TOWITOKO_OK)  //switch to baud, if error stay on normal baudrate
+			cs_debug("After ATR switching failed");
+		    }
+		  }
+		}
 		return ret;
 	}
 }

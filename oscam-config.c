@@ -1092,7 +1092,6 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   }
   if (!strcmp(token, "mhz")) { rdr->mhz=atoi(value); return; }
   if (!strcmp(token, "cardmhz")) { rdr->cardmhz=atoi(value); return; }
-  if (!strcmp(token, "customspeed")) { rdr->custom_speed=atoi(value); return; }
   if (!strcmp(token, "protocol"))
   {
     if (!strcmp(value, "mouse")) {      rdr->typ=R_MOUSE; return; }
@@ -1223,7 +1222,6 @@ int init_readerdb()
       reader[nr].maxqlen = CS_MAXQLEN;
       reader[nr].mhz = 357;
       reader[nr].cardmhz = 357;
-      reader[nr].custom_speed = 1;
       strcpy(reader[nr].pincode, "none");
       for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
       continue;

@@ -607,10 +607,6 @@ int videoguard_card_init(uchar *atr, int atrsize)
     else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
     {
         cs_log("Type: Videoguard Sky Italia");
-	if (reader[ridx].custom_speed) {
-	  cs_log("Notice: for Sky Italia 'customspeed = 1' will not work; resetting to 'customspeed = 0'");
-	  reader[ridx].custom_speed = 0;
-	}
 	if (reader[ridx].mhz != 357)
 	  cs_log("Warning: for Sky Italia currently only 'mhz = 357' is known to work! Device %s has mhz = %i",reader[ridx].device,reader[ridx].mhz);
     }
@@ -633,10 +629,6 @@ int videoguard_card_init(uchar *atr, int atrsize)
     else if ((atrsize == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atrsize) == 0))
     {
         cs_log("Type: Videoguard Sky Italia new (093B)");
-	if (reader[ridx].custom_speed) {
-	  cs_log("Notice: for Sky Italia 'customspeed = 1' will not work; resetting to 'customspeed = 0'");
-	  reader[ridx].custom_speed = 0;
-	}
 	if (reader[ridx].mhz != 357)
 	  cs_log("Warning: for Sky Italia currently only 'mhz = 357' is known to work! Device %s has mhz = %i",reader[ridx].device,reader[ridx].mhz);
     }
@@ -651,8 +643,6 @@ int videoguard_card_init(uchar *atr, int atrsize)
     }*/ 
     //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
     //this way also unknown videoguard2/NDS cards will work
-
-  Force_Baudrate_After_ATR(64516);//FIXME not necessary for a lot of cards!!! Try to call this routine only for ATRs that need it!
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
   int l;

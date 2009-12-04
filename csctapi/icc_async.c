@@ -68,8 +68,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 		return ICC_ASYNC_IFD_ERROR;
 	
 	/* Initialize Baudrate */
-//	if (IFD_Towitoko_SetBaudrate (ifd, ICC_ASYNC_BAUDRATE)!= IFD_TOWITOKO_OK)
-	if (IFD_Towitoko_SetBaudrate (ifd, 9600)!= IFD_TOWITOKO_OK)
+	if (IFD_Towitoko_SetBaudrate (ifd, ICC_ASYNC_BAUDRATE)!= IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
 	
 	/* Activate ICC */
@@ -168,6 +167,7 @@ int ICC_Async_GetTimings (ICC_Async * icc, ICC_Async_Timings * timings)
 int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate)
 {
 	icc->baudrate = baudrate;
+	printf ("ENTERED SETBaudrate = %lu", baudrate);
 	
 	return ICC_ASYNC_OK;
 }
@@ -175,6 +175,7 @@ int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate)
 int ICC_Async_GetBaudrate (ICC_Async * icc, unsigned long * baudrate)
 {
 	(*baudrate) = icc->baudrate;
+	printf ("ENTERED GetBaudrate = %lu", baudrate);
 	
 	return ICC_ASYNC_OK;  
 }

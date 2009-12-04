@@ -487,7 +487,6 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	if (memcmp(atr+11, "DNASP", 5)==0)
 	{
 		//if(SetIFS(0xFE) != 1) return 0;
-   		Force_Baudrate_After_ATR(115200);//FIXME not necessary for a lot of cards!!! Try to call this routine only for ATRs that need it!
 		cs_debug("[nagra-reader] detect pure nagra card T1 protocol");
 		is_pure_nagra=1;
 		memcpy(rom,atr+11,15);
