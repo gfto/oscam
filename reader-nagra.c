@@ -471,62 +471,6 @@ int chk_caid(ushort caid, CAIDTAB *ctab)
     	}
     	return 0;
 }
-int setBaudrate(void)
-{
-#ifdef OS_LINUX
-	if (reader[ridx].typ != R_INTERN) 
-	{
-	  	int bconst=B38400;
-	  	int baud=115200 * reader[ridx].mhz/reader[ridx].cardmhz;
-
-	  	int fd=open(reader[ridx].device,O_RDWR|O_NONBLOCK|O_NOCTTY);
-	
-	  	struct termios tio;
-	  	memset(&tio,0,sizeof(tio));
-	  	tio.c_cflag = (CS8 | CREAD | HUPCL | CLOCAL);
-		tio.c_cflag |= CSTOPB;
-		tio.c_iflag = (INPCK | BRKINT);
-		tio.c_cc[VMIN] = 1;
-		cfsetispeed(&tio,bconst);
-		cfsetospeed(&tio,bconst);
-		tio.c_cflag |= (PARENB | PARODD);
-	
-	  	struct serial_struct s;
-	  	if(ioctl(fd,TIOCGSERIAL,&s)<0)
-	  	{
-	    		cs_log("%s: get serial failed: %s",reader[ridx].device,strerror(errno));
-	    		return 0;
-	    	}
-	  	if(!tcsetattr(fd,TCSANOW,&tio))
-	  	{
-	      		if (reader[ridx].custom_speed) 
-	      		{
-	        	s.custom_divisor=(s.baud_base+(baud/2))/baud;
-	        	s.flags=(s.flags&~ASYNC_SPD_MASK) | ASYNC_SPD_CUST;
-	        	cs_log ("%s: custom: baud_base=%d baud=%d divisor=%d -> effective baudrate %d (%+.2f%% off)",
-	                			reader[ridx].device,s.baud_base,baud,s.custom_divisor,s.baud_base/s.custom_divisor,
-	                			(float)(s.baud_base/s.custom_divisor-baud)/(float)baud);
-	      		}
-	      		else
-	      		{
-	        		s.flags &= ~ASYNC_SPD_CUST;
-	        		cs_log ("%s: baud=%d", reader[ridx].device, 38400);
-	        	}
-	      		if(ioctl(fd,TIOCSSERIAL,&s)<0)
-	      		{
-	        		cs_log ("%s: set serial failed: %s",reader[ridx].device,strerror(errno));
-	        		return 0;
-	        	}
-	      	}
-	  	else
-	  	{
-	    		cs_log ("%s: tcsetattr failed: %s",reader[ridx].device,strerror(errno));
-	    		return 0;
-	    	}
-	}
-#endif
-	return 1;
-}
 
 int nagra2_card_init(uchar *atr, int atrlen)
 {
@@ -539,7 +483,7 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	if (memcmp(atr+11, "DNASP", 5)==0)
 	{
 		//if(SetIFS(0xFE) != 1) return 0;
-		if (!setBaudrate()) return 0;
+   		Force_Baudrate_After_ATR(115200);//FIXME not necessary for a lot of cards!!! Try to call this routine only for ATRs that need it!
 		cs_debug("[nagra-reader] detect pure nagra card T1 protocol");
 		is_pure_nagra=1;
 		memcpy(rom,atr+11,15);

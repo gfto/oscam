@@ -652,50 +652,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
     //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
     //this way also unknown videoguard2/NDS cards will work
 
-
-#ifdef OS_LINUX
-if (reader[ridx].typ != R_INTERN) {
-  int bconst=B38400;
-  int baud=64516 * reader[ridx].mhz/reader[ridx].cardmhz;
-  int fd=open(reader[ridx].device,O_RDWR|O_NONBLOCK|O_NOCTTY);
-
-  struct termios tio;
-  memset(&tio,0,sizeof(tio));
-  tio.c_cflag = (CS8 | CREAD | HUPCL | CLOCAL);
-  tio.c_cflag |= CSTOPB;
-  tio.c_iflag = (INPCK | BRKINT);
-  tio.c_cc[VMIN] = 1;
-  cfsetispeed(&tio,bconst);
-  cfsetospeed(&tio,bconst);
-  tio.c_cflag |= (PARENB | PARODD);
-
-  struct serial_struct s;
-  if(ioctl(fd,TIOCGSERIAL,&s)<0) {
-    cs_log("%s: get serial failed: %s",reader[ridx].device,strerror(errno));
-    return 0;
-    }
-  if(!tcsetattr(fd,TCSANOW,&tio)) {
-      if (reader[ridx].custom_speed) {
-        s.custom_divisor=(s.baud_base+(baud/2))/baud;
-        s.flags=(s.flags&~ASYNC_SPD_MASK) | ASYNC_SPD_CUST;
-        cs_log ("%s: custom: baud_base=%d baud=%d divisor=%d -> effective baudrate %d (%+.2f%% off)",
-                reader[ridx].device,s.baud_base,baud,s.custom_divisor,s.baud_base/s.custom_divisor,
-                (float)(s.baud_base/s.custom_divisor-baud)/(float)baud);
-      } else {
-        s.flags &= ~ASYNC_SPD_CUST;
-        cs_log ("%s: baud=%d", reader[ridx].device, 38400);
-        }
-      if(ioctl(fd,TIOCSSERIAL,&s)<0) {
-        cs_log ("%s: set serial failed: %s",reader[ridx].device,strerror(errno));
-        return 0;
-        }
-      }
-  else {
-    cs_log ("%s: tcsetattr failed: %s",reader[ridx].device,strerror(errno));
-    return 0;
-    }
-}
-#endif
+  Force_Baudrate_After_ATR(64516);//FIXME not necessary for a lot of cards!!! Try to call this routine only for ATRs that need it!
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
   int l;
