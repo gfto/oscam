@@ -199,7 +199,8 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial, bool pnp)
 #endif
 
 #ifdef OS_MACOSX
-		io->fd = open (filename,  O_RDWR | O_NOCTTY | O_NDELAY );
+		io->fd = open (filename,  O_RDWR | O_NOCTTY);
+		// io->fd = open (filename,  O_RDWR | O_NOCTTY | O_NDELAY );
 #else
 		io->fd = open (filename, O_RDWR | O_NOCTTY | O_SYNC);
 #endif
