@@ -546,10 +546,10 @@ int nagra2_card_info(void)
 {
 	if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] TIERS DONE");
-	cs_log("ROM:  %c %c %c %c %c %c %c %c", rom[0], rom[1], rom[2],rom[3], rom[4], rom[5], rom[6], rom[7]);
-	cs_log("REV:  %c %c %c %c %c %c %c", rom[8], rom[9], rom[10], rom[11], rom[12], rom[13], rom[14]);
-	cs_log("SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
-	cs_log("CAID: %04X",reader[ridx].caid[0]);
+	cs_ri_log("ROM:  %c %c %c %c %c %c %c %c", rom[0], rom[1], rom[2],rom[3], rom[4], rom[5], rom[6], rom[7]);
+	cs_ri_log("REV:  %c %c %c %c %c %c %c", rom[8], rom[9], rom[10], rom[11], rom[12], rom[13], rom[14]);
+	cs_ri_log("SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
+	cs_ri_log("CAID: %04X",reader[ridx].caid[0]);
 	cs_log("ready for requests"); 
 	return(1);
 }
