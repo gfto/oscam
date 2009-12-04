@@ -625,6 +625,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			params.T = 14;
 			params.WWT = 1500;
 			params.EGT = 5;
+			params.f = 5;
 			buf[0]=0x3B;
 		}
 /*					
