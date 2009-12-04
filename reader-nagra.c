@@ -24,7 +24,7 @@ unsigned char static_dt08[73];
 
 // Card Status checks
 #define HAS_CW      ((cam_state[2]&6)==6)
-#define RENEW_SESSIONKEY ((cam_state[0]&64)==128 || (cam_state[0]&64)==64 ||  (cam_state[0]&32)==32)
+#define RENEW_SESSIONKEY ((cam_state[0]&128)==128 || (cam_state[0]&64)==64 ||  (cam_state[0]&32)==32)
 #define SENDDATETIME ((cam_state[0]&16)==16)
 // Datatypes
 #define DT01        0x01
