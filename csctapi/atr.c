@@ -41,6 +41,8 @@ static unsigned atr_num_ib_table[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3
 
 unsigned atr_f_table[16] = {0, 372, 558, 744, 1116, 1488, 1860, 0, 0, 512, 768, 1024, 1536, 2048, 0, 0};
 
+// double atr_d_table[16] = { 0, 1, 2, 4, 8, 16, 32, 0, 12, 20, 0.5, 0.25, 125, 0.0625, 0.03125, 0.015625 };
+// the value bellow are wrong, use these above once the fix for baudrate after aTR is done
 double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 0, 0, 0, 0, 0.5, 0.25, 125, 0.0625, 0.03125, 0.015625};
 
 unsigned atr_i_table[4] = {25, 50, 100, 0};
