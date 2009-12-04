@@ -167,16 +167,12 @@ int ICC_Async_GetTimings (ICC_Async * icc, ICC_Async_Timings * timings)
 int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate)
 {
 	icc->baudrate = baudrate;
-	printf ("ENTERED SETBaudrate = %lu", baudrate);
-	
 	return ICC_ASYNC_OK;
 }
 
 int ICC_Async_GetBaudrate (ICC_Async * icc, unsigned long * baudrate)
 {
 	(*baudrate) = icc->baudrate;
-	printf ("ENTERED GetBaudrate = %lu", (*baudrate));
-	
 	return ICC_ASYNC_OK;  
 }
 
