@@ -475,7 +475,7 @@ if (reader[ridx].typ != R_INTERN) {
   struct serial_struct s;
   if(ioctl(fd,TIOCGSERIAL,&s)<0) {
     cs_log("%s: get serial failed: %s",reader[ridx].device,strerror(errno));
-    return 0;
+    return;
     }
   if(!tcsetattr(fd,TCSANOW,&tio)) {
       if (reader[ridx].custom_speed) {
@@ -490,12 +490,12 @@ if (reader[ridx].typ != R_INTERN) {
         }
       if(ioctl(fd,TIOCSSERIAL,&s)<0) {
         cs_log ("%s: set serial failed: %s",reader[ridx].device,strerror(errno));
-        return 0;
+        return;
         }
       }
   else {
     cs_log ("%s: tcsetattr failed: %s",reader[ridx].device,strerror(errno));
-    return 0;
+    return;
     }
 }
 #endif
