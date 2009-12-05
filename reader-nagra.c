@@ -484,7 +484,7 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	memset (reader[ridx].sa, 0xff, sizeof (reader[ridx].sa));
 	reader[ridx].caid[0]=SYSTEM_NAGRA;
 	
-	if (memcmp(atr+11, "DNASP", 5)==0)
+	if ((memcmp(atr+11, "DNASP", 5)==0 || memcmp(atr+11, "TIGER", 5)==0))
 	{
 		//if(SetIFS(0xFE) != 1) return 0;
 		cs_debug("[nagra-reader] detect pure nagra card T1 protocol");
