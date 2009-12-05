@@ -764,7 +764,7 @@ static int cc_cli_connect(void)
   if(handle < 0) return -1;
 
   // get init seed
-  if(read(handle, data, 16) != 16) {
+  if(recv(handle, data, 16, MSG_WAITALL) != 16) {
     cs_log("cccam: server does not return 16 bytes");
     network_tcp_connection_close(handle);
     return -2;
@@ -801,7 +801,7 @@ static int cc_cli_connect(void)
   cc_crypt(&cc->block[ENCRYPT], (uint8 *)reader[ridx].r_pwd, strlen(reader[ridx].r_pwd), ENCRYPT);     // modify encryption state w/ pwd
   cc_cmd_send(buf, 6, MSG_NO_HEADER); // send 'CCcam' xor w/ pwd
 
-  if (read(handle, data, 20) != 20) {
+  if (recv(handle, data, 20, MSG_WAITALL) != 20) {
     cs_log("cccam: login failed, pwd ack not received");
     return -2;
   }
