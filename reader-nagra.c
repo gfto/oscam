@@ -521,11 +521,11 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	if(!GetDataType(DT01,0x0E,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT01 DONE");
 	CamStateRequest();
-	if(!GetDataType(CAMDATA,0x55,10)) return 0;
-	cs_debug("[nagra-reader] CAMDATA Done");
-	CamStateRequest();
 	if(!GetDataType(IRDINFO,0x39,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] IRDINFO DONE");
+	CamStateRequest();
+	if(!GetDataType(CAMDATA,0x55,10)) return 0;
+	cs_debug("[nagra-reader] CAMDATA Done");
 	/*
 	//DumpDatatypes();
 	if(!GetDataType(0x04,0x44,MAX_REC)) return 0;
@@ -556,12 +556,17 @@ int nagra2_card_info(void)
 
 int nagra2_do_ecm(ECM_REQUEST *er)
 {
-	if RENEW_SESSIONKEY NegotiateSessionKey();
-	if SENDDATETIME DateTimeCMD();
+	//if RENEW_SESSIONKEY NegotiateSessionKey();
+	//if SENDDATETIME DateTimeCMD();
 	if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2)) 
 	{
-		cs_debug("[nagra-reader] nagra2_do_ecm failed");
-		return (0);
+		cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
+		if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2))
+		{
+			cs_debug("[nagra-reader] nagra2_do_ecm failed");
+			return (0);
+		}
+
 	}
 	//cs_sleepms(100);
 	CamStateRequest();
