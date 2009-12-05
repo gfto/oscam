@@ -536,13 +536,14 @@ bool IO_Serial_SetProperties (IO_Serial * io)
    { //no overclocking
      cfsetospeed(&newtio, IO_Serial_Bitrate(io->output_bitrate));
      cfsetispeed(&newtio, IO_Serial_Bitrate(io->input_bitrate));
+     cs_debug("standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %lu", io->cardmhz, io->mhz, io->output_bitrate);
    }
 #ifdef OS_LINUX
    else { //over or underclocking
     /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
     struct serial_struct nuts;
     ioctl(io->fd, TIOCGSERIAL, &nuts);
-    int custom_baud = 9600 * io->mhz / io->cardmhz;
+    int custom_baud = io->output_bitrate * io->mhz / io->cardmhz;
     nuts.custom_divisor = (nuts.baud_base + (custom_baud/2))/ custom_baud;
     cs_debug("custom baudrate: cardmhz=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
 	                      io->cardmhz, io->mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
