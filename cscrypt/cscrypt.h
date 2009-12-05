@@ -4,9 +4,14 @@
 #include "aes/aes.h"
 #endif
 
+#ifdef HAVE_SHA
+#  include <openssl/sha.h>
+#else
+#  include "sha1.h"
+#endif
+
 #include "des.h"
 #include "bn.h"
-#include "sha1.h"
 
 #ifndef HEADER_CSCRYPT_H
 #define HEADER_CSCRYPT_H

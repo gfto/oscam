@@ -744,7 +744,7 @@ static int cc_cli_connect(void)
 {
   int handle;
   uint8 data[20];
-  uint8 hash[SHA1_DIGEST_SIZE];
+  uint8 hash[SHA_DIGEST_LENGTH];
   uint8 buf[CC_MAXMSGSIZE];
   struct cc_data *cc;
 
@@ -773,10 +773,10 @@ static int cc_cli_connect(void)
 
   cc_xor(data);  // XOR init bytes with 'CCcam'
 
-  SHA1_CTX ctx;
+  SHA_CTX ctx;
   SHA1_Init(&ctx);
   SHA1_Update(&ctx, data, 16);
-  SHA1_Final(&ctx, hash);
+  SHA1_Final(hash, &ctx);
 
   cs_ddump(hash, sizeof(hash), "cccam: sha1 hash:");
 
