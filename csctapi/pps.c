@@ -88,7 +88,7 @@ PPS * PPS_New (ICC_Async * icc)
 int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 {
 	ATR *atr;
-	int ret;
+	int ret = PPS_HANDSAKE_ERROR;
 	
 	/* Perform PPS Exchange if requested */
 	if ((*length) > 0)
@@ -106,17 +106,21 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 				pps->parameters.d = atr_d_table[(params[2] & 0x0F)];
 			}
 			
+/*			
 			ret  = PPS_InitICC(pps);
 			
 			if (ret != PPS_OK)
 				return ret;
+*/
 		}
+/*		
 		else
 		{
 			return ret;
 		}
+*/
 	}
-	else /* Get parameters from ATR */
+	if ((*length) <= 0 || ret != PPS_OK) /* Get parameters from ATR */
 	{
 		PPS_SelectFirstProtocol (pps);
 		
@@ -128,6 +132,11 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 		ATR_GetParameter (atr, ATR_PARAMETER_F, &(pps->parameters.f));
 #endif
 	}
+	
+	ret  = PPS_InitICC(pps);
+			
+	if (ret != PPS_OK)
+		return ret;
 	
 #ifdef DEBUG_PROTOCOL
 	printf("PPS: T=%X, F=%.0f, D=%.6f, N=%.0f\n", 
@@ -245,19 +254,29 @@ static unsigned PPS_GetLength (BYTE * block)
 
 static int PPS_InitICC (PPS * pps)
 {
+#ifdef SCI_DEV
+        //case readertype = internal
+	//code for setting parameters to SCI_DEV (currently in ifd_towitoko.c in ResetAsync_ICC should be placed here
+	//if ok return PPS_OK;
+	//else return PPS_ICC_ERROR;
+	//
+#endif
 	unsigned long baudrate;
-	long double work_etu;
-	
-	/* Work etu = (1/D) * (F/fs) * 1000 milliseconds */
-	work_etu = (1000 * pps->parameters.f) / (pps->parameters.d * ICC_Async_GetClockRate (pps->icc));
-	
-	/* Baudrate = 1000 / etu bps */
-	baudrate = (long unsigned int) (1000 / work_etu);
-	
+
+	baudrate = pps->parameters.d * ICC_Async_GetClockRate (pps->icc) / pps->parameters.f; 
+	//FIXME notice that cardmhz is taken into account here
+	//not sure whether that goes ok when cardmhz = 600
+	//if not then IFD_GetClockRate should be devaluated to returning the DEFINED 372L * 9600L (like it usd to be..)
+
 #ifdef DEBUG_PROTOCOL
 	printf ("PPS: Baudrate = %d\n", (int)baudrate);
 #endif
 	
+
+	//FIXME currently for SCI_DEV Setbaudrate is dummied
+	//but it should be something like
+	//case readertype = smart:
+	//case readertype = mouse:
 	if (ICC_Async_SetBaudrate (pps->icc, baudrate) != ICC_ASYNC_OK)
 		return PPS_ICC_ERROR;
 	

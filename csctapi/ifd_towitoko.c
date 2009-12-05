@@ -786,31 +786,20 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		IFD_Towitoko_SetParity (ifd, IFD_TOWITOKO_PARITY_NONE);
 #endif
 
-		if (*atr) { //if valid ATR switch to post-ATR baudrate
-		  double atrparam_f,atrparam_d;
-		  if (ATR_GetParameter(*atr,ATR_PARAMETER_F,&atrparam_f)!=ATR_OK) {
-			cs_log ("Error getting ATR parameter (F)");
-			ATR_Delete (*atr);
-			(*atr) = NULL;
-			return IFD_TOWITOKO_IO_ERROR;
-		  }  
-		  if (ATR_GetParameter(*atr,ATR_PARAMETER_D,&atrparam_d)!=ATR_OK) {
-			cs_log ("Error getting ATR parameter (D)");
-			ATR_Delete (*atr);
-			(*atr) = NULL;
-			return IFD_TOWITOKO_IO_ERROR;
-		  }
-
-		  if (atrparam_f && atrparam_d) { //both should be valid
-		    int baudrate = (int)(IFD_TOWITOKO_BAUDRATE * ATR_DEFAULT_F * atrparam_d / atrparam_f);
-
-		    if (baudrate != IFD_TOWITOKO_BAUDRATE) {
-		      cs_debug("After ATR switching to baudrate %i. F=%.0f, D=%f",baudrate, atrparam_f, atrparam_d);
-		      if (IFD_Towitoko_SetBaudrate (ifd, baudrate) !=  IFD_TOWITOKO_OK)  //switch to baud, if error stay on normal baudrate
-			cs_debug("After ATR switching failed");
-		    }
-		  }
-		}
+/*
+		//PLAYGROUND faking ATR for test purposes only
+		//
+  		// sky 919 unsigned char atr_test[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
+  		// HD+ unsigned char atr_test[] = { 0x3F, 0xFF, 0x95, 0x00, 0xFF, 0x91, 0x81, 0x71, 0xFE, 0x47, 0x00, 0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34, 0x63 };
+		// S02 = irdeto unsigned char atr_test[] = { 0x3B, 0x9F, 0x21, 0x0E, 0x49, 0x52, 0x44, 0x45, 0x54, 0x4F, 0x20, 0x41, 0x43, 0x53, 0x03};
+		//cryptoworks 	unsigned char atr_test[] = { 0x3B, 0x78, 0x12, 0x00, 0x00, 0x65, 0xC4, 0x05, 0xFF, 0x8F, 0xF1, 0x90, 0x00 };
+		unsigned char atr_test[] = { 0x3F, 0xFF, 0x95, 0x00, 0xFF, 0x91, 0x81, 0x71, 0xFE, 0x47, 0x00, 0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34, 0x63 };
+		ATR_Delete(*atr); //throw away actual ATR
+		(*atr) = ATR_New ();
+		ATR_InitFromArray ((*atr), atr_test, sizeof(atr_test));
+		//END OF PLAYGROUND 
+*/
+		
 		return ret;
 	}
 }
@@ -968,8 +957,10 @@ unsigned long
 IFD_Towitoko_GetClockRate (IFD * ifd)
 {
  	//return IFD_TOWITOKO_CLOCK_RATE;
-	cs_debug("CLOCK RATE IS %i in 10kHz steps",ifd->io->mhz);
- 	return ifd->io->mhz * 10000L; 
+	if (ifd->io->cardmhz == 357 || ifd->io->cardmhz == 358)
+	  return (372L * 9600L);
+	else
+ 	  return ifd->io->cardmhz * 10000L; 
 }
 
 unsigned long 

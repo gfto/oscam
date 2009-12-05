@@ -167,6 +167,9 @@ int ICC_Async_GetTimings (ICC_Async * icc, ICC_Async_Timings * timings)
 int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate)
 {
 	icc->baudrate = baudrate;
+	if (IFD_Towitoko_SetBaudrate (icc->ifd, baudrate) !=  IFD_TOWITOKO_OK)
+	  return ICC_ASYNC_IFD_ERROR;
+	
 	return ICC_ASYNC_OK;
 }
 
