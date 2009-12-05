@@ -36,6 +36,10 @@
 #  define GCC_PACK
 #endif
 
+#ifdef WIN32
+#  define MSG_WAITALL 0
+#endif
+
 #include "oscam-config.h"
 #ifndef USE_CMAKE
 #  include "oscam-ostype.h"
