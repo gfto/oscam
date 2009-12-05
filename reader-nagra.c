@@ -436,7 +436,7 @@ int ParseDataType(unsigned char dt)
        				cs_log("|    |    |    |%s|%s|",date2,time2);
        			}
        		case 0x08:
-     		case 0x88: if (cta_res[11] == 0x49) decryptDT08();    			
+     		case 0x88: if (cta_res[11] == 0x49) decryptDT08(); return 1;  			
        		default:
        			return 1;
    	}
@@ -453,7 +453,7 @@ int GetDataType(unsigned char dt, int len, int shots)
   			cs_debug("[nagra-reader] failed to get datatype %02X",dt);
   			return 0;
   		}
-    		if(cta_res[2]==0) return 1;
+    		if((cta_res[2]==0) && (dt != CAMDATA)) return 1;
     		if(!ParseDataType(dt&0x0F)) return 0;
     		if ((dt == CAMDATA) && (cta_res[11] == 0x49)) return 1; //got dt08 data	
     		dt|=0x80; // get next item
