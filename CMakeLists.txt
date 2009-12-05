@@ -130,6 +130,11 @@ if (HAVE_AES)
     add_definitions ("-DHAVE_AES")
 endif (HAVE_AES)
 
+check_include_file ("openssl/sha.h" HAVE_SHA)
+if (HAVE_SHA)
+    add_definitions ("-DHAVE_SHA")
+endif (HAVE_SHA)
+
 #----------------------- subdirectories ------------------------------
 
 add_subdirectory (csctapi)
@@ -284,4 +289,9 @@ if (HAVE_AES)
 else (HAVE_AES)
     message (STATUS "  use built-in aes functions")
 endif (HAVE_AES)
+if (HAVE_SHA)
+    message (STATUS "  use system sha functions")
+else (HAVE_SHA)
+    message (STATUS "  use built-in sha functions")
+endif (HAVE_SHA)
 message (STATUS "")

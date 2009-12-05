@@ -7,7 +7,7 @@
 #ifdef HAVE_SHA
 #  include <openssl/sha.h>
 #else
-#  include "sha1.h"
+#  include "sha/sha1.h"
 #endif
 
 #include "des.h"
