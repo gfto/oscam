@@ -802,7 +802,7 @@ static int cc_cli_connect(void)
   cc_cmd_send(buf, 6, MSG_NO_HEADER); // send 'CCcam' xor w/ pwd
 
   if (read(handle, data, 20) != 20) {
-    cs_log("ccam: login failed, pwd ack not received");
+    cs_log("cccam: login failed, pwd ack not received");
     return -2;
   }
   cc_crypt(&cc->block[DECRYPT], data, 20, DECRYPT);
