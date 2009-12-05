@@ -198,12 +198,15 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial, bool pnp)
 	else
 #endif
 
-#ifdef OS_MACOSX
+//#ifdef OS_MACOSX
 		// on mac os x, make sure you use the /dev/cu.XXXX device in oscam.server
 		io->fd = open (filename,  O_RDWR | O_NOCTTY| O_NONBLOCK);
-#else
-		io->fd = open (filename, O_RDWR | O_NOCTTY | O_SYNC);
-#endif
+//#else
+//              with O_SYNC set OSCam is very critical on opening a device, on certain installs
+//              (eg virtual Ubuntu with /dev/ttyUSB) it gives "Error activating card"
+//              with O_NONBLOCK this problem is solved
+//		io->fd = open (filename, O_RDWR | O_NOCTTY | O_SYNC);
+//#endif
 
 	if (io->fd < 0)
 		return FALSE;
