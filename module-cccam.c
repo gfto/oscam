@@ -602,6 +602,9 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   } else {
     n = -1;
     cs_log("cccam: no suitable card on server");
+    cur_er->rc = 0;
+    cur_er->rcEx = 0x27;
+    write_ecm_answer(fd_c2m, cur_er);
   }
 
   return 0;

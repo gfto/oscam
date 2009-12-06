@@ -1512,8 +1512,8 @@ int send_dcw(ECM_REQUEST *er)
 {
   static char *stxt[]={"found", "cache1", "cache2", "emu",
                        "not found", "timeout", "sleeping",
-                       "fake", "invalid", "corrupt"};
-  static char *stxtEx[]={"", "group", "caid", "ident", "class", "chid", "queue"};
+                       "fake", "invalid", "corrupt", "no card"};
+  static char *stxtEx[]={"", "group", "caid", "ident", "class", "chid", "queue", "peer"};
   static char *stxtWh[]={"", "user ", "reader ", "server ", "lserver "};
   char sby[32]="";
   char erEx[32]="";
