@@ -587,15 +587,21 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 	}
 	return(0);
 }
-
+/*
+very experimental EMM support !!
+*/
 int nagra2_do_emm(EMM_PACKET *ep)
 {
+	cs_debug("[nagra-reader] -----------------");
+	cs_debug("[nagra-reader] -----------------");
+	cs_dump(ep->emm, 64, "[nagra-reader]EMM:");
+	cs_debug("[nagra-reader] -----------------");
+	cs_debug("[nagra-reader] -----------------");
 	if(!do_cmd(ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2))
 	{
 		cs_debug("[nagra-reader] nagra2_do_emm failed");
 		return (0);
 	}
-	cs_sleepms(500);
-	cs_dump(ep->emm, 64, "[nagra-reader]EMM:");
+	cs_sleepms(300);
 	return 1;
 }

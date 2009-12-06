@@ -779,6 +779,7 @@ extern int nds_card_info(void);
 extern int nagra2_card_init(uchar *, int);
 extern int nagra2_do_ecm(ECM_REQUEST *er);
 extern int nagra2_card_info(void);
+extern int nagra2_do_emm(EMM_PACKET *);
  
 // protocol modules
 extern int  monitor_send_idx(int, char *);

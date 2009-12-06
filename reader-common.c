@@ -426,6 +426,8 @@ int reader_emm(EMM_PACKET *ep)
 
     switch(reader[ridx].card_system)
     {
+      case SC_NAGRA:
+        rc=nagra2_do_emm(ep); break;
       case SC_IRDETO:
         rc=irdeto_do_emm(ep); break;
       case SC_CRYPTOWORKS:
