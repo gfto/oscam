@@ -456,7 +456,7 @@ int ParseDataType(unsigned char dt)
        				cs_log("|    |    |    |%s|%s|",date2,time2);
        			}
        		case 0x08:
-     		case 0x88: if (cta_res[11] == 0x49) decryptDT08(); return 1;  			
+     		case 0x88: if (cta_res[11] == 0x49) decryptDT08();  			
        		default:
        			return 1;
    	}
