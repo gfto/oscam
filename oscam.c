@@ -94,6 +94,7 @@ static  char* credit[] = {
     "dingo35 for seca reader-support",
     "dingo35 and okmikel for newcamd-support",
     "hellmaster1024 for gb*x-support",
+    "cogsi for cccam reader and radegast reader support",
     "the vdr-sc team for several good ideas :-)",
     NULL };
 

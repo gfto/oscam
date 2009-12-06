@@ -92,7 +92,7 @@ A million repetitions of "a"
 /* blk0() and blk() perform the initial expand. */
 /* I got the idea of expanding during the round function from SSLeay */
 /* FIXME: can we do this in an endian-proof way? */
-#ifdef WORDS_BIGENDIAN
+#if __BYTE_ORDER == __BIG_ENDIAN
 #define blk0(i) block->l[i]
 #else
 #define blk0(i) (block->l[i] = (rol(block->l[i],24)&0xFF00FF00) \

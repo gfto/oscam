@@ -63,7 +63,7 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
       (*netMsgId)++; 
      	break;
     case COMMTYPE_SERVER:
-      if( *netMsgId == 0xFFFE ) *netMsgId = 0; // или 0xFFFF ?
+      if( *netMsgId == 0xFFFE ) *netMsgId = 0; // пїЅпїЅпїЅ 0xFFFF ?
       break;
     }
     netbuf[2] = (*netMsgId) >> 8; 
@@ -530,6 +530,7 @@ static FILTER mk_user_ftab()
     int ctab_caid;
     ctab_caid = client[cs_idx].ctab.caid[i]&client[cs_idx].ctab.mask[i];
     if( ctab_caid ) c++;
+
     if( psfilt->caid==ctab_caid )
     {
       filt.caid=ctab_caid;

@@ -1102,7 +1102,12 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     if (!strcmp(value, "cs378x")) {     rdr->typ=R_CS378X; return; }
     if (!strcmp(value, "cs357x")) {     rdr->typ=R_CAMD35; return; }
     if (!strcmp(value, "gbox")) {       rdr->typ=R_GBOX; return; }
-    if (!strcmp(value, "cccam")) {       rdr->typ=R_CCCAM; return; }
+    if (!strcmp(value, "cccam")) {
+      rdr->typ=R_CCCAM;
+     // strcpy(value, "1");
+     // chk_caidtab(value, &rdr->ctab); // this is a MAJOR hack for auto multiple caid support (not currently working due to ncd table issue)
+      return;
+    }
     if (!strcmp(value, "radegast")) {       rdr->typ=R_RADEGAST; return; }
     if (!strcmp(value, "newcamd") || 
         !strcmp(value, "newcamd525")) {rdr->typ=R_NEWCAMD; 
