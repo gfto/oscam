@@ -199,8 +199,8 @@ void getCamID(void)
   	Get camid. For provider 0401 camid is 0xff,0xff,0xff,0xff. 
   	for other provider we will take them from hexserial
   	*/
-	unsigned char prv0401[] = {0x04, 0x01};
-	if (!memcmp(prv0401,&reader[ridx].prid[0],2))
+	unsigned char prv0401[] = {0x00, 0x00, 0x04, 0x01};
+	if (memcmp(prv0401,&reader[ridx].prid[0],4))
 	{
 		memcpy(camid,reader[ridx].hexserial,4);
 	}
@@ -343,7 +343,7 @@ void decryptDT08(void)
   	//cs_debug("[nagra-reader] dt08 72byte idea decrypted: %s", cs_hexdump (1, &static_dt08[35], 37));
   	
   	getCamID();
-  	cs_debug("[nagra-reader] using provider ID %s for dt08 calc",cs_hexdump (1,camid,4));
+  	cs_debug("[nagra-reader] using irdID %sfor dt08 calc",cs_hexdump (1,camid,4));
   	
 	// Calculate signature
   	memcpy (signature, static_dt08, 8);
@@ -434,7 +434,7 @@ int ParseDataType(unsigned char dt)
 			reader[ridx].prid[0][1]=0x00;
 			reader[ridx].prid[0][2]=cta_res[7];
 			reader[ridx].prid[0][3]=cta_res[8];
-     			reader[ridx].caid[0] =(SYSTEM_NAGRA|cta_res[11]);
+			reader[ridx].caid[0] =(SYSTEM_NAGRA|cta_res[11]);
      			memcpy(irdId,cta_res+14,4);
      			cs_debug("[nagra-reader] CAID: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
      			cs_debug("[nagra-reader] ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
