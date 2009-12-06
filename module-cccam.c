@@ -604,7 +604,25 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     cs_log("cccam: no suitable card on server");
     cur_er->rc = 0;
     cur_er->rcEx = 0x27;
+    //cur_er->rc = 1;
+    //cur_er->rcEx = 0;
+    usleep(100000);
     write_ecm_answer(fd_c2m, cur_er);
+    //reader[ridx].last_s = reader[ridx].last_g;
+
+    card = llist_itr_init(cc->cards, &itr);
+      while (card) {
+        if (card->caid == cur_er->caid) {   // caid matches
+          LLIST_ITR sitr;
+          uint16 *sid = llist_itr_init(card->badsids, &sitr);
+          while (sid) {
+            sid = llist_itr_remove(&sitr);
+          }
+          llist_itr_release(&sitr);
+        }
+        card = llist_itr_next(&itr);
+      }
+      llist_itr_release(&itr);
   }
 
   return 0;
@@ -937,6 +955,8 @@ int cc_cli_init(void)
     struct hostent *server;
     server = gethostbyname(reader[ridx].device);
     bcopy((char *)server->h_addr, (char *)&client[cs_idx].udp_sa.sin_addr.s_addr, server->h_length);
+
+    reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
 
     cs_log("cccam: proxy %s:%d cccam v%s (%s) (fd=%d, ridx=%d)",
             reader[ridx].device, reader[ridx].r_port, reader[ridx].cc_version,
