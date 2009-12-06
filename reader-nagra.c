@@ -195,11 +195,16 @@ void getCamID(void)
 {
 	/*
   	Hack: 
-  	Get camid. For provider 0401 camid is 0xff,0xff,0xff,0xff. 
+  	Get camid. For provider 0401/3411 camid is 0xff,0xff,0xff,0xff. 
   	for other provider we will take them from hexserial
   	*/
 	unsigned char prv0401[] = {0x00, 0x00, 0x04, 0x01};
-	if (memcmp(prv0401,&reader[ridx].prid[0],4))
+	unsigned char prv3411[] = {0x00, 0x00, 0x34, 0x11};
+	if ((memcmp(prv3411,&reader[ridx].prid[0],4)==0) || (memcmp(prv0401,&reader[ridx].prid[0],4)==0))
+	{
+		memset(camid,0xff,4);
+	}
+	else
 	{
 		memcpy(camid,reader[ridx].hexserial,4);
 	}
