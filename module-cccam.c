@@ -501,24 +501,48 @@ static int cc_send_cli_data()
   return cc_cmd_send(buf, 20 + 8 + 6 + 26 + 4 + 28 + 1, MSG_CLI_DATA);
 }
 
+static int cc_get_nxt_ecm(){
+  int n, i;
+  time_t t;
+
+  t=time((time_t *)0);
+  for (i = 1, n = 1; i < CS_MAXPENDING; i++)
+  {
+    if ((t-ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
+        (ecmtask[i].rc >= 10))      // drop timeouts
+        {
+          ecmtask[i].rc=0;
+        }
+
+    if (ecmtask[i].rc >= 10) {  // stil active and waiting
+      // search for the ecm with the lowest time, this should be the next to go
+      if ((!n || ecmtask[n].tps.time-ecmtask[i].tps.time < 0)) n = i;
+    }
+  }
+  return n;
+}
+
 static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
 {
   int n, h = -1;
   struct cc_data *cc = reader[ridx].cc;
   struct cc_card *card;
   LLIST_ITR itr;
+  ECM_REQUEST *cur_er;
 
-  cc->last_nok = 0;
+  if ((n = cc_get_nxt_ecm()) < 0) return 0;   // no queued ecms
+  cur_er = &ecmtask[n];
+  if (cur_er->rc == 99) return 0;   // ecm already sent
 
-  memcpy(buf, er->ecm, er->l);
+  memcpy(buf, cur_er->ecm, cur_er->l);
 
   cc->cur_card = NULL;
-  cc->cur_sid = er->srvid;
+  cc->cur_sid = cur_er->srvid;
 
   card = llist_itr_init(cc->cards, &itr);
 
   while (card) {
-    if (card->caid == er->caid) {   // caid matches
+    if (card->caid == cur_er->caid) {   // caid matches
       int s = 0;
 
       LLIST_ITR sitr;
@@ -535,7 +559,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
       LLIST_ITR pitr;
       uint8 *prov = llist_itr_init(card->provs, &pitr);
       while (prov && !s) {
-        if (b2i(3, prov) == er->prid) {  // provid matches
+        if (b2i(3, prov) == cur_er->prid) {  // provid matches
           if ((h < 0) || (card->hop < h)) {  // card is closer
             cc->cur_card = card;
             h = card->hop;  // card has been matched
@@ -550,29 +574,29 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   llist_itr_release(&itr);
 
   if (cc->cur_card) {
-    uint8 *ecmbuf = malloc(er->l+13);
-    bzero(ecmbuf, er->l+13);
+    uint8 *ecmbuf = malloc(cur_er->l+13);
+    bzero(ecmbuf, cur_er->l+13);
 
     // build ecm message
     ecmbuf[0] = cc->cur_card->caid >> 8;
     ecmbuf[1] = cc->cur_card->caid & 0xff;
-    ecmbuf[2] = er->prid >> 24;
-    ecmbuf[3] = er->prid >> 16;
-    ecmbuf[4] = er->prid >> 8;
-    ecmbuf[5] = er->prid & 0xff;
+    ecmbuf[2] = cur_er->prid >> 24;
+    ecmbuf[3] = cur_er->prid >> 16;
+    ecmbuf[4] = cur_er->prid >> 8;
+    ecmbuf[5] = cur_er->prid & 0xff;
     ecmbuf[6] = cc->cur_card->id >> 24;
     ecmbuf[7] = cc->cur_card->id >> 16;
     ecmbuf[8] = cc->cur_card->id >> 8;
     ecmbuf[9] = cc->cur_card->id & 0xff;
-    ecmbuf[10] = er->srvid >> 8;
-    ecmbuf[11] = er->srvid & 0xff;
-    ecmbuf[12] = er->l & 0xff;
-    memcpy(ecmbuf+13, buf, er->l);
+    ecmbuf[10] = cur_er->srvid >> 8;
+    ecmbuf[11] = cur_er->srvid & 0xff;
+    ecmbuf[12] = cur_er->l & 0xff;
+    memcpy(ecmbuf+13, buf, cur_er->l);
 
-    cc->count = er->idx;
+    cc->count = cur_er->idx;
 
-    cs_log("cccam: sending ecm for sid %04x to card %08x, hop %d", er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
-    n = cc_cmd_send(ecmbuf, er->l+13, MSG_ECM);      // send ecm
+    cs_log("cccam: sending ecm for sid %04x to card %08x, hop %d", cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
+    n = cc_cmd_send(ecmbuf, cur_er->l+13, MSG_ECM);      // send ecm
 
     X_FREE(ecmbuf);
   } else {
@@ -610,8 +634,9 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     // find blank caid slot in tab and add caid
 
     {
-      int i = 0, p = 0;
-   /*   while(reader[ridx].ctab.caid[i]) {
+      int i = 0;
+      /*, p = 0;
+      while(reader[ridx].ctab.caid[i]) {
         if (reader[ridx].ctab.caid[i] == b2i(2, buf+12)) p = 1;
         i++;
       }
