@@ -492,11 +492,11 @@ static int cc_send_cli_data()
   uint8 buf[CC_MAXMSGSIZE];
   bzero(buf, CC_MAXMSGSIZE);
 
-  memcpy(buf, reader[ridx].r_usr, strlen(reader[ridx].r_usr) );
+  memcpy(buf, reader[ridx].r_usr, sizeof(reader[ridx].r_usr));
   memcpy(buf + 20, cc->node_id, 8 );
-  memcpy(buf + 29, reader[ridx].cc_version, strlen(reader[ridx].cc_version));   // cccam version (ascii)
-  memcpy(buf + 61, reader[ridx].cc_build, strlen(reader[ridx].cc_build));       // build number (ascii)
-
+  memcpy(buf + 29, reader[ridx].cc_version, sizeof(reader[ridx].cc_version));   // cccam version (ascii)
+  memcpy(buf + 61, reader[ridx].cc_build, sizeof(reader[ridx].cc_build));       // build number (ascii)
+cs_log ("User: %s, version: %s, build: %s", reader[ridx].r_usr, reader[ridx].cc_version, reader[ridx].cc_build);
   return cc_cmd_send(buf, 20 + 8 + 6 + 26 + 4 + 28 + 1, MSG_CLI_DATA);
 }
 
