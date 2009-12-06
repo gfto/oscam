@@ -11,7 +11,6 @@ IDEA_KEY_SCHEDULE ksSession;
 extern uchar cta_res[];
 extern ushort cta_lr;
 int is_pure_nagra=0;
-int hasMod=0;
 unsigned char rom[15];
 unsigned char plainDT08RSA[64];
 unsigned char IdeaCamKey[16];
@@ -343,15 +342,13 @@ void decryptDT08(void)
   	//cs_debug("[nagra-reader] dt08 72byte idea decrypted: %s", cs_hexdump (1, &static_dt08[35], 37));
   	
   	getCamID();
-  	cs_debug("[nagra-reader] using irdID %sfor dt08 calc",cs_hexdump (1,camid,4));
+  	cs_debug("[nagra-reader] using camid %sfor dt08 calc",cs_hexdump (1,camid,4));
   	
 	// Calculate signature
   	memcpy (signature, static_dt08, 8);
   	memset (static_dt08 + 0, 0, 4);
   	memcpy (static_dt08 + 4, camid, 4);
   	Signature(sign2,IdeaCamKey,static_dt08,72);
-  	
-  	memcpy (plainDT08RSA, static_dt08+8, 64);
 
 	BN_CTX_free (ctx);
 	//cs_debug("[nagra-reader] dt08 sign1: %s", cs_hexdump (0, signature, 8));
@@ -359,13 +356,14 @@ void decryptDT08(void)
 	
 	if (memcmp (signature, sign2, 8)==0)
 	{
+		memcpy (plainDT08RSA, static_dt08+8, 64);
 		cs_debug("[nagra-reader] DT08 signature check ok");
-		hasMod=1;
 	}
 	else
 	{
+		memcpy (plainDT08RSA, reader[ridx].rsa_mod, 64);
 		cs_debug("[nagra-reader] DT08 signature check nok");
-		hasMod=0;
+		cs_debug("[nagra-reader] DT08 use n3_rsakey as pairingkey");
 	}  	
 }
 
