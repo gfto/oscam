@@ -99,13 +99,13 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	* Get protocol offered by interface bytes T*2 if available, 
 	* (that is, if TD1 is available), * otherwise use default T=0
 	*/
-	if (np>1)
+/*	if (np>1)
 		ATR_GetProtocolType (icc->atr, 2, &(icc->protocol_type));
 	
 #ifdef DEBUG_ICC
 	printf("ICC: Detected %s convention processor card T=%d\n",(icc->convention == ATR_CONVENTION_DIRECT ? "direct" : "inverse"), icc->protocol_type);
 #endif
-	
+	*///really should let PPS handle this
 	/* LED Green */
 	if (IFD_Towitoko_SetLED (ifd, IFD_TOWITOKO_LED_GREEN) != IFD_TOWITOKO_OK)
 	{
