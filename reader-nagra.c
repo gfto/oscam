@@ -89,7 +89,7 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
 		cs_debug("[nagra-reader] invalid data length encountered");
     		return 0;
     	}
-    	if (is_pure_nagra==0) msg[4]+=1;
+    	if (is_pure_nagra=0) msg[4]+=1;
     	if(!reader_cmd2icc(msg,msglen))
   	{
   		cs_sleepms(10);
@@ -481,22 +481,6 @@ int GetDataType(unsigned char dt, int len, int shots)
   	return 1;
 }
 
-
-int chk_caid(CAIDTAB *ctab)
-{
-	int n;
-	for (n=0; (n<CS_MAXCAIDTAB); n++)
-	{
-		if ((ctab->caid[n]&SYSTEM_MASK)==SYSTEM_NAGRA && (ctab->caid[n]&0xFF)>0)
-		{
-			cs_debug("[nagra-reader] using nagra mode");
-    			return 1;
-    		}
-    	}
-    	cs_debug("[nagra-reader] using irdeto mode");
-    	return 0;
-}
-
 int nagra2_card_init(uchar *atr, int atrlen)
 {
 	memset(rom, 0, 15);
@@ -507,19 +491,15 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	if ((memcmp(atr+11, "DNASP", 5)==0 || memcmp(atr+11, "TIGER", 5)==0))
 	{
 		//if(SetIFS(0xFE) != 1) return 0;
-		cs_debug("[nagra-reader] detect pure nagra card T1 protocol");
-		is_pure_nagra=1;
+		cs_debug("[nagra-reader] detect native nagra card T1 protocol");
 		memcpy(rom,atr+11,15);
 	}
 	else if (!memcmp(atr+4, "IRDETO", 6))
 	{
-		/*
-		cs_debug("[nagra-reader] support for non native nagra cards not finished Switching back to irdeto mode");
-		return 0;
-		*/
 		cs_debug("[nagra-reader] detect Irdeto tunneled nagra card");
-		if(!chk_caid(&reader[ridx].ctab)) return 0;
-		is_pure_nagra=0;
+		if(!reader[ridx].nagra_native) return 0;
+		cs_debug("[nagra-reader] using nagra mode");
+		is_pure_nagra=1;
 		if(!do_cmd(0x10,0x02,0x90,0x11,0))
 		{
 			cs_debug("[nagra-reader] get rom version failed");

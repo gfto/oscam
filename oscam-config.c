@@ -1062,6 +1062,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   }
   if (!strcmp(token, "n3_rsakey"))
   {
+    rdr->nagra_native=1;
     if (key_atob_l(value, rdr->rsa_mod, 128))
     {
       fprintf(stderr, "Configuration reader: Error in RSA Key\n");
