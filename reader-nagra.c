@@ -89,7 +89,7 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
 		cs_debug("[nagra-reader] invalid data length encountered");
     		return 0;
     	}
-    	if (is_pure_nagra=0) msg[4]+=1;
+    	if (is_pure_nagra=1) msg[4]+=1;
     	if(!reader_cmd2icc(msg,msglen))
   	{
   		cs_sleepms(10);
@@ -473,9 +473,9 @@ int GetDataType(unsigned char dt, int len, int shots)
   			cs_debug("[nagra-reader] failed to get datatype %02X",dt);
   			return 0;
   		}
-    		if((cta_res[2]==0) && (dt != CAMDATA)) return 1;
+    		if((cta_res[2]==0) && (dt != 0x08 || dt != 0x88)) return 1;
     		if(!ParseDataType(dt&0x0F)) return 0;
-    		if ((dt == CAMDATA) && (cta_res[11] == 0x49)) return 1; //got dt08 data	
+    		if ((dt != 0x08 || dt != 0x88) && (cta_res[11] == 0x49)) return 1; //got dt08 data	
     		dt|=0x80; // get next item
     	}
   	return 1;
