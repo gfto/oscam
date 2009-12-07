@@ -11,6 +11,7 @@ IDEA_KEY_SCHEDULE ksSession;
 extern uchar cta_res[];
 extern ushort cta_lr;
 int is_pure_nagra=0;
+int has_dt08=0;
 unsigned char rom[15];
 unsigned char plainDT08RSA[64];
 unsigned char IdeaCamKey[16];
@@ -219,6 +220,8 @@ int NegotiateSessionKey(void)
 	unsigned char idea2[16];
 	unsigned char sign1[8];
 	unsigned char sign2[8];
+	
+	if (!has_dt08) memcpy(plainDT08RSA, reader[ridx].rsa_mod, 64);
 
 	if(!do_cmd(0x2a,0x02,0xaa,0x42,NULL))
 	{
@@ -361,14 +364,14 @@ void decryptDT08(void)
 	
 	if (memcmp (signature, sign2, 8)==0)
 	{
+		has_dt08=1;
 		memcpy (plainDT08RSA, static_dt08+8, 64);
 		cs_debug("[nagra-reader] DT08 signature check ok");
 	}
 	else
 	{
-		memcpy (plainDT08RSA, reader[ridx].rsa_mod, 64);
+		has_dt08=0;
 		cs_debug("[nagra-reader] DT08 signature check nok");
-		cs_debug("[nagra-reader] DT08 use n3_rsakey as pairingkey");
 	}  	
 }
 
