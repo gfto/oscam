@@ -613,10 +613,12 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     card = llist_itr_init(cc->cards, &itr);
       while (card) {
         if (card->caid == cur_er->caid) {   // caid matches
+
           LLIST_ITR sitr;
           uint16 *sid = llist_itr_init(card->badsids, &sitr);
           while (sid) {
-            sid = llist_itr_remove(&sitr);
+            if (*sid == cur_er->srvid) sid = llist_itr_remove(&sitr);
+            else sid = llist_itr_next(&sitr);
           }
           llist_itr_release(&sitr);
         }
