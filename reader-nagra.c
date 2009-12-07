@@ -20,6 +20,8 @@ unsigned char sessi[16];
 unsigned char signature[8];
 unsigned char cam_state[3];
 unsigned char static_dt08[73];
+unsigned char prv0401[] = {0x00, 0x00, 0x04, 0x01};
+unsigned char prv3411[] = {0x00, 0x00, 0x34, 0x11};
 
 // Card Status checks
 #define HAS_CW      ((cam_state[2]&6)==6)
@@ -198,8 +200,6 @@ void getCamID(void)
   	Get camid. For provider 0401/3411 camid is 0xff,0xff,0xff,0xff. 
   	for other provider we will take them from hexserial
   	*/
-	unsigned char prv0401[] = {0x00, 0x00, 0x04, 0x01};
-	unsigned char prv3411[] = {0x00, 0x00, 0x34, 0x11};
 	if ((memcmp(prv3411,&reader[ridx].prid[0],4)==0) || (memcmp(prv0401,&reader[ridx].prid[0],4)==0))
 	{
 		memset(camid,0xff,4);
@@ -580,9 +580,18 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 	{
 		unsigned char v[8];
 		memset(v,0,sizeof(v));
-		idea_cbc_encrypt(&cta_res[4],er->cw,8,&ksSession,v,IDEA_DECRYPT);
+		idea_cbc_encrypt(&cta_res[30],er->cw,8,&ksSession,v,IDEA_DECRYPT);
 		memset(v,0,sizeof(v));
-		idea_cbc_encrypt(&cta_res[30],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
+		idea_cbc_encrypt(&cta_res[4],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
+		
+		if ((memcmp(prv3411,&reader[ridx].prid[0],4)==0) || (memcmp(prv0401,&reader[ridx].prid[0],4)==0))
+	  	{
+	    		unsigned char tt[8];
+	    		memcpy(&tt[0],&er->cw[0],8);
+	    		memcpy(&er->cw[0],&er->cw[8],8);
+	   		memcpy(&er->cw[8],&tt[0],8);
+	    	}
+	    	
 		post_process();
 		return (1);
 	}
