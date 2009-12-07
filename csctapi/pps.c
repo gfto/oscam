@@ -184,7 +184,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 					pps->parameters.f = (double) (atr_f_table[FI]);
 					pps->parameters.d = (double) (atr_d_table[DI]);
 					PPS_success = TRUE;
-					cs_debug("PTS Succesfull, selected protocol %i: T%X, F=%.0f, D=%.6f, N=%.0f\n", p, pps->parameters.t, pps->parameters.f, pps->parameters.d, pps->parameters.n);
+					cs_debug("PTS Succesfull, selected protocol %i: T%i, F=%.0f, D=%.6f, N=%.0f\n", p, pps->parameters.t, pps->parameters.f, pps->parameters.d, pps->parameters.n);
 					break;
 				}
 				else
@@ -198,19 +198,19 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 				ATR_GetProtocolType (atr, 2, &(pps->parameters.t));
 				ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
 				ATR_GetParameter (atr, ATR_PARAMETER_F, &(pps->parameters.f));
-				cs_debug("No PTS, selected protocol 2: T%X, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, pps->parameters.f, pps->parameters.d, pps->parameters.n);
+				cs_debug("No PTS, selected protocol 2: T%i, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, pps->parameters.f, pps->parameters.d, pps->parameters.n);
 			}
 			else {//otherwise use default T0
 				pps->parameters.t = ATR_PROTOCOL_TYPE_T0;
 				pps->parameters.d = ATR_DEFAULT_D;
 				pps->parameters.f = ATR_DEFAULT_F;
-				cs_debug("No PTS, selected protocol 1: T%X, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, pps->parameters.f, pps->parameters.d, pps->parameters.n);
+				cs_debug("No PTS, selected protocol 1: T%i, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, pps->parameters.f, pps->parameters.d, pps->parameters.n);
 			}
 		}
 	}//end length<0
 	
 #ifdef DEBUG_PROTOCOL
-	printf("PPS: T=%X, F=%.0f, D=%.6f, N=%.0f\n", 
+	printf("PPS: T=%i, F=%.0f, D=%.6f, N=%.0f\n", 
 	pps->parameters.t, 
 	pps->parameters.f, 
 	pps->parameters.d, 
