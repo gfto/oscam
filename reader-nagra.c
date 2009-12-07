@@ -92,7 +92,7 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
 		cs_debug("[nagra-reader] invalid data length encountered");
     		return 0;
     	}
-    	if (is_pure_nagra=1) msg[4]+=1;
+    	if (is_pure_nagra==1) msg[4]+=1;
     	if(!reader_cmd2icc(msg,msglen))
   	{
   		cs_sleepms(10);
