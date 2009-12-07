@@ -554,10 +554,17 @@ int nagra2_card_info(void)
 	return(1);
 }
 
+void post_process(void)
+{
+	//Todo: Do not block!//
+	CamStateRequest();
+	//cs_sleepms(20);
+	if RENEW_SESSIONKEY NegotiateSessionKey();
+	if SENDDATETIME DateTimeCMD();
+}
+
 int nagra2_do_ecm(ECM_REQUEST *er)
 {
-	//if RENEW_SESSIONKEY NegotiateSessionKey();
-	//if SENDDATETIME DateTimeCMD();
 	if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2)) 
 	{
 		cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
@@ -568,9 +575,7 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 		}
 
 	}
-	//cs_sleepms(100);
 	CamStateRequest();
-	
 	if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
 	{
 		unsigned char v[8];
@@ -578,30 +583,20 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 		idea_cbc_encrypt(&cta_res[4],er->cw,8,&ksSession,v,IDEA_DECRYPT);
 		memset(v,0,sizeof(v));
 		idea_cbc_encrypt(&cta_res[30],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
-		// after cw received. //Todo: Do not block!//
-		CamStateRequest();
-		//cs_sleepms(20);
-		if RENEW_SESSIONKEY NegotiateSessionKey();
-		if SENDDATETIME DateTimeCMD();
+		post_process();
 		return (1);
 	}
 	return(0);
 }
-/*
-very experimental EMM support !!
-*/
+
 int nagra2_do_emm(EMM_PACKET *ep)
 {
-	cs_debug("[nagra-reader] -----------------");
-	cs_debug("[nagra-reader] -----------------");
-	cs_dump(ep->emm, 64, "[nagra-reader]EMM:");
-	cs_debug("[nagra-reader] -----------------");
-	cs_debug("[nagra-reader] -----------------");
 	if(!do_cmd(ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2))
 	{
 		cs_debug("[nagra-reader] nagra2_do_emm failed");
 		return (0);
 	}
 	cs_sleepms(300);
+	post_process();
 	return 1;
 }
