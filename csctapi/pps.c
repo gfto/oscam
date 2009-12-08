@@ -335,7 +335,7 @@ static bool PPS_Match (BYTE * request, unsigned len_request, BYTE * confirm, uns
 	if ((len_request != len_confirm) || (!memcmp (request, confirm, len_request)))
 	{
 		/* See if the card specifies other than default FI and D */
-		if ((PPS_HAS_PPS1 (confirm)) && (confirm[2] != request[2]))
+		//if ((PPS_HAS_PPS1 (confirm)) && (confirm[2] != request[2]))
 			return FALSE;
 	}
 	
