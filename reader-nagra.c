@@ -224,7 +224,7 @@ int NegotiateSessionKey(void)
 	if (!has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
 	{
 		memcpy(plainDT08RSA, reader[ridx].rsa_mod, 64); 
-		memcpy(signature,reader[ridx].hexserial, 4);
+		memcpy(signature,reader[ridx].nagra_boxkey, 8);
 	}
 
 	if(!do_cmd(0x2a,0x02,0xaa,0x42,NULL))
@@ -253,12 +253,15 @@ int NegotiateSessionKey(void)
 		//cs_debug("[nagra-reader] DT08 decrypted $2a data: %s", cs_hexdump (1, negot, 32));
   		//cs_debug("[nagra-reader] DT08 decrypted $2a data: %s", cs_hexdump (1, &negot[32], 32));
   		
-  		memcpy(tmp, negot, 64);	
+  		memcpy(tmp, negot, 64);
 		ReverseMem(tmp, 64);
 		
 		// build sessionkey
 		// first halve is IDEA Hashed in chuncs of 8 bytes using the Signature1 from dt08 calc, CamID-Inv.CamID(16 bytes key) the results are the First 8 bytes of the Session key
-		memcpy(idea1, signature, 8); memcpy(idea1+8, reader[ridx].hexserial, 4); idea1[12] = ~reader[ridx].hexserial[0]; idea1[13] = ~reader[ridx].hexserial[1]; idea1[14] = ~reader[ridx].hexserial[2]; idea1[15] = ~reader[ridx].hexserial[3];
+		memcpy(idea1, signature, 8); 
+		memcpy(idea1+8, reader[ridx].hexserial, 4);
+		idea1[12] = ~reader[ridx].hexserial[0]; idea1[13] = ~reader[ridx].hexserial[1]; idea1[14] = ~reader[ridx].hexserial[2]; idea1[15] = ~reader[ridx].hexserial[3];
+		
 		Signature(sign1, idea1, tmp, 32);
 		memcpy(idea2,sign1,8); memcpy(idea2+8,sign1,8); 
 		Signature(sign2, idea2, tmp, 32);
@@ -582,7 +585,15 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 		}
 
 	}
+	if (is_pure_nagra==1)
+	{
+		cs_sleepms(50);
+	}
 	CamStateRequest();
+	if (is_pure_nagra==1)
+	{
+		cs_sleepms(50);
+	}
 	if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
 	{
 		unsigned char v[8];
@@ -590,7 +601,6 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 		idea_cbc_encrypt(&cta_res[30],er->cw,8,&ksSession,v,IDEA_DECRYPT);
 		memset(v,0,sizeof(v));
 		idea_cbc_encrypt(&cta_res[4],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
-		
 		if ((memcmp(prv3411,&reader[ridx].prid[0],4)==0) || (memcmp(prv0401,&reader[ridx].prid[0],4)==0))
 	  	{
 	    		unsigned char tt[8];
@@ -598,7 +608,6 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 	    		memcpy(&er->cw[0],&er->cw[8],8);
 	   		memcpy(&er->cw[8],&tt[0],8);
 	    	}
-	    	
 		post_process();
 		return (1);
 	}
