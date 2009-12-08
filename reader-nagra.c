@@ -221,7 +221,11 @@ int NegotiateSessionKey(void)
 	unsigned char sign1[8];
 	unsigned char sign2[8];
 	
-	if (!has_dt08) memcpy(plainDT08RSA, reader[ridx].rsa_mod, 64);
+	if (!has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
+	{
+		memcpy(plainDT08RSA, reader[ridx].rsa_mod, 64); 
+		memcpy(signature,reader[ridx].hexserial, 4);
+	}
 
 	if(!do_cmd(0x2a,0x02,0xaa,0x42,NULL))
 	{
