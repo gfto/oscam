@@ -171,19 +171,20 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 
 //If more than one protocol type and/or TA1 parameter values other than the default values and/or N equeal to 255 is/are indicated in the answer to reset, the card shall know unambiguously, after having sent the answer to reset, which protocol type or/and transmission parameter values (FI, D, N) will be used. Consequently a selection of the protocol type and/or the transmission parameters values shall be specified.
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(pps->parameters.n));
-		if (numprot > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255) {
+		ATR_GetProtocolType(atr,2,&(pps->parameters.t)); //get protocol from TD1
+		if ((pps->parameters.t != 14) && (numprot > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255)) {
 			//             PTSS  PTS0  PTS1  PTS2  PTS3  PCK
 			//             PTSS  PTS0  PTS1  PCK
 			BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
 
-			int p; //protocol 1 = T0 , protocol 2 = TD1, 3=TD2 etc
+			int p; 
 			for (p=1; p<=numprot; p++) {
 				if (p == 1)
 					pps->parameters.t = 0; //default T0 protocol
 				else
 				  ATR_GetProtocolType(atr,p+1,&(pps->parameters.t)); //get protocol from TDi //FIXME p+1 is needed for flaw in atr.c
-				if (pps->parameters.t == 14 && p < numprot) //if T14 and next protocol available
-					continue; //skip T14!!!
+				//if (pps->parameters.t == 14) 
+				//	continue; //skip T14!!!
 				req[1]=0x10 | pps->parameters.t; //PTS0 always flags PTS1 to be sent always
 				if (ATR_GetInterfaceByte (atr, p, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)  //PTS1 
 					req[2] = 0x11; //defaults FI and DI to 1
@@ -332,7 +333,7 @@ static int PPS_Exchange (PPS * pps, BYTE * params, unsigned *length)
 static bool PPS_Match (BYTE * request, unsigned len_request, BYTE * confirm, unsigned len_confirm)
 {
 	/* See if the reply differs from request */
-	if ((len_request != len_confirm) || (!memcmp (request, confirm, len_request)))
+	if ((len_request != len_confirm) || (memcmp (request, confirm, len_request)))
 	{
 		/* See if the card specifies other than default FI and D */
 		//if ((PPS_HAS_PPS1 (confirm)) && (confirm[2] != request[2]))
