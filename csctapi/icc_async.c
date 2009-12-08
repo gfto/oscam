@@ -293,7 +293,15 @@ int ICC_Async_Close (ICC_Async * icc)
 
 unsigned long ICC_Async_GetClockRate (ICC_Async * icc)
 {
-	return IFD_Towitoko_GetClockRate(icc->ifd);
+	switch (icc->ifd->io->cardmhz) {
+		case 357:
+		case 358:
+	  	return (372L * 9600L);
+		case 368:
+	  	return (384L * 9600L);
+		default:
+ 	  	return icc->ifd->io->cardmhz * 10000L;
+	}
 }
 
 void ICC_Async_Delete (ICC_Async * icc)

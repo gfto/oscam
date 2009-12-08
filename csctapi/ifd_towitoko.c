@@ -953,17 +953,6 @@ IFD_Towitoko_GetNumSlots (IFD * ifd)
 	return 1;
 }
 
-unsigned long
-IFD_Towitoko_GetClockRate (IFD * ifd)
-{
- 	return (372L * 9600L);
-	/*
-	if (ifd->io->cardmhz == 357 || ifd->io->cardmhz == 358)
-	  return (372L * 9600L);
-	else
- 	  return ifd->io->cardmhz * 10000L; */
-}
-
 unsigned long 
 IFD_Towitoko_GetMaxBaudrate (IFD * ifd)
 {

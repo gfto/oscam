@@ -133,52 +133,64 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	atr = ICC_Async_GetAtr (pps->icc);
 	if ((*length) <= 0 || !PPS_success) // If not by command, or PPS Exchange by command failed: Try PPS Exchange by ATR or Get parameters from ATR
 	{
-	  cs_debug("ATR reports smartcard supports %i protocols:",atr->pn);
-	  cs_debug("Protocol 1: T0");
+		//atr->pn contains nr of TDi + 1
+		//so if TD1 exists: number of protocols = atr->pn -1
+		//if TD1 not exists: number of protocols = atr->pn
+		int numprot = atr->pn;
+		BYTE tx;
+		if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TD, &tx) == ATR_OK)
+			numprot--;
+
+	  cs_debug("ATR reports smartcard supports %i protocols:",numprot);
 		int i,point;
 		char txt[50];
-		for (i=0; i< atr->pn-1; i++) {
-			sprintf(txt,"Protocol %01i:  ",i+2);
+		for (i=1; i<= numprot; i++) {
+			sprintf(txt,"Protocol %01i:  ",i);
 			point = 12;
-			if (atr->ib[i][ATR_INTERFACE_BYTE_TA].present) {
-			  sprintf((char *)txt+point,"TA%i=%02X ",i,atr->ib[i][ATR_INTERFACE_BYTE_TA].value);
+			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TA, &tx) == ATR_OK) {
+			  sprintf((char *)txt+point,"TA%i=%02X ",i,tx);
 				point +=7;
 			}
-			if (atr->ib[i][ATR_INTERFACE_BYTE_TB].present) {
-			  sprintf((char *)txt+point,"TB%i=%02X ",i,atr->ib[i][ATR_INTERFACE_BYTE_TB].value);
+			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TB, &tx) == ATR_OK) {
+			  sprintf((char *)txt+point,"TB%i=%02X ",i,tx);
 				point +=7;
 			}
-			if (atr->ib[i][ATR_INTERFACE_BYTE_TC].present) {
-			  sprintf((char *)txt+point,"TC%i=%02X ",i,atr->ib[i][ATR_INTERFACE_BYTE_TC].value);
+			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TC, &tx) == ATR_OK) {
+			  sprintf((char *)txt+point,"TC%i=%02X ",i,tx);
 				point +=7;
 			}
-			if (atr->ib[i][ATR_INTERFACE_BYTE_TD].present) {
-			  BYTE TD = atr->ib[i][ATR_INTERFACE_BYTE_TD].value;
-			  sprintf((char *)txt+point,"TD%i=%02X ",i,TD);
+			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TD, &tx) == ATR_OK) {
+			  sprintf((char *)txt+point,"TD%i=%02X ",i,tx);
 				point +=7;
-			  sprintf((char *)txt+point,"(T%i)",TD&0x0F);
+			  sprintf((char *)txt+point,"(T%i)",tx&0x0F);
 			}
+			else
+				sprintf((char *)txt+point,"no TD%i means T0",i);
 			cs_debug("%s",txt);
 		}
 
 //If more than one protocol type and/or TA1 parameter values other than the default values and/or N equeal to 255 is/are indicated in the answer to reset, the card shall know unambiguously, after having sent the answer to reset, which protocol type or/and transmission parameter values (FI, D, N) will be used. Consequently a selection of the protocol type and/or the transmission parameters values shall be specified.
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(pps->parameters.n));
-		if (atr->pn > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255) {
+		if (numprot > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255) {
 			//             PTSS  PTS0  PTS1  PTS2  PTS3  PCK
 			//             PTSS  PTS0  PTS1  PCK
 			BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
-	      
+
 			int p; //protocol 1 = T0 , protocol 2 = TD1, 3=TD2 etc
-			for (p=2; p<atr->pn; p++) {
-				ATR_GetProtocolType(atr,p,&(pps->parameters.t)); //get protocol from TDi
-	  		req[1]=0x10 | pps->parameters.t; //PTS0 always flags PTS1 to be sent always
-				if (ATR_GetInterfaceByte (atr, p, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK) //PTS1
-				  continue;
+			for (p=1; p<=numprot; p++) {
+				if (p == 1)
+					pps->parameters.t = 0; //default T0 protocol
+				else
+				  ATR_GetProtocolType(atr,p+1,&(pps->parameters.t)); //get protocol from TDi //FIXME p+1 is needed for flaw in atr.c
+				if (pps->parameters.t == 14 && p < numprot) //if T14 and next protocol available
+					continue; //skip T14!!!
+				req[1]=0x10 | pps->parameters.t; //PTS0 always flags PTS1 to be sent always
+				if (ATR_GetInterfaceByte (atr, p, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)  //PTS1 
+					req[2] = 0x11; //defaults FI and DI to 1
 	  		//req[3]=PPS_GetPCK(req,sizeof(req)-1); will be set by PPS_Exchange
-				int len = sizeof(req);
+				unsigned int len = sizeof(req);
 				ret = PPS_Exchange (pps, req, &len);
 		  	if (ret == PPS_OK) {
-					pps->parameters.d = req[2] & 0x0F;
 					BYTE FI = req[2] >> 4;
 					BYTE DI = req[2] & 0x0F;
 					pps->parameters.f = (double) (atr_f_table[FI]);
@@ -192,22 +204,35 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 			}
 		}
 
+    //FIXME now what to do with T14? Currently, it tries PPS and if TA1 is there, it tries to obey it. If that PPS would fail, code below makes it 
+		//fallback to default values. 
+		//Only problem would arise when a card demands succesfull PPS on T14, and sends TA1 which should not be obeyed (!!)
+		//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards, which is the old behaviour...
 		if (!PPS_success) {//last PPS not succesfull
-			// Get protocol offered by interface bytes T*2 if TD1 available, 
-			if (atr->pn>1) {
-				ATR_GetProtocolType (atr, 2, &(pps->parameters.t));
+			if (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && pps->parameters.t != 14) { //do not obey TA1 if T14 and no PTS 
 				ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
 				ATR_GetParameter (atr, ATR_PARAMETER_F, &(pps->parameters.f));
-				cs_debug("No PTS, selected protocol 2: T%i, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, pps->parameters.f, pps->parameters.d, pps->parameters.n);
 			}
-			else {//otherwise use default T0
-				pps->parameters.t = ATR_PROTOCOL_TYPE_T0;
-				pps->parameters.d = ATR_DEFAULT_D;
+			else {
 				pps->parameters.f = ATR_DEFAULT_F;
-				cs_debug("No PTS, selected protocol 1: T%i, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, pps->parameters.f, pps->parameters.d, pps->parameters.n);
+				pps->parameters.d = ATR_DEFAULT_D;
 			}
+			// Get protocol offered by interface bytes T*2 if TD1 available,
+			// FIXME or would it be wiser to not switch anything and stick to 9600? 
+			ATR_GetProtocolType (atr, 2, &(pps->parameters.t));
+			cs_debug("No PTS, selected protocol 1: T%i, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, pps->parameters.f, pps->parameters.d, pps->parameters.n);
 		}
 	}//end length<0
+		
+	//make sure no zero values
+	if (!pps->parameters.f) {
+		pps->parameters.f = ATR_DEFAULT_F;
+		cs_log("Warning: F=0 is invalid, forcing F=%.0f",pps->parameters.f);
+	}
+	if (!pps->parameters.d) {
+		pps->parameters.d = ATR_DEFAULT_D;
+		cs_log("Warning: D=0 is invalid, forcing D=%.0f",pps->parameters.d);
+	}
 	
 #ifdef DEBUG_PROTOCOL
 	printf("PPS: T=%i, F=%.0f, D=%.6f, N=%.0f\n", 
@@ -351,8 +376,10 @@ static int PPS_InitICC (PPS * pps)
 	//
 #endif
 	unsigned long baudrate;
-
-	baudrate = pps->parameters.d * ICC_Async_GetClockRate (pps->icc) / pps->parameters.f; 
+	if (pps->parameters.t == 14)
+		baudrate = 9600;
+	else
+		baudrate = pps->parameters.d * ICC_Async_GetClockRate (pps->icc) / pps->parameters.f; 
 
 #ifdef DEBUG_PROTOCOL
 	printf ("PPS: Baudrate = %d\n", (int)baudrate);

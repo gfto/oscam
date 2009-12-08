@@ -148,7 +148,6 @@ extern int IFD_Towitoko_Receive (IFD * ifd, IFD_Timings * timings, unsigned size
 extern BYTE IFD_Towitoko_GetType (IFD * ifd);
 extern BYTE IFD_Towitoko_GetFirmware (IFD * ifd);
 extern unsigned IFD_Towitoko_GetNumSlots (IFD * ifd);
-extern unsigned long IFD_Towitoko_GetClockRate (IFD * ifd);
 extern unsigned long IFD_Towitoko_GetMaxBaudrate (IFD * ifd);
 extern void IFD_Towitoko_GetDescription (IFD * ifd, BYTE * desc, unsigned length);
 
