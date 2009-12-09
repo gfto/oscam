@@ -575,6 +575,7 @@ void post_process(void)
 
 int nagra2_do_ecm(ECM_REQUEST *er)
 {
+	int retry;
 	if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2)) 
 	{
 		cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
@@ -585,14 +586,11 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 		}
 
 	}
-	if (is_pure_nagra==1)
+	cs_sleepms(5);
+	while(!CamStateRequest() && retry < 5)
 	{
-		cs_sleepms(50);
-	}
-	CamStateRequest();
-	if (is_pure_nagra==1)
-	{
-		cs_sleepms(50);
+		retry++;
+                cs_sleepms(10);
 	}
 	if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
 	{
