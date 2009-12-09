@@ -171,6 +171,8 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 
 //If more than one protocol type and/or TA1 parameter values other than the default values and/or N equeal to 255 is/are indicated in the answer to reset, the card shall know unambiguously, after having sent the answer to reset, which protocol type or/and transmission parameter values (FI, D, N) will be used. Consequently a selection of the protocol type and/or the transmission parameters values shall be specified.
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(pps->parameters.n));
+#ifndef SCI_DEV
+
 		ATR_GetProtocolType(atr,2,&(pps->parameters.t)); //get protocol from TD1
 		if ((pps->parameters.t != 14) && (numprot > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255)) {
 			//             PTSS  PTS0  PTS1  PTS2  PTS3  PCK
@@ -204,7 +206,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 					cs_ddump(req,4,"PTS Failure for protocol %i, response:",p);
 			}
 		}
-
+#endif
     //FIXME now what to do with T14? Currently, it tries PPS and if TA1 is there, it tries to obey it. If that PPS would fail, code below makes it 
 		//fallback to default values. 
 		//Only problem would arise when a card demands succesfull PPS on T14, and sends TA1 which should not be obeyed (!!)
