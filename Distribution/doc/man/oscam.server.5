@@ -55,7 +55,7 @@ TCP reconnect, if missing answers, default:none
 .PP
 \fBdisableserverfilter\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = ignore "caid" and "ident" settings of reader due faulty clients, default=0
+1 = ignore \fBcaid\fP and \fBident\fP settings of reader due faulty clients, default=0
 .RE
 .PP
 \fBlabel\fP = \fBname\fP
@@ -73,9 +73,9 @@ name for reader, \fIrequired\fR
 camd3 reader logport, camd3 UDP must be activated, only works if there's no camd3 cascading, 0=disabled, default=0
 .RE
 .PP
-\fBcaid\fP = \fBCAID\fP
+\fBcaid\fP = \fBCAID[,CAID]...\fP
 .RS 3n
-define CAID for reader
+define CAID for reader, some protocols only support one CAID
 .RE
 .PP
 \fBboxid\fP = \fBNDS box ID\fP
@@ -293,5 +293,18 @@ newcamd reader
  device   = 192.168.0.2,2345
  account  = user,password
  group    = 4
+.TP 3n
+\(bu
+CCcam reader
+ 
+ [reader]
+ label = mycccamreader
+ protocol = cccam
+ device = 192.168.0.3,3456
+ account = user,password
+ group = 5
+ caid = 0300,0400,0500
+ cccversion = 1.2.3
+ cccbuild = 4567  
 .SH "SEE ALSO"
 \fBoscam\fR(1), \fBoscam.conf\fR(5), \fBoscam.user\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)
