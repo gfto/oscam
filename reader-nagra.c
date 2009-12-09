@@ -575,7 +575,7 @@ void post_process(void)
 
 int nagra2_do_ecm(ECM_REQUEST *er)
 {
-	int retry;
+	int retry=0;
 	if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2)) 
 	{
 		cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
