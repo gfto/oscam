@@ -73,9 +73,11 @@ name for reader, \fIrequired\fR
 camd3 reader logport, camd3 UDP must be activated, only works if there's no camd3 cascading, 0=disabled, default=0
 .RE
 .PP
-\fBcaid\fP = \fBCAID[,CAID]...\fP
+\fBcaid\fP = \fBCAID[&<mask>][,CAID[&<mask>]]...\fP
 .RS 3n
-define CAID for reader, some protocols only support one CAID
+define CAID for reader, some protocols only support one CAID, default:\fBmask\fP=FFFF
+
+example: CAID=0100,0200&FFDF
 .RE
 .PP
 \fBboxid\fP = \fBNDS box ID\fP

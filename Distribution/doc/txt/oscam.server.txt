@@ -54,8 +54,11 @@ DESCRIPTIONS
 	  camd3  reader  logport,  camd3  UDP must be activated, only works if
 	  theres no camd3 cascading, 0=disabled, default=0
 
-       caid = CAID[,CAID]...
-	  define CAID for reader, some protocols only support one CAID
+       caid = CAID[&<mask>][,CAID[&<mask>]]...
+	  define CAID for  reader,  some  protocols  only  support  one  CAID,
+	  default:mask=FFFF
+
+	  example: CAID=0100,0200&FFDF
 
        boxid = NDS box ID
 	  NDS receiver box id
@@ -67,7 +70,7 @@ DESCRIPTIONS
 	  status detect of card (NONE = no detection), default:CD
 
        cardmhz = mhz
-	  set standard SC frequency in units of 10 kHz, for Irdeto SC  set  to
+	  set  standard  SC frequency in units of 10 kHz, for Irdeto SC set to
 	  600, refer to OVERCLOCKING, default:357
 
        mhz = frequency
@@ -134,22 +137,22 @@ DESCRIPTIONS
 		      2 = log all EMMs
 
        blocknano = nano[,nano]...|all
-	  list	of  EMM-nanos  to block (in hex w/o 0x) or all EMM-nanos, only
+	  list of EMM-nanos to block (in hex w/o 0x) or  all  EMM-nanos,  only
 	  valid for physical readers, default:none
 
 	   example: blocknano = 45,93,7a,ff
 		    blocknano = all
 
        savenano = nano[,nano]....|all
-	  list of EMM-nanos to save (in hex w/o 0x)  or  all  EMM-nanos,  only
+	  list	of  EMM-nanos  to  save (in hex w/o 0x) or all EMM-nanos, only
 	  valid for physical readers, default:none
 
 	   example: savenano = 45,93,7a,ff
 		    savenano = all
 
        readnano = [path]filename
-	  write  file  (usually  a  copy  of a file saved by savenano) to your
-	  smartcard, if no path is specified, the specified file  is  searched
+	  write file (usually a copy of a file	saved  by  savenano)  to  your
+	  smartcard,  if  no path is specified, the specified file is searched
 	  for in the configuration directory, only valid for physical readers,
 	  default:none
 
@@ -165,29 +168,29 @@ DESCRIPTIONS
 OVERCLOCKING
 	 Dreambox reader
 
-	  For SC overclocking set to 600. If mhz is unset or any other	value,
+	  For  SC overclocking set to 600. If mhz is unset or any other value,
 	  the default value will be used and behaviour will be standard.
 
 	 Phoenix / Smartmouse reader
 
-	  Overclocking	does  not  work  with  Windows	and Mac OS X.  Set mhz
-	  equivalent to the frequency of the reader.  OSCam can  not  set  the
+	  Overclocking does not work with Windows  and	Mac  OS  X.   Set  mhz
+	  equivalent  to  the  frequency of the reader.  OSCam can not set the
 	  frequency of the reader.
 
 	 Smargo Smartreader+
 
-	  Set  the  reader  frequency with the native Smargo Smartreader+ tool
+	  Set the reader frequency with the native  Smargo  Smartreader+  tool
 	  (srp_tools).	Do not set mhz and cardmhz.
 
-       OSCam tries to set the baudrate automatically.  A standard serial  port
+       OSCam  tries to set the baudrate automatically.	A standard serial port
        has limited baudrate settings, so SC overclocking might not work.  When
        using a serial reader the best way for overclocking is connecting it to
        a FTDI based USB to serial port adapter.
 
-       If  overclocking  does  not  work, verify the effective baudrate in the
-       logfile.  If it deviates too much from the requested baudrate,  the  SC
-       will  not  be  recognized  (no  ATR)  and  the  value for mhz should be
-       adjusted again.	The higher the baudrate, the more accurate the	effec
+       If overclocking does not work, verify the  effective  baudrate  in  the
+       logfile.   If  it deviates too much from the requested baudrate, the SC
+       will not be recognized (no  ATR)  and  the  value  for  mhz  should  be
+       adjusted  again.  The higher the baudrate, the more accurate the effec
        tive baudrate can be.
 
 EXAMPLES
