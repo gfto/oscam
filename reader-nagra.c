@@ -287,13 +287,21 @@ int NegotiateSessionKey(void)
 		cs_debug("[nagra-reader] CMD$2B failed");
 		return 0;
 	}
-	cs_ri_log("[nagra-reader] Session Key: %s", cs_hexdump(1, sessi, 16));
+	cs_debug("[nagra-reader] session key: %s", cs_hexdump(1, sessi, 16));
 	if (!CamStateRequest())
 	{
 		cs_debug("[nagra-reader] CamStateRequest failed");
 		return 0;
 	}
-	if SENDDATETIME DateTimeCMD();
+	if SENDDATETIME 
+	{
+		DateTimeCMD();
+	}
+	if RENEW_SESSIONKEY
+	{
+		cs_ri_log("Negotiate sessionkey was not successfull! Please check rsa key and boxkey");
+		return 0;
+	}
 	return 1;
 }
 
@@ -382,61 +390,29 @@ void decryptDT08(void)
 	}  	
 }
 
-int DumpDatatype(unsigned char dtbyte)
+void addProvider(int id)
 {
-	static unsigned char cmd22[] = {0x21, 0x00, 0x09, 0xA0, 0xCA, 0x00, 0x00, 0x04, 0x22, 0x01, 0x01, 0x0E};
-	// int r;
-	unsigned char dtactualsize;
-	// ushort chid;
-	// char ds[16], de[16];
-	// cmd22[0x0A] = dtbyte;
-
-	while(1)
+	int i;
+	int toadd=1;
+	int res;
+	for (i=0; i<reader[ridx].nprov; i++)
 	{
-		cmd22[0x0B] = 7;
-        	 if( (do_cmd(0x22,0x03,0xa2,cmd22[0x0B],&cmd22[0x0A]))<=0 )
-        	{
-			cs_debug("[nagra-reader] DT read failed");
-                	return 0;
+		if ((cta_res[7]==reader[ridx].prid[i][2]) && (cta_res[8]==reader[ridx].prid[i][3]))
+		{
+			toadd = 0;
 		}
-		dtactualsize = cta_res[2];
-		if(!dtactualsize) break;
-
-		cmd22[0x0A] = dtbyte | 0xC0;
-		cmd22[0x0B] = dtactualsize + 3;
-		if( (do_cmd(0x22,0x03,0xa2,cmd22[0x0B],&cmd22[0x0A]))<=0 )
-        	{
-			cs_debug("[nagra-reader] DT read failed");
-			return 0;
-		}
-		cmd22[0x0A] = dtbyte | 0x80;
 	}
-	return 1;
-}
-
-int DumpDatatypes(void)
-{
-	//int r;
-	unsigned char dtbyte = 0;
-	unsigned short dtflags;
-	while(1)
+	if (toadd)
 	{
-	        if( (do_cmd(0xc7,0x02,0xb7,0x04,NULL))<=0)
-        	{
-                	cs_debug("[nagra-reader] Determine updated DTs failed");
-                	return 0;
-        	}
-		memcpy(&dtflags,cta_res+2,2);
-		if(!dtflags)
-			break;
-		for(dtbyte=0; dtbyte < 16; dtbyte++)
-			if(dtflags & (0x01 << dtbyte))
-				//if (dtbyte == 0x01 || dtbyte == 0x08 || dtbyte == 0x00) break;
-					if (!DumpDatatype(dtbyte)) break;
+		reader[ridx].prid[reader[ridx].nprov][0]=0;
+  		reader[ridx].prid[reader[ridx].nprov][1]=0;
+  		reader[ridx].prid[reader[ridx].nprov][2]=cta_res[7];
+  		reader[ridx].prid[reader[ridx].nprov][3]=cta_res[8];
+  		memcpy(reader[ridx].sa[reader[ridx].nprov], reader[ridx].sa[0], 4);
+ 		reader[ridx].nprov+=1;
 	}
-	return 1;
-}
-
+}			
+		
 int ParseDataType(unsigned char dt)
 {
 	switch(dt) 
@@ -454,16 +430,19 @@ int ParseDataType(unsigned char dt)
      			return 1;
      		}
    		case TIERS:
-     			if(cta_res[7]==0x88 || cta_res[7]==0x08  || cta_res[7]==0x0C)
+     			if(cta_res[4]==0x88 || cta_res[4]==0x08  || cta_res[4]==0x0C || cta_res[4]==0x8C)
      			{
-       				int id=(cta_res[10]*256)|cta_res[11];
-       				int tLowId=(cta_res[20]*256)|cta_res[21];
-       				int tHiId=(cta_res[31]*256)|cta_res[32];
-       				char date1[15], time1[15], date2[15], time2[15];
-       				Date(cta_res+23,date1,time1);
-       				Date(cta_res+27,date2,time2);
-       				cs_log("|%04X|%04X|%04X|%s|%s|",id,tLowId,tHiId,date1,time1);
-       				cs_log("|    |    |    |%s|%s|",date2,time2);
+       				int id=(cta_res[7]*256)|cta_res[8];
+       				int tLowId=(cta_res[17]*256)|cta_res[18];
+       				int tHiId=(cta_res[28]*256)|cta_res[29];
+       				char date1[12], time1[12], date2[12], time2[12];
+       				Date(cta_res+20,date1,time1);
+       				Date(cta_res+24,date2,time2);
+       				cs_ri_log("|%04X|%04X    |%04X     |%s|%s|",id,tLowId,tHiId,date1,time1);
+       				cs_ri_log("|    |        |         |%s|%s|",date2,time2);
+       				addProvider(id);
+       				
+       				
        			}
        		case 0x08:
      		case 0x88: if (cta_res[11] == 0x49) decryptDT08();  			
@@ -536,32 +515,38 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	CamStateRequest();
 	if(!GetDataType(CAMDATA,0x55,10)) return 0;
 	cs_debug("[nagra-reader] CAMDATA Done");
-	/*
-	//DumpDatatypes();
 	if(!GetDataType(0x04,0x44,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT04 DONE");
+	CamStateRequest();
+	cs_ri_log("|id  |tier low|tier high| dates             |");
+  	cs_ri_log("+----+--------+---------+-------------------+");
+	if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
+	CamStateRequest();
 	if(!GetDataType(DT06,0x16,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT06 DONE");
-	*/
 	CamStateRequest();
 	if (!NegotiateSessionKey())
 	{
 		cs_debug("[nagra-reader] NegotiateSessionKey failed");
 		return 0;
 	}
-	return(1);
+	return 1;
 }
 
 int nagra2_card_info(void)
 {
-	if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
-	cs_debug("[nagra-reader] TIERS DONE");
-	cs_ri_log("ROM:  %c %c %c %c %c %c %c %c", rom[0], rom[1], rom[2],rom[3], rom[4], rom[5], rom[6], rom[7]);
-	cs_ri_log("REV:  %c %c %c %c %c %c %c", rom[8], rom[9], rom[10], rom[11], rom[12], rom[13], rom[14]);
-	cs_ri_log("SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
-	cs_ri_log("CAID: %04X",reader[ridx].caid[0]);
+	int i;
+	cs_ri_log("ROM:    %c %c %c %c %c %c %c %c", rom[0], rom[1], rom[2],rom[3], rom[4], rom[5], rom[6], rom[7]);
+	cs_ri_log("REV:    %c %c %c %c %c %c", rom[9], rom[10], rom[11], rom[12], rom[13], rom[14]);
+	cs_ri_log("SER:    %s", cs_hexdump (1, reader[ridx].hexserial, 4));
+	cs_ri_log("CAID:   %04X",reader[ridx].caid[0]);
+	cs_ri_log("Prv.ID: %s(sysid)",cs_hexdump (1,reader[ridx].prid[0],4));
+	for (i=1; i<reader[ridx].nprov; i++)
+	{
+		cs_ri_log("Prv.ID: %s",cs_hexdump (1,reader[ridx].prid[i],4));
+	}
 	cs_log("ready for requests"); 
-	return(1);
+	return 1;
 }
 
 void post_process(void)
