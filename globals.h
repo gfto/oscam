@@ -36,7 +36,7 @@
 #  define GCC_PACK
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) || defined(OS_CYGWIN32)
 #  define MSG_WAITALL 0
 #endif
 
