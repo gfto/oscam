@@ -39,7 +39,7 @@ DESCRIPTIONS
 	  time waiting for inactive user, default:none
 
        caid = <CAID>[&<mask>][:<CAID>[&<mask>]...
-	  limit CAIDs, default:all CAIDs
+	  limit CAIDs, default:all CAIDs, required
 
 	  example: caid = 0100&ffff:0200:0300&ff00
 
