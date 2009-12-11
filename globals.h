@@ -47,6 +47,15 @@
 #include "oscam-types.h"
 #include "cscrypt/cscrypt.h"
 
+#ifdef HAVE_PCSC
+#include <PCSC/pcsclite.h>
+#ifdef OS_MACOSX
+#include <PCSC/wintypes.h>
+#else
+#include <PCSC/reader.h>
+#endif
+#endif
+
 #ifndef CS_CONFDIR
 #define CS_CONFDIR    "/usr/local/etc"
 #endif
@@ -129,6 +138,10 @@
 #define R_SERIAL    0x80  // Reader serial
 #define R_IS_NETWORK    0x70
 #define R_IS_CASCADING  0xF0
+
+#ifdef HAVE_PCSC
+	#define R_PCSC 			0x6 // PCSC
+#endif
 
 #define CS_MAX_MOD 8
 #define MOD_CONN_TCP    1
@@ -354,6 +367,7 @@ struct s_reader
   int       card_system;
   char      label[32];
   char      device[128];
+  char      pcsc_name[128];
   int       detect;
   int       mhz;      //actual clock rate of reader in 10khz steps
   int	    cardmhz;	    //standard clock speed your card should have in 10khz steps; normally 357 but for Irdeto cards 600
@@ -418,6 +432,12 @@ struct s_reader
   int       init_history_pos;
 #endif
   int       msg_idx;
+#ifdef HAVE_PCSC
+  SCARDCONTEXT hContext;
+  SCARDHANDLE hCard;
+  DWORD dwActiveProtocol;
+#endif
+
 };
 
 #ifdef CS_ANTICASC

@@ -18,8 +18,9 @@ GENERAL		= Makefile Maketype globals.h oscam-config.h
 ifeq ($(wildcard csgbox), csgbox)
  VERX	= -gbx-$(subst ",,$(filter-out \#define GBXVERSION,$(shell grep GBXVERSION csgbox/gbox.h)))
 endif
-EXEFILE1	= Distribution/oscam-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TYP))
 
+#EXEFILE1	= Distribution/oscam-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TYP))
+EXEFILE1	= Distribution/oscam--$(subst cygwin,cygwin.exe,$(TYP))
 
 LIBDIR		= lib
 LIBFILE1	= $(LIBDIR)/libcs-$(TYP).a
@@ -73,7 +74,7 @@ endif
 		$(MAKE) -C csctapi
 
 $(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(GENERAL)
-		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) -o "$@" $(LIBS)
+		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) -o "$@" $(OS_INCLUDES) $(LIBS) 
 		$(STRIP) $@
 
 $(LIBFILE1):	$(OBJECTS1)
@@ -82,7 +83,7 @@ $(LIBFILE1):	$(OBJECTS1)
 $(OBJECTS1):	$(GENERAL)
 
 .c.a:
-		$(CC) $(CFLAGS) -Icsctapi $<
+		$(CC) $(CFLAGS) -Icsctapi $(OS_INCLUDES) $<
 		$(AR) $(ARFLAGS) $@ $*.o
 		-@rm -f $*.o
 

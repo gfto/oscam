@@ -6,6 +6,7 @@ CS_CONFDIR = '\"/usr/local/etc\"'
 export VER
 
 linux:	i386-pc-linux
+linux-pcsc:	i386-pc-linux-pcsc
 freebsd:	i386-pc-freebsd
 tuxbox:	cross-powerpc-tuxbox-linux
 win:	cross-i386-pc-cygwin
@@ -74,6 +75,27 @@ i386-pc-linux:
 
 ######################################################################
 #
+#	LINUX native with PCSC
+#
+######################################################################
+i386-pc-linux-pcsc:
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
+		OS_LIBS="-lcrypto" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread -lpcsclite" \
+		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses  -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/[MS]$$//' )"'"'" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=gcc \
+		DS_AR=ar \
+		DS_LD=ld \
+		DS_RL=ranlib \
+		DS_ST=strip
+
+######################################################################
+#
 #       MacOSX native
 #
 ######################################################################
@@ -83,9 +105,9 @@ macosx-native:
 		OS_LIBS="-lcrypto" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD -DCS_CONFDIR=${CS_CONFDIR} -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses  -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/[MS]$$//' )"'"'" \
+		DS_OPTS="-O2 -DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses  -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="'"$(shell svnversion -n . | sed 's/[MS]$$//' )"'"'" \
 		DS_CFLAGS="-c" \
-		DS_LDFLAGS="" \
+		DS_LDFLAGS="-framework PCSC" \
 		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \

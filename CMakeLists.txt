@@ -70,7 +70,7 @@ endif (CMAKE_CROSSCOMPILING)
 #----------------------- some paths ------------------------------
 
 set (OPTIONAL_LINK_DIR "" CACHE STRING "Some optional link directories")
-set (OPTIONAL_INCLUDE_DIR "" CACHE STRING "Some optional include directories")
+set (OPTIONAL_INCLUDE_DIR "/usr/include/PCSC" CACHE STRING "Some optional include directories")
 
 include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
@@ -85,7 +85,7 @@ if (OSCamOperatingSystem MATCHES "Linux")
     add_definitions ("-DOS_LINUX")
     set (DEFAULT_CS_CONFDIR "/usr/local/etc")
 elseif (OSCamOperatingSystem MATCHES "Mac OS X")
-    add_definitions ("-DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD")
+    add_definitions ("-DOS_MACOSX -DHAVE_PCSC -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD")
     set (DEFAULT_CS_CONFDIR "/usr/local/etc")
 elseif (OSCamOperatingSystem MATCHES "Tuxbox")
     add_definitions ("-DOS_LINUX -DTUXBOX -DPPC")
@@ -135,6 +135,11 @@ if (HAVE_SHA)
     add_definitions ("-DHAVE_SHA")
 endif (HAVE_SHA)
 
+check_include_file ("PCSC/wintypes.h" HAVE_PCSC)
+if (HAVE_PCSC)
+    add_definitions ("-DHAVE_PCSC")
+endif (HAVE_PCSC)
+
 #----------------------- subdirectories ------------------------------
 
 add_subdirectory (csctapi)
@@ -175,12 +180,22 @@ target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi 
 if (HAVE_AES)
     target_link_libraries (${exe_name} crypto)
 endif (HAVE_AES)
+if (HAVE_PCSC)
+if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
+    target_link_libraries (${exe_name} pcsclite)
+endif (NOT OSCamOperatingSystem MATCHES "Mac OS X")
+endif (HAVE_PCSC)
+
 add_dependencies (${exe_name} ${csoscam} ${csreaders} ${csmodules})
 
 #----------------------- specific options ------------------------------
 
 if (OSCamOperatingSystem MATCHES "Linux")
 elseif (OSCamOperatingSystem MATCHES "Mac OS X")
+	FIND_LIBRARY (PCSC_LIBRARY PCSC)
+	message (STATUS "OS X system PCSC : ${PCSC_LIBRARY}")
+   	target_link_libraries ( ${exe_name} ${PCSC_LIBRARY})
+    set (HAVE_PCSC "1")
 elseif (OSCamOperatingSystem MATCHES "Tuxbox")
     target_link_libraries ( ${exe_name} dl)
 elseif (OSCamOperatingSystem MATCHES "NeutrinoHD")
@@ -294,4 +309,7 @@ if (HAVE_SHA)
 else (HAVE_SHA)
     message (STATUS "  use built-in sha functions")
 endif (HAVE_SHA)
+if (HAVE_PCSC)
+    message (STATUS "  use system pcsc functions")
+endif (HAVE_PCSC)
 message (STATUS "")
