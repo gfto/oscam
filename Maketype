@@ -15,6 +15,7 @@ LIBS		= $(DS_LIBS) $(OS_LIBS) $(OS_PTLI)
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS
 
 GENERAL		= Makefile Maketype globals.h oscam-config.h
+
 ifeq ($(wildcard csgbox), csgbox)
  VERX	= -gbx-$(subst ",,$(filter-out \#define GBXVERSION,$(shell grep GBXVERSION csgbox/gbox.h)))
 endif
@@ -45,8 +46,8 @@ OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(module-radegast.o) \
 		  $(LIBFILE1)(module-serial.o) \
 		  $(LIBFILE1)(module-monitor.o) \
-      $(LIBFILE1)(module-newcamd.o) \
-      $(LIBFILE1)(module-cccam.o) \
+		  $(LIBFILE1)(module-newcamd.o) \
+		  $(LIBFILE1)(module-cccam.o) \
 		  $(LIBFILE1)(oscam-nano.o) \
 		  $(LIBFILE1)(oscam-chk.o) \
 		  $(LIBFILE1)(oscam-ac.o)
@@ -65,15 +66,17 @@ prepare:
 		    printf("#define CS_OS_SYS \"%s\"\n", $$3);  \
 		  }' > oscam-ostype.h
 		@[ -d "$(LIBDIR)" ] || mkdir "$(LIBDIR)"
+
 ifeq ($(wildcard csgbox), csgbox)
 		@-echo "#define CS_WITH_GBOX 1" >> oscam-ostype.h
 		$(MAKE) -C csgbox
 endif
+
 		$(MAKE) -C cscrypt
 		$(MAKE) -C csctapi
 
 $(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(GENERAL)
-		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) -o "$@" $(OS_INCLUDES) $(LIBS) 
+		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) -o "$@" $(LIBS)
 		$(STRIP) $@
 
 $(LIBFILE1):	$(OBJECTS1)
@@ -82,7 +85,7 @@ $(LIBFILE1):	$(OBJECTS1)
 $(OBJECTS1):	$(GENERAL)
 
 .c.a:
-		$(CC) $(CFLAGS) -Icsctapi $(OS_INCLUDES) $<
+		$(CC) $(CFLAGS) -Icsctapi $<
 		$(AR) $(ARFLAGS) $@ $*.o
 		-@rm -f $*.o
 
