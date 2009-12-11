@@ -369,6 +369,13 @@ static void monitor_send_details(char *txt, int pid)
   monitor_send_info(buf, 0);
 }
 
+static void monitor_send_details_version()
+{
+  char buf[256];
+  sprintf(buf, "[A-0000]version=%s, build=%s, system=%s%s", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf+100), buf+200);
+  monitor_send_info(buf, 1);
+}
+
 static void monitor_process_details_master(char *buf, int pid)
 {
   if (cfg->nice!=99)
@@ -498,7 +505,7 @@ static void monitor_logsend(char *flag)
 static int monitor_process_request(char *req)
 {
   int i, rc;
-  char *cmd[]={"login", "exit", "log", "status", "shutdown", "reload", "details"};
+  char *cmd[]={"login", "exit", "log", "status", "shutdown", "reload", "details", "version"};
 //  char *cmd[]={"login", "exit", "log", "status", "shutdown", "reload"};
   char *arg;
   if( (arg=strchr(req, ' ')) )
@@ -509,22 +516,23 @@ static int monitor_process_request(char *req)
   trim(req);
   if ((!auth) && (strcmp(req, cmd[0])))
     monitor_login(NULL);
-  for (rc=1, i=0; i<7; i++)
+  for (rc=1, i=0; i<8; i++)
     if (!strcmp(req, cmd[i]))
     {
       switch(i)
       {
-        case  0: monitor_login(arg); break;
-        case  1: rc=0; break;
-        case  2: monitor_logsend(arg); break;
-        case  3: monitor_process_info(); break;
-        case  4: if (client[cs_idx].monlvl>3)
-                   kill(client[0].pid, SIGQUIT);
-                 break;
+        case  0: monitor_login(arg); break; // login
+        case  1: rc=0; break; // exit
+        case  2: monitor_logsend(arg); break; // log
+        case  3: monitor_process_info(); break; // status
+        case  4: if (client[cs_idx].monlvl>3) 
+                   kill(client[0].pid, SIGQUIT); // shutdown
+                 break; 
         case  5: if (client[cs_idx].monlvl>2)
-                   kill(client[0].pid, SIGHUP);
+                   kill(client[0].pid, SIGHUP); // reload
                  break;
-        case  6: monitor_process_details(arg); break;
+        case  6: monitor_process_details(arg); break; // details
+        case  7: monitor_send_details_version(); break;
         default: continue;
       }
       break;
