@@ -12,8 +12,10 @@ SYNOPSIS
 
 DESCRIPTIONS
    The [reader] section
-       device = device|<ip|hostname>,<port>[,<lport>]
+       device = device|<ip|hostname|pscs reader number>,<port>[,<lport>]
 	  define local or remote reader (lport: remapping to local port)
+      For pcsc, it defines the number of the reader in the system, starting
+	  at 0.
 
        key = DES key
 	  key for newcamd remote reader encryption
@@ -83,6 +85,7 @@ DESCRIPTIONS
 	   smartreader
 	   internal
 	   serial
+       pcsc
 	   camd35|cs357x
 	   cs378x
 	   gbox
@@ -215,6 +218,16 @@ EXAMPLES
 	   aeskey   = 0102030405060708090a0b0c0d0e0f10
 	   group    = 2
 	   caid     = 0200
+
+	 PCSC compatible reader
+
+	   [reader]
+	   label    = myPCSCReader
+	   protocol = pcsc
+	   device   = 0
+	   aeskey   = 0102030405060708090a0b0c0d0e0f10
+	   group    = 1
+	   caid     = 0500
 
 	 camd 3.78x reader
 

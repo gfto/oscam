@@ -8,9 +8,9 @@ At least one [reader] section is \fIrequired\fR.
 .SH DESCRIPTIONS
 .SS "The [reader] section"
 .PP
-\fBdevice\fP = \fBdevice\fP|\fB<ip|hostname>,<port>[,<lport>]\fP
+\fBdevice\fP = \fBdevice\fP|\fB<ip|hostname|pcsc>,<port>[,<lport>]\fP
 .RS 3n
-define local or remote reader (lport: remapping to local port)
+define local or remote reader (lport: remapping to local port).  For pcsc, it defines the number of the reader in the system, starting at 0.
 .RE
 .PP
 \fBkey\fP = \fBDES key\fP
@@ -274,6 +274,17 @@ USB mouse compatible reader
  aeskey   = 0102030405060708090a0b0c0d0e0f10
  group    = 2
  caid     = 0200
+.TP 3n
+\(bu
+PCSC compatible reader
+
+ [reader]
+ label    = myPCSCReader
+ protocol = pcsc
+ device   = 0
+ aeskey   = 0102030405060708090a0b0c0d0e0f10
+ group    = 1
+ caid     = 0500
 .TP 3n
 \(bu
 camd 3.78x reader
