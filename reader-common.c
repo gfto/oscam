@@ -180,7 +180,7 @@ static int reader_activate_card()
 		  DWORD currentClk, currentClkLen;
 		  currentClkLen = sizeof(currentClk);
 		  rv = SCardGetAttrib(reader[ridx].hCard, SCARD_ATTR_CURRENT_CLK , &currentClk, &currentClkLen);
-/		  cs_debug("PCSC rv=(%lx) Current clk = %lx Khz",rv, currentClk);
+		  cs_debug("PCSC rv=(%lx) Current clk = %lx Khz",rv, currentClk);
 			*/
 
 		  // TODO: merge better
