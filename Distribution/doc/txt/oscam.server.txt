@@ -12,10 +12,10 @@ SYNOPSIS
 
 DESCRIPTIONS
    The [reader] section
-       device = device|<ip|hostname|pscs reader number>,<port>[,<lport>]
-	  define local or remote reader (lport: remapping to local port)
-      For pcsc, it defines the number of the reader in the system, starting
-	  at 0.
+       device = device|<ip|hostname>,<port>[,<lport>]|pcsc
+	  define local or remote reader
+	   lport: remapping to local port
+	   PCSC:  number of PCSC readers, starting with 0
 
        key = DES key
 	  key for newcamd remote reader encryption
@@ -85,7 +85,6 @@ DESCRIPTIONS
 	   smartreader
 	   internal
 	   serial
-       pcsc
 	   camd35|cs357x
 	   cs378x
 	   gbox
@@ -93,6 +92,7 @@ DESCRIPTIONS
 	   newcamd524
 	   cccam
 	   radegast
+	   pcsc
 
        cccversion = <main version>.<version>.<sub version>
 	  define CCcam version, default:none
@@ -219,16 +219,6 @@ EXAMPLES
 	   group    = 2
 	   caid     = 0200
 
-	 PCSC compatible reader
-
-	   [reader]
-	   label    = myPCSCReader
-	   protocol = pcsc
-	   device   = 0
-	   aeskey   = 0102030405060708090a0b0c0d0e0f10
-	   group    = 1
-	   caid     = 0500
-
 	 camd 3.78x reader
 
 	   [reader]
@@ -259,6 +249,16 @@ EXAMPLES
 	   caid = 0300,0400,0500
 	   cccversion = 1.2.3
 	   cccbuild = 4567
+
+	 PCSC reader
+
+	   [reader]
+	   label    = mypcscreader
+	   protocol = pcsc
+	   device   = 0
+	   aeskey   = 0102030405060708090a0b0c0d0e0f10
+	   group    = 6
+	   caid     = 0600
 
 SEE ALSO
        oscam(1), oscam.conf(5), oscam.user(5), oscam.srvid(5), oscam.guess(5),

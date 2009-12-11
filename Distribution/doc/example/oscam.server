@@ -78,3 +78,13 @@ protocol = radegast
 device   = 192.168.0.6,56789
 group    = 5
 caid     = 0500
+
+# PCSC reader
+
+[reader]
+label    = mypcscreader
+protocol = pcsc
+device   = 0
+aeskey   = 0102030405060708090a0b0c0d0e0f10
+group    = 6
+caid     = 0600

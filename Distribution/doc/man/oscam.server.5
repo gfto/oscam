@@ -8,9 +8,11 @@ At least one [reader] section is \fIrequired\fR.
 .SH DESCRIPTIONS
 .SS "The [reader] section"
 .PP
-\fBdevice\fP = \fBdevice\fP|\fB<ip|hostname|pcsc>,<port>[,<lport>]\fP
+\fBdevice\fP = \fBdevice\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP
 .RS 3n
-define local or remote reader (lport: remapping to local port).  For pcsc, it defines the number of the reader in the system, starting at 0.
+define local or remote reader 
+ \fBlport\fP: remapping to local port
+ \fBPCSC\fP:  number of PCSC readers, starting with 0 
 .RE
 .PP
 \fBkey\fP = \fBDES key\fP
@@ -120,6 +122,7 @@ reader protocol, \fIrequired\fR:
  \fBnewcamd524\fP
  \fBcccam\fP
  \fBradegast\fP
+ \fBpcsc\fP
 .RE
 .PP
 \fBcccversion\fP = \fB<main version>.<version>.<sub version>\fP
@@ -276,17 +279,6 @@ USB mouse compatible reader
  caid     = 0200
 .TP 3n
 \(bu
-PCSC compatible reader
-
- [reader]
- label    = myPCSCReader
- protocol = pcsc
- device   = 0
- aeskey   = 0102030405060708090a0b0c0d0e0f10
- group    = 1
- caid     = 0500
-.TP 3n
-\(bu
 camd 3.78x reader
  
  [reader]
@@ -319,5 +311,16 @@ CCcam reader
  caid = 0300,0400,0500
  cccversion = 1.2.3
  cccbuild = 4567  
+.TP 3n
+\(bu
+PCSC reader
+
+ [reader]
+ label    = mypcscreader
+ protocol = pcsc
+ device   = 0
+ aeskey   = 0102030405060708090a0b0c0d0e0f10
+ group    = 6
+ caid     = 0600
 .SH "SEE ALSO"
 \fBoscam\fR(1), \fBoscam.conf\fR(5), \fBoscam.user\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)
