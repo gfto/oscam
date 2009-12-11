@@ -394,7 +394,6 @@ void addProvider(int id)
 {
 	int i;
 	int toadd=1;
-	int res;
 	for (i=0; i<reader[ridx].nprov; i++)
 	{
 		if ((cta_res[7]==reader[ridx].prid[i][2]) && (cta_res[8]==reader[ridx].prid[i][3]))
