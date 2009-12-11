@@ -354,6 +354,7 @@ quantity of samples over limit, default:10
 \fBpenalty\fP = \fB0\fP|\fB1\fP|\fB2\fP
 .RS 3n
 level of penalty:
+
  0 = only logging
  1 = send fake CWs
  2 = disbable user temporary
@@ -375,6 +376,17 @@ fake delay time, default:1000
 .RS 3n
 How many samples should be penalized?, default:8
 .RE
+.SH MONITOR
+monitor commands:
+
+ login <user> <password> = login (for unencrypted connections only)
+ exit                    = exit monitor
+ log <on|off>            = enable|disable logging for 2 minutes
+ status                  = list of current processes and clients
+ shutdown                = showdown OSCam
+ reload                  = reinit user db, clients and anti-cascading
+ details <PID>           = details about selected PID
+ version                 = show OSCam version
 .SH EXAMPLES
  [global]
  logfile      = /var/log/oscam/oscam.log

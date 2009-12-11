@@ -253,6 +253,7 @@ DESCRIPTIONS
 
        penalty = 0|1|2
 	  level of penalty:
+
 	   0 = only logging
 	   1 = send fake CWs
 	   2 = disbable user temporary
@@ -267,6 +268,18 @@ DESCRIPTIONS
 
        denysamples = quantity
 	  How many samples should be penalized?, default:8
+
+MONITOR
+       monitor commands:
+
+	login <user> <password> = login (for unencrypted connections only)
+	exit			= exit monitor
+	log <on|off>		= enable|disable logging for 2 minutes
+	status			= list of current processes and clients
+	shutdown		= showdown OSCam
+	reload			= reinit user db, clients and anti-cascading
+	details <PID>		= details about selected PID
+	version 		= show OSCam version
 
 EXAMPLES
 	[global]
