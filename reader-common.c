@@ -373,13 +373,9 @@ static int reader_card_inserted(void)
 		 else {
 			 if ( (rv==SCARD_W_RESET_CARD) && (dwState == 0) ) {
 				 cs_debug("PCSC check card reinserted in %s [dwstate=%lx rv=(%lx)]", reader[ridx].pcsc_name, dwState, rv );
-				 // TODO: Removed and reinserted.. reconnect or connet card..
 			 	 SCardDisconnect(reader[ridx].hCard,SCARD_LEAVE_CARD);
-				 rv = SCardReleaseContext(&reader[ridx].hContext);
-				 sleep(1);
-				 reader_device_init(reader[ridx].device, reader[ridx].typ);
-				 sleep(2);
-
+			 	 rv = SCardConnect(reader[ridx].hContext, &reader[ridx].pcsc_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &reader[ridx].hCard, &reader[ridx].dwActiveProtocol);
+			 	 return  ((rv != SCARD_S_SUCCESS) ? 2 : 0);
 			 } else  if ( rv == SCARD_W_REMOVED_CARD || (dwState | SCARD_ABSENT) ) {
 				 cs_debug("PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", reader[ridx].pcsc_name, dwState, rv );
 			 } else {
