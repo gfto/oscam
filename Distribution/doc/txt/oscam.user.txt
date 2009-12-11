@@ -68,6 +68,15 @@ DESCRIPTIONS
        chid = <CAID>:<ChID>[,<CAID>:<ChID>]...
 	  user assingment to Irdeto ChID, default:none
 
+       monlevel = 0|1|2|4|4
+	  monitor level:
+
+	   0 = no access to monitor
+	   1 = only server and own procs
+	   2 = all procs, but viewing only, default
+	   3 = all procs, reload of oscam.user possible
+	   4 = complete access
+
        numusers = quantity
 	  anti-cascading:  user  per  account,	0  = anti-cascading permitted,
 	  default:none
