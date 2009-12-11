@@ -155,15 +155,15 @@ static int reader_activate_card()
 
 #ifdef HAVE_PCSC
   if (reader[ridx].typ == R_PCSC) {
-	  cs_debug("PCSC initializing card in (%s)", &reader[ridx].device);
+	  cs_debug("PCSC initializing card in (%s)", &reader[ridx].pcsc_name);
 	  LONG rv;
 	  DWORD dwState, dwAtrLen, dwReaderLen;
 	  BYTE pbAtr[64];
 	  dwAtrLen = sizeof(pbAtr);
 
-	  cs_debug("PCSC resetting card in (%s)", &reader[ridx].device);
+	  cs_debug("PCSC resetting card in (%s)", &reader[ridx].pcsc_name);
 	  rv = SCardReconnect(reader[ridx].hCard, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,  SCARD_RESET_CARD, &reader[ridx].dwActiveProtocol);
-	  cs_debug("PCSC resetting done on card in (%s)", &reader[ridx].device);
+	  cs_debug("PCSC resetting done on card in (%s)", &reader[ridx].pcsc_name);
 	  cs_debug("PCSC Protocol (T=%d)",reader[ridx].dwActiveProtocol);
 
 	  if ( rv != SCARD_S_SUCCESS )  {
