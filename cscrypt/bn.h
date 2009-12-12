@@ -56,7 +56,14 @@
  * [including the GNU Public Licence.]
  */
 
-#define I386_ONLY
+#define I386_Only
+
+//#ifdef __64BIT__
+//#define SIXTY_FOUR_BIT
+//#else
+#define THIRTY_TWO_BIT
+//#endif
+
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
