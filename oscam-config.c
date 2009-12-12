@@ -1097,7 +1097,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   {
     if (!strcmp(value, "mouse")) {      rdr->typ=R_MOUSE; return; }
     if (!strcmp(value, "smartreader")) {      rdr->typ=R_SMART; return; }
-    if (!strcmp(value, "internal")) {   rdr->typ=R_INTERN; return; }
+    if (!strcmp(value, "internal")) {   rdr->typ=R_INTERNAL; return; }
 #ifdef HAVE_PCSC
     if (!strcmp(value, "pcsc")) {   rdr->typ=R_PCSC; return; }
 #endif

@@ -48,7 +48,7 @@ static int reader_device_type(char *device, int typ)
       }
 #endif
       break;
-    case R_INTERN:
+    case R_INTERNAL:
       rc=PORT_SCI;
       break;
   }

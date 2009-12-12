@@ -1530,9 +1530,6 @@ int send_dcw(ECM_REQUEST *er)
 
   if(!client[cs_idx].ncd_server && client[cs_idx].autoau && er->rcEx==0)
   {
-    int typ=reader[er->reader[0]].typ;
-    if(er->rc!=0) typ=0;
-
     if(client[cs_idx].au>=0 && er->caid!=reader[client[cs_idx].au].caid[0])
     {
       client[cs_idx].au=(-1);
