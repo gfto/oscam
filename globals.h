@@ -678,6 +678,7 @@ extern char *cs_platform(char *);
 extern int recv_from_udpipe(uchar *, int);
 extern char* username(int);
 extern int idx_from_pid(pid_t);
+extern int idx_from_username(char *uname);
 extern int chk_bcaid(ECM_REQUEST *, CAIDTAB *);
 extern void cs_exit(int sig);
 extern int cs_fork(in_addr_t, in_port_t);

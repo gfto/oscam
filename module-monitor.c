@@ -296,9 +296,9 @@ static char *monitor_client_info(char id, int i)
     time_t now;
     struct tm *lt;
     now=time((time_t)0);
-   
-    if ((cfg->mon_hideclient_to <= 0) || 
-        (((now-client[i].lastecm)/60)<cfg->mon_hideclient_to) || 
+
+    if ((cfg->mon_hideclient_to <= 0) ||
+        (((now-client[i].lastecm)/60)<cfg->mon_hideclient_to) ||
         (((now-client[i].lastemm)/60)<cfg->mon_hideclient_to) ||
         (client[i].typ!='c'))
     {
@@ -342,11 +342,11 @@ static void monitor_process_info()
 {
   int i;
   time_t now;
-  
+
   now=time((time_t)0);
   for (i=0; i<CS_MAXPID; i++)
-    if ((cfg->mon_hideclient_to <= 0) || 
-        (((now-client[i].lastecm)/60)<cfg->mon_hideclient_to) || 
+    if ((cfg->mon_hideclient_to <= 0) ||
+        (((now-client[i].lastecm)/60)<cfg->mon_hideclient_to) ||
         (((now-client[i].lastemm)/60)<cfg->mon_hideclient_to) ||
         (client[i].typ!='c'))
       if (client[i].pid)
@@ -502,11 +502,18 @@ static void monitor_logsend(char *flag)
   client[cs_idx].log=1;
 }
 
+
+static void monitor_set_debuglevel(char *flag)
+{
+    cs_dblevel^=atoi(flag);
+    kill(client[0].pid, SIGUSR1);
+}
+
+
 static int monitor_process_request(char *req)
 {
   int i, rc;
-  char *cmd[]={"login", "exit", "log", "status", "shutdown", "reload", "details", "version"};
-//  char *cmd[]={"login", "exit", "log", "status", "shutdown", "reload"};
+  char *cmd[]={"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug", "setuser"};
   char *arg;
   if( (arg=strchr(req, ' ')) )
   {
@@ -516,7 +523,7 @@ static int monitor_process_request(char *req)
   trim(req);
   if ((!auth) && (strcmp(req, cmd[0])))
     monitor_login(NULL);
-  for (rc=1, i=0; i<8; i++)
+  for (rc=1, i=0; i<10; i++)
     if (!strcmp(req, cmd[i]))
     {
       switch(i)
@@ -525,14 +532,16 @@ static int monitor_process_request(char *req)
         case  1: rc=0; break; // exit
         case  2: monitor_logsend(arg); break; // log
         case  3: monitor_process_info(); break; // status
-        case  4: if (client[cs_idx].monlvl>3) 
+        case  4: if (client[cs_idx].monlvl>3)
                    kill(client[0].pid, SIGQUIT); // shutdown
-                 break; 
+                 break;
         case  5: if (client[cs_idx].monlvl>2)
                    kill(client[0].pid, SIGHUP); // reload
                  break;
         case  6: monitor_process_details(arg); break; // details
         case  7: monitor_send_details_version(); break;
+        case  8: monitor_set_debuglevel(arg); break; // debuglevel
+        case  9:  break; // setuser
         default: continue;
       }
       break;

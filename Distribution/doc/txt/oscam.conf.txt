@@ -279,6 +279,16 @@ MONITOR
 	shutdown		= showdown OSCam
 	reload			= reinit user db, clients and anti-cascading
 	details <PID>		= details about selected PID
+	debug <level>		= set debug level
+				   debug level mask:
+				     0 = no debugging (default)
+				     1 = debug dumps
+				     2 = debug master process
+				     4 = debug reader/proxy process
+				     8 = debug client process
+				    16 = debug reader I/O
+				    32 = debug watchdog
+				    63 = debug all
 	version 		= show OSCam version
 
 EXAMPLES

@@ -213,6 +213,15 @@ int idx_from_pid(pid_t pid)
   return(idx);
 }
 
+int idx_from_username(char *uname)
+{
+  int i, idx;
+  for (i=0, idx=(-1); (i<CS_MAXPID) && (idx<0); i++)
+    if (client[i].usr==uname)
+      idx=i;
+  return(idx);
+}
+
 static long chk_caid(ushort caid, CAIDTAB *ctab)
 {
   int n;
