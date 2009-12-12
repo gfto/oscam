@@ -517,10 +517,15 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	if(!GetDataType(0x04,0x44,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT04 DONE");
 	CamStateRequest();
+	
+	if (!memcmp(rom+5, "181", 3)==0) //dt05 is not supported by rom181
+	{
 	cs_ri_log("|id  |tier low|tier high| dates             |");
   	cs_ri_log("+----+--------+---------+-------------------+");
 	if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
 	CamStateRequest();
+	}
+	
 	if(!GetDataType(DT06,0x16,MAX_REC)) return 0;
 	cs_debug("[nagra-reader] DT06 DONE");
 	CamStateRequest();
@@ -574,8 +579,9 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 	while(!CamStateRequest() && retry < 5)
 	{
 		retry++;
-                cs_sleepms(10);
+                cs_sleepms(15);
 	}
+	cs_sleepms(5);
 	if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
 	{
 		unsigned char v[8];
