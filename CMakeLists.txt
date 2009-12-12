@@ -124,7 +124,7 @@ add_definitions ("-DCS_OS_SYS=\\\"${CS_OS_SYS}\\\"")
 
 if (${CS_OS_CPU} MATCHES "x86_64")
     add_definitions ("-DSIXTY_FOUR_BIT")
-else (NOT (${CS_OS_CPU} MATCHES "x86_64"))
+else (NOT ${CS_OS_CPU} MATCHES "x86_64")
     add_definitions ("-DTHIRTY_TWO_BIT")
 endif (${CS_OS_CPU} MATCHES "x86_64")
 
