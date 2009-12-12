@@ -171,7 +171,13 @@ static int reader_activate_card()
 		  return(0);
 	  }
 
-	  cs_debug("PCSC getting ATR for card in (%s)", &reader[ridx].device);
+        rv=SCardBeginTransaction(reader[ridx].hCard);
+        if (rv!=SCARD_S_SUCCESS) {
+        cs_log("PCSC reader %s Failed to begin transaction", reader[ridx].pcsc_name);
+        return 0;
+        }
+
+	  cs_debug("PCSC getting ATR for card in (%s)", &reader[ridx].pcsc_name);
 	  rv = SCardStatus(reader[ridx].hCard, NULL, &dwReaderLen, &dwState, &reader[ridx].dwActiveProtocol, pbAtr, &dwAtrLen);
 	  if ( rv == SCARD_S_SUCCESS ) {
 		  cs_debug("PCSC Protocol (T=%d)",reader[ridx].dwActiveProtocol);
@@ -365,7 +371,7 @@ static int reader_card_inserted(void)
         
         dwAtrLen = sizeof(pbAtr);
         
-        // thjis to take care of the case of a reader being started with no card ... we need something better.
+        // this is to take care of the case of a reader being started with no card ... we need something better.
         if (!reader[ridx].pcsc_has_card) {
             rv = SCardConnect(reader[ridx].hContext, &reader[ridx].pcsc_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &reader[ridx].hCard, &reader[ridx].dwActiveProtocol);
             if (rv==SCARD_E_NO_SMARTCARD) {
@@ -383,6 +389,7 @@ static int reader_card_inserted(void)
         cs_debug("PCSC rader %s dwstate=%lx rv=(%lx)", reader[ridx].pcsc_name, dwState, rv );
 
         if(rv==SCARD_E_INVALID_HANDLE){
+              SCardEndTransaction(reader[ridx].hCard,SCARD_LEAVE_CARD);
               SCardDisconnect(reader[ridx].hCard,SCARD_LEAVE_CARD);
         }
 		 if (rv == SCARD_S_SUCCESS && (dwState & (SCARD_PRESENT | SCARD_NEGOTIABLE | SCARD_POWERED ) )) {
