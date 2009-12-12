@@ -51,19 +51,16 @@ unsigned char XorSum(const unsigned char *mem, int len)
   return cs;
 }
 
-void Date(const unsigned char *data, char *dt, char *ti)
+static time_t tier_date(ulong date, char *buf, int l)
 {
-	int date=(data[0]<<8)|data[1];
-	int time=(data[2]<<8)|data[3];
-	struct tm t;
-	memset(&t,0,sizeof(struct tm));
-	t.tm_min =0;//-300;
-	t.tm_year=92;
-	t.tm_mday=date + 1;
-	t.tm_sec =(time - 1) * 2;
-  	mktime(&t);
-  	snprintf(dt,11,"%.2d.%.2d.%.4d",t.tm_mon+1,t.tm_mday,t.tm_year+1900);
-  	snprintf(ti,9,"%.2d:%.2d:%.2d",t.tm_hour,t.tm_min,t.tm_sec);
+  time_t ut=870393600L+date*(24*3600);
+  if (buf)
+  {
+    struct tm *t;
+    t=gmtime(&ut);
+    snprintf(buf, l, "%04d/%02d/%02d", t->tm_year+1900, t->tm_mon+1, t->tm_mday);
+  }
+  return(ut);
 }
 
 int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned char *data)
@@ -411,9 +408,11 @@ void addProvider(int id)
  		reader[ridx].nprov+=1;
 	}
 }			
-		
+
 int ParseDataType(unsigned char dt)
 {
+	char ds[16], de[16];
+      	ushort chid;
 	switch(dt) 
 	{
 		case IRDINFO:
@@ -421,7 +420,7 @@ int ParseDataType(unsigned char dt)
 			reader[ridx].prid[0][0]=0x00;
 			reader[ridx].prid[0][1]=0x00;
 			reader[ridx].prid[0][2]=cta_res[7];
-			reader[ridx].prid[0][3]=cta_res[8];
+			reader[ridx].prid[0][3]=cta_res[8];			
 			reader[ridx].caid[0] =(SYSTEM_NAGRA|cta_res[11]);
      			memcpy(irdId,cta_res+14,4);
      			cs_debug("[nagra-reader] CAID: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
@@ -429,20 +428,14 @@ int ParseDataType(unsigned char dt)
      			return 1;
      		}
    		case TIERS:
-     			if(cta_res[4]==0x88 || cta_res[4]==0x08  || cta_res[4]==0x0C || cta_res[4]==0x8C)
-     			{
-       				int id=(cta_res[7]*256)|cta_res[8];
-       				int tLowId=(cta_res[17]*256)|cta_res[18];
-       				int tHiId=(cta_res[28]*256)|cta_res[29];
-       				char date1[12], time1[12], date2[12], time2[12];
-       				Date(cta_res+20,date1,time1);
-       				Date(cta_res+24,date2,time2);
-       				cs_ri_log("|%04X|%04X    |%04X     |%s|%s|",id,tLowId,tHiId,date1,time1);
-       				cs_ri_log("|    |        |         |%s|%s|",date2,time2);
-       				addProvider(id);
-       				
-       				
-       			}
+   			if ((cta_lr>33) && (chid=b2i(2, cta_res+11)))
+      			{
+      				int id=(cta_res[7]*256)|cta_res[8];
+        			tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15);
+        			tier_date(b2i(2, cta_res+13)-0x7f7, de, 15);
+        			cs_ri_log("|%04X|%04X    |%s  |%s  |", id,chid, ds, de);
+        			addProvider(id); 
+        		}
        		case 0x08:
      		case 0x88: if (cta_res[11] == 0x49) decryptDT08();  			
        		default:
@@ -520,10 +513,12 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	
 	if (!memcmp(rom+5, "181", 3)==0) //dt05 is not supported by rom181
 	{
-	cs_ri_log("|id  |tier low|tier high| dates             |");
-  	cs_ri_log("+----+--------+---------+-------------------+");
-	if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
-	CamStateRequest();
+		cs_ri_log("-----------------------------------------");
+		cs_ri_log("|id  |tier    |valid from  |valid to    |");
+	  	cs_ri_log("+----+--------+------------+------------+");
+		if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
+		cs_ri_log("-----------------------------------------");
+		CamStateRequest();
 	}
 	
 	if(!GetDataType(DT06,0x16,MAX_REC)) return 0;
