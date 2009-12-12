@@ -106,7 +106,7 @@ DESCRIPTIONS
        aulow = minutes
 	  time no EMM occurs so that client is set to low, default:30
 
-       monlevel = 0|1|2|4|4
+       monlevel = 0|1|2|3|4
 	  monitor level:
 
 	   0 = no access to monitor
@@ -279,7 +279,7 @@ MONITOR
 	shutdown		= showdown OSCam
 	reload			= reinit user db, clients and anti-cascading
 	details <PID>		= details about selected PID
-	debug <level>		= set debug level
+	debug <level>		= set debug level (monlevel > 3 required)
 				   debug level mask:
 				     0 = no debugging (default)
 				     1 = debug dumps

@@ -68,7 +68,7 @@ DESCRIPTIONS
        chid = <CAID>:<ChID>[,<CAID>:<ChID>]...
 	  user assingment to Irdeto ChID, default:none
 
-       monlevel = 0|1|2|4|4
+       monlevel = 0|1|2|3|4
 	  monitor level:
 
 	   0 = no access to monitor

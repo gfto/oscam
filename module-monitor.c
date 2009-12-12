@@ -513,7 +513,7 @@ static void monitor_set_debuglevel(char *flag)
 static int monitor_process_request(char *req)
 {
   int i, rc;
-  char *cmd[]={"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug", "setuser"};
+  char *cmd[]={"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug"};
   char *arg;
   if( (arg=strchr(req, ' ')) )
   {
@@ -523,25 +523,26 @@ static int monitor_process_request(char *req)
   trim(req);
   if ((!auth) && (strcmp(req, cmd[0])))
     monitor_login(NULL);
-  for (rc=1, i=0; i<10; i++)
+  for (rc=1, i=0; i<9; i++)
     if (!strcmp(req, cmd[i]))
     {
       switch(i)
       {
-        case  0: monitor_login(arg); break; // login
+        case  0: monitor_login(arg); break;             // login
         case  1: rc=0; break; // exit
-        case  2: monitor_logsend(arg); break; // log
-        case  3: monitor_process_info(); break; // status
+        case  2: monitor_logsend(arg); break;           // log
+        case  3: monitor_process_info(); break;         // status
         case  4: if (client[cs_idx].monlvl>3)
-                   kill(client[0].pid, SIGQUIT); // shutdown
+                   kill(client[0].pid, SIGQUIT);        // shutdown
                  break;
         case  5: if (client[cs_idx].monlvl>2)
-                   kill(client[0].pid, SIGHUP); // reload
+                   kill(client[0].pid, SIGHUP);         // reload
                  break;
-        case  6: monitor_process_details(arg); break; // details
+        case  6: monitor_process_details(arg); break;   // details
         case  7: monitor_send_details_version(); break;
-        case  8: monitor_set_debuglevel(arg); break; // debuglevel
-        case  9:  break; // setuser
+	case  8: if (client[cs_idx].monlvl>3)
+		  monitor_set_debuglevel(arg);          // debuglevel
+		 break; 
         default: continue;
       }
       break;
