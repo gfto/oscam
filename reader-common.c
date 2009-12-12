@@ -70,7 +70,7 @@ int reader_doapi(uchar dad, uchar *buf, int l, int dbg)
 {
 #ifdef HAVE_PCSC
 	if (reader[ridx].typ == R_PCSC) {
-		LONG rv;
+		 ULONG rv;
 		 SCARD_IO_REQUEST pioRecvPci;
 		 DWORD dwSendLength, dwRecvLength;
 
@@ -156,7 +156,7 @@ static int reader_activate_card()
 #ifdef HAVE_PCSC
   if (reader[ridx].typ == R_PCSC) {
 	  cs_debug("PCSC initializing card in (%s)", &reader[ridx].pcsc_name);
-	  LONG rv;
+	  ULONG rv;
 	  DWORD dwState, dwAtrLen, dwReaderLen;
 	  BYTE pbAtr[64];
 	  dwAtrLen = sizeof(pbAtr);
@@ -367,7 +367,7 @@ static int reader_card_inserted(void)
     if (reader[ridx].typ == R_PCSC) {
         DWORD dwState, dwAtrLen, dwReaderLen;
         BYTE pbAtr[64];
-        LONG rv;
+        ULONG rv;
         
         dwAtrLen = sizeof(pbAtr);
         
@@ -426,7 +426,7 @@ int reader_device_init(char *device, int typ)
 {
 #ifdef HAVE_PCSC
 	if (reader[ridx].typ == R_PCSC) {
-		LONG rv;
+		ULONG rv;
 		DWORD dwReaders;
 		LPSTR mszReaders = NULL;
 		char *ptr, **readers = NULL;
