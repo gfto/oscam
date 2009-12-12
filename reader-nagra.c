@@ -548,11 +548,11 @@ int nagra2_card_info(void)
 	return 1;
 }
 
-void post_process(void)
+void nagra2_post_process(void)
 {
 	//Todo: Do not block!//
 	CamStateRequest();
-	//cs_sleepms(20);
+	cs_sleepms(10);
 	if RENEW_SESSIONKEY NegotiateSessionKey();
 	if SENDDATETIME DateTimeCMD();
 }
@@ -591,7 +591,6 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 	    		memcpy(&er->cw[0],&er->cw[8],8);
 	   		memcpy(&er->cw[8],&tt[0],8);
 	    	}
-		post_process();
 		return (1);
 	}
 	return(0);
@@ -605,6 +604,6 @@ int nagra2_do_emm(EMM_PACKET *ep)
 		return (0);
 	}
 	cs_sleepms(300);
-	post_process();
+	nagra2_post_process();
 	return 1;
 }

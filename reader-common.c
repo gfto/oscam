@@ -570,6 +570,18 @@ int reader_checkhealth(void)
   return reader[ridx].card_status==CARD_INSERTED;
 }
 
+void reader_post_process(void)
+{
+  // some systems eg. nagra2/3 needs post process after receiving cw from card
+  // To save ECM/CW time we added this function after writing ecm answer
+  switch(reader[ridx].card_system)
+    {
+      case SC_NAGRA:
+        nagra2_post_process(); break;
+      default: break;
+    }
+}
+
 int reader_ecm(ECM_REQUEST *er)
 {
   int rc=-1;

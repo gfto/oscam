@@ -308,6 +308,7 @@ static void reader_get_ecm(ECM_REQUEST *er)
     cs_dump(er->ecm, er->l, "ecm:");
   er->rc=reader_ecm(er);
   write_ecm_answer(fd_c2m, er);
+  reader_post_process();
   //if(reader[ridx].typ=='r') reader[ridx].qlen--;
 }
 
