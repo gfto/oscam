@@ -1118,32 +1118,32 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
         else
         {
           if(client[cs_idx].autoau)
-        {
-          if(client[cs_idx].ncd_server)
           {
-            int r=0;
-            for(r=0;r<CS_MAXREADER;r++)
+            if(client[cs_idx].ncd_server)
             {
-              if((reader[r].typ==R_MOUSE || reader[ridx].typ==R_SMART || reader[ridx].typ==R_INTERN || reader[ridx].typ==R_SERIAL) && reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
+              int r=0;
+              for(r=0;r<CS_MAXREADER;r++)
               {
-                client[cs_idx].au=r;
-                break;
+                if(reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
+                {
+                  client[cs_idx].au=r;
+                  break;
+                }
               }
+              if(client[cs_idx].au<0) sprintf(t_msg[0], "au(auto)=%d", client[cs_idx].au+1);
+                else sprintf(t_msg[0], "au(auto)=%s", reader[client[cs_idx].au].label);
+            }
+            else
+            {
+              sprintf(t_msg[0], "au=auto");
+            }
           }
-            if(client[cs_idx].au<0) sprintf(t_msg[0], "au(auto)=%d", client[cs_idx].au+1);
-              else sprintf(t_msg[0], "au(auto)=%s", reader[client[cs_idx].au].label);
-          }
-          else
-          {
-            sprintf(t_msg[0], "au=auto");
-          }
-        }
           else
           {
             if(client[cs_idx].au<0) sprintf(t_msg[0], "au=%d", client[cs_idx].au+1);
               else sprintf(t_msg[0], "au=%s", reader[client[cs_idx].au].label);
-                }
           }
+        }
       }  
       if(client[cs_idx].ncd_server)
       {
@@ -1530,48 +1530,31 @@ int send_dcw(ECM_REQUEST *er)
 
   if(!client[cs_idx].ncd_server && client[cs_idx].autoau && er->rcEx==0)
   {
-          int typ=reader[er->reader[0]].typ;
-          if(er->rc!=0) typ=0;
+    int typ=reader[er->reader[0]].typ;
+    if(er->rc!=0) typ=0;
 
-          if(client[cs_idx].au>=0 && er->caid!=reader[client[cs_idx].au].caid[0])
-          {
-            client[cs_idx].au=(-1);
-          }
+    if(client[cs_idx].au>=0 && er->caid!=reader[client[cs_idx].au].caid[0])
+    {
+      client[cs_idx].au=(-1);
+    }
 
-          switch(typ)
-          {
-            case R_MOUSE:
-              client[cs_idx].au=er->reader[0];
-              break;
-            case R_SMART:
-              client[cs_idx].au=er->reader[0];
-              break;
-            case R_INTERN:
-              client[cs_idx].au=er->reader[0];
-              break;
-            case R_SERIAL:
-              client[cs_idx].au=er->reader[0];
-              break;
-            default:
-              {
-                if(client[cs_idx].au<0)
-                {
-                  int r=0;
-                  for(r=0;r<CS_MAXREADER;r++)
-                  {
-                    if((reader[r].typ==R_MOUSE || reader[r].typ==R_SMART || reader[r].typ==R_INTERN || reader[r].typ==R_SERIAL) && er->caid==reader[r].caid[0])
-                    {
-                      client[cs_idx].au=r;
-                      break;
-                    }
-                  }
-                  if(r==CS_MAXREADER)
-                  {
-                    client[cs_idx].au=(-1);
-                  }
-                }
-              }
-           }
+    client[cs_idx].au=er->reader[0];
+    if(client[cs_idx].au<0)
+    {
+      int r=0;
+      for(r=0;r<CS_MAXREADER;r++)
+      {
+        if(er->caid==reader[r].caid[0])
+        {
+          client[cs_idx].au=r;
+          break;
+        }
+      }
+      if(r==CS_MAXREADER)
+      {
+        client[cs_idx].au=(-1);
+      }
+    }
   }
 
   er->caid=er->ocaid;
