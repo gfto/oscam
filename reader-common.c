@@ -70,33 +70,7 @@ int reader_doapi(uchar dad, uchar *buf, int l, int dbg)
 {
 #ifdef HAVE_PCSC
 	if (reader[ridx].typ == R_PCSC) {
-		 ULONG rv;
-		 SCARD_IO_REQUEST pioRecvPci;
-		 DWORD dwSendLength, dwRecvLength;
-
-		 dwSendLength = l;
-		 dwRecvLength = sizeof(cta_res);
-
-		 //cs_ddump(buf, dwSendLength, "sending %d bytes to PCSC", dwSendLength);
-
-		 if(reader[ridx].dwActiveProtocol == SCARD_PROTOCOL_T0)
-			 rv = SCardTransmit(reader[ridx].hCard, SCARD_PCI_T0, buf, dwSendLength, &pioRecvPci, &cta_res, &dwRecvLength);
-		 else  if(reader[ridx].dwActiveProtocol == SCARD_PROTOCOL_T1)
-			 rv = SCardTransmit(reader[ridx].hCard, SCARD_PCI_T1, buf, dwSendLength, &pioRecvPci, &cta_res, &dwRecvLength);
-		 else {
-			 cs_debug("PCSC invalid protocol (T=%d)", reader[ridx].dwActiveProtocol);
-			 return ERR_INVALID;
-		 }
-
-		 cta_lr=dwRecvLength;
-		 // cs_ddump(cta_res, cta_lr, "received %d bytes from PCSC with rv=%lx", cta_lr, rv);
-
-		 cs_debug("PCSC doapi (%lx ) (T=%d)", rv, reader[ridx].dwActiveProtocol );
-		 if ( rv  == SCARD_S_SUCCESS ){
-			 return OK;
-		 } else {
-			 return ERR_INVALID;
-		 }
+    	pcsc_reader_do_api(&reader[ridx], buf, cta_res, &cta_lr,l,dbg);
 	}
 
 #endif
@@ -155,55 +129,7 @@ static int reader_activate_card()
 
 #ifdef HAVE_PCSC
   if (reader[ridx].typ == R_PCSC) {
-	  cs_debug("PCSC initializing card in (%s)", &reader[ridx].pcsc_name);
-	  ULONG rv;
-	  DWORD dwState, dwAtrLen, dwReaderLen;
-	  BYTE pbAtr[64];
-	  dwAtrLen = sizeof(pbAtr);
-
-	  cs_debug("PCSC resetting card in (%s)", &reader[ridx].pcsc_name);
-	  rv = SCardReconnect(reader[ridx].hCard, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,  SCARD_RESET_CARD, &reader[ridx].dwActiveProtocol);
-	  cs_debug("PCSC resetting done on card in (%s)", &reader[ridx].pcsc_name);
-	  cs_debug("PCSC Protocol (T=%d)",reader[ridx].dwActiveProtocol);
-
-	  if ( rv != SCARD_S_SUCCESS )  {
-		  cs_debug("Error PCSC failed to reset card (%lx)", rv);
-		  return(0);
-	  }
-
-        rv=SCardBeginTransaction(reader[ridx].hCard);
-        if (rv!=SCARD_S_SUCCESS) {
-        cs_log("PCSC reader %s Failed to begin transaction", reader[ridx].pcsc_name);
-        return 0;
-        }
-
-	  cs_debug("PCSC getting ATR for card in (%s)", &reader[ridx].pcsc_name);
-	  rv = SCardStatus(reader[ridx].hCard, NULL, &dwReaderLen, &dwState, &reader[ridx].dwActiveProtocol, pbAtr, &dwAtrLen);
-	  if ( rv == SCARD_S_SUCCESS ) {
-		  cs_debug("PCSC Protocol (T=%d)",reader[ridx].dwActiveProtocol);
-
-		  /*
-		  DWORD currentClk, currentClkLen;
-		  currentClkLen = sizeof(currentClk);
-		  rv = SCardGetAttrib(reader[ridx].hCard, SCARD_ATTR_CURRENT_CLK , &currentClk, &currentClkLen);
-		  cs_debug("PCSC rv=(%lx) Current clk = %lx Khz",rv, currentClk);
-			*/
-
-		  // TODO: merge better
-		  memcpy(atr, pbAtr, dwAtrLen);
-		  atr_size=dwAtrLen;
-		#ifdef CS_RDR_INIT_HIST
-		  reader[ridx].init_history_pos=0;
-		  memset(reader[ridx].init_history, 0, sizeof(reader[ridx].init_history));
-		#endif
-		  cs_ri_log("ATR: %s", cs_hexdump(1, (uchar *)pbAtr, dwAtrLen));
-		  sleep(1);
-		  return(1);
-
-	  } else {
-		  cs_debug("Error PCSC failed to get ATR for card (%lx)", rv);
-		  return(0);
-	  }
+        return (pcsc_activate_card(&reader[ridx], atr, &atr_size));
   }
 #endif
 
@@ -365,51 +291,8 @@ static int reader_card_inserted(void)
 {
 #ifdef HAVE_PCSC
     if (reader[ridx].typ == R_PCSC) {
-        DWORD dwState, dwAtrLen, dwReaderLen;
-        BYTE pbAtr[64];
-        ULONG rv;
-        
-        dwAtrLen = sizeof(pbAtr);
-        
-        // this is to take care of the case of a reader being started with no card ... we need something better.
-        if (!reader[ridx].pcsc_has_card) {
-            rv = SCardConnect(reader[ridx].hContext, &reader[ridx].pcsc_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &reader[ridx].hCard, &reader[ridx].dwActiveProtocol);
-            if (rv==SCARD_E_NO_SMARTCARD) {
-                reader[ridx].pcsc_has_card=0;
-                cs_debug("PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", reader[ridx].pcsc_name, dwState, rv );
-                return 0;
-            }
-            else if( rv == SCARD_S_SUCCESS ) {
-                reader[ridx].pcsc_has_card=1;
-            }
-            
-        }
+    return(pcsc_check_card_inserted(&reader[ridx]));
 
-        rv = SCardStatus(reader[ridx].hCard, NULL, &dwReaderLen, &dwState, &reader[ridx].dwActiveProtocol, pbAtr, &dwAtrLen);
-        cs_debug("PCSC rader %s dwstate=%lx rv=(%lx)", reader[ridx].pcsc_name, dwState, rv );
-
-        if(rv==SCARD_E_INVALID_HANDLE){
-              SCardEndTransaction(reader[ridx].hCard,SCARD_LEAVE_CARD);
-              SCardDisconnect(reader[ridx].hCard,SCARD_LEAVE_CARD);
-        }
-		 if (rv == SCARD_S_SUCCESS && (dwState & (SCARD_PRESENT | SCARD_NEGOTIABLE | SCARD_POWERED ) )) {
-			 cs_debug("PCSC card IS inserted in %s card state [dwstate=%lx rv=(%lx)]", reader[ridx].pcsc_name, dwState,rv);
-			 //cs_debug("ATR: %s", cs_hexdump(1, (uchar *)pbAtr, dwAtrLen));
-			  return 3;
-		 } 
-		 else {
-			 if ( (rv==SCARD_W_RESET_CARD) && (dwState == 0) ) {
-				 cs_debug("PCSC check card reinserted in %s [dwstate=%lx rv=(%lx)]", reader[ridx].pcsc_name, dwState, rv );
-			 	 SCardDisconnect(reader[ridx].hCard,SCARD_LEAVE_CARD);
-			 	 rv = SCardConnect(reader[ridx].hContext, &reader[ridx].pcsc_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &reader[ridx].hCard, &reader[ridx].dwActiveProtocol);
-			 	 return  ((rv != SCARD_S_SUCCESS) ? 2 : 0);
-			 } else  if ( rv == SCARD_W_REMOVED_CARD && (dwState | SCARD_ABSENT) ) {
-				 cs_debug("PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", reader[ridx].pcsc_name, dwState, rv );
-			 } else {
-				 cs_debug("PCSC card inserted FAILURE in %s (%lx) card state (%x) (T=%d)", reader[ridx].pcsc_name, rv, dwState, reader[ridx].dwActiveProtocol);
-			 }
-			 return 0;
-		 }
 	}
 #endif
 
@@ -426,90 +309,7 @@ int reader_device_init(char *device, int typ)
 {
 #ifdef HAVE_PCSC
 	if (reader[ridx].typ == R_PCSC) {
-		ULONG rv;
-		DWORD dwReaders;
-		LPSTR mszReaders = NULL;
-		char *ptr, **readers = NULL;
-		int nbReaders;
-		int reader_nb;
-		
-		cs_debug("PCSC establish context for PCSC reader %s", device);
-		rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, &reader[ridx].hContext);
-		if ( rv == SCARD_S_SUCCESS ) {
-			// here we need to list the pcsc readers and get the name from there,
-			// the reader[ridx].device should contain the reader number
-			// and after the actual device name is copied in reader[ridx].pcsc_name .
-			rv = SCardListReaders(reader[ridx].hContext, NULL, NULL, &dwReaders);
-			if( rv != SCARD_S_SUCCESS ) {
-				cs_debug("PCSC failed listing readers [1] : (%lx)", rv);
-				return  0;
-			}
-			mszReaders = malloc(sizeof(char)*dwReaders);
-			if (mszReaders == NULL) {
-				cs_debug("PCSC failed malloc");
-				return  0;
-			}
-			rv = SCardListReaders(reader[ridx].hContext, NULL, mszReaders, &dwReaders);
-			if( rv != SCARD_S_SUCCESS ) {
-				cs_debug("PCSC failed listing readers [2]: (%lx)", rv);
-				return  0;
-			}
-			/* Extract readers from the null separated string and get the total
-			 * number of readers */
-			nbReaders = 0;
-			ptr = mszReaders;
-			while (*ptr != '\0') {
-				ptr += strlen(ptr)+1;
-				nbReaders++;
-			}
-			
-			if (nbReaders == 0) {
-				cs_debug("PCSC : no reader found");
-				return  0;
-			}
-
-			readers = calloc(nbReaders, sizeof(char *));
-			if (readers == NULL) {
-				cs_debug("PCSC failed malloc");
-				return  0;
-			}
-
-			/* fill the readers table */
-			nbReaders = 0;
-			ptr = mszReaders;
-			while (*ptr != '\0') {
-				cs_debug("%d: %s\n", nbReaders, ptr);
-				readers[nbReaders] = ptr;
-				ptr += strlen(ptr)+1;
-				nbReaders++;
-			}
-			reader_nb=atoi((const char *)&reader[ridx].device);
-			if (reader_nb < 0 || reader_nb >= nbReaders) {
-				cs_debug("Wrong reader index: %d\n", reader_nb);
-				return  0;
-			}
-			snprintf(reader[ridx].pcsc_name,sizeof(reader[ridx].pcsc_name),"%s",readers[reader_nb]);
-			cs_log("PCSC initializing reader (%s)", &reader[ridx].pcsc_name);
-			rv = SCardConnect(reader[ridx].hContext, &reader[ridx].pcsc_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &reader[ridx].hCard, &reader[ridx].dwActiveProtocol);
-			cs_debug("PCSC initializing result (%lx) protocol (T=%lx)", rv, reader[ridx].dwActiveProtocol );
-            if (rv==SCARD_S_SUCCESS) {
-                reader[ridx].pcsc_has_card=1;
-                return 0;
-            }
-            else if (rv==SCARD_E_NO_SMARTCARD) {
-                reader[ridx].pcsc_has_card=0;
-                return 0;
-            }
-            else {
-                reader[ridx].pcsc_has_card=0;
-                return 2;
-            }
-                
-		}
-		else {
-			cs_debug("PCSC failed establish context (%lx)", rv);
-			return  0;
-		}
+	   return (pcsc_reader_init(&reader[ridx], device));
 	}
 #endif
  

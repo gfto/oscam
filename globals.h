@@ -762,6 +762,14 @@ extern int reader_checkhealth(void);
 extern int reader_ecm(ECM_REQUEST *);
 extern int reader_emm(EMM_PACKET *);
 
+#ifdef HAVE_PCSC
+// reader-pcsc
+extern int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res, ushort *cta_lr,int l, int dbg);
+extern int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_size);
+extern int pcsc_check_card_inserted(struct s_reader *pcsc_reader);
+extern int pcsc_reader_init(struct s_reader *pcsc_reader, char *device);
+#endif
+
 // reader-irdeto
 extern int irdeto_card_init(uchar *, int);
 extern int irdeto_do_ecm(ECM_REQUEST *);
