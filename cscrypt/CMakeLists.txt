@@ -13,7 +13,7 @@ if (NOT HAVE_SHA)
     file (GLOB sha_hdrs "sha/*.h")
 endif (NOT HAVE_SHA)
 
-add_definitions ("-O3 -Winline -Werror -finline-functions -fomit-frame-pointer -s")
+add_definitions ("-O3 -Winline -finline-functions -fomit-frame-pointer -s")
 
 set (lib_name "cscrypt")
 

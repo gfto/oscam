@@ -122,6 +122,12 @@ add_definitions ("-DCS_OS_CPU=\\\"${CS_OS_CPU}\\\"")
 add_definitions ("-DCS_OS_HW=\\\"${CS_OS_HW}\\\"")
 add_definitions ("-DCS_OS_SYS=\\\"${CS_OS_SYS}\\\"")
 
+if (${CS_OS_CPU} MATCHES "x86_64")
+    add_definitions ("-DSIXTY_FOUR_BIT")
+else (NOT (${CS_OS_CPU} MATCHES "x86_64"))
+    add_definitions ("-DTHIRTY_TWO_BIT")
+endif (${CS_OS_CPU} MATCHES "x86_64")
+
 #----------------------- subdirectories ------------------------------
 
 include (CheckIncludeFile)

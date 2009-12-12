@@ -57,9 +57,6 @@
  */
 
 #define I386_ONLY
-#define THIRTY_TWO_BIT
-
-
 #ifndef HEADER_BN_H
 #define HEADER_BN_H
 
