@@ -68,7 +68,7 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 			snprintf(pcsc_reader->pcsc_name,sizeof(pcsc_reader->pcsc_name),"%s",readers[reader_nb]);
 			cs_log("PCSC initializing reader (%s)", &pcsc_reader->pcsc_name);
 			rv = SCardConnect(pcsc_reader->hContext, &pcsc_reader->pcsc_name, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1, &pcsc_reader->hCard, &pcsc_reader->dwActiveProtocol);
-			cs_debug("PCSC initializing result (%lx) protocol (T=%lx)", rv, pcsc_reader->dwActiveProtocol );
+			cs_debug("PCSC initializing result (%lx) protocol (T=%lx)", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
             if (rv==SCARD_S_SUCCESS) {
                 pcsc_reader->pcsc_has_card=1;
                 return 0;
@@ -106,14 +106,14 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res,
      else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1)
          rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T1, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
      else {
-         cs_debug("PCSC invalid protocol (T=%d)", pcsc_reader->dwActiveProtocol);
+         cs_debug("PCSC invalid protocol (T=%d)", ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
          return ERR_INVALID;
      }
 
      *cta_lr=dwRecvLength;
      // cs_ddump(cta_res, cta_lr, "received %d bytes from PCSC with rv=%lx", cta_lr, rv);
 
-     cs_debug("PCSC doapi (%lx ) (T=%d)", rv, pcsc_reader->dwActiveProtocol );
+     cs_debug("PCSC doapi (%lx ) (T=%d)", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1) );
      if ( rv  == SCARD_S_SUCCESS ){
          return OK;
      }
@@ -135,7 +135,7 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
     cs_debug("PCSC resetting card in (%s)", pcsc_reader->pcsc_name);
     rv = SCardReconnect(pcsc_reader->hCard, SCARD_SHARE_SHARED, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,  SCARD_RESET_CARD, &pcsc_reader->dwActiveProtocol);
     cs_debug("PCSC resetting done on card in (%s)", pcsc_reader->pcsc_name);
-    cs_debug("PCSC Protocol (T=%d)",pcsc_reader->dwActiveProtocol);
+    cs_debug("PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
 
     if ( rv != SCARD_S_SUCCESS )  {
         cs_debug("Error PCSC failed to reset card (%lx)", rv);
@@ -151,7 +151,7 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
 	  cs_debug("PCSC getting ATR for card in (%s)", pcsc_reader->pcsc_name);
 	  rv = SCardStatus(pcsc_reader->hCard, NULL, &dwReaderLen, &dwState, &pcsc_reader->dwActiveProtocol, pbAtr, &dwAtrLen);
 	  if ( rv == SCARD_S_SUCCESS ) {
-		  cs_debug("PCSC Protocol (T=%d)",pcsc_reader->dwActiveProtocol);
+		  cs_debug("PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
 		  memcpy(atr, pbAtr, dwAtrLen);
 		  *atr_size=dwAtrLen;
 		#ifdef CS_RDR_INIT_HIST
@@ -213,7 +213,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 			 } else  if ( rv == SCARD_W_REMOVED_CARD && (dwState | SCARD_ABSENT) ) {
 				 cs_debug("PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
 			 } else {
-				 cs_debug("PCSC card inserted FAILURE in %s (%lx) card state (%x) (T=%d)", pcsc_reader->pcsc_name, rv, dwState, pcsc_reader->dwActiveProtocol);
+				 cs_debug("PCSC card inserted FAILURE in %s (%lx) card state (%x) (T=%d)", pcsc_reader->pcsc_name, rv, dwState, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
 			 }
 			 return 0;
 		 }
