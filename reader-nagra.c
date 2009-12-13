@@ -11,6 +11,7 @@ IDEA_KEY_SCHEDULE ksSession;
 extern uchar cta_res[];
 extern ushort cta_lr;
 int is_pure_nagra=0;
+int is_tiger=0;
 int has_dt08=0;
 unsigned char rom[15];
 unsigned char plainDT08RSA[64];
@@ -223,14 +224,23 @@ int NegotiateSessionKey(void)
 		memcpy(plainDT08RSA, reader[ridx].rsa_mod, 64); 
 		memcpy(signature,reader[ridx].nagra_boxkey, 8);
 	}
-
-	if(!do_cmd(0x2a,0x02,0xaa,0x42,NULL))
+	if (is_tiger)
 	{
-		cs_debug("[nagra-reader] CMD$2A failed");
-		return 0;
+		if(!do_cmd(0xd1,0x02,0x51,0x42,NULL))
+		{
+			cs_debug("[nagra-reader] CMD$D1 failed");
+			return 0;
+		}
+	}
+	else
+	{
+		if(!do_cmd(0x2a,0x02,0xaa,0x42,NULL))
+		{
+			cs_debug("[nagra-reader] CMD$2A failed");
+			return 0;
+		}
 	}
 
-	{
 		// RSA decrypt of cmd$2a data, result is stored in "negot"
 		ReverseMem(cta_res+2, 64);
 		//cs_debug("[nagra-reader] plainDT08RSA: %s", cs_hexdump (1, plainDT08RSA, 32));
@@ -276,28 +286,42 @@ int NegotiateSessionKey(void)
 		IDEA_KEY_SCHEDULE ks;
 		idea_set_encrypt_key(sessi,&ks);
 		idea_set_decrypt_key(&ks,&ksSession);
-
-	}
-
-	if(!do_cmd(0x2b,0x42,0xab,0x02, cmd2b+10)) 
+	
+	if (!is_tiger)
 	{
-		cs_debug("[nagra-reader] CMD$2B failed");
-		return 0;
+		if(!do_cmd(0x2b,0x42,0xab,0x02, cmd2b+10)) 
+		{
+			cs_debug("[nagra-reader] CMD$2B failed");
+			return 0;
+		}
 	}
+	else
+	{
+		if(!do_cmd(0xd2,0x42,0x52,0x03, cmd2b+10)) 
+		{
+			cs_debug("[nagra-reader] CMD$D2 failed");
+			return 0;
+		}
+	}
+	
 	cs_debug("[nagra-reader] session key: %s", cs_hexdump(1, sessi, 16));
-	if (!CamStateRequest())
+	
+	if (!is_tiger)
 	{
-		cs_debug("[nagra-reader] CamStateRequest failed");
-		return 0;
-	}
-	if SENDDATETIME 
-	{
-		DateTimeCMD();
-	}
-	if RENEW_SESSIONKEY
-	{
-		cs_ri_log("Negotiate sessionkey was not successfull! Please check rsa key and boxkey");
-		return 0;
+		if (!CamStateRequest())
+		{
+			cs_debug("[nagra-reader] CamStateRequest failed");
+			return 0;
+		}
+		if SENDDATETIME 
+		{
+			DateTimeCMD();
+		}
+		if RENEW_SESSIONKEY
+		{
+			cs_ri_log("Negotiate sessionkey was not successfull! Please check rsa key and boxkey");
+			return 0;
+		}
 	}
 	return 1;
 }
@@ -469,11 +493,19 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	memset (reader[ridx].sa, 0xff, sizeof (reader[ridx].sa));
 	reader[ridx].caid[0]=SYSTEM_NAGRA;
 	
-	if ((memcmp(atr+11, "DNASP", 5)==0 || memcmp(atr+11, "TIGER", 5)==0))
+	if (memcmp(atr+11, "DNASP", 5)==0)
 	{
 		//if(SetIFS(0xFE) != 1) return 0;
 		cs_debug("[nagra-reader] detect native nagra card T1 protocol");
 		memcpy(rom,atr+11,15);
+	}
+	else if (memcmp(atr+11, "TIGER", 5)==0)
+	{
+		//if(SetIFS(0xFE) != 1) return 0;
+		cs_debug("[nagra-reader] detect nagra tiger card");
+		memcpy(rom,atr+11,15);
+		memset(reader[ridx].hexserial, 0xff, 4); // take 0xff as cardserial?
+		is_tiger=1;
 	}
 	else if (!memcmp(atr+4, "IRDETO", 6))
 	{
@@ -489,46 +521,51 @@ int nagra2_card_init(uchar *atr, int atrlen)
 		memcpy(rom,cta_res+2,15);
 	}
 	else return 0;
-	CamStateRequest();
-	if(!do_cmd(0x12,0x02,0x92,0x06,0)) 
+
+	if (!is_tiger)
 	{
-		cs_debug("[nagra-reader] get Serial failed");
-		return 0;
-	}
-	memcpy(reader[ridx].hexserial, cta_res+2, 4);
-	cs_debug("[nagra-reader] SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
-	memcpy(reader[ridx].sa[0], cta_res+2, 4);
-	
-	if(!GetDataType(DT01,0x0E,MAX_REC)) return 0;
-	cs_debug("[nagra-reader] DT01 DONE");
-	CamStateRequest();
-	if(!GetDataType(IRDINFO,0x39,MAX_REC)) return 0;
-	cs_debug("[nagra-reader] IRDINFO DONE");
-	CamStateRequest();
-	if(!GetDataType(CAMDATA,0x55,10)) return 0;
-	cs_debug("[nagra-reader] CAMDATA Done");
-	if(!GetDataType(0x04,0x44,MAX_REC)) return 0;
-	cs_debug("[nagra-reader] DT04 DONE");
-	CamStateRequest();
-	
-	if (!memcmp(rom+5, "181", 3)==0) //dt05 is not supported by rom181
-	{
-		cs_ri_log("-----------------------------------------");
-		cs_ri_log("|id  |tier    |valid from  |valid to    |");
-	  	cs_ri_log("+----+--------+------------+------------+");
-		if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
-		cs_ri_log("-----------------------------------------");
+		CamStateRequest();
+		if(!do_cmd(0x12,0x02,0x92,0x06,0)) 
+		{
+			cs_debug("[nagra-reader] get Serial failed");
+			return 0;
+		}
+		memcpy(reader[ridx].hexserial, cta_res+2, 4);
+		cs_debug("[nagra-reader] SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
+		memcpy(reader[ridx].sa[0], cta_res+2, 4);
+		
+		if(!GetDataType(DT01,0x0E,MAX_REC)) return 0;
+		cs_debug("[nagra-reader] DT01 DONE");
+		CamStateRequest();
+		if(!GetDataType(IRDINFO,0x39,MAX_REC)) return 0;
+		cs_debug("[nagra-reader] IRDINFO DONE");
+		CamStateRequest();
+		if(!GetDataType(CAMDATA,0x55,10)) return 0;
+		cs_debug("[nagra-reader] CAMDATA Done");
+		if(!GetDataType(0x04,0x44,MAX_REC)) return 0;
+		cs_debug("[nagra-reader] DT04 DONE");
+		CamStateRequest();
+		
+		if (!memcmp(rom+5, "181", 3)==0) //dt05 is not supported by rom181
+		{
+			cs_ri_log("-----------------------------------------");
+			cs_ri_log("|id  |tier    |valid from  |valid to    |");
+		  	cs_ri_log("+----+--------+------------+------------+");
+			if(!GetDataType(TIERS,0x57,MAX_REC)) return 0;
+			cs_ri_log("-----------------------------------------");
+			CamStateRequest();
+		}
+		
+		if(!GetDataType(DT06,0x16,MAX_REC)) return 0;
+		cs_debug("[nagra-reader] DT06 DONE");
 		CamStateRequest();
 	}
-	
-	if(!GetDataType(DT06,0x16,MAX_REC)) return 0;
-	cs_debug("[nagra-reader] DT06 DONE");
-	CamStateRequest();
 	if (!NegotiateSessionKey())
 	{
 		cs_debug("[nagra-reader] NegotiateSessionKey failed");
 		return 0;
 	}
+	
 	return 1;
 }
 
@@ -559,40 +596,60 @@ void nagra2_post_process(void)
 
 int nagra2_do_ecm(ECM_REQUEST *er)
 {
-	int retry=0;
-	if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2)) 
+	if (!is_tiger)
 	{
-		cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
-		if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2))
+		int retry=0;
+		if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2)) 
 		{
-			cs_debug("[nagra-reader] nagra2_do_ecm failed");
-			return (0);
+			cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
+			if(!do_cmd(er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2))
+			{
+				cs_debug("[nagra-reader] nagra2_do_ecm failed");
+				return (0);
+			}
+	
 		}
-
+		cs_sleepms(5);
+		while(!CamStateRequest() && retry < 5)
+		{
+			retry++;
+	                cs_sleepms(15);
+		}
+		cs_sleepms(5);
+		if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
+		{
+			unsigned char v[8];
+			memset(v,0,sizeof(v));
+			idea_cbc_encrypt(&cta_res[30],er->cw,8,&ksSession,v,IDEA_DECRYPT);
+			memset(v,0,sizeof(v));
+			idea_cbc_encrypt(&cta_res[4],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
+			if ((memcmp(prv3411,&reader[ridx].prid[0],4)==0) || (memcmp(prv0401,&reader[ridx].prid[0],4)==0))
+		  	{
+		    		unsigned char tt[8];
+		    		memcpy(&tt[0],&er->cw[0],8);
+		    		memcpy(&er->cw[0],&er->cw[8],8);
+		   		memcpy(&er->cw[8],&tt[0],8);
+		    	}
+			return (1);
+		}
 	}
-	cs_sleepms(5);
-	while(!CamStateRequest() && retry < 5)
+	else
 	{
-		retry++;
-                cs_sleepms(15);
+		if(!do_cmd(0xd3,er->ecm[4]+2,0x53,0x16, er->ecm+3+2))
+		{
+			//53 14 01 00 00 00 
+			//94 8c 3e f7 49 a8 c7 23 //cw1?
+			//9a 67 e3 e1 d4 c1 c7 83 //cw0?
+			//90 0
+			unsigned char v[8];
+			memset(v,0,sizeof(v));
+			idea_cbc_encrypt(&cta_res[14],er->cw,8,&ksSession,v,IDEA_DECRYPT);
+			memset(v,0,sizeof(v));
+			idea_cbc_encrypt(&cta_res[6],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
+			return (1);
+		}
 	}
-	cs_sleepms(5);
-	if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
-	{
-		unsigned char v[8];
-		memset(v,0,sizeof(v));
-		idea_cbc_encrypt(&cta_res[30],er->cw,8,&ksSession,v,IDEA_DECRYPT);
-		memset(v,0,sizeof(v));
-		idea_cbc_encrypt(&cta_res[4],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
-		if ((memcmp(prv3411,&reader[ridx].prid[0],4)==0) || (memcmp(prv0401,&reader[ridx].prid[0],4)==0))
-	  	{
-	    		unsigned char tt[8];
-	    		memcpy(&tt[0],&er->cw[0],8);
-	    		memcpy(&er->cw[0],&er->cw[8],8);
-	   		memcpy(&er->cw[8],&tt[0],8);
-	    	}
-		return (1);
-	}
+		
 	return(0);
 }
 
