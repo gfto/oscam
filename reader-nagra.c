@@ -91,6 +91,11 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
     		return 0;
     	}
     	if (is_pure_nagra==1) msg[4]+=1;
+    	if (is_tiger)
+    	{
+    		msg[4]--;
+    		msg[6]--;
+    	}
     	if(!reader_cmd2icc(msg,msglen))
   	{
   		cs_sleepms(10);
@@ -226,7 +231,8 @@ int NegotiateSessionKey(void)
 	}
 	if (is_tiger)
 	{
-		if(!do_cmd(0xd1,0x02,0x51,0x42,NULL))
+		unsigned char d1[] = {0xd2};
+		if(!do_cmd(0xd1,0x03,0x51,0x42,d1))
 		{
 			cs_debug("[nagra-reader] CMD$D1 failed");
 			return 0;
