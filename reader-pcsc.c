@@ -92,14 +92,14 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
     return 0;
 }
 
-int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res, ushort *cta_lr,int l, int dbg)
+int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res, ushort *cta_lr, int l, int dbg)
 {
      ULONG rv;
      SCARD_IO_REQUEST pioRecvPci;
      DWORD dwSendLength, dwRecvLength;
 
      dwSendLength = l;
-     dwRecvLength = sizeof(cta_res);
+     dwRecvLength = 512;
 
      //cs_ddump(buf, dwSendLength, "sending %d bytes to PCSC", dwSendLength);
 
@@ -113,9 +113,9 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res,
      }
 
      *cta_lr=dwRecvLength;
-     // cs_ddump(cta_res, cta_lr, "received %d bytes from PCSC with rv=%lx", cta_lr, rv);
+     //cs_ddump(cta_res, *cta_lr, "received %d bytes from PCSC with rv=%lx", *cta_lr, rv);
 
-     cs_debug("PCSC doapi (%lx ) (T=%d)", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1) );
+     cs_debug("PCSC doapi (%lx ) (T=%d), %d", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), dwRecvLength );
      if ( rv  == SCARD_S_SUCCESS ){
          return OK;
      }
