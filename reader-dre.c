@@ -269,7 +269,7 @@ int dre_do_ecm (ECM_REQUEST * er)
     cs_debug ("DEBUG: unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2] + 2 - 24));
     if ((dre_cmd (ecmcmd41))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-	return 0;		//exit if response is not 90 00
+				return 0;		//exit if response is not 90 00
       memcpy (er->cw, cta_res + 11, 8);
       memcpy (er->cw + 8, cta_res + 3, 8);
 
@@ -291,7 +291,7 @@ int dre_do_ecm (ECM_REQUEST * er)
     ecmcmd51[33] = provider;	//no part of sig
     if ((dre_cmd (ecmcmd51))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-	return 0;		//exit if response is not 90 00
+				return 0;		//exit if response is not 90 00
       memcpy (er->cw, cta_res + 11, 8);
       memcpy (er->cw + 8, cta_res + 3, 8);
       return 1;
@@ -316,9 +316,9 @@ int dre_do_emm (EMM_PACKET * ep)
       memcpy (emmcmd52 + 1, ep->emm + 5 + 32 + i * 56, 56);
       emmcmd52[0x39] = provider;
       if ((dre_cmd (emmcmd52)))
-	if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-	  return 0;		//exit if response is not 90 00
-    }
+				if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
+	  			return 0;		//exit if response is not 90 00
+    	}
   }
   else {
     static uchar emmcmd42[] =
@@ -328,30 +328,45 @@ int dre_do_emm (EMM_PACKET * ep)
       0x91,
       0x56, 0x58, 0x11
     };
-    memcpy (emmcmd42 + 1, ep->emm + 6, 48);
-    emmcmd42[51] = provider;
-    //emmcmd42[50] = ecmcmd42[2]; //TODO package nr could also be fixed 0x58
-    emmcmd42[50] = 0x58;
-    emmcmd42[49] = ep->emm[5];	//keynr
-    /* response: 
-       59 05 A2 02 05 01 5B 
-       90 00 */
-    if ((dre_cmd (emmcmd42))) {	//first emm request
-      if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-	return 0;		//exit if response is not 90 00
-
-      memcpy (emmcmd42 + 1, ep->emm + 55, 7);	//TODO OR next two lines?
-      /*memcpy (emmcmd42 + 1, ep->emm + 55, 7);  //FIXME either I cant count or my EMM log contains errors
-         memcpy (emmcmd42 + 8, ep->emm + 67, 41); */
-      emmcmd42[51] = provider;
-      //emmcmd42[50] = ecmcmd42[2]; //TODO package nr could also be fixed 0x58
-      emmcmd42[50] = 0x58;
-      emmcmd42[49] = ep->emm[54];	//keynr
-      if ((dre_cmd (emmcmd42))) {	//second emm request
-	if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-	  return 0;		//exit if response is not 90 00
-      }
-    }
+		switch (ep->emm[0]) {
+			case 0x87: //unique EMM
+				memcpy (emmcmd42 + 4, ep->emm + 3, 45);
+				emmcmd42[3] = 0x00; //not sure about this
+				emmcmd42[49] = ep->emm[41]; //keynr
+				emmcmd42[50] = 0x58 + ep->emm[40]; //package nr
+		    emmcmd42[51] = provider;
+		    if ((dre_cmd (emmcmd42))) {
+		      if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
+						return 0;		//exit if response is not 90 00
+				}
+				break;
+			case 0x89: //shared EMM
+			default:
+		    memcpy (emmcmd42 + 1, ep->emm + 6, 48);
+		    emmcmd42[51] = provider;
+		    //emmcmd42[50] = ecmcmd42[2]; //TODO package nr could also be fixed 0x58
+		    emmcmd42[50] = 0x58;
+		    emmcmd42[49] = ep->emm[5];	//keynr
+		    /* response: 
+		       59 05 A2 02 05 01 5B 
+		       90 00 */
+		    if ((dre_cmd (emmcmd42))) {	//first emm request
+		      if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
+						return 0;		//exit if response is not 90 00
+		
+		      memcpy (emmcmd42 + 1, ep->emm + 55, 7);	//TODO OR next two lines?
+		      /*memcpy (emmcmd42 + 1, ep->emm + 55, 7);  //FIXME either I cant count or my EMM log contains errors
+		         memcpy (emmcmd42 + 8, ep->emm + 67, 41); */
+		      emmcmd42[51] = provider;
+		      //emmcmd42[50] = ecmcmd42[2]; //TODO package nr could also be fixed 0x58
+		      emmcmd42[50] = 0x58;
+		      emmcmd42[49] = ep->emm[54];	//keynr
+		      if ((dre_cmd (emmcmd42))) {	//second emm request
+						if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
+							return 0;		//exit if response is not 90 00
+		      }
+		    }
+		}
   }
   return 1;			//success
 }
