@@ -151,7 +151,7 @@ static void write_to_log(int flag, char *txt)
 
   if (use_syslog && !use_ac_log)		// system-logfile
     syslog(LOG_INFO, "%s", txt);
-  else {
+  //else {
     time(&t);
     lt=localtime(&t);
     sprintf(buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
@@ -171,7 +171,7 @@ static void write_to_log(int flag, char *txt)
       else
         cs_write_log(buf+8);
 //    }
-  }
+  //}
   store_logentry(buf);
 
   for (i=0; i<CS_MAXPID; i++)	// monitor-clients
