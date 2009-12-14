@@ -475,40 +475,41 @@ static void monitor_logsend(char *flag)
 #ifdef CS_LOGHISTORY
   int i;
 #endif
-  if (strcmp(flag, "on"))
-  {
-    client[cs_idx].log=0;
-    return;
+  if (strcmp(flag, "on")) {
+      if (strcmp(flag, "onwohist")) {
+          client[cs_idx].log=0;
+          return;
+      }
   }
+
   if (client[cs_idx].log)	// already on
     return;
 #ifdef CS_LOGHISTORY
-  for (i=(*loghistidx+3) % CS_MAXLOGHIST; i!=*loghistidx; i=(i+1) % CS_MAXLOGHIST)
-  {
-    char *p_usr, *p_txt;
-    p_usr=(char *)(loghist+(i*CS_LOGHISTSIZE));
-    p_txt=p_usr+32;
-    if ((p_txt[0]) &&
-       ((client[cs_idx].monlvl>1) || (!strcmp(p_usr, client[cs_idx].usr))))
-    {
-      char sbuf[8];
-      sprintf(sbuf, "%03d", client[cs_idx].logcounter);
-      client[cs_idx].logcounter=(client[cs_idx].logcounter+1) % 1000;
-      memcpy(p_txt+4, sbuf, 3);
-      monitor_send(p_txt);
-    }
-  }
+   if (!strcmp(flag, "on")){
+     for (i=(*loghistidx+3) % CS_MAXLOGHIST; i!=*loghistidx; i=(i+1) % CS_MAXLOGHIST)
+     {
+       char *p_usr, *p_txt;
+       p_usr=(char *)(loghist+(i*CS_LOGHISTSIZE));
+       p_txt=p_usr+32;
+       if ((p_txt[0]) &&
+          ((client[cs_idx].monlvl>1) || (!strcmp(p_usr, client[cs_idx].usr))))
+       {
+         char sbuf[8];
+         sprintf(sbuf, "%03d", client[cs_idx].logcounter);
+         client[cs_idx].logcounter=(client[cs_idx].logcounter+1) % 1000;
+         memcpy(p_txt+4, sbuf, 3);
+         monitor_send(p_txt);
+       }
+     }
+   }
 #endif
   client[cs_idx].log=1;
 }
-
-
 static void monitor_set_debuglevel(char *flag)
 {
     cs_dblevel^=atoi(flag);
     kill(client[0].pid, SIGUSR1);
 }
-
 
 static int monitor_process_request(char *req)
 {
