@@ -4,7 +4,7 @@
 char oscam_device[128];
 int  oscam_card_detect;
 
-uchar cta_cmd[272], cta_res[260], atr[64];
+uchar cta_cmd[272], cta_res[CTA_RES_LEN], atr[64];
 ushort cta_lr, atr_size=0;
 static int cs_ptyp_orig; //reinit=1, 
 
