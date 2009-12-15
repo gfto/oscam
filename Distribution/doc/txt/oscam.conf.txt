@@ -278,7 +278,9 @@ MONITOR
 				  logging for 2 minutes
 	status			= list of current processes and clients
 	shutdown		= showdown OSCam
-	reload			= reinit user db, clients and anti-cascading
+	reload			= reinit user db, clients and anti-cascading,
+				  ident  reloading  has  been	disabled   for
+				  newcamd connections
 	details <PID>		= details about selected PID
 	debug <level>		= set debug level (monlevel > 3 required)
 				   debug level mask:
@@ -323,8 +325,8 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       oscam(1),     oscam.user(5),	 oscam.server(5),      oscam.srvid(5),
-       oscam.guess(5),	  oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
+       oscam(1),      oscam.user(5),	  oscam.server(5),     oscam.srvid(5),
+       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
        oscam.ac(5)
 
 
