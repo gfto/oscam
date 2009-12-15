@@ -300,9 +300,6 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 	{
 		if (!ATR_GetNextByte (io, timeout, &(atr->hb[i]), invert))
 			return ATR_MALFORMED;
-		//some irdeto cards report having 0xF historical bytes, but they actually carry 0xB 
-		if (atr->hbn == 0xF && i == 5 && !memcmp(atr->hb,"IRDETO",6))
-			atr->hbn = 0xB;
 	}
 	
 	pointer += (atr->hbn);
