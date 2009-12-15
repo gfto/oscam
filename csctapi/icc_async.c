@@ -150,10 +150,10 @@ int ICC_Async_SetTimings (ICC_Async * icc, ICC_Async_Timings * timings)
 	icc->timings.char_delay = timings->char_delay;
 	icc->timings.block_timeout = timings->block_timeout;
 	icc->timings.char_timeout = timings->char_timeout;
-	if (icc->protocol_type == ATR_PROTOCOL_TYPE_T1)
+/*	if (icc->protocol_type == ATR_PROTOCOL_TYPE_T1)
 		cs_debug("SetTimings: T1: chardelay %d, chartimeout CWT %d, blockdelay BGT??? %d, blocktimeout BWT %d",timings->char_delay,timings->char_timeout, timings->block_delay, timings->block_timeout);
 	else
-		cs_debug("SetTimings: T0/T14: chardelay %d, chartimeout WWT %d, blockdelay %d, blocktimeout %d",timings->char_delay,timings->char_timeout, timings->block_delay, timings->block_timeout);
+		cs_debug("SetTimings: T0/T14: chardelay %d, chartimeout WWT %d, blockdelay %d, blocktimeout %d",timings->char_delay,timings->char_timeout, timings->block_delay, timings->block_timeout);*/
 
 #ifdef SCI_DEV
 #include <sys/ioctl.h>
