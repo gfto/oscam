@@ -67,7 +67,7 @@
 #define ATR_INTEGER_VALUE_PI2	5	/* Integer value PI2 */
 
 /* Default values for paramenters */
-#define ATR_DEFAULT_F	372
+#define ATR_DEFAULT_FI 1
 #define ATR_DEFAULT_D	1
 #define ATR_DEFAULT_I 	50
 #define ATR_DEFAULT_N	0

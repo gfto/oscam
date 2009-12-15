@@ -550,7 +550,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		
 		params.ETU = 372;
 		params.EGT = 3;
-		params.f = 9;
+		params.FI = 9;
 		params.T = 0;
 		
 		if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
@@ -615,87 +615,10 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		if(n==0)
 			return IFD_TOWITOKO_IO_ERROR;
 			
-		if(ioctl(ifd->io->fd, IOCTL_GET_PARAMETERS, &params)<0)
-			return IFD_TOWITOKO_IO_ERROR;
-		
-//              cs_dump(buf, n, "BUF:");
-		if(n>9 && !memcmp(buf+4, irdeto, 6))
-		{
-			params.T = 14;
-			params.WWT = 1500;
-			params.EGT = 5;
-			params.f = 5;
-			buf[0]=0x3B;
-		}
-/*					
-		if(params.ETU>600 && (buf[0]!=0x3B || buf[0]!=0x3F))
-		{
-			params.T = 14;
-			params.WWT = 1500;
-			params.EGT = 5;
-			buf[0]=0x3B;
-		}
-*/			
 		(*atr) = ATR_New ();
 		if(ATR_InitFromArray ((*atr), buf, n) == ATR_OK)
 		{
 			struct timespec req_ts;
-			double a;
-			
-			double atrparam_d = 0;
-			
-			ATR_GetParameter(*atr,ATR_PARAMETER_D,&atrparam_d);
-			params.ETU = (unsigned char)atrparam_d;
-			
-//			printf("atr D=%f\n", a);
-			ATR_GetParameter(*atr, ATR_PARAMETER_N, &a);
-			params.EGT = (unsigned char)a;
-			if (params.EGT==255) params.EGT=0;
-			ATR_GetParameter(*atr, ATR_PARAMETER_P, &a);
-//			printf("atr P=%f\n", a);
-			params.P = (unsigned char)a;
-			ATR_GetParameter(*atr, ATR_PARAMETER_I, &a);
-//			printf("atr I=%f\n", a);
-			params.I = (unsigned char)a;
-
-			double atrparam_f = 0;
-
-			if (ATR_GetParameter(*atr,ATR_PARAMETER_F,&atrparam_f)!=ATR_OK)
-			{
-				cs_log ("Error getting ATR parameter (F)");
-				ATR_Delete (*atr);
-				(*atr) = NULL;
-				return IFD_TOWITOKO_IO_ERROR;
-			}
-			if (ATR_GetParameter(*atr,ATR_PARAMETER_D,&atrparam_d)!=ATR_OK)
-			{
-				cs_log ("Error getting ATR parameter (D)");
-				ATR_Delete (*atr);
-				(*atr) = NULL;
-				return IFD_TOWITOKO_IO_ERROR;
-			}
-
-			if (params.ETU != 0) 
-				params.ETU=atrparam_f/atrparam_d;
-			else
-				params.ETU=372;
-
-			if (ifd->io->mhz == 600) { //overclock works on Sky It 919
-			  params.f = 5;
-			  cs_log("Forcing params.f to 5");
-			}
-
-			if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
-			{
-				ATR_Delete (*atr);
-				(*atr) = NULL;
-				return IFD_TOWITOKO_IO_ERROR;
-			}
-			
-			ioctl(ifd->io->fd, IOCTL_GET_PARAMETERS, &params);
-			
-			cs_debug("T=%d f=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, (int)params.f, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
-			
 			req_ts.tv_sec = 0;
 			req_ts.tv_nsec = 50000000;
 			nanosleep (&req_ts, NULL);
@@ -793,7 +716,6 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
   		// HD+ unsigned char atr_test[] = { 0x3F, 0xFF, 0x95, 0x00, 0xFF, 0x91, 0x81, 0x71, 0xFE, 0x47, 0x00, 0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34, 0x63 };
 		// S02 = irdeto unsigned char atr_test[] = { 0x3B, 0x9F, 0x21, 0x0E, 0x49, 0x52, 0x44, 0x45, 0x54, 0x4F, 0x20, 0x41, 0x43, 0x53, 0x03};
 		//cryptoworks 	unsigned char atr_test[] = { 0x3B, 0x78, 0x12, 0x00, 0x00, 0x65, 0xC4, 0x05, 0xFF, 0x8F, 0xF1, 0x90, 0x00 };
-		unsigned char atr_test[] = { 0x3F, 0xFF, 0x95, 0x00, 0xFF, 0x91, 0x81, 0x71, 0xFE, 0x47, 0x00, 0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34, 0x63 };
 		ATR_Delete(*atr); //throw away actual ATR
 		(*atr) = ATR_New ();
 		ATR_InitFromArray ((*atr), atr_test, sizeof(atr_test));

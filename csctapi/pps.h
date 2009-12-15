@@ -43,7 +43,7 @@
 
 typedef struct
 {
-  double f;
+  BYTE FI;
   double d;
   double n;
   BYTE t;

@@ -100,7 +100,7 @@ Protocol_T14 * Protocol_T14_New (void)
 	return t14;
 }
 
-int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters * params)
+int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters * params, int selected_protocol)
 {
 	ICC_Async_Timings timings;
 	BYTE wi;
@@ -113,12 +113,13 @@ int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters 
 	
 	/* Integer value WI  = TC2, by default 10 */
 #ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
-	if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
+	if (ATR_GetInterfaceByte (atr, selected_protocol, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
 #endif
 	wi = PROTOCOL_T0_DEFAULT_WI;
 	
 	/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
-	t0->wwt = (long unsigned int) (960 * wi * (params->f / ICC_Async_GetClockRate (t0->icc)) * 1000);
+	double F =  (double) atr_f_table[params->FI];
+	t0->wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate (t0->icc)) * 1000);
 	
 	/* Set timings */
 	ICC_Async_GetTimings (t0->icc, &timings);
@@ -135,7 +136,7 @@ int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters 
 	return PROTOCOL_T0_OK;
 }
 
-int Protocol_T14_Init (Protocol_T14 * t14, ICC_Async * icc, PPS_ProtocolParameters * params)
+int Protocol_T14_Init (Protocol_T14 * t14, ICC_Async * icc, PPS_ProtocolParameters * params, int selected_protocol)
 {
 	ICC_Async_Timings timings;
 	BYTE wi;
@@ -148,12 +149,13 @@ int Protocol_T14_Init (Protocol_T14 * t14, ICC_Async * icc, PPS_ProtocolParamete
 	
 	/* Integer value WI  = TC2, by default 10 */
 #ifndef PROTOCOL_T14_USE_DEFAULT_TIMINGS
-	if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
+	if (ATR_GetInterfaceByte (atr, selected_protocol, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
 #endif
 	wi = PROTOCOL_T14_DEFAULT_WI;
 	
 	/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
-	t14->wwt = (long unsigned int) (960 * wi * (params->f / ICC_Async_GetClockRate (t14->icc)) * 1000);
+	double F =  (double) atr_f_table[params->FI];
+	t14->wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate (t14->icc)) * 1000);
 	t14->wwt >>= 1;
 	
 	/* Set timings */
@@ -164,9 +166,9 @@ int Protocol_T14_Init (Protocol_T14 * t14, ICC_Async * icc, PPS_ProtocolParamete
 	
 	ICC_Async_SetTimings (t14->icc, &timings);
 	
-#ifdef DEBUG_PROTOCOL
+//#ifdef DEBUG_PROTOCOL
 	printf ("Protocol: T=14: WWT=%d\n", (int)(t14->wwt));
-#endif
+//#endif
 	
 	return PROTOCOL_T14_OK;
 }

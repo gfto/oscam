@@ -81,8 +81,8 @@ extern void Protocol_T0_Delete (Protocol_T0 * t0);
 extern void Protocol_T14_Delete (Protocol_T14 * t14);
 
 /* Initialise a protocol handler */
-extern int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters * params);
-extern int Protocol_T14_Init (Protocol_T14 * t14, ICC_Async * icc, PPS_ProtocolParameters * params);
+extern int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters * params, int selected_protocol);
+extern int Protocol_T14_Init (Protocol_T14 * t14, ICC_Async * icc, PPS_ProtocolParameters * params, int selected_protocol);
 
 /* Send a command and return a response */
 extern int Protocol_T0_Command (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp ** rsp);

@@ -72,7 +72,7 @@ Protocol_T1_Delete (Protocol_T1 * t1);
 
 /* Initialise a protocol handler */
 extern int 
-Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, PPS_ProtocolParameters * params);
+Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, PPS_ProtocolParameters * params, int selected_protocol);
 
 /* Send a command and return a response */
 extern int

@@ -74,7 +74,7 @@ Protocol_T1_New (void)
 }
 
 int
-Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, PPS_ProtocolParameters * params)
+Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, PPS_ProtocolParameters * params, int selected_protocol)
 {
   ICC_Async_Timings timings;
   BYTE ta, tb, tc, cwi, bwi;
@@ -90,7 +90,7 @@ Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, PPS_ProtocolParameters * pa
   atr = ICC_Async_GetAtr (t1->icc);
 
   /* Set IFSC */
-  if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
+  if (ATR_GetInterfaceByte (atr, selected_protocol, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
     t1->ifsc = PROTOCOL_T1_DEFAULT_IFSC;
   else if ((ta != 0x00) && (ta != 0xFF))
     t1->ifsc = ta;
@@ -105,7 +105,7 @@ Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, PPS_ProtocolParameters * pa
 
 #ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
   /* Calculate CWI and BWI */
-  if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TB, &tb) == ATR_NOT_FOUND)
+  if (ATR_GetInterfaceByte (atr, selected_protocol, ATR_INTERFACE_BYTE_TB, &tb) == ATR_NOT_FOUND)
     {
 #endif
       cwi  = PROTOCOL_T1_DEFAULT_CWI;
@@ -142,7 +142,7 @@ Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, PPS_ProtocolParameters * pa
   t1->bgt = (unsigned short) (22 * work_etu);
 
   /* Set the error detection code type */
-  if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
+  if (ATR_GetInterfaceByte (atr, selected_protocol, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
     t1->edc = PROTOCOL_T1_EDC_LRC;
   else
     t1->edc = tc & 0x01;

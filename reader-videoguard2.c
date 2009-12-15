@@ -113,8 +113,8 @@ void postprocess_cw(unsigned char *cw)
   }
 
 //#if __BYTE_ORDER != __BIG_ENDIAN
-  cw[0] = (k1 + *((short *)&Hash14)) & 0xFF;
-  cw[1] = (k1 + *((short *)&Hash14))>>8;
+  cw[0] = (k1 + *((short *)&Hash14+1)) & 0xFF; //the +0 keeps compilere from nagging
+  cw[1] = (k1 + *((short *)&Hash14+0))>>8;
   cw[2] = (k2 + *((short *)&Hash14+1)) & 0xFF;
   cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
   cw[4] = (k3 + *((short *)&Hash14+2)) & 0xFF;
@@ -607,8 +607,6 @@ int videoguard_card_init(uchar *atr, int atrsize)
     else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
     {
         cs_log("Type: Videoguard Sky Italia");
-	if (reader[ridx].mhz != 357)
-	  cs_log("Warning: for Sky Italia currently only 'mhz = 357' is known to work! Device %s has mhz = %i",reader[ridx].device,reader[ridx].mhz);
     }
     else if ((atrsize == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atrsize) == 0))
     {
@@ -629,8 +627,6 @@ int videoguard_card_init(uchar *atr, int atrsize)
     else if ((atrsize == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atrsize) == 0))
     {
         cs_log("Type: Videoguard Sky Italia new (093B)");
-	if (reader[ridx].mhz != 357)
-	  cs_log("Warning: for Sky Italia currently only 'mhz = 357' is known to work! Device %s has mhz = %i",reader[ridx].device,reader[ridx].mhz);
     }
     else if ((atrsize == sizeof (atr_premiere)) && (memcmp (atr, atr_premiere, atrsize) == 0))
     {
