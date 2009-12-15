@@ -345,7 +345,8 @@ static void cs_reinit_clients()
         client[i].monlvl  = account->monlvl;
         client[i].fchid   = account->fchid;  // CHID filters
         client[i].cltab   = account->cltab;  // Class
-        client[i].ftab    = account->ftab;   // Ident
+        if(!client[i].ncd_server) // newcamd module dosent like ident reloading
+          client[i].ftab    = account->ftab;   // Ident
         client[i].sidtabok= account->sidtabok;   // services
         client[i].sidtabno= account->sidtabno;   // services
         memcpy(&client[i].ctab, &account->ctab, sizeof(client[i].ctab));
