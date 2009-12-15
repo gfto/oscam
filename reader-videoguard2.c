@@ -113,8 +113,8 @@ void postprocess_cw(unsigned char *cw)
   }
 
 //#if __BYTE_ORDER != __BIG_ENDIAN
-  cw[0] = (k1 + *((short *)&Hash14+1)) & 0xFF; //the +0 keeps compilere from nagging
-  cw[1] = (k1 + *((short *)&Hash14+0))>>8;
+  cw[0] = (k1 + *((short *)&Hash14)) & 0xFF;
+  cw[1] = (k1 + *((short *)&Hash14))>>8;
   cw[2] = (k2 + *((short *)&Hash14+1)) & 0xFF;
   cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
   cw[4] = (k3 + *((short *)&Hash14+2)) & 0xFF;
