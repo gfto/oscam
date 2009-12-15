@@ -328,16 +328,18 @@ int dre_do_emm (EMM_PACKET * ep)
       0x91,
       0x56, 0x58, 0x11
     };
+		int i;
 		switch (ep->emm[0]) {
 			case 0x87: //unique EMM
-				memcpy (emmcmd42 + 4, ep->emm + 3, 45);
-				emmcmd42[3] = 0x00; //not sure about this
-				emmcmd42[49] = ep->emm[41]; //keynr
-				emmcmd42[50] = 0x58 + ep->emm[40]; //package nr
-		    emmcmd42[51] = provider;
-		    if ((dre_cmd (emmcmd42))) {
-		      if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-						return 0;		//exit if response is not 90 00
+	    	for (i = 0; i < 2; i++) {
+					memcpy (emmcmd42 + 1, ep->emm + 42 + i*49, 48);
+					emmcmd42[49] = ep->emm[i*49 + 41]; //keynr
+					emmcmd42[50] = 0x58 + ep->emm[40]; //package nr
+			    emmcmd42[51] = provider;
+			    if ((dre_cmd (emmcmd42))) {
+			      if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
+							return 0;		//exit if response is not 90 00
+					}
 				}
 				break;
 			case 0x89: //shared EMM
