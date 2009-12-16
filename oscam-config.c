@@ -1199,6 +1199,10 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     strncpy(rdr->cc_build, value, sizeof(rdr->cc_build)-1);
     return;
   }
+  if (!strcmp(token, "cccmaxhop")) {  // cccam max card distance
+    rdr->cc_maxhop = atoi(value);
+    return;
+  }
   if (token[0] != '#')
     fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
 }

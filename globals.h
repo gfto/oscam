@@ -412,6 +412,7 @@ struct s_reader
   int       ncd_proto;
   char      cc_version[7];  // cccam version
   char      cc_build[5];    // cccam build number
+  int       cc_maxhop;      // cccam max distance
   void      *cc;            // ptr to cccam internal data struct
   uchar     tcp_connected;
   int       tcp_ito;      // inactivity timeout

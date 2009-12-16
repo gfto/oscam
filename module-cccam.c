@@ -560,7 +560,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
       uint8 *prov = llist_itr_init(card->provs, &pitr);
       while (prov && !s) {
         if (b2i(3, prov) == cur_er->prid) {  // provid matches
-          if ((h < 0) || (card->hop < h)) {  // card is closer
+          if (((h < 0) || (card->hop < h)) && (card->hop <= reader[ridx].cc_maxhop)) {  // card is closer and doesn't exceed max hop
             cc->cur_card = card;
             h = card->hop;  // card has been matched
           }
@@ -655,7 +655,6 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   case MSG_NEW_CARD:
     // find blank caid slot in tab and add caid
-
     {
       int i = 0;
       /*, p = 0;
@@ -822,6 +821,8 @@ static int cc_cli_connect(void)
   uint8 hash[SHA_DIGEST_LENGTH];
   uint8 buf[CC_MAXMSGSIZE];
   struct cc_data *cc;
+
+  if (!reader[ridx].cc_maxhop) reader[ridx].cc_maxhop = 10;
 
   // init internals data struct
   cc = malloc(sizeof(struct cc_data));
