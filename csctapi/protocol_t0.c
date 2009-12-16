@@ -166,9 +166,9 @@ int Protocol_T14_Init (Protocol_T14 * t14, ICC_Async * icc, PPS_ProtocolParamete
 	
 	ICC_Async_SetTimings (t14->icc, &timings);
 	
-//#ifdef DEBUG_PROTOCOL
+#ifdef DEBUG_PROTOCOL
 	printf ("Protocol: T=14: WWT=%d\n", (int)(t14->wwt));
-//#endif
+#endif
 	
 	return PROTOCOL_T14_OK;
 }

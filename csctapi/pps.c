@@ -138,14 +138,8 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	atr = ICC_Async_GetAtr (pps->icc);
 	if ((*length) <= 0 || !PPS_success) // If not by command, or PPS Exchange by command failed: Try PPS Exchange by ATR or Get parameters from ATR
 	{
-		//atr->pn contains nr of TDi + 1
-		//so if TD1 exists: number of protocols = atr->pn -1
-		//if TD1 not exists: number of protocols = atr->pn
 		int numprot = atr->pn;
 		BYTE tx;
-		if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TD, &tx) == ATR_OK)
-			numprot--;
-
 	  cs_debug("ATR reports smartcard supports %i protocols:",numprot);
 		int i,point;
 		char txt[50];

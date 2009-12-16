@@ -152,6 +152,8 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
 			TDi = atr->ib[pn][ATR_INTERFACE_BYTE_TD].value = buffer[pointer];
 			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = TRUE;
 			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0);
+			if ((TDi & 0xF0)  == 0) //last TDi byte
+				break;
 			if (pn >= ATR_MAX_PROTOCOLS)
 				return (ATR_MALFORMED);
 			pn++;
@@ -281,6 +283,8 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 			TDi = atr->ib[pn][ATR_INTERFACE_BYTE_TD].value;
 			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = TRUE;
 			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0);
+			if ((TDi & 0xF0)  == 0) //last TDi byte
+				break;
 			if (pn >= ATR_MAX_PROTOCOLS)
 				return (ATR_MALFORMED);
 			pn++;
