@@ -104,6 +104,9 @@ DESCRIPTIONS
 
 	  exmaple: cccbuild = 5678
 
+       cccmaxhop = hops
+	  define CCcam maximum SC distance, default:10
+
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader
 

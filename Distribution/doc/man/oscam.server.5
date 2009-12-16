@@ -139,6 +139,11 @@ define CCcam build, default:none
 exmaple: cccbuild = 5678
 .RE
 .PP
+\fBcccmaxhop\fP = \fBhops\fP
+.RS 3n
+define CCcam maximum SC distance, default:10
+.RE
+.PP
 \fBident\fP = \fB<CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...\fP
 .RS 3n
 define CAID and ident for reader
@@ -310,7 +315,7 @@ CCcam reader
  group = 5
  caid = 0300,0400,0500
  cccversion = 1.2.3
- cccbuild = 4567  
+ cccbuild = 4567
 .TP 3n
 \(bu
 PCSC reader
