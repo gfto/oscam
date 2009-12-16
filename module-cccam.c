@@ -531,9 +531,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   LLIST_ITR itr;
   ECM_REQUEST *cur_er;
 
-  cs_log("DEBUG: processing = %d", cc->processing);
   if (cc->processing) return 0;
-  cc->processing = 1;
 
   if ((n = cc_get_nxt_ecm()) < 0) return 0;   // no queued ecms
   cur_er = &ecmtask[n];
@@ -604,6 +602,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     n = cc_cmd_send(ecmbuf, cur_er->l+13, MSG_ECM);      // send ecm
 
     X_FREE(ecmbuf);
+    cc->processing = 1;
   } else {
     n = -1;
     cs_log("cccam: no suitable card on server");
