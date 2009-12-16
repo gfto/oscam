@@ -531,6 +531,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   LLIST_ITR itr;
   ECM_REQUEST *cur_er;
 
+  cs_log("DEBUG: processing = %d", cc->processing);
   if (cc->processing) return 0;
   cc->processing = 1;
 
