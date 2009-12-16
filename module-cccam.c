@@ -535,13 +535,19 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
 
   if (!cc) return 0;
 
+  pthread_mutex_lock(&cc->lock);
+
   //if (cc->processing) return 0;
 
-  if ((n = cc_get_nxt_ecm()) < 0) return 0;   // no queued ecms
+  if ((n = cc_get_nxt_ecm()) < 0) {
+    pthread_mutex_unlock(&cc->lock);
+    return 0;   // no queued ecms
+  }
   cur_er = &ecmtask[n];
-  if (cur_er->rc == 99) return 0;   // ecm already sent
-
-  pthread_mutex_lock(&cc->lock);
+  if (cur_er->rc == 99) {
+    pthread_mutex_unlock(&cc->lock);
+    return 0;   // ecm already sent
+  }
 
   if (buf) memcpy(buf, cur_er->ecm, cur_er->l);
 
