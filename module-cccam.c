@@ -560,7 +560,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
       uint8 *prov = llist_itr_init(card->provs, &pitr);
       while (prov && !s) {
         if (b2i(3, prov) == cur_er->prid) {  // provid matches
-          if (((h < 0) || (card->hop < h)) && (card->hop <= reader[ridx].cc_maxhop)) {  // card is closer and doesn't exceed max hop
+          if (((h < 0) || (card->hop < h)) && (card->hop <= reader[ridx].cc_maxhop - 1)) {  // card is closer and doesn't exceed max hop
             cc->cur_card = card;
             h = card->hop;  // card has been matched
           }
