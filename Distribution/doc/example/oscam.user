@@ -12,7 +12,7 @@ uniq       = 1
 group      = 1
 au         = reader1
 services   = services1
-betatunnel = 0300:0001:0100,0400.0005:0100
+betatunnel = 0300.FFFF:0100,0400.FFFF:0100
 ident 	   = 0100:000000
 caid       = 0100
 

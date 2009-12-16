@@ -25,8 +25,8 @@ DESCRIPTIONS
 	  define Betacrypt tunneling (max.  see  CS_MAXTUNTAB  in  globals.h).
 	  The ServiceID can also be used for wildcarded CAIDs.
 
-	   example: betatunnel = 0100:0001:0200,0300.0004:0500
-		    betatunnel = 0600:FFFF:0700
+	   example: betatunnel = 0100.0001:0200,0300.0004:0500
+		    betatunnel = 0600.FFFF:0700
 
        uniq = 0|1|2
 	  unique level:
