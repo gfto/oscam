@@ -822,8 +822,6 @@ static int cc_cli_connect(void)
   uint8 buf[CC_MAXMSGSIZE];
   struct cc_data *cc;
 
-  if (!reader[ridx].cc_maxhop) reader[ridx].cc_maxhop = 10;
-
   // init internals data struct
   cc = malloc(sizeof(struct cc_data));
   reader[ridx].cc = cc;
@@ -960,6 +958,7 @@ int cc_cli_init(void)
     bcopy((char *)server->h_addr, (char *)&client[cs_idx].udp_sa.sin_addr.s_addr, server->h_length);
 
     reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
+    if (!reader[ridx].cc_maxhop) reader[ridx].cc_maxhop = 10; // default maxhop to 10 if not configured
 
     cs_log("cccam: proxy %s:%d cccam v%s (%s), maxhop = %d (fd=%d, ridx=%d)",
             reader[ridx].device, reader[ridx].r_port, reader[ridx].cc_version,
