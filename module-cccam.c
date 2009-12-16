@@ -223,6 +223,8 @@ struct cc_data {
 
   int last_nok;
   int processing;
+
+  pthread_mutex_t lock;
 };
 
 static unsigned int seed;
@@ -531,13 +533,17 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   LLIST_ITR itr;
   ECM_REQUEST *cur_er;
 
+  if (!cc) return 0;
+
   if (cc->processing) return 0;
 
   if ((n = cc_get_nxt_ecm()) < 0) return 0;   // no queued ecms
   cur_er = &ecmtask[n];
   if (cur_er->rc == 99) return 0;   // ecm already sent
-  if (buf) memcpy(buf, cur_er->ecm, cur_er->l);
 
+  pthread_mutex_lock(&cc->lock);
+
+  if (buf) memcpy(buf, cur_er->ecm, cur_er->l);
 
   cc->cur_card = NULL;
   cc->cur_sid = cur_er->srvid;
@@ -631,6 +637,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
       llist_itr_release(&itr);
   }
 
+  pthread_mutex_unlock(&cc->lock);
   return 0;
 }
 
@@ -647,7 +654,10 @@ static void cc_rebuild_caid_tab()
 
 static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 {
+  int ret = buf[1];
   struct cc_data *cc = reader[ridx].cc;
+
+  pthread_mutex_lock(&cc->lock);
 
   switch (buf[1]) {
   case MSG_CLI_DATA:
@@ -749,7 +759,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     }
     bzero(cc->dcw, 16);
     cc_send_ecm(NULL, NULL);
-    return 0;
+    ret = 0;
     break;
   case MSG_CW:
     cc->processing = 0;
@@ -758,7 +768,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     cs_debug("cccam: cws: %s", cs_hexdump(0, cc->dcw, 16));
     cc_crypt(&cc->block[DECRYPT], buf+4, l-4, ENCRYPT); // additional crypto step
     cc_send_ecm(NULL, NULL);
-    return 0;
+    ret = 0;
     break;
   case MSG_PING:
     cc_cmd_send(NULL, 0, MSG_PING);
@@ -767,7 +777,8 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   }
 
-  return buf[1];
+  pthread_mutex_unlock(&cc->lock);
+  return ret;
 }
 
 static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
@@ -909,6 +920,7 @@ static int cc_cli_connect(void)
     return -3;
   }
 
+  pthread_mutex_init(&cc->lock, NULL);
   cc->processing = 0;
 
   return 0;
