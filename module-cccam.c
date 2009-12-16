@@ -916,9 +916,9 @@ int cc_cli_init(void)
       cs_log("cccam: invalid port %d for server %s", reader[ridx].r_port, reader[ridx].device);
       return(1);
     }
-    if( (ptrp=getprotobyname("tcp")) )
-      p_proto=ptrp->p_proto;
-    else
+   // if( (ptrp=getprotobyname("tcp")) )
+   //   p_proto=ptrp->p_proto;
+   // else
       p_proto=6;
 
     client[cs_idx].ip=0;
