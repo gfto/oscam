@@ -222,6 +222,7 @@ struct cc_data {
   uint16 cur_sid;
 
   int last_nok;
+  int processing;
 };
 
 static unsigned int seed;
@@ -530,11 +531,14 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   LLIST_ITR itr;
   ECM_REQUEST *cur_er;
 
+  if (cc->processing) return 0;
+  cc->processing = 1;
+
   if ((n = cc_get_nxt_ecm()) < 0) return 0;   // no queued ecms
   cur_er = &ecmtask[n];
   if (cur_er->rc == 99) return 0;   // ecm already sent
+  if (buf) memcpy(buf, cur_er->ecm, cur_er->l);
 
-  memcpy(buf, cur_er->ecm, cur_er->l);
 
   cc->cur_card = NULL;
   cc->cur_sid = cur_er->srvid;
@@ -721,6 +725,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   case MSG_CW_NOK1:
   case MSG_CW_NOK2:
+    cc->processing = 0;
     cs_log("cccam: cw nok, sid = %x", cc->cur_sid);
 
     int f = 0;
@@ -743,13 +748,16 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       cs_debug("   added sid block for card %08x", cc->cur_card->id);
     }
     bzero(cc->dcw, 16);
+    cc_send_ecm(NULL, NULL);
     return 0;
     break;
   case MSG_CW:
+    cc->processing = 0;
     cc_cw_decrypt(buf+4);
     memcpy(cc->dcw, buf+4, 16);
     cs_debug("cccam: cws: %s", cs_hexdump(0, cc->dcw, 16));
     cc_crypt(&cc->block[DECRYPT], buf+4, l-4, ENCRYPT); // additional crypto step
+    cc_send_ecm(NULL, NULL);
     return 0;
     break;
   case MSG_PING:
@@ -900,6 +908,9 @@ static int cc_cli_connect(void)
     cs_log("cccam: login failed, could not send client data");
     return -3;
   }
+
+  cc->processing = 0;
+
   return 0;
 }
 
