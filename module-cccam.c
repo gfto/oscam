@@ -535,7 +535,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
 
   if (!cc) return 0;
 
-  if (cc->processing) return 0;
+  //if (cc->processing) return 0;
 
   if ((n = cc_get_nxt_ecm()) < 0) return 0;   // no queued ecms
   cur_er = &ecmtask[n];
