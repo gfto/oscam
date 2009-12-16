@@ -961,9 +961,9 @@ int cc_cli_init(void)
 
     reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
 
-    cs_log("cccam: proxy %s:%d cccam v%s (%s) (fd=%d, ridx=%d)",
+    cs_log("cccam: proxy %s:%d cccam v%s (%s), maxhop = %d (fd=%d, ridx=%d)",
             reader[ridx].device, reader[ridx].r_port, reader[ridx].cc_version,
-            reader[ridx].cc_build, client[cs_idx].udp_fd, ridx);
+            reader[ridx].cc_build, reader[ridx].cc_maxhop, client[cs_idx].udp_fd, ridx);
 
     cc_cli_connect();
 
