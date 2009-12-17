@@ -814,7 +814,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     cs_debug("cccam: cws: %s", cs_hexdump(0, cc->dcw, 16));
     cc_crypt(&cc->block[DECRYPT], buf+4, l-4, ENCRYPT); // additional crypto step
     pthread_mutex_unlock(&cc->ecm_busy);
-    cc_abort_user_ecms();
+    //cc_abort_user_ecms();
     cc_send_ecm(NULL, NULL);
     ret = 0;
     break;
