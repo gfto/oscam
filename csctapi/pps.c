@@ -239,6 +239,27 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 				}
 			}
 			/////Here all non-ISO behaviour
+			// Nagra HD+ 
+			// ATR: 3F FF 95 00 FF 91 81 71 FE 47 00 44 4E 41 53 50 31 34 32 20 52 65 76 47 43 34 63
+			// Protocol 1: TA1=95 TB1=00 TC1=FF TD1=91 (T1)
+			// Protocol 2: TA2=81 TD2=71 (T1)
+			// Protocol 3: TA3=FE TB3=47 TC3=00 no TD3 means T0
+			//
+			// Problem1: card somehow fails all PTS attempts; perhaps because N=255 and we try PTS without it?
+			// Problem2: card reports to support T0 but TA1=FE , which values are (still) undefined . On failure of PTS card reverts to TA=11 which 
+			// makes the card fail
+			// We know the card needs 115200 (with cardmhz = 368) after ATR
+			// Solution: longterm: implement PTS2 
+			// Solution: shorterm: this hardcoding
+			//
+			ATR_GetProtocolType (atr, 1, &(pps->parameters.t));
+			protocol_selected = 1;
+			if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
+				pps->parameters.FI = TA1 >> 4;
+				ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
+			}
+			//
+			// 
 			/////End  all non-ISO behaviour
 		  if (pps->icc->ifd->io->com == RTYP_SCI) { 
 		  //// Here all fixes that are needed until PTS routine for Dreambox is found
