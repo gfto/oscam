@@ -100,7 +100,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	* (that is, if TD1 is available), * otherwise use default T=0
 	*/
 /*	if (np>1)
-		ATR_GetProtocolType (icc->atr, 2, &(icc->protocol_type));
+		ATR_GetProtocolType (icc->atr, 1, &(icc->protocol_type));
 	
 #ifdef DEBUG_ICC
 	printf("ICC: Detected %s convention processor card T=%d\n",(icc->convention == ATR_CONVENTION_DIRECT ? "direct" : "inverse"), icc->protocol_type);

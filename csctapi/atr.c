@@ -353,11 +353,11 @@ int ATR_GetNumberOfProtocols (ATR * atr, unsigned *number_protocols)
 
 int ATR_GetProtocolType (ATR * atr, unsigned number_protocol, BYTE *protocol_type)
 {
-	if ((number_protocol > atr->pn) || number_protocol < 2)
+	if ((number_protocol > atr->pn) || number_protocol < 1)
 		return ATR_NOT_FOUND;
 	
-	if (atr->ib[number_protocol - 2][ATR_INTERFACE_BYTE_TD].present)
-		(*protocol_type) = (atr->ib[number_protocol - 2][ATR_INTERFACE_BYTE_TD].value & 0x0F);
+	if (atr->ib[number_protocol - 1][ATR_INTERFACE_BYTE_TD].present)
+		(*protocol_type) = (atr->ib[number_protocol - 1][ATR_INTERFACE_BYTE_TD].value & 0x0F);
 	else
 		(*protocol_type) = ATR_PROTOCOL_TYPE_T0;
 	
