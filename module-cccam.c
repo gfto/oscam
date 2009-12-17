@@ -224,6 +224,8 @@ struct cc_data {
   int last_nok;
   int processing;
 
+  unsigned long crc;
+
   pthread_mutex_t lock;
   pthread_mutex_t ecm_busy;
 };
@@ -550,6 +552,12 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     return 0;   // no queued ecms
   }
   cur_er = &ecmtask[n];
+
+  if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) cur_er->rc = 99;
+  cc->crc = crc32(0, cur_er->ecm, cur_er->l);
+
+  cs_log("cccam: ecm crc = %uld", cc->crc);
+
   if (cur_er->rc == 99) {
     pthread_mutex_unlock(&cc->ecm_busy);
     pthread_mutex_unlock(&cc->lock);
