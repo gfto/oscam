@@ -608,7 +608,9 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   if (cc->cur_card) {
     cs_log("DEBUG11");
     uint8 *ecmbuf = malloc(cur_er->l+13);
+    cs_log("DEBUG11a");
     bzero(ecmbuf, cur_er->l+13);
+    cs_log("DEBUG11b");
 
     // build ecm message
     ecmbuf[0] = cc->cur_card->caid >> 8;
@@ -624,7 +626,9 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     ecmbuf[10] = cur_er->srvid >> 8;
     ecmbuf[11] = cur_er->srvid & 0xff;
     ecmbuf[12] = cur_er->l & 0xff;
+    cs_log("DEBUG11c");
     memcpy(ecmbuf+13, buf, cur_er->l);
+    cs_log("DEBUG11d");
 
     cc->count = cur_er->idx;
 
