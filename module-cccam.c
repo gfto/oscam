@@ -567,9 +567,11 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   cc->cur_card = NULL;
   cc->cur_sid = cur_er->srvid;
 
+  cs_log("DEBUG7");
   card = llist_itr_init(cc->cards, &itr);
 
   while (card) {
+    cs_log("DEBUG8");
     if (card->caid == cur_er->caid) {   // caid matches
       int s = 0;
 
@@ -584,6 +586,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
       }
       llist_itr_release(&sitr);
 
+      cs_log("DEBUG9");
       LLIST_ITR pitr;
       uint8 *prov = llist_itr_init(card->provs, &pitr);
       while (prov && !s) {
@@ -600,8 +603,10 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     card = llist_itr_next(&itr);
   }
   llist_itr_release(&itr);
+  cs_log("DEBUG10");
 
   if (cc->cur_card) {
+    cs_log("DEBUG11");
     uint8 *ecmbuf = malloc(cur_er->l+13);
     bzero(ecmbuf, cur_er->l+13);
 
@@ -623,11 +628,14 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
 
     cc->count = cur_er->idx;
 
+    cs_log("DEBUG12");
     cs_log("cccam: sending ecm for sid %04x to card %08x, hop %d", cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
     n = cc_cmd_send(ecmbuf, cur_er->l+13, MSG_ECM);      // send ecm
 
+    cs_log("DEBUG13");
     X_FREE(ecmbuf);
   } else {
+    cs_log("DEBUG14");
     n = -1;
     cs_log("cccam: no suitable card on server");
     cur_er->rc = 0;
@@ -635,7 +643,9 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     //cur_er->rc = 1;
     //cur_er->rcEx = 0;
     usleep(100000);
+    cs_log("DEBUG15");
     write_ecm_answer(fd_c2m, cur_er);
+    cs_log("DEBUG16");
     //reader[ridx].last_s = reader[ridx].last_g;
 
     card = llist_itr_init(cc->cards, &itr);
@@ -653,8 +663,10 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
         card = llist_itr_next(&itr);
       }
       llist_itr_release(&itr);
+      cs_log("DEBUG17");
   }
 
+  cs_log("DEBUG18");
   pthread_mutex_unlock(&cc->lock);
   return 0;
 }
