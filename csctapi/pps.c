@@ -405,11 +405,11 @@ static int PPS_InitICC (PPS * pps, int selected_protocol)
 		if (ioctl(pps->icc->ifd->io->fd, IOCTL_GET_PARAMETERS, &params) < 0 )
 			return PPS_ICC_ERROR;
 
-    		ATR *atr = ICC_Async_GetAtr (pps->icc);
+		ATR *atr = ICC_Async_GetAtr (pps->icc);
 
 		params.T = pps->parameters.t;
 
-    		BYTE oldFI = params.FI;
+		BYTE oldFI = params.FI;
 //		params.FI = pps->parameters.FI; //somehow setting this gets "card unsupported" 
 /*		if (pps->icc->ifd->io->mhz > 368) {
 			int number_of_overclock_steps = ((pps->icc->ifd->io->mhz)/200) - 2; //600 is 1 overclock, 800 2 overclocks etc.
@@ -424,9 +424,9 @@ static int PPS_InitICC (PPS * pps, int selected_protocol)
 			params.FI = 5; //routine above should be tested so hardcoding can get removed
 
 		if (oldFI != params.FI)
-		  cs_log("Forcing params.FI from %i to %i", oldFI, params.FI);
+			cs_log("Forcing params.FI from %i to %i", oldFI, params.FI);
 
-	  	double F =  (double) atr_f_table[pps->parameters.FI];
+		double F =  (double) atr_f_table[pps->parameters.FI];
 		params.ETU = F / pps->parameters.d;
 		if (pps->parameters.n == 255)
 			params.EGT = 0;
