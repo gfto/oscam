@@ -58,8 +58,6 @@ static int PPS_InitICC (PPS * pps, int protocol_selected);
 
 static int PPS_InitProtocol (PPS * pps, int protocol_selected);
 
-//static void PPS_SelectFirstProtocol (PPS * pps);
-
 static BYTE PPS_GetPCK (BYTE * block, unsigned length);
 
 /*
@@ -513,28 +511,7 @@ static int PPS_InitProtocol (PPS * pps, int selected_protocol)
 	
 	return PPS_PROTOCOL_ERROR;
 }
-/*
-static void PPS_SelectFirstProtocol (PPS * pps)
-{
-	ATR *atr = ICC_Async_GetAtr (pps->icc);
-	unsigned np;
-	
-	pps->parameters.t = ATR_PROTOCOL_TYPE_T0;
-	
-	ATR_GetNumberOfProtocols (atr, &np);
-	
-	 
-	// Get protocol offered by interface bytes T*2 if available, 
-	// (that is, if TD1 is available), * otherwise use default T=0
-	
-	if (np>1)
-		ATR_GetProtocolType (atr, 2, &(pps->parameters.t));
-	
-#ifdef DEBUG_PROTOCOL
-	printf ("PPS: Protocol T=%d selected\n", pps->parameters.t);
-#endif
-}
-*/
+
 static BYTE PPS_GetPCK (BYTE * block, unsigned length)
 {
 	BYTE pck;
