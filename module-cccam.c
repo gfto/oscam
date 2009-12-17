@@ -542,7 +542,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   } else {
     cs_log("cccam: ecm trylock: got lock");
   }
-  pthread_mutex_lock(&cc->lock);
+//  pthread_mutex_lock(&cc->lock);
 
   if ((n = cc_get_nxt_ecm()) < 0) {
     pthread_mutex_unlock(&cc->ecm_busy);
