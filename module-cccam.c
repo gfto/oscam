@@ -627,7 +627,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     ecmbuf[11] = cur_er->srvid & 0xff;
     ecmbuf[12] = cur_er->l & 0xff;
     cs_log("DEBUG11c");
-    memcpy(ecmbuf+13, buf, cur_er->l);
+    memcpy(ecmbuf+13, cur_er->ecm, cur_er->l);
     cs_log("DEBUG11d");
 
     cc->count = cur_er->idx;
