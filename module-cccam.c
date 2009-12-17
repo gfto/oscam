@@ -537,8 +537,10 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   if (!cc) return 0;
 
   if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) {
-    cs_debug("cccam: ecm trylock: failed to get lock");
+    cs_log("cccam: ecm trylock: failed to get lock");
     return 0;
+  } else {
+    cs_log("cccam: ecm trylock: got lock");
   }
   pthread_mutex_lock(&cc->lock);
 
