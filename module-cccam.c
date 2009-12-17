@@ -556,7 +556,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) cur_er->rc = 99;
   cc->crc = crc32(0, cur_er->ecm, cur_er->l);
 
-  cs_log("cccam: ecm crc = %uld", cc->crc);
+  cs_debug("cccam: ecm crc = 0x%lx", cc->crc);
 
   if (cur_er->rc == 99) {
     pthread_mutex_unlock(&cc->ecm_busy);
