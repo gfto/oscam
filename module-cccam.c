@@ -753,7 +753,6 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   case MSG_CW_NOK1:
   case MSG_CW_NOK2:
-    pthread_mutex_unlock(&cc->ecm_busy);
     cs_log("cccam: cw nok, sid = %x", cc->cur_sid);
 
     int f = 0;
@@ -776,15 +775,16 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       cs_debug("   added sid block for card %08x", cc->cur_card->id);
     }
     bzero(cc->dcw, 16);
+    pthread_mutex_unlock(&cc->ecm_busy);
     cc_send_ecm(NULL, NULL);
     ret = 0;
     break;
   case MSG_CW:
-    pthread_mutex_unlock(&cc->ecm_busy);
     cc_cw_decrypt(buf+4);
     memcpy(cc->dcw, buf+4, 16);
-    cs_debug("cccam: cws: %s", cs_hexdump(0, cc->dcw, 16));
+    cs_log("cccam: cws: %s", cs_hexdump(0, cc->dcw, 16));
     cc_crypt(&cc->block[DECRYPT], buf+4, l-4, ENCRYPT); // additional crypto step
+    pthread_mutex_unlock(&cc->ecm_busy);
     cc_send_ecm(NULL, NULL);
     ret = 0;
     break;
