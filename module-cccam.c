@@ -225,6 +225,7 @@ struct cc_data {
   int processing;
 
   pthread_mutex_t lock;
+  pthread_mutex_t ecm_busy;
 };
 
 static unsigned int seed;
@@ -535,16 +536,17 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
 
   if (!cc) return 0;
 
+  pthread_mutex_lock(&cc->ecm_busy);
   pthread_mutex_lock(&cc->lock);
 
-  //if (cc->processing) return 0;
-
   if ((n = cc_get_nxt_ecm()) < 0) {
+    pthread_mutex_unlock(&cc->ecm_busy);
     pthread_mutex_unlock(&cc->lock);
     return 0;   // no queued ecms
   }
   cur_er = &ecmtask[n];
   if (cur_er->rc == 99) {
+    pthread_mutex_unlock(&cc->ecm_busy);
     pthread_mutex_unlock(&cc->lock);
     return 0;   // ecm already sent
   }
@@ -614,7 +616,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     n = cc_cmd_send(ecmbuf, cur_er->l+13, MSG_ECM);      // send ecm
 
     X_FREE(ecmbuf);
-    cc->processing = 1;
   } else {
     n = -1;
     cs_log("cccam: no suitable card on server");
@@ -741,7 +742,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   case MSG_CW_NOK1:
   case MSG_CW_NOK2:
-    cc->processing = 0;
+    pthread_mutex_unlock(&cc->ecm_busy);
     cs_log("cccam: cw nok, sid = %x", cc->cur_sid);
 
     int f = 0;
@@ -768,7 +769,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     ret = 0;
     break;
   case MSG_CW:
-    cc->processing = 0;
+    pthread_mutex_unlock(&cc->ecm_busy);
     cc_cw_decrypt(buf+4);
     memcpy(cc->dcw, buf+4, 16);
     cs_debug("cccam: cws: %s", cs_hexdump(0, cc->dcw, 16));
@@ -927,7 +928,7 @@ static int cc_cli_connect(void)
   }
 
   pthread_mutex_init(&cc->lock, NULL);
-  cc->processing = 0;
+  pthread_mutex_init(&cc->ecm_busy, NULL);
 
   return 0;
 }
