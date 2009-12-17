@@ -180,12 +180,13 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 		for (i = 0; i <= 2; i++)
 			if (OffersT[i])
 				numprottype ++;
+		cs_debug("%i protocol types detected. Historical bytes: %s",numprottype, cs_hexdump(1,atr->hb,atr->hbn));
 
 //If more than one protocol type and/or TA1 parameter values other than the default values and/or N equeal to 255 is/are indicated in the answer to reset, the card shall know unambiguously, after having sent the answer to reset, which protocol type or/and transmission parameter values (FI, D, N) will be used. Consequently a selection of the protocol type and/or the transmission parameters values shall be specified.
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(pps->parameters.n));
 		ATR_GetProtocolType(atr,1,&(pps->parameters.t)); //get protocol from TD1
-		bool NeedsPTS = ((pps->icc->ifd->io->com != RTYP_SCI) && (pps->parameters.t != 14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
-		if (NeedsPTS) {
+		bool NeedsPTS = ((pps->parameters.t != 14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
+		if (NeedsPTS && (pps->icc->ifd->io->com != RTYP_SCI)) {
 			//             PTSS  PTS0  PTS1  PTS2  PTS3  PCK
 			//             PTSS  PTS0  PTS1  PCK
 			BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
@@ -212,16 +213,15 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 					cs_ddump(req,4,"PTS Failure for protocol %i, response:",p);
 			}
 		}
-//FIXME: If the card is able to process more than one protocol type and if one of those protocol types is indicated as T=0, then the protocol type T=0 shall indicated in TD1 as the first offered protocol, and is assumed if no PTS is performed.
 
 		//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards, which is the old behaviour...
 		if (!PPS_success) {//last PPS not succesfull
 			BYTE TA1;
-			if (!NeedsPTS && ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK && pps->parameters.t != 14) {
+			if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK && pps->parameters.t != 14) {
 				pps->parameters.FI = TA1 >> 4;
 				ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
 			}
-			else { //do not obey TA1 if T14, or when PTS is needed according to ISO, but failed, so not obeying ISO
+			else { //do not obey TA1 if T14
 				pps->parameters.FI = ATR_DEFAULT_FI;
 				pps->parameters.d = ATR_DEFAULT_D;
 			}
@@ -229,7 +229,28 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 			// FIXME or would it be wiser to not switch anything and stick to 9600? 
 			ATR_GetProtocolType (atr, 1, &(pps->parameters.t));
 			protocol_selected = 1;
-			cs_debug("No PTS, selected protocol 1: T%i, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
+
+			if (NeedsPTS) { //FIXME we MUST discover PTS routine for Dreambox reader, now all cards in DBreaders which need PTS come here!!!
+				if (OffersT[0]) {
+	//If the card is able to process more than one protocol type and if one of those protocol types is indicated as T=0, then the protocol type T=0 shall indicated in TD1 as the first offered protocol, and is assumed if no PTS is performed.
+					pps->parameters.t =  ATR_PROTOCOL_TYPE_T0;
+					pps->parameters.FI = ATR_DEFAULT_FI; //ignoring TA1 is necessary at least for all viaccess cards on dreambox readers
+					pps->parameters.d = ATR_DEFAULT_D;   //but perhaps it is the general thing to do...
+				}
+			}
+			/////Here all non-ISO behaviour
+			/////End  all non-ISO behaviour
+		  if (pps->icc->ifd->io->com == RTYP_SCI) { 
+		  //// Here all fixes that are needed until PTS routine for Dreambox is found
+			//// End  all fixes that are needed until PTS routine for Dreambox is found
+				if (atr->hbn >=6)
+					if (!memcmp( atr->hb, "IRDETO", 6 )) { //IRDETO needs TA1 behaviour on /dev/sci  ; which other cards need ignore TA1 on T14?
+						pps->parameters.FI = TA1 >> 4;
+						ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
+					}
+			}
+
+			cs_debug("No PTS %s, selected protocol 1: T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
 		}
 	}//end length<0
 		
