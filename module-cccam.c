@@ -544,20 +544,26 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   }
 //  pthread_mutex_lock(&cc->lock);
 
+  cs_log("DEBUG1");
   if ((n = cc_get_nxt_ecm()) < 0) {
+    cs_log("DEBUG2");
     pthread_mutex_unlock(&cc->ecm_busy);
     pthread_mutex_unlock(&cc->lock);
     return 0;   // no queued ecms
   }
+  cs_log("DEBUG3");
   cur_er = &ecmtask[n];
   if (cur_er->rc == 99) {
+    cs_log("DEBUG4");
     pthread_mutex_unlock(&cc->ecm_busy);
     pthread_mutex_unlock(&cc->lock);
     return 0;   // ecm already sent
   }
 
+  cs_log("DEBUG5");
   if (buf) memcpy(buf, cur_er->ecm, cur_er->l);
 
+  cs_log("DEBUG6");
   cc->cur_card = NULL;
   cc->cur_sid = cur_er->srvid;
 
