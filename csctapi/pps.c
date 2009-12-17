@@ -252,8 +252,8 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 			// Solution: longterm: implement PTS2 
 			// Solution: shorterm: this hardcoding
 			//
-			unsigned char nagra_hdplus[] = {0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34 };
-			if (atr->hbn == sizeof(nagra_hdplus))
+			unsigned char nagra_hdplus[] = {0x44, 0x4E, 0x41, 0x53, 0x50}; //DNASP, not sure about timings of TIGER & others
+			if (atr->hbn >= sizeof(nagra_hdplus))
 				if (!memcmp(atr->hb, nagra_hdplus, sizeof(nagra_hdplus))) {
 					ATR_GetProtocolType (atr, 1, &(pps->parameters.t));
 					protocol_selected = 1;
