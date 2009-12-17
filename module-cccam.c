@@ -222,7 +222,7 @@ struct cc_data {
   uint16 cur_sid;
 
   int last_nok;
-  int processing;
+  ECM_REQUEST *found;
 
   unsigned long crc;
 
@@ -507,9 +507,11 @@ static int cc_send_cli_data()
   return cc_cmd_send(buf, 20 + 8 + 6 + 26 + 4 + 28 + 1, MSG_CLI_DATA);
 }
 
-static int cc_get_nxt_ecm(){
+static int cc_get_nxt_ecm()
+{
   int n, i;
   time_t t;
+  struct cc_data *cc = reader[ridx].cc;
 
   t=time((time_t *)0);
   for (i = 1, n = 1; i < CS_MAXPENDING; i++)
@@ -522,7 +524,7 @@ static int cc_get_nxt_ecm(){
 
     if (ecmtask[i].rc >= 10) {  // stil active and waiting
       // search for the ecm with the lowest time, this should be the next to go
-      if ((!n || ecmtask[n].tps.time-ecmtask[i].tps.time < 0)) n = i;
+      if ((!n || ecmtask[n].tps.time-ecmtask[i].tps.time < 0) && &ecmtask[n] != cc->found) n = i;
     }
   }
   return n;
@@ -672,6 +674,31 @@ static void cc_rebuild_caid_tab()
 }
 */
 
+static int cc_abort_user_ecms(){
+  int n, i;
+  time_t t;//, tls;
+  struct cc_data *cc = reader[ridx].cc;
+
+  t=time((time_t *)0);
+  for (i=1,n=1; i<CS_MAXPENDING; i++)
+  {
+    if ((t-ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
+        (ecmtask[i].rc>=10))      // drop timeouts
+        {
+          ecmtask[i].rc=0;
+        }
+    int td=abs(1000*(ecmtask[i].tps.time-cc->found->tps.time)+ecmtask[i].tps.millitm-cc->found->tps.millitm);
+    if (ecmtask[i].rc>=10 && ecmtask[i].cidx==cc->found->cidx && &ecmtask[i]!=cc->found){
+          cs_log("aborting idx:%d caid:%04x client:%d timedelta:%d",ecmtask[i].idx,ecmtask[i].caid,ecmtask[i].cidx,td);
+          ecmtask[i].rc=0;
+          ecmtask[i].rcEx=7;
+          write_ecm_answer(fd_c2m, &ecmtask[i]);
+        }
+  }
+  return n;
+
+}
+
 static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 {
   int ret = buf[1];
@@ -787,6 +814,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     cs_debug("cccam: cws: %s", cs_hexdump(0, cc->dcw, 16));
     cc_crypt(&cc->block[DECRYPT], buf+4, l-4, ENCRYPT); // additional crypto step
     pthread_mutex_unlock(&cc->ecm_busy);
+    cc_abort_user_ecms();
     cc_send_ecm(NULL, NULL);
     ret = 0;
     break;
