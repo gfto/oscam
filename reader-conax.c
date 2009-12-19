@@ -258,7 +258,7 @@ int conax_card_info(void)
     write_cmd(cmd[type], cmd[type]+5);
     while (cta_res[cta_lr-2]==0x98)
     {
-      insCA[4]=cta_res[1];		// get len
+      insCA[4]=cta_res[cta_lr-1];		// get len
       read_cmd(insCA, NULL);		// read
       if ((cta_res[cta_lr-2]==0x90) || (cta_res[cta_lr-2]==0x98))
       {
