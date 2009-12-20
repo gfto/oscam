@@ -336,7 +336,7 @@ static int connect_nonb(int sockfd, const struct sockaddr *saptr, socklen_t sale
     cs_debug("cccam: conn_nb 2 (fd=%d)", sockfd);
     if (errno != EINPROGRESS) {
       cs_debug("cccam: conn_nb 3 (fd=%d)", sockfd);
-      return(-1);
+      //return(-1);
     }
   }
 
@@ -542,6 +542,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     if (er) {
       er->rc = 0;
       er->rcEx = 0x27;
+      cs_log("cccam: server not init!");
       write_ecm_answer(fd_c2m, er);
     }
     return 0;
@@ -655,12 +656,12 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     card = llist_itr_init(cc->cards, &itr);
       while (card) {
         if (card->caid == cur_er->caid) {   // caid matches
-
           LLIST_ITR sitr;
           uint16 *sid = llist_itr_init(card->badsids, &sitr);
           while (sid) {
-            if (*sid == cur_er->srvid) sid = llist_itr_remove(&sitr);
-            else sid = llist_itr_next(&sitr);
+//            if (*sid == cur_er->srvid) 
+            	sid = llist_itr_remove(&sitr);
+//            else sid = llist_itr_next(&sitr);
           }
           llist_itr_release(&sitr);
         }
