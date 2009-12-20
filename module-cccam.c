@@ -659,9 +659,9 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
           LLIST_ITR sitr;
           uint16 *sid = llist_itr_init(card->badsids, &sitr);
           while (sid) {
-//            if (*sid == cur_er->srvid) 
+            if (*sid == cur_er->srvid)
             	sid = llist_itr_remove(&sitr);
-//            else sid = llist_itr_next(&sitr);
+            else sid = llist_itr_next(&sitr);
           }
           llist_itr_release(&sitr);
         }
