@@ -113,6 +113,9 @@ int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be chan
     case 0xe2:
       cs_log ("DRECRYPT wrong provider: %s.", cs_hexdump (0, cta_res, cta_lr));
       break;
+    case 0xe3:
+      cs_log ("DRECRYPT illegal command: %s.", cs_hexdump (0, cta_res, cta_lr));  
+      break;
     case 0xec:
       cs_log ("DRECRYPT wrong signature: %s.", cs_hexdump (0, cta_res, cta_lr));
       break;
