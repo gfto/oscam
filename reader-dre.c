@@ -317,6 +317,9 @@ int dre_do_emm (EMM_PACKET * ep)
     int i;
     for (i = 0; i < 2; i++) {
       memcpy (emmcmd52 + 1, ep->emm + 5 + 32 + i * 56, 56);
+      // check for shared address
+      if(ep->emm[3]!=reader[ridx].sa[0][0]) 
+        return 1; // ignore, wrong address
       emmcmd52[0x39] = provider;
       if ((dre_cmd (emmcmd52)))
 				if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
