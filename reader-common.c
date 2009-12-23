@@ -439,22 +439,34 @@ int reader_emm(EMM_PACKET *ep)
 
       sprintf (token, "%swrite_%s_%s.%s", cs_confdir, (ep->emm[0] == 0x82) ? "UNIQ" : "SHARED", buf, "txt");
       if (!(fp = fopen (token, "w")))
-	cs_log ("ERROR: Cannot open EMM.txt file '%s' (errno=%d)\n", token, errno);
-      else {
-	cs_log ("Succesfully written text EMM to %s.", token);
-	int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
-	fprintf (fp, "%s", cs_hexdump (0, ep->emm, emm_length + 3));
-	fclose (fp);
+      {
+        cs_log ("ERROR: Cannot open EMM.txt file '%s' (errno=%d)\n", token, errno);
+      }
+      else
+      {
+    	cs_log ("Succesfully written text EMM to %s.", token);
+    	int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
+    	fprintf (fp, "%s", cs_hexdump (0, ep->emm, emm_length + 3));
+    	fclose (fp);
       }
 
       //sprintf (token, "%s%s.%s", cs_confdir, buf,"emm");
       sprintf (token, "%swrite_%s_%s.%s", cs_confdir, (ep->emm[0] == 0x82) ? "UNIQ" : "SHARED", buf, "emm");
       if (!(fp = fopen (token, "wb")))
-	cs_log ("ERROR: Cannot open EMM.emm file '%s' (errno=%d)\n", token, errno);
-      else {
-	cs_log ("Succesfully written binary EMM to %s.", token);
-	fwrite (ep, sizeof (*ep), 1, fp);
-	fclose (fp);
+      {
+    	cs_log ("ERROR: Cannot open EMM.emm file '%s' (errno=%d)\n", token, errno);
+      }
+      else 
+      {
+    	if (fwrite(ep, sizeof (*ep), 1, fp) == 1)
+        {
+        	cs_log ("Succesfully written binary EMM to %s.", token);
+        }
+        else
+        {
+        	cs_log ("ERROR: Cannot write binary EMM to %s (errno=%d)\n", token, errno);
+        }
+    	fclose (fp);
       }
     }
 
