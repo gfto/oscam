@@ -224,8 +224,8 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int tn,
 	     int n, BN_ULONG *t)
 	{
-	int i,j,n2=n*2;
-	unsigned int c1,c2,neg,zero;
+	int c1,c2,i,j,n2=n*2;
+	unsigned int neg,zero;
 	BN_ULONG ln,lo,*p;
 
 # ifdef BN_COUNT
@@ -678,14 +678,14 @@ int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 		{
 		if (i == 1 && !BN_get_flags(b,BN_FLG_STATIC_DATA))
 			{
-			bn_wexpand(b,al);
+			if (bn_wexpand(b,al) == NULL) goto err;
 			b->d[bl]=0;
 			bl++;
 			i--;
 			}
 		else if (i == -1 && !BN_get_flags(a,BN_FLG_STATIC_DATA))
 			{
-			bn_wexpand(a,bl);
+			if (bn_wexpand(a,bl) == NULL) goto err;
 			a->d[al]=0;
 			al++;
 			i++;
@@ -700,16 +700,16 @@ int BN_mul(BIGNUM *r, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
 			t = BN_CTX_get(ctx);
 			if (al == j) /* exact multiple */
 				{
-				bn_wexpand(t,k*2);
-				bn_wexpand(rr,k*2);
+				if (bn_wexpand(t,k*2) == NULL) goto err;
+				if (bn_wexpand(rr,k*2) == NULL) goto err;
 				bn_mul_recursive(rr->d,a->d,b->d,al,t->d);
 				}
 			else
 				{
-				bn_wexpand(a,k);
-				bn_wexpand(b,k);
-				bn_wexpand(t,k*4);
-				bn_wexpand(rr,k*4);
+				if (bn_wexpand(a,k) == NULL) goto err;
+				if (bn_wexpand(b,k) == NULL) goto err;
+				if (bn_wexpand(t,k*4) == NULL) goto err;
+				if (bn_wexpand(rr,k*4) == NULL) goto err;
 				for (i=a->top; i<k; i++)
 					a->d[i]=0;
 				for (i=b->top; i<k; i++)
