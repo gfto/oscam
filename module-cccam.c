@@ -674,7 +674,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
 
   return 0;
 }
-
+/*
 static int cc_abort_user_ecms(){
   int n, i;
   time_t t;//, tls;
@@ -699,7 +699,7 @@ static int cc_abort_user_ecms(){
   return n;
 
 }
-
+*/
 static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 {
   int ret = buf[1];
@@ -953,7 +953,7 @@ static int cc_cli_connect(void)
 
   pfd=client[cs_idx].udp_fd;
 
-  if (cc_send_cli_data(cc)<=0) {
+  if (cc_send_cli_data()<=0) {
     cs_log("cccam: login failed, could not send client data");
     return -3;
   }
