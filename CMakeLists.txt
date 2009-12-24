@@ -228,8 +228,20 @@ add_custom_target (
     touch ${CMAKE_CURRENT_SOURCE_DIR}/oscam-log.c
 )
 
+#if the svnversion program is absent, this will leave the SVN_REVISION string empty,
+#but won't stop CMake.
+execute_process (COMMAND "svnversion" "-n" "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_VARIABLE OSCAM_SVN_REVISION)
+
+if (OSCAM_SVN_REVISION)
+    string (REGEX REPLACE "[0-9]+:" "" OSCAM_SVN_REVISION "${OSCAM_SVN_REVISION}")
+    string (REPLACE "M" "" OSCAM_SVN_REVISION "${OSCAM_SVN_REVISION}")
+    string (REPLACE "exported" "0" OSCAM_SVN_REVISION "${OSCAM_SVN_REVISION}")
+else (OSCAM_SVN_REVISION)
+    set (OSCAM_SVN_REVISION "0")
+endif (OSCAM_SVN_REVISION)
+
 # pass the version to the compilations as a define
-add_definitions ("-D'CS_SVN_VERSION=\"$(shell svnversion -n ${CMAKE_CURRENT_SOURCE_DIR} | sed 's/[MS]$$//')\"'")
+add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 
 #----------------------- global compile and link options ------------------------------
 
