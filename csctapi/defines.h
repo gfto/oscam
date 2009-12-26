@@ -56,10 +56,12 @@ typedef unsigned short USHORT;
 typedef unsigned char UCHAR;
 typedef unsigned char *PUCHAR;
 typedef char *STR;
+#ifndef HAVE_PCSC
 typedef unsigned long ULONG;
 typedef ULONG RESPONSECODE;
 typedef ULONG *PULONG;
 typedef ULONG DWORD;
+#endif
 typedef void *PVOID;
 
 /*
