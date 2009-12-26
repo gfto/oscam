@@ -663,12 +663,12 @@ static void init_shm()
 #else
   ecmidx=(int *)&ecmcache[CS_ECMCACHESIZE];
 #endif
-  mcl=(int *)(ecmidx+sizeof(int));
-  logidx=(int *)(mcl+sizeof(int));
-  c_start=(int *)(logidx+sizeof(int));
-  log_fd=(int *)(c_start+sizeof(int));
-  oscam_sem=(int *)(log_fd+sizeof(int));
-  client=(struct s_client *)(oscam_sem+sizeof(int));
+  mcl=(int *)((void *)ecmidx+sizeof(int));
+  logidx=(int *)((void *)mcl+sizeof(int));
+  c_start=(int *)((void *)logidx+sizeof(int));
+  log_fd=(int *)((void *)c_start+sizeof(int));
+  oscam_sem=(int *)((void *)log_fd+sizeof(int));
+  client=(struct s_client *)((void *)oscam_sem+sizeof(int));
   reader=(struct s_reader *)&client[CS_MAXPID];
 #ifdef CS_WITH_GBOX
   Cards=(struct card_struct*)&reader[CS_MAXREADER];
@@ -679,8 +679,8 @@ static void init_shm()
   cfg=(struct s_config *)&reader[CS_MAXREADER];
 #endif
 #ifdef CS_LOGHISTORY
-  loghistidx=(int *)(cfg+sizeof(struct s_config));
-  loghist=(char *)(loghistidx+sizeof(int));
+  loghistidx=(int *)((void *)cfg+sizeof(struct s_config));
+  loghist=(char *)((void *)loghistidx+sizeof(int));
 #endif
 
 #ifdef DEBUG_SHM_POINTER
