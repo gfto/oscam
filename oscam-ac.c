@@ -22,7 +22,7 @@ int ac_init_log(char *file)
   return(fpa<=(FILE *)0);
 }
 
-void ac_init_stat(int i)
+void ac_init_stat()
 {
   memset(ac_stat, 0, sizeof(ac_stat));
   memset(acasc, 0, sizeof(acasc));
@@ -52,8 +52,8 @@ void ac_do_stat()
   for( i=0; i<CS_MAXPID; i++ ) 
   {
     idx = ac_stat[i].idx;
-    ac_stat[i].stat[idx] = acasc[i].count;
-    acasc[i].count=0;
+    ac_stat[i].stat[idx] = acasc[i].ac_count;
+    acasc[i].ac_count=0;
     cl_idx = idx_from_ac_idx(i);
 
     if( ac_stat[i].stat[idx] ) 
@@ -65,7 +65,7 @@ void ac_do_stat()
 
       if( client[cl_idx].ac_penalty==2 ) {// banned
         cs_debug("user '%s' banned", client[cl_idx].usr);
-        acasc[i].deny=1;
+        acasc[i].ac_deny=1;
       }
       else
       {
@@ -75,8 +75,8 @@ void ac_do_stat()
             maxval=ac_stat[i].stat[j];
           exceeds+=(ac_stat[i].stat[j]>client[cl_idx].ac_limit);
         }
-        prev_deny=acasc[i].deny;
-        acasc[i].deny = (exceeds >= cfg->ac_denysamples);
+        prev_deny=acasc[i].ac_deny;
+        acasc[i].ac_deny = (exceeds >= cfg->ac_denysamples);
         
         cs_debug("%s limit=%d, max=%d, samples=%d, dsamples=%d, ac[ci=%d][si=%d]:",
           client[cl_idx].usr, client[cl_idx].ac_limit, maxval, 
@@ -85,24 +85,24 @@ void ac_do_stat()
           ac_stat[i].stat[1], ac_stat[i].stat[2], ac_stat[i].stat[3], 
           ac_stat[i].stat[4], ac_stat[i].stat[5], ac_stat[i].stat[6], 
           ac_stat[i].stat[7], ac_stat[i].stat[8], ac_stat[i].stat[9]);
-        if( acasc[i].deny ) {
+        if( acasc[i].ac_deny ) {
           cs_log("user '%s' exceeds limit", client[cl_idx].usr);
           ac_stat[i].stat[idx] = 0;
         } else if( prev_deny )
           cs_log("user '%s' restored access", client[cl_idx].usr);
       }
     }
-    else if( acasc[i].deny ) 
+    else if( acasc[i].ac_deny ) 
     {
       prev_deny=1;
-      acasc[i].deny=0;
+      acasc[i].ac_deny=0;
       if( cl_idx!=-1 )
         cs_log("restored access for inactive user '%s'", client[cl_idx].usr);
       else
         cs_log("restored access for unknown user (ac_idx=%d)", i);
     }
 
-    if( !acasc[i].deny && !prev_deny )
+    if( !acasc[i].ac_deny && !prev_deny )
       ac_stat[i].idx = (ac_stat[i].idx + 1) % cfg->ac_samples;
   }
 }
@@ -149,17 +149,17 @@ void ac_chk(ECM_REQUEST *er, int level)
 
   if( level==1 ) 
   {
-    if( er->rc==7 ) acasc[client[cs_idx].ac_idx].count++;
+    if( er->rc==7 ) acasc[client[cs_idx].ac_idx].ac_count++;
     if( er->rc>3 ) return; // not found
     if( memcmp(ac_ecmd5, er->ecmd5, CS_ECMSTORESIZE) != 0 )
     {
-      acasc[client[cs_idx].ac_idx].count+=ac_dw_weight(er);
+      acasc[client[cs_idx].ac_idx].ac_count+=ac_dw_weight(er);
       memcpy(ac_ecmd5, er->ecmd5, CS_ECMSTORESIZE);
     }
     return;
   }
 
-  if( acasc[client[cs_idx].ac_idx].deny )
+  if( acasc[client[cs_idx].ac_idx].ac_deny )
     if( client[cs_idx].ac_penalty ) 
     {
       cs_debug("send fake dw");

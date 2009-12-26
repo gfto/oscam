@@ -448,8 +448,8 @@ struct s_reader
 #ifdef CS_ANTICASC
 
 struct s_acasc_shm {
-  ushort count : 15;
-  ushort deny  : 1;
+  ushort ac_count : 15;
+  ushort ac_deny  : 1;
 };
 
 struct s_acasc {
@@ -710,13 +710,15 @@ extern int chk_ufilters(ECM_REQUEST *);
 extern int chk_rfilter(ECM_REQUEST *, struct s_reader *);
 extern int chk_rsfilter(ECM_REQUEST *, int);
 extern int chk_avail_reader(ECM_REQUEST *, struct s_reader *);
+extern int matching_reader(ECM_REQUEST *, struct s_reader *);
 extern void set_signal_handler(int , int , void (*)(int));
 extern void cs_log_config(void);
+extern void cs_resolve(void);
 
 #ifdef CS_ANTICASC
 //extern void start_anticascader(void);
 extern void init_ac(void);
-extern void ac_init_stat(int);
+extern void ac_init_stat();
 extern int  ac_init_log(char*);
 extern void ac_do_stat(void);
 extern void ac_init_client(struct s_auth *);
@@ -746,6 +748,7 @@ extern void network_tcp_connection_close(int);
 
 // oscam-log
 extern int  cs_init_log(char *);
+extern void cs_write_log(char *);
 extern void cs_log(char *,...);
 extern void cs_debug(char *,...);
 extern void cs_ddump(uchar *, int, char *, ...);
@@ -763,6 +766,7 @@ extern void aes_decrypt(uchar *, int);
 // reader-common
 extern int reader_device_init(char *, int);
 extern int reader_checkhealth(void);
+extern void reader_post_process(void);
 extern int reader_ecm(ECM_REQUEST *);
 extern int reader_emm(EMM_PACKET *);
 

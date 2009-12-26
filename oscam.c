@@ -268,14 +268,14 @@ void set_signal_handler(int sig, int flags, void (*sighandler)(int))
 #endif
 }
 
-static void cs_alarm(int sig)
+static void cs_alarm()
 {
   cs_debug("Got alarm signal");
   cs_log("disconnect from %s (deadlock!)", cs_inet_ntoa(client[cs_idx].ip));
   cs_exit(0);
 }
 
-static void cs_master_alarm(int sig)
+static void cs_master_alarm()
 {
   cs_log("PANIC: master deadlock! last location: %s", mloc);
   fprintf(stderr, "PANIC: master deadlock! last location: %s", mloc);
@@ -283,7 +283,7 @@ static void cs_master_alarm(int sig)
   cs_exit(0);
 }
 
-static void cs_sigpipe(int sig)
+static void cs_sigpipe()
 {
   if ((cs_idx) && (master_pid!=getppid()))
     cs_exit(0);
@@ -663,12 +663,12 @@ static void init_shm()
 #else
   ecmidx=(int *)&ecmcache[CS_ECMCACHESIZE];
 #endif
-  mcl=(int *)((void *)ecmidx+sizeof(int));
-  logidx=(int *)((void *)mcl+sizeof(int));
-  c_start=(int *)((void *)logidx+sizeof(int));
-  log_fd=(int *)((void *)c_start+sizeof(int));
-  oscam_sem=(int *)((void *)log_fd+sizeof(int));
-  client=(struct s_client *)((void *)oscam_sem+sizeof(int));
+  mcl=(int *)(ecmidx+sizeof(int));
+  logidx=(int *)(mcl+sizeof(int));
+  c_start=(int *)(logidx+sizeof(int));
+  log_fd=(int *)(c_start+sizeof(int));
+  oscam_sem=(int *)(log_fd+sizeof(int));
+  client=(struct s_client *)(oscam_sem+sizeof(int));
   reader=(struct s_reader *)&client[CS_MAXPID];
 #ifdef CS_WITH_GBOX
   Cards=(struct card_struct*)&reader[CS_MAXREADER];
@@ -679,8 +679,8 @@ static void init_shm()
   cfg=(struct s_config *)&reader[CS_MAXREADER];
 #endif
 #ifdef CS_LOGHISTORY
-  loghistidx=(int *)((void *)cfg+sizeof(struct s_config));
-  loghist=(char *)((void *)loghistidx+sizeof(int));
+  loghistidx=(int *)(cfg+sizeof(struct s_config));
+  loghist=(char *)(loghistidx+sizeof(int));
 #endif
 
 #ifdef DEBUG_SHM_POINTER
@@ -832,7 +832,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   return(ph->ptab->ports[port_idx].fd);
 }
 
-static void cs_client_resolve(void *dummy)
+static void cs_client_resolve()
 {
   while (1)
   {
@@ -920,7 +920,7 @@ static void cs_logger(void)
       switch(n)
       {
         case PIP_ID_LOG:
-          cs_write_log(ptr);
+          cs_write_log((char *)ptr);
           break;
       }
     }
@@ -963,7 +963,7 @@ static void start_anticascader()
   use_ac_log=1;
   set_signal_handler(SIGHUP, 1, ac_init_stat);
   
-  ac_init_stat(0);
+  ac_init_stat();
   while(1)
   {
     for( i=0; i<cfg->ac_stime*60; i++ )
@@ -1841,8 +1841,8 @@ void get_cw(ECM_REQUEST *er)
       for (n=0; (n<CS_MAXTUNTAB); n++)
       if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all))
       {
-        char hack_n3[13]={0x70, 0x51, 0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12, 0x07};
-        char hack_n2[13]={0x70, 0x51, 0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12, 0x07};
+        uchar hack_n3[13]={0x70, 0x51, 0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12, 0x07};
+        uchar hack_n2[13]={0x70, 0x51, 0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12, 0x07};
         er->caid=ttab->bt_caidto[n];
         er->prid=0;
         er->l=(er->ecm[2]+3);
@@ -2109,7 +2109,7 @@ static void process_master_pipe()
   switch(n=read_from_pipe(mfdr, &ptr, 1))
   {
     case PIP_ID_LOG:
-      cs_write_log(ptr);
+      cs_write_log((char *)ptr);
       break;
     case PIP_ID_HUP:
       cs_accounts_chk();
