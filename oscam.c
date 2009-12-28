@@ -341,6 +341,7 @@ static void cs_reinit_clients()
         client[i].grp     = account->grp;
         client[i].au      = account->au;
         client[i].autoau  = account->autoau;
+        client[i].expirationdate = account->expirationdate;
         client[i].tosleep = (60*account->tosleep);
         client[i].monlvl  = account->monlvl;
         client[i].fchid   = account->fchid;  // CHID filters
@@ -1097,6 +1098,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
         client[cs_idx].dup=0;
         if (client[cs_idx].typ=='c')
         {
+          client[cs_idx].expirationdate=account->expirationdate;
           client[cs_idx].grp=account->grp;
           client[cs_idx].au=account->au;
           client[cs_idx].autoau=account->autoau;
@@ -1507,7 +1509,7 @@ int send_dcw(ECM_REQUEST *er)
 {
   static char *stxt[]={"found", "cache1", "cache2", "emu",
                        "not found", "timeout", "sleeping",
-                       "fake", "invalid", "corrupt", "no card"};
+                       "fake", "invalid", "corrupt", "no card", "expired"};
   static char *stxtEx[]={"", "group", "caid", "ident", "class", "chid", "queue", "peer"};
   static char *stxtWh[]={"", "user ", "reader ", "server ", "lserver "};
   char sby[32]="";
@@ -1789,6 +1791,8 @@ void get_cw(ECM_REQUEST *er)
     i=er->srvid;
     if ((i!=client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch))
       client[cs_idx].lastswitch=now;
+    if(client[cs_idx].expirationdate && client[cs_idx].expirationdate<client[cs_idx].lastecm)
+      er->rc=11; //expired
     if ((client[cs_idx].tosleep) &&
         (now-client[cs_idx].lastswitch>client[cs_idx].tosleep))
       er->rc=6; // sleeping

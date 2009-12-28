@@ -316,6 +316,7 @@ struct s_client
   time_t    lastswitch;
   time_t    lastemm;
   time_t    lastecm;
+  time_t    expirationdate;
   ulong     grp;
   int       crypted;
   int       dup;
@@ -492,6 +493,7 @@ struct s_auth
 #endif
   in_addr_t dynip;
   uchar     dyndns[64];
+  time_t    expirationdate;
   struct   s_auth *next;
 };
 

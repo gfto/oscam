@@ -77,6 +77,12 @@ DESCRIPTIONS
 	   3 = all procs, reload of oscam.user possible
 	   4 = complete access
 
+       expdate = <year>-<month>-<day>|<year>/<month>/<day>
+	  expiration date for account, default:none
+
+	   example: expdate = 2001-11-21
+		    expdate = 2002/12/22
+
        numusers = quantity
 	  anti-cascading:  user per account, 0 = anti-cascading not permitted,
 	  default:0

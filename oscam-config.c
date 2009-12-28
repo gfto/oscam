@@ -729,6 +729,23 @@ static void chk_account(char *token, char *value, struct s_auth *account)
   if(!strcmp(token, "class")) { chk_cltab(value, &account->cltab); return; }
   if(!strcmp(token, "chid")) {  chk_ftab(value, &account->fchid, "user", account->usr, "chid"); return; }
 
+  if (!strcmp(token, "expdate"))
+  {
+    struct tm cstime;
+    memset(&cstime,0,sizeof(cstime));
+    for (i=0, ptr1=strtok(value, "-/"); (i<3)&&(ptr1); ptr1=strtok(NULL, "-/"), i++)
+    {
+      switch(i)
+      {
+        case 0: cstime.tm_year=atoi(ptr1)-1900; break;
+        case 1: cstime.tm_mon =atoi(ptr1)-1;    break;
+        case 2: cstime.tm_mday=atoi(ptr1);      break;
+      }
+    }	
+    account->expirationdate=mktime(&cstime);
+    return;
+  }
+
 #ifdef CS_ANTICASC
   if( !strcmp(token, "numusers") )
   {
@@ -766,7 +783,7 @@ static void chk_account(char *token, char *value, struct s_auth *account)
 
 int init_userdb()
 {
-  int tag=0, nr, nro;
+  int tag=0, nr, nro, expired;
   //int first=1;
   FILE *fp;
   char *value;
@@ -826,7 +843,14 @@ int init_userdb()
     chk_account(trim(strtolower(token)), trim(value), account);
   }
   fclose(fp);
-  cs_log("userdb reloaded: %d accounts freed, %d accounts loaded", nro, nr);
+
+  for (expired=0, ptr=cfg->account; ptr;)
+  {
+    if(ptr->expirationdate && ptr->expirationdate<time(NULL)) expired++;
+    ptr=ptr->next;
+  }
+
+  cs_log("userdb reloaded: %d accounts freed, %d accounts loaded, %d expired", nro, nr, expired);
   return(0);
 }
 
