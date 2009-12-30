@@ -246,7 +246,7 @@ add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 #----------------------- global compile and link options ------------------------------
 
 # some optimisations
-add_definitions ("-O3 -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses -finline-functions -fomit-frame-pointer")
+add_definitions ("-O2 -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses -finline-functions -fomit-frame-pointer")
 
 # we don't want the '-rdynamic' in the link command
 set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
