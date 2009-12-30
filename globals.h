@@ -143,7 +143,7 @@
 	#define R_PCSC 			0x6 // PCSC
 #endif
 
-#define CS_MAX_MOD 8
+#define CS_MAX_MOD 12
 #define MOD_CONN_TCP    1
 #define MOD_CONN_UDP    2
 #define MOD_CONN_NET    3
@@ -567,6 +567,12 @@ struct s_config
   int       num_locals;
   unsigned long locals[CS_MAXLOCALS];
   //struct s_irdeto_quess *itab[0xff];
+  int       dvbapi_enabled;
+  int       dvbapi_au;
+  char      dvbapi_usr[64];
+  char      dvbapi_demux[128];
+  char      dvbapi_ca[128];
+  char      dvbapi_socket[128];
 #ifdef CS_ANTICASC
   char      ac_enabled;
   int       ac_users;       // num of users for account (0 - default)
@@ -716,6 +722,7 @@ extern int matching_reader(ECM_REQUEST *, struct s_reader *);
 extern void set_signal_handler(int , int , void (*)(int));
 extern void cs_log_config(void);
 extern void cs_resolve(void);
+extern void chk_dcw(int fd);
 
 #ifdef CS_ANTICASC
 //extern void start_anticascader(void);
@@ -834,5 +841,6 @@ extern void module_radegast(struct s_module *);
 extern void module_oscam_ser(struct s_module *);
 extern void module_gbox(struct s_module *);
 extern void module_cccam(struct s_module *);
+extern void module_dvbapi(struct s_module *);
 extern struct timeval *chk_pending(struct timeb tp_ctimeout);
 #endif  // CS_GLOBALS

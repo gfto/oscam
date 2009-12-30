@@ -29,14 +29,15 @@ typedef enum cs_proto_type
   TAG_CS357X,   // camd 3.5x UDP
   TAG_CS378X,    // camd 3.5x TCP
   TAG_GBOX, // gbox
-  TAG_CCCAM  // cccam
+  TAG_CCCAM,  // cccam
+  TAG_DVBAPI
 #ifdef CS_ANTICASC
   ,TAG_ANTICASC // anti-cascading
 #endif
 } cs_proto_type_t;
 
 static char *cctag[]={"global", "monitor", "camd33", "camd35", 
-                      "newcamd", "radegast", "serial", "cs357x", "cs378x", "gbox", "cccam",
+                      "newcamd", "radegast", "serial", "cs357x", "cs378x", "gbox", "cccam", "dvbapi",
 #ifdef CS_ANTICASC
                       "anticasc",
 #endif
@@ -518,6 +519,19 @@ static void chk_t_cccam(char *token, char *value)
   // placeholder for ccam server support
 }
 
+static void chk_t_dvbapi(char *token, char *value)
+{
+	if (!strcmp(token, "enabled")) 	{ cfg->dvbapi_enabled=atoi(value); return; }
+	if (!strcmp(token, "au"))	 	{ cfg->dvbapi_au=atoi(value); return; }
+	if (!strcmp(token, "demux")) 	{ strncpy(cfg->dvbapi_demux, value, sizeof(cfg->dvbapi_demux)-1); return; }
+	if (!strcmp(token, "ca")) 		{ strncpy(cfg->dvbapi_ca, value, sizeof(cfg->dvbapi_ca)-1); return; }
+	if (!strcmp(token, "socket")) 	{ strncpy(cfg->dvbapi_socket, value, sizeof(cfg->dvbapi_socket)-1); return; }
+	if (!strcmp(token, "user")) 	{ strncpy(cfg->dvbapi_usr, value, sizeof(cfg->dvbapi_usr)-1); return; }
+	
+	if (token[0] != '#')
+		fprintf(stderr, "Warning: keyword '%s' in softcam section not recognized\n",token);
+}
+
 static void chk_token(char *token, char *value, int tag)
 {
   switch(tag)
@@ -533,6 +547,7 @@ static void chk_token(char *token, char *value, int tag)
     case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
     case TAG_GBOX    : chk_t_gbox(token, value); break;
     case TAG_CCCAM   : chk_t_cccam(token, value); break;
+    case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
 #ifdef CS_ANTICASC
     case TAG_ANTICASC: chk_t_ac(token, value); break;
 #endif

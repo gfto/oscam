@@ -32,6 +32,8 @@ DESCRIPTIONS
 
 	 CCcam with AU support, cascading/remote server ECM support
 
+	 DVB API support, localhost only
+
        OSCam works on the following plattforms:
 
 	 Linux (tuxbox, arm, mips, mipsel, sh4, powerpc, ...)

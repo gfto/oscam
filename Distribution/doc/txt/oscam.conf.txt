@@ -238,9 +238,31 @@ DESCRIPTIONS
 
 	   example: locals = 01001234,02005678
 
+   The [dvbapi] section
+       enabled = 0|1
+	  1 = DVB API enabled, default:0
+
+       user = username
+	  user name for DVB API client, default:anonymous
+
+       demux = device
+	  path to demux device, default:none
+
+	   example: demux = /dev/dvb/adapter0/demux0
+
+       ca = device
+	  path to CA device, default:none
+
+	   example: ca = /dev/dvb/adapter0/ca0
+
+       socket = filename
+	  camd socket file, default:none
+
+	   example: socket = /tmp/camd.socket
+
    The [anticasc] section
        enabled = 0|1
-	  1=enabled anti-cascading, default:0
+	  1 = enabled anti-cascading, default:0
 
        numusers = quantity
 	  anti-cascading: user per account, 0 = anti-cascading not  permitted,

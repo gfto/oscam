@@ -520,8 +520,8 @@ void start_cardreader()
   else
   {
     client[cs_idx].ip=cs_inet_addr("127.0.0.1");
-    if (reader_device_init(reader[ridx].device, reader[ridx].typ))
-      cs_exit(1);
+    while (reader_device_init(reader[ridx].device, reader[ridx].typ)==2)
+      sleep(60); // wait 60 secs and try again
   }
 
   emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));
