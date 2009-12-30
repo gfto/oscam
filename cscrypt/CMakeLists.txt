@@ -13,7 +13,11 @@ if (NOT HAVE_SHA)
     file (GLOB sha_hdrs "sha/*.h")
 endif (NOT HAVE_SHA)
 
-add_definitions ("-O3 -Winline -Werror -finline-functions -fomit-frame-pointer -s")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+add_definitions ("-O2 -Winline -Werror -finline-functions -fomit-frame-pointer -s -m32")
+else (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+add_definitions ("-O2 -Winline -Werror -finline-functions -fomit-frame-pointer -s")
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 set (lib_name "cscrypt")
 
