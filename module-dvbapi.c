@@ -16,7 +16,7 @@
  *
  */
 
-#ifdef HAVE_DVBAPI
+#ifdef HAVE_DVBAPI_3
 
 #include <errno.h>
 #include <fcntl.h>
@@ -802,4 +802,4 @@ void module_dvbapi(struct s_module *ph)
 
 void module_dvbapi(struct s_module *ph) {}
 
-#endif // HAVE_DVBAPI
+#endif // HAVE_DVBAPI_3

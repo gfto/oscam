@@ -567,7 +567,7 @@ struct s_config
   int       num_locals;
   unsigned long locals[CS_MAXLOCALS];
   //struct s_irdeto_quess *itab[0xff];
-#ifdef HAVE_DVBAPI
+#ifdef HAVE_DVBAPI_3
   int       dvbapi_enabled;
   int       dvbapi_au;
   char      dvbapi_usr[64];
@@ -843,7 +843,7 @@ extern void module_radegast(struct s_module *);
 extern void module_oscam_ser(struct s_module *);
 extern void module_gbox(struct s_module *);
 extern void module_cccam(struct s_module *);
-#ifdef HAVE_DVBAPI
+#ifdef HAVE_DVBAPI_3
 extern void module_dvbapi(struct s_module *);
 #endif
 extern struct timeval *chk_pending(struct timeb tp_ctimeout);

@@ -22,6 +22,16 @@ Get sources from SVN
     svn co http://streamboard.gmc.to/svn/oscam/trunk oscam
     cd oscam
 
+Compile options
+---------------
+
+Enable features:
+
+CS_ANTICASC   - enable anti-cascading
+CS_LOGHISTORY - enable log history
+HAVE_DVBAPI_3 - enable DVB API 3 support
+
+
 Build with CMake (new solution for building)
 --------------------------------------------
 

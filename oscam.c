@@ -2173,7 +2173,7 @@ int main (int argc, char *argv[])
 #endif
            module_radegast,
            module_oscam_ser,
-#ifdef HAVE_DVBAPI
+#ifdef HAVE_DVBAPI_3
 	   module_dvbapi,
 #endif
            0
