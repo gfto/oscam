@@ -86,7 +86,6 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res,
 
 
      dwRecvLength = CTA_RES_LEN;
-     cs_debug("sending %d bytes to PCSC", dwSendLength);
 
     if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0) {
         //  explanantion as to why we do the test on buf[4] :
@@ -100,10 +99,12 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res,
             dwSendLength = l;
         else
             dwSendLength = l-1;
+        cs_debug("sending %d bytes to PCSC", dwSendLength);
         rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T0, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
     }
     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
         dwSendLength = l;
+        cs_debug("sending %d bytes to PCSC", dwSendLength);
         rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T1, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
     }
     else {
