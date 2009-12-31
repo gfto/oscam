@@ -372,8 +372,8 @@ int dvbapi_parse_capmt(unsigned char *buffer, const unsigned int length)
 			cs_debug("typ: %02x ca_system_id: %04x\t ca_pid: %04x\tca_descriptor_length %d", buffer[i + 7], pmt->program_info->descriptor->ca_system_id, pmt->program_info->descriptor->ca_pid,pmt->program_info->descriptor->descriptor_length);
 
 			if (buffer[i + 7] == 0x09) {
-				ECMpids[ECMpidcount].CA_PID=pmt->program_info->descriptor->ca_pid;			//add the PID
-				ECMpids[ECMpidcount].CA_System_ID=pmt->program_info->descriptor->ca_system_id;	//add the system id
+				ECMpids[ECMpidcount].CA_PID=pmt->es_info->program_info->descriptor->ca_pid;		//add the PID
+				ECMpids[ECMpidcount].CA_System_ID=pmt->es_info->program_info->descriptor->ca_system_id;	//add the system id
 				ECMpidcount++;
 			}
 		}
