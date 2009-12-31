@@ -88,14 +88,18 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res,
      dwRecvLength = CTA_RES_LEN;
      cs_debug("sending %d bytes to PCSC", dwSendLength);
 
-     if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0)
-         rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T0, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
-     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1)
-         rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T1, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
-     else {
-         cs_debug("PCSC invalid protocol (T=%d)", ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
-         return ERR_INVALID;
-     }
+    if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0) {
+        rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T0, buf, dwSendLength, NULL, cta_res, &dwRecvLength);
+        // rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T0, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
+    }
+    else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
+        rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T1, buf, dwSendLength, NULL, cta_res, &dwRecvLength);
+        // rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T1, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
+    }
+    else {
+        cs_debug("PCSC invalid protocol (T=%d)", pcsc_reader->dwActiveProtocol);
+        return ERR_INVALID;
+    }
 
      *cta_lr=dwRecvLength;
      cs_debug("received %d bytes from PCSC with rv=%lx", *cta_lr, rv);

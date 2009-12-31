@@ -30,6 +30,8 @@
 
 #include "globals.h"
 
+#ifdef OS_LINUX
+
 #include <linux/dvb/ca.h>
 #include <linux/dvb/dmx.h>
 
@@ -764,6 +766,7 @@ static void dvbapi_send_dcw(ECM_REQUEST *er) {
 }
 
 
+
 static void dvbapi_handler(int idx) {
 	static struct s_auth *account=0; 
 	
@@ -817,3 +820,9 @@ void module_dvbapi(struct s_module *ph)
 	ph->s_handler=dvbapi_handler;
 	ph->send_dcw=dvbapi_send_dcw;
 }
+
+#else // non OS_LINUX
+void module_dvbapi(struct s_module *ph) {}
+
+#endif // OS_LINUX
+
