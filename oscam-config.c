@@ -521,15 +521,19 @@ static void chk_t_cccam(char *token, char *value)
 
 static void chk_t_dvbapi(char *token, char *value)
 {
+#ifndef HAVE_DVBAPI
+	fprintf(stderr, "Warning: OSCam compiled without DVBAPI Support\n");
+#else
 	if (!strcmp(token, "enabled")) 	{ cfg->dvbapi_enabled=atoi(value); return; }
-	if (!strcmp(token, "au"))	 	{ cfg->dvbapi_au=atoi(value); return; }
+	if (!strcmp(token, "au"))	{ cfg->dvbapi_au=atoi(value); return; }
 	if (!strcmp(token, "demux")) 	{ strncpy(cfg->dvbapi_demux, value, sizeof(cfg->dvbapi_demux)-1); return; }
-	if (!strcmp(token, "ca")) 		{ strncpy(cfg->dvbapi_ca, value, sizeof(cfg->dvbapi_ca)-1); return; }
+	if (!strcmp(token, "ca")) 	{ strncpy(cfg->dvbapi_ca, value, sizeof(cfg->dvbapi_ca)-1); return; }
 	if (!strcmp(token, "socket")) 	{ strncpy(cfg->dvbapi_socket, value, sizeof(cfg->dvbapi_socket)-1); return; }
 	if (!strcmp(token, "user")) 	{ strncpy(cfg->dvbapi_usr, value, sizeof(cfg->dvbapi_usr)-1); return; }
 	
 	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in softcam section not recognized\n",token);
+	    fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
+#endif
 }
 
 static void chk_token(char *token, char *value, int tag)
