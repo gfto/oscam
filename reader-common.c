@@ -119,7 +119,14 @@ int card_write(uchar *cmd, uchar *data)
     return(reader_cmd2icc(buf, CMD_LEN+cmd[4]));
   }
   else
+#ifdef HAVE_PCSC
+    if(cmd[CMD_LEN-1])
+        return(reader_cmd2icc(cmd, CMD_LEN));
+    else
+        return(reader_cmd2icc(cmd, CMD_LEN-1));
+#else
     return(reader_cmd2icc(cmd, CMD_LEN));
+#endif
 }
 
 static int reader_activate_card()
