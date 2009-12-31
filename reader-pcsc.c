@@ -83,8 +83,11 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res,
      ULONG rv;
      SCARD_IO_REQUEST pioRecvPci;
      DWORD dwSendLength, dwRecvLength;
+    if(buf[4])
+        dwSendLength = l;
+    else
+        dwSendLength = l-1;
 
-     dwSendLength = l;
      dwRecvLength = CTA_RES_LEN;
      cs_debug("sending %d bytes to PCSC", dwSendLength);
 
