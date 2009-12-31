@@ -799,7 +799,4 @@ void module_dvbapi(struct s_module *ph)
 	ph->s_handler=dvbapi_handler;
 	ph->send_dcw=dvbapi_send_dcw;
 }
-
-void module_dvbapi(struct s_module *ph) {}
-
 #endif // HAVE_DVBAPI_3
