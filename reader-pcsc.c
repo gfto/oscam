@@ -83,15 +83,23 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res,
      ULONG rv;
      SCARD_IO_REQUEST pioRecvPci;
      DWORD dwSendLength, dwRecvLength;
-    if(buf[4])
-        dwSendLength = l;
-    else
-        dwSendLength = l-1;
+
 
      dwRecvLength = CTA_RES_LEN;
      cs_debug("sending %d bytes to PCSC", dwSendLength);
 
     if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0) {
+        //  explanantion as to why we do the test on buf[4] :
+        // Issuing a command without exchanging data :
+        //To issue a command to the card that does not involve the exchange of data (either sent or received), the send and receive buffers must be formatted as follows.
+        //The pbSendBuffer buffer must contain the CLA, INS, P1, and P2 values for the T=0 operation. The P3 value is not sent. (This is to differentiate the header from the case where 256 bytes are expected to be returned.)
+        //The cbSendLength parameter must be set to four, the size of the T=0 header information (CLA, INS, P1, and P2).
+        //The pbRecvBuffer will receive the SW1 and SW2 status codes from the operation.
+        //The pcbRecvLength should be at least two and will be set to two upon return.
+        if(buf[4])
+            dwSendLength = l;
+        else
+            dwSendLength = l-1;
         rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T0, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
     }
     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
