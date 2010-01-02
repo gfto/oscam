@@ -525,9 +525,7 @@ static void chk_t_dvbapi(char *token, char *value)
 	fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n");
 #else
 	if (!strcmp(token, "enabled")) 	{ cfg->dvbapi_enabled=atoi(value); return; }
-	if (!strcmp(token, "au"))	{ cfg->dvbapi_au=atoi(value); return; }
-	if (!strcmp(token, "demux")) 	{ strncpy(cfg->dvbapi_demux, value, sizeof(cfg->dvbapi_demux)-1); return; }
-	if (!strcmp(token, "ca")) 	{ strncpy(cfg->dvbapi_ca, value, sizeof(cfg->dvbapi_ca)-1); return; }
+	if (!strcmp(token, "au"))		{ cfg->dvbapi_au=atoi(value); return; }
 	if (!strcmp(token, "socket")) 	{ strncpy(cfg->dvbapi_socket, value, sizeof(cfg->dvbapi_socket)-1); return; }
 	if (!strcmp(token, "user")) 	{ strncpy(cfg->dvbapi_usr, value, sizeof(cfg->dvbapi_usr)-1); return; }
 	

@@ -571,8 +571,6 @@ struct s_config
   int       dvbapi_enabled;
   int       dvbapi_au;
   char      dvbapi_usr[64];
-  char      dvbapi_demux[128];
-  char      dvbapi_ca[128];
   char      dvbapi_socket[128];
 #endif
 #ifdef CS_ANTICASC

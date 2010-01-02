@@ -245,15 +245,8 @@ DESCRIPTIONS
        user = username
 	  user name for DVB API client, default:anonymous
 
-       demux = device
-	  path to demux device, default:none
-
-	   example: demux = /dev/dvb/adapter0/demux0
-
-       ca = device
-	  path to CA device, default:none
-
-	   example: ca = /dev/dvb/adapter0/ca0
+       au = 0|1
+	  1 = enable AU, default:0
 
        socket = filename
 	  camd socket file, default:none
