@@ -176,6 +176,43 @@ Protocol_T1_Command (Protocol_T1 * t1, APDU_Cmd * cmd, APDU_Rsp ** rsp)
   unsigned short counter;
   int ret;
   bool more;
+  if (APDU_Cmd_Ins(cmd) == T1_BLOCK_S_IFS_REQ)
+    {
+      BYTE inf = APDU_Cmd_P2(cmd);
+
+      /* Create an IFS request S-Block */
+      block = T1_Block_NewSBlock (T1_BLOCK_S_IFS_REQ, 1, &inf);
+
+#ifdef DEBUG_PROTOCOL
+      printf ("Protocol: Sending block S(IFS request, %d)\n", inf);
+#endif
+      /* Send IFSD request */
+      ret = Protocol_T1_SendBlock (t1, block);
+
+      /* Delete block */
+      T1_Block_Delete (block);
+
+      /* Receive a block */
+      ret = Protocol_T1_ReceiveBlock (t1, &block);
+
+      if (ret == PROTOCOL_T1_OK)
+        {
+          rsp_type = T1_Block_GetType (block);
+
+          /* Positive IFS Response S-Block received */
+          if (rsp_type == T1_BLOCK_S_IFS_RES)
+            {
+              /* Update IFSD value */
+              inf = (*T1_Block_GetInf (block));
+              t1->ifsd = inf;
+#ifdef DEBUG_PROTOCOL
+              printf ("Protocol: Received block S(IFS response, %d)\n", inf);
+#endif
+            }
+        }
+
+      return ret;
+    }
 
   /* Calculate the number of bytes to send */
   counter = 0;
