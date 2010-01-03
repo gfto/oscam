@@ -63,7 +63,7 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
       (*netMsgId)++; 
      	break;
     case COMMTYPE_SERVER:
-      if( *netMsgId == 0xFFFE ) *netMsgId = 0; // ��� 0xFFFF ?
+      if( *netMsgId == 0xFFFE ) *netMsgId = 0; // ??? 0xFFFF ?
       break;
     }
     netbuf[2] = (*netMsgId) >> 8; 
@@ -714,7 +714,7 @@ static void newcamd_auth_client(in_addr_t ip)
         if (au != -1)
             {
             if (cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid != reader[au].caid[0]
-                &&  cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid != reader[au].ftab.filts[0].caid) 
+                &&  cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid != reader[au].ftab.filts[0].caid)
                 {
                 cs_log("AU wont be used on this port -> disable AU");
                 au = -1;
@@ -850,6 +850,15 @@ static void newcamd_auth_client(in_addr_t ip)
                     mbuf[11] = reader[au].hexserial[2];
                     mbuf[12] = reader[au].hexserial[3];
                     mbuf[13] = reader[au].hexserial[4];
+                    }
+                else if ((pufilt->caid >> 8) == 0x18) 
+                    {
+                    mbuf[8] = 0x00;
+                    mbuf[9] = 0x00;
+                    mbuf[10] = reader[au].hexserial[0];
+                    mbuf[11] = reader[au].hexserial[1];
+                    mbuf[12] = reader[au].hexserial[2];
+                    mbuf[13] = reader[au].hexserial[3];
                     }
                 else
                     {
