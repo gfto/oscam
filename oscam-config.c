@@ -67,9 +67,9 @@ static void show_sidtab(struct s_sidtab *sidtab)
 }
 #endif
 
-static void chk_iprange(char *value, struct s_ip **base)
+void chk_iprange(char *value, struct s_ip **base)
 {
-  //int i;
+  int i = 0;
   char *ptr1, *ptr2;
   struct s_ip *lip, *cip;
 
@@ -88,6 +88,15 @@ static void chk_iprange(char *value, struct s_ip **base)
   memset(cip, 0, sizeof(struct s_ip));
   for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ","))
   {
+  	if (i == 0) ++i;
+  	else {
+  		if (!(cip=malloc(sizeof(struct s_ip)))){
+    		fprintf(stderr, "Error allocating memory (errno=%d)\n", errno);
+    		exit(1);
+  		}
+  		lip->next = cip;
+  		memset(cip, 0, sizeof(struct s_ip));
+  	}
     if( (ptr2=strchr(trim(ptr1), '-')) )
     {
       *ptr2++='\0';
@@ -96,6 +105,7 @@ static void chk_iprange(char *value, struct s_ip **base)
     }
     else
       cip->ip[0]=cip->ip[1]=cs_inet_addr(ptr1);
+    lip = cip;
   }
 }
 
