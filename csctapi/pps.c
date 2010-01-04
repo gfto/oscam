@@ -231,48 +231,14 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 			protocol_selected = 1;
 
 			if (NeedsPTS) { //FIXME we MUST discover PTS routine for Dreambox reader, now all cards in DBreaders which need PTS come here!!!
-				if (OffersT[0]) {
-	//If the card is able to process more than one protocol type and if one of those protocol types is indicated as T=0, then the protocol type T=0 shall indicated in TD1 as the first offered protocol, and is assumed if no PTS is performed.
-					pps->parameters.t =  ATR_PROTOCOL_TYPE_T0;
-					pps->parameters.FI = ATR_DEFAULT_FI; //ignoring TA1 is necessary at least for all viaccess cards on dreambox readers
-					pps->parameters.d = ATR_DEFAULT_D;   //but perhaps it is the general thing to do...
-				}
+				if ((pps->parameters.d == 32) || (pps->parameters.d == 12) || (pps->parameters.d == 20))
+					pps->parameters.d = 0; //behave conform "old" atr_d_table; viaccess cards that fail PTS need this
 			}
 			/////Here all non-ISO behaviour
-			// Nagra HD+ 
-			// ATR: 3F FF 95 00 FF 91 81 71 FE 47 00 44 4E 41 53 50 31 34 32 20 52 65 76 47 43 34 63
-			// Protocol 1: TA1=95 TB1=00 TC1=FF TD1=91 (T1)
-			// Protocol 2: TA2=81 TD2=71 (T1)
-			// Protocol 3: TA3=FE TB3=47 TC3=00 no TD3 means T0
-			//
-			// Problem1: card somehow fails all PTS attempts; perhaps because N=255 and we try PTS without it?
-			// Problem2: card reports to support T0 but TA1=FE , which values are (still) undefined . On failure of PTS card reverts to TA=11 which 
-			// makes the card fail
-			// We know the card needs 115200 (with cardmhz = 368) after ATR
-			// Solution: longterm: implement PTS2 
-			// Solution: shorterm: this hardcoding
-			//
-			unsigned char nagra_hdplus[] = {0x44, 0x4E, 0x41, 0x53, 0x50}; //DNASP, not sure about timings of TIGER & others
-			if (atr->hbn >= sizeof(nagra_hdplus))
-				if (!memcmp(atr->hb, nagra_hdplus, sizeof(nagra_hdplus))) {
-					ATR_GetProtocolType (atr, 1, &(pps->parameters.t));
-					protocol_selected = 1;
-					if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
-						pps->parameters.FI = TA1 >> 4;
-						ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
-					}
-				}
-			//
-			// 
 			/////End  all non-ISO behaviour
 		  if (pps->icc->ifd->io->com == RTYP_SCI) { 
 		  //// Here all fixes that are needed until PTS routine for Dreambox is found
 			//// End  all fixes that are needed until PTS routine for Dreambox is found
-				if (atr->hbn >=6)
-					if (!memcmp( atr->hb, "IRDETO", 6 )) { //IRDETO needs TA1 behaviour on /dev/sci  ; which other cards need ignore TA1 on T14?
-						pps->parameters.FI = TA1 >> 4;
-						ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
-					}
 			}
 
 			cs_debug("No PTS %s, selected protocol 1: T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
@@ -453,7 +419,7 @@ static int PPS_InitICC (PPS * pps, int selected_protocol)
 
 		double F =  (double) atr_f_table[pps->parameters.FI];
 		params.ETU = F / pps->parameters.d;
-		if (pps->parameters.n == 255)
+		if (pps->parameters.n == 255) //only for T0 or also for T1?
 			params.EGT = 0;
 		else
 			params.EGT = pps->parameters.n;
