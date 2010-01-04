@@ -83,7 +83,7 @@ DESCRIPTIONS
 	   example: expdate = 2001-11-21
 		    expdate = 2002/12/22
 
-       numusers = quantity
+       numusers = quantity (only if anti-cascading enabled)
 	  anti-cascading:  user per account, 0 = anti-cascading not permitted,
 	  default:0
 

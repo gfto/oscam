@@ -238,7 +238,7 @@ DESCRIPTIONS
 
 	   example: locals = 01001234,02005678
 
-   The [dvbapi] section
+   The [dvbapi] section (only if DVB API module enabled)
        enabled = 0|1
 	  1 = DVB API enabled, default:0
 
@@ -253,7 +253,7 @@ DESCRIPTIONS
 
 	   example: socket = /tmp/camd.socket
 
-   The [anticasc] section
+   The [anticasc] section (only if anti-cascading enabled)
        enabled = 0|1
 	  1 = enabled anti-cascading, default:0
 
