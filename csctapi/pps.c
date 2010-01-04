@@ -141,7 +141,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	  cs_debug("ATR reports smartcard supports %i protocols:",numprot);
 		int i,point;
 		char txt[50];
-		bool OffersT[2]; //T14 stored as T2
+		bool OffersT[3]; //T14 stored as T2
 		for (i = 0; i <= 2; i++)
 			OffersT[i] = FALSE;
 		for (i=1; i<= numprot; i++) {
