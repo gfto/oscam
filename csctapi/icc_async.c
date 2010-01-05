@@ -178,7 +178,7 @@ int ICC_Async_SetTimings (ICC_Async * icc, ICC_Async_Timings * timings)
 		if (ioctl(icc->ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
 			return ICC_ASYNC_IFD_ERROR;
 			
-		cs_debug("Set Timings: T=%d FI=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T,(int)params.FI, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
+		cs_debug("Set Timings: T=%d fs=%lu ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, params.fs, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
 	}
 #endif
 	return ICC_ASYNC_OK;

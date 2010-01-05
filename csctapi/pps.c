@@ -217,16 +217,14 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 		//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards, which is the old behaviour...
 		if (!PPS_success) {//last PPS not succesfull
 			BYTE TA1;
-			if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK && pps->parameters.t != 14) {
+			if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
 				pps->parameters.FI = TA1 >> 4;
 				ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
 			}
-			else { //do not obey TA1 if T14
+			else { //do not obey TA1
 				pps->parameters.FI = ATR_DEFAULT_FI;
 				pps->parameters.d = ATR_DEFAULT_D;
 			}
-			// Get protocol offered by interface bytes T*2 if TD1 available,
-			// FIXME or would it be wiser to not switch anything and stick to 9600? 
 			ATR_GetProtocolType (atr, 1, &(pps->parameters.t));
 			protocol_selected = 1;
 
@@ -391,7 +389,6 @@ static int PPS_InitICC (PPS * pps, int selected_protocol)
 	{
 		int n;
 		SCI_PARAMETERS params;
-		int m;
 		//memset(&params,0,sizeof(SCI_PARAMETERS));
 		if (ioctl(pps->icc->ifd->io->fd, IOCTL_GET_PARAMETERS, &params) < 0 )
 			return PPS_ICC_ERROR;
@@ -400,22 +397,13 @@ static int PPS_InitICC (PPS * pps, int selected_protocol)
 
 		params.T = pps->parameters.t;
 
-		BYTE oldFI = params.FI;
-//		params.FI = pps->parameters.FI; //somehow setting this gets "card unsupported" 
-/*		if (pps->icc->ifd->io->mhz > 368) {
-			int number_of_overclock_steps = ((pps->icc->ifd->io->mhz)/200) - 2; //600 is 1 overclock, 800 2 overclocks etc.
-			do 
-			{
-				if (params.FI != 1 && params.FI != 9)
-					params.FI --;
-				number_of_overclock_steps --;
-			} while (number_of_overclock_steps > 0);
-		}*/
+		params.fs = atr_fs_table[pps->parameters.FI] / 1000000;
+		ulong oldfs = params.fs;
 		if (pps->icc->ifd->io->mhz == 600)
-			params.FI = 5; //routine above should be tested so hardcoding can get removed
+			params.fs = 5;
 
-		if (oldFI != params.FI)
-			cs_log("Forcing params.FI from %i to %i", oldFI, params.FI);
+		if (oldfs != params.fs)
+			cs_log("Forcing params.fs from %lu mhz to %lu mhz", oldfs, params.fs);
 
 		double F =  (double) atr_f_table[pps->parameters.FI];
 		params.ETU = F / pps->parameters.d;
@@ -430,12 +418,13 @@ static int PPS_InitICC (PPS * pps, int selected_protocol)
 		ATR_GetParameter(atr, ATR_PARAMETER_I, &a);
 		params.I=(unsigned char)a;
 
+		cs_debug("Setting T=%d fs=%lu mhz ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, params.fs, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
+
 		if (ioctl(pps->icc->ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
 			return PPS_ICC_ERROR;
-			
-		ioctl(pps->icc->ifd->io->fd, IOCTL_GET_PARAMETERS, &params);
-			
-		cs_debug("T=%d f=%d ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T,(int)atr_f_table[pps->parameters.FI], (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
+		
+		if (ioctl(pps->icc->ifd->io->fd, IOCTL_SET_ATR_READY)<0)
+			return IFD_TOWITOKO_IO_ERROR;
 	}
 #endif
 	{

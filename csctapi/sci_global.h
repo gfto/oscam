@@ -82,7 +82,7 @@ SCI_MODES;
 typedef struct sci_parameters
 {
     UCHAR T;
-    ULONG FI;
+    ULONG fs;
     ULONG ETU;
     ULONG WWT;
     ULONG CWT;
