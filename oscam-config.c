@@ -1116,12 +1116,22 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     rdr->nagra_native=1;
     if (key_atob_l(value, rdr->rsa_mod, 128))
     {
-      fprintf(stderr, "Configuration reader: Error in RSA Key\n");
+      fprintf(stderr, "Configuration reader: Error in n3_rsakey\n");
       exit(1);
     }
     return;
   }
-  if (!strcmp(token, "n3_boxkey"))
+  if (!strcmp(token, "tiger_rsakey"))
+  {
+    rdr->nagra_native=1;
+    if (key_atob_l(value, rdr->rsa_mod, 240))
+    {
+      fprintf(stderr, "Configuration reader: Error in tiger_rsakey\n");
+      exit(1);
+    }
+    return;
+  }
+  if (!strcmp(token, "n3_boxkey") || !strcmp(token, "tiger_ideakey"))
   {
     if (key_atob_l(value, rdr->nagra_boxkey, 16))
     {
