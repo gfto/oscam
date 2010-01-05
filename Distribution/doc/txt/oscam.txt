@@ -32,7 +32,7 @@ DESCRIPTIONS
 
 	 CCcam with AU support, cascading/remote server ECM support
 
-	 DVB API support, localhost only
+	 DVB API 3 support with AU support
 
        OSCam works on the following plattforms:
 
