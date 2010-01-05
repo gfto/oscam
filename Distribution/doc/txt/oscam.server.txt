@@ -171,6 +171,12 @@ DESCRIPTIONS
        n3_boxkey = box key
 	  box key for Nagravision SCs
 
+       tiger_rsakey = RSA key
+	  RSA key for Tiger Nagravision SCs
+
+       tiger_ideakey = IDEA key
+	  IDEA key for Tiger Nagravision SCs
+
 OVERCLOCKING
 	 Dreambox reader
 
