@@ -34,6 +34,8 @@ DESCRIPTIONS
 	   1 = only one connection per user is allowed
 	   2 = set user to fake if source ip is different
 	       (e.g. for newcamd clients with different CAIDs and ports)
+	   3 = only one connection per user, but only the last login
+	       will survive (old mpcs behavior)
 
        sleep = minutes
 	  time waiting for inactive user, default:none

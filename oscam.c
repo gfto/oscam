@@ -1042,25 +1042,39 @@ void wait4master()
 
 static void cs_fake_client(char *usr, int uniq, in_addr_t ip)
 {
-    /* - Uniq = 1: only one connection per user
-     * - Uniq = 2: set user only to fake if source ip is different (e.g. for
-     *             newcamd clients with different CAID's -> Ports)
-    */
+    /* Uniq = 1: only one connection per user
+     *
+     * Uniq = 2: set (new connected) user only to fake if source 
+     *           ip is different (e.g. for newcamd clients with 
+     *	         different CAID's -> Ports)
+     *
+     * Uniq = 3: only one connection per user, but only the last 
+     *           login will survive (old mpcs behavior)
+     */
 
     int i;
 
     for (i=cdiff+1; i<CS_MAXPID; i++) {
         if (client[i].pid
-                && (client[i].typ == 'c')
-                && !client[i].dup
-                && !strcmp(client[i].usr, usr)
-                && ((uniq == 1)  || (client[i].ip != ip)))
-        {
-            client[cs_idx].dup = 1;
-            client[cs_idx].au = -1;
-            cs_log("client(%d) duplicate user '%s' from %s set to fake (uniq=%d)", cs_idx-cdiff, usr, cs_inet_ntoa(ip), uniq);
-            break;
-        }
+         && (client[i].typ == 'c')
+         && !client[i].dup
+         && !strcmp(client[i].usr, usr)
+         && ((uniq != 2) || (client[i].ip != ip)))
+          {
+	   if (uniq == 3)
+	    {
+	     client[i].dup = 1;
+	     client[i].au = -1;
+	     cs_log("client(%d) duplicate user '%s' from %s set to fake (uniq=%d)", i-cdiff, usr, cs_inet_ntoa(ip), uniq);
+	    }
+	   else
+	    {
+	     client[cs_idx].dup = 1;
+	     client[cs_idx].au = -1;
+	     cs_log("client(%d) duplicate user '%s' from %s set to fake (uniq=%d)", cs_idx-cdiff, usr, cs_inet_ntoa(ip), uniq);
+	     break;
+	    }
+          }
     }
 }
 
