@@ -851,15 +851,6 @@ static void newcamd_auth_client(in_addr_t ip)
                     mbuf[12] = reader[au].hexserial[3];
                     mbuf[13] = reader[au].hexserial[4];
                     }
-                else if ((pufilt->caid >> 8) == 0x18) 
-                    {
-                    mbuf[8] = 0x00;
-                    mbuf[9] = 0x00;
-                    mbuf[10] = reader[au].hexserial[0];
-                    mbuf[11] = reader[au].hexserial[1];
-                    mbuf[12] = reader[au].hexserial[2];
-                    mbuf[13] = reader[au].hexserial[3];
-                    }
                 else
                     {
                     mbuf[8] = reader[au].hexserial[0];

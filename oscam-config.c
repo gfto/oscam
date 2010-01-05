@@ -1131,7 +1131,16 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
     return;
   }
-  if (!strcmp(token, "n3_boxkey") || !strcmp(token, "tiger_ideakey"))
+  if (!strcmp(token, "n3_boxkey"))
+  {
+    if (key_atob_l(value, rdr->nagra_boxkey, 16))
+    {
+      fprintf(stderr, "Configuration reader: Error in Nagra Boxkey\n");
+      exit(1);
+    }
+    return;
+  }
+  if (!strcmp(token, "tiger_ideakey"))
   {
     if (key_atob_l(value, rdr->nagra_boxkey, 16))
     {

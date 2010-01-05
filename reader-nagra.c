@@ -93,7 +93,7 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
     	}
     	if(!reader_cmd2icc(msg,msglen))
   	{
-  		cs_sleepms(20);
+  		cs_sleepms(15);
 		if(cta_res[0]!=res) 
 	      	{
 	      		cs_debug("[nagra-reader] result not expected (%02x != %02x)",cta_res[0],res);
@@ -198,7 +198,7 @@ void getCamID(void)
 	}
 	else
 	{
-		memcpy(camid,reader[ridx].hexserial,4);
+		memcpy(camid,reader[ridx].hexserial+2,4);
 	}
 }
 
@@ -347,8 +347,8 @@ int NegotiateSessionKey(void)
 	// build sessionkey
 	// first halve is IDEA Hashed in chuncs of 8 bytes using the Signature1 from dt08 calc, CamID-Inv.CamID(16 bytes key) the results are the First 8 bytes of the Session key
 	memcpy(idea1, signature, 8); 
-	memcpy(idea1+8, reader[ridx].hexserial, 4);
-	idea1[12] = ~reader[ridx].hexserial[0]; idea1[13] = ~reader[ridx].hexserial[1]; idea1[14] = ~reader[ridx].hexserial[2]; idea1[15] = ~reader[ridx].hexserial[3];
+	memcpy(idea1+8, reader[ridx].hexserial+2, 4);
+	idea1[12] = ~reader[ridx].hexserial[2]; idea1[13] = ~reader[ridx].hexserial[3]; idea1[14] = ~reader[ridx].hexserial[4]; idea1[15] = ~reader[ridx].hexserial[5];
 		
 	Signature(sign1, idea1, tmp, 32);
 	memcpy(idea2,sign1,8); memcpy(idea2+8,sign1,8); 
@@ -559,6 +559,7 @@ int nagra2_card_init(uchar *atr, int atrlen)
 	memset(rom, 0, 15);
 	reader[ridx].nprov = 1;
 	memset (reader[ridx].sa, 0xff, sizeof (reader[ridx].sa));
+	memset(reader[ridx].hexserial, 0, 8); 
 	reader[ridx].caid[0]=SYSTEM_NAGRA;
 	
 	if (memcmp(atr+11, "DNASP", 5)==0)
@@ -572,7 +573,6 @@ int nagra2_card_init(uchar *atr, int atrlen)
 		if(SetIFS(0xFE) != 1) return 0;
 		cs_debug("[nagra-reader] detect nagra tiger card");
 		memcpy(rom,atr+11,15);
-		memset(reader[ridx].hexserial, 0xff, 4); // take 0xff as cardserial?
 		is_tiger=1;
 	}
 	else if (!memcmp(atr+4, "IRDETO", 6))
@@ -598,7 +598,7 @@ int nagra2_card_init(uchar *atr, int atrlen)
 			cs_debug("[nagra-reader] get Serial failed");
 			return 0;
 		}
-		memcpy(reader[ridx].hexserial, cta_res+2, 4);
+		memcpy(reader[ridx].hexserial+2, cta_res+2, 4);
 		cs_debug("[nagra-reader] SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
 		memcpy(reader[ridx].sa[0], cta_res+2, 4);
 		
@@ -655,10 +655,13 @@ int nagra2_card_info(void)
 
 void nagra2_post_process(void)
 {
-	CamStateRequest();
-	cs_sleepms(10);
-	if RENEW_SESSIONKEY NegotiateSessionKey();
-	if SENDDATETIME DateTimeCMD();
+	if (!is_tiger)
+	{
+		CamStateRequest();
+		cs_sleepms(10);
+		if RENEW_SESSIONKEY NegotiateSessionKey();
+		if SENDDATETIME DateTimeCMD();
+	}
 }
 
 int nagra2_do_ecm(ECM_REQUEST *er)
@@ -676,13 +679,13 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 			}
 	
 		}
-		cs_sleepms(15);
 		while(!CamStateRequest() && retry < 5)
 		{
+			cs_debug("[nagra-reader] CamStateRequest failed, try: %d", retry);
 			retry++;
 	                cs_sleepms(15);
 		}
-		cs_sleepms(10);
+		cs_sleepms(5);
 		if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
 		{
 			unsigned char v[8];
@@ -702,10 +705,16 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 	}
 	else
 	{
-		if(!do_cmd(0xd3,er->ecm[4]+2,0x53,0x16, er->ecm+3+2))
+		//                  ecm_data: 80 30 89 D3 87 54 11 10 DA A6 0F 4B 92 05 34 00 ...
+		//serial_data: A0 CA 00 00 8C D3 8A 00 00 00 00 00 10 DA A6 0F .
+		unsigned char ecm_trim[150];
+		memset(ecm_trim, 0, 150);
+		memcpy(&ecm_trim[5], er->ecm+3+2+2, er->ecm[4]+2);
+		if(do_cmd(er->ecm[3],er->ecm[4]+5,0x53,0x16, ecm_trim)) 
 		{
 			if(cta_res[2] == 0x01)
 			{
+
 				unsigned char v[8];
 				memset(v,0,sizeof(v));
 				idea_cbc_encrypt(&cta_res[14],er->cw,8,&ksSession,v,IDEA_DECRYPT);
@@ -717,7 +726,6 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 			return (0);
 		}
 	}
-		
 	return(0);
 }
 
