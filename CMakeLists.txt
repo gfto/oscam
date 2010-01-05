@@ -247,9 +247,9 @@ add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 
 # some optimisations
 if (OSCamOperatingSystem MATCHES "Mac OS X")
-add_definitions ("-O2 -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses -finline-functions -fomit-frame-pointer -m32")
+add_definitions ("-O2 -Winline -Wall -Wno-parentheses -finline-functions -fomit-frame-pointer -m32")
 else (OSCamOperatingSystem MATCHES "Mac OS X")
-add_definitions ("-O2 -Winline -Wall -Wno-implicit-function-declaration -Wno-parentheses -finline-functions -fomit-frame-pointer")
+add_definitions ("-O2 -Winline -Wall -Wno-parentheses -finline-functions -fomit-frame-pointer")
 endif (OSCamOperatingSystem MATCHES "Mac OS X")
 
 # we don't want the '-rdynamic' in the link command

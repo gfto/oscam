@@ -166,11 +166,6 @@ int llist_count(LLIST *l)
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 #define X_FREE(X) do { if (X) { free(X); X = NULL; } } while(0)
 
-typedef unsigned char uint8;
-typedef unsigned short uint16;
-typedef unsigned int uint32;
-typedef unsigned long long uint64;
-
 typedef enum {
   DECRYPT,
   ENCRYPT
@@ -309,99 +304,6 @@ static void cc_cw_decrypt(uint8 *cws)
     node_id_1 >>= 4;
     cur_card >>= 2;
   }
-}
-
-static int connect_nonb(int sockfd, const struct sockaddr *saptr, socklen_t salen, int nsec)
-{
-  int             flags, n, error;
-  socklen_t       len;
-  fd_set          rset, wset;
-  struct timeval  tval;
-
-  flags = fcntl(sockfd, F_GETFL, 0);
-  fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
-
-  error = 0;
-  cs_debug("cccam: conn_nb 1 (fd=%d)", sockfd);
-
-  if ( (n = connect(sockfd, saptr, salen)) < 0) {
-    if( errno==EALREADY ) {
-      cs_debug("cccam: conn_nb in progress, errno=%d", errno);
-      return(-1);
-    }
-    else if( errno==EISCONN ) {
-      cs_debug("cccam: conn_nb already connected, errno=%d", errno);
-      goto done;
-    }
-    cs_debug("cccam: conn_nb 2 (fd=%d)", sockfd);
-    if (errno != EINPROGRESS) {
-      cs_debug("cccam: conn_nb 3 (fd=%d)", sockfd);
-      //return(-1);
-    }
-  }
-
-  cs_debug("cccam: n = %d\n", n);
-
-  /* Do whatever we want while the connect is taking place. */
-  if (n == 0)
-    goto done;  /* connect completed immediately */
-
-  FD_ZERO(&rset);
-  FD_SET(sockfd, &rset);
-  wset = rset;
-  tval.tv_sec = nsec;
-  tval.tv_usec = 0;
-
-  if ( (n = select(sockfd+1, &rset, &wset, 0, nsec ? &tval : 0)) == 0) {
-      //close(sockfd);    // timeout
-    cs_debug("cccam: conn_nb 4 (fd=%d)", sockfd);
-      errno = ETIMEDOUT;
-      return(-1);
-  }
-
-  cs_debug("cccam: conn_nb 5 (fd=%d)", sockfd);
-
-  if (FD_ISSET(sockfd, &rset) || FD_ISSET(sockfd, &wset)) {
-    cs_debug("cccam: conn_nb 6 (fd=%d)", sockfd);
-    len = sizeof(error);
-    if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
-      cs_debug("cccam: conn_nb 7 (fd=%d)", sockfd);
-      return(-1);     // Solaris pending error
-    }
-  } else {
-    cs_debug("cccam: conn_nb 8 (fd=%d)", sockfd);
-    return -2;
-  }
-
-done:
-cs_debug("cccam: conn_nb 9 (fd=%d)", sockfd);
-  fcntl(sockfd, F_SETFL, flags);  /* restore file status flags */
-
-  if (error) {
-    cs_debug("cccam: conn_nb 10 (fd=%d)", sockfd);
-    //close(sockfd);    /* just in case */
-    errno = error;
-    return(-1);
-  }
-  return(0);
-}
-
-static int network_tcp_connection_open(uint8 *hostname, uint16 port)
-{
-
-  int flags;
-  if( connect_nonb(client[cs_idx].udp_fd,
-      (struct sockaddr *)&client[cs_idx].udp_sa,
-      sizeof(client[cs_idx].udp_sa), 5) < 0)
-  {
-    cs_log("cccam: connect(fd=%d) failed: (errno=%d)", client[cs_idx].udp_fd, errno);
-    return -1;
-  }
-  flags = fcntl(client[cs_idx].udp_fd, F_GETFL, 0);
-  flags &=~ O_NONBLOCK;
-  fcntl(client[cs_idx].udp_fd, F_SETFL, flags );
-
-  return client[cs_idx].udp_fd;
 }
 
 static int cc_msg_recv(uint8 *buf, int l)

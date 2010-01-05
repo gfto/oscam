@@ -12,54 +12,6 @@ static short int mode;
 #define OK_RESPONSE 0x61
 #define CMD_BYTE 0x59
 
-#define dre_cmd(cmd) \
-{ \
-  	dre_command(cmd, sizeof(cmd)); \
-}
-
-int dre_set_provider_info (void)
-{
-  int i;
-  static uchar cmd59[] = { 0x59, 0x14 };	// subscriptions
-  static uchar cmd5b[] = { 0x5b, 0x00, 0x14 };	//validity dates
-
-  cmd59[1] = provider;
-  if ((dre_cmd (cmd59))) {	//ask subscription packages, returns error on 0x11 card
-    uchar pbm[32];
-    memcpy (pbm, cta_res + 3, cta_lr - 6);
-    cs_debug ("DRECRYPT pbm: %s", cs_hexdump (0, pbm, 32));
-
-    if (pbm[0] == 0xff)
-      cs_log ("No active packages!");
-    else
-      for (i = 0; i < 32; i++)
-	if (pbm[i] != 0xff) {
-	  cmd5b[1] = i;
-	  cmd5b[2] = provider;
-	  dre_cmd (cmd5b);	//ask for validity dates 
-
-	  time_t start;
-	  time_t end;
-	  start = (cta_res[3] << 24) | (cta_res[4] << 16) | (cta_res[5] << 8) | cta_res[6];
-	  end = (cta_res[7] << 24) | (cta_res[8] << 16) | (cta_res[9] << 8) | cta_res[10];
-
-	  struct tm *temp;
-
-	  temp = localtime (&start);
-	  int startyear = temp->tm_year + 1900;
-	  int startmonth = temp->tm_mon + 1;
-	  int startday = temp->tm_mday;
-	  temp = localtime (&end);
-	  int endyear = temp->tm_year + 1900;
-	  int endmonth = temp->tm_mon + 1;
-	  int endday = temp->tm_mday;
-	  cs_log ("Active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
-		  endyear, endmonth, endday);
-	}
-  }
-  return 1;
-}
-
 uchar xor (uchar * cmd, int cmdlen)
 {
   int i;
@@ -68,7 +20,6 @@ uchar xor (uchar * cmd, int cmdlen)
     checksum ^= cmd[i];
   return checksum;
 }
-
 
 int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return 0 = err
 {
@@ -135,6 +86,54 @@ int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be chan
     cs_log ("DRECRYPT checksum does not match, expected %02x received %02x:%s", checksum,
 	    cta_res[length_excl_leader - 1], cs_hexdump (0, cta_res, cta_lr));
     return 0;			//error
+  }
+  return 1;
+}
+
+#define dre_cmd(cmd) \
+{ \
+  	dre_command(cmd, sizeof(cmd)); \
+}
+
+int dre_set_provider_info (void)
+{
+  int i;
+  static uchar cmd59[] = { 0x59, 0x14 };	// subscriptions
+  static uchar cmd5b[] = { 0x5b, 0x00, 0x14 };	//validity dates
+
+  cmd59[1] = provider;
+  if ((dre_cmd (cmd59))) {	//ask subscription packages, returns error on 0x11 card
+    uchar pbm[32];
+    memcpy (pbm, cta_res + 3, cta_lr - 6);
+    cs_debug ("DRECRYPT pbm: %s", cs_hexdump (0, pbm, 32));
+
+    if (pbm[0] == 0xff)
+      cs_log ("No active packages!");
+    else
+      for (i = 0; i < 32; i++)
+	if (pbm[i] != 0xff) {
+	  cmd5b[1] = i;
+	  cmd5b[2] = provider;
+	  dre_cmd (cmd5b);	//ask for validity dates 
+
+	  time_t start;
+	  time_t end;
+	  start = (cta_res[3] << 24) | (cta_res[4] << 16) | (cta_res[5] << 8) | cta_res[6];
+	  end = (cta_res[7] << 24) | (cta_res[8] << 16) | (cta_res[9] << 8) | cta_res[10];
+
+	  struct tm *temp;
+
+	  temp = localtime (&start);
+	  int startyear = temp->tm_year + 1900;
+	  int startmonth = temp->tm_mon + 1;
+	  int startday = temp->tm_mday;
+	  temp = localtime (&end);
+	  int endyear = temp->tm_year + 1900;
+	  int endmonth = temp->tm_mon + 1;
+	  int endday = temp->tm_mday;
+	  cs_log ("Active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
+		  endyear, endmonth, endday);
+	}
   }
   return 1;
 }

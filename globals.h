@@ -193,6 +193,11 @@ enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
 //typedef unsigned char uchar;
 //typedef unsigned long ulong;
 
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned int uint32;
+typedef unsigned long long uint64;
+
 // constants
 #define CTA_RES_LEN 512
 
@@ -640,7 +645,8 @@ extern ulong cs_atoi(char *, int, int);
 extern int byte_atob(char *);
 extern long word_atob(char *);
 extern int key_atob(char *, uchar *);
-extern int key_atob4(char *, uchar *);
+extern int key_atob14(char *, uchar *);
+extern int key_atob_l(char *, uchar *, int);
 extern char *key_btoa(char *, uchar *);
 extern char *cs_hexdump(int, uchar *, int);
 extern in_addr_t cs_inet_order(in_addr_t);
@@ -698,6 +704,7 @@ extern void wait4master(void);
 extern int cs_auth_client(struct s_auth *, char*);
 extern void cs_disconnect_client(void);
 extern int check_ecmcache(ECM_REQUEST *, ulong);
+extern void store_logentry(char *);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);
 extern int write_ecm_request(int, ECM_REQUEST *);
@@ -749,10 +756,14 @@ extern int  init_irdeto_guess_tab(void);
 
 // oscam-reader
 extern int ridx, logfd;
+extern int reader_cmd2api(uchar *, int);
+extern int reader_cmd2icc(uchar *, int);
+extern int card_write(uchar *, uchar *);
 extern void cs_ri_brk(int);
 extern void cs_ri_log(char *,...);
 extern void start_cardreader(void);
 extern void reader_card_info(void);
+extern int network_tcp_connection_open(uint8 *, uint16);
 extern void network_tcp_connection_close(int);
 
 // oscam-log
@@ -810,6 +821,7 @@ extern int cryptoworks_card_init(uchar *, int);
 extern int cryptoworks_do_ecm(ECM_REQUEST *);
 extern int cryptoworks_do_emm(EMM_PACKET *);
 extern int cryptoworks_card_info(void);
+extern int CheckSctLen(const uchar *, int);
 
 // reader-seca
 extern int seca_card_init(uchar *, int);
@@ -830,6 +842,18 @@ extern int nagra2_card_info(void);
 extern int nagra2_do_emm(EMM_PACKET *);
 extern void nagra2_post_process();
  
+// reader-conax
+extern int conax_card_init(uchar *, int);
+extern int conax_do_ecm(ECM_REQUEST *);
+extern int conax_do_emm(EMM_PACKET *);
+extern int conax_card_info(void);
+ 
+// reader-dre
+extern int dre_card_init(uchar *, int);
+extern int dre_do_ecm(ECM_REQUEST *);
+extern int dre_do_emm(EMM_PACKET *);
+extern int dre_card_info(void);
+
 // protocol modules
 extern int  monitor_send_idx(int, char *);
 extern void module_monitor(struct s_module *);

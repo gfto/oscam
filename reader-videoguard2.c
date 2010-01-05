@@ -530,7 +530,7 @@ static int do_cmd(const unsigned char *ins, const unsigned char *txbuff, unsigne
     memcpy(rxbuff+5+len,cta_res+len,2);
     }
   else {
-    if(!write_cmd(ins2,txbuff) || !status_ok(cta_res)) return -2;
+    if(!write_cmd(ins2,(uchar *)txbuff) || !status_ok(cta_res)) return -2;
     memcpy(rxbuff,ins2,5);
     memcpy(rxbuff+5,txbuff,len);
     memcpy(rxbuff+5+len,cta_res,2);
