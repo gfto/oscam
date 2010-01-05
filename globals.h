@@ -384,7 +384,7 @@ struct s_reader
   int       log_port;
   CAIDTAB   ctab;
   ulong     boxid;
-  uchar	    nagra_boxkey[8];
+  uchar	    nagra_boxkey[16]; //n3 boxkey 8byte  or tiger idea key 16byte
   int       nagra_native;
   uchar     aes_key[16];
   uchar     rsa_mod[120]; //rsa modulus for nagra cards.

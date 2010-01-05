@@ -93,7 +93,7 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
     	}
     	if(!reader_cmd2icc(msg,msglen))
   	{
-  		cs_sleepms(15);
+  		//cs_sleepms(15);
 		if(cta_res[0]!=res) 
 	      	{
 	      		cs_debug("[nagra-reader] result not expected (%02x != %02x)",cta_res[0],res);
@@ -204,19 +204,23 @@ void getCamID(void)
 
 int NegotiateSessionKey_Tiger(void)
 {
-	unsigned char rsa_modulo[120];
-	unsigned char idea_sig[16];
+
 	unsigned char vFixed[] = {0,1,2,3,0x11};
 	unsigned char parte_fija[120];
 	unsigned char parte_variable[88];
 	unsigned char d1_rsa_modulo[88];
-	unsigned char rand[88];
 	unsigned char d2_data[88];
 	unsigned char sign1[8];
 	unsigned char sessi1[8];
 	unsigned char sessi2[8];
 	unsigned char tmp[104];
 	unsigned char tmp1[8];
+	unsigned char random[88] = {0x51,0xd0,0xcc,0x4a,0x51,0xbc,0x4f,0xa4,0x7d,0x44,0xa9,0xa8,0x97,0x13,0x01,0x63,
+				0x8f,0xaf,0x86,0x60,0x7c,0xe3,0xee,0x29,0xca,0x13,0x09,0x44,0x83,0x48,0x17,0x8b,
+				0x88,0xa6,0x64,0x20,0x22,0x2b,0x04,0x50,0xd8,0x15,0x9c,0x50,0x09,0x7c,0x6a,0x5d,
+				0xa0,0xb3,0xb0,0x11,0xa2,0x15,0x00,0x58,0xae,0x4b,0xe7,0xb0,0x06,0xa0,0x1d,0xe0,
+				0x53,0x58,0x6a,0xf0,0x60,0x51,0x71,0xdb,0xe7,0x7c,0xf7,0x1b,0x37,0x9d,0x20,0xf8,
+				0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 					 
 	if(!do_cmd(0xd1,0x02,0x51,0xd2,NULL))
 	{
@@ -224,20 +228,17 @@ int NegotiateSessionKey_Tiger(void)
 		return 0;
 	}
 
-	ReverseMem(rsa_modulo, 120);
-	ReverseMem(&cta_res[90], 120);
-	
-	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (0, &cta_res[90], 32));
-	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (0, &cta_res[122], 32));
-	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (0, &cta_res[154], 32));
-	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (0, &cta_res[186], 24));
+	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[90], 32));
+	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[122], 32));
+	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[154], 32));
+	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[186], 24));
 	
 	BN_CTX *ctx = BN_CTX_new();
 	BIGNUM *bnN = BN_CTX_get(ctx);
 	BIGNUM *bnE = BN_CTX_get(ctx);
 	BIGNUM *bnCT = BN_CTX_get(ctx);
 	BIGNUM *bnPT = BN_CTX_get(ctx);
-	BN_bin2bn(rsa_modulo, 120, bnN);
+	BN_bin2bn(reader[ridx].rsa_mod, 120, bnN);
 	BN_bin2bn(vFixed+4, 1, bnE);
 	BN_bin2bn(&cta_res[90], 120, bnCT);
 	BN_mod_exp(bnPT, bnCT, bnE, bnN, ctx);
@@ -246,48 +247,139 @@ int NegotiateSessionKey_Tiger(void)
 	BN_CTX_end(ctx);
 	BN_CTX_free (ctx);
 	
-	ReverseMem(parte_fija, 120);
-	cs_debug("[nagra-reader] decrypted parte_fija: %s", cs_hexdump (0, parte_fija, 32));
-	cs_debug("[nagra-reader] decrypted parte_fija: %s", cs_hexdump (0, &parte_fija[32], 32));
-	cs_debug("[nagra-reader] decrypted parte_fija: %s", cs_hexdump (0, &parte_fija[64], 32));
-	cs_debug("[nagra-reader] decrypted parte_fija: %s", cs_hexdump (0, &parte_fija[96], 24));
+//	cs_debug("[nagra-reader] decrypted parte_fija: %s", cs_hexdump (1, parte_fija, 32));
+//	cs_debug("[nagra-reader] decrypted parte_fija: %s", cs_hexdump (1, &parte_fija[32], 32));
+//	cs_debug("[nagra-reader] decrypted parte_fija: %s", cs_hexdump (1, &parte_fija[64], 32));
+//	cs_debug("[nagra-reader] decrypted parte_fija: %s", cs_hexdump (1, &parte_fija[96], 24));
 	
 	cs_debug("[nagra-reader] ---------- SIG CHECK ---------------------");
 	memset(tmp,0, 104);
-	memcpy(tmp+4, parte_fija+11, 100); //104
-	Signature(sign1, idea_sig, tmp, 112);
-	cs_debug("[nagra-reader] foo: %s", cs_hexdump (0, tmp, 32));
-	cs_debug("[nagra-reader] foo: %s", cs_hexdump (0, &tmp[32], 32));
-	cs_debug("[nagra-reader] foo: %s", cs_hexdump (0, &tmp[64], 32));
-	cs_debug("[nagra-reader] foo: %s", cs_hexdump (0, &tmp[96], 8));
+	memcpy(tmp+4, parte_fija+11, 100);
+	Signature(sign1, reader[ridx].nagra_boxkey, tmp, 104);
+//	cs_debug("[nagra-reader] foo: %s", cs_hexdump (0, tmp, 32));
+//	cs_debug("[nagra-reader] foo: %s", cs_hexdump (0, &tmp[32], 32));
+//	cs_debug("[nagra-reader] foo: %s", cs_hexdump (0, &tmp[64], 32));
+//	cs_debug("[nagra-reader] foo: %s", cs_hexdump (0, &tmp[96], 8));
 	cs_debug("[nagra-reader] sign1: %s", cs_hexdump (0, sign1, 8));
 	cs_debug("[nagra-reader] sign2: %s", cs_hexdump (0, parte_fija+111, 8));
 	if (!memcmp (parte_fija+111, sign1, 8)==0)
 	{
 		cs_debug("[nagra-reader] signature check nok");
+		cs_debug("[nagra-reader] ------------------------------------------");
 		return 0;
 	}
-	cs_debug("[nagra-reader] ------------------------------------------");
 	cs_debug("[nagra-reader] signature check ok");
-	cs_debug("[nagra-reader] part2 of algo not implemented yet.");
+	cs_debug("[nagra-reader] ------------------------------------------");
 	
-	/*
-	A lot of todo here.
-	Second part of algo removed due it fails
-	*/
+	memcpy(reader[ridx].hexserial, parte_fija+15, 4);
+	memcpy(irdId, parte_fija+19, 4);
+	memcpy(d1_rsa_modulo,parte_fija+23,88);
+	
+//	cs_debug("[nagra-reader] d1_rsa_modulo: %s", cs_hexdump (1, d1_rsa_modulo, 22));
+//	cs_debug("[nagra-reader] d1_rsa_modulo: %s", cs_hexdump (1, &d1_rsa_modulo[22], 22));
+//	cs_debug("[nagra-reader] d1_rsa_modulo: %s", cs_hexdump (1, &d1_rsa_modulo[44], 22));
+//	cs_debug("[nagra-reader] d1_rsa_modulo: %s", cs_hexdump (1, &d1_rsa_modulo[66], 22));
+	ReverseMem(cta_res+2, 88);
+	BN_CTX *ctx1 = BN_CTX_new();
+	BIGNUM *bnN1 = BN_CTX_get(ctx1);
+	BIGNUM *bnE1 = BN_CTX_get(ctx1);
+	BIGNUM *bnCT1 = BN_CTX_get(ctx1);
+	BIGNUM *bnPT1 = BN_CTX_get(ctx1);
+	BN_bin2bn(d1_rsa_modulo, 88, bnN1);
+	BN_bin2bn(vFixed+4, 1, bnE1);
+	BN_bin2bn(cta_res+2, 88, bnCT1);
+	BN_mod_exp(bnPT1, bnCT1, bnE1, bnN1, ctx1);
+	memset(parte_variable, 0, 88);
+	BN_bn2bin(bnPT1, parte_variable + (88-BN_num_bytes(bnPT1)));
+	BN_CTX_end(ctx1);
+	BN_CTX_free (ctx1);
+//	cs_debug("[nagra-reader] parte_variable: %s", cs_hexdump (1, parte_variable, 22));
+//	cs_debug("[nagra-reader] parte_variable: %s", cs_hexdump (1, &parte_variable[22], 22));
+//	cs_debug("[nagra-reader] parte_variableo: %s", cs_hexdump (1, &parte_variable[44], 22));
+//	cs_debug("[nagra-reader] parte_variable: %s", cs_hexdump (1, &parte_variable[66], 22));
+	
+	reader[ridx].prid[0][0]=0x00;
+	reader[ridx].prid[0][1]=0x00;
+	reader[ridx].prid[0][2]=parte_variable[73];
+	reader[ridx].prid[0][3]=parte_variable[74];
+	reader[ridx].caid[0] =(SYSTEM_NAGRA|parte_variable[76]);
+	memcpy(sessi1,&parte_variable[79],8);
+     	cs_ri_log("[nagra-reader] CAID: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
+     	cs_ri_log("[nagra-reader] ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
+     	
+/*     	
+	BN_CTX *ctx2 = BN_CTX_new();
+	BIGNUM *rand0x50  = BN_CTX_get(ctx2);
+	BIGNUM *r_big = BN_CTX_get(ctx2);
+	BN_rand(rand0x50, 0x50, 0, 0);
+	//BN_mod(rand0x50, rand0x50, r_big, ctx2);
+	memset(rand, 0, 88);
+	BN_bn2bin(rand0x50, rand + (0x50-BN_num_bytes(r_big)));
+	rand[0] |= rand[0] & 0x80;
+	BN_CTX_end(ctx2);
+	BN_CTX_free (ctx2);
+
+	memset(rand, 0, 88);
+	memcpy(rand, test_d1_resp, 80);
+	
+	cs_debug("[nagra-reader] grandom: %s", cs_hexdump (1, rand, 22));
+	cs_debug("[nagra-reader] grandom: %s", cs_hexdump (1, &rand[22], 22));
+	cs_debug("[nagra-reader] grandom: %s", cs_hexdump (1, &rand[44], 22));
+	cs_debug("[nagra-reader] grandom: %s", cs_hexdump (1, &rand[66], 22));
+*/	
+	memcpy(sessi2,&random[72], 8);
+	
+	memset(tmp1,0,8);
+	memcpy(tmp1, random+72,8);
+//	cs_debug("[nagra-reader] byteflop last 8 bytes of random data: %s", cs_hexdump (1, tmp1, 8));
+	ReverseMem(tmp1, 8); //byteflop last 8 bytes of random data
+	
+	memcpy(random+72, tmp1,8); // insert back the byteflop data
+//	cs_debug("[nagra-reader] insert back the byteflop data: %s", cs_hexdump (1, random, 22));
+//	cs_debug("[nagra-reader] insert back the byteflop data: %s", cs_hexdump (1, &random[22], 22));
+//	cs_debug("[nagra-reader] insert back the byteflop data: %s", cs_hexdump (1, &random[44], 22));
+//	cs_debug("[nagra-reader] insert back the byteflop data: %s", cs_hexdump (1, &random[66], 22));
+	
+	memset(tmp1,0,8);
+	memcpy(tmp1, sessi1,8);
+	ReverseMem(tmp1, 8); // byteflop sessi1 one from rsa variabled part
+	memcpy(random+80,tmp1,8); // and attach him to random data
+	
+	
+	BN_CTX *ctx3 = BN_CTX_new();
+	BIGNUM *bnN3 = BN_CTX_get(ctx3);
+	BIGNUM *bnE3 = BN_CTX_get(ctx3);
+	BIGNUM *bnCT3 = BN_CTX_get(ctx3);
+	BIGNUM *bnPT3 = BN_CTX_get(ctx3);
+	BN_bin2bn(d1_rsa_modulo, 88, bnN3);
+	BN_bin2bn(vFixed+4, 1, bnE3);
+	BN_bin2bn(random, 88, bnCT3);
+	BN_mod_exp(bnPT3, bnCT3, bnE3, bnN3, ctx3);
+	memset(d2_data, 0, 88);
+	BN_bn2bin(bnPT3, d2_data + (88-BN_num_bytes(bnPT3)));
+	BN_CTX_end(ctx3);
+	BN_CTX_free (ctx3);
+//	cs_debug("[nagra-reader] d2_data: %s", cs_hexdump (1, d2_data, 22));
+//	cs_debug("[nagra-reader] d2_data: %s", cs_hexdump (1, &d2_data[22], 22));
+//	cs_debug("[nagra-reader] d2_data: %s", cs_hexdump (1, &d2_data[44], 22));
+//	cs_debug("[nagra-reader] d2_data: %s", cs_hexdump (1, &d2_data[66], 22));
+	ReverseMem(d2_data, 88);
 
 	if(!do_cmd(0xd2,0x5a,0x52,0x03, d2_data)) 
 	{
 		cs_debug("[nagra-reader] CMD$D2 failed");
 		return 0;
 	}
-	if (cta_res+2 == 0x00)
+	if (cta_res[2] == 0x00)
 	{
 		memcpy(sessi,sessi1,8); memcpy(sessi+8,sessi2,8);
+		IDEA_KEY_SCHEDULE ks;
+		idea_set_encrypt_key(sessi,&ks);
+		idea_set_decrypt_key(&ks,&ksSession);
 		cs_ri_log("[nagra-reader] session key: %s", cs_hexdump(1, sessi, 16));
 		return 1;
 	}
-	cs_ri_log("Negotiate sessionkey was not successfull! Please check rsa key and boxkey");
+	cs_ri_log("Negotiate sessionkey was not successfull! Please check tivusat rsa key");
 	return 0;
 		
 }
@@ -302,11 +394,6 @@ int NegotiateSessionKey(void)
 	unsigned char sign1[8];
 	unsigned char sign2[8];
 	
-	if (!has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
-	{
-		memcpy(plainDT08RSA, reader[ridx].rsa_mod, 64); 
-		memcpy(signature,reader[ridx].nagra_boxkey, 8);
-	}
 	if (is_tiger)
 	{
 		if (!NegotiateSessionKey_Tiger())
@@ -315,6 +402,11 @@ int NegotiateSessionKey(void)
 			return 0;
 		}
 		return 1;
+	}
+	if (!has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
+	{
+		memcpy(plainDT08RSA, reader[ridx].rsa_mod, 64); 
+		memcpy(signature,reader[ridx].nagra_boxkey, 8);
 	}
 	if(!do_cmd(0x2a,0x02,0xaa,0x42,NULL))
 	{
@@ -509,11 +601,21 @@ int ParseDataType(unsigned char dt)
 	{
 		case IRDINFO:
 		{
-			reader[ridx].prid[0][0]=0x00;
-			reader[ridx].prid[0][1]=0x00;
-			reader[ridx].prid[0][2]=cta_res[7];
-			reader[ridx].prid[0][3]=cta_res[8];			
+			reader[ridx].prid[0][0]=0;
+  			reader[ridx].prid[0][1]=0;
+  			reader[ridx].prid[0][2]=cta_res[7];
+  			reader[ridx].prid[0][3]=cta_res[8];
+  			memcpy(reader[ridx].sa[0], reader[ridx].sa[0], 4);
+  			/*
+			reader[ridx].prid[1][0]=0x00;
+			reader[ridx].prid[1][1]=0x00;
+			reader[ridx].prid[1][2]=0x00;
+			reader[ridx].prid[1][3]=0x00;
+			memcpy(reader[ridx].sa[1], reader[ridx].sa[0], 4);
+ 			reader[ridx].nprov+=1;
+ 			*/		
 			reader[ridx].caid[0] =(SYSTEM_NAGRA|cta_res[11]);
+			//reader[ridx].caid[0] =0x1801;
      			memcpy(irdId,cta_res+14,4);
      			cs_debug("[nagra-reader] CAID: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
      			cs_debug("[nagra-reader] ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
@@ -568,7 +670,7 @@ int nagra2_card_init(uchar *atr, int atrlen)
 		cs_debug("[nagra-reader] detect native nagra card T1 protocol");
 		memcpy(rom,atr+11,15);
 	}
-	else if (memcmp(atr+11, "TIGER", 5)==0)
+	else if (memcmp(atr+11, "TIGER", 5)==0 || (memcmp(atr+11, "NCMED", 5)==0))
 	{
 		if(SetIFS(0xFE) != 1) return 0;
 		cs_debug("[nagra-reader] detect nagra tiger card");
@@ -642,7 +744,7 @@ int nagra2_card_info(void)
 	int i;
 	cs_ri_log("ROM:    %c %c %c %c %c %c %c %c", rom[0], rom[1], rom[2],rom[3], rom[4], rom[5], rom[6], rom[7]);
 	cs_ri_log("REV:    %c %c %c %c %c %c", rom[9], rom[10], rom[11], rom[12], rom[13], rom[14]);
-	cs_ri_log("SER:    %s", cs_hexdump (1, reader[ridx].hexserial, 4));
+	cs_ri_log("SER:    %s", cs_hexdump (1, reader[ridx].hexserial+2, 4));
 	cs_ri_log("CAID:   %04X",reader[ridx].caid[0]);
 	cs_ri_log("Prv.ID: %s(sysid)",cs_hexdump (1,reader[ridx].prid[0],4));
 	for (i=1; i<reader[ridx].nprov; i++)
@@ -679,13 +781,14 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 			}
 	
 		}
+		cs_sleepms(10);
 		while(!CamStateRequest() && retry < 5)
 		{
 			cs_debug("[nagra-reader] CamStateRequest failed, try: %d", retry);
 			retry++;
 	                cs_sleepms(15);
 		}
-		cs_sleepms(5);
+		cs_sleepms(10);
 		if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
 		{
 			unsigned char v[8];
