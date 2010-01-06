@@ -890,7 +890,7 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
   ushort *slist=(ushort *) 0;
   ulong *llist=(ulong *) 0;
   ulong caid;
-  char buf[512];
+  char buf[strlen(value) + 1];
   strncpy(buf, value, sizeof(buf));
   b=(what==1) ? sizeof(ulong) : sizeof(ushort);
   for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
