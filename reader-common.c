@@ -422,7 +422,9 @@ int reader_ecm(ECM_REQUEST *er)
 int reader_emm(EMM_PACKET *ep)
 {
   int rc=-1;
-  if (rc=reader_checkhealth())
+
+  rc=reader_checkhealth();
+  if (rc)
   {
     client[cs_idx].last=time((time_t)0);
     if (reader[ridx].b_nano[ep->emm[0]] & 0x02) //should this nano be saved?

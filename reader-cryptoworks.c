@@ -235,7 +235,8 @@ int cryptoworks_card_init(uchar *atr, int atrsize)
       BN_bin2bn(keybuf, 64, ipk);
       RSA(cta_res+2, cta_res+2, 0x40, &exp, ipk, 0);
       BN_free(ipk);
-      if (ucpk_valid=(cta_res[2]==((mfid & 0xFF)>>1)))
+      ucpk_valid=(cta_res[2]==((mfid & 0xFF)>>1));
+      if (ucpk_valid)
       {
         cta_res[2]|=0x80;
         BN_bin2bn(cta_res+2, 0x40, &ucpk);
@@ -243,7 +244,8 @@ int cryptoworks_card_init(uchar *atr, int atrsize)
       }
       else
       {
-        if (ucpk_valid=(keybuf[0]==(((mfid & 0xFF)>>1)|0x80)))
+        ucpk_valid=(keybuf[0]==(((mfid & 0xFF)>>1)|0x80));
+        if (ucpk_valid)
         {
           BN_bin2bn(keybuf, 0x40, &ucpk);
           cs_ddump(keybuf, 0x40, "session-key found:");

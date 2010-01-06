@@ -174,8 +174,8 @@ static int monitor_recv(uchar *buf, int l)
     }
   }
   buf[n]='\0';
-  if (n=strlen(trim((char *)buf)))
-    client[cs_idx].last=time((time_t *) 0);
+  n=strlen(trim((char *)buf));
+  if (n) client[cs_idx].last=time((time_t *) 0);
   return(n);
 }
 

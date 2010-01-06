@@ -378,7 +378,8 @@ int camd35_client_init_log()
     return(1);
   }
 
-  if (ptrp=getprotobyname("udp"))
+  ptrp=getprotobyname("udp");
+  if (ptrp)
     p_proto=ptrp->p_proto;
   else
     p_proto=17;	// use defaults on error

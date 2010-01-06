@@ -880,7 +880,8 @@ static void oscam_ser_fork(int idx, char *url)
     client[cs_idx].au=(-1);
     client[cs_idx].usr[0]='\0';
     client[cs_idx].login=time((time_t *)0);
-    if (pfd=init_oscam_ser_device(oscam_ser_device))
+    pfd=init_oscam_ser_device(oscam_ser_device);
+    if (pfd)
       oscam_ser_server();
     else
       sleep(60);	// retry in 1 min. (USB-Device ?)

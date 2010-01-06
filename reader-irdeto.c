@@ -290,16 +290,24 @@ int irdeto_do_emm(EMM_PACKET *ep)
 
   int i, l=(ep->emm[3]&0x07), ok=0;
   int mode=(ep->emm[3]>>3);
+
   uchar *emm=ep->emm;
   ep->type=emm[3];
   if (mode&0x10)		// Hex addressed
+  {
     ok=(mode==reader[ridx].hexserial[3] &&
        (!l || !memcmp(&emm[4], reader[ridx].hexserial, l)));
+  }
   else				// Provider addressed
+  {
     for(i=0; i<reader[ridx].nprov; i++)
-      if (ok=(mode==reader[ridx].prid[i][0] &&
-             (!l || !memcmp(&emm[4], &reader[ridx].prid[i][1], l))))
-        break;
+    {
+      ok=(mode==reader[ridx].prid[i][0] &&
+         (!l || !memcmp(&emm[4], &reader[ridx].prid[i][1], l)));
+      if (ok) break;
+    }
+  }
+
   if (ok)
   {
     l++;

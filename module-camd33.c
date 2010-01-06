@@ -54,7 +54,8 @@ static void camd33_auth_client(in_addr_t ip)
   uchar *usr=NULL, *pwd=NULL;
   struct s_auth *account;
 
-  if (client[cs_idx].crypted=cfg->c33_crypted)
+  client[cs_idx].crypted=cfg->c33_crypted;
+  if (client[cs_idx].crypted)
   {
     struct s_ip *p_ip;
     for (p_ip=cfg->c33_plain; (p_ip) && (client[cs_idx].crypted); p_ip=p_ip->next)
