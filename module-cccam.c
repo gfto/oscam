@@ -166,6 +166,10 @@ int llist_count(LLIST *l)
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 #define X_FREE(X) do { if (X) { free(X); X = NULL; } } while(0)
 
+#if (defined(WIN32) || defined(OS_CYGWIN32)) && !defined(MSG_WAITALL)
+#  define MSG_WAITALL 0
+#endif
+
 typedef enum {
   DECRYPT,
   ENCRYPT

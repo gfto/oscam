@@ -636,7 +636,7 @@ static void init_shm()
 
   buf=(char *)malloc(shmsize);
   memset(buf, 0, shmsize);
-  write(shmid, buf, shmsize);
+  if (!write(shmid, buf, shmsize)) cs_exit(1);
   free(buf);
 
   ecmcache=(struct s_ecm *)mmap((void *)0, (size_t) shmsize, 
