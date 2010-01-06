@@ -392,15 +392,7 @@ static int PPS_InitICC (PPS * pps, int selected_protocol)
 		ATR *atr = ICC_Async_GetAtr (pps->icc);
 
 		params.T = pps->parameters.t;
-
 		params.fs = atr_fs_table[pps->parameters.FI] / 1000000;
-		ulong oldfs = params.fs;
-		if (pps->icc->ifd->io->mhz == 600)
-			params.fs = 5;
-
-		if (oldfs != params.fs)
-			cs_log("Forcing params.fs from %lu mhz to %lu mhz", oldfs, params.fs);
-
 		double F =  (double) atr_f_table[pps->parameters.FI];
 		params.ETU = F / pps->parameters.d;
 		if (pps->parameters.n == 255) //only for T0 or also for T1?
