@@ -5,6 +5,7 @@
 #include <PCSC/pcsclite.h>
 #ifdef OS_MACOSX
 #include <PCSC/wintypes.h>
+#include <PCSC/winscard.h>
 #else
 #include <PCSC/reader.h>
 #endif

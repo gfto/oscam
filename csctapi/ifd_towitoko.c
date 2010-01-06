@@ -559,7 +559,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		
 		if(ioctl(ifd->io->fd, IOCTL_SET_RESET)<0)
 			return IFD_TOWITOKO_IO_ERROR;
-			
+
 #ifdef SH4
 		gettimeofday(&tv,0);
 		memcpy(&tv_spent,&tv,sizeof(struct timeval));
