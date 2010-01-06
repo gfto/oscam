@@ -178,10 +178,10 @@ DESCRIPTIONS
 	  IDEA key for Tiger Nagravision SCs
 
 OVERCLOCKING
-	 Dreambox reader
+	 Dreambox and other internal readers
 
-	  For  SC overclocking set to 600. If mhz is unset or any other value,
-	  the default value will be used and behaviour will be standard.
+	  For  Dreambox and other internal readers the highest possible clock
+	  rate will be auto detected. The mhz parameter will be ignored.
 
 	 Phoenix / Smartmouse reader
 
