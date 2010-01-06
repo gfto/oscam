@@ -619,6 +619,8 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			req_ts.tv_sec = 0;
 			req_ts.tv_nsec = 50000000;
 			nanosleep (&req_ts, NULL);
+			if (ioctl(ifd->io->fd, IOCTL_SET_ATR_READY)<0)
+				return IFD_TOWITOKO_IO_ERROR;
 			return IFD_TOWITOKO_OK;
 		}
 		else

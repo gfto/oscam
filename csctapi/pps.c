@@ -186,7 +186,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(pps->parameters.n));
 		ATR_GetProtocolType(atr,1,&(pps->parameters.t)); //get protocol from TD1
 		bool NeedsPTS = ((pps->parameters.t != 14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
-		if (NeedsPTS && (pps->icc->ifd->io->com != RTYP_SCI)) {
+		if (NeedsPTS) {
 			//             PTSS  PTS0  PTS1  PTS2  PTS3  PCK
 			//             PTSS  PTS0  PTS1  PCK
 			BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
@@ -214,7 +214,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 			}
 		}
 
-		//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards, which is the old behaviour...
+		//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards, which is the old behaviour...; for SCI TA1 is obeyed...
 		if (!PPS_success) {//last PPS not succesfull
 			BYTE TA1;
 			if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
@@ -228,16 +228,12 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 			ATR_GetProtocolType (atr, 1, &(pps->parameters.t));
 			protocol_selected = 1;
 
-			if (NeedsPTS) { //FIXME we MUST discover PTS routine for Dreambox reader, now all cards in DBreaders which need PTS come here!!!
+			if (NeedsPTS) { 
 				if ((pps->parameters.d == 32) || (pps->parameters.d == 12) || (pps->parameters.d == 20))
 					pps->parameters.d = 0; //behave conform "old" atr_d_table; viaccess cards that fail PTS need this
 			}
 			/////Here all non-ISO behaviour
 			/////End  all non-ISO behaviour
-		  if (pps->icc->ifd->io->com == RTYP_SCI) { 
-		  //// Here all fixes that are needed until PTS routine for Dreambox is found
-			//// End  all fixes that are needed until PTS routine for Dreambox is found
-			}
 
 			cs_debug("No PTS %s, selected protocol 1: T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
 		}
@@ -423,8 +419,6 @@ static int PPS_InitICC (PPS * pps, int selected_protocol)
 		if (ioctl(pps->icc->ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
 			return PPS_ICC_ERROR;
 		
-		if (ioctl(pps->icc->ifd->io->fd, IOCTL_SET_ATR_READY)<0)
-			return IFD_TOWITOKO_IO_ERROR;
 	}
 #endif
 	{
