@@ -228,10 +228,10 @@ int NegotiateSessionKey_Tiger(void)
 		return 0;
 	}
 
-	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[90], 32));
-	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[122], 32));
-	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[154], 32));
-	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[186], 24));
+//	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[90], 32));
+//	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[122], 32));
+//	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[154], 32));
+//	cs_debug("[nagra-reader] crypted parte_fija: %s", cs_hexdump (1, &cta_res[186], 24));
 	
 	BN_CTX *ctx = BN_CTX_new();
 	BIGNUM *bnN = BN_CTX_get(ctx);
@@ -701,7 +701,7 @@ int nagra2_card_init(uchar *atr, int atrlen)
 			return 0;
 		}
 		memcpy(reader[ridx].hexserial+2, cta_res+2, 4);
-		cs_debug("[nagra-reader] SER:  %s", cs_hexdump (1, reader[ridx].hexserial, 4));
+		cs_debug("[nagra-reader] SER:  %s", cs_hexdump (1, reader[ridx].hexserial+2, 4));
 		memcpy(reader[ridx].sa[0], cta_res+2, 4);
 		
 		if(!GetDataType(DT01,0x0E,MAX_REC)) return 0;
