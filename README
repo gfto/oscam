@@ -29,7 +29,7 @@ Enable features:
 
 CS_ANTICASC   - enable anti-cascading
 CS_LOGHISTORY - enable log history
-HAVE_DVBAPI_3 - enable DVB API 3 support
+HAVE_DVBAPI   - enable DVB API support
 
 
 Build with CMake (new solution for building)

@@ -238,25 +238,26 @@ DESCRIPTIONS
 
 	   example: locals = 01001234,02005678
 
-   The [dvbapi] section (only if DVB API 3 module enabled)
+   The [dvbapi] section (only if DVB API module enabled)
        enabled = 0|1
-	  1 = DVB API 3 enabled, default:0
+	  1 = DVB API enabled, default:0
 
        user = username
-	  user name for DVB API 3 client, default:anonymous
+	  user name for DVB API client, default:anonymous
 
        au = 0|1
 	  1 = enable AU, default:0
 
        boxtype = dbox2|dreambox|ufs910
-	  set boxtype, default:dreambox
+	  set  boxtype,  auto  detection  of  DVB   API   will	 be   aspired,
+	  default:dreambox
 
    The [anticasc] section (only if anti-cascading enabled)
        enabled = 0|1
 	  1 = enabled anti-cascading, default:0
 
        numusers = quantity
-	  anti-cascading: user per account, 0 = anti-cascading not  permitted,
+	  anti-cascading:  user per account, 0 = anti-cascading not permitted,
 	  default:0
 
        sampletime = minutes
@@ -339,8 +340,8 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       oscam(1),      oscam.user(5),	  oscam.server(5),     oscam.srvid(5),
-       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
+       oscam(1),     oscam.user(5),	 oscam.server(5),      oscam.srvid(5),
+       oscam.guess(5),	  oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
        oscam.ac(5)
 
 

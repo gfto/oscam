@@ -531,7 +531,7 @@ static void chk_t_cccam(char *token, char *value)
 
 static void chk_t_dvbapi(char *token, char *value)
 {
-#ifndef HAVE_DVBAPI_3
+#ifndef HAVE_DVBAPI
 	fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n");
 #else
 	if (!strcmp(token, "enabled")) 	{ cfg->dvbapi_enabled=atoi(value); return; }

@@ -329,16 +329,16 @@ backwards sharing of local cards,default:none
 
  example: locals = 01001234,02005678
 .RE
-.SS "The [dvbapi] section" \fI(only if DVB API 3 module enabled)\fR
+.SS "The [dvbapi] section" \fI(only if DVB API module enabled)\fR
 .PP
 \fBenabled\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = DVB API 3 enabled, default:0
+1 = DVB API enabled, default:0
 .RE
 .PP
 \fBuser\fP = \fBusername\fP
 .RS 3n
-user name for DVB API 3 client, default:anonymous
+user name for DVB API client, default:anonymous
 .RE
 .PP
 \fBau\fP = \fB0\fP|\fB1\fP
@@ -348,7 +348,7 @@ user name for DVB API 3 client, default:anonymous
 .PP
 \fBboxtype\fP = \fBdbox2\fP|\fBdreambox\fP|\fBufs910\fP
 .RS 3n
-set boxtype, default:dreambox
+set boxtype, auto detection of DVB API will be aspired, default:dreambox
 .RE
 .SS "The [anticasc] section" \fI(only if anti-cascading enabled)\fR
 .PP
