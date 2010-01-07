@@ -243,7 +243,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	double F =  (double) atr_f_table[pps->parameters.FI];
 	if (!F) {
 		pps->parameters.FI = ATR_DEFAULT_FI;
-		cs_log("Warning: F=0 is invalid, forcing FI=%.0f", pps->parameters.FI);
+		cs_log("Warning: F=0 is invalid, forcing FI=%d", pps->parameters.FI);
 	}
 	if (!pps->parameters.d) {
 		pps->parameters.d = ATR_DEFAULT_D;
