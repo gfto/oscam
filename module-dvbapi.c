@@ -105,7 +105,7 @@ int dvbapi_open_device(int index_demux, int type)
 		sprintf(device_path, DMXDEV, index_demux);
 	else
 	{
-		if (strcmp(cfg->dvbapi_boxtype, "ufs910")==0)
+		if (strcmp(cfg->dvbapi_boxtype, "ufs910")==0 || strcmp(cfg->dvbapi_boxtype, "dbox2")==0)
 			ca_offset=1;
 
 		sprintf(device_path, CADEV, index_demux+ca_offset);

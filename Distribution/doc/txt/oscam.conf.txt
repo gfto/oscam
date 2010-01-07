@@ -248,7 +248,7 @@ DESCRIPTIONS
        au = 0|1
 	  1 = enable AU, default:0
 
-       boxtype = ufs910|dreambox
+       boxtype = dbox2|dreambox|ufs910
 	  set boxtype, default:dreambox
 
    The [anticasc] section (only if anti-cascading enabled)
