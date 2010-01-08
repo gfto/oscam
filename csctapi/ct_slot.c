@@ -302,7 +302,7 @@ void * CT_Slot_GetAtr (CT_Slot * slot)
 
 bool CT_Slot_IsLast (CT_Slot * slot)
 {
-	return (IFD_Towitoko_GetSlot(slot->ifd) >= IFD_Towitoko_GetNumSlots(slot->ifd)-1);
+	return (IFD_Towitoko_GetSlot(slot->ifd) >= IFD_Towitoko_GetNumSlots()-1);
 }
 
 void CT_Slot_GetType (CT_Slot * slot, BYTE * buffer, int len)

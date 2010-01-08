@@ -60,7 +60,7 @@ static int camd35_recv(uchar *buf, int l)
       {
         if (!client[cs_idx].udp_fd) return(-9);
         if (is_udp)
-          rs=recv_from_udpipe(buf, l);
+          rs=recv_from_udpipe(buf);
         else
           rs=recv(client[cs_idx].udp_fd, buf, l, 0);
       }
@@ -413,7 +413,7 @@ static int tcp_connect()
   if (!reader[ridx].tcp_connected) 
   {
     int handle=0;
-    handle = network_tcp_connection_open((uint8 *)reader[ridx].device, reader[ridx].r_port);
+    handle = network_tcp_connection_open();
     if (handle<0) return(0);
 
     reader[ridx].tcp_connected = 1;
@@ -446,7 +446,7 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
   return((camd35_send(buf)<1) ? (-1) : 0);
 }
 
-static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
+static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 {
   //int i;
   ushort idx;

@@ -180,7 +180,7 @@ static void cCamCryptVG2_PartialMod(unsigned short val, unsigned int count, unsi
 static void cCamCryptVG2_RotateRightAndHash(unsigned char *p);
 static void cCamCryptVG2_Reorder16A(unsigned char *dest, const unsigned char *src);
 static void cCamCryptVG2_ReorderAndEncrypt(unsigned char *p);
-static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data, const unsigned char *status);
+static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data);
 static void cCamCryptVG2_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG2_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2);
@@ -211,7 +211,7 @@ static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsig
 {
   switch(buff[0]) {
     case 0xD0:
-      cCamCryptVG2_Process_D0(buff,buff+5,buff+buff[4]+5);
+      cCamCryptVG2_Process_D0(buff,buff+5);
       break;
     case 0xD1:
       cCamCryptVG2_Process_D1(buff,buff+5,buff+buff[4]+5);
@@ -236,7 +236,7 @@ static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsig
   }
 }
 
-static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data, const unsigned char *status)
+static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data)
 {
   switch(ins[1]) {
     case 0xb4:

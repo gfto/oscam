@@ -240,7 +240,7 @@ static int connect_newcamd_server()
 
   // 1. Connect
   //
-  handle = network_tcp_connection_open((uint8 *)reader[ridx].device, reader[ridx].r_port);
+  handle = network_tcp_connection_open();
   if(handle < 0) return -1;
   
   // 2. Get init sequence
@@ -352,7 +352,7 @@ static int newcamd_send(uchar *buf, int ml, ushort sid)
          buf, ml, reader[ridx].ncd_skey, COMMTYPE_CLIENT, sid));
 }
 
-static int newcamd_recv(uchar *buf, int l)
+static int newcamd_recv(uchar *buf)
 {
   int rc, rs;
 
@@ -543,7 +543,7 @@ static FILTER mk_user_ftab()
   return filt;
 }
 
-static void newcamd_auth_client(in_addr_t ip)
+static void newcamd_auth_client()
 {
     int i, ok = 0;
     uchar *usr=NULL, *pwd=NULL;
@@ -943,7 +943,7 @@ static void newcamd_send_dcw(ECM_REQUEST *er)
                        client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0);
 }
 
-static void newcamd_process_ecm(uchar *buf, int l)
+static void newcamd_process_ecm(uchar *buf)
 {
   int pi;
   ECM_REQUEST *er;
@@ -964,7 +964,7 @@ static void newcamd_process_ecm(uchar *buf, int l)
   get_cw(er);
 }
 
-static void newcamd_process_emm(uchar *buf, int l)
+static void newcamd_process_emm(uchar *buf)
 {
   int au, ok=1;
   ushort caid;
@@ -1030,7 +1030,7 @@ static void newcamd_server()
   client[cs_idx].ncd_server = 1;
   cs_debug("client connected to %d port", 
             cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port);
-  newcamd_auth_client(client[cs_idx].ip);
+  newcamd_auth_client();
 
   n=-9;
   while(n==-9)
@@ -1041,14 +1041,14 @@ static void newcamd_server()
 	    {
 	      case 0x80:
 	      case 0x81:
-	        newcamd_process_ecm(mbuf, n);
+	        newcamd_process_ecm(mbuf);
 	        break;
 	      case MSG_KEEPALIVE:
 	        newcamd_reply_ka();
 	        break;
 	      default:
 	        if( mbuf[2]>0x81 && mbuf[2]<0x90 )
-	          newcamd_process_emm(mbuf+2, n-2);
+	          newcamd_process_emm(mbuf+2);
 	        else
 	          cs_debug("unknown command !");
 	    }

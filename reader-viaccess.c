@@ -149,7 +149,7 @@ static int chk_prov(uchar *id, uchar keynr)
   if (card_write(cmd, NULL)) return(0); \
 }
 
-int viaccess_card_init(uchar *atr, int atrsize)
+int viaccess_card_init(uchar *atr)
 {
   int i;
   uchar buf[256];

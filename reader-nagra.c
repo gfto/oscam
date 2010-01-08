@@ -571,7 +571,7 @@ void decryptDT08(void)
 	}  	
 }
 
-void addProvider(int id)
+void addProvider()
 {
 	int i;
 	int toadd=1;
@@ -628,7 +628,7 @@ int ParseDataType(unsigned char dt)
         			tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15);
         			tier_date(b2i(2, cta_res+13)-0x7f7, de, 15);
         			cs_ri_log("|%04X|%04X    |%s  |%s  |", id,chid, ds, de);
-        			addProvider(id); 
+        			addProvider(); 
         		}
        		case 0x08:
      		case 0x88: if (cta_res[11] == 0x49) decryptDT08();  			
@@ -656,7 +656,7 @@ int GetDataType(unsigned char dt, int len, int shots)
   	return 1;
 }
 
-int nagra2_card_init(uchar *atr, int atrlen)
+int nagra2_card_init(uchar *atr)
 {
 	memset(rom, 0, 15);
 	reader[ridx].nprov = 1;

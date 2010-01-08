@@ -67,7 +67,7 @@ int set_provider_info(int i)
   return(1);
 }
 
-int seca_card_init(uchar *atr, int atrsize)
+int seca_card_init(uchar *atr)
 {
   uchar buf[256];
   static uchar ins0e[] = { 0xc1, 0x0e, 0x00, 0x00, 0x08 }; // get serial number (UA)

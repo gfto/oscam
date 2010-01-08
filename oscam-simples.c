@@ -57,7 +57,7 @@ char *strtolower(char *txt)
 {
   char *p;
   for (p=txt; *p; p++)
-    *p=tolower(*p);
+    if (isupper((uchar)*p)) *p=tolower((uchar)*p);
   return(txt);
 }
 

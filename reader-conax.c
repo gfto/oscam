@@ -51,7 +51,7 @@ static int read_record(uchar *cmd, uchar *data)
   return(cta_lr-2);
 }
 
-int conax_card_init(uchar *atr, int atrsize)
+int conax_card_init(uchar *atr)
 {
   int i, j, n;
   uchar atr_0b00[] = { '0', 'B', '0', '0' };

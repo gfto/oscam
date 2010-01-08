@@ -153,7 +153,7 @@ cs_debug("conn_nb 9 (fd=%d)", sockfd);
   return(0);
 }
 
-int network_tcp_connection_open(uint8 *hostname, uint16 port)
+int network_tcp_connection_open()
 {
   int flags;
   if( connect_nonb(client[cs_idx].udp_fd, 
@@ -612,7 +612,7 @@ void start_cardreader()
   else
   {
     client[cs_idx].ip=cs_inet_addr("127.0.0.1");
-    while (reader_device_init(reader[ridx].device, reader[ridx].typ)==2)
+    while (reader_device_init(reader[ridx].device)==2)
       sleep(60); // wait 60 secs and try again
   }
 

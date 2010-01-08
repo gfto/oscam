@@ -86,7 +86,7 @@ extern IO_Serial *IO_Serial_New (int reader_type, int mhz, int cardmhz);
 extern void IO_Serial_Delete (IO_Serial * io);
 
 /* Initialization and closing */
-extern bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial, bool pnp);
+extern bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial);
 extern bool IO_Serial_Close (IO_Serial * io);
 
 /* Transmission properties */

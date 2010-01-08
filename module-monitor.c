@@ -124,7 +124,7 @@ static int monitor_recv(uchar *buf, int l)
   if (bpos)
     memcpy(buf, bbuf, n=bpos);
   else
-    n=recv_from_udpipe(buf, l);
+    n=recv_from_udpipe(buf);
   bpos=0;
   if (!n) return(buf[0]=0);
   if (buf[0]=='&')

@@ -74,7 +74,7 @@ Protocol_T1_New (void)
 }
 
 int
-Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, PPS_ProtocolParameters * params, int selected_protocol)
+Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, int selected_protocol)
 {
   ICC_Async_Timings timings;
   BYTE ta, tb, tc, cwi, bwi;

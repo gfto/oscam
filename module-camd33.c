@@ -48,7 +48,7 @@ static void camd33_request_emm()
   }
 }
 
-static void camd33_auth_client(in_addr_t ip)
+static void camd33_auth_client()
 {
   int i, rc;
   uchar *usr=NULL, *pwd=NULL;
@@ -185,7 +185,7 @@ static void camd33_server()
   }
   memset(req, 0, CS_MAXPENDING*REQ_SIZE);
 
-  camd33_auth_client(client[cs_idx].ip);
+  camd33_auth_client();
 
   while ((n=get_request(mbuf, sizeof(mbuf)))>0)
   {

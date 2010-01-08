@@ -689,7 +689,7 @@ extern int use_ac_log;
 
 // oscam
 extern char *cs_platform(char *);
-extern int recv_from_udpipe(uchar *, int);
+extern int recv_from_udpipe(uchar *);
 extern char* username(int);
 extern int idx_from_pid(pid_t);
 extern int idx_from_username(char *uname);
@@ -746,7 +746,7 @@ extern int  init_userdb(void);
 extern int  init_readerdb(void);
 extern int  init_sidtab(void);
 extern int  init_srvid(void);
-extern int  search_boxkey(ushort, ulong, char *);
+extern int  search_boxkey(ushort, char *);
 extern void init_len4caid(void);
 extern int  init_irdeto_guess_tab(void);
 
@@ -759,7 +759,7 @@ extern void cs_ri_brk(int);
 extern void cs_ri_log(char *,...);
 extern void start_cardreader(void);
 extern void reader_card_info(void);
-extern int network_tcp_connection_open(uint8 *, uint16);
+extern int network_tcp_connection_open();
 extern void network_tcp_connection_close(int);
 
 // oscam-log
@@ -780,7 +780,7 @@ extern void aes_decrypt(uchar *, int);
 #define aes_encrypt(b, n) aes_encrypt_idx(cs_idx, b, n)
 
 // reader-common
-extern int reader_device_init(char *, int);
+extern int reader_device_init(char *);
 extern int reader_checkhealth(void);
 extern void reader_post_process(void);
 extern int reader_ecm(ECM_REQUEST *);
@@ -795,13 +795,13 @@ extern int pcsc_reader_init(struct s_reader *pcsc_reader, char *device);
 #endif
 
 // reader-irdeto
-extern int irdeto_card_init(uchar *, int);
+extern int irdeto_card_init(uchar *);
 extern int irdeto_do_ecm(ECM_REQUEST *);
 extern int irdeto_do_emm(EMM_PACKET *);
 extern int irdeto_card_info(void);
 
 // reader-viaccess
-extern int viaccess_card_init(uchar *, int);
+extern int viaccess_card_init(uchar *);
 extern int viaccess_do_ecm(ECM_REQUEST *);
 extern int viaccess_do_emm(EMM_PACKET *);
 extern int viaccess_card_info(void);
@@ -813,14 +813,14 @@ extern int videoguard_do_emm(EMM_PACKET *);
 extern int videoguard_card_info(void);
 
 // reader-cryptoworks
-extern int cryptoworks_card_init(uchar *, int);
+extern int cryptoworks_card_init(uchar *);
 extern int cryptoworks_do_ecm(ECM_REQUEST *);
 extern int cryptoworks_do_emm(EMM_PACKET *);
 extern int cryptoworks_card_info(void);
 extern int CheckSctLen(const uchar *, int);
 
 // reader-seca
-extern int seca_card_init(uchar *, int);
+extern int seca_card_init(uchar *);
 extern int seca_do_ecm(ECM_REQUEST *);
 extern int seca_do_emm(EMM_PACKET *);
 extern int seca_card_info(void);
@@ -832,20 +832,20 @@ extern int nds_do_emm(EMM_PACKET *);
 extern int nds_card_info(void);
 
 // reader nagra2/3
-extern int nagra2_card_init(uchar *, int);
+extern int nagra2_card_init(uchar *);
 extern int nagra2_do_ecm(ECM_REQUEST *er);
 extern int nagra2_card_info(void);
 extern int nagra2_do_emm(EMM_PACKET *);
 extern void nagra2_post_process();
  
 // reader-conax
-extern int conax_card_init(uchar *, int);
+extern int conax_card_init(uchar *);
 extern int conax_do_ecm(ECM_REQUEST *);
 extern int conax_do_emm(EMM_PACKET *);
 extern int conax_card_info(void);
  
 // reader-dre
-extern int dre_card_init(uchar *, int);
+extern int dre_card_init(uchar *);
 extern int dre_do_ecm(ECM_REQUEST *);
 extern int dre_do_emm(EMM_PACKET *);
 extern int dre_card_info(void);

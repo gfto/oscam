@@ -474,7 +474,7 @@ static int PPS_InitProtocol (PPS * pps, int selected_protocol)
 		
 		if (pps->protocol != NULL)
 		{
-			ret = Protocol_T1_Init ((Protocol_T1 *) pps->protocol, (ICC_Async *) pps->icc, &(pps->parameters), selected_protocol);
+			ret = Protocol_T1_Init ((Protocol_T1 *) pps->protocol, (ICC_Async *) pps->icc, selected_protocol);
 			
 			if (ret != PROTOCOL_T1_OK)
 			{

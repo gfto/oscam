@@ -29,7 +29,7 @@ static int radegast_recv(uchar *buf, int l)
   return(n);
 }
 
-static int radegast_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
+static int radegast_recv_chk(uchar *dcw, int *rc, uchar *buf)
 {
   if ((buf[0] == 2) && (buf[1] == 0x12)) {
     memcpy(dcw, buf+4, 16);
@@ -167,7 +167,7 @@ static void radegast_server()
   cs_disconnect_client();
 }
 
-static int radegast_send_ecm(ECM_REQUEST *er, uchar *buf)
+static int radegast_send_ecm(ECM_REQUEST *er)
 {
   int n;
   uchar provid_buf[8];
@@ -265,7 +265,7 @@ int radegast_cli_init(void)
   cs_log("radegast: proxy %s:%d (fd=%d)",
           reader[ridx].device, reader[ridx].r_port, client[cs_idx].udp_fd);
 
-  handle = network_tcp_connection_open((unsigned char *)reader[ridx].device, reader[ridx].r_port);
+  handle = network_tcp_connection_open();
   if(handle < 0) return -1;
 
   reader[ridx].tcp_connected = 1;

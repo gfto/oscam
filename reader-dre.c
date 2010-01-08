@@ -138,7 +138,7 @@ int dre_set_provider_info (void)
   return 1;
 }
 
-int dre_card_init (uchar * atr, int atrsize)
+int dre_card_init (uchar * atr)
 {
   static uchar ua[] = { 0x43, 0x15 };	// get serial number (UA)
   static uchar providers[] = { 0x49, 0x15 };	// get providers

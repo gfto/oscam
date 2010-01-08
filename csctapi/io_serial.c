@@ -62,7 +62,7 @@ static bool IO_Serial_WaitToRead (int hnd, unsigned delay_ms, unsigned timeout_m
 
 static bool IO_Serial_WaitToWrite (IO_Serial *io, unsigned delay_ms, unsigned timeout_ms);
 
-static void IO_Serial_DeviceName (unsigned com, bool usbserial, char * filename, unsigned length);
+static void IO_Serial_DeviceName (char * filename, unsigned length);
 
 static bool IO_Serial_InitPnP (IO_Serial * io);
 
@@ -173,11 +173,11 @@ IO_Serial * IO_Serial_New (int reader_type, int mhz, int cardmhz)
 	return io;
 }
 
-bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial, bool pnp)
+bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial)
 {
 	char filename[IO_SERIAL_FILENAME_LENGTH];
 	
-	IO_Serial_DeviceName (com, usbserial, filename, IO_SERIAL_FILENAME_LENGTH);
+	IO_Serial_DeviceName (filename, IO_SERIAL_FILENAME_LENGTH);
 	
 #ifdef DEBUG_IO
 	printf ("IO: Opening serial port %s\n", filename);
@@ -819,7 +819,7 @@ bool IO_Serial_Close (IO_Serial * io)
 {
 	char filename[IO_SERIAL_FILENAME_LENGTH];
 	
-	IO_Serial_DeviceName (io->com, io->usbserial, filename, IO_SERIAL_FILENAME_LENGTH);
+	IO_Serial_DeviceName (filename, IO_SERIAL_FILENAME_LENGTH);
 	
 #ifdef DEBUG_IO
 	printf ("IO: Clossing serial port %s\n", filename);
@@ -1030,7 +1030,7 @@ static void IO_Serial_Clear (IO_Serial * io)
 	io->rts = 0;
 }
 
-static void IO_Serial_DeviceName (unsigned com, bool usbserial, char * filename, unsigned length)
+static void IO_Serial_DeviceName (char * filename, unsigned length)
 {
 	extern char oscam_device[];
    snprintf (filename, length, "%s", oscam_device);

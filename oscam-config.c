@@ -527,13 +527,12 @@ static void chk_t_gbox(char *token, char *value)
 static void chk_t_cccam(char *token, char *value)
 {
   // placeholder for ccam server support
+  fprintf(stderr, "Warning: OSCam have no cccam server support yet. Parametr %s = %s\n", token, value);
 }
 
+#ifdef HAVE_DVBAPI
 static void chk_t_dvbapi(char *token, char *value)
 {
-#ifndef HAVE_DVBAPI
-	fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n");
-#else
 	if (!strcmp(token, "enabled")) 	{ cfg->dvbapi_enabled=atoi(value); return; }
 	if (!strcmp(token, "au"))		{ cfg->dvbapi_au=atoi(value); return; }
 	if (!strcmp(token, "boxtype")) 	{ strncpy(cfg->dvbapi_boxtype, value, sizeof(cfg->dvbapi_boxtype)-1); return; }
@@ -541,8 +540,8 @@ static void chk_t_dvbapi(char *token, char *value)
 	
 	if (token[0] != '#')
 	    fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
-#endif
 }
+#endif
 
 static void chk_token(char *token, char *value, int tag)
 {
@@ -559,7 +558,11 @@ static void chk_token(char *token, char *value, int tag)
     case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
     case TAG_GBOX    : chk_t_gbox(token, value); break;
     case TAG_CCCAM   : chk_t_cccam(token, value); break;
+#ifdef HAVE_DVBAPI
     case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
+#else
+    case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
+#endif
 #ifdef CS_ANTICASC
     case TAG_ANTICASC: chk_t_ac(token, value); break;
 #endif
@@ -597,7 +600,7 @@ void init_len4caid()
   return;
 }
 
-int search_boxkey(ushort caid, ulong provid, char *key)
+int search_boxkey(ushort caid, char *key)
 {
   int i, rc=0;
   FILE *fp;
@@ -630,7 +633,7 @@ int search_boxkey(ushort caid, ulong provid, char *key)
   }
 #ifdef OSCAM_INBUILD_KEYS
   for(i=0; (!rc) && (npkey[i].keylen); i++)
-    if (rc=((caid==npkey[i].caid) && (provid==npkey[i].provid)))
+    if (rc=((caid==npkey[i].caid) && (npkey[i].provid==0)))
       memcpy(key, npkey[i].key, npkey[i].keylen);
 #endif
   return(rc);

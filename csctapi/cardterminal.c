@@ -98,7 +98,7 @@ char CardTerminal_Init (CardTerminal * ct, unsigned short pn, int reader_type, i
 	}
 	
 	/* Initialise serial port */
-	if (!IO_Serial_Init (ct->io, pn + 1, usbserial, FALSE))
+	if (!IO_Serial_Init (ct->io, pn + 1, usbserial))
 	{
 		free (ct->io);
 		ct->io = NULL;

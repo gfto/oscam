@@ -64,7 +64,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	unsigned np=0;
 
 	/* LED Red */
-	if (IFD_Towitoko_SetLED (ifd, IFD_TOWITOKO_LED_RED) != IFD_TOWITOKO_OK)
+	if (IFD_Towitoko_SetLED () != IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
 	
 	/* Initialize Baudrate */
@@ -107,7 +107,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 #endif
 	*///really should let PPS handle this
 	/* LED Green */
-	if (IFD_Towitoko_SetLED (ifd, IFD_TOWITOKO_LED_GREEN) != IFD_TOWITOKO_OK)
+	if (IFD_Towitoko_SetLED () != IFD_TOWITOKO_OK)
 	{
 		ATR_Delete (icc->atr);
 		icc->atr = NULL;
@@ -310,7 +310,7 @@ int ICC_Async_Close (ICC_Async * icc)
 		return ICC_ASYNC_IFD_ERROR;
 	
 	/* LED Off */
-	if (IFD_Towitoko_SetLED (icc->ifd, IFD_TOWITOKO_LED_OFF) != IFD_TOWITOKO_OK)
+	if (IFD_Towitoko_SetLED () != IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
 	
 	/* Delete atr */

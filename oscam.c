@@ -172,7 +172,7 @@ static int daemon(int nochdir, int noclose)
 }
 #endif
 
-int recv_from_udpipe(uchar *buf, int l)
+int recv_from_udpipe(uchar *buf)
 {
   unsigned short n;
   if (!pfd) return(-9);

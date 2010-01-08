@@ -17,7 +17,11 @@ static int cs_ptyp_orig; //reinit=1,
 #define SC_DRE 7
 #define SC_NAGRA 8
 
-static int reader_device_type(char *device, int typ)
+#ifdef TUXBOX
+static int reader_device_type(char *device)
+#else
+static int reader_device_type()
+#endif
 {
   int rc=PORT_STD;
 #ifdef TUXBOX
@@ -266,14 +270,14 @@ void reader_card_info()
 
 static int reader_get_cardsystem(void)
 {
-  if (nagra2_card_init(atr, atr_size))		reader[ridx].card_system=SC_NAGRA; else
-  if (irdeto_card_init(atr, atr_size))		reader[ridx].card_system=SC_IRDETO; else
-  if (conax_card_init(atr, atr_size))		reader[ridx].card_system=SC_CONAX; else
-  if (cryptoworks_card_init(atr, atr_size))	reader[ridx].card_system=SC_CRYPTOWORKS; else
-  if (seca_card_init(atr, atr_size))	reader[ridx].card_system=SC_SECA; else
-  if (viaccess_card_init(atr, atr_size))	reader[ridx].card_system=SC_VIACCESS; else
+  if (nagra2_card_init(atr))		reader[ridx].card_system=SC_NAGRA; else
+  if (irdeto_card_init(atr))		reader[ridx].card_system=SC_IRDETO; else
+  if (conax_card_init(atr))		reader[ridx].card_system=SC_CONAX; else
+  if (cryptoworks_card_init(atr))	reader[ridx].card_system=SC_CRYPTOWORKS; else
+  if (seca_card_init(atr))	reader[ridx].card_system=SC_SECA; else
+  if (viaccess_card_init(atr))	reader[ridx].card_system=SC_VIACCESS; else
   if (videoguard_card_init(atr, atr_size))  reader[ridx].card_system=SC_VIDEOGUARD2; else
-  if (dre_card_init(atr, atr_size))  reader[ridx].card_system=SC_DRE; else
+  if (dre_card_init(atr))  reader[ridx].card_system=SC_DRE; else
     cs_ri_log("card system not supported");
   cs_ri_brk(1);
 
@@ -305,7 +309,7 @@ static int reader_card_inserted(void)
   return(reader_chkicc(cta_cmd, 5) ? 0 : cta_res[0]);
 }
 
-int reader_device_init(char *device, int typ)
+int reader_device_init(char *device)
 {
 #ifdef HAVE_PCSC
 	if (reader[ridx].typ == R_PCSC) {
@@ -318,8 +322,13 @@ int reader_device_init(char *device, int typ)
   cs_ptyp_orig=cs_ptyp;
   cs_ptyp=D_DEVICE;
   snprintf(oscam_device, sizeof(oscam_device), "%s", device);
-  if ((rc=CT_init(1, reader_device_type(device, typ),reader[ridx].typ,reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
+#ifdef TUXBOX
+  if ((rc=CT_init(1, reader_device_type(device),reader[ridx].typ,reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
+    cs_log("[tuxbox] Cannot open device: %s", device);
+#else
+  if ((rc=CT_init(1, reader_device_type(),reader[ridx].typ,reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
     cs_log("Cannot open device: %s", device);
+#endif
   cs_debug("ct_init on %s: %d", device, rc);
   cs_ptyp=cs_ptyp_orig;
   return((rc!=OK) ? 2 : 0);

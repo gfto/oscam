@@ -179,7 +179,7 @@ int cryptoworks_disbale_pin(void)
   return(0);
 }
 
-int cryptoworks_card_init(uchar *atr, int atrsize)
+int cryptoworks_card_init(uchar *atr)
 {
   int i;
   unsigned int mfid=0x3F20;
@@ -228,7 +228,7 @@ int cryptoworks_card_init(uchar *atr, int atrsize)
   {
     uchar keybuf[256];
     BIGNUM *ipk;
-    if (search_boxkey(reader[ridx].caid[0], 0, (char *)keybuf))
+    if (search_boxkey(reader[ridx].caid[0], (char *)keybuf))
     {
       ipk=BN_new();
       BN_bin2bn(cwexp, sizeof(cwexp), &exp);

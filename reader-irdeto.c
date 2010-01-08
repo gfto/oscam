@@ -154,7 +154,7 @@ static int irdeto_do_cmd(uchar *buf, ushort good)
         if (reader_cmd2icc(cmd, sizeof(cmd))) return(0); \
   if (l && (cta_lr!=l)) return(0); }
 
-int irdeto_card_init(uchar *atr, int atrlen)
+int irdeto_card_init(uchar *atr)
 {
   int i, camkey=0, cs_ptyp_orig=cs_ptyp;
   uchar buf[256]={0};

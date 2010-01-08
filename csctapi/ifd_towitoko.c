@@ -245,7 +245,7 @@ int IFD_Towitoko_Close (IFD * ifd)
 	printf ("IFD: Closing slot number %d\n", ifd->slot);
 #endif
 	
-	ret = IFD_Towitoko_SetLED (ifd, IFD_TOWITOKO_LED_OFF);
+	ret = IFD_Towitoko_SetLED ();
 	if (ret != IFD_TOWITOKO_OK)
 		return ret;
 		
@@ -262,7 +262,7 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 		return IFD_TOWITOKO_OK;
 	}
 /*	
-	if (IFD_Towitoko_GetMaxBaudrate (ifd) < baudrate)
+	if (IFD_Towitoko_GetMaxBaudrate () < baudrate)
 	{
 #ifdef DEBUG_IFD
 		printf ("IFD: Tried to set unsupported baudrate: %lu", baudrate);
@@ -338,7 +338,7 @@ extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity)
 	return IFD_TOWITOKO_OK;
 }
 
-int IFD_Towitoko_SetLED (IFD * ifd, BYTE color)
+int IFD_Towitoko_SetLED ()
 {	
 	return IFD_TOWITOKO_OK;
 }
@@ -869,13 +869,13 @@ IFD_Towitoko_GetSlot (IFD * ifd)
 }
 
 unsigned
-IFD_Towitoko_GetNumSlots (IFD * ifd)
+IFD_Towitoko_GetNumSlots ()
 {
 	return 1;
 }
 
 unsigned long 
-IFD_Towitoko_GetMaxBaudrate (IFD * ifd)
+IFD_Towitoko_GetMaxBaudrate ()
 {
  	return 115200L;
 }

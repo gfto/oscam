@@ -33,7 +33,7 @@ void llist_destroy(LLIST *l);               // de-init linked list - frees all o
 void *llist_append(LLIST *l, void *o);       // append object onto bottom of list, returns ptr to obj
 
 void *llist_itr_init(LLIST *l, LLIST_ITR *itr);       // linked list iterator, returns ptr to first obj
-void llist_itr_release(LLIST_ITR *itr);               // release iterator
+//void llist_itr_release(LLIST_ITR *itr);               // release iterator
 void *llist_itr_next(LLIST_ITR *itr);                 // iterates, returns ptr to next obj
 
 void *llist_itr_insert(LLIST_ITR *itr, void *o);  // insert object at itr point, iterates to and returns ptr to new obj
@@ -66,7 +66,7 @@ void llist_destroy(LLIST *l)
     free(o);
     o = llist_itr_remove(&itr);
   }
-  llist_itr_release(&itr);
+//  llist_itr_release(&itr);
 }
 
 void *llist_append(LLIST *l, void *o)
@@ -107,12 +107,12 @@ void *llist_itr_init(LLIST *l, LLIST_ITR *itr)
 
   return NULL;
 }
-
+/*
 void llist_itr_release(LLIST_ITR *itr)
 {
  // pthread_mutex_unlock(&itr->l->lock);
 }
-
+*/
 void *llist_itr_next(LLIST_ITR *itr)
 {
   if (itr->cur->nxt) {
@@ -310,7 +310,7 @@ static void cc_cw_decrypt(uint8 *cws)
   }
 }
 
-static int cc_msg_recv(uint8 *buf, int l)
+static int cc_msg_recv(uint8 *buf)
 {
   int len, flags;
   uint8 netbuf[CC_MAXMSGSIZE];
@@ -503,7 +503,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
         }
         sid = llist_itr_next(&sitr);
       }
-      llist_itr_release(&sitr);
+//      llist_itr_release(&sitr);
 
       LLIST_ITR pitr;
       uint8 *prov = llist_itr_init(card->provs, &pitr);
@@ -516,11 +516,11 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
         }
         prov = llist_itr_next(&pitr);
       }
-      llist_itr_release(&pitr);
+//      llist_itr_release(&pitr);
     }
     card = llist_itr_next(&itr);
   }
-  llist_itr_release(&itr);
+//  llist_itr_release(&itr);
 
   if (cc->cur_card) {
     uint8 *ecmbuf = malloc(cur_er->l+13);
@@ -569,11 +569,11 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
             	sid = llist_itr_remove(&sitr);
             else sid = llist_itr_next(&sitr);
           }
-          llist_itr_release(&sitr);
+//          llist_itr_release(&sitr);
         }
         card = llist_itr_next(&itr);
       }
-      llist_itr_release(&itr);
+//      llist_itr_release(&itr);
 
       pthread_mutex_unlock(&cc->ecm_busy);
   }
@@ -669,7 +669,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
         card = llist_itr_next(&itr);
       }
     }
-    llist_itr_release(&itr);
+//    llist_itr_release(&itr);
   }
     break;
   case MSG_CW_NOK1:
@@ -681,12 +681,12 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     uint16 *sid = llist_itr_init(cc->cur_card->badsids, &itr);
     while (sid && !f) {
       if (*sid == cc->cur_sid) {
-        llist_itr_release(&itr);
+//        llist_itr_release(&itr);
         f = 1;
       }
       sid = llist_itr_next(&itr);
     }
-    llist_itr_release(&itr);
+//    llist_itr_release(&itr);
 
     if (!f) {
       sid = malloc(sizeof(uint16));
@@ -720,7 +720,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
   return ret;
 }
 
-static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
+static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf)
 {
   struct cc_data *cc = reader[ridx].cc;
 
@@ -750,7 +750,7 @@ int cc_recv(uchar *buf, int l)
 
   if (!is_server) {
     if (!client[cs_idx].udp_fd) return(-1);
-    n = cc_msg_recv(cbuf, l);  // recv and decrypt msg
+    n = cc_msg_recv(cbuf);  // recv and decrypt msg
   } else {
     return -2;
   }
@@ -797,7 +797,7 @@ static int cc_cli_connect(void)
     return -5;
 
   // connect
-  handle = network_tcp_connection_open((uint8 *)reader[ridx].device, reader[ridx].r_port);
+  handle = network_tcp_connection_open();
   if(handle < 0) return -1;
 
   // get init seed
