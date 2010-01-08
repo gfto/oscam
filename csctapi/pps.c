@@ -54,7 +54,7 @@ static bool PPS_Match (BYTE * request, unsigned len_request, BYTE * reply, unsig
 
 static unsigned PPS_GetLength (BYTE * block);
 
-static int PPS_InitICC (PPS * pps, int protocol_selected);
+static int PPS_InitICC (PPS * pps);
 
 static int PPS_InitProtocol (PPS * pps, int protocol_selected);
 
@@ -268,13 +268,16 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	pps->parameters.n);
 #endif
 
-	ret  = PPS_InitICC(pps, protocol_selected);
+	ret  = PPS_InitICC(pps);
 			
 	if (ret != PPS_OK)
 		return ret;
 	
 	/* Initialize selected protocol with selected parameters */
-	ret = PPS_InitProtocol (pps, protocol_selected);
+	if (pps->parameters.t == 1)
+		ret = PPS_InitProtocol (pps, 3); //FIXME in practice most T1 cards carry timing parameters in TA3, TB3 and TC3
+	else
+		ret = PPS_InitProtocol (pps, 2); //FIXME T0 cards carry timing parameters in TC2
 	
 	return ret;
 }
@@ -383,7 +386,7 @@ static unsigned PPS_GetLength (BYTE * block)
 	return length;
 }
 
-static int PPS_InitICC (PPS * pps, int selected_protocol)
+static int PPS_InitICC (PPS * pps)
 {
 #ifdef SCI_DEV
 #include <sys/ioctl.h>
