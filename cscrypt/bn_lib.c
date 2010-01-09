@@ -92,28 +92,28 @@ void BN_set_params(int mult, int high, int low, int mont)
 	{
 	if (mult >= 0)
 		{
-		if (mult > (sizeof(int)*8)-1)
+		if (mult > (int)(sizeof(int)*8)-1)
 			mult=sizeof(int)*8-1;
 		bn_limit_bits=mult;
 		bn_limit_num=1<<mult;
 		}
 	if (high >= 0)
 		{
-		if (high > (sizeof(int)*8)-1)
+		if (high > (int)(sizeof(int)*8)-1)
 			high=sizeof(int)*8-1;
 		bn_limit_bits_high=high;
 		bn_limit_num_high=1<<high;
 		}
 	if (low >= 0)
 		{
-		if (low > (sizeof(int)*8)-1)
+		if (low > (int)(sizeof(int)*8)-1)
 			low=sizeof(int)*8-1;
 		bn_limit_bits_low=low;
 		bn_limit_num_low=1<<low;
 		}
 	if (mont >= 0)
 		{
-		if (mont > (sizeof(int)*8)-1)
+		if (mont > (int)(sizeof(int)*8)-1)
 			mont=sizeof(int)*8-1;
 		bn_limit_bits_mont=mont;
 		bn_limit_num_mont=1<<mont;
@@ -129,10 +129,10 @@ int BN_get_params(int which)
 	else return(0);
 	}
 
-BIGNUM *BN_value_one(void)
+const BIGNUM *BN_value_one(void)
 	{
-	static BN_ULONG data_one=1L;
-	static BIGNUM const_one={&data_one,1,1,0};
+	static const BN_ULONG data_one=1L;
+	static const BIGNUM const_one={(BN_ULONG *)&data_one,1,1,0,BN_FLG_STATIC_DATA};
 
 	return(&const_one);
 	}
@@ -517,51 +517,24 @@ void BN_clear(BIGNUM *a)
 	a->neg=0;
 	}
 
-BN_ULONG BN_get_word(BIGNUM *a)
+BN_ULONG BN_get_word(const BIGNUM *a)
 	{
-	int i,n;
-	BN_ULONG ret=0;
-
-	n=BN_num_bytes(a);
-	if (n > sizeof(BN_ULONG))
-		return(BN_MASK2);
-	for (i=a->top-1; i>=0; i--)
-		{
-#ifndef SIXTY_FOUR_BIT /* the data item > unsigned long */
-		ret<<=BN_BITS4; /* stops the compiler complaining */
-		ret<<=BN_BITS4;
-#else
-		ret=0;
-#endif
-		ret|=a->d[i];
-		}
-	return(ret);
+	if (a->top > 1)
+		return BN_MASK2;
+	else if (a->top == 1)
+		return a->d[0];
+	/* a->top == 0 */
+	return 0;
 	}
 
 int BN_set_word(BIGNUM *a, BN_ULONG w)
 	{
-	int i,n;
-	if (bn_expand(a,sizeof(BN_ULONG)*8) == NULL) return(0);
-
-	n=sizeof(BN_ULONG)/BN_BYTES;
-	a->neg=0;
-	a->top=0;
-	a->d[0]=(BN_ULONG)w&BN_MASK2;
-	if (a->d[0] != 0) a->top=1;
-	for (i=1; i<n; i++)
-		{
-		/* the following is done instead of
-		 * w>>=BN_BITS2 so compilers don't complain
-		 * on builds where sizeof(long) == BN_TYPES */
-#ifndef SIXTY_FOUR_BIT /* the data item > unsigned long */
-		w>>=BN_BITS4;
-		w>>=BN_BITS4;
-#else
-		w=0;
-#endif
-		a->d[i]=(BN_ULONG)w&BN_MASK2;
-		if (a->d[i] != 0) a->top=i+1;
-		}
+	bn_check_top(a);
+	if (bn_expand(a,(int)sizeof(BN_ULONG)*8) == NULL) return(0);
+	a->neg = 0;
+	a->d[0] = w;
+	a->top = (w ? 1 : 0);
+	bn_check_top(a);
 	return(1);
 	}
 

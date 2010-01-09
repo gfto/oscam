@@ -171,7 +171,7 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
 	/* Store historical bytes */
 	if (pointer + atr->hbn >= length) {
 		cs_log("ATR is malformed, it reports %i historical bytes but there are only %i",atr->hbn, length-pointer-2);
-		if (length-pointer-2 >=0)
+		if (length-pointer >= 2)
 			atr->hbn = length-pointer-2;
 		else {
 			atr->hbn = 0;

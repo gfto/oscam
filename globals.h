@@ -517,7 +517,7 @@ struct s_config
   ulong     netprio;
   ulong     ctimeout;
   ulong     ftimeout;
-  int       cmaxidle;
+  ulong     cmaxidle;
   int     ulparent;
   ulong     delay;
   int       bindwait;
@@ -555,7 +555,7 @@ struct s_config
   struct s_ip *rad_allowed;
   char      rad_usr[32];
   char      ser_device[512];
-  int       srtimeout;  // SerialReaderTimeount in millisec
+  ulong       srtimeout;  // SerialReaderTimeount in millisec
   int       max_log_size;
   int       show_ecm_dw;
   int       waitforcards;
@@ -788,7 +788,7 @@ extern int reader_emm(EMM_PACKET *);
 
 #ifdef HAVE_PCSC
 // reader-pcsc
-extern int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res, ushort *cta_lr,int l, int dbg);
+extern int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res, ushort *cta_lr,int l);
 extern int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_size);
 extern int pcsc_check_card_inserted(struct s_reader *pcsc_reader);
 extern int pcsc_reader_init(struct s_reader *pcsc_reader, char *device);

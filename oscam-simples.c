@@ -183,7 +183,7 @@ char *cs_hexdump(int m, uchar *buf, int n)
 
   dump[i=0]='\0';
   m=(m)?3:2;
-  if (m*n>=sizeof(dump)) n=(sizeof(dump)/m)-1;
+  if (m*n>=(int)sizeof(dump)) n=(sizeof(dump)/m)-1;
   while (i<n)
     sprintf(dump+(m*i++), "%02X%s", *buf++, (m>2)?" ":"");
   return(dump);

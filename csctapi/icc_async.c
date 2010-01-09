@@ -347,7 +347,7 @@ void ICC_Async_Delete (ICC_Async * icc)
 
 static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer)
 {
-	int i;
+	uint i;
 	
 	for (i = 0; i < size; i++)
 		buffer[i] = ~(INVERT_BYTE (buffer[i]));

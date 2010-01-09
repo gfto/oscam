@@ -223,7 +223,7 @@ void newcamd_reply_ka()
 
 static int connect_newcamd_server() 
 {
-  uint32 i;
+  int i;
   uint8 buf[CWS_NETMSGSIZE];
   uint8 keymod[14];
   uint8 *key;
@@ -660,7 +660,7 @@ static void newcamd_auth_client()
     
     if (ok) 
         {
-        FILTER pufilt_noau = { 0 };
+        FILTER pufilt_noau;
         FILTER *pufilt = 0;
 
         key = des_login_key_get(cfg->ncd_key, passwdcrypt, strlen((char *)passwdcrypt));

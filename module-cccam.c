@@ -422,7 +422,7 @@ static int cc_get_nxt_ecm()
   t=time((time_t *)0);
   for (i = 1, n = 1; i < CS_MAXPENDING; i++)
   {
-    if ((t-ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
+    if ((t-(ulong)ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
         (ecmtask[i].rc >= 10))      // drop timeouts
         {
           ecmtask[i].rc=0;

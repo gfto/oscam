@@ -372,7 +372,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
       memcpy(buff,er->ecm,secLen);
       nanoD4[0]=0xD4;
       nanoD4[1]=0x08;
-      for (i=2; i<sizeof(nanoD4); i++)
+      for (i=2; i<(int)sizeof(nanoD4); i++)
         nanoD4[i]=rand();
       memcpy(&buff[secLen], nanoD4, sizeof(nanoD4));
       ecm=buff;

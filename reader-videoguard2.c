@@ -833,7 +833,7 @@ int videoguard_do_ecm(ECM_REQUEST *er)
   return 0;
 }
 
-static unsigned int num_addr(const unsigned char *data)
+static int num_addr(const unsigned char *data)
 {
   return ((data[3]&0x30)>>4)+1;
 }

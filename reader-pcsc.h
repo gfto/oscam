@@ -18,7 +18,7 @@
 #endif
 
 int pcsc_reader_init(struct s_reader *pcsc_reader, char *device);
-int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res, ushort *cta_lr,int l, int dbg);
+int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res, ushort *cta_lr,int l);
 int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_size);
 int pcsc_check_card_inserted(struct s_reader *pcsc_reader);
 

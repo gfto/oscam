@@ -504,10 +504,11 @@ static int Protocol_T0_Case4S (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp ** rsp
 
 static int Protocol_T0_Case2E (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
-	int ret = PROTOCOL_T0_OK, i;
+	int ret = PROTOCOL_T0_OK;
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	APDU_Cmd *tpdu_cmd;
 	APDU_Rsp *tpdu_rsp;
+    ulong i;
 	
 	if (APDU_Cmd_Lc (cmd) < 256)
 	{

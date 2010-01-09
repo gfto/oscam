@@ -327,7 +327,7 @@ typedef struct bn_recp_ctx_st
 /*#define BN_ascii2bn(a)	BN_hex2bn(a) */
 /*#define BN_bn2ascii(a)	BN_bn2hex(a) */
 
-BIGNUM *BN_value_one(void);
+const BIGNUM *BN_value_one(void);
 char *	BN_options(void);
 BN_CTX *BN_CTX_new(void);
 void	BN_CTX_init(BN_CTX *c);
@@ -364,7 +364,7 @@ int	BN_mul_word(BIGNUM *a, BN_ULONG w);
 int	BN_add_word(BIGNUM *a, BN_ULONG w);
 int	BN_sub_word(BIGNUM *a, BN_ULONG w);
 int	BN_set_word(BIGNUM *a, BN_ULONG w);
-BN_ULONG BN_get_word(BIGNUM *a);
+BN_ULONG BN_get_word(const BIGNUM *a);
 int	BN_cmp(const BIGNUM *a, const BIGNUM *b);
 void	BN_free(BIGNUM *a);
 int	BN_is_bit_set(const BIGNUM *a, int n);

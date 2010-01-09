@@ -385,7 +385,7 @@ static void monitor_process_details_master(char *buf, int pid)
   sprintf(buf, "version=%s#%s, system=%s%s", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf+100), buf+200);
   monitor_send_details(buf, pid);
 
-  sprintf(buf, "max. clients=%d, client max. idle=%d sec", CS_MAXPID-2, cfg->cmaxidle);
+  sprintf(buf, "max. clients=%d, client max. idle=%ld sec", CS_MAXPID-2, cfg->cmaxidle);
   monitor_send_details(buf, pid);
 
   if( cfg->max_log_size )

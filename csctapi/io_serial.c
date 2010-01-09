@@ -658,7 +658,7 @@ unsigned IO_Serial_GetCom (IO_Serial * io)
 bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * data)
 {
 	BYTE c;
-	int count = 0;
+	uint count = 0;
 #ifdef SH4
 	bool readed;
 	struct timeval tv, tv_spent;
@@ -747,9 +747,8 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 
 bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE * data)
 {
-	unsigned count, to_send;
+	unsigned count, to_send, i_w;
     BYTE data_w[512];
-    int i_w;
 #ifdef DEBUG_IO
 	unsigned i;
 	

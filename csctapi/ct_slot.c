@@ -80,7 +80,7 @@ char CT_Slot_Init (CT_Slot * slot, IO_Serial * io, int sn)
 	return OK;
 }
 
-char CT_Slot_Check (CT_Slot * slot, int timeout, bool * card, bool * change)
+char CT_Slot_Check (CT_Slot * slot, uint timeout, bool * card, bool * change)
 {
 	BYTE status;
 #ifdef HAVE_NANOSLEEP

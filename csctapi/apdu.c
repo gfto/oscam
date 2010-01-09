@@ -78,8 +78,8 @@ void APDU_Cmd_Delete (APDU_Cmd * apdu)
 int APDU_Cmd_Case (APDU_Cmd * apdu)
 {
 	BYTE B1;
-	unsigned short B2B3;
-	unsigned long L;
+	ushort B2B3;
+	ulong L;
 	int res;
 	
 	/* Calculate length of body */
@@ -95,22 +95,22 @@ int APDU_Cmd_Case (APDU_Cmd * apdu)
 		/* Get first byte of body */
 		B1 = apdu->command[4];
 		
-		if ((B1 != 0) && (L == B1 + 1))
+		if ((B1 != 0) && (L == (ulong)B1 + 1))
 			res = APDU_CASE_2S;
 		else if (L == 1)
 			res = APDU_CASE_3S;
-		else if ((B1 != 0) && (L == B1 + 2))
+		else if ((B1 != 0) && (L == (ulong)B1 + 2))
 			res = APDU_CASE_4S;
 		else if ((B1 == 0) && (L>2))
 		{
 			/* Get second and third byte of body */
-			B2B3 = (((unsigned short)(apdu->command[5]) << 8) | apdu->command[6]);
+			B2B3 = (((ushort)(apdu->command[5]) << 8) | apdu->command[6]);
 			
-			if ((B2B3 != 0) && (L == B2B3 + 3))
+			if ((B2B3 != 0) && (L == (ulong)B2B3 + 3))
 				res = APDU_CASE_2E;
 			else if (L == 3)
 				res = APDU_CASE_3E;
-			else if ((B2B3 != 0) && (L == B2B3 + 5))
+			else if ((B2B3 != 0) && (L == (ulong)B2B3 + 5))
 				res = APDU_CASE_4E;
 			else
 				res = APDU_MALFORMED;

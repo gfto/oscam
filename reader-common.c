@@ -74,7 +74,7 @@ int reader_doapi(uchar dad, uchar *buf, int l, int dbg)
 {
 #ifdef HAVE_PCSC
 	if (reader[ridx].typ == R_PCSC) {
-    	return pcsc_reader_do_api(&reader[ridx], buf, cta_res, &cta_lr,l,dbg);
+    	return pcsc_reader_do_api(&reader[ridx], buf, cta_res, &cta_lr,l);
 	}
 
 #endif
