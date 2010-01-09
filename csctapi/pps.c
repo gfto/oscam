@@ -185,6 +185,30 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 //If more than one protocol type and/or TA1 parameter values other than the default values and/or N equeal to 255 is/are indicated in the answer to reset, the card shall know unambiguously, after having sent the answer to reset, which protocol type or/and transmission parameter values (FI, D, N) will be used. Consequently a selection of the protocol type and/or the transmission parameters values shall be specified.
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(pps->parameters.n));
 		ATR_GetProtocolType(atr,1,&(pps->parameters.t)); //get protocol from TD1
+		BYTE TA2;
+		bool SpecificMode = (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TA, &TA2) == ATR_OK); //if TA2 present, specific mode, else negotiable mode
+		if (SpecificMode) {
+			pps->parameters.t = TA2 & 0x0F;
+			if ((TA2 & 0x10) != 0x10) { //bit 5 set to 0 means F and D explicitly defined in interface characters
+				BYTE TA1;
+				if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
+					pps->parameters.FI = TA1 >> 4;
+					ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
+				}
+				else {
+					pps->parameters.FI = ATR_DEFAULT_FI;
+					pps->parameters.d = ATR_DEFAULT_D;
+				}
+			}
+			else {
+				cs_log("Specific mode: speed 'implicitly defined', not sure how to proceed, assuming default values");
+				pps->parameters.FI = ATR_DEFAULT_FI;
+				pps->parameters.d = ATR_DEFAULT_D;
+			}
+			cs_debug("Specific mode: T%i, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
+		}
+		else { //negotiable mode
+
 		bool NeedsPTS = ((pps->parameters.t != 14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
 		if (NeedsPTS) {
 			//             PTSS  PTS0  PTS1  PTS2  PTS3  PCK
@@ -216,13 +240,6 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 
 		//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards (=no switching); 
 		//When for SCI, T14 protocol, TA1 is obeyed, this goes OK for mosts devices, but somehow on DM7025 Sky S02 card goes wrong when setting ETU (ok on DM800/DM8000)
-		//So either 
-		//a) for ALL T14 ETU should not be set, or 
-		//b) only for Irdeto T14 cards, 
-		//c) or all Irdeto cards
-		//to be working on DM7025 and all other sci-devices ...
-		//we choose option b) for now, can always expand it...
-		//implemented it in InitICC
 		if (!PPS_success) {//last PPS not succesfull
 			BYTE TA1;
 			if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
@@ -245,6 +262,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 
 			cs_debug("No PTS %s, selected protocol 1: T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
 		}
+		}//end negotiable mode
 	}//end length<0
 		
 	//make sure no zero values
