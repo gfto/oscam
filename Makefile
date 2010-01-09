@@ -345,7 +345,6 @@ cross-mips-sgi-irix6.5:
 		DS_RL=mips-sgi-irix6.5-ranlib \
 		DS_ST=mips-sgi-irix6.5-strip
 
-cross-mipsel-router-linux-uclibc: cross-mipsel-router-linux-uclibc929
 ######################################################################
 #
 #	Linux MIPS(LE) crosscompiler with ucLibc 0.9.27
@@ -377,7 +376,7 @@ cross-mipsel-router-linux-uclibc928:
 	@-mipsel-linux-uclibc-setlib 0.9.28
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		OS_LIBS="-lm" \
+		OS_LIBS="-lcrypto -lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO -DCS_CONFDIR=${CS_CONFDIR} -static-libgcc -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
