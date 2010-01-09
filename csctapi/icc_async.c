@@ -72,8 +72,10 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 		return ICC_ASYNC_IFD_ERROR;
 	
 	/* Activate ICC */
+#ifdef SCI_DEV
 	if (IFD_Towitoko_ActivateICC (ifd) != IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
+#endif
 	/* Reset ICC */
 	if (IFD_Towitoko_ResetAsyncICC (ifd, &(icc->atr)) != IFD_TOWITOKO_OK)
 	{
@@ -209,10 +211,10 @@ int ICC_Async_GetBaudrate (ICC_Async * icc, unsigned long * baudrate)
 	return ICC_ASYNC_OK;  
 }
 
+#ifndef NO_PAR_SWITCH
 int ICC_Async_BeginTransmission (ICC_Async * icc)
 {
 	/* Setup parity for this ICC */
-#ifndef NO_PAR_SWITCH
 	if (icc->convention == ATR_CONVENTION_INVERSE)
 	{
 		if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_ODD) != IFD_TOWITOKO_OK)
@@ -233,9 +235,18 @@ int ICC_Async_BeginTransmission (ICC_Async * icc)
 /*	if (IFD_Towitoko_SetBaudrate (icc->ifd, icc->baudrate)!= IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
 */	
-#endif
 	return ICC_ASYNC_OK;
 }
+
+int ICC_Async_EndTransmission (ICC_Async * icc)
+{
+	/* Restore parity */
+	if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_NONE) != IFD_TOWITOKO_OK)
+		return ICC_ASYNC_IFD_ERROR;		
+	
+	return ICC_ASYNC_OK;
+}
+#endif
 
 int ICC_Async_Transmit (ICC_Async * icc, unsigned size, BYTE * data)
 {
@@ -282,17 +293,6 @@ int ICC_Async_Receive (ICC_Async * icc, unsigned size, BYTE * data)
 	return ICC_ASYNC_OK;
 }
 
-int ICC_Async_EndTransmission (ICC_Async * icc)
-{
-#ifndef NO_PAR_SWITCH
-	/* Restore parity */
-	if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_NONE) != IFD_TOWITOKO_OK)
-		return ICC_ASYNC_IFD_ERROR;		
-#endif
-	
-	return ICC_ASYNC_OK;
-}
-
 ATR * ICC_Async_GetAtr (ICC_Async * icc)
 {
 	return icc->atr;
@@ -306,8 +306,10 @@ IFD * ICC_Async_GetIFD (ICC_Async * icc)
 int ICC_Async_Close (ICC_Async * icc)
 {
 	/* Dectivate ICC */
+#ifdef SCI_DEV
 	if (IFD_Towitoko_DeactivateICC (icc->ifd) != IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
+#endif
 	
 	/* LED Off */
 	if (IFD_Towitoko_SetLED () != IFD_TOWITOKO_OK)

@@ -454,12 +454,12 @@ int IFD_Towitoko_GetStatus (IFD * ifd, BYTE * result)
 	return IFD_TOWITOKO_OK;
 }
 
+#ifdef SCI_DEV
 int IFD_Towitoko_ActivateICC (IFD * ifd)
 {
 #ifdef DEBUG_IFD
 		printf ("IFD: Activating card\n");
 #endif
-#ifdef SCI_DEV
 	if(ifd->io->com==RTYP_SCI)
 	{
 		int in;
@@ -485,7 +485,6 @@ int IFD_Towitoko_ActivateICC (IFD * ifd)
 		}
 	}
 	else
-#endif
 	{
 		return IFD_TOWITOKO_OK;
 	}
@@ -497,7 +496,6 @@ int IFD_Towitoko_DeactivateICC (IFD * ifd)
 		printf ("IFD: Deactivating card\n");
 #endif
 
-#ifdef SCI_DEV
 	if(ifd->io->com==RTYP_SCI)
 	{
 		int in;
@@ -517,10 +515,10 @@ int IFD_Towitoko_DeactivateICC (IFD * ifd)
 		
 		
 	}
-#endif
 	
 	return IFD_TOWITOKO_OK;
 }
+#endif
 
 //extern void print_hex_data(unsigned char *data, int len);
 

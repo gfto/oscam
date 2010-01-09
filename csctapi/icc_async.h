@@ -84,10 +84,12 @@ extern IFD *ICC_Async_GetIFD (ICC_Async * icc);
 extern unsigned long ICC_Async_GetClockRate (ICC_Async * icc);
 
 /* Operations */
+#ifndef NO_PAR_SWITCH
 extern int ICC_Async_BeginTransmission (ICC_Async * icc);
+extern int ICC_Async_EndTransmission (ICC_Async * icc);
+#endif
 extern int ICC_Async_Transmit (ICC_Async * icc, unsigned size, BYTE * buffer);
 extern int ICC_Async_Receive (ICC_Async * icc, unsigned size, BYTE * buffer);
-extern int ICC_Async_EndTransmission (ICC_Async * icc);
 
 #endif /* _ICC_ASYNC_ */
 

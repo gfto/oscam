@@ -825,16 +825,20 @@ static int Protocol_T0_ExchangeTPDU (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp 
 		return PROTOCOL_T0_ERROR;
 	
 	/* Initialise transmission */
+#ifndef NO_PAR_SWITCH
 	if (ICC_Async_BeginTransmission (t0->icc) != ICC_ASYNC_OK)
 	{
 		(*rsp) = NULL;
 		return PROTOCOL_T0_ICC_ERROR;
 	}
+#endif
 	
 	/* Send header bytes */
 	if (ICC_Async_Transmit (t0->icc, 5, APDU_Cmd_Header (cmd)) != ICC_ASYNC_OK)
 	{
+#ifndef NO_PAR_SWITCH
 		ICC_Async_EndTransmission (t0->icc);
+#endif
 		
 		(*rsp) = NULL;
 		return PROTOCOL_T0_ICC_ERROR;
@@ -983,8 +987,10 @@ static int Protocol_T0_ExchangeTPDU (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp 
 		(*rsp) = NULL;
 	
 	/* End of transmission */
+#ifndef NO_PAR_SWITCH
 	if (ICC_Async_EndTransmission (t0->icc) != ICC_ASYNC_OK)
 		return PROTOCOL_T0_ICC_ERROR;
+#endif
 	
 	return (ret);
 }
@@ -1012,18 +1018,22 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 		return PROTOCOL_T14_ERROR;
 	
 	/* Initialise transmission */
+#ifndef NO_PAR_SWITCH
 	if (ICC_Async_BeginTransmission (t14->icc) != ICC_ASYNC_OK)
 	{
 		(*rsp) = NULL;
 		return PROTOCOL_T14_ICC_ERROR;
 	}
+#endif
 	
 	if(t14->icc->ifd->io->com!=RTYP_SCI)
 	{
 		/* Send 0x01 byte */
 		if (ICC_Async_Transmit (t14->icc, 1, &b1) != ICC_ASYNC_OK)
 		{
+#ifndef NO_PAR_SWITCH
 			ICC_Async_EndTransmission (t14->icc);
+#endif
 			
 			(*rsp) = NULL;
 			return PROTOCOL_T14_ICC_ERROR;
@@ -1032,7 +1042,9 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 		/* Send apdu */
 		if (ICC_Async_Transmit (t14->icc, cmd_len, cmd_raw) != ICC_ASYNC_OK)
 		{
+#ifndef NO_PAR_SWITCH
 			ICC_Async_EndTransmission (t14->icc);
+#endif
 			
 			(*rsp) = NULL;
 			return PROTOCOL_T14_ICC_ERROR;
@@ -1041,7 +1053,9 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 		/* Send xor byte */
 		if (ICC_Async_Transmit (t14->icc, 1, &ixor) != ICC_ASYNC_OK)
 		{
+#ifndef NO_PAR_SWITCH
 			ICC_Async_EndTransmission (t14->icc);
+#endif
 			
 			(*rsp) = NULL;
 			return PROTOCOL_T14_ICC_ERROR;
@@ -1056,7 +1070,9 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 		/* Send apdu */
 		if (ICC_Async_Transmit (t14->icc, cmd_len+2, buffer) != ICC_ASYNC_OK)
 		{
+#ifndef NO_PAR_SWITCH
 			ICC_Async_EndTransmission (t14->icc);
+#endif
 			
 			(*rsp) = NULL;
 			return PROTOCOL_T14_ICC_ERROR;
@@ -1145,8 +1161,10 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 	}
 	
 	/* End of transmission */
+#ifndef NO_PAR_SWITCH
 	if (ICC_Async_EndTransmission (t14->icc) != ICC_ASYNC_OK)
 		return PROTOCOL_T14_ICC_ERROR;
+#endif
 	
 	return (ret);
 }

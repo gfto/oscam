@@ -418,10 +418,12 @@ Protocol_T1_SendBlock (Protocol_T1 * t1, T1_Block * block)
   int length, ret;
 
   /* Setup transmission */
+#ifndef NO_PAR_SWITCH
   if (ICC_Async_BeginTransmission (t1->icc) != ICC_ASYNC_OK)
     ret = PROTOCOL_T1_ICC_ERROR;
 
   else
+#endif
     {
       /* Send T=1 block */
       buffer = T1_Block_Raw (block);
@@ -429,7 +431,9 @@ Protocol_T1_SendBlock (Protocol_T1 * t1, T1_Block * block)
 
       if (ICC_Async_Transmit (t1->icc, length, buffer) != ICC_ASYNC_OK)
         {
+#ifndef NO_PAR_SWITCH
           ICC_Async_EndTransmission (t1->icc);
+#endif
           ret = PROTOCOL_T1_ICC_ERROR;
         }
 
@@ -485,8 +489,10 @@ Protocol_T1_ReceiveBlock (Protocol_T1 * t1, T1_Block ** block)
     }
 
   /* End of transmission */
+#ifndef NO_PAR_SWITCH
   if (ICC_Async_EndTransmission (t1->icc) != ICC_ASYNC_OK)
     ret = PROTOCOL_T1_ICC_ERROR;
+#endif
 
   return ret;
 }
