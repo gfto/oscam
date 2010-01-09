@@ -29,6 +29,7 @@ Enable features:
 
 CS_ANTICASC   - enable anti-cascading
 CS_LOGHISTORY - enable log history
+CS_WITH_GBOX  - enable gbox support
 HAVE_DVBAPI   - enable DVB API support
 
 

@@ -560,13 +560,15 @@ struct s_config
   int       show_ecm_dw;
   int       waitforcards;
   int       preferlocalcards;
-  uchar      gbox_pwd[8];
-  uchar   ignorefile[512];
-  uchar     cardfile[512];
-  uchar     gbxShareOnl[512];
-  int     maxdist;
-  int       num_locals;
+#ifdef CS_WITH_GBOX
+  uchar         gbox_pwd[8];
+  uchar         ignorefile[512];
+  uchar         cardfile[512];
+  uchar         gbxShareOnl[512];
+  int           maxdist;
+  int           num_locals;
   unsigned long locals[CS_MAXLOCALS];
+#endif
   //struct s_irdeto_quess *itab[0xff];
 #ifdef HAVE_DVBAPI
   int       dvbapi_enabled;
