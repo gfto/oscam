@@ -2276,7 +2276,9 @@ int main (int argc, char *argv[])
         if( ph[i].ptab->ports[j].fd+1>gfd )
           gfd=ph[i].ptab->ports[j].fd+1;
       }
-
+  
+  client[0].last=time((time_t *)0);
+  
   start_client_resolver();
   init_service(97); // logger
   init_service(98); // resolver
