@@ -529,8 +529,9 @@ int ParseDataType(unsigned char dt)
   			reader[ridx].prid[0][2]=cta_res[7];
   			reader[ridx].prid[0][3]=cta_res[8];
   			memcpy(reader[ridx].sa[0], reader[ridx].sa[0], 4);
-  			if ( (cta_res[7] == 0x34 && cta_res[8] == 0x11) || (cta_res[7] == 0x04 && cta_res[8] == 0x01)) 
+  			if ( ((cta_res[7] == 0x34) && (cta_res[8] == 0x11)) || ((cta_res[7] == 0x04) && (cta_res[8] == 0x01))) //provider 3411, 0401 needs cw swap
   			{
+  				cs_debug("[nagra-reader] detect provider with swap cw!");
   				swapCW=1;
   			}
   			
@@ -715,7 +716,7 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 			retry++;
 	                cs_sleepms(15);
 		}
-		cs_sleepms(15);
+		cs_sleepms(10);
 		if (HAS_CW && do_cmd(0x1C,0x02,0x9C,0x36,NULL))
 		{
 			unsigned char v[8];
@@ -725,6 +726,7 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 			idea_cbc_encrypt(&cta_res[4],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
 			if (swapCW==1)
 		  	{
+		  		cs_debug("[nagra-reader] swapCW");
 		    		unsigned char tt[8];
 		    		memcpy(&tt[0],&er->cw[0],8);
 		    		memcpy(&er->cw[0],&er->cw[8],8);
