@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "ifd.h"
 
 /*
  * Not exported constants definition
@@ -340,8 +341,30 @@ static int PPS_Exchange (PPS * pps, BYTE * params, unsigned *length)
 #endif
 
 	cs_debug("PTS: Sending request: %s", cs_hexdump(1, params, len_request));
-	
+
 	/* Send PPS request */
+#ifdef COOL
+	//unsigned char ptsAck[10];
+	//u_int8 ptsLen = len_request;
+	unsigned short int ptsLen = len_request;
+	int Status = cnxt_smc_start_pps(handle, params, confirm, &ptsLen, TRUE);
+	printf ("cnxt_smc_start_pps Status=%i\n", Status);
+	len_confirm = ptsLen;
+#ifdef DEBUG_PROTOCOL
+	printf("COOL: confirm: \n");
+	for (i = 0; i < ptsLen; i++)
+		printf ("%02X", confirm[i]);
+	printf ("\n");
+	fflush(stdout);
+	printf("COOL: req: \n");
+	for (i = 0; i < len_request; i++)
+		printf ("%02X", params[i]);
+	printf ("\n");
+	fflush(stdout);
+#endif
+	if (Status)
+		return PPS_HANDSAKE_ERROR;
+#else
 	if (ICC_Async_Transmit (pps->icc, len_request, params) != ICC_ASYNC_OK)
 		return PPS_ICC_ERROR;
 	
@@ -367,6 +390,7 @@ static int PPS_Exchange (PPS * pps, BYTE * params, unsigned *length)
 		ret = PPS_HANDSAKE_ERROR;
 	else
 		ret = PPS_OK;
+#endif
 	
 	/* Copy PPS handsake */
 	memcpy (params, confirm, len_confirm);
@@ -443,6 +467,20 @@ static int PPS_InitICC (PPS * pps)
 			return PPS_ICC_ERROR;
 		
 	}
+	else
+#elif COOL
+	if(pps->icc->ifd->io->com==RTYP_SCI) {
+		typedef unsigned long u_int32;
+		u_int32 clk;
+		clk = atr_fs_table[pps->parameters.FI];
+		if (cnxt_smc_set_clock_freq(handle, clk))
+			return ICC_ASYNC_IFD_ERROR;
+#ifdef DEBUG_PROTOCOL
+		printf("Coolstream: set clock to %lu Hz\n", clk);
+#endif
+		return ICC_ASYNC_OK;
+	}
+	else
 #endif
 	{
 	unsigned long baudrate;

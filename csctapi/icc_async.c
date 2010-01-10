@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "ifd.h"
 
 /*
  * Not exported constants definition
@@ -136,6 +137,9 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 		if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_EVEN) != IFD_TOWITOKO_OK)
 			return ICC_ASYNC_IFD_ERROR;		
 	}
+#ifdef COOL
+	if (icc->ifd->io->com != RTYP_SCI)
+#endif
 	IO_Serial_Flush(ifd->io);
 #endif
 	return ICC_ASYNC_OK;
@@ -197,6 +201,20 @@ int ICC_Async_GetTimings (ICC_Async * icc, ICC_Async_Timings * timings)
 int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate)
 {
 	icc->baudrate = baudrate;
+/*#ifdef COOL
+	if (icc->ifd->io->com==RTYP_SCI) {
+    typedef unsigned long u_int32;
+    u_int32 clk;
+    //clk = 357*10000; // MHZ
+		//clk = baudrate * 3570000L / 9600L;
+		  clk = 500*10000;
+    if (cnxt_smc_set_clock_freq(icc->ifd->io->handle, clk))
+			return ICC_ASYNC_IFD_ERROR;
+		printf("set clock to %lu Hz\n", clk);
+		return ICC_ASYNC_OK;
+	}
+	else
+#endif*/
 	if (IFD_Towitoko_SetBaudrate (icc->ifd, baudrate) !=  IFD_TOWITOKO_OK)
 	  return ICC_ASYNC_IFD_ERROR;
 	
@@ -237,6 +255,11 @@ int ICC_Async_BeginTransmission (ICC_Async * icc)
 	return ICC_ASYNC_OK;
 }
 
+#ifdef COOL
+extern unsigned char cardbuffer[255];
+extern int cardbuflen;
+#endif
+
 int ICC_Async_Transmit (ICC_Async * icc, unsigned size, BYTE * data)
 {
 	BYTE *buffer = NULL, *sent; 
@@ -257,8 +280,28 @@ int ICC_Async_Transmit (ICC_Async * icc, unsigned size, BYTE * data)
 	timings.block_delay = icc->timings.block_delay;
 	timings.char_delay = icc->timings.char_delay;
 	
+#ifdef COOL
+//transmit buffer to SC and put answer in cardbuffer
+	if (icc->ifd->io->com == RTYP_SCI) {
+#define TIMEOUT 4000 //max 4294
+	cardbuflen = 256;//it needs to know max buffer size to respond?
+  if (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, TIMEOUT, 0))
+		return ICC_ASYNC_IFD_ERROR;
+
+#ifdef DEBUG_IFD
+  //usually done in IFD_Towitoko, for COOL do it here
+	printf ("COOLIFD: Transmit: ");
+	int i;
+	for (i = 0; i < size; i++)
+	  printf ("%X ", sent[i]);
+	printf ("\n");
+#endif
+	}
+	else
+#else
 	if (IFD_Towitoko_Transmit (icc->ifd, &timings, size, sent) != IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
+#endif
 	
 	if (icc->convention == ATR_CONVENTION_INVERSE)
 		free (buffer);
@@ -273,8 +316,27 @@ int ICC_Async_Receive (ICC_Async * icc, unsigned size, BYTE * data)
 	timings.block_timeout = icc->timings.block_timeout;
 	timings.char_timeout = icc->timings.char_timeout;
 	
+#ifdef COOL
+//receive  buffer to SC
+	if (size > cardbuflen)
+		size = cardbuflen; //never read past end of buffer
+  memcpy(data,cardbuffer,size);
+	cardbuflen -= size;
+	memmove(cardbuffer,cardbuffer+size,cardbuflen);
+
+#ifdef DEBUG_IFD
+  int i;
+  printf ("COOLIFD: Receive: "); //I think
+  for (i = 0; i < size; i++)
+    printf ("%X ", data[i]);
+  printf ("\n");
+	fflush(stdout);
+#endif
+  return ICC_ASYNC_OK;
+#else
 	if (IFD_Towitoko_Receive (icc->ifd, &timings, size, data) != IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
+#endif
 	
 	if (icc->convention == ATR_CONVENTION_INVERSE && icc->ifd->io->com!=RTYP_SCI)
 		ICC_Async_InvertBuffer (size, data);

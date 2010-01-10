@@ -188,10 +188,12 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial)
 	
 	io->com = com;
 
-#ifdef SCI_DEV
+#if defined(SCI_DEV) || defined(COOL)
 	if (com==RTYP_SCI)
 #ifdef SH4
 		io->fd = open (filename, O_RDWR|O_NONBLOCK|O_NOCTTY);
+#elif COOL
+		return Cool_Init();
 #else
 		io->fd = open (filename, O_RDWR);
 #endif
