@@ -50,7 +50,7 @@ typedef struct
 {
   IO_Serial * io;				/* Serial device */
   CT_Slot * slots[CARDTERMINAL_MAX_SLOTS];	/* Array of CT_Slot's */
-  uint num_slots;				/* Number of CT_Slot's */
+  unsigned int num_slots;				/* Number of CT_Slot's */
 #ifdef HAVE_PTHREAD_H
   pthread_mutex_t mutex;
 #endif
@@ -75,7 +75,7 @@ CardTerminal_Command (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 /* Return the reference to a slot */
 extern CT_Slot *
-CardTerminal_GetSlot (CardTerminal * ct, uint number);
+CardTerminal_GetSlot (CardTerminal * ct, unsigned int number);
 
 /* Close a CardTerminal */
 extern char

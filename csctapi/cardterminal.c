@@ -207,7 +207,7 @@ char CardTerminal_Command (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 char CardTerminal_Close (CardTerminal * ct)
 {
 	char ret, aux;
-	uint i;
+	unsigned int i;
 	
 	ret = OK;
 	
@@ -244,7 +244,7 @@ void CardTerminal_Delete (CardTerminal * ct)
 	free (ct);
 }
 
-CT_Slot * CardTerminal_GetSlot (CardTerminal * ct, uint number)
+CT_Slot * CardTerminal_GetSlot (CardTerminal * ct, unsigned int number)
 {
 	if (number < (ct->num_slots))
 		return ct->slots[number];
@@ -600,7 +600,7 @@ static char CardTerminal_GetStatus (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp 
 {
 	BYTE buffer[CARDTERMINAL_GETSTATUS_BUFFER_SIZE], p1, p2;
 	bool card, change;
-	uint i;
+	unsigned int i;
 	unsigned length;
 	char ret = OK;
 	
@@ -760,7 +760,7 @@ static char CardTerminal_SetParity (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp 
 static char CardTerminal_EjectICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
 	BYTE buffer[CARDTERMINAL_EJECTICC_BUFFER_SIZE], p1, p2;
-	uint sn, timeout;
+	unsigned int sn, timeout;
 	unsigned length;
 	bool card, change;
 	char ret;
@@ -816,7 +816,7 @@ static char CardTerminal_EjectICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp *
 	
 	/* Get the card removal timeout */
 	if (APDU_Cmd_Lc (cmd) == 1)
-		timeout = (uint) (*APDU_Cmd_Data (cmd));
+		timeout = (unsigned int) (*APDU_Cmd_Data (cmd));
 	else
 		timeout = 0;
 	
