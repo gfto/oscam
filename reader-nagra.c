@@ -629,7 +629,7 @@ int nagra2_card_init(uchar *atr)
 		memcpy(reader[ridx].hexserial+2, cta_res+2, 4);
 		cs_debug("[nagra-reader] SER:  %s", cs_hexdump (1, reader[ridx].hexserial+2, 4));
 		//memset(reader[ridx].sa[0], 0xff, 4);
-		//memcpy(reader[ridx].sa[0], cta_res+2, 2);
+		memcpy(reader[ridx].sa[0], cta_res+2, 2);
 		
 		if(!GetDataType(DT01,0x0E,MAX_REC)) return 0;
 		cs_debug("[nagra-reader] DT01 DONE");
@@ -763,15 +763,12 @@ int nagra2_do_emm(EMM_PACKET *ep)
 {
 	cs_debug("[nagra-reader] do_emm #########################################################");
 	cs_debug("[nagra-reader] do_emm #########################################################");
-	cs_debug("[nagra-reader] do_emm #########################################################");
-	cs_debug("[nagra-reader] do_emm #########################################################");
-	cs_debug("[nagra-reader] do_emm #########################################################");
 	if(!do_cmd(ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2))
 	{
 		cs_debug("[nagra-reader] nagra2_do_emm failed");
 		return (0);
 	}
-	cs_sleepms(3000);
+	cs_sleepms(300);
 	nagra2_post_process();
 	return 1;
 }
