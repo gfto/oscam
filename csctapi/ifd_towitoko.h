@@ -136,10 +136,8 @@ extern int IFD_Towitoko_SetLED ();
 extern int IFD_Towitoko_GetStatus (IFD * ifd, BYTE * status);
 
 /* General handling of ICC inserted in this IFD */
-#ifdef SCI_DEV
 extern int IFD_Towitoko_ActivateICC (IFD * ifd);
 extern int IFD_Towitoko_DeactivateICC (IFD * ifd);
-#endif
 
 /* Asynchronous ICC handling functions */
 extern int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr);
