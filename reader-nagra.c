@@ -529,7 +529,7 @@ int ParseDataType(unsigned char dt)
   			reader[ridx].prid[0][2]=cta_res[7];
   			reader[ridx].prid[0][3]=cta_res[8];
   			memcpy(reader[ridx].sa[0], reader[ridx].sa[0], 4);
-  			if ( (cta_res[7] == 0x34 && cta_res[8] == 0x11) || (cta_res[7] == 0x04 || cta_res[8] == 0x01))
+  			if ( (cta_res[7] == 0x34 && cta_res[8] == 0x11) || (cta_res[7] == 0x04 && cta_res[8] == 0x01)) 
   			{
   				swapCW=1;
   			}
