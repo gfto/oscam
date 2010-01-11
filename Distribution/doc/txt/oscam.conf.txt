@@ -245,11 +245,18 @@ DESCRIPTIONS
        user = username
 	  user name for DVB API client, default:anonymous
 
+       ignore = CAID[,CAID]...
+	  CAIDs to be ignored, default:none
+
+       priority = CAID[,CAID]...
+	  CAIDs to be prioritized, default:CAIDs of local SCs will be  priori
+	  tized
+
        au = 0|1
 	  1 = enable AU, default:0
 
        boxtype = dbox2|dreambox|ufs910
-	  set  boxtype,  auto  detection  of  DVB   API   will	 be   aspired,
+	  set	boxtype,   auto   detection   of  DVB  API  will  be  aspired,
 	  default:dreambox
 
    The [anticasc] section (only if anti-cascading enabled)
@@ -257,7 +264,7 @@ DESCRIPTIONS
 	  1 = enabled anti-cascading, default:0
 
        numusers = quantity
-	  anti-cascading:  user per account, 0 = anti-cascading not permitted,
+	  anti-cascading: user per account, 0 = anti-cascading not  permitted,
 	  default:0
 
        sampletime = minutes
@@ -340,8 +347,8 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       oscam(1),     oscam.user(5),	 oscam.server(5),      oscam.srvid(5),
-       oscam.guess(5),	  oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
+       oscam(1),      oscam.user(5),	  oscam.server(5),     oscam.srvid(5),
+       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
        oscam.ac(5)
 
 

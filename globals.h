@@ -573,8 +573,10 @@ struct s_config
 #ifdef HAVE_DVBAPI
   int       dvbapi_enabled;
   int       dvbapi_au;
-  char      dvbapi_usr[64];
+  char      dvbapi_usr[33];  
   char      dvbapi_boxtype[20];
+  char      dvbapi_priority[64];
+  char      dvbapi_ignore[64];  
 #endif
 #ifdef CS_ANTICASC
   char      ac_enabled;
