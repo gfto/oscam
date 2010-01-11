@@ -107,7 +107,4 @@ extern bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE
 extern unsigned IO_Serial_GetCom (IO_Serial * io);
 extern void IO_Serial_GetPnPId (IO_Serial * io, BYTE * pnp_id, unsigned *length);
 
-/* smartreader Frequency set */
-extern bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io);
-
 #endif /* IO_SERIAL */

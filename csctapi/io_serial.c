@@ -519,20 +519,6 @@ bool IO_Serial_SetProperties (IO_Serial * io)
 
 
    /* Set the bitrate */
-   if(io->reader_type==RTYP_SMART)
-   {
-#ifdef DEBUG_IO
-      printf("IO: SMARTREADER .. switching to frequency to %2.2fMHz\n", (float)io->mhz/100.0);
-#endif
-      if(!IO_Serial_Set_Smartreader_Freq(io))
-      {
-#ifdef DEBUG_IO
-         printf("IO: SMARTREADER .. ERROR switching to 6MHz\n");
-#endif
-         return FALSE;
-      }
-   }
-
 #ifdef OS_LINUX
    if (io->mhz == io->cardmhz)
 #endif
@@ -1063,61 +1049,4 @@ static bool IO_Serial_InitPnP (IO_Serial * io)
 	io->PnP_id_size = i;
 		return TRUE;
 }
-
-
-bool IO_Serial_Set_Smartreader_Freq(IO_Serial * io)
- {
-   struct termios term;
-   struct termios orig;
-   int freq = io->mhz;
-   unsigned char fi_di[4]={0x01, 0x01, 0x74, 0x01};
-   unsigned char fr[3]={0x02, 0x00, 0x00};
-   unsigned char nn[2]={0x03, 0x00};
-   unsigned char pr[2]={0x04, 0x00};
-   unsigned char in[2]={0x05, 0x00};
-   
-   orig=term;
-     
-   /* set smartreader in CMD mode */
-   tcgetattr(io->fd, &term);
-   
-   term.c_cflag &= ~CSIZE;
-   term.c_cflag |= CS5;
-   cfsetospeed(&term, 9600);
-   cfsetispeed(&term, 9600);
-   tcsetattr(io->fd, TCSANOW, &term);
-   
-   // our freq comes in as 358, 357 or 600 so it needs this to be in KHz for the FR command
-   freq*=10;
-   fr[1]=(unsigned char)((freq & 0xff00)>>8);
-   fr[2]=(unsigned char)(freq & 0x00ff);
-
-   // Irdeto card supposedly need NN set to 1 .. to be confirmed
-   if(io->cardmhz == 600)
-      nn[1]=0x01;
-      
-   // send the commands
-   IO_Serial_Write (io, 0, 4, fi_di);
-   IO_Serial_Flush(io);
-   
-   IO_Serial_Write (io, 0, 3, fr);
-   IO_Serial_Flush(io);
-
-   IO_Serial_Write (io, 0, 2, nn);
-   IO_Serial_Flush(io);
-
-   IO_Serial_Write (io, 0, 2, pr);
-   IO_Serial_Flush(io);
-
-   IO_Serial_Write (io, 0, 2, in);
-   IO_Serial_Flush(io);
-      
-   /* set smartreader in DATA mode */
-   tcgetattr(io->fd, &orig);
-   orig.c_cflag &= ~CSIZE;
-   orig.c_cflag |= CS8;
-   tcsetattr(io->fd, TCSANOW, &orig);
-
-   return TRUE;
- }
  
