@@ -179,7 +179,7 @@ add_library (${csoscam} STATIC ${csoscam_srcs} ${csoscam_hdrs})
 
 set (exe_name "oscam")
 add_executable (${exe_name} ${exe_srcs} ${exe_hdrs})
-target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt pthread rt nxp)
+target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt pthread)
 if (HAVE_AES)
     target_link_libraries (${exe_name} crypto)
 endif (HAVE_AES)
@@ -207,6 +207,8 @@ elseif (OSCamOperatingSystem MATCHES "Fonera2")
 elseif (OSCamOperatingSystem MATCHES "WRT54G")
 elseif (OSCamOperatingSystem MATCHES "Amino")
 elseif (OSCamOperatingSystem MATCHES "Windows/cygwin")
+elseif (OSCamOperatingSystem MATCHES "NeutrinoHD")
+    target_link_libraries ( ${exe_name} rt nxp )
 endif (OSCamOperatingSystem MATCHES "Linux")
 
 #----------------------- put svnversion in the build ------------------------------
