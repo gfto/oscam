@@ -6,14 +6,8 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
 #include"ifd_cool.h"
-
-// all other IFD_Towitoko functions should be
-// -eliminated (like SetLed or administrative jobs)
-// -rewritten eg. setparity should become a call to getproperties, setproperties
-// ActivateICC should call ResetICC automagically
-// DeactivateICC for symmetry and cleanup
-//
 
 #define OK 		1 
 #define ERROR 0
@@ -52,7 +46,7 @@ int Cool_GetStatus (int * in)
 		return ERROR;
 	//state = 0 no card, 1 = not ready, 2 = ready
 	if (state)
-	  *in = 1; //CARD, even if not ready report card is in, or it will never get activated
+		*in = 1; //CARD, even if not ready report card is in, or it will never get activated
 	else
 		*in = 0; //NOCARD
 	return OK;
@@ -60,12 +54,7 @@ int Cool_GetStatus (int * in)
 
 int Cool_Reset (ATR ** atr)
 {
-	//Cool_Reset(atr);
-	//reset needs clock to be reset by hand
-	typedef unsigned long u_int32;
-	u_int32 clk;
-	clk = 357*10000; // MHZ
-	if (cnxt_smc_set_clock_freq(handle, clk))
+	if (!Cool_SetBaudrate(357))
 		return ERROR;
 
 	//reset card
@@ -94,38 +83,13 @@ int Cool_Reset (ATR ** atr)
 		return ERROR;
 	}
 }
-/*
-int Cool_DeactivateICC ()
-{
-#ifdef DEBUG_IFD
-	printf ("IFD: Deactivating card\n");
-#endif
-/*
-		int in;
-		
-#if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
-		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
-#else
-		if(ioctl(ifd->io->fd, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
-#endif
-			return IFD_TOWITOKO_IO_ERROR;
-			
-		if(in)
-		{
-			if(ioctl(ifd->io->fd, IOCTL_SET_DEACTIVATE)<0)
-				return IFD_TOWITOKO_IO_ERROR;
-		}
-*/		
-/*
-	return OK;
-}
-*/
 
 int Cool_Transmit (BYTE * sent, unsigned size)
 { 
 #define TIMEOUT 4000 //max 4294
 	cardbuflen = 256;//it needs to know max buffer size to respond?
-	int rc = cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, TIMEOUT, 0);
+	if (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, TIMEOUT, 0))
+		return ERROR;
 
 #ifdef DEBUG_IFD
 	//usually done in IFD_Towitoko, for COOL do it here
@@ -135,23 +99,25 @@ int Cool_Transmit (BYTE * sent, unsigned size)
 		printf ("%X ", sent[i]);
 	printf ("\n");
 #endif
-
-	//FIXME implement rc
+	return OK;
 }
 
-int Cool_Receive (BYTE * buffer, unsigned size)
-{ //receive	buffer to SC
-	//memcpy(buffer,cardbuffer,cardbuflen);
-	//size = cardbuflen;
+int Cool_Receive (BYTE * data, unsigned size)
+{ 
+	if (size > cardbuflen)
+		size = cardbuflen; //never read past end of buffer
+	memcpy(data,cardbuffer,size);
+	cardbuflen -= size;
+	memmove(cardbuffer,cardbuffer+size,cardbuflen);
 
 #ifdef DEBUG_IFD
 	int i;
-	printf ("IFD: Receive: "); //I think
+	printf ("COOLIFD: Receive: "); //I think
 	for (i = 0; i < size; i++)
-		printf ("%X ", buffer[i]);
+		printf ("%X ", data[i]);
 	printf ("\n");
+	fflush(stdout);
 #endif
-
 	return OK;
 }	
 
@@ -159,8 +125,7 @@ int Cool_SetBaudrate (int mhz)
 {
 	typedef unsigned long u_int32;
 	u_int32 clk;
-	//clk = 357 * 10000;		// MHZ
-	clk = mhz * 10000;	// MHZ
+	clk = mhz * 10000;
 	if (cnxt_smc_set_clock_freq (handle, clk))
 		return ERROR;
 	return OK;

@@ -470,15 +470,13 @@ static int PPS_InitICC (PPS * pps)
 	else
 #elif COOL
 	if(pps->icc->ifd->io->com==RTYP_SCI) {
-		typedef unsigned long u_int32;
-		u_int32 clk;
-		clk = atr_fs_table[pps->parameters.FI];
-		if (cnxt_smc_set_clock_freq(handle, clk))
-			return ICC_ASYNC_IFD_ERROR;
+		int mhz = atr_fs_table[pps->parameters.FI] / 10000;
+		if (!Cool_SetBaudrate(mhz))
+			return PPS_ICC_ERROR;
 #ifdef DEBUG_PROTOCOL
-		printf("Coolstream: set clock to %lu Hz\n", clk);
+		printf("Coolstream: set clock to %i * 10kHz\n", mhz);
 #endif
-		return ICC_ASYNC_OK;
+		return PPS_OK;
 	}
 	else
 #endif
