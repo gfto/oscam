@@ -28,6 +28,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "../globals.h"
 
 #include "protocol_t0.h"
 #include "atr.h"

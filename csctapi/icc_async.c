@@ -23,6 +23,7 @@
 */
 
 #include "defines.h"
+#include "../globals.h"
 #include "icc_async.h"
 #include <stdlib.h>
 #include <stdio.h>
