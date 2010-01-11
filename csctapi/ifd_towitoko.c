@@ -363,16 +363,9 @@ int IFD_Towitoko_GetStatus (IFD * ifd, BYTE * result)
 	else
 #elif COOL
 	if(ifd->io->com==RTYP_SCI)
-	{
-	//	in=1;//FIXME 
-		int state;
-		if (cnxt_smc_get_state(handle, &state))
+	{	
+		if (!Cool_GetStatus(&in))
 			return IFD_TOWITOKO_IO_ERROR;
-		//guessing: state = 0 no card, 1 = not ready, 2 = ready
-		if (state)
-		  in = 1; //CARD, even if not ready report card is in, or it will never get activated
-		else
-			in = 0; //Nocard
 	}
 	else
 #endif
@@ -626,28 +619,9 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		
 		if(n==0)
 			return IFD_TOWITOKO_IO_ERROR;
-#elif COOL
-	if(ifd->io->com==RTYP_SCI) {
-		//Cool_Reset(atr);
-		//reset needs clock to be reset by hand
-		typedef unsigned long u_int32;
-		u_int32 clk;
-		clk = 357*10000; // MHZ
-		if (cnxt_smc_set_clock_freq(handle, clk))
-			return IFD_TOWITOKO_IO_ERROR;
-			
-		//reset card
-		int timeout = 5000; // Timout in ms?
-		if (cnxt_smc_reset_card (handle, timeout, NULL, NULL))
-			return IFD_TOWITOKO_IO_ERROR;
-
-		int n = 40;
-		unsigned char buf[40];
-		if (cnxt_smc_get_atr (handle, buf, &n))
-			return IFD_TOWITOKO_IO_ERROR;
 #endif
 			
-#if defined(SCI_DEV) || defined(COOL)
+#ifdef SCI_DEV
 		(*atr) = ATR_New ();
 		if(ATR_InitFromArray ((*atr), buf, n) == ATR_OK)
 		{
