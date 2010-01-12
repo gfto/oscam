@@ -165,10 +165,10 @@ DESCRIPTIONS
 	   example: readnano = write.emm
 		    readnano = /var/oscam/write.emm
 
-       n3_rsakey = RSA key
+       n3_rsakey|rsakey = RSA key
 	  RSA key for Nagravision SCs
 
-       n3_boxkey = box key
+       n3_boxkey|boxkey = box key
 	  box key for Nagravision SCs
 
        tiger_rsakey = RSA key
