@@ -191,17 +191,10 @@ int NegotiateSessionKey_Tiger(void)
 	unsigned char d1_rsa_modulo[88];
 	unsigned char d2_data[88];
 	unsigned char sign1[8];
-	unsigned char sessi1[8];
-	unsigned char sessi2[8];
+	unsigned char sk[16];
 	unsigned char tmp[104];
-	unsigned char tmp1[8];
 	unsigned char idea_sig[16];
-	unsigned char random[88] = {0x51,0xd0,0xcc,0x4a,0x51,0xbc,0x4f,0xa4,0x7d,0x44,0xa9,0xa8,0x97,0x13,0x01,0x63,
-				0x8f,0xaf,0x86,0x60,0x7c,0xe3,0xee,0x29,0xca,0x13,0x09,0x44,0x83,0x48,0x17,0x8b,
-				0x88,0xa6,0x64,0x20,0x22,0x2b,0x04,0x50,0xd8,0x15,0x9c,0x50,0x09,0x7c,0x6a,0x5d,
-				0xa0,0xb3,0xb0,0x11,0xa2,0x15,0x00,0x58,0xae,0x4b,0xe7,0xb0,0x06,0xa0,0x1d,0xe0,
-				0x53,0x58,0x6a,0xf0,0x60,0x51,0x71,0xdb,0xe7,0x7c,0xf7,0x1b,0x37,0x9d,0x20,0xf8,
-				0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+	unsigned char random[88];
 					 
 	if(!do_cmd(0xd1,0x02,0x51,0xd2,NULL))
 	{
@@ -263,20 +256,13 @@ int NegotiateSessionKey_Tiger(void)
 	reader[ridx].prid[0][2]=parte_variable[73];
 	reader[ridx].prid[0][3]=parte_variable[74];
 	reader[ridx].caid[0] =(SYSTEM_NAGRA|parte_variable[76]);
-	memcpy(sessi1,&parte_variable[79],8);
+	memcpy(sk,&parte_variable[79],8);                                                                           
+	memcpy(sk+8,&parte_variable[79],8); 
      	cs_ri_log("[nagra-reader] CAID: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
      	cs_ri_log("[nagra-reader] ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
-     	
-	memcpy(sessi2,&random[72], 8);
-	memset(tmp1,0,8);
-	memcpy(tmp1, random+72,8);
-	ReverseMem(tmp1, 8); //byteflop last 8 bytes of random data	
-	memcpy(random+72, tmp1,8); // insert back the byteflop data
-	
-	memset(tmp1,0,8);
-	memcpy(tmp1, sessi1,8);
-	ReverseMem(tmp1, 8); // byteflop sessi1 one from rsa variabled part
-	memcpy(random+80,tmp1,8); // and attach him to random data
+
+	memcpy(random, sk,16);
+	ReverseMem(random, 88);
 	
 	
 	BN_CTX *ctx3 = BN_CTX_new();
@@ -301,7 +287,7 @@ int NegotiateSessionKey_Tiger(void)
 	}
 	if (cta_res[2] == 0x00)
 	{
-		memcpy(sessi,sessi1,8); memcpy(sessi+8,sessi2,8);
+		memcpy(sessi,sk,16);
 		IDEA_KEY_SCHEDULE ks;
 		idea_set_encrypt_key(sessi,&ks);
 		idea_set_decrypt_key(&ks,&ksSession);
@@ -607,7 +593,7 @@ int nagra2_card_init(uchar *atr)
 	else if (!memcmp(atr+4, "IRDETO", 6))
 	{
 		cs_ri_log("[nagra-reader] detect Irdeto tunneled nagra card");
-		if(!reader[ridx].nagra_native) return 0;
+		if(!reader[ridx].has_rsa) return 0;
 		cs_ri_log("[nagra-reader] using nagra mode");
 		is_pure_nagra=1;
 		if(!do_cmd(0x10,0x02,0x90,0x11,0))

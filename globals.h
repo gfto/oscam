@@ -386,7 +386,7 @@ struct s_reader
   CAIDTAB   ctab;
   ulong     boxid;
   uchar	    nagra_boxkey[16]; //n3 boxkey 8byte  or tiger idea key 16byte
-  int       nagra_native;
+  int       has_rsa;
   uchar     aes_key[16];
   uchar     rsa_mod[120]; //rsa modulus for nagra cards.
   ulong     sidtabok;	// positiv services
