@@ -590,7 +590,7 @@ int nagra2_card_init(uchar *atr)
 		memcpy(rom,atr+11,15);
 		is_tiger=1;
 	}
-	else if (!memcmp(atr+4, "IRDETO", 6))
+	else if ((!memcmp(atr+4, "IRDETO", 6)) && ((atr[14]==0x03) && (atr[15]==0x84) && (atr[16]==0x55)))
 	{
 		cs_ri_log("[nagra-reader] detect Irdeto tunneled nagra card");
 		if(!reader[ridx].has_rsa) return 0;

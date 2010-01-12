@@ -163,25 +163,16 @@ int irdeto_card_init(uchar *atr)
   if (memcmp(atr+4, "IRDETO", 6))
     return(0);
   nagra=0;
-
-  /*
-   * Check Nagra
-   */
-  /*if ((!reader_cmd2icc(sc_GetROM, sizeof(sc_GetROM))) && (cta_res[cta_lr-2]==0x90))
+  
+  if(reader[ridx].has_rsa) // we use rsa from config as camkey
   {
-    nagra=1;
-    if (cta_res[0]==0x90)
-    {
-      char *ptr;
-      cta_res[cta_res[1]+4]='\0';
-      if( (ptr=strstr(cta_res+2, "ASP")) )
-      {
-        sprintf(buf, ", rom=%c.%c%c", ptr[3], ptr[4], ptr[5]);
-        if( (ptr=strstr(cta_res+2, "Rev")) )
-          sprintf(buf+10, "(%c%c%c)", ptr[3], ptr[4], ptr[5]);
-      }
-    }
-  } */
+  	cs_debug("[irdeto-reader] using camkey data from config");
+  	memcpy(&sc_GetCamKey383C[5], reader[ridx].rsa_mod, 0x40);
+  	memcpy(sc_CamKey, reader[ridx].nagra_boxkey, 8);
+  	cs_debug("[irdeto-reader]      camkey: %s", cs_hexdump (0, sc_CamKey, 8));
+  	cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[5], 32));
+  	cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[37], 32));
+  }
 
   /*
    * ContryCode
@@ -246,7 +237,7 @@ int irdeto_card_init(uchar *atr)
   }
   
   cs_ptyp=D_DEVICE;
-  cs_debug("set camkey for type=%d", camkey);
+  cs_debug("[irdeto-reader] set camkey for type=%d", camkey);
   cs_ptyp=cs_ptyp_orig;
 
   switch (camkey)
