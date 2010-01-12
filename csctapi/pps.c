@@ -137,17 +137,16 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	atr = ICC_Async_GetAtr (pps->icc);
 	if ((*length) <= 0 || !PPS_success) // If not by command, or PPS Exchange by command failed: Try PPS Exchange by ATR or Get parameters from ATR
 	{
-		int numprot = atr->pn;//number of protocol lines in ATR
+		int numprot = atr->pn-1;//number of protocol lines in ATR
 		BYTE tx;
-	  cs_debug("ATR reports smartcard supports %i protocols:",numprot);
+	  cs_debug("ATR reports %i protocol lines:",numprot);
 		int i,point;
 		char txt[50];
 		bool OffersT[3]; //T14 stored as T2
 		for (i = 0; i <= 2; i++)
 			OffersT[i] = FALSE;
 		for (i=1; i<= numprot; i++) {
-			sprintf(txt,"Protocol %01i:  ",i);
-			point = 12;
+			point = 0;
 			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TA, &tx) == ATR_OK) {
 			  sprintf((char *)txt+point,"TA%i=%02X ",i,tx);
 				point +=7;
@@ -210,17 +209,13 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 		}
 		else { //negotiable mode
 
-		bool NeedsPTS = ((pps->parameters.t != 14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
-		if (NeedsPTS) {
-			//             PTSS  PTS0  PTS1  PTS2  PTS3  PCK
-			//             PTSS  PTS0  PTS1  PCK
-			BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
-
-			int p; 
-			for (p=1; p<=numprot; p++) {
-				ATR_GetProtocolType(atr,p,&(pps->parameters.t));
+			bool NeedsPTS = ((pps->parameters.t != 14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || pps->parameters.n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
+			if (NeedsPTS) {
+				//             PTSS  PTS0  PTS1  PTS2  PTS3  PCK
+				//             PTSS  PTS0  PTS1  PCK
+				BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
 				req[1]=0x10 | pps->parameters.t; //PTS0 always flags PTS1 to be sent always
-				if (ATR_GetInterfaceByte (atr, p, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)  //PTS1 
+				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)  //PTS1 
 					req[2] = 0x11; //defaults FI and DI to 1
 	  		//req[3]=PPS_GetPCK(req,sizeof(req)-1); will be set by PPS_Exchange
 				unsigned int len = sizeof(req);
@@ -230,39 +225,36 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 					BYTE DI = req[2] & 0x0F;
 					pps->parameters.d = (double) (atr_d_table[DI]);
 					PPS_success = TRUE;
-					protocol_selected = p;
-					cs_debug("PTS Succesfull, selected protocol %i: T%i, F=%.0f, D=%.6f, N=%.0f\n", protocol_selected, pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
-					break;
+					cs_debug("PTS Succesfull, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
 				}
 				else
-					cs_ddump(req,4,"PTS Failure for protocol %i, response:",p);
+					cs_ddump(req,4,"PTS Failure, response:");
 			}
-		}
 
-		//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards (=no switching); 
-		//When for SCI, T14 protocol, TA1 is obeyed, this goes OK for mosts devices, but somehow on DM7025 Sky S02 card goes wrong when setting ETU (ok on DM800/DM8000)
-		if (!PPS_success) {//last PPS not succesfull
-			BYTE TA1;
-			if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
-				pps->parameters.FI = TA1 >> 4;
-				ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
-			}
-			else { //do not obey TA1
-				pps->parameters.FI = ATR_DEFAULT_FI;
-				pps->parameters.d = ATR_DEFAULT_D;
-			}
-			ATR_GetProtocolType (atr, 1, &(pps->parameters.t));
-			protocol_selected = 1;
+			//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards (=no switching); 
+			//When for SCI, T14 protocol, TA1 is obeyed, this goes OK for mosts devices, but somehow on DM7025 Sky S02 card goes wrong when setting ETU (ok on DM800/DM8000)
+			if (!PPS_success) {//last PPS not succesfull
+				BYTE TA1;
+				if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
+					pps->parameters.FI = TA1 >> 4;
+					ATR_GetParameter (atr, ATR_PARAMETER_D, &(pps->parameters.d));
+				}
+				else { //do not obey TA1
+					pps->parameters.FI = ATR_DEFAULT_FI;
+					pps->parameters.d = ATR_DEFAULT_D;
+				}
+				ATR_GetProtocolType (atr, 1, &(pps->parameters.t));
+				protocol_selected = 1;
+	
+				if (NeedsPTS) { 
+					if ((pps->parameters.d == 32) || (pps->parameters.d == 12) || (pps->parameters.d == 20))
+						pps->parameters.d = 0; //behave conform "old" atr_d_table; viaccess cards that fail PTS need this
+				}
+				/////Here all non-ISO behaviour
+				/////End  all non-ISO behaviour
 
-			if (NeedsPTS) { 
-				if ((pps->parameters.d == 32) || (pps->parameters.d == 12) || (pps->parameters.d == 20))
-					pps->parameters.d = 0; //behave conform "old" atr_d_table; viaccess cards that fail PTS need this
+				cs_debug("No PTS %s, selected protocol T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
 			}
-			/////Here all non-ISO behaviour
-			/////End  all non-ISO behaviour
-
-			cs_debug("No PTS %s, selected protocol 1: T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", pps->parameters.t, (double) atr_f_table[pps->parameters.FI], pps->parameters.d, pps->parameters.n);
-		}
 		}//end negotiable mode
 	}//end length<0
 		
@@ -467,7 +459,6 @@ static int PPS_InitICC (PPS * pps)
 			return PPS_ICC_ERROR;
 		
 	}
-	else
 #elif COOL
 	if(pps->icc->ifd->io->com==RTYP_SCI) {
 		int mhz = atr_fs_table[pps->parameters.FI] / 10000;
@@ -478,7 +469,6 @@ static int PPS_InitICC (PPS * pps)
 #endif
 		return PPS_OK;
 	}
-	else
 #endif
 	{
 	unsigned long baudrate;

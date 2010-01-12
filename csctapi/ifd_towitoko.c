@@ -619,9 +619,10 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		
 		if(n==0)
 			return IFD_TOWITOKO_IO_ERROR;
-#endif
+
+		if ((buf[0] !=0x3B) && (buf[0] != 0x3F)) //irdeto S02 reports FD as first byte ?!?
+			buf[0] = 0x3B;
 			
-#ifdef SCI_DEV
 		(*atr) = ATR_New ();
 		if(ATR_InitFromArray ((*atr), buf, n) == ATR_OK)
 		{
@@ -629,10 +630,8 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			req_ts.tv_sec = 0;
 			req_ts.tv_nsec = 50000000;
 			nanosleep (&req_ts, NULL);
-#ifdef SCI_DEV
 			if (ioctl(ifd->io->fd, IOCTL_SET_ATR_READY)<0)
 				return IFD_TOWITOKO_IO_ERROR;
-#endif
 			return IFD_TOWITOKO_OK;
 		}
 		else
