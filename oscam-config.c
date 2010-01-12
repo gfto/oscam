@@ -1135,7 +1135,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     rdr->has_rsa=1;
     if (key_atob_l(value, rdr->rsa_mod, 128))
     {
-      fprintf(stderr, "Configuration reader: Error in n3_rsakey\n");
+      fprintf(stderr, "Configuration reader: Error in rsakey\n");
       exit(1);
     }
     return;
@@ -1153,16 +1153,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   {
     if (key_atob_l(value, rdr->nagra_boxkey, 16))
     {
-      fprintf(stderr, "Configuration reader: Error in Nagra Boxkey\n");
-      exit(1);
-    }
-    return;
-  }
-  if (!strcmp(token, "tiger_ideakey"))
-  {
-    if (key_atob_l(value, rdr->nagra_boxkey, 32))
-    {
-      fprintf(stderr, "Configuration reader: Error in Nagra Boxkey\n");
+      fprintf(stderr, "Configuration reader: Error in boxkey\n");
       exit(1);
     }
     return;
