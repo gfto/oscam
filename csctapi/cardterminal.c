@@ -70,35 +70,20 @@ CardTerminal * CardTerminal_New (void)
 	return ct;
 }
 
-char CardTerminal_Init (CardTerminal * ct, unsigned short pn, int reader_type, int mhz, int cardmhz)
+char CardTerminal_Init (CardTerminal * ct, int reader_type, int mhz, int cardmhz)
 {
 	char ret;
 	int i;
-	bool usbserial;
 	
 	/* Create a new IO_Serial */
-	ct->io = IO_Serial_New (reader_type, mhz, cardmhz);
+	ct->io = IO_Serial_New (mhz, cardmhz);
 	
 	/* Memory error */
 	if (ct->io == NULL)
 		return ERR_MEMORY;
 	
-	/* 
-	* Handle USB port numbers: first USB serial port starts at 0x8000,
-	* 0x8001 if CTAPI_WIN32_COM is set 
-	*/
-	if ((pn & 0x8000) == 0x8000)
-	{
-		usbserial = TRUE;
-		pn &= 0x7FFF;
-	}
-	else
-	{
-		usbserial = FALSE;
-	}
-	
 	/* Initialise serial port */
-	if (!IO_Serial_Init (ct->io, pn + 1, usbserial))
+	if (!IO_Serial_Init (ct->io, reader_type))
 	{
 		free (ct->io);
 		ct->io = NULL;

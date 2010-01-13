@@ -78,14 +78,14 @@ int fdmc=(-1);
 void IO_Serial_Ioctl_Lock(IO_Serial * io, int flag)
 {
   extern int *oscam_sem;
-  if ((io->com!=RTYP_DB2COM1) && (io->com!=RTYP_DB2COM2)) return;
+  if ((io->reader_type!=R_DB2COM1) && (io->reader_type!=R_DB2COM2)) return;
   if (!flag)
     *oscam_sem=0;
-  else while (*oscam_sem!=io->com)
+  else while (*oscam_sem!=io->reader_type)
   {
     while (*oscam_sem)
-    usleep((io->com)*2000);
-    *oscam_sem=io->com;
+    usleep((io->reader_type)*2000);
+    *oscam_sem=io->reader_type;
     usleep(1000);
   }
 }
@@ -135,8 +135,8 @@ bool IO_Serial_DTR_RTS(IO_Serial * io, int dtr, int set)
 	unsigned int mbit;
 
 #if defined(TUXBOX) && defined(PPC)
-	if ((io->com==RTYP_DB2COM1) || (io->com==RTYP_DB2COM2))
-		return(IO_Serial_DTR_RTS_dbox2(io->com==RTYP_DB2COM2, dtr, set));
+	if ((io->reader_type==R_DB2COM1) || (io->reader_type==R_DB2COM2))
+		return(IO_Serial_DTR_RTS_dbox2(io->reader_type==R_DB2COM2, dtr, set));
 #endif
 
 	mbit=(dtr) ? TIOCM_DTR : TIOCM_RTS;
@@ -158,7 +158,7 @@ bool IO_Serial_DTR_RTS(IO_Serial * io, int dtr, int set)
  * Public functions definition
  */
 
-IO_Serial * IO_Serial_New (int reader_type, int mhz, int cardmhz)
+IO_Serial * IO_Serial_New (int mhz, int cardmhz)
 {
 	IO_Serial *io;
 	
@@ -167,14 +167,13 @@ IO_Serial * IO_Serial_New (int reader_type, int mhz, int cardmhz)
 	if (io != NULL)
 		IO_Serial_Clear (io);
 	
-	io->reader_type=reader_type;
 	io->mhz=mhz;
 	io->cardmhz=cardmhz;
 	
 	return io;
 }
 
-bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial)
+bool IO_Serial_Init (IO_Serial * io, int reader_type)
 {
 	char filename[IO_SERIAL_FILENAME_LENGTH];
 	
@@ -184,13 +183,10 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial)
 	printf ("IO: Opening serial port %s\n", filename);
 #endif
 	
-	if (com < 1)
-		return FALSE;
-	
-	io->com = com;
+	io->reader_type = reader_type;
 
 #if defined(SCI_DEV) || defined(COOL)
-	if (com==RTYP_SCI)
+	if (com==R_INTERNAL)
 #ifdef SH4
 		io->fd = open (filename, O_RDWR|O_NONBLOCK|O_NOCTTY);
 #elif COOL
@@ -215,7 +211,7 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial)
 		return FALSE;
 
 #if defined(TUXBOX) && defined(PPC)
-	if ((com==RTYP_DB2COM1) || (com==RTYP_DB2COM2))
+	if ((reader_type == R_DB2COM1) || (reader_type == R_DB2COM2))
 		if ((fdmc = open(DEV_MULTICAM, O_RDWR)) < 0)
 		{
 			close(io->fd);
@@ -223,12 +219,10 @@ bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial)
 		}
 #endif
 	
-	if (com!=RTYP_SCI)
+	if (reader_type != R_INTERNAL)
 		IO_Serial_InitPnP (io);
 	
-	io->usbserial=usbserial;
-	
-	if(io->com!=RTYP_SCI)
+	if(io->reader_type!=R_INTERNAL)
 		IO_Serial_Flush(io);
 		
 	return TRUE;
@@ -241,7 +235,7 @@ bool IO_Serial_GetProperties (IO_Serial * io)
 	unsigned int mctl;
 
 #ifdef SCI_DEV
-	if(io->com==RTYP_SCI)
+	if(io->reader_type==R_INTERNAL)
 		return FALSE;
 #endif
 
@@ -510,11 +504,11 @@ bool IO_Serial_SetProperties (IO_Serial * io)
    struct termios newtio;
 	
 #ifdef SCI_DEV
-   if(io->com==RTYP_SCI)
+   if(io->reader_type==R_INTERNAL)
       return FALSE;
 #endif
    
-   //	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
+   //	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->reader_type, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
    memset (&newtio, 0, sizeof (newtio));
 
 
@@ -620,7 +614,7 @@ bool IO_Serial_SetProperties (IO_Serial * io)
 	IO_Serial_Ioctl_Lock(io, 0);
 	
 #ifdef DEBUG_IO
-	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->com, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
+	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->reader_type, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
 #endif
 	return TRUE;
 }
@@ -640,7 +634,7 @@ void IO_Serial_GetPnPId (IO_Serial * io, BYTE * pnp_id, unsigned *length)
 
 unsigned IO_Serial_GetCom (IO_Serial * io)
 {
-	return io->com;
+	return io->reader_type;
 }
 
 
@@ -653,7 +647,7 @@ bool IO_Serial_Read (IO_Serial * io, unsigned timeout, unsigned size, BYTE * dat
 	struct timeval tv, tv_spent;
 #endif
 	
-	if((io->com!=RTYP_SCI) && (io->wr>0))
+	if((io->reader_type!=R_INTERNAL) && (io->wr>0))
 	{
 		BYTE buf[256];
 		int n = io->wr;
@@ -749,7 +743,7 @@ bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE * data
 	
 	for (count = 0; count < size; count += to_send)
 	{
-//		if(io->com==RTYP_SCI)
+//		if(io->reader_type==R_INTERNAL)
 //			to_send = 1;
 //		else
 			to_send = (delay? 1: size);
@@ -770,12 +764,12 @@ bool IO_Serial_Write (IO_Serial * io, unsigned delay, unsigned size, BYTE * data
 				printf ("ERROR\n");
 				fflush (stdout);
 #endif
-				if(io->com!=RTYP_SCI)
+				if(io->reader_type!=R_INTERNAL)
 					io->wr += u;
 				return FALSE;
 			}
 			
-			if(io->com!=RTYP_SCI)
+			if(io->reader_type!=R_INTERNAL)
 				io->wr += to_send;
 			
 #ifdef DEBUG_IO
@@ -950,7 +944,7 @@ static bool IO_Serial_WaitToWrite (IO_Serial *io, unsigned delay_ms, unsigned ti
    int out_fd;
    
 #ifdef SCI_DEV
-   if(io->com==RTYP_SCI)
+   if(io->reader_type==R_INTERNAL)
       return TRUE;
 #endif
 		
@@ -1003,10 +997,9 @@ static bool IO_Serial_WaitToWrite (IO_Serial *io, unsigned delay_ms, unsigned ti
 static void IO_Serial_Clear (IO_Serial * io)
 {
 	io->fd = -1;
-	io->com = 0;
+	io->reader_type = 0;
 	memset (io->PnP_id, 0, IO_SERIAL_PNPID_SIZE);
 	io->PnP_id_size = 0;
-	io->usbserial = FALSE;
 	io->wr = 0;
 	//modifyable properties:
 	io->input_bitrate = 0;

@@ -430,7 +430,7 @@ static int PPS_InitICC (PPS * pps)
 #include <sys/ioctl.h>
 #include "sci_global.h"
 #include "sci_ioctl.h"
-	if(pps->icc->ifd->io->com==RTYP_SCI)
+	if(pps->icc->ifd->io->com==R_INTERNAL)
 	{
 		int n;
 		SCI_PARAMETERS params;
@@ -464,7 +464,7 @@ static int PPS_InitICC (PPS * pps)
 		
 	}
 #elif COOL
-	if(pps->icc->ifd->io->com==RTYP_SCI) {
+	if(pps->icc->ifd->io->com==R_INTERNAL) {
 		int mhz = atr_fs_table[pps->parameters.FI] / 10000;
 		if (!Cool_SetBaudrate(mhz))
 			return PPS_ICC_ERROR;

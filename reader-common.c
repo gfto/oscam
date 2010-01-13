@@ -19,21 +19,11 @@ static int cs_ptyp_orig; //reinit=1,
 
 #ifdef TUXBOX
 static int reader_device_type(char *device)
-#else
-static int reader_device_type()
-#endif
 {
-  int rc=PORT_STD;
-#ifdef TUXBOX
+  int rc=reader[ridx].typ;
   struct stat sb;
-#endif
-
-  switch(reader[ridx].typ)
+  if (reader[ridx].typ == RMOUSE)
   {
-    case R_MOUSE:
-    case R_SMART:
-      rc=PORT_STD;
-#ifdef TUXBOX
       if (!stat(device, &sb))
       {
         if (S_ISCHR(sb.st_mode))
@@ -44,20 +34,16 @@ static int reader_device_type()
           if ((cs_hw==CS_HW_DBOX2) && ((dev_major==4) || (dev_major==5)))
             switch(dev_minor & 0x3F)
             {
-              case 0: rc=PORT_DB2COM1; break;
-              case 1: rc=PORT_DB2COM2; break;
+              case 0: rc=R_DB2COM1; break;
+              case 1: rc=R_DB2COM2; break;
             }
           cs_debug("device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, rc);
         }
       }
-#endif
-      break;
-    case R_INTERNAL:
-      rc=PORT_SCI;
-      break;
   }
   return(rc);
 }
+#endif
 
 static void reader_nullcard(void)
 {
@@ -323,10 +309,10 @@ int reader_device_init(char *device)
   cs_ptyp=D_DEVICE;
   snprintf(oscam_device, sizeof(oscam_device), "%s", device);
 #ifdef TUXBOX
-  if ((rc=CT_init(1, reader_device_type(device),reader[ridx].typ,reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
+  if ((rc=CT_init(1, reader_device_type(device),reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
     cs_log("[tuxbox] Cannot open device: %s", device);
 #else
-  if ((rc=CT_init(1, reader_device_type(),reader[ridx].typ,reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
+  if ((rc=CT_init(1, reader[ridx].typ,reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
     cs_log("Cannot open device: %s", device);
 #endif
   cs_debug("ct_init on %s: %d", device, rc);

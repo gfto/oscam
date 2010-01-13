@@ -78,7 +78,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 		return ICC_ASYNC_IFD_ERROR;
 	/* Reset ICC */
 #ifdef SCI_DEV
-	if (ifd->io->com == RTYP_SCI) {
+	if (ifd->io->reader_type == R_INTERNAL) {
 		if (!Sci_Reset(ifd, &(icc->atr)))
 		{
 			icc->atr = NULL;
@@ -88,7 +88,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	else
 #endif
 #ifdef COOL
-	if (ifd->io->com == RTYP_SCI) {
+	if (ifd->io->reader_type == R_INTERNAL) {
 		if (!Cool_Reset(&(icc->atr)))
 		{
 			icc->atr = NULL;
@@ -158,7 +158,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 			return ICC_ASYNC_IFD_ERROR;		
 	}
 #ifdef COOL
-	if (icc->ifd->io->com != RTYP_SCI)
+	if (icc->ifd->io->reader_type != R_INTERNAL)
 #endif
 	IO_Serial_Flush(ifd->io);
 #endif
@@ -183,7 +183,7 @@ int ICC_Async_SetTimings (ICC_Async * icc, ICC_Async_Timings * timings)
 #include <sys/ioctl.h>
 #include "sci_global.h"
 #include "sci_ioctl.h"
-	if (icc->ifd->io->com == RTYP_SCI) {
+	if (icc->ifd->io->reader_type == R_INTERNAL) {
 		SCI_PARAMETERS params;
 		if (ioctl(icc->ifd->io->fd, IOCTL_GET_PARAMETERS, &params) < 0 )
 			return ICC_ASYNC_IFD_ERROR;
@@ -222,7 +222,7 @@ int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate)
 {
 	icc->baudrate = baudrate;
 /*#ifdef COOL
-	if (icc->ifd->io->com==RTYP_SCI) {
+	if (icc->ifd->io->reader_type==R_INTERNAL) {
     typedef unsigned long u_int32;
     u_int32 clk;
     //clk = 357*10000; // MHZ
@@ -280,7 +280,7 @@ int ICC_Async_Transmit (ICC_Async * icc, unsigned size, BYTE * data)
 	BYTE *buffer = NULL, *sent; 
 	IFD_Timings timings;
 	
-	if (icc->convention == ATR_CONVENTION_INVERSE && icc->ifd->io->com!=RTYP_SCI)
+	if (icc->convention == ATR_CONVENTION_INVERSE && icc->ifd->io->reader_type != R_INTERNAL)
 	{
 		buffer = (BYTE *) calloc(sizeof (BYTE), size);
 		memcpy (buffer, data, size);
@@ -296,7 +296,7 @@ int ICC_Async_Transmit (ICC_Async * icc, unsigned size, BYTE * data)
 	timings.char_delay = icc->timings.char_delay;
 	
 #ifdef COOL
-	if (icc->ifd->io->com == RTYP_SCI) {
+	if (icc->ifd->io->reader_type == R_INTERNAL) {
 		if (!Cool_Transmit(sent, size))
 			return ICC_ASYNC_IFD_ERROR;
 	}
@@ -319,7 +319,7 @@ int ICC_Async_Receive (ICC_Async * icc, unsigned size, BYTE * data)
 	timings.char_timeout = icc->timings.char_timeout;
 	
 #ifdef COOL
-	if (icc->ifd->io->com == RTYP_SCI) {
+	if (icc->ifd->io->reader_type == R_INTERNAL) {
 		if (!Cool_Receive(data, size))
 			return ICC_ASYNC_IFD_ERROR;
 	}
@@ -329,7 +329,7 @@ int ICC_Async_Receive (ICC_Async * icc, unsigned size, BYTE * data)
 		return ICC_ASYNC_IFD_ERROR;
 #endif
 	
-	if (icc->convention == ATR_CONVENTION_INVERSE && icc->ifd->io->com!=RTYP_SCI)
+	if (icc->convention == ATR_CONVENTION_INVERSE && icc->ifd->io->reader_type!=R_INTERNAL)
 		ICC_Async_InvertBuffer (size, data);
 	
 	return ICC_ASYNC_OK;

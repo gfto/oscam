@@ -1020,7 +1020,7 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 		return PROTOCOL_T14_ICC_ERROR;
 	}
 	
-	if(t14->icc->ifd->io->com!=RTYP_SCI)
+	if(t14->icc->ifd->io->reader_type!=R_INTERNAL)
 	{
 		/* Send 0x01 byte */
 		if (ICC_Async_Transmit (t14->icc, 1, &b1) != ICC_ASYNC_OK)

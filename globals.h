@@ -123,7 +123,12 @@
 
 #define R_MOUSE     0x1 // Reader smartcard mouse
 #define R_INTERNAL  0x2 // Reader smartcard intern
+#define R_DB2COM1		0x3 // Reader Dbox2 @ com1
+#define R_DB2COM2		0x4 // Reader Dbox2 @ com1
 #define R_SMART     0x5 // Smartreader+
+#ifdef HAVE_PCSC
+	#define R_PCSC 			0x6 // PCSC
+#endif
 #define R_CAMD35    0x10  // Reader cascading camd 3.5x
 #define R_CAMD33    0x11  // Reader cascading camd 3.3x
 #define R_NEWCAMD   0x12  // Reader cascading newcamd
@@ -135,9 +140,6 @@
 #define R_IS_NETWORK    0x70
 #define R_IS_CASCADING  0xF0
 
-#ifdef HAVE_PCSC
-	#define R_PCSC 			0x6 // PCSC
-#endif
 
 #define CS_MAX_MOD 12
 #define MOD_CONN_TCP    1

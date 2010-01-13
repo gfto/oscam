@@ -64,12 +64,10 @@ typedef struct
 	int dtr;
 	int rts;	
 	/* end settings that can be modified */
-	unsigned com;				/* Com port number (1..4) */
+	int reader_type;
 	BYTE PnP_id[IO_SERIAL_PNPID_SIZE];	/* PnP Id of the serial device */
 	unsigned PnP_id_size;			/* Length of PnP Id */
-	bool usbserial;			/* Is serial USB device */
 	int wr;
-	int reader_type;
 	int mhz;			/* mhz specified in config = actual reader clock speed */
 	int cardmhz;			/* mhz specified in config = standard (non overclocked) clock speed of card*/
 }
@@ -82,11 +80,11 @@ IO_Serial;
 /* IO_Serial creation and deletion */
 //extern void IO_Serial_Reopen (IO_Serial * io);
 extern void IO_Serial_Flush (IO_Serial * io);
-extern IO_Serial *IO_Serial_New (int reader_type, int mhz, int cardmhz);
+extern IO_Serial *IO_Serial_New (int mhz, int cardmhz);
 extern void IO_Serial_Delete (IO_Serial * io);
 
 /* Initialization and closing */
-extern bool IO_Serial_Init (IO_Serial * io, unsigned com, bool usbserial);
+extern bool IO_Serial_Init (IO_Serial * io, int reader_type);
 extern bool IO_Serial_Close (IO_Serial * io);
 
 /* Transmission properties */

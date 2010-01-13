@@ -20,7 +20,6 @@ extern "C" {
 
 extern char CT_init (
       unsigned short Ctn,                  /* Terminal Number */
-      unsigned short pn,                    /* Port Number */
       int reader_type,                      /* reader type (mouse, smartreader) */
       int mhz,
       int cardmhz
@@ -48,25 +47,10 @@ extern char CT_data(
 #define ERR_MEMORY      -11              /* Memory Allocate Error */
 #define ERR_HTSI        -128             /* HTSI Error */
 
-#define PORT_COM1	   0             /* COM 1 */
-#define PORT_COM2	   1             /* COM 2 */
-#define PORT_COM3	   2             /* COM 3 */
-#define PORT_COM4	   3             /* COM 4 */
-#define PORT_Printer       4             /* Printer Port (MAC) */
-#define PORT_Modem         5             /* Modem Port (MAC)   */
-#define PORT_LPT1	   6             /* LPT 1 */
-#define PORT_LPT2	   7             /* LPT 2 */
-
     /* #define DAD */
 #define CARD            0
 #define CT              1
 #define HOST            2
-
-    /* #define port-types */
-#define PORT_STD	PORT_COM1
-#define PORT_SCI	PORT_COM2
-#define PORT_DB2COM1	PORT_COM3
-#define PORT_DB2COM2	PORT_COM4
 
 #ifdef __cplusplus
 }
