@@ -615,13 +615,14 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		{
 			n++;
 		}
+
+		if ((buf[0] !=0x3B) && (buf[0] != 0x3F) && (n>9 && !memcmp(buf+4, "IRDETO", 6))) //irdeto S02 reports FD as first byte on dreambox SCI, not sure about SH4 or phoenix
+			buf[0] = 0x3B;
 #endif
 		
 		if(n==0)
 			return IFD_TOWITOKO_IO_ERROR;
 
-		if ((buf[0] !=0x3B) && (buf[0] != 0x3F)) //irdeto S02 reports FD as first byte ?!?
-			buf[0] = 0x3B;
 			
 		(*atr) = ATR_New ();
 		if(ATR_InitFromArray ((*atr), buf, n) == ATR_OK)
