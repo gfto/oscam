@@ -137,8 +137,12 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	atr = ICC_Async_GetAtr (pps->icc);
 	if ((*length) <= 0 || !PPS_success) // If not by command, or PPS Exchange by command failed: Try PPS Exchange by ATR or Get parameters from ATR
 	{
-		int numprot = atr->pn-1;//number of protocol lines in ATR
+		int numprot = atr->pn;
+		//if there is a trailing TD, this number is one too high
 		BYTE tx;
+		if (ATR_GetInterfaceByte (atr, numprot-1, ATR_INTERFACE_BYTE_TD, &tx) == ATR_OK)
+			if ((tx & 0xF0) == 0)
+				numprot--;
 	  cs_debug("ATR reports %i protocol lines:",numprot);
 		int i,point;
 		char txt[50];
