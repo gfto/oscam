@@ -77,6 +77,16 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	if (IFD_Towitoko_ActivateICC (ifd) != IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
 	/* Reset ICC */
+#ifdef SCI_DEV
+	if (ifd->io->com == RTYP_SCI) {
+		if (!Sci_Reset(ifd, &(icc->atr)))
+		{
+			icc->atr = NULL;
+			return ICC_ASYNC_IFD_ERROR;
+		}
+	}
+	else
+#endif
 #ifdef COOL
 	if (ifd->io->com == RTYP_SCI) {
 		if (!Cool_Reset(&(icc->atr)))
