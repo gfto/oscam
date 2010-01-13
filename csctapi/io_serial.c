@@ -186,7 +186,7 @@ bool IO_Serial_Init (IO_Serial * io, int reader_type)
 	io->reader_type = reader_type;
 
 #if defined(SCI_DEV) || defined(COOL)
-	if (com==R_INTERNAL)
+	if (reader_type==R_INTERNAL)
 #ifdef SH4
 		io->fd = open (filename, O_RDWR|O_NONBLOCK|O_NOCTTY);
 #elif COOL
@@ -508,7 +508,7 @@ bool IO_Serial_SetProperties (IO_Serial * io)
       return FALSE;
 #endif
    
-   //	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->reader_type, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
+   //	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->reader_type, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
    memset (&newtio, 0, sizeof (newtio));
 
 
@@ -614,7 +614,7 @@ bool IO_Serial_SetProperties (IO_Serial * io)
 	IO_Serial_Ioctl_Lock(io, 0);
 	
 #ifdef DEBUG_IO
-	printf("IO: Setting properties: com%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->reader_type, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
+	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->reader_type, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
 #endif
 	return TRUE;
 }
@@ -1015,10 +1015,6 @@ static void IO_Serial_DeviceName (char * filename, unsigned length)
 {
 	extern char oscam_device[];
    snprintf (filename, length, "%s", oscam_device);
-//	if(com==1)
-//		snprintf (filename, length, "/dev/tts/%d", com - 1);
-//	else
-//		snprintf (filename, length, "/dev/sci%d", com - 2);
 }
 
 static bool IO_Serial_InitPnP (IO_Serial * io)

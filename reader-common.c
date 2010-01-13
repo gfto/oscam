@@ -22,7 +22,7 @@ static int reader_device_type(char *device)
 {
   int rc=reader[ridx].typ;
   struct stat sb;
-  if (reader[ridx].typ == RMOUSE)
+  if (reader[ridx].typ == R_MOUSE)
   {
       if (!stat(device, &sb))
       {

@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "ifd.h"
+#include "../globals.h"
 
 /*
  * Not exported constants definition
@@ -430,7 +431,7 @@ static int PPS_InitICC (PPS * pps)
 #include <sys/ioctl.h>
 #include "sci_global.h"
 #include "sci_ioctl.h"
-	if(pps->icc->ifd->io->com==R_INTERNAL)
+	if(pps->icc->ifd->io->reader_type == R_INTERNAL)
 	{
 		int n;
 		SCI_PARAMETERS params;
