@@ -108,7 +108,7 @@ int Sci_Reset (IFD * ifd, ATR ** atr)
 		}
 	}			
 #else
-	while(n<SCI_MAX_ATR_SIZE && IO_Serial_Read(ifd->io, IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
+	while(n<SCI_MAX_ATR_SIZE && IO_Serial_Read(IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
 	{
 		n++;
 	}

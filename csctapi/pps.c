@@ -465,7 +465,7 @@ static int PPS_InitICC (PPS * pps)
 		
 	}
 #elif COOL
-	if(pps->icc->ifd->io->com==R_INTERNAL) {
+	if(reader[ridx].typ == R_INTERNAL) {
 		int mhz = atr_fs_table[pps->parameters.FI] / 10000;
 		if (!Cool_SetBaudrate(mhz))
 			return PPS_ICC_ERROR;
@@ -481,7 +481,7 @@ static int PPS_InitICC (PPS * pps)
 	if (pps->parameters.t == 14)
 		baudrate = 9600;
 	else
-		baudrate = pps->parameters.d * ICC_Async_GetClockRate (pps->icc) / F; 
+		baudrate = pps->parameters.d * ICC_Async_GetClockRate () / F; 
 
 #ifdef DEBUG_PROTOCOL
 	printf ("PPS: Baudrate = %d\n", (int)baudrate);

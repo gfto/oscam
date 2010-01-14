@@ -436,7 +436,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		for(i=0; i<3; i++)
 		{
 			parity = par[i];
-			IO_Serial_Flush(ifd->io);
+			IO_Serial_Flush();
 
 			ret = IFD_Towitoko_SetParity (ifd, parity);
 			if (ret != IFD_TOWITOKO_OK)
@@ -474,7 +474,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 
 			(*atr) = ATR_New ();
 
-			if(ATR_InitFromStream ((*atr), ifd->io, IFD_TOWITOKO_ATR_TIMEOUT) == ATR_OK)
+			if(ATR_InitFromStream ((*atr), IFD_TOWITOKO_ATR_TIMEOUT) == ATR_OK)
 				ret = IFD_TOWITOKO_OK;
 
 			/* Succesfully retrive ATR */
@@ -492,7 +492,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			}	
 		}
 	
-		IO_Serial_Flush(ifd->io);
+		IO_Serial_Flush();
 
 /*
 		//PLAYGROUND faking ATR for test purposes only
@@ -537,15 +537,15 @@ int IFD_Towitoko_Transmit (IFD * ifd, IFD_Timings * timings, unsigned size, BYTE
 		/* Send data */
 		if ((sent == 0) && (block_delay != char_delay))
 		{
-			if (!IO_Serial_Write (ifd->io, block_delay, 1, buffer))
+			if (!IO_Serial_Write (block_delay, 1, buffer))
 				return IFD_TOWITOKO_IO_ERROR;
 			
-			if (!IO_Serial_Write (ifd->io, char_delay, to_send-1, buffer+1))
+			if (!IO_Serial_Write (char_delay, to_send-1, buffer+1))
 				return IFD_TOWITOKO_IO_ERROR;
 		}
 		else
 		{
-			if (!IO_Serial_Write (ifd->io, char_delay, to_send, buffer+sent))
+			if (!IO_Serial_Write (char_delay, to_send, buffer+sent))
 				return IFD_TOWITOKO_IO_ERROR;
 		}
 	}
@@ -571,20 +571,20 @@ int IFD_Towitoko_Receive (IFD * ifd, IFD_Timings * timings, unsigned size, BYTE 
 	if (block_timeout != char_timeout)
 	{
 		/* Read first byte using block timeout */
-		if (!IO_Serial_Read (ifd->io, block_timeout, 1, buffer))
+		if (!IO_Serial_Read (block_timeout, 1, buffer))
 			return IFD_TOWITOKO_IO_ERROR;
 		
 		if (size > 1)
 		{
 			/* Read remaining data bytes using char timeout */
-			if (!IO_Serial_Read (ifd->io, char_timeout, size - 1, buffer + 1))
+			if (!IO_Serial_Read (char_timeout, size - 1, buffer + 1))
 				return IFD_TOWITOKO_IO_ERROR;
 		}
 	}
 	else
 	{
 		/* Read all data bytes with the same timeout */
-		if (!IO_Serial_Read (ifd->io, char_timeout, size, buffer))
+		if (!IO_Serial_Read (char_timeout, size, buffer))
 			return IFD_TOWITOKO_IO_ERROR;
 	}
 #ifdef USE_GPIO

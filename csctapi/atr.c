@@ -51,7 +51,7 @@ unsigned atr_i_table[4] = {25, 50, 100, 0};
  * Not exported functions declaration
  */
 
-static bool ATR_GetNextByte (IO_Serial * io, unsigned timeout, BYTE * b, bool invert);
+static bool ATR_GetNextByte (unsigned timeout, BYTE * b, bool invert);
 
 /* 
  * Exported funcions definition
@@ -197,7 +197,7 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
 	return (ATR_OK);
 }
 
-int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
+int ATR_InitFromStream (ATR * atr, unsigned timeout)
 {
 	BYTE TDi;
 	unsigned pointer = 0, pn = 0, i;
@@ -206,7 +206,7 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 	invert = FALSE;
 		
 	/* Store T0 and TS */
-	if (!ATR_GetNextByte (io, timeout, &(atr->TS), invert))
+	if (!ATR_GetNextByte (timeout, &(atr->TS), invert))
 		return ATR_IO_ERROR;
 	
 	if (atr->TS == 0x03)
@@ -218,7 +218,7 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 	if ((atr->TS != 0x3B) && (atr->TS != 0x3F))
 		return ATR_MALFORMED;
 	
-	if (!ATR_GetNextByte (io, timeout, &(atr->T0), invert))
+	if (!ATR_GetNextByte (timeout, &(atr->T0), invert))
 		return ATR_MALFORMED;
 	
 	TDi = atr->T0;
@@ -237,7 +237,7 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 		if ((TDi | 0xEF) == 0xFF)
 		{
 			pointer++;
-			if (!ATR_GetNextByte(io, timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TA].value),invert))
+			if (!ATR_GetNextByte(timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TA].value),invert))
 				return ATR_MALFORMED;
 			atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = TRUE;
 		}
@@ -250,7 +250,7 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 		if ((TDi | 0xDF) == 0xFF)
 		{
 			pointer++;
-			if (!ATR_GetNextByte(io, timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TB].value),invert))
+			if (!ATR_GetNextByte(timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TB].value),invert))
 				return ATR_MALFORMED;
 			atr->ib[pn][ATR_INTERFACE_BYTE_TB].present = TRUE;
 		}
@@ -263,7 +263,7 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 		if ((TDi | 0xBF) == 0xFF)
 		{
 			pointer++;
-			if (!ATR_GetNextByte(io, timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TC].value), invert))
+			if (!ATR_GetNextByte(timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TC].value), invert))
 				return ATR_MALFORMED;
 			atr->ib[pn][ATR_INTERFACE_BYTE_TC].present = TRUE;
 		}
@@ -276,7 +276,7 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 		if ((TDi | 0x7F) == 0xFF)
 		{
 			pointer++;
-			if (!ATR_GetNextByte(io, timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TD].value), invert))
+			if (!ATR_GetNextByte(timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TD].value), invert))
 				return ATR_MALFORMED;
 			TDi = atr->ib[pn][ATR_INTERFACE_BYTE_TD].value;
 			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = TRUE;
@@ -298,7 +298,7 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 	/* Store historical bytes */
 	for (i = 0; i < (atr->hbn); i++)
 	{
-		if (!ATR_GetNextByte (io, timeout, &(atr->hb[i]), invert))
+		if (!ATR_GetNextByte (timeout, &(atr->hb[i]), invert))
 			return ATR_MALFORMED;
 	}
 	
@@ -309,7 +309,7 @@ int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout)
 	{
 		pointer++;
 		
-		if (!ATR_GetNextByte (io, timeout, (&((atr->TCK).value)), invert))
+		if (!ATR_GetNextByte (timeout, (&((atr->TCK).value)), invert))
 			return ATR_MALFORMED;
 	}
 	
@@ -579,10 +579,10 @@ int ATR_GetFsMax (ATR * atr, unsigned long *fsmax)
  * Not exported functions definition
  */
 
-static bool ATR_GetNextByte (IO_Serial * io, unsigned timeout, BYTE * byte, bool invert)
+static bool ATR_GetNextByte (unsigned timeout, BYTE * byte, bool invert)
 {
 	bool ret;
-	ret = IO_Serial_Read (io, timeout, 1, byte);
+	ret = IO_Serial_Read (timeout, 1, byte);
 	/* Para tarjetas inversas quiza */
 	if (invert)
 		(*byte) = ~(INVERT_BYTE (*byte));

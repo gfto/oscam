@@ -113,7 +113,7 @@ extern void ATR_Delete (ATR * atr);
 
 /* Initialization */
 extern int ATR_InitFromArray (ATR * atr, BYTE buffer[ATR_MAX_SIZE], unsigned length);
-extern int ATR_InitFromStream (ATR * atr, IO_Serial * io, unsigned timeout);
+extern int ATR_InitFromStream (ATR * atr, unsigned timeout);
 
 /* General smartcard characteristics */
 extern int ATR_GetConvention (ATR * atr, int *convention);

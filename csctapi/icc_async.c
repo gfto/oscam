@@ -70,7 +70,7 @@ int ICC_Async_Device_Init ()
 #endif
 	
 #if defined(SCI_DEV) || defined(COOL)
-	if (reader[ridx].typ==R_INTERNAL)
+	if (reader[ridx].typ == R_INTERNAL)
 #ifdef SH4
 		reader[ridx].handle = open (reader[ridx].device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 #elif COOL
@@ -109,14 +109,14 @@ int ICC_Async_GetStatus (BYTE * result)
 // status : 0 -start, 1 - card, 2- no card
 
 #ifdef SCI_DEV
-	if(reader[ridx].typ==R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 	{
 		if(!Sci_GetStatus(reader[ridx].handle, &in))
 			return IFD_TOWITOKO_IO_ERROR;			
 	}
 	else
 #elif COOL
-	if(reader[ridx].typ==R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 	{	
 		if (!Cool_GetStatus(&in))
 			return IFD_TOWITOKO_IO_ERROR;
@@ -125,13 +125,13 @@ int ICC_Async_GetStatus (BYTE * result)
 #endif
 
 #if defined(TUXBOX) && defined(PPC)
-	if ((reader[ridx].typ==R_DB2COM1) || (reader[ridx].typ==R_DB2COM2))
+	if ((reader[ridx].typ == R_DB2COM1) || (reader[ridx].typ == R_DB2COM2))
 	{
 		ushort msr=1;
 		extern int fdmc;
 		IO_Serial_Ioctl_Lock(1);
 		ioctl(fdmc, GET_PCDAT, &msr);
-		if (reader[ridx].typ==R_DB2COM2)
+		if (reader[ridx].typ == R_DB2COM2)
 			in=(!(msr & 1));
 		else
 			in=((msr & 0x0f00) == 0x0f00);
@@ -402,7 +402,7 @@ int ICC_Async_Transmit (ICC_Async * icc, unsigned size, BYTE * data)
 	}
 	else
 #endif
-	if (IFD_Towitoko_Transmit (icc->ifd, &timings, size, sent) != IFD_TOWITOKO_OK)
+	if (!Phoenix_Transmit (sent, size, &timings, size))
 		return ICC_ASYNC_IFD_ERROR;
 	
 	if (icc->convention == ATR_CONVENTION_INVERSE)
@@ -425,11 +425,11 @@ int ICC_Async_Receive (ICC_Async * icc, unsigned size, BYTE * data)
 	}
 	else
 #else
-	if (IFD_Towitoko_Receive (icc->ifd, &timings, size, data) != IFD_TOWITOKO_OK)
+	if (!Phoenix_Receive (data, size, &timings))
 		return ICC_ASYNC_IFD_ERROR;
 #endif
 	
-	if (icc->convention == ATR_CONVENTION_INVERSE && reader[ridx].typ!=R_INTERNAL)
+	if (icc->convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL)
 		ICC_Async_InvertBuffer (size, data);
 	
 	return ICC_ASYNC_OK;
@@ -463,7 +463,7 @@ int ICC_Async_Close (ICC_Async * icc)
 	return ICC_ASYNC_OK;
 }
 
-unsigned long ICC_Async_GetClockRate (ICC_Async * icc)
+unsigned long ICC_Async_GetClockRate ()
 {
 	switch (reader[ridx].cardmhz) {
 		case 357:

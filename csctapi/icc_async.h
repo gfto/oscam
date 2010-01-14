@@ -81,7 +81,7 @@ extern int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate);
 extern int ICC_Async_GetBaudrate (ICC_Async * icc, unsigned long * baudrate);
 extern ATR *ICC_Async_GetAtr (ICC_Async * icc);
 extern IFD *ICC_Async_GetIFD (ICC_Async * icc);
-extern unsigned long ICC_Async_GetClockRate (ICC_Async * icc);
+extern unsigned long ICC_Async_GetClockRate ();
 
 /* Operations */
 extern int ICC_Async_Transmit (ICC_Async * icc, unsigned size, BYTE * buffer);

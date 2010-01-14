@@ -138,8 +138,6 @@ extern int IFD_Towitoko_DeactivateICC (IFD * ifd);
 
 /* Asynchronous ICC handling functions */
 extern int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr);
-extern int IFD_Towitoko_Transmit (IFD * ifd, IFD_Timings * timings, unsigned size, BYTE * buffer);
-extern int IFD_Towitoko_Receive (IFD * ifd, IFD_Timings * timings, unsigned size, BYTE * buffer);
 
 /* Atributes of the drive associated with this IFD */
 extern BYTE IFD_Towitoko_GetType (IFD * ifd);
