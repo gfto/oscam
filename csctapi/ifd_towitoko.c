@@ -612,9 +612,6 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		}
 	
 		IO_Serial_Flush(ifd->io);
-#ifndef NO_PAR_SWITCH
-		IFD_Towitoko_SetParity (ifd, IFD_TOWITOKO_PARITY_NONE);
-#endif
 
 /*
 		//PLAYGROUND faking ATR for test purposes only

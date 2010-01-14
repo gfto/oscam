@@ -141,7 +141,6 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	icc->baudrate = ICC_ASYNC_BAUDRATE;
 	icc->ifd = ifd;
 	
-#ifdef NO_PAR_SWITCH
 	if (icc->convention == ATR_CONVENTION_INVERSE)
 	{
 		if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_ODD) != IFD_TOWITOKO_OK)
@@ -161,7 +160,6 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	if (icc->ifd->io->reader_type != R_INTERNAL)
 #endif
 	IO_Serial_Flush(ifd->io);
-#endif
 	return ICC_ASYNC_OK;
 #else
 	return ICC_ASYNC_ATR_ERROR;
@@ -247,34 +245,6 @@ int ICC_Async_GetBaudrate (ICC_Async * icc, unsigned long * baudrate)
 	return ICC_ASYNC_OK;  
 }
 
-int ICC_Async_BeginTransmission (ICC_Async * icc)
-{
-	/* Setup parity for this ICC */
-#ifndef NO_PAR_SWITCH
-	if (icc->convention == ATR_CONVENTION_INVERSE)
-	{
-		if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_ODD) != IFD_TOWITOKO_OK)
-			return ICC_ASYNC_IFD_ERROR;
-	}
-	else if(icc->protocol_type == ATR_PROTOCOL_TYPE_T14)
-	{
-		if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_NONE) != IFD_TOWITOKO_OK)
-			return ICC_ASYNC_IFD_ERROR;		
-	}
-	else
-	{
-		if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_EVEN) != IFD_TOWITOKO_OK)
-			return ICC_ASYNC_IFD_ERROR;		
-	}
-	
-	/* Setup baudrate for  this ICC */
-/*	if (IFD_Towitoko_SetBaudrate (icc->ifd, icc->baudrate)!= IFD_TOWITOKO_OK)
-		return ICC_ASYNC_IFD_ERROR;
-*/	
-#endif
-	return ICC_ASYNC_OK;
-}
-
 int ICC_Async_Transmit (ICC_Async * icc, unsigned size, BYTE * data)
 {
 	BYTE *buffer = NULL, *sent; 
@@ -331,17 +301,6 @@ int ICC_Async_Receive (ICC_Async * icc, unsigned size, BYTE * data)
 	
 	if (icc->convention == ATR_CONVENTION_INVERSE && icc->ifd->io->reader_type!=R_INTERNAL)
 		ICC_Async_InvertBuffer (size, data);
-	
-	return ICC_ASYNC_OK;
-}
-
-int ICC_Async_EndTransmission (ICC_Async * icc)
-{
-#ifndef NO_PAR_SWITCH
-	/* Restore parity */
-	if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_NONE) != IFD_TOWITOKO_OK)
-		return ICC_ASYNC_IFD_ERROR;		
-#endif
 	
 	return ICC_ASYNC_OK;
 }
