@@ -47,17 +47,19 @@ int Sci_Reset (IFD * ifd, ATR ** atr)
 	
 	(*atr) = NULL;
 
-#ifdef SH4		
 	memset(&params,0,sizeof(SCI_PARAMETERS));
 	
-	params.ETU = 372;
-	params.EGT = 3;
-	params.fs = 9;
+	params.ETU = 372; 
+	params.EGT = 3; //not sure why this value is chosen
+#ifdef SH4		
+	params.fs = 9; //not sure why this value is chosen
+#else
+	params.fs = 5;
+#endif
 	params.T = 0;
 	
 	if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
 		return ERROR;
-#endif
 	
 	if(ioctl(ifd->io->fd, IOCTL_SET_RESET)<0)
 		return ERROR;
