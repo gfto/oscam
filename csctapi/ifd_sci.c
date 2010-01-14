@@ -71,7 +71,7 @@ int Sci_Reset (IFD * ifd, ATR ** atr)
 
 	while(n<atr_size && (tv_spent.tv_sec-tv.tv_sec)<10)
  		{
-		if(IO_Serial_Read(ifd->io, IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
+		if(IO_Serial_Read(IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
 			n++;
 		gettimeofday(&tv_spent,0);
 		if(n==2) // format character
