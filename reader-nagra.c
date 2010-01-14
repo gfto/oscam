@@ -261,6 +261,7 @@ int NegotiateSessionKey_Tiger(void)
      	cs_ri_log("[nagra-reader] CAID: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
      	cs_ri_log("[nagra-reader] ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
 
+	memset(random, 0, 88);
 	memcpy(random, sk,16);
 	ReverseMem(random, 88);
 	
