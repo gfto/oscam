@@ -741,8 +741,12 @@ static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf)
 int cc_recv(uchar *buf, int l)
 {
   int n;
+  uchar *cbuf;
   struct cc_data *cc = reader[ridx].cc;
-  uchar *cbuf = malloc(l);
+
+  if (buf==NULL) return -1;
+  cbuf = malloc(l);
+  if (cbuf==NULL) return -1;
 
   memcpy(cbuf, buf, l);   // make a copy of buf
 
@@ -755,20 +759,20 @@ int cc_recv(uchar *buf, int l)
     return -2;
   }
 
-  cs_ddump(buf, n, "cccam: received %d bytes from %s", n, remote_txt());
+  cs_ddump(cbuf, n, "cccam: received %d bytes from %s", n, remote_txt());
   client[cs_idx].last = time((time_t *) 0);
 
-  if (n < 4) {
-    cs_log("cccam: packet to small (%d bytes)", n);
-    n = -1;
-  } else if (n == 0) {
+  if (n == 0) {
     cs_log("cccam: Connection closed to %s", remote_txt());
     n = -1;
+  } else if (n < 4) {
+    cs_log("cccam: packet to small (%d bytes)", n);
+    n = -1;
+  } else {
+    // parse it and write it back, if we have received something of value
+    cc_parse_msg(cbuf, n);
+    memcpy(buf, cbuf, l);
   }
-
-  cc_parse_msg(cbuf, n);
-
-  memcpy(buf, cbuf, l);
 
   X_FREE(cbuf);
 
@@ -783,10 +787,17 @@ static int cc_cli_connect(void)
   uint8 data[20];
   uint8 hash[SHA_DIGEST_LENGTH];
   uint8 buf[CC_MAXMSGSIZE];
+  char pwd[64];
   struct cc_data *cc;
+
+  if (reader[ridx].cc) X_FREE(reader[ridx].cc);
 
   // init internals data struct
   cc = malloc(sizeof(struct cc_data));
+  if (cc==NULL) {
+    cs_log("cccam: cannot allocate memory");
+    return -1;
+  }
   reader[ridx].cc = cc;
   bzero(reader[ridx].cc, sizeof(struct cc_data));
   cc->cards = llist_create();
@@ -826,16 +837,17 @@ static int cc_cli_connect(void)
   cc_cmd_send(hash, 20, MSG_NO_HEADER);   // send crypted hash to server
 
   bzero(buf, sizeof(buf));
-
   memcpy(buf, reader[ridx].r_usr, strlen(reader[ridx].r_usr));
   cs_ddump(buf, 20, "cccam: username '%s':", buf);
   cc_cmd_send(buf, 20, MSG_NO_HEADER);    // send usr '0' padded -> 20 bytes
 
   bzero(buf, sizeof(buf));
+  bzero(pwd, sizeof(pwd));
 
   cs_debug("cccam: 'CCcam' xor");
   memcpy(buf, "CCcam", 5);
-  cc_crypt(&cc->block[ENCRYPT], (uint8 *)reader[ridx].r_pwd, strlen(reader[ridx].r_pwd), ENCRYPT);     // modify encryption state w/ pwd
+  strncpy(pwd, reader[ridx].r_pwd, 63);
+  cc_crypt(&cc->block[ENCRYPT], (uint8 *)pwd, strlen(pwd), ENCRYPT);
   cc_cmd_send(buf, 6, MSG_NO_HEADER); // send 'CCcam' xor w/ pwd
 
   if ((n = recv(handle, data, 20, MSG_WAITALL)) != 20) {
@@ -924,7 +936,8 @@ int cc_cli_init(void)
     server = gethostbyname(reader[ridx].device);
     bcopy((char *)server->h_addr, (char *)&client[cs_idx].udp_sa.sin_addr.s_addr, server->h_length);
 
-    reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
+    if (reader[ridx].tcp_rto <= 0) reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
+    cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);
     if (!reader[ridx].cc_maxhop) reader[ridx].cc_maxhop = 10; // default maxhop to 10 if not configured
 
     cs_log("cccam: proxy %s:%d cccam v%s (%s), maxhop = %d (fd=%d, ridx=%d)",

@@ -188,6 +188,9 @@ void network_tcp_connection_close(int fd)
       ecmtask[i].rc=0;
     }
 
+    reader[ridx].ncd_msgid=0;
+    reader[ridx].last_s=reader[ridx].last_g=0;
+
     if (reader[ridx].ph.c_init())
     {
       cs_debug("network_tcp_connection_close() exit(1);");
@@ -195,8 +198,6 @@ void network_tcp_connection_close(int fd)
     }
 
     cs_resolve();
-    reader[ridx].ncd_msgid=0;
-    reader[ridx].last_s=reader[ridx].last_g=0;
 //  cs_log("last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
   }
 }
