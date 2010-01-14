@@ -9,11 +9,13 @@
 
 #include <stdio.h>
 #include <time.h>
-//#include <string.h>
 #include <sys/ioctl.h>
 #include "sci_global.h"
 #include "sci_ioctl.h"
 #include "atr.h"
+#ifdef SH4
+#include <fcntl.h> 
+#endif
 
 #include "ifd_towitoko.h"
 #define IFD_TOWITOKO_ATR_TIMEOUT	 800
