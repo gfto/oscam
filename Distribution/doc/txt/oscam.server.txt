@@ -166,10 +166,10 @@ DESCRIPTIONS
 		    readnano = /var/oscam/write.emm
 
        n3_rsakey|rsakey = RSA key
-	  RSA key for Nagravision SCs
+	  RSA key for Nagravision SCs / CAM key data for Irdeto SCs
 
        n3_boxkey|boxkey = box key
-	  box key for Nagravision SCs
+	  box key for Nagravision SCs / CAM key for Irdeto SCs
 
        tiger_rsakey = RSA key
 	  RSA key for Tiger Nagravision SCs
