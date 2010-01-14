@@ -55,7 +55,6 @@ ICC_Async *ICC_Async_New (void)
 	
 	/* Allocate memory */
 	icc = (ICC_Async *) malloc (sizeof (ICC_Async));
-printf("NEW ICC: reader_type = %i, cardmhz = %i\n",reader[ridx].typ, reader[ridx].cardmhz);
 	
 	if (icc != NULL)
 		ICC_Async_Clear (icc);

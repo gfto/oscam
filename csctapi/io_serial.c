@@ -169,14 +169,12 @@ IO_Serial * IO_Serial_New (int mhz, int cardmhz)
 	
 	io->mhz=mhz;
 	io->cardmhz=cardmhz;
-printf("IO_SERIAL_NEW: cardmhz = %i\n",cardmhz);
 	
 	return io;
 }
 
 bool IO_Serial_Init (IO_Serial * io, int reader_type)
 {
-printf("IO_SERIAL_INIT\n");	
 	io->reader_type = reader_type;
 	io->fd = reader[ridx].handle;
 
