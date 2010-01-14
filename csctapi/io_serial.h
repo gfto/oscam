@@ -92,9 +92,9 @@ extern bool IO_Serial_SetProperties (IO_Serial * io);
 extern bool IO_Serial_GetProperties (IO_Serial * io);
 extern bool IO_Serial_DTR_RTS(IO_Serial * io, int, int);
 #if defined(TUXBOX) && defined(PPC)
-extern void IO_Serial_Ioctl_Lock(IO_Serial *, int);
+extern void IO_Serial_Ioctl_Lock(int);
 #else
-#define IO_Serial_Ioctl_Lock(a, b) {}
+#define IO_Serial_Ioctl_Lock(b) {} //FIXME ugly !!
 #endif
 
 /* Input and output */

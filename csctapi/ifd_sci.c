@@ -13,6 +13,7 @@
 #include "sci_global.h"
 #include "sci_ioctl.h"
 #include "atr.h"
+#include "string.h"
 #ifdef SH4
 #include <fcntl.h> 
 #endif

@@ -444,7 +444,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 
 			ret = IFD_TOWITOKO_IO_ERROR;
 
-			IO_Serial_Ioctl_Lock(ifd->io, 1);
+			IO_Serial_Ioctl_Lock(1);
 #ifdef USE_GPIO
 			if (gpio_detect)
 			{
@@ -470,7 +470,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 #endif
 				IO_Serial_RTS_Clr(ifd->io);
 			
-			IO_Serial_Ioctl_Lock(ifd->io, 0);
+			IO_Serial_Ioctl_Lock(0);
 
 			(*atr) = ATR_New ();
 

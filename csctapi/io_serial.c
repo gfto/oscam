@@ -72,20 +72,20 @@ static void IO_Serial_Clear (IO_Serial * io);
 static int _in_echo_read = 0;
 int io_serial_need_dummy_char = 0;
 
-int fdmc=(-1);
+extern int fdmc;
 
 #if defined(TUXBOX) && defined(PPC)
-void IO_Serial_Ioctl_Lock(IO_Serial * io, int flag)
+void IO_Serial_Ioctl_Lock(int flag)
 {
   extern int *oscam_sem;
-  if ((io->reader_type!=R_DB2COM1) && (io->reader_type!=R_DB2COM2)) return;
+  if ((reader[ridx].typ!=R_DB2COM1) && (reader[ridx].typ!=R_DB2COM2)) return;
   if (!flag)
     *oscam_sem=0;
-  else while (*oscam_sem!=io->reader_type)
+  else while (*oscam_sem!=reader[ridx].typ)
   {
     while (*oscam_sem)
-    usleep((io->reader_type)*2000);
-    *oscam_sem=io->reader_type;
+    usleep((reader[ridx].typ)*2000); //FIXME is this right ?!?!
+    *oscam_sem=reader[ridx].typ;
     usleep(1000);
   }
 }
@@ -569,10 +569,10 @@ bool IO_Serial_SetProperties (IO_Serial * io)
 //	if (tcsetattr (io->fd, TCSAFLUSH, &newtio) < 0)
 //		return FALSE;
 
-	IO_Serial_Ioctl_Lock(io, 1);
+	IO_Serial_Ioctl_Lock(1);
 	IO_Serial_DTR_RTS(io, 0, io->rts == IO_SERIAL_HIGH);
 	IO_Serial_DTR_RTS(io, 1, io->dtr == IO_SERIAL_HIGH);
-	IO_Serial_Ioctl_Lock(io, 0);
+	IO_Serial_Ioctl_Lock(0);
 	
 #ifdef DEBUG_IO
 	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->reader_type, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);

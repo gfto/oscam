@@ -41,6 +41,7 @@ static int reader_device_type(char *device)
         }
       }
   }
+	reader[ridx].typ = rc;
   return(rc);
 }
 #endif

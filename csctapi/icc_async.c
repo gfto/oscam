@@ -43,6 +43,7 @@
 static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer);
 static void ICC_Async_Clear (ICC_Async * icc);
 
+int fdmc=(-1);
 
 /*
  * Exported functions definition
@@ -70,7 +71,7 @@ int ICC_Async_Device_Init ()
 #endif
 	
 #if defined(SCI_DEV) || defined(COOL)
-	if (reader_type==R_INTERNAL)
+	if (reader[ridx].typ==R_INTERNAL)
 #ifdef SH4
 		reader[ridx].handle = open (reader[ridx].device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 #elif COOL
@@ -87,7 +88,7 @@ int ICC_Async_Device_Init ()
 		return ICC_ASYNC_IFD_ERROR;
 
 #if defined(TUXBOX) && defined(PPC)
-	if ((reader_type == R_DB2COM1) || (reader_type == R_DB2COM2))
+	if ((reader[ridx].typ == R_DB2COM1) || (reader[ridx].typ == R_DB2COM2))
 		if ((fdmc = open(DEV_MULTICAM, O_RDWR)) < 0)
 		{
 			close(reader[ridx].handle);
@@ -125,17 +126,17 @@ int ICC_Async_GetStatus (BYTE * result)
 #endif
 
 #if defined(TUXBOX) && defined(PPC)
-	if ((reader[ridx].typ==R_DB2COM1) || (ifd->reader[ridx].typ==R_DB2COM2))
+	if ((reader[ridx].typ==R_DB2COM1) || (reader[ridx].typ==R_DB2COM2))
 	{
 		ushort msr=1;
 		extern int fdmc;
-		IO_Serial_Ioctl_Lock(ifd->io, 1);
+		IO_Serial_Ioctl_Lock(1);
 		ioctl(fdmc, GET_PCDAT, &msr);
 		if (reader[ridx].typ==R_DB2COM2)
 			in=(!(msr & 1));
 		else
 			in=((msr & 0x0f00) == 0x0f00);
-		IO_Serial_Ioctl_Lock(ifd->io, 0);
+		IO_Serial_Ioctl_Lock(0);
 	}
 	else
 #endif
@@ -222,7 +223,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 		return ICC_ASYNC_IFD_ERROR;
 	/* Reset ICC */
 #ifdef SCI_DEV
-	if (ifd->reader[ridx].typ == R_INTERNAL) {
+	if (reader[ridx].typ == R_INTERNAL) {
 		if (!Sci_Reset(ifd, &(icc->atr)))
 		{
 			icc->atr = NULL;
@@ -325,9 +326,9 @@ int ICC_Async_SetTimings (ICC_Async * icc, ICC_Async_Timings * timings)
 #include <sys/ioctl.h>
 #include "sci_global.h"
 #include "sci_ioctl.h"
-	if (icc->ifd->reader[ridx].typ == R_INTERNAL) {
+	if (reader[ridx].typ == R_INTERNAL) {
 		SCI_PARAMETERS params;
-		if (ioctl(icc->reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
+		if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
 			return ICC_ASYNC_IFD_ERROR;
 		switch (icc->protocol_type) {
 			case ATR_PROTOCOL_TYPE_T1:
@@ -341,7 +342,7 @@ int ICC_Async_SetTimings (ICC_Async * icc, ICC_Async_Timings * timings)
   			params.WWT = icc->timings.char_timeout;
 				break;
 		}
-		if (ioctl(icc->reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
+		if (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
 			return ICC_ASYNC_IFD_ERROR;
 			
 		cs_debug("Set Timings: T=%d fs=%lu ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, params.fs, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
