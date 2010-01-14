@@ -109,8 +109,6 @@ typedef struct
   BYTE slot;			/* Chipdrive Twin Slot */
   BYTE type;			/* Reader type code */
   BYTE firmware;		/* Reader firmware version */
-  
-  unsigned short status;
 }
 IFD_Towitoko;
 
@@ -133,7 +131,6 @@ extern int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate);
 extern int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate);
 extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity);
 extern int IFD_Towitoko_SetLED ();
-extern int IFD_Towitoko_GetStatus (IFD * ifd, BYTE * status);
 
 /* General handling of ICC inserted in this IFD */
 extern int IFD_Towitoko_ActivateICC (IFD * ifd);

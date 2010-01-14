@@ -91,7 +91,7 @@ char CT_Slot_Check (CT_Slot * slot, uint timeout, bool * card, bool * change)
 #endif
 	
 	/* Do first time check */
-	if (IFD_Towitoko_GetStatus (slot->ifd, &status) != IFD_TOWITOKO_OK)
+	if (ICC_Async_GetStatus (&status) != ICC_ASYNC_OK)
 	{
 		return ERR_TRANS;
 	}
@@ -109,7 +109,7 @@ char CT_Slot_Check (CT_Slot * slot, uint timeout, bool * card, bool * change)
 		usleep (1000);
 #endif
 		
-		if (IFD_Towitoko_GetStatus (slot->ifd, &status) != IFD_TOWITOKO_OK)
+		if (ICC_Async_GetStatus (&status) != ICC_ASYNC_OK)
 			return ERR_TRANS;
 		
 		(*change) |= IFD_TOWITOKO_CHANGE (status);

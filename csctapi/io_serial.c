@@ -169,56 +169,17 @@ IO_Serial * IO_Serial_New (int mhz, int cardmhz)
 	
 	io->mhz=mhz;
 	io->cardmhz=cardmhz;
+printf("IO_SERIAL_NEW: cardmhz = %i\n",cardmhz);
 	
 	return io;
 }
 
 bool IO_Serial_Init (IO_Serial * io, int reader_type)
 {
-	char filename[IO_SERIAL_FILENAME_LENGTH];
-	
-	IO_Serial_DeviceName (filename, IO_SERIAL_FILENAME_LENGTH);
-	
-#ifdef DEBUG_IO
-	printf ("IO: Opening serial port %s\n", filename);
-#endif
-	
+printf("IO_SERIAL_INIT\n");	
 	io->reader_type = reader_type;
+	io->fd = reader[ridx].handle;
 
-#if defined(SCI_DEV) || defined(COOL)
-	if (reader_type==R_INTERNAL)
-#ifdef SH4
-		io->fd = open (filename, O_RDWR|O_NONBLOCK|O_NOCTTY);
-#elif COOL
-		return Cool_Init();
-#else
-		io->fd = open (filename, O_RDWR);
-#endif
-	else
-#endif
-
-//#ifdef OS_MACOSX
-		// on mac os x, make sure you use the /dev/cu.XXXX device in oscam.server
-		io->fd = open (filename,  O_RDWR | O_NOCTTY| O_NONBLOCK);
-//#else
-//              with O_SYNC set OSCam is very critical on opening a device, on certain installs
-//              (eg virtual Ubuntu with /dev/ttyUSB) it gives "Error activating card"
-//              with O_NONBLOCK this problem is solved
-//		io->fd = open (filename, O_RDWR | O_NOCTTY | O_SYNC);
-//#endif
-
-	if (io->fd < 0)
-		return FALSE;
-
-#if defined(TUXBOX) && defined(PPC)
-	if ((reader_type == R_DB2COM1) || (reader_type == R_DB2COM2))
-		if ((fdmc = open(DEV_MULTICAM, O_RDWR)) < 0)
-		{
-			close(io->fd);
-			return FALSE;
-		}
-#endif
-	
 	if (reader_type != R_INTERNAL)
 		IO_Serial_InitPnP (io);
 	

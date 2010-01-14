@@ -83,7 +83,11 @@ char CardTerminal_Init (CardTerminal * ct, int reader_type, int mhz, int cardmhz
 		return ERR_MEMORY;
 	
 	/* Initialise serial port */
-	if (!IO_Serial_Init (ct->io, reader_type))
+	if (ICC_Async_Device_Init ()) { 
+		printf("ERROR in initializing device\n");
+		return ERR_TRANS;
+	}
+	if (!IO_Serial_Init(ct->io, reader_type))
 	{
 		free (ct->io);
 		ct->io = NULL;

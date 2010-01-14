@@ -374,6 +374,7 @@ struct s_reader
   int       card_system;
   char      label[32];
   char      device[128];
+  int       handle;   //device handle
   char      pcsc_name[128];
   int       pcsc_has_card;
   int       detect;
@@ -407,7 +408,8 @@ struct s_reader
   int       cachemm;
   int       rewritemm;
   int       online;
-  int       card_status;
+  int       card_status; //highlevel status
+  unsigned short status; //lowlevel status: states whether card inserted and/or change of status FIXME look at integration with pcsc_has_card/detect/card_status
   struct    s_module ph;
   uchar     ncd_key[16];
   uchar     ncd_skey[16];
