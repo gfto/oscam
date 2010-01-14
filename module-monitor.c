@@ -338,29 +338,27 @@ static char *monitor_client_info(char id, int i)
   return(sbuf);
 }
 
-static void monitor_process_info()
-{
-  int i;
-  time_t now;
+static void monitor_process_info(){
+	int i;
+	time_t now = time((time_t)0);
 
-  now=time((time_t)0);
-  for (i=0; i<CS_MAXPID; i++)
-    if ((cfg->mon_hideclient_to <= 0) ||
-        (((now-client[i].lastecm)/60)<cfg->mon_hideclient_to) ||
-        (((now-client[i].lastemm)/60)<cfg->mon_hideclient_to) ||
-        (client[i].typ!='c'))
-      if (client[i].pid)
-      {
-        if ((client[cs_idx].monlvl<2) && (client[i].typ!='s'))
-        {
-          if ((strcmp(client[cs_idx].usr, client[i].usr)) ||
-              ((client[i].typ!='c') && (client[i].typ!='m')))
-            continue;
-        }
-        monitor_send_info(monitor_client_info('I', i), 0);
-      }
-  monitor_send_info(NULL, 1);
-}
+	for (i = 0; i < CS_MAXPID; i++){
+		if	((cfg->mon_hideclient_to <= 0) ||
+				( now-client[i].lastecm < cfg->mon_hideclient_to) ||
+				( now-client[i].lastemm < cfg->mon_hideclient_to) ||
+				( client[i].typ != 'c')){
+			if (client[i].pid) {
+				if ((client[cs_idx].monlvl < 2) && (client[i].typ != 's')) {
+					if 	((strcmp(client[cs_idx].usr, client[i].usr)) ||
+							((client[i].typ != 'c') && (client[i].typ != 'm')))
+						continue;
+				}
+			monitor_send_info(monitor_client_info('I', i), 0);
+			}
+		}
+	}
+	monitor_send_info(NULL, 1);
+} 
 
 static void monitor_send_details(char *txt, int pid)
 {
