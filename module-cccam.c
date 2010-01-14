@@ -164,7 +164,7 @@ int llist_count(LLIST *l)
 #define CC_MAX_PROV   16
 
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
-#define X_FREE(X) do { if (X) { free(X); X = NULL; } } while(0)
+#define NULLFREE(X) do { if (X) { free(X); X = NULL; } } while(0)
 
 #if (defined(WIN32) || defined(OS_CYGWIN32)) && !defined(MSG_WAITALL)
 #  define MSG_WAITALL 0
@@ -382,7 +382,7 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd)
 
   n = send(client[cs_idx].udp_fd, netbuf, len, 0);
 
-  X_FREE(netbuf);
+  NULLFREE(netbuf);
 
   return n;
 }
@@ -547,7 +547,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     cs_log("cccam: sending ecm for sid %04x to card %08x, hop %d", cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
     n = cc_cmd_send(ecmbuf, cur_er->l+13, MSG_ECM);      // send ecm
 
-    X_FREE(ecmbuf);
+    NULLFREE(ecmbuf);
   } else {
     n = -1;
     cs_log("cccam: no suitable card on server");
@@ -774,7 +774,7 @@ int cc_recv(uchar *buf, int l)
     memcpy(buf, cbuf, l);
   }
 
-  X_FREE(cbuf);
+  NULLFREE(cbuf);
 
   pthread_mutex_unlock(&cc->lock);
 
@@ -790,7 +790,7 @@ static int cc_cli_connect(void)
   char pwd[64];
   struct cc_data *cc;
 
-  if (reader[ridx].cc) X_FREE(reader[ridx].cc);
+  if (reader[ridx].cc) NULLFREE(reader[ridx].cc);
 
   // init internals data struct
   cc = malloc(sizeof(struct cc_data));
