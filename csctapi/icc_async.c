@@ -232,7 +232,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	else
 #endif
 #ifdef COOL
-	if (ifd->reader[ridx].typ == R_INTERNAL) {
+	if (reader[ridx].typ == R_INTERNAL) {
 		if (!Cool_Reset(&(icc->atr)))
 		{
 			icc->atr = NULL;
@@ -301,7 +301,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 			return ICC_ASYNC_IFD_ERROR;		
 	}
 #ifdef COOL
-	if (icc->ifd->reader[ridx].typ != R_INTERNAL)
+	if (reader[ridx].typ != R_INTERNAL)
 #endif
 	IO_Serial_Flush(ifd->io);
 	return ICC_ASYNC_OK;
