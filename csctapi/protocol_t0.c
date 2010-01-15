@@ -1000,7 +1000,7 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 	if ((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S))
 		return PROTOCOL_T14_ERROR;
 	
-	if(t14->icc->ifd->io->reader_type!=R_INTERNAL)
+	if (reader[ridx].typ != R_INTERNAL)
 	{
 		/* Send 0x01 byte */
 		if (ICC_Async_Transmit (t14->icc, 1, &b1) != ICC_ASYNC_OK)

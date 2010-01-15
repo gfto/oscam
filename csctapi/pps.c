@@ -431,7 +431,7 @@ static int PPS_InitICC (PPS * pps)
 #include <sys/ioctl.h>
 #include "sci_global.h"
 #include "sci_ioctl.h"
-	if(pps->icc->ifd->io->reader_type == R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 	{
 		int n;
 		SCI_PARAMETERS params;

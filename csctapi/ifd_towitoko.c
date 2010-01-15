@@ -163,14 +163,14 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 #endif
 	
 #ifdef DEBUG_IFD
-	printf ("IFD: Initializing slot number %d, com=%d\n", slot, io->reader_type);
+	printf ("IFD: Initializing slot number %d, com=%d\n", slot, reader[ridx].typ);
 #endif
 	
 //	if ((slot != IFD_TOWITOKO_SLOT_MULTICAM) && (slot != IFD_TOWITOKO_SLOT_A) && (slot != IFD_TOWITOKO_SLOT_B))
 	if (slot != IFD_TOWITOKO_SLOT_MULTICAM )
 		return IFD_TOWITOKO_PARAM_ERROR;
 		
-	if(io->reader_type==R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 	{
 		ifd->io = io;
 		ifd->slot = slot;
@@ -255,7 +255,7 @@ int IFD_Towitoko_Close (IFD * ifd)
 
 int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 {
-	if(ifd->io->reader_type==R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 	{
 		return IFD_TOWITOKO_OK;
 	}
@@ -282,7 +282,7 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 
 int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate)
 {
-	if(ifd->io->reader_type==R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 	{
 		return IFD_TOWITOKO_OK;
 	}
@@ -298,7 +298,7 @@ int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate)
 
 extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity)
 {
-	if(ifd->io->reader_type==R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 	{
 		return IFD_TOWITOKO_OK;
 	}
@@ -333,7 +333,7 @@ int IFD_Towitoko_ActivateICC (IFD * ifd)
 		printf ("IFD: Activating card\n");
 #endif
 #ifdef SCI_DEV
-	if(ifd->io->reader_type==R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 	{
 		int in;
 
@@ -371,7 +371,7 @@ int IFD_Towitoko_DeactivateICC (IFD * ifd)
 #endif
 
 #ifdef SCI_DEV
-	if(ifd->io->reader_type==R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 	{
 		int in;
 		

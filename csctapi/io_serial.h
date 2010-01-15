@@ -63,7 +63,6 @@ typedef struct
 	int dtr;
 	int rts;	
 	/* end settings that can be modified */
-	int reader_type;
 	BYTE PnP_id[IO_SERIAL_PNPID_SIZE];	/* PnP Id of the serial device */
 	unsigned PnP_id_size;			/* Length of PnP Id */
 }
