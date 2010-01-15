@@ -1018,42 +1018,75 @@ int init_srvid()
 {
   int nr;
   FILE *fp;
-  char *value;
+  char *payload;
   static struct s_srvid *srvid=(struct s_srvid *)0;
-
   sprintf(token, "%s%s", cs_confdir, cs_srid);
-  if (!(fp=fopen(token, "r")))
-  {
-    cs_log("can't open file \"%s\" (err=%d), no service-id's loaded", 
-           token, errno);
+
+  if (!(fp=fopen(token, "r"))) {
+    cs_log("can't open file \"%s\" (err=%d), no service-id's loaded", token, errno);
     return(0);
   }
+
   nr=0;
-  while (fgets(token, sizeof(token), fp))
-  {
-    int l;
-    void *ptr;
-    if ((l=strlen(trim(token)))<6) continue;
-    if (!(value=strchr(token, ':'))) continue;
-    *value++='\0';
-    if (strlen(token)!=4) continue;
-    if (!(ptr=malloc(sizeof(struct s_srvid))))
-    {
+  while (fgets(token, sizeof(token), fp)) {
+
+		int l;
+		void *ptr;
+		if ((l=strlen(trim(token))) < 6) continue;
+		if (!(payload=strchr(token, '|'))) continue;
+		*payload++ = '\0';
+		//if (strlen(token)!=4) continue;
+
+		if (!(ptr = malloc(sizeof(struct s_srvid)))) {
       cs_log("Error allocating memory (errno=%d)", errno);
       return(1);
     }
+
     if (srvid)
-      srvid->next=ptr;
+      srvid->next = ptr;
     else
-      cfg->srvid=ptr;
-    srvid=ptr;
+      cfg->srvid = ptr;
+
+    srvid = ptr;
     memset(srvid, 0, sizeof(struct s_srvid));
-    srvid->srvid=word_atob(token);
-    strncpy(srvid->name, value, sizeof(srvid->name)-1);
-    nr++;
-  }
+
+    int i;
+    char *ptr1;
+    for (i = 0, ptr1 = strtok(payload, "|"); ptr1; ptr1 = strtok(NULL, "|"), i++){
+			switch(i){
+				case 0:
+					strncpy(srvid->prov, trim(ptr1), sizeof(srvid->prov)-1);
+					break;
+				case 1:
+					strncpy(srvid->name, trim(ptr1), sizeof(srvid->name)-1);
+					break;
+				case 2:
+					strncpy(srvid->type, trim(ptr1), sizeof(srvid->type)-1);
+					break;
+				case 3:
+					strncpy(srvid->desc, trim(ptr1), sizeof(srvid->desc)-1);
+					break;
+			}
+		}
+
+    char *srvidasc = strchr(token, ':');
+    *srvidasc++ = '\0';
+    srvid->srvid = word_atob(srvidasc);
+
+    srvid->ncaid = 0;
+		for (i = 0, ptr1 = strtok(token, ","); (ptr1) && (i < 10) ; ptr1 = strtok(NULL, ","), i++){
+			srvid->caid[i] = word_atob(ptr1);
+			srvid->ncaid = i+1;
+		}
+		nr++;
+	}
+
   fclose(fp);
-  cs_log("%d service-id's loaded", nr);
+  if (nr>0)
+		cs_log("%d service-id's loaded", nr);
+	else{
+		cs_log("oscam.srvid loading failed, old format");
+	}
   return(0);
 }
 

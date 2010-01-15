@@ -505,9 +505,14 @@ struct s_auth
 
 struct s_srvid
 {
-  int  srvid;
-  char name[33];
-  struct s_srvid *next;
+  int     srvid;
+  int     ncaid;
+  int     caid[10];
+  char    prov[33];
+  char    name[33];
+  char    type[33];
+  char    desc[33];
+  struct  s_srvid *next;
 };
 
 struct s_ip

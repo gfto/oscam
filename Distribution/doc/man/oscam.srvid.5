@@ -5,12 +5,16 @@
 service ID mappings
 .SH DESCRIPTIONS
 .PP
-\fB<srvid>\fP:\fB<name of service>\fP
+\fBCAID[,CAID]...\fP:\fBservice ID\fP|\fB[provider]\fP|\fB[name]\fP|\fB[type]\fP|\fB[description]\fP
+
 .RS 3n
-mapping between service ID and name of service
+mapping between CAID, service ID, provider, name, type and description of service
 .RE
+
+\fIEmpty lines are not allowed in \fBoscam.srvid\fP.\fR
 .SH EXAMPLES
- 000A:my service 1
- 00FF:my service 2
+ 0001,0002,0003:000a|my provider 1|tv name 1|tv|my tv package
+ 0004,0005,0006:000a|my provider 2|radio name 2|radio|my radio package
+ 0006:000b|my provider 3|tv name 3| 
 .SH "SEE ALSO"
 \fBoscam\fR(1), \fBoscam.conf\fR(5), \fBoscam.user\fR(5) \fBoscam.server\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)
