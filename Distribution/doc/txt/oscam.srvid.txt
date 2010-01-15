@@ -14,7 +14,13 @@ DESCRIPTIONS
 	  mapping  between CAID, service ID, provider, name, type and descrip
 	  tion of service
 
+ANNONTATIONS
        Please use Unix text file format only.
+
+       You only need the oscam.srvid when using the monitor or the web	inter
+       face.   For  saving  memory consumption only insert the service IDs you
+       really need. Some external programs use their own  oscam.srvid  and  do
+       not need the oscam.srvid of OSCam.
 
 EXAMPLES
 	0001,0002,0003:000a|my provider 1|tv name 1|tv|my tv package
