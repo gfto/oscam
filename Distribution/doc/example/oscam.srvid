@@ -1,3 +1,7 @@
+#
+# Sky Deutschland
+# 
+
 1702,1722,1833,1834,09C4:000C|Sky|Nat Geo Wild|TV|Sky Welt
 1702,1722,1833,1834,09C4:000D|Sky|National Geographic Channel|TV|Sky Welt
 1702,1722,1833,1834,09C4:000E|Sky|Discovery Channel|TV|Sky Welt
@@ -18,6 +22,7 @@
 1702,1722,1833,1834,09C4:0034|Sky|Spiegel Geschichte|TV|Sky Welt
 1702,1722,1833,1834,09C4:00A8|Sky|Motorvision TV|TV|Sky Welt
 1702,1722,1833,1834,09C4:0206|Sky|Goldstar TV|TV|Sky Welt
+
 1702,1722,1833,1834,09C4:0096|Sky|Deutsche Charts|Radio|Sky MCE
 1702,1722,1833,1834,09C4:0097|Sky|Rock Hymnen|Radio|Sky MCE
 1702,1722,1833,1834,09C4:0098|Sky|Love Songs|Radio|Sky MCE
@@ -25,6 +30,7 @@
 1702,1722,1833,1834,09C4:009A|Sky|80er/90er|Radio|Sky MCE
 1702,1722,1833,1834,09C4:009B|Sky|R&B/Hip Hop|Radio|Sky MCE
 1702,1722,1833,1834,09C4:009C|Sky|Country|Radio|Sky MCE
+
 1702,1722,1833,1834,09C4:0008|Sky|Sky Comedy|TV|Sky Film
 1702,1722,1833,1834,09C4:0009|Sky|Sky Action|TV|Sky Film
 1702,1722,1833,1834,1836,09C4:000A|Sky|Sky Cinema|TV|Sky Film
@@ -35,6 +41,7 @@
 1702,1722,1833,1834,09C4:002B|Sky|Sky Cinema +24|TV|Sky Film
 1702,1722,1833,1834,09C4:0203|Sky|MGM|TV|Sky Film
 1702,1722,1833,1834,09C4:0204|Sky|Sky Nostalgie|TV|Sky Film
+
 1702,1722,1833,1834,09C4:0011|Sky|Sky Sport Info|TV|Sky Sport
 1702,1833,09C4:0035|Sky|Sky Sport Austria|TV|Sky Sport
 1702,1722,1833,1834,09C4:00DD|Sky|Sky Sport 1|TV|Sky Sport
@@ -50,6 +57,7 @@
 1702,1722,1833,1834,09C4:014D|Sky|Sky Sport 2 / F1 Cockpit|TV|Sky Sport
 1702,1722,1833,1834,09C4:016B|Sky|Sky Sport 016B|TV|Sky Sport
 1702,1722,1833,1834,09C4:0175|Sky|Sky Sport 0175|TV|Sky Sport
+
 1702,1722,1833,1834,09C4:00DF|Sky|Sky Bundesliga|TV|Sky Bundesliga
 1702,1722,1833,1834,09C4:00FC|Sky|Sky Bundesliga 00FC|TV|Sky Bundesliga
 1702,1722,1833,1834,09C4:0106|Sky|Sky Bundesliga 0106|TV|Sky Bundesliga
@@ -62,6 +70,7 @@
 1702,1722,1833,1834,09C4:014C|Sky|Sky Bundesliga 014C|TV|Sky Bundesliga
 1702,1722,1833,1834,09C4:0156|Sky|Sky Bundesliga 0156|TV|Sky Bundesliga
 1702,1722,1833,1834,09C4:0160|Sky|Sky Bundesliga 0160|TV|Sky Bundesliga
+
 1702,1722,1833,1834,09C4:00FB|Sky|Sky Select 00FB|TV|Sky Select
 1702,1722,1833,1834,09C4:00FE|Sky|Sky Select 00FE|TV|Sky Select
 1702,1722,1833,1834,09C4:0105|Sky|Sky Select 0105|TV|Sky Select
@@ -73,6 +82,7 @@
 1702,1722,1833,1834,09C4:0137|Sky|Sky Select 0137|TV|Sky Select
 1702,1722,1833,1834,09C4:0141|Sky|Sky Select 0141|TV|Sky Select
 1702,1722,1833,1834,09C4:014B|Sky|Sky Select 014B|TV|Sky Select
+
 1702,1722,1833,1834,09C4:007E|Sky|Disney Cinemagic HD|TV|Sky HD
 1702,1722,1833,1834,09C4:007F|Sky|National Geographic HD|TV|Sky HD
 1702,1722,1833,1834,09C4:0080|Sky|History HD|TV|Sky HD
@@ -80,6 +90,7 @@
 1702,1722,1833,1834,09C4:0082|Sky|Discovery HD|TV|Sky HD
 1702,1722,1833,1834,09C4:0083|Sky|Sky Cinema HD|TV|Sky HD
 1702,1722,1833,1834,09C4:0084|Sky|Eurosport HD|TV|Sky HD
+
 1702,1833,09C4:003C|Sky|Kinowelt TV|TV|Sky Welt Extra
 1702,1833,09C4,0D22:003D|Sky|TNT Film (TCM)|TV|Sky Welt Extra
 1702,1833,09C4,0D22:003E|Sky|AXN Action|TV|Sky Welt Extra
@@ -98,11 +109,18 @@
 1702,1833,09C4:6FF1|Sky|VH1 Classic|TV|Sky Welt Extra
 1702,1833,09C4,0D00:7009|Sky|MTV Entertainment|TV|Sky Welt Extra
 1702,1833,09C4,0D00:700A|Sky|Nick Premium|TV|Sky Welt Extra
+
 1702,1722,1833,1834,09C4:000F|Sky|BigBrother|TV|Sky sonstige
+
 1702,1722,1833,1834,1836,09C4:0201|Sky|Blue Movie Info|TV|Sky Erotik
 1702,1722,1833,1834,1836,09C4:0159|Sky|Blue Movie 1|TV|Sky Erotik
 1702,1722,1833,1834,1836,09C4:0163|Sky|Blue Movie 2|TV|Sky Erotik
 1702,1722,1833,1834,1836,09C4:016D|Sky|Blue Movie 3|TV|Sky Erotik
+
+#
+# Kabel Deutschland
+#
+
 1722,1801:C3B5|KD|Fashion TV|TV|
 1722,1801:C3B6|KD|Motors TV|TV|
 1722,1801:C3B7|KD|Trace.TV|TV|
@@ -281,6 +299,11 @@
 1722,1801:D107|KD|Turkmax|TV|turkish
 1722,1801:CFD3|KD|ATV Avrupa|TV|turkish
 1722,1801:CFD5|KD|Euro D|TV|turkish
+
+#
+# ORF
+# 
+
 0D05:32C9|ORF|ORF1|TV|
 0D05:32CA|ORF|ORF2|TV|
 0D05:32CB|ORF|ORF2 W|TV|
@@ -292,28 +315,53 @@
 0D05:32D1|ORF|ORF2 V|TV|
 0D05:32D2|ORF|ORF2 St|TV|
 0D05:32D3|ORF|ORF2 K|TV|
+
 0D05:32D4|ORF|ATV+|TV|
 0D05:3332|ORF|Austria 9 TV|TV|
 0D05:4E27|ORF|Puls 4 Austria|TV|
+
 0D05:132F|ORF|ORF1 HD|TV|
 0D05:1330|ORF|ORF2 HD|TV|
+
+#
+# MTV Unlimited
+#
+
 0B00:6FF3|MTV Unlimited|MTV TWO|TV|
 0B00:6FEE|MTV Unlimited|MTV Hits|TV|
 0B00:6FEF|MTV Unlimited|MTV Dance|TV|
 0B00:6FF1|MTV Unlimited|VH1 Classic|TV|
 0B00:6FF0|MTV Unlimited|VH1 Europe|TV|
 0B00:6FFF|MTV Unlimited|MTV Music|TV|
+
+#
+# Schweizer Fernsehen
+#
+
 0500:0385|Schweizer Fernsehen|SF1|TV|
 0500:038F|Schweizer Fernsehen|SF info|TV|
 0500:038B|Schweizer Fernsehen|SF zwei|TV|
+
 0500:03DE|Schweizer Fernsehen|HD suisse|TV|
+
 0500&023800:36B2|Television Suisse Romande|TSR1|TV|
 0500&023800:36B8|Television Suisse Romande|TSR2|TV|
+
 0500&023800:36B3|Televisione svizzera di lingua italiana|TSI1|TV|
 0500&023800:36B9|Televisione svizzera di lingua italiana|TSI1|TV|
+
+#
+# Astra HD+
+# 
+
 1830:EF10|Astra HD+|RTL HD|TV|
 1830:EF11|Astra HD+|VOX HD|TV|
 1830:277E|Astra HD+|. (SD)|TV|
+
+#
+# Unity Media
+# 
+
 1722:71ad|UM|Record Internacional Europa|TV|
 1722:71ae|UM|Tkshow TV|TV|
 1722:71af|UM|Kanal Avrupa|TV|

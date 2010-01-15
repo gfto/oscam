@@ -1032,10 +1032,13 @@ int init_srvid()
 
 		int l;
 		void *ptr;
-		if ((l=strlen(trim(token))) < 6) continue;
+                char *tmp;
+                tmp = trim(token);
+
+                if (tmp[0] == '#') continue;
+                if ((l=strlen(tmp)) < 6) continue;
 		if (!(payload=strchr(token, '|'))) continue;
 		*payload++ = '\0';
-		//if (strlen(token)!=4) continue;
 
 		if (!(ptr = malloc(sizeof(struct s_srvid)))) {
       cs_log("Error allocating memory (errno=%d)", errno);
