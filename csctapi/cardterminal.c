@@ -713,7 +713,7 @@ static char CardTerminal_SetParity (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp 
 	if (p2 == CTBCS_P2_PARITY_ODD)
 	{
 		length = 2;
-		IFD_Towitoko_SetParity(ct->slots[0]->ifd, IFD_TOWITOKO_PARITY_ODD);	
+		IO_Serial_SetParity (PARITY_ODD);	
 		buffer[0] = CTBCS_SW1_OK;
 		buffer[1] = CTBCS_SW2_OK;
 		ret = OK;
@@ -721,7 +721,7 @@ static char CardTerminal_SetParity (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp 
 	else if(p2 == CTBCS_P2_PARITY_EVEN)
 	{
 		length = 2;
-		IFD_Towitoko_SetParity(ct->slots[0]->ifd, IFD_TOWITOKO_PARITY_EVEN);	
+		IO_Serial_SetParity (PARITY_EVEN);	
 		buffer[0] = CTBCS_SW1_OK;
 		buffer[1] = CTBCS_SW2_OK;
 		ret = OK;
@@ -729,7 +729,7 @@ static char CardTerminal_SetParity (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp 
 	else if (p2 == CTBCS_P2_PARITY_NONE)
 	{
 		length = 2;
-		IFD_Towitoko_SetParity(ct->slots[0]->ifd, IFD_TOWITOKO_PARITY_NONE);	
+		IO_Serial_SetParity (PARITY_NONE);	
 		buffer[0] = CTBCS_SW1_OK;
 		buffer[1] = CTBCS_SW2_OK;
 		ret = OK;

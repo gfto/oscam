@@ -36,9 +36,9 @@
  */
 
 /* Type of parity of the serial device */
-#define IO_SERIAL_PARITY_ODD		1
-#define IO_SERIAL_PARITY_EVEN		2
-#define IO_SERIAL_PARITY_NONE		3
+#define PARITY_ODD		1
+#define PARITY_EVEN		2
+#define PARITY_NONE		3
 
 /* Values for the modem lines */
 #define IO_SERIAL_HIGH			1
@@ -85,8 +85,8 @@ extern bool IO_Serial_Init (IO_Serial * io, int reader_type);
 extern bool IO_Serial_Close (IO_Serial * io);
 
 /* Transmission properties */
-extern bool IO_Serial_SetProperties (IO_Serial * io);
-extern bool IO_Serial_GetProperties (IO_Serial * io);
+extern bool IO_Serial_SetPropertiesOld (IO_Serial * io);
+extern bool IO_Serial_GetPropertiesOld (IO_Serial * io);
 extern bool IO_Serial_DTR_RTS(int, int);
 #if defined(TUXBOX) && defined(PPC)
 extern void IO_Serial_Ioctl_Lock(int);

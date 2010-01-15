@@ -179,7 +179,7 @@ bool IO_Serial_Init (IO_Serial * io, int reader_type)
 	return TRUE;
 }
 
-bool IO_Serial_GetProperties (IO_Serial * io)
+bool IO_Serial_GetPropertiesOld (IO_Serial * io)
 {
 	struct termios currtio;
 	speed_t i_speed, o_speed;
@@ -423,13 +423,13 @@ bool IO_Serial_GetProperties (IO_Serial * io)
 	if (((currtio.c_cflag) & PARENB) == PARENB)
 	{
 		if (((currtio.c_cflag) & PARODD) == PARODD)
-			io->parity = IO_SERIAL_PARITY_ODD;
+			io->parity = PARITY_ODD;
 		else
-			io->parity = IO_SERIAL_PARITY_EVEN;
+			io->parity = PARITY_EVEN;
 	}
 	else
 	{
-		io->parity = IO_SERIAL_PARITY_NONE;
+		io->parity = PARITY_NONE;
 	}
 	
 	if (((currtio.c_cflag) & CSTOPB) == CSTOPB)
@@ -444,13 +444,13 @@ bool IO_Serial_GetProperties (IO_Serial * io)
 	io->rts = ((mctl & TIOCM_RTS) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
 	
 #ifdef DEBUG_IO
-	printf("IO: Getting properties: %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
+	printf("IO: Getting properties: %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->input_bitrate, io->bits, io->parity == PARITY_EVEN ? "Even" : io->parity == PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
 #endif
 	
 	return TRUE;
 }
 
-bool IO_Serial_SetProperties (IO_Serial * io)
+bool IO_Serial_SetPropertiesOld (IO_Serial * io)
 {
    struct termios newtio;
 	
@@ -459,7 +459,7 @@ bool IO_Serial_SetProperties (IO_Serial * io)
       return FALSE;
 #endif
    
-   //	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
+   //	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, io->input_bitrate, io->bits, io->parity == PARITY_EVEN ? "Even" : io->parity == PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
    memset (&newtio, 0, sizeof (newtio));
 
 
@@ -512,17 +512,17 @@ bool IO_Serial_SetProperties (IO_Serial * io)
 	/* Set the parity */
 	switch (io->parity)
 	{
-		case IO_SERIAL_PARITY_ODD:
+		case PARITY_ODD:
 			newtio.c_cflag |= PARENB;
 			newtio.c_cflag |= PARODD;
 			break;
 		
-		case IO_SERIAL_PARITY_EVEN:	
+		case PARITY_EVEN:	
 			newtio.c_cflag |= PARENB;
 			newtio.c_cflag &= ~PARODD;
 			break;
 		
-		case IO_SERIAL_PARITY_NONE:
+		case PARITY_NONE:
 			newtio.c_cflag &= ~PARENB;
 			break;
 	}
@@ -565,8 +565,101 @@ bool IO_Serial_SetProperties (IO_Serial * io)
 	IO_Serial_Ioctl_Lock(0);
 	
 #ifdef DEBUG_IO
-	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
+	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, io->input_bitrate, io->bits, io->parity == PARITY_EVEN ? "Even" : io->parity == PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
 #endif
+	return TRUE;
+}
+
+bool IO_Serial_SetProperties (struct termios newtio)
+{
+   if(reader[ridx].typ == R_INTERNAL)
+      return FALSE;
+
+	if (tcsetattr (reader[ridx].handle, TCSANOW, &newtio) < 0)
+		return FALSE;
+//	tcflush(reader[ridx].handle, TCIOFLUSH);
+//	if (tcsetattr (reader[ridx].handle, TCSAFLUSH, &newtio) < 0)
+//		return FALSE;
+
+	unsigned int mctl;
+	if (ioctl (reader[ridx].handle, TIOCMGET, &mctl) < 0)
+		return FALSE;
+	
+	int dtr = ((mctl & TIOCM_DTR) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
+	int rts = ((mctl & TIOCM_RTS) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
+
+	IO_Serial_Ioctl_Lock(1);
+	IO_Serial_DTR_RTS(0, rts == IO_SERIAL_HIGH);
+	IO_Serial_DTR_RTS(1, dtr == IO_SERIAL_HIGH);
+	IO_Serial_Ioctl_Lock(0);
+
+#ifdef DEBUG_IO
+	printf("IO: Setting properties\n");
+#endif
+
+	return TRUE;
+}
+
+int IO_Serial_SetParity (BYTE parity)
+{
+	if(reader[ridx].typ == R_INTERNAL)
+		return TRUE;
+
+	if ((parity != PARITY_EVEN) && (parity != PARITY_ODD) && (parity != PARITY_NONE))
+		return FALSE;
+
+	struct termios tio;
+	int current_parity;
+	// Get current parity
+	if (tcgetattr (reader[ridx].handle, &tio) != 0)
+	  return FALSE;
+
+	if (((tio.c_cflag) & PARENB) == PARENB)
+	{
+		if (((tio.c_cflag) & PARODD) == PARODD)
+			current_parity = PARITY_ODD;
+		else
+			current_parity = PARITY_EVEN;
+	}
+	else
+	{
+		current_parity = PARITY_NONE;
+	}
+
+#ifdef DEBUG_IFD
+	printf ("IFD: Setting parity from %s to %s\n",
+	current_parity == PARITY_ODD ? "Odd" :
+	current_parity == PARITY_NONE ? "None" :
+	current_parity == PARITY_EVEN ? "Even" : "Invalid",
+	parity == PARITY_ODD ? "Odd" :
+	parity == PARITY_NONE ? "None" :
+	parity == PARITY_EVEN ? "Even" : "Invalid");
+#endif
+	
+	if (current_parity != parity)
+	{
+
+		// Set the parity
+		switch (parity)
+		{
+			case PARITY_ODD:
+				tio.c_cflag |= PARENB;
+				tio.c_cflag |= PARODD;
+				break;
+			
+			case PARITY_EVEN:	
+				tio.c_cflag |= PARENB;
+				tio.c_cflag &= ~PARODD;
+				break;
+			
+			case PARITY_NONE:
+				tio.c_cflag &= ~PARENB;
+				break;
+		}
+		if (!IO_Serial_SetProperties (tio))
+			return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -958,14 +1051,13 @@ static bool IO_Serial_InitPnP (IO_Serial * io)
 	int i = 0;
 	io->input_bitrate = 1200;
 	io->output_bitrate = 1200;
-	io->parity = IO_SERIAL_PARITY_NONE;
+	io->parity = PARITY_NONE;
 	io->bits = 7;
 	io->stopbits = 1;
 	io->dtr = IO_SERIAL_HIGH;
-//	io->rts = IO_SERIAL_HIGH;
 	io->rts = IO_SERIAL_LOW;
 	
-	if (!IO_Serial_SetProperties (io))
+	if (!IO_Serial_SetPropertiesOld (io))
 		return FALSE;
 
 	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (200, 1, &(io->PnP_id[i])))

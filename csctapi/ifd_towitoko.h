@@ -66,19 +66,6 @@
 #define IFD_TOWITOKO_CARD(status)       (((status) & 0x40) == 0x40)
 #define IFD_TOWITOKO_CHANGE(status)     (((status) & 0x80) == 0x80)
 
-/* Led Color */
-#define IFD_TOWITOKO_LED_OFF            0x00
-#define IFD_TOWITOKO_LED_RED            0x01
-#define IFD_TOWITOKO_LED_GREEN          0x02
-#define IFD_TOWITOKO_LED_YELLOW         0x03
-
-/* IFD parity */
-//#define IFD_TOWITOKO_PARITY_ODD         0x80
-//#define IFD_TOWITOKO_PARITY_EVEN        0x40
-#define IFD_TOWITOKO_PARITY_ODD         1
-#define IFD_TOWITOKO_PARITY_EVEN        2
-#define IFD_TOWITOKO_PARITY_NONE        3
-
 /* ICC types */
 #define IFD_TOWITOKO_I2C_SHORT          0
 #define IFD_TOWITOKO_I2C_LONG           1
@@ -129,7 +116,6 @@ extern int IFD_Towitoko_Close (IFD * ifd);
 /* Handling of this IFD */
 extern int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate);
 extern int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate);
-extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity);
 
 /* General handling of ICC inserted in this IFD */
 extern int IFD_Towitoko_ActivateICC (IFD * ifd);

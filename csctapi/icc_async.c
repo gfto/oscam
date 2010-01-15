@@ -274,17 +274,17 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	
 	if (icc->convention == ATR_CONVENTION_INVERSE)
 	{
-		if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_ODD) != IFD_TOWITOKO_OK)
+		if (!IO_Serial_SetParity (PARITY_ODD))
 			return ICC_ASYNC_IFD_ERROR;
 	}
 	else if(icc->protocol_type == ATR_PROTOCOL_TYPE_T14)
 	{
-		if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_NONE) != IFD_TOWITOKO_OK)
+		if (!IO_Serial_SetParity (PARITY_NONE))
 			return ICC_ASYNC_IFD_ERROR;		
 	}
 	else
 	{
-		if (IFD_Towitoko_SetParity (icc->ifd, IFD_TOWITOKO_PARITY_EVEN) != IFD_TOWITOKO_OK)
+		if (!IO_Serial_SetParity (PARITY_EVEN))
 			return ICC_ASYNC_IFD_ERROR;		
 	}
 #ifdef COOL

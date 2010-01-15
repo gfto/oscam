@@ -184,14 +184,14 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 	io->output_bitrate = IFD_TOWITOKO_BAUDRATE;
 	io->bits = 8;
 	io->stopbits = 2;
-	io->parity = IO_SERIAL_PARITY_EVEN;
+	io->parity = PARITY_EVEN;
 	io->dtr = IO_SERIAL_HIGH;
 //	io->dtr = IO_SERIAL_LOW;
 //	io->rts = IO_SERIAL_HIGH;
 	io->rts = IO_SERIAL_LOW;
 	
 		
-	if (!IO_Serial_SetProperties (io))
+	if (!IO_Serial_SetPropertiesOld (io))
 		return IFD_TOWITOKO_IO_ERROR;
 		
 	/* Default ifd settings */
@@ -208,7 +208,8 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 		return ret;
 	}
 	
-	ret = IFD_Towitoko_SetParity (ifd, IFD_TOWITOKO_PARITY_EVEN);
+	if (!IO_Serial_SetParity (PARITY_EVEN))
+		return IFD_TOWITOKO_IO_ERROR;
 	
 	if (ret != IFD_TOWITOKO_OK)
 	{
@@ -263,7 +264,7 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 	printf ("IFD: Setting baudrate to %lu\n", baudrate);
 #endif
 	/* Get current settings */
-	if (!IO_Serial_GetProperties (ifd->io))
+	if (!IO_Serial_GetPropertiesOld (ifd->io))
 		return IFD_TOWITOKO_IO_ERROR;
 	
 	if (ifd->io->output_bitrate == baudrate)
@@ -274,7 +275,7 @@ int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
 	ifd->io->output_bitrate = baudrate;
 	ifd->io->input_bitrate = baudrate;
 	
-	if (!IO_Serial_SetProperties (ifd->io))
+	if (!IO_Serial_SetPropertiesOld (ifd->io))
 		return IFD_TOWITOKO_IO_ERROR;
 	
 	return IFD_TOWITOKO_OK;
@@ -288,41 +289,10 @@ int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate)
 	}
 	
 	/* Get current settings */
-	if (!IO_Serial_GetProperties (ifd->io))
+	if (!IO_Serial_GetPropertiesOld (ifd->io))
 		return IFD_TOWITOKO_IO_ERROR;
 	
 	(*baudrate) = ifd->io->output_bitrate;
-	
-	return IFD_TOWITOKO_OK;
-}
-
-extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity)
-{
-	if(reader[ridx].typ == R_INTERNAL)
-	{
-		return IFD_TOWITOKO_OK;
-	}
-	
-#ifdef DEBUG_IFD
-	printf ("IFD: Parity = %s\n",
-	parity == IFD_TOWITOKO_PARITY_ODD ? "Odd" :
-	parity == IFD_TOWITOKO_PARITY_EVEN ? "Even" : "Invalid");
-#endif
-	
-	if ((parity != IFD_TOWITOKO_PARITY_EVEN) && (parity != IFD_TOWITOKO_PARITY_ODD) && (parity != IFD_TOWITOKO_PARITY_NONE))
-		return IFD_TOWITOKO_PARAM_ERROR;
-	
-	/* Get current settings */
-	if (!IO_Serial_GetProperties (ifd->io))
-		return IFD_TOWITOKO_IO_ERROR;
-	
-	if (ifd->io->parity !=parity)
-	{
-		ifd->io->parity = parity;
-		
-		if (!IO_Serial_SetProperties (ifd->io))
-			return IFD_TOWITOKO_IO_ERROR;
-	}
 	
 	return IFD_TOWITOKO_OK;
 }
@@ -407,7 +377,7 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 		int ret;
 		int parity;
 		int i;
-		int par[3] = {IFD_TOWITOKO_PARITY_EVEN, IFD_TOWITOKO_PARITY_ODD, IFD_TOWITOKO_PARITY_NONE};
+		int par[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 #ifdef HAVE_NANOSLEEP
 		struct timespec req_ts;
 		req_ts.tv_sec = 0;
@@ -420,9 +390,8 @@ int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
 			parity = par[i];
 			IO_Serial_Flush();
 
-			ret = IFD_Towitoko_SetParity (ifd, parity);
-			if (ret != IFD_TOWITOKO_OK)
-				return ret;
+			if (!IO_Serial_SetParity (parity))
+				return IFD_TOWITOKO_IO_ERROR;
 
 			ret = IFD_TOWITOKO_IO_ERROR;
 
