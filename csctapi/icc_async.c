@@ -209,10 +209,6 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 #ifndef ICC_TYPE_SYNC 
 	unsigned np=0;
 
-	/* LED Red */
-	if (IFD_Towitoko_SetLED () != IFD_TOWITOKO_OK)
-		return ICC_ASYNC_IFD_ERROR;
-	
 	/* Initialize Baudrate */
 	if (IFD_Towitoko_SetBaudrate (ifd, ICC_ASYNC_BAUDRATE)!= IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
@@ -223,7 +219,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	/* Reset ICC */
 #ifdef SCI_DEV
 	if (reader[ridx].typ == R_INTERNAL) {
-		if (!Sci_Reset(ifd, &(icc->atr)))
+		if (!Sci_Reset(&(icc->atr)))
 		{
 			icc->atr = NULL;
 			return ICC_ASYNC_IFD_ERROR;
@@ -271,15 +267,6 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	printf("ICC: Detected %s convention processor card T=%d\n",(icc->convention == ATR_CONVENTION_DIRECT ? "direct" : "inverse"), icc->protocol_type);
 #endif
 	*///really should let PPS handle this
-	/* LED Green */
-	if (IFD_Towitoko_SetLED () != IFD_TOWITOKO_OK)
-	{
-		ATR_Delete (icc->atr);
-		icc->atr = NULL;
-		icc->convention = 0;
-		
-		return ICC_ASYNC_IFD_ERROR;
-	}
 	
 	/* Initialize member variables */
 	icc->baudrate = ICC_ASYNC_BAUDRATE;
@@ -449,10 +436,6 @@ int ICC_Async_Close (ICC_Async * icc)
 {
 	/* Dectivate ICC */
 	if (IFD_Towitoko_DeactivateICC (icc->ifd) != IFD_TOWITOKO_OK)
-		return ICC_ASYNC_IFD_ERROR;
-	
-	/* LED Off */
-	if (IFD_Towitoko_SetLED () != IFD_TOWITOKO_OK)
 		return ICC_ASYNC_IFD_ERROR;
 	
 	/* Delete atr */

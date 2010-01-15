@@ -17,6 +17,7 @@
 #ifdef SH4
 #include <fcntl.h> 
 #endif
+#include "../globals.h"
 
 #include "ifd_towitoko.h"
 #define IFD_TOWITOKO_ATR_TIMEOUT	 800
@@ -36,7 +37,7 @@ int Sci_GetStatus (int handle, int * status)
 	return OK;
 }
 
-int Sci_Reset (IFD * ifd, ATR ** atr)
+int Sci_Reset (ATR ** atr)
 {
 	unsigned char buf[SCI_MAX_ATR_SIZE];
 	int n = 0;
@@ -59,10 +60,10 @@ int Sci_Reset (IFD * ifd, ATR ** atr)
 #endif
 	params.T = 0;
 	
-	if(ioctl(ifd->io->fd, IOCTL_SET_PARAMETERS, &params)!=0)
+	if(ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
 		return ERROR;
 	
-	if(ioctl(ifd->io->fd, IOCTL_SET_RESET)<0)
+	if(ioctl(reader[ridx].handle, IOCTL_SET_RESET)<0)
 		return ERROR;
 
 #ifdef SH4
@@ -128,7 +129,7 @@ int Sci_Reset (IFD * ifd, ATR ** atr)
 		req_ts.tv_sec = 0;
 		req_ts.tv_nsec = 50000000;
 		nanosleep (&req_ts, NULL);
-		if (ioctl(ifd->io->fd, IOCTL_SET_ATR_READY)<0)
+		if (ioctl(reader[ridx].handle, IOCTL_SET_ATR_READY)<0)
 			return ERROR;
 		return OK;
 	}

@@ -130,7 +130,6 @@ extern int IFD_Towitoko_Close (IFD * ifd);
 extern int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate);
 extern int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate);
 extern int IFD_Towitoko_SetParity (IFD * ifd, BYTE parity);
-extern int IFD_Towitoko_SetLED ();
 
 /* General handling of ICC inserted in this IFD */
 extern int IFD_Towitoko_ActivateICC (IFD * ifd);
@@ -143,7 +142,6 @@ extern int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr);
 extern BYTE IFD_Towitoko_GetType (IFD * ifd);
 extern BYTE IFD_Towitoko_GetFirmware (IFD * ifd);
 extern unsigned IFD_Towitoko_GetNumSlots ();
-extern unsigned long IFD_Towitoko_GetMaxBaudrate ();
 extern void IFD_Towitoko_GetDescription (IFD * ifd, BYTE * desc, unsigned length);
 
 /* Atributes of this IFD */

@@ -63,8 +63,6 @@ static bool IO_Serial_WaitToRead (unsigned delay_ms, unsigned timeout_ms);
 
 static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms);
 
-static void IO_Serial_DeviceName (char * filename, unsigned length);
-
 static bool IO_Serial_InitPnP (IO_Serial * io);
 
 static void IO_Serial_Clear (IO_Serial * io);
@@ -129,28 +127,28 @@ printf("IO: multicam.o %s %s\n", dtr ? "dtr" : "rts", set ? "set" : "clear"); ff
 }
 #endif
 
-bool IO_Serial_DTR_RTS(IO_Serial * io, int dtr, int set)
+bool IO_Serial_DTR_RTS(int dtr, int set)
 {
 	unsigned int msr;
 	unsigned int mbit;
 
 #if defined(TUXBOX) && defined(PPC)
-	if ((io->reader_type==R_DB2COM1) || (io->reader_type==R_DB2COM2))
-		return(IO_Serial_DTR_RTS_dbox2(io->reader_type==R_DB2COM2, dtr, set));
+	if ((reader[ridx].typ == R_DB2COM1) || (reader[ridx].typ == R_DB2COM2))
+		return(IO_Serial_DTR_RTS_dbox2(reader[ridx].typ == R_DB2COM2, dtr, set));
 #endif
 
 	mbit=(dtr) ? TIOCM_DTR : TIOCM_RTS;
 #if defined(TIOCMBIS) && defined(TIOBMBIC)
-	if (ioctl (io->fd, set ? TIOCMBIS : TIOCMBIC, &mbit) < 0)
+	if (ioctl (reader[ridx].handle, set ? TIOCMBIS : TIOCMBIC, &mbit) < 0)
 		return FALSE;
 #else
-	if (ioctl(io->fd, TIOCMGET, &msr) < 0)
+	if (ioctl(reader[ridx].handle, TIOCMGET, &msr) < 0)
 		return FALSE;
 	if (set)
 		msr|=mbit;
 	else
 		msr&=~mbit;
-	return((ioctl(io->fd, TIOCMSET, &msr)<0) ? FALSE : TRUE);
+	return((ioctl(reader[ridx].handle, TIOCMSET, &msr)<0) ? FALSE : TRUE);
 #endif
 }
 
@@ -167,21 +165,18 @@ IO_Serial * IO_Serial_New (int mhz, int cardmhz)
 	if (io != NULL)
 		IO_Serial_Clear (io);
 	
-	io->mhz=mhz;
-	io->cardmhz=cardmhz;
-	
 	return io;
 }
 
 bool IO_Serial_Init (IO_Serial * io, int reader_type)
 {
-	io->reader_type = reader_type;
-	io->fd = reader[ridx].handle;
+	reader[ridx].typ = reader_type;
+	reader[ridx].handle = reader[ridx].handle;
 
 	if (reader_type != R_INTERNAL)
 		IO_Serial_InitPnP (io);
 	
-	if(io->reader_type!=R_INTERNAL)
+	if(reader[ridx].typ!=R_INTERNAL)
 		IO_Serial_Flush();
 		
 	return TRUE;
@@ -194,14 +189,14 @@ bool IO_Serial_GetProperties (IO_Serial * io)
 	unsigned int mctl;
 
 #ifdef SCI_DEV
-	if(io->reader_type==R_INTERNAL)
+	if(reader[ridx].typ == R_INTERNAL)
 		return FALSE;
 #endif
 
 	if (io->input_bitrate != 0 && io->output_bitrate != 0) //properties are already filled
 	  return TRUE;
 	
-	if (tcgetattr (io->fd, &currtio) != 0)
+	if (tcgetattr (reader[ridx].handle, &currtio) != 0)
 		return FALSE;
 
 	o_speed = cfgetospeed (&currtio);
@@ -445,7 +440,7 @@ bool IO_Serial_GetProperties (IO_Serial * io)
 	else
 		io->stopbits = 1;
 	
-	if (ioctl (io->fd, TIOCMGET, &mctl) < 0)
+	if (ioctl (reader[ridx].handle, TIOCMGET, &mctl) < 0)
 		return FALSE;
 	
 	io->dtr = ((mctl & TIOCM_DTR) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
@@ -463,35 +458,35 @@ bool IO_Serial_SetProperties (IO_Serial * io)
    struct termios newtio;
 	
 #ifdef SCI_DEV
-   if(io->reader_type==R_INTERNAL)
+   if(reader[ridx].typ == R_INTERNAL)
       return FALSE;
 #endif
    
-   //	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->reader_type, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
+   //	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
    memset (&newtio, 0, sizeof (newtio));
 
 
    /* Set the bitrate */
 #ifdef OS_LINUX
-   if (io->mhz == io->cardmhz)
+   if (reader[ridx].mhz == reader[ridx].cardmhz)
 #endif
    { //no overclocking
      cfsetospeed(&newtio, IO_Serial_Bitrate(io->output_bitrate));
      cfsetispeed(&newtio, IO_Serial_Bitrate(io->input_bitrate));
-     cs_debug("standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %lu", io->cardmhz, io->mhz, io->output_bitrate);
+     cs_debug("standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %lu", reader[ridx].cardmhz, reader[ridx].mhz, io->output_bitrate);
    }
 #ifdef OS_LINUX
    else { //over or underclocking
     /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
     struct serial_struct nuts;
-    ioctl(io->fd, TIOCGSERIAL, &nuts);
-    int custom_baud = io->output_bitrate * io->mhz / io->cardmhz;
+    ioctl(reader[ridx].handle, TIOCGSERIAL, &nuts);
+    int custom_baud = io->output_bitrate * reader[ridx].mhz / reader[ridx].cardmhz;
     nuts.custom_divisor = (nuts.baud_base + (custom_baud/2))/ custom_baud;
     cs_debug("custom baudrate: cardmhz=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
-	                      io->cardmhz, io->mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
+	                      reader[ridx].cardmhz, reader[ridx].mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
     nuts.flags &= ~ASYNC_SPD_MASK;
     nuts.flags |= ASYNC_SPD_CUST;
-    ioctl(io->fd, TIOCSSERIAL, &nuts);
+    ioctl(reader[ridx].handle, TIOCSSERIAL, &nuts);
     cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
     cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
    }
@@ -560,20 +555,20 @@ bool IO_Serial_SetProperties (IO_Serial * io)
 	newtio.c_cc[VMIN] = 1;
 	newtio.c_cc[VTIME] = 0;
 
-//	tcdrain(io->fd);
-	if (tcsetattr (io->fd, TCSANOW, &newtio) < 0)
+//	tcdrain(reader[ridx].handle);
+	if (tcsetattr (reader[ridx].handle, TCSANOW, &newtio) < 0)
 		return FALSE;
-//	tcflush(io->fd, TCIOFLUSH);
-//	if (tcsetattr (io->fd, TCSAFLUSH, &newtio) < 0)
+//	tcflush(reader[ridx].handle, TCIOFLUSH);
+//	if (tcsetattr (reader[ridx].handle, TCSAFLUSH, &newtio) < 0)
 //		return FALSE;
 
 	IO_Serial_Ioctl_Lock(1);
-	IO_Serial_DTR_RTS(io, 0, io->rts == IO_SERIAL_HIGH);
-	IO_Serial_DTR_RTS(io, 1, io->dtr == IO_SERIAL_HIGH);
+	IO_Serial_DTR_RTS(0, io->rts == IO_SERIAL_HIGH);
+	IO_Serial_DTR_RTS(1, io->dtr == IO_SERIAL_HIGH);
 	IO_Serial_Ioctl_Lock(0);
 	
 #ifdef DEBUG_IO
-	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->reader_type, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
+	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, io->input_bitrate, io->bits, io->parity == IO_SERIAL_PARITY_EVEN ? "Even" : io->parity == IO_SERIAL_PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
 #endif
 	return TRUE;
 }
@@ -590,12 +585,6 @@ void IO_Serial_GetPnPId (IO_Serial * io, BYTE * pnp_id, unsigned *length)
 	(*length) = io->PnP_id_size;
 	memcpy (pnp_id, io->PnP_id, io->PnP_id_size);
 }
-
-unsigned IO_Serial_GetCom (IO_Serial * io)
-{
-	return io->reader_type;
-}
-
 
 bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
 {
@@ -698,11 +687,11 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 	fflush (stdout);
 #endif
 	/* Discard input data from previous commands */
-//	tcflush (io->fd, TCIFLUSH);
+//	tcflush (reader[ridx].handle, TCIFLUSH);
 	
 	for (count = 0; count < size; count += to_send)
 	{
-//		if(io->reader_type==R_INTERNAL)
+//		if(reader[ridx].typ == R_INTERNAL)
 //			to_send = 1;
 //		else
 			to_send = (delay? 1: size);
@@ -743,7 +732,7 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 			printf ("TIMEOUT\n");
 			fflush (stdout);
 #endif
-//			tcflush (io->fd, TCIFLUSH);
+//			tcflush (reader[ridx].handle, TCIFLUSH);
 			return FALSE;
 		}
 	}
@@ -758,18 +747,15 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 
 bool IO_Serial_Close (IO_Serial * io)
 {
-	char filename[IO_SERIAL_FILENAME_LENGTH];
-	
-	IO_Serial_DeviceName (filename, IO_SERIAL_FILENAME_LENGTH);
 	
 #ifdef DEBUG_IO
-	printf ("IO: Clossing serial port %s\n", filename);
+	printf ("IO: Clossing serial port %s\n", reader[ridx].device);
 #endif
 	
 #if defined(TUXBOX) && defined(PPC)
 	close(fdmc);
 #endif
-	if (close (io->fd) != 0)
+	if (close (reader[ridx].handle) != 0)
 		return FALSE;
 	
 	IO_Serial_Clear (io);
@@ -955,8 +941,8 @@ static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms)
 
 static void IO_Serial_Clear (IO_Serial * io)
 {
-	io->fd = -1;
-	io->reader_type = 0;
+	reader[ridx].handle = -1;
+	reader[ridx].typ = 0;
 	memset (io->PnP_id, 0, IO_SERIAL_PNPID_SIZE);
 	io->PnP_id_size = 0;
 	wr = 0;
@@ -968,12 +954,6 @@ static void IO_Serial_Clear (IO_Serial * io)
 	io->parity = 0;
 	io->dtr = 0;
 	io->rts = 0;
-}
-
-static void IO_Serial_DeviceName (char * filename, unsigned length)
-{
-	extern char oscam_device[];
-   snprintf (filename, length, "%s", oscam_device);
 }
 
 static bool IO_Serial_InitPnP (IO_Serial * io)

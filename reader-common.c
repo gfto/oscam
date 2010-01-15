@@ -1,7 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
 
-char oscam_device[128];
 int  oscam_card_detect;
 
 uchar cta_cmd[272], cta_res[CTA_RES_LEN], atr[64];
@@ -308,7 +307,6 @@ int reader_device_init(char *device)
   oscam_card_detect=reader[ridx].detect;
   cs_ptyp_orig=cs_ptyp;
   cs_ptyp=D_DEVICE;
-  snprintf(oscam_device, sizeof(oscam_device), "%s", device);
 #ifdef TUXBOX
   if ((rc=CT_init(1, reader_device_type(device),reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
     cs_log("[tuxbox] Cannot open device: %s", device);
