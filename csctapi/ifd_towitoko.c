@@ -180,19 +180,8 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 
 	
 	/* Default serial port settings */
-	io->input_bitrate = IFD_TOWITOKO_BAUDRATE;
-	io->output_bitrate = IFD_TOWITOKO_BAUDRATE;
-	io->bits = 8;
-	io->stopbits = 2;
-	io->parity = PARITY_EVEN;
-	io->dtr = IO_SERIAL_HIGH;
-//	io->dtr = IO_SERIAL_LOW;
-//	io->rts = IO_SERIAL_HIGH;
-	io->rts = IO_SERIAL_LOW;
-	
-		
-	if (!IO_Serial_SetPropertiesOld (io))
-		return IFD_TOWITOKO_IO_ERROR;
+	if (!IO_Serial_SetParams (IFD_TOWITOKO_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW))
+		return FALSE;
 		
 	/* Default ifd settings */
 	
@@ -200,12 +189,10 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 	ifd->slot = slot;
 	ifd->type = IFD_TOWITOKO_MULTICAM;
 	
-	ret = IFD_Towitoko_SetBaudrate (ifd, IFD_TOWITOKO_BAUDRATE);
-	
-	if (ret != IFD_TOWITOKO_OK)
+	if (!Phoenix_SetBaudrate(IFD_TOWITOKO_BAUDRATE))
 	{
 		IFD_Towitoko_Clear (ifd);
-		return ret;
+		return IFD_TOWITOKO_IO_ERROR;
 	}
 	
 	if (!IO_Serial_SetParity (PARITY_EVEN))
@@ -250,49 +237,6 @@ int IFD_Towitoko_Close (IFD * ifd)
 	
 	IFD_Towitoko_Clear (ifd);
 	
-	
-	return IFD_TOWITOKO_OK;
-}
-
-int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate)
-{
-	if(reader[ridx].typ == R_INTERNAL)
-	{
-		return IFD_TOWITOKO_OK;
-	}
-#ifdef DEBUG_IFD
-	printf ("IFD: Setting baudrate to %lu\n", baudrate);
-#endif
-	/* Get current settings */
-	if (!IO_Serial_GetPropertiesOld (ifd->io))
-		return IFD_TOWITOKO_IO_ERROR;
-	
-	if (ifd->io->output_bitrate == baudrate)
-		return IFD_TOWITOKO_OK;
-
-	
-	/* Set serial device bitrate */
-	ifd->io->output_bitrate = baudrate;
-	ifd->io->input_bitrate = baudrate;
-	
-	if (!IO_Serial_SetPropertiesOld (ifd->io))
-		return IFD_TOWITOKO_IO_ERROR;
-	
-	return IFD_TOWITOKO_OK;
-}
-
-int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate)
-{
-	if(reader[ridx].typ == R_INTERNAL)
-	{
-		return IFD_TOWITOKO_OK;
-	}
-	
-	/* Get current settings */
-	if (!IO_Serial_GetPropertiesOld (ifd->io))
-		return IFD_TOWITOKO_IO_ERROR;
-	
-	(*baudrate) = ifd->io->output_bitrate;
 	
 	return IFD_TOWITOKO_OK;
 }

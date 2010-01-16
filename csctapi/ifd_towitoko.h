@@ -115,7 +115,6 @@ extern int IFD_Towitoko_Close (IFD * ifd);
 
 /* Handling of this IFD */
 extern int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate);
-extern int IFD_Towitoko_GetBaudrate (IFD * ifd, unsigned long *baudrate);
 
 /* General handling of ICC inserted in this IFD */
 extern int IFD_Towitoko_ActivateICC (IFD * ifd);

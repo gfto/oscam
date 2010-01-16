@@ -10,6 +10,7 @@
 #include "../globals.h"
 #include "atr.h"
 #include "ifd_towitoko.h" //FIXME
+#include <termios.h>
 
 #define OK 		1 
 #define ERROR 0
@@ -142,7 +143,30 @@ int Phoenix_Receive (BYTE * buffer, unsigned size, IFD_Timings * timings)
 	return OK;
 }
 
-int Phoenix_SetBaudrate (int mhz)
+int Phoenix_SetBaudrate (unsigned long baudrate)
 {
+	if(reader[ridx].typ == R_INTERNAL)
+		return OK;
+
+#ifdef DEBUG_IFD
+	printf ("IFD: Setting baudrate to %lu\n", baudrate);
+#endif
+	if (reader[ridx].baudrate	== baudrate)
+		return OK;
+
+	/* Get current settings */
+	struct termios tio;
+	if (tcgetattr (reader[ridx].handle, &tio) != 0)
+		return ERROR;
+	
+	//write baudrate here!
+	if (!IO_Serial_SetBitrate (baudrate, &tio))
+		return ERROR;
+	
+	if (!IO_Serial_SetProperties(tio))
+		return ERROR;
+	
+	reader[ridx].baudrate = baudrate;
+	
 	return OK;
 }

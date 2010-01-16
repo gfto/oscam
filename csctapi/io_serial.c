@@ -179,319 +179,52 @@ bool IO_Serial_Init (IO_Serial * io, int reader_type)
 	return TRUE;
 }
 
-bool IO_Serial_GetPropertiesOld (IO_Serial * io)
+bool IO_Serial_SetBitrate (unsigned long bitrate, struct termios * tio)
 {
-	struct termios currtio;
-	speed_t i_speed, o_speed;
-	unsigned int mctl;
-
-#ifdef SCI_DEV
-	if(reader[ridx].typ == R_INTERNAL)
-		return FALSE;
-#endif
-
-	if (io->input_bitrate != 0 && io->output_bitrate != 0) //properties are already filled
-	  return TRUE;
-	
-	if (tcgetattr (reader[ridx].handle, &currtio) != 0)
-		return FALSE;
-
-	o_speed = cfgetospeed (&currtio);
-	
-	switch (o_speed)
-	{
-#ifdef B0
-		case B0:
-			io->output_bitrate = 0;
-			break;
-#endif
-#ifdef B50
-		case B50:
-			io->output_bitrate = 50;
-			break;
-#endif
-#ifdef B75
-		case B75:
-			io->output_bitrate = 75;
-			break;
-#endif
-#ifdef B110
-		case B110:
-			io->output_bitrate = 110;
-			break;
-#endif
-#ifdef B134
-		case B134:
-			io->output_bitrate = 134;
-			break;
-#endif
-#ifdef B150
-		case B150:
-			io->output_bitrate = 150;
-			break;
-#endif
-#ifdef B200
-		case B200:
-			io->output_bitrate = 200;
-			break;
-#endif
-#ifdef B300
-		case B300:
-			io->output_bitrate = 300;
-			break;
-#endif
-#ifdef B600
-		case B600:
-			io->output_bitrate = 600;
-			break;
-#endif
-#ifdef B1200
-		case B1200:
-			io->output_bitrate = 1200;
-			break;
-#endif
-#ifdef B1800
-		case B1800:
-			io->output_bitrate = 1800;
-			break;
-#endif
-#ifdef B2400
-		case B2400:
-			io->output_bitrate = 2400;
-			break;
-#endif
-#ifdef B4800
-		case B4800:
-			io->output_bitrate = 4800;
-			break;
-#endif
-#ifdef B9600
-		case B9600:
-			io->output_bitrate = 9600;
-			break;
-#endif
-#ifdef B19200
-		case B19200:
-			io->output_bitrate = 19200;
-			break;
-#endif
-#ifdef B38400
-		case B38400:
-			io->output_bitrate = 38400;
-			break;
-#endif
-#ifdef B57600
-		case B57600:
-			io->output_bitrate = 57600;
-			break;
-#endif
-#ifdef B115200
-		case B115200:
-			io->output_bitrate = 115200;
-			break;
-#endif
-#ifdef B230400
-		case B230400:
-			io->output_bitrate = 230400;
-			break;
-#endif
-		default:
-			io->output_bitrate = 1200;
-			break;
-	}
-
-	i_speed = cfgetispeed (&currtio);
-	
-	switch (i_speed)
-	{
-#ifdef B0
-		case B0:
-			io->input_bitrate = 0;
-			break;
-#endif
-#ifdef B50
-		case B50:
-			io->input_bitrate = 50;
-			break;
-#endif
-#ifdef B75
-		case B75:
-			io->input_bitrate = 75;
-			break;
-#endif
-#ifdef B110
-		case B110:
-			io->input_bitrate = 110;
-			break;
-#endif
-#ifdef B134
-		case B134:
-			io->input_bitrate = 134;
-			break;
-#endif
-#ifdef B150
-		case B150:
-			io->input_bitrate = 150;
-			break;
-#endif
-#ifdef B200
-		case B200:
-			io->input_bitrate = 200;
-			break;
-#endif
-#ifdef B300
-		case B300:
-			io->input_bitrate = 300;
-			break;
-#endif
-#ifdef B600
-		case B600:
-			io->input_bitrate = 600;
-			break;
-#endif
-#ifdef B1200
-		case B1200:
-			io->input_bitrate = 1200;
-			break;
-#endif
-#ifdef B1800
-		case B1800:
-			io->input_bitrate = 1800;
-			break;
-#endif
-#ifdef B2400
-		case B2400:
-			io->input_bitrate = 2400;
-			break;
-#endif
-#ifdef B4800
-		case B4800:
-			io->input_bitrate = 4800;
-			break;
-#endif
-#ifdef B9600
-		case B9600:
-			io->input_bitrate = 9600;
-			break;
-#endif
-#ifdef B19200
-		case B19200:
-			io->input_bitrate = 19200;
-			break;
-#endif
-#ifdef B38400
-		case B38400:
-			io->input_bitrate = 38400;
-			break;
-#endif
-#ifdef B57600
-		case B57600:
-			io->input_bitrate = 57600;
-			break;
-#endif
-#ifdef B115200
-		case B115200:
-			io->input_bitrate = 115200;
-			break;
-#endif
-#ifdef B230400
-		case B230400:
-			io->input_bitrate = 230400;
-			break;
-#endif
-		default:
-			io->input_bitrate = 1200;
-			break;
-	}
-	
-	switch (currtio.c_cflag & CSIZE)
-	{
-		case CS5:
-			io->bits = 5;
-			break;
-		case CS6:
-			io->bits = 6;
-			break;
-		case CS7:
-			io->bits = 7;
-			break;
-		case CS8:
-			io->bits = 8;
-			break;
-	}
-	
-	if (((currtio.c_cflag) & PARENB) == PARENB)
-	{
-		if (((currtio.c_cflag) & PARODD) == PARODD)
-			io->parity = PARITY_ODD;
-		else
-			io->parity = PARITY_EVEN;
-	}
-	else
-	{
-		io->parity = PARITY_NONE;
-	}
-	
-	if (((currtio.c_cflag) & CSTOPB) == CSTOPB)
-		io->stopbits = 2;
-	else
-		io->stopbits = 1;
-	
-	if (ioctl (reader[ridx].handle, TIOCMGET, &mctl) < 0)
-		return FALSE;
-	
-	io->dtr = ((mctl & TIOCM_DTR) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
-	io->rts = ((mctl & TIOCM_RTS) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
-	
-#ifdef DEBUG_IO
-	printf("IO: Getting properties: %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", io->input_bitrate, io->bits, io->parity == PARITY_EVEN ? "Even" : io->parity == PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
-#endif
-	
-	return TRUE;
-}
-
-bool IO_Serial_SetPropertiesOld (IO_Serial * io)
-{
-   struct termios newtio;
-	
-#ifdef SCI_DEV
-   if(reader[ridx].typ == R_INTERNAL)
-      return FALSE;
-#endif
-   
-   //	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, io->input_bitrate, io->bits, io->parity == PARITY_EVEN ? "Even" : io->parity == PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
-   memset (&newtio, 0, sizeof (newtio));
-
-
    /* Set the bitrate */
 #ifdef OS_LINUX
    if (reader[ridx].mhz == reader[ridx].cardmhz)
 #endif
-   { //no overclocking
-     cfsetospeed(&newtio, IO_Serial_Bitrate(io->output_bitrate));
-     cfsetispeed(&newtio, IO_Serial_Bitrate(io->input_bitrate));
-     cs_debug("standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %lu", reader[ridx].cardmhz, reader[ridx].mhz, io->output_bitrate);
+   { //no overcloking
+     cfsetospeed(tio, IO_Serial_Bitrate(bitrate));
+     cfsetispeed(tio, IO_Serial_Bitrate(bitrate));
+     cs_debug("standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %lu", reader[ridx].cardmhz, reader[ridx].mhz, bitrate);
    }
 #ifdef OS_LINUX
    else { //over or underclocking
     /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
     struct serial_struct nuts;
     ioctl(reader[ridx].handle, TIOCGSERIAL, &nuts);
-    int custom_baud = io->output_bitrate * reader[ridx].mhz / reader[ridx].cardmhz;
+    int custom_baud = bitrate * reader[ridx].mhz / reader[ridx].cardmhz;
     nuts.custom_divisor = (nuts.baud_base + (custom_baud/2))/ custom_baud;
     cs_debug("custom baudrate: cardmhz=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
 	                      reader[ridx].cardmhz, reader[ridx].mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
     nuts.flags &= ~ASYNC_SPD_MASK;
     nuts.flags |= ASYNC_SPD_CUST;
     ioctl(reader[ridx].handle, TIOCSSERIAL, &nuts);
-    cfsetospeed(&newtio, IO_Serial_Bitrate(38400));
-    cfsetispeed(&newtio, IO_Serial_Bitrate(38400));
+    cfsetospeed(tio, IO_Serial_Bitrate(38400));
+    cfsetispeed(tio, IO_Serial_Bitrate(38400));
    }
 #endif
-        
-   /* Set the character size */
-   switch (io->bits)
-   {
+	return TRUE;
+}
+
+bool IO_Serial_SetParams (unsigned long bitrate, unsigned bits, int parity, unsigned stopbits, int dtr, int rts)
+{
+	 struct termios newtio;
+	
+	 if(reader[ridx].typ == R_INTERNAL)
+			return FALSE;
+	 
+	 //	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, bitrate, bits, parity == PARITY_EVEN ? "Even" : parity == PARITY_ODD ? "Odd" : "None", stopbits, dtr, rts);
+	 memset (&newtio, 0, sizeof (newtio));
+
+	if (!IO_Serial_SetBitrate (bitrate, & newtio))
+		return FALSE;
+				
+	 /* Set the character size */
+	 switch (bits)
+	 {
 		case 5:
 			newtio.c_cflag |= CS5;
 			break;
@@ -510,7 +243,7 @@ bool IO_Serial_SetPropertiesOld (IO_Serial * io)
 	}
 	
 	/* Set the parity */
-	switch (io->parity)
+	switch (parity)
 	{
 		case PARITY_ODD:
 			newtio.c_cflag |= PARENB;
@@ -528,7 +261,7 @@ bool IO_Serial_SetPropertiesOld (IO_Serial * io)
 	}
 	
 	/* Set the number of stop bits */
-	switch (io->stopbits)
+	switch (stopbits)
 	{
 		case 1:
 			newtio.c_cflag &= (~CSTOPB);
@@ -552,21 +285,16 @@ bool IO_Serial_SetPropertiesOld (IO_Serial * io)
 	newtio.c_cc[VMIN] = 1;
 	newtio.c_cc[VTIME] = 0;
 
-//	tcdrain(reader[ridx].handle);
-	if (tcsetattr (reader[ridx].handle, TCSANOW, &newtio) < 0)
+	if (!IO_Serial_SetProperties(newtio))
 		return FALSE;
-//	tcflush(reader[ridx].handle, TCIOFLUSH);
-//	if (tcsetattr (reader[ridx].handle, TCSAFLUSH, &newtio) < 0)
-//		return FALSE;
+
+	reader[ridx].baudrate = bitrate;
 
 	IO_Serial_Ioctl_Lock(1);
-	IO_Serial_DTR_RTS(0, io->rts == IO_SERIAL_HIGH);
-	IO_Serial_DTR_RTS(1, io->dtr == IO_SERIAL_HIGH);
+	IO_Serial_DTR_RTS(0, rts == IO_SERIAL_HIGH);
+	IO_Serial_DTR_RTS(1, dtr == IO_SERIAL_HIGH);
 	IO_Serial_Ioctl_Lock(0);
-	
-#ifdef DEBUG_IO
-	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, io->input_bitrate, io->bits, io->parity == PARITY_EVEN ? "Even" : io->parity == PARITY_ODD ? "Odd" : "None", io->stopbits, io->dtr, io->rts);
-#endif
+
 	return TRUE;
 }
 
@@ -585,14 +313,6 @@ bool IO_Serial_SetProperties (struct termios newtio)
 	if (ioctl (reader[ridx].handle, TIOCMGET, &mctl) < 0)
 		return FALSE;
 	
-	int dtr = ((mctl & TIOCM_DTR) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
-	int rts = ((mctl & TIOCM_RTS) ? IO_SERIAL_HIGH : IO_SERIAL_LOW);
-
-	IO_Serial_Ioctl_Lock(1);
-	IO_Serial_DTR_RTS(0, rts == IO_SERIAL_HIGH);
-	IO_Serial_DTR_RTS(1, dtr == IO_SERIAL_HIGH);
-	IO_Serial_Ioctl_Lock(0);
-
 #ifdef DEBUG_IO
 	printf("IO: Setting properties\n");
 #endif
@@ -1047,15 +767,7 @@ static void IO_Serial_Clear (IO_Serial * io)
 static bool IO_Serial_InitPnP (IO_Serial * io)
 {
 	int i = 0;
-	io->input_bitrate = 1200;
-	io->output_bitrate = 1200;
-	io->parity = PARITY_NONE;
-	io->bits = 7;
-	io->stopbits = 1;
-	io->dtr = IO_SERIAL_HIGH;
-	io->rts = IO_SERIAL_LOW;
-	
-	if (!IO_Serial_SetPropertiesOld (io))
+  if (!IO_Serial_SetParams (1200, 7, PARITY_NONE, 1, IO_SERIAL_HIGH, IO_SERIAL_LOW))
 		return FALSE;
 
 	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (200, 1, &(io->PnP_id[i])))

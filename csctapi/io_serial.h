@@ -85,8 +85,6 @@ extern bool IO_Serial_Init (IO_Serial * io, int reader_type);
 extern bool IO_Serial_Close (IO_Serial * io);
 
 /* Transmission properties */
-extern bool IO_Serial_SetPropertiesOld (IO_Serial * io);
-extern bool IO_Serial_GetPropertiesOld (IO_Serial * io);
 extern bool IO_Serial_DTR_RTS(int, int);
 #if defined(TUXBOX) && defined(PPC)
 extern void IO_Serial_Ioctl_Lock(int);
