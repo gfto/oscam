@@ -48,7 +48,7 @@ static char CardTerminal_RequestICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp
 
 static char CardTerminal_GetStatus (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
-static char CardTerminal_SetParity (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp);
+static char CardTerminal_SetParity (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 static char CardTerminal_EjectICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
@@ -70,30 +70,15 @@ CardTerminal * CardTerminal_New (void)
 	return ct;
 }
 
-char CardTerminal_Init (CardTerminal * ct, int reader_type, int mhz, int cardmhz)
+char CardTerminal_Init (CardTerminal * ct)
 {
 	char ret;
 	int i;
 	
-	/* Create a new IO_Serial */
-	ct->io = IO_Serial_New (mhz, cardmhz);
-	
-	/* Memory error */
-	if (ct->io == NULL)
-		return ERR_MEMORY;
-	
 	/* Initialise serial port */
-	if (ICC_Async_Device_Init ()) { 
-		printf("ERROR in initializing device\n");
+	if (ICC_Async_Device_Init ()) 
 		return ERR_TRANS;
-	}
-	if (!IO_Serial_Init(ct->io, reader_type))
-	{
-		free (ct->io);
-		ct->io = NULL;
-		return ERR_TRANS;
-	}
-	
+
 	/* Cearte all reader slots */
 	ct->num_slots = 0;
 	do
@@ -110,7 +95,7 @@ char CardTerminal_Init (CardTerminal * ct, int reader_type, int mhz, int cardmhz
 		}
 		
 		/* Initialise slot */
-		ret = CT_Slot_Init (ct->slots[i], ct->io, i);
+		ret = CT_Slot_Init (ct->slots[i], i);
 		
 		if (ret != OK)
 			break;
@@ -132,9 +117,7 @@ char CardTerminal_Init (CardTerminal * ct, int reader_type, int mhz, int cardmhz
 			i--;
 		}
 		
-		IO_Serial_Close (ct->io);
-		free (ct->io);
-		ct->io = NULL;
+		IO_Serial_Close ();
 	}
 #ifdef HAVE_PTHREAD_H
 	else
@@ -176,7 +159,7 @@ char CardTerminal_Command (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		else if (ins == CTBCS_INS_STATUS) /* Get Status */
 			ret = CardTerminal_GetStatus (ct, cmd, rsp);
 		else if (ins == CTBCS_INS_PARITY) /* Get Status */
-			ret = CardTerminal_SetParity (ct, cmd, rsp);
+			ret = CardTerminal_SetParity (cmd, rsp);
 		else if (ins == CTBCS_INS_EJECT) /* Eject ICC */
 			ret = CardTerminal_EjectICC (ct, cmd, rsp);
 		else /* Wrong instruction */
@@ -212,14 +195,9 @@ char CardTerminal_Close (CardTerminal * ct)
 		}
 	}
 	
-	if (ct->io != NULL)
-	{
-		if (!IO_Serial_Close (ct->io))
+		if (!IO_Serial_Close ())
 			ret = ERR_TRANS;
 		
-		free (ct->io);
-	}
-	
 	CardTerminal_Clear (ct);
 	
 #ifdef HAVE_PTHREAD_H
@@ -295,7 +273,7 @@ static char CardTerminal_ResetCT (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp **
 			}
 			
 			/* Initialise this slot */
-			ret = CT_Slot_Init (ct->slots[sn],ct->io,sn);
+			ret = CT_Slot_Init (ct->slots[sn],sn);
 			
 			if (ret != OK)
 			{
@@ -689,7 +667,7 @@ static char CardTerminal_GetStatus (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp 
 	return ret;
 }
 
-static char CardTerminal_SetParity (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp)
+static char CardTerminal_SetParity (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
 	BYTE buffer[2], p1, p2;
 	unsigned length;
@@ -857,7 +835,6 @@ static void CardTerminal_Clear (CardTerminal * ct)
 {
 	int i;
 	
-	ct->io = NULL;
 	ct->num_slots = 0;
 	
 	for (i = 0; i < CARDTERMINAL_MAX_SLOTS; i++)

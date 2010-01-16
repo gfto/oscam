@@ -63,10 +63,6 @@ static bool IO_Serial_WaitToRead (unsigned delay_ms, unsigned timeout_ms);
 
 static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms);
 
-static bool IO_Serial_InitPnP (IO_Serial * io);
-
-static void IO_Serial_Clear (IO_Serial * io);
-
 static int _in_echo_read = 0;
 int io_serial_need_dummy_char = 0;
 
@@ -156,29 +152,6 @@ bool IO_Serial_DTR_RTS(int dtr, int set)
  * Public functions definition
  */
 
-IO_Serial * IO_Serial_New (int mhz, int cardmhz)
-{
-	IO_Serial *io;
-	
-	io = (IO_Serial *) malloc (sizeof (IO_Serial));
-	
-	if (io != NULL)
-		IO_Serial_Clear (io);
-	
-	return io;
-}
-
-bool IO_Serial_Init (IO_Serial * io, int reader_type)
-{
-	if (reader[ridx].typ != R_INTERNAL)
-		IO_Serial_InitPnP (io);
-	
-	if(reader[ridx].typ!=R_INTERNAL)
-		IO_Serial_Flush();
-		
-	return TRUE;
-}
-
 bool IO_Serial_SetBitrate (unsigned long bitrate, struct termios * tio)
 {
    /* Set the bitrate */
@@ -216,7 +189,6 @@ bool IO_Serial_SetParams (unsigned long bitrate, unsigned bits, int parity, unsi
 	 if(reader[ridx].typ == R_INTERNAL)
 			return FALSE;
 	 
-	 //	printf("IO: Setting properties: reader_type%d, %ld bps; %d bits/byte; %s parity; %d stopbits; dtr=%d; rts=%d\n", reader[ridx].typ, bitrate, bits, parity == PARITY_EVEN ? "Even" : parity == PARITY_ODD ? "Odd" : "None", stopbits, dtr, rts);
 	 memset (&newtio, 0, sizeof (newtio));
 
 	if (!IO_Serial_SetBitrate (bitrate, & newtio))
@@ -390,12 +362,6 @@ void IO_Serial_Flush ()
 }
 
 
-void IO_Serial_GetPnPId (IO_Serial * io, BYTE * pnp_id, unsigned *length)
-{
-	(*length) = io->PnP_id_size;
-	memcpy (pnp_id, io->PnP_id, io->PnP_id_size);
-}
-
 bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
 {
 	BYTE c;
@@ -555,7 +521,7 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 	return TRUE;
 }
 
-bool IO_Serial_Close (IO_Serial * io)
+bool IO_Serial_Close ()
 {
 	
 #ifdef DEBUG_IO
@@ -568,7 +534,7 @@ bool IO_Serial_Close (IO_Serial * io)
 	if (close (reader[ridx].handle) != 0)
 		return FALSE;
 	
-	IO_Serial_Clear (io);
+	wr = 0;
 	
 	return TRUE;
 }
@@ -749,31 +715,17 @@ static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms)
     
 }
 
-static void IO_Serial_Clear (IO_Serial * io)
+bool IO_Serial_InitPnP ()
 {
-	memset (io->PnP_id, 0, IO_SERIAL_PNPID_SIZE);
-	io->PnP_id_size = 0;
-	wr = 0;
-	//modifyable properties:
-	io->input_bitrate = 0;
-	io->output_bitrate = 0;
-	io->bits = 0;
-	io->stopbits = 0;
-	io->parity = 0;
-	io->dtr = 0;
-	io->rts = 0;
-}
+	unsigned int PnP_id_size = 0;
+	BYTE PnP_id[IO_SERIAL_PNPID_SIZE];	/* PnP Id of the serial device */
 
-static bool IO_Serial_InitPnP (IO_Serial * io)
-{
-	int i = 0;
   if (!IO_Serial_SetParams (1200, 7, PARITY_NONE, 1, IO_SERIAL_HIGH, IO_SERIAL_LOW))
 		return FALSE;
 
-	while ((i < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (200, 1, &(io->PnP_id[i])))
-      i++;
+	while ((PnP_id_size < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (200, 1, &(PnP_id[PnP_id_size])))
+      PnP_id_size++;
 
-	io->PnP_id_size = i;
 		return TRUE;
 }
  

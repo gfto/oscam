@@ -48,7 +48,6 @@
 
 typedef struct
 {
-  IO_Serial * io;				/* Serial device */
   CT_Slot * slots[CARDTERMINAL_MAX_SLOTS];	/* Array of CT_Slot's */
   unsigned int num_slots;				/* Number of CT_Slot's */
 #ifdef HAVE_PTHREAD_H
@@ -67,7 +66,7 @@ CardTerminal_New ();
 
 /* Intialice a CardTerminal in a given port */
 extern char 
-CardTerminal_Init (CardTerminal * ct, int reader_type, int mhz, int cardmhz);
+CardTerminal_Init (CardTerminal * ct);
 
 /* Send a CT-BCS command to a CardTerminal */
 extern char

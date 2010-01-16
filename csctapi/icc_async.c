@@ -64,7 +64,8 @@ ICC_Async *ICC_Async_New (void)
 
 int ICC_Async_Device_Init ()
 {
-	
+
+	wr = 0;	
 #ifdef DEBUG_IO
 	printf ("IO: Opening serial port %s\n", reader[ridx].device);
 #endif
@@ -94,7 +95,13 @@ int ICC_Async_Device_Init ()
 			return ICC_ASYNC_IFD_ERROR;
 		}
 #endif
-		
+
+	if (reader[ridx].typ != R_INTERNAL) { //FIXME move to ifd_phoenix.c
+		if(!IO_Serial_InitPnP ())
+			return ICC_ASYNC_IFD_ERROR;
+		IO_Serial_Flush();
+	}
+
 	return ICC_ASYNC_OK;
 }
 
@@ -237,7 +244,7 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	}
 	else
 #endif
-	if (IFD_Towitoko_ResetAsyncICC (ifd, &(icc->atr)) != IFD_TOWITOKO_OK)
+	if (!Phoenix_Reset(&(icc->atr)))
 	{
 		icc->atr = NULL;
 		return ICC_ASYNC_IFD_ERROR;
@@ -276,24 +283,21 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	{
 		if (!IO_Serial_SetParity (PARITY_ODD))
 			return ICC_ASYNC_IFD_ERROR;
-		icc->ifd->io->parity = PARITY_ODD;
 	}
 	else if(icc->protocol_type == ATR_PROTOCOL_TYPE_T14)
 	{
 		if (!IO_Serial_SetParity (PARITY_NONE))
 			return ICC_ASYNC_IFD_ERROR;		
-		icc->ifd->io->parity = PARITY_NONE;
 	}
 	else
 	{
 		if (!IO_Serial_SetParity (PARITY_EVEN))
 			return ICC_ASYNC_IFD_ERROR;		
-		icc->ifd->io->parity = PARITY_EVEN;
 	}
 #ifdef COOL
 	if (reader[ridx].typ != R_INTERNAL)
 #endif
-	IO_Serial_Flush(ifd->io);
+	IO_Serial_Flush();
 	return ICC_ASYNC_OK;
 #else
 	return ICC_ASYNC_ATR_ERROR;

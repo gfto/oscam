@@ -63,14 +63,14 @@ CT_Slot * CT_Slot_New ()
 	return slot;
 }
 
-char CT_Slot_Init (CT_Slot * slot, IO_Serial * io, int sn)
+char CT_Slot_Init (CT_Slot * slot, int sn)
 {
 	slot->ifd = IFD_Towitoko_New();
 	
 	if (slot->ifd == NULL)
 		return ERR_MEMORY;
 	
-	if (IFD_Towitoko_Init (slot->ifd, io, sn) != IFD_TOWITOKO_OK)
+	if (IFD_Towitoko_Init (slot->ifd, sn) != IFD_TOWITOKO_OK)
 	{
 		IFD_Towitoko_Delete (slot->ifd);
 		slot->ifd = NULL;

@@ -19,10 +19,7 @@ extern "C" {
 #define MAX_APDULEN     1040
 
 extern char CT_init (
-      unsigned short Ctn,                  /* Terminal Number */
-      int reader_type,                      /* reader type (mouse, smartreader) */
-      int mhz,
-      int cardmhz
+      unsigned short Ctn                  /* Terminal Number */
       );
 
 extern char CT_close(

@@ -92,7 +92,6 @@ IFD_Timings;
 /* Interface Device Handler */
 typedef struct
 {
-  IO_Serial *io;		/* Handle of serial device */
   BYTE slot;			/* Chipdrive Twin Slot */
   BYTE type;			/* Reader type code */
   BYTE firmware;		/* Reader firmware version */
@@ -110,18 +109,18 @@ extern IFD *IFD_Towitoko_New (void);
 extern void IFD_Towitoko_Delete (IFD * ifd);
 
 /* Handling of the drive associated with this IFD */
-extern int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot);
+extern int IFD_Towitoko_Init (IFD * ifd, BYTE slot);
 extern int IFD_Towitoko_Close (IFD * ifd);
 
 /* Handling of this IFD */
 extern int IFD_Towitoko_SetBaudrate (IFD * ifd, unsigned long baudrate);
 
 /* General handling of ICC inserted in this IFD */
-extern int IFD_Towitoko_ActivateICC (IFD * ifd);
-extern int IFD_Towitoko_DeactivateICC (IFD * ifd);
+extern int IFD_Towitoko_ActivateICC ();
+extern int IFD_Towitoko_DeactivateICC ();
 
 /* Asynchronous ICC handling functions */
-extern int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr);
+extern int IFD_Towitoko_ResetAsyncICC (ATR ** atr);
 
 /* Atributes of the drive associated with this IFD */
 extern BYTE IFD_Towitoko_GetType (IFD * ifd);

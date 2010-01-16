@@ -145,7 +145,7 @@ void IFD_Towitoko_Delete (IFD * ifd)
 	free (ifd);
 }
 
-int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
+int IFD_Towitoko_Init (IFD * ifd, BYTE slot)
 {
 	int ret;
 
@@ -172,7 +172,6 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 		
 	if(reader[ridx].typ == R_INTERNAL)
 	{
-		ifd->io = io;
 		ifd->slot = slot;
 		ifd->type = IFD_TOWITOKO_MULTICAM;
 		return IFD_TOWITOKO_OK;
@@ -185,7 +184,6 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 		
 	/* Default ifd settings */
 	
-	ifd->io = io;
 	ifd->slot = slot;
 	ifd->type = IFD_TOWITOKO_MULTICAM;
 	
@@ -196,12 +194,9 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 	}
 	
 	if (!IO_Serial_SetParity (PARITY_EVEN))
-		return IFD_TOWITOKO_IO_ERROR;
-	
-	if (ret != IFD_TOWITOKO_OK)
 	{
 		IFD_Towitoko_Clear (ifd);
-		return ret;
+		return IFD_TOWITOKO_IO_ERROR;
 	}
 	
 	ret = IFD_Towitoko_GetReaderInfo (ifd);
@@ -212,7 +207,7 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 	}
 	else
 	{	
-		IO_Serial_Flush(ifd->io);
+		IO_Serial_Flush();
 	}
 	
 	return ret;
@@ -220,8 +215,6 @@ int IFD_Towitoko_Init (IFD * ifd, IO_Serial * io, BYTE slot)
 
 int IFD_Towitoko_Close (IFD * ifd)
 {
-	int ret;
-
 #ifdef USE_GPIO
 	if(gpio_detect) 
 	{
@@ -241,7 +234,7 @@ int IFD_Towitoko_Close (IFD * ifd)
 	return IFD_TOWITOKO_OK;
 }
 
-int IFD_Towitoko_ActivateICC (IFD * ifd)
+int IFD_Towitoko_ActivateICC ()
 {
 #ifdef DEBUG_IFD
 		printf ("IFD: Activating card\n");
@@ -278,7 +271,7 @@ int IFD_Towitoko_ActivateICC (IFD * ifd)
 	}
 }
 
-int IFD_Towitoko_DeactivateICC (IFD * ifd)
+int IFD_Towitoko_DeactivateICC ()
 {
 #ifdef DEBUG_IFD
 		printf ("IFD: Deactivating card\n");
@@ -310,100 +303,6 @@ int IFD_Towitoko_DeactivateICC (IFD * ifd)
 }
 
 //extern void print_hex_data(unsigned char *data, int len);
-
-int IFD_Towitoko_ResetAsyncICC (IFD * ifd, ATR ** atr)
-{	 
-
-#ifdef DEBUG_IFD
-	printf ("IFD: Resetting card:\n");
-#endif
-
-		int ret;
-		int parity;
-		int i;
-		int par[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
-#ifdef HAVE_NANOSLEEP
-		struct timespec req_ts;
-		req_ts.tv_sec = 0;
-		req_ts.tv_nsec = 50000000;
-#endif
-		
-		(*atr) = NULL;
-		for(i=0; i<3; i++)
-		{
-			parity = par[i];
-			IO_Serial_Flush();
-
-			if (!IO_Serial_SetParity (parity))
-				return IFD_TOWITOKO_IO_ERROR;
-
-			ret = IFD_TOWITOKO_IO_ERROR;
-
-			IO_Serial_Ioctl_Lock(1);
-#ifdef USE_GPIO
-			if (gpio_detect)
-			{
-				set_gpio(0);
-				set_gpio1(0);
-			}
-			else
-#endif
-				IO_Serial_RTS_Set();
-
-#ifdef HAVE_NANOSLEEP
-			nanosleep (&req_ts, NULL);
-#else
-			usleep (50000L);
-#endif
-#ifdef USE_GPIO
-			if (gpio_detect)
-			{
-				set_gpio_input();
-				set_gpio1(1);
-			}
-			else
-#endif
-				IO_Serial_RTS_Clr();
-			
-			IO_Serial_Ioctl_Lock(0);
-
-			(*atr) = ATR_New ();
-
-			if(ATR_InitFromStream ((*atr), IFD_TOWITOKO_ATR_TIMEOUT) == ATR_OK)
-				ret = IFD_TOWITOKO_OK;
-
-			/* Succesfully retrive ATR */
-			if (ret == IFD_TOWITOKO_OK)
-			{			
-				break;
-			}
-			else
-			{
-				ATR_Delete (*atr);
-				(*atr) = NULL;
-#ifdef USE_GPIO
-				if (gpio_detect) set_gpio1(0);
-#endif
-			}	
-		}
-	
-		IO_Serial_Flush();
-
-/*
-		//PLAYGROUND faking ATR for test purposes only
-		//
-  		// sky 919 unsigned char atr_test[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
-  		// HD+ unsigned char atr_test[] = { 0x3F, 0xFF, 0x95, 0x00, 0xFF, 0x91, 0x81, 0x71, 0xFE, 0x47, 0x00, 0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34, 0x63 };
-		// S02 = irdeto unsigned char atr_test[] = { 0x3B, 0x9F, 0x21, 0x0E, 0x49, 0x52, 0x44, 0x45, 0x54, 0x4F, 0x20, 0x41, 0x43, 0x53, 0x03};
-		//cryptoworks 	unsigned char atr_test[] = { 0x3B, 0x78, 0x12, 0x00, 0x00, 0x65, 0xC4, 0x05, 0xFF, 0x8F, 0xF1, 0x90, 0x00 };
-		ATR_Delete(*atr); //throw away actual ATR
-		(*atr) = ATR_New ();
-		ATR_InitFromArray ((*atr), atr_test, sizeof(atr_test));
-		//END OF PLAYGROUND 
-*/
-		
-		return ret;
-}
 
 BYTE IFD_Towitoko_GetType (IFD * ifd)
 {
@@ -494,7 +393,6 @@ static int IFD_Towitoko_GetReaderInfo (IFD * ifd)
 
 static void IFD_Towitoko_Clear (IFD * ifd)
 {
-	ifd->io = NULL;
 	ifd->slot = 0x00;
 	ifd->type = 0x00;
 	ifd->firmware = 0x00;

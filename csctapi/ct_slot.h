@@ -70,7 +70,7 @@ CT_Slot_New ();
 
 /* Intialice a CT_Slot */
 extern char 
-CT_Slot_Init (CT_Slot * slot, IO_Serial * io, int sn);
+CT_Slot_Init (CT_Slot * slot, int sn);
 
 /* Check for card inserted */
 extern char

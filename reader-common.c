@@ -308,10 +308,11 @@ int reader_device_init(char *device)
   cs_ptyp_orig=cs_ptyp;
   cs_ptyp=D_DEVICE;
 #ifdef TUXBOX
-  if ((rc=CT_init(1, reader_device_type(device),reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
+	reader[ridx].typ = reader_device_type(device);
+  if ((rc=CT_init(1))!=OK)
     cs_log("[tuxbox] Cannot open device: %s", device);
 #else
-  if ((rc=CT_init(1, reader[ridx].typ,reader[ridx].mhz,reader[ridx].cardmhz))!=OK)
+  if ((rc=CT_init(1))!=OK)
     cs_log("Cannot open device: %s", device);
 #endif
   cs_debug("ct_init on %s: %d", device, rc);

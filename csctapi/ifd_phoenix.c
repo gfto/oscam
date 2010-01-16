@@ -12,7 +12,7 @@
 #include "ifd_towitoko.h" //FIXME
 #include <termios.h>
 
-#define OK 		1 
+#define OK 		1
 #define ERROR 0
 
 #define IFD_TOWITOKO_MAX_TRANSMIT 255
@@ -45,8 +45,82 @@ int Phoenix_GetStatus (int * status)
 }
 
 int Phoenix_Reset (ATR ** atr)
-{	 
-		return OK;
+{	
+
+#ifdef DEBUG_IFD
+	printf ("IFD: Resetting card:\n");
+#endif
+
+		int ret;
+		int i;
+		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
+#ifdef HAVE_NANOSLEEP
+		struct timespec req_ts;
+		req_ts.tv_sec = 0;
+		req_ts.tv_nsec = 50000000;
+#endif
+		
+		(*atr) = NULL;
+		for(i=0; i<3; i++) {
+			IO_Serial_Flush();
+			if (!IO_Serial_SetParity (parity[i]))
+				return ERROR;
+
+			ret = ERROR;
+			IO_Serial_Ioctl_Lock(1);
+#ifdef USE_GPIO
+			if (gpio_detect){
+				set_gpio(0);
+				set_gpio1(0);
+			}
+			else
+#endif
+				IO_Serial_RTS_Set();
+#ifdef HAVE_NANOSLEEP
+			nanosleep (&req_ts, NULL);
+#else
+			usleep (50000L);
+#endif
+#ifdef USE_GPIO
+			if (gpio_detect) {
+				set_gpio_input();
+				set_gpio1(1);
+			}
+			else
+#endif
+				IO_Serial_RTS_Clr();
+			IO_Serial_Ioctl_Lock(0);
+			(*atr) = ATR_New ();
+			if(ATR_InitFromStream ((*atr), IFD_TOWITOKO_ATR_TIMEOUT) == ATR_OK)
+				ret = OK;
+			// Succesfully retrieve ATR
+			if (ret == OK)
+				break;
+			else
+			{
+				ATR_Delete (*atr);
+				(*atr) = NULL;
+#ifdef USE_GPIO
+				if (gpio_detect) set_gpio1(0);
+#endif
+			}
+		}
+		IO_Serial_Flush();
+
+/*
+		//PLAYGROUND faking ATR for test purposes only
+		//
+		// sky 919 unsigned char atr_test[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
+		// HD+ unsigned char atr_test[] = { 0x3F, 0xFF, 0x95, 0x00, 0xFF, 0x91, 0x81, 0x71, 0xFE, 0x47, 0x00, 0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34, 0x63 };
+		// S02 = irdeto unsigned char atr_test[] = { 0x3B, 0x9F, 0x21, 0x0E, 0x49, 0x52, 0x44, 0x45, 0x54, 0x4F, 0x20, 0x41, 0x43, 0x53, 0x03};
+		//cryptoworks 	unsigned char atr_test[] = { 0x3B, 0x78, 0x12, 0x00, 0x00, 0x65, 0xC4, 0x05, 0xFF, 0x8F, 0xF1, 0x90, 0x00 };
+		ATR_Delete(*atr); //throw away actual ATR
+		(*atr) = ATR_New ();
+		ATR_InitFromArray ((*atr), atr_test, sizeof(atr_test));
+		//END OF PLAYGROUND
+*/
+		
+		return ret;
 }
 
 int Phoenix_Transmit (BYTE * buffer, unsigned size, IFD_Timings * timings)
@@ -69,7 +143,7 @@ int Phoenix_Transmit (BYTE * buffer, unsigned size, IFD_Timings * timings)
 #ifdef USE_GPIO
 	if (gpio_detect) set_gpio1(0);
 #endif
-	for (sent = 0; sent < size; sent = sent + to_send) 
+	for (sent = 0; sent < size; sent = sent + to_send)
 	{
 		/* Calculate number of bytes to send */
 		to_send = MIN(size, IFD_TOWITOKO_MAX_TRANSMIT);
