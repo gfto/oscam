@@ -1031,8 +1031,6 @@ static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms)
 
 static void IO_Serial_Clear (IO_Serial * io)
 {
-	reader[ridx].handle = -1;
-	reader[ridx].typ = 0;
 	memset (io->PnP_id, 0, IO_SERIAL_PNPID_SIZE);
 	io->PnP_id_size = 0;
 	wr = 0;
