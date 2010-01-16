@@ -276,16 +276,19 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	{
 		if (!IO_Serial_SetParity (PARITY_ODD))
 			return ICC_ASYNC_IFD_ERROR;
+		icc->ifd->io->parity = PARITY_ODD;
 	}
 	else if(icc->protocol_type == ATR_PROTOCOL_TYPE_T14)
 	{
 		if (!IO_Serial_SetParity (PARITY_NONE))
 			return ICC_ASYNC_IFD_ERROR;		
+		icc->ifd->io->parity = PARITY_NONE;
 	}
 	else
 	{
 		if (!IO_Serial_SetParity (PARITY_EVEN))
 			return ICC_ASYNC_IFD_ERROR;		
+		icc->ifd->io->parity = PARITY_EVEN;
 	}
 #ifdef COOL
 	if (reader[ridx].typ != R_INTERNAL)
