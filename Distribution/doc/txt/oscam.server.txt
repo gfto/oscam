@@ -68,7 +68,7 @@ DESCRIPTIONS
        aeskey = AES key
 	  AES key for Viaccess SCs
 
-       detect = CD|DSR|CTS|RING|NONE|gpio[2-7]
+       detect = CD|DSR|CTS|RING|NONE|gpio[1-7]
 	  status detect of card (NONE = no detection), default:CD
 
        cardmhz = mhz
