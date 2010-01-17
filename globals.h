@@ -320,6 +320,7 @@ struct s_client
   time_t    lastemm;
   time_t    lastecm;
   time_t    expirationdate;
+  int       disabled;
   ulong     grp;
   int       crypted;
   int       dup;
@@ -500,7 +501,8 @@ struct s_auth
   in_addr_t dynip;
   uchar     dyndns[64];
   time_t    expirationdate;
-  struct   s_auth *next;
+  int       disabled;
+  struct    s_auth *next;
 };
 
 struct s_srvid

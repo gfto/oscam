@@ -745,6 +745,7 @@ static void chk_account(char *token, char *value, struct s_auth *account)
   if (!strcmp(token, "sleep")) { account->tosleep=atoi(value); return; }
   if (!strcmp(token, "monlevel")) { account->monlvl=atoi(value); return; }
   if (!strcmp(token, "caid")) { chk_caidtab(value, &account->ctab); return; }
+  if (!strcmp(token, "disabled")) { account->disabled=atoi(value); return; }
   /*
    *  case insensitive
    */
@@ -827,7 +828,7 @@ static void chk_account(char *token, char *value, struct s_auth *account)
 
 int init_userdb()
 {
-  int tag=0, nr, nro, expired;
+  int tag=0, nr, nro, expired, disabled;
   //int first=1;
   FILE *fp;
   char *value;
@@ -888,13 +889,14 @@ int init_userdb()
   }
   fclose(fp);
 
-  for (expired=0, ptr=cfg->account; ptr;)
+  for (expired=0, disabled=0, ptr=cfg->account; ptr;)
   {
     if(ptr->expirationdate && ptr->expirationdate<time(NULL)) expired++;
+    if(ptr->disabled != 0) disabled++;
     ptr=ptr->next;
   }
 
-  cs_log("userdb reloaded: %d accounts freed, %d accounts loaded, %d expired", nro, nr, expired);
+  cs_log("userdb reloaded: %d accounts freed, %d accounts loaded, %d expired, %d disabled", nro, nr, expired, disabled);
   return(0);
 }
 
