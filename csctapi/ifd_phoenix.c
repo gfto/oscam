@@ -25,23 +25,28 @@ int Phoenix_Init ()
 
 int Phoenix_GetStatus (int * status)
 {
-	int in;
+#ifdef USE_GPIO  //felix: detect card via defined gpio
+ if (gpio_detect)
+		*status=get_gpio();
+ else
+#endif
+ {
 	unsigned int modembits=0;
 	extern int oscam_card_detect; //FIXME kill global variable
 	if (ioctl(reader[ridx].handle, TIOCMGET,&modembits)<0)
 		return ERROR;
 	switch(oscam_card_detect&0x7f)
 	{
-		case	0: in=(modembits & TIOCM_CAR);	break;
-		case	1: in=(modembits & TIOCM_DSR);	break;
-		case	2: in=(modembits & TIOCM_CTS);	break;
-		case	3: in=(modembits & TIOCM_RNG);	break;
-		default: in=0;		// dummy
+		case	0: *status=(modembits & TIOCM_CAR);	break;
+		case	1: *status=(modembits & TIOCM_DSR);	break;
+		case	2: *status=(modembits & TIOCM_CTS);	break;
+		case	3: *status=(modembits & TIOCM_RNG);	break;
+		default: *status=0;		// dummy
 	}
 	if (!(oscam_card_detect&0x80))
-		in=!in;
-	*status = in;
-	return OK;
+		*status=!*status;
+ }
+ return OK;
 }
 
 int Phoenix_Reset (ATR ** atr)
@@ -81,10 +86,9 @@ int Phoenix_Reset (ATR ** atr)
 #else
 			usleep (50000L);
 #endif
-#ifdef USE_GPIO
+#ifdef USE_GPIO  //felix: set card reset hi (inactive)
 			if (gpio_detect) {
 				set_gpio_input();
-				set_gpio1(1);
 			}
 			else
 #endif

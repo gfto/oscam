@@ -75,7 +75,7 @@
 static int IFD_Towitoko_GetReaderInfo (IFD * ifd);
 static void IFD_Towitoko_Clear (IFD * ifd);
 
-#ifdef USE_GPIO
+#ifdef USE_GPIO  //felix: definition of gpio functions
 
 int gpio_outen,gpio_out,gpio_in;
 unsigned int pin,gpio;
@@ -92,20 +92,6 @@ static void set_gpio(int level)
 		gpio|=pin;
 	else
 		gpio&=~pin;
-	write(gpio_out, &gpio, sizeof(gpio));
-}
-
-static void set_gpio1(int level)
-{     
-	read(gpio_outen, &gpio, sizeof(gpio));
-	gpio |= 2; 
-	write(gpio_outen, &gpio, sizeof(gpio));
-
-	read(gpio_out, &gpio, sizeof(gpio));
-	if (level>0)
-		gpio|=2;
-	else
-		gpio&=~2;
 	write(gpio_out, &gpio, sizeof(gpio));
 }
 
@@ -149,11 +135,11 @@ int IFD_Towitoko_Init (IFD * ifd, BYTE slot)
 {
 	int ret;
 
-#ifdef USE_GPIO	     	
+#ifdef USE_GPIO  //felix: define gpio number used for card detect and reset. ref to globals.h	     	
 	extern int oscam_card_detect;
 	if (oscam_card_detect>4)
 	{
-		gpio_detect=oscam_card_detect-3;
+		gpio_detect=oscam_card_detect-4;
 		pin = 1<<gpio_detect;
 		gpio_outen=open("/dev/gpio/outen",O_RDWR);
 		gpio_out=open("/dev/gpio/out",O_RDWR);
@@ -215,13 +201,13 @@ int IFD_Towitoko_Init (IFD * ifd, BYTE slot)
 
 int IFD_Towitoko_Close (IFD * ifd)
 {
-#ifdef USE_GPIO
+#ifdef USE_GPIO //felix: close dev if card detected
 	if(gpio_detect) 
 	{
 		close(gpio_outen);
 		close(gpio_out);
 		close(gpio_in);
-       }
+	}
 #endif
 	
 #ifdef DEBUG_IFD

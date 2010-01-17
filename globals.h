@@ -151,7 +151,7 @@
 char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", NULL };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
-                       "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7",
+                       "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
 #endif
                        NULL };
 #else
