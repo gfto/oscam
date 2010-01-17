@@ -29,24 +29,24 @@ services   = services2
 ident 	   = 0200:000000
 caid       = 0200
 
-# user for group 2 without monitor access, AU disabled
+# user for group 2 without monitor access, AU disabled, account disabled
 
 [account]
 user       = user3
 pwd        = password3
+disabled   = 1
 group      = 2
 services   = services2
 ident 	   = 0200:000000
 caid       = 0200
 
-# user for group 3 without monitor access, only one connection possible, AU disabled, account disabled
+# user for group 3 without monitor access, only one connection possible, AU disabled, multiple idents
 
 [account]
 user       = user4
 pwd        = password4
-disabled   = 1
 monlevel   = 0
 uniq       = 1
 group      = 3
-ident 	   = 0300:000000
+ident 	   = 0300:000000,FFFFFF;0400:FFFFFF
 caid       = 0300

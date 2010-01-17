@@ -59,7 +59,7 @@ DESCRIPTIONS
        services = [!]services[,[!]<services>]...
 	  user [de]assingment to service group, default:none
 
-       ident = <CAID>:<ident>[;<CAID>:<ident>]...
+       ident  = <CAID>:<ident>[,<ident>,...][;<CAID>:<ident>[,<ident>,...]]...
 	  user assingment to idents, default:none
 
        class = [!]class[,[!]class]...
@@ -89,7 +89,7 @@ DESCRIPTIONS
 	  1 = account disabled, default:0
 
        numusers = quantity (only if anti-cascading enabled)
-	  anti-cascading:  user per account, 0 = anti-cascading not permitted,
+	  anti-cascading: user per account, 0 = anti-cascading not  permitted,
 	  default:0
 
 EXAMPLES
@@ -105,8 +105,8 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       oscam(1),     oscam.conf(5),	 oscam.server(5),      oscam.srvid(5),
-       oscam.guess(5),	  oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
+       oscam(1),      oscam.conf(5),	  oscam.server(5),     oscam.srvid(5),
+       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
        oscam.ac(5)
 
 
