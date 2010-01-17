@@ -232,7 +232,7 @@ int NegotiateSessionKey_Tiger(void)
 	cs_debug("[nagra-reader] signature check ok");
 	cs_debug("[nagra-reader] ------------------------------------------");
 	
-	memcpy(reader[ridx].hexserial, parte_fija+15, 4);
+	memcpy(reader[ridx].hexserial+2, parte_fija+15, 4);
 	memcpy(irdId, parte_fija+19, 4);
 	memcpy(d1_rsa_modulo,parte_fija+23,88);
 	
@@ -724,6 +724,10 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 	}
 	else
 	{
+		//check ECM prov id
+		if (memcmp(&reader[ridx].prid[0][2], er->ecm+5, 2))
+			return (0);
+	
 		//                  ecm_data: 80 30 89 D3 87 54 11 10 DA A6 0F 4B 92 05 34 00 ...
 		//serial_data: A0 CA 00 00 8C D3 8A 00 00 00 00 00 10 DA A6 0F .
 		unsigned char ecm_trim[150];
@@ -750,14 +754,33 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 
 int nagra2_do_emm(EMM_PACKET *ep)
 {
-	cs_debug("[nagra-reader] do_emm #########################################################");
-	cs_debug("[nagra-reader] do_emm #########################################################");
-	if(!do_cmd(ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2))
+	if (!is_tiger)
 	{
-		cs_debug("[nagra-reader] nagra2_do_emm failed");
-		return (0);
+		if(!do_cmd(ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2))
+		{
+			cs_debug("[nagra-reader] nagra2_do_emm failed");
+			return (0);
+		}
+		cs_sleepms(300);
+		nagra2_post_process();
 	}
-	cs_sleepms(300);
-	nagra2_post_process();
+	else
+	{
+		//check EMM prov id
+		if (memcmp(&reader[ridx].prid[0][2], ep->emm+10, 2))
+			return (0);
+	
+		//   emm_data: 82 70 8E 00 00 00 00 00 D3 87 8D 11 C0 F4 B1 27 2C 3D 25 94 ...
+		//serial_data: A0 CA 00 00 8C D3 8A 01 00 00 00 00 C0 F4 B1 27 2C 3D 25 94 ...
+		unsigned char emm_trim[150];
+		memset(emm_trim, 0, 150);
+		memcpy(&emm_trim[5], ep->emm+3+5+2+2, ep->emm[9]+2);
+		if(!do_cmd(ep->emm[8],ep->emm[9]+5,0x53,0x16, emm_trim))
+		{
+			cs_debug("[nagra-reader] nagra2_do_emm failed");
+			return (0);
+		}
+		cs_sleepms(300); 
+	}
 	return 1;
 }
