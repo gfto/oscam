@@ -19,7 +19,6 @@
 #endif
 #include "../globals.h"
 
-#include "ifd_towitoko.h"
 #define IFD_TOWITOKO_ATR_TIMEOUT	 800
 
 #define OK 		1 
@@ -139,6 +138,72 @@ int Sci_Reset (ATR ** atr)
 		(*atr) = NULL;
 		return ERROR;
 	}
+}
+
+int Sci_Activate ()
+{
+#ifdef DEBUG_IFD
+		printf ("IFD: Activating card\n");
+#endif
+#ifdef SCI_DEV
+	if(reader[ridx].typ == R_INTERNAL)
+	{
+		int in;
+
+#if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
+		if(ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
+#else
+		if(ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
+#endif
+			return ERROR;
+			
+		if(in)
+		{
+			struct timespec req_ts;
+			req_ts.tv_sec = 0;
+			req_ts.tv_nsec = 50000000;
+			nanosleep (&req_ts, NULL);
+			return OK;
+		}
+		else
+			return ERROR;
+	}
+	else
+#endif
+	{
+		return OK;
+	}
+}
+
+int Sci_Deactivate ()
+{
+#ifdef DEBUG_IFD
+		printf ("IFD: Deactivating card\n");
+#endif
+
+#ifdef SCI_DEV
+	if(reader[ridx].typ == R_INTERNAL)
+	{
+		int in;
+		
+#if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
+		if(ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
+#else
+		if(ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
+#endif
+			return ERROR;
+			
+		if(in)
+		{
+			if(ioctl(reader[ridx].handle, IOCTL_SET_DEACTIVATE)<0)
+				return ERROR;
+		}
+		
+		
+	}
+#endif
+	
+	return OK;
 }
 
 #endif

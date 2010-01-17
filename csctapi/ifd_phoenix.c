@@ -9,17 +9,93 @@
 //#include "ioctls.h"
 #include "../globals.h"
 #include "atr.h"
-#include "ifd_towitoko.h" //FIXME
 #include <termios.h>
+#include "ifd.h" //FIXME kill this after IFD timings
 
 #define OK 		1
 #define ERROR 0
 
 #define IFD_TOWITOKO_MAX_TRANSMIT 255
 #define IFD_TOWITOKO_ATR_TIMEOUT   800
+#define IFD_TOWITOKO_BAUDRATE            9600
+
+#ifdef USE_GPIO	//felix: definition of gpio functions
+int gpio_outen,gpio_out,gpio_in;
+unsigned int pin,gpio;
+int gpio_detect=0;
+
+static void set_gpio(int level)
+{		
+	read(gpio_outen, &gpio, sizeof(gpio));
+	gpio |= pin;
+	write(gpio_outen, &gpio, sizeof(gpio));
+
+	read(gpio_out, &gpio, sizeof(gpio));
+	if (level>0)
+		gpio|=pin;
+	else
+		gpio&=~pin;
+	write(gpio_out, &gpio, sizeof(gpio));
+}
+
+static void set_gpio_input(void)
+{
+	read(gpio_outen, &gpio, sizeof(gpio));			
+	gpio &= ~pin;
+	write(gpio_outen, &gpio, sizeof(gpio));
+}
+
+static int get_gpio(void)
+{
+	set_gpio_input();
+	read(gpio_in, &gpio, sizeof(gpio));
+	return ((int)((gpio&pin)?1:0));
+}
+#endif
+
 
 int Phoenix_Init ()
 {
+#ifdef USE_GPIO	//felix: define gpio number used for card detect and reset. ref to globals.h				
+	extern int oscam_card_detect;
+	if (oscam_card_detect>4)
+	{
+		gpio_detect=oscam_card_detect-4;
+		pin = 1<<gpio_detect;
+		gpio_outen=open("/dev/gpio/outen",O_RDWR);
+		gpio_out=open("/dev/gpio/out",O_RDWR);
+		gpio_in=open("/dev/gpio/in",O_RDWR);
+		set_gpio_input();
+	}
+#endif
+	
+#ifdef DEBUG_IFD
+	printf ("IFD: Initializing slot number %d, com=%d\n", slot, reader[ridx].typ);
+#endif
+	
+	if(reader[ridx].typ == R_INTERNAL) //not sure whether this should be moved in front of GPIO part
+		return OK;
+	
+	/* Default serial port settings */
+	if (!IO_Serial_SetParams (IFD_TOWITOKO_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW))
+	{
+		reader[ridx].status = 0;//added this one because it seemed logical
+		return ERROR;
+	}
+		
+	if (!Phoenix_SetBaudrate(IFD_TOWITOKO_BAUDRATE))
+	{
+		reader[ridx].status = 0;
+		return ERROR;
+	}
+	
+	if (!IO_Serial_SetParity (PARITY_EVEN))
+	{
+		reader[ridx].status = 0;
+		return ERROR;
+	}
+	
+	IO_Serial_Flush();
 	return OK;
 }
 
@@ -74,10 +150,8 @@ int Phoenix_Reset (ATR ** atr)
 			ret = ERROR;
 			IO_Serial_Ioctl_Lock(1);
 #ifdef USE_GPIO
-			if (gpio_detect){
+			if (gpio_detect)
 				set_gpio(0);
-				set_gpio1(0);
-			}
 			else
 #endif
 				IO_Serial_RTS_Set();
@@ -104,9 +178,6 @@ int Phoenix_Reset (ATR ** atr)
 			{
 				ATR_Delete (*atr);
 				(*atr) = NULL;
-#ifdef USE_GPIO
-				if (gpio_detect) set_gpio1(0);
-#endif
 			}
 		}
 		IO_Serial_Flush();
@@ -144,9 +215,6 @@ int Phoenix_Transmit (BYTE * buffer, unsigned size, IFD_Timings * timings)
 	char_delay = IFD_TOWITOKO_DELAY + timings->char_delay;
 	block_delay = IFD_TOWITOKO_DELAY + timings->block_delay;
 
-#ifdef USE_GPIO
-	if (gpio_detect) set_gpio1(0);
-#endif
 	for (sent = 0; sent < size; sent = sent + to_send)
 	{
 		/* Calculate number of bytes to send */
@@ -167,9 +235,6 @@ int Phoenix_Transmit (BYTE * buffer, unsigned size, IFD_Timings * timings)
 				return ERROR;
 		}
 	}
-#ifdef USE_GPIO
-	if (gpio_detect) set_gpio1(1);
-#endif
 	return OK;
 }
 
@@ -185,9 +250,6 @@ int Phoenix_Receive (BYTE * buffer, unsigned size, IFD_Timings * timings)
 	/* Calculate timeouts */
 	char_timeout = IFD_TOWITOKO_TIMEOUT + timings->char_timeout;
 	block_timeout = IFD_TOWITOKO_TIMEOUT + timings->block_timeout;
-#ifdef USE_GPIO
-	if (gpio_detect) set_gpio1(0);
-#endif
 	if (block_timeout != char_timeout)
 	{
 		/* Read first byte using block timeout */
@@ -207,9 +269,6 @@ int Phoenix_Receive (BYTE * buffer, unsigned size, IFD_Timings * timings)
 		if (!IO_Serial_Read (char_timeout, size, buffer))
 			return ERROR;
 	}
-#ifdef USE_GPIO
-	if (gpio_detect) set_gpio1(1);
-#endif
 	
 #ifdef DEBUG_IFD
 	printf ("IFD: Receive: ");
@@ -246,5 +305,24 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 	
 	reader[ridx].baudrate = baudrate;
 	
+	return OK;
+}
+
+int Phoenix_Close ()
+{
+#ifdef USE_GPIO //felix: close dev if card detected
+	if(gpio_detect) 
+	{
+		close(gpio_outen);
+		close(gpio_out);
+		close(gpio_in);
+	}
+#endif
+	
+#ifdef DEBUG_IFD
+	printf ("IFD: Closing slot\n");
+#endif
+	
+	reader[ridx].status = 0;
 	return OK;
 }

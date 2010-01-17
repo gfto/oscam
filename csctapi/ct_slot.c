@@ -24,7 +24,6 @@
 
 #include "defines.h"
 #include "ct_slot.h"
-#include "ifd_towitoko.h"
 #include "icc_async.h"
 #include "protocol_t0.h"
 #include "protocol_t1.h"
@@ -36,6 +35,10 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+
+/* Card status *///FIXME simplify this + duplicate in icc_async.h
+#define IFD_TOWITOKO_CARD(status)       (((status) & 0x40) == 0x40)
+#define IFD_TOWITOKO_CHANGE(status)     (((status) & 0x80) == 0x80)
 
 /* Try first asynchronous init and if it fails try synchronous */
 //#undef ICC_PROBE_ASYNC_FIRST
@@ -65,17 +68,8 @@ CT_Slot * CT_Slot_New ()
 
 char CT_Slot_Init (CT_Slot * slot, int sn)
 {
-	slot->ifd = IFD_Towitoko_New();
-	
-	if (slot->ifd == NULL)
-		return ERR_MEMORY;
-	
-	if (IFD_Towitoko_Init (slot->ifd, sn) != IFD_TOWITOKO_OK)
-	{
-		IFD_Towitoko_Delete (slot->ifd);
-		slot->ifd = NULL;
+	if (!Phoenix_Init())
 		return ERR_TRANS;
-	}
 	
 	return OK;
 }
@@ -132,7 +126,7 @@ char CT_Slot_Probe (CT_Slot * slot, BYTE * userdata, unsigned length)
 	if (slot->icc == NULL)
 		return ERR_MEMORY;
 	
-	if (ICC_Async_Init (slot->icc, slot->ifd) != ICC_ASYNC_OK)
+	if (ICC_Async_Init (slot->icc) != ICC_ASYNC_OK)
 	{
 		ICC_Async_Delete (slot->icc);
 				
@@ -302,12 +296,15 @@ void * CT_Slot_GetAtr (CT_Slot * slot)
 
 bool CT_Slot_IsLast (CT_Slot * slot)
 {
-	return (IFD_Towitoko_GetSlot(slot->ifd) >= IFD_Towitoko_GetNumSlots()-1);
+	//return (IFD_Towitoko_GetSlot(slot->ifd) >= IFD_Towitoko_GetNumSlots()-1);
+	return 1; //GetSlot always returns 0, and GetNumSlots returns always 1
 }
 
 void CT_Slot_GetType (CT_Slot * slot, BYTE * buffer, int len)
 {
-	IFD_Towitoko_GetDescription (slot->ifd, buffer, len);
+	//IFD_Towitoko_GetDescription (slot->ifd, buffer, len)
+	buffer="dummy";
+	len=5;
 }
 
 char CT_Slot_Close (CT_Slot * slot)
@@ -346,13 +343,8 @@ char CT_Slot_Close (CT_Slot * slot)
 		ICC_Async_Delete ((ICC_Async *) slot->icc);
 	}
 	
-	if (slot->ifd != NULL)
-	{
-		if (IFD_Towitoko_Close (slot->ifd) != IFD_TOWITOKO_OK)
+		if (!Phoenix_Close ())
 			ret = ERR_TRANS;
-		
-		IFD_Towitoko_Delete (slot->ifd);
-	}
 	
 	CT_Slot_Clear (slot);
 	
@@ -370,7 +362,6 @@ void CT_Slot_Delete (CT_Slot * slot)
 
 static void CT_Slot_Clear (CT_Slot * slot)
 {
-	slot->ifd = NULL;
 	slot->icc = NULL;
 	slot->protocol = NULL;
 	slot->icc_type = CT_SLOT_NULL;

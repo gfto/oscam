@@ -26,7 +26,6 @@
 #define _ICC_ASYNC_
 
 #include "defines.h"
-#include "ifd_towitoko.h" //FIXME
 #include "atr.h"
 
 /*
@@ -37,6 +36,14 @@
 #define ICC_ASYNC_OK            0
 #define ICC_ASYNC_IFD_ERROR     1
 #define ICC_ASYNC_ATR_ERROR     2
+
+/* Card status */
+#define IFD_TOWITOKO_NOCARD_NOCHANGE    0x00
+#define IFD_TOWITOKO_CARD_NOCHANGE      0x40
+#define IFD_TOWITOKO_NOCARD_CHANGE      0x80
+#define IFD_TOWITOKO_CARD_CHANGE        0xC0
+#define IFD_TOWITOKO_CARD(status)       (((status) & 0x40) == 0x40)
+#define IFD_TOWITOKO_CHANGE(status)     (((status) & 0x80) == 0x80)
 
 /*
  * Exported types definition
@@ -53,7 +60,6 @@ ICC_Async_Timings;
 
 typedef struct
 {
-  IFD *ifd;                     /* Interface device */
   ATR *atr;                     /* Answer to reset of this ICC */
   int convention;               /* Convention of this ICC */
   unsigned long baudrate;	/* Current baudrate (bps) for transmiting to this ICC */
@@ -71,7 +77,7 @@ extern ICC_Async * ICC_Async_New (void);
 extern void ICC_Async_Delete (ICC_Async * icc);
 
 /* Initialization and Deactivation */
-extern int ICC_Async_Init (ICC_Async * icc, IFD * ifd);
+extern int ICC_Async_Init (ICC_Async * icc);
 extern int ICC_Async_Close (ICC_Async * icc);
 
 /* Attributes */
@@ -80,7 +86,6 @@ extern int ICC_Async_GetTimings (ICC_Async * icc, ICC_Async_Timings * timings);
 extern int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate);
 extern int ICC_Async_GetBaudrate (ICC_Async * icc, unsigned long * baudrate);
 extern ATR *ICC_Async_GetAtr (ICC_Async * icc);
-extern IFD *ICC_Async_GetIFD (ICC_Async * icc);
 extern unsigned long ICC_Async_GetClockRate ();
 
 /* Operations */

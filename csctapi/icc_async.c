@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "ifd.h"
+#include "mc_global.h"
 
 /*
  * Not exported constants definition
@@ -119,14 +120,14 @@ int ICC_Async_GetStatus (BYTE * result)
 	if(reader[ridx].typ == R_INTERNAL)
 	{
 		if(!Sci_GetStatus(reader[ridx].handle, &in))
-			return IFD_TOWITOKO_IO_ERROR;			
+			return ICC_ASYNC_IFD_ERROR;			
 	}
 	else
 #elif COOL
 	if(reader[ridx].typ == R_INTERNAL)
 	{	
 		if (!Cool_GetStatus(&in))
-			return IFD_TOWITOKO_IO_ERROR;
+			return ICC_ASYNC_IFD_ERROR;
 	}
 	else
 #endif
@@ -146,13 +147,8 @@ int ICC_Async_GetStatus (BYTE * result)
 	}
 	else
 #endif
-#ifdef USE_GPIO
-	if (gpio_detect)
-		in=get_gpio();
-	else
-#endif
   if (!Phoenix_GetStatus(&in))
-			return IFD_TOWITOKO_IO_ERROR;
+			return ICC_ASYNC_IFD_ERROR;
 
 	if (in)
 	{       
@@ -160,9 +156,6 @@ int ICC_Async_GetStatus (BYTE * result)
 		{
 			status[0] = IFD_TOWITOKO_CARD_CHANGE;
 			reader[ridx].status = 1;
-#ifdef USE_GPIO
-			if (gpio_detect) set_gpio1(0);
-#endif
 		}
 		else if(reader[ridx].status == 1)
 		{
@@ -172,9 +165,6 @@ int ICC_Async_GetStatus (BYTE * result)
 		{
 			status[0] = IFD_TOWITOKO_CARD_CHANGE;
 			reader[ridx].status = 1;
-#ifdef USE_GPIO
-			if (gpio_detect) set_gpio1(0);
-#endif
 		}
 	}
 	else
@@ -183,17 +173,11 @@ int ICC_Async_GetStatus (BYTE * result)
 		{
 			status[0] = IFD_TOWITOKO_NOCARD_CHANGE;
 			reader[ridx].status = 2;
-#ifdef USE_GPIO
-			if (gpio_detect) set_gpio1(1);
-#endif
 		}
 		else if(reader[ridx].status == 1)
 		{
 			status[0] = IFD_TOWITOKO_NOCARD_CHANGE;
 			reader[ridx].status = 2;
-#ifdef USE_GPIO
-			if (gpio_detect) set_gpio1(1);
-#endif
 		}
 		else
 		{
@@ -208,10 +192,10 @@ int ICC_Async_GetStatus (BYTE * result)
 	printf ("IFD: com%d Status = %s / %s\n", reader[ridx].typ, IFD_TOWITOKO_CARD(status[0])? "card": "no card", IFD_TOWITOKO_CHANGE(status[0])? "change": "no change");
 #endif
 	
-	return IFD_TOWITOKO_OK;
+	return ICC_ASYNC_OK;
 }
 
-int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
+int ICC_Async_Init (ICC_Async * icc)
 {
 #ifndef ICC_TYPE_SYNC 
 	unsigned np=0;
@@ -220,11 +204,11 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	if (!Phoenix_SetBaudrate (ICC_ASYNC_BAUDRATE))
 		return ICC_ASYNC_IFD_ERROR;
 	
+#ifdef SCI_DEV
 	/* Activate ICC */
-	if (IFD_Towitoko_ActivateICC (ifd) != IFD_TOWITOKO_OK)
+	if (!Sci_Activate())
 		return ICC_ASYNC_IFD_ERROR;
 	/* Reset ICC */
-#ifdef SCI_DEV
 	if (reader[ridx].typ == R_INTERNAL) {
 		if (!Sci_Reset(&(icc->atr)))
 		{
@@ -277,7 +261,6 @@ int ICC_Async_Init (ICC_Async * icc, IFD * ifd)
 	
 	/* Initialize member variables */
 	icc->baudrate = ICC_ASYNC_BAUDRATE;
-	icc->ifd = ifd;
 	
 	if (icc->convention == ATR_CONVENTION_INVERSE)
 	{
@@ -434,16 +417,13 @@ ATR * ICC_Async_GetAtr (ICC_Async * icc)
 	return icc->atr;
 }
 
-IFD * ICC_Async_GetIFD (ICC_Async * icc)
-{
-	return icc->ifd;
-}
-
 int ICC_Async_Close (ICC_Async * icc)
 {
+#ifdef SCI_DEV
 	/* Dectivate ICC */
-	if (IFD_Towitoko_DeactivateICC (icc->ifd) != IFD_TOWITOKO_OK)
+	if (!Sci_Deactivate())
 		return ICC_ASYNC_IFD_ERROR;
+#endif
 	
 	/* Delete atr */
 	ATR_Delete (icc->atr);
@@ -485,7 +465,6 @@ static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer)
 
 static void ICC_Async_Clear (ICC_Async * icc)
 {
-	icc->ifd = NULL;
 	icc->atr = NULL;
 	icc->baudrate = 0L;
 	icc->convention = 0;

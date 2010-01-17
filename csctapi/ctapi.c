@@ -114,7 +114,7 @@ char CT_init (unsigned short ctn)
 #endif  
 	
 #ifdef DEBUG_CTAPI
-	printf ("CTAPI: CT_init(ctn=%u, pn=%u)=%d\n", ctn, pn, ret);
+	printf ("CTAPI: CT_init(ctn=%u)=%d\n", ctn, ret);
 #endif
 	
 	return ret;

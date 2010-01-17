@@ -30,7 +30,6 @@
 #include "apdu.h"
 #include "ctapi.h"
 #include "ctbcs.h"
-#include "ifd_towitoko.h"
 
 
 /* 
@@ -52,7 +51,6 @@
 
 typedef struct
 {
-  IFD * ifd;		/* Interface device */
   void * icc;		/* Integrated circuit card */
   void * protocol;	/* Protocol handler */
   int icc_type;		/* Type of ICC */
