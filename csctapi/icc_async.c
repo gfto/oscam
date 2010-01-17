@@ -72,7 +72,7 @@ int ICC_Async_Device_Init ()
 	
 #if defined(SCI_DEV) || defined(COOL)
 	if (reader[ridx].typ == R_INTERNAL)
-#ifdef SH4
+#if defined(SH4) || defined(STB04SCI)
 		reader[ridx].handle = open (reader[ridx].device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 #elif COOL
 		return Cool_Init();
