@@ -120,18 +120,8 @@ char CT_Slot_Probe (CT_Slot * slot, BYTE * userdata, unsigned length)
 	BYTE buffer[PPS_MAX_LENGTH];
 	unsigned buffer_len  = 0;
 	
-	/* Initiaice ICC */
-	slot->icc = ICC_Async_New ();
-	
-	if (slot->icc == NULL)
-		return ERR_MEMORY;
-	
-	if (ICC_Async_Init (slot->icc) != ICC_ASYNC_OK)
+	if (ICC_Async_Init () != ICC_ASYNC_OK)
 	{
-		ICC_Async_Delete (slot->icc);
-				
-		slot->icc = NULL;
-		slot->icc_type = CT_SLOT_NULL;
 		return ERR_TRANS;
 		
 		/* Synchronous card present */
@@ -147,12 +137,11 @@ char CT_Slot_Probe (CT_Slot * slot, BYTE * userdata, unsigned length)
 	/* Initialise protocol */
 	if (slot->icc_type == CT_SLOT_ICC_ASYNC)
 	{
-		pps = PPS_New((ICC_Async *) slot->icc);
+		pps = PPS_New();
 		
 		if (pps == NULL)
 		{
-			ICC_Async_Close ((ICC_Async *) slot->icc);
-			ICC_Async_Delete ((ICC_Async *) slot->icc);
+			ICC_Async_Close ();
 			
 			slot->icc = NULL;
 			slot->icc_type = CT_SLOT_NULL;
@@ -168,8 +157,7 @@ char CT_Slot_Probe (CT_Slot * slot, BYTE * userdata, unsigned length)
 		{
 			PPS_Delete (pps);
 			
-			ICC_Async_Close ((ICC_Async *) slot->icc);
-			ICC_Async_Delete ((ICC_Async *) slot->icc);
+			ICC_Async_Close ();
 			
 			slot->icc = NULL;
 			slot->icc_type = CT_SLOT_NULL;
@@ -221,10 +209,8 @@ char CT_Slot_Release (CT_Slot * slot)
 	
 	if (slot->icc_type == CT_SLOT_ICC_ASYNC)
 	{
-		if (ICC_Async_Close ((ICC_Async *) slot->icc) != ICC_ASYNC_OK)
+		if (ICC_Async_Close () != ICC_ASYNC_OK)
 			ret = ERR_TRANS;
-		
-		ICC_Async_Delete ((ICC_Async *) slot->icc);
 	}
 	
 	slot->icc = NULL;
@@ -240,7 +226,7 @@ char CT_Slot_Command (CT_Slot * slot, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	
 	if (slot->protocol_type == CT_SLOT_PROTOCOL_T0) /* T=0 protocol ICC */
 	{
-		if (Protocol_T0_Command ((Protocol_T0 *) slot->protocol, cmd, rsp) != PROTOCOL_T0_OK)
+		if (Protocol_T0_Command ( cmd, rsp) != PROTOCOL_T0_OK)
 			ret = ERR_TRANS;
 		else
 			ret = OK;
@@ -254,7 +240,7 @@ char CT_Slot_Command (CT_Slot * slot, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	}
 	else if (slot->protocol_type == CT_SLOT_PROTOCOL_T14) /* T=14 protocol ICC */
 	{
-		if (Protocol_T14_Command ((Protocol_T14 *) slot->protocol, cmd, rsp) != PROTOCOL_T14_OK)
+		if (Protocol_T14_Command (cmd, rsp) != PROTOCOL_T14_OK)
 			ret = ERR_TRANS;
 		else
 			ret = OK;
@@ -338,10 +324,8 @@ char CT_Slot_Close (CT_Slot * slot)
 	
 	if (slot->icc_type == CT_SLOT_ICC_ASYNC)
 	{
-		if (ICC_Async_Close ((ICC_Async *) slot->icc) != ICC_ASYNC_OK)
+		if (ICC_Async_Close () != ICC_ASYNC_OK)
 			ret = ERR_TRANS;
-		
-		ICC_Async_Delete ((ICC_Async *) slot->icc);
 	}
 	
 		if (!Phoenix_Close ())

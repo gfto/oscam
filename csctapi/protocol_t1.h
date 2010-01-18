@@ -47,7 +47,6 @@
 /* T=1 Protocol context */
 typedef struct
 {
-  ICC_Async *icc;       /* Asynchronous integrated cirtuit card */
   unsigned short ifsc;  /* Information field size for the ICC */
   unsigned short ifsd;  /* Information field size for the IFD */
   unsigned short bgt;   /* Block guard time */
@@ -72,7 +71,7 @@ Protocol_T1_Delete (Protocol_T1 * t1);
 
 /* Initialise a protocol handler */
 extern int 
-Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, int selected_protocol);
+Protocol_T1_Init (Protocol_T1 * t1, int selected_protocol);
 
 /* Send a command and return a response */
 extern int

@@ -52,7 +52,6 @@ PPS_ProtocolParameters;
 
 typedef struct
 {
-  ICC_Async *icc;
   void *protocol;
   PPS_ProtocolParameters parameters;
 }
@@ -63,7 +62,7 @@ PPS;
  */
 
 /* Create PPS context */
-extern PPS *PPS_New (ICC_Async * icc);
+extern PPS *PPS_New ();
 
 /* Perform protcol type selection and return confirm */
 extern int PPS_Perform (PPS * pps, BYTE * params, unsigned *length);

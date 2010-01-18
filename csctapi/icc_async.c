@@ -42,26 +42,13 @@
  */
 
 static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer);
-static void ICC_Async_Clear (ICC_Async * icc);
+static void ICC_Async_Clear ();
 
 int fdmc=(-1);
 
 /*
  * Exported functions definition
  */
-
-ICC_Async *ICC_Async_New (void)
-{
-	ICC_Async *icc;
-	
-	/* Allocate memory */
-	icc = (ICC_Async *) malloc (sizeof (ICC_Async));
-	
-	if (icc != NULL)
-		ICC_Async_Clear (icc);
-	
-	return icc;
-}
 
 int ICC_Async_Device_Init ()
 {
@@ -195,7 +182,7 @@ int ICC_Async_GetStatus (BYTE * result)
 	return ICC_ASYNC_OK;
 }
 
-int ICC_Async_Init (ICC_Async * icc)
+int ICC_Async_Init ()
 {
 #ifndef ICC_TYPE_SYNC 
 	unsigned np=0;
@@ -321,7 +308,7 @@ int ICC_Async_SetTimings ()
 	return ICC_ASYNC_OK;
 }
 
-int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate)
+int ICC_Async_SetBaudrate (unsigned long baudrate)
 {
 	if (!Phoenix_SetBaudrate (baudrate))
 	  return ICC_ASYNC_IFD_ERROR;
@@ -329,7 +316,7 @@ int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate)
 	return ICC_ASYNC_OK;
 }
 
-int ICC_Async_GetBaudrate (ICC_Async * icc, unsigned long * baudrate)
+int ICC_Async_GetBaudrate (unsigned long * baudrate)
 {
 	(*baudrate) = reader[ridx].baudrate;
 	return ICC_ASYNC_OK;  
@@ -395,7 +382,7 @@ int ICC_Async_Receive (unsigned size, BYTE * data)
 	return ICC_ASYNC_OK;
 }
 
-int ICC_Async_Close (ICC_Async * icc)
+int ICC_Async_Close ()
 {
 #ifdef SCI_DEV
 	/* Dectivate ICC */
@@ -406,7 +393,7 @@ int ICC_Async_Close (ICC_Async * icc)
 	/* Delete atr */
 	ATR_Delete (atr);
 	
-	ICC_Async_Clear (icc);
+	ICC_Async_Clear ();
 	
 	return ICC_ASYNC_OK;
 }
@@ -424,11 +411,6 @@ unsigned long ICC_Async_GetClockRate ()
 	}
 }
 
-void ICC_Async_Delete (ICC_Async * icc)
-{
-	free (icc);
-}
-
 /*
  * Not exported functions definition
  */
@@ -441,7 +423,7 @@ static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer)
 		buffer[i] = ~(INVERT_BYTE (buffer[i]));
 }
 
-static void ICC_Async_Clear (ICC_Async * icc)
+static void ICC_Async_Clear ()
 {
 	atr = NULL;
 	convention = 0;

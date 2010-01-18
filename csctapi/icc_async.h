@@ -57,12 +57,12 @@ typedef struct
   unsigned char_timeout;         /* Max timeout (ms) to receive sucesive characters */
 }
 ICC_Async_Timings;
-
+/*
 typedef struct
 {
 }
 ICC_Async;
-
+*/
 ATR *atr;                     /* Answer to reset of this ICC */
 int convention;               /* Convention of this ICC */
 BYTE protocol_type;		/* Type of protocol */
@@ -72,18 +72,14 @@ ICC_Async_Timings icc_timings;    /* Current timings for transmiting to this ICC
  * Exported functions declaration
  */
 
-/* Creation and Deletion */
-extern ICC_Async * ICC_Async_New (void);
-extern void ICC_Async_Delete (ICC_Async * icc);
-
 /* Initialization and Deactivation */
-extern int ICC_Async_Init (ICC_Async * icc);
-extern int ICC_Async_Close (ICC_Async * icc);
+extern int ICC_Async_Init ();
+extern int ICC_Async_Close ();
 
 /* Attributes */
 extern int ICC_Async_SetTimings ();
-extern int ICC_Async_SetBaudrate (ICC_Async * icc, unsigned long baudrate);
-extern int ICC_Async_GetBaudrate (ICC_Async * icc, unsigned long * baudrate);
+extern int ICC_Async_SetBaudrate (unsigned long baudrate);
+extern int ICC_Async_GetBaudrate (unsigned long * baudrate);
 extern unsigned long ICC_Async_GetClockRate ();
 
 /* Operations */
