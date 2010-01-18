@@ -90,12 +90,6 @@
 /* Smartcard of type synchronoys */
 /* #undef ICC_TYPE_SYNC */
 
-/* Smartcard with direct convention */
-/* #undef IFD_TOWITOKO_CONVENTION_DIRECT */
-
-/* Smartcard with inverse convention */
-/* #undef IFD_TOWITOKO_CONVENTION_INVERSE */
-
 /* ATR for asynchronous cards is cheked */
 #define IFD_TOWITOKO_STRICT_ATR_CHECK 1
 

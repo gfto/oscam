@@ -103,11 +103,7 @@ Protocol_T14 * Protocol_T14_New (void)
 
 int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters * params, int selected_protocol)
 {
-	ICC_Async_Timings timings;
 	BYTE wi;
-#ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
-	ATR *atr = ICC_Async_GetAtr (icc);
-#endif
 	
 	/* Set ICC */
 	t0->icc = icc;
@@ -123,12 +119,9 @@ int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters 
 	t0->wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
 	
 	/* Set timings */
-	ICC_Async_GetTimings (t0->icc, &timings);
-	
-	timings.block_timeout = t0->wwt;
-	timings.char_timeout = t0->wwt;
-	
-	ICC_Async_SetTimings (t0->icc, &timings);
+	icc_timings.block_timeout = t0->wwt;
+	icc_timings.char_timeout = t0->wwt;
+	ICC_Async_SetTimings ();
 	
 #ifdef DEBUG_PROTOCOL
 	printf ("Protocol: T=0: WWT=%d, Clockrate=%lu\n", (int)(t0->wwt),ICC_Async_GetClockRate());
@@ -139,11 +132,7 @@ int Protocol_T0_Init (Protocol_T0 * t0, ICC_Async * icc, PPS_ProtocolParameters 
 
 int Protocol_T14_Init (Protocol_T14 * t14, ICC_Async * icc, PPS_ProtocolParameters * params, int selected_protocol)
 {
-	ICC_Async_Timings timings;
 	BYTE wi;
-#ifndef PROTOCOL_T14_USE_DEFAULT_TIMINGS
-	ATR *atr = ICC_Async_GetAtr (icc);
-#endif
 	
 	/* Set ICC */
 	t14->icc = icc;
@@ -160,13 +149,10 @@ int Protocol_T14_Init (Protocol_T14 * t14, ICC_Async * icc, PPS_ProtocolParamete
 	t14->wwt >>= 1;
 	
 	/* Set timings */
-	ICC_Async_GetTimings (t14->icc, &timings);
-	
-	timings.block_timeout = t14->wwt;
-	timings.char_timeout = t14->wwt;
-	
-	ICC_Async_SetTimings (t14->icc, &timings);
-	
+	icc_timings.block_timeout = t14->wwt;
+	icc_timings.char_timeout = t14->wwt;
+	ICC_Async_SetTimings ();
+
 #ifdef DEBUG_PROTOCOL
 	printf ("Protocol: T=14: WWT=%d\n", (int)(t14->wwt));
 #endif
@@ -827,7 +813,7 @@ static int Protocol_T0_ExchangeTPDU (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp 
 		return PROTOCOL_T0_ERROR;
 	
 	/* Send header bytes */
-	if (ICC_Async_Transmit (t0->icc, 5, APDU_Cmd_Header (cmd)) != ICC_ASYNC_OK)
+	if (ICC_Async_Transmit (5, APDU_Cmd_Header (cmd)) != ICC_ASYNC_OK)
 	{
 		(*rsp) = NULL;
 		return PROTOCOL_T0_ICC_ERROR;
@@ -847,7 +833,7 @@ static int Protocol_T0_ExchangeTPDU (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp 
 	while (recv < PROTOCOL_T0_MAX_SHORT_RESPONSE)
 	{
 		/* Read one procedure byte */
-		if (ICC_Async_Receive (t0->icc, 1, buffer + recv) != ICC_ASYNC_OK)
+		if (ICC_Async_Receive (1, buffer + recv) != ICC_ASYNC_OK)
 		{
 			ret = PROTOCOL_T0_ICC_ERROR;
 			break;
@@ -875,7 +861,7 @@ static int Protocol_T0_ExchangeTPDU (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp 
 				return PROTOCOL_T0_ERROR;
 			
 			/* Read SW2 byte */
-			if (ICC_Async_Receive (t0->icc, 1, buffer + recv) != ICC_ASYNC_OK)
+			if (ICC_Async_Receive (1, buffer + recv) != ICC_ASYNC_OK)
 			{
 				ret = PROTOCOL_T0_ICC_ERROR;
 				break;
@@ -897,7 +883,7 @@ static int Protocol_T0_ExchangeTPDU (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp 
 				if (sent >= Lc)
 					return PROTOCOL_T0_ERROR;
 								
-				if (ICC_Async_Transmit(t0->icc, MAX (Lc - sent, 0), data + sent) != ICC_ASYNC_OK) /* Send remaining data bytes */
+				if (ICC_Async_Transmit(MAX (Lc - sent, 0), data + sent) != ICC_ASYNC_OK) /* Send remaining data bytes */
 				{
 					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
@@ -916,7 +902,7 @@ static int Protocol_T0_ExchangeTPDU (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp 
 				*/
 				
 				/* Read remaining data bytes */
-				if (ICC_Async_Receive(t0->icc, MAX (Le - recv, 0), buffer + recv) != ICC_ASYNC_OK)
+				if (ICC_Async_Receive(MAX (Le - recv, 0), buffer + recv) != ICC_ASYNC_OK)
 				{//printf("error %d\n", (int)Le);
 					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
@@ -938,7 +924,7 @@ static int Protocol_T0_ExchangeTPDU (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp 
 					return PROTOCOL_T0_ERROR;
 								
 				/* Send next data byte */
-				if (ICC_Async_Transmit (t0->icc, 1, data + sent) !=ICC_ASYNC_OK)
+				if (ICC_Async_Transmit (1, data + sent) !=ICC_ASYNC_OK)
 				{
 					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
@@ -953,7 +939,7 @@ static int Protocol_T0_ExchangeTPDU (Protocol_T0 * t0, APDU_Cmd * cmd, APDU_Rsp 
 					return PROTOCOL_T0_ERROR;
 				
 				/* Read next data byte */
-				if (ICC_Async_Receive (t0->icc, 1, buffer + recv) != ICC_ASYNC_OK)
+				if (ICC_Async_Receive (1, buffer + recv) != ICC_ASYNC_OK)
 				{
 					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
@@ -1003,21 +989,21 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 	if (reader[ridx].typ != R_INTERNAL)
 	{
 		/* Send 0x01 byte */
-		if (ICC_Async_Transmit (t14->icc, 1, &b1) != ICC_ASYNC_OK)
+		if (ICC_Async_Transmit (1, &b1) != ICC_ASYNC_OK)
 		{
 			(*rsp) = NULL;
 			return PROTOCOL_T14_ICC_ERROR;
 		}
 		
 		/* Send apdu */
-		if (ICC_Async_Transmit (t14->icc, cmd_len, cmd_raw) != ICC_ASYNC_OK)
+		if (ICC_Async_Transmit (cmd_len, cmd_raw) != ICC_ASYNC_OK)
 		{
 			(*rsp) = NULL;
 			return PROTOCOL_T14_ICC_ERROR;
 		}
 		
 		/* Send xor byte */
-		if (ICC_Async_Transmit (t14->icc, 1, &ixor) != ICC_ASYNC_OK)
+		if (ICC_Async_Transmit (1, &ixor) != ICC_ASYNC_OK)
 		{
 			(*rsp) = NULL;
 			return PROTOCOL_T14_ICC_ERROR;
@@ -1030,7 +1016,7 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 		buffer[cmd_len+1] = ixor;
 		
 		/* Send apdu */
-		if (ICC_Async_Transmit (t14->icc, cmd_len+2, buffer) != ICC_ASYNC_OK)
+		if (ICC_Async_Transmit (cmd_len+2, buffer) != ICC_ASYNC_OK)
 		{
 			(*rsp) = NULL;
 			return PROTOCOL_T14_ICC_ERROR;
@@ -1067,7 +1053,7 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 #endif
 		}
 		/* Read one procedure byte */
-		if (ICC_Async_Receive (t14->icc, 8, buffer) != ICC_ASYNC_OK)
+		if (ICC_Async_Receive (8, buffer) != ICC_ASYNC_OK)
 		{
 			ret = PROTOCOL_T14_ICC_ERROR;
 			break;
@@ -1078,14 +1064,14 @@ static int Protocol_T14_ExchangeTPDU (Protocol_T14 * t14, APDU_Cmd * cmd, APDU_R
 			
 			if(recv)
 			{
-				if (ICC_Async_Receive (t14->icc, recv, buffer + 8) != ICC_ASYNC_OK)
+				if (ICC_Async_Receive (recv, buffer + 8) != ICC_ASYNC_OK)
 				{
 					ret = PROTOCOL_T14_ICC_ERROR;
 					break;
 				}
 			}
 			
-			if (ICC_Async_Receive (t14->icc, 1, &ixor) != ICC_ASYNC_OK)
+			if (ICC_Async_Receive (1, &ixor) != ICC_ASYNC_OK)
 			{
 				ret = PROTOCOL_T14_ICC_ERROR;
 				break;

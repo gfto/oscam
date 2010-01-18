@@ -282,29 +282,24 @@ int Phoenix_Receive (BYTE * buffer, unsigned size, IFD_Timings * timings)
 
 int Phoenix_SetBaudrate (unsigned long baudrate)
 {
-	if(reader[ridx].typ == R_INTERNAL)
-		return OK;
-
 #ifdef DEBUG_IFD
 	printf ("IFD: Setting baudrate to %lu\n", baudrate);
 #endif
-	if (reader[ridx].baudrate	== baudrate)
-		return OK;
-
-	/* Get current settings */
-	struct termios tio;
-	if (tcgetattr (reader[ridx].handle, &tio) != 0)
-		return ERROR;
+	if ((reader[ridx].typ != R_INTERNAL) && (reader[ridx].baudrate	!= baudrate))
+	{
+		/* Get current settings */
+		struct termios tio;
+		if (tcgetattr (reader[ridx].handle, &tio) != 0)
+			return ERROR;
 	
-	//write baudrate here!
-	if (!IO_Serial_SetBitrate (baudrate, &tio))
-		return ERROR;
+		//write baudrate here!
+		if (!IO_Serial_SetBitrate (baudrate, &tio))
+			return ERROR;
 	
-	if (!IO_Serial_SetProperties(tio))
-		return ERROR;
-	
+		if (!IO_Serial_SetProperties(tio))
+			return ERROR;
+	}
 	reader[ridx].baudrate = baudrate;
-	
 	return OK;
 }
 

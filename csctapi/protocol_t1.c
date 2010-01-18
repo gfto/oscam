@@ -76,18 +76,13 @@ Protocol_T1_New (void)
 int
 Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, int selected_protocol)
 {
-  ICC_Async_Timings timings;
   BYTE ta, tb, tc, cwi, bwi;
   unsigned long baudrate;
   double work_etu;
-  ATR *atr;
   int i;
 
   /* Set ICC */
   t1->icc = icc;
-
-  /* Get ATR of the card */
-  atr = ICC_Async_GetAtr (t1->icc);
 
   /* Set IFSC */
   if (ATR_GetInterfaceByte (atr, selected_protocol, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
@@ -151,13 +146,10 @@ Protocol_T1_Init (Protocol_T1 * t1, ICC_Async * icc, int selected_protocol)
   t1->ns = 1;
   
   /* Set timings */
-  ICC_Async_GetTimings (t1->icc, &timings);
-
-  timings.block_timeout = t1->bwt;
-  timings.char_timeout = t1->cwt;
-  timings.block_delay = t1->bgt;
-
-  ICC_Async_SetTimings (t1->icc, &timings);
+  icc_timings.block_timeout = t1->bwt;
+  icc_timings.char_timeout = t1->cwt;
+  icc_timings.block_delay = t1->bgt;
+	ICC_Async_SetTimings ();
 
 #ifdef DEBUG_PROTOCOL
   printf ("Protocol: T=1: IFSC=%d, IFSD=%d, CWT=%d, BWT=%d, BGT=%d, EDC=%s\n",
@@ -422,7 +414,7 @@ Protocol_T1_SendBlock (Protocol_T1 * t1, T1_Block * block)
       buffer = T1_Block_Raw (block);
       length = T1_Block_RawLen (block);
 
-      if (ICC_Async_Transmit (t1->icc, length, buffer) != ICC_ASYNC_OK)
+      if (ICC_Async_Transmit (length, buffer) != ICC_ASYNC_OK)
         {
           ret = PROTOCOL_T1_ICC_ERROR;
         }
@@ -441,7 +433,7 @@ Protocol_T1_ReceiveBlock (Protocol_T1 * t1, T1_Block ** block)
   int ret;
 
   /* Receive four mandatory bytes */
-  if (ICC_Async_Receive (t1->icc, 4, buffer) != ICC_ASYNC_OK)
+  if (ICC_Async_Receive (4, buffer) != ICC_ASYNC_OK)
     {
       ret = PROTOCOL_T1_ICC_ERROR;
       (*block) = NULL;
@@ -455,7 +447,7 @@ Protocol_T1_ReceiveBlock (Protocol_T1 * t1, T1_Block ** block)
           Protocol_T1_UpdateBWT (t1, t1->cwt);
 
           /* Receive remaining bytes */
-          if (ICC_Async_Receive (t1->icc, buffer[2], buffer + 4) !=
+          if (ICC_Async_Receive (buffer[2], buffer + 4) !=
               ICC_ASYNC_OK)
             {
               (*block) = NULL;
@@ -497,13 +489,8 @@ Protocol_T1_Clear (Protocol_T1 * t1)
 static int
 Protocol_T1_UpdateBWT (Protocol_T1 * t1, unsigned short bwt)
 {
-  ICC_Async_Timings timings;
-  
-  ICC_Async_GetTimings (t1->icc, &timings);
-
-  timings.block_timeout = bwt;
-
-  ICC_Async_SetTimings (t1->icc, &timings);
+  icc_timings.block_timeout = bwt;
+	ICC_Async_SetTimings ();
 
   return PROTOCOL_T1_OK;
 }

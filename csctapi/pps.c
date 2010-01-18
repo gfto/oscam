@@ -99,7 +99,6 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	//and it is easier to overclock then
 	//also from FI -> F is easy, other way around not
 	
-	ATR *atr;
 	int ret;
 	bool PPS_success; 
 	
@@ -135,7 +134,6 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	}
 	PPS_success = PPS_OK;
 	int protocol_selected = 0; //stores which TAi,TBi etc. bytes must be used 0 means not set
-	atr = ICC_Async_GetAtr (pps->icc);
 	if ((*length) <= 0 || !PPS_success) // If not by command, or PPS Exchange by command failed: Try PPS Exchange by ATR or Get parameters from ATR
 	{
 		int numprot = atr->pn;
@@ -274,7 +272,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 		cs_log("Warning: D=0 is invalid, forcing D=%.0f",pps->parameters.d);
 	}
 
-	pps->icc->protocol_type = pps->parameters.t;
+	protocol_type = pps->parameters.t;
 	
 #ifdef DEBUG_PROTOCOL
 	printf("PPS: T=%i, F=%.0f, D=%.6f, N=%.0f\n", 
@@ -362,16 +360,16 @@ static int PPS_Exchange (PPS * pps, BYTE * params, unsigned *length)
 	if (Status)
 		return PPS_HANDSAKE_ERROR;
 #else
-	if (ICC_Async_Transmit (pps->icc, len_request, params) != ICC_ASYNC_OK)
+	if (ICC_Async_Transmit (len_request, params) != ICC_ASYNC_OK)
 		return PPS_ICC_ERROR;
 	
 	/* Get PPS confirm */
-	if (ICC_Async_Receive (pps->icc, 2, confirm) != ICC_ASYNC_OK)
+	if (ICC_Async_Receive (2, confirm) != ICC_ASYNC_OK)
 		return PPS_ICC_ERROR;
 	
 	len_confirm = PPS_GetLength (confirm);
 	
-	if (ICC_Async_Receive (pps->icc, len_confirm - 2, confirm + 2) != ICC_ASYNC_OK)
+	if (ICC_Async_Receive (len_confirm - 2, confirm + 2) != ICC_ASYNC_OK)
 		return PPS_ICC_ERROR;
 	
 #ifdef DEBUG_PROTOCOL
@@ -438,8 +436,6 @@ static int PPS_InitICC (PPS * pps)
 		//memset(&params,0,sizeof(SCI_PARAMETERS));
 		if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
 			return PPS_ICC_ERROR;
-
-		ATR *atr = ICC_Async_GetAtr (pps->icc);
 
 		params.T = pps->parameters.t;
 		params.fs = atr_fs_table[pps->parameters.FI] / 1000000;

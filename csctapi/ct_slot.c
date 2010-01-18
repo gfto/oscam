@@ -289,7 +289,8 @@ void * CT_Slot_GetICC (CT_Slot * slot)
 void * CT_Slot_GetAtr (CT_Slot * slot)
 {
 	if (slot->icc_type == CT_SLOT_ICC_ASYNC)
-		return ((void *) ICC_Async_GetAtr((ICC_Async *) slot->icc));
+		return ((void *) atr );
+		//return ((void *) ICC_Async_GetAtr((ICC_Async *) slot->icc));
 	
 	return NULL;
 }
