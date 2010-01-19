@@ -74,25 +74,16 @@ static BYTE PPS_GetPCK (BYTE * block, unsigned length);
  * Exported functions definition
  */
 
-PPS * PPS_New ()
+void PPS_New ()
 {
-	PPS *pps;
-	
-	pps = (PPS *) malloc (sizeof (PPS));
-	
-	if (pps != NULL)
-	{
 		protocol = NULL;
 		parameters.t = PPS_DEFAULT_PROTOCOL;
 		parameters.FI = ATR_DEFAULT_FI;
 		parameters.d = ATR_DEFAULT_D;
 		parameters.n = ATR_DEFAULT_N;
-	}
-	
-	return pps;
 }
 
-int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
+int PPS_Perform (BYTE * params, unsigned *length)
 {
 	//Performs PPS Exchange on command when *length >0
 	//If unsuccesfull, or when length <= 0
@@ -126,7 +117,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 			}
 			
 /*			
-			ret  = PPS_InitICC(pps);
+			ret  = PPS_InitICC();
 			
 			if (ret != PPS_OK)
 				return ret;
@@ -289,7 +280,7 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	parameters.n);
 #endif
 
-	ret  = PPS_InitICC(pps);
+	ret  = PPS_InitICC();
 			
 	if (ret != PPS_OK)
 		return ret;
@@ -298,20 +289,10 @@ int PPS_Perform (PPS * pps, BYTE * params, unsigned *length)
 	return PPS_InitProtocol (); 
 }
 
-void * PPS_GetProtocol ()
-{
-	return protocol;
-}
-
 PPS_ProtocolParameters *PPS_GetProtocolParameters ()
 {
 	/* User must Remember not to reference this struct after removing PPS */
 	return &(parameters);
-}
-
-void PPS_Delete (PPS * pps)
-{
-	free (pps);
 }
 
 /*

@@ -51,8 +51,6 @@
 
 typedef struct
 {
-  void * icc;		/* Integrated circuit card */
-  void * protocol;	/* Protocol handler */
   int icc_type;		/* Type of ICC */
   int protocol_type;	/* Type of protocol */
 }
@@ -89,10 +87,6 @@ CT_Slot_Command (CT_Slot * slot, APDU_Cmd * cmd, APDU_Rsp ** rsp);
 /* Return ICC type */
 extern int
 CT_Slot_GetICCType (CT_Slot * slot);
-
-/* Return a reference to the ICC */
-extern void *
-CT_Slot_GetICC (CT_Slot * slot);
 
 /* Get answer to reset of the card */
 extern void *

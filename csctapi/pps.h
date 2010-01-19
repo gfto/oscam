@@ -50,11 +50,6 @@ typedef struct
 }
 PPS_ProtocolParameters;
 
-typedef struct
-{
-}
-PPS;
-
 void *protocol;
 PPS_ProtocolParameters parameters;
 
@@ -63,18 +58,12 @@ PPS_ProtocolParameters parameters;
  */
 
 /* Create PPS context */
-extern PPS *PPS_New ();
+extern void PPS_New ();
 
 /* Perform protcol type selection and return confirm */
-extern int PPS_Perform (PPS * pps, BYTE * params, unsigned *length);
-
-/* Get protocol handler */
-extern void *PPS_GetProtocol ();
+extern int PPS_Perform (BYTE * params, unsigned *length);
 
 /* Get protocol parameters */
 extern PPS_ProtocolParameters *PPS_GetProtocolParameters ();
-
-/* Delete PPS context */
-extern void PPS_Delete (PPS * pps);
 
 #endif /* _PPS_ */

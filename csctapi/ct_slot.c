@@ -116,7 +116,7 @@ char CT_Slot_Check (CT_Slot * slot, uint timeout, bool * card, bool * change)
 
 char CT_Slot_Probe (CT_Slot * slot, BYTE * userdata, unsigned length)
 {
-	PPS * pps;
+	//PPS * pps;
 	BYTE buffer[PPS_MAX_LENGTH];
 	unsigned buffer_len  = 0;
 	
@@ -137,40 +137,24 @@ char CT_Slot_Probe (CT_Slot * slot, BYTE * userdata, unsigned length)
 	/* Initialise protocol */
 	if (slot->icc_type == CT_SLOT_ICC_ASYNC)
 	{
-		pps = PPS_New();
-		
-		if (pps == NULL)
-		{
-			ICC_Async_Close ();
-			
-			slot->icc = NULL;
-			slot->icc_type = CT_SLOT_NULL;
-			return ERR_MEMORY;
-		}
+		PPS_New();
 		
 		/* Prepare PPS request */
 		if ((userdata != NULL) && (length > 0))
 			memcpy (buffer, userdata, buffer_len = MIN(length, PPS_MAX_LENGTH));
 		
 		/* Do PPS */
-		if (PPS_Perform (pps, buffer, &buffer_len) != PPS_OK)
+		if (PPS_Perform (buffer, &buffer_len) != PPS_OK)
 		{
-			PPS_Delete (pps);
-			
 			ICC_Async_Close ();
 			
-			slot->icc = NULL;
 			slot->icc_type = CT_SLOT_NULL;
 			slot->protocol_type = CT_SLOT_NULL;
 			
 			return ERR_TRANS;
 		}
 		
-		slot->protocol_type = (PPS_GetProtocolParameters (pps))->t;
-		slot->protocol = PPS_GetProtocol (pps);
-		
-		
-		PPS_Delete (pps);
+		slot->protocol_type = (PPS_GetProtocolParameters ())->t;
 	}
 	
 	return OK;	
@@ -182,7 +166,6 @@ char CT_Slot_Release (CT_Slot * slot)
 	
 	ret = OK;
 	
-	slot->protocol = NULL;
 	slot->protocol_type = CT_SLOT_NULL;
 	
 	if (slot->icc_type == CT_SLOT_ICC_ASYNC)
@@ -191,7 +174,6 @@ char CT_Slot_Release (CT_Slot * slot)
 			ret = ERR_TRANS;
 	}
 	
-	slot->icc = NULL;
 	slot->icc_type = CT_SLOT_NULL;
 	
 	return ret;
@@ -243,11 +225,6 @@ char CT_Slot_Command (CT_Slot * slot, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 int CT_Slot_GetICCType (CT_Slot * slot)
 {
 	return slot->icc_type;
-}
-
-void * CT_Slot_GetICC (CT_Slot * slot)
-{
-	return slot->icc;
 }
 
 void * CT_Slot_GetAtr (CT_Slot * slot)
@@ -303,8 +280,6 @@ void CT_Slot_Delete (CT_Slot * slot)
 
 static void CT_Slot_Clear (CT_Slot * slot)
 {
-	slot->icc = NULL;
-	slot->protocol = NULL;
 	slot->icc_type = CT_SLOT_NULL;
 	slot->protocol_type = CT_SLOT_NULL;
 }
