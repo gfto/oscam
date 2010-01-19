@@ -218,7 +218,7 @@ char CT_Slot_Command (CT_Slot * slot, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	}
 	else if (slot->protocol_type == CT_SLOT_PROTOCOL_T14) /* T=14 protocol ICC */
 	{
-		if (Protocol_T14_Command (cmd, rsp) != PROTOCOL_T14_OK)
+		if (Protocol_T14_Command (cmd, rsp) != PROTOCOL_T0_OK)
 			ret = ERR_TRANS;
 		else
 			ret = OK;

@@ -74,59 +74,6 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp);
  * Exproted funtions definition
  */
 
-int Protocol_T0_Init (PPS_ProtocolParameters * params)
-{
-	BYTE wi;
-	
-	/* Integer value WI  = TC2, by default 10 */
-#ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
-	if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
-#endif
-	wi = PROTOCOL_T0_DEFAULT_WI;
-	
-	/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
-	double F =  (double) atr_f_table[params->FI];
-	unsigned long wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
-	
-	/* Set timings */
-	icc_timings.block_timeout = wwt;
-	icc_timings.char_timeout = wwt;
-	ICC_Async_SetTimings ();
-	
-#ifdef DEBUG_PROTOCOL
-	printf ("Protocol: T=0: WWT=%d, Clockrate=%lu\n", (int)(wwt),ICC_Async_GetClockRate());
-#endif
-	
-	return PROTOCOL_T0_OK;
-}
-
-int Protocol_T14_Init (PPS_ProtocolParameters * params)
-{
-	BYTE wi;
-	
-	/* Integer value WI  = TC2, by default 10 */
-#ifndef PROTOCOL_T14_USE_DEFAULT_TIMINGS
-	if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
-#endif
-	wi = PROTOCOL_T14_DEFAULT_WI;
-	
-	/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
-	double F =  (double) atr_f_table[params->FI];
-	unsigned long wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
-	wwt >>= 1;
-	
-	/* Set timings */
-	icc_timings.block_timeout = wwt;
-	icc_timings.char_timeout = wwt;
-	ICC_Async_SetTimings ();
-
-#ifdef DEBUG_PROTOCOL
-	printf ("Protocol: T=14: WWT=%d\n", (int)(wwt));
-#endif
-	
-	return PROTOCOL_T14_OK;
-}
-
 int Protocol_T0_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
 	int cmd_case, ret;
@@ -187,7 +134,7 @@ int Protocol_T14_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 #ifdef DEBUG_PROTOCOL
 		printf ("Protocol: T=14: Invalid APDU\n");
 #endif
-	ret = PROTOCOL_T14_ERROR;
+	ret = PROTOCOL_T0_ERROR;
 	}
 	
 	return ret;
@@ -912,7 +859,7 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	BYTE buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
 	BYTE *cmd_raw;
 	long sent, recv, cmd_len;
-	int ret = PROTOCOL_T14_OK, nulls, cmd_case;
+	int ret = PROTOCOL_T0_OK, nulls, cmd_case;
 	BYTE ixor = 0x3E;
 	BYTE ixor1 = 0x3F;
 	BYTE b1 = 0x01;
@@ -927,7 +874,7 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
 	/* Check case of command */
 	if ((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S))
-		return PROTOCOL_T14_ERROR;
+		return PROTOCOL_T0_ERROR;
 	
 	if (reader[ridx].typ != R_INTERNAL)
 	{
@@ -935,21 +882,21 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		if (ICC_Async_Transmit (1, &b1) != ICC_ASYNC_OK)
 		{
 			(*rsp) = NULL;
-			return PROTOCOL_T14_ICC_ERROR;
+			return PROTOCOL_T0_ICC_ERROR;
 		}
 		
 		/* Send apdu */
 		if (ICC_Async_Transmit (cmd_len, cmd_raw) != ICC_ASYNC_OK)
 		{
 			(*rsp) = NULL;
-			return PROTOCOL_T14_ICC_ERROR;
+			return PROTOCOL_T0_ICC_ERROR;
 		}
 		
 		/* Send xor byte */
 		if (ICC_Async_Transmit (1, &ixor) != ICC_ASYNC_OK)
 		{
 			(*rsp) = NULL;
-			return PROTOCOL_T14_ICC_ERROR;
+			return PROTOCOL_T0_ICC_ERROR;
 		}
 	}
 	else
@@ -962,7 +909,7 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		if (ICC_Async_Transmit (cmd_len+2, buffer) != ICC_ASYNC_OK)
 		{
 			(*rsp) = NULL;
-			return PROTOCOL_T14_ICC_ERROR;
+			return PROTOCOL_T0_ICC_ERROR;
 		}
 	}
 	
@@ -998,7 +945,7 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		/* Read one procedure byte */
 		if (ICC_Async_Receive (8, buffer) != ICC_ASYNC_OK)
 		{
-			ret = PROTOCOL_T14_ICC_ERROR;
+			ret = PROTOCOL_T0_ICC_ERROR;
 			break;
 		}
 		else
@@ -1009,14 +956,14 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 			{
 				if (ICC_Async_Receive (recv, buffer + 8) != ICC_ASYNC_OK)
 				{
-					ret = PROTOCOL_T14_ICC_ERROR;
+					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
 				}
 			}
 			
 			if (ICC_Async_Receive (1, &ixor) != ICC_ASYNC_OK)
 			{
-				ret = PROTOCOL_T14_ICC_ERROR;
+				ret = PROTOCOL_T0_ICC_ERROR;
 				break;
 			}
 
@@ -1025,19 +972,19 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 				
 			if(ixor1 != ixor)
 			{
-				ret = PROTOCOL_T14_ERROR;
+				ret = PROTOCOL_T0_ERROR;
 				break;
 			}
 			
 			
 			
 				
-			ret = PROTOCOL_T14_OK;
+			ret = PROTOCOL_T0_OK;
 			break;
 		}
 	}
 		
-	if (ret == PROTOCOL_T14_OK)
+	if (ret == PROTOCOL_T0_OK)
 	{
 		memcpy(buffer + 8 + recv, buffer + 2, 2);
 		(*rsp) = APDU_Rsp_New (buffer + 8, recv + 2);

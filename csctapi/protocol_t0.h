@@ -41,13 +41,6 @@
 #define PROTOCOL_T0_IFD_ERROR		3	/* IFD comunication error */
 #define PROTOCOL_T0_ERROR		4	/* T=0 Protocol Error */
 
-/* Return codes */
-#define PROTOCOL_T14_OK			0	/* Command OK */
-#define PROTOCOL_T14_NULL_ERROR		1	/* Maximum NULL's reachec */
-#define PROTOCOL_T14_ICC_ERROR		2	/* ICC comunication error */
-#define PROTOCOL_T14_IFD_ERROR		3	/* IFD comunication error */
-#define PROTOCOL_T14_ERROR		4	/* T=0 Protocol Error */
-
 /*
  * Exported datatypes definition
  */
@@ -55,10 +48,6 @@
 /*
  * Exported functions declaration
  */
-
-/* Initialise a protocol handler */
-extern int Protocol_T0_Init (PPS_ProtocolParameters * params);
-extern int Protocol_T14_Init (PPS_ProtocolParameters * params);
 
 /* Send a command and return a response */
 extern int Protocol_T0_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);

@@ -37,7 +37,7 @@
  */
 
 #define PPS_DEFAULT_PROTOCOL	0x00
-
+#define PROTOCOL_T0_DEFAULT_WI 10
 /*
  * Not exported macros definition
  */
@@ -489,35 +489,37 @@ static int PPS_InitProtocol ()
 {
 	int ret;
 	
-	if (parameters.t == ATR_PROTOCOL_TYPE_T0)
+	if ((parameters.t == ATR_PROTOCOL_TYPE_T0) || (parameters.t == ATR_PROTOCOL_TYPE_T14))
 	{
-			ret = Protocol_T0_Init (&(parameters));
-			
-			if (ret != PROTOCOL_T0_OK)
-			{
-				protocol = NULL;
-				return PPS_PROTOCOL_ERROR;
-			}
-			
-			return PPS_OK;
+		BYTE wi;
+		
+		/* Integer value WI  = TC2, by default 10 */
+#ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
+		if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
+#endif
+		wi = PROTOCOL_T0_DEFAULT_WI;
+		
+		/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
+		double F =  (double) atr_f_table[parameters.FI];
+		unsigned long wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
+		if (parameters.t == 14)
+			wwt >>= 1; //is this correct?
+		
+		/* Set timings */
+		icc_timings.block_timeout = wwt;
+		icc_timings.char_timeout = wwt;
+		ICC_Async_SetTimings ();
+		
+#ifdef DEBUG_PROTOCOL
+		printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", params->t, (int)(wwt),ICC_Async_GetClockRate());
+#endif
+		return PPS_OK;
 	}
 	else if (parameters.t == ATR_PROTOCOL_TYPE_T1)
 	{
 			ret = Protocol_T1_Init ();
 			
 			if (ret != PROTOCOL_T1_OK)
-			{
-				protocol = NULL;
-				return PPS_PROTOCOL_ERROR;
-			}
-			
-			return PPS_OK;
-	}
-	else if (parameters.t == ATR_PROTOCOL_TYPE_T14)
-	{
-			ret = Protocol_T14_Init (&(parameters));
-			
-			if (ret != PROTOCOL_T14_OK)
 			{
 				protocol = NULL;
 				return PPS_PROTOCOL_ERROR;
