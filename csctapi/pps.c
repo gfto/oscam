@@ -38,6 +38,14 @@
 
 #define PPS_DEFAULT_PROTOCOL	0x00
 #define PROTOCOL_T0_DEFAULT_WI 10
+
+#define PROTOCOL_T1_DEFAULT_IFSC        32
+#define PROTOCOL_T1_DEFAULT_IFSD        32
+#define PROTOCOL_T1_MAX_IFSC            251  /* Cannot send > 255 buffer */
+#define PROTOCOL_T1_DEFAULT_CWI         13
+#define PROTOCOL_T1_DEFAULT_BWI         4
+#define PROTOCOL_T1_EDC_LRC             0
+#define PROTOCOL_T1_EDC_CRC             1
 /*
  * Not exported macros definition
  */
@@ -485,54 +493,126 @@ static int PPS_InitICC ()
 	}
 }
 
+int Protocol_T1_Init ()
+{
+	BYTE ta, tb, tc, cwi, bwi;
+	unsigned long baudrate;
+	double work_etu;
+	int i;
+
+	// Set IFSC
+	if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
+		ifsc = PROTOCOL_T1_DEFAULT_IFSC;
+	else if ((ta != 0x00) && (ta != 0xFF))
+		ifsc = ta;
+	else
+		ifsc = PROTOCOL_T1_DEFAULT_IFSC;
+
+	// Towitoko does not allow IFSC > 251 //FIXME not sure whether this limitation still exists
+	ifsc = MIN (ifsc, PROTOCOL_T1_MAX_IFSC);
+
+	// Set IFSD
+	ifsd = PROTOCOL_T1_DEFAULT_IFSD;
+
+#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
+	// Calculate CWI and BWI
+	if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TB, &tb) == ATR_NOT_FOUND)
+		{
+#endif
+			cwi	= PROTOCOL_T1_DEFAULT_CWI;
+			bwi = PROTOCOL_T1_DEFAULT_BWI;
+#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
+		}
+	else
+		{
+			cwi	= tb & 0x0F;
+			bwi = (tb & 0xF0) >> 4;
+		}
+#endif
+	
+	// Work etu	= (1000 / baudrate) milliseconds
+	ICC_Async_GetBaudrate (&baudrate);
+	work_etu = 1000 / (double)baudrate;
+
+	// Set CWT = (2^CWI + 11) work etu
+	cwt = 1;
+
+	for (i = 0; i < cwi ; i++)
+		cwt *= 2;
+
+	cwt = (unsigned short) ((cwt + 11) * work_etu);
+
+	// Set BWT = (2^BWI * 960 + 11) work etu
+	bwt = 1;
+	for (i = 0; i < bwi; i++)
+		bwt *= 2;
+
+	bwt = (unsigned short) ((bwt * 960 + 11) * work_etu);
+
+	// Set BGT = 22 * work etu
+	bgt = (unsigned short) (22 * work_etu);
+
+	// Set the error detection code type
+	if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
+		edc = PROTOCOL_T1_EDC_LRC;
+	else
+		edc = tc & 0x01;
+
+	// Set initial send sequence (NS)
+	ns = 1;
+	
+	// Set timings
+	icc_timings.block_timeout = bwt;
+	icc_timings.char_timeout = cwt;
+	icc_timings.block_delay = bgt;
+	ICC_Async_SetTimings ();
+
+#ifdef DEBUG_PROTOCOL
+	printf ("Protocol: T=1: IFSC=%d, IFSD=%d, CWT=%d, BWT=%d, BGT=%d, EDC=%s\n",
+					ifsc, ifsd, cwt, bwt, t1->bgt,
+					(edc == PROTOCOL_T1_EDC_LRC) ? "LRC" : "CRC");
+#endif
+
+	return PROTOCOL_T1_OK;
+}
+
 static int PPS_InitProtocol ()
 {
-	int ret;
-	
-	if ((parameters.t == ATR_PROTOCOL_TYPE_T0) || (parameters.t == ATR_PROTOCOL_TYPE_T14))
-	{
-		BYTE wi;
-		
-		/* Integer value WI  = TC2, by default 10 */
-#ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
-		if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
-#endif
-		wi = PROTOCOL_T0_DEFAULT_WI;
-		
-		/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
-		double F =  (double) atr_f_table[parameters.FI];
-		unsigned long wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
-		if (parameters.t == 14)
-			wwt >>= 1; //is this correct?
-		
-		/* Set timings */
-		icc_timings.block_timeout = wwt;
-		icc_timings.char_timeout = wwt;
-		ICC_Async_SetTimings ();
-		
-#ifdef DEBUG_PROTOCOL
-		printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", params->t, (int)(wwt),ICC_Async_GetClockRate());
-#endif
-		return PPS_OK;
-	}
-	else if (parameters.t == ATR_PROTOCOL_TYPE_T1)
-	{
-			ret = Protocol_T1_Init ();
-			
-			if (ret != PROTOCOL_T1_OK)
+	switch (parameters.t) {
+		case ATR_PROTOCOL_TYPE_T0:
+		case ATR_PROTOCOL_TYPE_T14:
 			{
-				protocol = NULL;
-				return PPS_PROTOCOL_ERROR;
-			}
+			BYTE wi;
+			/* Integer value WI	= TC2, by default 10 */
+#ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
+			if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
+#endif
+			wi = PROTOCOL_T0_DEFAULT_WI;
+
+			/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
+			double F =	(double) atr_f_table[parameters.FI];
+			unsigned long wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
+			if (parameters.t == 14)
+				wwt >>= 1; //is this correct?
 			
-			return PPS_OK;
+			/* Set timings */
+			icc_timings.block_timeout = wwt;
+			icc_timings.char_timeout = wwt;
+			ICC_Async_SetTimings ();
+#ifdef DEBUG_PROTOCOL
+			printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", params->t, (int)(wwt),ICC_Async_GetClockRate());
+#endif
+			}
+			break;
+	 case ATR_PROTOCOL_TYPE_T1:
+			Protocol_T1_Init ();//always returns ok
+			break;
+	 default:
+			protocol = NULL;
+			return PPS_PROTOCOL_ERROR;
+			break;
 	}
-	else
-	{
-		protocol = NULL;
-	}
-	
-	return PPS_PROTOCOL_ERROR;
+	return PPS_OK;
 }
 
 static BYTE PPS_GetPCK (BYTE * block, unsigned length)
