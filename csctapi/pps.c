@@ -498,7 +498,6 @@ int Protocol_T1_Init ()
 	BYTE ta, tb, tc, cwi, bwi;
 	unsigned long baudrate;
 	double work_etu;
-	int i;
 
 	// Set IFSC
 	if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
@@ -526,7 +525,7 @@ int Protocol_T1_Init ()
 	else
 		{
 			cwi	= tb & 0x0F;
-			bwi = (tb & 0xF0) >> 4;
+			bwi = tb >> 4;
 		}
 #endif
 	
@@ -535,19 +534,10 @@ int Protocol_T1_Init ()
 	work_etu = 1000 / (double)baudrate;
 
 	// Set CWT = (2^CWI + 11) work etu
-	cwt = 1;
-
-	for (i = 0; i < cwi ; i++)
-		cwt *= 2;
-
-	cwt = (unsigned short) ((cwt + 11) * work_etu);
+	cwt = (unsigned short) (((1<<cwi) + 11) * work_etu);
 
 	// Set BWT = (2^BWI * 960 + 11) work etu
-	bwt = 1;
-	for (i = 0; i < bwi; i++)
-		bwt *= 2;
-
-	bwt = (unsigned short) ((bwt * 960 + 11) * work_etu);
+	bwt = (unsigned short) (((1<<bwi) * 960 + 11) * work_etu);
 
 	// Set BGT = 22 * work etu
 	bgt = (unsigned short) (22 * work_etu);
