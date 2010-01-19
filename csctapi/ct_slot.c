@@ -182,28 +182,6 @@ char CT_Slot_Release (CT_Slot * slot)
 	
 	ret = OK;
 	
-	if (slot->protocol_type == CT_SLOT_PROTOCOL_T0)
-	{
-		if (Protocol_T0_Close ((Protocol_T0 *) slot->protocol) != PROTOCOL_T0_OK)
-			ret = ERR_TRANS;
-		
-		Protocol_T0_Delete ((Protocol_T0 *) slot->protocol);
-	}
-	else if (slot->protocol_type == CT_SLOT_PROTOCOL_T1)
-	{
-		if (Protocol_T1_Close ((Protocol_T1 *) slot->protocol) != PROTOCOL_T1_OK)
-			ret = ERR_TRANS;
-		
-		Protocol_T1_Delete ((Protocol_T1 *) slot->protocol);
-	}
-	else if (slot->protocol_type == CT_SLOT_PROTOCOL_T14)
-	{
-		if (Protocol_T14_Close ((Protocol_T14 *) slot->protocol) != PROTOCOL_T14_OK)
-			ret = ERR_TRANS;
-		
-		Protocol_T14_Delete ((Protocol_T14 *) slot->protocol);
-	}
-	
 	slot->protocol = NULL;
 	slot->protocol_type = CT_SLOT_NULL;
 	
@@ -226,14 +204,14 @@ char CT_Slot_Command (CT_Slot * slot, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	
 	if (slot->protocol_type == CT_SLOT_PROTOCOL_T0) /* T=0 protocol ICC */
 	{
-		if (Protocol_T0_Command ( cmd, rsp) != PROTOCOL_T0_OK)
+		if (Protocol_T0_Command (cmd, rsp) != PROTOCOL_T0_OK)
 			ret = ERR_TRANS;
 		else
 			ret = OK;
 	}
 	else if (slot->protocol_type == CT_SLOT_PROTOCOL_T1) /* T=1 protocol ICC */
 	{
-		if (Protocol_T1_Command ((Protocol_T1 *) slot->protocol, cmd, rsp) != PROTOCOL_T1_OK)
+		if (Protocol_T1_Command (cmd, rsp) != PROTOCOL_T1_OK)
 			ret = ERR_TRANS;
 		else
 			ret = OK;
@@ -299,28 +277,6 @@ char CT_Slot_Close (CT_Slot * slot)
 	char ret; 
 	
 	ret = OK;
-	
-	if (slot->protocol_type == CT_SLOT_PROTOCOL_T0)
-	{
-		if (Protocol_T0_Close ((Protocol_T0 *) slot->protocol) != PROTOCOL_T0_OK)
-			ret = ERR_TRANS;
-		
-		Protocol_T0_Delete ((Protocol_T0 *) slot->protocol);
-	}
-	else if (slot->protocol_type == CT_SLOT_PROTOCOL_T1)
-	{
-		if (Protocol_T1_Close ((Protocol_T1 *) slot->protocol) != PROTOCOL_T1_OK)
-			ret = ERR_TRANS;
-		
-		Protocol_T1_Delete ((Protocol_T1 *) slot->protocol);
-	}
-	else if (slot->protocol_type == CT_SLOT_PROTOCOL_T14)
-	{
-		if (Protocol_T14_Close ((Protocol_T14 *) slot->protocol) != PROTOCOL_T14_OK)
-			ret = ERR_TRANS;
-		
-		Protocol_T14_Delete ((Protocol_T14 *) slot->protocol);
-	}
 	
 	if (slot->icc_type == CT_SLOT_ICC_ASYNC)
 	{

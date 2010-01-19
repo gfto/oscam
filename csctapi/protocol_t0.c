@@ -51,9 +51,6 @@
  * Not exported functions declaration
  */
 
-static void Protocol_T0_Clear (Protocol_T0 * t0);
-static void Protocol_T14_Clear (Protocol_T14 * t14);
-
 static int Protocol_T0_Case1 (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 static int Protocol_T0_Case2S (APDU_Cmd * cmd, APDU_Rsp ** rsp);
@@ -77,78 +74,54 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp);
  * Exproted funtions definition
  */
 
-Protocol_T0 * Protocol_T0_New (void)
-{
-	Protocol_T0 *t0;
-	
-	t0 = (Protocol_T0 *) malloc (sizeof (Protocol_T0));
-	
-	if (t0 != NULL)
-		Protocol_T0_Clear (t0);
-	
-	return t0;
-}
-
-Protocol_T14 * Protocol_T14_New (void)
-{
-	Protocol_T14 *t14;
-	
-	t14 = (Protocol_T14 *) malloc (sizeof (Protocol_T14));
-	
-	if (t14 != NULL)
-		Protocol_T14_Clear (t14);
-	
-	return t14;
-}
-
-int Protocol_T0_Init (Protocol_T0 * t0, PPS_ProtocolParameters * params, int selected_protocol)
+int Protocol_T0_Init (PPS_ProtocolParameters * params)
 {
 	BYTE wi;
 	
 	/* Integer value WI  = TC2, by default 10 */
 #ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
-	if (ATR_GetInterfaceByte (atr, selected_protocol, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
+	if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
 #endif
 	wi = PROTOCOL_T0_DEFAULT_WI;
 	
 	/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
 	double F =  (double) atr_f_table[params->FI];
-	t0->wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
+	unsigned long wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
 	
 	/* Set timings */
-	icc_timings.block_timeout = t0->wwt;
-	icc_timings.char_timeout = t0->wwt;
+	icc_timings.block_timeout = wwt;
+	icc_timings.char_timeout = wwt;
 	ICC_Async_SetTimings ();
 	
 #ifdef DEBUG_PROTOCOL
-	printf ("Protocol: T=0: WWT=%d, Clockrate=%lu\n", (int)(t0->wwt),ICC_Async_GetClockRate());
+	printf ("Protocol: T=0: WWT=%d, Clockrate=%lu\n", (int)(wwt),ICC_Async_GetClockRate());
 #endif
 	
 	return PROTOCOL_T0_OK;
 }
 
-int Protocol_T14_Init (Protocol_T14 * t14, PPS_ProtocolParameters * params, int selected_protocol)
+int Protocol_T14_Init (PPS_ProtocolParameters * params)
 {
 	BYTE wi;
 	
 	/* Integer value WI  = TC2, by default 10 */
 #ifndef PROTOCOL_T14_USE_DEFAULT_TIMINGS
-	if (ATR_GetInterfaceByte (atr, selected_protocol, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
+	if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
 #endif
 	wi = PROTOCOL_T14_DEFAULT_WI;
 	
 	/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
 	double F =  (double) atr_f_table[params->FI];
-	t14->wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
-	t14->wwt >>= 1;
+	unsigned long wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
+	wwt >>= 1;
 	
 	/* Set timings */
-	icc_timings.block_timeout = t14->wwt;
-	icc_timings.char_timeout = t14->wwt;
+	icc_timings.block_timeout = wwt;
+	icc_timings.char_timeout = wwt;
 	ICC_Async_SetTimings ();
 
 #ifdef DEBUG_PROTOCOL
-	printf ("Protocol: T=14: WWT=%d\n", (int)(t14->wwt));
+	printf ("Protocol: T=14: WWT=%d\n", (int)(wwt));
 #endif
 	
 	return PROTOCOL_T14_OK;
@@ -218,30 +191,6 @@ int Protocol_T14_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	}
 	
 	return ret;
-}
-
-int Protocol_T0_Close (Protocol_T0 * t0)
-{
-	Protocol_T0_Clear (t0);
-	
-	return PROTOCOL_T0_OK;
-}
-
-int Protocol_T14_Close (Protocol_T14 * t14)
-{
-	Protocol_T14_Clear (t14);
-	
-	return PROTOCOL_T14_OK;
-}
-
-void Protocol_T0_Delete (Protocol_T0 * t0)
-{
- 	free (t0);
-}
-
-void Protocol_T14_Delete (Protocol_T14 * t14)
-{
- 	free (t14);
 }
 
 /*
@@ -1099,14 +1048,4 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	}
 	
 	return (ret);
-}
-
-static void Protocol_T0_Clear (Protocol_T0 * t0)
-{
-	t0->wwt = 0;
-}
-
-static void Protocol_T14_Clear (Protocol_T14 * t14)
-{
-	t14->wwt = 0;
 }

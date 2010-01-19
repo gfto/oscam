@@ -44,41 +44,23 @@
  * Exported datatypes definition
  */
 
-/* T=1 Protocol context */
-typedef struct
-{
-  unsigned short ifsc;  /* Information field size for the ICC */
-  unsigned short ifsd;  /* Information field size for the IFD */
-  unsigned short bgt;   /* Block guard time */
-  unsigned short bwt;   /* Block waiting time */
-  unsigned short cwt;   /* Character waiting time */
-  int edc;              /* Type of error detection code */
-  BYTE ns;              /* Send sequence number */
-}
-Protocol_T1;
-
+unsigned short ifsc;  /* Information field size for the ICC */
+unsigned short ifsd;  /* Information field size for the IFD */
+unsigned short bgt;   /* Block guard time */
+unsigned short bwt;   /* Block waiting time */
+unsigned short cwt;   /* Character waiting time */
+int edc;              /* Type of error detection code */
+BYTE ns;              /* Send sequence number */
 /*
  * Exported functions declaration
  */
 
-/* Create a new protocol handler */
-extern Protocol_T1 * 
-Protocol_T1_New (void);
-
-/* Delete a protocol handler */
-extern void 
-Protocol_T1_Delete (Protocol_T1 * t1);
-
 /* Initialise a protocol handler */
 extern int 
-Protocol_T1_Init (Protocol_T1 * t1, int selected_protocol);
+Protocol_T1_Init ();
 
 /* Send a command and return a response */
 extern int
-Protocol_T1_Command (Protocol_T1 * t1, APDU_Cmd * cmd, APDU_Rsp ** rsp);
-
-/* Close a protocol handler */
-extern int 
-Protocol_T1_Close (Protocol_T1 * t1);
+Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 #endif /* _PROTOCOL_T1_ */
