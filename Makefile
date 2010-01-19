@@ -11,6 +11,7 @@ linux:	i386-pc-linux
 linux-pcsc:	i386-pc-linux-pcsc
 freebsd:	i386-pc-freebsd
 tuxbox:	cross-powerpc-tuxbox-linux
+tripledragon: cross-powerpc-405-linux
 win:	cross-i386-pc-cygwin
 cygwin: i386-pc-cygwin
 macosx: macosx-native
@@ -19,6 +20,7 @@ std:	linux \
 	macosx \
 	cross-i386-pc-cygwin \
 	cross-powerpc-tuxbox-linux \
+	cross-powerpc-405-linux \
 	cross-i386-pc-freebsd \
 	cross-arm-nslu2-linux \
 	cross-mipsel-router-linux-uclibc927 \
@@ -197,6 +199,26 @@ cross-powerpc-tuxbox-linux-uclibc:
 		DS_RL=powerpc-tuxbox-linux-uclibc-ranlib \
 		DS_ST=powerpc-tuxbox-linux-uclibc-strip
 
+######################################################################
+#
+#	TripleDragon crosscompiler
+#
+######################################################################
+cross-powerpc-405-linux:
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		OS_LIBS="-lcrypto -ldl -lm" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-O2 -DOS_LINUX -DTRIPLEDRAGON -DCS_LOGHISTORY -DCS_ANTICASC -DHAVE_DVBAPI_TD -DSTB04SCI -DCS_CONFDIR='\"/var/tuxbox/config\"' -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=powerpc-405-linux-gnu-gcc \
+		DS_AR=powerpc-405-linux-gnu-ar \
+		DS_LD=powerpc-405-linux-gnu-ld \
+		DS_RL=powerpc-405-linux-gnu-ranlib \
+		DS_ST=powerpc-405-linux-gnu-strip
 
 ######################################################################
 #

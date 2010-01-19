@@ -102,12 +102,18 @@ char *cs_platform(char *buf)
     struct stat st;
     cs_hw=CS_HW_DBOX2;          // dbox2, default for now
     if (!stat("/dev/sci0", &st)) cs_hw=CS_HW_DREAM; // dreambox
+#ifdef TRIPLEDRAGON
+    if (!stat("/dev/stb/tdsc0", &st)) cs_hw=CS_HW_DRAGON; // tripledragon
+#endif
     switch(cs_hw)
     {
 #ifdef PPC
       case CS_HW_DBOX2: hw="dbox2"   ; break;
 #endif
       case CS_HW_DREAM: hw="dreambox"; break;
+#ifdef TRIPLEDRAGON
+      case CS_HW_DRAGON: hw="tripledragon"; break;
+#endif
     }
 #endif
     if (!hw) hw=CS_OS_HW;
