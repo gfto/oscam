@@ -943,7 +943,7 @@ static void start_resolver()
   int i;
 #ifdef USE_PTHREAD
   pthread_t tid;
-  if (i=pthread_create(&tid, (pthread_attr_t *)0, (void *) &cs_logger, (void *) 0))
+  if ((i=pthread_create(&tid, (pthread_attr_t *)0, (void *) &cs_logger, (void *) 0)))
     cs_log("ERROR: can't create logging-thread (err=%d)", i);
   else
   {
