@@ -14,7 +14,7 @@
 
 int aes_active=0;
 AES_KEY dkey, ekey;
-
+int BASEYEAR = 1997;
 static void cAES_SetKey(const unsigned char *key)
 {
   AES_set_decrypt_key(key,128,&dkey);
@@ -547,7 +547,6 @@ static int do_cmd(const unsigned char *ins, const unsigned char *txbuff, unsigne
   return len;
 }
 
-#define BASEYEAR 2000
 static void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss)
 {
   *year=(Date[0]/12)+BASEYEAR;
@@ -595,19 +594,23 @@ int videoguard_card_init(uchar *atr, int atrsize)
   unsigned char atr_premiere[] = { 0x3F, 0xFF, 0x11, 0x25, 0x03, 0x10, 0x80, 0x41, 0xB0, 0x07, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x50, 0x31, 0x01, 0x00, 0x11 };
 	unsigned char atr_kbw[] = { 0x3F, 0xFF, 0x14, 0x25, 0x03, 0x10, 0x80, 0x54, 0xB0, 0x01, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x4B, 0x57, 0x01, 0x00, 0x00};
 
+
     if ((atrsize == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atrsize) == 0))
     {
         cs_log("Type: Videoguard BSkyB");
         /* BSkyB seems to need one additionnal byte in the serial communication... */
         io_serial_need_dummy_char = 1;
+				BASEYEAR = 2000;
     }
     else if ((atrsize == sizeof (atr_bskyb_new)) && (memcmp (atr, atr_bskyb_new, atrsize) == 0))
     {
         cs_log("Type: Videoguard BSkyB - New");
+				BASEYEAR = 2000;
     }
     else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
     {
         cs_log("Type: Videoguard Sky Italia");
+				BASEYEAR = 2000;
     }
     else if ((atrsize == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atrsize) == 0))
     {
@@ -620,10 +623,12 @@ int videoguard_card_init(uchar *atr, int atrsize)
     else if ((atrsize == sizeof (atr_viasat_new)) && (memcmp (atr, atr_viasat_new, atrsize) == 0))
     {
         cs_log("Type: Videoguard Viasat new (093E)");
+				BASEYEAR = 2000;
     }
     else if ((atrsize == sizeof (atr_viasat_scandinavia)) && (memcmp (atr, atr_viasat_scandinavia, atrsize) == 0))
     {
         cs_log("Type: Videoguard Viasat Scandinavia");
+				BASEYEAR = 2000;
     }
     else if ((atrsize == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atrsize) == 0))
     {
