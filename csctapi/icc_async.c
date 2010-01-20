@@ -315,7 +315,7 @@ int ICC_Async_Transmit (unsigned size, BYTE * data)
 	if (!Phoenix_Transmit (sent, size, icc_timings.block_delay, icc_timings.char_delay))
 		return ICC_ASYNC_IFD_ERROR;
 	
-	if (convention == ATR_CONVENTION_INVERSE)
+	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL)
 		free (buffer);
 	
 	return ICC_ASYNC_OK;
