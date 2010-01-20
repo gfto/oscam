@@ -198,9 +198,9 @@ int Phoenix_Reset (ATR ** atr)
 		return ret;
 }
 
-int Phoenix_Transmit (BYTE * buffer, unsigned size, IFD_Timings * timings)
+int Phoenix_Transmit (BYTE * buffer, unsigned size, unsigned int block_delay, unsigned int char_delay)
 {
-	unsigned block_delay, char_delay, sent=0, to_send = 0;
+	unsigned sent=0, to_send = 0;
 
 #ifdef DEBUG_IFD
 	printf ("IFD: Transmit: ");
@@ -208,12 +208,6 @@ int Phoenix_Transmit (BYTE * buffer, unsigned size, IFD_Timings * timings)
 	printf ("%X ", buffer[sent]);
 	printf ("\n");
 #endif
-
-#define IFD_TOWITOKO_DELAY 0
-
-	/* Calculate delays */
-	char_delay = IFD_TOWITOKO_DELAY + timings->char_delay;
-	block_delay = IFD_TOWITOKO_DELAY + timings->block_delay;
 
 	for (sent = 0; sent < size; sent = sent + to_send)
 	{
@@ -238,18 +232,13 @@ int Phoenix_Transmit (BYTE * buffer, unsigned size, IFD_Timings * timings)
 	return OK;
 }
 
-int Phoenix_Receive (BYTE * buffer, unsigned size, IFD_Timings * timings)
+int Phoenix_Receive (BYTE * buffer, unsigned size, unsigned int block_timeout, unsigned int char_timeout)
 {
-	unsigned char_timeout, block_timeout;
-#ifdef DEBUG_IFD
-	int i;
-#endif
-
 #define IFD_TOWITOKO_TIMEOUT             1000
 
 	/* Calculate timeouts */
-	char_timeout = IFD_TOWITOKO_TIMEOUT + timings->char_timeout;
-	block_timeout = IFD_TOWITOKO_TIMEOUT + timings->block_timeout;
+	char_timeout += IFD_TOWITOKO_TIMEOUT;
+	block_timeout += IFD_TOWITOKO_TIMEOUT;
 	if (block_timeout != char_timeout)
 	{
 		/* Read first byte using block timeout */
@@ -271,6 +260,7 @@ int Phoenix_Receive (BYTE * buffer, unsigned size, IFD_Timings * timings)
 	}
 	
 #ifdef DEBUG_IFD
+	int i;
 	printf ("IFD: Receive: ");
 	for (i = 0; i < size; i++)
 	printf ("%X ", buffer[i]);

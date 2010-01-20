@@ -348,8 +348,8 @@ Protocol_T1_ReceiveBlock (T1_Block ** block)
 static int
 Protocol_T1_UpdateBWT (unsigned short bwt)
 {
-  icc_timings.block_timeout = bwt;
-	ICC_Async_SetTimings ();
+	if (ICC_Async_SetTimings (bwt) != ICC_ASYNC_OK)
+		return PROTOCOL_T1_ICC_ERROR;
 
   return PROTOCOL_T1_OK;
 }

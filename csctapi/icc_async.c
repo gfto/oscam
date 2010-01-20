@@ -272,39 +272,12 @@ int ICC_Async_Init ()
 #endif
 }
 
-int ICC_Async_SetTimings ()
+int ICC_Async_SetTimings (unsigned short bwt)
 {
-/*	if (protocol_type == ATR_PROTOCOL_TYPE_T1)
-		cs_debug("SetTimings: T1: chardelay %d, chartimeout CWT %d, blockdelay BGT??? %d, blocktimeout BWT %d",timings->char_delay,timings->char_timeout, timings->block_delay, timings->block_timeout);
-	else
-		cs_debug("SetTimings: T0/T14: chardelay %d, chartimeout WWT %d, blockdelay %d, blocktimeout %d",timings->char_delay,timings->char_timeout, timings->block_delay, timings->block_timeout);*/
-
-#ifdef SCI_DEV
-#include <sys/ioctl.h>
-#include "sci_global.h"
-#include "sci_ioctl.h"
-	if (reader[ridx].typ == R_INTERNAL) {
-		SCI_PARAMETERS params;
-		if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
+	if (protocol_type != ATR_PROTOCOL_TYPE_T1)
 			return ICC_ASYNC_IFD_ERROR;
-		switch (protocol_type) {
-			case ATR_PROTOCOL_TYPE_T1:
-				params.BWT = icc_timings.block_timeout;
-				params.CWT = icc_timings.char_timeout;
-				//params.BGT = icc_timings.block_delay; load into params.EGT??
-				break;
-			case ATR_PROTOCOL_TYPE_T0:
-			case ATR_PROTOCOL_TYPE_T14:
-			default:
-  			params.WWT = icc_timings.char_timeout;
-				break;
-		}
-		if (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
-			return ICC_ASYNC_IFD_ERROR;
-			
-		cs_debug("Set Timings: T=%d fs=%lu ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, params.fs, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
-	}
-#endif
+	
+	//currently not supporting update BWT for T1
 	return ICC_ASYNC_OK;
 }
 
@@ -316,16 +289,9 @@ int ICC_Async_SetBaudrate (unsigned long baudrate)
 	return ICC_ASYNC_OK;
 }
 
-int ICC_Async_GetBaudrate (unsigned long * baudrate)
-{
-	(*baudrate) = reader[ridx].baudrate;
-	return ICC_ASYNC_OK;  
-}
-
 int ICC_Async_Transmit (unsigned size, BYTE * data)
 {
 	BYTE *buffer = NULL, *sent; 
-	IFD_Timings timings;
 	
 	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL)
 	{
@@ -339,9 +305,6 @@ int ICC_Async_Transmit (unsigned size, BYTE * data)
 		sent = data;
 	}
 	
-	timings.block_delay = icc_timings.block_delay;
-	timings.char_delay = icc_timings.char_delay;
-	
 #ifdef COOL
 	if (reader[ridx].typ == R_INTERNAL) {
 		if (!Cool_Transmit(sent, size))
@@ -349,7 +312,7 @@ int ICC_Async_Transmit (unsigned size, BYTE * data)
 	}
 	else
 #endif
-	if (!Phoenix_Transmit (sent, size, &timings, size))
+	if (!Phoenix_Transmit (sent, size, icc_timings.block_delay, icc_timings.char_delay))
 		return ICC_ASYNC_IFD_ERROR;
 	
 	if (convention == ATR_CONVENTION_INVERSE)
@@ -360,11 +323,6 @@ int ICC_Async_Transmit (unsigned size, BYTE * data)
 
 int ICC_Async_Receive (unsigned size, BYTE * data)
 {
-	IFD_Timings timings;
-	
-	timings.block_timeout = icc_timings.block_timeout;
-	timings.char_timeout = icc_timings.char_timeout;
-	
 #ifdef COOL
 	if (reader[ridx].typ == R_INTERNAL) {
 		if (!Cool_Receive(data, size))
@@ -372,7 +330,7 @@ int ICC_Async_Receive (unsigned size, BYTE * data)
 	}
 	else
 #else
-	if (!Phoenix_Receive (data, size, &timings))
+	if (!Phoenix_Receive (data, size, icc_timings.block_timeout, icc_timings.char_timeout))
 		return ICC_ASYNC_IFD_ERROR;
 #endif
 	

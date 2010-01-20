@@ -66,8 +66,6 @@ static unsigned PPS_GetLength (BYTE * block);
 
 static int PPS_InitICC ();
 
-static int PPS_InitProtocol ();
-
 static BYTE PPS_GetPCK (BYTE * block, unsigned length);
 
 /*
@@ -271,7 +269,6 @@ int PPS_Perform (BYTE * params, unsigned *length)
 	}
 
 	protocol_type = parameters.t;
-	
 #ifdef DEBUG_PROTOCOL
 	printf("PPS: T=%i, F=%.0f, D=%.6f, N=%.0f\n", 
 	parameters.t, 
@@ -280,13 +277,11 @@ int PPS_Perform (BYTE * params, unsigned *length)
 	parameters.n);
 #endif
 
-	ret  = PPS_InitICC();
-			
-	if (ret != PPS_OK)
-		return ret;
-	
 	/* Initialize selected protocol with selected parameters */
-	return PPS_InitProtocol (); 
+//	if (PPS_InitProtocol () != PPS_OK)
+//		return PPS_ICC_ERROR;
+
+	return PPS_InitICC();
 }
 
 PPS_ProtocolParameters *PPS_GetProtocolParameters ()
@@ -406,8 +401,133 @@ static unsigned PPS_GetLength (BYTE * block)
 	return length;
 }
 
+unsigned int ETU_to_ms(unsigned long WWT)
+{
+#define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
+	if (WWT > CHAR_LEN)
+		WWT -= CHAR_LEN;
+	else
+		WWT = 0;
+	double work_etu = 1000 / (double)reader[ridx].baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
+	return (unsigned int) WWT * work_etu;
+}
+
+
 static int PPS_InitICC ()
 {
+	unsigned long WWT, BWT, CWT, BGT, edc, EGT, CGT;
+
+	if (parameters.n == 255) //Extra Guard Time
+		EGT = 0;
+	else
+		EGT = parameters.n;
+	unsigned int GT = EGT + 12; //Guard Time in ETU
+	unsigned long gt_ms = ETU_to_ms(GT);
+	
+	switch (parameters.t) {
+		case ATR_PROTOCOL_TYPE_T0:
+		case ATR_PROTOCOL_TYPE_T14:
+			{
+			BYTE wi;
+			/* Integer value WI	= TC2, by default 10 */
+#ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
+			if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
+#endif
+			wi = PROTOCOL_T0_DEFAULT_WI;
+
+			// WWT = 960 * WI * (Fi / f) * 1000 milliseconds
+			WWT = (unsigned long) 960 * wi; //in ETU
+			if (parameters.t == 14)
+				WWT >>= 1; //is this correct?
+			
+			if (reader[ridx].typ != R_INTERNAL) {
+				unsigned long wwt_ms = ETU_to_ms(WWT);
+
+				icc_timings.block_timeout = wwt_ms;
+				icc_timings.char_timeout = wwt_ms;
+				icc_timings.block_delay = gt_ms;
+				icc_timings.char_delay = gt_ms;
+				cs_debug("Setting timings: block_timeout=%u ms, char_timeout=%u ms, block_delay=%u ms, char_delay=%u ms",icc_timings.block_timeout, icc_timings.char_timeout, icc_timings.block_delay, icc_timings.char_delay);
+			}
+#ifdef DEBUG_PROTOCOL
+			printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", params->t, (int)(wwt),ICC_Async_GetClockRate());
+#endif
+			}
+			break;
+	 case ATR_PROTOCOL_TYPE_T1:
+			{
+				BYTE ta, tb, tc, cwi, bwi;
+			
+				// Set IFSC
+				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
+					ifsc = PROTOCOL_T1_DEFAULT_IFSC;
+				else if ((ta != 0x00) && (ta != 0xFF))
+					ifsc = ta;
+				else
+					ifsc = PROTOCOL_T1_DEFAULT_IFSC;
+			
+				// Towitoko does not allow IFSC > 251 //FIXME not sure whether this limitation still exists
+				ifsc = MIN (ifsc, PROTOCOL_T1_MAX_IFSC);
+			
+				// Set IFSD
+				ifsd = PROTOCOL_T1_DEFAULT_IFSD;
+			
+			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
+				// Calculate CWI and BWI
+				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TB, &tb) == ATR_NOT_FOUND)
+					{
+			#endif
+						cwi	= PROTOCOL_T1_DEFAULT_CWI;
+						bwi = PROTOCOL_T1_DEFAULT_BWI;
+			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
+					}
+				else
+					{
+						cwi	= tb & 0x0F;
+						bwi = tb >> 4;
+					}
+			#endif
+			
+				// Set CWT = (2^CWI + 11) work etu
+				CWT = (unsigned short) (((1<<cwi) + 11)); // in ETU
+			
+				// Set BWT = (2^BWI * 960 + 11) work etu
+				BWT = (unsigned short) (((1<<bwi) * 960 + 11)); //in ETU
+			
+				// Set BGT = 22 * work etu
+				BGT = 22L; //in ETU
+
+				if (parameters.n == 255)
+					CGT = 11L; //in ETU
+				else
+					CGT = GT;
+			
+				// Set the error detection code type
+				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
+					edc = PROTOCOL_T1_EDC_LRC;
+				else
+					edc = tc & 0x01;
+			
+				// Set initial send sequence (NS)
+				ns = 1;
+			
+				cs_debug ("Protocol: T=1: IFSC=%d, IFSD=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", ifsc, ifsd, CWT, BWT, BGT, (edc == PROTOCOL_T1_EDC_LRC) ? "LRC" : "CRC");
+
+				if (reader[ridx].typ != R_INTERNAL) {
+					icc_timings.block_timeout = ETU_to_ms(BWT);
+					icc_timings.char_timeout = ETU_to_ms(CWT);
+					icc_timings.block_delay = ETU_to_ms(BGT);
+					icc_timings.char_delay = ETU_to_ms(CGT);
+					cs_debug("Setting timings: block_timeout=%u ms, char_timeout=%u ms, block_delay=%u ms, char_delay=%u ms",icc_timings.block_timeout, icc_timings.char_timeout, icc_timings.block_delay, icc_timings.char_delay);
+				}
+			}
+			break;
+	 default:
+			protocol = NULL;
+			return PPS_PROTOCOL_ERROR;
+			break;
+	}
+
 #ifdef SCI_DEV
 #include <sys/ioctl.h>
 #include "sci_global.h"
@@ -426,10 +546,10 @@ static int PPS_InitICC ()
 		//for Irdeto T14 cards, do not set ETU
     if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && params.T == 14))
 		  params.ETU = F / parameters.d;
-		if (parameters.n == 255) //only for T0 or also for T1?
-			params.EGT = 0;
-		else
-			params.EGT = parameters.n;
+		params.EGT = EGT;
+		params.WWT = WWT;
+		params.BWT = BWT;
+		params.CWT = CWT;
 
 		double a;
 		ATR_GetParameter(atr, ATR_PARAMETER_P, &a);
@@ -474,117 +594,6 @@ static int PPS_InitICC ()
 	}
 }
 
-int Protocol_T1_Init ()
-{
-	BYTE ta, tb, tc, cwi, bwi;
-	unsigned long baudrate;
-	double work_etu;
-
-	// Set IFSC
-	if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
-		ifsc = PROTOCOL_T1_DEFAULT_IFSC;
-	else if ((ta != 0x00) && (ta != 0xFF))
-		ifsc = ta;
-	else
-		ifsc = PROTOCOL_T1_DEFAULT_IFSC;
-
-	// Towitoko does not allow IFSC > 251 //FIXME not sure whether this limitation still exists
-	ifsc = MIN (ifsc, PROTOCOL_T1_MAX_IFSC);
-
-	// Set IFSD
-	ifsd = PROTOCOL_T1_DEFAULT_IFSD;
-
-#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
-	// Calculate CWI and BWI
-	if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TB, &tb) == ATR_NOT_FOUND)
-		{
-#endif
-			cwi	= PROTOCOL_T1_DEFAULT_CWI;
-			bwi = PROTOCOL_T1_DEFAULT_BWI;
-#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
-		}
-	else
-		{
-			cwi	= tb & 0x0F;
-			bwi = tb >> 4;
-		}
-#endif
-	
-	// Work etu	= (1000 / baudrate) milliseconds
-	ICC_Async_GetBaudrate (&baudrate);
-	work_etu = 1000 / (double)baudrate;
-
-	// Set CWT = (2^CWI + 11) work etu
-	cwt = (unsigned short) (((1<<cwi) + 11) * work_etu);
-
-	// Set BWT = (2^BWI * 960 + 11) work etu
-	bwt = (unsigned short) (((1<<bwi) * 960 + 11) * work_etu);
-
-	// Set BGT = 22 * work etu
-	bgt = (unsigned short) (22 * work_etu);
-
-	// Set the error detection code type
-	if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
-		edc = PROTOCOL_T1_EDC_LRC;
-	else
-		edc = tc & 0x01;
-
-	// Set initial send sequence (NS)
-	ns = 1;
-	
-	// Set timings
-	icc_timings.block_timeout = bwt;
-	icc_timings.char_timeout = cwt;
-	icc_timings.block_delay = bgt;
-	ICC_Async_SetTimings ();
-
-#ifdef DEBUG_PROTOCOL
-	printf ("Protocol: T=1: IFSC=%d, IFSD=%d, CWT=%d, BWT=%d, BGT=%d, EDC=%s\n",
-					ifsc, ifsd, cwt, bwt, t1->bgt,
-					(edc == PROTOCOL_T1_EDC_LRC) ? "LRC" : "CRC");
-#endif
-
-	return PROTOCOL_T1_OK;
-}
-
-static int PPS_InitProtocol ()
-{
-	switch (parameters.t) {
-		case ATR_PROTOCOL_TYPE_T0:
-		case ATR_PROTOCOL_TYPE_T14:
-			{
-			BYTE wi;
-			/* Integer value WI	= TC2, by default 10 */
-#ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
-			if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
-#endif
-			wi = PROTOCOL_T0_DEFAULT_WI;
-
-			/* WWT = 960 * WI * (Fi / f) * 1000 milliseconds */
-			double F =	(double) atr_f_table[parameters.FI];
-			unsigned long wwt = (long unsigned int) (960 * wi * (F / ICC_Async_GetClockRate ()) * 1000);
-			if (parameters.t == 14)
-				wwt >>= 1; //is this correct?
-			
-			/* Set timings */
-			icc_timings.block_timeout = wwt;
-			icc_timings.char_timeout = wwt;
-			ICC_Async_SetTimings ();
-#ifdef DEBUG_PROTOCOL
-			printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", params->t, (int)(wwt),ICC_Async_GetClockRate());
-#endif
-			}
-			break;
-	 case ATR_PROTOCOL_TYPE_T1:
-			Protocol_T1_Init ();//always returns ok
-			break;
-	 default:
-			protocol = NULL;
-			return PPS_PROTOCOL_ERROR;
-			break;
-	}
-	return PPS_OK;
-}
 
 static BYTE PPS_GetPCK (BYTE * block, unsigned length)
 {
