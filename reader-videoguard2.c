@@ -547,7 +547,7 @@ static int do_cmd(const unsigned char *ins, const unsigned char *txbuff, unsigne
   return len;
 }
 
-#define BASEYEAR 1997
+#define BASEYEAR 2000
 static void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss)
 {
   *year=(Date[0]/12)+BASEYEAR;
