@@ -610,7 +610,6 @@ int videoguard_card_init(uchar *atr, int atrsize)
     else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
     {
         cs_log("Type: Videoguard Sky Italia");
-				BASEYEAR = 2000;
     }
     else if ((atrsize == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atrsize) == 0))
     {
