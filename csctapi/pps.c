@@ -247,7 +247,7 @@ int PPS_Perform (BYTE * params, unsigned *length)
 	
 				if (NeedsPTS) { 
 					if ((parameters.d == 32) || (parameters.d == 12) || (parameters.d == 20))
-						parameters.d = 0; //behave conform "old" atr_d_table; viaccess cards that fail PTS need this
+						parameters.d = ATR_DEFAULT_D; // viaccess cards that fail PTS need this
 				}
 				/////Here all non-ISO behaviour
 				/////End  all non-ISO behaviour

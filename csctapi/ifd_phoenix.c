@@ -70,7 +70,7 @@ int Phoenix_Init ()
 #endif
 	
 #ifdef DEBUG_IFD
-	printf ("IFD: Initializing slot number %d, com=%d\n", slot, reader[ridx].typ);
+	printf ("IFD: Initializing com=%d\n",  reader[ridx].typ);
 #endif
 	
 	if(reader[ridx].typ == R_INTERNAL) //not sure whether this should be moved in front of GPIO part
