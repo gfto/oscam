@@ -26,6 +26,7 @@
 #include "atr.h"
 #include <stdlib.h>
 #include <string.h>
+#include "../globals.h"
 
 /* 
  * Not exported variables definition

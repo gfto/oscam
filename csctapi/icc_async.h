@@ -70,11 +70,14 @@ ICC_Async_Timings icc_timings;    /* Current timings for transmiting to this ICC
 /* Initialization and Deactivation */
 extern int ICC_Async_Init ();
 extern int ICC_Async_Close ();
+int ICC_Async_Device_Init ();
 
 /* Attributes */
 extern int ICC_Async_SetTimings (unsigned short bwt);
 extern int ICC_Async_SetBaudrate (unsigned long baudrate);
 extern unsigned long ICC_Async_GetClockRate ();
+int ICC_Async_GetStatus (BYTE * result);
+
 
 /* Operations */
 extern int ICC_Async_Transmit (unsigned size, BYTE * buffer);

@@ -26,6 +26,7 @@
 #define _IO_SERIAL_
 
 #include "defines.h"
+#include <termios.h>
 
 //#define IO_Serial_DTR_Set() IO_Serial_DTR_RTS(1, 1)
 //#define IO_Serial_DTR_Clr() IO_Serial_DTR_RTS(1, 0)
@@ -67,6 +68,11 @@ extern void IO_Serial_Ioctl_Lock(int);
 #else
 #define IO_Serial_Ioctl_Lock(b) {} //FIXME ugly !!
 #endif
+
+bool IO_Serial_SetBitrate (unsigned long bitrate, struct termios * tio);
+bool IO_Serial_SetParams (unsigned long bitrate, unsigned bits, int parity, unsigned stopbits, int dtr, int rts);
+bool IO_Serial_SetProperties (struct termios newtio);
+int IO_Serial_SetParity (BYTE parity);
 
 /* Input and output */
 extern bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data);

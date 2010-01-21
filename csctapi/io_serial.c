@@ -31,7 +31,6 @@
 #ifdef OS_HPUX
 #include <sys/modem.h>
 #endif
-#include <termios.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>

@@ -276,6 +276,8 @@ int ICC_Async_SetTimings (unsigned short bwt)
 {
 	if (protocol_type != ATR_PROTOCOL_TYPE_T1)
 			return ICC_ASYNC_IFD_ERROR;
+
+	bwt = bwt;
 	
 	//currently not supporting update BWT for T1
 	return ICC_ASYNC_OK;

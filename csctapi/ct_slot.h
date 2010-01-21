@@ -66,11 +66,11 @@ CT_Slot_New ();
 
 /* Intialice a CT_Slot */
 extern char 
-CT_Slot_Init (CT_Slot * slot, int sn);
+CT_Slot_Init ();
 
 /* Check for card inserted */
 extern char
-CT_Slot_Check (CT_Slot * slot, unsigned int timeout, bool * card, bool * change);
+CT_Slot_Check (unsigned int timeout, bool * card, bool * change);
 
 /* Probe ICC type and protocol */
 extern char
@@ -92,13 +92,9 @@ CT_Slot_GetICCType (CT_Slot * slot);
 extern void *
 CT_Slot_GetAtr (CT_Slot * slot);
 
-/* Says if this slot is last */
-extern bool
-CT_Slot_IsLast (CT_Slot * slot);
-
 /* Return slot type */
 extern void
-CT_Slot_GetType (CT_Slot * slot, BYTE * buffer, int len);
+CT_Slot_GetType (BYTE * buffer, int len);
 
 /* Close a CT_Slot */
 extern char 
