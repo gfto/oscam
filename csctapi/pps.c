@@ -450,7 +450,7 @@ static int PPS_InitICC ()
 				cs_debug("Setting timings: block_timeout=%u ms, char_timeout=%u ms, block_delay=%u ms, char_delay=%u ms",icc_timings.block_timeout, icc_timings.char_timeout, icc_timings.block_delay, icc_timings.char_delay);
 			}
 #ifdef DEBUG_PROTOCOL
-			printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", params->t, (int)(wwt),ICC_Async_GetClockRate());
+			printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", parameters.t, (int)(WWT), ICC_Async_GetClockRate());
 #endif
 			}
 			break;
