@@ -650,6 +650,8 @@ int nagra2_card_init(uchar *atr)
 		cs_debug("[nagra-reader] NegotiateSessionKey failed");
 		return 0;
 	}
+	if (reader[ridx].cardmhz != 368)
+		cs_log("WARNING: For Nagra2 cards you will have to set 'cardmhz = 368' in oscam.server");
 	
 	return 1;
 }

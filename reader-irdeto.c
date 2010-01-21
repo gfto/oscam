@@ -255,7 +255,8 @@ int irdeto_card_init(uchar *atr)
       reader_chk_cmd(sc_GetCamKey383C, 0);
       break;
   }
- 
+	if (reader[ridx].cardmhz != 600)
+		cs_log("WARNING: For irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
   cs_log("ready for requests");
   return(1);
 }

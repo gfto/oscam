@@ -167,10 +167,20 @@ bool IO_Serial_SetBitrate (unsigned long bitrate, struct termios * tio)
     /* these structures are only available on linux as fas as we know so limit this code to OS_LINUX */
     struct serial_struct nuts;
     ioctl(reader[ridx].handle, TIOCGSERIAL, &nuts);
-    int custom_baud = bitrate * reader[ridx].mhz / reader[ridx].cardmhz;
-    nuts.custom_divisor = (nuts.baud_base + (custom_baud/2))/ custom_baud;
+    int custom_baud_asked = bitrate * reader[ridx].mhz / reader[ridx].cardmhz;
+    nuts.custom_divisor = (nuts.baud_base + (custom_baud_asked/2))/ custom_baud_asked;
+		int custom_baud_delivered =  nuts.baud_base / nuts.custom_divisor;
     cs_debug("custom baudrate: cardmhz=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
-	                      reader[ridx].cardmhz, reader[ridx].mhz, custom_baud, nuts.baud_base, nuts.custom_divisor, nuts.baud_base/nuts.custom_divisor);
+	                      reader[ridx].cardmhz, reader[ridx].mhz, custom_baud_asked, nuts.baud_base, nuts.custom_divisor, custom_baud_delivered);
+		int baud_diff = custom_baud_delivered - custom_baud_asked;
+		if (baud_diff < 0)
+			baud_diff = (-baud_diff);
+		if (baud_diff  > 0.05 * custom_baud_asked) {
+			cs_log("WARNING: your card is asking for custom_baudrate = %i, but your configuration can only deliver custom_baudrate = %i",custom_baud_asked, custom_baud_delivered);
+			cs_log("You are over- or underclocking, try OSCam when running your reader at normal clockspeed as required by your card, and setting mhz and cardmhz parameters accordingly.");
+			if (nuts.baud_base <= 115200)
+				cs_log("You are probably connecting your reader via a serial port, OSCam has more flexibility switching to custom_baudrates when using an USB->serial converter, preferably based on FTDI chip.");
+		}
     nuts.flags &= ~ASYNC_SPD_MASK;
     nuts.flags |= ASYNC_SPD_CUST;
     ioctl(reader[ridx].handle, TIOCSSERIAL, &nuts);
