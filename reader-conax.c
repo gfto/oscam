@@ -81,13 +81,6 @@ int conax_card_init(uchar *atr)
     switch(cta_res[i])
     {
 	
-      case 0x09:
-		reader[ridx].prid[j][0]=0x00;
-		reader[ridx].prid[j][1]=0x00;
-		reader[ridx].prid[j][2]=cta_res[i+4];
-		reader[ridx].prid[j][3]=cta_res[i+5];
-		
-		break;
       case 0x23:
 		if ( cta_res[i+5] != 0x00)
 		{
@@ -100,11 +93,9 @@ int conax_card_init(uchar *atr)
 		break;
     }
 
-
-
-  reader[ridx].nprov = j;
-
-
+  /* we have one provider, 0x0000 */
+  reader[ridx].nprov = 1;
+  memset(reader[ridx].prid, 0x00, sizeof(reader[ridx].prid));
 
   cs_ri_log("type: conax, caid: %04X, serial: %llu, card: v%d",
          reader[ridx].caid[0], b2ll(6, reader[ridx].hexserial), cardver);
