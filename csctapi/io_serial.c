@@ -281,10 +281,6 @@ bool IO_Serial_SetProperties (struct termios newtio)
 //	if (tcsetattr (reader[ridx].handle, TCSAFLUSH, &newtio) < 0)
 //		return FALSE;
 
-	unsigned int mctl;
-	if (ioctl (reader[ridx].handle, TIOCMGET, &mctl) < 0)
-		return FALSE;
-	
 #ifdef DEBUG_IO
 	printf("IO: Setting properties\n");
 #endif
