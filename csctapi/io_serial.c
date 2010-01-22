@@ -290,6 +290,14 @@ bool IO_Serial_SetProperties (struct termios newtio)
 //	if (tcsetattr (reader[ridx].handle, TCSAFLUSH, &newtio) < 0)
 //		return FALSE;
 
+  int mctl;
+	if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {
+		mctl &= ~TIOCM_RTS; //should be mctl |= TIOCM_RTS; for readers with reversed polarity reset
+		ioctl (reader->handle, TIOCMSET, &mctl);
+	}
+	else
+		cs_log("WARNING: Failed to reset reader %s", reader[ridx].label);
+
 #ifdef DEBUG_IO
 	printf("IO: Setting properties\n");
 #endif
