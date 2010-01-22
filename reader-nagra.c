@@ -70,7 +70,7 @@ static int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsi
 	*/
 	int msglen=ilen+6;
 	unsigned char msg[msglen];
-	unsigned char nagra_head[] = {0xA0, 0xCA, 0x00, 0x00};
+	static char nagra_head[] = {0xA0, 0xCA, 0x00, 0x00};
 
 	memset(msg, 0, msglen);
 	memcpy(msg,nagra_head,4);
@@ -141,7 +141,7 @@ static void ReverseMem(unsigned char *vIn, int len)
 	}
 }
 
-static void Signature(unsigned char *sig, unsigned char *vkey,unsigned char *msg, int len)
+static void Signature(unsigned char *sig, const unsigned char *vkey,const unsigned char *msg, int len) 
 {
 	IDEA_KEY_SCHEDULE ks;
 	unsigned char v[8];
