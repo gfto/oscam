@@ -34,8 +34,8 @@ unsigned char cam_state[3];
 #define SYSTEM_NAGRA 0x1800
 #define SYSTEM_MASK 0xFF00
 
-//unsigned char XorSum(const unsigned char *mem, int len)
-unsigned char XorSum(unsigned char *mem, int len)
+
+static unsigned char XorSum(unsigned char *mem, int len)
 {
   unsigned char cs;
   cs=0x00;
@@ -47,8 +47,7 @@ unsigned char XorSum(unsigned char *mem, int len)
   return cs;
 }
 
-//static time_t tier_date(ulong date, char *buf, int l)
-time_t tier_date(ulong date, char *buf, int l)
+static time_t tier_date(ulong date, char *buf, int l)
 {
   time_t ut=870393600L+date*(24*3600);
   if (buf)
@@ -60,7 +59,7 @@ time_t tier_date(ulong date, char *buf, int l)
   return(ut);
 }
 
-int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned char *data)
+static int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned char *data)
 {
 	/*
 	here we build the command related to the protocol T1 for ROM142 or T14 for ROM181
@@ -108,7 +107,7 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
     	return 0;
 }
 
-int SetIFS(unsigned char size)
+static int SetIFS(unsigned char size)
 {
 	unsigned char buf[5];
 	int ret;
@@ -130,7 +129,7 @@ int SetIFS(unsigned char size)
   	return 1;
 }
 
-void ReverseMem(unsigned char *vIn, int len)
+static void ReverseMem(unsigned char *vIn, int len)
 {
 	unsigned char temp;
 	int i;
@@ -142,8 +141,7 @@ void ReverseMem(unsigned char *vIn, int len)
 	}
 }
 
-void Signature(unsigned char *sig, unsigned char *vkey,unsigned char *msg, int len)
-//void Signature(unsigned char *sig, const unsigned char *vkey,const unsigned char *msg, int len)
+static void Signature(unsigned char *sig, unsigned char *vkey,unsigned char *msg, int len)
 {
 	IDEA_KEY_SCHEDULE ks;
 	unsigned char v[8];
@@ -165,7 +163,7 @@ void Signature(unsigned char *sig, unsigned char *vkey,unsigned char *msg, int l
 	return;
 }
 
-int CamStateRequest(void)
+static int CamStateRequest(void)
 {
 	if(do_cmd(0xC0,0x02,0xB0,0x06,NULL))
 	{
@@ -180,12 +178,12 @@ int CamStateRequest(void)
 	return (1);
 }
 
-void DateTimeCMD(void)
+static void DateTimeCMD(void)
 {
 	do_cmd(0xC8,0x02,0xB8,0x06,NULL);
 }
 
-int NegotiateSessionKey_Tiger(void)
+static int NegotiateSessionKey_Tiger(void)
 {
 
 	unsigned char vFixed[] = {0,1,2,3,0x11};
@@ -303,7 +301,7 @@ int NegotiateSessionKey_Tiger(void)
 		
 }
 
-int NegotiateSessionKey(void)
+static int NegotiateSessionKey(void)
 {
 	unsigned char cmd2b[] = {0x21, 0x40, 0x48, 0xA0, 0xCA, 0x00, 0x00, 0x43, 0x2B, 0x40, 0x1C, 0x54, 0xd1, 0x26, 0xe7, 0xe2, 0x40, 0x20, 0xd1, 0x66, 0xf4, 0x18, 0x97, 0x9d, 0x5f, 0x16, 0x8f, 0x7f, 0x7a, 0x55, 0x15, 0x82, 0x31, 0x14, 0x06, 0x57, 0x1a, 0x3f, 0xf0, 0x75, 0x62, 0x41, 0xc2, 0x84, 0xda, 0x4c, 0x2e, 0x84, 0xe9, 0x29, 0x13, 0x81, 0xee, 0xd6, 0xa9, 0xf5, 0xe9, 0xdb, 0xaf, 0x22, 0x51, 0x3d, 0x44, 0xb3, 0x20, 0x83, 0xde, 0xcb, 0x5f, 0x35, 0x2b, 0xb0, 0xce, 0x70, 0x02, 0x00};
 	unsigned char negot[64];
@@ -405,7 +403,7 @@ int NegotiateSessionKey(void)
 	return 1;
 }
 
-void decryptDT08(void)
+static void decryptDT08(void)
 {
 
 	unsigned char vFixed[] = {0,1,2,3};
@@ -484,7 +482,7 @@ void decryptDT08(void)
 	}  	
 }
 
-void addProvider()
+static void addProvider()
 {
 	int i;
 	int toadd=1;
@@ -506,7 +504,7 @@ void addProvider()
 	}
 }			
 
-int ParseDataType(unsigned char dt)
+static int ParseDataType(unsigned char dt)
 {
 	char ds[16], de[16];
       	ushort chid;
@@ -556,7 +554,7 @@ int ParseDataType(unsigned char dt)
   	return 0;
 }
 
-int GetDataType(unsigned char dt, int len, int shots)
+static int GetDataType(unsigned char dt, int len, int shots)
 {
 	int i;
   	for(i=0; i<shots; i++)
