@@ -2,17 +2,8 @@
 #include "reader-common.h"
 #include <stdlib.h>
 
-//02102009 Dingo35 (=original author of this module):
-//-added detection of EMM-GA; this kind of EMM has not been documented yet, no update takes place (yet)
-//-solved bug in validity date
-//-eliminated unnecessary buffers
-//-added printing of PBM info
-
 extern uchar cta_cmd[], cta_res[];
 extern ushort cta_lr;
-static unsigned short pmap=0;	// provider-maptable
-unsigned long long serial ;
-char *card;
 
 #define write_cmd(cmd, data) \
 { \
@@ -24,7 +15,7 @@ char *card;
         if (card_write(cmd, NULL)) return(0); \
 }
 
-int set_provider_info(int i)
+static int set_provider_info(int i)
 {
   static uchar ins12[] = { 0xc1, 0x12, 0x00, 0x00, 0x19 }; // get provider info
   int year, month, day;
@@ -69,6 +60,9 @@ int set_provider_info(int i)
 
 int seca_card_init(uchar *atr)
 {
+	char *card;
+	static unsigned short pmap=0;	// provider-maptable
+	unsigned long long serial ;
   uchar buf[256];
   static uchar ins0e[] = { 0xc1, 0x0e, 0x00, 0x00, 0x08 }; // get serial number (UA)
   static uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x07 }; // get nr. of prividers
@@ -140,28 +134,23 @@ static int get_prov_index(char *provid)	//returns provider id or -1 if not found
 
 int seca_do_ecm(ECM_REQUEST *er)
 {
-  static unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
-  static unsigned char ins3a[] = { 0xc1,0x3a,0x00,0x00,0x10 }; // decoding cw
+  unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
+  unsigned char ins3a[] = { 0xc1,0x3a,0x00,0x00,0x10 }; // decoding cw
   int i;
-
   i=get_prov_index((char *) er->ecm+3);
   if ((i == -1) || (reader[ridx].availkeys[i][0] == 0)) //if provider not found or expired
   	return (0);
   ins3c[2]=i;
   ins3c[3]=er->ecm[7]; //key nr
   ins3c[4]=(((er->ecm[1]&0x0f) << 8) | er->ecm[2])-0x05;
-  
-  //memcpy(ins3cdata,er->ecm+8,256-8);
   write_cmd(ins3c, er->ecm+8); //ecm request
-
-  static unsigned char ins30[] = { 0xC1, 0x30, 0x00, 0x02, 0x09 };
-  static unsigned char ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF };
+  unsigned char ins30[] = { 0xC1, 0x30, 0x00, 0x02, 0x09 };
+  unsigned char ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF };
   /* We need to use a token */
   if (cta_res[0] == 0x90 && cta_res[1] == 0x1a) {
     write_cmd(ins30, ins30data);
     write_cmd(ins3c, er->ecm+8); //ecm request
   }
-
   if ((cta_res[0] != 0x90) || (cta_res[1] != 0x00)) return (0);
   read_cmd(ins3a, NULL); //get cw's
   if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) return (0);//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
@@ -171,9 +160,8 @@ int seca_do_ecm(ECM_REQUEST *er)
 }
 
 int seca_do_emm(EMM_PACKET *ep)
-{ //return 1;
-  static unsigned char ins40[] = { 0xc1,0x40,0x00,0x00,0x00 };
-  //uchar ins40data[256];
+{
+  unsigned char ins40[] = { 0xc1,0x40,0x00,0x00,0x00 };
   int i,ins40data_offset;
   int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
 
@@ -197,7 +185,6 @@ int seca_do_emm(EMM_PACKET *ep)
 		ins40[3]=ep->emm[9];
 		ins40[4]= emm_length - 0x07;
 		ins40data_offset = 10;
-		//memcpy(ins40data,ep->emm+10,256-10);
 	}
 	break;
       }//end shared EMM
@@ -218,7 +205,6 @@ int seca_do_emm(EMM_PACKET *ep)
 		ins40[3]=ep->emm[12];
 		ins40[4]= emm_length - 0x0A;
 		ins40data_offset = 13;
-		//memcpy(ins40data,ep->emm+13,256-13);
 	}
 	break;
       } //end unique EMM
@@ -259,12 +245,8 @@ int seca_card_info (void)
 //
 //This module is therefore optical only
 
-  static unsigned char ins34[] = {
-    0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00
-  };				//data following is provider Package Bitmap Records
-  static unsigned char ins32[] = {
-    0xc1, 0x32, 0x00, 0x00, 0x20
-  };				// get PBM
+  static unsigned char ins34[] = { 0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 };				//data following is provider Package Bitmap Records
+  static unsigned char ins32[] = { 0xc1, 0x32, 0x00, 0x00, 0x20 };				// get PBM
   int prov;
 
   for (prov = 0; prov < reader[ridx].nprov; prov++) {
