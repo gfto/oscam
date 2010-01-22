@@ -15,14 +15,14 @@
 int aes_active=0;
 AES_KEY dkey, ekey;
 int BASEYEAR = 1997;
-void cAES_SetKey(const unsigned char *key)
+static void cAES_SetKey(const unsigned char *key)
 {
   AES_set_decrypt_key(key,128,&dkey);
   AES_set_encrypt_key(key,128,&ekey);
   aes_active=1;
 }
 
-int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt)
+static int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt)
 {
   if(aes_active) {
     len=(len+15)&(~15); // pad up to a multiple of 16
@@ -33,7 +33,7 @@ int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt)
   return -1;
 }
 
-int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 if cw is all zeros
+static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 if cw is all zeros
 {
   int i;
   for (i = 0; i < 8; i++)
@@ -47,22 +47,22 @@ int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 if cw i
 //////  special thanks to an "italian forum" !!!!
 
 
-void postprocess_cw(unsigned char *cw)
+static void postprocess_cw(unsigned char *cw)
 {
 
   if (!cw_is_valid(cw)) //if cw is all zero, keep it that way
     return; 
 #if __BYTE_ORDER == __BIG_ENDIAN
-  unsigned char Tb1[0xC]={0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF,0xF8,0x61,0xCB,0x52};
-  unsigned char Tb2[0x40]= {
+  static unsigned char Tb1[0xC]={0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF,0xF8,0x61,0xCB,0x52};
+  static unsigned char Tb2[0x40]= {
     0xC5,0x39,0xF5,0xB9,0x90,0x99,0x01,0x3A,0xD4,0xB9,0x6A,0xB5,0xEA,0x67,0x7E,0xB4,
     0x6C,0x30,0x4B,0xF0,0xB8,0x10,0xB0,0xB5,0xB7,0x6D,0xA7,0x51,0x1A,0xE7,0x14,0xCA,
     0x4F,0x4F,0x15,0x86,0x26,0x08,0x10,0xB1,0xE7,0xE1,0x48,0xBE,0x7D,0xDD,0x5E,0xCB,
     0xcF,0xBF,0x32,0x3B,0x8B,0x31,0xB1,0x31,0x0F,0x1A,0x66,0x4B,0x01,0x40,0x01,0x00
   };
 #else
-  unsigned char Tb1[0xC]={0x23,0x01,0x67,0x45,0xAB,0x89,0xEF,0xCD,0x61,0xF8,0x52,0xCB};
-  unsigned char Tb2[0x40]= {
+  static unsigned char Tb1[0xC]={0x23,0x01,0x67,0x45,0xAB,0x89,0xEF,0xCD,0x61,0xF8,0x52,0xCB};
+  static unsigned char Tb2[0x40]= {
     0x39,0xC5,0xB9,0xF5,0x99,0x90,0x3A,0x01,0xB9,0xD4,0xB5,0x6A,0x67,0xEA,0xB4,0x7E,
     0x30,0x6C,0xF0,0x4B,0x10,0xB8,0xB5,0xB0,0x6D,0xB7,0x51,0xA7,0xE7,0x1A,0xCA,0x14,
     0x4F,0x4F,0x86,0x15,0x08,0x26,0xB1,0x10,0xE1,0xE7,0xBE,0x48,0xDD,0x7D,0xCB,0x5E,
@@ -138,7 +138,7 @@ void postprocess_cw(unsigned char *cw)
 
 //////  ====================================================================================
 
-void swap_lb (unsigned char *buff, int len)
+static void swap_lb (unsigned char *buff, int len)
 {
 
 #if __BYTE_ORDER != __BIG_ENDIAN
@@ -153,7 +153,7 @@ void swap_lb (unsigned char *buff, int len)
   }
 } 
 
-inline void __xxor(unsigned char *data, int len, const unsigned char *v1, const unsigned char *v2)
+static inline void __xxor(unsigned char *data, int len, const unsigned char *v1, const unsigned char *v2)
 {
   switch(len) { // looks ugly, but the compiler can optimize it very well ;)
     case 16:
@@ -175,19 +175,19 @@ inline void __xxor(unsigned char *data, int len, const unsigned char *v1, const 
 unsigned short cardkeys[3][32];
 unsigned char stateD3A[16];
 
-void cCamCryptVG2_LongMult(unsigned short *pData, unsigned short *pLen, unsigned int mult, unsigned int carry);
-void cCamCryptVG2_PartialMod(unsigned short val, unsigned int count, unsigned short *outkey, const unsigned short *inkey);
-void cCamCryptVG2_RotateRightAndHash(unsigned char *p);
-void cCamCryptVG2_Reorder16A(unsigned char *dest, const unsigned char *src);
-void cCamCryptVG2_ReorderAndEncrypt(unsigned char *p);
-void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data);
-void cCamCryptVG2_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status);
-void cCamCryptVG2_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status);
-void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2);
-void cCamCryptVG2_SetSeed(unsigned char *Key1, unsigned char *Key2);
-void cCamCryptVG2_GetCamKey(unsigned char *buff);
+static void cCamCryptVG2_LongMult(unsigned short *pData, unsigned short *pLen, unsigned int mult, unsigned int carry);
+static void cCamCryptVG2_PartialMod(unsigned short val, unsigned int count, unsigned short *outkey, const unsigned short *inkey);
+static void cCamCryptVG2_RotateRightAndHash(unsigned char *p);
+static void cCamCryptVG2_Reorder16A(unsigned char *dest, const unsigned char *src);
+static void cCamCryptVG2_ReorderAndEncrypt(unsigned char *p);
+static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data);
+static void cCamCryptVG2_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status);
+static void cCamCryptVG2_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status);
+static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2);
+static void cCamCryptVG2_SetSeed(unsigned char *Key1, unsigned char *Key2);
+static void cCamCryptVG2_GetCamKey(unsigned char *buff);
 
-void cCamCryptVG2_SetSeed(unsigned char *Key1, unsigned char *Key2)
+static void cCamCryptVG2_SetSeed(unsigned char *Key1, unsigned char *Key2)
 {
   swap_lb (Key1, 64);
   swap_lb (Key2, 64);
@@ -197,7 +197,7 @@ void cCamCryptVG2_SetSeed(unsigned char *Key1, unsigned char *Key2)
   swap_lb (Key2, 64);
 }
 
-void cCamCryptVG2_GetCamKey(unsigned char *buff)
+static void cCamCryptVG2_GetCamKey(unsigned char *buff)
 {
   unsigned short *tb2=(unsigned short *)buff, c=1;
   memset(tb2,0,64);
@@ -207,7 +207,7 @@ void cCamCryptVG2_GetCamKey(unsigned char *buff)
   swap_lb (buff, 64);
 }
 
-void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2)
+static void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2)
 {
   switch(buff[0]) {
     case 0xD0:
@@ -236,7 +236,7 @@ void cCamCryptVG2_PostProcess_Decrypt(unsigned char *buff, int len, unsigned cha
   }
 }
 
-void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data)
+static void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data)
 {
   switch(ins[1]) {
     case 0xb4:
@@ -278,7 +278,7 @@ void cCamCryptVG2_Process_D0(const unsigned char *ins, unsigned char *data)
   }
 }
 
-void cCamCryptVG2_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status)
+static void cCamCryptVG2_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status)
 {
   unsigned char iter[16], tmp[16];
   memset(iter,0,sizeof(iter));
@@ -315,7 +315,7 @@ void cCamCryptVG2_Process_D1(const unsigned char *ins, unsigned char *data, cons
   memcpy(stateD3A,tmp,16);
 }
 
-void cCamCryptVG2_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status)
+static void cCamCryptVG2_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status)
 {
   if(ins[4]>16) ins[4]-=16;
   if(ins[1]==0xbe) memset(stateD3A,0,sizeof(stateD3A));
@@ -359,7 +359,7 @@ void cCamCryptVG2_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsi
     }
 }
 
-void cCamCryptVG2_ReorderAndEncrypt(unsigned char *p)
+static void cCamCryptVG2_ReorderAndEncrypt(unsigned char *p)
 {
   unsigned char tmp[16];
   cCamCryptVG2_Reorder16A(tmp,p);
@@ -369,7 +369,7 @@ void cCamCryptVG2_ReorderAndEncrypt(unsigned char *p)
 
 // reorder AAAABBBBCCCCDDDD to ABCDABCDABCDABCD
 
-void cCamCryptVG2_Reorder16A(unsigned char *dest, const unsigned char *src)
+static void cCamCryptVG2_Reorder16A(unsigned char *dest, const unsigned char *src)
 {
   int i;
   int j;
@@ -379,7 +379,7 @@ void cCamCryptVG2_Reorder16A(unsigned char *dest, const unsigned char *src)
       dest[k]=src[j];
 }
 
-void cCamCryptVG2_LongMult(unsigned short *pData, unsigned short *pLen, unsigned int mult, unsigned int carry)
+static void cCamCryptVG2_LongMult(unsigned short *pData, unsigned short *pLen, unsigned int mult, unsigned int carry)
 {
   int i;
   for(i=0; i<*pLen; i++) {
@@ -390,7 +390,7 @@ void cCamCryptVG2_LongMult(unsigned short *pData, unsigned short *pLen, unsigned
   if(carry) pData[(*pLen)++]=carry;
 }
 
-void cCamCryptVG2_PartialMod(unsigned short val, unsigned int count, unsigned short *outkey, const unsigned short *inkey)
+static void cCamCryptVG2_PartialMod(unsigned short val, unsigned int count, unsigned short *outkey, const unsigned short *inkey)
 {
   if(count) {
     unsigned int mod=inkey[count];
@@ -410,7 +410,7 @@ void cCamCryptVG2_PartialMod(unsigned short val, unsigned int count, unsigned sh
     outkey[0]=val;
 }
 
-const unsigned char table1[256] = {
+static const unsigned char table1[256] = {
   0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5, 0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,
   0xca,0x82,0xc9,0x7d,0xfa,0x59,0x47,0xf0, 0xad,0xd4,0xa2,0xaf,0x9c,0xa4,0x72,0xc0,
   0xb7,0xfd,0x93,0x26,0x36,0x3f,0xf7,0xcc, 0x34,0xa5,0xe5,0xf1,0x71,0xd8,0x31,0x15,
@@ -429,7 +429,7 @@ const unsigned char table1[256] = {
   0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68, 0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16,
   };
 
-void cCamCryptVG2_RotateRightAndHash(unsigned char *p)
+static void cCamCryptVG2_RotateRightAndHash(unsigned char *p)
 {
   unsigned char t1=p[15];
   int i;
@@ -464,12 +464,12 @@ struct CmdTab {
 };
 
 struct CmdTab *cmd_table=NULL;
-void memorize_cmd_table (const unsigned char *mem, int size){
+static void memorize_cmd_table (const unsigned char *mem, int size){
   cmd_table=(struct CmdTab *)malloc(sizeof(unsigned char) * size);
   memcpy(cmd_table,mem,size);
 }
 
-int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode)
+static int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode)
 {
   struct CmdTabEntry *pcte=cmd_table->e;
   int i;
@@ -482,7 +482,7 @@ int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned c
   return 0;
 }
 
-int status_ok(const unsigned char *status){
+static int status_ok(const unsigned char *status){
     //cs_log("check status %02x%02x", status[0],status[1]);
     return (status[0] == 0x90 || status[0] == 0x91)
            && (status[1] == 0x00 || status[1] == 0x01
@@ -494,7 +494,7 @@ int status_ok(const unsigned char *status){
 #define write_cmd(cmd, data) (card_write(cmd, data) == 0)
 #define read_cmd(cmd, data) (card_write(cmd, NULL) == 0)
 
-int read_cmd_len(const unsigned char *cmd) 
+static int read_cmd_len(const unsigned char *cmd) 
 { 
   unsigned char cmd2[5]; 
   memcpy(cmd2,cmd,5); 
@@ -507,7 +507,7 @@ int read_cmd_len(const unsigned char *cmd)
   return cta_res[0];   
 }
 
-int videoguard2_do_cmd(const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff)
+static int do_cmd(const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff)
 {
   unsigned char ins2[5];
   memcpy(ins2,ins,5);
@@ -547,7 +547,7 @@ int videoguard2_do_cmd(const unsigned char *ins, const unsigned char *txbuff, un
   return len;
 }
 
-void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss)
+static void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss)
 {
   *year=(Date[0]/12)+BASEYEAR;
   *mon=(Date[0]%12)+1;
@@ -557,13 +557,13 @@ void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int
   *ss=(Date[3]-*mm*32)*2;
 }
 
-void read_tiers(void)
+static void read_tiers(void)
 {
-  const unsigned char ins2a[5] = { 0xd0,0x2a,0x00,0x00,0x00 };
+  static const unsigned char ins2a[5] = { 0xd0,0x2a,0x00,0x00,0x00 };
   int l;
-  l=videoguard2_do_cmd(ins2a,NULL,NULL);
+  l=do_cmd(ins2a,NULL,NULL);
   if(l<0 || !status_ok(cta_res+l)) return;
-  unsigned char ins76[5] = { 0xd0,0x76,0x00,0x00,0x00 };
+  static unsigned char ins76[5] = { 0xd0,0x76,0x00,0x00,0x00 };
   ins76[3]=0x7f; ins76[4]=2;
   if(!read_cmd(ins76,NULL) || !status_ok(cta_res+2)) return;
   ins76[3]=0; ins76[4]=0;
@@ -571,7 +571,7 @@ void read_tiers(void)
   int i;
   for(i=0; i<num; i++) {
     ins76[2]=i;
-    l=videoguard2_do_cmd(ins76,NULL,NULL);
+    l=do_cmd(ins76,NULL,NULL);
     if(l<0 || !status_ok(cta_res+l)) return;
     if(cta_res[2]==0 && cta_res[3]==0) break;
     int y,m,d,H,M,S;
@@ -666,7 +666,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
   unsigned char buff[256];
 
   unsigned char ins7416[5] = { 0xD0,0x74,0x16,0x00,0x00 };
-  if(videoguard2_do_cmd(ins7416, NULL, NULL)<0) {
+  if(do_cmd(ins7416, NULL, NULL)<0) {
     cs_log ("cmd 7416 failed");
     return 0;
     }
@@ -683,7 +683,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
   } else {
     /* we can try to get the boxid from the card */
     int boxidOK=0;
-    l=videoguard2_do_cmd(ins36, NULL, buff);
+    l=do_cmd(ins36, NULL, buff);
     if(l>=0) {
       int i;
       for(i=0; i<l ;i++) {
@@ -711,7 +711,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
 
   //short int SWIRDstatus = cta_res[1];
   unsigned char ins58[5] = { 0xD0,0x58,0x00,0x00,0x00 };
-  l=videoguard2_do_cmd(ins58, NULL, buff);
+  l=do_cmd(ins58, NULL, buff);
   if(l<0) {
     cs_log("cmd ins58 failed");
     return 0;
@@ -748,35 +748,35 @@ int videoguard_card_init(uchar *atr, int atrsize)
   unsigned char insB4[5] = { 0xD0,0xB4,0x00,0x00,0x40 };
   unsigned char tbuff[64];
   cCamCryptVG2_GetCamKey(tbuff);
-  l=videoguard2_do_cmd(insB4, tbuff, NULL);
+  l=do_cmd(insB4, tbuff, NULL);
   if(l<0 || !status_ok(cta_res)) {
     cs_log ("cmd D0B4 failed (%02X%02X)", cta_res[0], cta_res[1]);
     return 0;
     }
 
   unsigned char insBC[5] = { 0xD0,0xBC,0x00,0x00,0x00 };
-  l=videoguard2_do_cmd(insBC, NULL, NULL);
+  l=do_cmd(insBC, NULL, NULL);
   if(l<0) {
     cs_log("cmd D0BC failed");
     return 0;
     }
 
   unsigned char insBE[5] = { 0xD3,0xBE,0x00,0x00,0x00 };
-  l=videoguard2_do_cmd(insBE, NULL, NULL);
+  l=do_cmd(insBE, NULL, NULL);
   if(l<0) {
     cs_log("cmd D3BE failed");
     return 0;
     }
 
   unsigned char ins58a[5] = { 0xD1,0x58,0x00,0x00,0x00 };
-  l=videoguard2_do_cmd(ins58a, NULL, NULL);
+  l=do_cmd(ins58a, NULL, NULL);
   if(l<0) {
     cs_log("cmd D158 failed");
     return 0;
     }
 
   unsigned char ins4Ca[5] = { 0xD1,0x4C,0x00,0x00,0x00 };
-  l=videoguard2_do_cmd(ins4Ca,payload4C, NULL);
+  l=do_cmd(ins4Ca,payload4C, NULL);
   if(l<0 || !status_ok(cta_res)) {
     cs_log("cmd D14Ca failed");
     return 0;
@@ -796,8 +796,8 @@ int videoguard_card_init(uchar *atr, int atrsize)
 
 int videoguard_do_ecm(ECM_REQUEST *er)
 {
-  unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
-  const unsigned char ins54[5] = { 0xD3,0x54,0x00,0x00,0x00};
+  static unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
+  static const unsigned char ins54[5] = { 0xD3,0x54,0x00,0x00,0x00};
   int posECMpart2=er->ecm[6]+7;
   int lenECMpart2=er->ecm[posECMpart2]+1;
   unsigned char tbuff[264];
@@ -805,9 +805,9 @@ int videoguard_do_ecm(ECM_REQUEST *er)
   memcpy(&tbuff[1],&(er->ecm[posECMpart2+1]),lenECMpart2-1);
   ins40[4]=lenECMpart2;
   int l;
-  l = videoguard2_do_cmd(ins40,tbuff,NULL);
+  l = do_cmd(ins40,tbuff,NULL);
   if(l>0 && status_ok(cta_res)) {
-    l = videoguard2_do_cmd(ins54,NULL,NULL);
+    l = do_cmd(ins54,NULL,NULL);
     if(l>0 && status_ok(cta_res+l)) {
       if (!cw_is_valid(CW1)) //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
 	return 0;
@@ -841,12 +841,12 @@ int videoguard_do_ecm(ECM_REQUEST *er)
   return 0;
 }
 
-int num_addr(const unsigned char *data)
+static int num_addr(const unsigned char *data)
 {
   return ((data[3]&0x30)>>4)+1;
 }
 
-int addr_mode(const unsigned char *data)
+static int addr_mode(const unsigned char *data)
 {
   switch(data[3]&0xC0) {
     case 0x40: return 3;
@@ -855,7 +855,7 @@ int addr_mode(const unsigned char *data)
     }
 }
 
-const unsigned char * payload_addr(const unsigned char *data, const unsigned char *a)
+static const unsigned char * payload_addr(const unsigned char *data, const unsigned char *a)
 {
   int s;
   int l;
@@ -919,7 +919,7 @@ int videoguard_do_emm(EMM_PACKET *ep)
   const unsigned char *payload = payload_addr(ep->emm, reader[ridx].hexserial);
   if (payload) {
     ins42[4]=*payload;
-    int l = videoguard2_do_cmd(ins42,payload+1,NULL);
+    int l = do_cmd(ins42,payload+1,NULL);
     if(l>0 && status_ok(cta_res)) {
       rc=1;
       }
