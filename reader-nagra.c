@@ -34,7 +34,8 @@ unsigned char cam_state[3];
 #define SYSTEM_NAGRA 0x1800
 #define SYSTEM_MASK 0xFF00
 
-unsigned char XorSum(const unsigned char *mem, int len)
+//unsigned char XorSum(const unsigned char *mem, int len)
+unsigned char XorSum(unsigned char *mem, int len)
 {
   unsigned char cs;
   cs=0x00;
@@ -46,7 +47,8 @@ unsigned char XorSum(const unsigned char *mem, int len)
   return cs;
 }
 
-static time_t tier_date(ulong date, char *buf, int l)
+//static time_t tier_date(ulong date, char *buf, int l)
+time_t tier_date(ulong date, char *buf, int l)
 {
   time_t ut=870393600L+date*(24*3600);
   if (buf)
@@ -69,7 +71,7 @@ int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned ch
 	*/
 	int msglen=ilen+6;
 	unsigned char msg[msglen];
-	static char nagra_head[] = {0xA0, 0xCA, 0x00, 0x00};
+	unsigned char nagra_head[] = {0xA0, 0xCA, 0x00, 0x00};
 
 	memset(msg, 0, msglen);
 	memcpy(msg,nagra_head,4);
@@ -140,7 +142,8 @@ void ReverseMem(unsigned char *vIn, int len)
 	}
 }
 
-void Signature(unsigned char *sig, const unsigned char *vkey,const unsigned char *msg, int len)
+void Signature(unsigned char *sig, unsigned char *vkey,unsigned char *msg, int len)
+//void Signature(unsigned char *sig, const unsigned char *vkey,const unsigned char *msg, int len)
 {
 	IDEA_KEY_SCHEDULE ks;
 	unsigned char v[8];
