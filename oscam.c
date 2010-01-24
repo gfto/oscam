@@ -1091,7 +1091,7 @@ static void cs_fake_client(char *usr, int uniq, in_addr_t ip)
 int cs_auth_client(struct s_auth *account, char *e_txt)
 {
   int rc=0;
-  char buf[16];
+  char buf[32];
   char *t_crypt="encrypted";
   char *t_plain="plain";
   char *t_grant=" granted";

@@ -325,7 +325,7 @@ struct s_client
   int       crypted;
   int       dup;
   int       au;
-  int       autoau;
+  char      autoau;
   int       monlvl;
   int       dbglvl;
   CAIDTAB   ctab;
