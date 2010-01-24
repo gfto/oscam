@@ -23,6 +23,7 @@
 */
 
 #include "defines.h"
+#include "../oscam-types.h"
 #include "apdu.h"
 #include <stdlib.h>
 #include <string.h>
