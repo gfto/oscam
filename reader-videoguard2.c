@@ -863,7 +863,7 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
 
   switch(addr_mode(data)) {
     case 2: s=3; break;
-    case 3: s=4; break;
+    case 3: case 0: s=4; break;
     default: return NULL;
     }
 
@@ -876,7 +876,10 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
     }
 
   /* skip header, the list of address, and the separator (the two 00 00) */
-  ptr = data+4+4*num_addr(data)+2;
+  if (position == -1)
+    ptr = data+6+data[5];
+  else
+    ptr = data+4+4*num_addr(data)+2;
 
   /* skip optional 00 */
   if (*ptr == 0x00) ptr++;
@@ -917,7 +920,7 @@ int videoguard_do_emm(EMM_PACKET *ep)
   int rc=0;
 
   const unsigned char *payload = payload_addr(ep->emm, reader[ridx].hexserial);
-  if (payload) {
+  while (payload) {
     ins42[4]=*payload;
     int l = do_cmd(ins42,payload+1,NULL);
     if(l>0 && status_ok(cta_res)) {
@@ -926,9 +929,19 @@ int videoguard_do_emm(EMM_PACKET *ep)
 
     cs_log("EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
 //cs_dump(ep->emm, 64, "EMM:");
-    if (status_ok (cta_res)) {
-      read_tiers();
+    //if (status_ok (cta_res)) {
+      //read_tiers();
+      //}
+
+    if (num_addr(ep->emm) == 1 && (int)(&payload[1] - &ep->emm[0]) + *payload + 1 < ep->l) {
+      payload += *payload + 1;
+      if (*payload == 0x00) ++payload;
+      ++payload;
+      if (*payload != 0x02) break;
+      payload += 2 + payload[1];
       }
+    else
+      payload = 0;
 
     }
  
