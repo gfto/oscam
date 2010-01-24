@@ -52,7 +52,7 @@ int Cool_GetStatus (int * in)
 	return OK;
 }
 
-int Cool_Reset (ATR ** atr)
+int Cool_Reset (ATR * atr)
 {
 	if (!Cool_SetBaudrate(357))
 		return ERROR;
@@ -67,8 +67,7 @@ int Cool_Reset (ATR ** atr)
 	if (cnxt_smc_get_atr (handle, buf, &n))
 		return ERROR;
 		
-	(*atr) = ATR_New ();
-	if(ATR_InitFromArray ((*atr), buf, n) == ATR_OK)
+	if(ATR_InitFromArray (atr, buf, n) == ATR_OK)
 	{
 		struct timespec req_ts;
 		req_ts.tv_sec = 0;
@@ -77,11 +76,7 @@ int Cool_Reset (ATR ** atr)
 		return OK;
 	}
 	else
-	{
-		ATR_Delete (*atr);
-		(*atr) = NULL;
 		return ERROR;
-	}
 }
 
 int Cool_Transmit (BYTE * sent, unsigned size)

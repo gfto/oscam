@@ -36,7 +36,7 @@ int Sci_GetStatus (int handle, int * status)
 	return OK;
 }
 
-int Sci_Reset (ATR ** atr)
+int Sci_Reset (ATR * atr)
 {
 	unsigned char buf[SCI_MAX_ATR_SIZE];
 	int n = 0;
@@ -46,8 +46,6 @@ int Sci_Reset (ATR ** atr)
 	int atr_size = 2, TDi_exists = 0;
 #endif
 	
-	(*atr) = NULL;
-
 	memset(&params,0,sizeof(SCI_PARAMETERS));
 	
 	params.ETU = 372; 
@@ -120,9 +118,7 @@ int Sci_Reset (ATR ** atr)
 	if(n==0)
 		return ERROR;
 
-		
-	(*atr) = ATR_New ();
-	if(ATR_InitFromArray ((*atr), buf, n) == ATR_OK)
+	if(ATR_InitFromArray (atr, buf, n) == ATR_OK)
 	{
 		struct timespec req_ts;
 		req_ts.tv_sec = 0;
@@ -133,11 +129,7 @@ int Sci_Reset (ATR ** atr)
 		return OK;
 	}
 	else
-	{
-		ATR_Delete (*atr);
-		(*atr) = NULL;
 		return ERROR;
-	}
 }
 
 int Sci_Activate ()

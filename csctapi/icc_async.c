@@ -186,46 +186,36 @@ int ICC_Async_Init ()
 #ifndef ICC_TYPE_SYNC 
 	unsigned np=0;
 
-	/* Initialize Baudrate */
+	// Initialize Baudrate
 	if (!Phoenix_SetBaudrate (ICC_ASYNC_BAUDRATE))
 		return ICC_ASYNC_IFD_ERROR;
-	
+
+	atr = &icc_atr;	
 #ifdef SCI_DEV
-	/* Activate ICC */
+	// Activate ICC
 	if (!Sci_Activate())
 		return ICC_ASYNC_IFD_ERROR;
-	/* Reset ICC */
+	// Reset ICC
 	if (reader[ridx].typ == R_INTERNAL) {
-		if (!Sci_Reset(&(atr)))
-		{
-			atr = NULL;
+		if (!Sci_Reset(atr))
 			return ICC_ASYNC_IFD_ERROR;
-		}
 	}
 	else
 #endif
 #ifdef COOL
 	if (reader[ridx].typ == R_INTERNAL) {
-		if (!Cool_Reset(&(atr)))
-		{
-			atr = NULL;
+		if (!Cool_Reset(atr))
 			return ICC_ASYNC_IFD_ERROR;
-		}
 	}
 	else
 #endif
-	if (!Phoenix_Reset(&(atr)))
-	{
-		atr = NULL;
+	if (!Phoenix_Reset(atr))
 		return ICC_ASYNC_IFD_ERROR;
-	}
-	/* Get ICC convention */
+	// Get ICC convention
 	if (ATR_GetConvention (atr, &(convention)) != ATR_OK)
 	{
-		ATR_Delete (atr);
-		atr = NULL;
 		convention = 0;
-		
+	  //no protocol_type = -1 ???	
 		return ICC_ASYNC_ATR_ERROR;
 	}
 	
@@ -350,9 +340,6 @@ int ICC_Async_Close ()
 #endif
 	
 	/* Delete atr */
-	ATR_Delete (atr);
-
-	atr = NULL;
 	convention = 0;
 	protocol_type = -1;
 	

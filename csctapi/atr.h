@@ -107,10 +107,6 @@ extern unsigned atr_i_table[4];
  * Exported functions declaraton
  */
 
-/* Creation and deletion */
-extern ATR *ATR_New (void);
-extern void ATR_Delete (ATR * atr);
-
 /* Initialization */
 extern int ATR_InitFromArray (ATR * atr, BYTE buffer[ATR_MAX_SIZE], unsigned length);
 extern int ATR_InitFromStream (ATR * atr, unsigned timeout);

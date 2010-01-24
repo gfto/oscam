@@ -380,10 +380,7 @@ static char CardTerminal_ResetCT (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp **
 			
 			if (CT_Slot_GetICCType (ct->slots[sn]) == CT_SLOT_ICC_ASYNC)
 			{
-				if (atr != NULL)
-					ATR_GetRaw ((ATR *) atr, buffer, &length);
-				else 
-					length = 0;
+				ATR_GetRaw ((ATR *) atr, buffer, &length);
 				
 				buffer[length] = CTBCS_SW1_RESET_ASYNC_OK;
 				buffer[length + 1] = CTBCS_SW2_RESET_ASYNC_OK;
@@ -397,10 +394,7 @@ static char CardTerminal_ResetCT (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp **
 			
 			if (CT_Slot_GetICCType (ct->slots[sn]) == CT_SLOT_ICC_ASYNC)
 			{
-				if (atr != NULL)
-					ATR_GetHistoricalBytes ((ATR *) atr, buffer, &length);
-				else
-					length = 0;
+				ATR_GetHistoricalBytes ((ATR *) atr, buffer, &length);
 				
 				buffer[length] = CTBCS_SW1_RESET_ASYNC_OK;
 				buffer[length + 1] = CTBCS_SW2_RESET_ASYNC_OK;
@@ -520,10 +514,7 @@ static char CardTerminal_RequestICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp
 			
 			if (CT_Slot_GetICCType (ct->slots[sn]) == CT_SLOT_ICC_ASYNC)
 			{
-				if (atr != NULL)
-					ATR_GetRaw ((ATR *) atr, buffer, &length);
-				else
-					length = 0;
+				ATR_GetRaw ((ATR *) atr, buffer, &length);
 				
 				buffer[length] = CTBCS_SW1_REQUEST_ASYNC_OK;
 				buffer[length + 1] = CTBCS_SW2_REQUEST_ASYNC_OK;
@@ -536,10 +527,7 @@ static char CardTerminal_RequestICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp
 			
 			if (CT_Slot_GetICCType (ct->slots[sn]) == CT_SLOT_ICC_ASYNC)
 			{
-				if (atr != NULL)
 				ATR_GetHistoricalBytes ((ATR *) atr, buffer, &length);
-				else
-				length = 0;
 				
 				buffer[length] = CTBCS_SW1_REQUEST_ASYNC_OK;
 				buffer[length + 1] = CTBCS_SW2_REQUEST_ASYNC_OK;

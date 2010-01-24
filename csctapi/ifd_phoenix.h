@@ -17,7 +17,7 @@ static int get_gpio(void);
 
 int Phoenix_Init ();
 int Phoenix_GetStatus (int * status);
-int Phoenix_Reset (ATR ** atr);
+int Phoenix_Reset (ATR * atr);
 int Phoenix_Transmit (BYTE * buffer, unsigned size, unsigned int block_delay, unsigned int char_delay);
 int Phoenix_Receive (BYTE * buffer, unsigned size, unsigned int block_timeout, unsigned int char_timeout);
 int Phoenix_SetBaudrate (unsigned long baudrate);

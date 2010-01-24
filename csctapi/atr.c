@@ -58,16 +58,6 @@ static bool ATR_GetNextByte (unsigned timeout, BYTE * b, bool invert);
  * Exported funcions definition
  */
 
-ATR * ATR_New (void)
-{
-	ATR *atr;
-	
-	/* Allocate memory */
-	atr = (ATR *) malloc (sizeof (ATR));
-	
-	return atr;
-}
-
 int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length)
 {
 	BYTE TDi;
@@ -317,11 +307,6 @@ int ATR_InitFromStream (ATR * atr, unsigned timeout)
 	atr->length = pointer + 1;
 	return (ATR_OK);
 	
-}
-
-void ATR_Delete (ATR * atr)
-{
-	free (atr);
 }
 
 int ATR_GetConvention (ATR * atr, int *convention)

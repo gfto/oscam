@@ -58,7 +58,7 @@ typedef struct
 }
 ICC_Async_Timings;
 
-ATR *atr;                     /* Answer to reset of this ICC */
+ATR * atr, icc_atr;                     /* Answer to reset of this ICC */
 int convention;               /* Convention of this ICC */
 BYTE protocol_type;		/* Type of protocol */
 ICC_Async_Timings icc_timings;    /* Current timings for transmiting to this ICC */
