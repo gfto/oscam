@@ -26,7 +26,6 @@
 #define _CT_SLOT_
 
 #include "defines.h"
-#include "../globals.h"
 #include "apdu.h"
 #include "ctapi.h"
 #include "ctbcs.h"

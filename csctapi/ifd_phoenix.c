@@ -57,10 +57,9 @@ static int get_gpio(void)
 int Phoenix_Init ()
 {
 #ifdef USE_GPIO	//felix: define gpio number used for card detect and reset. ref to globals.h				
-	extern int oscam_card_detect;
-	if (oscam_card_detect>4)
+	if (reader[ridx].detect>4)
 	{
-		gpio_detect=oscam_card_detect-4;
+		gpio_detect=reader[ridx].detect-4;
 		pin = 1<<gpio_detect;
 		gpio_outen=open("/dev/gpio/outen",O_RDWR);
 		gpio_out=open("/dev/gpio/out",O_RDWR);
@@ -108,10 +107,9 @@ int Phoenix_GetStatus (int * status)
 #endif
  {
 	unsigned int modembits=0;
-	extern int oscam_card_detect; //FIXME kill global variable
 	if (ioctl(reader[ridx].handle, TIOCMGET,&modembits)<0)
 		return ERROR;
-	switch(oscam_card_detect&0x7f)
+	switch(reader[ridx].detect&0x7f)
 	{
 		case	0: *status=(modembits & TIOCM_CAR);	break;
 		case	1: *status=(modembits & TIOCM_DSR);	break;
@@ -119,7 +117,7 @@ int Phoenix_GetStatus (int * status)
 		case	3: *status=(modembits & TIOCM_RNG);	break;
 		default: *status=0;		// dummy
 	}
-	if (!(oscam_card_detect&0x80))
+	if (!(reader[ridx].detect&0x80))
 		*status=!*status;
  }
  return OK;

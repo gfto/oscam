@@ -1,8 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
 
-int  oscam_card_detect;
-
 uchar cta_cmd[272], cta_res[CTA_RES_LEN], atr[64];
 ushort cta_lr, atr_size=0;
 static int cs_ptyp_orig; //reinit=1, 
@@ -304,7 +302,6 @@ int reader_device_init(char *device)
 #endif
  
   int rc;
-  oscam_card_detect=reader[ridx].detect;
   cs_ptyp_orig=cs_ptyp;
   cs_ptyp=D_DEVICE;
 #ifdef TUXBOX
