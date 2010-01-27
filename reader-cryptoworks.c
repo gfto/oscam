@@ -1,9 +1,7 @@
 #include "globals.h"
 #include "reader-common.h"
 
-static uchar cwexp[] = { 1, 0 , 1};
 static BIGNUM exp, ucpk;
-static int ucpk_valid = 0;
 
 extern uchar cta_cmd[], cta_res[];
 extern ushort cta_lr;
@@ -183,6 +181,7 @@ int cryptoworks_card_init(uchar *atr)
 {
   int i;
   unsigned int mfid=0x3F20;
+  static uchar cwexp[] = { 1, 0 , 1};
   uchar insA4C[]= {0xA4, 0xC0, 0x00, 0x00, 0x11};
   uchar insB8[] = {0xA4, 0xB8, 0x00, 0x00, 0x0c};
   uchar issuerid=0;
@@ -193,6 +192,7 @@ int cryptoworks_card_init(uchar *atr)
 
   reader[ridx].caid[0]=0xD00;
   reader[ridx].nprov=0;
+  reader[ridx].ucpk_valid = 0;
   memset(reader[ridx].prid, 0, sizeof(reader[ridx].prid));
 
   read_cmd(insA4C, NULL);		// read masterfile-ID
@@ -235,8 +235,8 @@ int cryptoworks_card_init(uchar *atr)
       BN_bin2bn(keybuf, 64, ipk);
       RSA(cta_res+2, cta_res+2, 0x40, &exp, ipk, 0);
       BN_free(ipk);
-      ucpk_valid=(cta_res[2]==((mfid & 0xFF)>>1));
-      if (ucpk_valid)
+      reader[ridx].ucpk_valid =(cta_res[2]==((mfid & 0xFF)>>1));
+      if (reader[ridx].ucpk_valid)
       {
         cta_res[2]|=0x80;
         BN_bin2bn(cta_res+2, 0x40, &ucpk);
@@ -244,8 +244,8 @@ int cryptoworks_card_init(uchar *atr)
       }
       else
       {
-        ucpk_valid=(keybuf[0]==(((mfid & 0xFF)>>1)|0x80));
-        if (ucpk_valid)
+        reader[ridx].ucpk_valid =(keybuf[0]==(((mfid & 0xFF)>>1)|0x80));
+        if (reader[ridx].ucpk_valid)
         {
           BN_bin2bn(keybuf, 0x40, &ucpk);
           cs_ddump(keybuf, 0x40, "session-key found:");
@@ -359,7 +359,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
   static unsigned char ins4C[] = { 0xA4,0x4C,0x00,0x00,0x00 };
   static unsigned char insC0[] = { 0xA4,0xC0,0x00,0x00,0x1C };
   unsigned char nanoD4[10];
-  int secLen=CheckSctLen(er->ecm,-5+(ucpk_valid ? sizeof(nanoD4):0));
+  int secLen=CheckSctLen(er->ecm,-5+(reader[ridx].ucpk_valid ? sizeof(nanoD4):0));
 
   if(secLen>5)
   {
@@ -367,7 +367,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
     uchar *ecm=er->ecm;
     uchar buff[MAX_LEN];
 
-    if(ucpk_valid)
+    if(reader[ridx].ucpk_valid)
     {
       memcpy(buff,er->ecm,secLen);
       nanoD4[0]=0xD4;
@@ -379,7 +379,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
       secLen+=sizeof(nanoD4);
     }
 
-    ins4C[3]=ucpk_valid ? 2 : 0;
+    ins4C[3]=reader[ridx].ucpk_valid ? 2 : 0;
     ins4C[4]=secLen-5;
     write_cmd(ins4C, ecm+5);
     if (cta_res[cta_lr-2]==0x9f)
@@ -416,7 +416,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
             }
             else if (n==0x40) // camcrypt
             {
-              if(ucpk_valid)
+              if(reader[ridx].ucpk_valid)
               {
                 RSA(&cta_res[i+2],&cta_res[i+2], n, &exp, &ucpk, 0);
                 cs_debug("smartcardcryptoworks: after camcrypt ");

@@ -22,15 +22,15 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "../globals.h"
 #include "pps.h"
 #include "atr.h"
 #include "protocol_t0.h"
 #include "protocol_t1.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "ifd.h"
-#include "../globals.h"
 
 /*
  * Not exported constants definition
@@ -40,7 +40,6 @@
 #define PROTOCOL_T0_DEFAULT_WI 10
 
 #define PROTOCOL_T1_DEFAULT_IFSC        32
-#define PROTOCOL_T1_DEFAULT_IFSD        32
 #define PROTOCOL_T1_MAX_IFSC            251  /* Cannot send > 255 buffer */
 #define PROTOCOL_T1_DEFAULT_CWI         13
 #define PROTOCOL_T1_DEFAULT_BWI         4
@@ -64,22 +63,13 @@ static bool PPS_Match (BYTE * request, unsigned len_request, BYTE * reply, unsig
 
 static unsigned PPS_GetLength (BYTE * block);
 
-static int PPS_InitICC ();
+static int PPS_InitICC (BYTE t, BYTE FI, double d, double n);
 
 static BYTE PPS_GetPCK (BYTE * block, unsigned length);
 
 /*
  * Exported functions definition
  */
-
-void PPS_New ()
-{
-		protocol = NULL;
-		parameters.t = PPS_DEFAULT_PROTOCOL;
-		parameters.FI = ATR_DEFAULT_FI;
-		parameters.d = ATR_DEFAULT_D;
-		parameters.n = ATR_DEFAULT_N;
-}
 
 int PPS_Perform (BYTE * params, unsigned *length)
 {
@@ -94,6 +84,20 @@ int PPS_Perform (BYTE * params, unsigned *length)
 	//We need to store FI instread of F, because SCI_DEV works with FI
 	//and it is easier to overclock then
 	//also from FI -> F is easy, other way around not
+typedef struct
+{
+  BYTE FI;
+  double d;
+  double n;
+  BYTE t;
+}
+PPS_ProtocolParameters;
+
+PPS_ProtocolParameters parameters;
+		parameters.t = PPS_DEFAULT_PROTOCOL;
+		parameters.FI = ATR_DEFAULT_FI;
+		parameters.d = ATR_DEFAULT_D;
+		parameters.n = ATR_DEFAULT_N;
 	
 	int ret;
 	bool PPS_success; 
@@ -209,7 +213,7 @@ int PPS_Perform (BYTE * params, unsigned *length)
 		else { //negotiable mode
 
 			bool NeedsPTS = ((parameters.t != 14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || parameters.n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
-			if (NeedsPTS) {
+			if (NeedsPTS && reader[ridx].deprecated == 0) {
 				//             PTSS  PTS0  PTS1  PTS2  PTS3  PCK
 				//             PTSS  PTS0  PTS1  PCK
 				BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
@@ -247,7 +251,7 @@ int PPS_Perform (BYTE * params, unsigned *length)
 	
 				if (NeedsPTS) { 
 					if ((parameters.d == 32) || (parameters.d == 12) || (parameters.d == 20))
-						parameters.d = ATR_DEFAULT_D; // viaccess cards that fail PTS need this
+						parameters.d = 0; // viaccess cards that fail PTS need this
 				}
 				/////Here all non-ISO behaviour
 				/////End  all non-ISO behaviour
@@ -280,14 +284,12 @@ int PPS_Perform (BYTE * params, unsigned *length)
 	/* Initialize selected protocol with selected parameters */
 //	if (PPS_InitProtocol () != PPS_OK)
 //		return PPS_ICC_ERROR;
-
-	return PPS_InitICC();
-}
-
-PPS_ProtocolParameters *PPS_GetProtocolParameters ()
-{
-	/* User must Remember not to reference this struct after removing PPS */
-	return &(parameters);
+	if (reader[ridx].deprecated == 0)
+		return PPS_InitICC (parameters.t, parameters.FI, parameters.d, parameters.n);
+	else {
+		cs_log("Warning: entering Deprecated Mode");
+		return PPS_InitICC (parameters.t, ATR_DEFAULT_FI, ATR_DEFAULT_D, parameters.n);
+	}
 }
 
 /*
@@ -408,28 +410,28 @@ unsigned int ETU_to_ms(unsigned long WWT)
 		WWT -= CHAR_LEN;
 	else
 		WWT = 0;
-	double work_etu = 1000 / (double)reader[ridx].baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
+	double work_etu = 1000 / (double)current_baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
 	return (unsigned int) WWT * work_etu * reader[ridx].cardmhz / reader[ridx].mhz;
 }
 
 
-static int PPS_InitICC ()
+static int PPS_InitICC (BYTE t, BYTE FI, double d, double n)
 {
-	unsigned long WWT, BWT, CWT, BGT, edc, EGT, CGT;
+	unsigned long BGT, edc, EGT, CGT, WWT = 0;
 	//initialize timings for internal readers
 	icc_timings.block_timeout = 0;
 	icc_timings.char_timeout = 0;
 	icc_timings.block_delay = 0;
 	icc_timings.char_delay = 0;
 
-	if (parameters.n == 255) //Extra Guard Time
+	if (n == 255) //Extra Guard Time
 		EGT = 0;
 	else
-		EGT = parameters.n;
+		EGT = n;
 	unsigned int GT = EGT + 12; //Guard Time in ETU
 	unsigned long gt_ms = ETU_to_ms(GT);
 	
-	switch (parameters.t) {
+	switch (t) {
 		case ATR_PROTOCOL_TYPE_T0:
 		case ATR_PROTOCOL_TYPE_T14:
 			{
@@ -442,7 +444,7 @@ static int PPS_InitICC ()
 
 			// WWT = 960 * WI * (Fi / f) * 1000 milliseconds
 			WWT = (unsigned long) 960 * wi; //in ETU
-			if (parameters.t == 14)
+			if (t == 14)
 				WWT >>= 1; //is this correct?
 			
 			if (reader[ridx].typ != R_INTERNAL) {
@@ -455,7 +457,7 @@ static int PPS_InitICC ()
 				cs_debug("Setting timings: block_timeout=%u ms, char_timeout=%u ms, block_delay=%u ms, char_delay=%u ms",icc_timings.block_timeout, icc_timings.char_timeout, icc_timings.block_delay, icc_timings.char_delay);
 			}
 #ifdef DEBUG_PROTOCOL
-			printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", parameters.t, (int)(WWT), ICC_Async_GetClockRate());
+			printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", t, (int)(WWT), ICC_Async_GetClockRate());
 #endif
 			}
 			break;
@@ -473,9 +475,6 @@ static int PPS_InitICC ()
 			
 				// Towitoko does not allow IFSC > 251 //FIXME not sure whether this limitation still exists
 				ifsc = MIN (ifsc, PROTOCOL_T1_MAX_IFSC);
-			
-				// Set IFSD
-				ifsd = PROTOCOL_T1_DEFAULT_IFSD;
 			
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
 				// Calculate CWI and BWI
@@ -502,7 +501,7 @@ static int PPS_InitICC ()
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
 
-				if (parameters.n == 255)
+				if (n == 255)
 					CGT = 11L; //in ETU
 				else
 					CGT = GT;
@@ -515,8 +514,8 @@ static int PPS_InitICC ()
 			
 				// Set initial send sequence (NS)
 				ns = 1;
-			
-				cs_debug ("Protocol: T=1: IFSC=%d, IFSD=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", ifsc, ifsd, CWT, BWT, BGT, (edc == PROTOCOL_T1_EDC_LRC) ? "LRC" : "CRC");
+
+				cs_debug ("Protocol: T=1: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", ifsc, CWT, BWT, BGT, (edc == PROTOCOL_T1_EDC_LRC) ? "LRC" : "CRC");
 
 				if (reader[ridx].typ != R_INTERNAL) {
 					icc_timings.block_timeout = ETU_to_ms(BWT);
@@ -528,7 +527,6 @@ static int PPS_InitICC ()
 			}
 			break;
 	 default:
-			protocol = NULL;
 			return PPS_PROTOCOL_ERROR;
 			break;
 	}
@@ -545,12 +543,12 @@ static int PPS_InitICC ()
 		if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
 			return PPS_ICC_ERROR;
 
-		params.T = parameters.t;
-		params.fs = atr_fs_table[parameters.FI] / 1000000;
-		double F =  (double) atr_f_table[parameters.FI];
+		params.T = t;
+		params.fs = atr_fs_table[FI] / 1000000;
+		double F =  (double) atr_f_table[FI];
 		//for Irdeto T14 cards, do not set ETU
     if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && params.T == 14))
-		  params.ETU = F / parameters.d;
+		  params.ETU = F / d;
 		params.EGT = EGT;
 		params.WWT = WWT;
 		params.BWT = BWT;
@@ -570,7 +568,7 @@ static int PPS_InitICC ()
 	}
 #elif COOL
 	if(reader[ridx].typ == R_INTERNAL) {
-		int mhz = atr_fs_table[parameters.FI] / 10000;
+		int mhz = atr_fs_table[FI] / 10000;
 		if (!Cool_SetBaudrate(mhz))
 			return PPS_ICC_ERROR;
 #ifdef DEBUG_PROTOCOL
@@ -581,19 +579,35 @@ static int PPS_InitICC ()
 #endif
 	{
 	unsigned long baudrate;
-	double F =  (double) atr_f_table[parameters.FI];
-	if (parameters.t == 14)
+	double F =  (double) atr_f_table[FI];
+	if (t == 14)
 		baudrate = 9600;
 	else
-		baudrate = parameters.d * ICC_Async_GetClockRate () / F; 
+		baudrate = d * ICC_Async_GetClockRate () / F; 
 
 #ifdef DEBUG_PROTOCOL
 	printf ("PPS: Baudrate = %d\n", (int)baudrate);
 #endif
 	
+	if (reader[ridx].deprecated == 0)
+		if (ICC_Async_SetBaudrate (baudrate) != ICC_ASYNC_OK)
+			return PPS_ICC_ERROR;
 
-	if (ICC_Async_SetBaudrate (baudrate) != ICC_ASYNC_OK)
-		return PPS_ICC_ERROR;
+	//IFS setting in case of T1
+	if ((t == ATR_PROTOCOL_TYPE_T1) && (ifsc != PROTOCOL_T1_DEFAULT_IFSC))
+	{
+		APDU_Cmd * cmd;
+		APDU_Rsp ** rsp;
+		unsigned char tmp[5];
+  	tmp[0] = 0x21;
+  	tmp[1] = 0xC1; // IFS Request cmd
+  	tmp[2] = 0x01; // cmd length
+  	tmp[3] = ifsc; // Information Field size
+  	tmp[4] = ifsc ^ 0xE1;
+		cmd = APDU_Cmd_New (tmp, 5L);
+		Protocol_T1_Command (cmd, rsp);
+    APDU_Cmd_Delete (cmd);
+	}
 	
 	return PPS_OK;
 	}

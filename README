@@ -8,18 +8,15 @@ Pointers
 --------
 
 - svn repository:
-    http://streamboard.gmc.to/svn/oscam
-
-- trac instance:
-    http://streamboard.gmc.to:8001/oscam
+    http://oscam.ump2002.net/svn/oscam/trunk
 
 - wiki:
-    http://streamboard.gmc.to:8001/oscam/wiki
+    http://trac.oscam.ump2002.net/
 
 Get sources from SVN
 --------------------
 
-    svn co http://streamboard.gmc.to/svn/oscam/trunk oscam
+    svn co http://oscam.ump2002.net/svn/oscam/trunk oscam
     cd oscam
 
 Compile options

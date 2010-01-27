@@ -22,12 +22,14 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "defines.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../globals.h"
+#include "defines.h"
 #include "protocol_t1.h"
 #include "t1_block.h"
+#include "icc_async.h"
 
 /*
  * Not exported functions declaration
@@ -40,7 +42,7 @@ static int
 Protocol_T1_ReceiveBlock (T1_Block ** block);
 
 static int
-Protocol_T1_UpdateBWT (unsigned short bwt);
+Protocol_T1_UpdateBWT (unsigned short BWT);
 
 /*
  * Exproted funtions definition
@@ -61,9 +63,9 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
       /* Create an IFS request S-Block */
       block = T1_Block_NewSBlock (T1_BLOCK_S_IFS_REQ, 1, &inf);
 
-#ifdef DEBUG_PROTOCOL
-      printf ("Protocol: Sending block S(IFS request, %d)\n", inf);
-#endif
+//#ifdef DEBUG_PROTOCOL
+      cs_debug ("Protocol: Sending block S(IFS request, %d)\n", inf);
+//#endif
       /* Send IFSD request */
       ret = Protocol_T1_SendBlock (block);
 
@@ -82,10 +84,9 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
             {
               /* Update IFSD value */
               inf = (*T1_Block_GetInf (block));
-              ifsd = inf;
-#ifdef DEBUG_PROTOCOL
-              printf ("Protocol: Received block S(IFS response, %d)\n", inf);
-#endif
+//#ifdef DEBUG_PROTOCOL
+              cs_debug ("Protocol: Received block S(IFS response, %d)\n", inf);
+//#endif
             }
         }
 
@@ -181,14 +182,14 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
   while ((ret == PROTOCOL_T1_OK) && more)
     {
       if (wtx > 1)
-        Protocol_T1_UpdateBWT (wtx * (bwt));          
+        Protocol_T1_UpdateBWT (wtx * BWT); //FIXME wtx only counts for next block, but it is never reset!
 
       /* Receive a block */
       ret = Protocol_T1_ReceiveBlock (&block);
 
       if (wtx > 1)
         {
-          Protocol_T1_UpdateBWT (bwt);          
+          Protocol_T1_UpdateBWT (BWT);          
           wtx = 0;
         }
 
@@ -316,7 +317,8 @@ Protocol_T1_ReceiveBlock (T1_Block ** block)
       if (buffer[2] != 0x00)
         {
           /* Set timings to read the remaining block */
-          Protocol_T1_UpdateBWT (cwt);
+					if (reader[ridx].typ != R_INTERNAL)
+          	Protocol_T1_UpdateBWT (CWT);
 
           /* Receive remaining bytes */
           if (ICC_Async_Receive (buffer[2], buffer + 4) !=
@@ -333,7 +335,8 @@ Protocol_T1_ReceiveBlock (T1_Block ** block)
             }
 
           /* Restore timings */
-          Protocol_T1_UpdateBWT (bwt);
+					if (reader[ridx].typ != R_INTERNAL)
+          	Protocol_T1_UpdateBWT (BWT);
         }
       else
         {

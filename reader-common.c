@@ -4,6 +4,7 @@
 uchar cta_cmd[272], cta_res[CTA_RES_LEN], atr[64];
 ushort cta_lr, atr_size=0;
 static int cs_ptyp_orig; //reinit=1, 
+extern int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr);
 
 #define SC_IRDETO 1
 #define SC_CRYPTOWORKS 2
@@ -89,11 +90,22 @@ int reader_cmd2api(uchar *buf, int l)
 
 int reader_cmd2icc(uchar *buf, int l)
 {
-    int rc;
-    cs_ddump(buf, l, "write to cardreader %s:",reader[ridx].label);
-    rc = reader_doapi(0, buf, l, D_DEVICE);
-    cs_ddump(cta_res, cta_lr, "answer from cardreader %s:", reader[ridx].label);
-    return rc;
+	int rc;
+#ifdef HAVE_PCSC
+	if (reader[ridx].typ == R_PCSC) {
+ 	  return (pcsc_reader_do_api(&reader[ridx], buf, cta_res, &cta_lr,l)); 
+	}
+
+#endif
+
+	cs_ddump(buf, l, "write to cardreader %s:",reader[ridx].label);
+	cta_lr=sizeof(cta_res)-1;
+	cs_ptyp_orig=cs_ptyp;
+	cs_ptyp=D_DEVICE;
+	rc=ICC_Async_CardWrite(buf, l, cta_res, &cta_lr);
+	cs_ptyp=cs_ptyp_orig;
+	cs_ddump(cta_res, cta_lr, "answer from cardreader %s:", reader[ridx].label);
+	return rc;
 }
 
 #define CMD_LEN 5

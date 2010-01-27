@@ -38,32 +38,10 @@
 #define PPS_PROTOCOL_ERROR	3	/* Error starting protocol */
 #define PPS_MAX_LENGTH		6
 /*
- * Exported data types definition
- */
-
-typedef struct
-{
-  BYTE FI;
-  double d;
-  double n;
-  BYTE t;
-}
-PPS_ProtocolParameters;
-
-void *protocol;
-PPS_ProtocolParameters parameters;
-
-/*
  * Exported functions declaration
  */
 
-/* Create PPS context */
-extern void PPS_New ();
-
 /* Perform protcol type selection and return confirm */
 extern int PPS_Perform (BYTE * params, unsigned *length);
-
-/* Get protocol parameters */
-extern PPS_ProtocolParameters *PPS_GetProtocolParameters ();
 
 #endif /* _PPS_ */

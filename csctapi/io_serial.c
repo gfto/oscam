@@ -22,8 +22,6 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "defines.h"
-#include "../globals.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -43,12 +41,16 @@
 #include <sys/time.h>
 #include <sys/ioctl.h>
 #include <time.h>
-#include "io_serial.h"
-#include "mc_global.h"
 
 #ifdef OS_LINUX
 #include <linux/serial.h>
 #endif
+
+#include "../globals.h"
+#include "defines.h"
+#include "io_serial.h"
+#include "mc_global.h"
+#include "icc_async.h"
 
 #define IO_SERIAL_FILENAME_LENGTH 	32
 
@@ -269,7 +271,7 @@ bool IO_Serial_SetParams (unsigned long bitrate, unsigned bits, int parity, unsi
 	if (!IO_Serial_SetProperties(newtio))
 		return FALSE;
 
-	reader[ridx].baudrate = bitrate;
+	current_baudrate = bitrate;
 
 	IO_Serial_Ioctl_Lock(1);
 	IO_Serial_DTR_RTS(0, rts == IO_SERIAL_HIGH);

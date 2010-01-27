@@ -22,12 +22,6 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "defines.h"
-#include "ct_slot.h"
-#include "icc_async.h"
-#include "protocol_t0.h"
-#include "protocol_t1.h"
-#include "pps.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -35,6 +29,14 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+// globals.h is needed on some platform for uint and other defs.. they need to move to oscam-types.h
+#include "../globals.h"
+#include "defines.h"
+#include "ct_slot.h"
+#include "icc_async.h"
+#include "protocol_t0.h"
+#include "protocol_t1.h"
+#include "pps.h"
 #include "ifd.h"
 
 /* Card status *///FIXME simplify this + duplicate in icc_async.h
@@ -75,43 +77,14 @@ char CT_Slot_Init ()
 	return OK;
 }
 
-char CT_Slot_Check (uint timeout, bool * card, bool * change)
+char CT_Slot_Check (bool * card, bool * change)
 {
 	BYTE status;
-#ifdef HAVE_NANOSLEEP
-	struct timespec req_ts;
 	
-	req_ts.tv_sec = 1;
-	req_ts.tv_nsec = 0;
-#endif
-	
-	/* Do first time check */
 	if (ICC_Async_GetStatus (&status) != ICC_ASYNC_OK)
-	{
 		return ERR_TRANS;
-	}
-
 	(*change) = IFD_TOWITOKO_CHANGE (status);
-	
-	while ((timeout > 0) && (!IFD_TOWITOKO_CARD (status)))
-	{
-		timeout --;
-		
-#ifdef HAVE_NANOSLEEP
-		/* Sleep one second */
-		nanosleep (&req_ts,NULL);
-#else
-		usleep (1000);
-#endif
-		
-		if (ICC_Async_GetStatus (&status) != ICC_ASYNC_OK)
-			return ERR_TRANS;
-		
-		(*change) |= IFD_TOWITOKO_CHANGE (status);
-	}
-	
 	(*card) = IFD_TOWITOKO_CARD (status);
-	
 	return OK;
 }
 
@@ -136,10 +109,7 @@ char CT_Slot_Probe (CT_Slot * slot, BYTE * userdata, unsigned length)
 	
 	
 	/* Initialise protocol */
-	if (slot->icc_type == CT_SLOT_ICC_ASYNC)
 	{
-		PPS_New();
-		
 		/* Prepare PPS request */
 		if ((userdata != NULL) && (length > 0))
 			memcpy (buffer, userdata, buffer_len = MIN(length, PPS_MAX_LENGTH));
@@ -150,12 +120,9 @@ char CT_Slot_Probe (CT_Slot * slot, BYTE * userdata, unsigned length)
 			ICC_Async_Close ();
 			
 			slot->icc_type = CT_SLOT_NULL;
-			slot->protocol_type = CT_SLOT_NULL;
 			
 			return ERR_TRANS;
 		}
-		
-		slot->protocol_type = (PPS_GetProtocolParameters ())->t;
 	}
 	
 	return OK;	
@@ -167,8 +134,6 @@ char CT_Slot_Release (CT_Slot * slot)
 	
 	ret = OK;
 	
-	slot->protocol_type = CT_SLOT_NULL;
-	
 	if (slot->icc_type == CT_SLOT_ICC_ASYNC)
 	{
 		if (ICC_Async_Close () != ICC_ASYNC_OK)
@@ -176,49 +141,6 @@ char CT_Slot_Release (CT_Slot * slot)
 	}
 	
 	slot->icc_type = CT_SLOT_NULL;
-	
-	return ret;
-}
-
-char CT_Slot_Command (CT_Slot * slot, APDU_Cmd * cmd, APDU_Rsp ** rsp)
-{
-	BYTE buffer[2];
-	char ret;
-	
-	if (slot->protocol_type == CT_SLOT_PROTOCOL_T0) /* T=0 protocol ICC */
-	{
-		if (Protocol_T0_Command (cmd, rsp) != PROTOCOL_T0_OK)
-			ret = ERR_TRANS;
-		else
-			ret = OK;
-	}
-	else if (slot->protocol_type == CT_SLOT_PROTOCOL_T1) /* T=1 protocol ICC */
-	{
-		if (Protocol_T1_Command (cmd, rsp) != PROTOCOL_T1_OK)
-			ret = ERR_TRANS;
-		else
-			ret = OK;
-	}
-	else if (slot->protocol_type == CT_SLOT_PROTOCOL_T14) /* T=14 protocol ICC */
-	{
-		if (Protocol_T14_Command (cmd, rsp) != PROTOCOL_T0_OK)
-			ret = ERR_TRANS;
-		else
-			ret = OK;
-	}
-	else if (slot->protocol_type == CT_SLOT_NULL) /* Card removed */
-	{
-		buffer[0] = CTBCS_SW1_ICC_ERROR;
-		buffer[1] = CTBCS_SW2_ICC_ERROR;
-		
-		(*rsp) = APDU_Rsp_New (buffer, 2);
-		ret = OK;
-	}
-	else /* Other protocol */
-	{
-		(*rsp) = NULL;
-		ret = ERR_HTSI;
-	}
 	
 	return ret;
 }
@@ -235,14 +157,6 @@ void * CT_Slot_GetAtr (CT_Slot * slot)
 		//return ((void *) ICC_Async_GetAtr((ICC_Async *) slot->icc));
 	
 	return NULL;
-}
-
-void CT_Slot_GetType (BYTE * buffer, int len)
-{
-	//IFD_Towitoko_GetDescription (slot->ifd, buffer, len)
-	char temp[5] = "dummy";
-	len=5;
-	buffer = (BYTE *) temp;
 }
 
 char CT_Slot_Close (CT_Slot * slot)
@@ -277,5 +191,4 @@ void CT_Slot_Delete (CT_Slot * slot)
 static void CT_Slot_Clear (CT_Slot * slot)
 {
 	slot->icc_type = CT_SLOT_NULL;
-	slot->protocol_type = CT_SLOT_NULL;
 }

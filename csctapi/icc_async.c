@@ -22,14 +22,17 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "defines.h"
-#include "../globals.h"
-#include "icc_async.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "../globals.h"
+#include "defines.h"
+#include "icc_async.h"
 #include "ifd.h"
 #include "mc_global.h"
+#include "apdu.h"
+#include "protocol_t0.h"
+#include "protocol_t1.h"
 
 /*
  * Not exported constants definition
@@ -42,6 +45,8 @@
  */
 
 static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer);
+int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
+extern unsigned int ETU_to_ms(unsigned long WWT);
 
 int fdmc=(-1);
 
@@ -261,14 +266,89 @@ int ICC_Async_Init ()
 #endif
 }
 
+int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr)
+{
+	APDU_Cmd *apdu_cmd;
+	APDU_Rsp *apdu_rsp = NULL;
+	int remain;
+	bool err = FALSE;
+
+	if (reader[ridx].status != 1) //no card inside
+		return ICC_ASYNC_IFD_ERROR;
+	
+	/* Create a command APDU */
+	apdu_cmd = APDU_Cmd_New (cmd, lc);
+	if (apdu_cmd == NULL)
+		return ICC_ASYNC_IFD_ERROR;
+	
+	if (Protocol_Command (apdu_cmd, &apdu_rsp) == ICC_ASYNC_OK) {
+		if (apdu_rsp != NULL) {
+			/* Copy APDU data to rsp */
+			remain = MAX ((short)APDU_Rsp_RawLen(apdu_rsp) - (*lr),0);
+			if (remain > 0) {
+				cs_log("MEMORY ERROR");
+				err = TRUE; //FIXME do I need this?
+			}
+			(*lr) = MIN ((*lr), (short)APDU_Rsp_RawLen (apdu_rsp));
+			memcpy (rsp, APDU_Rsp_Raw (apdu_rsp) + remain, (*lr));
+			APDU_Rsp_Delete (apdu_rsp);
+		}
+		else 
+			(*lr) = 0;
+	}
+	else
+		return ICC_ASYNC_IFD_ERROR;
+		
+	APDU_Cmd_Delete (apdu_cmd);
+	if (err)
+		return ICC_ASYNC_IFD_ERROR;
+
+	return ICC_ASYNC_OK;
+}
+
+int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
+{
+	switch (protocol_type) {
+		case ATR_PROTOCOL_TYPE_T0:
+			if (Protocol_T0_Command (cmd, rsp) != ICC_ASYNC_OK)
+				return ICC_ASYNC_IFD_ERROR;
+			break;
+		case ATR_PROTOCOL_TYPE_T1:
+			if (Protocol_T1_Command (cmd, rsp) != ICC_ASYNC_OK) //FIXME in .h and also .c !!!
+				return ICC_ASYNC_IFD_ERROR;
+			break;
+		case ATR_PROTOCOL_TYPE_T14:
+			if (Protocol_T14_Command (cmd, rsp) != ICC_ASYNC_OK)
+				return ICC_ASYNC_IFD_ERROR;
+			break;
+		default:
+			cs_log("Error, unknown protocol type %i",protocol_type);
+			return ICC_ASYNC_IFD_ERROR;
+	}
+	return ICC_ASYNC_OK;
+}
+
 int ICC_Async_SetTimings (unsigned short bwt)
 {
-	if (protocol_type != ATR_PROTOCOL_TYPE_T1)
-			return ICC_ASYNC_IFD_ERROR;
-
-	bwt = bwt;
-	
-	//currently not supporting update BWT for T1
+	if (protocol_type == ATR_PROTOCOL_TYPE_T1) {
+		if (reader[ridx].typ == R_INTERNAL) {
+#ifdef SCI_DEV
+#include <sys/ioctl.h>
+#include "sci_global.h"
+#include "sci_ioctl.h"
+			SCI_PARAMETERS params;
+			if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
+				return ICC_ASYNC_IFD_ERROR;
+			params.BWT = bwt;
+			if (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
+				return ICC_ASYNC_IFD_ERROR;
+#endif
+		}
+		else
+			icc_timings.block_timeout = ETU_to_ms(bwt);
+		cs_debug("Setting BWT to %i", bwt);
+		BWT = bwt;
+	}
 	return ICC_ASYNC_OK;
 }
 
@@ -299,6 +379,12 @@ int ICC_Async_Transmit (unsigned size, BYTE * data)
 #ifdef COOL
 	if (reader[ridx].typ == R_INTERNAL) {
 		if (!Cool_Transmit(sent, size))
+			return ICC_ASYNC_IFD_ERROR;
+	}
+	else
+#elif SCI_DEV
+	if (reader[ridx].typ == R_INTERNAL) {
+		if (!Phoenix_Transmit (sent, size, 0, 0)) //the internal reader will provide the delay
 			return ICC_ASYNC_IFD_ERROR;
 	}
 	else

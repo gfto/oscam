@@ -51,7 +51,6 @@
 typedef struct
 {
   int icc_type;		/* Type of ICC */
-  int protocol_type;	/* Type of protocol */
 }
 CT_Slot;
 
@@ -69,7 +68,7 @@ CT_Slot_Init ();
 
 /* Check for card inserted */
 extern char
-CT_Slot_Check (unsigned int timeout, bool * card, bool * change);
+CT_Slot_Check (bool * card, bool * change);
 
 /* Probe ICC type and protocol */
 extern char
@@ -79,10 +78,6 @@ CT_Slot_Probe (CT_Slot * slot, BYTE * userdata, unsigned length);
 extern char
 CT_Slot_Release (CT_Slot * slot);
 
-/* Send a command to and ICC */
-extern char
-CT_Slot_Command (CT_Slot * slot, APDU_Cmd * cmd, APDU_Rsp ** rsp);
-
 /* Return ICC type */
 extern int
 CT_Slot_GetICCType (CT_Slot * slot);
@@ -90,10 +85,6 @@ CT_Slot_GetICCType (CT_Slot * slot);
 /* Get answer to reset of the card */
 extern void *
 CT_Slot_GetAtr (CT_Slot * slot);
-
-/* Return slot type */
-extern void
-CT_Slot_GetType (BYTE * buffer, int len);
 
 /* Close a CT_Slot */
 extern char 

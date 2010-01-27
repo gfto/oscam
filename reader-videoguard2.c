@@ -605,7 +605,6 @@ int videoguard_card_init(uchar *atr, int atrsize)
     else if ((atrsize == sizeof (atr_bskyb_new)) && (memcmp (atr, atr_bskyb_new, atrsize) == 0))
     {
         cs_log("Type: Videoguard BSkyB - New");
-				BASEYEAR = 2000;
     }
     else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
     {
@@ -644,6 +643,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
     else if ((atrsize == sizeof (atr_get)) && (memcmp (atr, atr_get, atrsize) == 0))
     {
         cs_log("Type: Videoguard Get Kabel Norway");
+        			BASEYEAR = 2004;
     }
 /*    else
     {

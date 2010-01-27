@@ -21,12 +21,11 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
+#include <stdlib.h>
+#include <string.h>
 #include "defines.h"
 #include "cardterminal.h"
 #include "atr.h"
-#include <stdlib.h>
-#include <string.h>
 #include "icc_async.h"
 
 /*
@@ -50,8 +49,6 @@ static char CardTerminal_RequestICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp
 static char CardTerminal_GetStatus (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 static char CardTerminal_SetParity (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-
-static char CardTerminal_EjectICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 static void CardTerminal_Clear (CardTerminal * ct);
 
@@ -163,8 +160,6 @@ char CardTerminal_Command (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 			ret = CardTerminal_GetStatus (ct, cmd, rsp);
 		else if (ins == CTBCS_INS_PARITY) /* Get Status */
 			ret = CardTerminal_SetParity (cmd, rsp);
-		else if (ins == CTBCS_INS_EJECT) /* Eject ICC */
-			ret = CardTerminal_EjectICC (ct, cmd, rsp);
 		else /* Wrong instruction */
 		{
 			length = CTBCS_MIN_RESPONSE_SIZE;
@@ -319,7 +314,7 @@ static char CardTerminal_ResetCT (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp **
 		}
 		
 		/* Check for card */
-		ret = CT_Slot_Check (0, &card, &change);
+		ret = CT_Slot_Check (&card, &change);
 		
 		if (ret != OK)
 		{
@@ -424,7 +419,7 @@ static char CardTerminal_ResetCT (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp **
 static char CardTerminal_RequestICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
 	BYTE buffer[CARDTERMINAL_REQUESTICC_BUFFER_SIZE], p1, p2;
-	unsigned timeout, sn, length;
+	unsigned sn, length;
 	bool card, change;
 	void * atr;
 	char ret;
@@ -446,14 +441,8 @@ static char CardTerminal_RequestICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp
 			return OK;
 		}
 		
-		/* Get the card insertion timeout */
-		if (APDU_Cmd_Lc (cmd) == 1)
-			timeout = (APDU_Cmd_Data (cmd)[0]);
-		else
-			timeout = 0;
-		
 		/* Check for card */
-		ret = CT_Slot_Check (timeout, &card, &change);
+		ret = CT_Slot_Check (&card, &change);
 		
 		if (ret != OK)
 		{
@@ -585,8 +574,7 @@ static char CardTerminal_GetStatus (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp 
 		memcpy(buffer,CARDTERMINAL_MANUFACTURER,5);
 		
 		/* CT type */
-		if (ct->slots[0] != NULL)
-			CT_Slot_GetType(buffer + 5,5);
+		memcpy(buffer+5,"DUMMY",5);
 		
 		/* CT version */
 		memcpy(buffer+10,VERSION,5);
@@ -599,7 +587,7 @@ static char CardTerminal_GetStatus (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp 
 	{
 		for (i = 0; i < ct->num_slots; i++)
 		{
-			ret = CT_Slot_Check (0, &card, &change);
+			ret = CT_Slot_Check (&card, &change);
 			
 			if (ret != OK)
 			{
@@ -626,25 +614,6 @@ static char CardTerminal_GetStatus (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp 
 		length = i+2;
 		buffer[i] = CTBCS_SW1_OK;
 		buffer[i+1] = CTBCS_SW2_OK;
-	}
-	else if (p2 == CTBCS_P2_STATUS_PROTOCOL)
-	{
-		for (i = 0; i < ct->num_slots; i++)
-		{
-			if(ct->slots[i]->protocol_type == CT_SLOT_PROTOCOL_T0)
-				buffer[i] = 0x00;
-			else if(ct->slots[i]->protocol_type == CT_SLOT_PROTOCOL_T1)		
-				buffer[i] = 0x01;
-			else if(ct->slots[i]->protocol_type == CT_SLOT_PROTOCOL_T14)		
-				buffer[i] = 0x0E;
-			else
-				buffer[i] = 0xFF;
-		}
-		
-		length = i+2;
-		buffer[i] = CTBCS_SW1_OK;
-		buffer[i+1] = CTBCS_SW2_OK;
-		ret = OK;
 	}
 	else /* Wrong command cualifier */
 	{
@@ -709,113 +678,6 @@ static char CardTerminal_SetParity (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		buffer[0] = CTBCS_SW1_WRONG_PARAM;
 		buffer[1] = CTBCS_SW2_WRONG_PARAM;
 		ret = OK;
-	}
-	
-	(*rsp) = APDU_Rsp_New (buffer, length);
-	return ret;
-}
-
-static char CardTerminal_EjectICC (CardTerminal * ct, APDU_Cmd * cmd, APDU_Rsp ** rsp)
-{
-	BYTE buffer[CARDTERMINAL_EJECTICC_BUFFER_SIZE], p1, p2;
-	unsigned int sn, timeout;
-	unsigned length;
-	bool card, change;
-	char ret;
-	
-	/* Get functional unit */
-	p1 = APDU_Cmd_P1 (cmd);
-	
-	/* Wrong functional unit */
-	if ((p1 != CTBCS_P1_INTERFACE1) && (p1 != CTBCS_P1_INTERFACE2))
-	{
-		buffer[0] = CTBCS_SW1_WRONG_PARAM;
-		buffer[1] = CTBCS_SW2_WRONG_PARAM;
-		
-		(*rsp) = APDU_Rsp_New (buffer, 2);
-		return OK;
-	}
-	
-	/* Get the slot number */
-	sn = (p1 == CTBCS_P1_INTERFACE1) ? 0 : 1;
-	
-	if (!(sn < ct->num_slots))
-	{
-		buffer[0] = CTBCS_SW1_WRONG_PARAM;
-		buffer[1] = CTBCS_SW2_WRONG_PARAM;
-		
-		(*rsp) = APDU_Rsp_New (buffer, 2);
-		return ERR_INVALID;
-	}
-	
-	/* Get command cualifier */
-	p2 = APDU_Cmd_P2 (cmd);
-	
-#if 0
-	/* Wrong command cualifier */
-	if (p2 != 0)
-	{
-		buffer[0] = CTBCS_SW1_WRONG_PARAM;
-		buffer[1] = CTBCS_SW2_WRONG_PARAM;
-		
-		(*rsp) = APDU_Rsp_New (buffer, 2);
-		return OK;
-	}
-#endif
-	
-	if (CT_Slot_GetICCType (ct->slots[sn]) == CT_SLOT_NULL)
-	{
-		buffer[0] = CTBCS_SW1_EJECT_OK;
-		buffer[1] = CTBCS_SW2_EJECT_OK;
-		
-		(*rsp) = APDU_Rsp_New (buffer, 2);
-		return OK;
-	}
-	
-	/* Get the card removal timeout */
-	if (APDU_Cmd_Lc (cmd) == 1)
-		timeout = (unsigned int) (*APDU_Cmd_Data (cmd));
-	else
-		timeout = 0;
-	
-	/* Check for card removal */
-	ret = CT_Slot_Check (timeout, &card, &change);
-	
-	if (ret != OK)
-	{
-		(*rsp) = NULL;
-		return ret;
-	}
-	
-	/* Release ICC (always or only when card is removed?) */
-	ret = CT_Slot_Release (ct->slots[sn]);
-	
-	if (ret != OK)
-	{
-		(*rsp) = NULL;
-		return ret;
-	}
-	
-	if (timeout != 0)
-	{
-		if (card)
-		{
-			buffer[0] = CTBCS_SW1_EJECT_NOT_REMOVED;      
-			buffer[1] = CTBCS_SW2_EJECT_NOT_REMOVED;
-			length = 2;
-		}
-		else
-		{
-			buffer[0] = CTBCS_SW1_EJECT_REMOVED;      
-			buffer[1] = CTBCS_SW2_EJECT_REMOVED;
-			length = 2;
-		}
-	}
-	else
-	{
-		buffer[0] = CTBCS_SW1_EJECT_OK;;      
-		buffer[1] = CTBCS_SW2_EJECT_OK;;
-		length = 2;
 	}
 	
 	(*rsp) = APDU_Rsp_New (buffer, length);

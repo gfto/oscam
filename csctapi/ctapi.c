@@ -170,7 +170,6 @@ char CT_data (unsigned short ctn, unsigned char *dad, unsigned char *sad, unsign
 	APDU_Cmd *apdu_cmd;
 	APDU_Rsp *apdu_rsp = NULL;
 	int remain;
-	unsigned char aux;
 	char ret;
 	
 #ifdef DEBUG_CTAPI
@@ -217,37 +216,7 @@ char CT_data (unsigned short ctn, unsigned char *dad, unsigned char *sad, unsign
 				(*dad) = (*sad);
 			}	
 			else /* Command goes to an ICC */
-			{
-				/* Get the slot */
-				slot = CardTerminal_GetSlot(ct, ((*dad)==0)? 0: (*dad)-1);
-				
-				if (slot != NULL)
-				{
-					/* ICC command */
-					ret = CT_Slot_Command (slot, apdu_cmd, &apdu_rsp);
-					
-					if (CT_Slot_GetICCType (slot) != CT_SLOT_NULL)
-					{
-						aux = (*sad);
-						(*sad) = (*dad);
-						(*dad) = aux;
-					}
-					else
-					{
-						(*dad) = (*sad);
-						(*sad) = 1;
-					}
-				}
-				else
-				{
-					/* Invalid DAD address */
-					(*dad) = (*sad);
-					(*sad) = 1;
-					apdu_rsp = NULL;
-					
-					ret = ERR_INVALID;
-				}
-			}
+				ret = ERR_INVALID; //this is no longer handled by CT_data
 			
 #ifdef HAVE_PTHREAD_H
 			pthread_mutex_unlock (CardTerminal_GetMutex(ct));

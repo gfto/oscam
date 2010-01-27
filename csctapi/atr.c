@@ -22,11 +22,11 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include "defines.h"
-#include "atr.h"
 #include <stdlib.h>
 #include <string.h>
 #include "../globals.h"
+#include "defines.h"
+#include "atr.h"
 
 /* 
  * Not exported variables definition

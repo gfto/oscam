@@ -325,7 +325,7 @@ struct s_client
   int       crypted;
   int       dup;
   int       au;
-  char      autoau;
+  int       autoau;
   int       monlvl;
   int       dbglvl;
   CAIDTAB   ctab;
@@ -391,8 +391,19 @@ struct s_reader
   ulong     boxid;
   uchar	    nagra_boxkey[16]; //n3 boxkey 8byte  or tiger idea key 16byte
   int       has_rsa;
+  int		is_pure_nagra; // set to 1 if a tunneled nagra card used in nagra mode
+  int		is_tiger;	// set to 1 if tiger nagra card is detect
+  int		has_dt08;	// nagra related
+  int		swapCW; //nagra related
   uchar     aes_key[16];
   uchar     rsa_mod[120]; //rsa modulus for nagra cards.
+  uchar		rom[15];		// storing rom version  
+  uchar		plainDT08RSA[64]; //nagra related
+  uchar		IdeaCamKey[16]; //nagra related
+  uchar		irdId[4]; //nagra related
+  uchar		sessi[16]; //nagra related
+  uchar		signature[8]; //nagra related
+  uchar		cam_state[3]; //nagra related
   ulong     sidtabok;	// positiv services
   ulong     sidtabno;	// negative services
   uchar     hexserial[8];
@@ -405,13 +416,14 @@ struct s_reader
   uchar     b_nano[256];
   uchar     emmfile[128];
   char      pincode[5];
+  int		ucpk_valid;
   int       logemm;
   int       cachemm;
   int       rewritemm;
   int       online;
   int       card_status; //highlevel status
-  unsigned short status; //lowlevel status: states whether card inserted and/or change of status FIXME look at integration with pcsc_has_card/detect/card_status
-	unsigned long baudrate; //we are storing the (for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
+  unsigned short status; //0 = init state, 1 = card inside, 2 = no card inside //FIXME look at integration with pcsc_has_card/detect/card_status
+	int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
   uchar     ncd_key[16];
   uchar     ncd_skey[16];

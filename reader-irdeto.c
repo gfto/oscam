@@ -3,7 +3,6 @@
 
 extern uchar cta_cmd[], cta_res[];
 extern ushort cta_lr;
-static int nagra;
 
 static const uchar CryptTable[256] =
 {
@@ -158,11 +157,10 @@ int irdeto_card_init(uchar *atr)
 {
   int i, camkey=0, cs_ptyp_orig=cs_ptyp;
   uchar buf[256]={0};
-  //uchar sc_GetROM[]         = { 0xA0, 0xCA, 0x00, 0x00, 3, 0x10, 0, 0x11};
 
   if (memcmp(atr+4, "IRDETO", 6))
     return(0);
-  nagra=0;
+  cs_ri_log("[irdeto-reader] detect Irdeto card");
   
   if(reader[ridx].has_rsa) // we use rsa from config as camkey
   {
@@ -180,8 +178,7 @@ int irdeto_card_init(uchar *atr)
   reader_chk_cmd(sc_GetCountryCode, 18);
   reader[ridx].acs=(cta_res[0]<<8)|cta_res[1];
   reader[ridx].caid[0]=(cta_res[5]<<8)|cta_res[6];
-  cs_ri_log("type: %s, caid: %04X, acs: %x.%02x%s",
-         (nagra) ? "aladin" : "irdeto",
+  cs_ri_log("[irdeto-reader] caid: %04X, acs: %x.%02x%s",
          reader[ridx].caid[0], cta_res[0], cta_res[1], buf);
 
   /*
@@ -193,7 +190,7 @@ int irdeto_card_init(uchar *atr)
   reader_chk_cmd(sc_GetHEXSerial, 18);
   memcpy(reader[ridx].hexserial, cta_res+12, 8); 
   reader[ridx].nprov=cta_res[10];
-  cs_ri_log("ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+  cs_ri_log("[irdeto-reader] ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
           buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
 
   /*
@@ -257,7 +254,6 @@ int irdeto_card_init(uchar *atr)
   }
 	if (reader[ridx].cardmhz != 600)
 		cs_log("WARNING: For irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
-  cs_log("ready for requests");
   return(1);
 }
 
@@ -317,7 +313,7 @@ int irdeto_do_emm(EMM_PACKET *ep)
       return(irdeto_do_cmd(cta_cmd, 0) ? 0 : 1);
     }
     else
-      cs_log("addrlen %d > %d", l, ADDRLEN);
+      cs_debug("[irdeto-reader] addrlen %d > %d", l, ADDRLEN);
   }
   return(0);
 }
@@ -327,28 +323,7 @@ int irdeto_card_info(void)
   int i, p;
   uchar buf[256]={0};
   uchar sc_GetChid[]        = { 0xA0, 0xCA, 0x00, 0x00, 4, 0x22, 1, 5, 0x20};
-  cs_log("card detected");
-  cs_log("type: irdeto");
 
-  if (nagra)
-  {
-    for (sc_GetChid[7]=5;;sc_GetChid[7]|=0x80)
-    {
-      ushort chid;
-      char ds[16], de[16];
-      reader_chk_cmd(sc_GetChid, 0);
-      if ((cta_lr>33) && (chid=b2i(2, cta_res+11)))
-      {
-        chid_date(b2i(2, cta_res+20)-0x7f7, ds, 15);
-        chid_date(b2i(2, cta_res+13)-0x7f7, de, 15);
-        cs_ri_log("chid: %04X, date: %s - %s", chid, ds, de);
-      }
-      else
-        break;
-    }
-  }
-  else
-  {
     /*
      * Provider
      */
@@ -368,7 +343,7 @@ int irdeto_card_info(void)
         reader[ridx].prid[i][0]=0xf;
     }
     if (p)
-      cs_ri_log("providers: %d (%s)", p, buf+1);
+      cs_ri_log("[irdeto-reader] providers: %d (%s)", p, buf+1);
 
     /*
      * ContryCode2
@@ -376,7 +351,7 @@ int irdeto_card_info(void)
     reader_chk_cmd(sc_GetCountryCode2, 0);
     if ((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1]))
     {
-      cs_debug("max chids: %d, %d, %d, %d", cta_res[6], cta_res[7], cta_res[8], cta_res[9]);
+      cs_debug("[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6], cta_res[7], cta_res[8], cta_res[9]);
 
       /*
        * Provider 2
@@ -404,17 +379,16 @@ int irdeto_card_info(void)
                 chid_date(date+cta_res[k+4], t+16, 16);
                 if (first)
                 {
-                  cs_ri_log("provider: %d, id: %06X", p, b2i(3, &reader[ridx].prid[i][1]));
+                  cs_ri_log("[irdeto-reader] provider: %d, id: %06X", p, b2i(3, &reader[ridx].prid[i][1]));
                   first=0;
                 }
-                cs_ri_log("chid: %04X, date: %s - %s", chid, t, t+16);
+                cs_ri_log("[irdeto-reader] chid: %04X, date: %s - %s", chid, t, t+16);
               }
             }
           }
         }
       }
     }
-  }
   
 // maps the provider id for Betacrypt from FFFFFF to 000000,
 // fixes problems with cascading CCcam and OSCam
@@ -434,5 +408,6 @@ int irdeto_card_info(void)
       reader[ridx].sa[i][3]=0xFF;
     }
   }
+  cs_log("[irdeto-reader] ready for requests");
   return(1);
 }

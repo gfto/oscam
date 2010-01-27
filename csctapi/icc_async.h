@@ -62,6 +62,8 @@ ATR * atr, icc_atr;                     /* Answer to reset of this ICC */
 int convention;               /* Convention of this ICC */
 BYTE protocol_type;		/* Type of protocol */
 ICC_Async_Timings icc_timings;    /* Current timings for transmiting to this ICC */
+BYTE BWT,CWT;
+unsigned long current_baudrate; //(for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
 
 /*
  * Exported functions declaration
@@ -80,6 +82,7 @@ int ICC_Async_GetStatus (BYTE * result);
 
 
 /* Operations */
+int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr);
 extern int ICC_Async_Transmit (unsigned size, BYTE * buffer);
 extern int ICC_Async_Receive (unsigned size, BYTE * buffer);
 

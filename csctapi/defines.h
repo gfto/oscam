@@ -48,15 +48,20 @@
  * Type definitions
  */
 
+#ifndef BYTE
+#ifndef __wintypes_h__
 typedef unsigned char BYTE;
+#endif
+#endif
+
 #ifndef __cplusplus
 typedef int bool;
 #endif
+typedef char *STR;
+#ifndef HAVE_PCSC
 typedef unsigned short USHORT;
 typedef unsigned char UCHAR;
 typedef unsigned char *PUCHAR;
-typedef char *STR;
-#ifndef HAVE_PCSC
 typedef unsigned long ULONG;
 typedef ULONG RESPONSECODE;
 typedef ULONG *PULONG;

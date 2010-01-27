@@ -1320,6 +1320,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     rdr->cc_maxhop = atoi(value);
     return;
   }
+  if (!strcmp(token, "deprecated")) { rdr->deprecated=atoi(value); return; }
   if (token[0] != '#')
     fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
 }
@@ -1352,6 +1353,7 @@ int init_readerdb()
       reader[nr].maxqlen = CS_MAXQLEN;
       reader[nr].mhz = 357;
       reader[nr].cardmhz = 357;
+			reader[nr].deprecated = 0;
       strcpy(reader[nr].pincode, "none");
       for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
       continue;

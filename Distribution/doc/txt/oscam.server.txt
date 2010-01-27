@@ -79,6 +79,10 @@ DESCRIPTIONS
 	  set reader frequency in units of 10 kHz, if mhz > cardmhz you are in
 	  overclocking mode, refer to OVERCLOCKING, default:357
 
+       deprecated  = 0|1
+	  1  =	SC  speed will not be changed, SC communication will remain on
+	  normal ATR speed of 9600 baud, default:0
+
        protocol = reader protocol
 	  reader protocol, required:
 	   mouse
@@ -143,22 +147,22 @@ DESCRIPTIONS
 		      2 = log all EMMs
 
        blocknano = nano[,nano]...|all
-	  list of EMM-nanos to block (in hex w/o 0x) or  all  EMM-nanos,  only
+	  list	of  EMM-nanos  to block (in hex w/o 0x) or all EMM-nanos, only
 	  valid for physical readers, default:none
 
 	   example: blocknano = 45,93,7a,ff
 		    blocknano = all
 
        savenano = nano[,nano]....|all
-	  list	of  EMM-nanos  to  save (in hex w/o 0x) or all EMM-nanos, only
+	  list of EMM-nanos to save (in hex w/o 0x)  or  all  EMM-nanos,  only
 	  valid for physical readers, default:none
 
 	   example: savenano = 45,93,7a,ff
 		    savenano = all
 
        readnano = [path]filename
-	  write file (usually a copy of a file	saved  by  savenano)  to  your
-	  smartcard,  if  no path is specified, the specified file is searched
+	  write  file  (usually  a  copy  of a file saved by savenano) to your
+	  smartcard, if no path is specified, the specified file  is  searched
 	  for in the configuration directory, only valid for physical readers,
 	  default:none
 
@@ -180,29 +184,29 @@ DESCRIPTIONS
 OVERCLOCKING
 	 Dreambox and other internal readers
 
-	  For  Dreambox and other internal readers the highest possible clock
+	  For Dreambox and other internal readers the highest possible	clock
 	  rate will be auto detected. The mhz parameter will be ignored.
 
 	 Phoenix / Smartmouse reader
 
-	  Overclocking does not work with Windows  and	Mac  OS  X.   Set  mhz
-	  equivalent  to  the  frequency of the reader.  OSCam can not set the
+	  Overclocking	does  not  work  with  Windows	and Mac OS X.  Set mhz
+	  equivalent to the frequency of the reader.  OSCam can  not  set  the
 	  frequency of the reader.
 
 	 Smargo Smartreader+
 
-	  Set the reader frequency with the native  Smargo  Smartreader+  tool
+	  Set  the  reader  frequency with the native Smargo Smartreader+ tool
 	  (srp_tools).	Do not set mhz and cardmhz.
 
-       OSCam  tries to set the baudrate automatically.	A standard serial port
+       OSCam tries to set the baudrate automatically.  A standard serial  port
        has limited baudrate settings, so SC overclocking might not work.  When
        using a serial reader the best way for overclocking is connecting it to
        a FTDI based USB to serial port adapter.
 
-       If overclocking does not work, verify the  effective  baudrate  in  the
-       logfile.   If  it deviates too much from the requested baudrate, the SC
-       will not be recognized (no  ATR)  and  the  value  for  mhz  should  be
-       adjusted  again.  The higher the baudrate, the more accurate the effec
+       If  overclocking  does  not  work, verify the effective baudrate in the
+       logfile.  If it deviates too much from the requested baudrate,  the  SC
+       will  not  be  recognized  (no  ATR)  and  the  value for mhz should be
+       adjusted again.	The higher the baudrate, the more accurate the	effec
        tive baudrate can be.
 
 EXAMPLES

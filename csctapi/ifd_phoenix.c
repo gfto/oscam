@@ -10,6 +10,8 @@
 #include "../globals.h"
 #include "atr.h"
 #include <termios.h>
+#include "ifd_phoenix.h"
+#include "icc_async.h"
 
 #define OK 		1
 #define ERROR 0
@@ -262,7 +264,7 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 #ifdef DEBUG_IFD
 	printf ("IFD: Setting baudrate to %lu\n", baudrate);
 #endif
-	if ((reader[ridx].typ != R_INTERNAL) && (reader[ridx].baudrate	!= baudrate))
+	if ((reader[ridx].typ != R_INTERNAL) && (current_baudrate	!= baudrate))
 	{
 		/* Get current settings */
 		struct termios tio;
@@ -276,7 +278,7 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 		if (!IO_Serial_SetProperties(tio))
 			return ERROR;
 	}
-	reader[ridx].baudrate = baudrate;
+	current_baudrate = baudrate;
 	return OK;
 }
 

@@ -26,7 +26,6 @@
 #define _PROTOCOL_T1_
 
 #include "defines.h"
-#include "icc_async.h"
 #include "apdu.h"
 #include "pps.h"
 
@@ -45,11 +44,6 @@
  */
 
 unsigned short ifsc;  /* Information field size for the ICC */
-unsigned short ifsd;  /* Information field size for the IFD */
-unsigned short bgt;   /* Block guard time */
-unsigned short bwt;   /* Block waiting time */
-unsigned short cwt;   /* Character waiting time */
-int edc;              /* Type of error detection code */
 BYTE ns;              /* Send sequence number */
 /*
  * Exported functions declaration
