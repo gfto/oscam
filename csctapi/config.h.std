@@ -84,12 +84,6 @@
 /* Memory smartcard type (0,1,2,3) */
 /* #undef ICC_SYNC_MEMORY_TYPE */
 
-/* Smartcard of type asynchronoys */
-/* #undef ICC_TYPE_ASYNC */
-
-/* Smartcard of type synchronoys */
-/* #undef ICC_TYPE_SYNC */
-
 /* ATR for asynchronous cards is cheked */
 #define IFD_TOWITOKO_STRICT_ATR_CHECK 1
 

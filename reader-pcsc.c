@@ -84,8 +84,12 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res,
      SCARD_IO_REQUEST pioRecvPci;
      DWORD dwSendLength, dwRecvLength;
 
+    if(!l) {
+        cs_log("ERROR : data length to be send to the reader is %d" , l);
+        return ERR_INVALID;
+    }
 
-     dwRecvLength = CTA_RES_LEN;
+    dwRecvLength = CTA_RES_LEN;
 
     if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0) {
         //  explanantion as to why we do the test on buf[4] :
@@ -189,7 +193,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
                 SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
                 pcsc_reader->hCard=0;
             }
-            cs_debug("PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
+            // cs_debug("PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
             return 0;
         }
         else if( rv == SCARD_W_UNRESPONSIVE_CARD ) {
@@ -205,7 +209,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
         }
         else {
             // if we get here we have a bigger problem -> display status and debug
-            cs_debug("PCSC reader %s status [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
+            // cs_debug("PCSC reader %s status [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
             return 0;
         }
         
@@ -215,14 +219,12 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
     rv = SCardStatus(pcsc_reader->hCard, NULL, &dwReaderLen, &dwState, &pcsc_reader->dwActiveProtocol, pbAtr, &dwAtrLen);
 
     if (rv == SCARD_S_SUCCESS && (dwState & (SCARD_PRESENT | SCARD_NEGOTIABLE | SCARD_POWERED ) )) {
-        cs_debug("PCSC card IS inserted in %s card state [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState,rv);
         return CARD_INSERTED;
     } 
     else {
         SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
         pcsc_reader->hCard=0;
         pcsc_reader->pcsc_has_card=0;
-        cs_debug("PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
     }
     
     return 0;

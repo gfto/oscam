@@ -33,18 +33,11 @@
  */
 
 /* Return codes */
-#define ICC_ASYNC_OK            0
-#define ICC_ASYNC_IFD_ERROR     1
-#define ICC_ASYNC_ATR_ERROR     2
+#define OK		0
+#define ERROR	1
 
-/* Card status */
-#define IFD_TOWITOKO_NOCARD_NOCHANGE    0x00
-#define IFD_TOWITOKO_CARD_NOCHANGE      0x40
-#define IFD_TOWITOKO_NOCARD_CHANGE      0x80
-#define IFD_TOWITOKO_CARD_CHANGE        0xC0
-#define IFD_TOWITOKO_CARD(status)       (((status) & 0x40) == 0x40)
-#define IFD_TOWITOKO_CHANGE(status)     (((status) & 0x80) == 0x80)
-
+#define ATR_TIMEOUT				800
+#define DEFAULT_BAUDRATE	9600
 /*
  * Exported types definition
  */
@@ -53,32 +46,30 @@ typedef struct
 {
   unsigned block_delay;          /* Delay (ms) after starting to transmit */
   unsigned char_delay;           /* Delay (ms) after transmiting each sucesive char*/
-  unsigned block_timeout;        /* Max timeout (ms) to receive first char */
-  unsigned char_timeout;         /* Max timeout (ms) to receive sucesive characters */
 }
 ICC_Async_Timings;
 
-ATR * atr, icc_atr;                     /* Answer to reset of this ICC */
 int convention;               /* Convention of this ICC */
 BYTE protocol_type;		/* Type of protocol */
 ICC_Async_Timings icc_timings;    /* Current timings for transmiting to this ICC */
-BYTE BWT,CWT;
+unsigned short BWT,CWT; //(for overclocking uncorrected) block waiting time, character waiting time, in ETU
 unsigned long current_baudrate; //(for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
+unsigned int read_timeout;		// Max timeout (ms) to receive characters
 
 /*
  * Exported functions declaration
  */
 
 /* Initialization and Deactivation */
-extern int ICC_Async_Init ();
-extern int ICC_Async_Close ();
-int ICC_Async_Device_Init ();
+extern int ICC_Async_Activate (ATR * newatr);
+extern int ICC_Async_Close (void);
+int ICC_Async_Device_Init (void);
 
 /* Attributes */
-extern int ICC_Async_SetTimings (unsigned short bwt);
+int ICC_Async_SetTimings (unsigned wait_etu);
 extern int ICC_Async_SetBaudrate (unsigned long baudrate);
-extern unsigned long ICC_Async_GetClockRate ();
-int ICC_Async_GetStatus (BYTE * result);
+extern unsigned long ICC_Async_GetClockRate (void);
+int ICC_Async_GetStatus (int * has_card);
 
 
 /* Operations */

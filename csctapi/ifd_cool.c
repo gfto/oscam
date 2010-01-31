@@ -9,8 +9,8 @@
 #include <string.h>
 #include"ifd_cool.h"
 
-#define OK 		1 
-#define ERROR 0
+#define OK 		0 
+#define ERROR 1
 
 void * handle;
 
@@ -54,7 +54,7 @@ int Cool_GetStatus (int * in)
 
 int Cool_Reset (ATR * atr)
 {
-	if (!Cool_SetBaudrate(357))
+	if (Cool_SetBaudrate(357))
 		return ERROR;
 
 	//reset card
@@ -124,5 +124,26 @@ int Cool_SetBaudrate (int mhz)
 	if (cnxt_smc_set_clock_freq (handle, clk))
 		return ERROR;
 	return OK;
+}
+
+int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT, unsigned long BGT)
+{
+	struct
+	{
+		unsigned short  CardActTime;   //card activation time (in clock cycles = 1/54Mhz)
+		unsigned short  CardDeactTime; //card deactivation time (in clock cycles = 1/54Mhz)
+		unsigned short  ATRSTime;			//ATR first char timeout in clock cycles (1/f)
+		unsigned short  ATRDTime;			//ATR duration in ETU
+		unsigned long	  BWT;
+		unsigned long   CWT;
+		unsigned char   EGT;
+		unsigned char   BGT;
+	} params;
+	params.BWT = BWT;
+	params.CWT = CWT;
+	params.EGT = EGT;
+	params.BGT = BGT;
+	if (cnxt_smc_set_config_timeout(handle, params))
+		return ERROR;
 }
 #endif

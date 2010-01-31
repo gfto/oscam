@@ -1,11 +1,15 @@
 #include "globals.h"
 #include "reader-common.h"
+#include "defines.h"
+#include "atr.h"
 
-uchar cta_cmd[272], cta_res[CTA_RES_LEN], atr[64];
-ushort cta_lr, atr_size=0;
+uchar cta_res[CTA_RES_LEN];
+ushort cta_lr;
 static int cs_ptyp_orig; //reinit=1, 
+extern int ICC_Async_Device_Init ();
 extern int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr);
-
+extern int ICC_Async_Activate	 (ATR * atr);
+extern int ICC_Async_GetStatus (int * card);
 #define SC_IRDETO 1
 #define SC_CRYPTOWORKS 2
 #define SC_VIACCESS 3
@@ -55,39 +59,6 @@ static void reader_nullcard(void)
   reader[ridx].nprov=0;
 }
 
-int reader_doapi(uchar dad, uchar *buf, int l, int dbg)
-{
-#ifdef HAVE_PCSC
-	if (reader[ridx].typ == R_PCSC) {
- 	  return (dad == 0) ? pcsc_reader_do_api(&reader[ridx], buf, cta_res, &cta_lr,l) : 0; 
-	}
-
-#endif
-  int rc;
-  uchar sad;
-
-//  oscam_card_inserted=4;
-  sad=2;
-  cta_lr=sizeof(cta_res)-1;
-  cs_ptyp_orig=cs_ptyp;
-  cs_ptyp=dbg;
-  //cs_ddump(buf, l, "send %d bytes to ctapi", l);
-  rc=CT_data(1, &dad, &sad, l, buf, &cta_lr, cta_res);
-  //cs_ddump(cta_res, cta_lr, "received %d bytes from ctapi with rc=%d", cta_lr, rc);
-  cs_ptyp=cs_ptyp_orig;
-  return(rc);
-}
-
-int reader_chkicc(uchar *buf, int l)
-{
-  return(reader_doapi(1, buf, l, D_WATCHDOG));
-}
-
-int reader_cmd2api(uchar *buf, int l)
-{
-  return(reader_doapi(1, buf, l, D_DEVICE));
-}
-
 int reader_cmd2icc(uchar *buf, int l)
 {
 	int rc;
@@ -122,74 +93,53 @@ int card_write(uchar *cmd, uchar *data)
     return(reader_cmd2icc(cmd, CMD_LEN));
 }
 
-static int reader_activate_card()
+static int reader_card_inserted(void)
 {
-  int i;
-  char ret;
-
 #ifdef HAVE_PCSC
-  if (reader[ridx].typ == R_PCSC) {
-        return (pcsc_activate_card(&reader[ridx], atr, &atr_size));
-  }
+	if (reader[ridx].typ == R_PCSC) {
+		return(pcsc_check_card_inserted(&reader[ridx]));
+	}
 #endif
+	int card;
+	if (ICC_Async_GetStatus (&card)) {
+		cs_log("Error getting status of terminal.");
+		return 0; //corresponds with no card inside!!
+	}
+	return (card);
+}
 
-  cta_cmd[0] = CTBCS_INS_RESET;
-  cta_cmd[1] = CTBCS_P2_RESET_GET_ATR;
-  cta_cmd[2] = 0x00;
-
-  ret = reader_cmd2api(cta_cmd, 3);
-  if (ret!=OK)
-  {
-    cs_log("Error reset terminal: %d", ret);
-    return(0);
-  }
-  
-  cta_cmd[0] = CTBCS_CLA;
-  cta_cmd[1] = CTBCS_INS_STATUS;
-  cta_cmd[2] = CTBCS_P1_CT_KERNEL;
-  cta_cmd[3] = CTBCS_P2_STATUS_ICC;
-  cta_cmd[4] = 0x00;
-
-//  ret=reader_cmd2api(cmd, 11); warum 11 ??????
-  ret=reader_cmd2api(cta_cmd, 5);
-  if (ret!=OK)
-  {
-    cs_log("Error getting status of terminal: %d", ret);
-    return(0);
-  }
-  if (cta_res[0]!=CTBCS_DATA_STATUS_CARD_CONNECT)
-    return(0);
+static int reader_activate_card(ATR * atr)
+{
+      int i;
+#ifdef HAVE_PCSC
+    unsigned char atrarr[64];
+    ushort atr_size = 0;
+    if (reader[ridx].typ == R_PCSC) {
+        if (pcsc_activate_card(&reader[ridx], atrarr, &atr_size))
+            return (ATR_InitFromArray (atr, atrarr, atr_size) == ATR_OK);
+        else
+            return 0;
+    }
+#endif
+	if (!reader_card_inserted())
+		return 0;
 
   /* Activate card */
-//  for (i=0; (i<5) && ((ret!=OK)||(cta_res[cta_lr-2]!=0x90)); i++)
-  for (i=0; i<5; i++)
-  {
-    //reader_irdeto_mode = i%2 == 1; //does not work when overclocking
-    cta_cmd[0] = CTBCS_CLA;
-    cta_cmd[1] = CTBCS_INS_REQUEST;
-    cta_cmd[2] = CTBCS_P1_INTERFACE1;
-    cta_cmd[3] = CTBCS_P2_REQUEST_GET_ATR;
-    cta_cmd[4] = 0x00;
-
-    ret=reader_cmd2api(cta_cmd, 5);
-    if ((ret==OK)||(cta_res[cta_lr-2]==0x90))
-    {
-      i=100;
-      break;
-    }
-    cs_log("Error activating card: %d", ret);
-    cs_sleepms(500);
-  }
+  for (i=0; i<5; i++) {
+		if (!ICC_Async_Activate(atr)) {
+			i = 100;
+			break;
+		}
+		cs_log("Error activating card.");
+  	cs_sleepms(500);
+	}
   if (i<100) return(0);
 
-  /* Store ATR */
-  atr_size=cta_lr-2;
-  memcpy(atr, cta_res, atr_size);
 #ifdef CS_RDR_INIT_HIST
   reader[ridx].init_history_pos=0;
   memset(reader[ridx].init_history, 0, sizeof(reader[ridx].init_history));
 #endif
-  cs_ri_log("ATR: %s", cs_hexdump(1, atr, atr_size));
+//  cs_ri_log("ATR: %s", cs_hexdump(1, atr, atr_size));//FIXME
   sleep(1);
   return(1);
 }
@@ -264,7 +214,7 @@ void reader_card_info()
   }
 }
 
-static int reader_get_cardsystem(void)
+static int reader_get_cardsystem(ATR atr)
 {
   if (nagra2_card_init(atr))		reader[ridx].card_system=SC_NAGRA; else
   if (irdeto_card_init(atr))		reader[ridx].card_system=SC_IRDETO; else
@@ -272,7 +222,7 @@ static int reader_get_cardsystem(void)
   if (cryptoworks_card_init(atr))	reader[ridx].card_system=SC_CRYPTOWORKS; else
   if (seca_card_init(atr))	reader[ridx].card_system=SC_SECA; else
   if (viaccess_card_init(atr))	reader[ridx].card_system=SC_VIACCESS; else
-  if (videoguard_card_init(atr, atr_size))  reader[ridx].card_system=SC_VIDEOGUARD2; else
+  if (videoguard_card_init(atr))  reader[ridx].card_system=SC_VIDEOGUARD2; else
   if (dre_card_init(atr))  reader[ridx].card_system=SC_DRE; else
     cs_ri_log("card system not supported");
   cs_ri_brk(1);
@@ -283,26 +233,9 @@ static int reader_get_cardsystem(void)
 static int reader_reset(void)
 {
   reader_nullcard();
-  if (!reader_activate_card()) return(0);
-  return(reader_get_cardsystem());
-}
-
-static int reader_card_inserted(void)
-{
-#ifdef HAVE_PCSC
-    if (reader[ridx].typ == R_PCSC) {
-    return(pcsc_check_card_inserted(&reader[ridx]));
-
-	}
-#endif
-
-  cta_cmd[0]=CTBCS_CLA;
-  cta_cmd[1]=CTBCS_INS_STATUS;
-  cta_cmd[2]=CTBCS_P1_INTERFACE1;
-  cta_cmd[3]=CTBCS_P2_STATUS_ICC;
-  cta_cmd[4]=0x00;
-
-  return(reader_chkicc(cta_cmd, 5) ? 0 : cta_res[0]);
+	ATR atr;
+  if (!reader_activate_card(&atr)) return(0);
+  return(reader_get_cardsystem(atr));
 }
 
 int reader_device_init(char *device)
@@ -313,16 +246,20 @@ int reader_device_init(char *device)
 	}
 #endif
  
-  int rc;
+  int rc = -1; //FIXME
   cs_ptyp_orig=cs_ptyp;
   cs_ptyp=D_DEVICE;
 #ifdef TUXBOX
 	reader[ridx].typ = reader_device_type(device);
-  if ((rc=CT_init(1))!=OK)
+	if (ICC_Async_Device_Init())
     cs_log("[tuxbox] Cannot open device: %s", device);
+	else
+		rc = OK;
 #else
-  if ((rc=CT_init(1))!=OK)
+	if (ICC_Async_Device_Init())
     cs_log("Cannot open device: %s", device);
+	else
+		rc = OK;
 #endif
   cs_debug("ct_init on %s: %d", device, rc);
   cs_ptyp=cs_ptyp_orig;

@@ -34,19 +34,34 @@
 #include "protocol_t0.h"
 #include "protocol_t1.h"
 
-/*
- * Not exported constants definition
- */
-#define ICC_ASYNC_MAX_TRANSMIT	255
-#define ICC_ASYNC_BAUDRATE	9600
+// Default T0/T14 settings
+#define DEFAULT_WI		10
+// Default T1 settings
+#define DEFAULT_IFSC	32
+#define MAX_IFSC			251  /* Cannot send > 255 buffer */
+#define DEFAULT_CWI		13
+#define DEFAULT_BWI		4
+#define EDC_LRC				0
+
+#define PPS_MAX_LENGTH	6
+#define PPS_HAS_PPS1(block)       ((block[1] & 0x10) == 0x10)
+#define PPS_HAS_PPS2(block)       ((block[1] & 0x20) == 0x20)
+#define PPS_HAS_PPS3(block)       ((block[1] & 0x40) == 0x40)
+
 
 /*
  * Not exported functions declaration
  */
 
 static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer);
-int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-extern unsigned int ETU_to_ms(unsigned long WWT);
+static int Parse_ATR (ATR * atr);
+static int PPS_Exchange (BYTE * params, unsigned *length);
+static unsigned PPS_GetLength (BYTE * block);
+static int InitCard (ATR * atr, BYTE FI, double d, double n);
+static unsigned int ETU_to_ms(unsigned long WWT);
+static BYTE PPS_GetPCK (BYTE * block, unsigned length);
+static int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
+static int SetRightParity (void);
 
 int fdmc=(-1);
 
@@ -56,7 +71,15 @@ int fdmc=(-1);
 
 int ICC_Async_Device_Init ()
 {
-
+#if defined(LIBUSB)
+	if (reader[ridx].typ == R_SMART) {
+		if(SR_Init(&reader[ridx])) {
+			return ERROR;
+		}
+	}
+	else 
+#endif
+ {
 	wr = 0;	
 #ifdef DEBUG_IO
 	printf ("IO: Opening serial port %s\n", reader[ridx].device);
@@ -67,7 +90,7 @@ int ICC_Async_Device_Init ()
 #if defined(SH4) || defined(STB04SCI)
 		reader[ridx].handle = open (reader[ridx].device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 #elif COOL
-		return Cool_Init();
+		return !Cool_Init();  //if cool_init succeeds, it returns 0, so device_init returns 1 ? /FIXME I think the ! should disappear
 #else
 		reader[ridx].handle = open (reader[ridx].device, O_RDWR);
 #endif
@@ -77,30 +100,32 @@ int ICC_Async_Device_Init ()
 	reader[ridx].handle = open (reader[ridx].device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 
 	if (reader[ridx].handle < 0)
-		return ICC_ASYNC_IFD_ERROR;
+		return ERROR;
 
 #if defined(TUXBOX) && defined(PPC)
 	if ((reader[ridx].typ == R_DB2COM1) || (reader[ridx].typ == R_DB2COM2))
 		if ((fdmc = open(DEV_MULTICAM, O_RDWR)) < 0)
 		{
 			close(reader[ridx].handle);
-			return ICC_ASYNC_IFD_ERROR;
+			return ERROR;
 		}
 #endif
 
 	if (reader[ridx].typ != R_INTERNAL) { //FIXME move to ifd_phoenix.c
-		if(!IO_Serial_InitPnP ())
-			return ICC_ASYNC_IFD_ERROR;
+		if(IO_Serial_InitPnP ())
+			return ERROR;
 		IO_Serial_Flush();
 	}
-
-	return ICC_ASYNC_OK;
+  if (Phoenix_Init()) {
+		IO_Serial_Close (); //FIXME no Phoenix_Close ?
+		return ERROR;
+	}
+ }
+ return OK;
 }
 
-int ICC_Async_GetStatus (BYTE * result)
+int ICC_Async_GetStatus (int * card)
 {
-	BYTE status[2];
-//	unsigned int modembits=0;
 	int in;
 	
 //	printf("\n%08X\n", (int)ifd->io);
@@ -108,24 +133,28 @@ int ICC_Async_GetStatus (BYTE * result)
 // status : 0 -start, 1 - card, 2- no card
 
 #ifdef SCI_DEV
-	if(reader[ridx].typ == R_INTERNAL)
-	{
-		if(!Sci_GetStatus(reader[ridx].handle, &in))
-			return ICC_ASYNC_IFD_ERROR;			
+	if(reader[ridx].typ == R_INTERNAL) {
+		if(Sci_GetStatus(reader[ridx].handle, &in))
+			return ERROR;			
 	}
 	else
 #elif COOL
-	if(reader[ridx].typ == R_INTERNAL)
-	{	
-		if (!Cool_GetStatus(&in))
-			return ICC_ASYNC_IFD_ERROR;
+	if(reader[ridx].typ == R_INTERNAL) {	
+		if (Cool_GetStatus(&in))
+			return ERROR;
+	}
+	else
+#endif
+#if defined(LIBUSB)
+	if(reader[ridx].typ == R_SMART) {	
+		if (SR_GetStatus(&reader[ridx],&in))
+			return ERROR;
 	}
 	else
 #endif
 
 #if defined(TUXBOX) && defined(PPC)
-	if ((reader[ridx].typ == R_DB2COM1) || (reader[ridx].typ == R_DB2COM2))
-	{
+	if ((reader[ridx].typ == R_DB2COM1) || (reader[ridx].typ == R_DB2COM2)) {
 		ushort msr=1;
 		extern int fdmc;
 		IO_Serial_Ioctl_Lock(1);
@@ -138,132 +167,90 @@ int ICC_Async_GetStatus (BYTE * result)
 	}
 	else
 #endif
-  if (!Phoenix_GetStatus(&in))
-			return ICC_ASYNC_IFD_ERROR;
+    if (Phoenix_GetStatus(&in))
+            return ERROR;
 
-	if (in)
-	{       
-		if(reader[ridx].status == 0)
-		{
-			status[0] = IFD_TOWITOKO_CARD_CHANGE;
-			reader[ridx].status = 1;
-		}
-		else if(reader[ridx].status == 1)
-		{
-			status[0] = IFD_TOWITOKO_CARD_NOCHANGE;
-		}
-		else
-		{
-			status[0] = IFD_TOWITOKO_CARD_CHANGE;
-			reader[ridx].status = 1;
-		}
+  if (in) {
+		*card = TRUE;
+		reader[ridx].status = 1;
 	}
-	else
-	{
-		if(reader[ridx].status == 0)
-		{
-			status[0] = IFD_TOWITOKO_NOCARD_CHANGE;
-			reader[ridx].status = 2;
-		}
-		else if(reader[ridx].status == 1)
-		{
-			status[0] = IFD_TOWITOKO_NOCARD_CHANGE;
-			reader[ridx].status = 2;
-		}
-		else
-		{
-			status[0] = IFD_TOWITOKO_NOCARD_NOCHANGE;
-		}
+	else {
+		*card = FALSE;
+		reader[ridx].status = 2;
 	}
-	
-		
-	(*result) = status[0];
 	
 #ifdef DEBUG_IFD
-	printf ("IFD: com%d Status = %s / %s\n", reader[ridx].typ, IFD_TOWITOKO_CARD(status[0])? "card": "no card", IFD_TOWITOKO_CHANGE(status[0])? "change": "no change");
+	printf ("IFD: com%d Status = %s / %s\n", reader[ridx].typ, in ? "card": "no card", in ? "change": "no change");
 #endif
 	
-	return ICC_ASYNC_OK;
+	return OK;
 }
 
-int ICC_Async_Init ()
+int ICC_Async_Activate (ATR * atr)
 {
-#ifndef ICC_TYPE_SYNC 
-	unsigned np=0;
+	int card;
 
-	// Initialize Baudrate
-	if (!Phoenix_SetBaudrate (ICC_ASYNC_BAUDRATE))
-		return ICC_ASYNC_IFD_ERROR;
+	if (ICC_Async_GetStatus (&card))
+		return ERROR;
+	if (card == 0)
+		return ERROR;
 
-	atr = &icc_atr;	
+#if defined(LIBUSB)
+    if (reader[ridx].typ == R_SMART) {
+        if (SR_Reset(&reader[ridx],atr)) {
+            return ERROR;
+        }
+    }
+    else
+    {
+#endif
+    
+        /* Initialize Baudrate */
+        if (Phoenix_SetBaudrate (DEFAULT_BAUDRATE))
+            return ERROR;
+        
 #ifdef SCI_DEV
-	// Activate ICC
-	if (!Sci_Activate())
-		return ICC_ASYNC_IFD_ERROR;
-	// Reset ICC
-	if (reader[ridx].typ == R_INTERNAL) {
-		if (!Sci_Reset(atr))
-			return ICC_ASYNC_IFD_ERROR;
-	}
-	else
+        /* Activate ICC */
+        if (Sci_Activate())
+            return ERROR;
+        /* Reset ICC */
+        if (reader[ridx].typ == R_INTERNAL) {
+            if (Sci_Reset(atr)) 
+                return ERROR;
+        }
+        else
 #endif
 #ifdef COOL
-	if (reader[ridx].typ == R_INTERNAL) {
-		if (!Cool_Reset(atr))
-			return ICC_ASYNC_IFD_ERROR;
-	}
-	else
+        if (reader[ridx].typ == R_INTERNAL) {
+            if (Cool_Reset(atr)) 
+                return ERROR;
+        }
+        else
 #endif
-	if (!Phoenix_Reset(atr))
-		return ICC_ASYNC_IFD_ERROR;
-	// Get ICC convention
-	if (ATR_GetConvention (atr, &(convention)) != ATR_OK)
-	{
+        if (Phoenix_Reset(atr)) {
+            return ERROR;
+        }
+#if defined(LIBUSB)
+    }
+#endif
+
+	unsigned char atrarr[64];
+	unsigned int atr_size;
+	ATR_GetRaw(atr, atrarr, &atr_size);
+	cs_ri_log("ATR: %s", cs_hexdump(1, atrarr, atr_size));
+
+	/* Get ICC convention */
+	if (ATR_GetConvention (atr, &(convention)) != ATR_OK) {
 		convention = 0;
-	  //no protocol_type = -1 ???	
-		return ICC_ASYNC_ATR_ERROR;
+	  protocol_type = 0; 
+		return ERROR;
 	}
 	
 	protocol_type = ATR_PROTOCOL_TYPE_T0;
 	
-	ATR_GetNumberOfProtocols (atr, &np);
-	
-	/* 
-	* Get protocol offered by interface bytes T*2 if available, 
-	* (that is, if TD1 is available), * otherwise use default T=0
-	*/
-/*	if (np>1)
-		ATR_GetProtocolType (atr, 1, &(protocol_type));
-	
-#ifdef DEBUG_ICC
-	printf("ICC: Detected %s convention processor card T=%d\n",(convention == ATR_CONVENTION_DIRECT ? "direct" : "inverse"), protocol_type);
-#endif
-	*///really should let PPS handle this
-	
-	/* Initialize member variables */
-	if (convention == ATR_CONVENTION_INVERSE)
-	{
-		if (!IO_Serial_SetParity (PARITY_ODD))
-			return ICC_ASYNC_IFD_ERROR;
-	}
-	else if(protocol_type == ATR_PROTOCOL_TYPE_T14)
-	{
-		if (!IO_Serial_SetParity (PARITY_NONE))
-			return ICC_ASYNC_IFD_ERROR;		
-	}
-	else
-	{
-		if (!IO_Serial_SetParity (PARITY_EVEN))
-			return ICC_ASYNC_IFD_ERROR;		
-	}
-#ifdef COOL
-	if (reader[ridx].typ != R_INTERNAL)
-#endif
-	IO_Serial_Flush();
-	return ICC_ASYNC_OK;
-#else
-	return ICC_ASYNC_ATR_ERROR;
-#endif
+	if (Parse_ATR(atr))
+		return ERROR;		
+	return OK;
 }
 
 int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr)
@@ -274,14 +261,14 @@ int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *r
 	bool err = FALSE;
 
 	if (reader[ridx].status != 1) //no card inside
-		return ICC_ASYNC_IFD_ERROR;
+		return ERROR;
 	
 	/* Create a command APDU */
 	apdu_cmd = APDU_Cmd_New (cmd, lc);
 	if (apdu_cmd == NULL)
-		return ICC_ASYNC_IFD_ERROR;
+		return ERROR;
 	
-	if (Protocol_Command (apdu_cmd, &apdu_rsp) == ICC_ASYNC_OK) {
+	if (!Protocol_Command (apdu_cmd, &apdu_rsp)) {
 		if (apdu_rsp != NULL) {
 			/* Copy APDU data to rsp */
 			remain = MAX ((short)APDU_Rsp_RawLen(apdu_rsp) - (*lr),0);
@@ -297,74 +284,92 @@ int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *r
 			(*lr) = 0;
 	}
 	else
-		return ICC_ASYNC_IFD_ERROR;
+		return ERROR;
 		
 	APDU_Cmd_Delete (apdu_cmd);
 	if (err)
-		return ICC_ASYNC_IFD_ERROR;
+		return ERROR;
 
-	return ICC_ASYNC_OK;
+	return OK;
 }
 
 int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
 	switch (protocol_type) {
 		case ATR_PROTOCOL_TYPE_T0:
-			if (Protocol_T0_Command (cmd, rsp) != ICC_ASYNC_OK)
-				return ICC_ASYNC_IFD_ERROR;
+			if (Protocol_T0_Command (cmd, rsp))
+				return ERROR;
 			break;
 		case ATR_PROTOCOL_TYPE_T1:
-			if (Protocol_T1_Command (cmd, rsp) != ICC_ASYNC_OK) //FIXME in .h and also .c !!!
-				return ICC_ASYNC_IFD_ERROR;
+			if (Protocol_T1_Command (cmd, rsp))
+				return ERROR;
 			break;
 		case ATR_PROTOCOL_TYPE_T14:
-			if (Protocol_T14_Command (cmd, rsp) != ICC_ASYNC_OK)
-				return ICC_ASYNC_IFD_ERROR;
+			if (Protocol_T14_Command (cmd, rsp))
+				return ERROR;
 			break;
 		default:
 			cs_log("Error, unknown protocol type %i",protocol_type);
-			return ICC_ASYNC_IFD_ERROR;
+			return ERROR;
 	}
-	return ICC_ASYNC_OK;
+	return OK;
 }
 
-int ICC_Async_SetTimings (unsigned short bwt)
+int ICC_Async_SetTimings (unsigned wait_etu)
 {
-	if (protocol_type == ATR_PROTOCOL_TYPE_T1) {
-		if (reader[ridx].typ == R_INTERNAL) {
-#ifdef SCI_DEV
-#include <sys/ioctl.h>
-#include "sci_global.h"
-#include "sci_ioctl.h"
-			SCI_PARAMETERS params;
-			if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
-				return ICC_ASYNC_IFD_ERROR;
-			params.BWT = bwt;
-			if (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
-				return ICC_ASYNC_IFD_ERROR;
-#endif
-		}
-		else
-			icc_timings.block_timeout = ETU_to_ms(bwt);
-		cs_debug("Setting BWT to %i", bwt);
-		BWT = bwt;
-	}
-	return ICC_ASYNC_OK;
+//		if (reader[ridx].typ == R_INTERNAL) {
+//not sure whether this tampering with Block/Character timeouts is needed with SCI devices, 
+//since we have set CWT and BWT it seems logical the reader is taking care of this
+//#ifdef SCI_DEV
+//#include <sys/ioctl.h>
+//#include "sci_global.h"
+//#include "sci_ioctl.h"
+//			SCI_PARAMETERS params;
+//			if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
+//				return ERROR;
+//			params.BWT = bwt;
+//			if (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
+//				return ERROR;
+//#endif
+//		}
+//		else {
+			read_timeout = ETU_to_ms(wait_etu);
+			//cs_debug("Setting timeout to %i", wait_etu);
+//		}
+	return OK;
 }
 
 int ICC_Async_SetBaudrate (unsigned long baudrate)
 {
-	if (!Phoenix_SetBaudrate (baudrate))
-	  return ICC_ASYNC_IFD_ERROR;
+	if (Phoenix_SetBaudrate (baudrate)) //also call this for internal readers to update current_baudrate
+	  return ERROR;
+
+#ifdef COOL
+	if(reader[ridx].typ == R_INTERNAL)
+		if (Cool_SetBaudrate(reader[ridx].mhz))
+			return ERROR;
+#endif
+
+#if defined(LIBUSB)
+	if (reader[ridx].typ == R_SMART) {
+		if(SR_SetBaudrate(&reader[ridx]))
+			return ERROR;
+		return OK;
+	}
+#endif
 	
-	return ICC_ASYNC_OK;
+	return OK;
 }
 
 int ICC_Async_Transmit (unsigned size, BYTE * data)
 {
 	BYTE *buffer = NULL, *sent; 
 	
+#if defined(LIBUSB)
+	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL && reader[ridx].typ != R_SMART)
+#else
 	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL)
+#endif
 	{
 		buffer = (BYTE *) calloc(sizeof (BYTE), size);
 		memcpy (buffer, data, size);
@@ -376,60 +381,87 @@ int ICC_Async_Transmit (unsigned size, BYTE * data)
 		sent = data;
 	}
 	
-#ifdef COOL
-	if (reader[ridx].typ == R_INTERNAL) {
-		if (!Cool_Transmit(sent, size))
-			return ICC_ASYNC_IFD_ERROR;
-	}
+#if defined(LIBUSB)
+    if (reader[ridx].typ == R_SMART) {
+        if (SR_Transmit(&reader[ridx], sent, size))
+            return ERROR;
+    }
 	else
-#elif SCI_DEV
+#endif
+
+#ifdef COOL
+    if (reader[ridx].typ == R_INTERNAL) {
+        if (Cool_Transmit(sent, size))
+            return ERROR;
+    }
+    else
+    #elif SCI_DEV
 	if (reader[ridx].typ == R_INTERNAL) {
-		if (!Phoenix_Transmit (sent, size, 0, 0)) //the internal reader will provide the delay
-			return ICC_ASYNC_IFD_ERROR;
+		if (Phoenix_Transmit (sent, size, 0, 0)) //the internal reader will provide the delay
+			return ERROR;
 	}
 	else
 #endif
-	if (!Phoenix_Transmit (sent, size, icc_timings.block_delay, icc_timings.char_delay))
-		return ICC_ASYNC_IFD_ERROR;
-	
+	if (Phoenix_Transmit (sent, size, icc_timings.block_delay, icc_timings.char_delay))
+		return ERROR;
+
+#if defined(LIBUSB)
+	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL && reader[ridx].typ != R_SMART)
+#else
 	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL)
+#endif
 		free (buffer);
-	
-	return ICC_ASYNC_OK;
+
+	return OK;
 }
 
 int ICC_Async_Receive (unsigned size, BYTE * data)
 {
 #ifdef COOL
-	if (reader[ridx].typ == R_INTERNAL) {
-		if (!Cool_Receive(data, size))
-			return ICC_ASYNC_IFD_ERROR;
-	}
-	else
-#else
-	if (!Phoenix_Receive (data, size, icc_timings.block_timeout, icc_timings.char_timeout))
-		return ICC_ASYNC_IFD_ERROR;
+    if (reader[ridx].typ == R_INTERNAL) {
+        if (Cool_Receive(data, size))
+            return ERROR;
+    }
+    else
 #endif
-	
+#if defined(LIBUSB)
+    if (reader[ridx].typ == R_SMART) {
+        if (SR_Receive(&reader[ridx], data, size))
+            return ERROR;
+    }
+    else
+#endif
+
+	if (Phoenix_Receive (data, size, read_timeout))
+		return ERROR;
+
+#if defined(LIBUSB)
+	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL && reader[ridx].typ != R_SMART)
+#else
 	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL)
+#endif
 		ICC_Async_InvertBuffer (size, data);
 	
-	return ICC_ASYNC_OK;
+	return OK;
 }
 
 int ICC_Async_Close ()
 {
+#if defined(LIBUSB)
+    if (reader[ridx].typ == R_SMART) {
+        if (SR_Close(&reader[ridx]))
+            return ERROR;
+    }
+    else
+#endif
+
 #ifdef SCI_DEV
 	/* Dectivate ICC */
-	if (!Sci_Deactivate())
-		return ICC_ASYNC_IFD_ERROR;
+	if (Sci_Deactivate())
+		return ERROR;
 #endif
 	
-	/* Delete atr */
-	convention = 0;
-	protocol_type = -1;
-	
-	return ICC_ASYNC_OK;
+	return OK;
 }
 
 unsigned long ICC_Async_GetClockRate ()
@@ -455,4 +487,520 @@ static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer)
 	
 	for (i = 0; i < size; i++)
 		buffer[i] = ~(INVERT_BYTE (buffer[i]));
+}
+
+static int Parse_ATR (ATR * atr)
+{
+	BYTE FI = ATR_DEFAULT_FI;
+	//BYTE t = ATR_PROTOCOL_TYPE_T0;
+	double d = ATR_DEFAULT_D;
+	double n = ATR_DEFAULT_N;
+	int ret;
+	bool PPS_success; 
+
+	/* Perform PPS Exchange if requested by command */
+	PPS_success = OK;
+	if (!PPS_success) 
+	{
+		int numprot = atr->pn;
+		//if there is a trailing TD, this number is one too high
+		BYTE tx;
+		if (ATR_GetInterfaceByte (atr, numprot-1, ATR_INTERFACE_BYTE_TD, &tx) == ATR_OK)
+			if ((tx & 0xF0) == 0)
+				numprot--;
+		cs_debug("ATR reports %i protocol lines:",numprot);
+		int i,point;
+		char txt[50];
+		bool OffersT[3]; //T14 stored as T2
+		for (i = 0; i <= 2; i++)
+			OffersT[i] = FALSE;
+		for (i=1; i<= numprot; i++) {
+			point = 0;
+			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TA, &tx) == ATR_OK) {
+				sprintf((char *)txt+point,"TA%i=%02X ",i,tx);
+				point +=7;
+			}
+			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TB, &tx) == ATR_OK) {
+				sprintf((char *)txt+point,"TB%i=%02X ",i,tx);
+				point +=7;
+			}
+			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TC, &tx) == ATR_OK) {
+				sprintf((char *)txt+point,"TC%i=%02X ",i,tx);
+				point +=7;
+			}
+			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TD, &tx) == ATR_OK) {
+				sprintf((char *)txt+point,"TD%i=%02X ",i,tx);
+				point +=7;
+				tx &= 0X0F;
+				sprintf((char *)txt+point,"(T%i)",tx);
+				if (tx == 14)
+					OffersT[2] = TRUE;
+				else
+					OffersT[tx] = TRUE;
+			}
+			else {
+				sprintf((char *)txt+point,"no TD%i means T0",i);
+				OffersT[0] = TRUE;
+			}
+			cs_debug("%s",txt);
+		}
+		
+		int numprottype = 0;
+		for (i = 0; i <= 2; i++)
+			if (OffersT[i])
+				numprottype ++;
+		cs_debug("%i protocol types detected. Historical bytes: %s",numprottype, cs_hexdump(1,atr->hb,atr->hbn));
+
+//If more than one protocol type and/or TA1 parameter values other than the default values and/or N equeal to 255 is/are indicated in the answer to reset, the card shall know unambiguously, after having sent the answer to reset, which protocol type or/and transmission parameter values (FI, D, N) will be used. Consequently a selection of the protocol type and/or the transmission parameters values shall be specified.
+		ATR_GetParameter (atr, ATR_PARAMETER_N, &(n));
+		ATR_GetProtocolType(atr,1,&(protocol_type)); //get protocol from TD1
+		BYTE TA2;
+		bool SpecificMode = (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TA, &TA2) == ATR_OK); //if TA2 present, specific mode, else negotiable mode
+		if (SpecificMode) {
+			protocol_type = TA2 & 0x0F;
+			if ((TA2 & 0x10) != 0x10) { //bit 5 set to 0 means F and D explicitly defined in interface characters
+				BYTE TA1;
+				if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
+					FI = TA1 >> 4;
+					ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
+				}
+				else {
+					FI = ATR_DEFAULT_FI;
+					d = ATR_DEFAULT_D;
+				}
+			}
+			else {
+				cs_log("Specific mode: speed 'implicitly defined', not sure how to proceed, assuming default values");
+				FI = ATR_DEFAULT_FI;
+				d = ATR_DEFAULT_D;
+			}
+			cs_debug("Specific mode: T%i, F=%.0f, D=%.6f, N=%.0f\n", protocol_type, (double) atr_f_table[FI], d, n);
+		}
+		else { //negotiable mode
+
+			bool NeedsPTS = ((protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
+			if (NeedsPTS && reader[ridx].deprecated == 0) {
+				//						 PTSS	PTS0	PTS1	PTS2	PTS3	PCK
+				//						 PTSS	PTS0	PTS1	PCK
+				BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
+				req[1]=0x10 | protocol_type; //PTS0 always flags PTS1 to be sent always
+				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1 
+					req[2] = 0x11; //defaults FI and DI to 1
+				//req[3]=PPS_GetPCK(req,sizeof(req)-1); will be set by PPS_Exchange
+				unsigned int len = sizeof(req);
+				ret = PPS_Exchange (req, &len);
+				if (ret == OK) {
+					FI = req[2] >> 4;
+					BYTE DI = req[2] & 0x0F;
+					d = (double) (atr_d_table[DI]);
+					PPS_success = TRUE;
+					cs_debug("PTS Succesfull, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", protocol_type, (double) atr_f_table[FI], d, n);
+				}
+				else
+					cs_ddump(req,4,"PTS Failure, response:");
+			}
+
+			//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards (=no switching); 
+			//When for SCI, T14 protocol, TA1 is obeyed, this goes OK for mosts devices, but somehow on DM7025 Sky S02 card goes wrong when setting ETU (ok on DM800/DM8000)
+			if (!PPS_success) {//last PPS not succesfull
+				BYTE TA1;
+				if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
+					FI = TA1 >> 4;
+					ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
+				}
+				else { //do not obey TA1
+					FI = ATR_DEFAULT_FI;
+					d = ATR_DEFAULT_D;
+				}
+				if (NeedsPTS) { 
+					if ((d == 32) || (d == 12) || (d == 20)) //those values were RFU in old table
+						d = 0; // viaccess cards that fail PTS need this
+				}
+
+				cs_debug("No PTS %s, selected protocol T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", protocol_type, (double) atr_f_table[FI], d, n);
+			}
+		}//end negotiable mode
+	}//end length<0
+		
+	//make sure no zero values
+	double F =	(double) atr_f_table[FI];
+	if (!F) {
+		FI = ATR_DEFAULT_FI;
+		cs_log("Warning: F=0 is invalid, forcing FI=%d", FI);
+	}
+	if (!d) {
+		d = ATR_DEFAULT_D;
+		cs_log("Warning: D=0 is invalid, forcing D=%.0f",d);
+	}
+
+#ifdef DEBUG_PROTOCOL
+	printf("PPS: T=%i, F=%.0f, D=%.6f, N=%.0f\n", t, F, d, n);
+#endif
+
+#if defined(LIBUSB)
+	if (reader[ridx].typ == R_SMART) {
+		reader[ridx].sr_config.F=atr_f_table[FI];
+		reader[ridx].sr_config.D=d;
+		reader[ridx].sr_config.N=n;
+		reader[ridx].sr_config.T=protocol_type;
+		SR_SetBaudrate(&reader[ridx]);
+		SetRightParity ();
+		return OK;
+	}
+	else {
+#endif
+		if (reader[ridx].deprecated == 0)
+			return InitCard (atr, FI, d, n);
+		else {
+			cs_log("Warning: entering Deprecated Mode");
+			return InitCard (atr, ATR_DEFAULT_FI, ATR_DEFAULT_D, n);
+		}
+#if defined(LIBUSB)
+	}
+#endif
+}
+
+/*
+ * Not exported funtions definition
+ */
+
+static int PPS_Exchange (BYTE * params, unsigned *length)
+{
+	BYTE confirm[PPS_MAX_LENGTH];
+	unsigned len_request, len_confirm;
+	int ret;
+#ifdef DEBUG_PROTOCOL
+	unsigned int i;
+#endif
+
+	len_request = PPS_GetLength (params);
+	params[len_request - 1] = PPS_GetPCK(params, len_request - 1);
+
+#ifdef DEBUG_PROTOCOL
+	printf ("PPS: Sending request: ");
+	for (i = 0; i < len_request; i++)
+		printf ("%X ", params[i]);
+	printf ("\n");
+#endif
+
+	cs_debug("PTS: Sending request: %s", cs_hexdump(1, params, len_request));
+
+	/* Send PPS request */
+#ifdef COOL
+	//unsigned char ptsAck[10];
+	//u_int8 ptsLen = len_request;
+	unsigned short int ptsLen = len_request;
+	int Status = cnxt_smc_start_pps(handle, params, confirm, &ptsLen, TRUE);
+	printf ("cnxt_smc_start_pps Status=%i\n", Status);
+	len_confirm = ptsLen;
+#ifdef DEBUG_PROTOCOL
+	printf("COOL: confirm: \n");
+	for (i = 0; i < ptsLen; i++)
+		printf ("%02X", confirm[i]);
+	printf ("\n");
+	fflush(stdout);
+	printf("COOL: req: \n");
+	for (i = 0; i < len_request; i++)
+		printf ("%02X", params[i]);
+	printf ("\n");
+	fflush(stdout);
+#endif
+	if (Status)
+		return ERROR;
+#else
+	if (ICC_Async_Transmit (len_request, params))
+		return ERROR;
+
+	/* Get PPS confirm */
+	if (ICC_Async_Receive (2, confirm))
+		return ERROR;
+
+	len_confirm = PPS_GetLength (confirm);
+
+	if (ICC_Async_Receive (len_confirm - 2, confirm + 2))
+		return ERROR;
+
+#ifdef DEBUG_PROTOCOL
+	printf ("PPS: Receivig confirm: ");
+	for (i = 0; i < len_confirm; i++)
+		printf ("%X ", confirm[i]);
+	printf ("\n");
+#endif
+
+	cs_debug("PTS: Receiving confirm: %s", cs_hexdump(1, confirm, len_confirm));
+
+	if ((len_request != len_confirm) || (memcmp (params, confirm, len_request)))
+		ret = ERROR;
+	else
+		ret = OK;
+#endif
+
+	/* Copy PPS handsake */
+	memcpy (params, confirm, len_confirm);
+	(*length) = len_confirm;
+
+	return ret;
+}
+
+static unsigned PPS_GetLength (BYTE * block)
+{
+	unsigned length = 3;
+
+	if (PPS_HAS_PPS1 (block))
+	length++;
+
+	if (PPS_HAS_PPS2 (block))
+	length++;
+
+	if (PPS_HAS_PPS3 (block))
+	length++;
+
+	return length;
+}
+
+static unsigned int ETU_to_ms(unsigned long WWT)
+{
+#define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
+	if (WWT > CHAR_LEN)
+		WWT -= CHAR_LEN;
+	else
+		WWT = 0;
+	double work_etu = 1000 / (double)current_baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
+	return (unsigned int) WWT * work_etu * reader[ridx].cardmhz / reader[ridx].mhz;
+}
+
+static int SetRightParity (void)
+{
+	//set right parity
+	if (convention == ATR_CONVENTION_INVERSE)
+	{
+#if defined(LIBUSB)
+        if (reader[ridx].typ == R_SMART) {
+            reader[ridx].sr_config.inv= (convention == ATR_CONVENTION_INVERSE) ? 1: 0;
+            reader[ridx].sr_config.parity=ODD;
+            if(SR_SetParity(&reader[ridx]))
+                return ERROR;
+        }
+    else
+#endif
+            if (IO_Serial_SetParity (PARITY_ODD))
+                return ERROR;
+	}
+	else if(protocol_type == ATR_PROTOCOL_TYPE_T14)
+	{
+#if defined(LIBUSB)
+        if (reader[ridx].typ == R_SMART) {
+            reader[ridx].sr_config.parity=NONE;
+            if(SR_SetParity(&reader[ridx]))
+                return ERROR;
+        }
+        else
+#endif
+            if (IO_Serial_SetParity (PARITY_NONE))
+                return ERROR;		
+	}
+	else
+	{
+#if defined(LIBUSB)
+        if (reader[ridx].typ == R_SMART) {
+            reader[ridx].sr_config.parity=EVEN;
+            if(SR_SetParity(&reader[ridx]))
+                return ERROR;
+        }
+        else
+#endif
+            if (IO_Serial_SetParity (PARITY_EVEN))
+                return ERROR;		
+	}
+#ifdef COOL
+	if (reader[ridx].typ != R_INTERNAL)
+#endif
+#if defined(LIBUSB)
+        if (reader[ridx].typ != R_SMART)
+#endif
+            IO_Serial_Flush();
+	return OK;
+}
+
+static int InitCard (ATR * atr, BYTE FI, double d, double n)
+{
+	//set the amps and the volts according to ATR
+	double P,I;
+	if (ATR_GetParameter(atr, ATR_PARAMETER_P, &P) != ATR_OK)
+		P = 0;
+	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
+		I = 0;
+
+	//set clock speed to max if internal reader
+	if(reader[ridx].typ == R_INTERNAL)
+		if (reader[ridx].mhz == 357 || reader[ridx].mhz == 358) //no overclocking
+			reader[ridx].mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
+
+	//set clock speed/baudrate must be done before timings
+	//because current_baudrate is used in calculation of timings
+	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader[ridx].mhz / 100);
+	unsigned long baudrate;
+	double F =	(double) atr_f_table[FI];
+	if (protocol_type == ATR_PROTOCOL_TYPE_T14)
+		baudrate = 9600;
+	else
+		baudrate = d * ICC_Async_GetClockRate () / F; 
+
+#ifdef DEBUG_PROTOCOL
+	printf ("PPS: Baudrate = %d\n", (int)baudrate);
+#endif
+
+	if (reader[ridx].deprecated == 0)
+		if (ICC_Async_SetBaudrate (baudrate))
+			return ERROR;
+
+	//set timings according to ATR
+	unsigned long BGT, edc, EGT, CGT, WWT = 0;
+	read_timeout = 0;
+	icc_timings.block_delay = 0;
+	icc_timings.char_delay = 0;
+
+	if (n == 255) //Extra Guard Time
+		EGT = 0;
+	else
+		EGT = n;
+	unsigned int GT = EGT + 12; //Guard Time in ETU
+	unsigned long gt_ms = ETU_to_ms(GT);
+
+	switch (protocol_type) {
+		case ATR_PROTOCOL_TYPE_T0:
+		case ATR_PROTOCOL_TYPE_T14:
+			{
+			BYTE wi;
+			/* Integer value WI	= TC2, by default 10 */
+#ifndef PROTOCOL_T0_USE_DEFAULT_TIMINGS
+			if (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TC, &(wi)) != ATR_OK)
+#endif
+			wi = DEFAULT_WI;
+
+			// WWT = 960 * WI * (Fi / f) * 1000 milliseconds
+			WWT = (unsigned long) 960 * wi; //in ETU
+			if (protocol_type == ATR_PROTOCOL_TYPE_T14)
+				WWT >>= 1; //is this correct?
+			
+			read_timeout = ETU_to_ms(WWT);
+			icc_timings.block_delay = gt_ms;
+			icc_timings.char_delay = gt_ms;
+			cs_debug("Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", read_timeout, icc_timings.block_delay, icc_timings.char_delay);
+#ifdef DEBUG_PROTOCOL
+			printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", t, (int)(WWT), ICC_Async_GetClockRate());
+#endif
+			}
+			break;
+	 case ATR_PROTOCOL_TYPE_T1:
+			{
+				BYTE ta, tb, tc, cwi, bwi;
+			
+				// Set IFSC
+				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
+					ifsc = DEFAULT_IFSC;
+				else if ((ta != 0x00) && (ta != 0xFF))
+					ifsc = ta;
+				else
+					ifsc = DEFAULT_IFSC;
+			
+				// Towitoko does not allow IFSC > 251 //FIXME not sure whether this limitation still exists
+				ifsc = MIN (ifsc, MAX_IFSC);
+			
+			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
+				// Calculate CWI and BWI
+				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TB, &tb) == ATR_NOT_FOUND)
+					{
+			#endif
+						cwi	= DEFAULT_CWI;
+						bwi = DEFAULT_BWI;
+			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
+					}
+				else
+					{
+						cwi	= tb & 0x0F;
+						bwi = tb >> 4;
+					}
+			#endif
+			
+				// Set CWT = (2^CWI + 11) work etu
+				CWT = (unsigned short) (((1<<cwi) + 11)); // in ETU
+			
+				// Set BWT = (2^BWI * 960 + 11) work etu
+				BWT = (unsigned short)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate() )	+ 11 ;
+			
+				// Set BGT = 22 * work etu
+				BGT = 22L; //in ETU
+
+				if (n == 255)
+					CGT = 11L; //in ETU
+				else
+					CGT = GT;
+			
+				// Set the error detection code type
+				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
+					edc = EDC_LRC;
+				else
+					edc = tc & 0x01;
+			
+				// Set initial send sequence (NS)
+				ns = 1;
+
+				cs_debug ("Protocol: T=1: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", ifsc, CWT, BWT, BGT, (edc == EDC_LRC) ? "LRC" : "CRC");
+
+				read_timeout = ETU_to_ms(BWT);
+				icc_timings.block_delay = ETU_to_ms(BGT);
+				icc_timings.char_delay = ETU_to_ms(CGT);
+				cs_debug("Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", read_timeout, icc_timings.block_delay, icc_timings.char_delay);
+			}
+			break;
+	 default:
+			return ERROR;
+			break;
+	}//switch
+
+	if (SetRightParity ())
+		return ERROR;
+
+  //write settings to internal device
+	if(reader[ridx].typ == R_INTERNAL) {
+#ifdef SCI_DEV
+		double F =	(double) atr_f_table[FI];
+		unsigned long ETU = 0;
+		//for Irdeto T14 cards, do not set ETU
+		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && protocol_type == 14))
+			ETU = F / d;
+		if (Sci_WriteSettings (protocol_type, reader[ridx].mhz / 100, ETU, WWT, BWT, CWT, EGT, (unsigned char)P, (unsigned char)I))
+			return ERROR;	
+#elif COOL
+		if (Cool_WriteSettings (BWT, CWT, EGT, BGT))
+			return ERROR;
+#endif //COOL
+	}
+
+	//IFS setting in case of T1
+	if ((protocol_type == ATR_PROTOCOL_TYPE_T1) && (ifsc != DEFAULT_IFSC)) {
+		APDU_Cmd * cmd;
+		APDU_Rsp ** rsp;
+		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
+		tmp[3] = ifsc; // Information Field size
+		tmp[4] = ifsc ^ 0xE1;
+		cmd = APDU_Cmd_New (tmp, 5L);
+		Protocol_T1_Command (cmd, rsp);
+		APDU_Cmd_Delete (cmd);
+	}
+
+	return OK;
+}
+
+static BYTE PPS_GetPCK (BYTE * block, unsigned length)
+{
+	BYTE pck;
+	unsigned i;
+
+	pck = block[0];
+	for (i = 1; i < length; i++)
+		pck ^= block[i];
+
+	return pck;
 }

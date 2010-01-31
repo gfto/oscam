@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "reader-common.h"
 
-extern uchar cta_cmd[], cta_res[];
+extern uchar cta_res[];
 extern ushort cta_lr;
 
 struct geo_cache
@@ -141,16 +141,17 @@ static int chk_prov(uchar *id, uchar keynr)
 
 #define write_cmd(cmd, data) \
 { \
-  if (card_write(cmd, data)) return(0); \
+  if (card_write(cmd, data)) return ERROR; \
 }
 
 #define read_cmd(cmd, data) \
 { \
-  if (card_write(cmd, NULL)) return(0); \
+  if (card_write(cmd, NULL)) return ERROR; \
 }
 
-int viaccess_card_init(uchar *atr)
+int viaccess_card_init(ATR newatr)
 {
+	get_atr;
   int i;
   uchar buf[256];
   static uchar insac[] = { 0xca, 0xac, 0x00, 0x00, 0x00 }; // select data
@@ -161,11 +162,11 @@ int viaccess_card_init(uchar *atr)
   static uchar insFAC[] = { 0x87, 0x02, 0x00, 0x00, 0x03 }; // init FAC
   static uchar FacDat[] = { 0x00, 0x00, 0x28 };
 
-  if ((atr[0]!=0x3f) || (atr[1]!=0x77) || ((atr[2]!=0x18) && (atr[2]!=0x11)) || (atr[9]!=0x68)) return(0);
+  if ((atr[0]!=0x3f) || (atr[1]!=0x77) || ((atr[2]!=0x18) && (atr[2]!=0x11)) || (atr[9]!=0x68)) return ERROR;
 
   write_cmd(insFAC, FacDat);
   if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) )
-    return(0);
+    return ERROR;
 
 //  switch((atr[atrsize-4]<<8)|atr[atrsize-3])
 //  {
@@ -233,7 +234,7 @@ cs_log("name: %s", cta_res);
 
   cs_log("ready for requests");
   memset(&last_geo, 0, sizeof(last_geo));
-  return(1);
+  return OK;
 }
 
 int viaccess_do_ecm(ECM_REQUEST *er)
@@ -273,7 +274,7 @@ int viaccess_do_ecm(ECM_REQUEST *er)
     if (!chk_prov(ident, keynr))
     {
       cs_debug("smartcardviaccess ecm: provider or key not found on card");
-      return(0);
+      return ERROR;
     }
     ecm88Data+=5;
     ecm88Len-=5;
@@ -350,7 +351,7 @@ int viaccess_do_ecm(ECM_REQUEST *er)
     aes_decrypt(er->cw, 16);
   }
 
-  return(rc?1:0);
+  return(rc?OK:ERROR);
 }
 
 int viaccess_do_emm(EMM_PACKET *ep)
@@ -398,7 +399,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
         provider_ok = 1;
       } else {
         cs_debug("smartcardviaccess emm: provider or key not found on card (%x, %x)", ident, keynr);
-        return 0;
+        return ERROR;
       }
 
       // set provider
@@ -407,7 +408,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
         cs_dump(insa4, 5, "set provider cmd:");
         cs_dump(soid, 3, "set provider data:");
         cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
-        return 0;
+        return ERROR;
       }
     } else if (emmParsed[0]==0x9e && emmParsed[1]==0x20) {
       /* adf */
@@ -424,7 +425,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
         if( afd[31-custwp/8] & (1 << (custwp & 7)) )
           cs_debug("emm for our card %08X", b2i(4, &reader[ridx].sa[0][0]));
         else
-          return 2; // skipped
+          return SKIPPED;
       }
 
       // memorize
@@ -453,12 +454,12 @@ int viaccess_do_emm(EMM_PACKET *ep)
     cs_debug("viaccess: provider not found in emm... continue anyway...");
     // force key to 1...
     keynr = 1;
-    ///return 0;
+    ///return ERROR;
   }
 
   if (!nanoF0Data) {
     cs_dump(ep->emm, ep->l, "can't find 0xf0 in emm...");
-    return 0; // error
+    return ERROR; // error
   }
 
   if (nano9EData) {
@@ -470,7 +471,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
         cs_dump(insf0, 5, "set adf cmd:");
         cs_dump(nano9EData, 0x22, "set adf data:");
         cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
-        return 0;
+        return ERROR;
       }
     } else {
       // set adf crypte
@@ -483,7 +484,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
         cs_dump(insf4, 5, "set adf encrypted cmd:");
         cs_dump(insData, insf4[4], "set adf encrypted data:");
         cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
-        return 0;
+        return ERROR;
       }
     }
   }
@@ -508,7 +509,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
 
     if (!nano81Data) {
       cs_dump(ep->emm, ep->l, "0x92 found, but can't find 0x81 in emm...");
-      return 0; // error
+      return ERROR; // error
     }
 
     ins1c[3] = keynr;  // key
@@ -527,7 +528,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
       write_cmd(insc8, insc8Data); 
       if( cta_res[0] != 0x00 || cta_res[1] != 00 || cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
         ///cs_dump(cta_res, cta_lr, "extended status error:");
-        return 0;
+        return ERROR;
       } else {
         cs_debug("update successfully written (with extended status OK)");
         rc=1; // written
@@ -647,6 +648,6 @@ int viaccess_card_info(void)
     insa4[2]=0x02; 
     write_cmd(insa4, NULL); // select next provider
   }
-  //return 0;
-  return 1;
+  //return ERROR;
+  return OK;
 }

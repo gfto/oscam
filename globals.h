@@ -52,6 +52,10 @@
 #endif
 #endif
 
+#if defined(LIBUSB)
+#include "csctapi/ftdi.h"
+#endif
+
 #ifndef CS_CONFDIR
 #define CS_CONFDIR    "/usr/local/etc"
 #endif
@@ -260,6 +264,16 @@ typedef struct s_ptab
   PORT   ports[CS_MAXPORTS];
 } GCC_PACK PTAB;
 
+typedef struct  {
+    int F;
+    float D;
+    int fs;
+    int N;
+    int T;
+    int inv;
+    int parity;
+} SR_CONFIG;
+
 struct s_ecm
 {
   uchar  ecmd5[CS_ECMSTORESIZE];
@@ -461,6 +475,17 @@ struct s_reader
   SCARDCONTEXT hContext;
   SCARDHANDLE hCard;
   DWORD dwActiveProtocol;
+#endif
+#if defined(LIBUSB)
+    unsigned char g_read_buffer[4096];
+    int g_read_buffer_size;
+    pthread_mutex_t g_read_mutex;
+    pthread_mutex_t g_usb_mutex;
+    struct ftdi_context ftdic;
+    struct usb_device *smartreader_usb_dev;
+    pthread_t rt;
+    unsigned char modem_status;
+    SR_CONFIG sr_config;
 #endif
 
 };
@@ -780,7 +805,6 @@ extern int  init_irdeto_guess_tab(void);
 
 // oscam-reader
 extern int ridx, logfd;
-extern int reader_cmd2api(uchar *, int);
 extern int reader_cmd2icc(uchar *, int);
 extern int card_write(uchar *, uchar *);
 extern void cs_ri_brk(int);
@@ -821,62 +845,6 @@ extern int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *
 extern int pcsc_check_card_inserted(struct s_reader *pcsc_reader);
 extern int pcsc_reader_init(struct s_reader *pcsc_reader, char *device);
 #endif
-
-// reader-irdeto
-extern int irdeto_card_init(uchar *);
-extern int irdeto_do_ecm(ECM_REQUEST *);
-extern int irdeto_do_emm(EMM_PACKET *);
-extern int irdeto_card_info(void);
-
-// reader-viaccess
-extern int viaccess_card_init(uchar *);
-extern int viaccess_do_ecm(ECM_REQUEST *);
-extern int viaccess_do_emm(EMM_PACKET *);
-extern int viaccess_card_info(void);
-
-// reader-videoguard
-extern int videoguard_card_init(uchar *, int);
-extern int videoguard_do_ecm(ECM_REQUEST *);
-extern int videoguard_do_emm(EMM_PACKET *);
-extern int videoguard_card_info(void);
-
-// reader-cryptoworks
-extern int cryptoworks_card_init(uchar *);
-extern int cryptoworks_do_ecm(ECM_REQUEST *);
-extern int cryptoworks_do_emm(EMM_PACKET *);
-extern int cryptoworks_card_info(void);
-extern int CheckSctLen(const uchar *, int);
-
-// reader-seca
-extern int seca_card_init(uchar *);
-extern int seca_do_ecm(ECM_REQUEST *);
-extern int seca_do_emm(EMM_PACKET *);
-extern int seca_card_info(void);
- 
-// reader-nds
-extern int nds_card_init(uchar *, int);
-extern int nds_do_ecm(ECM_REQUEST *);
-extern int nds_do_emm(EMM_PACKET *);
-extern int nds_card_info(void);
-
-// reader nagra2/3
-extern int nagra2_card_init(uchar *);
-extern int nagra2_do_ecm(ECM_REQUEST *er);
-extern int nagra2_card_info(void);
-extern int nagra2_do_emm(EMM_PACKET *);
-extern void nagra2_post_process();
- 
-// reader-conax
-extern int conax_card_init(uchar *);
-extern int conax_do_ecm(ECM_REQUEST *);
-extern int conax_do_emm(EMM_PACKET *);
-extern int conax_card_info(void);
- 
-// reader-dre
-extern int dre_card_init(uchar *);
-extern int dre_do_ecm(ECM_REQUEST *);
-extern int dre_do_emm(EMM_PACKET *);
-extern int dre_card_info(void);
 
 // protocol modules
 extern int  monitor_send_idx(int, char *);

@@ -28,7 +28,6 @@
 #include "defines.h"
 #include "icc_async.h"
 #include "apdu.h"
-#include "pps.h"
 
 /*
  * Exported constants definition

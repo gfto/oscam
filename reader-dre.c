@@ -1,18 +1,15 @@
 #include "globals.h"
 #include "reader-common.h"
-//#include <stdlib.h>
 
-extern uchar cta_cmd[], cta_res[];
+extern uchar cta_res[];
 extern ushort cta_lr;
-unsigned long long serial;
-char *card;
 static uchar provider;
 static short int mode;
 
 #define OK_RESPONSE 0x61
 #define CMD_BYTE 0x59
 
-uchar xor (uchar * cmd, int cmdlen)
+static uchar xor (uchar * cmd, int cmdlen)
 {
   int i;
   uchar checksum = 0x00;
@@ -21,7 +18,7 @@ uchar xor (uchar * cmd, int cmdlen)
   return checksum;
 }
 
-int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return 0 = err
+static int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return ERROR = err
 {
   static uchar startcmd[] = { 0x80, 0xFF, 0x10, 0x01, 0x05 };	//any command starts with this, 
   //last byte is nr of bytes of the command that will be sent
@@ -46,7 +43,7 @@ int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be chan
 
   if ((cta_lr != 2) || (cta_res[0] != OK_RESPONSE)) {
     cs_log ("DRECRYPT ERROR: unexpected answer from card: %s", cs_hexdump (0, cta_res, cta_lr));
-    return 0;			//error
+    return ERROR;			//error
   }
 
   reqans[4] = cta_res[1];	//adapt length byte
@@ -54,7 +51,7 @@ int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be chan
 
   if (cta_res[0] != CMD_BYTE) {
     cs_log ("DRECRYPT Unknown response: cta_res[0] expected to be %02x, is %02x", CMD_BYTE, cta_res[0]);
-    return 0;
+    return ERROR;
   }
   if ((cta_res[1] == 0x03) && (cta_res[2] == 0xe2)) {
     switch (cta_res[3]) {
@@ -74,7 +71,7 @@ int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be chan
       cs_debug ("DRECRYPT unknown error: %s.", cs_hexdump (0, cta_res, cta_lr));
       break;
     }
-    return 0;			//error
+    return ERROR;			//error
   }
   int length_excl_leader = cta_lr;
   if ((cta_res[cta_lr - 2] == 0x90) && (cta_res[cta_lr - 1] == 0x00))
@@ -85,9 +82,9 @@ int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be chan
   if (cta_res[length_excl_leader - 1] != checksum) {
     cs_log ("DRECRYPT checksum does not match, expected %02x received %02x:%s", checksum,
 	    cta_res[length_excl_leader - 1], cs_hexdump (0, cta_res, cta_lr));
-    return 0;			//error
+    return ERROR;			//error
   }
-  return 1;
+  return OK;
 }
 
 #define dre_cmd(cmd) \
@@ -95,7 +92,7 @@ int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be chan
   	dre_command(cmd, sizeof(cmd)); \
 }
 
-int dre_set_provider_info (void)
+static int dre_set_provider_info (void)
 {
   int i;
   static uchar cmd59[] = { 0x59, 0x14 };	// subscriptions
@@ -135,17 +132,19 @@ int dre_set_provider_info (void)
 		  endyear, endmonth, endday);
 	}
   }
-  return 1;
+  return OK;
 }
 
-int dre_card_init (uchar * atr)
+int dre_card_init (ATR newatr)
 {
+	get_atr;
   static uchar ua[] = { 0x43, 0x15 };	// get serial number (UA)
   static uchar providers[] = { 0x49, 0x15 };	// get providers
   int i;
+	char *card;
 
   if ((atr[0] != 0x3b) || (atr[1] != 0x15) || (atr[2] != 0x11) || (atr[3] != 0x12 || atr[4] != 0xca || atr[5] != 0x07))
-    return (0);
+    return ERROR;
 
   provider = atr[6];
   uchar checksum = xor (atr + 1, 6);
@@ -201,9 +200,9 @@ FE 48 */
 
   providers[1] = provider;
   if (!(dre_cmd (providers)))
-    return 0;			//fatal error
+    return ERROR;			//fatal error
   if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-    return 0;
+    return ERROR;
   uchar provname[128];
   for (i = 0; ((i < cta_res[2] - 6) && (i < 128)); i++) {
     provname[i] = cta_res[6 + i];
@@ -248,10 +247,10 @@ FE 48 */
   //reader[ridx].nprov = 1; TODO doesnt seem necessary
 
   if (!dre_set_provider_info ())
-    return 0;			//fatal error
+    return ERROR;			//fatal error
 
   cs_log ("ready for requests");
-  return (1);
+  return OK;
 }
 
 int dre_do_ecm (ECM_REQUEST * er)
@@ -271,11 +270,11 @@ int dre_do_ecm (ECM_REQUEST * er)
     cs_debug ("DEBUG: unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2] + 2 - 24));
     if ((dre_cmd (ecmcmd41))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-				return 0;		//exit if response is not 90 00
+				return ERROR;		//exit if response is not 90 00
       memcpy (er->cw, cta_res + 11, 8);
       memcpy (er->cw + 8, cta_res + 3, 8);
 
-      return 1;
+      return OK;
     }
   }
   else {
@@ -293,13 +292,13 @@ int dre_do_ecm (ECM_REQUEST * er)
     ecmcmd51[33] = provider;	//no part of sig
     if ((dre_cmd (ecmcmd51))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-				return 0;		//exit if response is not 90 00
+				return ERROR;		//exit if response is not 90 00
       memcpy (er->cw, cta_res + 11, 8);
       memcpy (er->cw + 8, cta_res + 3, 8);
-      return 1;
+      return OK;
     }
   }
-  return 0;
+  return ERROR;
 }
 
 int dre_do_emm (EMM_PACKET * ep)
@@ -318,11 +317,11 @@ int dre_do_emm (EMM_PACKET * ep)
       memcpy (emmcmd52 + 1, ep->emm + 5 + 32 + i * 56, 56);
       // check for shared address
       if(ep->emm[3]!=reader[ridx].sa[0][0]) 
-        return 1; // ignore, wrong address
+        return OK; // ignore, wrong address
       emmcmd52[0x39] = provider;
       if ((dre_cmd (emmcmd52)))
 				if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-	  			return 0;		//exit if response is not 90 00
+	  			return ERROR;		//exit if response is not 90 00
     	}
   }
   else {
@@ -343,7 +342,7 @@ int dre_do_emm (EMM_PACKET * ep)
 			    emmcmd42[51] = provider;
 			    if ((dre_cmd (emmcmd42))) {
 			      if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-							return 0;		//exit if response is not 90 00
+							return ERROR;		//exit if response is not 90 00
 					}
 				}
 				break;
@@ -359,7 +358,7 @@ int dre_do_emm (EMM_PACKET * ep)
 		       90 00 */
 		    if ((dre_cmd (emmcmd42))) {	//first emm request
 		      if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-						return 0;		//exit if response is not 90 00
+						return ERROR;		//exit if response is not 90 00
 		
 		      memcpy (emmcmd42 + 1, ep->emm + 55, 7);	//TODO OR next two lines?
 		      /*memcpy (emmcmd42 + 1, ep->emm + 55, 7);  //FIXME either I cant count or my EMM log contains errors
@@ -370,15 +369,15 @@ int dre_do_emm (EMM_PACKET * ep)
 		      emmcmd42[49] = ep->emm[54];	//keynr
 		      if ((dre_cmd (emmcmd42))) {	//second emm request
 						if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-							return 0;		//exit if response is not 90 00
+							return ERROR;		//exit if response is not 90 00
 		      }
 		    }
 		}
   }
-  return 1;			//success
+  return OK;			//success
 }
 
 int dre_card_info (void)
 {
-  return (1);
+  return OK;
 }

@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "reader-common.h"
 
-extern uchar cta_cmd[], cta_res[];
+extern uchar cta_res[];
 extern ushort cta_lr;
 
 static const uchar CryptTable[256] =
@@ -150,16 +150,17 @@ static int irdeto_do_cmd(uchar *buf, ushort good)
 
 #define reader_chk_cmd(cmd, l) \
 { \
-        if (reader_cmd2icc(cmd, sizeof(cmd))) return(0); \
-  if (l && (cta_lr!=l)) return(0); }
+        if (reader_cmd2icc(cmd, sizeof(cmd))) return ERROR; \
+  if (l && (cta_lr!=l)) return ERROR; }
 
-int irdeto_card_init(uchar *atr)
+int irdeto_card_init(ATR newatr)
 {
+	get_atr;
   int i, camkey=0, cs_ptyp_orig=cs_ptyp;
   uchar buf[256]={0};
 
   if (memcmp(atr+4, "IRDETO", 6))
-    return(0);
+    return ERROR;
   cs_ri_log("[irdeto-reader] detect Irdeto card");
   
   if(reader[ridx].has_rsa) // we use rsa from config as camkey
@@ -254,27 +255,29 @@ int irdeto_card_init(uchar *atr)
   }
 	if (reader[ridx].cardmhz != 600)
 		cs_log("WARNING: For irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
-  return(1);
+  return OK;
 }
 
 int irdeto_do_ecm(ECM_REQUEST *er)
 {
   static const uchar sc_EcmCmd[] = { 0x05, 0x00, 0x00, 0x02, 0x00 };
+  uchar cta_cmd[272];
 
   memcpy(cta_cmd, sc_EcmCmd, sizeof(sc_EcmCmd));
   cta_cmd[4]=(er->ecm[2])-3;
   memcpy(cta_cmd+sizeof(sc_EcmCmd), &er->ecm[6], cta_cmd[4]);
-  if (irdeto_do_cmd(cta_cmd, 0x9D00)) return(0);
-  if (cta_lr<24) return(0);
+  if (irdeto_do_cmd(cta_cmd, 0x9D00)) return ERROR;
+  if (cta_lr<24) return ERROR;
   ReverseSessionKeyCrypt(sc_CamKey, cta_res+6);
   ReverseSessionKeyCrypt(sc_CamKey, cta_res+14);
   memcpy(er->cw, cta_res+6, 16);
-  return(1);
+  return OK;
 }
 
 int irdeto_do_emm(EMM_PACKET *ep)
 {
   static const uchar sc_EmmCmd[] = { 0x01,0x00,0x00,0x00,0x00 };
+  uchar cta_cmd[272];
 
   int i, l=(ep->emm[3]&0x07), ok=0;
   int mode=(ep->emm[3]>>3);
@@ -315,14 +318,13 @@ int irdeto_do_emm(EMM_PACKET *ep)
     else
       cs_debug("[irdeto-reader] addrlen %d > %d", l, ADDRLEN);
   }
-  return(0);
+  return ERROR;
 }
 
 int irdeto_card_info(void)
 {
   int i, p;
   uchar buf[256]={0};
-  uchar sc_GetChid[]        = { 0xA0, 0xCA, 0x00, 0x00, 4, 0x22, 1, 5, 0x20};
 
     /*
      * Provider
@@ -409,5 +411,5 @@ int irdeto_card_info(void)
     }
   }
   cs_log("[irdeto-reader] ready for requests");
-  return(1);
+  return OK;
 }

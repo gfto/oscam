@@ -3,7 +3,7 @@
 
 static BIGNUM exp, ucpk;
 
-extern uchar cta_cmd[], cta_res[];
+extern uchar cta_res[];
 extern ushort cta_lr;
 
 #define CMD_LEN 5
@@ -99,12 +99,12 @@ int CheckSctLen(const uchar *data, int off)
 
 #define write_cmd(cmd, data) \
 { \
-        if (card_write(cmd, data)) return(0); \
+        if (card_write(cmd, data)) return ERROR; \
 }
 
 #define read_cmd(cmd, data) \
 { \
-        if (card_write(cmd, NULL)) return(0); \
+        if (card_write(cmd, NULL)) return ERROR; \
 }
 
 static char *chid_date(uchar *ptr, char *buf, int l)
@@ -154,13 +154,13 @@ int cryptoworks_send_pin(void)
 	  cs_ri_log("[cryptoworks]-sending pincode to card");  
 	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log("[cryptoworks]-bad pincode");
 	  	 
-	  return(1);
+	  return OK;
   }
   
   return(0);
 }
 
-int cryptoworks_disbale_pin(void)
+static int cryptoworks_disable_pin(void)
 {
   unsigned char insPIN[] = { 0xA4, 0x26, 0x00, 0x00, 0x04, 0x00,0x00,0x00,0x00 }; //disable PIN  
   
@@ -171,14 +171,14 @@ int cryptoworks_disbale_pin(void)
 	  write_cmd(insPIN, insPIN+5);
 	  cs_ri_log("[cryptoworks]-disable pincode to card");
 	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log("[cryptoworks]-bad pincode");
-	  return(1);
+	  return ERROR;
   }
-  
-  return(0);
+  return OK;
 }
 
-int cryptoworks_card_init(uchar *atr)
+int cryptoworks_card_init(ATR newatr)
 {
+	get_atr;
   int i;
   unsigned int mfid=0x3F20;
   static uchar cwexp[] = { 1, 0 , 1};
@@ -188,7 +188,7 @@ int cryptoworks_card_init(uchar *atr)
   char issuer[20]={0};
   char *unknown="unknown", *pin=unknown, ptxt[CS_MAXPROV<<2]={0};
 
-  if ((atr[6]!=0xC4) || (atr[9]!=0x8F) || (atr[10]!=0xF1)) return(0);
+  if ((atr[6]!=0xC4) || (atr[9]!=0x8F) || (atr[10]!=0xF1)) return ERROR;
 
   reader[ridx].caid[0]=0xD00;
   reader[ridx].nprov=0;
@@ -276,9 +276,9 @@ int cryptoworks_card_init(uchar *atr)
   cs_ri_log("providers: %d (%s)", reader[ridx].nprov, ptxt+1);
   cs_log("ready for requests");
   
-  cryptoworks_disbale_pin(); //by KrazyIvan
+  cryptoworks_disable_pin(); //by KrazyIvan
   	
-  return(1);
+  return OK;
 }
 
 #ifdef LALL
@@ -425,7 +425,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
               else
               {
                 cs_log("cryptoworks: valid UCPK needed for camcrypt!");
-                return(0);
+                return ERROR;
               }
             }
             break;
@@ -615,5 +615,5 @@ int cryptoworks_card_info(void)
     //================================================================================
     
   }
-  return(1);
+  return OK;
 }

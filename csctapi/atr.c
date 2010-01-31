@@ -568,7 +568,7 @@ int ATR_GetFsMax (ATR * atr, unsigned long *fsmax)
 static bool ATR_GetNextByte (unsigned timeout, BYTE * byte, bool invert)
 {
 	bool ret;
-	ret = IO_Serial_Read (timeout, 1, byte);
+	ret = !IO_Serial_Read (timeout, 1, byte);
 	/* Para tarjetas inversas quiza */
 	if (invert)
 		(*byte) = ~(INVERT_BYTE (*byte));

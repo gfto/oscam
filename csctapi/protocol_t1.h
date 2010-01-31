@@ -27,7 +27,6 @@
 
 #include "defines.h"
 #include "apdu.h"
-#include "pps.h"
 
 /*
  * Exported constants definition

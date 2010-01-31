@@ -2,17 +2,17 @@
 #include "reader-common.h"
 #include <stdlib.h>
 
-extern uchar cta_cmd[], cta_res[];
+extern uchar cta_res[];
 extern ushort cta_lr;
 
 #define write_cmd(cmd, data) \
 { \
-        if (card_write(cmd, data)) return(0); \
+        if (card_write(cmd, data)) return ERROR; \
 }
 
 #define read_cmd(cmd, data) \
 { \
-        if (card_write(cmd, NULL)) return(0); \
+        if (card_write(cmd, NULL)) return ERROR; \
 }
 
 static int set_provider_info(int i)
@@ -27,7 +27,7 @@ static int set_provider_info(int i)
   ins12[2]=i;//select provider
   read_cmd(ins12, NULL); // show provider properties
   
-  if ((cta_res[25] != 0x90) || (cta_res[26] != 0x00)) return (0);
+  if ((cta_res[25] != 0x90) || (cta_res[26] != 0x00)) return ERROR;
   reader[ridx].prid[i][0]=0;
   reader[ridx].prid[i][1]=0;//blanken high byte provider code
   memcpy(&reader[ridx].prid[i][2], cta_res, 2);
@@ -55,11 +55,12 @@ static int set_provider_info(int i)
   if (valid==1) //if not expired
     cs_log("SA: %s", cs_hexdump(0, cta_res+18, 4));
 //    cs_log("SA:%02X%02X%02X%02X.",cta_res[18],cta_res[19],cta_res[20],cta_res[21]);
-  return(1);
+  return OK;
 }
 
-int seca_card_init(uchar *atr)
+int seca_card_init(ATR newatr)
 {
+	get_atr;
 	char *card;
 	static unsigned short pmap=0;	// provider-maptable
 	unsigned long long serial ;
@@ -75,7 +76,7 @@ int seca_card_init(uchar *atr)
   static uchar ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff };
 
   buf[0]=0x00;
-  if ((atr[10]!=0x0e) || (atr[11]!=0x6c) || (atr[12]!=0xb6) || (atr[13]!=0xd6)) return(0);
+  if ((atr[10]!=0x0e) || (atr[11]!=0x6c) || (atr[12]!=0xb6) || (atr[13]!=0xd6)) return ERROR;
   switch(atr[7]<<8|atr[8])
   {
     case 0x5084: card="Generic"; break;
@@ -104,8 +105,8 @@ int seca_card_init(uchar *atr)
   for (i=0; i<16; i++)
     if (pmap&(1<<i))
     {
-      if (!set_provider_info(i))
-        return(0);
+      if (set_provider_info(i) == ERROR)
+        return ERROR;
       else
 	sprintf((char *) buf+strlen((char *)buf), ",%04lX", b2i(2, &reader[ridx].prid[i][2])); 
     }
@@ -119,7 +120,7 @@ int seca_card_init(uchar *atr)
 	  cs_log("parental locked");
   }	
   cs_log("ready for requests");
-  return(1);
+  return OK;
 }
 
 static int get_prov_index(char *provid)	//returns provider id or -1 if not found
@@ -139,7 +140,7 @@ int seca_do_ecm(ECM_REQUEST *er)
   int i;
   i=get_prov_index((char *) er->ecm+3);
   if ((i == -1) || (reader[ridx].availkeys[i][0] == 0)) //if provider not found or expired
-  	return (0);
+  	return ERROR;
   ins3c[2]=i;
   ins3c[3]=er->ecm[7]; //key nr
   ins3c[4]=(((er->ecm[1]&0x0f) << 8) | er->ecm[2])-0x05;
@@ -151,12 +152,11 @@ int seca_do_ecm(ECM_REQUEST *er)
     write_cmd(ins30, ins30data);
     write_cmd(ins3c, er->ecm+8); //ecm request
   }
-  if ((cta_res[0] != 0x90) || (cta_res[1] != 0x00)) return (0);
+  if ((cta_res[0] != 0x90) || (cta_res[1] != 0x00)) return ERROR;
   read_cmd(ins3a, NULL); //get cw's
-  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) return (0);//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
+  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) return ERROR;//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
   memcpy(er->cw,cta_res,16);
-  return(1);
-    
+  return OK;
 }
 
 int seca_do_emm(EMM_PACKET *ep)
@@ -174,11 +174,11 @@ int seca_do_emm(EMM_PACKET *ep)
 	//first find out prov id
 	i=get_prov_index((char *) ep->emm+3);
 	if (i == -1) 
-		return(0);
+		return ERROR;
 	//prov id found, now test for SA (only first 3 bytes, custom byte does not count)
 	if (memcmp (ep->emm + 5, reader[ridx].sa[i], 3)) {
 		cs_log("EMM: Shared update did not match; EMM SA:%02X%02X%02X, provider %i, Reader SA:%s.", ep->emm[5], ep->emm[6], ep->emm[7], i + 1, cs_hexdump (0, reader[ridx].sa[i], 3));
-		return(0);
+		return ERROR;
 	}
 	else {
 		cs_log("EMM: Shared update matched for EMM SA %02X%02X%02X, provider %i.", ep->emm[5], ep->emm[6], ep->emm[7], i + 1);
@@ -193,7 +193,7 @@ int seca_do_emm(EMM_PACKET *ep)
 	//first test if UA matches
  	if (memcmp (reader[ridx].hexserial, ep->emm + 3, 6)) {
 		cs_log("EMM: Unique update did not match; EMM Serial:%02X%02X%02X%02X%02X%02X, Reader Serial:%s.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], cs_hexdump (0, reader[ridx].hexserial, 6));
-		return(0);
+		return ERROR;
 	}
 	else {
 		//first find out prov id
@@ -201,7 +201,7 @@ int seca_do_emm(EMM_PACKET *ep)
                 cs_log("EMM: Unique update matched EMM Serial:%02X%02X%02X%02X%02X, provider %i.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], i + 1);
 
 		if (i==-1) 
-			return(0);
+			return ERROR;
 		ins40[3]=ep->emm[12];
 		ins40[4]= emm_length - 0x0A;
 		ins40data_offset = 13;
@@ -218,7 +218,7 @@ tp   len       shared-- cust
     default:
 	cs_log("EMM: Congratulations, you have discovered a new EMM on SECA. This has not been decoded yet, so send this output to authors:");
         cs_dump (ep->emm, emm_length + 3, "EMM:");
-  	return 0;	//unknown, no update
+  	return ERROR;	//unknown, no update
   }	//end of switch
 
   ins40[2]=i;
@@ -229,13 +229,12 @@ tp   len       shared-- cust
 //  else
   if (cta_res[0] == 0x97) {
 	 cs_log("EMM: Update not necessary.");
-	 return(1); //Update not necessary
+	 return OK; //Update not necessary
   }
   if ((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19)))
-  	if (set_provider_info(i) != 0) //after successfull EMM, print new provider info
-	  return(1);
-  return(0);
-  
+  	if (set_provider_info(i) == OK) //after successfull EMM, print new provider info
+	  return OK;
+  return ERROR;
 }
 
 int seca_card_info (void)
@@ -266,6 +265,6 @@ int seca_card_info (void)
       cs_log ("ERROR: PBM returns unknown byte %02x", cta_res[0]);
     }
   }
-  return (1);
+  return OK;
 }
 

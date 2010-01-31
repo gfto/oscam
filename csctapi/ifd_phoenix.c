@@ -13,12 +13,7 @@
 #include "ifd_phoenix.h"
 #include "icc_async.h"
 
-#define OK 		1
-#define ERROR 0
-
-#define IFD_TOWITOKO_MAX_TRANSMIT 255
-#define IFD_TOWITOKO_ATR_TIMEOUT   800
-#define IFD_TOWITOKO_BAUDRATE            9600
+#define MAX_TRANSMIT			255
 
 #ifdef USE_GPIO	//felix: definition of gpio functions
 int gpio_outen,gpio_out,gpio_in;
@@ -50,7 +45,10 @@ static int get_gpio(void)
 {
 	set_gpio_input();
 	read(gpio_in, &gpio, sizeof(gpio));
-	return ((int)((gpio&pin)?1:0));
+	if (gpio&pin)
+		return OK;
+	else
+		return ERROR;
 }
 #endif
 
@@ -77,19 +75,19 @@ int Phoenix_Init ()
 		return OK;
 	
 	/* Default serial port settings */
-	if (!IO_Serial_SetParams (IFD_TOWITOKO_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW))
+	if (IO_Serial_SetParams (DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW))
 	{
 		reader[ridx].status = 0;//added this one because it seemed logical
 		return ERROR;
 	}
 		
-	if (!Phoenix_SetBaudrate(IFD_TOWITOKO_BAUDRATE))
+	if (Phoenix_SetBaudrate(DEFAULT_BAUDRATE))
 	{
 		reader[ridx].status = 0;
 		return ERROR;
 	}
 	
-	if (!IO_Serial_SetParity (PARITY_EVEN))
+	if (IO_Serial_SetParity (PARITY_EVEN))
 	{
 		reader[ridx].status = 0;
 		return ERROR;
@@ -103,7 +101,7 @@ int Phoenix_GetStatus (int * status)
 {
 #ifdef USE_GPIO  //felix: detect card via defined gpio
  if (gpio_detect)
-		*status=get_gpio();
+		*status=!get_gpio();
  else
 #endif
  {
@@ -141,7 +139,7 @@ int Phoenix_Reset (ATR * atr)
 		
 		for(i=0; i<3; i++) {
 			IO_Serial_Flush();
-			if (!IO_Serial_SetParity (parity[i]))
+			if (IO_Serial_SetParity (parity[i]))
 				return ERROR;
 
 			ret = ERROR;
@@ -165,7 +163,7 @@ int Phoenix_Reset (ATR * atr)
 #endif
 				IO_Serial_RTS_Clr();
 			IO_Serial_Ioctl_Lock(0);
-			if(ATR_InitFromStream (atr, IFD_TOWITOKO_ATR_TIMEOUT) == ATR_OK)
+			if(ATR_InitFromStream (atr, ATR_TIMEOUT) == ATR_OK)
 				ret = OK;
 			// Succesfully retrieve ATR
 			if (ret == OK)
@@ -179,8 +177,9 @@ int Phoenix_Reset (ATR * atr)
 		// sky 919 unsigned char atr_test[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
 		// HD+ unsigned char atr_test[] = { 0x3F, 0xFF, 0x95, 0x00, 0xFF, 0x91, 0x81, 0x71, 0xFE, 0x47, 0x00, 0x44, 0x4E, 0x41, 0x53, 0x50, 0x31, 0x34, 0x32, 0x20, 0x52, 0x65, 0x76, 0x47, 0x43, 0x34, 0x63 };
 		// S02 = irdeto unsigned char atr_test[] = { 0x3B, 0x9F, 0x21, 0x0E, 0x49, 0x52, 0x44, 0x45, 0x54, 0x4F, 0x20, 0x41, 0x43, 0x53, 0x03};
+		// conax unsigned char atr_test[] = { 0x3B, 0x24, 0x00, 0x30, 0x42, 0x30, 0x30 };
 		//cryptoworks 	unsigned char atr_test[] = { 0x3B, 0x78, 0x12, 0x00, 0x00, 0x65, 0xC4, 0x05, 0xFF, 0x8F, 0xF1, 0x90, 0x00 };
-		ATR_InitFromArray ((*atr), atr_test, sizeof(atr_test));
+		ATR_InitFromArray (atr, atr_test, sizeof(atr_test));
 		//END OF PLAYGROUND
 */
 		
@@ -201,52 +200,33 @@ int Phoenix_Transmit (BYTE * buffer, unsigned size, unsigned int block_delay, un
 	for (sent = 0; sent < size; sent = sent + to_send)
 	{
 		/* Calculate number of bytes to send */
-		to_send = MIN(size, IFD_TOWITOKO_MAX_TRANSMIT);
+		to_send = MIN(size, MAX_TRANSMIT);
 				
 		/* Send data */
 		if ((sent == 0) && (block_delay != char_delay))
 		{
-			if (!IO_Serial_Write (block_delay, 1, buffer))
+			if (IO_Serial_Write (block_delay, 1, buffer))
 				return ERROR;
 			
-			if (!IO_Serial_Write (char_delay, to_send-1, buffer+1))
+			if (IO_Serial_Write (char_delay, to_send-1, buffer+1))
 				return ERROR;
 		}
 		else
 		{
-			if (!IO_Serial_Write (char_delay, to_send, buffer+sent))
+			if (IO_Serial_Write (char_delay, to_send, buffer+sent))
 				return ERROR;
 		}
 	}
 	return OK;
 }
 
-int Phoenix_Receive (BYTE * buffer, unsigned size, unsigned int block_timeout, unsigned int char_timeout)
+int Phoenix_Receive (BYTE * buffer, unsigned size, unsigned int timeout)
 {
 #define IFD_TOWITOKO_TIMEOUT             1000
 
-	/* Calculate timeouts */
-	char_timeout += IFD_TOWITOKO_TIMEOUT;
-	block_timeout += IFD_TOWITOKO_TIMEOUT;
-	if (block_timeout != char_timeout)
-	{
-		/* Read first byte using block timeout */
-		if (!IO_Serial_Read (block_timeout, 1, buffer))
-			return ERROR;
-		
-		if (size > 1)
-		{
-			/* Read remaining data bytes using char timeout */
-			if (!IO_Serial_Read (char_timeout, size - 1, buffer + 1))
-				return ERROR;
-		}
-	}
-	else
-	{
-		/* Read all data bytes with the same timeout */
-		if (!IO_Serial_Read (char_timeout, size, buffer))
-			return ERROR;
-	}
+	/* Read all data bytes with the same timeout */
+	if (IO_Serial_Read (timeout + IFD_TOWITOKO_TIMEOUT, size, buffer))
+		return ERROR;
 	
 #ifdef DEBUG_IFD
 	int i;
@@ -271,14 +251,13 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 		if (tcgetattr (reader[ridx].handle, &tio) != 0)
 			return ERROR;
 	
-		//write baudrate here!
-		if (!IO_Serial_SetBitrate (baudrate, &tio))
+		if (IO_Serial_SetBitrate (baudrate, &tio))
 			return ERROR;
 	
-		if (!IO_Serial_SetProperties(tio))
+		if (IO_Serial_SetProperties(tio))
 			return ERROR;
 	}
-	current_baudrate = baudrate;
+	current_baudrate = baudrate; //so if update fails, current_baudrate is not changed either
 	return OK;
 }
 

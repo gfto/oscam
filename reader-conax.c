@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "reader-common.h"
 
-extern uchar cta_cmd[], cta_res[];
+extern uchar cta_res[];
 extern ushort cta_lr;
 
 /*
@@ -29,12 +29,12 @@ static char *chid_date(uchar *ptr, char *buf, int l)
 
 #define write_cmd(cmd, data) \
 { \
-        if (card_write(cmd, data)) return(0); \
+        if (card_write(cmd, data)) return ERROR; \
 }
 
 #define read_cmd(cmd, data) \
 { \
-        if (card_write(cmd, NULL)) return(0); \
+        if (card_write(cmd, NULL)) return ERROR; \
 }
 
 static int read_record(uchar *cmd, uchar *data)
@@ -51,23 +51,23 @@ static int read_record(uchar *cmd, uchar *data)
   return(cta_lr-2);
 }
 
-int conax_card_init(uchar *atr)
+int conax_card_init(ATR newatr)
 {
+	get_atr;
   int i, j, n;
-  uchar atr_0b00[] = { '0', 'B', '0', '0' };
+  uchar atr_conax[] = { 0x3B, 0x24, 0x00 };
   uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x10, 0x01, 0x40};
   uchar ins82[] = {0xDD, 0x82, 0x00, 0x00, 0x11, 0x11, 0x0f, 0x01, 0xb0, 0x0f, 0xff, \
                    0xff, 0xfb, 0x00, 0x00, 0x09, 0x04, 0x0b, 0x00, 0xe0, 0x30, 0x2b };
 
   uchar cardver=0;
 
-  if ((memcmp(atr+3, atr_0b00, sizeof(atr_0b00))) &&
-      (memcmp(atr+4, atr_0b00, sizeof(atr_0b00))))
-    return(0);
+  if (memcmp(atr, atr_conax, sizeof(atr_conax)))
+    return ERROR;
 
   reader[ridx].caid[0]=0xB00;
 
-  if ((n=read_record(ins26, ins26+5))<0) return(0);	// read caid, card-version
+  if ((n=read_record(ins26, ins26+5))<0) return ERROR;	// read caid, card-version
   for (i=0; i<n; i+=cta_res[i+1]+2)
     switch(cta_res[i])
     {
@@ -75,7 +75,7 @@ int conax_card_init(uchar *atr)
       case 0x28: reader[ridx].caid[0]=(cta_res[i+2]<<8)|cta_res[i+3];
     }
 
-  if ((n=read_record(ins82, ins82+5))<0) return(0);	// read serial
+  if ((n=read_record(ins82, ins82+5))<0) return ERROR;	// read serial
 
   for (j=0, i=2; i<n; i+=cta_res[i+1]+2)
     switch(cta_res[i])
@@ -108,10 +108,10 @@ int conax_card_init(uchar *atr)
   }
 
   cs_log("ready for requests");
-  return(1);
+  return OK;
 }
 
-int conax_send_pin(void)
+static int conax_send_pin(void)
 {
   unsigned char insPIN[] = { 0xDD,0xC8,0x00,0x00,0x07,0x1D,0x05,0x01,0x00,0x00,0x00,0x00 }; //letzte vier ist der Pin-Code
   memcpy(insPIN+8,reader[ridx].pincode,4);
@@ -119,7 +119,7 @@ int conax_send_pin(void)
   write_cmd(insPIN, insPIN+5);
   cs_ri_log("[conax]-sending pincode to card");   
  
-  return(1);
+  return OK;
 }
 
 
@@ -132,7 +132,7 @@ int conax_do_ecm(ECM_REQUEST *er)
   unsigned char buf[256];
 
   if ((n=CheckSctLen(er->ecm, 3))<0)
-    return(0);
+    return ERROR;
 
   buf[0]=0x14;
   buf[1]=n+1;
@@ -198,7 +198,10 @@ int conax_do_ecm(ECM_REQUEST *er)
 
     }
  } 
- return(rc==3);
+ if (rc==3)
+	 return OK;
+ else
+	 return ERROR;
 }
 
 int conax_do_emm(EMM_PACKET *ep)
@@ -225,8 +228,10 @@ int conax_do_emm(EMM_PACKET *ep)
 
   rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));
 
-  return(rc);
-
+  if (rc)
+		return OK;
+	else
+		return ERROR;
 }
 
 int conax_card_info(void)
@@ -276,5 +281,5 @@ int conax_card_info(void)
       }
     }
   }
-  return(1);
+  return OK;
 }

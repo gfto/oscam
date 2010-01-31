@@ -19,10 +19,10 @@
 #endif
 #include "../globals.h"
 
-#define IFD_TOWITOKO_ATR_TIMEOUT	 800
+#define ATR_TIMEOUT   800
 
-#define OK 		1 
-#define ERROR 0
+#define OK 		0 
+#define ERROR 1
 
 int Sci_Init ()
 {
@@ -69,7 +69,7 @@ int Sci_Reset (ATR * atr)
 
 	while(n<atr_size && (tv_spent.tv_sec-tv.tv_sec)<10)
  		{
-		if(IO_Serial_Read(IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
+		if(!IO_Serial_Read(ATR_TIMEOUT, 1, buf+n))
 			n++;
 		gettimeofday(&tv_spent,0);
 		if(n==2) // format character
@@ -106,7 +106,7 @@ int Sci_Reset (ATR * atr)
 		}
 	}			
 #else
-	while(n<SCI_MAX_ATR_SIZE && IO_Serial_Read(IFD_TOWITOKO_ATR_TIMEOUT, 1, buf+n))
+	while(n<SCI_MAX_ATR_SIZE && !IO_Serial_Read(ATR_TIMEOUT, 1, buf+n))
 	{
 		n++;
 	}
@@ -130,6 +130,35 @@ int Sci_Reset (ATR * atr)
 	}
 	else
 		return ERROR;
+}
+
+int Sci_WriteSettings (BYTE T, unsigned long fs, unsigned long ETU, unsigned long WWT, unsigned long BWT, unsigned long CWT, unsigned long EGT, unsigned char P, unsigned char I)
+{
+	//int n;
+	SCI_PARAMETERS params;
+	//memset(&params,0,sizeof(SCI_PARAMETERS));
+	if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
+		return ERROR;
+
+	params.T = T;
+	params.fs = fs;
+	//for Irdeto T14 cards, do not set ETU
+	if (ETU)
+		params.ETU = ETU;
+	params.EGT = EGT;
+	params.WWT = WWT;
+	params.BWT = BWT;
+	params.CWT = CWT;
+	if (P)
+		params.P = P;
+	if (I)
+		params.I = I;
+
+	cs_debug("Setting T=%d fs=%lu mhz ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, params.fs, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
+
+	if (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
+		return ERROR;
+	return OK;
 }
 
 int Sci_Activate ()

@@ -21,7 +21,6 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -120,7 +119,9 @@ printf("IO: multicam.o %s %s\n", dtr ? "dtr" : "rts", set ? "set" : "clear"); ff
       rc=ioctl(fdmc, SET_PCDAT, &msr);
     }
   }
-  return((rc<0) ? FALSE : TRUE);
+	if (rc<0)
+		return ERROR;
+	return OK;
 }
 #endif
 
@@ -137,15 +138,17 @@ bool IO_Serial_DTR_RTS(int dtr, int set)
 	mbit=(dtr) ? TIOCM_DTR : TIOCM_RTS;
 #if defined(TIOCMBIS) && defined(TIOBMBIC)
 	if (ioctl (reader[ridx].handle, set ? TIOCMBIS : TIOCMBIC, &mbit) < 0)
-		return FALSE;
+		return ERROR;
 #else
 	if (ioctl(reader[ridx].handle, TIOCMGET, &msr) < 0)
-		return FALSE;
+		return ERROR;
 	if (set)
 		msr|=mbit;
 	else
 		msr&=~mbit;
-	return((ioctl(reader[ridx].handle, TIOCMSET, &msr)<0) ? FALSE : TRUE);
+	if (ioctl(reader[ridx].handle, TIOCMSET, &msr)<0)
+		return ERROR;
+	return OK;
 #endif
 }
 
@@ -190,7 +193,7 @@ bool IO_Serial_SetBitrate (unsigned long bitrate, struct termios * tio)
     cfsetispeed(tio, IO_Serial_Bitrate(38400));
    }
 #endif
-	return TRUE;
+	return OK;
 }
 
 bool IO_Serial_SetParams (unsigned long bitrate, unsigned bits, int parity, unsigned stopbits, int dtr, int rts)
@@ -198,12 +201,12 @@ bool IO_Serial_SetParams (unsigned long bitrate, unsigned bits, int parity, unsi
 	 struct termios newtio;
 	
 	 if(reader[ridx].typ == R_INTERNAL)
-			return FALSE;
+			return ERROR;
 	 
 	 memset (&newtio, 0, sizeof (newtio));
 
-	if (!IO_Serial_SetBitrate (bitrate, & newtio))
-		return FALSE;
+	if (IO_Serial_SetBitrate (bitrate, & newtio))
+		return ERROR;
 				
 	 /* Set the character size */
 	 switch (bits)
@@ -268,8 +271,8 @@ bool IO_Serial_SetParams (unsigned long bitrate, unsigned bits, int parity, unsi
 	newtio.c_cc[VMIN] = 1;
 	newtio.c_cc[VTIME] = 0;
 
-	if (!IO_Serial_SetProperties(newtio))
-		return FALSE;
+	if (IO_Serial_SetProperties(newtio))
+		return ERROR;
 
 	current_baudrate = bitrate;
 
@@ -278,19 +281,19 @@ bool IO_Serial_SetParams (unsigned long bitrate, unsigned bits, int parity, unsi
 	IO_Serial_DTR_RTS(1, dtr == IO_SERIAL_HIGH);
 	IO_Serial_Ioctl_Lock(0);
 
-	return TRUE;
+	return OK;
 }
 
 bool IO_Serial_SetProperties (struct termios newtio)
 {
    if(reader[ridx].typ == R_INTERNAL)
-      return FALSE;
+      return ERROR;
 
 	if (tcsetattr (reader[ridx].handle, TCSANOW, &newtio) < 0)
-		return FALSE;
+		return ERROR;
 //	tcflush(reader[ridx].handle, TCIOFLUSH);
 //	if (tcsetattr (reader[ridx].handle, TCSAFLUSH, &newtio) < 0)
-//		return FALSE;
+//		return ERROR;
 
   int mctl;
 	if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {
@@ -304,22 +307,22 @@ bool IO_Serial_SetProperties (struct termios newtio)
 	printf("IO: Setting properties\n");
 #endif
 
-	return TRUE;
+	return OK;
 }
 
 int IO_Serial_SetParity (BYTE parity)
 {
 	if(reader[ridx].typ == R_INTERNAL)
-		return TRUE;
+		return OK;
 
 	if ((parity != PARITY_EVEN) && (parity != PARITY_ODD) && (parity != PARITY_NONE))
-		return FALSE;
+		return ERROR;
 
 	struct termios tio;
 	int current_parity;
 	// Get current parity
 	if (tcgetattr (reader[ridx].handle, &tio) != 0)
-	  return FALSE;
+	  return ERROR;
 
 	if (((tio.c_cflag) & PARENB) == PARENB)
 	{
@@ -363,17 +366,17 @@ int IO_Serial_SetParity (BYTE parity)
 				tio.c_cflag &= ~PARENB;
 				break;
 		}
-		if (!IO_Serial_SetProperties (tio))
-			return FALSE;
+		if (IO_Serial_SetProperties (tio))
+			return ERROR;
 	}
 
-	return TRUE;
+	return OK;
 }
 
 void IO_Serial_Flush ()
 {
 	BYTE b;
-	while(IO_Serial_Read(1000, 1, &b));
+	while(!IO_Serial_Read(1000, 1, &b));
 }
 
 
@@ -392,10 +395,8 @@ bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
 		int n = wr;
 		wr = 0;
 	
-		if(!IO_Serial_Read (timeout, n, buf))
-		{
-			return FALSE;
-		}
+		if(IO_Serial_Read (timeout, n, buf))
+			return ERROR;
 	}
 	
 #ifdef DEBUG_IO
@@ -417,7 +418,7 @@ bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
  			}
  			gettimeofday(&tv_spent,0);
 		}
-		if(!readed) return FALSE;
+		if(!readed) return ERROR;
 		
 		data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;
 #ifdef DEBUG_IO
@@ -425,7 +426,7 @@ bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
 		fflush (stdout);
 #endif
 #else
-		if (IO_Serial_WaitToRead (0, timeout))
+		if (!IO_Serial_WaitToRead (0, timeout))
 		{
 			if (read (reader[ridx].handle, &c, 1) != 1)
 			{
@@ -433,7 +434,7 @@ bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
 				printf ("ERROR\n");
 				fflush (stdout);
 #endif
-				return FALSE;
+				return ERROR;
 			}
 			data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;
 			
@@ -449,7 +450,7 @@ bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
 			fflush (stdout);
 #endif
 			tcflush (reader[ridx].handle, TCIFLUSH);
-			return FALSE;
+			return ERROR;
 		}
 #endif
 	}
@@ -461,7 +462,7 @@ bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
 	fflush (stdout);
 #endif
 	
-	return TRUE;
+	return OK;
 }
 
 
@@ -487,7 +488,7 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 //		else
 			to_send = (delay? 1: size);
 		
-		if (IO_Serial_WaitToWrite (delay, 1000))
+		if (!IO_Serial_WaitToWrite (delay, 1000))
 		{
             for (i_w=0; i_w < to_send; i_w++) {
             data_w [(1+io_serial_need_dummy_char)*i_w] = data [count + i_w];
@@ -505,7 +506,7 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 #endif
 				if(reader[ridx].typ != R_INTERNAL)
 					wr += u;
-				return FALSE;
+				return ERROR;
 			}
 			
 			if(reader[ridx].typ != R_INTERNAL)
@@ -524,7 +525,7 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 			fflush (stdout);
 #endif
 //			tcflush (reader[ridx].handle, TCIFLUSH);
-			return FALSE;
+			return ERROR;
 		}
 	}
 	
@@ -533,7 +534,7 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 	fflush (stdout);
 #endif
 	
-	return TRUE;
+	return OK;
 }
 
 bool IO_Serial_Close ()
@@ -547,11 +548,11 @@ bool IO_Serial_Close ()
 	close(fdmc);
 #endif
 	if (close (reader[ridx].handle) != 0)
-		return FALSE;
+		return ERROR;
 	
 	wr = 0;
 	
-	return TRUE;
+	return OK;
 }
 
 /*
@@ -657,7 +658,7 @@ static bool IO_Serial_WaitToRead (unsigned delay_ms, unsigned timeout_ms)
       printf("select_ret=%i\n" , select_ret);
       printf("errno =%d\n", errno);
       fflush(stdout);
-      return (FALSE);
+      return ERROR;
    }
 
    if (FD_ISSET(in_fd, &erfds))
@@ -665,10 +666,12 @@ static bool IO_Serial_WaitToRead (unsigned delay_ms, unsigned timeout_ms)
       printf("fd is in error fds\n");
       printf("errno =%d\n", errno);
       fflush(stdout);
-      return (FALSE);
+      return ERROR;
    }
-
-   return(FD_ISSET(in_fd,&rfds));
+   if (FD_ISSET(in_fd,&rfds))
+		 return OK;
+	 else
+		 return ERROR;
 }
 
 static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms)
@@ -681,7 +684,7 @@ static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms)
    
 #ifdef SCI_DEV
    if(reader[ridx].typ == R_INTERNAL)
-      return TRUE;
+      return OK;
 #endif
 		
    if (delay_ms > 0)
@@ -715,7 +718,7 @@ static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms)
       printf("select_ret=%d\n" , select_ret);
       printf("errno =%d\n", errno);
       fflush(stdout);
-      return (FALSE);
+      return ERROR;
    }
 
    if (FD_ISSET(out_fd, &ewfds))
@@ -723,11 +726,13 @@ static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms)
       printf("fd is in ewfds\n");
       printf("errno =%d\n", errno);
       fflush(stdout);
-      return (FALSE);
+      return ERROR;
    }
 
-   return(FD_ISSET(out_fd,&wfds));
-    
+   if (FD_ISSET(out_fd,&wfds))
+		 return OK;
+	 else
+		 return ERROR;
 }
 
 bool IO_Serial_InitPnP ()
@@ -735,12 +740,12 @@ bool IO_Serial_InitPnP ()
 	unsigned int PnP_id_size = 0;
 	BYTE PnP_id[IO_SERIAL_PNPID_SIZE];	/* PnP Id of the serial device */
 
-  if (!IO_Serial_SetParams (1200, 7, PARITY_NONE, 1, IO_SERIAL_HIGH, IO_SERIAL_LOW))
-		return FALSE;
+  if (IO_Serial_SetParams (1200, 7, PARITY_NONE, 1, IO_SERIAL_HIGH, IO_SERIAL_LOW))
+		return ERROR;
 
-	while ((PnP_id_size < IO_SERIAL_PNPID_SIZE) && IO_Serial_Read (200, 1, &(PnP_id[PnP_id_size])))
+	while ((PnP_id_size < IO_SERIAL_PNPID_SIZE) && !IO_Serial_Read (200, 1, &(PnP_id[PnP_id_size])))
       PnP_id_size++;
 
-		return TRUE;
+		return OK;
 }
  

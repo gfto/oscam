@@ -703,7 +703,7 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		return PROTOCOL_T0_ERROR;
 	
 	/* Send header bytes */
-	if (ICC_Async_Transmit (5, APDU_Cmd_Header (cmd)) != ICC_ASYNC_OK)
+	if (ICC_Async_Transmit (5, APDU_Cmd_Header (cmd)))
 	{
 		(*rsp) = NULL;
 		return PROTOCOL_T0_ICC_ERROR;
@@ -723,7 +723,7 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	while (recv < PROTOCOL_T0_MAX_SHORT_RESPONSE)
 	{
 		/* Read one procedure byte */
-		if (ICC_Async_Receive (1, buffer + recv) != ICC_ASYNC_OK)
+		if (ICC_Async_Receive (1, buffer + recv))
 		{
 			ret = PROTOCOL_T0_ICC_ERROR;
 			break;
@@ -751,7 +751,7 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 				return PROTOCOL_T0_ERROR;
 			
 			/* Read SW2 byte */
-			if (ICC_Async_Receive (1, buffer + recv) != ICC_ASYNC_OK)
+			if (ICC_Async_Receive (1, buffer + recv))
 			{
 				ret = PROTOCOL_T0_ICC_ERROR;
 				break;
@@ -773,7 +773,7 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 				if (sent >= Lc)
 					return PROTOCOL_T0_ERROR;
 								
-				if (ICC_Async_Transmit(MAX (Lc - sent, 0), data + sent) != ICC_ASYNC_OK) /* Send remaining data bytes */
+				if (ICC_Async_Transmit(MAX (Lc - sent, 0), data + sent)) /* Send remaining data bytes */
 				{
 					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
@@ -792,7 +792,7 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 				*/
 				
 				/* Read remaining data bytes */
-				if (ICC_Async_Receive(MAX (Le - recv, 0), buffer + recv) != ICC_ASYNC_OK)
+				if (ICC_Async_Receive(MAX (Le - recv, 0), buffer + recv))
 				{//printf("error %d\n", (int)Le);
 					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
@@ -814,7 +814,7 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 					return PROTOCOL_T0_ERROR;
 								
 				/* Send next data byte */
-				if (ICC_Async_Transmit (1, data + sent) !=ICC_ASYNC_OK)
+				if (ICC_Async_Transmit (1, data + sent))
 				{
 					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
@@ -829,7 +829,7 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 					return PROTOCOL_T0_ERROR;
 				
 				/* Read next data byte */
-				if (ICC_Async_Receive (1, buffer + recv) != ICC_ASYNC_OK)
+				if (ICC_Async_Receive (1, buffer + recv))
 				{
 					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
@@ -879,21 +879,21 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	if (reader[ridx].typ != R_INTERNAL)
 	{
 		/* Send 0x01 byte */
-		if (ICC_Async_Transmit (1, &b1) != ICC_ASYNC_OK)
+		if (ICC_Async_Transmit (1, &b1))
 		{
 			(*rsp) = NULL;
 			return PROTOCOL_T0_ICC_ERROR;
 		}
 		
 		/* Send apdu */
-		if (ICC_Async_Transmit (cmd_len, cmd_raw) != ICC_ASYNC_OK)
+		if (ICC_Async_Transmit (cmd_len, cmd_raw))
 		{
 			(*rsp) = NULL;
 			return PROTOCOL_T0_ICC_ERROR;
 		}
 		
 		/* Send xor byte */
-		if (ICC_Async_Transmit (1, &ixor) != ICC_ASYNC_OK)
+		if (ICC_Async_Transmit (1, &ixor))
 		{
 			(*rsp) = NULL;
 			return PROTOCOL_T0_ICC_ERROR;
@@ -906,7 +906,7 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		buffer[cmd_len+1] = ixor;
 		
 		/* Send apdu */
-		if (ICC_Async_Transmit (cmd_len+2, buffer) != ICC_ASYNC_OK)
+		if (ICC_Async_Transmit (cmd_len+2, buffer))
 		{
 			(*rsp) = NULL;
 			return PROTOCOL_T0_ICC_ERROR;
@@ -943,7 +943,7 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 #endif
 		}
 		/* Read one procedure byte */
-		if (ICC_Async_Receive (8, buffer) != ICC_ASYNC_OK)
+		if (ICC_Async_Receive (8, buffer))
 		{
 			ret = PROTOCOL_T0_ICC_ERROR;
 			break;
@@ -954,14 +954,14 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 			
 			if(recv)
 			{
-				if (ICC_Async_Receive (recv, buffer + 8) != ICC_ASYNC_OK)
+				if (ICC_Async_Receive (recv, buffer + 8))
 				{
 					ret = PROTOCOL_T0_ICC_ERROR;
 					break;
 				}
 			}
 			
-			if (ICC_Async_Receive (1, &ixor) != ICC_ASYNC_OK)
+			if (ICC_Async_Receive (1, &ixor))
 			{
 				ret = PROTOCOL_T0_ICC_ERROR;
 				break;

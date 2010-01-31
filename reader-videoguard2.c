@@ -38,9 +38,9 @@ static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 
   int i;
   for (i = 0; i < 8; i++)
     if (cw[i] != 0) {//test if cw = 00
-      return 1;
+      return OK;
     }
-  return 0;
+  return ERROR;
 }
 
 //////  ====================================================================================
@@ -443,7 +443,7 @@ static void cCamCryptVG2_RotateRightAndHash(unsigned char *p)
 
 unsigned char CW1[8], CW2[8];
 
-extern uchar cta_cmd[], cta_res[];
+extern uchar cta_res[];
 extern ushort cta_lr;
 
 extern int io_serial_need_dummy_char;
@@ -580,8 +580,12 @@ static void read_tiers(void)
     }
 }
 
-int videoguard_card_init(uchar *atr, int atrsize)
+int videoguard_card_init(ATR newatr)
 {
+	get_hist;
+	if ((hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
+		return ERROR;
+	get_atr;
   /* known atrs */
   unsigned char atr_bskyb[] = { 0x3F, 0x7F, 0x13, 0x25, 0x03, 0x33, 0xB0, 0x06, 0x69, 0xFF, 0x4A, 0x50, 0xD0, 0x00, 0x00, 0x53, 0x59, 0x00, 0x00, 0x00 };
   unsigned char atr_bskyb_new[] = { 0x3F, 0xFD, 0x13, 0x25, 0x02, 0x50, 0x00, 0x0F, 0x33, 0xB0, 0x0F, 0x69, 0xFF, 0x4A, 0x50, 0xD0, 0x00, 0x00, 0x53, 0x59, 0x02 };
@@ -595,52 +599,52 @@ int videoguard_card_init(uchar *atr, int atrsize)
 	unsigned char atr_kbw[] = { 0x3F, 0xFF, 0x14, 0x25, 0x03, 0x10, 0x80, 0x54, 0xB0, 0x01, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x4B, 0x57, 0x01, 0x00, 0x00};
 	unsigned char atr_get[] = { 0x3F, 0xFF, 0x14, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x10, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x5A, 0x45, 0x01, 0x00, 0x00};
 
-    if ((atrsize == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atrsize) == 0))
+    if ((atr_size == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atr_size) == 0))
     {
         cs_log("Type: Videoguard BSkyB");
         /* BSkyB seems to need one additionnal byte in the serial communication... */
         io_serial_need_dummy_char = 1;
 				BASEYEAR = 2000;
     }
-    else if ((atrsize == sizeof (atr_bskyb_new)) && (memcmp (atr, atr_bskyb_new, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_bskyb_new)) && (memcmp (atr, atr_bskyb_new, atr_size) == 0))
     {
         cs_log("Type: Videoguard BSkyB - New");
     }
-    else if ((atrsize == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atr_size) == 0))
     {
         cs_log("Type: Videoguard Sky Italia");
     }
-    else if ((atrsize == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atr_size) == 0))
     {
         cs_log("Type: Videoguard DirecTV");
     }
-    else if ((atrsize == sizeof (atr_yes)) && (memcmp (atr, atr_yes, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_yes)) && (memcmp (atr, atr_yes, atr_size) == 0))
     {
         cs_log("Type: Videoguard YES DBS Israel");
     }
-    else if ((atrsize == sizeof (atr_viasat_new)) && (memcmp (atr, atr_viasat_new, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_viasat_new)) && (memcmp (atr, atr_viasat_new, atr_size) == 0))
     {
         cs_log("Type: Videoguard Viasat new (093E)");
 				BASEYEAR = 2000;
     }
-    else if ((atrsize == sizeof (atr_viasat_scandinavia)) && (memcmp (atr, atr_viasat_scandinavia, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_viasat_scandinavia)) && (memcmp (atr, atr_viasat_scandinavia, atr_size) == 0))
     {
         cs_log("Type: Videoguard Viasat Scandinavia");
 				BASEYEAR = 2000;
     }
-    else if ((atrsize == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atr_size) == 0))
     {
         cs_log("Type: Videoguard Sky Italia new (093B)");
     }
-    else if ((atrsize == sizeof (atr_premiere)) && (memcmp (atr, atr_premiere, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_premiere)) && (memcmp (atr, atr_premiere, atr_size) == 0))
     {
         cs_log("Type: Videoguard Sky Germany");
     }
-    else if ((atrsize == sizeof (atr_kbw)) && (memcmp (atr, atr_kbw, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_kbw)) && (memcmp (atr, atr_kbw, atr_size) == 0))
     {
         cs_log("Type: Videoguard Kabel BW");
     }
-    else if ((atrsize == sizeof (atr_get)) && (memcmp (atr, atr_get, atrsize) == 0))
+    else if ((atr_size == sizeof (atr_get)) && (memcmp (atr, atr_get, atr_size) == 0))
     {
         cs_log("Type: Videoguard Get Kabel Norway");
         			BASEYEAR = 2004;
@@ -655,11 +659,11 @@ int videoguard_card_init(uchar *atr, int atrsize)
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
   int l;
-  if((l=read_cmd_len(ins7401))<0) return 0; //not a videoguard2/NDS card or communication error
+  if((l=read_cmd_len(ins7401))<0) return ERROR; //not a videoguard2/NDS card or communication error
   ins7401[4]=l;
   if(!read_cmd(ins7401,NULL) || !status_ok(cta_res+l)) {
     cs_log ("failed to read cmd list");
-    return 0;
+    return ERROR;
     }
   memorize_cmd_table (cta_res,l);
 
@@ -668,7 +672,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
   unsigned char ins7416[5] = { 0xD0,0x74,0x16,0x00,0x00 };
   if(do_cmd(ins7416, NULL, NULL)<0) {
     cs_log ("cmd 7416 failed");
-    return 0;
+    return ERROR;
     }
 
   unsigned char ins36[5] = { 0xD0,0x36,0x00,0x00,0x00 };
@@ -697,7 +701,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
 
     if(!boxidOK) {
       cs_log ("no boxID available");
-      return 0;
+      return ERROR;
       }
   }
 
@@ -706,7 +710,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
   memcpy(payload4C,boxID,4);
   if(!write_cmd(ins4C,payload4C) || !status_ok(cta_res+l)) {
     cs_log("sending boxid failed");
-    return 0;
+    return ERROR;
     }
 
   //short int SWIRDstatus = cta_res[1];
@@ -714,7 +718,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
   l=do_cmd(ins58, NULL, buff);
   if(l<0) {
     cs_log("cmd ins58 failed");
-    return 0;
+    return ERROR;
     }
   memset(reader[ridx].hexserial, 0, 8);
   memcpy(reader[ridx].hexserial+2, cta_res+3, 4);
@@ -751,35 +755,35 @@ int videoguard_card_init(uchar *atr, int atrsize)
   l=do_cmd(insB4, tbuff, NULL);
   if(l<0 || !status_ok(cta_res)) {
     cs_log ("cmd D0B4 failed (%02X%02X)", cta_res[0], cta_res[1]);
-    return 0;
+    return ERROR;
     }
 
   unsigned char insBC[5] = { 0xD0,0xBC,0x00,0x00,0x00 };
   l=do_cmd(insBC, NULL, NULL);
   if(l<0) {
     cs_log("cmd D0BC failed");
-    return 0;
+    return ERROR;
     }
 
   unsigned char insBE[5] = { 0xD3,0xBE,0x00,0x00,0x00 };
   l=do_cmd(insBE, NULL, NULL);
   if(l<0) {
     cs_log("cmd D3BE failed");
-    return 0;
+    return ERROR;
     }
 
   unsigned char ins58a[5] = { 0xD1,0x58,0x00,0x00,0x00 };
   l=do_cmd(ins58a, NULL, NULL);
   if(l<0) {
     cs_log("cmd D158 failed");
-    return 0;
+    return ERROR;
     }
 
   unsigned char ins4Ca[5] = { 0xD1,0x4C,0x00,0x00,0x00 };
   l=do_cmd(ins4Ca,payload4C, NULL);
   if(l<0 || !status_ok(cta_res)) {
     cs_log("cmd D14Ca failed");
-    return 0;
+    return ERROR;
     }
 
   cs_log("type: Videoguard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
@@ -791,7 +795,7 @@ int videoguard_card_init(uchar *atr, int atrsize)
 
   cs_log("ready for requests");
 
-  return(1);
+  return OK;
 }
 
 int videoguard_do_ecm(ECM_REQUEST *er)
@@ -810,7 +814,7 @@ int videoguard_do_ecm(ECM_REQUEST *er)
     l = do_cmd(ins54,NULL,NULL);
     if(l>0 && status_ok(cta_res+l)) {
       if (!cw_is_valid(CW1)) //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
-	return 0;
+	return ERROR;
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
         memcpy(er->cw+0,CW2,8);
@@ -835,10 +839,10 @@ int videoguard_do_ecm(ECM_REQUEST *er)
 	postprocess_cw(er->cw+0);
 	postprocess_cw(er->cw+8);
       }
-      return 1;
+      return OK;
     }
   }
-  return 0;
+  return ERROR;
 }
 
 static int num_addr(const unsigned char *data)
@@ -875,17 +879,20 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
       }
     }
 
-  /* skip header, the list of address, and the separator (the two 00 00) */
-  if (position == -1)
-    ptr = data+6+data[5];
-  else
-    ptr = data+4+4*num_addr(data)+2;
+  /* skip EMM-G but not EMM from cccam */
+  if (position == -1 && data[1] != 0x00) return NULL;
 
-  /* skip optional 00 */
-  if (*ptr == 0x00) ptr++;
+  int num_ua = (position == -1) ? 0 : num_addr(data);
 
-  /* skip the 1st bitmap len */
-  ptr++;
+  /* skip header and the list of addresses */
+  ptr = data+4+4*num_ua;
+
+  if (*ptr != 0x02)          // some clients omit 00 00 separator */
+  {
+    ptr += 2;                // skip 00 00 separator
+    if (*ptr == 0x00) ptr++; // skip optional 00
+    ptr++;                   // skip the 1st bitmap len
+  }
 
   /* check */
   if (*ptr != 0x02) return NULL;
@@ -917,21 +924,21 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
 int videoguard_do_emm(EMM_PACKET *ep)
 {
   unsigned char ins42[5] = { 0xD1,0x42,0x00,0x00,0xFF };
-  int rc=0;
+  int rc=ERROR;
 
   const unsigned char *payload = payload_addr(ep->emm, reader[ridx].hexserial);
   while (payload) {
     ins42[4]=*payload;
     int l = do_cmd(ins42,payload+1,NULL);
     if(l>0 && status_ok(cta_res)) {
-      rc=1;
+      rc=OK;
       }
 
     cs_log("EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
 //cs_dump(ep->emm, 64, "EMM:");
-    //if (status_ok (cta_res)) {
-      //read_tiers();
-      //}
+    if (status_ok (cta_res) && (cta_res[1] & 0x01)) {
+      read_tiers();
+      }
 
     if (num_addr(ep->emm) == 1 && (int)(&payload[1] - &ep->emm[0]) + *payload + 1 < ep->l) {
       payload += *payload + 1;
@@ -954,5 +961,5 @@ int videoguard_card_info(void)
   cs_log("card detected");
   cs_log("type: Videoguard" );
   read_tiers ();
-  return(1);
+  return OK;
 }

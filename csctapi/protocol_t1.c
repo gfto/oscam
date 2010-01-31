@@ -182,7 +182,7 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
   while ((ret == PROTOCOL_T1_OK) && more)
     {
       if (wtx > 1)
-        Protocol_T1_UpdateBWT (wtx * BWT); //FIXME wtx only counts for next block, but it is never reset!
+        Protocol_T1_UpdateBWT (wtx * BWT);
 
       /* Receive a block */
       ret = Protocol_T1_ReceiveBlock (&block);
@@ -287,7 +287,7 @@ Protocol_T1_SendBlock (T1_Block * block)
       buffer = T1_Block_Raw (block);
       length = T1_Block_RawLen (block);
 
-      if (ICC_Async_Transmit (length, buffer) != ICC_ASYNC_OK)
+      if (ICC_Async_Transmit (length, buffer))
         {
           ret = PROTOCOL_T1_ICC_ERROR;
         }
@@ -306,7 +306,7 @@ Protocol_T1_ReceiveBlock (T1_Block ** block)
   int ret;
 
   /* Receive four mandatory bytes */
-  if (ICC_Async_Receive (4, buffer) != ICC_ASYNC_OK)
+  if (ICC_Async_Receive (4, buffer))
     {
       ret = PROTOCOL_T1_ICC_ERROR;
       (*block) = NULL;
@@ -317,12 +317,10 @@ Protocol_T1_ReceiveBlock (T1_Block ** block)
       if (buffer[2] != 0x00)
         {
           /* Set timings to read the remaining block */
-					if (reader[ridx].typ != R_INTERNAL)
-          	Protocol_T1_UpdateBWT (CWT);
+          Protocol_T1_UpdateBWT (CWT);
 
           /* Receive remaining bytes */
-          if (ICC_Async_Receive (buffer[2], buffer + 4) !=
-              ICC_ASYNC_OK)
+          if (ICC_Async_Receive (buffer[2], buffer + 4))
             {
               (*block) = NULL;
               ret = PROTOCOL_T1_ICC_ERROR;
@@ -335,8 +333,7 @@ Protocol_T1_ReceiveBlock (T1_Block ** block)
             }
 
           /* Restore timings */
-					if (reader[ridx].typ != R_INTERNAL)
-          	Protocol_T1_UpdateBWT (BWT);
+          Protocol_T1_UpdateBWT (BWT);
         }
       else
         {
@@ -351,7 +348,7 @@ Protocol_T1_ReceiveBlock (T1_Block ** block)
 static int
 Protocol_T1_UpdateBWT (unsigned short bwt)
 {
-	if (ICC_Async_SetTimings (bwt) != ICC_ASYNC_OK)
+	if (ICC_Async_SetTimings (bwt))
 		return PROTOCOL_T1_ICC_ERROR;
 
   return PROTOCOL_T1_OK;

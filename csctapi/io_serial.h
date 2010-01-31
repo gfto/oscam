@@ -25,16 +25,12 @@
 #ifndef _IO_SERIAL_
 #define _IO_SERIAL_
 
-#include "defines.h"
 #include <termios.h>
 
 //#define IO_Serial_DTR_Set() IO_Serial_DTR_RTS(1, 1)
 //#define IO_Serial_DTR_Clr() IO_Serial_DTR_RTS(1, 0)
 #define IO_Serial_RTS_Set() IO_Serial_DTR_RTS(0, 1)
 #define IO_Serial_RTS_Clr() IO_Serial_DTR_RTS(0, 0)
-/* 
- * Exported constants definition
- */
 
 /* Type of parity of the serial device */
 #define PARITY_ODD		1
@@ -42,24 +38,24 @@
 #define PARITY_NONE		3
 
 /* Values for the modem lines */
-#define IO_SERIAL_HIGH			1
+#define IO_SERIAL_HIGH		1
 #define IO_SERIAL_LOW			0
 
 /* Maximum size of PnP Com ID */
 #define IO_SERIAL_PNPID_SIZE 		256
 
-int wr; //FIXME should be in ifd_phoenix.c or .h
+int wr;
 
 /* 
  * Exported functions declaration
  */
 
 /* IO_Serial creation and deletion */
-extern void IO_Serial_Flush ();
+extern void IO_Serial_Flush (void);
 
 /* Initialization and closing */
 extern bool IO_Serial_InitPnP (void);
-extern bool IO_Serial_Close ();
+extern bool IO_Serial_Close (void);
 
 /* Transmission properties */
 extern bool IO_Serial_DTR_RTS(int, int);
