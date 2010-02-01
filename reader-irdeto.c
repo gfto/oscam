@@ -361,7 +361,7 @@ int irdeto_card_info(void)
       for (i=p=0; i<reader[ridx].nprov; i++)
       {
         int j, k, chid, first=1;
-        char t[32];
+        char t[64];
         if (reader[ridx].prid[i][4]!=0xff)
         {
           p++;
