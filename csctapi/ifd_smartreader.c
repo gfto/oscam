@@ -27,6 +27,7 @@ static bool smartreader_check_endpoint(struct usb_device *dev);
 static void sr_hexdump(const unsigned char* data, size_t size, bool single);
 #endif
 
+extern int usb_debug;
 
 int SR_Init (struct s_reader *reader)
 {
@@ -40,8 +41,13 @@ int SR_Init (struct s_reader *reader)
     memcpy(device,reader->device,128);
     busname=strtok(device,search);
     devname=strtok(NULL,search);
-#ifdef DEBUG_IO
-    cs_log("looking for device %s on bus %s");
+    if(!busname || !devname) {
+        cs_log("Wrong device format (%s), it should be Device=bus:dev",reader->device);
+        return ERROR;
+    }
+#ifdef DEBUG_USB_IO
+    usb_debug=0;
+    cs_log("looking for device %s on bus %s",devname,busname);
 #endif
     reader->smartreader_usb_dev=NULL;
     if(!(reader->smartreader_usb_dev=find_smartreader((const char *)devname,(const char *)busname, &reader->ftdic)))
@@ -53,13 +59,15 @@ int SR_Init (struct s_reader *reader)
     reader->ftdic.in_ep = 0x1;
     reader->ftdic.out_ep = 0x82;
 
+    ftdi_write_data_set_chunksize(&reader->ftdic,64);
     
     //open the smartreader device if found by find_smartreader
     if ((ret = ftdi_usb_open_dev(&reader->ftdic,reader->smartreader_usb_dev)) < 0) {
         cs_log("unable to open ftdi device %s:%s (ret=%d error=%s)",busname,devname, ret, ftdi_get_error_string(&reader->ftdic));
         return ERROR;
     }
-
+    ftdi_usb_reset(&reader->ftdic);
+    
 #ifdef DEBUG_USB_IO
     cs_log("IO:SR: Setting smartreader latency timer to 1ms");
 #endif
@@ -274,15 +282,13 @@ static struct usb_device * find_smartreader(const char *devname, const char*busn
             }
         }
         if(dev_found) {
-#ifdef DEBUG_USB_IO
-            cs_log("IO:SR: Found smartreader device %s:%s",busname,devname);
-#endif
+            cs_log("Found smartreader device %s:%s",busname,devname);
             break;
         }
     }
 
     if(!dev_found) {
-        cs_log("IO:SR: Smartreader device %s:%s not found",busname,devname);
+        cs_log("Smartreader device %s:%s not found",busname,devname);
         ftdi_deinit(ftdic);
         return NULL;
         }
@@ -308,7 +314,7 @@ static unsigned int smart_read(struct s_reader *reader, unsigned char* buff, int
     int total_read = 0;
     struct timeval start, now, dif = {0,0};
     gettimeofday(&start,NULL);
-
+    
 
     while(total_read < (int)size && dif.tv_sec < timeout_sec) {
 
@@ -316,6 +322,12 @@ static unsigned int smart_read(struct s_reader *reader, unsigned char* buff, int
         if(reader->g_read_buffer_size > 0) {
         
             ret = reader->g_read_buffer_size > size-total_read ? size-total_read : reader->g_read_buffer_size;
+#ifdef DEBUG_IO
+        if(usb_debug) {
+            cs_log("IO:SR: %d byte to read %d, %d bytes read",size, total_read);
+        }
+#endif
+
             memcpy(buff+total_read,reader->g_read_buffer,ret);
             reader->g_read_buffer_size -= ret;
             total_read+=ret;
@@ -340,6 +352,11 @@ static unsigned int smart_write(struct s_reader *reader, unsigned char* buff, in
 
     if (udelay == 0) {
         ret = ftdi_write_data(&reader->ftdic, buff, size);
+        if(ret<0) {
+#ifdef DEBUG_USB_IO
+            cs_log("IO:SR: USB write error : %d , %s",ret,reader->ftdic.error_str );
+#endif
+        }
     }
     else {
         for (idx = 0; idx < size; idx++) {
@@ -425,11 +442,9 @@ static void EnableSmartReader(struct s_reader *reader, int clock, unsigned short
     ret = smart_write(reader, Invert, sizeof (Invert),0);
     usleep(delay);
 
-
     ret = ftdi_set_line_property2(&reader->ftdic, BITS_8, STOP_BIT_2, parity, BREAK_ON);
     //  send break for 350ms, also comes from JoePub debugging.
     usleep(350000);
-
     ret = ftdi_set_line_property2(&reader->ftdic, BITS_8, STOP_BIT_2, parity, BREAK_OFF);
 
     smart_flush(reader);
@@ -471,19 +486,25 @@ static void* ReaderThread(void *p)
         if(reader->g_read_buffer_size == sizeof(reader->g_read_buffer)){
             //if out read buffer is full then delay
             //slightly and go around again
-            struct timespec req = {0,200000000}; //20ms
-            nanosleep(&req,NULL);
+            usleep(20000);
             continue;
         }
 
         ret = usb_bulk_read(reader->ftdic.usb_dev,reader->ftdic.out_ep,(char*)local_buffer,64,1000);
+        if(ret<0) {
+#ifdef DEBUG_USB_IO
+            cs_log("IO:SR: usb_bulk_read read error %d",ret);
+#endif
+        }
         sched_yield();
-
-
+#ifdef DEBUG_IO
+        if(usb_debug) {
+            cs_log("IO:SR: usb_bulk_read read %d bytes",ret);
+        }
+#endif
         if(ret>2) {  //FTDI always sends modem status bytes as first 2 chars with the 232BM
             pthread_mutex_lock(&reader->g_read_mutex);
             reader->modem_status=local_buffer[0];
-
             copy_size = (int)sizeof(reader->g_read_buffer) - reader->g_read_buffer_size > ret-2 ? ret-2 : (int)sizeof(reader->g_read_buffer) - reader->g_read_buffer_size;
             memcpy(reader->g_read_buffer+reader->g_read_buffer_size,local_buffer+2,copy_size);
             reader->g_read_buffer_size += copy_size;            
@@ -495,8 +516,6 @@ static void* ReaderThread(void *p)
                 reader->modem_status=local_buffer[0];
                 pthread_mutex_unlock(&reader->g_read_mutex);
             }
-            //sleep for 50ms since there was nothing to read last time
-            usleep(50000);
         }
     }
 
