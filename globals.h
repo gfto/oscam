@@ -116,14 +116,14 @@
 #define CS_EMMCACHESIZE   (CS_MAXPID<<1)
 #define CS_RDR_INIT_HIST
 #endif
-
-#define D_DUMP      1 // Debug Dumps
-#define D_MASTER    2 // Debug Master Process
-#define D_READER    4 // Debug Reader/Proxy Process
-#define D_CLIENT    8 // Debug Client Process
-#define D_DEVICE    16  // Debug Reader I/O
-#define D_WATCHDOG  32  // Debug Watchdog
-#define D_ALL_DUMP  63
+///////////////////////////design:                     actual:
+#define D_DUMP      1 // Debug Dumps								// nothing
+#define D_MASTER    2 // Debug Master Process				// nothing
+#define D_READER    4 // Debug Reader/Proxy Process // traffic from/to cardreader on reader-xxxx.c level + ATR analysis + ecm dump?!?
+#define D_CLIENT    8 // Debug Client Process				// client traffic + cw: dump ?!?
+#define D_PROTOCOL  16  // Debug IFD+protocol				// nothing
+#define D_DEVICE    32  // Debug Reader I/O					// DEBUG_IO 
+#define D_ALL_DUMP  63															// dumps all
 
 #define R_MOUSE     0x1 // Reader smartcard mouse
 #define R_INTERNAL  0x2 // Reader smartcard intern
@@ -606,7 +606,6 @@ struct s_config
   char      ser_device[512];
   ulong       srtimeout;  // SerialReaderTimeount in millisec
   int       max_log_size;
-  int       show_ecm_dw;
   int       waitforcards;
   int       preferlocalcards;
 #ifdef CS_WITH_GBOX

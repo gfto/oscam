@@ -330,8 +330,7 @@ int casc_process_ecm(ECM_REQUEST *er)
     }
   }
 
-  if (cfg->show_ecm_dw || client[cs_idx].dbglvl)
-    cs_dump(er->ecm, er->l, "casc ecm:");
+  cs_ddump(er->ecm, er->l, "casc ecm:");
   rc=0;
   if (sflag)
   {
@@ -397,8 +396,7 @@ static void reader_get_ecm(ECM_REQUEST *er)
     casc_process_ecm(er);
     return;
   }
-  if (cfg->show_ecm_dw || client[cs_idx].dbglvl)
-    cs_dump(er->ecm, er->l, "ecm:");
+  cs_ddump(er->ecm, er->l, "ecm:");
   er->rc=reader_ecm(er);
   write_ecm_answer(fd_c2m, er);
   reader_post_process();

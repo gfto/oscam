@@ -154,7 +154,7 @@ static void write_to_log(int flag, char *txt)
   //else {
     time(&t);
     lt=localtime(&t);
-    sprintf(buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
+    	sprintf(buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
                  lt->tm_year+1900, lt->tm_mon+1, lt->tm_mday,
                  lt->tm_hour, lt->tm_min, lt->tm_sec, txt);
 
@@ -216,9 +216,7 @@ void cs_debug(char *fmt,...)
   char txt[256];
 
 //  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, client[cs_idx].dbglvl ,cs_ptyp & client[cs_idx].dbglvl);
-  
-//  if ((cs_ptyp & cs_dblevel)==cs_ptyp)
-  if ((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp)
+  if (client[cs_idx].dbglvl & cs_ptyp)
   {
     va_list params;
     va_start(params, fmt);
@@ -226,6 +224,71 @@ void cs_debug(char *fmt,...)
     va_end(params);
     write_to_log(1, txt);
   }
+}
+int number_of_chars_printed = 0;
+void cs_debug_nolf(char *fmt,...)
+{
+ char txt[256];
+
+//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, client[cs_idx].dbglvl ,cs_ptyp & client[cs_idx].dbglvl);
+ if (client[cs_idx].dbglvl & cs_ptyp)
+ {
+    va_list params;
+    va_start(params, fmt);
+    	vsprintf(txt, fmt, params);
+    va_end(params);
+	if(!memcmp(txt,"\n", 1)) {
+		number_of_chars_printed = 0;
+	}
+	else
+		number_of_chars_printed++;
+
+  int i;
+  time_t t;
+  struct tm *lt;
+  char buf[512],sbuf[16];
+
+  if (use_syslog && !use_ac_log)		// system-logfile
+    syslog(LOG_INFO, "%s", txt);
+  time(&t);
+  lt=localtime(&t);
+	if (number_of_chars_printed == 1)
+    	sprintf(buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d            %s",
+                 lt->tm_year+1900, lt->tm_mon+1, lt->tm_mday,
+                 lt->tm_hour, lt->tm_min, lt->tm_sec, txt);
+	else 
+	  if (number_of_chars_printed == 16) {
+			number_of_chars_printed = 0;
+ 	  	sprintf(buf, "[LOG000]%s\n", txt);
+		}
+		else
+ 	  	sprintf(buf, "[LOG000]%s", txt);
+
+  if ((*log_fd) && (client[cs_idx].typ!='l') && (client[cs_idx].typ!='a'))
+    write_to_pipe(*log_fd, PIP_ID_LOG, (uchar *) buf+8, strlen(buf+8));
+  else
+    cs_write_log(buf+8);
+
+  store_logentry(buf);
+
+  for (i=0; i<CS_MAXPID; i++)	// monitor-clients
+  {
+    if ((client[i].pid) && (client[i].log))
+    {
+      if (client[i].monlvl<2)
+      {
+        if ((client[cs_idx].typ!='c') && (client[cs_idx].typ!='m'))
+          continue;
+        if (strcmp(client[cs_idx].usr, client[i].usr))
+          continue;
+      }
+      sprintf(sbuf, "%03d", client[i].logcounter);
+      client[i].logcounter=(client[i].logcounter+1) % 1000;
+      memcpy(buf+4, sbuf, 3);
+      monitor_send_idx(i, buf);
+    }
+  }
+ }
 }
 
 void cs_dump(uchar *buf, int n, char *fmt, ...)
@@ -248,8 +311,8 @@ void cs_ddump(uchar *buf, int n, char *fmt, ...)
   int i;
   char txt[512];
 
-//  if (((cs_ptyp & cs_dblevel)==cs_ptyp) && (fmt))
-  if (((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp) && (fmt))
+  //if (((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp) && (fmt))
+  if ((cs_ptyp & client[cs_idx].dbglvl) && (fmt))
   {
     va_list params;
     va_start(params, fmt);
@@ -258,8 +321,8 @@ void cs_ddump(uchar *buf, int n, char *fmt, ...)
     write_to_log(1, txt);
 //printf("LOG: %s\n", txt); fflush(stdout);
   }
-//  if (((cs_ptyp | D_DUMP) & cs_dblevel)==(cs_ptyp | D_DUMP))
-  if (((cs_ptyp | D_DUMP) & client[cs_idx].dbglvl)==(cs_ptyp | D_DUMP))
+  //if (((cs_ptyp | D_DUMP) & client[cs_idx].dbglvl)==(cs_ptyp | D_DUMP))
+  if (cs_ptyp & client[cs_idx].dbglvl)
   {
     for (i=0; i<n; i+=16)
     {

@@ -101,10 +101,13 @@ static int reader_card_inserted(void)
 	}
 #endif
 	int card;
+	cs_ptyp_orig=cs_ptyp;
+	cs_ptyp=D_PROTOCOL;
 	if (ICC_Async_GetStatus (&card)) {
 		cs_log("Error getting status of terminal.");
 		return 0; //corresponds with no card inside!!
 	}
+	cs_ptyp=cs_ptyp_orig;
 	return (card);
 }
 
@@ -125,6 +128,8 @@ static int reader_activate_card(ATR * atr)
 		return 0;
 
   /* Activate card */
+	cs_ptyp_orig=cs_ptyp;
+	cs_ptyp=D_DEVICE;
   for (i=0; i<5; i++) {
 		if (!ICC_Async_Activate(atr)) {
 			i = 100;
@@ -133,6 +138,7 @@ static int reader_activate_card(ATR * atr)
 		cs_log("Error activating card.");
   	cs_sleepms(500);
 	}
+	cs_ptyp=cs_ptyp_orig;
   if (i<100) return(0);
 
 #ifdef CS_RDR_INIT_HIST
@@ -251,16 +257,11 @@ int reader_device_init(char *device)
   cs_ptyp=D_DEVICE;
 #ifdef TUXBOX
 	reader[ridx].typ = reader_device_type(device);
-	if (ICC_Async_Device_Init())
-    cs_log("[tuxbox] Cannot open device: %s", device);
-	else
-		rc = OK;
-#else
+#endif
 	if (ICC_Async_Device_Init())
     cs_log("Cannot open device: %s", device);
 	else
 		rc = OK;
-#endif
   cs_debug("ct_init on %s: %d", device, rc);
   cs_ptyp=cs_ptyp_orig;
   return((rc!=OK) ? 2 : 0);

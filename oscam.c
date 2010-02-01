@@ -1607,8 +1607,7 @@ int send_dcw(ECM_REQUEST *er)
   ac_chk(er, 1);
 #endif
 
-  if( cfg->show_ecm_dw || client[cs_idx].dbglvl )
-    cs_dump(er->cw, 16, "cw:");
+  cs_ddump(er->cw, 16, "cw:");
   if (er->rc==7) er->rc=0;
   ph[client[cs_idx].ctyp].send_dcw(er);
   return 0;

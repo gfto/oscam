@@ -92,9 +92,7 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int dtr, int set)
   unsigned short rts_bits[2]={ 0x10, 0x800};
   unsigned short dtr_bits[2]={0x100,     0};
 
-#ifdef DEBUG_IO
-printf("IO: multicam.o %s %s\n", dtr ? "dtr" : "rts", set ? "set" : "clear"); fflush(stdout);
-#endif
+	cs_debug("IO: multicam.o %s %s\n", dtr ? "dtr" : "rts", set ? "set" : "clear"); fflush(stdout);
   if ((rc=ioctl(fdmc, GET_PCDAT, &msr))>=0)
   {
     if (dtr)		// DTR
@@ -303,10 +301,7 @@ bool IO_Serial_SetProperties (struct termios newtio)
 	else
 		cs_log("WARNING: Failed to reset reader %s", reader[ridx].label);
 
-#ifdef DEBUG_IO
-	printf("IO: Setting properties\n");
-#endif
-
+	cs_debug("IO: Setting properties\n");
 	return OK;
 }
 
@@ -336,15 +331,13 @@ int IO_Serial_SetParity (BYTE parity)
 		current_parity = PARITY_NONE;
 	}
 
-#ifdef DEBUG_IFD
-	printf ("IFD: Setting parity from %s to %s\n",
-	current_parity == PARITY_ODD ? "Odd" :
-	current_parity == PARITY_NONE ? "None" :
-	current_parity == PARITY_EVEN ? "Even" : "Invalid",
-	parity == PARITY_ODD ? "Odd" :
-	parity == PARITY_NONE ? "None" :
-	parity == PARITY_EVEN ? "Even" : "Invalid");
-#endif
+	cs_debug ("IFD: Setting parity from %s to %s\n",
+		current_parity == PARITY_ODD ? "Odd" :
+		current_parity == PARITY_NONE ? "None" :
+		current_parity == PARITY_EVEN ? "Even" : "Invalid",
+		parity == PARITY_ODD ? "Odd" :
+		parity == PARITY_NONE ? "None" :
+		parity == PARITY_EVEN ? "Even" : "Invalid");
 	
 	if (current_parity != parity)
 	{
@@ -399,10 +392,7 @@ bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
 			return ERROR;
 	}
 	
-#ifdef DEBUG_IO
-	printf ("IO: Receiving: ");
-	fflush (stdout);
-#endif
+	cs_debug ("IO: Receiving: ");
 	for (count = 0; count < size * (_in_echo_read ? (1+io_serial_need_dummy_char) : 1); count++)
 	{
 #ifdef SH4
@@ -421,63 +411,36 @@ bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data)
 		if(!readed) return ERROR;
 		
 		data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;
-#ifdef DEBUG_IO
-		printf ("%X ", c);
-		fflush (stdout);
-#endif
+		cs_debug_nolf ("%02X ", c);
 #else
 		if (!IO_Serial_WaitToRead (0, timeout))
 		{
 			if (read (reader[ridx].handle, &c, 1) != 1)
 			{
-#ifdef DEBUG_IO
-				printf ("ERROR\n");
-				fflush (stdout);
-#endif
+				cs_debug_nolf ("ERROR\n");
 				return ERROR;
 			}
 			data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;
-			
-#ifdef DEBUG_IO
-			printf ("%X ", c);
-			fflush (stdout);
-#endif
+			cs_debug_nolf ("%02X ", c);
 		}
 		else
 		{
-#ifdef DEBUG_IO
-			printf ("TIMEOUT\n");
-			fflush (stdout);
-#endif
+			cs_debug_nolf ("TIMEOUT\n");
 			tcflush (reader[ridx].handle, TCIFLUSH);
 			return ERROR;
 		}
 #endif
 	}
-	
-    _in_echo_read = 0;
-
-#ifdef DEBUG_IO
-	printf ("\n");
-	fflush (stdout);
-#endif
-	
+	cs_debug_nolf("\n"); //UGLY this is essential, resets global var, do not delete
+	_in_echo_read = 0;
 	return OK;
 }
-
-
-
 
 bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 {
 	unsigned count, to_send, i_w;
     BYTE data_w[512];
-#ifdef DEBUG_IO
-	unsigned i;
 	
-	printf ("IO: Sending: ");
-	fflush (stdout);
-#endif
 	/* Discard input data from previous commands */
 //	tcflush (reader[ridx].handle, TCIFLUSH);
 	
@@ -500,10 +463,7 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
             _in_echo_read = 1;
             if (u != (1+io_serial_need_dummy_char)*to_send)
 			{
-#ifdef DEBUG_IO
-				printf ("ERROR\n");
-				fflush (stdout);
-#endif
+				cs_debug ("ERROR\n");
 				if(reader[ridx].typ != R_INTERNAL)
 					wr += u;
 				return ERROR;
@@ -512,37 +472,22 @@ bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data)
 			if(reader[ridx].typ != R_INTERNAL)
 				wr += to_send;
 			
-#ifdef DEBUG_IO
-			for (i=0; i<(1+io_serial_need_dummy_char)*to_send; i++)
-				printf ("%X ", data_w[count + i]);
-			fflush (stdout);
-#endif
+			cs_ddump (data_w+count, (1+io_serial_need_dummy_char)*to_send, "IO: Sending: ");
 		}
 		else
 		{
-#ifdef DEBUG_IO
-			printf ("TIMEOUT\n");
-			fflush (stdout);
-#endif
+			cs_debug ("TIMEOUT\n");
 //			tcflush (reader[ridx].handle, TCIFLUSH);
 			return ERROR;
 		}
 	}
-	
-#ifdef DEBUG_IO
-	printf ("\n");
-	fflush (stdout);
-#endif
-	
 	return OK;
 }
 
 bool IO_Serial_Close ()
 {
 	
-#ifdef DEBUG_IO
-	printf ("IO: Clossing serial port %s\n", reader[ridx].device);
-#endif
+	cs_debug ("IO: Clossing serial port %s\n", reader[ridx].device);
 	
 #if defined(TUXBOX) && defined(PPC)
 	close(fdmc);

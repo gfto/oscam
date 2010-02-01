@@ -49,8 +49,8 @@ int SR_Init (struct s_reader *reader)
     usb_debug=0;
     cs_log("looking for device %s on bus %s",devname,busname);
 #endif
-    reader->smartreader_usb_dev=NULL;
-    if(!(reader->smartreader_usb_dev=find_smartreader((const char *)devname,(const char *)busname, &reader->ftdic)))
+    reader->smartreader_usb_dev=find_smartreader((const char *)devname,(const char *)busname, &reader->ftdic);
+    if(!reader->smartreader_usb_dev)
         return ERROR;
     //The smartreader has different endpoint addresses
     //compared to a real FT232 device, so change them here,
@@ -66,7 +66,6 @@ int SR_Init (struct s_reader *reader)
         cs_log("unable to open ftdi device %s:%s (ret=%d error=%s)",busname,devname, ret, ftdi_get_error_string(&reader->ftdic));
         return ERROR;
     }
-    ftdi_usb_reset(&reader->ftdic);
     
 #ifdef DEBUG_USB_IO
     cs_log("IO:SR: Setting smartreader latency timer to 1ms");
@@ -490,14 +489,14 @@ static void* ReaderThread(void *p)
             continue;
         }
 
-        ret = usb_bulk_read(reader->ftdic.usb_dev,reader->ftdic.out_ep,(char*)local_buffer,64,1000);
+        ret = usb_bulk_read(reader->ftdic.usb_dev,reader->ftdic.out_ep,(char*)local_buffer,4,1000);
         if(ret<0) {
 #ifdef DEBUG_USB_IO
             cs_log("IO:SR: usb_bulk_read read error %d",ret);
 #endif
         }
         sched_yield();
-#ifdef DEBUG_IO
+#ifdef DEBUG_USB_IO
         if(usb_debug) {
             cs_log("IO:SR: usb_bulk_read read %d bytes",ret);
         }

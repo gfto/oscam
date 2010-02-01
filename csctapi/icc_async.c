@@ -81,16 +81,14 @@ int ICC_Async_Device_Init ()
 #endif
  {
 	wr = 0;	
-#ifdef DEBUG_IO
-	printf ("IO: Opening serial port %s\n", reader[ridx].device);
-#endif
+	cs_debug ("IFD: Opening serial port %s\n", reader[ridx].device);
 	
 #if defined(SCI_DEV) || defined(COOL)
 	if (reader[ridx].typ == R_INTERNAL)
 #if defined(SH4) || defined(STB04SCI)
 		reader[ridx].handle = open (reader[ridx].device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 #elif COOL
-		return !Cool_Init();  //if cool_init succeeds, it returns 0, so device_init returns 1 ? /FIXME I think the ! should disappear
+		return Cool_Init();
 #else
 		reader[ridx].handle = open (reader[ridx].device, O_RDWR);
 #endif
@@ -179,9 +177,7 @@ int ICC_Async_GetStatus (int * card)
 		reader[ridx].status = 2;
 	}
 	
-#ifdef DEBUG_IFD
-	printf ("IFD: com%d Status = %s / %s\n", reader[ridx].typ, in ? "card": "no card", in ? "change": "no change");
-#endif
+	cs_debug ("IFD: com%d Status = %s", reader[ridx].typ, in ? "card": "no card");
 	
 	return OK;
 }

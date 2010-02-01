@@ -350,7 +350,6 @@ static void chk_t_global(char *token, char *value)
       cfg->max_log_size=10;
     return;
   }
-  if( !strcmp(token, "showecmdw")) { cfg->show_ecm_dw = atoi(value); return; }
   if( !strcmp(token, "waitforcards")) { cfg->waitforcards = atoi(value); return; }
   if( !strcmp(token, "preferlocalcards")) { cfg->preferlocalcards = atoi(value); return; }
   if (token[0] != '#')
