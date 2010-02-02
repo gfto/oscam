@@ -421,11 +421,10 @@ static void EnableSmartReader(struct s_reader *reader, int clock, unsigned short
     usleep(delay);
 
     // command 4 , set parameter T
+    T=0; // protocol is handled by oscam
 #ifdef DEBUG_USB_IO
     cs_log("IO:SR: sending T=%02X to smartreader",T);
 #endif
-    // this is a test.
-    T=0; // protocol is handled by oscam
     // 
     Prot[0]=0x04;
     Prot[1]=T;

@@ -799,6 +799,13 @@ static int SetRightParity (void)
 
 static int InitCard (ATR * atr, BYTE FI, double d, double n)
 {
+	unsigned long baudrate;
+	double P,I;
+	double F;
+    unsigned long BGT, edc, EGT, CGT, WWT = 0;
+    unsigned int GT;
+    unsigned long gt_ms;
+    
 #if defined(LIBUSB)
  if (reader[ridx].typ == R_SMART) {
 		reader[ridx].sr_config.F=atr_f_table[FI];
@@ -806,13 +813,11 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n)
 		reader[ridx].sr_config.N=n;
 		reader[ridx].sr_config.T=protocol_type;
 		SR_SetBaudrate(&reader[ridx]);
-		SetRightParity ();
-		return OK;
+		// SetRightParity ();
+		// return OK;
  }
- else {
 #endif
 	//set the amps and the volts according to ATR
-	double P,I;
 	if (ATR_GetParameter(atr, ATR_PARAMETER_P, &P) != ATR_OK)
 		P = 0;
 	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
@@ -823,11 +828,14 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n)
 		if (reader[ridx].mhz == 357 || reader[ridx].mhz == 358) //no overclocking
 			reader[ridx].mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 
+#if defined(LIBUSB)
+	if ( reader[ridx].typ != R_SMART) {
+#endif
+
 	//set clock speed/baudrate must be done before timings
 	//because current_baudrate is used in calculation of timings
 	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader[ridx].mhz / 100);
-	unsigned long baudrate;
-	double F =	(double) atr_f_table[FI];
+	F =	(double) atr_f_table[FI];
 	if (protocol_type == ATR_PROTOCOL_TYPE_T14)
 		baudrate = 9600;
 	else
@@ -836,13 +844,18 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n)
 #ifdef DEBUG_PROTOCOL
 	printf ("PPS: Baudrate = %d\n", (int)baudrate);
 #endif
+#if defined(LIBUSB)
+    }
+#endif
 
+#if defined(LIBUSB)
+	if (reader[ridx].deprecated == 0 && reader[ridx].typ != R_SMART)
+#else
 	if (reader[ridx].deprecated == 0)
+#endif
 		if (ICC_Async_SetBaudrate (baudrate))
 			return ERROR;
-
 	//set timings according to ATR
-	unsigned long BGT, edc, EGT, CGT, WWT = 0;
 	read_timeout = 0;
 	icc_timings.block_delay = 0;
 	icc_timings.char_delay = 0;
@@ -851,8 +864,8 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n)
 		EGT = 0;
 	else
 		EGT = n;
-	unsigned int GT = EGT + 12; //Guard Time in ETU
-	unsigned long gt_ms = ETU_to_ms(GT);
+	GT = EGT + 12; //Guard Time in ETU
+	gt_ms = ETU_to_ms(GT);
 
 	switch (protocol_type) {
 		case ATR_PROTOCOL_TYPE_T0:
@@ -976,9 +989,6 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n)
 		Protocol_T1_Command (cmd, rsp);
 		APDU_Cmd_Delete (cmd);
 	}
-#if defined(LIBUSB)
- }
-#endif
  return OK;
 }
 
