@@ -483,7 +483,7 @@ static int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, uns
 }
 
 static int status_ok(const unsigned char *status){
-    //cs_log("check status %02x%02x", status[0],status[1]);
+    //cs_log("[videoguard2-reader] check status %02x%02x", status[0],status[1]);
     return (status[0] == 0x90 || status[0] == 0x91)
            && (status[1] == 0x00 || status[1] == 0x01
                || status[1] == 0x20 || status[1] == 0x21
@@ -501,7 +501,7 @@ static int read_cmd_len(const unsigned char *cmd)
   cmd2[3]=0x80; 
   cmd2[4]=1; 
   if(!read_cmd(cmd2,NULL) || cta_res[1] != 0x90 || cta_res[2] != 0x00) { 
-    cs_debug("failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]); 
+    cs_debug("[videoguard2-reader] failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]); 
     return -1;
     } 
   return cta_res[0];   
@@ -576,7 +576,7 @@ static void read_tiers(void)
     if(cta_res[2]==0 && cta_res[3]==0) break;
     int y,m,d,H,M,S;
     rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S);
-    cs_log("Tier: %02x%02x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d",cta_res[2],cta_res[3],y,m,d,H,M,S);
+    cs_log("[videoguard2-reader] tier: %02x%02x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d",cta_res[2],cta_res[3],y,m,d,H,M,S);
     }
 }
 
@@ -602,57 +602,57 @@ int videoguard_card_init(ATR newatr)
 
     if ((atr_size == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atr_size) == 0))
     {
-        cs_log("Type: Videoguard BSkyB");
+        cs_log("[videoguard2-reader] type: VideoGuard BSkyB");
         /* BSkyB seems to need one additionnal byte in the serial communication... */
         io_serial_need_dummy_char = 1;
 				BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_bskyb_new)) && (memcmp (atr, atr_bskyb_new, atr_size) == 0))
     {
-        cs_log("Type: Videoguard BSkyB - New");
+        cs_log("[videoguard2-reader] type: VideoGuard BSkyB - New");
     }
     else if ((atr_size == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atr_size) == 0))
     {
-        cs_log("Type: Videoguard Sky Italia");
+        cs_log("[videoguard2-reader] type: VideoGuard Sky Italia");
     }
     else if ((atr_size == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atr_size) == 0))
     {
-        cs_log("Type: Videoguard DirecTV");
+        cs_log("[videoguard2-reader] type: VideoGuard DirecTV");
     }
     else if ((atr_size == sizeof (atr_yes)) && (memcmp (atr, atr_yes, atr_size) == 0))
     {
-        cs_log("Type: Videoguard YES DBS Israel");
+        cs_log("[videoguard2-reader] type: VideoGuard YES DBS Israel");
     }
     else if ((atr_size == sizeof (atr_viasat_new)) && (memcmp (atr, atr_viasat_new, atr_size) == 0))
     {
-        cs_log("Type: Videoguard Viasat new (093E)");
+        cs_log("[videoguard2-reader] type: VideoGuard Viasat new (093E)");
 				BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_viasat_scandinavia)) && (memcmp (atr, atr_viasat_scandinavia, atr_size) == 0))
     {
-        cs_log("Type: Videoguard Viasat Scandinavia");
+        cs_log("[videoguard2-reader] type: VideoGuard Viasat Scandinavia");
 				BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atr_size) == 0))
     {
-        cs_log("Type: Videoguard Sky Italia new (093B)");
+        cs_log("[videoguard2-reader] type: VideoGuard Sky Italia new (093B)");
     }
     else if ((atr_size == sizeof (atr_premiere)) && (memcmp (atr, atr_premiere, atr_size) == 0))
     {
-        cs_log("Type: Videoguard Sky Germany");
+        cs_log("[videoguard2-reader] type: VideoGuard Sky Germany");
     }
     else if ((atr_size == sizeof (atr_kbw)) && (memcmp (atr, atr_kbw, atr_size) == 0))
     {
-        cs_log("Type: Videoguard Kabel BW");
+        cs_log("[videoguard2-reader] type: VideoGuard Kabel BW");
     }
     else if ((atr_size == sizeof (atr_get)) && (memcmp (atr, atr_get, atr_size) == 0))
     {
-        cs_log("Type: Videoguard Get Kabel Norway");
+        cs_log("[videoguard2-reader] type: VideoGuard Get Kabel Norway");
         			BASEYEAR = 2004;
     }
     else if ((atr_size == sizeof (atr_foxtel_90b)) && (memcmp (atr, atr_foxtel_90b, atr_size) == 0))
     {    
-	cs_log("Type: Videoguard Foxtel Australia (090b)");
+	cs_log("[videoguard2-reader] type: VideoGuard Foxtel Australia (090b)");
 				BASEYEAR = 2000;			
     }
 /*    else
@@ -668,7 +668,7 @@ int videoguard_card_init(ATR newatr)
   if((l=read_cmd_len(ins7401))<0) return ERROR; //not a videoguard2/NDS card or communication error
   ins7401[4]=l;
   if(!read_cmd(ins7401,NULL) || !status_ok(cta_res+l)) {
-    cs_log ("failed to read cmd list");
+    cs_log ("[videoguard2-reader] failed to read cmd list");
     return ERROR;
     }
   memorize_cmd_table (cta_res,l);
@@ -677,7 +677,7 @@ int videoguard_card_init(ATR newatr)
 
   unsigned char ins7416[5] = { 0xD0,0x74,0x16,0x00,0x00 };
   if(do_cmd(ins7416, NULL, NULL)<0) {
-    cs_log ("cmd 7416 failed");
+    cs_log ("[videoguard2-reader] cmd 7416 failed");
     return ERROR;
     }
 
@@ -706,7 +706,7 @@ int videoguard_card_init(ATR newatr)
       }
 
     if(!boxidOK) {
-      cs_log ("no boxID available");
+      cs_log ("[videoguard2-reader] no boxID available");
       return ERROR;
       }
   }
@@ -715,7 +715,7 @@ int videoguard_card_init(ATR newatr)
   unsigned char payload4C[9] = { 0,0,0,0, 3,0,0,0,4 };
   memcpy(payload4C,boxID,4);
   if(!write_cmd(ins4C,payload4C) || !status_ok(cta_res+l)) {
-    cs_log("sending boxid failed");
+    cs_log("[videoguard2-reader] sending boxid failed");
     return ERROR;
     }
 
@@ -723,7 +723,7 @@ int videoguard_card_init(ATR newatr)
   unsigned char ins58[5] = { 0xD0,0x58,0x00,0x00,0x00 };
   l=do_cmd(ins58, NULL, buff);
   if(l<0) {
-    cs_log("cmd ins58 failed");
+    cs_log("[videoguard2-reader] cmd ins58 failed");
     return ERROR;
     }
   memset(reader[ridx].hexserial, 0, 8);
@@ -735,10 +735,10 @@ int videoguard_card_init(ATR newatr)
   memset(reader[ridx].prid, 0x00, sizeof(reader[ridx].prid));
 
   /*
-  cs_log ("INS58 : Fuse byte=0x%02X, IRDStatus=0x%02X", cta_res[2],SWIRDstatus);
+  cs_log ("[videoguard2-reader] INS58 : Fuse byte=0x%02X, IRDStatus=0x%02X", cta_res[2],SWIRDstatus);
   if (SWIRDstatus==4)  {
   // If swMarriage=4, not married then exchange for BC Key
-  cs_log ("Card not married, exchange for BC Keys");
+  cs_log ("[videoguard2-reader] Card not married, exchange for BC Keys");
    */
 
   unsigned char seed1[] = {
@@ -760,46 +760,46 @@ int videoguard_card_init(ATR newatr)
   cCamCryptVG2_GetCamKey(tbuff);
   l=do_cmd(insB4, tbuff, NULL);
   if(l<0 || !status_ok(cta_res)) {
-    cs_log ("cmd D0B4 failed (%02X%02X)", cta_res[0], cta_res[1]);
+    cs_log ("[videoguard2-reader] cmd D0B4 failed (%02X%02X)", cta_res[0], cta_res[1]);
     return ERROR;
     }
 
   unsigned char insBC[5] = { 0xD0,0xBC,0x00,0x00,0x00 };
   l=do_cmd(insBC, NULL, NULL);
   if(l<0) {
-    cs_log("cmd D0BC failed");
+    cs_log("[videoguard2-reader] cmd D0BC failed");
     return ERROR;
     }
 
   unsigned char insBE[5] = { 0xD3,0xBE,0x00,0x00,0x00 };
   l=do_cmd(insBE, NULL, NULL);
   if(l<0) {
-    cs_log("cmd D3BE failed");
+    cs_log("[videoguard2-reader] cmd D3BE failed");
     return ERROR;
     }
 
   unsigned char ins58a[5] = { 0xD1,0x58,0x00,0x00,0x00 };
   l=do_cmd(ins58a, NULL, NULL);
   if(l<0) {
-    cs_log("cmd D158 failed");
+    cs_log("[videoguard2-reader] cmd D158 failed");
     return ERROR;
     }
 
   unsigned char ins4Ca[5] = { 0xD1,0x4C,0x00,0x00,0x00 };
   l=do_cmd(ins4Ca,payload4C, NULL);
   if(l<0 || !status_ok(cta_res)) {
-    cs_log("cmd D14Ca failed");
+    cs_log("[videoguard2-reader] cmd D14Ca failed");
     return ERROR;
     }
 
-  cs_log("type: Videoguard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
+  cs_log("[videoguard2-reader] type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
          reader[ridx].caid[0],
          reader[ridx].hexserial[2],reader[ridx].hexserial[3],reader[ridx].hexserial[4],reader[ridx].hexserial[5],
          boxID[0],boxID[1],boxID[2],boxID[3]);
 
   ///read_tiers();
 
-  cs_log("ready for requests");
+  cs_log("[videoguard2-reader] ready for requests");
 
   return OK;
 }
@@ -940,7 +940,7 @@ int videoguard_do_emm(EMM_PACKET *ep)
       rc=OK;
       }
 
-    cs_log("EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
+    cs_log("[videoguard2-reader] EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
 //cs_dump(ep->emm, 64, "EMM:");
     if (status_ok (cta_res) && (cta_res[1] & 0x01)) {
       read_tiers();
@@ -964,8 +964,8 @@ int videoguard_do_emm(EMM_PACKET *ep)
 int videoguard_card_info(void)
 {
   /* info is displayed in init, or when processing info */
-  cs_log("card detected");
-  cs_log("type: Videoguard" );
+  cs_log("[videoguard2-reader] card detected");
+  cs_log("[videoguard2-reader] type: VideoGuard" );
   read_tiers ();
   return OK;
 }

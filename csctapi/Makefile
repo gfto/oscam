@@ -1,6 +1,6 @@
 SHELL		= /bin/sh
 
-GENERAL		= Makefile config.h
+GENERAL		= Makefile
 
 LIBDIR		= ../lib
 LIBFILE1	= $(LIBDIR)/libcsctapi-$(TYP).a

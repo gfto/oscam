@@ -47,6 +47,13 @@
 #define PROTOCOL_T14_MAX_SHORT_COMMAND  260
 #define PROTOCOL_T14_MAX_SHORT_RESPONSE 258
 
+/* Transportation of APDUs by T=0 */
+/* #undef PROTOCOL_T0_ISO */
+//#define PROTOCOL_T0_ISO 1
+
+/* Timings in ATR are not used in T=0 cards */
+/* #undef PROTOCOL_T0_USE_DEFAULT_TIMINGS */
+
 /*
  * Not exported functions declaration
  */
@@ -80,10 +87,8 @@ int Protocol_T0_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	
 	cmd_case = APDU_Cmd_Case (cmd);
 	
-#ifdef DEBUG_PROTOCOL
 	if (cmd_case != APDU_MALFORMED)
-		printf ("Protocol: T=0 Case %d %s\n", (cmd_case & 0x0F), APDU_CASE_IS_EXTENDED (cmd_case)? "extended": "short");
-#endif
+		cs_debug_mask (D_IFD,"Protocol: T=0 Case %d %s\n", (cmd_case & 0x0F), APDU_CASE_IS_EXTENDED (cmd_case)? "extended": "short");
 	
 	if (cmd_case == APDU_CASE_1)
 		ret = Protocol_T0_Case1 (cmd, rsp);
@@ -101,9 +106,7 @@ int Protocol_T0_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		ret = Protocol_T0_Case4E (cmd, rsp);
 	else
 	{
-#ifdef DEBUG_PROTOCOL
-		printf ("Protocol: T=0: Invalid APDU\n");
-#endif
+		cs_debug_mask (D_IFD,"Protocol: T=0: Invalid APDU\n");
 		ret = PROTOCOL_T0_ERROR;
 	}
 	
@@ -116,10 +119,8 @@ int Protocol_T14_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		
 	cmd_case = APDU_Cmd_Case (cmd);
 	
-#ifdef DEBUG_PROTOCOL
 	if (cmd_case != APDU_MALFORMED)
-		printf ("Protocol: T=14 Case %d %s\n", (cmd_case & 0x0F), APDU_CASE_IS_EXTENDED (cmd_case)? "extended": "short");
-#endif
+		cs_debug_mask (D_IFD,"Protocol: T=14 Case %d %s\n", (cmd_case & 0x0F), APDU_CASE_IS_EXTENDED (cmd_case)? "extended": "short");
 	
 	if (cmd_case == APDU_CASE_2S)
 	{
@@ -131,10 +132,8 @@ int Protocol_T14_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	}
 	else
 	{
-#ifdef DEBUG_PROTOCOL
-		printf ("Protocol: T=14: Invalid APDU\n");
-#endif
-	ret = PROTOCOL_T0_ERROR;
+		cs_debug_mask (D_IFD,"Protocol: T=14: Invalid APDU\n");
+		ret = PROTOCOL_T0_ERROR;
 	}
 	
 	return ret;

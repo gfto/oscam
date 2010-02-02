@@ -28,9 +28,16 @@
  * Get configuration information
  */
 
-// #ifdef HAVE_CONFIG_H
-#include "config.h"
-// #endif
+#include "../oscam-config.h"
+
+/* Debug Input/Output */
+#define DEBUG_USB_IO 1
+
+/* Define to 1 if you have the `nanosleep' function. */
+#if !defined(OS_AIX) && !defined(OS_SOLARIS) && !defined(OS_OSF5)
+#define HAVE_NANOSLEEP 1
+#endif
+
 
 /*
  * Boolean constants

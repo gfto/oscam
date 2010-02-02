@@ -31,6 +31,9 @@
 #include "t1_block.h"
 #include "icc_async.h"
 
+/* Timings in ATR are not used in T=1 cards */
+/* #undef PROTOCOL_T1_USE_DEFAULT_TIMINGS */
+
 /*
  * Not exported functions declaration
  */
@@ -62,10 +65,8 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
       /* Create an IFS request S-Block */
       block = T1_Block_NewSBlock (T1_BLOCK_S_IFS_REQ, 1, &inf);
+      cs_debug_mask (D_IFD,"Protocol: Sending block S(IFS request, %d)\n", inf);
 
-//#ifdef DEBUG_PROTOCOL
-      cs_debug ("Protocol: Sending block S(IFS request, %d)\n", inf);
-//#endif
       /* Send IFSD request */
       ret = Protocol_T1_SendBlock (block);
 
@@ -84,9 +85,7 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
             {
               /* Update IFSD value */
               inf = (*T1_Block_GetInf (block));
-//#ifdef DEBUG_PROTOCOL
-              cs_debug ("Protocol: Received block S(IFS response, %d)\n", inf);
-//#endif
+              cs_debug_mask (D_IFD,"Protocol: Received block S(IFS response, %d)\n", inf);
             }
         }
 
@@ -105,10 +104,7 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
   /* Create an I-Block */
   block = T1_Block_NewIBlock (bytes, APDU_Cmd_Raw (cmd), ns, more);
-
-#ifdef DEBUG_PROTOCOL
-  printf ("Sending block I(%d,%d)\n", ns, more);
-#endif
+  cs_debug_mask (D_IFD,"Sending block I(%d,%d)\n", ns, more);
 
   /* Send a block */
   ret = Protocol_T1_SendBlock (block);
@@ -128,9 +124,7 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
           /* Positive ACK R-Block received */
           if (rsp_type == T1_BLOCK_R_OK)
             {
-#ifdef DEBUG_PROTOCOL
-              printf ("Protocol: Received block R(%d)\n", T1_Block_GetNR (block));
-#endif                   
+              cs_debug_mask (D_IFD,"Protocol: Received block R(%d)\n", T1_Block_GetNR (block));
               /* Delete block */
               T1_Block_Delete (block);
  
@@ -148,9 +142,8 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
               block =
                 T1_Block_NewIBlock (bytes, APDU_Cmd_Raw (cmd) + counter,
                                     ns, more);
-#ifdef DEBUG_PROTOCOL
-              printf ("Protocol: Sending block I(%d,%d)\n", ns, more);
-#endif
+              cs_debug_mask (D_IFD,"Protocol: Sending block I(%d,%d)\n", ns, more);
+
               /* Send a block */
               ret = Protocol_T1_SendBlock (block);
 
@@ -199,10 +192,8 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
           if (rsp_type == T1_BLOCK_I)
             {
-#ifdef DEBUG_PROTOCOL
-              printf ("Protocol: Received block I(%d,%d)\n", 
+              cs_debug_mask (D_IFD,"Protocol: Received block I(%d,%d)\n", 
               T1_Block_GetNS(block), T1_Block_GetMore (block));
-#endif
               /* Calculate nr */
               nr = (T1_Block_GetNS (block) + 1) % 2;
                                
@@ -222,9 +213,8 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
                 {
                   /* Create an R-Block */
                   block = T1_Block_NewRBlock (T1_BLOCK_R_OK, nr);
-#ifdef DEBUG_PROTOCOL
-                  printf ("Protocol: Sending block R(%d)\n", nr);
-#endif                    
+                  cs_debug_mask (D_IFD,"Protocol: Sending block R(%d)\n", nr);
+
                   /* Send R-Block */
                   ret = Protocol_T1_SendBlock (block);
 
@@ -238,17 +228,15 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
             {
               /* Get wtx multiplier */
               wtx = (*T1_Block_GetInf (block));
-#ifdef DEBUG_PROTOCOL
-              printf ("Protocol: Received block S(WTX request, %d)\n", wtx);
-#endif                                  
+              cs_debug_mask (D_IFD,"Protocol: Received block S(WTX request, %d)\n", wtx);
+
               /* Delete block */
               T1_Block_Delete (block);
              
               /* Create an WTX response S-Block */
               block = T1_Block_NewSBlock (T1_BLOCK_S_WTX_RES, 1, &wtx);
-#ifdef DEBUG_PROTOCOL
-              printf ("Protocol: Sending block S(WTX response, %d)\n", wtx);
-#endif                    
+              cs_debug_mask (D_IFD,"Protocol: Sending block S(WTX response, %d)\n", wtx);
+
               /* Send WTX response */
               ret = Protocol_T1_SendBlock (block);
                   

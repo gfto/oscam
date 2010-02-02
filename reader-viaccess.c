@@ -110,7 +110,7 @@ static void show_subs(const uchar *emm)
 
       memset(szGeo, 0, 256);
       strncpy(szGeo, (char *)emm+2, emm[1]);
-      cs_log("nano A6: geo %s", szGeo);
+      cs_log("[viaccess-reader] nano A6: geo %s", szGeo);
       break;
     }
     case 0xB6:
@@ -120,7 +120,7 @@ static void show_subs(const uchar *emm)
 
       m=emm[emm[1]+1];
       parse_via_date(emm+2, &vd, 0);
-      cs_log("nano B6: modexp %d%d%d%d%d%d: %02d/%02d/%04d", (m&0x20)?1:0, 
+      cs_log("[viaccess-reader] nano B6: modexp %d%d%d%d%d%d: %02d/%02d/%04d", (m&0x20)?1:0, 
              (m&0x10)?1:0,(m&0x08)?1:0,(m&0x04)?1:0,(m&0x02)?1:0,(m&0x01)?1:0,
              vd.day_s, vd.month_s, vd.year_s+1980);
       break;
@@ -181,8 +181,8 @@ int viaccess_card_init(ATR newatr)
   insac[2]=0xa4; write_cmd(insac, NULL); // request unique id
   insb8[4]=0x07; read_cmd(insb8, NULL); // read unique id
   memcpy(reader[ridx].hexserial, cta_res+2, 5);
-//  cs_log("type: viaccess, ver: %s serial: %llu", ver, b2ll(5, cta_res+2));
-  cs_ri_log("type: viaccess(%sstandard atr), caid: %04X, serial: %llu",
+//  cs_log("[viaccess-reader] type: Viaccess, ver: %s serial: %llu", ver, b2ll(5, cta_res+2));
+  cs_ri_log("type: Viaccess (%sstandard atr), caid: %04X, serial: %llu",
         atr[9]==0x68?"":"non-",reader[ridx].caid[0], b2ll(5, cta_res+2));
 
   i=0;
@@ -196,7 +196,7 @@ int viaccess_card_init(ATR newatr)
     memcpy(&reader[ridx].prid[i][1], cta_res, 3);
     memcpy(&reader[ridx].availkeys[i][0], cta_res+10, 16);
     sprintf((char *)buf+strlen((char *)buf), ",%06lX", b2i(3, &reader[ridx].prid[i][1]));
-//cs_log("buf: %s", buf);
+//cs_log("[viaccess-reader] buf: %s", buf);
 
     insac[2]=0xa5; write_cmd(insac, NULL); // request sa
     insb8[4]=0x06; read_cmd(insb8, NULL); // read sa
@@ -208,7 +208,7 @@ int viaccess_card_init(ATR newatr)
     l=cta_res[1];
     insb8[4]=l; read_cmd(insb8, NULL); // read name
     cta_res[l]=0;
-cs_log("name: %s", cta_res);
+cs_log("[viaccess-reader] name: %s", cta_res);
 */
 
     insa4[2]=0x02;
@@ -227,12 +227,12 @@ cs_log("name: %s", cta_res);
       static uchar cmDPL[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F};
       write_cmd(inDPL,cmDPL);
       if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) )
-          cs_log("Can't disable parental lock. Wrong PIN? I assumed 0000!");
+          cs_log("[viaccess-reader] Can't disable parental lock. Wrong PIN? I assumed 0000!");
       else
-          cs_log("Parental lock disabled");
+          cs_log("[viaccess-reader] Parental lock disabled");
   }
 
-  cs_log("ready for requests");
+  cs_log("[viaccess-reader] ready for requests");
   memset(&last_geo, 0, sizeof(last_geo));
   return OK;
 }
@@ -273,7 +273,7 @@ int viaccess_do_ecm(ECM_REQUEST *er)
     keynr=ecm88Data[4]&0x0F;
     if (!chk_prov(ident, keynr))
     {
-      cs_debug("smartcardviaccess ecm: provider or key not found on card");
+      cs_debug("[viaccess-reader] EMM: provider or key not found on card");
       return ERROR;
     }
     ecm88Data+=5;
@@ -398,7 +398,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
       if (chk_prov(ident, keynr)) {
         provider_ok = 1;
       } else {
-        cs_debug("smartcardviaccess emm: provider or key not found on card (%x, %x)", ident, keynr);
+        cs_debug("[viaccess-reader] EMM: provider or key not found on card (%x, %x)", ident, keynr);
         return ERROR;
       }
 
@@ -407,7 +407,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
       if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
         cs_dump(insa4, 5, "set provider cmd:");
         cs_dump(soid, 3, "set provider data:");
-        cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+        cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
         return ERROR;
       }
     } else if (emmParsed[0]==0x9e && emmParsed[1]==0x20) {
@@ -423,7 +423,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
         afd=(uchar*)emmParsed+2;
 
         if( afd[31-custwp/8] & (1 << (custwp & 7)) )
-          cs_debug("emm for our card %08X", b2i(4, &reader[ridx].sa[0][0]));
+          cs_debug("[viaccess-reader] emm for our card %08X", b2i(4, &reader[ridx].sa[0][0]));
         else
           return SKIPPED;
       }
@@ -451,7 +451,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
   }
 
   if (!provider_ok) {
-    cs_debug("viaccess: provider not found in emm... continue anyway...");
+    cs_debug("[viaccess-reader] provider not found in emm, continue anyway");
     // force key to 1...
     keynr = 1;
     ///return ERROR;
@@ -470,7 +470,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
       if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
         cs_dump(insf0, 5, "set adf cmd:");
         cs_dump(nano9EData, 0x22, "set adf data:");
-        cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+        cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
         return ERROR;
       }
     } else {
@@ -483,7 +483,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
       if(( cta_res[cta_lr-2]!=0x90 && cta_res[cta_lr-2]!=0x91) || cta_res[cta_lr-1]!=0x00 ) {
         cs_dump(insf4, 5, "set adf encrypted cmd:");
         cs_dump(insData, insf4[4], "set adf encrypted data:");
-        cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+        cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
         return ERROR;
       }
     }
@@ -496,12 +496,12 @@ int viaccess_do_emm(EMM_PACKET *ep)
     memcpy (insData + ins18Len, nanoF0Data, nanoF0Data[1] + 2);
     write_cmd(ins18, insData);
     if( cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0x00 ) {
-      cs_debug("update successfully written");
+      cs_debug("[viaccess-reader] update successfully written");
       rc=1; // written
     } else {
       cs_dump(ins18, 5, "set subscription cmd:");
       cs_dump(insData, ins18[4], "set subscription data:");
-      cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+      cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
     }
     
   } else {
@@ -522,7 +522,7 @@ int viaccess_do_emm(EMM_PACKET *ep)
       /* maybe a 2nd level status, so read it */
       ///cs_dump(ins1c, 5, "set subscription encrypted cmd:");
       ///cs_dump(insData, ins1c[4], "set subscription encrypted data:");
-      ///cs_log("update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+      ///cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
 
       //read_cmd(insc8, insc8Data); this cannot be right, insc8Data would be ignored -- dingo35
       write_cmd(insc8, insc8Data); 
@@ -530,11 +530,11 @@ int viaccess_do_emm(EMM_PACKET *ep)
         ///cs_dump(cta_res, cta_lr, "extended status error:");
         return ERROR;
       } else {
-        cs_debug("update successfully written (with extended status OK)");
+        cs_debug("[viaccess-reader] update successfully written (with extended status OK)");
         rc=1; // written
       }
     } else {
-      cs_debug("update successfully written");
+      cs_debug("[viaccess-reader] update successfully written");
       rc=1; // written
     }
   }
@@ -579,14 +579,14 @@ int viaccess_card_info(void)
   show_cls=reader[ridx].show_cls;
   memset(&last_geo, 0, sizeof(last_geo));
 
-  cs_log("card detected"); 
+  cs_log("[viaccess-reader] card detected"); 
   
   // set pin
   write_cmd(ins24, pin);
 
   insac[2]=0xa4; write_cmd(insac, NULL); // request unique id
   insb8[4]=0x07; read_cmd(insb8, NULL); // read unique id
-  cs_log("serial: %llu", b2ll(5, cta_res+2));
+  cs_log("[viaccess-reader] serial: %llu", b2ll(5, cta_res+2));
 
   scls=0;
   insa4[2]=0x00; write_cmd(insa4, NULL); // select issuer 0

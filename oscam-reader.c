@@ -330,7 +330,7 @@ int casc_process_ecm(ECM_REQUEST *er)
     }
   }
 
-  cs_ddump(er->ecm, er->l, "casc ecm:");
+  cs_ddump_mask(D_ATR, er->ecm, er->l, "casc ecm:");
   rc=0;
   if (sflag)
   {
@@ -396,7 +396,7 @@ static void reader_get_ecm(ECM_REQUEST *er)
     casc_process_ecm(er);
     return;
   }
-  cs_ddump(er->ecm, er->l, "ecm:");
+  cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
   er->rc=reader_ecm(er);
   write_ecm_answer(fd_c2m, er);
   reader_post_process();

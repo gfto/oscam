@@ -97,9 +97,9 @@ int conax_card_init(ATR newatr)
   reader[ridx].nprov = 1;
   memset(reader[ridx].prid, 0x00, sizeof(reader[ridx].prid));
 
-  cs_ri_log("type: conax, caid: %04X, serial: %llu, card: v%d",
+  cs_ri_log("type: Conax, caid: %04X, serial: %llu, card: v%d",
          reader[ridx].caid[0], b2ll(6, reader[ridx].hexserial), cardver);
-  cs_ri_log("Conax-Provider:%d", reader[ridx].nprov);
+  cs_ri_log("Provider:%d", reader[ridx].nprov);
 
   for (j=0; j<reader[ridx].nprov; j++)
   {
@@ -107,7 +107,7 @@ int conax_card_init(ATR newatr)
 	cs_ri_log("Provider:%d  SharedAddress:%08X", j+1, b2ll(4, reader[ridx].sa[j]));	
   }
 
-  cs_log("ready for requests");
+  cs_log("[conax-reader] ready for requests");
   return OK;
 }
 
@@ -117,7 +117,7 @@ static int conax_send_pin(void)
   memcpy(insPIN+8,reader[ridx].pincode,4);
 
   write_cmd(insPIN, insPIN+5);
-  cs_ri_log("[conax]-sending pincode to card");   
+  cs_ri_log("sending pincode to card");   
  
   return OK;
 }
@@ -245,8 +245,8 @@ int conax_card_info(void)
   char *txt[] = { "Package", "PPV-Event" };
   uchar *cmd[] = { insC6, ins26 };
 
-  cs_log("card detected");
-  cs_log("type: conax");
+  cs_log("[conax-reader] card detected");
+  cs_log("[conax-reader] type: Conax");
 
   for (type=0; type<2; type++)
   {

@@ -116,13 +116,13 @@
 #define CS_EMMCACHESIZE   (CS_MAXPID<<1)
 #define CS_RDR_INIT_HIST
 #endif
-///////////////////////////design:                     actual:
-#define D_DUMP      1 // Debug Dumps								// nothing
-#define D_MASTER    2 // Debug Master Process				// nothing
-#define D_READER    4 // Debug Reader/Proxy Process // traffic from/to cardreader on reader-xxxx.c level + ATR analysis + ecm dump?!?
-#define D_CLIENT    8 // Debug Client Process				// client traffic + cw: dump ?!?
-#define D_PROTOCOL  16  // Debug IFD+protocol				// nothing
-#define D_DEVICE    32  // Debug Reader I/O					// DEBUG_IO 
+
+#define D_DUMP      1 // RFU
+#define D_ATR       2 // Debug ATR parsing, ecm, cw
+#define D_READER    4 // Debug Reader/Proxy Process
+#define D_CLIENT    8 // Debug Client Process
+#define D_IFD       16  // Debug IFD+protocol
+#define D_DEVICE    32  // Debug Reader I/O
 #define D_ALL_DUMP  63															// dumps all
 
 #define R_MOUSE     0x1 // Reader smartcard mouse
@@ -818,7 +818,10 @@ extern int  cs_init_log(char *);
 extern void cs_write_log(char *);
 extern void cs_log(char *,...);
 extern void cs_debug(char *,...);
+extern void cs_debug_nolf(char *,...);
+extern void cs_debug_mask(unsigned short, char *,...);
 extern void cs_ddump(uchar *, int, char *, ...);
+extern void cs_ddump_mask(unsigned short, uchar *, int, char *, ...);
 extern void cs_close_log(void);
 extern int  cs_init_statistics(char *);
 extern void cs_statistics(int);

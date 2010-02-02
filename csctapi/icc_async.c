@@ -71,6 +71,7 @@ int fdmc=(-1);
 
 int ICC_Async_Device_Init ()
 {
+	cs_debug_mask (D_IFD, "IFD: Opening device %s\n", reader[ridx].device);
 #if defined(LIBUSB)
 	if (reader[ridx].typ == R_SMART) {
 		if(SR_Init(&reader[ridx])) {
@@ -81,7 +82,6 @@ int ICC_Async_Device_Init ()
 #endif
  {
 	wr = 0;	
-	cs_debug ("IFD: Opening serial port %s\n", reader[ridx].device);
 	
 #if defined(SCI_DEV) || defined(COOL)
 	if (reader[ridx].typ == R_INTERNAL)
@@ -119,6 +119,7 @@ int ICC_Async_Device_Init ()
 		return ERROR;
 	}
  }
+ cs_debug_mask (D_IFD, "IFD: Device %s succesfully opened\n", reader[ridx].device);
  return OK;
 }
 
@@ -184,6 +185,7 @@ int ICC_Async_GetStatus (int * card)
 
 int ICC_Async_Activate (ATR * atr)
 {
+	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader[ridx].label);
 	int card;
 
 	if (ICC_Async_GetStatus (&card))
@@ -244,8 +246,13 @@ int ICC_Async_Activate (ATR * atr)
 	
 	protocol_type = ATR_PROTOCOL_TYPE_T0;
 	
-	if (Parse_ATR(atr))
+	unsigned short cs_ptyp_orig=cs_ptyp;
+	cs_ptyp=D_ATR;
+	int ret = Parse_ATR(atr);
+	cs_ptyp=cs_ptyp_orig;
+	if (ret)
 		return ERROR;		
+	cs_debug_mask (D_IFD, "IFD: Card in reader %s succesfully activated\n", reader[ridx].label);
 	return OK;
 }
 
@@ -330,13 +337,14 @@ int ICC_Async_SetTimings (unsigned wait_etu)
 //		}
 //		else {
 			read_timeout = ETU_to_ms(wait_etu);
-			//cs_debug("Setting timeout to %i", wait_etu);
+			cs_debug_mask(D_IFD, "Setting timeout to %i", wait_etu);
 //		}
 	return OK;
 }
 
 int ICC_Async_SetBaudrate (unsigned long baudrate)
 {
+	cs_debug_mask(D_IFD, "Setting baudrate to %lu", baudrate);
 	if (Phoenix_SetBaudrate (baudrate)) //also call this for internal readers to update current_baudrate
 	  return ERROR;
 
@@ -350,15 +358,15 @@ int ICC_Async_SetBaudrate (unsigned long baudrate)
 	if (reader[ridx].typ == R_SMART) {
 		if(SR_SetBaudrate(&reader[ridx]))
 			return ERROR;
-		return OK;
 	}
 #endif
-	
+	cs_debug_mask(D_IFD, "Succesfully set baudrate to %lu", baudrate);
 	return OK;
 }
 
 int ICC_Async_Transmit (unsigned size, BYTE * data)
 {
+	cs_ddump_mask(D_IFD, data, size, "IFD Transmit: ");
 	BYTE *buffer = NULL, *sent; 
 	
 #if defined(LIBUSB)
@@ -407,25 +415,25 @@ int ICC_Async_Transmit (unsigned size, BYTE * data)
 	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL)
 #endif
 		free (buffer);
-
+	cs_debug_mask(D_IFD, "IFD Transmit succesful");
 	return OK;
 }
 
 int ICC_Async_Receive (unsigned size, BYTE * data)
 {
 #ifdef COOL
-    if (reader[ridx].typ == R_INTERNAL) {
-        if (Cool_Receive(data, size))
-            return ERROR;
-    }
-    else
+	if (reader[ridx].typ == R_INTERNAL) {
+	    if (Cool_Receive(data, size))
+	        return ERROR;
+	}
+	else
 #endif
 #if defined(LIBUSB)
-    if (reader[ridx].typ == R_SMART) {
-        if (SR_Receive(&reader[ridx], data, size))
-            return ERROR;
-    }
-    else
+	if (reader[ridx].typ == R_SMART) {
+	    if (SR_Receive(&reader[ridx], data, size))
+	        return ERROR;
+	}
+	else
 #endif
 
 	if (Phoenix_Receive (data, size, read_timeout))
@@ -437,18 +445,20 @@ int ICC_Async_Receive (unsigned size, BYTE * data)
 	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ != R_INTERNAL)
 #endif
 		ICC_Async_InvertBuffer (size, data);
-	
+
+	cs_ddump_mask(D_IFD, data, size, "IFD Received: ");
 	return OK;
 }
 
 int ICC_Async_Close ()
 {
+	cs_debug_mask (D_IFD, "IFD: Closing device %s", reader[ridx].device);
 #if defined(LIBUSB)
-    if (reader[ridx].typ == R_SMART) {
-        if (SR_Close(&reader[ridx]))
-            return ERROR;
-    }
-    else
+	if (reader[ridx].typ == R_SMART) {
+	    if (SR_Close(&reader[ridx]))
+	        return ERROR;
+	}
+	else
 #endif
 
 #ifdef SCI_DEV
@@ -457,6 +467,7 @@ int ICC_Async_Close ()
 		return ERROR;
 #endif
 	
+	cs_debug_mask (D_IFD, "IFD: Device %s succesfully closed", reader[ridx].device);
 	return OK;
 }
 
@@ -624,9 +635,6 @@ static int Parse_ATR (ATR * atr)
 		cs_log("Warning: D=0 is invalid, forcing D=%.0f",d);
 	}
 
-#ifdef DEBUG_PROTOCOL
-	printf("PPS: T=%i, F=%.0f, D=%.6f, N=%.0f\n", t, F, d, n);
-#endif
 	if (reader[ridx].deprecated == 0)
 		return InitCard (atr, FI, d, n);
 	else {
@@ -644,21 +652,10 @@ static int PPS_Exchange (BYTE * params, unsigned *length)
 	BYTE confirm[PPS_MAX_LENGTH];
 	unsigned len_request, len_confirm;
 	int ret;
-#ifdef DEBUG_PROTOCOL
-	unsigned int i;
-#endif
 
 	len_request = PPS_GetLength (params);
 	params[len_request - 1] = PPS_GetPCK(params, len_request - 1);
-
-#ifdef DEBUG_PROTOCOL
-	printf ("PPS: Sending request: ");
-	for (i = 0; i < len_request; i++)
-		printf ("%X ", params[i]);
-	printf ("\n");
-#endif
-
-	cs_debug("PTS: Sending request: %s", cs_hexdump(1, params, len_request));
+	cs_debug_mask (D_IFD,"PTS: Sending request: %s", cs_hexdump(1, params, len_request));
 
 	/* Send PPS request */
 #ifdef COOL
@@ -668,18 +665,6 @@ static int PPS_Exchange (BYTE * params, unsigned *length)
 	int Status = cnxt_smc_start_pps(handle, params, confirm, &ptsLen, TRUE);
 	printf ("cnxt_smc_start_pps Status=%i\n", Status);
 	len_confirm = ptsLen;
-#ifdef DEBUG_PROTOCOL
-	printf("COOL: confirm: \n");
-	for (i = 0; i < ptsLen; i++)
-		printf ("%02X", confirm[i]);
-	printf ("\n");
-	fflush(stdout);
-	printf("COOL: req: \n");
-	for (i = 0; i < len_request; i++)
-		printf ("%02X", params[i]);
-	printf ("\n");
-	fflush(stdout);
-#endif
 	if (Status)
 		return ERROR;
 #else
@@ -694,26 +679,17 @@ static int PPS_Exchange (BYTE * params, unsigned *length)
 
 	if (ICC_Async_Receive (len_confirm - 2, confirm + 2))
 		return ERROR;
-
-#ifdef DEBUG_PROTOCOL
-	printf ("PPS: Receivig confirm: ");
-	for (i = 0; i < len_confirm; i++)
-		printf ("%X ", confirm[i]);
-	printf ("\n");
 #endif
 
-	cs_debug("PTS: Receiving confirm: %s", cs_hexdump(1, confirm, len_confirm));
-
+	cs_debug_mask(D_IFD, "PTS: Receiving confirm: %s", cs_hexdump(1, confirm, len_confirm));
 	if ((len_request != len_confirm) || (memcmp (params, confirm, len_request)))
 		ret = ERROR;
 	else
 		ret = OK;
-#endif
 
 	/* Copy PPS handsake */
 	memcpy (params, confirm, len_confirm);
 	(*length) = len_confirm;
-
 	return ret;
 }
 
@@ -840,10 +816,6 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n)
 		baudrate = 9600;
 	else
 		baudrate = d * ICC_Async_GetClockRate () / F; 
-
-#ifdef DEBUG_PROTOCOL
-	printf ("PPS: Baudrate = %d\n", (int)baudrate);
-#endif
 #if defined(LIBUSB)
     }
 #endif
@@ -887,9 +859,7 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n)
 			icc_timings.block_delay = gt_ms;
 			icc_timings.char_delay = gt_ms;
 			cs_debug("Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", read_timeout, icc_timings.block_delay, icc_timings.char_delay);
-#ifdef DEBUG_PROTOCOL
-			printf ("Protocol: T=%i: WWT=%d, Clockrate=%lu\n", t, (int)(WWT), ICC_Async_GetClockRate());
-#endif
+			cs_debug_mask (D_IFD,"Protocol: T=%i: WWT=%d, Clockrate=%lu\n", protocol_type, (int)(WWT), ICC_Async_GetClockRate());
 			}
 			break;
 	 case ATR_PROTOCOL_TYPE_T1:

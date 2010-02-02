@@ -54,12 +54,11 @@ OPTIONS
        -d <level>
 	  debug level mask:
 	    0 = no debugging (default)
-	    1 = debug dumps
-	    2 = debug master process
-	    4 = debug reader/proxy process
-	    8 = debug client process
-	   16 = debug reader I/O
-	   32 = debug watchdog
+	    2 = ATR parsing info, ECM dumps, CW dumps
+	    4 = traffic from/to the reader
+	    8 = traffic from/to the clients
+	   16 = traffic to the reader-device on IFD layer
+	   32 = traffic to the reader-device on I/O layer
 	   63 = debug all
 
        -m <filename>

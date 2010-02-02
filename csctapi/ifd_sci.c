@@ -163,9 +163,7 @@ int Sci_WriteSettings (BYTE T, unsigned long fs, unsigned long ETU, unsigned lon
 
 int Sci_Activate ()
 {
-#ifdef DEBUG_IFD
-		printf ("IFD: Activating card\n");
-#endif
+	cs_debug_mask(D_IFD, "IFD: Activating card");
 #ifdef SCI_DEV
 	if(reader[ridx].typ == R_INTERNAL)
 	{
@@ -198,10 +196,7 @@ int Sci_Activate ()
 
 int Sci_Deactivate ()
 {
-#ifdef DEBUG_IFD
-		printf ("IFD: Deactivating card\n");
-#endif
-
+	cs_debug_mask(D_IFD, "IFD: Deactivating card");
 #ifdef SCI_DEV
 	if(reader[ridx].typ == R_INTERNAL)
 	{

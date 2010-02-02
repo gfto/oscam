@@ -156,7 +156,7 @@ static int irdeto_do_cmd(uchar *buf, ushort good)
 int irdeto_card_init(ATR newatr)
 {
 	get_atr;
-  int i, camkey=0, cs_ptyp_orig=cs_ptyp;
+  int i, camkey=0;
   uchar buf[256]={0};
 
   if (memcmp(atr+4, "IRDETO", 6))
@@ -165,12 +165,12 @@ int irdeto_card_init(ATR newatr)
   
   if(reader[ridx].has_rsa) // we use rsa from config as camkey
   {
-  	cs_debug("using camkey data from config");
+  	cs_debug("[irdeto-reader] using camkey data from config");
   	memcpy(&sc_GetCamKey383C[5], reader[ridx].rsa_mod, 0x40);
   	memcpy(sc_CamKey, reader[ridx].nagra_boxkey, 8);
-  	cs_debug("     camkey: %s", cs_hexdump (0, sc_CamKey, 8));
-  	cs_debug("camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[5], 32));
-  	cs_debug("camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[37], 32));
+  	cs_debug("[irdeto-reader]      camkey: %s", cs_hexdump (0, sc_CamKey, 8));
+  	cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[5], 32));
+  	cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[37], 32));
   }
 
   /*
@@ -191,7 +191,7 @@ int irdeto_card_init(ATR newatr)
   reader_chk_cmd(sc_GetHEXSerial, 18);
   memcpy(reader[ridx].hexserial, cta_res+12, 8); 
   reader[ridx].nprov=cta_res[10];
-  cs_ri_log("type: Irdeto, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+  cs_ri_log("ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
           buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
 
   /*
@@ -234,9 +234,7 @@ int irdeto_card_init(ATR newatr)
 	  }
   }
   
-  cs_ptyp=D_DEVICE;
-  cs_debug("set camkey for type=%d", camkey);
-  cs_ptyp=cs_ptyp_orig;
+  cs_debug("[irdeto-reader] set camkey for type=%d", camkey);
 
   switch (camkey)
   {
@@ -254,7 +252,7 @@ int irdeto_card_init(ATR newatr)
       break;
   }
 	if (reader[ridx].cardmhz != 600)
-		cs_log("WARNING: For irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
+		cs_log("WARNING: For Irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
   return OK;
 }
 
@@ -316,7 +314,7 @@ int irdeto_do_emm(EMM_PACKET *ep)
       return(irdeto_do_cmd(cta_cmd, 0) ? 0 : 1);
     }
     else
-      cs_debug("addrlen %d > %d", l, ADDRLEN);
+      cs_debug("[irdeto-reader] addrlen %d > %d", l, ADDRLEN);
   }
   return ERROR;
 }
@@ -353,7 +351,7 @@ int irdeto_card_info(void)
     reader_chk_cmd(sc_GetCountryCode2, 0);
     if ((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1]))
     {
-      cs_debug("max chids: %d, %d, %d, %d", cta_res[6], cta_res[7], cta_res[8], cta_res[9]);
+      cs_debug("[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6], cta_res[7], cta_res[8], cta_res[9]);
 
       /*
        * Provider 2
@@ -410,6 +408,6 @@ int irdeto_card_info(void)
       reader[ridx].sa[i][3]=0xFF;
     }
   }
-  cs_log("ready for requests");
+  cs_log("[irdeto-reader] ready for requests");
   return OK;
 }

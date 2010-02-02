@@ -49,12 +49,12 @@ static int set_provider_info(int i)
   trim(l_name+8);
   l_name[0]=(l_name[8]) ? ',' : 0;
   reader[ridx].availkeys[i][0]=valid; //misusing availkeys to register validity of provider
-  cs_log("provider: %d, valid: %i%s, expiry date: %4d/%02d/%02d",
+  cs_log("[seca-reader] provider: %d, valid: %i%s, expiry date: %4d/%02d/%02d",
          i+1, valid,l_name, year, month, day);
   memcpy(&reader[ridx].sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
-    cs_log("SA: %s", cs_hexdump(0, cta_res+18, 4));
-//    cs_log("SA:%02X%02X%02X%02X.",cta_res[18],cta_res[19],cta_res[20],cta_res[21]);
+    cs_log("[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4));
+//    cs_log("[seca-reader] SA: %02X%02X%02X%02X.",cta_res[18],cta_res[19],cta_res[20],cta_res[21]);
   return OK;
 }
 
@@ -95,7 +95,7 @@ int seca_card_init(ATR newatr)
   read_cmd(ins0e, NULL); // read unique id
   memcpy(reader[ridx].hexserial, cta_res+2, 6);
   serial = b2ll(5, cta_res+3) ;
-  cs_ri_log("type: seca, caid: %04X, serial: %llu, card: %s v%d.%d",
+  cs_ri_log("type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
          reader[ridx].caid[0], serial, card, atr[9]&0x0F, atr[9]>>4);
   read_cmd(ins16, NULL); // read nr of providers
   pmap=cta_res[2]<<8|cta_res[3];
@@ -115,11 +115,11 @@ int seca_card_init(ATR newatr)
 // Unlock parental control
   if( cfg->ulparent != 0 ){
 	  write_cmd(ins30, ins30data); 
-	  cs_log("ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
+	  cs_log("[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
   }else {
-	  cs_log("parental locked");
+	  cs_log("[seca-reader] parental locked");
   }	
-  cs_log("ready for requests");
+  cs_log("[seca-reader] ready for requests");
   return OK;
 }
 
@@ -177,11 +177,11 @@ int seca_do_emm(EMM_PACKET *ep)
 		return ERROR;
 	//prov id found, now test for SA (only first 3 bytes, custom byte does not count)
 	if (memcmp (ep->emm + 5, reader[ridx].sa[i], 3)) {
-		cs_log("EMM: Shared update did not match; EMM SA:%02X%02X%02X, provider %i, Reader SA:%s.", ep->emm[5], ep->emm[6], ep->emm[7], i + 1, cs_hexdump (0, reader[ridx].sa[i], 3));
+		cs_log("[seca-reader] EMM: Shared update did not match; EMM SA:%02X%02X%02X, provider %i, Reader SA:%s.", ep->emm[5], ep->emm[6], ep->emm[7], i + 1, cs_hexdump (0, reader[ridx].sa[i], 3));
 		return ERROR;
 	}
 	else {
-		cs_log("EMM: Shared update matched for EMM SA %02X%02X%02X, provider %i.", ep->emm[5], ep->emm[6], ep->emm[7], i + 1);
+		cs_log("[seca-reader] EMM: Shared update matched for EMM SA %02X%02X%02X, provider %i.", ep->emm[5], ep->emm[6], ep->emm[7], i + 1);
 		ins40[3]=ep->emm[9];
 		ins40[4]= emm_length - 0x07;
 		ins40data_offset = 10;
@@ -192,13 +192,13 @@ int seca_do_emm(EMM_PACKET *ep)
       {
 	//first test if UA matches
  	if (memcmp (reader[ridx].hexserial, ep->emm + 3, 6)) {
-		cs_log("EMM: Unique update did not match; EMM Serial:%02X%02X%02X%02X%02X%02X, Reader Serial:%s.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], cs_hexdump (0, reader[ridx].hexserial, 6));
+		cs_log("[seca-reader] EMM: Unique update did not match; EMM Serial:%02X%02X%02X%02X%02X%02X, Reader Serial:%s.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], cs_hexdump (0, reader[ridx].hexserial, 6));
 		return ERROR;
 	}
 	else {
 		//first find out prov id
 		i=get_prov_index((char *) ep->emm+9);
-                cs_log("EMM: Unique update matched EMM Serial:%02X%02X%02X%02X%02X, provider %i.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], i + 1);
+                cs_log("[seca-reader] EMM: Unique update matched EMM Serial:%02X%02X%02X%02X%02X, provider %i.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], i + 1);
 
 		if (i==-1) 
 			return ERROR;
@@ -216,7 +216,7 @@ tp   len       shared-- cust
     case 0x88:			//GA???
     case 0x89:			//GA???
     default:
-	cs_log("EMM: Congratulations, you have discovered a new EMM on SECA. This has not been decoded yet, so send this output to authors:");
+	cs_log("[seca-reader] EMM: Congratulations, you have discovered a new EMM on SECA. This has not been decoded yet, so send this output to authors:");
         cs_dump (ep->emm, emm_length + 3, "EMM:");
   	return ERROR;	//unknown, no update
   }	//end of switch
@@ -228,7 +228,7 @@ tp   len       shared-- cust
 //	  seca_card_init(); //if return code = 90 19 then PPUA changed. //untested!!
 //  else
   if (cta_res[0] == 0x97) {
-	 cs_log("EMM: Update not necessary.");
+	 cs_log("[seca-reader] EMM: Update not necessary.");
 	 return OK; //Update not necessary
   }
   if ((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19)))
@@ -239,7 +239,7 @@ tp   len       shared-- cust
 
 int seca_card_info (void)
 {
-//Seca Package BitMap records (PBM) can be used to determine whether the channel is part of the package that the seca-card can decrypt. This module reads the PBM
+//SECA Package BitMap records (PBM) can be used to determine whether the channel is part of the package that the SECA card can decrypt. This module reads the PBM
 //from the SECA card. It cannot be used to check the channel, because this information seems to reside in the CA-descriptor, which seems not to be passed on through servers like camd, newcamd, radegast etc.
 //
 //This module is therefore optical only
@@ -255,14 +255,14 @@ int seca_card_info (void)
     uchar pbm[8];		//TODO should be arrayed per prov
     switch (cta_res[0]) {
     case 0x04:
-      cs_log ("No PBM for provider %i", prov + 1);
+      cs_log ("[seca-reader] no PBM for provider %i", prov + 1);
       break;
     case 0x83:
       memcpy (pbm, cta_res + 1, 8);
-      cs_log ("PBM for provider %i: %s", prov + 1, cs_hexdump (0, pbm, 8));
+      cs_log ("[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump (0, pbm, 8));
       break;
     default:
-      cs_log ("ERROR: PBM returns unknown byte %02x", cta_res[0]);
+      cs_log ("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);
     }
   }
   return OK;

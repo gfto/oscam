@@ -102,7 +102,7 @@ static int reader_card_inserted(void)
 #endif
 	int card;
 	cs_ptyp_orig=cs_ptyp;
-	cs_ptyp=D_PROTOCOL;
+	cs_ptyp=D_IFD;
 	if (ICC_Async_GetStatus (&card)) {
 		cs_log("Error getting status of terminal.");
 		return 0; //corresponds with no card inside!!

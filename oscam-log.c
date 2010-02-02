@@ -225,6 +225,20 @@ void cs_debug(char *fmt,...)
     write_to_log(1, txt);
   }
 }
+
+void cs_debug_mask(unsigned short mask, char *fmt,...)
+{
+	char txt[256];
+  if (client[cs_idx].dbglvl & mask)
+  {
+    va_list params;
+    va_start(params, fmt);
+    vsprintf(txt+11, fmt, params);
+    va_end(params);
+    write_to_log(1, txt);
+  }
+}
+
 int number_of_chars_printed = 0;
 void cs_debug_nolf(char *fmt,...)
 {
@@ -323,6 +337,32 @@ void cs_ddump(uchar *buf, int n, char *fmt, ...)
   }
   //if (((cs_ptyp | D_DUMP) & client[cs_idx].dbglvl)==(cs_ptyp | D_DUMP))
   if (cs_ptyp & client[cs_idx].dbglvl)
+  {
+    for (i=0; i<n; i+=16)
+    {
+      sprintf(txt+11, "%s", cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i));
+      write_to_log(i==0, txt);
+    }
+  }
+}
+
+void cs_ddump_mask(unsigned short mask, uchar *buf, int n, char *fmt, ...)
+{
+  int i;
+  char txt[512];
+
+  //if (((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp) && (fmt))
+  if ((mask & client[cs_idx].dbglvl) && (fmt))
+  {
+    va_list params;
+    va_start(params, fmt);
+    vsprintf(txt+11, fmt, params);
+    va_end(params);
+    write_to_log(1, txt);
+//printf("LOG: %s\n", txt); fflush(stdout);
+  }
+  //if (((cs_ptyp | D_DUMP) & client[cs_idx].dbglvl)==(cs_ptyp | D_DUMP))
+  if (mask & client[cs_idx].dbglvl)
   {
     for (i=0; i<n; i+=16)
     {

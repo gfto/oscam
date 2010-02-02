@@ -31,9 +31,6 @@ int Cool_Init ()
 	int reader = 0;
 	if (cnxt_smc_open (&handle, &reader))
 		return FALSE;
-/*	
-	if (Cool_SetBaudrate(mhz) != OK)
-		return ERROR;*/
 
 	return OK;
 }
@@ -42,8 +39,10 @@ int Cool_Init ()
 int Cool_GetStatus (int * in)
 {
 	int state;
-	if (cnxt_smc_get_state(handle, &state))
+	if (cnxt_smc_get_state(handle, &state)) {
+		cs_log("ERROR COOL Getstatus failed.");
 		return ERROR;
+	}
 	//state = 0 no card, 1 = not ready, 2 = ready
 	if (state)
 		*in = 1; //CARD, even if not ready report card is in, or it will never get activated
@@ -85,15 +84,7 @@ int Cool_Transmit (BYTE * sent, unsigned size)
 	cardbuflen = 256;//it needs to know max buffer size to respond?
 	if (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, TIMEOUT, 0))
 		return ERROR;
-
-#ifdef DEBUG_IFD
-	//usually done in IFD_Towitoko, for COOL do it here
-	printf ("COOLIFD: Transmit: ");
-	int i;
-	for (i = 0; i < size; i++)
-		printf ("%X ", sent[i]);
-	printf ("\n");
-#endif
+	cs_ddump(sent, size, "COOL IO: Transmit: ");
 	return OK;
 }
 
@@ -104,15 +95,7 @@ int Cool_Receive (BYTE * data, unsigned size)
 	memcpy(data,cardbuffer,size);
 	cardbuflen -= size;
 	memmove(cardbuffer,cardbuffer+size,cardbuflen);
-
-#ifdef DEBUG_IFD
-	int i;
-	printf ("COOLIFD: Receive: "); //I think
-	for (i = 0; i < size; i++)
-		printf ("%X ", data[i]);
-	printf ("\n");
-	fflush(stdout);
-#endif
+	cs_dump(data, size, "COOL IO: Receive: ");
 	return OK;
 }	
 
@@ -121,8 +104,12 @@ int Cool_SetBaudrate (int mhz)
 	typedef unsigned long u_int32;
 	u_int32 clk;
 	clk = mhz * 10000;
-	if (cnxt_smc_set_clock_freq (handle, clk))
+	if (cnxt_smc_set_clock_freq (handle, clk)) {
+		cs_log("ERROR COOL setting clock to %lu", clk);
 		return ERROR;
+	}
+
+	cs_debug("COOL: Clock succesfully set to %i0 kHz", mhz);
 	return OK;
 }
 
@@ -143,7 +130,11 @@ int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT,
 	params.CWT = CWT;
 	params.EGT = EGT;
 	params.BGT = BGT;
-	if (cnxt_smc_set_config_timeout(handle, params))
+	if (cnxt_smc_set_config_timeout(handle, params)) {
+		cs_log("ERROR COOL WriteSettings failed.");
 		return ERROR;
+	}
+	cs_debug("COOL WriteSettings OK");
+	return OK
 }
 #endif

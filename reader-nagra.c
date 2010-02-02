@@ -214,8 +214,8 @@ static int NegotiateSessionKey_Tiger(void)
 	reader[ridx].caid[0] =(SYSTEM_NAGRA|parte_variable[76]);
 	memcpy(sk,&parte_variable[79],8);                                                                           
 	memcpy(sk+8,&parte_variable[79],8); 
-     	cs_ri_log("[nagra-reader] CAID: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,reader[ridx].irdId,4));
-     	cs_ri_log("[nagra-reader] ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
+     	cs_ri_log("type: NAGRA, caid: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,reader[ridx].irdId,4));
+     	cs_ri_log("ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
 
 	memset(random, 0, 88);
 	memcpy(random, sk,16);
@@ -248,7 +248,7 @@ static int NegotiateSessionKey_Tiger(void)
 		IDEA_KEY_SCHEDULE ks;
 		idea_set_encrypt_key(reader[ridx].sessi,&ks);
 		idea_set_decrypt_key(&ks,&ksSession);
-		cs_ri_log("[nagra-reader] session key: %s", cs_hexdump(1, reader[ridx].sessi, 16));
+		cs_ri_log("session key: %s", cs_hexdump(1, reader[ridx].sessi, 16));
 		return OK;
 	}
 	cs_ri_log("Negotiate sessionkey was not successfull! Please check tivusat rsa key");
@@ -487,7 +487,7 @@ static int ParseDataType(unsigned char dt)
 			reader[ridx].caid[0] =(SYSTEM_NAGRA|cta_res[11]);
 			//reader[ridx].caid[0] =0x1801;
      			memcpy(reader[ridx].irdId,cta_res+14,4);
-     			cs_debug("[nagra-reader] CAID: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,reader[ridx].irdId,4));
+     			cs_debug("[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,reader[ridx].irdId,4));
      			cs_debug("[nagra-reader] ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
      			return OK;
      		}
@@ -541,24 +541,24 @@ int nagra2_card_init(ATR newatr)
 	
 	if (memcmp(atr+11, "DNASP", 5)==0)
 	{
-		cs_ri_log("[nagra-reader] detect native nagra card T1 protocol");
+		cs_ri_log("detect native NAGRA card T1 protocol");
 		memcpy(reader[ridx].rom,atr+11,15);
 	}
 	else if (memcmp(atr+11, "TIGER", 5)==0 || (memcmp(atr+11, "NCMED", 5)==0))
 	{
-		cs_ri_log("[nagra-reader] detect nagra tiger card");
+		cs_ri_log("detect NAGRA tiger card");
 		memcpy(reader[ridx].rom,atr+11,15);
 		reader[ridx].is_tiger=1;
 	}
 	else if ((!memcmp(atr+4, "IRDETO", 6)) && ((atr[14]==0x03) && (atr[15]==0x84) && (atr[16]==0x55)))
 	{
-		cs_ri_log("[nagra-reader] detect Irdeto tunneled nagra card");
+		cs_ri_log("detect Irdeto tunneled NAGRA card");
 		if(!reader[ridx].has_rsa)
 		{
-			cs_ri_log("[nagra-reader] switching back to Irdeto mode");
+			cs_ri_log("switching back to Irdeto mode");
 			return ERROR;
 		}
-		cs_ri_log("[nagra-reader] using nagra mode");
+		cs_ri_log("using NAGRA mode");
 		reader[ridx].is_pure_nagra=1;
 		if(!do_cmd(0x10,0x02,0x90,0x11,0))
 		{
@@ -614,7 +614,7 @@ int nagra2_card_init(ATR newatr)
 		return ERROR;
 	}
 	if ((reader[ridx].cardmhz != 368) && (reader[ridx].is_pure_nagra == 0))
-		cs_log("WARNING: For Nagra2 cards you will have to set 'cardmhz = 368' in oscam.server");
+		cs_log("WARNING: For NAGRA2 cards you will have to set 'cardmhz = 368' in oscam.server");
 	
 	return OK;
 }

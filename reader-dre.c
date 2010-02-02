@@ -35,14 +35,14 @@ static int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will 
   memcpy (command + headerlen, cmd, cmdlen);
 
   uchar checksum = ~xor (cmd, cmdlen);
-  //cs_debug ("Checksum: %02x", checksum);
+  //cs_debug ("[dre-reader] Checksum: %02x", checksum);
   cmdlen += headerlen;
   command[cmdlen++] = checksum;
 
   reader_cmd2icc (command, cmdlen);
 
   if ((cta_lr != 2) || (cta_res[0] != OK_RESPONSE)) {
-    cs_log ("DRECRYPT ERROR: unexpected answer from card: %s", cs_hexdump (0, cta_res, cta_lr));
+    cs_log ("[dre-reader] unexpected answer from card: %s", cs_hexdump (0, cta_res, cta_lr));
     return ERROR;			//error
   }
 
@@ -50,25 +50,25 @@ static int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will 
   reader_cmd2icc (reqans, 5);
 
   if (cta_res[0] != CMD_BYTE) {
-    cs_log ("DRECRYPT Unknown response: cta_res[0] expected to be %02x, is %02x", CMD_BYTE, cta_res[0]);
+    cs_log ("[dre-reader] unknown response: cta_res[0] expected to be %02x, is %02x", CMD_BYTE, cta_res[0]);
     return ERROR;
   }
   if ((cta_res[1] == 0x03) && (cta_res[2] == 0xe2)) {
     switch (cta_res[3]) {
     case 0xe1:
-      cs_log ("DRECRYPT checksum error: %s.", cs_hexdump (0, cta_res, cta_lr));
+      cs_log ("[dre-reader] checksum error: %s.", cs_hexdump (0, cta_res, cta_lr));
       break;
     case 0xe2:
-      cs_log ("DRECRYPT wrong provider: %s.", cs_hexdump (0, cta_res, cta_lr));
+      cs_log ("[dre-reader] wrong provider: %s.", cs_hexdump (0, cta_res, cta_lr));
       break;
     case 0xe3:
-      cs_log ("DRECRYPT illegal command: %s.", cs_hexdump (0, cta_res, cta_lr));  
+      cs_log ("[dre-reader] illegal command: %s.", cs_hexdump (0, cta_res, cta_lr));  
       break;
     case 0xec:
-      cs_log ("DRECRYPT wrong signature: %s.", cs_hexdump (0, cta_res, cta_lr));
+      cs_log ("[dre-reader] wrong signature: %s.", cs_hexdump (0, cta_res, cta_lr));
       break;
     default:
-      cs_debug ("DRECRYPT unknown error: %s.", cs_hexdump (0, cta_res, cta_lr));
+      cs_debug ("[dre-reader] unknown error: %s.", cs_hexdump (0, cta_res, cta_lr));
       break;
     }
     return ERROR;			//error
@@ -80,7 +80,7 @@ static int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will 
   checksum = ~xor (cta_res + 2, length_excl_leader - 3);
 
   if (cta_res[length_excl_leader - 1] != checksum) {
-    cs_log ("DRECRYPT checksum does not match, expected %02x received %02x:%s", checksum,
+    cs_log ("[dre-reader] checksum does not match, expected %02x received %02x:%s", checksum,
 	    cta_res[length_excl_leader - 1], cs_hexdump (0, cta_res, cta_lr));
     return ERROR;			//error
   }
@@ -102,10 +102,10 @@ static int dre_set_provider_info (void)
   if ((dre_cmd (cmd59))) {	//ask subscription packages, returns error on 0x11 card
     uchar pbm[32];
     memcpy (pbm, cta_res + 3, cta_lr - 6);
-    cs_debug ("DRECRYPT pbm: %s", cs_hexdump (0, pbm, 32));
+    cs_debug ("[dre-reader] pbm: %s", cs_hexdump (0, pbm, 32));
 
     if (pbm[0] == 0xff)
-      cs_log ("No active packages!");
+      cs_log ("[dre-reader] no active packages");
     else
       for (i = 0; i < 32; i++)
 	if (pbm[i] != 0xff) {
@@ -128,7 +128,7 @@ static int dre_set_provider_info (void)
 	  int endyear = temp->tm_year + 1900;
 	  int endmonth = temp->tm_mon + 1;
 	  int endday = temp->tm_mday;
-	  cs_log ("Active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
+	  cs_log ("[dre-reader] active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
 		  endyear, endmonth, endday);
 	}
   }
@@ -150,7 +150,7 @@ int dre_card_init (ATR newatr)
   uchar checksum = xor (atr + 1, 6);
 
   if (checksum != atr[7])
-    cs_log ("DRECRYPT Warning: expected ATR checksum %02x, smartcard reports %02x", checksum, atr[7]);
+    cs_log ("[dre-reader] warning: expected ATR checksum %02x, smartcard reports %02x", checksum, atr[7]);
 
   switch (atr[6]) {
   case 0x11:
@@ -231,17 +231,17 @@ FE 48 */
     dre_chksum += buf[i] - 48;
   }
 
-  //cs_ri_log("type: DRECrypt, caid: %04X, serial: %llu, card: v%x",
-  cs_log ("type: DRECrypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
+  //cs_ri_log("[dre-reader] type: DRE Crypt, caid: %04X, serial: %llu, card: v%x",
+  cs_log ("[dre-reader] type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
 	  reader[ridx].caid[0], cs_hexdump (0, reader[ridx].hexserial + 2, 4), dre_chksum, provider - 16,
 	  major_version + 1, low_dre_id, geocode, card, major_version, minor_version);
-  cs_log ("Provider name:%s.", provname);
+  cs_log ("[dre-reader] Provider name:%s.", provname);
 
 
   memset (reader[ridx].sa, 0, sizeof (reader[ridx].sa));
   memcpy (reader[ridx].sa[0], reader[ridx].hexserial + 2, 1);	//copy first byte of unique address also in shared address, because we dont know what it is...
 
-  cs_log ("DEBUG: SA = %02X%02X%02X%02X, UA = %s", reader[ridx].sa[0][0], reader[ridx].sa[0][1], reader[ridx].sa[0][2],
+  cs_log ("[dre-reader] SA = %02X%02X%02X%02X, UA = %s", reader[ridx].sa[0][0], reader[ridx].sa[0][1], reader[ridx].sa[0][2],
 	  reader[ridx].sa[0][3], cs_hexdump (0, reader[ridx].hexserial + 2, 4));
 
   //reader[ridx].nprov = 1; TODO doesnt seem necessary
@@ -249,7 +249,7 @@ FE 48 */
   if (!dre_set_provider_info ())
     return ERROR;			//fatal error
 
-  cs_log ("ready for requests");
+  cs_log ("[dre-reader] ready for requests");
   return OK;
 }
 
@@ -266,8 +266,8 @@ int dre_do_ecm (ECM_REQUEST * er)
     memcpy (ecmcmd41 + 4, er->ecm + 8, 16);
     ecmcmd41[20] = er->ecm[6];	//keynumber
     ecmcmd41[21] = 0x58 + er->ecm[25];	//package number
-    cs_debug ("DEBUG: unused ECM info front:%s", cs_hexdump (0, er->ecm, 8));
-    cs_debug ("DEBUG: unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2] + 2 - 24));
+    cs_debug ("[dre-reader] unused ECM info front:%s", cs_hexdump (0, er->ecm, 8));
+    cs_debug ("[dre-reader] unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2] + 2 - 24));
     if ((dre_cmd (ecmcmd41))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
 				return ERROR;		//exit if response is not 90 00
@@ -287,8 +287,8 @@ int dre_do_ecm (ECM_REQUEST * er)
       0x14			//provider
     };
     memcpy (ecmcmd51 + 1, er->ecm + 5, 0x21);
-    cs_debug ("DEBUG: unused ECM info front:%s", cs_hexdump (0, er->ecm, 5));
-    cs_debug ("DEBUG: unused ECM info back:%s", cs_hexdump (0, er->ecm + 37, 4));
+    cs_debug ("[dre-reader] unused ECM info front:%s", cs_hexdump (0, er->ecm, 5));
+    cs_debug ("[dre-reader] unused ECM info back:%s", cs_hexdump (0, er->ecm + 37, 4));
     ecmcmd51[33] = provider;	//no part of sig
     if ((dre_cmd (ecmcmd51))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))

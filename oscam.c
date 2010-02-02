@@ -16,7 +16,7 @@ int fd_c2m=0;   // FD Client -> Master (for clients / write )
 int fd_c2l=0;   // FD Client -> Logger (for clients / write )
 int cs_dblevel=0;   // Debug Level (TODO !!)
 int cs_idx=0;   // client index (0=master, ...)
-int cs_ptyp=D_MASTER; // process-type
+int cs_ptyp=0; // process-type
 struct s_module ph[CS_MAX_MOD]; // Protocols
 int maxph=0;    // Protocols used
 int cs_hw=0;    // hardware autodetect
@@ -1607,7 +1607,7 @@ int send_dcw(ECM_REQUEST *er)
   ac_chk(er, 1);
 #endif
 
-  cs_ddump(er->cw, 16, "cw:");
+  cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
   if (er->rc==7) er->rc=0;
   ph[client[cs_idx].ctyp].send_dcw(er);
   return 0;

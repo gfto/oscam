@@ -67,9 +67,7 @@ int Phoenix_Init ()
 	}
 #endif
 	
-#ifdef DEBUG_IFD
-	printf ("IFD: Initializing com=%d\n",  reader[ridx].typ);
-#endif
+	cs_debug_mask (D_IFD, "IFD: Initializing reader %s type=%d\n",  reader[ridx].label, reader[ridx].typ);
 	
 	if(reader[ridx].typ == R_INTERNAL) //not sure whether this should be moved in front of GPIO part
 		return OK;
@@ -124,10 +122,7 @@ int Phoenix_GetStatus (int * status)
 
 int Phoenix_Reset (ATR * atr)
 {	
-#ifdef DEBUG_IFD
-	printf ("IFD: Resetting card:\n");
-#endif
-
+		cs_debug_mask (D_IFD, "IFD: Resetting card:\n");
 		int ret;
 		int i;
 		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
@@ -190,13 +185,6 @@ int Phoenix_Transmit (BYTE * buffer, unsigned size, unsigned int block_delay, un
 {
 	unsigned sent=0, to_send = 0;
 
-#ifdef DEBUG_IFD
-	printf ("IFD: Transmit: ");
-	for (sent = 0; sent < size; sent++)
-	printf ("%X ", buffer[sent]);
-	printf ("\n");
-#endif
-
 	for (sent = 0; sent < size; sent = sent + to_send)
 	{
 		/* Calculate number of bytes to send */
@@ -228,22 +216,12 @@ int Phoenix_Receive (BYTE * buffer, unsigned size, unsigned int timeout)
 	if (IO_Serial_Read (timeout + IFD_TOWITOKO_TIMEOUT, size, buffer))
 		return ERROR;
 	
-#ifdef DEBUG_IFD
-	int i;
-	printf ("IFD: Receive: ");
-	for (i = 0; i < size; i++)
-	printf ("%X ", buffer[i]);
-	printf ("\n");
-#endif
-	
 	return OK;
 }
 
 int Phoenix_SetBaudrate (unsigned long baudrate)
 {
-#ifdef DEBUG_IFD
-	printf ("IFD: Setting baudrate to %lu\n", baudrate);
-#endif
+	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %lu\n", baudrate);
 	if ((reader[ridx].typ != R_INTERNAL) && (current_baudrate	!= baudrate))
 	{
 		/* Get current settings */
@@ -271,11 +249,7 @@ int Phoenix_Close ()
 		close(gpio_in);
 	}
 #endif
-	
-#ifdef DEBUG_IFD
-	printf ("IFD: Closing slot\n");
-#endif
-	
+	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader[ridx].device);
 	reader[ridx].status = 0;
 	return OK;
 }
