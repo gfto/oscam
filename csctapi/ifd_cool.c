@@ -135,6 +135,6 @@ int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT,
 		return ERROR;
 	}
 	cs_debug("COOL WriteSettings OK");
-	return OK
+	return OK;
 }
 #endif
