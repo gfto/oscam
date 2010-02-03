@@ -75,6 +75,7 @@ int cs_init_log(char *file)
     use_stdout=1;
     fp=stdout;
     cs_log(head);
+    cs_log_config();
     return(0);
   }
   if (strcmp(file, "syslog"))
@@ -104,6 +105,7 @@ int cs_init_log(char *file)
     openlog("oscam", LOG_NDELAY, LOG_DAEMON);
     use_syslog=1;
     cs_log(head);
+    cs_log_config();
     return(0);
   }
 }
