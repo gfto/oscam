@@ -122,27 +122,49 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
     int ret;
     int atr_ok;
     int i;
-    int parity[3] = {ODD, EVEN, NONE};
+    int parity[4] = {EVEN, ODD, NONE, EVEN};    // the last EVEN is to try with different F, D values for irdeto card.
+#ifdef DEBUG_USB_IO
+    char *parity_str[5]={"NONE", "ODD", "EVEN", "MARK", "SPACE"};
+#endif
     
-    if(reader->mhz==reader->cardmhz && reader->cardmhz*10000 > 4000000)
+    if(reader->mhz==reader->cardmhz && reader->cardmhz*10000 > 3690000)
         reader->sr_config.fs=reader->cardmhz*10000; 
     else    
-        reader->sr_config.fs=4000000; 
+        reader->sr_config.fs=3690000; 
+
+    ResetSmartReader(reader);
     
-    
-    for(i=0 ; i<3 ;i++) {
+    for(i=0 ; i<sizeof(parity) ;i++) {
+        reader->sr_config.irdeto=FALSE;
         atr_ok=ERROR;
         memset(data,0,sizeof(data));
         reader->sr_config.parity=parity[i];
+#ifdef DEBUG_USB_IO
+        cs_log("IO:SR: Trying with parity %s",parity_str[reader->sr_config.parity]);
+#endif    
 
-        ResetSmartReader(reader);
-
+        // special irdeto case
+        if(i==3) {
+#ifdef DEBUG_USB_IO
+            cs_log("IO:SR: Trying irdeto");
+#endif
+            reader->sr_config.F=618; /// magic smartreader value
+            reader->sr_config.D=1;
+            // reader->sr_config.T=2; // will be set to T=1 in EnableSmartReader
+            reader->sr_config.T=1;
+            reader->sr_config.irdeto=TRUE;
+        }
+        
+        smart_flush(reader);
+        EnableSmartReader(reader, reader->sr_config.fs, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
+        sched_yield();
+        
         //Reset smartcard
     
         //Set the DTR HIGH and RTS HIGH
         ftdi_setdtr_rts(&reader->ftdic, 1, 1);
         // A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
-        // so if we have a base freq of 3.5712MHz : 40000/4000000 = .0112007168458781 seconds, aka 11ms
+        // so if we have a base freq of 3.5712MHz : 40000/3690000 = .0112007168458781 seconds, aka 11ms
         // so if we have a base freq of 6.00MHz : 40000/6000000 = .0066666666666666 seconds, aka 6ms
         // here were doing 200ms .. is it too much ?
         usleep(200000);
@@ -168,7 +190,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
             cs_log("IO:SR: Inverse convention detected, setting smartreader inv to 1");
 #endif
             reader->sr_config.inv=1;
-            EnableSmartReader(reader, reader->sr_config.fs, 372, 1, 0, 0, reader->sr_config.inv, reader->sr_config.parity);
+            EnableSmartReader(reader, reader->sr_config.fs, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
         }
         // parse atr
         if(ATR_InitFromArray (atr, data, ret) == ATR_OK) {
@@ -176,6 +198,12 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
             cs_log("IO:SR: ATR parsing OK");
 #endif
             atr_ok=OK;
+            if(i==3) {
+#ifdef DEBUG_USB_IO
+                cs_log("IO:SR: Locking F and D for Irdeto mode");
+#endif
+                reader->sr_config.irdeto=TRUE;
+            }
         }
 
         if(atr_ok == OK)
@@ -222,6 +250,10 @@ int SR_SetBaudrate (struct s_reader *reader)
 int SR_SetParity (struct s_reader *reader)
 {
     int ret;
+#ifdef DEBUG_USB_IO
+    char *parity_str[5]={"NONE", "ODD", "EVEN", "MARK", "SPACE"};
+    cs_log("IO:SR: Setting parity to %s",parity_str[reader->sr_config.parity]);
+#endif    
     ret = ftdi_set_line_property(&reader->ftdic, (enum ftdi_bits_type) 8, STOP_BIT_2, reader->sr_config.parity);
     if(ret)
         return ERROR;
@@ -380,30 +412,37 @@ static void EnableSmartReader(struct s_reader *reader, int clock, unsigned short
     unsigned char Prot[2];
     unsigned char Invert[2];
     
+        
     ret = ftdi_set_baudrate(&reader->ftdic, 9600);
     ftdi_setflowctrl(&reader->ftdic, 0);
     ret = ftdi_set_line_property(&reader->ftdic, (enum ftdi_bits_type) 5, STOP_BIT_2, parity);
-#ifdef DEBUG_USB_IO
-    cs_log("IO:SR: sending F=%04X to smartreader",Fi);
-    cs_log("IO:SR: sending D=%02X to smartreader",Di);
-#endif
-    usleep(delay);
-    // command 1, set F and D parameter
-    FiDi[0]=0x01;
-    FiDi[1]=HIBYTE(Fi);
-    FiDi[2]=LOBYTE(Fi);
-    FiDi[3]=Di;
-    ret = smart_write(reader,FiDi, sizeof (FiDi),0);
     usleep(delay);
 
+    // command 1, set F and D parameter
+    if(!reader->sr_config.irdeto) {
+#ifdef DEBUG_USB_IO
+    cs_log("IO:SR: sending F=%04X (%d) to smartreader",Fi,Fi);
+    cs_log("IO:SR: sending D=%02X (%d) to smartreader",Di,Di);
+#endif
+        FiDi[0]=0x01;
+        FiDi[1]=HIBYTE(Fi);
+        FiDi[2]=LOBYTE(Fi);
+        FiDi[3]=Di;
+        ret = smart_write(reader,FiDi, sizeof (FiDi),0);
+        usleep(delay);
+    }
+    else {
+        cs_log("Not setting F and D as we're in Irdeto mode");
+    }
+
     // command 2, set the frequency in KHz
-    // direct from the source .. 4MHz is the best init frequency for T=0 card
-    // if (clock<4000000 && T==0)
-    if (clock<4000000)
-        clock=4000000;
+    // direct from the source .. 4MHz is the best init frequency for T=0 card, but looks like it's causing issue with some nagra card, reveting to 3.69MHz
+    // if (clock<3690000 && T==0)
+    if (clock<3690000)
+        clock=3690000;
     freqk = (unsigned short) (clock / 1000);
 #ifdef DEBUG_USB_IO
-    cs_log("IO:SR: sending Freq=%d to smartreader",freqk);
+    cs_log("IO:SR: sending Freq=%04X (%d) to smartreader",freqk,freqk);
 #endif
     Freq[0]=0x02;
     Freq[1]=HIBYTE(freqk);
@@ -413,7 +452,7 @@ static void EnableSmartReader(struct s_reader *reader, int clock, unsigned short
 
     // command 3, set paramter N
 #ifdef DEBUG_USB_IO
-    cs_log("IO:SR: sending N=%02X to smartreader",Ni);
+    cs_log("IO:SR: sending N=%02X (%d) to smartreader",Ni,Ni);
 #endif
     N[0]=0x03;
     N[1]=Ni;
@@ -421,9 +460,17 @@ static void EnableSmartReader(struct s_reader *reader, int clock, unsigned short
     usleep(delay);
 
     // command 4 , set parameter T
-    T=0; // protocol is handled by oscam
+    // if(T==2) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
+    if(reader->sr_config.irdeto) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
+        {
+        T=1;
+        reader->sr_config.T=1;
+        }
+    else if (T==1)
+        T=0; // T=1 protocol is handled by oscam
+        
 #ifdef DEBUG_USB_IO
-    cs_log("IO:SR: sending T=%02X to smartreader",T);
+    cs_log("IO:SR: sending T=%02X (%d) to smartreader",T,T);
 #endif
     // 
     Prot[0]=0x04;
@@ -455,10 +502,10 @@ static void ResetSmartReader(struct s_reader *reader)
     // set smartreader+ default values 
     reader->sr_config.F=372; 
     reader->sr_config.D=1.0; 
-    if(reader->mhz==reader->cardmhz && reader->cardmhz*10000 > 4000000)
+    if(reader->mhz==reader->cardmhz && reader->cardmhz*10000 > 3690000)
         reader->sr_config.fs=reader->cardmhz*10000; 
     else    
-        reader->sr_config.fs=4000000; 
+        reader->sr_config.fs=3690000; 
     reader->sr_config.N=0; 
     reader->sr_config.T=0; 
     reader->sr_config.inv=0; 
