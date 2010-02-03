@@ -276,6 +276,9 @@ static void camd35_server()
       case 6:	// EMM
         camd35_process_emm(mbuf);
         break;
+      case 19:   // EMM
+        camd35_process_emm(mbuf);
+        break;
       default:
         cs_log("unknown command !");
     }
