@@ -269,14 +269,12 @@ static void camd35_server()
   {
     switch(mbuf[0])
     {
-      case 0:	// ECM
-      case 3:	// ECM (cascading)
+      case  0:	// ECM
+      case  3:	// ECM (cascading)
         camd35_process_ecm(mbuf);
         break;
-      case 6:	// EMM
-        camd35_process_emm(mbuf);
-        break;
-      case 19:   // EMM
+      case  6:	// EMM
+      case 19:  // EMM
         camd35_process_emm(mbuf);
         break;
       default:
