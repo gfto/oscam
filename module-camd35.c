@@ -274,6 +274,8 @@ static void camd35_server()
         camd35_process_ecm(mbuf);
         break;
       case 6:	// EMM
+        camd35_process_emm(mbuf);
+        break;
       case 19:   // EMM
         camd35_process_emm(mbuf);
         break;
