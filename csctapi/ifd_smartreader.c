@@ -535,7 +535,7 @@ static void* ReaderThread(void *p)
             continue;
         }
 
-        ret = usb_bulk_read(reader->ftdic.usb_dev,reader->ftdic.out_ep,(char*)local_buffer,4,1000);
+        ret = usb_bulk_read(reader->ftdic.usb_dev,reader->ftdic.out_ep,(char*)local_buffer,4,10000);
         if(ret<0) {
 #ifdef DEBUG_USB_IO
             cs_log("IO:SR: usb_bulk_read read error %d",ret);

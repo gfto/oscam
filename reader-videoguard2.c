@@ -583,7 +583,7 @@ static void read_tiers(void)
 int videoguard_card_init(ATR newatr)
 {
 	get_hist;
-	if ((hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
+	if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
 		return ERROR;
 	get_atr;
   /* known atrs */
