@@ -363,7 +363,7 @@ struct s_client
   int       cwfound;
   int       cwcache;
   int       cwnot;
-  int       cwtun;       // count betatunneled ecms per client
+  int       cwtun;       // count betatunneled ECMs per client
   uchar     ucrc[4];     // needed by monitor and used by camd35
   ulong     pcrc;        // pwd crc
   AES_KEY   aeskey;      // needed by monitor and used by camd33, camd35

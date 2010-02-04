@@ -1730,7 +1730,7 @@ void cs_betatunnel(ECM_REQUEST *er)
     er->l+=10;
     er->ecm[2]=er->l-3;
     client[cs_idx].cwtun++;
-    cs_debug("ecm converted from: 0x%X to betacrypt: 0x%X for service id:0x%X",
+    cs_debug("ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
              ttab->bt_caidfrom[n], ttab->bt_caidto[n], ttab->bt_srvid[n]);
   }
 }
@@ -1891,12 +1891,12 @@ void get_cw(ECM_REQUEST *er)
                 break;
       }
 
-    // Betatunneling
-    // moved behind the check routines, because newcamd-ECM will fail if ecm is converted before
+    // BetaCrypt tunneling
+    // moved behind the check routines, because newcamd ECM will fail if ECM is converted before
     if (&client[cs_idx].ttab)
       cs_betatunnel(er);
     
-    // Store ECM in cache
+    // store ECM in cache
     memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
 
     if (((er->rc > 12) || (er->rc == 0) || (!er->rc)) && check_ecmcache(er, client[cs_idx].grp)) // 12 is the highest errorcode so far
