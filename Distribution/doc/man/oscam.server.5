@@ -110,7 +110,11 @@ refer to OVERCLOCKING, default:357
 .PP
 \fBdeprecated \fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = SC speed will not be changed, SC communication will remain on normal ATR speed of 9600 baud, default:0
+Frist the SC will be initialized in normal mode. If it fails, the SC will be automatically 
+reverted to deprecated mode, so that the SC speed will not be changed and the communication 
+will remain on normal ATR speed of 9600 baud.
+
+1 = use deprecated SC mode only, default:0
 .RE
 .PP
 \fBprotocol\fP = \fBreader protocol\fP
