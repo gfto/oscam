@@ -205,19 +205,18 @@ static void camd35_send_dcw(ECM_REQUEST *er)
 {
   uchar *buf;
   buf=req+(er->cpti*REQ_SIZE);	// get orig request
+
+  if (buf[0]==3)
+    memmove(buf+20+16, buf+20+buf[1], 0x34);
+
   if (er->rc<4)
-  {
-    if (buf[0]==3)
-      memmove(buf+20+16, buf+20+buf[1], 0x34);
     buf[0]++;
-    buf[1]=16;
-    memcpy(buf+20, er->cw, buf[1]);
-  }
-  else
-  {
-    buf[0]=0x44;
-    buf[1]=0;
-  }
+  else // CMD08: stop requests for current system+provider+serviceid
+    buf[0]=0x08;
+
+  buf[1]=16;
+  memcpy(buf+20, er->cw, buf[1]);
+
   camd35_send(buf);
   camd35_request_emm(er);
 }
@@ -452,11 +451,13 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
   //int i;
   ushort idx;
 
-  if ((buf[0]!=1) && (buf[0]!=0x44))	// no cw, ignore others
+  // CMD44: old reject command introduced in mpcs
+  // keeping this for backward compatibility
+  if ((buf[0]!=1) && ((buf[0]!=0x44) || (buf[0]!=0x08)))
     return(-1);
 //  memcpy(&idx, buf+16, 2);
   idx=b2i(2, buf+16);
-  *rc=(buf[0]!=0x44);
+  *rc=((buf[0]!=0x44) || (buf[0]!=0x08));
   memcpy(dcw, buf+20, 16);
   return(idx);
 }
