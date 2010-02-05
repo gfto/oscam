@@ -54,10 +54,10 @@
  */
 
 static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer);
-static int Parse_ATR (ATR * atr);
+static int Parse_ATR (ATR * atr, unsigned short deprecated);
 static int PPS_Exchange (BYTE * params, unsigned *length);
 static unsigned PPS_GetLength (BYTE * block);
-static int InitCard (ATR * atr, BYTE FI, double d, double n);
+static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short deprecated);
 static unsigned int ETU_to_ms(unsigned long WWT);
 static BYTE PPS_GetPCK (BYTE * block, unsigned length);
 static int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
@@ -183,7 +183,7 @@ int ICC_Async_GetStatus (int * card)
 	return OK;
 }
 
-int ICC_Async_Activate (ATR * atr)
+int ICC_Async_Activate (ATR * atr, unsigned short deprecated)
 {
 	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader[ridx].label);
 	int card;
@@ -248,7 +248,7 @@ int ICC_Async_Activate (ATR * atr)
 	
 	unsigned short cs_ptyp_orig=cs_ptyp;
 	cs_ptyp=D_ATR;
-	int ret = Parse_ATR(atr);
+	int ret = Parse_ATR(atr, deprecated);
 	cs_ptyp=cs_ptyp_orig;
 	if (ret)
 		return ERROR;		
@@ -496,7 +496,7 @@ static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer)
 		buffer[i] = ~(INVERT_BYTE (buffer[i]));
 }
 
-static int Parse_ATR (ATR * atr)
+static int Parse_ATR (ATR * atr, unsigned short deprecated)
 {
 	BYTE FI = ATR_DEFAULT_FI;
 	//BYTE t = ATR_PROTOCOL_TYPE_T0;
@@ -510,7 +510,6 @@ static int Parse_ATR (ATR * atr)
 		if (ATR_GetInterfaceByte (atr, numprot-1, ATR_INTERFACE_BYTE_TD, &tx) == ATR_OK)
 			if ((tx & 0xF0) == 0)
 				numprot--;
-		cs_debug("ATR reports %i protocol lines:",numprot);
 		int i,point;
 		char txt[50];
 		bool OffersT[3]; //T14 stored as T2
@@ -582,7 +581,7 @@ static int Parse_ATR (ATR * atr)
 
 			bool PPS_success = FALSE; 
 			bool NeedsPTS = ((protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
-			if (NeedsPTS && reader[ridx].deprecated == 0) {
+			if (NeedsPTS && deprecated == 0) {
 				//						 PTSS	PTS0	PTS1	PTS2	PTS3	PCK
 				//						 PTSS	PTS0	PTS1	PCK
 				BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
@@ -635,12 +634,10 @@ static int Parse_ATR (ATR * atr)
 		cs_log("Warning: D=0 is invalid, forcing D=%.0f",d);
 	}
 
-	if (reader[ridx].deprecated == 0)
-		return InitCard (atr, FI, d, n);
-	else {
-		cs_log("Warning: entering Deprecated Mode");
-		return InitCard (atr, ATR_DEFAULT_FI, ATR_DEFAULT_D, n);
-	}
+	if (deprecated == 0)
+		return InitCard (atr, FI, d, n, deprecated);
+	else
+		return InitCard (atr, ATR_DEFAULT_FI, ATR_DEFAULT_D, n, deprecated);
 }
 
 /*
@@ -773,9 +770,8 @@ static int SetRightParity (void)
 	return OK;
 }
 
-static int InitCard (ATR * atr, BYTE FI, double d, double n)
+static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short deprecated)
 {
-	unsigned long baudrate;
 	double P,I;
 	double F;
     unsigned long BGT, edc, EGT, CGT, WWT = 0;
@@ -812,21 +808,18 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n)
 	//because current_baudrate is used in calculation of timings
 	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader[ridx].mhz / 100);
 	F =	(double) atr_f_table[FI];
-	if (protocol_type == ATR_PROTOCOL_TYPE_T14)
-		baudrate = 9600;
-	else
-		baudrate = d * ICC_Async_GetClockRate () / F; 
 #if defined(LIBUSB)
     }
 #endif
 
 #if defined(LIBUSB)
-	if (reader[ridx].deprecated == 0 && reader[ridx].typ != R_SMART)
+	if (deprecated == 0 && reader[ridx].typ != R_SMART)
 #else
-	if (reader[ridx].deprecated == 0)
+	if (deprecated == 0)
 #endif
-		if (ICC_Async_SetBaudrate (baudrate))
-			return ERROR;
+		if (protocol_type != ATR_PROTOCOL_TYPE_T14) //dont switch for T14
+			if (ICC_Async_SetBaudrate ( d * ICC_Async_GetClockRate () / F))
+				return ERROR;
 	//set timings according to ATR
 	read_timeout = 0;
 	icc_timings.block_delay = 0;
@@ -938,7 +931,7 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n)
 		double F =	(double) atr_f_table[FI];
 		unsigned long ETU = 0;
 		//for Irdeto T14 cards, do not set ETU
-		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && protocol_type == 14))
+		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
 		if (Sci_WriteSettings (protocol_type, reader[ridx].mhz / 100, ETU, WWT, BWT, CWT, EGT, (unsigned char)P, (unsigned char)I))
 			return ERROR;	

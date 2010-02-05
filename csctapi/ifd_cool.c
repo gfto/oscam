@@ -95,7 +95,7 @@ int Cool_Receive (BYTE * data, unsigned size)
 	memcpy(data,cardbuffer,size);
 	cardbuflen -= size;
 	memmove(cardbuffer,cardbuffer+size,cardbuflen);
-	cs_dump(data, size, "COOL IO: Receive: ");
+	cs_ddump(data, size, "COOL IO: Receive: ");
 	return OK;
 }	
 

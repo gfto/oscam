@@ -8,7 +8,7 @@ ushort cta_lr;
 static int cs_ptyp_orig; //reinit=1, 
 extern int ICC_Async_Device_Init ();
 extern int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr);
-extern int ICC_Async_Activate	 (ATR * atr);
+extern int ICC_Async_Activate	 (ATR * atr, unsigned short deprecated);
 extern int ICC_Async_GetStatus (int * card);
 #define SC_IRDETO 1
 #define SC_CRYPTOWORKS 2
@@ -111,7 +111,7 @@ static int reader_card_inserted(void)
 	return (card);
 }
 
-static int reader_activate_card(ATR * atr)
+static int reader_activate_card(ATR * atr, unsigned short deprecated)
 {
       int i;
 #ifdef HAVE_PCSC
@@ -131,7 +131,7 @@ static int reader_activate_card(ATR * atr)
 	cs_ptyp_orig=cs_ptyp;
 	cs_ptyp=D_DEVICE;
   for (i=0; i<5; i++) {
-		if (!ICC_Async_Activate(atr)) {
+		if (!ICC_Async_Activate(atr, deprecated)) {
 			i = 100;
 			break;
 		}
@@ -238,10 +238,18 @@ static int reader_get_cardsystem(ATR atr)
 
 static int reader_reset(void)
 {
-  reader_nullcard();
+	reader_nullcard();
 	ATR atr;
-  if (!reader_activate_card(&atr)) return(0);
-  return(reader_get_cardsystem(atr));
+	unsigned short int ret, deprecated;
+	for (deprecated = reader[ridx].deprecated; deprecated < 2; deprecated++) {
+		if (!reader_activate_card(&atr, deprecated)) return(0);
+		ret =reader_get_cardsystem(atr);
+		if (ret)
+			break;
+		if (!deprecated)
+			cs_log("Normal mode failed, reverting to Deprecated Mode");
+	}
+	return(ret);
 }
 
 int reader_device_init(char *device)

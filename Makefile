@@ -84,10 +84,11 @@ i386-pc-linux:
 i386-pc-linux-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
+        LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_LINUX -DUSE_PTHREAD -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' `libusb-config --cflags`" \
+		DS_OPTS="-O2 -DOS_LINUX -DUSE_PTHREAD -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="`libusb-config --libs`" \
 		DS_ARFLAGS="-rvsl" \
@@ -126,10 +127,11 @@ i386-pc-linux-pcsc:
 i386-pc-linux-pcsc-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
+        LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread -lpcsclite" \
-		DS_OPTS="-O2 -DOS_LINUX -DUSE_PTHREAD -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' `libusb-config --cflags`" \
+		DS_OPTS="-O2 -DOS_LINUX -DUSE_PTHREAD -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="`libusb-config --libs`" \
 		DS_ARFLAGS="-rvsl" \
@@ -168,12 +170,13 @@ macosx-native:
 macosx-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
+		LIBUSB="/usr/local/lib/libusb-1.0.a" \a
 		OS_LIBS="-lcrypto -lm " \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -DLIBUSB -m32 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' `libusb-config --cflags`" \
+		DS_OPTS="-O2 -DOS_MACOSX -DNEED_DAEMON -DCS_NOSHM -DHAVE_PTHREAD_H -DUSE_PTHREAD -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -DLIBUSB -m32 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
-		DS_LDFLAGS="-framework PCSC `libusb-config --libs`" \
+		DS_LDFLAGS="-framework PCSC -Wl,-framework -Wl,IOKit -Wl,-framework -Wl,CoreFoundation -Wl,-prebind -no-undefined" \
 		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \

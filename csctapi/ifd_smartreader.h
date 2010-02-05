@@ -16,11 +16,11 @@
 
 #include <pthread.h>
 #include <memory.h>
-
+#include <libusb-1.0/libusb.h>
 #include "../globals.h"
-#include "ftdi.h"
 #include "atr.h"
 
+#include "smartreader_types.h"
 
 int SR_Init (struct s_reader *reader);
 int SR_GetStatus (struct s_reader *reader,int * in);

@@ -61,7 +61,7 @@ unsigned int read_timeout;		// Max timeout (ms) to receive characters
  */
 
 /* Initialization and Deactivation */
-extern int ICC_Async_Activate (ATR * newatr);
+extern int ICC_Async_Activate (ATR * newatr, unsigned short deprecated);
 extern int ICC_Async_Close (void);
 int ICC_Async_Device_Init (void);
 
