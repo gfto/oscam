@@ -275,8 +275,11 @@ typedef struct  {
     int parity;
     int irdeto;
     int running;
+#if defined(LIBUSB)
 	libusb_device *usb_dev;
 	libusb_device_handle *usb_dev_handle;
+    enum smartreader_chip_type type;
+#endif
     int in_ep;  // 0x01
     int out_ep; // 0x82
     int index;
@@ -287,7 +290,6 @@ typedef struct  {
     unsigned int writebuffer_chunksize;
     unsigned char bitbang_enabled;
     int baudrate;
-    enum smartreader_chip_type type;
     int interface;   // 0 or 1 
     /** maximum packet size. Needed for filtering modem status bytes every n packets. */
     unsigned int max_packet_size;
