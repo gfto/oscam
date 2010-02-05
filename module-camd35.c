@@ -209,7 +209,10 @@ static void camd35_send_dcw(ECM_REQUEST *er)
   if (buf[0]==3)
     memmove(buf+20+16, buf+20+buf[1], 0x34);
 
-  if (er->rc<4)
+  // <4: found, cache1, cache2
+  // >5 & <8: sleeping, fake
+  // >10 & <13: expdate, disabled
+  if ((er->rc < 4) || (er->rc > 5 && er->rc < 8) || (er->rc > 10 && er->rc < 13)) 
     buf[0]++;
   else // CMD08: stop requests for current system+provider+serviceid
     buf[0]=0x08;
