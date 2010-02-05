@@ -265,6 +265,7 @@ typedef struct s_ptab
   PORT   ports[CS_MAXPORTS];
 } GCC_PACK PTAB;
 
+#if defined(LIBUSB)
 typedef struct  {
     int F;
     float D;
@@ -275,11 +276,9 @@ typedef struct  {
     int parity;
     int irdeto;
     int running;
-#if defined(LIBUSB)
 	libusb_device *usb_dev;
 	libusb_device_handle *usb_dev_handle;
     enum smartreader_chip_type type;
-#endif
     int in_ep;  // 0x01
     int out_ep; // 0x82
     int index;
@@ -294,6 +293,7 @@ typedef struct  {
     /** maximum packet size. Needed for filtering modem status bytes every n packets. */
     unsigned int max_packet_size;
 } SR_CONFIG;
+#endif
 
 
 struct s_ecm

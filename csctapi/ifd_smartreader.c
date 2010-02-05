@@ -70,8 +70,10 @@ int SR_Init (struct s_reader *reader)
 #endif
 
    	ret = libusb_init(NULL);
-	if (ret < 0)
-		return ret;
+	if (ret < 0) {
+        cs_log("Libusb init error : %d",ret);
+        return ret;
+    }
 
     smartreader_init(reader);
 
