@@ -66,7 +66,7 @@ int SR_Init (struct s_reader *reader)
         return ERROR;
     }
 #ifdef DEBUG_USB_IO
-    cs_log("looking for device %s on bus %s",devname,busname);
+    cs_log("IO:SR: Looking for device %s on bus %s",devname,busname);
 #endif
 
    	ret = libusb_init(NULL);
@@ -79,8 +79,10 @@ int SR_Init (struct s_reader *reader)
 
     reader->sr_config.usb_dev=find_smartreader(busname,devname);
     if(!reader->sr_config.usb_dev)
-        return EXIT_FAILURE;
-    
+        return ERROR;
+#ifdef DEBUG_USB_IO
+    cs_log("IO:SR: Opening smartreader device %s on bus %s",devname,busname);
+#endif
     //The smartreader has different endpoint addresses
     //compared to a real FT232 device, so change them here,
     //also a good way to compare a real FT232 with a smartreader
@@ -96,7 +98,7 @@ int SR_Init (struct s_reader *reader)
     //OSCam config files etc...
     if ((ret=smartreader_usb_open_dev(reader))) {
         cs_log("unable to open smartreader device %s in bus %s (ret=%d)\n", devname,busname,ret);
-        return EXIT_FAILURE;
+        return ERROR;
     }
 
 #ifdef DEBUG_USB_IO
@@ -577,7 +579,7 @@ static unsigned int smartreader_determine_max_packet_size(S_READER *reader)
     struct libusb_config_descriptor *configDesc;
     struct libusb_interface interface;
     struct libusb_interface_descriptor intDesc;
-    int config;
+    int config_index;
     int ret;
     // Determine maximum packet size. Init with default value.
     // New hi-speed devices from FTDI use a packet size of 512 bytes
@@ -589,14 +591,16 @@ static unsigned int smartreader_determine_max_packet_size(S_READER *reader)
 
     ret = libusb_get_device_descriptor(reader->sr_config.usb_dev, &desc);
     if (ret < 0) {
-        cs_log("Smartreader : failed to get device descriptor");
-        return (-1);
+        cs_log("Smartreader : couldn't read device descriptor , using default packet size");
+        return packet_size;        
     }
-    
     if (desc.bNumConfigurations)
     {
-        ret=libusb_get_configuration(reader->sr_config.usb_dev_handle,&config);
-        ret=libusb_get_config_descriptor(reader->sr_config.usb_dev,config,&configDesc);
+        ret=libusb_get_active_config_descriptor(reader->sr_config.usb_dev,&configDesc);
+        if(ret) {
+            cs_log("Smartreader : couldn't read config descriptor , using default packet size");
+            return packet_size;
+        }
 
         if (reader->sr_config.interface < configDesc->bNumInterfaces)
         {

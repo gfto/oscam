@@ -85,12 +85,12 @@ i386-pc-linux-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
         LIBUSB="/usr/local/lib/libusb-1.0.a" \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto -lm -lrt" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
 		DS_OPTS="-O2 -DOS_LINUX -DUSE_PTHREAD -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
-		DS_LDFLAGS="`libusb-config --libs`" \
+		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
@@ -128,12 +128,12 @@ i386-pc-linux-pcsc-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
         LIBUSB="/usr/local/lib/libusb-1.0.a" \
-		OS_LIBS="-lcrypto -lm" \
+		OS_LIBS="-lcrypto -lm -lrt" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread -lpcsclite" \
 		DS_OPTS="-O2 -DOS_LINUX -DUSE_PTHREAD -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
-		DS_LDFLAGS="`libusb-config --libs`" \
+		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
 		DS_CC=gcc \
 		DS_AR=ar \
