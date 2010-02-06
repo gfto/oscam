@@ -543,15 +543,26 @@ static FILTER mk_user_ftab()
   return filt;
 }
 
-static void newcamd_auth_client()
+static void newcamd_auth_client(in_addr_t ip)
 {
-    int i, ok = 0;
+    int i, ok;
     uchar *usr=NULL, *pwd=NULL;
     struct s_auth *account;
     uchar buf[14];
     uchar *key=0;
     uint8 *passwdcrypt = NULL;
     int au=0;
+    struct s_ip *p_ip;
+
+    ok = cfg->ncd_allowed ? 0 : 1;
+    for (p_ip=cfg->ncd_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
+       ok=((ip>=p_ip->ip[0]) && (ip<=p_ip->ip[1]));
+
+    if (!ok)
+    {
+       cs_auth_client((struct s_auth *)0, NULL);
+       cs_exit(0);
+    }
 
     // make random 14 bytes
     seed = (unsigned int) time((time_t*)0);
@@ -1030,7 +1041,7 @@ static void newcamd_server()
   client[cs_idx].ncd_server = 1;
   cs_debug("client connected to %d port", 
             cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port);
-  newcamd_auth_client();
+  newcamd_auth_client(client[cs_idx].ip);
 
   n=-9;
   while(n==-9)

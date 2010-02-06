@@ -468,6 +468,7 @@ static void chk_t_newcamd(char *token, char *value)
 {
   if (!strcmp(token, "port")) { chk_port_tab(value, &cfg->ncd_ptab); return; }
   if (!strcmp(token, "serverip")) { cfg->ncd_srvip=inet_addr(value); return; }
+  if (!strcmp(token, "allowed")) { chk_iprange(value, &cfg->ncd_allowed); return; }
   if (!strcmp(token, "key"))
   {
     if (key_atob14(value, cfg->ncd_key))
