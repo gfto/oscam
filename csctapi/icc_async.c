@@ -777,6 +777,7 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
     unsigned long BGT, edc, EGT, CGT, WWT = 0;
     unsigned int GT;
     unsigned long gt_ms;
+		current_baudrate = DEFAULT_BAUDRATE;
     
 #if defined(LIBUSB)
  if (reader[ridx].typ == R_SMART) {

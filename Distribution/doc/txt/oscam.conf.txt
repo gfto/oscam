@@ -242,12 +242,12 @@ DESCRIPTIONS
        user = username
 	  user name for DVB API client, default:anonymous
 
-       ignore = CAID[,CAID]...
+       ignore = <CAID>[,<CAID>]...
 	  CAIDs to be ignored, default:none
 
-       priority = CAID[,CAID]...
-	  CAIDs to be prioritized, default:CAIDs of local SCs will be  priori
-	  tized
+       priority = <CAID>:<provider ID>[,CAID:<provider ID>]...
+	  CAIDs and provider IDs to be prioritized, default:CAIDs and provider
+	  IDs of local SCs will be prioritized
 
        au = 0|1
 	  1 = enable AU, default:0
