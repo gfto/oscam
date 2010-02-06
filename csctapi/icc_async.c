@@ -354,12 +354,12 @@ int ICC_Async_SetBaudrate (unsigned long baudrate)
 			return ERROR;
 #endif
 
-#if defined(LIBUSB)
-	if (reader[ridx].typ == R_SMART) {
-		if(SR_SetBaudrate(&reader[ridx]))
-			return ERROR;
-	}
-#endif
+//#if defined(LIBUSB)
+//	if (reader[ridx].typ == R_SMART) {
+//		if(SR_SetBaudrate(&reader[ridx]))
+//			return ERROR;
+//	}
+//#endif
 	cs_debug_mask(D_IFD, "Succesfully set baudrate to %lu", baudrate);
 	return OK;
 }
@@ -717,49 +717,34 @@ static unsigned int ETU_to_ms(unsigned long WWT)
 	return (unsigned int) WWT * work_etu * reader[ridx].cardmhz / reader[ridx].mhz;
 }
 
+static int ICC_Async_SetParity (unsigned short parity)
+{
+#if defined(LIBUSB)
+	if (reader[ridx].typ == R_SMART) {
+		reader[ridx].sr_config.inv= (convention == ATR_CONVENTION_INVERSE) ? 1: 0;
+		reader[ridx].sr_config.parity=parity;
+		if(SR_SetParity(&reader[ridx]))
+			return ERROR;
+	}
+	else
+#endif
+		if (IO_Serial_SetParity (parity))
+			return ERROR;
+	return OK;
+}
+
 static int SetRightParity (void)
 {
 	//set right parity
+	unsigned short parity = PARITY_EVEN;
 	if (convention == ATR_CONVENTION_INVERSE)
-	{
-#if defined(LIBUSB)
-        if (reader[ridx].typ == R_SMART) {
-            reader[ridx].sr_config.inv= (convention == ATR_CONVENTION_INVERSE) ? 1: 0;
-            reader[ridx].sr_config.parity=ODD;
-            if(SR_SetParity(&reader[ridx]))
-                return ERROR;
-        }
-    else
-#endif
-            if (IO_Serial_SetParity (PARITY_ODD))
-                return ERROR;
-	}
+		parity = PARITY_ODD;
 	else if(protocol_type == ATR_PROTOCOL_TYPE_T14)
-	{
-#if defined(LIBUSB)
-        if (reader[ridx].typ == R_SMART) {
-            reader[ridx].sr_config.parity=NONE;
-            if(SR_SetParity(&reader[ridx]))
-                return ERROR;
-        }
-        else
-#endif
-            if (IO_Serial_SetParity (PARITY_NONE))
-                return ERROR;		
-	}
-	else
-	{
-#if defined(LIBUSB)
-        if (reader[ridx].typ == R_SMART) {
-            reader[ridx].sr_config.parity=EVEN;
-            if(SR_SetParity(&reader[ridx]))
-                return ERROR;
-        }
-        else
-#endif
-            if (IO_Serial_SetParity (PARITY_EVEN))
-                return ERROR;		
-	}
+		parity = PARITY_NONE;
+	
+	if (ICC_Async_SetParity(parity))
+		return ERROR;
+
 #ifdef COOL
 	if (reader[ridx].typ != R_INTERNAL)
 #endif
@@ -779,17 +764,6 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
     unsigned long gt_ms;
 		current_baudrate = DEFAULT_BAUDRATE;
     
-#if defined(LIBUSB)
- if (reader[ridx].typ == R_SMART) {
-		reader[ridx].sr_config.F=atr_f_table[FI];
-		reader[ridx].sr_config.D=d;
-		reader[ridx].sr_config.N=n;
-		reader[ridx].sr_config.T=protocol_type;
-		SR_SetBaudrate(&reader[ridx]);
-		// SetRightParity ();
-		// return OK;
- }
-#endif
 	//set the amps and the volts according to ATR
 	if (ATR_GetParameter(atr, ATR_PARAMETER_P, &P) != ATR_OK)
 		P = 0;
@@ -801,26 +775,16 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 		if (reader[ridx].mhz == 357 || reader[ridx].mhz == 358) //no overclocking
 			reader[ridx].mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 
-#if defined(LIBUSB)
-	if ( reader[ridx].typ != R_SMART) {
-#endif
-
 	//set clock speed/baudrate must be done before timings
 	//because current_baudrate is used in calculation of timings
 	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader[ridx].mhz / 100);
 	F =	(double) atr_f_table[FI];
-#if defined(LIBUSB)
-    }
-#endif
 
-#if defined(LIBUSB)
-	if (deprecated == 0 && reader[ridx].typ != R_SMART)
-#else
 	if (deprecated == 0)
-#endif
 		if (protocol_type != ATR_PROTOCOL_TYPE_T14) //dont switch for T14
 			if (ICC_Async_SetBaudrate ( d * ICC_Async_GetClockRate () / F))
 				return ERROR;
+
 	//set timings according to ATR
 	read_timeout = 0;
 	icc_timings.block_delay = 0;
@@ -941,6 +905,10 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 			return ERROR;
 #endif //COOL
 	}
+#if defined(LIBUSB)
+ if (reader[ridx].typ == R_SMART)
+		SR_WriteSettings(&reader[ridx], (unsigned short) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)protocol_type);
+#endif
 
 	//IFS setting in case of T1
 	if ((protocol_type == ATR_PROTOCOL_TYPE_T1) && (ifsc != DEFAULT_IFSC)) {

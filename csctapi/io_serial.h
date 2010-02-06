@@ -32,11 +32,14 @@
 #define IO_Serial_RTS_Set() IO_Serial_DTR_RTS(0, 1)
 #define IO_Serial_RTS_Clr() IO_Serial_DTR_RTS(0, 0)
 
-/* Type of parity of the serial device */
+//Type of parity of the serial device
+//Chosen to Smartreader definition
+//Since for io_serial it doesnt matter which values we choose
+#define PARITY_NONE		0
 #define PARITY_ODD		1
 #define PARITY_EVEN		2
-#define PARITY_NONE		3
-
+#define PARITY_MARK		3
+#define PARITY_SPACE	4
 /* Values for the modem lines */
 #define IO_SERIAL_HIGH		1
 #define IO_SERIAL_LOW			0

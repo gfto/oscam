@@ -268,10 +268,17 @@ int SR_Receive (struct s_reader *reader, BYTE * buffer, unsigned size)
 	return OK;
 }	
 
-int SR_SetBaudrate (struct s_reader *reader)
+int SR_WriteSettings (struct s_reader *reader, unsigned short F, BYTE D, BYTE N, BYTE T)
 {
-    reader->sr_config.fs=reader->mhz*10000; //freq in KHz
-    EnableSmartReader(reader, reader->sr_config.fs, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
+//		maintaining all this admin seems overdone, since after this init the values are nowhere needed
+//		reader[ridx].sr_config.F=F;
+//		reader[ridx].sr_config.D=D;
+//		reader[ridx].sr_config.N=N;
+//		reader[ridx].sr_config.T=T;
+//   reader->sr_config.fs=reader->mhz*10000; //freq in KHz */
+//    EnableSmartReader(reader, reader->sr_config.fs, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
+    EnableSmartReader(reader, reader->mhz*10000, F, D, N, T, reader->sr_config.inv,reader->sr_config.parity);
+
     //baud rate not really used in native mode since
     //it's handled by the card, so just set to maximum 3Mb/s
     smartreader_set_baudrate(reader, 3000000);
