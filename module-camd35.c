@@ -219,7 +219,7 @@ static void camd35_send_dcw(ECM_REQUEST *er)
   else
   {
     // Send CW
-    if (er->rc < 4)
+    if ((er->rc < 4) || (er->rc == 7))
     {
       buf[0]++;
       buf[1]=16;
