@@ -206,9 +206,6 @@ static void camd35_send_dcw(ECM_REQUEST *er)
   uchar *buf;
   buf=req+(er->cpti*REQ_SIZE);	// get orig request
 
-  if (buf[0]==3)
-    memmove(buf+20+16, buf+20+buf[1], 0x34);
-
   // CMD08: stop requests for current system+provider+serviceid
   if ((er->rcEx > 0) || (er->rc == 8))
   {
@@ -221,6 +218,8 @@ static void camd35_send_dcw(ECM_REQUEST *er)
     // Send CW
     if ((er->rc < 4) || (er->rc == 7))
     {
+      if (buf[0]==3)
+        memmove(buf+20+16, buf+20+buf[1], 0x34);
       buf[0]++;
       buf[1]=16;
       memcpy(buf+20, er->cw, buf[1]);
