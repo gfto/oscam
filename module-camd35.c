@@ -219,10 +219,7 @@ static void camd35_send_dcw(ECM_REQUEST *er)
   else
   {
     // Send CW
-    // <4: found, cache1, cache2
-    // >5 & <8: sleeping, fake
-    // >10 & <13: expdate, disabled
-    if ((er->rc < 4) || (er->rc > 5 && er->rc < 8) || (er->rc > 10 && er->rc < 13))
+    if (er->rc < 4)
     {
       buf[0]++;
       buf[1]=16;
