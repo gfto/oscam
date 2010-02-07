@@ -210,7 +210,7 @@ static void camd35_send_dcw(ECM_REQUEST *er)
     memmove(buf+20+16, buf+20+buf[1], 0x34);
 
   // CMD08: stop requests for current system+provider+serviceid
-  if ((er->rcEx > 0 || er->rc == 8))
+  if ((er->rcEx > 0) || (er->rc == 8))
   {
     buf[0]=0x08;
     buf[1]=2;
