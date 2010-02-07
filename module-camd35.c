@@ -209,20 +209,31 @@ static void camd35_send_dcw(ECM_REQUEST *er)
   if (buf[0]==3)
     memmove(buf+20+16, buf+20+buf[1], 0x34);
 
-  // <4: found, cache1, cache2
-  // >5 & <8: sleeping, fake
-  // >10 & <13: expdate, disabled
-  if ((er->rc < 4) || (er->rc > 5 && er->rc < 8) || (er->rc > 10 && er->rc < 13))
-  {
-    buf[0]++;
-    buf[1]=16;
-    memcpy(buf+20, er->cw, buf[1]);
-  }
-  else // CMD08: stop requests for current system+provider+serviceid
+  // CMD08: stop requests for current system+provider+serviceid
+  if ((er->rcEx > 0 || er->rc == 8))
   {
     buf[0]=0x08;
     buf[1]=2;
     memset(buf+20, 0, buf[1]);
+  }
+  else
+  {
+    // Send CW
+    // <4: found, cache1, cache2
+    // >5 & <8: sleeping, fake
+    // >10 & <13: expdate, disabled
+    if ((er->rc < 4) || (er->rc > 5 && er->rc < 8) || (er->rc > 10 && er->rc < 13))
+    {
+      buf[0]++;
+      buf[1]=16;
+      memcpy(buf+20, er->cw, buf[1]);
+    }
+    else 
+    {
+      // Send old CMD44 to prevent cascading problems with older mpcs/oscam versions
+      buf[0]=0x44;
+      buf[1]=0;
+    }
   }
   camd35_send(buf);
   camd35_request_emm(er);
