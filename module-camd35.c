@@ -5,7 +5,7 @@
 //CMD02 - EMM (in clientmode - set EMM, in server mode - EMM data) - obsolete
 //CMD03 - ECM (cascading request)
 //CMD04 - ECM (cascading response)
-//CMD05 - Send cardata/cardinfo to client
+//CMD05 - EMM (emm request) send cardata/cardinfo to client
 //CMD06 - EMM (incomming EMM in server mode)
 //CMD19 - EMM (incomming EMM in server mode) only seen with caid 0x1830
 //CMD08 - Stop sending requests to the server for current srvid,prvid,caid
