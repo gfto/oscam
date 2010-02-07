@@ -556,12 +556,12 @@ static void newcamd_auth_client(in_addr_t ip)
 
     ok = cfg->ncd_allowed ? 0 : 1;
     for (p_ip=cfg->ncd_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
-       ok=((ip>=p_ip->ip[0]) && (ip<=p_ip->ip[1]));
+	ok=((ip>=p_ip->ip[0]) && (ip<=p_ip->ip[1]));
 
     if (!ok)
     {
-       cs_auth_client((struct s_auth *)0, NULL);
-       cs_exit(0);
+	cs_auth_client((struct s_auth *)0, NULL);
+	cs_exit(0);
     }
 
     // make random 14 bytes

@@ -775,15 +775,21 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 		if (reader[ridx].mhz == 357 || reader[ridx].mhz == 358) //no overclocking
 			reader[ridx].mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 
-	//set clock speed/baudrate must be done before timings
-	//because current_baudrate is used in calculation of timings
-	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader[ridx].mhz / 100);
-	F =	(double) atr_f_table[FI];
-
-	if (deprecated == 0)
-		if (protocol_type != ATR_PROTOCOL_TYPE_T14) //dont switch for T14
-			if (ICC_Async_SetBaudrate ( d * ICC_Async_GetClockRate () / F))
-				return ERROR;
+#if defined(LIBUSB)
+ if (reader[ridx].typ != R_SMART) {
+#endif    
+        //set clock speed/baudrate must be done before timings
+        //because current_baudrate is used in calculation of timings
+        cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader[ridx].mhz / 100);
+        F =	(double) atr_f_table[FI];
+    
+        if (deprecated == 0)
+            if (protocol_type != ATR_PROTOCOL_TYPE_T14) //dont switch for T14
+                if (ICC_Async_SetBaudrate ( d * ICC_Async_GetClockRate () / F))
+                    return ERROR;
+#if defined(LIBUSB)
+    }
+#endif
 
 	//set timings according to ATR
 	read_timeout = 0;

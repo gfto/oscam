@@ -216,6 +216,13 @@ Each CAID requires a separate port.
 bind service to specified IP address, default:all
 .RE
 .PP
+\fBallowed\fP = \fBIP address\fP|\fBIP address range\fP[,\fBIP address\fP|\fBIP address range]\fP...
+.RS 3n
+client connections allowed from, default:none
+
+ example: allowed = 127.0.0.1,192.168.0.0-192.168.255.255
+.RE
+.PP
 \fBkey\fP = \fBDES key\fP
 .RS 3n
 key for newcamd client encryption, default:none

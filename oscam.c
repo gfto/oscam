@@ -125,9 +125,9 @@ char *cs_platform(char *buf)
 static void usage()
 {
   fprintf(stderr, "%s\n\n", logo);
-  fprintf(stderr, "OSCam cardserver v%s, build #%s (%s) - (w) 2009-2010 streamboard SVN\n", CS_VERSION_X, CS_SVN_VERSION, CS_OSTYPE);
-  fprintf(stderr, "\tsee http://streamboard.gmc.to:8001/wiki/ for more details\n");
-  fprintf(stderr, "\tbased on OSCam 0.99.x, (w) 2010 oscam.ump2002.net SVN\n");
+  fprintf(stderr, "OSCam cardserver v%s, build #%s (%s) - (w) 2010 oscam.ump2002.net SVN\n", CS_VERSION_X, CS_SVN_VERSION, CS_OSTYPE);
+  fprintf(stderr, "\tsee http://trac.oscam.ump2002.net/wiki/ for more details\n");
+  fprintf(stderr, "\tbased on streamboard OSCam 0.99.x, (w) 2009 streamboard SVN\n");
   fprintf(stderr, "\tbased on streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n\n");
   fprintf(stderr, "oscam [-b] [-c config-dir]");
 #ifdef CS_NOSHM
