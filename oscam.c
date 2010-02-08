@@ -1641,10 +1641,10 @@ void chk_dcw(int fd)
     switch(er->rc)
     {
       case 2:
-        ert->rc=2; //cache1
+        ert->rc=2;
         break;
       case 3:
-        ert->rc=3; //cache2
+        ert->rc=3;
         break;
       default:
         ert->rc=0;
