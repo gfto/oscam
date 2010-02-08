@@ -875,7 +875,7 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	if ((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S))
 		return PROTOCOL_T0_ERROR;
 	
-	if (reader[ridx].typ != R_INTERNAL)
+	if (reader[ridx].typ <= R_MOUSE)
 	{
 		/* Send 0x01 byte */
 		if (ICC_Async_Transmit (1, &b1))

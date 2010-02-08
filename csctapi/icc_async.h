@@ -67,7 +67,6 @@ int ICC_Async_Device_Init (void);
 
 /* Attributes */
 int ICC_Async_SetTimings (unsigned wait_etu);
-extern int ICC_Async_SetBaudrate (unsigned long baudrate);
 extern unsigned long ICC_Async_GetClockRate (void);
 int ICC_Async_GetStatus (int * has_card);
 

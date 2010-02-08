@@ -164,9 +164,6 @@ int Sci_WriteSettings (BYTE T, unsigned long fs, unsigned long ETU, unsigned lon
 int Sci_Activate ()
 {
 	cs_debug_mask(D_IFD, "IFD: Activating card");
-#ifdef SCI_DEV
-	if(reader[ridx].typ == R_INTERNAL)
-	{
 		int in;
 
 #if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
@@ -186,20 +183,12 @@ int Sci_Activate ()
 		}
 		else
 			return ERROR;
-	}
-	else
-#endif
-	{
 		return OK;
-	}
 }
 
 int Sci_Deactivate ()
 {
 	cs_debug_mask(D_IFD, "IFD: Deactivating card");
-#ifdef SCI_DEV
-	if(reader[ridx].typ == R_INTERNAL)
-	{
 		int in;
 		
 #if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
@@ -214,10 +203,6 @@ int Sci_Deactivate ()
 			if(ioctl(reader[ridx].handle, IOCTL_SET_DEACTIVATE)<0)
 				return ERROR;
 		}
-		
-		
-	}
-#endif
 	
 	return OK;
 }

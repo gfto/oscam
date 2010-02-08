@@ -55,6 +55,10 @@ static int get_gpio(void)
 
 int Phoenix_Init ()
 {
+		if(IO_Serial_InitPnP ())
+			return ERROR;
+		IO_Serial_Flush();
+
 #ifdef USE_GPIO	//felix: define gpio number used for card detect and reset. ref to globals.h				
 	if (reader[ridx].detect>4)
 	{
@@ -68,9 +72,6 @@ int Phoenix_Init ()
 #endif
 	
 	cs_debug_mask (D_IFD, "IFD: Initializing reader %s type=%d\n",  reader[ridx].label, reader[ridx].typ);
-	
-	if(reader[ridx].typ == R_INTERNAL) //not sure whether this should be moved in front of GPIO part
-		return OK;
 	
 	/* Default serial port settings */
 	if (IO_Serial_SetParams (DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW))
@@ -131,6 +132,9 @@ int Phoenix_Reset (ATR * atr)
 		req_ts.tv_sec = 0;
 		req_ts.tv_nsec = 50000000;
 #endif
+
+    if (Phoenix_SetBaudrate (DEFAULT_BAUDRATE))
+      return ERROR;
 		
 		for(i=0; i<3; i++) {
 			IO_Serial_Flush();
@@ -222,7 +226,7 @@ int Phoenix_Receive (BYTE * buffer, unsigned size, unsigned int timeout)
 int Phoenix_SetBaudrate (unsigned long baudrate)
 {
 	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %lu\n", baudrate);
-	if ((reader[ridx].typ != R_INTERNAL) && (current_baudrate	!= baudrate))
+	if (current_baudrate	!= baudrate)
 	{
 		/* Get current settings */
 		struct termios tio;

@@ -126,19 +126,22 @@
 #define D_DEVICE    32  // Debug Reader I/O
 #define D_ALL_DUMP  63															// dumps all
 
-#define R_MOUSE     0x1 // Reader smartcard mouse
-#define R_INTERNAL  0x2 // Reader smartcard intern
-#define R_DB2COM1		0x3 // Reader Dbox2 @ com1
-#define R_DB2COM2		0x4 // Reader Dbox2 @ com1
+#define R_DB2COM1		0x1 // Reader Dbox2 @ com1
+#define R_DB2COM2		0x2 // Reader Dbox2 @ com1
+#define R_MOUSE     0x3 // Reader smartcard mouse
+/////////////////// phoenix readers which need baudrate setting and timings need to be guarded by OSCam: BEFORE R_MOUSE
+#define R_INTERNAL  0x4 // Reader smartcard intern
+/////////////////// internal readers (Dreambox, Coolstream, IPBox) are all R_INTERNAL, they are determined compile-time
+/////////////////// readers that do not reed baudrate setting and timings are guarded by reader itself (large buffer built in): AFTER R_SMART
 #define R_SMART     0x5 // Smartreader+
-#ifdef HAVE_PCSC
-	#define R_PCSC 			0x6 // PCSC
-#endif
+#define R_PCSC 			0x6 // PCSC
+/////////////////// proxy readers after R_CS378X
 #define R_CAMD35    0x10  // Reader cascading camd 3.5x
 #define R_CAMD33    0x11  // Reader cascading camd 3.3x
 #define R_NEWCAMD   0x12  // Reader cascading newcamd
 #define R_RADEGAST  0x13  // Reader cascading radegast
 #define R_CS378X    0x14  // Reader cascading camd 3.5x TCP
+/////////////////// peer to peer proxy readers after R_CCCAM
 #define R_GBOX      0x20  // Reader cascading gbox
 #define R_CCCAM     0x25  // Reader cascading cccam
 #define R_SERIAL    0x80  // Reader serial
@@ -385,7 +388,7 @@ struct s_client
   int       cwcache;
   int       cwnot;
   int       cwtun;       // count betatunneled ECMs per client
-  int       cwignored;   // count ignored
+  int       cwignored;   // count ignored 
   uchar     ucrc[4];     // needed by monitor and used by camd35
   ulong     pcrc;        // pwd crc
   AES_KEY   aeskey;      // needed by monitor and used by camd33, camd35
