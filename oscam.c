@@ -1906,7 +1906,7 @@ void get_cw(ECM_REQUEST *er)
     // store ECM in cache
     memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
 
-    if (((er->rc > 12) || (er->rc == 0) || (!er->rc)) && check_ecmcache(er, client[cs_idx].grp)) // 12 is the highest errorcode so far
+    if (check_ecmcache(er, client[cs_idx].grp))
       er->rc=1; // cache1
 
 #ifdef CS_ANTICASC
