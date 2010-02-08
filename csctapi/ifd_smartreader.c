@@ -189,7 +189,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         }
         
         smart_flush(reader);
-        EnableSmartReader(reader, reader->sr_config.fs, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
+        EnableSmartReader(reader, reader->sr_config.fs/10000, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
         sched_yield();
         
         //Reset smartcard
@@ -223,7 +223,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
             cs_log("IO:SR: Inverse convention detected, setting smartreader inv to 1");
 #endif
             reader->sr_config.inv=1;
-            EnableSmartReader(reader, reader->sr_config.fs, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
+            EnableSmartReader(reader, reader->sr_config.fs/10000, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
         }
         // parse atr
         if(ATR_InitFromArray (atr, data, ret) == ATR_OK) {
@@ -275,9 +275,24 @@ int SR_WriteSettings (struct s_reader *reader, unsigned short F, BYTE D, BYTE N,
 //		reader[ridx].sr_config.D=D;
 //		reader[ridx].sr_config.N=N;
 //		reader[ridx].sr_config.T=T;
-//   reader->sr_config.fs=reader->mhz*10000; //freq in KHz */
+//   reader->sr_config.fs=reader->mhz*10000; //freq in Hz */
 //    EnableSmartReader(reader, reader->sr_config.fs, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
-    EnableSmartReader(reader, reader->mhz*10000, F, D, N, T, reader->sr_config.inv,reader->sr_config.parity);
+		
+    // smartreader supports 3.20, 3.43, 3.69, 4.00, 4.36, 4.80, 5.34, 6.00, 6.86, 8.00, 9.61, 12.0, 16.0 Mhz
+		if (reader->mhz >=1600) reader->mhz = 1600; else
+		if (reader->mhz >=1200) reader->mhz = 1200; else
+		if (reader->mhz >=961)  reader->mhz =  961; else
+		if (reader->mhz >=800)  reader->mhz =  800; else
+		if (reader->mhz >=686)  reader->mhz =  686; else
+		if (reader->mhz >=600)  reader->mhz =  600; else
+		if (reader->mhz >=534)  reader->mhz =  534; else
+		if (reader->mhz >=480)  reader->mhz =  480; else
+		if (reader->mhz >=436)  reader->mhz =  436; else
+		if (reader->mhz >=400)  reader->mhz =  400; else
+		if (reader->mhz >=369)  reader->mhz =  369; else
+		if (reader->mhz >=343)  reader->mhz =  343; else
+			reader->mhz =  320;
+    EnableSmartReader(reader, reader->mhz, F, D, N, T, reader->sr_config.inv,reader->sr_config.parity);
 
     //baud rate not really used in native mode since
     //it's handled by the card, so just set to maximum 3Mb/s
@@ -351,10 +366,8 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
 
     // command 2, set the frequency in KHz
     // direct from the source .. 4MHz is the best init frequency for T=0 card, but looks like it's causing issue with some nagra card, reveting to 3.69MHz
-    // if (clock<3690000 && T==0)
-    if (clock<3690000)
-        clock=3690000;
-    freqk = (unsigned short) (clock / 1000);
+		freqk = clock * 10; //clock with type int couldnt hold freq in Hz on all platforms, so I reverted to 10khz units (like mhz) - dingo
+
 #ifdef DEBUG_USB_IO
     cs_log("IO:SR: sending Freq=%04X (%d) to smartreader",freqk,freqk);
 #endif
@@ -420,7 +433,7 @@ static void ResetSmartReader(S_READER *reader)
     reader->sr_config.T=0; 
     reader->sr_config.inv=0; 
     
-    EnableSmartReader(reader, reader->sr_config.fs, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
+    EnableSmartReader(reader, reader->sr_config.fs/10000, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
     sched_yield();
 
 }

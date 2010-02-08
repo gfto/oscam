@@ -889,10 +889,10 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 		if (Sci_WriteSettings (protocol_type, reader[ridx].mhz / 100, ETU, WWT, BWT, CWT, EGT, (unsigned char)P, (unsigned char)I))
 			return ERROR;	
 #elif COOL
+		if (Cool_SetClockrate(reader[ridx].mhz))
+			return ERROR;
 		if (Cool_WriteSettings (BWT, CWT, EGT, BGT))
 			return ERROR;
-//		if (Cool_SetBaudrate(reader[ridx].mhz))
-//			return ERROR;
 #endif //COOL
 	}
 #if defined(LIBUSB)

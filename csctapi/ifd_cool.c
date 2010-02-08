@@ -53,7 +53,7 @@ int Cool_GetStatus (int * in)
 
 int Cool_Reset (ATR * atr)
 {
-	if (Cool_SetBaudrate(357))
+	if (Cool_SetClockrate(357))
 		return ERROR;
 
 	//reset card
@@ -99,7 +99,7 @@ int Cool_Receive (BYTE * data, unsigned size)
 	return OK;
 }	
 
-int Cool_SetBaudrate (int mhz)
+int Cool_SetClockrate (int mhz)
 {
 	typedef unsigned long u_int32;
 	u_int32 clk;
