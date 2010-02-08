@@ -1224,6 +1224,8 @@ int check_ecmcache(ECM_REQUEST *er, ulong grp)
 //cs_log("cache CHECK: grp=%lX", grp);
   for(i=0; i<CS_ECMCACHESIZE; i++)
     if ((grp & ecmcache[i].grp) &&
+        ecmcache[i].caid==er->caid &&
+        ecmcache[i].prid==er->prid &&
         (!memcmp(ecmcache[i].ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
     {
 //cs_log("cache found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
@@ -1235,14 +1237,16 @@ int check_ecmcache(ECM_REQUEST *er, ulong grp)
 
 static void store_ecm(ECM_REQUEST *er)
 {
-//cs_log("store ecm from reader %d", er->reader[0]);
-  memcpy(ecmcache[*ecmidx].ecmd5, er->ecmd5, CS_ECMSTORESIZE);
-  memcpy(ecmcache[*ecmidx].cw, er->cw, 16);
-  ecmcache[*ecmidx].caid=er->caid;
-  ecmcache[*ecmidx].prid=er->prid;
-  ecmcache[*ecmidx].grp =reader[er->reader[0]].grp;
-// cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
+  int rc;
+  rc=*ecmidx;
   *ecmidx=(*ecmidx+1) % CS_ECMCACHESIZE;
+  //cs_log("store ecm from reader %d", er->reader[0]);
+  memcpy(ecmcache[rc].ecmd5, er->ecmd5, CS_ECMSTORESIZE);
+  memcpy(ecmcache[rc].cw, er->cw, 16);
+  ecmcache[rc].caid=er->caid;
+  ecmcache[rc].prid=er->prid;
+  ecmcache[rc].grp=reader[er->reader[0]].grp;
+  //cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
 
 void store_logentry(char *txt)
@@ -1634,7 +1638,17 @@ void chk_dcw(int fd)
   ert->rcEx=er->rcEx;
   if (er->rc>0) // found
   {
-    ert->rc=(er->rc==2)?2:0;
+    switch(er->rc)
+    {
+      case 2:
+        ert->rc=2; //cache1
+        break;
+      case 3:
+        ert->rc=3; //cache2
+        break;
+      default:
+        ert->rc=0;
+    }
     ert->rcEx=0;
     ert->reader[0]=er->reader[0];
     memcpy(ert->cw , er->cw , sizeof(er->cw));
@@ -1811,28 +1825,26 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 
 void get_cw(ECM_REQUEST *er)
 {
-  int i, j, m, rejected;
-  //uchar orig_caid[sizeof(er->caid)];
+  int i, j, m, rejected=0;
   time_t now;
-//test the guessing ...
-//cs_log("caid should be %04X, provid %06X", er->caid, er->prid);
-//er->caid=0;
 
   client[cs_idx].lastecm=time((time_t)0);
   
   if (!er->caid)
     guess_cardsystem(er);
 
+  // FIXME: quickfixes obsolete ?
   if( (er->caid & 0xFF00)==0x600 && !er->chid )
     er->chid = (er->ecm[6]<<8)|er->ecm[7];
+  // quickfix for 0100:000065
+  if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
+    er->srvid = 0x0642;
+  // END quickfixes
 
   if (!er->prid)
     er->prid=chk_provid(er->ecm, er->caid);
 
-// quickfix for 0100:000065
-  if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
-    er->srvid = 0x0642;
-
+  // Set providerid for newcamd clients if none is given
   if( (!er->prid) && client[cs_idx].ncd_server )
   {
     int pi = client[cs_idx].port_idx;
@@ -1840,25 +1852,37 @@ void get_cw(ECM_REQUEST *er)
       er->prid = cfg->ncd_ptab.ports[pi].ftab.filts[0].prids[0];
   }
 
-//cs_log("caid IS NOW .. %04X, provid %06X", er->caid, er->prid);
+  // CAID not supported or found
+  if (!er->caid)
+  {
+    er->rc=8;
+    er->rcEx=E2_CAID;
+    rejected=1;
+  }
 
-  rejected=0;
+  // user expired
+  if(client[cs_idx].expirationdate && client[cs_idx].expirationdate<client[cs_idx].lastecm)
+    er->rc=11;
+
+  // user disabled
+  if(client[cs_idx].disabled != 0)
+    er->rc=12;
+
   if (er->rc>99)    // rc<100 -> ecm error
   {
     now=time((time_t *) 0);
     m=er->caid;
     er->ocaid=er->caid;
-
     i=er->srvid;
+
     if ((i!=client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch))
       client[cs_idx].lastswitch=now;
-    if(client[cs_idx].expirationdate && client[cs_idx].expirationdate<client[cs_idx].lastecm)
-      er->rc=11; //expired
-    if(client[cs_idx].disabled != 0)
-      er->rc=12; //disabled
+
+    // user sleeping
     if ((client[cs_idx].tosleep) &&
         (now-client[cs_idx].lastswitch>client[cs_idx].tosleep))
-      er->rc=6; // sleeping
+      er->rc=6;
+
     client[cs_idx].last_srvid=i;
     client[cs_idx].last_caid=m;
 
@@ -1870,7 +1894,6 @@ void get_cw(ECM_REQUEST *er)
                 break;
         case 1: if (!chk_bcaid(er, &client[cs_idx].ctab)) 
                 {
-//                  cs_log("chk_bcaid failed");
                   er->rc=8; // invalid
                   er->rcEx=E2_CAID;
                 }
