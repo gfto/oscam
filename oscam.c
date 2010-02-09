@@ -1825,141 +1825,170 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 
 void get_cw(ECM_REQUEST *er)
 {
-  int i, j, m;
-  time_t now;
+	int i, j, m;
+	time_t now = time((time_t)0);
 
-  client[cs_idx].lastecm=time((time_t)0);
-  
-  if (!er->caid)
-    guess_cardsystem(er);
+	client[cs_idx].lastecm = now;
 
-  // FIXME: quickfixes obsolete ?
-  if( (er->caid & 0xFF00)==0x600 && !er->chid )
-    er->chid = (er->ecm[6]<<8)|er->ecm[7];
-  // quickfix for 0100:000065
-  if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
-    er->srvid = 0x0642;
-  // END quickfixes
+	if (!er->caid)
+		guess_cardsystem(er);
 
-  if (!er->prid)
-    er->prid=chk_provid(er->ecm, er->caid);
+	/* Quickfix Area
+	 * FIXME: quickfixes obsolete ?
+	 */
 
-  // Set providerid for newcamd clients if none is given
-  if( (!er->prid) && client[cs_idx].ncd_server )
-  {
-    int pi = client[cs_idx].port_idx;
-    if( pi>=0 && cfg->ncd_ptab.nports && cfg->ncd_ptab.nports >= pi )
-      er->prid = cfg->ncd_ptab.ports[pi].ftab.filts[0].prids[0];
-  }
+	if( (er->caid & 0xFF00) == 0x600 && !er->chid )
+		er->chid = (er->ecm[6]<<8)|er->ecm[7];
 
-  // CAID not supported or found
-  if (!er->caid)
-  {
-    er->rc=8;
-    er->rcEx=E2_CAID;
-  }
+	// quickfix for 0100:000065
+	if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
+		er->srvid = 0x0642;
+	/* END quickfixes */
 
-  // user expired
-  if(client[cs_idx].expirationdate && client[cs_idx].expirationdate<client[cs_idx].lastecm)
-    er->rc=11;
+	if (!er->prid)
+		er->prid = chk_provid(er->ecm, er->caid);
 
-  // user disabled
-  if(client[cs_idx].disabled != 0)
-    er->rc=12;
+	// Set providerid for newcamd clients if none is given
+	if( (!er->prid) && client[cs_idx].ncd_server ) {
+		int pi = client[cs_idx].port_idx;
+		if( pi >= 0 && cfg->ncd_ptab.nports && cfg->ncd_ptab.nports >= pi )
+			er->prid = cfg->ncd_ptab.ports[pi].ftab.filts[0].prids[0];
+	}
 
-  if (er->rc>99)    // rc<100 -> ecm error
-  {
-    now=time((time_t *) 0);
-    m=er->caid;
-    er->ocaid=er->caid;
-    i=er->srvid;
+	// CAID not supported or found
+	if (!er->caid) {
+		er->rc = 8;
+		er->rcEx = E2_CAID;
+	}
 
-    if ((i!=client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch))
-      client[cs_idx].lastswitch=now;
+	// user expired
+	if(client[cs_idx].expirationdate && client[cs_idx].expirationdate < client[cs_idx].lastecm)
+		er->rc = 11;
 
-    // user sleeping
-    if ((client[cs_idx].tosleep) &&
-        (now-client[cs_idx].lastswitch>client[cs_idx].tosleep))
-      er->rc=6;
+	// user disabled
+	if(client[cs_idx].disabled != 0)
+		er->rc = 12;
 
-    client[cs_idx].last_srvid=i;
-    client[cs_idx].last_caid=m;
+	// rc<100 -> ecm error
+	if (er->rc > 99) {
 
-    for (j=0; (j<6) && (er->rc>99); j++)
-      switch(j) 
-      {
-        case 0: if (client[cs_idx].dup)
-                  er->rc=7; // fake
-                break;
-        case 1: if (!chk_bcaid(er, &client[cs_idx].ctab)) 
-                {
-                  er->rc=8; // invalid
-                  er->rcEx=E2_CAID;
-                }
-                break;
-        case 2: if (!chk_srvid(er, cs_idx))
-                  er->rc=8;
-                break;
-        case 3: if (!chk_ufilters(er))
-                  er->rc=8;
-                break;
-        case 4: if (!chk_sfilter(er, ph[client[cs_idx].ctyp].ptab))
-                  er->rc=8;
-                break;
-        case 5: if( (i=er->l-(er->ecm[2]+3)) )
-                {
-                  if (i>0)
-                  {
-                    cs_debug("warning: ecm size adjusted from 0x%X to 0x%X", 
-                      er->l, er->ecm[2]+3);
-                    er->l=(er->ecm[2]+3);
-                  }
-                  else
-                    er->rc=9; // corrupt
-                }
-                break;
-      }
+		m = er->caid;
+		er->ocaid = er->caid;
+		i = er->srvid;
 
-    // BetaCrypt tunneling
-    // moved behind the check routines, because newcamd ECM will fail if ECM is converted before
-    if (&client[cs_idx].ttab)
-      cs_betatunnel(er);
+		if ((i != client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch))
+			client[cs_idx].lastswitch = now;
+
+		// user sleeping
+		if ((client[cs_idx].tosleep) && (now - client[cs_idx].lastswitch > client[cs_idx].tosleep))
+			er->rc = 6;
+
+		client[cs_idx].last_srvid = i;
+		client[cs_idx].last_caid = m;
+
+		for (j = 0; (j < 6) && (er->rc > 99); j++)
+		{
+			switch(j) {
+
+				case 0:
+					// fake (uniq)
+					if (client[cs_idx].dup)
+						er->rc = 7;
+					break;
+
+				case 1:
+					// invalid (caid)
+					if (!chk_bcaid(er, &client[cs_idx].ctab)) {
+						er->rc = 8;
+						er->rcEx = E2_CAID;
+						}
+					break;
+
+				case 2:
+					// invalid (srvid)
+					if (!chk_srvid(er, cs_idx))
+						er->rc = 8;
+					break;
+
+				case 3:
+					// invalid (ufilters)
+					if (!chk_ufilters(er))
+						er->rc = 8;
+					break;
+
+				case 4:
+					// invalid (sfilter)
+					if (!chk_sfilter(er, ph[client[cs_idx].ctyp].ptab))
+						er->rc = 8;
+					break;
+
+				case 5:
+					// corrupt
+					if( (i = er->l - (er->ecm[2] + 3)) ) {
+						if (i > 0) {
+							cs_debug("warning: ecm size adjusted from 0x%X to 0x%X",
+							er->l, er->ecm[2] + 3);
+							er->l = (er->ecm[2] + 3);
+						}
+						else
+							er->rc = 9;
+					}
+					break;
+			}
+		}
+
+		/*BetaCrypt tunneling
+		 *moved behind the check routines,
+		 *because newcamd ECM will fail
+		 *if ECM is converted before
+		 */
+		if (&client[cs_idx].ttab)
+			cs_betatunnel(er);
     
-    // store ECM in cache
-    memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
+		// store ECM in cache
+		memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
 
-    if (check_ecmcache(er, client[cs_idx].grp))
-      er->rc=1; // cache1
+		// cache1
+		if (check_ecmcache(er, client[cs_idx].grp))
+			er->rc = 1;
 
 #ifdef CS_ANTICASC
-    ac_chk(er, 0);
+		ac_chk(er, 0);
 #endif
-  }
+	}
 
-  if(er->rc>99 && er->rc!=1)
-  {
-    for (i=m=0; i<CS_MAXREADER; i++)
-      if (matching_reader(er, &reader[i])&&(i!=ridx))
-        m|=er->reader[i]=(reader[i].fallback)?2:1;
+	if(er->rc > 99 && er->rc != 1) {
 
-    switch(m)
-    {
-      case 0: er->rc=4;                         // no reader -> not found
-              if (!er->rcEx) er->rcEx=E2_GROUP; 
-              break;
-      case 2: for (i=0; i<CS_MAXREADER; i++)  // fallbacks only, switch them.
-                er->reader[i]>>=1;
-    }
-  }
-  if (er->rc<100)
-  {
-    if (cfg->delay) usleep(cfg->delay);
-    send_dcw(er);
-    return;
-  }
+		for (i = m = 0; i < CS_MAXREADER; i++)
+			if (matching_reader(er, &reader[i]) && (i != ridx))
+				m|=er->reader[i] = (reader[i].fallback)? 2: 1;
 
-  er->rcEx=0; 
-  request_cw(er, 0, cfg->preferlocalcards ? 1 : 0);
+		switch(m) {
+
+			// no reader -> not found
+			case 0:
+				er->rc = 4;
+				if (!er->rcEx)
+					er->rcEx = E2_GROUP;
+				break;
+
+			// fallbacks only, switch them
+			case 2:
+				for (i = 0; i < CS_MAXREADER; i++)
+					er->reader[i]>>=1;
+		}
+	}
+
+	if (er->rc < 100) {
+		if (cfg->delay)
+			usleep(cfg->delay);
+
+		send_dcw(er);
+		return;
+	}
+
+	er->rcEx = 0;
+	request_cw(er, 0, cfg->preferlocalcards ? 1 : 0);
 }
 
 void log_emm_request(int auidx)
