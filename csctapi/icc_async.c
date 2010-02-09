@@ -91,11 +91,15 @@ int ICC_Async_Device_Init ()
 			}
 			break;
 #endif
-#if defined(LIBUSB)
 		case R_SMART:
+#if defined(LIBUSB)
 			if(SR_Init(&reader[ridx]))
 				return ERROR;
 			break;
+#else
+			cs_log("ERROR, you have specified 'protocol = smartreader' in oscam.server,");
+			cs_log("recompile with SmartReader support.");
+			return ERROR;
 #endif
 		case R_INTERNAL:
 #ifdef COOL
@@ -108,10 +112,15 @@ int ICC_Async_Device_Init ()
 	#endif
 			if (reader[ridx].handle < 0)
 				return ERROR;
+#else//SCI_DEV
+			cs_log("ERROR, you have specified 'protocol = internal' in oscam.server,");
+			cs_log("recompile with internal reader support.");
+			return ERROR;
 #endif//SCI_DEV
 			break;
 		default:
 			cs_log("ERROR ICC_Device_Init: unknow reader type %i",reader[ridx].typ);
+			return ERROR;
 	}
 
 	if (reader[ridx].typ <= R_MOUSE)
@@ -168,6 +177,7 @@ int ICC_Async_GetStatus (int * card)
 			break;
 		default:
 			cs_log("ERROR ICC_Device_Init: unknow reader type %i",reader[ridx].typ);
+			return ERROR;
 	}
 
   if (in) {
@@ -221,6 +231,7 @@ int ICC_Async_Activate (ATR * atr, unsigned short deprecated)
 			break;
 		default:
 			cs_log("ERROR ICC_Async_Activate: unknow reader type %i",reader[ridx].typ);
+			return ERROR;
 	}
 
 	unsigned char atrarr[64];
@@ -371,6 +382,7 @@ int ICC_Async_Transmit (unsigned size, BYTE * data)
 			break;
 		default:
 			cs_log("ERROR ICC_Async_Transmit: unknow reader type %i",reader[ridx].typ);
+			return ERROR;
 	}
 
 	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ <= R_MOUSE)
@@ -405,6 +417,7 @@ int ICC_Async_Receive (unsigned size, BYTE * data)
 			break;
 		default:
 			cs_log("ERROR ICC_Async_Receive: unknow reader type %i",reader[ridx].typ);
+			return ERROR;
 	}
 
 	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ <= R_MOUSE)
@@ -440,6 +453,7 @@ int ICC_Async_Close ()
 			break;
 		default:
 			cs_log("ERROR ICC_Async_Close: unknow reader type %i",reader[ridx].typ);
+			return ERROR;
 	}
 	
 	cs_debug_mask (D_IFD, "IFD: Device %s succesfully closed", reader[ridx].device);
@@ -713,6 +727,7 @@ static int ICC_Async_SetParity (unsigned short parity)
 			return OK;
 		default:
 			cs_log("ERROR ICC_Async_SetParity: unknow reader type %i",reader[ridx].typ);
+			return ERROR;
 	}
 	return OK;
 }
