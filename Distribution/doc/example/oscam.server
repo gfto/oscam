@@ -88,3 +88,22 @@ device   = 0
 aeskey   = 0102030405060708090a0b0c0d0e0f10
 group    = 6
 caid     = 0600
+
+# Smargo Smartreader+
+
+[reader]
+label    = mysmartreader
+protocol = smartreader
+device   = 001:002
+aeskey   = 0102030405060708090a0b0c0d0e0f10
+group    = 7
+caid     = 0700
+
+# internal reader
+
+[reader]
+label    = myinternalreader
+protocol = internal
+device   = /dev/sci0
+group    = 8
+caid     = 0800

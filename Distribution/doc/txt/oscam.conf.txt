@@ -161,6 +161,9 @@ DESCRIPTIONS
 
 	   example: allowed = 127.0.0.1,192.168.0.0-192.168.255.255
 
+       keepalive = 0|1
+	  0 = disable keepalive, default:1
+
        key = DES key
 	  key for newcamd client encryption, default:none
 

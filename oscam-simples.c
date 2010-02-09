@@ -235,6 +235,8 @@ ulong b2i(int n, uchar *b)
       return ((b[0]<<16) | (b[1]<<8) | b[2]);
     case 4:
       return (((b[0]<<24) | (b[1]<<16) | (b[2]<<8) | b[3]) & 0xffffffffL);
+    case 8:
+      return (((b[0]<<56) | (b[1]<<48) | (b[2]<<40) | (b[3]<<32) | (b[4]<<24) | (b[5]<<16) | (b[6]<<8) | b[7]) & 0xffffffffffffffffL);
     default:
       cs_log("Error in b2i, n=%i",n);
   }

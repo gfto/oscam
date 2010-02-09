@@ -162,6 +162,7 @@ int llist_count(LLIST *l)
 
 #define CC_MAXMSGSIZE 512
 #define CC_MAX_PROV   16
+#define CC_MAX_ECMS   50  // before reconnect
 
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 #define NULLFREE(X) do { if (X) { free(X); X = NULL; } } while(0)
@@ -218,6 +219,7 @@ struct cc_data {
   LLIST *cards;               // cards list
 
   uint32 count;
+  uint32 ecm_count;
   uint16 cur_sid;
 
   int last_nok;
@@ -308,6 +310,14 @@ static void cc_cw_decrypt(uint8 *cws)
     node_id_1 >>= 4;
     cur_card >>= 2;
   }
+}
+
+static void cc_cycle_connection()
+{
+  close(client[cs_idx].udp_fd);
+  close(pfd);
+  usleep(200000);
+  ph->c_init();
 }
 
 static int cc_msg_recv(uint8 *buf)
@@ -443,6 +453,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   struct cc_card *card;
   LLIST_ITR itr;
   ECM_REQUEST *cur_er;
+
+  if (cc->ecm_count) cc->ecm_count++;
 
   if (!cc || (pfd < 1)) {
     if (er) {
@@ -713,9 +725,13 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
   case MSG_PING:
     cc_cmd_send(NULL, 0, MSG_PING);
     break;
+  case MSG_DCW_SOMETHING:
+    cc->ecm_count = 1;
   default:
     break;
   }
+
+  if (cc->ecm_count > CC_MAX_ECMS) cc_cycle_connection();
 
   return ret;
 }
@@ -801,6 +817,8 @@ static int cc_cli_connect(void)
   reader[ridx].cc = cc;
   bzero(reader[ridx].cc, sizeof(struct cc_data));
   cc->cards = llist_create();
+
+  cc->ecm_count = 0;
 
   // check cred config
   if(reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0 ||

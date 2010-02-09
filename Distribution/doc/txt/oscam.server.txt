@@ -291,6 +291,15 @@ EXAMPLES
 	   group    = 7
 	   caid     = 0700
 
+	 internal reader
+
+	   [reader]
+	   label    = myinternalreader
+	   protocol = internal
+	   device   = /dev/sci0
+	   group    = 8
+	   caid     = 0800
+
 SEE ALSO
        oscam(1), oscam.conf(5), oscam.user(5), oscam.srvid(5), oscam.guess(5),
        oscam.cert(5), oscam.services(5), oscam.ird(5), oscam.ac(5)
