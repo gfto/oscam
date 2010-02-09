@@ -39,10 +39,7 @@ int Cool_Init ()
 int Cool_GetStatus (int * in)
 {
 	int state;
-	if (cnxt_smc_get_state(handle, &state)) {
-		cs_log("ERROR COOL Getstatus failed.");
-		return ERROR;
-	}
+	call (cnxt_smc_get_state(handle, &state));
 	//state = 0 no card, 1 = not ready, 2 = ready
 	if (state)
 		*in = 1; //CARD, even if not ready report card is in, or it will never get activated
@@ -53,20 +50,17 @@ int Cool_GetStatus (int * in)
 
 int Cool_Reset (ATR * atr)
 {
-	if (Cool_SetClockrate(357))
-		return ERROR;
+	call (Cool_SetClockrate(357));
 
 	//reset card
 	int timeout = 5000; // Timout in ms?
-	if (cnxt_smc_reset_card (handle, timeout, NULL, NULL))
-		return ERROR;
+	call (cnxt_smc_reset_card (handle, timeout, NULL, NULL));
 
 	int n = 40;
 	unsigned char buf[40];
-	if (cnxt_smc_get_atr (handle, buf, &n))
-		return ERROR;
+	call (cnxt_smc_get_atr (handle, buf, &n));
 		
-	if(ATR_InitFromArray (atr, buf, n) == ATR_OK)
+	call (!ATR_InitFromArray (atr, buf, n) == ATR_OK);
 	{
 		struct timespec req_ts;
 		req_ts.tv_sec = 0;
@@ -74,16 +68,13 @@ int Cool_Reset (ATR * atr)
 		nanosleep (&req_ts, NULL);
 		return OK;
 	}
-	else
-		return ERROR;
 }
 
 int Cool_Transmit (BYTE * sent, unsigned size)
 { 
 #define TIMEOUT 4000 //max 4294
 	cardbuflen = 256;//it needs to know max buffer size to respond?
-	if (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, TIMEOUT, 0))
-		return ERROR;
+	call (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, TIMEOUT, 0));
 	cs_ddump(sent, size, "COOL IO: Transmit: ");
 	return OK;
 }
@@ -104,11 +95,7 @@ int Cool_SetClockrate (int mhz)
 	typedef unsigned long u_int32;
 	u_int32 clk;
 	clk = mhz * 10000;
-	if (cnxt_smc_set_clock_freq (handle, clk)) {
-		cs_log("ERROR COOL setting clock to %lu", clk);
-		return ERROR;
-	}
-
+	call (cnxt_smc_set_clock_freq (handle, clk));
 	cs_debug("COOL: Clock succesfully set to %i0 kHz", mhz);
 	return OK;
 }
@@ -130,10 +117,7 @@ int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT,
 	params.CWT = CWT;
 	params.EGT = EGT;
 	params.BGT = BGT;
-	if (cnxt_smc_set_config_timeout(handle, params)) {
-		cs_log("ERROR COOL WriteSettings failed.");
-		return ERROR;
-	}
+	call (cnxt_smc_set_config_timeout(handle, params));
 	cs_debug("COOL WriteSettings OK");
 	return OK;
 }

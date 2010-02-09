@@ -12,7 +12,6 @@
 #include <sys/ioctl.h>
 #include "sci_global.h"
 #include "sci_ioctl.h"
-#include "atr.h"
 #include "string.h"
 #ifdef SH4
 #include <fcntl.h> 
@@ -31,8 +30,7 @@ int Sci_Init ()
 int Sci_GetStatus (int handle, int * status)
 {
 	int in;
-	if (ioctl(handle, IOCTL_GET_IS_CARD_PRESENT, status)<0)
-		return ERROR;
+	call (ioctl(handle, IOCTL_GET_IS_CARD_PRESENT, status)<0);
 	return OK;
 }
 
@@ -57,11 +55,8 @@ int Sci_Reset (ATR * atr)
 #endif
 	params.T = 0;
 	
-	if(ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
-		return ERROR;
-	
-	if(ioctl(reader[ridx].handle, IOCTL_SET_RESET)<0)
-		return ERROR;
+	call (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0);
+	call (ioctl(reader[ridx].handle, IOCTL_SET_RESET)<0);
 
 #ifdef SH4
 	gettimeofday(&tv,0);
@@ -115,21 +110,19 @@ int Sci_Reset (ATR * atr)
 		buf[0] = 0x3B;
 #endif
 	
-	if(n==0)
+	if(n==0) {
+		cs_log("ERROR: 0 characters found in ATR");
 		return ERROR;
-
-	if(ATR_InitFromArray (atr, buf, n) == ATR_OK)
+	}
+	call(!ATR_InitFromArray (atr, buf, n) == ATR_OK);
 	{
 		struct timespec req_ts;
 		req_ts.tv_sec = 0;
 		req_ts.tv_nsec = 50000000;
 		nanosleep (&req_ts, NULL);
-		if (ioctl(reader[ridx].handle, IOCTL_SET_ATR_READY)<0)
-			return ERROR;
+		call (ioctl(reader[ridx].handle, IOCTL_SET_ATR_READY)<0);
 		return OK;
 	}
-	else
-		return ERROR;
 }
 
 int Sci_WriteSettings (BYTE T, unsigned long fs, unsigned long ETU, unsigned long WWT, unsigned long BWT, unsigned long CWT, unsigned long EGT, unsigned char P, unsigned char I)
@@ -137,8 +130,7 @@ int Sci_WriteSettings (BYTE T, unsigned long fs, unsigned long ETU, unsigned lon
 	//int n;
 	SCI_PARAMETERS params;
 	//memset(&params,0,sizeof(SCI_PARAMETERS));
-	if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
-		return ERROR;
+	call (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 );
 
 	params.T = T;
 	params.fs = fs;
@@ -156,8 +148,7 @@ int Sci_WriteSettings (BYTE T, unsigned long fs, unsigned long ETU, unsigned lon
 
 	cs_debug("Setting T=%d fs=%lu mhz ETU=%d WWT=%d CWT=%d BWT=%d EGT=%d clock=%d check=%d P=%d I=%d U=%d", (int)params.T, params.fs, (int)params.ETU, (int)params.WWT, (int)params.CWT, (int)params.BWT, (int)params.EGT, (int)params.clock_stop_polarity, (int)params.check, (int)params.P, (int)params.I, (int)params.U);
 
-	if (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
-		return ERROR;
+	call (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0);
 	return OK;
 }
 
@@ -167,11 +158,10 @@ int Sci_Activate ()
 		int in;
 
 #if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
-		if(ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
+		call (ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0);
 #else
-		if(ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
+		call (ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0);
 #endif
-			return ERROR;
 			
 		if(in)
 		{
@@ -189,21 +179,16 @@ int Sci_Activate ()
 int Sci_Deactivate ()
 {
 	cs_debug_mask(D_IFD, "IFD: Deactivating card");
-		int in;
+	int in;
 		
 #if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
-		if(ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0)
+	call (ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0);
 #else
-		if(ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0)
+	call (ioctl(reader[ridx].handle, IOCTL_GET_IS_CARD_ACTIVATED, &in)<0);
 #endif
-			return ERROR;
 			
-		if(in)
-		{
-			if(ioctl(reader[ridx].handle, IOCTL_SET_DEACTIVATE)<0)
-				return ERROR;
-		}
-	
+	if(in)
+		call (ioctl(reader[ridx].handle, IOCTL_SET_DEACTIVATE)<0);
 	return OK;
 }
 

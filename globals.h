@@ -36,6 +36,12 @@
 #  define GCC_PACK
 #endif
 
+#define call(arg) \
+	if (arg) { \
+		cs_log("ERROR, function call %s returns error.",#arg); \
+		return ERROR; \
+	}
+
 #include "oscam-config.h"
 #ifndef USE_CMAKE
 #  include "oscam-ostype.h"

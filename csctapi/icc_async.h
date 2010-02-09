@@ -38,6 +38,7 @@
 
 #define ATR_TIMEOUT				800
 #define DEFAULT_BAUDRATE	9600
+
 /*
  * Exported types definition
  */

@@ -55,8 +55,7 @@ static int get_gpio(void)
 
 int Phoenix_Init ()
 {
-		if(IO_Serial_InitPnP ())
-			return ERROR;
+		call (IO_Serial_InitPnP ());
 		IO_Serial_Flush();
 
 #ifdef USE_GPIO	//felix: define gpio number used for card detect and reset. ref to globals.h				
@@ -74,24 +73,9 @@ int Phoenix_Init ()
 	cs_debug_mask (D_IFD, "IFD: Initializing reader %s type=%d\n",  reader[ridx].label, reader[ridx].typ);
 	
 	/* Default serial port settings */
-	if (IO_Serial_SetParams (DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW))
-	{
-		reader[ridx].status = 0;//added this one because it seemed logical
-		return ERROR;
-	}
-		
-	if (Phoenix_SetBaudrate(DEFAULT_BAUDRATE))
-	{
-		reader[ridx].status = 0;
-		return ERROR;
-	}
-	
-	if (IO_Serial_SetParity (PARITY_EVEN))
-	{
-		reader[ridx].status = 0;
-		return ERROR;
-	}
-	
+	call (IO_Serial_SetParams (DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
+	call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
+	call (IO_Serial_SetParity (PARITY_EVEN));
 	IO_Serial_Flush();
 	return OK;
 }
@@ -105,8 +89,7 @@ int Phoenix_GetStatus (int * status)
 #endif
  {
 	unsigned int modembits=0;
-	if (ioctl(reader[ridx].handle, TIOCMGET,&modembits)<0)
-		return ERROR;
+	call (ioctl(reader[ridx].handle, TIOCMGET,&modembits)<0);
 	switch(reader[ridx].detect&0x7f)
 	{
 		case	0: *status=(modembits & TIOCM_CAR);	break;
@@ -133,13 +116,11 @@ int Phoenix_Reset (ATR * atr)
 		req_ts.tv_nsec = 50000000;
 #endif
 
-    if (Phoenix_SetBaudrate (DEFAULT_BAUDRATE))
-      return ERROR;
+    call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
 		
 		for(i=0; i<3; i++) {
 			IO_Serial_Flush();
-			if (IO_Serial_SetParity (parity[i]))
-				return ERROR;
+			call (IO_Serial_SetParity (parity[i]));
 
 			ret = ERROR;
 			IO_Serial_Ioctl_Lock(1);
@@ -197,17 +178,11 @@ int Phoenix_Transmit (BYTE * buffer, unsigned size, unsigned int block_delay, un
 		/* Send data */
 		if ((sent == 0) && (block_delay != char_delay))
 		{
-			if (IO_Serial_Write (block_delay, 1, buffer))
-				return ERROR;
-			
-			if (IO_Serial_Write (char_delay, to_send-1, buffer+1))
-				return ERROR;
+			call (IO_Serial_Write (block_delay, 1, buffer));
+			call (IO_Serial_Write (char_delay, to_send-1, buffer+1));
 		}
 		else
-		{
-			if (IO_Serial_Write (char_delay, to_send, buffer+sent))
-				return ERROR;
-		}
+			call (IO_Serial_Write (char_delay, to_send, buffer+sent));
 	}
 	return OK;
 }
@@ -217,9 +192,7 @@ int Phoenix_Receive (BYTE * buffer, unsigned size, unsigned int timeout)
 #define IFD_TOWITOKO_TIMEOUT             1000
 
 	/* Read all data bytes with the same timeout */
-	if (IO_Serial_Read (timeout + IFD_TOWITOKO_TIMEOUT, size, buffer))
-		return ERROR;
-	
+	call (IO_Serial_Read (timeout + IFD_TOWITOKO_TIMEOUT, size, buffer));
 	return OK;
 }
 
@@ -230,14 +203,9 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 	{
 		/* Get current settings */
 		struct termios tio;
-		if (tcgetattr (reader[ridx].handle, &tio) != 0)
-			return ERROR;
-	
-		if (IO_Serial_SetBitrate (baudrate, &tio))
-			return ERROR;
-	
-		if (IO_Serial_SetProperties(tio))
-			return ERROR;
+		call (tcgetattr (reader[ridx].handle, &tio) != 0);
+		call (IO_Serial_SetBitrate (baudrate, &tio));
+		call (IO_Serial_SetProperties(tio));
 	}
 	current_baudrate = baudrate; //so if update fails, current_baudrate is not changed either
 	return OK;

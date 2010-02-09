@@ -8,11 +8,15 @@ At least one [reader] section is \fIrequired\fR.
 .SH DESCRIPTIONS
 .SS "The [reader] section"
 .PP
-\fBdevice\fP = \fBdevice\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP
+\fBdevice\fP = \fB<device|bus:device>\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP
 .RS 3n
 define local or remote reader 
- \fBlport\fP: remapping to local port
- \fBPCSC\fP:  number of PCSC readers, starting with 0 
+ 
+ \fBdevice\fP:      device name
+ \fBbus:devivce\fP: bus name and device name of the Smartreader+
+              (get the names with lsusb 'Bus' and 'Device')
+ \fBlport\fP:       remapping to local port
+ \fBPCSC\fP:        number of PCSC readers, starting with 0 
 .RE
 .PP
 \fBkey\fP = \fBDES key\fP
@@ -346,5 +350,16 @@ PCSC reader
  aeskey   = 0102030405060708090a0b0c0d0e0f10
  group    = 6
  caid     = 0600
+.TP 3n
+\(bu
+Smargo Smartreader+
+
+ [reader]
+ label    = mysmartreader
+ protocol = smartreader
+ device   = 001:002
+ aeskey   = 0102030405060708090a0b0c0d0e0f10
+ group    = 7
+ caid     = 0700
 .SH "SEE ALSO"
 \fBoscam\fR(1), \fBoscam.conf\fR(5), \fBoscam.user\fR(5), \fBoscam.srvid\fR(5), \fBoscam.guess\fR(5), \fBoscam.cert\fR(5), \fBoscam.services\fR(5), \fBoscam.ird\fR(5), \fBoscam.ac\fR(5)
