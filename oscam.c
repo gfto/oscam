@@ -1862,11 +1862,19 @@ void get_cw(ECM_REQUEST *er)
 
   // user expired
   if(client[cs_idx].expirationdate && client[cs_idx].expirationdate<client[cs_idx].lastecm)
+  {
     er->rc=11;
+    er->rcEx=0;
+    rejected=1;
+  }
 
   // user disabled
   if(client[cs_idx].disabled != 0)
+  {
     er->rc=12;
+    er->rcEx=0;
+    rejected=1;
+  }
 
   if (er->rc>99)    // rc<100 -> ecm error
   {
