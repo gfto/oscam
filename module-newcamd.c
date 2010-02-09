@@ -1064,10 +1064,10 @@ static void newcamd_server()
 	          cs_debug("unknown command !");
 	    }
 	  }
-		if(n==-9)
+    if(n==-9)
 		{
-	  		newcamd_reply_ka();
-	  	}
+        if (cfg->ncd_keepalive) newcamd_reply_ka();
+    }
 	}
 	
   if(req) { free(req); req=0;}

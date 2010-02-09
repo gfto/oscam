@@ -1151,6 +1151,7 @@ static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, 
         
             ret = reader->g_read_buffer_size > size-total_read ? size-total_read : reader->g_read_buffer_size;
             memcpy(buff+total_read,reader->g_read_buffer,ret);
+						//cs_ddump(buff+total_read, ret, "SR IO: Receive: "); routine reads 1 byte at a time, takes up too many lines
             reader->g_read_buffer_size -= ret;
             total_read+=ret;
         }
@@ -1161,6 +1162,7 @@ static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, 
         usleep(50);
         sched_yield();
     }
+		cs_ddump(buff, total_read, "SR IO: Receive: ");
 
     
     return total_read;
@@ -1195,9 +1197,9 @@ int smartreader_write_data(S_READER *reader, unsigned char *buf, unsigned int si
             cs_log("usb bulk write failed : ret = %d",ret);
             return(ret);
         }
-        
+				cs_ddump(buf+offset, written, "SR IO: Transmit: ");
         total_written += written;
-        offset += write_size;
+        offset += write_size;//FIXME shouldnt this be written?
     }
 
     return total_written;

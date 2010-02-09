@@ -636,20 +636,12 @@ static int PPS_Exchange (BYTE * params, unsigned *length)
 	cs_debug_mask (D_IFD,"PTS: Sending request: %s", cs_hexdump(1, params, len_request));
 
 	/* Send PPS request */
-#ifdef COOL
-	//unsigned char ptsAck[10];
-	//u_int8 ptsLen = len_request;
-	unsigned short int ptsLen = len_request;
-	call (cnxt_smc_start_pps(handle, params, confirm, &ptsLen, TRUE));
-	len_confirm = ptsLen;
-#else
 	call (ICC_Async_Transmit (len_request, params));
 
 	/* Get PPS confirm */
 	call (ICC_Async_Receive (2, confirm));
 	len_confirm = PPS_GetLength (confirm);
 	call (ICC_Async_Receive (len_confirm - 2, confirm + 2));
-#endif
 
 	cs_debug_mask(D_IFD, "PTS: Receiving confirm: %s", cs_hexdump(1, confirm, len_confirm));
 	if ((len_request != len_confirm) || (memcmp (params, confirm, len_request)))

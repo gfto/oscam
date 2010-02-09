@@ -478,6 +478,7 @@ static void chk_t_newcamd(char *token, char *value)
     }
     return;
   }
+  if (!strcmp(token, "keepalive")) { cfg->ncd_keepalive=atoi(value); return; } else { cfg->ncd_keepalive = 1; return; }
   if (token[0] != '#')
     fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n",token);
 }

@@ -8,6 +8,8 @@
 #include <time.h>
 #include <string.h>
 #include"ifd_cool.h"
+#include"../globals.h"
+#include"icc_async.h"
 
 #define OK 		0 
 #define ERROR 1
@@ -54,7 +56,7 @@ int Cool_Reset (ATR * atr)
 
 	//reset card
 	int timeout = 5000; // Timout in ms?
-	call (cnxt_smc_reset_card (handle, timeout, NULL, NULL));
+	call (cnxt_smc_reset_card (handle, ATR_TIMEOUT, NULL, NULL));
 
 	int n = 40;
 	unsigned char buf[40];
@@ -72,9 +74,9 @@ int Cool_Reset (ATR * atr)
 
 int Cool_Transmit (BYTE * sent, unsigned size)
 { 
-#define TIMEOUT 4000 //max 4294
 	cardbuflen = 256;//it needs to know max buffer size to respond?
-	call (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, TIMEOUT, 0));
+	call (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, 50, 0));
+	//call (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, read_timeout, 0));
 	cs_ddump(sent, size, "COOL IO: Transmit: ");
 	return OK;
 }
