@@ -1642,7 +1642,6 @@ int send_dcw(ECM_REQUEST *er)
 	
     	default: 
 		client[cs_idx].cwnot++;
-		break;
   }
 #ifdef CS_ANTICASC
   ac_chk(er, 1);
