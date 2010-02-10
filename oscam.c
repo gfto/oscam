@@ -1603,7 +1603,7 @@ int send_dcw(ECM_REQUEST *er)
     case  1: client[cs_idx].cwcache++;   break;          //cache1 
     case  2: client[cs_idx].cwcache++;   break;          //cache2 
     case  3:                                             //emu 
-    case  4:                                             //not found 
+    case  4: client[cs_idx].cwnot++;     break;          //not found 
     case  5:                                             //timeout 
     case  6:                                             //sleeping 
     case  7:                                             //fake 
