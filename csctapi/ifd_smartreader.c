@@ -171,8 +171,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         reader->sr_config.fs=3690000; 
 
     ResetSmartReader(reader);
-    
-    for(i=0 ; i<sizeof(parity) ;i++) {
+    for(i=0 ; i < 4 ;i++) {
         reader->sr_config.irdeto=FALSE;
         atr_ok=ERROR;
         memset(data,0,sizeof(data));
