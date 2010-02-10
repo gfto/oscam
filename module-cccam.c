@@ -294,21 +294,14 @@ static void cc_cw_decrypt(uint8 *cws)
 {
   struct cc_data *cc = reader[ridx].cc;
 
-  uint32 cur_card = cc->cur_card->id;
-  uint32 node_id_1 = b2i(4, cc->node_id);
-  uint32 node_id_2 = b2i(4, cc->node_id + 4);
-  uint32 tmp;
+  uint64 node_id = b2ll(8, cc->node_id);
+  uint8 tmp;
   int i;
 
   for (i = 0; i < 16; i++) {
-    tmp = cws[i] ^ node_id_2;
-    if (i & 1) {
-      tmp = ~tmp;
-    }
-    cws[i] = cur_card ^ tmp;
-    node_id_2 = (node_id_2 >> 4) | (node_id_1 << 28);
-    node_id_1 >>= 4;
-    cur_card >>= 2;
+    tmp = cws[i] ^ (node_id >> (4 * i));
+    if (i & 1) tmp = ~tmp;
+    cws[i] = (cc->cur_card->id >> (2 * i)) ^ tmp;
   }
 }
 

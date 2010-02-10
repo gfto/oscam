@@ -14,6 +14,8 @@
 #define LOBYTE(w) ((BYTE)((w) & 0xff))
 #define HIBYTE(w) ((BYTE)((w) >> 8))
 
+//The number of concurrent bulk reads to queue onto the smartreader
+#define NUM_TXFERS 2
 
 typedef struct s_reader S_READER;
 
@@ -44,6 +46,9 @@ static int smartreader_set_latency_timer(S_READER *reader, unsigned short latenc
 static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T,unsigned char inv, int parity);
 static void ResetSmartReader(S_READER *reader);
 static void* ReaderThread(void *p);
+
+//#define DEBUG_USB_IO
+//#define DEBUG_IO
 
 #ifdef DEBUG_USB_IO
 static void sr_hexdump(const unsigned char* data, unsigned int size, bool single);
@@ -342,8 +347,7 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     unsigned char N[2];
     unsigned char Prot[2];
     unsigned char Invert[2];
-    
-        
+       
     ret = smartreader_set_baudrate(reader, 9600);
     smartreader_setflowctrl(reader, 0);
     ret = smartreader_set_line_property(reader, (enum smartreader_bits_type) 5, STOP_BIT_2, NONE);
@@ -385,7 +389,6 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     ret = smart_write(reader, N, sizeof (N),0);
 
     // command 4 , set parameter T
-    // if(T==2) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
     if(reader->sr_config.irdeto) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
         {
         T=1;
@@ -585,10 +588,6 @@ void smartreader_init(S_READER *reader)
     reader->sr_config.index = 0;
     reader->sr_config.in_ep = 0x02;
     reader->sr_config.out_ep = 0x82;
-//    reader->sr_config.bitbang_mode = 1; /* when bitbang is enabled this holds the number of the mode  */
-
-//    reader->sr_config.async_usb_buffer_size=0;
-//    reader->sr_config.async_usb_buffer = NULL;
 }
 
 
@@ -1153,6 +1152,11 @@ static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, 
             memcpy(buff+total_read,reader->g_read_buffer,ret);
 						//cs_ddump(buff+total_read, ret, "SR IO: Receive: "); routine reads 1 byte at a time, takes up too many lines
             reader->g_read_buffer_size -= ret;
+
+	    if(reader->g_read_buffer_size > 0){
+		memcpy(reader->g_read_buffer, reader->g_read_buffer + ret, reader->g_read_buffer_size);
+	    }
+
             total_read+=ret;
         }
         pthread_mutex_unlock(&reader->g_read_mutex);
@@ -1256,57 +1260,83 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size,
     return ret;
 }
 
+static void read_callback(struct libusb_transfer *transfer){
+
+    struct s_reader *reader = (struct s_reader*)transfer->user_data;
+    int copy_size;
+    int ret;
+
+    if(transfer->status == LIBUSB_TRANSFER_COMPLETED){
+
+        if(transfer->actual_length > 2) {  //FTDI always sends modem status bytes as first 2 chars with the 232BM
+
+            pthread_mutex_lock(&reader->g_read_mutex);
+
+            if(reader->g_read_buffer_size == sizeof(reader->g_read_buffer)){
+                cs_log("IO:SR: buffer full\n");
+                //if out read buffer is full then delay
+                //slightly and go around again
+                ret = libusb_submit_transfer(transfer);
+		if(ret!=0)
+		    cs_log("IO:SR: submit async transfer failed with error %d\n",ret);			
+		pthread_mutex_unlock(&reader->g_read_mutex);
+                return;
+             }
+
+            reader->modem_status= transfer->buffer[1];
+            copy_size = sizeof(reader->g_read_buffer) - reader->g_read_buffer_size > (unsigned int)transfer->actual_length-2 ? (unsigned int)transfer->actual_length-2: sizeof(reader->g_read_buffer) - reader->g_read_buffer_size;
+            memcpy(reader->g_read_buffer+reader->g_read_buffer_size,transfer->buffer+2,copy_size);
+            reader->g_read_buffer_size += copy_size;
+            pthread_mutex_unlock(&reader->g_read_mutex);
+
+	    //cs_log("IO:SR: xferred %d bytes to read buffer: %02x\n",copy_size,transfer->buffer[2]); 
+
+        }
+        else {
+            if(transfer->actual_length==2) {
+                pthread_mutex_lock(&reader->g_read_mutex);
+                reader->modem_status=transfer->buffer[1];
+                pthread_mutex_unlock(&reader->g_read_mutex);
+            }
+        }
+
+        ret = libusb_submit_transfer(transfer);
+	sched_yield();
+	
+	if(ret!=0)
+	    cs_log("IO:SR: submit async transfer failed with error %d\n",ret);			
+
+
+    }else
+         cs_log("IO:SR: USB bulk read failed with error %d\n",transfer->status);
+}
+
 
 static void* ReaderThread(void *p)
 {
 
+    struct libusb_transfer* usbt[NUM_TXFERS];
+    unsigned char usb_buffers[NUM_TXFERS][64];
     struct s_reader *reader;
-    int ret;
-    int read;
-    unsigned int copy_size;
-    unsigned char local_buffer[64];  //64 is max transfer size of FTDI bulk pipe
-
+    int ret,idx;
+	
     reader = (struct s_reader *)p;
     reader->sr_config.running=TRUE;
-    
-    
-        
-    while(reader->sr_config.running){
-        if(reader->g_read_buffer_size == sizeof(reader->g_read_buffer)){
-            cs_log("buffer full");
-            //if out read buffer is full then delay
-            //slightly and go around again
-            usleep(20000);
-            continue;
-        }
 
-        ret = libusb_bulk_transfer(reader->sr_config.usb_dev_handle,
-                                    reader->sr_config.out_ep,
-                                    local_buffer,
-                                    4,
-                                    &read,
-                                    reader->sr_config.usb_read_timeout);
-        if(ret<0) {
-#ifdef DEBUG_USB_IO
-            cs_log("IO:SR: usb_bulk_read read error %d",ret);
-#endif
-        }
-        sched_yield();
-        if(read>2) {  //FTDI always sends modem status bytes as first 2 chars with the 232BM
-            pthread_mutex_lock(&reader->g_read_mutex);
-            reader->modem_status= local_buffer[0];
-            copy_size = sizeof(reader->g_read_buffer) - reader->g_read_buffer_size > (unsigned int)read-2 ? (unsigned int)read-2: sizeof(reader->g_read_buffer) - reader->g_read_buffer_size;
-            memcpy(reader->g_read_buffer+reader->g_read_buffer_size,local_buffer+2,copy_size);
-            reader->g_read_buffer_size += copy_size;            
-            pthread_mutex_unlock(&reader->g_read_mutex);
-        } 
-        else {
-            if(read==2) {
-                pthread_mutex_lock(&reader->g_read_mutex);
-                reader->modem_status=local_buffer[0];
-                pthread_mutex_unlock(&reader->g_read_mutex);
-            }
-        }
+    for(idx=0; idx<NUM_TXFERS; idx++){
+         usbt[idx] = libusb_alloc_transfer(0);
+
+         libusb_fill_bulk_transfer(usbt[idx],
+            reader->sr_config.usb_dev_handle,reader->sr_config.out_ep,usb_buffers[idx],64,
+            &read_callback,p,0);
+
+         ret = libusb_submit_transfer(usbt[idx]);            
+    }
+
+    while(reader->sr_config.running){
+
+        ret = libusb_handle_events(NULL);
+        if(ret!=0) printf("libusb_handle_events returned with %d\n",ret);
     }
 
     pthread_exit(NULL);
