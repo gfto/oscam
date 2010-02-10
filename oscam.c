@@ -1599,20 +1599,50 @@ int send_dcw(ECM_REQUEST *er)
   er->caid=er->ocaid;
   switch(er->rc)
   {
-    case  0: client[cs_idx].cwfound++;   break;          //found 
-    case  1: client[cs_idx].cwcache++;   break;          //cache1 
-    case  2: client[cs_idx].cwcache++;   break;          //cache2 
-    case  3:                                             //emu 
-    case  4: client[cs_idx].cwnot++;     break;          //not found 
-    case  5:                                             //timeout 
-    case  6:                                             //sleeping 
-    case  7:                                             //fake 
-    case  8: client[cs_idx].cwignored++; break;          //invalid 
-    case  9:                                             //corrupt 
-    case 10:                                             //no card 
-    case 11:                                             //expired 
-    case 12:                                             //disabled 
-    default: client[cs_idx].cwnot++;                     //NOK 
+	case 0:
+	case 3:
+		// 0 - found
+		// 3 - emu FIXME: (obsolete ?)
+		client[cs_idx].cwfound++;
+		break;
+
+	case 1:
+	case 2:
+		// 1 - cache1
+		// 2 - cache2
+		client[cs_idx].cwcache++;
+		break;
+
+	case 4:
+	case 9:
+	case 10:
+		// 4 - not found
+		// 9 - corrupt
+		// 10 - no card
+		client[cs_idx].cwnot++;
+		break;
+
+	case 5:
+		// 5 - timeout
+		client[cs_idx].cwtout++;
+		break;
+
+	case 6:
+	case 7:
+	case 8:
+	case 11:
+	case 12:
+		// 6 - sleeping
+		// 7 - fake
+		// 8 - invalid
+		// 11 - expired
+		// 12 - disabled
+		client[cs_idx].cwignored++;
+		break;
+	
+    	default: 
+		client[cs_idx].cwnot++;
+		break;
   }
 #ifdef CS_ANTICASC
   ac_chk(er, 1);
