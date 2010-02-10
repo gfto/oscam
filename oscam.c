@@ -1387,7 +1387,7 @@ void logCWtoFile(ECM_REQUEST *er)
     struct tm *timeinfo;
     struct s_srvid *this;
 
-    if (cfg->cwlogdir[0])     /* CWL logging only if cwlogdir is set in config */
+    if (cfg->cwlogdir != NULL)     /* CWL logging only if cwlogdir is set in config */
     {
         /* search service name for that id and change characters 
            causing problems in file name */
@@ -2357,7 +2357,7 @@ int main (int argc, char *argv[])
     cs_exit(1);
   }
   master_pid=client[0].pid=getpid();
-  if (cfg->pidfile[0])
+  if (cfg->pidfile != NULL)
   {
     FILE *fp;
     if (!(fp=fopen(cfg->pidfile, "w")))
@@ -2388,12 +2388,12 @@ int main (int argc, char *argv[])
   if (cfg->waitforcards)
   {
       int card_init_done;
-
       cs_log("Waiting for local card init ....");
-      for(;;) {
+      sleep(3);  // short sleep for card detect to work proberly
+      do {
           card_init_done = 1;
           for (i = 0; i < CS_MAXREADER; i++) {
-            if (reader[i].card_status == CARD_INSERTED) {
+            if (reader[i].card_status == CARD_NEED_INIT) {
               card_init_done = 0;
               break;
             }
@@ -2402,7 +2402,7 @@ int main (int argc, char *argv[])
               break;
           cs_sleepms(300);              // wait a little bit
           alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1); 
-      }
+      } while (1);
       cs_log("Init for all local cards done !");
   }
   

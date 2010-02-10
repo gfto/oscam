@@ -1,7 +1,6 @@
 #include "globals.h"
 #include <syslog.h>
 
-char logfile[256]=CS_LOGFILE;
 int number_of_chars_printed = 0;
 
 static FILE *fp=(FILE *)0;
@@ -60,7 +59,7 @@ void cs_write_log(char *txt)
 #endif
   if (fp || use_stdout)
   {
-    if( !use_stdout && !use_syslog) switch_log(logfile, &fp, cs_init_log);
+    if( !use_stdout && !use_syslog) switch_log(cfg->logfile, &fp, cs_init_log);
     fprintf(fp, "%s", txt);
     fflush(fp);
   }
@@ -343,7 +342,7 @@ void cs_ddump_mask(unsigned short mask, uchar *buf, int n, char *fmt, ...)
 
 int cs_init_statistics(char *file) 
 {
-  if ((!fps) && (file[0]))
+  if ((!fps) && (file != NULL))
   {
     if ((fps=fopen(file, "a"))<=(FILE *)0)
     {

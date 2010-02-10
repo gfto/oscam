@@ -153,7 +153,7 @@ static int reader_activate_card(ATR * atr, unsigned short deprecated)
 void do_emm_from_file(void)
 {
   //now here check whether we have EMM's on file to load and write to card:
-  if (reader[ridx].emmfile[0]) {//readnano has something filled in
+  if (reader[ridx].emmfile != NULL) {//readnano has something filled in
 
     //handling emmfile
     char token[256];
@@ -180,7 +180,8 @@ void do_emm_from_file(void)
         cs_log ("ERROR: EMM read from file %s NOT processed correctly!", token);
 
       reader[ridx].b_nano[eptmp->emm[0]] = old_b_nano; //restore old block/save settings
-      reader[ridx].emmfile[0] = 0; //clear emmfile, so no reading anymore
+			free (reader[ridx].emmfile);
+      reader[ridx].emmfile = NULL; //clear emmfile, so no reading anymore
 
       free(eptmp);
       eptmp = NULL;
@@ -239,7 +240,7 @@ static int reader_reset(void)
 {
 	reader_nullcard();
 	ATR atr;
-	unsigned short int ret, deprecated;
+	unsigned short int deprecated, ret = ERROR;
 	for (deprecated = reader[ridx].deprecated; deprecated < 2; deprecated++) {
 		if (!reader_activate_card(&atr, deprecated)) return(0);
 		ret =reader_get_cardsystem(atr);
@@ -281,6 +282,7 @@ int reader_checkhealth(void)
     if (reader[ridx].card_status != CARD_INSERTED)
     {
       cs_log("card detected");
+      reader[ridx].card_status  = CARD_NEED_INIT;
       reader[ridx].card_status = (reader_reset() ? CARD_INSERTED : CARD_FAILURE);
       if (reader[ridx].card_status == CARD_FAILURE)
       {

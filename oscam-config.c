@@ -300,10 +300,10 @@ static void chk_srvip(char *value, in_addr_t *ip)
 static void chk_t_global(char *token, char *value)
 {
   if (!strcmp(token, "serverip")) { cfg->srvip=inet_addr(value); return; }
-  if (!strcmp(token, "logfile")) { strncpy(logfile, value, sizeof(logfile)-1); return; }
-  if (!strcmp(token, "pidfile")) { strncpy(cfg->pidfile, value, sizeof(cfg->pidfile)-1); return; }
-  if (!strcmp(token, "usrfile")) { strncpy(cfg->usrfile, value, sizeof(cfg->usrfile)-1); return; }
-  if (!strcmp(token, "cwlogdir")) { strncpy(cfg->cwlogdir, value, sizeof(cfg->cwlogdir)-1); return; }
+  if (!strcmp(token, "logfile")) { asprintf(&(cfg->logfile), "%s", value); return; }
+  if (!strcmp(token, "pidfile")) { asprintf(&(cfg->pidfile), "%s", value); return; }
+  if (!strcmp(token, "usrfile")) { asprintf(&(cfg->usrfile), "%s", value); return; }
+  if (!strcmp(token, "cwlogdir")) { asprintf(&(cfg->cwlogdir), "%s", value); return; }
   if (!strcmp(token, "clienttimeout")) 
   {
       cfg->ctimeout = atoi(value);
@@ -685,6 +685,10 @@ int init_config()
   cfg->mon_hideclient_to=0;
   cfg->srtimeout=1500;
   cfg->ulparent=0;
+	cfg->logfile=NULL;
+	cfg->pidfile=NULL;
+	cfg->usrfile=NULL;
+	cfg->cwlogdir=NULL;
 #ifdef CS_ANTICASC
   cfg->ac_enabled=0;
   cfg->ac_users=0;
@@ -717,7 +721,11 @@ int init_config()
     chk_token(trim(strtolower(token)), trim(value), tag);
   }
   fclose(fp);
-  cs_init_log(logfile);
+#ifdef CS_LOGFILE
+	if (cfg->logfile == NULL)
+		asprintf(&(cfg->logfile), "%s", CS_LOGFILE);
+#endif
+  cs_init_log(cfg->logfile);
   if (cfg->ftimeout>=cfg->ctimeout)
   {
     cfg->ftimeout = cfg->ctimeout - 100;
@@ -1153,7 +1161,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     return;
   }
   if( !strcmp(token, "pincode")) { strncpy(rdr->pincode, value, sizeof(rdr->pincode)-1); return; }
-  if (!strcmp(token, "readnano")) { strncpy((char *)rdr->emmfile, value, sizeof(rdr->emmfile)-1); return; }
+  if (!strcmp(token, "readnano")) { asprintf(&(rdr->emmfile), "%s", value); return; }
   /*
    *  case insensitive
    */
