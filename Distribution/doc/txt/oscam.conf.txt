@@ -35,7 +35,10 @@ DESCRIPTIONS
 	   TCP/IP port
 	   CWs found
 	   CWs from cache
-	   CWS not found
+	   CWs not found
+	   CWs ignored
+	   CWs timed out
+	   CWs tunneled
 	   login time in unix/POSIX format
 	   logout time in unix/POSIX format
 	   protocol
