@@ -194,8 +194,8 @@ extern char *RDR_CD_TXT[];
 #define CS_ANTICASC
 
 // moved from reader-common.h
+// 0 = no card inside
 #define CARD_INSERTED  1
-#define CARD_NEED_INIT 2
 #define CARD_FAILURE   4
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
@@ -468,9 +468,7 @@ struct s_reader
   int       logemm;
   int       cachemm;
   int       rewritemm;
-  int       online;
-  int       card_status; //highlevel status
-  unsigned short status; //0 = init state, 1 = card inside, 2 = no card inside //FIXME look at integration with pcsc_has_card/detect/card_status
+  int       card_status;
 	int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
   uchar     ncd_key[16];

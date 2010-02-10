@@ -222,6 +222,5 @@ int Phoenix_Close ()
 	}
 #endif
 	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader[ridx].device);
-	reader[ridx].status = 0;
 	return OK;
 }

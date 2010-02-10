@@ -216,7 +216,6 @@ void reader_card_info()
       case SC_DRE:
 	 dre_card_info(); break;
     }
-    reader[ridx].online = 1; //do not check on rc, because error in cardinfo should not be fatal
   }
 }
 
@@ -279,12 +278,11 @@ int reader_checkhealth(void)
 {
   if (reader_card_inserted())
   {
-    if (!(reader[ridx].card_status & CARD_INSERTED))
+    if (reader[ridx].card_status != CARD_INSERTED)
     {
       cs_log("card detected");
-      reader[ridx].card_status  = CARD_NEED_INIT;
-      reader[ridx].card_status = CARD_INSERTED | (reader_reset() ? 0 : CARD_FAILURE);
-      if (reader[ridx].card_status & CARD_FAILURE)
+      reader[ridx].card_status = (reader_reset() ? CARD_INSERTED : CARD_FAILURE);
+      if (reader[ridx].card_status == CARD_FAILURE)
       {
         cs_log("card initializing error");
       }
@@ -304,7 +302,7 @@ int reader_checkhealth(void)
   }
   else
   {
-    if (reader[ridx].card_status & CARD_INSERTED)
+    if (reader[ridx].card_status == CARD_INSERTED)
     {
       reader_nullcard();
       client[cs_idx].lastemm=0;
@@ -315,7 +313,6 @@ int reader_checkhealth(void)
       cs_log("card ejected");
     }
     reader[ridx].card_status=0;
-    reader[ridx].online=0;
   }
   return reader[ridx].card_status==CARD_INSERTED;
 }

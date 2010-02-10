@@ -332,7 +332,6 @@ int SR_Close (struct s_reader *reader)
     reader->sr_config.running=FALSE;
     pthread_join(reader->rt,NULL);
     libusb_close(reader->sr_config.usb_dev_handle);
-    reader[ridx].status = 0;
     return OK;
 
 }

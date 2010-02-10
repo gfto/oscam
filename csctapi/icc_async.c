@@ -143,7 +143,6 @@ int ICC_Async_GetStatus (int * card)
 	
 //	printf("\n%08X\n", (int)ifd->io);
 	
-// status : 0 -start, 1 - card, 2- no card
 	switch(reader[ridx].typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
@@ -181,14 +180,10 @@ int ICC_Async_GetStatus (int * card)
 			return ERROR;
 	}
 
-  if (in) {
+  if (in)
 		*card = TRUE;
-		reader[ridx].status = 1;
-	}
-	else {
+	else
 		*card = FALSE;
-		reader[ridx].status = 2;
-	}
 	
 	cs_debug ("IFD: Status = %s", in ? "card": "no card");
 	
@@ -265,11 +260,6 @@ int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *r
 	int remain;
 	bool err = FALSE;
 
-	if (reader[ridx].status != 1) {//no card inside
-		cs_log("ERROR: Writing to card with no card inside");
-		return ERROR;
-	}
-	
 	/* Create a command APDU */
 	apdu_cmd = APDU_Cmd_New (cmd, lc);
 	if (apdu_cmd == NULL) {
