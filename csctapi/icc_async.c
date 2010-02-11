@@ -130,7 +130,7 @@ int ICC_Async_Device_Init ()
 	if (reader[ridx].typ <= R_MOUSE)
 	  if (Phoenix_Init()) {
 			cs_log("ERROR: Phoenix_Init returns error");
-			IO_Serial_Close (); //FIXME no Phoenix_Close ?
+			Phoenix_Close ();
 			return ERROR;
 		}
  cs_debug_mask (D_IFD, "IFD: Device %s succesfully opened\n", reader[ridx].device);
@@ -419,8 +419,7 @@ int ICC_Async_Close ()
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_MOUSE:
-			//IO_serial_close?
-			//	return ERROR;
+			call (Phoenix_Close());
 			break;
 #if defined(LIBUSB)
 		case R_SMART:
@@ -431,6 +430,7 @@ int ICC_Async_Close ()
 #ifdef SCI_DEV
 			/* Dectivate ICC */
 			call (Sci_Deactivate());
+			call (Phoenix_Close());
 #endif
 			break;
 		default:

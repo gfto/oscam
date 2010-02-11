@@ -221,6 +221,7 @@ int Phoenix_Close ()
 		close(gpio_in);
 	}
 #endif
+	IO_Serial_Close();
 	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader[ridx].device);
 	return OK;
 }
