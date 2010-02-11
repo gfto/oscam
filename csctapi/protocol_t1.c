@@ -38,21 +38,15 @@
  * Not exported functions declaration
  */
 
-static int
-Protocol_T1_SendBlock (T1_Block * block);
+static int Protocol_T1_SendBlock (T1_Block * block);
 
-static int
-Protocol_T1_ReceiveBlock (T1_Block ** block);
-
-static int
-Protocol_T1_UpdateBWT (unsigned short BWT);
+static int Protocol_T1_ReceiveBlock (T1_Block ** block);
 
 /*
  * Exproted funtions definition
  */
 
-int
-Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
+int Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
   T1_Block *block;
   BYTE *buffer, rsp_type, bytes, nr, wtx;
@@ -70,13 +64,10 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
       /* Send IFSD request */
       ret = Protocol_T1_SendBlock (block);
 
-      /* Delete block */
-      T1_Block_Delete (block);
-
       /* Receive a block */
       ret = Protocol_T1_ReceiveBlock (&block);
 
-      if (ret == PROTOCOL_T1_OK)
+      if (ret == OK)
         {
           rsp_type = T1_Block_GetType (block);
 
@@ -109,15 +100,12 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
   /* Send a block */
   ret = Protocol_T1_SendBlock (block);
 
-  /* Delete I-block */
-  T1_Block_Delete (block);
-
-  while ((ret == PROTOCOL_T1_OK) && more)
+  while ((ret == OK) && more)
     {
       /* Receive a block */
       ret = Protocol_T1_ReceiveBlock (&block);
 
-      if (ret == PROTOCOL_T1_OK)
+      if (ret == OK)
         {
           rsp_type = T1_Block_GetType (block);
 
@@ -146,9 +134,6 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
               /* Send a block */
               ret = Protocol_T1_SendBlock (block);
-
-              /* Delete I-block */
-              T1_Block_Delete (block);
             }
                                    
           else
@@ -156,13 +141,13 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
               /* Delete block */
               T1_Block_Delete (block);
 
-              ret = PROTOCOL_T1_NOT_IMPLEMENTED;
+              ret = ERROR; //not implemented
             }
         }
 
       else
         {
-          ret = PROTOCOL_T1_NOT_IMPLEMENTED;
+          ret = ERROR;//not implemented
         }
     }
 
@@ -172,21 +157,21 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
   more = TRUE;
   wtx = 0;
       
-  while ((ret == PROTOCOL_T1_OK) && more)
+  while ((ret == OK) && more)
     {
       if (wtx > 1)
-        Protocol_T1_UpdateBWT (wtx * BWT);
+        ICC_Async_SetTimings (wtx * BWT);
 
       /* Receive a block */
       ret = Protocol_T1_ReceiveBlock (&block);
 
       if (wtx > 1)
         {
-          Protocol_T1_UpdateBWT (BWT);          
+          ICC_Async_SetTimings (BWT);          
           wtx = 0;
         }
 
-      if (ret == PROTOCOL_T1_OK)
+      if (ret == OK)
         {
           rsp_type = T1_Block_GetType (block);
 
@@ -217,9 +202,6 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
                   /* Send R-Block */
                   ret = Protocol_T1_SendBlock (block);
-
-                  /* Delete I-block */
-                  T1_Block_Delete (block);
                 }
             }
 
@@ -239,19 +221,16 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
               /* Send WTX response */
               ret = Protocol_T1_SendBlock (block);
-                  
-              /* Delete block */
-              T1_Block_Delete (block);
             }
 
           else
             {
-              ret = PROTOCOL_T1_NOT_IMPLEMENTED;
+              ret = ERROR;//not implemented
             }
         }
     }
 
-  if (ret == PROTOCOL_T1_OK)
+  if (ret == OK)
     (*rsp) = APDU_Rsp_New (buffer, counter);
 
   if (buffer != NULL)
@@ -264,80 +243,43 @@ Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
  * Not exported functions definition
  */
 
-static int
-Protocol_T1_SendBlock (T1_Block * block)
+static int Protocol_T1_SendBlock (T1_Block * block)
 {
-  BYTE *buffer;
-  int length, ret;
-
-    {
-      /* Send T=1 block */
-      buffer = T1_Block_Raw (block);
-      length = T1_Block_RawLen (block);
-
-      if (ICC_Async_Transmit (length, buffer))
-        {
-          ret = PROTOCOL_T1_ICC_ERROR;
-        }
-
-      else
-        ret = PROTOCOL_T1_OK;
-    }
-
+	int ret;
+  ret = ICC_Async_Transmit (T1_Block_RawLen(block), T1_Block_Raw(block));
+	T1_Block_Delete(block);
   return ret;
 }
 
-static int
-Protocol_T1_ReceiveBlock (T1_Block ** block)
+static int Protocol_T1_ReceiveBlock (T1_Block ** block)
 {
   BYTE buffer[T1_BLOCK_MAX_SIZE];
   int ret;
 
   /* Receive four mandatory bytes */
   if (ICC_Async_Receive (4, buffer))
-    {
-      ret = PROTOCOL_T1_ICC_ERROR;
-      (*block) = NULL;
-    }
-
+      ret = ERROR;
   else
-    {
-      if (buffer[2] != 0x00)
-        {
+      if (buffer[2] != 0x00) {
           /* Set timings to read the remaining block */
-          Protocol_T1_UpdateBWT (CWT);
+          ICC_Async_SetTimings (CWT);
 
           /* Receive remaining bytes */
           if (ICC_Async_Receive (buffer[2], buffer + 4))
-            {
-              (*block) = NULL;
-              ret = PROTOCOL_T1_ICC_ERROR;
-            }
-
-          else
-            {
+              ret = ERROR;
+          else {
               (*block) = T1_Block_New (buffer, buffer[2] + 4);
-              ret = PROTOCOL_T1_OK;
+              ret = OK;
             }
-
           /* Restore timings */
-          Protocol_T1_UpdateBWT (BWT);
+          ICC_Async_SetTimings (BWT);
         }
-      else
-        {
-          ret = PROTOCOL_T1_OK;
+      else {
+          ret = OK;
           (*block) = T1_Block_New (buffer, 4);
         }
-    }
 
+	if (ret == ERROR)
+		(*block) = NULL;
   return ret;
-}
-
-static int
-Protocol_T1_UpdateBWT (unsigned short bwt)
-{
-	if (ICC_Async_SetTimings (bwt))
-		return PROTOCOL_T1_ICC_ERROR;
-
-  return PROTOCOL_T1_OK;
 }

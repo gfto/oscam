@@ -29,16 +29,6 @@
 #include "apdu.h"
 
 /*
- * Exported constants definition
- */
-
-/* Return codes */
-#define PROTOCOL_T1_OK                  0       /* Command OK */
-#define PROTOCOL_T1_ICC_ERROR           2       /* ICC comunication error */
-#define PROTOCOL_T1_ERROR               4       /* T=1 Protocol Error */
-#define PROTOCOL_T1_NOT_IMPLEMENTED     7       /* Feture not implemented */
-
-/*
  * Exported datatypes definition
  */
 
