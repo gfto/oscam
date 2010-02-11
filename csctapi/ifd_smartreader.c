@@ -19,8 +19,8 @@
 
 typedef struct s_reader S_READER;
 
-
-static struct libusb_device* find_smartreader(const char*busname,const char *devname);
+static bool smartreader_check_endpoint(libusb_device *usb_dev);
+static struct libusb_device *find_smartreader(const char*busname,const char *devname);
 static void smartreader_init(S_READER *reader);
 static unsigned int smartreader_determine_max_packet_size(S_READER *reader);
 static int smartreader_usb_close_internal (S_READER *reader);
@@ -45,14 +45,7 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size,
 static int smartreader_set_latency_timer(S_READER *reader, unsigned short latency);
 static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T,unsigned char inv, int parity);
 static void ResetSmartReader(S_READER *reader);
-static void* ReaderThread(void *p);
-
-//#define DEBUG_USB_IO
-//#define DEBUG_IO
-
-#ifdef DEBUG_USB_IO
-static void sr_hexdump(const unsigned char* data, unsigned int size, bool single);
-#endif
+static void *ReaderThread(void *p);
 
 int SR_Init (struct s_reader *reader)
 {
@@ -70,9 +63,8 @@ int SR_Init (struct s_reader *reader)
         cs_log("Wrong device format (%s), it should be Device=bus:dev",reader->device);
         return ERROR;
     }
-#ifdef DEBUG_USB_IO
-    cs_log("IO:SR: Looking for device %s on bus %s",devname,busname);
-#endif
+
+    cs_debug_mask (D_IFD,"IO:SR: Looking for device %s on bus %s",devname,busname);
 
    	ret = libusb_init(NULL);
 	if (ret < 0) {
@@ -85,9 +77,8 @@ int SR_Init (struct s_reader *reader)
     reader->sr_config.usb_dev=find_smartreader(busname,devname);
     if(!reader->sr_config.usb_dev)
         return ERROR;
-#ifdef DEBUG_USB_IO
-    cs_log("IO:SR: Opening smartreader device %s on bus %s",devname,busname);
-#endif
+
+    cs_debug_mask (D_IFD,"IO:SR: Opening smartreader device %s on bus %s",devname,busname);
     //The smartreader has different endpoint addresses
     //compared to a real FT232 device, so change them here,
     //also a good way to compare a real FT232 with a smartreader
@@ -106,9 +97,8 @@ int SR_Init (struct s_reader *reader)
         return ERROR;
     }
 
-#ifdef DEBUG_USB_IO
-    cs_log("IO:SR: Setting smartreader latency timer to 1ms");
-#endif
+    cs_debug_mask (D_IFD,"IO:SR: Setting smartreader latency timer to 1ms");
+
     //Set the FTDI latency timer to 1ms
     ret = smartreader_set_latency_timer(reader, 1);
 
@@ -161,9 +151,9 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
     int atr_ok;
     unsigned int i;
     int parity[4] = {EVEN, ODD, NONE, EVEN};    // the last EVEN is to try with different F, D values for irdeto card.
-#ifdef DEBUG_USB_IO
+
     char *parity_str[5]={"NONE", "ODD", "EVEN", "MARK", "SPACE"};
-#endif
+
     
     if(reader->mhz==reader->cardmhz && reader->cardmhz*10000 > 3690000)
         reader->sr_config.fs=reader->cardmhz*10000; 
@@ -176,15 +166,14 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         atr_ok=ERROR;
         memset(data,0,sizeof(data));
         reader->sr_config.parity=parity[i];
-#ifdef DEBUG_USB_IO
-        cs_log("IO:SR: Trying with parity %s",parity_str[reader->sr_config.parity]);
-#endif    
+
+        cs_debug_mask (D_IFD,"IO:SR: Trying with parity %s",parity_str[reader->sr_config.parity]);
+
 
         // special irdeto case
         if(i==3) {
-#ifdef DEBUG_USB_IO
-            cs_log("IO:SR: Trying irdeto");
-#endif
+            cs_debug_mask (D_IFD,"IO:SR: Trying irdeto");
+
             reader->sr_config.F=618; /// magic smartreader value
             reader->sr_config.D=1;
             // reader->sr_config.T=2; // will be set to T=1 in EnableSmartReader
@@ -214,31 +203,25 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
     
         //Read the ATR
         ret = smart_read(reader,data, 40,1);
-#ifdef DEBUG_USB_IO
-        cs_log("IO:SR: get ATR ret = %d" , ret);
+        cs_debug_mask (D_IFD,"IO:SR: get ATR ret = %d" , ret);
         if(ret)
-            sr_hexdump(data,ATR_MAX_SIZE*2,FALSE);
-#endif
+            cs_ddump(data,ATR_MAX_SIZE*2,"IO:SR: ");
+
         if(data[0]!=0x3B && data[0]!=0x03 && data[0]!=0x3F)
             continue; // this is not a valid ATR.
             
         if(data[0]==0x03) {
-#ifdef DEBUG_USB_IO
-            cs_log("IO:SR: Inverse convention detected, setting smartreader inv to 1");
-#endif
+            cs_debug_mask (D_IFD,"IO:SR: Inverse convention detected, setting smartreader inv to 1");
+
             reader->sr_config.inv=1;
             EnableSmartReader(reader, reader->sr_config.fs/10000, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
         }
         // parse atr
         if(ATR_InitFromArray (atr, data, ret) == ATR_OK) {
-#ifdef DEBUG_USB_IO
-            cs_log("IO:SR: ATR parsing OK");
-#endif
+            cs_debug_mask (D_IFD,"IO:SR: ATR parsing OK");
             atr_ok=OK;
             if(i==3) {
-#ifdef DEBUG_USB_IO
-                cs_log("IO:SR: Locking F and D for Irdeto mode");
-#endif
+                cs_debug_mask (D_IFD,"IO:SR: Locking F and D for Irdeto mode");
                 reader->sr_config.irdeto=TRUE;
             }
         }
@@ -309,10 +292,10 @@ int SR_WriteSettings (struct s_reader *reader, unsigned short F, BYTE D, BYTE N,
 int SR_SetParity (struct s_reader *reader)
 {
     int ret;
-#ifdef DEBUG_USB_IO
+
     char *parity_str[5]={"NONE", "ODD", "EVEN", "MARK", "SPACE"};
-    cs_log("IO:SR: Setting parity to %s",parity_str[reader->sr_config.parity]);
-#endif    
+    cs_debug_mask (D_IFD,"IO:SR: Setting parity to %s",parity_str[reader->sr_config.parity]);
+
     ret = smartreader_set_line_property(reader, (enum smartreader_bits_type) 8, STOP_BIT_2, reader->sr_config.parity);
     if(ret)
         return ERROR;
@@ -324,9 +307,8 @@ int SR_SetParity (struct s_reader *reader)
 
 int SR_Close (struct s_reader *reader)
 {
-#ifdef DEBUG_USB_IO
-	cs_log ("IO:SR: Closing smarteader\n");
-#endif
+
+	cs_debug_mask(D_IFD,"IO:SR: Closing smarteader\n");
 
     reader->sr_config.running=FALSE;
     pthread_join(reader->rt,NULL);
@@ -352,10 +334,8 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
 
     // command 1, set F and D parameter
     if(!reader->sr_config.irdeto) {
-#ifdef DEBUG_USB_IO
-    cs_log("IO:SR: sending F=%04X (%d) to smartreader",Fi,Fi);
-    cs_log("IO:SR: sending D=%02X (%d) to smartreader",Di,Di);
-#endif
+        cs_debug_mask (D_IFD,"IO:SR: sending F=%04X (%d) to smartreader",Fi,Fi);
+        cs_debug_mask (D_IFD,"IO:SR: sending D=%02X (%d) to smartreader",Di,Di);
         FiDi[0]=0x01;
         FiDi[1]=HIBYTE(Fi);
         FiDi[2]=LOBYTE(Fi);
@@ -368,20 +348,15 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
 
     // command 2, set the frequency in KHz
     // direct from the source .. 4MHz is the best init frequency for T=0 card, but looks like it's causing issue with some nagra card, reveting to 3.69MHz
-		freqk = clock * 10; //clock with type int couldnt hold freq in Hz on all platforms, so I reverted to 10khz units (like mhz) - dingo
-
-#ifdef DEBUG_USB_IO
-    cs_log("IO:SR: sending Freq=%04X (%d) to smartreader",freqk,freqk);
-#endif
+    freqk = clock * 10; //clock with type int couldnt hold freq in Hz on all platforms, so I reverted to 10khz units (like mhz) - dingo
+    cs_debug_mask (D_IFD,"IO:SR: sending Freq=%04X (%d) to smartreader",freqk,freqk);
     Freq[0]=0x02;
     Freq[1]=HIBYTE(freqk);
     Freq[2]=LOBYTE(freqk);
     ret = smart_write(reader, Freq, sizeof (Freq),0);
 
     // command 3, set paramter N
-#ifdef DEBUG_USB_IO
-    cs_log("IO:SR: sending N=%02X (%d) to smartreader",Ni,Ni);
-#endif
+    cs_debug_mask (D_IFD,"IO:SR: sending N=%02X (%d) to smartreader",Ni,Ni);
     N[0]=0x03;
     N[1]=Ni;
     ret = smart_write(reader, N, sizeof (N),0);
@@ -395,18 +370,13 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     else if (T==1)
         T=0; // T=1 protocol is handled by oscam
         
-#ifdef DEBUG_USB_IO
-    cs_log("IO:SR: sending T=%02X (%d) to smartreader",T,T);
-#endif
-    // 
+    cs_debug_mask (D_IFD,"IO:SR: sending T=%02X (%d) to smartreader",T,T);
     Prot[0]=0x04;
     Prot[1]=T;
     ret = smart_write(reader, Prot, sizeof (Prot),0);
 
     // command 5, set invert y/n
-#ifdef DEBUG_USB_IO
-    cs_log("IO:SR: sending inv=%02X to smartreader",inv);
-#endif
+    cs_debug_mask (D_IFD,"IO:SR: sending inv=%02X to smartreader",inv);
     Invert[0]=0x05;
     Invert[1]=inv;
     ret = smart_write(reader, Invert, sizeof (Invert),0);
@@ -438,81 +408,48 @@ static void ResetSmartReader(S_READER *reader)
     sched_yield();
 
 }
-/*
 
-static bool smartreader_check_endpoint(struct usb_device *dev)
+static bool smartreader_check_endpoint(libusb_device *usb_dev)
 {
-    int nb_interfaces;
-    int i,j,k,l;
-    u_int8_t tmpEndpointAddress;
+    unsigned int packet_size;
+    struct libusb_device_descriptor desc;
+    struct libusb_config_descriptor *configDesc;
+    struct libusb_interface interface;
+    struct libusb_interface_descriptor intDesc;
+    struct libusb_endpoint_descriptor endpoint;
+    int ret;
+    int j,k,l;
+    u_int8_t tmpEndpointAddress;  
     int nb_endpoint_ok;
 
-    if (!dev->config) {
-#ifdef DEBUG_USB_IO
-        cs_log("IO:SR:  Couldn't retrieve descriptors");
-#endif
-        return FALSE;
+    
+    ret = libusb_get_device_descriptor(usb_dev, &desc);
+    if (ret < 0) {
+        cs_log("Smartreader : couldn't read device descriptor, assuming this is not a smartreader");
+        return FALSE;        
     }
-        
-    nb_interfaces=dev->config->bNumInterfaces;
-    // smartreader only has 1 interface
-    if(nb_interfaces!=1) {
-#ifdef DEBUG_USB_IO
-        cs_log("IO:SR:  Couldn't retrieve interfaces");
-#endif
-        return FALSE;
-    }
+    if (desc.bNumConfigurations) {
+        ret=libusb_get_active_config_descriptor(usb_dev,&configDesc);
+        if(ret) {
+            cs_log("Smartreader : couldn't read config descriptor , assuming this is not a smartreader");
+            return FALSE;
+        }
 
-    nb_endpoint_ok=0;
-    for (i = 0; i < dev->descriptor.bNumConfigurations; i++)
-        for (j = 0; j < dev->config[i].bNumInterfaces; j++)
-            for (k = 0; k < dev->config[i].interface[j].num_altsetting; k++)
-                for (l = 0; l < dev->config[i].interface[j].altsetting[k].bNumEndpoints; l++) {
-                    tmpEndpointAddress=dev->config[i].interface[j].altsetting[k].endpoint[l].bEndpointAddress;
-#ifdef DEBUG_USB_IO
-                    // cs_log("IO:SR:  checking endpoint address %02X on bus %03X of device %03x",tmpEndpointAddress,dev->);
-                    cs_log("IO:SR:  checking endpoint address %02X",tmpEndpointAddress);
-#endif
+        nb_endpoint_ok=0;
+        for(j=0; j<configDesc->bNumInterfaces; j++) 
+            for(k=0; k<configDesc->interface[j].num_altsetting; k++)
+                for(l=0; l<configDesc->interface[j].altsetting[k].bNumEndpoints; l++) {
+                    tmpEndpointAddress=configDesc->interface[j].altsetting[k].endpoint[l].bEndpointAddress;
                     if((tmpEndpointAddress== 0x1) || (tmpEndpointAddress== 0x82))
                         nb_endpoint_ok++;
                 }
-
+    }
     if(nb_endpoint_ok!=2)
         return FALSE;
     return TRUE;
 }
 
-*/
 
-#ifdef DEBUG_USB_IO
-static void sr_hexdump(const unsigned char* data, unsigned int size, bool single)
-{
-    unsigned int idx;
-    unsigned int i;
-    char buffer[512];
-
-    memset(buffer,0,512);
-    i=0;
-    for (idx = 0; idx < size; idx++) {
-        if(!single && idx % 16 == 0 && idx != 0){
-            cs_log("IO:SR: %s",buffer);
-            memset(buffer,0,512);
-            i=0;
-        }
-        if((i+1)*3 >= 509) {
-            cs_log("IO:SR: %s",buffer);
-            memset(buffer,0,512);
-            i=0;
-        }
-
-        sprintf(buffer+i*3,"%02X ", data[idx]);
-        i++;
-    }
-}
-#endif
-
-
-///////////////////////
 static struct libusb_device* find_smartreader(const char *busname,const char *devname)
 {
     int dev_found;
@@ -544,10 +481,10 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
             }
 
             if(libusb_get_bus_number(dev)==atoi(busname) && libusb_get_device_address(dev)==atoi(devname)) {
-                cs_log("IO:SR: Checking FTDI device: %03d on bus %03d",libusb_get_device_address(dev),libusb_get_bus_number(dev));
+                cs_debug_mask(D_IFD,"IO:SR: Checking FTDI device: %03d on bus %03d",libusb_get_device_address(dev),libusb_get_bus_number(dev));
                 // check for smargo endpoints.
-                
-                dev_found=TRUE;
+                if(smartreader_check_endpoint(dev))
+                    dev_found=TRUE;
             }
             
             
@@ -596,7 +533,7 @@ static unsigned int smartreader_determine_max_packet_size(S_READER *reader)
     struct libusb_config_descriptor *configDesc;
     struct libusb_interface interface;
     struct libusb_interface_descriptor intDesc;
-    int config_index;
+
     int ret;
     // Determine maximum packet size. Init with default value.
     // New hi-speed devices from FTDI use a packet size of 512 bytes
@@ -734,7 +671,6 @@ int smartreader_usb_open_dev(S_READER *reader)
     ret=libusb_claim_interface(reader->sr_config.usb_dev_handle, reader->sr_config.interface) ;
     if (ret!= 0)
     {
-        cs_log("WTF !!! ret=%d",ret);
         smartreader_usb_close_internal (reader);
         if (detach_errno == EPERM) {
             cs_log("inappropriate permissions on device!");
@@ -1148,7 +1084,6 @@ static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, 
         
             ret = reader->g_read_buffer_size > size-total_read ? size-total_read : reader->g_read_buffer_size;
             memcpy(buff+total_read,reader->g_read_buffer,ret);
-						//cs_ddump(buff+total_read, ret, "SR IO: Receive: "); routine reads 1 byte at a time, takes up too many lines
             reader->g_read_buffer_size -= ret;
 
 	    if(reader->g_read_buffer_size > 0){
@@ -1199,7 +1134,7 @@ int smartreader_write_data(S_READER *reader, unsigned char *buf, unsigned int si
             cs_log("usb bulk write failed : ret = %d",ret);
             return(ret);
         }
-				cs_ddump(buf+offset, written, "SR IO: Transmit: ");
+        cs_ddump(buf+offset, written, "SR IO: Transmit: ");
         total_written += written;
         offset += write_size;//FIXME shouldnt this be written?
     }
@@ -1241,9 +1176,7 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size,
     if (udelay == 0) {
         ret = smartreader_write_data(reader, buff, size);
         if(ret<0) {
-#ifdef DEBUG_USB_IO
-            cs_log("IO:SR: USB write error : %d",ret);
-#endif
+            cs_debug_mask (D_IFD,"IO:SR: USB write error : %d",ret);
         }
     }
     else {
@@ -1264,31 +1197,28 @@ static void read_callback(struct libusb_transfer *transfer){
     int copy_size;
     int ret;
 
-    if(transfer->status == LIBUSB_TRANSFER_COMPLETED){
+    if(transfer->status == LIBUSB_TRANSFER_COMPLETED) {
 
         if(transfer->actual_length > 2) {  //FTDI always sends modem status bytes as first 2 chars with the 232BM
 
             pthread_mutex_lock(&reader->g_read_mutex);
 
-            if(reader->g_read_buffer_size == sizeof(reader->g_read_buffer)){
+            if(reader->g_read_buffer_size == sizeof(reader->g_read_buffer)) {
                 cs_log("IO:SR: buffer full\n");
                 //if out read buffer is full then delay
                 //slightly and go around again
                 ret = libusb_submit_transfer(transfer);
-		if(ret!=0)
-		    cs_log("IO:SR: submit async transfer failed with error %d\n",ret);			
-		pthread_mutex_unlock(&reader->g_read_mutex);
+                if(ret!=0)
+                    cs_log("IO:SR: submit async transfer failed with error %d\n",ret);			
+                pthread_mutex_unlock(&reader->g_read_mutex);
                 return;
              }
 
-            reader->modem_status= transfer->buffer[1];
+            reader->modem_status = transfer->buffer[1];
             copy_size = sizeof(reader->g_read_buffer) - reader->g_read_buffer_size > (unsigned int)transfer->actual_length-2 ? (unsigned int)transfer->actual_length-2: sizeof(reader->g_read_buffer) - reader->g_read_buffer_size;
             memcpy(reader->g_read_buffer+reader->g_read_buffer_size,transfer->buffer+2,copy_size);
             reader->g_read_buffer_size += copy_size;
             pthread_mutex_unlock(&reader->g_read_mutex);
-
-	    //cs_log("IO:SR: xferred %d bytes to read buffer: %02x\n",copy_size,transfer->buffer[2]); 
-
         }
         else {
             if(transfer->actual_length==2) {
@@ -1298,14 +1228,14 @@ static void read_callback(struct libusb_transfer *transfer){
             }
         }
 
-        ret = libusb_submit_transfer(transfer);
+    ret = libusb_submit_transfer(transfer);
 	sched_yield();
 	
 	if(ret!=0)
 	    cs_log("IO:SR: submit async transfer failed with error %d\n",ret);			
 
-
-    }else
+    }
+    else
          cs_log("IO:SR: USB bulk read failed with error %d\n",transfer->status);
 }
 
@@ -1321,20 +1251,25 @@ static void* ReaderThread(void *p)
     reader = (struct s_reader *)p;
     reader->sr_config.running=TRUE;
 
-    for(idx=0; idx<NUM_TXFERS; idx++){
+    for(idx=0; idx<NUM_TXFERS; idx++) {
          usbt[idx] = libusb_alloc_transfer(0);
 
-         libusb_fill_bulk_transfer(usbt[idx],
-            reader->sr_config.usb_dev_handle,reader->sr_config.out_ep,usb_buffers[idx],64,
-            &read_callback,p,0);
+         libusb_fill_bulk_transfer( usbt[idx],
+                                    reader->sr_config.usb_dev_handle,
+                                    reader->sr_config.out_ep,
+                                    usb_buffers[idx],
+                                    64,
+                                    &read_callback,
+                                    p,
+                                    0 );
 
          ret = libusb_submit_transfer(usbt[idx]);            
     }
 
-    while(reader->sr_config.running){
-
+    while(reader->sr_config.running) {
         ret = libusb_handle_events(NULL);
-        if(ret!=0) printf("libusb_handle_events returned with %d\n",ret);
+        if(ret!=0) 
+            cs_log("libusb_handle_events returned with %d\n",ret);
     }
 
     pthread_exit(NULL);

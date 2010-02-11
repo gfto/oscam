@@ -300,10 +300,42 @@ static void chk_srvip(char *value, in_addr_t *ip)
 static void chk_t_global(char *token, char *value)
 {
   if (!strcmp(token, "serverip")) { cfg->srvip=inet_addr(value); return; }
-  if (!strcmp(token, "logfile")) { asprintf(&(cfg->logfile), "%s", value); return; }
-  if (!strcmp(token, "pidfile")) { asprintf(&(cfg->pidfile), "%s", value); return; }
-  if (!strcmp(token, "usrfile")) { asprintf(&(cfg->usrfile), "%s", value); return; }
-  if (!strcmp(token, "cwlogdir")) { asprintf(&(cfg->cwlogdir), "%s", value); return; }
+  if (!strcmp(token, "logfile")) {
+          if (cfg->logfile != NULL) {
+                  free(cfg->logfile);
+                  cfg->logfile = NULL;
+          }
+          if (value[0])
+                  asprintf(&(cfg->logfile), "%s", value);
+          return;
+  }
+  if (!strcmp(token, "pidfile")) {
+          if (cfg->pidfile != NULL) {
+                  free(cfg->pidfile);
+                  cfg->pidfile = NULL;
+          }
+          if (value[0])
+                  asprintf(&(cfg->pidfile), "%s", value);
+          return;
+  }
+  if (!strcmp(token, "usrfile")) {
+          if (cfg->usrfile != NULL) {
+                  free(cfg->usrfile);
+                  cfg->usrfile = NULL;
+          }
+          if (value[0])
+                  asprintf(&(cfg->usrfile), "%s", value);
+          return;
+  }
+  if (!strcmp(token, "cwlogdir")) {
+          if (cfg->cwlogdir != NULL) {
+                  free(cfg->cwlogdir);
+                  cfg->cwlogdir = NULL;
+          }
+          if (value[0])
+                  asprintf(&(cfg->cwlogdir), "%s", value);
+          return;
+  }
   if (!strcmp(token, "clienttimeout")) 
   {
       cfg->ctimeout = atoi(value);
@@ -1161,7 +1193,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     return;
   }
   if( !strcmp(token, "pincode")) { strncpy(rdr->pincode, value, sizeof(rdr->pincode)-1); return; }
-  if (!strcmp(token, "readnano")) { asprintf(&(rdr->emmfile), "%s", value); return; }
+  if (!strcmp(token, "readnano") && value[0]) { asprintf(&(rdr->emmfile), "%s", value); return; }
   /*
    *  case insensitive
    */

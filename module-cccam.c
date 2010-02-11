@@ -307,9 +307,13 @@ static void cc_cw_decrypt(uint8 *cws)
 
 static void cc_cycle_connection()
 {
+  reader[ridx].tcp_connected = 0;
+  usleep(200000);
   close(client[cs_idx].udp_fd);
   close(pfd);
-  usleep(200000);
+  pfd = 0;
+  client[cs_idx].udp_fd = 0;
+  usleep(100000);
   ph->c_init();
 }
 
