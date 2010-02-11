@@ -367,6 +367,7 @@ struct s_client
   time_t    lastemm;
   time_t    lastecm;
   time_t    expirationdate;
+  int       c35_suppresscmd08;
   int       disabled;
   ulong     grp;
   int       crypted;
@@ -441,19 +442,8 @@ struct s_reader
   ulong     boxid;
   uchar	    nagra_boxkey[16]; //n3 boxkey 8byte  or tiger idea key 16byte
   int       has_rsa;
-  int		is_pure_nagra; // set to 1 if a tunneled nagra card used in nagra mode
-  int		is_tiger;	// set to 1 if tiger nagra card is detect
-  int		has_dt08;	// nagra related
-  int		swapCW; //nagra related
   uchar     aes_key[16];
   uchar     rsa_mod[120]; //rsa modulus for nagra cards.
-  uchar		rom[15];		// storing rom version  
-  uchar		plainDT08RSA[64]; //nagra related
-  uchar		IdeaCamKey[16]; //nagra related
-  uchar		irdId[4]; //nagra related
-  uchar		sessi[16]; //nagra related
-  uchar		signature[8]; //nagra related
-  uchar		cam_state[3]; //nagra related
   ulong     sidtabok;	// positiv services
   ulong     sidtabno;	// negative services
   uchar     hexserial[8];
@@ -570,6 +560,7 @@ struct s_auth
   in_addr_t dynip;
   uchar     dyndns[64];
   time_t    expirationdate;
+  int       c35_suppresscmd08;
   int       disabled;
   struct    s_auth *next;
 };
@@ -626,6 +617,7 @@ struct s_config
   struct s_ip *c33_plain;
   int       c35_port;
   in_addr_t c35_srvip;
+  int       c35_suppresscmd08;
   PTAB      c35_tcp_ptab;
   in_addr_t c35_tcp_srvip;
   PTAB      ncd_ptab;

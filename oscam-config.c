@@ -357,6 +357,7 @@ static void chk_t_global(char *token, char *value)
   if (!strcmp(token, "netprio")) { cfg->netprio=atoi(value); return; }
   if (!strcmp(token, "resolvedelay")) { cfg->resolvedelay=atoi(value); return; }
   if (!strcmp(token, "sleep")) { cfg->tosleep=atoi(value); return; }
+  if (!strcmp(token, "suppresscmd08")) { cfg->c35_suppresscmd08=atoi(value); return; }
   if (!strcmp(token, "unlockparental")) { cfg->ulparent=atoi(value); return; }
   if (!strcmp(token, "nice"))
   {
@@ -796,6 +797,7 @@ static void chk_account(char *token, char *value, struct s_auth *account)
   if (!strcmp(token, "monlevel")) { account->monlvl=atoi(value); return; }
   if (!strcmp(token, "caid")) { chk_caidtab(value, &account->ctab); return; }
   if (!strcmp(token, "disabled")) { account->disabled=atoi(value); return; }
+  if (!strcmp(token, "suppresscmd08")) { account->c35_suppresscmd08=atoi(value); return; }
   /*
    *  case insensitive
    */
@@ -922,6 +924,7 @@ int init_userdb()
       account->au=(-1);
       account->monlvl=cfg->mon_level;
       account->tosleep=cfg->tosleep;
+      account->c35_suppresscmd08=cfg->c35_suppresscmd08;
       for (i=1; i<CS_MAXCAIDTAB; account->ctab.mask[i++]=0xffff);
       for (i=1; i<CS_MAXTUNTAB; account->ttab.bt_srvid[i++]=0x0000);
       nr++;

@@ -217,7 +217,7 @@ static void camd35_send_dcw(ECM_REQUEST *er)
   uchar *buf;
   buf=req+(er->cpti*REQ_SIZE);	// get orig request
 
-  if ((er->rcEx > 0) || (er->rc == 8))
+  if (((er->rcEx > 0) || (er->rc == 8)) && !client[cs_idx].c35_suppresscmd08)
   {
     buf[0]=0x08;
     buf[1]=2;
