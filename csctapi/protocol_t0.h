@@ -50,7 +50,7 @@
 
 /* Send a command and return a response */
 extern int Protocol_T0_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-extern int Protocol_T14_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
+extern int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 #endif /* _PROTOCOL_T0_ */
 

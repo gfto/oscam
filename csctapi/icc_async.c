@@ -303,7 +303,7 @@ int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 			call (Protocol_T1_Command (cmd, rsp));
 			break;
 		case ATR_PROTOCOL_TYPE_T14:
-			call (Protocol_T14_Command (cmd, rsp));
+			call (Protocol_T14_ExchangeTPDU (cmd, rsp));
 			break;
 		default:
 			cs_log("Error, unknown protocol type %i",protocol_type);

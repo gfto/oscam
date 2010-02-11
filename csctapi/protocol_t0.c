@@ -47,26 +47,12 @@
 #define PROTOCOL_T14_MAX_SHORT_COMMAND  260
 #define PROTOCOL_T14_MAX_SHORT_RESPONSE 258
 
-/* Transportation of APDUs by T=0 */
-/* #undef PROTOCOL_T0_ISO */
-//#define PROTOCOL_T0_ISO 1
-
 /* Timings in ATR are not used in T=0 cards */
 /* #undef PROTOCOL_T0_USE_DEFAULT_TIMINGS */
 
 /*
  * Not exported functions declaration
  */
-
-static int Protocol_T0_Case1 (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-
-static int Protocol_T0_Case2S (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-static int Protocol_T14_Case2S (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-
-static int Protocol_T0_Case3S (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-static int Protocol_T14_Case3S (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-
-static int Protocol_T0_Case4S (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 static int Protocol_T0_Case2E (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
@@ -75,7 +61,6 @@ static int Protocol_T0_Case3E (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 static int Protocol_T0_Case4E (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 /*
  * Exproted funtions definition
@@ -83,299 +68,37 @@ static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp);
 
 int Protocol_T0_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
-	int cmd_case, ret;
+	int cmd_case;
 	
 	cmd_case = APDU_Cmd_Case (cmd);
-	
 	if (cmd_case != APDU_MALFORMED)
 		cs_debug_mask (D_IFD,"Protocol: T=0 Case %d %s\n", (cmd_case & 0x0F), APDU_CASE_IS_EXTENDED (cmd_case)? "extended": "short");
-	
-	if (cmd_case == APDU_CASE_1)
-		ret = Protocol_T0_Case1 (cmd, rsp);
-	else if (cmd_case == APDU_CASE_2S)
-		ret = Protocol_T0_Case2S (cmd, rsp);
-	else if (cmd_case == APDU_CASE_3S)
-		ret = Protocol_T0_Case3S (cmd, rsp);
-	else if (cmd_case == APDU_CASE_4S)
-		ret = Protocol_T0_Case4S (cmd, rsp);
-	else if (cmd_case == APDU_CASE_2E)
-		ret = Protocol_T0_Case2E (cmd, rsp);
-	else if (cmd_case == APDU_CASE_3E)
-		ret = Protocol_T0_Case3E (cmd, rsp);
-	else if (cmd_case == APDU_CASE_4E)
-		ret = Protocol_T0_Case4E (cmd, rsp);
-	else
-	{
-		cs_debug_mask (D_IFD,"Protocol: T=0: Invalid APDU\n");
-		ret = PROTOCOL_T0_ERROR;
-	}
-	
-	return ret;
-}
 
-int Protocol_T14_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
-{
-	int cmd_case, ret;
-		
-	cmd_case = APDU_Cmd_Case (cmd);
-	
-	if (cmd_case != APDU_MALFORMED)
-		cs_debug_mask (D_IFD,"Protocol: T=14 Case %d %s\n", (cmd_case & 0x0F), APDU_CASE_IS_EXTENDED (cmd_case)? "extended": "short");
-	
-	if (cmd_case == APDU_CASE_2S)
-	{
-		ret = Protocol_T14_Case2S (cmd, rsp);
+	switch (cmd_case) {
+		case APDU_CASE_2E:
+			return Protocol_T0_Case2E (cmd, rsp);
+		case APDU_CASE_3E:
+			return Protocol_T0_Case3E (cmd, rsp);
+		case APDU_CASE_4E:
+			return Protocol_T0_Case4E (cmd, rsp);
+		case APDU_CASE_1:
+			cmd->command[4] = 0x00;
+			cmd->length = 5;
+			return Protocol_T0_ExchangeTPDU(cmd, rsp);
+		case APDU_CASE_4S:
+			cmd->length--;
+		case APDU_CASE_2S:
+		case APDU_CASE_3S:
+			return Protocol_T0_ExchangeTPDU(cmd, rsp);
+		default:
+			cs_debug_mask (D_IFD,"Protocol: T=0: Invalid APDU\n");
+			return PROTOCOL_T0_ERROR;
 	}
-	else if (cmd_case == APDU_CASE_3S)
-	{
-		ret = Protocol_T14_Case3S (cmd, rsp);
-	}
-	else
-	{
-		cs_debug_mask (D_IFD,"Protocol: T=14: Invalid APDU\n");
-		ret = PROTOCOL_T0_ERROR;
-	}
-	
-	return ret;
 }
 
 /*
  * Not exported functions definition
  */
-
-static int Protocol_T0_Case1 (APDU_Cmd * cmd, APDU_Rsp ** rsp)
-{
-	int ret;
-	BYTE buffer[5];
-	APDU_Cmd *tpdu_cmd;
-	
-	/* Map command APDU onto TPDU */
-	memcpy (buffer, APDU_Cmd_Raw (cmd), 4);
-	buffer[4] = 0x00;
-	
-	tpdu_cmd = APDU_Cmd_New (buffer, 5);
-	
-	/* Send command TPDU */
-	ret = Protocol_T0_ExchangeTPDU(tpdu_cmd, rsp);
-	
-	/* Delete command TPDU */
-	APDU_Cmd_Delete (tpdu_cmd);
-	
-	return ret;
-}
-
-
-static int Protocol_T0_Case2S (APDU_Cmd * cmd, APDU_Rsp ** rsp)
-{
-	int ret;
-	
-	/* Send command TPDU */
-	ret = Protocol_T0_ExchangeTPDU(cmd, rsp);
-	
-	return ret;
-}
-
-static int Protocol_T14_Case2S (APDU_Cmd * cmd, APDU_Rsp ** rsp)
-{
-	int ret;
-	
-	/* Send command TPDU */
-	ret = Protocol_T14_ExchangeTPDU(cmd, rsp);
-	
-	return ret;
-}
-
-static int Protocol_T0_Case3S (APDU_Cmd * cmd, APDU_Rsp ** rsp)
-{
-	int ret;
-	APDU_Rsp *tpdu_rsp;
-#ifdef PROTOCOL_T0_ISO
-	BYTE buffer[5];
-	APDU_Cmd *tpdu_cmd;
-#endif
-	
-	/* Send command TPDU */
-	ret = Protocol_T0_ExchangeTPDU(cmd, (&tpdu_rsp));
-	
-	if (ret == PROTOCOL_T0_OK)
-	{
-#ifdef PROTOCOL_T0_ISO
-		/*  Le definitely not accepted */
-		if (APDU_Rsp_SW1 (tpdu_rsp) == 0x67)
-		{
-			/* Map response APDU onto TPDU without change */
-			(*rsp) = tpdu_rsp;
-		}
-		else if (APDU_Rsp_SW1 (tpdu_rsp) == 0x6C) /* Le not accepted, La indicated */
-		{
-			/* Map command APDU onto TPDU */
-			memcpy (buffer, APDU_Cmd_Raw (cmd), 4);
-			buffer[4] = APDU_Rsp_SW2 (tpdu_rsp);
-			
-			tpdu_cmd = APDU_Cmd_New (buffer, 5);
-			
-			/* Delete response TPDU */
-			APDU_Rsp_Delete (tpdu_rsp);
-			
-			/* Re-issue command TPDU */
-			ret = Protocol_T0_ExchangeTPDU(tpdu_cmd, rsp);
-			
-			/* Delete command TPDU */
-			APDU_Cmd_Delete (tpdu_cmd);
-			
-			if (ret == PROTOCOL_T0_OK)
-			{
-				if (APDU_Rsp_DataLen ((*rsp)) > APDU_Cmd_Le (cmd))
-				{
-					/* Map response APDU onto TPDU */
-					APDU_Rsp_TruncateData ((*rsp), APDU_Cmd_Le (cmd));
-				}
-			}
-		}
-		else if (APDU_Rsp_SW1 (tpdu_rsp) == 0x61) /* Command processed, Lx indicated */
-		{
-			/* MAP response TPDU onto APDU */
-			(*rsp) = tpdu_rsp;
-			
-			/* Prepare Get Response TPDU */
-			buffer[0] = APDU_Cmd_Cla (cmd);
-			buffer[1] = 0xC0;
-			buffer[2] = 0x00;
-			buffer[3] = 0x00;
-	
-			do
-			{
-				/* Issue Get Response command TPDU */
-				buffer[4] = APDU_Rsp_SW2 (tpdu_rsp);
-				tpdu_cmd = APDU_Cmd_New (buffer, 5);
-				
-				ret = Protocol_T0_ExchangeTPDU(tpdu_cmd, (&tpdu_rsp));
-				
-				/* Delete command TPDU */
-				APDU_Cmd_Delete (tpdu_cmd);
-				
-				if (ret == PROTOCOL_T0_OK)
-				{
-					/* Append response TPDU to APDU  */
-					if (APDU_Rsp_AppendData ((*rsp), tpdu_rsp) != APDU_OK)
-						ret = PROTOCOL_T0_ERROR;
-					
-					/* Delete response TPDU */
-					APDU_Rsp_Delete (tpdu_rsp);
-				}
-			}
-			while ((ret == PROTOCOL_T0_OK) && (APDU_Rsp_SW1 (*rsp) == 0x61));
-	
-			if (ret == PROTOCOL_T0_OK)
-			{
-				if (APDU_Rsp_DataLen ((*rsp)) > APDU_Cmd_Le (cmd))
-				{
-					/* Map response APDU onto TPDU */
-					APDU_Rsp_TruncateData ((*rsp), APDU_Cmd_Le (cmd));
-				}
-			}
-		}	
-		else /* Le accepted */
-		{
-			/* Map response TPDU onto APDU without change */
-			(*rsp) = tpdu_rsp;
-		}
-#else
-	(*rsp) = tpdu_rsp;
-#endif
-	}
-	
-	return ret;
-}
-
-static int Protocol_T14_Case3S (APDU_Cmd * cmd, APDU_Rsp ** rsp)
-{
-	int ret;
-	
-	/* Send command TPDU */
-	ret = Protocol_T14_ExchangeTPDU(cmd, rsp);
-	
-	return ret;
-}
-
-static int Protocol_T0_Case4S (APDU_Cmd * cmd, APDU_Rsp ** rsp)
-{
-	int ret;
-	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
-	APDU_Cmd *tpdu_cmd;
-	APDU_Rsp *tpdu_rsp;
-	
-	/* Map command APDU onto TPDU */
-	memcpy (buffer, APDU_Cmd_Raw (cmd), APDU_Cmd_RawLen (cmd) - 1);
-	
-	tpdu_cmd = APDU_Cmd_New (buffer, APDU_Cmd_RawLen (cmd) - 1);
-	
-	/* Send command TPDU */
-	ret = Protocol_T0_ExchangeTPDU(tpdu_cmd, (&tpdu_rsp));
-	
-	/* Delete command TPDU */
-	APDU_Cmd_Delete (tpdu_cmd);
-	
-	if (ret == PROTOCOL_T0_OK)
-	{
-#ifdef PROTOCOL_T0_ISO
-		/* Command accepted with information added */
-		if (APDU_Rsp_SW1 (tpdu_rsp) == 0x61)
-		{
-			/* Prepare Get Reponse command TPDU */
-			buffer[0] = APDU_Cmd_Cla (cmd);
-			buffer[1] = 0xC0;
-			buffer[2] = 0x00;
-			buffer[3] = 0x00;
-			
-			if (APDU_Rsp_SW2 (tpdu_rsp) == 0x00)
-				buffer[4] = (BYTE) APDU_Cmd_Le (cmd);
-			else
-				buffer[4] = MIN (APDU_Cmd_Le (cmd), APDU_Rsp_SW2 (tpdu_rsp));
-			
-			tpdu_cmd = APDU_Cmd_New (buffer, 5);
-			
-			/* Delete response TPDU */
-			APDU_Rsp_Delete (tpdu_rsp);
-			
-			/* Issue Get Reponse command */
-			ret = Protocol_T0_ExchangeTPDU(tpdu_cmd, rsp);
-			
-			/* Delete command TPDU */
-			APDU_Cmd_Delete (tpdu_cmd);
-		}	
-		else if ((APDU_Rsp_SW1 (tpdu_rsp) & 0xF0) == 0x60) /* Command not accepted */
-		{
-			/* Map response TPDU onto APDU without change */
-			(*rsp) = tpdu_rsp;
-		}
-		else /* Command accepted */
-		{
-			/* Delete response TPDU */
-			APDU_Rsp_Delete (tpdu_rsp);
-			
-			/* Prepare Get Reponse TPDU */
-			buffer[0] = APDU_Cmd_Cla (cmd);
-			buffer[1] = 0xC0;
-			buffer[2] = 0x00;
-			buffer[3] = 0x00;
-			buffer[4] = (BYTE) APDU_Cmd_Le (cmd);
-			
-			tpdu_cmd = APDU_Cmd_New (buffer, 5);
-			
-			/* Issue Get Reponse command TPDU */
-			ret = Protocol_T0_Case3S (t0, tpdu_cmd, rsp);
-			
-			/* Delete command TPDU */
-			APDU_Cmd_Delete (tpdu_cmd);
-		}
-#else
-		(*rsp) = tpdu_rsp;
-#endif
-	}
-	
-	return ret;
-}
 
 
 static int Protocol_T0_Case2E (APDU_Cmd * cmd, APDU_Rsp ** rsp)
@@ -482,7 +205,7 @@ static int Protocol_T0_Case3E (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		tpdu_cmd = APDU_Cmd_New (buffer, 5);
 		
 		/* Send command TPDU */
-		ret = Protocol_T0_Case3S (tpdu_cmd, rsp);
+		ret = Protocol_T0_ExchangeTPDU (tpdu_cmd, rsp); //this was Case3S !!!
 		
 		/* Delete command TPDU */
 		APDU_Cmd_Delete (tpdu_cmd);
@@ -853,7 +576,7 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	return (ret);
 }
 
-static int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
+int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
 	BYTE buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
 	BYTE *cmd_raw;

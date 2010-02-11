@@ -188,27 +188,6 @@ unsigned long APDU_Cmd_Le (APDU_Cmd * apdu)
 	return res;
 }
 
-bool  APDU_Cmd_Le_Available (APDU_Cmd * apdu)
-{
-	int c;
-	bool res;
-	
-	c = APDU_Cmd_Case (apdu);
-	
-	if (c == APDU_CASE_3S)
-		res = (apdu->command[4] == 0);
-	else if (c  == APDU_CASE_4S)
-		res  = (apdu->command[apdu->length - 1] == 0);
-	else if (c == APDU_CASE_3E)
-		res = ((((unsigned long)(apdu->command[5]) << 8) | apdu->command[6]) == 0);
-	else if (c == APDU_CASE_4E)
-		res = ((((unsigned long)(apdu->command[apdu->length - 2]) << 8) | apdu->command[apdu->length - 1]) == 0);
-	else
-		res = FALSE;
-	
-	return res;
-}
-
 BYTE * APDU_Cmd_Header (APDU_Cmd * apdu)
 {
 	return apdu->command;
@@ -292,11 +271,6 @@ unsigned long
 APDU_Rsp_DataLen (APDU_Rsp * apdu)
 {
 	return (apdu->length - 2);
-}
-
-BYTE * APDU_Rsp_Data (APDU_Rsp * apdu)
-{
-	return apdu->response;
 }
 
 BYTE * APDU_Rsp_Raw (APDU_Rsp * apdu)

@@ -104,9 +104,6 @@ extern unsigned long APDU_Cmd_Lc (APDU_Cmd * apdu);
 /* Return length of data expected */
 extern unsigned long APDU_Cmd_Le (APDU_Cmd * apdu);
 
-/* Return TRUE if the command requires all data available */
-extern bool APDU_Cmd_Le_Available (APDU_Cmd * apdu);
-
 /* Return a pointer to the header of the command */
 extern BYTE *APDU_Cmd_Header (APDU_Cmd * apdu);
 
@@ -133,9 +130,6 @@ extern BYTE APDU_Rsp_SW2 (APDU_Rsp * apdu);
 
 /* Return length of the data of the response */
 extern unsigned long APDU_Rsp_DataLen (APDU_Rsp * apdu);
-
-/* Return a pointer to the data of the response */
-extern BYTE *APDU_Rsp_Data (APDU_Rsp * apdu);
 
 /* Return a pointer to the whole response */
 extern BYTE *APDU_Rsp_Raw (APDU_Rsp * apdu);
