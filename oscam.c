@@ -2390,7 +2390,7 @@ int main (int argc, char *argv[])
   if (cfg->waitforcards)
   {
       int card_init_done;
-      cs_log("Waiting for local card init ....");
+      cs_log("waiting for local card init");
       sleep(3);  // short sleep for card detect to work proberly
       do {
           card_init_done = 1;
@@ -2400,12 +2400,10 @@ int main (int argc, char *argv[])
               break;
             }
           }
-          if (card_init_done)
-              break;
           cs_sleepms(300);              // wait a little bit
           alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1); 
-      } while (1);
-      cs_log("Init for all local cards done !");
+      } while (!card_init_done);
+      cs_log("init for all local cards done");
   }
   
 
