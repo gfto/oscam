@@ -82,8 +82,9 @@ SIGNALS
 	  get reader SC info
 
 SEE ALSO
-       oscam.conf(5),	 oscam.user(5),    oscam.server(5),    oscam.srvid(5),
-       oscam.guess(5), oscam.cert(5), oscam.services(5), oscam.ird(5)
+       list_smargo(1),	  oscam.conf(5),    oscam.user(5),    oscam.server(5),
+       oscam.srvid(5),	 oscam.guess(5),   oscam.cert(5),   oscam.services(5),
+       oscam.ird(5)
 
 
 

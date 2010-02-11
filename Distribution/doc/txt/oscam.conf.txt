@@ -362,9 +362,9 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       oscam(1),      oscam.user(5),	  oscam.server(5),     oscam.srvid(5),
-       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
-       oscam.ac(5)
+       list_smargo(1),	    oscam(1),	   oscam.user(5),     oscam.server(5),
+       oscam.srvid(5),	 oscam.guess(5),   oscam.cert(5),   oscam.services(5),
+       oscam.ird(5), oscam.ac(5)
 
 
 
