@@ -1895,6 +1895,14 @@ void get_cw(ECM_REQUEST *er)
 		er->rcEx = E2_CAID;
 	}
 
+	// user expired
+	if(client[cs_idx].expirationdate && client[cs_idx].expirationdate < client[cs_idx].lastecm)
+		er->rc = 11;
+
+	// user disabled
+	if(client[cs_idx].disabled != 0)
+		er->rc = 12;
+
 	// rc<100 -> ecm error
 	if (er->rc > 99) {
 
@@ -1904,14 +1912,6 @@ void get_cw(ECM_REQUEST *er)
 
 		if ((i != client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch))
 			client[cs_idx].lastswitch = now;
-
-		// user expired
-		if(client[cs_idx].expirationdate && client[cs_idx].expirationdate < client[cs_idx].lastecm)
-			er->rc = 11;
-
-		// user disabled
-		if(client[cs_idx].disabled != 0)
-			er->rc = 12;
 
 		// user sleeping
 		if ((client[cs_idx].tosleep) && (now - client[cs_idx].lastswitch > client[cs_idx].tosleep))
