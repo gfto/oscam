@@ -323,7 +323,7 @@ int casc_process_ecm(ECM_REQUEST *er)
   if( reader[ridx].ph.type==MOD_CONN_TCP && reader[ridx].tcp_rto )
   {
     int rto = abs(reader[ridx].last_s - reader[ridx].last_g);
-    if (rto >= reader[ridx].tcp_rto)
+    if (rto >= (reader[ridx].tcp_rto*60))
     {
       cs_debug("rto=%d", rto);
       network_tcp_connection_close(client[cs_idx].udp_fd);
