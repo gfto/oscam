@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <string.h>
 
-#include <libusb/libusb.h>
+#include <libusb-1.0/libusb.h>
 #define FALSE 0
 #define TRUE 1
 

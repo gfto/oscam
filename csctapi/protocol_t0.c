@@ -92,7 +92,7 @@ int Protocol_T0_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 			return Protocol_T0_ExchangeTPDU(cmd, rsp);
 		default:
 			cs_debug_mask (D_IFD,"Protocol: T=0: Invalid APDU\n");
-			return PROTOCOL_T0_ERROR;
+			return ERROR;
 	}
 }
 
@@ -103,7 +103,7 @@ int Protocol_T0_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
 static int Protocol_T0_Case2E (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
-	int ret = PROTOCOL_T0_OK;
+	int ret = OK;
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	APDU_Cmd *tpdu_cmd;
 	APDU_Rsp *tpdu_rsp;
@@ -150,7 +150,7 @@ static int Protocol_T0_Case2E (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 			/* Delete command TPDU */
 			APDU_Cmd_Delete (tpdu_cmd);
 			
-			if (ret == PROTOCOL_T0_OK)
+			if (ret == OK)
 			{
 				/*  Card does support envelope command */
 				if (APDU_Rsp_SW1 (tpdu_rsp) == 0x90)
@@ -227,7 +227,7 @@ static int Protocol_T0_Case3E (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 		/* Delete command TPDU */
 		APDU_Cmd_Delete (tpdu_cmd);
 		
-		if (ret == PROTOCOL_T0_OK)
+		if (ret == OK)
 		{
 			/*  Le definitely not accepted */
 			if (APDU_Rsp_SW1 (tpdu_rsp) == 0x67)
@@ -278,12 +278,12 @@ static int Protocol_T0_Case3E (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 					/* Delete command TPDU */
 					APDU_Cmd_Delete (tpdu_cmd);
 					
-					if (ret == PROTOCOL_T0_OK)
+					if (ret == OK)
 					{
 						/* Append response TPDU to APDU  */
 						if (APDU_Rsp_AppendData ((*rsp), tpdu_rsp) != APDU_OK)
 						{
-							ret = PROTOCOL_T0_ERROR;
+							ret = ERROR;
 							APDU_Rsp_Delete (tpdu_rsp);
 							break;
 						}
@@ -344,7 +344,7 @@ static int Protocol_T0_Case4E (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	}
 	
 	/* 4E1 a) b) and c) */
-	if (ret == PROTOCOL_T0_OK)
+	if (ret == OK)
 	{
 		if (APDU_Rsp_SW1 (tpdu_rsp) == 0x61)
 		{
@@ -412,7 +412,8 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_RESPONSE];
 	BYTE *data;
 	long Lc, Le, sent, recv;
-	int ret = PROTOCOL_T0_OK, nulls, cmd_case;
+	int ret = OK, nulls, cmd_case;
+	(*rsp) = NULL;//in case of error this will be returned
 	
 	/* Parse APDU */
 	Lc = APDU_Cmd_Lc (cmd);
@@ -422,14 +423,9 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	
 	/* Check case of command */
 	if ((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S))
-		return PROTOCOL_T0_ERROR;
+		return ERROR;
 	
-	/* Send header bytes */
-	if (ICC_Async_Transmit (5, APDU_Cmd_Header (cmd)))
-	{
-		(*rsp) = NULL;
-		return PROTOCOL_T0_ICC_ERROR;
-	}
+	call (ICC_Async_Transmit (5, APDU_Cmd_Header (cmd)));		//Send header bytes
 	
 	/* Initialise counters */
 	nulls = 0;
@@ -444,44 +440,23 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 	
 	while (recv < PROTOCOL_T0_MAX_SHORT_RESPONSE)
 	{
-		/* Read one procedure byte */
-		if (ICC_Async_Receive (1, buffer + recv))
-		{
-			ret = PROTOCOL_T0_ICC_ERROR;
-			break;
-		}
+		call (ICC_Async_Receive (1, buffer + recv));				//Read one procedure byte
 		
 		/* NULL byte received */
-		if (buffer[recv] == 0x60)
-		{
+		if (buffer[recv] == 0x60) {
 			nulls++;
-			
-			/* Maximum number of nulls reached */
-			if (nulls >= PROTOCOL_T0_MAX_NULLS)
-			{
-				ret = PROTOCOL_T0_NULL_ERROR;
-				break;
-			}
-			
+			if (nulls >= PROTOCOL_T0_MAX_NULLS)								//Maximum number of nulls reached 
+				return ERROR;
 			continue;
 		}
 		else if ((buffer[recv] & 0xF0) == 0x60 || (buffer[recv] & 0xF0) == 0x90) /* SW1 byte received */
 		{//printf("sw1\n");
 			recv++;
-			
 			if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE)
-				return PROTOCOL_T0_ERROR;
-			
-			/* Read SW2 byte */
-			if (ICC_Async_Receive (1, buffer + recv))
-			{
-				ret = PROTOCOL_T0_ICC_ERROR;
-				break;
-			}
-			
+				return ERROR;
+			call (ICC_Async_Receive (1, buffer + recv));					//Read SW2 byte
 			recv++;
-			
-			ret = PROTOCOL_T0_OK;
+			ret = OK;
 			break;
 		}
 		else if ((buffer[recv] & 0x0E) == (APDU_Cmd_Ins (cmd) & 0x0E)) /* ACK byte received */
@@ -490,102 +465,68 @@ static int Protocol_T0_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 			nulls = 0;
 			
 			/* Case 2 command: send data */
-			if (cmd_case == APDU_CASE_2S)
-			{
+			if (cmd_case == APDU_CASE_2S) {
 				if (sent >= Lc)
-					return PROTOCOL_T0_ERROR;
-								
+					return ERROR;
 				if (ICC_Async_Transmit(MAX (Lc - sent, 0), data + sent)) /* Send remaining data bytes */
-				{
-					ret = PROTOCOL_T0_ICC_ERROR;
-					break;
-				}
-				
+					return ERROR;
 				sent = Lc;
 				continue;
 			}
 			else /* Case 3 command: receive data */
 			{
 				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE)
-					return PROTOCOL_T0_ERROR;
+					return ERROR;
 				
 				/* 
 				* Le <= PROTOCOL_T0_MAX_SHORT_RESPONSE - 2 for short commands 
 				*/
 				
 				/* Read remaining data bytes */
-				if (ICC_Async_Receive(MAX (Le - recv, 0), buffer + recv))
-				{//printf("error %d\n", (int)Le);
-					ret = PROTOCOL_T0_ICC_ERROR;
-					break;
-				}
-				
+				call (ICC_Async_Receive(MAX (Le - recv, 0), buffer + recv));
 				recv = Le;
 				continue;
 			}
 		}
 		else if ((buffer[recv] & 0x0E) == ((~APDU_Cmd_Ins (cmd)) & 0x0E)) /* ~ACK byte received */
 		{//printf("~ack\n");
-			/* Reset null's counter */
-			nulls = 0;
+			nulls = 0;																								//Reset null's counter
 			
 			/* Case 2 command: send data */
-			if (cmd_case == APDU_CASE_2S)
-			{
+			if (cmd_case == APDU_CASE_2S) {
 				if (sent >= Lc)
-					return PROTOCOL_T0_ERROR;
-								
-				/* Send next data byte */
-				if (ICC_Async_Transmit (1, data + sent))
-				{
-					ret = PROTOCOL_T0_ICC_ERROR;
-					break;
-				}
-				
+					return ERROR;
+				call (ICC_Async_Transmit (1, data + sent));							//Send next data byte
 				sent++;
 				continue;
 			}
-			else /* Case 3 command: receive data */
-			{
+			else {/* Case 3 command: receive data */
 				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE)
-					return PROTOCOL_T0_ERROR;
-				
-				/* Read next data byte */
-				if (ICC_Async_Receive (1, buffer + recv))
-				{
-					ret = PROTOCOL_T0_ICC_ERROR;
-					break;
-				}
-				
+					return ERROR;
+				call (ICC_Async_Receive (1, buffer + recv));						//Read next data byte
 				recv++;
 				continue;
 			}
 		}
 		else /* Anything else received */
-		{//printf("hs\n");
-			ret = PROTOCOL_T0_ERROR;
-			break;
-		}
-	}
+			return ERROR;
+	}//while
 		
-	if (ret == PROTOCOL_T0_OK)
-		(*rsp) = APDU_Rsp_New (buffer, recv);
-	else
-		(*rsp) = NULL;
-	
-	return (ret);
+	(*rsp) = APDU_Rsp_New (buffer, recv);
+	return OK;
 }
 
 int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 {
 	BYTE buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
 	BYTE *cmd_raw;
-	long sent, recv, cmd_len;
-	int ret = PROTOCOL_T0_OK, nulls, cmd_case;
+	long recv, cmd_len;
+	int cmd_case;
 	BYTE ixor = 0x3E;
 	BYTE ixor1 = 0x3F;
 	BYTE b1 = 0x01;
 	int i;
+	(*rsp) = NULL;//in case of error this is returned
 	
 	/* Parse APDU */
 	cmd_len = APDU_Cmd_Lc (cmd) + 5;
@@ -596,125 +537,46 @@ int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
 	/* Check case of command */
 	if ((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S))
-		return PROTOCOL_T0_ERROR;
+		return ERROR;
 	
-	if (reader[ridx].typ <= R_MOUSE)
-	{
-		/* Send 0x01 byte */
-		if (ICC_Async_Transmit (1, &b1))
-		{
-			(*rsp) = NULL;
-			return PROTOCOL_T0_ICC_ERROR;
-		}
-		
-		/* Send apdu */
-		if (ICC_Async_Transmit (cmd_len, cmd_raw))
-		{
-			(*rsp) = NULL;
-			return PROTOCOL_T0_ICC_ERROR;
-		}
-		
-		/* Send xor byte */
-		if (ICC_Async_Transmit (1, &ixor))
-		{
-			(*rsp) = NULL;
-			return PROTOCOL_T0_ICC_ERROR;
-		}
+	if (reader[ridx].typ <= R_MOUSE) {
+		call (ICC_Async_Transmit (1, &b1));						//send 0x01 byte
+		call (ICC_Async_Transmit (cmd_len, cmd_raw));	//send apdu
+		call (ICC_Async_Transmit (1, &ixor));					//Send xor byte
 	}
-	else
-	{
+	else {
 		buffer[0] = 0x01;
 		memcpy(buffer+1, cmd_raw, cmd_len);
 		buffer[cmd_len+1] = ixor;
 		
 		/* Send apdu */
-		if (ICC_Async_Transmit (cmd_len+2, buffer))
-		{
-			(*rsp) = NULL;
-			return PROTOCOL_T0_ICC_ERROR;
-		}
+		call (ICC_Async_Transmit (cmd_len+2, buffer));//send apdu
 	}
 	
-	/* Initialise counters */
-	nulls = 0;
-	sent = 0;
-	recv = 0;
-	
-	
-	
-	/* 
-	* Let's be a bit paranoid with buffer sizes within this loop
-	* so it doesn't overflow reception and transmission buffers
-	* if card does not strictly respect the protocol
-	*/
-	
-	while (recv < PROTOCOL_T14_MAX_SHORT_RESPONSE)
+	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09)
 	{
-		if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09)
-		{
 #ifdef HAVE_NANOSLEEP
-			struct timespec req_ts;
+		struct timespec req_ts;
 		
 //			req_ts.tv_sec = 1;
 //			req_ts.tv_nsec = 500000000;
-			req_ts.tv_sec = 2;
-			req_ts.tv_nsec = 500000000;
-			nanosleep (&req_ts, NULL);
+		req_ts.tv_sec = 2;
+		req_ts.tv_nsec = 500000000;
+		nanosleep (&req_ts, NULL);  //FIXME why wait 2,5 sec?
 #else
-			usleep (999999L);
+		usleep (999999L);
 #endif
-		}
-		/* Read one procedure byte */
-		if (ICC_Async_Receive (8, buffer))
-		{
-			ret = PROTOCOL_T0_ICC_ERROR;
-			break;
-		}
-		else
-		{
-			recv = (long)buffer[7];
-			
-			if(recv)
-			{
-				if (ICC_Async_Receive (recv, buffer + 8))
-				{
-					ret = PROTOCOL_T0_ICC_ERROR;
-					break;
-				}
-			}
-			
-			if (ICC_Async_Receive (1, &ixor))
-			{
-				ret = PROTOCOL_T0_ICC_ERROR;
-				break;
-			}
-
-			for(i=0; i<8+recv; i++)		
-				ixor1^=buffer[i];
-				
-			if(ixor1 != ixor)
-			{
-				ret = PROTOCOL_T0_ERROR;
-				break;
-			}
-			
-			
-			
-				
-			ret = PROTOCOL_T0_OK;
-			break;
-		}
 	}
-		
-	if (ret == PROTOCOL_T0_OK)
-	{
-		memcpy(buffer + 8 + recv, buffer + 2, 2);
-		(*rsp) = APDU_Rsp_New (buffer + 8, recv + 2);
-	}
-	else
-	{
-		(*rsp) = NULL;
-	}
-	
-	return (ret);
+	call (ICC_Async_Receive (8, buffer));				//Read one procedure byte
+	recv = (long)buffer[7];
+	if(recv)
+		call (ICC_Async_Receive (recv, buffer + 8));
+	call (ICC_Async_Receive (1, &ixor));
+	for(i=0; i<8+recv; i++)		
+		ixor1^=buffer[i];
+	if(ixor1 != ixor)
+		return ERROR;
+	memcpy(buffer + 8 + recv, buffer + 2, 2);
+	(*rsp) = APDU_Rsp_New (buffer + 8, recv + 2);
+	return OK;
 }
