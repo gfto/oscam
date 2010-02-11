@@ -93,8 +93,8 @@ DESCRIPTIONS
 	  default:0
 
        suppresscmd08 = 0|1
-	  0  =	CMD08  for  camd 3.5x clients enabled, 1 = CMD08 for camd 3.5x
-	  clients disabled, default:0
+	  0 = CMD08 for camd3 3.57x/3.78x clients enabled, 1 = CMD08 for camd3
+	  3.57x/3.78x clients disabled, default:0
 
 EXAMPLES
 	[account]

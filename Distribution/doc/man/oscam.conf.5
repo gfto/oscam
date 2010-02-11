@@ -121,11 +121,6 @@ max log file size, default:10
 .RS 3n
 1 = try decoding on local cards first, default:0
 .RE
-.PP
-\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
-.RS 3n
-0 = CMD08 for camd 3.5x clients enabled, 1 = CMD08 for camd 3.5x clients disabled, default:0
-.RE
 .SS "The [monitor] section"
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
@@ -293,7 +288,12 @@ UDP port for camd 3.57x clients, 0 = disabled, default:0
 \fBserverip\fP = \fBIP address\fP
 .RS 3n
 bind service to specified IP address, default:all
-.RE	  
+.RE
+.PP
+\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
+.RS 3n
+0 = CMD08 enabled, 1 = CMD08 disabled, default:0
+.RE
 .SS "The [cs378x] section"
 .PP
 \fBport\fP = \fB0\fP|\fBport@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
@@ -308,6 +308,11 @@ TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled, default:0
 \fBserverip\fP = \fBIP address\fP
 .RS 3n
 bind service to specified IP address, default:all
+.RE
+.PP
+\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
+.RS 3n
+0 = CMD08 enabled, 1 = CMD08 disabled, default:0
 .RE
 .SS "The [gbox] section"
 .PP

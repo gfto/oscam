@@ -91,10 +91,6 @@ DESCRIPTIONS
        preferlocalcards = 0|1
 	  1 = try decoding on local cards first, default:0
 
-       suppresscmd08 = 0|1
-	  0  =	CMD08  for  camd 3.5x clients enabled, 1 = CMD08 for camd 3.5x
-	  clients disabled, default:0
-
    The [monitor] section
        port = 0|port
 	  UDP port for monitor, port=0 monitor disabled, default:0
@@ -102,7 +98,7 @@ DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
-       nocrypt = IP address|IP address range[,IP address|IP address  range]...
+       nocrypt	= IP address|IP address range[,IP address|IP address range]...
 	  unsecured monitor connection, default:none
 
 	   example: nocrypt = 127.0.0.1,192.168.0.0-192.168.255.255
@@ -122,7 +118,7 @@ DESCRIPTIONS
 	  monlevel can be overwritten per user in oscam.user
 
        hideclient_to = seconds
-	  time	to  hide  clients  in the monitor if not sending requests, 0 =
+	  time to hide clients in the monitor if not  sending  requests,  0  =
 	  disabled, default:0
 
    The [camd33] section
@@ -132,7 +128,7 @@ DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
-       nocrypt = IP address|IP address range[,IP address|IP address  range]...
+       nocrypt	= IP address|IP address range[,IP address|IP address range]...
 	  unsecured camd 3.3x client connection, default:none
 
 	   example: nocrypt = 127.0.0.1,192.168.0.0-192.168.255.255
@@ -163,7 +159,7 @@ DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
-       allowed	= IP address|IP address range[,IP address|IP address range]...
+       allowed = IP address|IP address range[,IP address|IP address  range]...
 	  client connections allowed from, default:none
 
 	   example: allowed = 127.0.0.1,192.168.0.0-192.168.255.255
@@ -183,7 +179,7 @@ DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
-       allowed = IP address|IP address range[,IP address|IP address  range]...
+       allowed	= IP address|IP address range[,IP address|IP address range]...
 	  client connections allowed from, default:none
 
 	   example: allowed = 127.0.0.1,192.168.0.0-192.168.255.255
@@ -214,6 +210,9 @@ DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
+       suppresscmd08 = 0|1
+	  0 = CMD08 enabled, 1 = CMD08 disabled, default:0
+
    The [cs378x] section
        port = 0|port@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...
 	  TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled,
@@ -225,6 +224,9 @@ DESCRIPTIONS
 
        serverip = IP address
 	  bind service to specified IP address, default:all
+
+       suppresscmd08 = 0|1
+	  0 = CMD08 enabled, 1 = CMD08 disabled, default:0
 
    The [gbox] section
        password = password
@@ -268,7 +270,7 @@ DESCRIPTIONS
 	  1 = enable AU, default:0
 
        boxtype = dbox2|dreambox|ufs910
-	  set	boxtype,   auto   detection   of  DVB  API  will  be  aspired,
+	  set  boxtype,  auto  detection  of  DVB   API   will	 be   aspired,
 	  default:dreambox
 
    The [anticasc] section (only if anti-cascading enabled)
@@ -276,7 +278,7 @@ DESCRIPTIONS
 	  1 = enabled anti-cascading, default:0
 
        numusers = quantity
-	  anti-cascading: user per account, 0 = anti-cascading not  permitted,
+	  anti-cascading:  user per account, 0 = anti-cascading not permitted,
 	  default:0
 
        sampletime = minutes
@@ -322,9 +324,9 @@ MONITOR
 				     2 = ATR parsing info, ECM dumps, CW dumps
 				     4 = traffic from/to the reader
 				     8 = traffic from/to the clients
-				    16 = traffic to the reader-device  on  IFD
+				    16	=  traffic to the reader-device on IFD
        layer
-				    32	=  traffic to the reader-device on I/O
+				    32 = traffic to the reader-device  on  I/O
        layer
 				    63 = debug all
 	version 		= show OSCam version
@@ -360,8 +362,8 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       oscam(1),     oscam.user(5),	 oscam.server(5),      oscam.srvid(5),
-       oscam.guess(5),	  oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
+       oscam(1),      oscam.user(5),	  oscam.server(5),     oscam.srvid(5),
+       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
        oscam.ac(5)
 
 
