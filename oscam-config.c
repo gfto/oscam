@@ -357,7 +357,6 @@ static void chk_t_global(char *token, char *value)
   if (!strcmp(token, "netprio")) { cfg->netprio=atoi(value); return; }
   if (!strcmp(token, "resolvedelay")) { cfg->resolvedelay=atoi(value); return; }
   if (!strcmp(token, "sleep")) { cfg->tosleep=atoi(value); return; }
-  if (!strcmp(token, "suppresscmd08")) { cfg->c35_suppresscmd08=atoi(value); return; }
   if (!strcmp(token, "unlockparental")) { cfg->ulparent=atoi(value); return; }
   if (!strcmp(token, "nice"))
   {
@@ -485,6 +484,7 @@ static void chk_t_camd35(char *token, char *value)
 {
   if (!strcmp(token, "port")) { cfg->c35_port=atoi(value); return; }
   if (!strcmp(token, "serverip")) { cfg->c35_tcp_srvip=inet_addr(value); return; }
+  if (!strcmp(token, "suppresscmd08")) { cfg->c35_suppresscmd08=atoi(value); return; }
   if (token[0] != '#')
     fprintf(stderr, "Warning: keyword '%s' in camd35 section not recognized\n",token);
 }
@@ -493,6 +493,7 @@ static void chk_t_camd35_tcp(char *token, char *value)
 {
   if (!strcmp(token, "port")) { chk_port_tab(value, &cfg->c35_tcp_ptab); return; }
   if (!strcmp(token, "serverip")) { cfg->c35_tcp_srvip=inet_addr(value); return; }
+  if (!strcmp(token, "suppresscmd08")) { cfg->c35_suppresscmd08=atoi(value); return; }
   if (token[0] != '#')
     fprintf(stderr, "Warning: keyword '%s' in camd35 tcp section not recognized\n",token);
 }
