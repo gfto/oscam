@@ -314,25 +314,8 @@ int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
 int ICC_Async_SetTimings (unsigned wait_etu)
 {
-//		if (reader[ridx].typ == R_INTERNAL) {
-//not sure whether this tampering with Block/Character timeouts is needed with SCI devices, 
-//since we have set CWT and BWT it seems logical the reader is taking care of this
-//#ifdef SCI_DEV
-//#include <sys/ioctl.h>
-//#include "sci_global.h"
-//#include "sci_ioctl.h"
-//			SCI_PARAMETERS params;
-//			if (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 )
-//				return ERROR;
-//			params.BWT = bwt;
-//			if (ioctl(reader[ridx].handle, IOCTL_SET_PARAMETERS, &params)!=0)
-//				return ERROR;
-//#endif
-//		}
-//		else {
-			read_timeout = ETU_to_ms(wait_etu);
-			cs_debug_mask(D_IFD, "Setting timeout to %i", wait_etu);
-//		}
+	read_timeout = ETU_to_ms(wait_etu);
+	cs_debug_mask(D_IFD, "Setting timeout to %i", wait_etu);
 	return OK;
 }
 
@@ -455,10 +438,6 @@ unsigned long ICC_Async_GetClockRate ()
 	}
 }
 
-/*
- * Not exported functions definition
- */
-
 static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer)
 {
 	uint i;
@@ -523,7 +502,6 @@ static int Parse_ATR (ATR * atr, unsigned short deprecated)
 				numprottype ++;
 		cs_debug("%i protocol types detected. Historical bytes: %s",numprottype, cs_hexdump(1,atr->hb,atr->hbn));
 
-//If more than one protocol type and/or TA1 parameter values other than the default values and/or N equeal to 255 is/are indicated in the answer to reset, the card shall know unambiguously, after having sent the answer to reset, which protocol type or/and transmission parameter values (FI, D, N) will be used. Consequently a selection of the protocol type and/or the transmission parameters values shall be specified.
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(n));
 		ATR_GetProtocolType(atr,1,&(protocol_type)); //get protocol from TD1
 		BYTE TA2;
@@ -551,15 +529,13 @@ static int Parse_ATR (ATR * atr, unsigned short deprecated)
 		else { //negotiable mode
 
 			bool PPS_success = FALSE; 
-			bool NeedsPTS = ((protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to ISO 7816 , SCI gets stuck on our PTS
+			bool NeedsPTS = ((protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
 			if (NeedsPTS && deprecated == 0) {
-				//						 PTSS	PTS0	PTS1	PTS2	PTS3	PCK
 				//						 PTSS	PTS0	PTS1	PCK
 				BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
 				req[1]=0x10 | protocol_type; //PTS0 always flags PTS1 to be sent always
 				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1 
 					req[2] = 0x11; //defaults FI and DI to 1
-				//req[3]=PPS_GetPCK(req,sizeof(req)-1); will be set by PPS_Exchange
 				unsigned int len = sizeof(req);
 				ret = PPS_Exchange (req, &len);
 				if (ret == OK) {
@@ -573,7 +549,6 @@ static int Parse_ATR (ATR * atr, unsigned short deprecated)
 					cs_ddump(req,4,"PTS Failure, response:");
 			}
 
-			//FIXME Currently InitICC sets baudrate to 9600 for all T14 cards (=no switching); 
 			//When for SCI, T14 protocol, TA1 is obeyed, this goes OK for mosts devices, but somehow on DM7025 Sky S02 card goes wrong when setting ETU (ok on DM800/DM8000)
 			if (!PPS_success) {//last PPS not succesfull
 				BYTE TA1;
@@ -610,10 +585,6 @@ static int Parse_ATR (ATR * atr, unsigned short deprecated)
 	else
 		return InitCard (atr, ATR_DEFAULT_FI, ATR_DEFAULT_D, n, deprecated);
 }
-
-/*
- * Not exported funtions definition
- */
 
 static int PPS_Exchange (BYTE * params, unsigned *length)
 {
