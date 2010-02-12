@@ -1631,7 +1631,10 @@ int send_dcw(ECM_REQUEST *er)
 		// 4 - not found
 		// 9 - corrupt
 		// 10 - no card
-		client[cs_idx].cwnot++;
+		if (er->rcEx)
+			client[cs_idx].cwignored++;
+		else
+			client[cs_idx].cwnot++;
 		break;
 
 	case 5:
