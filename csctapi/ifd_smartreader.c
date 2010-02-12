@@ -411,18 +411,15 @@ static void ResetSmartReader(S_READER *reader)
 
 static bool smartreader_check_endpoint(libusb_device *usb_dev)
 {
-    unsigned int packet_size;
     struct libusb_device_descriptor desc;
     struct libusb_config_descriptor *configDesc;
-    struct libusb_interface interface;
-    struct libusb_interface_descriptor intDesc;
-    struct libusb_endpoint_descriptor endpoint;
     int ret;
     int j,k,l;
     u_int8_t tmpEndpointAddress;  
     int nb_endpoint_ok;
 
     
+    nb_endpoint_ok=0;
     ret = libusb_get_device_descriptor(usb_dev, &desc);
     if (ret < 0) {
         cs_log("Smartreader : couldn't read device descriptor, assuming this is not a smartreader");
@@ -435,7 +432,6 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev)
             return FALSE;
         }
 
-        nb_endpoint_ok=0;
         for(j=0; j<configDesc->bNumInterfaces; j++) 
             for(k=0; k<configDesc->interface[j].num_altsetting; k++)
                 for(l=0; l<configDesc->interface[j].altsetting[k].bNumEndpoints; l++) {

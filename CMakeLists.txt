@@ -195,6 +195,9 @@ endif (HAVE_PCSC)
 
 add_subdirectory (csctapi)
 add_subdirectory (cscrypt)
+if (HAVE_LIBUSB)
+add_subdirectory (utils)
+endif (HAVE_LIBUSB)
 
 #----------------------- file groups ------------------------------
 

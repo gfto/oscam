@@ -170,7 +170,7 @@ macosx-native:
 macosx-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst cross-,,$@) \
-		LIBUSB="/usr/local/lib/libusb-1.0.a" \a
+		LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm " \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \

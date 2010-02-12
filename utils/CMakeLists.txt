@@ -1,0 +1,250 @@
+project (Utils C)
+
+#----------------------- minimum version of cmake to use ------------
+
+# if you want to switch to 2.6 min, please look at the escaped definitions
+# later in this file (the add_definitions in 2.6 don't need to be escaped),
+# and remove the CMP0005 policy.
+# the CMP0003 could also be removed for cmake 2.6
+cmake_minimum_required (VERSION 2.4)
+if(COMMAND cmake_policy)
+    cmake_policy(SET CMP0005 OLD)
+    cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
+#----------------------- detect system ------------------------------
+
+if (CMAKE_CROSSCOMPILING)
+    if (OSCAM_SYSTEM_NAME MATCHES "Tuxbox")
+        set (OSCamOperatingSystem "Tuxbox")
+        set (CS_OS_HW "tuxbox")
+        set (CS_OS_SYS "linux")
+    elseif (OSCAM_SYSTEM_NAME MATCHES "TripleDragon")
+        set (OSCamOperatingSystem "TripleDragon")
+        set (CS_OS_HW "tuxbox")
+        set (CS_OS_SYS "linux")
+    elseif (OSCAM_SYSTEM_NAME MATCHES "Coolstream")
+        set (OSCamOperatingSystem "NeutrinoHD")
+        set (CS_OS_HW "coolstream")
+        set (CS_OS_SYS "linux")
+    elseif (OSCAM_SYSTEM_NAME MATCHES "NSLU2")
+        set (OSCamOperatingSystem "SlugOS")
+	set (CS_OS_HW "nslu2")
+	set (CS_OS_SYS "linux")
+    elseif (OSCAM_SYSTEM_NAME MATCHES "Fonera2")
+        set (OSCamOperatingSystem "Fonera2")
+        set (CS_OS_HW "fonera2")
+        set (CS_OS_SYS "linux")
+    elseif (OSCAM_SYSTEM_NAME MATCHES "agv2+w")
+        set (OSCamOperatingSystem "agv2+w")
+        set (CS_OS_HW "agv2+w")
+        set (CS_OS_SYS "linux")
+    elseif (OSCAM_SYSTEM_NAME MATCHES "WRT54G")
+        set (OSCamOperatingSystem "WRT54G")
+        set (CS_OS_HW "wrt54g")
+        set (CS_OS_SYS "linux")
+    elseif (OSCAM_SYSTEM_NAME MATCHES "Amino")
+        set (OSCamOperatingSystem "Amino")
+        set (CS_OS_HW "amino")
+        set (CS_OS_SYS "linux")
+    else (OSCAM_SYSTEM_NAME MATCHES "Tuxbox")
+        message (STATUS "Unknown cross system name: <${CMAKE_SYSTEM_NAME}>")
+        set (OSCamOperatingSystem "Unknown")
+        set (CS_OS_HW "unknown")
+        set (CS_OS_SYS "unknown")
+    endif (OSCAM_SYSTEM_NAME MATCHES "Tuxbox")
+else (CMAKE_CROSSCOMPILING)
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        set (OSCamOperatingSystem "Linux")
+        set (CS_OS_HW "pc")
+        set (CS_OS_SYS "linux")
+    elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set (OSCamOperatingSystem "Mac OS X")
+        set (CS_OS_HW "mac")
+        set (CS_OS_SYS "macosx")
+        SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32" )
+        SET( CMAKE_CFLAGS "${CMAKE_CFLAGS} -m32" )
+    elseif (${CYGWIN})
+        set (OSCamOperatingSystem "Windows/Cygwin")
+        set (CS_OS_HW "pc")
+        set (CS_OS_SYS "cygwin")
+        set (CMAKE_SYSTEM_PROCESSOR "i386")
+    else (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+        message (STATUS "Unknown system name: <${CMAKE_SYSTEM_NAME}>")
+        set (OSCamOperatingSystem "Unknown")
+        set (CS_OS_HW "unknown")
+        set (CS_OS_SYS "unknown")
+    endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+endif (CMAKE_CROSSCOMPILING)
+
+#----------------------- some paths ------------------------------
+
+set (OPTIONAL_LINK_DIR "" CACHE STRING "Some optional link directories")
+set (OPTIONAL_INCLUDE_DIR "" CACHE STRING "Some optional include directories")
+
+include_directories (
+    ${OPTIONAL_INCLUDE_DIR}
+    )
+
+link_directories (${OPTIONAL_LINK_DIR})
+
+#----------------------- global options ------------------------------
+
+if (OSCamOperatingSystem MATCHES "Linux")
+    add_definitions ("-DOS_LINUX")
+    set (DEFAULT_CS_CONFDIR "/usr/local/etc")
+elseif (OSCamOperatingSystem MATCHES "Mac OS X")
+    add_definitions ("-DOS_MACOSX -DHAVE_PCSC -DNEED_DAEMON -DCS_NOSHM")
+    set (DEFAULT_CS_CONFDIR "/usr/local/etc")
+elseif (OSCamOperatingSystem MATCHES "Tuxbox")
+    add_definitions ("-DOS_LINUX -DTUXBOX -DPPC")
+    set (DEFAULT_CS_CONFDIR "/var/tuxbox/config")
+elseif (OSCamOperatingSystem MATCHES "TripleDragon")
+    add_definitions ("-DOS_LINUX -DTRIPLEDRAGON -DHAVE_DVBAPI -DSTB04SCI -DTUXBOX -DPPC")    
+    set (DEFAULT_CS_CONFDIR "/var/tuxbox/config")
+elseif (OSCamOperatingSystem MATCHES "NeutrinoHD")
+    add_definitions ("-DOS_LINUX -DTUXBOX -DCOOL")
+    set (DEFAULT_CS_CONFDIR "/var/tuxbox/config")
+elseif (OSCamOperatingSystem MATCHES "SlugOS")
+    add_definitions ("-DOS_LINUX -DARM")
+    set (DEFAULT_CS_CONFDIR "/var/etc")
+elseif (OSCamOperatingSystem MATCHES "Fonera2")
+    add_definitions ("-DOS_LINUX -DMIPSEL -DUCLIBC")
+    set (DEFAULT_CS_CONFDIR "/var/etc")
+elseif (OSCamOperatingSystem MATCHES "agv2+w")
+    add_definitions ("-DOS_LINUX -DUCLIBC")
+    set (DEFAULT_CS_CONFDIR "/etc")
+elseif (OSCamOperatingSystem MATCHES "WRT54G")
+    add_definitions ("-DOS_LINUX -DMIPSEL -DUCLIBC -DUSE_GPIO")
+    set (DEFAULT_CS_CONFDIR "/jffs/etc/config/oscam")
+elseif (OSCamOperatingSystem MATCHES "Amino")
+    add_definitions ("-DOS_LINUX")
+    set (DEFAULT_CS_CONFDIR "/usr/local/etc")
+elseif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+    add_definitions ("-DOS_CYGWIN32 -static")
+    set (DEFAULT_CS_CONFDIR ".")
+endif (OSCamOperatingSystem MATCHES "Linux")
+
+
+set (CS_OS_CPU ${CMAKE_SYSTEM_PROCESSOR})
+set (CS_OSTYPE ${CS_OS_CPU}-${CS_OS_HW}-${CS_OS_SYS})
+
+add_definitions ("-DUSE_CMAKE")
+add_definitions ("-DCS_OSTYPE=\\\"${CS_OSTYPE}\\\"")
+add_definitions ("-DCS_OS_CPU=\\\"${CS_OS_CPU}\\\"")
+add_definitions ("-DCS_OS_HW=\\\"${CS_OS_HW}\\\"")
+add_definitions ("-DCS_OS_SYS=\\\"${CS_OS_SYS}\\\"")
+
+#----------------------- subdirectories ------------------------------
+
+include (CheckIncludeFile)
+
+if (LIBUSBDIR)
+    check_include_file ("${LIBUSBDIR}/include/libusb-1.0/libusb.h" HAVE_LIBUSB)
+    if (HAVE_LIBUSB)
+        message(STATUS "Utils: libusb found.")
+        add_definitions ("-DLIBUSB")
+        add_definitions ("-I${LIBUSBDIR}/include//include")
+        add_library(utils_imp_libusb STATIC IMPORTED)
+        set_property(TARGET utils_imp_libusb PROPERTY IMPORTED_LOCATION ${LIBUSBDIR}/lib/libusb-1.0.a)
+    elseif (HAVE_LIBUSB)
+        message(STATUS "Utils: no libusb found.")
+    endif (HAVE_LIBUSB)
+else (LIBUSBDIR)
+    check_include_file ("libusb-1.0/libusb.h" HAVE_LIBUSB)
+    if (HAVE_LIBUSB)
+        message(STATUS "Utils: libusb found.")
+        add_definitions ("-DLIBUSB")
+        add_definitions ("-I/usr/local/include")
+        add_library(utils_imp_libusb STATIC IMPORTED)
+        set_property(TARGET utils_imp_libusb PROPERTY IMPORTED_LOCATION /usr/local/lib/libusb-1.0.a)
+    else (HAVE_LIBUSB)
+        message(STATUS "Utils: no libusb found.")
+    endif (HAVE_LIBUSB)
+endif (LIBUSBDIR)
+
+#---- are we building ?
+if (HAVE_LIBUSB)
+
+#----------------------- file groups ------------------------------
+
+file (GLOB exe_srcs "list_smargo.c")
+file (GLOB exe_hdrs "*.h")
+file (GLOB all_srcs ${exe_srcs})
+
+#----------------------- the executable ------------------------------
+
+set (util_name "list_smargo")
+add_executable (${util_name} ${exe_srcs} ${exe_hdrs})
+    target_link_libraries (${util_name} utils_imp_libusb)
+if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
+    target_link_libraries (${util_name} rt)
+endif (NOT OSCamOperatingSystem MATCHES "Mac OS X")
+
+#----------------------- specific options ------------------------------
+
+if (OSCamOperatingSystem MATCHES "Linux")
+elseif (OSCamOperatingSystem MATCHES "Mac OS X")
+        FIND_LIBRARY (IOKit_LIBRARY IOKit)
+   	    target_link_libraries ( ${util_name} ${IOKit_LIBRARY})
+        FIND_LIBRARY (CoreFoundation_LIBRARY CoreFoundation)
+   	    target_link_libraries ( ${util_name} ${CoreFoundation_LIBRARY})
+elseif (OSCamOperatingSystem MATCHES "Tuxbox")
+    target_link_libraries ( ${util_name} dl)
+elseif (OSCamOperatingSystem MATCHES "TripleDragon")
+    target_link_libraries ( ${util_name} dl)
+elseif (OSCamOperatingSystem MATCHES "SlugOS")
+elseif (OSCamOperatingSystem MATCHES "Fonera2")
+elseif (OSCamOperatingSystem MATCHES "agv2+w")
+elseif (OSCamOperatingSystem MATCHES "WRT54G")
+elseif (OSCamOperatingSystem MATCHES "Amino")
+elseif (OSCamOperatingSystem MATCHES "Windows/cygwin")
+elseif (OSCamOperatingSystem MATCHES "NeutrinoHD")
+    target_link_libraries ( ${util_name} rt nxp )
+endif (OSCamOperatingSystem MATCHES "Linux")
+
+#----------------------- global compile and link options ------------------------------
+
+# some optimisations
+if (OSCamOperatingSystem MATCHES "Mac OS X")
+add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -m32")
+else (OSCamOperatingSystem MATCHES "Mac OS X")
+add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer")
+endif (OSCamOperatingSystem MATCHES "Mac OS X")
+
+# we don't want the '-rdynamic' in the link command
+set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+
+# we want to strip
+if (OSCamOperatingSystem MATCHES "Mac OS X")
+set (CMAKE_EXE_LINKER_FLAGS "-s -m32")
+else (OSCamOperatingSystem MATCHES "Mac OS X")
+set (CMAKE_EXE_LINKER_FLAGS "-s")
+endif (OSCamOperatingSystem MATCHES "Mac OS X")
+
+#----------------------- we can use CPack to build pacakges --------------------------
+
+# compute my filename
+set (CPACK_PACKAGE_FILE_NAME  "${PROJECT_NAME}-${CS_OSTYPE}")
+
+
+# wich archive we want to generate
+set (CPACK_GENERATOR "TGZ")
+
+# what to put in the archive
+set (CPACK_STRIP_FILES TRUE)
+set (CPACK_COMPONENTS_ALL bin)# config doc)
+
+# ok, we can now use CPack
+include (CPack)
+
+#----------------------- printout resume -----------------------------
+
+message (STATUS "Utils:  operating system: ${OSCamOperatingSystem}")
+message (STATUS "Utils:  system type: ${CS_OSTYPE}")
+message (STATUS "Utils:  system: ${CS_OS_SYS}")
+message (STATUS "Utils:  cpu: ${CS_OS_CPU}")
+message (STATUS "Utils:  hw: ${CS_OS_HW}")
+message (STATUS "Utils:  use system static libusb")
+message (STATUS "")
+endif (HAVE_LIBUSB)

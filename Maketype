@@ -21,6 +21,7 @@ ifeq ($(wildcard csgbox), csgbox)
 endif
 
 EXEFILE1	= Distribution/oscam-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TYP))
+EXEFILE2	= Distribution/list_smargo-$(VER)$(VERX)-$(subst cygwin,cygwin.exe,$(TYP))
 
 LIBDIR		= lib
 LIBFILE1	= $(LIBDIR)/libcs-$(TYP).a
@@ -54,7 +55,11 @@ OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(oscam-chk.o) \
 		  $(LIBFILE1)(oscam-ac.o)
 
+ifneq ($(LIBUSB),)
+all:		prepare $(EXEFILE1) $(EXEFILE2)
+else
 all:		prepare $(EXEFILE1)
+endif
 
 prepare:
 		@-echo "-----------------------------------------------------"
@@ -79,6 +84,10 @@ endif
 
 $(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(GENERAL)
 		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBUSB) -o "$@" $(LIBS)
+		$(STRIP) $@
+
+$(EXEFILE2):	utils/list_smargo.c
+		$(CC) $(LDFLAGS) utils/list_smargo.c $(LIBUSB) -o "$@" $(LIBS)
 		$(STRIP) $@
 
 $(LIBFILE1):	$(OBJECTS1)

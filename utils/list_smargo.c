@@ -27,17 +27,14 @@
 
 static int smartreader_check_endpoint(libusb_device *usb_dev)
 {
-    unsigned int packet_size;
     struct libusb_device_descriptor desc;
     struct libusb_config_descriptor *configDesc;
-    struct libusb_interface interface;
-    struct libusb_interface_descriptor intDesc;
-    struct libusb_endpoint_descriptor endpoint;
     int ret;
     int j,k,l;
     u_int8_t tmpEndpointAddress;  
     int nb_endpoint_ok;
 
+    nb_endpoint_ok=0;
     
     ret = libusb_get_device_descriptor(usb_dev, &desc);
     if (ret < 0) {
@@ -51,7 +48,6 @@ static int smartreader_check_endpoint(libusb_device *usb_dev)
             return FALSE;
         }
 
-        nb_endpoint_ok=0;
         for(j=0; j<configDesc->bNumInterfaces; j++) 
             for(k=0; k<configDesc->interface[j].num_altsetting; k++)
                 for(l=0; l<configDesc->interface[j].altsetting[k].bNumEndpoints; l++) {
@@ -60,6 +56,7 @@ static int smartreader_check_endpoint(libusb_device *usb_dev)
                         nb_endpoint_ok++;
                 }
     }
+    
     if(nb_endpoint_ok!=2)
         return FALSE;
     return TRUE;
@@ -71,6 +68,7 @@ static void print_devs(libusb_device **devs)
 	libusb_device_handle *handle;
 	int i = 0;
 	int ret;
+    int busid, devid;
     
 	while ((dev = devs[i++]) != NULL) {
 		struct libusb_device_descriptor desc;
@@ -88,9 +86,12 @@ static void print_devs(libusb_device **devs)
             }
             // check for smargo endpoints.
             if(smartreader_check_endpoint(dev)) {
-            printf("bus %03d, device %03d : %04x:%04x Smartreader\n",
-                libusb_get_bus_number(dev), libusb_get_device_address(dev),
-                            desc.idVendor, desc.idProduct );
+            busid=libusb_get_bus_number(dev);
+            devid=libusb_get_device_address(dev);
+            printf("bus %03d, device %03d : %04x:%04x Smartreader (Device=%03d:%03d)\n",
+                            busid, devid,
+                            desc.idVendor, desc.idProduct,
+                            busid, devid );
             }
             
             libusb_close(handle);
