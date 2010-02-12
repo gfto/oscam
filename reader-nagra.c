@@ -134,8 +134,7 @@ static int CamStateRequest(void)
 	if(do_cmd(0xC0,0x02,0xB0,0x06,NULL))
 	{
 		memcpy(cam_state,cta_res+3,3);
-		//cs_debug("[nagra-reader] Camstate: %s",cs_hexdump (1, cam_state, 3));
-		cs_ri_log("[nagra-reader] Camstate: %s",cs_hexdump (1, cam_state, 3));
+		cs_debug("[nagra-reader] Camstate: %s",cs_hexdump (1, cam_state, 3));
 	}
 	else
 	{
