@@ -129,16 +129,24 @@ static void usage()
   fprintf(stderr, "\tsee http://streamboard.gmc.to:8001/wiki/ for more details\n");
   fprintf(stderr, "\tbased on OSCam 0.99.x, (w) 2010 oscam.ump2002.net SVN\n");
   fprintf(stderr, "\tbased on streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n\n");
-  fprintf(stderr, "oscam [-b] [-c config-dir]");
+  fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
 #ifdef CS_NOSHM
   fprintf(stderr, " [-m memory-file]");
 #endif
-  fprintf(stderr, "\n\n\t-b       : start in background\n");
-  fprintf(stderr, "\t-c <dir> : read configuration from <dir>\n");
-  fprintf(stderr, "\t           default=%s\n", CS_CONFDIR);
+  fprintf(stderr, "\n\n\t-b         : start in background\n");
+  fprintf(stderr, "\t-c <dir>   : read configuration from <dir>\n");
+  fprintf(stderr, "\t             default = %s\n", CS_CONFDIR);
+  fprintf(stderr, "\t-d <level> : debug level mask\n");
+  fprintf(stderr, "\t             0 = no debugging (default)\n");
+  fprintf(stderr, "\t             2 = ATR parsing info, ECM dumps, CW dumps\n");
+  fprintf(stderr, "\t             4 = traffic from/to the reader\n");
+  fprintf(stderr, "\t             8 = traffic from/to the clients\n");
+  fprintf(stderr, "\t             16 = traffic to the reader-device on IFD layer\n");
+  fprintf(stderr, "\t             32 = traffic to the reader-device on I/O layer\n");
+  fprintf(stderr, "\t             63 = debug all\n");
 #ifdef CS_NOSHM
-  fprintf(stderr, "\t-m <file>: use <file> as mmaped memory file\n");
-  fprintf(stderr, "\t           default=%s\n", CS_MMAPFILE);
+  fprintf(stderr, "\t-m <file>  : use <file> as mmaped memory file\n");
+  fprintf(stderr, "\t             default = %s\n", CS_MMAPFILE);
 #endif
   fprintf(stderr, "\n");
   exit(1);
