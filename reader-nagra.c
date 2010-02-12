@@ -20,9 +20,9 @@ unsigned char signature[8];
 unsigned char cam_state[3];
 
 // Card Status checks
-#define HAS_CW      ((cam_state[2]&6)==6)
-#define RENEW_SESSIONKEY ((cam_state[0]&128)==128 || (cam_state[0]&64)==64 ||  (cam_state[0]&32)==32)
-#define SENDDATETIME ((cam_state[0]&16)==16)
+#define HAS_CW()      ((cam_state[2]&6)==6)
+#define RENEW_SESSIONKEY() ((cam_state[0]&128)==128 || (cam_state[0]&64)==64 ||  (cam_state[0]&32)==32 || (cam_state[2]&8)==8)
+#define SENDDATETIME() (cam_state[0]&8)
 // Datatypes
 #define DT01        0x01
 #define IRDINFO     0x00
@@ -134,7 +134,8 @@ static int CamStateRequest(void)
 	if(do_cmd(0xC0,0x02,0xB0,0x06,NULL))
 	{
 		memcpy(cam_state,cta_res+3,3);
-		cs_debug("[nagra-reader] Camstate: %s",cs_hexdump (1, cam_state, 3));
+		//cs_debug("[nagra-reader] Camstate: %s",cs_hexdump (1, cam_state, 3));
+		cs_ri_log("[nagra-reader] Camstate: %s",cs_hexdump (1, cam_state, 3));
 	}
 	else
 	{
@@ -146,7 +147,11 @@ static int CamStateRequest(void)
 
 static void DateTimeCMD(void)
 {
-	do_cmd(0xC8,0x02,0xB8,0x06,NULL);
+	if (!do_cmd(0xC8,0x02,0xB8,0x06,NULL))
+	{
+		cs_debug("[nagra-reader] DateTimeCMD failed!");
+	}
+		
 }
 
 static int NegotiateSessionKey_Tiger(void)
@@ -351,16 +356,14 @@ static int NegotiateSessionKey(void)
 
 	cs_debug("[nagra-reader] session key: %s", cs_hexdump(1, sessi, 16));
 	
+	DateTimeCMD();
+	
 	if (!CamStateRequest())
 	{
 		cs_debug("[nagra-reader] CamStateRequest failed");
 		return ERROR;
 	}
-	if SENDDATETIME 
-	{
-		DateTimeCMD();
-	}
-	if RENEW_SESSIONKEY
+	if RENEW_SESSIONKEY()
 	{
 		cs_ri_log("Negotiate sessionkey was not successfull! Please check rsa key and boxkey");
 		return ERROR;
@@ -647,8 +650,8 @@ void nagra2_post_process(void)
 	{
 		CamStateRequest();
 		cs_sleepms(10);
-		if RENEW_SESSIONKEY NegotiateSessionKey();
-		if SENDDATETIME DateTimeCMD();
+		if RENEW_SESSIONKEY() NegotiateSessionKey();
+		if SENDDATETIME() DateTimeCMD();
 	}
 }
 
@@ -668,15 +671,15 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 			}
 	
 		}
-		cs_sleepms(10);
+		cs_sleepms(15);
 		while(!CamStateRequest() && retry < 3)
 		{
 			cs_debug("[nagra-reader] CamStateRequest failed, try: %d", retry);
 			retry++;
 	                cs_sleepms(10);
 		}
-		//cs_sleepms(10);
-		if (HAS_CW && (do_cmd(0x1C,0x02,0x9C,0x36,NULL)))
+		cs_sleepms(5);
+		if (HAS_CW() && (do_cmd(0x1C,0x02,0x9C,0x36,NULL)))
 		{
 			unsigned char v[8];
 			memset(v,0,sizeof(v));
