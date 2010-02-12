@@ -133,7 +133,11 @@ int Sci_WriteSettings (BYTE T, unsigned long fs, unsigned long ETU, unsigned lon
 	call (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 );
 
 	params.T = T;
-	params.fs = fs;
+#if defined(TUXBOX) && defined(PPC)
+	reader[ridx].mhz = 357; //signals that we are using default clockrate of reader
+#else
+	params.fs = fs; //Dreambox 500 seems to have trouble with setting this, it really likes fs = 10..
+#endif
 	//for Irdeto T14 cards, do not set ETU
 	if (ETU)
 		params.ETU = ETU;

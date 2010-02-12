@@ -279,7 +279,7 @@ int reader_checkhealth(void)
 {
   if (reader_card_inserted())
   {
-    if (reader[ridx].card_status != CARD_INSERTED)
+    if (reader[ridx].card_status == NO_CARD)
     {
       cs_log("card detected");
       reader[ridx].card_status  = CARD_NEED_INIT;
@@ -314,7 +314,7 @@ int reader_checkhealth(void)
       io_serial_need_dummy_char=0;
       cs_log("card ejected");
     }
-    reader[ridx].card_status=0;
+    reader[ridx].card_status=NO_CARD;
   }
   return reader[ridx].card_status==CARD_INSERTED;
 }
