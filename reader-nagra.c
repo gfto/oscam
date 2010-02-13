@@ -79,7 +79,7 @@ static int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsi
     	}
     	if(!reader_cmd2icc(msg,msglen))
   	{
-  		cs_sleepms(5);
+  		//cs_sleepms(5);
 		if(cta_res[0]!=res) 
 	      	{
 	      		cs_debug("[nagra-reader] result not expected (%02x != %02x)",cta_res[0],res);
@@ -229,8 +229,8 @@ static int NegotiateSessionKey_Tiger(void)
 	reader[ridx].caid[0] =(SYSTEM_NAGRA|parte_variable[76]);
 	memcpy(sk,&parte_variable[79],8);                                                                           
 	memcpy(sk+8,&parte_variable[79],8); 
-  cs_ri_log("type: NAGRA, caid: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
-  cs_ri_log("ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
+  	cs_ri_log("type: NAGRA, caid: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
+  	cs_ri_log("ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
 
 	memset(random, 0, 88);
 	memcpy(random, sk,16);
@@ -263,7 +263,7 @@ static int NegotiateSessionKey_Tiger(void)
 		IDEA_KEY_SCHEDULE ks;
 		idea_set_encrypt_key(sessi,&ks);
 		idea_set_decrypt_key(&ks,&ksSession);
-		cs_ri_log("session key: %s", cs_hexdump(1, sessi, 16));
+		cs_debug("[nagra-reader] session key negotiated");
 		return OK;
 	}
 	cs_ri_log("Negotiate sessionkey was not successfull! Please check tivusat rsa key");
@@ -303,8 +303,6 @@ static int NegotiateSessionKey(void)
 
 	// RSA decrypt of cmd$2a data, result is stored in "negot"
 	ReverseMem(cta_res+2, 64);
-	//cs_debug("[nagra-reader] plainDT08RSA: %s", cs_hexdump (1, plainDT08RSA, 32));
-	//cs_debug("[nagra-reader] plainDT08RSA: %s", cs_hexdump (1, &plainDT08RSA[32], 32));
 	unsigned char vFixed[] = {0,1,2,3};
 	BN_CTX *ctx = BN_CTX_new();
 	BIGNUM *bnN = BN_CTX_get(ctx);
@@ -317,8 +315,6 @@ static int NegotiateSessionKey(void)
 	BN_mod_exp(bnPT, bnCT, bnE, bnN, ctx);
 	memset(negot, 0, 64);
 	BN_bn2bin(bnPT, negot + (64-BN_num_bytes(bnPT)));
-	//cs_debug("[nagra-reader] DT08 decrypted $2a data: %s", cs_hexdump (1, negot, 32));
- 		//cs_debug("[nagra-reader] DT08 decrypted $2a data: %s", cs_hexdump (1, &negot[32], 32));
  		
 	memcpy(tmp, negot, 64);
 	ReverseMem(tmp, 64);
@@ -353,7 +349,7 @@ static int NegotiateSessionKey(void)
 		return ERROR;
 	}
 
-	cs_debug("[nagra-reader] session key: %s", cs_hexdump(1, sessi, 16));
+	cs_debug("[nagra-reader] session key negotiated");
 	
 	DateTimeCMD();
 	
@@ -498,7 +494,6 @@ static int ParseDataType(unsigned char dt)
  			reader[ridx].nprov+=1;
  					
 			reader[ridx].caid[0] =(SYSTEM_NAGRA|cta_res[11]);
-			//reader[ridx].caid[0] =0x1801;
     				memcpy(irdId,cta_res+14,4);
     				cs_debug("[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader[ridx].caid[0], cs_hexdump (1,irdId,4));
     				cs_debug("[nagra-reader] ProviderID: %s",cs_hexdump (1,reader[ridx].prid[0],4));
@@ -587,7 +582,6 @@ int nagra2_card_init(ATR newatr)
 		}
 		memcpy(reader[ridx].hexserial+2, cta_res+2, 4);
 		cs_debug("[nagra-reader] SER:  %s", cs_hexdump (1, reader[ridx].hexserial+2, 4));
-		//memset(reader[ridx].sa[0], 0xff, 4);
 		memcpy(reader[ridx].sa[0], cta_res+2, 2);
 		
 		if(!GetDataType(DT01,0x0E,MAX_REC)) return ERROR;
@@ -648,7 +642,6 @@ void nagra2_post_process(void)
 	if (!is_tiger)
 	{
 		CamStateRequest();
-		cs_sleepms(10);
 		if RENEW_SESSIONKEY() NegotiateSessionKey();
 		if SENDDATETIME() DateTimeCMD();
 	}
@@ -670,14 +663,13 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 			}
 	
 		}
-		cs_sleepms(15);
+		cs_sleepms(10);
 		while(!CamStateRequest() && retry < 3)
 		{
 			cs_debug("[nagra-reader] CamStateRequest failed, try: %d", retry);
 			retry++;
 	                cs_sleepms(10);
 		}
-		cs_sleepms(5);
 		if (HAS_CW() && (do_cmd(0x1C,0x02,0x9C,0x36,NULL)))
 		{
 			unsigned char v[8];
