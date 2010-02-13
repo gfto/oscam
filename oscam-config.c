@@ -881,77 +881,88 @@ static void chk_account(char *token, char *value, struct s_auth *account)
 
 int init_userdb()
 {
-  int tag=0, nr, nro, expired, disabled;
-  //int first=1;
-  FILE *fp;
-  char *value;
-  struct s_auth *ptr;
-  /*static */struct s_auth *account=(struct s_auth *)0;
+	int tag = 0, nr, nro, expired, disabled;
+	//int first=1;
+	FILE *fp;
+	char *value;
+	struct s_auth *ptr;
+	/*static */struct s_auth *account=(struct s_auth *)0;
 
-  sprintf(token, "%s%s", cs_confdir, cs_user);
-  if (!(fp=fopen(token, "r")))
-  {
-    cs_log("Cannot open file \"%s\" (errno=%d)", token, errno);
-    return(1);
-  }
-  for (nro=0, ptr=cfg->account; ptr; nro++)
-  {
-    struct s_auth *ptr_next;
-    ptr_next=ptr->next;
-    free(ptr);
-    ptr=ptr_next;
-  }
-  nr=0;
-  while (fgets(token, sizeof(token), fp))
-  {
-    int i, l;
-    void *ptr;
-    if ((l=strlen(trim(token)))<3) continue;
-    if ((token[0]=='[') && (token[l-1]==']'))
-    {
-      token[l-1]=0;
-      tag=(!strcmp("account", strtolower(token+1)));
-      if (!(ptr=malloc(sizeof(struct s_auth))))
-      {
-        cs_log("Error allocating memory (errno=%d)", errno);
-        return(1);
-      }
-      if (account)
-        account->next=ptr;
-      else
-        cfg->account=ptr;
-      account=ptr;
-      memset(account, 0, sizeof(struct s_auth));
-      account->au=(-1);
-      account->monlvl=cfg->mon_level;
-      account->tosleep=cfg->tosleep;
-      account->c35_suppresscmd08=cfg->c35_suppresscmd08;
-      for (i=1; i<CS_MAXCAIDTAB; account->ctab.mask[i++]=0xffff);
-      for (i=1; i<CS_MAXTUNTAB; account->ttab.bt_srvid[i++]=0x0000);
-      nr++;
+	sprintf(token, "%s%s", cs_confdir, cs_user);
+	if (!(fp = fopen(token, "r"))) {
+		cs_log("Cannot open file \"%s\" (errno=%d)", token, errno);
+		return(1);
+	}
+
+	for (nro = 0, ptr = cfg->account; ptr; nro++) {
+		struct s_auth *ptr_next;
+		ptr_next = ptr->next;
+		free(ptr);
+		ptr = ptr_next;
+	}
+	nr = 0;
+
+	while (fgets(token, sizeof(token), fp)) {
+		int i, l;
+		void *ptr;
+
+		if ((l=strlen(trim(token))) < 3)
+			continue;
+
+		if ((token[0] == '[') && (token[l-1] == ']')) {
+			token[l - 1] = 0;
+			tag = (!strcmp("account", strtolower(token + 1)));
+
+			if (!(ptr=malloc(sizeof(struct s_auth)))) {
+				cs_log("Error allocating memory (errno=%d)", errno);
+				return(1);
+			}
+
+			if (account)
+				account->next = ptr;
+			else
+				cfg->account = ptr;
+
+			account = ptr;
+			memset(account, 0, sizeof(struct s_auth));
+			account->au = (-1);
+			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
+			for (i = 1; i < CS_MAXTUNTAB; account->ttab.bt_srvid[i++] = 0x0000);
+			nr++;
+
 #ifdef CS_ANTICASC
-      account->ac_users=cfg->ac_users;
-      account->ac_penalty=cfg->ac_penalty;
-      account->ac_idx = nr;
+			account->ac_users = cfg->ac_users;
+			account->ac_penalty = cfg->ac_penalty;
+			account->ac_idx = nr;
 #endif
-      continue;
-    }
-    if (!tag) continue;
-    if (!(value=strchr(token, '='))) continue;
-    *value++='\0';
-    chk_account(trim(strtolower(token)), trim(value), account);
-  }
-  fclose(fp);
+			continue;
+		}
 
-  for (expired=0, disabled=0, ptr=cfg->account; ptr;)
-  {
-    if(ptr->expirationdate && ptr->expirationdate<time(NULL)) expired++;
-    if(ptr->disabled != 0) disabled++;
-    ptr=ptr->next;
-  }
+		if (!tag)
+			continue;
 
-  cs_log("userdb reloaded: %d accounts freed, %d accounts loaded, %d expired, %d disabled", nro, nr, expired, disabled);
-  return(0);
+		if (!(value=strchr(token, '=')))
+			continue;
+
+		*value++ = '\0';
+		chk_account(trim(strtolower(token)), trim(value), account);
+	}
+
+	fclose(fp);
+
+	for (expired = 0, disabled = 0, ptr = cfg->account; ptr;) {
+
+		if(ptr->expirationdate && ptr->expirationdate < time(NULL))
+			expired++;
+
+		if(ptr->disabled != 0)
+			disabled++;
+
+		ptr = ptr->next;
+	}
+
+	cs_log("userdb reloaded: %d accounts freed, %d accounts loaded, %d expired, %d disabled", nro, nr, expired, disabled);
+	return(0);
 }
 
 static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)

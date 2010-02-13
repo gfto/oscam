@@ -340,51 +340,59 @@ void cs_exit(int sig)
 
 static void cs_reinit_clients()
 {
-  int i;
-  struct s_auth *account;
+	int i;
+	struct s_auth *account;
 
-  for( i=1; i<CS_MAXPID; i++ )
-    if( client[i].pid && client[i].typ=='c' && client[i].usr[0] )
-    {
-      for (account=cfg->account; (account) ; account=account->next)
-        if (!strcmp(client[i].usr, account->usr))
-          break;
+	for( i = 1; i < CS_MAXPID; i++ )
+		if( client[i].pid && client[i].typ == 'c' && client[i].usr[0] ) {
+			for (account = cfg->account; (account) ; account = account->next)
+				if (!strcmp(client[i].usr, account->usr))
+					break;
 
-      if (account && 
-          client[i].pcrc==crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), NULL), 16)) 
-      {
-        client[i].grp     = account->grp;
-        client[i].au      = account->au;
-        client[i].autoau  = account->autoau;
-        client[i].expirationdate = account->expirationdate;
-        client[i].c35_suppresscmd08 = account->c35_suppresscmd08;
-        client[i].disabled = account->disabled;
-	client[i].tosleep = (60*account->tosleep);
-        client[i].monlvl  = account->monlvl;
-        client[i].fchid   = account->fchid;  // CHID filters
-        client[i].cltab   = account->cltab;  // Class
-        if(!client[i].ncd_server) // newcamd module dosent like ident reloading
-          client[i].ftab    = account->ftab;   // Ident
-        client[i].sidtabok= account->sidtabok;   // services
-        client[i].sidtabno= account->sidtabno;   // services
-        memcpy(&client[i].ctab, &account->ctab, sizeof(client[i].ctab));
-        memcpy(&client[i].ttab, &account->ttab, sizeof(client[i].ttab));
+			if (account && client[i].pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), NULL), 16)) {
+				client[i].grp		= account->grp;
+				client[i].au		= account->au;
+				client[i].autoau	= account->autoau;
+				client[i].expirationdate = account->expirationdate;
+
+				//set first to global value and then to specific (higher prio)
+				client[i].c35_suppresscmd08 = cfg->c35_suppresscmd08;
+				client[i].c35_suppresscmd08 = account->c35_suppresscmd08;
+
+				//set first to global value and then to specific (higher prio)
+				client[i].tosleep	= (60*cfg->tosleep);
+				client[i].tosleep	= (60*account->tosleep);
+
+				//set first to global value and then to specific (higher prio)
+				client[i].monlvl	= cfg->mon_level;
+				client[i].monlvl	= account->monlvl;
+
+				client[i].disabled	= account->disabled;
+				client[i].fchid		= account->fchid;  // CHID filters
+				client[i].cltab		= account->cltab;  // Class
+
+				// newcamd module dosent like ident reloading
+				if(!client[i].ncd_server)
+					client[i].ftab	= account->ftab;   // Ident
+
+				client[i].sidtabok	= account->sidtabok;   // services
+				client[i].sidtabno	= account->sidtabno;   // services
+
+				memcpy(&client[i].ctab, &account->ctab, sizeof(client[i].ctab));
+				memcpy(&client[i].ttab, &account->ttab, sizeof(client[i].ttab));
+
 #ifdef CS_ANTICASC
-        client[i].ac_idx     = account->ac_idx;
-        client[i].ac_penalty = account->ac_penalty;
-        client[i].ac_limit   = (account->ac_users*100+80)*cfg->ac_stime;
-#endif      
-      }
-      else 
-      {
-        if (ph[client[i].ctyp].type & MOD_CONN_NET) 
-        {
-          cs_debug("client '%s', pid=%d not found in db (or password changed)", 
-                    client[i].usr, client[i].pid);
-          kill(client[i].pid, SIGQUIT);
-        }
-      }
-    }
+				client[i].ac_idx	= account->ac_idx;
+				client[i].ac_penalty= account->ac_penalty;
+				client[i].ac_limit	= (account->ac_users * 100 + 80) * cfg->ac_stime;
+#endif
+			} else {
+				if (ph[client[i].ctyp].type & MOD_CONN_NET) {
+					cs_debug("client '%s', pid=%d not found in db (or password changed)", client[i].usr, client[i].pid);
+					kill(client[i].pid, SIGQUIT);
+				}
+			}
+		}
 }
 
 static void cs_sighup()
