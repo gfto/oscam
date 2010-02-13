@@ -79,7 +79,7 @@ static int do_cmd(unsigned char cmd, int ilen, unsigned char res, int rlen, unsi
     	}
     	if(!reader_cmd2icc(msg,msglen))
   	{
-  		//cs_sleepms(5);
+  		cs_sleepms(5);
 		if(cta_res[0]!=res) 
 	      	{
 	      		cs_debug("[nagra-reader] result not expected (%02x != %02x)",cta_res[0],res);
