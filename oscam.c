@@ -1879,9 +1879,15 @@ void get_cw(ECM_REQUEST *er)
 	if( (er->caid & 0xFF00) == 0x600 && !er->chid )
 		er->chid = (er->ecm[6]<<8)|er->ecm[7];
 
-	// quickfix for 0100:000065
+	// Quickfix for 0100:000065
 	if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
 		er->srvid = 0x0642;
+
+	// Quickfix for Opticum/Globo HD9500
+	// Quickfix for 0500:030300
+	if (er->caid == 0x500 && er->prid == 0x030300)
+		er->prid = 0x030600;
+
 	/* END quickfixes */
 
 	if (!er->prid)
