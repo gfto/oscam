@@ -60,7 +60,7 @@ static unsigned PPS_GetLength (BYTE * block);
 static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short deprecated);
 static unsigned int ETU_to_ms(unsigned long WWT);
 static BYTE PPS_GetPCK (BYTE * block, unsigned length);
-static int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
+static int Protocol_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
 static int SetRightParity (void);
 
 int fdmc=(-1);
@@ -255,19 +255,11 @@ int ICC_Async_Activate (ATR * atr, unsigned short deprecated)
 
 int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr)
 {
-	APDU_Cmd *apdu_cmd;
 	APDU_Rsp *apdu_rsp = NULL;
 	int remain;
 	bool err = FALSE;
 
-	/* Create a command APDU */
-	apdu_cmd = APDU_Cmd_New (cmd, lc);
-	if (apdu_cmd == NULL) {
-		cs_log("ERROR creating APDU command");
-		return ERROR;
-	}
-	
-	call (Protocol_Command (apdu_cmd, &apdu_rsp));
+	call (Protocol_Command (cmd, lc, &apdu_rsp));
 	{
 		if (apdu_rsp != NULL) {
 			/* Copy APDU data to rsp */
@@ -284,7 +276,6 @@ int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *r
 			(*lr) = 0;
 	}
 		
-	APDU_Cmd_Delete (apdu_cmd);
 	if (err) {
 		cs_log("ERROR creating APDU response");
 		return ERROR;
@@ -293,17 +284,17 @@ int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *r
 	return OK;
 }
 
-int Protocol_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
+int Protocol_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
 {
 	switch (protocol_type) {
 		case ATR_PROTOCOL_TYPE_T0:
-			call (Protocol_T0_Command (cmd, rsp));
+			call (Protocol_T0_Command (command, command_len, rsp));
 			break;
 		case ATR_PROTOCOL_TYPE_T1:
-			call (Protocol_T1_Command (cmd, rsp));
+			call (Protocol_T1_Command (command, command_len, rsp));
 			break;
 		case ATR_PROTOCOL_TYPE_T14:
-			call (Protocol_T14_ExchangeTPDU (cmd, rsp));
+			call (Protocol_T14_ExchangeTPDU (command, command_len, rsp));
 			break;
 		default:
 			cs_log("Error, unknown protocol type %i",protocol_type);
@@ -847,14 +838,11 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 
 	//IFS setting in case of T1
 	if ((protocol_type == ATR_PROTOCOL_TYPE_T1) && (ifsc != DEFAULT_IFSC)) {
-		APDU_Cmd * cmd;
 		APDU_Rsp ** rsp;
 		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
 		tmp[3] = ifsc; // Information Field size
 		tmp[4] = ifsc ^ 0xE1;
-		cmd = APDU_Cmd_New (tmp, 5L);
-		Protocol_T1_Command (cmd, rsp);
-		APDU_Cmd_Delete (cmd);
+		Protocol_T1_Command (tmp, sizeof(tmp), rsp);
 	}
  return OK;
 }

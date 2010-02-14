@@ -54,16 +54,16 @@ int wr;
  */
 
 /* IO_Serial creation and deletion */
-extern void IO_Serial_Flush (void);
+void IO_Serial_Flush (void);
 
 /* Initialization and closing */
-extern bool IO_Serial_InitPnP (void);
-extern bool IO_Serial_Close (void);
+bool IO_Serial_InitPnP (void);
+bool IO_Serial_Close (void);
 
 /* Transmission properties */
-extern bool IO_Serial_DTR_RTS(int, int);
+bool IO_Serial_DTR_RTS(int, int);
 #if defined(TUXBOX) && defined(PPC)
-extern void IO_Serial_Ioctl_Lock(int);
+void IO_Serial_Ioctl_Lock(int);
 #else
 #define IO_Serial_Ioctl_Lock(b) {} //FIXME ugly !!
 #endif
@@ -74,7 +74,7 @@ bool IO_Serial_SetProperties (struct termios newtio);
 int IO_Serial_SetParity (BYTE parity);
 
 /* Input and output */
-extern bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data);
-extern bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data);
+bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data);
+bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data);
 
 #endif /* IO_SERIAL */

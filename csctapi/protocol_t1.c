@@ -46,16 +46,16 @@ static int Protocol_T1_ReceiveBlock (T1_Block ** block);
  * Exproted funtions definition
  */
 
-int Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
+int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
 {
   T1_Block *block;
   BYTE *buffer, rsp_type, bytes, nr, wtx;
   unsigned short counter;
   int ret;
   bool more;
-  if (APDU_Cmd_Ins(cmd) == T1_BLOCK_S_IFS_REQ)
+  if (command[1] == T1_BLOCK_S_IFS_REQ)
     {
-      BYTE inf = APDU_Cmd_P2(cmd);
+      BYTE inf = command[3];
 
       /* Create an IFS request S-Block */
       block = T1_Block_NewSBlock (T1_BLOCK_S_IFS_REQ, 1, &inf);
@@ -85,16 +85,16 @@ int Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
   /* Calculate the number of bytes to send */
   counter = 0;
-  bytes = MIN (APDU_Cmd_RawLen (cmd), ifsc);
+  bytes = MIN (command_len, ifsc);
 
   /* See if chaining is needed */
-  more = (APDU_Cmd_RawLen (cmd) > ifsc);
+  more = (command_len > ifsc);
 
   /* Increment ns */
   ns = (ns + 1) %2;
 
   /* Create an I-Block */
-  block = T1_Block_NewIBlock (bytes, APDU_Cmd_Raw (cmd), ns, more);
+  block = T1_Block_NewIBlock (bytes, command, ns, more);
   cs_debug_mask (D_IFD,"Sending block I(%d,%d)\n", ns, more);
 
   /* Send a block */
@@ -121,14 +121,14 @@ int Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp)
 
               /* Calculate the number of bytes to send */
               counter += bytes;
-              bytes = MIN (APDU_Cmd_RawLen (cmd) - counter, ifsc);
+              bytes = MIN (command_len - counter, ifsc);
 
               /* See if chaining is needed */
-              more = (APDU_Cmd_RawLen (cmd) - counter > ifsc);
+              more = (command_len - counter > ifsc);
 
               /* Create an I-Block */
               block =
-                T1_Block_NewIBlock (bytes, APDU_Cmd_Raw (cmd) + counter,
+                T1_Block_NewIBlock (bytes, command + counter,
                                     ns, more);
               cs_debug_mask (D_IFD,"Protocol: Sending block I(%d,%d)\n", ns, more);
 

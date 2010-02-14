@@ -38,12 +38,7 @@ BYTE ns;              /* Send sequence number */
  * Exported functions declaration
  */
 
-/* Initialise a protocol handler */
-extern int 
-Protocol_T1_Init ();
-
 /* Send a command and return a response */
-extern int
-Protocol_T1_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
+int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
 
 #endif /* _PROTOCOL_T1_ */

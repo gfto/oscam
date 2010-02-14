@@ -30,8 +30,8 @@
 #include "apdu.h"
 
 /* Send a command and return a response */
-extern int Protocol_T0_Command (APDU_Cmd * cmd, APDU_Rsp ** rsp);
-extern int Protocol_T14_ExchangeTPDU (APDU_Cmd * cmd, APDU_Rsp ** rsp);
+int Protocol_T0_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
+int Protocol_T14_ExchangeTPDU (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
 
 #endif /* _PROTOCOL_T0_ */
 

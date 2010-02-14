@@ -62,20 +62,20 @@ unsigned int read_timeout;		// Max timeout (ms) to receive characters
  */
 
 /* Initialization and Deactivation */
-extern int ICC_Async_Activate (ATR * newatr, unsigned short deprecated);
-extern int ICC_Async_Close (void);
+int ICC_Async_Activate (ATR * newatr, unsigned short deprecated);
+int ICC_Async_Close (void);
 int ICC_Async_Device_Init (void);
 
 /* Attributes */
 int ICC_Async_SetTimings (unsigned wait_etu);
-extern unsigned long ICC_Async_GetClockRate (void);
+unsigned long ICC_Async_GetClockRate (void);
 int ICC_Async_GetStatus (int * has_card);
 
 
 /* Operations */
 int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr);
-extern int ICC_Async_Transmit (unsigned size, BYTE * buffer);
-extern int ICC_Async_Receive (unsigned size, BYTE * buffer);
+int ICC_Async_Transmit (unsigned size, BYTE * buffer);
+int ICC_Async_Receive (unsigned size, BYTE * buffer);
 
 #endif /* _ICC_ASYNC_ */
 

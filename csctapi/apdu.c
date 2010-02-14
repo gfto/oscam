@@ -40,44 +40,13 @@
  * Exported functions definition
  */
 
-APDU_Cmd * APDU_Cmd_New (BYTE * data, unsigned long length)
+int APDU_Cmd_Case (unsigned char * command, unsigned long command_len)
 {
-	APDU_Cmd *apdu;
-	
-	if ((length > APDU_MAX_CMD_SIZE))
-		return NULL;
-	
-	apdu = (APDU_Cmd *) malloc (sizeof (APDU_Cmd));
-	
-	if (apdu != NULL)
-	{
-		apdu->length = MAX (APDU_MIN_CMD_SIZE, length);
-		apdu->command = (BYTE *) calloc (apdu->length, sizeof (BYTE));
-		
-		if (apdu->command != NULL)
-		{
-			memcpy (apdu->command, data, length);
-			if (length < apdu->length)
-				memset (apdu->command + length, 0, apdu->length - length);
-		}
-		else
-		{
-			free (apdu);
-			apdu = NULL;
-		}
-	}
-	
-	return apdu;
-}
+	APDU_Cmd c, * apdu;
+	c.command=command;
+	c.length=command_len;
+	apdu = &c;
 
-void APDU_Cmd_Delete (APDU_Cmd * apdu)
-{
-	free (apdu->command);
-	free (apdu);
-}
-
-int APDU_Cmd_Case (APDU_Cmd * apdu)
-{
 	BYTE B1;
 	ushort B2B3;
 	ulong L;
@@ -125,24 +94,9 @@ int APDU_Cmd_Case (APDU_Cmd * apdu)
 	return res;
 }
 
-BYTE  APDU_Cmd_Cla (APDU_Cmd * apdu)
-{
-	return apdu->command[0];
-}
-
 BYTE APDU_Cmd_Ins (APDU_Cmd * apdu)
 {
 	return apdu->command[1];
-}
-
-BYTE APDU_Cmd_P1 (APDU_Cmd * apdu)
-{
-	return apdu->command[2];
-}
-
-BYTE APDU_Cmd_P2 (APDU_Cmd * apdu)
-{
-	return apdu->command[3];
 }
 
 unsigned long APDU_Cmd_Lc (APDU_Cmd * apdu)
@@ -150,7 +104,7 @@ unsigned long APDU_Cmd_Lc (APDU_Cmd * apdu)
 	int c;
 	unsigned long res;
 	
-	c = APDU_Cmd_Case (apdu);
+	c = APDU_Cmd_Case (apdu->command, apdu->length);
 	
 	if ((c == APDU_CASE_1) || (c == APDU_CASE_3S) || (c == APDU_CASE_3E))
 		res = 0;
@@ -169,7 +123,7 @@ unsigned long APDU_Cmd_Le (APDU_Cmd * apdu)
 	int c;
 	unsigned long res;
 	
-	c = APDU_Cmd_Case (apdu);
+	c = APDU_Cmd_Case (apdu->command, apdu->length);
 	
 	if ((c == APDU_CASE_1) || (c == APDU_CASE_2S) || (c == APDU_CASE_2E))
 		res = 0;
@@ -199,7 +153,7 @@ BYTE * APDU_Cmd_Data (APDU_Cmd * apdu)
 	int c;
 	BYTE * res;
 	
-	c = APDU_Cmd_Case (apdu);
+	c = APDU_Cmd_Case (apdu->command, apdu->length);
 	
 	if ((c == APDU_CASE_1) || (c == APDU_CASE_3S) || (c == APDU_CASE_3E))
 		res = NULL;
@@ -211,16 +165,6 @@ BYTE * APDU_Cmd_Data (APDU_Cmd * apdu)
 		res = NULL;
 	
 	return res;
-}
-
-BYTE * APDU_Cmd_Raw (APDU_Cmd * apdu)
-{
-	return apdu->command;
-}
-
-unsigned long APDU_Cmd_RawLen (APDU_Cmd * apdu)
-{
-	return apdu->length;
 }
 
 APDU_Rsp * APDU_Rsp_New (BYTE * data, unsigned long length)

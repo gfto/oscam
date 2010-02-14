@@ -65,44 +65,31 @@ T1_Block;
  * Exported functions declaration
  */
 
-extern T1_Block *
-T1_Block_New (BYTE * buffer, unsigned length);
+T1_Block * T1_Block_New (BYTE * buffer, unsigned length);
 
-extern T1_Block *
-T1_Block_NewIBlock (BYTE len, BYTE * inf, BYTE ns, bool more);
+T1_Block * T1_Block_NewIBlock (BYTE len, BYTE * inf, BYTE ns, bool more);
 
-extern T1_Block *
-T1_Block_NewRBlock (BYTE type, BYTE nr);
+T1_Block * T1_Block_NewRBlock (BYTE type, BYTE nr);
 
-extern T1_Block *
-T1_Block_NewSBlock (BYTE type, BYTE len, BYTE * inf);
+T1_Block * T1_Block_NewSBlock (BYTE type, BYTE len, BYTE * inf);
 
-extern BYTE
-T1_Block_GetType (T1_Block * block);
+BYTE T1_Block_GetType (T1_Block * block);
 
-extern BYTE
-T1_Block_GetNS (T1_Block * block);
+BYTE T1_Block_GetNS (T1_Block * block);
 
-extern bool
-T1_Block_GetMore (T1_Block * block);
+bool T1_Block_GetMore (T1_Block * block);
 
-extern BYTE
-T1_Block_GetNR (T1_Block * block);
+BYTE T1_Block_GetNR (T1_Block * block);
 
-extern BYTE
-T1_Block_GetLen (T1_Block * block);
+BYTE T1_Block_GetLen (T1_Block * block);
 
-extern BYTE *
-T1_Block_GetInf (T1_Block * block);
+BYTE * T1_Block_GetInf (T1_Block * block);
 
-extern BYTE *
-T1_Block_Raw (T1_Block * block);
+BYTE * T1_Block_Raw (T1_Block * block);
 
-extern unsigned
-T1_Block_RawLen (T1_Block * block);
+unsigned T1_Block_RawLen (T1_Block * block);
 
-extern void
-T1_Block_Delete (T1_Block * block);
+void T1_Block_Delete (T1_Block * block);
 
 #endif /* _T1_BLOCK_ */
 
