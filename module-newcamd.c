@@ -210,15 +210,16 @@ static int network_cmd_no_data_receive(int handle, uint16 *netMsgId,
 
 void newcamd_reply_ka()
 {
-  if( !client[cs_idx].udp_fd )
-  {
-    cs_debug("invalid client fd=%d", client[cs_idx].udp_fd);
-    return;
-  }
-  cs_debug("send keep_alive");
-  network_cmd_no_data_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid, 
-                           MSG_KEEPALIVE, client[cs_idx].ncd_skey, 
-                           COMMTYPE_SERVER);
+	if(!client[cs_idx].udp_fd)
+	{
+		cs_debug("invalid client fd=%d", client[cs_idx].udp_fd);
+    		return;
+	}
+
+	cs_debug("send keepalive to client fd=%d", client[cs_idx].udp_fd);
+
+	network_cmd_no_data_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid, 
+		MSG_KEEPALIVE, client[cs_idx].ncd_skey,COMMTYPE_SERVER);
 }
 
 static int connect_newcamd_server() 
@@ -1028,51 +1029,63 @@ static void newcamd_process_emm(uchar *buf)
 
 static void newcamd_server()
 {
-  int n;
+	int rc;
 
-  req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
-  if (!req)
-  {
-    cs_log("Cannot allocate memory (errno=%d)", errno);
-    cs_exit(1);
-  }
-  memset(req, 0, CS_MAXPENDING*REQ_SIZE);
+	req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
+	if (!req)
+	{
+		cs_log("Cannot allocate memory (errno=%d)", errno);
+		cs_exit(1);
+	}
 
-  client[cs_idx].ncd_server = 1;
-  cs_debug("client connected to %d port", 
-            cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port);
-  newcamd_auth_client(client[cs_idx].ip);
+	memset(req, 0, CS_MAXPENDING*REQ_SIZE);
+	client[cs_idx].ncd_server = 1;
+	cs_debug("client connected to %d port", cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port);
+	newcamd_auth_client(client[cs_idx].ip);
 
-  n=-9;
-  while(n==-9)
-  {	  
-	  while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
-	  {
-	    switch(mbuf[2])
-	    {
-	      case 0x80:
-	      case 0x81:
-	        newcamd_process_ecm(mbuf);
-	        break;
-	      case MSG_KEEPALIVE:
-	        newcamd_reply_ka();
-	        break;
-	      default:
-	        if( mbuf[2]>0x81 && mbuf[2]<0x90 )
-	          newcamd_process_emm(mbuf+2);
-	        else
-	          cs_debug("unknown command !");
-	    }
-	  }
-    if(n==-9)
+	// check for clienttimeout, if timeout occurs try to send keepalive / wait for answer
+	// befor client was disconnected. If keepalive was disabled, exit after clienttimeout
+	rc=-9;
+	while(rc==-9)
+	{
+		// process_input returns -9 on clienttimeout
+		while ((rc=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
 		{
-        if (cfg->ncd_keepalive) newcamd_reply_ka();
-    }
+			switch(mbuf[2])
+			{
+				case 0x80:
+				case 0x81:
+					newcamd_process_ecm(mbuf);
+					break;
+
+				case MSG_KEEPALIVE:
+					newcamd_reply_ka();
+					break;
+
+				default:
+					if(mbuf[2]>0x81 && mbuf[2]<0x90)
+						newcamd_process_emm(mbuf+2);
+					else
+						cs_debug("unknown newcamd command! (%d)", mbuf[2]);
+			}
+		}
+
+		if(rc==-9)
+		{
+			if (cfg->ncd_keepalive) 
+				newcamd_reply_ka();
+			else
+				rc=0;
+		}
 	}
 	
-  if(req) { free(req); req=0;}
+	if(req)
+	{ 
+		free(req); 
+		req=0;
+	}
 
-  cs_disconnect_client();
+	cs_disconnect_client();
 }
 
 /*

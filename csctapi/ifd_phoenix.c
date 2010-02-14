@@ -123,6 +123,7 @@ int Phoenix_Reset (ATR * atr)
 			call (IO_Serial_SetParity (parity[i]));
 
 			ret = ERROR;
+			usleep (500000); //smartreader in mouse mode needs this
 			IO_Serial_Ioctl_Lock(1);
 #ifdef USE_GPIO
 			if (gpio_detect)
