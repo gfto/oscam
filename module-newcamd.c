@@ -1072,7 +1072,7 @@ static void newcamd_server()
 
 		if(rc==-9)
 		{
-			if (cfg->ncd_keepalive) 
+			if (client[cs_idx].ncd_keepalive) 
 				newcamd_reply_ka();
 			else
 				rc=0;
