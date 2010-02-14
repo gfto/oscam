@@ -1250,7 +1250,6 @@ int check_ecmcache(ECM_REQUEST *er, ulong grp)
   for(i=0; i<CS_ECMCACHESIZE; i++)
     if ((grp & ecmcache[i].grp) &&
         ecmcache[i].caid==er->caid &&
-        ecmcache[i].prid==er->prid &&
         (!memcmp(ecmcache[i].ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
     {
 //cs_log("cache found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
