@@ -42,18 +42,13 @@
 
 int APDU_Cmd_Case (unsigned char * command, unsigned long command_len)
 {
-	APDU_Cmd c, * apdu;
-	c.command=command;
-	c.length=command_len;
-	apdu = &c;
-
 	BYTE B1;
 	ushort B2B3;
 	ulong L;
 	int res;
 	
 	/* Calculate length of body */
-	L = MAX(apdu->length - 4, 0);
+	L = MAX(command_len - 4, 0);
 	
 	/* Case 1 */
 	if (L == 0)
@@ -63,7 +58,7 @@ int APDU_Cmd_Case (unsigned char * command, unsigned long command_len)
 	else
 	{
 		/* Get first byte of body */
-		B1 = apdu->command[4];
+		B1 = command[4];
 		
 		if ((B1 != 0) && (L == (ulong)B1 + 1))
 			res = APDU_CASE_2S;
@@ -74,7 +69,7 @@ int APDU_Cmd_Case (unsigned char * command, unsigned long command_len)
 		else if ((B1 == 0) && (L>2))
 		{
 			/* Get second and third byte of body */
-			B2B3 = (((ushort)(apdu->command[5]) << 8) | apdu->command[6]);
+			B2B3 = (((ushort)(command[5]) << 8) | command[6]);
 			
 			if ((B2B3 != 0) && (L == (ulong)B2B3 + 3))
 				res = APDU_CASE_2E;
@@ -90,79 +85,6 @@ int APDU_Cmd_Case (unsigned char * command, unsigned long command_len)
 			res = APDU_MALFORMED;
 		}
 	}
-	
-	return res;
-}
-
-BYTE APDU_Cmd_Ins (APDU_Cmd * apdu)
-{
-	return apdu->command[1];
-}
-
-unsigned long APDU_Cmd_Lc (APDU_Cmd * apdu)
-{
-	int c;
-	unsigned long res;
-	
-	c = APDU_Cmd_Case (apdu->command, apdu->length);
-	
-	if ((c == APDU_CASE_1) || (c == APDU_CASE_3S) || (c == APDU_CASE_3E))
-		res = 0;
-	else if ((c == APDU_CASE_2S) || (c == APDU_CASE_4S))
-		res = apdu->command[4];
-	else if ((c == APDU_CASE_2E) || (c == APDU_CASE_4E))
-		res  = (((unsigned long)(apdu->command[5]) << 8) | apdu->command[6]);
-	else
-		res = 0;
-	
-	return res;
-}
-
-unsigned long APDU_Cmd_Le (APDU_Cmd * apdu)
-{
-	int c;
-	unsigned long res;
-	
-	c = APDU_Cmd_Case (apdu->command, apdu->length);
-	
-	if ((c == APDU_CASE_1) || (c == APDU_CASE_2S) || (c == APDU_CASE_2E))
-		res = 0;
-	else if (c == APDU_CASE_3S)
-//		res = ((apdu->command[4] == 0) ? 256: apdu->command[4]);
-		res = apdu->command[4];
-	else if (c == APDU_CASE_4S)
-		res = ((apdu->command[apdu->length - 1] == 0) ? 256: apdu->command[apdu->length - 1]);
-	else if (c == APDU_CASE_3E)
-		res  = ((((unsigned long)(apdu->command[5]) << 8) | apdu->command[6]) == 0 ? 65536 : (((unsigned long)(apdu->command[5]) << 8) | apdu->command[6]));
-	else if (c == APDU_CASE_4E)
-		res  = ((((unsigned long)(apdu->command[apdu->length - 2]) << 8) | apdu->command[apdu->length - 1]) == 0 ? 65536 : (((unsigned long)(apdu->command[apdu->length - 2]) << 8) | apdu->command[apdu->length - 1]));
-	else
-		res = 0;
-	
-	return res;
-}
-
-BYTE * APDU_Cmd_Header (APDU_Cmd * apdu)
-{
-	return apdu->command;
-}
-
-
-BYTE * APDU_Cmd_Data (APDU_Cmd * apdu)
-{
-	int c;
-	BYTE * res;
-	
-	c = APDU_Cmd_Case (apdu->command, apdu->length);
-	
-	if ((c == APDU_CASE_1) || (c == APDU_CASE_3S) || (c == APDU_CASE_3E))
-		res = NULL;
-	else if ((c == APDU_CASE_2S) || (c == APDU_CASE_4S))
-		res = apdu->command + 5;
-	else if ((c == APDU_CASE_2E) || (c == APDU_CASE_4E))
-		res = apdu->command + 7;
-	else
-		res = NULL;
 	
 	return res;
 }

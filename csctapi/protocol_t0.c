@@ -71,14 +71,7 @@ int Protocol_T0_Command (unsigned char * command, unsigned long command_len, APD
 	if (command_len < 5) //APDU_CASE_1 or malformed
 		return ERROR;
 
-	APDU_Cmd c, * cmd;
-	c.command=command;
-	c.length=command_len;
-	cmd = &c;
-
-	int cmd_case;
-	
-	cmd_case = APDU_Cmd_Case (command, command_len);
+	int cmd_case = APDU_Cmd_Case (command, command_len);
 	switch (cmd_case) {
 		case APDU_CASE_2E:
 			return Protocol_T0_Case2E (command, command_len, rsp);
@@ -104,7 +97,6 @@ int Protocol_T0_Command (unsigned char * command, unsigned long command_len, APD
 
 static int Protocol_T0_Case2E (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
 {
-	int ret = OK;
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	APDU_Rsp *tpdu_rsp;
     ulong i;
@@ -130,23 +122,15 @@ static int Protocol_T0_Case2E (unsigned char * command, unsigned long command_le
 			/* Create envelope command TPDU */
 			buffer[4] = MIN (255, command_len - i);
 			memcpy (buffer + 5, command + i, buffer[4]);
-			ret = Protocol_T0_ExchangeTPDU(buffer, buffer[4] + 5, (&tpdu_rsp));
-			if (ret == OK)
-			{
+			call (Protocol_T0_ExchangeTPDU(buffer, buffer[4] + 5, (&tpdu_rsp)));
 				/*  Card does support envelope command */
 				if (APDU_Rsp_SW1 (tpdu_rsp) == 0x90)
 				{
 					/* This is not the last segment */
 					if (buffer[4] + i < command_len)
-					{
-						/* Delete response TPDU */
-						APDU_Rsp_Delete (tpdu_rsp);
-					}
+						APDU_Rsp_Delete (tpdu_rsp); //delete response TPDU
 					else
-					{
-						/* Map response TPDU onto APDU */
-						(*rsp) = tpdu_rsp;
-					}
+						(*rsp) = tpdu_rsp;// Map response TPDU onto APDU
 				}	
 				else /* Card does not support envelope command or error */
 				{
@@ -154,14 +138,9 @@ static int Protocol_T0_Case2E (unsigned char * command, unsigned long command_le
 					(*rsp) = tpdu_rsp;
 					break;
 				}
-			}
-			else
-			{
-				break;
-			}
 		}
 	
-	return ret;
+	return OK;
 }
 
 
@@ -300,27 +279,28 @@ static int Protocol_T0_Case4E (unsigned char * command, unsigned long command_le
 
 static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
 {
-	APDU_Cmd c, * cmd;
-	c.command=command;
-	c.length=command_len;
-	cmd = &c;
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_RESPONSE];
 	BYTE *data;
 	long Lc, Le, sent, recv;
 	int ret = OK, nulls, cmd_case;
 	(*rsp) = NULL;//in case of error this will be returned
 	
-	/* Parse APDU */
-	Lc = APDU_Cmd_Lc (cmd);
-	Le = APDU_Cmd_Le (cmd);
-	data = APDU_Cmd_Data (cmd);
 	cmd_case = APDU_Cmd_Case (command, command_len);
-	
-	/* Check case of command */
-	if ((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S))
-		return ERROR;
-	
-	call (ICC_Async_Transmit (5, APDU_Cmd_Header (cmd)));		//Send header bytes
+	switch (cmd_case) {
+		case APDU_CASE_2S:
+			Lc = command[4];
+			Le = 0;
+			data = command + 5;	
+			break;
+		case APDU_CASE_3S:
+			Lc = 0;
+			Le = command[4];
+			data = NULL;	
+			break;
+		default:
+			return ERROR;
+	}
+	call (ICC_Async_Transmit (5, command));		//Send header bytes
 	
 	/* Initialise counters */
 	nulls = 0;
@@ -354,7 +334,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 			ret = OK;
 			break;
 		}
-		else if ((buffer[recv] & 0x0E) == (APDU_Cmd_Ins (cmd) & 0x0E)) /* ACK byte received */
+		else if ((buffer[recv] & 0x0E) == (command[1] & 0x0E)) /* ACK byte received */
 		{//printf("ack\n");
 			/* Reset null's counter */
 			nulls = 0;
@@ -383,7 +363,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 				continue;
 			}
 		}
-		else if ((buffer[recv] & 0x0E) == ((~APDU_Cmd_Ins (cmd)) & 0x0E)) /* ~ACK byte received */
+		else if ((buffer[recv] & 0x0E) == ((~command[1]) & 0x0E)) /* ~ACK byte received */
 		{//printf("~ack\n");
 			nulls = 0;																								//Reset null's counter
 			
@@ -413,26 +393,21 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 
 int Protocol_T14_ExchangeTPDU (unsigned char * cmd_raw, unsigned long command_len, APDU_Rsp ** rsp)
 {
-	APDU_Cmd c, * cmd;
-	c.command=cmd_raw;
-	c.length=command_len;
-	cmd = &c;
-
 	BYTE buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
-	long recv, cmd_len;
+	long recv;
 	int cmd_case;
 	BYTE ixor = 0x3E;
 	BYTE ixor1 = 0x3F;
 	BYTE b1 = 0x01;
 	int i;
+	long cmd_len = (long) command_len;
 	(*rsp) = NULL;//in case of error this is returned
 	
 	/* Parse APDU */
-	cmd_len = APDU_Cmd_Lc (cmd) + 5;
-	cmd_case = APDU_Cmd_Case (cmd_raw, command_len);
+	cmd_case = APDU_Cmd_Case (cmd_raw, cmd_len);
 	for(i=0; i<cmd_len; i++)
 		ixor^=cmd_raw[i];
-
+	
 	/* Check case of command */
 	if ((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S))
 		return ERROR;

@@ -57,14 +57,6 @@
  * Exported data types definition
  */
 
-/* Command APDU */
-typedef struct
-{
-  BYTE *command;
-  unsigned long length;
-}
-APDU_Cmd;
-
 /* Response APDU */
 typedef struct
 {
@@ -79,21 +71,6 @@ APDU_Rsp;
 
 /* Return the case of command */
 int APDU_Cmd_Case (unsigned char * command, unsigned long command_len);
-
-/* Return command instruction */
-BYTE APDU_Cmd_Ins (APDU_Cmd * apdu);
-
-/* Return length of data sent */
-unsigned long APDU_Cmd_Lc (APDU_Cmd * apdu);
-
-/* Return length of data expected */
-unsigned long APDU_Cmd_Le (APDU_Cmd * apdu);
-
-/* Return a pointer to the header of the command */
-BYTE *APDU_Cmd_Header (APDU_Cmd * apdu);
-
-/* Return a pointer  to the data of the comamnd */
-BYTE *APDU_Cmd_Data (APDU_Cmd * apdu);
 
 /* Create a APDU_Rsp */
 APDU_Rsp *APDU_Rsp_New (BYTE * data, unsigned long length);
