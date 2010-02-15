@@ -880,7 +880,7 @@ int cc_recv(uchar *buf, int l)
 
   pthread_mutex_unlock(&cc->lock);
 
-  //if (!is_server) cs_exit(0);
+  if (!is_server && (n==-1)) cs_exit(0);
 
   return(n);
 }
@@ -999,7 +999,7 @@ static int cc_cli_connect(void)
 
 static void cc_srv_report_cards()
 {
-  uint id = 1, r, j;
+  uint id = 1, r, j, k;
   uint8 hop = 0, reshare;
   uint8 buf[CC_MAXMSGSIZE];
   struct cc_data *cc = client[cs_idx].cc;
@@ -1032,6 +1032,37 @@ static void cc_srv_report_cards()
       id++;
     }
 
+    if (reader[r].ftab.filts) {
+      for (j=0; j<CS_MAXFILTERS; j++) {
+        if (reader[r].ftab.filts[j].caid) {
+          bzero(buf, sizeof(buf));
+
+          buf[0] = id >> 24;
+          buf[1] = id >> 16;
+          buf[2] = id >> 8;
+          buf[3] = id & 0xff;
+          buf[8] = reader[r].ftab.filts[j].caid >> 8;
+          buf[9] = reader[r].ftab.filts[j].caid & 0xff;
+          buf[10] = hop;
+          buf[11] = reshare;
+          buf[20] = reader[r].ftab.filts[j].nprids;
+
+          for (k=0; k<reader[r].ftab.filts[j].nprids; k++) {
+            buf[21 + (k*7)] = reader[r].ftab.filts[j].prids[k] << 24;
+            buf[22 + (k*7)] = reader[r].ftab.filts[j].prids[k] << 16;
+            buf[23 + (k*7)] = reader[r].ftab.filts[j].prids[k] << 8;
+            buf[24 + (k*7)] = reader[r].ftab.filts[j].prids[k] & 0xff;
+          }
+
+          buf[21 + (k*7)] = 1;
+          memcpy(buf + 22 + (k*7), cc->node_id, 8);
+
+          cc_cmd_send(buf, 30 + (k*7), MSG_NEW_CARD);
+
+          id++;
+        }
+      }
+    }
   }
 }
 
