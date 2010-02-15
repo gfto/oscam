@@ -61,7 +61,7 @@ caid     = 0300
 # remote CCcam reader
 
 [reader]
-label     = remote4
+label      = remote4
 protocol   = cccam
 device     = 192.168.0.5,45678
 account    = login4,password4

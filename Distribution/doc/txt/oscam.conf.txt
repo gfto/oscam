@@ -228,6 +228,23 @@ DESCRIPTIONS
        suppresscmd08 = 0|1
 	  0 = CMD08 enabled, 1 = CMD08 disabled, default:0
 
+   The [cccam] section
+       port = 0|port
+	  TCP/IP port for CCcam clients, 0 = disabled, default:0
+
+       version = <main version>.<version>.<sub version>
+	  define CCcam version, default:none
+
+	  example: version = 1.2.34
+
+       build = <4-digit number>
+	  define CCcam build, default:none
+
+	  example: build = 5678
+
+       reshare = level
+	  Reshare level for CCcam clients, default:none
+
    The [gbox] section
        password = password
 	  password for gbox server
