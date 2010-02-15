@@ -415,7 +415,7 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev)
     struct libusb_config_descriptor *configDesc;
     int ret;
     int j,k,l;
-    u_int8_t tmpEndpointAddress;  
+    uint8_t tmpEndpointAddress;  
     int nb_endpoint_ok;
 
     
