@@ -791,6 +791,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   case MSG_DCW_SOMETHING:
     cc->ecm_count = 1;
+    cs_log("cccam: cmd 0x05 recvd, commencing ecm count");
     break;
   default:
     break;
@@ -1174,11 +1175,11 @@ static int cc_srv_connect()
   return 0;
 }
 
-int cc_srv_init()
+void cc_srv_init()
 {
   pfd=client[cs_idx].udp_fd;
   //cc_auth_client(client[cs_idx].ip);
-  return cc_srv_connect();
+  cc_srv_connect();
 }
 
 int cc_cli_init()

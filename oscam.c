@@ -1016,7 +1016,7 @@ static void start_anticascader()
 static void init_cardreader()
 {
   for (ridx=0; ridx<CS_MAXREADER; ridx++)
-    if (reader[ridx].device[0])
+    if ((reader[ridx].device[0]) && (reader[ridx].enable == 1))
       switch(cs_fork(0, 99))
       {
         case -1:
