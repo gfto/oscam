@@ -21,6 +21,9 @@ DESCRIPTIONS
 	   lport:	remapping to local port
 	   PCSC:	number of PCSC readers, starting with 0
 
+       enable = 0|1
+	  0 = deactivate reader, default=1
+
        key = DES key
 	  key for newcamd remote reader encryption
 
@@ -109,12 +112,12 @@ DESCRIPTIONS
        cccversion = <main version>.<version>.<sub version>
 	  define CCcam version, default:none
 
-	  exmaple: cccversion = 1.2.34
+	  example: cccversion = 1.2.34
 
        cccbuild = <4-digit number>
 	  define CCcam build, default:none
 
-	  exmaple: cccbuild = 5678
+	  example: cccbuild = 5678
 
        cccmaxhop = hops
 	  define CCcam maximum SC distance, default:10
@@ -122,7 +125,7 @@ DESCRIPTIONS
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader
 
-	  exmaple: ident = 0100:123456,234567;0200:345678,456789
+	  example: ident = 0100:123456,234567;0200:345678,456789
 
        provid = ID
 	  define provider ID for reader
@@ -192,29 +195,29 @@ DESCRIPTIONS
 OVERCLOCKING
 	 Dreambox and other internal readers
 
-	  For Dreambox and other internal readers the highest possible	clock
-	  rate will be auto detected. The mhz parameter will be ignored.
+	  For  Dreambox  and  other  internal  readers	the  highest  possible
+	  clockrate  will be auto detected. The mhz parameter will be ignored.
 
 	 Phoenix / Smartmouse reader
 
-	  Overclocking	does  not  work  with  Windows	and Mac OS X.  Set mhz
-	  equivalent to the frequency of the reader.  OSCam can  not  set  the
+	  Overclocking does not work with Windows  and	Mac  OS  X.   Set  mhz
+	  equivalent  to  the  frequency of the reader.  OSCam can not set the
 	  frequency of the reader.
 
 	 Smargo Smartreader+
 
-	  Set  the  reader  frequency with the native Smargo Smartreader+ tool
+	  Set the reader frequency with the native  Smargo  Smartreader+  tool
 	  (srp_tools).	Do not set mhz and cardmhz.
 
-       OSCam tries to set the baudrate automatically.  A standard serial  port
+       OSCam  tries to set the baudrate automatically.	A standard serial port
        has limited baudrate settings, so SC overclocking might not work.  When
        using a serial reader the best way for overclocking is connecting it to
        a FTDI based USB to serial port adapter.
 
-       If  overclocking  does  not  work, verify the effective baudrate in the
-       logfile.  If it deviates too much from the requested baudrate,  the  SC
-       will  not  be  recognized  (no  ATR)  and  the  value for mhz should be
-       adjusted again.	The higher the baudrate, the more accurate the	effec
+       If overclocking does not work, verify the  effective  baudrate  in  the
+       logfile.   If  it deviates too much from the requested baudrate, the SC
+       will not be recognized (no  ATR)  and  the  value  for  mhz  should  be
+       adjusted  again.  The higher the baudrate, the more accurate the effec
        tive baudrate can be.
 
 EXAMPLES
@@ -302,7 +305,7 @@ EXAMPLES
 
 SEE ALSO
        list_smargo(1), oscam(1), oscam.conf(5), oscam.user(5), oscam.srvid(5),
-       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
+       oscam.guess(5),	  oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
        oscam.ac(5)
 
 
