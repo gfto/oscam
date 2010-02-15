@@ -298,6 +298,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 			data = NULL;	
 			break;
 		default:
+			cs_log("ERROR: invalid cmd_case = %i in Protocol_T0_ExchangeTPDU",cmd_case);
 			return ERROR;
 	}
 	call (ICC_Async_Transmit (5, command));		//Send header bytes
@@ -320,15 +321,18 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 		/* NULL byte received */
 		if (buffer[recv] == 0x60) {
 			nulls++;
-			if (nulls >= PROTOCOL_T0_MAX_NULLS)								//Maximum number of nulls reached 
+			if (nulls >= PROTOCOL_T0_MAX_NULLS) {								//Maximum number of nulls reached 
+				cs_log("ERROR Protocol_T0_ExchangeTPDU: Maximum number of nulls reached:%i",nulls);
 				return ERROR;
-			continue;
+			}
 		}
 		else if ((buffer[recv] & 0xF0) == 0x60 || (buffer[recv] & 0xF0) == 0x90) /* SW1 byte received */
 		{//printf("sw1\n");
 			recv++;
-			if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE)
+			if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
+				cs_log("ERROR Protocol_T0_ExchangeTPDU: Maximum short response exceeded:%li",recv);
 				return ERROR;
+			}
 			call (ICC_Async_Receive (1, buffer + recv));					//Read SW2 byte
 			recv++;
 			ret = OK;
@@ -341,17 +345,20 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 			
 			/* Case 2 command: send data */
 			if (cmd_case == APDU_CASE_2S) {
-				if (sent >= Lc)
+				if (sent >= Lc) {
+					cs_log("ERROR Protocol_T0_ExchangeTPDU ACK byte: sent=%li exceeds Lc=%li",sent, Lc);
 					return ERROR;
-				if (ICC_Async_Transmit(MAX (Lc - sent, 0), data + sent)) /* Send remaining data bytes */
-					return ERROR;
+				}
+				call (ICC_Async_Transmit(MAX (Lc - sent, 0), data + sent)); /* Send remaining data bytes */
 				sent = Lc;
 				continue;
 			}
 			else /* Case 3 command: receive data */
 			{
-				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE)
+				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
+					cs_log("ERROR Protocol_T0_ExchangeTPDU: Case 3 ACK - maximum short response exceeded:%li",recv);
 					return ERROR;
+				}
 				
 				/* 
 				* Le <= PROTOCOL_T0_MAX_SHORT_RESPONSE - 2 for short commands 
@@ -369,22 +376,28 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 			
 			/* Case 2 command: send data */
 			if (cmd_case == APDU_CASE_2S) {
-				if (sent >= Lc)
+				if (sent >= Lc) {
+					cs_log("ERROR Protocol_T0_ExchangeTPDU ~ACK byte: sent=%li exceeds Lc=%li",sent, Lc);
 					return ERROR;
+				}
 				call (ICC_Async_Transmit (1, data + sent));							//Send next data byte
 				sent++;
 				continue;
 			}
 			else {/* Case 3 command: receive data */
-				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE)
+				if (recv >= PROTOCOL_T0_MAX_SHORT_RESPONSE) {
+					cs_log("ERROR Protocol_T0_ExchangeTPDU: Case 3 ~ACK - maximum short response exceeded:%li",recv);
 					return ERROR;
+				}
 				call (ICC_Async_Receive (1, buffer + recv));						//Read next data byte
 				recv++;
 				continue;
 			}
 		}
-		else /* Anything else received */
+		else { /* Anything else received */
+			cs_log("ERROR Protocol_T0_ExchangeTPDU: Received unexpected character %02X", buffer[recv]);
 			return ERROR;
+		}
 	}//while
 		
 	(*rsp) = APDU_Rsp_New (buffer, recv);
@@ -409,8 +422,10 @@ int Protocol_T14_ExchangeTPDU (unsigned char * cmd_raw, unsigned long command_le
 		ixor^=cmd_raw[i];
 	
 	/* Check case of command */
-	if ((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S))
+	if ((cmd_case != APDU_CASE_2S) && (cmd_case != APDU_CASE_3S)) {
+		cs_log("ERROR: invalid cmd_case = %i in Protocol_T14_ExchangeTPDU",cmd_case);
 		return ERROR;
+	}
 	
 	if (reader[ridx].typ <= R_MOUSE) {
 		call (ICC_Async_Transmit (1, &b1));						//send 0x01 byte
@@ -447,8 +462,10 @@ int Protocol_T14_ExchangeTPDU (unsigned char * cmd_raw, unsigned long command_le
 	call (ICC_Async_Receive (1, &ixor));
 	for(i=0; i<8+recv; i++)		
 		ixor1^=buffer[i];
-	if(ixor1 != ixor)
+	if(ixor1 != ixor) {
+		cs_log("ERROR: invalid checsum = %02X expected %02X", ixor1, ixor);
 		return ERROR;
+	}
 	memcpy(buffer + 8 + recv, buffer + 2, 2);
 	(*rsp) = APDU_Rsp_New (buffer + 8, recv + 2);
 	return OK;

@@ -330,7 +330,7 @@ static void cc_cycle_connection()
 
 static int cc_msg_recv(uint8 *buf)
 {
-  int len, flags;
+  int len;
   uint8 netbuf[CC_MAXMSGSIZE];
   struct cc_data *cc;
 
@@ -355,7 +355,7 @@ static int cc_msg_recv(uint8 *buf)
   cc_crypt(&cc->block[DECRYPT], netbuf, 4, DECRYPT);
   //cs_ddump(netbuf, 4, "cccam: decrypted header:");
 
-  flags = netbuf[0];
+  g_flag = netbuf[0];
 
   if (((netbuf[2] << 8) | netbuf[3]) != 0) {  // check if any data is expected in msg
     if (((netbuf[2] << 8) | netbuf[3]) > CC_MAXMSGSIZE - 2) {
@@ -374,7 +374,7 @@ static int cc_msg_recv(uint8 *buf)
     len += 4;
   }
 
-  //cs_ddump(netbuf, len, "cccam: full decrypted msg, len=%d:", len);
+  cs_ddump(netbuf, len, "cccam: full decrypted msg, len=%d:", len);
 
   memcpy(buf, netbuf, len);
   return len;
@@ -435,8 +435,9 @@ static int cc_send_cli_data()
 
   cs_log ("cccam: user: %s, version: %s, build: %s", reader[ridx].r_usr, reader[ridx].cc_version, reader[ridx].cc_build);
 
+  i = cc_cmd_send(buf, 20 + 8 + 6 + 26 + 4 + 28 + 1, MSG_CLI_DATA);
 
-  return cc_cmd_send(buf, 20 + 8 + 6 + 26 + 4 + 28 + 1, MSG_CLI_DATA);
+  return i;
 }
 
 static int cc_send_srv_data()
@@ -667,8 +668,6 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
   else
     cc = client[cs_idx].cc;
 
-  g_flag = buf[0];
-
   switch (buf[1]) {
   case MSG_CLI_DATA:
     cs_debug("cccam: client data ack");
@@ -691,17 +690,19 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       card->hop = buf[14];
       memcpy(card->key, buf+16, 8);
 
-      cs_debug("cccam: card %08x added, caid %04x, hop %d, key %s",
+      cs_log("cccam: card %08x added, caid %04x, hop %d, key %s",
           card->id, card->caid, card->hop, cs_hexdump(0, card->key, 8));
+
 
       for (i = 0; i < buf[24]; i++) {  // providers
         uint8 *prov = malloc(3);
 
         memcpy(prov, buf+25+(7*i), 3);
-        cs_debug("      prov %d, %06x", i+1, b2i(3, prov));
+        cs_log("      prov %d, %06x", i+1, b2i(3, prov));
 
         llist_append(card->provs, prov);
       }
+
 
       llist_append(cc->cards, card);
       if (!cc->cur_card) cc->cur_card = card;
@@ -844,6 +845,7 @@ int cc_recv(uchar *buf, int l)
   int n;
   uchar *cbuf;
   struct cc_data *cc;
+
   if (reader[ridx].cc)
     cc = reader[ridx].cc;
   else
@@ -857,12 +859,7 @@ int cc_recv(uchar *buf, int l)
 
   pthread_mutex_lock(&cc->lock);
 
-  //if (!is_server) {
-  //  if (!client[cs_idx].udp_fd) return(-1);
   n = cc_msg_recv(cbuf);  // recv and decrypt msg
-  //} else {
-  //  return -2;
-  //}
 
   cs_ddump(cbuf, n, "cccam: received %d bytes from %s", n, remote_txt());
   client[cs_idx].last = time((time_t *) 0);
@@ -883,7 +880,7 @@ int cc_recv(uchar *buf, int l)
 
   pthread_mutex_unlock(&cc->lock);
 
-  if (!is_server) cs_exit(0);
+  //if (!is_server) cs_exit(0);
 
   return(n);
 }
@@ -987,6 +984,15 @@ static int cc_cli_connect(void)
 
   pthread_mutex_init(&cc->lock, NULL);
   pthread_mutex_init(&cc->ecm_busy, NULL);
+
+  reader[ridx].caid[0] = reader[ridx].ftab.filts[0].caid;
+  reader[ridx].nprov = reader[ridx].ftab.filts[0].nprids;
+  for (n=0; n<reader[ridx].nprov; n++) {
+    reader[ridx].prid[n][0] = reader[ridx].ftab.filts[0].prids[n] << 24;
+    reader[ridx].prid[n][1] = reader[ridx].ftab.filts[0].prids[n] << 16;
+    reader[ridx].prid[n][2] = reader[ridx].ftab.filts[0].prids[n] << 8;
+    reader[ridx].prid[n][3] = reader[ridx].ftab.filts[0].prids[n] & 0xff;
+  }
 
   return 0;
 }
