@@ -193,12 +193,12 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         // so if we have a base freq of 3.5712MHz : 40000/3690000 = .0112007168458781 seconds, aka 11ms
         // so if we have a base freq of 6.00MHz : 40000/6000000 = .0066666666666666 seconds, aka 6ms
         // here were doing 200ms .. is it too much ?
-        usleep(200000);
+        cs_sleepms(200);
         
         //Set the DTR HIGH and RTS LOW
         smartreader_setdtr_rts(reader, 1, 0);
     
-        usleep(200000);
+        cs_sleepms(200);
         sched_yield();
     
         //Read the ATR
@@ -383,7 +383,7 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
 
     ret = smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
     //  send break for 350ms, also comes from JoePub debugging.
-    usleep(350000);
+    cs_sleepms(350);
     ret = smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_OFF);
 
     smart_flush(reader);
@@ -1092,7 +1092,10 @@ static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, 
        
         gettimeofday(&now,NULL);
         timersub(&now, &start, &dif);
-        usleep(50);
+        struct timespec req_ts;
+        req_ts.tv_sec = 0;
+        req_ts.tv_nsec = 50000;
+        nanosleep (&req_ts, NULL);//behaves better to signals than usleep and sleep
         sched_yield();
     }
 		cs_ddump(buff, total_read, "SR IO: Receive: ");
@@ -1180,7 +1183,10 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size,
             if ((ret = smartreader_write_data(reader, &buff[idx], 1)) < 0){
                 break;
             }
-            usleep(udelay);
+	          struct timespec req_ts;
+	          req_ts.tv_sec = 0;
+	          req_ts.tv_nsec = udelay * 1000;
+	          nanosleep (&req_ts, NULL); //behaves better with signals than usleep
         }
     }
     sched_yield();

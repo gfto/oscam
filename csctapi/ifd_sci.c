@@ -116,10 +116,7 @@ int Sci_Reset (ATR * atr)
 	}
 	call(!ATR_InitFromArray (atr, buf, n) == ATR_OK);
 	{
-		struct timespec req_ts;
-		req_ts.tv_sec = 0;
-		req_ts.tv_nsec = 50000000;
-		nanosleep (&req_ts, NULL);
+		cs_sleepms(50);
 		call (ioctl(reader[ridx].handle, IOCTL_SET_ATR_READY)<0);
 		return OK;
 	}
@@ -165,13 +162,7 @@ int Sci_Activate ()
 #endif
 			
 		if(in)
-		{
-			struct timespec req_ts;
-			req_ts.tv_sec = 0;
-			req_ts.tv_nsec = 50000000;
-			nanosleep (&req_ts, NULL);
-			return OK;
-		}
+			cs_sleepms(50);
 		else
 			return ERROR;
 		return OK;

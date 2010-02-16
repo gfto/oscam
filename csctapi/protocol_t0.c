@@ -442,19 +442,7 @@ int Protocol_T14_ExchangeTPDU (unsigned char * cmd_raw, unsigned long command_le
 	}
 	
 	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09)
-	{
-#ifdef HAVE_NANOSLEEP
-		struct timespec req_ts;
-		
-//			req_ts.tv_sec = 1;
-//			req_ts.tv_nsec = 500000000;
-		req_ts.tv_sec = 2;
-		req_ts.tv_nsec = 500000000;
-		nanosleep (&req_ts, NULL);  //FIXME why wait 2,5 sec?
-#else
-		usleep (999999L);
-#endif
-	}
+		cs_sleepms(2500); //FIXME why wait?
 	call (ICC_Async_Receive (8, buffer));				//Read one procedure byte
 	recv = (long)buffer[7];
 	if(recv)

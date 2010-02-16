@@ -601,7 +601,7 @@ void start_cardreader()
     if (!(reader[ridx].ph.c_init))
     {
       cs_log("FATAL: %s-protocol not supporting cascading", reader[ridx].ph.desc);
-      sleep(1);
+      cs_sleepms(1000);
       cs_exit(1);
     }
     if (reader[ridx].ph.c_init())
@@ -613,7 +613,7 @@ void start_cardreader()
   {
     client[cs_idx].ip=cs_inet_addr("127.0.0.1");
     while (reader_device_init(reader[ridx].device)==2)
-      sleep(60); // wait 60 secs and try again
+      cs_sleepms(60000); // wait 60 secs and try again
   }
 
   emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));

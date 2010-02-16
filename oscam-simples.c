@@ -312,12 +312,13 @@ void cs_ftime(struct timeb *tp)
 #endif
 }
 
-void cs_sleepms(int msec)
+void cs_sleepms(unsigned int msec)
 {
-  struct timeval tv;
-  tv.tv_sec = msec / 1000;
-  tv.tv_usec = (msec % 1000) * 1000;
-  select(0, 0, 0, 0, &tv);
+	//does not interfere with signals like sleep and usleep do
+	struct timespec req_ts;
+	req_ts.tv_sec = msec/1000;
+	req_ts.tv_nsec = (msec % 1000) * 1000000L;
+	nanosleep (&req_ts, NULL);
 }
 
 int bytes_available(int fd)

@@ -119,7 +119,7 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   len += 2;
   if ((len = des_decrypt(netbuf, len, deskey)) < 11 ) {  // 15(newcamd525) or 11 ???
     cs_debug("nmr: can't decrypt, invalid des key?");
-    sleep(2);
+    cs_sleepms(2000);
     return -1;
   }
   //cs_ddump(netbuf, len, "nmr: decrypted data, len=%d", len);

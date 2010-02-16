@@ -146,7 +146,7 @@ static int reader_activate_card(ATR * atr, unsigned short deprecated)
   memset(reader[ridx].init_history, 0, sizeof(reader[ridx].init_history));
 #endif
 //  cs_ri_log("ATR: %s", cs_hexdump(1, atr, atr_size));//FIXME
-  sleep(1);
+  cs_sleepms(1000);
   return(1);
 }
 

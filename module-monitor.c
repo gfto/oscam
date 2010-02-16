@@ -87,7 +87,10 @@ int monitor_send_idx(int idx, char *txt)
   unsigned char buf[256+32];
   if (!client[idx].udp_fd)
     return(-1);
-  usleep(500L);		// avoid lost udp-pakets ..
+	struct timespec req_ts;
+	req_ts.tv_sec = 0;
+	req_ts.tv_nsec = 500000;
+	nanosleep (&req_ts, NULL);//avoid lost udp-pakkets
   if (!client[idx].crypted)
     return(sendto(client[idx].udp_fd, txt, strlen(txt), 0,
                  (struct sockaddr *)&client[idx].udp_sa,

@@ -743,7 +743,7 @@ extern uchar *i2b(int, ulong);
 extern ulong a2i(char *, int);
 extern int boundary(int, int);
 extern void cs_ftime(struct timeb *);
-extern void cs_sleepms(int);
+extern void cs_sleepms(unsigned int);
 extern int bytes_available(int);
 extern void cs_setpriority(int);
 extern struct s_auth *find_user(char *);

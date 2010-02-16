@@ -316,10 +316,10 @@ static void cc_cw_crypt(uint8 *cws)
 static void cc_cycle_connection()
 {
   reader[ridx].tcp_connected = 0;
-  usleep(200000);
+  cs_sleepms(200);
   close(pfd);
   client[cs_idx].udp_fd = 0;
-  usleep(100000);
+  cs_sleepms(100);
   ph->c_init();
 }
 
@@ -601,7 +601,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     cur_er->rcEx = 0x27;
     //cur_er->rc = 1;
     //cur_er->rcEx = 0;
-    usleep(100000);
+    cs_sleepms(100);
     write_ecm_answer(fd_c2m, cur_er);
     //reader[ridx].last_s = reader[ridx].last_g;
 

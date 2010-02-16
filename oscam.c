@@ -828,7 +828,7 @@ static int start_listener(struct s_module *ph, int port_idx)
       {
         cs_log("%s: Bind request failed, waiting another %d seconds",
                ph->desc, timeout);
-        sleep(1);
+        cs_sleepms(1000);
       }
       else
       {
@@ -973,7 +973,7 @@ static void start_resolver()
     pthread_detach(tid);
   }
 #endif
-  sleep(1); // wait for reader
+  cs_sleepms(1000); // wait for reader
   while(1)
   {
     if (master_pid!=getppid())
@@ -983,7 +983,7 @@ static void start_resolver()
       if (master_pid!=getppid())
         cs_exit(0);
       else
-        sleep(1);
+        cs_sleepms(1000);
 //        sleep(cfg->resolvedelay);
   }
 }
@@ -1003,7 +1003,7 @@ static void start_anticascader()
       if( master_pid!=getppid() )
         cs_exit(0);
       else
-        sleep(1);
+        cs_sleepms(1000);
 
     if (master_pid!=getppid())
       cs_exit(0);
@@ -1062,7 +1062,7 @@ void wait4master()
 {
   int i;
   for (i=0; (i<1000) && (client[cs_idx].pid!=getpid()); i++)
-    usleep(1000L);
+    cs_sleepms(1);
   if (client[cs_idx].pid!=getpid())
   {
     cs_log("PANIC: client not found in shared memory");
@@ -2412,7 +2412,7 @@ int main (int argc, char *argv[])
   {
       int card_init_done;
       cs_log("waiting for local card init");
-      sleep(3);  // short sleep for card detect to work proberly
+      cs_sleepms(3000);  // short sleep for card detect to work proberly
       do {
           card_init_done = 1;
           for (i = 0; i < CS_MAXREADER; i++) {

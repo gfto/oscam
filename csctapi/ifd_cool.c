@@ -64,10 +64,7 @@ int Cool_Reset (ATR * atr)
 		
 	call (!ATR_InitFromArray (atr, buf, n) == ATR_OK);
 	{
-		struct timespec req_ts;
-		req_ts.tv_sec = 0;
-		req_ts.tv_nsec = 50000000;
-		nanosleep (&req_ts, NULL);
+		cs_sleepms(50);
 		return OK;
 	}
 }

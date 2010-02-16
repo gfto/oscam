@@ -884,7 +884,7 @@ static void oscam_ser_fork(int idx, char *url)
     if (pfd)
       oscam_ser_server();
     else
-      sleep(60);	// retry in 1 min. (USB-Device ?)
+      cs_sleepms(60000);	// retry in 1 min. (USB-Device ?)
     if (pfd) close(pfd);
   }
 }

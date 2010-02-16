@@ -78,9 +78,12 @@ void IO_Serial_Ioctl_Lock(int flag)
   else while (*oscam_sem!=reader[ridx].typ)
   {
     while (*oscam_sem)
-    usleep((reader[ridx].typ)*2000); //FIXME is this right ?!?!
+			if (reader[ridx].typ == R_DB2COM1)
+				cs_sleepms(6);
+			else
+				cs_sleepms(8);
     *oscam_sem=reader[ridx].typ;
-    usleep(1000);
+    cs_sleepms(1);
   }
 }
 
@@ -575,17 +578,7 @@ static bool IO_Serial_WaitToRead (unsigned delay_ms, unsigned timeout_ms)
    int in_fd;
    
    if (delay_ms > 0)
-   {
-#ifdef HAVE_NANOSLEEP
-      struct timespec req_ts;
-      
-      req_ts.tv_sec = delay_ms / 1000;
-      req_ts.tv_nsec = (delay_ms % 1000) * 1000000L;
-      nanosleep (&req_ts, NULL);
-#else
-      usleep (delay_ms * 1000L);
-#endif
-   }
+      cs_sleepms (delay_ms);
    
    in_fd=reader[ridx].handle;
    
@@ -633,17 +626,7 @@ static bool IO_Serial_WaitToWrite (unsigned delay_ms, unsigned timeout_ms)
 #endif
 		
    if (delay_ms > 0)
-	{
-#ifdef HAVE_NANOSLEEP
-      struct timespec req_ts;
-      
-      req_ts.tv_sec = delay_ms / 1000;
-      req_ts.tv_nsec = (delay_ms % 1000) * 1000000L;
-      nanosleep (&req_ts, NULL);
-#else
-      usleep (delay_ms * 1000L);
-#endif
-   }
+      cs_sleepms(delay_ms);
 
    out_fd=reader[ridx].handle;
     

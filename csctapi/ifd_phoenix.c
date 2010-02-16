@@ -110,20 +110,13 @@ int Phoenix_Reset (ATR * atr)
 		int ret;
 		int i;
 		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
-#ifdef HAVE_NANOSLEEP
-		struct timespec req_ts;
-		req_ts.tv_sec = 0;
-		req_ts.tv_nsec = 50000000;
-#endif
-
     call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
-		
 		for(i=0; i<3; i++) {
 			IO_Serial_Flush();
 			call (IO_Serial_SetParity (parity[i]));
 
 			ret = ERROR;
-			usleep (500000); //smartreader in mouse mode needs this
+			cs_sleepms(500); //smartreader in mouse mode needs this
 			IO_Serial_Ioctl_Lock(1);
 #ifdef USE_GPIO
 			if (gpio_detect)
@@ -131,11 +124,7 @@ int Phoenix_Reset (ATR * atr)
 			else
 #endif
 				IO_Serial_RTS_Set();
-#ifdef HAVE_NANOSLEEP
-			nanosleep (&req_ts, NULL);
-#else
-			usleep (50000L);
-#endif
+			cs_sleepms(50);
 #ifdef USE_GPIO  //felix: set card reset hi (inactive)
 			if (gpio_detect) {
 				set_gpio_input();

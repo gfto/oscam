@@ -522,7 +522,7 @@ void dvbapi_try_descrambling (int demux_index)
 		//grep ecm
 		dvbapi_get_single_ecm(demux_index, demux[demux_index].ECMpids[n].CA_System_ID, demux[demux_index].ECMpids[n].CA_PID, provid);
 
-		sleep(3); //try next if no cw for .. secs
+		cs_sleepms(3000); //try next if no cw for .. secs
 	}
 }
 
@@ -565,7 +565,7 @@ void *thread_descrambling(void *di)
 		if (k==5) // give up
 			return 0;
 
-		sleep(10);
+		cs_sleepms(10000);
 	}
 
 
@@ -973,7 +973,7 @@ void *thread_check_zap(void *arg) {
 
 	while(1)
 	{
-		sleep(1); // check every second
+		cs_sleepms(1000); // check every second
 		//cs_debug("dvbapi: check zap");
 
 		connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
