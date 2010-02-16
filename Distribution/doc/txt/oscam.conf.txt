@@ -235,15 +235,20 @@ DESCRIPTIONS
        version = <main version>.<version>.<sub version>
 	  define CCcam version, default:none
 
-	  example: version = 1.2.34
+	   example: version = 1.2.34
 
        build = <4-digit number>
 	  define CCcam build, default:none
 
-	  example: build = 5678
+	   example: build = 5678
 
        reshare = level
-	  Reshare level for CCcam clients, default:none
+	  reshare level for CCcam clients, default:none
+
+	   0 = no resharing
+	   1 = resharing for direct peer only
+	   2 = resharing for direct peer and next level
+	   x = resharing for direct peer and next x level
 
    The [gbox] section
        password = password
@@ -295,7 +300,7 @@ DESCRIPTIONS
 	  1 = enabled anti-cascading, default:0
 
        numusers = quantity
-	  anti-cascading:  user per account, 0 = anti-cascading not permitted,
+	  anti-cascading:  user  per  account,	0  =  anti-cascading disabled,
 	  default:0
 
        sampletime = minutes

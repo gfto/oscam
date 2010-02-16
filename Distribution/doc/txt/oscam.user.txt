@@ -91,7 +91,7 @@ DESCRIPTIONS
 	  1 = account disabled, default:0
 
        numusers = quantity (only if anti-cascading enabled)
-	  anti-cascading: user per account, 0 = anti-cascading not  permitted,
+	  anti-cascading: user	per  account,  0  =  anti-cascading  disabled,
 	  default:0
 
        suppresscmd08 = 0|1

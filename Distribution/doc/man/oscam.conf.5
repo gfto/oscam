@@ -325,19 +325,24 @@ TCP/IP port for CCcam clients, 0 = disabled, default:0
 .RS 3n
 define CCcam version, default:none
 
-example: version = 1.2.34
+ example: version = 1.2.34
 .RE
 .PP
 \fBbuild\fP = \fB<4-digit number>\fP
 .RS 3n
 define CCcam build, default:none
 
-example: build = 5678
+ example: build = 5678
 .RE
 .PP
 \fBreshare\fP = \fBlevel\fP
 .RS 3n
-Reshare level for CCcam clients, default:none
+reshare level for CCcam clients, default:none
+
+ 0 = no resharing
+ 1 = resharing for direct peer only
+ 2 = resharing for direct peer and next level
+ x = resharing for direct peer and next x level
 .RE
 .SS "The [gbox] section"
 .PP
@@ -414,7 +419,7 @@ set boxtype, auto detection of DVB API will be aspired, default:dreambox
 .PP
 \fBnumusers\fP = \fBquantity\fP
 .RS 3n
-anti-cascading: user per account, 0 = anti-cascading not permitted, default:0
+anti-cascading: user per account, 0 = anti-cascading disabled, default:0
 .RE
 .PP
 \fBsampletime\fP = \fBminutes\fP
