@@ -185,7 +185,7 @@ int ICC_Async_GetStatus (int * card)
 	else
 		*card = FALSE;
 	
-	cs_debug ("IFD: Status = %s", in ? "card": "no card");
+	cs_debug_mask (D_TRACE, "IFD: Status = %s", in ? "card": "no card");
 	
 	return OK;
 }
