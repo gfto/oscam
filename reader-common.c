@@ -337,10 +337,10 @@ int reader_ecm(ECM_REQUEST *er)
   static int loadbalanced_idx = 1;
   if( (rc=reader_checkhealth()) )
   {
-    cs_log("OUT: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
+    //cs_log("OUT: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
     if(((reader[ridx].caid[0]>>8)==((er->caid>>8)&0xFF)) && (((reader[ridx].loadbalanced) && (loadbalanced_idx == ridx)) || !reader[ridx].loadbalanced))
     {
-      cs_log("IN: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
+      //cs_log("IN: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
       client[cs_idx].last_srvid=er->srvid;
       client[cs_idx].last_caid=er->caid;
       client[cs_idx].last=time((time_t)0);
