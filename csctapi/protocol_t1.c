@@ -98,60 +98,46 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
   cs_debug_mask (D_IFD,"Sending block I(%d,%d)\n", ns, more);
 
   /* Send a block */
-  ret = Protocol_T1_SendBlock (block);
+  call (Protocol_T1_SendBlock (block));
 
-  while ((ret == OK) && more)
-    {
+  while (more) {
       /* Receive a block */
-      ret = Protocol_T1_ReceiveBlock (&block);
+      call (Protocol_T1_ReceiveBlock (&block));
+      rsp_type = T1_Block_GetType (block);
 
-      if (ret == OK)
-        {
-          rsp_type = T1_Block_GetType (block);
-
-          /* Positive ACK R-Block received */
-          if (rsp_type == T1_BLOCK_R_OK)
-            {
-              cs_debug_mask (D_IFD,"Protocol: Received block R(%d)\n", T1_Block_GetNR (block));
-              /* Delete block */
-              T1_Block_Delete (block);
+      /* Positive ACK R-Block received */
+      if (rsp_type == T1_BLOCK_R_OK) {
+          cs_debug_mask (D_IFD,"Protocol: Received block R(%d)\n", T1_Block_GetNR (block));
+          /* Delete block */
+          T1_Block_Delete (block);
  
-              /* Increment ns  */
-              ns = (ns + 1) % 2;
+          /* Increment ns  */
+          ns = (ns + 1) % 2;
 
-              /* Calculate the number of bytes to send */
-              counter += bytes;
-              bytes = MIN (command_len - counter, ifsc);
+          /* Calculate the number of bytes to send */
+          counter += bytes;
+          bytes = MIN (command_len - counter, ifsc);
 
-              /* See if chaining is needed */
-              more = (command_len - counter > ifsc);
+          /* See if chaining is needed */
+          more = (command_len - counter > ifsc);
 
-              /* Create an I-Block */
-              block =
-                T1_Block_NewIBlock (bytes, command + counter,
-                                    ns, more);
-              cs_debug_mask (D_IFD,"Protocol: Sending block I(%d,%d)\n", ns, more);
+          /* Create an I-Block */
+          block = T1_Block_NewIBlock (bytes, command + counter, ns, more);
+          cs_debug_mask (D_IFD,"Protocol: Sending block I(%d,%d)\n", ns, more);
 
-              /* Send a block */
-              ret = Protocol_T1_SendBlock (block);
-            }
-                                   
-          else
-            {
-              /* Delete block */
-              T1_Block_Delete (block);
-
-              ret = ERROR; //not implemented
-            }
-        }
-
-      else
-        {
-          ret = ERROR;//not implemented
-        }
-    }
+          /* Send a block */
+          call (Protocol_T1_SendBlock (block));
+      }
+      else {
+          /* Delete block */
+          T1_Block_Delete (block);
+          cs_debug_mask(D_TRACE, "ERROR T1 Command %02X not implemented in SendBlock", rsp_type);
+          return ERROR;
+      }
+  }
 
   /* Reset counter */
+	ret = OK;
   buffer = NULL;
   counter = 0;      
   more = TRUE;
@@ -184,7 +170,7 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
                                
               /* Save inf field */
               bytes = T1_Block_GetLen (block);
-	      buffer = (BYTE *) realloc(buffer, counter + bytes);
+      	      buffer = (BYTE *) realloc(buffer, counter + bytes);
               memcpy (buffer + counter, T1_Block_GetInf (block), bytes);
               counter += bytes;
 
@@ -225,6 +211,7 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
 
           else
             {
+              cs_debug_mask(D_TRACE, "ERROR T1 Command %02X not implemented in Receive Block", rsp_type);
               ret = ERROR;//not implemented
             }
         }

@@ -463,7 +463,7 @@ int Protocol_T14_ExchangeTPDU (unsigned char * cmd_raw, unsigned long command_le
 	for(i=0; i<8+recv; i++)		
 		ixor1^=buffer[i];
 	if(ixor1 != ixor) {
-		cs_debug_mask(D_TRACE, "ERROR: invalid checsum = %02X expected %02X", ixor1, ixor);
+		cs_debug_mask(D_TRACE, "ERROR: invalid checksum = %02X expected %02X", ixor1, ixor);
 		return ERROR;
 	}
 	memcpy(buffer + 8 + recv, buffer + 2, 2);
