@@ -290,7 +290,7 @@ static void cc_xor(uint8 *buf)
   }
 }
 
-static void cc_cw_decrypt(uint8 *cws)
+static void cc_cw_crypt(uint8 *cws)
 {
   struct cc_data *cc;
   uint64 node_id;
@@ -311,11 +311,6 @@ static void cc_cw_decrypt(uint8 *cws)
     if (i & 1) tmp = ~tmp;
     cws[i] = (cc->cur_card->id >> (2 * i)) ^ tmp;
   }
-}
-
-static void cc_cw_encrypt(uint8 *cws)
-{
-  // cc_cw_decrypt() inverse
 }
 
 static void cc_cycle_connection()
@@ -776,7 +771,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
         get_cw(er);
       }
     } else {
-      cc_cw_decrypt(buf+4);
+      cc_cw_crypt(buf+4);
       memcpy(cc->dcw, buf+4, 16);
       cs_debug("cccam: cws: %s", cs_hexdump(0, cc->dcw, 16));
       cc_crypt(&cc->block[DECRYPT], buf+4, l-4, ENCRYPT); // additional crypto step
@@ -788,6 +783,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   case MSG_KEEPALIVE:
     cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
+    cs_debug("cccam: keepalive");
     break;
   case MSG_DCW_SOMETHING:
     cc->ecm_count = 1;
@@ -830,7 +826,7 @@ static void cc_send_dcw(ECM_REQUEST *er)
   if(er->rc<=3) {
     cc = client[cs_idx].cc;
     memcpy(buf, er->cw, sizeof(buf));
-    cc_cw_decrypt(buf);
+    cc_cw_crypt(buf);
     NULLFREE(cc->cur_card);
     cs_debug("cccam: send cw: er->cpti=%d", er->cpti);
     cc_cmd_send(buf, 16, MSG_CW_ECM);
@@ -881,7 +877,11 @@ int cc_recv(uchar *buf, int l)
 
   pthread_mutex_unlock(&cc->lock);
 
-  if (!is_server && (n==-1)) cs_exit(0);
+  if (!is_server && (n==-1)) {
+    cs_log("cccam: cycle connection");
+    cc_cycle_connection();
+    //cs_exit(1);
+  }
 
   return(n);
 }
