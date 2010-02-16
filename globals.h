@@ -58,7 +58,7 @@
 #include <PCSC/reader.h> 
 #endif 
 #endif
- 
+
 #if defined(LIBUSB)
 #include <libusb-1.0/libusb.h>
 #include "csctapi/smartreader_types.h"
@@ -492,6 +492,7 @@ struct s_reader
   uchar     gbox_vers;
   uchar     gbox_prem;
   int       gbox_fd;
+  int       loadbalanced;
   struct timeb  gbox_lasthello;   // incoming time stamp
 #ifdef CS_RDR_INIT_HIST
   uchar     init_history[4096];

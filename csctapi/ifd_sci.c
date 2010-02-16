@@ -133,12 +133,7 @@ int Sci_WriteSettings (BYTE T, unsigned long fs, unsigned long ETU, unsigned lon
 	call (ioctl(reader[ridx].handle, IOCTL_GET_PARAMETERS, &params) < 0 );
 
 	params.T = T;
-#if defined(TUXBOX) && defined(PPC)
-	if (cs_hw=CS_HW_DREAM)
-		reader[ridx].mhz = 1000; //Dreambox 500 seems to need this
-	else
-#endif
-		params.fs = fs;
+	params.fs = fs;
 
 	//for Irdeto T14 cards, do not set ETU
 	if (ETU)

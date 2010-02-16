@@ -1327,6 +1327,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     rdr->typ=R_MOUSE;
     return;
   }
+  if (!strcmp(token, "loadbalanced")) { rdr->loadbalanced=atoi(value); return; }
   if (!strcmp(token, "ident")) { chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid"); return; }
   if (!strcmp(token, "class")) { chk_cltab(value, &rdr->cltab); return; }
   if (!strcmp(token, "chid")) {  chk_ftab(value, &rdr->fchid,"reader",rdr->label,"chid"); return; }
