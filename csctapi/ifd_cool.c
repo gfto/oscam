@@ -11,9 +11,6 @@
 #include"../globals.h"
 #include"icc_async.h"
 
-#define OK 		0 
-#define ERROR 1
-
 void * handle;
 
 unsigned char cardbuffer[256];

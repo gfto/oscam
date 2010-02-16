@@ -291,8 +291,20 @@ int Protocol_Command (unsigned char * command, unsigned long command_len, APDU_R
 			call (Protocol_T0_Command (command, command_len, rsp));
 			break;
 		case ATR_PROTOCOL_TYPE_T1:
-			call (Protocol_T1_Command (command, command_len, rsp));
+		 {
+			int try = 1;
+			do {
+				if (Protocol_T1_Command (command, command_len, rsp) == OK)
+					break;
+				try++;
+				//try to resync
+				APDU_Rsp ** rsp;
+				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
+				Protocol_T1_Command (resync, sizeof(resync), rsp);
+				ifsc = DEFAULT_IFSC;
+			} while (try <= 3);
 			break;
+		 }
 		case ATR_PROTOCOL_TYPE_T14:
 			call (Protocol_T14_ExchangeTPDU (command, command_len, rsp));
 			break;

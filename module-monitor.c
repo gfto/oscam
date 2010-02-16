@@ -273,11 +273,12 @@ static char *monitor_get_proto(int idx)
               {
                 switch(reader[i].typ)		// TODO like ph
                 {
-                  case R_MOUSE   : ctyp="mouse";    break;
+                case R_MOUSE   : ctyp="mouse";    break;
                   case R_INTERNAL: ctyp="intern";   break;
                   case R_SMART   : ctyp="smartreader";    break;
                   case R_CAMD35  : ctyp="camd 3.5x";break;
                   case R_CAMD33  : ctyp="camd 3.3x";break;
+                  case R_CCCAM   : ctyp="cccam";    break;
                   case R_NEWCAMD : ctyp="newcamd";  break;
                   case R_RADEGAST: ctyp="radegast"; break;
                   case R_SERIAL  : ctyp="serial";   break;

@@ -54,34 +54,60 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
   int ret;
   bool more;
   if (command[1] == T1_BLOCK_S_IFS_REQ)
-    {
-      BYTE inf = command[3];
+  {
+    BYTE inf = command[3];
 
-      /* Create an IFS request S-Block */
-      block = T1_Block_NewSBlock (T1_BLOCK_S_IFS_REQ, 1, &inf);
-      cs_debug_mask (D_IFD,"Protocol: Sending block S(IFS request, %d)\n", inf);
+    /* Create an IFS request S-Block */
+    block = T1_Block_NewSBlock (T1_BLOCK_S_IFS_REQ, 1, &inf);
+    cs_debug_mask (D_IFD,"Protocol: Sending block S(IFS request, %d)\n", inf);
 
-      /* Send IFSD request */
-      ret = Protocol_T1_SendBlock (block);
+    /* Send IFSD request */
+    ret = Protocol_T1_SendBlock (block);
 
-      /* Receive a block */
-      ret = Protocol_T1_ReceiveBlock (&block);
+    /* Receive a block */
+    ret = Protocol_T1_ReceiveBlock (&block);
 
-      if (ret == OK)
-        {
-          rsp_type = T1_Block_GetType (block);
+    if (ret == OK)
+      {
+        rsp_type = T1_Block_GetType (block);
 
-          /* Positive IFS Response S-Block received */
-          if (rsp_type == T1_BLOCK_S_IFS_RES)
-            {
-              /* Update IFSD value */
-              inf = (*T1_Block_GetInf (block));
-              cs_debug_mask (D_IFD,"Protocol: Received block S(IFS response, %d)\n", inf);
-            }
-        }
+        /* Positive IFS Response S-Block received */
+        if (rsp_type == T1_BLOCK_S_IFS_RES)
+          {
+            /* Update IFSD value */
+            inf = (*T1_Block_GetInf (block));
+            cs_debug_mask (D_IFD,"Protocol: Received block S(IFS response, %d)\n", inf);
+          }
+      }
 
-      return ret;
-    }
+    return ret;
+  }
+
+  if (command[1] == T1_BLOCK_S_RESYNCH_REQ)
+  {
+    /* Create an Resynch request S-Block */
+    block = T1_Block_NewSBlock (T1_BLOCK_S_RESYNCH_REQ, 0, NULL);
+    cs_debug_mask (D_IFD,"Protocol: Sending block S(RESYNCH request)\n");
+
+    /* Send request */
+    ret = Protocol_T1_SendBlock (block);
+
+    /* Receive a block */
+    ret = Protocol_T1_ReceiveBlock (&block);
+
+    if (ret == OK)
+      {
+        rsp_type = T1_Block_GetType (block);
+
+        /* Positive IFS Response S-Block received */
+        if (rsp_type == T1_BLOCK_S_RESYNCH_RES) {
+            cs_debug_mask (D_IFD,"Protocol: Received block S(RESYNCH response)\n");
+						ns = 0;
+				}
+      }
+
+    return ret;
+  }
 
   /* Calculate the number of bytes to send */
   counter = 0;

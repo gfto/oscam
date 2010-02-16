@@ -334,13 +334,13 @@ void reader_post_process(void)
 int reader_ecm(ECM_REQUEST *er)
 {
   int rc=-1, r, m=0;
-  static int loadbalanced_idx = 1;
+  static int loadbalanced_idx = 0;
   if( (rc=reader_checkhealth()) )
   {
-    //cs_log("OUT: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
+    //cs_debug("OUTER: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
     if(((reader[ridx].caid[0]>>8)==((er->caid>>8)&0xFF)) && (((reader[ridx].loadbalanced) && (loadbalanced_idx == ridx)) || !reader[ridx].loadbalanced))
     {
-      //cs_log("IN: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
+      //cs_debug("INNER: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
       client[cs_idx].last_srvid=er->srvid;
       client[cs_idx].last_caid=er->caid;
       client[cs_idx].last=time((time_t)0);
@@ -370,7 +370,7 @@ int reader_ecm(ECM_REQUEST *er)
   }
   for (r=0;r<CS_MAXREADER;r++)
     if (reader[r].caid[0]) m++;
-  if (loadbalanced_idx++ >= m) loadbalanced_idx = 1;
+  if (loadbalanced_idx++ >= m) loadbalanced_idx = 0;
   return(rc);
 }
 
