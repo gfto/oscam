@@ -537,7 +537,7 @@ static void chk_t_cccam(char *token, char *value)
       exit(1);
     }
     bzero(cfg->cc_version, sizeof(cfg->cc_version));
-    strncpy(cfg->cc_version, value, sizeof(cfg->cc_version)-1);
+    strncpy((char*)cfg->cc_version, value, sizeof(cfg->cc_version)-1);
     return;
   }
   if (!strcmp(token, "build")) {  // cccam build number
@@ -546,7 +546,7 @@ static void chk_t_cccam(char *token, char *value)
       exit(1);
     }
     bzero(cfg->cc_build, sizeof(cfg->cc_build));
-    strncpy(cfg->cc_build, value, sizeof(cfg->cc_build)-1);
+    strncpy((char*)cfg->cc_build, value, sizeof(cfg->cc_build)-1);
     return;
   }
   if (token[0] != '#')

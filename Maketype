@@ -83,11 +83,11 @@ endif
 		$(MAKE) -C csctapi
 
 $(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(GENERAL)
-		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBUSB) -o "$@" $(LIBS)
+		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBUSB) $(LIBRT) -o "$@" $(LIBS)
 		$(STRIP) $@
 
 $(EXEFILE2):	utils/list_smargo.c
-		$(CC) $(LDFLAGS) utils/list_smargo.c $(LIBUSB) -o "$@" $(LIBS)
+		$(CC) $(LDFLAGS) utils/list_smargo.c $(LIBUSB) $(LIBRT) -o "$@" $(LIBS)
 		$(STRIP) $@
 
 $(LIBFILE1):	$(OBJECTS1)

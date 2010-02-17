@@ -183,10 +183,11 @@ typedef enum
   MSG_CLI_DATA,
   MSG_CW_ECM,
   MSG_CARD_REMOVED = 4,
-  MSG_DCW_SOMETHING,            // this still needs to be worked out
+  MSG_BAD_ECM,
   MSG_KEEPALIVE,
   MSG_NEW_CARD,
   MSG_SRV_DATA,
+  MSG_CMD_0B = 0x0b,
   MSG_CW_NOK1 = 0xfe,
   MSG_CW_NOK2 = 0xff,
   MSG_NO_HEADER = 0xffff
@@ -785,10 +786,14 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
     cs_debug("cccam: keepalive");
     break;
-  case MSG_DCW_SOMETHING:
-    cc->ecm_count = 1;
-    cs_log("cccam: cmd 0x05 recvd, commencing ecm count");
+  case MSG_BAD_ECM:
+    //cc->ecm_count = 1;
+    //cs_log("cccam: cmd 0x05 recvd, commencing ecm count");
+    cc_cmd_send(NULL, 0, MSG_BAD_ECM);
     break;
+  case MSG_CMD_0B:
+    // need to work out algo (reverse) for this...
+    cc_cycle_connection();
   default:
     break;
   }
@@ -818,7 +823,7 @@ static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf)
 
 static void cc_send_dcw(ECM_REQUEST *er)
 {
-  uchar buf[16], cw[8];
+  uchar buf[16];
   struct cc_data *cc;
 
   bzero(buf, sizeof(buf));
@@ -1126,10 +1131,10 @@ static int cc_srv_connect()
   if ((i=recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
     cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
     cs_ddump(buf, 20, "cccam: username '%s':", buf);
-    strncpy(usr, buf, sizeof(usr));
+    strncpy(usr, (char *)buf, sizeof(usr));
   } else return -1;
 
-  for (i=0, account=cfg->account; account; account=account->next)
+  for (account=cfg->account; account; account=account->next)
     if (!strcmp(usr, account->usr)) break;
 
   strncpy(pwd, cfg->account->pwd, sizeof(pwd));
