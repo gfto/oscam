@@ -520,7 +520,6 @@ static void chk_t_newcamd(char *token, char *value)
   else
   {
     cfg->ncd_keepalive = 1;
-    return;
   }
   if (token[0] != '#')
     fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n",token);
@@ -820,7 +819,15 @@ static void chk_account(char *token, char *value, struct s_auth *account)
   if (!strcmp(token, "caid")) { chk_caidtab(value, &account->ctab); return; }
   if (!strcmp(token, "disabled")) { account->disabled=atoi(value); return; }
   if (!strcmp(token, "suppresscmd08")) { account->c35_suppresscmd08=atoi(value); return; }
-  if (!strcmp(token, "keepalive")) { account->ncd_keepalive=atoi(value); return; }
+  if (!strcmp(token, "keepalive")) 
+  { 
+    account->ncd_keepalive = atoi(value); 
+    return; 
+  }
+  else
+  {
+    account->ncd_keepalive = 1;
+  }
   /*
    *  case insensitive
    */
