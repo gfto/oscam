@@ -645,10 +645,10 @@ int smartreader_usb_open_dev(S_READER *reader)
 
     if (desc.bNumConfigurations > 0)
     {
-        ret=libusb_get_configuration(&reader->sr_config.usb_dev_handle,&config);
+        ret=libusb_get_configuration(reader->sr_config.usb_dev_handle,&config);
         
         // libusb-win32 on Windows 64 can return a null pointer for a valid device
-        if (libusb_set_configuration(&reader->sr_config.usb_dev_handle, config) &&
+        if (libusb_set_configuration(reader->sr_config.usb_dev_handle, config) &&
             errno != EBUSY)
         {
             smartreader_usb_close_internal (reader);
