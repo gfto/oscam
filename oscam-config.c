@@ -824,10 +824,6 @@ static void chk_account(char *token, char *value, struct s_auth *account)
     account->ncd_keepalive = atoi(value); 
     return; 
   }
-  else
-  {
-    account->ncd_keepalive = 1;
-  }
   /*
    *  case insensitive
    */
@@ -955,6 +951,7 @@ int init_userdb()
 			account = ptr;
 			memset(account, 0, sizeof(struct s_auth));
 			account->au = (-1);
+			account->ncd_keepalive = 1;
 			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
 			for (i = 1; i < CS_MAXTUNTAB; account->ttab.bt_srvid[i++] = 0x0000);
 			nr++;
