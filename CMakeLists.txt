@@ -379,6 +379,8 @@ add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 # some optimisations
 if (OSCamOperatingSystem MATCHES "Mac OS X")
 add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -m32")
+elseif (OSCAM_SYSTEM_NAME MATCHES "NSLU2")
+add_definitions ("-O2 -Winline -Wall -finline-functions -fomit-frame-pointer")
 else (OSCamOperatingSystem MATCHES "Mac OS X")
 add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer")
 endif (OSCamOperatingSystem MATCHES "Mac OS X")

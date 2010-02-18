@@ -425,7 +425,19 @@ static void cs_debug_level()
 {
   int i;
 
-  cs_dblevel ^= D_ALL_DUMP;
+	switch (cs_dblevel) {
+		case 0:
+			cs_dblevel = 1;
+			break;
+		case 32:
+			cs_dblevel = 63;
+			break;
+		case 63:
+			cs_dblevel = 0;
+			break;
+		default:
+			cs_dblevel <<= 1;
+	}
   if (master_pid==getpid()) 
     for (i=0; i<CS_MAXPID && client[i].pid; i++)
       client[i].dbglvl=cs_dblevel;
