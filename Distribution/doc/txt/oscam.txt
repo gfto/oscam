@@ -75,8 +75,7 @@ SIGNALS
 	  after reloading the ident, please restart newcamd client
 
        SIGUSR1
-	  switch  debug  level	to  63 (debug all)/switch debug level to 0 (no
-	  debugging)
+	  shift debug level to next level (see debug level mask above)
 
        SIGUSR2
 	  get reader SC info
