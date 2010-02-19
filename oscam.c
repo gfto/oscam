@@ -138,6 +138,7 @@ static void usage()
   fprintf(stderr, "\t             default = %s\n", CS_CONFDIR);
   fprintf(stderr, "\t-d <level> : debug level mask\n");
   fprintf(stderr, "\t             0 = no debugging (default)\n");
+  fprintf(stderr, "\t             1 = detailed error messages\n");
   fprintf(stderr, "\t             2 = ATR parsing info, ECM, EMM and CW dumps\n");
   fprintf(stderr, "\t             4 = traffic from/to the reader\n");
   fprintf(stderr, "\t             8 = traffic from/to the clients\n");
@@ -338,7 +339,7 @@ void cs_exit(int sig)
   exit(sig);
 }
 
-static void cs_reinit_clients()
+void cs_reinit_clients()
 {
 	int i;
 	struct s_auth *account;
@@ -1451,7 +1452,7 @@ void logCWtoFile(ECM_REQUEST *er)
         if (writeheader)
         {
             /* no global macro for cardserver name :( */
-            fprintf(pfCWL, "# OSCam cardserver v%s - http://streamboard.gmc.to:8001/oscam/wiki\n", CS_VERSION_X); 
+            fprintf(pfCWL, "# OSCam cardserver v%s - http://streamboard.gmc.to:8001/wiki\n", CS_VERSION_X); 
             fprintf(pfCWL, "# control word log file for use with tsdec offline decrypter\n");
             strftime(buf,sizeof(buf),"DATE %Y-%m-%d, TIME %H:%M:%S, TZ %Z\n",timeinfo);
             fprintf(pfCWL, "# %s",buf);
@@ -2063,8 +2064,9 @@ void do_emm(EMM_PACKET *ep)
 //  if ((!reader[au].fd) || (reader[au].b_nano[ep->emm[3]])) // blocknano is obsolete
   if ((!reader[au].fd) ||       // reader has no fd
       (reader[au].caid[0]!=b2i(2,ep->caid)) ||    // wrong caid
-      (memcmp(reader[au].hexserial, ep->hexserial, 8))) // wrong serial
+      (memcmp(reader[au].hexserial, ep->hexserial, 8))) {// wrong serial
     return;
+	}
 
   ep->cidx=cs_idx;
   write_to_pipe(reader[au].fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));

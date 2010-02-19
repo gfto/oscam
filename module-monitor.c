@@ -232,7 +232,7 @@ static void monitor_send_info(char *txt, int last)
   btxt[0]=0;
 }
 
-static int cs_idx2ridx(int idx)
+int cs_idx2ridx(int idx)
 {
   int i;
   for (i=0; i<CS_MAXREADER; i++)
@@ -257,39 +257,45 @@ char *monitor_get_srvname(int srvid, int caid){
 	return(name);
 }
 
-static char *monitor_get_proto(int idx)
+char *monitor_get_proto(int idx)
 {
-  int i;
-  char *ctyp;
-  switch(client[idx].typ)
-  {
-    case 's': ctyp="server"   ; break;
-    case 'n': ctyp="resolver" ; break;
-    case 'l': ctyp="logger"   ; break;
-    case 'p':
-    case 'r': if ((i=cs_idx2ridx(idx))<0)	// should never happen
-                ctyp=(client[idx].typ=='p') ? "proxy" : "reader";
-              else
-              {
-                switch(reader[i].typ)		// TODO like ph
-                {
-                case R_MOUSE   : ctyp="mouse";    break;
-                  case R_INTERNAL: ctyp="intern";   break;
-                  case R_SMART   : ctyp="smartreader";    break;
-                  case R_CAMD35  : ctyp="camd 3.5x";break;
-                  case R_CAMD33  : ctyp="camd 3.3x";break;
-                  case R_CCCAM   : ctyp="cccam";    break;
-                  case R_NEWCAMD : ctyp="newcamd";  break;
-                  case R_RADEGAST: ctyp="radegast"; break;
-                  case R_SERIAL  : ctyp="serial";   break;
-                  case R_GBOX    : ctyp="gbox";     break;
-                  default        : ctyp="unknown";  break;
-                }
-              }
-              break;
-    default : ctyp=ph[client[idx].ctyp].desc;
-  }
-  return(ctyp);
+	int i;
+	char *ctyp;
+	switch(client[idx].typ) {
+		case 's'	: ctyp = "server"   ; break;
+		case 'n'	: ctyp = "resolver" ; break;
+		case 'l'	: ctyp = "logger"   ; break;
+		case 'p'	:
+		case 'r'	:
+			if ((i = cs_idx2ridx(idx)) < 0)	// should never happen
+				ctyp = (client[idx].typ == 'p') ? "proxy" : "reader";
+			else {
+				switch(reader[i].typ) {	/* TODO like ph*/
+					case R_MOUSE	: ctyp = "mouse";		break;
+					case R_INTERNAL	: ctyp = "intern";		break;
+					case R_SMART	: ctyp = "smartreader";	break;
+					case R_CAMD35	: ctyp = "camd 3.5x";	break;
+					case R_CAMD33	: ctyp = "camd 3.3x";	break;
+					case R_NEWCAMD	: ctyp = "newcamd";		break;
+					case R_RADEGAST	: ctyp = "radegast";	break;
+					case R_SERIAL	: ctyp = "serial";		break;
+#ifdef CS_WITH_GBOX
+					case R_GBOX		: ctyp = "gbox";		break;
+#endif
+#ifdef HAVE_PCSC
+					case R_PCSC		: ctyp = "pcsc";		break;
+#endif
+					case R_CCCAM	: ctyp = "cccam";		break;
+					case R_CS378X	: ctyp = "cs378x";		break;
+					case R_DB2COM1	: ctyp = "dbox COM1";	break;
+					case R_DB2COM2	: ctyp = "dbox COM2";   break;
+					default			: ctyp = "unknown";		break;
+				}
+			}
+			break;
+		default		: ctyp = ph[client[idx].ctyp].desc;
+	}
+	return(ctyp);
 }
 
 static char *monitor_client_info(char id, int i)
@@ -306,7 +312,6 @@ static char *monitor_client_info(char id, int i)
     now=time((time_t)0);
 
     if ((cfg->mon_hideclient_to <= 0) ||
-        (((now-client[i].lastecm)/60)<cfg->mon_hideclient_to) ||
         (((now-client[i].lastemm)/60)<cfg->mon_hideclient_to) ||
         (client[i].typ!='c'))
     {

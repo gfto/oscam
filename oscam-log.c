@@ -152,6 +152,13 @@ static void write_to_log(int flag, char *txt)
 //  get_log_header(flag, sbuf);
 //  memcpy(txt, sbuf, 11);
 
+
+  time(&t);
+  lt=localtime(&t);
+  sprintf(buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
+                lt->tm_year+1900, lt->tm_mon+1, lt->tm_mday,
+                lt->tm_hour, lt->tm_min, lt->tm_sec, txt);
+
   if (use_syslog && !use_ac_log)		// system-logfile
     syslog(LOG_INFO, "%s", txt);
   time(&t);
@@ -373,14 +380,14 @@ void cs_statistics(int idx)
     else
       cwps=0;
 
-    fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s\n", 
+    fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s %04X:%04X\n",
                   lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
                   lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
                   client[idx].usr[0] ? client[idx].usr : "-",
                   cs_inet_ntoa(client[idx].ip), client[idx].port,
                   client[idx].cwfound, client[idx].cwcache, client[idx].cwnot, client[idx].cwignored,
                   client[idx].cwtout, client[idx].cwtun, client[idx].login, client[idx].last,
-                  ph[client[idx].ctyp].desc);
+                  ph[client[idx].ctyp].desc,client[idx].last_caid,client[idx].last_srvid);
     fflush(fps);
   }
 }

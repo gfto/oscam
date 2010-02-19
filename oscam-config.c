@@ -115,7 +115,7 @@ void chk_iprange(char *value, struct s_ip **base)
   }
 }
 
-static void chk_caidtab(char *caidasc, CAIDTAB *ctab)
+void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 {
   int i;
   char *ptr1, *ptr2, *ptr3;
@@ -141,7 +141,7 @@ static void chk_caidtab(char *caidasc, CAIDTAB *ctab)
   }
 }
 
-static void chk_tuntab(char *tunasc, TUNTAB *ttab)
+void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
   int i;
   char *ptr1, *ptr2, *ptr3;
@@ -167,7 +167,7 @@ static void chk_tuntab(char *tunasc, TUNTAB *ttab)
   }
 }
 
-static void chk_services(char *labels, ulong *sidok, ulong *sidno)
+void chk_services(char *labels, ulong *sidok, ulong *sidno)
 {
   int i;
   char *ptr;
@@ -181,9 +181,7 @@ static void chk_services(char *labels, ulong *sidok, ulong *sidno)
     }
 }
 
-static 
-void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName,
-              const char *zFiltName)
+void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName)
 {
   int i,j;
   char *ptr1,*ptr2,*ptr3;
@@ -225,7 +223,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
   //cs_log("exit chk_ftab");
 }
 
-static void chk_cltab(char *classasc, CLASSTAB *clstab)
+void chk_cltab(char *classasc, CLASSTAB *clstab)
 {
   int i;
   char *ptr1;
@@ -239,7 +237,7 @@ static void chk_cltab(char *classasc, CLASSTAB *clstab)
   }
 }
 
-static void chk_port_tab(char *portasc, PTAB *ptab)
+void chk_port_tab(char *portasc, PTAB *ptab)
 {
   int i,j,nfilts,ifilt,iport;
   char *ptr1,*ptr2,*ptr3;
@@ -297,7 +295,7 @@ static void chk_srvip(char *value, in_addr_t *ip)
 }
 #endif
 
-static void chk_t_global(char *token, char *value)
+void chk_t_global(char *token, char *value)
 {
   if (!strcmp(token, "serverip")) { cfg->srvip=inet_addr(value); return; }
   if (!strcmp(token, "logfile")) {
@@ -389,7 +387,7 @@ static void chk_t_global(char *token, char *value)
 }
 
 #ifdef CS_ANTICASC
-static void chk_t_ac(char *token, char *value)
+void chk_t_ac(char *token, char *value)
 {
   if (!strcmp(token, "enabled")) 
   {
@@ -448,7 +446,7 @@ static void chk_t_ac(char *token, char *value)
 }
 #endif
 
-static void chk_t_monitor(char *token, char *value)
+void chk_t_monitor(char *token, char *value)
 {
   if (!strcmp(token, "port")) { cfg->mon_port=atoi(value); return; }
   if (!strcmp(token, "serverip")) { cfg->mon_srvip=inet_addr(value); return; }
@@ -460,7 +458,7 @@ static void chk_t_monitor(char *token, char *value)
     fprintf(stderr, "Warning: keyword '%s' in monitor section not recognized\n",token);
 }
 
-static void chk_t_camd33(char *token, char *value)
+void chk_t_camd33(char *token, char *value)
 {
   if (!strcmp(token, "port")) { cfg->c33_port=atoi(value); return; }
   if (!strcmp(token, "serverip")) { cfg->c33_srvip=inet_addr(value); return; }
@@ -480,7 +478,7 @@ static void chk_t_camd33(char *token, char *value)
     fprintf(stderr, "Warning: keyword '%s' in camd33 section not recognized\n",token);
 }
 
-static void chk_t_camd35(char *token, char *value)
+void chk_t_camd35(char *token, char *value)
 {
   if (!strcmp(token, "port")) { cfg->c35_port=atoi(value); return; }
   if (!strcmp(token, "serverip")) { cfg->c35_tcp_srvip=inet_addr(value); return; }
@@ -489,7 +487,7 @@ static void chk_t_camd35(char *token, char *value)
     fprintf(stderr, "Warning: keyword '%s' in camd35 section not recognized\n",token);
 }
 
-static void chk_t_camd35_tcp(char *token, char *value)
+void chk_t_camd35_tcp(char *token, char *value)
 {
   if (!strcmp(token, "port")) { chk_port_tab(value, &cfg->c35_tcp_ptab); return; }
   if (!strcmp(token, "serverip")) { cfg->c35_tcp_srvip=inet_addr(value); return; }
@@ -498,7 +496,7 @@ static void chk_t_camd35_tcp(char *token, char *value)
     fprintf(stderr, "Warning: keyword '%s' in camd35 tcp section not recognized\n",token);
 }
 
-static void chk_t_newcamd(char *token, char *value)
+void chk_t_newcamd(char *token, char *value)
 {
   if (!strcmp(token, "port")) { chk_port_tab(value, &cfg->ncd_ptab); return; }
   if (!strcmp(token, "serverip")) { cfg->ncd_srvip=inet_addr(value); return; }
@@ -521,7 +519,7 @@ static void chk_t_newcamd(char *token, char *value)
     fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n",token);
 }
 
-static void chk_t_cccam(char *token, char *value)
+void chk_t_cccam(char *token, char *value)
 {
   if (!strcmp(token, "port")) { cfg->cc_port=atoi(value); return; }
   //if (!strcmp(token, "serverip")) { cfg->cc_srvip=inet_addr(value); return; }
@@ -548,7 +546,7 @@ static void chk_t_cccam(char *token, char *value)
     fprintf(stderr, "Warning: keyword '%s' in cccam section not recognized\n",token);
 }
 
-static void chk_t_radegast(char *token, char *value)
+void chk_t_radegast(char *token, char *value)
 {
   if (!strcmp(token, "port")) { cfg->rad_port=atoi(value); return; }
   if (!strcmp(token, "serverip")) { cfg->rad_srvip=inet_addr(value); return; }
@@ -558,7 +556,7 @@ static void chk_t_radegast(char *token, char *value)
     fprintf(stderr, "Warning: keyword '%s' in radegast section not recognized\n",token);
 }
 
-static void chk_t_serial(char *token, char *value)
+void chk_t_serial(char *token, char *value)
 {
   if (!strcmp(token, "device"))
   {
@@ -599,7 +597,7 @@ static void chk_t_gbox(char *token, char *value)
 #endif
 
 #ifdef HAVE_DVBAPI
-static void chk_t_dvbapi(char *token, char *value)
+void chk_t_dvbapi(char *token, char *value)
 {
 	if (!strcmp(token, "enabled"))	{ cfg->dvbapi_enabled=atoi(value); return; }
 	if (!strcmp(token, "au"))	{ cfg->dvbapi_au=atoi(value); return; }
@@ -802,7 +800,7 @@ int init_config()
   return 0;
 }
 
-static void chk_account(char *token, char *value, struct s_auth *account)
+void chk_account(char *token, char *value, struct s_auth *account)
 {
   int i;
   char *ptr1;//, *ptr2;
@@ -1035,7 +1033,7 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
   }
 }
 
-static void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
+void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
 {
   if (!strcmp(token, "caid")) { chk_entry4sidtab(value, sidtab, 0); return; }
   if (!strcmp(token, "provid")) { chk_entry4sidtab(value, sidtab, 1); return; }
