@@ -22,7 +22,7 @@
 
 #include "globals.h"
 
-#define BUFSIZE 1024
+#define BUFSIZE 512
 #define MAX_DEMUX 5
 #define MAX_CAID 50
 #define ECM_PIDS 20
@@ -56,6 +56,8 @@ typedef struct demux_s
 	unsigned char buffer_cache_dmx[12];
 	unsigned char lastcw0[8];
 	unsigned char lastcw1[8];
+	pthread_t descramble_thread; 
+	unsigned int thread_active; 
 } DEMUXTYPE;
 #define DMX_FILTER_SIZE 16
 
@@ -126,8 +128,7 @@ typedef struct ca_pid {
 DEMUXTYPE demux[MAX_DEMUX];
 
 unsigned short global_caid_list[MAX_CAID];
-CAIDTAB prioritytab;
-unsigned short ignoretab[CS_MAXCAIDTAB];
+CAIDTAB prioritytab,ignoretab;
 
 #define BOX_COUNT 2
 struct box_devices
@@ -248,8 +249,17 @@ int dvbapi_detect_api()
 
 int dvbapi_read_device(int dmx_fd, unsigned char *buf, int length, int debug)
 {
-	int len;
-	len=read(dmx_fd, buf, length);
+	int len, rc;
+	struct pollfd pfd[1];
+
+	pfd[0].fd = dmx_fd;
+	pfd[0].events = (POLLIN | POLLPRI);
+
+	rc = poll(pfd, 1, 5000);
+	if (rc<1)
+		return -1;
+
+	len = read(dmx_fd, buf, length);
 
 	if (len==-1)
 		cs_log("dvbapi: read error %d", errno);
@@ -361,7 +371,7 @@ void dvbapi_parse_cat(int demux_index)
 	unsigned short i, j;
 	int dmx_fd, len;
 
-	dmx_fd=demux[demux_index].demux_ecm_fd;
+	dmx_fd=demux[demux_index].demux_emm_fd;
 
 	dvbapi_set_filter(dmx_fd, selected_api, 0x0001, 0x01, 0xFF, 2000);
 
@@ -386,6 +396,8 @@ void dvbapi_parse_cat(int demux_index)
 		}
 	}
 
+	dvbapi_stop_filter(demux_index, 1);
+
 	return;
 }
 
@@ -403,15 +415,21 @@ void dvbapi_stop_descrambling(int demux_id)
 	demux[demux_id].program_number=0;
 
 	if (demux[demux_id].demux_ecm_fd>0) {
-		ioctl(demux[demux_id].demux_ecm_fd,DMX_STOP);
+		dvbapi_stop_filter(demux_id, 0);
 		close(demux[demux_id].demux_ecm_fd);
 		demux[demux_id].demux_ecm_fd=0;
 	}
 
 	if (demux[demux_id].demux_emm_fd>0) {
-		ioctl(demux[demux_id].demux_emm_fd,DMX_STOP);
+		dvbapi_stop_filter(demux_id, 1);
 		close(demux[demux_id].demux_emm_fd);
 		demux[demux_id].demux_emm_fd=0;
+	}
+
+	if (demux[demux_id].thread_active == 0) { 
+		pthread_cancel(demux[demux_id].descramble_thread);
+		pthread_join(demux[demux_id].descramble_thread, NULL);
+		demux[demux_id].thread_active = -1;
 	}
 
 	if (demux[demux_id].ca_fd>0) {
@@ -463,7 +481,6 @@ void dvbapi_start_descrambling(int demux_index, unsigned short caid, unsigned sh
 	demux[demux_index].ca_system_id=caid;
 	demux[demux_index].provider_id=provider_id;
 
-
 	int camfd=dvbapi_open_device(demux_index,1);
 	if (camfd<=0) {
 		return;
@@ -498,7 +515,6 @@ void dvbapi_try_descrambling (int demux_index)
 			break;
 
 		dvbapi_stop_filter(demux_index,0);
-		dvbapi_stop_filter(demux_index,1);
 
 		cs_debug("dvbapi: trying CA_System_ID: %04x CA_PID: %04x EEM_PID: %04x", demux[demux_index].ECMpids[n].CA_System_ID, demux[demux_index].ECMpids[n].CA_PID, demux[demux_index].ECMpids[n].EMM_PID);
 
@@ -511,13 +527,11 @@ void dvbapi_try_descrambling (int demux_index)
 				provid=prioritytab.mask[pid];
 		}
 
-		if (cfg->dvbapi_au==1)
-		{
+		if (cfg->dvbapi_au==1) {
+			dvbapi_stop_filter(demux_index,1);
 			if (demux[demux_index].ECMpids[n].EMM_PID>0)
 				provid=dvbapi_get_provid(demux_index, demux[demux_index].ECMpids[n].EMM_PID);
 		}
-
-		//cs_log("Provider ID: %04x", provid);
 
 		//grep ecm
 		dvbapi_get_single_ecm(demux_index, demux[demux_index].ECMpids[n].CA_System_ID, demux[demux_index].ECMpids[n].CA_PID, provid);
@@ -529,18 +543,22 @@ void dvbapi_try_descrambling (int demux_index)
 void *thread_descrambling(void *di)
 {
 	int demux_index=(int)di;
-	int dmx1_fd,dmx2_fd,n=30,k=0;
+	int dmx1_fd,dmx2_fd=0,n=30,k=0;
 	unsigned int program_number;
+
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
 	cs_debug("dvbapi: Start descrambling Thread %d", demux_index);
 
-	dmx1_fd = dvbapi_open_device(demux_index,0); //ECM,CAT
-	dmx2_fd = dvbapi_open_device(demux_index,0); //EMM
-
+	dmx1_fd = dvbapi_open_device(demux_index,0); //ECM
 	demux[demux_index].demux_ecm_fd=dmx1_fd;
-	demux[demux_index].demux_emm_fd=dmx2_fd;
-
-	dvbapi_parse_cat(demux_index);
+	
+	if (cfg->dvbapi_au==1) {
+		dmx2_fd = dvbapi_open_device(demux_index,0); //EMM,CAT
+		demux[demux_index].demux_emm_fd=dmx2_fd;
+		dvbapi_parse_cat(demux_index);
+	}
 
 	program_number=demux[demux_index].program_number;
 
@@ -568,14 +586,12 @@ void *thread_descrambling(void *di)
 		cs_sleepms(10000);
 	}
 
-
-	struct pollfd pfd2[MAX_DEMUX*2];
+	struct pollfd pfd2[2];
 	int rc,len,i,pfdcount;
 	unsigned char buffer[BUFSIZE];
 
 	while(1)
 	{
-
 		pfdcount=0;
 
 		if (program_number!=demux[demux_index].program_number || demux[demux_index].ca_system_id==0) //channel change -> new thread
@@ -586,14 +602,18 @@ void *thread_descrambling(void *di)
 			pfd2[pfdcount].events = (POLLIN | POLLPRI);
 			pfdcount++;
 		} else break;
-		if (demux[demux_index].demux_emm_fd>0) {
-			pfd2[pfdcount].fd = demux[demux_index].demux_emm_fd;
-			pfd2[pfdcount].events = (POLLIN | POLLPRI);
-			pfdcount++;
-		} else break;
+		if (cfg->dvbapi_au==1) {
+			if (demux[demux_index].demux_emm_fd>0) {
+				pfd2[pfdcount].fd = demux[demux_index].demux_emm_fd;
+				pfd2[pfdcount].events = (POLLIN | POLLPRI);
+				pfdcount++;
+			} else break;
+		}
 
+		rc=poll(pfd2, pfdcount, 3000);
 
-		rc=poll(pfd2, pfdcount, 1000);
+		if (rc<0)
+			break;
 
 		for (i = 0; i < pfdcount; i++) {
 			if (pfd2[i].revents & (POLLIN | POLLPRI)) {
@@ -613,32 +633,26 @@ void *thread_descrambling(void *di)
 							memcpy(demux[demux_index].buffer_cache_dmx, buffer, 12);
 							cs_debug("Read %d bytes\tTable-id: %02x\tCA section length: %d", len, buffer[0], len);
 
-							if (len>0) {
-								ECM_REQUEST *er;
+							ECM_REQUEST *er;
 
-								if (!(er=get_ecmtask()))
-									continue;
+							if (!(er=get_ecmtask()))
+								continue;
 
-								er->srvid = demux[demux_index].program_number;
-								er->caid  = demux[demux_index].ca_system_id;
-								er->prid  = demux[demux_index].provider_id;
+							er->srvid = demux[demux_index].program_number;
+							er->caid  = demux[demux_index].ca_system_id;
+							er->prid  = demux[demux_index].provider_id;
 
-								er->l=len;
-								memcpy(er->ecm, buffer, er->l);
+							er->l=len;
+							memcpy(er->ecm, buffer, er->l);
 
-								get_cw(er);
-							}
+							get_cw(er);
 						}
 					}
 				}
 				if (pfd2[i].fd==demux[demux_index].demux_emm_fd) {
 					//EMM
 
-					if (cfg->dvbapi_au!=1)
-						continue;
-
 					cs_debug("EMM Type: 0x%02x", buffer[0]);
-
 					cs_ddump(buffer, len, "emm:");
 
 					//force emm output
@@ -664,7 +678,8 @@ void *thread_descrambling(void *di)
 
 	cs_debug("dvbapi: Stop descrambling Thread %d", demux_index);
 
-	return 0;
+	pthread_detach(pthread_self());
+	pthread_exit(0);
 }
 
 
@@ -687,13 +702,12 @@ void dvbapi_resort_ecmpids(int demux_index)
 			if (reader[i].caid[j] != 0) {
 				if (k+1>=MAX_CAID) break;
 				global_caid_list[k]=reader[i].caid[j];
-				k++;
-				
+				k++;				
 			}
 		}
 	}
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
-		if (dvbapi_check_array(ignoretab, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CA_System_ID)>=0) {
+		if (dvbapi_check_array(ignoretab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CA_System_ID)>=0) {
 			cs_debug("-> ignore %04x", demux[demux_index].ECMpids[n].CA_System_ID);
 		} else if (dvbapi_check_array(global_caid_list, MAX_CAID, demux[demux_index].ECMpids[n].CA_System_ID)>=0) {
 			cs_debug("-> caid list %04x", demux[demux_index].ECMpids[n].CA_System_ID);
@@ -724,10 +738,38 @@ void dvbapi_resort_ecmpids(int demux_index)
 	return;
 }
 
+void dvbapi_parse_descriptor(int demux_id, int i, unsigned int info_length, unsigned char *buffer) {
+	//int ca_pmt_cmd_id = buffer[i + 5];
+	unsigned int descriptor_length=0;
+	ushort added,j,n;
+
+	for (j = 0; j < info_length - 1; j += descriptor_length + 2) {
+		descriptor_length = buffer[i + j + 7];
+		int descriptor_ca_system_id = (buffer[i + j + 8] << 8) | buffer[i + j + 9];
+		int descriptor_ca_pid = ((buffer[i + j + 10] & 0x1F) << 8) | buffer[i + j + 11];
+
+		cs_debug("typ: %02x\tca_system_id: %04x\t ca_pid: %04x", buffer[i + j + 6], descriptor_ca_system_id, descriptor_ca_pid);
+
+		if (buffer[i + j + 6] == 0x09) {
+			added=0;
+			for (n=0;n<demux[demux_id].ECMpidcount;n++) {
+				if (demux[demux_id].ECMpids[n].CA_System_ID==descriptor_ca_system_id)
+					added=1;
+			}
+			if (added==0) {
+				demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CA_PID=descriptor_ca_pid;
+				demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CA_System_ID=descriptor_ca_system_id;
+				demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].EMM_PID=0;
+				demux[demux_id].ECMpidcount++;
+			}
+		}
+	}
+}
+
 // from tuxbox camd
 int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length)
 {
-	unsigned short i, j, u, n, added;
+	unsigned short i, u;
 	unsigned short ca_mask=0x01, demux_index2=0x00;
 
 	int ca_pmt_list_management = buffer[0];
@@ -760,20 +802,17 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length)
 	}
 
 	for (i=0;i<MAX_DEMUX;i++) {
-		if (demux[i].demux_index==demux_index2) {
-			if (demux[i].program_number==((buffer[1] << 8) | buffer[2])) { // already descrambling prog on this device
-				if (demux[i].active==1) {
-					//remove any inactive program
-					for (u=0;u<MAX_DEMUX;u++) {
-						if (demux[u].demux_index==demux_index2 && demux[u].active==0)
-							dvbapi_stop_descrambling(u);
-						demux[u].active=0;
-					}
-
-				} else
-					demux[i].active=1;
-				return 0;
-			}
+		if (demux[i].demux_index==demux_index2 && demux[i].program_number==((buffer[1] << 8) | buffer[2])) { // already descrambling prog on this device
+			if (demux[i].active==1) {
+				//remove any inactive program
+				for (u=0;u<MAX_DEMUX;u++) {
+					if (demux[u].demux_index==demux_index2 && demux[u].active==0)
+						dvbapi_stop_descrambling(u);
+					demux[u].active=0;
+				}
+			} else
+				demux[i].active=1;
+			return 0;
 		}
 	}
 
@@ -813,26 +852,8 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length)
 	cs_debug("dvbapi: demux index: %d ca index: %d", demux[demux_id].demux_index, demux[demux_id].cadev_index);
 
 	//CA_PIDS for all streams
-	if (program_info_length != 0)
-	{
-		int ca_pmt_cmd_id = buffer[6];
-		cs_debug("ca_pmt_id: %02x", ca_pmt_cmd_id);
-		int descriptor_length=0;
-		for (i = 0; i < program_info_length - 1; i += descriptor_length + 2)
-		{
-			descriptor_length = buffer[i + 8];
-			int ca_system_id = (buffer[i + 9] << 8) | buffer[i + 10];
-			int ca_pid = ((buffer[i + 11] & 0x1F) << 8)| buffer[i + 12];
-
-			cs_debug("typ: %02x ca_system_id: %04x\t ca_pid: %04x\tca_descriptor_length %d", buffer[i + 7], ca_system_id, ca_pid, descriptor_length);
-
-			if (buffer[i + 7] == 0x09) {
-				demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CA_PID=ca_pid;
-				demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CA_System_ID=ca_system_id;
-				demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].EMM_PID=0;
-				demux[demux_id].ECMpidcount++;
-			}
-		}
+	if (program_info_length != 0) {
+		dvbapi_parse_descriptor(demux_id, 1, program_info_length, buffer);
 	}
 
 	//CA_PIDs for a single stream
@@ -848,47 +869,18 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length)
 		demux[demux_id].STREAMpids[demux[demux_id].STREAMpidcount]=elementary_pid;
 		demux[demux_id].STREAMpidcount++;
 
-		if (es_info_length != 0)
-		{
-			int ca_pmt_cmd_id = buffer[i + 5];
-			cs_debug("dvbapi: ca_pmt_cmd_id 0x%02x", ca_pmt_cmd_id);
-			unsigned int descriptor_length=0;
-			for (j = 0; j < es_info_length - 1; j += descriptor_length + 2)
-			{
-				descriptor_length = buffer[i + j + 7];
-				int descriptor_ca_system_id = (buffer[i + j + 8] << 8) | buffer[i + j + 9];
-				int descriptor_ca_pid = ((buffer[i + j + 10] & 0x1F) << 8) | buffer[i + j + 11];
-
-				cs_debug("typ: %02x\tca_system_id: %04x\t ca_pid: %04x", buffer[i + j + 6], descriptor_ca_system_id, descriptor_ca_pid);
-
-				if (buffer[i + j + 6] == 0x09) {
-					added=0;
-					for (n=0;n<demux[demux_id].ECMpidcount;n++) {
-						if (demux[demux_id].ECMpids[n].CA_System_ID==descriptor_ca_system_id)
-							added=1;
-					}
-					if (added==0) {
-						demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CA_PID=descriptor_ca_pid;
-						demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CA_System_ID=descriptor_ca_system_id;
-						demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].EMM_PID=0;
-						demux[demux_id].ECMpidcount++;
-					}
-				}
-			}
+		if (es_info_length != 0) {
+			dvbapi_parse_descriptor(demux_id, i, es_info_length, buffer);
 		}
 	}
 
-	pthread_t p3;
-
-	cs_log("dvbapi: Found %d ECMpids in PMT", demux[demux_id].ECMpidcount);
-	cs_debug("dvbapi: Found %d STREAMpids in PMT", demux[demux_id].STREAMpidcount);
+	cs_debug("dvbapi: Found %d ECMpids and %d STREAMpids in PMT", demux[demux_id].ECMpidcount);
 
 	if (demux[demux_id].ECMpidcount>0) {
 		dvbapi_resort_ecmpids(demux_id);
-		if (demux[demux_id].ECMpidcount>0)
-			pthread_create (&p3, NULL, thread_descrambling, (void*)demux_id);
+		if (demux[demux_id].ECMpidcount>0) {}
+			demux[demux_id].thread_active=pthread_create(&demux[demux_id].descramble_thread, NULL, thread_descrambling, (void*)demux_id);
 	}
-
 
 	return 0;
 }
@@ -973,7 +965,7 @@ void *thread_check_zap(void *arg) {
 
 	while(1)
 	{
-		cs_sleepms(1000); // check every second
+		cs_sleepms(500);
 		//cs_debug("dvbapi: check zap");
 
 		connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
@@ -991,7 +983,6 @@ void *thread_check_zap(void *arg) {
 		}
 
 		// if message begins with an apdu_tag and is longer than three bytes
-
 		if ((buffer[0] == 0x9F) && ((buffer[1] >> 7) == 0x01) && ((buffer[2] >> 7) == 0x00)) {
 			dvbapi_handlesockmsg(buffer, len);
 		} else {
@@ -1006,7 +997,27 @@ void *thread_check_zap(void *arg) {
 	return 0;
 }
 
+void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 
+	char *ptr1, *ptr3;
+	int i;
+
+	for (i=0, ptr1=strtok(caidasc, ","); (i<CS_MAXCAIDTAB) && (ptr1); ptr1=strtok(NULL, ","))
+	{
+		unsigned long caid, prov;
+		if( (ptr3=strchr(trim(ptr1), ':')) )
+			*ptr3++='\0';
+		else
+			ptr3="";
+
+		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3))) < 0x10000)
+		{
+			ctab->caid[i]=caid;
+			ctab->mask[i]=prov;
+			i++;
+		}
+	}
+}
 
 int dvbapi_main_local()
 {
@@ -1019,7 +1030,7 @@ int dvbapi_main_local()
 	}
 
 	if (cfg->dvbapi_boxtype[0]==0) {
-		strncpy(cfg->dvbapi_boxtype, "dreambox", sizeof(cfg->dvbapi_boxtype)-1);
+		cs_strncpy(cfg->dvbapi_boxtype, "dreambox", sizeof(cfg->dvbapi_boxtype));
 		cs_log("dvbapi: boxtype not set. Assume boxtype=%s.", cfg->dvbapi_boxtype);
 	} else
 		cs_log("dvbapi: boxtype=%s.", cfg->dvbapi_boxtype);
@@ -1035,7 +1046,7 @@ int dvbapi_main_local()
 		demux[i].cadev_index=-1;
 		demux[i].ca_fd=0;
 		demux[i].demux_index=-1;
-
+		demux[i].thread_active = -1; 
 		memset(demux[i].buffer_cache_dmx,0 ,12);
 	}
 
@@ -1052,38 +1063,8 @@ int dvbapi_main_local()
 		return 1;
 	}
 
-	char *ptr1, *ptr3;
-	//priority
-	for (i=0, ptr1=strtok(cfg->dvbapi_priority, ","); (i<CS_MAXCAIDTAB) && (ptr1); ptr1=strtok(NULL, ","))
-	{
-		unsigned long caid, prov;
-		if( (ptr3=strchr(trim(ptr1), ':')) )
-			*ptr3++='\0';
-		else
-			ptr3="";
-
-		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3))) < 0x10000)
-		{
-			prioritytab.caid[i]=caid;
-			prioritytab.mask[i]=prov;
-			i++;
-		}
-	}
-	//ignore
-	for (i=0, ptr1=strtok(cfg->dvbapi_ignore, ","); (i<CS_MAXCAIDTAB) && (ptr1); ptr1=strtok(NULL, ","))
-	{
-		unsigned long caid, prov;
-		if( (ptr3=strchr(trim(ptr1), ':')) )
-			*ptr3++='\0';
-		else
-			ptr3="";
-
-		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3))) < 0x10000)
-		{
-			ignoretab[i]=caid;
-			i++;
-		}
-	}
+	dvbapi_chk_caidtab(cfg->dvbapi_priority, &prioritytab);
+	dvbapi_chk_caidtab(cfg->dvbapi_ignore, &ignoretab);
 
 	pfd2[0].fd = fd_m2c;
 	pfd2[0].events = (POLLIN | POLLPRI);
@@ -1097,7 +1078,6 @@ int dvbapi_main_local()
 	while (1) {
 		if (master_pid!=getppid())
 			cs_exit(0);
-
 
 		chk_pending(tp);
 
@@ -1127,12 +1107,14 @@ void dvbapi_send_dcw(ECM_REQUEST *er)
 	memcpy(cw_0, er->cw, 8);
 	memcpy(cw_1, er->cw+8, 8);
 
-	for (i=0;i<MAX_DEMUX;i++)
-	{
-		if (demux[i].program_number==er->srvid)
-		{
-
+	for (i=0;i<MAX_DEMUX;i++) {
+		if (demux[i].program_number==er->srvid) {
 			if (er->rc<=2 && demux[i].ca_system_id==0 && er->caid!=0) {
+				dvbapi_start_descrambling(i, er->caid, er->pid, er->prid);
+			}
+
+			if (er->rc==4 && cfg->dvbapi_au==1 && dvbapi_check_array(global_caid_list, MAX_CAID, er->caid)>=0) {
+				//local card and not found -> maybe card need emm
 				dvbapi_start_descrambling(i, er->caid, er->pid, er->prid);
 			}
 
@@ -1144,14 +1126,12 @@ void dvbapi_send_dcw(ECM_REQUEST *er)
 			ca_descr_t ca_descr;
 			memset(&ca_descr,0,sizeof(ca_descr));
 
-			if (demux[i].ca_fd<=0)
-			{
+			if (demux[i].ca_fd<=0) {
 				cs_log("dvbapi: could not write cw.");
 				return;
 			}
 
-			if (memcmp(cw_0,demux[i].lastcw0,8)!=0 && memcmp(cw_0,nullcw,8)!=0)
-			{
+			if (memcmp(cw_0,demux[i].lastcw0,8)!=0 && memcmp(cw_0,nullcw,8)!=0) {
 				ca_descr.index = i;
 				ca_descr.parity = 0;
 				memcpy(demux[i].lastcw0,cw_0,8);
@@ -1161,8 +1141,7 @@ void dvbapi_send_dcw(ECM_REQUEST *er)
 					cs_debug("dvbapi: Error CA_SET_DESCR");
 			}
 
-			if (memcmp(cw_1,demux[i].lastcw1,8)!=0 && memcmp(cw_1,nullcw,8)!=0)
-			{
+			if (memcmp(cw_1,demux[i].lastcw1,8)!=0 && memcmp(cw_1,nullcw,8)!=0) {
 				ca_descr.index = i;
 				ca_descr.parity = 1;
 				memcpy(demux[i].lastcw1,cw_1,8);
@@ -1196,7 +1175,6 @@ static void dvbapi_handler(int idx)
 	}
 
 	int ok=0;
-
 	if( !account )
 	{
 		client[cs_idx].usr[0]=0;
