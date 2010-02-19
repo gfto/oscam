@@ -196,7 +196,20 @@ OVERCLOCKING
 	 Dreambox and other internal readers
 
 	  For  Dreambox  and  other  internal  readers	the  highest  possible
-	  clockrate  will be auto detected. The mhz parameter will be ignored.
+	  clockrate will be auto detected. The mhz parameter lets you override
+	  the values chosen by OSCam, if it differs from 357 and 358, but usu
+	  ally you will not set any value for mhz.
+
+	  For  certain	Dreamboxes  (especially  PPC  clones)  the default mhz
+	  parameter leads to slow ECM times and/or "not found" ECMs.  By  set
+	  ting mhz to values like 200, 300, 400, ... 1600 you can find a value
+	  that works for your receiver and  your  card.  The  higher  the  mhz
+	  value, the slower the ECM time (strange enough).
+
+	  If you choose the value too low, your card is not recognized (no ATR
+	  or "card not supported"). If you choose the value too high, you  get
+	  slow ECM times. Our experience is that either no mhz line, or a line
+	  mhz = 1000 works best.
 
 	 Phoenix / Smartmouse reader
 
