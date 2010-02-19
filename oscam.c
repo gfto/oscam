@@ -354,23 +354,10 @@ static void cs_reinit_clients()
 				client[i].au		= account->au;
 				client[i].autoau	= account->autoau;
 				client[i].expirationdate = account->expirationdate;
-
-				//set first to global value and then to specific (higher prio)
-				client[i].ncd_keepalive = cfg->ncd_keepalive;
 				client[i].ncd_keepalive = account->ncd_keepalive;
-
-				//set first to global value and then to specific (higher prio)
-				client[i].c35_suppresscmd08 = cfg->c35_suppresscmd08;
 				client[i].c35_suppresscmd08 = account->c35_suppresscmd08;
-
-				//set first to global value and then to specific (higher prio)
-				client[i].tosleep	= (60*cfg->tosleep);
 				client[i].tosleep	= (60*account->tosleep);
-
-				//set first to global value and then to specific (higher prio)
-				client[i].monlvl	= cfg->mon_level;
 				client[i].monlvl	= account->monlvl;
-
 				client[i].disabled	= account->disabled;
 				client[i].fchid		= account->fchid;  // CHID filters
 				client[i].cltab		= account->cltab;  // Class
