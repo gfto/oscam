@@ -112,6 +112,7 @@ int Phoenix_Reset (ATR * atr)
 		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
     call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
 		for(i=0; i<3; i++) {
+			cs_sleepms(200); // pause for 200ms as this might help with the PL2303
 			IO_Serial_Flush();
 			call (IO_Serial_SetParity (parity[i]));
 
@@ -124,7 +125,7 @@ int Phoenix_Reset (ATR * atr)
 			else
 #endif
 				IO_Serial_RTS_Set();
-			cs_sleepms(50);
+			cs_sleepms(200); // we went form 50 to 200 as this might help with the PL2303
 #ifdef USE_GPIO  //felix: set card reset hi (inactive)
 			if (gpio_detect) {
 				set_gpio_input();
@@ -132,6 +133,7 @@ int Phoenix_Reset (ATR * atr)
 			else
 #endif
 				IO_Serial_RTS_Clr();
+			cs_sleepms(200); // pause for 200ms as this might help with the PL2303
 			IO_Serial_Ioctl_Lock(0);
 			if(ATR_InitFromStream (atr, ATR_TIMEOUT) == ATR_OK)
 				ret = OK;
@@ -195,7 +197,9 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 		struct termios tio;
 		call (tcgetattr (reader[ridx].handle, &tio) != 0);
 		call (IO_Serial_SetBitrate (baudrate, &tio));
+        cs_sleepms(200); // pause for 200ms as this might help with the PL2303
 		call (IO_Serial_SetProperties(tio));
+        cs_sleepms(200); // pause for 200ms as this might help with the PL2303
 	}
 	current_baudrate = baudrate; //so if update fails, current_baudrate is not changed either
 	return OK;

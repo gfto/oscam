@@ -340,6 +340,10 @@ elseif (OSCamOperatingSystem MATCHES "NeutrinoHD")
     target_link_libraries ( ${exe_name} rt nxp )
 endif (OSCamOperatingSystem MATCHES "Linux")
 
+if (WEBIF)
+    add_definitions ("-DWEBIF")
+endif (WEBIF)
+
 #----------------------- put svnversion in the build ------------------------------
 # at every target rebuild, we re-build the oscam.c compilation...
 
@@ -378,11 +382,11 @@ add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 
 # some optimisations
 if (OSCamOperatingSystem MATCHES "Mac OS X")
-add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -m32")
+    add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -m32")
 elseif (OSCAM_SYSTEM_NAME MATCHES "NSLU2")
-add_definitions ("-O2 -Winline -Wall -finline-functions -fomit-frame-pointer")
+    add_definitions ("-O2 -Winline -Wall -finline-functions -fomit-frame-pointer")
 else (OSCamOperatingSystem MATCHES "Mac OS X")
-add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer")
+    add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer")
 endif (OSCamOperatingSystem MATCHES "Mac OS X")
 
 # we don't want the '-rdynamic' in the link command
@@ -473,4 +477,7 @@ endif (HAVE_PTHREAD)
 if (HAVE_LIBUSB)
     message (STATUS "  use system libusb functions")
 endif (HAVE_LIBUSB)
+if (WEBIF)
+    message (STATUS "  Web interface enabled")
+endif (WEBIF)
 message (STATUS "")
