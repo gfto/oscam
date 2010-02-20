@@ -105,7 +105,7 @@ static int dre_set_provider_info (void)
     cs_debug ("[dre-reader] pbm: %s", cs_hexdump (0, pbm, 32));
 
     if (pbm[0] == 0xff)
-      cs_log ("[dre-reader] no active packages");
+      cs_ri_log ("[dre-reader] no active packages");
     else
       for (i = 0; i < 32; i++)
 	if (pbm[i] != 0xff) {
@@ -128,7 +128,7 @@ static int dre_set_provider_info (void)
 	  int endyear = temp->tm_year + 1900;
 	  int endmonth = temp->tm_mon + 1;
 	  int endday = temp->tm_mday;
-	  cs_log ("[dre-reader] active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
+	  cs_ri_log ("[dre-reader] active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
 		  endyear, endmonth, endday);
 	}
   }
@@ -232,16 +232,16 @@ FE 48 */
   }
 
   //cs_ri_log("[dre-reader] type: DRE Crypt, caid: %04X, serial: %llu, card: v%x",
-  cs_log ("[dre-reader] type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
+  cs_ri_log ("[dre-reader] type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
 	  reader[ridx].caid[0], cs_hexdump (0, reader[ridx].hexserial + 2, 4), dre_chksum, provider - 16,
 	  major_version + 1, low_dre_id, geocode, card, major_version, minor_version);
-  cs_log ("[dre-reader] Provider name:%s.", provname);
+  cs_ri_log ("[dre-reader] Provider name:%s.", provname);
 
 
   memset (reader[ridx].sa, 0, sizeof (reader[ridx].sa));
   memcpy (reader[ridx].sa[0], reader[ridx].hexserial + 2, 1);	//copy first byte of unique address also in shared address, because we dont know what it is...
 
-  cs_log ("[dre-reader] SA = %02X%02X%02X%02X, UA = %s", reader[ridx].sa[0][0], reader[ridx].sa[0][1], reader[ridx].sa[0][2],
+  cs_ri_log ("[dre-reader] SA = %02X%02X%02X%02X, UA = %s", reader[ridx].sa[0][0], reader[ridx].sa[0][1], reader[ridx].sa[0][2],
 	  reader[ridx].sa[0][3], cs_hexdump (0, reader[ridx].hexserial + 2, 4));
 
   //reader[ridx].nprov = 1; TODO doesnt seem necessary

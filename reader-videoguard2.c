@@ -656,7 +656,7 @@ static void read_tiers(void)
     if(cta_res[2]==0 && cta_res[3]==0) break;
     int y,m,d,H,M,S;
     rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S);
-    cs_log("[videoguard2-reader] tier: %02x%02x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d",cta_res[2],cta_res[3],y,m,d,H,M,S);
+    cs_ri_log("[videoguard2-reader] tier: %02x%02x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d",cta_res[2],cta_res[3],y,m,d,H,M,S);
     }
 }
 
@@ -682,57 +682,57 @@ int videoguard_card_init(ATR newatr)
 
     if ((atr_size == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard BSkyB");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard BSkyB");
         /* BSkyB seems to need one additionnal byte in the serial communication... */
         io_serial_need_dummy_char = 1;
 				BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_bskyb_new)) && (memcmp (atr, atr_bskyb_new, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard BSkyB - New");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard BSkyB - New");
     }
     else if ((atr_size == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard Sky Italia");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard Sky Italia");
     }
     else if ((atr_size == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard DirecTV");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard DirecTV");
     }
     else if ((atr_size == sizeof (atr_yes)) && (memcmp (atr, atr_yes, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard YES DBS Israel");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard YES DBS Israel");
     }
     else if ((atr_size == sizeof (atr_viasat_new)) && (memcmp (atr, atr_viasat_new, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard Viasat new (093E)");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard Viasat new (093E)");
 				BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_viasat_scandinavia)) && (memcmp (atr, atr_viasat_scandinavia, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard Viasat Scandinavia");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard Viasat Scandinavia");
 				BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard Sky Italia new (093B)");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard Sky Italia new (093B)");
     }
     else if ((atr_size == sizeof (atr_premiere)) && (memcmp (atr, atr_premiere, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard Sky Germany");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard Sky Germany");
     }
     else if ((atr_size == sizeof (atr_kbw)) && (memcmp (atr, atr_kbw, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard Kabel BW");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard Kabel BW");
     }
     else if ((atr_size == sizeof (atr_get)) && (memcmp (atr, atr_get, atr_size) == 0))
     {
-        cs_log("[videoguard2-reader] type: VideoGuard Get Kabel Norway");
+        cs_ri_log("[videoguard2-reader] type: VideoGuard Get Kabel Norway");
         			BASEYEAR = 2004;
     }
     else if ((atr_size == sizeof (atr_foxtel_90b)) && (memcmp (atr, atr_foxtel_90b, atr_size) == 0))
     {    
-	cs_log("[videoguard2-reader] type: VideoGuard Foxtel Australia (090b)");
+	cs_ri_log("[videoguard2-reader] type: VideoGuard Foxtel Australia (090b)");
 				BASEYEAR = 2000;			
     }
 /*    else
@@ -872,7 +872,7 @@ int videoguard_card_init(ATR newatr)
     return ERROR;
     }
 
-  cs_log("[videoguard2-reader] type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
+  cs_ri_log("[videoguard2-reader] type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
          reader[ridx].caid[0],
          reader[ridx].hexserial[2],reader[ridx].hexserial[3],reader[ridx].hexserial[4],reader[ridx].hexserial[5],
          boxID[0],boxID[1],boxID[2],boxID[3]);

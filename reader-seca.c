@@ -49,12 +49,11 @@ static int set_provider_info(int i)
   trim(l_name+8);
   l_name[0]=(l_name[8]) ? ',' : 0;
   reader[ridx].availkeys[i][0]=valid; //misusing availkeys to register validity of provider
-  cs_log("[seca-reader] provider: %d, valid: %i%s, expiry date: %4d/%02d/%02d",
+  cs_ri_log("[seca-reader] provider: %d, valid: %i%s, expiry date: %4d/%02d/%02d",
          i+1, valid,l_name, year, month, day);
   memcpy(&reader[ridx].sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
-    cs_log("[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4));
-//    cs_log("[seca-reader] SA: %02X%02X%02X%02X.",cta_res[18],cta_res[19],cta_res[20],cta_res[21]);
+    cs_ri_log("[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4));
   return OK;
 }
 
@@ -115,9 +114,9 @@ int seca_card_init(ATR newatr)
 // Unlock parental control
   if( cfg->ulparent != 0 ){
 	  write_cmd(ins30, ins30data); 
-	  cs_log("[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
+	  cs_ri_log("[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
   }else {
-	  cs_log("[seca-reader] parental locked");
+	  cs_ri_log("[seca-reader] parental locked");
   }	
   cs_log("[seca-reader] ready for requests");
   return OK;
@@ -255,11 +254,11 @@ int seca_card_info (void)
     uchar pbm[8];		//TODO should be arrayed per prov
     switch (cta_res[0]) {
     case 0x04:
-      cs_log ("[seca-reader] no PBM for provider %i", prov + 1);
+      cs_ri_log ("[seca-reader] no PBM for provider %i", prov + 1);
       break;
     case 0x83:
       memcpy (pbm, cta_res + 1, 8);
-      cs_log ("[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump (0, pbm, 8));
+      cs_ri_log ("[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump (0, pbm, 8));
       break;
     default:
       cs_log ("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);
