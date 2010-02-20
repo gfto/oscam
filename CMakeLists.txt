@@ -145,6 +145,22 @@ add_definitions ("-DCS_OS_SYS=\\\"${CS_OS_SYS}\\\"")
 #----------------------- subdirectories ------------------------------
 
 include (CheckIncludeFile)
+if(CS_ANTICASC)
+    add_definitions ("-DCS_ANTICASC")
+endif(CS_ANTICASC)
+
+if(CS_LOGHISTORY)
+    add_definitions ("-DCS_LOGHISTORY")
+endif(CS_LOGHISTORY)
+
+if(CS_WITH_GBOX)
+    add_definitions ("-DCS_WITH_GBOX")
+endif(CS_WITH_GBOX)
+
+if(HAVE_DVBAPI)
+    add_definitions ("-DHAVE_DVBAPI")
+endif(HAVE_DVBAPI)
+
 check_include_file ("pthread.h" HAVE_PTHREAD)
 if (HAVE_PTHREAD)
     message(STATUS "  pthread found. Adding pthread support ")
@@ -232,8 +248,6 @@ if( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
         endif (HAVE_LIBUSB AND HAVE_PTHREAD)
     endif (LIBUSBDIR)
 endif( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
-
-
 
 
 check_include_file ("PCSC/wintypes.h" HAVE_PCSC)
@@ -339,10 +353,6 @@ elseif (OSCamOperatingSystem MATCHES "Windows/cygwin")
 elseif (OSCamOperatingSystem MATCHES "NeutrinoHD")
     target_link_libraries ( ${exe_name} rt nxp )
 endif (OSCamOperatingSystem MATCHES "Linux")
-
-if (WEBIF)
-    add_definitions ("-DWEBIF")
-endif (WEBIF)
 
 #----------------------- put svnversion in the build ------------------------------
 # at every target rebuild, we re-build the oscam.c compilation...
@@ -477,7 +487,4 @@ endif (HAVE_PTHREAD)
 if (HAVE_LIBUSB)
     message (STATUS "  use system libusb functions")
 endif (HAVE_LIBUSB)
-if (WEBIF)
-    message (STATUS "  Web interface enabled")
-endif (WEBIF)
 message (STATUS "")
