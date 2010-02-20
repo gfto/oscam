@@ -1402,7 +1402,7 @@ void logCWtoFile(ECM_REQUEST *er)
        each call. If not file exists, a header is prepended */
 
     FILE *pfCWL;
-    char srvname[23];
+    char srvname[128];
     /* %s / %s   _I  %04X  _  %s  .cwl  */
     char buf[sizeof(cfg->cwlogdir)+1+6+2+4+1+sizeof(srvname)+5];
     char date[7];
@@ -1490,6 +1490,8 @@ int write_ecm_answer(int fd, ECM_REQUEST *er)
   er->caid=er->ocaid;
   if (er->rc==1||(er->gbxRidx&&er->rc==0)){
     store_ecm(er);
+
+  if (cfg->cwlogdir != NULL)
     logCWtoFile(er);
   }  
   
