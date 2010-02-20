@@ -48,7 +48,7 @@ static int camd35_auth_client(uchar *ucrc)
   if (upwd[0])
     return(memcmp(client[cs_idx].ucrc, ucrc, 4) ? 1 : 0);
   client[cs_idx].crypted=1;
-  crc=(ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3];
+  crc=(((ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3]) & 0xffffffffL);
   for (account=cfg->account; (account) && (!upwd[0]); account=account->next)
     if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), NULL), 16))
     {
