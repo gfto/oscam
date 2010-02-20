@@ -47,6 +47,7 @@ int llist_count(LLIST *l);    // returns number of obj in list
 
 #include <string.h>
 #include <stdlib.h>
+int cc_cli_init();
 
 LLIST *llist_create(void)
 {
