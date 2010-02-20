@@ -321,7 +321,7 @@ static void cc_cycle_connection()
   close(pfd);
   client[cs_idx].udp_fd = 0;
   cs_sleepms(100);
-  ph->c_init();
+  cc_cli_init();
 }
 
 static int cc_msg_recv(uint8 *buf)
