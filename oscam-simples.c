@@ -358,3 +358,17 @@ void cs_setpriority(int prio)
 #endif
 }
 #endif
+
+/* 
+* Ordinary strncpy does not terminate the string if the source 
+* is exactly as long or longer as the specified size. This can raise security issues.
+* This function is a replacement which makes sure that a \0 is always added. 
+* num should be the real size of char array (do not subtract -1). 
+*/
+void cs_strncpy(char * destination, const char * source, size_t num){
+        uint32 l, size = strlen(source);
+        if(size > num - 1) l = num - 1;
+        else l = size;
+        memcpy(destination, source, l);
+        destination[l] = '\0';
+}
