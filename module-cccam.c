@@ -767,6 +767,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 
       if ((er=get_ecmtask())) {
         er->caid = b2i(2, buf+4);
+        er->srvid = b2i(2, buf+14);
         er->l = buf[16];
         memcpy(er->ecm, buf+17, er->l);
         er->prid = b2i(4, buf+6);
@@ -868,7 +869,7 @@ int cc_recv(uchar *buf, int l)
   client[cs_idx].last = time((time_t *) 0);
 
   if (n == 0) {
-    cs_log("cccam: Connection closed to %s", remote_txt());
+    cs_log("cccam: connection closed to %s", remote_txt());
     n = -1;
   } else if (n < 4) {
     cs_log("cccam: packet to small (%d bytes)", n);
