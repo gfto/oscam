@@ -184,6 +184,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         smart_flush(reader);
         EnableSmartReader(reader, reader->sr_config.fs/10000, reader->sr_config.F, (BYTE)reader->sr_config.D, reader->sr_config.N, reader->sr_config.T, reader->sr_config.inv,reader->sr_config.parity);
         sched_yield();
+        cs_sleepms(500); //smartreader in mouse mode needs this, so it might also be needed in native mode.
         
         //Reset smartcard
     
@@ -515,8 +516,8 @@ void smartreader_init(S_READER *reader)
     reader->sr_config.writebuffer_chunksize = 64;
     reader->sr_config.max_packet_size = 0;
 
-    reader->sr_config.interface = 0;
-    reader->sr_config.index = 0;
+    reader->sr_config.interface = INTERFACE_ANY;
+    reader->sr_config.index = INTERFACE_A;
     reader->sr_config.in_ep = 0x02;
     reader->sr_config.out_ep = 0x82;
 }
