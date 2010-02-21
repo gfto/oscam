@@ -314,6 +314,7 @@ int SR_Close (struct s_reader *reader)
     reader->sr_config.running=FALSE;
     pthread_join(reader->rt,NULL);
     libusb_close(reader->sr_config.usb_dev_handle);
+    libusb_exit(NULL);
     return OK;
 
 }
@@ -506,8 +507,8 @@ void smartreader_init(S_READER *reader)
 {
     reader->sr_config.usb_dev = NULL;
     reader->sr_config.usb_dev_handle=NULL;
-    reader->sr_config.usb_read_timeout = 5000;
-    reader->sr_config.usb_write_timeout = 5000;
+    reader->sr_config.usb_read_timeout = 10000;
+    reader->sr_config.usb_write_timeout = 10000;
 
     reader->sr_config.type = TYPE_BM;    /* chip type */
     reader->sr_config.baudrate = -1;

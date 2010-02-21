@@ -271,9 +271,12 @@ endif (HAVE_PCSC)
 
 add_subdirectory (csctapi)
 add_subdirectory (cscrypt)
-if (HAVE_LIBUSB)
-add_subdirectory (utils)
-endif (HAVE_LIBUSB)
+
+if( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
+    if (HAVE_LIBUSB)
+        add_subdirectory (utils)
+    endif (HAVE_LIBUSB)
+endif( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
 
 #----------------------- file groups ------------------------------
 
