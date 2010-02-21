@@ -1006,7 +1006,8 @@ static int cc_cli_connect(void)
 
 static void cc_srv_report_cards()
 {
-  uint id = 1, r, j, k;
+  int j;
+  uint id = 1, r, k;
   uint8 hop = 0, reshare;
   uint8 buf[CC_MAXMSGSIZE];
   struct cc_data *cc = client[cs_idx].cc;
