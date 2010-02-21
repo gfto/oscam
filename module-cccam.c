@@ -1174,7 +1174,25 @@ static int cc_srv_connect()
   // report cards
   cc_srv_report_cards();
 
-  while ((i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0);
+  // check for clienttimeout, if timeout occurs try to send keepalive
+  for(;;)
+  {
+    i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
+     
+    if (i == -9)
+    {
+      if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) > 0)
+      {
+        cs_debug("cccam: keepalive");
+        i = 0;
+      }
+    }
+     
+    if (i < 0)
+    {
+      break;
+    }
+  }
 
   cs_disconnect_client();
 
