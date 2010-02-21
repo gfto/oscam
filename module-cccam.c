@@ -1185,11 +1185,11 @@ static int cc_srv_connect()
       if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) > 0)
       {
         cs_debug("cccam: keepalive");
-        i = 0;
+        i = 1;
       }
     }
      
-    if (i < 0)
+    if (i <= 0)
     {
       break;
     }
