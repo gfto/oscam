@@ -74,19 +74,23 @@ int ICC_Async_Device_Init ()
 	cs_debug_mask (D_IFD, "IFD: Opening device %s\n", reader[ridx].device);
 
 	wr = 0;
-	if (reader[ridx].typ <= R_MOUSE)	
-		reader[ridx].handle = open (reader[ridx].device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
-		if (reader[ridx].handle < 0) {
-			cs_log("ERROR opening device %s",reader[ridx].device);
-			return ERROR;
-		}
 
 	switch(reader[ridx].typ) {
 		case R_MOUSE:
+			reader[ridx].handle = open (reader[ridx].device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
+			if (reader[ridx].handle < 0) {
+				cs_log("ERROR opening device %s",reader[ridx].device);
+				return ERROR;
+			}
 			break;
 #if defined(TUXBOX) && defined(PPC)
 		case R_DB2COM1:
 		case R_DB2COM2:
+			reader[ridx].handle = open (reader[ridx].device,  O_RDWR | O_NOCTTY| O_SYNC);
+			if (reader[ridx].handle < 0) {
+				cs_log("ERROR opening device %s",reader[ridx].device);
+				return ERROR;
+			}
 			if ((fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {
 				close(reader[ridx].handle);
 				cs_log("ERROR opening device %s",DEV_MULTICAM);
