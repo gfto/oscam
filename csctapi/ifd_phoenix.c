@@ -112,7 +112,7 @@ int Phoenix_Reset (ATR * atr)
 		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 		call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
 		for(i=0; i<3; i++) {
-#ifndef OS_CYGWIN
+#ifndef OS_CYGWIN32
 			/* 
 			* Pause for 200ms as this might help with the PL2303.
 			* Some users reporting that this breaks cygwin, so we exclude this.
@@ -131,7 +131,7 @@ int Phoenix_Reset (ATR * atr)
 			else
 #endif
 				IO_Serial_RTS_Set();
-#ifdef OS_CYGWIN
+#ifdef OS_CYGWIN32
 			/* 
 			* Pause for 200ms as this might help with the PL2303.
 			* Some users reporting that this breaks cygwin, so we went back to 50ms.
@@ -148,7 +148,7 @@ int Phoenix_Reset (ATR * atr)
 			else
 #endif
 				IO_Serial_RTS_Clr();
-#ifndef OS_CYGWIN
+#ifndef OS_CYGWIN32
 			/* 
 			* Pause for 200ms as this might help with the PL2303.
 			* Some users reporting that this breaks cygwin, so we exclude this.
@@ -218,7 +218,7 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 		struct termios tio;
 		call (tcgetattr (reader[ridx].handle, &tio) != 0);
 		call (IO_Serial_SetBitrate (baudrate, &tio));
-#ifndef OS_CYGWIN
+#ifndef OS_CYGWIN32
 		/* 
 		* Pause for 200ms as this might help with the PL2303.
 		* Some users reporting that this breaks cygwin, so we exclude this.
@@ -226,7 +226,7 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 	        cs_sleepms(200);
 #endif
 		call (IO_Serial_SetProperties(tio));
-#ifndef OS_CYGWIN
+#ifndef OS_CYGWIN32
 		/* 
 		* Pause for 200ms as this might help with the PL2303.
 		* Some users reporting that this breaks cygwin, so we exclude this.
