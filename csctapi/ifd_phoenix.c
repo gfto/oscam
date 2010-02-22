@@ -110,9 +110,15 @@ int Phoenix_Reset (ATR * atr)
 		int ret;
 		int i;
 		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
-    call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
+		call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
 		for(i=0; i<3; i++) {
-			cs_sleepms(200); // pause for 200ms as this might help with the PL2303
+#ifndef OS_CYGWIN
+			/* 
+			* Pause for 200ms as this might help with the PL2303.
+			* Some users reporting that this breaks cygwin, so we exclude this.
+			*/
+			cs_sleepms(200);
+#endif
 			IO_Serial_Flush();
 			call (IO_Serial_SetParity (parity[i]));
 
@@ -125,7 +131,16 @@ int Phoenix_Reset (ATR * atr)
 			else
 #endif
 				IO_Serial_RTS_Set();
-			cs_sleepms(200); // we went form 50 to 200 as this might help with the PL2303
+#ifdef OS_CYGWIN
+			/* 
+			* Pause for 200ms as this might help with the PL2303.
+			* Some users reporting that this breaks cygwin, so we went back to 50ms.
+			*/
+			cs_sleepms(50);
+#else
+			cs_sleepms(200);
+#endif
+
 #ifdef USE_GPIO  //felix: set card reset hi (inactive)
 			if (gpio_detect) {
 				set_gpio_input();
@@ -133,7 +148,13 @@ int Phoenix_Reset (ATR * atr)
 			else
 #endif
 				IO_Serial_RTS_Clr();
-			cs_sleepms(200); // pause for 200ms as this might help with the PL2303
+#ifndef OS_CYGWIN
+			/* 
+			* Pause for 200ms as this might help with the PL2303.
+			* Some users reporting that this breaks cygwin, so we exclude this.
+			*/
+			cs_sleepms(200);
+#endif
 			IO_Serial_Ioctl_Lock(0);
 			if(ATR_InitFromStream (atr, ATR_TIMEOUT) == ATR_OK)
 				ret = OK;
@@ -197,9 +218,21 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 		struct termios tio;
 		call (tcgetattr (reader[ridx].handle, &tio) != 0);
 		call (IO_Serial_SetBitrate (baudrate, &tio));
-        cs_sleepms(200); // pause for 200ms as this might help with the PL2303
+#ifndef OS_CYGWIN
+		/* 
+		* Pause for 200ms as this might help with the PL2303.
+		* Some users reporting that this breaks cygwin, so we exclude this.
+		*/
+	        cs_sleepms(200);
+#endif
 		call (IO_Serial_SetProperties(tio));
-        cs_sleepms(200); // pause for 200ms as this might help with the PL2303
+#ifndef OS_CYGWIN
+		/* 
+		* Pause for 200ms as this might help with the PL2303.
+		* Some users reporting that this breaks cygwin, so we exclude this.
+		*/
+	        cs_sleepms(200);
+#endif
 	}
 	current_baudrate = baudrate; //so if update fails, current_baudrate is not changed either
 	return OK;
