@@ -176,8 +176,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
 
             reader->sr_config.F=618; /// magic smartreader value
             reader->sr_config.D=1;
-            // reader->sr_config.T=2; // will be set to T=1 in EnableSmartReader
-            reader->sr_config.T=1;
+            reader->sr_config.T=2; // will be set to T=1 in EnableSmartReader
             reader->sr_config.irdeto=TRUE;
         }
         
@@ -208,8 +207,10 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         if(ret)
             cs_ddump(data,ATR_MAX_SIZE*2,"IO:SR: ");
 
-        if(data[0]!=0x3B && data[0]!=0x03 && data[0]!=0x3F)
+        if(data[0]!=0x3B && data[0]!=0x03 && data[0]!=0x3F) {
+            reader->sr_config.irdeto=FALSE;
             continue; // this is not a valid ATR.
+        }
             
         if(data[0]==0x03) {
             cs_debug_mask (D_IFD,"IO:SR: Inverse convention detected, setting smartreader inv to 1");
@@ -364,7 +365,7 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     ret = smart_write(reader, N, sizeof (N),0);
 
     // command 4 , set parameter T
-    if(reader->sr_config.irdeto) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
+    if(reader->sr_config.irdeto && T==2) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
         {
         T=1;
         reader->sr_config.T=1;
