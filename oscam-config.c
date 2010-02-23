@@ -1243,7 +1243,8 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   if (!strcmp(token, "inactivitytimeout")) {   rdr->tcp_ito = atoi(value);  return; }
   if (!strcmp(token, "reconnecttimeout")) {    rdr->tcp_rto = atoi(value);  return; }
   if (!strcmp(token, "disableserverfilter")) { rdr->ncd_disable_server_filt = atoi(value);  return; }
-
+  //FIXME workaround for Smargo until native mode works
+  if (!strcmp(token, "smargopatch")) { rdr->smargopatch = atoi(value);  return; }
   if (!strcmp(token, "label")) { strncpy(rdr->label, value, sizeof(rdr->label)-1); return; }
   if (!strcmp(token, "fallback")) { rdr->fallback=atoi(value) ? 1 : 0; return; }
   if (!strcmp(token, "logport")) { rdr->log_port=atoi(value); return; }

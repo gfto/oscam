@@ -420,6 +420,7 @@ struct s_client
 
 struct s_reader
 {
+  int       smargopatch; //FIXME workaround for Smargo until native mode works
   int       cs_idx;
   int       enable;
   int       fd;
@@ -459,12 +460,12 @@ struct s_reader
   uchar     b_nano[256];
   char      * emmfile;
   char      pincode[5];
-  int		ucpk_valid;
+  int	    ucpk_valid;
   int       logemm;
   int       cachemm;
   int       rewritemm;
   int       card_status;
-	int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
+  int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
   uchar     ncd_key[16];
   uchar     ncd_skey[16];
