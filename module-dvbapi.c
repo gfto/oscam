@@ -56,8 +56,6 @@ typedef struct demux_s
 	unsigned char buffer_cache_dmx[12];
 	unsigned char lastcw0[8];
 	unsigned char lastcw1[8];
-	pthread_t descramble_thread; 
-	unsigned int thread_active; 
 } DEMUXTYPE;
 #define DMX_FILTER_SIZE 16
 
@@ -424,12 +422,6 @@ void dvbapi_stop_descrambling(int demux_id)
 		dvbapi_stop_filter(demux_id, 1);
 		close(demux[demux_id].demux_emm_fd);
 		demux[demux_id].demux_emm_fd=0;
-	}
-
-	if (demux[demux_id].thread_active == 0) { 
-		pthread_cancel(demux[demux_id].descramble_thread);
-		pthread_join(demux[demux_id].descramble_thread, NULL);
-		demux[demux_id].thread_active = -1;
 	}
 
 	if (demux[demux_id].ca_fd>0) {
@@ -878,8 +870,11 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length)
 
 	if (demux[demux_id].ECMpidcount>0) {
 		dvbapi_resort_ecmpids(demux_id);
-		if (demux[demux_id].ECMpidcount>0) {}
-			demux[demux_id].thread_active=pthread_create(&demux[demux_id].descramble_thread, NULL, thread_descrambling, (void*)demux_id);
+		if (demux[demux_id].ECMpidcount>0) {
+			pthread_t p3;
+			if (pthread_create(&p3, NULL, thread_descrambling, (void*)demux_id))
+				cs_log("dvbapi: pthread error");
+		}
 	}
 
 	return 0;
@@ -1046,7 +1041,6 @@ int dvbapi_main_local()
 		demux[i].cadev_index=-1;
 		demux[i].ca_fd=0;
 		demux[i].demux_index=-1;
-		demux[i].thread_active = -1; 
 		memset(demux[i].buffer_cache_dmx,0 ,12);
 	}
 
