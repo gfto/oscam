@@ -350,7 +350,7 @@ static int cc_msg_recv(uint8 *buf)
   }
 
   cc_crypt(&cc->block[DECRYPT], netbuf, 4, DECRYPT);
-  //cs_ddump(netbuf, 4, "cccam: decrypted header:");
+  cs_ddump(netbuf, 4, "cccam: decrypted header:");
 
   g_flag = netbuf[0];
 
@@ -1153,11 +1153,11 @@ static int cc_srv_connect()
   //cs_auth_client((struct s_auth *)(-1), NULL);
 
   // send passwd ack
-  bzero(data, 20);
-  memcpy(data, "CCcam\0", 6);
-  cs_ddump(data, 20, "cccam: send ack:");
-  cc_crypt(&cc->block[ENCRYPT], data, 20, ENCRYPT);
-  send(pfd, data, 20, 0);
+  bzero(buf, 20);
+  memcpy(buf, "CCcam\0", 6);
+  cs_ddump(buf, 20, "cccam: send ack:");
+  cc_crypt(&cc->block[ENCRYPT], buf, 20, ENCRYPT);
+  send(pfd, buf, 20, 0);
 
   // recv cli data
   bzero(buf,sizeof(buf));
