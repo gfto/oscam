@@ -1260,7 +1260,7 @@ int cc_cli_init()
 
     struct hostent *server;
     server = gethostbyname(reader[ridx].device);
-    bcopy((char *)server->h_addr, (char *)&client[cs_idx].udp_sa.sin_addr.s_addr, server->h_length);
+    memmove((char *)&client[cs_idx].udp_sa.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
 
     if (reader[ridx].tcp_rto <= 0) reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
     cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);

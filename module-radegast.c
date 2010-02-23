@@ -260,7 +260,7 @@ int radegast_cli_init(void)
 
   struct hostent *server;
   server = gethostbyname(reader[ridx].device);
-  bcopy((char *)server->h_addr, (char *)&client[cs_idx].udp_sa.sin_addr.s_addr, server->h_length);
+  memmove((char *)&client[cs_idx].udp_sa.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
 
   cs_log("radegast: proxy %s:%d (fd=%d)",
           reader[ridx].device, reader[ridx].r_port, client[cs_idx].udp_fd);
