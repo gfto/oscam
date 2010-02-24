@@ -173,7 +173,7 @@ static int radegast_send_ecm(ECM_REQUEST *er)
   uchar provid_buf[8];
   uchar header[22] = "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";
   uchar *ecmbuf = malloc(er->l + 30);
-  bzero(ecmbuf, er->l + 30);
+  memset(ecmbuf, 0, er->l + 30);
 
   ecmbuf[0] = 1;
   ecmbuf[1] = er->l + 30 - 2;
