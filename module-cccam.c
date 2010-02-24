@@ -1138,12 +1138,10 @@ static int cc_srv_connect()
   } else return -1;
 
   for (account=cfg->account; account; account=account->next)
-  if (strcmp(usr, account->usr) == 0) {
-    strncpy(pwd, account->pwd, sizeof(pwd));
-    break;
-  }
-
-  strncpy(pwd, cfg->account->pwd, sizeof(pwd));
+    if (strcmp(usr, account->usr) == 0) {
+      strncpy(pwd, account->pwd, sizeof(pwd));
+      break;
+    }
 
   // receive passwd / 'CCcam'
   cc_crypt(&cc->block[DECRYPT], (uint8 *)pwd, strlen(pwd), DECRYPT);
