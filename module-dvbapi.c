@@ -146,15 +146,14 @@ int selected_api=-1;
 
 int dvbapi_set_filter(int dmx_fd, int api, unsigned short pid, unsigned char filt, unsigned char mask, int timeout)
 {
-	int command,ret=-1;
+	int ret=-1;
 
 	cs_debug("dvbapi: set filter pid:%04x, value:%04x",pid, filt);
 
 	switch(api)
 	{
 		case 0:
-			//dvbapi 3
-			command=0;
+			api=api;
 			struct dmx_sct_filter_params sFP2;
 
 			memset(&sFP2,0,sizeof(sFP2));
@@ -168,8 +167,7 @@ int dvbapi_set_filter(int dmx_fd, int api, unsigned short pid, unsigned char fil
 
 			break;
 		case 1:
-			//dvbapi 1
-			command=0;
+			api=api;
 			struct dmxSctFilterParams sFP1;
 
 			memset(&sFP1,0,sizeof(sFP1));
@@ -224,7 +222,7 @@ int dvbapi_detect_api()
 
 	if (dmx_fd < 0) return 0;
 
-	int command,ret=0;
+	int ret=0;
 
 	for (i=0;i<num_apis;i++)
 	{
@@ -532,6 +530,83 @@ void dvbapi_try_descrambling (int demux_index)
 	}
 }
 
+void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int len) {
+	int i;
+	cs_debug("dvbapi: EMM Type: 0x%02x caid: %04x", buffer[0],demux[demux_index].ca_system_id);
+	cs_ddump(buffer, len, "emm:");
+
+	//force emm output
+	reader[ridx].logemm=9999;
+
+	memset(&epg, 0, sizeof(epg));
+	epg.caid[0] = (uchar)(demux[demux_index].ca_system_id>>8);
+	epg.caid[1] = (uchar)(demux[demux_index].ca_system_id);
+
+	epg.provid[1] = (uchar)(demux[demux_index].provider_id>>16);
+	epg.provid[2] = (uchar)(demux[demux_index].provider_id>>8);
+	epg.provid[3] = (uchar)(demux[demux_index].provider_id);
+
+	epg.l=len;
+	memcpy(epg.emm, buffer, epg.l);
+
+	for (i=0;i<CS_MAXREADER;i++) {
+		if (reader[i].caid[0] == demux[demux_index].ca_system_id) {
+			client[cs_idx].au=i;
+			memcpy(epg.hexserial, reader[client[cs_idx].au].hexserial, 8);
+		}
+	}
+
+	switch(demux[demux_index].ca_system_id >> 8) {
+		case 0x18: // NAGRA EMM
+			epg.l=len;
+			int emm_shared = (buffer[7] == 0x10);
+			uchar cam_id[4];
+
+			switch(buffer[0]) {
+				case 0x82:
+					//emm-s
+					cs_debug("dvbapi: NAGRA shared emm");
+					//do_emm(&epg);
+					break;
+				case 0x83:
+					//emm-u/g
+					cam_id[0] = buffer[5]; cam_id[1] = buffer[4]; cam_id[2] = buffer[3]; cam_id[3] = buffer[6];
+					cs_debug("dvbapi: NAGRA %s EMM for camid: %02X %02X %02X %02X", emm_shared ? "group" : "user", cam_id[0], cam_id[1], cam_id[2], cam_id[3]);
+					if (epg.hexserial[2]==cam_id[0] && epg.hexserial[3]==cam_id[1] && epg.hexserial[4]==cam_id[2]) {
+						if (emm_shared==1) {
+							//do_emm(&epg);
+							cs_debug("dvbapi: do nagra user emm");
+						}
+						if (emm_shared==0 && epg.hexserial[5] == cam_id[3]) {
+							//do_emm(&epg);
+							cs_debug("dvbapi: do nagra group emm");
+						}
+					}
+					break;
+				default:
+					cs_debug("dvbapi: unknown Nagra EMM (skipped)");
+					break;
+			}
+			break;
+		case 0x06: //Irdeto EMM
+		case 0x01: //Seca EMM
+			do_emm(&epg);
+			break;
+		case 0x0D:
+			cs_debug("dvbapi: CrytoWorks EMM (skipped)");
+			break;
+		case 0x05:
+			cs_debug("dvbapi: Viaccess EMM (skipped)");
+			break;
+		case 0x09:
+			cs_debug("dvbapi: Videoguard EMM (skipped)");
+			break;
+		default:
+			cs_debug("dvbapi: Unknown EMM (skipped)");
+			break;
+	}
+}
+
 void *thread_descrambling(void *di)
 {
 	int demux_index=(int)di;
@@ -554,8 +629,7 @@ void *thread_descrambling(void *di)
 
 	program_number=demux[demux_index].program_number;
 
-	while(1)
-	{
+	while(1) {
 		if (demux[demux_index].ca_system_id!=0) // got valid cw -> stop trying
 			break;
 
@@ -582,8 +656,7 @@ void *thread_descrambling(void *di)
 	int rc,len,i,pfdcount;
 	unsigned char buffer[BUFSIZE];
 
-	while(1)
-	{
+	while(1) {
 		pfdcount=0;
 
 		if (program_number!=demux[demux_index].program_number || demux[demux_index].ca_system_id==0) //channel change -> new thread
@@ -642,27 +715,7 @@ void *thread_descrambling(void *di)
 					}
 				}
 				if (pfd2[i].fd==demux[demux_index].demux_emm_fd) {
-					//EMM
-
-					cs_debug("EMM Type: 0x%02x", buffer[0]);
-					cs_ddump(buffer, len, "emm:");
-
-					//force emm output
-					reader[ridx].logemm=9999;
-
-					memset(&epg, 0, sizeof(epg));
-
-					epg.caid[0] = (uchar)(demux[demux_index].ca_system_id>>8);
-					epg.caid[1] = (uchar)(demux[demux_index].ca_system_id);
-
-					epg.provid[2] = (uchar)(demux[demux_index].provider_id>>8);
-					epg.provid[3] = (uchar)(demux[demux_index].provider_id);
-
-					epg.l=len;
-					memcpy(epg.emm, buffer, epg.l);
-					memcpy(epg.hexserial, reader[client[cs_idx].au].hexserial, 8);
-
-					do_emm(&epg);
+					dvbapi_process_emm(demux_index, buffer, len);
 				}
 			}
 		}
@@ -881,57 +934,46 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length)
 }
 
 
-void dvbapi_handlesockmsg (unsigned char *buffer, unsigned int len)
-{
-	unsigned int val, size, i;
+void dvbapi_handlesockmsg (unsigned char *buffer, unsigned int len) {
+	unsigned int val=0, size=0, i, k;
 
 	//cs_dump(buffer, len, "handlesockmsg:");
+	for (k = 0; k < len; k += 3 + size + val) {
+		if (buffer[0+k] != 0x9F || buffer[1+k] != 0x80) {
+			cs_log("dvbapi: unknown socket command: %02x", buffer[0+k]);
+			return;
+		}
 
-	if (buffer[0] != 0x9F || buffer[1] != 0x80) {
-		cs_log("dvbapi: unknown socket command: %02x", buffer[0]);
-		return;
-	}
+		if (buffer[3+k] & 0x80) {
+			val = 0;
+			size = buffer[3+k] & 0x7F;
+			for (i = 0; i < size; i++)
+				val = (val << 8) | buffer[i + 1 + 3 + k];
+			size++;
+		} else	{
+			val = buffer[3+k] & 0x7F;
+			size = 1;
+		}
 
-	if (buffer[3] & 0x80) {
-		val = 0;
-		size = buffer[3] & 0x7F;
-		for (i = 0; i < size; i++)
-			val = (val << 8) | buffer[i + 1 + 3];
-		size++;
-	} else
-	{
-		val = buffer[3] & 0x7F;
-		size = 1;
-	}
-
-	switch(buffer[2])
-	{
-		case 0x30:
-			cs_debug("ca_info!!");
-			break;
-		case 0x32:
-			if ((3 + size + val) == len)
+		switch(buffer[2+k]) {
+			case 0x32:
 				dvbapi_parse_capmt(buffer + 3 + size, val);
-			else {
-				cs_log("dvbapi: ca_pmt invalid length");
-				cs_dump(buffer, len, "invalid length:");
-			}
-			break;
-		case 0x3f:
-			//9F 80 3f 04 83 02 00 <demux index>
-			cs_ddump(buffer, len, "capmt 3f:");
-			int demux_index=buffer[7];
-			dvbapi_stop_descrambling_all(demux_index);
-			break;
-		default:
-			cs_log("dvbapi: handlesockmsg() unknown command");
-			cs_dump(buffer, len, "unknown command:");
-			break;
+				break;
+			case 0x3f:
+				//9F 80 3f 04 83 02 00 <demux index>
+				cs_ddump(buffer, len, "capmt 3f:");
+				int demux_index=buffer[7+k];
+				dvbapi_stop_descrambling_all(demux_index);
+				break;
+			default:
+				cs_log("dvbapi: handlesockmsg() unknown command");
+				cs_dump(buffer, len, "unknown command:");
+				break;
+		}
 	}
 }
 
 int dvbapi_init_listenfd() {
-
 	int clilen;
 	struct sockaddr_un servaddr;
 
