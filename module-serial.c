@@ -190,8 +190,8 @@ static int oscam_ser_parse_url(char *url)
     else if (!strcmp(baud, "9600"))
       oscam_ser_baud=B9600;
   }
-  strncpy(oscam_ser_usr, usr, sizeof(oscam_ser_usr)-1);
-  strncpy(oscam_ser_device, dev, sizeof(oscam_ser_device)-1);
+  cs_strncpy(oscam_ser_usr, usr, sizeof(oscam_ser_usr));
+  cs_strncpy(oscam_ser_device, dev, sizeof(oscam_ser_device));
   return(oscam_ser_baud);
 }
 

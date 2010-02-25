@@ -50,13 +50,10 @@
 #include "oscam-types.h"
 #include "cscrypt/cscrypt.h"
 
-#ifdef HAVE_PCSC 
-#include <PCSC/pcsclite.h> 
-#ifdef OS_MACOSX 
-#include <PCSC/wintypes.h> 
-#else 
-#include <PCSC/reader.h> 
-#endif 
+#ifdef HAVE_PCSC
+#include <PCSC/pcsclite.h>
+#include <PCSC/wintypes.h>
+#include <PCSC/reader.h>
 #endif
 
 #if defined(LIBUSB)
@@ -122,9 +119,9 @@
 #define CS_MAXPENDING   (CS_MAXPID<<1)
 #define CS_ECMCACHESIZE   CS_MAXPID
 #define CS_EMMCACHESIZE   (CS_MAXPID<<1)
-#define CS_RDR_INIT_HIST
 #endif
 
+#define CS_RDR_INIT_HIST
 #define D_TRACE     1 // Generate very detailed error/trace messages per routine
 #define D_ATR       2 // Debug ATR parsing, dump of ecm, emm, cw
 #define D_READER    4 // Debug Reader/Proxy Process
@@ -400,7 +397,11 @@ struct s_client
   int       cwtun;       // count betatunneled ECMs per client
   int       cwignored;   // count ignored  ECMs per client
   int       cwtout;      // count timeouted ECMs per client
-  uchar     ucrc[4];     // needed by monitor and used by camd35
+  int		cwlastresptime; //last Responsetime (ms)
+  int		emmok;		// count EMM ok
+  int		emmnok;		// count EMM nok
+  int		wihidden;	// hidden in webinterface status
+  uchar     ucrc[4];    // needed by monitor and used by camd35
   ulong     pcrc;        // pwd crc
   AES_KEY   aeskey;      // needed by monitor and used by camd33, camd35
   ushort    ncd_msgid;
@@ -420,7 +421,8 @@ struct s_client
 
 struct s_reader
 {
-  int       smargopatch; //FIXME workaround for Smargo until native mode works
+	int		smargopatch; //FIXME workaround for Smargo until native mode works
+  int		pid;
   int       cs_idx;
   int       enable;
   int       fd;
@@ -460,12 +462,12 @@ struct s_reader
   uchar     b_nano[256];
   char      * emmfile;
   char      pincode[5];
-  int	    ucpk_valid;
+  int		ucpk_valid;
   int       logemm;
   int       cachemm;
   int       rewritemm;
   int       card_status;
-  int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
+	int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
   uchar     ncd_key[16];
   uchar     ncd_skey[16];
@@ -480,7 +482,7 @@ struct s_reader
   int       tcp_ito;      // inactivity timeout
   int       tcp_rto;      // reconnect timeout
   time_t    last_g;       // get (if last_s-last_g>tcp_rto - reconnect )
-  time_t    last_s;       // send 
+  time_t    last_s;       // send
   uchar     show_cls;     // number of classes subscription showed on kill -31
   int       maxqlen;      // max queue length
   int       qlen;         // current queue length
@@ -500,6 +502,10 @@ struct s_reader
   int       init_history_pos;
 #endif
   int       msg_idx;
+  int		emmwritten; //count written EMM
+  int		emmskipped; //count skipped EMM
+  int		emmerror;	//count error EMM
+  int		emmblocked;	//count blocked EMM
 #ifdef HAVE_PCSC
   SCARDCONTEXT hContext;
   SCARDHANDLE hCard;
@@ -568,7 +574,7 @@ struct s_auth
   int       c35_suppresscmd08;
   int       ncd_keepalive;
   int       disabled;
-  struct    s_auth *next;
+  struct   s_auth *next;
 };
 
 struct s_srvid
@@ -592,6 +598,7 @@ struct s_ip
 struct s_config
 {
   int       nice;
+  int		debuglvl;
   ulong     netprio;
   ulong     ctimeout;
   ulong     ftimeout;
@@ -606,6 +613,8 @@ struct s_config
   char      *usrfile;
   char      *cwlogdir;
   char      *logfile;
+  int		disablelog;
+  int		usrfileflag;
   struct s_auth *account;
   struct s_srvid *srvid;
   struct s_sidtab *sidtab;
@@ -615,6 +624,16 @@ struct s_config
   int       mon_aulow;
   int       mon_hideclient_to;
   int       mon_level;
+#ifdef WEBIF
+  int       http_port;
+  char      http_user[65];
+  char      http_pwd[65];
+  char      http_css[128];
+  char      http_tpl[128];
+  char      http_script[128];
+  int		http_refresh;
+  int		http_hide_idle_clients;
+#endif
   int       c33_port;
   in_addr_t c33_srvip;
   uchar     c33_key[16];
@@ -659,10 +678,10 @@ struct s_config
 #ifdef HAVE_DVBAPI
   int       dvbapi_enabled;
   int       dvbapi_au;
-  char      dvbapi_usr[33];  
+  char      dvbapi_usr[33];
   char      dvbapi_boxtype[20];
   char      dvbapi_priority[64];
-  char      dvbapi_ignore[64];  
+  char      dvbapi_ignore[64];
 #endif
 #ifdef CS_ANTICASC
   char      ac_enabled;
@@ -671,7 +690,7 @@ struct s_config
   int       ac_samples;     // qty of samples
   int       ac_penalty;     // 0 - write to log
   int       ac_fakedelay;   // 100-1000 ms
-  int       ac_denysamples; 
+  int       ac_denysamples;
   char      ac_logfile[128];
   struct s_cpmap *cpmap;
 #endif
@@ -680,7 +699,7 @@ struct s_config
 
 typedef struct ecm_request_t
 {
-  
+
   uchar         ecm[256];
   uchar         cw[16];
   uchar         ecmd5[CS_ECMSTORESIZE];
@@ -705,7 +724,7 @@ typedef struct ecm_request_t
   ushort    gbxCWFrom;
   ushort    gbxFrom;
   ushort    gbxTo;
-  
+
   uchar       gbxForward[16];
   int     gbxRidx;
 } GCC_PACK      ECM_REQUEST;
@@ -748,10 +767,23 @@ extern void cs_sleepms(unsigned int);
 extern int bytes_available(int);
 extern void cs_setpriority(int);
 extern struct s_auth *find_user(char *);
+#ifdef WEBIF
+extern int x2i(int i);
+extern void urldecode(char *s);
+extern char to_hex(char code);
+extern char *urlencode(char *str);
+extern char *char_to_hex(const unsigned char* p_array, unsigned int p_array_len, char hex2ascii[256][2]);
+extern void create_rand_str(char *dst, int size);
+#endif
+extern void long2bitchar(long value, char *result);
+extern int file_exists(const char * filename);
 extern void clear_sip(struct s_ip **sip);
 extern void clear_ptab(struct s_ptab *ptab);
+extern void clear_ftab(struct s_ftab *ftab);
 void clear_caidtab(struct s_caidtab *ctab);
 void clear_tuntab(struct s_tuntab *ttab);
+extern int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int forceBakOverWrite);
+extern void fprintf_conf(FILE *f, int varnameWidth, const char *varname, const char *fmtstring, ...);
 extern void cs_strncpy(char * destination, const char * source, size_t num);
 
 // oscam variables
@@ -786,7 +818,6 @@ extern char *cs_platform(char *);
 extern int recv_from_udpipe(uchar *);
 extern char* username(int);
 extern int idx_from_pid(pid_t);
-extern int idx_from_username(char *uname);
 extern int chk_bcaid(ECM_REQUEST *, CAIDTAB *);
 extern void cs_exit(int sig);
 extern int cs_fork(in_addr_t, in_port_t);
@@ -818,6 +849,7 @@ extern int chk_avail_reader(ECM_REQUEST *, struct s_reader *);
 extern int matching_reader(ECM_REQUEST *, struct s_reader *);
 extern void set_signal_handler(int , int , void (*)(int));
 extern void cs_log_config(void);
+extern void cs_reinit_clients(void);
 extern void cs_resolve(void);
 extern void chk_dcw(int fd);
 
@@ -843,6 +875,36 @@ extern int  init_srvid(void);
 extern int  search_boxkey(ushort, char *);
 extern void init_len4caid(void);
 extern int  init_irdeto_guess_tab(void);
+extern void chk_caidtab(char *caidasc, CAIDTAB *ctab);
+extern void chk_tuntab(char *tunasc, TUNTAB *ttab);
+extern void chk_services(char *labels, ulong *sidok, ulong *sidno);
+extern void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName);
+extern void chk_cltab(char *classasc, CLASSTAB *clstab);
+extern void chk_iprange(char *value, struct s_ip **base);
+extern void chk_port_tab(char *portasc, PTAB *ptab);
+#ifdef CS_ANTICASC
+extern void chk_t_ac(char *token, char *value);
+#endif
+extern void chk_t_camd33(char *token, char *value);
+extern void chk_t_camd35(char *token, char *value);
+extern void chk_t_camd35_tcp(char *token, char *value);
+extern void chk_t_newcamd(char *token, char *value);
+extern void chk_t_radegast(char *token, char *value);
+extern void chk_t_serial(char *token, char *value);
+extern void chk_t_gbox(char *token, char *value);
+extern void chk_t_cccam(char *token, char *value);
+extern void chk_t_global(char *token, char *value);
+extern void chk_t_monitor(char *token, char *value);
+extern void chk_t_dvbapi(char *token, char *value);
+extern void chk_account(char *token, char *value, struct s_auth *account);
+extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
+extern int write_services();
+extern int write_userdb();
+extern int write_config();
+extern char *mk_t_caidtab(CAIDTAB *ctab);
+extern char *mk_t_tuntab(TUNTAB *ttab);
+extern char *mk_t_group(ulong *grp);
+extern char *mk_t_ftab(FTAB *ftab);
 
 // oscam-reader
 extern int ridx, logfd;
@@ -905,4 +967,15 @@ extern void module_cccam(struct s_module *);
 extern void module_dvbapi(struct s_module *);
 #endif
 extern struct timeval *chk_pending(struct timeb tp_ctimeout);
+
+// module-monitor
+extern char *monitor_get_proto(int idx);
+extern char *monitor_get_srvname(int srvid, int caid);
+extern int cs_idx2ridx(int idx);
+
+#ifdef WEBIF
+// oscam-http
+extern void http_srv();
+#endif
+
 #endif  // CS_GLOBALS

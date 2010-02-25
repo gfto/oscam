@@ -89,7 +89,7 @@ static int camd35_recv(uchar *buf, int l)
       {
         case  0:        break;	// ok
         case  1: rc=-2; break;	// unknown user
-	default: rc=-9; break;	// error's from cs_auth() 
+	default: rc=-9; break;	// error's from cs_auth()
       }
       break;
     case 2:
@@ -198,7 +198,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
       mbuf[128]=(reader[au].b_nano[0xd0])?0:1;
       mbuf[129]=(reader[au].b_nano[0xd2])?0:1;
       mbuf[130]=(reader[au].b_nano[0xd3])?0:1;*/
-      //we think client/server protocols should deliver all information, and only readers should discard EMM 
+      //we think client/server protocols should deliver all information, and only readers should discard EMM
       mbuf[128]=1; //if 0, GA EMM is blocked
       mbuf[129]=1; //if 0, SA EMM is blocked
       mbuf[130]=1; //if 0, UA EMM is blocked
@@ -304,9 +304,9 @@ static void camd35_server()
         cs_log("unknown camd35 command! (%d)", mbuf[0]);
     }
   }
-  
+
   if(req) { free(req); req=0;}
-  	
+
   cs_disconnect_client();
 }
 
@@ -384,7 +384,7 @@ int camd35_client_init()
   cs_log("proxy %s:%d (fd=%d%s)",
          reader[ridx].device, reader[ridx].r_port,
          client[cs_idx].udp_fd, ptxt);
-  
+
   if (is_udp) pfd=client[cs_idx].udp_fd;
 
   return(0);
@@ -428,22 +428,22 @@ int camd35_client_init_log()
 
   cs_log("camd3 loghost initialized (fd=%d, port=%d)",
          logfd, reader[ridx].log_port);
-  
+
   return(0);
 }
 
 static int tcp_connect()
 {
-  if (!reader[ridx].tcp_connected) 
+  if (!reader[ridx].tcp_connected)
   {
     int handle=0;
     handle = network_tcp_connection_open();
     if (handle<0) return(0);
 
     reader[ridx].tcp_connected = 1;
-    reader[ridx].last_s = reader[ridx].last_g = time((time_t *)0); 
+    reader[ridx].last_s = reader[ridx].last_g = time((time_t *)0);
     pfd = client[cs_idx].udp_fd = handle;
-  } 
+  }
   if (!client[cs_idx].udp_fd) return(0);
   return(1);
 }
@@ -500,7 +500,7 @@ static int camd35_recv_log(ushort *caid, ulong *provid, ushort *srvid)
   if (strstr((char *)ptr, " decoded ")) return(-1);	// skip "found"s
   if (!(ptr2=(uchar *)strchr((char *)ptr, ' '))) return(-1);	// corrupt
   *ptr2=0;
-  
+
   for (i=0, ptr2=(uchar *)strtok((char *)ptr, ":"); ptr2; i++, ptr2=(uchar *)strtok(NULL, ":"))
   {
     trim((char *)ptr2);
@@ -550,7 +550,7 @@ void module_camd35_tcp(struct s_module *ph)
   ph->multi=1;
   ph->watchdog=1;
   ph->ptab=&cfg->c35_tcp_ptab;
-  if (ph->ptab->nports==0) 
+  if (ph->ptab->nports==0)
     ph->ptab->nports=1; // show disabled in log
   ph->s_ip=cfg->c35_tcp_srvip;
   ph->s_handler=camd35_server;

@@ -6,7 +6,7 @@
 #  define CS_VERSION_X  CS_VERSION
 #endif
 
-static	int auth=0;
+static int auth = 0;
 
 static void monitor_check_ip()
 {
@@ -207,7 +207,7 @@ static void monitor_send_info(char *txt, int last)
   if (!last)
   {
     if (btxt[0]) monitor_send(btxt);
-    strncpy(btxt, txt, sizeof(btxt));
+    cs_strncpy(btxt, txt, sizeof(btxt));
     return;
   }
 
@@ -215,12 +215,12 @@ static void monitor_send_info(char *txt, int last)
   {
     monitor_send(btxt);
     txt[2]='E';
-    strncpy(btxt, txt, sizeof(btxt));
+    cs_strncpy(btxt, txt, sizeof(btxt));
   }
   else
   {
     if (txt)
-      strncpy(btxt, txt, sizeof(btxt));
+      cs_strncpy(btxt, txt, sizeof(btxt));
     btxt[2]=(btxt[2]=='B') ? 'S' : 'E';
   }
 
@@ -232,13 +232,12 @@ static void monitor_send_info(char *txt, int last)
   btxt[0]=0;
 }
 
-int cs_idx2ridx(int idx)
-{
-  int i;
-  for (i=0; i<CS_MAXREADER; i++)
-    if (reader[i].cs_idx==idx)
-      return(i);
-  return(-1);
+int cs_idx2ridx(int idx){
+	int i;
+	for (i = 0; i < CS_MAXREADER; i++)
+		if (reader[i].cs_idx==idx)
+			return(i);
+	return(-1);
 }
 
 char *monitor_get_srvname(int srvid, int caid){
@@ -250,7 +249,7 @@ char *monitor_get_srvname(int srvid, int caid){
 		if (this->srvid == srvid)
 			for (i=0; i<this->ncaid; i++)
 				if (this->caid[i] == caid)
-					strncpy(name, this->name, 32);
+					cs_strncpy(name, this->name, 32);
 
 	if (!name[0]) sprintf(name, "[%04X:%04X]", caid, srvid);
 	if (!srvid) name[0] = '\0';
@@ -298,57 +297,52 @@ char *monitor_get_proto(int idx)
 	return(ctyp);
 }
 
-static char *monitor_client_info(char id, int i)
-{
-  static char sbuf[256];
+static char *monitor_client_info(char id, int i){
+	static char sbuf[256];
+	sbuf[0] = '\0';
 
-  sbuf[0]='\0';
-  if (client[i].pid)
-  {
-    char ldate[16], ltime[16], *usr;
-    int lsec, isec, cnr, con, cau;
-    time_t now;
-    struct tm *lt;
-    now=time((time_t)0);
+	if (client[i].pid){
+		char ldate[16], ltime[16], *usr;
+		int lsec, isec, cnr, con, cau;
+		time_t now;
+		struct tm *lt;
+		now=time((time_t)0);
 
-    if ((cfg->mon_hideclient_to <= 0) ||
-        (((now-client[i].lastemm)/60)<cfg->mon_hideclient_to) ||
-        (client[i].typ!='c'))
-    {
-      lsec=now-client[i].login;
-      isec=now-client[i].last;
-      usr=client[i].usr;
-      if (((client[i].typ=='r') || (client[i].typ=='p')) &&
-          (con=cs_idx2ridx(i))>=0)
-        usr=reader[con].label;
-      if (client[i].dup)
-        con=2;
-      else
-        if ((client[i].tosleep) &&
-            (now-client[i].lastswitch>client[i].tosleep))
-          con=1;
-        else
-          con=0;
-      if (i-cdiff>0)
-        cnr=i-cdiff;
-      else
-        cnr=(i>1) ? i-1 : 0;
-      if( (cau=client[i].au+1) )
-        if ((now-client[i].lastemm)/60>cfg->mon_aulow)
-          cau=-cau;
-      lt=localtime(&client[i].login);
-      sprintf(ldate, "%2d.%02d.%02d",
-                     lt->tm_mday, lt->tm_mon+1, lt->tm_year % 100);
-      sprintf(ltime, "%2d:%02d:%02d",
-                     lt->tm_hour, lt->tm_min, lt->tm_sec);
-      sprintf(sbuf, "[%c--CCC]%d|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d\n",
-              id, client[i].pid, client[i].typ, cnr, usr, cau, client[i].crypted,
-              cs_inet_ntoa(client[i].ip), client[i].port, monitor_get_proto(i),
-              ldate, ltime, lsec, client[i].last_caid, client[i].last_srvid,
-              monitor_get_srvname(client[i].last_srvid, client[i].last_caid), isec, con);
-    }
-  }
-  return(sbuf);
+		if	((cfg->mon_hideclient_to <= 0) ||
+			(now-client[i].lastecm < cfg->mon_hideclient_to) ||
+			(now-client[i].lastemm < cfg->mon_hideclient_to) ||
+			(client[i].typ != 'c'))
+		{
+			lsec=now-client[i].login;
+			isec=now-client[i].last;
+			usr=client[i].usr;
+			if (((client[i].typ == 'r') || (client[i].typ == 'p')) && (con=cs_idx2ridx(i)) >= 0)
+				usr=reader[con].label;
+			if (client[i].dup)
+				con=2;
+			else
+				if ((client[i].tosleep) && (now-client[i].lastswitch>client[i].tosleep))
+					con = 1;
+				else
+					con = 0;
+			if (i - cdiff > 0)
+				cnr = i - cdiff;
+			else
+				cnr=(i > 1) ? i - 1 : 0;
+			if( (cau = client[i].au + 1) )
+				if ((now-client[i].lastemm) /60 > cfg->mon_aulow)
+					cau=-cau;
+			lt = localtime(&client[i].login);
+			sprintf(ldate, "%2d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year % 100);
+			sprintf(ltime, "%2d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
+			sprintf(sbuf, "[%c--CCC]%d|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d\n",
+							id, client[i].pid, client[i].typ, cnr, usr, cau, client[i].crypted,
+							cs_inet_ntoa(client[i].ip), client[i].port, monitor_get_proto(i),
+							ldate, ltime, lsec, client[i].last_caid, client[i].last_srvid,
+							monitor_get_srvname(client[i].last_srvid, client[i].last_caid), isec, con);
+		}
+	}
+	return(sbuf);
 }
 
 static void monitor_process_info(){
@@ -371,43 +365,40 @@ static void monitor_process_info(){
 		}
 	}
 	monitor_send_info(NULL, 1);
-} 
-
-static void monitor_send_details(char *txt, int pid)
-{
-  char buf[256];
-  snprintf(buf, 255, "[D-----]%d|%s\n", pid, txt);
-  monitor_send_info(buf, 0);
 }
 
-static void monitor_send_details_version()
-{
-  char buf[256];
-  sprintf(buf, "[A-0000]version=%s, build=%s, system=%s%s", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf+100), buf+200);
-  monitor_send_info(buf, 1);
+static void monitor_send_details(char *txt, int pid){
+	char buf[256];
+	snprintf(buf, 255, "[D-----]%d|%s\n", pid, txt);
+	monitor_send_info(buf, 0);
 }
 
-static void monitor_process_details_master(char *buf, int pid)
-{
-  if (cfg->nice!=99)
-    sprintf(buf+200, ", nice=%d", cfg->nice);
-  else
-    buf[200]='\0';
-  sprintf(buf, "version=%s#%s, system=%s%s", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf+100), buf+200);
-  monitor_send_details(buf, pid);
+static void monitor_send_details_version(){
+	char buf[256];
+	sprintf(buf, "[V-0000]version=%s, build=%s, system=%s%s\n", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf + 100), buf + 200);
+	monitor_send_info(buf, 1);
+}
 
-  sprintf(buf, "max. clients=%d, client max. idle=%ld sec", CS_MAXPID-2, cfg->cmaxidle);
-  monitor_send_details(buf, pid);
+static void monitor_process_details_master(char *buf, int pid){
+	if (cfg->nice != 99)
+		sprintf(buf + 200, ", nice=%d", cfg->nice);
+	else
+		buf[200] = '\0';
+	sprintf(buf, "version=%s#%s, system=%s%s", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf + 100), buf + 200);
+	monitor_send_details(buf, pid);
 
-  if( cfg->max_log_size )
-    sprintf(buf+200, "%d Kb", cfg->max_log_size);
-  else
-    strcpy(buf+200, "unlimited");
-  sprintf(buf, "max. logsize=%s", buf+200);
-  monitor_send_details(buf, pid);
+	sprintf(buf, "max. clients=%d, client max. idle=%ld sec", CS_MAXPID - 2, cfg->cmaxidle);
+	monitor_send_details(buf, pid);
 
-  sprintf(buf, "client timeout=%lu ms, cache delay=%ld ms", cfg->ctimeout, cfg->delay);
-  monitor_send_details(buf, pid);
+	if( cfg->max_log_size )
+		sprintf(buf + 200, "%d Kb", cfg->max_log_size);
+	else
+		strcpy(buf + 200, "unlimited");
+	sprintf(buf, "max. logsize=%s", buf + 200);
+	monitor_send_details(buf, pid);
+
+	sprintf(buf, "client timeout=%lu ms, cache delay=%ld ms", cfg->ctimeout, cfg->delay);
+	monitor_send_details(buf, pid);
 
 //#ifdef CS_NOSHM
 //  sprintf(buf, "shared memory initialized (size=%d, fd=%d)", shmsize, shmid);
@@ -418,174 +409,294 @@ static void monitor_process_details_master(char *buf, int pid)
 }
 
 #ifdef CS_RDR_INIT_HIST
-static void monitor_process_details_reader(int pid, int idx)
-{
-  int r_idx;
-  char *p;
-  if ((r_idx=cs_idx2ridx(idx))>=0)
-    for (p=(char *)reader[r_idx].init_history; *p; p+=strlen(p)+1)
-      monitor_send_details(p, pid);
-  else
-    monitor_send_details("Missing reader index !", pid);
+static void monitor_process_details_reader(int pid, int idx){
+	int r_idx;
+	char *p;
+	if ((r_idx=cs_idx2ridx(idx))>=0)
+		for (p=(char *)reader[r_idx].init_history; *p; p+=strlen(p)+1)
+			monitor_send_details(p, pid);
+		else
+			monitor_send_details("Missing reader index !", pid);
 }
 #endif
 
-static void monitor_process_details(char *arg)
-{
-  int pid, idx;
-  char sbuf[256];
-  if (!arg) return;
-  if ((idx=idx_from_pid(pid=atoi(arg)))<0)
-    monitor_send_details("Invalid PID", pid);
-  else
-  {
-    monitor_send_info(monitor_client_info('D', idx), 0);
-    switch(client[idx].typ)
-    {
-      case 's':
-        monitor_process_details_master(sbuf, pid);
-        break;
-      case 'c': case 'm':
-        break;
-      case 'r':
+static void monitor_process_details(char *arg){
+	int pid, idx;
+	char sbuf[256];
+	if (!arg) return;
+	if ((idx = idx_from_pid(pid = atoi(arg))) < 0)
+		monitor_send_details("Invalid PID", pid);
+	else
+	{
+		monitor_send_info(monitor_client_info('D', idx), 0);
+		switch(client[idx].typ)
+		{
+			case 's':
+				monitor_process_details_master(sbuf, pid);
+				break;
+			case 'c': case 'm':
+				break;
+			case 'r':
 #ifdef CS_RDR_INIT_HIST
-        monitor_process_details_reader(pid, idx);
+				monitor_process_details_reader(pid, idx);
 #endif
-        break;
-      case 'p':
-        break;
-    }
-  }
-  monitor_send_info(NULL, 1);
+				break;
+			case 'p':
+				break;
+		}
+		}
+	monitor_send_info(NULL, 1);
 }
 
-static void monitor_send_login(void)
-{
-  char buf[64];
-  if (auth)
-    sprintf(buf, "[A-0000]1|%s logged in\n", client[cs_idx].usr);
-  else
-    strcpy(buf, "[A-0000]0|not logged in\n");
-  monitor_send_info(buf, 1);
+static void monitor_send_login(void){
+	char buf[64];
+	if (auth)
+		sprintf(buf, "[A-0000]1|%s logged in\n", client[cs_idx].usr);
+	else
+		strcpy(buf, "[A-0000]0|not logged in\n");
+	monitor_send_info(buf, 1);
 }
 
-static void monitor_login(char *usr)
-{
-  char *pwd=NULL;
-  if ((usr) && (pwd=strchr(usr, ' ')))
-    *pwd++=0;
-  if (pwd)
-    monitor_auth_client(trim(usr), trim(pwd));
-  else
-    monitor_auth_client(NULL, NULL);
-  monitor_send_login();
+static void monitor_login(char *usr){
+	char *pwd=NULL;
+	if ((usr) && (pwd=strchr(usr, ' ')))
+		*pwd++=0;
+	if (pwd)
+		monitor_auth_client(trim(usr), trim(pwd));
+	else
+		monitor_auth_client(NULL, NULL);
+	monitor_send_login();
 }
 
-static void monitor_logsend(char *flag)
-{
+static void monitor_logsend(char *flag){
 #ifdef CS_LOGHISTORY
-  int i;
+	int i;
 #endif
-  if (strcmp(flag, "on")) {
-      if (strcmp(flag, "onwohist")) {
-          client[cs_idx].log=0;
-          return;
-      }
-  }
+	if (strcmp(flag, "on")) {
+		if (strcmp(flag, "onwohist")) {
+			client[cs_idx].log=0;
+			return;
+		}
+	}
 
-  if (client[cs_idx].log)	// already on
-    return;
+	if (client[cs_idx].log)	// already on
+		return;
 #ifdef CS_LOGHISTORY
-   if (!strcmp(flag, "on")){
-     for (i=(*loghistidx+3) % CS_MAXLOGHIST; i!=*loghistidx; i=(i+1) % CS_MAXLOGHIST)
-     {
-       char *p_usr, *p_txt;
-       p_usr=(char *)(loghist+(i*CS_LOGHISTSIZE));
-       p_txt=p_usr+32;
-       if ((p_txt[0]) &&
-          ((client[cs_idx].monlvl>1) || (!strcmp(p_usr, client[cs_idx].usr))))
-       {
-         char sbuf[8];
-         sprintf(sbuf, "%03d", client[cs_idx].logcounter);
-         client[cs_idx].logcounter=(client[cs_idx].logcounter+1) % 1000;
-         memcpy(p_txt+4, sbuf, 3);
-         monitor_send(p_txt);
-       }
-     }
-   }
+	if (!strcmp(flag, "on")){
+		for (i = (*loghistidx + 3) % CS_MAXLOGHIST; i != *loghistidx; i = (i + 1) % CS_MAXLOGHIST){
+			char *p_usr, *p_txt;
+			p_usr=(char *)(loghist+(i*CS_LOGHISTSIZE));
+			p_txt = p_usr + 32;
+			if ((p_txt[0]) && ((client[cs_idx].monlvl > 1) || (!strcmp(p_usr, client[cs_idx].usr)))) {
+				char sbuf[8];
+				sprintf(sbuf, "%03d", client[cs_idx].logcounter);
+				client[cs_idx].logcounter=(client[cs_idx].logcounter + 1) % 1000;
+				memcpy(p_txt + 4, sbuf, 3);
+				monitor_send(p_txt);
+			}
+		}
+	}
 #endif
-  client[cs_idx].log=1;
+	client[cs_idx].log=1;
 }
-static void monitor_set_debuglevel(char *flag)
-{
-    cs_dblevel^=atoi(flag);
-    kill(client[0].pid, SIGUSR1);
+
+static void monitor_set_debuglevel(char *flag){
+	cfg->debuglvl = atoi(flag);
+	kill(client[0].pid, SIGUSR1);
+}
+
+static void monitor_set_account(char *args){
+	struct s_auth *account;
+	char delimiter[] = " =";
+	char *ptr;
+	int argidx, i, found;
+	char *argarray[3];
+	char *token[]={"au", "sleep", "uniq", "monlevel", "group", "services", "betatunnel", "ident", "caid", "chid", "class", "hostname", "refresh"};
+	int tokencnt = sizeof(token)/sizeof(char *);
+	char buf[256];
+
+	argidx = 0;
+	found = 0;
+
+	ptr = strtok(args, delimiter);
+
+	// resolve arguments
+	while(ptr != NULL) {
+		argarray[argidx]=trim(ptr);
+		ptr = strtok(NULL, delimiter);
+		argidx++;
+	}
+
+	if(!strcmp(argarray[1], "refresh")){
+		kill(client[0].pid, SIGHUP);
+	}else{
+		if(argidx != 3) {
+			sprintf(buf, "[S-0000]setuser failed - wrong number of parameters (%d)\n", argidx);
+			monitor_send_info(buf, 1);
+			return;
+		}
+	}
+
+	//search account
+	for (account=cfg->account; (account) ; account=account->next){
+		if (!strcmp(argarray[0], account->usr)){
+			found=1;
+			break;
+		}
+	}
+
+	if (found != 1){
+		sprintf(buf, "[S-0000]setuser failed - user %s not found\n", argarray[0]);
+		monitor_send_info(buf, 1);
+		return;
+	}
+
+	found = 0;
+	for (i = 0; i < tokencnt; i++){
+		if (!strcmp(argarray[1], token[i])){
+			// preparing the parameters before re-load
+			switch(i) {
+
+				case	6: clear_tuntab(&account->ttab); break;		//betatunnel
+
+				case	8: clear_caidtab(&account->ctab); break;	//Caid
+
+
+
+
+			}
+			found = 1;
+		}
+	}
+
+	if (found != 1){
+		sprintf(buf, "[S-0000]setuser failed - parameter %s not exist", argarray[1]);
+		monitor_send_info(buf, 1);
+		return;
+	} else {
+		chk_account(token[i],argarray[2],account);
+	}
+
+	cs_reinit_clients();
+
+	sprintf(buf, "[S-0000]setuser %s done - param %s set to %s\n", argarray[0], argarray[1], argarray[2]);
+	monitor_send_info(buf, 1);
+}
+
+static void monitor_set_server(char *args){
+	char delimiter[] = "=";
+	char *ptr;
+	int argidx, i, found;
+	char *argarray[3];
+	char *token[]={"clienttimeout", "fallbacktimeout", "clientmaxidle", "cachedelay", "bindwait", "netprio", "resolvedelay", "sleep", "unlockparental", "serialreadertimeout", "maxlogsize", "showecmdw", "waitforcards", "preferlocalcards"};
+	char buf[256];
+
+	argidx=0;	found=0;
+	ptr = strtok(args, delimiter);
+
+	// resolve arguments
+	while(ptr != NULL) {
+		argarray[argidx]=trim(ptr);
+		ptr = strtok(NULL, delimiter);
+		argidx++;
+	}
+
+	if(argidx != 2) {
+		sprintf(buf, "[S-0000]setserver failed - wrong number of parameters (%d)\n", argidx);
+		monitor_send_info(buf, 1);
+		return;
+	}
+
+	trim(argarray[0]);
+	trim(argarray[1]);
+	strtolower(argarray[0]);
+
+	for (i = 0; i < 14; i++)
+		if (!strcmp(argarray[0], token[i]))	break;
+
+	if (i < 14){
+		chk_t_global(token[i],argarray[1]);
+		sprintf(buf, "[S-0000]setserver done - param %s set to %s\n", argarray[0], argarray[1]);
+		monitor_send_info(buf, 1);
+	} else {
+		sprintf(buf, "[S-0000]setserver failed - parameter %s not exist", argarray[0]);
+		monitor_send_info(buf, 1);
+		return;
+	}
+
+	if (cfg->ftimeout>=cfg->ctimeout) {
+		cfg->ftimeout = cfg->ctimeout - 100;
+		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms", cfg->ftimeout);
+		monitor_send_info(buf, 1);
+	}
+	if(cfg->ftimeout < cfg->srtimeout) {
+		cfg->ftimeout = cfg->srtimeout + 100;
+		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms", cfg->ftimeout);
+		monitor_send_info(buf, 1);
+	}
+	if(cfg->ctimeout < cfg->srtimeout) {
+		cfg->ctimeout = cfg->srtimeout + 100;
+		sprintf(buf, "[S-0000]setserver WARNING: clienttimeout adjusted to %lu ms", cfg->ctimeout);
+		monitor_send_info(buf, 1);
+	}
+	//kill(client[0].pid, SIGUSR1);
 }
 
 static int monitor_process_request(char *req)
 {
-  int i, rc;
-  char *cmd[]={"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug"};
-  char *arg;
-  if( (arg=strchr(req, ' ')) )
-  {
-    *arg++=0;
-    trim(arg);
-  }
-  trim(req);
-  if ((!auth) && (strcmp(req, cmd[0])))
-    monitor_login(NULL);
-  for (rc=1, i=0; i<9; i++)
-    if (!strcmp(req, cmd[i]))
-    {
-      switch(i)
-      {
-        case  0: monitor_login(arg); break;             // login
-        case  1: rc=0; break; // exit
-        case  2: monitor_logsend(arg); break;           // log
-        case  3: monitor_process_info(); break;         // status
-        case  4: if (client[cs_idx].monlvl>3)
-                   kill(client[0].pid, SIGQUIT);        // shutdown
-                 break;
-        case  5: if (client[cs_idx].monlvl>2)
-                   kill(client[0].pid, SIGHUP);         // reload
-                 break;
-        case  6: monitor_process_details(arg); break;   // details
-        case  7: monitor_send_details_version(); break;
-	case  8: if (client[cs_idx].monlvl>3)
-		  monitor_set_debuglevel(arg);          // debuglevel
-		 break; 
-        default: continue;
-      }
-      break;
-    }
-  return(rc);
+	int i, rc;
+	char *cmd[] = {"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug", "setuser", "setserver"};
+	int cmdcnt = sizeof(cmd)/sizeof(char *);  // Calculate the amount of items in array
+	char *arg;
+
+	if( (arg = strchr(req, ' ')) ) { *arg++ = 0; trim(arg); }
+	//trim(req);
+	if ((!auth) && (strcmp(req, cmd[0])))	monitor_login(NULL);
+
+	for (rc=1, i = 0; i < cmdcnt; i++)
+		if (!strcmp(req, cmd[i])) {
+			switch(i) {
+				case  0:	monitor_login(arg); break;	// login
+				case  1:	rc=0; break;	// exit
+				case  2:	monitor_logsend(arg); break;	// log
+				case  3:	monitor_process_info(); break;	// status
+				case  4:	if (client[cs_idx].monlvl > 3) kill(client[0].pid, SIGQUIT); break;	// shutdown
+				case  5:	if (client[cs_idx].monlvl > 2) kill(client[0].pid, SIGHUP); break;	// reload
+				case  6:	monitor_process_details(arg); break;	// details
+				case  7:	monitor_send_details_version(); break;	// version
+				case  8:	if (client[cs_idx].monlvl > 3) monitor_set_debuglevel(arg); break;	// debuglevel
+				case  9:	if (client[cs_idx].monlvl > 3) monitor_set_account(arg); break;	// setuser
+				case 10:	if (client[cs_idx].monlvl > 3) monitor_set_server(arg); break;	// setserver
+				default:	continue;
+			}
+			break;
+		}
+	return(rc);
 }
 
-static void monitor_server()
-{
-  int n;
-  client[cs_idx].typ='m';
-  while (((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>=0) &&
-           monitor_process_request((char *)mbuf));
-  cs_disconnect_client();
+static void monitor_server(){
+	int n;
+	client[cs_idx].typ='m';
+	while (((n = process_input(mbuf, sizeof(mbuf), cfg->cmaxidle)) >= 0) && monitor_process_request((char *)mbuf));
+		cs_disconnect_client();
 }
 
-void module_monitor(struct s_module *ph)
-{
-  static PTAB ptab;
-  ptab.ports[0].s_port = cfg->mon_port;
-  ph->ptab = &ptab;
-  ph->ptab->nports = 1;
+void module_monitor(struct s_module *ph){
+	static PTAB ptab;
+	ptab.ports[0].s_port = cfg->mon_port;
+	ph->ptab = &ptab;
+	ph->ptab->nports = 1;
 
-  if (cfg->mon_aulow<1)
-    cfg->mon_aulow=30;
-  strcpy(ph->desc, "monitor");
-  ph->type=MOD_CONN_UDP;
-  ph->multi=0;
-  ph->watchdog=1;
-  ph->s_ip=cfg->mon_srvip;
-  ph->s_handler=monitor_server;
-  ph->recv=monitor_recv;
+	if (cfg->mon_aulow < 1)
+		cfg->mon_aulow = 30;
+	strcpy(ph->desc, "monitor");
+	ph->type=MOD_CONN_UDP;
+	ph->multi = 0;
+	ph->watchdog = 1;
+	ph->s_ip = cfg->mon_srvip;
+	ph->s_handler = monitor_server;
+	ph->recv = monitor_recv;
 //  ph->send_dcw=NULL;
 }
+
+

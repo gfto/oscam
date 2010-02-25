@@ -272,15 +272,25 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 #ifdef NOTUSED
 static void chk_srvip(char *value, in_addr_t *ip)
 {
-  int i;
-  char *ptr;
-  for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
-    if (i<8) ip[i++]=inet_addr(ptr);
+	int i;
+	char *ptr;
+	for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
+		if (i<8) ip[i++] = inet_addr(ptr);
 }
 #endif
 
 void chk_t_global(char *token, char *value)
 {
+	if (!strcmp(token, "disablelog")) {
+		if (strlen(value) == 0) {
+			cfg->disablelog = 0;
+			return;
+		} else {
+			cfg->disablelog = atoi(value);
+			return;
+		}
+	}
+
 	if (!strcmp(token, "serverip")) {
 		if (strlen(value) == 0) {
 			cfg->srvip = 0;
@@ -329,6 +339,16 @@ void chk_t_global(char *token, char *value)
 		if (strlen(value) > 0)
 			asprintf(&(cfg->cwlogdir), "%s", value);
 		return;
+	}
+
+	if (!strcmp(token, "usrfileflag")) {
+		if (strlen(value) == 0) {
+			cfg->usrfileflag = 0;
+			return;
+		} else {
+			cfg->usrfileflag = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "clienttimeout")) {
@@ -543,7 +563,7 @@ void chk_t_ac(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in anticascading section not recognized",token);
+		cs_log( "Warning: keyword '%s' in anticascading section not recognized",token);
 }
 #endif
 
@@ -598,6 +618,67 @@ void chk_t_monitor(char *token, char *value)
 			return;
 		}
 	}
+
+#ifdef WEBIF
+	if (!strcmp(token, "httpport")) {
+		if(strlen(value) == 0) {
+			cfg->http_port = 0;
+			return;
+		} else {
+			cfg->http_port = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "httpuser")) {
+		cs_strncpy(cfg->http_user, value, sizeof(cfg->http_user));
+		return;
+	}
+
+	if (!strcmp(token, "httppwd")) {
+		cs_strncpy(cfg->http_pwd, value, sizeof(cfg->http_pwd));
+		return;
+	}
+
+	if (!strcmp(token, "httpcss")) {
+		cs_strncpy(cfg->http_css, value, sizeof(cfg->http_css));
+		return;
+	}
+
+	if (!strcmp(token, "httpscript")) {
+		cs_strncpy(cfg->http_script, value, sizeof(cfg->http_script));
+		return;
+	}
+
+	if (!strcmp(token, "httptpl")) {
+		cs_strncpy(cfg->http_tpl, value, sizeof(cfg->http_tpl));
+		if(strlen(cfg->http_tpl) < (sizeof(cfg->http_tpl)-2) && cfg->http_tpl[strlen(cfg->http_tpl)-1] != '/') {
+			cfg->http_tpl[strlen(cfg->http_tpl)] = '/';
+			cfg->http_tpl[strlen(cfg->http_tpl)] = '\0';
+		}
+		return;
+	}
+
+	if (!strcmp(token, "httprefresh")) {
+		if(strlen(value) == 0) {
+			cfg->http_refresh = 0;
+			return;
+		} else {
+			cfg->http_refresh = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "httphideidleclients")) {
+		if(strlen(value) == 0) {
+			cfg->http_hide_idle_clients = 0;
+			return;
+		} else {
+			cfg->http_hide_idle_clients=atoi(value);
+			return;
+		}
+	}
+#endif
 
 	if (!strcmp(token, "hideclient_to")) {
 		if(strlen(value) == 0) {
@@ -659,7 +740,7 @@ void chk_t_camd33(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in camd33 section not recognized",token);
+		cs_log( "Warning: keyword '%s' in camd33 section not recognized",token);
 }
 
 void chk_t_camd35(char *token, char *value)
@@ -695,7 +776,7 @@ void chk_t_camd35(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in camd35 section not recognized", token);
+		cs_log( "Warning: keyword '%s' in camd35 section not recognized", token);
 }
 
 void chk_t_camd35_tcp(char *token, char *value)
@@ -731,7 +812,7 @@ void chk_t_camd35_tcp(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in camd35 tcp section not recognized", token);
+		cs_log( "Warning: keyword '%s' in camd35 tcp section not recognized", token);
 }
 
 void chk_t_newcamd(char *token, char *value)
@@ -785,7 +866,7 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in newcamd section not recognized", token);
+		cs_log( "Warning: keyword '%s' in newcamd section not recognized", token);
 }
 
 void chk_t_cccam(char *token, char *value)
@@ -832,7 +913,7 @@ void chk_t_cccam(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in cccam section not recognized",token);
+		cs_log( "Warning: keyword '%s' in cccam section not recognized",token);
 }
 
 void chk_t_radegast(char *token, char *value)
@@ -873,7 +954,7 @@ void chk_t_radegast(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in radegast section not recognized", token);
+		cs_log( "Warning: keyword '%s' in radegast section not recognized", token);
 }
 
 void chk_t_serial(char *token, char *value)
@@ -887,7 +968,7 @@ void chk_t_serial(char *token, char *value)
 		return;
 	}
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in serial section not recognized", token);
+		cs_log( "Warning: keyword '%s' in serial section not recognized", token);
 }
 
 #ifdef CS_WITH_GBOX
@@ -912,7 +993,7 @@ static void chk_t_gbox(char *token, char *value)
     return;
   }
   if (token[0] != '#')
-    cs_log("Warning: keyword '%s' in gbox section not recognized\n",token);
+    fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized\n",token);
 }
 #endif
 
@@ -927,7 +1008,7 @@ void chk_t_dvbapi(char *token, char *value)
 	if (!strcmp(token, "ignore"))   { cs_strncpy(cfg->dvbapi_ignore, value, sizeof(cfg->dvbapi_ignore)); return; }
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in dvbapi section not recognized\n",token);
+		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
 }
 #endif
 
@@ -950,7 +1031,7 @@ static void chk_token(char *token, char *value, int tag)
 #ifdef HAVE_DVBAPI
 		case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
 #else
-		case TAG_DVBAPI  : cs_log("Warning: OSCam compiled without DVB API support.\n"); break;
+		case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
 #endif
 #ifdef CS_ANTICASC
 		case TAG_ANTICASC: chk_t_ac(token, value); break;
@@ -1061,6 +1142,14 @@ int init_config()
 	cfg->pidfile = NULL;
 	cfg->usrfile = NULL;
 	cfg->cwlogdir = NULL;
+#ifdef WEBIF
+	strcpy(cfg->http_user, "");
+	strcpy(cfg->http_pwd, "");
+	strcpy(cfg->http_css, "");
+	cfg->http_refresh = 0;
+	cfg->http_hide_idle_clients = 0;
+	strcpy(cfg->http_tpl, "");
+#endif
 	cfg->ncd_keepalive = 1;
 #ifdef CS_ANTICASC
 	cfg->ac_enabled = 0;
@@ -1296,7 +1385,386 @@ void chk_account(char *token, char *value, struct s_auth *account)
 #endif
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in account section not recognized",token);
+		cs_log( "Warning: keyword '%s' in account section not recognized",token);
+}
+
+int write_services()
+{
+	int i;
+	FILE *f;
+	struct s_sidtab *sidtab = cfg->sidtab;
+	char tmpfile[256];
+	char destfile[256];
+	char bakfile[256];
+
+	snprintf(destfile, 255,"%s%s", cs_confdir, cs_sidt);
+	snprintf(tmpfile, 255, "%s%s.tmp", cs_confdir, cs_sidt);
+	snprintf(bakfile, 255,"%s%s.bak", cs_confdir, cs_sidt);
+
+	if (!(f=fopen(tmpfile, "w"))){
+		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
+		return(1);
+	}
+	fprintf(f,"#oscam.services generated automatically\n\n");
+
+	while(sidtab != NULL){
+		fprintf(f,"[%s]\n", sidtab->label);
+		fprintf_conf(f, CONFVARWIDTH, "caid", "");
+		for (i=0; i<sidtab->num_caid; i++){
+			if (i==0) fprintf(f,"%04X", sidtab->caid[i]);
+			else fprintf(f,",%04X", sidtab->caid[i]);
+		}
+		fputc((int)'\n', f);
+		fprintf_conf(f, CONFVARWIDTH, "provid", "");
+		for (i=0; i<sidtab->num_provid; i++){
+			if (i==0) fprintf(f,"%06lX", sidtab->provid[i]);
+			else fprintf(f,",%06lX", sidtab->provid[i]);
+		}
+		fputc((int)'\n', f);
+		fprintf_conf(f, CONFVARWIDTH, "srvid", "");
+		for (i=0; i<sidtab->num_srvid; i++){
+			if (i==0) fprintf(f,"%04X", sidtab->srvid[i]);
+			else fprintf(f,",%04X", sidtab->srvid[i]);
+		}
+		fprintf(f,"\n\n");
+		sidtab=sidtab->next;
+	}
+
+	fclose(f);
+	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
+}
+
+int write_config()
+{
+	int i,j;
+	FILE *f;
+	char *dot = "", *dot1 = "", *dot2 = ""; //flags for delimiters
+	char tmpfile[256];
+	char destfile[256];
+	char bakfile[256];
+
+	snprintf(destfile, 255,"%s%s", cs_confdir, cs_conf);
+	snprintf(tmpfile, 255, "%s%s.tmp", cs_confdir, cs_conf);
+	snprintf(bakfile, 255,"%s%s.bak", cs_confdir, cs_conf);
+
+	if (!(f=fopen(tmpfile, "w"))){
+    cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
+    return(1);
+  }
+  fprintf(f,"#oscam.config generated automatically\n\n");
+
+	/*global settings*/
+	fprintf(f,"[global]\n");
+	if (cfg->srvip != 0)
+		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->srvip));
+	if (cfg->pidfile != NULL) fprintf_conf(f, CONFVARWIDTH, "pidfile", "%s\n", cfg->pidfile);
+	if (cfg->usrfile != NULL) fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg->usrfile);
+	if (cfg->logfile != NULL) fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", cfg->logfile);
+	if (cfg->cwlogdir != NULL) fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg->cwlogdir);
+	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg->usrfileflag);
+	fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout/1000);
+	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout/1000);
+	fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
+	fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay);
+	fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);
+	fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg->netprio);
+	fprintf_conf(f, CONFVARWIDTH, "resolvedelay", "%d\n", cfg->resolvedelay);
+	if (cfg->tosleep) fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", cfg->tosleep);
+	fprintf_conf(f, CONFVARWIDTH, "unlockparental", "%d\n", cfg->ulparent);
+	fprintf_conf(f, CONFVARWIDTH, "nice", "%d\n", cfg->nice);
+	fprintf_conf(f, CONFVARWIDTH, "serialreadertimeout", "%d\n", cfg->srtimeout);
+	fprintf_conf(f, CONFVARWIDTH, "maxlogsize", "%d\n", cfg->max_log_size);
+	fprintf_conf(f, CONFVARWIDTH, "waitforcards", "%d\n", cfg->waitforcards);
+	fprintf_conf(f, CONFVARWIDTH, "preferlocalcards", "%d\n", cfg->preferlocalcards);
+	fputc((int)'\n', f);
+
+	/*monitor settings*/
+	fprintf(f,"[monitor]\n");
+	fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->mon_port);
+	if (cfg->mon_srvip != 0)
+		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->mon_srvip));
+
+	fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
+	struct s_ip *cip;
+	for (cip = cfg->mon_allowed; cip; cip = cip->next){
+		fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
+  	if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
+  	dot=",";
+	}
+	fputc((int)'\n', f);
+	fprintf_conf(f, CONFVARWIDTH, "aulow", "%d\n", cfg->mon_aulow);
+	fprintf_conf(f, CONFVARWIDTH, "hideclient_to", "%d\n", cfg->mon_hideclient_to);
+	fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", cfg->mon_level);
+#ifdef WEBIF
+	fprintf_conf(f, CONFVARWIDTH, "httpport", "%d\n", cfg->http_port);
+	fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg->http_user);
+	fprintf_conf(f, CONFVARWIDTH, "httppwd", "%s\n", cfg->http_pwd);
+	fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
+	fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg->http_script);
+	fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg->http_refresh);
+	fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
+#endif
+	fputc((int)'\n', f);
+
+	/*newcamd*/
+	if ((cfg->ncd_ptab.nports > 0) && (cfg->ncd_ptab.ports[0].s_port > 0)){
+		fprintf(f,"[newcamd]\n");
+		fprintf_conf(f, CONFVARWIDTH, "port", "");
+		dot1 = "";
+		for(i = 0; i < cfg->ncd_ptab.nports; ++i){
+			fprintf(f,"%s%d@%04X", dot1, cfg->ncd_ptab.ports[i].s_port, cfg->ncd_ptab.ports[i].ftab.filts[0].caid);
+			if (cfg->ncd_ptab.ports[i].ftab.filts[0].nprids > 0){
+				fprintf(f,":");
+				dot2 = "";
+				for (j = 0; j < cfg->ncd_ptab.ports[i].ftab.filts[0].nprids; ++j){
+					fprintf(f,"%s%06X", dot2, (int)cfg->ncd_ptab.ports[i].ftab.filts[0].prids[j]);
+					dot2 = ",";
+				}
+			}
+			dot1=";";
+		}
+
+		fputc((int)'\n', f);
+		if (cfg->ncd_srvip != 0)
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->ncd_srvip));
+		fprintf_conf(f, CONFVARWIDTH, "key", "");
+		for (i=0;i<14;i++) fprintf(f,"%02X", cfg->ncd_key[i]);
+		fprintf(f,"\n");
+		fprintf_conf(f, CONFVARWIDTH, "allowed", "");
+		struct s_ip *cip;
+		dot="";
+		for (cip = cfg->ncd_allowed; cip; cip = cip->next){
+			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
+			if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
+			dot=",";
+		}
+		fprintf(f,"\n");
+		fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", cfg->ncd_keepalive);
+		fprintf(f,"\n");
+	}
+
+	/*camd3.3*/
+	if ( cfg->c33_port > 0) {
+		fprintf(f,"[camd33]\n");
+		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->c33_port);
+		if (cfg->c33_srvip != 0)
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->c33_srvip));
+		fprintf_conf(f, CONFVARWIDTH, "passive", "%d\n", cfg->c33_passive);
+		fprintf_conf(f, CONFVARWIDTH, "key", ""); for (i = 0; i < (int) sizeof(cfg->c33_key); ++i) fprintf(f,"%02X", cfg->c33_key[i]); fputc((int)'\n', f);
+		fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
+		dot="";
+		for (cip = cfg->c33_plain; cip; cip = cip->next){
+			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
+			if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
+			dot=",";
+	  }
+		fprintf(f,"\n\n");
+	}
+
+	/*camd3.5*/
+	if ( cfg->c35_port > 0) {
+		fprintf(f,"[cs357x]\n");
+		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->c35_port);
+		if (cfg->c35_tcp_srvip != 0)
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
+		if (cfg->c35_suppresscmd08)
+			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg->c35_suppresscmd08);
+		fprintf(f,"\n");
+	}
+
+	/*camd3.5 TCP*/
+	if ((cfg->c35_tcp_ptab.nports > 0) && (cfg->c35_tcp_ptab.ports[0].s_port > 0)) {
+		fprintf(f,"[cs378x]\n");
+		fprintf_conf(f, CONFVARWIDTH, "port", "");
+		dot1 = "";
+		for(i = 0; i < cfg->c35_tcp_ptab.nports; ++i){
+			fprintf(f,"%s%d@%04X", dot1, cfg->c35_tcp_ptab.ports[i].s_port, cfg->c35_tcp_ptab.ports[i].ftab.filts[0].caid);
+			if (cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 0){
+				fprintf(f,":");
+				dot2 = "";
+				for (j = 0; j < cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids; ++j){
+					fprintf(f,"%s%lX", dot2, cfg->c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
+					dot2 = ",";
+				}
+			}
+			dot1=";";
+		}
+
+		fputc((int)'\n', f);
+		if (cfg->c35_tcp_srvip != 0)
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
+		fputc((int)'\n', f);
+	}
+
+	/*Radegast*/
+	if ( cfg->rad_port > 0) {
+		fprintf(f,"[radegast]\n");
+		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->rad_port);
+		if (cfg->rad_srvip != 0)
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->rad_srvip));
+		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->rad_usr);
+		fprintf_conf(f, CONFVARWIDTH, "allowed", "");
+		struct s_ip *cip;
+		for (cip = cfg->rad_allowed; cip; cip = cip->next){
+			fprintf(f,"%s%s", dot, inet_ntoa(*(struct in_addr *)&cip->ip[0]));
+			if (cip->ip[0] == cip->ip[1])	fprintf(f,"-%s", inet_ntoa(*(struct in_addr *)&cip->ip[1]));
+			dot=",";
+		}
+		fprintf(f,"\n\n");
+	}
+
+#ifdef CS_WITH_GBOX
+	/*Gbox*/
+	if ((cfg->gbox_pwd[0] > 0) || (cfg->gbox_pwd[1] > 0) || (cfg->gbox_pwd[2] > 0) || (cfg->gbox_pwd[3] > 0)){
+		fprintf(f,"[gbox]\n");
+		fprintf_conf(f, CONFVARWIDTH, "password", ""); for (i=0;i<4;i++) fprintf(f,"%02X", cfg->gbox_pwd[i]); fputc((int)'\n', f);;
+		fprintf_conf(f, CONFVARWIDTH, "maxdist", "%d\n", cfg->maxdist);
+		fprintf_conf(f, CONFVARWIDTH, "ignorelist", "%s\n", cfg->ignorefile);
+		fprintf_conf(f, CONFVARWIDTH, "onlineinfos", "%s\n", cfg->gbxShareOnl);
+		fprintf_conf(f, CONFVARWIDTH, "cardinfos", "%s\n", cfg->cardfile);
+		fprintf_conf(f, CONFVARWIDTH, "locals", "");
+		char *dot = "";
+		for (i = 0; i < cfg->num_locals; i++){
+			fprintf(f,"%s%06lX", dot, cfg->locals[i]);
+			dot=";";
+		}
+		fprintf(f,"\n\n");
+	}
+#endif
+
+	/*serial*/
+
+
+	/*cccam*/
+	if ( cfg->cc_port > 0) {
+		fprintf(f,"[cccam]\n");
+		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->cc_port);
+		fprintf_conf(f, CONFVARWIDTH, "reshare", "%d\n", cfg->cc_reshare);
+		fprintf_conf(f, CONFVARWIDTH, "version", "%s\n", cfg->cc_version);
+		fprintf_conf(f, CONFVARWIDTH, "build", "%s\n", cfg->cc_build);
+		fprintf(f,"\n");
+	}
+
+#ifdef HAVE_DVBAPI
+	/*dvb-api*/
+	if (cfg->dvbapi_enabled > 0) {
+		fprintf(f,"[dvbapi]\n");
+		fprintf_conf(f, CONFVARWIDTH, "enabled", "%d\n", cfg->dvbapi_enabled);
+		fprintf_conf(f, CONFVARWIDTH, "au", "%d\n", cfg->dvbapi_au);
+		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", cfg->dvbapi_boxtype);
+		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->dvbapi_usr);
+		fputc((int)'\n', f);
+	}
+#endif
+
+#ifdef CS_ANTICASC
+	fprintf(f,"[anticasc]\n");
+	fprintf_conf(f, CONFVARWIDTH, "enabled", "%d\n", cfg->ac_enabled);
+	fprintf_conf(f, CONFVARWIDTH, "numusers", "%d\n", cfg->ac_users);
+	fprintf_conf(f, CONFVARWIDTH, "sampletime", "%d\n", cfg->ac_stime);
+	fprintf_conf(f, CONFVARWIDTH, "samples", "%d\n", cfg->ac_samples);
+	fprintf_conf(f, CONFVARWIDTH, "penalty", "%d\n", cfg->ac_penalty);
+	fprintf_conf(f, CONFVARWIDTH, "aclogfile", "%s\n", cfg->ac_logfile);
+	fprintf_conf(f, CONFVARWIDTH, "denysamples", "%d\n", cfg->ac_denysamples);
+	fprintf_conf(f, CONFVARWIDTH, "fakedelay", "%d\n", cfg->ac_fakedelay);
+	fputc((int)'\n', f);
+#endif
+
+	fclose(f);
+
+	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
+}
+
+int write_userdb()
+{
+	int i;
+	FILE *f;
+	struct s_auth *account;
+	char *dot = ""; //flag for comma
+	char tmpfile[256];
+	char destfile[256];
+	char bakfile[256];
+
+	snprintf(destfile, 255,"%s%s", cs_confdir, cs_user);
+	snprintf(tmpfile, 255, "%s%s.tmp", cs_confdir, cs_user);
+	snprintf(bakfile, 255,"%s%s.bak", cs_confdir, cs_user);
+
+  if (!(f=fopen(tmpfile, "w"))){
+    cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
+    return(1);
+  }
+  fprintf(f,"#oscam.user generated automatically\n\n");
+
+  //each account
+	for (account=cfg->account; (account) ; account=account->next){
+		fprintf(f,"[account]\n");
+		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", account->usr);
+		fprintf_conf(f, CONFVARWIDTH, "pwd", "%s\n", account->pwd);
+		fprintf_conf(f, CONFVARWIDTH, "disabled", "%d\n", account->disabled);
+		struct tm * timeinfo = localtime (&account->expirationdate);
+		char buf [80];
+		strftime (buf,80,"%Y-%m-%d",timeinfo);
+		if(strcmp(buf,"1970-01-01"))
+			fprintf_conf(f, CONFVARWIDTH, "expdate", "%s\n", buf);
+		else
+			fprintf_conf(f, CONFVARWIDTH, "expdate", "\n");
+
+		//group
+		char *value = mk_t_group((ulong*)account->grp);
+		fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
+		free(value);
+
+		fprintf_conf(f, CONFVARWIDTH, "hostname", "%s\n", account->dyndns);
+		fprintf_conf(f, CONFVARWIDTH, "uniq", "%d\n", account->uniq);
+		fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", account->tosleep);
+		fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", account->monlvl);
+
+		if (account->au > -1)
+			if (account->au < CS_MAXREADER)
+				fprintf_conf(f, CONFVARWIDTH, "au", "%s\n", reader[account->au].label);
+		if (account->autoau == 1) fprintf_conf(f, CONFVARWIDTH, "au", "1\n");
+
+		fprintf_conf(f, CONFVARWIDTH, "services", "");
+		char sidok[33]; long2bitchar(account->sidtabok,sidok);
+		char sidno[33];	long2bitchar(account->sidtabno,sidno);
+		struct s_sidtab *sidtab = cfg->sidtab;
+		i=0; dot = "";
+		for (; sidtab; sidtab=sidtab->next){
+			if(sidok[i]=='1')	{fprintf(f,"%s%s", dot, sidtab->label); dot = ",";}
+			if(sidno[i]=='1') {fprintf(f,"%s!%s", dot, sidtab->label); dot = ",";}
+			i++;
+		}
+		fputc((int)'\n', f);
+
+		//CAID
+		value = mk_t_caidtab(&account->ctab);
+		fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
+		free(value);
+
+		//betatunnel
+		value = mk_t_tuntab(&account->ttab);
+		fprintf_conf(f, CONFVARWIDTH, "betatunnel", "%s\n", value);
+		free(value);
+
+		//ident
+		value = mk_t_ftab(&account->ftab);
+		fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
+		free(value);
+
+		if (account->c35_suppresscmd08)
+			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
+
+		fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", account->ncd_keepalive);
+
+#ifdef CS_ANTICASC
+		fprintf_conf(f, CONFVARWIDTH, "numusers", "%d\n", account->ac_users);
+		fprintf_conf(f, CONFVARWIDTH, "penalty", "%d\n", account->ac_penalty);
+#endif
+		fputc((int)'\n', f);
+	}
+  fclose(f);
+
+  return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
 int init_userdb()
@@ -1440,7 +1908,7 @@ void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
   if (!strcmp(token, "ident")) { chk_entry4sidtab(value, sidtab, 1); return; }
   if (!strcmp(token, "srvid")) { chk_entry4sidtab(value, sidtab, 2); return; }
   if (token[0] != '#')
-    cs_log("Warning: keyword '%s' in sidtab section not recognized\n",token);
+    fprintf(stderr, "Warning: keyword '%s' in sidtab section not recognized\n",token);
 }
 
 int init_sidtab()
@@ -2280,3 +2748,137 @@ void init_ac()
   return;
 }
 #endif
+
+/*
+ * makes a char ready to write a token into config or webIf
+ */
+char *mk_t_caidtab(CAIDTAB *ctab){
+	int i = 0, needed = 1, pos = 0;
+	while(ctab->caid[i]){
+		if(ctab->mask[i]) needed += 10;
+		else needed += 5;
+		if(ctab->cmap[i]) needed += 5;
+		++i;
+	}
+	char *value = (char *) malloc(needed * sizeof(char));
+	i = 0;
+	while(ctab->caid[i]) {
+		if(i == 0) {
+			sprintf(value + pos, "%04X", ctab->caid[i]);
+			pos += 4;
+		} else {
+			sprintf(value + pos, ",%04X", ctab->caid[i]);
+			pos += 5;
+		}
+		if(ctab->mask[i]){
+			sprintf(value + pos, "&%04X", ctab->mask[i]);
+			pos += 5;
+		}
+		if(ctab->cmap[i]){
+			sprintf(value + pos, ":%04X", ctab->cmap[i]);
+			pos += 5;
+		}
+		++i;
+	}
+	value[pos] = '\0';
+	return value;
+}
+
+/*
+ * makes a char ready to write a token into config or webIf
+ */
+char *mk_t_tuntab(TUNTAB *ttab){
+	int i = 0, needed = 1, pos = 0;
+	while(ttab->bt_caidfrom[i]){
+		if(ttab->bt_srvid[i]) needed += 10;
+		else needed += 5;
+		if(ttab->bt_caidto[i]) needed += 5;
+		++i;
+	}
+	char *value = (char *) malloc(needed * sizeof(char));
+	i = 0;
+	while(ttab->bt_caidfrom[i]) {
+		if(i == 0) {
+			sprintf(value + pos, "%04X", ttab->bt_caidfrom[i]);
+			pos += 4;
+		} else {
+			sprintf(value + pos, ",%04X", ttab->bt_caidfrom[i]);
+			pos += 5;
+		}
+		if(ttab->bt_srvid[i]){
+			sprintf(value + pos, ".%04X", ttab->bt_srvid[i]);
+			pos += 5;
+		}
+		if(ttab->bt_caidto[i]){
+			sprintf(value + pos, ":%04X", ttab->bt_caidto[i]);
+			pos += 5;
+		}
+		++i;
+	}
+	value[pos] = '\0';
+	return value;
+}
+
+/*
+ * makes a char ready to write a token into config or webIf
+ */
+char *mk_t_group(ulong *grp){
+	int i = 0, needed = 1, pos = 0, dot = 0;
+	char grpbit[33];
+	long2bitchar((long) grp, grpbit);
+
+	for(i = 0; i < 32; i++){
+		if (grpbit[i] == '1'){
+			needed += 2;
+			if(i > 9) needed += 1;
+		}
+	}
+	char *value = (char *) malloc(needed * sizeof(char));
+
+	for(i = 0; i < 32; i++){
+		if (grpbit[i] == '1'){
+			if (dot == 0){
+				sprintf(value + pos, "%d", i+1);
+				if (i > 9)pos += 2;
+				else pos += 1;
+				dot = 1;
+			} else {
+				sprintf(value + pos, ",%d", i+1);
+				if (i > 9)pos += 3;
+				else pos += 2;
+			}
+		}
+	}
+	value[pos] = '\0';
+	return value;
+}
+
+/*
+ * makes a char ready to write a token into config or webIf
+ */
+char *mk_t_ftab(FTAB *ftab){
+	int i = 0, j = 0, needed = 1, pos = 0;
+
+	needed = ftab->nfilts * 5;
+	for (i = 0; i < ftab->nfilts; ++i)
+		needed += ftab->filts[i].nprids * 7;
+
+	char *value = (char *) malloc(needed * sizeof(char));
+
+	char *dot="";
+	for (i = 0; i < ftab->nfilts; ++i){
+		sprintf(value + pos, "%s%04X", dot, ftab->filts[i].caid);
+		pos += 4;
+		if (i > 0) pos += 1;
+		dot=":";
+		for (j = 0; j < ftab->filts[i].nprids; ++j) {
+			sprintf(value + pos, "%s%06lX", dot, ftab->filts[i].prids[j]);
+			pos += 7;
+			dot=",";
+		}
+		dot=";";
+	}
+
+	value[pos] = '\0';
+	return value;
+}

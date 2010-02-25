@@ -66,7 +66,7 @@ static  int  shmsize =  CS_ECMCACHESIZE*(sizeof(struct s_ecm)) +
                         CS_MAXPID*(sizeof(struct idstore_struct))+
 #endif
 #ifdef CS_ANTICASC
-                        CS_MAXPID*(sizeof(struct s_acasc_shm)) + 
+                        CS_MAXPID*(sizeof(struct s_acasc_shm)) +
 #endif
 #ifdef CS_LOGHISTORY
                         CS_MAXLOGHIST*CS_LOGHISTSIZE + sizeof(int) +
@@ -229,15 +229,6 @@ int idx_from_pid(pid_t pid)
   return(idx);
 }
 
-int idx_from_username(char *uname)
-{
-  int i, idx;
-  for (i=0, idx=(-1); (i<CS_MAXPID) && (idx<0); i++)
-    if (client[i].usr==uname)
-      idx=i;
-  return(idx);
-}
-
 static long chk_caid(ushort caid, CAIDTAB *ctab)
 {
   int n;
@@ -396,7 +387,6 @@ static void cs_sighup()
 static void cs_accounts_chk()
 {
   int i;
-
   init_userdb();
   cs_reinit_clients();
 #ifdef CS_ANTICASC
@@ -411,32 +401,41 @@ static void cs_accounts_chk()
 
 static void cs_debug_level()
 {
-  int i;
+	int i;
 
-	switch (cs_dblevel) {
-		case 0:
-			cs_dblevel = 1;
-			break;
-		case 32:
-			cs_dblevel = 63;
-			break;
-		case 63:
-			cs_dblevel = 0;
-			break;
-		default:
-			cs_dblevel <<= 1;
+	//switch debuglevel forward one step if not set from outside
+	if(cfg->debuglvl == cs_dblevel) {
+		switch (cs_dblevel) {
+			case 0:
+				cs_dblevel = 1;
+				break;
+			case 32:
+				cs_dblevel = 63;
+				break;
+			case 63:
+				cs_dblevel = 0;
+				break;
+			default:
+				cs_dblevel <<= 1;
+		}
+	} else {
+		cs_dblevel = cfg->debuglvl;
 	}
-  if (master_pid==getpid()) 
-    for (i=0; i<CS_MAXPID && client[i].pid; i++)
-      client[i].dbglvl=cs_dblevel;
-  else
-    client[cs_idx].dbglvl=cs_dblevel;
-  cs_log("%sdebug_level=%d", (master_pid==getpid())?"all ":"",cs_dblevel);
+
+	cfg->debuglvl = cs_dblevel;
+
+	if (master_pid == getpid())
+		for (i=0; i<CS_MAXPID && client[i].pid; i++)
+			client[i].dbglvl = cs_dblevel;
+		else
+			client[cs_idx].dbglvl = cs_dblevel;
+		cs_log("%sdebug_level=%d", (master_pid == getpid())?"all ":"", cs_dblevel);
 }
 
 static void cs_card_info(int i)
 {
   uchar dummy[1]={0x00};
+
   for( i=1; i<CS_MAXPID; i++ )
     if( client[i].pid && client[i].typ=='r' && client[i].fd_m2c ){
       write_to_pipe(client[i].fd_m2c, PIP_ID_CIN, dummy, 1);
@@ -464,6 +463,9 @@ static void cs_child_chk(int i)
             case 'p': txt="proxy";  break;
             case 'r': txt="reader"; break;
             case 'n': txt="resolver"; break;
+#ifdef WEBIF
+            case 'h': txt="http";	break;
+#endif
           }
           cs_log("PANIC: %s lost !! (pid=%d)", txt, client[i].pid);
           cs_exit(1);
@@ -477,7 +479,7 @@ static void cs_child_chk(int i)
           uchar     ac_penalty=0;
           if( cfg->ac_enabled )
           {
-            strncpy(usr, client[i].usr, sizeof(usr)-1);
+            cs_strncpy(usr, client[i].usr, sizeof(usr));
             ac_idx = client[i].ac_idx;
             ac_limit = client[i].ac_limit;
             ac_penalty = client[i].ac_penalty;
@@ -562,6 +564,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
                      client[i].sidtabno=reader[ridx].sidtabno;
                      reader[ridx].fd=client[i].fd_m2c;
                      reader[ridx].cs_idx=i;
+                     reader[ridx].pid=pid;
                      if (reader[ridx].r_port)
                        cs_log("proxy started (pid=%d, server=%s)",
                               pid, reader[ridx].device);
@@ -599,11 +602,21 @@ int cs_fork(in_addr_t ip, in_port_t port)
             case 96: client[i].typ='a';
                      client[i].ip=client[0].ip;
                      strcpy(client[i].usr, client[0].usr);
-                     cs_log("anticascader started (pid=%d, delay=%d min)", 
+                     cs_log("anticascader started (pid=%d, delay=%d min)",
                             pid, cfg->ac_stime);
                      cdiff=i;
                      break;
 #endif
+
+#ifdef WEBIF
+            case 95: client[i].typ='h';		// http
+                     client[i].ip=client[0].ip;
+                     strcpy(client[i].usr, client[0].usr);
+                     cs_log("http started (pid=%d)",pid);
+                     cdiff=i;
+                     break;
+#endif
+
             default: client[i].typ='c';   // static client
                      client[i].ip=client[0].ip;
                      client[i].ctyp=port;
@@ -630,26 +643,26 @@ static void init_signal()
 {
   int i;
   for (i=1; i<NSIG; i++)
-    set_signal_handler(i, 3, cs_exit);
-  set_signal_handler(SIGWINCH, 1, SIG_IGN);
-//  set_signal_handler(SIGPIPE , 0, SIG_IGN);
-  set_signal_handler(SIGPIPE , 0, cs_sigpipe);
-//  set_signal_handler(SIGALRM , 0, cs_alarm);
-  set_signal_handler(SIGALRM , 0, cs_master_alarm);
-  set_signal_handler(SIGCHLD , 1, cs_child_chk);
-//  set_signal_handler(SIGHUP  , 1, cs_accounts_chk);
-  set_signal_handler(SIGHUP , 1, cs_sighup);
-  set_signal_handler(SIGUSR1, 1, cs_debug_level);
-  set_signal_handler(SIGUSR2, 1, cs_card_info);
-  set_signal_handler(SIGCONT, 1, SIG_IGN);
-  cs_log("signal handling initialized (type=%s)",
+		set_signal_handler(i, 3, cs_exit);
+		set_signal_handler(SIGWINCH, 1, SIG_IGN);
+		//  set_signal_handler(SIGPIPE , 0, SIG_IGN);
+		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
+		//  set_signal_handler(SIGALRM , 0, cs_alarm);
+		set_signal_handler(SIGALRM , 0, cs_master_alarm);
+		set_signal_handler(SIGCHLD , 1, cs_child_chk);
+		//  set_signal_handler(SIGHUP  , 1, cs_accounts_chk);
+		set_signal_handler(SIGHUP , 1, cs_sighup);
+		set_signal_handler(SIGUSR1, 1, cs_debug_level);
+		set_signal_handler(SIGUSR2, 1, cs_card_info);
+		set_signal_handler(SIGCONT, 1, SIG_IGN);
+		cs_log("signal handling initialized (type=%s)",
 #ifdef CS_SIGBSD
-         "bsd"
+		"bsd"
 #else
-         "sysv"
+		"sysv"
 #endif
-        );
-  return;
+		);
+	return;
 }
 
 static void init_shm()
@@ -668,7 +681,7 @@ static void init_shm()
   if (!write(shmid, buf, shmsize)) cs_exit(1);
   free(buf);
 
-  ecmcache=(struct s_ecm *)mmap((void *)0, (size_t) shmsize, 
+  ecmcache=(struct s_ecm *)mmap((void *)0, (size_t) shmsize,
                                 PROT_READ|PROT_WRITE, MAP_SHARED, shmid, 0);
 #else
   struct shmid_ds sd;
@@ -816,10 +829,10 @@ static int start_listener(struct s_module *ph, int port_idx)
   if( !is_udp )
   {
     ulong keep_alive = 1;
-    setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_KEEPALIVE, 
+    setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_KEEPALIVE,
                (void *)&keep_alive, sizeof(ulong));
   }
-  
+
   while (timeout--)
   {
     if (bind(ph->ptab->ports[port_idx].fd, (struct sockaddr *)&sad, sizeof (sad))<0)
@@ -995,7 +1008,7 @@ static void start_anticascader()
 
   use_ac_log=1;
   set_signal_handler(SIGHUP, 1, ac_init_stat);
-  
+
   ac_init_stat();
   while(1)
   {
@@ -1013,20 +1026,27 @@ static void start_anticascader()
 }
 #endif
 
+#ifdef WEBIF
+static void cs_http()
+{
+	http_srv();
+}
+#endif
+
 static void init_cardreader()
 {
-  for (ridx=0; ridx<CS_MAXREADER; ridx++)
-    if ((reader[ridx].device[0]) && (reader[ridx].enable == 1))
-      switch(cs_fork(0, 99))
-      {
-        case -1:
-          cs_exit(1);
-        case  0:
-          break;
-        default:
-          wait4master();
-          start_cardreader();
-      }
+	for (ridx=0; ridx<CS_MAXREADER; ridx++)
+		if ((reader[ridx].device[0]) && (reader[ridx].enable == 1))
+			switch(cs_fork(0, 99)) {
+				case -1:
+					cs_exit(1);
+				case  0:
+					break;
+				default:
+
+		wait4master();
+		start_cardreader();
+	}
 }
 
 static void init_service(int srv)
@@ -1054,6 +1074,9 @@ static void init_service(int srv)
         case 97: cs_logger();
 #endif
         case 98: start_resolver();
+#ifdef WEBIF
+        case 95: cs_http();
+#endif
       }
   }
 }
@@ -1076,11 +1099,11 @@ static void cs_fake_client(char *usr, int uniq, in_addr_t ip)
 {
     /* Uniq = 1: only one connection per user
      *
-     * Uniq = 2: set (new connected) user only to fake if source 
-     *           ip is different (e.g. for newcamd clients with 
+     * Uniq = 2: set (new connected) user only to fake if source
+     *           ip is different (e.g. for newcamd clients with
      *	         different CAID's -> Ports)
      *
-     * Uniq = 3: only one connection per user, but only the last 
+     * Uniq = 3: only one connection per user, but only the last
      *           login will survive (old mpcs behavior)
      *
      * Uniq = 4: set user only to fake if source ip is
@@ -1207,7 +1230,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
               else sprintf(t_msg[0], "au=%s", reader[client[cs_idx].au].label);
           }
         }
-      }  
+      }
       if(client[cs_idx].ncd_server)
       {
         cs_log("%s %s:%d-client %s%s (%s, %s)",
@@ -1215,14 +1238,14 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
              e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,
              cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port,
              client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
-             client[cs_idx].ip ? t_grant : t_grant+1,   
+             client[cs_idx].ip ? t_grant : t_grant+1,
              username(cs_idx), t_msg[rc]);
       }
       else
       {
         cs_log("%s %s-client %s%s (%s, %s)",
              client[cs_idx].crypted ? t_crypt : t_plain,
-             e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,          
+             e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,
              client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
              client[cs_idx].ip ? t_grant : t_grant+1,
              username(cs_idx), t_msg[rc]);
@@ -1281,8 +1304,8 @@ void store_logentry(char *txt)
   ptr[0]='\1';    // make username unusable
   ptr[1]='\0';
   if ((client[cs_idx].typ=='c') || (client[cs_idx].typ=='m'))
-    strncpy(ptr, client[cs_idx].usr, 31);
-  strncpy(ptr+32, txt, CS_LOGHISTSIZE-33);
+    cs_strncpy(ptr, client[cs_idx].usr, 31);
+  cs_strncpy(ptr+32, txt, CS_LOGHISTSIZE-33);
   *loghistidx=(*loghistidx+1) % CS_MAXLOGHIST;
 #endif
 }
@@ -1419,7 +1442,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	srvname[0] = 0;
 	for (this=cfg->srvid; this; this = this->next) {
 		if (this->srvid == er->srvid) {
-			strncpy(srvname, this->name, sizeof(srvname));
+			cs_strncpy(srvname, this->name, sizeof(srvname));
 			srvname[sizeof(srvname)-1] = 0;
 			for (i = 0; srvname[i]; i++)
 				if (srvname[i] == ' ') srvname[i] = '_';
@@ -1490,9 +1513,8 @@ int write_ecm_answer(int fd, ECM_REQUEST *er)
   /* CWL logging only if cwlogdir is set in config */
   if (cfg->cwlogdir != NULL)
     logCWtoFile(er);
+  }
 
-  }  
-  
   return(write_ecm_request(fd, er));
 }
 /*
@@ -1591,10 +1613,13 @@ int send_dcw(ECM_REQUEST *er)
   if (er->rcEx)
     snprintf(erEx, sizeof(erEx)-1, "rejected %s%s", stxtWh[er->rcEx>>4],
              stxtEx[er->rcEx&0xf]);
+
+  client[cs_idx].cwlastresptime = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
+
   cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s",
-         uname, er->caid, er->prid, er->srvid, er->l, lc, 
-         er->rcEx?erEx:stxt[er->rc],
-         1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm, sby);
+         uname, er->caid, er->prid, er->srvid, er->l, lc,
+         er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby);
+
 
   if(!client[cs_idx].ncd_server && client[cs_idx].autoau && er->rcEx==0)
   {
@@ -1659,6 +1684,7 @@ int send_dcw(ECM_REQUEST *er)
     	default: 
 		client[cs_idx].cwignored++;
   }
+
 #ifdef CS_ANTICASC
   ac_chk(er, 1);
 #endif
@@ -1848,18 +1874,19 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
       {
           // network and local cards
           default:
-          case 0:  
-              if (er->reader[i]&flag)
+          case 0:
+              if (er->reader[i]&flag){
                   write_ecm_request(reader[i].fd, er);
+              }
               break;
-              // only local cards  
-          case 1:  
+              // only local cards
+          case 1:
               if (!(reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag)
                       write_ecm_request(reader[i].fd, er);
               break;
               // only network
-          case 2:  
+          case 2:
               if ((reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag)
                       write_ecm_request(reader[i].fd, er);
@@ -1883,7 +1910,7 @@ void get_cw(ECM_REQUEST *er)
 	if( (er->caid & 0xFF00) == 0x600 && !er->chid )
 		er->chid = (er->ecm[6]<<8)|er->ecm[7];
 
-	// Quickfix for 0100:000065
+	// quickfix for 0100:000065
 	if (er->caid == 0x100 && er->prid == 0x65 && er->srvid == 0)
 		er->srvid = 0x0642;
 
@@ -2066,10 +2093,12 @@ void do_emm(EMM_PACKET *ep)
 //  if ((!reader[au].fd) || (reader[au].b_nano[ep->emm[3]])) // blocknano is obsolete
   if ((!reader[au].fd) ||       // reader has no fd
       (reader[au].caid[0]!=b2i(2,ep->caid)) ||    // wrong caid
-      (memcmp(reader[au].hexserial, ep->hexserial, 8))) {// wrong serial
-    return;
-	}
+      (memcmp(reader[au].hexserial, ep->hexserial, 8))) /* wrong serial*/  {
+	  client[cs_idx].emmnok++;
+	  return;
+  }
 
+  client[cs_idx].emmok++;
   ep->cidx=cs_idx;
   write_to_pipe(reader[au].fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
 }
@@ -2168,7 +2197,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
           {
               er->locals_done = 0;
               er->stage++;
-              request_cw(er, er->stage, cfg->preferlocalcards ? 1 : 0); 
+              request_cw(er, er->stage, cfg->preferlocalcards ? 1 : 0);
 
               tpc.millitm += (cfg->ctimeout-cfg->ftimeout);
               tpc.time += tpc.millitm / 1000;
@@ -2224,7 +2253,7 @@ int process_input(uchar *buf, int l, int timeout)
 
     rc=select(((pfd>fd_m2c)?pfd:fd_m2c)+1, &fds, 0, 0, chk_pending(tp));
     if (master_pid!=getppid()) cs_exit(0);
-    if (rc<0) 
+    if (rc<0)
     {
       if (errno==EINTR) continue;
       else return(0);
@@ -2301,7 +2330,7 @@ int main (int argc, char *argv[])
   //int      fd;                  /* socket descriptors */
   int      i, j, n;
   int      bg=0;
-  int      gfd; //nph, 
+  int      gfd; //nph,
   int      fdp[2];
   uchar    buf[2048];
   void (*mod_def[])(struct s_module *)=
@@ -2329,13 +2358,13 @@ int main (int argc, char *argv[])
     {
       case 'b': bg=1;
                 break;
-      case 'c': strncpy(cs_confdir, optarg, sizeof(cs_confdir)-1);
+      case 'c': cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir));
                 break;
       case 'd': cs_dblevel=atoi(optarg);
                 break;
       case 'm':
 #ifdef CS_NOSHM
-                strncpy(cs_memfile, optarg, sizeof(cs_memfile)-1);
+                cs_strncpy(cs_memfile, optarg, sizeof(cs_memfile));
                 break;
 #endif
       case 'h':
@@ -2345,6 +2374,7 @@ int main (int argc, char *argv[])
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
   init_shm();
   init_config();
+  cfg->debuglvl = cs_dblevel; // give static debuglevel to outer world
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {
     memset(&ph[i], 0, sizeof(struct s_module));
@@ -2352,8 +2382,7 @@ int main (int argc, char *argv[])
   }
 
   cs_log("auth size=%d", sizeof(struct s_auth));
-  //cs_log_config();
-  cfg->delay*=1000;
+
   init_sidtab();
   init_readerdb();
   init_userdb();
@@ -2397,20 +2426,24 @@ int main (int argc, char *argv[])
 
   for (i=0; i<CS_MAX_MOD; i++)
     if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )
-      for(j=0; j<ph[i].ptab->nports; j++) 
+      for(j=0; j<ph[i].ptab->nports; j++)
       {
         start_listener(&ph[i], j);
         if( ph[i].ptab->ports[j].fd+1>gfd )
           gfd=ph[i].ptab->ports[j].fd+1;
       }
-  
-  client[0].last=time((time_t *)0);
-  
+
+	//set time for server to now to avoid 0 in monitor/webif
+	client[0].last=time((time_t *)0);
+
   start_client_resolver();
   init_service(97); // logger
   init_service(98); // resolver
+#ifdef WEBIF
+  init_service(95); // http
+#endif
   init_cardreader();
-  
+
   if (cfg->waitforcards)
   {
       int card_init_done;
@@ -2428,13 +2461,13 @@ int main (int argc, char *argv[])
           alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1); 
       } while (!card_init_done);
       cs_log("init for all local cards done");
+
   }
-  
 
 #ifdef CS_ANTICASC
   if( !cfg->ac_enabled )
     cs_log("anti cascading disabled");
-  else 
+  else
   {
     init_ac();
     init_service(96);
@@ -2512,7 +2545,7 @@ int main (int argc, char *argv[])
                     pfd=fdp[0];
                     wait4master();
                     client[cs_idx].ctyp=i;
-                    client[cs_idx].port_idx=j; 
+                    client[cs_idx].port_idx=j;
                     client[cs_idx].udp_fd=ph[i].ptab->ports[j].fd;
                     client[cs_idx].udp_sa=cad;
                     if (ph[client[cs_idx].ctyp].watchdog)
@@ -2545,7 +2578,7 @@ int main (int argc, char *argv[])
                   wait4master();
                   client[cs_idx].ctyp=i;
                   client[cs_idx].udp_fd=pfd;
-                  client[cs_idx].port_idx=j; 
+                  client[cs_idx].port_idx=j;
                   if (ph[client[cs_idx].ctyp].watchdog)
                       alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
                   ph[i].s_handler();

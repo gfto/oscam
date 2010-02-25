@@ -259,7 +259,7 @@ int cryptoworks_card_init(ATR newatr)
     issuerid=cta_res[2];
   if (read_record(0xC0)>=16)
   {
-    strncpy(issuer, (const char *)cta_res+2, sizeof(issuer)-1);
+    cs_strncpy(issuer, (const char *)cta_res+2, sizeof(issuer));
     trim(issuer);
   }
   else
@@ -567,7 +567,7 @@ int cryptoworks_card_info(void)
     select_file(0x0e, 0x11);		// read provider name
     if (read_record(0xD6)>=16)
     {
-      strncpy(l_name+8, (const char *)cta_res+2, sizeof(l_name)-9);
+      cs_strncpy(l_name+8, (const char *)cta_res+2, sizeof(l_name)-9);
       l_name[sizeof(l_name)-1]=0;
       trim(l_name+8);
     }

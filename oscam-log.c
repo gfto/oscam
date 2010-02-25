@@ -35,13 +35,13 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(char*))
       *f=(FILE *)0;
       rc=rename(file, prev_log);
       if( rc!=0 ) {
-        fprintf(stderr, "rename(%s, %s) failed (errno=%d)\n", 
+        fprintf(stderr, "rename(%s, %s) failed (errno=%d)\n",
                 file, prev_log, errno);
       }
-      else if( pfinit(file)) 
+      else if( pfinit(file))
         cs_exit(0);
 
-	
+
     }
   }
 }
@@ -49,95 +49,87 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(char*))
 void cs_write_log(char *txt)
 {
 #ifdef CS_ANTICASC
-  if( use_ac_log && fpa )
-  {
-    switch_log(cfg->ac_logfile, &fpa, ac_init_log);
-    fprintf(fpa, "%s", txt);
-    fflush(fpa);
-  }
-  else
+	if( use_ac_log && fpa ) {
+		switch_log(cfg->ac_logfile, &fpa, ac_init_log);
+		fprintf(fpa, "%s", txt);
+		fflush(fpa);
+	}
+	else
 #endif
-  if (fp || use_stdout)
-  {
-    if( !use_stdout && !use_syslog) switch_log(cfg->logfile, &fp, cs_init_log);
-    fprintf(fp, "%s", txt);
-    fflush(fp);
-  }
+		if (fp || use_stdout) {
+			if( !use_stdout && !use_syslog)
+				switch_log(cfg->logfile, &fp, cs_init_log);
+			if (!cfg->disablelog){
+				fprintf(fp, "%s", txt);
+				fflush(fp);
+			}
+		}
 }
 
-int cs_init_log(char *file) 
+int cs_init_log(char *file)
 {
-  static char *head = ">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")";
+	static char *head = ">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")";
 
-  if (!strcmp(file, "stdout"))
-  {
-    use_stdout=1;
-    fp=stdout;
-    cs_log(head);
-    cs_log_config();
-    return(0);
-  }
-  if (strcmp(file, "syslog"))
-  {
-    if (!fp)
-    {
-      if ((fp=fopen(file, "a+"))<=(FILE *)0)
-      {
-        fp=(FILE *)0;
-        fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", file, errno);
-      }
-      else
-      {
-        time_t t;
-        char line[80];
-        memset(line, '-', sizeof(line));
-        line[(sizeof(line)/sizeof(char))-1]='\0';
-        time(&t);
-        fprintf(fp, "\n%s\n>> OSCam <<  cardserver started at %s%s\n", line, ctime(&t), line);
-        cs_log_config();
-      }
-    }
-    return(fp<=(FILE *)0);
-  }
-  else
-  {
-    openlog("oscam", LOG_NDELAY, LOG_DAEMON);
-    use_syslog=1;
-    cs_log(head);
-    cs_log_config();
-    return(0);
-  }
+	if (!strcmp(file, "stdout")) {
+		use_stdout = 1;
+		fp = stdout;
+		cs_log(head);
+		cs_log_config();
+		return(0);
+	}
+	if (strcmp(file, "syslog")) {
+		if (!fp) {
+			if ((fp = fopen(file, "a+")) <= (FILE *)0) {
+				fp = (FILE *)0;
+				fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", file, errno);
+			} else {
+				time_t t;
+				char line[80];
+				memset(line, '-', sizeof(line));
+				line[(sizeof(line)/sizeof(char)) - 1] = '\0';
+				time(&t);
+				if (!cfg->disablelog)
+					fprintf(fp, "\n%s\n>> OSCam <<  cardserver started at %s%s\n", line, ctime(&t), line);
+				cs_log_config();
+			}
+		}
+		return(fp <= (FILE *)0);
+	} else {
+		openlog("oscam", LOG_NDELAY, LOG_DAEMON);
+		use_syslog = 1;
+		cs_log(head);
+		cs_log_config();
+		return(0);
+	}
 }
 
 static char *get_log_header(int m, char *txt)
 {
-  if (m)
-  {
-    sprintf(txt, "%6d ", getpid());
-    if (cs_idx)
-      switch (client[cs_idx].typ)
-      {
-        case 'r':
-        case 'p': sprintf(txt+7, "%c%02d ", client[cs_idx].typ, cs_idx-1);
-                  break;
-        case 'm':
-        case 'c': sprintf(txt+7, "%c%02d ", client[cs_idx].typ, cs_idx-cdiff);
-                  break;
+	if(m) {
+		sprintf(txt, "%6d ", getpid());
+		if (cs_idx) {
+			switch (client[cs_idx].typ) {
+				case 'r':
+				case 'p':	sprintf(txt+7, "%c%02d ", client[cs_idx].typ, cs_idx - 1);
+							break;
+				case 'm':
+				case 'c':	sprintf(txt+7, "%c%02d ", client[cs_idx].typ, cs_idx - cdiff);
+							break;
 #ifdef CS_ANTICASC
-        case 'a':
-#endif        
-        case 'l':
-        case 'n': sprintf(txt+7, "%c   "  , client[cs_idx].typ);
-                  break;
-      }
-    else
-      strcpy(txt+7, "s   ");
-  }
-  else
-  {
-    sprintf(txt, "%-11.11s", "");
-  }
-  return(txt);
+				case 'a':
+#endif
+				case 'l':
+				case 'h':
+				case 'n':	sprintf(txt+7, "%c   "  , client[cs_idx].typ);
+							break;
+			}
+		} else {
+			strcpy(txt+7, "s   ");
+		}
+	} else {
+		sprintf(txt, "%-11.11s", "");
+	}
+	return(txt);
 }
 
 static void write_to_log(int flag, char *txt)
@@ -219,7 +211,7 @@ void cs_log(char *fmt,...)
   write_to_log(-1, txt);
 }
 
-void cs_close_log(void) 
+void cs_close_log(void)
 {
   if (use_stdout || use_syslog || !fp) return;
   fclose(fp);

@@ -10,6 +10,9 @@ Pointers
 - svn repository:
     svn co http://streamboard.gmc.to/svn/oscam/trunk
 
+- trac instance:
+    http://streamboard.gmc.to:8001/oscam
+
 - wiki:
     http://streamboard.gmc.to/oscam
 

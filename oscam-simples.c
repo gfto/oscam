@@ -359,67 +359,224 @@ void cs_setpriority(int prio)
 }
 #endif
 
-/* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
-void clear_sip(struct s_ip **sip){
-        struct s_ip *cip = *sip, *lip;
-        for (*sip = NULL; cip != NULL; cip = lip){
-                lip = cip->next;
-                free(cip);
-        }
+#ifdef WEBIF
+/* Helper function for urldecode.*/
+int x2i(int i){
+	i=toupper(i);
+	i = i - '0';
+	if(i > 9) i = i - 'A' + '9' + 1;
+	return i;
 }
 
-/* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
-void clear_ptab(struct s_ptab *ptab){
-        int i;
-        for (i = 0; i < ptab->nports; i++) {
-                ptab->ports[i].ftab.nfilts = 0;
-                ptab->ports[i].ftab.filts[0].nprids = 0;
-        }
-        ptab->nports = 0;
+/* Decodes values in a http url */
+void urldecode(char *s){
+	int c, c1, n;
+	char *s0,*t;
+	t = s0 = s;
+	n = strlen(s);
+	while(n >0){
+		c = *s++;
+		if(c == '+') c = ' ';
+		else if(c == '%' && n > 2){
+			c = *s++;
+			c1 = c;
+			c = *s++;
+			c = 16*x2i(c1) + x2i(c);
+			n -= 2;
+		}
+		*t++ = c;
+		n--;
+	}
+	*t = 0;
+}
+
+/* Helper function for urlencode.*/
+char to_hex(char code){
+	static char hex[] = "0123456789abcdef";
+	return hex[code & 15];
+}
+
+/* Encode values in a http url. Note: Be sure to free() the returned string after use */
+char *urlencode(char *str){
+	char *pstr = str, *buf = (char *) malloc((strlen(str) * 3 + 1) * sizeof(char)), *pbuf = buf;
+	while (*pstr) {
+		if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') *pbuf++ = *pstr;
+		else if (*pstr == ' ') *pbuf++ = '+';
+		else {
+			*pbuf++ = '%';
+			*pbuf++ = to_hex(*pstr >> 4);
+			*pbuf++ = to_hex(*pstr & 15);
+		}
+		++pstr;
+	}
+	*pbuf = '\0';
+	pbuf = (char *) malloc((strlen(buf) + 1) * sizeof(char));
+	strcpy(pbuf, buf);
+	free(buf);
+	return pbuf;
+}
+
+/* Converts a char array to a char array with hex values (needed for example for md5). The hex2ascii
+   array is a lookup table with the corresponding hex string on the array position of the integer representation
+   of the ascii value. Note that you need to "free" the resulting array after usage or you'll get a memory leak!*/
+char *char_to_hex(const unsigned char* p_array, unsigned int p_array_len, char hex2ascii[256][2]) {
+	unsigned char* str = (unsigned char*)malloc(p_array_len*2+1);
+	str[p_array_len*2] = '\0';
+	const unsigned char* p_end = p_array + p_array_len;
+	size_t pos=0;
+	const unsigned char* p;
+	for( p = p_array; p != p_end; p++, pos+=2 ) {
+		str[pos] = hex2ascii[*p][0];
+		str[pos+1] = hex2ascii[*p][1];
+	}
+	return (char*)str;
+}
+
+/* Creates a random string with specified length. Note that dst must be one larger than size to hold the trailing \0*/
+void create_rand_str(char *dst, int size){
+	static const char text[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	int i;
+	for (i = 0; i < size; ++i){
+		dst[i] = text[rand() % (sizeof(text) - 1)];
+	}
+	dst[i] = '\0';
+}
+#endif
+
+/* Converts a long value to a char array in bitwise representation.
+   Note that the result array MUST be at least 33 bit large and that
+   this function assumes long values to hold only values up to 32bits and to be positive!
+   the result of e.g. long 7 is 11100000000000000000000000000000 this means the array
+   is reversed */
+void long2bitchar(long value, char *result){
+	int pos;
+	for (pos=0;pos<32;pos++) result[pos]='0';
+	result[pos] = '\0';
+
+	pos=0;
+	while (value > 0 && pos < 32){
+		if(value % 2 == 1) result[pos]='1';
+		else result[pos]='0';
+		value=value / 2;
+		pos++;
+	}
+}
+
+/* Return 1 if the file exists, else 0 */
+int file_exists(const char * filename){
+	FILE *file;
+	if ((file = fopen(filename, "r"))){
+		fclose(file);
+		return 1;
+	}
+	return 0;
+}
+
+/* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
+void clear_sip(struct s_ip **sip){
+	struct s_ip *cip = *sip, *lip;
+	for (*sip = NULL; cip != NULL; cip = lip){
+		lip = cip->next;
+		free(cip);
+	}
 }
 
 /* Clears the s_ftab struct provided by setting nfilts and nprids to zero. */
 void clear_ftab(struct s_ftab *ftab){
-        int i, j;
-        for (i = 0; i < CS_MAXFILTERS; i++) {
-                ftab->filts[i].caid = 0;
-                for (j = 0; j < CS_MAXPROV; j++)
-                        ftab->filts[i].prids[j] = 0;
-                ftab->filts[i].nprids = 0;
-        }
-        ftab->nfilts = 0;
+	int i, j;
+	for (i = 0; i < CS_MAXFILTERS; i++) {
+		ftab->filts[i].caid = 0;
+		for (j = 0; j < CS_MAXPROV; j++)
+			ftab->filts[i].prids[j] = 0;
+		ftab->filts[i].nprids = 0;
+	}
+	ftab->nfilts = 0;
+}
+
+/* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
+void clear_ptab(struct s_ptab *ptab){
+	int i;
+	for (i = 0; i < ptab->nports; i++) {
+		ptab->ports[i].ftab.nfilts = 0;
+		ptab->ports[i].ftab.filts[0].nprids = 0;
+	}
+	ptab->nports = 0;
 }
 
 /* Clears given caidtab */
 void clear_caidtab(struct s_caidtab *ctab){
-        int i;
-        for (i = 0; i < CS_MAXCAIDTAB; i++) {
-                ctab->caid[i] = 0;
-                ctab->mask[i] = 0;
-                ctab->cmap[i] = 0;
-        }
+	int i;
+	for (i = 0; i < CS_MAXCAIDTAB; i++) {
+		ctab->caid[i] = 0;
+		ctab->mask[i] = 0;
+		ctab->cmap[i] = 0;
+	}
 }
 
 /* Clears given tuntab */
 void clear_tuntab(struct s_tuntab *ttab){
-        int i;
-        for (i = 0; i < CS_MAXTUNTAB; i++) {
-                ttab->bt_caidfrom[i] = 0;
-                ttab->bt_caidto[i] = 0;
-                ttab->bt_srvid[i] = 0;
-        }
+	int i;
+	for (i = 0; i < CS_MAXTUNTAB; i++) {
+		ttab->bt_caidfrom[i] = 0;
+		ttab->bt_caidto[i] = 0;
+		ttab->bt_srvid[i] = 0;
+	}
+}
+/* Overwrites destfile with tmpfile. If forceBakOverWrite = 0, the bakfile will not be overwritten if it exists, else it will be.*/
+int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int forceBakOverWrite){
+	if(forceBakOverWrite != 0 && file_exists(bakfile)){
+		if(remove(bakfile) < 0) cs_log("Error removing backup conf file %s (errno=%d)! Will try to proceed nonetheless...", bakfile, errno);
+	}
+	if(file_exists(bakfile)){
+		if(remove(destfile) < 0) {
+			cs_log("Error removing original conf file %s (errno=%d). Will maintain original one!", destfile, errno);
+			if(remove(tmpfile) < 0) cs_log("Error removing temp conf file %s (errno=%d)!", tmpfile, errno);
+			return(1);
+		}
+	} else {
+		if(rename(destfile, bakfile) < 0){
+			cs_log("Error renaming original conf file %s to %s (errno=%d). Will maintain original one!", destfile, bakfile, errno);
+			if(remove(tmpfile) < 0) cs_log("Error removing temp conf file %s (errno=%d)!", tmpfile, errno);
+			return(1);
+		}
+	}
+	if(rename(tmpfile, destfile) < 0){
+		cs_log("Error renaming new conf file %s to %s (errno=%d). The config will be missing upon next startup as this is non-recoverable!", tmpfile, destfile, errno);
+		return(1);
+	}
+	return(0);
 }
 
-/* 
-* Ordinary strncpy does not terminate the string if the source 
-* is exactly as long or longer as the specified size. This can raise security issues.
-* This function is a replacement which makes sure that a \0 is always added. 
-* num should be the real size of char array (do not subtract -1). 
-*/
+/* Replacement of fprintf which adds necessary whitespace to fill up the varname to a fixed width.
+   If varname is longer than varnameWidth, no whitespace is added*/
+void fprintf_conf(FILE *f, int varnameWidth, const char *varname, const char *fmtstring, ...){
+	int varlen = strlen(varname);
+	int max = (varlen > varnameWidth) ? varlen : varnameWidth;
+	char varnamebuf[max + 3];
+	char *ptr = varnamebuf + varlen;
+	va_list argptr;
+
+	strcpy(varnamebuf, varname);
+	while(varlen < varnameWidth){
+		ptr[0] = ' ';
+		++ptr;
+		++varlen;
+	}
+	strcpy(ptr, "= ");
+	fwrite(varnamebuf, sizeof(char), strlen(varnamebuf), f);
+	if(strlen(fmtstring) > 0){
+		va_start(argptr, fmtstring);
+		vfprintf(f, fmtstring, argptr);
+		va_end(argptr);
+	}
+}
+
+/* Ordinary strncpy does not terminate the string if the source is exactly as long or longer as the specified size. This can raise security issues.
+   This function is a replacement which makes sure that a \0 is always added. num should be the real size of char array (do not subtract -1). */
 void cs_strncpy(char * destination, const char * source, size_t num){
-        uint32 l, size = strlen(source);
-        if(size > num - 1) l = num - 1;
-        else l = size;
-        memcpy(destination, source, l);
-        destination[l] = '\0';
+	uint32 l, size = strlen(source);
+	if(size > num - 1) l = num - 1;
+	else l = size;
+	memcpy(destination, source, l);
+	destination[l] = '\0';
 }

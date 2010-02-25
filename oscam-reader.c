@@ -401,6 +401,7 @@ static void reader_get_ecm(ECM_REQUEST *er)
   write_ecm_answer(fd_c2m, er);
   reader_post_process();
   //if(reader[ridx].typ=='r') reader[ridx].qlen--;
+  //printf("queue: %d\n",reader[ridx].qlen);
 }
 
 static void reader_send_DCW(ECM_REQUEST *er)
@@ -455,6 +456,23 @@ static int reader_do_emm(EMM_PACKET *ep)
            username(ep->cidx), emmcache[i].type, ep->emm[2],
            i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
   }
+
+  //counting results
+  switch(rc){
+	  case 0:
+		  reader[ridx].emmerror++;
+		  break;
+	  case 1:
+		  reader[ridx].emmwritten++;
+		  break;
+	  case 2:
+		  reader[ridx].emmskipped++;
+		  break;
+	  case 3:
+		  reader[ridx].emmblocked++;
+		  break;
+  }
+
   return(rc);
 }
 
