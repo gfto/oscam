@@ -1818,10 +1818,12 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
+#ifdef CS_WITH_GBOX
 		if (!strcmp(value, "gbox")) {
 			rdr->typ = R_GBOX;
 			return;
 		}
+#endif
 
 		if (!strcmp(value, "cccam")) {
 			rdr->typ = R_CCCAM;
