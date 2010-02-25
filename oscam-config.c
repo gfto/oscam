@@ -2131,34 +2131,65 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 	strtolower(value);
 
 	if (!strcmp(token, "enable")) {
-		rdr->enable = atoi(value) ? 1 : 0; 
-		return;
+		if(strlen(value) == 0) {
+			rdr->enable = 0;
+			return;
+		} else {
+			rdr->enable = atoi(value) ? 1 : 0;
+			return;
+		}
 	}
 
 	if (!strcmp(token, "services")) {
-		chk_services(value, &rdr->sidtabok, &rdr->sidtabno);
-		return;
+		if(strlen(value) == 0) {
+			rdr->sidtabok = 0;
+			rdr->sidtabno = 0;
+			return;
+		} else {
+			chk_services(value, &rdr->sidtabok, &rdr->sidtabno);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "inactivitytimeout")) {
-		rdr->tcp_ito = atoi(value);
-		return;
+		if(strlen(value) == 0) {
+			rdr->tcp_ito = 0;
+			return;
+		} else {
+			rdr->tcp_ito = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "reconnecttimeout")) {
-		rdr->tcp_rto = atoi(value);
-		return;
+		if(strlen(value) == 0) {
+			rdr->tcp_rto = 0;
+			return;
+		} else {
+			rdr->tcp_rto = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "disableserverfilter")) {
-		rdr->ncd_disable_server_filt = atoi(value);
-		return;
+		if(strlen(value) == 0) {
+			rdr->ncd_disable_server_filt = 0;
+			return;
+		} else {
+			rdr->ncd_disable_server_filt = atoi(value);
+			return;
+		}
 	}
 
 	//FIXME workaround for Smargo until native mode works
 	if (!strcmp(token, "smargopatch")) {
-		rdr->smargopatch = atoi(value);
-		return;
+		if(strlen(value) == 0) {
+			rdr->smargopatch = 0;
+			return;
+		} else {
+			rdr->smargopatch = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "label")) {
