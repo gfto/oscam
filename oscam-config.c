@@ -543,7 +543,7 @@ void chk_t_ac(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in anticascading section not recognized",token);
+		cs_log("Warning: keyword '%s' in anticascading section not recognized",token);
 }
 #endif
 
@@ -659,7 +659,7 @@ void chk_t_camd33(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in camd33 section not recognized",token);
+		cs_log("Warning: keyword '%s' in camd33 section not recognized",token);
 }
 
 void chk_t_camd35(char *token, char *value)
@@ -695,7 +695,7 @@ void chk_t_camd35(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in camd35 section not recognized", token);
+		cs_log("Warning: keyword '%s' in camd35 section not recognized", token);
 }
 
 void chk_t_camd35_tcp(char *token, char *value)
@@ -731,7 +731,7 @@ void chk_t_camd35_tcp(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in camd35 tcp section not recognized", token);
+		cs_log("Warning: keyword '%s' in camd35 tcp section not recognized", token);
 }
 
 void chk_t_newcamd(char *token, char *value)
@@ -785,7 +785,7 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in newcamd section not recognized", token);
+		cs_log("Warning: keyword '%s' in newcamd section not recognized", token);
 }
 
 void chk_t_cccam(char *token, char *value)
@@ -832,7 +832,7 @@ void chk_t_cccam(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in cccam section not recognized",token);
+		cs_log("Warning: keyword '%s' in cccam section not recognized",token);
 }
 
 void chk_t_radegast(char *token, char *value)
@@ -873,7 +873,7 @@ void chk_t_radegast(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in radegast section not recognized", token);
+		cs_log("Warning: keyword '%s' in radegast section not recognized", token);
 }
 
 void chk_t_serial(char *token, char *value)
@@ -887,7 +887,7 @@ void chk_t_serial(char *token, char *value)
 		return;
 	}
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in serial section not recognized", token);
+		cs_log("Warning: keyword '%s' in serial section not recognized", token);
 }
 
 #ifdef CS_WITH_GBOX
@@ -912,7 +912,7 @@ static void chk_t_gbox(char *token, char *value)
     return;
   }
   if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized\n",token);
+    cs_log("Warning: keyword '%s' in gbox section not recognized\n",token);
 }
 #endif
 
@@ -927,7 +927,7 @@ void chk_t_dvbapi(char *token, char *value)
 	if (!strcmp(token, "ignore"))   { cs_strncpy(cfg->dvbapi_ignore, value, sizeof(cfg->dvbapi_ignore)); return; }
 
 	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
+		cs_log("Warning: keyword '%s' in dvbapi section not recognized\n",token);
 }
 #endif
 
@@ -950,7 +950,7 @@ static void chk_token(char *token, char *value, int tag)
 #ifdef HAVE_DVBAPI
 		case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
 #else
-		case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
+		case TAG_DVBAPI  : cs_log("Warning: OSCam compiled without DVB API support.\n"); break;
 #endif
 #ifdef CS_ANTICASC
 		case TAG_ANTICASC: chk_t_ac(token, value); break;
@@ -1296,7 +1296,7 @@ void chk_account(char *token, char *value, struct s_auth *account)
 #endif
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in account section not recognized",token);
+		cs_log("Warning: keyword '%s' in account section not recognized",token);
 }
 
 int init_userdb()
@@ -1440,7 +1440,7 @@ void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
   if (!strcmp(token, "ident")) { chk_entry4sidtab(value, sidtab, 1); return; }
   if (!strcmp(token, "srvid")) { chk_entry4sidtab(value, sidtab, 2); return; }
   if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in sidtab section not recognized\n",token);
+    cs_log("Warning: keyword '%s' in sidtab section not recognized\n",token);
 }
 
 int init_sidtab()
@@ -1699,23 +1699,43 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "fallback")) {
-		rdr->fallback = atoi(value) ? 1 : 0;
-		return;
+		if(strlen(value) == 0) {
+			rdr->fallback = 0;
+			return;
+		} else {
+			rdr->fallback = atoi(value) ? 1 : 0;
+			return;
+		}
 	}
 
 	if (!strcmp(token, "logport")) {
-		rdr->log_port = atoi(value);
-		return;
+		if(strlen(value) == 0) {
+			rdr->log_port = 0;
+			return;
+		} else {
+			rdr->log_port = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "caid")) {
-		chk_caidtab(value, &rdr->ctab);
-		return;
+		if(strlen(value) == 0) {
+			clear_caidtab(&rdr->ctab);
+			return;
+		} else {
+			chk_caidtab(value, &rdr->ctab);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "boxid")) {
-		rdr->boxid = a2i(value, 4);
-		return;
+		if(strlen(value) == 0) {
+			rdr->boxid = 0;
+			return;
+		} else {
+			rdr->boxid = a2i(value, 4);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "aeskey")) {
@@ -1765,13 +1785,23 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "mhz")) {
-		rdr->mhz = atoi(value);
-		return;
+		if(strlen(value) == 0) {
+			rdr->mhz = 0;
+			return;
+		} else {
+			rdr->mhz = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "cardmhz")) {
-		rdr->cardmhz = atoi(value);
-		return;
+		if(strlen(value) == 0) {
+			rdr->cardmhz = 0;
+			return;
+		} else {
+			rdr->cardmhz = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "protocol")) {
@@ -1850,19 +1880,29 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
-		fprintf(stderr, "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE\n",value);
+		cs_log( "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE",value);
 		rdr->typ = R_MOUSE;
 		return;
 	}
 
 	if (!strcmp(token, "loadbalanced")) {
-		rdr->loadbalanced = atoi(value);
-		return;
+		if(strlen(value) == 0) {
+			rdr->loadbalanced = 0;
+			return;
+		} else {
+			rdr->loadbalanced = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "ident")) {
-		chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid");
-		return;
+		if(strlen(value) == 0) {
+			clear_ftab(&rdr->ftab);
+			return;
+		} else {
+			chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid");
+			return;
+		}
 	}
 
 	if (!strcmp(token, "class")) {
@@ -1888,45 +1928,56 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "group"))
-	{
-		for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
-			int g;
-			g = atoi(ptr);
-			if ((g>0) && (g<33)) {
-				rdr->grp |= (1<<(g-1));
+	if (!strcmp(token, "group")) {
+		if(strlen(value) == 0) {
+			rdr->grp = 0;
+			return;
+		} else {
+			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+				int g;
+				g = atoi(ptr);
+				if ((g>0) && (g<33)) {
+					rdr->grp |= (1<<(g-1));
+				}
 			}
+			return;
 		}
-		return;
 	}
 
 	if (!strcmp(token, "emmcache")) {
-		for (i = 0, ptr = strtok(value, ","); (i < 3) && (ptr); ptr = strtok(NULL, ","), i++) {
-			switch(i)
-			{
-				case 0:
-					rdr->cachemm = atoi(ptr);
-					break;
+		if(strlen(value) == 0) {
+			rdr->cachemm = 0;
+			rdr->rewritemm = 0;
+			rdr->logemm = 0;
+			return;
+		} else {
+			for (i = 0, ptr = strtok(value, ","); (i < 3) && (ptr); ptr = strtok(NULL, ","), i++) {
+				switch(i)
+				{
+					case 0:
+						rdr->cachemm = atoi(ptr);
+						break;
 
-				case 1:
-					rdr->rewritemm = atoi(ptr);
-					break;
+					case 1:
+						rdr->rewritemm = atoi(ptr);
+						break;
 
-				case 2: rdr->logemm = atoi(ptr);
-					break;
+					case 2: rdr->logemm = atoi(ptr);
+						break;
+				}
 			}
-		}
 
-		if (rdr->rewritemm <= 0) {
-			fprintf(stderr, "Notice: Setting EMMCACHE to %i,1,%i instead of %i,%i,%i. ", 
-				rdr->cachemm, rdr->logemm,
-				rdr->cachemm, rdr->rewritemm,
-				rdr->logemm);
+			if (rdr->rewritemm <= 0) {
+				fprintf(stderr, "Notice: Setting EMMCACHE to %i,1,%i instead of %i,%i,%i. ",
+					rdr->cachemm, rdr->logemm,
+					rdr->cachemm, rdr->rewritemm,
+					rdr->logemm);
 
-			fprintf(stderr, "Zero or negative number of rewrites is silly\n");
-			rdr->rewritemm = 1;
+				fprintf(stderr, "Zero or negative number of rewrites is silly\n");
+				rdr->rewritemm = 1;
+			}
+			return;
 		}
-		return;
 	}
 
 	if (!strcmp(token, "blocknano")) {
