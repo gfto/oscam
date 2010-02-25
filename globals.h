@@ -748,7 +748,6 @@ extern void cs_sleepms(unsigned int);
 extern int bytes_available(int);
 extern void cs_setpriority(int);
 extern struct s_auth *find_user(char *);
-extern void long2bitchar(long value, char *result);
 extern void clear_sip(struct s_ip **sip);
 extern void clear_ptab(struct s_ptab *ptab);
 void clear_caidtab(struct s_caidtab *ctab);
