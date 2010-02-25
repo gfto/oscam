@@ -1580,9 +1580,11 @@ int send_dcw(ECM_REQUEST *er)
     snprintf(uname,sizeof(uname)-1, "%s", username(cs_idx));
   if (er->rc==0)
   {
+#ifdef CS_WITH_GBOX
     if(reader[er->reader[0]].typ==R_GBOX)
       snprintf(sby, sizeof(sby)-1, " by %s(%04X)", reader[er->reader[0]].label,er->gbxCWFrom);
     else
+#endif
       snprintf(sby, sizeof(sby)-1, " by %s", reader[er->reader[0]].label);
   }
   if (er->rc<4) er->rcEx=0;

@@ -464,22 +464,23 @@ static int reader_listen(int fd1, int fd2)
   int is_tcp=(reader[ridx].ph.type==MOD_CONN_TCP);
   fd_set fds;
   struct timeval tv;
- 
-  if(reader[ridx].typ==R_GBOX){
-    struct timeb tpe;
-  int x;
-  ulong ms;
-  cs_ftime(&tpe);
-  for(x=0;x<CS_MAXPENDING;x++){
-    ms=1000*(tpe.time-ecmtask[x].tps.time)+tpe.millitm-ecmtask[x].tps.millitm;
-    if(ecmtask[x].rc == 10 && ms > cfg->ctimeout && ridx == ecmtask[x].gbxRidx){
-      //cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",ecmtask[x].rc,ecmtask[x].idx,x,ridx,ecmtask[x].gbxRidx);
-      ecmtask[x].rc=5;
-      send_dcw(&ecmtask[x]);
 
+#ifdef CS_WITH_GBOX 
+  if(reader[ridx].typ==R_GBOX) {
+    struct timeb tpe;
+    int x;
+    ulong ms;
+    cs_ftime(&tpe);
+    for(x=0;x<CS_MAXPENDING;x++){
+      ms=1000*(tpe.time-ecmtask[x].tps.time)+tpe.millitm-ecmtask[x].tps.millitm;
+      if(ecmtask[x].rc == 10 && ms > cfg->ctimeout && ridx == ecmtask[x].gbxRidx) {
+        //cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",ecmtask[x].rc,ecmtask[x].idx,x,ridx,ecmtask[x].gbxRidx);
+        ecmtask[x].rc=5;
+        send_dcw(&ecmtask[x]);
+      }
     }
   }
-  }
+#endif
   
   if (master_pid!=getppid()) cs_exit(0);
   tcp_toflag=(fd2 && is_tcp && reader[ridx].tcp_ito && reader[ridx].tcp_connected);
