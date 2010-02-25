@@ -3,6 +3,8 @@
 #  include "oscam-boxkeys.np"
 #endif
 
+#define CONFVARWIDTH 20
+
 static char *cs_conf="oscam.conf";
 static char *cs_user="oscam.user";
 static char *cs_srvr="oscam.server";
@@ -19,35 +21,35 @@ static char token[4096];
 
 typedef enum cs_proto_type
 {
-  TAG_GLOBAL,   // must be first !
-  TAG_MONITOR,  // monitor
-  TAG_CAMD33,   // camd 3.3x
-  TAG_CAMD35,   // camd 3.5x UDP
-  TAG_NEWCAMD,  // newcamd
-  TAG_RADEGAST, // radegast
-  TAG_SERIAL,   // serial (static)
-  TAG_CS357X,   // camd 3.5x UDP
-  TAG_CS378X,    // camd 3.5x TCP
-#ifdef CS_WITH_GBOX   
-  TAG_GBOX, // gbox
+	TAG_GLOBAL,		// must be first !
+	TAG_MONITOR,	// monitor
+	TAG_CAMD33,		// camd 3.3x
+	TAG_CAMD35,		// camd 3.5x UDP
+	TAG_NEWCAMD,	// newcamd
+	TAG_RADEGAST,	// radegast
+	TAG_SERIAL,		// serial (static)
+	TAG_CS357X,		// camd 3.5x UDP
+	TAG_CS378X,		// camd 3.5x TCP
+#ifdef CS_WITH_GBOX
+	TAG_GBOX,		// gbox
 #endif
-  TAG_CCCAM,  // cccam
-  TAG_DVBAPI
+	TAG_CCCAM,		// cccam
+	TAG_DVBAPI
 #ifdef CS_ANTICASC
-  ,TAG_ANTICASC // anti-cascading
+	,TAG_ANTICASC	// anti-cascading
 #endif
 } cs_proto_type_t;
 
-static char *cctag[]={"global", "monitor", "camd33", "camd35", 
-                      "newcamd", "radegast", "serial", "cs357x", "cs378x",
-#ifdef CS_WITH_GBOX  
+static char *cctag[]={"global", "monitor", "camd33", "camd35",
+						"newcamd", "radegast", "serial", "cs357x", "cs378x",
+#ifdef CS_WITH_GBOX
 		      "gbox",
 #endif
-		      "cccam", "dvbapi",
+						"cccam", "dvbapi",
 #ifdef CS_ANTICASC
                       "anticasc",
 #endif
-                       NULL};
+                      NULL};
 
 #ifdef DEBUG_SIDTAB
 static void show_sidtab(struct s_sidtab *sidtab)
@@ -75,499 +77,807 @@ static void show_sidtab(struct s_sidtab *sidtab)
 
 void chk_iprange(char *value, struct s_ip **base)
 {
-  int i = 0;
-  char *ptr1, *ptr2;
-  struct s_ip *lip, *cip;
+	int i = 0;
+	char *ptr1, *ptr2;
+	struct s_ip *lip, *cip;
 
-  for (cip=lip=*base; cip; cip=cip->next)
-    lip=cip;
-  if (!(cip=malloc(sizeof(struct s_ip))))
-  {
-    fprintf(stderr, "Error allocating memory (errno=%d)\n", errno);
-    exit(1);
-  }
-  if (*base)
-    lip->next=cip;
-  else
-    *base=cip;
+	for (cip=lip=*base; cip; cip=cip->next)
+		lip = cip;
+	if (!(cip=malloc(sizeof(struct s_ip)))) {
+		fprintf(stderr, "Error allocating memory (errno=%d)\n", errno);
+		exit(1);
+	}
+	if (*base)
+		lip->next = cip;
+	else
+		*base = cip;
 
-  memset(cip, 0, sizeof(struct s_ip));
-  for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ","))
-  {
-  	if (i == 0) ++i;
-  	else {
-  		if (!(cip=malloc(sizeof(struct s_ip)))){
-    		fprintf(stderr, "Error allocating memory (errno=%d)\n", errno);
-    		exit(1);
-  		}
-  		lip->next = cip;
-  		memset(cip, 0, sizeof(struct s_ip));
-  	}
-    if( (ptr2=strchr(trim(ptr1), '-')) )
-    {
-      *ptr2++='\0';
-      cip->ip[0]=cs_inet_addr(trim(ptr1));
-      cip->ip[1]=cs_inet_addr(trim(ptr2));
-    }
-    else
-      cip->ip[0]=cip->ip[1]=cs_inet_addr(ptr1);
-    lip = cip;
-  }
+	memset(cip, 0, sizeof(struct s_ip));
+	for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ",")) {
+			if (i == 0)
+				++i;
+		else {
+			if (!(cip=malloc(sizeof(struct s_ip)))) {
+				fprintf(stderr, "Error allocating memory (errno=%d)\n", errno);
+				exit(1);
+			}
+			lip->next = cip;
+			memset(cip, 0, sizeof(struct s_ip));
+		}
+
+		if( (ptr2=strchr(trim(ptr1), '-')) ) {
+			*ptr2++ ='\0';
+			cip->ip[0]=cs_inet_addr(trim(ptr1));
+			cip->ip[1]=cs_inet_addr(trim(ptr2));
+		} else {
+			cip->ip[0]=cip->ip[1]=cs_inet_addr(ptr1);
+		}
+		lip = cip;
+	}
 }
 
 void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 {
-  int i;
-  char *ptr1, *ptr2, *ptr3;
-  for (i=0, ptr1=strtok(caidasc, ","); (i<CS_MAXCAIDTAB) && (ptr1); ptr1=strtok(NULL, ","))
-  {
-    ulong caid, mask, cmap;
-    if( (ptr3=strchr(trim(ptr1), ':')) )
-      *ptr3++='\0';
-    else
-      ptr3="";
-    if( (ptr2=strchr(trim(ptr1), '&')) )
-      *ptr2++='\0';
-    else
-      ptr2="";
-    if (((caid=a2i(ptr1, 2))|(mask=a2i(ptr2,-2))|(cmap=a2i(ptr3, 2))) < 0x10000)
-    {
-      ctab->caid[i]=caid;
-      ctab->mask[i]=mask;
-      ctab->cmap[i++]=cmap;
-    }
-//    else
-//      cs_log("WARNING: wrong CAID in %s -> ignored", cs_user);
-  }
+	int i;
+	char *ptr1, *ptr2, *ptr3;
+
+	for (i = 0, ptr1 = strtok(caidasc, ","); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok(NULL, ",")) {
+		ulong caid, mask, cmap;
+		if( (ptr3 = strchr(trim(ptr1), ':')) )
+			*ptr3++ = '\0';
+		else
+			ptr3 = "";
+
+		if( (ptr2 = strchr(trim(ptr1), '&')) )
+			*ptr2++ = '\0';
+		else
+			ptr2 = "";
+
+		if (((caid = a2i(ptr1, 2)) | (mask = a2i(ptr2,-2)) | (cmap = a2i(ptr3, 2))) < 0x10000) {
+			ctab->caid[i] = caid;
+			ctab->mask[i] = mask;
+			ctab->cmap[i++] = cmap;
+		}
+	}
 }
 
 void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
-  int i;
-  char *ptr1, *ptr2, *ptr3;
-  for (i=0, ptr1=strtok(tunasc, ","); (i<CS_MAXTUNTAB) && (ptr1); ptr1=strtok(NULL, ","))
-  {
-    ulong bt_caidfrom, bt_caidto, bt_srvid;
-    if( (ptr3=strchr(trim(ptr1), ':')) )
-      *ptr3++='\0';
-    else
-      ptr3="";
-    if( (ptr2=strchr(trim(ptr1), '.')) )
-      *ptr2++='\0';
-    else
-      ptr2="";
-    if ((bt_caidfrom=a2i(ptr1, 2))|(bt_srvid=a2i(ptr2,-2))|(bt_caidto=a2i(ptr3, 2)))
-    {
-      ttab->bt_caidfrom[i]=bt_caidfrom;
-      ttab->bt_caidto[i]=bt_caidto;
-      ttab->bt_srvid[i++]=bt_srvid;
-    }
-//    else
-//      cs_log("WARNING: wrong Betatunnel in %s -> ignored", cs_user);
-  }
+	int i;
+	char *ptr1, *ptr2, *ptr3;
+
+	for (i = 0, ptr1 = strtok(tunasc, ","); (i < CS_MAXTUNTAB) && (ptr1); ptr1 = strtok(NULL, ",")) {
+		ulong bt_caidfrom, bt_caidto, bt_srvid;
+		if( (ptr3 = strchr(trim(ptr1), ':')) )
+			*ptr3++ = '\0';
+		else
+			ptr3 = "";
+
+		if( (ptr2 = strchr(trim(ptr1), '.')) )
+			*ptr2++ = '\0';
+		else
+			ptr2 = "";
+
+		if ((bt_caidfrom = a2i(ptr1, 2)) | (bt_srvid = a2i(ptr2,-2)) | (bt_caidto = a2i(ptr3, 2))) {
+			ttab->bt_caidfrom[i] = bt_caidfrom;
+			ttab->bt_caidto[i] = bt_caidto;
+			ttab->bt_srvid[i++] = bt_srvid;
+		}
+	}
 }
 
 void chk_services(char *labels, ulong *sidok, ulong *sidno)
 {
-  int i;
-  char *ptr;
-  SIDTAB *sidtab;
-  *sidok=*sidno=0;
-  for (ptr=strtok(labels, ","); ptr; ptr=strtok(NULL, ","))
-    for (trim(ptr), i=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, i++)
-    {
-      if (!strcmp(sidtab->label, ptr)) *sidok|=(1<<i);
-      if ((ptr[0]=='!') && (!strcmp(sidtab->label, ptr+1))) *sidno|=(1<<i);
-    }
+	int i;
+	char *ptr;
+	SIDTAB *sidtab;
+	*sidok = *sidno = 0;
+	for (ptr=strtok(labels, ","); ptr; ptr=strtok(NULL, ",")) {
+		for (trim(ptr), i = 0, sidtab = cfg->sidtab; sidtab; sidtab = sidtab->next, i++) {
+			if (!strcmp(sidtab->label, ptr)) *sidok|=(1<<i);
+			if ((ptr[0]=='!') && (!strcmp(sidtab->label, ptr+1))) *sidno|=(1<<i);
+		}
+	}
 }
 
 void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName)
 {
-  int i,j;
-  char *ptr1,*ptr2,*ptr3;
-  char *ptr[CS_MAXFILTERS] = {0};
-  
-  memset(ftab, 0, sizeof(FTAB));
-  for( i=0, ptr1=strtok(zFilterAsc, ";"); (i<CS_MAXFILTERS) && (ptr1); ptr1=strtok(NULL, ";"), i++ )
-  {
-    //cs_log("ptr1=%s", ptr1);
-    ptr[i] = ptr1;
-    if( (ptr2=strchr(trim(ptr1), ':')) ) 
-    {
-      //cs_log("ptr2=%s", ptr2);
-      *ptr2++='\0';
-      //cs_log("ptr2=%s", ptr2);
-      ftab->filts[i].caid = (ushort)a2i(ptr1, 4);
-      //cs_log("caid=%04X", ftab->filts[i].caid);
-      ptr[i] = ptr2;
-    }
-    else if (zFiltName && zFiltName[0]=='c')
-    {
-      cs_log("PANIC: CAID field not found in CHID parameter!");
-      cs_exit(1);
-    }
-    ftab->nfilts++;
-  }
+	int i, j;
+	char *ptr1, *ptr2, *ptr3;
+	char *ptr[CS_MAXFILTERS] = {0};
 
-  if( ftab->nfilts ) cs_debug("%s '%s' %s filter(s):", zType, zName, zFiltName);
-  for( i=0; i<ftab->nfilts; i++ ) 
-  {
-    cs_debug("CAID #%d: %04X", i, ftab->filts[i].caid);
-    for( j=0, ptr3=strtok(ptr[i], ","); (j<CS_MAXPROV) && (ptr3); ptr3=strtok(NULL, ","), j++ )
-    {
-      ftab->filts[i].prids[j] = a2i(ptr3,6);
-      ftab->filts[i].nprids++;
-      cs_debug("%s #%d: %06X", zFiltName, j, ftab->filts[i].prids[j]);
-    }
-  }
-  //cs_log("exit chk_ftab");
+	memset(ftab, 0, sizeof(FTAB));
+	for( i = 0, ptr1 = strtok(zFilterAsc, ";"); (i < CS_MAXFILTERS) && (ptr1); ptr1 = strtok(NULL, ";"), i++ ) {
+		ptr[i] = ptr1;
+		if( (ptr2 = strchr(trim(ptr1), ':')) ) {
+			*ptr2++ ='\0';
+			ftab->filts[i].caid = (ushort)a2i(ptr1, 4);
+			ptr[i] = ptr2;
+		}
+		else if (zFiltName && zFiltName[0] == 'c') {
+			cs_log("PANIC: CAID field not found in CHID parameter!");
+			cs_exit(1);
+		}
+		ftab->nfilts++;
+	}
+
+	if( ftab->nfilts ) cs_debug("%s '%s' %s filter(s):", zType, zName, zFiltName);
+	for( i = 0; i < ftab->nfilts; i++ ) {
+		cs_debug("CAID #%d: %04X", i, ftab->filts[i].caid);
+		for( j = 0, ptr3 = strtok(ptr[i], ","); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok(NULL, ","), j++ ) {
+			ftab->filts[i].prids[j] = a2i(ptr3,6);
+			ftab->filts[i].nprids++;
+			cs_debug("%s #%d: %06X", zFiltName, j, ftab->filts[i].prids[j]);
+		}
+	}
 }
 
 void chk_cltab(char *classasc, CLASSTAB *clstab)
 {
-  int i;
-  char *ptr1;
-  for( i=0, ptr1=strtok(classasc, ","); (i<CS_MAXCAIDTAB) && (ptr1); ptr1=strtok(NULL, ",") )
-  {
-    ptr1=trim(ptr1);
-    if( ptr1[0] == '!' )
-      clstab->bclass[clstab->bn++] = (uchar)a2i(ptr1+1, 2);
-    else
-      clstab->aclass[clstab->an++] = (uchar)a2i(ptr1, 2);
-  }
+	int i;
+	char *ptr1;
+	for( i = 0, ptr1 = strtok(classasc, ","); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok(NULL, ",") ) {
+		ptr1 = trim(ptr1);
+		if( ptr1[0] == '!' )
+			clstab->bclass[clstab->bn++] = (uchar)a2i(ptr1+1, 2);
+		else
+			clstab->aclass[clstab->an++] = (uchar)a2i(ptr1, 2);
+	}
 }
 
 void chk_port_tab(char *portasc, PTAB *ptab)
 {
-  int i,j,nfilts,ifilt,iport;
-  char *ptr1,*ptr2,*ptr3;
-  char *ptr[CS_MAXPORTS] = {0};
-  int  port[CS_MAXPORTS] = {0};
-  int previous_nports = ptab->nports;
+	int i, j, nfilts, ifilt, iport;
+	char *ptr1, *ptr2, *ptr3;
+	char *ptr[CS_MAXPORTS] = {0};
+	int  port[CS_MAXPORTS] = {0};
+	int previous_nports = ptab->nports;
 
-  for (nfilts=i=previous_nports, ptr1=strtok(portasc, ";"); (i<CS_MAXCAIDTAB) && (ptr1); ptr1=strtok(NULL, ";"), i++)
-  {
-    ptr[i] = ptr1;
-    if( (ptr2=strchr(trim(ptr1), '@')) ) 
-    {
-      *ptr2++='\0';
-      ptab->ports[i].s_port = atoi(ptr1);
-      ptr[i] = ptr2;
-      port[i] = ptab->ports[i].s_port;
-      ptab->nports++;
-    }
-    nfilts++;
-  }
+	for (nfilts = i = previous_nports, ptr1 = strtok(portasc, ";"); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok(NULL, ";"), i++) {
+		ptr[i] = ptr1;
+		if( (ptr2=strchr(trim(ptr1), '@')) ) {
+			*ptr2++ ='\0';
+			ptab->ports[i].s_port = atoi(ptr1);
+			ptr[i] = ptr2;
+			port[i] = ptab->ports[i].s_port;
+			ptab->nports++;
+		}
+		nfilts++;
+	}
 
-  if( nfilts==1 && strlen(portasc)<6 && ptab->ports[0].s_port == 0 ) {
-    ptab->ports[0].s_port = atoi(portasc);
-    ptab->nports = 1;
-  }
+	if( nfilts == 1 && strlen(portasc) < 6 && ptab->ports[0].s_port == 0 ) {
+		ptab->ports[0].s_port = atoi(portasc);
+		ptab->nports = 1;
+	}
 
-  iport=ifilt = previous_nports;
-  for (i=previous_nports; i<nfilts; i++) 
-  {
-    if( port[i]!=0 ) iport = i;
-    for (j=0, ptr3=strtok(ptr[i], ","); (j<CS_MAXPROV) && (ptr3); ptr3=strtok(NULL, ","), j++)
-    {
-      if( (ptr2=strchr(trim(ptr3), ':')) ) 
-      {
-        *ptr2++='\0';
-        ptab->ports[iport].ftab.nfilts++;
-        ifilt = ptab->ports[iport].ftab.nfilts-1;
-        ptab->ports[iport].ftab.filts[ifilt].caid = (ushort)a2i(ptr3, 4);
-        ptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
-      } else {
-        ptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr3, 6);
-      }
-      ptab->ports[iport].ftab.filts[ifilt].nprids++;
-    }
-  }
+	iport = ifilt = previous_nports;
+	for (i=previous_nports; i<nfilts; i++) {
+		if( port[i] != 0 )
+			iport = i;
+		for (j = 0, ptr3 = strtok(ptr[i], ","); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok(NULL, ","), j++) {
+			if( (ptr2=strchr(trim(ptr3), ':')) ) {
+				*ptr2++='\0';
+				ptab->ports[iport].ftab.nfilts++;
+				ifilt = ptab->ports[iport].ftab.nfilts-1;
+				ptab->ports[iport].ftab.filts[ifilt].caid = (ushort)a2i(ptr3, 4);
+				ptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
+			} else {
+				ptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr3, 6);
+			}
+			ptab->ports[iport].ftab.filts[ifilt].nprids++;
+		}
+	}
 }
-
-#ifdef NOTUSED
-static void chk_srvip(char *value, in_addr_t *ip)
-{
-  int i;
-  char *ptr;
-  for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
-    if (i<8) ip[i++]=inet_addr(ptr);
-}
-#endif
 
 void chk_t_global(char *token, char *value)
 {
-  if (!strcmp(token, "serverip")) { cfg->srvip=inet_addr(value); return; }
-  if (!strcmp(token, "logfile")) {
-          if (cfg->logfile != NULL) {
-                  free(cfg->logfile);
-                  cfg->logfile = NULL;
-          }
-          if (value[0])
-                  asprintf(&(cfg->logfile), "%s", value);
-          return;
-  }
-  if (!strcmp(token, "pidfile")) {
-          if (cfg->pidfile != NULL) {
-                  free(cfg->pidfile);
-                  cfg->pidfile = NULL;
-          }
-          if (value[0])
-                  asprintf(&(cfg->pidfile), "%s", value);
-          return;
-  }
-  if (!strcmp(token, "usrfile")) {
-          if (cfg->usrfile != NULL) {
-                  free(cfg->usrfile);
-                  cfg->usrfile = NULL;
-          }
-          if (value[0])
-                  asprintf(&(cfg->usrfile), "%s", value);
-          return;
-  }
-  if (!strcmp(token, "cwlogdir")) {
-          if (cfg->cwlogdir != NULL) {
-                  free(cfg->cwlogdir);
-                  cfg->cwlogdir = NULL;
-          }
-          if (value[0])
-                  asprintf(&(cfg->cwlogdir), "%s", value);
-          return;
-  }
-  if (!strcmp(token, "clienttimeout")) 
-  {
-      cfg->ctimeout = atoi(value);
-      if (cfg->ctimeout < 100)
-          cfg->ctimeout *= 1000;
-      return;
-  }
-  if (!strcmp(token, "fallbacktimeout")) 
-  {
-      cfg->ftimeout = atoi(value);
-      if (cfg->ftimeout < 100)
-          cfg->ftimeout *= 1000;
-      return;
-  }
+	if (!strcmp(token, "serverip")) {
+		if (strlen(value) == 0) {
+			cfg->srvip = 0;
+			return;
+		} else {
+			cfg->srvip=inet_addr(value);
+			return;
+		}
+	}
 
-  if (!strcmp(token, "clientmaxidle")) { cfg->cmaxidle=atoi(value); return; }
-  if (!strcmp(token, "cachedelay")) { cfg->delay=atoi(value); return; }
-  if (!strcmp(token, "bindwait")) { cfg->bindwait=atoi(value); return; }
-  if (!strcmp(token, "netprio")) { cfg->netprio=atoi(value); return; }
-  if (!strcmp(token, "resolvedelay")) { cfg->resolvedelay=atoi(value); return; }
-  if (!strcmp(token, "sleep")) { cfg->tosleep=atoi(value); return; }
-  if (!strcmp(token, "unlockparental")) { cfg->ulparent=atoi(value); return; }
-  if (!strcmp(token, "nice"))
-  {
-    cfg->nice=atoi(value);
-    if ((cfg->nice<-20) || (cfg->nice>20)) cfg->nice=99;
-    if (cfg->nice!=99) cs_setpriority(cfg->nice);  // ignore errors
-    return;
-  }
-  if (!strcmp(token, "serialreadertimeout")) 
-  {
-    if (cfg->srtimeout < 100)
-      cfg->srtimeout = atoi(value) * 1000;
-    else
-      cfg->srtimeout = atoi(value);
-    if( cfg->srtimeout <=0 )
-      cfg->srtimeout=1500;
-    return;
-  }
-  if (!strcmp(token, "maxlogsize")) 
-  {
-    cfg->max_log_size=atoi(value);
-    if( cfg->max_log_size <=10 )
-      cfg->max_log_size=10;
-    return;
-  }
-  if( !strcmp(token, "waitforcards")) { cfg->waitforcards = atoi(value); return; }
-  if( !strcmp(token, "preferlocalcards")) { cfg->preferlocalcards = atoi(value); return; }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n",token);
+	if (!strcmp(token, "logfile")) {
+		if (cfg->logfile != NULL) {
+			free(cfg->logfile);
+			cfg->logfile = NULL;
+		}
+		if (strlen(value) > 0)
+			asprintf(&(cfg->logfile), "%s", value);
+		return;
+	}
+
+	if (!strcmp(token, "pidfile")) {
+		if (cfg->pidfile != NULL) {
+			free(cfg->pidfile);
+			cfg->pidfile = NULL;
+		}
+		if (strlen(value) > 0)
+			asprintf(&(cfg->pidfile), "%s", value);
+		return;
+	}
+
+	if (!strcmp(token, "usrfile")) {
+		if (cfg->usrfile != NULL) {
+			free(cfg->usrfile);
+			cfg->usrfile = NULL;
+		}
+		if (strlen(value) > 0)
+			asprintf(&(cfg->usrfile), "%s", value);
+		return;
+	}
+
+	if (!strcmp(token, "cwlogdir")) {
+		if (cfg->cwlogdir != NULL) {
+			free(cfg->cwlogdir);
+			cfg->cwlogdir = NULL;
+		}
+		if (strlen(value) > 0)
+			asprintf(&(cfg->cwlogdir), "%s", value);
+		return;
+	}
+
+	if (!strcmp(token, "clienttimeout")) {
+		if (strlen(value) == 0) {
+			cfg->ctimeout = CS_CLIENT_TIMEOUT;
+			return;
+		} else {
+			cfg->ctimeout = atoi(value);
+			if (cfg->ctimeout < 100)
+				cfg->ctimeout *= 1000;
+			return;
+		}
+	}
+
+	if (!strcmp(token, "fallbacktimeout")) {
+		if (strlen(value) == 0) {
+			cfg->ftimeout = CS_CLIENT_TIMEOUT;
+			return;
+		} else {
+			cfg->ftimeout = atoi(value);
+			if (cfg->ftimeout < 100)
+				cfg->ftimeout *= 1000;
+			return;
+		}
+	}
+
+	if (!strcmp(token, "clientmaxidle")) {
+		if (strlen(value) == 0) {
+			cfg->cmaxidle = CS_CLIENT_MAXIDLE;
+			return;
+		} else {
+			cfg->cmaxidle = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "cachedelay")) {
+		if (strlen(value) == 0) {
+			cfg->delay = CS_DELAY;
+			return;
+		} else {
+			cfg->delay = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "bindwait")) {
+		if (strlen(value) == 0) {
+			cfg->bindwait = CS_BIND_TIMEOUT;
+			return;
+		} else {
+			cfg->bindwait = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "netprio")) {
+		if (strlen(value) == 0) {
+			cfg->netprio = 0;
+			return;
+		} else {
+			cfg->netprio = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "resolvedelay")) {
+		if (strlen(value) == 0) {
+			cfg->resolvedelay = CS_RESOLVE_DELAY;
+			return;
+		} else {
+			cfg->resolvedelay = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "sleep")) {
+		if (strlen(value) == 0) {
+			cfg->tosleep = 0;
+			return;
+		} else {
+			cfg->tosleep = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "unlockparental")) {
+		if (strlen(value) == 0) {
+			cfg->ulparent = 0;
+			return;
+		} else {
+			cfg->ulparent = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "nice")) {
+		if (strlen(value) == 0) {
+			cfg->nice = 99;
+			return;
+		} else {
+			cfg->nice = atoi(value);
+			if ((cfg->nice<-20) || (cfg->nice>20)) cfg->nice = 99;
+			if (cfg->nice != 99) cs_setpriority(cfg->nice);  // ignore errors
+			return;
+		}
+	}
+
+	if (!strcmp(token, "serialreadertimeout")) {
+		if (cfg->srtimeout < 100)
+			cfg->srtimeout = atoi(value) * 1000;
+		else
+			cfg->srtimeout = atoi(value);
+		if (cfg->srtimeout <= 0)
+			cfg->srtimeout = 1500;
+		return;
+	}
+
+	if (!strcmp(token, "maxlogsize")) {
+		if (strlen(value) == 0) {
+			cfg->max_log_size = 10;
+			return;
+		} else {
+			cfg->max_log_size = atoi(value);
+			if( cfg->max_log_size <= 10 )
+				cfg->max_log_size = 10;
+			return;
+		}
+	}
+
+	if( !strcmp(token, "waitforcards")) {
+		if (strlen(value) == 0) {
+			cfg->waitforcards = 0;
+			return;
+		} else {
+			cfg->waitforcards = atoi(value);
+			return;
+		}
+	}
+
+	if( !strcmp(token, "preferlocalcards")) {
+		if (strlen(value) == 0) {
+			cfg->preferlocalcards = 0;
+			return;
+		} else {
+			cfg->preferlocalcards = atoi(value);
+			return;
+		}
+	}
+
+	if (token[0] != '#')
+		cs_log("Warning: keyword '%s' in global section not recognized", token);
 }
 
 #ifdef CS_ANTICASC
 void chk_t_ac(char *token, char *value)
 {
-  if (!strcmp(token, "enabled")) 
-  {
-    cfg->ac_enabled=atoi(value);
-    if( cfg->ac_enabled<=0 ) cfg->ac_enabled=0;
-    else cfg->ac_enabled=1;
-    return;
-  }
+	if (!strcmp(token, "enabled")) {
+		cfg->ac_enabled = atoi(value);
+		if( cfg->ac_enabled <= 0 )
+			cfg->ac_enabled = 0;
+		else
+			cfg->ac_enabled = 1;
+	return;
+	}
 
-  if (!strcmp(token, "numusers")) 
-  {
-    cfg->ac_users=atoi(value);
-    if( cfg->ac_users<0 ) cfg->ac_users=0;
-    return;
-  }
-  if (!strcmp(token, "sampletime")) 
-  {
-    cfg->ac_stime=atoi(value);
-    if( cfg->ac_stime<0 ) cfg->ac_stime=2;
-    return;
-  }
-  if (!strcmp(token, "samples")) 
-  {
-    cfg->ac_samples=atoi(value);
-    if( cfg->ac_samples<2 || cfg->ac_samples>10) cfg->ac_samples=10;
-    return;
-  }
-  if (!strcmp(token, "penalty")) 
-  {
-    cfg->ac_penalty=atoi(value);
-    if( cfg->ac_penalty<0 ) cfg->ac_penalty=0;
-    return;
-  }
-  if (!strcmp(token, "aclogfile"))
-  {
-    strncpy(cfg->ac_logfile, value, sizeof(cfg->ac_logfile)-1);
-    return;
-  }
-  if( !strcmp(token, "fakedelay") )
-  {
-    cfg->ac_fakedelay=atoi(value);
-    if( cfg->ac_fakedelay<100 || cfg->ac_fakedelay>1000 )
-      cfg->ac_fakedelay=1000;
-    return;
-  }
-  if( !strcmp(token, "denysamples") )
-  {
-    cfg->ac_denysamples=atoi(value);
-    if( cfg->ac_denysamples<2 || cfg->ac_denysamples>cfg->ac_samples-1 )
-      cfg->ac_denysamples=cfg->ac_samples-1;
-    return;
-  }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in anticascading section not recognized\n",token);
-//#endif moved this endif up two lines, I think this was erroneous - dingo35
+	if (!strcmp(token, "numusers")) {
+		cfg->ac_users = atoi(value);
+		if( cfg->ac_users < 0 )
+			cfg->ac_users = 0;
+		return;
+	}
+
+	if (!strcmp(token, "sampletime")) {
+		cfg->ac_stime = atoi(value);
+		if( cfg->ac_stime < 0 )
+			cfg->ac_stime = 2;
+		return;
+	}
+
+	if (!strcmp(token, "samples")) {
+		cfg->ac_samples = atoi(value);
+		if( cfg->ac_samples < 2 || cfg->ac_samples > 10)
+			cfg->ac_samples = 10;
+		return;
+	}
+
+	if (!strcmp(token, "penalty")) {
+		cfg->ac_penalty = atoi(value);
+		if( cfg->ac_penalty < 0 )
+			cfg->ac_penalty = 0;
+		return;
+	}
+
+	if (!strcmp(token, "aclogfile")) {
+		cs_strncpy(cfg->ac_logfile, value, sizeof(cfg->ac_logfile));
+		return;
+	}
+
+	if( !strcmp(token, "fakedelay") ) {
+		cfg->ac_fakedelay = atoi(value);
+		if( cfg->ac_fakedelay < 100 || cfg->ac_fakedelay > 1000 )
+			cfg->ac_fakedelay = 1000;
+		return;
+	}
+
+	if( !strcmp(token, "denysamples") ) {
+		cfg->ac_denysamples = atoi(value);
+		if( cfg->ac_denysamples < 2 || cfg->ac_denysamples > cfg->ac_samples - 1 )
+			cfg->ac_denysamples=cfg->ac_samples-1;
+		return;
+	}
+
+	if (token[0] != '#')
+		cs_log( "Warning: keyword '%s' in anticascading section not recognized",token);
 }
 #endif
 
 void chk_t_monitor(char *token, char *value)
 {
-  if (!strcmp(token, "port")) { cfg->mon_port=atoi(value); return; }
-  if (!strcmp(token, "serverip")) { cfg->mon_srvip=inet_addr(value); return; }
-  if (!strcmp(token, "nocrypt")) { chk_iprange(value, &cfg->mon_allowed); return; }
-  if (!strcmp(token, "aulow")) { cfg->mon_aulow=atoi(value); return; }
-  if (!strcmp(token, "monlevel")) { cfg->mon_level=atoi(value); return; }
-  if (!strcmp(token, "hideclient_to")) { cfg->mon_hideclient_to=atoi(value); return; }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in monitor section not recognized\n",token);
+	if (!strcmp(token, "port")) {
+		if(strlen(value) == 0) {
+			cfg->mon_port = 0;
+			return;
+		} else {
+			cfg->mon_port=atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "serverip")) {
+		if(strlen(value) == 0) {
+			cfg->mon_srvip = 0;
+			return;
+		} else {
+			cfg->mon_srvip=inet_addr(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "nocrypt")) {
+		if(strlen(value) == 0) {
+			clear_sip(&cfg->mon_allowed);
+			return;
+		} else {
+			chk_iprange(value, &cfg->mon_allowed);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "aulow")) {
+		if(strlen(value) == 0) {
+			cfg->mon_aulow = 0;
+			return;
+		} else {
+			cfg->mon_aulow = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "monlevel")) {
+		if(strlen(value) == 0) {
+			cfg->mon_level = 0;
+			return;
+		} else {
+			cfg->mon_level = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "hideclient_to")) {
+		if(strlen(value) == 0) {
+			cfg->mon_hideclient_to = 0;
+			return;
+		} else {
+			cfg->mon_hideclient_to = atoi(value);
+			return;
+		}
+	}
+
+	if (token[0] != '#')
+		cs_log("Warning: keyword '%s' in monitor section not recognized",token);
 }
 
 void chk_t_camd33(char *token, char *value)
 {
-  if (!strcmp(token, "port")) { cfg->c33_port=atoi(value); return; }
-  if (!strcmp(token, "serverip")) { cfg->c33_srvip=inet_addr(value); return; }
-  if (!strcmp(token, "nocrypt")) { chk_iprange(value, &cfg->c33_plain); return; }
-  if (!strcmp(token, "passive")) { cfg->c33_passive=(value[0]!='0'); return; }
-  if (!strcmp(token, "key"))
-  {
-    if (key_atob(value, cfg->c33_key))
-    {
-      fprintf(stderr, "Configuration camd3.3x: Error in Key\n");
-      exit(1);
-    }
-    cfg->c33_crypted=1;
-    return;
-  }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in camd33 section not recognized\n",token);
+	if (!strcmp(token, "port")) {
+		if(strlen(value) == 0) {
+			cfg->c33_port = 0;
+			return;
+		} else {
+			cfg->c33_port = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "serverip")) {
+		if(strlen(value) == 0) {
+			cfg->c33_srvip = 0;
+			return;
+		} else {
+			cfg->c33_srvip = inet_addr(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "nocrypt")) {
+		if(strlen(value) == 0) {
+			return;
+		} else {
+			chk_iprange(value, &cfg->c33_plain);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "passive")) {
+		cfg->c33_passive = (value[0]!='0');
+		return;
+	}
+
+	if (!strcmp(token, "key")) {
+		if (key_atob(value, cfg->c33_key)) {
+			fprintf(stderr, "Configuration camd3.3x: Error in Key\n");
+			exit(1);
+		}
+		cfg->c33_crypted=1;
+		return;
+	}
+
+	if (token[0] != '#')
+		cs_log( "Warning: keyword '%s' in camd33 section not recognized",token);
 }
 
 void chk_t_camd35(char *token, char *value)
 {
-  if (!strcmp(token, "port")) { cfg->c35_port=atoi(value); return; }
-  if (!strcmp(token, "serverip")) { cfg->c35_tcp_srvip=inet_addr(value); return; }
-  if (!strcmp(token, "suppresscmd08")) { cfg->c35_suppresscmd08=atoi(value); return; }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in camd35 section not recognized\n",token);
+	if (!strcmp(token, "port")) {
+		if(strlen(value) == 0) {
+			cfg->c35_port = 0;
+			return;
+		} else {
+			cfg->c35_port = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "serverip")) {
+		if(strlen(value) == 0) {
+			cfg->c35_tcp_srvip = 0;
+			return;
+		} else {
+			cfg->c35_tcp_srvip = inet_addr(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "suppresscmd08")) {
+		if(strlen(value) == 0) {
+			cfg->c35_suppresscmd08 = 0;
+			return;
+		} else {
+			cfg->c35_suppresscmd08=atoi(value);
+			return;
+		}
+	}
+
+	if (token[0] != '#')
+		cs_log( "Warning: keyword '%s' in camd35 section not recognized", token);
 }
 
 void chk_t_camd35_tcp(char *token, char *value)
 {
-  if (!strcmp(token, "port")) { chk_port_tab(value, &cfg->c35_tcp_ptab); return; }
-  if (!strcmp(token, "serverip")) { cfg->c35_tcp_srvip=inet_addr(value); return; }
-  if (!strcmp(token, "suppresscmd08")) { cfg->c35_suppresscmd08=atoi(value); return; }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in camd35 tcp section not recognized\n",token);
+	if (!strcmp(token, "port")) {
+		if(strlen(value) == 0) {
+			clear_ptab(&cfg->c35_tcp_ptab);
+			return;
+		} else {
+			chk_port_tab(value, &cfg->c35_tcp_ptab);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "serverip")) {
+		if(strlen(value) == 0) {
+			cfg->c35_tcp_srvip = 0;
+			return;
+		} else {
+			cfg->c35_tcp_srvip = inet_addr(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "suppresscmd08")) {
+		if(strlen(value) == 0) {
+			cfg->c35_suppresscmd08 = 0;
+			return;
+		} else {
+			cfg->c35_suppresscmd08 = atoi(value);
+			return;
+		}
+	}
+
+	if (token[0] != '#')
+		cs_log( "Warning: keyword '%s' in camd35 tcp section not recognized", token);
 }
 
 void chk_t_newcamd(char *token, char *value)
 {
-  if (!strcmp(token, "port")) { chk_port_tab(value, &cfg->ncd_ptab); return; }
-  if (!strcmp(token, "serverip")) { cfg->ncd_srvip=inet_addr(value); return; }
-  if (!strcmp(token, "allowed")) { chk_iprange(value, &cfg->ncd_allowed); return; }
-  if (!strcmp(token, "key"))
-  {
-    if (key_atob14(value, cfg->ncd_key))
-    {
-      fprintf(stderr, "Configuration newcamd: Error in Key\n");
-      exit(1);
-    }
-    return;
-  }
-  if (!strcmp(token, "keepalive"))
-  {
-    cfg->ncd_keepalive=atoi(value);
-    return;
-  }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n",token);
+	if (!strcmp(token, "port")) {
+		if(strlen(value) == 0) {
+			clear_ptab(&cfg->ncd_ptab);
+			return;
+		} else {
+			chk_port_tab(value, &cfg->ncd_ptab);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "serverip")) {
+		if(strlen(value) == 0) {
+			cfg->ncd_srvip = 0;
+			return;
+		} else {
+			cfg->ncd_srvip = inet_addr(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "allowed")) {
+		if(strlen(value) == 0) {
+			clear_sip(&cfg->ncd_allowed);
+			return;
+		} else {
+			chk_iprange(value, &cfg->ncd_allowed);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "key")) {
+		if (key_atob14(value, cfg->ncd_key)) {
+			fprintf(stderr, "Configuration newcamd: Error in Key\n");
+			exit(1);
+		}
+		return;
+	}
+
+	if (!strcmp(token, "keepalive")) {
+		if(strlen(value) == 0) {
+			cfg->ncd_keepalive = 1;
+			return;
+		} else {
+			cfg->ncd_keepalive = atoi(value);
+			return;
+		}
+	}
+
+	if (token[0] != '#')
+		cs_log( "Warning: keyword '%s' in newcamd section not recognized", token);
 }
 
 void chk_t_cccam(char *token, char *value)
 {
-  if (!strcmp(token, "port")) { cfg->cc_port=atoi(value); return; }
-  //if (!strcmp(token, "serverip")) { cfg->cc_srvip=inet_addr(value); return; }
-  if (!strcmp(token, "reshare")) { cfg->cc_reshare=atoi(value); return; }
-  if (!strcmp(token, "version")) {  // cccam version
-  if (strlen(value)>sizeof(cfg->cc_version)-1) {
-      fprintf(stderr, "cccam config: version too long\n");
-      exit(1);
-    }
-    memset(cfg->cc_version, 0, sizeof(cfg->cc_version));
-    strncpy((char*)cfg->cc_version, value, sizeof(cfg->cc_version)-1);
-    return;
-  }
-  if (!strcmp(token, "build")) {  // cccam build number
-    if (strlen(value)>sizeof(cfg->cc_build)-1) {
-      fprintf(stderr, "cccam config build number too long\n");
-      exit(1);
-    }
-    memset(cfg->cc_build, 0, sizeof(cfg->cc_build));
-    strncpy((char*)cfg->cc_build, value, sizeof(cfg->cc_build)-1);
-    return;
-  }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in cccam section not recognized\n",token);
+	if (!strcmp(token, "port")) {
+		if(strlen(value) == 0) {
+			cfg->cc_port = 0;
+			return;
+		} else {
+			cfg->cc_port = atoi(value);
+			return;
+		}
+	}
+	//if (!strcmp(token, "serverip")) { cfg->cc_srvip=inet_addr(value); return; }
+
+	if (!strcmp(token, "reshare")) {
+		if(strlen(value) == 0) {
+			cfg->cc_reshare = 0;
+			return;
+		} else {
+			cfg->cc_reshare=atoi(value);
+			return;
+		}
+	}
+	// cccam version
+	if (!strcmp(token, "version")) {
+		if (strlen(value) > sizeof(cfg->cc_version) - 1) {
+			fprintf(stderr, "cccam config: version too long\n");
+			exit(1);
+		}
+		memset(cfg->cc_version, 0, sizeof(cfg->cc_version));
+		strncpy((char*)cfg->cc_version, value, sizeof(cfg->cc_version) - 1);
+		return;
+	}
+	// cccam build number
+	if (!strcmp(token, "build")) {
+		if (strlen(value) > sizeof(cfg->cc_build) - 1) {
+			fprintf(stderr, "cccam config build number too long\n");
+			exit(1);
+		}
+		memset(cfg->cc_build, 0, sizeof(cfg->cc_build));
+		strncpy((char*)cfg->cc_build, value, sizeof(cfg->cc_build)-1);
+		return;
+	}
+
+	if (token[0] != '#')
+		cs_log( "Warning: keyword '%s' in cccam section not recognized",token);
 }
 
 void chk_t_radegast(char *token, char *value)
 {
-  if (!strcmp(token, "port")) { cfg->rad_port=atoi(value); return; }
-  if (!strcmp(token, "serverip")) { cfg->rad_srvip=inet_addr(value); return; }
-  if (!strcmp(token, "allowed")) { chk_iprange(value, &cfg->rad_allowed); return; }
-  if (!strcmp(token, "user")) { strncpy(cfg->rad_usr, value, sizeof(cfg->rad_usr)-1); return; }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in radegast section not recognized\n",token);
+	if (!strcmp(token, "port")) {
+		if(strlen(value) == 0) {
+			cfg->rad_port = 0;
+			return;
+		} else {
+			cfg->rad_port = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "serverip")) {
+		if(strlen(value) == 0) {
+			cfg->rad_srvip = 0;
+			return;
+		} else {
+			cfg->rad_srvip = inet_addr(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "allowed")) {
+		if(strlen(value) == 0) {
+			clear_sip(&cfg->rad_allowed);
+			return;
+		} else {
+			chk_iprange(value, &cfg->rad_allowed);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "user")) {
+		cs_strncpy(cfg->rad_usr, value, sizeof(cfg->rad_usr));
+		return;
+	}
+
+	if (token[0] != '#')
+		cs_log( "Warning: keyword '%s' in radegast section not recognized", token);
 }
 
 void chk_t_serial(char *token, char *value)
 {
-  if (!strcmp(token, "device"))
-  {
-    int l;
-    l=strlen(cfg->ser_device);
-    if (l) cfg->ser_device[l++]=1;  // use ctrl-a as delimiter
-    strncpy(cfg->ser_device+l, value, sizeof(cfg->ser_device)-1-l);
-    return;
-  }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in serial section not recognized\n",token);
+	if (!strcmp(token, "device")) {
+		int l;
+		l = strlen(cfg->ser_device);
+		if (l)
+			cfg->ser_device[l++]=1;  // use ctrl-a as delimiter
+		cs_strncpy(cfg->ser_device+l, value, sizeof(cfg->ser_device)-l);
+		return;
+	}
+	if (token[0] != '#')
+		cs_log( "Warning: keyword '%s' in serial section not recognized", token);
 }
 
 #ifdef CS_WITH_GBOX
@@ -576,9 +886,9 @@ static void chk_t_gbox(char *token, char *value)
 //  if (!strcmp(token, "password")) strncpy(cfg->gbox_pwd, i2b(4, a2i(value, 4)), 4);
   if (!strcmp(token, "password")) { cs_atob(cfg->gbox_pwd, value, 4); return; }
   if (!strcmp(token, "maxdist")) { cfg->maxdist=atoi(value); return; }
-  if (!strcmp(token, "ignorelist")) { strncpy((char *)cfg->ignorefile, value, sizeof(cfg->ignorefile)-1); return; }
-  if (!strcmp(token, "onlineinfos")) { strncpy((char *)cfg->gbxShareOnl, value, sizeof(cfg->gbxShareOnl)-1); return; }
-  if (!strcmp(token, "cardinfos")) { strncpy((char *)cfg->cardfile, value, sizeof(cfg->cardfile)-1); return; }
+  if (!strcmp(token, "ignorelist")) { cs_strncpy((char *)cfg->ignorefile, value, sizeof(cfg->ignorefile)); return; }
+  if (!strcmp(token, "onlineinfos")) { cs_strncpy((char *)cfg->gbxShareOnl, value, sizeof(cfg->gbxShareOnl)); return; }
+  if (!strcmp(token, "cardinfos")) { cs_strncpy((char *)cfg->cardfile, value, sizeof(cfg->cardfile)); return; }
   if (!strcmp(token, "locals"))
   {
     char *ptr1;
@@ -599,308 +909,384 @@ static void chk_t_gbox(char *token, char *value)
 #ifdef HAVE_DVBAPI
 void chk_t_dvbapi(char *token, char *value)
 {
-	if (!strcmp(token, "enabled"))	{ cfg->dvbapi_enabled=atoi(value); return; }
-	if (!strcmp(token, "au"))	{ cfg->dvbapi_au=atoi(value); return; }
-	if (!strcmp(token, "boxtype")) 	{ strncpy(cfg->dvbapi_boxtype, value, sizeof(cfg->dvbapi_boxtype)-1); return; }
-	if (!strcmp(token, "user")) 	{ strncpy(cfg->dvbapi_usr, value, sizeof(cfg->dvbapi_usr)-1); return; }
-        if (!strcmp(token, "priority")) { strncpy(cfg->dvbapi_priority, value, sizeof(cfg->dvbapi_priority)-1); return; }
-        if (!strcmp(token, "ignore"))   { strncpy(cfg->dvbapi_ignore, value, sizeof(cfg->dvbapi_ignore)-1); return; }
-	
+	if (!strcmp(token, "enabled")) 	{ cfg->dvbapi_enabled=atoi(value); return; }
+	if (!strcmp(token, "au"))		{ cfg->dvbapi_au=atoi(value); return; }
+	if (!strcmp(token, "boxtype")) 	{ cs_strncpy(cfg->dvbapi_boxtype, value, sizeof(cfg->dvbapi_boxtype)); return; }
+	if (!strcmp(token, "user")) 	{ cs_strncpy(cfg->dvbapi_usr, value, sizeof(cfg->dvbapi_usr)); return; }
+	if (!strcmp(token, "priority")) { cs_strncpy(cfg->dvbapi_priority, value, sizeof(cfg->dvbapi_priority)); return; }
+	if (!strcmp(token, "ignore"))   { cs_strncpy(cfg->dvbapi_ignore, value, sizeof(cfg->dvbapi_ignore)); return; }
+
 	if (token[0] != '#')
-	    fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
+		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
 }
 #endif
 
 static void chk_token(char *token, char *value, int tag)
 {
-  switch(tag)
-  {
-    case TAG_GLOBAL  : chk_t_global(token, value); break;
-    case TAG_MONITOR : chk_t_monitor(token, value); break;
-    case TAG_CAMD33  : chk_t_camd33(token, value); break;
-    case TAG_CAMD35  : 
-    case TAG_CS357X  : chk_t_camd35(token, value); break;
-    case TAG_NEWCAMD : chk_t_newcamd(token, value); break;
-    case TAG_RADEGAST: chk_t_radegast(token, value); break;
-    case TAG_SERIAL  : chk_t_serial(token, value); break;
-    case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
+	switch(tag) {
+		case TAG_GLOBAL  : chk_t_global(token, value); break;
+		case TAG_MONITOR : chk_t_monitor(token, value); break;
+		case TAG_CAMD33  : chk_t_camd33(token, value); break;
+		case TAG_CAMD35  :
+		case TAG_CS357X  : chk_t_camd35(token, value); break;
+		case TAG_NEWCAMD : chk_t_newcamd(token, value); break;
+		case TAG_RADEGAST: chk_t_radegast(token, value); break;
+		case TAG_SERIAL  : chk_t_serial(token, value); break;
+		case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
 #ifdef CS_WITH_GBOX
-    case TAG_GBOX    : chk_t_gbox(token, value); break;
+		case TAG_GBOX    : chk_t_gbox(token, value); break;
 #endif
-    case TAG_CCCAM   : chk_t_cccam(token, value); break;
+		case TAG_CCCAM   : chk_t_cccam(token, value); break;
 #ifdef HAVE_DVBAPI
-    case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
+		case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
 #else
-    case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
+		case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
 #endif
 #ifdef CS_ANTICASC
-    case TAG_ANTICASC: chk_t_ac(token, value); break;
+		case TAG_ANTICASC: chk_t_ac(token, value); break;
 #endif
-  }
+	}
 }
 
 void init_len4caid()
 {
-  int nr;
-  FILE *fp;
-  char *value;
+	int nr;
+	FILE *fp;
+	char *value;
 
-  memset(len4caid, 0, sizeof(ushort)<<8);
-  sprintf(token, "%s%s", cs_confdir, cs_l4ca);
-  if (!(fp=fopen(token, "r")))
-    return;
-  for(nr=0; fgets(token, sizeof(token), fp);)
-  {
-    int i, c;
-    char *ptr;
-    if (!(value=strchr(token, ':'))) continue;
-    *value++='\0';
-    if( (ptr=strchr(value, '#')) )
-      *ptr='\0';
-    if (strlen(trim(token))!=2) continue;
-    if (strlen(trim(value))!=4) continue;
-    if ((i=byte_atob(token))<0) continue;
-    if ((c=word_atob(value))<0) continue;
-//printf("idx %02X = %04X\n", i, c); fflush(stdout);
-    len4caid[i]=c;
-    nr++;
-  }
-  fclose(fp);
-  cs_log("%d lengths for caid guessing loaded", nr);
-  return;
+	memset(len4caid, 0, sizeof(ushort)<<8);
+	sprintf(token, "%s%s", cs_confdir, cs_l4ca);
+	if (!(fp = fopen(token, "r")))
+		return;
+	for(nr = 0; fgets(token, sizeof(token), fp);) {
+		int i, c;
+		char *ptr;
+		if (!(value=strchr(token, ':')))
+			continue;
+		*value++ ='\0';
+		if( (ptr = strchr(value, '#')) )
+			*ptr = '\0';
+		if (strlen(trim(token)) != 2)
+			continue;
+		if (strlen(trim(value)) != 4)
+			continue;
+		if ((i = byte_atob(token)) < 0)
+			continue;
+		if ((c = word_atob(value)) < 0)
+			continue;
+		len4caid[i] = c;
+		nr++;
+	}
+	fclose(fp);
+	cs_log("%d lengths for caid guessing loaded", nr);
+	return;
 }
 
 int search_boxkey(ushort caid, char *key)
 {
-  int i, rc=0;
-  FILE *fp;
-  char c_caid[512];
+	int i, rc = 0;
+	FILE *fp;
+	char c_caid[512];
 
-  sprintf(c_caid, "%s%s", cs_confdir, cs_cert);
-  fp=fopen(c_caid, "r");
-  if (fp)
-  {
-    for (; (!rc) && fgets(c_caid, sizeof(c_caid), fp);)
-    {
-      char *c_provid, *c_key;
+	sprintf(c_caid, "%s%s", cs_confdir, cs_cert);
+	fp = fopen(c_caid, "r");
+	if (fp) {
+		for (; (!rc) && fgets(c_caid, sizeof(c_caid), fp);) {
+			char *c_provid, *c_key;
 
-      c_provid=strchr(c_caid, '#');
-      if (c_provid) *c_provid='\0';
-      if (!(c_provid=strchr(c_caid, ':'))) continue;
-      *c_provid++='\0';
-      if (!(c_key=strchr(c_provid, ':'))) continue;
-      *c_key++='\0';
-      if (word_atob(trim(c_caid))!=caid) continue;
-      if ((i=(strlen(trim(c_key))>>1))>256) continue;
-      if (cs_atob((uchar *)key, c_key, i)<0)
-      {
-        cs_log("wrong key in \"%s\"", cs_cert);
-        continue;
-      }
-      rc=1;
-    }
-    fclose(fp);
-  }
+			c_provid = strchr(c_caid, '#');
+			if (c_provid)
+				*c_provid = '\0';
+			if (!(c_provid = strchr(c_caid, ':')))
+				continue;
+			*c_provid++ ='\0';
+			if (!(c_key = strchr(c_provid, ':')))
+				continue;
+			*c_key++ ='\0';
+			if (word_atob(trim(c_caid))!=caid)
+				continue;
+			if ((i=(strlen(trim(c_key))>>1)) > 256)
+				continue;
+			if (cs_atob((uchar *)key, c_key, i) < 0) {
+				cs_log("wrong key in \"%s\"", cs_cert);
+				continue;
+			}
+			rc = 1;
+		}
+		fclose(fp);
+	}
 #ifdef OSCAM_INBUILD_KEYS
-  for(i=0; (!rc) && (npkey[i].keylen); i++)
-    if (rc=((caid==npkey[i].caid) && (npkey[i].provid==0)))
-      memcpy(key, npkey[i].key, npkey[i].keylen);
+	for(i=0; (!rc) && (npkey[i].keylen); i++)
+		if (rc=((caid==npkey[i].caid) && (npkey[i].provid==0)))
+			memcpy(key, npkey[i].key, npkey[i].keylen);
 #endif
-  return(rc);
+	return(rc);
 }
 
 int init_config()
 {
-  int tag=TAG_GLOBAL;
-  FILE *fp;
-  char *value;
+	int tag=TAG_GLOBAL;
+	FILE *fp;
+	char *value;
 
 #ifndef CS_EMBEDDED
 #ifdef PRIO_PROCESS
-  errno=0;
-  if ((cfg->nice=getpriority(PRIO_PROCESS, 0))==(-1))
-    if (errno)
+	errno=0;
+	if ((cfg->nice = getpriority(PRIO_PROCESS, 0)) == (-1))
+	if (errno)
 #endif
 #endif
-  cfg->nice=99;
-  cfg->ctimeout=CS_CLIENT_TIMEOUT;
-  cfg->ftimeout=CS_CLIENT_TIMEOUT / 2;
-  cfg->cmaxidle=CS_CLIENT_MAXIDLE;
-  cfg->delay=CS_DELAY;
-  cfg->bindwait=CS_BIND_TIMEOUT;
-  cfg->resolvedelay=CS_RESOLVE_DELAY;
-  cfg->mon_level=2;
-  cfg->mon_hideclient_to=0;
-  cfg->srtimeout=1500;
-  cfg->ulparent=0;
-	cfg->logfile=NULL;
-	cfg->pidfile=NULL;
-	cfg->usrfile=NULL;
-	cfg->cwlogdir=NULL;
+	cfg->nice = 99;
+	cfg->ctimeout = CS_CLIENT_TIMEOUT;
+	cfg->ftimeout = CS_CLIENT_TIMEOUT / 2;
+	cfg->cmaxidle = CS_CLIENT_MAXIDLE;
+	cfg->delay = CS_DELAY;
+	cfg->bindwait = CS_BIND_TIMEOUT;
+	cfg->resolvedelay = CS_RESOLVE_DELAY;
+	cfg->mon_level = 2;
+	cfg->mon_hideclient_to = 0;
+	cfg->srtimeout = 1500;
+	cfg->ulparent = 0;
+	cfg->logfile = NULL;
+	cfg->pidfile = NULL;
+	cfg->usrfile = NULL;
+	cfg->cwlogdir = NULL;
 #ifdef CS_ANTICASC
-  cfg->ac_enabled=0;
-  cfg->ac_users=0;
-  cfg->ac_stime=2;
-  cfg->ac_samples=10;
-  cfg->ac_denysamples=8;
-  cfg->ac_fakedelay=1000;
-  strcpy(cfg->ac_logfile, "./oscam_ac.log");
+	cfg->ac_enabled = 0;
+	cfg->ac_users = 0;
+	cfg->ac_stime = 2;
+	cfg->ac_samples = 10;
+	cfg->ac_denysamples = 8;
+	cfg->ac_fakedelay = 1000;
+	strcpy(cfg->ac_logfile, "./oscam_ac.log");
 #endif
-  cfg->ncd_keepalive=1;
-  sprintf(token, "%s%s", cs_confdir, cs_conf);
-  if (!(fp=fopen(token, "r")))
-  {
-    fprintf(stderr, "Cannot open config file '%s' (errno=%d)\n", token, errno);
-    exit(1);
-  }
-  while (fgets(token, sizeof(token), fp))
-  {
-    int i, l;
-    //void *ptr;
-    if ((l=strlen(trim(token)))<3) continue;
-    if ((token[0]=='[') && (token[l-1]==']'))
-    {
-      for (token[l-1]=0, tag=-1, i=TAG_GLOBAL; cctag[i]; i++)
-        if (!strcmp(cctag[i], strtolower(token+1)))
-          tag=i;
-      continue;
-    }
-    if (!(value=strchr(token, '='))) continue;
-    *value++='\0';
-    chk_token(trim(strtolower(token)), trim(value), tag);
-  }
-  fclose(fp);
+	cfg->ncd_keepalive=1;
+	sprintf(token, "%s%s", cs_confdir, cs_conf);
+	if (!(fp = fopen(token, "r"))) {
+		fprintf(stderr, "Cannot open config file '%s' (errno=%d)\n", token, errno);
+		exit(1);
+	}
+	while (fgets(token, sizeof(token), fp)) {
+		int i, l;
+		//void *ptr;
+		if ((l = strlen(trim(token))) < 3)
+			continue;
+		if ((token[0] == '[') && (token[l-1] == ']')) {
+			for (token[l-1] = 0, tag = -1, i = TAG_GLOBAL; cctag[i]; i++)
+				if (!strcmp(cctag[i], strtolower(token+1)))
+					tag = i;
+			continue;
+		}
+		if (!(value=strchr(token, '=')))
+			continue;
+		*value++ ='\0';
+		chk_token(trim(strtolower(token)), trim(value), tag);
+	}
+	fclose(fp);
 #ifdef CS_LOGFILE
 	if (cfg->logfile == NULL)
 		asprintf(&(cfg->logfile), "%s", CS_LOGFILE);
 #endif
-  cs_init_log(cfg->logfile);
-  if (cfg->ftimeout>=cfg->ctimeout)
-  {
-    cfg->ftimeout = cfg->ctimeout - 100;
-    cs_log("WARNING: fallbacktimeout adjusted to %lu ms (must be smaller than clienttimeout (%lu ms))", cfg->ftimeout, cfg->ctimeout);
-  }
-  if(cfg->ftimeout < cfg->srtimeout)
-  {
-    cfg->ftimeout = cfg->srtimeout + 100;
-    cs_log("WARNING: fallbacktimeout adjusted to %lu ms (must be greater than serialreadertimeout (%lu ms))", cfg->ftimeout, cfg->srtimeout);
-  }
-  if(cfg->ctimeout < cfg->srtimeout)
-  {
-    cfg->ctimeout = cfg->srtimeout + 100;
-    cs_log("WARNING: clienttimeout adjusted to %lu ms (must be greater than serialreadertimeout (%lu ms))", cfg->ctimeout, cfg->srtimeout);
-  }
+	cs_init_log(cfg->logfile);
+	if (cfg->ftimeout >= cfg->ctimeout) {
+		cfg->ftimeout = cfg->ctimeout - 100;
+		cs_log("WARNING: fallbacktimeout adjusted to %lu ms (must be smaller than clienttimeout (%lu ms))", cfg->ftimeout, cfg->ctimeout);
+	}
+	if(cfg->ftimeout < cfg->srtimeout) {
+		cfg->ftimeout = cfg->srtimeout + 100;
+		cs_log("WARNING: fallbacktimeout adjusted to %lu ms (must be greater than serialreadertimeout (%lu ms))", cfg->ftimeout, cfg->srtimeout);
+	}
+	if(cfg->ctimeout < cfg->srtimeout) {
+		cfg->ctimeout = cfg->srtimeout + 100;
+		cs_log("WARNING: clienttimeout adjusted to %lu ms (must be greater than serialreadertimeout (%lu ms))", cfg->ctimeout, cfg->srtimeout);
+	}
 #ifdef CS_ANTICASC
-  if( cfg->ac_denysamples+1>cfg->ac_samples )
-  {
-    cfg->ac_denysamples=cfg->ac_samples-1;
-    cs_log("WARNING: DenySamples adjusted to %d", cfg->ac_denysamples);
-  }
+	if( cfg->ac_denysamples+1 > cfg->ac_samples ) {
+		cfg->ac_denysamples = cfg->ac_samples - 1;
+		cs_log("WARNING: DenySamples adjusted to %d", cfg->ac_denysamples);
+	}
 #endif
-  return 0;
+	return 0;
 }
 
 void chk_account(char *token, char *value, struct s_auth *account)
 {
-  int i;
-  char *ptr1;//, *ptr2;
-  if (!strcmp(token, "user")) { strncpy(account->usr, value, sizeof(account->usr)-1); return; }
-  if (!strcmp(token, "pwd")) { strncpy(account->pwd, value, sizeof(account->pwd)-1); return; }
-  if (!strcmp(token, "hostname")) { strncpy((char *)account->dyndns, value, sizeof(account->dyndns)-1); return; }
-  if (!strcmp(token, "betatunnel")) { chk_tuntab(value, &account->ttab); return; }
-  if (!strcmp(token, "uniq")) { account->uniq=atoi(value); return; }
-  if (!strcmp(token, "sleep")) { account->tosleep=atoi(value); return; }
-  if (!strcmp(token, "monlevel")) { account->monlvl=atoi(value); return; }
-  if (!strcmp(token, "caid")) { chk_caidtab(value, &account->ctab); return; }
-  if (!strcmp(token, "disabled")) { account->disabled=atoi(value); return; }
-  if (!strcmp(token, "suppresscmd08")) { account->c35_suppresscmd08=atoi(value); return; }
-  if (!strcmp(token, "keepalive")) 
-  { 
-    account->ncd_keepalive = atoi(value); 
-    return; 
-  }
-  /*
-   *  case insensitive
-   */
-  strtolower(value);
-  if (!strcmp(token, "au"))
-  {
-    if(value && value[0]=='1') account->autoau=1;
-    for (i=0; i<CS_MAXREADER; i++)
-      if ((reader[i].label[0]) &&
-          (!strncmp(reader[i].label, value, strlen(reader[i].label))))
-        account->au=i;
-    return;
-  }
-  if (!strcmp(token, "group"))\
-  {
-    for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ","))
-    {
-      int g;
-      g=atoi(ptr1);
-      if ((g>0) && (g<33)) account->grp|=(1<<(g-1));
-    }
-    return;
-  }
-  if(!strcmp(token, "services")) { chk_services(value, &account->sidtabok, &account->sidtabno); return; }
-  if(!strcmp(token, "ident")) { chk_ftab(value, &account->ftab, "user", account->usr, "provid"); return; }
-  if(!strcmp(token, "class")) { chk_cltab(value, &account->cltab); return; }
-  if(!strcmp(token, "chid")) {  chk_ftab(value, &account->fchid, "user", account->usr, "chid"); return; }
+	int i;
+	char *ptr1;
 
-  if (!strcmp(token, "expdate"))
-  {
-        if (!value[0]) {
-                account->expirationdate=(time_t)NULL;
-                return;
-        }
-    struct tm cstime;
-    memset(&cstime,0,sizeof(cstime));
-    for (i=0, ptr1=strtok(value, "-/"); (i<3)&&(ptr1); ptr1=strtok(NULL, "-/"), i++)
-    {
-      switch(i)
-      {
-        case 0: cstime.tm_year=atoi(ptr1)-1900; break;
-        case 1: cstime.tm_mon =atoi(ptr1)-1;    break;
-        case 2: cstime.tm_mday=atoi(ptr1);      break;
-      }
-    }
-    account->expirationdate=mktime(&cstime);
-    return;
-  }
+	if (!strcmp(token, "user")) {
+		cs_strncpy(account->usr, value, sizeof(account->usr));
+		return;
+	}
+
+	if (!strcmp(token, "pwd")) {
+		cs_strncpy(account->pwd, value, sizeof(account->pwd));
+		return;
+	}
+
+	if (!strcmp(token, "hostname")) {
+		cs_strncpy((char *)account->dyndns, value, sizeof(account->dyndns));
+		return;
+	}
+
+	if (!strcmp(token, "betatunnel")) {
+		if(strlen(value) == 0) {
+			clear_tuntab(&account->ttab);
+			return;
+		} else {
+			chk_tuntab(value, &account->ttab);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "uniq")) {
+		if(strlen(value) == 0) {
+			account->uniq = 0;
+			return;
+		} else {
+			account->uniq = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "sleep")) {
+		if(strlen(value) == 0) {
+			account->tosleep = 0;
+			return;
+		} else {
+			account->tosleep=atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "monlevel")) {
+		if(strlen(value) == 0) {
+			account->monlvl = 0;
+			return;
+		} else {
+			account->monlvl = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "caid")) {
+		if(strlen(value) == 0) {
+			clear_caidtab(&account->ctab);
+			return;
+		} else {
+			chk_caidtab(value, &account->ctab);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "disabled")) {
+		if(strlen(value) == 0) {
+			account->disabled = 0;
+			return;
+		} else {
+			account->disabled = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "suppresscmd08")) {
+		if(strlen(value) == 0) {
+			account->c35_suppresscmd08 = 0;
+			return;
+		} else {
+			account->c35_suppresscmd08=atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "keepalive")) {
+		if(strlen(value) == 0) {
+			account->ncd_keepalive = 1;
+			return;
+		} else {
+			account->ncd_keepalive = atoi(value);
+			return;
+		}
+	}
+	/*
+	*  case insensitive
+	*/
+	strtolower(value);
+
+	if (!strcmp(token, "au")) {
+		//set default values for usage during runtime from Webif
+		account->au=-1;
+		account->autoau=0;
+
+		if(value && value[0]=='1') account->autoau=1;
+			for (i=0; i<CS_MAXREADER; i++)
+				if ((reader[i].label[0]) && (!strncmp(reader[i].label, value, strlen(reader[i].label))))
+					account->au=i;
+		return;
+	}
+
+	if (!strcmp(token, "group")) {
+		account->grp = 0;
+		for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ",")) {
+			int g;
+			g = atoi(ptr1);
+			if ((g>0) && (g < 33)) account->grp|=(1<<(g-1));
+		}
+		return;
+	}
+
+	if(!strcmp(token, "services")) {
+		chk_services(value, &account->sidtabok, &account->sidtabno);
+		return;
+	}
+
+	if(!strcmp(token, "ident")) { /*ToDo ftab clear*/
+		chk_ftab(value, &account->ftab, "user", account->usr, "provid");
+		return;
+	}
+
+	if(!strcmp(token, "class")) {
+		chk_cltab(value, &account->cltab);
+		return;
+	}
+
+	if(!strcmp(token, "chid")) {
+		chk_ftab(value, &account->fchid, "user", account->usr, "chid");
+		return;
+	}
+
+	if (!strcmp(token, "expdate")) {
+		if (!value[0]) {
+			account->expirationdate=(time_t)NULL;
+			return;
+		}
+		struct tm cstime;
+		memset(&cstime,0,sizeof(cstime));
+		for (i=0, ptr1=strtok(value, "-/"); (i<3)&&(ptr1); ptr1=strtok(NULL, "-/"), i++) {
+			switch(i) {
+				case 0: cstime.tm_year=atoi(ptr1)-1900; break;
+				case 1: cstime.tm_mon =atoi(ptr1)-1;    break;
+				case 2: cstime.tm_mday=atoi(ptr1);      break;
+			}
+		}
+		account->expirationdate=mktime(&cstime);
+		return;
+	}
 
 #ifdef CS_ANTICASC
-  if( !strcmp(token, "numusers") )
-  {
-    account->ac_users = atoi(value);
-    return;
-  }
-  if( !strcmp(token, "penalty") ) 
-  {
-    account->ac_penalty = atoi(value);
-    return;
-  }
-#endif
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in account section not recognized\n",token);
+	if( !strcmp(token, "numusers") ) {
+		account->ac_users = atoi(value);
+		return;
+	}
 
-//  if (!strcmp(token, "caid"))
-//  {
-//    for (i=0, ptr1=strtok(value, ","); (i<CS_MAXCAIDTAB) && (ptr1); ptr1=strtok(NULL, ","))
-//    {
-//      ulong caid, mask;
-//      if (ptr2=strchr(trim(ptr1), '&'))
-//        *ptr2++='\0';
-//      else
-//        ptr2="";
-//      if (((caid=a2i(ptr1, 2))|(mask=a2i(ptr2,-2))) < 0x10000)
-//      {
-//        account->caidtab[i][0]=caid;
-//        account->caidtab[i++][1]=mask;
-//      }
-//      else
-//        cs_log("WARNING: wrong CAID in %s -> ignored", cs_user);
-//    }
-//  }
+	if( !strcmp(token, "penalty") ) {
+		account->ac_penalty = atoi(value);
+		return;
+	}
+#endif
+
+	if (token[0] != '#')
+		cs_log( "Warning: keyword '%s' in account section not recognized",token);
 }
 
 int init_userdb()
@@ -1001,7 +1387,7 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
   ulong *llist=(ulong *) 0;
   ulong caid;
   char buf[strlen(value) + 1];
-  strncpy(buf, value, sizeof(buf));
+  cs_strncpy(buf, value, sizeof(buf));
   b=(what==1) ? sizeof(ulong) : sizeof(ushort);
   for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
   {
@@ -1092,7 +1478,7 @@ int init_sidtab()
       sidtab=ptr;
       nr++;
       memset(sidtab, 0, sizeof(struct s_sidtab));
-      strncpy(sidtab->label, strtolower(token+1), sizeof(sidtab->label));
+      cs_strncpy(sidtab->label, strtolower(token+1), sizeof(sidtab->label));
       continue;
     }
     if (!sidtab) continue;
@@ -1153,16 +1539,16 @@ int init_srvid()
     for (i = 0, ptr1 = strtok(payload, "|"); ptr1; ptr1 = strtok(NULL, "|"), i++){
 			switch(i){
 				case 0:
-					strncpy(srvid->prov, trim(ptr1), sizeof(srvid->prov)-1);
+					cs_strncpy(srvid->prov, trim(ptr1), sizeof(srvid->prov));
 					break;
 				case 1:
-					strncpy(srvid->name, trim(ptr1), sizeof(srvid->name)-1);
+					cs_strncpy(srvid->name, trim(ptr1), sizeof(srvid->name));
 					break;
 				case 2:
-					strncpy(srvid->type, trim(ptr1), sizeof(srvid->type)-1);
+					cs_strncpy(srvid->type, trim(ptr1), sizeof(srvid->type));
 					break;
 				case 3:
-					strncpy(srvid->desc, trim(ptr1), sizeof(srvid->desc)-1);
+					cs_strncpy(srvid->desc, trim(ptr1), sizeof(srvid->desc));
 					break;
 			}
 		}
@@ -1175,6 +1561,7 @@ int init_srvid()
 		for (i = 0, ptr1 = strtok(token, ","); (ptr1) && (i < 10) ; ptr1 = strtok(NULL, ","), i++){
 			srvid->caid[i] = word_atob(ptr1);
 			srvid->ncaid = i+1;
+			//cs_debug("ld caid: %04X srvid: %04X Prov: %s Chan: %s",srvid->caid[i],srvid->srvid,srvid->prov,srvid->name);
 		}
 		nr++;
 	}
@@ -1202,7 +1589,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       trim(ptr);
       switch(i)
       {
-        case 0: strncpy(rdr->device, ptr, sizeof(rdr->device)-1); break;
+        case 0: cs_strncpy(rdr->device, ptr, sizeof(rdr->device)); break;
         case 1: rdr->r_port=atoi(ptr); break;
         case 2: rdr->l_port=atoi(ptr); break;
       }
@@ -1219,7 +1606,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
     return;
   }
 #ifdef CS_WITH_GBOX
-  if (!strcmp(token, "password")) { strncpy((char *)rdr->gbox_pwd, (const char *)i2b(4, a2i(value, 4)), 4); return; }
+  if (!strcmp(token, "password")) { cs_strncpy((char *)rdr->gbox_pwd, (const char *)i2b(4, a2i(value, 4)), 4); return; }
   if (!strcmp(token, "premium")) { rdr->gbox_prem=1; return; }
 #endif
   if (!strcmp(token, "account"))
@@ -1229,8 +1616,8 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       trim(ptr);
       switch(i)
       {
-        case 0: strncpy(rdr->r_usr, ptr, sizeof(rdr->r_usr)-1); break;
-        case 1: strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd)-1); break;
+        case 0: cs_strncpy(rdr->r_usr, ptr, sizeof(rdr->r_usr)); break;
+        case 1: cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd)); break;
       }
     }
     return;
@@ -1241,7 +1628,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
    *  case insensitive
    */
   strtolower(value);
-  
+
   if (!strcmp(token, "enable")) { rdr->enable=atoi(value) ? 1 : 0; return; }
   if (!strcmp(token, "services")) { chk_services(value, &rdr->sidtabok, &rdr->sidtabno); return; }
   if (!strcmp(token, "inactivitytimeout")) {   rdr->tcp_ito = atoi(value);  return; }
@@ -1249,7 +1636,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   if (!strcmp(token, "disableserverfilter")) { rdr->ncd_disable_server_filt = atoi(value);  return; }
   //FIXME workaround for Smargo until native mode works
   if (!strcmp(token, "smargopatch")) { rdr->smargopatch = atoi(value);  return; }
-  if (!strcmp(token, "label")) { strncpy(rdr->label, value, sizeof(rdr->label)-1); return; }
+  if (!strcmp(token, "label")) { cs_strncpy(rdr->label, value, sizeof(rdr->label)); return; }
   if (!strcmp(token, "fallback")) { rdr->fallback=atoi(value) ? 1 : 0; return; }
   if (!strcmp(token, "logport")) { rdr->log_port=atoi(value); return; }
   if (!strcmp(token, "caid")) { chk_caidtab(value, &rdr->ctab); return; }
@@ -1325,10 +1712,10 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       return;
     }
     if (!strcmp(value, "radegast")) {       rdr->typ=R_RADEGAST; return; }
-    if (!strcmp(value, "newcamd") || 
-        !strcmp(value, "newcamd525")) {rdr->typ=R_NEWCAMD; 
+    if (!strcmp(value, "newcamd") ||
+        !strcmp(value, "newcamd525")) {rdr->typ=R_NEWCAMD;
                                        rdr->ncd_proto=NCD_525; return; }
-    if (!strcmp(value, "newcamd524")) {rdr->typ=R_NEWCAMD; 
+    if (!strcmp(value, "newcamd524")) {rdr->typ=R_NEWCAMD;
                                        rdr->ncd_proto=NCD_524; return; }
     fprintf(stderr, "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE\n",value);
     rdr->typ=R_MOUSE;
@@ -1400,7 +1787,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       exit(1);
     }
     memset(rdr->cc_version, 0, sizeof(rdr->cc_version));
-    strncpy(rdr->cc_version, value, sizeof(rdr->cc_version)-1);
+    cs_strncpy(rdr->cc_version, value, sizeof(rdr->cc_version));
     return;
   }
   if (!strcmp(token, "cccbuild")) {  // cccam build number
@@ -1409,7 +1796,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
       exit(1);
     }
     memset(rdr->cc_build, 0, sizeof(rdr->cc_build));
-    strncpy(rdr->cc_build, value, sizeof(rdr->cc_build)-1);
+    cs_strncpy(rdr->cc_build, value, sizeof(rdr->cc_build));
     return;
   }
   if (!strcmp(token, "cccmaxhop")) {  // cccam max card distance
@@ -1418,50 +1805,51 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
   }
   if (!strcmp(token, "deprecated")) { rdr->deprecated=atoi(value); return; }
   if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
+    cs_log( "Warning: keyword '%s' in reader section not recognized",token);
 }
 
 int init_readerdb()
 {
-  int tag=0, nr;
-  FILE *fp;
-  char *value;
+	int tag = 0, nr;
+	FILE *fp;
+	char *value;
 
-  sprintf(token, "%s%s", cs_confdir, cs_srvr);
-  if (!(fp=fopen(token, "r")))
-  {
-    cs_log("can't open file \"%s\" (errno=%d)\n", token, errno);
-    return(1);
-  }
-  nr=0;
-  while (fgets(token, sizeof(token), fp))
-  {
-    int i, l;
-    if ((l=strlen(trim(token)))<3) continue;
-    if ((token[0]=='[') && (token[l-1]==']'))
-    {
-      token[l-1]=0;
-      tag=(!strcmp("reader", strtolower(token+1)));
-      if (reader[nr].label[0] && reader[nr].typ) nr++;
-      memset(&reader[nr], 0, sizeof(struct s_reader));
-      reader[nr].enable = 1;
-      reader[nr].tcp_rto = 30;      
-      reader[nr].show_cls = 10;
-      reader[nr].maxqlen = CS_MAXQLEN;
-      reader[nr].mhz = 357;
-      reader[nr].cardmhz = 357;
+	sprintf(token, "%s%s", cs_confdir, cs_srvr);
+	if (!(fp=fopen(token, "r"))) {
+		cs_log("can't open file \"%s\" (errno=%d)\n", token, errno);
+		return(1);
+	}
+	nr = 0;
+	while (fgets(token, sizeof(token), fp)) {
+		int i, l;
+		if ((l = strlen(trim(token))) < 3)
+			continue;
+		if ((token[0] == '[') && (token[l-1] == ']')) {
+			token[l-1] = 0;
+			tag = (!strcmp("reader", strtolower(token+1)));
+			if (reader[nr].label[0] && reader[nr].typ) nr++;
+			memset(&reader[nr], 0, sizeof(struct s_reader));
+			reader[nr].enable = 1;
+			reader[nr].tcp_rto = 30;
+			reader[nr].show_cls = 10;
+			reader[nr].maxqlen = CS_MAXQLEN;
+			reader[nr].mhz = 357;
+			reader[nr].cardmhz = 357;
 			reader[nr].deprecated = 0;
-      strcpy(reader[nr].pincode, "none");
-      for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
-      continue;
-    }
-    if (!tag) continue;
-    if (!(value=strchr(token, '='))) continue;
-    *value++='\0';
-    chk_reader(trim(strtolower(token)), trim(value), &reader[nr]);
-  }
-  fclose(fp);
-  return(0);
+			strcpy(reader[nr].pincode, "none");
+			for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
+			continue;
+		}
+
+		if (!tag)
+			continue;
+		if (!(value=strchr(token, '=')))
+			continue;
+		*value++ ='\0';
+		chk_reader(trim(strtolower(token)), trim(value), &reader[nr]);
+	}
+	fclose(fp);
+	return(0);
 }
 
 /*
@@ -1480,7 +1868,7 @@ int init_irdeto_guess_tab()
   sprintf(token, "%s%s", cs_confdir, cs_ird);
   if (!(fp=fopen(token, "r")))
   {
-    cs_log("can't open file \"%s\" (errno=%d) irdeto guessing not loaded", 
+    cs_log("can't open file \"%s\" (errno=%d) irdeto guessing not loaded",
            token, errno);
     return(1);
   }
@@ -1499,15 +1887,15 @@ int init_irdeto_guess_tab()
         case 0: b3   = a2i(ptr, 2); break;
         case 1: b47  = a2i(ptr, 8); break;
         case 2: caid = a2i(ptr, 4); break;
-        case 3: 
+        case 3:
           for( j=0; j<4; j++ )
             zSid[j]=ptr[j];
           zSid[4]=0;
-          sid  = a2i(zSid, 4); 
+          sid  = a2i(zSid, 4);
           break;
       }
     }
-    if( !skip ) 
+    if( !skip )
     {
       if (!(ird_row=(struct s_irdeto_quess*)malloc(sizeof(struct s_irdeto_quess))))
       {
@@ -1557,7 +1945,7 @@ void init_ac()
   sprintf(token, "%s%s", cs_confdir, cs_ac);
   if (!(fp=fopen(token, "r")))
   {
-    cs_log("can't open file \"%s\" (errno=%d) anti-cascading table not loaded", 
+    cs_log("can't open file \"%s\" (errno=%d) anti-cascading table not loaded",
             token, errno);
     return;
   }
@@ -1589,7 +1977,7 @@ void init_ac()
         case 0:
           ptr1=ptr;
           break;
-        case 1: 
+        case 1:
           dwtime = atoi(ptr);
           break;
       }
@@ -1602,21 +1990,21 @@ void init_ac()
         trim(ptr);
         switch( i )
         {
-        case 0: 
+        case 0:
           if( *ptr=='*' ) caid = 0;
-          else caid = a2i(ptr, 4); 
+          else caid = a2i(ptr, 4);
           break;
-        case 1: 
+        case 1:
           if( *ptr=='*' ) provid = 0;
-          else provid = a2i(ptr, 6); 
+          else provid = a2i(ptr, 6);
           break;
-        case 2: 
+        case 2:
           if( *ptr=='*' ) sid = 0;
-          else sid = a2i(ptr, 4); 
+          else sid = a2i(ptr, 4);
           break;
-        case 3: 
+        case 3:
           if( *ptr=='*' ) chid = 0;
-          else chid = a2i(ptr, 4); 
+          else chid = a2i(ptr, 4);
           break;
         }
       }
@@ -1638,7 +2026,7 @@ void init_ac()
       cpmap->dwtime = dwtime;
       cpmap->next   = 0;
 
-      cs_debug("nr=%d, caid=%04X, provid=%06X, sid=%04X, chid=%04X, dwtime=%d", 
+      cs_debug("nr=%d, caid=%04X, provid=%06X, sid=%04X, chid=%04X, dwtime=%d",
                 nr, caid, provid, sid, chid, dwtime);
       nr++;
     }
@@ -1648,3 +2036,137 @@ void init_ac()
   return;
 }
 #endif
+
+/*
+ * makes a char ready to write a token into config or webIf
+ */
+char *mk_t_caidtab(CAIDTAB *ctab){
+	int i = 0, needed = 1, pos = 0;
+	while(ctab->caid[i]){
+		if(ctab->mask[i]) needed += 10;
+		else needed += 5;
+		if(ctab->cmap[i]) needed += 5;
+		++i;
+	}
+	char *value = (char *) malloc(needed * sizeof(char));
+	i = 0;
+	while(ctab->caid[i]) {
+		if(i == 0) {
+			sprintf(value + pos, "%04X", ctab->caid[i]);
+			pos += 4;
+		} else {
+			sprintf(value + pos, ",%04X", ctab->caid[i]);
+			pos += 5;
+		}
+		if(ctab->mask[i]){
+			sprintf(value + pos, "&%04X", ctab->mask[i]);
+			pos += 5;
+		}
+		if(ctab->cmap[i]){
+			sprintf(value + pos, ":%04X", ctab->cmap[i]);
+			pos += 5;
+		}
+		++i;
+	}
+	value[pos] = '\0';
+	return value;
+}
+
+/*
+ * makes a char ready to write a token into config or webIf
+ */
+char *mk_t_tuntab(TUNTAB *ttab){
+	int i = 0, needed = 1, pos = 0;
+	while(ttab->bt_caidfrom[i]){
+		if(ttab->bt_srvid[i]) needed += 10;
+		else needed += 5;
+		if(ttab->bt_caidto[i]) needed += 5;
+		++i;
+	}
+	char *value = (char *) malloc(needed * sizeof(char));
+	i = 0;
+	while(ttab->bt_caidfrom[i]) {
+		if(i == 0) {
+			sprintf(value + pos, "%04X", ttab->bt_caidfrom[i]);
+			pos += 4;
+		} else {
+			sprintf(value + pos, ",%04X", ttab->bt_caidfrom[i]);
+			pos += 5;
+		}
+		if(ttab->bt_srvid[i]){
+			sprintf(value + pos, ".%04X", ttab->bt_srvid[i]);
+			pos += 5;
+		}
+		if(ttab->bt_caidto[i]){
+			sprintf(value + pos, ":%04X", ttab->bt_caidto[i]);
+			pos += 5;
+		}
+		++i;
+	}
+	value[pos] = '\0';
+	return value;
+}
+
+/*
+ * makes a char ready to write a token into config or webIf
+ */
+char *mk_t_group(ulong *grp){
+	int i = 0, needed = 1, pos = 0, dot = 0;
+	char grpbit[33];
+	long2bitchar((long) grp, grpbit);
+
+	for(i = 0; i < 32; i++){
+		if (grpbit[i] == '1'){
+			needed += 2;
+			if(i > 9) needed += 1;
+		}
+	}
+	char *value = (char *) malloc(needed * sizeof(char));
+
+	for(i = 0; i < 32; i++){
+		if (grpbit[i] == '1'){
+			if (dot == 0){
+				sprintf(value + pos, "%d", i+1);
+				if (i > 9)pos += 2;
+				else pos += 1;
+				dot = 1;
+			} else {
+				sprintf(value + pos, ",%d", i+1);
+				if (i > 9)pos += 3;
+				else pos += 2;
+			}
+		}
+	}
+	value[pos] = '\0';
+	return value;
+}
+
+/*
+ * makes a char ready to write a token into config or webIf
+ */
+char *mk_t_ftab(FTAB *ftab){
+	int i = 0, j = 0, needed = 1, pos = 0;
+
+	needed = ftab->nfilts * 5;
+	for (i = 0; i < ftab->nfilts; ++i)
+		needed += ftab->filts[i].nprids * 7;
+
+	char *value = (char *) malloc(needed * sizeof(char));
+
+	char *dot="";
+	for (i = 0; i < ftab->nfilts; ++i){
+		sprintf(value + pos, "%s%04X", dot, ftab->filts[i].caid);
+		pos += 4;
+		if (i > 0) pos += 1;
+		dot=":";
+		for (j = 0; j < ftab->filts[i].nprids; ++j) {
+			sprintf(value + pos, "%s%06lX", dot, ftab->filts[i].prids[j]);
+			pos += 7;
+			dot=",";
+		}
+		dot=";";
+	}
+
+	value[pos] = '\0';
+	return value;
+}

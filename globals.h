@@ -748,6 +748,12 @@ extern void cs_sleepms(unsigned int);
 extern int bytes_available(int);
 extern void cs_setpriority(int);
 extern struct s_auth *find_user(char *);
+extern void long2bitchar(long value, char *result);
+extern void clear_sip(struct s_ip **sip);
+extern void clear_ptab(struct s_ptab *ptab);
+void clear_caidtab(struct s_caidtab *ctab);
+void clear_tuntab(struct s_tuntab *ttab);
+extern void cs_strncpy(char * destination, const char * source, size_t num);
 
 // oscam variables
 extern int pfd, rfd, fd_c2m, fd_m2c, cs_idx, *c_start, cs_ptyp, cs_dblevel, cs_hw;

@@ -359,6 +359,64 @@ void cs_setpriority(int prio)
 }
 #endif
 
+/* Clears the s_ip structure provided. The pointer will be set to NULL so everything is cleared.*/
+void clear_sip(struct s_ip **sip){
+        struct s_ip *cip = *sip, *lip;
+        for (*sip = NULL; cip != NULL; cip = lip){
+                lip = cip->next;
+                free(cip);
+        }
+}
+
+/* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
+void clear_ptab(struct s_ptab *ptab){
+        int i;
+        for (i = 0; i < ptab->nports; i++) {
+                ptab->ports[i].ftab.nfilts = 0;
+                ptab->ports[i].ftab.filts[0].nprids = 0;
+        }
+        ptab->nports = 0;
+}
+
+/* Clears given caidtab */
+void clear_caidtab(struct s_caidtab *ctab){
+        int i;
+        for (i = 0; i < CS_MAXCAIDTAB; i++) {
+                ctab->caid[i] = 0;
+                ctab->mask[i] = 0;
+                ctab->cmap[i] = 0;
+        }
+}
+
+/* Clears given tuntab */
+void clear_tuntab(struct s_tuntab *ttab){
+        int i;
+        for (i = 0; i < CS_MAXTUNTAB; i++) {
+                ttab->bt_caidfrom[i] = 0;
+                ttab->bt_caidto[i] = 0;
+                ttab->bt_srvid[i] = 0;
+        }
+}
+
+/* Converts a long value to a char array in bitwise representation.
+   Note that the result array MUST be at least 33 bit large and that
+   this function assumes long values to hold only values up to 32bits and to be positive!
+   the result of e.g. long 7 is 11100000000000000000000000000000 this means the array
+   is reversed */
+void long2bitchar(long value, char *result){
+        int pos;
+        for (pos=0;pos<32;pos++) result[pos]='0';
+        result[pos] = '\0';
+
+        pos=0;
+        while (value > 0 && pos < 32){
+                if(value % 2 == 1) result[pos]='1';
+                else result[pos]='0';
+                value=value / 2;
+                pos++;
+        }
+}
+
 /* 
 * Ordinary strncpy does not terminate the string if the source 
 * is exactly as long or longer as the specified size. This can raise security issues.
