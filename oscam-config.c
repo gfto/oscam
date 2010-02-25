@@ -1061,6 +1061,7 @@ int init_config()
 	cfg->pidfile = NULL;
 	cfg->usrfile = NULL;
 	cfg->cwlogdir = NULL;
+	cfg->ncd_keepalive = 1;
 #ifdef CS_ANTICASC
 	cfg->ac_enabled = 0;
 	cfg->ac_users = 0;
@@ -1070,7 +1071,6 @@ int init_config()
 	cfg->ac_fakedelay = 1000;
 	strcpy(cfg->ac_logfile, "./oscam_ac.log");
 #endif
-	cfg->ncd_keepalive=1;
 	sprintf(token, "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d)\n", token, errno);
@@ -1587,235 +1587,416 @@ int init_srvid()
 
 static void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
-  int i;
-  char *ptr;
-  /*
-   *  case sensitive first
-   */
-  if (!strcmp(token, "device"))
-  {
-    for (i=0, ptr=strtok(value, ","); (i<3)&&(ptr); ptr=strtok(NULL, ","), i++)
-    {
-      trim(ptr);
-      switch(i)
-      {
-        case 0: cs_strncpy(rdr->device, ptr, sizeof(rdr->device)); break;
-        case 1: rdr->r_port=atoi(ptr); break;
-        case 2: rdr->l_port=atoi(ptr); break;
-      }
-    }
-    return;
-  }
-  if (!strcmp(token, "key"))
-  {
-    if (key_atob14(value, rdr->ncd_key))
-    {
-      fprintf(stderr, "Configuration newcamd: Error in Key\n");
-      exit(1);
-    }
-    return;
-  }
+	int i;
+	char *ptr;
+	/*
+	 *  case sensitive first
+	 */
+	if (!strcmp(token, "device")) {
+		for (i = 0, ptr = strtok(value, ","); (i < 3) && (ptr); ptr = strtok(NULL, ","), i++) {
+			trim(ptr);
+			switch(i) {
+				case 0:
+					cs_strncpy(rdr->device, ptr, sizeof(rdr->device));
+					break;
+
+				case 1:
+					rdr->r_port = atoi(ptr);
+					break;
+
+				case 2:
+					rdr->l_port = atoi(ptr);
+					break;
+			}
+		}
+		return;
+	}
+
+	if (!strcmp(token, "key")) {
+		if (key_atob14(value, rdr->ncd_key)) {
+			fprintf(stderr, "Configuration newcamd: Error in Key\n");
+			exit(1);
+		}
+		return;
+	}
+
 #ifdef CS_WITH_GBOX
-  if (!strcmp(token, "password")) { cs_strncpy((char *)rdr->gbox_pwd, (const char *)i2b(4, a2i(value, 4)), 4); return; }
-  if (!strcmp(token, "premium")) { rdr->gbox_prem=1; return; }
-#endif
-  if (!strcmp(token, "account"))
-  {
-    for (i=0, ptr=strtok(value, ","); (i<2)&&(ptr); ptr=strtok(NULL, ","), i++)
-    {
-      trim(ptr);
-      switch(i)
-      {
-        case 0: cs_strncpy(rdr->r_usr, ptr, sizeof(rdr->r_usr)); break;
-        case 1: cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd)); break;
-      }
-    }
-    return;
-  }
-  if( !strcmp(token, "pincode")) { strncpy(rdr->pincode, value, sizeof(rdr->pincode)-1); return; }
-  if (!strcmp(token, "readnano") && value[0]) { asprintf(&(rdr->emmfile), "%s", value); return; }
-  /*
-   *  case insensitive
-   */
-  strtolower(value);
+	if (!strcmp(token, "password")) {
+		cs_strncpy((char *)rdr->gbox_pwd, (const char *)i2b(4, a2i(value, 4)), 4); 
+		return;
+	}
 
-  if (!strcmp(token, "enable")) { rdr->enable=atoi(value) ? 1 : 0; return; }
-  if (!strcmp(token, "services")) { chk_services(value, &rdr->sidtabok, &rdr->sidtabno); return; }
-  if (!strcmp(token, "inactivitytimeout")) {   rdr->tcp_ito = atoi(value);  return; }
-  if (!strcmp(token, "reconnecttimeout")) {    rdr->tcp_rto = atoi(value);  return; }
-  if (!strcmp(token, "disableserverfilter")) { rdr->ncd_disable_server_filt = atoi(value);  return; }
-  //FIXME workaround for Smargo until native mode works
-  if (!strcmp(token, "smargopatch")) { rdr->smargopatch = atoi(value);  return; }
-  if (!strcmp(token, "label")) { cs_strncpy(rdr->label, value, sizeof(rdr->label)); return; }
-  if (!strcmp(token, "fallback")) { rdr->fallback=atoi(value) ? 1 : 0; return; }
-  if (!strcmp(token, "logport")) { rdr->log_port=atoi(value); return; }
-  if (!strcmp(token, "caid")) { chk_caidtab(value, &rdr->ctab); return; }
-  if (!strcmp(token, "boxid")) { rdr->boxid=a2i(value,4); return; }
-  if (!strcmp(token, "aeskey"))
-  {
-    if (key_atob(value, rdr->aes_key))
-    {
-      fprintf(stderr, "Configuration reader: Error in AES Key\n");
-      exit(1);
-    }
-    return;
-  }
-  if ((!strcmp(token, "n3_rsakey")) || (!strcmp(token, "rsakey")) )
-  {
-    rdr->has_rsa=1;
-    if (key_atob_l(value, rdr->rsa_mod, 128))
-    {
-      fprintf(stderr, "Configuration reader: Error in rsakey\n");
-      exit(1);
-    }
-    return;
-  }
-  if (!strcmp(token, "tiger_rsakey"))
-  {
-    if (key_atob_l(value, rdr->rsa_mod, 240))
-    {
-      fprintf(stderr, "Configuration reader: Error in tiger_rsakey\n");
-      exit(1);
-    }
-    return;
-  }
-  if ((!strcmp(token, "n3_boxkey")) || (!strcmp(token, "boxkey")))
-  {
-    if (key_atob_l(value, rdr->nagra_boxkey, 16))
-    {
-      fprintf(stderr, "Configuration reader: Error in boxkey\n");
-      exit(1);
-    }
-    return;
-  }
-  if (!strcmp(token, "detect"))
-  {
-    for (i=0; RDR_CD_TXT[i]; i++)
-    {
-      if (!strcmp(value, RDR_CD_TXT[i]))
-        rdr->detect=i;
-      else
-        if ((value[0]=='!') && (!strcmp(value+1, RDR_CD_TXT[i])))
-          rdr->detect=i|0x80;
-    }
-    return;
-  }
-  if (!strcmp(token, "mhz")) { rdr->mhz=atoi(value); return; }
-  if (!strcmp(token, "cardmhz")) { rdr->cardmhz=atoi(value); return; }
-  if (!strcmp(token, "protocol"))
-  {
-    if (!strcmp(value, "mouse")) {      rdr->typ=R_MOUSE; return; }
-    if (!strcmp(value, "smartreader")) {      rdr->typ=R_SMART; return; }
-    if (!strcmp(value, "internal")) {   rdr->typ=R_INTERNAL; return; }
+	if (!strcmp(token, "premium")) {
+		rdr->gbox_prem = 1;
+		return;
+	}
+#endif
+	if (!strcmp(token, "account")) {
+		for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
+			trim(ptr);
+			switch(i) {
+				case 0:
+					cs_strncpy(rdr->r_usr, ptr, sizeof(rdr->r_usr));
+					break;
+
+				case 1:
+					cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd));
+					break;
+			}
+		}
+		return;
+	}
+
+	if (!strcmp(token, "pincode")) {
+		strncpy(rdr->pincode, value, sizeof(rdr->pincode) - 1);
+		return;
+	}
+
+	if (!strcmp(token, "readnano") && value[0]) {
+		asprintf(&(rdr->emmfile), "%s", value);
+		return;
+	}
+
+	/*
+	 *  case insensitive
+	*/
+	strtolower(value);
+
+	if (!strcmp(token, "enable")) {
+		rdr->enable = atoi(value) ? 1 : 0; 
+		return;
+	}
+
+	if (!strcmp(token, "services")) {
+		chk_services(value, &rdr->sidtabok, &rdr->sidtabno);
+		return;
+	}
+
+	if (!strcmp(token, "inactivitytimeout")) {
+		rdr->tcp_ito = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "reconnecttimeout")) {
+		rdr->tcp_rto = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "disableserverfilter")) {
+		rdr->ncd_disable_server_filt = atoi(value);
+		return;
+	}
+
+	//FIXME workaround for Smargo until native mode works
+	if (!strcmp(token, "smargopatch")) {
+		rdr->smargopatch = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "label")) {
+		cs_strncpy(rdr->label, value, sizeof(rdr->label));
+		return;
+	}
+
+	if (!strcmp(token, "fallback")) {
+		rdr->fallback = atoi(value) ? 1 : 0;
+		return;
+	}
+
+	if (!strcmp(token, "logport")) {
+		rdr->log_port = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "caid")) {
+		chk_caidtab(value, &rdr->ctab);
+		return;
+	}
+
+	if (!strcmp(token, "boxid")) {
+		rdr->boxid = a2i(value, 4);
+		return;
+	}
+
+	if (!strcmp(token, "aeskey")) {
+		if (key_atob(value, rdr->aes_key)) {
+			fprintf(stderr, "Configuration reader: Error in AES Key\n");
+			exit(1);
+		}
+		return;
+	}
+
+	if ((!strcmp(token, "n3_rsakey")) || (!strcmp(token, "rsakey"))) {
+		rdr->has_rsa = 1;
+		if (key_atob_l(value, rdr->rsa_mod, 128)) {
+			fprintf(stderr, "Configuration reader: Error in rsakey\n");
+			exit(1);
+		}
+		return;
+	}
+
+	if (!strcmp(token, "tiger_rsakey")) {
+		if (key_atob_l(value, rdr->rsa_mod, 240)) {
+			fprintf(stderr, "Configuration reader: Error in tiger_rsakey\n");
+			exit(1);
+		}
+		return;
+	}
+
+	if ((!strcmp(token, "n3_boxkey")) || (!strcmp(token, "boxkey"))) {
+		if (key_atob_l(value, rdr->nagra_boxkey, 16)) {
+			fprintf(stderr, "Configuration reader: Error in boxkey\n");
+			exit(1);
+		}
+		return;
+	}
+
+	if (!strcmp(token, "detect")) {
+		for (i = 0; RDR_CD_TXT[i]; i++) {
+			if (!strcmp(value, RDR_CD_TXT[i])) {
+				rdr->detect = i;
+			}
+			else {
+				if ((value[0] == '!') && (!strcmp(value+1, RDR_CD_TXT[i])))
+					rdr->detect = i|0x80;
+			}
+		}
+		return;
+	}
+
+	if (!strcmp(token, "mhz")) {
+		rdr->mhz = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "cardmhz")) {
+		rdr->cardmhz = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "protocol")) {
+
+		if (!strcmp(value, "mouse")) {
+			rdr->typ = R_MOUSE;
+			return;
+		}
+
+		if (!strcmp(value, "smartreader")) {
+			rdr->typ = R_SMART;
+			return;
+		}
+
+		if (!strcmp(value, "internal")) {
+			rdr->typ = R_INTERNAL;
+			return;
+		}
+
 #ifdef HAVE_PCSC
-    if (!strcmp(value, "pcsc")) {   rdr->typ=R_PCSC; return; }
+		if (!strcmp(value, "pcsc")) {
+			rdr->typ = R_PCSC;
+			return;
+		}
 #endif
-    if (!strcmp(value, "serial")) {     rdr->typ=R_SERIAL; return; }
-    if (!strcmp(value, "camd35")) {     rdr->typ=R_CAMD35; return; }
-    if (!strcmp(value, "cs378x")) {     rdr->typ=R_CS378X; return; }
-    if (!strcmp(value, "cs357x")) {     rdr->typ=R_CAMD35; return; }
-    if (!strcmp(value, "gbox")) {       rdr->typ=R_GBOX; return; }
-    if (!strcmp(value, "cccam")) {
-      rdr->typ=R_CCCAM;
-     // strcpy(value, "1");
-     // chk_caidtab(value, &rdr->ctab); // this is a MAJOR hack for auto multiple caid support (not currently working due to ncd table issue)
-      return;
-    }
-    if (!strcmp(value, "radegast")) {       rdr->typ=R_RADEGAST; return; }
-    if (!strcmp(value, "newcamd") ||
-        !strcmp(value, "newcamd525")) {rdr->typ=R_NEWCAMD;
-                                       rdr->ncd_proto=NCD_525; return; }
-    if (!strcmp(value, "newcamd524")) {rdr->typ=R_NEWCAMD;
-                                       rdr->ncd_proto=NCD_524; return; }
-    fprintf(stderr, "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE\n",value);
-    rdr->typ=R_MOUSE;
-    return;
-  }
-  if (!strcmp(token, "loadbalanced")) { rdr->loadbalanced=atoi(value); return; }
-  if (!strcmp(token, "ident")) { chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid"); return; }
-  if (!strcmp(token, "class")) { chk_cltab(value, &rdr->cltab); return; }
-  if (!strcmp(token, "chid")) {  chk_ftab(value, &rdr->fchid,"reader",rdr->label,"chid"); return; }
-  if (!strcmp(token, "showcls")) { rdr->show_cls = atoi(value); return; }
-  if (!strcmp(token, "maxqlen"))
-  {
-    rdr->maxqlen = atoi(value);
-    if( rdr->maxqlen<0 || rdr->maxqlen>CS_MAXQLEN )
-      rdr->maxqlen=CS_MAXQLEN;
-    return;
-  }
-  if (!strcmp(token, "group"))
-  {
-    for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
-    {
-      int g;
-      g=atoi(ptr);
-      if ((g>0) && (g<33)) rdr->grp|=(1<<(g-1));
-    }
-    return;
-  }
-  if (!strcmp(token, "emmcache"))
-  {
-    for (i=0, ptr=strtok(value, ","); (i<3)&&(ptr); ptr=strtok(NULL, ","), i++)
-      switch(i)
-      {
-        case 0: rdr->cachemm=atoi(ptr);   break;
-        case 1: rdr->rewritemm=atoi(ptr); break;
-        case 2: rdr->logemm=atoi(ptr);    break;
-      }
-    if (rdr->rewritemm <=0) {
-      fprintf(stderr, "Notice: Setting EMMCACHE to %i,1,%i instead of %i,%i,%i. Zero or negative number of rewrites is silly\n", rdr->cachemm,rdr->logemm,rdr->cachemm,rdr->rewritemm,rdr->logemm);
-      rdr->rewritemm = 1;
-    }
-    return;
-  }
 
-  if (!strcmp(token, "blocknano"))
-  {
-    if (!strcmp(value,"all")) //wildcard is used
-      for (i=0 ; i<256; i++)
-  rdr->b_nano[i] |= 0x01; //set all lsb's to block all nanos
-    else
-      for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
-  if ((i=byte_atob(ptr))>=0)
-    rdr->b_nano[i]|= 0x01; //lsb is set when to block nano
-    return;
-  }
-  if (!strcmp(token, "savenano"))
-  {
-    if (!strcmp(value,"all")) //wildcard is used
-      for (i=0 ; i<256; i++)
-  rdr->b_nano[i] |= 0x02; //set all lsb+1 to save all nanos to file
-    else
-      for (ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
-  if ((i=byte_atob(ptr))>=0)
-    rdr->b_nano[i]|= 0x02; //lsb+1 is set when to save nano to file
-    return;
-  }
-  if (!strcmp(token, "cccversion")) {  // cccam version
-    if (strlen(value)>sizeof(rdr->cc_version)-1) {
-      fprintf(stderr, "cccam config: version too long\n");
-      exit(1);
-    }
-    memset(rdr->cc_version, 0, sizeof(rdr->cc_version));
-    cs_strncpy(rdr->cc_version, value, sizeof(rdr->cc_version));
-    return;
-  }
-  if (!strcmp(token, "cccbuild")) {  // cccam build number
-    if (strlen(value)>sizeof(rdr->cc_build)-1) {
-      fprintf(stderr, "cccam config build number too long\n");
-      exit(1);
-    }
-    memset(rdr->cc_build, 0, sizeof(rdr->cc_build));
-    cs_strncpy(rdr->cc_build, value, sizeof(rdr->cc_build));
-    return;
-  }
-  if (!strcmp(token, "cccmaxhop")) {  // cccam max card distance
-    rdr->cc_maxhop = atoi(value);
-    return;
-  }
-  if (!strcmp(token, "deprecated")) { rdr->deprecated=atoi(value); return; }
-  if (token[0] != '#')
-    cs_log( "Warning: keyword '%s' in reader section not recognized",token);
+		if (!strcmp(value, "serial")) {
+			rdr->typ = R_SERIAL;
+			return;
+		}
+
+		if (!strcmp(value, "camd35")) {
+			rdr->typ = R_CAMD35;
+			return;
+		}
+
+		if (!strcmp(value, "cs378x")) {
+			rdr->typ = R_CS378X;
+			return;
+		}
+
+		if (!strcmp(value, "cs357x")) {
+			rdr->typ = R_CAMD35;
+			return;
+		}
+
+		if (!strcmp(value, "gbox")) {
+			rdr->typ = R_GBOX;
+			return;
+		}
+
+		if (!strcmp(value, "cccam")) {
+			rdr->typ = R_CCCAM;
+			//strcpy(value, "1");
+			//chk_caidtab(value, &rdr->ctab); 
+			//this is a MAJOR hack for auto multiple caid support (not currently working due to ncd table issue)
+			return;
+		}
+
+		if (!strcmp(value, "radegast")) {
+			rdr->typ = R_RADEGAST;
+			return;
+		}
+
+		if (!strcmp(value, "newcamd") || !strcmp(value, "newcamd525")) {
+			rdr->typ = R_NEWCAMD;
+			rdr->ncd_proto = NCD_525;
+			return;
+		}
+
+		if (!strcmp(value, "newcamd524")) {
+			rdr->typ = R_NEWCAMD;
+			rdr->ncd_proto = NCD_524;
+			return;
+		}
+
+		fprintf(stderr, "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE\n",value);
+		rdr->typ = R_MOUSE;
+		return;
+	}
+
+	if (!strcmp(token, "loadbalanced")) {
+		rdr->loadbalanced = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "ident")) {
+		chk_ftab(value, &rdr->ftab,"reader",rdr->label,"provid");
+		return;
+	}
+
+	if (!strcmp(token, "class")) {
+		chk_cltab(value, &rdr->cltab);
+		return;
+	}
+
+	if (!strcmp(token, "chid")) {
+		chk_ftab(value, &rdr->fchid,"reader",rdr->label,"chid");
+		return;
+	}
+
+	if (!strcmp(token, "showcls")) {
+		rdr->show_cls = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "maxqlen")) {
+		rdr->maxqlen = atoi(value);
+		if( rdr->maxqlen < 0 || rdr->maxqlen > CS_MAXQLEN) {
+			rdr->maxqlen = CS_MAXQLEN;
+		}
+		return;
+	}
+
+	if (!strcmp(token, "group"))
+	{
+		for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+			int g;
+			g = atoi(ptr);
+			if ((g>0) && (g<33)) {
+				rdr->grp |= (1<<(g-1));
+			}
+		}
+		return;
+	}
+
+	if (!strcmp(token, "emmcache")) {
+		for (i = 0, ptr = strtok(value, ","); (i < 3) && (ptr); ptr = strtok(NULL, ","), i++) {
+			switch(i)
+			{
+				case 0:
+					rdr->cachemm = atoi(ptr);
+					break;
+
+				case 1:
+					rdr->rewritemm = atoi(ptr);
+					break;
+
+				case 2: rdr->logemm = atoi(ptr);
+					break;
+			}
+		}
+
+		if (rdr->rewritemm <= 0) {
+			fprintf(stderr, "Notice: Setting EMMCACHE to %i,1,%i instead of %i,%i,%i. ", 
+				rdr->cachemm, rdr->logemm,
+				rdr->cachemm, rdr->rewritemm,
+				rdr->logemm);
+
+			fprintf(stderr, "Zero or negative number of rewrites is silly\n");
+			rdr->rewritemm = 1;
+		}
+		return;
+	}
+
+	if (!strcmp(token, "blocknano")) {
+		//wildcard is used
+		if (!strcmp(value,"all")) {
+			for (i = 0 ; i < 256; i++) {
+				rdr->b_nano[i] |= 0x01; //set all lsb's to block all nanos
+			}
+		}
+		else {
+			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+				if ((i = byte_atob(ptr)) >= 0) {
+					rdr->b_nano[i] |= 0x01; //lsb is set when to block nano
+				}
+			}
+		}
+		return;
+	}
+
+	if (!strcmp(token, "savenano")) {
+		//wildcard is used
+		if (!strcmp(value,"all")) {
+			for (i = 0 ; i < 256; i++) {
+				rdr->b_nano[i] |= 0x02; //set all lsb+1 to save all nanos to file
+			}
+		}
+		else {
+			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+				if ((i = byte_atob(ptr)) >= 0) {
+					rdr->b_nano[i] |= 0x02; //lsb+1 is set when to save nano to file
+				}
+			}
+		}
+		return;
+	}
+
+	if (!strcmp(token, "cccversion")) {
+		// cccam version
+		if (strlen(value) > sizeof(rdr->cc_version) - 1) {
+			fprintf(stderr, "cccam config: version too long\n");
+			exit(1);
+		}
+		memset(rdr->cc_version, 0, sizeof(rdr->cc_version));
+		cs_strncpy(rdr->cc_version, value, sizeof(rdr->cc_version));
+		return;
+	}
+
+	if (!strcmp(token, "cccbuild")) {
+		// cccam build number
+		if (strlen(value) > sizeof(rdr->cc_build) - 1) {
+			fprintf(stderr, "cccam config build number too long\n");
+			exit(1);
+		}
+
+		memset(rdr->cc_build, 0, sizeof(rdr->cc_build));
+		cs_strncpy(rdr->cc_build, value, sizeof(rdr->cc_build));
+		return;
+	}
+
+	if (!strcmp(token, "cccmaxhop")) {
+		// cccam max card distance
+		rdr->cc_maxhop = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "deprecated")) {
+		rdr->deprecated = atoi(value);
+		return;
+	}
+
+	if (token[0] != '#')
+		cs_log("Warning: keyword '%s' in reader section not recognized",token);
 }
 
 int init_readerdb()
