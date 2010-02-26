@@ -312,9 +312,8 @@ struct s_ecm
   uchar  ecmd5[CS_ECMSTORESIZE];
   uchar  cw[16];
   ushort caid;
-  ulong  prid;
   ulong  grp;
-//  int level;
+  //int level;
 };
 
 struct s_emm

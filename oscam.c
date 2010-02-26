@@ -1314,7 +1314,6 @@ static void store_ecm(ECM_REQUEST *er)
   memcpy(ecmcache[rc].ecmd5, er->ecmd5, CS_ECMSTORESIZE);
   memcpy(ecmcache[rc].cw, er->cw, 16);
   ecmcache[rc].caid=er->caid;
-  ecmcache[rc].prid=er->prid;
   ecmcache[rc].grp=reader[er->reader[0]].grp;
   //cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
