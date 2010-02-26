@@ -162,6 +162,58 @@ monlevel can be overwritten per user in \fBoscam.user\fR
 .RS 3n
 time to hide clients in the monitor if not sending requests, 0 = disabled, default:0
 .RE
+.PP
+.SS "The [webif] section" \fI(only if web interface module enabled)\fR
+\fBhttpport\fP = \fBport\fP
+.RS 3n
+port for web interface, 0 = disabled, default:none, \fIrequired\fR
+.RE
+.PP
+\fBhttpuser\fP = \fBusername\fP
+.RS 3n
+username for password protection, default:none
+.RE
+.PP
+\fBhttppwd\fP = \fBpassword\fP
+.RS 3n
+password for password protection, default:none
+.RE
+.PP
+\fBhttpcss\fP = \fBpath\fP
+.RS 3n
+path for external CSS file, default:none
+.RE
+.PP
+\fBhttptpl\fP = \fBpath\fP
+.RS 3n
+path for external templates, default:none
+.RE
+.PP
+\fBhttprefresh\fP = \fBseconds\fP
+.RS 3n
+status refresh in seconds, default:none
+.RE
+.PP
+\fBhttptpl\fP = \fBpath\fP
+.RS 3n
+path for external templates, default:none
+.RE
+.PP
+\fBhttphideidleclients\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enables hiding clients after idle time set in parameter \fBhideclient_to\fP, default:0
+.RE
+.PP
+\fBhttpscript\fP = \fBpath\fP
+.RS 3n
+path to an executable script which you wish to start from web interface, default:none
+.RE
+.PP
+\fBhttpallowed\fP = \fBIP address\fP|\fBIP address range\fP[,\fBIP address\fP|\fBIP address range]\fP...
+.RS 3n
+http web interface connections allowed, default:none
+ example: httpallowed = 127.0.0.1,192.168.0.0-192.168.255.255
+.RE
 .SS "The [camd33] section"
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
@@ -480,6 +532,39 @@ monitor commands:
                              32 = traffic to the reader-device on I/O layer
                              63 = debug all
  version                 = show OSCam version
+.SH WEB INTERFACE
+.TP 3n
+\(bu
+template system
+
+The web interface allows you to create your own template. For developing your 
+own template request the orignal template with the non-linked page 
+\fBsavetemplates.html\fP. Store your own template in the directory specified 
+by \fBhttptpl\fP. 
+.TP 3n
+\(bu
+SSL connection to the web interface
+
+The Apache module \fBmod_proxy\fP can be used to proxy requests to the web 
+interface. With this module it's also possible to use a SSL connection to 
+the web interface. 
+
+ ProxyRequests Off
+  <Proxy *>
+   Order deny,allow
+   Allow from all
+  </Proxy>
+  ProxyPass /oscam/ http://localhost:8080/
+  ProxyPassReverse /oscam/ http://localhost:8080/
+
+For further information please read the Apache documentation. 
+.TP 3n
+\(bu
+known issues
+
+Login is not possible by now with the Safari browser because of incorrect 
+stale flag handling. Increasing the AUTHNONCEVALIDSECS in oscam-http.h would 
+be a workaround, but also a small security risk.
 .SH EXAMPLES
  [global]
  logfile      = /var/log/oscam/oscam.log
