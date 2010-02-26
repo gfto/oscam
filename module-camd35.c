@@ -472,18 +472,19 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 
 static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 {
-  //int i;
-  ushort idx;
+	ushort idx;
 
-  // CMD44: old reject command introduced in mpcs
-  // keeping this for backward compatibility
-  if ((buf[0]!=1) && ((buf[0]!=0x44) || (buf[0]!=0x08)))
-    return(-1);
-//  memcpy(&idx, buf+16, 2);
-  idx=b2i(2, buf+16);
-  *rc=((buf[0]!=0x44) || (buf[0]!=0x08));
-  memcpy(dcw, buf+20, 16);
-  return(idx);
+	// CMD44: old reject command introduced in mpcs
+	// keeping this for backward compatibility
+	if ((buf[0] != 1) && (buf[0] != 0x44) && (buf[0] != 0x08))
+		return(-1);
+
+	idx=b2i(2, buf+16);
+
+	*rc=((buf[0] != 0x44) && (buf[0] != 0x08));
+
+	memcpy(dcw, buf+20, 16);
+	return(idx);
 }
 
 static int camd35_recv_log(ushort *caid, ulong *provid, ushort *srvid)
