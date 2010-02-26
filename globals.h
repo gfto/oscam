@@ -50,10 +50,13 @@
 #include "oscam-types.h"
 #include "cscrypt/cscrypt.h"
 
-#ifdef HAVE_PCSC
-#include <PCSC/pcsclite.h>
-#include <PCSC/wintypes.h>
-#include <PCSC/reader.h>
+#ifdef HAVE_PCSC 
+    #include <PCSC/pcsclite.h> 
+    #ifdef OS_MACOSX 
+        #include <PCSC/wintypes.h> 
+    #else 
+        #include <PCSC/reader.h> 
+    #endif 
 #endif
 
 #if defined(LIBUSB)
@@ -421,7 +424,6 @@ struct s_client
 
 struct s_reader
 {
-	int		smargopatch; //FIXME workaround for Smargo until native mode works
   int		pid;
   int       cs_idx;
   int       enable;
