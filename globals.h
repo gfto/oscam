@@ -149,7 +149,7 @@
 #define R_RADEGAST  0x13  // Reader cascading radegast
 #define R_CS378X    0x14  // Reader cascading camd 3.5x TCP
 /////////////////// peer to peer proxy readers after R_CCCAM
-#ifdef CW_WITH_GBOX
+#ifdef CS_WITH_GBOX
 #define R_GBOX      0x20  // Reader cascading gbox
 #endif
 #define R_CCCAM     0x25  // Reader cascading cccam

@@ -1607,7 +1607,7 @@ int send_dcw(ECM_REQUEST *er)
     lc^=*lp;
   cs_ftime(&tpe);
 
-#ifdef CW_WITH_GBOX
+#ifdef CS_WITH_GBOX
   if(er->gbxFrom)
     snprintf(uname,sizeof(uname)-1, "%s(%04X)", username(cs_idx), er->gbxFrom);
   else
