@@ -12,7 +12,6 @@ static char *cs_srid="oscam.srvid";
 static char *cs_l4ca="oscam.guess";
 static char *cs_cert="oscam.cert";
 static char *cs_sidt="oscam.services";
-//static char *cs_ird="oscam.ird";
 #ifdef CS_ANTICASC
 static char *cs_ac="oscam.ac";
 #endif
@@ -30,27 +29,15 @@ typedef enum cs_proto_type
 	TAG_SERIAL,		// serial (static)
 	TAG_CS357X,		// camd 3.5x UDP
 	TAG_CS378X,		// camd 3.5x TCP
-#ifdef CS_WITH_GBOX
 	TAG_GBOX,		// gbox
-#endif
 	TAG_CCCAM,		// cccam
 	TAG_DVBAPI,		// dvbapi
-	TAG_WEBIF		// webif
-#ifdef CS_ANTICASC
-	,TAG_ANTICASC		// anti-cascading
-#endif
+	TAG_WEBIF,		// webif
+	TAG_ANTICASC		// anti-cascading
 } cs_proto_type_t;
 
-static char *cctag[]={"global", "monitor", "camd33", "camd35",
-						"newcamd", "radegast", "serial", "cs357x", "cs378x",
-#ifdef CS_WITH_GBOX
-		      "gbox",
-#endif
-						"cccam", "dvbapi", "webif",
-#ifdef CS_ANTICASC
-                      "anticasc",
-#endif
-                      NULL};
+static char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", "radegast", "serial",
+		      "cs357x", "cs378x", "gbox", "cccam", "dvbapi", "webif", "anticasc", NULL};
 
 #ifdef DEBUG_SIDTAB
 static void show_sidtab(struct s_sidtab *sidtab)
@@ -1042,9 +1029,13 @@ static void chk_token(char *token, char *value, int tag)
 		case TAG_RADEGAST: chk_t_radegast(token, value); break;
 		case TAG_SERIAL  : chk_t_serial(token, value); break;
 		case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
+
 #ifdef CS_WITH_GBOX
 		case TAG_GBOX    : chk_t_gbox(token, value); break;
+#else
+		case TAG_GBOX    : fprintf(stderr, "Warning: OSCam compiled without gbox support.\n"); break;
 #endif
+
 		case TAG_CCCAM   : chk_t_cccam(token, value); break;
 #ifdef HAVE_DVBAPI
 		case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
@@ -1052,15 +1043,20 @@ static void chk_token(char *token, char *value, int tag)
 		case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
 #endif
 
+
 #ifdef WEBIF
 		case TAG_WEBIF  : chk_t_webif(token, value); break;
 #else
 		case TAG_WEBIF  : fprintf(stderr, "Warning: OSCam compiled without Webinterface support.\n"); break;
 #endif
 
+
 #ifdef CS_ANTICASC
 		case TAG_ANTICASC: chk_t_ac(token, value); break;
+#else
+		case TAG_ANTICASC: fprintf(stderr, "Warning: OSCam compiled without anticascading support.\n"); break;
 #endif
+
 	}
 }
 
@@ -2631,89 +2627,6 @@ int init_readerdb()
 	fclose(fp);
 	return(0);
 }
-
-/*
-int init_irdeto_guess_tab()
-{
-  int i, j, skip;
-  int b47;
-  FILE *fp;
-  char token[128], *value, *ptr;
-  char zSid[5];
-  uchar b3;
-  ushort caid, sid;
-  struct s_irdeto_quess *ird_row, *head;
-
-  memset(cfg->itab, 0, sizeof(cfg->itab));
-  sprintf(token, "%s%s", cs_confdir, cs_ird);
-  if (!(fp=fopen(token, "r")))
-  {
-    cs_log("can't open file \"%s\" (errno=%d) irdeto guessing not loaded",
-           token, errno);
-    return(1);
-  }
-  while (fgets(token, sizeof(token), fp))
-  {
-    if( strlen(token)<20 ) continue;
-    for( i=b3=b47=caid=sid=skip=0, ptr=strtok(token, ":"); (i<4)&&(ptr); ptr=strtok(NULL, ":"), i++ )
-    {
-      trim(ptr);
-      if( *ptr==';' || *ptr=='#' || *ptr=='-' ) {
-        skip=1;
-        break;
-      }
-      switch(i)
-      {
-        case 0: b3   = a2i(ptr, 2); break;
-        case 1: b47  = a2i(ptr, 8); break;
-        case 2: caid = a2i(ptr, 4); break;
-        case 3:
-          for( j=0; j<4; j++ )
-            zSid[j]=ptr[j];
-          zSid[4]=0;
-          sid  = a2i(zSid, 4);
-          break;
-      }
-    }
-    if( !skip )
-    {
-      if (!(ird_row=(struct s_irdeto_quess*)malloc(sizeof(struct s_irdeto_quess))))
-      {
-        cs_log("Error allocating memory (errno=%d)", errno);
-        return;
-      }
-      ird_row->b47  = b47;
-      ird_row->caid = caid;
-      ird_row->sid  = sid;
-      ird_row->next = 0;
-
-      head = cfg->itab[b3];
-      if( head ) {
-        while( head->next )
-          head=head->next;
-        head->next=ird_row;
-      }
-      else
-        cfg->itab[b3]=ird_row;
-
-      //cs_debug("%02X:%08X:%04X:%04X", b3, b47, caid, sid);
-    }
-  }
-  fclose(fp);
-
-  for( i=0; i<0xff; i++ )
-  {
-    head=cfg->itab[i];
-    while(head)
-    {
-      cs_debug("itab[%02X]: b47=%08X, caid=%04X, sid=%04X",
-               i, head->b47, head->caid, head->sid);
-      head=head->next;
-    }
-  }
-  return(0);
-}
-*/
 
 #ifdef CS_ANTICASC
 void init_ac()
