@@ -2121,7 +2121,12 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "readnano") && value[0]) {
-		asprintf(&(rdr->emmfile), "%s", value);
+		if (rdr->emmfile != NULL) {
+			free(rdr->emmfile);
+			rdr->emmfile = NULL;
+		}
+		if (strlen(value) > 0)
+			asprintf(&(rdr->emmfile), "%s", value);
 		return;
 	}
 
