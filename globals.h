@@ -680,7 +680,9 @@ struct s_config
 	int		num_locals;
 	unsigned long 	locals[CS_MAXLOCALS];
 #endif
-	//struct s_irdeto_quess *itab[0xff];
+#ifdef IRDETO_GUESSING
+	struct s_irdeto_quess *itab[0xff];
+#endif
 #ifdef HAVE_DVBAPI
 	int			dvbapi_enabled;
 	int			dvbapi_au;
@@ -839,6 +841,9 @@ extern int write_ecm_answer(int, ECM_REQUEST *);
 extern void log_emm_request(int);
 extern ulong chk_provid(uchar *, ushort);
 extern void guess_cardsystem(ECM_REQUEST *);
+#ifdef IRDETO_GUESSING
+extern void guess_irdeto(ECM_REQUEST *); 
+#endif
 extern void get_cw(ECM_REQUEST *);
 extern void do_emm(EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
@@ -879,6 +884,9 @@ extern int  init_sidtab(void);
 extern int  init_srvid(void);
 extern int  search_boxkey(ushort, char *);
 extern void init_len4caid(void);
+#ifdef IRDETO_GUESSING
+extern int  init_irdeto_guess_tab(void); 
+#endif
 extern void chk_caidtab(char *caidasc, CAIDTAB *ctab);
 extern void chk_tuntab(char *tunasc, TUNTAB *ttab);
 extern void chk_services(char *labels, ulong *sidok, ulong *sidno);

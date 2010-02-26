@@ -16,6 +16,10 @@ static char *cs_sidt="oscam.services";
 static char *cs_ac="oscam.ac";
 #endif
 
+#ifdef IRDETO_GUESSING
+static char *cs_ird="oscam.ird";
+#endif
+
 static char token[4096];
 
 typedef enum cs_proto_type
@@ -2627,6 +2631,88 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (token[0] != '#')
 		cs_log("Warning: keyword '%s' in reader section not recognized",token);
 }
+
+#ifdef IRDETO_GUESSING
+int init_irdeto_guess_tab()
+{
+  int i, j, skip;
+  int b47;
+  FILE *fp;
+  char token[128], *ptr;
+  char zSid[5];
+  uchar b3;
+  ushort caid, sid;
+  struct s_irdeto_quess *ird_row, *head;
+
+  memset(cfg->itab, 0, sizeof(cfg->itab));
+  sprintf(token, "%s%s", cs_confdir, cs_ird);
+  if (!(fp=fopen(token, "r")))
+  {
+    cs_log("can't open file \"%s\" (errno=%d) irdeto guessing not loaded",
+           token, errno);
+    return(1);
+  }
+  while (fgets(token, sizeof(token), fp))
+  {
+    if( strlen(token)<20 ) continue;
+    for( i=b3=b47=caid=sid=skip=0, ptr=strtok(token, ":"); (i<4)&&(ptr); ptr=strtok(NULL, ":"), i++ )
+    {
+      trim(ptr);
+      if( *ptr==';' || *ptr=='#' || *ptr=='-' ) {
+        skip=1;
+        break;
+      }
+      switch(i)
+      {
+        case 0: b3   = a2i(ptr, 2); break;
+        case 1: b47  = a2i(ptr, 8); break;
+        case 2: caid = a2i(ptr, 4); break;
+        case 3:
+          for( j=0; j<4; j++ )
+            zSid[j]=ptr[j];
+          zSid[4]=0;
+          sid  = a2i(zSid, 4);
+          break;
+      }
+    }
+    if( !skip )
+    {
+      if (!(ird_row=(struct s_irdeto_quess*)malloc(sizeof(struct s_irdeto_quess))))
+      {
+        cs_log("Error allocating memory (errno=%d)", errno);
+        return(1);
+      }
+      ird_row->b47  = b47;
+      ird_row->caid = caid;
+      ird_row->sid  = sid;
+      ird_row->next = 0;
+
+      head = cfg->itab[b3];
+      if( head ) {
+        while( head->next )
+          head=head->next;
+        head->next=ird_row;
+      }
+      else
+        cfg->itab[b3]=ird_row;
+        //cs_debug("%02X:%08X:%04X:%04X", b3, b47, caid, sid);
+    }
+  }
+  fclose(fp);
+
+  for( i=0; i<0xff; i++ )
+  {
+    head=cfg->itab[i];
+    while(head)
+    {
+      cs_debug("itab[%02X]: b47=%08X, caid=%04X, sid=%04X",
+               i, head->b47, head->caid, head->sid);
+      head=head->next;
+    }
+  }
+  return(0);
+}
+#endif
 
 int init_readerdb()
 {

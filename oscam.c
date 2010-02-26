@@ -148,6 +148,9 @@ static void usage()
 #ifdef CS_WITH_GBOX
   fprintf(stderr, "gbox ");
 #endif
+#ifdef IRDETO_GUESSING
+  fprintf(stderr, "irdeto guessing ");
+#endif
   fprintf(stderr, "\n\n");
   fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
 #ifdef CS_NOSHM
@@ -1779,6 +1782,45 @@ ulong chk_provid(uchar *ecm, ushort caid)
   return(provid);
 }
 
+#ifdef IRDETO_GUESSING
+void guess_irdeto(ECM_REQUEST *er)
+{
+  uchar  b3;
+  int    b47;
+  //ushort chid;
+  struct s_irdeto_quess *ptr;
+
+  b3  = er->ecm[3];
+  ptr = cfg->itab[b3];
+  if( !ptr ) {
+    cs_debug("unknown irdeto byte 3: %02X", b3);
+    return;
+  }
+  b47  = b2i(4, er->ecm+4);
+  //chid = b2i(2, er->ecm+6);
+  //cs_debug("ecm: b47=%08X, ptr->b47=%08X, ptr->caid=%04X", b47, ptr->b47, ptr->caid);
+  while( ptr )
+  {
+    if( b47==ptr->b47 )
+    {
+      if( er->srvid && (er->srvid!=ptr->sid) )
+      {
+        cs_debug("sid mismatched (ecm: %04X, guess: %04X), wrong oscam.ird file?",
+                  er->srvid, ptr->sid);
+        return;
+      }
+      er->caid=ptr->caid;
+      er->srvid=ptr->sid;
+      er->chid=(ushort)ptr->b47;
+//      cs_debug("quess_irdeto() found caid=%04X, sid=%04X, chid=%04X",
+//               er->caid, er->srvid, er->chid);
+      return;
+    }
+    ptr=ptr->next;
+  }
+}
+#endif
+
 void cs_betatunnel(ECM_REQUEST *er)
 {
   int n;
@@ -1830,6 +1872,11 @@ void guess_cardsystem(ECM_REQUEST *er)
   if ((er->ecm[3]==0x81) && (er->ecm[4]==0xFF) &&
       (!er->ecm[5]) && (!er->ecm[6]) && (er->ecm[7]==er->ecm[2]-5))
     last_hope=0xd00;
+
+#ifdef IRDETO_GUESSING
+  if (!er->caid && er->ecm[2]==0x31 && er->ecm[0x0b]==0x28) 
+    guess_irdeto(er); 
+#endif
 
   if (!er->caid)    // guess by len ..
     er->caid=len4caid[er->ecm[2]+3];
@@ -2366,6 +2413,9 @@ int main (int argc, char *argv[])
   cs_set_mloc(30, "init");
   init_srvid();
   init_len4caid();
+#ifdef IRDETO_GUESSING
+  init_irdeto_guess_tab(); 
+#endif
   cs_init_statistics(cfg->usrfile);
 
   if (pipe(fdp))
