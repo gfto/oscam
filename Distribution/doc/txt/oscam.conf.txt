@@ -19,6 +19,9 @@ DESCRIPTIONS
        logfile = filename|/dev/null|/dev/tty|syslog
 	  logging target, default: /var/log/oscam.log
 
+       disablelog = 0|1
+	  1 = disable log file, default:0
+
        pidfile = filename
 	  PID file, default:no PID file
 
