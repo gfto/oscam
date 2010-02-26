@@ -32,4 +32,4 @@ int SR_SetParity (struct s_reader *reader, unsigned short parity);
 int SR_Close (struct s_reader *reader);
 
 #endif // __SMARTREADER__
-#endif // HAVE_LIBUSB && USE_PTHREAD
+#endif // HAVE_LIBUSB
