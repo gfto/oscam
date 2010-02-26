@@ -149,7 +149,9 @@
 #define R_RADEGAST  0x13  // Reader cascading radegast
 #define R_CS378X    0x14  // Reader cascading camd 3.5x TCP
 /////////////////// peer to peer proxy readers after R_CCCAM
+#ifdef CW_WITH_GBOX
 #define R_GBOX      0x20  // Reader cascading gbox
+#endif
 #define R_CCCAM     0x25  // Reader cascading cccam
 #define R_SERIAL    0x80  // Reader serial
 #define R_IS_NETWORK    0x70
@@ -347,6 +349,7 @@ struct s_module
   PTAB *ptab;
 };
 
+#ifdef IRDETO_GUESSING
 struct s_irdeto_quess
 {
   int    b47;
@@ -354,6 +357,7 @@ struct s_irdeto_quess
   ushort sid;
   struct s_irdeto_quess *next;
 };
+#endif
 
 struct s_client
 {
@@ -493,14 +497,16 @@ struct s_reader
   FTAB      fchid;
   FTAB      ftab;
   CLASSTAB  cltab;
+#ifdef CS_WITH_GBOX
   uchar     gbox_pwd[4];
   uchar     gbox_timecode[7];
   int       gbox_online;
   uchar     gbox_vers;
   uchar     gbox_prem;
   int       gbox_fd;
-  int       loadbalanced;
   struct timeb  gbox_lasthello;   // incoming time stamp
+#endif
+  int       loadbalanced;
 #ifdef CS_RDR_INIT_HIST
   uchar     init_history[4096];
   int       init_history_pos;
@@ -911,7 +917,9 @@ extern void chk_t_camd35_tcp(char *token, char *value);
 extern void chk_t_newcamd(char *token, char *value);
 extern void chk_t_radegast(char *token, char *value);
 extern void chk_t_serial(char *token, char *value);
+#ifdef CS_WITH_GBOX
 extern void chk_t_gbox(char *token, char *value);
+#endif
 extern void chk_t_cccam(char *token, char *value);
 extern void chk_t_global(char *token, char *value);
 extern void chk_t_monitor(char *token, char *value);
