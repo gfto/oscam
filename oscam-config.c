@@ -22,11 +22,11 @@ static char token[4096];
 typedef enum cs_proto_type
 {
 	TAG_GLOBAL,		// must be first !
-	TAG_MONITOR,	// monitor
+	TAG_MONITOR,		// monitor
 	TAG_CAMD33,		// camd 3.3x
 	TAG_CAMD35,		// camd 3.5x UDP
-	TAG_NEWCAMD,	// newcamd
-	TAG_RADEGAST,	// radegast
+	TAG_NEWCAMD,		// newcamd
+	TAG_RADEGAST,		// radegast
 	TAG_SERIAL,		// serial (static)
 	TAG_CS357X,		// camd 3.5x UDP
 	TAG_CS378X,		// camd 3.5x TCP
@@ -34,9 +34,10 @@ typedef enum cs_proto_type
 	TAG_GBOX,		// gbox
 #endif
 	TAG_CCCAM,		// cccam
-	TAG_DVBAPI
+	TAG_DVBAPI,		// dvbapi
+	TAG_WEBIF		// webif
 #ifdef CS_ANTICASC
-	,TAG_ANTICASC	// anti-cascading
+	,TAG_ANTICASC		// anti-cascading
 #endif
 } cs_proto_type_t;
 
@@ -45,7 +46,7 @@ static char *cctag[]={"global", "monitor", "camd33", "camd35",
 #ifdef CS_WITH_GBOX
 		      "gbox",
 #endif
-						"cccam", "dvbapi",
+						"cccam", "dvbapi", "webif",
 #ifdef CS_ANTICASC
                       "anticasc",
 #endif
@@ -619,7 +620,23 @@ void chk_t_monitor(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "hideclient_to")) {
+		if(strlen(value) == 0) {
+			cfg->mon_hideclient_to = 0;
+			return;
+		} else {
+			cfg->mon_hideclient_to = atoi(value);
+			return;
+		}
+	}
+
+	if (token[0] != '#')
+		cs_log("Warning: keyword '%s' in monitor section not recognized",token);
+}
+
 #ifdef WEBIF
+void chk_t_webif(char *token, char *value)
+{
 	if (!strcmp(token, "httpport")) {
 		if(strlen(value) == 0) {
 			cfg->http_port = 0;
@@ -678,21 +695,12 @@ void chk_t_monitor(char *token, char *value)
 			return;
 		}
 	}
-#endif
-
-	if (!strcmp(token, "hideclient_to")) {
-		if(strlen(value) == 0) {
-			cfg->mon_hideclient_to = 0;
-			return;
-		} else {
-			cfg->mon_hideclient_to = atoi(value);
-			return;
-		}
-	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in monitor section not recognized",token);
+		cs_log("Warning: keyword '%s' in webif section not recognized",token);
 }
+#endif
+
 
 void chk_t_camd33(char *token, char *value)
 {
@@ -1001,7 +1009,7 @@ static void chk_t_gbox(char *token, char *value)
 void chk_t_dvbapi(char *token, char *value)
 {
 	if (!strcmp(token, "enabled")) 	{ cfg->dvbapi_enabled=atoi(value); return; }
-	if (!strcmp(token, "au"))		{ cfg->dvbapi_au=atoi(value); return; }
+	if (!strcmp(token, "au"))	{ cfg->dvbapi_au=atoi(value); return; }
 	if (!strcmp(token, "boxtype")) 	{ cs_strncpy(cfg->dvbapi_boxtype, value, sizeof(cfg->dvbapi_boxtype)); return; }
 	if (!strcmp(token, "user")) 	{ cs_strncpy(cfg->dvbapi_usr, value, sizeof(cfg->dvbapi_usr)); return; }
 	if (!strcmp(token, "priority")) { cs_strncpy(cfg->dvbapi_priority, value, sizeof(cfg->dvbapi_priority)); return; }
@@ -1033,6 +1041,13 @@ static void chk_token(char *token, char *value, int tag)
 #else
 		case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
 #endif
+
+#ifdef WEBIF
+		case TAG_WEBIF  : chk_t_webif(token, value); break;
+#else
+		case TAG_WEBIF  : fprintf(stderr, "Warning: OSCam compiled without Webinterface support.\n"); break;
+#endif
+
 #ifdef CS_ANTICASC
 		case TAG_ANTICASC: chk_t_ac(token, value); break;
 #endif
@@ -1495,15 +1510,6 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "aulow", "%d\n", cfg->mon_aulow);
 	fprintf_conf(f, CONFVARWIDTH, "hideclient_to", "%d\n", cfg->mon_hideclient_to);
 	fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", cfg->mon_level);
-#ifdef WEBIF
-	fprintf_conf(f, CONFVARWIDTH, "httpport", "%d\n", cfg->http_port);
-	fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg->http_user);
-	fprintf_conf(f, CONFVARWIDTH, "httppwd", "%s\n", cfg->http_pwd);
-	fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
-	fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg->http_script);
-	fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg->http_refresh);
-	fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
-#endif
 	fputc((int)'\n', f);
 
 	/*newcamd*/
@@ -1653,6 +1659,21 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "au", "%d\n", cfg->dvbapi_au);
 		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", cfg->dvbapi_boxtype);
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->dvbapi_usr);
+		fputc((int)'\n', f);
+	}
+#endif
+
+#ifdef WEBIF
+	/*webinterface*/
+	if (cfg->http_port > 0) {
+		fprintf(f,"[webif]\n");
+		fprintf_conf(f, CONFVARWIDTH, "httpport", "%d\n", cfg->http_port);
+		fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg->http_user);
+		fprintf_conf(f, CONFVARWIDTH, "httppwd", "%s\n", cfg->http_pwd);
+		fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
+		fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg->http_script);
+		fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg->http_refresh);
+		fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
 		fputc((int)'\n', f);
 	}
 #endif

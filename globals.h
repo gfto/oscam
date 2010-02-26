@@ -424,6 +424,7 @@ struct s_client
 
 struct s_reader
 {
+  int		smargopatch; //FIXME workaround for Smargo until native mode works
   int		pid;
   int       cs_idx;
   int       enable;
@@ -899,7 +900,15 @@ extern void chk_t_gbox(char *token, char *value);
 extern void chk_t_cccam(char *token, char *value);
 extern void chk_t_global(char *token, char *value);
 extern void chk_t_monitor(char *token, char *value);
+
+#ifdef HAVE_DVBAPI
 extern void chk_t_dvbapi(char *token, char *value);
+#endif
+
+#ifdef WEBIF
+extern void chk_t_webif(char *token, char *value);
+#endif
+
 extern void chk_account(char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
 extern int write_services();
