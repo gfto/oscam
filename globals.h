@@ -357,68 +357,70 @@ struct s_irdeto_quess
 
 struct s_client
 {
-  pid_t     pid;
-  in_addr_t ip;
-  in_port_t port;
-  time_t    login;
-  time_t    last;
-  time_t    lastswitch;
-  time_t    lastemm;
-  time_t    lastecm;
-  time_t    expirationdate;
-  int       c35_suppresscmd08;
-  int       ncd_keepalive;
-  int       disabled;
-  ulong     grp;
-  int       crypted;
-  int       dup;
-  int       au;
-  int       autoau;
-  int       monlvl;
-  int       dbglvl;
-  CAIDTAB   ctab;
-  TUNTAB    ttab;
-  ulong     sidtabok; // positiv services
-  ulong     sidtabno; // negative services
-  int       typ;
-  int       ctyp;
-  int       stat;
-  int       ufd;
-  int       last_srvid;
-  int       last_caid;
-  int       tosleep;
-  char      usr[32];
-  int       udp_fd;
-  int       fd_m2c;
-  struct    sockaddr_in udp_sa;
-  int       log;
-  int       logcounter;
-  int       cwfound;     // count found ECMs per client
-  int       cwcache;     // count ECMs from cache1/2 per client
-  int       cwnot;       // count not found ECMs per client
-  int       cwtun;       // count betatunneled ECMs per client
-  int       cwignored;   // count ignored  ECMs per client
-  int       cwtout;      // count timeouted ECMs per client
+  pid_t		pid;
+  in_addr_t	ip;
+  in_port_t	port;
+  time_t	login;
+  time_t	last;
+  time_t	lastswitch;
+  time_t	lastemm;
+  time_t	lastecm;
+  time_t	expirationdate;
+  int		c35_suppresscmd08;
+  int		ncd_keepalive;
+  int		disabled;
+  ulong		grp;
+  int		crypted;
+  int		dup;
+  int		au;
+  int		autoau;
+  int		monlvl;
+  int		dbglvl;
+  CAIDTAB	ctab;
+  TUNTAB	ttab;
+  ulong		sidtabok; // positiv services
+  ulong		sidtabno; // negative services
+  int		typ;
+  int		ctyp;
+  int		stat;
+  int		ufd;
+  int		last_srvid;
+  int		last_caid;
+  int		tosleep;
+  char		usr[32];
+  int		udp_fd;
+  int		fd_m2c;
+  struct	sockaddr_in udp_sa;
+  int		log;
+  int		logcounter;
+  int		cwfound;     // count found ECMs per client
+  int		cwcache;     // count ECMs from cache1/2 per client
+  int		cwnot;       // count not found ECMs per client
+  int		cwtun;       // count betatunneled ECMs per client
+  int		cwignored;   // count ignored  ECMs per client
+  int		cwtout;      // count timeouted ECMs per client
   int		cwlastresptime; //last Responsetime (ms)
+#ifdef WEBIF
   int		emmok;		// count EMM ok
   int		emmnok;		// count EMM nok
   int		wihidden;	// hidden in webinterface status
-  uchar     ucrc[4];    // needed by monitor and used by camd35
-  ulong     pcrc;        // pwd crc
-  AES_KEY   aeskey;      // needed by monitor and used by camd33, camd35
-  ushort    ncd_msgid;
-  uchar     ncd_skey[16];
-  void      *cc;
-  int       port_idx;    // index in server ptab
-  int       ncd_server;  // newcamd server?
-#ifdef CS_ANTICASC
-  ushort    ac_idx;
-  ushort    ac_limit;
-  uchar     ac_penalty;
 #endif
-  FTAB      fchid;
-  FTAB      ftab;        // user [caid] and ident filter
-  CLASSTAB  cltab;
+  uchar		ucrc[4];    // needed by monitor and used by camd35
+  ulong		pcrc;        // pwd crc
+  AES_KEY	aeskey;      // needed by monitor and used by camd33, camd35
+  ushort	ncd_msgid;
+  uchar		ncd_skey[16];
+  void		*cc;
+  int		port_idx;    // index in server ptab
+  int		ncd_server;  // newcamd server
+#ifdef CS_ANTICASC
+  ushort	ac_idx;
+  ushort	ac_limit;
+  uchar		ac_penalty;
+#endif
+  FTAB		fchid;
+  FTAB		ftab;        // user [caid] and ident filter
+  CLASSTAB	cltab;
 };
 
 struct s_reader
@@ -469,7 +471,7 @@ struct s_reader
   int       cachemm;
   int       rewritemm;
   int       card_status;
-	int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
+  int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
   uchar     ncd_key[16];
   uchar     ncd_skey[16];
@@ -670,6 +672,7 @@ struct s_config
 	int		max_log_size;
 	int		waitforcards;
 	int		preferlocalcards;
+
 #ifdef CS_WITH_GBOX
 	uchar		gbox_pwd[8];
 	uchar		ignorefile[128];
@@ -679,25 +682,28 @@ struct s_config
 	int		num_locals;
 	unsigned long 	locals[CS_MAXLOCALS];
 #endif
+
 #ifdef IRDETO_GUESSING
 	struct s_irdeto_quess *itab[0xff];
 #endif
+
 #ifdef HAVE_DVBAPI
-	int			dvbapi_enabled;
-	int			dvbapi_au;
+	int		dvbapi_enabled;
+	int		dvbapi_au;
 	char		dvbapi_usr[33];
 	char		dvbapi_boxtype[20];
 	char		dvbapi_priority[64];
 	char		dvbapi_ignore[64];
 #endif
+
 #ifdef CS_ANTICASC
 	char		ac_enabled;
-	int			ac_users;       // num of users for account (0 - default)
-	int			ac_stime;       // time to collect AC statistics (3 min - default)
-	int			ac_samples;     // qty of samples
-	int			ac_penalty;     // 0 - write to log
-	int			ac_fakedelay;   // 100-1000 ms
-	int			ac_denysamples;
+	int		ac_users;       // num of users for account (0 - default)
+	int		ac_stime;       // time to collect AC statistics (3 min - default)
+	int		ac_samples;     // qty of samples
+	int		ac_penalty;     // 0 - write to log
+	int		ac_fakedelay;   // 100-1000 ms
+	int		ac_denysamples;
 	char		ac_logfile[128];
 	struct		s_cpmap *cpmap;
 #endif
@@ -728,12 +734,15 @@ typedef struct ecm_request_t
   uchar         rcEx;
   struct timeb  tps;    // incoming time stamp
   uchar         locals_done;
-  ushort    gbxCWFrom;
-  ushort    gbxFrom;
-  ushort    gbxTo;
 
-  uchar       gbxForward[16];
-  int     gbxRidx;
+#ifdef CS_WITH_GBOX
+  ushort	gbxCWFrom;
+  ushort	gbxFrom;
+  ushort	gbxTo;
+  uchar		gbxForward[16];
+  int		gbxRidx;
+#endif
+
 } GCC_PACK      ECM_REQUEST;
 
 typedef struct emm_packet_t
@@ -980,12 +989,15 @@ extern void module_camd33(struct s_module *);
 extern void module_newcamd(struct s_module *);
 extern void module_radegast(struct s_module *);
 extern void module_oscam_ser(struct s_module *);
-extern void module_gbox(struct s_module *);
 extern void module_cccam(struct s_module *);
+extern struct timeval *chk_pending(struct timeb tp_ctimeout);
+#ifdef CS_WITH_GBOX
+extern void module_gbox(struct s_module *);
+#endif
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif
-extern struct timeval *chk_pending(struct timeb tp_ctimeout);
+
 
 // module-monitor
 extern char *monitor_get_proto(int idx);

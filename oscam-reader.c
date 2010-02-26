@@ -47,7 +47,9 @@ static void casc_check_dcw(int idx, int rc, uchar *cw)
       if (rc)
       {
         ecmtask[i].rc=(i==idx) ? 1 : 2;
+#ifdef CS_WITH_GBOX
         if(ecmtask[i].gbxRidx)ecmtask[i].rc=0;
+#endif
         memcpy(ecmtask[i].cw, cw, 16);
       }
       else

@@ -1529,7 +1529,12 @@ int write_ecm_answer(int fd, ECM_REQUEST *er)
   er->reader[0]=ridx;
 //cs_log("answer from reader %d (rc=%d)", er->reader[0], er->rc);
   er->caid=er->ocaid;
-  if (er->rc==1||(er->gbxRidx&&er->rc==0)){
+
+#ifdef CS_WITH_GBOX
+  if (er->rc==1||(er->gbxRidx&&er->rc==0)) {
+#else
+  if (er->rc==1) {
+#endif
     store_ecm(er);
 
   /* CWL logging only if cwlogdir is set in config */
@@ -1618,9 +1623,12 @@ int send_dcw(ECM_REQUEST *er)
   for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
     lc^=*lp;
   cs_ftime(&tpe);
+
+#ifdef CW_WITH_GBOX
   if(er->gbxFrom)
     snprintf(uname,sizeof(uname)-1, "%s(%04X)", username(cs_idx), er->gbxFrom);
   else
+#endif
     snprintf(uname,sizeof(uname)-1, "%s", username(cs_idx));
   if (er->rc==0)
   {
@@ -1745,7 +1753,9 @@ void chk_dcw(int fd)
     ert->rcEx=0;
     ert->reader[0]=er->reader[0];
     memcpy(ert->cw , er->cw , sizeof(er->cw));
+#ifdef CS_WITH_GBOX
     ert->gbxCWFrom=er->gbxCWFrom;
+#endif
   }
   else    // not found (from ONE of the readers !)
   {
@@ -2116,11 +2126,14 @@ void do_emm(EMM_PACKET *ep)
   if ((!reader[au].fd) ||       // reader has no fd
       (reader[au].caid[0]!=b2i(2,ep->caid)) ||    // wrong caid
       (memcmp(reader[au].hexserial, ep->hexserial, 8))) /* wrong serial*/  {
+#ifdef WEBIF
 	  client[cs_idx].emmnok++;
+#endif
 	  return;
   }
-
+#ifdef WEBIF
   client[cs_idx].emmok++;
+#endif
   ep->cidx=cs_idx;
   write_to_pipe(reader[au].fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
 }
