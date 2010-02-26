@@ -67,6 +67,8 @@ unsigned char Hash4[] = {0x0B,0x04,0x07,0x08,0x05,0x09,0x0B,0x0A,0x07,0x02,0x0A,
 
 static void postprocess_cw(unsigned char *cw, int nTableIdx)
 {
+  if (!cw_is_valid(cw)) //if cw is all zero, keep it that way
+    return;
 	unsigned short hk[8],i,j,m=0;
 	for (i = 0; i < 6; i++) hk[2+i]=Hash3[i];
 	for (i = 0; i < 2; i++) {
@@ -96,6 +98,7 @@ static void postprocess_cw(unsigned char *cw, int nTableIdx)
 		cw[i]=hk[2+(i>>1)]>>((i&1)<<3);
   cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
   cw[7] = (cw[4] + cw[5] + cw[6]) & 0xFF;
+  cs_ddump (cw, 8, "Postprocessed2 DW:");
 }  
 
 
