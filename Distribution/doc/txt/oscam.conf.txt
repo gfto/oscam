@@ -22,6 +22,9 @@ DESCRIPTIONS
        disablelog = 0|1
 	  1 = disable log file, default:0
 
+       disableuserfile = 0|1
+	  1 = avoid logging although logfile is set, default:0
+
        pidfile = filename
 	  PID file, default:no PID file
 
@@ -395,9 +398,9 @@ MONITOR
 WEB INTERFACE
 	 template system
 
-	  The web interface allows you to create your own template. For devel
-	  oping  your  own template request the orignal template with the non-
-	  linked page savetemplates.html.  Store  your	own  template  in  the
+	  The web interface allows  you  to  create  your  own	template.  For
+	  developing  your  own template request the orignal template with the
+	  non-linked page savetemplates.html. Store your own template  in  the
 	  directory specified by httptpl.
 
 	 SSL connection to the web interface
