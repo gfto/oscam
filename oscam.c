@@ -149,7 +149,7 @@ static void usage()
   fprintf(stderr, "gbox ");
 #endif
 #ifdef IRDETO_GUESSING
-  fprintf(stderr, "irdeto guessing ");
+  fprintf(stderr, "irdeto-guessing ");
 #endif
   fprintf(stderr, "\n\n");
   fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
