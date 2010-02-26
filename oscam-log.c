@@ -119,7 +119,9 @@ static char *get_log_header(int m, char *txt)
 				case 'a':
 #endif
 				case 'l':
+#ifdef WEBIF
 				case 'h':
+#endif
 				case 'n':	sprintf(txt+7, "%c   "  , client[cs_idx].typ);
 							break;
 			}
