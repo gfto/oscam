@@ -1728,6 +1728,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
 		fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg->http_script);
 		fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg->http_refresh);
+		fprintf_conf(f, CONFVARWIDTH, "httpallowed", "%d\n", cfg->http_allowed);
 		fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
 		fputc((int)'\n', f);
 	}
