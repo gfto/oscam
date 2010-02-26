@@ -960,11 +960,7 @@ void cs_resolve()
     }
 }
 
-#ifdef USE_PTHREAD
-static void cs_logger(void *dummy)
-#else
 static void cs_logger(void)
-#endif
 {
   *log_fd=client[cs_idx].fd_m2c;
   while(1)
@@ -976,10 +972,10 @@ static void cs_logger(void)
     FD_ZERO(&fds);
     FD_SET(fd_m2c, &fds);
     select(fd_m2c+1, &fds, 0, 0, 0);
-#ifndef USE_PTHREAD
+
     if (master_pid!=getppid())
       cs_exit(0);
-#endif
+
     if (FD_ISSET(fd_m2c, &fds))
     {
       int n;
@@ -999,16 +995,7 @@ static void cs_logger(void)
 static void start_resolver()
 {
   int i;
-#ifdef USE_PTHREAD
-  pthread_t tid;
-  if ((i=pthread_create(&tid, (pthread_attr_t *)0, (void *) &cs_logger, (void *) 0)))
-    cs_log("ERROR: can't create logging-thread (err=%d)", i);
-  else
-  {
-    cs_log("logging thread started");
-    pthread_detach(tid);
-  }
-#endif
+
   cs_sleepms(1000); // wait for reader
   while(1)
   {
@@ -1091,11 +1078,7 @@ static void init_service(int srv)
 #ifdef CS_ANTICASC
         case 96: start_anticascader();
 #endif
-#ifdef USE_PTHREAD
-        case 97: cs_logger(dummy);
-#else
         case 97: cs_logger();
-#endif
         case 98: start_resolver();
 #ifdef WEBIF
         case 95: cs_http();
