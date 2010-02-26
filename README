@@ -31,6 +31,7 @@ CS_ANTICASC   - enable anti-cascading
 CS_LOGHISTORY - enable log history
 CS_WITH_GBOX  - enable gbox support
 HAVE_DVBAPI   - enable DVB API support
+DWEBIF        - enable web interface
 
 Enable features with cmake:
 
@@ -38,6 +39,7 @@ Enable features with cmake:
 -DCS_LOGHISTORY=1 - enable log history
 -DCS_WITH_GBOX=1  - enable gbox support
 -DHAVE_DVBAPI=1   - enable DVB API support
+-DWEBIF=1         - enable web interface
 
 Build with CMake (new solution for building)
 --------------------------------------------
