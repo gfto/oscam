@@ -283,6 +283,16 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "disableuserfile")) {
+		if (strlen(value) == 0) {
+			cfg->disableuserfile = 0;
+			return;
+		} else {
+			cfg->disableuserfile = atoi(value);
+			return;
+		}
+	}
+
 	if (!strcmp(token, "serverip")) {
 		if (strlen(value) == 0) {
 			cfg->srvip = 0;
@@ -682,7 +692,7 @@ void chk_t_webif(char *token, char *value)
 			cfg->http_hide_idle_clients = 0;
 			return;
 		} else {
-			cfg->http_hide_idle_clients=atoi(value);
+			cfg->http_hide_idle_clients = atoi(value);
 			return;
 		}
 	}
@@ -693,6 +703,16 @@ void chk_t_webif(char *token, char *value)
 			return;
 		} else {
 			chk_iprange(value, &cfg->http_allowed);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "httpreadonly")) {
+		if(strlen(value) == 0) {
+			cfg->http_readonly = 0;
+			return;
+		} else {
+			cfg->http_readonly = atoi(value);
 			return;
 		}
 	}
@@ -1531,6 +1551,7 @@ int write_config()
 	if (cfg->logfile != NULL) fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", cfg->logfile);
 	if (cfg->cwlogdir != NULL) fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg->cwlogdir);
 	fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg->disablelog);
+	fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg->disableuserfile);
 	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg->usrfileflag);
 	fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout/1000);
 	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout/1000);
@@ -1728,8 +1749,16 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
 		fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg->http_script);
 		fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg->http_refresh);
-		fprintf_conf(f, CONFVARWIDTH, "httpallowed", "%d\n", cfg->http_allowed);
+		fprintf_conf(f, CONFVARWIDTH, "httpallowed", "");
+		dot = "";
+		for (cip = cfg->http_allowed; cip; cip = cip->next){
+			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
+	  	if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
+	  	dot = ",";
+		}
+		fputc((int)'\n', f);
 		fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
+		fprintf_conf(f, CONFVARWIDTH, "httpreadonly", "%d\n", cfg->http_readonly);
 		fputc((int)'\n', f);
 	}
 #endif

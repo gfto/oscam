@@ -356,32 +356,33 @@ int cs_init_statistics(char *file)
 
 void cs_statistics(int idx)
 {
-  time_t t;
-  struct tm *lt;
+	time_t t;
+	struct tm *lt;
 
-  if (fps)
-  {
-    float cwps;
+	if (fps)
+	{
+		float cwps;
 
-    switch_log(cfg->usrfile, &fps, cs_init_statistics);
-    time(&t);
-    lt=localtime(&t);
-    if (client[idx].cwfound+client[idx].cwnot>0)
-    {
-      cwps=client[idx].last-client[idx].login;
-      cwps/=client[idx].cwfound+client[idx].cwnot;
-    }
-    else
-      cwps=0;
-
-    fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s %04X:%04X\n",
-                  lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
-                  lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
-                  client[idx].usr[0] ? client[idx].usr : "-",
-                  cs_inet_ntoa(client[idx].ip), client[idx].port,
-                  client[idx].cwfound, client[idx].cwcache, client[idx].cwnot, client[idx].cwignored,
-                  client[idx].cwtout, client[idx].cwtun, client[idx].login, client[idx].last,
-                  ph[client[idx].ctyp].desc,client[idx].last_caid,client[idx].last_srvid);
-    fflush(fps);
-  }
+		switch_log(cfg->usrfile, &fps, cs_init_statistics);
+		time(&t);
+		lt=localtime(&t);
+		if (client[idx].cwfound+client[idx].cwnot>0)
+		{
+			cwps=client[idx].last-client[idx].login;
+			cwps/=client[idx].cwfound+client[idx].cwnot;
+		}
+		else
+			cwps=0;
+		if(!cfg->disableuserfile) {
+			fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s %04X:%04X\n",
+					lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
+					lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
+					client[idx].usr[0] ? client[idx].usr : "-",
+							cs_inet_ntoa(client[idx].ip), client[idx].port,
+							client[idx].cwfound, client[idx].cwcache, client[idx].cwnot, client[idx].cwignored,
+							client[idx].cwtout, client[idx].cwtun, client[idx].login, client[idx].last,
+							ph[client[idx].ctyp].desc,client[idx].last_caid,client[idx].last_srvid);
+			fflush(fps);
+		}
+	}
 }

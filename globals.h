@@ -625,6 +625,7 @@ struct s_config
 	char		*cwlogdir;
 	char		*logfile;
 	int		disablelog;
+	int		disableuserfile;
 	int		usrfileflag;
 	struct s_auth 	*account;
 	struct s_srvid 	*srvid;
@@ -642,9 +643,10 @@ struct s_config
 	char		http_css[128];
 	char		http_tpl[128];
 	char		http_script[128];
-	int		http_refresh;
-	int		http_hide_idle_clients;
-	struct s_ip	*http_allowed;
+	int			http_refresh;
+	int			http_hide_idle_clients;
+	struct 	s_ip *http_allowed;
+	int			http_readonly;
 #endif
 	int		c33_port;
 	in_addr_t	c33_srvip;
