@@ -457,6 +457,7 @@ static int reader_do_emm(EMM_PACKET *ep)
            i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
   }
 
+#ifdef WEBIF
   //counting results
   switch(rc){
 	  case 0:
@@ -472,6 +473,7 @@ static int reader_do_emm(EMM_PACKET *ep)
 		  reader[ridx].emmblocked++;
 		  break;
   }
+#endif
 
   return(rc);
 }

@@ -502,10 +502,12 @@ struct s_reader
   int       init_history_pos;
 #endif
   int       msg_idx;
+#ifdef WEBIF
   int		emmwritten; //count written EMM
   int		emmskipped; //count skipped EMM
   int		emmerror;	//count error EMM
   int		emmblocked;	//count blocked EMM
+#endif
 #ifdef HAVE_PCSC
   SCARDCONTEXT hContext;
   SCARDHANDLE hCard;
