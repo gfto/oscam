@@ -551,7 +551,7 @@ void chk_t_ac(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in anticascading section not recognized",token);
+		cs_log("Warning: keyword '%s' in anticascading section not recognized",token);
 }
 #endif
 
@@ -745,7 +745,7 @@ void chk_t_camd33(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in camd33 section not recognized",token);
+		cs_log("Warning: keyword '%s' in camd33 section not recognized",token);
 }
 
 void chk_t_camd35(char *token, char *value)
@@ -781,7 +781,7 @@ void chk_t_camd35(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in camd35 section not recognized", token);
+		cs_log("Warning: keyword '%s' in camd35 section not recognized", token);
 }
 
 void chk_t_camd35_tcp(char *token, char *value)
@@ -817,7 +817,7 @@ void chk_t_camd35_tcp(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in camd35 tcp section not recognized", token);
+		cs_log("Warning: keyword '%s' in camd35 tcp section not recognized", token);
 }
 
 void chk_t_newcamd(char *token, char *value)
@@ -871,7 +871,7 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in newcamd section not recognized", token);
+		cs_log("Warning: keyword '%s' in newcamd section not recognized", token);
 }
 
 void chk_t_cccam(char *token, char *value)
@@ -918,7 +918,7 @@ void chk_t_cccam(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in cccam section not recognized",token);
+		cs_log("Warning: keyword '%s' in cccam section not recognized",token);
 }
 
 void chk_t_radegast(char *token, char *value)
@@ -959,7 +959,7 @@ void chk_t_radegast(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in radegast section not recognized", token);
+		cs_log("Warning: keyword '%s' in radegast section not recognized", token);
 }
 
 void chk_t_serial(char *token, char *value)
@@ -973,47 +973,90 @@ void chk_t_serial(char *token, char *value)
 		return;
 	}
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in serial section not recognized", token);
+		cs_log("Warning: keyword '%s' in serial section not recognized", token);
 }
 
 #ifdef CS_WITH_GBOX
 static void chk_t_gbox(char *token, char *value)
 {
-//  if (!strcmp(token, "password")) strncpy(cfg->gbox_pwd, i2b(4, a2i(value, 4)), 4);
-  if (!strcmp(token, "password")) { cs_atob(cfg->gbox_pwd, value, 4); return; }
-  if (!strcmp(token, "maxdist")) { cfg->maxdist=atoi(value); return; }
-  if (!strcmp(token, "ignorelist")) { cs_strncpy((char *)cfg->ignorefile, value, sizeof(cfg->ignorefile)); return; }
-  if (!strcmp(token, "onlineinfos")) { cs_strncpy((char *)cfg->gbxShareOnl, value, sizeof(cfg->gbxShareOnl)); return; }
-  if (!strcmp(token, "cardinfos")) { cs_strncpy((char *)cfg->cardfile, value, sizeof(cfg->cardfile)); return; }
-  if (!strcmp(token, "locals"))
-  {
-    char *ptr1;
-    int n=0, i;
-    for (i=0, ptr1=strtok(value, ","); (i<CS_MAXLOCALS) && (ptr1); ptr1=strtok(NULL, ","))
-    {
-      cfg->locals[n++]=a2i(ptr1, 8);
-      //printf("%i %08X",n,cfg->locals[n-1]);
-    }
-    cfg->num_locals=n;
-    return;
-  }
-  if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized\n",token);
+	//if (!strcmp(token, "password")) strncpy(cfg->gbox_pwd, i2b(4, a2i(value, 4)), 4);
+	if (!strcmp(token, "password")) {
+		cs_atob(cfg->gbox_pwd, value, 4);
+		return;
+	}
+
+	if (!strcmp(token, "maxdist")) {
+		cfg->maxdist=atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "ignorelist")) {
+		cs_strncpy((char *)cfg->ignorefile, value, sizeof(cfg->ignorefile));
+		return;
+	}
+
+	if (!strcmp(token, "onlineinfos")) {
+		cs_strncpy((char *)cfg->gbxShareOnl, value, sizeof(cfg->gbxShareOnl));
+		return;
+	}
+
+	if (!strcmp(token, "cardinfos")) {
+		cs_strncpy((char *)cfg->cardfile, value, sizeof(cfg->cardfile));
+		return;
+	}
+
+	if (!strcmp(token, "locals"))
+	{
+		char *ptr1;
+		int n = 0, i;
+		for (i = 0, ptr1 = strtok(value, ","); (i < CS_MAXLOCALS) && (ptr1); ptr1 = strtok(NULL, ",")) {
+			cfg->locals[n++] = a2i(ptr1, 8);
+			//printf("%i %08X",n,cfg->locals[n-1]);
+		}
+		cfg->num_locals = n;
+		return;
+	}
+
+	if (token[0] != '#')
+		cs_log("Warning: keyword '%s' in gbox section not recognized",token);
 }
 #endif
 
 #ifdef HAVE_DVBAPI
 void chk_t_dvbapi(char *token, char *value)
 {
-	if (!strcmp(token, "enabled")) 	{ cfg->dvbapi_enabled=atoi(value); return; }
-	if (!strcmp(token, "au"))	{ cfg->dvbapi_au=atoi(value); return; }
-	if (!strcmp(token, "boxtype")) 	{ cs_strncpy(cfg->dvbapi_boxtype, value, sizeof(cfg->dvbapi_boxtype)); return; }
-	if (!strcmp(token, "user")) 	{ cs_strncpy(cfg->dvbapi_usr, value, sizeof(cfg->dvbapi_usr)); return; }
-	if (!strcmp(token, "priority")) { cs_strncpy(cfg->dvbapi_priority, value, sizeof(cfg->dvbapi_priority)); return; }
-	if (!strcmp(token, "ignore"))   { cs_strncpy(cfg->dvbapi_ignore, value, sizeof(cfg->dvbapi_ignore)); return; }
+	if (!strcmp(token, "enabled")) {
+		cfg->dvbapi_enabled = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "au")) {
+		cfg->dvbapi_au = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "boxtype")) {
+		cs_strncpy(cfg->dvbapi_boxtype, value, sizeof(cfg->dvbapi_boxtype));
+		return;
+	}
+
+	if (!strcmp(token, "user")) {
+		cs_strncpy(cfg->dvbapi_usr, value, sizeof(cfg->dvbapi_usr));
+		return;
+	}
+
+	if (!strcmp(token, "priority")) {
+		cs_strncpy(cfg->dvbapi_priority, value, sizeof(cfg->dvbapi_priority));
+		return;
+	}
+
+	if (!strcmp(token, "ignore")) {
+		cs_strncpy(cfg->dvbapi_ignore, value, sizeof(cfg->dvbapi_ignore));
+		return;
+	}
 
 	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
+		cs_log("Warning: keyword '%s' in dvbapi section not recognized\n",token);
 }
 #endif
 
@@ -1029,32 +1072,33 @@ static void chk_token(char *token, char *value, int tag)
 		case TAG_RADEGAST: chk_t_radegast(token, value); break;
 		case TAG_SERIAL  : chk_t_serial(token, value); break;
 		case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
+		case TAG_CCCAM   : chk_t_cccam(token, value); break;
 
 #ifdef CS_WITH_GBOX
 		case TAG_GBOX    : chk_t_gbox(token, value); break;
 #else
-		case TAG_GBOX    : fprintf(stderr, "Warning: OSCam compiled without gbox support.\n"); break;
+		case TAG_GBOX    : cs_log("Warning: OSCam compiled without gbox support."); break;
 #endif
 
-		case TAG_CCCAM   : chk_t_cccam(token, value); break;
+
 #ifdef HAVE_DVBAPI
 		case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
 #else
-		case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
+		case TAG_DVBAPI  : cs_log("Warning: OSCam compiled without DVB API support."); break;
 #endif
 
 
 #ifdef WEBIF
-		case TAG_WEBIF  : chk_t_webif(token, value); break;
+		case TAG_WEBIF   : chk_t_webif(token, value); break;
 #else
-		case TAG_WEBIF  : fprintf(stderr, "Warning: OSCam compiled without Webinterface support.\n"); break;
+		case TAG_WEBIF   : cs_log("Warning: OSCam compiled without Webinterface support."); break;
 #endif
 
 
 #ifdef CS_ANTICASC
 		case TAG_ANTICASC: chk_t_ac(token, value); break;
 #else
-		case TAG_ANTICASC: fprintf(stderr, "Warning: OSCam compiled without anticascading support.\n"); break;
+		case TAG_ANTICASC: cs_log("Warning: OSCam compiled without anticascading support."); break;
 #endif
 
 	}
@@ -1406,7 +1450,7 @@ void chk_account(char *token, char *value, struct s_auth *account)
 #endif
 
 	if (token[0] != '#')
-		cs_log( "Warning: keyword '%s' in account section not recognized",token);
+		cs_log("Warning: keyword '%s' in account section not recognized",token);
 }
 
 int write_services()
@@ -1936,7 +1980,7 @@ void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
   if (!strcmp(token, "ident")) { chk_entry4sidtab(value, sidtab, 1); return; }
   if (!strcmp(token, "srvid")) { chk_entry4sidtab(value, sidtab, 2); return; }
   if (token[0] != '#')
-    fprintf(stderr, "Warning: keyword '%s' in sidtab section not recognized\n",token);
+    cs_log("Warning: keyword '%s' in sidtab section not recognized",token);
 }
 
 int init_sidtab()
@@ -2412,7 +2456,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
-		cs_log( "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE",value);
+		cs_log("WARNING: value '%s' in protocol-line not recognized, assuming MOUSE",value);
 		rdr->typ = R_MOUSE;
 		return;
 	}
