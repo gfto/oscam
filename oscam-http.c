@@ -1153,7 +1153,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				client[i].wihidden = 0;
 		}else{
 			int oldval = cfg->http_hide_idle_clients;
-			chk_t_monitor("httphideidleclients", hideidle);
+			chk_t_webif("httphideidleclients", hideidle);
 			if(oldval != cfg->http_hide_idle_clients){
 				refresh_oscam(REFR_SERVER, in);
 			}
