@@ -1061,10 +1061,6 @@ static void init_cardreader()
 
 static void init_service(int srv)
 {
-#ifdef USE_PTHREAD
-   uchar dummy[1]={0x00};
-#endif
-
   switch(cs_fork(0, srv))
   {
     case -1:

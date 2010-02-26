@@ -305,12 +305,12 @@ typedef struct  {
     int interface;   // 0 or 1 
     /** maximum packet size. Needed for filtering modem status bytes every n packets. */
     unsigned int max_packet_size;
-    unsigned char g_read_buffer[4096]; 
-    unsigned int g_read_buffer_size; 
-    pthread_mutex_t g_read_mutex; 
-    pthread_mutex_t g_usb_mutex; 
-    pthread_t rt; 
-    unsigned char modem_status; 
+    unsigned char g_read_buffer[4096];
+    unsigned int g_read_buffer_size;
+    pthread_mutex_t g_read_mutex;
+    pthread_mutex_t g_usb_mutex;
+    pthread_t rt;
+    unsigned char modem_status;
 } SR_CONFIG;
 #endif
 
