@@ -696,6 +696,16 @@ void chk_t_webif(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "httpallowed")) {
+		if(strlen(value) == 0) {
+			clear_sip(&cfg->http_allowed);
+			return;
+		} else {
+			chk_iprange(value, &cfg->http_allowed);
+			return;
+		}
+	}
+
 	if (token[0] != '#')
 		cs_log("Warning: keyword '%s' in webif section not recognized",token);
 }

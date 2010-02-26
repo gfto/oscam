@@ -602,33 +602,33 @@ struct s_ip
 
 struct s_config
 {
-	int			nice;
-	int			debuglvl;
+	int		nice;
+	int		debuglvl;
 	ulong		netprio;
 	ulong		ctimeout;
 	ulong		ftimeout;
 	ulong		cmaxidle;
-	int			ulparent;
+	int		ulparent;
 	ulong		delay;
-	int			bindwait;
-	int			resolvedelay;
-	int			tosleep;
+	int		bindwait;
+	int		resolvedelay;
+	int		tosleep;
 	in_addr_t	srvip;
 	char		*pidfile;
 	char		*usrfile;
 	char		*cwlogdir;
 	char		*logfile;
-	int			disablelog;
-	int			usrfileflag;
-	struct s_auth *account;
-	struct s_srvid *srvid;
+	int		disablelog;
+	int		usrfileflag;
+	struct s_auth 	*account;
+	struct s_srvid 	*srvid;
 	struct s_sidtab *sidtab;
-	int			mon_port;
+	int		mon_port;
 	in_addr_t	mon_srvip;
-	struct s_ip *mon_allowed;
-	int			mon_aulow;
-	int			mon_hideclient_to;
-	int			mon_level;
+	struct s_ip 	*mon_allowed;
+	int		mon_aulow;
+	int		mon_hideclient_to;
+	int		mon_level;
 #ifdef WEBIF
 	int			http_port;
 	char		http_user[65];
@@ -636,30 +636,31 @@ struct s_config
 	char		http_css[128];
 	char		http_tpl[128];
 	char		http_script[128];
-	int			http_refresh;
-	int			http_hide_idle_clients;
+	int		http_refresh;
+	int		http_hide_idle_clients;
+	struct s_ip	*http_allowed;
 #endif
-	int			c33_port;
+	int		c33_port;
 	in_addr_t	c33_srvip;
 	uchar		c33_key[16];
-	int			c33_crypted;
-	int			c33_passive;
-	struct s_ip *c33_plain;
-	int			c35_port;
+	int		c33_crypted;
+	int		c33_passive;
+	struct s_ip 	*c33_plain;
+	int		c35_port;
 	in_addr_t	c35_srvip;
-	int			c35_suppresscmd08;
+	int		c35_suppresscmd08;
 	PTAB		c35_tcp_ptab;
 	in_addr_t	c35_tcp_srvip;
 	PTAB		ncd_ptab;
 	in_addr_t	ncd_srvip;
 	uchar		ncd_key[16];
-	int			ncd_keepalive;
-	struct s_ip *ncd_allowed;
+	int		ncd_keepalive;
+	struct s_ip 	*ncd_allowed;
 	PTAB		cc_ptab;
-	int			rad_port;
+	int		rad_port;
 	in_addr_t	rad_srvip;
-	int			cc_port;
-	int			cc_reshare;
+	int		cc_port;
+	int		cc_reshare;
 	in_addr_t	cc_srvip;
 	uchar		cc_version[7];
 	uchar		cc_build[5];
@@ -667,17 +668,17 @@ struct s_config
 	char		rad_usr[32];
 	char		ser_device[512];
 	ulong		srtimeout;  // SerialReaderTimeount in millisec
-	int			max_log_size;
-	int			waitforcards;
-	int			preferlocalcards;
+	int		max_log_size;
+	int		waitforcards;
+	int		preferlocalcards;
 #ifdef CS_WITH_GBOX
 	uchar		gbox_pwd[8];
 	uchar		ignorefile[128];
 	uchar		cardfile[128];
 	uchar		gbxShareOnl[128];
-	int			maxdist;
-	int			num_locals;
-	unsigned long locals[CS_MAXLOCALS];
+	int		maxdist;
+	int		num_locals;
+	unsigned long 	locals[CS_MAXLOCALS];
 #endif
 	//struct s_irdeto_quess *itab[0xff];
 #ifdef HAVE_DVBAPI

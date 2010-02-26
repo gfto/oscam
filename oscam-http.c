@@ -1482,7 +1482,7 @@ int process_request(FILE *f, struct in_addr in) {
   struct s_ip *p_ip;
   in_addr_t addr = cs_inet_order(in.s_addr);
 
-  for (p_ip = cfg->mon_allowed; (p_ip) && (!ok); p_ip = p_ip->next)
+  for (p_ip = cfg->http_allowed; (p_ip) && (!ok); p_ip = p_ip->next)
     ok =((addr >= p_ip->ip[0]) && (addr <= p_ip->ip[1]));
   if (!ok){
 	  send_error(f, 403, "Forbidden", NULL, "Access denied.");
