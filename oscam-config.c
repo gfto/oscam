@@ -1486,6 +1486,7 @@ int write_config()
 	if (cfg->usrfile != NULL) fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg->usrfile);
 	if (cfg->logfile != NULL) fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", cfg->logfile);
 	if (cfg->cwlogdir != NULL) fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg->cwlogdir);
+	fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg->disablelog);
 	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg->usrfileflag);
 	fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout/1000);
 	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout/1000);
