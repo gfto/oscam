@@ -438,6 +438,11 @@ EXAMPLES
 	monlevel     = 1
 	nocrypt      = 127.0.0.1
 
+	[webif]
+	httpport     = 8888
+	httpuser     = myusername
+	httppwd      = mypassword
+
 	[newcamd]
 	key	     = 0102030405060708091011121314
 	port	     = 10000@0100:100000;20000@0200:200000,300000,400000
