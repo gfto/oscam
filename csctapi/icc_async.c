@@ -660,9 +660,7 @@ static int ICC_Async_SetParity (unsigned short parity)
 		break;
 #if defined(LIBUSB)
 		case R_SMART:
-			reader[ridx].sr_config.inv= (convention == ATR_CONVENTION_INVERSE) ? 1: 0;
-			reader[ridx].sr_config.parity=parity;
-			call (SR_SetParity(&reader[ridx]));
+			call (SR_SetParity(&reader[ridx], parity));
 			break;
 #endif
 		case R_INTERNAL:
@@ -854,7 +852,7 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 	}
 #if defined(LIBUSB)
 	if (reader[ridx].typ == R_SMART)
-		SR_WriteSettings(&reader[ridx], (unsigned short) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)protocol_type);
+		SR_WriteSettings(&reader[ridx], (unsigned short) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)protocol_type, convention);
 #endif
 	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader[ridx].mhz / 100);
 

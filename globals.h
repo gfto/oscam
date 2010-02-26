@@ -523,16 +523,6 @@ struct s_reader
   SCARDHANDLE hCard;
   DWORD dwActiveProtocol;
 #endif
-#if defined(LIBUSB)
-    unsigned char g_read_buffer[4096];
-    unsigned int g_read_buffer_size;
-    pthread_mutex_t g_read_mutex;
-    pthread_mutex_t g_usb_mutex;
-    struct usb_device *smartreader_usb_dev;
-    pthread_t rt;
-    unsigned char modem_status;
-    SR_CONFIG sr_config;
-#endif
 };
 
 #ifdef CS_ANTICASC
