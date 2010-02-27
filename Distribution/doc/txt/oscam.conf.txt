@@ -389,18 +389,19 @@ MONITOR
 				     4 = traffic from/to the reader
 				     8 = traffic from/to the clients
 				    16 = traffic to the reader-device  on  IFD
-       layer
+					 layer
 				    32	=  traffic to the reader-device on I/O
-       layer
+					 layer
 				    63 = debug all
 	version 		= show OSCam version
+	commands		= show all valid monitor commands
 
 WEB INTERFACE
 	 template system
 
-	  The web interface allows  you  to  create  your  own	template.  For
-	  developing  your  own template request the orignal template with the
-	  non-linked page savetemplates.html. Store your own template  in  the
+	  The web interface allows you to create your own template. For devel
+	  oping  your  own template request the orignal template with the non-
+	  linked page savetemplates.html.  Store  your	own  template  in  the
 	  directory specified by httptpl.
 
 	 SSL connection to the web interface
