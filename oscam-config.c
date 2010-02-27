@@ -1747,6 +1747,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg->http_user);
 		fprintf_conf(f, CONFVARWIDTH, "httppwd", "%s\n", cfg->http_pwd);
 		fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
+		fprintf_conf(f, CONFVARWIDTH, "httptpl", "%s\n", cfg->http_tpl);
 		fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg->http_script);
 		fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg->http_refresh);
 		fprintf_conf(f, CONFVARWIDTH, "httpallowed", "");
