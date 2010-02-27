@@ -565,16 +565,16 @@ static void monitor_set_account(char *args){
 
 
 			}
-			found = 1;
+			found = i;
 		}
 	}
 
-	if (found != 1){
+	if (!found){
 		sprintf(buf, "[S-0000]setuser failed - parameter %s not exist", argarray[1]);
 		monitor_send_info(buf, 1);
 		return;
 	} else {
-		chk_account(token[i],argarray[2],account);
+		chk_account(token[found], argarray[2], account);
 	}
 
 	cs_reinit_clients();
