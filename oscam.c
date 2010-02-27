@@ -2072,7 +2072,7 @@ void get_cw(ECM_REQUEST *er)
 
 	if (er->rc < 100) {
 		if (cfg->delay)
-			usleep(cfg->delay * 1000);
+			cs_sleepms(cfg->delay);
 
 		send_dcw(er);
 		return;
