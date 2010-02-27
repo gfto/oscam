@@ -43,7 +43,7 @@ static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 
   return ERROR;
 }
 
-unsigned short Nd$TabB001[0x4][0x20]= {
+unsigned short NdTabB001[0x4][0x20]= {
 	{ 0xEAF1,0x0237,0x29D0,0xBAD2,0xE9D3,0x8BAE,0x2D6D,0xCD1B,
 		0x538D,0xDE6B,0xA634,0xF81A,0x18B5,0x5087,0x14EA,0x672E,
 		0xF0FC,0x055E,0x62E5,0xB78F,0x5D09,0x0003,0xE4E8,0x2DCE,
@@ -80,7 +80,7 @@ static void postprocess_cw(unsigned char *cw, int nTableIdx)
 			if (j<8) 
 				hk[0]=(hk[0]+((cw[j +1]<<8) | cw[j]));
 			if(j==8) hk[0]=(hk[0]+0x80);
-			hk[0]=(hk[0]+hk[2] + (0xFF & Nd$TabB001[nTableIdx][m>>1] >> ((m&1)<<3))) ;
+			hk[0]=(hk[0]+hk[2] + (0xFF & NdTabB001[nTableIdx][m>>1] >> ((m&1)<<3))) ;
 			hk[1] = hk[2];
 			hk[2] = hk[3];
 			hk[3] = hk[4];
