@@ -669,10 +669,13 @@ void chk_t_webif(char *token, char *value)
 	}
 
 	if (!strcmp(token, "httptpl")) {
+		cfg->http_tpl[0] = '\0';
 		cs_strncpy(cfg->http_tpl, value, sizeof(cfg->http_tpl));
-		if(strlen(cfg->http_tpl) < (sizeof(cfg->http_tpl)-2) && cfg->http_tpl[strlen(cfg->http_tpl)-1] != '/') {
-			cfg->http_tpl[strlen(cfg->http_tpl)] = '/';
-			cfg->http_tpl[strlen(cfg->http_tpl)] = '\0';
+		if(strlen(value) != 0) {
+			if(strlen(cfg->http_tpl) < (sizeof(cfg->http_tpl)-2) && cfg->http_tpl[strlen(cfg->http_tpl)-1] != '/') {
+				cfg->http_tpl[strlen(cfg->http_tpl)] = '/';
+				cfg->http_tpl[strlen(cfg->http_tpl)] = '\0';
+			}
 		}
 		return;
 	}
