@@ -521,30 +521,82 @@ How many samples should be penalized?, default:8
 .RE
 .SH MONITOR
 monitor commands:
+.TP 3n
+\(bu
+\fBlogin <user> <password>\fP
 
- login <user> <password> = login (for unencrypted connections only)
- exit                    = exit monitor
- log <on|onwohist|off>   = enable|enable without hitory|disable 
-                           logging for 2 minutes
- status                  = list of current processes and clients
- shutdown                = showdown OSCam
- reload                  = reinit user db, clients and anti-cascading,
-                           for newcamd connections: after reloading 
-                           the ident, please restart newcamd client
- details <PID>           = details about selected PID
- debug <level>           = set debug level (\fBmonlevel\fP > 3 required)
-                            debug level mask:
-                              0 = no debugging (default)
-                              2 = ATR parsing info, ECM dumps, CW dumps
-                              4 = traffic from/to the reader
-                              8 = traffic from/to the clients
-                             16 = traffic to the reader-device on IFD
-			                   layer
-                             32 = traffic to the reader-device on I/O
-			                   layer
-                             63 = debug all
- version                 = show OSCam version
- commands                = show all valid monitor commands
+login (for unencrypted connections only)
+
+.TP 3n
+\(bu
+\fBsetuser <user> <parameter>=<value>\fP
+
+set parameter for user
+ 
+.TP 3n
+\(bu
+\fBexit\fP
+
+exit monitor
+ 
+.TP 3n
+\(bu
+\fBlog <on|onwohist|off>\fP
+
+enable|enable without hitory|disable logging for 2 minutes
+
+.TP 3n
+\(bu
+\fBstatus\fP
+
+list of current processes and clients
+
+.TP 3n
+\(bu
+\fBshutdown\fP
+
+shutdown OSCam
+ 
+.TP 3n
+\(bu
+\fBreload\fP
+
+reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart newcamd client
+
+.TP 3n
+\(bu
+\fBdetails <PID>\fP
+
+details about selected PID
+
+.TP 3n
+\(bu
+\fBdebug <level>\fP
+
+set debug level (\fBmonlevel\fP > 3 required)
+                            
+debug level mask:
+  0 = no debugging (default)
+  2 = ATR parsing info, ECM dumps, CW dumps
+  4 = traffic from/to the reader
+  8 = traffic from/to the clients
+ 16 = traffic to the reader-device on IFD 
+      layer 
+ 32 = traffic to the reader-device on I/O 
+      layer 
+ 63 = debug all
+				     
+.TP 3n
+\(bu
+\fBversion\fP
+
+show OSCam version
+
+.TP 3n
+\(bu
+\fBcommands\fP
+
+show all valid monitor commands
 .SH WEB INTERFACE
 .TP 3n
 \(bu

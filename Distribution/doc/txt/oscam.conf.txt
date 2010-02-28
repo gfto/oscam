@@ -372,29 +372,70 @@ DESCRIPTIONS
 MONITOR
        monitor commands:
 
-	login <user> <password> = login (for unencrypted connections only)
-	exit			= exit monitor
-	log <on|onwohist|off>	= enable|enable without hitory|disable
-				  logging for 2 minutes
-	status			= list of current processes and clients
-	shutdown		= showdown OSCam
-	reload			= reinit user db, clients and anti-cascading,
-				  for newcamd connections: after reloading
-				  the ident, please restart newcamd client
-	details <PID>		= details about selected PID
-	debug <level>		= set debug level (monlevel > 3 required)
-				   debug level mask:
-				     0 = no debugging (default)
-				     2 = ATR parsing info, ECM dumps, CW dumps
-				     4 = traffic from/to the reader
-				     8 = traffic from/to the clients
-				    16 = traffic to the reader-device  on  IFD
-					 layer
-				    32	=  traffic to the reader-device on I/O
-					 layer
-				    63 = debug all
-	version 		= show OSCam version
-	commands		= show all valid monitor commands
+	 login <user> <password>
+
+	  login (for unencrypted connections only)
+
+
+	 setuser <user> <parameter>=<value>
+
+	  set parameter for user
+
+
+	 exit
+
+	  exit monitor
+
+
+	 log <on|onwohist|off>
+
+	  enable|enable without hitory|disable logging for 2 minutes
+
+
+	 status
+
+	  list of current processes and clients
+
+
+	 shutdown
+
+	  shutdown OSCam
+
+
+	 reload
+
+	  reinit user db, clients and anti-cascading, for newcamd connections:
+	  after reloading the ident, please restart newcamd client
+
+
+	 details <PID>
+
+	  details about selected PID
+
+
+	 debug <level>
+
+	  set debug level (monlevel > 3 required)
+
+	  debug level mask:
+	    0 = no debugging (default)
+	    2 = ATR parsing info, ECM dumps, CW dumps
+	    4 = traffic from/to the reader
+	    8 = traffic from/to the clients
+	   16 = traffic to the reader-device on IFD
+		layer
+	   32 = traffic to the reader-device on I/O
+		layer
+	   63 = debug all
+
+	 version
+
+	  show OSCam version
+
+
+	 commands
+
+	  show all valid monitor commands
 
 WEB INTERFACE
 	 template system
