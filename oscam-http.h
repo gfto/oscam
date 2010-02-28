@@ -1024,7 +1024,6 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TH>&nbsp;</TH><TH>Edit DVB Api Config</TH></TR>\n\
 		<TR><TD>Enabled:</TD><TD><input name=\"enabled\" type=\"checkbox\" value=\"1\" ##ENABLEDCHECKED##>\n\
 		<TR><TD>AU:</TD><TD><input name=\"au\" type=\"checkbox\" value=\"1\" ##AUCHECKED##>\n\
-		<TR><TD>Boxtype:</TD><TD><input name=\"boxtype\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##BOXTYPE##\"></TD></TR>\n\
 		<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##USER##\"></TD></TR>\n\
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
 	</TABLE>\n\

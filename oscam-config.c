@@ -1062,11 +1062,6 @@ void chk_t_dvbapi(char *token, char *value)
 		return;
 	}
 
-	if (!strcmp(token, "boxtype")) {
-		cs_strncpy(cfg->dvbapi_boxtype, value, sizeof(cfg->dvbapi_boxtype));
-		return;
-	}
-
 	if (!strcmp(token, "user")) {
 		cs_strncpy(cfg->dvbapi_usr, value, sizeof(cfg->dvbapi_usr));
 		return;
@@ -1736,7 +1731,6 @@ int write_config()
 		fprintf(f,"[dvbapi]\n");
 		fprintf_conf(f, CONFVARWIDTH, "enabled", "%d\n", cfg->dvbapi_enabled);
 		fprintf_conf(f, CONFVARWIDTH, "au", "%d\n", cfg->dvbapi_au);
-		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", cfg->dvbapi_boxtype);
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->dvbapi_usr);
 		fputc((int)'\n', f);
 	}
