@@ -25,8 +25,6 @@
 #ifndef _T1_BLOCK_
 #define _T1_BLOCK_
 
-#include "defines.h"
-
 /*
  * Exported constants definition
  */
@@ -56,7 +54,7 @@
 
 typedef struct
 {
-  BYTE * data;
+  unsigned char * data;
   unsigned length;
 }
 T1_Block;
@@ -65,29 +63,25 @@ T1_Block;
  * Exported functions declaration
  */
 
-T1_Block * T1_Block_New (BYTE * buffer, unsigned length);
+T1_Block * T1_Block_New (unsigned char * buffer, unsigned length);
 
-T1_Block * T1_Block_NewIBlock (BYTE len, BYTE * inf, BYTE ns, bool more);
+T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned char ns, int more);
 
-T1_Block * T1_Block_NewRBlock (BYTE type, BYTE nr);
+T1_Block * T1_Block_NewRBlock (unsigned char type, unsigned char nr);
 
-T1_Block * T1_Block_NewSBlock (BYTE type, BYTE len, BYTE * inf);
+T1_Block * T1_Block_NewSBlock (unsigned char type, unsigned char len, unsigned char * inf);
 
-BYTE T1_Block_GetType (T1_Block * block);
+unsigned char T1_Block_GetType (T1_Block * block);
 
-BYTE T1_Block_GetNS (T1_Block * block);
+unsigned char T1_Block_GetNS (T1_Block * block);
 
-bool T1_Block_GetMore (T1_Block * block);
+int T1_Block_GetMore (T1_Block * block);
 
-BYTE T1_Block_GetNR (T1_Block * block);
+unsigned char T1_Block_GetNR (T1_Block * block);
 
-BYTE T1_Block_GetLen (T1_Block * block);
+unsigned char T1_Block_GetLen (T1_Block * block);
 
-BYTE * T1_Block_GetInf (T1_Block * block);
-
-BYTE * T1_Block_Raw (T1_Block * block);
-
-unsigned T1_Block_RawLen (T1_Block * block);
+unsigned char * T1_Block_GetInf (T1_Block * block);
 
 void T1_Block_Delete (T1_Block * block);
 

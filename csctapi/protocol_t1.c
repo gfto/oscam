@@ -259,7 +259,7 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
 static int Protocol_T1_SendBlock (T1_Block * block)
 {
 	int ret;
-  ret = ICC_Async_Transmit (T1_Block_RawLen(block), T1_Block_Raw(block));
+  ret = ICC_Async_Transmit (block->length, block->data);
 	T1_Block_Delete(block);
   return ret;
 }

@@ -35,15 +35,13 @@
 /*
  * Not exported functions declaration
  */
-static BYTE
-T1_Block_LRC (BYTE * data, unsigned length);
+static unsigned char T1_Block_LRC (unsigned char * data, unsigned length);
  
 /*
  * Exported functions definition
  */
 
-T1_Block *
-T1_Block_New (BYTE * buffer, unsigned length)
+T1_Block * T1_Block_New (unsigned char * buffer, unsigned length)
 {
   T1_Block * block;
   
@@ -52,180 +50,127 @@ T1_Block_New (BYTE * buffer, unsigned length)
   
   block = (T1_Block *) malloc (sizeof (T1_Block));
   
-  if (block != NULL)
-    {
-      block->length = MIN(length, T1_BLOCK_MAX_SIZE);
-      block->data = (BYTE *) calloc (block->length, sizeof (BYTE));
+  if (block != NULL) {
+      if (length > T1_BLOCK_MAX_SIZE)
+        block->length = T1_BLOCK_MAX_SIZE;
+      else
+        block->length = length;
+      block->data = (unsigned char *) calloc (block->length, sizeof (unsigned char));
       
       if (block->data != NULL)
-        {
           memcpy (block->data, buffer, block->length);
-        }
-      else
-        {
+      else {
           free (block);
           block = NULL;
         }
-    }
-  
+  }
   return block;
 }
 
-T1_Block *
-T1_Block_NewIBlock (BYTE len, BYTE * inf, BYTE ns, bool more)
+T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned char ns, int more)
 {
   T1_Block * block;
-  
   block = (T1_Block *) malloc (sizeof (T1_Block));
-  
-  if (block != NULL)
-    {
+  if (block != NULL) {
       block->length = len + 4;
-      block->data = (BYTE *) calloc (block->length, sizeof (BYTE));
-      
-      if (block->data != NULL)
-        {
+      block->data = (unsigned char *) calloc (block->length, sizeof (unsigned char));
+      if (block->data != NULL) {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = T1_BLOCK_I | ((ns << 6) & 0x40);
-          
           if (more)
             block->data[1] |= 0x20;
-            
           block->data[2] = len;
-          
           if (len != 0x00)
             memcpy (block->data + 3, inf, len);
-          
           block->data[len+3] = T1_Block_LRC (block->data, len+3);
         }
-      else
-        {
+      else {
           free (block);
           block = NULL;
         }
-    }
-  
+  }
   return block;
 }
 
-T1_Block *
-T1_Block_NewRBlock (BYTE type, BYTE nr)
+T1_Block * T1_Block_NewRBlock (unsigned char type, unsigned char nr)
 {
   T1_Block * block;
-  
   block = (T1_Block *) malloc (sizeof (T1_Block));
-  
-  if (block != NULL)
-    {
+  if (block != NULL) {
       block->length = 4;
-      block->data = (BYTE *) calloc (block->length, sizeof (BYTE));
-      
-      if (block->data != NULL)
-        {
+      block->data = (unsigned char *) calloc (block->length, sizeof (unsigned char));
+      if (block->data != NULL) {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = type | ((nr << 4) & 0x10);
           block->data[2] = 0x00;
           block->data[3] = T1_Block_LRC (block->data, 3);
-        }
-      else
-        {
+      }
+      else {
           free (block);
           block = NULL;
-        }
-    }
-  
+      }
+  }
   return block;
 }
 
-T1_Block *
-T1_Block_NewSBlock (BYTE type, BYTE len, BYTE * inf)
+T1_Block * T1_Block_NewSBlock (unsigned char type, unsigned char len, unsigned char * inf)
 {
   T1_Block * block;
-  
   block = (T1_Block *) malloc (sizeof (T1_Block));
-  
-  if (block != NULL)
-    {
+  if (block != NULL) {
       block->length = 4 + len;
-      block->data = (BYTE *) calloc (block->length, sizeof (BYTE));
-      
-      if (block->data != NULL)
-        {
+      block->data = (unsigned char *) calloc (block->length, sizeof (unsigned char));
+      if (block->data != NULL) {
           block->data[0] = T1_BLOCK_NAD;
           block->data[1] = type;
           block->data[2] = len;
-
           if (len != 0x00)
             memcpy (block->data + 3, inf, len);
-          
           block->data[len+3] = T1_Block_LRC (block->data, len+3);
-        }
-      else
-        {
+      }
+      else {
           free (block);
           block = NULL;
-        }
-    }
-  
+      }
+  }
   return block;
 }
 
-BYTE
-T1_Block_GetType (T1_Block * block)
+unsigned char T1_Block_GetType (T1_Block * block)
 {
   if ((block->data[1] & 0x80) == T1_BLOCK_I)
     return T1_BLOCK_I;
-    
   return (block->data[1] & 0xEF);
 }
 
-BYTE
-T1_Block_GetNS (T1_Block * block)
+unsigned char T1_Block_GetNS (T1_Block * block)
 {
   return ((block->data[1] >> 6)& 0x01);
 }
 
-bool
-T1_Block_GetMore (T1_Block * block)
+int T1_Block_GetMore (T1_Block * block)
 {
   return ((block->data[1] >> 5) & 0x01);
 }
 
-BYTE
-T1_Block_GetNR (T1_Block * block)
+unsigned char T1_Block_GetNR (T1_Block * block)
 {
   return ((block->data[1] >> 4) & 0x01);
 }
 
-BYTE
-T1_Block_GetLen (T1_Block * block)
+unsigned char T1_Block_GetLen (T1_Block * block)
 {
   return block->data[2];
 }
 
-BYTE *
-T1_Block_GetInf (T1_Block * block)
+unsigned char * T1_Block_GetInf (T1_Block * block)
 {
   if (block->length < 5)
     return NULL;
-    
   return block->data + 3;
 }
 
-BYTE *
-T1_Block_Raw (T1_Block * block)
-{
-  return block->data;
-}
-
-unsigned
-T1_Block_RawLen (T1_Block * block)
-{
-  return block->length;
-}
-
-void
-T1_Block_Delete (T1_Block * block)
+void T1_Block_Delete (T1_Block * block)
 {
   free (block->data);
   free (block);
@@ -235,17 +180,12 @@ T1_Block_Delete (T1_Block * block)
  * Not exported functions definition
  */
 
-static BYTE
-T1_Block_LRC (BYTE * data, unsigned length)
+static unsigned char T1_Block_LRC (unsigned char * data, unsigned length)
 {
-  BYTE lrc;
+  unsigned char lrc;
   unsigned i;
-
   lrc = 0x00;
   for (i = 0; i < length; i++)
-    {
       lrc ^= data[i];
-    }
-    
   return lrc;       
 }

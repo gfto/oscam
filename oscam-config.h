@@ -22,6 +22,7 @@
 #  ifndef COOL
 #    define SCI_DEV 1
 #  endif
+#  define HAVE_DVBAPI
 #endif
 
 #ifdef UCLIBC

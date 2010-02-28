@@ -25,12 +25,13 @@ Get sources from SVN
 Compile options
 ---------------
 
+DVBAPI support is automatically compiled in if the target platform supports it.
+
 Enable features:
 
 CS_ANTICASC     - enable anti-cascading (default)
 CS_LOGHISTORY   - enable log history (default)
 CS_WITH_GBOX    - enable gbox support
-HAVE_DVBAPI     - enable DVB API support
 DWEBIF          - enable web interface
 IRDETO_GUESSING - enable irdeto guessing support
 
@@ -39,7 +40,6 @@ Enable features with cmake:
 -DCS_ANTICASC=1     - enable anti-cascading (default)
 -DCS_LOGHISTORY=1   - enable log history (default)
 -DCS_WITH_GBOX=1    - enable gbox support
--DHAVE_DVBAPI=1     - enable DVB API support
 -DWEBIF=1           - enable web interface
 -DIRDETO_GUESSING=1 - enable irdeto guessing support
 

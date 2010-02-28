@@ -16,11 +16,12 @@
  *
  */
 
+#include "globals.h"  //HAVE_DVBAPI is set here so must be included before ifdef 
+
 #ifdef HAVE_DVBAPI
 
 #include <sys/un.h>
 
-#include "globals.h"
 
 #define BUFSIZE 512
 #define MAX_DEMUX 5
