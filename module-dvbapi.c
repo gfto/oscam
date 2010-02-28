@@ -21,7 +21,6 @@
 #include <sys/un.h>
 
 #include "globals.h"
-#include "oscam-config.h"
 
 #define BUFSIZE 512
 #define MAX_DEMUX 5
@@ -277,11 +276,7 @@ int dvbapi_open_device(int index_demux, int type)
 		sprintf(device_path, devices[selected_box].demux_device_path, demux[index_demux].demux_index);
 	else
 	{
-#ifdef TUXBOX
-		if (cs_hw==CS_HW_DREAM)
-			ca_offset=0;
-		else
-#endif
+		if (strcmp(cfg->dvbapi_boxtype, "ufs910")==0 || strcmp(cfg->dvbapi_boxtype, "dbox2")==0)
 			ca_offset=1;
 
 		sprintf(device_path, devices[selected_box].ca_device_path, demux[index_demux].cadev_index+ca_offset);
@@ -1070,6 +1065,12 @@ int dvbapi_main_local()
 	if (cfg->dvbapi_usr[0]==0) {
 	    //
 	}
+
+	if (cfg->dvbapi_boxtype[0]==0) {
+		strncpy(cfg->dvbapi_boxtype, "dreambox", sizeof(cfg->dvbapi_boxtype)-1);
+		cs_log("dvbapi: boxtype not set. Assume boxtype=%s.", cfg->dvbapi_boxtype);
+	} else
+		cs_log("dvbapi: boxtype=%s.", cfg->dvbapi_boxtype);
 
 	for (i=0;i<MAX_DEMUX;i++)
 	{
