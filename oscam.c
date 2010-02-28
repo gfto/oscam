@@ -1616,11 +1616,11 @@ int send_dcw(ECM_REQUEST *er)
       snprintf(sby, sizeof(sby)-1, " by %s(%04X)", reader[er->reader[0]].label,er->gbxCWFrom);
     else
 #endif
-      snprintf(sby, sizeof(sby)-1, " by %s", reader[er->reader[0]].label);
-   
-    // add marker to reader it er was betatunneled 
-    if(er->btun)
-      snprintf(sby, sizeof(sby)-1, " by %s(btun)", reader[er->reader[0]].label);
+      // add marker to reader if ECM_REQUEST was betatunneled 
+      if(er->btun)
+        snprintf(sby, sizeof(sby)-1, " by %s(btun)", reader[er->reader[0]].label);
+      else
+        snprintf(sby, sizeof(sby)-1, " by %s", reader[er->reader[0]].label);
   }
   if (er->rc<4) er->rcEx=0;
   if (er->rcEx)
