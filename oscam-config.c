@@ -1556,8 +1556,8 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg->disablelog);
 	fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg->disableuserfile);
 	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg->usrfileflag);
-	fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout/1000);
-	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout/1000);
+	fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout);
+	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout);
 	fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
 	fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay);
 	fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);
