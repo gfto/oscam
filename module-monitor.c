@@ -511,12 +511,16 @@ static void monitor_set_account(char *args){
 	char *ptr;
 	int argidx, i, found;
 	char *argarray[3];
-	char *token[]={"au", "sleep", "uniq", "monlevel", "group", "services", "betatunnel", "ident", "caid", "chid", "class", "hostname", "refresh"};
+	char *token[]={"au", "sleep", "uniq", "monlevel", "group", "services", "betatunnel", "ident", "caid", "chid", "class", "hostname"};
 	int tokencnt = sizeof(token)/sizeof(char *);
-	char buf[256];
+	char buf[256], tmp[64];
 
 	argidx = 0;
 	found = 0;
+
+	sprintf(tmp, "%s",args);
+	sprintf(buf, "[S-0000]setuser: %s check\n", tmp);
+	monitor_send_info(buf, 0);
 
 	ptr = strtok(args, delimiter);
 
@@ -527,14 +531,12 @@ static void monitor_set_account(char *args){
 		argidx++;
 	}
 
-	if(!strcmp(argarray[1], "refresh")){
-		kill(client[0].pid, SIGHUP);
-	}else{
-		if(argidx != 3) {
-			sprintf(buf, "[S-0000]setuser failed - wrong number of parameters (%d)\n", argidx);
-			monitor_send_info(buf, 1);
-			return;
-		}
+	if(argidx != 3) {
+		sprintf(buf, "[S-0000]setuser: %s failed - wrong number of parameters (%d)\n",tmp,  argidx);
+		monitor_send_info(buf, 0);
+		sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
+		monitor_send_info(buf, 1);
+		return;
 	}
 
 	//search account
@@ -546,7 +548,9 @@ static void monitor_set_account(char *args){
 	}
 
 	if (found != 1){
-		sprintf(buf, "[S-0000]setuser failed - user %s not found\n", argarray[0]);
+		sprintf(buf, "[S-0000]setuser: %s failed - user %s not found\n",tmp , argarray[0]);
+		monitor_send_info(buf, 0);
+		sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
 		monitor_send_info(buf, 1);
 		return;
 	}
@@ -560,26 +564,28 @@ static void monitor_set_account(char *args){
 			case	6: clear_tuntab(&account->ttab); break;		//betatunnel
 
 			case	8: clear_caidtab(&account->ctab); break;	//Caid
-
-
-
-
 			}
 			found = i;
 		}
 	}
 
 	if (!found){
-		sprintf(buf, "[S-0000]setuser failed - parameter %s not exist", argarray[1]);
+		sprintf(buf, "[S-0000]setuser: %s failed - parameter %s not exist",tmp , argarray[1]);
+		monitor_send_info(buf, 0);
+		sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
 		monitor_send_info(buf, 1);
 		return;
 	} else {
 		chk_account(token[found], argarray[2], account);
 	}
 
-	cs_reinit_clients();
+	if (write_userdb()==0)
+		kill(client[0].pid, SIGHUP);
 
-	sprintf(buf, "[S-0000]setuser %s done - param %s set to %s\n", argarray[0], argarray[1], argarray[2]);
+	sprintf(buf, "[S-0000]setuser: %s done - param %s set to %s\n", tmp, argarray[1], argarray[2]);
+	monitor_send_info(buf, 0);
+
+	sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
 	monitor_send_info(buf, 1);
 }
 
