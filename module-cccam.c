@@ -1030,7 +1030,7 @@ static void cc_srv_report_cards()
       buf[20] = reader[r].nprov;
 
       for (j=0; j<reader[r].nprov; j++) {
-        memcpy(buf + 21 + (j*7), reader[r].prid[j]+1, 3);
+        memcpy(buf + 21 + (j*7), reader[r].prid[j]+0, 3);
       }
 
       buf[21 + (j*7)] = 1;

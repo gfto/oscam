@@ -318,7 +318,7 @@ static int connect_newcamd_server()
     reader[ridx].prid[i][1] = buf[16+2+11*i];
     reader[ridx].prid[i][2] = buf[17+2+11*i];
     memcpy(&reader[ridx].sa[i], buf+22+2+11*i, 4); // the 4 first bytes are not read
-    cs_log("Provider ID: %02X%02X%02X - SA: %02X%02X%02X%02X", reader[ridx].prid[i][1],  reader[ridx].prid[i][2], reader[ridx].prid[i][3], reader[ridx].sa[i][0], reader[ridx].sa[i][1], reader[ridx].sa[i][2], reader[ridx].sa[i][3]);
+    cs_log("Provider ID: %02X%02X%02X - SA: %02X%02X%02X%02X", reader[ridx].prid[i][0],  reader[ridx].prid[i][1], reader[ridx].prid[i][2], reader[ridx].sa[i][0], reader[ridx].sa[i][1], reader[ridx].sa[i][2], reader[ridx].sa[i][3]);
   }
   memcpy(reader[ridx].ncd_skey, key, 16);
 
