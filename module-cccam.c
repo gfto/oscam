@@ -996,9 +996,9 @@ static int cc_cli_connect(void)
   reader[ridx].caid[0] = reader[ridx].ftab.filts[0].caid;
   reader[ridx].nprov = reader[ridx].ftab.filts[0].nprids;
   for (n=0; n<reader[ridx].nprov; n++) {
-    reader[ridx].prid[n][0] = reader[ridx].ftab.filts[0].prids[n] << 24;
-    reader[ridx].prid[n][1] = reader[ridx].ftab.filts[0].prids[n] << 16;
-    reader[ridx].prid[n][2] = reader[ridx].ftab.filts[0].prids[n] << 8;
+    reader[ridx].prid[n][0] = reader[ridx].ftab.filts[0].prids[n] >> 24;
+    reader[ridx].prid[n][1] = reader[ridx].ftab.filts[0].prids[n] >> 16;
+    reader[ridx].prid[n][2] = reader[ridx].ftab.filts[0].prids[n] >> 8;
     reader[ridx].prid[n][3] = reader[ridx].ftab.filts[0].prids[n] & 0xff;
   }
 
@@ -1057,14 +1057,13 @@ static void cc_srv_report_cards()
           buf[20] = reader[r].ftab.filts[j].nprids;
 
           for (k=0; k<reader[r].ftab.filts[j].nprids; k++) {
-            buf[21 + (k*7)] = reader[r].ftab.filts[j].prids[k] << 24;
-            buf[22 + (k*7)] = reader[r].ftab.filts[j].prids[k] << 16;
-            buf[23 + (k*7)] = reader[r].ftab.filts[j].prids[k] << 8;
-            buf[24 + (k*7)] = reader[r].ftab.filts[j].prids[k] & 0xff;
+            buf[21 + (k*7)] = reader[r].ftab.filts[j].prids[k] >> 16;
+            buf[22 + (k*7)] = reader[r].ftab.filts[j].prids[k] >> 8;
+            buf[23 + (k*7)] = reader[r].ftab.filts[j].prids[k] & 0xff;
           }
 
           buf[21 + (k*7)] = 1;
-          memcpy(buf + 22 + (k*7), cc->node_id, 8);
+          memcpy(buf + 22 + (k*7), cc->node_id, 7);
 
           cc_cmd_send(buf, 30 + (k*7), MSG_NEW_CARD);
 
