@@ -1045,7 +1045,7 @@ static void chk_t_gbox(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized",token);
+		fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized\n",token);
 }
 #endif
 
