@@ -772,7 +772,7 @@ void chk_t_camd33(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		fprintf(stderr "Warning: keyword '%s' in camd33 section not recognized\n",token);
+		fprintf(stderr, "Warning: keyword '%s' in camd33 section not recognized\n",token);
 }
 
 void chk_t_camd35(char *token, char *value)
