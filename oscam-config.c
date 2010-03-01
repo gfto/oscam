@@ -502,7 +502,7 @@ void chk_t_global(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in global section not recognized", token);
+		fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n", token);
 }
 
 #ifdef CS_ANTICASC
@@ -565,7 +565,7 @@ void chk_t_ac(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in anticascading section not recognized",token);
+		fprintf(stderr, "Warning: keyword '%s' in anticascading section not recognized\n",token);
 }
 #endif
 
@@ -632,7 +632,7 @@ void chk_t_monitor(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in monitor section not recognized",token);
+		fprintf(stderr, "Warning: keyword '%s' in monitor section not recognized\n",token);
 }
 
 #ifdef WEBIF
@@ -721,7 +721,7 @@ void chk_t_webif(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in webif section not recognized",token);
+		fprintf(stderr, "Warning: keyword '%s' in webif section not recognized\n",token);
 }
 #endif
 
@@ -772,7 +772,7 @@ void chk_t_camd33(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in camd33 section not recognized",token);
+		fprintf(stderr "Warning: keyword '%s' in camd33 section not recognized\n",token);
 }
 
 void chk_t_camd35(char *token, char *value)
@@ -808,7 +808,7 @@ void chk_t_camd35(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in camd35 section not recognized", token);
+		fprintf(stderr, "Warning: keyword '%s' in camd35 section not recognized\n", token);
 }
 
 void chk_t_camd35_tcp(char *token, char *value)
@@ -844,7 +844,7 @@ void chk_t_camd35_tcp(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in camd35 tcp section not recognized", token);
+		fprintf(stderr, "Warning: keyword '%s' in camd35 tcp section not recognized\n", token);
 }
 
 void chk_t_newcamd(char *token, char *value)
@@ -898,7 +898,7 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in newcamd section not recognized", token);
+		fprintf(stderr, "Warning: keyword '%s' in newcamd section not recognized\n", token);
 }
 
 void chk_t_cccam(char *token, char *value)
@@ -945,7 +945,7 @@ void chk_t_cccam(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in cccam section not recognized",token);
+		fprintf(stderr, "Warning: keyword '%s' in cccam section not recognized\n",token);
 }
 
 void chk_t_radegast(char *token, char *value)
@@ -986,7 +986,7 @@ void chk_t_radegast(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in radegast section not recognized", token);
+		fprintf(stderr, "Warning: keyword '%s' in radegast section not recognized\n", token);
 }
 
 void chk_t_serial(char *token, char *value)
@@ -1000,7 +1000,7 @@ void chk_t_serial(char *token, char *value)
 		return;
 	}
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in serial section not recognized", token);
+		fprintf(stderr, "Warning: keyword '%s' in serial section not recognized\n", token);
 }
 
 #ifdef CS_WITH_GBOX
@@ -1045,7 +1045,7 @@ static void chk_t_gbox(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in gbox section not recognized",token);
+		fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized",token);
 }
 #endif
 
@@ -1083,7 +1083,7 @@ void chk_t_dvbapi(char *token, char *value)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in dvbapi section not recognized\n",token);
+		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
 }
 #endif
 
@@ -1104,28 +1104,28 @@ static void chk_token(char *token, char *value, int tag)
 #ifdef CS_WITH_GBOX
 		case TAG_GBOX    : chk_t_gbox(token, value); break;
 #else
-		case TAG_GBOX    : cs_log("Warning: OSCam compiled without gbox support."); break;
+		case TAG_GBOX    : fprintf(stderr, "Warning: OSCam compiled without gbox support.\n"); break;
 #endif
 
 
 #ifdef HAVE_DVBAPI
 		case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
 #else
-		case TAG_DVBAPI  : cs_log("Warning: OSCam compiled without DVB API support."); break;
+		case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
 #endif
 
 
 #ifdef WEBIF
 		case TAG_WEBIF   : chk_t_webif(token, value); break;
 #else
-		case TAG_WEBIF   : cs_log("Warning: OSCam compiled without Webinterface support."); break;
+		case TAG_WEBIF   : fprintf(stderr, "Warning: OSCam compiled without Webinterface support.\n"); break;
 #endif
 
 
 #ifdef CS_ANTICASC
 		case TAG_ANTICASC: chk_t_ac(token, value); break;
 #else
-		case TAG_ANTICASC: cs_log("Warning: OSCam compiled without anticascading support."); break;
+		case TAG_ANTICASC: fprintf(stderr, "Warning: OSCam compiled without anticascading support.\n"); break;
 #endif
 
 	}
@@ -1477,7 +1477,7 @@ void chk_account(char *token, char *value, struct s_auth *account)
 #endif
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in account section not recognized",token);
+		fprintf(stderr, "Warning: keyword '%s' in account section not recognized\n",token);
 }
 
 int write_services()
@@ -2018,7 +2018,7 @@ void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
   if (!strcmp(token, "ident")) { chk_entry4sidtab(value, sidtab, 1); return; }
   if (!strcmp(token, "srvid")) { chk_entry4sidtab(value, sidtab, 2); return; }
   if (token[0] != '#')
-    cs_log("Warning: keyword '%s' in sidtab section not recognized",token);
+    fprintf(stderr, "Warning: keyword '%s' in sidtab section not recognized\n",token);
 }
 
 int init_sidtab()
@@ -2494,7 +2494,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
-		cs_log("WARNING: value '%s' in protocol-line not recognized, assuming MOUSE",value);
+		fprintf(stderr, "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE\n",value);
 		rdr->typ = R_MOUSE;
 		return;
 	}
@@ -2663,7 +2663,7 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (token[0] != '#')
-		cs_log("Warning: keyword '%s' in reader section not recognized",token);
+		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
 }
 
 #ifdef IRDETO_GUESSING
