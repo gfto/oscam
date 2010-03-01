@@ -1974,8 +1974,11 @@ void get_cw(ECM_REQUEST *er)
 		er->ocaid = er->caid;
 		i = er->srvid;
 
-		if ((i != client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch))
+		if ((i != client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch)) {
 			client[cs_idx].lastswitch = now;
+			if(cfg->usrfileflag)
+				cs_statistics(cs_idx);
+		}
 
 		// user sleeping
 		if ((client[cs_idx].tosleep) && (now - client[cs_idx].lastswitch > client[cs_idx].tosleep))
