@@ -111,9 +111,7 @@ char *cs_platform(char *buf)
       case CS_HW_DBOX2: hw="dbox2"   ; break;
 #endif
       case CS_HW_DREAM: hw="dreambox"; break;
-#ifdef TRIPLEDRAGON
       case CS_HW_DRAGON: hw="tripledragon"; break;
-#endif
     }
 #endif
     if (!hw) hw=CS_OS_HW;
