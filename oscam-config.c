@@ -720,6 +720,11 @@ void chk_t_webif(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "httpdyndns")) {
+		cs_strncpy((char *)cfg->http_dyndns, value, sizeof(cfg->http_dyndns));
+		return;
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in webif section not recognized\n",token);
 }
@@ -1761,6 +1766,7 @@ int write_config()
 	  	dot = ",";
 		}
 		fputc((int)'\n', f);
+		fprintf_conf(f, CONFVARWIDTH, "httpdyndns", "%s\n", cfg->http_dyndns);
 		fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
 		fprintf_conf(f, CONFVARWIDTH, "httpreadonly", "%d\n", cfg->http_readonly);
 		fputc((int)'\n', f);

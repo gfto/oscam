@@ -649,6 +649,8 @@ struct s_config
 	int			http_hide_idle_clients;
 	struct 	s_ip *http_allowed;
 	int			http_readonly;
+	in_addr_t	http_dynip;
+	uchar		http_dyndns[64];
 #endif
 	int		c33_port;
 	in_addr_t	c33_srvip;
