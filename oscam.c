@@ -2110,8 +2110,8 @@ void do_emm(EMM_PACKET *ep)
     return;
   client[cs_idx].lastemm=time((time_t)0);
   cs_debug_mask(D_EMM,"reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
-  cs_ddump(D_EMM, ep->hexserial, 8, "emm UA:");
-	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
+  cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA:");
+  cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 //  if ((!reader[au].fd) || (reader[au].b_nano[ep->emm[3]])) // blocknano is obsolete
   if ((!reader[au].fd) ||       // reader has no fd
       (reader[au].caid[0]!=b2i(2,ep->caid)) ||    // wrong caid
