@@ -162,12 +162,14 @@ static void usage()
   fprintf(stderr, "\t-d <level> : debug level mask\n");
   fprintf(stderr, "\t             0 = no debugging (default)\n");
   fprintf(stderr, "\t             1 = detailed error messages\n");
-  fprintf(stderr, "\t             2 = ATR parsing info, ECM, EMM and CW dumps\n");
+  fprintf(stderr, "\t             2 = ATR parsing info, ECM and CW dumps\n");
   fprintf(stderr, "\t             4 = traffic from/to the reader\n");
   fprintf(stderr, "\t             8 = traffic from/to the clients\n");
   fprintf(stderr, "\t             16 = traffic to the reader-device on IFD layer\n");
   fprintf(stderr, "\t             32 = traffic to the reader-device on I/O layer\n");
-  fprintf(stderr, "\t             63 = debug all\n");
+  fprintf(stderr, "\t             64 = EMM dumps\n");
+  fprintf(stderr, "\t             128 = reserved for future use\n");
+  fprintf(stderr, "\t             255 = debug all\n");
 #ifdef CS_NOSHM
   fprintf(stderr, "\t-m <file>  : use <file> as mmaped memory file\n");
   fprintf(stderr, "\t             default = %s\n", CS_MMAPFILE);
