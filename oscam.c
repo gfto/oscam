@@ -432,10 +432,10 @@ static void cs_debug_level()
 			case 0:
 				cs_dblevel = 1;
 				break;
-			case 32:
-				cs_dblevel = 63;
+			case 64:
+				cs_dblevel = 255;
 				break;
-			case 63:
+			case 255:
 				cs_dblevel = 0;
 				break;
 			default:
@@ -2108,9 +2108,9 @@ void do_emm(EMM_PACKET *ep)
   if ((au<0) || (au>=CS_MAXREADER))
     return;
   client[cs_idx].lastemm=time((time_t)0);
-  cs_debug("reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
-  cs_ddump(ep->hexserial, 8, "emm UA:");
-	cs_ddump_mask(D_ATR, ep->emm, ep->l, "emm:");
+  cs_debug_mask(D_EMM,"reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
+  cs_ddump(D_EMM, ep->hexserial, 8, "emm UA:");
+	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 //  if ((!reader[au].fd) || (reader[au].b_nano[ep->emm[3]])) // blocknano is obsolete
   if ((!reader[au].fd) ||       // reader has no fd
       (reader[au].caid[0]!=b2i(2,ep->caid)) ||    // wrong caid

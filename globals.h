@@ -126,12 +126,14 @@
 
 #define CS_RDR_INIT_HIST
 #define D_TRACE     1 // Generate very detailed error/trace messages per routine
-#define D_ATR       2 // Debug ATR parsing, dump of ecm, emm, cw
+#define D_ATR       2 // Debug ATR parsing, dump of ecm, cw
 #define D_READER    4 // Debug Reader/Proxy Process
 #define D_CLIENT    8 // Debug Client Process
 #define D_IFD       16  // Debug IFD+protocol
 #define D_DEVICE    32  // Debug Reader I/O
-#define D_ALL_DUMP  63															// dumps all
+#define D_EMM				64  // Dumps EMM
+#define D_FUT				128 // Reserved for future use
+#define D_ALL_DUMP  255 // dumps all
 
 #define R_DB2COM1		0x1 // Reader Dbox2 @ com1
 #define R_DB2COM2		0x2 // Reader Dbox2 @ com1
