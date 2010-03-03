@@ -638,6 +638,7 @@ struct s_config
 	int		mon_aulow;
 	int		mon_hideclient_to;
 	int		mon_level;
+	int		mon_appendchaninfo;
 #ifdef WEBIF
 	int			http_port;
 	char		http_user[65];

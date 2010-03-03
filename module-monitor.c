@@ -251,7 +251,7 @@ char *monitor_get_srvname(int srvid, int caid){
 				if (this->caid[i] == caid)
 					cs_strncpy(name, this->name, 32);
 
-	if (!name[0]) sprintf(name, "[%04X:%04X]", caid, srvid);
+	if (!name[0]) sprintf(name, "%04X:%04X unknown", caid, srvid);
 	if (!srvid) name[0] = '\0';
 	return(name);
 }

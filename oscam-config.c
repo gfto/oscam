@@ -631,6 +631,16 @@ void chk_t_monitor(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "appendchaninfo")) {
+		if(strlen(value) == 0) {
+			cfg->mon_appendchaninfo = 0;
+			return;
+		} else {
+			cfg->mon_appendchaninfo = atoi(value);
+			return;
+		}
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in monitor section not recognized\n",token);
 }
@@ -1594,6 +1604,7 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "aulow", "%d\n", cfg->mon_aulow);
 	fprintf_conf(f, CONFVARWIDTH, "hideclient_to", "%d\n", cfg->mon_hideclient_to);
 	fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", cfg->mon_level);
+	fprintf_conf(f, CONFVARWIDTH, "appendchaninfo", "%d\n", cfg->mon_appendchaninfo);
 	fputc((int)'\n', f);
 
 	/*newcamd*/
