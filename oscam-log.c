@@ -375,7 +375,7 @@ void cs_statistics(int idx)
 			cwps=0;
 
 		char *channel ="";
-		if(!cfg->mon_appendchaninfo)
+		if(cfg->mon_appendchaninfo)
 			channel = monitor_get_srvname(client[idx].last_srvid,client[idx].last_caid);
 
 		if(!cfg->disableuserfile) {
