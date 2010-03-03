@@ -127,6 +127,8 @@ DESCRIPTIONS
 	  time to hide clients in the monitor if not  sending  requests,  0  =
 	  disabled, default:0
 
+       appendchaninfo = 0|1
+	  1 = append channel name on log messages, default:0
 
    The [webif] section (only if web interface module enabled)
        httpport = port
