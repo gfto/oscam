@@ -373,15 +373,22 @@ void cs_statistics(int idx)
 		}
 		else
 			cwps=0;
+
+		char *channel ="";
+		if(!cfg->mon_appendchaninfo)
+			channel = monitor_get_srvname(client[idx].last_srvid,client[idx].last_caid);
+
 		if(!cfg->disableuserfile) {
-			fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s %04X:%04X\n",
+			fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s %04X:%04X %s\n",
 					lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
 					lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
 					client[idx].usr[0] ? client[idx].usr : "-",
-							cs_inet_ntoa(client[idx].ip), client[idx].port,
-							client[idx].cwfound, client[idx].cwcache, client[idx].cwnot, client[idx].cwignored,
-							client[idx].cwtout, client[idx].cwtun, client[idx].login, client[idx].last,
-							ph[client[idx].ctyp].desc,client[idx].last_caid,client[idx].last_srvid);
+					cs_inet_ntoa(client[idx].ip), client[idx].port,
+					client[idx].cwfound, client[idx].cwcache, client[idx].cwnot, client[idx].cwignored,
+					client[idx].cwtout, client[idx].cwtun, client[idx].login, client[idx].last,
+					ph[client[idx].ctyp].desc,client[idx].last_caid,client[idx].last_srvid,
+					channel);
+
 			fflush(fps);
 		}
 	}
