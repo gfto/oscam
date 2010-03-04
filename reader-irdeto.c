@@ -367,26 +367,28 @@ int irdeto_do_ecm(ECM_REQUEST *er)
 
 int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
-  int i, l=(ep->emm[3]&0x07), ok=0;
-  int mode=(ep->emm[3]>>3);
-  if (mode&0x10) {		// Hex addressed
-    ep->type = UNIQUE;
+	int i, l = (ep->emm[3]&0x07), ok=0;
+	int mode = (ep->emm[3]>>3);
+	if (mode&0x10) {
+		// Hex addressed
+		ep->type = UNIQUE;
 		memset(ep->hexserial,0,8);
- 		memcpy(ep->hexserial, ep->emm + 4, l);
-    return (mode==rdr->hexserial[3] &&
-       (!l || !memcmp(ep->emm+4, rdr->hexserial, l)));
-  }
-  else {				// Provider addressed
+		memcpy(ep->hexserial, ep->emm + 4, l);
+		return (mode == rdr->hexserial[3] && (!l || !memcmp(ep->emm+4, rdr->hexserial, l)));
+	}
+	else {
+		// Provider addressed
+		for(i = 0; i < rdr->nprov; i++) {
+			ok = (mode == rdr->prid[i][0] && (!l || !memcmp(ep->emm+4, &rdr->prid[i][1], l)));
+			if (ok) break;
+		}
+		
 		ep->type = SHARED;
-    for(i=0; i<rdr->nprov; i++) {
-      ok=(mode==rdr->prid[i][0] &&
-         (!l || !memcmp(ep->emm+4, &rdr->prid[i][1], l)));
-      if (ok) break;
-    }
 		memset(ep->hexserial,0,8);
- 		memcpy(ep->hexserial, ep->emm+4, l); //prid in hezserial instread of SA
+		//prid in hexserial instead of SA
+		memcpy(ep->hexserial, ep->emm+4, l);
 		return ok;
-  }
+	}
 }
 
 int irdeto_do_emm(EMM_PACKET *ep)
