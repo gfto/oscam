@@ -731,7 +731,6 @@ int nagra2_get_emm_type(EMM_PACKET *ep) //returns TRUE if shared emm matches SA,
 				ep->type = SHARED;
 			else
 				ep->type = UNIQUE;
- 			memcpy(ep->hexserial, ep->emm + 3, 6);
  			return (!memcmp (reader[ridx].hexserial, ep->hexserial, 4));
 		case 0x82:
 			ep->type = GLOBAL;
