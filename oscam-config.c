@@ -2628,10 +2628,49 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "blockemm-unknown")) { rdr->blockemm_unknown=atoi(value); return; } 
-	if (!strcmp(token, "blockemm-u")) { rdr->blockemm_u=atoi(value); return; } 
-	if (!strcmp(token, "blockemm-s")) { rdr->blockemm_s=atoi(value); return; } 
-	if (!strcmp(token, "blockemm-g")) { rdr->blockemm_g=atoi(value); return; } 
+	if (!strcmp(token, "blockemm-unknown")) {
+		if (strlen(value) == 0) {
+			rdr->blockemm_unknown = 0;
+			return;
+		}
+		else {
+			rdr->blockemm_unknown = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "blockemm-u")) {
+		if (strlen(value) == 0) {
+			rdr->blockemm_u = 0;
+			return;
+		}
+		else {
+			rdr->blockemm_u = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "blockemm-s")) {
+		if (strlen(value) == 0) {
+			rdr->blockemm_s = 0;
+			return;
+		}
+		else {
+			rdr->blockemm_s = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "blockemm-g")) {
+		if (strlen(value) == 0) {
+			rdr->blockemm_g = 0;
+			return;
+		}
+		else {
+			rdr->blockemm_g = atoi(value);
+			return;
+		}
+	}
 
 	if (!strcmp(token, "savenano")) {
 		//wildcard is used
