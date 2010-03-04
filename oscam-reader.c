@@ -422,9 +422,6 @@ static int reader_do_emm(EMM_PACKET *ep)
 
   cs_ftime(&tps);
 
-  if (memcmp(ep->hexserial, reader[ridx].hexserial, 8))
-    return(3);
-
   no=0;
   for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++)
     if (!memcmp(emmcache[i].emm, ep->emm, ep->emm[2]))

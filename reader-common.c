@@ -360,9 +360,10 @@ int reader_ecm(ECM_REQUEST *er)
           rc=(seca_do_ecm(er)) ? 1 : 0; break;
         case SC_VIDEOGUARD2:
           rc=(videoguard_do_ecm(er)) ? 1 : 0; break;
-  case SC_DRE:
-    rc=(dre_do_ecm(er)) ? 1: 0; break;
-        default: rc=0;
+        case SC_DRE:
+          rc=(dre_do_ecm(er)) ? 1: 0; break;
+        default:
+          rc=0;
       }
     }
     else
@@ -372,6 +373,33 @@ int reader_ecm(ECM_REQUEST *er)
     if (reader[r].caid[0]) m++;
   if (loadbalanced_idx++ >= m) loadbalanced_idx = 1;
   return(rc);
+}
+
+int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+{
+	cs_debug_mask(D_EMM,"Entered reader_get_emm_type cardsystem %i",rdr->card_system);
+	int rc;
+	switch(rdr->card_system) {
+    case SC_NAGRA:
+      rc=nagra2_get_emm_type(ep); break;
+    case SC_IRDETO:
+      rc=irdeto_get_emm_type(ep); break;
+    case SC_CRYPTOWORKS:
+      rc=cryptoworks_get_emm_type(ep); break;
+    case SC_VIACCESS:
+      rc=viaccess_get_emm_type(ep); break;
+    case SC_CONAX:
+      rc=conax_get_emm_type(ep); break;
+    case SC_SECA:
+      rc=seca_get_emm_type(ep, rdr); break;
+    case SC_VIDEOGUARD2:
+      rc=videoguard_get_emm_type(ep); break;
+    case SC_DRE:
+      rc=dre_get_emm_type(ep); break;
+    default:
+      rc=0;
+  }
+	return rc;
 }
 
 int reader_emm(EMM_PACKET *ep)

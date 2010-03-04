@@ -354,6 +354,12 @@ int viaccess_do_ecm(ECM_REQUEST *er)
   return(rc?OK:ERROR);
 }
 
+int viaccess_get_emm_type(EMM_PACKET *ep) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+{
+	ep->type=UNKNOWN; //FIXME not sure how this maps onto global, unique and shared!
+	return TRUE; //FIXME let it all pass without checking serial or SA, without filling ep->hexserial
+}
+
 int viaccess_do_emm(EMM_PACKET *ep)
 {
   static unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id

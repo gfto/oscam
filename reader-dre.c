@@ -244,7 +244,7 @@ FE 48 */
   cs_ri_log ("[dre-reader] SA = %02X%02X%02X%02X, UA = %s", reader[ridx].sa[0][0], reader[ridx].sa[0][1], reader[ridx].sa[0][2],
 	  reader[ridx].sa[0][3], cs_hexdump (0, reader[ridx].hexserial + 2, 4));
 
-  //reader[ridx].nprov = 1; TODO doesnt seem necessary
+  reader[ridx].nprov = 1;
 
   if (!dre_set_provider_info ())
     return ERROR;			//fatal error
@@ -301,6 +301,22 @@ int dre_do_ecm (ECM_REQUEST * er)
   return ERROR;
 }
 
+int dre_get_emm_type(EMM_PACKET *ep)
+{
+  switch (ep->emm[0]) {
+		case 0x87:
+			ep->type = UNIQUE; //FIXME no filling of ep->hexserial
+			break;
+		case 0x89:
+			ep->type = SHARED; //FIXME no filling of ep->hexserial
+			break;
+		default:
+			ep->type = UNKNOWN;
+	}
+	return TRUE; //FIXME no checking of serial or SA
+}
+	
+
 int dre_do_emm (EMM_PACKET * ep)
 {
 
@@ -333,8 +349,8 @@ int dre_do_emm (EMM_PACKET * ep)
       0x56, 0x58, 0x11
     };
 		int i;
-		switch (ep->emm[0]) {
-			case 0x87: //unique EMM
+		switch (ep->type) {
+			case UNIQUE: 
 	    	for (i = 0; i < 2; i++) {
 					memcpy (emmcmd42 + 1, ep->emm + 42 + i*49, 48);
 					emmcmd42[49] = ep->emm[i*49 + 41]; //keynr
@@ -346,7 +362,7 @@ int dre_do_emm (EMM_PACKET * ep)
 					}
 				}
 				break;
-			case 0x89: //shared EMM
+			case SHARED:
 			default:
 		    memcpy (emmcmd42 + 1, ep->emm + 6, 48);
 		    emmcmd42[51] = provider;

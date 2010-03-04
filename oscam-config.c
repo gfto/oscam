@@ -2628,6 +2628,11 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+	if (!strcmp(token, "blockemm-unknown")) { rdr->blockemm_unknown=atoi(value); return; } 
+	if (!strcmp(token, "blockemm-u")) { rdr->blockemm_u=atoi(value); return; } 
+	if (!strcmp(token, "blockemm-s")) { rdr->blockemm_s=atoi(value); return; } 
+	if (!strcmp(token, "blockemm-g")) { rdr->blockemm_g=atoi(value); return; } 
+
 	if (!strcmp(token, "savenano")) {
 		//wildcard is used
 		if (!strcmp(value,"all")) {

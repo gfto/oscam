@@ -122,11 +122,11 @@ int seca_card_init(ATR newatr)
   return OK;
 }
 
-static int get_prov_index(char *provid)	//returns provider id or -1 if not found
+static int get_prov_index(struct s_reader * rdr, char *provid)	//returns provider id or -1 if not found
 {
   int prov;
-  for (prov=0; prov<reader[ridx].nprov; prov++) //search for provider index
-    if (!memcmp(provid, &reader[ridx].prid[prov][2], 2))
+  for (prov=0; prov<rdr->nprov; prov++) //search for provider index
+    if (!memcmp(provid, &rdr->prid[prov][2], 2))
       return(prov);
   return(-1);
 }
@@ -137,7 +137,7 @@ int seca_do_ecm(ECM_REQUEST *er)
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
   unsigned char ins3a[] = { 0xc1,0x3a,0x00,0x00,0x10 }; // decoding cw
   int i;
-  i=get_prov_index((char *) er->ecm+3);
+  i=get_prov_index(&reader[ridx], (char *) er->ecm+3);
   if ((i == -1) || (reader[ridx].availkeys[i][0] == 0)) //if provider not found or expired
   	return ERROR;
   ins3c[2]=i;
@@ -158,20 +158,47 @@ int seca_do_ecm(ECM_REQUEST *er)
   return OK;
 }
 
+int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+{
+	cs_debug_mask(D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
+	int i;
+  switch (ep->emm[0]) {
+		case 0x82:
+			ep->type = UNIQUE;
+			memset(ep->hexserial,0,8);
+ 			memcpy(ep->hexserial, ep->emm + 3, 6);
+			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 6)); 
+			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, rdr->hexserial = %s", cs_hexdump(1, rdr->hexserial, 6)); 
+ 			return (!memcmp (rdr->hexserial, ep->hexserial, 6));
+		case 0x84:
+			ep->type = SHARED;
+			memset(ep->hexserial,0,8);
+			memcpy(ep->hexserial, ep->emm + 5, 3); //dont include custom byte; this way the network also knows SA
+			i=get_prov_index(rdr, (char *) ep->emm+3);
+			cs_debug_mask(D_EMM, "SECA EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 3)); 
+			if (i== -1) //provider not found on this card
+				return FALSE; //do not pass this EMM
+			cs_debug_mask(D_EMM, "SECA EMM: SHARED, rdr->sa[%i] = %s", i, cs_hexdump(1, rdr->sa[i], 3)); 
+			return (!memcmp (rdr->sa[i], ep->hexserial, 3));
+		default:
+			ep->type = UNKNOWN;
+			return TRUE;
+	}
+}
+	
 int seca_do_emm(EMM_PACKET *ep)
 {
   unsigned char ins40[] = { 0xc1,0x40,0x00,0x00,0x00 };
   int i,ins40data_offset;
   int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
 
-  cs_ddump (ep->emm, emm_length + 3, "EMM:");
-  ep->type = ep->emm[0];
+  cs_ddump_mask (D_EMM, ep->emm, emm_length + 3, "EMM:");
   switch (ep->type) {
-    case 0x84:	//shared EMM
+    case SHARED:
       {
 	//to test if SA matches
 	//first find out prov id
-	i=get_prov_index((char *) ep->emm+3);
+	i=get_prov_index(&reader[ridx], (char *) ep->emm+3);
 	if (i == -1) 
 		return ERROR;
 	//prov id found, now test for SA (only first 3 bytes, custom byte does not count)
@@ -187,7 +214,7 @@ int seca_do_emm(EMM_PACKET *ep)
 	}
 	break;
       }//end shared EMM
-    case 0x82:	//unique EMM
+    case UNIQUE:	
       {
 	//first test if UA matches
  	if (memcmp (reader[ridx].hexserial, ep->emm + 3, 6)) {
@@ -196,7 +223,7 @@ int seca_do_emm(EMM_PACKET *ep)
 	}
 	else {
 		//first find out prov id
-		i=get_prov_index((char *) ep->emm+9);
+		i=get_prov_index(&reader[ridx], (char *) ep->emm+9);
                 cs_log("[seca-reader] EMM: Unique update matched EMM Serial:%02X%02X%02X%02X%02X, provider %i.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], i + 1);
 
 		if (i==-1) 

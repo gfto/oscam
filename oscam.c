@@ -2107,17 +2107,30 @@ void do_emm(EMM_PACKET *ep)
 {
   int au;//, ephs;
   au=client[cs_idx].au;
+	cs_ddump_mask(D_ATR, ep->emm, ep->l, "emm:");
 
   if ((au<0) || (au>=CS_MAXREADER))
     return;
+	if (!reader_get_emm_type(ep, &reader[au])) //decodes ep->type and ep->hexserial from the EMM
+		return;
+  cs_debug_mask(D_EMM, "Emmtype = %i. reader %s has serial %s.", ep->type, reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
+  cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
+	switch (ep->type) {
+		case UNKNOWN:
+			if (reader[au].blockemm_unknown) return;
+		case UNIQUE:
+			if (reader[au].blockemm_u) return;
+		case SHARED:
+			if (reader[au].blockemm_s) return;
+//FIXME only camd33 delivers hexserial from the net, newcamd, camd35 copy cardreader hexserial in; reader_get_emm_type overwrites this with real SA value if known!
+		case GLOBAL:
+			if (reader[au].blockemm_g) return;
+	}
   client[cs_idx].lastemm=time((time_t)0);
-  cs_debug_mask(D_EMM,"reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
-  cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA:");
   cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 //  if ((!reader[au].fd) || (reader[au].b_nano[ep->emm[3]])) // blocknano is obsolete
   if ((!reader[au].fd) ||       // reader has no fd
-      (reader[au].caid[0]!=b2i(2,ep->caid)) ||    // wrong caid
-      (memcmp(reader[au].hexserial, ep->hexserial, 8))) /* wrong serial*/  {
+      (reader[au].caid[0]!=b2i(2,ep->caid))) {   // wrong caid
 #ifdef WEBIF
 	  client[cs_idx].emmnok++;
 #endif
@@ -2127,6 +2140,7 @@ void do_emm(EMM_PACKET *ep)
   client[cs_idx].emmok++;
 #endif
   ep->cidx=cs_idx;
+  cs_debug_mask(D_EMM, "EMM is being sent to reader %s.", reader[au].label);
   write_to_pipe(reader[au].fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
 }
 

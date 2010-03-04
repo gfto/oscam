@@ -531,7 +531,8 @@ void dvbapi_try_descrambling (int demux_index)
 	}
 }
 
-void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int len) {
+void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int len) 
+{
 	int i;
 	cs_debug("dvbapi: EMM Type: 0x%02x caid: %04x", buffer[0],demux[demux_index].ca_system_id);
 	cs_ddump(buffer, len, "emm:");
@@ -553,59 +554,10 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 	for (i=0;i<CS_MAXREADER;i++) {
 		if (reader[i].caid[0] == demux[demux_index].ca_system_id) {
 			client[cs_idx].au=i;
-			memcpy(epg.hexserial, reader[client[cs_idx].au].hexserial, 8);
+//			memcpy(epg.hexserial, reader[client[cs_idx].au].hexserial, 8);
 		}
 	}
-
-	switch(demux[demux_index].ca_system_id >> 8) {
-		case 0x18: // NAGRA EMM
-			epg.l=len;
-			int emm_shared = (buffer[7] == 0x10);
-			uchar cam_id[4];
-
-			switch(buffer[0]) {
-				case 0x82:
-					//emm-s
-					cs_debug("dvbapi: NAGRA shared emm");
-					//do_emm(&epg);
-					break;
-				case 0x83:
-					//emm-u/g
-					cam_id[0] = buffer[5]; cam_id[1] = buffer[4]; cam_id[2] = buffer[3]; cam_id[3] = buffer[6];
-					cs_debug("dvbapi: NAGRA %s EMM for camid: %02X %02X %02X %02X", emm_shared ? "group" : "user", cam_id[0], cam_id[1], cam_id[2], cam_id[3]);
-					if (epg.hexserial[2]==cam_id[0] && epg.hexserial[3]==cam_id[1] && epg.hexserial[4]==cam_id[2]) {
-						if (emm_shared==1) {
-							//do_emm(&epg);
-							cs_debug("dvbapi: do nagra user emm");
-						}
-						if (emm_shared==0 && epg.hexserial[5] == cam_id[3]) {
-							//do_emm(&epg);
-							cs_debug("dvbapi: do nagra group emm");
-						}
-					}
-					break;
-				default:
-					cs_debug("dvbapi: unknown Nagra EMM (skipped)");
-					break;
-			}
-			break;
-		case 0x06: //Irdeto EMM
-		case 0x01: //Seca EMM
-			do_emm(&epg);
-			break;
-		case 0x0D:
-			cs_debug("dvbapi: CrytoWorks EMM (skipped)");
-			break;
-		case 0x05:
-			cs_debug("dvbapi: Viaccess EMM (skipped)");
-			break;
-		case 0x09:
-			cs_debug("dvbapi: Videoguard EMM (skipped)");
-			break;
-		default:
-			cs_debug("dvbapi: Unknown EMM (skipped)");
-			break;
-	}
+	do_emm(&epg);
 }
 
 void *thread_descrambling(void *di)

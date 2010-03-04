@@ -476,6 +476,10 @@ struct s_reader
   ushort    acs;    // irdeto
   ushort    caid[16];
   uchar     b_nano[256];
+  int       blockemm_unknown; //block EMMs that have unknown type
+  int       blockemm_u;				//blcok Unique EMMs
+  int       blockemm_s;				//block Shared EMMS
+  int       blockemm_g;				//block Global EMMs
   char      * emmfile;
   char      pincode[5];
   int		ucpk_valid;
@@ -764,10 +768,16 @@ typedef struct emm_packet_t
   uchar l;
   uchar caid[2];
   uchar provid[4];
-  uchar hexserial[8];
+  uchar hexserial[8];					 //contains hexserial or SA of EMM
   uchar type;
   int   cidx;
 } GCC_PACK EMM_PACKET;
+
+//EMM types:
+#define UNKNOWN 0
+#define UNIQUE	1
+#define SHARED	2
+#define GLOBAL	3
 
 // oscam-simples
 extern char *remote_txt(void);
@@ -986,6 +996,7 @@ extern int reader_checkhealth(void);
 extern void reader_post_process(void);
 extern int reader_ecm(ECM_REQUEST *);
 extern int reader_emm(EMM_PACKET *);
+int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 
 #ifdef HAVE_PCSC
 // reader-pcsc

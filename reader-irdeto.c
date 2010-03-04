@@ -365,6 +365,30 @@ int irdeto_do_ecm(ECM_REQUEST *er)
   return OK;
 }
 
+int irdeto_get_emm_type(EMM_PACKET *ep) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+{
+  int i, l=(ep->emm[3]&0x07), ok=0;
+  int mode=(ep->emm[3]>>3);
+  if (mode&0x10) {		// Hex addressed
+    ep->type = UNIQUE;
+		memset(ep->hexserial,0,8);
+ 		memcpy(ep->hexserial, ep->emm + 4, l);
+    return (mode==reader[ridx].hexserial[3] &&
+       (!l || !memcmp(ep->emm+4, reader[ridx].hexserial, l)));
+  }
+  else {				// Provider addressed
+		ep->type = SHARED;
+    for(i=0; i<reader[ridx].nprov; i++) {
+      ok=(mode==reader[ridx].prid[i][0] &&
+         (!l || !memcmp(ep->emm+4, &reader[ridx].prid[i][1], l)));
+      if (ok) break;
+    }
+		memset(ep->hexserial,0,8);
+ 		memcpy(ep->hexserial, ep->emm+4, l); //prid in hezserial instread of SA
+		return ok;
+  }
+}
+
 int irdeto_do_emm(EMM_PACKET *ep)
 {
   static const uchar sc_EmmCmd[] = { 0x01,0x00,0x00,0x00,0x00 };
@@ -374,7 +398,6 @@ int irdeto_do_emm(EMM_PACKET *ep)
   int mode=(ep->emm[3]>>3);
 
   uchar *emm=ep->emm;
-  ep->type=emm[3];
   if (mode&0x10)		// Hex addressed
   {
     ok=(mode==reader[ridx].hexserial[3] &&

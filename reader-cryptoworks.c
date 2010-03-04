@@ -456,6 +456,36 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
   return((r==3) ? 1 : 0);
 }
 
+int cryptoworks_get_emm_type(EMM_PACKET *ep) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+{
+  switch (ep->emm[0]) {
+		case 0x82:
+  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[13]==0x80 && ep->emm[14]==0x05)
+				ep->type = UNIQUE; //FIXME no ep->hexserial set
+			else
+				ep->type = UNKNOWN;
+			break;
+		case 0x84:
+  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[12]==0x80 && ep->emm[13]==0x04)
+				ep->type = SHARED;
+			else
+				ep->type = UNKNOWN;
+			break;
+		case 0x89:
+  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[8]==0x83 && ep->emm[9]==0x01)
+				ep->type = GLOBAL;
+			else
+				ep->type = UNKNOWN;
+			break;
+		case 0x8F://incoming via camd3.5x
+		    //ep->type=emm[4];
+		default:
+			ep->type = UNKNOWN;
+	}
+	return TRUE; //no check on serial or SA
+}
+	
+
 int cryptoworks_do_emm(EMM_PACKET *ep)
 {
   uchar insEMM_GA[] = {0xA4, 0x44, 0x00, 0x00, 0x00};
@@ -474,16 +504,13 @@ int cryptoworks_do_emm(EMM_PACKET *ep)
   }
   */
    
-  //by KrazyIvan 
-  ep->type=emm[0];
   //cs_log("[cryptoworks-reader] EMM Dump:..: %s",cs_hexdump(1, emm, emm[2])); 
-  switch(emm[0])
+  switch(ep->type)
   {
   	 // emm via camd3.5x
   	 case 0x8F:  	 	  
 		  if(emm[3]==0xA4)
 		  {		    
-		    ep->type=emm[4];
 		    //cs_log("[cryptoworks-reader] EMM Dump: CMD: %s", cs_hexdump(1, emm+3, 5)); 
 		    //cs_log("[cryptoworks-reader] EMM Dump: DATA: %s",cs_hexdump(1, emm+8, emm[7]));
 		    write_cmd(emm+3, emm+3+CMD_LEN);
@@ -496,7 +523,6 @@ int cryptoworks_do_emm(EMM_PACKET *ep)
   	 case 0x89:
   	 	  if(emm[3]==0xA9 && emm[4]==0xFF && emm[8]==0x83 && emm[9]==0x01)
 		  {
-				ep->type=insEMM_GA[1];
 				insEMM_GA[4]=ep->emm[2]-2;
 				//cs_log("[cryptoworks-reader] EMM Dump: CMD: %s", cs_hexdump(1, insEMM_GA, 5)); 
 				//cs_log("[cryptoworks-reader] EMM Dump: DATA: %s",cs_hexdump(1, emm+5, insEMM_GA[4])); 				
@@ -514,7 +540,6 @@ int cryptoworks_do_emm(EMM_PACKET *ep)
   	 case 0x84:
   	 	  if(emm[3]==0xA9 && emm[4]==0xFF && emm[12]==0x80 && emm[13]==0x04)
 		  {
-				ep->type=insEMM_SA[1];
 				insEMM_SA[4]=ep->emm[2]-6;
 				//cs_log("[cryptoworks-reader] EMM Dump: CMD: %s", cs_hexdump(1, insEMM_SA, 5)); 
 				//cs_log("[cryptoworks-reader] EMM Dump: DATA: %s",cs_hexdump(1, emm+9, insEMM_SA[4])); 				
@@ -532,7 +557,6 @@ int cryptoworks_do_emm(EMM_PACKET *ep)
   	 case 0x82:
   	 	if(emm[3]==0xA9 && emm[4]==0xFF && emm[13]==0x80 && emm[14]==0x05)
 		{
-			ep->type=insEMM_UA[1];
 			insEMM_UA[4]=ep->emm[2]-7;
 			//cs_log("[cryptoworks-reader] EMM Dump: CMD: %s", cs_hexdump(1, insEMM_UA, 5)); 
 			//cs_log("[cryptoworks-reader] EMM Dump: DATA: %s",cs_hexdump(1, emm+10, insEMM_UA[4])); 				
