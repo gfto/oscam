@@ -1012,7 +1012,6 @@ static void newcamd_process_emm(uchar *buf)
     if( !ok ) cs_log("only EMM-S supported");
   }
   else*/
-    memcpy(epg.hexserial, reader[au].hexserial, 8);	// dummy
   
   memcpy(epg.emm, buf, epg.l);
   if( ok ) 

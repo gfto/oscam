@@ -269,7 +269,6 @@ static void camd35_process_emm(uchar *buf)
   epg.l=buf[1];
   memcpy(epg.caid     , buf+10              , 2);
   memcpy(epg.provid   , buf+12              , 4);
-  memcpy(epg.hexserial, reader[au].hexserial, 8);	// dummy
   memcpy(epg.emm      , buf+20              , epg.l);
   do_emm(&epg);
 }
