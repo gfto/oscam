@@ -89,7 +89,7 @@ DESCRIPTIONS
 	  set reader frequency in units of 10 kHz, if mhz > cardmhz you are in
 	  overclocking mode, refer to OVERCLOCKING, default:357
 
-       deprecated  = 0|1
+       deprecated = 0|1
 	  Frist the SC will be initialized in normal mode. If it fails, the SC
 	  will	be  automatically  reverted to deprecated mode, so that the SC
 	  speed will not be changed and the communication will remain on  nor
@@ -166,6 +166,18 @@ DESCRIPTIONS
 
 	   example: blocknano = 45,93,7a,ff
 		    blocknano = all
+
+       blockemm-u = 0|1
+	  1 = block unique EMMs, default:0
+
+       blockemm-s = 0|1
+	  1 = block shared EMMs, default:0
+
+       blockemm-g = 0|1
+	  1 = block global EMMs, default:0
+
+       blockemm-unknown = 0|1
+	  1 = block unknown types of EMMs, default:0
 
        savenano = nano[,nano]....|all
 	  list	of  EMM-nanos  to  save (in hex w/o 0x) or all EMM-nanos, only

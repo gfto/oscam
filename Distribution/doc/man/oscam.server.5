@@ -122,7 +122,7 @@ set reader frequency in units of 10 kHz, if \fBmhz\fP > \fBcardmhz\fP you are in
 refer to OVERCLOCKING, default:357 
 .RE
 .PP
-\fBdeprecated \fP = \fB0\fP|\fB1\fP
+\fBdeprecated\fP = \fB0\fP|\fB1\fP
 .RS 3n
 Frist the SC will be initialized in normal mode. If it fails, the SC will be automatically 
 reverted to deprecated mode, so that the SC speed will not be changed and the communication 
@@ -224,6 +224,26 @@ list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, only valid for phys
 
  example: blocknano = 45,93,7a,ff
           blocknano = all
+.RE
+.PP
+\fBblockemm-u\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = block unique EMMs, default:0
+.RE
+.PP
+\fBblockemm-s\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = block shared EMMs, default:0
+.RE
+.PP
+\fBblockemm-g\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = block global EMMs, default:0
+.RE
+.PP
+\fBblockemm-unknown\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = block unknown types of EMMs, default:0
 .RE
 .PP
 \fBsavenano\fP = \fBnano[,nano]....\fP|\fPall\fP
