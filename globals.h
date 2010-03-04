@@ -842,7 +842,6 @@ extern unsigned long *IgnoreList;
 
 extern struct s_config *cfg;
 extern char cs_confdir[], *loghist;
-extern EMM_PACKET epg;
 extern struct s_module ph[CS_MAX_MOD];
 extern ECM_REQUEST *ecmtask;
 #ifdef CS_ANTICASC

@@ -26,7 +26,6 @@ ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 uchar mbuf[1024];   // global buffer
 ECM_REQUEST *ecmtask;
-EMM_PACKET  epg;
 #ifdef CS_ANTICASC
 struct s_acasc ac_stat[CS_MAXPID];
 #endif

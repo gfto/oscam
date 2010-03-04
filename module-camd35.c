@@ -263,6 +263,7 @@ static void camd35_process_ecm(uchar *buf)
 static void camd35_process_emm(uchar *buf)
 {
   int au;
+  EMM_PACKET epg;
   memset(&epg, 0, sizeof(epg));
   au=client[cs_idx].au;
   if ((au<0) || (au>CS_MAXREADER)) return;  // TODO

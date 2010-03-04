@@ -534,6 +534,7 @@ void dvbapi_try_descrambling (int demux_index)
 void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int len) 
 {
 	int i;
+	EMM_PACKET epg;
 	cs_debug("dvbapi: EMM Type: 0x%02x caid: %04x", buffer[0],demux[demux_index].ca_system_id);
 	cs_ddump(buffer, len, "emm:");
 

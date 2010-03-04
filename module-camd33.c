@@ -165,6 +165,7 @@ static void camd33_process_ecm(uchar *buf, int l)
 
 static void camd33_process_emm(uchar *buf, int l)
 {
+  EMM_PACKET epg;
   memset(&epg, 0, sizeof(epg));
   epg.l=l-7;
   memcpy(epg.caid     , buf+1, 2);

@@ -981,6 +981,7 @@ static void newcamd_process_emm(uchar *buf)
   int au, ok=1;
   ushort caid;
 
+  EMM_PACKET epg;
   memset(&epg, 0, sizeof(epg));
   au=client[cs_idx].au;
 
