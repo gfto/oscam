@@ -203,7 +203,7 @@ int conax_do_ecm(ECM_REQUEST *er)
 	 return ERROR;
 }
 
-int conax_get_emm_type(EMM_PACKET *ep) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
 	ep->type=ep->emm[2]+3; //FIXME not sure how this maps onto global, unique and shared!
 	return TRUE; //FIXME let it all pass without checking serial or SA, without filling ep->hexserial

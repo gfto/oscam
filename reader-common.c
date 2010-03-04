@@ -381,21 +381,21 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	int rc;
 	switch(rdr->card_system) {
     case SC_NAGRA:
-      rc=nagra2_get_emm_type(ep); break;
+      rc=nagra2_get_emm_type(ep, rdr); break;
     case SC_IRDETO:
-      rc=irdeto_get_emm_type(ep); break;
+      rc=irdeto_get_emm_type(ep, rdr); break;
     case SC_CRYPTOWORKS:
-      rc=cryptoworks_get_emm_type(ep); break;
+      rc=cryptoworks_get_emm_type(ep, rdr); break;
     case SC_VIACCESS:
-      rc=viaccess_get_emm_type(ep); break;
+      rc=viaccess_get_emm_type(ep, rdr); break;
     case SC_CONAX:
-      rc=conax_get_emm_type(ep); break;
+      rc=conax_get_emm_type(ep, rdr); break;
     case SC_SECA:
       rc=seca_get_emm_type(ep, rdr); break;
     case SC_VIDEOGUARD2:
-      rc=videoguard_get_emm_type(ep); break;
+      rc=videoguard_get_emm_type(ep, rdr); break;
     case SC_DRE:
-      rc=dre_get_emm_type(ep); break;
+      rc=dre_get_emm_type(ep, rdr); break;
     default:
       rc=0;
   }

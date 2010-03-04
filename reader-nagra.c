@@ -718,7 +718,7 @@ int nagra2_do_ecm(ECM_REQUEST *er)
 	return ERROR;
 }
 
-int nagra2_get_emm_type(EMM_PACKET *ep) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+int nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
   switch (ep->emm[0]) {
 		case 0x83:
@@ -731,7 +731,7 @@ int nagra2_get_emm_type(EMM_PACKET *ep) //returns TRUE if shared emm matches SA,
 				ep->type = SHARED;
 			else
 				ep->type = UNIQUE;
- 			return (!memcmp (reader[ridx].hexserial, ep->hexserial, 4));
+ 			return (!memcmp (rdr->hexserial, ep->hexserial, 4));
 		case 0x82:
 			ep->type = GLOBAL;
 			return TRUE;

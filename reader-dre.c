@@ -301,7 +301,7 @@ int dre_do_ecm (ECM_REQUEST * er)
   return ERROR;
 }
 
-int dre_get_emm_type(EMM_PACKET *ep)
+int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
   switch (ep->emm[0]) {
 		case 0x87:

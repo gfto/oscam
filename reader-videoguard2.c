@@ -942,7 +942,7 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
   return ptr;
 }
 
-int videoguard_get_emm_type(EMM_PACKET *ep) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
 	ep->type=UNKNOWN; //FIXME not sure how this maps onto global, unique and shared!
 	return TRUE; //FIXME let it all pass without checking serial or SA, without filling ep->hexserial
