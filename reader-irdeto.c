@@ -367,40 +367,35 @@ int irdeto_do_ecm(ECM_REQUEST *er)
 
 int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
-	int i, ok = 0;
 	int l = (ep->emm[3]&0x07);
+	int mode = (ep->emm[3]>>3);
 
 	cs_debug_mask(D_EMM, "Entered irdeto_get_emm_type ep->emm[3]=%02x",ep->emm[3]);
 
 	switch (ep->emm[3]) {
 
 		case 0xd0:
+			// 0xd0 means global emm
 			ep->type = GLOBAL;
 			cs_debug_mask(D_EMM, "IRDETO EMM: GLOBAL");
 			return TRUE;
 		case 0xd2:
+			// 0xd2 means shared emm, first 2 bytes of hexserial are transmitted in emm, seems to be the shared adr
 			ep->type = SHARED;
 			memset(ep->hexserial, 0, 8);
-			//prid in hexserial instead of SA
 			memcpy(ep->hexserial, ep->emm + 4, l);
-			for(i = 0; i < rdr->nprov; i++) {
-				ok = (!l || !memcmp(ep->hexserial, &rdr->prid[i][1], l));
-
-				// FIXME: Betacrypt/Nagra Aladin reports wrong provider id
-				if ((rdr->caid[0] >= 0x1700) && (rdr->caid[0] <= 0x1799))
-					ok = 1;
-
-				if (ok) break;
-			}
-			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
-			return ok;	
+			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED, ep = %s", cs_hexdump(1, ep->hexserial, l));
+			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED, rdr = %s", cs_hexdump(1, rdr->hexserial, l));
+			return (!l || !memcmp(ep->emm + 4, rdr->hexserial, l));
 			
 		case 0xd3:
+			// 0xd3 means uniqe emm
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
-			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
-			return (!l || !memcmp(ep->hexserial, rdr->hexserial, l));
+			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE, ep = %s", cs_hexdump(1, ep->hexserial, l));
+			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE, rdr = %s", cs_hexdump(1, rdr->hexserial, l));
+			return (mode == rdr->hexserial[3] && (!l || !memcmp(ep->emm + 4, rdr->hexserial, l)));
 		default:
 			ep->type = UNKNOWN;
 			cs_debug_mask(D_EMM, "IRDETO EMM: UNKNOWN");
