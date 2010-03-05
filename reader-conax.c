@@ -205,8 +205,38 @@ int conax_do_ecm(ECM_REQUEST *er)
 
 int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
-	ep->type=ep->emm[2]+3; //FIXME not sure how this maps onto global, unique and shared!
-	return TRUE; //FIXME let it all pass without checking serial or SA, without filling ep->hexserial
+	int i, ok = 0;
+
+	cs_debug_mask(D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x",ep->emm[2]);
+
+	for (i = 0; i < rdr->nprov; i++) {
+		ok = (!memcmp(&ep->emm[6], rdr->sa[i], 4));
+		if (ok) break;
+	}
+
+	if (ok) {
+		ep->type = SHARED;
+		memset(ep->hexserial, 0, 8);
+		memcpy(ep->hexserial, &ep->emm[4], 6);
+		cs_debug_mask(D_EMM, "CONAX EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
+		return TRUE;
+	}
+	else {
+		if (!memcmp(&ep->emm[4], rdr->hexserial, 6)) {
+			ep->type = UNIQUE;
+			memset(ep->hexserial, 0, 8);
+			memcpy(ep->hexserial, &ep->emm[4], 6);
+			cs_debug_mask(D_EMM, "CONAX EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
+			return TRUE;
+		}
+		else {
+			ep->type = GLOBAL;
+			cs_debug_mask(D_EMM, "CONAX EMM: GLOBAL");
+			memset(ep->hexserial, 0, 8);
+			return TRUE;
+		}
+	}
+
 }
 	
 
