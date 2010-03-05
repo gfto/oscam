@@ -365,30 +365,48 @@ int irdeto_do_ecm(ECM_REQUEST *er)
   return OK;
 }
 
-int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
-{
-	int i, l = (ep->emm[3]&0x07), ok=0;
-	int mode = (ep->emm[3]>>3);
-	if (mode&0x10) {
-		// Hex addressed
-		ep->type = UNIQUE;
-		memset(ep->hexserial,0,8);
-		memcpy(ep->hexserial, ep->emm + 4, l);
-		return (mode == rdr->hexserial[3] && (!l || !memcmp(ep->emm+4, rdr->hexserial, l)));
+int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
+
+	int i, ok = 0;
+	int l = (ep->emm[3]&0x07);
+
+	cs_debug_mask(D_EMM, "Entered irdeto_get_emm_type ep->emm[3]=%02x",ep->emm[3]);
+
+	switch (ep->emm[3]) {
+
+		case 0xd0:
+			ep->type = GLOBAL;
+			cs_debug_mask(D_EMM, "IRDETO EMM: GLOBAL");
+			return TRUE;
+		case 0xd2:
+			ep->type = SHARED;
+			memset(ep->hexserial, 0, 8);
+			//prid in hexserial instead of SA
+			memcpy(ep->hexserial, ep->emm + 4, l);
+			for(i = 0; i < rdr->nprov; i++) {
+				ok = (!l || !memcmp(ep->hexserial, &rdr->prid[i][1], l));
+
+				// FIXME: Betacrypt/Nagra Aladin reports wrong provider id
+				if ((rdr->caid[0] >= 0x1700) && (rdr->caid[0] <= 0x1799))
+					ok = 1;
+
+				if (ok) break;
+			}
+			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
+			return ok;	
+			
+		case 0xd3:
+			ep->type = UNIQUE;
+			memset(ep->hexserial, 0, 8);
+			memcpy(ep->hexserial, ep->emm + 4, l);
+			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
+			return (!l || !memcmp(ep->hexserial, rdr->hexserial, l));
+		default:
+			ep->type = UNKNOWN;
+			cs_debug_mask(D_EMM, "IRDETO EMM: UNKNOWN");
+			return TRUE;
 	}
-	else {
-		// Provider addressed
-		for(i = 0; i < rdr->nprov; i++) {
-			ok = (mode == rdr->prid[i][0] && (!l || !memcmp(ep->emm+4, &rdr->prid[i][1], l)));
-			if (ok) break;
-		}
-		
-		ep->type = SHARED;
-		memset(ep->hexserial,0,8);
-		//prid in hexserial instead of SA
-		memcpy(ep->hexserial, ep->emm+4, l);
-		return ok;
-	}
+
 }
 
 int irdeto_do_emm(EMM_PACKET *ep)
