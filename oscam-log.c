@@ -276,7 +276,15 @@ void cs_dump(uchar *buf, int n, char *fmt, ...)
 	char txt[512];
 
 	if( fmt )
-		cs_log(fmt);
+	{
+		get_log_header(1, txt);
+		va_list params;
+		va_start(params, fmt);
+		vsprintf(txt+11, fmt, params);
+		va_end(params);
+		write_to_log(-1, txt);
+		//printf("LOG: %s\n", txt); fflush(stdout);
+	}
 
 	for( i=0; i<n; i+=16 )
 	{
