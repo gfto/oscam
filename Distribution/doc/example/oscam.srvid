@@ -356,7 +356,9 @@
 
 1830:EF10|Astra HD+|RTL HD|TV|
 1830:EF11|Astra HD+|VOX HD|TV|
-1830:277E|Astra HD+|. (SD)|TV|
+1830:EF74|Astra HD+|SAT.1 HD|TV|
+1830:EF75|Astra HD+|ProSieben HD|TV|
+1830:EF76|Astra HD+|kabel eins HD|TV|
 
 #
 # Unity Media
