@@ -217,7 +217,7 @@ int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if 
 	if (ok) {
 		ep->type = SHARED;
 		memset(ep->hexserial, 0, 8);
-		memcpy(ep->hexserial, &ep->emm[4], 6);
+		memcpy(ep->hexserial, &ep->emm[6], 4);
 		cs_debug_mask(D_EMM, "CONAX EMM: SHARED, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
 		return TRUE;
 	}
