@@ -418,7 +418,7 @@ static int reader_do_emm(EMM_PACKET *ep)
 {
   int i, no, rc, ecs;
   char *rtxt[] = { "error", "written", "skipped", "blocked" };
-  char *typedesc[]= { "unknown", "unique", "shared", "global" };
+  //char *typedesc[]= { "unknown", "unique", "shared", "global" };
   struct timeb tps, tpe;
 
   cs_ftime(&tps);
@@ -450,8 +450,10 @@ static int reader_do_emm(EMM_PACKET *ep)
   {
     cs_ftime(&tpe);
 
-    cs_log("%s emm: type=%s, len=%d, idx=%d, cnt=%d: %s (%d ms)",
-           username(ep->cidx), typedesc[emmcache[i].type], ep->emm[2],
+    //cs_log("%s emm: type=%s, len=%d, idx=%d, cnt=%d: %s (%d ms)",
+    cs_log("%s type=%s, len=%d, idx=%d, cnt=%d: %s (%d ms)",
+           //username(ep->cidx), typedesc[emmcache[i].type], ep->emm[2],
+           username(ep->cidx), emmcache[i].type, ep->emm[2],
            i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
   }
 
