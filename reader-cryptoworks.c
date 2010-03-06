@@ -505,7 +505,7 @@ int cryptoworks_do_emm(EMM_PACKET *ep)
   */
    
   //cs_log("[cryptoworks-reader] EMM Dump:..: %s",cs_hexdump(1, emm, emm[2])); 
-  switch(ep->type)
+  switch(ep->emm[0])
   {
   	 // emm via camd3.5x
   	 case 0x8F:  	 	  
