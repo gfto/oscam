@@ -473,10 +473,16 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TR
 				ep->type = UNKNOWN;
 			break;
 
-		case 0x86:
 		case 0x88:
 		case 0x89:
   	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[8]==0x83 && ep->emm[9]==0x01)
+				ep->type = GLOBAL;
+			else
+				ep->type = UNKNOWN;
+			break;
+
+		case 0x86:
+  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[5]==0x83 && ep->emm[8]==0x85)
 				ep->type = GLOBAL;
 			else
 				ep->type = UNKNOWN;
