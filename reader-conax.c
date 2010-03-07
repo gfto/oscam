@@ -236,7 +236,6 @@ int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if 
 			return TRUE;
 		}
 	}
-
 }
 	
 

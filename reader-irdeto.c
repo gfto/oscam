@@ -374,8 +374,9 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 	switch (ep->emm[3]) {
 
+		case 0x00:
 		case 0xd0:
-			// 0xd0 means global emm
+			// 0xd0/0x00 means global emm
 			ep->type = GLOBAL;
 			cs_debug_mask(D_EMM, "IRDETO EMM: GLOBAL");
 			return TRUE;
