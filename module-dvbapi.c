@@ -610,7 +610,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length) {
 	}
 
 	if (global_support_pip != 1 && global_merged_capmt != 1) {
-		dvbapi_stop_descrambling_all(0);
+		dvbapi_stop_descrambling_all(demux_index2);
 	}
 
 	//get free id
@@ -812,7 +812,7 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 }
 
 int dvbapi_main_local() {
-	struct pollfd pfd2[(MAX_FILTER*MAX_FILTER)+1];
+	struct pollfd pfd2[(MAX_DEMUX*MAX_FILTER)+1];
 	int i,rc,pfdcount,g,len;
 	pthread_t p1;
 	unsigned char md5buf[CS_ECMSTORESIZE];
