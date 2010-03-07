@@ -482,12 +482,6 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TR
 			break;
 
 		case 0x86:
-  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[5]==0x83 && ep->emm[6]==0x01)
-				ep->type = GLOBAL;
-			else
-				ep->type = UNKNOWN;
-			break;
-
 		case 0x8F://FIXME incoming emm via camd3.5x, SA/GA/UA ?
 		default:
 			ep->type = UNKNOWN;
@@ -520,7 +514,7 @@ int cryptoworks_do_emm(EMM_PACKET *ep)
   	 case UNKNOWN:
 		  // FIXME emm via camd3.5x was returned from check_emm_type as UNKNOWN
 		  // so we should check here for this emmtype until we know the real mode
-		  if(emm[3]==0xA4 && emm[0]==0x8F)
+		  if(emm[3]==0xA4 && emm[0]==0x8F || emm[3]==0xA9 && emm[0]==0x86)
 		  {		    
 		    //cs_log("[cryptoworks-reader] EMM Dump: CMD: %s", cs_hexdump(1, emm+3, 5)); 
 		    //cs_log("[cryptoworks-reader] EMM Dump: DATA: %s",cs_hexdump(1, emm+8, emm[7]));
