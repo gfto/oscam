@@ -85,6 +85,9 @@ set (OPTIONAL_INCLUDE_DIR "" CACHE STRING "Some optional include directories")
 include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
     ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
+    if(CS_WITH_GBOX)
+    	${CMAKE_CURRENT_SOURCE_DIR}/csgbox
+    endif(CS_WITH_GBOX)
     ${OPTIONAL_INCLUDE_DIR}
     )
 link_directories (${OPTIONAL_LINK_DIR})
@@ -271,7 +274,9 @@ endif (HAVE_PCSC)
 
 add_subdirectory (csctapi)
 add_subdirectory (cscrypt)
-
+if(CS_WITH_GBOX)
+	add_subdirectory (csgbox)
+endif(CS_WITH_GBOX)
 if( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
     if (HAVE_LIBUSB)
         add_subdirectory (utils)
@@ -309,7 +314,11 @@ add_library (${csoscam} STATIC ${csoscam_srcs} ${csoscam_hdrs})
 
 set (exe_name "oscam")
 add_executable (${exe_name} ${exe_srcs} ${exe_hdrs})
-target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt)
+if(CS_WITH_GBOX)
+	target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt csgbox)
+else(CS_WITHGBOX)
+	target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt)
+endif(CS_WITH_GBOX)
 if(HAVE_LIBRT AND HAVE_LIBUSB)
     target_link_libraries (${exe_name} imp_libusb)
     if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
@@ -505,4 +514,7 @@ endif (WEBIF)
 if (IRDETO_GUESSING)
     message (STATUS "  irdeto guessing enabled")
 endif (IRDETO_GUESSING)
+if(CS_WITH_GBOX)
+    message (STATUS "  gbox protocol enabled")
+endif(CS_WITH_GBOX)
 message (STATUS "")
