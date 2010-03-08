@@ -194,46 +194,16 @@ int seca_do_emm(EMM_PACKET *ep)
 
   cs_ddump_mask (D_EMM, ep->emm, emm_length + 3, "EMM:");
   switch (ep->type) {
-    case SHARED:
-      {
-	//to test if SA matches
-	//first find out prov id
-	i=get_prov_index(&reader[ridx], (char *) ep->emm+3);
-	if (i == -1) 
-		return ERROR;
-	//prov id found, now test for SA (only first 3 bytes, custom byte does not count)
-	if (memcmp (ep->emm + 5, reader[ridx].sa[i], 3)) {
-		cs_log("[seca-reader] EMM: Shared update did not match; EMM SA:%02X%02X%02X, provider %i, Reader SA:%s.", ep->emm[5], ep->emm[6], ep->emm[7], i + 1, cs_hexdump (0, reader[ridx].sa[i], 3));
-		return ERROR;
-	}
-	else {
-		cs_log("[seca-reader] EMM: Shared update matched for EMM SA %02X%02X%02X, provider %i.", ep->emm[5], ep->emm[6], ep->emm[7], i + 1);
-		ins40[3]=ep->emm[9];
-		ins40[4]= emm_length - 0x07;
-		ins40data_offset = 10;
-	}
-	break;
-      }//end shared EMM
+		case SHARED:
+			ins40[3]=ep->emm[9];
+			ins40[4]= emm_length - 0x07;
+			ins40data_offset = 10;
+			break;
     case UNIQUE:	
-      {
-	//first test if UA matches
- 	if (memcmp (reader[ridx].hexserial, ep->emm + 3, 6)) {
-		cs_log("[seca-reader] EMM: Unique update did not match; EMM Serial:%02X%02X%02X%02X%02X%02X, Reader Serial:%s.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], cs_hexdump (0, reader[ridx].hexserial, 6));
-		return ERROR;
-	}
-	else {
-		//first find out prov id
-		i=get_prov_index(&reader[ridx], (char *) ep->emm+9);
-                cs_log("[seca-reader] EMM: Unique update matched EMM Serial:%02X%02X%02X%02X%02X, provider %i.", ep->emm[3], ep->emm[4], ep->emm[5], ep->emm[6], ep->emm[7], ep->emm[8], i + 1);
-
-		if (i==-1) 
-			return ERROR;
-		ins40[3]=ep->emm[12];
-		ins40[4]= emm_length - 0x0A;
-		ins40data_offset = 13;
-	}
-	break;
-      } //end unique EMM
+			ins40[3]=ep->emm[12];
+			ins40[4]= emm_length - 0x0A;
+			ins40data_offset = 13;
+			break;
     case 0x83:  //new unknown EMM
   /*
 EMM:
@@ -241,18 +211,17 @@ tp   len       shared-- cust
 83 00 74 00 00 00 00 00 38  84C745CB7BFADA4E08F5FB8D0B6A26FA533682D83E6E594F778585F55F4784EF70495B3458C104D3D3F55FEA0F3BD47EC29265E8B2AAC83EBAA396A3890EA87154F41ED16DA6AB46C28E8935B55E4EFAB8215792A1BF61657BDEFAD02050E27F21E62AE29519F4815AB062340B7 */
     case 0x88:			//GA???
     case 0x89:			//GA???
-    default:
-	cs_log("[seca-reader] EMM: Congratulations, you have discovered a new EMM on SECA. This has not been decoded yet, so send this output to authors:");
-        cs_dump (ep->emm, emm_length + 3, "EMM:");
-  	return ERROR;	//unknown, no update
+			default:
+			cs_log("[seca-reader] EMM: Congratulations, you have discovered a new EMM on SECA. This has not been decoded yet, so send this output to authors:");
+			cs_dump (ep->emm, emm_length + 3, "EMM:");
+			return ERROR;	//unknown, no update
   }	//end of switch
 
+  i=get_prov_index(&reader[ridx], (char *) ep->emm+9);
+  if (i==-1) 
+    return ERROR;
   ins40[2]=i;
   write_cmd(ins40, ep->emm + ins40data_offset); //emm request
-//TODO  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) return (0);
-//  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x19))
-//	  seca_card_init(); //if return code = 90 19 then PPUA changed. //untested!!
-//  else
   if (cta_res[0] == 0x97) {
 	 cs_log("[seca-reader] EMM: Update not necessary.");
 	 return OK; //Update not necessary
