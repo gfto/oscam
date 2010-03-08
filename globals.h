@@ -437,6 +437,7 @@ struct s_client
 
 struct s_reader
 {
+  int		smargopatch;
   int		pid;
   int       cs_idx;
   int       enable;
