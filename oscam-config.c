@@ -2313,17 +2313,6 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
-	//FIXME workaround for Smargo until native mode works
-	if (!strcmp(token, "smargopatch")) {
-		if(strlen(value) == 0) {
-			rdr->smargopatch = 0;
-			return;
-		} else {
-			rdr->smargopatch = atoi(value);
-			return;
-		}
-	}
-
 	if (!strcmp(token, "label")) {
 		cs_strncpy(rdr->label, value, sizeof(rdr->label));
 		return;
