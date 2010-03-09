@@ -874,6 +874,7 @@ extern int chk_avail_reader(ECM_REQUEST *, struct s_reader *);
 extern int matching_reader(ECM_REQUEST *, struct s_reader *);
 extern void set_signal_handler(int , int , void (*)(int));
 extern void cs_log_config(void);
+extern void cs_waitforcardinit(void);
 extern void cs_reinit_clients(void);
 extern void cs_resolve(void);
 extern void chk_dcw(int fd);
