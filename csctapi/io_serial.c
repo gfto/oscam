@@ -161,7 +161,6 @@ bool IO_Serial_SetBitrate (unsigned long bitrate, struct termios * tio)
 {
    /* Set the bitrate */
 #ifdef OS_LINUX
-   //FIXME workaround for Smargo until native mode works
    if ((reader[ridx].mhz == reader[ridx].cardmhz) && (reader[ridx].smargopatch != 1))
 #endif
    { //no overcloking
@@ -594,17 +593,13 @@ static bool IO_Serial_WaitToRead (unsigned delay_ms, unsigned timeout_ms)
    select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
    if(select_ret==-1)
    {
-      printf("select_ret=%i\n" , select_ret);
-      printf("errno =%d\n", errno);
-      fflush(stdout);
+      cs_log("ERROR in IO_Serial_WaitToRead: select_ret=%i, errno=%d", select_ret, errno);
       return ERROR;
    }
 
    if (FD_ISSET(in_fd, &erfds))
    {
-      printf("fd is in error fds\n");
-      printf("errno =%d\n", errno);
-      fflush(stdout);
+      cs_log("ERROR in IO_Serial_WaitToRead: fd is in error fds, errno=%d", errno);
       return ERROR;
    }
    if (FD_ISSET(in_fd,&rfds))

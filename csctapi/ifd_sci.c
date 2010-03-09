@@ -29,7 +29,6 @@ int Sci_Init ()
 
 int Sci_GetStatus (int handle, int * status)
 {
-	int in;
 	call (ioctl(handle, IOCTL_GET_IS_CARD_PRESENT, status)<0);
 	return OK;
 }

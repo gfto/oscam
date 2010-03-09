@@ -94,22 +94,6 @@
 #define CS_MAXLOGHIST     30
 #define CS_LOGHISTSIZE    160 // 32+128: username + logline
 
-#ifdef OLD_DEFS
-#ifdef  CS_EMBEDDED
-#define CS_MAXPENDING   32
-#define CS_ECMCACHESIZE   32
-#define CS_EMMCACHESIZE   64
-#define CS_MAXPID   32
-#define CS_MAXREADER    8
-#else
-#define CS_MAXPENDING   128
-#define CS_ECMCACHESIZE   128
-#define CS_EMMCACHESIZE   256
-#define CS_MAXPID   128
-#define CS_MAXREADER    64
-#endif
-#endif
-
 #ifdef  CS_EMBEDDED
 #define CS_MAXPID   32
 #define CS_MAXREADER    (CS_MAXPID>>1)
@@ -498,6 +482,7 @@ struct s_reader
   char      cc_build[5];    // cccam build number
   int       cc_maxhop;      // cccam max distance
   void      *cc;            // ptr to cccam internal data struct
+  uchar     cc_id;
   uchar     tcp_connected;
   int       tcp_ito;      // inactivity timeout
   int       tcp_rto;      // reconnect timeout

@@ -180,7 +180,7 @@ int ICC_Async_GetStatus (int * card)
 #endif
 			break;
 		default:
-			cs_log("ERROR ICC_Device_Init: unknow reader type %i",reader[ridx].typ);
+			cs_log("ERROR ICC_Get_Status: unknow reader type %i",reader[ridx].typ);
 			return ERROR;
 	}
 
@@ -772,14 +772,13 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 					ifsc = ta;
 				else
 					ifsc = DEFAULT_IFSC;
-			
-				// Towitoko does not allow IFSC > 251 //FIXME not sure whether this limitation still exists
-				// ifsc = MIN (ifsc, MAX_IFSC);
 
 				//FIXME workaround for Smargo until native mode works
-				if(reader[ridx].smargopatch == 1)
+				if (reader[ridx].smargopatch == 1)
 					ifsc = MIN (ifsc, 28);
 				else
+					// Towitoko does not allow IFSC > 251 
+					//FIXME not sure whether this limitation still exists
 					ifsc = MIN (ifsc, MAX_IFSC);
 			
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
