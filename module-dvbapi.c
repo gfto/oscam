@@ -402,6 +402,8 @@ void dvbapi_stop_descrambling(int demux_id) {
 		demux[demux_id].ca_fd=0;
 	}
 
+	unlink("/tmp/ecm.info");
+
 	return;
 }
 
@@ -627,8 +629,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 
 		cs_debug("stream_type: %02x\telementary_pid: %04x\tes_info_length: %04x", stream_type, elementary_pid, es_info_length);
 
-		demux[demux_id].STREAMpids[demux[demux_id].STREAMpidcount]=elementary_pid;
-		demux[demux_id].STREAMpidcount++;
+		demux[demux_id].STREAMpids[demux[demux_id].STREAMpidcount++]=elementary_pid;
 
 		if (es_info_length != 0) {
 			dvbapi_parse_descriptor(demux_id, i, es_info_length, buffer);
@@ -782,7 +783,7 @@ void *thread_check_zap(void *arg) {
 						cs_debug("dvbapi: invaild capmt");
 				} else {
 					cs_log("dvbapi: New capmt on old socket. Please report.");
-					cs_dump(mbuf, len, "capmt:");
+					//cs_dump(mbuf, len, "capmt:");
 				}
 			}
 
@@ -1039,6 +1040,18 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 				if (ioctl(demux[i].ca_fd, CA_SET_DESCR, &ca_descr) < 0)
 					cs_debug("dvbapi: Error CA_SET_DESCR");
 			}
+
+			FILE *ecmtxt;
+			ecmtxt = fopen("/tmp/ecm.info", "w");
+			if(ecmtxt != NULL) {
+				fprintf(ecmtxt, "===== %s ECM on CaID 0x%04X, pid 0x%04x ======\n", "unknown", er->caid, 0);
+				fprintf(ecmtxt, "prov: %06X, pkey: %02X\n", er->prid, 0);
+				fprintf(ecmtxt, "cw0 : %s\n", cs_hexdump(1,demux[i].lastcw0,8));
+				fprintf(ecmtxt, "cw1 : %s\n", cs_hexdump(1,demux[i].lastcw1,8));
+				fclose(ecmtxt);
+				ecmtxt = NULL;
+			}
+
 		}
 	}
 }
