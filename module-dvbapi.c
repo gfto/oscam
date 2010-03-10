@@ -1041,19 +1041,11 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 					cs_debug("dvbapi: Error CA_SET_DESCR");
 			}
 
-			/* camd3 Example
-			CAID 0x1702, PID 0x1764, PROVIDER 0x000000
-			FROM: 192.168.178.250
-			CW0: 4C 27 6F E2 12 43 42 97
-			CW1: 62 A2 96 9A 46 86 DE AA
-			 */
 			FILE *ecmtxt;
 			ecmtxt = fopen("/tmp/ecm.info", "w");
 			if(ecmtxt != NULL) {
-				//fprintf(ecmtxt, "===== %s ECM on CaID 0x%04X, pid 0x%04x ======\n", "unknown", er->caid, 0);
-				//fprintf(ecmtxt, "prov: %06X, pkey: %02X\n", er->prid, 0);
-				fprintf(ecmtxt, "CAID 0x%04X, PID 0x%04X, PROVIDER %06X\n", er->caid, er->srvid, er->prid);
-				fprintf(ecmtxt, "FROM: %s\n", reader[ridx].label);
+				fprintf(ecmtxt, "===== %s ECM on CaID 0x%04X, pid 0x%04x ======\n", "unknown", er->caid, 0);
+				fprintf(ecmtxt, "prov: %06X, pkey: %02X\n", er->prid, 0);
 				fprintf(ecmtxt, "cw0 : %s\n", cs_hexdump(1,demux[i].lastcw0,8));
 				fprintf(ecmtxt, "cw1 : %s\n", cs_hexdump(1,demux[i].lastcw1,8));
 				fclose(ecmtxt);
