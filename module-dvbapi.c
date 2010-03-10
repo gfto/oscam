@@ -1052,8 +1052,8 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 			if(ecmtxt != NULL) {
 				//fprintf(ecmtxt, "===== %s ECM on CaID 0x%04X, pid 0x%04x ======\n", "unknown", er->caid, 0);
 				//fprintf(ecmtxt, "prov: %06X, pkey: %02X\n", er->prid, 0);
-				fprintf(ecmtxt, "CAID 0x%04X, PID 0x%04X, PROVIDER %06X", er->caid, er->srvid, er->prid);
-				fprintf(ecmtxt, "FROM: %s", reader[ridx].label);
+				fprintf(ecmtxt, "CAID 0x%04X, PID 0x%04X, PROVIDER %06X\n", er->caid, er->srvid, er->prid);
+				fprintf(ecmtxt, "FROM: %s\n", reader[ridx].label);
 				fprintf(ecmtxt, "cw0 : %s\n", cs_hexdump(1,demux[i].lastcw0,8));
 				fprintf(ecmtxt, "cw1 : %s\n", cs_hexdump(1,demux[i].lastcw1,8));
 				fclose(ecmtxt);
