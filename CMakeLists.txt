@@ -85,9 +85,9 @@ set (OPTIONAL_INCLUDE_DIR "" CACHE STRING "Some optional include directories")
 include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
     ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
-    if(CS_WITH_GBOX)
+    if[CS_WITH_GBOX]
     	${CMAKE_CURRENT_SOURCE_DIR}/csgbox
-    endif(CS_WITH_GBOX)
+    endif[CS_WITH_GBOX]
     ${OPTIONAL_INCLUDE_DIR}
     )
 link_directories (${OPTIONAL_LINK_DIR})
