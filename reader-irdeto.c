@@ -175,28 +175,15 @@ static int irdeto_card_init_provider(void)
     }
     else
       reader[ridx].prid[i][0]=0xf;
+
+    // maps the provider id for Betacrypt from FFFFFF to 000000,
+    // fixes problems with cascading CCcam and OSCam
+    if ((reader[ridx].caid[0] >= 0x1700) && (reader[ridx].caid[0] <= 0x1799))
+      memset(&reader[ridx].prid[i][0], 0, 4);
   }
   if (p)
     cs_ri_log("providers: %d (%s)", p, buf+1);
 
-  // maps the provider id for Betacrypt from FFFFFF to 000000,
-  // fixes problems with cascading CCcam and OSCam
-  if ((reader[ridx].caid[0] >= 0x1700) && (reader[ridx].caid[0] <= 0x1799))
-  {
-    memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
-    for (i=0; i<reader[ridx].nprov; i++) 
-    {
-      reader[ridx].prid[i][0]=0;
-      reader[ridx].prid[i][1]=0;
-      reader[ridx].prid[i][2]=0;
-      reader[ridx].prid[i][3]=i;
-      reader[ridx].prid[i][4]=0;
-      reader[ridx].sa[i][0]=0x00; 
-      reader[ridx].sa[i][1]=0xFF; 
-      reader[ridx].sa[i][2]=0xFF;
-      reader[ridx].sa[i][3]=0xFF;
-    }
-  }
   return OK;
 }
 
