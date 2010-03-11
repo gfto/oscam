@@ -170,19 +170,26 @@ static int irdeto_card_init_provider(void)
     if ((cta_lr==26) && ((!(i&1)) || (cta_res[0]!=0xf)))
     {
       reader[ridx].prid[i][4]=p++;
-      memcpy(&reader[ridx].prid[i][0], cta_res, 4);
+
+      // maps the provider id for Betacrypt from FFFFFF to 000000,
+      // fixes problems with cascading CCcam and OSCam
+      if ((reader[ridx].caid[0] >= 0x1700) && (reader[ridx].caid[0] <= 0x1799))
+        memset(&reader[ridx].prid[i][0], 0, 4);
+      else
+        memcpy(&reader[ridx].prid[i][0], cta_res, 4);
+
       sprintf((char *) buf+strlen((char *)buf), ",%06lx", b2i(3, &reader[ridx].prid[i][1]));
     }
     else
       reader[ridx].prid[i][0]=0xf;
-
-    // maps the provider id for Betacrypt from FFFFFF to 000000,
-    // fixes problems with cascading CCcam and OSCam
-    if ((reader[ridx].caid[0] >= 0x1700) && (reader[ridx].caid[0] <= 0x1799))
-      memset(&reader[ridx].prid[i][0], 0, 4);
   }
   if (p)
     cs_ri_log("providers: %d (%s)", p, buf+1);
+
+  /*
+   * ContryCode2
+   */
+  reader_chk_cmd(sc_GetCountryCode2, 0);
 
   return OK;
 }
@@ -378,10 +385,6 @@ int irdeto_card_info(void)
 {
   int i, p;
 
-  /*
-   * ContryCode2
-   */
-  reader_chk_cmd(sc_GetCountryCode2, 0);
   if ((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1]))
   {
     cs_debug("[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6], cta_res[7], cta_res[8], cta_res[9]);
@@ -425,4 +428,3 @@ int irdeto_card_info(void)
   cs_ri_log("[irdeto-reader] ready for requests");
   return OK;
 }
-
