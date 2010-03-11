@@ -1991,7 +1991,6 @@ void get_cw(ECM_REQUEST *er)
 
 		for (j = 0; (j < 6) && (er->rc > 99); j++)
 		{
-			cs_sleepms(1);
 			switch(j) {
 
 				case 0:
