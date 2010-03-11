@@ -1991,6 +1991,8 @@ void get_cw(ECM_REQUEST *er)
 
 		for (j = 0; (j < 6) && (er->rc > 99); j++)
 		{
+			//FIXME: seems to be needed for cccam-module to work correctly
+			cs_sleepus(1);
 			switch(j) {
 
 				case 0:

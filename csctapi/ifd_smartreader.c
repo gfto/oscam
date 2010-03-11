@@ -1091,10 +1091,7 @@ static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, 
        
         gettimeofday(&now,NULL);
         timersub(&now, &start, &dif);
-        struct timespec req_ts;
-        req_ts.tv_sec = 0;
-        req_ts.tv_nsec = 50000;
-        nanosleep (&req_ts, NULL);//behaves better to signals than usleep and sleep
+	cs_sleepus(50);
         sched_yield();
     }
 		cs_ddump(buff, total_read, "SR IO: Receive: ");
@@ -1182,10 +1179,7 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size,
             if ((ret = smartreader_write_data(reader, &buff[idx], 1)) < 0){
                 break;
             }
-	          struct timespec req_ts;
-	          req_ts.tv_sec = 0;
-	          req_ts.tv_nsec = udelay * 1000;
-	          nanosleep (&req_ts, NULL); //behaves better with signals than usleep
+	    cs_sleepus(udelay);
         }
     }
     sched_yield();

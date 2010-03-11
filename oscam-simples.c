@@ -321,6 +321,15 @@ void cs_sleepms(unsigned int msec)
 	nanosleep (&req_ts, NULL);
 }
 
+void cs_sleepus(unsigned int usec)
+{
+	//does not interfere with signals like sleep and usleep do
+	struct timespec req_ts;
+	req_ts.tv_sec = usec/1000000;
+	req_ts.tv_nsec = (usec % 1000000) * 1000L;
+	nanosleep (&req_ts, NULL);
+}
+
 int bytes_available(int fd)
 {
   struct pollfd pfds;
