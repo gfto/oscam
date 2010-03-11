@@ -153,80 +153,34 @@ static int irdeto_do_cmd(uchar *buf, ushort good)
         if (reader_cmd2icc(cmd, sizeof(cmd))) return ERROR; \
   if (l && (cta_lr!=l)) return ERROR; }
 
-static int irdeto_card_init2(void)
+static int irdeto_card_init_provider(void)
 {
   int i, p;
   uchar buf[256]={0};
 
-    /*
-     * Provider
-     */
-    memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
-    for (buf[0]=i=p=0; i<reader[ridx].nprov; i++)
+  /*
+   * Provider
+   */
+  memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
+  for (buf[0]=i=p=0; i<reader[ridx].nprov; i++)
+  {
+    sc_GetProvider[3]=i;
+    reader_chk_cmd(sc_GetProvider, 0);
+    //if ((cta_lr==26) && (cta_res[0]!=0xf))
+    if ((cta_lr==26) && ((!(i&1)) || (cta_res[0]!=0xf)))
     {
-      sc_GetProvider[3]=i;
-      reader_chk_cmd(sc_GetProvider, 0);
-//      if ((cta_lr==26) && (cta_res[0]!=0xf))
-      if ((cta_lr==26) && ((!(i&1)) || (cta_res[0]!=0xf)))
-      {
-        reader[ridx].prid[i][4]=p++;
-        memcpy(&reader[ridx].prid[i][0], cta_res, 4);
-        sprintf((char *) buf+strlen((char *)buf), ",%06lx", b2i(3, &reader[ridx].prid[i][1]));
-      }
-      else
-        reader[ridx].prid[i][0]=0xf;
+      reader[ridx].prid[i][4]=p++;
+      memcpy(&reader[ridx].prid[i][0], cta_res, 4);
+      sprintf((char *) buf+strlen((char *)buf), ",%06lx", b2i(3, &reader[ridx].prid[i][1]));
     }
-    if (p)
-      cs_ri_log("providers: %d (%s)", p, buf+1);
+    else
+      reader[ridx].prid[i][0]=0xf;
+  }
+  if (p)
+    cs_ri_log("providers: %d (%s)", p, buf+1);
 
-    /*
-     * ContryCode2
-     */
-    reader_chk_cmd(sc_GetCountryCode2, 0);
-    if ((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1]))
-    {
-      cs_debug("[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6], cta_res[7], cta_res[8], cta_res[9]);
-
-      /*
-       * Provider 2
-       */
-      for (i=p=0; i<reader[ridx].nprov; i++)
-      {
-        int j, k, chid, first=1;
-        char t[32];
-        if (reader[ridx].prid[i][4]!=0xff)
-        {
-          p++;
-          sc_GetChanelIds[3]=i;
-          for (j=0; j<10; j++)
-          {
-            sc_GetChanelIds[5]=j;
-            reader_chk_cmd(sc_GetChanelIds, 0);
-            if (cta_lr<61) break;
-            for(k=0; k<cta_lr; k+=6)
-            {
-              chid=b2i(2, cta_res+k);
-              if (chid && chid!=0xFFFF)
-              {
-                time_t date;
-                chid_date(date=b2i(2, cta_res+k+2), t, 16);
-                chid_date(date+cta_res[k+4], t+16, 16);
-                if (first)
-                {
-                  cs_ri_log("provider: %d, id: %06X", p, b2i(3, &reader[ridx].prid[i][1]));
-                  first=0;
-                }
-                cs_ri_log("chid: %04X, date: %s - %s", chid, t, t+16);
-              }
-            }
-          }
-        }
-      }
-    }
-  
-// maps the provider id for Betacrypt from FFFFFF to 000000,
-// fixes problems with cascading CCcam and OSCam
-
+  // maps the provider id for Betacrypt from FFFFFF to 000000,
+  // fixes problems with cascading CCcam and OSCam
   if ((reader[ridx].caid[0] >= 0x1700) && (reader[ridx].caid[0] <= 0x1799))
   {
     memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
@@ -236,20 +190,20 @@ static int irdeto_card_init2(void)
       reader[ridx].prid[i][1]=0;
       reader[ridx].prid[i][2]=0;
       reader[ridx].prid[i][3]=i;
+      reader[ridx].prid[i][4]=0;
       reader[ridx].sa[i][0]=0x00; 
       reader[ridx].sa[i][1]=0xFF; 
       reader[ridx].sa[i][2]=0xFF;
       reader[ridx].sa[i][3]=0xFF;
     }
   }
-  cs_log("[irdeto-reader] ready for requests");
   return OK;
 }
 
 int irdeto_card_init(ATR newatr)
 {
-	get_atr;
-  int i, camkey=0;
+  get_atr;
+  int camkey=0;
   uchar buf[256]={0};
 
   if (memcmp(atr+4, "IRDETO", 6))
@@ -307,26 +261,6 @@ int irdeto_card_init(ATR newatr)
     }
   }
 
-  if ((reader[ridx].caid[0] >= 0x1700) && (reader[ridx].caid[0] <= 0x1799)) // Betacrypt
-  {
-    memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
-    for (i=0; i<reader[ridx].nprov; i++) 
-    {
-    	//values are needed for AU to work for Nagravision/Aladin/Betacrypt
-      reader[ridx].prid[i][0]=0;
-      reader[ridx].prid[i][1]=0;
-      reader[ridx].prid[i][2]=0;
-      reader[ridx].prid[i][3]=i;
-      //reader[ridx].prid[i][4]=0; //not sure what to do with this one
-      
-	    //since shared address is not filled, we fill it here
-		  reader[ridx].sa[i][0]=0x00; 
-		  reader[ridx].sa[i][1]=0xFF; 
-		  reader[ridx].sa[i][2]=0xFF;
-		  reader[ridx].sa[i][3]=0xFF;
-	  }
-  }
-  
   cs_debug("[irdeto-reader] set camkey for type=%d", camkey);
 
   switch (camkey)
@@ -346,7 +280,8 @@ int irdeto_card_init(ATR newatr)
   }
 	if (reader[ridx].cardmhz != 600)
 		cs_log("WARNING: For Irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
-  return irdeto_card_init2();
+
+  return irdeto_card_init_provider();
 }
 
 int irdeto_do_ecm(ECM_REQUEST *er)
@@ -454,7 +389,53 @@ int irdeto_do_emm(EMM_PACKET *ep)
 
 int irdeto_card_info(void)
 {
-	//original irdeto_card_info is not pure info, it is actually needed for init
-	return OK;
+  int i, p;
+
+  /*
+   * ContryCode2
+   */
+  reader_chk_cmd(sc_GetCountryCode2, 0);
+  if ((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1]))
+  {
+    cs_debug("[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6], cta_res[7], cta_res[8], cta_res[9]);
+
+    /*
+     * Provider 2
+     */
+    for (i=p=0; i<reader[ridx].nprov; i++)
+    {
+      int j, k, chid, first=1;
+      char t[32];
+      if (reader[ridx].prid[i][4]!=0xff)
+      {
+        p++;
+        sc_GetChanelIds[3]=i;
+        for (j=0; j<10; j++)
+        {
+          sc_GetChanelIds[5]=j;
+          reader_chk_cmd(sc_GetChanelIds, 0);
+          if (cta_lr<61) break;
+          for(k=0; k<cta_lr; k+=6)
+          {
+            chid=b2i(2, cta_res+k);
+            if (chid && chid!=0xFFFF)
+            {
+              time_t date;
+              chid_date(date=b2i(2, cta_res+k+2), t, 16);
+              chid_date(date+cta_res[k+4], t+16, 16);
+              if (first)
+              {
+                cs_ri_log("provider: %d, id: %06X", p, b2i(3, &reader[ridx].prid[i][1]));
+                first=0;
+              }
+              cs_ri_log("chid: %04X, date: %s - %s", chid, t, t+16);
+            }
+          }
+        }
+      }
+    }
+  }
+  cs_ri_log("[irdeto-reader] ready for requests");
+  return OK;
 }
 
