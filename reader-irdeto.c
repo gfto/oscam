@@ -225,8 +225,14 @@ int irdeto_card_init(ATR newatr)
   memcpy(buf, cta_res, 10);
   buf[10]=0;
   reader_chk_cmd(sc_GetHEXSerial, 18);
-  memcpy(reader[ridx].hexserial, cta_res+12, 8); 
-  reader[ridx].nprov=cta_res[10];
+  memcpy(reader[ridx].hexserial, cta_res+12, 8);
+
+  // Betacrypt cards have only 1 provider, so we ignore card response
+  if ((reader[ridx].caid[0] >= 0x1700) && (reader[ridx].caid[0] <= 0x1799))
+    reader[ridx].nprov=1;
+  else
+    reader[ridx].nprov=cta_res[10];
+
   cs_ri_log("ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
           buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
 
