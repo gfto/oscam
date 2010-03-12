@@ -186,11 +186,6 @@ static int irdeto_card_init_provider(void)
   if (p)
     cs_ri_log("providers: %d (%s)", p, buf+1);
 
-  /*
-   * ContryCode2
-   */
-  reader_chk_cmd(sc_GetCountryCode2, 0);
-
   return OK;
 }
 
@@ -384,6 +379,11 @@ int irdeto_do_emm(EMM_PACKET *ep)
 int irdeto_card_info(void)
 {
   int i, p;
+
+  /*
+   * ContryCode2
+   */
+  reader_chk_cmd(sc_GetCountryCode2, 0);
 
   if ((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1]))
   {
