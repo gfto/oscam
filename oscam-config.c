@@ -427,6 +427,16 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "clientdyndns")) {
+		if (strlen(value) == 0) {
+			cfg->clientdyndns = 0;
+			return;
+		} else {
+			cfg->clientdyndns = atoi(value);
+			return;
+		}
+	}
+
 	if (!strcmp(token, "sleep")) {
 		if (strlen(value) == 0) {
 			cfg->tosleep = 0;

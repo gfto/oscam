@@ -898,64 +898,64 @@ static int start_listener(struct s_module *ph, int port_idx)
 
 static void cs_client_resolve()
 {
-  while (1)
-  {
-    struct hostent *rht;
-    struct s_auth *account;
-    struct sockaddr_in udp_sa;
+	while (1)
+	{
+		struct hostent *rht;
+		struct s_auth *account;
+		struct sockaddr_in udp_sa;
 
-    for (account=cfg->account; account; account=account->next)
-      if (account->dyndns[0])
-      {
-        rht=gethostbyname((const char *)account->dyndns);
-        if (rht)
-        {
-          memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-          account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
-        }
-        else
-          cs_log("can't resolve hostname %s (user: %s)", account->dyndns, account->usr);
-        client[cs_idx].last=time((time_t)0);
-      }
-    sleep(cfg->resolvedelay);
-  }
+		for (account=cfg->account; account; account=account->next)
+			if (account->dyndns[0])
+			{
+				rht=gethostbyname((const char *)account->dyndns);
+				if (rht)
+				{
+					memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
+					account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
+				}
+				else
+					cs_log("can't resolve hostname %s (user: %s)", account->dyndns, account->usr);
+				client[cs_idx].last=time((time_t)0);
+			}
+		sleep(cfg->resolvedelay);
+	}
 }
 
 static void start_client_resolver()
 {
-  int i;
-  pthread_t tid;
+	int i;
+	pthread_t tid;
 
-  i=pthread_create(&tid, (pthread_attr_t *)0, (void *)&cs_client_resolve, (void *) 0);
-  if (i)
-    cs_log("ERROR: can't create resolver-thread (err=%d)", i);
-  else
-  {
-    cs_log("resolver thread started");
-    pthread_detach(tid);
-  }
+	i=pthread_create(&tid, (pthread_attr_t *)0, (void *)&cs_client_resolve, (void *) 0);
+	if (i)
+		cs_log("ERROR: can't create resolver-thread (err=%d)", i);
+	else
+	{
+		cs_log("resolver thread started");
+		pthread_detach(tid);
+	}
 }
 
 void cs_resolve()
 {
-  int i, idx;
-  struct hostent *rht;
-  struct s_auth;
-  for (i=0; i<CS_MAXREADER; i++)
-    if ((idx=reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK))
-    {
-      client[cs_idx].last=time((time_t)0);
-      rht=gethostbyname(reader[i].device);
-      if (rht)
-      {
-        memcpy(&client[idx].udp_sa.sin_addr, rht->h_addr,
-               sizeof(client[idx].udp_sa.sin_addr));
-        client[idx].ip=cs_inet_order(client[idx].udp_sa.sin_addr.s_addr);
-      }
-      else
-        cs_log("can't resolve %s", reader[i].device);
-      client[cs_idx].last=time((time_t)0);
-    }
+	int i, idx;
+	struct hostent *rht;
+	struct s_auth;
+	for (i=0; i<CS_MAXREADER; i++)
+		if ((idx=reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK))
+		{
+			client[cs_idx].last=time((time_t)0);
+			rht = gethostbyname(reader[i].device);
+			if (rht)
+			{
+				memcpy(&client[idx].udp_sa.sin_addr, rht->h_addr,
+						sizeof(client[idx].udp_sa.sin_addr));
+				client[idx].ip=cs_inet_order(client[idx].udp_sa.sin_addr.s_addr);
+			}
+			else
+				cs_log("can't resolve %s", reader[i].device);
+			client[cs_idx].last=time((time_t)0);
+		}
 }
 
 static void cs_logger(void)
@@ -992,21 +992,21 @@ static void cs_logger(void)
 
 static void start_resolver()
 {
-  int i;
+	int i;
 
-  cs_sleepms(1000); // wait for reader
-  while(1)
-  {
-    if (master_pid!=getppid())
-      cs_exit(0);
-    cs_resolve();
-    for (i=0; i<cfg->resolvedelay; i++)
-      if (master_pid!=getppid())
-        cs_exit(0);
-      else
-        cs_sleepms(1000);
-//        sleep(cfg->resolvedelay);
-  }
+	cs_sleepms(1000); // wait for reader
+	while(1)
+	{
+		if (master_pid!=getppid())
+			cs_exit(0);
+		cs_resolve();
+		for (i=0; i<cfg->resolvedelay; i++)
+			if (master_pid!=getppid())
+				cs_exit(0);
+			else
+				cs_sleepms(1000);
+		//        sleep(cfg->resolvedelay);
+	}
 }
 
 #ifdef CS_ANTICASC
@@ -1137,123 +1137,123 @@ static void cs_fake_client(char *usr, int uniq, in_addr_t ip)
 
 int cs_auth_client(struct s_auth *account, char *e_txt)
 {
-  int rc=0;
-  char buf[32];
-  char *t_crypt="encrypted";
-  char *t_plain="plain";
-  char *t_grant=" granted";
-  char *t_reject=" rejected";
-  char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason" };
-  client[cs_idx].grp=0xffffffff;
-  client[cs_idx].au=(-1);
-  switch((long)account)
-  {
-    case -2:            // gbx-dummy
-      client[cs_idx].dup=0;
-      break;
-    case 0:           // reject access
-      rc=1;
-      cs_log("%s %s-client %s%s (%s)",
-             client[cs_idx].crypted ? t_crypt : t_plain,
-             ph[client[cs_idx].ctyp].desc,
-             client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
-             client[cs_idx].ip ? t_reject : t_reject+1,
-             e_txt ? e_txt : t_msg[rc]);
-      break;
-    default:            // grant/check access
-      if (client[cs_idx].ip && account->dyndns[0])
-        if (client[cs_idx].ip != account->dynip)
-          rc=2;
-      if (!rc)
-      {
-        client[cs_idx].dup=0;
-        if (client[cs_idx].typ=='c')
-        {
-          client[cs_idx].expirationdate=account->expirationdate;
-          client[cs_idx].disabled=account->disabled;
-          client[cs_idx].c35_suppresscmd08 = account->c35_suppresscmd08;
-          client[cs_idx].ncd_keepalive = account->ncd_keepalive;
-	  client[cs_idx].grp=account->grp;
-          client[cs_idx].au=account->au;
-          client[cs_idx].autoau=account->autoau;
-          client[cs_idx].tosleep=(60*account->tosleep);
-          memcpy(&client[cs_idx].ctab, &account->ctab, sizeof(client[cs_idx].ctab));
-          if (account->uniq)
-            cs_fake_client(account->usr, account->uniq, client[cs_idx].ip);
-          client[cs_idx].ftab  = account->ftab;   // IDENT filter
-          client[cs_idx].cltab = account->cltab;  // CLASS filter
-          client[cs_idx].fchid = account->fchid;  // CHID filter
-          client[cs_idx].sidtabok= account->sidtabok;   // services
-          client[cs_idx].sidtabno= account->sidtabno;   // services
-          client[cs_idx].pcrc  = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), NULL), 16);
-          memcpy(&client[cs_idx].ttab, &account->ttab, sizeof(client[cs_idx].ttab));
+	int rc=0;
+	char buf[32];
+	char *t_crypt="encrypted";
+	char *t_plain="plain";
+	char *t_grant=" granted";
+	char *t_reject=" rejected";
+	char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason" };
+	client[cs_idx].grp=0xffffffff;
+	client[cs_idx].au=(-1);
+	switch((long)account)
+	{
+	case -2:            // gbx-dummy
+	client[cs_idx].dup=0;
+	break;
+	case 0:           // reject access
+		rc=1;
+		cs_log("%s %s-client %s%s (%s)",
+				client[cs_idx].crypted ? t_crypt : t_plain,
+				ph[client[cs_idx].ctyp].desc,
+				client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
+				client[cs_idx].ip ? t_reject : t_reject+1,
+				e_txt ? e_txt : t_msg[rc]);
+		break;
+	default:            // grant/check access
+		if (client[cs_idx].ip && account->dyndns[0])
+			if (client[cs_idx].ip != account->dynip)
+				rc=2;
+		if (!rc)
+		{
+			client[cs_idx].dup=0;
+			if (client[cs_idx].typ=='c')
+			{
+				client[cs_idx].expirationdate=account->expirationdate;
+				client[cs_idx].disabled=account->disabled;
+				client[cs_idx].c35_suppresscmd08 = account->c35_suppresscmd08;
+				client[cs_idx].ncd_keepalive = account->ncd_keepalive;
+				client[cs_idx].grp=account->grp;
+				client[cs_idx].au=account->au;
+				client[cs_idx].autoau=account->autoau;
+				client[cs_idx].tosleep=(60*account->tosleep);
+				memcpy(&client[cs_idx].ctab, &account->ctab, sizeof(client[cs_idx].ctab));
+				if (account->uniq)
+					cs_fake_client(account->usr, account->uniq, client[cs_idx].ip);
+				client[cs_idx].ftab  = account->ftab;   // IDENT filter
+				client[cs_idx].cltab = account->cltab;  // CLASS filter
+				client[cs_idx].fchid = account->fchid;  // CHID filter
+				client[cs_idx].sidtabok= account->sidtabok;   // services
+				client[cs_idx].sidtabno= account->sidtabno;   // services
+				client[cs_idx].pcrc  = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), NULL), 16);
+				memcpy(&client[cs_idx].ttab, &account->ttab, sizeof(client[cs_idx].ttab));
 #ifdef CS_ANTICASC
-          ac_init_client(account);
+				ac_init_client(account);
 #endif
-        }
-      }
-      client[cs_idx].monlvl=account->monlvl;
-      strcpy(client[cs_idx].usr, account->usr);
-    case -1:            // anonymous grant access
-      if (rc)
-        t_grant=t_reject;
-      else
-      {
-        if (client[cs_idx].typ=='m')
-          sprintf(t_msg[0], "lvl=%d", client[cs_idx].monlvl);
-        else
-        {
-          if(client[cs_idx].autoau)
-          {
-            if(client[cs_idx].ncd_server)
-            {
-              int r=0;
-              for(r=0;r<CS_MAXREADER;r++)
-              {
-                if(reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
-                {
-                  client[cs_idx].au=r;
-                  break;
-                }
-              }
-              if(client[cs_idx].au<0) sprintf(t_msg[0], "au(auto)=%d", client[cs_idx].au+1);
-                else sprintf(t_msg[0], "au(auto)=%s", reader[client[cs_idx].au].label);
-            }
-            else
-            {
-              sprintf(t_msg[0], "au=auto");
-            }
-          }
-          else
-          {
-            if(client[cs_idx].au<0) sprintf(t_msg[0], "au=%d", client[cs_idx].au+1);
-              else sprintf(t_msg[0], "au=%s", reader[client[cs_idx].au].label);
-          }
-        }
-      }
-      if(client[cs_idx].ncd_server)
-      {
-        cs_log("%s %s:%d-client %s%s (%s, %s)",
-             client[cs_idx].crypted ? t_crypt : t_plain,
-             e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,
-             cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port,
-             client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
-             client[cs_idx].ip ? t_grant : t_grant+1,
-             username(cs_idx), t_msg[rc]);
-      }
-      else
-      {
-        cs_log("%s %s-client %s%s (%s, %s)",
-             client[cs_idx].crypted ? t_crypt : t_plain,
-             e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,
-             client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
-             client[cs_idx].ip ? t_grant : t_grant+1,
-             username(cs_idx), t_msg[rc]);
-      }
+			}
+		}
+		client[cs_idx].monlvl=account->monlvl;
+		strcpy(client[cs_idx].usr, account->usr);
+	case -1:            // anonymous grant access
+	if (rc)
+		t_grant=t_reject;
+	else
+	{
+		if (client[cs_idx].typ=='m')
+			sprintf(t_msg[0], "lvl=%d", client[cs_idx].monlvl);
+		else
+		{
+			if(client[cs_idx].autoau)
+			{
+				if(client[cs_idx].ncd_server)
+				{
+					int r=0;
+					for(r=0;r<CS_MAXREADER;r++)
+					{
+						if(reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
+						{
+							client[cs_idx].au=r;
+							break;
+						}
+					}
+					if(client[cs_idx].au<0) sprintf(t_msg[0], "au(auto)=%d", client[cs_idx].au+1);
+					else sprintf(t_msg[0], "au(auto)=%s", reader[client[cs_idx].au].label);
+				}
+				else
+				{
+					sprintf(t_msg[0], "au=auto");
+				}
+			}
+			else
+			{
+				if(client[cs_idx].au<0) sprintf(t_msg[0], "au=%d", client[cs_idx].au+1);
+				else sprintf(t_msg[0], "au=%s", reader[client[cs_idx].au].label);
+			}
+		}
+	}
+	if(client[cs_idx].ncd_server)
+	{
+		cs_log("%s %s:%d-client %s%s (%s, %s)",
+				client[cs_idx].crypted ? t_crypt : t_plain,
+						e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,
+								cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port,
+								client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
+										client[cs_idx].ip ? t_grant : t_grant+1,
+												username(cs_idx), t_msg[rc]);
+	}
+	else
+	{
+		cs_log("%s %s-client %s%s (%s, %s)",
+				client[cs_idx].crypted ? t_crypt : t_plain,
+						e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,
+								client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
+										client[cs_idx].ip ? t_grant : t_grant+1,
+												username(cs_idx), t_msg[rc]);
+	}
 
-      break;
-  }
-  return(rc);
+	break;
+	}
+	return(rc);
 }
 
 void cs_disconnect_client(void)
@@ -2514,7 +2514,9 @@ int main (int argc, char *argv[])
 	//set time for server to now to avoid 0 in monitor/webif
 	client[0].last=time((time_t *)0);
 
-  start_client_resolver();
+	if(cfg->clientdyndns)
+		start_client_resolver();
+
   init_service(97); // logger
   init_service(98); // resolver
 #ifdef WEBIF

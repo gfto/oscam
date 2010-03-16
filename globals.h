@@ -609,6 +609,7 @@ struct s_config
 	ulong		delay;
 	int		bindwait;
 	int		resolvedelay;
+	int		clientdyndns;
 	int		tosleep;
 	in_addr_t	srvip;
 	char		*pidfile;
