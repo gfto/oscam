@@ -651,7 +651,7 @@ static void newcamd_auth_client(in_addr_t ip)
                 }
             else
                 {
-                cs_log("AU flag %d for user %s",au,usr);
+                cs_debug("AU flag %d for user %s", au ,usr);
                 }
             }
         else
