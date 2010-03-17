@@ -73,6 +73,11 @@ DESCRIPTIONS
        resolvedelay = seconds
 	  delay for DNS resolving, default:30
 
+       clientdyndns = 0|1
+	  1 = disable DNS resolving of clients, if you have already defined  a
+	  hostname  for  your  clients	the  parameter must be 1, otherwise no
+	  authentication will be possible for this clients, default:0
+
        sleep = minutes
 	  time waiting for inactive users, default:none,  can  be  overwritten
 	  per user in oscam.user
