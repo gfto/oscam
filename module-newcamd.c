@@ -377,7 +377,7 @@ static int newcamd_recv(uchar *buf)
 	cs_ddump(buf, rs, "received %d bytes from %s", rs, remote_txt());
 	client[cs_idx].last = time((time_t *) 0);
 
-	if( rc == -1  ||  rc > 147 ) {
+	if(rc == -1) {
 		if (rs > 0)
 			cs_log("packet to small or too large (%d bytes)", rs);
 		else
