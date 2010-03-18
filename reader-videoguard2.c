@@ -887,16 +887,11 @@ unsigned short mem10C1E0[672]={
 		0x7894, 0x83B9, 0xA0C,  0x38AF, 0x5803, 0x18C0, 0xFA36, 0x592C, 0x4548, 0xABB8, 0x1527,
 		0xAEE9 };
 
-struct Attack_data{					//dim 0x6C bytes
-	char Val0;								//0x0
-	char Unused0[3];
-	short Val20;							//0x8
-	short Val21;							//0xA
-	int Val3;									//0xC
-	unsigned char val4[0x48];	//0x10
-//	int Val5;									//0x50
-//	int Val6;									//0x54
-	unsigned short Val7[0x14];	//0x58
+struct Attack_data{                                     //dim 0x6C bytes
+        char Unused0[0x10];
+        unsigned char val4[0x40];
+        char Unused1[0x08];
+        unsigned short Val7[0x14];
 };
 typedef struct Attack_data MyData;
 
@@ -1146,7 +1141,7 @@ void do_post_dw_hash(unsigned char *DW_INPUT, unsigned char *DW_OUTPUT, unsigned
                   switch(ecm_header_data[ecmi+2]) {   //b0 01
                   case 1:
                     {
-                    memset(Data.val4, 0, 0x48);
+                    memset(Data.val4, 0, sizeof(Data.val4));
                     memcpy(Data.val4,DW_INPUT,8);
                     Data.val4[0x8]=0x80;
                     PrepareData1(&Data);
@@ -1157,7 +1152,7 @@ void do_post_dw_hash(unsigned char *DW_INPUT, unsigned char *DW_OUTPUT, unsigned
                     }
                 case 3:
                     {
-                    memset(Data.val4, 0, 0x48);
+                    memset(Data.val4, 0, sizeof(Data.val4));
                     memcpy(Data.val4,DW_INPUT,8);
                     memcpy(Data.val4+8,&ecm_header_data[ecmi+3],ecm_header_data[ecmi]-2);
                     Data.val4[8+(ecm_header_data[ecmi]-2)]=0x80;
