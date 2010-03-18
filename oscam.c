@@ -149,7 +149,7 @@ static void usage()
   fprintf(stderr, "irdeto-guessing ");
 #endif
   fprintf(stderr, "\n\n");
-  fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
+  fprintf(stderr, "oscam [-b] [-c config-dir] [-d] [-h]");
 #ifdef CS_NOSHM
   fprintf(stderr, " [-m memory-file]");
 #endif
@@ -170,6 +170,7 @@ static void usage()
   fprintf(stderr, "\t-m <file>  : use <file> as mmaped memory file\n");
   fprintf(stderr, "\t             default = %s\n", CS_MMAPFILE);
 #endif
+  fprintf(stderr, "\t-h         : show this help\n");
   fprintf(stderr, "\n");
   exit(1);
 }
