@@ -1124,7 +1124,7 @@ static int Transform_MD5_C069B411(MyData *Data){	// ROM:C069B411
 
 static void do_post_dw_hash(unsigned char *DW_INPUT, unsigned char *DW_OUTPUT, unsigned char *ecm_header_data) {
     MyData Data;
-    int a,i,ecmi,ecm_header_count;
+    int a,i,j,ecmi,ecm_header_count;
 
     //ecm_header_data = 01 03 b0 01 01
 
@@ -1158,9 +1158,9 @@ static void do_post_dw_hash(unsigned char *DW_INPUT, unsigned char *DW_OUTPUT, u
                     a=(ecm_header_data[ecmi]-2+8);
                     Data.val4[0x38] = (a << 3);
                     a = (a >> 5);
-                    for (i=1; i<8; i++)
+                    for (j=1; j<8; j++)
                     {
-                      Data.val4[0x38+i] = a;
+                      Data.val4[0x38+j] = a;
                       a = a >> 8;
                     }
                     PrepareData4(&Data);
@@ -1213,7 +1213,7 @@ int videoguard_do_ecm(ECM_REQUEST *er)
       int i;
       for (i = 6; i < posECMpart2; i++)
       {
-        if (er->ecm[i] == 0xB0 && ((er->ecm[i+1] == 0x01) ||(er->ecm[i+1] == 0x02)||(er->ecm[i+1] == 0x03) ) ) {
+        if (er->ecm[i-3] == 0x80 && er->ecm[i] == 0xB0 && ((er->ecm[i+1] == 0x01) ||(er->ecm[i+1] == 0x02)||(er->ecm[i+1] == 0x03) ) ) {
 			posB0 = i;
       	  break;
 		}
