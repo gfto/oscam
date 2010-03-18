@@ -355,36 +355,36 @@ static int newcamd_send(uchar *buf, int ml, ushort sid)
 
 static int newcamd_recv(uchar *buf)
 {
-  int rc, rs;
+	int rc, rs;
 
-  if (is_server)
-  {
-    rs=network_message_receive(client[cs_idx].udp_fd, 
-                               &client[cs_idx].ncd_msgid, buf, 
-                               client[cs_idx].ncd_skey, COMMTYPE_SERVER);
-  }
-  else
-  {
-    if (!client[cs_idx].udp_fd) return(-1);
-    rs=network_message_receive(client[cs_idx].udp_fd, 
-                               &reader[ridx].ncd_msgid,buf, 
-                               reader[ridx].ncd_skey, COMMTYPE_CLIENT);
-  }
+	if (is_server)
+	{
+		rs = network_message_receive(client[cs_idx].udp_fd,
+				&client[cs_idx].ncd_msgid, buf,
+				client[cs_idx].ncd_skey, COMMTYPE_SERVER);
+	}
+	else
+	{
+		if (!client[cs_idx].udp_fd) return(-1);
+		rs = network_message_receive(client[cs_idx].udp_fd,
+				&reader[ridx].ncd_msgid, buf,
+				reader[ridx].ncd_skey, COMMTYPE_CLIENT);
+	}
 
-  if (rs<5) rc=(-1);
-  else rc=rs;
+	if (rs < 5) rc = (-1);
+	else rc = rs;
 
-  cs_ddump(buf, rs, "received %d bytes from %s", rs, remote_txt());
-  client[cs_idx].last = time((time_t *) 0);
+	cs_ddump(buf, rs, "received %d bytes from %s", rs, remote_txt());
+	client[cs_idx].last = time((time_t *) 0);
 
-  if( rc==-1 )
-  {
-  	if (rs > 0)
-      cs_log("packet to small (%d bytes)", rs);
-    else
-      cs_log("Connection closed to %s", remote_txt());
-  }
-  return(rc);
+	if( rc == -1  ||  rc > 147 ) {
+		if (rs > 0)
+			cs_log("packet to small or too large (%d bytes)", rs);
+		else
+			cs_log("Connection closed to %s", remote_txt());
+	}
+
+	return(rc);
 }
 
 static unsigned int seed;
