@@ -297,7 +297,7 @@ typedef struct  {
     pthread_mutex_t g_usb_mutex;
     pthread_t rt;
     unsigned char modem_status;
-} SR_CONFIG;
+} GCC_PACK SR_CONFIG;
 #endif
 
 

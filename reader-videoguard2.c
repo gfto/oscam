@@ -524,7 +524,7 @@ static void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *d
 typedef struct{
    unsigned short id;
    char name[32];
-} tier_t;
+} GCC_PACK tier_t;
 
 static tier_t skyit_tiers[] =
 {
@@ -887,29 +887,28 @@ unsigned short mem10C1E0[672]={
 		0x7894, 0x83B9, 0xA0C,  0x38AF, 0x5803, 0x18C0, 0xFA36, 0x592C, 0x4548, 0xABB8, 0x1527,
 		0xAEE9 };
 
-struct Attack_data{                                     //dim 0x6C bytes
+typedef struct Attack_data {                                     //dim 0x6C bytes
         char Unused0[0x10];
         unsigned char val4[0x40];
         char Unused1[0x08];
         unsigned short Val7[0x14];
-};
-typedef struct Attack_data MyData;
+} GCC_PACK MyData;
 
 
-void PrepareData1(MyData *P1) {
+static void PrepareData1(MyData *P1) {
     unsigned short Tb1[0x6]={0x0123,0x4567,0x89AB,0xCDEF,0xF861,0xCB52};
     int i;
     for(i = 0; i < 6; i++) P1->Val7[i] = Tb1[i];
 }
 
-void PrepareData4(MyData *P1) {
+static void PrepareData4(MyData *P1) {
     int Tb[4]={0x67452301,0xefcdab89,0x98badcfe,0x10325476};
     int *mybuf = (int*) P1->Val7;
     int i;
     for(i = 0; i < 4; i++) mybuf[i] = Tb[i];
 }
 
-unsigned char AdditionalFunc1(MyData *P1, int P2) {
+static unsigned char AdditionalFunc1(MyData *P1, int P2) {
   short res;
   short *buf = (short*) P1->Val7;
 
@@ -921,7 +920,7 @@ unsigned char AdditionalFunc1(MyData *P1, int P2) {
         return (res & 0xFF);
 }
 
-unsigned char AdditionalFunc4(MyData *P1, int P2) {
+static unsigned char AdditionalFunc4(MyData *P1, int P2) {
   int res = 0;
   int *buf = (int*) P1->Val7;
 
@@ -935,7 +934,7 @@ unsigned char AdditionalFunc4(MyData *P1, int P2) {
         return (res & 0xFF);
 }
 
-void Process_1(MyData *Data, int TableIdx) {
+static void Process_1(MyData *Data, int TableIdx) {
 	unsigned char var0=0,var3=0;
 	int var1;
 	short *Tmp=(short*)Data->Val7;
@@ -1005,7 +1004,7 @@ void Process_1(MyData *Data, int TableIdx) {
 #define F(x, y, z) (((x) & (y)) | (~(x) & (z)))
 #define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 
-int Transform_MD5_C069B411(MyData *Data){	// ROM:C069B411
+static int Transform_MD5_C069B411(MyData *Data){	// ROM:C069B411
      short var0;
      short var5;
      short var9;
@@ -1123,7 +1122,7 @@ int Transform_MD5_C069B411(MyData *Data){	// ROM:C069B411
 01 12 B0 03 0A 00 87 F4 0B 98 99 FF DD 0C 10 C0 80 C2 20 03 17 61 7E 0A A0 7F 9B 14 05 66 3E CD 00 00 90 53 C0 02 94 33 75 1C 54 32 3C E9 21 B4 23 9E A2 D2 2E 85 AE 75 24 2D 71 16 DA 39 88 65 AE C3 0F 10 B2 2A 93 A8 53 00 AD 93 B6 8D C4 30 B1 DE 75 1F A8 3E EF A9 DC AC F1 5F AE B4 8A E9 60 E3 27 FC 64 29 8B ED 5C AA 06 D5 42 D8 2A 6D 48 FA D6 65 A3 F8 C4
 */
 
-void do_post_dw_hash(unsigned char *DW_INPUT, unsigned char *DW_OUTPUT, unsigned char *ecm_header_data) {
+static void do_post_dw_hash(unsigned char *DW_INPUT, unsigned char *DW_OUTPUT, unsigned char *ecm_header_data) {
     MyData Data;
     int a,i,ecmi,ecm_header_count;
 

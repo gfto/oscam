@@ -53,14 +53,14 @@ typedef struct s_gbox
   int cat_len;
   int pmt_len;
   int ecm_len;
-} GBOX_LENS;
+} GCC_PACK GBOX_LENS;
 
 typedef struct s_sssp
 {
   ushort caid;
   ushort pid;
   ulong  prid;
-} SSSP_TAB;
+} GCC_PACK SSSP_TAB;
 
 
 GBOX_LENS gbox_lens;
