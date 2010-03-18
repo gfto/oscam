@@ -1178,6 +1178,7 @@ static void do_post_dw_hash(unsigned char *DW_INPUT, unsigned char *DW_OUTPUT, u
                   }
                 }
     }
+  cs_ddump (DW_OUTPUT, 8, "Postprocessed DW:");
 }
 
 int videoguard_do_ecm(ECM_REQUEST *er)
