@@ -1587,6 +1587,7 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay);
 	fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);
 	fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg->netprio);
+	fprintf_conf(f, CONFVARWIDTH, "clientdyndns", "%d\n", cfg->clientdyndns);
 	fprintf_conf(f, CONFVARWIDTH, "resolvedelay", "%d\n", cfg->resolvedelay);
 	if (cfg->tosleep) fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", cfg->tosleep);
 	fprintf_conf(f, CONFVARWIDTH, "unlockparental", "%d\n", cfg->ulparent);
