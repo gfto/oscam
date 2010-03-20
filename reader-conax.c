@@ -4,29 +4,6 @@
 extern uchar cta_res[];
 extern ushort cta_lr;
 
-/*
-static unsigned int Conax_ToDate(char data0, char data1) 
-{ // decimal: yyyymmdd
-  int y,m,d;
-  unsigned int l;
-
-  y= 1990+ ((data1>>4) + ((data0>>5)&0x7)*10);
-  m= data1&0xf;
-  d= data0&0x1f;
-  l=  (y*100+m)*100+d;
-  return l;
-}*/
-
-static char *chid_date(uchar *ptr, char *buf, int l)
-{
-  if (buf)
-  {
-    snprintf(buf, l, "%04d/%02d/%02d",
-                     1990+(ptr[1]>>4)+(((ptr[0]>>5)&7)*10), ptr[1]&0xf, ptr[0]&0x1f);
-  }
-  return(buf);
-}
-
 #define write_cmd(cmd, data) \
 { \
         if (card_write(cmd, data)) return ERROR; \
@@ -35,6 +12,16 @@ static char *chid_date(uchar *ptr, char *buf, int l)
 #define read_cmd(cmd, data) \
 { \
         if (card_write(cmd, NULL)) return ERROR; \
+}
+
+static char *chid_date(const uchar *ptr, char *buf, int l)
+{
+  if (buf)
+  {
+    snprintf(buf, l, "%04d/%02d/%02d",
+              1990+(ptr[1]>>4)+(((ptr[0]>>5)&7)*10), ptr[1]&0xf, ptr[0]&0x1f);
+  }
+  return(buf);
 }
 
 static int read_record(uchar *cmd, uchar *data)
@@ -74,23 +61,25 @@ int conax_card_init(ATR newatr)
       case 0x28: reader[ridx].caid[0]=(cta_res[i+2]<<8)|cta_res[i+3];
     }
 
+  // Ins82 command needs to use the correct CAID reported in nano 0x28
+  ins82[17]=(reader[ridx].caid[0]>>8)&0xFF;
+  ins82[18]=(reader[ridx].caid[1])&0xFF;
+
   if ((n=read_record(ins82, ins82+5))<0) return ERROR;	// read serial
 
   for (j=0, i=2; i<n; i+=cta_res[i+1]+2)
     switch(cta_res[i])
     {
-	
       case 0x23:
-		if ( cta_res[i+5] != 0x00)
-		{
-			 memcpy(reader[ridx].hexserial, &cta_res[i+3], 6);
-		}else{
-		
-			 memcpy(reader[ridx].sa[j], &cta_res[i+5], 4);
-                 j++;
-		}           
-		break;
+        if ( cta_res[i+5] != 0x00)
+        {
+          memcpy(reader[ridx].hexserial, &cta_res[i+3], 6);
+        }else{
+          memcpy(reader[ridx].sa[j], &cta_res[i+5], 4);
+        j++;
     }
+    break;
+  }
 
   /* we have one provider, 0x0000 */
   reader[ridx].nprov = 1;
@@ -102,8 +91,8 @@ int conax_card_init(ATR newatr)
 
   for (j=0; j<reader[ridx].nprov; j++)
   {
-	cs_ri_log("Provider:%d  Provider-Id:%06X", j+1, b2ll(4, reader[ridx].prid[j]));	
-	cs_ri_log("Provider:%d  SharedAddress:%08X", j+1, b2ll(4, reader[ridx].sa[j]));	
+    cs_ri_log("Provider:%d  Provider-Id:%06X", j+1, b2ll(4, reader[ridx].prid[j]));
+    cs_ri_log("Provider:%d  SharedAddress:%08X", j+1, b2ll(4, reader[ridx].sa[j]));
   }
 
   cs_log("[conax-reader] ready for requests");
@@ -112,12 +101,12 @@ int conax_card_init(ATR newatr)
 
 static int conax_send_pin(void)
 {
-  unsigned char insPIN[] = { 0xDD,0xC8,0x00,0x00,0x07,0x1D,0x05,0x01,0x00,0x00,0x00,0x00 }; //letzte vier ist der Pin-Code
+  unsigned char insPIN[] = { 0xDD,0xC8,0x00,0x00,0x07,0x1D,0x05,0x01,0x00,0x00,0x00,0x00 }; //Last four are the Pin-Code
   memcpy(insPIN+8,reader[ridx].pincode,4);
 
   write_cmd(insPIN, insPIN+5);
-  cs_ri_log("sending pincode to card");   
- 
+  cs_ri_log("sending pincode to card");
+
   return OK;
 }
 
@@ -142,65 +131,62 @@ int conax_do_ecm(ECM_REQUEST *er)
 
   write_cmd(insA2, buf);  // write Header + ECM
 
-  while ((cta_res[cta_lr-2]==0x98) && 	// Antwort 
-         ((insCA[4]=cta_res[cta_lr-1])>0) && (insCA[4]!=0xFF))
+  while ((cta_res[cta_lr-2]==0x98) && 	// Antwort
+  ((insCA[4]=cta_res[cta_lr-1])>0) && (insCA[4]!=0xFF))
   {
     read_cmd(insCA, NULL);  //Codeword auslesen
 
     if ((cta_res[cta_lr-2]==0x98) ||
-        ((cta_res[cta_lr-2]==0x90) ))
+    ((cta_res[cta_lr-2]==0x90) ))
     {
       for(i=0; i<cta_lr-2; i+=cta_res[i+1]+2)
+      {
+        switch (cta_res[i])
+        {
+          case 0x25:
+            if ( (cta_res[i+1]>=0xD) && !((n=cta_res[i+4])&0xFE) )
+            {
+            rc|=(1<<n);
+            memcpy(er->cw+(n<<3), cta_res+i+7, 8);
+            }
+            break;
+          case 0x31:
+            if ( (cta_res[i+1]==0x02  && cta_res[i+2]==0x00  && cta_res[i+3]==0x00) || \
+            (cta_res[i+1]==0x02  && cta_res[i+2]==0x40  && cta_res[i+3]==0x00) )
+              break;
+            else if (strcmp(reader[ridx].pincode, "none"))
+            {
+              conax_send_pin();
+              write_cmd(insA2, buf);  // write Header + ECM
 
-	switch (cta_res[i])
-	{
-		case 0x25:
-			if ( (cta_res[i+1]>=0xD) && !((n=cta_res[i+4])&0xFE) )
-			{
-				rc|=(1<<n);
-				memcpy(er->cw+(n<<3), cta_res+i+7, 8);
-			}
-			break;
-		case 0x31:
-			if ( (cta_res[i+1]==0x02  && cta_res[i+2]==0x00  && cta_res[i+3]==0x00) || \
-				(cta_res[i+1]==0x02  && cta_res[i+2]==0x40  && cta_res[i+3]==0x00) )
-				break;
-			else if (strcmp(reader[ridx].pincode, "none"))
-			{
-		                conax_send_pin();
-		                write_cmd(insA2, buf);  // write Header + ECM
-                		 while ((cta_res[cta_lr-2]==0x98) &&   // Antwort
-                        		((insCA[4]=cta_res[cta_lr-1])>0) && (insCA[4]!=0xFF))
-                 		{
-                        		read_cmd(insCA, NULL);  //Codeword auslesen
-                        		if ((cta_res[cta_lr-2]==0x98) ||
-                                	   ((cta_res[cta_lr-2]==0x90) && (!cta_res[cta_lr-1])))
-                        		{
+              while ((cta_res[cta_lr-2]==0x98) &&   // Antwort
+                      ((insCA[4]=cta_res[cta_lr-1])>0) && (insCA[4]!=0xFF))
+              {
+                read_cmd(insCA, NULL);  //Codeword auslesen
 
-                        			for(j=0;j<cta_lr-2; j+=cta_res[j+1]+2)
-                                			if ((cta_res[j]==0x25) &&       // access: is cw
-                                			(cta_res[j+1]>=0xD) &&      // 0xD: 5 header + 8 cw
-                                			!((n=cta_res[j+4])&0xFE))   // cw idx must be 0 or 1
-                                			{
-                                        			rc|=(1<<n);
-                                        			memcpy(er->cw+(n<<3), cta_res+j+7, 8);
-                                			}
-                        		}
-                		}
-
-			}
-			break;
-			
-	}
-
-
-
+                if ((cta_res[cta_lr-2]==0x98) ||
+                    ((cta_res[cta_lr-2]==0x90) && (!cta_res[cta_lr-1])))
+                {
+                  for(j=0;j<cta_lr-2; j+=cta_res[j+1]+2)
+                    if ((cta_res[j]==0x25) &&       // access: is cw
+                        (cta_res[j+1]>=0xD) &&      // 0xD: 5 header + 8 cw
+                        !((n=cta_res[j+4])&0xFE))   // cw idx must be 0 or 1
+                    {
+                      rc|=(1<<n);
+                      memcpy(er->cw+(n<<3), cta_res+j+7, 8);
+                    }
+                }
+              }
+            }
+            break;
+        }
+      }
     }
- } 
- if (rc==3)
-	 return OK;
- else
-	 return ERROR;
+  }
+  if (rc==3)
+    return OK;
+  else
+    return ERROR;
 }
 
 int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
@@ -237,22 +223,14 @@ int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if 
 		}
 	}
 }
-	
 
 int conax_do_emm(EMM_PACKET *ep)
 {
-  /* by KrazyIvan
- *   EMM with lenght 83 and 85, is the same as ECM and PPV.
- *     EMM with lenght AA and A8 (keyupdate).
- *       82 70 82 00 00 00 00 2c 86 52 70 79 64 10 16 bc
- *         */
-
-
   unsigned char insEMM[] = { 0xDD,0x84,0x00,0x00,0x00 };
   unsigned char buf[255];
   int rc=0;
 
-  int l=ep->emm[2];
+  const int l = ep->emm[2];
 
   insEMM[4]=l+5;
   buf[0]=0x12;
@@ -263,9 +241,9 @@ int conax_do_emm(EMM_PACKET *ep)
   rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));
 
   if (rc)
-		return OK;
-	else
-		return ERROR;
+    return OK;
+  else
+    return ERROR;
 }
 
 int conax_card_info(void)

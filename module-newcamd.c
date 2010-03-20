@@ -24,7 +24,15 @@ typedef enum
   MSG_ADMIN_COMMAND,
   MSG_ADMIN_COMMAND_ACK,
   MSG_ADMIN_COMMAND_NAK,
-  MSG_KEEPALIVE = CWS_FIRSTCMDNO + 0x1d
+  MSG_KEEPALIVE = CWS_FIRSTCMDNO + 0x1d,
+  MSG_SERVER_2_CLIENT_OSD = 0xd1,
+  MSG_SERVER_2_CLIENT_ALLCARDS = 0xd2,
+  MSG_SERVER_2_CLIENT_ADDCARD = 0xd3,
+  MSG_SERVER_2_CLIENT_REMOVECARD = 0xd4,
+  MSG_SERVER_2_CLIENT_CHANGE_KEY = 0xd5,
+  MSG_SERVER_2_CLIENT_GET_VERSION = 0xd6,
+  MSG_SERVER_2_CLIENT_ADDSID = 0xd7,
+  MSG_CLIENT_2_SERVER_CARDDISCOVER = 0xd8
 } net_msg_type_t;
 
 typedef enum
@@ -33,13 +41,22 @@ typedef enum
   COMMTYPE_SERVER
 } comm_type_t;
 
+
+typedef struct custom_data
+{
+  unsigned short sid;
+  unsigned short caid;
+  int provid;
+  uchar x;
+} custom_data_t;
+
 #define REQ_SIZE	2
 static	uchar	*req=0;
 static  int ncd_proto=NCD_AUTO;
 
 static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer, 
                                 int len, uint8 *deskey, comm_type_t commType,
-                                ushort sid)
+                                ushort sid, custom_data_t *cd)
 {
   uint8 netbuf[CWS_NETMSGSIZE];
   int head_size;
@@ -70,6 +87,19 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
   if( sid ) {
     netbuf[(ncd_proto==NCD_524)?6:4] = (uchar)(sid>>8); //sid
     netbuf[(ncd_proto==NCD_524)?7:5] = (uchar)(sid);
+  }
+  if ((!ncd_proto==NCD_524) && (buffer[0] >= 0xd1) && (buffer[0]<= 0xd8)) { // extended proto for mg
+    cs_debug("newcamd: extended: msg");
+    if (cd) {
+      cs_debug("newcamd: extended: has cd");
+      netbuf[4] = cd->sid >> 8;
+      netbuf[5] = cd->sid & 0xff;
+      netbuf[6] = cd->caid >> 8;
+      netbuf[7] = cd->caid & 0xff;
+      netbuf[8] = (cd->provid >> 16) & 0xFF;
+      netbuf[9] = (cd->provid >> 8) & 0xff;
+      netbuf[10] = cd->provid & 0xff;
+    }
   }
   netbuf[0] = (len - 2) >> 8;
   netbuf[1] = (len - 2) & 0xff;
@@ -195,7 +225,7 @@ static void network_cmd_no_data_send(int handle, uint16 *netMsgId,
   uint8 buffer[CWS_NETMSGSIZE];
 
   buffer[0] = cmd; buffer[1] = 0;
-  network_message_send(handle, netMsgId, buffer, 3, deskey, commType, 0);
+  network_message_send(handle, netMsgId, buffer, 3, deskey, commType, 0, NULL);
 }
 
 static int network_cmd_no_data_receive(int handle, uint16 *netMsgId, 
@@ -269,7 +299,7 @@ static int connect_newcamd_server()
   //          reader[ridx].r_port, reader[ridx].r_usr, reader[ridx].r_pwd,
   //          index+strlen(passwdcrypt)+1);
   network_message_send(handle, 0, buf, index+strlen((char *)passwdcrypt)+1, key, 
-                       COMMTYPE_CLIENT, 0x8888);
+                       COMMTYPE_CLIENT, 0x8888, NULL);
 
   // 3.1 Get login answer
   //
@@ -350,41 +380,41 @@ static int newcamd_send(uchar *buf, int ml, ushort sid)
 
   //cs_ddump(buf, ml, "send %d bytes to %s", ml, remote_txt());
   return(network_message_send(client[cs_idx].udp_fd, &reader[ridx].ncd_msgid, 
-         buf, ml, reader[ridx].ncd_skey, COMMTYPE_CLIENT, sid));
+         buf, ml, reader[ridx].ncd_skey, COMMTYPE_CLIENT, sid, NULL));
 }
 
 static int newcamd_recv(uchar *buf)
 {
-	int rc, rs;
+  int rc, rs;
 
-	if (is_server)
-	{
-		rs = network_message_receive(client[cs_idx].udp_fd,
-				&client[cs_idx].ncd_msgid, buf,
-				client[cs_idx].ncd_skey, COMMTYPE_SERVER);
-	}
-	else
-	{
-		if (!client[cs_idx].udp_fd) return(-1);
-		rs = network_message_receive(client[cs_idx].udp_fd,
-				&reader[ridx].ncd_msgid, buf,
-				reader[ridx].ncd_skey, COMMTYPE_CLIENT);
-	}
+  if (is_server)
+  {
+    rs=network_message_receive(client[cs_idx].udp_fd, 
+                               &client[cs_idx].ncd_msgid, buf, 
+                               client[cs_idx].ncd_skey, COMMTYPE_SERVER);
+  }
+  else
+  {
+    if (!client[cs_idx].udp_fd) return(-1);
+    rs=network_message_receive(client[cs_idx].udp_fd, 
+                               &reader[ridx].ncd_msgid,buf, 
+                               reader[ridx].ncd_skey, COMMTYPE_CLIENT);
+  }
 
-	if (rs < 5) rc = (-1);
-	else rc = rs;
+  if (rs<5) rc=(-1);
+  else rc=rs;
 
-	cs_ddump(buf, rs, "received %d bytes from %s", rs, remote_txt());
-	client[cs_idx].last = time((time_t *) 0);
+  cs_ddump(buf, rs, "received %d bytes from %s", rs, remote_txt());
+  client[cs_idx].last = time((time_t *) 0);
 
-	if(rc == -1) {
-		if (rs > 0)
-			cs_log("packet to small or too large (%d bytes)", rs);
-		else
-			cs_log("Connection closed to %s", remote_txt());
-	}
-
-	return(rc);
+  if( rc==-1 )
+  {
+  	if (rs > 0)
+      cs_log("packet to small (%d bytes)", rs);
+    else
+      cs_log("Connection closed to %s", remote_txt());
+  }
+  return(rc);
 }
 
 static unsigned int seed;
@@ -651,12 +681,12 @@ static void newcamd_auth_client(in_addr_t ip)
                 }
             else
                 {
-                cs_debug("AU flag %d for user %s", au ,usr);
+                cs_debug("AU flag %d for user %s", au, usr);
                 }
             }
         else
             {
-            cs_log("AU disabled for user %s",usr);
+            cs_log("AU disabled for user %s", usr);
             }
         }
 
@@ -900,7 +930,7 @@ static void newcamd_auth_client(in_addr_t ip)
                 len+=11;
                 }
 
-            if( network_message_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid,  mbuf, len, key, COMMTYPE_SERVER, 0 ) <0 )
+            if( network_message_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid,  mbuf, len, key, COMMTYPE_SERVER, 0, NULL) <0 )
                 {
                 if(req)
                     {
@@ -952,7 +982,7 @@ static void newcamd_send_dcw(ECM_REQUEST *er)
   cs_debug("ncd_send_dcw: er->cpti=%d, cl_msgid=%d, %02X", er->cpti, cl_msgid, mbuf[0]);
 
   network_message_send(client[cs_idx].udp_fd, &cl_msgid, mbuf, len, 
-                       client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0);
+                       client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0, NULL);
 }
 
 static void newcamd_process_ecm(uchar *buf)
@@ -1024,7 +1054,7 @@ static void newcamd_process_emm(uchar *buf)
   buf[1] = 0x10;
   buf[2] = 0x00;
   network_message_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid, buf, 3, 
-                       client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0);
+                       client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0, NULL);
 }
 
 static void newcamd_server()
@@ -1042,6 +1072,59 @@ static void newcamd_server()
 	client[cs_idx].ncd_server = 1;
 	cs_debug("client connected to %d port", cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port);
 	newcamd_auth_client(client[cs_idx].ip);
+
+	// report all cards if using extended mg proto
+	if (cfg->ncd_mgclient) {
+		cs_debug("newcamd: extended: report all available cards");
+		int r, j, k;
+		uint8 buf[512];
+		custom_data_t *cd = malloc(sizeof(struct custom_data));
+		memset(cd, 0, sizeof(struct custom_data));
+		memset(buf, 0, sizeof(buf));
+
+		buf[0] = MSG_SERVER_2_CLIENT_ADDCARD;
+
+		for (r=0; r<CS_MAXREADER; r++) {
+			int flt = 0;
+			if (reader[r].ftab.filts) {
+				for (j=0; j<CS_MAXFILTERS; j++) {
+					if (reader[r].ftab.filts[j].caid) {
+						cd->caid = reader[r].ftab.filts[j].caid;
+						for (k=0; k<reader[r].ftab.filts[j].nprids; k++) {
+							cd->provid = reader[r].ftab.filts[j].prids[k];
+							cs_debug("newcamd: extended: report card");
+
+							network_message_send(client[cs_idx].udp_fd, 
+							&client[cs_idx].ncd_msgid, buf, 3, 
+							client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0, cd);
+
+							flt = 1;
+						}
+					}
+				}
+			}
+
+			if (reader[r].caid[0] && !flt) {
+				if ((reader[r].tcp_connected || reader[r].card_status == CARD_INSERTED)) {
+					cd->caid = reader[r].caid[0];
+					for (j=0; j<reader[r].nprov; j++) {
+						if (reader[r].card_status == CARD_INSERTED)
+							cd->provid = (reader[r].prid[j][1]) << 16 
+							| (reader[r].prid[j][2] << 8) || reader[r].prid[j][3];
+						else
+							cd->provid = (reader[r].prid[j][0]) << 16 
+							| (reader[r].prid[j][1] << 8) || reader[r].prid[j][2];
+
+            					cs_debug("newcamd: extended: report card");
+            					network_message_send(client[cs_idx].udp_fd, 
+						&client[cs_idx].ncd_msgid, buf, 3, 
+						client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0, cd);
+					}
+				}	
+			}
+		}
+	free(cd);
+	}
 
 	// check for clienttimeout, if timeout occurs try to send keepalive / wait for answer
 	// befor client was disconnected. If keepalive was disabled, exit after clienttimeout
