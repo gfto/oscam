@@ -481,6 +481,7 @@ struct s_reader
   char      cc_version[7];  // cccam version
   char      cc_build[5];    // cccam build number
   int       cc_maxhop;      // cccam max distance
+  int		cc_currenthops; // number of hops for CCCam
   void      *cc;            // ptr to cccam internal data struct
   uchar     cc_id;
   uchar     tcp_connected;
@@ -738,7 +739,6 @@ typedef struct ecm_request_t
   struct timeb  tps;    // incoming time stamp
   uchar         locals_done;
   int		btun; // mark er as betatunneled
-  int		hops; // number of hops for CCCam
 
 #ifdef CS_WITH_GBOX
   ushort	gbxCWFrom;
