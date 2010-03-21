@@ -589,3 +589,19 @@ void cs_strncpy(char * destination, const char * source, size_t num){
 	memcpy(destination, source, l);
 	destination[l] = '\0';
 }
+
+char *get_servicename(int srvid, int caid){
+	int i;
+	struct s_srvid *this = cfg->srvid;
+	static char name[83];
+
+	for (name[0] = 0; this && (!name[0]); this = this->next)
+		if (this->srvid == srvid)
+			for (i=0; i<this->ncaid; i++)
+				if (this->caid[i] == caid)
+					cs_strncpy(name, this->name, 32);
+
+	if (!name[0]) sprintf(name, "%04X:%04X unknown", caid, srvid);
+	if (!srvid) name[0] = '\0';
+	return(name);
+}

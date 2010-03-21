@@ -377,7 +377,7 @@ void cs_statistics(int idx)
 
 		char *channel ="";
 		if(cfg->mon_appendchaninfo)
-			channel = monitor_get_srvname(client[idx].last_srvid,client[idx].last_caid);
+			channel = get_servicename(client[idx].last_srvid,client[idx].last_caid);
 
 		if(!cfg->disableuserfile) {
 			fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s %04X:%04X %s\n",

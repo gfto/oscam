@@ -617,7 +617,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 	cs_debug("dvbapi: Found %d ECMpids and %d STREAMpids in PMT", demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
 
 	if (demux[demux_id].ECMpidcount>0) {
-		char *name = monitor_get_srvname(demux[demux_id].program_number, demux[demux_id].ECMpids[0].CA_System_ID);
+		char *name = get_servicename(demux[demux_id].program_number, demux[demux_id].ECMpids[0].CA_System_ID);
 		cs_log("dvbapi: new program number: %04X (%s)", program_number, name);
 		dvbapi_resort_ecmpids(demux_id);
 		if (demux[demux_id].ECMpidcount>0) {

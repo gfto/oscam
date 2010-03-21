@@ -812,6 +812,7 @@ void clear_tuntab(struct s_tuntab *ttab);
 extern int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int forceBakOverWrite);
 extern void fprintf_conf(FILE *f, int varnameWidth, const char *varname, const char *fmtstring, ...);
 extern void cs_strncpy(char * destination, const char * source, size_t num);
+extern char *get_servicename(int srvid, int caid);
 
 // oscam variables
 extern int pfd, rfd, fd_c2m, fd_m2c, cs_idx, *c_start, cs_ptyp, cs_dblevel, cs_hw;
@@ -1015,7 +1016,6 @@ extern void module_dvbapi(struct s_module *);
 
 // module-monitor
 extern char *monitor_get_proto(int idx);
-extern char *monitor_get_srvname(int srvid, int caid);
 extern int cs_idx2ridx(int idx);
 
 #ifdef WEBIF

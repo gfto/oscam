@@ -1632,7 +1632,7 @@ int send_dcw(ECM_REQUEST *er)
 	if(cfg->mon_appendchaninfo)
 		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
-				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, monitor_get_srvname(er->srvid, er->caid));
+				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, get_servicename(er->srvid, er->caid));
 	else
 		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
