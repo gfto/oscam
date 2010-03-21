@@ -1162,9 +1162,15 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
 				e_txt ? e_txt : t_msg[rc]);
 		break;
 	default:            // grant/check access
-		if (client[cs_idx].ip && account->dyndns[0])
-			if (client[cs_idx].ip != account->dynip)
-				rc=2;
+		if (client[cs_idx].ip && account->dyndns[0]) {
+			if (cfg->clientdyndns) {
+				if (client[cs_idx].ip != account->dynip)
+					rc=2;
+			}
+			else
+				cs_log("Warning: clientdyndns disabled in config. Enable clientdyndns to use hostname restrictions");
+		}
+
 		if (!rc)
 		{
 			client[cs_idx].dup=0;
