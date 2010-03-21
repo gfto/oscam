@@ -738,6 +738,7 @@ typedef struct ecm_request_t
   struct timeb  tps;    // incoming time stamp
   uchar         locals_done;
   int		btun; // mark er as betatunneled
+  int		hops; // number of hops for CCCam
 
 #ifdef CS_WITH_GBOX
   ushort	gbxCWFrom;

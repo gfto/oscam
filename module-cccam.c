@@ -591,7 +591,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     memcpy(ecmbuf+13, cur_er->ecm, cur_er->l);
 
     cc->count = cur_er->idx;
-
+    er->hops = cc->cur_card->hop + 1;
     cs_log("cccam: sending ecm for sid %04x to card %08x, hop %d", cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
     n = cc_cmd_send(ecmbuf, cur_er->l+13, MSG_CW_ECM);      // send ecm
 
