@@ -458,6 +458,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
 
 int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
+  rdr=rdr;
   switch (ep->emm[0]) {
 		case 0x82:
   	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[13]==0x80 && ep->emm[14]==0x05)

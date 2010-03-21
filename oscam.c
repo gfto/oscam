@@ -2106,8 +2106,9 @@ void log_emm_request(int auidx)
 void do_emm(EMM_PACKET *ep)
 {
 	int au;
-	au = client[cs_idx].au;
+	char *typtext[]={"UNKNOWN", "UNIQUE", "SHARED", "GLOBAL"}; 
 
+	au = client[cs_idx].au;
 	cs_ddump_mask(D_ATR, ep->emm, ep->l, "emm:");
 
 	if ((au < 0) || (au >= CS_MAXREADER))
@@ -2117,20 +2118,18 @@ void do_emm(EMM_PACKET *ep)
 		return;
 
 	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
+	cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], reader[au].label, cs_hexdump(0, reader[au].hexserial, 8)); 
 
 	switch (ep->type) {
 		case UNKNOWN:
-  			cs_debug_mask(D_EMM, "emmtype UNKNOWN. Reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
 			if (reader[au].blockemm_unknown) return;
 			break;
 
 		case UNIQUE:
-  			cs_debug_mask(D_EMM, "emmtype UNIQUE. Reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
 			if (reader[au].blockemm_u) return;
 			break;
 
 		case SHARED:
-  			cs_debug_mask(D_EMM, "emmtype SHARED. Reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
 			if (reader[au].blockemm_s) return;
 			break;
 
