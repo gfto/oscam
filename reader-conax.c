@@ -87,7 +87,7 @@ int conax_card_init(ATR newatr)
 
   cs_ri_log("type: Conax, caid: %04X, serial: %llu, card: v%d",
          reader[ridx].caid[0], b2ll(6, reader[ridx].hexserial), cardver);
-  cs_ri_log("Provider:%d", reader[ridx].nprov);
+  cs_ri_log("Providers:%d", reader[ridx].nprov);
 
   for (j=0; j<reader[ridx].nprov; j++)
   {
