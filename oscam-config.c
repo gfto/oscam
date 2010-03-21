@@ -1662,6 +1662,7 @@ int write_config()
 		}
 		fprintf(f,"\n");
 		fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", cfg->ncd_keepalive);
+		fprintf_conf(f, CONFVARWIDTH, "mgclient", "%d\n", cfg->ncd_mgclient);
 		fprintf(f,"\n");
 	}
 
