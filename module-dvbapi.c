@@ -994,6 +994,7 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 				fprintf(ecmtxt, "reader: %s\n", reader[er->reader[0]].label);
 				if (reader[er->reader[0]].typ & R_IS_CASCADING)
 					fprintf(ecmtxt, "from: %s\n", reader[er->reader[0]].device);
+				fprintf(ecmtxt, "protocol: %d\n", reader[er->reader[0]].typ);
 				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client[cs_idx].cwlastresptime/1000);
 				fprintf(ecmtxt, "cw0 : %s\n", cs_hexdump(1,demux[i].lastcw0,8));
 				fprintf(ecmtxt, "cw1 : %s\n", cs_hexdump(1,demux[i].lastcw1,8));
