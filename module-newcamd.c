@@ -681,7 +681,7 @@ static void newcamd_auth_client(in_addr_t ip)
                 }
             else
                 {
-                cs_debug("AU flag %d for user %s", au, usr);
+                cs_log("AU enabled for user %s on reader %s", usr, reader[au].label);
                 }
             }
         else
