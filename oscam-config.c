@@ -1756,7 +1756,18 @@ int write_config()
 #endif
 
 	/*serial*/
-
+	if (cfg->ser_device[0]){
+		fprintf(f,"[serial]\n");
+		char sdevice[512];
+		cs_strncpy(sdevice, cfg->ser_device, sizeof(sdevice));
+		char *p;
+		while( (p = strrchr(sdevice, 1)) ) {
+			*p = 0;
+			fprintf_conf(f, CONFVARWIDTH, "device", "%s\n", p + 1);
+		}
+		fprintf_conf(f, CONFVARWIDTH, "device", "%s\n", sdevice);
+		fprintf(f,"\n");
+	}
 
 	/*cccam*/
 	if ( cfg->cc_port > 0) {
