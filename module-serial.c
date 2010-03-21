@@ -891,13 +891,16 @@ static void oscam_ser_fork(int idx, char *url)
 
 void init_oscam_ser(int idx)
 {
-  char *p;
-  while( (p=strrchr(cfg->ser_device, 1)) )
-  {
-    *p=0;
-    oscam_ser_fork(idx, p+1);
-  }
-  oscam_ser_fork(idx, cfg->ser_device);
+	char sdevice[512];
+	cs_strncpy(sdevice, cfg->ser_device, sizeof(sdevice));
+
+	char *p;
+	while( (p=strrchr(sdevice, 1)) )
+	{
+		*p = 0;
+		oscam_ser_fork(idx, p + 1);
+	}
+	oscam_ser_fork(idx, sdevice);
 }
 
 /*
