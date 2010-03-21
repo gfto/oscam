@@ -1045,7 +1045,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 					status = "<b>online</b>"; classname="online";
 					isonline = 1;
 					proto = monitor_get_proto(i);
-					lastchan = monitor_get_srvname(client[i].last_srvid, client[i].last_caid);
+					lastchan = get_servicename(client[i].last_srvid, client[i].last_caid);
 					lastresponsetm = client[i].cwlastresptime;
 					isec = now - client[i].last;
 					if(isec > 0){
@@ -1393,7 +1393,7 @@ void send_oscam_services(struct templatevars *vars, FILE *f, struct uriparams *p
 		if ((strcmp(getParam(params, "service"), sidtab->label) == 0) && (strcmp(getParam(params, "action"), "list") == 0) ){
 			tpl_printf(vars, 0, "SIDCLASS","sidlist");
 			for (i=0; i<sidtab->num_srvid; i++){
-				tpl_printf(vars, 1, "SID", "%04X : %s<BR>", sidtab->srvid[i], monitor_get_srvname(sidtab->srvid[i], sidtab->caid[0]));
+				tpl_printf(vars, 1, "SID", "%04X : %s<BR>", sidtab->srvid[i], get_servicename(sidtab->srvid[i], sidtab->caid[0]));
 			}
 		}	else {
 			tpl_printf(vars, 0, "SIDCLASS","");
