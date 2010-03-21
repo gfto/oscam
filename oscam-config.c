@@ -924,7 +924,7 @@ void chk_t_newcamd(char *token, char *value)
 
 	if (!strcmp(token, "mgclient")) {
 		if(strlen(value) == 0) {
-			cfg->ncd_mgclient = 1;
+			cfg->ncd_mgclient = 0;
 			return;
 		} else {
 			cfg->ncd_mgclient = atoi(value);
