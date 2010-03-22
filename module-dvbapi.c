@@ -966,8 +966,10 @@ void dvbapi_main_local() {
 						connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
 						cs_debug("dvbapi: new socket connection %d", connfd);
 
-						if (connfd <= 0)
+						if (connfd <= 0) {
+							cs_log("dvbapi: accept() returns error %d, fd event %d", errno, pfd2[i].revents);
 							continue;
+						}
 
 						len = read(connfd, mbuf, sizeof(mbuf));
 
