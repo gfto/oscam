@@ -114,7 +114,6 @@ typedef struct ca_pid {
 DEMUXTYPE demux[MAX_DEMUX];
 
 unsigned short global_caid_list[MAX_CAID];
-CAIDTAB prioritytab,ignoretab;
 
 #define BOX_COUNT 2
 struct box_devices
@@ -514,10 +513,10 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 	epg.caid[1] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CA_System_ID);
 
 	unsigned long provid = (buffer[10] << 8) | buffer[11];
-	int pid=dvbapi_check_array(prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[demux[demux_index].pidindex].CA_System_ID);
+	int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[demux[demux_index].pidindex].CA_System_ID);
 	if (pid>=0) {
-		if (prioritytab.mask[pid]>0)
-			provid=prioritytab.mask[pid];
+		if (cfg->dvbapi_prioritytab.mask[pid]>0)
+			provid = cfg->dvbapi_prioritytab.mask[pid];
 	}
 
 	epg.provid[1] = (uchar)(provid>>16);
@@ -562,12 +561,12 @@ void dvbapi_resort_ecmpids(int demux_index) {
 		}
 	}
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
-		if (dvbapi_check_array(ignoretab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CA_System_ID)>=0) {
+		if (dvbapi_check_array(cfg->dvbapi_ignoretab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CA_System_ID)>=0) {
 			cs_debug("-> ignore %04x", demux[demux_index].ECMpids[n].CA_System_ID);
 		} else if (dvbapi_check_array(global_caid_list, MAX_CAID, demux[demux_index].ECMpids[n].CA_System_ID)>=0) {
 			cs_debug("-> caid list %04x", demux[demux_index].ECMpids[n].CA_System_ID);
 			tmppids[tmppidcount++]=demux[demux_index].ECMpids[n];
-		} else if (dvbapi_check_array(prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CA_System_ID)>=0) {
+		} else if (dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CA_System_ID)>=0) {
 			cs_debug("-> priority %04x", demux[demux_index].ECMpids[n].CA_System_ID);
 			tmppids[tmppidcount++]=demux[demux_index].ECMpids[n];
 		} else {
@@ -878,8 +877,6 @@ void dvbapi_main_local() {
 		return;
 	}
 
-	dvbapi_chk_caidtab(cfg->dvbapi_priority, &prioritytab);
-	dvbapi_chk_caidtab(cfg->dvbapi_ignore, &ignoretab);
 #if 0
 	int pmt_fd = open("/tmp/pmt.tmp", O_RDONLY);
 	if(pmt_fd>0) {
@@ -1009,10 +1006,10 @@ void dvbapi_main_local() {
 								memcpy(demux[demux_index].buffer_cache_dmx, md5buf, CS_ECMSTORESIZE);
 								
 								unsigned long provid=0;
-								int pid=dvbapi_check_array(prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].demux_fd[n].CA_System_ID);
+								int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].demux_fd[n].CA_System_ID);
 								if (pid>=0) {
-									if (prioritytab.mask[pid]>0)
-										provid=prioritytab.mask[pid];
+									if (cfg->dvbapi_prioritytab.mask[pid]>0)
+										provid = cfg->dvbapi_prioritytab.mask[pid];
 								}
 	
 								ECM_REQUEST *er;

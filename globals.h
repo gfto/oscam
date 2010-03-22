@@ -696,8 +696,8 @@ struct s_config
 	int		dvbapi_au;
 	char		dvbapi_usr[33];
 	char		dvbapi_boxtype[20];
-	char		dvbapi_priority[64];
-	char		dvbapi_ignore[64];
+	CAIDTAB	dvbapi_prioritytab;
+	CAIDTAB	dvbapi_ignoretab;
 #endif
 
 #ifdef CS_ANTICASC
@@ -933,6 +933,7 @@ extern void chk_t_monitor(char *token, char *value);
 
 #ifdef HAVE_DVBAPI
 extern void chk_t_dvbapi(char *token, char *value);
+void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab);
 #endif
 
 #ifdef WEBIF

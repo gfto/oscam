@@ -1108,12 +1108,12 @@ void chk_t_dvbapi(char *token, char *value)
 	}
 
 	if (!strcmp(token, "priority")) {
-		cs_strncpy(cfg->dvbapi_priority, value, sizeof(cfg->dvbapi_priority));
+		dvbapi_chk_caidtab(value, &cfg->dvbapi_prioritytab);
 		return;
 	}
 
 	if (!strcmp(token, "ignore")) {
-		cs_strncpy(cfg->dvbapi_ignore, value, sizeof(cfg->dvbapi_ignore));
+		dvbapi_chk_caidtab(value, &cfg->dvbapi_ignoretab);
 		return;
 	}
 
