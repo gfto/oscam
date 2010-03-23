@@ -1956,6 +1956,35 @@ int write_server()
 
 			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", reader[i].label);
 
+			char *ctyp ="";
+			switch(reader[i].typ) {	/* TODO like ph*/
+				case R_MOUSE	: ctyp = "mouse";		break;
+				case R_INTERNAL	: ctyp = "internal";		break;
+				case R_SMART	: ctyp = "smartreader";	break;
+				case R_CAMD35	: ctyp = "camd35";	break;
+				case R_CAMD33	: ctyp = "camd33";	break;
+				case R_NEWCAMD	:
+					if (reader[i].ncd_proto == NCD_524)
+						ctyp = "newcamd524";
+					else
+						ctyp = "newcamd";
+					break;
+				case R_RADEGAST	: ctyp = "radegast";	break;
+				case R_SERIAL	: ctyp = "serial";		break;
+#ifdef CS_WITH_GBOX
+				case R_GBOX		: ctyp = "gbox";		break;
+#endif
+#ifdef HAVE_PCSC
+				case R_PCSC		: ctyp = "pcsc";		break;
+#endif
+				case R_CCCAM	: ctyp = "cccam";		break;
+				case R_CS378X	: ctyp = "cs378x";		break;
+				case R_DB2COM1	: ctyp = "internal";	break;
+				case R_DB2COM2	: ctyp = "internal";   break;
+
+			}
+			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s", ctyp);
+
 			fprintf_conf(f, CONFVARWIDTH, "device", "%s", reader[i].device);
 			if (reader[i].r_port)
 				fprintf(f, ",%d", reader[i].r_port);
@@ -2026,6 +2055,30 @@ int write_server()
 
 			if (reader[i].boxid)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", reader[i].boxid);
+
+
+			//Keys Section here
+
+
+			if (reader[ridx].detect) {
+				if (reader[ridx].detect&0x80)
+					fprintf_conf(f, CONFVARWIDTH, "detect", "!%s\n", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+				else
+					fprintf_conf(f, CONFVARWIDTH, "detect", "%s\n", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+			}
+
+			if (reader[i].mhz)
+				fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", reader[i].mhz);
+
+			if (reader[i].cardmhz)
+				fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", reader[i].cardmhz);
+
+			if (reader[i].loadbalanced)
+				fprintf_conf(f, CONFVARWIDTH, "loadbalanced", "%d\n", reader[i].loadbalanced);
+
+			value = mk_t_ftab(&reader[i].ftab);
+			fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
+			free(value);
 
 			//ToDo: Add more reader parameter
 		}
