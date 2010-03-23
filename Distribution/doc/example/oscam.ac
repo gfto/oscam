@@ -3,6 +3,6 @@
 #
 # format: <CAID>:<provider ID>=<seconds>
 
-0100:000000=10
+0500:000000=10
 *=7
 	

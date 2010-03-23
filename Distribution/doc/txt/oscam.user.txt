@@ -94,6 +94,15 @@ DESCRIPTIONS
 	  anti-cascading: user	per  account,  0  =  anti-cascading  disabled,
 	  default:0
 
+       penalty = 0|1|2 (only if anti-cascading enabled)
+	  level of penalty:
+
+	   0 = only logging
+	   1 = send fake CWs
+	   2 = disbable user temporary
+
+	  default:0
+
        suppresscmd08 = 0|1
 	  0 = CMD08 for camd3 3.57x/3.78x clients enabled, 1 = CMD08 for camd3
 	  3.57x/3.78x clients disabled, default:0

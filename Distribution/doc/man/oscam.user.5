@@ -123,6 +123,17 @@ expiration date for account, default:none
 anti-cascading: user per account, 0 = anti-cascading disabled, default:0
 .RE
 .PP
+\fBpenalty\fP = \fB0\fP|\fB1\fP|\fB2\fP \fI(only if anti-cascading enabled)\fR
+.RS 3n
+level of penalty:
+
+ 0 = only logging
+ 1 = send fake CWs
+ 2 = disbable user temporary
+
+default:0
+.RE
+.PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
 .RS 3n
 0 = CMD08 for camd3 3.57x/3.78x clients enabled, 1 = CMD08 for camd3 3.57x/3.78x clients disabled, default:0
