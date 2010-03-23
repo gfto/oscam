@@ -213,9 +213,15 @@ reader assingment to group, \fIrequired\fR
 set EMM cache of local reader:
  \fBusecache\fP = \fB0\fP|\fB1\fP  1=enable EMM chaching, default:0
  \fBrewrite\fP  = determines how often one and the same EMM is written
- \fBlogging\fP  = \fB0\fP = log errors only
-            \fB1\fP = log all EMMs except the double EMMs
-            \fB2\fP = log all EMMs
+ \fBlogging\fP  = EMM logging mask:
+            \fB0\fP = EMM logging disabled
+            \fB1\fP = logging EMM errors
+            \fB2\fP = logging written EMMs
+            \fB4\fP = logging skipped EMMs
+            \fB8\fP = logging blocked EMMs
+
+ example: emmcache = 1,3,10
+          emmcache = 1,2,6
 .RE
 .PP
 \fBblocknano\fP = \fBnano[,nano]...\fP|\fPall\fP
