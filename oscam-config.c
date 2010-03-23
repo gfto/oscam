@@ -1929,6 +1929,112 @@ int write_userdb()
   return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
+int write_server()
+{
+	int i,j;
+	char *value;
+	FILE *f;
+
+	char *dot = ""; //flag for comma
+	char tmpfile[256];
+	char destfile[256];
+	char bakfile[256];
+
+	snprintf(destfile, 255,"%s%s", cs_confdir, cs_srvr);
+	snprintf(tmpfile, 255, "%s%s.tmp", cs_confdir, cs_srvr);
+	snprintf(bakfile, 255,"%s%s.bak", cs_confdir, cs_srvr);
+
+	if (!(f=fopen(tmpfile, "w"))){
+		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
+		return(1);
+	}
+	fprintf(f,"#oscam.user generated automatically\n\n");
+
+	for (i = 0; i < CS_MAXREADER; i++) {
+		if ( reader[i].label[0] ) {
+			fprintf(f,"[reader]\n");
+
+			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", reader[i].label);
+
+			fprintf_conf(f, CONFVARWIDTH, "device", "%s", reader[i].device);
+			if (reader[i].r_port)
+				fprintf(f, ",%d", reader[i].r_port);
+			if (reader[i].l_port)
+				fprintf(f, ",%d", reader[i].l_port);
+			fprintf(f, "\n");
+
+			if (reader[i].ncd_key[0]) {
+				fprintf_conf(f, CONFVARWIDTH, "key", "");
+				for (j = 0; j < 14; j++) {
+					fprintf(f, "%02X", reader[i].ncd_key[j]);
+				}
+				fprintf(f, "\n");
+			}
+
+#ifdef CS_WITH_GBOX
+			fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", reader[i].gbox_pwd);
+			fprintf_conf(f, CONFVARWIDTH, "premium", "%d\n", reader[i].gbox_prem);
+#endif
+			if (reader[i].r_usr[0]) {
+				fprintf_conf(f, CONFVARWIDTH, "account", "");
+				fprintf(f, "%s", reader[i].r_usr);
+				fprintf(f, ",%s", reader[i].r_pwd);
+				fprintf(f, "\n");
+			}
+
+			if (reader[i].pincode[0])
+				fprintf_conf(f, CONFVARWIDTH, "pincode", "%s\n", reader[i].pincode);
+
+			if (reader[i].emmfile)
+				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", reader[i].emmfile);
+
+			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", reader[i].enable);
+
+			fprintf_conf(f, CONFVARWIDTH, "services", "");
+			char sidok[33]; long2bitchar(reader[i].sidtabok, sidok);
+			char sidno[33];	long2bitchar(reader[i].sidtabno, sidno);
+			struct s_sidtab *sidtab = cfg->sidtab;
+			i=0; dot = "";
+			for (; sidtab; sidtab=sidtab->next){
+				if(sidok[i]=='1')	{fprintf(f,"%s%s", dot, sidtab->label); dot = ",";}
+				if(sidno[i]=='1') {fprintf(f,"%s!%s", dot, sidtab->label); dot = ",";}
+				i++;
+			}
+			fputc((int)'\n', f);
+
+			if (reader[i].tcp_ito)
+				fprintf_conf(f, CONFVARWIDTH, "inactivitytimeout", "%d\n", reader[i].tcp_ito);
+
+			if (reader[i].tcp_rto)
+				fprintf_conf(f, CONFVARWIDTH, "reconnecttimeout", "%d\n", reader[i].tcp_rto);
+
+			if (reader[i].ncd_disable_server_filt)
+				fprintf_conf(f, CONFVARWIDTH, "disableserverfilter", "%d\n", reader[i].ncd_disable_server_filt);
+
+			if (reader[i].smargopatch)
+				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", reader[i].smargopatch);
+
+			if (reader[i].fallback)
+				fprintf_conf(f, CONFVARWIDTH, "fallback", "%d\n", reader[i].fallback);
+
+			if (reader[i].log_port)
+				fprintf_conf(f, CONFVARWIDTH, "logport", "%d\n", reader[i].log_port);
+
+			value = mk_t_caidtab(&reader[i].ctab);
+			fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
+			free(value);
+
+			if (reader[i].boxid)
+				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", reader[i].boxid);
+
+			//ToDo: Add more reader parameter
+		}
+	}
+	fclose(f);
+
+	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
+}
+
 int init_userdb()
 {
 	int tag = 0, nr, nro, expired, disabled;
