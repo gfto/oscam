@@ -115,7 +115,7 @@ DEMUXTYPE demux[MAX_DEMUX];
 
 unsigned short global_caid_list[MAX_CAID];
 
-#define BOX_COUNT 2
+#define BOX_COUNT 3
 struct box_devices
 {
 	char ca_device_path[32];
@@ -124,6 +124,7 @@ struct box_devices
 };
 
 struct box_devices devices[BOX_COUNT] = {
+	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/ca%d", "/tmp/virtual_adapter/demux%d", "/tmp/camd.socket" },
 	/* dreambox (dvb-api-3)*/	{ "/dev/dvb/adapter0/ca%d", "/dev/dvb/adapter0/demux%d", "/var/tmp/camd.socket" },
 	/* dreambox (dvb-api-1)*/	{ "/dev/dvb/card0/ca%d", "/dev/dvb/card0/demux%d", "/var/tmp/camd.socket" }
 };
@@ -516,7 +517,7 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 	int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[demux[demux_index].pidindex].CA_System_ID);
 	if (pid>=0) {
 		if (cfg->dvbapi_prioritytab.mask[pid]>0)
-			provid = cfg->dvbapi_prioritytab.mask[pid];
+			provid = (cfg->dvbapi_prioritytab.cmap[pid] << 8 | cfg->dvbapi_prioritytab.mask[pid]);
 	}
 
 	epg.provid[1] = (uchar)(provid>>16);
@@ -775,9 +776,10 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 		else
 			ptr3="";
 
-		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3))) < 0x10000)
+		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3))))
 		{
 			ctab->caid[i]=caid;
+			ctab->cmap[i]=prov >> 8;
 			ctab->mask[i++]=prov;
 		}
 	}
@@ -1009,7 +1011,7 @@ void dvbapi_main_local() {
 								int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].demux_fd[n].CA_System_ID);
 								if (pid>=0) {
 									if (cfg->dvbapi_prioritytab.mask[pid]>0)
-										provid = cfg->dvbapi_prioritytab.mask[pid];
+										provid = (cfg->dvbapi_prioritytab.cmap[pid] << 8 | cfg->dvbapi_prioritytab.mask[pid]);
 								}
 	
 								ECM_REQUEST *er;
