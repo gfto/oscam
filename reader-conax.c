@@ -87,12 +87,13 @@ int conax_card_init(ATR newatr)
 
   cs_ri_log("type: Conax, caid: %04X, serial: %llu, card: v%d",
          reader[ridx].caid[0], b2ll(6, reader[ridx].hexserial), cardver);
-  cs_ri_log("Providers:%d", reader[ridx].nprov);
+
+  cs_ri_log("Providers: %d", reader[ridx].nprov);
 
   for (j=0; j<reader[ridx].nprov; j++)
   {
-    cs_ri_log("Provider:%d  Provider-Id:%06X", j+1, b2ll(4, reader[ridx].prid[j]));
-    cs_ri_log("Provider:%d  SharedAddress:%08X", j+1, b2ll(4, reader[ridx].sa[j]));
+    cs_ri_log("Provider: %d  Provider-Id: %06X", j+1, b2ll(4, reader[ridx].prid[j]));
+    cs_ri_log("Provider: %d  SharedAddress: %08X", j+1, b2ll(4, reader[ridx].sa[j]));
   }
 
   cs_log("[conax-reader] ready for requests");
