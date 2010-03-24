@@ -1127,7 +1127,7 @@ static int cc_srv_connect()
   cc = malloc(sizeof(struct cc_data));
   if (cc==NULL) {
     cs_log("cccam: cannot allocate memory");
-    return -1;
+    cs_exit(0);
   }
 
   client[cs_idx].cc = cc;
@@ -1161,14 +1161,20 @@ static int cc_srv_connect()
     cs_ddump(buf, 20, "cccam: recv:");
     cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
     cs_ddump(buf, 20, "cccam: hash:");
-  } else return -1;
+  } else {
+    cs_log("cccam:%d: receive failed errno: %d (%s)", __LINE__, errno, strerror(errno));
+    cs_exit(0);
+  }
 
   // receive username
   if ((i=recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
     cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
     cs_ddump(buf, 20, "cccam: username '%s':", buf);
     strncpy(usr, (char *)buf, sizeof(usr));
-  } else return -1;
+  } else {
+    cs_log("cccam:%d: receive username failed errno: %d (%s)", __LINE__, errno, strerror(errno));
+    cs_exit(0);
+  }
 
   for (account=cfg->account; account; account=account->next)
     if (strcmp(usr, account->usr) == 0) {
@@ -1181,7 +1187,10 @@ static int cc_srv_connect()
   if ((i=recv(pfd, buf, 6, MSG_WAITALL)) == 6) {
     cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
     cs_ddump(buf, 6, "cccam: pwd check '%s':", buf);
-  } else return -1;
+  } else {
+    cs_log("cccam:%d: receive passwd failed errno: %d (%s)", __LINE__, errno, strerror(errno));
+    cs_exit(0);
+  }
 
   cs_auth_client(account, NULL);
   //cs_auth_client((struct s_auth *)(-1), NULL);
@@ -1203,7 +1212,10 @@ static int cc_srv_connect()
   // send cli data ack
   cc_cmd_send(NULL, 0, MSG_CLI_DATA);
 
-  if (cc_send_srv_data()<0) return -1;
+  if (cc_send_srv_data()<0) {
+	cs_log("cccam:%d: cc_send_srv_data() failed errno: %d (%s)", __LINE__, errno, strerror(errno));
+	cs_exit(0);
+  }
 
   is_server = 1;
 
@@ -1243,6 +1255,9 @@ void cc_srv_init()
   pfd=client[cs_idx].udp_fd;
   //cc_auth_client(client[cs_idx].ip);
   cc_srv_connect();
+
+  
+  cs_exit(0);
 }
 
 int cc_cli_init()
