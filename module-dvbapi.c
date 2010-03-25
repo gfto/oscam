@@ -785,19 +785,20 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 	}
 }
 
-#if 0
+#ifdef QBOXHD
 time_t pmt_timestamp=0;
 int pmt_id=-1, dir_fd=-1;
 
 void event_handler(int signal) {
 	struct stat pmt_info;
-	uchar inhalt[200], dest[200];
-	int len;
+	uchar inhalt[400], dest[200];
+	uint len;
 	signal=signal;
 	int pmt_fd = open("/tmp/pmt.tmp", O_RDONLY);
 	if(pmt_fd>0) {
 		if (fstat(pmt_fd, &pmt_info) == 0) {
 			if (pmt_info.st_mtime == pmt_timestamp) {
+				close(pmt_fd);
 				return;
 			}
 
@@ -812,10 +813,29 @@ void event_handler(int signal) {
 			pmt_timestamp = pmt_info.st_mtime;
 
 			cs_sleepms(100);
-			//02 B0 <len> <srvid1> <srvid2> ..
+
 			len = read(pmt_fd,inhalt,sizeof(inhalt));
 			if (len<1) return;
+#ifdef QBOXHD
+			uint j1,j2;
+			// QboxHD pmt.tmp is the full capmt written as a string of hex values
+			// pmt.tmp must be longer than 3 bytes (6 hex chars) and even length
+			if ((len<6) || ((len%2) != 0)) {
+				cs_log("dvbapi: error parsing QboxHD pmt.tmp, incorrect length");
+				return;
+			}
 
+			for(j2=0,j1=0;j2<len;j2+=2,j1++) {
+				if (sscanf((char*)inhalt+j2,"%02X",(uint*)dest+j1) != 1) {
+					cs_log("dvbapi: error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
+					return;
+				}
+			}
+
+			cs_ddump(dest,len/2,"QboxHD pmt.tmp:");
+
+			pmt_id = dvbapi_parse_capmt(dest+4, (len/2)-4, -1);
+#else
 			cs_ddump(inhalt,len,"pmt:");
 		
 			memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
@@ -827,6 +847,7 @@ void event_handler(int signal) {
 			memcpy(dest + 7, inhalt + 12, len - 12 - 4);
 
 			pmt_id = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1);
+#endif
 			close(pmt_fd);
 		}
 	} else {
@@ -879,7 +900,7 @@ void dvbapi_main_local() {
 		return;
 	}
 
-#if 0
+#ifdef QBOXHD
 	int pmt_fd = open("/tmp/pmt.tmp", O_RDONLY);
 	if(pmt_fd>0) {
 		struct sigaction signal_action;
@@ -961,9 +982,9 @@ void dvbapi_main_local() {
 				}
 
 				if (type[i]==1) {
-					if (pfd2[i].fd==listenfd) {						
+					if (pfd2[i].fd==listenfd) {
+						cs_debug("dvbapi: new socket connection");
 						connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
-						cs_debug("dvbapi: new socket connection %d", connfd);
 
 						if (connfd <= 0) {
 							cs_log("dvbapi: accept() returns error %d, fd event %d", errno, pfd2[i].revents);
@@ -985,7 +1006,7 @@ void dvbapi_main_local() {
 					} else {
 						cs_log("dvbapi: New capmt on old socket. Please report.");
 						len = read(pfd2[i].fd, mbuf, sizeof(mbuf));
-						cs_dump(mbuf, len, "message:");					
+						cs_dump(mbuf, len, "message:");
 					}
 				} else { // type==0
 					if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf), 0)) <= 0)

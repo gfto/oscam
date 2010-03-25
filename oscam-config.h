@@ -12,7 +12,9 @@
 #    define CS_LOGFILE "/dev/tty"
 #  endif
 #  define CS_EMBEDDED
-#  define CS_NOSHM
+#  ifndef QBOXHD
+#     define CS_NOSHM
+#  endif
 #  define NO_FTIME
 #  define CS_HW_DBOX2	1
 #  define CS_HW_DREAM	2
