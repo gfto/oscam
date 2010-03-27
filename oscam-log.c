@@ -353,7 +353,7 @@ int cs_init_statistics(char *file)
 {
 	if ((!fps) && (file != NULL))
 	{
-		if ((fps=fopen(file, "a"))<=(FILE *)0)
+		if ((fps=fopen(file, "a+"))<=(FILE *)0)
 		{
 			fps=(FILE *)0;
 			cs_log("couldn't open statistics file: %s", file);
@@ -385,7 +385,12 @@ void cs_statistics(int idx)
 		if(cfg->mon_appendchaninfo)
 			channel = get_servicename(client[idx].last_srvid,client[idx].last_caid);
 
-		int lsec = client[idx].last - client[idx].lastswitch;
+		int lsec;
+		if ((client[idx].last_caid == 0xFFFF) && (client[idx].last_srvid == 0xFFFF))
+			lsec = client[idx].last - client[idx].login; //client leave calc total duration
+		else
+			lsec = client[idx].last - client[idx].lastswitch;
+
 		int secs = 0, fullmins = 0, mins = 0, fullhours = 0;
 
 		if((lsec > 0) && (lsec < 1000000)) {

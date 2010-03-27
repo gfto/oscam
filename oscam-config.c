@@ -1313,6 +1313,7 @@ int init_config()
 	if (cfg->logfile == NULL)
 		asprintf(&(cfg->logfile), "%s", CS_LOGFILE);
 #endif
+	cs_init_statistics(cfg->usrfile);
 	cs_init_log(cfg->logfile);
 	if (cfg->ftimeout >= cfg->ctimeout) {
 		cfg->ftimeout = cfg->ctimeout - 100;

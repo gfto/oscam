@@ -330,6 +330,7 @@ void cs_exit(int sig)
   switch(client[cs_idx].typ)
   {
     case 'c':
+    	cs_statistics(cs_idx);
     	client[cs_idx].last_caid = 0xFFFF;
     	client[cs_idx].last_srvid = 0xFFFF;
     	cs_statistics(cs_idx);
@@ -2483,7 +2484,7 @@ int main (int argc, char *argv[])
 #ifdef IRDETO_GUESSING
   init_irdeto_guess_tab(); 
 #endif
-  cs_init_statistics(cfg->usrfile);
+
 
   if (pipe(fdp))
   {
