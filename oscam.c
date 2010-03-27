@@ -1989,9 +1989,9 @@ void get_cw(ECM_REQUEST *er)
 		i = er->srvid;
 
 		if ((i != client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch)) {
-			client[cs_idx].lastswitch = now;
 			if(cfg->usrfileflag)
 				cs_statistics(cs_idx);
+			client[cs_idx].lastswitch = now;
 		}
 
 		// user sleeping

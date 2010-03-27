@@ -385,18 +385,42 @@ void cs_statistics(int idx)
 		if(cfg->mon_appendchaninfo)
 			channel = get_servicename(client[idx].last_srvid,client[idx].last_caid);
 
+		int lsec = client[idx].last - client[idx].lastswitch;
+		int secs = 0, fullmins = 0, mins = 0, fullhours = 0;
+
+		if((lsec > 0) && (lsec < 1000000)) {
+			secs = lsec % 60;
+			if (lsec > 60) {
+				fullmins = lsec / 60;
+				mins = fullmins % 60;
+				if(fullmins > 60) {
+					fullhours = fullmins / 60;
+				}
+			}
+		}
+
 		/* statistics entry start with 's' to filter it out on other end of pipe
 		 * so we can use the same Pipe as Log
 		 */
-		sprintf(buf, "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s %04X:%04X %s\n",
+		sprintf(buf, "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %02d:%02d:%02d %s %04X:%04X %s\n",
 				lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
 				lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
 				client[idx].usr[0] ? client[idx].usr : "-",
-						cs_inet_ntoa(client[idx].ip), client[idx].port,
-						client[idx].cwfound, client[idx].cwcache, client[idx].cwnot, client[idx].cwignored,
-						client[idx].cwtout, client[idx].cwtun, client[idx].login, client[idx].last,
-						ph[client[idx].ctyp].desc, client[idx].last_caid,client[idx].last_srvid,
-						channel);
+				cs_inet_ntoa(client[idx].ip),
+				client[idx].port,
+				client[idx].cwfound,
+				client[idx].cwcache,
+				client[idx].cwnot,
+				client[idx].cwignored,
+				client[idx].cwtout,
+				client[idx].cwtun,
+				client[idx].login,
+				client[idx].last,
+				fullhours, mins, secs,
+				ph[client[idx].ctyp].desc,
+				client[idx].last_caid,
+				client[idx].last_srvid,
+				channel);
 
 		if ((*log_fd) && (client[cs_idx].typ != 'l') && (client[cs_idx].typ != 'a'))
 			write_to_pipe(*log_fd, PIP_ID_LOG, (uchar *) buf, strlen(buf));
