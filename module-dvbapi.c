@@ -132,13 +132,6 @@ struct box_devices devices[BOX_COUNT] = {
 int selected_box=-1;
 int selected_api=-1;
 
-int emm_count[]={0,0,0,0};
-
-#if 0
-extern uchar *nagra2_get_emm_filter(struct s_reader*, int);
-extern uchar *irdeto_get_emm_filter(struct s_reader*, int);
-#endif
-
 int dvbapi_set_filter(int dmx_fd, int api, unsigned short pid, uchar *filt, uchar *mask, int timeout) {
 	int ret=-1;
 
@@ -353,22 +346,7 @@ void dvbapi_start_emm_filter(int demux_index, int emmtype, int type) {
 		}
 	}
 
-#ifndef NOT_MODULAR
-#define SC_IRDETO 1 //reader-common.c
-#define SC_NAGRA 8
 	switch(reader[client[cs_idx].au].card_system) {
-#if 0
-		case SC_IRDETO:
-			i=0;
-			uchar *filter1 = irdeto_get_emm_filter(&reader[client[cs_idx].au], emmtype);
-			memcpy(filter,filter1,32);
-			break;
-		case SC_NAGRA:
-			i=0;
-			uchar *filter1 = nagra2_get_emm_filter(&reader[client[cs_idx].au], emmtype);
-			memcpy(filter,filter1,32);
-			break;
-#endif
 		default:
 			if (emmtype!=GLOBAL) return;
 			memset(filter,0,32);
@@ -376,17 +354,6 @@ void dvbapi_start_emm_filter(int demux_index, int emmtype, int type) {
 			filter[0+16]=0xF0;
 			break;
 	}
-#else
-	if (cardsystem[reader[client[cs_idx].au].card_system-1].get_emm_filter) {
-		uchar *filter1 = cardsystem[reader[client[cs_idx].au].card_system-1].get_emm_filter(&reader[client[cs_idx].au], emmtype);
-		memcpy(filter,filter1,32);
-	} else {
-		if (emmtype!=GLOBAL) return;
-		memset(filter,0,32);
-		filter[0]=0x80;
-		filter[0+16]=0xF0;
-	}
-#endif
 
 	for (i=0;i<MAX_FILTER;i++) {
 		if (demux[demux_index].demux_fd[i].fd<=0) {
@@ -526,7 +493,7 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 
 	epg.l=len;
 	memcpy(epg.emm, buffer, epg.l);
-
+/*
 	int found=0;
 	for (i=0;i<CS_MAXREADER;i++) {
 		if (reader[i].caid[0] == demux[demux_index].ECMpids[demux[demux_index].pidindex].CA_System_ID) {
@@ -535,14 +502,10 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 			break;
 		}
 	}
-
-	if (found==1 && reader[client[cs_idx].au].card_system>0) {
-		/* cardsystem[reader[client[cs_idx].au].card_system-1].get_emm_type(&epg, &reader[client[cs_idx].au]);
-		char *typtext[]={"UNKNOWN", "UNIQUE", "SHARED", "GLOBAL"};
-		emm_count[epg.type]++;
-		cs_debug("dvbapi: %s emm (unk/g/s/u) (%d/%d/%d/%d)", typtext[epg.type], emm_count[UNKNOWN], emm_count[GLOBAL], emm_count[SHARED], emm_count[UNIQUE]); */
-		do_emm(&epg);
-	}
+*/
+	//if (found==1 && reader[client[cs_idx].au].card_system>0) {
+	do_emm(&epg);
+	//}
 
 }
 
@@ -785,7 +748,6 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 	}
 }
 
-#ifdef QBOXHD
 time_t pmt_timestamp=0;
 int pmt_id=-1, dir_fd=-1;
 
@@ -858,7 +820,7 @@ void event_handler(int signal) {
 		close(dir_fd);
 	}
 }
-#endif
+
 
 void dvbapi_main_local() {
 	int maxpfdsize=(MAX_DEMUX*MAX_FILTER)+MAX_DEMUX+2;
@@ -900,7 +862,6 @@ void dvbapi_main_local() {
 		return;
 	}
 
-#ifdef QBOXHD
 	int pmt_fd = open("/tmp/pmt.tmp", O_RDONLY);
 	if(pmt_fd>0) {
 		struct sigaction signal_action;
@@ -917,7 +878,7 @@ void dvbapi_main_local() {
 		}
 		close(pmt_fd);
 	}
-#endif
+
 	cs_ftime(&tp);
 	tp.time+=500;
 

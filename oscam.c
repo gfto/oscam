@@ -2120,8 +2120,12 @@ void do_emm(EMM_PACKET *ep)
 	if ((au < 0) || (au >= CS_MAXREADER))
 		return;
 
-	if (!reader_get_emm_type(ep, &reader[au])) //decodes ep->type and ep->hexserial from the EMM
-		return;
+	if (reader[au].card_system>0) {
+		if (!reader_get_emm_type(ep, &reader[au])) { //decodes ep->type and ep->hexserial from the EMM
+			cs_debug_mask(D_EMM, "emm skipped");
+			return;
+		}
+	}
 
 	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 	cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], reader[au].label, cs_hexdump(0, reader[au].hexserial, 8)); 
@@ -2142,7 +2146,6 @@ void do_emm(EMM_PACKET *ep)
 		// FIXME only camd33 delivers hexserial from the net, newcamd, camd35 copy 
 		// cardreader hexserial in; reader_get_emm_type overwrites this with real SA value if known!
 		case GLOBAL:
-  			cs_debug_mask(D_EMM, "emmtype GLOBAL. Reader %s has serial %s.", reader[au].label, cs_hexdump(0, reader[au].hexserial, 8));
 			if (reader[au].blockemm_g) return;
 			break;
 	}

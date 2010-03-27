@@ -206,30 +206,35 @@ int ICC_Async_Activate (ATR * atr, unsigned short deprecated)
 	}
 
 	current_baudrate = DEFAULT_BAUDRATE; //this is needed for all readers to calculate work_etu for timings
-	switch(reader[ridx].typ) {
-		case R_DB2COM1:
-		case R_DB2COM2:
-		case R_MOUSE:
-			call (Phoenix_Reset(atr));
-			break;
-#if defined(LIBUSB)
-		case R_SMART:
-			call (SR_Reset(&reader[ridx],atr));
-			break;
-#endif
-		case R_INTERNAL:
-#ifdef SCI_DEV
-			call (Sci_Activate());
-			call (Sci_Reset(atr));
-#elif COOL
-			call (Cool_Reset(atr));
-#endif
-			break;
-		default:
-			cs_log("ERROR ICC_Async_Activate: unknow reader type %i",reader[ridx].typ);
-			return ERROR;
-	}
 
+	if (reader[ridx].atr[0] != 0) {
+		cs_log("using ATR from reader config");
+		ATR_InitFromArray(atr, reader[ridx].atr, 33);
+	} else {
+		switch(reader[ridx].typ) {
+			case R_DB2COM1:
+			case R_DB2COM2:
+			case R_MOUSE:
+				call (Phoenix_Reset(atr));
+				break;
+#if defined(LIBUSB)
+			case R_SMART:
+				call (SR_Reset(&reader[ridx],atr));
+				break;
+#endif
+			case R_INTERNAL:
+#ifdef SCI_DEV
+				call (Sci_Activate());
+				call (Sci_Reset(atr));
+#elif COOL
+				call (Cool_Reset(atr));
+#endif
+				break;
+			default:
+				cs_log("ERROR ICC_Async_Activate: unknow reader type %i",reader[ridx].typ);
+				return ERROR;
+		}
+	}
 	unsigned char atrarr[64];
 	unsigned int atr_size;
 	ATR_GetRaw(atr, atrarr, &atr_size);

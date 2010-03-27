@@ -71,12 +71,13 @@ int Phoenix_Init ()
 #endif
 	
 	cs_debug_mask (D_IFD, "IFD: Initializing reader %s type=%d\n",  reader[ridx].label, reader[ridx].typ);
-	
-	/* Default serial port settings */
-	call (IO_Serial_SetParams (DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
-	call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
-	call (IO_Serial_SetParity (PARITY_EVEN));
-	IO_Serial_Flush();
+	if (reader[ridx].atr[0]==0) {
+		/* Default serial port settings */
+		call (IO_Serial_SetParams (DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
+		call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
+		call (IO_Serial_SetParity (PARITY_EVEN));
+		IO_Serial_Flush();
+	}
 	return OK;
 }
 

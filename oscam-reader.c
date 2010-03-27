@@ -423,28 +423,42 @@ static int reader_do_emm(EMM_PACKET *ep)
 
   cs_ftime(&tps);
 
-  no=0;
-  for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++)
-    if (!memcmp(emmcache[i].emm, ep->emm, ep->emm[2]))
-    {
-      if (reader[ridx].cachemm)
-        ecs=(reader[ridx].rewritemm > emmcache[i].count) ? 1 : 2;
-      else
-        ecs=1;
-      no=++emmcache[i].count;
-      i--;
-    }
+	no=0;
+	for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++)
+		if (!memcmp(emmcache[i].emm, ep->emm, ep->emm[2]))
+		{
+			if (reader[ridx].cachemm)
+				ecs=(reader[ridx].rewritemm > emmcache[i].count) ? 1 : 2;
+			else
+				ecs=1;
+			no=++emmcache[i].count;
+			i--;
+		}
 
-  if ((rc=ecs)<2)
-  {
-    rc=(proxy) ? 0 : reader_emm(ep);
-    if (!ecs)
-    {
-      i=reader_store_emm(ep->emm, ep->type);
-      no=1;
-    }
-  }
-  if (rc) client[cs_idx].lastemm=time((time_t)0);
+	if ((rc=ecs)<2)
+	{
+		if (proxy) {
+			cs_debug("network emm reader: %s" ,reader[ridx].label);
+
+			if (reader[ridx].ph.c_send_emm) {
+				rc=reader[ridx].ph.c_send_emm(ep);
+			} else {
+				cs_debug("send_emm() support missing");
+				rc=0;
+			}
+		} else {
+			cs_debug("local emm reader: %s" ,reader[ridx].label);
+    			rc=reader_emm(ep);
+		}
+
+    		if (!ecs)
+    		{
+			i=reader_store_emm(ep->emm, ep->type);
+			no=1;
+		}
+  	}
+
+	if (rc) client[cs_idx].lastemm=time((time_t)0);
 
   if (reader[ridx].logemm & (1 << rc))
   {

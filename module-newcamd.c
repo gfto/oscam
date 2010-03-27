@@ -1263,6 +1263,23 @@ static int newcamd_send_ecm(ECM_REQUEST *er, uchar *buf)
   return((newcamd_send(buf, er->l, er->srvid)<1) ? (-1) : 0);
 }
 
+
+static int newcamd_send_emm(EMM_PACKET *ep)
+{
+  uchar buf[200];
+  if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
+    return(-1);
+
+  // check server filters
+  if( !newcamd_connect() ) return (-1);
+
+  //if( !chk_rsfilter(er, reader[ridx].ncd_disable_server_filt) ) return(-1);
+
+  memcpy(buf, ep->emm, ep->l);
+
+  return((newcamd_send(buf, ep->l, 0)<1) ? (-1) : 0);
+}
+
 static int newcamd_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
 {
   ushort idx; 
@@ -1293,5 +1310,5 @@ void module_newcamd(struct s_module *ph)
   ph->c_init=newcamd_client_init;
   ph->c_recv_chk=newcamd_recv_chk;
   ph->c_send_ecm=newcamd_send_ecm;
-
+  ph->c_send_emm=newcamd_send_emm;
 }

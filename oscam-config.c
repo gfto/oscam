@@ -2596,6 +2596,11 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+	if ((!strcmp(token, "atr"))) {
+		key_atob_l(value, rdr->atr, 128);
+		return;
+	}
+
 	if (!strcmp(token, "detect")) {
 		for (i = 0; RDR_CD_TXT[i]; i++) {
 			if (!strcmp(value, RDR_CD_TXT[i])) {

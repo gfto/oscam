@@ -335,6 +335,7 @@ struct s_module
   int  (*c_recv_chk)();
   int  (*c_init)();
   int  (*c_send_ecm)();
+  int  (*c_send_emm)();
   int  (*c_init_log)();
   int  (*c_recv_log)();
   int  c_port;
@@ -450,6 +451,7 @@ struct s_reader
   int       has_rsa;
   uchar     aes_key[16];
   uchar     rsa_mod[120]; //rsa modulus for nagra cards.
+  uchar     atr[64];
   ulong     sidtabok;	// positiv services
   ulong     sidtabno;	// negative services
   uchar     hexserial[8];
