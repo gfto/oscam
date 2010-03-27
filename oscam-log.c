@@ -31,8 +31,8 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(char*))
 			fprintf(*f, "switch log file\n");
 			fflush(*f);
 			fclose(*f);
-			*f=(FILE *)0;
-			rc=rename(file, prev_log);
+			*f = (FILE *)0;
+			rc = rename(file, prev_log);
 			if( rc!=0 ) {
 				fprintf(stderr, "rename(%s, %s) failed (errno=%d)\n",
 						file, prev_log, errno);
@@ -53,12 +53,19 @@ void cs_write_log(char *txt)
 	}
 	else
 #endif
-		if (fp || use_stdout) {
-			if( !use_stdout && !use_syslog)
-				switch_log(cfg->logfile, &fp, cs_init_log);
-			if (!cfg->disablelog){
-				fprintf(fp, "%s", txt);
-				fflush(fp);
+		// filter out entries with leading 's' and forward to statistics
+		if(txt[0] == 's') {
+			switch_log(cfg->usrfile, &fps, cs_init_statistics);
+			fprintf(fps, "%s", txt + 1); // remove the leading 's' and write to file
+			fflush(fps);
+		} else {
+			if (fp || use_stdout) {
+				if( !use_stdout && !use_syslog)
+					switch_log(cfg->logfile, &fp, cs_init_log);
+				if (!cfg->disablelog){
+					fprintf(fp, "%s", txt);
+					fflush(fp);
+				}
 			}
 		}
 }
@@ -357,14 +364,13 @@ int cs_init_statistics(char *file)
 
 void cs_statistics(int idx)
 {
-	time_t t;
-	struct tm *lt;
+	if (!cfg->disableuserfile){
+		time_t t;
+		struct tm *lt;
+		char buf[512];
 
-	if (fps)
-	{
 		float cwps;
 
-		switch_log(cfg->usrfile, &fps, cs_init_statistics);
 		time(&t);
 		lt=localtime(&t);
 		if (client[idx].cwfound+client[idx].cwnot>0)
@@ -379,18 +385,22 @@ void cs_statistics(int idx)
 		if(cfg->mon_appendchaninfo)
 			channel = get_servicename(client[idx].last_srvid,client[idx].last_caid);
 
-		if(!cfg->disableuserfile) {
-			fprintf(fps, "%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s %04X:%04X %s\n",
-					lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
-					lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
-					client[idx].usr[0] ? client[idx].usr : "-",
-					cs_inet_ntoa(client[idx].ip), client[idx].port,
-					client[idx].cwfound, client[idx].cwcache, client[idx].cwnot, client[idx].cwignored,
-					client[idx].cwtout, client[idx].cwtun, client[idx].login, client[idx].last,
-					ph[client[idx].ctyp].desc,client[idx].last_caid,client[idx].last_srvid,
-					channel);
+		/* statistics entry start with 's' to filter it out on other end of pipe
+		 * so we can use the same Pipe as Log
+		 */
+		sprintf(buf, "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %s %04X:%04X %s\n",
+				lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
+				lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
+				client[idx].usr[0] ? client[idx].usr : "-",
+						cs_inet_ntoa(client[idx].ip), client[idx].port,
+						client[idx].cwfound, client[idx].cwcache, client[idx].cwnot, client[idx].cwignored,
+						client[idx].cwtout, client[idx].cwtun, client[idx].login, client[idx].last,
+						ph[client[idx].ctyp].desc, client[idx].last_caid,client[idx].last_srvid,
+						channel);
 
-			fflush(fps);
-		}
+		if ((*log_fd) && (client[cs_idx].typ != 'l') && (client[cs_idx].typ != 'a'))
+			write_to_pipe(*log_fd, PIP_ID_LOG, (uchar *) buf, strlen(buf));
+		else
+			cs_write_log(buf);
 	}
 }
