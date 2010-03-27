@@ -506,7 +506,7 @@ static void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *d
 {
   *year=(Date[0]/12)+BASEYEAR;
   *mon=(Date[0]%12)+1;
-  *day=Date[1];
+  *day=Date[1] & 0x1f;
   *hh=Date[2]/8;
   *mm=(0x100*(Date[2]-*hh*8)+Date[3])/32;
   *ss=(Date[3]-*mm*32)*2;
