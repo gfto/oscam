@@ -786,9 +786,12 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 	    card->caid = b2i(2, buf+12);
 	    card->hop = buf[14];
 	    memcpy(card->key, buf+16, 8);
-	    //cs_log("cccam: card %08X added, caid %04X, hop %d, node %s_%x", card->id, card->caid, card->hop, cs_hexdump(0, buf+26+(7*buf[24]), 8), card->sub_id);
+
+	    cs_log("cccam: card %08X added, caid %04X, hop %d, node %s_%x", card->id, card->caid, card->hop, cs_hexdump(0, buf+26+(7*buf[24]), 8), card->sub_id);
+
 	    //cs_dump(buf+26+(7*buf[24]), 8, NULL);
 	    //cs_dump(buf+8, 8, NULL);
+
 	    // providers
 	    for (i = 0; i < buf[24]; i++) 
 	    {
@@ -796,7 +799,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 		if (prov)
 		{
 		    memcpy(prov, buf+25+(7*i), 3);
-		    //cs_log("      prov %d, %06x", i+1, b2i(3, prov));
+		    cs_log("      prov %d, %06x", i+1, b2i(3, prov));
 	    	    llist_append(card->provs, prov);
 		}
 	    }
@@ -816,7 +819,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 	    {
 		if (card->id == b2i(4, buf+4) && card->sub_id == b2i(3, buf+9))
 		{
-		    //cs_log("cccam: card %08X_%X removed, caid %04X", card->id, card->sub_id, card->caid);
+		    cs_log("cccam: card %08X_%X removed, caid %04X", card->id, card->sub_id, card->caid);
 	            llist_destroy(card->provs);
 	            llist_destroy(card->badsids);
 		    free(card);
