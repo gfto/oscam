@@ -1141,7 +1141,7 @@ static void dvbapi_handler(int idx) {
 				break;
 	}
 
-	cs_auth_client(ok ? account : (struct s_auth *)(-1), "unknown");
+	cs_auth_client(ok ? account : (struct s_auth *)(-1), "dvbapi");
 
 	dvbapi_main_local();
 

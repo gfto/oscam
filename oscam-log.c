@@ -54,7 +54,7 @@ void cs_write_log(char *txt)
 	else
 #endif
 		// filter out entries with leading 's' and forward to statistics
-		if(txt[0] == 's') {
+		if(txt[0] == 's' && fps) {
 			switch_log(cfg->usrfile, &fps, cs_init_statistics);
 			fprintf(fps, "%s", txt + 1); // remove the leading 's' and write to file
 			fflush(fps);
