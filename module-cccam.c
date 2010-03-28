@@ -681,15 +681,18 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
         ecmbuf[11] = cur_er->srvid & 0xff;
         ecmbuf[12] = cur_er->l & 0xff;
         memcpy(ecmbuf+13, cur_er->ecm, cur_er->l);
+
         cc->count = cur_er->idx;
-        //cs_log("cccam: sending ecm for sid %04X to card %08X, hop %d", cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
+        reader[ridx].cc_currenthops = cc->cur_card->hop + 1; 
+        cs_log("cccam: sending ecm for sid %04X to card %08X, hop %d", cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
         n = cc_cmd_send(ecmbuf, cur_er->l+13, MSG_CW_ECM);      // send ecm
+
         //NULLFREE(ecmbuf);
     } 
     else 
     {
 	n = -1;
-	//cs_log("cccam: no suitable card on server for caid %04X&%06X sid %04X", cur_er->caid, cur_er->prid, cur_er->srvid);
+	cs_log("cccam: no suitable card on server for caid %04X&%06X sid %04X", cur_er->caid, cur_er->prid, cur_er->srvid);
 	cur_er->rc = 0;
         cur_er->rcEx = 0x27;
 	
