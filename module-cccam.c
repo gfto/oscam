@@ -1396,6 +1396,7 @@ static int cc_srv_connect()
       cs_exit(0);
     }
 
+    client[cs_idx].crypted = 1;
     cs_auth_client(account, NULL);
     //cs_auth_client((struct s_auth *)(-1), NULL);
 
