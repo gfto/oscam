@@ -472,23 +472,22 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 
 static int camd35_send_emm(EMM_PACKET *ep)
 {
+	uchar buf[512];
+	if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
+		return(-1);
 
-uchar buf[400];
-  if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
-    return(-1);
+	if (!is_udp && !tcp_connect()) return(-1);
 
-  if (!is_udp && !tcp_connect()) return(-1);
+	memset(buf, 0, 20);
+	memset(buf+20, 0xff, ep->l+15);
 
-  memset(buf, 0, 20);
-  memset(buf+20, 0xff, ep->l+15);
+	buf[0]=0x06;
+	buf[1]=ep->l;
+	memcpy(buf+10, ep->caid, 2);
+	memcpy(buf+12, ep->provid, 4);
+	memcpy(buf+20, ep->emm, ep->l);
 
-buf[0]=0x06;
-buf[1]=ep->l;
-  memcpy(buf+10, ep->caid, 2);
-  memcpy(buf+12, ep->provid, 4);
-  memcpy(buf+20, ep->emm, ep->l);
-
-  return((camd35_send(buf)<1) ? (-1) : 0);
+	return((camd35_send(buf)<1) ? (-1) : 0);
 }
 
 static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)

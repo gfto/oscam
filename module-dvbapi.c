@@ -467,7 +467,6 @@ void dvbapi_start_descrambling(int demux_index, unsigned short caid, unsigned sh
 }
 
 void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int len) {
-	int i;
 	EMM_PACKET epg;
 
 	if (demux[demux_index].pidindex==-1) return;
@@ -493,20 +492,8 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 
 	epg.l=len;
 	memcpy(epg.emm, buffer, epg.l);
-/*
-	int found=0;
-	for (i=0;i<CS_MAXREADER;i++) {
-		if (reader[i].caid[0] == demux[demux_index].ECMpids[demux[demux_index].pidindex].CA_System_ID) {
-			client[cs_idx].au=i;
-			found=1;
-			break;
-		}
-	}
-*/
-	//if (found==1 && reader[client[cs_idx].au].card_system>0) {
-	do_emm(&epg);
-	//}
 
+	do_emm(&epg);
 }
 
 void dvbapi_resort_ecmpids(int demux_index) {
@@ -753,7 +740,7 @@ int pmt_id=-1, dir_fd=-1;
 
 void event_handler(int signal) {
 	struct stat pmt_info;
-	uchar inhalt[400], dest[200];
+	uchar dest[512];
 	uint len;
 	signal=signal;
 	int pmt_fd = open("/tmp/pmt.tmp", O_RDONLY);
@@ -776,7 +763,7 @@ void event_handler(int signal) {
 
 			cs_sleepms(100);
 
-			len = read(pmt_fd,inhalt,sizeof(inhalt));
+			len = read(pmt_fd,mbuf,sizeof(mbuf));
 			if (len<1) return;
 #ifdef QBOXHD
 			uint j1,j2;
@@ -788,7 +775,7 @@ void event_handler(int signal) {
 			}
 
 			for(j2=0,j1=0;j2<len;j2+=2,j1++) {
-				if (sscanf((char*)inhalt+j2,"%02X",(uint*)dest+j1) != 1) {
+				if (sscanf((char*)mbuf+j2,"%02X",(uint*)dest+j1) != 1) {
 					cs_log("dvbapi: error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
 					return;
 				}
@@ -798,15 +785,15 @@ void event_handler(int signal) {
 
 			pmt_id = dvbapi_parse_capmt(dest+4, (len/2)-4, -1);
 #else
-			cs_ddump(inhalt,len,"pmt:");
+			cs_ddump(mbuf,len,"pmt:");
 		
 			memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
 			
-			dest[1] = inhalt[3];
-			dest[2] = inhalt[4];
-			dest[5] = inhalt[11]+1;
+			dest[1] = mbuf[3];
+			dest[2] = mbuf[4];
+			dest[5] = mbuf[11]+1;
 		
-			memcpy(dest + 7, inhalt + 12, len - 12 - 4);
+			memcpy(dest + 7, mbuf + 12, len - 12 - 4);
 
 			pmt_id = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1);
 #endif
@@ -820,7 +807,6 @@ void event_handler(int signal) {
 		close(dir_fd);
 	}
 }
-
 
 void dvbapi_main_local() {
 	int maxpfdsize=(MAX_DEMUX*MAX_FILTER)+MAX_DEMUX+2;
