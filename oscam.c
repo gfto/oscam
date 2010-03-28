@@ -2159,16 +2159,18 @@ void do_emm(EMM_PACKET *ep)
 	client[cs_idx].lastemm = time((time_t)0);
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
-	if ((!reader[au].fd) ||       // reader has no fd
-	(reader[au].caid[0] != b2i(2,ep->caid))) {   // wrong caid
+	if (reader[au].card_system>0) {
+		if ((!reader[au].fd) ||       // reader has no fd
+		(reader[au].caid[0] != b2i(2,ep->caid))) {   // wrong caid
 #ifdef WEBIF
-	  client[cs_idx].emmnok++;
+			client[cs_idx].emmnok++;
 #endif
-	  return;
+	  		return;
+		}
+#ifdef WEBIF
+		client[cs_idx].emmok++;
+#endif
 	}
-#ifdef WEBIF
-	client[cs_idx].emmok++;
-#endif
 	ep->cidx = cs_idx;
 	cs_debug_mask(D_EMM, "emm is being sent to reader %s.", reader[au].label);
 	write_to_pipe(reader[au].fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
