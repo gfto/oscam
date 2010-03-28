@@ -92,7 +92,7 @@
 #define CS_DELAY          0
 #define CS_RESOLVE_DELAY  30
 #define CS_MAXLOGHIST     30
-#define CS_LOGHISTSIZE    160 // 32+128: username + logline
+#define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
 
 #ifdef  CS_EMBEDDED
 #define CS_MAXPID   32
