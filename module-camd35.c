@@ -494,14 +494,22 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 {
 	ushort idx;
 
+	// reading CMD05 Emm request and set serial
+	if (buf[0] == 0x05) {
+		memcpy(reader[ridx].hexserial, buf + 40, 6);
+		reader[ridx].hexserial[6] = 0;
+		reader[ridx].hexserial[7] = 0;
+		cs_log("hexserial in reader %s received and set to: %s", reader[ridx].label, cs_hexdump(0, reader[ridx].hexserial, 8));
+	}
+
 	// CMD44: old reject command introduced in mpcs
 	// keeping this for backward compatibility
 	if ((buf[0] != 1) && (buf[0] != 0x44) && (buf[0] != 0x08))
 		return(-1);
 
-	idx=b2i(2, buf+16);
+	idx = b2i(2, buf+16);
 
-	*rc=((buf[0] != 0x44) && (buf[0] != 0x08));
+	*rc = ((buf[0] != 0x44) && (buf[0] != 0x08));
 
 	memcpy(dcw, buf+20, 16);
 	return(idx);
