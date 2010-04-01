@@ -71,15 +71,15 @@ int conax_card_init(ATR newatr)
     switch(cta_res[i])
     {
       case 0x23:
-        if ( cta_res[i+5] != 0x00)
-        {
+        if (cta_res[i+5] != 0x00) {
           memcpy(reader[ridx].hexserial, &cta_res[i+3], 6);
-        }else{
+        }
+        else {
           memcpy(reader[ridx].sa[j], &cta_res[i+5], 4);
-        j++;
+          j++;
+        }
+        break;
     }
-    break;
-  }
 
   /* we have one provider, 0x0000 */
   reader[ridx].nprov = 1;
@@ -190,11 +190,11 @@ int conax_do_ecm(ECM_REQUEST *er)
     return ERROR;
 }
 
-int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 	int i, ok = 0;
 
-	cs_debug_mask(D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x",ep->emm[2]);
+	cs_debug_mask(D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
 
 	for (i = 0; i < rdr->nprov; i++) {
 		ok = (!memcmp(&ep->emm[6], rdr->sa[i], 4));
@@ -209,10 +209,10 @@ int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if 
 		return TRUE;
 	}
 	else {
-		if (!memcmp(&ep->emm[4], rdr->hexserial, 6)) {
+		if (!memcmp(&ep->emm[6], rdr->hexserial+2, 4)) {
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
-			memcpy(ep->hexserial, &ep->emm[4], 6);
+			memcpy(ep->hexserial+2, &ep->emm[6], 4);
 			cs_debug_mask(D_EMM, "CONAX EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 8));
 			return TRUE;
 		}
