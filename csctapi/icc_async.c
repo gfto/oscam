@@ -217,29 +217,35 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader->label);
 
 	reader->current_baudrate = DEFAULT_BAUDRATE; //this is needed for all readers to calculate work_etu for timings
-	switch(reader->typ) {
-		case R_DB2COM1:
-		case R_DB2COM2:
-		case R_SC8in1:
-		case R_MOUSE:
-			call (Phoenix_Reset(reader, atr));
-			break;
+	if (reader->atr[0] != 0) {
+		if (reader->atr[0] != 0) {
+		ATR_InitFromArray(atr, reader->atr, 33);
+	} 
+	else {
+		switch(reader->typ) {
+			case R_DB2COM1:
+			case R_DB2COM2:
+			case R_SC8in1:
+			case R_MOUSE:
+				call (Phoenix_Reset(reader, atr));
+				break;
 #if defined(LIBUSB)
-		case R_SMART:
-			call (SR_Reset(reader, atr));
-			break;
+			case R_SMART:
+				call (SR_Reset(reader, atr));
+				break;
 #endif
-		case R_INTERNAL:
+			case R_INTERNAL:
 #ifdef SCI_DEV
-			call (Sci_Activate(reader));
-			call (Sci_Reset(reader, atr));
+				call (Sci_Activate(reader));
+				call (Sci_Reset(reader, atr));
 #elif COOL
-			call (Cool_Reset(atr));
+				call (Cool_Reset(atr));
 #endif
-			break;
-		default:
-			cs_log("ERROR ICC_Async_Activate: unknow reader type %i",reader->typ);
-			return ERROR;
+				break;
+			default:
+				cs_log("ERROR ICC_Async_Activate: unknow reader type %i",reader->typ);
+				return ERROR;
+		}
 	}
 
 	unsigned char atrarr[64];
