@@ -791,9 +791,14 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 					ifsc = ta;
 				else
 					ifsc = DEFAULT_IFSC;
-			
-				// Towitoko does not allow IFSC > 251 //FIXME not sure whether this limitation still exists
-				ifsc = MIN (ifsc, MAX_IFSC);
+
+				//FIXME workaround for Smargo until native mode works
+				if (reader[ridx].smargopatch == 1)
+					ifsc = MIN (ifsc, 28);
+				else
+					// Towitoko does not allow IFSC > 251 
+					//FIXME not sure whether this limitation still exists
+					ifsc = MIN (ifsc, MAX_IFSC);
 			
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
 				// Calculate CWI and BWI
