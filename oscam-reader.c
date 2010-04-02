@@ -461,7 +461,7 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
   if (rc) client[cs_idx].lastemm=time((time_t)0);
 
-  if (reader[ridx].logemm & (1 << rc))
+  if (reader->logemm & (1 << rc))
   {
     cs_ftime(&tpe);
 
