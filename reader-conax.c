@@ -81,12 +81,19 @@ int conax_card_init(struct s_reader * reader, ATR newatr)
         break;
     }
 
-  /* we have one provider, 0x0000 */
+  // check if hexserial is not "zero"
+  if (reader->hexserial[2] == 0x00 && reader->hexserial[3] == 0x00 &&
+      reader->hexserial[4] == 0x00 && reader->hexserial[5] == 0x00)
+    return ERROR;
+
+
+  // we have one provider, 0x0000
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
-  cs_ri_log(reader, "type: Conax, caid: %04X, serial: %llu, card: v%d",
-         reader->caid[0], b2ll(6, reader->hexserial), cardver);
+  cs_ri_log(reader, "type: Conax, caid: %04X, serial: %llu, hex serial: %02x%02x%02x%02x, card: v%d",
+         reader->caid[0], b2ll(6, reader->hexserial), reader->hexserial[2], 
+         reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], cardver);
 
   cs_ri_log(reader, "Providers: %d", reader->nprov);
 
@@ -96,7 +103,6 @@ int conax_card_init(struct s_reader * reader, ATR newatr)
     cs_ri_log(reader, "Provider: %d  SharedAddress: %08X", j+1, b2ll(4, reader->sa[j]));
   }
 
-  cs_log("[conax-reader] ready for requests");
   return OK;
 }
 
@@ -258,9 +264,6 @@ int conax_card_info(struct s_reader * reader)
   char *txt[] = { "Package", "PPV-Event" };
   uchar *cmd[] = { insC6, ins26 };
 
-  cs_log("[conax-reader] card detected");
-  cs_log("[conax-reader] type: Conax");
-
   for (type=0; type<2; type++)
   {
     n=0;
@@ -294,5 +297,6 @@ int conax_card_info(struct s_reader * reader)
       }
     }
   }
+  cs_log("[conax-reader] ready for requests");
   return OK;
 }
