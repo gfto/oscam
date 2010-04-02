@@ -203,6 +203,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
       mbuf[128]=1; //if 0, GA EMM is blocked
       mbuf[129]=1; //if 0, SA EMM is blocked
       mbuf[130]=1; //if 0, UA EMM is blocked
+      mbuf[131]=reader[au].card_system; //Cardsystem for Oscam client
     }
     else		// disable emm
       mbuf[20]=mbuf[39]=mbuf[40]=mbuf[47]=mbuf[49]=1;
@@ -500,7 +501,13 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 		memcpy(reader[ridx].hexserial, buf + 40, 6);
 		reader[ridx].hexserial[6] = 0;
 		reader[ridx].hexserial[7] = 0;
-		cs_log("hexserial in reader %s received and set to: %s", reader[ridx].label, cs_hexdump(0, reader[ridx].hexserial, 8));
+		reader[ridx].caid[0] = b2i(2, buf+20);
+		reader[ridx].card_system = buf[131];
+		cs_log("CMD05 reader: %s serial: %s cardsyst: %d caid: %04X",
+				reader[ridx].label,
+				cs_hexdump(0, reader[ridx].hexserial, 8),
+				reader[ridx].card_system,
+				reader[ridx].caid[0]);
 	}
 
 	// CMD44: old reject command introduced in mpcs
