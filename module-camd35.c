@@ -507,7 +507,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 		reader[ridx].aucaid = b2i(2, buf+20);
 		reader[ridx].card_system = (buf[131]>10) ? 0 : buf[131]; //Fixme - first CMD05 contains 255
 		cs_log("CMD05 len: %d reader: %s serial: %s cardsyst: %d aucaid: %04X",
-				sizeof(buf),
+				sizeof(&buf),
 				reader[ridx].label,
 				cs_hexdump(0, reader[ridx].hexserial, 8),
 				reader[ridx].card_system,
