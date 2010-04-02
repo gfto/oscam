@@ -501,13 +501,12 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 		memcpy(reader[ridx].hexserial, buf + 40, 6);
 		reader[ridx].hexserial[6] = 0;
 		reader[ridx].hexserial[7] = 0;
-		reader[ridx].caid[0] = b2i(2, buf+20);
-		reader[ridx].card_system = buf[131];
-		cs_log("CMD05 reader: %s serial: %s cardsyst: %d caid: %04X",
+		//reader[ridx].caid[0] = b2i(2, buf+20);
+		reader[ridx].card_system = (buf[131]>10) ? 0 : buf[131]; //Fixme - first CMD05 contains 255
+		cs_log("CMD05 reader: %s serial: %s cardsyst: %d",
 				reader[ridx].label,
 				cs_hexdump(0, reader[ridx].hexserial, 8),
-				reader[ridx].card_system,
-				reader[ridx].caid[0]);
+				reader[ridx].card_system);
 	}
 
 	// CMD44: old reject command introduced in mpcs
