@@ -251,6 +251,8 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   int hasD2 = 0;
   uchar DE04[256];
 
+  memset(DE04, 0, sizeof(DE04));
+
   if(ecm88Data[0]==0xd2)
   {
       // FIXME: use the d2 arguments
