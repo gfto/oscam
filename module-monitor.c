@@ -5,6 +5,7 @@
 #else
 #  define CS_VERSION_X  CS_VERSION
 #endif
+extern struct s_reader *reader;
 
 static int auth = 0;
 

@@ -33,7 +33,9 @@
 #include "apdu.h"
 #include "protocol_t0.h"
 #include "protocol_t1.h"
+#include "io_serial.h"
 
+extern struct termios stored_termio[8]; //FIXME no globals please
 // Default T0/T14 settings
 #define DEFAULT_WI		10
 // Default T1 settings
@@ -54,14 +56,13 @@
  */
 
 static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer);
-static int Parse_ATR (ATR * atr, unsigned short deprecated);
-static int PPS_Exchange (BYTE * params, unsigned *length);
+static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprecated);
+static int PPS_Exchange (struct s_reader * reader, BYTE * params, unsigned *length);
 static unsigned PPS_GetLength (BYTE * block);
-static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short deprecated);
-static unsigned int ETU_to_ms(unsigned long WWT);
+static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, double n, unsigned short deprecated);
+static unsigned int ETU_to_ms(struct s_reader * reader, unsigned long WWT);
 static BYTE PPS_GetPCK (BYTE * block, unsigned length);
-static int Protocol_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
-static int SetRightParity (void);
+static int SetRightParity (struct s_reader * reader);
 
 int fdmc=(-1);
 
@@ -69,30 +70,32 @@ int fdmc=(-1);
  * Exported functions definition
  */
 
-int ICC_Async_Device_Init ()
+int ICC_Async_Device_Init (struct s_reader *reader)
 {
-	cs_debug_mask (D_IFD, "IFD: Opening device %s\n", reader[ridx].device);
+	cs_debug_mask (D_IFD, "IFD: Opening device %s\n", reader->device);
 
 	wr = 0;
 
-	switch(reader[ridx].typ) {
+	switch(reader->typ) {
+		case R_SC8in1:
+			pthread_mutex_init(&sc8in1, NULL);
 		case R_MOUSE:
-			reader[ridx].handle = open (reader[ridx].device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
-			if (reader[ridx].handle < 0) {
-				cs_log("ERROR opening device %s",reader[ridx].device);
+			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
+			if (reader->handle < 0) {
+				cs_log("ERROR opening device %s",reader->device);
 				return ERROR;
 			}
 			break;
 #if defined(TUXBOX) && defined(PPC)
 		case R_DB2COM1:
 		case R_DB2COM2:
-			reader[ridx].handle = open (reader[ridx].device,  O_RDWR | O_NOCTTY| O_SYNC);
-			if (reader[ridx].handle < 0) {
-				cs_log("ERROR opening device %s",reader[ridx].device);
+			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_SYNC);
+			if (reader->handle < 0) {
+				cs_log("ERROR opening device %s",reader->device);
 				return ERROR;
 			}
 			if ((fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {
-				close(reader[ridx].handle);
+				close(reader->handle);
 				cs_log("ERROR opening device %s",DEV_MULTICAM);
 				return ERROR;
 			}
@@ -100,7 +103,7 @@ int ICC_Async_Device_Init ()
 #endif
 		case R_SMART:
 #if defined(LIBUSB)
-			call (SR_Init(&reader[ridx]));
+			call (SR_Init(reader));
 			break;
 #else
 			cs_log("ERROR, you have specified 'protocol = smartreader' in oscam.server,");
@@ -112,12 +115,12 @@ int ICC_Async_Device_Init ()
 			return Cool_Init();
 #elif SCI_DEV
 	#if defined(SH4) || defined(STB04SCI)
-			reader[ridx].handle = open (reader[ridx].device, O_RDWR|O_NONBLOCK|O_NOCTTY);
+			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 	#else
-			reader[ridx].handle = open (reader[ridx].device, O_RDWR);
+			reader->handle = open (reader->device, O_RDWR);
 	#endif
-			if (reader[ridx].handle < 0) {
-				cs_log("ERROR opening device %s",reader[ridx].device);
+			if (reader->handle < 0) {
+				cs_log("ERROR opening device %s",reader->device);
 				return ERROR;
 			}
 #else//SCI_DEV
@@ -127,60 +130,76 @@ int ICC_Async_Device_Init ()
 #endif//SCI_DEV
 			break;
 		default:
-			cs_log("ERROR ICC_Device_Init: unknow reader type %i",reader[ridx].typ);
+			cs_log("ERROR ICC_Device_Init: unknow reader type %i",reader->typ);
 			return ERROR;
 	}
-
-	if (reader[ridx].typ <= R_MOUSE)
-	  if (Phoenix_Init()) {
+	
+	if (reader->typ == R_SC8in1) {
+		int i = -1; //Flag for GetStatus init
+		Sc8in1_GetStatus(reader, &i); //Initialize cardstatus
+	}
+	 if (reader->typ <= R_MOUSE)
+	  if (Phoenix_Init(reader)) {
 			cs_log("ERROR: Phoenix_Init returns error");
-			Phoenix_Close ();
+			Phoenix_Close (reader);
 			return ERROR;
 		}
- cs_debug_mask (D_IFD, "IFD: Device %s succesfully opened\n", reader[ridx].device);
+	//if (reader->typ == R_SC8in1) {
+	if (reader->typ == R_SC8in1 && reader->slot == 1) { //FIXME
+		struct termios termio;
+		tcgetattr(reader->handle,&termio);
+		int i;
+		for (i=0; i<8; i++)
+		  //init all stored termios to default comm settings after device init, before ATR
+		  memcpy(&stored_termio[i],&termio,sizeof(termio));
+	}
+ cs_debug_mask (D_IFD, "IFD: Device %s succesfully opened\n", reader->device);
  return OK;
 }
 
-int ICC_Async_GetStatus (int * card)
+int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 {
 	int in;
 	
 //	printf("\n%08X\n", (int)ifd->io);
 	
-	switch(reader[ridx].typ) {
+	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
 #if defined(TUXBOX) && defined(PPC)
 			{
 			ushort msr=1;
 			extern int fdmc;
-			IO_Serial_Ioctl_Lock(1);
+			IO_Serial_Ioctl_Lock(reader, 1);
 			ioctl(fdmc, GET_PCDAT, &msr);
-			if (reader[ridx].typ == R_DB2COM2)
+			if (reader->typ == R_DB2COM2)
 				in=(!(msr & 1));
 			else
 				in=((msr & 0x0f00) == 0x0f00);
-			IO_Serial_Ioctl_Lock(0);
+			IO_Serial_Ioctl_Lock(reader, 0);
 			}
 			break;
 #endif
+		case R_SC8in1:
+			call (Sc8in1_GetStatus(reader, &in));
+			break;
 		case R_MOUSE:
-			call (Phoenix_GetStatus(&in));
+			call (Phoenix_GetStatus(reader, &in));
 			break;
 #if defined(LIBUSB)
 		case R_SMART:
-			call (SR_GetStatus(&reader[ridx],&in));
+			call (SR_GetStatus(reader,&in));
 			break;
 #endif
 		case R_INTERNAL:
 #ifdef SCI_DEV
-			call (Sci_GetStatus(reader[ridx].handle, &in));
+			call (Sci_GetStatus(reader, &in));
 #elif COOL
 			call (Cool_GetStatus(&in));
 #endif
 			break;
 		default:
-			cs_log("ERROR ICC_Get_Status: unknow reader type %i",reader[ridx].typ);
+			cs_log("ERROR ICC_Get_Status: unknow reader type %i",reader->typ);
 			return ERROR;
 	}
 
@@ -189,56 +208,47 @@ int ICC_Async_GetStatus (int * card)
 	else
 		*card = FALSE;
 	
-	//cs_debug_mask (D_TRACE, "IFD: Status = %s", in ? "card": "no card");
+	cs_debug_mask (D_TRACE, "IFD: Status = %s", in ? "card": "no card");
 	
 	return OK;
 }
 
-int ICC_Async_Activate (ATR * atr, unsigned short deprecated)
+int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short deprecated)
 {
-	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader[ridx].label);
+	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader->label);
 	int card;
 
-	call (ICC_Async_GetStatus (&card));
-	if (card == 0) {
-		cs_log("ERROR: Trying to activate card but no card inside");
-		return ERROR;
-	}
-
 	current_baudrate = DEFAULT_BAUDRATE; //this is needed for all readers to calculate work_etu for timings
-
-	if (reader[ridx].atr[0] != 0) {
-		cs_log("using ATR from reader config");
-		ATR_InitFromArray(atr, reader[ridx].atr, 33);
-	} else {
-		switch(reader[ridx].typ) {
-			case R_DB2COM1:
-			case R_DB2COM2:
-			case R_MOUSE:
-				call (Phoenix_Reset(atr));
-				break;
+	switch(reader->typ) {
+		case R_DB2COM1:
+		case R_DB2COM2:
+		case R_SC8in1:
+		case R_MOUSE:
+			call (Phoenix_Reset(reader, atr));
+			break;
 #if defined(LIBUSB)
-			case R_SMART:
-				call (SR_Reset(&reader[ridx],atr));
-				break;
+		case R_SMART:
+			call (SR_Reset(reader, atr));
+			break;
 #endif
-			case R_INTERNAL:
+		case R_INTERNAL:
 #ifdef SCI_DEV
-				call (Sci_Activate());
-				call (Sci_Reset(atr));
+			call (Sci_Activate(reader));
+			call (Sci_Reset(reader, atr));
 #elif COOL
-				call (Cool_Reset(atr));
+			call (Cool_Reset(atr));
 #endif
-				break;
-			default:
-				cs_log("ERROR ICC_Async_Activate: unknow reader type %i",reader[ridx].typ);
-				return ERROR;
-		}
+			break;
+		default:
+			cs_log("ERROR ICC_Async_Activate: unknow reader type %i",reader->typ);
+			return ERROR;
 	}
+
 	unsigned char atrarr[64];
 	unsigned int atr_size;
 	ATR_GetRaw(atr, atrarr, &atr_size);
-	cs_ri_log("ATR: %s", cs_hexdump(1, atrarr, atr_size));
+	cs_ri_log(reader, "ATR: %s", cs_hexdump(1, atrarr, atr_size));
+
 
 	/* Get ICC convention */
 	if (ATR_GetConvention (atr, &(convention)) != ATR_OK) {
@@ -252,23 +262,54 @@ int ICC_Async_Activate (ATR * atr, unsigned short deprecated)
 	
 	unsigned short cs_ptyp_orig=cs_ptyp;
 	cs_ptyp=D_ATR;
-	int ret = Parse_ATR(atr, deprecated);
+	int ret = Parse_ATR(reader, atr, deprecated);
 	if (ret)
 		cs_log("ERROR: Parse_ATR returned error");
 	cs_ptyp=cs_ptyp_orig;
 	if (ret)
 		return ERROR;		
-	cs_debug_mask (D_IFD, "IFD: Card in reader %s succesfully activated\n", reader[ridx].label);
+	cs_debug_mask (D_IFD, "IFD: Card in reader %s succesfully activated\n", reader->label);
 	return OK;
 }
 
-int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr)
+static int Protocol_Command (struct s_reader *reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
+{
+	switch (protocol_type) {
+		case ATR_PROTOCOL_TYPE_T0:
+			call (Protocol_T0_Command (reader, command, command_len, rsp));
+			break;
+		case ATR_PROTOCOL_TYPE_T1:
+		 {
+			int try = 1;
+			do {
+				if (Protocol_T1_Command (reader, command, command_len, rsp) == OK)
+					break;
+				try++;
+				//try to resync
+				APDU_Rsp ** rsp;
+				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
+				Protocol_T1_Command (reader, resync, sizeof(resync), rsp);
+				ifsc = DEFAULT_IFSC;
+			} while (try <= 3);
+			break;
+		 }
+		case ATR_PROTOCOL_TYPE_T14:
+			call (Protocol_T14_ExchangeTPDU (reader, command, command_len, rsp));
+			break;
+		default:
+			cs_log("Error, unknown protocol type %i",protocol_type);
+			return ERROR;
+	}
+	return OK;
+}
+
+int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr)
 {
 	APDU_Rsp *apdu_rsp = NULL;
 	int remain;
 	bool err = FALSE;
 
-	call (Protocol_Command (cmd, lc, &apdu_rsp));
+	call (Protocol_Command (reader, cmd, lc, &apdu_rsp));
 	{
 		if (apdu_rsp != NULL) {
 			/* Copy APDU data to rsp */
@@ -293,50 +334,20 @@ int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *r
 	return OK;
 }
 
-int Protocol_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
-{
-	switch (protocol_type) {
-		case ATR_PROTOCOL_TYPE_T0:
-			call (Protocol_T0_Command (command, command_len, rsp));
-			break;
-		case ATR_PROTOCOL_TYPE_T1:
-		 {
-			int try = 1;
-			do {
-				if (Protocol_T1_Command (command, command_len, rsp) == OK)
-					break;
-				try++;
-				//try to resync
-				APDU_Rsp ** rsp;
-				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
-				Protocol_T1_Command (resync, sizeof(resync), rsp);
-				ifsc = DEFAULT_IFSC;
-			} while (try <= 3);
-			break;
-		 }
-		case ATR_PROTOCOL_TYPE_T14:
-			call (Protocol_T14_ExchangeTPDU (command, command_len, rsp));
-			break;
-		default:
-			cs_log("Error, unknown protocol type %i",protocol_type);
-			return ERROR;
-	}
-	return OK;
-}
 
-int ICC_Async_SetTimings (unsigned wait_etu)
+int ICC_Async_SetTimings (struct s_reader * reader, unsigned wait_etu)
 {
-	read_timeout = ETU_to_ms(wait_etu);
+	read_timeout = ETU_to_ms(reader, wait_etu);
 	cs_debug_mask(D_IFD, "Setting timeout to %i", wait_etu);
 	return OK;
 }
 
-int ICC_Async_Transmit (unsigned size, BYTE * data)
+int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 {
 	cs_ddump_mask(D_IFD, data, size, "IFD Transmit: ");
 	BYTE *buffer = NULL, *sent; 
 	
-	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ <= R_MOUSE) {
+	if (convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE) {
 		buffer = (BYTE *) calloc(sizeof (BYTE), size);
 		memcpy (buffer, data, size);
 		ICC_Async_InvertBuffer (size, buffer);
@@ -345,108 +356,110 @@ int ICC_Async_Transmit (unsigned size, BYTE * data)
 	else
 		sent = data;
 
-	switch(reader[ridx].typ) {
+	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
+		case R_SC8in1:
 		case R_MOUSE:
-			call (Phoenix_Transmit (sent, size, icc_timings.block_delay, icc_timings.char_delay));
+			call (Phoenix_Transmit (reader, sent, size, icc_timings.block_delay, icc_timings.char_delay));
 			break;
 #if defined(LIBUSB)
 		case R_SMART:
-			call (SR_Transmit(&reader[ridx], sent, size));
+			call (SR_Transmit(reader, sent, size));
 			break;
 #endif
 		case R_INTERNAL:
 #ifdef COOL
 			call (Cool_Transmit(sent, size));
 #elif SCI_DEV
-			call (Phoenix_Transmit (sent, size, 0, 0)); //the internal reader will provide the delay
+			call (Phoenix_Transmit (reader, sent, size, 0, 0)); //the internal reader will provide the delay
 #endif
 			break;
 		default:
-			cs_log("ERROR ICC_Async_Transmit: unknow reader type %i",reader[ridx].typ);
+			cs_log("ERROR ICC_Async_Transmit: unknow reader type %i",reader->typ);
 			return ERROR;
 	}
 
-	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ <= R_MOUSE)
+	if (convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE)
 		free (buffer);
 	cs_debug_mask(D_IFD, "IFD Transmit succesful");
 	return OK;
 }
 
-int ICC_Async_Receive (unsigned size, BYTE * data)
+int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
 {
-	switch(reader[ridx].typ) {
+	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
+		case R_SC8in1:
 		case R_MOUSE:
-			call (Phoenix_Receive (data, size, read_timeout));
+			call (Phoenix_Receive (reader, data, size, read_timeout));
 			break;
 #if defined(LIBUSB)
 		case R_SMART:
-			call (SR_Receive(&reader[ridx], data, size));
+			call (SR_Receive(reader, data, size));
 			break;
 #endif
 		case R_INTERNAL:
 #ifdef COOL
 	    call (Cool_Receive(data, size));
 #elif SCI_DEV
-			call (Phoenix_Receive (data, size, read_timeout));
+			call (Phoenix_Receive (reader, data, size, read_timeout));
 #endif
 			break;
 		default:
-			cs_log("ERROR ICC_Async_Receive: unknow reader type %i",reader[ridx].typ);
+			cs_log("ERROR ICC_Async_Receive: unknow reader type %i",reader->typ);
 			return ERROR;
 	}
 
-	if (convention == ATR_CONVENTION_INVERSE && reader[ridx].typ <= R_MOUSE)
+	if (convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE)
 		ICC_Async_InvertBuffer (size, data);
 
 	cs_ddump_mask(D_IFD, data, size, "IFD Received: ");
 	return OK;
 }
 
-int ICC_Async_Close ()
+int ICC_Async_Close (struct s_reader *reader)
 { //FIXME this routine is never called!
-	cs_debug_mask (D_IFD, "IFD: Closing device %s", reader[ridx].device);
+	cs_debug_mask (D_IFD, "IFD: Closing device %s", reader->device);
 
-	switch(reader[ridx].typ) {
+	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_MOUSE:
-			call (Phoenix_Close());
+			call (Phoenix_Close(reader));
 			break;
 #if defined(LIBUSB)
 		case R_SMART:
-			call (SR_Close(&reader[ridx]));
+			call (SR_Close(reader));
 			break;
 #endif
 		case R_INTERNAL:
 #ifdef SCI_DEV
 			/* Dectivate ICC */
-			call (Sci_Deactivate());
-			call (Phoenix_Close());
+			call (Sci_Deactivate(reader));
+			call (Phoenix_Close(reader));
 #endif
 			break;
 		default:
-			cs_log("ERROR ICC_Async_Close: unknow reader type %i",reader[ridx].typ);
+			cs_log("ERROR ICC_Async_Close: unknow reader type %i",reader->typ);
 			return ERROR;
 	}
 	
-	cs_debug_mask (D_IFD, "IFD: Device %s succesfully closed", reader[ridx].device);
+	cs_debug_mask (D_IFD, "IFD: Device %s succesfully closed", reader->device);
 	return OK;
 }
 
-unsigned long ICC_Async_GetClockRate ()
+static unsigned long ICC_Async_GetClockRate (int cardmhz)
 {
-	switch (reader[ridx].cardmhz) {
+	switch (cardmhz) {
 		case 357:
 		case 358:
 	  	return (372L * 9600L);
 		case 368:
 	  	return (384L * 9600L);
 		default:
- 	  	return reader[ridx].cardmhz * 10000L;
+ 	  	return cardmhz * 10000L;
 	}
 }
 
@@ -458,7 +471,7 @@ static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer)
 		buffer[i] = ~(INVERT_BYTE (buffer[i]));
 }
 
-static int Parse_ATR (ATR * atr, unsigned short deprecated)
+static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprecated)
 {
 	BYTE FI = ATR_DEFAULT_FI;
 	//BYTE t = ATR_PROTOCOL_TYPE_T0;
@@ -549,7 +562,7 @@ static int Parse_ATR (ATR * atr, unsigned short deprecated)
 				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1 
 					req[2] = 0x11; //defaults FI and DI to 1
 				unsigned int len = sizeof(req);
-				ret = PPS_Exchange (req, &len);
+				ret = PPS_Exchange (reader, req, &len);
 				if (ret == OK) {
 					FI = req[2] >> 4;
 					BYTE DI = req[2] & 0x0F;
@@ -593,12 +606,12 @@ static int Parse_ATR (ATR * atr, unsigned short deprecated)
 	}
 
 	if (deprecated == 0)
-		return InitCard (atr, FI, d, n, deprecated);
+		return InitCard (reader, atr, FI, d, n, deprecated);
 	else
-		return InitCard (atr, ATR_DEFAULT_FI, ATR_DEFAULT_D, n, deprecated);
+		return InitCard (reader, atr, ATR_DEFAULT_FI, ATR_DEFAULT_D, n, deprecated);
 }
 
-static int PPS_Exchange (BYTE * params, unsigned *length)
+static int PPS_Exchange (struct s_reader * reader, BYTE * params, unsigned *length)
 {
 	BYTE confirm[PPS_MAX_LENGTH];
 	unsigned len_request, len_confirm;
@@ -609,12 +622,12 @@ static int PPS_Exchange (BYTE * params, unsigned *length)
 	cs_debug_mask (D_IFD,"PTS: Sending request: %s", cs_hexdump(1, params, len_request));
 
 	/* Send PPS request */
-	call (ICC_Async_Transmit (len_request, params));
+	call (ICC_Async_Transmit (reader, len_request, params));
 
 	/* Get PPS confirm */
-	call (ICC_Async_Receive (2, confirm));
+	call (ICC_Async_Receive (reader, 2, confirm));
 	len_confirm = PPS_GetLength (confirm);
-	call (ICC_Async_Receive (len_confirm - 2, confirm + 2));
+	call (ICC_Async_Receive (reader, len_confirm - 2, confirm + 2));
 
 	cs_debug_mask(D_IFD, "PTS: Receiving confirm: %s", cs_hexdump(1, confirm, len_confirm));
 	if ((len_request != len_confirm) || (memcmp (params, confirm, len_request)))
@@ -644,7 +657,7 @@ static unsigned PPS_GetLength (BYTE * block)
 	return length;
 }
 
-static unsigned int ETU_to_ms(unsigned long WWT)
+static unsigned int ETU_to_ms(struct s_reader * reader, unsigned long WWT)
 {
 #define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
 	if (WWT > CHAR_LEN)
@@ -652,32 +665,33 @@ static unsigned int ETU_to_ms(unsigned long WWT)
 	else
 		WWT = 0;
 	double work_etu = 1000 / (double)current_baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
-	return (unsigned int) WWT * work_etu * reader[ridx].cardmhz / reader[ridx].mhz;
+	return (unsigned int) WWT * work_etu * reader->cardmhz / reader->mhz;
 }
 
-static int ICC_Async_SetParity (unsigned short parity)
+static int ICC_Async_SetParity (struct s_reader * reader, unsigned short parity)
 {
-	switch(reader[ridx].typ) {
+	switch(reader->typ) {
 		case R_DB2COM1:
 		case R_DB2COM2:
+		case R_SC8in1:
 		case R_MOUSE:
-			call (IO_Serial_SetParity (parity));
+			call (IO_Serial_SetParity (reader, parity));
 		break;
 #if defined(LIBUSB)
 		case R_SMART:
-			call (SR_SetParity(&reader[ridx], parity));
+			call (SR_SetParity(reader, parity));
 			break;
 #endif
 		case R_INTERNAL:
 			return OK;
 		default:
-			cs_log("ERROR ICC_Async_SetParity: unknow reader type %i",reader[ridx].typ);
+			cs_log("ERROR ICC_Async_SetParity: unknow reader type %i",reader->typ);
 			return ERROR;
 	}
 	return OK;
 }
 
-static int SetRightParity (void)
+static int SetRightParity (struct s_reader * reader)
 {
 	//set right parity
 	unsigned short parity = PARITY_EVEN;
@@ -686,19 +700,19 @@ static int SetRightParity (void)
 	else if(protocol_type == ATR_PROTOCOL_TYPE_T14)
 		parity = PARITY_NONE;
 	
-	call (ICC_Async_SetParity(parity));
+	call (ICC_Async_SetParity(reader, parity));
 
 #ifdef COOL
-	if (reader[ridx].typ != R_INTERNAL)
+	if (reader->typ != R_INTERNAL)
 #endif
 #if defined(LIBUSB)
-  if (reader[ridx].typ != R_SMART)
+  if (reader->typ != R_SMART)
 #endif
-            IO_Serial_Flush();
+            IO_Serial_Flush(reader);
 	return OK;
 }
 
-static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short deprecated)
+static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, double n, unsigned short deprecated)
 {
 	double P,I;
 	double F;
@@ -714,9 +728,9 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 		I = 0;
 
 	//set clock speed to max if internal reader
-	if(reader[ridx].typ > R_MOUSE)
-		if (reader[ridx].mhz == 357 || reader[ridx].mhz == 358) //no overclocking
-			reader[ridx].mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
+	if(reader->typ > R_MOUSE)
+		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
+			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 
 	//set clock speed/baudrate must be done before timings
 	//because current_baudrate is used in calculation of timings
@@ -724,9 +738,9 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 
 	if (deprecated == 0)
 		if (protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
-			unsigned long baud_temp = d * ICC_Async_GetClockRate () / F;
-			if (reader[ridx].typ <= R_MOUSE)
-				call (Phoenix_SetBaudrate (baud_temp));
+			unsigned long baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
+			if (reader->typ <= R_MOUSE)
+				call (Phoenix_SetBaudrate (reader, baud_temp));
 			cs_debug_mask(D_IFD, "Setting baudrate to %lu", baud_temp);
 			current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
 		}
@@ -741,7 +755,7 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 	else
 		EGT = n;
 	GT = EGT + 12; //Guard Time in ETU
-	gt_ms = ETU_to_ms(GT);
+	gt_ms = ETU_to_ms(reader, GT);
 
 	switch (protocol_type) {
 		case ATR_PROTOCOL_TYPE_T0:
@@ -759,11 +773,11 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 			if (protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
 			
-			read_timeout = ETU_to_ms(WWT);
+			read_timeout = ETU_to_ms(reader, WWT);
 			icc_timings.block_delay = gt_ms;
 			icc_timings.char_delay = gt_ms;
 			cs_debug("Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", read_timeout, icc_timings.block_delay, icc_timings.char_delay);
-			cs_debug_mask (D_IFD,"Protocol: T=%i: WWT=%d, Clockrate=%lu\n", protocol_type, (int)(WWT), ICC_Async_GetClockRate());
+			cs_debug_mask (D_IFD,"Protocol: T=%i: WWT=%d, Clockrate=%lu\n", protocol_type, (int)(WWT), ICC_Async_GetClockRate(reader->cardmhz));
 			}
 			break;
 	 case ATR_PROTOCOL_TYPE_T1:
@@ -777,14 +791,9 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 					ifsc = ta;
 				else
 					ifsc = DEFAULT_IFSC;
-
-				//FIXME workaround for Smargo until native mode works
-				if (reader[ridx].smargopatch == 1)
-					ifsc = MIN (ifsc, 28);
-				else
-					// Towitoko does not allow IFSC > 251 
-					//FIXME not sure whether this limitation still exists
-					ifsc = MIN (ifsc, MAX_IFSC);
+			
+				// Towitoko does not allow IFSC > 251 //FIXME not sure whether this limitation still exists
+				ifsc = MIN (ifsc, MAX_IFSC);
 			
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
 				// Calculate CWI and BWI
@@ -806,7 +815,7 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 				CWT = (unsigned short) (((1<<cwi) + 11)); // in ETU
 			
 				// Set BWT = (2^BWI * 960 + 11) work etu
-				BWT = (unsigned short)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate() )	+ 11 ;
+				BWT = (unsigned short)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
 			
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
@@ -827,9 +836,9 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 
 				cs_debug ("Protocol: T=1: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", ifsc, CWT, BWT, BGT, (edc == EDC_LRC) ? "LRC" : "CRC");
 
-				read_timeout = ETU_to_ms(BWT);
-				icc_timings.block_delay = ETU_to_ms(BGT);
-				icc_timings.char_delay = ETU_to_ms(CGT);
+				read_timeout = ETU_to_ms(reader, BWT);
+				icc_timings.block_delay = ETU_to_ms(reader, BGT);
+				icc_timings.char_delay = ETU_to_ms(reader, CGT);
 				cs_debug("Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", read_timeout, icc_timings.block_delay, icc_timings.char_delay);
 			}
 			break;
@@ -838,27 +847,27 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 			break;
 	}//switch
 
-	call (SetRightParity ());
+	call (SetRightParity (reader));
 
   //write settings to internal device
-	if(reader[ridx].typ == R_INTERNAL) {
+	if(reader->typ == R_INTERNAL) {
 #ifdef SCI_DEV
 		double F =	(double) atr_f_table[FI];
 		unsigned long ETU = 0;
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
-		call (Sci_WriteSettings (protocol_type, reader[ridx].mhz / 100, ETU, WWT, BWT, CWT, EGT, (unsigned char)P, (unsigned char)I));
+		call (Sci_WriteSettings (reader, protocol_type, reader->mhz / 100, ETU, WWT, BWT, CWT, EGT, (unsigned char)P, (unsigned char)I));
 #elif COOL
-		call (Cool_SetClockrate(reader[ridx].mhz));
+		call (Cool_SetClockrate(reader->mhz));
 		call (Cool_WriteSettings (BWT, CWT, EGT, BGT));
 #endif //COOL
 	}
 #if defined(LIBUSB)
-	if (reader[ridx].typ == R_SMART)
-		SR_WriteSettings(&reader[ridx], (unsigned short) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)protocol_type, convention);
+	if (reader->typ == R_SMART)
+		SR_WriteSettings(reader, (unsigned short) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)protocol_type, convention);
 #endif
-	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader[ridx].mhz / 100);
+	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 
 	//IFS setting in case of T1
 	if ((protocol_type == ATR_PROTOCOL_TYPE_T1) && (ifsc != DEFAULT_IFSC)) {
@@ -866,7 +875,7 @@ static int InitCard (ATR * atr, BYTE FI, double d, double n, unsigned short depr
 		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
 		tmp[3] = ifsc; // Information Field size
 		tmp[4] = ifsc ^ 0xE1;
-		Protocol_T1_Command (tmp, sizeof(tmp), rsp);
+		Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp);
 	}
  return OK;
 }

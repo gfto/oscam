@@ -121,13 +121,14 @@
 
 #define R_DB2COM1		0x1 // Reader Dbox2 @ com1
 #define R_DB2COM2		0x2 // Reader Dbox2 @ com1
-#define R_MOUSE     0x3 // Reader smartcard mouse
+#define R_SC8in1    0x3 // Reader smartcard mouse
+#define R_MOUSE     0x4 // Reader smartcard mouse
 /////////////////// phoenix readers which need baudrate setting and timings need to be guarded by OSCam: BEFORE R_MOUSE
-#define R_INTERNAL  0x4 // Reader smartcard intern
+#define R_INTERNAL  0x5 // Reader smartcard intern
 /////////////////// internal readers (Dreambox, Coolstream, IPBox) are all R_INTERNAL, they are determined compile-time
 /////////////////// readers that do not reed baudrate setting and timings are guarded by reader itself (large buffer built in): AFTER R_SMART
-#define R_SMART     0x5 // Smartreader+
-#define R_PCSC 			0x6 // PCSC
+#define R_SMART     0x6 // Smartreader+
+#define R_PCSC 			0x7 // PCSC
 /////////////////// proxy readers after R_CS378X
 #define R_CAMD35    0x10  // Reader cascading camd 3.5x
 #define R_CAMD33    0x11  // Reader cascading camd 3.3x
@@ -425,6 +426,7 @@ struct s_reader
   int		smargopatch;
   int		pid;
   int       cs_idx;
+  int       ridx; //FIXME reader[ridx] reader has to know what number it is, should be replaced by storing pointer to reader instread of array index
   int       enable;
   int       fd;
   ulong     grp;
@@ -433,6 +435,7 @@ struct s_reader
   int       card_system;
   char      label[32];
   char      device[128];
+  ushort    slot;   //in case of multiple slots like sc8in1; first slot = 1
   int       handle;   //device handle
   char      pcsc_name[128];
   int       pcsc_has_card;
@@ -826,7 +829,6 @@ extern ushort len4caid[256];
 extern pid_t master_pid;
 extern struct s_ecm *ecmcache;
 extern struct s_client *client;
-extern struct s_reader *reader;
 
 extern struct card_struct *Cards;
 extern struct idstore_struct *idstore;
@@ -876,7 +878,7 @@ extern int chk_srvid(ECM_REQUEST *, int);
 extern int chk_sfilter(ECM_REQUEST *, PTAB*);
 extern int chk_ufilters(ECM_REQUEST *);
 extern int chk_rfilter(ECM_REQUEST *, struct s_reader *);
-extern int chk_rsfilter(ECM_REQUEST *, int);
+extern int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *, int);
 extern int chk_avail_reader(ECM_REQUEST *, struct s_reader *);
 extern int matching_reader(ECM_REQUEST *, struct s_reader *);
 extern void set_signal_handler(int , int , void (*)(int));
@@ -954,14 +956,14 @@ extern char *mk_t_ftab(FTAB *ftab);
 
 // oscam-reader
 extern int ridx, logfd;
-extern int reader_cmd2icc(uchar *, int);
-extern int card_write(uchar *, uchar *);
-extern void cs_ri_brk(int);
-extern void cs_ri_log(char *,...);
-extern void start_cardreader(void);
-extern void reader_card_info(void);
+extern int reader_cmd2icc(struct s_reader * reader, uchar *, int);
+extern int card_write(struct s_reader * reader, uchar *, uchar *);
+extern void cs_ri_brk(struct s_reader * reader, int);
+extern void cs_ri_log(struct s_reader * reader, char *,...);
+extern void * start_cardreader(void *);
+extern void reader_card_info(struct s_reader * reader);
 extern int network_tcp_connection_open();
-extern void network_tcp_connection_close(int);
+extern void network_tcp_connection_close(struct s_reader * reader, int);
 
 // oscam-log
 extern int  cs_init_log(char *);
@@ -984,11 +986,11 @@ extern void aes_decrypt(uchar *, int);
 #define aes_encrypt(b, n) aes_encrypt_idx(cs_idx, b, n)
 
 // reader-common
-extern int reader_device_init(char *);
-extern int reader_checkhealth(void);
-extern void reader_post_process(void);
-extern int reader_ecm(ECM_REQUEST *);
-extern int reader_emm(EMM_PACKET *);
+extern int reader_device_init(struct s_reader * reader);
+extern int reader_checkhealth(struct s_reader * reader);
+extern void reader_post_process(struct s_reader * reader);
+extern int reader_ecm(struct s_reader * reader, ECM_REQUEST *);
+extern int reader_emm(struct s_reader * reader, EMM_PACKET *);
 int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 
 #ifdef HAVE_PCSC

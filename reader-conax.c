@@ -6,12 +6,12 @@ extern ushort cta_lr;
 
 #define write_cmd(cmd, data) \
 { \
-        if (card_write(cmd, data)) return ERROR; \
+        if (card_write(reader, cmd, data)) return ERROR; \
 }
 
 #define read_cmd(cmd, data) \
 { \
-        if (card_write(cmd, NULL)) return ERROR; \
+        if (card_write(reader, cmd, NULL)) return ERROR; \
 }
 
 static char *chid_date(const uchar *ptr, char *buf, int l)
@@ -24,7 +24,7 @@ static char *chid_date(const uchar *ptr, char *buf, int l)
   return(buf);
 }
 
-static int read_record(uchar *cmd, uchar *data)
+static int read_record(struct s_reader * reader, uchar *cmd, uchar *data)
 {
   uchar insCA[] = {0xDD, 0xCA, 0x00, 0x00, 0x00};
 
@@ -38,7 +38,7 @@ static int read_record(uchar *cmd, uchar *data)
   return(cta_lr-2);
 }
 
-int conax_card_init(ATR newatr)
+int conax_card_init(struct s_reader * reader, ATR newatr)
 {
   int i, j, n;
   uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x10, 0x01, 0x40};
@@ -51,68 +51,68 @@ int conax_card_init(ATR newatr)
   if ((hist_size < 4) || (memcmp(hist,"0B00",4)))
     return ERROR;
 
-  reader[ridx].caid[0]=0xB00;
+  reader->caid[0]=0xB00;
 
-  if ((n=read_record(ins26, ins26+5))<0) return ERROR;	// read caid, card-version
+  if ((n=read_record(reader, ins26, ins26+5))<0) return ERROR;	// read caid, card-version
   for (i=0; i<n; i+=cta_res[i+1]+2)
     switch(cta_res[i])
     {
       case 0x20: cardver=cta_res[i+2]; break;
-      case 0x28: reader[ridx].caid[0]=(cta_res[i+2]<<8)|cta_res[i+3];
+      case 0x28: reader->caid[0]=(cta_res[i+2]<<8)|cta_res[i+3];
     }
 
   // Ins82 command needs to use the correct CAID reported in nano 0x28
-  ins82[17]=(reader[ridx].caid[0]>>8)&0xFF;
-  ins82[18]=(reader[ridx].caid[1])&0xFF;
+  ins82[17]=(reader->caid[0]>>8)&0xFF;
+  ins82[18]=(reader->caid[1])&0xFF;
 
-  if ((n=read_record(ins82, ins82+5))<0) return ERROR;	// read serial
+  if ((n=read_record(reader, ins82, ins82+5))<0) return ERROR;	// read serial
 
   for (j=0, i=2; i<n; i+=cta_res[i+1]+2)
     switch(cta_res[i])
     {
       case 0x23:
         if (cta_res[i+5] != 0x00) {
-          memcpy(reader[ridx].hexserial, &cta_res[i+3], 6);
+          memcpy(reader->hexserial, &cta_res[i+3], 6);
         }
         else {
-          memcpy(reader[ridx].sa[j], &cta_res[i+5], 4);
+          memcpy(reader->sa[j], &cta_res[i+5], 4);
           j++;
         }
         break;
     }
 
   /* we have one provider, 0x0000 */
-  reader[ridx].nprov = 1;
-  memset(reader[ridx].prid, 0x00, sizeof(reader[ridx].prid));
+  reader->nprov = 1;
+  memset(reader->prid, 0x00, sizeof(reader->prid));
 
-  cs_ri_log("type: Conax, caid: %04X, serial: %llu, card: v%d",
-         reader[ridx].caid[0], b2ll(6, reader[ridx].hexserial), cardver);
+  cs_ri_log(reader, "type: Conax, caid: %04X, serial: %llu, card: v%d",
+         reader->caid[0], b2ll(6, reader->hexserial), cardver);
 
-  cs_ri_log("Providers: %d", reader[ridx].nprov);
+  cs_ri_log(reader, "Providers: %d", reader->nprov);
 
-  for (j=0; j<reader[ridx].nprov; j++)
+  for (j=0; j<reader->nprov; j++)
   {
-    cs_ri_log("Provider: %d  Provider-Id: %06X", j+1, b2ll(4, reader[ridx].prid[j]));
-    cs_ri_log("Provider: %d  SharedAddress: %08X", j+1, b2ll(4, reader[ridx].sa[j]));
+    cs_ri_log(reader, "Provider: %d  Provider-Id: %06X", j+1, b2ll(4, reader->prid[j]));
+    cs_ri_log(reader, "Provider: %d  SharedAddress: %08X", j+1, b2ll(4, reader->sa[j]));
   }
 
   cs_log("[conax-reader] ready for requests");
   return OK;
 }
 
-static int conax_send_pin(void)
+static int conax_send_pin(struct s_reader * reader)
 {
   unsigned char insPIN[] = { 0xDD,0xC8,0x00,0x00,0x07,0x1D,0x05,0x01,0x00,0x00,0x00,0x00 }; //Last four are the Pin-Code
-  memcpy(insPIN+8,reader[ridx].pincode,4);
+  memcpy(insPIN+8,reader->pincode,4);
 
   write_cmd(insPIN, insPIN+5);
-  cs_ri_log("sending pincode to card");
+  cs_ri_log(reader, "sending pincode to card");
 
   return OK;
 }
 
 
-int conax_do_ecm(ECM_REQUEST *er)
+int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   int i,j,n, rc=0;
   unsigned char insA2[]  = { 0xDD,0xA2,0x00,0x00,0x00 };
@@ -155,9 +155,9 @@ int conax_do_ecm(ECM_REQUEST *er)
             if ( (cta_res[i+1]==0x02  && cta_res[i+2]==0x00  && cta_res[i+3]==0x00) || \
             (cta_res[i+1]==0x02  && cta_res[i+2]==0x40  && cta_res[i+3]==0x00) )
               break;
-            else if (strcmp(reader[ridx].pincode, "none"))
+            else if (strcmp(reader->pincode, "none"))
             {
-              conax_send_pin();
+              conax_send_pin(reader);
               write_cmd(insA2, buf);  // write Header + ECM
 
               while ((cta_res[cta_lr-2]==0x98) &&   // Antwort
@@ -225,7 +225,7 @@ int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	}
 }
 
-int conax_do_emm(EMM_PACKET *ep)
+int conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   unsigned char insEMM[] = { 0xDD,0x84,0x00,0x00,0x00 };
   unsigned char buf[255];
@@ -247,7 +247,7 @@ int conax_do_emm(EMM_PACKET *ep)
     return ERROR;
 }
 
-int conax_card_info(void)
+int conax_card_info(struct s_reader * reader)
 {
   int type, i, j, k, n=0;
   ushort provid;
@@ -288,7 +288,7 @@ int conax_card_info(void)
                          break;
             }
           }
-          cs_ri_log("%s: %d, id: %04X, date: %s - %s, name: %s",
+          cs_ri_log(reader, "%s: %d, id: %04X, date: %s - %s, name: %s",
                     txt[type], ++n, provid, pdate, pdate+16, trim(provname));
         }
       }

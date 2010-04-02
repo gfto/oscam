@@ -1,4 +1,5 @@
 #include "globals.h"
+extern struct s_reader * reader;
 
 static int radegast_send(uchar *buf)
 {

@@ -25,8 +25,8 @@
 #ifndef _ICC_ASYNC_
 #define _ICC_ASYNC_
 
-#include "defines.h"
 #include "atr.h"
+#include "icc_async_exports.h"
 
 /*
  * Exported constants definition
@@ -36,7 +36,7 @@
 #define OK		0
 #define ERROR	1
 
-#define ATR_TIMEOUT				800
+#define ATR_TIMEOUT				1000
 #define DEFAULT_BAUDRATE	9600
 
 /*
@@ -57,25 +57,20 @@ unsigned short BWT,CWT; //(for overclocking uncorrected) block waiting time, cha
 unsigned long current_baudrate; //(for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
 unsigned int read_timeout;		// Max timeout (ms) to receive characters
 
-/*
- * Exported functions declaration
- */
-
 /* Initialization and Deactivation */
-int ICC_Async_Activate (ATR * newatr, unsigned short deprecated);
-int ICC_Async_Close (void);
-int ICC_Async_Device_Init (void);
+int ICC_Async_Activate (struct s_reader *reader, ATR * newatr, unsigned short deprecated);
+int ICC_Async_Close (struct s_reader *reader);
+int ICC_Async_Device_Init (struct s_reader *reader);
 
 /* Attributes */
-int ICC_Async_SetTimings (unsigned wait_etu);
-unsigned long ICC_Async_GetClockRate (void);
-int ICC_Async_GetStatus (int * has_card);
+int ICC_Async_SetTimings (struct s_reader * reader, unsigned wait_etu);
+int ICC_Async_GetStatus (struct s_reader *reader, int * has_card);
 
 
 /* Operations */
-int ICC_Async_CardWrite (unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr);
-int ICC_Async_Transmit (unsigned size, BYTE * buffer);
-int ICC_Async_Receive (unsigned size, BYTE * buffer);
+int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr);
+int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * buffer);
+int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * buffer);
 
 #endif /* _ICC_ASYNC_ */
 

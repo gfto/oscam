@@ -1,24 +1,25 @@
 #include "globals.h"
 
-int ridx=0, logfd=0;
+int logfd=0;
+extern struct s_reader * reader;
 
 static int proxy;
 static struct s_emm *emmcache;
 static int last_idx=1;
 static ushort idx=1;
 
-void cs_ri_brk(int flag)
+void cs_ri_brk(struct s_reader * reader, int flag)
 {
 #ifdef CS_RDR_INIT_HIST
   static int brk_pos=0;
   if (flag)
-    brk_pos=reader[ridx].init_history_pos;
+    brk_pos=reader->init_history_pos;
   else
-    reader[ridx].init_history_pos=brk_pos;
+    reader->init_history_pos=brk_pos;
 #endif
 }
 
-void cs_ri_log(char *fmt,...)
+void cs_ri_log(struct s_reader * reader, char *fmt,...)
 {
   char txt[256];
 
@@ -29,10 +30,10 @@ void cs_ri_log(char *fmt,...)
   cs_log("%s", txt);
 #ifdef CS_RDR_INIT_HIST
   int val;
-  val=sizeof(reader[ridx].init_history)-reader[ridx].init_history_pos-1;
+  val=sizeof(reader->init_history)-reader->init_history_pos-1;
   if (val>0)
-    snprintf((char *) reader[ridx].init_history+reader[ridx].init_history_pos, val, "%s", txt);
-  reader[ridx].init_history_pos+=strlen(txt)+1;
+    snprintf((char *) reader->init_history+reader->init_history_pos, val, "%s", txt);
+  reader->init_history_pos+=strlen(txt)+1;
 #endif
 }
 
@@ -60,7 +61,7 @@ static void casc_check_dcw(int idx, int rc, uchar *cw)
   }
 }
 
-static int casc_recv_timer(uchar *buf, int l, int msec)
+static int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec)
 {
   struct timeval tv;
   fd_set fds;
@@ -74,7 +75,7 @@ static int casc_recv_timer(uchar *buf, int l, int msec)
   select(pfd+1, &fds, 0, 0, &tv);
   rc=0;
   if (FD_ISSET(pfd, &fds))
-    if (!(rc=reader[ridx].ph.recv(buf, l)))
+    if (!(rc=reader->ph.recv(buf, l)))
       rc=-1;
 
   return(rc);
@@ -172,7 +173,7 @@ int network_tcp_connection_open()
   return client[cs_idx].udp_fd;
 }
 
-void network_tcp_connection_close(int fd) 
+void network_tcp_connection_close(struct s_reader * reader, int fd) 
 {
   cs_debug("tcp_conn_close(): fd=%d, is_server=%d", fd, is_server);
   close(fd);
@@ -182,7 +183,7 @@ void network_tcp_connection_close(int fd)
   {
     int i;
     pfd=0;
-    reader[ridx].tcp_connected = 0;
+    reader->tcp_connected = 0;
 
     for (i=0; i<CS_MAXPENDING; i++)
     {
@@ -190,27 +191,27 @@ void network_tcp_connection_close(int fd)
       ecmtask[i].rc=0;
     }
 
-    reader[ridx].ncd_msgid=0;
-    reader[ridx].last_s=reader[ridx].last_g=0;
+    reader->ncd_msgid=0;
+    reader->last_s=reader->last_g=0;
 
-    if (reader[ridx].ph.c_init())
+    if (reader->ph.c_init())
     {
       cs_debug("network_tcp_connection_close() exit(1);");
       cs_exit(1);
     }
 
     cs_resolve();
-//  cs_log("last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
+//  cs_log("last_s=%d, last_g=%d", reader->last_s, reader->last_g);
   }
 }
 
-static void casc_do_sock_log()
+static void casc_do_sock_log(struct s_reader * reader)
 {
   int i, idx;
   ushort caid, srvid;
   ulong provid;
 
-  idx=reader[ridx].ph.c_recv_log(&caid, &provid, &srvid);
+  idx=reader->ph.c_recv_log(&caid, &provid, &srvid);
   client[cs_idx].last=time((time_t)0);
   if (idx<0) return;        // no dcw-msg received
 
@@ -228,27 +229,27 @@ static void casc_do_sock_log()
   }
 }
 
-static void casc_do_sock(int w)
+static void casc_do_sock(struct s_reader * reader, int w)
 {
   int i, n, idx, rc, j;
   uchar buf[1024];
   uchar dcw[16];
 
-  if ((n=casc_recv_timer(buf, sizeof(buf), w))<=0)
+  if ((n=casc_recv_timer(reader, buf, sizeof(buf), w))<=0)
   {
-    if (reader[ridx].ph.type==MOD_CONN_TCP && reader[ridx].typ != R_RADEGAST)
+    if (reader->ph.type==MOD_CONN_TCP && reader->typ != R_RADEGAST)
     {
       cs_debug("casc_do_sock: close connection");
-      network_tcp_connection_close(client[cs_idx].udp_fd);
+      network_tcp_connection_close(reader, client[cs_idx].udp_fd);
     }
     return;
   }
   client[cs_idx].last=time((time_t)0);
-  idx=reader[ridx].ph.c_recv_chk(dcw, &rc, buf, n);
+  idx=reader->ph.c_recv_chk(dcw, &rc, buf, n);
 
   if (idx<0) return;  // no dcw received
-  reader[ridx].last_g=time((time_t*)0); // for reconnect timeout
-//cs_log("casc_do_sock: last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
+  reader->last_g=time((time_t*)0); // for reconnect timeout
+//cs_log("casc_do_sock: last_s=%d, last_g=%d", reader->last_s, reader->last_g);
   if (!idx) idx=last_idx;
   j=0;
   for (i=1; i<CS_MAXPENDING; i++)
@@ -263,7 +264,7 @@ static void casc_do_sock(int w)
   }
 }
 
-static void casc_get_dcw(int n)
+static void casc_get_dcw(struct s_reader * reader, int n)
 {
   int w;
   struct timeb tps, tpe;
@@ -277,7 +278,7 @@ static void casc_get_dcw(int n)
   while (((w=1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm)>0)
           && (ecmtask[n].rc>=10))
   {
-    casc_do_sock(w);
+    casc_do_sock(reader, w);
     cs_ftime(&tps);
   }
   if (ecmtask[n].rc>=10)
@@ -286,7 +287,7 @@ static void casc_get_dcw(int n)
 
 
 
-int casc_process_ecm(ECM_REQUEST *er)
+int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   int rc, n, i, sflag;
   time_t t;//, tls;
@@ -314,21 +315,21 @@ int casc_process_ecm(ECM_REQUEST *er)
     return(-2);
   }
   memcpy(&ecmtask[n], er, sizeof(ECM_REQUEST));
-  if( reader[ridx].typ == R_NEWCAMD )
-    ecmtask[n].idx=(reader[ridx].ncd_msgid==0)?2:reader[ridx].ncd_msgid+1;
+  if( reader->typ == R_NEWCAMD )
+    ecmtask[n].idx=(reader->ncd_msgid==0)?2:reader->ncd_msgid+1;
   else
     ecmtask[n].idx=idx++;
   ecmtask[n].rc=10;
   cs_debug("---- ecm_task %d, idx %d, sflag=%d, level=%d", 
            n, ecmtask[n].idx, sflag, er->level);
 
-  if( reader[ridx].ph.type==MOD_CONN_TCP && reader[ridx].tcp_rto )
+  if( reader->ph.type==MOD_CONN_TCP && reader->tcp_rto )
   {
-    int rto = abs(reader[ridx].last_s - reader[ridx].last_g);
-    if (rto >= (reader[ridx].tcp_rto*60))
+    int rto = abs(reader->last_s - reader->last_g);
+    if (rto >= (reader->tcp_rto*60))
     {
       cs_debug("rto=%d", rto);
-      network_tcp_connection_close(client[cs_idx].udp_fd);
+      network_tcp_connection_close(reader, client[cs_idx].udp_fd);
     }
   }
 
@@ -339,17 +340,17 @@ int casc_process_ecm(ECM_REQUEST *er)
     if (!client[cs_idx].udp_sa.sin_addr.s_addr) // once resolved at least
       cs_resolve();
 
-    if ((rc=reader[ridx].ph.c_send_ecm(&ecmtask[n], buf)))
+    if ((rc=reader->ph.c_send_ecm(&ecmtask[n], buf)))
       casc_check_dcw(n, 0, ecmtask[n].cw);  // simulate "not found"
     else
       last_idx = ecmtask[n].idx;
-    reader[ridx].last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
+    reader->last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
 
-    if (!reader[ridx].ph.c_multi)
-      casc_get_dcw(n);
+    if (!reader->ph.c_multi)
+      casc_get_dcw(reader, n);
   }
 
-//cs_log("casc_process_ecm 1: last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
+//cs_log("casc_process_ecm 1: last_s=%d, last_g=%d", reader->last_s, reader->last_g);
 
   if (idx>0x1ffe) idx=1;
   return(rc);
@@ -368,7 +369,7 @@ static int reader_store_emm(uchar *emm, uchar type)
   return(rc);
 }
 
-static void reader_get_ecm(ECM_REQUEST *er)
+static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
   if ((er->rc<10) )
@@ -377,7 +378,7 @@ static void reader_get_ecm(ECM_REQUEST *er)
       return;
     }
   er->ocaid=er->caid;
-  if (!chk_bcaid(er, &reader[ridx].ctab))
+  if (!chk_bcaid(er, &reader->ctab))
   {
     cs_debug("caid %04X filtered", er->caid);
     er->rcEx=E2_CAID;
@@ -395,15 +396,15 @@ static void reader_get_ecm(ECM_REQUEST *er)
   {
     client[cs_idx].last_srvid=er->srvid;
     client[cs_idx].last_caid=er->caid;
-    casc_process_ecm(er);
+    casc_process_ecm(reader, er);
     return;
   }
   cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
-  er->rc=reader_ecm(er);
+  er->rc=reader_ecm(reader, er);
   write_ecm_answer(fd_c2m, er);
-  reader_post_process();
-  //if(reader[ridx].typ=='r') reader[ridx].qlen--;
-  //printf("queue: %d\n",reader[ridx].qlen);
+  reader_post_process(reader);
+  //if(reader->typ=='r') reader->qlen--;
+  //printf("queue: %d\n",reader->qlen);
 }
 
 static void reader_send_DCW(ECM_REQUEST *er)
@@ -414,75 +415,76 @@ static void reader_send_DCW(ECM_REQUEST *er)
     }
 }
 
-static int reader_do_emm(EMM_PACKET *ep)
+static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   int i, no, rc, ecs;
   char *rtxt[] = { "error", "written", "skipped", "blocked" };
-  char *typedesc[]= { "unknown", "unique", "shared", "global" };
   struct timeb tps, tpe;
 
   cs_ftime(&tps);
 
-	no=0;
-	for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++)
-		if (!memcmp(emmcache[i].emm, ep->emm, ep->emm[2]))
-		{
-			if (reader[ridx].cachemm)
-				ecs=(reader[ridx].rewritemm > emmcache[i].count) ? 1 : 2;
-			else
-				ecs=1;
-			no=++emmcache[i].count;
-			i--;
-		}
+  no=0;
+  for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++)
+          if (!memcmp(emmcache[i].emm, ep->emm, ep->emm[2]))
+          {
+                  if (reader->cachemm)
+                          ecs=(reader->rewritemm > emmcache[i].count) ? 1 : 2;
+                  else
+                          ecs=1;
+                  no=++emmcache[i].count;
+                  i--;
+          }
 
-	if ((rc=ecs)<2)
-	{
-		if (proxy) {
-			cs_debug("network emm reader: %s" ,reader[ridx].label);
+  if ((rc=ecs)<2)
+  {
+          if (proxy) {
+                  cs_debug("network emm reader: %s" ,reader->label);
 
-			if (reader[ridx].ph.c_send_emm) {
-				rc=reader[ridx].ph.c_send_emm(ep);
-			} else {
-				cs_debug("send_emm() support missing");
-				rc=0;
-			}
-		} else {
-			cs_debug("local emm reader: %s" ,reader[ridx].label);
-    			rc=reader_emm(ep);
-		}
+                  if (reader->ph.c_send_emm) {
+                          rc=reader->ph.c_send_emm(ep);
+                  } else {
+                          cs_debug("send_emm() support missing");
+                          rc=0;
+                  }
+          } else {
+                  cs_debug("local emm reader: %s" ,reader->label);
+                  rc=reader_emm(reader, ep);
+          }
 
-    		if (!ecs)
-    		{
-			i=reader_store_emm(ep->emm, ep->type);
-			no=1;
-		}
-  	}
+          if (!ecs)
+          {
+                  i=reader_store_emm(ep->emm, ep->type);
+                  no=1;
+          }
+  }
 
-	if (rc) client[cs_idx].lastemm=time((time_t)0);
+  if (rc) client[cs_idx].lastemm=time((time_t)0);
 
-  if (reader[ridx].logemm & (1 << rc))
+  if (reader->logemm>=rc)
   {
     cs_ftime(&tpe);
-
-    cs_log("%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%d ms) by %s",
-           username(ep->cidx), typedesc[emmcache[i].type], ep->emm[2],
-           i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm, reader[ridx].label);
+//    cs_log("%s type=%02x, len=%d, idx=%d, cnt=%d: %s (%d ms)",
+//           cs_inet_ntoa(client[ep->cidx].ip), emmcache[i].type, ep->emm[2],
+//           i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
+    cs_log("%s type=%02x, len=%d, idx=%d, cnt=%d: %s (%d ms)",
+           username(ep->cidx), emmcache[i].type, ep->emm[2],
+           i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
   }
 
 #ifdef WEBIF
   //counting results
   switch(rc){
 	  case 0:
-		  reader[ridx].emmerror++;
+		  reader->emmerror++;
 		  break;
 	  case 1:
-		  reader[ridx].emmwritten++;
+		  reader->emmwritten++;
 		  break;
 	  case 2:
-		  reader[ridx].emmskipped++;
+		  reader->emmskipped++;
 		  break;
 	  case 3:
-		  reader[ridx].emmblocked++;
+		  reader->emmblocked++;
 		  break;
   }
 #endif
@@ -490,22 +492,22 @@ static int reader_do_emm(EMM_PACKET *ep)
   return(rc);
 }
 
-static int reader_listen(int fd1, int fd2)
+static int reader_listen(struct s_reader * reader, int fd1, int fd2)
 {
   int fdmax, tcp_toflag, use_tv=(!proxy);
-  int is_tcp=(reader[ridx].ph.type==MOD_CONN_TCP);
+  int is_tcp=(reader->ph.type==MOD_CONN_TCP);
   fd_set fds;
   struct timeval tv;
 
 #ifdef CS_WITH_GBOX 
-  if(reader[ridx].typ==R_GBOX) {
+  if(reader->typ==R_GBOX) {
     struct timeb tpe;
     int x;
     ulong ms;
     cs_ftime(&tpe);
     for(x=0;x<CS_MAXPENDING;x++){
       ms=1000*(tpe.time-ecmtask[x].tps.time)+tpe.millitm-ecmtask[x].tps.millitm;
-      if(ecmtask[x].rc == 10 && ms > cfg->ctimeout && ridx == ecmtask[x].gbxRidx) {
+      if(ecmtask[x].rc == 10 && ms > cfg->ctimeout && reader->ridx == ecmtask[x].gbxRidx) {
         //cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",ecmtask[x].rc,ecmtask[x].idx,x,ridx,ecmtask[x].gbxRidx);
         ecmtask[x].rc=5;
         send_dcw(&ecmtask[x]);
@@ -514,13 +516,13 @@ static int reader_listen(int fd1, int fd2)
   }
 #endif
   
-  if (master_pid!=getppid()) cs_exit(0);
-  tcp_toflag=(fd2 && is_tcp && reader[ridx].tcp_ito && reader[ridx].tcp_connected);
+  //if (master_pid!=getppid()) cs_exit(0);
+  tcp_toflag=(fd2 && is_tcp && reader->tcp_ito && reader->tcp_connected);
   tv.tv_sec = 0;
   tv.tv_usec = 100000L;
   if (tcp_toflag)
   {
-    tv.tv_sec = reader[ridx].tcp_ito*60;
+    tv.tv_sec = reader->tcp_ito*60;
     tv.tv_usec = 0;
     use_tv = 1;
   } 
@@ -531,7 +533,7 @@ static int reader_listen(int fd1, int fd2)
   fdmax=(fd1>fd2) ? fd1 : fd2;
   fdmax=(fdmax>logfd) ? fdmax : logfd;
   if (select(fdmax+1, &fds, 0, 0, (use_tv) ? &tv : 0)<0) return(0);
-  if (master_pid!=getppid()) cs_exit(0);
+  //if (master_pid!=getppid()) cs_exit(0);
 
   if ((logfd) && (FD_ISSET(logfd, &fds)))
   {
@@ -552,12 +554,12 @@ static int reader_listen(int fd1, int fd2)
       time_t now;
       int time_diff;
       time(&now);
-      time_diff = abs(now-reader[ridx].last_s);
-      if (time_diff>(reader[ridx].tcp_ito*60))
+      time_diff = abs(now-reader->last_s);
+      if (time_diff>(reader->tcp_ito*60))
       {
         cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
-                  reader[ridx].ph.desc, time_diff, fd2);
-        network_tcp_connection_close(fd2);
+                  reader->ph.desc, time_diff, fd2);
+        network_tcp_connection_close(reader, fd2);
       }
     }
     cs_debug("select: pipe is set");
@@ -567,86 +569,88 @@ static int reader_listen(int fd1, int fd2)
   if (tcp_toflag)
   {
     cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
-             reader[ridx].ph.desc, tv.tv_sec, fd2);
-    network_tcp_connection_close(fd2);
+             reader->ph.desc, tv.tv_sec, fd2);
+    network_tcp_connection_close(reader, fd2);
     return(0);
   }
 
-  if (!proxy) reader_checkhealth();
+  if (!proxy) reader_checkhealth(reader);
   return(0);
 }
 
-static void reader_do_pipe()
+static void reader_do_pipe(struct s_reader * reader)
 {
   uchar *ptr;
   switch(read_from_pipe(fd_m2c, &ptr, 0))
   {
     case PIP_ID_ECM:
-      reader_get_ecm((ECM_REQUEST *)ptr);
+      reader_get_ecm(reader, (ECM_REQUEST *)ptr);
       break;
     case PIP_ID_DCW:
       reader_send_DCW((ECM_REQUEST *)ptr);
       break;  
     case PIP_ID_EMM:
-      reader_do_emm((EMM_PACKET *)ptr);
+      reader_do_emm(reader, (EMM_PACKET *)ptr);
       break;
     case PIP_ID_CIN: 
-      reader_card_info(); 
+      reader_card_info(reader); 
       break;
   }
 }
 
-static void reader_main()
+static void reader_main(struct s_reader * reader)
 {
   while (1)
   {
-    switch(reader_listen(fd_m2c, pfd))
+    switch(reader_listen(reader, fd_m2c, pfd))
     {
-      case 1: reader_do_pipe()  ; break;
-      case 2: casc_do_sock(0)   ; break;
-      case 3: casc_do_sock_log(); break;
+      case 1: reader_do_pipe(reader)  ; break;
+      case 2: casc_do_sock(reader, 0)   ; break;
+      case 3: casc_do_sock_log(reader); break;
     }
   }
 }
 
-void start_cardreader()
+void * start_cardreader(void * rdr)
 {
+	struct s_reader * reader = (struct s_reader *) rdr; //FIXME can be made simpler
   cs_ptyp=D_READER;
 
-  if ((proxy=reader[ridx].typ & R_IS_CASCADING))
+  if ((proxy=reader->typ & R_IS_CASCADING))
   {
     client[cs_idx].typ='p';
-    client[cs_idx].port=reader[ridx].r_port;
-    strcpy(client[cs_idx].usr, reader[ridx].r_usr);
-    switch(reader[ridx].typ)
+    client[cs_idx].port=reader->r_port;
+    strcpy(client[cs_idx].usr, reader->r_usr);
+    switch(reader->typ)
     {
-      case R_CAMD33  : module_camd33(&reader[ridx].ph); break;
-      case R_CAMD35  : module_camd35(&reader[ridx].ph); break;
-      case R_NEWCAMD : module_newcamd(&reader[ridx].ph); break;
-      case R_RADEGAST: module_radegast(&reader[ridx].ph); break;
-      case R_SERIAL  : module_oscam_ser(&reader[ridx].ph); break;
-      case R_CS378X  : module_camd35_tcp(&reader[ridx].ph); break;
-      case R_CCCAM  : module_cccam(&reader[ridx].ph); break;
+      case R_CAMD33  : module_camd33(&reader->ph); break;
+      case R_CAMD35  : module_camd35(&reader->ph); break;
+      case R_NEWCAMD : module_newcamd(&reader->ph); break;
+      case R_RADEGAST: module_radegast(&reader->ph); break;
+      case R_SERIAL  : module_oscam_ser(&reader->ph); break;
+      case R_CS378X  : module_camd35_tcp(&reader->ph); break;
+      case R_CCCAM  : module_cccam(&reader->ph); break;
 #ifdef CS_WITH_GBOX
-      case R_GBOX    : module_gbox(&reader[ridx].ph);strcpy(client[cs_idx].usr, reader[ridx].label); break;
+      case R_GBOX    : module_gbox(&reader->ph);strcpy(client[cs_idx].usr, reader->label); break;
 #endif
     }
-    if (!(reader[ridx].ph.c_init))
+    if (!(reader->ph.c_init))
     {
-      cs_log("FATAL: %s-protocol not supporting cascading", reader[ridx].ph.desc);
+      cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);
       cs_sleepms(1000);
       cs_exit(1);
     }
-    if (reader[ridx].ph.c_init())
+    if (reader->ph.c_init())
       cs_exit(1);
-    if ((reader[ridx].log_port) && (reader[ridx].ph.c_init_log))
-      reader[ridx].ph.c_init_log();
+    if ((reader->log_port) && (reader->ph.c_init_log))
+      reader->ph.c_init_log();
   }
   else
   {
     client[cs_idx].ip=cs_inet_addr("127.0.0.1");
-    while (reader_device_init(reader[ridx].device)==2)
-      cs_sleepms(60000); // wait 60 secs and try again
+		if (reader->typ != R_SC8in1)
+     	while (reader_device_init(reader)==2)
+      	cs_sleepms(60000); // wait 60 secs and try again
   }
 
   emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));
@@ -664,7 +668,8 @@ void start_cardreader()
     cs_exit(1);
   }
   memset(ecmtask, 0, CS_MAXPENDING*(sizeof(ECM_REQUEST)));
-
-  reader_main();
+  reader_main(reader);
   cs_exit(0);
+	return NULL; //dummy to prevent compiler error
 }
+

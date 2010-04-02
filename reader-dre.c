@@ -18,7 +18,7 @@ static uchar xor (uchar * cmd, int cmdlen)
   return checksum;
 }
 
-static int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return ERROR = err
+static int dre_command (struct s_reader * reader, uchar * cmd, int cmdlen)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return ERROR = err
 {
   static uchar startcmd[] = { 0x80, 0xFF, 0x10, 0x01, 0x05 };	//any command starts with this, 
   //last byte is nr of bytes of the command that will be sent
@@ -39,7 +39,7 @@ static int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will 
   cmdlen += headerlen;
   command[cmdlen++] = checksum;
 
-  reader_cmd2icc (command, cmdlen);
+  reader_cmd2icc (reader, command, cmdlen);
 
   if ((cta_lr != 2) || (cta_res[0] != OK_RESPONSE)) {
     cs_log ("[dre-reader] unexpected answer from card: %s", cs_hexdump (0, cta_res, cta_lr));
@@ -47,7 +47,7 @@ static int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will 
   }
 
   reqans[4] = cta_res[1];	//adapt length byte
-  reader_cmd2icc (reqans, 5);
+  reader_cmd2icc (reader, reqans, 5);
 
   if (cta_res[0] != CMD_BYTE) {
     cs_log ("[dre-reader] unknown response: cta_res[0] expected to be %02x, is %02x", CMD_BYTE, cta_res[0]);
@@ -89,10 +89,10 @@ static int dre_command (uchar * cmd, int cmdlen)	//attention: inputcommand will 
 
 #define dre_cmd(cmd) \
 { \
-  	dre_command(cmd, sizeof(cmd)); \
+  	dre_command(reader, cmd, sizeof(cmd)); \
 }
 
-static int dre_set_provider_info (void)
+static int dre_set_provider_info (struct s_reader * reader)
 {
   int i;
   static uchar cmd59[] = { 0x59, 0x14 };	// subscriptions
@@ -105,7 +105,7 @@ static int dre_set_provider_info (void)
     cs_debug ("[dre-reader] pbm: %s", cs_hexdump (0, pbm, 32));
 
     if (pbm[0] == 0xff)
-      cs_ri_log ("[dre-reader] no active packages");
+      cs_ri_log (reader, "[dre-reader] no active packages");
     else
       for (i = 0; i < 32; i++)
 	if (pbm[i] != 0xff) {
@@ -128,14 +128,14 @@ static int dre_set_provider_info (void)
 	  int endyear = temp->tm_year + 1900;
 	  int endmonth = temp->tm_mon + 1;
 	  int endday = temp->tm_mday;
-	  cs_ri_log ("[dre-reader] active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
+	  cs_ri_log (reader, "[dre-reader] active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
 		  endyear, endmonth, endday);
 	}
   }
   return OK;
 }
 
-int dre_card_init (ATR newatr)
+int dre_card_init (struct s_reader * reader, ATR newatr)
 {
 	get_atr;
   static uchar ua[] = { 0x43, 0x15 };	// get serial number (UA)
@@ -155,32 +155,32 @@ int dre_card_init (ATR newatr)
   switch (atr[6]) {
   case 0x11:
     card = "Tricolor Centr";
-    reader[ridx].caid[0] = 0x4ae0;
+    reader->caid[0] = 0x4ae0;
     mode = 41;
     break;			//59 type card = MSP (74 type = ATMEL)
   case 0x12:
     card = "Cable TV";
-    reader[ridx].caid[0] = 0x4ae0;	//TODO not sure about this one
+    reader->caid[0] = 0x4ae0;	//TODO not sure about this one
     mode = 41;			//TODO not sure
     break;
   case 0x14:
     card = "Tricolor Syberia / Platforma HD new";
-    reader[ridx].caid[0] = 0x4ae1;
+    reader->caid[0] = 0x4ae1;
     mode = 51;
     break;			//59 type card
   case 0x15:
     card = "Platforma HD / DW old";
-    reader[ridx].caid[0] = 0x4ae1;
+    reader->caid[0] = 0x4ae1;
     mode = 51;
     break;			//59 type card
   default:
     card = "Unknown";
-    reader[ridx].caid[0] = 0x4ae1;
+    reader->caid[0] = 0x4ae1;
     mode = 51;
     break;
   }
 
-  memset (reader[ridx].prid, 0x00, 8);
+  memset (reader->prid, 0x00, 8);
 
   static uchar cmd30[] =
     { 0x30, 0x81, 0x00, 0x81, 0x82, 0x03, 0x84, 0x05, 0x06, 0x87, 0x08, 0x09, 0x00, 0x81, 0x82, 0x03, 0x84, 0x05,
@@ -217,9 +217,9 @@ FE 48 */
 
   int hexlength = cta_res[1] - 2;	//discard first and last byte, last byte is always checksum, first is answer code
 
-  reader[ridx].hexserial[0] = 0;
-  reader[ridx].hexserial[1] = 0;
-  memcpy (reader[ridx].hexserial + 2, cta_res + 3, hexlength);
+  reader->hexserial[0] = 0;
+  reader->hexserial[1] = 0;
+  memcpy (reader->hexserial + 2, cta_res + 3, hexlength);
 
   int low_dre_id = ((cta_res[4] << 16) | (cta_res[5] << 8) | cta_res[6]) - 48608;
   int dre_chksum = 0;
@@ -232,28 +232,28 @@ FE 48 */
   }
 
   //cs_ri_log("[dre-reader] type: DRE Crypt, caid: %04X, serial: %llu, card: v%x",
-  cs_ri_log ("[dre-reader] type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
-	  reader[ridx].caid[0], cs_hexdump (0, reader[ridx].hexserial + 2, 4), dre_chksum, provider - 16,
+  cs_ri_log (reader, "[dre-reader] type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
+	  reader->caid[0], cs_hexdump (0, reader->hexserial + 2, 4), dre_chksum, provider - 16,
 	  major_version + 1, low_dre_id, geocode, card, major_version, minor_version);
-  cs_ri_log ("[dre-reader] Provider name:%s.", provname);
+  cs_ri_log (reader, "[dre-reader] Provider name:%s.", provname);
 
 
-  memset (reader[ridx].sa, 0, sizeof (reader[ridx].sa));
-  memcpy (reader[ridx].sa[0], reader[ridx].hexserial + 2, 1);	//copy first byte of unique address also in shared address, because we dont know what it is...
+  memset (reader->sa, 0, sizeof (reader->sa));
+  memcpy (reader->sa[0], reader->hexserial + 2, 1);	//copy first byte of unique address also in shared address, because we dont know what it is...
 
-  cs_ri_log ("[dre-reader] SA = %02X%02X%02X%02X, UA = %s", reader[ridx].sa[0][0], reader[ridx].sa[0][1], reader[ridx].sa[0][2],
-	  reader[ridx].sa[0][3], cs_hexdump (0, reader[ridx].hexserial + 2, 4));
+  cs_ri_log (reader, "[dre-reader] SA = %02X%02X%02X%02X, UA = %s", reader->sa[0][0], reader->sa[0][1], reader->sa[0][2],
+	  reader->sa[0][3], cs_hexdump (0, reader->hexserial + 2, 4));
 
-  reader[ridx].nprov = 1;
+  reader->nprov = 1;
 
-  if (!dre_set_provider_info ())
+  if (!dre_set_provider_info (reader))
     return ERROR;			//fatal error
 
   cs_log ("[dre-reader] ready for requests");
   return OK;
 }
 
-int dre_do_ecm (ECM_REQUEST * er)
+int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
 {
   if (mode == 41) {
     static uchar ecmcmd41[] = { 0x41,
@@ -318,7 +318,7 @@ int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 }
 	
 
-int dre_do_emm (EMM_PACKET * ep)
+int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
 {
 
   int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
@@ -333,7 +333,7 @@ int dre_do_emm (EMM_PACKET * ep)
     for (i = 0; i < 2; i++) {
       memcpy (emmcmd52 + 1, ep->emm + 5 + 32 + i * 56, 56);
       // check for shared address
-      if(ep->emm[3]!=reader[ridx].sa[0][0]) 
+      if(ep->emm[3]!=reader->sa[0][0]) 
         return OK; // ignore, wrong address
       emmcmd52[0x39] = provider;
       if ((dre_cmd (emmcmd52)))

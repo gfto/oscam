@@ -1091,7 +1091,7 @@ static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, 
        
         gettimeofday(&now,NULL);
         timersub(&now, &start, &dif);
-	cs_sleepus(50);
+				cs_sleepus(50);
         sched_yield();
     }
 		cs_ddump(buff, total_read, "SR IO: Receive: ");
@@ -1179,7 +1179,7 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size,
             if ((ret = smartreader_write_data(reader, &buff[idx], 1)) < 0){
                 break;
             }
-	    cs_sleepus(udelay);
+	          cs_sleepus(udelay);
         }
     }
     sched_yield();

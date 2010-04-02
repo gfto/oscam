@@ -1,5 +1,6 @@
 #include "globals.h"
 #include <termios.h>
+extern struct s_reader *reader;
 
 #define HSIC_CRC 0xA5
 #define SSSP_MAX_PID 8

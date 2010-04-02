@@ -7,15 +7,15 @@ extern ushort cta_lr;
 
 #define write_cmd(cmd, data) \
 { \
-        if (card_write(cmd, data)) return ERROR; \
+        if (card_write(reader, cmd, data)) return ERROR; \
 }
 
 #define read_cmd(cmd, data) \
 { \
-        if (card_write(cmd, NULL)) return ERROR; \
+        if (card_write(reader, cmd, NULL)) return ERROR; \
 }
 
-static int set_provider_info(int i)
+static int set_provider_info(struct s_reader * reader, int i)
 {
   static uchar ins12[] = { 0xc1, 0x12, 0x00, 0x00, 0x19 }; // get provider info
   int year, month, day;
@@ -28,9 +28,9 @@ static int set_provider_info(int i)
   read_cmd(ins12, NULL); // show provider properties
   
   if ((cta_res[25] != 0x90) || (cta_res[26] != 0x00)) return ERROR;
-  reader[ridx].prid[i][0]=0;
-  reader[ridx].prid[i][1]=0;//blanken high byte provider code
-  memcpy(&reader[ridx].prid[i][2], cta_res, 2);
+  reader->prid[i][0]=0;
+  reader->prid[i][1]=0;//blanken high byte provider code
+  memcpy(&reader->prid[i][2], cta_res, 2);
   
   year = (cta_res[22]>>1) + 1990;
   month = ((cta_res[22]&0x1)<< 3) | (cta_res[23] >>5);
@@ -48,16 +48,16 @@ static int set_provider_info(int i)
   l_name[sizeof(l_name)-1]=0;
   trim(l_name+8);
   l_name[0]=(l_name[8]) ? ',' : 0;
-  reader[ridx].availkeys[i][0]=valid; //misusing availkeys to register validity of provider
-  cs_ri_log("[seca-reader] provider: %d, valid: %i%s, expiry date: %4d/%02d/%02d",
+  reader->availkeys[i][0]=valid; //misusing availkeys to register validity of provider
+  cs_ri_log (reader, "[seca-reader] provider: %d, valid: %i%s, expiry date: %4d/%02d/%02d",
          i+1, valid,l_name, year, month, day);
-  memcpy(&reader[ridx].sa[i][0], cta_res+18, 4);
+  memcpy(&reader->sa[i][0], cta_res+18, 4);
   if (valid==1) //if not expired
-    cs_ri_log("[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4));
+    cs_ri_log (reader, "[seca-reader] SA: %s", cs_hexdump(0, cta_res+18, 4));
   return OK;
 }
 
-int seca_card_init(ATR newatr)
+int seca_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
 	char *card;
@@ -89,34 +89,34 @@ int seca_card_init(ATR newatr)
     case 0x7070: card="Canal+ NL"; break;
     default:     card="Unknown"; break;
   }
-  reader[ridx].caid[0]=0x0100;
-  memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
+  reader->caid[0]=0x0100;
+  memset(reader->prid, 0xff, sizeof(reader->prid));
   read_cmd(ins0e, NULL); // read unique id
-  memcpy(reader[ridx].hexserial, cta_res+2, 6);
+  memcpy(reader->hexserial, cta_res+2, 6);
   serial = b2ll(5, cta_res+3) ;
-  cs_ri_log("type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
-         reader[ridx].caid[0], serial, card, atr[9]&0x0F, atr[9]>>4);
+  cs_ri_log (reader, "type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
+         reader->caid[0], serial, card, atr[9]&0x0F, atr[9]>>4);
   read_cmd(ins16, NULL); // read nr of providers
   pmap=cta_res[2]<<8|cta_res[3];
-  for (reader[ridx].nprov=0, i=pmap; i; i>>=1)
-    reader[ridx].nprov+=i&1;
+  for (reader->nprov=0, i=pmap; i; i>>=1)
+    reader->nprov+=i&1;
  
   for (i=0; i<16; i++)
     if (pmap&(1<<i))
     {
-      if (set_provider_info(i) == ERROR)
+      if (set_provider_info(reader, i) == ERROR)
         return ERROR;
       else
-	sprintf((char *) buf+strlen((char *)buf), ",%04lX", b2i(2, &reader[ridx].prid[i][2])); 
+	sprintf((char *) buf+strlen((char *)buf), ",%04lX", b2i(2, &reader->prid[i][2])); 
     }
 
-  cs_ri_log("providers: %d (%s)", reader[ridx].nprov, buf+1);
+  cs_ri_log (reader, "providers: %d (%s)", reader->nprov, buf+1);
 // Unlock parental control
   if( cfg->ulparent != 0 ){
 	  write_cmd(ins30, ins30data); 
-	  cs_ri_log("[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
+	  cs_ri_log (reader, "[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
   }else {
-	  cs_ri_log("[seca-reader] parental locked");
+	  cs_ri_log (reader, "[seca-reader] parental locked");
   }	
   cs_log("[seca-reader] ready for requests");
   return OK;
@@ -132,13 +132,13 @@ static int get_prov_index(struct s_reader * rdr, char *provid)	//returns provide
 }
 	
 
-int seca_do_ecm(ECM_REQUEST *er)
+int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
   unsigned char ins3a[] = { 0xc1,0x3a,0x00,0x00,0x10 }; // decoding cw
   int i;
-  i=get_prov_index(&reader[ridx], (char *) er->ecm+3);
-  if ((i == -1) || (reader[ridx].availkeys[i][0] == 0)) //if provider not found or expired
+  i=get_prov_index(reader, (char *) er->ecm+3);
+  if ((i == -1) || (reader->availkeys[i][0] == 0)) //if provider not found or expired
   	return ERROR;
   ins3c[2]=i;
   ins3c[3]=er->ecm[7]; //key nr
@@ -186,7 +186,7 @@ int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if s
 	}
 }
 	
-int seca_do_emm(EMM_PACKET *ep)
+int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   unsigned char ins40[] = { 0xc1,0x40,0x00,0x00,0x00 };
   int i,ins40data_offset;
@@ -217,7 +217,7 @@ tp   len       shared-- cust
 			return ERROR;	//unknown, no update
   }	//end of switch
 
-  i=get_prov_index(&reader[ridx], (char *) ep->emm+9);
+  i=get_prov_index(reader, (char *) ep->emm+9);
   if (i==-1) 
     return ERROR;
   ins40[2]=i;
@@ -227,12 +227,12 @@ tp   len       shared-- cust
 	 return OK; //Update not necessary
   }
   if ((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19)))
-  	if (set_provider_info(i) == OK) //after successfull EMM, print new provider info
+  	if (set_provider_info(reader, i) == OK) //after successfull EMM, print new provider info
 	  return OK;
   return ERROR;
 }
 
-int seca_card_info (void)
+int seca_card_info (struct s_reader * reader)
 {
 //SECA Package BitMap records (PBM) can be used to determine whether the channel is part of the package that the SECA card can decrypt. This module reads the PBM
 //from the SECA card. It cannot be used to check the channel, because this information seems to reside in the CA-descriptor, which seems not to be passed on through servers like camd, newcamd, radegast etc.
@@ -243,18 +243,18 @@ int seca_card_info (void)
   static unsigned char ins32[] = { 0xc1, 0x32, 0x00, 0x00, 0x20 };				// get PBM
   int prov;
 
-  for (prov = 0; prov < reader[ridx].nprov; prov++) {
+  for (prov = 0; prov < reader->nprov; prov++) {
     ins32[2] = prov;
     write_cmd (ins34, ins34 + 5);	//prepare card for pbm request
     read_cmd(ins32, NULL);	//pbm request
     uchar pbm[8];		//TODO should be arrayed per prov
     switch (cta_res[0]) {
     case 0x04:
-      cs_ri_log ("[seca-reader] no PBM for provider %i", prov + 1);
+      cs_ri_log (reader, "[seca-reader] no PBM for provider %i", prov + 1);
       break;
     case 0x83:
       memcpy (pbm, cta_res + 1, 8);
-      cs_ri_log ("[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump (0, pbm, 8));
+      cs_ri_log (reader, "[seca-reader] PBM for provider %i: %s", prov + 1, cs_hexdump (0, pbm, 8));
       break;
     default:
       cs_log ("[seca-reader] ERROR: PBM returns unknown byte %02x", cta_res[0]);

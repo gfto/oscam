@@ -48,12 +48,6 @@ double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 32, 64, 12, 20, 0.5, 0.25, 0.125, 0
 
 unsigned atr_i_table[4] = {25, 50, 100, 0};
 
-/*
- * Not exported functions declaration
- */
-
-static bool ATR_GetNextByte (unsigned timeout, BYTE * b, bool invert);
-
 /* 
  * Exported funcions definition
  */
@@ -186,127 +180,6 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
 	
 	atr->length = pointer + 1;
 	return (ATR_OK);
-}
-
-int ATR_InitFromStream (ATR * atr, unsigned timeout)
-{
-	BYTE TDi;
-	unsigned pointer = 0, pn = 0, i;
-	bool invert;
-
-	invert = FALSE;
-		
-	/* Store T0 and TS */
-	if (!ATR_GetNextByte (timeout, &(atr->TS), invert))
-		return ATR_IO_ERROR;
-	
-	if (atr->TS == 0x03)
-	{
-		atr->TS = 0x3F;
-		invert = TRUE;
-	}
-	
-	if ((atr->TS != 0x3B) && (atr->TS != 0x3F))
-		return ATR_MALFORMED;
-	
-	if (!ATR_GetNextByte (timeout, &(atr->T0), invert))
-		return ATR_MALFORMED;
-	
-	TDi = atr->T0;
-	pointer = 1;
-	
-	/* Store number of historical bytes */
-	atr->hbn = TDi & 0x0F;
-	
-	/* TCK is not present by default */
-	(atr->TCK).present = FALSE;
-	
-	/* Extract interface bytes */
-	while (TRUE)
-	{
-		/* Check TAi is present */
-		if ((TDi | 0xEF) == 0xFF)
-		{
-			pointer++;
-			if (!ATR_GetNextByte(timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TA].value),invert))
-				return ATR_MALFORMED;
-			atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = TRUE;
-		}
-		else
-		{
-			atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = FALSE;
-		}
-		
-		/* Check TBi is present */
-		if ((TDi | 0xDF) == 0xFF)
-		{
-			pointer++;
-			if (!ATR_GetNextByte(timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TB].value),invert))
-				return ATR_MALFORMED;
-			atr->ib[pn][ATR_INTERFACE_BYTE_TB].present = TRUE;
-		}
-		else
-		{
-			atr->ib[pn][ATR_INTERFACE_BYTE_TB].present = FALSE;
-		}
-		
-		/* Check TCi is present */
-		if ((TDi | 0xBF) == 0xFF)
-		{
-			pointer++;
-			if (!ATR_GetNextByte(timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TC].value), invert))
-				return ATR_MALFORMED;
-			atr->ib[pn][ATR_INTERFACE_BYTE_TC].present = TRUE;
-		}
-		else
-		{
-			atr->ib[pn][ATR_INTERFACE_BYTE_TC].present = FALSE;
-		}
-		
-		/* Read TDi if present */
-		if ((TDi | 0x7F) == 0xFF)
-		{
-			pointer++;
-			if (!ATR_GetNextByte(timeout, &(atr->ib[pn][ATR_INTERFACE_BYTE_TD].value), invert))
-				return ATR_MALFORMED;
-			TDi = atr->ib[pn][ATR_INTERFACE_BYTE_TD].value;
-			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = TRUE;
-			(atr->TCK).present = ((TDi & 0x0F) != ATR_PROTOCOL_TYPE_T0);
-			if (pn >= ATR_MAX_PROTOCOLS)
-				return (ATR_MALFORMED);
-			pn++;
-		}
-		else
-		{
-			atr->ib[pn][ATR_INTERFACE_BYTE_TD].present = FALSE;
-			break;
-		}
-	}
-	
-	/* Store number of protocols */
-	atr->pn = pn + 1;
-	
-	/* Store historical bytes */
-	for (i = 0; i < (atr->hbn); i++)
-	{
-		if (!ATR_GetNextByte (timeout, &(atr->hb[i]), invert))
-			return ATR_MALFORMED;
-	}
-	
-	pointer += (atr->hbn);
-	
-	/* Store TCK */
-	if ((atr->TCK).present)
-	{
-		pointer++;
-		
-		if (!ATR_GetNextByte (timeout, (&((atr->TCK).value)), invert))
-			return ATR_MALFORMED;
-	}
-	
-	atr->length = pointer + 1;
-	return (ATR_OK);
-	
 }
 
 int ATR_GetConvention (ATR * atr, int *convention)
@@ -559,19 +432,4 @@ int ATR_GetFsMax (ATR * atr, unsigned long *fsmax)
 		(*fsmax) = atr_fs_table[1];
 	
 	return (ATR_OK);
-}
-
-/*
- * Not exported functions definition
- */
-
-static bool ATR_GetNextByte (unsigned timeout, BYTE * byte, bool invert)
-{
-	bool ret;
-	ret = !IO_Serial_Read (timeout, 1, byte);
-	/* Para tarjetas inversas quiza */
-	if (invert)
-		(*byte) = ~(INVERT_BYTE (*byte));
-	
-	return ret;
 }

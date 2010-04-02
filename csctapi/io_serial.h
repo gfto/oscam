@@ -27,10 +27,10 @@
 
 #include <termios.h>
 
-//#define IO_Serial_DTR_Set() IO_Serial_DTR_RTS(1, 1)
-//#define IO_Serial_DTR_Clr() IO_Serial_DTR_RTS(1, 0)
-#define IO_Serial_RTS_Set() IO_Serial_DTR_RTS(0, 1)
-#define IO_Serial_RTS_Clr() IO_Serial_DTR_RTS(0, 0)
+#define IO_Serial_DTR_Set(reader) IO_Serial_DTR_RTS(reader, 1, 1)
+#define IO_Serial_DTR_Clr(reader) IO_Serial_DTR_RTS(reader, 1, 0)
+#define IO_Serial_RTS_Set(reader) IO_Serial_DTR_RTS(reader, 0, 1)
+#define IO_Serial_RTS_Clr(reader) IO_Serial_DTR_RTS(reader, 0, 0)
 
 //Type of parity of the serial device
 //Chosen to Smartreader definition
@@ -54,27 +54,27 @@ int wr;
  */
 
 /* IO_Serial creation and deletion */
-void IO_Serial_Flush (void);
+void IO_Serial_Flush (struct s_reader * reader);
 
 /* Initialization and closing */
-bool IO_Serial_InitPnP (void);
-bool IO_Serial_Close (void);
+bool IO_Serial_InitPnP (struct s_reader * reader);
+bool IO_Serial_Close (struct s_reader * reader);
 
 /* Transmission properties */
-bool IO_Serial_DTR_RTS(int, int);
+bool IO_Serial_DTR_RTS(struct s_reader * reader, int, int);
 #if defined(TUXBOX) && defined(PPC)
-void IO_Serial_Ioctl_Lock(int);
+void IO_Serial_Ioctl_Lock(struct s_reader * reader, int);
 #else
-#define IO_Serial_Ioctl_Lock(b) {} //FIXME ugly !!
+#define IO_Serial_Ioctl_Lock(a,b) {} //FIXME ugly !!
 #endif
 
-bool IO_Serial_SetBitrate (unsigned long bitrate, struct termios * tio);
-bool IO_Serial_SetParams (unsigned long bitrate, unsigned bits, int parity, unsigned stopbits, int dtr, int rts);
-bool IO_Serial_SetProperties (struct termios newtio);
-int IO_Serial_SetParity (BYTE parity);
+bool IO_Serial_SetBitrate (struct s_reader * reader, unsigned long bitrate, struct termios * tio);
+bool IO_Serial_SetParams (struct s_reader * reader, unsigned long bitrate, unsigned bits, int parity, unsigned stopbits, int dtr, int rts);
+bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio);
+int IO_Serial_SetParity (struct s_reader * reader, BYTE parity);
 
 /* Input and output */
-bool IO_Serial_Read (unsigned timeout, unsigned size, BYTE * data);
-bool IO_Serial_Write (unsigned delay, unsigned size, BYTE * data);
+bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, BYTE * data);
+bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, BYTE * data);
 
 #endif /* IO_SERIAL */

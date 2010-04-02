@@ -38,15 +38,15 @@
  * Not exported functions declaration
  */
 
-static int Protocol_T1_SendBlock (T1_Block * block);
+static int Protocol_T1_SendBlock (struct s_reader *reader, T1_Block * block);
 
-static int Protocol_T1_ReceiveBlock (T1_Block ** block);
+static int Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block);
 
 /*
  * Exproted funtions definition
  */
 
-int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
+int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
 {
   T1_Block *block;
   BYTE *buffer, rsp_type, bytes, nr, wtx;
@@ -62,10 +62,10 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
     cs_debug_mask (D_IFD,"Protocol: Sending block S(IFS request, %d)\n", inf);
 
     /* Send IFSD request */
-    ret = Protocol_T1_SendBlock (block);
+    ret = Protocol_T1_SendBlock (reader, block);
 
     /* Receive a block */
-    ret = Protocol_T1_ReceiveBlock (&block);
+    ret = Protocol_T1_ReceiveBlock (reader, &block);
 
     if (ret == OK)
       {
@@ -90,10 +90,10 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
     cs_debug_mask (D_IFD,"Protocol: Sending block S(RESYNCH request)\n");
 
     /* Send request */
-    ret = Protocol_T1_SendBlock (block);
+    ret = Protocol_T1_SendBlock (reader, block);
 
     /* Receive a block */
-    ret = Protocol_T1_ReceiveBlock (&block);
+    ret = Protocol_T1_ReceiveBlock (reader, &block);
 
     if (ret == OK)
       {
@@ -124,11 +124,11 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
   cs_debug_mask (D_IFD,"Sending block I(%d,%d)\n", ns, more);
 
   /* Send a block */
-  call (Protocol_T1_SendBlock (block));
+  call (Protocol_T1_SendBlock (reader, block));
 
   while (more) {
       /* Receive a block */
-      call (Protocol_T1_ReceiveBlock (&block));
+      call (Protocol_T1_ReceiveBlock (reader, &block));
       rsp_type = T1_Block_GetType (block);
 
       /* Positive ACK R-Block received */
@@ -152,7 +152,7 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
           cs_debug_mask (D_IFD,"Protocol: Sending block I(%d,%d)\n", ns, more);
 
           /* Send a block */
-          call (Protocol_T1_SendBlock (block));
+          call (Protocol_T1_SendBlock (reader, block));
       }
       else {
           /* Delete block */
@@ -172,14 +172,14 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
   while ((ret == OK) && more)
     {
       if (wtx > 1)
-        ICC_Async_SetTimings (wtx * BWT);
+        ICC_Async_SetTimings (reader, wtx * BWT);
 
       /* Receive a block */
-      ret = Protocol_T1_ReceiveBlock (&block);
+      ret = Protocol_T1_ReceiveBlock (reader, &block);
 
       if (wtx > 1)
         {
-          ICC_Async_SetTimings (BWT);          
+          ICC_Async_SetTimings (reader, BWT);          
           wtx = 0;
         }
 
@@ -213,7 +213,7 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
                   cs_debug_mask (D_IFD,"Protocol: Sending block R(%d)\n", nr);
 
                   /* Send R-Block */
-                  ret = Protocol_T1_SendBlock (block);
+                  ret = Protocol_T1_SendBlock (reader, block);
                 }
             }
 
@@ -232,7 +232,7 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
               cs_debug_mask (D_IFD,"Protocol: Sending block S(WTX response, %d)\n", wtx);
 
               /* Send WTX response */
-              ret = Protocol_T1_SendBlock (block);
+              ret = Protocol_T1_SendBlock (reader, block);
             }
 
           else
@@ -256,36 +256,36 @@ int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APD
  * Not exported functions definition
  */
 
-static int Protocol_T1_SendBlock (T1_Block * block)
+static int Protocol_T1_SendBlock (struct s_reader *reader, T1_Block * block)
 {
 	int ret;
-  ret = ICC_Async_Transmit (block->length, block->data);
+  ret = ICC_Async_Transmit (reader, block->length, block->data);
 	T1_Block_Delete(block);
   return ret;
 }
 
-static int Protocol_T1_ReceiveBlock (T1_Block ** block)
+static int Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block)
 {
   BYTE buffer[T1_BLOCK_MAX_SIZE];
   int ret;
 
   /* Receive four mandatory bytes */
-  if (ICC_Async_Receive (4, buffer))
+  if (ICC_Async_Receive (reader, 4, buffer))
       ret = ERROR;
   else
       if (buffer[2] != 0x00) {
           /* Set timings to read the remaining block */
-          ICC_Async_SetTimings (CWT);
+          ICC_Async_SetTimings (reader, CWT);
 
           /* Receive remaining bytes */
-          if (ICC_Async_Receive (buffer[2], buffer + 4))
+          if (ICC_Async_Receive (reader, buffer[2], buffer + 4))
               ret = ERROR;
           else {
               (*block) = T1_Block_New (buffer, buffer[2] + 4);
               ret = OK;
             }
           /* Restore timings */
-          ICC_Async_SetTimings (BWT);
+          ICC_Async_SetTimings (reader, BWT);
         }
       else {
           ret = OK;

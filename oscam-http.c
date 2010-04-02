@@ -10,6 +10,8 @@
 #include <dirent.h>
 #include <sys/socket.h>
 
+extern struct s_reader *reader;
+
 static int running = 1;
 
 void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in){

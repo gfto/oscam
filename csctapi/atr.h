@@ -26,7 +26,6 @@
 #define _ATR_
 
 #include "defines.h"
-#include "io_serial.h"
 
 /*
  * Exported constants definition
@@ -109,7 +108,6 @@ extern unsigned atr_i_table[4];
 
 /* Initialization */
 int ATR_InitFromArray (ATR * atr, BYTE buffer[ATR_MAX_SIZE], unsigned length);
-int ATR_InitFromStream (ATR * atr, unsigned timeout);
 
 /* General smartcard characteristics */
 int ATR_GetConvention (ATR * atr, int *convention);

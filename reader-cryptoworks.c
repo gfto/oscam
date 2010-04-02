@@ -99,12 +99,12 @@ int CheckSctLen(const uchar *data, int off)
 
 #define write_cmd(cmd, data) \
 { \
-        if (card_write(cmd, data)) return ERROR; \
+        if (card_write(reader, cmd, data)) return ERROR; \
 }
 
 #define read_cmd(cmd, data) \
 { \
-        if (card_write(cmd, NULL)) return ERROR; \
+        if (card_write(reader, cmd, NULL)) return ERROR; \
 }
 
 static char *chid_date(uchar *ptr, char *buf, int l)
@@ -117,7 +117,7 @@ static char *chid_date(uchar *ptr, char *buf, int l)
   return(buf);
 }
 
-static int select_file(uchar f1, uchar f2)
+static int select_file(struct s_reader * reader, uchar f1, uchar f2)
 {
   uchar insA4[] = {0xA4, 0xA4, 0x00, 0x00, 0x02, 0x00, 0x00};
   insA4[5]=f1;
@@ -126,7 +126,7 @@ static int select_file(uchar f1, uchar f2)
   return((cta_res[0]==0x9f)&&(cta_res[1]==0x11));
 }
 
-static int read_record(uchar rec)
+static int read_record(struct s_reader * reader, uchar rec)
 {
   uchar insA2[] = {0xA4, 0xA2, 0x00, 0x00, 0x01, 0x00};
   uchar insB2[] = {0xA4, 0xB2, 0x00, 0x00, 0x00};
@@ -142,17 +142,17 @@ static int read_record(uchar rec)
   return(cta_lr-2);
 }
 
-int cryptoworks_send_pin(void)
+int cryptoworks_send_pin(struct s_reader * reader)
 {
   unsigned char insPIN[] = { 0xA4, 0x20, 0x00, 0x00, 0x04, 0x00,0x00,0x00,0x00 }; //Verify PIN  
   
-  if(reader[ridx].pincode[0] && (reader[ridx].pincode[0]&0xF0)==0x30)
+  if(reader->pincode[0] && (reader->pincode[0]&0xF0)==0x30)
   {
-	  memcpy(insPIN+5,reader[ridx].pincode,4);
+	  memcpy(insPIN+5,reader->pincode,4);
 	
 	  write_cmd(insPIN, insPIN+5);
-	  cs_ri_log("sending pincode to card");  
-	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log("bad pincode");
+	  cs_ri_log(reader, "sending pincode to card");  
+	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log(reader, "bad pincode");
 	  	 
 	  return OK;
   }
@@ -160,23 +160,23 @@ int cryptoworks_send_pin(void)
   return(0);
 }
 
-static int cryptoworks_disable_pin(void)
+static int cryptoworks_disable_pin(struct s_reader * reader)
 {
   unsigned char insPIN[] = { 0xA4, 0x26, 0x00, 0x00, 0x04, 0x00,0x00,0x00,0x00 }; //disable PIN  
   
-  if(reader[ridx].pincode[0] && (reader[ridx].pincode[0]&0xF0)==0x30)
+  if(reader->pincode[0] && (reader->pincode[0]&0xF0)==0x30)
   {
-	  memcpy(insPIN+5,reader[ridx].pincode,4);
+	  memcpy(insPIN+5,reader->pincode,4);
 	
 	  write_cmd(insPIN, insPIN+5);
-	  cs_ri_log("disable pincode to card");
-	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log("bad pincode");
+	  cs_ri_log(reader, "disable pincode to card");
+	  if((cta_res[0]==0x98)&&(cta_res[1]==0x04)) cs_ri_log(reader, "bad pincode");
 	  return ERROR;
   }
   return OK;
 }
 
-int cryptoworks_card_init(ATR newatr)
+int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
   int i;
@@ -190,53 +190,53 @@ int cryptoworks_card_init(ATR newatr)
 
   if ((atr[6]!=0xC4) || (atr[9]!=0x8F) || (atr[10]!=0xF1)) return ERROR;
 
-  reader[ridx].caid[0]=0xD00;
-  reader[ridx].nprov=0;
-  reader[ridx].ucpk_valid = 0;
-  memset(reader[ridx].prid, 0, sizeof(reader[ridx].prid));
+  reader->caid[0]=0xD00;
+  reader->nprov=0;
+  reader->ucpk_valid = 0;
+  memset(reader->prid, 0, sizeof(reader->prid));
 
   read_cmd(insA4C, NULL);		// read masterfile-ID
   if ((cta_res[0]==0xDF) && (cta_res[1]>=6))
     mfid=(cta_res[6]<<8)|cta_res[7];
 
-  select_file(0x3f, 0x20);
+  select_file(reader, 0x3f, 0x20);
   insB8[2]=insB8[3]=0;		// first
   for(cta_res[0]=0xdf; cta_res[0]==0xdf;)
   {
     read_cmd(insB8, NULL);		// read provider id's
     if (cta_res[0]!=0xdf) break;
-    if (((cta_res[4]&0x1f)==0x1f) && (reader[ridx].nprov<CS_MAXPROV))
+    if (((cta_res[4]&0x1f)==0x1f) && (reader->nprov<CS_MAXPROV))
     {
       sprintf(ptxt+strlen(ptxt), ",%02X", cta_res[5]);
-      reader[ridx].prid[reader[ridx].nprov++][3]=cta_res[5];
+      reader->prid[reader->nprov++][3]=cta_res[5];
     }
     insB8[2]=insB8[3]=0xff;	// next
   }
-  for (i=reader[ridx].nprov; i<CS_MAXPROV; i++)
-    memset(&reader[ridx].prid[i][0], 0xff, 4);
+  for (i=reader->nprov; i<CS_MAXPROV; i++)
+    memset(&reader->prid[i][0], 0xff, 4);
 
-  select_file(0x2f, 0x01);		// read caid
-  if (read_record(0xD1)>=4)
-    reader[ridx].caid[0]=(cta_res[2]<<8)|cta_res[3];
+  select_file(reader, 0x2f, 0x01);		// read caid
+  if (read_record(reader, 0xD1)>=4)
+    reader->caid[0]=(cta_res[2]<<8)|cta_res[3];
 
-  if (read_record(0x80)>=7)		// read serial
-    memcpy(reader[ridx].hexserial, cta_res+2, 5);
-  cs_ri_log("type: CryptoWorks, caid: %04X, ascii serial: %llu, hex serial: %s",
-            reader[ridx].caid[0], b2ll(5, reader[ridx].hexserial),cs_hexdump(0, reader[ridx].hexserial, 5));
+  if (read_record(reader, 0x80)>=7)		// read serial
+    memcpy(reader->hexserial, cta_res+2, 5);
+  cs_ri_log(reader, "type: CryptoWorks, caid: %04X, ascii serial: %llu, hex serial: %s",
+            reader->caid[0], b2ll(5, reader->hexserial),cs_hexdump(0, reader->hexserial, 5));
 
-  if (read_record(0x9E)>=66)	// read ISK
+  if (read_record(reader, 0x9E)>=66)	// read ISK
   {
     uchar keybuf[256];
     BIGNUM *ipk;
-    if (search_boxkey(reader[ridx].caid[0], (char *)keybuf))
+    if (search_boxkey(reader->caid[0], (char *)keybuf))
     {
       ipk=BN_new();
       BN_bin2bn(cwexp, sizeof(cwexp), &exp);
       BN_bin2bn(keybuf, 64, ipk);
       RSA(cta_res+2, cta_res+2, 0x40, &exp, ipk, 0);
       BN_free(ipk);
-      reader[ridx].ucpk_valid =(cta_res[2]==((mfid & 0xFF)>>1));
-      if (reader[ridx].ucpk_valid)
+      reader->ucpk_valid =(cta_res[2]==((mfid & 0xFF)>>1));
+      if (reader->ucpk_valid)
       {
         cta_res[2]|=0x80;
         BN_bin2bn(cta_res+2, 0x40, &ucpk);
@@ -244,20 +244,20 @@ int cryptoworks_card_init(ATR newatr)
       }
       else
       {
-        reader[ridx].ucpk_valid =(keybuf[0]==(((mfid & 0xFF)>>1)|0x80));
-        if (reader[ridx].ucpk_valid)
+        reader->ucpk_valid =(keybuf[0]==(((mfid & 0xFF)>>1)|0x80));
+        if (reader->ucpk_valid)
         {
           BN_bin2bn(keybuf, 0x40, &ucpk);
           cs_ddump(keybuf, 0x40, "session-key found:");
         }
         else
-          cs_log("[cryptoworks-reader] invalid IPK or session-key for CAID %04X !", reader[ridx].caid[0]);
+          cs_log("[cryptoworks-reader] invalid IPK or session-key for CAID %04X !", reader->caid[0]);
       }
     }
   }
-  if (read_record(0x9F)>=3)
+  if (read_record(reader, 0x9F)>=3)
     issuerid=cta_res[2];
-  if (read_record(0xC0)>=16)
+  if (read_record(reader, 0xC0)>=16)
   {
     cs_strncpy(issuer, (const char *)cta_res+2, sizeof(issuer));
     trim(issuer);
@@ -265,18 +265,18 @@ int cryptoworks_card_init(ATR newatr)
   else
     strcpy(issuer, unknown);
 
-  select_file(0x3f, 0x20);
-  select_file(0x2f, 0x11);		// read pin
-  if (read_record(atr[8])>=7)
+  select_file(reader, 0x3f, 0x20);
+  select_file(reader, 0x2f, 0x11);		// read pin
+  if (read_record(reader, atr[8])>=7)
   {
     cta_res[6]=0;
     pin=(char *)cta_res+2;
   }
-  cs_ri_log("issuer: %s, id: %02X, bios: v%d, pin: %s, mfid: %04X", issuer, issuerid, atr[7], pin, mfid);
-  cs_ri_log("providers: %d (%s)", reader[ridx].nprov, ptxt+1);
+  cs_ri_log(reader, "issuer: %s, id: %02X, bios: v%d, pin: %s, mfid: %04X", issuer, issuerid, atr[7], pin, mfid);
+  cs_ri_log(reader, "providers: %d (%s)", reader->nprov, ptxt+1);
   cs_log("[cryptoworks-reader] ready for requests");
   
-  cryptoworks_disable_pin(); //by KrazyIvan
+  cryptoworks_disable_pin(reader); //by KrazyIvan
   	
   return OK;
 }
@@ -353,13 +353,13 @@ bool cSmartCardCryptoworks::Decode(const cEcmInfo *ecm, const unsigned char *dat
 }
 #endif
 
-int cryptoworks_do_ecm(ECM_REQUEST *er)
+int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   int r=0;
   static unsigned char ins4C[] = { 0xA4,0x4C,0x00,0x00,0x00 };
   static unsigned char insC0[] = { 0xA4,0xC0,0x00,0x00,0x1C };
   unsigned char nanoD4[10];
-  int secLen=CheckSctLen(er->ecm,-5+(reader[ridx].ucpk_valid ? sizeof(nanoD4):0));
+  int secLen=CheckSctLen(er->ecm,-5+(reader->ucpk_valid ? sizeof(nanoD4):0));
 
   if(secLen>5)
   {
@@ -367,7 +367,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
     uchar *ecm=er->ecm;
     uchar buff[MAX_LEN];
 
-    if(reader[ridx].ucpk_valid)
+    if(reader->ucpk_valid)
     {
       memcpy(buff,er->ecm,secLen);
       nanoD4[0]=0xD4;
@@ -379,7 +379,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
       secLen+=sizeof(nanoD4);
     }
 
-    ins4C[3]=reader[ridx].ucpk_valid ? 2 : 0;
+    ins4C[3]=reader->ucpk_valid ? 2 : 0;
     ins4C[4]=secLen-5;
     write_cmd(ins4C, ecm+5);
     if (cta_res[cta_lr-2]==0x9f)
@@ -416,7 +416,7 @@ int cryptoworks_do_ecm(ECM_REQUEST *er)
             }
             else if (n==0x40) // camcrypt
             {
-              if(reader[ridx].ucpk_valid)
+              if(reader->ucpk_valid)
               {
                 RSA(&cta_res[i+2],&cta_res[i+2], n, &exp, &ucpk, 0);
                 cs_debug("[cryptoworks-reader] after camcrypt ");
@@ -490,7 +490,7 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TR
 }
 	
 
-int cryptoworks_do_emm(EMM_PACKET *ep)
+int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   uchar insEMM_GA[] = {0xA4, 0x44, 0x00, 0x00, 0x00};
   uchar insEMM_SA[] = {0xA4, 0x48, 0x00, 0x00, 0x00};
@@ -567,7 +567,7 @@ int cryptoworks_do_emm(EMM_PACKET *ep)
   return(rc);
 }
 
-int cryptoworks_card_info(void)
+int cryptoworks_card_info(struct s_reader * reader)
 {
   int i;
   uchar insA21[]= {0xA4, 0xA2, 0x01, 0x00, 0x05, 0x8C, 0x00, 0x00, 0x00, 0x00};
@@ -576,20 +576,20 @@ int cryptoworks_card_info(void)
   cs_log("[cryptoworks-reader] card detected");
   cs_log("[cryptoworks-reader] type: CryptoWorks");
 
-  for (i=0; i<reader[ridx].nprov; i++)
+  for (i=0; i<reader->nprov; i++)
   {
     l_name[8]=0;
-    select_file(0x1f, reader[ridx].prid[i][3]);	// select provider
-    select_file(0x0e, 0x11);		// read provider name
-    if (read_record(0xD6)>=16)
+    select_file(reader, 0x1f, reader->prid[i][3]);	// select provider
+    select_file(reader, 0x0e, 0x11);		// read provider name
+    if (read_record(reader, 0xD6)>=16)
     {
       cs_strncpy(l_name+8, (const char *)cta_res+2, sizeof(l_name)-9);
       l_name[sizeof(l_name)-1]=0;
       trim(l_name+8);
     }
     l_name[0]=(l_name[8]) ? ',' : 0;
-    cs_ri_log("provider: %d, id: %02X%s", i+1, reader[ridx].prid[i][3], l_name);
-    select_file(0x0f, 0x20);		// select provider class
+    cs_ri_log(reader, "provider: %d, id: %02X%s", i+1, reader->prid[i][3], l_name);
+    select_file(reader, 0x0f, 0x20);		// select provider class
     write_cmd(insA21, insA21+5);
     if (cta_res[0]==0x9f)
     {
@@ -602,14 +602,14 @@ int cryptoworks_card_info(void)
           char ds[16], de[16];
           chid_date(cta_res+28, ds, sizeof(ds)-1);
           chid_date(cta_res+30, de, sizeof(de)-1);
-          cs_ri_log("chid: %02X%02X, date: %s - %s, name: %s",
+          cs_ri_log(reader, "chid: %02X%02X, date: %s - %s, name: %s",
                     cta_res[6], cta_res[7], ds, de, trim((char *) cta_res+10));
         }
       }
     }
     //================================================================================
     //by KrazyIvan
-    select_file(0x0f, 0x00);		// select provider channel 
+    select_file(reader, 0x0f, 0x00);		// select provider channel 
     write_cmd(insA21, insA21+5);
     if (cta_res[0]==0x9f)
     {
@@ -623,7 +623,7 @@ int cryptoworks_card_info(void)
           chid_date(cta_res+28, ds, sizeof(ds)-1);
           chid_date(cta_res+30, de, sizeof(de)-1);
           cta_res[27]=0;
-          cs_ri_log("chid: %02X%02X, date: %s - %s, name: %s",
+          cs_ri_log(reader, "chid: %02X%02X, date: %s - %s, name: %s",
                     cta_res[6], cta_res[7], ds, de, trim((char *)cta_res+10));
         }
       }

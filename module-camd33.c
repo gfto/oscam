@@ -1,4 +1,5 @@
 #include "globals.h"
+extern struct s_reader *reader;
 
 #define REQ_SIZE	4
 static	uchar	camdbug[256];		// camd send wrong order

@@ -168,7 +168,7 @@ int chk_ufilters(ECM_REQUEST *er)
   return (rc);
 }
 
-int chk_rsfilter(ECM_REQUEST *er, int disable_server_filt)
+int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er, int disable_server_filt)
 {
   int i, rc=1;
   ushort caid;
@@ -182,27 +182,27 @@ int chk_rsfilter(ECM_REQUEST *er, int disable_server_filt)
   }
 
   rc=prid=0;
-  caid = reader[ridx].caid[0];
+  caid = reader->caid[0];
   if( caid==er->caid )
   {
-    for( i=0; (!rc) && (i<reader[ridx].nprov); i++ )
+    for( i=0; (!rc) && (i<reader->nprov); i++ )
     {
-      prid = (ulong)((reader[ridx].prid[i][0]<<16) |
-                     (reader[ridx].prid[i][1]<<8) |
-                     (reader[ridx].prid[i][2]));
+      prid = (ulong)((reader->prid[i][0]<<16) |
+                     (reader->prid[i][1]<<8) |
+                     (reader->prid[i][2]));
       cs_debug("trying server '%s' filter %04X:%06X", 
-                reader[ridx].device, caid, prid);
+                reader->device, caid, prid);
       if( prid==er->prid )
       {
         rc=1;
         cs_debug("%04X:%06X allowed by server '%s' filter %04X:%06X",
-                  er->caid, er->prid, reader[ridx].device, caid, prid);
+                  er->caid, er->prid, reader->device, caid, prid);
       }
     }
   }
   if(!rc) {
     cs_debug("no match, %04X:%06X rejected by server '%s' filters",
-            er->caid, er->prid, reader[ridx].device);
+            er->caid, er->prid, reader->device);
     if( !er->rcEx ) er->rcEx=(E1_SERVER<<4)|E2_IDENT;
     return 0;
   }

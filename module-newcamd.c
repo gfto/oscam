@@ -1,4 +1,5 @@
 #include "globals.h"
+extern struct s_reader *reader;
 
 #define CWS_NETMSGSIZE 272
 
@@ -124,12 +125,12 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   cs_debug("nmr(): len=%d, errno=%d", len, (len==-1)?errno:0);
   if (!len) {
     cs_debug("nmr: 1 return 0");
-    network_tcp_connection_close(handle);
+    network_tcp_connection_close(&reader[ridx], handle);
     return 0;
   }
   if (len != 2) {
     cs_debug("nmr: len!=2");
-    network_tcp_connection_close(handle);
+    network_tcp_connection_close(&reader[ridx], handle);
     return -1;
   }
   if (((netbuf[0] << 8) | netbuf[1]) > CWS_NETMSGSIZE - 2) {
@@ -279,7 +280,7 @@ static int connect_newcamd_server()
   reader[ridx].ncd_msgid = 0;
   if( read(handle, keymod, sizeof(keymod)) != sizeof(keymod)) {
     cs_log("server does not return 14 bytes");
-    network_tcp_connection_close(handle);
+    network_tcp_connection_close(&reader[ridx], handle);
     return -2;
   }
   cs_ddump(keymod, 14, "server init sequence:");
@@ -308,14 +309,14 @@ static int connect_newcamd_server()
   if( login_answer == MSG_CLIENT_2_SERVER_LOGIN_NAK )
   {
     cs_log("login failed for user '%s'", reader[ridx].r_usr);
-    network_tcp_connection_close(handle);
+    network_tcp_connection_close(&reader[ridx], handle);
     return -3;
   }
   if( login_answer != MSG_CLIENT_2_SERVER_LOGIN_ACK ) 
   {
     cs_log("expected MSG_CLIENT_2_SERVER_LOGIN_ACK (%02X), received %02X", 
              MSG_CLIENT_2_SERVER_LOGIN_ACK, login_answer);
-    network_tcp_connection_close(handle);
+    network_tcp_connection_close(&reader[ridx], handle);
     return -3;
   }
 
@@ -330,7 +331,7 @@ static int connect_newcamd_server()
   if( bytes_received < 16 || buf[2] != MSG_CARD_DATA ) {
     cs_log("expected MSG_CARD_DATA (%02X), received %02X", 
              MSG_CARD_DATA, buf[2]);
-    network_tcp_connection_close(handle);
+    network_tcp_connection_close(&reader[ridx], handle);
     return -4;
   }
 
@@ -1256,7 +1257,7 @@ static int newcamd_send_ecm(ECM_REQUEST *er, uchar *buf)
   // check server filters
   if( !newcamd_connect() ) return (-1);
 
-  if( !chk_rsfilter(er, reader[ridx].ncd_disable_server_filt) ) return(-1);
+  if( !chk_rsfilter(reader, er, reader[ridx].ncd_disable_server_filt) ) return(-1);
 
   memcpy(buf, er->ecm, er->l);
 

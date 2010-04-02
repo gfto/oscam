@@ -11,6 +11,7 @@ OBJECTS1	= $(LIBFILE1)(apdu.o) \
 			$(LIBFILE1)(ifd_cool.o) \
 		  $(LIBFILE1)(ifd_sci.o) \
 		  $(LIBFILE1)(ifd_phoenix.o) \
+		  $(LIBFILE1)(ifd_sc8in1.o) \
 		  $(LIBFILE1)(io_serial.o) \
 		  $(LIBFILE1)(protocol_t0.o) \
 		  $(LIBFILE1)(protocol_t1.o) \

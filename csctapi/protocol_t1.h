@@ -39,6 +39,6 @@ BYTE ns;              /* Send sequence number */
  */
 
 /* Send a command and return a response */
-int Protocol_T1_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
+int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
 
 #endif /* _PROTOCOL_T1_ */

@@ -2,6 +2,7 @@
 #ifdef CS_WITH_BOXKEYS
 #  include "oscam-boxkeys.np"
 #endif
+extern struct s_reader * reader;
 
 #define CONFVARWIDTH 20
 
@@ -1961,6 +1962,7 @@ int write_server()
 			switch(reader[i].typ) {	/* TODO like ph*/
 				case R_MOUSE	: ctyp = "mouse";		break;
 				case R_INTERNAL	: ctyp = "internal";		break;
+				case R_SC8in1	: ctyp = "sc8in1";	break;
 				case R_SMART	: ctyp = "smartreader";	break;
 				case R_CAMD35	: ctyp = "camd35";	break;
 				case R_CAMD33	: ctyp = "camd33";	break;
@@ -2639,6 +2641,11 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 		if (!strcmp(value, "mouse")) {
 			rdr->typ = R_MOUSE;
+			return;
+		}
+
+		if (!strcmp(value, "sc8in1")) {
+			rdr->typ = R_SC8in1;
 			return;
 		}
 

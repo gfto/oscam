@@ -138,10 +138,10 @@ static time_t chid_date(ulong date, char *buf, int l)
   return(ut);
 }
 
-static int irdeto_do_cmd(uchar *buf, ushort good)
+static int irdeto_do_cmd(struct s_reader * reader, uchar *buf, ushort good)
 {
   int rc;
-  if( (rc=reader_cmd2icc(buf, buf[4]+5)) )
+  if( (rc=reader_cmd2icc(reader, buf, buf[4]+5)) )
     return(rc);			// result may be 0 (success) or negative
   if (cta_lr<2)
     return(0x7F7F);		// this should never happen
@@ -150,10 +150,10 @@ static int irdeto_do_cmd(uchar *buf, ushort good)
 
 #define reader_chk_cmd(cmd, l) \
 { \
-        if (reader_cmd2icc(cmd, sizeof(cmd))) return ERROR; \
+        if (reader_cmd2icc(reader, cmd, sizeof(cmd))) return ERROR; \
   if (l && (cta_lr!=l)) return ERROR; }
 
-static int irdeto_card_init_provider(void)
+static int irdeto_card_init_provider(struct s_reader * reader)
 {
   int i, p;
   uchar buf[256]={0};
@@ -161,35 +161,35 @@ static int irdeto_card_init_provider(void)
   /*
    * Provider
    */
-  memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
-  for (buf[0]=i=p=0; i<reader[ridx].nprov; i++)
+  memset(reader->prid, 0xff, sizeof(reader->prid));
+  for (buf[0]=i=p=0; i<reader->nprov; i++)
   {
     sc_GetProvider[3]=i;
     reader_chk_cmd(sc_GetProvider, 0);
     //if ((cta_lr==26) && (cta_res[0]!=0xf))
     if ((cta_lr==26) && ((!(i&1)) || (cta_res[0]!=0xf)))
     {
-      reader[ridx].prid[i][4]=p++;
+      reader->prid[i][4]=p++;
 
       // maps the provider id for Betacrypt from FFFFFF to 000000,
       // fixes problems with cascading CCcam and OSCam
-      if ((reader[ridx].caid[0] >= 0x1700) && (reader[ridx].caid[0] <= 0x1799))
-        memset(&reader[ridx].prid[i][0], 0, 4);
+      if ((reader->caid[0] >= 0x1700) && (reader->caid[0] <= 0x1799))
+        memset(&reader->prid[i][0], 0, 4);
       else
-        memcpy(&reader[ridx].prid[i][0], cta_res, 4);
+        memcpy(&reader->prid[i][0], cta_res, 4);
 
-      sprintf((char *) buf+strlen((char *)buf), ",%06lx", b2i(3, &reader[ridx].prid[i][1]));
+      sprintf((char *) buf+strlen((char *)buf), ",%06lx", b2i(3, &reader->prid[i][1]));
     }
     else
-      reader[ridx].prid[i][0]=0xf;
+      reader->prid[i][0]=0xf;
   }
   if (p)
-    cs_ri_log("providers: %d (%s)", p, buf+1);
+    cs_ri_log(reader, "providers: %d (%s)", p, buf+1);
 
   return OK;
 }
 
-int irdeto_card_init(ATR newatr)
+int irdeto_card_init(struct s_reader * reader, ATR newatr)
 {
   get_atr;
   int camkey=0;
@@ -197,13 +197,13 @@ int irdeto_card_init(ATR newatr)
 
   if (memcmp(atr+4, "IRDETO", 6))
     return ERROR;
-  cs_ri_log("detect Irdeto card");
+  cs_ri_log(reader, "detect Irdeto card");
   
-  if(reader[ridx].has_rsa) // we use rsa from config as camkey
+  if(reader->has_rsa) // we use rsa from config as camkey
   {
   	cs_debug("[irdeto-reader] using camkey data from config");
-  	memcpy(&sc_GetCamKey383C[5], reader[ridx].rsa_mod, 0x40);
-  	memcpy(sc_CamKey, reader[ridx].nagra_boxkey, 8);
+  	memcpy(&sc_GetCamKey383C[5], reader->rsa_mod, 0x40);
+  	memcpy(sc_CamKey, reader->nagra_boxkey, 8);
   	cs_debug("[irdeto-reader]      camkey: %s", cs_hexdump (0, sc_CamKey, 8));
   	cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[5], 32));
   	cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[37], 32));
@@ -213,10 +213,10 @@ int irdeto_card_init(ATR newatr)
    * ContryCode
    */
   reader_chk_cmd(sc_GetCountryCode, 18);
-  reader[ridx].acs=(cta_res[0]<<8)|cta_res[1];
-  reader[ridx].caid[0]=(cta_res[5]<<8)|cta_res[6];
-  cs_ri_log("caid: %04X, acs: %x.%02x%s",
-         reader[ridx].caid[0], cta_res[0], cta_res[1], buf);
+  reader->acs=(cta_res[0]<<8)|cta_res[1];
+  reader->caid[0]=(cta_res[5]<<8)|cta_res[6];
+  cs_ri_log(reader, "caid: %04X, acs: %x.%02x%s",
+         reader->caid[0], cta_res[0], cta_res[1], buf);
 
   /*
    * Ascii/Hex-Serial
@@ -225,9 +225,9 @@ int irdeto_card_init(ATR newatr)
   memcpy(buf, cta_res, 10);
   buf[10]=0;
   reader_chk_cmd(sc_GetHEXSerial, 18);
-  memcpy(reader[ridx].hexserial, cta_res+12, 8); 
-  reader[ridx].nprov=cta_res[10];
-  cs_ri_log("ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+  memcpy(reader->hexserial, cta_res+12, 8); 
+  reader->nprov=cta_res[10];
+  cs_ri_log(reader, "ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
           buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
 
   /*
@@ -241,7 +241,7 @@ int irdeto_card_init(ATR newatr)
    */
   if ((atr[14]==0x03) && (atr[15]==0x84) && (atr[16]==0x55))
   {
-    switch (reader[ridx].caid[0])
+    switch (reader->caid[0])
     {
       case 0x1702: camkey=1; break;
       case 0x1722: camkey=2; break;
@@ -267,13 +267,13 @@ int irdeto_card_init(ATR newatr)
       reader_chk_cmd(sc_GetCamKey383C, 0);
       break;
   }
-	if (reader[ridx].cardmhz != 600)
+	if (reader->cardmhz != 600)
 		cs_log("WARNING: For Irdeto cards you will have to set 'cardmhz = 600' in oscam.server");
 
-  return irdeto_card_init_provider();
+  return irdeto_card_init_provider(reader);
 }
 
-int irdeto_do_ecm(ECM_REQUEST *er)
+int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   static const uchar sc_EcmCmd[] = { 0x05, 0x00, 0x00, 0x02, 0x00 };
   uchar cta_cmd[272];
@@ -281,7 +281,7 @@ int irdeto_do_ecm(ECM_REQUEST *er)
   memcpy(cta_cmd, sc_EcmCmd, sizeof(sc_EcmCmd));
   cta_cmd[4]=(er->ecm[2])-3;
   memcpy(cta_cmd+sizeof(sc_EcmCmd), &er->ecm[6], cta_cmd[4]);
-  if (irdeto_do_cmd(cta_cmd, 0x9D00)) return ERROR;
+  if (irdeto_do_cmd(reader, cta_cmd, 0x9D00)) return ERROR;
   if (cta_lr<24) return ERROR;
   ReverseSessionKeyCrypt(sc_CamKey, cta_res+6);
   ReverseSessionKeyCrypt(sc_CamKey, cta_res+14);
@@ -330,7 +330,7 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 }
 
-int irdeto_do_emm(EMM_PACKET *ep)
+int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   static const uchar sc_EmmCmd[] = { 0x01,0x00,0x00,0x00,0x00 };
   uchar cta_cmd[272];
@@ -341,15 +341,15 @@ int irdeto_do_emm(EMM_PACKET *ep)
   uchar *emm=ep->emm;
   if (mode&0x10)		// Hex addressed
   {
-    ok=(mode==reader[ridx].hexserial[3] &&
-       (!l || !memcmp(&emm[4], reader[ridx].hexserial, l)));
+    ok=(mode==reader->hexserial[3] &&
+       (!l || !memcmp(&emm[4], reader->hexserial, l)));
   }
   else				// Provider addressed
   {
-    for(i=0; i<reader[ridx].nprov; i++)
+    for(i=0; i<reader->nprov; i++)
     {
-      ok=(mode==reader[ridx].prid[i][0] &&
-         (!l || !memcmp(&emm[4], &reader[ridx].prid[i][1], l)));
+      ok=(mode==reader->prid[i][0] &&
+         (!l || !memcmp(&emm[4], &reader->prid[i][1], l)));
       if (ok) break;
     }
   }
@@ -368,7 +368,7 @@ int irdeto_do_emm(EMM_PACKET *ep)
       memcpy(ptr, emm, l);				// copy addr bytes
       ptr+=ADDRLEN; emm+=l;
       memcpy(ptr, &emm[2], dataLen);			// copy emm bytes
-      return(irdeto_do_cmd(cta_cmd, 0) ? 0 : 1);
+      return(irdeto_do_cmd(reader, cta_cmd, 0) ? 0 : 1);
     }
     else
       cs_debug("[irdeto-reader] addrlen %d > %d", l, ADDRLEN);
@@ -376,7 +376,7 @@ int irdeto_do_emm(EMM_PACKET *ep)
   return ERROR;
 }
 
-int irdeto_card_info(void)
+int irdeto_card_info(struct s_reader * reader)
 {
   int i, p;
 
@@ -392,11 +392,11 @@ int irdeto_card_info(void)
     /*
      * Provider 2
      */
-    for (i=p=0; i<reader[ridx].nprov; i++)
+    for (i=p=0; i<reader->nprov; i++)
     {
       int j, k, chid, first=1;
       char t[32];
-      if (reader[ridx].prid[i][4]!=0xff)
+      if (reader->prid[i][4]!=0xff)
       {
         p++;
         sc_GetChanelIds[3]=i;
@@ -415,16 +415,16 @@ int irdeto_card_info(void)
               chid_date(date+cta_res[k+4], t+16, 16);
               if (first)
               {
-                cs_ri_log("provider: %d, id: %06X", p, b2i(3, &reader[ridx].prid[i][1]));
+                cs_ri_log(reader, "provider: %d, id: %06X", p, b2i(3, &reader->prid[i][1]));
                 first=0;
               }
-              cs_ri_log("chid: %04X, date: %s - %s", chid, t, t+16);
+              cs_ri_log(reader, "chid: %04X, date: %s - %s", chid, t, t+16);
             }
           }
         }
       }
     }
   }
-  cs_ri_log("[irdeto-reader] ready for requests");
+  cs_ri_log(reader, "[irdeto-reader] ready for requests");
   return OK;
 }

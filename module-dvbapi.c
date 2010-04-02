@@ -4,6 +4,9 @@
 
 #include <sys/un.h>
 
+extern int ridx;
+extern struct s_reader * reader;
+
 #define MAX_DEMUX 5
 #define MAX_CAID 50
 #define ECM_PIDS 20

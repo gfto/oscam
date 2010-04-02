@@ -2,7 +2,6 @@
 		ifd_phoenix.c
 		This module provides IFD handling functions for Smartmouse/Phoenix reader.
 */
-
 #include <stdio.h>
 //#include <time.h>
 //#include <string.h>
@@ -12,8 +11,10 @@
 #include <termios.h>
 #include "ifd_phoenix.h"
 #include "icc_async.h"
+#include "io_serial.h"
 
 #define MAX_TRANSMIT			255
+#define PHOENIX_MAX_ATR_SIZE		40
 
 #ifdef USE_GPIO	//felix: definition of gpio functions
 int gpio_outen,gpio_out,gpio_in;
@@ -53,15 +54,15 @@ static int get_gpio(void)
 #endif
 
 
-int Phoenix_Init ()
+int Phoenix_Init (struct s_reader * reader)
 {
-		call (IO_Serial_InitPnP ());
-		IO_Serial_Flush();
+		call (IO_Serial_InitPnP (reader));
+		IO_Serial_Flush(reader);
 
 #ifdef USE_GPIO	//felix: define gpio number used for card detect and reset. ref to globals.h				
-	if (reader[ridx].detect>4)
+	if (reader->detect>4)
 	{
-		gpio_detect=reader[ridx].detect-4;
+		gpio_detect=reader->detect-4;
 		pin = 1<<gpio_detect;
 		gpio_outen=open("/dev/gpio/outen",O_RDWR);
 		gpio_out=open("/dev/gpio/out",O_RDWR);
@@ -70,18 +71,15 @@ int Phoenix_Init ()
 	}
 #endif
 	
-	cs_debug_mask (D_IFD, "IFD: Initializing reader %s type=%d\n",  reader[ridx].label, reader[ridx].typ);
-	if (reader[ridx].atr[0]==0) {
-		/* Default serial port settings */
-		call (IO_Serial_SetParams (DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
-		call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
-		call (IO_Serial_SetParity (PARITY_EVEN));
-		IO_Serial_Flush();
-	}
+	cs_debug_mask (D_IFD, "IFD: Initializing reader %s type=%d\n",  reader->label, reader->typ);
+	
+	/* Default serial port settings */
+	call (IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
+	IO_Serial_Flush(reader);
 	return OK;
 }
 
-int Phoenix_GetStatus (int * status)
+int Phoenix_GetStatus (struct s_reader * reader, int * status)
 {
 #ifdef USE_GPIO  //felix: detect card via defined gpio
  if (gpio_detect)
@@ -90,8 +88,8 @@ int Phoenix_GetStatus (int * status)
 #endif
  {
 	unsigned int modembits=0;
-	call (ioctl(reader[ridx].handle, TIOCMGET,&modembits)<0);
-	switch(reader[ridx].detect&0x7f)
+	call (ioctl(reader->handle, TIOCMGET,&modembits)<0);
+	switch(reader->detect&0x7f)
 	{
 		case	0: *status=(modembits & TIOCM_CAR);	break;
 		case	1: *status=(modembits & TIOCM_DSR);	break;
@@ -99,19 +97,20 @@ int Phoenix_GetStatus (int * status)
 		case	3: *status=(modembits & TIOCM_RNG);	break;
 		default: *status=0;		// dummy
 	}
-	if (!(reader[ridx].detect&0x80))
+	if (!(reader->detect&0x80))
 		*status=!*status;
  }
  return OK;
 }
 
-int Phoenix_Reset (ATR * atr)
+int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 {	
 		cs_debug_mask (D_IFD, "IFD: Resetting card:\n");
 		int ret;
 		int i;
+		unsigned char buf[PHOENIX_MAX_ATR_SIZE];
 		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
-		call (Phoenix_SetBaudrate (DEFAULT_BAUDRATE));
+		call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
 		for(i=0; i<3; i++) {
 #ifndef OS_CYGWIN32
 			/* 
@@ -120,18 +119,18 @@ int Phoenix_Reset (ATR * atr)
 			*/
 			cs_sleepms(200);
 #endif
-			IO_Serial_Flush();
-			call (IO_Serial_SetParity (parity[i]));
+			IO_Serial_Flush(reader);
+			call (IO_Serial_SetParity (reader, parity[i]));
 
 			ret = ERROR;
 			cs_sleepms(500); //smartreader in mouse mode needs this
-			IO_Serial_Ioctl_Lock(1);
+			IO_Serial_Ioctl_Lock(reader, 1);
 #ifdef USE_GPIO
 			if (gpio_detect)
 				set_gpio(0);
 			else
 #endif
-				IO_Serial_RTS_Set();
+				IO_Serial_RTS_Set(reader);
 #ifdef OS_CYGWIN32
 			/* 
 			* Pause for 200ms as this might help with the PL2303.
@@ -148,7 +147,7 @@ int Phoenix_Reset (ATR * atr)
 			}
 			else
 #endif
-				IO_Serial_RTS_Clr();
+				IO_Serial_RTS_Clr(reader);
 #ifndef OS_CYGWIN32
 			/* 
 			* Pause for 200ms as this might help with the PL2303.
@@ -156,14 +155,22 @@ int Phoenix_Reset (ATR * atr)
 			*/
 			cs_sleepms(200);
 #endif
-			IO_Serial_Ioctl_Lock(0);
-			if(ATR_InitFromStream (atr, ATR_TIMEOUT) == ATR_OK)
+			IO_Serial_Ioctl_Lock(reader, 0);
+
+			int n=0;
+			while(n<PHOENIX_MAX_ATR_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
+				n++;
+			if(n==0) {
+				cs_log("ERROR: 0 characters found in ATR");
+				return ERROR;
+		  }
+			if (ATR_InitFromArray (atr, buf, n) == ATR_OK)
 				ret = OK;
 			// Succesfully retrieve ATR
 			if (ret == OK)
 				break;
 		}
-		IO_Serial_Flush();
+		IO_Serial_Flush(reader);
 
 /*
 		//PLAYGROUND faking ATR for test purposes only
@@ -180,7 +187,7 @@ int Phoenix_Reset (ATR * atr)
 		return ret;
 }
 
-int Phoenix_Transmit (BYTE * buffer, unsigned size, unsigned int block_delay, unsigned int char_delay)
+int Phoenix_Transmit (struct s_reader * reader, BYTE * buffer, unsigned size, unsigned int block_delay, unsigned int char_delay)
 {
 	unsigned sent=0, to_send = 0;
 
@@ -192,33 +199,33 @@ int Phoenix_Transmit (BYTE * buffer, unsigned size, unsigned int block_delay, un
 		/* Send data */
 		if ((sent == 0) && (block_delay != char_delay))
 		{
-			call (IO_Serial_Write (block_delay, 1, buffer));
-			call (IO_Serial_Write (char_delay, to_send-1, buffer+1));
+			call (IO_Serial_Write (reader, block_delay, 1, buffer));
+			call (IO_Serial_Write (reader, char_delay, to_send-1, buffer+1));
 		}
 		else
-			call (IO_Serial_Write (char_delay, to_send, buffer+sent));
+			call (IO_Serial_Write (reader, char_delay, to_send, buffer+sent));
 	}
 	return OK;
 }
 
-int Phoenix_Receive (BYTE * buffer, unsigned size, unsigned int timeout)
+int Phoenix_Receive (struct s_reader * reader, BYTE * buffer, unsigned size, unsigned int timeout)
 {
 #define IFD_TOWITOKO_TIMEOUT             1000
 
 	/* Read all data bytes with the same timeout */
-	call (IO_Serial_Read (timeout + IFD_TOWITOKO_TIMEOUT, size, buffer));
+	call (IO_Serial_Read (reader, timeout + IFD_TOWITOKO_TIMEOUT, size, buffer));
 	return OK;
 }
 
-int Phoenix_SetBaudrate (unsigned long baudrate)
+int Phoenix_SetBaudrate (struct s_reader * reader, unsigned long baudrate)
 {
 	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %lu\n", baudrate);
 	if (current_baudrate	!= baudrate)
 	{
 		/* Get current settings */
 		struct termios tio;
-		call (tcgetattr (reader[ridx].handle, &tio) != 0);
-		call (IO_Serial_SetBitrate (baudrate, &tio));
+		call (tcgetattr (reader->handle, &tio) != 0);
+		call (IO_Serial_SetBitrate (reader, baudrate, &tio));
 #ifndef OS_CYGWIN32
 		/* 
 		* Pause for 200ms as this might help with the PL2303.
@@ -226,7 +233,7 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 		*/
 	        cs_sleepms(200);
 #endif
-		call (IO_Serial_SetProperties(tio));
+		call (IO_Serial_SetProperties(reader, tio));
 #ifndef OS_CYGWIN32
 		/* 
 		* Pause for 200ms as this might help with the PL2303.
@@ -239,7 +246,7 @@ int Phoenix_SetBaudrate (unsigned long baudrate)
 	return OK;
 }
 
-int Phoenix_Close ()
+int Phoenix_Close (struct s_reader * reader)
 {
 #ifdef USE_GPIO //felix: close dev if card detected
 	if(gpio_detect) 
@@ -249,7 +256,7 @@ int Phoenix_Close ()
 		close(gpio_in);
 	}
 #endif
-	IO_Serial_Close();
-	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader[ridx].device);
+	IO_Serial_Close(reader);
+	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader->device);
 	return OK;
 }

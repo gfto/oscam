@@ -32,7 +32,6 @@
 
 #include "protocol_t0.h"
 #include "atr.h"
-
 /*
  * Not exported constants definition
  */
@@ -54,19 +53,19 @@
  * Not exported functions declaration
  */
 
-static int Protocol_T0_Case2E (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
+static int Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
 
-static int Protocol_T0_Case3E (unsigned char * command, APDU_Rsp ** rsp);
+static int Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command, APDU_Rsp ** rsp);
 
-static int Protocol_T0_Case4E (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
+static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
 
-static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
+static int Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
 
 /*
  * Exproted funtions definition
  */
 
-int Protocol_T0_Command (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
+int Protocol_T0_Command (struct s_reader * reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
 {
 	if (command_len < 5) //APDU_CASE_1 or malformed
 		return ERROR;
@@ -74,16 +73,16 @@ int Protocol_T0_Command (unsigned char * command, unsigned long command_len, APD
 	int cmd_case = APDU_Cmd_Case (command, command_len);
 	switch (cmd_case) {
 		case APDU_CASE_2E:
-			return Protocol_T0_Case2E (command, command_len, rsp);
+			return Protocol_T0_Case2E (reader, command, command_len, rsp);
 		case APDU_CASE_3E:
-			return Protocol_T0_Case3E (command, rsp);
+			return Protocol_T0_Case3E (reader, command, rsp);
 		case APDU_CASE_4E:
-			return Protocol_T0_Case4E (command, command_len, rsp);
+			return Protocol_T0_Case4E (reader, command, command_len, rsp);
 		case APDU_CASE_4S:
 			command_len--; //FIXME this should change 4S to 2S/3S command
 		case APDU_CASE_2S:
 		case APDU_CASE_3S:
-			return Protocol_T0_ExchangeTPDU(command, command_len, rsp);
+			return Protocol_T0_ExchangeTPDU(reader, command, command_len, rsp);
 		default:
 			cs_debug_mask (D_IFD,"Protocol: T=0: Invalid APDU\n");
 			return ERROR;
@@ -95,7 +94,7 @@ int Protocol_T0_Command (unsigned char * command, unsigned long command_len, APD
  */
 
 
-static int Protocol_T0_Case2E (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
+static int Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
 {
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	APDU_Rsp *tpdu_rsp;
@@ -108,7 +107,7 @@ static int Protocol_T0_Case2E (unsigned char * command, unsigned long command_le
 		memcpy(buffer, command, 4);
 		buffer[4] = (BYTE) Lc;
 		memcpy (buffer + 5, command + 7, buffer[4]);
-		return Protocol_T0_ExchangeTPDU(buffer, buffer[4] + 5, rsp);
+		return Protocol_T0_ExchangeTPDU(reader, buffer, buffer[4] + 5, rsp);
 	}
 
 		/* Prepare envelope TPDU */
@@ -122,7 +121,7 @@ static int Protocol_T0_Case2E (unsigned char * command, unsigned long command_le
 			/* Create envelope command TPDU */
 			buffer[4] = MIN (255, command_len - i);
 			memcpy (buffer + 5, command + i, buffer[4]);
-			call (Protocol_T0_ExchangeTPDU(buffer, buffer[4] + 5, (&tpdu_rsp)));
+			call (Protocol_T0_ExchangeTPDU(reader, buffer, buffer[4] + 5, (&tpdu_rsp)));
 				/*  Card does support envelope command */
 				if (APDU_Rsp_SW1 (tpdu_rsp) == 0x90)
 				{
@@ -144,7 +143,7 @@ static int Protocol_T0_Case2E (unsigned char * command, unsigned long command_le
 }
 
 
-static int Protocol_T0_Case3E (unsigned char * command, APDU_Rsp ** rsp)
+static int Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command, APDU_Rsp ** rsp)
 {
 	int ret;
 	BYTE buffer[5];
@@ -157,12 +156,12 @@ static int Protocol_T0_Case3E (unsigned char * command, APDU_Rsp ** rsp)
 	if (Le <= 256)
 	{
 		buffer[4] = (BYTE)Le;
-		return Protocol_T0_ExchangeTPDU (buffer, 5, rsp); //this was Case3S !!!
+		return Protocol_T0_ExchangeTPDU(reader, buffer, 5, rsp); //this was Case3S !!!
 	}
 
 	/* Map APDU onto command TPDU */
 	buffer[4] = 0x00;
-	call (Protocol_T0_ExchangeTPDU(buffer, 5 , (&tpdu_rsp)));
+	call (Protocol_T0_ExchangeTPDU(reader, buffer, 5 , (&tpdu_rsp)));
 
 	if (APDU_Rsp_SW1 (tpdu_rsp) == 0x6C) {/* Le not accepted, La indicated */
 		/* Map command APDU onto TPDU */
@@ -172,7 +171,7 @@ static int Protocol_T0_Case3E (unsigned char * command, APDU_Rsp ** rsp)
 		/* Delete response TPDU */
 		APDU_Rsp_Delete (tpdu_rsp);
 		
-		return Protocol_T0_ExchangeTPDU(buffer, 5, rsp); //Reissue command
+		return Protocol_T0_ExchangeTPDU(reader, buffer, 5, rsp); //Reissue command
 	}
 	
 	(*rsp) = tpdu_rsp; //Map response TPDU onto APDU without change , also for SW1 = 0x67
@@ -190,7 +189,7 @@ static int Protocol_T0_Case3E (unsigned char * command, APDU_Rsp ** rsp)
 		while (Lm > 0)
 		{
 			buffer[4] = (BYTE) MIN (Lm, Lx);
-			call (Protocol_T0_ExchangeTPDU(buffer, 5, (&tpdu_rsp)));
+			call (Protocol_T0_ExchangeTPDU(reader, buffer, 5, (&tpdu_rsp)));
 
 			/* Append response TPDU to APDU  */
 			if (APDU_Rsp_AppendData ((*rsp), tpdu_rsp) != APDU_OK)
@@ -210,7 +209,7 @@ static int Protocol_T0_Case3E (unsigned char * command, APDU_Rsp ** rsp)
 }
 
 
-static int Protocol_T0_Case4E (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
+static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
 {
 	int ret;
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
@@ -224,10 +223,10 @@ static int Protocol_T0_Case4E (unsigned char * command, unsigned long command_le
 		memcpy(buffer,command,4);
 		buffer[4] = (BYTE) Lc;
 		memcpy (buffer + 5, command, buffer[4]);
-		ret = Protocol_T0_ExchangeTPDU(buffer, buffer[4] + 5, (&tpdu_rsp));
+		ret = Protocol_T0_ExchangeTPDU(reader, buffer, buffer[4] + 5, (&tpdu_rsp));
 	}
 	else /* 4E2 */
-		ret = Protocol_T0_Case2E (command, command_len, (&tpdu_rsp));
+		ret = Protocol_T0_Case2E (reader, command, command_len, (&tpdu_rsp));
 	
 	/* 4E1 a) b) and c) */
 	if (ret == OK)
@@ -250,7 +249,7 @@ static int Protocol_T0_Case4E (unsigned char * command, unsigned long command_le
 			buffer[4] = 0x00;     /* B1 = 0x00 */
 			buffer[5] = (BYTE) (Le >> 8);  /* B2 = BL-1 */
 			buffer[6] = (BYTE) (Le & 0x00FF);      /* B3 = BL */
-			ret = Protocol_T0_Case3E (buffer, rsp);
+			ret = Protocol_T0_Case3E (reader, buffer, rsp);
 		}
 		else if ((APDU_Rsp_SW1 (tpdu_rsp) & 0xF0) == 0x60)
 		{
@@ -270,14 +269,14 @@ static int Protocol_T0_Case4E (unsigned char * command, unsigned long command_le
 			buffer[4] = 0x00;     /* B1 = 0x00 */
 			buffer[5] = (BYTE) Le >> 8;  /* B2 = BL-1 */
 			buffer[6] = (BYTE) Le & 0x00FF;      /* B3 = BL */
-			ret = Protocol_T0_Case3E (buffer, rsp);
+			ret = Protocol_T0_Case3E (reader, buffer, rsp);
 		}
 	}
 	return ret;
 }
 
 
-static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
+static int Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
 {
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_RESPONSE];
 	BYTE *data;
@@ -301,7 +300,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 			cs_debug_mask(D_TRACE, "ERROR: invalid cmd_case = %i in Protocol_T0_ExchangeTPDU",cmd_case);
 			return ERROR;
 	}
-	call (ICC_Async_Transmit (5, command));		//Send header bytes
+	call (ICC_Async_Transmit (reader, 5, command));		//Send header bytes
 	
 	/* Initialise counters */
 	nulls = 0;
@@ -316,7 +315,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 	
 	while (recv < PROTOCOL_T0_MAX_SHORT_RESPONSE)
 	{
-		call (ICC_Async_Receive (1, buffer + recv));				//Read one procedure byte
+		call (ICC_Async_Receive (reader, 1, buffer + recv));				//Read one procedure byte
 		
 		/* NULL byte received */
 		if (buffer[recv] == 0x60) {
@@ -333,7 +332,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 				cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU: Maximum short response exceeded:%li",recv);
 				return ERROR;
 			}
-			call (ICC_Async_Receive (1, buffer + recv));					//Read SW2 byte
+			call (ICC_Async_Receive (reader, 1, buffer + recv));					//Read SW2 byte
 			recv++;
 			ret = OK;
 			break;
@@ -349,7 +348,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU ACK byte: sent=%li exceeds Lc=%li",sent, Lc);
 					return ERROR;
 				}
-				call (ICC_Async_Transmit(MAX (Lc - sent, 0), data + sent)); /* Send remaining data bytes */
+				call (ICC_Async_Transmit(reader, MAX (Lc - sent, 0), data + sent)); /* Send remaining data bytes */
 				sent = Lc;
 				continue;
 			}
@@ -365,7 +364,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 				*/
 				
 				/* Read remaining data bytes */
-				call (ICC_Async_Receive(MAX (Le - recv, 0), buffer + recv));
+				call (ICC_Async_Receive(reader, MAX (Le - recv, 0), buffer + recv));
 				recv = Le;
 				continue;
 			}
@@ -380,7 +379,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU ~ACK byte: sent=%li exceeds Lc=%li",sent, Lc);
 					return ERROR;
 				}
-				call (ICC_Async_Transmit (1, data + sent));							//Send next data byte
+				call (ICC_Async_Transmit (reader, 1, data + sent));							//Send next data byte
 				sent++;
 				continue;
 			}
@@ -389,7 +388,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 					cs_debug_mask(D_TRACE, "ERROR Protocol_T0_ExchangeTPDU: Case 3 ~ACK - maximum short response exceeded:%li",recv);
 					return ERROR;
 				}
-				call (ICC_Async_Receive (1, buffer + recv));						//Read next data byte
+				call (ICC_Async_Receive (reader, 1, buffer + recv));						//Read next data byte
 				recv++;
 				continue;
 			}
@@ -404,7 +403,7 @@ static int Protocol_T0_ExchangeTPDU (unsigned char * command, unsigned long comm
 	return OK;
 }
 
-int Protocol_T14_ExchangeTPDU (unsigned char * cmd_raw, unsigned long command_len, APDU_Rsp ** rsp)
+int Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_raw, unsigned long command_len, APDU_Rsp ** rsp)
 {
 	BYTE buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
 	long recv;
@@ -427,10 +426,10 @@ int Protocol_T14_ExchangeTPDU (unsigned char * cmd_raw, unsigned long command_le
 		return ERROR;
 	}
 	
-	if (reader[ridx].typ <= R_MOUSE) {
-		call (ICC_Async_Transmit (1, &b1));						//send 0x01 byte
-		call (ICC_Async_Transmit (cmd_len, cmd_raw));	//send apdu
-		call (ICC_Async_Transmit (1, &ixor));					//Send xor byte
+	if (reader->typ <= R_MOUSE) {
+		call (ICC_Async_Transmit (reader, 1, &b1));						//send 0x01 byte
+		call (ICC_Async_Transmit (reader, cmd_len, cmd_raw));	//send apdu
+		call (ICC_Async_Transmit (reader, 1, &ixor));					//Send xor byte
 	}
 	else {
 		buffer[0] = 0x01;
@@ -438,16 +437,16 @@ int Protocol_T14_ExchangeTPDU (unsigned char * cmd_raw, unsigned long command_le
 		buffer[cmd_len+1] = ixor;
 		
 		/* Send apdu */
-		call (ICC_Async_Transmit (cmd_len+2, buffer));//send apdu
+		call (ICC_Async_Transmit (reader, cmd_len+2, buffer));//send apdu
 	}
 	
 	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09)
 		cs_sleepms(2500); //FIXME why wait?
-	call (ICC_Async_Receive (8, buffer));				//Read one procedure byte
+	call (ICC_Async_Receive (reader, 8, buffer));				//Read one procedure byte
 	recv = (long)buffer[7];
 	if(recv)
-		call (ICC_Async_Receive (recv, buffer + 8));
-	call (ICC_Async_Receive (1, &ixor));
+		call (ICC_Async_Receive (reader, recv, buffer + 8));
+	call (ICC_Async_Receive (reader, 1, &ixor));
 	for(i=0; i<8+recv; i++)		
 		ixor1^=buffer[i];
 	if(ixor1 != ixor) {
