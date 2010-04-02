@@ -160,7 +160,7 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
         pcsc_reader->init_history_pos=0;
         memset(pcsc_reader->init_history, 0, sizeof(pcsc_reader->init_history));
 #endif
-        cs_ri_log("ATR: %s", cs_hexdump(1, (uchar *)pbAtr, dwAtrLen));
+        //cs_ri_log("ATR: %s", cs_hexdump(1, (uchar *)pbAtr, dwAtrLen));
         return(1);
     }
     else {
