@@ -42,7 +42,7 @@ static int readsc8in1(struct s_reader * reader) {
   // bit5=1 means Slot6=Smartcard inside
   // bit6=1 means Slot7=Smartcard inside
   // bit7=1 means Slot8=Smartcard inside
-  int res,i;
+  int res;
   unsigned char tmp[128];
   struct termios termio, termiobackup;
 

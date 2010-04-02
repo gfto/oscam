@@ -58,6 +58,8 @@ static void reader_nullcard(struct s_reader * reader)
   reader->nprov=0;
 }
 
+extern int selectslot(struct s_reader * reader, int slot);
+
 int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l)
 {
 	int rc;
@@ -118,7 +120,7 @@ static int reader_card_inserted(struct s_reader * reader)
 	cs_ptyp=cs_ptyp_orig;
 	return (card);
 }
-extern int selectslot(struct s_reader * reader, int slot);
+
 static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned short deprecated)
 {
       int i;
