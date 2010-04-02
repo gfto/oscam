@@ -2231,9 +2231,12 @@ void do_emm(EMM_PACKET *ep)
 	client[cs_idx].lastemm = time((time_t)0);
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
+	if (!reader[au].aucaid)
+		reader[au].aucaid = reader[au].caid[0];
+
 	if (reader[au].card_system>0) {
 		if ((!reader[au].fd) ||       // reader has no fd
-		(reader[au].caid[0] != b2i(2,ep->caid))) {   // wrong caid
+		(reader[au].aucaid != b2i(2,ep->caid))) {   // wrong caid
 #ifdef WEBIF
 			client[cs_idx].emmnok++;
 #endif
