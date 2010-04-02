@@ -425,6 +425,6 @@ int irdeto_card_info(struct s_reader * reader)
       }
     }
   }
-  cs_ri_log(reader, "[irdeto-reader] ready for requests");
+  cs_log("[irdeto-reader] ready for requests");
   return OK;
 }
