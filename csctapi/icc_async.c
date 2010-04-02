@@ -215,7 +215,6 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short deprecated)
 {
 	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader->label);
-	int card;
 
 	reader->current_baudrate = DEFAULT_BAUDRATE; //this is needed for all readers to calculate work_etu for timings
 	switch(reader->typ) {
