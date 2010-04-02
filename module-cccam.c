@@ -1294,6 +1294,7 @@ static int cc_srv_connect()
     cs_ddump(buf, 6, "cccam: pwd check '%s':", buf);
   } else return -1;
 
+  client[cs_idx].crypted = 1;
   cs_auth_client(account, NULL);
   //cs_auth_client((struct s_auth *)(-1), NULL);
 
