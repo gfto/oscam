@@ -161,8 +161,7 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, unsigned long bitrate, stru
 {
    /* Set the bitrate */
 #ifdef OS_LINUX
-   //FIXME workaround for Smargo until native mode works
-   if ((reader[ridx].mhz == reader[ridx].cardmhz) && (reader[ridx].smargopatch != 1))
+   if (reader->mhz == reader->cardmhz)
 #endif
    { //no overcloking
      cfsetospeed(tio, IO_Serial_Bitrate(bitrate));
@@ -276,7 +275,7 @@ bool IO_Serial_SetParams (struct s_reader * reader, unsigned long bitrate, unsig
 	if (IO_Serial_SetProperties(reader, newtio))
 		return ERROR;
 
-	current_baudrate = bitrate;
+	reader->current_baudrate = bitrate;
 
 	IO_Serial_Ioctl_Lock(reader, 1);
 	IO_Serial_DTR_RTS(reader, 0, rts == IO_SERIAL_HIGH);
@@ -385,11 +384,11 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 	struct timeval tv, tv_spent;
 #endif
 	
-	if((reader->typ != R_INTERNAL) && (wr>0))
+	if((reader->typ != R_INTERNAL) && (reader->written>0))
 	{
 		BYTE buf[256];
-		int n = wr;
-		wr = 0;
+		int n = reader->written;
+		reader->written = 0;
 	
 		if(IO_Serial_Read (reader, timeout, n, buf))
 			return ERROR;
@@ -468,12 +467,12 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, B
 			{
 				cs_debug ("ERROR\n");
 				if(reader->typ != R_INTERNAL)
-					wr += u;
+					reader->written += u;
 				return ERROR;
 			}
 			
 			if(reader->typ != R_INTERNAL)
-				wr += to_send;
+				reader->written += to_send;
 			
 			cs_ddump (data_w+count, (1+io_serial_need_dummy_char)*to_send, "IO: Sending: ");
 		}
@@ -498,7 +497,7 @@ bool IO_Serial_Close (struct s_reader * reader)
 	if (close (reader->handle) != 0)
 		return ERROR;
 	
-	wr = 0;
+	reader->written = 0;
 	
 	return OK;
 }

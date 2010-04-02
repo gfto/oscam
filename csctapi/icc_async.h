@@ -43,19 +43,6 @@
  * Exported types definition
  */
 
-typedef struct
-{
-  unsigned block_delay;          /* Delay (ms) after starting to transmit */
-  unsigned char_delay;           /* Delay (ms) after transmiting each sucesive char*/
-}
-ICC_Async_Timings;
-
-int convention;               /* Convention of this ICC */
-BYTE protocol_type;		/* Type of protocol */
-ICC_Async_Timings icc_timings;    /* Current timings for transmiting to this ICC */
-unsigned short BWT,CWT; //(for overclocking uncorrected) block waiting time, character waiting time, in ETU
-unsigned long current_baudrate; //(for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
-unsigned int read_timeout;		// Max timeout (ms) to receive characters
 
 /* Initialization and Deactivation */
 int ICC_Async_Activate (struct s_reader *reader, ATR * newatr, unsigned short deprecated);

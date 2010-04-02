@@ -47,8 +47,6 @@
 /* Maximum size of PnP Com ID */
 #define IO_SERIAL_PNPID_SIZE 		256
 
-int wr;
-
 /* 
  * Exported functions declaration
  */

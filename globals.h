@@ -421,12 +421,12 @@ struct s_client
   CLASSTAB	cltab;
 };
 
-struct s_reader
+struct s_reader  //contains device info, reader info and card info
 {
   int		smargopatch;
   int		pid;
   int       cs_idx;
-  int       ridx; //FIXME reader[ridx] reader has to know what number it is, should be replaced by storing pointer to reader instread of array index
+  int       ridx; //FIXME reader[ridx] reader has to know what number it is, should be replaced by storing pointer to reader instead of array index
   int       enable;
   int       fd;
   ulong     grp;
@@ -529,6 +529,18 @@ struct s_reader
 #ifdef LIBUSB
   SR_CONFIG *sr_config;
 #endif
+	////variables from icc_async.h start
+	int convention; //Convention of this ICC
+	unsigned char protocol_type; // Type of protocol
+	unsigned short BWT,CWT; // (for overclocking uncorrected) block waiting time, character waiting time, in ETU
+	unsigned long current_baudrate; // (for overclocking uncorrected) baudrate to prevent unnecessary conversions from/to termios structure
+	unsigned int read_timeout; // Max timeout (ms) to receive characters
+	unsigned int block_delay; // Delay (ms) after starting to transmit
+	unsigned int char_delay; // Delay (ms) after transmiting each sucesive char
+	////variables from icc_async.h end
+	////variables from io_serial.h start
+	int written; //keep score of how much bytes are written to serial port, since they are echoed back they have to be read
+	////variables from io_serial.h end
 };
 
 #ifdef CS_ANTICASC

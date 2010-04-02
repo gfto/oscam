@@ -172,14 +172,14 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
   while ((ret == OK) && more)
     {
       if (wtx > 1)
-        ICC_Async_SetTimings (reader, wtx * BWT);
+        ICC_Async_SetTimings (reader, wtx * reader->BWT);
 
       /* Receive a block */
       ret = Protocol_T1_ReceiveBlock (reader, &block);
 
       if (wtx > 1)
         {
-          ICC_Async_SetTimings (reader, BWT);          
+          ICC_Async_SetTimings (reader, reader->BWT);          
           wtx = 0;
         }
 
@@ -275,7 +275,7 @@ static int Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block)
   else
       if (buffer[2] != 0x00) {
           /* Set timings to read the remaining block */
-          ICC_Async_SetTimings (reader, CWT);
+          ICC_Async_SetTimings (reader, reader->CWT);
 
           /* Receive remaining bytes */
           if (ICC_Async_Receive (reader, buffer[2], buffer + 4))
@@ -285,7 +285,7 @@ static int Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block)
               ret = OK;
             }
           /* Restore timings */
-          ICC_Async_SetTimings (reader, BWT);
+          ICC_Async_SetTimings (reader, reader->BWT);
         }
       else {
           ret = OK;

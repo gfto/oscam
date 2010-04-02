@@ -95,14 +95,15 @@ int selectslot(struct s_reader * reader, int slot) {
   //
 	if (slot == current_slot)
 		return(0);
-	cs_debug("SC8in1: select slot %i", slot);
+	cs_log("SC8in1: select slot %i", slot);
   int res;
   unsigned char tmp[128];
   struct termios termio;
 	//cs_sleepms(10); //FIXME do I need this?
   // backup rs232 data
   tcgetattr(reader->handle,&termio);
-  memcpy(&stored_termio[current_slot-1],&termio,sizeof(termio));
+	if (current_slot != 0)
+  	memcpy(&stored_termio[current_slot-1],&termio,sizeof(termio));
 	//
   // switch SC8in1 to command mode
   IO_Serial_DTR_Set(reader);

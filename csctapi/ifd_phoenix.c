@@ -220,7 +220,7 @@ int Phoenix_Receive (struct s_reader * reader, BYTE * buffer, unsigned size, uns
 int Phoenix_SetBaudrate (struct s_reader * reader, unsigned long baudrate)
 {
 	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %lu\n", baudrate);
-	if (current_baudrate	!= baudrate)
+	if (reader->current_baudrate	!= baudrate)
 	{
 		/* Get current settings */
 		struct termios tio;
@@ -242,7 +242,7 @@ int Phoenix_SetBaudrate (struct s_reader * reader, unsigned long baudrate)
 	        cs_sleepms(200);
 #endif
 	}
-	current_baudrate = baudrate; //so if update fails, current_baudrate is not changed either
+	reader->current_baudrate = baudrate; //so if update fails, reader->current_baudrate is not changed either
 	return OK;
 }
 
