@@ -1257,7 +1257,7 @@ static int newcamd_send_ecm(ECM_REQUEST *er, uchar *buf)
   // check server filters
   if( !newcamd_connect() ) return (-1);
 
-  if( !chk_rsfilter(reader, er, reader[ridx].ncd_disable_server_filt) ) return(-1);
+  if( !chk_rsfilter(&reader[ridx], er, reader[ridx].ncd_disable_server_filt) ) return(-1);
 
   memcpy(buf, er->ecm, er->l);
 
