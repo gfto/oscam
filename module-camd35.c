@@ -200,9 +200,9 @@ static void camd35_request_emm(ECM_REQUEST *er)
       mbuf[129]=(reader[au].b_nano[0xd2])?0:1;
       mbuf[130]=(reader[au].b_nano[0xd3])?0:1;*/
       //we think client/server protocols should deliver all information, and only readers should discard EMM
-      mbuf[128]=1; //if 0, GA EMM is blocked
-      mbuf[129]=1; //if 0, SA EMM is blocked
-      mbuf[130]=1; //if 0, UA EMM is blocked
+      mbuf[128]=reader[au].blockemm_g; //if 0, GA EMM is blocked
+      mbuf[129]=reader[au].blockemm_s; //if 0, SA EMM is blocked
+      mbuf[130]=reader[au].blockemm_u; //if 0, UA EMM is blocked
       mbuf[131]=reader[au].card_system; //Cardsystem for Oscam client
     }
     else		// disable emm
@@ -506,8 +506,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 		reader[ridx].blockemm_u = buf[129];
 		reader[ridx].aucaid = b2i(2, buf+20);
 		reader[ridx].card_system = (buf[131]>10) ? 0 : buf[131]; //Fixme - first CMD05 contains 255
-		cs_log("CMD05 len: %d reader: %s serial: %s cardsyst: %d aucaid: %04X",
-				sizeof(&buf),
+		cs_log("CMD05 reader: %s serial: %s cardsyst: %d aucaid: %04X",
 				reader[ridx].label,
 				cs_hexdump(0, reader[ridx].hexserial, 8),
 				reader[ridx].card_system,
