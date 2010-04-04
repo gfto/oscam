@@ -64,7 +64,7 @@ int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar * cta_res,
 	int rc;
 #ifdef HAVE_PCSC
 	if (reader[ridx]->typ == R_PCSC) {
- 	  return (pcsc_reader_do_api(reader, buf, response, response_length ,l)); 
+ 	  return (pcsc_reader_do_api(reader, buf, cta_res, &cta_lr ,l)); 
 	}
 
 #endif
