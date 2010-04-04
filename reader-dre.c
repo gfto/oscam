@@ -1,8 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
 
-extern uchar cta_res[];
-extern ushort cta_lr;
 static uchar provider;
 static short int mode;
 
@@ -18,8 +16,9 @@ static uchar xor (uchar * cmd, int cmdlen)
   return checksum;
 }
 
-static int dre_command (struct s_reader * reader, uchar * cmd, int cmdlen)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return ERROR = err
+static int dre_command (struct s_reader * reader, uchar * cmd, int cmdlen, unsigned char * cta_res, unsigned short * cta_length)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return ERROR = err
 {
+  def_resp2;
   static uchar startcmd[] = { 0x80, 0xFF, 0x10, 0x01, 0x05 };	//any command starts with this, 
   //last byte is nr of bytes of the command that will be sent
   //after the startcmd
@@ -39,7 +38,7 @@ static int dre_command (struct s_reader * reader, uchar * cmd, int cmdlen)	//att
   cmdlen += headerlen;
   command[cmdlen++] = checksum;
 
-  reader_cmd2icc (reader, command, cmdlen);
+  reader_cmd2icc (reader, command, cmdlen, cta_res, &cta_lr);
 
   if ((cta_lr != 2) || (cta_res[0] != OK_RESPONSE)) {
     cs_log ("[dre-reader] unexpected answer from card: %s", cs_hexdump (0, cta_res, cta_lr));
@@ -47,7 +46,7 @@ static int dre_command (struct s_reader * reader, uchar * cmd, int cmdlen)	//att
   }
 
   reqans[4] = cta_res[1];	//adapt length byte
-  reader_cmd2icc (reader, reqans, 5);
+  reader_cmd2icc (reader, reqans, 5, cta_res, &cta_lr);
 
   if (cta_res[0] != CMD_BYTE) {
     cs_log ("[dre-reader] unknown response: cta_res[0] expected to be %02x, is %02x", CMD_BYTE, cta_res[0]);
@@ -89,11 +88,12 @@ static int dre_command (struct s_reader * reader, uchar * cmd, int cmdlen)	//att
 
 #define dre_cmd(cmd) \
 { \
-  	dre_command(reader, cmd, sizeof(cmd)); \
+  	dre_command(reader, cmd, sizeof(cmd),cta_res,&cta_lr); \
 }
 
 static int dre_set_provider_info (struct s_reader * reader)
 {
+  def_resp;
   int i;
   static uchar cmd59[] = { 0x59, 0x14 };	// subscriptions
   static uchar cmd5b[] = { 0x5b, 0x00, 0x14 };	//validity dates
@@ -138,6 +138,7 @@ static int dre_set_provider_info (struct s_reader * reader)
 int dre_card_init (struct s_reader * reader, ATR newatr)
 {
 	get_atr;
+  def_resp;
   static uchar ua[] = { 0x43, 0x15 };	// get serial number (UA)
   static uchar providers[] = { 0x49, 0x15 };	// get providers
   int i;
@@ -255,6 +256,7 @@ FE 48 */
 
 int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
 {
+  def_resp;
   if (mode == 41) {
     static uchar ecmcmd41[] = { 0x41,
       0x58, 0x1f, 0x00,		//fixed part, dont change 
@@ -320,7 +322,7 @@ int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
 {
-
+  def_resp;
   int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
 
   cs_ddump (ep->emm, emm_length + 3, "EMM:");

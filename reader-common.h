@@ -68,6 +68,12 @@ int dre_do_emm(struct s_reader * reader, EMM_PACKET *);
 int dre_get_emm_type(EMM_PACKET *, struct s_reader *);
 int dre_card_info(void);
 
+
+#define write_cmd(cmd, data) \
+{ \
+        if (card_write(reader, cmd, data, cta_res, &cta_lr)) return ERROR; \
+}
+
 #define get_atr \
 		unsigned char atr[64]; \
 		unsigned int atr_size; \
@@ -78,3 +84,10 @@ int dre_card_info(void);
 		unsigned int hist_size; \
 		ATR_GetHistoricalBytes(&newatr, hist, &hist_size);
 
+#define def_resp \
+		unsigned char cta_res[CTA_RES_LEN]; \
+		unsigned short cta_lr;
+
+#define def_resp2 \
+		ushort cta_lr; \
+		cta_length = &cta_lr;

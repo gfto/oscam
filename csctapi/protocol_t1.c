@@ -46,7 +46,7 @@ static int Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block)
  * Exproted funtions definition
  */
 
-int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
+int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr)
 {
   T1_Block *block;
   BYTE *buffer, rsp_type, bytes, nr, wtx;
@@ -243,8 +243,10 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
         }
     }
 
-  if (ret == OK)
-    (*rsp) = APDU_Rsp_New (buffer, counter);
+  if (ret == OK) {
+		memcpy(rsp, buffer, counter);
+		*lr = counter;
+	}
 
   if (buffer != NULL)
     free (buffer);

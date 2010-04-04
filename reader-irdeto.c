@@ -1,9 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
 
-extern uchar cta_res[];
-extern ushort cta_lr;
-
 static const uchar CryptTable[256] =
 {
   0xDA, 0x26, 0xE8, 0x72, 0x11, 0x52, 0x3E, 0x46,
@@ -138,10 +135,11 @@ static time_t chid_date(ulong date, char *buf, int l)
   return(ut);
 }
 
-static int irdeto_do_cmd(struct s_reader * reader, uchar *buf, ushort good)
+static int irdeto_do_cmd(struct s_reader * reader, uchar *buf, ushort good, uchar * cta_res, ushort * cta_length)
 {
+  def_resp2;
   int rc;
-  if( (rc=reader_cmd2icc(reader, buf, buf[4]+5)) )
+  if( (rc=reader_cmd2icc(reader, buf, buf[4]+5, cta_res, &cta_lr)) )
     return(rc);			// result may be 0 (success) or negative
   if (cta_lr<2)
     return(0x7F7F);		// this should never happen
@@ -150,11 +148,12 @@ static int irdeto_do_cmd(struct s_reader * reader, uchar *buf, ushort good)
 
 #define reader_chk_cmd(cmd, l) \
 { \
-        if (reader_cmd2icc(reader, cmd, sizeof(cmd))) return ERROR; \
+        if (reader_cmd2icc(reader, cmd, sizeof(cmd), cta_res, &cta_lr)) return ERROR; \
   if (l && (cta_lr!=l)) return ERROR; }
 
 static int irdeto_card_init_provider(struct s_reader * reader)
 {
+  def_resp;
   int i, p;
   uchar buf[256]={0};
 
@@ -191,6 +190,7 @@ static int irdeto_card_init_provider(struct s_reader * reader)
 
 int irdeto_card_init(struct s_reader * reader, ATR newatr)
 {
+  def_resp;
   get_atr;
   int camkey=0;
   uchar buf[256]={0};
@@ -275,13 +275,14 @@ int irdeto_card_init(struct s_reader * reader, ATR newatr)
 
 int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
+  def_resp; cta_lr=0; //suppress compiler error
   static const uchar sc_EcmCmd[] = { 0x05, 0x00, 0x00, 0x02, 0x00 };
   uchar cta_cmd[272];
 
   memcpy(cta_cmd, sc_EcmCmd, sizeof(sc_EcmCmd));
   cta_cmd[4]=(er->ecm[2])-3;
   memcpy(cta_cmd+sizeof(sc_EcmCmd), &er->ecm[6], cta_cmd[4]);
-  if (irdeto_do_cmd(reader, cta_cmd, 0x9D00)) return ERROR;
+  if (irdeto_do_cmd(reader, cta_cmd, 0x9D00, cta_res, &cta_lr)) return ERROR;
   if (cta_lr<24) return ERROR;
   ReverseSessionKeyCrypt(sc_CamKey, cta_res+6);
   ReverseSessionKeyCrypt(sc_CamKey, cta_res+14);
@@ -332,6 +333,7 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
+  def_resp;
   static const uchar sc_EmmCmd[] = { 0x01,0x00,0x00,0x00,0x00 };
   uchar cta_cmd[272];
 
@@ -368,7 +370,7 @@ int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
       memcpy(ptr, emm, l);				// copy addr bytes
       ptr+=ADDRLEN; emm+=l;
       memcpy(ptr, &emm[2], dataLen);			// copy emm bytes
-      return(irdeto_do_cmd(reader, cta_cmd, 0) ? 0 : 1);
+      return(irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) ? 0 : 1);
     }
     else
       cs_debug("[irdeto-reader] addrlen %d > %d", l, ADDRLEN);
@@ -378,6 +380,7 @@ int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 int irdeto_card_info(struct s_reader * reader)
 {
+  def_resp;
   int i, p;
 
   /*

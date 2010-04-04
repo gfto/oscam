@@ -76,12 +76,6 @@ int Phoenix_Init (struct s_reader * reader)
 	/* Default serial port settings */
 	call (IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
 	IO_Serial_Flush(reader);
-	if (reader->atr[0] == 0) {
-		call (IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
-		call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
-		call (IO_Serial_SetParity (reader, PARITY_EVEN));
-		IO_Serial_Flush(reader);
-	}
 	return OK;
 }
 
