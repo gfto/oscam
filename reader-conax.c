@@ -1,6 +1,19 @@
 #include "globals.h"
 #include "reader-common.h"
 
+extern uchar cta_res[];
+extern ushort cta_lr;
+
+#define write_cmd(cmd, data) \
+{ \
+        if (card_write(reader, cmd, data)) return ERROR; \
+}
+
+#define read_cmd(cmd, data) \
+{ \
+        if (card_write(reader, cmd, NULL)) return ERROR; \
+}
+
 static char *chid_date(const uchar *ptr, char *buf, int l)
 {
   if (buf)
@@ -11,16 +24,15 @@ static char *chid_date(const uchar *ptr, char *buf, int l)
   return(buf);
 }
 
-static int read_record(struct s_reader * reader, uchar *cmd, uchar *data, uchar * cta_res, ushort * cta_length)
+static int read_record(struct s_reader * reader, uchar *cmd, uchar *data)
 {
-  def_resp2;
   uchar insCA[] = {0xDD, 0xCA, 0x00, 0x00, 0x00};
 
   write_cmd(cmd, data);		// select record
   if (cta_res[0]!=0x98)
     return(-1);
   insCA[4]=cta_res[1];		// get len
-  write_cmd(insCA, NULL);	// read record
+  read_cmd(insCA, NULL);	// read record
   if ((cta_res[cta_lr-2]!=0x90) || (cta_res[cta_lr-1]))
     return(-1);
   return(cta_lr-2);
@@ -28,7 +40,6 @@ static int read_record(struct s_reader * reader, uchar *cmd, uchar *data, uchar 
 
 int conax_card_init(struct s_reader * reader, ATR newatr)
 {
-  def_resp;
   int i, j, n;
   uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x10, 0x01, 0x40};
   uchar ins82[] = {0xDD, 0x82, 0x00, 0x00, 0x11, 0x11, 0x0f, 0x01, 0xb0, 0x0f, 0xff, \
@@ -42,7 +53,7 @@ int conax_card_init(struct s_reader * reader, ATR newatr)
 
   reader->caid[0]=0xB00;
 
-  if ((n=read_record(reader, ins26, ins26+5, cta_res, &cta_lr))<0) return ERROR; // read caid, card-version
+  if ((n=read_record(reader, ins26, ins26+5))<0) return ERROR;	// read caid, card-version
   for (i=0; i<n; i+=cta_res[i+1]+2)
     switch(cta_res[i])
     {
@@ -54,7 +65,7 @@ int conax_card_init(struct s_reader * reader, ATR newatr)
   ins82[17]=(reader->caid[0]>>8)&0xFF;
   ins82[18]=(reader->caid[1])&0xFF;
 
-  if ((n=read_record(reader, ins82, ins82+5, cta_res, &cta_lr))<0) return ERROR; // read serial
+  if ((n=read_record(reader, ins82, ins82+5))<0) return ERROR;	// read serial
 
   for (j=0, i=2; i<n; i+=cta_res[i+1]+2)
     switch(cta_res[i])
@@ -97,7 +108,6 @@ int conax_card_init(struct s_reader * reader, ATR newatr)
 
 static int conax_send_pin(struct s_reader * reader)
 {
-  def_resp;
   unsigned char insPIN[] = { 0xDD,0xC8,0x00,0x00,0x07,0x1D,0x05,0x01,0x00,0x00,0x00,0x00 }; //Last four are the Pin-Code
   memcpy(insPIN+8,reader->pincode,4);
 
@@ -110,7 +120,6 @@ static int conax_send_pin(struct s_reader * reader)
 
 int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
-  def_resp;
   int i,j,n, rc=0;
   unsigned char insA2[]  = { 0xDD,0xA2,0x00,0x00,0x00 };
   unsigned char insCA[]  = { 0xDD,0xCA,0x00,0x00,0x00 };
@@ -132,7 +141,7 @@ int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   while ((cta_res[cta_lr-2]==0x98) && 	// Antwort
   ((insCA[4]=cta_res[cta_lr-1])>0) && (insCA[4]!=0xFF))
   {
-    write_cmd(insCA, NULL);  //Codeword auslesen
+    read_cmd(insCA, NULL);  //Codeword auslesen
 
     if ((cta_res[cta_lr-2]==0x98) ||
     ((cta_res[cta_lr-2]==0x90) ))
@@ -160,7 +169,7 @@ int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
               while ((cta_res[cta_lr-2]==0x98) &&   // Antwort
                       ((insCA[4]=cta_res[cta_lr-1])>0) && (insCA[4]!=0xFF))
               {
-                write_cmd(insCA, NULL);  //Codeword auslesen
+                read_cmd(insCA, NULL);  //Codeword auslesen
 
                 if ((cta_res[cta_lr-2]==0x98) ||
                     ((cta_res[cta_lr-2]==0x90) && (!cta_res[cta_lr-1])))
@@ -224,7 +233,6 @@ int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 int conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
-  def_resp;
   unsigned char insEMM[] = { 0xDD,0x84,0x00,0x00,0x00 };
   unsigned char buf[255];
   int rc=0;
@@ -247,7 +255,6 @@ int conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 int conax_card_info(struct s_reader * reader)
 {
-  def_resp;
   int type, i, j, k, n=0;
   ushort provid;
   char provname[32], pdate[32];
@@ -264,7 +271,7 @@ int conax_card_info(struct s_reader * reader)
     while (cta_res[cta_lr-2]==0x98)
     {
       insCA[4]=cta_res[cta_lr-1];		// get len
-      write_cmd(insCA, NULL);		// read
+      read_cmd(insCA, NULL);		// read
       if ((cta_res[cta_lr-2]==0x90) || (cta_res[cta_lr-2]==0x98))
       {
         for (j=0; j<cta_lr-2; j+=cta_res[j+1]+2)

@@ -1274,7 +1274,7 @@ static int newcamd_send_emm(EMM_PACKET *ep)
   // check server filters
   if( !newcamd_connect() ) return (-1);
 
-  //if( !chk_rsfilter(&reader[ridx], er, reader[ridx].ncd_disable_server_filt) ) return(-1);
+  //if( !chk_rsfilter(er, reader[ridx].ncd_disable_server_filt) ) return(-1);
 
   memcpy(buf, ep->emm, ep->l);
 

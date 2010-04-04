@@ -2,9 +2,21 @@
 #include "reader-common.h"
 #include <stdlib.h>
 
+extern uchar cta_res[];
+extern ushort cta_lr;
+
+#define write_cmd(cmd, data) \
+{ \
+        if (card_write(reader, cmd, data)) return ERROR; \
+}
+
+#define read_cmd(cmd, data) \
+{ \
+        if (card_write(reader, cmd, NULL)) return ERROR; \
+}
+
 static int set_provider_info(struct s_reader * reader, int i)
 {
-  def_resp;
   static uchar ins12[] = { 0xc1, 0x12, 0x00, 0x00, 0x19 }; // get provider info
   int year, month, day;
   struct tm *lt;
@@ -13,7 +25,7 @@ static int set_provider_info(struct s_reader * reader, int i)
   char l_name[16+8+1]=", name: ";
 
   ins12[2]=i;//select provider
-  write_cmd(ins12, NULL); // show provider properties
+  read_cmd(ins12, NULL); // show provider properties
   
   if ((cta_res[25] != 0x90) || (cta_res[26] != 0x00)) return ERROR;
   reader->prid[i][0]=0;
@@ -48,7 +60,6 @@ static int set_provider_info(struct s_reader * reader, int i)
 int seca_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
-	def_resp;
 	char *card;
 	static unsigned short pmap=0;	// provider-maptable
 	unsigned long long serial ;
@@ -80,12 +91,12 @@ int seca_card_init(struct s_reader * reader, ATR newatr)
   }
   reader->caid[0]=0x0100;
   memset(reader->prid, 0xff, sizeof(reader->prid));
-  write_cmd(ins0e, NULL); // read unique id
+  read_cmd(ins0e, NULL); // read unique id
   memcpy(reader->hexserial, cta_res+2, 6);
   serial = b2ll(5, cta_res+3) ;
   cs_ri_log (reader, "type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
          reader->caid[0], serial, card, atr[9]&0x0F, atr[9]>>4);
-  write_cmd(ins16, NULL); // read nr of providers
+  read_cmd(ins16, NULL); // read nr of providers
   pmap=cta_res[2]<<8|cta_res[3];
   for (reader->nprov=0, i=pmap; i; i>>=1)
     reader->nprov+=i&1;
@@ -123,7 +134,6 @@ static int get_prov_index(struct s_reader * rdr, char *provid)	//returns provide
 
 int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
-  def_resp;
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
   unsigned char ins3a[] = { 0xc1,0x3a,0x00,0x00,0x10 }; // decoding cw
   int i;
@@ -142,7 +152,7 @@ int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     write_cmd(ins3c, er->ecm+8); //ecm request
   }
   if ((cta_res[0] != 0x90) || (cta_res[1] != 0x00)) return ERROR;
-  write_cmd(ins3a, NULL); //get cw's
+  read_cmd(ins3a, NULL); //get cw's
   if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) return ERROR;//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
   memcpy(er->cw,cta_res,16);
   return OK;
@@ -178,7 +188,6 @@ int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if s
 	
 int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
-  def_resp;
   unsigned char ins40[] = { 0xc1,0x40,0x00,0x00,0x00 };
   int i,ins40data_offset;
   int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
@@ -230,7 +239,6 @@ int seca_card_info (struct s_reader * reader)
 //
 //This module is therefore optical only
 
-  def_resp;
   static unsigned char ins34[] = { 0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 };				//data following is provider Package Bitmap Records
   static unsigned char ins32[] = { 0xc1, 0x32, 0x00, 0x00, 0x20 };				// get PBM
   int prov;
@@ -238,7 +246,7 @@ int seca_card_info (struct s_reader * reader)
   for (prov = 0; prov < reader->nprov; prov++) {
     ins32[2] = prov;
     write_cmd (ins34, ins34 + 5);	//prepare card for pbm request
-    write_cmd (ins32, NULL);	//pbm request
+    read_cmd(ins32, NULL);	//pbm request
     uchar pbm[8];		//TODO should be arrayed per prov
     switch (cta_res[0]) {
     case 0x04:
