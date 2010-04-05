@@ -56,7 +56,12 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
     return ERROR;
   }
   cs_ddump_mask (D_DEVICE, buff, lenwrite, "IO: Sending: ");
-  write(reader->handle, buff, lenwrite); //dont use IO_Serial_Write since mcr commands dont echo back 
+
+  if(!write(reader->handle, buff, lenwrite)) {
+    cs_log("ERROR: SC8in1 Command write error");
+    return ERROR; //dont use IO_Serial_Write since mcr commands dont echo back 
+  }
+
   tcdrain(reader->handle);
   if (IO_Serial_Read (reader, 1000, lenread, buff) == ERROR) {
     cs_log("SC8in1 Command read error");
