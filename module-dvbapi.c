@@ -289,6 +289,12 @@ int dvbapi_open_device(int index_demux, int type) {
 int dvbapi_stop_filter(int demux_index, int type) {
 	int g;
 
+	/* set cardsystem to 0. This prevents us for emm flood to server
+	 * until carsystem is set new from CMD05
+	 */
+	if (reader[client[cs_idx].au].typ & R_IS_NETWORK)
+		reader[client[cs_idx].au].card_system = 0;
+
 	for (g=0;g<MAX_FILTER;g++) {
 		if (demux[demux_index].demux_fd[g].fd>0 && demux[demux_index].demux_fd[g].type==type) {
 			ioctl(demux[demux_index].demux_fd[g].fd,DMX_STOP);
