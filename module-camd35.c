@@ -497,7 +497,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 	ushort idx;
 
 	// reading CMD05 Emm request and set serial
-	if (buf[0] == 0x05) {
+	if ((buf[0] == 0x05) && !(buf[131]==0xff)) {
 		memcpy(reader[ridx].hexserial, buf + 40, 6);
 		reader[ridx].hexserial[6] = 0;
 		reader[ridx].hexserial[7] = 0;
@@ -505,7 +505,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 		reader[ridx].blockemm_s = buf[129];
 		reader[ridx].blockemm_u = buf[129];
 		reader[ridx].aucaid = b2i(2, buf+20);
-		reader[ridx].card_system = (buf[131]>10) ? 0 : buf[131]; //Fixme - first CMD05 contains 255
+		reader[ridx].card_system = buf[131];
 		cs_log("CMD05 reader: %s serial: %s cardsyst: %d aucaid: %04X",
 				reader[ridx].label,
 				cs_hexdump(0, reader[ridx].hexserial, 8),

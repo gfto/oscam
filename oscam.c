@@ -2249,6 +2249,7 @@ void do_emm(EMM_PACKET *ep)
 	ep->cidx = cs_idx;
 	cs_debug_mask(D_EMM, "emm is being sent to reader %s.", reader[au].label);
 	write_to_pipe(reader[au].fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
+	cs_log("emm written to %s type=%s len=%d", reader[au].label, typtext[ep->type], ep->l);
 }
 
 static int comp_timeb(struct timeb *tpa, struct timeb *tpb)
