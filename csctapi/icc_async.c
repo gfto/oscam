@@ -28,13 +28,16 @@
 #include "../globals.h"
 #include "defines.h"
 #include "icc_async.h"
-#include "ifd.h"
 #include "mc_global.h"
 #include "protocol_t0.h"
 #include "protocol_t1.h"
 #include "io_serial.h"
+#include "ifd_cool.h" 
+#include "ifd_phoenix.h" 
+#include "ifd_sc8in1.h" 
+#include "ifd_sci.h"
+#include "ifd_smartreader.h"
 
-extern struct termios stored_termio[8]; //FIXME no globals please
 // Default T0/T14 settings
 #define DEFAULT_WI		10
 // Default T1 settings
@@ -137,20 +140,17 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 		int i = -1; //Flag for GetStatus init
 		Sc8in1_GetStatus(reader, &i); //Initialize cardstatus
 	}
-	 if (reader->typ <= R_MOUSE)
-	  if (Phoenix_Init(reader)) {
-			cs_log("ERROR: Phoenix_Init returns error");
-			Phoenix_Close (reader);
-			return ERROR;
+
+	if (reader->typ <= R_MOUSE)
+		if (Phoenix_Init(reader)) {
+				cs_log("ERROR: Phoenix_Init returns error");
+				Phoenix_Close (reader);
+				return ERROR;
 		}
-	if (reader->typ == R_SC8in1) {
-		struct termios termio;
-		tcgetattr(reader->handle,&termio);
-		int i;
-		for (i=0; i<8; i++)
-		  //init all stored termios to default comm settings after device init, before ATR
-		  memcpy(&stored_termio[i],&termio,sizeof(termio));
-	}
+
+	if (reader->typ == R_SC8in1) 
+		call(Sc8in1_Init(reader));
+
  cs_debug_mask (D_IFD, "IFD: Device %s succesfully opened\n", reader->device);
  return OK;
 }

@@ -3,11 +3,9 @@
 #include "defines.h"
 #include "atr.h"
 #include "icc_async_exports.h"
+#include "csctapi/ifd_sc8in1.h"
 
 static int cs_ptyp_orig; //reinit=1, 
-extern int Sc8in1_Card_Changed (struct s_reader * reader);
-extern int selectslot(struct s_reader * reader, int slot);
-extern pthread_mutex_t sc8in1; //FIXME
 
 #define SC_IRDETO 1
 #define SC_CRYPTOWORKS 2
@@ -75,7 +73,7 @@ int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar * cta_res,
 	if (reader->typ == R_SC8in1) {
 		pthread_mutex_lock(&sc8in1);
 		cs_debug("SC8in1: locked for CardWrite of slot %i", reader->slot);
-		selectslot(reader, reader->slot);
+		Sc8in1_Selectslot(reader, reader->slot);
 	}
 	rc=ICC_Async_CardWrite(reader, buf, (unsigned short)l, cta_res, p_cta_lr);
 	if (reader->typ == R_SC8in1) {
@@ -141,7 +139,7 @@ static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned sh
 	if (reader->typ == R_SC8in1) {
 		pthread_mutex_lock(&sc8in1);
 		cs_debug_mask(D_ATR, "SC8in1: locked for Activation of slot %i", reader->slot);
-		selectslot(reader, reader->slot);
+		Sc8in1_Selectslot(reader, reader->slot);
 	}
   for (i=0; i<5; i++) {
 		if (!ICC_Async_Activate(reader, atr, deprecated)) {

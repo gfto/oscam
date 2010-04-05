@@ -18,9 +18,9 @@
 
 #include <pthread.h>
 
+int Sc8in1_Init (struct s_reader * reader);
 int Sc8in1_GetStatus (struct s_reader * reader, int * status);
+int Sc8in1_Card_Changed (struct s_reader * reader);
+int Sc8in1_Selectslot(struct s_reader * reader, int slot);
 
-pthread_mutex_t sc8in1; //semaphore for SC8in1, FIXME should not be global, but one per SC8in1
-//not sure why mutex seems to be global for all threads in one reader, and variables below only if they are defined static ...
-static int current_slot; //FIXME should not be a global, but one per SC8in1
-static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not static, the threads dont share same cardstatus!
+static pthread_mutex_t sc8in1; //semaphore for SC8in1, FIXME should not be global, but one per SC8in1

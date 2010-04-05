@@ -27,23 +27,14 @@
 #include "io_serial.h"
 #include "icc_async.h"
 
-struct termios stored_termio[8];//FIXME no globals please
+static struct termios stored_termio[8];//FIXME no globals please
+static int current_slot; //FIXME should not be a global, but one per SC8in1
+static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not static, the threads dont share same cardstatus!
+
 #define MAX_TRANSMIT			255
 
-static int readsc8in1(struct s_reader * reader) {
-  // Reads the card status
-  //
-  // the bits in the return bytes:
-  // bit0=1 means Slot1=Smartcard inside
-  // bit1=1 means Slot2=Smartcard inside
-  // bit2=1 means Slot3=Smartcard inside
-  // bit3=1 means Slot4=Smartcard inside
-  // bit4=1 means Slot5=Smartcard inside
-  // bit5=1 means Slot6=Smartcard inside
-  // bit6=1 means Slot7=Smartcard inside
-  // bit7=1 means Slot8=Smartcard inside
-  int res;
-  unsigned char tmp[128];
+static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsigned short lenwrite, unsigned short lenread)
+{
   struct termios termio, termiobackup;
 
   // backup data
@@ -60,41 +51,55 @@ static int readsc8in1(struct s_reader * reader) {
   termio.c_cflag = B9600|CS8|CREAD|CLOCAL;
   if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
     cs_log("ERROR: SC8in1 readsc8in1 set RS232 attributes\n");
-    return(-1);
+    return ERROR;
   }
-  // get SC8in1 info
-  tmp[0]=0x47;
-  IO_Serial_Write (reader, 0, 1, tmp);
+  IO_Serial_Write (reader, 0, lenwrite, buff);
   tcdrain(reader->handle);
-  res=IO_Serial_Read (reader, 1000, 8, tmp);
-
-  if ( res==ERROR ) {
+  if (IO_Serial_Read (reader, 1000, lenread, buff) == ERROR) {
     cs_log("READSC8in1 read error");
-    return(-1); // ERROR !
+    return ERROR;
   }
 
   // switch SC8in1 to normal mode
-  tcdrain(reader->handle);
+  //cs_sleepms(10); FIXME do I need this?
   IO_Serial_DTR_Clr(reader);
 
   // restore data
   memcpy(&termio,&termiobackup,sizeof(termio));
   if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
     cs_log("ERROR: SC8in1 readsc8in1 restore RS232 attributes\n");
-    return(-1);
+    return ERROR;
   }
-
-  if (tmp[0]!=0x90) return(-1); // ERROR !
-
-  // return result byte
-  return(tmp[1]);
+	return OK;
 }
 
-int selectslot(struct s_reader * reader, int slot) {
+static int readsc8in1(struct s_reader * reader)
+{
+  // Reads the card status
+  //
+  // the bits in the return bytes:
+  // bit0=1 means Slot1=Smartcard inside
+  // bit1=1 means Slot2=Smartcard inside
+  // bit2=1 means Slot3=Smartcard inside
+  // bit3=1 means Slot4=Smartcard inside
+  // bit4=1 means Slot5=Smartcard inside
+  // bit5=1 means Slot6=Smartcard inside
+  // bit6=1 means Slot7=Smartcard inside
+  // bit7=1 means Slot8=Smartcard inside
+  unsigned char buf[10];
+  buf[0]=0x47;
+	if (sc8in1_command(reader, buf, 1, 8) < 0) return (-1);
+  if (buf[0]!=0x90) return(-1);
+
+  // return result byte
+  return(buf[1]);
+}
+
+int Sc8in1_Selectslot(struct s_reader * reader, int slot) {
   // selects the Smartcard Socket "slot"
   //
 	if (slot == current_slot)
-		return(0);
+		return OK;
 	cs_log("SC8in1: select slot %i", slot);
   int res;
   unsigned char tmp[128];
@@ -112,7 +117,7 @@ int selectslot(struct s_reader * reader, int slot) {
   termio.c_cflag = B9600|CS8|CREAD|CLOCAL;
   if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
     cs_log("ERROR: SC8in1 selectslot set RS232 attributes\n");
-    return(-1);
+    return ERROR;
   }
 	tcflush(reader->handle, TCIOFLUSH);
   // selecd select slot command to SC8in1
@@ -131,10 +136,22 @@ int selectslot(struct s_reader * reader, int slot) {
   memcpy(&termio, &stored_termio[reader->slot-1], sizeof(termio));
   if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
     cs_log("ERROR: SC8in1 selectslot restore RS232 attributes\n");
-    return(-1);
+    return ERROR;
   }
 	//cs_sleepms(10); //FIXME do I need this?
-  return(0);
+  return OK;
+}
+
+int Sc8in1_Init(struct s_reader * reader)
+{
+	//additional init, Phoenix_Init is also called for Sc8in1 !
+	struct termios termio;
+	tcgetattr(reader->handle,&termio);
+	int i;
+	for (i=0; i<8; i++)
+		//init all stored termios to default comm settings after device init, before ATR
+		memcpy(&stored_termio[i],&termio,sizeof(termio));
+	return OK;
 }
 
 int Sc8in1_Card_Changed(struct s_reader * reader) {

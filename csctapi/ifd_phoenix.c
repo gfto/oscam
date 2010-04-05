@@ -162,11 +162,8 @@ int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			int n=0;
 			while(n<PHOENIX_MAX_ATR_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
 				n++;
-			if(n==0) {
-				cs_log("WARNING: 0 characters found in ATR");
-				//FIXME: No parity switching was done if we exit here
-				//return ERROR;
-		  	}
+			if(n==0)
+				continue;
 			if (ATR_InitFromArray (atr, buf, n) == ATR_OK)
 				ret = OK;
 			// Succesfully retrieve ATR

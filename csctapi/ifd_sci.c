@@ -3,8 +3,7 @@
 		This module provides IFD handling functions for SCI internal reader.
 */
 
-#include "atr.h"
-#include "../globals.h"
+#include "ifd_sci.h"
 
 #ifdef SCI_DEV
 
