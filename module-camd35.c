@@ -498,13 +498,32 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 
 	// reading CMD05 Emm request and set serial
 	if ((buf[0] == 0x05) && !(buf[131]==0xff)) {
+
+		reader[ridx].nprov = 0; //reset if number changes on reader change
+		reader[ridx].nprov = buf[47];
+		reader[ridx].aucaid = b2i(2, buf+20);
+
+		int i;
+		for (i=0; i<reader[ridx].nprov; i++) {
+			if (((reader[ridx].aucaid >= 0x1700) && (reader[ridx].aucaid <= 0x1799))  ||	// Betacrypt
+					((reader[ridx].aucaid >= 0x0600) && (reader[ridx].aucaid <= 0x0699)))	// Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
+			{
+				reader[ridx].prid[i][0] = buf[48+(i*5)];
+				memcpy(&reader[ridx].prid[i][1], &buf[50+(i*5)], 3);
+			} else {
+				reader[ridx].prid[i][2] = buf[48+(i*5)];
+				reader[ridx].prid[i][3] = buf[49+(i*5)];
+				memcpy(&reader[ridx].sa[i][0], &buf[50+(i*5)], 3);
+			}
+		}
+
 		memcpy(reader[ridx].hexserial, buf + 40, 6);
 		reader[ridx].hexserial[6] = 0;
 		reader[ridx].hexserial[7] = 0;
+
 		reader[ridx].blockemm_g = buf[128];
 		reader[ridx].blockemm_s = buf[129];
 		reader[ridx].blockemm_u = buf[129];
-		reader[ridx].aucaid = b2i(2, buf+20);
 		reader[ridx].card_system = buf[131];
 		cs_log("CMD05 reader: %s serial: %s cardsyst: %d aucaid: %04X",
 				reader[ridx].label,
