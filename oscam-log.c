@@ -150,7 +150,11 @@ static void write_to_log(int flag, char *txt)
 	//  get_log_header(flag, sbuf);
 	//  memcpy(txt, sbuf, 11);
 
-	if (use_syslog && !use_ac_log)		// system-logfile
+#ifdef CS_ANTICASC
+	if (use_syslog && !use_ac_log) // system-logfile
+#else
+	if (use_syslog) // system-logfile
+#endif
 		syslog(LOG_INFO, "%s", txt);
 
 	time(&t);

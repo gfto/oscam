@@ -166,7 +166,7 @@ int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 				cs_log("WARNING: 0 characters found in ATR");
 				//FIXME: No parity switching was done if we exit here
 				//return ERROR;
-		  }
+		  	}
 			if (ATR_InitFromArray (atr, buf, n) == ATR_OK)
 				ret = OK;
 			// Succesfully retrieve ATR
