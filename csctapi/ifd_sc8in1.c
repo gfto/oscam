@@ -74,7 +74,7 @@ static int readsc8in1(struct s_reader * reader) {
   }
 
   // switch SC8in1 to normal mode
-  cs_sleepms(2);
+  tcdrain(reader->handle);
   IO_Serial_DTR_Clr(reader);
 
   // restore data
@@ -124,7 +124,7 @@ int selectslot(struct s_reader * reader, int slot) {
 	//tcflush(reader->handle, TCIOFLUSH);
   res=IO_Serial_Read (reader, 1000, 4, tmp); // ignore reader response of 4 bytes
 	current_slot = slot;
-	cs_sleepms(2);
+  tcdrain(reader->handle);
   // switch SC8in1 to normal mode
   IO_Serial_DTR_Clr(reader);
   // restore rs232 data
