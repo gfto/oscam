@@ -2204,6 +2204,8 @@ void do_emm(EMM_PACKET *ep)
 			return;
 		}
 	}
+	else
+		return;
 
 	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 	cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], reader[au].label, cs_hexdump(0, reader[au].hexserial, 8)); 
@@ -2249,7 +2251,8 @@ void do_emm(EMM_PACKET *ep)
 	ep->cidx = cs_idx;
 	cs_debug_mask(D_EMM, "emm is being sent to reader %s.", reader[au].label);
 	write_to_pipe(reader[au].fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
-	cs_log("emm written to %s type=%s len=%d", reader[au].label, typtext[ep->type], ep->l);
+	if (reader[au].type == R_IS_NETWORK)
+		cs_log("emm written to %s type=%s len=%d", reader[au].label, typtext[ep->type], ep->l);
 }
 
 static int comp_timeb(struct timeb *tpa, struct timeb *tpb)
