@@ -292,7 +292,7 @@ int dvbapi_stop_filter(int demux_index, int type) {
 	/* set cardsystem to 0. This prevents us for emm flood to server
 	 * until carsystem is set new from CMD05
 	 */
-	if (reader[client[cs_idx].au].typ & R_IS_NETWORK)
+	if (reader[client[cs_idx].au].typ == R_CAMD35)
 		reader[client[cs_idx].au].card_system = 0;
 
 	for (g=0;g<MAX_FILTER;g++) {
