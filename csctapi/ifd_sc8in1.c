@@ -30,6 +30,8 @@
 static struct termios stored_termio[8];//FIXME no globals please
 static int current_slot; //FIXME should not be a global, but one per SC8in1
 static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not static, the threads dont share same cardstatus!
+static unsigned char sc8in1_clock[2];
+static unsigned short is_mcr;
 
 #define MAX_TRANSMIT			255
 
@@ -50,13 +52,14 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
   termio.c_cc[VTIME] = 1; // working
   termio.c_cflag = B9600|CS8|CREAD|CLOCAL;
   if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
-    cs_log("ERROR: SC8in1 readsc8in1 set RS232 attributes\n");
+    cs_log("ERROR: SC8in1 Command error in set RS232 attributes\n");
     return ERROR;
   }
-  IO_Serial_Write (reader, 0, lenwrite, buff);
+  cs_ddump_mask (D_DEVICE, buff, lenwrite, "IO: Sending: ");
+  write(reader->handle, buff, lenwrite); //dont use IO_Serial_Write since mcr commands dont echo back 
   tcdrain(reader->handle);
   if (IO_Serial_Read (reader, 1000, lenread, buff) == ERROR) {
-    cs_log("READSC8in1 read error");
+    cs_log("SC8in1 Command read error");
     return ERROR;
   }
 
@@ -67,7 +70,7 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
   // restore data
   memcpy(&termio,&termiobackup,sizeof(termio));
   if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
-    cs_log("ERROR: SC8in1 readsc8in1 restore RS232 attributes\n");
+    cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
     return ERROR;
   }
 	return OK;
@@ -89,10 +92,10 @@ static int readsc8in1(struct s_reader * reader)
   unsigned char buf[10];
   buf[0]=0x47;
 	if (sc8in1_command(reader, buf, 1, 8) < 0) return (-1);
-  if (buf[0]!=0x90) return(-1);
+  if (buf[1]!=0x90) return(-1);
 
   // return result byte
-  return(buf[1]);
+  return(buf[2]);
 }
 
 int Sc8in1_Selectslot(struct s_reader * reader, int slot) {
@@ -146,11 +149,20 @@ int Sc8in1_Init(struct s_reader * reader)
 {
 	//additional init, Phoenix_Init is also called for Sc8in1 !
 	struct termios termio;
-	tcgetattr(reader->handle,&termio);
 	int i;
+	tcgetattr(reader->handle,&termio);
 	for (i=0; i<8; i++)
 		//init all stored termios to default comm settings after device init, before ATR
 		memcpy(&stored_termio[i],&termio,sizeof(termio));
+		unsigned char buff[] = { 0x74 };
+		sc8in1_command(reader, buff, 1, 1);
+		if (buff[0] == 4 || buff[0] == 8) {
+			is_mcr = (unsigned short) buff[0];
+			cs_log("SC8in1: device MCR%i detected", is_mcr);
+		}
+		else
+			is_mcr = 0;
+		tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
 	return OK;
 }
 
@@ -171,7 +183,7 @@ int Sc8in1_GetStatus (struct s_reader * reader, int * in)
 		cs_debug("SC8in1: locking for Getstatus for slot %i",reader->slot);
 		pthread_mutex_lock(&sc8in1);
 		cs_debug("SC8in1: locked for Getstatus for slot %i",reader->slot);
-		int i=readsc8in1(reader);
+		int i=readsc8in1(reader); //read cardstatus
 		pthread_mutex_unlock(&sc8in1);
 		cs_debug("SC8in1: unlocked for Getstatus for slot %i",reader->slot);
 		if (i < 0)
@@ -180,5 +192,46 @@ int Sc8in1_GetStatus (struct s_reader * reader, int * in)
 	}
 	//cs_log("Status: %02X, reader[ridx].slot=%i, 1<<slot-1=%02X bool=%i",result,reader[ridx].slot,1<<(reader[ridx].slot-1), result & 1<<(reader[ridx].slot-1));
 	*in = (cardstatus & 1<<(reader->slot-1));
+	return OK;
+}
+
+int MCR_SetClockrate (struct s_reader * reader, int mhz)
+{
+	unsigned short speed, shift, mask;
+	switch (mhz) {
+		case 357:
+		case 358:
+			speed = 0;
+			break;
+		case 368:
+		case 369:
+			speed = 1;
+			break;
+		case 600:
+			speed = 2;
+			break;
+		case 800:
+			speed = 3;
+			break;
+		default:
+			speed = 0;
+			cs_log("ERROR Sc8in1, cannot set clockspeed to %i", mhz);
+			break;
+	}
+	if (reader->slot >= 5)
+		shift = (reader->slot - 5) * 2;
+	else
+		shift = (reader->slot - 1) * 2;
+	speed = speed << shift;
+	mask = 3 << shift;
+
+	if (reader->slot >= 5) {
+		sc8in1_clock[0] &= mask;
+		sc8in1_clock[0] |= speed;
+	}
+	else {
+		sc8in1_clock[1] &= mask;
+		sc8in1_clock[1] |= speed;
+	}
 	return OK;
 }
