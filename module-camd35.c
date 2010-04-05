@@ -134,84 +134,76 @@ static int camd35_recv(uchar *buf, int l)
 
 static void camd35_request_emm(ECM_REQUEST *er)
 {
-  int i, au;
-  time_t now;
-  static time_t last=0;
-  static int disable_counter=0;
-  static uchar lastserial[8]={0,0,0,0,0,0,0,0};
+	int i, au;
+	time_t now;
+	static time_t last = 0;
+	static int disable_counter = 0;
+	static uchar lastserial[8] = {0,0,0,0,0,0,0,0};
 
-  au=client[cs_idx].au;
-  if ((au<0) || (au>CS_MAXREADER)) return;  // TODO
+	au = client[cs_idx].au;
+	if ((au < 0) || (au > CS_MAXREADER))
+		return;  // TODO
 
-  time(&now);
-  if (!memcmp(lastserial, reader[au].hexserial, 8))
-	  if (abs(now-last)<180) return;
-  memcpy(lastserial, reader[au].hexserial, 8);
-  last=now;
+	time(&now);
+	if (!memcmp(lastserial, reader[au].hexserial, 8))
+		if (abs(now-last) < 180) return;
 
-  if (reader[au].caid[0])
-  {
-    disable_counter=0;
-    log_emm_request(au);
-  }
-  else
-    if (disable_counter>2)
-      return;
-    else
-      disable_counter++;
+	memcpy(lastserial, reader[au].hexserial, 8);
+	last = now;
 
-//  if (reader[au].hexserial[3])
-//  {
-//    if (!reader[au].online)
-//    {
-//      memset(lastserial, 0, sizeof(lastserial));
-//      return;
-//    }
-    memset(mbuf, 0, sizeof(mbuf));
-    mbuf[2]=mbuf[3]=0xff;			// must not be zero
-    memcpy(mbuf+ 8, i2b(2, er->srvid), 2);
-    memcpy(mbuf+12, i2b(4, er->prid ), 4);
-    memcpy(mbuf+16, i2b(2, er->pid  ), 2);
-    mbuf[0]=5;
-    mbuf[1]=111;
-    if (reader[au].caid[0])
-    {
-      mbuf[39]=1;				// no. caids
-      mbuf[20]=reader[au].caid[0]>>8;		// caid's (max 8)
-      mbuf[21]=reader[au].caid[0]&0xff;
-      memcpy(mbuf+40, reader[au].hexserial, 6);	// serial now 6 bytes
-      mbuf[47]=reader[au].nprov;
-      for (i=0; i<reader[au].nprov; i++)
-      {
-        if (((reader[au].caid[0] >= 0x1700) && (reader[au].caid[0] <= 0x1799))  || // Betacrypt
-            ((reader[au].caid[0] >= 0x0600) && (reader[au].caid[0] <= 0x0699)))    // Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
-        {
-          mbuf[48+(i*5)]=reader[au].prid[i][0];
-          memcpy(&mbuf[50+(i*5)], &reader[au].prid[i][1], 3);
-        }
-        else
-        {
-	        mbuf[48+(i*5)]=reader[au].prid[i][2];
-	        mbuf[49+(i*5)]=reader[au].prid[i][3];
-		      memcpy(&mbuf[50+(i*5)], &reader[au].sa[i][0],3);
-		    }
-      }/* b_nano old implementation was not working according to documentation, so we changed it
-      mbuf[128]=(reader[au].b_nano[0xd0])?0:1;
-      mbuf[129]=(reader[au].b_nano[0xd2])?0:1;
-      mbuf[130]=(reader[au].b_nano[0xd3])?0:1;*/
-      //we think client/server protocols should deliver all information, and only readers should discard EMM
-      mbuf[128]=reader[au].blockemm_g; //if 0, GA EMM is blocked
-      mbuf[129]=reader[au].blockemm_s; //if 0, SA EMM is blocked
-      mbuf[130]=reader[au].blockemm_u; //if 0, UA EMM is blocked
-      mbuf[131]=reader[au].card_system; //Cardsystem for Oscam client
-    }
-    else		// disable emm
-      mbuf[20]=mbuf[39]=mbuf[40]=mbuf[47]=mbuf[49]=1;
-    memcpy(mbuf+10, mbuf+20, 2);
-    camd35_send(mbuf);		// send with data-len 111 for camd3 > 3.890
-    mbuf[1]++;
-    camd35_send(mbuf);		// send with data-len 112 for camd3 < 3.890
-//  }
+	if (reader[au].caid[0])
+	{
+		disable_counter = 0;
+		log_emm_request(au);
+	}
+	else
+		if (disable_counter > 2)
+			return;
+		else
+			disable_counter++;
+
+	memset(mbuf, 0, sizeof(mbuf));
+	mbuf[2] = mbuf[3] = 0xff;			// must not be zero
+	memcpy(mbuf + 8, i2b(2, er->srvid), 2);
+	memcpy(mbuf + 12, i2b(4, er->prid), 4);
+	memcpy(mbuf + 16, i2b(2, er->pid), 2);
+	mbuf[0] = 5;
+	mbuf[1] = 111;
+	if (reader[au].caid[0])
+	{
+		mbuf[39] = 1;							// no. caids
+		mbuf[20] = reader[au].caid[0]>>8;		// caid's (max 8)
+		mbuf[21] = reader[au].caid[0]&0xff;
+		memcpy(mbuf + 40, reader[au].hexserial, 6);	// serial now 6 bytes
+		mbuf[47] = reader[au].nprov;
+		for (i = 0; i < reader[au].nprov; i++)
+		{
+			if (((reader[au].caid[0] >= 0x1700) && (reader[au].caid[0] <= 0x1799))  || // Betacrypt
+					((reader[au].caid[0] >= 0x0600) && (reader[au].caid[0] <= 0x0699)))    // Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
+			{
+				mbuf[48 + (i*5)] = reader[au].prid[i][0];
+				memcpy(&mbuf[50 + (i*5)], &reader[au].prid[i][1], 3);
+			}
+			else
+			{
+				mbuf[48 + (i * 5)] = reader[au].prid[i][2];
+				mbuf[49 + (i * 5)] =reader[au].prid[i][3];
+				memcpy(&mbuf[50 + (i * 5)], &reader[au].sa[i][0],4); // for conax we need at least 4 Bytes
+			}
+		}
+		//we think client/server protocols should deliver all information, and only readers should discard EMM
+		mbuf[128] = reader[au].blockemm_g;
+		mbuf[129] = reader[au].blockemm_s;
+		mbuf[130] = reader[au].blockemm_u;
+		mbuf[131] = reader[au].card_system; //Cardsystem for Oscam client
+	}
+	else		// disable emm
+		mbuf[20] = mbuf[39] = mbuf[40] = mbuf[47] = mbuf[49] = 1;
+
+	memcpy(mbuf + 10, mbuf + 20, 2);
+	camd35_send(mbuf);		// send with data-len 111 for camd3 > 3.890
+	mbuf[1]++;
+	camd35_send(mbuf);		// send with data-len 112 for camd3 < 3.890
 }
 
 static void camd35_send_dcw(ECM_REQUEST *er)
@@ -508,12 +500,12 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 			if (((reader[ridx].aucaid >= 0x1700) && (reader[ridx].aucaid <= 0x1799))  ||	// Betacrypt
 					((reader[ridx].aucaid >= 0x0600) && (reader[ridx].aucaid <= 0x0699)))	// Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
 			{
-				reader[ridx].prid[i][0] = buf[48+(i*5)];
-				memcpy(&reader[ridx].prid[i][1], &buf[50+(i*5)], 3);
+				reader[ridx].prid[i][0] = buf[48 + (i*5)];
+				memcpy(&reader[ridx].prid[i][1], &buf[50 + (i * 5)], 3);
 			} else {
-				reader[ridx].prid[i][2] = buf[48+(i*5)];
-				reader[ridx].prid[i][3] = buf[49+(i*5)];
-				memcpy(&reader[ridx].sa[i][0], &buf[50+(i*5)], 3);
+				reader[ridx].prid[i][2] = buf[48 + (i * 5)];
+				reader[ridx].prid[i][3] = buf[49+ (i * 5)];
+				memcpy(&reader[ridx].sa[i][0], &buf[50 + (i * 5)], 4);
 			}
 		}
 
