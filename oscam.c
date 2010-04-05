@@ -413,10 +413,10 @@ static void cs_sighup()
 
 static void cs_accounts_chk()
 {
-  int i;
   init_userdb();
   cs_reinit_clients();
 #ifdef CS_ANTICASC
+  int i;
   for (i=0; i<CS_MAXPID; i++)
     if (client[i].typ=='a')
     {

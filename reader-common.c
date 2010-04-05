@@ -4,11 +4,11 @@
 #include "atr.h"
 #include "icc_async_exports.h"
 
-uchar cta_res[CTA_RES_LEN];
-ushort cta_lr;
 static int cs_ptyp_orig; //reinit=1, 
 extern int Sc8in1_Card_Changed (struct s_reader * reader);
+extern int selectslot(struct s_reader * reader, int slot);
 extern pthread_mutex_t sc8in1; //FIXME
+
 #define SC_IRDETO 1
 #define SC_CRYPTOWORKS 2
 #define SC_VIACCESS 3
@@ -58,20 +58,18 @@ static void reader_nullcard(struct s_reader * reader)
   reader->nprov=0;
 }
 
-extern int selectslot(struct s_reader * reader, int slot);
-
-int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l)
+int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar * cta_res, ushort * p_cta_lr)
 {
 	int rc;
 #ifdef HAVE_PCSC
-	if (reader->typ == R_PCSC) {
- 	  return (pcsc_reader_do_api(reader, buf, cta_res, &cta_lr,l)); 
+	if (reader[ridx].typ == R_PCSC) {
+ 	  return (pcsc_reader_do_api(reader, buf, cta_res, p_cta_lr,l)); 
 	}
 
 #endif
 
 	cs_ddump(buf, l, "write to cardreader %s:",reader->label);
-	cta_lr=sizeof(cta_res)-1;
+	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary 
 	cs_ptyp_orig=cs_ptyp;
 	cs_ptyp=D_DEVICE;
 	if (reader->typ == R_SC8in1) {
@@ -79,28 +77,28 @@ int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l)
 		cs_debug("SC8in1: locked for CardWrite of slot %i", reader->slot);
 		selectslot(reader, reader->slot);
 	}
-	rc=ICC_Async_CardWrite(reader, buf, l, cta_res, &cta_lr);
+	rc=ICC_Async_CardWrite(reader, buf, (unsigned short)l, cta_res, p_cta_lr);
 	if (reader->typ == R_SC8in1) {
 		cs_debug("SC8in1: unlocked for CardWrite of slot %i", reader->slot);
 		pthread_mutex_unlock(&sc8in1);
 	}
 	cs_ptyp=cs_ptyp_orig;
-	cs_ddump(cta_res, cta_lr, "answer from cardreader %s:", reader->label);
+	cs_ddump(cta_res, *p_cta_lr, "answer from cardreader %s:", reader->label);
 	return rc;
 }
 
 #define CMD_LEN 5
 
-int card_write(struct s_reader * reader, uchar *cmd, uchar *data)
+int card_write(struct s_reader * reader, uchar *cmd, uchar *data, uchar *response, ushort * response_length)
 {
   if (data) {
     uchar buf[256]; //only allocate buffer when its needed
     memcpy(buf, cmd, CMD_LEN);
     if (cmd[4]) memcpy(buf+CMD_LEN, data, cmd[4]);
-    return(reader_cmd2icc(reader, buf, CMD_LEN+cmd[4]));
+    return(reader_cmd2icc(reader, buf, CMD_LEN+cmd[4], response, response_length));
   }
   else
-    return(reader_cmd2icc(reader, cmd, CMD_LEN));
+    return(reader_cmd2icc(reader, cmd, CMD_LEN, response, response_length));
 }
 
 static int reader_card_inserted(struct s_reader * reader)

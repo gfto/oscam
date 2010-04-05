@@ -26,7 +26,6 @@
 #define _PROTOCOL_T1_
 
 #include "defines.h"
-#include "apdu.h"
 
 /*
  * Exported datatypes definition
@@ -39,6 +38,6 @@ BYTE ns;              /* Send sequence number */
  */
 
 /* Send a command and return a response */
-int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp);
+int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr);
 
 #endif /* _PROTOCOL_T1_ */

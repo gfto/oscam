@@ -5,8 +5,7 @@ GENERAL		= Makefile
 LIBDIR		= ../lib
 LIBFILE1	= $(LIBDIR)/libcsctapi-$(TYP).a
 
-OBJECTS1	= $(LIBFILE1)(apdu.o) \
-		  $(LIBFILE1)(atr.o) \
+OBJECTS1	= $(LIBFILE1)(atr.o) \
 		  $(LIBFILE1)(icc_async.o) \
 			$(LIBFILE1)(ifd_cool.o) \
 		  $(LIBFILE1)(ifd_sci.o) \

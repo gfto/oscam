@@ -162,7 +162,7 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, unsigned long bitrate, stru
    /* Set the bitrate */
 #ifdef OS_LINUX
    //FIXME workaround for Smargo until native mode works
-   if ((reader[ridx].mhz == reader[ridx].cardmhz) && (reader[ridx].smargopatch != 1))
+   if ((reader->mhz == reader->cardmhz) && (reader->smargopatch != 1))
 #endif
    { //no overcloking
      cfsetospeed(tio, IO_Serial_Bitrate(bitrate));

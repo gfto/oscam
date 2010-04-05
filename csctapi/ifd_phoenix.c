@@ -74,12 +74,8 @@ int Phoenix_Init (struct s_reader * reader)
 	cs_debug_mask (D_IFD, "IFD: Initializing reader %s type=%d\n",  reader->label, reader->typ);
 	
 	/* Default serial port settings */
-	call (IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
-	IO_Serial_Flush(reader);
 	if (reader->atr[0] == 0) {
 		call (IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
-		call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
-		call (IO_Serial_SetParity (reader, PARITY_EVEN));
 		IO_Serial_Flush(reader);
 	}
 	return OK;
@@ -167,8 +163,9 @@ int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			while(n<PHOENIX_MAX_ATR_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
 				n++;
 			if(n==0) {
-				cs_log("ERROR: 0 characters found in ATR");
-				return ERROR;
+				cs_log("WARNING: 0 characters found in ATR");
+				//FIXME: No parity switching was done if we exit here
+				//return ERROR;
 		  }
 			if (ATR_InitFromArray (atr, buf, n) == ATR_OK)
 				ret = OK;

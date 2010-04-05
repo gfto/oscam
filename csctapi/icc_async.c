@@ -30,7 +30,6 @@
 #include "icc_async.h"
 #include "ifd.h"
 #include "mc_global.h"
-#include "apdu.h"
 #include "protocol_t0.h"
 #include "protocol_t1.h"
 #include "io_serial.h"
@@ -217,10 +216,11 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader->label);
 
 	reader->current_baudrate = DEFAULT_BAUDRATE; //this is needed for all readers to calculate work_etu for timings
+
 	if (reader->atr[0] != 0) {
 		cs_log("using ATR from reader config");
 		ATR_InitFromArray(atr, reader->atr, 33);
-	} 
+	}
 	else {
 		switch(reader->typ) {
 			case R_DB2COM1:
@@ -276,29 +276,29 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	return OK;
 }
 
-static int Protocol_Command (struct s_reader *reader, unsigned char * command, unsigned long command_len, APDU_Rsp ** rsp)
+int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsigned short command_len, unsigned char *rsp, unsigned short *lr)
 {
+	*lr = 0; //will be returned in case of error
 	switch (reader->protocol_type) {
 		case ATR_PROTOCOL_TYPE_T0:
-			call (Protocol_T0_Command (reader, command, command_len, rsp));
+			call (Protocol_T0_Command (reader, command, command_len, rsp, lr));
 			break;
 		case ATR_PROTOCOL_TYPE_T1:
 		 {
 			int try = 1;
 			do {
-				if (Protocol_T1_Command (reader, command, command_len, rsp) == OK)
+				if (Protocol_T1_Command (reader, command, command_len, rsp, lr) == OK)
 					break;
 				try++;
 				//try to resync
-				APDU_Rsp ** rsp;
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
-				Protocol_T1_Command (reader, resync, sizeof(resync), rsp);
+				Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
 				ifsc = DEFAULT_IFSC;
 			} while (try <= 3);
 			break;
 		 }
 		case ATR_PROTOCOL_TYPE_T14:
-			call (Protocol_T14_ExchangeTPDU (reader, command, command_len, rsp));
+			call (Protocol_T14_ExchangeTPDU (reader, command, command_len, rsp, lr));
 			break;
 		default:
 			cs_log("Error, unknown protocol type %i",reader->protocol_type);
@@ -306,38 +306,6 @@ static int Protocol_Command (struct s_reader *reader, unsigned char * command, u
 	}
 	return OK;
 }
-
-int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr)
-{
-	APDU_Rsp *apdu_rsp = NULL;
-	int remain;
-	bool err = FALSE;
-
-	call (Protocol_Command (reader, cmd, lc, &apdu_rsp));
-	{
-		if (apdu_rsp != NULL) {
-			/* Copy APDU data to rsp */
-			remain = MAX ((short)APDU_Rsp_RawLen(apdu_rsp) - (*lr),0);
-			if (remain > 0) {
-				cs_log("MEMORY ERROR");
-				err = TRUE; //FIXME do I need this?
-			}
-			(*lr) = MIN ((*lr), (short)APDU_Rsp_RawLen (apdu_rsp));
-			memcpy (rsp, APDU_Rsp_Raw (apdu_rsp) + remain, (*lr));
-			APDU_Rsp_Delete (apdu_rsp);
-		}
-		else 
-			(*lr) = 0;
-	}
-		
-	if (err) {
-		cs_log("ERROR creating APDU response");
-		return ERROR;
-	}
-
-	return OK;
-}
-
 
 int ICC_Async_SetTimings (struct s_reader * reader, unsigned wait_etu)
 {
@@ -797,7 +765,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 					ifsc = DEFAULT_IFSC;
 		
 				//FIXME workaround for Smargo until native mode works
-				if (reader[ridx].smargopatch == 1)
+				if (reader->smargopatch == 1)
 					ifsc = MIN (ifsc, 28);
 				else
 					// Towitoko does not allow IFSC > 251
@@ -880,11 +848,12 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 
 	//IFS setting in case of T1
 	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (ifsc != DEFAULT_IFSC)) {
-		APDU_Rsp ** rsp;
+		unsigned char rsp[CTA_RES_LEN];
+		unsigned short * lr;
 		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
 		tmp[3] = ifsc; // Information Field size
 		tmp[4] = ifsc ^ 0xE1;
-		Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp);
+		Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp, lr);
 	}
  return OK;
 }

@@ -5,8 +5,6 @@
 #include <unistd.h>
 
 IDEA_KEY_SCHEDULE ksSession;
-extern uchar cta_res[];
-extern ushort cta_lr;
 int is_pure_nagra=0;
 int is_tiger=0;
 int has_dt08=0;
@@ -47,7 +45,7 @@ static time_t tier_date(ulong date, char *buf, int l)
   return(ut);
 }
 
-static int do_cmd(struct s_reader * reader, unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned char *data)
+static int do_cmd(struct s_reader * reader, unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned char *data, unsigned char * cta_res, unsigned short * p_cta_lr)
 {
 	/*
 	here we build the command related to the protocol T1 for ROM142 or T14 for ROM181
@@ -77,7 +75,7 @@ static int do_cmd(struct s_reader * reader, unsigned char cmd, int ilen, unsigne
     	{
     		msg[4]+=1;
     	}
-    	if(!reader_cmd2icc(reader, msg,msglen))
+    	if(!reader_cmd2icc(reader, msg,msglen, cta_res, p_cta_lr))
   	{
   		cs_sleepms(5);
 		if(cta_res[0]!=res) 
@@ -85,12 +83,12 @@ static int do_cmd(struct s_reader * reader, unsigned char cmd, int ilen, unsigne
 	      		cs_debug("[nagra-reader] result not expected (%02x != %02x)",cta_res[0],res);
 	      		return ERROR;
 	      	}
-	      	if((cta_lr-2)!=rlen) 
+	      	if((*p_cta_lr-2)!=rlen) 
 	      	{
-	      		cs_debug("[nagra-reader] result length expected (%d != %d)",(cta_lr-2),rlen);
+	      		cs_debug("[nagra-reader] result length expected (%d != %d)",(*p_cta_lr-2),rlen);
 	      		return ERROR;
 	      	}
-      		return cta_lr;
+      		return *p_cta_lr;
       	}		
     	return ERROR;
 }
@@ -131,7 +129,8 @@ static void Signature(unsigned char *sig, const unsigned char *vkey,const unsign
 
 static int CamStateRequest(struct s_reader * reader)
 {
-	if(do_cmd(reader, 0xC0,0x02,0xB0,0x06,NULL))
+	def_resp;
+	if(do_cmd(reader, 0xC0,0x02,0xB0,0x06,NULL,cta_res,&cta_lr))
 	{
 		memcpy(cam_state,cta_res+3,3);
 		cs_debug("[nagra-reader] Camstate: %s",cs_hexdump (1, cam_state, 3));
@@ -146,7 +145,8 @@ static int CamStateRequest(struct s_reader * reader)
 
 static void DateTimeCMD(struct s_reader * reader)
 {
-	if (!do_cmd(reader, 0xC8,0x02,0xB8,0x06,NULL))
+	def_resp;
+	if (!do_cmd(reader, 0xC8,0x02,0xB8,0x06,NULL,cta_res,&cta_lr))
 	{
 		cs_debug("[nagra-reader] DateTimeCMD failed!");
 	}
@@ -155,7 +155,7 @@ static void DateTimeCMD(struct s_reader * reader)
 
 static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 {
-
+	def_resp;
 	unsigned char vFixed[] = {0,1,2,3,0x11};
 	unsigned char parte_fija[120];
 	unsigned char parte_variable[88];
@@ -167,7 +167,7 @@ static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 	unsigned char idea_sig[16];
 	unsigned char random[88];
 					 
-	if(!do_cmd(reader, 0xd1,0x02,0x51,0xd2,NULL))
+	if(!do_cmd(reader, 0xd1,0x02,0x51,0xd2,NULL,cta_res,&cta_lr))
 	{
 		cs_debug("[nagra-reader] CMD$D1 failed");
 		return ERROR;
@@ -252,7 +252,7 @@ static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 	BN_CTX_free (ctx3);
 	ReverseMem(d2_data, 88);
 
-	if(!do_cmd(reader, 0xd2,0x5a,0x52,0x03, d2_data)) 
+	if(!do_cmd(reader, 0xd2,0x5a,0x52,0x03, d2_data,cta_res,&cta_lr)) 
 	{
 		cs_debug("[nagra-reader] CMD$D2 failed");
 		return ERROR;
@@ -273,6 +273,7 @@ static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 
 static int NegotiateSessionKey(struct s_reader * reader)
 {
+	def_resp;
 	unsigned char cmd2b[] = {0x21, 0x40, 0x48, 0xA0, 0xCA, 0x00, 0x00, 0x43, 0x2B, 0x40, 0x1C, 0x54, 0xd1, 0x26, 0xe7, 0xe2, 0x40, 0x20, 0xd1, 0x66, 0xf4, 0x18, 0x97, 0x9d, 0x5f, 0x16, 0x8f, 0x7f, 0x7a, 0x55, 0x15, 0x82, 0x31, 0x14, 0x06, 0x57, 0x1a, 0x3f, 0xf0, 0x75, 0x62, 0x41, 0xc2, 0x84, 0xda, 0x4c, 0x2e, 0x84, 0xe9, 0x29, 0x13, 0x81, 0xee, 0xd6, 0xa9, 0xf5, 0xe9, 0xdb, 0xaf, 0x22, 0x51, 0x3d, 0x44, 0xb3, 0x20, 0x83, 0xde, 0xcb, 0x5f, 0x35, 0x2b, 0xb0, 0xce, 0x70, 0x02, 0x00};
 	unsigned char negot[64];
 	unsigned char tmp[64];
@@ -295,7 +296,7 @@ static int NegotiateSessionKey(struct s_reader * reader)
 		memcpy(plainDT08RSA, reader->rsa_mod, 64); 
 		memcpy(signature,reader->nagra_boxkey, 8);
 	}
-	if(!do_cmd(reader, 0x2a,0x02,0xaa,0x42,NULL))
+	if(!do_cmd(reader, 0x2a,0x02,0xaa,0x42,NULL,cta_res,&cta_lr))
 	{
 		cs_debug("[nagra-reader] CMD$2A failed");
 		return ERROR;
@@ -343,7 +344,7 @@ static int NegotiateSessionKey(struct s_reader * reader)
 	idea_set_encrypt_key(sessi,&ks);
 	idea_set_decrypt_key(&ks,&ksSession);
 	
-	if(!do_cmd(reader, 0x2b,0x42,0xab,0x02, cmd2b+10))
+	if(!do_cmd(reader, 0x2b,0x42,0xab,0x02, cmd2b+10,cta_res,&cta_lr))
 	{
 		cs_debug("[nagra-reader] CMD$2B failed");
 		return ERROR;
@@ -367,9 +368,8 @@ static int NegotiateSessionKey(struct s_reader * reader)
 	return OK;
 }
 
-static void decryptDT08(struct s_reader * reader)
+static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
 {
-
 	unsigned char vFixed[] = {0,1,2,3};
 	unsigned char v[72];
 	unsigned char buf[72];
@@ -446,7 +446,7 @@ static void decryptDT08(struct s_reader * reader)
 	}  	
 }
 
-static void addProvider(struct s_reader * reader)
+static void addProvider(struct s_reader * reader, unsigned char * cta_res)
 {
 	int i;
 	int toadd=1;
@@ -468,7 +468,7 @@ static void addProvider(struct s_reader * reader)
 	}
 }			
 
-static int ParseDataType(struct s_reader * reader, unsigned char dt)
+static int ParseDataType(struct s_reader * reader, unsigned char dt, unsigned char * cta_res, unsigned short cta_lr)
 {
 	char ds[16], de[16];
       	ushort chid;
@@ -506,10 +506,10 @@ static int ParseDataType(struct s_reader * reader, unsigned char dt)
         			tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15);
         			tier_date(b2i(2, cta_res+13)-0x7f7, de, 15);
         			cs_ri_log(reader, "|%04X|%04X    |%s  |%s  |", id,chid, ds, de);
-        			addProvider(reader); 
+        			addProvider(reader, cta_res); 
         		}
        		case 0x08:
-     		case 0x88: if (cta_res[11] == 0x49) decryptDT08(reader);  			
+     		case 0x88: if (cta_res[11] == 0x49) decryptDT08(reader, cta_res);  			
        		default:
        			return OK;
    	}
@@ -518,16 +518,17 @@ static int ParseDataType(struct s_reader * reader, unsigned char dt)
 
 static int GetDataType(struct s_reader * reader, unsigned char dt, int len, int shots)
 {
+	def_resp;
 	int i;
   	for(i=0; i<shots; i++)
   	{
-  		if(!do_cmd(reader, 0x22,0x03,0xA2,len,&dt))
+  		if(!do_cmd(reader, 0x22,0x03,0xA2,len,&dt,cta_res,&cta_lr))
   		{
   			cs_debug("[nagra-reader] failed to get datatype %02X",dt);
   			return ERROR;
   		}
     		if((cta_res[2]==0) && (dt != 0x08 || dt != 0x88)) return OK;
-    		if(!ParseDataType(reader, dt&0x0F)) return ERROR;
+    		if(!ParseDataType(reader, dt&0x0F, cta_res, cta_lr)) return ERROR;
     		if ((dt != 0x08 || dt != 0x88) && (cta_res[11] == 0x49)) return OK; //got dt08 data	
     		dt|=0x80; // get next item
     	}
@@ -537,6 +538,7 @@ static int GetDataType(struct s_reader * reader, unsigned char dt, int len, int 
 int nagra2_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
+	def_resp;
 	memset(rom, 0, 15);
 	reader->nprov = 1;
 	memset(reader->hexserial, 0, 8); 
@@ -563,7 +565,7 @@ int nagra2_card_init(struct s_reader * reader, ATR newatr)
 		}
 		cs_ri_log(reader, "using NAGRA mode");
 		is_pure_nagra=1;
-		if(!do_cmd(reader, 0x10,0x02,0x90,0x11,0))
+		if(!do_cmd(reader, 0x10,0x02,0x90,0x11,0,cta_res,&cta_lr))
 		{
 			cs_debug("[nagra-reader] get rom version failed");
 			return ERROR;
@@ -575,7 +577,7 @@ int nagra2_card_init(struct s_reader * reader, ATR newatr)
 	if (!is_tiger)
 	{
 		CamStateRequest(reader);
-		if(!do_cmd(reader, 0x12,0x02,0x92,0x06,0)) 
+		if(!do_cmd(reader, 0x12,0x02,0x92,0x06,0,cta_res,&cta_lr)) 
 		{
 			cs_debug("[nagra-reader] get Serial failed");
 			return ERROR;
@@ -649,14 +651,15 @@ void nagra2_post_process(struct s_reader * reader)
 
 int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
+	def_resp;
 	if (!is_tiger)
 	{
 		int retry=0;
-		if(!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2)) 
+		if(!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2,cta_res,&cta_lr)) 
 		{
 			cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
 			cs_sleepms(10);
-			if(!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2))
+			if(!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2,cta_res,&cta_lr))
 			{
 				cs_debug("[nagra-reader] nagra2_do_ecm failed, retry failed!");
 				return ERROR;
@@ -670,7 +673,7 @@ int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			retry++;
 	                cs_sleepms(10);
 		}
-		if (HAS_CW() && (do_cmd(reader, 0x1C,0x02,0x9C,0x36,NULL)))
+		if (HAS_CW() && (do_cmd(reader, 0x1C,0x02,0x9C,0x36,NULL,cta_res,&cta_lr)))
 		{
 			unsigned char v[8];
 			memset(v,0,sizeof(v));
@@ -699,7 +702,7 @@ int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		unsigned char ecm_trim[150];
 		memset(ecm_trim, 0, 150);
 		memcpy(&ecm_trim[5], er->ecm+3+2+2, er->ecm[4]+2);
-		if(do_cmd(reader, er->ecm[3],er->ecm[4]+5,0x53,0x16, ecm_trim)) 
+		if(do_cmd(reader, er->ecm[3],er->ecm[4]+5,0x53,0x16, ecm_trim,cta_res,&cta_lr)) 
 		{
 			if(cta_res[2] == 0x01)
 			{
@@ -746,9 +749,10 @@ int nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if
 
 int nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
+	def_resp;
 	if (!is_tiger)
 	{
-		if(!do_cmd(reader, ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2))
+		if(!do_cmd(reader, ep->emm[8],ep->emm[9]+2,0x84,0x02,ep->emm+8+2,cta_res,&cta_lr))
 		{
 			cs_debug("[nagra-reader] nagra2_do_emm failed");
 			return ERROR;
@@ -772,7 +776,7 @@ int nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 		unsigned char emm_trim[150];
 		memset(emm_trim, 0, 150);
 		memcpy(&emm_trim[5], ep->emm+3+5+2+2, ep->emm[9]+2);
-		if(!do_cmd(reader, ep->emm[8],ep->emm[9]+5,0x53,0x16, emm_trim))
+		if(!do_cmd(reader, ep->emm[8],ep->emm[9]+5,0x53,0x16, emm_trim,cta_res,&cta_lr))
 		{
 			cs_debug("[nagra-reader] nagra2_do_emm failed");
 			return ERROR;

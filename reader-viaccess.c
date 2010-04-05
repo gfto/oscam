@@ -1,9 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
 
-extern uchar cta_res[];
-extern ushort cta_lr;
-
 struct geo_cache
 {
   ulong provid;
@@ -139,19 +136,10 @@ static int chk_prov(struct s_reader * reader, uchar *id, uchar keynr)
   return(rc);
 }
 
-#define write_cmd(cmd, data) \
-{ \
-  if (card_write(reader, cmd, data)) return ERROR; \
-}
-
-#define read_cmd(cmd, data) \
-{ \
-  if (card_write(reader, cmd, NULL)) return ERROR; \
-}
-
 int viaccess_card_init(struct s_reader * reader, ATR newatr)
 {
-	get_atr;
+  get_atr;
+  def_resp;
   int i;
   uchar buf[256];
   static uchar insac[] = { 0xca, 0xac, 0x00, 0x00, 0x00 }; // select data
@@ -179,7 +167,7 @@ int viaccess_card_init(struct s_reader * reader, ATR newatr)
   reader->caid[0]=0x500;
   memset(reader->prid, 0xff, sizeof(reader->prid));
   insac[2]=0xa4; write_cmd(insac, NULL); // request unique id
-  insb8[4]=0x07; read_cmd(insb8, NULL); // read unique id
+  insb8[4]=0x07; write_cmd(insb8, NULL); // read unique id
   memcpy(reader->hexserial, cta_res+2, 5);
 //  cs_log("[viaccess-reader] type: Viaccess, ver: %s serial: %llu", ver, b2ll(5, cta_res+2));
   cs_ri_log(reader, "type: Viaccess (%sstandard atr), caid: %04X, serial: %llu",
@@ -190,7 +178,7 @@ int viaccess_card_init(struct s_reader * reader, ATR newatr)
   buf[0]=0;
   while((cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0))
   {
-    insc0[4]=0x1a; read_cmd(insc0, NULL); // show provider properties
+    insc0[4]=0x1a; write_cmd(insc0, NULL); // show provider properties
     cta_res[2]&=0xF0;
     reader->prid[i][0]=0;
     memcpy(&reader->prid[i][1], cta_res, 3);
@@ -199,14 +187,14 @@ int viaccess_card_init(struct s_reader * reader, ATR newatr)
 //cs_log("[viaccess-reader] buf: %s", buf);
 
     insac[2]=0xa5; write_cmd(insac, NULL); // request sa
-    insb8[4]=0x06; read_cmd(insb8, NULL); // read sa
+    insb8[4]=0x06; write_cmd(insb8, NULL); // read sa
     memcpy(&reader->sa[i][0], cta_res+2, 4);
 
 /*
     insac[2]=0xa7; write_cmd(insac, NULL); // request name
-    insb8[4]=0x02; read_cmd(insb8, NULL); // read name nano + len
+    insb8[4]=0x02; write_cmd(insb8, NULL); // read name nano + len
     l=cta_res[1];
-    insb8[4]=l; read_cmd(insb8, NULL); // read name
+    insb8[4]=l; write_cmd(insb8, NULL); // read name
     cta_res[l]=0;
 cs_log("[viaccess-reader] name: %s", cta_res);
 */
@@ -239,6 +227,7 @@ cs_log("[viaccess-reader] name: %s", cta_res);
 
 int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
+  def_resp;
   static unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
   static unsigned char ins88[] = { 0xca,0x88,0x00,0x00,0x00 }; // set ecm
   static unsigned char insf8[] = { 0xca,0xf8,0x00,0x00,0x00 }; // set geographic info 
@@ -334,7 +323,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     }
     //
     
-    read_cmd(insc0, NULL);	// read dcw
+    write_cmd(insc0, NULL);	// read dcw
     switch(cta_res[0])
     {
       case 0xe8: // even
@@ -358,13 +347,14 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
-	rdr=rdr;
+        rdr=rdr;
 	ep->type=UNKNOWN; //FIXME not sure how this maps onto global, unique and shared!
 	return TRUE; //FIXME let it all pass without checking serial or SA, without filling ep->hexserial
 }
 
 int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
+  def_resp;
   static unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
   static unsigned char insf0[] = { 0xca,0xf0,0x00,0x01,0x22 }; // set adf
   static unsigned char insf4[] = { 0xca,0xf4,0x00,0x01,0x00 }; // set adf, encrypted
@@ -533,7 +523,6 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
       ///cs_dump(insData, ins1c[4], "set subscription encrypted data:");
       ///cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
 
-      //read_cmd(insc8, insc8Data); this cannot be right, insc8Data would be ignored -- dingo35
       write_cmd(insc8, insc8Data); 
       if( cta_res[0] != 0x00 || cta_res[1] != 00 || cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
         ///cs_dump(cta_res, cta_lr, "extended status error:");
@@ -575,6 +564,7 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 int viaccess_card_info(struct s_reader * reader)
 {
+  def_resp;
   int i, l, scls, show_cls;
   static uchar insac[] = { 0xca, 0xac, 0x00, 0x00, 0x00 }; // select data
   static uchar insb8[] = { 0xca, 0xb8, 0x00, 0x00, 0x00 }; // read selected data
@@ -594,7 +584,7 @@ int viaccess_card_info(struct s_reader * reader)
   write_cmd(ins24, pin);
 
   insac[2]=0xa4; write_cmd(insac, NULL); // request unique id
-  insb8[4]=0x07; read_cmd(insb8, NULL); // read unique id
+  insb8[4]=0x07; write_cmd(insb8, NULL); // read unique id
   cs_log("[viaccess-reader] serial: %llu", b2ll(5, cta_res+2));
 
   scls=0;
@@ -603,18 +593,18 @@ int viaccess_card_info(struct s_reader * reader)
   {
     ulong l_provid, l_sa;
     uchar l_name[64];
-    insc0[4]=0x1a; read_cmd(insc0, NULL); // show provider properties
+    insc0[4]=0x1a; write_cmd(insc0, NULL); // show provider properties
     cta_res[2]&=0xF0;
     l_provid=b2i(3, cta_res);
 
     insac[2]=0xa5; write_cmd(insac, NULL); // request sa
-    insb8[4]=0x06; read_cmd(insb8, NULL); // read sa
+    insb8[4]=0x06; write_cmd(insb8, NULL); // read sa
     l_sa=b2i(4, cta_res+2);
 
     insac[2]=0xa7; write_cmd(insac, NULL); // request name
-    insb8[4]=0x02; read_cmd(insb8, NULL); // read name nano + len
+    insb8[4]=0x02; write_cmd(insb8, NULL); // read name nano + len
     l=cta_res[1];
-    insb8[4]=l; read_cmd(insb8, NULL); // read name
+    insb8[4]=l; write_cmd(insb8, NULL); // read name
     cta_res[l]=0;
     trim((char *)cta_res);
     if (cta_res[0])
@@ -624,9 +614,9 @@ int viaccess_card_info(struct s_reader * reader)
 
     // read GEO
     insac[2]=0xa6; write_cmd(insac, NULL); // request GEO
-    insb8[4]=0x02; read_cmd(insb8, NULL); // read GEO nano + len
+    insb8[4]=0x02; write_cmd(insb8, NULL); // read GEO nano + len
     l=cta_res[1];
-    insb8[4]=l; read_cmd(insb8, NULL); // read geo
+    insb8[4]=l; write_cmd(insb8, NULL); // read geo
     cs_ri_log(reader, "provider: %d, id: %06X%s, sa: %08X, geo: %s",
            i, l_provid, l_name, l_sa, (l<4) ? "empty" : cs_hexdump(1, cta_res, l));
 
@@ -636,14 +626,14 @@ int viaccess_card_info(struct s_reader * reader)
     scls=0;
     while( (cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0) )
     {
-      insb8[4]=0x02; read_cmd(insb8, NULL); // read class subs nano + len
+      insb8[4]=0x02; write_cmd(insb8, NULL); // read class subs nano + len
       if( (cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0) )
       {
         int fshow;
         l=cta_res[1];
         //fshow=(client[cs_idx].dbglvl==D_DUMP)?1:(scls < show_cls)?1:0;
         fshow=(scls<show_cls);
-        insb8[4]=l; read_cmd(insb8, NULL); // read class subs
+        insb8[4]=l; write_cmd(insb8, NULL); // read class subs
         if( (cta_res[cta_lr-2]==0x90) && (fshow) && 
             (cta_res[cta_lr-1]==0x00 || cta_res[cta_lr-1]==0x08) )
         {

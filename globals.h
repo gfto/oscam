@@ -538,10 +538,10 @@ struct s_reader  //contains device info, reader info and card info
 	unsigned int read_timeout; // Max timeout (ms) to receive characters
 	unsigned int block_delay; // Delay (ms) after starting to transmit
 	unsigned int char_delay; // Delay (ms) after transmiting each sucesive char
-	////variables from icc_async.h end
 	////variables from io_serial.h start
 	int written; //keep score of how much bytes are written to serial port, since they are echoed back they have to be read
-	////variables from io_serial.h end
+	////variables from reader-dre.c 
+	unsigned char provider;
 };
 
 #ifdef CS_ANTICASC
@@ -969,8 +969,8 @@ extern char *mk_t_ftab(FTAB *ftab);
 
 // oscam-reader
 extern int ridx, logfd;
-extern int reader_cmd2icc(struct s_reader * reader, uchar *, int);
-extern int card_write(struct s_reader * reader, uchar *, uchar *);
+extern int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar *response, ushort *response_length);
+extern int card_write(struct s_reader * reader, uchar *, uchar *, uchar *, ushort *);
 extern void cs_ri_brk(struct s_reader * reader, int);
 extern void cs_ri_log(struct s_reader * reader, char *,...);
 extern void * start_cardreader(void *);
