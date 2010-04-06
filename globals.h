@@ -1007,6 +1007,7 @@ extern int reader_ecm(struct s_reader * reader, ECM_REQUEST *);
 extern int reader_emm(struct s_reader * reader, EMM_PACKET *);
 int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 uchar *get_emm_filter(struct s_reader * rdr, int type);
+int get_cardsystem(ushort caid);
 
 #ifdef HAVE_PCSC
 // reader-pcsc

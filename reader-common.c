@@ -417,6 +417,28 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
 	return rc;
 }
 
+int get_cardsystem(ushort caid) {
+	switch(caid >> 8) {
+		case 0x01:
+			return SC_SECA;
+		case 0x05:
+			return SC_VIACCESS;
+		case 0x06:
+			return SC_IRDETO;
+		case 0x09:
+			return SC_VIDEOGUARD2;
+		case 0x0B:
+			return SC_CONAX;
+		case 0x0D:
+			return SC_CRYPTOWORKS;
+		case 0x17:
+		case 0x18:
+			return SC_NAGRA;
+		default: 
+			return 0;
+	}
+}
+
 uchar *get_emm_filter(struct s_reader * rdr, int type) {
 
 	static uint8_t filter[32];
