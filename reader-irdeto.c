@@ -341,18 +341,14 @@ uchar *irdeto_get_emm_filter(struct s_reader * rdr, int type)
 			filter[0+16] = 0xFF;
 			filter[1]    = 0x00;
 			filter[1+16] = 0x2F; // 0x00 to 0xD0
-			//filter[1]    = 0xD0;
-			//filter[1+16] = 0xFF;
 			break;
 		case SHARED:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
 			filter[1]    = 0xD2;
 			filter[1+16] = 0xFF;
-			filter[2]    = rdr->sa[0][0];
-			filter[2+16] = 0xFF;
-			filter[3]    = rdr->sa[0][1];
-			filter[3+16] = 0xFF;
+			memcpy(filter+2, rdr->hexserial, 2);
+			memset(filter+2+16, 0xFF, 2);
 			break;
 		case UNIQUE:
 			filter[0]    = 0x82;

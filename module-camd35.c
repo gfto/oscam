@@ -515,7 +515,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 
 		reader[ridx].blockemm_g = buf[128];
 		reader[ridx].blockemm_s = buf[129];
-		reader[ridx].blockemm_u = buf[129];
+		reader[ridx].blockemm_u = buf[130];
 		reader[ridx].card_system = buf[131];
 		cs_log("CMD05 reader: %s serial: %s cardsyst: %d aucaid: %04X",
 				reader[ridx].label,
