@@ -442,7 +442,7 @@ int get_cardsystem(ushort caid) {
 uchar *get_emm_filter(struct s_reader * rdr, int type) {
 
 	static uint8_t filter[32];
-	memset(filter, 0x00, 32);
+	memset(filter, 0xFF, 32); // should deliver a filter which not produce a flood if cardsystem is not yet implemented.
 
 	switch(rdr->card_system) {
 		case SC_NAGRA:
