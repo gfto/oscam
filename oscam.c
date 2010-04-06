@@ -1344,10 +1344,10 @@ void cs_disconnect_client(void)
 	cs_exit(0);
 }
 
-int check_ecmcache(ECM_REQUEST *er, ulong grp)
+int check_ecmcache(ECM_REQUEST *er, ulong grp, int cachecm)
 {
 	// disable caching
-	if (!reader[ridx].cachecm) return(0);
+	if (!cachecm) return(0);
 
 	int i;
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
@@ -2135,7 +2135,7 @@ void get_cw(ECM_REQUEST *er)
 		memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
 
 		// cache1
-		if (check_ecmcache(er, client[cs_idx].grp))
+		if (check_ecmcache(er, client[cs_idx].grp, reader[ridx].cachecm))
 			er->rc = 1;
 
 #ifdef CS_ANTICASC
