@@ -870,7 +870,7 @@ extern int cs_fork(in_addr_t, in_port_t);
 extern void wait4master(void);
 extern int cs_auth_client(struct s_auth *, char*);
 extern void cs_disconnect_client(void);
-extern int check_ecmcache(ECM_REQUEST *, ulong, int);
+extern int check_ecmcache(ECM_REQUEST *, ulong);
 extern void store_logentry(char *);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);

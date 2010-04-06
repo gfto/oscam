@@ -546,11 +546,6 @@ int cs_fork(in_addr_t ip, in_port_t port)
       cs_exit(1);
     }
 		if (reader[ridx].typ == R_SC8in1 && port == 99) { //SC8in1 reader gets threaded, not forked
-			int pos = strlen(reader[ridx].device)-2; //this is where : should be located; is also valid length of physical device name
-			if (reader[ridx].device[pos] != 0x3a) //0x3a = ":"
-				cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader[ridx].device[pos], reader[ridx].device);
-			reader[ridx].slot=(int)reader[ridx].device[pos+1] - 0x30;//FIXME test boundaries
-			reader[ridx].device[pos]= 0; //slot 1 reader now gets correct physicalname
                         if (reader[ridx].handle == 0)
 				reader_device_init(&reader[ridx]); 
 			cs_log("creating thread for device %s slot %i with ridx %i=%i", reader[ridx].device, reader[ridx].slot, reader[ridx].ridx, ridx);
@@ -1344,11 +1339,8 @@ void cs_disconnect_client(void)
 	cs_exit(0);
 }
 
-int check_ecmcache(ECM_REQUEST *er, ulong grp, int cachecm)
+int check_ecmcache(ECM_REQUEST *er, ulong grp)
 {
-	// disable caching
-	if (!cachecm) return(0);
-
 	int i;
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache CHECK: grp=%lX", grp);
@@ -2135,8 +2127,10 @@ void get_cw(ECM_REQUEST *er)
 		memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
 
 		// cache1
-		if (check_ecmcache(er, client[cs_idx].grp, reader[ridx].cachecm))
-			er->rc = 1;
+		if(reader[ridx].cachecm) {
+			if (check_ecmcache(er, client[cs_idx].grp))
+				er->rc = 1;
+		}
 
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);

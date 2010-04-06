@@ -81,6 +81,11 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 	switch(reader->typ) {
 		case R_SC8in1:
 			pthread_mutex_init(&sc8in1, NULL);
+			int pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
+			if (reader->device[pos] != 0x3a) //0x3a = ":"
+				cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
+			reader->slot=(int)reader->device[pos+1] - 0x30;//FIXME test boundaries
+			reader->device[pos]= 0; //slot 1 reader now gets correct physicalname
 		case R_MOUSE:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
