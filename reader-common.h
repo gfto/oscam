@@ -62,7 +62,8 @@ int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *);
 int conax_do_emm(struct s_reader * reader, EMM_PACKET *);
 int conax_get_emm_type(EMM_PACKET *, struct s_reader *);
 int conax_card_info(struct s_reader * reader);
- 
+uchar *conax_get_emm_filter(struct s_reader * rdr, int type);
+
 // reader-dre
 int dre_card_init(struct s_reader * reader, ATR atr);
 int dre_do_ecm(struct s_reader * reader, ECM_REQUEST *);

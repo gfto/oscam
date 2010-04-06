@@ -458,7 +458,7 @@ uchar *get_emm_filter(struct s_reader * rdr, int type) {
 
 			break;
 		case SC_CONAX:
-
+			return conax_get_emm_filter(rdr, type);
 			break;
 		case SC_SECA:
 
