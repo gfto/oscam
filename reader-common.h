@@ -16,6 +16,7 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *);
 int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *);
 int irdeto_get_emm_type(EMM_PACKET *, struct s_reader *); //s_reader as last argument to remind you that this function picks out OTHER reader than you would expect!
 int irdeto_card_info(struct s_reader * reader);
+uchar *irdeto_get_emm_filter(struct s_reader * rdr, int type);
 
 // reader-viaccess
 int viaccess_card_init(struct s_reader * reader, ATR atr);
