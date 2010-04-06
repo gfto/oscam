@@ -340,47 +340,27 @@ uchar *irdeto_get_emm_filter(struct s_reader * rdr, int type)
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
 			filter[1]    = 0x00;
-			filter[1+16] = 0x00;
-			filter[2]    = 0x00;
-			filter[2+16] = 0x00;
-			filter[3]    = 0xD0;
-			filter[3+16] = 0xFF;
+			filter[1+16] = 0x2F; // 0x00 to 0xD0
+			//filter[1]    = 0xD0;
+			//filter[1+16] = 0xFF;
 			break;
 		case SHARED:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
-			filter[1]    = 0x00;
-			filter[1+16] = 0x00;
-			filter[2]    = 0x00;
-			filter[2+16] = 0x00;
-			filter[3]    = 0xD2;
+			filter[1]    = 0xD2;
+			filter[1+16] = 0xFF;
+			filter[2]    = rdr->sa[0][0];
+			filter[2+16] = 0xFF;
+			filter[3]    = rdr->sa[0][1];
 			filter[3+16] = 0xFF;
-			filter[4]    = rdr->sa[0][0];
-			filter[4+16] = 0xFF;
-			filter[5]    = rdr->sa[0][1];
-			filter[5+16] = 0xFF;
-			filter[6]    = 0x00;
-			filter[6+16] = 0x00;
-			filter[7]    = 0x00;
-			filter[7+16] = 0x00;
 			break;
 		case UNIQUE:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
-			filter[1]    = 0x00;
-			filter[1+16] = 0x00;
-			filter[2]    = 0x00;
-			filter[2+16] = 0x00;
-			filter[3]    = 0xD3;
-			filter[3+16] = 0xFF;
-			filter[4]    = rdr->hexserial[0];
-			filter[4+16] = 0xFF;
-			filter[5]    = rdr->hexserial[1];
-			filter[5+16] = 0xFF;
-			filter[6]    = rdr->hexserial[2];
-			filter[6+16] = 0xFF;
-			filter[7]    = rdr->hexserial[3];
-			filter[7+16] = 0xFF;
+			filter[1]    = 0xD3;
+			filter[1+16] = 0xFF;
+			memcpy(filter+2, rdr->hexserial, 4);
+			memset(filter+2+16, 0xFF, 4);
 			break;
 	}
 
