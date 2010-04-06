@@ -210,10 +210,8 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 		*card = TRUE;
 	else
 		*card = FALSE;
-#ifndef QBOXHD	
-	//FIXME: This causes strange card/no card messages on QBOXHD
+
 	cs_debug_mask (D_IFD, "IFD: Status = %s", in ? "card": "no card");
-#endif
 	
 	return OK;
 }
