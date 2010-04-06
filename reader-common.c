@@ -424,10 +424,10 @@ uchar *get_emm_filter(struct s_reader * rdr, int type) {
 
 	switch(rdr->card_system) {
 		case SC_NAGRA:
-			memcpy(filter, nagra2_get_emm_filter(rdr, type), 32);
+			return nagra2_get_emm_filter(rdr, type);
 			break;
 		case SC_IRDETO:
-			memcpy(filter, irdeto_get_emm_filter(rdr, type), 32);
+			return irdeto_get_emm_filter(rdr, type);
 			break;
 		case SC_CRYPTOWORKS:
 
@@ -451,7 +451,7 @@ uchar *get_emm_filter(struct s_reader * rdr, int type) {
 			break;
 	}
 
-	return filter;
+	//return filter;
 }
 
 int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
