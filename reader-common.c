@@ -451,7 +451,7 @@ uchar *get_emm_filter(struct s_reader * rdr, int type) {
 			break;
 	}
 
-	//return filter;
+	return filter;
 }
 
 int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
