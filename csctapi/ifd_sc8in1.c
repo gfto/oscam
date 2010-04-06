@@ -37,6 +37,7 @@ static unsigned short is_mcr;
 
 static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsigned short lenwrite, unsigned short lenread)
 {
+  int res,i;
   struct termios termio, termiobackup;
 
   // backup data
@@ -56,15 +57,13 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
     return ERROR;
   }
   cs_ddump_mask (D_DEVICE, buff, lenwrite, "IO: Sending: ");
-
-  if(!write(reader->handle, buff, lenwrite)) {
+  if(!write(reader->handle, buff, lenwrite)); { //dont use IO_Serial_Write since mcr commands dont echo back 
     cs_log("ERROR: SC8in1 Command write error");
-    return ERROR; //dont use IO_Serial_Write since mcr commands dont echo back 
+    return ERROR;
   }
-
   tcdrain(reader->handle);
   if (IO_Serial_Read (reader, 1000, lenread, buff) == ERROR) {
-    cs_log("SC8in1 Command read error");
+    cs_log("ERROR: SC8in1 Command read error");
     return ERROR;
   }
 
@@ -159,15 +158,20 @@ int Sc8in1_Init(struct s_reader * reader)
 	for (i=0; i<8; i++)
 		//init all stored termios to default comm settings after device init, before ATR
 		memcpy(&stored_termio[i],&termio,sizeof(termio));
-		unsigned char buff[] = { 0x74 };
-		sc8in1_command(reader, buff, 1, 1);
-		if (buff[0] == 4 || buff[0] == 8) {
-			is_mcr = (unsigned short) buff[0];
-			cs_log("SC8in1: device MCR%i detected", is_mcr);
-		}
-		else
-			is_mcr = 0;
-		tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
+	unsigned char buff[] = { 0x74 };
+	sc8in1_command(reader, buff, 1, 1);
+	if (buff[0] == 4 || buff[0] == 8) {
+		is_mcr = (unsigned short) buff[0];
+		cs_log("SC8in1: device MCR%i detected", is_mcr);
+	}
+	else
+		is_mcr = 0;
+	tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
+	int fd = reader->handle;
+	for (i=0; i<CS_MAXREADER; i++) //copy handle to other slots, FIXME change this if multiple sc8in1 readers 
+		if (reader[i].typ == R_SC8in1)
+			reader[i].handle = fd;
+
 	return OK;
 }
 
@@ -238,5 +242,5 @@ int MCR_SetClockrate (struct s_reader * reader, int mhz)
 		sc8in1_clock[1] &= mask;
 		sc8in1_clock[1] |= speed;
 	}
-	return OK;
 }
+

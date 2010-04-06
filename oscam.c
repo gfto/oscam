@@ -551,14 +551,8 @@ int cs_fork(in_addr_t ip, in_port_t port)
 				cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader[ridx].device[pos], reader[ridx].device);
 			reader[ridx].slot=(int)reader[ridx].device[pos+1] - 0x30;//FIXME test boundaries
 			reader[ridx].device[pos]= 0; //slot 1 reader now gets correct physicalname
-                        if (reader[ridx].handle == 0) { 
+                        if (reader[ridx].handle == 0)
 				reader_device_init(&reader[ridx]); 
-				int fd = reader[ridx].handle; 
-				int i; 
-				for (i=0; i<CS_MAXREADER; i++) //copy handle to other slots, FIXME change this if multiple sc8in1 readers  
-					if (reader[i].typ == R_SC8in1) 
-						reader[i].handle = fd; 
-			} 
 			cs_log("creating thread for device %s slot %i with ridx %i=%i", reader[ridx].device, reader[ridx].slot, reader[ridx].ridx, ridx);
 			int rc;
 			pthread_t dummy;
