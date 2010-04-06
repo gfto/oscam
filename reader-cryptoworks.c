@@ -451,16 +451,18 @@ int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
-  cs_debug_mask(D_EMM, "Entered cryptoworks_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
+  char dumprdrserial[6];
 
+  cs_debug_mask(D_EMM, "Entered cryptoworks_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
   switch (ep->emm[0]) {
 		case 0x82:
   	 		if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[13]==0x80 && ep->emm[14]==0x05) {
 				ep->type = UNIQUE;
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 6);
+				strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 6));
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNIQUE, ep = %s rdr = %s", 
-					      cs_hexdump(1, ep->hexserial, 6), cs_hexdump(1, rdr->hexserial, 6));
+					      cs_hexdump(1, ep->hexserial, 6), dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 6)); // check for serial
 			}
 
@@ -469,8 +471,9 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				ep->type = SHARED;
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 4);
+				strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 4));
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: SHARED, ep = %s rdr = %s", 
-					      cs_hexdump(1, ep->hexserial, 4), cs_hexdump(1, rdr->hexserial, 4));
+					      cs_hexdump(1, ep->hexserial, 4), dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 4)); // check for SA
 			}
 
