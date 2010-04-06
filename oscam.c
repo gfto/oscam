@@ -1346,19 +1346,23 @@ void cs_disconnect_client(void)
 
 int check_ecmcache(ECM_REQUEST *er, ulong grp)
 {
-  int i;
-// cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
-//cs_log("cache CHECK: grp=%lX", grp);
-  for(i=0; i<CS_ECMCACHESIZE; i++)
-    if ((grp & ecmcache[i].grp) &&
-        ecmcache[i].caid==er->caid &&
-        (!memcmp(ecmcache[i].ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
-    {
-//cs_log("cache found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
-      memcpy(er->cw, ecmcache[i].cw, 16);
-      return(1);
-    }
-  return(0);
+	// disable caching
+	if (!reader[ridx].cachecm) return(0);
+
+	int i;
+	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
+	//cs_log("cache CHECK: grp=%lX", grp);
+	for(i=0; i<CS_ECMCACHESIZE; i++) {
+		if ((grp & ecmcache[i].grp) &&
+		     ecmcache[i].caid==er->caid &&
+		     (!memcmp(ecmcache[i].ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
+		{
+			//cs_log("cache found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
+			memcpy(er->cw, ecmcache[i].cw, 16);
+			return(1);
+		}
+	}
+	return(0);
 }
 
 static void store_ecm(ECM_REQUEST *er)
