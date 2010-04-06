@@ -37,7 +37,6 @@ static unsigned short is_mcr;
 
 static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsigned short lenwrite, unsigned short lenread)
 {
-  int res,i;
   struct termios termio, termiobackup;
 
   // backup data
@@ -57,7 +56,7 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
     return ERROR;
   }
   cs_ddump_mask (D_DEVICE, buff, lenwrite, "IO: Sending: ");
-  if(!write(reader->handle, buff, lenwrite)); { //dont use IO_Serial_Write since mcr commands dont echo back 
+  if(!write(reader->handle, buff, lenwrite)) { //dont use IO_Serial_Write since mcr commands dont echo back 
     cs_log("ERROR: SC8in1 Command write error");
     return ERROR;
   }
@@ -242,5 +241,6 @@ int MCR_SetClockrate (struct s_reader * reader, int mhz)
 		sc8in1_clock[1] &= mask;
 		sc8in1_clock[1] |= speed;
 	}
+	return OK;
 }
 
