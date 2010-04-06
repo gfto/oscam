@@ -452,7 +452,7 @@ uchar *get_emm_filter(struct s_reader * rdr, int type) {
 			return irdeto_get_emm_filter(rdr, type);
 			break;
 		case SC_CRYPTOWORKS:
-
+			return cryptoworks_get_emm_filter(rdr, type);
 			break;
 		case SC_VIACCESS:
 
