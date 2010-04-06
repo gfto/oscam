@@ -451,7 +451,7 @@ int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
-  char dumprdrserial[6];
+  char dumprdrserial[18];
 
   cs_debug_mask(D_EMM, "Entered cryptoworks_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
   switch (ep->emm[0]) {
