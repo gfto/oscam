@@ -398,6 +398,16 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "ecmcache")) {
+		if(strlen(value) == 0) {
+			cfg->cachecm = 1;
+			return;
+		} else {
+			cfg->cachecm = atoi(value);
+			return;
+		}
+	}
+
 	if (!strcmp(token, "bindwait")) {
 		if (strlen(value) == 0) {
 			cfg->bindwait = CS_BIND_TIMEOUT;
@@ -1270,6 +1280,7 @@ int init_config()
 	cfg->pidfile = NULL;
 	cfg->usrfile = NULL;
 	cfg->cwlogdir = NULL;
+	cfg->cachecm = 1;
 #ifdef WEBIF
 	strcpy(cfg->http_user, "");
 	strcpy(cfg->http_pwd, "");
@@ -2818,16 +2829,6 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
-	if (!strcmp(token, "ecmcache")) {
-		if(strlen(value) == 0) {
-			rdr->cachecm = 1;
-			return;
-		} else {
-			rdr->cachecm = atoi(value);
-			return;
-		}
-	}
-
 	if (!strcmp(token, "blocknano")) {
 		//wildcard is used
 		if (!strcmp(value,"all")) {
@@ -3054,7 +3055,6 @@ int init_readerdb()
 			reader[nr].mhz = 357;
 			reader[nr].cardmhz = 357;
 			reader[nr].deprecated = 0;
-			reader[nr].cachecm = 1;
 			strcpy(reader[nr].pincode, "none");
 			for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
 			continue;

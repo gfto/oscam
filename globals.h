@@ -475,7 +475,6 @@ struct s_reader  //contains device info, reader info and card info
   int		ucpk_valid;
   int       logemm;
   int       cachemm;
-  int       cachecm;
   int       rewritemm;
   int       card_status;
   int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
@@ -625,6 +624,7 @@ struct s_config
 	ulong		ctimeout;
 	ulong		ftimeout;
 	ulong		cmaxidle;
+	int		cachecm;
 	int		ulparent;
 	ulong		delay;
 	int		bindwait;
