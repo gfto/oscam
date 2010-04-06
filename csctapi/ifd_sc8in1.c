@@ -30,8 +30,6 @@
 static struct termios stored_termio[8];//FIXME no globals please
 static int current_slot; //FIXME should not be a global, but one per SC8in1
 static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not static, the threads dont share same cardstatus!
-static unsigned char sc8in1_clock[2];
-static unsigned short is_mcr;
 
 #define MAX_TRANSMIT			255
 
@@ -62,7 +60,7 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
   }
   tcdrain(reader->handle);
   if (IO_Serial_Read (reader, 1000, lenread, buff) == ERROR) {
-    cs_log("ERROR: SC8in1 Command read error");
+    cs_log("SC8in1 Command read error");
     return ERROR;
   }
 
@@ -152,7 +150,8 @@ int Sc8in1_Init(struct s_reader * reader)
 {
 	//additional init, Phoenix_Init is also called for Sc8in1 !
 	struct termios termio;
-	int i;
+	int i,speed,fd = reader->handle;
+	unsigned int is_mcr, sc8in1_clock = 0;
 	tcgetattr(reader->handle,&termio);
 	for (i=0; i<8; i++)
 		//init all stored termios to default comm settings after device init, before ATR
@@ -166,10 +165,38 @@ int Sc8in1_Init(struct s_reader * reader)
 	else
 		is_mcr = 0;
 	tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
-	int fd = reader->handle;
 	for (i=0; i<CS_MAXREADER; i++) //copy handle to other slots, FIXME change this if multiple sc8in1 readers 
-		if (reader[i].typ == R_SC8in1)
+		if (reader[i].typ == R_SC8in1) {
 			reader[i].handle = fd;
+			if (!is_mcr)
+				continue;
+			//if MCR set clock
+			switch (reader->mhz) {
+				case 357:
+				case 358:
+					continue;
+				case 368:
+				case 369:
+					speed = 1;
+					break;
+				case 600:
+					speed = 2;
+					break;
+				case 800:
+					speed = 3;
+					break;
+				default:
+					speed = 0;
+					cs_log("ERROR Sc8in1, cannot set clockspeed to %i", reader->mhz);
+					break;
+			}
+			sc8in1_clock |= (speed << (reader->slot - 1) * 2); 
+		}
+	buff[0] = 0x63; //MCR set clock
+	buff[1] = (sc8in1_clock >> 8) & 0xFF;
+	buff[2] = sc8in1_clock & 0xFF;
+	sc8in1_command(reader,  buff, 3, 0);
+//		}
 
 	return OK;
 }
@@ -202,45 +229,3 @@ int Sc8in1_GetStatus (struct s_reader * reader, int * in)
 	*in = (cardstatus & 1<<(reader->slot-1));
 	return OK;
 }
-
-int MCR_SetClockrate (struct s_reader * reader, int mhz)
-{
-	unsigned short speed, shift, mask;
-	switch (mhz) {
-		case 357:
-		case 358:
-			speed = 0;
-			break;
-		case 368:
-		case 369:
-			speed = 1;
-			break;
-		case 600:
-			speed = 2;
-			break;
-		case 800:
-			speed = 3;
-			break;
-		default:
-			speed = 0;
-			cs_log("ERROR Sc8in1, cannot set clockspeed to %i", mhz);
-			break;
-	}
-	if (reader->slot >= 5)
-		shift = (reader->slot - 5) * 2;
-	else
-		shift = (reader->slot - 1) * 2;
-	speed = speed << shift;
-	mask = 3 << shift;
-
-	if (reader->slot >= 5) {
-		sc8in1_clock[0] &= mask;
-		sc8in1_clock[0] |= speed;
-	}
-	else {
-		sc8in1_clock[1] &= mask;
-		sc8in1_clock[1] |= speed;
-	}
-	return OK;
-}
-

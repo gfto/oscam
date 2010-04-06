@@ -449,35 +449,44 @@ int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return((r==3) ? 1 : 0);
 }
 
-int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
-  rdr=rdr;
+  cs_debug_mask(D_EMM, "Entered cryptoworks_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
+
   switch (ep->emm[0]) {
 		case 0x82:
-  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[13]==0x80 && ep->emm[14]==0x05)
-				ep->type = UNIQUE; //FIXME no ep->hexserial set
-			else
-				ep->type = UNKNOWN;
-			break;
+  	 		if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[13]==0x80 && ep->emm[14]==0x05) {
+				ep->type = UNIQUE; //FIXME: no ep->hexserial set
+				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNIQUE");
+				return TRUE; //FIXME: still no check on serial
+			}
+
 		case 0x84:
-  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[12]==0x80 && ep->emm[13]==0x04)
+	  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[12]==0x80 && ep->emm[13]==0x04) {
 				ep->type = SHARED;
-			else
-				ep->type = UNKNOWN;
-			break;
+				memset(ep->hexserial, 0, 8);
+				memcpy(ep->hexserial, ep->emm + 6, 4);
+				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: SHARED, ep = %s rdr = %s", 
+					      cs_hexdump(1, ep->emm + 6, 4), cs_hexdump(1, ep->hexserial, 4));
+				return (!memcmp(ep->emm + 6, rdr->hexserial, 4)); // check for SA
+			}
+
 		case 0x88:
 		case 0x89:
-  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[8]==0x83 && ep->emm[9]==0x01)
+  	 		if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[8]==0x83 && ep->emm[9]==0x01) {
+				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: GLOBAL");
 				ep->type = GLOBAL;
-			else
-				ep->type = UNKNOWN;
-			break;
-		case 0x8F://incoming via camd3.5x
-		    //ep->type=emm[4];
+				return TRUE;
+			}
+
+		//incoming via camd3.5x
+		//ep->type=emm[4];
+		case 0x8F:
 		default:
 			ep->type = UNKNOWN;
+			cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNKNOWN");
+			return TRUE;
 	}
-	return TRUE; //no check on serial or SA
 }
 	
 
