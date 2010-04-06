@@ -54,6 +54,7 @@ int nagra2_card_info(struct s_reader * reader);
 int nagra2_do_emm(struct s_reader * reader, EMM_PACKET *);
 int nagra2_get_emm_type(EMM_PACKET *, struct s_reader *);
 void nagra2_post_process(struct s_reader * reader);
+uchar *nagra2_get_emm_filter(struct s_reader * rdr, int type);
  
 // reader-conax
 int conax_card_init(struct s_reader * reader, ATR atr);

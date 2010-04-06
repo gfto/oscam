@@ -417,6 +417,43 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
 	return rc;
 }
 
+uchar *get_emm_filter(struct s_reader * rdr, int type) {
+
+	static uint8_t filter[32];
+	memset(filter, 0x00, 32);
+
+	switch(rdr->card_system) {
+		case SC_NAGRA:
+			memcpy(filter, nagra2_get_emm_filter(rdr, type), 32);
+			break;
+		case SC_IRDETO:
+			memcpy(filter, irdeto_get_emm_filter(rdr, type), 32);
+			break;
+		case SC_CRYPTOWORKS:
+
+			break;
+		case SC_VIACCESS:
+
+			break;
+		case SC_CONAX:
+
+			break;
+		case SC_SECA:
+
+			break;
+		case SC_VIDEOGUARD2:
+
+			break;
+		case SC_DRE:
+
+			break;
+		default:
+			break;
+	}
+
+	return filter;
+}
+
 int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   int rc=-1;
