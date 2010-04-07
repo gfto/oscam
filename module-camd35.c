@@ -493,7 +493,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 
 		reader[ridx].nprov = 0; //reset if number changes on reader change
 		reader[ridx].nprov = buf[47];
-		reader[ridx].aucaid = b2i(2, buf+20);
+		reader[ridx].caid[0] = b2i(2, buf+20);
 
 		int i;
 		for (i=0; i<reader[ridx].nprov; i++) {
@@ -521,7 +521,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 				reader[ridx].label,
 				cs_hexdump(0, reader[ridx].hexserial, 8),
 				reader[ridx].card_system,
-				reader[ridx].aucaid);
+				reader[ridx].caid[0]);
 	}
 
 	// CMD44: old reject command introduced in mpcs

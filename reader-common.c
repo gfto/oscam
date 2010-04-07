@@ -448,19 +448,15 @@ uchar *get_emm_filter(struct s_reader * rdr, int type) {
 	switch(rdr->card_system) {
 		case SC_NAGRA:
 			return nagra2_get_emm_filter(rdr, type);
-			break;
 		case SC_IRDETO:
 			return irdeto_get_emm_filter(rdr, type);
-			break;
 		case SC_CRYPTOWORKS:
 			return cryptoworks_get_emm_filter(rdr, type);
-			break;
 		case SC_VIACCESS:
 
 			break;
 		case SC_CONAX:
 			return conax_get_emm_filter(rdr, type);
-			break;
 		case SC_SECA:
 
 			break;
