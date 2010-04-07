@@ -48,6 +48,7 @@ typedef struct demux_s
 	unsigned char buffer_cache_dmx[CS_ECMSTORESIZE];
 	unsigned char lastcw[2][8];
 	int emm_filter;
+	uchar hexserial[8];
 	struct s_reader *rdr;
 	
 } DEMUXTYPE;
@@ -345,7 +346,7 @@ void dvbapi_start_emm_filter(int demux_index) {
 	ushort caid = demux[demux_index].ECMpids[demux[demux_index].pidindex].CA_System_ID;
 	ushort pid  = demux[demux_index].ECMpids[demux[demux_index].pidindex].EMM_PID;
 
-	if (pid==0 || demux[demux_index].emm_filter==1 || !demux[demux_index].rdr)
+	if (pid==0 || !demux[demux_index].rdr)
 		return;
 
 	memset(nullserial,0,8);
@@ -353,6 +354,14 @@ void dvbapi_start_emm_filter(int demux_index) {
 	if (!memcmp(demux[demux_index].rdr->hexserial, nullserial, 8)) {
 		//cs_debug("dvbapi: hexserial not set %s", cs_hexdump(1, demux[demux_index].rdr->hexserial, 8));
 		return;
+	}
+
+	if (demux[demux_index].emm_filter==1 && !memcmp(demux[demux_index].rdr->hexserial, demux[demux_index].hexserial, 8)) {
+		return;
+	}
+
+	if (memcmp(demux[demux_index].rdr->hexserial, demux[demux_index].hexserial, 8)) {
+		dvbapi_stop_filter(demux_index, TYPE_EMM);
 	}
 
 	if (demux[demux_index].rdr->card_system==0)
@@ -387,6 +396,8 @@ void dvbapi_start_emm_filter(int demux_index) {
 		cs_dump(filter, 32, "demux filter:");
 		dvbapi_set_filter(dmx_fd, selected_api, pid, filter, filter+16, 0);
 	}
+
+	memcpy(demux[demux_index].hexserial, demux[demux_index].rdr->hexserial, 8);
 	demux[demux_index].emm_filter=1;
 }
 
@@ -616,6 +627,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 	demux[demux_id].socket_fd=connfd;
 	demux[demux_id].emm_filter=0;
 	demux[demux_id].rdr=NULL;
+	memset(demux[demux_id].hexserial, 0, 8);
 
 	for (i=0;i<8;i++) {
 		if (ca_mask & (1 << i)) {
@@ -848,6 +860,7 @@ void dvbapi_main_local() {
 		demux[i].socket_fd=0;
 		demux[i].emm_filter=0;
 		demux[i].rdr=NULL;
+		memset(demux[i].hexserial, 0, 8);
 		memset(demux[i].buffer_cache_dmx, 0, CS_ECMSTORESIZE);
 		for (rc=0;rc<MAX_FILTER;rc++) demux[i].demux_fd[rc].fd=0;
 	}
