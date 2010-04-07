@@ -338,8 +338,10 @@ void dvbapi_start_filter(int demux_index, ushort caid, unsigned short pid, uchar
 }
 
 void dvbapi_start_emm_filter(int demux_index, int emmtype, int type) {
-	int dmx_fd,i,n=-1;
+	int dmx_fd, i, n=-1;
 	uchar filter[32];
+	uchar *reader_filter;
+	char *typtext[]={"UNKNOWN", "UNIQUE", "SHARED", "GLOBAL"};
 
 	if (demux[demux_index].pidindex==-1) return;
 
@@ -348,43 +350,43 @@ void dvbapi_start_emm_filter(int demux_index, int emmtype, int type) {
 
 	int found=0;
 	for (i=0;i<CS_MAXREADER;i++) {
-		if (reader[i].caid[0] == demux[demux_index].ECMpids[demux[demux_index].pidindex].CA_System_ID) {
+		if (reader[i].aucaid == caid) {
 			client[cs_idx].au=i;
 			found=1;
 			break;
 		}
 	}
 
-	switch(reader[client[cs_idx].au].card_system) {
-		default:
-			if (emmtype!=GLOBAL) return;
-			memset(filter,0,32);
-			filter[0]=0x80;
-			filter[0+16]=0xF0;
-			break;
-	}
-
-	for (i=0;i<MAX_FILTER;i++) {
-		if (demux[demux_index].demux_fd[i].fd<=0) {
-			n=i;
-			break;
+	if (!found) {
+		cs_log("emm dmx filter - no AU reader found");
+	} else {
+		reader_filter = get_emm_filter(&reader[client[cs_idx].au], emmtype);
+		memcpy(filter, reader_filter, 32);
+		cs_log("emm dmx filter %s \t set to: %s",typtext[emmtype], cs_hexdump(0, filter, 32));
+	
+	
+		for (i=0;i<MAX_FILTER;i++) {
+			if (demux[demux_index].demux_fd[i].fd<=0) {
+				n=i;
+				break;
+			}
 		}
+	
+		if (n==-1) {
+			cs_log("dvbapi: no free filter");
+			return;
+		}
+	
+		dmx_fd=dvbapi_open_device(demux_index, 0);
+	
+		demux[demux_index].demux_fd[n].fd=dmx_fd;
+		demux[demux_index].demux_fd[n].CA_System_ID=caid;
+		demux[demux_index].demux_fd[n].PID=pid;
+		demux[demux_index].demux_fd[n].type=type;
+	
+		cs_ddump(filter, 32, "demux filter:");
+		dvbapi_set_filter(dmx_fd, selected_api, pid, filter, filter+16, 0);
 	}
-
-	if (n==-1) {
-		cs_log("dvbapi: no free filter");
-		return;
-	}
-
-	dmx_fd=dvbapi_open_device(demux_index, 0);
-
-	demux[demux_index].demux_fd[n].fd=dmx_fd;
-	demux[demux_index].demux_fd[n].CA_System_ID=caid;
-	demux[demux_index].demux_fd[n].PID=pid;
-	demux[demux_index].demux_fd[n].type=type;
-
-	cs_ddump(filter, 32, "demux filter:");
-	dvbapi_set_filter(dmx_fd, selected_api, pid, filter, filter+16, 0);
 }
 
 void dvbapi_parse_cat(int demux_index, uchar *buf, int len) {
