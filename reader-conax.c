@@ -232,26 +232,26 @@ uchar *conax_get_emm_filter(struct s_reader * rdr, int type)
 
 	switch (type) {
 		case GLOBAL:
-			filter[0]    = 0x80;
-			filter[0+16] = 0xF0;
-			filter[1]    = 0x00;
-			filter[1+16] = 0x00; // 0x00 to 0xD0
+			filter[0]    = 0x82;
+			filter[0+16] = 0xFF;
+			filter[1]    = 0x70;
+			filter[1+16] = 0xFF;
 			break;
 		case SHARED:
-			filter[0]    = 0x80;
-			filter[0+16] = 0xF0;
-			filter[1]    = 0x00;
-			filter[1+16] = 0x00;
-			memcpy(filter+4, rdr->sa[0], 4);
-			memset(filter+4+16, 0xFF, 4);
+			filter[0]    = 0x82;
+			filter[0+16] = 0xFF;
+			filter[1]    = 0x70;
+			filter[1+16] = 0xFF;
+			memcpy(filter+2, rdr->sa[0], 4);
+			memset(filter+2+16, 0xFF, 4);
 			break;
 		case UNIQUE:
-			filter[0]    = 0x80;
-			filter[0+16] = 0xF0;
-			filter[1]    = 0x00;
-			filter[1+16] = 0x00;
-			memcpy(filter+4, rdr->hexserial + 2, 4);
-			memset(filter+4+16, 0xFF, 4);
+			filter[0]    = 0x82;
+			filter[0+16] = 0xFF;
+			filter[1]    = 0x70;
+			filter[1+16] = 0xFF;
+			memcpy(filter+2, rdr->hexserial + 2, 4);
+			memset(filter+2+16, 0xFF, 4);
 			break;
 	}
 
