@@ -310,7 +310,7 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l));
-			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED, l = %d, ep = %s , rdr = %s", l, cs_hexdump(1, ep->hexserial, l), dumprdrserial);
+			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED l = %d ep = %s rdr = %s", l, cs_hexdump(1, ep->hexserial, l), dumprdrserial);
 			return (!l || !memcmp(ep->emm + 4, rdr->hexserial, l));
 			
 		case 3:
@@ -319,7 +319,7 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l));
-			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE, l = %d, ep = %s , rdr = %s", l, cs_hexdump(1, ep->hexserial, l), dumprdrserial);
+			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE l = %d ep = %s rdr = %s", l, cs_hexdump(1, ep->hexserial, l), dumprdrserial);
 			return (base == rdr->hexserial[3] && (!l || !memcmp(ep->emm + 4, rdr->hexserial, l)));
 
 		default:
