@@ -1117,6 +1117,8 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 				fprintf(ecmtxt, "reader: %s\n", reader[er->reader[0]].label);
 				if (reader[er->reader[0]].typ & R_IS_CASCADING)
 					fprintf(ecmtxt, "from: %s\n", reader[er->reader[0]].device);
+				else
+					fprintf(ecmtxt, "from: local\n");
 				fprintf(ecmtxt, "protocol: %d\n", reader[er->reader[0]].typ);
 				//if (reader[er->reader[0]].typ == R_CCCAM)
 					fprintf(ecmtxt, "hops: %d\n", reader[er->reader[0]].cc_currenthops);
