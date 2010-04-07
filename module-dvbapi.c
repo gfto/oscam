@@ -350,6 +350,10 @@ void dvbapi_start_emm_filter(int demux_index, int emmtype, int type) {
 
 	int found=0;
 	for (i=0;i<CS_MAXREADER;i++) {
+
+		if(!reader[i].aucaid)
+			reader[i].aucaid = reader[i].caid[0];
+
 		if (reader[i].aucaid == caid) {
 			client[cs_idx].au=i;
 			found=1;
