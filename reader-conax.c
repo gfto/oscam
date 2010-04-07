@@ -242,8 +242,8 @@ uchar *conax_get_emm_filter(struct s_reader * rdr, int type)
 			filter[0+16] = 0xFF;
 			filter[1]    = 0x70;
 			filter[1+16] = 0xFF;
-			memcpy(filter+6, rdr->sa[0], 4);
-			memset(filter+6+16, 0xFF, 4);
+			memcpy(filter+4, rdr->sa[0], 4);
+			memset(filter+4+16, 0xFF, 4);
 			break;
 
 		case UNIQUE:
@@ -251,8 +251,8 @@ uchar *conax_get_emm_filter(struct s_reader * rdr, int type)
 			filter[0+16] = 0xFF;
 			filter[1]    = 0x70;
 			filter[1+16] = 0xFF;
-			memcpy(filter+6, rdr->hexserial + 2, 4);
-			memset(filter+6+16, 0xFF, 4);
+			memcpy(filter+4, rdr->hexserial + 2, 4);
+			memset(filter+4+16, 0xFF, 4);
 			break;
 	}
 
