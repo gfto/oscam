@@ -906,6 +906,8 @@ void dvbapi_main_local() {
 	pfd2[1].events = (POLLIN | POLLPRI);
 	type[1]=1;
 
+	cs_debug("dvbapi: starting main loop");
+
 	while (1) {
 		if (master_pid!=getppid())
 			cs_exit(0);
@@ -913,6 +915,8 @@ void dvbapi_main_local() {
 		pfdcount=2;
 
 		chk_pending(tp);
+
+		cs_debug_mask(D_FUT, "dvbapi: collect devices");
 
 		for (i=0;i<MAX_DEMUX;i++) {
 			for (g=0;g<MAX_FILTER;g++) {
@@ -932,9 +936,11 @@ void dvbapi_main_local() {
 			}
 		}
 
+		cs_debug_mask(D_FUT, "dvbapi: starting poll");
 		rc = poll(pfd2, pfdcount, 500);
 	
 		if (rc<1) continue;
+		cs_debug_mask(D_FUT, "dvbapi: got event %d", rc);
 
 		for (i = 0; i < pfdcount; i++) {
 			if (pfd2[i].revents > 3)
@@ -974,17 +980,17 @@ void dvbapi_main_local() {
 							cs_debug("dvbapi: camd.socket: too short message received");
 							continue;
 						}
-
-						// if message begins with an apdu_tag and is longer than three bytes
-						if ((mbuf[0] == 0x9F) && ((mbuf[1] >> 7) == 0x01) && ((mbuf[2] >> 7) == 0x00))
-							dvbapi_handlesockmsg(mbuf, len, connfd);
-						else
-							cs_debug("dvbapi: invaild capmt");
 					} else {
 						cs_log("dvbapi: New capmt on old socket. Please report.");
+						connfd=pfd2[i].fd;
 						len = read(pfd2[i].fd, mbuf, sizeof(mbuf));
 						cs_dump(mbuf, len, "message:");
 					}
+					// if message begins with an apdu_tag and is longer than three bytes
+					if ((mbuf[0] == 0x9F) && ((mbuf[1] >> 7) == 0x01) && ((mbuf[2] >> 7) == 0x00))
+						dvbapi_handlesockmsg(mbuf, len, connfd);
+					else
+						cs_debug("dvbapi: invaild capmt");
 				} else { // type==0
 					if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf), 0)) <= 0)
 						continue;
