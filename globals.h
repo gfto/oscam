@@ -464,7 +464,6 @@ struct s_reader  //contains device info, reader info and card info
   uchar     sa[CS_MAXPROV][4];    // viaccess & seca
   ushort    acs;    // irdeto
   ushort    caid[16];
-  ushort    aucaid;
   uchar     b_nano[256];
   int       blockemm_unknown; //block EMMs that have unknown type
   int       blockemm_u;				//blcok Unique EMMs
