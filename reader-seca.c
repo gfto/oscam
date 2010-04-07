@@ -175,6 +175,33 @@ int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if s
 			return TRUE;
 	}
 }
+
+uchar *seca_get_emm_filter(struct s_reader * rdr, int type)
+{
+	static uint8_t filter[32];
+	memset(filter, 0x00, 32);
+
+	switch (type) {
+		case GLOBAL:
+			// FIXME: Seems to be that seca has no EMM-G ?!
+			filter[0]    = 0xFF;
+			filter[0+16] = 0xFF;
+			break;
+
+		case SHARED:
+			filter[0]    = 0x84;
+			filter[0+16] = 0xFF;
+			break;
+
+		case UNIQUE:
+			filter[0]    = 0x82;
+			filter[0+16] = 0xFF;
+			memcpy(filter+2, rdr->hexserial, 6);
+			memset(filter+2+16, 0xFF, 6);
+			break;
+	}
+	return filter;
+}
 	
 int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {

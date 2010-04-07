@@ -453,18 +453,14 @@ uchar *get_emm_filter(struct s_reader * rdr, int type) {
 		case SC_CRYPTOWORKS:
 			return cryptoworks_get_emm_filter(rdr, type);
 		case SC_VIACCESS:
-
 			break;
 		case SC_CONAX:
 			return conax_get_emm_filter(rdr, type);
 		case SC_SECA:
-
-			break;
+			return seca_get_emm_filter(rdr, type);
 		case SC_VIDEOGUARD2:
-
 			break;
 		case SC_DRE:
-
 			break;
 		default:
 			break;
