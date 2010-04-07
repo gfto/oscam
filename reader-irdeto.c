@@ -292,21 +292,20 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 	int l = (ep->emm[3]&0x07);
-	int mode = (ep->emm[3]>>3);
-	int type = (ep->emm[3]&0x03);
+	int base = (ep->emm[3]>>3);
 	char dumprdrserial[l*3];
 
 	cs_debug_mask(D_EMM, "Entered irdeto_get_emm_type ep->emm[3]=%02x",ep->emm[3]);
 
-	switch (type) {
+	switch (l) {
 
-		case 0x00:
-			// means global emm
+		case 0:
+			// global emm, 0 bytes addressed
 			ep->type = GLOBAL;
 			cs_debug_mask(D_EMM, "IRDETO EMM: GLOBAL");
 			return TRUE;
-		case 0x02:
-			// means shared emm, first 2 bytes of hexserial are transmitted in emm, seems to be the shared adr
+		case 2:
+			// shared emm, 2 bytes addressed
 			ep->type = SHARED;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
@@ -314,14 +313,15 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED, l = %d, ep = %s , rdr = %s", l, cs_hexdump(1, ep->hexserial, l), dumprdrserial);
 			return (!l || !memcmp(ep->emm + 4, rdr->hexserial, l));
 			
-		case 0x03:
-			// means uniqe emm
+		case 3:
+			// unique emm, 3 bytes addressed
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l));
 			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE, l = %d, ep = %s , rdr = %s", l, cs_hexdump(1, ep->hexserial, l), dumprdrserial);
-			return (mode == rdr->hexserial[3] && (!l || !memcmp(ep->emm + 4, rdr->hexserial, l)));
+			return (base == rdr->hexserial[3] && (!l || !memcmp(ep->emm + 4, rdr->hexserial, l)));
+
 		default:
 			ep->type = UNKNOWN;
 			cs_debug_mask(D_EMM, "IRDETO EMM: UNKNOWN");
@@ -335,26 +335,35 @@ uchar *irdeto_get_emm_filter(struct s_reader * rdr, int type)
 	static uint8_t filter[32];
 	memset(filter, 0x00, 32);
 
+	int base = rdr->hexserial[3];
+	int emm_g = base * 8;
+	int emm_s = emm_g + 2;
+	int emm_u = emm_g + 3;
+
 	switch (type) {
 		case GLOBAL:
+			// hex addressed
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
-			filter[1]    = 0x00;
-			filter[1+16] = 0x2F; // 0x00 to 0xD0
+			filter[1]    = emm_g;
+			// FIXME: more restrictive filter for provider addressed EMM's
+			filter[1+16] = 0x0F;
 			break;
+
 		case SHARED:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
-			filter[1]    = 0xD2;
-			filter[1+16] = 0x0F;
+			filter[1]    = emm_s;
+			filter[1+16] = 0xFF;
 			memcpy(filter+2, rdr->hexserial, 2);
 			memset(filter+2+16, 0xFF, 2);
 			break;
+
 		case UNIQUE:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
-			filter[1]    = 0xD3;
-			filter[1+16] = 0x0F;
+			filter[1]    = emm_u;
+			filter[1+16] = 0xFF;
 			memcpy(filter+2, rdr->hexserial, 4);
 			memset(filter+2+16, 0xFF, 4);
 			break;
