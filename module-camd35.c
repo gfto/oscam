@@ -497,8 +497,8 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 
 		int i;
 		for (i=0; i<reader[ridx].nprov; i++) {
-			if (((reader[ridx].aucaid >= 0x1700) && (reader[ridx].aucaid <= 0x1799))  ||	// Betacrypt
-					((reader[ridx].aucaid >= 0x0600) && (reader[ridx].aucaid <= 0x0699)))	// Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
+			if (((reader[ridx].caid[0] >= 0x1700) && (reader[ridx].caid[0] <= 0x1799))  ||	// Betacrypt
+					((reader[ridx].caid[0] >= 0x0600) && (reader[ridx].caid[0] <= 0x0699)))	// Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
 			{
 				reader[ridx].prid[i][0] = buf[48 + (i*5)];
 				memcpy(&reader[ridx].prid[i][1], &buf[50 + (i * 5)], 3);
@@ -516,11 +516,9 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 		reader[ridx].blockemm_g = (buf[128]==1) ? 0: 1;
 		reader[ridx].blockemm_s = (buf[129]==1) ? 0: 1;
 		reader[ridx].blockemm_u = (buf[130]==1) ? 0: 1;
-		reader[ridx].card_system = get_cardsystem(reader[ridx].aucaid);
-		cs_log("CMD05 reader: %s serial: %s cardsyst: %d aucaid: %04X",
+		reader[ridx].card_system = get_cardsystem(reader[ridx].caid[0]);
+		cs_log("%s CMD05 AU request for caid: %04X",
 				reader[ridx].label,
-				cs_hexdump(0, reader[ridx].hexserial, 8),
-				reader[ridx].card_system,
 				reader[ridx].caid[0]);
 	}
 
