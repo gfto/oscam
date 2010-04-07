@@ -1608,6 +1608,7 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout);
 	fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
 	fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay);
+	fprintf_conf(f, CONFVARWIDTH, "ecmcache", "%ld\n", cfg->cachecm);
 	fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);
 	fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg->netprio);
 	fprintf_conf(f, CONFVARWIDTH, "clientdyndns", "%d\n", cfg->clientdyndns);
