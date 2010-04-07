@@ -485,13 +485,17 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				return TRUE;
 			}
 
-		//incoming via camd3.5x
-		//ep->type=emm[4];
+		/* FIXME: Dont know how to handle camd3 cryptoworks emms correct */
 		case 0x8F:
-		default:
+			ep->type = UNKNOWN;
+			cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNKNOWN 0x8F via camd3");
+			return TRUE;
+
+		/* FIXME: Seems to be that all other EMM types are rejected by the card */
+		default: 
 			ep->type = UNKNOWN;
 			cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNKNOWN");
-			return TRUE;
+			return FALSE; // skip emm
 	}
 }
 
@@ -555,7 +559,7 @@ int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   int rc=0;
   uchar *emm=ep->emm;
   
-  /* this original    
+  /* FIXME: this is the original code how to deal with camd3 EMM's
   if ((emm[0]==0x8f) && (emm[3]==0xa4))		// emm via camd3.5x
   {    
     ep->type=emm[4];
@@ -565,15 +569,12 @@ int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
   */
    
-  //cs_log("[cryptoworks-reader] EMM Dump:..: %s",cs_hexdump(1, emm, emm[2])); 
   switch(ep->type)
   {
   	 // emm via camd3.5x
   	 case UNKNOWN:  	 	  
 		  if(emm[3]==0xA4)
 		  {		    
-		    //cs_log("[cryptoworks-reader] EMM Dump: CMD: %s", cs_hexdump(1, emm+3, 5)); 
-		    //cs_log("[cryptoworks-reader] EMM Dump: DATA: %s",cs_hexdump(1, emm+8, emm[7]));
 		    write_cmd(emm+3, emm+3+CMD_LEN);
 		    rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));	
 		  }
@@ -582,10 +583,6 @@ int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   	 //GA    	 
   	 case GLOBAL:
 				insEMM_GA[4]=ep->emm[2]-2;
-				//cs_log("[cryptoworks-reader] EMM Dump: CMD: %s", cs_hexdump(1, insEMM_GA, 5)); 
-				//cs_log("[cryptoworks-reader] EMM Dump: DATA: %s",cs_hexdump(1, emm+5, insEMM_GA[4])); 				
-				//cs_log("[cryptoworks-reader] EMM Dump: IF: %02X == %02X",emm[7],(insEMM_GA[4]-3)); 								
-				
 				if(emm[7]==insEMM_GA[4]-3)
 				{
 					write_cmd(insEMM_GA, emm+5);
@@ -596,10 +593,6 @@ int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   	 //SA
   	 case SHARED:
 				insEMM_SA[4]=ep->emm[2]-6;
-				//cs_log("[cryptoworks-reader] EMM Dump: CMD: %s", cs_hexdump(1, insEMM_SA, 5)); 
-				//cs_log("[cryptoworks-reader] EMM Dump: DATA: %s",cs_hexdump(1, emm+9, insEMM_SA[4])); 				
-				//cs_log("[cryptoworks-reader] EMM Dump: IF: %02X == %02X",emm[11],(insEMM_SA[4]-3)); 								
-				
 				if(emm[11]==insEMM_SA[4]-3)
 				{
 					write_cmd(insEMM_SA, emm+9);
@@ -610,10 +603,6 @@ int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   	 //UA	  	 
   	 case UNIQUE:
 			insEMM_UA[4]=ep->emm[2]-7;
-			//cs_log("[cryptoworks-reader] EMM Dump: CMD: %s", cs_hexdump(1, insEMM_UA, 5)); 
-			//cs_log("[cryptoworks-reader] EMM Dump: DATA: %s",cs_hexdump(1, emm+10, insEMM_UA[4])); 				
-			//cs_log("[cryptoworks-reader] EMM Dump: IF: %02X == %02X",emm[12],(insEMM_UA[4]-3)); 								
-			
 			if(emm[12]==insEMM_UA[4]-3)
 			{
 				//cryptoworks_send_pin(); //?? may be 
