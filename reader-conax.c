@@ -230,18 +230,21 @@ uchar *conax_get_emm_filter(struct s_reader * rdr, int type)
 
 	switch (type) {
 		case GLOBAL:
-			// FIXME: dont see any conax global EMM yet
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
-			filter[1]    = 0x70;
+			// FIXME: dont see any conax global EMM yet
+			filter[1]    = 0xFF;
 			filter[1+16] = 0xFF;
+			// END
+			filter[8]    = 0x70;
+			filter[8+16] = 0xFF;
 			break;
 
 		case SHARED:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
-			filter[1]    = 0x70;
-			filter[1+16] = 0xFF;
+			filter[8]    = 0x70;
+			filter[8+16] = 0xFF;
 			memcpy(filter+4, rdr->sa[0], 4);
 			memset(filter+4+16, 0xFF, 4);
 			break;
@@ -249,8 +252,8 @@ uchar *conax_get_emm_filter(struct s_reader * rdr, int type)
 		case UNIQUE:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
-			filter[1]    = 0x70;
-			filter[1+16] = 0xFF;
+			filter[8]    = 0x70;
+			filter[8+16] = 0xFF;
 			memcpy(filter+4, rdr->hexserial + 2, 4);
 			memset(filter+4+16, 0xFF, 4);
 			break;
