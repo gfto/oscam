@@ -432,6 +432,7 @@ int get_cardsystem(ushort caid) {
 		case 0x0D:
 			return SC_CRYPTOWORKS;
 		case 0x17:
+			return SC_IRDETO;
 		case 0x18:
 			return SC_NAGRA;
 		default: 
