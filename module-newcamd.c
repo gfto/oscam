@@ -779,11 +779,6 @@ static void newcamd_auth_client(in_addr_t ip)
 
             mbuf[4] = (uchar)(pufilt->caid>>8);
             mbuf[5] = (uchar)(pufilt->caid);
-
-	//FIXME: this may break emm from non-oscam servers
-	if (au != -1) {
-		memcpy(mbuf+6, reader[au].hexserial, 8);
-#if 0
             mbuf[6] = 0x00;
             mbuf[7] = 0x00;
 
@@ -820,7 +815,6 @@ static void newcamd_auth_client(in_addr_t ip)
                     mbuf[12] = reader[au].hexserial[4];
                     mbuf[13] = reader[au].hexserial[5];
                     }
-#endif
                 }
             else 
                 {
