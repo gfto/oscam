@@ -103,7 +103,7 @@ DESCRIPTIONS
 	  1 = try decoding on local cards first, default:0
 
        ecmcache = 0|1
-	  1 = disable ECM cache, default:0
+	  1 = enable ECM cache, default:1
 
    The [monitor] section
        port = 0|port
