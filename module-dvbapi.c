@@ -1022,7 +1022,7 @@ void dvbapi_main_local() {
 								
 								dvbapi_start_emm_filter(demux_index, SHARED, TYPE_EMM);
 								dvbapi_start_emm_filter(demux_index, GLOBAL, TYPE_EMM);
-								//dvbapi_start_emm_filter(demux_index, UNIQUE, TYPE_EMM);
+								dvbapi_start_emm_filter(demux_index, UNIQUE, TYPE_EMM);
 								continue;
 							}
 							cs_debug("EMM Filter fd %d", demux[demux_index].demux_fd[n].fd);
