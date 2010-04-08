@@ -321,7 +321,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TH>Login Date</TH>\n\
 		<TH>Login Time</TH>\n\
 		<TH>Online</TH>\n\
-		<TH>caid:srvid</TH>\n\
+		<TH>CAID:SRVID</TH>\n\
 		<TH>Current Channel</TH>\n\
 		<TH>Idle</TH>\n\
 		<TH>Status</TH>\n\

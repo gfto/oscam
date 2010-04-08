@@ -1244,8 +1244,11 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0) {
-		cfg->debuglvl = atoi(debuglvl);
-		kill(client[0].pid, SIGUSR1);
+		int lvl = atoi(debuglvl);
+		if (cfg->debuglvl != lvl) {
+			cfg->debuglvl = lvl;
+			kill(client[0].pid, SIGUSR1);
+		}
 	}
 
 	char *hideidx = getParam(params, "hide");
@@ -1619,8 +1622,11 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0) {
-		cfg->debuglvl = atoi(debuglvl);
-		kill(client[0].pid, SIGUSR1);
+		int lvl = atoi(debuglvl);
+		if (cfg->debuglvl != lvl) {
+			cfg->debuglvl = lvl;
+			kill(client[0].pid, SIGUSR1);
+		}
 	}
 	char targetfile[256];
 
