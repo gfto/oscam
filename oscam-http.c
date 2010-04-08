@@ -1399,6 +1399,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 	tpl_printf(vars, 0, "SDEBUG", "%s&nbsp;%d to&nbsp;\n", "Switch Debug from", cfg->debuglvl);
 	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=0\" title=\"no debugging (default)\">0</A>&nbsp;\n");
+	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=1\" title=\"detailed error messages\">1</A>&nbsp;\n");
 	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=2\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n");
 	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=4\" title=\"traffic from/to the reader\">4</A>&nbsp;\n");
 	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=8\" title=\"traffic from/to the clients\">8</A>&nbsp;\n");
@@ -1645,6 +1646,7 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 
 		tpl_printf(vars, 0, "SDEBUG", "%s&nbsp;%d to&nbsp;\n", "Switch Debug from", cfg->debuglvl);
 		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=0\" title=\"no debugging (default)\">0</A>&nbsp;\n");
+		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=1\" title=\"detailed error messages\">1</A>&nbsp;\n");
 		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=2\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n");
 		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=4\" title=\"traffic from/to the reader\">4</A>&nbsp;\n");
 		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=8\" title=\"traffic from/to the clients\">8</A>&nbsp;\n");

@@ -310,7 +310,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TR>\n\
 		<TH>hide</TH>\n\
 		<TH>PID</TH>\n\
-		<TH>Typ</TH>\n\
+		<TH>Type</TH>\n\
 		<TH>ID</TH>\n\
 		<TH>Label</TH>\n\
 		<TH>AU</TH>\n\
@@ -322,7 +322,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TH>Login Time</TH>\n\
 		<TH>Online</TH>\n\
 		<TH>caid:srvid</TH>\n\
-		<TH>Last Channel</TH>\n\
+		<TH>Current Channel</TH>\n\
 		<TH>Idle</TH>\n\
 		<TH>Status</TH>\n\
 		</TR>\n\
