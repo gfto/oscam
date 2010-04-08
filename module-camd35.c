@@ -489,7 +489,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 	ushort idx;
 
 	// reading CMD05 Emm request and set serial
-	if (buf[0] == 0x05 && buf[1] > 111) {
+	if (buf[0] == 0x05 && buf[1] == 111) {
 
 		reader[ridx].nprov = 0; //reset if number changes on reader change
 		reader[ridx].nprov = buf[47];
