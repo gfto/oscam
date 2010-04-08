@@ -149,8 +149,9 @@ bool IO_Serial_DTR_RTS(struct s_reader * reader, int dtr, int set)
 		msr&=~mbit;
 	if (ioctl(reader->handle, TIOCMSET, &msr)<0)
 		return ERROR;
-	return OK;
 #endif
+	cs_debug("IO: Setting %s=%i",dtr?"DTR":"RTS", set);
+	return OK;
 }
 
 /*

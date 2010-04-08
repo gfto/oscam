@@ -35,6 +35,7 @@ static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not
 
 static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsigned short lenwrite, unsigned short lenread)
 {
+  int init_phase = (buff[0] == 0x63); //FIXME UGLY
   struct termios termio, termiobackup;
 
   // backup data
@@ -64,17 +65,16 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
     return ERROR;
   }
 
-  // switch SC8in1 to normal mode
-  //cs_sleepms(10); FIXME do I need this?
-  IO_Serial_DTR_Clr(reader);
-
   // restore data
   memcpy(&termio,&termiobackup,sizeof(termio));
   if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
     cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
     return ERROR;
   }
-	return OK;
+
+  // switch SC8in1 to normal mode
+  IO_Serial_DTR_Clr(reader);
+  return OK;
 }
 
 static int readsc8in1(struct s_reader * reader)
@@ -134,14 +134,14 @@ int Sc8in1_Selectslot(struct s_reader * reader, int slot) {
   res=IO_Serial_Read (reader, 1000, 4, tmp); // ignore reader response of 4 bytes
 	current_slot = slot;
   tcdrain(reader->handle);
-  // switch SC8in1 to normal mode
-  IO_Serial_DTR_Clr(reader);
   // restore rs232 data
   memcpy(&termio, &stored_termio[reader->slot-1], sizeof(termio));
   if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
     cs_log("ERROR: SC8in1 selectslot restore RS232 attributes\n");
     return ERROR;
   }
+  // switch SC8in1 to normal mode
+  IO_Serial_DTR_Clr(reader);
 	//cs_sleepms(10); //FIXME do I need this?
   return OK;
 }
@@ -206,6 +206,10 @@ int Sc8in1_Init(struct s_reader * reader)
 		sc8in1_command(reader,  buff, 3, 0);
 	}
 
+	//IO_Serial_Flush(reader); //FIXME somehow ATR is generated and must be flushed
+	i = -1; //Flag for GetStatus init
+	Sc8in1_GetStatus(reader, &i); //Initialize cardstatus
+
 	return OK;
 }
 
@@ -233,7 +237,6 @@ int Sc8in1_GetStatus (struct s_reader * reader, int * in)
 			return ERROR;
 		cardstatus = i;
 	}
-	//cs_log("Status: %02X, reader[ridx].slot=%i, 1<<slot-1=%02X bool=%i",result,reader[ridx].slot,1<<(reader[ridx].slot-1), result & 1<<(reader[ridx].slot-1));
 	*in = (cardstatus & 1<<(reader->slot-1));
 	return OK;
 }

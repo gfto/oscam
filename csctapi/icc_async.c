@@ -141,11 +141,6 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			return ERROR;
 	}
 	
-	if (reader->typ == R_SC8in1) {
-		int i = -1; //Flag for GetStatus init
-		Sc8in1_GetStatus(reader, &i); //Initialize cardstatus
-	}
-
 	if (reader->typ <= R_MOUSE)
 		if (Phoenix_Init(reader)) {
 				cs_log("ERROR: Phoenix_Init returns error");
