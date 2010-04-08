@@ -463,7 +463,7 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 6));
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNIQUE, ep = %s rdr = %s", 
 					      cs_hexdump(1, ep->hexserial, 6), dumprdrserial);
-				return (!memcmp(ep->emm + 5, rdr->hexserial, 6)); // check for serial
+				return (!memcmp(ep->emm + 5, rdr->hexserial, 5)); // check for serial
 			}
 
 		case 0x84:
@@ -538,8 +538,8 @@ uchar *cryptoworks_get_emm_filter(struct s_reader * rdr, int type)
 			filter[1+16] = 0xFF;
 			filter[2]    = 0xFF;
 			filter[2+16] = 0xFF;
-			memcpy(filter+3, rdr->hexserial, 6);
-			memset(filter+3+16, 0xFF, 6);
+			memcpy(filter+3, rdr->hexserial, 5);
+			memset(filter+3+16, 0xFF, 5);
 			filter[11]    = 0x80;
 			filter[11+16] = 0xFF;
 			filter[12]    = 0x05;
