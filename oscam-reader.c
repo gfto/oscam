@@ -475,16 +475,16 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   //counting results
   switch(rc){
 	  case 0:
-		  reader->emmerror++;
+		  reader->emmerror[ep->type]++;
 		  break;
 	  case 1:
-		  reader->emmwritten++;
+		  reader->emmwritten[ep->type]++;
 		  break;
 	  case 2:
-		  reader->emmskipped++;
+		  reader->emmskipped[ep->type]++;
 		  break;
 	  case 3:
-		  reader->emmblocked++;
+		  reader->emmblocked[ep->type]++;
 		  break;
   }
 #endif

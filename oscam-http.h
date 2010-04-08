@@ -142,6 +142,15 @@ oZHxhw+kg84RLJrHtc4T18/QuDFPVLuEiM+ZE6fLzrlxKeSpqDK9/WV7pRjK86J80r1+1OsfHs8k\
 Mz14skq98iflxVJUunilac6ezubssBTyfArszebMtYdIADs9X18zs3EXW696egU47GL3ZjZnFwH+\
 AYRRPIe3vIMRAAAAAElFTkSuQmCC"
 
+#define ICKIL "data:image/png;base64,\
+R0lGODlhEAAQANUhAP///yk0QKGqtHF6hWBsdsopAJMAAP/M/8vS1+Lm6f9MDP+DIP8pAP8zAP9s\
+FK64w9zf76Ors8nQ1evs8err8PLy/Ozv+4SMlOvw+6GqsoOJkfPy/NDT3GdweP/+/tHU3Wdvd///\
+/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAACEALAAAAAAQABAAAAaHwJBw\
+SBwSBEXiYDkgACSBZGgAwECcCEG0SE0IsNpk9wvIBi5cgDdAiGgfHaU6HAoEPo/tdK4HTDYAAEJj\
+Wx4FBYGHgxZfBEIFBweHkQVTVwAZAQAGCwuRnQZTYAEUmw6nDqEhoxwVAAUKsQqVow8PrwcMDQ0M\
+kgJmGiCaBroGBryhdknGQsxBADs="
+
 #define ICDIS "data:image/png;base64,\
 iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA\
 BGdBTUEAALGOfPtRkwAAACBjSFJNAAB6JQAAgIMAAPn/AACA6QAAdTAAAOpgAAA6mAAAF2+SX8VG\
@@ -195,58 +204,86 @@ FowXS5dhd7doo2DVII0V5BAjigP89GEVAtda8b2ehodU4rNaAW+dGfzlFkyo89GTlcrHYCLpKD+V\
 c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 
 #define TPLHEADER "\
-<HTML>\n\
-  <HEAD>\n\
-    <TITLE>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</TITLE>\n\
-    <link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
-    <link href=\"##ICO##\" rel=\"icon\" type=\"image/x-icon\"/>\
-    ##REFRESH##\
-  </HEAD>\n\
-  <BODY>\n\
-    <H2>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2>"
+		<HTML>\n\
+		<HEAD>\n\
+		<TITLE>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION## pl ##PATCHLEVEL##</TITLE>\n\
+		<link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
+		<link href=\"##ICO##\" rel=\"icon\" type=\"image/x-icon\"/>\
+		##REFRESH##\
+		</HEAD>\n\
+		<BODY>\n\
+		<H4><DIV Style=\"float:left\"> Start: ##STARTDATE## / ##STARTTIME## <BR><BR> UpTime: ##UPTIME## </DIV></H4>\
+		<H2>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION## pl ##PATCHLEVEL##</H2>"
 
 #define TPLFOOTER "\
-  <HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>Style by Eneen</H4>\
-  </BODY>\
-</HTML>"
+		<HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>embedded Style by Eneen</H4>\
+		</BODY>\
+		</HTML>"
 
 #define TPLREFRESH "\
-\n<meta http-equiv=\"refresh\" content=\"##REFRESHTIME##; URL=##REFRESHURL##\" />\n"
+		\n<meta http-equiv=\"refresh\" content=\"##REFRESHTIME##; URL=##REFRESHURL##\" />\n"
 
 #define TPLMENU "\
-  <TABLE border=0 class=\"menu\">\n\
-    <TR>\n\
-      <TD CLASS=\"menu\"><A HREF=\"status.html\">STATUS</TD>\n\
-      <TD CLASS=\"menu\"><A HREF=\"config.html\">CONFIGURATION</TD>\n\
-      <TD CLASS=\"menu\"><A HREF=\"readers.html\">READERS</TD>\n\
-      <TD CLASS=\"menu\"><A HREF=\"userconfig.html\">USERS</TD>\n\
-      <TD CLASS=\"menu\"><A HREF=\"services.html\">SERVICES</TD>\n\
-      <TD CLASS=\"script\"><A HREF=\"script.html\">SCRIPT</TD>\n\
-      <TD CLASS=\"shutdown\"><A HREF=\"shutdown.html\">SHUTDOWN</TD>\n\
-    </TR>\n\
-  </TABLE>"
+		<TABLE border=0 class=\"menu\">\n\
+		<TR>\n\
+		<TD CLASS=\"menu\"><A HREF=\"status.html\">STATUS</TD>\n\
+		<TD CLASS=\"menu\"><A HREF=\"config.html\">CONFIGURATION</TD>\n\
+		<TD CLASS=\"menu\"><A HREF=\"readers.html\">READERS</TD>\n\
+		<TD CLASS=\"menu\"><A HREF=\"userconfig.html\">USERS</TD>\n\
+		<TD CLASS=\"menu\"><A HREF=\"services.html\">SERVICES</TD>\n\
+		<TD CLASS=\"menu\"><A HREF=\"files.html\">FILES</TD>\n\
+		<TD CLASS=\"script\"><A HREF=\"script.html\">SCRIPT</TD>\n\
+		<TD CLASS=\"shutdown\"><A HREF=\"shutdown.html\">SHUTDOWN</TD>\n\
+		</TR>\n\
+		</TABLE>"
 
 #define TPLCONFIGMENU "\
+		<BR><BR>\n\
+		<TABLE border=0 class=\"configmenu\">\n\
+		<TR>\n\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=global\">Global</TD>\n\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd33\">Camd3.3</TD>\n\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35\">Camd3.5</TD>\n\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</TD>\n\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=newcamd\">Newcamd</TD>\n\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=radegast\">Radegast</TD>\n\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=cccam\">Cccam</TD>\n\
+		##TPLCONFIGMENUGBOX##\
+		##TPLCONFIGMENUANTICASC##\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=monitor\">Monitor</TD>\n\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=serial\">Serial</TD>\n\
+		##TPLCONFIGMENUDVBAPI##\
+		</TR>\n\
+		</TABLE>"
+
+#define TPLFILEMENU "\
 	<BR><BR>\n\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=global\">Global</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd33\">Camd3.3</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35\">Camd3.5</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=newcamd\">Newcamd</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=radegast\">Radegast</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=cccam\">Cccam</TD>\n\
-			##TPLCONFIGMENUGBOX##\
-			##TPLCONFIGMENUANTICASC##\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=monitor\">Monitor</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=serial\">Serial</TD>\n\
-			##TPLCONFIGMENUDVBAPI##\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=conf\">oscam.conf</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=user\">oscam.user</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=server\">oscam.server</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=services\">oscam.services</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=srvid\">oscam.srvid</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=logfile\">logfile</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=userfile\">userfile</TD>\n\
+			##TPLFILEMENUANTICASC##\
 		</TR>\n\
 	</TABLE>"
 
+#define TPLFILE "\
+  ##TPLHEADER##\
+  ##TPLMENU##\n\
+  ##TPLFILEMENU##\n\
+  <BR><BR>##SDEBUG####SLOG####SCLEAR##\n\
+  <DIV class=\"log\">\
+  <pre>##FILECONTENT##</pre>\
+  </DIV>\n\
+  ##TPLFOOTER##"
+
 #ifdef CS_ANTICASC
 #define TPLCONFIGMENUANTICASC "<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=anticasc\">Anticascading</TD>\n"
+#define TPLFILEMENUANTICASC "<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=anticasc\">AC Log</TD>\n"
 #endif
 
 #ifdef HAVE_DVBAPI
@@ -258,124 +295,130 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 #endif
 
 #define TPLSTATUS "\
-  ##TPLHEADER##\
-  ##TPLMENU##\n\
-  <BR><BR>\n\
-  <form action=\"status.html\" method=\"get\">\n\
-	<select name=\"hideidle\">\n\
-      <option value=\"0\" ##HIDEIDLECLIENTSSELECTED0##>Show idle clients</option>\n\
-      <option value=\"1\" ##HIDEIDLECLIENTSSELECTED1##>Hide idle clients</option>\n\
-      <option value=\"2\">Show hidden clients</option>\n\
-  	</select>\n\
-  	<input type=\"submit\" value=\"Update\">\n\
-  </form>\n\
-  <TABLE WIDTH=\"100%\" cellspacing=\"0\" class=\"status\">\n\
-    <TR>\n\
-	  <TH>hide</TH>\n\
-      <TH>PID</TH>\n\
-      <TH>Typ</TH>\n\
-      <TH>ID</TH>\n\
-      <TH>Label</TH>\n\
-      <TH>AU</TH>\n\
-      <TH>Crypted</TH>\n\
-      <TH>Address</TH>\n\
-      <TH>Port</TH>\n\
-      <TH>Protocol</TH>\n\
-      <TH>Login Date</TH>\n\
-      <TH>Login Time</TH>\n\
-      <TH>Online</TH>\n\
-      <TH>caid:srvid</TH>\n\
-      <TH>Last Channel</TH>\n\
-      <TH>Idle</TH>\n\
-      <TH>Status</TH>\n\
-    </TR>\n\
-    ##CLIENTSTATUS##\
-  </TABLE><BR>\n\
-  <DIV class=\"log\">\n\
-  ##LOGHISTORY##\
-  </DIV>\n\
-  ##TPLFOOTER##"
+		##TPLHEADER##\
+		##TPLMENU##\n\
+		<BR><BR>\n\
+		<form action=\"status.html\" method=\"get\">\n\
+		<select name=\"hideidle\">\n\
+		<option value=\"0\" ##HIDEIDLECLIENTSSELECTED0##>Show idle clients</option>\n\
+		<option value=\"1\" ##HIDEIDLECLIENTSSELECTED1##>Hide idle clients</option>\n\
+		<option value=\"2\">Show hidden clients</option>\n\
+		</select>\n\
+		<input type=\"submit\" value=\"Update\">\n\
+		</form>\n\
+		<TABLE WIDTH=\"100%\" cellspacing=\"0\" class=\"status\">\n\
+		<TR>\n\
+		<TH>hide</TH>\n\
+		<TH>PID</TH>\n\
+		<TH>Typ</TH>\n\
+		<TH>ID</TH>\n\
+		<TH>Label</TH>\n\
+		<TH>AU</TH>\n\
+		<TH>Crypted</TH>\n\
+		<TH>Address</TH>\n\
+		<TH>Port</TH>\n\
+		<TH>Protocol</TH>\n\
+		<TH>Login Date</TH>\n\
+		<TH>Login Time</TH>\n\
+		<TH>Online</TH>\n\
+		<TH>caid:srvid</TH>\n\
+		<TH>Last Channel</TH>\n\
+		<TH>Idle</TH>\n\
+		<TH>Status</TH>\n\
+		</TR>\n\
+		##CLIENTSTATUS##\
+		</TABLE><BR>\n\
+		<DIV class=\"log\">\n\
+		##LOGHISTORY##\
+		</DIV><BR>\n\
+		##SDEBUG##\
+		##TPLFOOTER##"
 
 #define TPLCLIENTSTATUSBIT "\
- <TR class=\"##CLIENTTYPE##\">\n\
-  <TD align=\"center\" WIDTH=\"10\"><A HREF =\"status.html?hide=##HIDEIDX##\" TITLE=\"Hide this client\"><IMG SRC=\"##HIDEICON##\" ALT=\"Hide\"></A></TD>\n\
-  <TD align=\"center\">##CLIENTPID##</TD>\n\
-  <TD align=\"center\">##CLIENTTYPE##</TD>\n\
-  <TD align=\"center\">##CLIENTCNR##</TD>\n\
-  <TD>##CLIENTUSER##</TD>\n\
-  <TD align=\"center\">##CLIENTCAU##</TD>\n\
-  <TD align=\"center\">##CLIENTCRYPTED##</TD>\n\
-  <TD align=\"center\">##CLIENTIP##</TD>\n\
-  <TD align=\"center\">##CLIENTPORT##</TD>\n\
-  <TD>##CLIENTPROTO##</TD>\n\
-  <TD align=\"center\">##CLIENTLOGINDATE##</TD>\n\
-  <TD align=\"center\">##CLIENTLOGINTIME##</TD>\n\
-  <TD align=\"center\">##CLIENTLOGINSECS##</TD>\n\
-  <TD align=\"center\">##CLIENTCAID##:##CLIENTSRVID##</TD>\n\
-  <TD>##CLIENTSRVPROVIDER####CLIENTSRVNAME##</TD>\n\
-  <TD align=\"center\">##CLIENTIDLESECS##</TD>\n\
-  <TD align=\"center\">##CLIENTCON##</TD>\n\
- </TR>\n"
+		<TR class=\"##CLIENTTYPE##\">\n\
+		<TD align=\"center\" WIDTH=\"10\"><A HREF =\"status.html?hide=##HIDEIDX##\" TITLE=\"Hide this client\"><IMG SRC=\"##HIDEICON##\" ALT=\"Hide\"></A></TD>\n\
+		<TD align=\"center\">##CLIENTPID##</TD>\n\
+		<TD align=\"center\">##CLIENTTYPE##</TD>\n\
+		<TD align=\"center\">##CLIENTCNR##</TD>\n\
+		<TD>##CLIENTUSER##</TD>\n\
+		<TD align=\"center\">##CLIENTCAU##</TD>\n\
+		<TD align=\"center\">##CLIENTCRYPTED##</TD>\n\
+		<TD align=\"center\">##CLIENTIP##</TD>\n\
+		<TD align=\"center\">##CLIENTPORT##</TD>\n\
+		<TD>##CLIENTPROTO##</TD>\n\
+		<TD align=\"center\">##CLIENTLOGINDATE##</TD>\n\
+		<TD align=\"center\">##CLIENTLOGINTIME##</TD>\n\
+		<TD align=\"center\">##CLIENTLOGINSECS##</TD>\n\
+		<TD align=\"center\">##CLIENTCAID##:##CLIENTSRVID##</TD>\n\
+		<TD>##CLIENTSRVPROVIDER####CLIENTSRVNAME##</TD>\n\
+		<TD align=\"center\">##CLIENTIDLESECS##</TD>\n\
+		<TD align=\"center\">##CLIENTCON##</TD>\n\
+		</TR>\n"
 
 #define TPLUSERCONFIGLIST "\
-  ##TPLHEADER##\
-  ##TPLMENU##\n\
-  ##MESSAGE##\
-  <BR>\
-  <TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</TD></TR></TABLE><BR>\
-  <TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
-    <TR>\n\
-	  <TH>Lock</TH>\n\
-      <TH>Label</TH>\n\
-      <TH>Status</TH>\n\
-      <TH>Protocol</TH>\n\
-      <TH>Last Channel</TH>\n\
-      <TH>Idle</TH>\n\
-      <TH>OK</TH>\n\
-      <TH>NOK</TH>\n\
-      <TH>IGN</TH>\n\
-      <TH>TOUT</TH>\n\
-      <TH>CACHE</TH>\n\
-      <TH>TUN</TH>\n\
-      <TH>LTIME</TH>\n\
-      <TH>EOK</TH>\n\
-      <TH>ENOK</TH>\n\
-      <TH colspan=\"2\" align=\"center\">Action</TH>\n\
-    </TR>\n\
-    ##USERCONFIGS##\
-    ##NEWUSERFORM##\
-  </TABLE><BR>\n\
-  ##TPLFOOTER##"
+		##TPLHEADER##\
+		##TPLMENU##\n\
+		##MESSAGE##\
+		<BR>\
+		<TABLE CLASS=\"configmenu\">\
+		<TR>\
+		<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</TD>\
+		<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</TD>\
+		</TR>\
+		</TABLE><BR>\
+		<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+		<TR>\n\
+		<TH>Lock</TH>\n\
+		<TH>Label</TH>\n\
+		<TH>Status</TH>\n\
+		<TH>Protocol</TH>\n\
+		<TH>Last Channel</TH>\n\
+		<TH>Idle</TH>\n\
+		<TH>OK</TH>\n\
+		<TH>NOK</TH>\n\
+		<TH>IGN</TH>\n\
+		<TH>TOUT</TH>\n\
+		<TH>CACHE</TH>\n\
+		<TH>TUN</TH>\n\
+		<TH>LTIME</TH>\n\
+		<TH>EOK</TH>\n\
+		<TH>ENOK</TH>\n\
+		<TH colspan=\"2\" align=\"center\">Action</TH>\n\
+		</TR>\n\
+		##USERCONFIGS##\
+		##NEWUSERFORM##\
+		</TABLE><BR>\n\
+		##TPLFOOTER##"
 
 #define TPLADDNEWUSER "\
-	<TR>\n\
+		<TR>\n\
 		<FORM action=\"user_edit.html\" method=\"get\">\n\
 		<TD>&nbsp;</TD>\n\
-		<TD colspan=\"6\">New User:&nbsp;&nbsp;<input name=\"user\" type=\"text\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" value=\"Add User\"></TD>\n\
+		<TD colspan=\"6\">New User:&nbsp;&nbsp;<input name=\"user\" type=\"text\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" value=\"Add User\" ##BTNDISABLED##></TD>\n\
 		<TD colspan=\"10\" align=\"center\"></TD>\n\
 		</FORM>\n\
-	<TR>\n"
+		<TR>\n"
 
 #define TPLUSERCONFIGLISTBIT "\
-  <TR class=\"##CLASSNAME##\">\n\
-	<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"/></A></TD>\n\
-    <TD>##USER##</TD>\n\
-    <TD>##STATUS####EXPIRED##</TD>\n\
-    <TD align=\"center\">##CLIENTPROTO##</TD>\n\
-    <TD>##LASTCHANNEL##</TD>\n\
-    <TD align=\"center\">##IDLESECS##</TD>\n\
-	<TD align=\"center\">##CWOK##</TD>\n\
-	<TD align=\"center\">##CWNOK##</TD>\n\
-	<TD align=\"center\">##CWIGN##</TD>\n\
-	<TD align=\"center\">##CWTOUT##</TD>\n\
-	<TD align=\"center\">##CWCACHE##</TD>\n\
-	<TD align=\"center\">##CWTUN##</TD>\n\
-	<TD align=\"center\">##CWLASTRESPONSET##</TD>\n\
-	<TD align=\"center\">##EMMOK##</TD>\n\
-	<TD align=\"center\">##EMMNOK##</TD>\n\
-    <TD align=\"center\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG SRC=\"##EDIICO##\" BORDER=\"0\" ALT=\"Edit User\"/></A></TD>\n\
-    <TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=delete\" TITLE=\"delete this user\"><IMG SRC=\"##DELICO##\"BORDER=\"0\" ALT=\"Delete User\"/></A></TD>\n\
-  </TR>\n"
+		<TR class=\"##CLASSNAME##\">\n\
+		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"/></A></TD>\n\
+		<TD>##USER##</TD>\n\
+		<TD>##STATUS####EXPIRED##</TD>\n\
+		<TD align=\"center\">##CLIENTPROTO##</TD>\n\
+		<TD>##LASTCHANNEL##</TD>\n\
+		<TD align=\"center\">##IDLESECS##</TD>\n\
+		<TD align=\"center\">##CWOK##</TD>\n\
+		<TD align=\"center\">##CWNOK##</TD>\n\
+		<TD align=\"center\">##CWIGN##</TD>\n\
+		<TD align=\"center\">##CWTOUT##</TD>\n\
+		<TD align=\"center\">##CWCACHE##</TD>\n\
+		<TD align=\"center\">##CWTUN##</TD>\n\
+		<TD align=\"center\">##CWLASTRESPONSET##</TD>\n\
+		<TD align=\"center\">##EMMOK##</TD>\n\
+		<TD align=\"center\">##EMMNOK##</TD>\n\
+		<TD align=\"center\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG SRC=\"##EDIICO##\" BORDER=\"0\" ALT=\"Edit User\"/></A></TD>\n\
+		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=delete\" TITLE=\"delete this user\"><IMG SRC=\"##DELICO##\"BORDER=\"0\" ALT=\"Delete User\"/></A></TD>\n\
+		</TR>\n"
 
 #define TPLUSEREDIT "\
 ##TPLHEADER##\
@@ -467,9 +510,9 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
     </TR>\n\
     ##TPLUSEREDITANTICASC##\
     <TR>\n\
-    <TR><TD>Keepalive:</TD><TD><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TD></TR>\n\
-      <TD align=\"center\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save settings and reload users\"></TD>\n\
-      <TD align=\"center\"><input name=\"newuser\" type=\"text\" size=\"20\" maxlength=\"20\" title=\"Enter new username if you want to clone this user\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" name=\"action\" value=\"Save As\" title=\"Save as new user and reload users\"></TD>\n\
+    <TR><TD>Keepalive:</TD><TD><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\
+      <TD align=\"center\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save settings and reload users\" ##BTNDISABLED##></TD>\n\
+      <TD align=\"center\"><input name=\"newuser\" type=\"text\" size=\"20\" maxlength=\"20\" title=\"Enter new username if you want to clone this user\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" name=\"action\" value=\"Save As\" title=\"Save as new user and reload users\" ##BTNDISABLED##></TD>\n\
     </TR>\n\
   </TABLE>\n\
 </form>\n\
@@ -520,10 +563,10 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR>\n\
       <TH>Reader</TH>\n\
       <TH>Protocol</TH>\n\
-      <TH>EERR</TH>\n\
-      <TH>EWRI</TH>\n\
-      <TH>ESKI</TH>\n\
-      <TH>EBLO</TH>\n\
+      <TH>EERR UK / G / S / UQ</TH>\n\
+      <TH>EWRI UK / G / S / UQ</TH>\n\
+      <TH>ESKI UK / G / S / UQ</TH>\n\
+      <TH>EBLO UK / G / S / UQ</TH>\n\
       <TH COLSPAN=\"3\">Action</TH>\n\
     </TR>\n\
     ##READERLIST##\
@@ -534,10 +577,10 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR>\n\
       <TD>##READERNAME##</TD>\n\
       <TD>##CTYP##</TD>\n\
-      <TD align=\"center\">##EMMERROR##</TD>\n\
-      <TD align=\"center\">##EMMWRITTEN##</TD>\n\
-      <TD align=\"center\">##EMMSKIPPED##</TD>\n\
-      <TD align=\"center\">##EMMBLOCKED##</TD>\n\
+      <TD align=\"center\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\
+      <TD align=\"center\">##EMMWRITTENUK## / ##EMMWRITTENG## / ##EMMWRITTENS## / ##EMMWRITTENUQ##</TD>\n\
+      <TD align=\"center\">##EMMSKIPPEDUK## / ##EMMSKIPPEDG## / ##EMMSKIPPEDS## / ##EMMSKIPPEDUQ##</TD>\n\
+      <TD align=\"center\">##EMMBLOCKEDUK## / ##EMMBLOCKEDG## / ##EMMBLOCKEDS## / ##EMMBLOCKEDUQ##</TD>\n\
       <TD align=\"center\"><A HREF=\"readerconfig.html?reader=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG SRC=\"##EDIICO##\" BORDER=\"0\" ALT=\"Edit Reader\"/></A></TD>\
       <TD align=\"center\">##ENTITLEMENT##</TD>\n\
 	  <TD align=\"center\">##READERREFRESH##</TD>\n\
@@ -577,7 +620,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
   <TABLE cellspacing=\"0\">\n\
     <TR><TH>&nbsp;</TH><TH>Edit Reader ##READERNAME##</TH></TR>\n\
     ##READERDEPENDINGCONFIG##\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
   </TABLE>\n\
 <BR><BR>Saving not yet implemented - Nothing changes on click<BR><BR>\n\
 ##TPLFOOTER##"
@@ -763,7 +806,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>Onlineinfos:</TD><TD><input name=\"onlineinfos\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##ONLINEINFOS##\"></TD></TR>\n\
 		<TR><TD>Cardinfos:</TD><TD><input name=\"cardinfos\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##CARDINFOS##\"></TD></TR>\n\
 		<TR><TD>Locals:</TD><TD><input name=\"locals\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##LOCALS##\"></TD></TR>\n\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 ##TPLFOOTER##"
 
@@ -787,7 +830,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>AClogfile:</TD><TD><input name=\"aclogfile\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##ACLOGFILE##\"></TD></TR>\n\
 		<TR><TD>Fakedelay:</TD><TD><input name=\"fakedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FAKEDELAY##\"></TD></TR>\n\
 		<TR><TD>Denysamples:</TD><TD><input name=\"denysamples\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DENYSAMPLES##\"></TD></TR>\n\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -808,7 +851,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>Reshare:</TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
 		<TR><TD>Version:</TD><TD><input name=\"version\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##VERSION##\"></TD></TR>\n\
 		<TR><TD>Build:</TD><TD><input name=\"build\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##BUILD##\"></TD></TR>\n\
-		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -822,11 +865,12 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 <form action=\"config.html\" method=\"get\">\n\
 	<input name=\"part\" type=\"hidden\" value=\"monitor\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-  <input name=\"httphideidleclients\" type=\"hidden\" value=\"0\">\n\
+	<input name=\"httphideidleclients\" type=\"hidden\" value=\"0\">\n\
+	<input name=\"appendchaninfo\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Monitor Config</TH></TR>\n\
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MONPORT##\"></TD></TR>\n\
-		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"> Use 0 (zero) to delete.</TD></TR>\n\
+		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 		<TR><TD>Nocrypt:</TD><TD><input name=\"nocrypt\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
 		<TR><TD>Aulow:</TD><TD><input name=\"aulow\" type=\"text\" size=\"5\" maxlength=\"1\" value=\"##AULOW##\"> min</TD></TR>\n\
 		<TR>\n\
@@ -840,15 +884,19 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			</select></TD>\n\
 		</TR>\n\
 		<TR><TD>Hideclientto:</TD><TD><input name=\"hideclient_to\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HIDECLIENTTO##\"> s</TD></TR>\n\
+		<TR><TD>Appendchaninfo:</TD><TD><input name=\"appendchaninfo\" type=\"checkbox\" value=\"1\" ##APPENDCHANINFO##></TD></TR>\n\
+		<TR><TH>&nbsp;</TH><TH>Webinterface Config</TH></TR>\n\
 		<TR><TD>Httpport:</TD><TD><input name=\"httpport\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HTTPPORT##\"></TD></TR>\n\
 		<TR><TD>Httpuser:</TD><TD><input name=\"httpuser\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##HTTPUSER##\"></TD></TR>\n\
 		<TR><TD>Httppwd:</TD><TD><input name=\"httppwd\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##HTTPPASSWORD##\"></TD></TR>\n\
-		<TR><TD>Httpcss:</TD><TD><input name=\"httpcss\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##HTTPCSS##\"></TD></TR>\n\
+		<TR><TD>Httpcss:</TD><TD><SELECT name=\"httpcss\">##CSSOPTIONS##</select></TD></TR>\n\
 		<TR><TD>Httprefresh:</TD><TD><input name=\"httprefresh\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HTTPREFRESH##\"> s</TD></TR>\n\
 		<TR><TD>Httptpl:</TD><TD><input name=\"httptpl\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPTPL##\"></TD></TR>\n\
 		<TR><TD>Httpscript:</TD><TD><input name=\"httpscript\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPSCRIPT##\"></TD></TR>\n\
 		<TR><TD>HttpHideIdleClients:</TD><TD><input name=\"httphideidleclients\" type=\"checkbox\" value=\"1\" ##CHECKED##>\n\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+		<TR><TD>Httpallowed:</TD><TD><input name=\"httpallowed\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##HTTPALLOW##\"></TD></TR>\n\
+		<TR><TD>Httpdyndns:</TD><TD><input name=\"httpdyndns\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##HTTPDYNDNS##\"></TD></TR>\n\
+    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -865,10 +913,10 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Radegast Config</TH></TR>\n\
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
-		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"> Use 0 (zero) to delete.</TD></TR>\n\
+		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 		<TR><TD>Allowed:</TD><TD><input name=\"allowed\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##ALLOWED##\"></TD></TR>\n\
 		<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##USER##\"></TD></TR>\n\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -883,14 +931,16 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<input name=\"part\" type=\"hidden\" value=\"newcamd\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 	<input name=\"keepalive\" type=\"hidden\" value=\"0\">\n\
+	<input name=\"mgclient\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Newcamd Config</TH></TR>\n\
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##PORT##\"></TD></TR>\n\
-		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"> Use 0 (zero) to delete.</TD></TR>\n\
+		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 		<TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"35\" maxlength=\"28\" value=\"##KEY##\"></TD></TR>\n\
 		<TR><TD>Allowed:</TD><TD><input name=\"allowed\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##ALLOWED##\"></TD></TR>\n\
 		<TR><TD>Keepalive:</TD><TD><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\
-		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+		<TR><TD>Mgclient:</TD><TD><input name=\"mgclient\" type=\"checkbox\" value=\"1\" ##MGCLIENTCHK##></TD></TR>\n\
+		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -904,29 +954,38 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 <form action=\"config.html\" method=\"get\">\n\
 	<input name=\"part\" type=\"hidden\" value=\"global\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
+	<input name=\"disableuserfile\" type=\"hidden\" value=\"0\">\n\
+	<input name=\"disablelog\" type=\"hidden\" value=\"0\">\n\
+	<input name=\"clientdyndns\" type=\"hidden\" value=\"0\">\n\
+	<input name=\"unlockparental\" type=\"hidden\" value=\"0\">\n\
+	<input name=\"waitforcards\" type=\"hidden\" value=\"0\">\n\
+	<input name=\"preferlocalcards\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Global Config</TH></TR>\n\
-		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"> Use 0 (zero) to delete.</TD></TR>\n\
+		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 		<TR><TD>PID File:</TD><TD><input name=\"pidfile\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##PIDFILE##\"></TD></TR>\n\
-		<TR><TD>Usrfile:</TD><TD><input name=\"usrfile\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##USERFILE##\"></TD></TR>\n\
-		<TR><TD>Logfile:</TD><TD><input name=\"logfile\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##LOGFILE##\"></TD></TR>\n\
+		<TR><TD>Disableuserfile:</TD><TD><input name=\"disableuserfile\" type=\"checkbox\" value=\"1\" ##CHKDISABLEUSERFILE##></TD></TR>\n\
+		<TR><TD>Usrfile:</TD><TD><input name=\"usrfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##USERFILE##\"></TD></TR>\n\
+		<TR><TD>Disablelog:</TD><TD><input name=\"disablelog\" type=\"checkbox\" value=\"1\" ##CHKDISABLELOG##></TD></TR>\n\
+		<TR><TD>Logfile:</TD><TD><input name=\"logfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##LOGFILE##\"></TD></TR>\n\
 		<TR><TD>Usrfileflag:</TD><TD><input name=\"usrfileflag\" type=\"text\" size=\"5\" maxlength=\"1\" value=\"##USERFILEFLAG##\"></TD></TR>\n\
 		<TR><TD>CWlogdir:</TD><TD><input name=\"cwlogdir\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##CWLOGDIR##\"></TD></TR>\n\
-		<TR><TD>Clienttimeout:</TD><TD><input name=\"clienttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTTIMEOUT##\"> s</TD></TR>\n\
-		<TR><TD>Fallbacktimeout:</TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> s</TD></TR>\n\
+		<TR><TD>Clienttimeout:</TD><TD><input name=\"clienttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTTIMEOUT##\"> ms</TD></TR>\n\
+		<TR><TD>Fallbacktimeout:</TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> ms</TD></TR>\n\
 		<TR><TD>Clientmaxidle:</TD><TD><input name=\"clientmaxidle\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTMAXIDLE##\"> s</TD></TR>\n\
 		<TR><TD>Cachedelay:</TD><TD><input name=\"cachedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms</TD></TR>\n\
 		<TR><TD>Bindwait:</TD><TD><input name=\"bindwait\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##BINDWAIT##\"> s</TD></TR>\n\
 		<TR><TD>Netprio:</TD><TD><input name=\"netprio\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NETPRIO##\"></TD></TR>\n\
+		<TR><TD>Clientdyndns:</TD><TD><input name=\"clientdyndns\" type=\"checkbox\" value=\"1\" ##CHKCLIENTDYNDNS##></TD></TR>\n\
 		<TR><TD>Resolvedelay:</TD><TD><input name=\"resolvedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RESOLVEDELAY##\"> ms</TD></TR>\n\
 		<TR><TD>Sleep:</TD><TD><input name=\"sleep\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SLEEP##\"> min</TD></TR>\n\
-		<TR><TD>Unlockparental:</TD><TD><input name=\"unlockparental\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##UNLOCKPARENTAL##\"></TD></TR>\n\
+		<TR><TD>Unlockparental:</TD><TD><input name=\"unlockparental\" type=\"checkbox\" value=\"1\" ##UNLOCKPARENTAL##></TD></TR>\n\
 		<TR><TD>Nice:</TD><TD><input name=\"nice\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NICE##\"></TD></TR>\n\
 		<TR><TD>Serialreadertimeout:</TD><TD><input name=\"serialreadertimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SERIALTIMEOUT##\"> ms</TD></TR>\n\
-		<TR><TD>Maxlogsize:</TD><TD><input name=\"maxlogsize\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXLOGSIZE##\"></TD></TR>\n\
-		<TR><TD>Waitforcards:</TD><TD><input name=\"waitforcards\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##WAITFORCARDS##\"></TD></TR>\n\
-		<TR><TD>Preferlocalcards:</TD><TD><input name=\"preferlocalcards\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PREFERLOCALCARDS##\"></TD></TR>\n\
-		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+		<TR><TD>Maxlogsize:</TD><TD><input name=\"maxlogsize\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXLOGSIZE##\"> kB</TD></TR>\n\
+		<TR><TD>Waitforcards:</TD><TD><input name=\"waitforcards\" type=\"checkbox\" value=\"1\" ##WAITFORCARDS##></TD></TR>\n\
+		<TR><TD>Preferlocalcards:</TD><TD><input name=\"preferlocalcards\" type=\"checkbox\" value=\"1\" ##PREFERLOCALCARDS##></TD></TR>\n\
+		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -940,14 +999,15 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 <form action=\"config.html\" method=\"get\">\n\
 	<input name=\"part\" type=\"hidden\" value=\"camd33\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
+	<input name=\"passive\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Camd33 Config</TH></TR>\n\
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
-		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"> Use 0 (zero) to delete.</TD></TR>\n\
+		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 		<TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"35\" maxlength=\"28\" value=\"##KEY##\"></TD></TR>\n\
-		<TR><TD>Passive:</TD><TD><input name=\"passive\" type=\"text\" size=\"3\" maxlength=\"1\" value=\"##PASSIVE##\"></TD></TR>\n\
+		<TR><TD>Passive:</TD><TD><input name=\"passive\" type=\"checkbox\" value=\"1\" ##PASSIVE##></TD></TR>\n\
 		<TR><TD>Nocrypt:</TD><TD><input name=\"nocrypt\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -965,9 +1025,9 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Camd35 Config</TH></TR>\n\
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
-		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"> Use 0 (zero) to delete.</TD></TR>\n\
+		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 		<TR><TD>Suppresscmd08:</TD><TD><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD></TR>\n\
-		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -984,8 +1044,8 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Camd35 TCP Config</TH></TR>\n\
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##PORT##\"></TD></TR>\n\
-		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"> Use 0 (zero) to delete.</TD></TR>\n\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
+    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -1001,12 +1061,15 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Serial Config</TH></TR>\n\
-		<TR><TD>Device:</TD><TD><input name=\"device\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##SERIALDEVICE##\"></TD></TR>\n\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+		##DEVICES##\
+		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
-<BR><BR>Configuration Serial not yet implemented<BR><BR>\n\
+<BR><BR>\n\
 ##TPLFOOTER##"
+
+#define TPLCONFIGSERIALDEVICEBIT "\
+	<TR><TD>Device:</TD><TD><input name=\"device\" type=\"text\" size=\"50\" maxlength=\"100\" value=\"##SERIALDEVICE##\"></TD></TR>\n"
 
 #ifdef HAVE_DVBAPI
 #define TPLCONFIGDVBAPI "\
@@ -1026,7 +1089,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>AU:</TD><TD><input name=\"au\" type=\"checkbox\" value=\"1\" ##AUCHECKED##>\n\
 		<TR><TD>Boxtype:</TD><TD><input name=\"boxtype\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##BOXTYPE##\"></TD></TR>\n\
 		<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##USER##\"></TD></TR>\n\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\">\n</TD></TR>\n\
+    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -1047,7 +1110,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
       <FORM action=\"services_edit.html\" method=\"get\"><INPUT TYPE=\"hidden\" NAME=\"action\" VALUE=\"add\">\n\
       <TD>New Service:</TD>\n\
       <TD><input name=\"service\" type=\"text\"></TD>\n\
-      <TD  colspan=\"2\" align=\"center\"><input type=\"submit\" value=\"Add\"></TD>\n\
+      <TD  colspan=\"2\" align=\"center\"><input type=\"submit\" value=\"Add\" ##BTNDISABLED##></TD>\n\
       </FORM>\n\
     <TR>\n\
   </TABLE>\n\
@@ -1067,7 +1130,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 #define TPLSERVICEEDIT "\
 ##TPLHEADER##\
 ##TPLMENU##\n\
-<DIV CLASS=\"message\">##MESSAGE##</DIV>\
+##MESSAGE##\
 <BR><BR>\n\
   <form action=\"services_edit.html\" method=\"get\">\n\
   <input name=\"service\" type=\"hidden\" value=\"##LABELENC##\">\n\
@@ -1076,7 +1139,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR>\n<TD>caid: </TD><TD><input name=\"caid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##CAIDS##\"></TD></TR>\
     <TR>\n<TD>provid: </TD><TD><input name=\"provid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##PROVIDS##\"></TD></TR>\
     <TR>\n<TD>srvid: </TD><TD><textarea name=\"srvid\" cols=\"80\" rows=\"5\">##SRVIDS##</textarea></TD></TR>\
-    <TR>\n<TD>&nbsp;</TD><TD align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save service and reload services\"></TD>\n\
+    <TR>\n<TD>&nbsp;</TD><TD align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save service and reload services\" ##BTNDISABLED##></TD>\n\
   </TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
@@ -1089,7 +1152,7 @@ All users will become disconnected.<br>\
 You will not be able to restart oscam from the webinterface.<br>\
 The webinterface will try to connect to oscam once 30 seconds after shutdown.</b><br>\n\
 </DIV><br><form action=\"shutdown.html\" method=\"get\">\n\
-<input type=\"submit\" name=\"action\" value=\"Shutdown\" title=\"Save service and reload services\"></TD>\n\
+<input type=\"submit\" name=\"action\" value=\"Shutdown\" title=\"Save service and reload services\" ##BTNDISABLED##></TD>\n\
 </form>\
 ##TPLFOOTER##"
 
@@ -1112,6 +1175,7 @@ The webinterface will try to connect to oscam once 30 seconds after shutdown.</b
 #define TPLSCRIPT "\
 ##TPLHEADER##\
 ##TPLMENU##\n\
+##MESSAGE##\
 <br><br><b>Oscam execute script: ##SCRIPTNAME## --> Status: ##SCRIPTRESULT## --> Returncode: ##CODE##</b><br>\n\
 ##TPLFOOTER##"
 
@@ -1154,6 +1218,8 @@ char *tpl[]={
 	"USEREDITSIDNOBIT",
 	"SAVETEMPLATES",
 	"CONFIGMENU",
+	"FILEMENU",
+	"FILE",
 	"CONFIGGBOX",
 	"CONFIGCCCAM",
 	"CONFIGMONITOR",
@@ -1164,6 +1230,7 @@ char *tpl[]={
 	"CONFIGCAMD35",
 	"CONFIGCAMD35TCP",
 	"CONFIGSERIAL",
+	"CONFIGSERIALDEVICEBIT",
 	"SERVICECONFIGLIST",
 	"SERVICECONFIGLISTBIT",
 	"SERVICECONFIGSIDBIT",
@@ -1179,6 +1246,7 @@ char *tpl[]={
 	,"USEREDITANTICASC"
 	,"CONFIGANTICASC"
 	,"CONFIGMENUANTICASC"
+	,"FILEMENUANTICASC"
 #endif
 #ifdef CS_WITH_GBOX
 	,"CONFIGMENUGBOX"
@@ -1226,6 +1294,8 @@ char *tplmap[]={
 	TPLUSEREDITSIDNOBIT,
 	TPLSAVETEMPLATES,
 	TPLCONFIGMENU,
+	TPLFILEMENU,
+	TPLFILE,
 	TPLCONFIGGBOX,
 	TPLCONFIGCCCAM,
 	TPLCONFIGMONITOR,
@@ -1236,6 +1306,7 @@ char *tplmap[]={
 	TPLCONFIGCAMD35,
 	TPLCONFIGCAMD35TCP,
 	TPLCONFIGSERIAL,
+	TPLCONFIGSERIALDEVICEBIT,
 	TPLSERVICECONFIGLIST,
 	TPLSERVICECONFIGLISTBIT,
 	TPLSERVICECONFIGSIDBIT,
@@ -1251,6 +1322,7 @@ char *tplmap[]={
 	,TPLUSEREDITANTICASC
 	,TPLCONFIGANTICASC
 	,TPLCONFIGMENUANTICASC
+	,TPLFILEMENUANTICASC
 #endif
 #ifdef CS_WITH_GBOX
 	,TPLCONFIGMENUGBOX

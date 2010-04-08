@@ -516,10 +516,10 @@ struct s_reader  //contains device info, reader info and card info
 #endif
   int       msg_idx;
 #ifdef WEBIF
-  int		emmwritten; //count written EMM
-  int		emmskipped; //count skipped EMM
-  int		emmerror;	//count error EMM
-  int		emmblocked;	//count blocked EMM
+  int		emmwritten[4]; //count written EMM
+  int		emmskipped[4]; //count skipped EMM
+  int		emmerror[4];	//count error EMM
+  int		emmblocked[4];	//count blocked EMM
 #endif
 #ifdef HAVE_PCSC
   SCARDCONTEXT hContext;
