@@ -914,6 +914,7 @@ void dvbapi_main_local() {
 
 		pfdcount=2;
 
+		cs_debug_mask(D_FUT, "dvbapi: check pending");
 		chk_pending(tp);
 
 		cs_debug_mask(D_FUT, "dvbapi: collect devices");

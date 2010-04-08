@@ -507,8 +507,8 @@ uchar *cryptoworks_get_emm_filter(struct s_reader * rdr, int type)
 
 	switch (type) {
 		case GLOBAL:
-			filter[0]    = 0x86;
-			filter[0+16] = 0xFC; // 0x86 to 0x89
+			filter[0]    = 0x88;
+			filter[0+16] = 0xFE; // 0x88 to 0x89
 			filter[1]    = 0xA9;
 			filter[1+16] = 0xFF;
 			filter[2]    = 0xFF;
