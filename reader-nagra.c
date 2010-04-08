@@ -772,8 +772,7 @@ uchar *nagra2_get_emm_filter(struct s_reader * rdr, int type)
 			filter[0+16] = 0xFF;
 			memcpy(filter+1, rdr->hexserial+2, 3);
 			memset(filter+1+16, 0xFF, 3);
-			filter[3+16] = 0xFF;
-			filter[4]    = rdr->hexserial[5] & 0xFF;
+			filter[4]    = rdr->hexserial[5];
 			filter[4+16] = 0xFF;
 			filter[5]    = 0x00;
 			filter[5+16] = 0xFF;
