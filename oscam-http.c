@@ -618,28 +618,29 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			default : ctyp="unknown"; break;
 		}
 
+		tpl_printf(vars, 0, "EMMERRORUK", "%d", reader[readeridx].emmerror[UNKNOWN]);
+		tpl_printf(vars, 0, "EMMERRORG", "%d", reader[readeridx].emmerror[GLOBAL]);
+		tpl_printf(vars, 0, "EMMERRORS", "%d", reader[readeridx].emmerror[SHARED]);
+		tpl_printf(vars, 0, "EMMERRORUQ", "%d", reader[readeridx].emmerror[UNIQUE]);
+
+		tpl_printf(vars, 0, "EMMWRITTENUK", "%d", reader[readeridx].emmwritten[UNKNOWN]);
+		tpl_printf(vars, 0, "EMMWRITTENG", "%d", reader[readeridx].emmwritten[GLOBAL]);
+		tpl_printf(vars, 0, "EMMWRITTENS", "%d", reader[readeridx].emmwritten[SHARED]);
+		tpl_printf(vars, 0, "EMMWRITTENUQ", "%d", reader[readeridx].emmwritten[UNIQUE]);
+
+		tpl_printf(vars, 0, "EMMSKIPPEDUK", "%d", reader[readeridx].emmskipped[UNKNOWN]);
+		tpl_printf(vars, 0, "EMMSKIPPEDG", "%d", reader[readeridx].emmskipped[GLOBAL]);
+		tpl_printf(vars, 0, "EMMSKIPPEDS", "%d", reader[readeridx].emmskipped[SHARED]);
+		tpl_printf(vars, 0, "EMMSKIPPEDUQ", "%d", reader[readeridx].emmskipped[UNIQUE]);
+
+		tpl_printf(vars, 0, "EMMBLOCKEDUK", "%d", reader[readeridx].emmblocked[UNKNOWN]);
+		tpl_printf(vars, 0, "EMMBLOCKEDG", "%d", reader[readeridx].emmblocked[GLOBAL]);
+		tpl_printf(vars, 0, "EMMBLOCKEDS", "%d", reader[readeridx].emmblocked[SHARED]);
+		tpl_printf(vars, 0, "EMMBLOCKEDUQ", "%d", reader[readeridx].emmblocked[UNIQUE]);
+
+
 		if (isphysical == 1) {
 			tpl_printf(vars, 0, "RIDX", "%d", readeridx);
-			tpl_printf(vars, 0, "EMMERRORUK", "%d", reader[readeridx].emmerror[UNKNOWN]);
-			tpl_printf(vars, 0, "EMMERRORG", "%d", reader[readeridx].emmerror[GLOBAL]);
-			tpl_printf(vars, 0, "EMMERRORS", "%d", reader[readeridx].emmerror[SHARED]);
-			tpl_printf(vars, 0, "EMMERRORUQ", "%d", reader[readeridx].emmerror[UNIQUE]);
-
-			tpl_printf(vars, 0, "EMMWRITTENUK", "%d", reader[readeridx].emmwritten[UNKNOWN]);
-			tpl_printf(vars, 0, "EMMWRITTENG", "%d", reader[readeridx].emmwritten[GLOBAL]);
-			tpl_printf(vars, 0, "EMMWRITTENS", "%d", reader[readeridx].emmwritten[SHARED]);
-			tpl_printf(vars, 0, "EMMWRITTENUQ", "%d", reader[readeridx].emmwritten[UNIQUE]);
-
-			tpl_printf(vars, 0, "EMMSKIPPEDUK", "%d", reader[readeridx].emmskipped[UNKNOWN]);
-			tpl_printf(vars, 0, "EMMSKIPPEDG", "%d", reader[readeridx].emmskipped[GLOBAL]);
-			tpl_printf(vars, 0, "EMMSKIPPEDS", "%d", reader[readeridx].emmskipped[SHARED]);
-			tpl_printf(vars, 0, "EMMSKIPPEDUQ", "%d", reader[readeridx].emmskipped[UNIQUE]);
-
-			tpl_printf(vars, 0, "EMMBLOCKEDUK", "%d", reader[readeridx].emmblocked[UNKNOWN]);
-			tpl_printf(vars, 0, "EMMBLOCKEDG", "%d", reader[readeridx].emmblocked[GLOBAL]);
-			tpl_printf(vars, 0, "EMMBLOCKEDS", "%d", reader[readeridx].emmblocked[SHARED]);
-			tpl_printf(vars, 0, "EMMBLOCKEDUQ", "%d", reader[readeridx].emmblocked[UNIQUE]);
-
 			tpl_addVar(vars, 0, "REFRICO", ICREF);
 			tpl_addVar(vars, 0, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
 #ifdef CS_RDR_INIT_HIST
@@ -648,10 +649,6 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 #endif
 		} else {
 			tpl_printf(vars, 0, "RIDX", "");
-			tpl_addVar(vars, 0, "EMMERROR", "");
-			tpl_addVar(vars, 0, "EMMWRITTEN", "");
-			tpl_addVar(vars, 0, "EMMSKIPPED", "");
-			tpl_addVar(vars, 0, "EMMBLOCKED", "");
 			tpl_addVar(vars, 0, "READERREFRESH","");
 #ifdef CS_RDR_INIT_HIST
 			tpl_addVar(vars, 0, "ENTITLEMENT","");
