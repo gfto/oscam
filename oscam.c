@@ -1342,7 +1342,7 @@ void cs_disconnect_client(void)
 int check_ecmcache(ECM_REQUEST *er, ulong grp)
 {
 	// disable cache1 and cache2
-	if (!cfg->cachecm) return(0);
+	if (!reader[ridx].cachecm) return(0);
 	
 	int i;
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
