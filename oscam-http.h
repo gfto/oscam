@@ -206,14 +206,14 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 #define TPLHEADER "\
 		<HTML>\n\
 		<HEAD>\n\
-		<TITLE>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION## pl ##PATCHLEVEL##</TITLE>\n\
+		<TITLE>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</TITLE>\n\
 		<link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
 		<link href=\"##ICO##\" rel=\"icon\" type=\"image/x-icon\"/>\
 		##REFRESH##\
 		</HEAD>\n\
 		<BODY>\n\
 		<H4><DIV Style=\"float:left\"> Start: ##STARTDATE## / ##STARTTIME## <BR><BR> UpTime: ##UPTIME## </DIV></H4>\
-		<H2>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION## pl ##PATCHLEVEL##</H2>"
+		<H2>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2>"
 
 #define TPLFOOTER "\
 		<HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>embedded Style by Eneen</H4>\

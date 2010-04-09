@@ -1859,7 +1859,6 @@ int process_request(FILE *f, struct in_addr in) {
 
 		tpl_addVar(vars, 0, "CS_VERSION", CS_VERSION);
 		tpl_addVar(vars, 0, "CS_SVN_VERSION", CS_SVN_VERSION);
-		tpl_addVar(vars, 0, "PATCHLEVEL", " 10");
 		tpl_addVar(vars, 0, "ICO", ICMAI);
 		if(cfg->http_refresh > 0 && (pgidx == 3 || pgidx == -1)) {
 			tpl_printf(vars, 0, "REFRESHTIME", "%d", cfg->http_refresh);
