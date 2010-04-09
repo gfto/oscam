@@ -461,6 +461,7 @@ uchar *get_emm_filter(struct s_reader * rdr, int type) {
 		case SC_VIDEOGUARD2:
 			break;
 		case SC_DRE:
+			return dre_get_emm_filter(rdr, type);
 			break;
 		default:
 			break;

@@ -302,14 +302,40 @@ int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			ep->type = UNIQUE; //FIXME no filling of ep->hexserial
 			break;
 		case 0x89:
-			ep->type = SHARED; //FIXME no filling of ep->hexserial
-			break;
+			ep->type = SHARED;
+			memset(ep->hexserial, 0, 4);
+			memcpy(ep->hexserial, ep->emm + 3, 4);
+			return (!memcmp(&rdr->sa[0][0], ep->emm + 3, 4));
 		default:
 			ep->type = UNKNOWN;
 	}
-	return TRUE; //FIXME no checking of serial or SA
+	return TRUE; //FIXME no checking of serial
 }
-	
+
+uchar *dre_get_emm_filter(struct s_reader * rdr, int type)
+{
+        static uint8_t filter[32];
+        memset(filter, 0x00, 32);
+
+        switch (type) {
+                case GLOBAL:
+			//FIXME: Dont now how to filter GLOBAL EMM's
+                        filter[0]    = 0xFF; //dummy
+                        filter[0+16] = 0xFF;
+                        break;
+                case SHARED:
+                        filter[0]    = 0x89;
+                        filter[0+16] = 0xFF;
+                        memcpy(filter+1, &rdr->sa[0][0], 4);
+                        memset(filter+1+16, 0xFF, 4);
+                        break;
+                case UNIQUE:
+			//FIXME: No filter for hexserial
+                        filter[0]    = 0x87;
+                        filter[0+16] = 0xFF;
+	}
+	return filter;
+}
 
 int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
 {
