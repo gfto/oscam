@@ -154,7 +154,7 @@ DESCRIPTIONS
 
        emmcache = usecache,rewrite,logging
 	  set EMM cache of local reader:
-	   usecache = 0|1  1=enable EMM chaching, default:0
+	   usecache = 0|1 1 = enable EMM caching, default:0
 	   rewrite  = determines how often one and the same EMM is written
 	   logging  = EMM logging mask:
 		      0 = EMM logging disabled
@@ -165,6 +165,9 @@ DESCRIPTIONS
 
 	   example: emmcache = 1,3,10
 		    emmcache = 1,2,6
+
+       ecmcache = 0|1
+	  1 = enable ECM caching, default:1
 
        blocknano = nano[,nano]...|all
 	  list of EMM-nanos to block (in hex w/o 0x) or  all  EMM-nanos,  only

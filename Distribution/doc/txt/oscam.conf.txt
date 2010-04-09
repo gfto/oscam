@@ -102,9 +102,6 @@ DESCRIPTIONS
        preferlocalcards = 0|1
 	  1 = try decoding on local cards first, default:0
 
-       ecmcache = 0|1
-	  1 = enable ECM cache, default:1
-
    The [monitor] section
        port = 0|port
 	  UDP port for monitor, port=0 monitor disabled, default:0

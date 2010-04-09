@@ -211,7 +211,7 @@ reader assingment to group, \fIrequired\fR
 \fBemmcache\fP = \fBusecache,rewrite,logging\fP
 .RS 3n
 set EMM cache of local reader:
- \fBusecache\fP = \fB0\fP|\fB1\fP  1=enable EMM chaching, default:0
+ \fBusecache\fP = \fB0\fP|\fB1\fP 1 = enable EMM caching, default:0
  \fBrewrite\fP  = determines how often one and the same EMM is written
  \fBlogging\fP  = EMM logging mask:
             \fB0\fP = EMM logging disabled
@@ -222,6 +222,11 @@ set EMM cache of local reader:
 
  example: emmcache = 1,3,10
           emmcache = 1,2,6
+.RE
+.PP
+\fBecmcache\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = enable ECM caching, default:1
 .RE
 .PP
 \fBblocknano\fP = \fBnano[,nano]...\fP|\fPall\fP
