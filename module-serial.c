@@ -564,7 +564,7 @@ static void oscam_ser_auth_client(int proto)
   // After reload base account ptrs may be placed in other address,
   // and we may can't find it in this process. 
   // Simply save valid account.
-  static struct s_auth *account=0; 
+  struct s_auth *account=0; 
 
   if (connected==proto)
     return;

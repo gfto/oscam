@@ -191,13 +191,14 @@ uchar *seca_get_emm_filter(struct s_reader * rdr, int type)
 		case SHARED:
 			filter[0]    = 0x84;
 			filter[0+16] = 0xFF;
+			//FIXME: no filter for sa / provider
 			break;
 
 		case UNIQUE:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
-			memcpy(filter+2, rdr->hexserial, 6);
-			memset(filter+2+16, 0xFF, 6);
+			memcpy(filter+1, rdr->hexserial, 6);
+			memset(filter+1+16, 0xFF, 6);
 			break;
 	}
 	return filter;
