@@ -1382,7 +1382,19 @@ void chk_account(char *token, char *value, struct s_auth *account)
 			account->tosleep = 0;
 			return;
 		} else {
-			account->tosleep=atoi(value);
+			account->tosleep = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "sleepsend")) {
+		if(strlen(value) == 0) {
+			account->c35_sleepsend = 0;
+			return;
+		} else {
+			account->c35_sleepsend = atoi(value);
+			if (account->c35_sleepsend > 0xFF)
+				account->c35_sleepsend = 0xFF;
 			return;
 		}
 	}

@@ -208,35 +208,47 @@ static void camd35_request_emm(ECM_REQUEST *er)
 
 static void camd35_send_dcw(ECM_REQUEST *er)
 {
-  uchar *buf;
-  buf=req+(er->cpti*REQ_SIZE);	// get orig request
+	uchar *buf;
+	buf = req + (er->cpti * REQ_SIZE);	// get orig request
 
-  if (((er->rcEx > 0) || (er->rc == 8)) && !client[cs_idx].c35_suppresscmd08)
-  {
-    buf[0]=0x08;
-    buf[1]=2;
-    memset(buf+20, 0, buf[1]);
-  }
-  else
-  {
-    // Send CW
-    if ((er->rc < 4) || (er->rc == 7))
-    {
-      if (buf[0]==3)
-        memmove(buf+20+16, buf+20+buf[1], 0x34);
-      buf[0]++;
-      buf[1]=16;
-      memcpy(buf+20, er->cw, buf[1]);
-    }
-    else 
-    {
-      // Send old CMD44 to prevent cascading problems with older mpcs/oscam versions
-      buf[0]=0x44;
-      buf[1]=0;
-    }
-  }
-  camd35_send(buf);
-  camd35_request_emm(er);
+	if (((er->rcEx > 0) || (er->rc == 8)) && !client[cs_idx].c35_suppresscmd08)
+	{
+		buf[0] = 0x08;
+		buf[1] = 2;
+		memset(buf + 20, 0, buf[1]);
+	}
+	else if (((er->rcEx > 0) || (er->rc == 6)) && client[cs_idx].c35_sleepsend > 0)
+	{
+		buf[0] = 0x08;
+		buf[1] = 2;
+		buf[20] = 0;
+		/*
+		 * the second Databyte should be forseen for a sleeptime in minutes
+		 * whoever knows the camd3 protocol related to CMD08 - please help!
+		 * on tests this don't work with native camd3
+		 */
+		buf[21] = client[cs_idx].c35_sleepsend;
+	}
+	else
+	{
+		// Send CW
+		if ((er->rc < 4) || (er->rc == 7))
+		{
+			if (buf[0]==3)
+				memmove(buf + 20 + 16, buf + 20 + buf[1], 0x34);
+			buf[0]++;
+			buf[1] = 16;
+			memcpy(buf+20, er->cw, buf[1]);
+		}
+		else
+		{
+			// Send old CMD44 to prevent cascading problems with older mpcs/oscam versions
+			buf[0] = 0x44;
+			buf[1] = 0;
+		}
+	}
+	camd35_send(buf);
+	camd35_request_emm(er);
 }
 
 static void camd35_process_ecm(uchar *buf)

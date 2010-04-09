@@ -1250,6 +1250,7 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
 				client[cs_idx].au=account->au;
 				client[cs_idx].autoau=account->autoau;
 				client[cs_idx].tosleep=(60*account->tosleep);
+				client[cs_idx].c35_sleepsend = account->c35_sleepsend;
 				memcpy(&client[cs_idx].ctab, &account->ctab, sizeof(client[cs_idx].ctab));
 				if (account->uniq)
 					cs_fake_client(account->usr, account->uniq, client[cs_idx].ip);
