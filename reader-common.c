@@ -311,7 +311,7 @@ int reader_checkhealth(struct s_reader * reader)
 
       int i;
       for( i=1; i<CS_MAXPID; i++ ) {
-        if( client[i].pid && client[i].typ=='c' && client[i].usr[0] ) {
+        if( client[i].pid && client[i].typ=='c' && client[i].usr[0] && ph[client[i].ctyp].type & MOD_CONN_NET) {
           kill(client[i].pid, SIGQUIT);
         }
       }

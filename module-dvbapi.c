@@ -709,7 +709,6 @@ void dvbapi_handlesockmsg (unsigned char *buffer, unsigned int len, int connfd) 
 				cs_ddump(buffer, len, "capmt 3f:");
 				//int demux_index=buffer[7+k];
 				//dvbapi_stop_descrambling_all(demux_index);
-				close(connfd);
 				break;
 			default:
 				cs_log("dvbapi: handlesockmsg() unknown command");
@@ -917,8 +916,6 @@ void dvbapi_main_local() {
 		cs_debug_mask(D_FUT, "dvbapi: check pending");
 		chk_pending(tp);
 
-		cs_debug_mask(D_FUT, "dvbapi: collect devices");
-
 		for (i=0;i<MAX_DEMUX;i++) {
 			for (g=0;g<MAX_FILTER;g++) {
 				if (demux[i].demux_fd[g].fd>0) {
@@ -941,7 +938,6 @@ void dvbapi_main_local() {
 		rc = poll(pfd2, pfdcount, 500);
 	
 		if (rc<1) continue;
-		cs_debug_mask(D_FUT, "dvbapi: got event %d", rc);
 
 		for (i = 0; i < pfdcount; i++) {
 			if (pfd2[i].revents > 3)
