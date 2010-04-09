@@ -170,6 +170,10 @@ DESCRIPTIONS
 	  http web interface connections allowed, default:none
 	   example: httpallowed = 127.0.0.1,192.168.0.0-192.168.255.255
 
+       httpdyndns = hostname
+	  http web interface connections allowed, default:none
+	   example: httpdyndns = my.dynexample.com
+
    The [camd33] section
        port = 0|port
 	  TCP/IP port for camd 3.3x clients, 0 = disabled, default:0
