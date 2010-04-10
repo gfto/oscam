@@ -508,6 +508,10 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
       <TD>Suppresscmd08:</TD>\n\
       <TD><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD>\n\
     </TR>\n\
+        <TR>\n\
+      <TD>Sleepsend:</TD>\n\
+      <TD><input name=\"sleepsend\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##SLEEPSEND##\"> 0 or 255</TD>\n\
+    </TR>\n\
     ##TPLUSEREDITANTICASC##\
     <TR>\n\
     <TR><TD>Keepalive:</TD><TD><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\

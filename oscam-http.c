@@ -1013,11 +1013,15 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 
 	//SUPPRESSCMD08
 	if (account->c35_suppresscmd08)
-	tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
+		tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
+
+	//Sleepsend
+	if (account->c35_sleepsend)
+		tpl_printf(vars, 0, "SLEEPSEND", "%d", account->c35_sleepsend);
 
 	//Keepalive
 	if (account->ncd_keepalive)
-	tpl_addVar(vars, 0, "KEEPALIVE", "checked");
+		tpl_addVar(vars, 0, "KEEPALIVE", "checked");
 
 #ifdef CS_ANTICASC
 	tpl_printf(vars, 0, "AC_USERS", "%d", account->ac_users);

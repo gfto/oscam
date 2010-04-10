@@ -16,28 +16,31 @@ extern struct s_reader *reader;
 static	uchar upwd[64]={0};
 static	uchar *req;
 static  int is_udp=1;
+static int stopped;
+static int lastcaid;
+static int lastsrvid;
 
 static int camd35_send(uchar *buf)
 {
-  int l;
-  unsigned char rbuf[REQ_SIZE+15+4], *sbuf=rbuf+4;
+	int l;
+	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
 
-  if (!client[cs_idx].udp_fd) return(-1);
-  l=20+buf[1]+(((buf[0]==3) || (buf[0]==4)) ? 0x34 : 0);
-  memcpy(rbuf, client[cs_idx].ucrc, 4);
-  memcpy(sbuf, buf, l);
-  memset(sbuf+l, 0xff, 15);	// set unused space to 0xff for newer camd3's
-  memcpy(sbuf+4, i2b(4, crc32(0L, sbuf+20, sbuf[1])), 4);
-  l=boundary(4, l);
-  cs_ddump(sbuf, l, "send %d bytes to %s", l, remote_txt());
-  aes_encrypt(sbuf, l);
+	if (!client[cs_idx].udp_fd) return(-1);
+	l = 20 + buf[1] + (((buf[0] == 3) || (buf[0] == 4)) ? 0x34 : 0);
+	memcpy(rbuf, client[cs_idx].ucrc, 4);
+	memcpy(sbuf, buf, l);
+	memset(sbuf + l, 0xff, 15);	// set unused space to 0xff for newer camd3's
+	memcpy(sbuf + 4, i2b(4, crc32(0L, sbuf+20, sbuf[1])), 4);
+	l = boundary(4, l);
+	cs_ddump(sbuf, l, "send %d bytes to %s", l, remote_txt());
+	aes_encrypt(sbuf, l);
 
-  if (is_udp)
-    return(sendto(client[cs_idx].udp_fd, rbuf, l+4, 0,
-                  (struct sockaddr *)&client[cs_idx].udp_sa,
-                  sizeof(client[cs_idx].udp_sa)));
-  else
-    return(send(client[cs_idx].udp_fd, rbuf, l+4, 0));
+	if (is_udp)
+		return(sendto(client[cs_idx].udp_fd, rbuf, l+4, 0,
+				(struct sockaddr *)&client[cs_idx].udp_sa,
+				sizeof(client[cs_idx].udp_sa)));
+	else
+		return(send(client[cs_idx].udp_fd, rbuf, l + 4, 0));
 }
 
 static int camd35_auth_client(uchar *ucrc)
@@ -456,24 +459,34 @@ static int tcp_connect()
 
 static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 {
-  if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
-    return(-1);
+	if (stopped) {
+		if (er->srvid == lastsrvid && er->caid == lastcaid)
+			return(-1);
+		else
+			stopped = 0;
+	}
 
-  if (!is_udp && !tcp_connect()) return(-1);
+	lastsrvid = er->srvid;
+	lastcaid = er->caid;
 
-  memset(buf, 0, 20);
-  memset(buf+20, 0xff, er->l+15);
-  buf[1]=er->l;
-  memcpy(buf+ 8, i2b(2, er->srvid), 2);
-  memcpy(buf+10, i2b(2, er->caid ), 2);
-  memcpy(buf+12, i2b(4, er->prid ), 4);
-//  memcpy(buf+16, i2b(2, er->pid  ), 2);
-//  memcpy(buf+16, &er->idx , 2);
-  memcpy(buf+16, i2b(2, er->idx ), 2);
-  buf[18]=0xff;
-  buf[19]=0xff;
-  memcpy(buf+20, er->ecm  , er->l);
-  return((camd35_send(buf)<1) ? (-1) : 0);
+	if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
+		return(-1);
+
+	if (!is_udp && !tcp_connect()) return(-1);
+
+	memset(buf, 0, 20);
+	memset(buf + 20, 0xff, er->l+15);
+	buf[1]=er->l;
+	memcpy(buf + 8, i2b(2, er->srvid), 2);
+	memcpy(buf + 10, i2b(2, er->caid ), 2);
+	memcpy(buf + 12, i2b(4, er->prid ), 4);
+	//  memcpy(buf+16, i2b(2, er->pid  ), 2);
+	//  memcpy(buf+16, &er->idx , 2);
+	memcpy(buf + 16, i2b(2, er->idx ), 2);
+	buf[18] = 0xff;
+	buf[19] = 0xff;
+	memcpy(buf + 20, er->ecm  , er->l);
+	return((camd35_send(buf) < 1) ? (-1) : 0);
 }
 
 static int camd35_send_emm(EMM_PACKET *ep)
@@ -533,6 +546,10 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 				reader[ridx].label,
 				reader[ridx].caid[0]);
 	}
+
+	if (buf[0] == 0x08)
+		if(buf[21] == 0xFF)
+			stopped = 1;
 
 	// CMD44: old reject command introduced in mpcs
 	// keeping this for backward compatibility
