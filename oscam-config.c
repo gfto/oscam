@@ -1118,6 +1118,11 @@ void chk_t_dvbapi(char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "cw_delay")) {
+		dvbapi_chk_caidtab(value, &cfg->dvbapi_delaytab);
+		return;
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in dvbapi section not recognized\n",token);
 }

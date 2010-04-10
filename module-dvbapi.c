@@ -838,7 +838,7 @@ void dvbapi_main_local() {
 	int maxpfdsize=(MAX_DEMUX*MAX_FILTER)+MAX_DEMUX+2;
 	struct pollfd pfd2[maxpfdsize];
 	int i,rc,pfdcount,g,listenfd,connfd,clilen,j;
-	unsigned char md5buf[CS_ECMSTORESIZE];
+	//unsigned char md5buf[CS_ECMSTORESIZE];
 	int ids[maxpfdsize], fdn[maxpfdsize], type[maxpfdsize];
 	struct timeb tp;
 	struct sockaddr_un servaddr;
@@ -1003,10 +1003,12 @@ void dvbapi_main_local() {
 							if (mbuf[0] != 0x80 && mbuf[0] != 0x81) 
 								continue;
 
-							memcpy(md5buf, MD5(mbuf, len, NULL), CS_ECMSTORESIZE);
+							//memcpy(md5buf, MD5(mbuf, len, NULL), CS_ECMSTORESIZE);
 
-							if (memcmp(md5buf, demux[demux_index].buffer_cache_dmx, CS_ECMSTORESIZE) != 0) {
-								memcpy(demux[demux_index].buffer_cache_dmx, md5buf, CS_ECMSTORESIZE);
+							//if (memcmp(md5buf, demux[demux_index].buffer_cache_dmx, CS_ECMSTORESIZE) != 0) {
+							if (demux[demux_index].buffer_cache_dmx[0] != mbuf[0]) {
+								//memcpy(demux[demux_index].buffer_cache_dmx, md5buf, CS_ECMSTORESIZE);
+								demux[demux_index].buffer_cache_dmx[0] = mbuf[0];
 
 								if (cfg->dvbapi_au==1)
 									dvbapi_start_emm_filter(demux_index);
@@ -1079,6 +1081,7 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 						cs_debug("dvbapi: trying CA_System_ID: %04x CA_PID: %04x", demux[i].ECMpids[n].CA_System_ID, demux[i].ECMpids[n].CA_PID);
 
 						//grep ecm
+						demux[i].buffer_cache_dmx[0] = 0;
 						dvbapi_start_filter(i, demux[i].ECMpids[n].CA_System_ID, demux[i].ECMpids[n].CA_PID, 0x80,0xF0,TYPE_ECM); //ECM
 						demux[i].ECMpids[n].checked=1;
 						break;
@@ -1099,6 +1102,17 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 				demux[i].ca_fd = dvbapi_open_device(i,1);
 				if (demux[i].ca_fd<=0)
 					return;
+			}
+
+			int dindex = dvbapi_check_array(cfg->dvbapi_delaytab.caid, CS_MAXCAIDTAB, er->caid);
+			if (dindex>=0) {
+				char tmp1[5];
+				sprintf(tmp1, "%04X", cfg->dvbapi_delaytab.mask[dindex]);
+				int cw_delay = strtol(tmp1, '\0', 10);
+				if (cw_delay<1000) {
+					cs_log("dvbapi: wait %d ms", cw_delay);
+					cs_sleepms(cw_delay);
+				}
 			}
 
 			for (n=0;n<2;n++) {

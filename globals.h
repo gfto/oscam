@@ -718,6 +718,7 @@ struct s_config
 	char		dvbapi_boxtype[20];
 	CAIDTAB	dvbapi_prioritytab;
 	CAIDTAB	dvbapi_ignoretab;
+	CAIDTAB	dvbapi_delaytab;
 #endif
 
 #ifdef CS_ANTICASC
