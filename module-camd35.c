@@ -231,6 +231,7 @@ static void camd35_send_dcw(ECM_REQUEST *er)
 		 * on tests this don't work with native camd3
 		 */
 		buf[21] = client[cs_idx].c35_sleepsend;
+		cs_log("CMD08 sleep request %02X send to %s", client[cs_idx].c35_sleepsend, client[cs_idx].usr);
 	}
 	else
 	{
@@ -460,8 +461,10 @@ static int tcp_connect()
 static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 {
 	if (stopped) {
-		if (er->srvid == lastsrvid && er->caid == lastcaid)
+		if (er->srvid == lastsrvid && er->caid == lastcaid){
+			cs_log("%s is stopped - sleep request FF from server", reader[ridx].label);
 			return(-1);
+		}
 		else
 			stopped = 0;
 	}
@@ -548,8 +551,11 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 	}
 
 	if (buf[0] == 0x08)
-		if(buf[21] == 0xFF)
+		if(buf[21] == 0xFF) {
 			stopped = 1;
+			cs_log("%s CMD08 sleep request FF",
+							reader[ridx].label);
+		}
 
 	// CMD44: old reject command introduced in mpcs
 	// keeping this for backward compatibility
