@@ -220,7 +220,7 @@ static void camd35_send_dcw(ECM_REQUEST *er)
 		buf[1] = 2;
 		memset(buf + 20, 0, buf[1]);
 	}
-	else if ((er->rc == 6) && (client[cs_idx].c35_sleepsend > 0))
+	else if (er->rc == 13)
 	{
 		buf[0] = 0x08;
 		buf[1] = 2;
@@ -230,8 +230,8 @@ static void camd35_send_dcw(ECM_REQUEST *er)
 		 * whoever knows the camd3 protocol related to CMD08 - please help!
 		 * on tests this don't work with native camd3
 		 */
-		buf[21] = client[cs_idx].c35_sleepsend;
-		cs_log("CMD08 sleep request %02X send to %s", client[cs_idx].c35_sleepsend, client[cs_idx].usr);
+		buf[21] = 0xFF;
+		cs_log("%s stop request send", client[cs_idx].usr);
 	}
 	else
 	{
@@ -462,11 +462,11 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 {
 	if (stopped) {
 		if (er->srvid == lastsrvid && er->caid == lastcaid){
-			cs_log("%s is stopped - sleep request FF from server", reader[ridx].label);
+			cs_log("%s is stopped - request FF from server", reader[ridx].label);
 			return(-1);
 		}
 		else {
-			cs_log("%s is started - sleep request FF from server", reader[ridx].label);
+			cs_log("%s is started - request FF from server", reader[ridx].label);
 			stopped = 0;
 		}
 	}
@@ -555,7 +555,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 	if (buf[0] == 0x08) {
 		if(buf[21] == 0xFF) {
 			stopped = 1;
-			cs_log("%s CMD08 sleep request FF",
+			cs_log("%s CMD08 stop request 00 FF",
 							reader[ridx].label);
 		}
 	}

@@ -1668,7 +1668,7 @@ int send_dcw(ECM_REQUEST *er)
 {
 	static char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
-			"fake", "invalid", "corrupt", "no card", "expdate", "disabled"};
+			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
 	static char *stxtEx[]={"", "group", "caid", "ident", "class", "chid", "queue", "peer"};
 	static char *stxtWh[]={"", "user ", "reader ", "server ", "lserver "};
 	char sby[32]="";
@@ -2061,8 +2061,13 @@ void get_cw(ECM_REQUEST *er)
 		}
 
 		// user sleeping
-		if ((client[cs_idx].tosleep) && (now - client[cs_idx].lastswitch > client[cs_idx].tosleep))
-			er->rc = 6;
+		if ((client[cs_idx].tosleep) && (now - client[cs_idx].lastswitch > client[cs_idx].tosleep)) {
+			if (client[cs_idx].c35_sleepsend == 0xFF) {
+				er->rc = 13; // send stop command CMD08 {00 FF}
+			} else {
+				er->rc = 6;
+			}
+		}
 
 		client[cs_idx].last_srvid = i;
 		client[cs_idx].last_caid = m;

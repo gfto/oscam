@@ -1016,8 +1016,7 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
 
 	//Sleepsend
-	if (account->c35_sleepsend)
-		tpl_printf(vars, 0, "SLEEPSEND", "%d", account->c35_sleepsend);
+	tpl_printf(vars, 0, "SLEEPSEND", "%d", account->c35_sleepsend);
 
 	//Keepalive
 	if (account->ncd_keepalive)
