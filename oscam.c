@@ -2300,7 +2300,6 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 				if (act) {
 					int inc_stage = 1;
 					if (cfg->preferlocalcards && !er->locals_done) {
-						cs_log("loop %d - %d:%d", i, cfg->preferlocalcards, er->locals_done);
 						er->locals_done = 1;
 						for (j = 0; j < CS_MAXREADER; j++) {
 							if (reader[j].typ & R_IS_NETWORK)
