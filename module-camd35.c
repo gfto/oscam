@@ -257,31 +257,31 @@ static void camd35_send_dcw(ECM_REQUEST *er)
 
 static void camd35_process_ecm(uchar *buf)
 {
-  ECM_REQUEST *er;
-  if (!(er=get_ecmtask()))
-    return;
-  er->l=buf[1];
-  memcpy(req+(er->cpti*REQ_SIZE), buf, 0x34+20+er->l);	// save request
-  er->srvid=b2i(2, buf+ 8);
-  er->caid =b2i(2, buf+10);
-  er->prid =b2i(4, buf+12);
-  er->pid  =b2i(2, buf+16);
-  memcpy(er->ecm, buf+20, er->l);
-  get_cw(er);
+	ECM_REQUEST *er;
+	if (!(er = get_ecmtask()))
+		return;
+	er->l = buf[1];
+	memcpy(req + (er->cpti*REQ_SIZE), buf, 0x34 + 20 + er->l);	// save request
+	er->srvid = b2i(2, buf+ 8);
+	er->caid = b2i(2, buf+10);
+	er->prid = b2i(4, buf+12);
+	er->pid  = b2i(2, buf+16);
+	memcpy(er->ecm, buf + 20, er->l);
+	get_cw(er);
 }
 
 static void camd35_process_emm(uchar *buf)
 {
-  int au;
-  EMM_PACKET epg;
-  memset(&epg, 0, sizeof(epg));
-  au=client[cs_idx].au;
-  if ((au<0) || (au>CS_MAXREADER)) return;  // TODO
-  epg.l=buf[1];
-  memcpy(epg.caid     , buf+10              , 2);
-  memcpy(epg.provid   , buf+12              , 4);
-  memcpy(epg.emm      , buf+20              , epg.l);
-  do_emm(&epg);
+	int au;
+	EMM_PACKET epg;
+	memset(&epg, 0, sizeof(epg));
+	au = client[cs_idx].au;
+	if ((au < 0) || (au > CS_MAXREADER)) return;  // TODO
+	epg.l = buf[1];
+	memcpy(epg.caid, buf + 10, 2);
+	memcpy(epg.provid, buf + 12 , 4);
+	memcpy(epg.emm, buf + 20, epg.l);
+	do_emm(&epg);
 }
 
 static void camd35_server()
@@ -460,13 +460,15 @@ static int tcp_connect()
 
 static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 {
+	char *typtext[]={"ok", "invalid", "sleeping"};
+
 	if (stopped) {
 		if (er->srvid == lastsrvid && er->caid == lastcaid){
-			cs_log("%s is stopped - request FF from server", reader[ridx].label);
+			cs_log("%s is stopped - requested by server (%s)",
+					reader[ridx].label, typtext[stopped]);
 			return(-1);
 		}
 		else {
-			cs_log("%s is started - request FF from server", reader[ridx].label);
 			stopped = 0;
 		}
 	}
@@ -517,6 +519,7 @@ static int camd35_send_emm(EMM_PACKET *ep)
 static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 {
 	ushort idx;
+	char *typtext[]={"ok", "invalid", "sleeping"};
 
 	// reading CMD05 Emm request and set serial
 	if (buf[0] == 0x05 && buf[1] == 111) {
@@ -554,10 +557,12 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 
 	if (buf[0] == 0x08) {
 		if(buf[21] == 0xFF) {
-			stopped = 1;
-			cs_log("%s CMD08 stop request 00 FF",
-							reader[ridx].label);
+			stopped = 2; // server says sleep
+		} else {
+			stopped = 1; // server says invalid
 		}
+		cs_log("%s CMD08 stop request by server (%s)",
+				reader[ridx].label, typtext[stopped]);
 	}
 
 	// CMD44: old reject command introduced in mpcs

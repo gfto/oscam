@@ -1460,13 +1460,14 @@ void chk_account(char *token, char *value, struct s_auth *account)
 
 	if (!strcmp(token, "au")) {
 		//set default values for usage during runtime from Webif
-		account->au=-1;
+		account->au = -1;
 		account->autoau=0;
 
-		if(value && value[0]=='1') account->autoau=1;
-			for (i=0; i<CS_MAXREADER; i++)
-				if ((reader[i].label[0]) && (!strncmp(reader[i].label, value, strlen(reader[i].label))))
-					account->au=i;
+		if(value && value[0] == '1')
+			account->autoau = 1;
+		for (i = 0; i < CS_MAXREADER; i++)
+			if ((reader[i].label[0]) && (!strncmp(reader[i].label, value, strlen(reader[i].label))))
+				account->au = i;
 		return;
 	}
 
