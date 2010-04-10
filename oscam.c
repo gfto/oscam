@@ -375,6 +375,7 @@ void cs_reinit_clients()
 				client[i].ncd_keepalive = account->ncd_keepalive;
 				client[i].c35_suppresscmd08 = account->c35_suppresscmd08;
 				client[i].tosleep	= (60*account->tosleep);
+				client[i].c35_sleepsend = account->c35_sleepsend;
 				client[i].monlvl	= account->monlvl;
 				client[i].disabled	= account->disabled;
 				client[i].fchid		= account->fchid;  // CHID filters
