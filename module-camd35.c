@@ -220,7 +220,7 @@ static void camd35_send_dcw(ECM_REQUEST *er)
 		buf[1] = 2;
 		memset(buf + 20, 0, buf[1]);
 	}
-	else if (((er->rcEx > 0) || (er->rc == 6)) && client[cs_idx].c35_sleepsend > 0)
+	else if ((er->rc == 6) && (client[cs_idx].c35_sleepsend > 0))
 	{
 		buf[0] = 0x08;
 		buf[1] = 2;
@@ -465,8 +465,10 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 			cs_log("%s is stopped - sleep request FF from server", reader[ridx].label);
 			return(-1);
 		}
-		else
+		else {
+			cs_log("%s is started - sleep request FF from server", reader[ridx].label);
 			stopped = 0;
+		}
 	}
 
 	lastsrvid = er->srvid;
@@ -550,12 +552,13 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 				reader[ridx].caid[0]);
 	}
 
-	if (buf[0] == 0x08)
+	if (buf[0] == 0x08) {
 		if(buf[21] == 0xFF) {
 			stopped = 1;
 			cs_log("%s CMD08 sleep request FF",
 							reader[ridx].label);
 		}
+	}
 
 	// CMD44: old reject command introduced in mpcs
 	// keeping this for backward compatibility
