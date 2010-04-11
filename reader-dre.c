@@ -307,6 +307,7 @@ int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 3, 4);
 				return (!memcmp(&rdr->sa[0][0], ep->emm + 3, 4));
+			}
 			else
 				return TRUE;
 		default:
