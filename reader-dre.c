@@ -302,9 +302,13 @@ int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			break;
 		case 0x89:
 			ep->type = SHARED;
-			memset(ep->hexserial, 0, 8);
-			memcpy(ep->hexserial, ep->emm + 3, 4);
-			return (!memcmp(&rdr->sa[0][0], ep->emm + 3, 4));
+			// FIXME: Seems to be that SA is only used with caid 0x4ae1
+			if (rdr->caid[0] == 0x4ae1) {
+				memset(ep->hexserial, 0, 8);
+				memcpy(ep->hexserial, ep->emm + 3, 4);
+				return (!memcmp(&rdr->sa[0][0], ep->emm + 3, 4));
+			else
+				return TRUE;
 		default:
 			ep->type = UNKNOWN;
 	}
