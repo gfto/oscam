@@ -296,7 +296,6 @@ int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
 
 int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
-  rdr=rdr;
   switch (ep->emm[0]) {
 		case 0x87:
 			ep->type = UNIQUE; //FIXME no filling of ep->hexserial
