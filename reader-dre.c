@@ -342,7 +342,6 @@ int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
   int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
 
   cs_ddump (ep->emm, emm_length + 3, "EMM:");
-  ep->type = ep->emm[0];
 
   if (reader->caid[0] == 0x4ae1) {
     static uchar emmcmd52[0x3a];
