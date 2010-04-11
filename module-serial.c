@@ -560,7 +560,7 @@ static void oscam_ser_disconnect()
 
 static void oscam_ser_auth_client(int proto)
 {
-  int ok=0;
+  int ok; //initializing this variable to 0 does prevent reconnect
   // After reload base account ptrs may be placed in other address,
   // and we may can't find it in this process. 
   // Simply save valid account.
