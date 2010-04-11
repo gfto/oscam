@@ -298,8 +298,9 @@ int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
   switch (ep->emm[0]) {
 		case 0x87:
-			ep->type = UNIQUE; //FIXME no filling of ep->hexserial
-			break;
+			ep->type = UNIQUE;
+			return TRUE; //FIXME: no filling of ep->hexserial
+
 		case 0x89:
 			ep->type = SHARED;
 			// FIXME: Seems to be that SA is only used with caid 0x4ae1
@@ -312,8 +313,8 @@ int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				return TRUE;
 		default:
 			ep->type = UNKNOWN;
+			return TRUE;
 	}
-	return TRUE; //FIXME no checking of serial
 }
 
 uchar *dre_get_emm_filter(struct s_reader * rdr, int type)
