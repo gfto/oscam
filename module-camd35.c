@@ -513,7 +513,7 @@ static int camd35_send_emm(EMM_PACKET *ep)
 	memcpy(buf+12, ep->provid, 4);
 	memcpy(buf+20, ep->emm, ep->l);
 
-	return((camd35_send(buf)<1) ? (-1) : 0);
+	return((camd35_send(buf)<1) ? 0 : 1);
 }
 
 static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
