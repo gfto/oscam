@@ -1016,6 +1016,39 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 	return TRUE; //FIXME let it all pass without checking serial or SA, without filling ep->hexserial
 }
 
+uchar *videoguard_get_emm_filter(struct s_reader * rdr, int type)
+{
+	static uint8_t filter[32];
+	memset(filter, 0x00, 32);
+
+	//ToDo videoguard_get_emm_filter basic construction
+	switch (type) {
+		case GLOBAL:
+			filter[0]    = 0x82;
+			filter[0+16] = 0xFF;
+
+			break;
+
+		case SHARED:
+			filter[0]    = 0x82;
+			filter[0+16] = 0xFF;
+
+			//memcpy(filter+2, rdr->hexserial, 2);
+			//memset(filter+2+16, 0xFF, 2);
+			break;
+
+		case UNIQUE:
+			filter[0]    = 0x82;
+			filter[0+16] = 0xFF;
+
+			//memcpy(filter+2, rdr->hexserial, 4);
+			//memset(filter+2+16, 0xFF, 4);
+			break;
+	}
+
+	return filter;
+}
+
 int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   unsigned char cta_res[CTA_RES_LEN];

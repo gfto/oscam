@@ -31,6 +31,7 @@ int videoguard_do_ecm(struct s_reader * reader, ECM_REQUEST *);
 int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *);
 int videoguard_get_emm_type(EMM_PACKET *, struct s_reader *);
 int videoguard_card_info(struct s_reader * reader);
+uchar *videoguard_get_emm_filter(struct s_reader * rdr, int type);
 
 // reader-cryptoworks
 int cryptoworks_card_init(struct s_reader * reader, ATR atr);

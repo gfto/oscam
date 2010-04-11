@@ -459,6 +459,7 @@ uchar *get_emm_filter(struct s_reader * rdr, int type) {
 		case SC_SECA:
 			return seca_get_emm_filter(rdr, type);
 		case SC_VIDEOGUARD2:
+			//return videoguard_get_emm_filter(rdr, type);
 			break;
 		case SC_DRE:
 			return dre_get_emm_filter(rdr, type);
