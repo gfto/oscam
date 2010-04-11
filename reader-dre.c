@@ -325,13 +325,17 @@ uchar *dre_get_emm_filter(struct s_reader * rdr, int type)
                 case SHARED:
                         filter[0]    = 0x89;
                         filter[0+16] = 0xFF;
-                        memcpy(filter+1, &rdr->sa[0][0], 4);
-                        memset(filter+1+16, 0xFF, 4);
+			// FIXME: Seems to be that SA is only used with caid 0x4ae1
+			if (rdr->caid[0] == 0x4ae1) {
+                        	memcpy(filter+1, &rdr->sa[0][0], 4);
+                        	memset(filter+1+16, 0xFF, 4);
+			}
                         break;
                 case UNIQUE:
 			//FIXME: No filter for hexserial
                         filter[0]    = 0x87;
                         filter[0+16] = 0xFF;
+			break;
 	}
 	return filter;
 }
