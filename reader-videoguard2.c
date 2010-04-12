@@ -734,6 +734,7 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     }
   memset(reader->hexserial, 0, 8);
   memcpy(reader->hexserial+2, cta_res+3, 4);
+  memcpy(reader->sa, cta_res+3, 3);
   reader->caid[0] = cta_res[24]*0x100+cta_res[25];
 
   /* we have one provider, 0x0000 */
