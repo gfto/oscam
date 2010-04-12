@@ -1019,6 +1019,8 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 
 uchar *videoguard_get_emm_filter(struct s_reader * rdr, int type)
 {
+	//FIXME
+	rdr=rdr;
 	static uint8_t filter[32];
 	memset(filter, 0x00, 32);
 
