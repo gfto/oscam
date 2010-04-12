@@ -1014,15 +1014,43 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
 
 int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
-	rdr=rdr;
-	ep->type=UNKNOWN; //FIXME not sure how this maps onto global, unique and shared!
-	return TRUE; //FIXME let it all pass without checking serial or SA, without filling ep->hexserial
+
+//82 30 ad 70 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 00 
+//d3 02 00 22 90 20 44 02 4a 50 1d 88 ab 02 ac 79 16 6c df a1 b1 b7 77 00 ba eb 63 b5 c9 a9 30 2b 43 e9 16 a9 d5 14 00 
+//d3 02 00 22 90 20 44 02 13 e3 40 bd 29 e4 90 97 c3 aa 93 db 8d f5 6b e4 92 dd 00 9b 51 03 c9 3d d0 e2 37 44 d3 bf 00
+//d3 02 00 22 90 20 44 02 97 79 5d 18 96 5f 3a 67 70 55 bb b9 d2 49 31 bd 18 17 2a e9 6f eb d8 76 ec c3 c9 cc 53 39 00 
+//d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10 76 aa 75 ef d6 82 27 2e 44 7b 00
+
+	int len = (ep->emm[3] / 16) - 3;
+	uchar emm[256];
+	int i,pos;
+
+	memcpy(emm, ep->emm, 4);
+	pos=4+(4*len)+2;
+
+	if ( ep->emm[pos-2] != 0x00 && ep->emm[pos-1] != 0x00 && ep->emm[pos-1] != 0x01 ) {	
+		//remote emm without serial
+		ep->type=UNKNOWN;
+		return TRUE;
+	}
+
+	for (i=0;i<len;i++) {
+		if (!memcmp (rdr->hexserial+2, ep->emm+(4*(i+1)), 4)) {
+			memcpy(ep->hexserial, ep->emm+(4*(i+1)), 4);
+			memcpy(emm+4, ep->emm+pos+1, ep->emm[pos+5]+4);
+			memcpy(ep->emm, emm, ep->emm[pos+5]+4+4);
+			ep->l=ep->emm[pos+5]+4;
+			ep->type=UNIQUE;
+			return TRUE;
+		}
+		pos = pos + ep->emm[pos+5] + 5;
+	}
+
+	return FALSE;
 }
 
 uchar *videoguard_get_emm_filter(struct s_reader * rdr, int type)
 {
-	//FIXME
-	rdr=rdr;
 	static uint8_t filter[32];
 	memset(filter, 0x00, 32);
 
@@ -1032,25 +1060,31 @@ uchar *videoguard_get_emm_filter(struct s_reader * rdr, int type)
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
 
+			memcpy(filter+2, rdr->hexserial+2, 4);
+			memset(filter+2+16, 0xFF, 4);
 			break;
-
 		case SHARED:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
 
-			//memcpy(filter+2, rdr->hexserial, 2);
-			//memset(filter+2+16, 0xFF, 2);
+			memcpy(filter+6, rdr->hexserial+2, 4);
+			memset(filter+6+16, 0xFF, 4);
 			break;
-
 		case UNIQUE:
 			filter[0]    = 0x82;
 			filter[0+16] = 0xFF;
 
-			//memcpy(filter+2, rdr->hexserial, 4);
-			//memset(filter+2+16, 0xFF, 4);
+			memcpy(filter+10, rdr->hexserial+2, 4);
+			memset(filter+10+16, 0xFF, 4);
+			break;
+		case UNKNOWN:
+			filter[0]    = 0x82;
+			filter[0+16] = 0xFF;
+
+			memcpy(filter+14, rdr->hexserial+2, 2);
+			memset(filter+14+16, 0xFF, 2);
 			break;
 	}
-
 	return filter;
 }
 
