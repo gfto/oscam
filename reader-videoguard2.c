@@ -1034,12 +1034,12 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 		return TRUE;
 	}
 
-	for (i=0;i<len;i++) {
-		if (!memcmp (rdr->hexserial+2, ep->emm+(4*(i+1)), 4)) {
-			memcpy(ep->hexserial, ep->emm+(4*(i+1)), 4);
+	for (i=1;i<=len;i++) {
+		if (!memcmp (rdr->hexserial+2, ep->emm+(4*i), 4)) {
+			memcpy(ep->hexserial, ep->emm+(4*i), 4);
 			memcpy(emm+4, ep->emm+pos+1, ep->emm[pos+5]+4);
 			memcpy(ep->emm, emm, ep->emm[pos+5]+4+4);
-			ep->l=ep->emm[pos+5]+4;
+			ep->l=ep->emm[pos+5]+4+4;
 			ep->type=UNIQUE;
 			return TRUE;
 		}

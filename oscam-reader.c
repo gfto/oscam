@@ -515,8 +515,9 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
     }
   }
 #endif
-  
-  if (master_pid!=getppid()) cs_exit(0);
+  if (reader->typ != R_SC8in1) {
+    if (master_pid!=getppid()) cs_exit(0);
+  }
   tcp_toflag=(fd2 && is_tcp && reader->tcp_ito && reader->tcp_connected);
   tv.tv_sec = 0;
   tv.tv_usec = 100000L;
@@ -533,8 +534,10 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
   fdmax=(fd1>fd2) ? fd1 : fd2;
   fdmax=(fdmax>logfd) ? fdmax : logfd;
   if (select(fdmax+1, &fds, 0, 0, (use_tv) ? &tv : 0)<0) return(0);
-  if (master_pid!=getppid()) cs_exit(0);
 
+  if (reader->typ != R_SC8in1) {
+    if (master_pid!=getppid()) cs_exit(0);
+  }
   if ((logfd) && (FD_ISSET(logfd, &fds)))
   {
     cs_debug("select: log-socket ist set");
