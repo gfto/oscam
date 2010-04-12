@@ -106,9 +106,9 @@
 #define CS_MAXPENDING   (CS_MAXPID<<1)
 #define CS_ECMCACHESIZE   CS_MAXPID
 #define CS_EMMCACHESIZE   (CS_MAXPID<<1)
+#define CS_RDR_INIT_HIST
 #endif
 
-#define CS_RDR_INIT_HIST
 #define D_TRACE     1 // Generate very detailed error/trace messages per routine
 #define D_ATR       2 // Debug ATR parsing, dump of ecm, cw
 #define D_READER    4 // Debug Reader/Proxy Process
