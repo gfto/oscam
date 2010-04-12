@@ -3304,9 +3304,11 @@ char *mk_t_group(ulong *grp){
 char *mk_t_ftab(FTAB *ftab){
 	int i = 0, j = 0, needed = 1, pos = 0;
 
-	needed = ftab->nfilts * 5;
-	for (i = 0; i < ftab->nfilts; ++i)
-		needed += ftab->filts[i].nprids * 7;
+	if (ftab->nfilts != 0) {
+		needed = ftab->nfilts * 5;
+		for (i = 0; i < ftab->nfilts; ++i)
+			needed += ftab->filts[i].nprids * 7;
+	}
 
 	char *value = (char *) malloc(needed * sizeof(char));
 
