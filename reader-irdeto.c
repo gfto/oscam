@@ -351,7 +351,7 @@ void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[4+1+16] = 0x0F;
 
 
-	filter[36]=GLOBAL;
+	filter[36]=SHARED;
 	filter[37]=0;
 	filter[38+0]    = 0x82;
 	filter[38+0+16] = 0xFF;
@@ -361,7 +361,7 @@ void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memset(filter+38+2+16, 0xFF, 2);
 
 
-	filter[70]=GLOBAL;
+	filter[70]=UNIQUE;
 	filter[71]=0;
 	filter[72+0]    = 0x82;
 	filter[72+0+16] = 0xFF;
