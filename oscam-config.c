@@ -2047,11 +2047,11 @@ int write_server()
 			char sidok[33]; long2bitchar(reader[i].sidtabok, sidok);
 			char sidno[33];	long2bitchar(reader[i].sidtabno, sidno);
 			struct s_sidtab *sidtab = cfg->sidtab;
-			i=0; dot = "";
+			j=0; dot = "";
 			for (; sidtab; sidtab=sidtab->next){
-				if(sidok[i]=='1')	{fprintf(f,"%s%s", dot, sidtab->label); dot = ",";}
-				if(sidno[i]=='1') {fprintf(f,"%s!%s", dot, sidtab->label); dot = ",";}
-				i++;
+				if(sidok[j]=='1')	{fprintf(f,"%s%s", dot, sidtab->label); dot = ",";}
+				if(sidno[j]=='1') {fprintf(f,"%s!%s", dot, sidtab->label); dot = ",";}
+				j++;
 			}
 			fputc((int)'\n', f);
 
@@ -2080,15 +2080,52 @@ int write_server()
 			if (reader[i].boxid)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", reader[i].boxid);
 
-
 			//Keys Section here
+			if (reader[i].aes_key[0])
+				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", key_btoa(NULL, reader[i].aes_key));
 
+			//n3_rsakey
+			if (reader[i].rsa_mod[0]) {
+				if (reader[i].is_pure_nagra) {
+					fprintf_conf(f, CONFVARWIDTH, "n3_rsakey", "");
+					for (j=0;j<128;j++) {
+						fprintf(f, "%02X", reader[i].rsa_mod[j]);
+					}
+					fprintf(f, "\n");
+				}
+				else if (reader[i].is_tiger) {
+					//tiger_rsakey
+					fprintf_conf(f, CONFVARWIDTH, "tiger_rsakey", "");
+					for (j=0;j<240;j++) {
+						fprintf(f, "%02X", reader[i].rsa_mod[j]);
+					}
+					fprintf(f, "\n");
+				}
+			}
 
-			if (reader[ridx].detect) {
-				if (reader[ridx].detect&0x80)
-					fprintf_conf(f, CONFVARWIDTH, "detect", "!%s\n", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+			//Boxkey
+			if (reader[i].nagra_boxkey[0]) {
+				fprintf_conf(f, CONFVARWIDTH, "boxkey", "");
+				for (j=0;j<16;j++) {
+					fprintf(f, "%02X", reader[i].nagra_boxkey[j]);
+				}
+				fprintf(f, "\n");
+			}
+
+			//ATR
+			if ( reader[i].atr[0]) {
+				fprintf_conf(f, CONFVARWIDTH, "atr", "");
+				for (j=0;j<128;j++) {
+					fprintf(f, "%02X", reader[i].atr[j]);
+				}
+				fprintf(f, "\n");
+			}
+
+			if (reader[i].detect) {
+				if (reader[i].detect&0x80)
+					fprintf_conf(f, CONFVARWIDTH, "detect", "!%s\n", RDR_CD_TXT[reader[i].detect&0x7f]);
 				else
-					fprintf_conf(f, CONFVARWIDTH, "detect", "%s\n", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+					fprintf_conf(f, CONFVARWIDTH, "detect", "%s\n", RDR_CD_TXT[reader[i].detect&0x7f]);
 			}
 
 			if (reader[i].mhz)
