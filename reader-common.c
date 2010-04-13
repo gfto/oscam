@@ -452,33 +452,40 @@ int get_cardsystem(ushort caid) {
 	}
 }
 
-uchar *get_emm_filter(struct s_reader * rdr, int type) {
-
-	static uint8_t filter[32];
-	memset(filter, 0xFF, 32); // should deliver a filter which not produce a flood if cardsystem is not yet implemented.
+void get_emm_filter(struct s_reader * rdr, uchar *filter) {
+	filter[0]=0xFF;
+	filter[1]=0;
 
 	switch(rdr->card_system) {
 		case SC_NAGRA:
-			return nagra2_get_emm_filter(rdr, type);
+			nagra2_get_emm_filter(rdr, filter);
+			break;
 		case SC_IRDETO:
-			return irdeto_get_emm_filter(rdr, type);
+			irdeto_get_emm_filter(rdr, filter);
+			break;
 		case SC_CRYPTOWORKS:
-			return cryptoworks_get_emm_filter(rdr, type);
+			cryptoworks_get_emm_filter(rdr, filter);
+			break;
 		case SC_VIACCESS:
-			return viaccess_get_emm_filter(rdr, type);
+			viaccess_get_emm_filter(rdr, filter);
+			break;
 		case SC_CONAX:
-			return conax_get_emm_filter(rdr, type);
+			conax_get_emm_filter(rdr, filter);
+			break;
 		case SC_SECA:
-			return seca_get_emm_filter(rdr, type);
+			seca_get_emm_filter(rdr, filter);
+			break;
 		case SC_VIDEOGUARD2:
-			return videoguard_get_emm_filter(rdr, type);
+			videoguard_get_emm_filter(rdr, filter);
+			break;
 		case SC_DRE:
-			return dre_get_emm_filter(rdr, type);
+			dre_get_emm_filter(rdr, filter);
+			break;
 		default:
 			break;
 	}
 
-	return filter;
+	return;
 }
 
 int reader_emm(struct s_reader * reader, EMM_PACKET *ep)

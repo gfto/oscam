@@ -223,43 +223,43 @@ int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	}
 }
 
-uchar *conax_get_emm_filter(struct s_reader * rdr, int type)
+void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	static uint8_t filter[32];
-	memset(filter, 0x00, 32);
+	filter[0]=0xFF;	//header
+	filter[1]=3;		//filter count
 
-	switch (type) {
-		case GLOBAL:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
-			// FIXME: dont see any conax global EMM yet
-			filter[1]    = 0xFF;
-			filter[1+16] = 0xFF;
-			// END
-			filter[8]    = 0x70;
-			filter[8+16] = 0xFF;
-			break;
+	filter[2]=GLOBAL;
+	filter[3]=1; //not active
 
-		case SHARED:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
-			filter[8]    = 0x70;
-			filter[8+16] = 0xFF;
-			memcpy(filter+4, rdr->sa[0], 4);
-			memset(filter+4+16, 0xFF, 4);
-			break;
+	filter[4+0]    = 0x82;
+	filter[4+0+16] = 0xFF;
+	// FIXME: dont see any conax global EMM yet
+	filter[4+1]    = 0xFF;
+	filter[4+1+16] = 0xFF;
+	// END
+	filter[4+8]    = 0x70;
+	filter[4+8+16] = 0xFF;
 
-		case UNIQUE:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
-			filter[8]    = 0x70;
-			filter[8+16] = 0xFF;
-			memcpy(filter+4, rdr->hexserial + 2, 4);
-			memset(filter+4+16, 0xFF, 4);
-			break;
-	}
+	filter[36]=SHARED;
+	filter[37]=0;
 
-	return filter;
+	filter[38+0]    = 0x82;
+	filter[38+0+16] = 0xFF;
+	filter[38+8]    = 0x70;
+	filter[38+8+16] = 0xFF;
+	memcpy(filter+38+4, rdr->sa[0], 4);
+	memset(filter+38+4+16, 0xFF, 4);
+
+	filter[70]=UNIQUE;
+	filter[71]=0;
+	filter[72+0]    = 0x82;
+	filter[72+0+16] = 0xFF;
+	filter[72+8]    = 0x70;
+	filter[72+8+16] = 0xFF;
+	memcpy(filter+72+4, rdr->hexserial + 2, 4);
+	memset(filter+72+4+16, 0xFF, 4);
+
+	return;
 }
 
 int conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)

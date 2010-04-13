@@ -337,7 +337,7 @@ void dvbapi_start_filter(int demux_index, int pidindex, unsigned short pid, ucha
 
 void dvbapi_start_emm_filter(int demux_index) {
 	int dmx_fd, i, n=-1;
-	uchar *filter,nullserial[8];
+	uchar nullserial[8];
 
 	char *typtext[]={"UNKNOWN", "UNIQUE", "SHARED", "GLOBAL"};
 
@@ -367,12 +367,25 @@ void dvbapi_start_emm_filter(int demux_index) {
 	if (demux[demux_index].rdr->card_system==0)
 		demux[demux_index].rdr->card_system=get_cardsystem(caid);
 
-	int j;
-	for (j=1;j<4;j++) {
-		int emmtype=j;
-		n=-1;
-		filter = get_emm_filter(demux[demux_index].rdr, emmtype);
+	uchar dmx_filter[256];
+	memset(dmx_filter, 0, sizeof(dmx_filter));
 
+	get_emm_filter(demux[demux_index].rdr, dmx_filter);
+
+	int filter_count=dmx_filter[1];
+	int j;
+
+	for (j=1;j<=filter_count && j < 8;j++) {
+		int startpos=2+(34*(j-1));
+
+		if (dmx_filter[startpos+1] != 0x00)
+			continue;
+
+		uchar filter[32];
+		memcpy(filter, dmx_filter+startpos+2, 32);
+		int emmtype=dmx_filter[startpos];
+		n=-1;
+		
 		for (i=0;i<MAX_FILTER;i++) {
 			if (demux[demux_index].demux_fd[i].fd<=0) {
 				n=i;

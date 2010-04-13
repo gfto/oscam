@@ -1021,12 +1021,13 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 //d3 02 00 22 90 20 44 02 97 79 5d 18 96 5f 3a 67 70 55 bb b9 d2 49 31 bd 18 17 2a e9 6f eb d8 76 ec c3 c9 cc 53 39 00 
 //d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10 76 aa 75 ef d6 82 27 2e 44 7b 00
 
-	int len = (ep->emm[3] / 16) - 3;
+	int serial_count = ((ep->emm[3] >> 4) & 3) + 1;
 	uchar emm[256];
 	int i,pos;
+	int serial_len = (ep->emm[3] & 0x80) ? 3 : 4;
 
 	memcpy(emm, ep->emm, 4);
-	pos=4+(4*len)+2;
+	pos=4+(serial_len*serial_count)+2;
 
 	if ( ep->emm[pos-2] != 0x00 && ep->emm[pos-1] != 0x00 && ep->emm[pos-1] != 0x01 ) {	
 		//remote emm without serial
@@ -1034,9 +1035,9 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 		return TRUE;
 	}
 
-	for (i=1;i<=len;i++) {
-		if (!memcmp (rdr->hexserial+2, ep->emm+(4*i), 4)) {
-			memcpy(ep->hexserial, ep->emm+(4*i), 4);
+	for (i=1;i<=serial_count;i++) {
+		if (!memcmp (rdr->hexserial+2, ep->emm+(serial_len*i), serial_len)) {
+			memcpy(ep->hexserial, ep->emm+(serial_len*i), serial_len);
 			memcpy(emm+4, ep->emm+pos+1, ep->emm[pos+5]+4);
 			memcpy(ep->emm, emm, ep->emm[pos+5]+4+4);
 			ep->l=ep->emm[pos+5]+4+4;
@@ -1049,43 +1050,53 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 	return FALSE;
 }
 
-uchar *videoguard_get_emm_filter(struct s_reader * rdr, int type)
+void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	static uint8_t filter[32];
-	memset(filter, 0x00, 32);
+	filter[0]=0xFF;
+	filter[1]=4;
 
 	//ToDo videoguard_get_emm_filter basic construction
-	switch (type) {
-		case GLOBAL:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
 
-			memcpy(filter+2, rdr->hexserial+2, 4);
-			memset(filter+2+16, 0xFF, 4);
-			break;
-		case SHARED:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
+	filter[2]=UNIQUE;
+	filter[3]=0;
 
-			memcpy(filter+6, rdr->hexserial+2, 4);
-			memset(filter+6+16, 0xFF, 4);
-			break;
-		case UNIQUE:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
+	filter[4+0]    = 0x82;
+	filter[4+0+16] = 0xFF;
 
-			memcpy(filter+10, rdr->hexserial+2, 4);
-			memset(filter+10+16, 0xFF, 4);
-			break;
-		case UNKNOWN:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
+	memcpy(filter+4+2, rdr->hexserial+2, 4);
+	memset(filter+4+2+16, 0xFF, 4);
 
-			memcpy(filter+14, rdr->hexserial+2, 2);
-			memset(filter+14+16, 0xFF, 2);
-			break;
-	}
-	return filter;
+
+	filter[36]=UNIQUE;
+	filter[37]=0;
+
+	filter[38+0]    = 0x82;
+	filter[38+0+16] = 0xFF;
+
+	memcpy(filter+38+6, rdr->hexserial+2, 4);
+	memset(filter+38+6+16, 0xFF, 4);
+	
+
+	filter[70]=UNIQUE;
+	filter[71]=0;
+
+	filter[72+0]    = 0x82;
+	filter[72+0+16] = 0xFF;
+
+	memcpy(filter+72+10, rdr->hexserial+2, 4);
+	memset(filter+72+10+16, 0xFF, 4);
+
+
+	filter[104]=UNIQUE;
+	filter[105]=0;
+
+	filter[106+0]    = 0x82;
+	filter[106+0+16] = 0xFF;
+
+	memcpy(filter+106+14, rdr->hexserial+2, 2);
+	memset(filter+106+14+16, 0xFF, 2);
+
+	return;
 }
 
 int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep)

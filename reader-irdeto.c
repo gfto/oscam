@@ -330,46 +330,47 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 }
 
-uchar *irdeto_get_emm_filter(struct s_reader * rdr, int type)
+void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	static uint8_t filter[32];
-	memset(filter, 0x00, 32);
+	filter[0]=0xFF;
+	filter[1]=3;
 
 	int base = rdr->hexserial[3];
 	int emm_g = base * 8;
 	int emm_s = emm_g + 2;
 	int emm_u = emm_g + 3;
 
-	switch (type) {
-		case GLOBAL:
-			// hex addressed
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
-			filter[1]    = emm_g;
-			// FIXME: more restrictive filter for provider addressed EMM's
-			filter[1+16] = 0x0F;
-			break;
+	filter[2]=GLOBAL;
+	filter[3]=0;
+	
+	// hex addressed
+	filter[4+0]    = 0x82;
+	filter[4+0+16] = 0xFF;
+	filter[4+1]    = emm_g;
+	// FIXME: more restrictive filter for provider addressed EMM's
+	filter[4+1+16] = 0x0F;
 
-		case SHARED:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
-			filter[1]    = emm_s;
-			filter[1+16] = 0xFF;
-			memcpy(filter+2, rdr->hexserial, 2);
-			memset(filter+2+16, 0xFF, 2);
-			break;
 
-		case UNIQUE:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
-			filter[1]    = emm_u;
-			filter[1+16] = 0xFF;
-			memcpy(filter+2, rdr->hexserial, 4);
-			memset(filter+2+16, 0xFF, 4);
-			break;
-	}
+	filter[36]=GLOBAL;
+	filter[37]=0;
+	filter[38+0]    = 0x82;
+	filter[38+0+16] = 0xFF;
+	filter[38+1]    = emm_s;
+	filter[38+1+16] = 0xFF;
+	memcpy(filter+38+2, rdr->hexserial, 2);
+	memset(filter+38+2+16, 0xFF, 2);
 
-	return filter;
+
+	filter[70]=GLOBAL;
+	filter[71]=0;
+	filter[72+0]    = 0x82;
+	filter[72+0+16] = 0xFF;
+	filter[72+1]    = emm_u;
+	filter[72+1+16] = 0xFF;
+	memcpy(filter+72+2, rdr->hexserial, 4);
+	memset(filter+72+2+16, 0xFF, 4);
+
+	return;
 }
 
 int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)

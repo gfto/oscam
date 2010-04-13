@@ -356,29 +356,34 @@ int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE 
 	return TRUE; //FIXME let it all pass without checking serial or SA, without filling ep->hexserial
 }
 
-uchar *viaccess_get_emm_filter(struct s_reader * rdr, int type)
+void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	static uint8_t filter[32];
-	memset(filter, 0x00, 32);
+	filter[0]=0xFF;
+	filter[1]=3;
 
-	switch (type) {
-		case GLOBAL:
-			filter[0]    = 0x8D;
-			filter[0+16] = 0xFF;
-			break;
-		case SHARED:
-			filter[0]    = 0x8C;
-			filter[0+16] = 0xFF;
-			break;
-		case UNIQUE:
-			filter[0]    = 0x8E;
-			filter[0+16] = 0xFF;
-			memcpy(filter+1, rdr->hexserial+1, 3);
-			memset(filter+1+16, 0xFF, 3);
-			break;
-	}
+	filter[2]=GLOBAL;
+	filter[3]=0;
 
-	return filter;
+	filter[4+0]    = 0x8D;
+	filter[4+0+16] = 0xFF;
+
+
+	filter[36]=SHARED;
+	filter[37]=0;
+
+	filter[38+0]    = 0x8C;
+	filter[38+0+16] = 0xFF;
+
+
+	filter[70]=UNIQUE;
+	filter[71]=0;
+
+	filter[72+0]    = 0x8E;
+	filter[72+0+16] = 0xFF;
+	memcpy(filter+72+1, rdr->hexserial+1, 3);
+	memset(filter+72+1+16, 0xFF, 3);
+
+	return;
 }
 
 int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)

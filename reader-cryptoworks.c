@@ -498,55 +498,58 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	}
 }
 
-uchar *cryptoworks_get_emm_filter(struct s_reader * rdr, int type)
+void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	static uint8_t filter[32];
-	memset(filter, 0x00, 32);
+	filter[0]=0xFF;
+	filter[1]=3;
 
-	switch (type) {
-		case GLOBAL:
-			filter[0]    = 0x88;
-			filter[0+16] = 0xFE; // 0x88 to 0x89
-			filter[1]    = 0xA9;
-			filter[1+16] = 0xFF;
-			filter[2]    = 0xFF;
-			filter[2+16] = 0xFF;
-			filter[6]    = 0x83;
-			filter[6+16] = 0xFF;
-			filter[7]    = 0x01;
-			filter[7+16] = 0xFF;
-			break;
-		case SHARED:
-			filter[0]    = 0x84;
-			filter[0+16] = 0xFF;
-			filter[1]    = 0xA9;
-			filter[1+16] = 0xFF;
-			filter[2]    = 0xFF;
-			filter[2+16] = 0xFF;
-			memcpy(filter+3, rdr->hexserial, 4);
-			memset(filter+3+16, 0xFF, 4);
-			filter[10]    = 0x80;
-			filter[10+16] = 0xFF;
-			filter[11]    = 0x04;
-			filter[11+16] = 0xFF;
-			break;
-		case UNIQUE:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
-			filter[1]    = 0xA9;
-			filter[1+16] = 0xFF;
-			filter[2]    = 0xFF;
-			filter[2+16] = 0xFF;
-			memcpy(filter+3, rdr->hexserial, 5);
-			memset(filter+3+16, 0xFF, 5);
-			filter[11]    = 0x80;
-			filter[11+16] = 0xFF;
-			filter[12]    = 0x05;
-			filter[12+16] = 0xFF;
-			break;
-	}
+	filter[2]=GLOBAL;
+	filter[3]=0;
 
-	return filter;
+	filter[4+0]    = 0x88;
+	filter[4+0+16] = 0xFE; // 0x88 to 0x89
+	filter[4+1]    = 0xA9;
+	filter[4+1+16] = 0xFF;
+	filter[4+2]    = 0xFF;
+	filter[4+2+16] = 0xFF;
+	filter[4+6]    = 0x83;
+	filter[4+6+16] = 0xFF;
+	filter[4+7]    = 0x01;
+	filter[4+7+16] = 0xFF;
+
+	filter[36]=SHARED;
+	filter[37]=0;
+
+	filter[38+0]    = 0x84;
+	filter[38+0+16] = 0xFF;
+	filter[38+1]    = 0xA9;
+	filter[38+1+16] = 0xFF;
+	filter[38+2]    = 0xFF;
+	filter[38+2+16] = 0xFF;
+	memcpy(filter+38+3, rdr->hexserial, 4);
+	memset(filter+38+3+16, 0xFF, 4);
+	filter[38+10]    = 0x80;
+	filter[38+10+16] = 0xFF;
+	filter[38+11]    = 0x04;
+	filter[38+11+16] = 0xFF;
+
+	filter[70]=UNIQUE;
+	filter[71]=0;
+
+	filter[72+0]    = 0x82;
+	filter[72+0+16] = 0xFF;
+	filter[72+1]    = 0xA9;
+	filter[72+1+16] = 0xFF;
+	filter[72+2]    = 0xFF;
+	filter[72+2+16] = 0xFF;
+	memcpy(filter+72+3, rdr->hexserial, 5);
+	memset(filter+72+3+16, 0xFF, 5);
+	filter[72+11]    = 0x80;
+	filter[72+11+16] = 0xFF;
+	filter[72+12]    = 0x05;
+	filter[72+12+16] = 0xFF;
+
+	return;
 }
 
 int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)

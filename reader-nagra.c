@@ -739,39 +739,45 @@ int nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if
 	}
 }
 
-uchar *nagra2_get_emm_filter(struct s_reader * rdr, int type)
+void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	static uint8_t filter[32];
-	memset(filter, 0x00, 32);
+	filter[0]=0xFF;
+	filter[1]=3;
+	
 
-	switch (type) {
-		case GLOBAL:
-			filter[0]    = 0x82;
-			filter[0+16] = 0xFF;
-			break;
-		case SHARED:
-			filter[0]    = 0x83;
-			filter[0+16] = 0xFF;
-			memcpy(filter+1, rdr->hexserial+2, 3);
-			memset(filter+1+16, 0xFF, 3);
-			filter[4]    = 0x00;
-			filter[4+16] = 0xFF;
-			filter[5]    = 0x10;
-			filter[5+16] = 0xFF;
-			break;
-		case UNIQUE:
-			filter[0]    = 0x83;
-			filter[0+16] = 0xFF;
-			memcpy(filter+1, rdr->hexserial+2, 3);
-			memset(filter+1+16, 0xFF, 3);
-			filter[4]    = rdr->hexserial[5];
-			filter[4+16] = 0xFF;
-			filter[5]    = 0x00;
-			filter[5+16] = 0xFF;
-			break;
-	}
+	filter[2]=GLOBAL;
+	filter[3]=0;
+	
+	filter[4+0]    = 0x82;
+	filter[4+0+16] = 0xFF;
+	
 
-	return filter;
+	filter[36]=SHARED;
+	filter[37]=0;
+
+	filter[38+0]    = 0x83;
+	filter[38+0+16] = 0xFF;
+	memcpy(filter+38+1, rdr->hexserial+2, 3);
+	memset(filter+38+1+16, 0xFF, 3);
+	filter[38+4]    = 0x00;
+	filter[38+4+16] = 0xFF;
+	filter[38+5]    = 0x10;
+	filter[38+5+16] = 0xFF;
+
+
+	filter[70]=UNIQUE;
+	filter[71]=0;
+
+	filter[72+0]    = 0x83;
+	filter[72+0+16] = 0xFF;
+	memcpy(filter+72+1, rdr->hexserial+2, 3);
+	memset(filter+72+1+16, 0xFF, 3);
+	filter[72+4]    = rdr->hexserial[5];
+	filter[72+4+16] = 0xFF;
+	filter[72+5]    = 0x00;
+	filter[72+5+16] = 0xFF;
+	
+	return;
 }
 int nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
