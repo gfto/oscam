@@ -27,6 +27,9 @@
 
 #include <pthread.h>
 
+//for reader-nagra variables in s_reader: 
+#include "cscrypt/idea.h" 
+
 #ifndef CS_GLOBALS
 #define CS_GLOBALS
 #define CS_VERSION    "0.99.4svn"
@@ -422,6 +425,14 @@ struct s_client
   CLASSTAB	cltab;
 };
 
+//for viaccess var in s_reader:
+struct geo_cache
+{
+	ulong provid;
+	uchar geo[256];
+	uchar geo_len;
+};
+
 struct s_reader  //contains device info, reader info and card info
 {
   int		smargopatch;
@@ -543,6 +554,24 @@ struct s_reader  //contains device info, reader info and card info
 	int written; //keep score of how much bytes are written to serial port, since they are echoed back they have to be read
 	////variables from reader-dre.c 
 	unsigned char provider;
+	////variables from reader-nagra.c 
+        IDEA_KEY_SCHEDULE ksSession; 
+ 	int is_pure_nagra; 
+ 	int is_tiger; 
+ 	int has_dt08; 
+ 	int swapCW; 
+ 	unsigned char rom[15]; 
+ 	unsigned char plainDT08RSA[64]; 
+ 	unsigned char IdeaCamKey[16]; 
+ 	unsigned char irdId[4]; 
+ 	unsigned char sessi[16]; 
+ 	unsigned char signature[8]; 
+ 	unsigned char cam_state[3]; 
+	////variables from reader-cryptoworks.c
+	BIGNUM exp;
+	BIGNUM ucpk;
+	////variables from reader-viaccess.c 
+	struct geo_cache last_geo;
 };
 
 #ifdef CS_ANTICASC

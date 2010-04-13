@@ -1412,9 +1412,8 @@ int cc_cli_init()
     cs_log ("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d", reader[ridx].label,
      reader[ridx].device, reader[ridx].r_port,
      reader[ridx].cc_version, reader[ridx].cc_build, reader[ridx].cc_maxhop);
-    cc_cli_connect();
 
-    return(0);
+    return(cc_cli_connect());
   }
   return(-1);
 }

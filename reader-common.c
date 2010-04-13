@@ -66,7 +66,6 @@ int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar * cta_res,
 
 #endif
 
-	cs_ddump(buf, l, "write to cardreader %s:",reader->label);
 	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary 
 	cs_ptyp_orig=cs_ptyp;
 	cs_ptyp=D_DEVICE;
@@ -75,13 +74,14 @@ int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar * cta_res,
 		cs_debug("SC8in1: locked for CardWrite of slot %i", reader->slot);
 		Sc8in1_Selectslot(reader, reader->slot);
 	}
+	cs_ddump(buf, l, "write to cardreader %s:",reader->label);
 	rc=ICC_Async_CardWrite(reader, buf, (unsigned short)l, cta_res, p_cta_lr);
+	cs_ddump(cta_res, *p_cta_lr, "answer from cardreader %s:", reader->label);
 	if (reader->typ == R_SC8in1) {
 		cs_debug("SC8in1: unlocked for CardWrite of slot %i", reader->slot);
 		pthread_mutex_unlock(&sc8in1);
 	}
 	cs_ptyp=cs_ptyp_orig;
-	cs_ddump(cta_res, *p_cta_lr, "answer from cardreader %s:", reader->label);
 	return rc;
 }
 

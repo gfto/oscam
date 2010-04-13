@@ -1,15 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
 
-struct geo_cache
-{
-  ulong provid;
-  uchar geo[256];
-  uchar geo_len;
-};
-
-static struct geo_cache last_geo;
-
 struct via_date {
   ushort day_s   : 5;
   ushort month_s : 4;
@@ -221,7 +212,7 @@ cs_log("[viaccess-reader] name: %s", cta_res);
   }
 
   cs_log("[viaccess-reader] ready for requests");
-  memset(&last_geo, 0, sizeof(last_geo));
+  memset(&reader->last_geo, 0, sizeof(reader->last_geo));
   return OK;
 }
 
@@ -278,11 +269,11 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     }
     //
 
-    if( last_geo.provid != provid ) 
+    if( reader->last_geo.provid != provid ) 
     {
-      last_geo.provid = provid;
-      last_geo.geo_len = 0;
-      last_geo.geo[0]  = 0;
+      reader->last_geo.provid = provid;
+      reader->last_geo.geo_len = 0;
+      reader->last_geo.geo[0]  = 0;
       write_cmd(insa4, ident); // set provider
     }
 
@@ -297,11 +288,11 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     }
     if(ecmf8Len)
     {
-      if( last_geo.geo_len!=ecmf8Len || 
-         memcmp(last_geo.geo, ecmf8Data, last_geo.geo_len))
+      if( reader->last_geo.geo_len!=ecmf8Len || 
+         memcmp(reader->last_geo.geo, ecmf8Data, reader->last_geo.geo_len))
       {
-        memcpy(last_geo.geo, ecmf8Data, ecmf8Len);
-        last_geo.geo_len= ecmf8Len;
+        memcpy(reader->last_geo.geo, ecmf8Data, ecmf8Len);
+        reader->last_geo.geo_len= ecmf8Len;
         insf8[3]=keynr;
         insf8[4]=ecmf8Len;
         write_cmd(insf8, ecmf8Data);
@@ -575,7 +566,7 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     }
   }
 
-  memset(&last_geo, 0, sizeof(last_geo));
+  memset(&reader->last_geo, 0, sizeof(reader->last_geo));
 
   /*
   Sub Main()
@@ -614,7 +605,7 @@ int viaccess_card_info(struct s_reader * reader)
   static uchar pin[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04};
 
   show_cls=reader->show_cls;
-  memset(&last_geo, 0, sizeof(last_geo));
+  memset(&reader->last_geo, 0, sizeof(reader->last_geo));
 
   cs_log("[viaccess-reader] card detected"); 
   

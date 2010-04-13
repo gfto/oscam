@@ -1,8 +1,6 @@
 #include "globals.h"
 #include "reader-common.h"
 
-static BIGNUM exp, ucpk;
-
 #define CMD_LEN 5
 
 void RotateBytes1(unsigned char *out, unsigned char *in, int n)
@@ -223,15 +221,15 @@ int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
     if (search_boxkey(reader->caid[0], (char *)keybuf))
     {
       ipk=BN_new();
-      BN_bin2bn(cwexp, sizeof(cwexp), &exp);
+      BN_bin2bn(cwexp, sizeof(cwexp), &reader->exp);
       BN_bin2bn(keybuf, 64, ipk);
-      RSA(cta_res+2, cta_res+2, 0x40, &exp, ipk, 0);
+      RSA(cta_res+2, cta_res+2, 0x40, &reader->exp, ipk, 0);
       BN_free(ipk);
       reader->ucpk_valid =(cta_res[2]==((mfid & 0xFF)>>1));
       if (reader->ucpk_valid)
       {
         cta_res[2]|=0x80;
-        BN_bin2bn(cta_res+2, 0x40, &ucpk);
+        BN_bin2bn(cta_res+2, 0x40, &reader->ucpk);
         cs_ddump(cta_res+2, 0x40, "IPK available -> session-key:");
       }
       else
@@ -239,7 +237,7 @@ int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
         reader->ucpk_valid =(keybuf[0]==(((mfid & 0xFF)>>1)|0x80));
         if (reader->ucpk_valid)
         {
-          BN_bin2bn(keybuf, 0x40, &ucpk);
+          BN_bin2bn(keybuf, 0x40, &reader->ucpk);
           cs_ddump(keybuf, 0x40, "session-key found:");
         }
         else
@@ -411,7 +409,7 @@ int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             {
               if(reader->ucpk_valid)
               {
-                RSA(&cta_res[i+2],&cta_res[i+2], n, &exp, &ucpk, 0);
+                RSA(&cta_res[i+2],&cta_res[i+2], n, &reader->exp, &reader->ucpk, 0);
                 cs_debug("[cryptoworks-reader] after camcrypt ");
                 r=0; secLen=n-4; n=4;
               }
