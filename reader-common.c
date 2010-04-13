@@ -237,18 +237,28 @@ void reader_card_info(struct s_reader * reader)
 
 static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 {
-  if (nagra2_card_init(reader, atr))		reader->card_system=SC_NAGRA; else
-  if (irdeto_card_init(reader, atr))		reader->card_system=SC_IRDETO; else
-  if (conax_card_init(reader, atr))		reader->card_system=SC_CONAX; else
-  if (cryptoworks_card_init(reader, atr))	reader->card_system=SC_CRYPTOWORKS; else
-  if (seca_card_init(reader, atr))	reader->card_system=SC_SECA; else
-  if (viaccess_card_init(reader, atr))	reader->card_system=SC_VIACCESS; else
-  if (videoguard_card_init(reader, atr))  reader->card_system=SC_VIDEOGUARD2; else
-  if (dre_card_init(reader, atr))  reader->card_system=SC_DRE; else
-    cs_ri_log(reader, "card system not supported");
-  cs_ri_brk(reader, 1);
 
-  return(reader->card_system);
+	if (nagra2_card_init(reader, atr))
+		reader->card_system=SC_NAGRA;
+	else if (irdeto_card_init(reader, atr))
+		reader->card_system=SC_IRDETO;
+	else if (conax_card_init(reader, atr))
+		reader->card_system=SC_CONAX;
+	else if (cryptoworks_card_init(reader, atr))
+		reader->card_system=SC_CRYPTOWORKS;
+	else if (seca_card_init(reader, atr))
+		reader->card_system=SC_SECA;
+	else if (viaccess_card_init(reader, atr))
+		reader->card_system=SC_VIACCESS;
+	else if (videoguard_card_init(reader, atr))
+		reader->card_system=SC_VIDEOGUARD2;
+	else if (dre_card_init(reader, atr)) 
+		reader->card_system=SC_DRE;
+	else
+		cs_ri_log(reader, "card system not supported");
+
+	cs_ri_brk(reader, 1);
+	return(reader->card_system);
 }
 
 static int reader_reset(struct s_reader * reader)
