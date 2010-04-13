@@ -163,10 +163,10 @@ void send_oscam_config_camd35(struct templatevars *vars, FILE *f, struct uripara
 	}
 	tpl_printf(vars, 0, "PORT", "%d", cfg->c35_port);
 	if (cfg->c35_tcp_srvip != 0)
-	tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
+		tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
 
 	if (cfg->c35_suppresscmd08)
-	tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
+		tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
 
 	fputs(tpl_getTpl(vars, "CONFIGCAMD35"), f);
 }
@@ -206,6 +206,10 @@ void send_oscam_config_camd35tcp(struct templatevars *vars, FILE *f, struct urip
 	}
 	if (cfg->c35_tcp_srvip != 0)
 	tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
+
+	//SUPPRESSCMD08
+	if (cfg->c35_suppresscmd08)
+		tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
 
 	fputs(tpl_getTpl(vars, "CONFIGCAMD35TCP"), f);
 }
