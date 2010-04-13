@@ -1017,6 +1017,9 @@ void dvbapi_main_local() {
 					close(pfd2[i].fd);
 					continue;
 				}
+				if (pfd2[i].fd==fd_m2c) {
+					cs_exit(0);
+				}
 			}
 			if (pfd2[i].revents & (POLLIN | POLLPRI)) {
 				if (pfd2[i].fd==fd_m2c) {
@@ -1026,15 +1029,15 @@ void dvbapi_main_local() {
 
 				if (type[i]==1) {
 					if (pfd2[i].fd==listenfd) {
-						cs_debug("dvbapi: new socket connection");
 						connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
+						cs_debug("dvbapi: new socket connection fd: %d", connfd);
 
 						if (connfd <= 0) {
 							cs_log("dvbapi: accept() returns error %d, fd event %d", errno, pfd2[i].revents);
 							continue;
 						}
 					} else {
-						cs_log("dvbapi: New capmt on old socket. Please report.");
+						cs_debug("dvbapi: New capmt on old socket. Please report.");
 						connfd = pfd2[i].fd;
 					}
 
