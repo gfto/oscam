@@ -4,8 +4,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-IDEA_KEY_SCHEDULE ksSession;
-
 // Card Status checks
 #define HAS_CW()      ((reader->cam_state[2]&6)==6)
 #define RENEW_SESSIONKEY() ((reader->cam_state[0]&128)==128 || (reader->cam_state[0]&64)==64 || (reader->cam_state[0]&32)==32 || (reader->cam_state[2]&8)==8)
@@ -404,7 +402,7 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
   	memcpy (&buf[64], static_dt08+65, 8);
   	memset(v,0,sizeof(v));
   	memset(static_dt08,0,sizeof(static_dt08));
-  	idea_cbc_encrypt(buf,static_dt08,72,&ksSession,v,IDEA_DECRYPT);
+  	idea_cbc_encrypt(buf,static_dt08,72,&reader->ksSession,v,IDEA_DECRYPT);
   	
   	if (reader->swapCW==1)
   	{
@@ -671,9 +669,9 @@ int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		{
 			unsigned char v[8];
 			memset(v,0,sizeof(v));
-			idea_cbc_encrypt(&cta_res[30],er->cw,8,&ksSession,v,IDEA_DECRYPT);
+			idea_cbc_encrypt(&cta_res[30],er->cw,8,&reader->ksSession,v,IDEA_DECRYPT);
 			memset(v,0,sizeof(v));
-			idea_cbc_encrypt(&cta_res[4],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
+			idea_cbc_encrypt(&cta_res[4],er->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
 			if (reader->swapCW==1)
 		  	{
 		  		cs_debug("[nagra-reader] swap cws");
@@ -703,9 +701,9 @@ int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 				unsigned char v[8];
 				memset(v,0,sizeof(v));
-				idea_cbc_encrypt(&cta_res[14],er->cw,8,&ksSession,v,IDEA_DECRYPT);
+				idea_cbc_encrypt(&cta_res[14],er->cw,8,&reader->ksSession,v,IDEA_DECRYPT);
 				memset(v,0,sizeof(v));
-				idea_cbc_encrypt(&cta_res[6],er->cw+8,8,&ksSession,v,IDEA_DECRYPT);
+				idea_cbc_encrypt(&cta_res[6],er->cw+8,8,&reader->ksSession,v,IDEA_DECRYPT);
 				return OK;
 			}
 			cs_debug("[nagra-reader] can't decode ecm");
