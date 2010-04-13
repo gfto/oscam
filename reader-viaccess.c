@@ -336,24 +336,36 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return(rc?OK:ERROR);
 }
 
-int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
-       switch (ep->emm[0]) {
+	cs_debug_mask(D_EMM, "Entered viaccess_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
+
+	switch (ep->emm[0]) {
 		case 0x8E:
 			memcpy(ep->hexserial, ep->emm+3, 3);
+			cs_debug_mask(D_EMM, "VIACCESS EMM: UNIQUE");
 			if (!memcmp (rdr->hexserial+1, ep->hexserial, 3)) {
-				ep->type=UNIQUE; //?
+				ep->type=UNIQUE; //FIXME: ?
 				return TRUE;
 			}
-			break;
-		case 0x8C:
+			else
+				return FALSE;
+
 		case 0x8D:
 			ep->type=GLOBAL;
+			cs_debug_mask(D_EMM, "VIACCESS EMM: GLOBAL");
+			return TRUE;
+
+		case 0x8C:
+			ep->type=SHARED;
+			cs_debug_mask(D_EMM, "VIACCESS EMM: SHARED");
+			return TRUE;
+
+		default:
+			ep->type = UNKNOWN;
+			cs_debug_mask(D_EMM, "VIACCESS EMM: UNKNOWN");
 			return TRUE;
 	}	
-
-	ep->type=UNKNOWN; //FIXME not sure how this maps onto global, unique and shared!
-	return TRUE; //FIXME let it all pass without checking serial or SA, without filling ep->hexserial
 }
 
 void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
