@@ -669,13 +669,6 @@ int cs_fork(in_addr_t ip, in_port_t port)
                      }
                      cdiff=i;
                      break;
-            case 98: client[i].typ='n';   // resolver
-                     client[i].ip=client[0].ip;
-                     strcpy(client[i].usr, client[0].usr);
-                     cs_log("resolver started (pid=%d, delay=%d sec)",
-                             pid, cfg->resolvedelay);
-                     cdiff=i;
-                     break;
             case 97: client[i].typ='l';   // logger
                      client[i].ip=client[0].ip;
                      strcpy(client[i].usr, client[0].usr);
@@ -992,10 +985,35 @@ static void start_client_resolver()
 
 	i=pthread_create(&tid, (pthread_attr_t *)0, (void *)&cs_client_resolve, (void *) 0);
 	if (i)
+		cs_log("ERROR: can't create client resolver-thread (err=%d)", i);
+	else
+	{
+		cs_log("client resolver thread started");
+		pthread_detach(tid);
+	}
+}
+
+static void loop_resolver() 
+{ 
+  cs_sleepms(1000); // wait for reader 
+  while(1) 
+  { 
+    cs_resolve(); 
+    cs_sleepms(1000*cfg->resolvedelay); 
+  } 
+} 
+
+static void start_resolver()
+{
+	int i;
+	pthread_t tid;
+
+	i=pthread_create(&tid, (pthread_attr_t *)0, (void *)&loop_resolver, (void *) 0);
+	if (i)
 		cs_log("ERROR: can't create resolver-thread (err=%d)", i);
 	else
 	{
-		cs_log("resolver thread started");
+		cs_log("resolver thread started (delay=%d sec)", cfg->resolvedelay);
 		pthread_detach(tid);
 	}
 }
@@ -1052,25 +1070,6 @@ static void cs_logger(void)
       }
     }
   }
-}
-
-static void start_resolver()
-{
-	int i;
-
-	cs_sleepms(1000); // wait for reader
-	while(1)
-	{
-		if (master_pid!=getppid())
-			cs_exit(0);
-		cs_resolve();
-		for (i=0; i<cfg->resolvedelay; i++)
-			if (master_pid!=getppid())
-				cs_exit(0);
-			else
-				cs_sleepms(1000);
-		//        sleep(cfg->resolvedelay);
-	}
 }
 
 #ifdef CS_ANTICASC
@@ -1139,7 +1138,6 @@ static void init_service(int srv)
 		case 96: start_anticascader();
 #endif
 		case 97: cs_logger();
-		case 98: start_resolver();
 #ifdef WEBIF
 		case 95: cs_http();
 #endif
@@ -2585,7 +2583,7 @@ int main (int argc, char *argv[])
 		start_client_resolver();
 
   init_service(97); // logger
-  init_service(98); // resolver
+  start_resolver();
 #ifdef WEBIF
   init_service(95); // http
 #endif
