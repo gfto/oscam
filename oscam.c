@@ -955,67 +955,52 @@ static int start_listener(struct s_module *ph, int port_idx)
 
 static void cs_client_resolve()
 {
-	while (1)
-	{
-		struct hostent *rht;
-		struct s_auth *account;
-		struct sockaddr_in udp_sa;
+  while (1)
+  {
+    struct hostent *rht;
+    struct s_auth *account;
+    struct sockaddr_in udp_sa;
 
-		for (account=cfg->account; account; account=account->next)
-			if (account->dyndns[0])
-			{
-				rht=gethostbyname((const char *)account->dyndns);
-				if (rht)
-				{
-					memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-					account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
-				}
-				else
-					cs_log("can't resolve hostname %s (user: %s)", account->dyndns, account->usr);
-				client[cs_idx].last=time((time_t)0);
-			}
-		sleep(cfg->resolvedelay);
-	}
+    for (account=cfg->account; account; account=account->next)
+      if (account->dyndns[0])
+      {
+        rht=gethostbyname((const char *)account->dyndns);
+        if (rht)
+        {
+          memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
+          account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
+        }
+        else
+          cs_log("can't resolve hostname %s (user: %s)", account->dyndns, account->usr);
+        client[cs_idx].last=time((time_t)0);
+      }
+    sleep(cfg->resolvedelay);
+  }
 }
 
-static void start_client_resolver()
+static void loop_resolver()
 {
-	int i;
-	pthread_t tid;
-
-	i=pthread_create(&tid, (pthread_attr_t *)0, (void *)&cs_client_resolve, (void *) 0);
-	if (i)
-		cs_log("ERROR: can't create client resolver-thread (err=%d)", i);
-	else
-	{
-		cs_log("client resolver thread started");
-		pthread_detach(tid);
-	}
+  cs_sleepms(1000); // wait for reader
+  while(1)
+  {
+    cs_resolve();
+    cs_sleepms(1000*cfg->resolvedelay);
+  }
 }
 
-static void loop_resolver() 
-{ 
-  cs_sleepms(1000); // wait for reader 
-  while(1) 
-  { 
-    cs_resolve(); 
-    cs_sleepms(1000*cfg->resolvedelay); 
-  } 
-} 
-
-static void start_resolver()
+static void start_thread(void * startroutine, char * nameroutine)
 {
-	int i;
-	pthread_t tid;
+  int i;
+  pthread_t tid;
 
-	i=pthread_create(&tid, (pthread_attr_t *)0, (void *)&loop_resolver, (void *) 0);
-	if (i)
-		cs_log("ERROR: can't create resolver-thread (err=%d)", i);
-	else
-	{
-		cs_log("resolver thread started (delay=%d sec)", cfg->resolvedelay);
-		pthread_detach(tid);
-	}
+  i=pthread_create(&tid, (pthread_attr_t *)0, startroutine, (void *) 0);
+  if (i)
+    cs_log("ERROR: can't create %s thread (err=%d)", i, nameroutine);
+  else
+  {
+    cs_log("%s thread started", nameroutine);
+    pthread_detach(tid);
+  }
 }
 
 void cs_resolve()
@@ -2580,10 +2565,10 @@ int main (int argc, char *argv[])
 	client[0].last=time((time_t *)0);
 
 	if(cfg->clientdyndns)
-		start_client_resolver();
+		start_thread((void *) &cs_client_resolve, "client resolver");
 
   init_service(97); // logger
-  start_resolver();
+  start_thread((void *) &loop_resolver, "resolver");
 #ifdef WEBIF
   init_service(95); // http
 #endif
