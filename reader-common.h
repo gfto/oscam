@@ -24,6 +24,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *);
 int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *);
 int viaccess_get_emm_type(EMM_PACKET *, struct s_reader *);
 int viaccess_card_info(struct s_reader * reader);
+uchar *viaccess_get_emm_filter(struct s_reader * rdr, int type);
 
 // reader-videoguard
 int videoguard_card_init(struct s_reader * reader, ATR atr);
