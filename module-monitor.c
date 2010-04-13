@@ -366,6 +366,12 @@ static void monitor_send_details_version(){
 	monitor_send_info(buf, 1);
 }
 
+static void monitor_send_keepalive_ack(){
+	char buf[32];
+	sprintf(buf, "[K-0000]keepalive_ack\n");
+	monitor_send_info(buf, 1);
+}
+
 static void monitor_process_details_master(char *buf, int pid){
 	if (cfg->nice != 99)
 		sprintf(buf + 200, ", nice=%d", cfg->nice);
@@ -650,7 +656,7 @@ static void monitor_list_commands(char *args[], int cmdcnt){
 static int monitor_process_request(char *req)
 {
 	int i, rc;
-	char *cmd[] = {"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug", "setuser", "setserver", "commands"};
+	char *cmd[] = {"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug", "setuser", "setserver", "commands", "keepalive"};
 	int cmdcnt = sizeof(cmd)/sizeof(char *);  // Calculate the amount of items in array
 	char *arg;
 
@@ -673,6 +679,7 @@ static int monitor_process_request(char *req)
 			case  9:	if (client[cs_idx].monlvl > 3) monitor_set_account(arg); break;	// setuser
 			case 10:	if (client[cs_idx].monlvl > 3) monitor_set_server(arg); break;	// setserver
 			case 11:	if (client[cs_idx].monlvl > 3) monitor_list_commands(cmd, cmdcnt); break;	// list commands
+			case 12:	if (client[cs_idx].monlvl > 3) monitor_send_keepalive_ack(); break;	// keepalive
 			default:	continue;
 			}
 			break;
