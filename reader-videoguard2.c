@@ -1053,7 +1053,7 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
-	filter[1]=4;
+	filter[1]=3;
 
 	//ToDo videoguard_get_emm_filter basic construction
 
@@ -1087,14 +1087,14 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memset(filter+72+10+16, 0xFF, 4);
 
 
-	filter[104]=UNIQUE;
+	/* filter[104]=UNIQUE;
 	filter[105]=0;
 
 	filter[106+0]    = 0x82;
 	filter[106+0+16] = 0xFF;
 
 	memcpy(filter+106+14, rdr->hexserial+2, 2);
-	memset(filter+106+14+16, 0xFF, 2);
+	memset(filter+106+14+16, 0xFF, 2); */
 
 	return;
 }
