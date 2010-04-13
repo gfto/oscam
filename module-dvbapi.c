@@ -755,6 +755,8 @@ void dvbapi_handlesockmsg (unsigned char *buffer, unsigned int len, int connfd) 
 							break;
 						}				
 					}			
+				} else {
+					close(connfd);
 				}
 				break;
 			default:
@@ -982,7 +984,7 @@ void dvbapi_main_local() {
 		
 			if (demux[i].socket_fd>0) {
 				rc=0;
-				if (strcmp(cfg->dvbapi_boxtype, "ipbox") != 0) {
+				if (strcmp(cfg->dvbapi_boxtype, "ipbox") == 0) {
 					for (j = 0; j < pfdcount; j++)
 						if (pfd2[j].fd == demux[i].socket_fd) {
 							rc=1;
