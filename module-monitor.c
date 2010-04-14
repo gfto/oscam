@@ -377,20 +377,20 @@ static void monitor_process_details_master(char *buf, int pid){
 		sprintf(buf + 200, ", nice=%d", cfg->nice);
 	else
 		buf[200] = '\0';
-	sprintf(buf, "version=%s#%s, system=%s%s", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf + 100), buf + 200);
+	sprintf(buf, "version=%s#%s, system=%s%s\n", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf + 100), buf + 200);
 	monitor_send_details(buf, pid);
 
-	sprintf(buf, "max. clients=%d, client max. idle=%ld sec", CS_MAXPID - 2, cfg->cmaxidle);
+	sprintf(buf, "max. clients=%d, client max. idle=%ld sec\n", CS_MAXPID - 2, cfg->cmaxidle);
 	monitor_send_details(buf, pid);
 
 	if( cfg->max_log_size )
 		sprintf(buf + 200, "%d Kb", cfg->max_log_size);
 	else
 		strcpy(buf + 200, "unlimited");
-	sprintf(buf, "max. logsize=%s", buf + 200);
+	sprintf(buf, "max. logsize=%s\n", buf + 200);
 	monitor_send_details(buf, pid);
 
-	sprintf(buf, "client timeout=%lu ms, cache delay=%ld ms", cfg->ctimeout, cfg->delay);
+	sprintf(buf, "client timeout=%lu ms, cache delay=%ld ms\n", cfg->ctimeout, cfg->delay);
 	monitor_send_details(buf, pid);
 
 	//#ifdef CS_NOSHM
@@ -563,7 +563,7 @@ static void monitor_set_account(char *args){
 	}
 
 	if (!found){
-		sprintf(buf, "[S-0000]setuser: %s failed - parameter %s not exist",tmp , argarray[1]);
+		sprintf(buf, "[S-0000]setuser: %s failed - parameter %s not exist\n",tmp , argarray[1]);
 		monitor_send_info(buf, 0);
 		sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
 		monitor_send_info(buf, 1);
@@ -618,24 +618,24 @@ static void monitor_set_server(char *args){
 		sprintf(buf, "[S-0000]setserver done - param %s set to %s\n", argarray[0], argarray[1]);
 		monitor_send_info(buf, 1);
 	} else {
-		sprintf(buf, "[S-0000]setserver failed - parameter %s not exist", argarray[0]);
+		sprintf(buf, "[S-0000]setserver failed - parameter %s not exist\n", argarray[0]);
 		monitor_send_info(buf, 1);
 		return;
 	}
 
 	if (cfg->ftimeout>=cfg->ctimeout) {
 		cfg->ftimeout = cfg->ctimeout - 100;
-		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms", cfg->ftimeout);
+		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg->ftimeout);
 		monitor_send_info(buf, 1);
 	}
 	if(cfg->ftimeout < cfg->srtimeout) {
 		cfg->ftimeout = cfg->srtimeout + 100;
-		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms", cfg->ftimeout);
+		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg->ftimeout);
 		monitor_send_info(buf, 1);
 	}
 	if(cfg->ctimeout < cfg->srtimeout) {
 		cfg->ctimeout = cfg->srtimeout + 100;
-		sprintf(buf, "[S-0000]setserver WARNING: clienttimeout adjusted to %lu ms", cfg->ctimeout);
+		sprintf(buf, "[S-0000]setserver WARNING: clienttimeout adjusted to %lu ms\n", cfg->ctimeout);
 		monitor_send_info(buf, 1);
 	}
 	//kill(client[0].pid, SIGUSR1);
@@ -645,7 +645,7 @@ static void monitor_list_commands(char *args[], int cmdcnt){
 	int i;
 	for (i = 0; i < cmdcnt; i++) {
 		char buf[64];
-		sprintf(buf, "[S-0000]commands: %s", args[i]);
+		sprintf(buf, "[S-0000]commands: %s\n", args[i]);
 		if(i < cmdcnt-1)
 			monitor_send_info(buf, 0);
 		else
