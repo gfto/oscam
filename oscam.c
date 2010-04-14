@@ -2217,14 +2217,10 @@ void do_emm(EMM_PACKET *ep)
 
 	if (reader[au].card_system > 0) {
 		if ((!reader[au].fd) ||	(reader[au].caid[0] != b2i(2,ep->caid))) {   // wrong caid
-#ifdef WEBIF
 			client[cs_idx].emmnok++;
-#endif
 			return;
 		}
-#ifdef WEBIF
 		client[cs_idx].emmok++;
-#endif
 	}
 	ep->cidx = cs_idx;
 	cs_debug_mask(D_EMM, "emm is being sent to reader %s.", reader[au].label);

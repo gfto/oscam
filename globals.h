@@ -402,9 +402,9 @@ struct s_client
   int		cwignored;   // count ignored  ECMs per client
   int		cwtout;      // count timeouted ECMs per client
   int		cwlastresptime; //last Responsetime (ms)
+  int		emmok;       // count EMM ok
+  int		emmnok;	     // count EMM nok
 #ifdef WEBIF
-  int		emmok;		// count EMM ok
-  int		emmnok;		// count EMM nok
   int		wihidden;	// hidden in webinterface status
 #endif
   uchar		ucrc[4];    // needed by monitor and used by camd35

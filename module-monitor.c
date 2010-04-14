@@ -320,13 +320,15 @@ static char *monitor_client_info(char id, int i){
 				if ((now-client[i].lastemm) /60 > cfg->mon_aulow)
 					cau=-cau;
 			lt = localtime(&client[i].login);
-			sprintf(ldate, "%2d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year % 100);
-			sprintf(ltime, "%2d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
-			sprintf(sbuf, "[%c--CCC]%d|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d\n",
+			sprintf(ldate, "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year % 100);
+			sprintf(ltime, "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
+                        sprintf(sbuf, "[%c--CCC]%d|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",    
 					id, client[i].pid, client[i].typ, cnr, usr, cau, client[i].crypted,
 					cs_inet_ntoa(client[i].ip), client[i].port, monitor_get_proto(i),
 					ldate, ltime, lsec, client[i].last_caid, client[i].last_srvid,
-					get_servicename(client[i].last_srvid, client[i].last_caid), isec, con);
+					get_servicename(client[i].last_srvid, client[i].last_caid), isec, con,
+                                        client[i].cwfound, client[i].cwnot, client[i].cwcache, client[i].cwignored,
+                                        client[i].cwtout, client[i].emmok, client[i].emmnok, client[i].cwlastresptime);
 		}
 	}
 	return(sbuf);
@@ -373,24 +375,53 @@ static void monitor_send_keepalive_ack(){
 }
 
 static void monitor_process_details_master(char *buf, int pid){
-	if (cfg->nice != 99)
-		sprintf(buf + 200, ", nice=%d", cfg->nice);
-	else
-		buf[200] = '\0';
-	sprintf(buf, "version=%s#%s, system=%s%s\n", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf + 100), buf + 200);
+	sprintf(buf, "Version=%s#%s", CS_VERSION_X, CS_SVN_VERSION);
 	monitor_send_details(buf, pid);
-
-	sprintf(buf, "max. clients=%d, client max. idle=%ld sec\n", CS_MAXPID - 2, cfg->cmaxidle);
+	sprintf(buf, "System=%s%s", cs_platform(buf + 100), buf + 200);
 	monitor_send_details(buf, pid);
-
+	sprintf(buf, "DebugLevel=%d", cfg->debuglvl);
+	monitor_send_details(buf, pid);
+	sprintf(buf, "MaxClients=%d", CS_MAXPID - 2);
+	monitor_send_details(buf, pid);
+	sprintf(buf, "ClientMaxIdle=%ld sec", cfg->cmaxidle);
+	monitor_send_details(buf, pid);
 	if( cfg->max_log_size )
 		sprintf(buf + 200, "%d Kb", cfg->max_log_size);
 	else
 		strcpy(buf + 200, "unlimited");
-	sprintf(buf, "max. logsize=%s\n", buf + 200);
+	sprintf(buf, "MaxLogsize=%s", buf + 200);
 	monitor_send_details(buf, pid);
-
-	sprintf(buf, "client timeout=%lu ms, cache delay=%ld ms\n", cfg->ctimeout, cfg->delay);
+	sprintf(buf, "ClientTimeout=%lu ms", cfg->ctimeout);
+	monitor_send_details(buf, pid);
+	sprintf(buf, "CacheDelay=%ld ms", cfg->delay);
+	monitor_send_details(buf, pid);
+	if( cfg->cwlogdir ) {
+                sprintf(buf, "CwlogDir=%s", cfg->cwlogdir);
+	        monitor_send_details(buf, pid);
+        }
+	if( cfg->preferlocalcards ) {
+	        sprintf(buf, "PreferlocalCards=%d", cfg->preferlocalcards);
+	        monitor_send_details(buf, pid);
+        }
+	if( cfg->waitforcards ) {
+	        sprintf(buf, "WaitforCards=%d", cfg->waitforcards);
+	        monitor_send_details(buf, pid);
+        }
+	sprintf(buf, "LogFile=%s", cfg->logfile);
+	monitor_send_details(buf, pid);
+	sprintf(buf, "PidFile=%s", cfg->pidfile);
+	monitor_send_details(buf, pid);
+	if( cfg->usrfile ) {
+	        sprintf(buf, "UsrFile=%s", cfg->usrfile);
+	        monitor_send_details(buf, pid);
+        }
+	sprintf(buf, "ResolveDelay=%d", cfg->resolvedelay);
+	monitor_send_details(buf, pid);
+	sprintf(buf, "Sleep=%d", cfg->tosleep);
+	monitor_send_details(buf, pid);
+	sprintf(buf, "Monitorport=%d", cfg->mon_port);
+	monitor_send_details(buf, pid);
+	sprintf(buf, "Nice=%d", cfg->nice);
 	monitor_send_details(buf, pid);
 
 	//#ifdef CS_NOSHM
