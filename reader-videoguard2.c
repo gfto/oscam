@@ -1022,11 +1022,11 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 //d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10 76 aa 75 ef d6 82 27 2e 44 7b 00
 
 	int serial_count = ((ep->emm[3] >> 4) & 3) + 1;
-	uchar emm[256];
+	//uchar emm[256];
 	int i,pos;
 	int serial_len = (ep->emm[3] & 0x80) ? 3 : 4;
 
-	memcpy(emm, ep->emm, 4);
+	//memcpy(emm, ep->emm, 4);
 	pos=4+(serial_len*serial_count)+2;
 
 	if ( ep->emm[pos-2] != 0x00 && ep->emm[pos-1] != 0x00 && ep->emm[pos-1] != 0x01 ) {	
@@ -1038,9 +1038,9 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 	for (i=1;i<=serial_count;i++) {
 		if (!memcmp (rdr->hexserial+2, ep->emm+(serial_len*i), serial_len)) {
 			memcpy(ep->hexserial, ep->emm+(serial_len*i), serial_len);
-			memcpy(emm+4, ep->emm+pos+1, ep->emm[pos+5]+4);
-			memcpy(ep->emm, emm, ep->emm[pos+5]+4+4);
-			ep->l=ep->emm[pos+5]+4+4;
+			//memcpy(emm+4, ep->emm+pos+1, ep->emm[pos+5]+4);
+			//memcpy(ep->emm, emm, ep->emm[pos+5]+4+4);
+			//ep->l=ep->emm[pos+5]+4+4;
 			ep->type=UNIQUE;
 			return TRUE;
 		}
