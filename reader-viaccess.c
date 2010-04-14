@@ -342,23 +342,22 @@ int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 	switch (ep->emm[0]) {
 		case 0x8E:
-			memcpy(ep->hexserial, ep->emm+3, 3);
+			ep->type=SHARED;
+			memset(ep->hexserial, 0, 8);
+			memcpy(ep->hexserial, ep->emm + 3, 3);
+			cs_debug_mask(D_EMM, "VIACCESS EMM: SHARED");
+			return(!memcmp(&rdr->sa[0][0], ep->hexserial, 3));
+
+		case 0x8C:
+			ep->type=UNIQUE;
+			memset(ep->hexserial, 0, 8);
+			memcpy(ep->hexserial, ep->emm + 3, 3);
 			cs_debug_mask(D_EMM, "VIACCESS EMM: UNIQUE");
-			if (!memcmp (rdr->hexserial+1, ep->hexserial, 3)) {
-				ep->type=UNIQUE; //FIXME: ?
-				return TRUE;
-			}
-			else
-				return FALSE;
+			return(!memcmp(rdr->hexserial + 1, ep->hexserial, 4));
 
 		case 0x8D:
 			ep->type=GLOBAL;
 			cs_debug_mask(D_EMM, "VIACCESS EMM: GLOBAL");
-			return TRUE;
-
-		case 0x8C:
-			ep->type=SHARED;
-			cs_debug_mask(D_EMM, "VIACCESS EMM: SHARED");
 			return TRUE;
 
 		default:
@@ -376,24 +375,28 @@ void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[2]=GLOBAL;
 	filter[3]=0;
 
-	filter[4+0]    = 0x8D;
-	filter[4+0+16] = 0xFF;
+	filter[4+0]     = 0x8D;
+	filter[4+0+16]  = 0xFF;
+	filter[4+1]     = 0xFF; // FIXME: dummy, flood client with EMM's
+	filter[4+1+16]  = 0xFF;
 
 
 	filter[36]=SHARED;
 	filter[37]=0;
 
-	filter[38+0]    = 0x8C;
+	filter[38+0]    = 0x8E;
 	filter[38+0+16] = 0xFF;
+	memcpy(filter+38+1, &rdr->sa[0][0], 3);
+	memset(filter+38+1+16, 0xFF, 3);
 
 
 	filter[70]=UNIQUE;
 	filter[71]=0;
 
-	filter[72+0]    = 0x8E;
+	filter[72+0]    = 0x8C;
 	filter[72+0+16] = 0xFF;
-	memcpy(filter+72+1, rdr->hexserial+1, 3);
-	memset(filter+72+1+16, 0xFF, 3);
+	memcpy(filter+72+1, rdr->hexserial + 1, 4);
+	memset(filter+72+1+16, 0xFF, 4);
 
 	return;
 }
