@@ -643,13 +643,18 @@ static void newcamd_auth_client(in_addr_t ip)
             passwdcrypt = (uint8*)__md5_crypt(account->pwd, "$1$abcdefgh$");
             cs_debug("account->pwd=%s", passwdcrypt);
             if (strcmp((char *)pwd, (const char *)passwdcrypt) == 0)
-                {
+            {
                 client[cs_idx].crypted=1;
-                cs_auth_client(account, NULL); //FixMe: returnvalue == 2 means dyndns mismatch and must stop login
-                cs_log("user %s authenticated successfully (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
-                ok = 1;
-                break;
-                }
+                if(cs_auth_client(account, NULL) == 2) {
+                	cs_log("dyndns hostname mismatch for user %s (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
+			break;
+		}
+		else {
+                	cs_log("user %s authenticated successfully (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
+                	ok = 1;
+                	break;
+		}
+            }
             else
                 {
                 cs_log("user %s is providing a wrong password (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
