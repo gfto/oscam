@@ -21,19 +21,38 @@ void cs_ri_brk(struct s_reader * reader, int flag)
 
 void cs_ri_log(struct s_reader * reader, char *fmt,...)
 {
-  char txt[256];
+	char txt[256];
 
-  va_list params;
-  va_start(params, fmt);
-  vsprintf(txt, fmt, params);
-  va_end(params);
-  cs_log("%s", txt);
+	va_list params;
+	va_start(params, fmt);
+	vsprintf(txt, fmt, params);
+	va_end(params);
+	cs_log("%s", txt);
 #ifdef CS_RDR_INIT_HIST
-  int val;
-  val=sizeof(reader->init_history)-reader->init_history_pos-1;
-  if (val>0)
-    snprintf((char *) reader->init_history+reader->init_history_pos, val, "%s", txt);
-  reader->init_history_pos+=strlen(txt)+1;
+	int val;
+	val=sizeof(reader->init_history)-reader->init_history_pos-1;
+	if (val>0)
+		snprintf((char *) reader->init_history+reader->init_history_pos, val, "%s", txt);
+#ifdef CS_RDR_INIT_HIST_FILE
+	FILE *fp;
+	char filename[32];
+	mkdir("/tmp/.oscam", S_IRWXU);
+	sprintf(filename, "/tmp/.oscam/reader%d", reader->ridx);
+
+	if (reader->init_history_pos==0)
+		unlink(filename);
+
+	fp=fopen(filename, "a");
+
+	if(fp != NULL) {
+		fseek(fp, reader->init_history_pos, SEEK_SET);
+		fprintf(fp, "%s\n", txt);
+		fclose(fp);
+	}
+
+	truncate(filename, reader->init_history_pos+strlen(txt)+1);
+#endif
+	reader->init_history_pos+=strlen(txt)+1;
 #endif
 }
 
@@ -419,7 +438,7 @@ static void reader_send_DCW(ECM_REQUEST *er)
 static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   int i, no, rc, ecs;
-  char *rtxt[] = { "error", "written", "skipped", "blocked" };
+  char *rtxt[] = { "error", proxy ? "sent" : "written", "skipped", "blocked" };
   char *typedesc[]= { "unknown", "unique", "shared", "global" };
   struct timeb tps, tpe;
 

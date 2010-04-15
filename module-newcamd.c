@@ -1282,7 +1282,7 @@ static int newcamd_send_emm(EMM_PACKET *ep)
 
   memcpy(buf, ep->emm, ep->l);
 
-  return((newcamd_send(buf, ep->l, 0)<1) ? (-1) : 0);
+  return((newcamd_send(buf, ep->l, 0)<1) ? 0 : 1);
 }
 
 static int newcamd_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
