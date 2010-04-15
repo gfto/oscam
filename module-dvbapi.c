@@ -551,7 +551,7 @@ void dvbapi_resort_ecmpids(int demux_index) {
 
 	for (i=0;i<CS_MAXREADER;i++) {
 		for (j=0;j<CS_MAXREADER;j++) {
-			if (reader[i].caid[j] != 0 && reader[i].card_status == 0) {
+			if (reader[i].caid[j] != 0 && reader[i].card_status > NO_CARD) {
 				if (k+1>=MAX_CAID) break;
 				global_caid_list[k++]=reader[i].caid[j];	
 			}
