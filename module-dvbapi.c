@@ -4,7 +4,6 @@
 
 #include <sys/un.h>
 
-extern int ridx;
 extern struct s_reader * reader;
 
 #define MAX_DEMUX 5
@@ -31,6 +30,7 @@ typedef struct filter_s
 	int pidindex;
 	int pid;
 	ushort type;
+	int count;
 } FILTERTYPE;
 
 typedef struct demux_s
@@ -302,6 +302,17 @@ int dvbapi_stop_filter(int demux_index, int type) {
 	return 1;
 }
 
+int dvbapi_stop_filternum(int demux_index, int num) {
+
+	if (demux[demux_index].demux_fd[num].fd>0) {
+		ioctl(demux[demux_index].demux_fd[num].fd,DMX_STOP);
+		close(demux[demux_index].demux_fd[num].fd);
+		demux[demux_index].demux_fd[num].fd=0;
+	}
+
+	return 1;
+}
+
 void dvbapi_start_filter(int demux_index, int pidindex, unsigned short pid, uchar table, uchar mask, int type) {
 	int dmx_fd,i,n=-1;
 	uchar filter[32];
@@ -326,6 +337,7 @@ void dvbapi_start_filter(int demux_index, int pidindex, unsigned short pid, ucha
 	demux[demux_index].demux_fd[n].pidindex = pidindex;
 	demux[demux_index].demux_fd[n].pid      = pid;
 	demux[demux_index].demux_fd[n].type     = type;
+	demux[demux_index].demux_fd[n].count    = 0;
 
 	memset(filter,0,32);
 
@@ -336,17 +348,13 @@ void dvbapi_start_filter(int demux_index, int pidindex, unsigned short pid, ucha
 }
 
 void dvbapi_start_emm_filter(int demux_index) {
-	int dmx_fd, i, n=-1;
+	int dmx_fd, i, j, n;
 	uchar nullserial[8];
-
 	char *typtext[]={"UNKNOWN", "UNIQUE", "SHARED", "GLOBAL"};
 
 	if (demux[demux_index].pidindex==-1) return;
 
-	ushort caid = demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID;
-	ushort pid  = demux[demux_index].ECMpids[demux[demux_index].pidindex].EMM_PID;
-
-	if (pid==0 || !demux[demux_index].rdr)
+	if (demux[demux_index].ECMpids[demux[demux_index].pidindex].EMM_PID==0 || !demux[demux_index].rdr)
 		return;
 
 	memset(nullserial,0,8);
@@ -365,7 +373,7 @@ void dvbapi_start_emm_filter(int demux_index) {
 	}
 
 	if (demux[demux_index].rdr->card_system==0)
-		demux[demux_index].rdr->card_system=get_cardsystem(caid);
+		demux[demux_index].rdr->card_system=get_cardsystem(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
 
 	uchar dmx_filter[256];
 	memset(dmx_filter, 0, sizeof(dmx_filter));
@@ -373,7 +381,6 @@ void dvbapi_start_emm_filter(int demux_index) {
 	get_emm_filter(demux[demux_index].rdr, dmx_filter);
 
 	int filter_count=dmx_filter[1];
-	int j;
 
 	for (j=1;j<=filter_count && j < 8;j++) {
 		int startpos=2+(34*(j-1));
@@ -384,6 +391,7 @@ void dvbapi_start_emm_filter(int demux_index) {
 		uchar filter[32];
 		memcpy(filter, dmx_filter+startpos+2, 32);
 		int emmtype=dmx_filter[startpos];
+		int count=dmx_filter[startpos+1];
 		n=-1;
 		
 		for (i=0;i<MAX_FILTER;i++) {
@@ -402,12 +410,13 @@ void dvbapi_start_emm_filter(int demux_index) {
 
 		demux[demux_index].demux_fd[n].fd       = dmx_fd;
 		demux[demux_index].demux_fd[n].pidindex = demux[demux_index].pidindex;
-		demux[demux_index].demux_fd[n].pid      = pid;
+		demux[demux_index].demux_fd[n].pid      = demux[demux_index].ECMpids[demux[demux_index].pidindex].EMM_PID;
 		demux[demux_index].demux_fd[n].type     = TYPE_EMM;
+		demux[demux_index].demux_fd[n].count    = count;
 
 		cs_log("dvbapi: starting emm filter %s",typtext[emmtype]);
 		cs_dump(filter, 32, "demux filter:");
-		dvbapi_set_filter(dmx_fd, selected_api, pid, filter, filter+16, 0);
+		dvbapi_set_filter(dmx_fd, selected_api, demux[demux_index].ECMpids[demux[demux_index].pidindex].EMM_PID, filter, filter+16, 0);
 	}
 
 	memcpy(demux[demux_index].hexserial, demux[demux_index].rdr->hexserial, 8);
@@ -506,10 +515,11 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 	EMM_PACKET epg;
 
 	if (demux[demux_index].pidindex==-1) return;
+
 	cs_ddump(buffer, 16, "emm:");
 
 	//force emm output
-	reader[ridx].logemm=9999;
+	demux[demux_index].rdr->logemm=9999;
 
 	memset(&epg, 0, sizeof(epg));
 	epg.caid[0] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID>>8);
@@ -541,7 +551,7 @@ void dvbapi_resort_ecmpids(int demux_index) {
 
 	for (i=0;i<CS_MAXREADER;i++) {
 		for (j=0;j<CS_MAXREADER;j++) {
-			if (reader[i].caid[j] != 0 && reader[i].card_system > 0) {
+			if (reader[i].caid[j] != 0 && reader[i].card_status == 0) {
 				if (k+1>=MAX_CAID) break;
 				global_caid_list[k++]=reader[i].caid[j];	
 			}
@@ -1100,12 +1110,18 @@ void dvbapi_main_local() {
 								if (demux[demux_index].pidindex < 0)
 									continue;
 								
-								dvbapi_stop_filter(demux_index, TYPE_EMM);
+								dvbapi_stop_filternum(demux_index, n);
 								continue;
 							}
 							cs_debug("EMM Filter fd %d", demux[demux_index].demux_fd[n].fd);
 							dvbapi_process_emm(demux_index, mbuf, len);
 						}
+						if (demux[demux_index].demux_fd[n].count==1) {
+							//stop filter
+							dvbapi_stop_filternum(demux_index, n);
+						}
+						if (demux[demux_index].demux_fd[n].count>1)
+							demux[demux_index].demux_fd[n].count--;
 					}
 				}
 			}
