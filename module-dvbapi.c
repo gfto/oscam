@@ -950,7 +950,7 @@ void dvbapi_main_local() {
 	cs_ftime(&tp);
 	tp.time+=500;
 
-	pfd2[0].fd = fd_m2c;
+	pfd2[0].fd = client[cs_idx].fd_m2c_c;
 	pfd2[0].events = (POLLIN | POLLPRI);
 	type[0]=0;
 
@@ -1017,13 +1017,13 @@ void dvbapi_main_local() {
 					close(pfd2[i].fd);
 					continue;
 				}
-				if (pfd2[i].fd==fd_m2c) {
+				if (pfd2[i].fd==client[cs_idx].fd_m2c_c) {
 					cs_exit(0);
 				}
 			}
 			if (pfd2[i].revents & (POLLIN | POLLPRI)) {
-				if (pfd2[i].fd==fd_m2c) {
-					chk_dcw(fd_m2c);
+				if (pfd2[i].fd==client[cs_idx].fd_m2c_c) {
+					chk_dcw(client[cs_idx].fd_m2c_c);
 					continue;
 				}
 
