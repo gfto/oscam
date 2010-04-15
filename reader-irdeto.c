@@ -291,7 +291,7 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
-	int l = (ep->emm[3]&0x07);
+	int i, l = (ep->emm[3]&0x07);
 	int base = (ep->emm[3]>>3);
 	char dumprdrserial[l*3];
 
@@ -310,8 +310,20 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l));
-			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED l = %d ep = %s rdr = %s", l, cs_hexdump(1, ep->hexserial, l), dumprdrserial);
-			return (!l || !memcmp(ep->emm + 4, rdr->hexserial, l));
+			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED l = %d ep = %s rdr = %s base = %02x", l, 
+                                      cs_hexdump(1, ep->hexserial, l), dumprdrserial, base);
+
+			if (base & 0x10) {
+				// hex addressed
+				return (base == rdr->hexserial[3] && (!l || !memcmp(ep->emm + 4, rdr->hexserial, l)));
+			}
+			else {
+				// provider addressed
+				for(i = 0; i < rdr->nprov; i++)
+					if (base == rdr->prid[i][0] && (!l || !memcmp(ep->emm + 4, &rdr->prid[i][1], l)))
+						return TRUE;
+			}
+
 			
 		case 3:
 			// unique emm, 3 bytes addressed
@@ -319,7 +331,9 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
 			strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l));
-			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE l = %d ep = %s rdr = %s", l, cs_hexdump(1, ep->hexserial, l), dumprdrserial);
+			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE l = %d ep = %s rdr = %s", l, 
+                                      cs_hexdump(1, ep->hexserial, l), dumprdrserial);
+
 			return (base == rdr->hexserial[3] && (!l || !memcmp(ep->emm + 4, rdr->hexserial, l)));
 
 		default:
