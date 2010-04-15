@@ -906,7 +906,7 @@ extern void store_logentry(char *);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);
 extern int write_ecm_request(int, ECM_REQUEST *);
-extern int write_ecm_answer(int, ECM_REQUEST *);
+extern int write_ecm_answer(struct s_reader *, int, ECM_REQUEST *);
 extern void log_emm_request(int);
 extern ulong chk_provid(uchar *, ushort);
 extern void guess_cardsystem(ECM_REQUEST *);

@@ -37,7 +37,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 #endif
 }
 
-static void casc_check_dcw(int idx, int rc, uchar *cw)
+static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
 {
   int i;
   for (i=1; i<CS_MAXPENDING; i++)
@@ -55,7 +55,7 @@ static void casc_check_dcw(int idx, int rc, uchar *cw)
       }
       else
         ecmtask[i].rc=0;    
-      write_ecm_answer(fd_c2m, &ecmtask[i]);
+      write_ecm_answer(reader, fd_c2m, &ecmtask[i]);
       ecmtask[i].idx=0;
     }
   }
@@ -223,7 +223,7 @@ static void casc_do_sock_log(struct s_reader * reader)
        && (ecmtask[i].prid==provid)
        && (ecmtask[i].srvid==srvid))
     {
-      casc_check_dcw(i, 0, ecmtask[i].cw);  // send "not found"
+      casc_check_dcw(reader, i, 0, ecmtask[i].cw);  // send "not found"
       break;
     }
   }
@@ -257,7 +257,7 @@ static void casc_do_sock(struct s_reader * reader, int w)
 
    if (ecmtask[i].idx==idx)
     {
-      casc_check_dcw(i, rc, dcw);
+      casc_check_dcw(reader, i, rc, dcw);
       j=1;
       break;
     }
@@ -282,7 +282,7 @@ static void casc_get_dcw(struct s_reader * reader, int n)
     cs_ftime(&tps);
   }
   if (ecmtask[n].rc>=10)
-    casc_check_dcw(n, 0, ecmtask[n].cw);  // simulate "not found"
+    casc_check_dcw(reader, n, 0, ecmtask[n].cw);  // simulate "not found"
 }
 
 
@@ -341,7 +341,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
       cs_resolve();
 
     if ((rc=reader->ph.c_send_ecm(&ecmtask[n], buf)))
-      casc_check_dcw(n, 0, ecmtask[n].cw);  // simulate "not found"
+      casc_check_dcw(reader, n, 0, ecmtask[n].cw);  // simulate "not found"
     else
       last_idx = ecmtask[n].idx;
     reader->last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
@@ -383,14 +383,14 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
     cs_debug("caid %04X filtered", er->caid);
     er->rcEx=E2_CAID;
     er->rc=0;
-    write_ecm_answer(fd_c2m, er);
+    write_ecm_answer(reader, fd_c2m, er);
     return;
   }
   // cache2
   if (check_ecmcache(er, client[er->cidx].grp))
   {
     er->rc=2;
-    write_ecm_answer(fd_c2m, er);
+    write_ecm_answer(reader, fd_c2m, er);
     return;
   }
   if (proxy)
@@ -402,7 +402,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
   cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
   er->rc=reader_ecm(reader, er);
-  write_ecm_answer(fd_c2m, er);
+  write_ecm_answer(reader, fd_c2m, er);
   reader_post_process(reader);
   //if(reader->typ=='r') reader->qlen--;
   //printf("queue: %d\n",reader->qlen);

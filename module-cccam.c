@@ -536,7 +536,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
       er->rc = 0;
       er->rcEx = 0x27;
       cs_log("cccam: server not init!");
-      write_ecm_answer(fd_c2m, er);
+      write_ecm_answer(&reader[ridx], fd_c2m, er);
     }
     return -1;
   }
@@ -643,7 +643,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     //cur_er->rc = 1;
     //cur_er->rcEx = 0;
     cs_sleepms(300);
-    write_ecm_answer(fd_c2m, cur_er);
+    write_ecm_answer(&reader[ridx], fd_c2m, cur_er);
     //reader[ridx].last_s = reader[ridx].last_g;
 
     card = llist_itr_init(cc->cards, &itr);
@@ -686,7 +686,7 @@ static int cc_abort_user_ecms(){
           cs_log("aborting idx:%d caid:%04x client:%d timedelta:%d",ecmtask[i].idx,ecmtask[i].caid,ecmtask[i].cidx,td);
           ecmtask[i].rc=0;
           ecmtask[i].rcEx=7;
-          write_ecm_answer(fd_c2m, &ecmtask[i]);
+          write_ecm_answer(&reader[ridx], fd_c2m, &ecmtask[i]);
         }
   }
   return n;

@@ -1551,7 +1551,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	fclose(pfCWL);
 }
 
-int write_ecm_answer(int fd, ECM_REQUEST *er)
+int write_ecm_answer(struct s_reader * reader, int fd, ECM_REQUEST *er)
 {
   int i;
   uchar c;
@@ -1565,7 +1565,7 @@ int write_ecm_answer(int fd, ECM_REQUEST *er)
     }
   }
 
-  er->reader[0]=ridx;
+  er->reader[0]=reader->ridx;
 //cs_log("answer from reader %d (rc=%d)", er->reader[0], er->rc);
   er->caid=er->ocaid;
 
