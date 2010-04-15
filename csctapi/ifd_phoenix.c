@@ -14,7 +14,8 @@
 #include "io_serial.h"
 
 #define MAX_TRANSMIT			255
-#define PHOENIX_MAX_ATR_SIZE		40
+//FIXME: crash if atr>64
+#define PHOENIX_MAX_ATR_SIZE		64
 
 #ifdef USE_GPIO	//felix: definition of gpio functions
 int gpio_outen,gpio_out,gpio_in;
