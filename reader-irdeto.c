@@ -357,13 +357,10 @@ void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[2]=GLOBAL;
 	filter[3]=0;
 	
-	// hex addressed
 	filter[4+0]    = 0x82;
 	filter[4+0+16] = 0xFF;
 	filter[4+1]    = emm_g;
-	// FIXME: more restrictive filter for provider addressed EMM's
 	filter[4+1+16] = 0x0F;
-
 
 	filter[36]=SHARED;
 	filter[37]=0;
@@ -373,7 +370,6 @@ void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[38+1+16] = 0xFF;
 	memcpy(filter+38+2, rdr->hexserial, 2);
 	memset(filter+38+2+16, 0xFF, 2);
-
 
 	filter[70]=UNIQUE;
 	filter[71]=0;
