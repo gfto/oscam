@@ -584,7 +584,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
 static void reader_do_pipe(struct s_reader * reader)
 {
   uchar *ptr;
-  switch(read_from_pipe(fd_m2c, &ptr, 0))
+  switch(read_from_pipe(client[reader->cs_idx].fd_m2c_c, &ptr, 0))
   {
     case PIP_ID_ECM:
       reader_get_ecm(reader, (ECM_REQUEST *)ptr);
@@ -605,7 +605,7 @@ static void reader_main(struct s_reader * reader)
 {
   while (1)
   {
-    switch(reader_listen(reader, fd_m2c, pfd))
+    switch(reader_listen(reader, client[reader->cs_idx].fd_m2c_c, pfd))
     {
       case 1: reader_do_pipe(reader)  ; break;
       case 2: casc_do_sock(reader, 0)   ; break;

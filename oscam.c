@@ -12,7 +12,6 @@
 int ridx=0;
 int pfd=0;      // Primary FD, must be closed on exit
 int mfdr=0;     // Master FD (read)
-int fd_m2c=0;   // FD Master -> Client (for clients / read )
 int fd_c2m=0;   // FD Client -> Master (for clients / write )
 int fd_c2l=0;   // FD Client -> Logger (for clients / write )
 int cs_dblevel=0;   // Debug Level (TODO !!)
@@ -557,7 +556,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
 			//client part
      	is_server=((ip) || (port<90)) ? 1 : 0; //FIXME global should be local per thread
      	//cs_ptyp=D_CLIENT;
-			fd_m2c = fdp[0];
+			client[i].fd_m2c_c = fdp[0]; //store client read fd
 			cs_idx=i; //although thread runs in master process, reserve an cs_idx slot
 #ifndef CS_NOSHM
 			shmid=0;
@@ -615,7 +614,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
         set_signal_handler(SIGINT , 1, SIG_IGN);
         set_signal_handler(SIGUSR1, 1, cs_debug_level);
         is_server=((ip) || (port<90)) ? 1 : 0;
-        fd_m2c=fdp[0];
+	client[i].fd_m2c_c=fdp[0];
         close(fdp[1]);
         close(mfdr);
         if( port!=97 ) cs_close_log();
@@ -1035,17 +1034,17 @@ static void cs_logger(void)
     fd_set fds;
 
     FD_ZERO(&fds);
-    FD_SET(fd_m2c, &fds);
-    select(fd_m2c+1, &fds, 0, 0, 0);
+    FD_SET(client[cs_idx].fd_m2c_c, &fds);
+    select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, 0);
 
     if (master_pid!=getppid())
       cs_exit(0);
 
-    if (FD_ISSET(fd_m2c, &fds))
+    if (FD_ISSET(client[cs_idx].fd_m2c_c, &fds))
     {
       int n;
-//    switch(n=read_from_pipe(fd_m2c, &ptr, 1))
-      n=read_from_pipe(fd_m2c, &ptr, 1);
+//    switch(n=read_from_pipe(client[cs_idx].fd_m2c_c, &ptr, 1))
+      n=read_from_pipe(client[cs_idx].fd_m2c_c, &ptr, 1);
 //if (n!=PIP_ID_NUL) printf("received %d bytes\n", n); fflush(stdout);
       switch(n)
       {
@@ -1427,9 +1426,9 @@ int read_from_pipe(int fd, uchar **data, int redir)
 
     if (rc<0)
     {
-      fprintf(stderr, "WARNING: pipe garbage");
+      fprintf(stderr, "WARNING: pipe garbage from pipe %i", fd);
       fflush(stderr);
-      cs_log("WARNING: pipe garbage");
+      cs_log("WARNING: pipe garbage from pipe %i", fd);
       rc=PIP_ID_ERR;
     }
     else
@@ -2351,9 +2350,9 @@ int process_input(uchar *buf, int l, int timeout)
   {
     FD_ZERO(&fds);
     FD_SET(pfd, &fds);
-    FD_SET(fd_m2c, &fds);
+    FD_SET(client[cs_idx].fd_m2c_c, &fds);
 
-    rc=select(((pfd>fd_m2c)?pfd:fd_m2c)+1, &fds, 0, 0, chk_pending(tp));
+    rc=select(((pfd>client[cs_idx].fd_m2c_c)?pfd:client[cs_idx].fd_m2c_c)+1, &fds, 0, 0, chk_pending(tp));
     if (master_pid!=getppid()) cs_exit(0);
     if (rc<0)
     {
@@ -2361,8 +2360,8 @@ int process_input(uchar *buf, int l, int timeout)
       else return(0);
     }
 
-    if (FD_ISSET(fd_m2c, &fds))   // read from pipe
-      chk_dcw(fd_m2c);
+    if (FD_ISSET(client[cs_idx].fd_m2c_c, &fds))   // read from pipe
+      chk_dcw(client[cs_idx].fd_m2c_c);
 
     if (FD_ISSET(pfd, &fds))    // read from client
     {

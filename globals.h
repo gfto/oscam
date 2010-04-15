@@ -391,7 +391,8 @@ struct s_client
   int		tosleep;
   char		usr[32];
   int		udp_fd;
-  int		fd_m2c;
+  int		fd_m2c; //master writes to this fd 
+  int		fd_m2c_c; //client reads from this fd 
   struct	sockaddr_in udp_sa;
   int		log;
   int		logcounter;
@@ -866,7 +867,7 @@ extern void cs_strncpy(char * destination, const char * source, size_t num);
 extern char *get_servicename(int srvid, int caid);
 
 // oscam variables
-extern int pfd, rfd, fd_c2m, fd_m2c, cs_idx, *c_start, cs_ptyp, cs_dblevel, cs_hw;
+extern int pfd, rfd, fd_c2m, cs_idx, *c_start, cs_ptyp, cs_dblevel, cs_hw;
 extern int *logidx, *loghistidx, *log_fd;
 extern int is_server, *mcl;
 extern uchar mbuf[1024];
