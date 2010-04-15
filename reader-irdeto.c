@@ -315,12 +315,12 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 			if (base & 0x10) {
 				// hex addressed
-				return (base == rdr->hexserial[3] && (!l || !memcmp(ep->emm + 4, rdr->hexserial, l)));
+				return (base == rdr->hexserial[3] && !memcmp(ep->emm + 4, rdr->hexserial, l));
 			}
 			else {
 				// provider addressed
 				for(i = 0; i < rdr->nprov; i++)
-					if (base == rdr->prid[i][0] && (!l || !memcmp(ep->emm + 4, &rdr->prid[i][1], l)))
+					if (base == rdr->prid[i][0] && !memcmp(ep->emm + 4, &rdr->prid[i][1], l))
 						return TRUE;
 			}
 
@@ -334,7 +334,7 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE l = %d ep = %s rdr = %s", l, 
                                       cs_hexdump(1, ep->hexserial, l), dumprdrserial);
 
-			return (base == rdr->hexserial[3] && (!l || !memcmp(ep->emm + 4, rdr->hexserial, l)));
+			return (base == rdr->hexserial[3] && !memcmp(ep->emm + 4, rdr->hexserial, l));
 
 		default:
 			ep->type = UNKNOWN;
