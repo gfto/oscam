@@ -2025,9 +2025,12 @@ int write_server()
 			}
 
 #ifdef CS_WITH_GBOX
-			fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", reader[i].gbox_pwd);
-			fprintf_conf(f, CONFVARWIDTH, "premium", "%d\n", reader[i].gbox_prem);
+			if (reader[i].typ == R_GBOX) {
+				fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", reader[i].gbox_pwd);
+				fprintf_conf(f, CONFVARWIDTH, "premium", "%d\n", reader[i].gbox_prem);
+			}
 #endif
+
 			if (reader[i].r_usr[0]) {
 				fprintf_conf(f, CONFVARWIDTH, "account", "");
 				fprintf(f, "%s", reader[i].r_usr);
@@ -2080,7 +2083,6 @@ int write_server()
 			if (reader[i].boxid)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", reader[i].boxid);
 
-			//Keys Section here
 			if (reader[i].aes_key[0])
 				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", key_btoa(NULL, reader[i].aes_key));
 
@@ -2103,7 +2105,6 @@ int write_server()
 				}
 			}
 
-			//Boxkey
 			if (reader[i].nagra_boxkey[0]) {
 				fprintf_conf(f, CONFVARWIDTH, "boxkey", "");
 				for (j=0;j<16;j++) {
@@ -2112,7 +2113,6 @@ int write_server()
 				fprintf(f, "\n");
 			}
 
-			//ATR
 			if ( reader[i].atr[0]) {
 				fprintf_conf(f, CONFVARWIDTH, "atr", "");
 				for (j=0;j<128;j++) {
@@ -2141,7 +2141,57 @@ int write_server()
 			fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
 			free(value);
 
-			//ToDo: Add more reader parameter
+			//Todo: write reader class
+
+			value = mk_t_ftab(&reader[i].fchid);
+			fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
+			free(value);
+
+			if (reader[i].show_cls)
+				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", reader[i].show_cls);
+
+			if (reader[i].maxqlen)
+				fprintf_conf(f, CONFVARWIDTH, "maxqlen", "%d\n", reader[i].maxqlen);
+
+			value = mk_t_group((ulong*)reader[i].grp);
+			fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
+			free(value);
+
+			if (reader[i].cachemm)
+				fprintf_conf(f, CONFVARWIDTH, "emmcache", "%d,%d,%d\n", reader[i].cachemm, reader[i].rewritemm, reader[i].logemm);
+
+			if (reader[i].cachecm)
+				fprintf_conf(f, CONFVARWIDTH, "ecmcache", "%d\n", reader[i].cachecm);
+
+			//Todo: write blocknano
+
+			if (reader[i].blockemm_unknown)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-unknown", "%d\n", reader[i].blockemm_unknown);
+
+			if (reader[i].blockemm_u)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-u", "%d\n", reader[i].blockemm_u);
+
+			if (reader[i].blockemm_s)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-s", "%d\n", reader[i].blockemm_s);
+
+			if (reader[i].blockemm_g)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-g", "%d\n", reader[i].blockemm_g);
+
+			//Todo: write savenano
+
+			if (reader[i].typ == R_CCCAM) {
+				if (reader[i].cc_version[0])
+					fprintf_conf(f, CONFVARWIDTH, "cccversion", "%s\n", reader[i].cc_version);
+
+				if (reader[i].cc_build[0])
+					fprintf_conf(f, CONFVARWIDTH, "cccbuild", "%s\n", reader[i].cc_build);
+
+				if (reader[i].cc_maxhop)
+					fprintf_conf(f, CONFVARWIDTH, "cccmaxhop", "%d\n", reader[i].cc_maxhop);
+			}
+
+			if (reader[i].deprecated)
+				fprintf_conf(f, CONFVARWIDTH, "deprecated", "%d\n", reader[i].deprecated);
 		}
 	}
 	fclose(f);
