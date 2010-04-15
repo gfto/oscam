@@ -14,8 +14,6 @@
 #include "io_serial.h"
 
 #define MAX_TRANSMIT			255
-//FIXME: crash if atr>64
-#define PHOENIX_MAX_ATR_SIZE		64
 
 #ifdef USE_GPIO	//felix: definition of gpio functions
 int gpio_outen,gpio_out,gpio_in;
@@ -111,7 +109,7 @@ int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		cs_debug_mask (D_IFD, "IFD: Resetting card:\n");
 		int ret;
 		int i;
-		unsigned char buf[PHOENIX_MAX_ATR_SIZE];
+		unsigned char buf[ATR_MAX_SIZE];
 		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 		call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
 		for(i=0; i<3; i++) {
@@ -161,7 +159,7 @@ int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			IO_Serial_Ioctl_Lock(reader, 0);
 
 			int n=0;
-			while(n<PHOENIX_MAX_ATR_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
+			while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
 				n++;
 			if(n==0)
 				continue;
