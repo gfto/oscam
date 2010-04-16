@@ -526,8 +526,8 @@ struct s_reader  //contains device info, reader info and card info
   int       loadbalanced;
 #ifdef CS_RDR_INIT_HIST
   uchar     init_history[4096];
-  int       init_history_pos;
 #endif
+  int       init_history_pos;
   int       msg_idx;
 #ifdef WEBIF
   int		emmwritten[4]; //count written EMM
@@ -726,6 +726,7 @@ struct s_config
 	int		max_log_size;
 	int		waitforcards;
 	int		preferlocalcards;
+	int		saveinithistory;
 
 #ifdef CS_WITH_GBOX
 	uchar		gbox_pwd[8];

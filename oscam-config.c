@@ -512,6 +512,16 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 
+	if( !strcmp(token, "saveinithistory")) {
+		if (strlen(value) == 0) {
+			cfg->saveinithistory = 0;
+			return;
+		} else {
+			cfg->saveinithistory = atoi(value);
+			return;
+		}
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n", token);
 }

@@ -156,8 +156,8 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
         cs_debug("PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
         memcpy(atr, pbAtr, dwAtrLen);
         *atr_size=dwAtrLen;
-#ifdef CS_RDR_INIT_HIST
         pcsc_reader->init_history_pos=0;
+#ifdef CS_RDR_INIT_HIST
         memset(pcsc_reader->init_history, 0, sizeof(pcsc_reader->init_history));
 #endif
         //cs_ri_log("ATR: %s", cs_hexdump(1, (uchar *)pbAtr, dwAtrLen));

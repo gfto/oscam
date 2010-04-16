@@ -593,7 +593,7 @@ void dvbapi_parse_descriptor(int demux_id, int i, unsigned int info_length, unsi
 		int descriptor_ca_system_id = (buffer[i + j + 8] << 8) | buffer[i + j + 9];
 		int descriptor_ca_pid = ((buffer[i + j + 10] & 0x1F) << 8) | buffer[i + j + 11];
 
-		cs_debug("typ: %02x\tca_system_id: %04x\t ca_pid: %04x", buffer[i + j + 6], descriptor_ca_system_id, descriptor_ca_pid);
+		cs_debug("typ: %02x\tcaid: %04x\t ca_pid: %04x", buffer[i + j + 6], descriptor_ca_system_id, descriptor_ca_pid);
 
 		if (buffer[i + j + 6] == 0x09) {
 			added=0;
@@ -623,7 +623,7 @@ void dvbapi_try_caid(int demux_index, int num) {
 		return;
 	}
 
-	cs_debug("dvbapi: trying CA_System_ID: %04x CA_PID: %04x", demux[demux_index].ECMpids[num].CAID, demux[demux_index].ECMpids[num].ECM_PID);
+	cs_debug("dvbapi: trying CAID: %04x CA_PID: %04x", demux[demux_index].ECMpids[num].CAID, demux[demux_index].ECMpids[num].ECM_PID);
 
 	//grep ecm
 	dvbapi_start_filter(demux_index, num, demux[demux_index].ECMpids[num].ECM_PID, 0x80, 0xF0, TYPE_ECM); //ECM

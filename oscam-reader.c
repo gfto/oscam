@@ -10,13 +10,11 @@ static ushort idx=1;
 
 void cs_ri_brk(struct s_reader * reader, int flag)
 {
-#ifdef CS_RDR_INIT_HIST
   static int brk_pos=0;
   if (flag)
     brk_pos=reader->init_history_pos;
   else
     reader->init_history_pos=brk_pos;
-#endif
 }
 
 void cs_ri_log(struct s_reader * reader, char *fmt,...)
@@ -33,27 +31,28 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	val=sizeof(reader->init_history)-reader->init_history_pos-1;
 	if (val>0)
 		snprintf((char *) reader->init_history+reader->init_history_pos, val, "%s", txt);
-#ifdef CS_RDR_INIT_HIST_FILE
-	FILE *fp;
-	char filename[32];
-	mkdir("/tmp/.oscam", S_IRWXU);
-	sprintf(filename, "/tmp/.oscam/reader%d", reader->ridx);
+#endif
+#ifdef OS_LINUX
+	if (cfg->saveinithistory) {
+		FILE *fp;
+		char filename[32];
+		mkdir("/tmp/.oscam", S_IRWXU);
+		sprintf(filename, "/tmp/.oscam/reader%d", reader->ridx);
 
-	if (reader->init_history_pos==0)
-		unlink(filename);
+		if (reader->init_history_pos==0)
+			unlink(filename);
 
-	fp=fopen(filename, "a");
+		fp=fopen(filename, "a");
 
-	if(fp != NULL) {
-		fseek(fp, reader->init_history_pos, SEEK_SET);
-		fprintf(fp, "%s\n", txt);
-		fclose(fp);
+		if(fp != NULL) {
+			fseek(fp, reader->init_history_pos, SEEK_SET);
+			fprintf(fp, "%s\n", txt);
+			fclose(fp);
+		}
+		truncate(filename, reader->init_history_pos+strlen(txt)+1);
 	}
-
-	truncate(filename, reader->init_history_pos+strlen(txt)+1);
 #endif
 	reader->init_history_pos+=strlen(txt)+1;
-#endif
 }
 
 static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
