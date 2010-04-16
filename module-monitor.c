@@ -589,7 +589,7 @@ static void monitor_set_account(char *args){
 
 			case	8: clear_caidtab(&account->ctab); break;	//Caid
 			}
-			found = i;
+			found = 1;
 		}
 	}
 
