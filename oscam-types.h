@@ -19,6 +19,9 @@ typedef unsigned long long ullong;
 #ifndef NO_ENDIAN_H
  #ifdef OS_MACOSX
     #include <machine/endian.h>
+    #define __BYTE_ORDER __DARWIN_BYTE_ORDER 
+    #define __BIG_ENDIAN    __DARWIN_BIG_ENDIAN 
+    #define __LITTLE_ENDIAN __DARWIN_LITTLE_ENDIAN
  #else
     #include <endian.h>
     #include <byteswap.h>
