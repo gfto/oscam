@@ -826,7 +826,9 @@ static void init_shm()
   client[0].typ='s';
   client[0].au=(-1);
   client[0].dbglvl=cs_dblevel;
-  strcpy(client[0].usr, "root");
+  char *runuser = getenv("USER");
+  strcpy(client[0].usr, runuser);
+
 #ifdef CS_LOGHISTORY
   *loghistidx=0;
   memset(loghist, 0, CS_MAXLOGHIST*CS_LOGHISTSIZE);
