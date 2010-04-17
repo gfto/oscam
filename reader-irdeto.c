@@ -377,8 +377,8 @@ void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[72+0+16] = 0xFF;
 	filter[72+1]    = emm_u;
 	filter[72+1+16] = 0xFF;
-	memcpy(filter+72+2, rdr->hexserial, 4);
-	memset(filter+72+2+16, 0xFF, 4);
+	memcpy(filter+72+2, rdr->hexserial, 3);
+	memset(filter+72+2+16, 0xFF, 3);
 
 	return;
 }
