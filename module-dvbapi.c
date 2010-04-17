@@ -947,7 +947,7 @@ void dvbapi_main_local() {
 	struct sigaction signal_action;
 	signal_action.sa_handler = event_handler;
 	sigemptyset(&signal_action.sa_mask);
-	signal_action.sa_flags = 0;
+	signal_action.sa_flags = SA_RESTART;
 	sigaction(SIGRTMIN + 1, &signal_action, NULL);
 	
 	dir_fd = open("/tmp/", O_RDONLY);

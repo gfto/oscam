@@ -443,7 +443,7 @@ static void monitor_process_details_reader(int pid, int idx) {
 	else
 		monitor_send_details("Missing reader index !", pid);
 #else
-	if ((r_idx=cs_idx2ridx(idx))>=0 && cfg->saveinithistory)
+	if ((r_idx=cs_idx2ridx(idx))>=0 && cfg->saveinithistory) {
 		FILE *fp;
 		char filename[32];
 		char buffer[128];
