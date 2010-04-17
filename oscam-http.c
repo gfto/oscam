@@ -30,10 +30,8 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 		break;
 
 		case REFR_READERS:
-#ifdef CS_RDR_INIT_HIST
 		kill(client[0].pid, SIGUSR2);
 		cs_log("Refresh Reader/Tiers requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
-#endif
 		break;
 
 		case REFR_SERVER:

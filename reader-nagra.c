@@ -756,26 +756,24 @@ void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[37]=0;
 
 	filter[38+0]    = 0x83;
-	filter[38+0+16] = 0xFF;
-	memcpy(filter+38+1, rdr->hexserial+2, 3);
-	memset(filter+38+1+16, 0xFF, 3);
+	filter[38+1]    = rdr->hexserial[4];
+	filter[38+2]    = rdr->hexserial[3];
+	filter[38+3]    = rdr->hexserial[2];
 	filter[38+4]    = 0x00;
-	filter[38+4+16] = 0xFF;
 	filter[38+5]    = 0x10;
-	filter[38+5+16] = 0xFF;
+	memset(filter[38+0+16], 0xFF, 6);
 
 
 	filter[70]=UNIQUE;
 	filter[71]=0;
 
 	filter[72+0]    = 0x83;
-	filter[72+0+16] = 0xFF;
-	memcpy(filter+72+1, rdr->hexserial+2, 3);
-	memset(filter+72+1+16, 0xFF, 3);
+	filter[72+1]    = rdr->hexserial[4];
+	filter[72+2]    = rdr->hexserial[3];
+	filter[72+3]    = rdr->hexserial[2];
 	filter[72+4]    = rdr->hexserial[5];
-	filter[72+4+16] = 0xFF;
 	filter[72+5]    = 0x00;
-	filter[72+5+16] = 0xFF;
+	memset(filter[72+0+16], 0xFF, 6);
 	
 	return;
 }
