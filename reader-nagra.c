@@ -761,7 +761,7 @@ void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[38+3]    = rdr->hexserial[2];
 	filter[38+4]    = 0x00;
 	filter[38+5]    = 0x10;
-	memset(filter[38+0+16], 0xFF, 6);
+	memset(filter+38+0+16, 0xFF, 6);
 
 
 	filter[70]=UNIQUE;
@@ -773,7 +773,7 @@ void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[72+3]    = rdr->hexserial[2];
 	filter[72+4]    = rdr->hexserial[5];
 	filter[72+5]    = 0x00;
-	memset(filter[72+0+16], 0xFF, 6);
+	memset(filter+72+0+16, 0xFF, 6);
 	
 	return;
 }
