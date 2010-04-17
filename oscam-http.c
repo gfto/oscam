@@ -649,16 +649,16 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_printf(vars, 0, "RIDX", "%d", readeridx);
 			tpl_addVar(vars, 0, "REFRICO", ICREF);
 			tpl_addVar(vars, 0, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
-#ifdef CS_RDR_INIT_HIST
+
 			tpl_addVar(vars, 0, "ENTICO", ICENT);
 			tpl_addVar(vars, 0, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
-#endif
+
 		} else {
 			tpl_printf(vars, 0, "RIDX", "");
 			tpl_addVar(vars, 0, "READERREFRESH","");
-#ifdef CS_RDR_INIT_HIST
+
 			tpl_addVar(vars, 0, "ENTITLEMENT","");
-#endif
+
 		}
 
 		tpl_addVar(vars, 0, "CTYP", ctyp);
@@ -1219,10 +1219,10 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 
 void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams *params) {
 	/* build entitlements from reader init history */
-#ifdef CS_RDR_INIT_HIST
 	int ridx;
-	char *p;
 	char *reader_ = getParam(params, "reader");
+#ifdef CS_RDR_INIT_HIST	
+	char *p;
 	if(strlen(reader_) > 0) {
 		for (ridx=0; ridx<CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
 		if(ridx<CS_MAXREADER) {
@@ -1233,10 +1233,25 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 		tpl_addVar(vars, 0, "READERNAME", reader_);
 	}
 #else
-	tpl_addVar(vars, 0, "LOGHISTORY", "Your binary has not been compiled with the \
-																		CS_RDR_INIT_HIST flag (some architectures disable this \
-																		per default to save ressources). Please recompile if you \
-																		need this feature! This is not a bug!<BR>\n");
+	if (cfg->saveinithistory && strlen(reader_) > 0) {
+		for (ridx=0; ridx<CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
+
+		FILE *fp;
+		char filename[32];
+		char buffer[128];
+		sprintf(filename, "/tmp/.oscam/reader%d", reader[ridx].ridx);
+		fp = fopen(filename, "r");
+
+		if (fp) {
+			while(fgets(buffer, 128, fp) != NULL) {
+				tpl_printf(vars, 1, "LOGHISTORY", "%s<BR>\n", buffer);
+			}
+			fclose(fp);
+		}
+		tpl_addVar(vars, 0, "READERNAME", reader_);
+	} else {
+		tpl_addVar(vars, 0, "LOGHISTORY", "You have to set saveinithistory=1 in your config to see Entitlements!<BR>\n");
+	}
 #endif
 	fputs(tpl_getTpl(vars, "ENTITLEMENTS"), f);
 }
