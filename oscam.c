@@ -826,8 +826,13 @@ static void init_shm()
   client[0].typ='s';
   client[0].au=(-1);
   client[0].dbglvl=cs_dblevel;
-  char *runuser = getenv("USER");
-  strcpy(client[0].usr, runuser);
+
+  // get username master running under
+  struct passwd *pwd;
+  if ((pwd = getpwuid(getuid())) != NULL)
+    strcpy(client[0].usr, pwd->pw_name);
+  else
+    strcpy(client[0].usr, "root");
 
 #ifdef CS_LOGHISTORY
   *loghistidx=0;
