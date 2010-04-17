@@ -107,6 +107,8 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 		tpl_addVar(vars, 0, "WAITFORCARDS", "checked");
 	if (cfg->preferlocalcards == 1)
 		tpl_addVar(vars, 0, "PREFERLOCALCARDS", "checked");
+	if (cfg->saveinithistory == 1)
+		tpl_addVar(vars, 0, "SAVEINITHISTORY", "checked");
 
 	fputs(tpl_getTpl(vars, "CONFIGGLOBAL"), f);
 }
