@@ -1203,9 +1203,11 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
 	client[cs_idx].au=(-1);
 	switch((long)account)
 	{
+#ifdef CS_WITH_GBOX
 	case -2:            // gbx-dummy
 	client[cs_idx].dup=0;
 	break;
+#endif
 	case 0:           // reject access
 		rc=1;
 		cs_log("%s %s-client %s%s (%s)",
