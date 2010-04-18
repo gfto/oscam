@@ -41,12 +41,16 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		sprintf(filename, "/tmp/.oscam/reader%d", reader->ridx);
 
 		int size=reader->init_history_pos+strlen(txt)+1;
-		buffer=malloc(size);
+		buffer=malloc(size+1);
+
+		if (buffer==NULL)
+			return;
+
 		memset(buffer, 32, size);
 
 		fp=fopen(filename, "r");
 
-		if (fp && reader->init_history_pos) {
+		if (fp) {
 			fread(buffer, 1, reader->init_history_pos, fp);
 			fclose(fp);
 		}
