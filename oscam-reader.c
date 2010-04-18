@@ -408,6 +408,8 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   if (check_ecmcache(er, client[er->cidx].grp))
   {
     er->rc=2;
+    if(cfg->delay)
+      cs_sleepms(cfg->delay);
     write_ecm_answer(reader, fd_c2m, er);
     return;
   }
