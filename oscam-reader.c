@@ -36,20 +36,28 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	if (cfg->saveinithistory) {
 		FILE *fp;
 		char filename[32];
+		char *buffer;
 		mkdir("/tmp/.oscam", S_IRWXU);
 		sprintf(filename, "/tmp/.oscam/reader%d", reader->ridx);
 
-		if (reader->init_history_pos==0)
-			unlink(filename);
+		int size=reader->init_history_pos+strlen(txt)+1;
+		buffer=malloc(size);
+		memset(buffer, 32, size);
 
-		fp=fopen(filename, "a");
+		fp=fopen(filename, "r");
 
-		if(fp != NULL) {
-			fseek(fp, reader->init_history_pos, SEEK_SET);
-			fprintf(fp, "%s\n", txt);
+		if (fp && reader->init_history_pos) {
+			fread(buffer, 1, reader->init_history_pos, fp);
 			fclose(fp);
 		}
-		truncate(filename, reader->init_history_pos+strlen(txt)+1);
+
+		sprintf(buffer+reader->init_history_pos, "%s\n", txt);
+
+		fp=fopen(filename, "w");
+		fwrite(buffer, 1, reader->init_history_pos+strlen(txt)+1, fp);
+		fclose(fp);
+
+		free(buffer);
 	}
 #endif
 	reader->init_history_pos+=strlen(txt)+1;
