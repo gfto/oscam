@@ -223,14 +223,10 @@ void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]=3;		//filter count
 
 	filter[2]=GLOBAL;
-	filter[3]=1; //not active
+	filter[3]=1; // FIXME: dont see any conax global EMM yet
 
 	filter[4+0]    = 0x82;
 	filter[4+0+16] = 0xFF;
-	// FIXME: dont see any conax global EMM yet
-	filter[4+1]    = 0xFF;
-	filter[4+1+16] = 0xFF;
-	// END
 	filter[4+8]    = 0x70;
 	filter[4+8+16] = 0xFF;
 
