@@ -352,7 +352,7 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 			return ERROR;
 	}
 
-	if (reader->convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE)
+	if (buffer)
 		free (buffer);
 	cs_debug_mask(D_IFD, "IFD Transmit succesful");
 	return OK;
@@ -534,6 +534,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1 
 					req[2] = 0x11; //defaults FI and DI to 1
 				unsigned int len = sizeof(req);
+				call (SetRightParity (reader));
 				ret = PPS_Exchange (reader, req, &len);
 				if (ret == OK) {
 					FI = req[2] >> 4;

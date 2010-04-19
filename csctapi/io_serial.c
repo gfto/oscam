@@ -162,8 +162,8 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, unsigned long bitrate, stru
 {
    /* Set the bitrate */
 #ifdef OS_LINUX
-   //FIXME workaround for Smargo until native mode works
-   if ((reader->mhz == reader->cardmhz) && (reader->smargopatch != 1))
+  //FIXME workaround for Smargo until native mode works
+  if ((reader->mhz == reader->cardmhz) && (reader->smargopatch != 1))
 #endif
    { //no overcloking
      cfsetospeed(tio, IO_Serial_Bitrate(bitrate));
@@ -510,64 +510,88 @@ bool IO_Serial_Close (struct s_reader * reader)
 
 static int IO_Serial_Bitrate(int bitrate)
 {
+	static const struct BaudRates { int real; speed_t apival; } BaudRateTab[] = {
 #ifdef B230400
-	if ((bitrate)>=230400) return B230400;
+		{ 230400, B230400 },
 #endif
 #ifdef B115200
-	if ((bitrate)>=115200) return B115200;
+		{ 115200, B115200 },
+#endif
+#ifdef B76800	
+		{ 76800, B76800 },
 #endif
 #ifdef B57600
-	if ((bitrate)>=57600) return B57600;
+		{  57600, B57600  },
 #endif
 #ifdef B38400
-	if ((bitrate)>=38400) return B38400;
+		{  38400, B38400  },
+#endif
+#ifdef B28800
+		{  28800, B28800  },
 #endif
 #ifdef B19200
-	if ((bitrate)>=19200) return B19200;
+		{  19200, B19200  },
+#endif
+#ifdef B14400
+		{  14400, B14400  },
 #endif
 #ifdef B9600
-	if ((bitrate)>=9600) return B9600;
+		{   9600, B9600   },
+#endif
+#ifdef B7200
+		{   7200, B7200   },
 #endif
 #ifdef B4800
-	if ((bitrate)>=4800) return B4800;
+		{   4800, B4800   },
 #endif
 #ifdef B2400
-	if ((bitrate)>=2400) return B2400;
-#endif
-#ifdef B1800
-	if ((bitrate)>=1800) return B1800;
+		{   2400, B2400   },
 #endif
 #ifdef B1200
-	if ((bitrate)>=1200) return B1200;
+		{   1200, B1200   },
 #endif
 #ifdef B600
-	if ((bitrate)>=600) return B600;
+        {    600, B600    },
 #endif
 #ifdef B300
-	if ((bitrate)>=300) return B300;
+        {    300, B300    },
 #endif
 #ifdef B200
-	if ((bitrate)>=200) return B200;
+		{    200, B200    },
 #endif
 #ifdef B150
-	if ((bitrate)>=150) return B150;
+		{    150, B150    },
 #endif
 #ifdef B134
-	if ((bitrate)>=134) return B134;
+		{    134, B134    },
 #endif
 #ifdef B110
-	if ((bitrate)>=110) return B110;
+		{    110, B110    },
 #endif
 #ifdef B75
-	if ((bitrate)>=75) return B75;
+		{     75, B75     },
 #endif
 #ifdef B50
-	if ((bitrate)>=50) return B50;
+		{     50, B50     },
 #endif
 #ifdef B0
-	if ((bitrate)>=0) return B0;
+		{      0, B0      }
 #endif
-	return 0;	/* Should never get here */
+		};
+
+	int i;
+	
+	for(i=0; i<(int)(sizeof(BaudRateTab)/sizeof(struct BaudRates)); i++)
+	{
+		int b=BaudRateTab[i].real;
+		int d=((b-bitrate)*10000)/b;
+		if(abs(d)<=350)
+		{
+			return BaudRateTab[i].apival;
+		}
+	}
+	return B0;
+
 }
 
 static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms)
