@@ -441,6 +441,24 @@ static void cs_card_info(int i)
       //kill(client[i].pid, SIGUSR2);
 }
 
+//SS: restart cardreader after 5 seconds:
+static void restart_cardreader()
+{
+  reader[ridx].ridx = ridx; //FIXME
+  if ((reader[ridx].device[0]) && (reader[ridx].enable == 1)) {
+    switch(cs_fork(0, 99)) {
+      case -1:
+	cs_exit(1);
+      case  0:
+        break;
+      default:
+	wait4master();
+	start_cardreader(&reader[ridx]);
+    }
+  }
+}
+
+
 static void cs_child_chk(int i)
 {
   while (waitpid(0, NULL, WNOHANG)>0);
@@ -465,7 +483,15 @@ static void cs_child_chk(int i)
 #endif
           }
           cs_log("PANIC: %s lost !! (pid=%d)", txt, client[i].pid);
-          cs_exit(1);
+          if (client[i].typ == 'r' || client[i].typ == 'p') 
+          {
+            usleep(5*1000*1000); // SS: 5 sek wait
+            cs_log("RESTARTING: %s (index=%d)", txt, i);
+            ridx = i;
+            restart_cardreader();
+          }
+          else
+            cs_exit(1);
         }
         else
         {
@@ -1065,6 +1091,7 @@ static void cs_http()
 	http_srv();
 }
 #endif
+
 
 static void init_cardreader()
 {

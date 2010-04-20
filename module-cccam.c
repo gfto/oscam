@@ -773,6 +773,7 @@ static int checkCaidInfos(int index, long *lastSize)
   stat(fname, &st);
   long current_size = st.st_size;
   int result = (current_size != *lastSize);
+  cs_debug("checkCaidInfos %d: cur=%ld last=%ld", index, current_size, *lastSize);
   *lastSize = current_size;
   return result;
 }
@@ -807,7 +808,7 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
   }
   fflush(file);
   fclose(file);
-  cs_log("saveCaidInfos: CAIDS: %d PROVIDERS: %d", caid_count, prov_count);
+  cs_debug("saveCaidInfos %d: CAIDS: %d PROVIDERS: %d", index, caid_count, prov_count);
 }
 
 static LLIST *loadCaidInfos(int index) {
@@ -844,7 +845,7 @@ static LLIST *loadCaidInfos(int index) {
     llist_append(caid_infos, caid_info);
   } while (1);
   fclose(file);
-  cs_log("loadCaidInfos: CAIDS: %d PROVIDERS: %d", caid_count, prov_count);
+  cs_debug("loadCaidInfos %d: CAIDS: %d PROVIDERS: %d", index, caid_count, prov_count);
   return caid_infos;
 }
 
@@ -1621,8 +1622,8 @@ void cc_srv_init()
   pfd=client[cs_idx].udp_fd;
   //cc_auth_client(client[cs_idx].ip);
   if (cc_srv_connect() < 0)
-		cs_log("cccam:%d failed errno: %d (%s)", __LINE__, errno, strerror(errno));
-	cs_exit(0);
+    cs_log("cccam:%d failed errno: %d (%s)", __LINE__, errno, strerror(errno));
+  cs_exit(1);
 }
 
 int cc_cli_init()
