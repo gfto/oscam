@@ -270,7 +270,7 @@ int dvbapi_open_device(int index_demux, int type) {
 	if (type==0)
 		sprintf(device_path, devices[selected_box].demux_device_path, demux[index_demux].demux_index);
 	else {
-		if (cfg->dvbapi_boxtype==BOXTYPE_DUCKBOX || cfg->dvbapi_boxtype==BOXTYPE_DBOX2)
+		if (cfg->dvbapi_boxtype==BOXTYPE_DUCKBOX || cfg->dvbapi_boxtype==BOXTYPE_DBOX2 || cfg->dvbapi_boxtype==BOXTYPE_UFS910)
 			ca_offset=1;
 
 		sprintf(device_path, devices[selected_box].ca_device_path, demux[index_demux].cadev_index+ca_offset);
