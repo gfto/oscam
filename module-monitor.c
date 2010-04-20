@@ -364,7 +364,7 @@ static void monitor_send_details(char *txt, int pid){
 
 static void monitor_send_details_version(){
 	char buf[256];
-	sprintf(buf, "[V-0000]version=%s, build=%s, system=%s%s\n", CS_VERSION_X, CS_SVN_VERSION, cs_platform(buf + 100), buf + 200);
+	sprintf(buf, "[V-0000]version=%s, build=%s, system=%s-%s-%s\n", CS_VERSION_X, CS_SVN_VERSION,  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
 	monitor_send_info(buf, 1);
 }
 
@@ -377,7 +377,7 @@ static void monitor_send_keepalive_ack(){
 static void monitor_process_details_master(char *buf, int pid){
 	sprintf(buf, "Version=%s#%s", CS_VERSION_X, CS_SVN_VERSION);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "System=%s%s", cs_platform(buf + 100), buf + 200);
+	sprintf(buf, "System=%s-%s-%s",  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
 	monitor_send_details(buf, pid);
 	sprintf(buf, "DebugLevel=%d", cfg->debuglvl);
 	monitor_send_details(buf, pid);
@@ -478,9 +478,7 @@ static void monitor_process_details(char *arg){
 		case 'c': case 'm':
 			break;
 		case 'r':
-#ifdef CS_RDR_INIT_HIST
 			monitor_process_details_reader(pid, idx);
-#endif
 			break;
 		case 'p':
 			break;

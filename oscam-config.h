@@ -16,9 +16,6 @@
 #     define CS_NOSHM
 #  endif
 #  define NO_FTIME
-#  define CS_HW_DBOX2	1
-#  define CS_HW_DREAM	2
-#  define CS_HW_DRAGON 3
 #  ifndef COOL
 #    define SCI_DEV 1
 #  endif

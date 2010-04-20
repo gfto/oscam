@@ -155,6 +155,16 @@
 #define MOD_CONN_NET    3
 #define MOD_CONN_SERIAL 4
 
+#ifdef HAVE_DVBAPI
+#define BOXTYPE_DREAMBOX	1
+#define BOXTYPE_DUCKBOX	2
+#define BOXTYPE_UFS910	3
+#define BOXTYPE_DBOX2	4
+#define BOXTYPE_IPBOX	5
+#define BOXTYPES		5
+extern char *boxdesc[];
+#endif
+
 #ifdef CS_CORE
 char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", NULL };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
@@ -747,7 +757,7 @@ struct s_config
 	int		dvbapi_enabled;
 	int		dvbapi_au;
 	char		dvbapi_usr[33];
-	char		dvbapi_boxtype[20];
+	int		dvbapi_boxtype;
 	CAIDTAB	dvbapi_prioritytab;
 	CAIDTAB	dvbapi_ignoretab;
 	CAIDTAB	dvbapi_delaytab;
@@ -869,7 +879,7 @@ extern void cs_strncpy(char * destination, const char * source, size_t num);
 extern char *get_servicename(int srvid, int caid);
 
 // oscam variables
-extern int pfd, rfd, fd_c2m, cs_idx, *c_start, cs_ptyp, cs_dblevel, cs_hw;
+extern int pfd, rfd, fd_c2m, cs_idx, *c_start, cs_ptyp, cs_dblevel;
 extern int *logidx, *loghistidx, *log_fd;
 extern int is_server, *mcl;
 extern uchar mbuf[1024];
@@ -894,7 +904,6 @@ extern int use_ac_log;
 
 
 // oscam
-extern char *cs_platform(char *);
 extern int recv_from_udpipe(uchar *);
 extern char* username(int);
 extern int idx_from_pid(pid_t);

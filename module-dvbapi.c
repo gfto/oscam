@@ -121,6 +121,8 @@ DEMUXTYPE demux[MAX_DEMUX];
 
 unsigned short global_caid_list[MAX_CAID];
 
+char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox" };
+
 #define BOX_COUNT 3
 struct box_devices
 {
@@ -268,7 +270,7 @@ int dvbapi_open_device(int index_demux, int type) {
 	if (type==0)
 		sprintf(device_path, devices[selected_box].demux_device_path, demux[index_demux].demux_index);
 	else {
-		if (strcmp(cfg->dvbapi_boxtype, "ufs910")==0 || strcmp(cfg->dvbapi_boxtype, "dbox2")==0)
+		if (cfg->dvbapi_boxtype==BOXTYPE_DUCKBOX || cfg->dvbapi_boxtype==BOXTYPE_DBOX2)
 			ca_offset=1;
 
 		sprintf(device_path, devices[selected_box].ca_device_path, demux[index_demux].cadev_index+ca_offset);
@@ -518,9 +520,6 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 
 	cs_ddump(buffer, 16, "emm:");
 
-	//force emm output
-	demux[demux_index].rdr->logemm=9999;
-
 	memset(&epg, 0, sizeof(epg));
 	epg.caid[0] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID>>8);
 	epg.caid[1] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
@@ -646,7 +645,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 	}
 	
 	// ipbox workaround
-	if (strcmp(cfg->dvbapi_boxtype, "ipbox") == 0) {
+	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
 		for (i = 0; i < MAX_DEMUX; i++) {
 			if (demux[i].demux_index == demux_index) {
 				if (demux[i].program_number == program_number) {
@@ -757,7 +756,7 @@ void dvbapi_handlesockmsg (unsigned char *buffer, unsigned int len, int connfd) 
 				//9F 80 3f 04 83 02 00 <demux index>
 				cs_ddump(buffer, len, "capmt 3f:");
 				// ipbox fix
-				if (strcmp(cfg->dvbapi_boxtype, "ipbox") == 0) {
+				if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
 					int demux_index=buffer[7+k];
 					for (i = 0; i < MAX_DEMUX; i++) {
 						if (demux[i].demux_index == demux_index) {
@@ -833,7 +832,7 @@ void event_handler(int signal) {
 	else
 		pausecam=0;
 
-	if (strcmp(cfg->dvbapi_boxtype, "ipbox") == 0)
+	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX)
 		return;
 
 	if (pmt_id==-2)
@@ -912,12 +911,6 @@ void dvbapi_main_local() {
 	struct sockaddr_un servaddr;
 	ssize_t len=0;
 
-	if (cfg->dvbapi_boxtype[0]==0) {
-		strncpy(cfg->dvbapi_boxtype, "dreambox", sizeof(cfg->dvbapi_boxtype)-1);
-		cs_log("dvbapi: boxtype not set. Assume boxtype=%s.", cfg->dvbapi_boxtype);
-	} else
-		cs_log("dvbapi: boxtype=%s.", cfg->dvbapi_boxtype);
-
 	for (i=0;i<MAX_DEMUX;i++) {
 		demux[i].program_number=0;
 		demux[i].pidindex=-1;
@@ -994,7 +987,7 @@ void dvbapi_main_local() {
 		
 			if (demux[i].socket_fd>0) {
 				rc=0;
-				if (strcmp(cfg->dvbapi_boxtype, "ipbox") == 0) {
+				if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
 					for (j = 0; j < pfdcount; j++)
 						if (pfd2[j].fd == demux[i].socket_fd) {
 							rc=1;
@@ -1059,6 +1052,18 @@ void dvbapi_main_local() {
 					}
 
 					dvbapi_handlesockmsg(mbuf, len, connfd);
+
+					if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
+						// check do we have any demux running on this fd
+						short execlose = 1;
+						for (j = 0; j < MAX_DEMUX; j++) {
+							if (demux[j].socket_fd == connfd) {
+								execlose = 0;
+								break;
+							}
+						}
+						if (execlose) close(connfd);
+					}
 				} else { // type==0
 					if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0)
 						continue;

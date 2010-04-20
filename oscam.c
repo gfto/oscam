@@ -18,8 +18,6 @@ int cs_dblevel=0;   // Debug Level (TODO !!)
 int cs_idx=0;   // client index (0=master, ...)
 int cs_ptyp=0; // process-type
 struct s_module ph[CS_MAX_MOD]; // Protocols
-int maxph=0;    // Protocols used
-int cs_hw=0;    // hardware autodetect
 int is_server=0;    // used in modules to specify function
 pid_t master_pid=0;   // master pid OUTSIDE shm
 ushort  len4caid[256];    // table for guessing caid (by len)
@@ -90,33 +88,6 @@ static void cs_set_mloc(int ato, char *txt)
     alarm(ato);
   if (txt)
     strcpy(mloc, txt);
-}
-
-char *cs_platform(char *buf)
-{
-  static char *hw=NULL;
-  if (!hw)
-  {
-#ifdef TUXBOX
-    struct stat st;
-    cs_hw=CS_HW_DBOX2;          // dbox2, default for now
-    if (!stat("/dev/sci0", &st)) cs_hw=CS_HW_DREAM; // dreambox
-#ifdef TRIPLEDRAGON
-    if (!stat("/dev/stb/tdsc0", &st)) cs_hw=CS_HW_DRAGON; // tripledragon
-#endif
-    switch(cs_hw)
-    {
-#ifdef PPC
-      case CS_HW_DBOX2: hw="dbox2"   ; break;
-#endif
-      case CS_HW_DREAM: hw="dreambox"; break;
-      case CS_HW_DRAGON: hw="tripledragon"; break;
-    }
-#endif
-    if (!hw) hw=CS_OS_HW;
-  }
-  sprintf(buf, "%s-%s-%s", CS_OS_CPU, hw, CS_OS_SYS);
-  return(buf);
 }
 
 static void usage()
@@ -2406,13 +2377,13 @@ static void process_master_pipe()
 
 void cs_log_config()
 {
-  uchar buf[2048];
+  uchar buf[20];
 
   if (cfg->nice!=99)
     sprintf((char *)buf, ", nice=%d", cfg->nice);
   else
     buf[0]='\0';
-  cs_log("version=%s, build #%s, system=%s%s", CS_VERSION_X, CS_SVN_VERSION, cs_platform((char *)buf+64), buf);
+  cs_log("version=%s, build #%s, system=%s-%s-%s%s", CS_VERSION_X, CS_SVN_VERSION, CS_OS_CPU, CS_OS_HW, CS_OS_SYS, buf);
   cs_log("max. clients=%d, client max. idle=%d sec",
 #ifdef CS_ANTICASC
          CS_MAXPID-3, cfg->cmaxidle);

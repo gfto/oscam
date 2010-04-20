@@ -495,7 +495,12 @@ void send_oscam_config_dvbapi(struct templatevars *vars, FILE *f, struct uripara
 
 	if (cfg->dvbapi_enabled > 0) tpl_addVar(vars, 0, "ENABLEDCHECKED", "checked");
 	if (cfg->dvbapi_au > 0) tpl_addVar(vars, 0, "AUCHECKED", "checked");
-	tpl_addVar(vars, 0, "BOXTYPE", cfg->dvbapi_boxtype);
+
+	tpl_printf(vars, 0, "BOXTYPE", "<option value=\"\"%s>None</option>\n", cfg->dvbapi_boxtype == 0 ? " selected" : "");
+	for (i=1; i<=BOXTYPES; i++) {
+		tpl_printf(vars, 1, "BOXTYPE", "<option%s>%s</option>\n", cfg->dvbapi_boxtype == i ? " selected" : "", boxdesc[i]);
+	}
+
 	tpl_addVar(vars, 0, "USER", cfg->dvbapi_usr);
 
 	fputs(tpl_getTpl(vars, "CONFIGDVBAPI"), f);
