@@ -716,8 +716,10 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		dvbapi_resort_ecmpids(demux_id);
 		if (demux[demux_id].ECMpidcount>0)
 			dvbapi_try_caid(demux_id, 0);
-	} else
-		cs_log("dvbapi: new program number: %04X", program_number);
+	} else {
+		char *name = get_servicename(demux[demux_id].program_number, 0);
+		cs_log("dvbapi: new program number: %04X (%s)", program_number, name);
+	}
 
 	return demux_id;
 }
