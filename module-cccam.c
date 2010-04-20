@@ -987,24 +987,24 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 
     int f = 0;
     LLIST_ITR itr;
-    uint16 *sid = llist_itr_init(cc->cur_card->badsids, &itr);
-    while (sid && !f) {
-      if (*sid == cc->cur_sid) {
-//        llist_itr_release(&itr);
-        f = 1;
+    if (cc->cur_card) {
+      uint16 *sid = llist_itr_init(cc->cur_card->badsids, &itr);
+      while (sid && !f) {
+        if (*sid == cc->cur_sid) {
+          f = 1;
+        }
+        sid = llist_itr_next(&itr);
       }
-      sid = llist_itr_next(&itr);
-    }
-//    llist_itr_release(&itr);
 
-    if (!f) {
-      sid = malloc(sizeof(uint16));
-			if (sid) {
-      *sid = cc->cur_sid;
+      if (!f) {
+        sid = malloc(sizeof(uint16));
+	if (sid) {
+          *sid = cc->cur_sid;
 
-      sid = llist_append(cc->cur_card->badsids, sid);
-      cs_debug("   added sid block for card %08x", cc->cur_card->id);
-			}
+          sid = llist_append(cc->cur_card->badsids, sid);
+          cs_debug("   added sid block for card %08x", cc->cur_card->id);
+        }
+      }
     }
     memset(cc->dcw, 0, 16);
     pthread_mutex_unlock(&cc->ecm_busy);
