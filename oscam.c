@@ -487,8 +487,16 @@ static void cs_child_chk(int i)
           {
             usleep(5*1000*1000); // SS: 5 sek wait
             cs_log("RESTARTING: %s (index=%d)", txt, i);
-            ridx = i;
-            restart_cardreader();
+            int old_pid = client[i].pid;
+            client[i].pid = 0;
+            for (ridx = 0; ridx < CS_MAXREADER; ridx++) 
+            {
+              if (reader[ridx].pid = old_pid)
+              {
+                restart_cardreader();
+                break;
+              }
+            }
           }
           else
             cs_exit(1);
