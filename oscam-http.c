@@ -659,8 +659,12 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 		} else {
 			tpl_printf(vars, 0, "RIDX", "");
 			tpl_addVar(vars, 0, "READERREFRESH","");
-
-			tpl_addVar(vars, 0, "ENTITLEMENT","");
+			if (reader[readeridx].typ == R_CCCAM) {
+				tpl_addVar(vars, 0, "ENTICO", ICENT);
+				tpl_addVar(vars, 0, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
+			} else {
+				tpl_addVar(vars, 0, "ENTITLEMENT","");
+			}
 
 		}
 
@@ -1229,8 +1233,41 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 	if(strlen(reader_) > 0) {
 		for (ridx=0; ridx<CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
 		if(ridx<CS_MAXREADER) {
-			for (p=(char *)reader[ridx].init_history; *p; p+=strlen(p)+1) {
-				tpl_printf(vars, 1, "LOGHISTORY", "%s<BR>\n", p);
+
+			if (reader[ridx].typ == R_CCCAM) {
+				char fname[40];
+				sprintf(fname, "/tmp/cards.%d", reader[ridx].ridx);
+				FILE *file = fopen(fname, "r");
+				if (file) {
+					uint16 caid = 0;
+					do {
+						if (fread(&caid, 1, sizeof(caid), file) <= 1)
+							break;
+						tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X<BR>\n", caid);
+						int count = 0;
+						if (fread(&count, 1, sizeof(count), file) <= 1)
+							break;
+						uint8 prov1 ,prov2, prov3;
+						int revcount = count;
+						while (count > 0) {
+							if (fread(&prov1, 1, 1, file) <= 0)
+								break;
+							if (fread(&prov2, 1, 1, file) <= 0)
+								break;
+							if (fread(&prov3, 1, 1, file) <= 0)
+								break;
+							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %02X%02X%02X<BR>\n", revcount - count, prov1, prov2, prov3);
+							count--;
+						}
+						tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
+					} while (1);
+					fclose(file);
+				}
+
+			} else {
+				for (p=(char *)reader[ridx].init_history; *p; p+=strlen(p)+1) {
+					tpl_printf(vars, 1, "LOGHISTORY", "%s<BR>\n", p);
+				}
 			}
 		}
 		tpl_addVar(vars, 0, "READERNAME", reader_);
@@ -1238,20 +1275,53 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 #else
 	if (cfg->saveinithistory && strlen(reader_) > 0) {
 		for (ridx=0; ridx<CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
-
-		FILE *fp;
-		char filename[32];
-		char buffer[128];
-		sprintf(filename, "/tmp/.oscam/reader%d", reader[ridx].ridx);
-		fp = fopen(filename, "r");
-
-		if (fp) {
-			while(fgets(buffer, 128, fp) != NULL) {
-				tpl_printf(vars, 1, "LOGHISTORY", "%s<BR>\n", buffer);
+		printf("we are right %d\n", reader[ridx].typ);
+		if (reader[ridx].typ == R_CCCAM) {
+			printf("we are right");
+			char fname[40];
+			sprintf(fname, "/tmp/cards.%d", reader[ridx].ridx);
+			FILE *file = fopen(fname, "r");
+			if (file) {
+				uint16 caid = 0;
+				do {
+					if (fread(&caid, 1, sizeof(caid), file) <= 1)
+						break;
+					tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X<BR>\n", caid);
+					int count = 0;
+					if (fread(&count, 1, sizeof(count), file) <= 1)
+						break;
+					uint8 prov1 ,prov2, prov3;
+					int revcount = count;
+					while (count > 0) {
+						if (fread(&prov1, 1, 1, file) <= 0)
+							break;
+						if (fread(&prov2, 1, 1, file) <= 0)
+							break;
+						if (fread(&prov3, 1, 1, file) <= 0)
+							break;
+						tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %02X%02X%02X<BR>\n", revcount - count, prov1, prov2, prov3);
+						count--;
+					}
+					tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
+				} while (1);
+				fclose(file);
 			}
-			fclose(fp);
+
+		} else {
+			FILE *fp;
+			char filename[32];
+			char buffer[128];
+			sprintf(filename, "/tmp/.oscam/reader%d", reader[ridx].ridx);
+			fp = fopen(filename, "r");
+
+			if (fp) {
+				while(fgets(buffer, 128, fp) != NULL) {
+					tpl_printf(vars, 1, "LOGHISTORY", "%s<BR>\n", buffer);
+				}
+				fclose(fp);
+			}
+			tpl_addVar(vars, 0, "READERNAME", reader_);
 		}
-		tpl_addVar(vars, 0, "READERNAME", reader_);
 	} else {
 		tpl_addVar(vars, 0, "LOGHISTORY", "You have to set saveinithistory=1 in your config to see Entitlements!<BR>\n");
 	}
