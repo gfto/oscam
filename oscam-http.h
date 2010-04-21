@@ -1096,6 +1096,9 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>AU:</TD><TD><input name=\"au\" type=\"checkbox\" value=\"1\" ##AUCHECKED##>\n\
 		<TR><TD>Boxtype:</TD><TD><SELECT name=\"boxtype\">##BOXTYPE##</select></TD></TR>\n\
 		<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##USER##\"></TD></TR>\n\
+		<TR><TD>Priority:</TD><TD><input name=\"priority\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##PRIORITY##\"></TD></TR>\n\
+		<TR><TD>Ignore:</TD><TD><input name=\"ignore\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##IGNORE##\"></TD></TR>\n\
+		<TR><TD>Cw_delay:</TD><TD><input name=\"cw_delay\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##CWDELAY##\"></TD></TR>\n\
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\

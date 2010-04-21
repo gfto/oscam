@@ -1828,6 +1828,40 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "au", "%d\n", cfg->dvbapi_au);
 		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", boxdesc[cfg->dvbapi_boxtype]);
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->dvbapi_usr);
+
+		fprintf_conf(f, CONFVARWIDTH, "priority", "");
+		i = 0;
+		dot = "";
+		while(cfg->dvbapi_prioritytab.caid[i]) {
+			fprintf(f, "%s%04X", dot, cfg->dvbapi_prioritytab.caid[i]);
+			if(cfg->dvbapi_prioritytab.mask[i])
+				fprintf(f, ":%06X", cfg->dvbapi_prioritytab.mask[i]);
+			dot = ",";
+			i++;
+		}
+		fprintf(f,"\n");
+
+		fprintf_conf(f, CONFVARWIDTH, "ignore", "");
+		i = 0;
+		dot = "";
+		while(cfg->dvbapi_ignoretab.caid[i]) {
+			fprintf(f, "%s%04X", dot, cfg->dvbapi_ignoretab.caid[i]);
+			dot = ",";
+			i++;
+		}
+		fprintf(f,"\n");
+
+		fprintf_conf(f, CONFVARWIDTH, "cw_delay", "");
+		i = 0;
+		dot = "";
+		while(cfg->dvbapi_delaytab.caid[i]) {
+			fprintf(f, "%s%04X", dot, cfg->dvbapi_delaytab.caid[i]);
+			fprintf(f, ":%d", cfg->dvbapi_delaytab.mask[i]);
+			dot = ",";
+			i++;
+		}
+		fprintf(f,"\n");
+
 		fputc((int)'\n', f);
 	}
 #endif

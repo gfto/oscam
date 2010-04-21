@@ -503,6 +503,33 @@ void send_oscam_config_dvbapi(struct templatevars *vars, FILE *f, struct uripara
 
 	tpl_addVar(vars, 0, "USER", cfg->dvbapi_usr);
 
+	i = 0;
+	char *dot = "";
+	while(cfg->dvbapi_prioritytab.caid[i]) {
+		tpl_printf(vars, 1, "PRIORITY", "%s%04X", dot, cfg->dvbapi_prioritytab.caid[i]);
+		if(cfg->dvbapi_prioritytab.mask[i])
+			tpl_printf(vars, 1, "PRIORITY", ":%06X", cfg->dvbapi_prioritytab.mask[i]);
+		dot = ",";
+		i++;
+	}
+
+	i = 0;
+	dot = "";
+	while(cfg->dvbapi_ignoretab.caid[i]) {
+		tpl_printf(vars, 1, "IGNORE", "%s%04X", dot, cfg->dvbapi_ignoretab.caid[i]);
+		dot = ",";
+		i++;
+	}
+
+	i = 0;
+	dot = "";
+	while(cfg->dvbapi_delaytab.caid[i]) {
+		tpl_printf(vars, 1, "CWDELAY", "%s%04X", dot, cfg->dvbapi_delaytab.caid[i]);
+		tpl_printf(vars, 1, "CWDELAY", ":%d", cfg->dvbapi_delaytab.mask[i]);
+		dot = ",";
+		i++;
+	}
+
 	fputs(tpl_getTpl(vars, "CONFIGDVBAPI"), f);
 }
 #endif
