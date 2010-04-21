@@ -491,7 +491,7 @@ static void cs_child_chk(int i)
             client[i].pid = 0;
             for (ridx = 0; ridx < CS_MAXREADER; ridx++) 
             {
-              if (reader[ridx].pid = old_pid)
+              if (reader[ridx].pid == old_pid)
               {
                 restart_cardreader();
                 break;
