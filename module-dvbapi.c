@@ -717,6 +717,11 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		if (demux[demux_id].ECMpidcount>0)
 			dvbapi_try_caid(demux_id, 0);
 	} else {
+		// set channel srvid+caid
+		client[cs_idx].last_srvid = demux[demux_id].program_number;
+		client[cs_idx].last_caid = 0;
+		// reset idle-Time
+		client[cs_idx].last=time((time_t)0);
 		char *name = get_servicename(demux[demux_id].program_number, 0);
 		cs_log("dvbapi: new program number: %04X (%s)", program_number, name);
 	}
@@ -1207,6 +1212,9 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 						cs_debug("dvbapi: Error CA_SET_DESCR");
 				}
 			}
+
+			// reset idle-Time
+			client[cs_idx].last=time((time_t)0);
 
 			FILE *ecmtxt;
 			ecmtxt = fopen(ECMINFO_FILE, "w");
