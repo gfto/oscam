@@ -916,6 +916,8 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (!strcmp(token, "key")) {
+		if(strlen(value) == 0)
+			return;
 		if (key_atob14(value, cfg->ncd_key)) {
 			fprintf(stderr, "Configuration newcamd: Error in Key\n");
 			exit(1);

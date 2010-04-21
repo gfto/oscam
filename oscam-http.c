@@ -248,25 +248,26 @@ void send_oscam_config_newcamd(struct templatevars *vars, FILE *f, struct uripar
 			}
 			dot1=";";
 		}
+
+
+		if (cfg->ncd_srvip != 0)
+			tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->ncd_srvip));
+
+		for (i=0;i<14;i++) tpl_printf(vars, 1, "KEY", "%02X", cfg->ncd_key[i]);
+
+		struct s_ip *cip;
+		char *dot="";
+		for (cip = cfg->ncd_allowed; cip; cip = cip->next) {
+			tpl_printf(vars, 1, "ALLOWED", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
+			if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, 1, "ALLOWED", "-%s", cs_inet_ntoa(cip->ip[1]));
+			dot=",";
+		}
+
+		if (cfg->ncd_keepalive)
+			tpl_addVar(vars, 0, "KEEPALIVE", "checked");
+		if (cfg->ncd_mgclient)
+			tpl_addVar(vars, 0, "MGCLIENTCHK", "checked");
 	}
-
-	if (cfg->ncd_srvip != 0)
-	tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->ncd_srvip));
-	for (i=0;i<14;i++) tpl_printf(vars, 1, "KEY", "%02X", cfg->ncd_key[i]);
-
-	struct s_ip *cip;
-	char *dot="";
-	for (cip = cfg->ncd_allowed; cip; cip = cip->next) {
-		tpl_printf(vars, 1, "ALLOWED", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-		if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, 1, "ALLOWED", "-%s", cs_inet_ntoa(cip->ip[1]));
-		dot=",";
-	}
-
-	if (cfg->ncd_keepalive)
-		tpl_addVar(vars, 0, "KEEPALIVE", "checked");
-	if (cfg->ncd_mgclient)
-		tpl_addVar(vars, 0, "MGCLIENTCHK", "checked");
-
 	fputs(tpl_getTpl(vars, "CONFIGNEWCAMD"), f);
 }
 
