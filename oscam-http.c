@@ -481,6 +481,10 @@ void send_oscam_config_serial(struct templatevars *vars, FILE *f, struct uripara
 void send_oscam_config_dvbapi(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
 	int i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
+		//clear tables
+		clear_caidtab(&cfg->dvbapi_prioritytab);
+		clear_caidtab(&cfg->dvbapi_ignoretab);
+		clear_caidtab(&cfg->dvbapi_delaytab);
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				tpl_printf(vars, 1, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
