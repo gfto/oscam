@@ -183,8 +183,8 @@ int llist_count(LLIST *l)
 
 #define CC_MAXMSGSIZE 512
 #define CC_MAX_PROV   16
-#define CC_MAX_ECMS   5000  // before reconnect
-#define CC_MAX_KEEPALIVE 5000 //SS: Hack: before reconnect
+#define CC_MAX_ECMS   150  // before reconnect
+#define CC_MAX_KEEPALIVE 500 //SS: Hack: before reconnect
 
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 
@@ -246,6 +246,7 @@ struct cc_data {
 
   struct cc_card *cur_card;   // ptr to selected card
   LLIST *cards;               // cards list
+  int card_count;
   
   //SS: Hack:
   LLIST *caid_infos;
@@ -875,10 +876,10 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     {
       int i = 0;
       if (buf[14] > reader[ridx].cc_maxhop)
-	break;
+        break;
       struct cc_card *card = malloc(sizeof(struct cc_card));
       if (!card)
-	break;
+        break;
 
       memset(card, 0, sizeof(struct cc_card));
 
@@ -890,8 +891,9 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       card->hop = buf[14];
       memcpy(card->key, buf+16, 8);
 
-      cs_debug("cccam: card %08x added, caid %04x, hop %d, key %s",
-          card->id, card->caid, card->hop, cs_hexdump(0, card->key, 8));
+      cc->card_count++;
+      cs_debug("cccam: card %08x added, caid %04x, hop %d, key %s, count %d",
+          card->id, card->caid, card->hop, cs_hexdump(0, card->key, 8), cc->card_count);
 
 
       for (i = 0; i < buf[24]; i++) {  // providers
@@ -901,7 +903,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
           cs_debug("      prov %d, %06x", i+1, b2i(3, prov));
 
           llist_append(card->provs, prov);
-	}
+        }
       }
 
       //SS: Hack:
@@ -962,11 +964,13 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     struct cc_card *card;
     LLIST_ITR itr;
 
+    int found = 0;
     card = llist_itr_init(cc->cards, &itr);
     while (card) {
-      if (card->id == b2i(4, buf+4) && card->sub_id == b2i (3, buf + 9)) {
-        cs_debug("cccam: card %08x removed, caid %04x", card->id, card->caid);
-
+      if (card->id == b2i(4, buf+4)) {// && card->sub_id == b2i (3, buf + 9)) {
+        cc->card_count--;
+        cs_debug("cccam: card %08x removed, caid %04x, count %d", card->id, card->caid, cc->card_count);
+        found = 1;
         //SS: Fix card free:
         if (card == cc->cur_card)
           cc->cur_card = NULL;
@@ -979,6 +983,8 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
         card = llist_itr_next(&itr);
       }
     }
+    if (!found)
+      cs_debug("cccam: card %08x NOT FOUND?!?, caid %04x, count %d", card->id, card->caid, cc->card_count);
 //    llist_itr_release(&itr);
   }
     break;
