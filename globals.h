@@ -694,6 +694,7 @@ struct s_config
 	int		usrfileflag;
 	struct s_auth 	*account;
 	struct s_srvid 	*srvid;
+	//Todo #ifdef CCCAM
 	struct s_provid *provid;
 	struct s_sidtab *sidtab;
 	int		mon_port;
