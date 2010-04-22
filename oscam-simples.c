@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #include "globals.h"
 
 static AES_KEY	aeskey;
