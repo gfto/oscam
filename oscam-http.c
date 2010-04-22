@@ -161,13 +161,15 @@ void send_oscam_config_camd35(struct templatevars *vars, FILE *f, struct uripara
 		if(write_config()==0) refresh_oscam(REFR_SERVER, in);
 		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
-	tpl_printf(vars, 0, "PORT", "%d", cfg->c35_port);
-	if (cfg->c35_tcp_srvip != 0)
-		tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
 
-	if (cfg->c35_suppresscmd08)
-		tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
+	if (cfg->c35_port) {
+		tpl_printf(vars, 0, "PORT", "%d", cfg->c35_port);
+		if (cfg->c35_tcp_srvip != 0)
+			tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
 
+		if (cfg->c35_suppresscmd08)
+			tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
+	}
 	fputs(tpl_getTpl(vars, "CONFIGCAMD35"), f);
 }
 
@@ -203,14 +205,14 @@ void send_oscam_config_camd35tcp(struct templatevars *vars, FILE *f, struct urip
 			}
 			dot1=";";
 		}
+
+		if (cfg->c35_tcp_srvip != 0)
+			tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
+
+		//SUPPRESSCMD08
+		if (cfg->c35_suppresscmd08)
+			tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
 	}
-	if (cfg->c35_tcp_srvip != 0)
-	tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
-
-	//SUPPRESSCMD08
-	if (cfg->c35_suppresscmd08)
-		tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
-
 	fputs(tpl_getTpl(vars, "CONFIGCAMD35TCP"), f);
 }
 
@@ -1267,6 +1269,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 		if(ridx<CS_MAXREADER) {
 
 			if (reader[ridx].typ == R_CCCAM) {
+
 				char fname[40];
 				sprintf(fname, "/tmp/cards.%d", reader[ridx].ridx);
 				FILE *file = fopen(fname, "r");
