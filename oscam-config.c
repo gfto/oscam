@@ -17,6 +17,9 @@ static char *cs_sidt="oscam.services";
 static char *cs_ac="oscam.ac";
 #endif
 
+//Todo #ifdef CCCAM
+static char *cs_provid="oscam.provid";
+
 #ifdef IRDETO_GUESSING
 static char *cs_ird="oscam.ird";
 #endif
@@ -2462,6 +2465,76 @@ int init_sidtab()
 #endif
   cs_log("services reloaded: %d services freed, %d services loaded", nro, nr);
   return(0);
+}
+
+//Todo #ifdef CCCAM
+int init_provid() {
+	int nr;
+	FILE *fp;
+	char *payload;
+	static struct s_provid *provid=(struct s_provid *)0;
+	sprintf(token, "%s%s", cs_confdir, cs_provid);
+
+	if (!(fp=fopen(token, "r"))) {
+		cs_log("can't open file \"%s\" (err=%d), no provids's loaded", token, errno);
+		return(0);
+	}
+	nr=0;
+	while (fgets(token, sizeof(token), fp)) {
+
+		int l;
+		void *ptr;
+		char *tmp;
+		tmp = trim(token);
+
+		if (tmp[0] == '#') continue;
+		if ((l = strlen(tmp)) < 11) continue;
+		if (!(payload = strchr(token, '|'))) continue;
+		*payload++ = '\0';
+
+		if (!(ptr = malloc(sizeof(struct s_provid)))) {
+			cs_log("Error allocating memory (errno=%d)", errno);
+			return(1);
+		}
+
+		if (provid)
+			provid->next = ptr;
+		else
+			cfg->provid = ptr;
+
+		provid = ptr;
+		memset(provid, 0, sizeof(struct s_provid));
+
+		int i;
+		char *ptr1;
+		for (i = 0, ptr1 = strtok(payload, "|"); ptr1; ptr1 = strtok(NULL, "|"), i++){
+			switch(i){
+			case 0:
+				cs_strncpy(provid->prov, trim(ptr1), sizeof(provid->prov));
+				break;
+			case 1:
+				cs_strncpy(provid->sat, trim(ptr1), sizeof(provid->sat));
+				break;
+			case 2:
+				cs_strncpy(provid->lang, trim(ptr1), sizeof(provid->lang));
+				break;
+			}
+		}
+
+		char *providasc = strchr(token, ':');
+		*providasc++ = '\0';
+		provid->provid = a2i(providasc, 3);
+		provid->caid = a2i(token, 3);
+		nr++;
+	}
+
+	fclose(fp);
+	if (nr>0)
+		cs_log("%d provid's loaded", nr);
+	else{
+		cs_log("oscam.provid loading failed, wrong format?");
+	}
+	return(0);
 }
 
 int init_srvid()

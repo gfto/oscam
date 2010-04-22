@@ -653,6 +653,17 @@ struct s_srvid
   struct  s_srvid *next;
 };
 
+//Todo #ifdef CCCAM
+struct s_provid
+{
+	int		caid;
+	ulong	provid;
+	char	prov[33];
+	char	sat[33];
+	char	lang[33];
+	struct	s_provid *next;
+};
+
 struct s_ip
 {
   in_addr_t ip[2];
@@ -683,6 +694,7 @@ struct s_config
 	int		usrfileflag;
 	struct s_auth 	*account;
 	struct s_srvid 	*srvid;
+	struct s_provid *provid;
 	struct s_sidtab *sidtab;
 	int		mon_port;
 	in_addr_t	mon_srvip;
@@ -1010,6 +1022,8 @@ extern char *mk_t_caidtab(CAIDTAB *ctab);
 extern char *mk_t_tuntab(TUNTAB *ttab);
 extern char *mk_t_group(ulong *grp);
 extern char *mk_t_ftab(FTAB *ftab);
+//Todo #ifdef CCCAM
+extern int init_provid();
 
 // oscam-reader
 extern int ridx, logfd;

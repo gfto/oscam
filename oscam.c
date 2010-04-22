@@ -2525,6 +2525,9 @@ int main (int argc, char *argv[])
   init_signal();
   cs_set_mloc(30, "init");
   init_srvid();
+  //Todo #ifdef CCCAM
+  init_provid();
+
   init_len4caid();
 #ifdef IRDETO_GUESSING
   init_irdeto_guess_tab(); 
