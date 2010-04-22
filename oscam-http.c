@@ -129,19 +129,22 @@ void send_oscam_config_camd33(struct templatevars *vars, FILE *f, struct uripara
 		if(write_config()==0) refresh_oscam(REFR_SERVER, in);
 		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
-	tpl_printf(vars, 0, "PORT", "%d", cfg->c33_port);
-	if (cfg->c33_srvip != 0)
-	tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c33_srvip));
-	if (cfg->c33_passive == 1)
-		tpl_addVar(vars, 0, "PASSIVE", "checked");
 
-	for (i = 0; i < (int) sizeof(cfg->c33_key); ++i) tpl_printf(vars, 1, "KEY", "%02X",cfg->c33_key[i]);
-	struct s_ip *cip;
-	char *dot="";
-	for (cip = cfg->c33_plain; cip; cip = cip->next) {
-		tpl_printf(vars, 1, "NOCRYPT", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-		if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, 1, "NOCRYPT", "-%s", cs_inet_ntoa(cip->ip[1]));
-		dot=",";
+	if (cfg->c33_port) {
+		tpl_printf(vars, 0, "PORT", "%d", cfg->c33_port);
+		if (cfg->c33_srvip != 0)
+			tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c33_srvip));
+		if (cfg->c33_passive == 1)
+			tpl_addVar(vars, 0, "PASSIVE", "checked");
+
+		for (i = 0; i < (int) sizeof(cfg->c33_key); ++i) tpl_printf(vars, 1, "KEY", "%02X",cfg->c33_key[i]);
+		struct s_ip *cip;
+		char *dot="";
+		for (cip = cfg->c33_plain; cip; cip = cip->next) {
+			tpl_printf(vars, 1, "NOCRYPT", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
+			if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, 1, "NOCRYPT", "-%s", cs_inet_ntoa(cip->ip[1]));
+			dot=",";
+		}
 	}
 
 	fputs(tpl_getTpl(vars, "CONFIGCAMD33"), f);
