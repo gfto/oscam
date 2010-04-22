@@ -799,6 +799,10 @@ void chk_t_camd33(char *token, char *value)
 	}
 
 	if (!strcmp(token, "key")) {
+		if(strlen(value) == 0) {
+			cfg->c33_crypted = 0;
+			return;
+		}
 		if (key_atob(value, cfg->c33_key)) {
 			fprintf(stderr, "Configuration camd3.3x: Error in Key\n");
 			exit(1);
