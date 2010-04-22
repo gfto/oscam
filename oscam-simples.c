@@ -607,7 +607,6 @@ char *get_servicename(int srvid, int caid){
 }
 
 char *get_provider(int caid, ulong provid){
-	int i;
 	struct s_provid *this = cfg->provid;
 	static char name[83];
 
