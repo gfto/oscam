@@ -588,7 +588,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   cc->cur_sid = cur_er->srvid;
 
   card = llist_itr_init(cc->cards, &itr);
-
   while (card) {
     if (card->caid == cur_er->caid) {   // caid matches
       int s = 0;
@@ -602,20 +601,18 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
         }
         sid = llist_itr_next(&sitr);
       }
-//      llist_itr_release(&sitr);
-
+ 
       LLIST_ITR pitr;
       uint8 *prov = llist_itr_init(card->provs, &pitr);
       while (prov && !s) {
         if (!cur_er->prid || b2i(3, prov) == cur_er->prid) {  // provid matches
-          if (((h < 0) || (card->hop < h)) && (card->hop <= reader[ridx].cc_maxhop - 1)) {  // card is closer and doesn't exceed max hop
+          if (((h < 0) || (card->hop <= h)) && (card->hop <= reader[ridx].cc_maxhop - 1)) {  // card is closer and doesn't exceed max hop
             cc->cur_card = card;
             h = card->hop;  // card has been matched
           }
         }
         prov = llist_itr_next(&pitr);
       }
-//      llist_itr_release(&pitr);
     }
     card = llist_itr_next(&itr);
   }
@@ -625,7 +622,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     card = llist_itr_init(cc->cards, &itr);
     while (card) {
       if (card->caid == cur_er->caid) {   // caid matches
-        if (((h < 0) || (card->hop < h)) && (card->hop <= reader[ridx].cc_maxhop - 1)) {  // card is closer and doesn't exceed max hop
+        if (((h < 0) || (card->hop <= h)) && (card->hop <= reader[ridx].cc_maxhop - 1)) {  // card is closer and doesn't exceed max hop
           cc->cur_card = card;
           h = card->hop;  // card has been matched
         }
@@ -634,8 +631,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     }
   }
   
-//  llist_itr_release(&itr);
-
   if (cc->cur_card) {
     uint8 ecmbuf[CC_MAXMSGSIZE];
     memset(ecmbuf, 0, CC_MAXMSGSIZE);
@@ -659,7 +654,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     cc->count = cur_er->idx;
     reader[ridx].cc_currenthops = cc->cur_card->hop + 1;
 
-    //cs_log("cccam: sending ecm for sid %04x to card %08x, hop %d", cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
+    cs_log("cccam: sending ecm for sid %04x to card %08x, hop %d", cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
     n = cc_cmd_send(ecmbuf, cur_er->l+13, MSG_CW_ECM);      // send ecm
 
   } else {
@@ -1699,10 +1694,12 @@ int cc_cli_init()
 
 void cc_cleanup(void)
 {
+  cs_debug("cc_cleanup in");
   cc_free(reader[ridx].cc);
   reader[ridx].cc = NULL;
   cc_free(client[cs_idx].cc);
   client[cs_idx].cc = NULL;
+  cs_debug("cc_cleanup out");
 }
 
 void module_cccam(struct s_module *ph)

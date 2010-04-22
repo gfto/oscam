@@ -485,14 +485,19 @@ static void cs_child_chk(int i)
           cs_log("PANIC: %s lost !! (pid=%d)", txt, client[i].pid);
           if (client[i].typ == 'r' || client[i].typ == 'p') 
           {
-            usleep(5*1000*1000); // SS: 5 sek wait
-            cs_log("RESTARTING: %s (index=%d)", txt, i);
             int old_pid = client[i].pid;
             client[i].pid = 0;
             for (ridx = 0; ridx < CS_MAXREADER; ridx++) 
             {
               if (reader[ridx].pid == old_pid)
               {
+                reader[ridx].pid = 0;
+                reader[ridx].card_status = NO_CARD;
+                reader[ridx].cs_idx = 0;
+                reader[ridx].cc = NULL;
+                cs_log("RESTARTING READER %s in 5 seconds (index=%d)", txt, ridx);
+                cs_sleepms(5*1000); // SS: 5 sek wait
+                cs_log("RESTARTING READER: %s (index=%d)", txt, ridx);
                 restart_cardreader();
                 break;
               }
