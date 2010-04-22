@@ -616,6 +616,6 @@ char *get_provider(int caid, ulong provid){
 			snprintf(name, 83, "%s / %s / %s", this->prov, this->sat, this->lang);
 
 	if (!name[0]) snprintf(name, 83, "%04X:%06lX unknown", caid, provid);
-	if (!provid || !caid) name[0] = '\0';
+	if (!caid) name[0] = '\0';
 	return(name);
 }

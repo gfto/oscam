@@ -1281,11 +1281,11 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					char ascprovid[6];
 					char *provider="";
 					do {
-						if (fread(&caid, 1, sizeof(caid), file) <= 1)
+						if (fread(&caid, 1, sizeof(caid), file) <= 0)
 							break;
 						tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X<BR>\n", caid);
 						int count = 0;
-						if (fread(&count, 1, sizeof(count), file) <= 1)
+						if (fread(&count, 1, sizeof(count), file) <= 0)
 							break;
 						uint8 prov1 ,prov2, prov3;
 						int revcount = count;
