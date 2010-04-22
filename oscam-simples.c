@@ -605,3 +605,17 @@ char *get_servicename(int srvid, int caid){
 	if (!srvid) name[0] = '\0';
 	return(name);
 }
+
+char *get_provider(int caid, ulong provid){
+	int i;
+	struct s_provid *this = cfg->provid;
+	static char name[83];
+
+	for (name[0] = 0; this && (!name[0]); this = this->next)
+		if (this->caid == caid && this->provid == provid)
+			snprintf(name, 83, "%s / %s / %s", this->prov, this->sat, this->lang);
+
+	if (!name[0]) snprintf(name, 83, "%04X:%06lX unknown", caid, provid);
+	if (!provid || !caid) name[0] = '\0';
+	return(name);
+}

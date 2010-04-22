@@ -1278,6 +1278,8 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				FILE *file = fopen(fname, "r");
 				if (file) {
 					uint16 caid = 0;
+					char ascprovid[6];
+					char *provider="";
 					do {
 						if (fread(&caid, 1, sizeof(caid), file) <= 1)
 							break;
@@ -1294,7 +1296,12 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 								break;
 							if (fread(&prov3, 1, 1, file) <= 0)
 								break;
-							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %02X%02X%02X<BR>\n", revcount - count, prov1, prov2, prov3);
+
+							sprintf(ascprovid, "%02X%02X%02X", prov1, prov2, prov3);
+							provider = get_provider(caid, a2i(ascprovid, 3));
+
+							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
+									revcount - count, ascprovid, provider);
 							count--;
 						}
 						tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");

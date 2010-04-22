@@ -890,6 +890,7 @@ extern int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile,
 extern void fprintf_conf(FILE *f, int varnameWidth, const char *varname, const char *fmtstring, ...);
 extern void cs_strncpy(char * destination, const char * source, size_t num);
 extern char *get_servicename(int srvid, int caid);
+extern char *get_provider(int caid, ulong provid);
 
 // oscam variables
 extern int pfd, rfd, fd_c2m, cs_idx, *c_start, cs_ptyp, cs_dblevel;
