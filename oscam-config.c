@@ -1657,24 +1657,26 @@ int write_config()
 	fputc((int)'\n', f);
 
 	/*monitor settings*/
-	fprintf(f,"[monitor]\n");
-	fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->mon_port);
-	if (cfg->mon_srvip != 0)
-		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->mon_srvip));
+	if(cfg->mon_port) {
+		fprintf(f,"[monitor]\n");
+		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->mon_port);
+		if (cfg->mon_srvip != 0)
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->mon_srvip));
 
-	fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
-	struct s_ip *cip;
-	for (cip = cfg->mon_allowed; cip; cip = cip->next){
-		fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-  	if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
-  	dot=",";
+		fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
+		struct s_ip *cip;
+		for (cip = cfg->mon_allowed; cip; cip = cip->next){
+			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
+			if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
+			dot=",";
+		}
+		fputc((int)'\n', f);
+		fprintf_conf(f, CONFVARWIDTH, "aulow", "%d\n", cfg->mon_aulow);
+		fprintf_conf(f, CONFVARWIDTH, "hideclient_to", "%d\n", cfg->mon_hideclient_to);
+		fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", cfg->mon_level);
+		fprintf_conf(f, CONFVARWIDTH, "appendchaninfo", "%d\n", cfg->mon_appendchaninfo);
+		fputc((int)'\n', f);
 	}
-	fputc((int)'\n', f);
-	fprintf_conf(f, CONFVARWIDTH, "aulow", "%d\n", cfg->mon_aulow);
-	fprintf_conf(f, CONFVARWIDTH, "hideclient_to", "%d\n", cfg->mon_hideclient_to);
-	fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", cfg->mon_level);
-	fprintf_conf(f, CONFVARWIDTH, "appendchaninfo", "%d\n", cfg->mon_appendchaninfo);
-	fputc((int)'\n', f);
 
 	/*newcamd*/
 	if ((cfg->ncd_ptab.nports > 0) && (cfg->ncd_ptab.ports[0].s_port > 0)){
