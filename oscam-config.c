@@ -1622,10 +1622,10 @@ int write_config()
 	snprintf(bakfile, 255,"%s%s.bak", cs_confdir, cs_conf);
 
 	if (!(f=fopen(tmpfile, "w"))){
-    cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
-    return(1);
-  }
-  fprintf(f,"#oscam.config generated automatically\n\n");
+		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
+		return(1);
+	}
+	fprintf(f,"#oscam.config generated automatically\n\n");
 
 	/*global settings*/
 	fprintf(f,"[global]\n");
@@ -1902,16 +1902,18 @@ int write_config()
 #endif
 
 #ifdef CS_ANTICASC
-	fprintf(f,"[anticasc]\n");
-	fprintf_conf(f, CONFVARWIDTH, "enabled", "%d\n", cfg->ac_enabled);
-	fprintf_conf(f, CONFVARWIDTH, "numusers", "%d\n", cfg->ac_users);
-	fprintf_conf(f, CONFVARWIDTH, "sampletime", "%d\n", cfg->ac_stime);
-	fprintf_conf(f, CONFVARWIDTH, "samples", "%d\n", cfg->ac_samples);
-	fprintf_conf(f, CONFVARWIDTH, "penalty", "%d\n", cfg->ac_penalty);
-	fprintf_conf(f, CONFVARWIDTH, "aclogfile", "%s\n", cfg->ac_logfile);
-	fprintf_conf(f, CONFVARWIDTH, "denysamples", "%d\n", cfg->ac_denysamples);
-	fprintf_conf(f, CONFVARWIDTH, "fakedelay", "%d\n", cfg->ac_fakedelay);
-	fputc((int)'\n', f);
+	if(cfg->ac_enabled) {
+		fprintf(f,"[anticasc]\n");
+		fprintf_conf(f, CONFVARWIDTH, "enabled", "%d\n", cfg->ac_enabled);
+		fprintf_conf(f, CONFVARWIDTH, "numusers", "%d\n", cfg->ac_users);
+		fprintf_conf(f, CONFVARWIDTH, "sampletime", "%d\n", cfg->ac_stime);
+		fprintf_conf(f, CONFVARWIDTH, "samples", "%d\n", cfg->ac_samples);
+		fprintf_conf(f, CONFVARWIDTH, "penalty", "%d\n", cfg->ac_penalty);
+		fprintf_conf(f, CONFVARWIDTH, "aclogfile", "%s\n", cfg->ac_logfile);
+		fprintf_conf(f, CONFVARWIDTH, "denysamples", "%d\n", cfg->ac_denysamples);
+		fprintf_conf(f, CONFVARWIDTH, "fakedelay", "%d\n", cfg->ac_fakedelay);
+		fputc((int)'\n', f);
+	}
 #endif
 
 	fclose(f);
