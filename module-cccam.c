@@ -19,6 +19,8 @@ static uchar fast_rnd()
   return (uchar)(seed % 0xFF);
 }
 
+static int cc_cli_init();
+
 static void cc_init_crypt(struct cc_crypt_block *block, uint8 *key, int len)
 {
   int i = 0 ;

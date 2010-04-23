@@ -9,8 +9,6 @@
 #include <stdlib.h>
 #include "module-obj-llist.h"
 
-int cc_cli_init();
-
 LLIST *llist_create(void)
 {
 	LLIST *l = malloc(sizeof(LLIST));
