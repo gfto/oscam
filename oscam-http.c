@@ -2,13 +2,15 @@
 //
 // OSCam HTTP server module
 //
-#include "oscam-http-helpers.c"
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/socket.h>
+#include "oscam-http-helpers.c"
+#include "module-cccam.h"
 
 extern struct s_reader *reader;
 
@@ -1273,6 +1275,12 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 			if (reader[ridx].typ == R_CCCAM) {
 
+				struct cc_data *ctest = reader[ridx].cc;
+
+				tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
+				tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
+				tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
+
 				char fname[40];
 				sprintf(fname, "/tmp/cards.%d", reader[ridx].ridx);
 				FILE *file = fopen(fname, "r");
@@ -1438,7 +1446,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			tpl_printf(vars, 0, "HIDEIDX", "%d", i);
 			tpl_addVar(vars, 0, "HIDEICON", ICHID);
-			if(client[i].typ == 'c' && !cfg->http_readonly) {
+			if((client[i].typ == 'c' || client[i].typ == 'r' || client[i].typ == 'p') && !cfg->http_readonly) {
 				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
 				tpl_printf(vars, 1, "CLIENTPID", "<A HREF=\"status.html?action=kill&pid=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\" STYLE=\"float:right\"></A>", client[i].pid, ICKIL);
 			} else {
