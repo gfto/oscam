@@ -1,5 +1,5 @@
 /*
- * oscam-llist.c
+ * module-obj-llist.c
  *
  *  Created on: 23.04.2010
  *      Author: alno
@@ -7,7 +7,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "oscam-llist.h"
+#include "module-obj-llist.h"
 
 int cc_cli_init();
 

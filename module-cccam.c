@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "globals.h"
 #include "module-cccam.h"
-#include "oscam-llist.h"
+#include "module-obj-llist.h"
 
 extern struct s_reader *reader;
 

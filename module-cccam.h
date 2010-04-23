@@ -4,7 +4,7 @@
  *  Created on: 23.04.2010
  *      Author: alno
  */
-#include "oscam-llist.h"
+#include "module-obj-llist.h"
 
 #ifndef MODULECCCAM_H_
 #define MODULECCCAM_H_
