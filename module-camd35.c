@@ -562,7 +562,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 			stopped++; // server says invalid
 		}
 		cs_log("%s CMD08 stop request by server (%s)",
-				reader[ridx].label, typtext[stopped]);
+				reader[ridx].label, typtext[(stopped >= 10)? 2: 1]);
 	}
 
 	// CMD44: old reject command introduced in mpcs
