@@ -465,7 +465,7 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 	if (stopped >= 10) {
 		if (er->srvid == lastsrvid && er->caid == lastcaid){
 			cs_log("%s is stopped - requested by server (%s)",
-					reader[ridx].label, typtext[stopped]);
+					reader[ridx].label, typtext[(stopped >= 10)? 2: 1]);
 			return(-1);
 		}
 		else {
