@@ -462,7 +462,7 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 {
 	char *typtext[]={"ok", "invalid", "sleeping"};
 
-	if (stopped) {
+	if (stopped >= 10) {
 		if (er->srvid == lastsrvid && er->caid == lastcaid){
 			cs_log("%s is stopped - requested by server (%s)",
 					reader[ridx].label, typtext[stopped]);
@@ -557,9 +557,9 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 
 	if (buf[0] == 0x08) {
 		if(buf[21] == 0xFF) {
-			stopped = 2; // server says sleep
+			stopped = 10; // server says sleep
 		} else {
-			stopped = 1; // server says invalid
+			stopped++; // server says invalid
 		}
 		cs_log("%s CMD08 stop request by server (%s)",
 				reader[ridx].label, typtext[stopped]);
