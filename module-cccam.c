@@ -361,20 +361,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     card = llist_itr_next(&itr);
   }
 
-  //SS: Hack: Avoiding "no suitable card on server" with HD+:  
-  if (!cc->cur_card) {
-    card = llist_itr_init(cc->cards, &itr);
-    while (card) {
-      if (card->caid == cur_er->caid) {   // caid matches
-        if (((h < 0) || (card->hop <= h)) && (card->hop <= reader[ridx].cc_maxhop - 1)) {  // card is closer and doesn't exceed max hop
-          cc->cur_card = card;
-          h = card->hop;  // card has been matched
-        }
-      }
-      card = llist_itr_next(&itr);
-    }
-  }
-  
   if (cc->cur_card) {
     uint8 ecmbuf[CC_MAXMSGSIZE];
     memset(ecmbuf, 0, CC_MAXMSGSIZE);
@@ -644,8 +630,22 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
           llist_append(card->provs, prov);
         }
       }
-
+      
       //SS: Hack:
+      //Check if we have this card:
+      LLIST_ITR itr;
+      struct cc_card *old_card = llist_itr_init(cc->cards, &itr);
+      while (old_card) {
+        if (old_card->id == card->id) { //we already have this card, delete the old one
+          cc->card_count--;
+          cc_free_card(old_card);
+          old_card = llist_itr_remove(&itr);
+        }
+        else
+          old_card = llist_itr_next(&itr);
+      }
+
+      //build own card/provs list:
       int doSaveCaidInfos = 0;
       if (cc->caid_infos && checkCaidInfos(ridx, &cc->caid_size)) {
         freeCaidInfos(cc->caid_infos);
@@ -656,7 +656,6 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       if (!cc->caid_infos)
         cc->caid_infos = llist_create();
        
-      LLIST_ITR itr;
       struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos, &itr);
       while (caid_info) {
         if (caid_info->caid == card->caid) 
@@ -744,7 +743,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 
       if (!f) {
         sid = malloc(sizeof(uint16));
-	if (sid) {
+	    if (sid) {
           *sid = cc->cur_sid;
 
           sid = llist_append(cc->cur_card->badsids, sid);
@@ -763,7 +762,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 
       cc->cur_card = malloc(sizeof(struct cc_card));
       if (!cc->cur_card)
-	break;
+	    break;
       memset(cc->cur_card, 0, sizeof(struct cc_card));
 
       cc->cur_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8 | buf[13];
@@ -993,6 +992,7 @@ static int cc_cli_connect(void)
 
   reader[ridx].tcp_connected = 1;
   reader[ridx].last_g = reader[ridx].last_s = time((time_t *)0);
+  reader[ridx].card_status = CARD_INSERTED;
 
   cs_debug("cccam: last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
 

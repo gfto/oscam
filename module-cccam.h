@@ -11,7 +11,7 @@
 
 #define CC_MAXMSGSIZE 512
 #define CC_MAX_PROV   16
-#define CC_MAX_ECMS   150  // before reconnect
+#define CC_MAX_ECMS   15000  // before reconnect
 #define CC_MAX_KEEPALIVE 500 //SS: Hack: before reconnect
 
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)

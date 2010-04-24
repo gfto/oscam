@@ -291,8 +291,6 @@ static void cs_sigpipe()
 
 void cs_exit(int sig)
 {
-  int i;
-
   set_signal_handler(SIGCHLD, 1, SIG_IGN);
   set_signal_handler(SIGHUP , 1, SIG_IGN);
   if (sig && (sig!=SIGQUIT))
@@ -308,6 +306,7 @@ void cs_exit(int sig)
     case 'n': *log_fd=0;
               break;
     case 's': *log_fd=0;
+              int i;
               for (i=1; i<CS_MAXPID; i++)
                 if (client[i].pid)
                   kill(client[i].pid, SIGQUIT);
@@ -442,18 +441,19 @@ static void cs_card_info(int i)
 }
 
 //SS: restart cardreader after 5 seconds:
-static void restart_cardreader()
+static void restart_cardreader(int pridx)
 {
+  ridx = pridx;
   reader[ridx].ridx = ridx; //FIXME
   if ((reader[ridx].device[0]) && (reader[ridx].enable == 1)) {
     switch(cs_fork(0, 99)) {
       case -1:
-	cs_exit(1);
+	    cs_exit(1);
       case  0:
         break;
       default:
-	wait4master();
-	start_cardreader(&reader[ridx]);
+	    wait4master();
+	    start_cardreader(&reader[ridx]);
     }
   }
 }
@@ -492,13 +492,16 @@ static void cs_child_chk(int i)
               if (reader[ridx].pid == old_pid)
               {
                 reader[ridx].pid = 0;
-                reader[ridx].card_status = NO_CARD;
-                reader[ridx].cs_idx = 0;
                 reader[ridx].cc = NULL;
+
                 cs_log("RESTARTING READER %s in 5 seconds (index=%d)", txt, ridx);
                 cs_sleepms(5*1000); // SS: 5 sek wait
                 cs_log("RESTARTING READER: %s (index=%d)", txt, ridx);
-                restart_cardreader();
+
+                uchar u[2];
+                u[0] = ridx;
+                u[1] = 0;
+                write_to_pipe(fd_c2m, PIP_ID_RST, u, sizeof(u));
                 break;
               }
             }
@@ -624,7 +627,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
         set_signal_handler(SIGINT , 1, SIG_IGN);
         set_signal_handler(SIGUSR1, 1, cs_debug_level);
         is_server=((ip) || (port<90)) ? 1 : 0;
-	client[i].fd_m2c_c=fdp[0];
+	    client[i].fd_m2c_c=fdp[0];
         close(fdp[1]);
         close(mfdr);
         if( port!=97 ) cs_close_log();
@@ -1796,7 +1799,7 @@ void chk_dcw(int fd)
   ECM_REQUEST *er, *ert;
   if (read_from_pipe(fd, (uchar **)&er, 0)!=PIP_ID_ECM)
     return;
-  //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
+  cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100)
     return; // already done
@@ -2411,6 +2414,9 @@ static void process_master_pipe()
       break;
     case PIP_ID_HUP:
       cs_accounts_chk();
+      break;
+    case PIP_ID_RST:
+      restart_cardreader(ptr[0]);
       break;
   }
 }
