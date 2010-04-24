@@ -1725,6 +1725,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "passive", "%d\n", cfg->c33_passive);
 		fprintf_conf(f, CONFVARWIDTH, "key", ""); for (i = 0; i < (int) sizeof(cfg->c33_key); ++i) fprintf(f,"%02X", cfg->c33_key[i]); fputc((int)'\n', f);
 		fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
+		struct s_ip *cip;
 		dot="";
 		for (cip = cfg->c33_plain; cip; cip = cip->next){
 			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
@@ -1889,6 +1890,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg->http_script);
 		fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg->http_refresh);
 		fprintf_conf(f, CONFVARWIDTH, "httpallowed", "");
+		struct s_ip *cip;
 		dot = "";
 		for (cip = cfg->http_allowed; cip; cip = cip->next){
 			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
