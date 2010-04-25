@@ -1252,7 +1252,7 @@ static void cc_srv_report_cards()
 	      }
 	      buf[8] = caid_info->caid >> 8;
 	      buf[9] = caid_info->caid & 0xff;
-	      buf[10] = hop;
+	      buf[10] = caid_info->hop+1;
 	      buf[11] = reshare;
 	      int j = 0;
 	      LLIST_ITR itr_prov;
