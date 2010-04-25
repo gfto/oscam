@@ -1282,18 +1282,22 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 				char fname[40];
-				sprintf(fname, "/tmp/cards.%d", reader[ridx].ridx);
+				sprintf(fname, "/tmp/caidinfos.%d", reader[ridx].ridx);
 				FILE *file = fopen(fname, "r");
 				if (file) {
 					uint16 caid = 0;
+					uint8 hop = 0;
 					char ascprovid[6];
 					char *provider="";
 					do {
-						if (fread(&caid, 1, sizeof(caid), file) <= 0)
+						if (fread(&caid, 1, sizeof(caid), file) <= 1)
 							break;
-						tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X<BR>\n", caid);
+						if (fread(&hop, 1, sizeof(hop), file) <= 1){
+							//break;
+						}
+						tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
 						int count = 0;
-						if (fread(&count, 1, sizeof(count), file) <= 0)
+						if (fread(&count, 1, sizeof(count), file) <= 1)
 							break;
 						uint8 prov1 ,prov2, prov3;
 						int revcount = count;
@@ -1315,6 +1319,9 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
 					} while (1);
 					fclose(file);
+					tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
+				} else {
+					tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
 				}
 
 			} else {
@@ -1330,16 +1337,27 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 		for (ridx=0; ridx<CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
 		printf("we are right %d\n", reader[ridx].typ);
 		if (reader[ridx].typ == R_CCCAM) {
-			printf("we are right");
+
+			struct cc_data *ctest = reader[ridx].cc;
+
+			tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
+			tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
+			tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
+
 			char fname[40];
-			sprintf(fname, "/tmp/cards.%d", reader[ridx].ridx);
+			sprintf(fname, "/tmp/caidinfos.%d", reader[ridx].ridx);
 			FILE *file = fopen(fname, "r");
 			if (file) {
 				uint16 caid = 0;
+				uint8 hop = 0;
+				char ascprovid[6];
+				char *provider="";
 				do {
 					if (fread(&caid, 1, sizeof(caid), file) <= 1)
 						break;
-					tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X<BR>\n", caid);
+					if (fread(&hop, 1, sizeof(hop), file) <= 1)
+						//break;
+					tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
 					int count = 0;
 					if (fread(&count, 1, sizeof(count), file) <= 1)
 						break;
@@ -1352,12 +1370,19 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 							break;
 						if (fread(&prov3, 1, 1, file) <= 0)
 							break;
-						tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %02X%02X%02X<BR>\n", revcount - count, prov1, prov2, prov3);
+
+						sprintf(ascprovid, "%02X%02X%02X", prov1, prov2, prov3);
+						provider = get_provider(caid, a2i(ascprovid, 3));
+
+						tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
+								revcount - count, ascprovid, provider);
 						count--;
 					}
 					tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
 				} while (1);
 				fclose(file);
+			} else {
+				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
 			}
 
 		} else {
