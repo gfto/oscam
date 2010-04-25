@@ -1799,7 +1799,7 @@ void chk_dcw(int fd)
   ECM_REQUEST *er, *ert;
   if (read_from_pipe(fd, (uchar **)&er, 0)!=PIP_ID_ECM)
     return;
-  cs_debug("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
+  //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100)
     return; // already done
