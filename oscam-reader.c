@@ -191,7 +191,7 @@ int network_tcp_connection_open()
   int flags;
   if( connect_nonb(client[cs_idx].udp_fd, 
       (struct sockaddr *)&client[cs_idx].udp_sa, 
-      sizeof(client[cs_idx].udp_sa), 5) < 0) 
+      sizeof(client[cs_idx].udp_sa), 5) < 0)
   { 
     cs_log("connect(fd=%d) failed: (errno=%d)", client[cs_idx].udp_fd, errno); 
     return -1; 

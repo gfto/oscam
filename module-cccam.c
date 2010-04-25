@@ -193,7 +193,7 @@ static void cc_check_version (char *cc_version, char *cc_build, uint32 *cc_max_e
 {
   char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "" };
   char *build[] = { "2892", "2971", "3094", "3165", "3191", "" };
-  uint32 max_ecms[] = { -1, -1, 60, 60, 60, 60 };
+  uint32 max_ecms[] = { 0, 0, 60, 60, 60, 60 };
   int i;
   *cc_max_ecms = 60;
   if (strlen (cc_version) == 0) {
@@ -1474,6 +1474,9 @@ int cc_cli_init()
     client[cs_idx].udp_sa.sin_port = htons((u_short)reader[ridx].r_port);
 
     cs_resolve();
+
+    uchar *ip = (uchar*)&client[cs_idx].ip;
+    cs_debug("cccam: ip=%d.%d.%d.%d", ip[3], ip[2], ip[1], ip[0]);
 
     if (reader[ridx].tcp_rto <= 0) reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
     cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);
