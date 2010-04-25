@@ -304,6 +304,7 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			ep->type = GLOBAL;
 			cs_debug_mask(D_EMM, "IRDETO EMM: GLOBAL");
 			return TRUE;
+
 		case 2:
 			// shared emm, 2 bytes addressed
 			ep->type = SHARED;
@@ -323,7 +324,8 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 					if (base == rdr->prid[i][0] && !memcmp(ep->emm + 4, &rdr->prid[i][1], l))
 						return TRUE;
 			}
-
+			cs_debug_mask(D_EMM, "IRDETO EMM: neither hex nor provider addressed or unknown provider id");
+			return FALSE;
 			
 		case 3:
 			// unique emm, 3 bytes addressed
