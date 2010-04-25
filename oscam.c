@@ -119,10 +119,11 @@ static void usage()
   fprintf(stderr, "irdeto-guessing ");
 #endif
   fprintf(stderr, "\n\n");
-  fprintf(stderr, "oscam [-b] [-c config-dir] [-d] [-h]");
+  fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
 #ifdef CS_NOSHM
   fprintf(stderr, " [-m memory-file]");
 #endif
+  fprintf(stderr, " [-h]");
   fprintf(stderr, "\n\n\t-b         : start in background\n");
   fprintf(stderr, "\t-c <dir>   : read configuration from <dir>\n");
   fprintf(stderr, "\t             default = %s\n", CS_CONFDIR);
