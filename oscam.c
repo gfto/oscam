@@ -494,6 +494,7 @@ static void cs_child_chk(int i)
               {
                 reader[ridx].pid = 0;
                 reader[ridx].cc = NULL;
+                reader[ridx].tcp_connected = 0;
 
                 cs_log("RESTARTING READER %s in 5 seconds (index=%d)", txt, ridx);
                 cs_sleepms(5*1000); // SS: 5 sek wait

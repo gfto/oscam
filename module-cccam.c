@@ -189,15 +189,17 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd)
 }
 
 #define CC_DEFAULT_VERSION 1
-static void cc_check_version (char *cc_version, char *cc_build)
+static void cc_check_version (char *cc_version, char *cc_build, uint32 *cc_max_ecms)
 {
   char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "" };
   char *build[] = { "2892", "2971", "3094", "3165", "3191", "" };
+  uint32 max_ecms[] = { -1, -1, 60, 60, 60, 60 };
   int i;
-
+  *cc_max_ecms = 60;
   if (strlen (cc_version) == 0) {
     memcpy (cc_version, version[CC_DEFAULT_VERSION], strlen (version[CC_DEFAULT_VERSION]));
     memcpy (cc_build, build[CC_DEFAULT_VERSION], strlen (build[CC_DEFAULT_VERSION]));
+    *cc_max_ecms = max_ecms[CC_DEFAULT_VERSION];
     cs_debug ("cccam: auto version set: %s build: %s", cc_version, cc_build);
     return;
   }
@@ -205,6 +207,7 @@ static void cc_check_version (char *cc_version, char *cc_build)
   for (i = 0; strlen (version[i]); i++)
     if (!memcmp (cc_version, version[i], strlen (version[i]))) {
       memcpy (cc_build, build[i], strlen (build[i]));
+      *cc_max_ecms = max_ecms[i];
       cs_debug ("cccam: auto build set for version: %s build: %s", cc_version, cc_build);
       break;
     }
@@ -249,7 +252,7 @@ static int cc_send_srv_data()
   memset(buf, 0, CC_MAXMSGSIZE);
 
   memcpy(buf, cc->node_id, 8 );
-  cc_check_version ((char *) cfg->cc_version, (char *) cfg->cc_build);
+  cc_check_version ((char *) cfg->cc_version, (char *) cfg->cc_build, &cc->max_ecms);
   memcpy(buf + 8, cfg->cc_version, sizeof(reader[ridx].cc_version));   // cccam version (ascii)
   memcpy(buf + 40, cfg->cc_build, sizeof(reader[ridx].cc_build));       // build number (ascii)
 
@@ -493,7 +496,7 @@ static void cc_free(struct cc_data *cc)
 static int checkCaidInfos(int index, long *lastSize)
 {
   char fname[40];
-  sprintf(fname, "/tmp/cards.%d", index);
+  sprintf(fname, "/tmp/caidinfos.%d", index);
   
   struct stat st;
   stat(fname, &st);
@@ -504,9 +507,12 @@ static int checkCaidInfos(int index, long *lastSize)
   return result;
 }
 
+/**
+ * Saves caidinfos to /tmp/caidinfos.<readerindex>
+ */
 static void saveCaidInfos(int index, LLIST *caid_infos) {
   char fname[40];
-  sprintf(fname, "/tmp/cards.%d", index);
+  sprintf(fname, "/tmp/caidinfos.%d", index);
   FILE *file = fopen(fname, "w");
   LLIST_ITR itr;
   LLIST_ITR itr_prov;
@@ -537,9 +543,12 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
   cs_debug("saveCaidInfos %d: CAIDS: %d PROVIDERS: %d", index, caid_count, prov_count);
 }
 
+/**
+ * Loads caidinfos from /tmp/caidinfos.<readerindex>
+ */
 static LLIST *loadCaidInfos(int index) {
   char fname[40];
-  sprintf(fname, "/tmp/cards.%d", index);
+  sprintf(fname, "/tmp/caidinfos.%d", index);
   FILE *file = fopen(fname, "r");
   if (!file)
     return NULL;
@@ -573,6 +582,70 @@ static LLIST *loadCaidInfos(int index) {
   fclose(file);
   cs_debug("loadCaidInfos %d: CAIDS: %d PROVIDERS: %d", index, caid_count, prov_count);
   return caid_infos;
+}
+
+/**
+ * Adds a new card to the caid_infos. Only caid/provs are used
+ * Return 0 if caid already exists, 1 ist this is a new card or provider
+ */
+static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card)
+{
+	int doSaveCaidInfos = 0;
+	LLIST_ITR itr;
+    struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos, &itr);
+    while (caid_info) {
+      if (caid_info->caid == card->caid)
+        break;
+      caid_info = llist_itr_next(&itr);
+    }
+    if (!caid_info) {
+      caid_info = malloc(sizeof(struct cc_caid_info));
+      caid_info->caid = card->caid;
+      caid_info->provs = llist_create();
+      llist_append(cc->caid_infos, caid_info);
+      doSaveCaidInfos = 1;
+    }
+    if (caid_info->hop == 0 || caid_info->hop > card->hop)
+    {
+      caid_info->hop = card->hop;
+      doSaveCaidInfos = 1;
+    }
+
+    uint8 *prov_info;
+    uint8 *prov_card;
+    LLIST_ITR itr_info;
+    LLIST_ITR itr_card;
+    prov_card = llist_itr_init(card->provs, &itr_card);
+    while (prov_card) {
+      prov_info = llist_itr_init(caid_info->provs, &itr_info);
+      while (prov_info) {
+        if (b2i(3, prov_info) == b2i(3, prov_card))
+          break;
+        prov_info = llist_itr_next(&itr_info);
+      }
+      if (!prov_info) {
+        uint8 *prov_new = malloc(3);
+        memcpy(prov_new, prov_card, 3);
+        llist_append(caid_info->provs, prov_new);
+        doSaveCaidInfos = 1;
+      }
+      prov_card = llist_itr_next(&itr_card);
+    }
+    return doSaveCaidInfos;
+}
+
+static void rebuild_caidinfos(struct cc_data *cc)
+{
+  freeCaidInfos(cc->caid_infos);
+  cc->caid_infos = llist_create();
+  LLIST_ITR itr;
+  struct cc_card *card = llist_itr_init(cc->cards, &itr);
+  while (card)
+  {
+	  add_card_to_caidinfo(cc, card);
+	  card = llist_itr_next(&itr);
+  }
+  cc->needs_rebuild_caidinfo = 0;
 }
 
 //SS: Hack end
@@ -620,7 +693,6 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       cs_debug("cccam: card %08x added, caid %04x, hop %d, key %s, count %d",
           card->id, card->caid, card->hop, cs_hexdump(0, card->key, 8), cc->card_count);
 
-
       for (i = 0; i < buf[24]; i++) {  // providers
         uint8 *prov = malloc(3);
         if (prov) {
@@ -645,56 +717,30 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
           old_card = llist_itr_next(&itr);
       }
 
-      //build own card/provs list:
-      int doSaveCaidInfos = 0;
-      if (cc->caid_infos && checkCaidInfos(ridx, &cc->caid_size)) {
-        freeCaidInfos(cc->caid_infos);
-        cc->caid_infos = NULL;
-      }
-      if (!cc->caid_infos)
-        cc->caid_infos = loadCaidInfos(ridx);
-      if (!cc->caid_infos)
-        cc->caid_infos = llist_create();
-       
-      struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos, &itr);
-      while (caid_info) {
-        if (caid_info->caid == card->caid) 
-          break;
-        caid_info = llist_itr_next(&itr);
-      }
-      if (!caid_info) {
-        caid_info = malloc(sizeof(struct cc_caid_info));
-        caid_info->caid = card->caid;
-        caid_info->provs = llist_create();
-        llist_append(cc->caid_infos, caid_info);
-      }
-      uint8 *prov_info;
-      uint8 *prov_card;
-      LLIST_ITR itr_info;
-      LLIST_ITR itr_card;
-      prov_card = llist_itr_init(card->provs, &itr_card);
-      while (prov_card) {
-        prov_info = llist_itr_init(caid_info->provs, &itr_info);
-        while (prov_info) {
-          if (b2i(3, prov_info) == b2i(3, prov_card)) 
-            break;
-          prov_info = llist_itr_next(&itr_info);
-        }
-        if (!prov_info) {
-          uint8 *prov_new = malloc(3);
-          memcpy(prov_new, prov_card, 3);
-          llist_append(caid_info->provs, prov_new);
-          doSaveCaidInfos = 1;
-        }
-        prov_card = llist_itr_next(&itr_card);
-      }
-      if (doSaveCaidInfos)
-        saveCaidInfos(ridx, cc->caid_infos);
-      //SS: Hack end
-      
       llist_append(cc->cards, card);
-      if (!cc->cur_card) 
+      if (!cc->cur_card)
         cc->cur_card = card;
+
+      //build own card/provs list:
+      cc->needs_rebuild_caidinfo++;
+      if (cc->needs_rebuild_caidinfo > CC_CAIDINFO_REBUILD) {
+    	rebuild_caidinfos(cc);
+    	saveCaidInfos(ridx, cc->caid_infos);      }
+      else
+      {
+    	if (cc->caid_infos && checkCaidInfos(ridx, &cc->caid_size)) {
+          freeCaidInfos(cc->caid_infos);
+          cc->caid_infos = NULL;
+        }
+        if (!cc->caid_infos)
+          cc->caid_infos = loadCaidInfos(ridx);
+        if (!cc->caid_infos)
+          cc->caid_infos = llist_create();
+
+        if (add_card_to_caidinfo(cc, card))
+          saveCaidInfos(ridx, cc->caid_infos);
+      }
+      //SS: Hack end
     }
     break;
   case MSG_CARD_REMOVED:
@@ -723,7 +769,8 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     }
     if (!found)
       cs_debug("cccam: card %08x NOT FOUND?!?, caid %04x, count %d", card->id, card->caid, cc->card_count);
-//    llist_itr_release(&itr);
+    else
+      cc->needs_rebuild_caidinfo++;
   }
     break;
   case MSG_CW_NOK1:
@@ -793,7 +840,6 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     } else { 
       cc_cmd_send(NULL, 0, MSG_KEEPALIVE); 
       cs_debug("cccam: keepalive");
-      cc->keepalive_count++;
     }
     break;
   case MSG_BAD_ECM:
@@ -808,7 +854,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   }
 
-  if (cc->ecm_count > CC_MAX_ECMS || cc->keepalive_count > CC_MAX_KEEPALIVE)
+  if ((cc->max_ecms > 0) && (cc->ecm_count > cc->max_ecms))
     cc_cycle_connection();
 
   return ret;
@@ -926,7 +972,7 @@ static int cc_cli_connect(void)
   cc->cards = llist_create();
 
   cc->ecm_count = 0;
-  cc->keepalive_count = 0;
+  cc->max_ecms = reader[ridx].cc_max_ecms;
 
   // check cred config
   if(reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0 ||
@@ -1247,20 +1293,20 @@ static int cc_srv_connect()
   memset(usr, 0, sizeof(usr));
   memset(pwd, 0, sizeof(pwd));
 
-  if (client[cs_idx].cc) { 
-    cc_free(client[cs_idx].cc);
-    client[cs_idx].cc = NULL;
-  }
+  //SS: Use last cc data for faster reconnects:
+  cc = client[cs_idx].cc;
+  if (!cc)
+  {
+    // init internals data struct
+    cc = malloc(sizeof(struct cc_data));
+    if (cc==NULL) {
+      cs_log("cccam: cannot allocate memory");
+      return -1;
+    }
 
-  // init internals data struct
-  cc = malloc(sizeof(struct cc_data));
-  if (cc==NULL) {
-    cs_log("cccam: cannot allocate memory");
-    return -1;
+    client[cs_idx].cc = cc;
+    memset(client[cs_idx].cc, 0, sizeof(struct cc_data));
   }
-
-  client[cs_idx].cc = cc;
-  memset(client[cs_idx].cc, 0, sizeof(struct cc_data));
 
   // calc + send random seed
   seed = (unsigned int) time((time_t*)0);
@@ -1426,7 +1472,7 @@ int cc_cli_init()
     if (reader[ridx].tcp_rto <= 0) reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
     cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);
     if (!reader[ridx].cc_maxhop) reader[ridx].cc_maxhop = 5; // default maxhop to 5 if not configured
-    cc_check_version (reader[ridx].cc_version, reader[ridx].cc_build);
+    cc_check_version (reader[ridx].cc_version, reader[ridx].cc_build, &reader[ridx].cc_max_ecms);
     cs_log ("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d", reader[ridx].label,
      reader[ridx].device, reader[ridx].r_port,
      reader[ridx].cc_version, reader[ridx].cc_build, reader[ridx].cc_maxhop);

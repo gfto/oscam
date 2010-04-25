@@ -513,6 +513,7 @@ struct s_reader  //contains device info, reader info and card info
   char      cc_version[7];  // cccam version
   char      cc_build[5];    // cccam build number
   int       cc_maxhop;      // cccam max distance
+  uint32    cc_max_ecms;    // SS:cccam max ecms
   int		cc_currenthops; // number of hops for CCCam
   void      *cc;            // ptr to cccam internal data struct
   uchar     cc_id;

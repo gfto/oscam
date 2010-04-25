@@ -11,8 +11,7 @@
 
 #define CC_MAXMSGSIZE 512
 #define CC_MAX_PROV   16
-#define CC_MAX_ECMS   15000  // before reconnect
-#define CC_MAX_KEEPALIVE 500 //SS: Hack: before reconnect
+#define CC_CAIDINFO_REBUILD 200 //SS: Rebuid Caidinfos after 200 Card-Updates
 
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 
@@ -62,6 +61,7 @@ struct cc_card {
 struct cc_caid_info {
 	uint16 caid;
 	LLIST *provs;
+	uint8 hop;
 };
 //SS: Hack end
 
@@ -74,11 +74,13 @@ struct cc_data {
 
 	struct cc_card *cur_card;   // ptr to selected card
 	LLIST *cards;               // cards list
-	int card_count;
+	uint32 card_count;
 
 	//SS: Hack:
 	LLIST *caid_infos;
 	long caid_size;
+	uint16 needs_rebuild_caidinfo;
+	uint32 max_ecms;
 	//SS: Hack end
 
 	uint32 count;
