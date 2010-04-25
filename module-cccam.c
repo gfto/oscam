@@ -521,6 +521,7 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
   struct cc_caid_info *caid_info = llist_itr_init(caid_infos, &itr);
   while (caid_info) {
     fwrite(&caid_info->caid, 1, sizeof(caid_info->caid), file);
+    fwrite(&caid_info->hop, 1, sizeof(caid_info->hop), file);
     caid_count++;
     int count = 0;    
     uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
@@ -555,11 +556,14 @@ static LLIST *loadCaidInfos(int index) {
 
   int caid_count = 0;
   int prov_count = 0;
+  uint8 hop = 0;
     
   uint16 caid = 0;
   LLIST *caid_infos = llist_create();
   do {
     if (fread(&caid, 1, sizeof(caid), file) <= 1)
+      break;
+    if (fread(&hop, 1, sizeof(hop), file) <= 1)
       break;
     caid_count++;
     int count = 0;
@@ -567,6 +571,7 @@ static LLIST *loadCaidInfos(int index) {
       break;
     struct cc_caid_info *caid_info = malloc(sizeof(struct cc_caid_info));
     caid_info->caid = caid;
+    caid_info->hop = hop;
     caid_info->provs = llist_create();
     uint8 *prov;
     while (count > 0) {
@@ -602,6 +607,7 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card)
       caid_info = malloc(sizeof(struct cc_caid_info));
       caid_info->caid = card->caid;
       caid_info->provs = llist_create();
+      caid_info->hop = card->hop;
       llist_append(cc->caid_infos, caid_info);
       doSaveCaidInfos = 1;
     }
