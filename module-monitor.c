@@ -581,7 +581,7 @@ static void monitor_set_account(char *args){
 	//search account
 	for (account=cfg->account; (account) ; account=account->next){
 		if (!strcmp(argarray[0], account->usr)){
-			found=1;
+			found = 1;
 			break;
 		}
 	}
@@ -594,7 +594,7 @@ static void monitor_set_account(char *args){
 		return;
 	}
 
-	found = 0;
+	found = -1;
 	for (i = 0; i < tokencnt; i++){
 		if (!strcmp(argarray[1], token[i])){
 			// preparing the parameters before re-load
@@ -604,11 +604,11 @@ static void monitor_set_account(char *args){
 
 			case	8: clear_caidtab(&account->ctab); break;	//Caid
 			}
-			found = 1;
+			found = i;
 		}
 	}
 
-	if (!found){
+	if (found != -1){
 		sprintf(buf, "[S-0000]setuser: %s failed - parameter %s not exist\n",tmp , argarray[1]);
 		monitor_send_info(buf, 0);
 		sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
