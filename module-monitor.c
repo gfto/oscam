@@ -544,13 +544,28 @@ static void monitor_set_debuglevel(char *flag){
 	kill(client[0].pid, SIGUSR1);
 }
 
+static void monitor_get_account(){
+	struct s_auth *account;
+	char buf[32];
+        int count = 0;
+
+	for (account=cfg->account; (account); account=account->next){
+                count++;
+		snprintf(buf, 255, "[U-----]%s\n", account->usr);
+	        monitor_send_info(buf, 0);
+	}
+	sprintf(buf, "[U-----] %i User registered\n", count);
+	monitor_send_info(buf, 1);
+        return;
+}
+
 static void monitor_set_account(char *args){
 	struct s_auth *account;
 	char delimiter[] = " =";
 	char *ptr;
 	int argidx, i, found;
 	char *argarray[3];
-	char *token[]={"au", "sleep", "uniq", "monlevel", "group", "services", "betatunnel", "ident", "caid", "chid", "class", "hostname"};
+	char *token[]={"au", "sleep", "uniq", "monlevel", "group", "services", "betatunnel", "ident", "caid", "chid", "class", "hostname", "expdate", "keepalive", "disabled"};
 	int tokencnt = sizeof(token)/sizeof(char *);
 	char buf[256], tmp[64];
 
@@ -608,9 +623,13 @@ static void monitor_set_account(char *args){
 		}
 	}
 
-	if (found != -1){
-		sprintf(buf, "[S-0000]setuser: %s failed - parameter %s not exist\n",tmp , argarray[1]);
+	if (found < 0){
+		sprintf(buf, "[S-0000]setuser: parameter %s not exist. possible values:\n", argarray[1]);
 		monitor_send_info(buf, 0);
+	        for (i = 0; i < tokencnt; i++){
+		        sprintf(buf, "[S-0000]%s\n", token[i]);
+		        monitor_send_info(buf, 0);
+                }
 		sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
 		monitor_send_info(buf, 1);
 		return;
@@ -622,9 +641,6 @@ static void monitor_set_account(char *args){
 		kill(client[0].pid, SIGHUP);
 
 	sprintf(buf, "[S-0000]setuser: %s done - param %s set to %s\n", tmp, argarray[1], argarray[2]);
-	monitor_send_info(buf, 0);
-
-	sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
 	monitor_send_info(buf, 1);
 }
 
@@ -702,7 +718,7 @@ static void monitor_list_commands(char *args[], int cmdcnt){
 static int monitor_process_request(char *req)
 {
 	int i, rc;
-	char *cmd[] = {"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug", "setuser", "setserver", "commands", "keepalive"};
+	char *cmd[] = {"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug", "getuser", "setuser", "setserver", "commands", "keepalive"};
 	int cmdcnt = sizeof(cmd)/sizeof(char *);  // Calculate the amount of items in array
 	char *arg;
 
@@ -722,10 +738,11 @@ static int monitor_process_request(char *req)
 			case  6:	monitor_process_details(arg); break;	// details
 			case  7:	monitor_send_details_version(); break;	// version
 			case  8:	if (client[cs_idx].monlvl > 3) monitor_set_debuglevel(arg); break;	// debuglevel
-			case  9:	if (client[cs_idx].monlvl > 3) monitor_set_account(arg); break;	// setuser
-			case 10:	if (client[cs_idx].monlvl > 3) monitor_set_server(arg); break;	// setserver
-			case 11:	if (client[cs_idx].monlvl > 3) monitor_list_commands(cmd, cmdcnt); break;	// list commands
-			case 12:	if (client[cs_idx].monlvl > 3) monitor_send_keepalive_ack(); break;	// keepalive
+			case  9:	if (client[cs_idx].monlvl > 3) monitor_get_account(); break;	// getuser
+			case 10:	if (client[cs_idx].monlvl > 3) monitor_set_account(arg); break;	// setuser
+			case 11:	if (client[cs_idx].monlvl > 3) monitor_set_server(arg); break;	// setserver
+			case 12:	if (client[cs_idx].monlvl > 3) monitor_list_commands(cmd, cmdcnt); break;	// list commands
+			case 13:	if (client[cs_idx].monlvl > 3) monitor_send_keepalive_ack(); break;	// keepalive
 			default:	continue;
 			}
 			break;
