@@ -603,7 +603,7 @@ static void newcamd_auth_client(in_addr_t ip)
 {
     int i, ok;
     uchar *usr = NULL, *pwd = NULL;
-    char client_id[4], *client_name = NULL;
+    char client_id[5], *client_name = NULL;
     struct s_auth *account;
     uchar buf[14];
     uchar *key=0;
@@ -660,6 +660,9 @@ static void newcamd_auth_client(in_addr_t ip)
         cs_exit(0);
         }
 
+    sprintf(client_id, "%02X%02X", mbuf[0], mbuf[1]);
+    client_name = get_ncd_client_name(client_id);
+
     for (ok=0, account=cfg->account; (usr) && (account) && (!ok); account=account->next) 
         {
         cs_debug("account->usr=%s", account->usr);
@@ -669,9 +672,6 @@ static void newcamd_auth_client(in_addr_t ip)
             cs_debug("account->pwd=%s", passwdcrypt);
             if (strcmp((char *)pwd, (const char *)passwdcrypt) == 0)
             {
-		sprintf(client_id, "%02X%02X", mbuf[0], mbuf[1]);
-	 	client_name = get_ncd_client_name(client_id);
-
                 client[cs_idx].crypted=1;
 
                 if(cs_auth_client(account, NULL) == 2) {
