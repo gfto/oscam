@@ -590,7 +590,7 @@ static int IO_Serial_Bitrate(int bitrate)
 			return BaudRateTab[i].apival;
 		}
 	}
-	return B0;
+	return B38400;
 
 }
 

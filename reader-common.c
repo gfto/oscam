@@ -16,7 +16,8 @@ static int cs_ptyp_orig; //reinit=1,
 #define SC_DRE 7
 #define SC_NAGRA 8
 
-#ifdef TUXBOX
+#if defined(TUXBOX) && defined(PPC) //dbox2 only
+#include "csctapi/mc_global.h"
 static int reader_device_type(struct s_reader * reader)
 {
   int rc=reader->typ;
@@ -30,14 +31,12 @@ static int reader_device_type(struct s_reader * reader)
           int dev_major, dev_minor;
           dev_major=major(sb.st_rdev);
           dev_minor=minor(sb.st_rdev);
-#ifdef PPC
           if (((dev_major==4) || (dev_major==5)))
             switch(dev_minor & 0x3F)
             {
               case 0: rc=R_DB2COM1; break;
               case 1: rc=R_DB2COM2; break;
             }
-#endif
           cs_debug("device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, rc);
         }
       }
@@ -287,11 +286,13 @@ int reader_device_init(struct s_reader * reader)
 	}
 #endif
  
-  int rc = -1; //FIXME
-  cs_ptyp_orig=cs_ptyp;
-  cs_ptyp=D_DEVICE;
-#ifdef TUXBOX
-	reader->typ = reader_device_type(reader);
+	int rc = -1; //FIXME
+	cs_ptyp_orig=cs_ptyp;
+	cs_ptyp=D_DEVICE;
+#if defined(TUXBOX) && defined(PPC)
+	struct stat st;
+	if (!stat(DEV_MULTICAM, &st))
+		reader->typ = reader_device_type(reader);
 #endif
 	if (ICC_Async_Device_Init(reader))
 		cs_log("Cannot open device: %s", reader->device);

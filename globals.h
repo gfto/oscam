@@ -896,7 +896,7 @@ extern char *get_servicename(int srvid, int caid);
 extern char *get_provider(int caid, ulong provid);
 
 // oscam variables
-extern int pfd, rfd, fd_c2m, cs_idx, *c_start, cs_ptyp, cs_dblevel;
+extern int pfd, fd_c2m, cs_idx, *c_start, cs_ptyp, cs_dblevel;
 extern int *logidx, *loghistidx, *log_fd;
 extern int is_server, *mcl;
 extern uchar mbuf[1024];
