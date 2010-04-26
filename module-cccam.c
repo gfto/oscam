@@ -292,7 +292,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   LLIST_ITR itr;
   ECM_REQUEST *cur_er;
 
-  if(cc) cc->ecm_count++;
+  if(cc->ecm_count)
+	  cc->ecm_count++;
 
   if (!cc || (pfd < 1)) {
     if (er) {
@@ -493,11 +494,16 @@ static void cc_free(struct cc_data *cc)
   free(cc);
 }
 
+static void fname_caidinfos(char *fname, int index)
+{
+  sprintf(fname, "/tmp/.oscam/caidinfos.%d", index);
+  mkdir(fname, S_IRWXU);
+}
+
 static int checkCaidInfos(int index, long *lastSize)
 {
   char fname[40];
-  sprintf(fname, "/tmp/caidinfos.%d", index);
-  
+  fname_caidinfos(fname, index);
   struct stat st;
   stat(fname, &st);
   long current_size = st.st_size;
@@ -512,7 +518,7 @@ static int checkCaidInfos(int index, long *lastSize)
  */
 static void saveCaidInfos(int index, LLIST *caid_infos) {
   char fname[40];
-  sprintf(fname, "/tmp/caidinfos.%d", index);
+  fname_caidinfos(fname, index);
   FILE *file = fopen(fname, "w");
   LLIST_ITR itr;
   LLIST_ITR itr_prov;
@@ -520,16 +526,16 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
   int prov_count = 0;
   struct cc_caid_info *caid_info = llist_itr_init(caid_infos, &itr);
   while (caid_info) {
-    fwrite(&caid_info->caid, 1, sizeof(caid_info->caid), file);
-    fwrite(&caid_info->hop, 1, sizeof(caid_info->hop), file);
+    fwrite(&caid_info->caid, 1, sizeof(uint16), file);
+    fwrite(&caid_info->hop, 1, sizeof(uint8), file);
     caid_count++;
-    int count = 0;    
+    uint8 count = 0;
     uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
     while (prov) {
       count++;
       prov = llist_itr_next(&itr_prov);
     }
-    fwrite(&count, 1, sizeof(count), file);
+    fwrite(&count, 1, sizeof(uint8), file);
     prov = llist_itr_init(caid_info->provs, &itr_prov);
     while (prov) {
       fwrite(prov, 1, 3, file);
@@ -549,25 +555,25 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
  */
 static LLIST *loadCaidInfos(int index) {
   char fname[40];
-  sprintf(fname, "/tmp/caidinfos.%d", index);
+  fname_caidinfos(fname, index);
   FILE *file = fopen(fname, "r");
   if (!file)
     return NULL;
 
   int caid_count = 0;
   int prov_count = 0;
-  uint8 hop = 0;
-    
+
   uint16 caid = 0;
+  uint8 hop = 0;
   LLIST *caid_infos = llist_create();
   do {
-    if (fread(&caid, 1, sizeof(caid), file) <= 1)
+    if (fread(&caid, 1, sizeof(uint16), file) <= 1)
       break;
-    if (fread(&hop, 1, sizeof(hop), file) <= 1)
+    if (fread(&hop, 1, sizeof(uint8), file) <= 1)
       break;
     caid_count++;
-    int count = 0;
-    if (fread(&count, 1, sizeof(count), file) <= 1)
+    uint8 count = 0;
+    if (fread(&count, 1, sizeof(uint8), file) <= 1)
       break;
     struct cc_caid_info *caid_info = malloc(sizeof(struct cc_caid_info));
     caid_info->caid = caid;
@@ -849,8 +855,8 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     }
     break;
   case MSG_BAD_ECM:
-    //cc->ecm_count = 1;
-    //cs_log("cccam: cmd 0x05 recvd, commencing ecm count");
+    cc->ecm_count = 1;
+    cs_log("cccam: cmd 0x05 recvd, commencing ecm count");
     cc_cmd_send(NULL, 0, MSG_BAD_ECM);
     break;
   case MSG_CMD_0B:
