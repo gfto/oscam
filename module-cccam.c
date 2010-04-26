@@ -497,7 +497,6 @@ static void cc_free(struct cc_data *cc)
 static void fname_caidinfos(char *fname, int index)
 {
   sprintf(fname, "/tmp/.oscam/caidinfos.%d", index);
-  mkdir(fname, S_IRWXU);
 }
 
 static int checkCaidInfos(int index, long *lastSize)
@@ -518,6 +517,7 @@ static int checkCaidInfos(int index, long *lastSize)
  */
 static void saveCaidInfos(int index, LLIST *caid_infos) {
   char fname[40];
+  mkdir("/tmp/.oscam", S_IRWXU);
   fname_caidinfos(fname, index);
   FILE *file = fopen(fname, "w");
   LLIST_ITR itr;
@@ -528,6 +528,7 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
   while (caid_info) {
     fwrite(&caid_info->caid, 1, sizeof(uint16), file);
     fwrite(&caid_info->hop, 1, sizeof(uint8), file);
+
     caid_count++;
     uint8 count = 0;
     uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
@@ -542,10 +543,9 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
       prov = llist_itr_next(&itr_prov);
     }
     prov_count += count;
-    
+
     caid_info = llist_itr_next(&itr);
   }
-  fflush(file);
   fclose(file);
   cs_debug("saveCaidInfos %d: CAIDS: %d PROVIDERS: %d", index, caid_count, prov_count);
 }
@@ -567,13 +567,13 @@ static LLIST *loadCaidInfos(int index) {
   uint8 hop = 0;
   LLIST *caid_infos = llist_create();
   do {
-    if (fread(&caid, 1, sizeof(uint16), file) <= 1)
+    if (fread(&caid, 1, sizeof(uint16), file) <= 0)
       break;
-    if (fread(&hop, 1, sizeof(uint8), file) <= 1)
+    if (fread(&hop, 1, sizeof(uint8), file) <= 0)
       break;
     caid_count++;
     uint8 count = 0;
-    if (fread(&count, 1, sizeof(uint8), file) <= 1)
+    if (fread(&count, 1, sizeof(uint8), file) <= 0)
       break;
     struct cc_caid_info *caid_info = malloc(sizeof(struct cc_caid_info));
     caid_info->caid = caid;
@@ -642,8 +642,8 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card)
         doSaveCaidInfos = 1;
       }
       prov_card = llist_itr_next(&itr_card);
-    }
-    return doSaveCaidInfos;
+   }
+   return doSaveCaidInfos;
 }
 
 static void rebuild_caidinfos(struct cc_data *cc)
@@ -740,7 +740,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     	saveCaidInfos(ridx, cc->caid_infos);      }
       else
       {
-    	if (cc->caid_infos && checkCaidInfos(ridx, &cc->caid_size)) {
+    	  if (cc->caid_infos && checkCaidInfos(ridx, &cc->caid_size)) {
           freeCaidInfos(cc->caid_infos);
           cc->caid_infos = NULL;
         }
