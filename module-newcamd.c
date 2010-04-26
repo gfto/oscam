@@ -2,6 +2,7 @@
 extern struct s_reader *reader;
 
 #define CWS_NETMSGSIZE 272
+#define NCD_CLIENT_ID 0x8888
 
 #define CWS_FIRSTCMDNO 0xe0
 typedef enum
@@ -50,6 +51,29 @@ typedef struct custom_data
   int provid;
   uchar x;
 } custom_data_t;
+
+static char *get_ncd_client_name(char *client_id)
+{
+        static const int max_id_idx = 28;
+        static char *ncd_service_ids[] = { "0000", "5644", "4C43", "4333", "7264", "6762", "6D67", "7763", "6E73", "6378", "6B61",
+                                           "6576", "4343", "5456", "414C", "0666", "0667", "9911", "434C", "4765", "5342",
+                                           "6E65", "4E58", "4453", "8888", "7363", "0669", "0665", "0769" };
+
+        static char *ncd_service_names[] = { "Generic", "VDRSC", "LCE", "Camd3", "Radegast", "Gbox2CS", "Mgcamd",
+                                             "WinCSC", "newcs", "cx", "Kaffeine", "Evocamd", "CCcam", "Tecview",
+                                             "AlexCS", "Rqcamd", "Rq-echo", "Acamd", "Cardlink", "Octagon", "sbcl",
+                                             "NextYE2k", "NextYE2k", "DiabloCam/UW", "OScam", "Scam", "Rq-sssp/CW",
+                                             "Rq-sssp/CS", "JlsRq", "Unknown - please report" };
+
+        int idx = 0;
+        for (idx = 0; idx <= max_id_idx; idx++) {
+		if(!memcmp(ncd_service_ids[idx], client_id, 4))
+                        return ncd_service_names[idx];
+
+        }
+
+        return ncd_service_names[max_id_idx+1];
+}
 
 #define REQ_SIZE	2
 static	uchar	*req=0;
@@ -300,7 +324,7 @@ static int connect_newcamd_server()
   //          reader[ridx].r_port, reader[ridx].r_usr, reader[ridx].r_pwd,
   //          index+strlen(passwdcrypt)+1);
   network_message_send(handle, 0, buf, index+strlen((char *)passwdcrypt)+1, key, 
-                       COMMTYPE_CLIENT, 0x8888, NULL);
+                       COMMTYPE_CLIENT, NCD_CLIENT_ID, NULL);
 
   // 3.1 Get login answer
   //
@@ -578,7 +602,8 @@ static FILTER mk_user_ftab()
 static void newcamd_auth_client(in_addr_t ip)
 {
     int i, ok;
-    uchar *usr=NULL, *pwd=NULL;
+    uchar *usr = NULL, *pwd = NULL;
+    char client_id[4], *client_name = NULL;
     struct s_auth *account;
     uchar buf[14];
     uchar *key=0;
@@ -644,27 +669,31 @@ static void newcamd_auth_client(in_addr_t ip)
             cs_debug("account->pwd=%s", passwdcrypt);
             if (strcmp((char *)pwd, (const char *)passwdcrypt) == 0)
             {
+		sprintf(client_id, "%02X%02X", mbuf[0], mbuf[1]);
+	 	client_name = get_ncd_client_name(client_id);
+
                 client[cs_idx].crypted=1;
+
                 if(cs_auth_client(account, NULL) == 2) {
-                	cs_log("dyndns hostname mismatch for user %s (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
+			cs_log("hostname or ip mismatch for user %s (%s)", usr, client_name);
 			break;
 		}
 		else {
-                	cs_log("user %s authenticated successfully (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
+                	cs_log("user %s authenticated successfully (%s)", usr, client_name);
                 	ok = 1;
                 	break;
 		}
             }
             else
                 {
-                cs_log("user %s is providing a wrong password (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
+                cs_log("user %s is providing a wrong password (%s)", usr, client_name);
                 }
             }
         }
 	
     if (!ok && !account)
         {
-        cs_log("user %s is trying to connect but doesnt exist ! (using client %02X%02X)", usr, mbuf[0], mbuf[1]);
+        cs_log("user %s is trying to connect but doesnt exist ! (%s)", usr, client_name);
         usr = 0;
         }
 
