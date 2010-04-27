@@ -81,6 +81,8 @@ struct cc_data {
 	LLIST *caid_infos;
 	long caid_size;
 	uint16 needs_rebuild_caidinfo;
+	int max_ecms;
+	int ecm_counter;
 	//SS: Hack end
 
 	uint32 count;

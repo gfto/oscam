@@ -836,6 +836,9 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       pthread_mutex_unlock(&cc->ecm_busy);
       //cc_abort_user_ecms();
       cc_send_ecm(NULL, NULL);
+
+      if (cc->max_ecms)
+    	  cc->ecm_counter++;
       ret = 0;
     }
     break;
@@ -850,16 +853,28 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
   case MSG_BAD_ECM:
 	l=l-4;//Header Length=4 Byte
     cs_log("cccam: cmd 0x05 recvd, payload length=%d", l);
-    if (l>0)
+    if (l>0) {
       cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+      cc->max_ecms = 60;
+      cc->ecm_counter = 0;
+    }
+    else
+    {
+    	cc->max_ecms = 0;
+    	cc->ecm_counter = 0;
+    }
     break;
   case MSG_CMD_0B:
     // need to work out algo (reverse) for this...
     cc_cycle_connection();
+    break;
   default:
+    cs_log("cccam: unhandled msg: %d", buf[1]);
     break;
   }
 
+  if (cc->max_ecms && (cc->ecm_counter > cc->max_ecms))
+	cc_cycle_connection();
   return ret;
 }
 
@@ -959,20 +974,19 @@ static int cc_cli_connect(void)
   char pwd[64];
   struct cc_data *cc;
 
-  if (reader[ridx].cc) { 
-    cc_free(reader[ridx].cc);
-    reader[ridx].cc = NULL;
+  if (!reader[ridx].cc) {
+    // init internals data struct
+    cc = malloc(sizeof(struct cc_data));
+    if (cc==NULL) {
+      cs_log("cccam: cannot allocate memory");
+      return -1;
+    }
+    reader[ridx].cc = cc;
+    memset(reader[ridx].cc, 0, sizeof(struct cc_data));
+    cc->cards = llist_create();
+    cc->ecm_counter = 0;
+    cc->max_ecms = 0;
   }
-
-  // init internals data struct
-  cc = malloc(sizeof(struct cc_data));
-  if (cc==NULL) {
-    cs_log("cccam: cannot allocate memory");
-    return -1;
-  }
-  reader[ridx].cc = cc;
-  memset(reader[ridx].cc, 0, sizeof(struct cc_data));
-  cc->cards = llist_create();
 
   // check cred config
   if(reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0 ||
@@ -1390,6 +1404,7 @@ static int cc_srv_connect()
   // check for clienttimeout, if timeout occurs try to send keepalive
   for (;;) {
     i=process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
+    //cs_log("srv process input i=%d cmi=%d", i, cmi);
     if (i == -9) {
       cc_srv_report_cards();
       cmi += 10;
@@ -1510,7 +1525,6 @@ void module_cccam(struct s_module *ph)
   ph->s_ip=cfg->cc_srvip;
   ph->s_handler=cc_srv_init;
   ph->send_dcw=cc_send_dcw;
-
   static PTAB ptab;
   ptab.ports[0].s_port = cfg->cc_port;
   ph->ptab = &ptab;
