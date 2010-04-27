@@ -1282,7 +1282,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 				char fname[40];
-				sprintf(fname, "/tmp/caidinfos.%d", reader[ridx].ridx);
+				sprintf(fname, "/tmp/.oscam/caidinfos.%d", ridx);
 				FILE *file = fopen(fname, "r");
 				if (file) {
 					uint16 caid = 0;
@@ -1345,7 +1345,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 			char fname[40];
-			sprintf(fname, "/tmp/caidinfos.%d", reader[ridx].ridx);
+			sprintf(fname, "/tmp/.oscam/caidinfos.%d", ridx);
 			FILE *file = fopen(fname, "r");
 			if (file) {
 				uint16 caid = 0;
