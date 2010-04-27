@@ -189,17 +189,14 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd)
 }
 
 #define CC_DEFAULT_VERSION 1
-static void cc_check_version (char *cc_version, char *cc_build, uint32 *cc_max_ecms)
+static void cc_check_version (char *cc_version, char *cc_build)
 {
   char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "" };
   char *build[] = { "2892", "2971", "3094", "3165", "3191", "" };
-  uint32 max_ecms[] = { 0, 0, 60, 60, 60, 60 };
   int i;
-  *cc_max_ecms = 60;
   if (strlen (cc_version) == 0) {
     memcpy (cc_version, version[CC_DEFAULT_VERSION], strlen (version[CC_DEFAULT_VERSION]));
     memcpy (cc_build, build[CC_DEFAULT_VERSION], strlen (build[CC_DEFAULT_VERSION]));
-    *cc_max_ecms = max_ecms[CC_DEFAULT_VERSION];
     cs_debug ("cccam: auto version set: %s build: %s", cc_version, cc_build);
     return;
   }
@@ -207,7 +204,6 @@ static void cc_check_version (char *cc_version, char *cc_build, uint32 *cc_max_e
   for (i = 0; strlen (version[i]); i++)
     if (!memcmp (cc_version, version[i], strlen (version[i]))) {
       memcpy (cc_build, build[i], strlen (build[i]));
-      *cc_max_ecms = max_ecms[i];
       cs_debug ("cccam: auto build set for version: %s build: %s", cc_version, cc_build);
       break;
     }
@@ -252,7 +248,7 @@ static int cc_send_srv_data()
   memset(buf, 0, CC_MAXMSGSIZE);
 
   memcpy(buf, cc->node_id, 8 );
-  cc_check_version ((char *) cfg->cc_version, (char *) cfg->cc_build, &cc->max_ecms);
+  cc_check_version ((char *) cfg->cc_version, (char *) cfg->cc_build);
   memcpy(buf + 8, cfg->cc_version, sizeof(reader[ridx].cc_version));   // cccam version (ascii)
   memcpy(buf + 40, cfg->cc_build, sizeof(reader[ridx].cc_build));       // build number (ascii)
 
@@ -291,9 +287,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   struct cc_card *card;
   LLIST_ITR itr;
   ECM_REQUEST *cur_er;
-
-  if(cc->ecm_count)
-	  cc->ecm_count++;
 
   if (!cc || (pfd < 1)) {
     if (er) {
@@ -855,9 +848,10 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     }
     break;
   case MSG_BAD_ECM:
-    cc->ecm_count = 1;
-    cs_log("cccam: cmd 0x05 recvd, commencing ecm count");
-    cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+	l=l-4;//Header Length=4 Byte
+    cs_log("cccam: cmd 0x05 recvd, payload length=%d", l);
+    if (l>0)
+      cc_cmd_send(NULL, 0, MSG_BAD_ECM);
     break;
   case MSG_CMD_0B:
     // need to work out algo (reverse) for this...
@@ -865,9 +859,6 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
   default:
     break;
   }
-
-  if ((cc->max_ecms > 0) && (cc->ecm_count > cc->max_ecms))
-    cc_cycle_connection();
 
   return ret;
 }
@@ -982,9 +973,6 @@ static int cc_cli_connect(void)
   reader[ridx].cc = cc;
   memset(reader[ridx].cc, 0, sizeof(struct cc_data));
   cc->cards = llist_create();
-
-  cc->ecm_count = 0;
-  cc->max_ecms = reader[ridx].cc_max_ecms;
 
   // check cred config
   if(reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0 ||
@@ -1487,7 +1475,7 @@ int cc_cli_init()
     if (reader[ridx].tcp_rto <= 0) reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
     cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);
     if (!reader[ridx].cc_maxhop) reader[ridx].cc_maxhop = 5; // default maxhop to 5 if not configured
-    cc_check_version (reader[ridx].cc_version, reader[ridx].cc_build, &reader[ridx].cc_max_ecms);
+    cc_check_version (reader[ridx].cc_version, reader[ridx].cc_build);
     cs_log ("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d", reader[ridx].label,
      reader[ridx].device, reader[ridx].r_port,
      reader[ridx].cc_version, reader[ridx].cc_build, reader[ridx].cc_maxhop);

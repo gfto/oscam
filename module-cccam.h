@@ -26,13 +26,14 @@ typedef enum {
 
 typedef enum
 {
-	MSG_CLI_DATA,
-	MSG_CW_ECM,
+	MSG_CLI_DATA = 0,
+	MSG_CW_ECM = 1,
+	MSG_EMM_ACK = 2,
 	MSG_CARD_REMOVED = 4,
-	MSG_BAD_ECM,
-	MSG_KEEPALIVE,
-	MSG_NEW_CARD,
-	MSG_SRV_DATA,
+	MSG_BAD_ECM = 5,
+	MSG_KEEPALIVE = 6,
+	MSG_NEW_CARD = 7,
+	MSG_SRV_DATA = 8,
 	MSG_CMD_0B = 0x0b,
 	MSG_CW_NOK1 = 0xfe,
 	MSG_CW_NOK2 = 0xff,
@@ -80,11 +81,9 @@ struct cc_data {
 	LLIST *caid_infos;
 	long caid_size;
 	uint16 needs_rebuild_caidinfo;
-	uint32 max_ecms;
 	//SS: Hack end
 
 	uint32 count;
-	uint32 ecm_count;
 	uint32 keepalive_count; //SS: Hack: CycleConnection when >CC_MAX_KEEPALIVE
 	uint16 cur_sid;
 
