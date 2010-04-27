@@ -566,7 +566,7 @@ static void monitor_set_account(char *args){
 	int argidx, i, found;
 	char *argarray[3];
 	char *token[]={"au", "sleep", "uniq", "monlevel", "group", "services", "betatunnel", "ident", "caid", "chid", "class", "hostname", "expdate", "keepalive", "disabled"};
-	int tokencnt = sizeof(token)/sizeof(char *);
+	int tokencnt = (sizeof(token)/sizeof(char *)) +1;
 	char buf[256], tmp[64];
 
 	argidx = 0;
