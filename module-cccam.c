@@ -972,9 +972,9 @@ static int cc_cli_connect(void)
   uint8 hash[SHA_DIGEST_LENGTH];
   uint8 buf[CC_MAXMSGSIZE];
   char pwd[64];
-  struct cc_data *cc;
+  struct cc_data *cc = reader[ridx].cc;
 
-  if (!reader[ridx].cc) {
+  if (!cc) {
     // init internals data struct
     cc = malloc(sizeof(struct cc_data));
     if (cc==NULL) {
