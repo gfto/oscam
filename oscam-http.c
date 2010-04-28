@@ -1358,7 +1358,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					uint8 prov[3];
 					int revcount = count;
 					while (count > 0) {
-						if (freadprov, 1, sizeof(prov)), file) <= 0)
+						if (fread(prov, 1, sizeof(prov), file) <= 0)
 							break;
 						sprintf(ascprovid, "%02X%02X%02X", prov[0], prov[1], prov[2]);
 						provider = get_provider(caid, a2i(ascprovid, 3));
