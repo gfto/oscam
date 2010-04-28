@@ -499,7 +499,7 @@ static void cs_child_chk(int i)
     			reader[ridx].cs_idx=0;
     			reader[ridx].last_s = 0;
     			reader[ridx].last_g = 0;
-    			cs_log("closing fd_m2c=%d, ufd=%d", fd_m2c, ufd);
+    			cs_log("closing fd_m2c=%d, ufd=%d", client[i].fd_m2c, client[i].ufd);
                 if (client[i].fd_m2c) close(client[i].fd_m2c);
                 if (client[i].ufd) close(client[i].ufd);
                 memset(&client[i], 0, sizeof(struct s_client));
