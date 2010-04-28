@@ -495,6 +495,15 @@ static void cs_child_chk(int i)
                 reader[ridx].pid = 0;
                 reader[ridx].cc = NULL;
                 reader[ridx].tcp_connected = 0;
+    			reader[ridx].fd=0;
+    			reader[ridx].cs_idx=0;
+    			reader[ridx].last_s = 0;
+    			reader[ridx].last_g = 0;
+    			cs_log("closing fd_m2c=%d, ufd=%d", fd_m2c, ufd);
+                if (client[i].fd_m2c) close(client[i].fd_m2c);
+                if (client[i].ufd) close(client[i].ufd);
+                memset(&client[i], 0, sizeof(struct s_client));
+                client[i].au=(-1);
 
                 cs_log("RESTARTING READER %s in 5 seconds (index=%d)", txt, ridx);
                 cs_sleepms(5*1000); // SS: 5 sek wait
@@ -639,11 +648,13 @@ int cs_fork(in_addr_t ip, in_port_t port)
 #ifndef CS_NOSHM
         shmid=0;
 #endif
+        cs_log("FORK-CLIENT: fd_m2c_c=%d", client[i].fd_m2c_c);
         break;
       default:          // HERE is master
         client[i].fd_m2c=fdp[1];
         client[i].dbglvl=cs_dblevel;
         close(fdp[0]);
+        cs_log("FORK-MASTER: fd_m2c=%d", client[i].fd_m2c);
         if (ip)
         {
           client[i].typ='c';      // dynamic client
@@ -2619,7 +2630,7 @@ int main (int argc, char *argv[])
       if (ph[i].s_handler)
         ph[i].s_handler(i);
 
-  cs_close_log();
+  //cs_close_log();
   *mcl=1;
   while (1)
   {

@@ -298,11 +298,23 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     return -1;
   }
 
-  if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) {
-    cs_debug("cccam: ecm trylock: failed to get lock");
-    return 0;
-  } else {
-    cs_debug("cccam: ecm trylock: got lock");
+  int retry = 2;
+  while(1)
+  {
+    if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) {
+      cs_debug("cccam: ecm trylock: failed to get lock");
+      retry--;
+      if (retry == 0)
+      {
+    	  pthread_mutex_unlock(&cc->ecm_busy);
+    	  cc_cycle_connection();
+      }
+      else if (retry == -1)
+        return -2;
+    } else {
+      cs_debug("cccam: ecm trylock: got lock");
+      break;
+    }
   }
 
   if ((n = cc_get_nxt_ecm()) < 0) {
@@ -610,7 +622,7 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card)
       llist_append(cc->caid_infos, caid_info);
       doSaveCaidInfos = 1;
     }
-    if (caid_info->hop == 0 || caid_info->hop > card->hop)
+    if (card->hop < caid_info->hop)
     {
       caid_info->hop = card->hop;
       doSaveCaidInfos = 1;
@@ -853,16 +865,16 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
   case MSG_BAD_ECM:
 	l=l-4;//Header Length=4 Byte
     cs_log("cccam: cmd 0x05 recvd, payload length=%d", l);
-    if (l>0) {
-      cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+    if (l>0) { //payload > 0 needs cycle connection after 60 ECMs
       cc->max_ecms = 60;
       cc->ecm_counter = 0;
     }
     else
     {
-    	cc->max_ecms = 0;
-    	cc->ecm_counter = 0;
+      cc->max_ecms = 0;
+      cc->ecm_counter = 0;
     }
+    cc_cmd_send(NULL, 0, MSG_BAD_ECM);
     break;
   case MSG_CMD_0B:
     // need to work out algo (reverse) for this...
