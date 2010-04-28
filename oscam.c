@@ -641,6 +641,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
 	    client[i].fd_m2c_c=fdp[0];
         close(fdp[1]);
         close(mfdr);
+        //cs_log("FORK-CLIENT: fd_m2c_c=%d", client[i].fd_m2c_c);
         if( port!=97 ) cs_close_log();
         mfdr=0;
         cs_ptyp=D_CLIENT;
@@ -648,13 +649,12 @@ int cs_fork(in_addr_t ip, in_port_t port)
 #ifndef CS_NOSHM
         shmid=0;
 #endif
-        cs_log("FORK-CLIENT: fd_m2c_c=%d", client[i].fd_m2c_c);
         break;
       default:          // HERE is master
         client[i].fd_m2c=fdp[1];
         client[i].dbglvl=cs_dblevel;
         close(fdp[0]);
-        cs_log("FORK-MASTER: fd_m2c=%d", client[i].fd_m2c);
+        //cs_log("FORK-MASTER: fd_m2c=%d", client[i].fd_m2c);
         if (ip)
         {
           client[i].typ='c';      // dynamic client
@@ -1992,18 +1992,21 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
           // network and local cards
           default:
           case 0:
+        	  cs_log("request_cw1 ridx=%d fd=%d", i, reader[i].fd);
               if (er->reader[i]&flag){
                   write_ecm_request(reader[i].fd, er);
               }
               break;
               // only local cards
           case 1:
+        	  cs_log("request_cw2 ridx=%d fd=%d", i, reader[i].fd);
               if (!(reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag)
                       write_ecm_request(reader[i].fd, er);
               break;
               // only network
           case 2:
+        	  cs_log("request_cw3 ridx=%d fd=%d", i, reader[i].fd);
               if ((reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag)
                       write_ecm_request(reader[i].fd, er);
