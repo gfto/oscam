@@ -1295,15 +1295,15 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						if (fread(&hop, 1, sizeof(hop), file) <= 0)
 							break;
 						tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
-						int count = 0;
+						uint8 count = 0;
 						if (fread(&count, 1, sizeof(count), file) <= 0)
 							break;
-						uint8 prov;
+						uint8 prov[3];
 						int revcount = count;
 						while (count > 0) {
-							if (fread(&prov, 1, 1, file) <= 0)
+							if (fread(prov, 1, sizeof(prov), file) <= 0)
 								break;
-							sprintf(ascprovid, "%02X%02X%02X", prov, 0, 0);
+							sprintf(ascprovid, "%02X%02X%02X", prov[0], prov[1], prov[2]);
 							provider = get_provider(caid, a2i(ascprovid, 3));
 
 							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
@@ -1352,15 +1352,15 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					if (fread(&hop, 1, sizeof(hop), file) <= 0)
 						break;
 					tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
-					int count = 0;
+					uint8 count = 0;
 					if (fread(&count, 1, sizeof(count), file) <= 0)
 						break;
-					uint8 prov;
+					uint8 prov[3];
 					int revcount = count;
 					while (count > 0) {
-						if (fread(&prov, 1, 1, file) <= 0)
+						if (freadprov, 1, sizeof(prov)), file) <= 0)
 							break;
-						sprintf(ascprovid, "%02X%02X%02X", prov, 0, 0);
+						sprintf(ascprovid, "%02X%02X%02X", prov[0], prov[1], prov[2]);
 						provider = get_provider(caid, a2i(ascprovid, 3));
 
 						tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
