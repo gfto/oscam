@@ -95,11 +95,11 @@ static void cc_cw_crypt(uint8 *cws)
 static void cc_cycle_connection()
 {
   reader[ridx].tcp_connected = 0;
-  cs_sleepms(100);
+  //cs_sleepms(100);
   close(pfd);
   pfd = 0;
   client[cs_idx].udp_fd = 0;
-  cs_sleepms(100);
+  //cs_sleepms(100);
   cc_cli_init();
 }
 
@@ -984,9 +984,9 @@ static int cc_cli_connect(void)
     reader[ridx].cc = cc;
     memset(reader[ridx].cc, 0, sizeof(struct cc_data));
     cc->cards = llist_create();
-    cc->ecm_counter = 0;
-    cc->max_ecms = 0;
   }
+  cc->ecm_counter = 0;
+  cc->max_ecms = 0;
 
   // check cred config
   if(reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0 ||
