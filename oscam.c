@@ -2007,7 +2007,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
               break;
               // only network
           case 2:
-        	  cs_log("request_cw3 ridx=%d fd=%d", i, reader[i].fd);
+        	  //cs_log("request_cw3 ridx=%d fd=%d", i, reader[i].fd);
               if ((reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag) {
                       //cs_log("request_cw1 ridx=%d fd=%d", i, reader[i].fd);
