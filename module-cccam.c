@@ -800,9 +800,9 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     cs_log("cccam: cw nok, sid = %x", cc->cur_sid);
 
     int f = 0;
-    pthread_mutex_lock(&cc->list_busy);
     LLIST_ITR itr;
     if (cc->cur_card) {
+      pthread_mutex_lock(&cc->list_busy);
       uint16 *sid = llist_itr_init(cc->cur_card->badsids, &itr);
       while (sid && !f) {
         if (*sid == cc->cur_sid) {
@@ -820,8 +820,8 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
           cs_debug("   added sid block for card %08x", cc->cur_card->id);
         }
       }
+      pthread_mutex_unlock(&cc->list_busy);
     }
-    pthread_mutex_unlock(&cc->list_busy);
     memset(cc->dcw, 0, 16);
     // SS: ecm_busy removed!
 //    pthread_mutex_unlock(&cc->ecm_busy);
@@ -883,7 +883,9 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       cc->max_ecms = 0;
       cc->ecm_counter = 0;
     }
+    cc->cur_card = NULL;
     cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+    cc_send_ecm(NULL, NULL);
     ret = 0;
     break;
   case MSG_CMD_0B:
