@@ -292,33 +292,24 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     if (er) {
       er->rc = 0;
       er->rcEx = 0x27;
-      cs_log("cccam: server not init!");
+      cs_log("cccam: server not init! ccinit=%d pfd=%d", cc?1:0, pfd);
       write_ecm_answer(&reader[ridx], fd_c2m, er);
+      cc_cycle_connection();
     }
     return -1;
   }
 
-  int retry = 2;
-  while(1)
-  {
-    if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) {
-      cs_debug("cccam: ecm trylock: failed to get lock");
-      retry--;
-      if (retry == 0)
-      {
-    	  pthread_mutex_unlock(&cc->ecm_busy);
-    	  cc_cycle_connection();
-      }
-      else if (retry == -1)
-        return -2;
-    } else {
-      cs_debug("cccam: ecm trylock: got lock");
-      break;
-    }
-  }
+// SS: ecm_busy removed!
+//  if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) {
+//	  cs_log("cccam: ecm trylock: failed to get lock");
+//	  //return 0; //pending send...
+//  }
+//  else
+//	  cs_debug("cccam: ecm trylock: got lock");
 
   if ((n = cc_get_nxt_ecm()) < 0) {
-    pthread_mutex_unlock(&cc->ecm_busy);
+	  // SS: ecm_busy removed!
+	  //    pthread_mutex_unlock(&cc->ecm_busy);
     return 0;   // no queued ecms
   }
   cur_er = &ecmtask[n];
@@ -329,7 +320,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   cs_debug("cccam: ecm crc = 0x%lx", cc->crc);
 
   if (cur_er->rc == 99) {
-    pthread_mutex_unlock(&cc->ecm_busy);
+	  // SS: ecm_busy removed!
+	  //    pthread_mutex_unlock(&cc->ecm_busy);
     return 0;   // ecm already sent
   }
 
@@ -340,6 +332,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   cc->cur_card = NULL;
   cc->cur_sid = cur_er->srvid;
 
+  pthread_mutex_lock(&cc->list_busy);
   card = llist_itr_init(cc->cards, &itr);
   while (card) {
     if (card->caid == cur_er->caid) {   // caid matches
@@ -394,20 +387,20 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
     reader[ridx].cc_currenthops = cc->cur_card->hop + 1;
 
     cs_log("cccam: sending ecm for sid %04x to card %08x, hop %d", cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
+    pthread_mutex_unlock(&cc->list_busy);
     n = cc_cmd_send(ecmbuf, cur_er->l+13, MSG_CW_ECM);      // send ecm
 
   } else {
-    n = -1;
-    cs_log("cccam: no suitable card on server");
-    cur_er->rc = 0;
-    cur_er->rcEx = 0x27;
-    //cur_er->rc = 1;
-    //cur_er->rcEx = 0;
-    cs_sleepms(300);
-    write_ecm_answer(&reader[ridx], fd_c2m, cur_er);
-    //reader[ridx].last_s = reader[ridx].last_g;
+	  n = -1;
+	  cs_log("cccam: no suitable card on server");
+	  cur_er->rc = 0;
+	  cur_er->rcEx = 0x27;
+	  //cur_er->rc = 1;
+	  //cur_er->rcEx = 0;
+	  //cs_sleepms(300);
+	  //reader[ridx].last_s = reader[ridx].last_g;
 
-    card = llist_itr_init(cc->cards, &itr);
+	  card = llist_itr_init(cc->cards, &itr);
       while (card) {
         if (card->caid == cur_er->caid) {   // caid matches
           LLIST_ITR sitr;
@@ -420,8 +413,11 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
         }
         card = llist_itr_next(&itr);
       }
+      pthread_mutex_unlock(&cc->list_busy);
 
-    pthread_mutex_unlock(&cc->ecm_busy);
+      write_ecm_answer(&reader[ridx], fd_c2m, cur_er);
+      // SS: ecm_busy removed!
+//      pthread_mutex_unlock(&cc->ecm_busy);
   }
 
   return 0;
@@ -722,6 +718,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       
       //SS: Hack:
       //Check if we have this card:
+      pthread_mutex_lock(&cc->list_busy);
       LLIST_ITR itr;
       struct cc_card *old_card = llist_itr_init(cc->cards, &itr);
       while (old_card) {
@@ -757,6 +754,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
         if (add_card_to_caidinfo(cc, card))
           saveCaidInfos(ridx, cc->caid_infos);
       }
+      pthread_mutex_unlock(&cc->list_busy);
       //SS: Hack end
     }
     break;
@@ -765,7 +763,9 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     struct cc_card *card;
     LLIST_ITR itr;
 
+    pthread_mutex_lock(&cc->list_busy);
     int found = 0;
+    int cur_card_removed = 0;
     card = llist_itr_init(cc->cards, &itr);
     while (card) {
       if (card->id == b2i(4, buf+4)) {// && card->sub_id == b2i (3, buf + 9)) {
@@ -773,8 +773,10 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
         cs_debug("cccam: card %08x removed, caid %04x, count %d", card->id, card->caid, cc->card_count);
         found = 1;
         //SS: Fix card free:
-        if (card == cc->cur_card)
+        if (card == cc->cur_card) {
           cc->cur_card = NULL;
+          cur_card_removed = 1;
+        }
         cc_free_card(card);
         //SS: Fix card free end
 
@@ -784,10 +786,13 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
         card = llist_itr_next(&itr);
       }
     }
+    pthread_mutex_unlock(&cc->list_busy);
     if (!found)
-      cs_debug("cccam: card %08x NOT FOUND?!?, caid %04x, count %d", card->id, card->caid, cc->card_count);
+      cs_debug("cccam: card %08x NOT FOUND?!?, count %d", b2i(4, buf+4), cc->card_count);
     else
       cc->needs_rebuild_caidinfo++;
+    if (cur_card_removed && reader[ridx].tcp_connected)
+    	cc_send_ecm(NULL, NULL);
   }
     break;
   case MSG_CW_NOK1:
@@ -795,6 +800,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     cs_log("cccam: cw nok, sid = %x", cc->cur_sid);
 
     int f = 0;
+    pthread_mutex_lock(&cc->list_busy);
     LLIST_ITR itr;
     if (cc->cur_card) {
       uint16 *sid = llist_itr_init(cc->cur_card->badsids, &itr);
@@ -815,8 +821,10 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
         }
       }
     }
+    pthread_mutex_unlock(&cc->list_busy);
     memset(cc->dcw, 0, 16);
-    pthread_mutex_unlock(&cc->ecm_busy);
+    // SS: ecm_busy removed!
+//    pthread_mutex_unlock(&cc->ecm_busy);
     cc_send_ecm(NULL, NULL);
     ret = 0;
     break;
@@ -845,7 +853,8 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       memcpy(cc->dcw, buf+4, 16);
       cs_debug("cccam: cws: %s", cs_hexdump(0, cc->dcw, 16));
       cc_crypt(&cc->block[DECRYPT], buf+4, l-4, ENCRYPT); // additional crypto step
-      pthread_mutex_unlock(&cc->ecm_busy);
+      // SS: ecm_busy removed!
+//      pthread_mutex_unlock(&cc->ecm_busy);
       //cc_abort_user_ecms();
       cc_send_ecm(NULL, NULL);
 
@@ -877,16 +886,19 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     cc_cmd_send(NULL, 0, MSG_BAD_ECM);
     break;
   case MSG_CMD_0B:
-    // need to work out algo (reverse) for this...
-    cc_cycle_connection();
-    break;
+	  // need to work out algo (reverse) for this...
+	  cs_debug("cccam: MSG_CMD_0B received, cycle connection!");
+	  cc_cycle_connection();
+	  break;
   default:
     cs_log("cccam: unhandled msg: %d", buf[1]);
     break;
   }
 
-  if (cc->max_ecms && (cc->ecm_counter > cc->max_ecms))
-	cc_cycle_connection();
+  if (cc->max_ecms && (cc->ecm_counter > cc->max_ecms)) {
+	  cs_debug("cccam: max ecms (%d) reached, cycle connection!", cc->max_ecms);
+	  cc_cycle_connection();
+  }
   return ret;
 }
 
@@ -969,7 +981,7 @@ int cc_recv(uchar *buf, int l)
   pthread_mutex_unlock(&cc->lock);
 
   if (!is_server && (n==-1)) {
-    cs_log("cccam: cycle connection");
+    cs_debug("cccam: cc_recv: cycle connection");
     cc_cycle_connection();
     //cs_exit(1);
   }
@@ -993,21 +1005,26 @@ static int cc_cli_connect(void)
       cs_log("cccam: cannot allocate memory");
       return -1;
     }
-    reader[ridx].cc = cc;
-    memset(reader[ridx].cc, 0, sizeof(struct cc_data));
+    memset(cc, 0, sizeof(struct cc_data));
     cc->cards = llist_create();
+    reader[ridx].cc = cc;
   }
   cc->ecm_counter = 0;
   cc->max_ecms = 0;
 
   // check cred config
   if(reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0 ||
-     reader[ridx].r_usr[0] == 0 || reader[ridx].r_port == 0)
-    return -5;
+     reader[ridx].r_usr[0] == 0 || reader[ridx].r_port == 0) {
+	  cs_log("cccam: configuration error!");
+	  return -5;
+  }
 
   // connect
   handle = network_tcp_connection_open();
-  if(handle < 0) return -1;
+  if(handle < 0) {
+	  cs_log("cccam: network connect error!");
+	  return -1;
+  }
 
   // get init seed
   if((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
@@ -1062,21 +1079,24 @@ static int cc_cli_connect(void)
     cs_debug("cccam: login succeeded");
   }
 
-  reader[ridx].tcp_connected = 1;
-  reader[ridx].last_g = reader[ridx].last_s = time((time_t *)0);
-  reader[ridx].card_status = CARD_INSERTED;
-
   cs_debug("cccam: last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
 
   pfd=client[cs_idx].udp_fd;
+  cs_debug("cccam: pfd=%d", pfd);
 
   if (cc_send_cli_data()<=0) {
     cs_log("cccam: login failed, could not send client data");
     return -3;
   }
 
+  reader[ridx].tcp_connected = 1;
+  reader[ridx].last_g = reader[ridx].last_s = time((time_t *)0);
+  reader[ridx].card_status = CARD_INSERTED;
+
   pthread_mutex_init(&cc->lock, NULL);
-  pthread_mutex_init(&cc->ecm_busy, NULL);
+  // SS: ecm_busy removed!
+//  pthread_mutex_init(&cc->ecm_busy, NULL);
+  pthread_mutex_init(&cc->list_busy, NULL);
 
   reader[ridx].caid[0] = reader[ridx].ftab.filts[0].caid;
   reader[ridx].nprov = reader[ridx].ftab.filts[0].nprids;
@@ -1253,56 +1273,58 @@ static void cc_srv_report_cards()
 	
 	//SS: Hack:
 	if (reader[r].typ == R_CCCAM && !flt) {
-          if (cc->caid_infos && checkCaidInfos(r, &cc->caid_size)) {
+		pthread_mutex_lock(&cc->list_busy);
+        if (cc->caid_infos && checkCaidInfos(r, &cc->caid_size)) {
             freeCaidInfos(cc->caid_infos);
             cc->caid_infos = NULL;
-          }
-          if (!cc->caid_infos)
+        }
+        if (!cc->caid_infos)
             cc->caid_infos = loadCaidInfos(r);
-          if (cc->caid_infos) {
+        if (cc->caid_infos) {
             LLIST_ITR itr;
             struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos, &itr);
             while (caid_info) {
-              memset(buf, 0, sizeof(buf));
-	      buf[0] = id >> 24;
-  	      buf[1] = id >> 16;
-	      buf[2] = id >> 8;
-	      buf[3] = id & 0xff;
-  	      buf[5] = reader[r].cc_id >> 16;
-	      buf[6] = reader[r].cc_id >> 8;
-	      buf[7] = reader[r].cc_id & 0xFF;
-	      if (!reader[r].cc_id)
-	      {
-  	        buf[6] = 0x99;
-		buf[7] = 0x63 + r;
-	      }
-	      buf[8] = caid_info->caid >> 8;
-	      buf[9] = caid_info->caid & 0xff;
-	      buf[10] = caid_info->hop+1;
-	      buf[11] = reshare;
-	      int j = 0;
-	      LLIST_ITR itr_prov;
-	      uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
-  	      while (prov) {
-  	        memcpy(buf + 21 + (j*7), prov, 3);
-	        prov = llist_itr_next(&itr_prov);
-	        j++;
-	      }
-	      buf[20] = j;
+            	memset(buf, 0, sizeof(buf));
+            	buf[0] = id >> 24;
+            	buf[1] = id >> 16;
+            	buf[2] = id >> 8;
+            	buf[3] = id & 0xff;
+            	buf[5] = reader[r].cc_id >> 16;
+            	buf[6] = reader[r].cc_id >> 8;
+            	buf[7] = reader[r].cc_id & 0xFF;
+            	if (!reader[r].cc_id)
+            	{
+            		buf[6] = 0x99;
+            		buf[7] = 0x63 + r;
+            	}
+            	buf[8] = caid_info->caid >> 8;
+            	buf[9] = caid_info->caid & 0xff;
+            	buf[10] = caid_info->hop+1;
+            	buf[11] = reshare;
+            	int j = 0;
+            	LLIST_ITR itr_prov;
+            	uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
+            	while (prov) {
+            		memcpy(buf + 21 + (j*7), prov, 3);
+            		prov = llist_itr_next(&itr_prov);
+            		j++;
+            	}
+            	buf[20] = j;
 
-	      buf[21 + (j*7)] = 1;
-	      memcpy(buf + 22 + (j*7), cc->node_id, 8);
-	      id++;
+            	buf[21 + (j*7)] = 1;
+            	memcpy(buf + 22 + (j*7), cc->node_id, 8);
+            	id++;
 
-              reader[r].cc_id = b2i(3, buf+5);
-              cc_cmd_send(buf, 30 + (j*7), MSG_NEW_CARD);
-              //cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
-              caid_info = llist_itr_next(&itr);
+            	reader[r].cc_id = b2i(3, buf+5);
+            	cc_cmd_send(buf, 30 + (j*7), MSG_NEW_CARD);
+            	//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
+            	caid_info = llist_itr_next(&itr);
             }       
-	  }
         }
-	//SS: Hack end
+        pthread_mutex_unlock(&cc->list_busy);
     }
+	//SS: Hack end
+  }
 }
 
 static int cc_srv_connect()

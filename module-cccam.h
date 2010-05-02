@@ -96,6 +96,7 @@ struct cc_data {
 
 	pthread_mutex_t lock;
 	pthread_mutex_t ecm_busy;
+	pthread_mutex_t list_busy;
 };
 
 #endif /* MODULECCCAM_H_ */
