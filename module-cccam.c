@@ -884,11 +884,13 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       cc->ecm_counter = 0;
     }
     cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+    ret = 0;
     break;
   case MSG_CMD_0B:
 	  // need to work out algo (reverse) for this...
 	  cs_debug("cccam: MSG_CMD_0B received, cycle connection!");
 	  cc_cycle_connection();
+	  ret = 0;
 	  break;
   default:
     cs_log("cccam: unhandled msg: %d", buf[1]);
@@ -898,6 +900,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
   if (cc->max_ecms && (cc->ecm_counter > cc->max_ecms)) {
 	  cs_debug("cccam: max ecms (%d) reached, cycle connection!", cc->max_ecms);
 	  cc_cycle_connection();
+	  ret = 0;
   }
   return ret;
 }
