@@ -703,15 +703,47 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     int boxidOK=0;
     l=do_cmd(reader, ins36, NULL, buff,cta_res);
     if(l>=0) {
-      int i;
-      for(i=0; i<l ;i++) {
-        if(buff[i+1]==0xF3 && (buff[i]==0x00 || buff[i]==0x0A)) {
-          memcpy(&boxID,&buff[i+2],sizeof(boxID));
-          boxidOK=1;
-          break;
-          }
+      /* skipping the initial fixed fields: cmdecho (4) + length (1) + ? (4) + ua (4) */
+      int i=13;
+      while (i<l) {
+        switch (buff[i]) { /* object length vary depending on type */
+            case 0xEF: /* card status */
+              i+=3;
+              break;
+            case 0xD1:
+              i+=4;
+              break;
+            case 0xDF: /* next server contact */
+              i+=5;
+              break;
+            case 0xF3: /* boxID */
+                  memcpy(&boxID,&buff[i+1],sizeof(boxID));
+                  boxidOK=1;
+              i+=5;
+              break;
+            case 0xF6:
+              i+=6;
+              break;
+            case 0x01: /* date & time */
+              i+=7;
+              break;
+            case 0xFA:
+              i+=9;
+              break;
+            case 0x5E:
+            case 0x67: /* signature */
+            case 0xDE:
+            case 0xE2:
+            case 0xE9: /* tier dates */
+            case 0xFD:
+              i+=buff[i+1]+2; /* skip length + 2 bytes (type and length) */
+              break;
+            default: /* default to assume a length byte */
+              cs_log("[videoguard2-reader] ins36 returned unknown type=0x%02X - parsing may fail", buff[i]);
+              i+=buff[i+1]+2;
         }
       }
+    }
 
     if(!boxidOK) {
       cs_log ("[videoguard2-reader] no boxID available");
