@@ -312,7 +312,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
       er->rcEx = 0x27;
       cs_log("cccam: server not init! ccinit=%d pfd=%d", cc?1:0, pfd);
       write_ecm_answer(&reader[ridx], fd_c2m, er);
-      cc_cycle_connection();
+      //cc_cycle_connection();
     }
     return -1;
   }
@@ -328,6 +328,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
   if ((n = cc_get_nxt_ecm()) < 0) {
 	  // SS: ecm_busy removed!
 	  //    pthread_mutex_unlock(&cc->ecm_busy);
+    cs_log("no ecm pending!");
     return 0;   // no queued ecms
   }
   cur_er = &ecmtask[n];
@@ -900,8 +901,13 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
 		  }
 		  memset(cc->dcw, 0, 16);
 		  cc->cur_card = NULL;
-		  
-		  cc_send_ecm(NULL, NULL);
+
+                  int n;
+                  if ((n = cc_get_nxt_ecm()) >= 0) {
+                    ecmtask[n].rc = 100;
+                    cs_log("retrying ecm...");
+                    cc_send_ecm(NULL, NULL);
+                  }
 	  }
       //if (cc->found)
       //write_ecm_answer(&reader[ridx], fd_c2m, cc->found);
@@ -937,7 +943,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       // SS: ecm_busy removed!
 //      pthread_mutex_unlock(&cc->ecm_busy);
       //cc_abort_user_ecms();
-      cc_send_ecm(NULL, NULL);
+      //cc_send_ecm(NULL, NULL);
 
       if (cc->max_ecms)
     	  cc->ecm_counter++;
