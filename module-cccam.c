@@ -878,7 +878,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
   case MSG_CW_NOK2:
 	  cs_log("cccam: cw nok (%d), sid = %x", buf[1], cc->cur_sid);
 
-	  if (cc->cur_card && cc->cur_sid) {
+	  if (cc->cur_card) {
 		  int f = 0;
 		  LLIST_ITR itr;
 		  uint16 *sid = llist_itr_init(cc->cur_card->badsids, &itr);
