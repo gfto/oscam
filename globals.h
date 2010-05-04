@@ -97,6 +97,7 @@
 #define CS_RESOLVE_DELAY  30
 #define CS_MAXLOGHIST     30
 #define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
+#define CS_MAXREADERCAID  16
 
 #ifdef  CS_EMBEDDED
 #define CS_MAXPID   32
@@ -489,7 +490,7 @@ struct s_reader  //contains device info, reader info and card info
   uchar     availkeys[CS_MAXPROV][16];  // viaccess; misused in seca, if availkeys[PROV][0]=0 then expired, 1 then valid.
   uchar     sa[CS_MAXPROV][4];    // viaccess & seca
   ushort    acs;    // irdeto
-  ushort    caid[16];
+  ushort    caid[CS_MAXREADERCAID];
   uchar     b_nano[256];
   int       blockemm_unknown; //block EMMs that have unknown type
   int       blockemm_u;				//blcok Unique EMMs
@@ -514,7 +515,6 @@ struct s_reader  //contains device info, reader info and card info
   char      cc_build[5];    // cccam build number
   int       cc_maxhop;      // cccam max distance
   int		cc_currenthops; // number of hops for CCCam
-  int       cc_limit_ecms;  // cccam ecms have to be limited an reconnected
   void      *cc;            // ptr to cccam internal data struct
   uchar     cc_id;
   uchar     tcp_connected;

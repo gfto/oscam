@@ -190,27 +190,39 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd)
 }
 
 #define CC_DEFAULT_VERSION 1
-static void cc_check_version (char *cc_version, char *cc_build, int *cc_limit_ecms)
+char *version[]  = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "" };
+char *build[]    = { "2892",   "2971",  "3094",  "3165",  "3191",  "" };
+int limit_ecms[] = { 0,        0,       1,       1,       1,       0 };  
+
+static int cc_get_limit_ecms(char *cc_version)
 {
-  char *version[]  = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "" };
-  char *build[]    = { "2892",   "2971",  "3094",  "3165",  "3191",  "" };
-  int limit_ecms[] = { 0,        0,       1,       1,       1,       0 };  
+  int limit = limit_ecms[CC_DEFAULT_VERSION];
+  int i;
+  for (i = 0; strlen (version[i]); i++)
+    if (!memcmp (cc_version, version[i], strlen (version[i]))) {
+      limit = limit_ecms[i];
+      cs_debug("cccam server version: %s limit ecms: %s", cc_version, limit?"yes":"no");
+      break;
+    }
+  return limit;
+}
+
+static void cc_check_version (char *cc_version, char *cc_build)
+{
   int i;
   
-  *cc_limit_ecms = limit_ecms[CC_DEFAULT_VERSION];
   if (strlen (cc_version) == 0) {
     memcpy (cc_version, version[CC_DEFAULT_VERSION], strlen (version[CC_DEFAULT_VERSION]));
     memcpy (cc_build, build[CC_DEFAULT_VERSION], strlen (build[CC_DEFAULT_VERSION]));
     
-    cs_debug ("cccam: auto version set: %s build: %s limit ecms: %s", cc_version, cc_build, *cc_limit_ecms?"yes":"no");
+    cs_debug ("cccam: auto version set: %s build: %s", cc_version, cc_build);
     return;
   }
 
   for (i = 0; strlen (version[i]); i++)
     if (!memcmp (cc_version, version[i], strlen (version[i]))) {
       memcpy (cc_build, build[i], strlen (build[i]));
-      *cc_limit_ecms = limit_ecms[i];
-      cs_debug ("cccam: auto build set for version: %s build: %s limit ecms: %s", cc_version, cc_build, *cc_limit_ecms?"yes":"no");
+      cs_debug ("cccam: auto build set for version: %s build: %s", cc_version, cc_build);
       break;
     }
 }
@@ -254,7 +266,7 @@ static int cc_send_srv_data()
   memset(buf, 0, CC_MAXMSGSIZE);
 
   memcpy(buf, cc->node_id, 8 );
-  cc_check_version ((char *) cfg->cc_version, (char *) cfg->cc_build, &cc->limit_ecms);
+  cc_check_version ((char *) cfg->cc_version, (char *) cfg->cc_build);
   memcpy(buf + 8, cfg->cc_version, sizeof(reader[ridx].cc_version));   // cccam version (ascii)
   memcpy(buf + 40, cfg->cc_build, sizeof(reader[ridx].cc_build));       // build number (ascii)
 
@@ -629,7 +641,8 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card)
     struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos, &itr);
     while (caid_info) {
       if (caid_info->caid == card->caid)
-        break;
+        if (llist_count(caid_info->provs) < CS_MAXPROV)
+          break;
       caid_info = llist_itr_next(&itr);
     }
     if (!caid_info) {
@@ -701,6 +714,21 @@ static void cleanup_old_cards(struct cc_data *cc)
     		card = llist_itr_next(&itr);
     }
 }
+
+static int caid_filtered(int caid)
+{
+  int defined = 0;
+  int i;
+  for (i = 0; i < CS_MAXREADERCAID; i++) {
+    if (reader[ridx].caid[i]) {
+      if (reader[ridx].caid[i] == caid)
+        return 0;
+      defined = 1;
+    }
+  }
+  return defined;
+}
+
 //SS: Hack end
 
 static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
@@ -721,13 +749,18 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   case MSG_SRV_DATA:
     memcpy(cc->peer_node_id, buf+4, 8);
-    cs_log("cccam: srv %s running v%s (%s)", cs_hexdump(0, cc->peer_node_id, 8), buf+12, buf+44);
+    cc->limit_ecms = cc_get_limit_ecms((char*)buf+12);
+    cs_log("cccam: srv %s running v%s (%s) limit ecms: %s", cs_hexdump(0, cc->peer_node_id, 8), buf+12, buf+44, cc->limit_ecms?"yes":"no");
     break;
   case MSG_NEW_CARD:
     {
       int i = 0;
       if (buf[14] > reader[ridx].cc_maxhop)
         break;
+
+      if (caid_filtered(b2i(2, buf+12)))
+        break;
+              
       struct cc_card *card = malloc(sizeof(struct cc_card));
       if (!card)
         break;
@@ -831,8 +864,10 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       }
     }
     pthread_mutex_unlock(&cc->list_busy);
-    if (!found)
-      cs_debug("cccam: card %08x NOT FOUND?!?, count %d", b2i(4, buf+4), cc->card_count);
+    if (!found) {
+      if (!reader[ridx].caid[0])
+        cs_debug("cccam: card %08x NOT FOUND?!?, count %d", b2i(4, buf+4), cc->card_count);
+    }
     else
       cc->needs_rebuild_caidinfo++;
     if (cur_card_removed && reader[ridx].tcp_connected)
@@ -1059,7 +1094,6 @@ static int cc_cli_connect(void)
   }
   cc->ecm_counter = 0;
   cc->max_ecms = 0;
-  cc->limit_ecms = reader[ridx].cc_limit_ecms;
 
   // check cred config
   if(reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0 ||
@@ -1170,7 +1204,7 @@ static void cc_srv_report_cards()
 
     reshare = cfg->cc_reshare;
     if (!reshare) return;
-	
+
     for (r=0; r<CS_MAXREADER; r++)
     {
 	flt = 0;
@@ -1322,7 +1356,6 @@ static void cc_srv_report_cards()
 	
 	//SS: Hack:
 	if (reader[r].typ == R_CCCAM && !flt) {
-		pthread_mutex_lock(&cc->list_busy);
         if (cc->caid_infos && checkCaidInfos(r, &cc->caid_size)) {
             freeCaidInfos(cc->caid_infos);
             cc->caid_infos = NULL;
@@ -1366,11 +1399,9 @@ static void cc_srv_report_cards()
 
             	reader[r].cc_id = b2i(3, buf+5);
             	cc_cmd_send(buf, 30 + (j*7), MSG_NEW_CARD);
-            	//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
             	caid_info = llist_itr_next(&itr);
             }       
         }
-        pthread_mutex_unlock(&cc->list_busy);
     }
 	//SS: Hack end
   }
@@ -1573,10 +1604,10 @@ int cc_cli_init()
     if (reader[ridx].tcp_rto <= 0) reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
     cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);
     if (!reader[ridx].cc_maxhop) reader[ridx].cc_maxhop = 5; // default maxhop to 5 if not configured
-    cc_check_version (reader[ridx].cc_version, reader[ridx].cc_build, &reader[ridx].cc_limit_ecms);
+    cc_check_version (reader[ridx].cc_version, reader[ridx].cc_build);
     cs_log ("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d, limit ecms: %s", reader[ridx].label,
      reader[ridx].device, reader[ridx].r_port,
-     reader[ridx].cc_version, reader[ridx].cc_build, reader[ridx].cc_maxhop, reader[ridx].cc_limit_ecms?"yes":"no");
+     reader[ridx].cc_version, reader[ridx].cc_build, reader[ridx].cc_maxhop);
 
     return(cc_cli_connect());
   }
