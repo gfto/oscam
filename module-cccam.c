@@ -1605,7 +1605,7 @@ int cc_cli_init()
     cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);
     if (!reader[ridx].cc_maxhop) reader[ridx].cc_maxhop = 5; // default maxhop to 5 if not configured
     cc_check_version (reader[ridx].cc_version, reader[ridx].cc_build);
-    cs_log ("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d, limit ecms: %s", reader[ridx].label,
+    cs_log ("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d", reader[ridx].label,
      reader[ridx].device, reader[ridx].r_port,
      reader[ridx].cc_version, reader[ridx].cc_build, reader[ridx].cc_maxhop);
 
