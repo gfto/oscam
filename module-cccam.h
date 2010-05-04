@@ -56,6 +56,7 @@ struct cc_card {
 	uint8 key[8];     // card serial (for au)
 	LLIST *provs;     // providers
 	LLIST *badsids;   // sids that have failed to decode
+	time_t time;
 };
 
 //SS: Hack:
@@ -81,6 +82,7 @@ struct cc_data {
 	LLIST *caid_infos;
 	long caid_size;
 	uint16 needs_rebuild_caidinfo;
+	int limit_ecms;
 	int max_ecms;
 	int ecm_counter;
 	//SS: Hack end

@@ -3,6 +3,7 @@
 #include "globals.h"
 #include "module-cccam.h"
 #include "module-obj-llist.h"
+#include <time.h>
 
 extern struct s_reader *reader;
 
@@ -189,22 +190,27 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd)
 }
 
 #define CC_DEFAULT_VERSION 1
-static void cc_check_version (char *cc_version, char *cc_build)
+static void cc_check_version (char *cc_version, char *cc_build, int *cc_limit_ecms)
 {
-  char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "" };
-  char *build[] = { "2892", "2971", "3094", "3165", "3191", "" };
+  char *version[]  = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "" };
+  char *build[]    = { "2892",   "2971",  "3094",  "3165",  "3191",  "" };
+  int limit_ecms[] = { 0,        0,       1,       1,       1,       0 };  
   int i;
+  
+  *cc_limit_ecms = limit_ecms[CC_DEFAULT_VERSION];
   if (strlen (cc_version) == 0) {
     memcpy (cc_version, version[CC_DEFAULT_VERSION], strlen (version[CC_DEFAULT_VERSION]));
     memcpy (cc_build, build[CC_DEFAULT_VERSION], strlen (build[CC_DEFAULT_VERSION]));
-    cs_debug ("cccam: auto version set: %s build: %s", cc_version, cc_build);
+    
+    cs_debug ("cccam: auto version set: %s build: %s limit ecms: %s", cc_version, cc_build, *cc_limit_ecms?"yes":"no");
     return;
   }
 
   for (i = 0; strlen (version[i]); i++)
     if (!memcmp (cc_version, version[i], strlen (version[i]))) {
       memcpy (cc_build, build[i], strlen (build[i]));
-      cs_debug ("cccam: auto build set for version: %s build: %s", cc_version, cc_build);
+      *cc_limit_ecms = limit_ecms[i];
+      cs_debug ("cccam: auto build set for version: %s build: %s limit ecms: %s", cc_version, cc_build, *cc_limit_ecms?"yes":"no");
       break;
     }
 }
@@ -248,7 +254,7 @@ static int cc_send_srv_data()
   memset(buf, 0, CC_MAXMSGSIZE);
 
   memcpy(buf, cc->node_id, 8 );
-  cc_check_version ((char *) cfg->cc_version, (char *) cfg->cc_build);
+  cc_check_version ((char *) cfg->cc_version, (char *) cfg->cc_build, &cc->limit_ecms);
   memcpy(buf + 8, cfg->cc_version, sizeof(reader[ridx].cc_version));   // cccam version (ascii)
   memcpy(buf + 40, cfg->cc_build, sizeof(reader[ridx].cc_build));       // build number (ascii)
 
@@ -329,41 +335,57 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
 
   if (buf) memcpy(buf, cur_er->ecm, cur_er->l);
 
-  cc->cur_card = NULL;
+  card = cc->cur_card;
   cc->cur_sid = cur_er->srvid;
+  
+  if (card && card->caid == cur_er->caid) {   // caid matches
+	  LLIST_ITR sitr;
+	  uint16 *sid = llist_itr_init(card->badsids, &sitr);
+	  while (sid) {
+		  if (*sid == cc->cur_sid) {
+	          card = NULL;
+	          break;
+	      }
+	      sid = llist_itr_next(&sitr);
+	  }
+  }
+  if (!card) {
+	  cc->cur_card = NULL;
+	  
+	  pthread_mutex_lock(&cc->list_busy);
+	  card = llist_itr_init(cc->cards, &itr);
+	  while (card) {
+		if (card->caid == cur_er->caid) {   // caid matches
+		  int s = 0;
 
-  pthread_mutex_lock(&cc->list_busy);
-  card = llist_itr_init(cc->cards, &itr);
-  while (card) {
-    if (card->caid == cur_er->caid) {   // caid matches
-      int s = 0;
+		  LLIST_ITR sitr;
+		  uint16 *sid = llist_itr_init(card->badsids, &sitr);
+		  while (sid) {
+			if (*sid == cc->cur_sid) {
+			  s = 1;
+			  break;
+			}
+			sid = llist_itr_next(&sitr);
+		  }
 
-      LLIST_ITR sitr;
-      uint16 *sid = llist_itr_init(card->badsids, &sitr);
-      while (sid) {
-        if (*sid == cc->cur_sid) {
-          s = 1;
-          break;
-        }
-        sid = llist_itr_next(&sitr);
-      }
- 
-      LLIST_ITR pitr;
-      uint8 *prov = llist_itr_init(card->provs, &pitr);
-      while (prov && !s) {
-        if (!cur_er->prid || b2i(3, prov) == cur_er->prid) {  // provid matches
-          if (((h < 0) || (card->hop <= h)) && (card->hop <= reader[ridx].cc_maxhop - 1)) {  // card is closer and doesn't exceed max hop
-            cc->cur_card = card;
-            h = card->hop;  // card has been matched
-          }
-        }
-        prov = llist_itr_next(&pitr);
-      }
-    }
-    card = llist_itr_next(&itr);
+		  LLIST_ITR pitr;
+		  uint8 *prov = llist_itr_init(card->provs, &pitr);
+		  while (prov && !s) {
+			if (!cur_er->prid || b2i(3, prov) == cur_er->prid) {  // provid matches
+			  if (((h < 0) || (card->hop <= h)) && (card->hop <= reader[ridx].cc_maxhop - 1)) {  // card is closer and doesn't exceed max hop
+				cc->cur_card = card;
+				h = card->hop;  // card has been matched
+			  }
+			}
+			prov = llist_itr_next(&pitr);
+		  }
+		}
+		card = llist_itr_next(&itr);
+	  }
   }
 
   if (cc->cur_card) {
+    cc->cur_card->time = time((time_t)0);
     uint8 ecmbuf[CC_MAXMSGSIZE];
     memset(ecmbuf, 0, CC_MAXMSGSIZE);
 
@@ -661,6 +683,24 @@ static void rebuild_caidinfos(struct cc_data *cc)
   cc->needs_rebuild_caidinfo = 0;
 }
 
+static void cleanup_old_cards(struct cc_data *cc)
+{
+	time_t clean_time = time((time_t)0) - 60*60;
+    LLIST_ITR itr;
+    struct cc_card *card = llist_itr_init(cc->cards, &itr);
+    while (card) {
+    	if (card->time < clean_time) {
+    		cc->card_count--;
+    		cs_debug("cccam: old card removed %08x, count %d", card->id, cc->card_count);
+    		if (card == cc->cur_card)
+    		  cc->cur_card = NULL;
+    		cc_free_card(card);
+    		card = llist_itr_remove(&itr);
+    	}
+    	else
+    		card = llist_itr_next(&itr);
+    }
+}
 //SS: Hack end
 
 static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
@@ -717,20 +757,22 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       }
       
       //SS: Hack:
-      //Check if we have this card:
+      //Check if we already have this card:
       pthread_mutex_lock(&cc->list_busy);
       LLIST_ITR itr;
       struct cc_card *old_card = llist_itr_init(cc->cards, &itr);
       while (old_card) {
-        if (old_card->id == card->id) { //we already have this card, delete the old one
+        if (old_card->id == card->id) { //we aready have this card, delete it
           cc->card_count--;
-          cc_free_card(old_card);
-          old_card = llist_itr_remove(&itr);
+          cc_free_card(card);
+          old_card->time = time((time_t)0);
+          pthread_mutex_unlock(&cc->list_busy);
+          return 0;
         }
-        else
-          old_card = llist_itr_next(&itr);
+        old_card = llist_itr_next(&itr);
       }
 
+      card->time = time((time_t)0);
       llist_append(cc->cards, card);
       if (!cc->cur_card)
         cc->cur_card = card;
@@ -738,11 +780,13 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
       //build own card/provs list:
       cc->needs_rebuild_caidinfo++;
       if (cc->needs_rebuild_caidinfo > CC_CAIDINFO_REBUILD) {
+    	cleanup_old_cards(cc);
     	rebuild_caidinfos(cc);
-    	saveCaidInfos(ridx, cc->caid_infos);      }
+    	saveCaidInfos(ridx, cc->caid_infos);      
+      }
       else
       {
-    	  if (cc->caid_infos && checkCaidInfos(ridx, &cc->caid_size)) {
+    	if (cc->caid_infos && checkCaidInfos(ridx, &cc->caid_size)) {
           freeCaidInfos(cc->caid_infos);
           cc->caid_infos = NULL;
         }
@@ -781,7 +825,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
         //SS: Fix card free end
 
         card = llist_itr_remove(&itr);
-        break;
+        //break;
       } else {
         card = llist_itr_next(&itr);
       }
@@ -797,37 +841,39 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     break;
   case MSG_CW_NOK1:
   case MSG_CW_NOK2:
-    cs_log("cccam: cw nok, sid = %x", cc->cur_sid);
+	  cs_log("cccam: cw nok (%d), sid = %x", buf[1], cc->cur_sid);
 
-    int f = 0;
-    LLIST_ITR itr;
-    if (cc->cur_card) {
-      pthread_mutex_lock(&cc->list_busy);
-      uint16 *sid = llist_itr_init(cc->cur_card->badsids, &itr);
-      while (sid && !f) {
-        if (*sid == cc->cur_sid) {
-          f = 1;
-        }
-        sid = llist_itr_next(&itr);
-      }
+	  if (cc->cur_card && cc->cur_sid) {
+		  int f = 0;
+		  LLIST_ITR itr;
+		  uint16 *sid = llist_itr_init(cc->cur_card->badsids, &itr);
+		  while (sid && !f) {
+			if (*sid == cc->cur_sid) {
+			  f = 1;
+			}
+			sid = llist_itr_next(&itr);
+		  }
 
-      if (!f) {
-        sid = malloc(sizeof(uint16));
-	    if (sid) {
-          *sid = cc->cur_sid;
+		  if (!f) {
+			sid = malloc(sizeof(uint16));
+			if (sid) {
+			  *sid = cc->cur_sid;
 
-          sid = llist_append(cc->cur_card->badsids, sid);
-          cs_debug("   added sid block for card %08x", cc->cur_card->id);
-        }
-      }
-      pthread_mutex_unlock(&cc->list_busy);
-    }
-    memset(cc->dcw, 0, 16);
-    // SS: ecm_busy removed!
-//    pthread_mutex_unlock(&cc->ecm_busy);
-    cc_send_ecm(NULL, NULL);
-    ret = 0;
-    break;
+			  sid = llist_append(cc->cur_card->badsids, sid);
+			  cs_log("   added sid block for card %08x", cc->cur_card->id);
+			}
+		  }
+		  memset(cc->dcw, 0, 16);
+		  cc->cur_card = NULL;
+		  
+		  cc_send_ecm(NULL, NULL);
+	  }
+      //if (cc->found)
+      //write_ecm_answer(&reader[ridx], fd_c2m, cc->found);
+      // SS: ecm_busy removed!
+      //    pthread_mutex_unlock(&cc->ecm_busy);
+      ret = 0;
+      break;
   case MSG_CW_ECM:
     if (is_server) {
       ECM_REQUEST *er;
@@ -872,25 +918,22 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
     }
     break;
   case MSG_BAD_ECM:
-	l=l-4;//Header Length=4 Byte
+    l=l-4;//Header Length=4 Byte
     cs_log("cccam: cmd 0x05 recvd, payload length=%d", l);
-    if (l>0) { //payload > 0 needs cycle connection after 60 ECMs
-      cc->max_ecms = 60;
-      cc->ecm_counter = 0;
+    //payload always needs cycle connection after 60 ECMs!!
+    if (cc->limit_ecms && !cc->max_ecms) {
+        cc->max_ecms = 60;
+        cc->ecm_counter = 0;
     }
-    else
-    {
-      cc->max_ecms = 0;
-      cc->ecm_counter = 0;
+    if (l) {
+      cc->cur_card = NULL;
+      cc_cmd_send(NULL, 0, MSG_BAD_ECM);
     }
-    cc->cur_card = NULL;
-    cc_cmd_send(NULL, 0, MSG_BAD_ECM);
-    cc_send_ecm(NULL, NULL);
     ret = 0;
     break;
   case MSG_CMD_0B:
 	  // need to work out algo (reverse) for this...
-	  cs_debug("cccam: MSG_CMD_0B received, cycle connection!");
+	  cs_log("cccam: MSG_CMD_0B received, cycle connection!");
 	  cc_cycle_connection();
 	  ret = 0;
 	  break;
@@ -900,7 +943,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l)
   }
 
   if (cc->max_ecms && (cc->ecm_counter > cc->max_ecms)) {
-	  cs_debug("cccam: max ecms (%d) reached, cycle connection!", cc->max_ecms);
+	  cs_log("cccam: max ecms (%d) reached, cycle connection!", cc->max_ecms);
 	  cc_cycle_connection();
 	  ret = 0;
   }
@@ -1016,6 +1059,7 @@ static int cc_cli_connect(void)
   }
   cc->ecm_counter = 0;
   cc->max_ecms = 0;
+  cc->limit_ecms = reader[ridx].cc_limit_ecms;
 
   // check cred config
   if(reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0 ||
@@ -1529,10 +1573,10 @@ int cc_cli_init()
     if (reader[ridx].tcp_rto <= 0) reader[ridx].tcp_rto = 60 * 60 * 10;  // timeout to 10 hours
     cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);
     if (!reader[ridx].cc_maxhop) reader[ridx].cc_maxhop = 5; // default maxhop to 5 if not configured
-    cc_check_version (reader[ridx].cc_version, reader[ridx].cc_build);
-    cs_log ("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d", reader[ridx].label,
+    cc_check_version (reader[ridx].cc_version, reader[ridx].cc_build, &reader[ridx].cc_limit_ecms);
+    cs_log ("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d, limit ecms: %s", reader[ridx].label,
      reader[ridx].device, reader[ridx].r_port,
-     reader[ridx].cc_version, reader[ridx].cc_build, reader[ridx].cc_maxhop);
+     reader[ridx].cc_version, reader[ridx].cc_build, reader[ridx].cc_maxhop, reader[ridx].cc_limit_ecms?"yes":"no");
 
     return(cc_cli_connect());
   }
