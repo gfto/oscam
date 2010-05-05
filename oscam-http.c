@@ -1279,7 +1279,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 				tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
 				tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
-				tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
+				//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 				char fname[40];
 				sprintf(fname, "/tmp/.oscam/caidinfos.%d", ridx);
@@ -1336,7 +1336,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 			tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
 			tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
-			tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
+			//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 			char fname[40];
 			sprintf(fname, "/tmp/.oscam/caidinfos.%d", ridx);

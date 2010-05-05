@@ -76,7 +76,6 @@ struct cc_data {
 
 	struct cc_card *cur_card;   // ptr to selected card
 	LLIST *cards;               // cards list
-	uint32 card_count;
 
 	//SS: Hack:
 	LLIST *caid_infos;
