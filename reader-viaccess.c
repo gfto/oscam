@@ -450,6 +450,9 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
         return ERROR;
       }
 
+      // as we are maybe changing the used provider, clear the cache, so the next ecm will re-select the correct one 
+      memset(&reader->last_geo, 0, sizeof(reader->last_geo));
+
       // set provider
       write_cmd(insa4, soid);             
       if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
@@ -585,8 +588,6 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
       rc=1; // written
     }
   }
-
-  memset(&reader->last_geo, 0, sizeof(reader->last_geo));
 
   /*
   Sub Main()
