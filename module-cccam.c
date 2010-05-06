@@ -31,9 +31,12 @@ static char *getprefix()
 
 	prefix = malloc(100);
 	if (is_server)
-		sprintf(prefix, "cccam(s) %12.12s: ", client[cs_idx].usr);
+		sprintf(prefix, "cccam(s) %s ", client[cs_idx].usr);
 	else
-		sprintf(prefix, "cccam(r) %12.12s: ", reader[ridx].label);
+		sprintf(prefix, "cccam(r) %s ", reader[ridx].label);
+	strcat(prefix, ":");
+	while (strlen(prefix) < 20)
+		strcat(prefix, " ");
 	return prefix;
 }
 
@@ -1213,10 +1216,40 @@ static int cc_cli_connect(void)
   return 0;
 }
 
+/**
+ * Server:
+ * Adds a cccam-carddata buffer to the list of reported carddatas
+ */
+static void add_reported_carddata(LLIST *reported_carddatas, uint8 *buf, int len)
+{
+	struct cc_reported_carddata *carddata = malloc(sizeof(struct cc_reported_carddata));
+	uint8 *buf_copy = malloc(len);
+	memcpy(buf_copy, buf, len);
+	carddata->buf = buf_copy;
+	carddata->len = len;
+	llist_append(reported_carddatas, carddata);
+}
+
+static void clear_reported_carddata(LLIST *reported_carddatas)
+{
+	LLIST_ITR itr;
+	struct cc_reported_carddata *carddata = llist_itr_init(reported_carddatas, &itr);
+	while (carddata) {
+		cc_cmd_send(carddata->buf, carddata->len, MSG_CARD_REMOVED);
+		free(carddata->buf);
+		carddata = llist_itr_remove(&itr);
+	}
+	llist_destroy(reported_carddatas);
+}
+
+/**
+ * Server:
+ * Reports all caid/providers to the connected clients
+ */
 static void cc_srv_report_cards()
 {
     int j;
-    uint id = 1, r, k;
+    uint id, r, k;
     uint8 hop = 0, reshare, flt=0;
     uint8 buf[CC_MAXMSGSIZE];
     struct cc_data *cc = client[cs_idx].cc;
@@ -1224,206 +1257,218 @@ static void cc_srv_report_cards()
     reshare = cfg->cc_reshare;
     if (!reshare) return;
 
-    for (r=0; r<CS_MAXREADER; r++)
-    {
-	flt = 0;
-	if (/*!reader[r].caid[0] && */reader[r].ftab.filts)
-	{
-    	    for (j=0; j<CS_MAXFILTERS; j++)
-    	    {
-	        if (reader[r].ftab.filts[j].caid)
-		{
-		    memset(buf, 0, sizeof(buf));
-    		    buf[0] = id >> 24;
-		    buf[1] = id >> 16;
-    		    buf[2] = id >> 8;
-    		    buf[3] = id & 0xff;
-		    //if (!reader[r].cc_id)
-		    {
-			buf[6] = 0x49 + r;
-			buf[7] = 0x10 + j;
-			reader[r].cc_id = b2i(3, buf+5);
-		    }
-		    //else
-			//reader[r].cc_id++;
-		    buf[5] = reader[r].cc_id >> 16;
-		    buf[6] = reader[r].cc_id >> 8;
-		    buf[7] = reader[r].cc_id & 0xFF;
-		    buf[8] = reader[r].ftab.filts[j].caid >> 8;
-		    buf[9] = reader[r].ftab.filts[j].caid & 0xff;
-    		    buf[10] = hop;
-		    buf[11] = reshare;
-		    buf[20] = reader[r].ftab.filts[j].nprids;
-		    //cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
-    		    for (k=0; k<reader[r].ftab.filts[j].nprids; k++)
-		    {
-    			buf[21 + (k*7)] = reader[r].ftab.filts[j].prids[k] >> 16;
-    		        buf[22 + (k*7)] = reader[r].ftab.filts[j].prids[k] >> 8;
-		        buf[23 + (k*7)] = reader[r].ftab.filts[j].prids[k] & 0xFF;
-		        //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
-    		    }
-		    buf[21 + (k*7)] = 1;
-    		    memcpy(buf + 22 + (k*7), cc->node_id, 8);
-/*
-		    buf[21 + (k*7)+8] = 1;
-    		    memcpy(buf + 22 + (k*7)+8, cc->node_id, 7);//8);
-		    cc_cmd_send(buf, 30 + (k*7) + 9, MSG_NEW_CARD);
-*/	  
-		    cc_cmd_send(buf, 30 + (k*7), MSG_NEW_CARD);
-    		    id++;
-		    flt = 1;
+    if (!cc->report_carddata_id)
+    	id = 1;
+    else
+    	id = cc->report_carddata_id;
+
+    LLIST *reported_carddatas = llist_create();
+
+    for (r = 0; r < CS_MAXREADER; r++) {
+		flt = 0;
+		if (/*!reader[r].caid[0] && */reader[r].ftab.filts) {
+			for (j = 0; j < CS_MAXFILTERS; j++) {
+				if (reader[r].ftab.filts[j].caid) {
+					memset(buf, 0, sizeof(buf));
+					buf[0] = id >> 24;
+					buf[1] = id >> 16;
+					buf[2] = id >> 8;
+					buf[3] = id & 0xff;
+					//if (!reader[r].cc_id)
+					{
+						buf[6] = 0x49 + r;
+						buf[7] = 0x10 + j;
+						reader[r].cc_id = b2i(3, buf + 5);
+					}
+					//else
+					//reader[r].cc_id++;
+					buf[5] = reader[r].cc_id >> 16;
+					buf[6] = reader[r].cc_id >> 8;
+					buf[7] = reader[r].cc_id & 0xFF;
+					buf[8] = reader[r].ftab.filts[j].caid >> 8;
+					buf[9] = reader[r].ftab.filts[j].caid & 0xff;
+					buf[10] = hop;
+					buf[11] = reshare;
+					buf[20] = reader[r].ftab.filts[j].nprids;
+					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
+					for (k = 0; k < reader[r].ftab.filts[j].nprids; k++) {
+						buf[21 + (k * 7)] = reader[r].ftab.filts[j].prids[k]
+								>> 16;
+						buf[22 + (k * 7)] = reader[r].ftab.filts[j].prids[k]
+								>> 8;
+						buf[23 + (k * 7)] = reader[r].ftab.filts[j].prids[k]
+								& 0xFF;
+						//cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
+					}
+					buf[21 + (k * 7)] = 1;
+					memcpy(buf + 22 + (k * 7), cc->node_id, 8);
+					/*
+					 buf[21 + (k*7)+8] = 1;
+					 memcpy(buf + 22 + (k*7)+8, cc->node_id, 7);//8);
+					 cc_cmd_send(buf, 30 + (k*7) + 9, MSG_NEW_CARD);
+					 */
+					int len = 30 + (k * 7);
+					cc_cmd_send(buf, len, MSG_NEW_CARD);
+					add_reported_carddata(reported_carddatas, buf, len);
+
+					id++;
+					flt = 1;
+				}
+			}
 		}
-	    }
-	}
 
-	if (!reader[r].caid[0] && !flt)
-	{
-	    flt = 0;
-	    for (j=0; j<CS_MAXCAIDTAB; j++)
-	    {
-		//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", reader[r].ctab.caid[j], reader[r].ctab.cmap[j]);
-		ushort lcaid = reader[r].ctab.caid[j];
-		
-		if (!lcaid || (lcaid == 0xFFFF))
-		    lcaid = reader[r].ctab.cmap[j];
-		    
-		if (lcaid && (lcaid != 0xFFFF))
-	        {
-		    memset(buf, 0, sizeof(buf));
-    		    buf[0] = id >> 24;
-		    buf[1] = id >> 16;
-    		    buf[2] = id >> 8;
-    		    buf[3] = id & 0xff;
-		    //if (!reader[r].cc_id)
-		    {
-			buf[6] = 0x48 + r;
-			buf[7] = 0x63 + j;
-			reader[r].cc_id = b2i(3, buf+5);
-		    }
-		    //else
-			//reader[r].cc_id++;
-		    buf[5] = reader[r].cc_id >> 16;
-		    buf[6] = reader[r].cc_id >> 8;
-		    buf[7] = reader[r].cc_id & 0xFF;
-		    buf[8] = lcaid >> 8;
-		    buf[9] = lcaid & 0xff;
-    		    buf[10] = hop;
-		    buf[11] = reshare;
-		    buf[20] = 1;
-		    //cs_log("CAID map CCcam card report caid: %04X nodeid: %s subid: %06X", lcaid, cs_hexdump(0, cc->peer_node_id, 8), reader[r].cc_id);
-    		    //buf[21] = 0;
-    		    //buf[22] = 0;
-		    //buf[23] = 0;
-		    buf[21+7] = 1;
-    		    memcpy(buf + 22+7, cc->node_id, 8);
-		    cc_cmd_send(buf, 30+7, MSG_NEW_CARD);
-    		    id++;
-	
-		    flt = 1;
+		if (!reader[r].caid[0] && !flt) {
+			flt = 0;
+			for (j = 0; j < CS_MAXCAIDTAB; j++) {
+				//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", reader[r].ctab.caid[j], reader[r].ctab.cmap[j]);
+				ushort lcaid = reader[r].ctab.caid[j];
+
+				if (!lcaid || (lcaid == 0xFFFF))
+					lcaid = reader[r].ctab.cmap[j];
+
+				if (lcaid && (lcaid != 0xFFFF)) {
+					memset(buf, 0, sizeof(buf));
+					buf[0] = id >> 24;
+					buf[1] = id >> 16;
+					buf[2] = id >> 8;
+					buf[3] = id & 0xff;
+					//if (!reader[r].cc_id)
+					{
+						buf[6] = 0x48 + r;
+						buf[7] = 0x63 + j;
+						reader[r].cc_id = b2i(3, buf + 5);
+					}
+					//else
+					//reader[r].cc_id++;
+					buf[5] = reader[r].cc_id >> 16;
+					buf[6] = reader[r].cc_id >> 8;
+					buf[7] = reader[r].cc_id & 0xFF;
+					buf[8] = lcaid >> 8;
+					buf[9] = lcaid & 0xff;
+					buf[10] = hop;
+					buf[11] = reshare;
+					buf[20] = 1;
+					//cs_log("CAID map CCcam card report caid: %04X nodeid: %s subid: %06X", lcaid, cs_hexdump(0, cc->peer_node_id, 8), reader[r].cc_id);
+					//buf[21] = 0;
+					//buf[22] = 0;
+					//buf[23] = 0;
+					buf[21 + 7] = 1;
+					memcpy(buf + 22 + 7, cc->node_id, 8);
+					int len = 30+7;
+					cc_cmd_send(buf, len, MSG_NEW_CARD);
+					add_reported_carddata(reported_carddatas, buf, len);
+					id++;
+
+					flt = 1;
+				}
+			}
 		}
-	    }
-	}
 
-	if (reader[r].caid[0] && !flt)
-        {
-	    //cs_log("tcp_connected: %d card_status: %d ", reader[r].tcp_connected, reader[r].card_status);
-	    memset(buf, 0, sizeof(buf));
-	    buf[0] = id >> 24;
-	    buf[1] = id >> 16;
-	    buf[2] = id >> 8;
-	    buf[3] = id & 0xff;
-	    buf[5] = reader[r].cc_id >> 16;
-	    buf[6] = reader[r].cc_id >> 8;
-	    buf[7] = reader[r].cc_id & 0xFF;
-	    if (!reader[r].cc_id)
-	    {
-		buf[6] = 0x99;
-		buf[7] = 0x63 + r;
-	    }
-	    buf[8] = reader[r].caid[0] >> 8;
-	    buf[9] = reader[r].caid[0] & 0xff;
-	    buf[10] = hop;
-	    buf[11] = reshare;
-	    buf[20] = reader[r].nprov;
-	    for (j=0; j<reader[r].nprov; j++)
-	    {
-		if (reader[r].card_status == CARD_INSERTED)
-		    memcpy(buf + 21 + (j*7), reader[r].prid[j]+1, 3);
-		else
-		    memcpy(buf + 21 + (j*7), reader[r].prid[j], 3);
-		//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
-	    }
+		if (reader[r].caid[0] && !flt) {
+			//cs_log("tcp_connected: %d card_status: %d ", reader[r].tcp_connected, reader[r].card_status);
+			memset(buf, 0, sizeof(buf));
+			buf[0] = id >> 24;
+			buf[1] = id >> 16;
+			buf[2] = id >> 8;
+			buf[3] = id & 0xff;
+			buf[5] = reader[r].cc_id >> 16;
+			buf[6] = reader[r].cc_id >> 8;
+			buf[7] = reader[r].cc_id & 0xFF;
+			if (!reader[r].cc_id) {
+				buf[6] = 0x99;
+				buf[7] = 0x63 + r;
+			}
+			buf[8] = reader[r].caid[0] >> 8;
+			buf[9] = reader[r].caid[0] & 0xff;
+			buf[10] = hop;
+			buf[11] = reshare;
+			buf[20] = reader[r].nprov;
+			for (j = 0; j < reader[r].nprov; j++) {
+				if (reader[r].card_status == CARD_INSERTED)
+					memcpy(buf + 21 + (j * 7), reader[r].prid[j] + 1, 3);
+				else
+					memcpy(buf + 21 + (j * 7), reader[r].prid[j], 3);
+				//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
+			}
 
-	    buf[21 + (j*7)] = 1;
-	    memcpy(buf + 22 + (j*7), cc->node_id, 8);
-	    id++;
+			buf[21 + (j * 7)] = 1;
+			memcpy(buf + 22 + (j * 7), cc->node_id, 8);
+			id++;
 
-	    if ((reader[r].tcp_connected || reader[r].card_status == CARD_INSERTED) /*&& !reader[r].cc_id*/)
-	    {
-		reader[r].cc_id = b2i(3, buf+5);
-		cc_cmd_send(buf, 30 + (j*7), MSG_NEW_CARD);
-		//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
-	    }
-	    else
-		if ((reader[r].card_status != CARD_INSERTED) && (!reader[r].tcp_connected) && reader[r].cc_id)
-		{
-		    reader[r].cc_id = 0;
-    		    cc_cmd_send(buf, 30 + (j*7), MSG_CARD_REMOVED);
-		    //cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], reader[r].label);
+			if ((reader[r].tcp_connected || reader[r].card_status
+					== CARD_INSERTED) /*&& !reader[r].cc_id*/) {
+				reader[r].cc_id = b2i(3, buf + 5);
+				int len = 30 + (j * 7);
+				add_reported_carddata(reported_carddatas, buf, len);
+				cc_cmd_send(buf, len, MSG_NEW_CARD);
+				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
+			} else if ((reader[r].card_status != CARD_INSERTED)
+					&& (!reader[r].tcp_connected) && reader[r].cc_id) {
+				reader[r].cc_id = 0;
+				cc_cmd_send(buf, 30 + (j * 7), MSG_CARD_REMOVED);
+				//cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], reader[r].label);
+			}
 		}
-	}
-	
-	//SS: Hack:
-	if (reader[r].typ == R_CCCAM && !flt) {
-        if (cc->caid_infos && checkCaidInfos(r, &cc->caid_size)) {
-            freeCaidInfos(cc->caid_infos);
-            cc->caid_infos = NULL;
-        }
-        if (!cc->caid_infos)
-            cc->caid_infos = loadCaidInfos(r);
-        if (cc->caid_infos) {
-            LLIST_ITR itr;
-            struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos, &itr);
-            while (caid_info) {
-            	memset(buf, 0, sizeof(buf));
-            	buf[0] = id >> 24;
-            	buf[1] = id >> 16;
-            	buf[2] = id >> 8;
-            	buf[3] = id & 0xff;
-            	buf[5] = reader[r].cc_id >> 16;
-            	buf[6] = reader[r].cc_id >> 8;
-            	buf[7] = reader[r].cc_id & 0xFF;
-            	if (!reader[r].cc_id)
-            	{
-            		buf[6] = 0x99;
-            		buf[7] = 0x63 + r;
-            	}
-            	buf[8] = caid_info->caid >> 8;
-            	buf[9] = caid_info->caid & 0xff;
-            	buf[10] = caid_info->hop+1;
-            	buf[11] = reshare;
-            	int j = 0;
-            	LLIST_ITR itr_prov;
-            	uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
-            	while (prov) {
-            		memcpy(buf + 21 + (j*7), prov, 3);
-            		prov = llist_itr_next(&itr_prov);
-            		j++;
-            	}
-            	buf[20] = j;
 
-            	buf[21 + (j*7)] = 1;
-            	memcpy(buf + 22 + (j*7), cc->node_id, 8);
-            	id++;
+		//SS: Hack:
+		if (reader[r].typ == R_CCCAM && !flt) {
+			if (cc->caid_infos && checkCaidInfos(r, &cc->caid_size)) {
+				freeCaidInfos(cc->caid_infos);
+				cc->caid_infos = NULL;
+			}
+			if (!cc->caid_infos)
+				cc->caid_infos = loadCaidInfos(r);
+			if (cc->caid_infos) {
+				LLIST_ITR itr;
+				struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos,
+						&itr);
+				while (caid_info) {
+					memset(buf, 0, sizeof(buf));
+					buf[0] = id >> 24;
+					buf[1] = id >> 16;
+					buf[2] = id >> 8;
+					buf[3] = id & 0xff;
+					buf[5] = reader[r].cc_id >> 16;
+					buf[6] = reader[r].cc_id >> 8;
+					buf[7] = reader[r].cc_id & 0xFF;
+					if (!reader[r].cc_id) {
+						buf[6] = 0x99;
+						buf[7] = 0x63 + r;
+					}
+					buf[8] = caid_info->caid >> 8;
+					buf[9] = caid_info->caid & 0xff;
+					buf[10] = caid_info->hop + 1;
+					buf[11] = reshare;
+					int j = 0;
+					LLIST_ITR itr_prov;
+					uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
+					while (prov) {
+						memcpy(buf + 21 + (j * 7), prov, 3);
+						prov = llist_itr_next(&itr_prov);
+						j++;
+					}
+					buf[20] = j;
 
-            	reader[r].cc_id = b2i(3, buf+5);
-            	cc_cmd_send(buf, 30 + (j*7), MSG_NEW_CARD);
-            	caid_info = llist_itr_next(&itr);
-            }       
-        }
+					buf[21 + (j * 7)] = 1;
+					memcpy(buf + 22 + (j * 7), cc->node_id, 8);
+					id++;
+
+					reader[r].cc_id = b2i(3, buf + 5);
+					int len = 30 + (j * 7);
+					cc_cmd_send(buf, len, MSG_NEW_CARD);
+					add_reported_carddata(reported_carddatas, buf, len);
+					caid_info = llist_itr_next(&itr);
+				}
+			}
+		}
+		//SS: Hack end
     }
-	//SS: Hack end
-  }
+	cc->report_carddata_id = id;
+
+	//Reported deleted cards:
+    if (cc->reported_carddatas)
+    	clear_reported_carddata(cc->reported_carddatas);
+    cc->reported_carddatas = reported_carddatas;
 }
 
 static int cc_srv_connect()
