@@ -31,11 +31,10 @@ static char *getprefix()
 
 	prefix = malloc(100);
 	if (is_server)
-		sprintf(prefix, "cccam(s) %s ", client[cs_idx].usr);
+		sprintf(prefix, "cccam(s) %s: ", client[cs_idx].usr);
 	else
-		sprintf(prefix, "cccam(r) %s ", reader[ridx].label);
-	strcat(prefix, ":");
-	while (strlen(prefix) < 20)
+		sprintf(prefix, "cccam(r) %s: ", reader[ridx].label);
+	while (strlen(prefix) < 22)
 		strcat(prefix, " ");
 	return prefix;
 }
@@ -371,24 +370,23 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
 
   if (buf) memcpy(buf, cur_er->ecm, cur_er->l);
 
-//  card = cc->cur_card;
-//  cc->cur_sid = cur_er->srvid;
-//
-//  if (card && card->caid == cur_er->caid) {   // caid matches
-//	  LLIST_ITR sitr;
-//	  uint16 *sid = llist_itr_init(card->badsids, &sitr);
-//	  while (sid) {
-//		  if (*sid == cc->cur_sid) {
-//	          card = NULL;
-//	          break;
-//	      }
-//	      sid = llist_itr_next(&sitr);
-//	  }
-//  }
-//  if (!card) {
-	  cc->cur_card = NULL;
-	  cc->cur_sid = cur_er->srvid;
-	  
+  //First check last used card:
+  card = cc->cur_card;
+  cc->cur_sid = cur_er->srvid;
+  if (card && card->caid == cur_er->caid) {   // caid matches
+	  LLIST_ITR sitr;
+	  uint16 *sid = llist_itr_init(card->badsids, &sitr);
+	  while (sid) {
+	      if (*sid == cc->cur_sid) { //sid is blocked
+	          card = NULL;
+	          break;
+	      }
+	      sid = llist_itr_next(&sitr);
+	  }
+  }
+  else card = NULL;
+  
+  if (!card) {
 	  pthread_mutex_lock(&cc->list_busy);
 	  card = llist_itr_init(cc->cards, &itr);
 	  while (card) {
@@ -419,8 +417,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf)
 		}
 		card = llist_itr_next(&itr);
 	  }
-//  }
-
+  }
   if (cc->cur_card) {
     cc->cur_card->time = time((time_t)0);
     uint8 ecmbuf[CC_MAXMSGSIZE];
