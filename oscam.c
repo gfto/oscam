@@ -2792,7 +2792,8 @@ void cs_switch_led(int led, int action) {
 		}
 
 		if (!(f=fopen(ledfile, "w"))){
-			cs_log("Cannot open file \"%s\" (errno=%d)", ledfile, errno);
+			// FIXME: sometimes cs_log was not available when calling cs_switch_led -> signal 11
+			//cs_log("Cannot open file \"%s\" (errno=%d)", ledfile, errno);
 			return;
 		}
 		fprintf(f,"%d", action);
