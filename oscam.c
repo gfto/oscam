@@ -118,6 +118,9 @@ static void usage()
 #ifdef IRDETO_GUESSING
   fprintf(stderr, "irdeto-guessing ");
 #endif
+#ifdef CS_LED
+  fprintf(stderr, "led-trigger ");
+#endif
   fprintf(stderr, "\n\n");
   fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
 #ifdef CS_NOSHM
@@ -311,6 +314,12 @@ void cs_exit(int sig)
               for (i=1; i<CS_MAXPID; i++)
                 if (client[i].pid)
                   kill(client[i].pid, SIGQUIT);
+#ifdef CS_LED
+              cs_switch_led(LED1B, LED_OFF);
+              cs_switch_led(LED1A, LED_ON);
+              cs_switch_led(LED2, LED_OFF);
+              cs_switch_led(LED3, LED_OFF);
+#endif
               cs_log("cardserver down");
 #ifndef CS_NOSHM
               if (ecmcache) shmdt((void *)ecmcache);
@@ -1725,6 +1734,10 @@ int send_dcw(ECM_REQUEST *er)
 
 	client[cs_idx].cwlastresptime = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
 
+#ifdef CS_LED
+	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
+#endif
+
 	if(cfg->mon_appendchaninfo)
 		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
@@ -2491,6 +2504,12 @@ void cs_waitforcardinit()
 
 int main (int argc, char *argv[])
 {
+
+#ifdef CS_LED
+  cs_switch_led(LED1A, LED_DEFAULT);
+  cs_switch_led(LED1A, LED_ON);
+#endif
+
   struct   sockaddr_in cad;     /* structure to hold client's address */
   int      scad;                /* length of address */
   //int      fd;                  /* socket descriptors */
@@ -2620,6 +2639,10 @@ int main (int argc, char *argv[])
   cs_log("waiting for local card init");
   cs_waitforcardinit();
   cs_log("init for all local cards done");
+#ifdef CS_LED
+  cs_switch_led(LED1A, LED_OFF);
+  cs_switch_led(LED1B, LED_ON);
+#endif
 
 #ifdef CS_ANTICASC
   if( !cfg->ac_enabled )
@@ -2749,3 +2772,50 @@ int main (int argc, char *argv[])
   }
   cs_exit(1);
 }
+
+#ifdef CS_LED
+void cs_switch_led(int led, int action) {
+
+	if(action < 2) { // only LED_ON and LED_OFF
+		char ledfile[256];
+		FILE *f;
+
+		switch(led){
+		case LED1A:snprintf(ledfile, 255, "/sys/class/leds/nslu2:red:status/brightness");
+		break;
+		case LED1B:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:ready/brightness");
+		break;
+		case LED2:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-1/brightness");
+		break;
+		case LED3:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-2/brightness");
+		break;
+		}
+
+		if (!(f=fopen(ledfile, "w"))){
+			cs_log("Cannot open file \"%s\" (errno=%d)", ledfile, errno);
+			return;
+		}
+		fprintf(f,"%d", action);
+		fclose(f);
+	} else { // LED Macros
+		switch(action){
+		case LED_DEFAULT:
+			cs_switch_led(LED1A, LED_OFF);
+			cs_switch_led(LED1B, LED_OFF);
+			cs_switch_led(LED2, LED_ON);
+			cs_switch_led(LED3, LED_OFF);
+			break;
+		case LED_BLINK_OFF:
+			cs_switch_led(led, LED_OFF);
+			cs_sleepms(100);
+			cs_switch_led(led, LED_ON);
+			break;
+		case LED_BLINK_ON:
+			cs_switch_led(led, LED_ON);
+			cs_sleepms(300);
+			cs_switch_led(led, LED_OFF);
+			break;
+		}
+	}
+}
+#endif

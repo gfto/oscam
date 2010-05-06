@@ -494,6 +494,10 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
   if (rc) client[cs_idx].lastemm=time((time_t)0);
 
+#ifdef CS_LED
+  if (rc) cs_switch_led(LED3, LED_BLINK_ON);
+#endif
+
   if (reader->logemm & (1 << rc))
   {
     cs_ftime(&tpe);

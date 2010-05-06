@@ -221,6 +221,19 @@ typedef unsigned long long uint64;
 // constants
 #define CTA_RES_LEN 512
 
+#ifdef CS_LED
+#define  LED1A 		0
+#define  LED1B 		1
+#define  LED2 		2
+#define  LED3 		3
+#define  LED_OFF	0
+#define  LED_ON		1
+#define  LED_BLINK_ON 	2
+#define  LED_BLINK_OFF 	3
+#define  LED_DEFAULT 	10
+extern void cs_switch_led(int led, int action);
+#endif
+
 typedef struct s_classtab
 {
   uchar an;
