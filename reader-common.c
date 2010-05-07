@@ -102,6 +102,8 @@ int card_write(struct s_reader * reader, uchar *cmd, uchar *data, uchar *respons
 
 static int reader_card_inserted(struct s_reader * reader)
 {
+	if (reader->detect == 4)
+		return 1;
 #ifdef HAVE_PCSC
 	if (reader->typ == R_PCSC) {
 		return(pcsc_check_card_inserted(reader));

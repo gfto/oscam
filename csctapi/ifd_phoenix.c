@@ -83,25 +83,28 @@ int Phoenix_Init (struct s_reader * reader)
 int Phoenix_GetStatus (struct s_reader * reader, int * status)
 {
 #ifdef USE_GPIO  //felix: detect card via defined gpio
- if (gpio_detect)
+	if (gpio_detect)
 		*status=!get_gpio();
- else
+	else
 #endif
- {
-	unsigned int modembits=0;
-	call (ioctl(reader->handle, TIOCMGET,&modembits)<0);
-	switch(reader->detect&0x7f)
 	{
-		case	0: *status=(modembits & TIOCM_CAR);	break;
-		case	1: *status=(modembits & TIOCM_DSR);	break;
-		case	2: *status=(modembits & TIOCM_CTS);	break;
-		case	3: *status=(modembits & TIOCM_RNG);	break;
-		default: *status=0;		// dummy
+		unsigned int modembits=0;
+	        if (ioctl(reader->handle, TIOCMGET, &modembits) < 0) {
+	                cs_log("ERROR Phoenix_GetStatus: ioctl error in card detection for %s", reader->label);
+	                return ERROR;
+	        }
+		switch(reader->detect&0x7f)
+		{
+			case	0: *status=(modembits & TIOCM_CAR);	break;
+			case	1: *status=(modembits & TIOCM_DSR);	break;
+			case	2: *status=(modembits & TIOCM_CTS);	break;
+			case	3: *status=(modembits & TIOCM_RNG);	break;
+			default: *status=0;		// dummy
+		}
+		if (!(reader->detect&0x80))
+			*status=!*status;
 	}
-	if (!(reader->detect&0x80))
-		*status=!*status;
- }
- return OK;
+	return OK;
 }
 
 int Phoenix_Reset (struct s_reader * reader, ATR * atr)

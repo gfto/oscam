@@ -35,7 +35,7 @@ static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not
 
 static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsigned short lenwrite, unsigned short lenread)
 {
-  int init_phase = (buff[0] == 0x63); //FIXME UGLY
+  //int init_phase = (buff[0] == 0x63); //FIXME UGLY
   struct termios termio, termiobackup;
 
   // backup data
