@@ -59,17 +59,25 @@ struct cc_card {
 	time_t time;
 };
 
+//SS: Hack:
 struct cc_reported_carddata {
 	uint8 *buf;
 	int len;
 };
 
-//SS: Hack:
 struct cc_caid_info {
 	uint16 caid;
 	LLIST *provs;
 	uint8 hop;
 };
+
+struct cc_auto_blocked {
+	uint16 caid;
+	uint32 prov;
+	uint16 sid;
+	int call_count;
+};
+
 //SS: Hack end
 
 struct cc_data {
@@ -90,7 +98,8 @@ struct cc_data {
 	int max_ecms;
 	int ecm_counter;
 	int report_carddata_id; //Server only
-	LLIST * reported_carddatas;
+	LLIST *reported_carddatas; //struct cc_reported_carddata
+	LLIST *auto_blocked; //struct cc_auto_blocked
 	//SS: Hack end
 
 	uint32 count;
