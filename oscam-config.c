@@ -2121,12 +2121,8 @@ int write_server()
 			}
 #endif
 
-			if (reader[i].r_usr[0] && !isphysical) {
-				fprintf_conf(f, CONFVARWIDTH, "account", "");
-				fprintf(f, "%s", reader[i].r_usr);
-				fprintf(f, ",%s", reader[i].r_pwd);
-				fprintf(f, "\n");
-			}
+			if (reader[i].r_usr[0] && !isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "account", "%s,%s\n", reader[i].r_usr, reader[i].r_pwd);
 
 			if(strcmp(reader[i].pincode, "none"))
 				fprintf_conf(f, CONFVARWIDTH, "pincode", "%s\n", reader[i].pincode);
