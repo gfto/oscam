@@ -730,7 +730,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		clear_caidtab(&reader[ridx].ctab);
 		clear_ftab(&reader[ridx].ftab);
 		for(i = 0; i < (*params).paramcount; ++i) {
-			chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
+			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action")))
+				chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
 		}
 		if(write_server()==0) refresh_oscam(REFR_READERS, in);
 		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
