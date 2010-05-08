@@ -721,10 +721,14 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
 	int i, ridx;
 	char *reader_ = getParam(params, "reader");
+	char *value;
+
 	for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
 	if(ridx == CS_MAXREADER) {
 		tpl_addVar(vars, 0, "MESSAGE", "<BR><BR>Reader not found<BR><BR>");
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
+		clear_caidtab(&reader[ridx].ctab);
+		clear_ftab(&reader[ridx].ftab);
 		for(i = 0; i < (*params).paramcount; ++i) {
 			chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
 		}
@@ -752,6 +756,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_addVar(vars, 0, "RSAKEY", (char *)reader[ridx].rsa_mod);
 	tpl_addVar(vars, 0, "BOXKEY", (char *)reader[ridx].nagra_boxkey);
 
+	if(reader[ridx].smargopatch)
+		tpl_addVar(vars, 0, "SMARGOPATCHCHECKED", "checked");
+
 	if (reader[ridx].detect&0x80)
 		tpl_printf(vars, 0, "DETECT", "!%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
 	else
@@ -776,7 +783,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	}
 
 	//group
-	char *value = mk_t_group((ulong*)reader[ridx].grp);
+	value = mk_t_group((ulong*)reader[ridx].grp);
 	tpl_printf(vars, 0, "GRP", "%s", value);
 	free(value);
 
