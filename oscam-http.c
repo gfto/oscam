@@ -154,7 +154,7 @@ void send_oscam_config_camd33(struct templatevars *vars, FILE *f, struct uripara
 
 void send_oscam_config_camd35(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
 	int i;
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
+	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				tpl_printf(vars, 1, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
@@ -180,7 +180,7 @@ void send_oscam_config_camd35(struct templatevars *vars, FILE *f, struct uripara
 
 void send_oscam_config_camd35tcp(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
 	int i;
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
+	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
 		clear_ptab(&cfg->c35_tcp_ptab); /*clear Porttab*/
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -890,9 +890,12 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		break;
 		case R_NEWCAMD :
 		if ( reader[ridx].ncd_proto == NCD_525 )
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD525BIT"));
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD525BIT"));
 		else if ( reader[ridx].ncd_proto == NCD_524 )
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD524BIT"));
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD524BIT"));
+		break;
+		case R_CCCAM :
+		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
 		break;
 #ifdef CS_WITH_GBOX
 		case R_GBOX :
