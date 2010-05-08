@@ -1024,6 +1024,7 @@ extern void chk_t_gbox(char *token, char *value);
 extern void chk_t_cccam(char *token, char *value);
 extern void chk_t_global(char *token, char *value);
 extern void chk_t_monitor(char *token, char *value);
+extern void chk_reader(char *token, char *value, struct s_reader *rdr);
 
 #ifdef HAVE_DVBAPI
 extern void chk_t_dvbapi(char *token, char *value);
@@ -1039,6 +1040,7 @@ extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
 extern int write_services();
 extern int write_userdb();
 extern int write_config();
+extern int write_server();
 extern char *mk_t_caidtab(CAIDTAB *ctab);
 extern char *mk_t_tuntab(TUNTAB *ttab);
 extern char *mk_t_group(ulong *grp);

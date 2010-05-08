@@ -624,7 +624,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR><TH>&nbsp;</TH><TH>Edit Reader ##READERNAME##</TH></TR>\n\
     <TR><TD>Enable:</TD><TD><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
     ##READERDEPENDINGCONFIG##\
-    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
+    <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" ##BTNDISABLED##>\n</TD></TR>\n\
   </TABLE>\n\
 <BR><BR>Saving not yet implemented - Nothing changes on click<BR><BR>\n\
 ##TPLFOOTER##"

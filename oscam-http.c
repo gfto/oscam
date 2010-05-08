@@ -716,16 +716,18 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 }
 
 void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
-	int ridx;
+	int i, ridx;
 	char *reader_ = getParam(params, "reader");
 	for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
 	if(ridx == CS_MAXREADER) {
 		tpl_addVar(vars, 0, "MESSAGE", "<BR><BR>Reader not found<BR><BR>");
-	} else if(strcmp(getParam(params, "action"), "execute") == 0) {
-		tpl_addVar(vars, 0, "MESSAGE", "<BR><BR>Saving not yet implemented<BR><BR>");
-		refresh_oscam(REFR_READERS, in);
+	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
+		for(i = 0; i < (*params).paramcount; ++i) {
+			chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
+		}
+		if(write_server()==0) refresh_oscam(REFR_READERS, in);
+		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
-	int i;
 
 	tpl_addVar(vars, 0, "READERNAME", reader[ridx].label);
 	if(reader[ridx].enable)

@@ -2030,6 +2030,7 @@ int write_userdb()
 int write_server()
 {
 	int i,j;
+	int isphysical = 0;
 	char *value;
 	FILE *f;
 
@@ -2050,16 +2051,30 @@ int write_server()
 
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if ( reader[i].label[0] ) {
+			isphysical = 0;
 			fprintf(f,"[reader]\n");
 
 			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", reader[i].label);
+			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", reader[i].enable);
 
 			char *ctyp ="";
 			switch(reader[i].typ) {	/* TODO like ph*/
-				case R_MOUSE	: ctyp = "mouse";		break;
-				case R_INTERNAL	: ctyp = "internal";		break;
-				case R_SC8in1	: ctyp = "sc8in1";	break;
-				case R_SMART	: ctyp = "smartreader";	break;
+				case R_MOUSE	:
+					ctyp = "mouse";
+					isphysical = 1;
+					break;
+				case R_INTERNAL	:
+					ctyp = "internal";
+					isphysical = 1;
+					break;
+				case R_SC8in1	:
+					ctyp = "sc8in1";
+					isphysical = 1;
+					break;
+				case R_SMART	:
+					ctyp = "smartreader";
+					isphysical = 1;
+					break;
 				case R_CAMD35	: ctyp = "camd35";	break;
 				case R_CAMD33	: ctyp = "camd33";	break;
 				case R_NEWCAMD	:
@@ -2082,7 +2097,7 @@ int write_server()
 				case R_DB2COM2	: ctyp = "internal";   break;
 
 			}
-			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s", ctyp);
+			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s\n", ctyp);
 
 			fprintf_conf(f, CONFVARWIDTH, "device", "%s", reader[i].device);
 			if (reader[i].r_port)
@@ -2106,20 +2121,18 @@ int write_server()
 			}
 #endif
 
-			if (reader[i].r_usr[0]) {
+			if (reader[i].r_usr[0] && !isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "account", "");
 				fprintf(f, "%s", reader[i].r_usr);
 				fprintf(f, ",%s", reader[i].r_pwd);
 				fprintf(f, "\n");
 			}
 
-			if (reader[i].pincode[0])
+			if(strcmp(reader[i].pincode, "none"))
 				fprintf_conf(f, CONFVARWIDTH, "pincode", "%s\n", reader[i].pincode);
 
-			if (reader[i].emmfile)
+			if (reader[i].emmfile && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", reader[i].emmfile);
-
-			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", reader[i].enable);
 
 			fprintf_conf(f, CONFVARWIDTH, "services", "");
 			char sidok[33]; long2bitchar(reader[i].sidtabok, sidok);
@@ -2133,16 +2146,16 @@ int write_server()
 			}
 			fputc((int)'\n', f);
 
-			if (reader[i].tcp_ito)
+			if (reader[i].tcp_ito && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "inactivitytimeout", "%d\n", reader[i].tcp_ito);
 
-			if (reader[i].tcp_rto)
+			if (reader[i].tcp_rto && !isphysical && !reader[i].tcp_rto == 30)
 				fprintf_conf(f, CONFVARWIDTH, "reconnecttimeout", "%d\n", reader[i].tcp_rto);
 
-			if (reader[i].ncd_disable_server_filt)
+			if (reader[i].ncd_disable_server_filt && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "disableserverfilter", "%d\n", reader[i].ncd_disable_server_filt);
 
-			if (reader[i].smargopatch)
+			if (reader[i].smargopatch && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", reader[i].smargopatch);
 
 			if (reader[i].fallback)
@@ -2155,14 +2168,14 @@ int write_server()
 			fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
 			free(value);
 
-			if (reader[i].boxid)
+			if (reader[i].boxid && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", reader[i].boxid);
 
-			if (reader[i].aes_key[0])
+			if (reader[i].aes_key[0] && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", key_btoa(NULL, reader[i].aes_key));
 
 			//n3_rsakey
-			if (reader[i].rsa_mod[0]) {
+			if (reader[i].rsa_mod[0] && isphysical) {
 				if (reader[i].is_pure_nagra) {
 					fprintf_conf(f, CONFVARWIDTH, "n3_rsakey", "");
 					for (j=0;j<128;j++) {
@@ -2180,7 +2193,7 @@ int write_server()
 				}
 			}
 
-			if (reader[i].nagra_boxkey[0]) {
+			if (reader[i].nagra_boxkey[0] && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "boxkey", "");
 				for (j=0;j<16;j++) {
 					fprintf(f, "%02X", reader[i].nagra_boxkey[j]);
@@ -2188,7 +2201,7 @@ int write_server()
 				fprintf(f, "\n");
 			}
 
-			if ( reader[i].atr[0]) {
+			if ( reader[i].atr[0] && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "atr", "");
 				for (j=0;j<128;j++) {
 					fprintf(f, "%02X", reader[i].atr[j]);
@@ -2196,17 +2209,17 @@ int write_server()
 				fprintf(f, "\n");
 			}
 
-			if (reader[i].detect) {
+			if (reader[i].detect && isphysical) {
 				if (reader[i].detect&0x80)
 					fprintf_conf(f, CONFVARWIDTH, "detect", "!%s\n", RDR_CD_TXT[reader[i].detect&0x7f]);
 				else
 					fprintf_conf(f, CONFVARWIDTH, "detect", "%s\n", RDR_CD_TXT[reader[i].detect&0x7f]);
 			}
 
-			if (reader[i].mhz)
+			if (reader[i].mhz && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", reader[i].mhz);
 
-			if (reader[i].cardmhz)
+			if (reader[i].cardmhz && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", reader[i].cardmhz);
 
 			if (reader[i].loadbalanced)
@@ -2219,13 +2232,14 @@ int write_server()
 			//Todo: write reader class
 
 			value = mk_t_ftab(&reader[i].fchid);
-			fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
+			if(value[0])
+				fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
 			free(value);
 
-			if (reader[i].show_cls)
+			if (reader[i].show_cls && !reader[i].show_cls == 10)
 				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", reader[i].show_cls);
 
-			if (reader[i].maxqlen)
+			if (reader[i].maxqlen && !reader[i].maxqlen == CS_MAXQLEN)
 				fprintf_conf(f, CONFVARWIDTH, "maxqlen", "%d\n", reader[i].maxqlen);
 
 			value = mk_t_group((ulong*)reader[i].grp);
@@ -2271,8 +2285,10 @@ int write_server()
 					fprintf_conf(f, CONFVARWIDTH, "cccdisableautoblock", "%d\n", reader[i].cc_disable_auto_block);
 			}
 
-			if (reader[i].deprecated)
+			if (reader[i].deprecated && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "deprecated", "%d\n", reader[i].deprecated);
+
+			fprintf(f, "\n\n");
 		}
 	}
 	fclose(f);
@@ -2636,7 +2652,7 @@ int init_srvid()
 	return(0);
 }
 
-static void chk_reader(char *token, char *value, struct s_reader *rdr)
+void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
 	int i;
 	char *ptr;
