@@ -3211,19 +3211,34 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "cccdisableretryecm")) {
-		rdr->cc_disable_retry_ecm = atoi(value);
-		return;
+		if (strlen(value) == 0) {
+			rdr->cc_disable_retry_ecm = 0;
+			return;
+		} else {
+			rdr->cc_disable_retry_ecm = atoi(value);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "cccdisableautoblock")) {
-		rdr->cc_disable_auto_block = atoi(value);
-		return;
+		if (strlen(value) == 0) {
+			rdr->cc_disable_auto_block = 0;
+			return;
+		} else {
+			rdr->cc_disable_auto_block = atoi(value);
+			return;
+		}
 	}
 
 
 	if (!strcmp(token, "deprecated")) {
-		rdr->deprecated = atoi(value);
-		return;
+		if (strlen(value) == 0) {
+			rdr->deprecated = 0;
+			return;
+		} else {
+			rdr->deprecated = atoi(value);
+			return;
+		}
 	}
 
 	if (token[0] != '#')
