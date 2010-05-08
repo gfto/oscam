@@ -735,7 +735,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_addVar(vars, 0, "READERNAME", reader[ridx].label);
 	if(reader[ridx].enable)
 		tpl_addVar(vars, 0, "ENABLED", "checked");
-	tpl_printf(vars, 0, "DEVICE", "%s", reader[ridx].device);
+
 	tpl_printf(vars, 0, "ACCOUNT",  "%s,%s\n", reader[ridx].r_usr, reader[ridx].r_pwd);
 	for (i=0; i<14; i++) tpl_printf(vars, 1, "NCD_KEY", "%02X", reader[ridx].ncd_key[i]);
 	tpl_addVar(vars, 0, "PINCODE", reader[ridx].pincode);
@@ -765,10 +765,14 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_addVar(vars, 0, "PREMIUM", reader[ridx].gbox_prem);
 #endif
 
-	if(reader[ridx].r_port) tpl_printf(vars, 0, "R_PORT", ",%d", reader[ridx].r_port);
+	tpl_printf(vars, 0, "DEVICE", "%s", reader[ridx].device);
+	if(reader[ridx].r_port)
+		tpl_printf(vars, 1, "DEVICE", ",%d", reader[ridx].r_port);
 	if(reader[ridx].l_port) {
-		if(reader[ridx].r_port) tpl_printf(vars, 0, "L_PORT", ",%d", reader[ridx].l_port);
-		else tpl_printf(vars, 0, "L_PORT", ",,%d", reader[ridx].l_port);
+		if(reader[ridx].r_port)
+			tpl_printf(vars, 1, "DEVICE", ",%d", reader[ridx].l_port);
+		else
+			tpl_printf(vars, 1, "DEVICE", ",,%d", reader[ridx].l_port);
 	}
 
 	//group

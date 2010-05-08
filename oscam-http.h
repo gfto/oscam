@@ -627,7 +627,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR><TD>Enable:</TD><TD><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
     <TR><TD>Fallback:</TD><TD><input name=\"fallback\" type=\"checkbox\" value=\"1\" ##FALLBACKCHECKED##></TD></TR>\n\
     <TR><TD>Group:</TD><TD><input name=\"grp\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##GRP##\"></TD></TR>\n\
-    <TR><TD>Device:</TD><TD><input name=\"device\" type=\"text\" size=\"50\" maxlength=\"150\" value=\"##DEVICE####R_PORT####L_PORT##\"></TD></TR>\n\
+    <TR><TD>Device:</TD><TD><input name=\"device\" type=\"text\" size=\"50\" maxlength=\"150\" value=\"##DEVICE##\"></TD></TR>\n\
     <TR><TD>CAID:</TD><TD><input name=\"caid\" type=\"text\" size=\"50\" maxlength=\"100\" value=\"##CAIDS##\"></TD></TR>\n\
     <TR><TD>Services:</TD><TD>\n<TABLE cellspacing=\"0\" class=\"invisible\">##SIDS##</TD>\n</TR>\n</TABLE>\n\
     <TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>\n\
