@@ -125,20 +125,6 @@ DESCRIPTIONS
        cccmaxhop = hops
 	  define CCcam maximum SC distance, default:10
 
-  	   cccdisableretryecm = 0|1
-  	  1 = disables ECM retrying. 0 = enables ECM retrying 
-  	  default: enabled
-  	  Enabled: When a ECM request is denied from a CCCam Server, OSCam immediatelly sends a new ECM request
-  	  Disabled: When a ECM request is denied from a CCCam Server, OSCam sends no new ECM request
-  	  
-  	   cccdisableautoblock = 0|1
-  	  1 = disabled auto block. 0 = enables auto block
-  	  default: enabled
-  	  Enabled: When a ECM request is send to a CCCam Server, it tries the card with the lowest hop. If its denied, 
-  	   the sid is blocked on this card. When all cards are blocked, the CAID:PROV:SID Information is stored in
-  	   a auto block list and is newer send again.
-  	  Disabled: No block list 
-
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader
 
@@ -230,45 +216,58 @@ DESCRIPTIONS
        tiger_ideakey = IDEA key
 	  IDEA key for Tiger Nagravision SCs
 
+       cccdisableretryecm = 0|1
+	  0  =	enables  ECM  retrying:  When an ECM request is denied from an
+	  CCCam server, OSCam immediatelly sends a new ECM  request,  1=  dis
+	  ables  ECM  retrying:  When  an  ECM request is denied from an CCCam
+	  server, OSCam sends no new ECM request, default:0
+
+       cccdisableautoblock = 0|1
+	  0 = enables auto block: When an ECM request  is  send  to  an  CCCam
+	  server,  it  tries  the SC with the lowest hop. If it is denied, the
+	  SID  is  blocked  on	this  SC.  When  all  SC  are	blocked,   the
+	  CAID:PROV:SID  information  is  stored  in  a auto block list and is
+	  newer send again, 1= disabled auto block, default: 1
+
 OVERCLOCKING
 	 Dreambox and other internal readers
 
-	  For  Dreambox and other internal readers the highest possible clock
-	  rate will be auto detected. The mhz parameter lets you override  the
-	  values  chosen by OSCam, if it differs from 357 and 358, but usually
+	  For Dreambox and other internal readers the highest possible	clock
+	  rate	will be auto detected. The mhz parameter lets you override the
+	  values chosen by OSCam, if it differs from 357 and 358, but  usually
 	  you will not set any value for mhz.
 
-	  For certain Dreamboxes  (especially  PPC  clones)  the  default  mhz
-	  parameter  leads  to slow ECM times and/or "not found" ECMs. By set
+	  For  certain	Dreamboxes  (especially  PPC  clones)  the default mhz
+	  parameter leads to slow ECM times and/or "not found" ECMs.  By  set
 	  ting mhz to values like 200, 300, 400, ... 1600 you can find a value
-	  that	works  for  your  receiver  and  your card. The higher the mhz
+	  that works for your receiver and  your  card.  The  higher  the  mhz
 	  value, the slower the ECM time (strange enough).
 
 	  If you choose the value too low, your card is not recognized (no ATR
-	  or  "card not supported"). If you choose the value too high, you get
+	  or "card not supported"). If you choose the value too high, you  get
 	  slow ECM times. Our experience is that either no mhz line, or a line
 	  mhz = 1000 works best.
 
 	 Phoenix / Smartmouse reader
 
-	  Overclocking	does  not  work  with  Windows	and Mac OS X.  Set mhz
-	  equivalent to the frequency of the reader.  OSCam can  not  set  the
+	  Overclocking does not work with Windows  and	Mac  OS  X.   Set  mhz
+	  equivalent  to  the  frequency of the reader.  OSCam can not set the
 	  frequency of the reader.
 
 	 Smargo Smartreader+
 
-	  Set  the  reader  frequency with the native Smargo Smartreader+ tool
+	  Set the reader frequency with the native  Smargo  Smartreader+  tool
 	  (srp_tools).	Do not set mhz and cardmhz.
 
-       OSCam tries to set the baudrate automatically.  A standard serial  port
+       OSCam  tries to set the baudrate automatically.	A standard serial port
        has limited baudrate settings, so SC overclocking might not work.  When
        using a serial reader the best way for overclocking is connecting it to
        a FTDI based USB to serial port adapter.
 
-       If  overclocking  does  not  work, verify the effective baudrate in the
-       logfile.  If it deviates too much from the requested baudrate,  the  SC
-       will  not  be  recognized  (no  ATR)  and  the  value for mhz should be
-       adjusted again.	The higher the baudrate, the more accurate the	effec
+       If overclocking does not work, verify the  effective  baudrate  in  the
+       logfile.   If  it deviates too much from the requested baudrate, the SC
+       will not be recognized (no  ATR)  and  the  value  for  mhz  should  be
+       adjusted  again.  The higher the baudrate, the more accurate the effec
        tive baudrate can be.
 
 EXAMPLES
@@ -355,9 +354,9 @@ EXAMPLES
 	   caid     = 0800
 
 SEE ALSO
-       list_smargo(1), oscam(1), oscam.conf(5), oscam.user(5), oscam.srvid(5),
-       oscam.guess(5),	 oscam.cert(5),    oscam.services(5),	 oscam.ird(5),
-       oscam.ac(5)
+       list_smargo(1), oscam(1),  oscam.ac(5),	oscam.cert(5),	oscam.conf(5),
+       oscam.guess(5),	 oscam.ird(5),	 oscam.provid(5),   oscam.services(5),
+       oscam.srvid(5), oscam.user(5)
 
 
 

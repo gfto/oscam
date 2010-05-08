@@ -102,14 +102,12 @@ DESCRIPTIONS
        preferlocalcards = 0|1
 	  1 = try decoding on local cards first, default:0
 
+       restartreaderseconds = seconds
+	  seconds beetween restarts, 0 = disable reader restart, default:5
+
        saveinithistory = 0|1
 	  1 = save SC init history to /tmp/.oscam/reader<number>, default:0
 
-       restartreaderseconds = seconds
-      0 = disable reader restart
-      >0 = seconds beetween restarts
-      default = 5 seconds
-      
    The [monitor] section
        port = 0|port
 	  UDP port for monitor, port=0 monitor disabled, default:0
@@ -525,9 +523,9 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       list_smargo(1),	    oscam(1),	   oscam.user(5),     oscam.server(5),
-       oscam.srvid(5),	 oscam.guess(5),   oscam.cert(5),   oscam.services(5),
-       oscam.ird(5), oscam.ac(5)
+       list_smargo(1),	oscam(1),  oscam.ac(5), oscam.cert(5), oscam.guess(5),
+       oscam.ird(5),  oscam.provid(5),	 oscam.server(5),   oscam.services(5),
+       oscam.srvid(5), oscam.user(5)
 
 
 
