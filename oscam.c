@@ -493,7 +493,7 @@ static void cs_child_chk(int i)
 #endif
           }
           cs_log("PANIC: %s lost !! (pid=%d)", txt, client[i].pid);
-          if (client[i].typ == 'r' || client[i].typ == 'p') 
+          if (cfg->reader_restart_seconds && (client[i].typ == 'r' || client[i].typ == 'p'))
           {
             int old_pid = client[i].pid;
             client[i].pid = 0;
@@ -508,15 +508,15 @@ static void cs_child_chk(int i)
     			reader[ridx].cs_idx=0;
     			reader[ridx].last_s = 0;
     			reader[ridx].last_g = 0;
-    			cs_log("closing fd_m2c=%d, ufd=%d", client[i].fd_m2c, client[i].ufd);
-                if (client[i].fd_m2c) close(client[i].fd_m2c);
-                if (client[i].ufd) close(client[i].ufd);
+    			//cs_log("closing fd_m2c=%d, ufd=%d", client[i].fd_m2c, client[i].ufd);
+                //if (client[i].fd_m2c) close(client[i].fd_m2c);
+                //if (client[i].ufd) close(client[i].ufd);
                 memset(&client[i], 0, sizeof(struct s_client));
                 client[i].au=(-1);
 
-                cs_log("RESTARTING READER %s in 5 seconds (index=%d)", txt, ridx);
-                cs_sleepms(5*1000); // SS: 5 sek wait
-                cs_log("RESTARTING READER: %s (index=%d)", txt, ridx);
+                cs_log("RESTARTING READER %s in %d seconds (index=%d)", txt, cfg->reader_restart_seconds, ridx);
+                cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
+                cs_log("RESTARTING READER %s (index=%d)", txt, ridx);
 
                 uchar u[2];
                 u[0] = ridx;

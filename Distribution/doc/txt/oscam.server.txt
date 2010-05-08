@@ -125,6 +125,20 @@ DESCRIPTIONS
        cccmaxhop = hops
 	  define CCcam maximum SC distance, default:10
 
+  	   cccdisableretryecm = 0|1
+  	  1 = disables ECM retrying. 0 = enables ECM retrying 
+  	  default: enabled
+  	  Enabled: When a ECM request is denied from a CCCam Server, OSCam immediatelly sends a new ECM request
+  	  Disabled: When a ECM request is denied from a CCCam Server, OSCam sends no new ECM request
+  	  
+  	   cccdisableautoblock = 0|1
+  	  1 = disabled auto block. 0 = enables auto block
+  	  default: enabled
+  	  Enabled: When a ECM request is send to a CCCam Server, it tries the card with the lowest hop. If its denied, 
+  	   the sid is blocked on this card. When all cards are blocked, the CAID:PROV:SID Information is stored in
+  	   a auto block list and is newer send again.
+  	  Disabled: No block list 
+
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader
 

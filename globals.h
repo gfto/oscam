@@ -529,6 +529,8 @@ struct s_reader  //contains device info, reader info and card info
   int       cc_maxhop;      // cccam max distance
   int		cc_currenthops; // number of hops for CCCam
   void      *cc;            // ptr to cccam internal data struct
+  int       cc_disable_retry_ecm; //Schlocke
+  int       cc_disable_auto_block; //Schlocke
   uchar     cc_id;
   uchar     tcp_connected;
   int       tcp_ito;      // inactivity timeout
@@ -767,6 +769,7 @@ struct s_config
 	int		waitforcards;
 	int		preferlocalcards;
 	int		saveinithistory;
+	int     reader_restart_seconds; //Schlocke Reader restart auf x seconds, disable = 0
 
 #ifdef CS_WITH_GBOX
 	uchar		gbox_pwd[8];

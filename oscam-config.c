@@ -525,6 +525,11 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "readerrestartseconds")) {
+		cfg->reader_restart_seconds = atoi(value);
+		return;
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n", token);
 }
@@ -1366,6 +1371,7 @@ int init_config()
 		cs_log("WARNING: DenySamples adjusted to %d", cfg->ac_denysamples);
 	}
 #endif
+	cfg->reader_restart_seconds = 5;
 	return 0;
 }
 
@@ -1654,6 +1660,7 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "waitforcards", "%d\n", cfg->waitforcards);
 	fprintf_conf(f, CONFVARWIDTH, "preferlocalcards", "%d\n", cfg->preferlocalcards);
 	fprintf_conf(f, CONFVARWIDTH, "saveinithistory", "%d\n", cfg->saveinithistory);
+	fprintf_conf(f, CONFVARWIDTH, "readerrestartseconds", "%d\n", cfg->reader_restart_seconds);
 	fputc((int)'\n', f);
 
 	/*monitor settings*/
@@ -2256,6 +2263,12 @@ int write_server()
 
 				if (reader[i].cc_maxhop)
 					fprintf_conf(f, CONFVARWIDTH, "cccmaxhop", "%d\n", reader[i].cc_maxhop);
+
+				if (reader[i].cc_disable_retry_ecm)
+					fprintf_conf(f, CONFVARWIDTH, "cccdisableretryecm", "%d\n", reader[i].cc_disable_retry_ecm);
+
+				if (reader[i].cc_disable_auto_block)
+					fprintf_conf(f, CONFVARWIDTH, "cccdisableautoblock", "%d\n", reader[i].cc_disable_auto_block);
 			}
 
 			if (reader[i].deprecated)
@@ -3180,6 +3193,17 @@ static void chk_reader(char *token, char *value, struct s_reader *rdr)
 		rdr->cc_maxhop = atoi(value);
 		return;
 	}
+
+	if (!strcmp(token, "cccdisableretryecm")) {
+		rdr->cc_disable_retry_ecm = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "cccdisableautoblock")) {
+		rdr->cc_disable_auto_block = atoi(value);
+		return;
+	}
+
 
 	if (!strcmp(token, "deprecated")) {
 		rdr->deprecated = atoi(value);
