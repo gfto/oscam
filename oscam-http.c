@@ -743,7 +743,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_printf(vars, 0, "INACTIVITYTIMEOUT", "%d", reader[ridx].tcp_ito);
 	tpl_printf(vars, 0, "RECEIVETIMEOUT", "%d", reader[ridx].tcp_rto);
 	tpl_printf(vars, 0, "DISABLESERVERFILTER", "%d", reader[ridx].ncd_disable_server_filt);
-	tpl_printf(vars, 0, "FALLBACK", "%d", reader[ridx].fallback);
+	if(reader[ridx].fallback)
+		tpl_addVar(vars, 0, "FALLBACKCHECKED", "checked");
 	tpl_printf(vars, 0, "LOGPORT", "%d", reader[ridx].log_port);
 	tpl_printf(vars, 0, "BOXID", "%ld", reader[ridx].boxid);
 	tpl_addVar(vars, 0, "USER", reader[ridx].r_usr);
@@ -752,9 +753,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_addVar(vars, 0, "BOXKEY", (char *)reader[ridx].nagra_boxkey);
 
 	if (reader[ridx].detect&0x80)
-	tpl_printf(vars, 0, "DETECT", "!%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+		tpl_printf(vars, 0, "DETECT", "!%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
 	else
-	tpl_printf(vars, 0, "DETECT", "%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+		tpl_printf(vars, 0, "DETECT", "%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
 
 	tpl_printf(vars, 0, "MHZ", "%d", reader[ridx].mhz);
 	tpl_printf(vars, 0, "CARDMHZ", "%d", reader[ridx].cardmhz);
@@ -844,7 +845,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			break;
 		}
 	}
-	if (all == 1) tpl_printf(vars, 0, "SAVENANO", "all", reader[ridx].maxqlen);
+	if (all == 1) tpl_addVar(vars, 0, "SAVENANO", "all");
 	else {
 		for(i = 0; i < 256; ++i) {
 			if(reader[ridx].b_nano[i] & 0x02) tpl_printf(vars, 1, "SAVENANO", "%s%02x\n", dot, i);
@@ -860,7 +861,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			break;
 		}
 	}
-	if (all == 1) tpl_printf(vars, 0, "BLOCKNANO", "all", reader[ridx].maxqlen);
+	if (all == 1) tpl_addVar(vars, 0, "BLOCKNANO", "all");
 	else {
 		for(i = 0; i < 256; ++i) {
 			if(reader[ridx].b_nano[i] & 0x01) tpl_printf(vars, 1, "BLOCKNANO", "%s%02x\n", dot, i);
@@ -880,44 +881,57 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	switch (reader[ridx].typ) {
 
 		case R_MOUSE :
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGMOUSEBIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "mouse");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGMOUSEBIT"));
+			break;
 		case R_SMART :
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSMARTBIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "smartreader");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSMARTBIT"));
+			break;
 		case R_INTERNAL:
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGINTERNALBIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "internal");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGINTERNALBIT"));
+			break;
 		case R_SERIAL :
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSERIALBIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "serial");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSERIALBIT"));
+			break;
 		case R_CAMD35 :
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCAMD35BIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "camd35");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCAMD35BIT"));
+			break;
 		case R_CS378X :
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCS378XBIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "cs378x");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCS378XBIT"));
+			break;
 		case R_RADEGAST:
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGRADEGASTBIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "radegast");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGRADEGASTBIT"));
+			break;
 		case R_NEWCAMD :
-		if ( reader[ridx].ncd_proto == NCD_525 )
-			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD525BIT"));
-		else if ( reader[ridx].ncd_proto == NCD_524 )
-			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD524BIT"));
-		break;
+			if ( reader[ridx].ncd_proto == NCD_525 ){
+				tpl_addVar(vars, 0, "PROTOCOL", "newcamd525");
+				tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD525BIT"));
+			} else if ( reader[ridx].ncd_proto == NCD_524 ) {
+				tpl_addVar(vars, 0, "PROTOCOL", "newcamd524");
+				tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD524BIT"));
+			}
+			break;
 		case R_CCCAM :
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "cccam");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
+			break;
 #ifdef CS_WITH_GBOX
 		case R_GBOX :
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGGBOXBIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "gbox");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGGBOXBIT"));
+			break;
 #endif
 #ifdef HAVE_PCSC
 		case R_PCSC :
-		tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGPCSCBIT"));
-		break;
+			tpl_addVar(vars, 0, "PROTOCOL", "pcsc");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGPCSCBIT"));
+			break;
 #endif
 
 	}

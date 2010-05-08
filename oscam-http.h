@@ -620,14 +620,17 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 ##MESSAGE##\
   <form action=\"readerconfig.html?action=execute\" method=\"get\"><input name=\"reader\" type=\"hidden\" value=\"##READERNAME##\">\n\
   <input name=\"enable\" type=\"hidden\" value=\"0\">\n\
+  <input name=\"fallback\" type=\"hidden\" value=\"0\">\n\
   <TABLE cellspacing=\"0\">\n\
-    <TR><TH>&nbsp;</TH><TH>Edit Reader ##READERNAME##</TH></TR>\n\
+    <TR><TH COLSPAN=\"2\">Edit Reader ##READERNAME##</TH></TR>\n\
+    <TR><TH>&nbsp;</TH><TH>Reader general settings</TH></TR>\n\
     <TR><TD>Enable:</TD><TD><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
+    <TR><TD>Fallback:</TD><TD><input name=\"fallback\" type=\"checkbox\" value=\"1\" ##FALLBACKCHECKED##></TD></TR>\n\
     <TR><TD>Group:</TD><TD><input name=\"grp\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##GRP##\"></TD></TR>\n\
-    ##READERDEPENDINGCONFIG##\
     <TR><TD>CAID:</TD><TD><input name=\"caid\" type=\"text\" size=\"50\" maxlength=\"100\" value=\"##CAIDS##\"></TD></TR>\n\
     <TR><TD>Services:</TD><TD>\n<TABLE cellspacing=\"0\" class=\"invisible\">##SIDS##</TD>\n</TR>\n</TABLE>\n\
-    <TR><TD>Fallback:</TD><TD><input name=\"fallback\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##FALLBACK##\"></TD></TR>\n\
+    <TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>\n\
+    ##READERDEPENDINGCONFIG##\
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" ##BTNDISABLED##>\n</TD></TR>\n\
   </TABLE>\n\
 	<BR><BR>\n\
