@@ -1644,7 +1644,7 @@ static int cc_srv_connect()
 
   // report cards
   cc_srv_report_cards();
-  int caid_info_count = cc->caid_infos?0:llist_count(cc->caid_infos);
+  int caid_info_count = cc->caid_infos?llist_count(cc->caid_infos):0;
 
   cmi = 0;
   // check for cient timeout, if timeout occurs try to send keepalive
@@ -1652,7 +1652,7 @@ static int cc_srv_connect()
     i=process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
     //cs_log("srv process input i=%d cmi=%d", i, cmi);
     if (i == -9) {
-      int new_caid_info_count = cc->caid_infos?0:llist_count(cc->caid_infos);
+      int new_caid_info_count = cc->caid_infos?llist_count(cc->caid_infos):0;
       if (new_caid_info_count != caid_info_count) {
         cc_srv_report_cards();
       }

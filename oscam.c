@@ -651,7 +651,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
         close(fdp[1]);
         close(mfdr);
         //cs_log("FORK-CLIENT: fd_m2c_c=%d", client[i].fd_m2c_c);
-        if( port!=97 ) cs_close_log();
+        //SS:if( port!=97 ) cs_close_log();
         mfdr=0;
         cs_ptyp=D_CLIENT;
         cs_idx=i;
