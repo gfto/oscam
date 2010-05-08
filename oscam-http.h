@@ -619,8 +619,10 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 <BR><BR>\n\
 ##MESSAGE##\
   <form action=\"readerconfig.html?action=execute\" method=\"get\"><input name=\"reader\" type=\"hidden\" value=\"##READERNAME##\">\n\
+  <input name=\"enable\" type=\"hidden\" value=\"0\">\n\
   <TABLE cellspacing=\"0\">\n\
     <TR><TH>&nbsp;</TH><TH>Edit Reader ##READERNAME##</TH></TR>\n\
+    <TR><TD>Enable:</TD><TD><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
     ##READERDEPENDINGCONFIG##\
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
   </TABLE>\n\

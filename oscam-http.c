@@ -728,6 +728,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	int i;
 
 	tpl_addVar(vars, 0, "READERNAME", reader[ridx].label);
+	if(reader[ridx].enable)
+		tpl_addVar(vars, 0, "ENABLED", "checked");
 	tpl_printf(vars, 0, "DEVICE", "%s", reader[ridx].device);
 	for (i=0; i<14; i++) tpl_printf(vars, 1, "NCD_KEY", "%02X", reader[ridx].ncd_key[i]);
 	tpl_addVar(vars, 0, "PINCODE", reader[ridx].pincode);
