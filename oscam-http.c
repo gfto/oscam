@@ -852,7 +852,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 	tpl_printf(vars, 0, "SHOWCLS", "%d", reader[ridx].show_cls);
 	tpl_printf(vars, 0, "MAXQLEN", "%d", reader[ridx].maxqlen);
-	tpl_printf(vars, 0, "EMMCACHE", "%d,%d,&d", reader[ridx].cachemm, reader[ridx].rewritemm, reader[ridx].logemm);
+
+	if(reader[ridx].cachemm)
+		tpl_printf(vars, 0, "EMMCACHE", "%d,%d,%d", reader[ridx].cachemm, reader[ridx].rewritemm, reader[ridx].logemm);
 
 	//savenano
 	int all = 1;
