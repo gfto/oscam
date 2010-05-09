@@ -761,6 +761,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_addVar(vars, 0, "PASS", reader[ridx].r_pwd);
 	tpl_addVar(vars, 0, "RSAKEY", (char *)reader[ridx].rsa_mod);
 	tpl_addVar(vars, 0, "BOXKEY", (char *)reader[ridx].nagra_boxkey);
+	tpl_addVar(vars, 0, "ATR", (char *)reader[ridx].atr);
 
 	if(reader[ridx].smargopatch)
 		tpl_addVar(vars, 0, "SMARGOPATCHCHECKED", "checked");

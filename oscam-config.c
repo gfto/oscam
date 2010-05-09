@@ -2871,8 +2871,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if ((!strcmp(token, "atr"))) {
-		key_atob_l(value, rdr->atr, 128);
-		return;
+		if(strlen(value) == 0) {
+			memset(rdr->atr, 0, 64);
+			return;
+		} else {
+			key_atob_l(value, rdr->atr, 128);
+			return;
+		}
 	}
 
 	if (!strcmp(token, "detect")) {
