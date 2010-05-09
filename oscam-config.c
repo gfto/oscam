@@ -1631,7 +1631,7 @@ int write_config()
 		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
 		return(1);
 	}
-	fprintf(f,"#oscam.config generated automatically\n\n");
+	fprintf(f,"#oscam.conf generated automatically\n\n");
 
 	/*global settings*/
 	fprintf(f,"[global]\n");
@@ -2047,7 +2047,7 @@ int write_server()
 		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
 		return(1);
 	}
-	fprintf(f,"#oscam.user generated automatically\n\n");
+	fprintf(f,"#oscam.server generated automatically\n\n");
 
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if ( reader[i].label[0] ) {
