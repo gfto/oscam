@@ -618,7 +618,9 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 ##TPLMENU##\n\
 <BR><BR>\n\
 ##MESSAGE##\
-  <form action=\"readerconfig.html?action=execute\" method=\"get\"><input name=\"reader\" type=\"hidden\" value=\"##READERNAME##\">\n\
+  <form action=\"readerconfig.html?action=execute\" method=\"get\">\n\
+  <input name=\"reader\" type=\"hidden\" value=\"##READERNAME##\">\n\
+  <input name=\"protocol\" type=\"hidden\" value=\"##PROTOCOL##\">\n\
   <input name=\"enable\" type=\"hidden\" value=\"0\">\n\
   <input name=\"fallback\" type=\"hidden\" value=\"0\">\n\
   <TABLE cellspacing=\"0\">\n\
