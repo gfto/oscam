@@ -2174,7 +2174,7 @@ int write_server()
 			if (reader[i].rsa_mod[0] && isphysical) {
 				if (reader[i].is_pure_nagra) {
 					fprintf_conf(f, CONFVARWIDTH, "n3_rsakey", "");
-					for (j=0;j<128;j++) {
+					for (j=0;j<64;j++) {
 						fprintf(f, "%02X", reader[i].rsa_mod[j]);
 					}
 					fprintf(f, "\n");
@@ -2191,7 +2191,7 @@ int write_server()
 
 			if (reader[i].nagra_boxkey[0] && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "boxkey", "");
-				for (j=0;j<16;j++) {
+				for (j=0;j<8;j++) {
 					fprintf(f, "%02X", reader[i].nagra_boxkey[j]);
 				}
 				fprintf(f, "\n");
@@ -2199,7 +2199,7 @@ int write_server()
 
 			if ( reader[i].atr[0] && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "atr", "");
-				for (j=0;j<128;j++) {
+				for (j=0;j<64;j++) {
 					fprintf(f, "%02X", reader[i].atr[j]);
 				}
 				fprintf(f, "\n");
