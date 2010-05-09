@@ -914,19 +914,19 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 		case R_MOUSE :
 			tpl_addVar(vars, 0, "PROTOCOL", "mouse");
-			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGMOUSEBIT"));
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_SMART :
 			tpl_addVar(vars, 0, "PROTOCOL", "smartreader");
-			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSMARTBIT"));
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_INTERNAL:
 			tpl_addVar(vars, 0, "PROTOCOL", "internal");
-			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGINTERNALBIT"));
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_SERIAL :
 			tpl_addVar(vars, 0, "PROTOCOL", "serial");
-			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSERIALBIT"));
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_CAMD35 :
 			tpl_addVar(vars, 0, "PROTOCOL", "camd35");
@@ -962,7 +962,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 #ifdef HAVE_PCSC
 		case R_PCSC :
 			tpl_addVar(vars, 0, "PROTOCOL", "pcsc");
-			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGPCSCBIT"));
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 #endif
 
