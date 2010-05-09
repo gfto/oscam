@@ -2171,7 +2171,7 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", key_btoa(NULL, reader[i].aes_key));
 
 			//n3_rsakey
-			if (reader[i].rsa_mod[0] && isphysical) {
+			if (reader[i].has_rsa && isphysical) {
 				if (reader[i].is_pure_nagra) {
 					fprintf_conf(f, CONFVARWIDTH, "n3_rsakey", "");
 					for (j=0;j<64;j++) {
