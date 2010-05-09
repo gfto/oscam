@@ -508,9 +508,10 @@ static void cs_child_chk(int i)
     			reader[ridx].cs_idx=0;
     			reader[ridx].last_s = 0;
     			reader[ridx].last_g = 0;
-    			//cs_log("closing fd_m2c=%d, ufd=%d", client[i].fd_m2c, client[i].ufd);
+    			cs_debug_mask(D_TRACE, "closing fd_m2c=%d, fd_m2c_c=%d, ufd=%d", client[i].fd_m2c, client[i].fd_m2c_c, client[i].ufd);
                 //if (client[i].fd_m2c) close(client[i].fd_m2c);
-                //if (client[i].ufd) close(client[i].ufd);
+                if (client[i].ufd) close(client[i].ufd);
+                if (client[i].fd_m2c_c) close(client[i].fd_m2c_c);
                 memset(&client[i], 0, sizeof(struct s_client));
                 client[i].au=(-1);
 
@@ -2006,7 +2007,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
           default:
           case 0:
               if (er->reader[i]&flag){
-                  //cs_log("request_cw1 ridx=%d fd=%d", i, reader[i].fd);
+                  //cs_debug_mask(D_TRACE, "request_cw1 ridx=%d fd=%d", i, reader[i].fd);
                   write_ecm_request(reader[i].fd, er);
               }
               break;
@@ -2014,7 +2015,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
           case 1:
               if (!(reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag) {
-                      //cs_log("request_cw1 ridx=%d fd=%d", i, reader[i].fd);
+                	  //cs_debug_mask(D_TRACE, "request_cw1 ridx=%d fd=%d", i, reader[i].fd);
                       write_ecm_request(reader[i].fd, er);
                   }
               break;
@@ -2023,7 +2024,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
         	  //cs_log("request_cw3 ridx=%d fd=%d", i, reader[i].fd);
               if ((reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag) {
-                      //cs_log("request_cw1 ridx=%d fd=%d", i, reader[i].fd);
+                	  //cs_debug_mask(D_TRACE, "request_cw1 ridx=%d fd=%d", i, reader[i].fd);
                       write_ecm_request(reader[i].fd, er);
                   }
               break;
@@ -2434,6 +2435,20 @@ int process_input(uchar *buf, int l, int timeout)
   return(rc);
 }
 
+static void restart_clients()
+{
+	  int i;
+	  cs_log("restarting clients");
+	  for (i=0; i<CS_MAXPID; i++) {
+	    if (client[i].typ=='c')
+	    {
+	      kill(client[i].pid, SIGKILL);
+	      cs_log("killing client c%02d pid %d", i, client[i].pid);
+	    }
+	  }
+}
+
+
 static void process_master_pipe()
 {
   int n;
@@ -2449,6 +2464,7 @@ static void process_master_pipe()
       break;
     case PIP_ID_RST:
       restart_cardreader(ptr[0]);
+      restart_clients();
       break;
   }
 }

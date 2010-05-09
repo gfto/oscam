@@ -106,6 +106,11 @@ static void cc_cw_crypt(uint8 *cws) {
 	}
 }
 
+/**
+ * reader
+ * cleans autoblock list
+ * list is not disposed
+ */
 static void cc_clear_auto_blocked(LLIST *cc_auto_blocked_list) {
 	LLIST_ITR itr;
 	struct cc_auto_blocked *auto_blocked = llist_itr_init(cc_auto_blocked_list,
@@ -116,6 +121,10 @@ static void cc_clear_auto_blocked(LLIST *cc_auto_blocked_list) {
 	}
 }
 
+/**
+ * reader
+ * add caid:prov:sid to the autoblock list
+ */
 static int cc_add_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
 		uint32 prov, uint16 sid) {
 	LLIST_ITR itr;
@@ -141,6 +150,10 @@ static int cc_add_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
 	return 1;
 }
 
+/**
+ * reader
+ * checks if caid:prov:sid is on the autoblock list
+ */
 static int cc_is_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
 		uint32 prov, uint16 sid, int add) {
 	LLIST_ITR itr;
@@ -332,7 +345,7 @@ static void cc_check_version(char *cc_version, char *cc_build) {
 
 /**
  * reader
- * sends own version to the CCCam server
+ * sends own version information to the CCCam server
  */
 static int cc_send_cli_data() {
 	int i;
@@ -457,6 +470,14 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	}
 	cur_er = &ecmtask[n];
 
+	//check if auto blocked:
+	if (!reader[ridx].cc_disable_auto_block && cc_is_auto_blocked(
+				cc->auto_blocked, cur_er->caid, cur_er->prid, cur_er->srvid, 1)) {
+		cs_log("%s no suitable card on server (auto blocked)", getprefix());
+		pthread_mutex_unlock(&cc->ecm_busy);
+		return 0; //Nothing to do, can't decode
+	}
+
 	if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
 		//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
 		cur_er->rc = 99;
@@ -492,13 +513,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		card = NULL;
 
 	//then check all other cards
-	//is this caid/prov/sid auto-blocked?
-	int auto_blocked = 0;
-	if (!card && !reader[ridx].cc_disable_auto_block && cc_is_auto_blocked(
-			cc->auto_blocked, cur_er->caid, cur_er->prid, cur_er->srvid, 1))
-		auto_blocked = 1;
-
-	if (!card && !auto_blocked) {
+	if (!card) {
 		pthread_mutex_lock(&cc->list_busy);
 		card = llist_itr_init(cc->cards, &itr);
 		while (card) {
@@ -562,8 +577,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 	} else {
 		n = -1;
-		cs_log("%s no suitable card on server%s", getprefix(),
-				auto_blocked ? " (auto blocked)" : "");
+		cs_log("%s no suitable card on server", getprefix());
 		cur_er->rc = 0;
 		cur_er->rcEx = 0x27;
 		//cur_er->rc = 1;
@@ -868,7 +882,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 	else
 		cc = client[cs_idx].cc;
 
-	cs_debug_mask(D_TRACE, "%s parse_msg=%d", getprefix(), buf[1]);
+	cs_debug("%s parse_msg=%d", getprefix(), buf[1]);
 
 	switch (buf[1]) {
 	case MSG_CLI_DATA:
@@ -1064,7 +1078,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		} else {
 			cc_cw_crypt(buf + 4);
 			memcpy(cc->dcw, buf + 4, 16);
-			cs_debug_mask(D_TRACE, "$s cws: %s", getprefix(), cs_hexdump(0,
+			cs_debug_mask(D_TRACE, "%s cws: %s", getprefix(), cs_hexdump(0,
 					cc->dcw, 16));
 			cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 			pthread_mutex_unlock(&cc->ecm_busy);
@@ -1702,7 +1716,7 @@ static int cc_srv_connect() {
 	int caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 
 	cmi = 0;
-	// check for cient timeout, if timeout occurs try to send keepalive
+	// check for client timeout, if timeout occurs try to send keepalive
 	for (;;) {
 		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
 		//cs_log("srv process input i=%d cmi=%d", i, cmi);

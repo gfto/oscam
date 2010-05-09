@@ -11,6 +11,7 @@ static int use_syslog=0;
 static int use_stdout=0;
 static pthread_mutex_t log_lock;
 static char *log_txt;
+static char *log_buf;
 
 #ifdef CS_ANTICASC
 FILE *fpa=(FILE *)0;
@@ -81,7 +82,8 @@ int cs_init_log(char *file)
 	static char *head = ">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")";
 
 	pthread_mutex_init(&log_lock, NULL);
-	log_txt = malloc(1024);
+	log_txt = malloc(512);
+	log_buf = malloc(700);
 
 	if (!strcmp(file, "stdout")) {
 		use_stdout = 1;
@@ -154,7 +156,7 @@ static void write_to_log(int flag, char *txt)
 	int i;
 	time_t t;
 	struct tm *lt;
-	char buf[512], sbuf[16];
+	char sbuf[16];
 
 	//  get_log_header(flag, sbuf);
 	//  memcpy(txt, sbuf, 11);
@@ -171,29 +173,29 @@ static void write_to_log(int flag, char *txt)
 
 	switch(flag) {
 		case -1:
-		sprintf(buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
+		sprintf(log_buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
 				lt->tm_year+1900, lt->tm_mon+1, lt->tm_mday,
 				lt->tm_hour, lt->tm_min, lt->tm_sec, txt);
 		break;
 		case 1:
-			sprintf(buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d            %s",
+			sprintf(log_buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d            %s",
 					lt->tm_year+1900, lt->tm_mon+1, lt->tm_mday,
 					lt->tm_hour, lt->tm_min, lt->tm_sec, txt);
 			break;
 		case 16:
 			number_of_chars_printed = 0;
-			sprintf(buf, "[LOG000]%s\n", txt);
+			sprintf(log_buf, "[LOG000]%s\n", txt);
 			break;
 		default:
-			sprintf(buf, "[LOG000]%s", txt);
+			sprintf(log_buf, "[LOG000]%s", txt);
 	}
 
 	if ((*log_fd) && (client[cs_idx].typ != 'l') && (client[cs_idx].typ != 'a'))
-		write_to_pipe(*log_fd, PIP_ID_LOG, (uchar *) buf+8, strlen(buf+8));
+		write_to_pipe(*log_fd, PIP_ID_LOG, (uchar *) log_buf+8, strlen(log_buf+8));
 	else
-		cs_write_log(buf + 8);
+		cs_write_log(log_buf + 8);
 
-	store_logentry(buf);
+	store_logentry(log_buf);
 
 	for (i = 0; i < CS_MAXPID; i++)	// monitor-clients
 	{
@@ -208,8 +210,8 @@ static void write_to_log(int flag, char *txt)
 			}
 			sprintf(sbuf, "%03d", client[i].logcounter);
 			client[i].logcounter = (client[i].logcounter+1) % 1000;
-			memcpy(buf + 4, sbuf, 3);
-			monitor_send_idx(i, buf);
+			memcpy(log_buf + 4, sbuf, 3);
+			monitor_send_idx(i, log_buf);
 		}
 	}
 }
@@ -233,8 +235,10 @@ void cs_close_log(void)
 	if (log_txt) {
 		cs_log("LOG CLOSED");
 		pthread_mutex_destroy(&log_lock);
+		free(log_buf);
 		free(log_txt);
 		log_txt = NULL;
+		log_buf = NULL;
 	}
 	if (use_stdout || use_syslog || !fp) return;
 	fclose(fp);
