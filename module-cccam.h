@@ -12,7 +12,6 @@
 #define CC_MAXMSGSIZE 512
 #define CC_MAX_PROV   16
 #define CC_CAIDINFO_REBUILD 200 //SS: Rebuid Caidinfos after 200 Card-Updates
-
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 
 #if (defined(WIN32) || defined(OS_CYGWIN32)) && !defined(MSG_WAITALL)
@@ -20,12 +19,10 @@
 #endif
 
 typedef enum {
-	DECRYPT,
-	ENCRYPT
+	DECRYPT, ENCRYPT
 } cc_crypt_mode_t;
 
-typedef enum
-{
+typedef enum {
 	MSG_CLI_DATA = 0,
 	MSG_CW_ECM = 1,
 	MSG_EMM_ACK = 2,
@@ -40,8 +37,7 @@ typedef enum
 	MSG_NO_HEADER = 0xffff
 } cc_msg_type_t;
 
-struct cc_crypt_block
-{
+struct cc_crypt_block {
 	uint8 keytable[256];
 	uint8 state;
 	uint8 counter;
@@ -49,13 +45,13 @@ struct cc_crypt_block
 };
 
 struct cc_card {
-	uint32 id;        // cccam card (share) id
-	uint32 sub_id;   // subshare id
+	uint32 id; // cccam card (share) id
+	uint32 sub_id; // subshare id
 	uint16 caid;
 	uint8 hop;
-	uint8 key[8];     // card serial (for au)
-	LLIST *provs;     // providers
-	LLIST *badsids;   // sids that have failed to decode
+	uint8 key[8]; // card serial (for au)
+	LLIST *provs; // providers
+	LLIST *badsids; // sids that have failed to decode
 	time_t time;
 };
 
@@ -81,14 +77,14 @@ struct cc_auto_blocked {
 //SS: Hack end
 
 struct cc_data {
-	struct cc_crypt_block block[2];    // crypto state blocks
+	struct cc_crypt_block block[2]; // crypto state blocks
 
-	uint8 node_id[8],           // client node id
-	peer_node_id[8],      // server node id
-	dcw[16];              // control words
+	uint8 node_id[8], // client node id
+			peer_node_id[8], // server node id
+			dcw[16]; // control words
 
-	struct cc_card *cur_card;   // ptr to selected card
-	LLIST *cards;               // cards list
+	struct cc_card *cur_card; // ptr to selected card
+	LLIST *cards; // cards list
 
 	//SS: Hack:
 	LLIST *caid_infos;
@@ -105,9 +101,10 @@ struct cc_data {
 	uint32 send_ecmtask;
 	uint32 recv_ecmtask;
 	uint16 cur_sid;
+	int server_init_errors;
 
-	int last_nok;
-	ECM_REQUEST *found;
+	//int last_nok;
+	//ECM_REQUEST *found;
 
 	unsigned long crc;
 
