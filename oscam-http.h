@@ -572,6 +572,26 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
       <TH COLSPAN=\"3\">Action</TH>\n\
     </TR>\n\
     ##READERLIST##\
+    <TR>\
+		<form action=\"readerconfig.html\" method=\"get\">\n\
+		<TD COLSPAN=\"2\">New Reader</TD>\
+		<TD COLSPAN=\"2\">Label:&nbsp;&nbsp;<input type=\"text\" name=\"label\" value=\"newreader\"></TD>\
+		<TD COLSPAN=\"2\">Protocol:&nbsp;&nbsp;<select name=\"protocol\">\
+			<option>mouse</option>\
+			<option>smartreader</option>\
+			<option>internal</option>\
+			<option>serial</option>\
+			<option>camd35</option>\
+			<option>cs378x</option>\
+			<option>radegast</option>\
+			<option>newcamd525</option>\
+			<option>newcamd524</option>\
+			<option>cccam</option>\
+			<option>gbox</option>\
+			<option>pcsc</option>\
+		</select></TD>\
+		<TD COLSPAN=\"3\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD></TR>\
+		</form>\
   </TABLE>\n\
 ##TPLFOOTER##"
 
@@ -665,9 +685,9 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR><TD>Pincode:</TD><TD><input name=\"pincode\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PINCODE##\"></TD></TR>\n\
     <TR><TD>Disableserverfilter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n\
     <TR><TD>Boxid:</TD><TD><input name=\"boxid\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##BOXID##\"></TD></TR>\n\
-    <TR><TD>Rsakey:</TD><TD><input name=\"rsakey\" type=\"text\" size=\"130\" maxlength=\"128\" value=\"##RSAKEY##\"></TD></TR>\n\
+    <TR><TD>Rsakey:</TD><TD><input name=\"rsakey\" type=\"text\" size=\"135\" maxlength=\"128\" value=\"##RSAKEY##\"></TD></TR>\n\
     <TR><TD>Boxkey:</TD><TD><input name=\"boxkey\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##BOXKEY##\"></TD></TR>\n\
-    <TR><TD>ATR:</TD><TD><input name=\"atr\" type=\"text\" size=\"130\" maxlength=\"128\" value=\"##ATR##\"></TD></TR>\n\
+    <TR><TD>ATR:</TD><TD><input name=\"atr\" type=\"text\" size=\"50\" maxlength=\"20\" value=\"##ATR##\"></TD></TR>\n\
     <TR><TD>Detect:</TD><TD><input name=\"detect\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DETECT##\"></TD></TR>\n\
     <TR><TD>Mhz:</TD><TD><input name=\"mhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MHZ##\"></TD></TR>\n\
     <TR><TD>Cardmhz:</TD><TD><input name=\"cardmhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CARDMHZ##\"></TD></TR>\n\

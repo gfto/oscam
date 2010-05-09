@@ -719,14 +719,30 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 }
 
 void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
-	int i, ridx;
+	int i, ridx=0;
 	char *reader_ = getParam(params, "reader");
 	char *value;
 
-	for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
-	if(ridx == CS_MAXREADER) {
-		tpl_addVar(vars, 0, "MESSAGE", "<BR><BR>Reader not found<BR><BR>");
+	if(strcmp(getParam(params, "action"), "Add") == 0) {
+		// Add new reader
+		for(ridx = 0; ridx < CS_MAXREADER && reader[ridx].label[0]; ridx++);
+		memset(&reader[ridx], 0, sizeof(struct s_reader));
+		reader[ridx].enable = 1;
+		reader[ridx].tcp_rto = 30;
+		reader[ridx].show_cls = 10;
+		reader[ridx].maxqlen = CS_MAXQLEN;
+		reader[ridx].mhz = 357;
+		reader[ridx].cardmhz = 357;
+		reader[ridx].deprecated = 0;
+		reader[ridx].cachecm = 1;
+		strcpy(reader[ridx].pincode, "none");
+		for (i=1; i<CS_MAXCAIDTAB; reader[ridx].ctab.mask[i++]=0xffff);
+		for(i = 0; i < (*params).paramcount; ++i)
+			if (strcmp((*params).params[i], "action"))
+				chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
+
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
+		for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
 		char servicelabels[255]="";
 		clear_caidtab(&reader[ridx].ctab);
 		clear_ftab(&reader[ridx].ftab);
@@ -760,9 +776,12 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_printf(vars, 0, "BOXID", "%ld", reader[ridx].boxid);
 	tpl_addVar(vars, 0, "USER", reader[ridx].r_usr);
 	tpl_addVar(vars, 0, "PASS", reader[ridx].r_pwd);
-	for (i = 0; i < 64; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", reader[ridx].rsa_mod[i]);
-	for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", reader[ridx].nagra_boxkey[i]);
-	for (i = 0; i < 64; i++) tpl_printf(vars, 1, "ATR", "%02X", reader[ridx].atr[i]);
+	if(reader[ridx].has_rsa) {
+		for (i = 0; i < 64; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", reader[ridx].rsa_mod[i]);
+		for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", reader[ridx].nagra_boxkey[i]);
+	}
+	if ( reader[i].atr[0])
+		for (i = 0; i < 20; i++) tpl_printf(vars, 1, "ATR", "%02X", reader[ridx].atr[i]);
 
 	if(reader[ridx].smargopatch)
 		tpl_addVar(vars, 0, "SMARGOPATCHCHECKED", "checked");
