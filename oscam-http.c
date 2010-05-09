@@ -881,14 +881,20 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		}
 	}
 
+	if (reader[ridx].cachecm)
+		tpl_addVar(vars, 0, "ECMCACHECHECKED", "checked");
+
 	if (reader[ridx].blockemm_unknown)
-			tpl_addVar(vars, 0, "BLOCKEMMUNKNOWNCHK", "checked");
+		tpl_addVar(vars, 0, "BLOCKEMMUNKNOWNCHK", "checked");
 	if (reader[ridx].blockemm_u)
-			tpl_addVar(vars, 0, "BLOCKEMMUNIQCHK", "checked");
+		tpl_addVar(vars, 0, "BLOCKEMMUNIQCHK", "checked");
 	if (reader[ridx].blockemm_s)
-			tpl_addVar(vars, 0, "BLOCKEMMSHAREDCHK", "checked");
+		tpl_addVar(vars, 0, "BLOCKEMMSHAREDCHK", "checked");
 	if (reader[ridx].blockemm_g)
-			tpl_addVar(vars, 0, "BLOCKEMMGLOBALCHK", "checked");
+		tpl_addVar(vars, 0, "BLOCKEMMGLOBALCHK", "checked");
+
+	if (reader[ridx].deprecated)
+		tpl_addVar(vars, 0, "DEPRECATEDCHCHECKED", "checked");
 
 	tpl_addVar(vars, 0, "CCCVERSION", reader[ridx].cc_version);
 	tpl_addVar(vars, 0, "CCCBUILD", reader[ridx].cc_build);
