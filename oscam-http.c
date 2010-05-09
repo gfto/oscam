@@ -731,11 +731,12 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		clear_caidtab(&reader[ridx].ctab);
 		clear_ftab(&reader[ridx].ftab);
 		for(i = 0; i < (*params).paramcount; ++i) {
-			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action")))
+			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action"))) {
 				if (!strcmp((*params).params[i], "services"))
 					sprintf(servicelabels + strlen(servicelabels), "%s,", (*params).values[i]);
 				else
 					chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
+			}
 		}
 		chk_reader("services", servicelabels, &reader[ridx]);
 		if(write_server()==0) refresh_oscam(REFR_READERS, in);

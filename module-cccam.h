@@ -75,7 +75,7 @@ struct cc_auto_blocked {
 	uint16 caid;
 	uint32 prov;
 	uint16 sid;
-	int call_count;
+	time_t time;
 };
 
 //SS: Hack end
@@ -102,8 +102,8 @@ struct cc_data {
 	LLIST *auto_blocked; //struct cc_auto_blocked
 	//SS: Hack end
 
-	uint32 count;
-	uint32 keepalive_count; //SS: Hack: CycleConnection when >CC_MAX_KEEPALIVE
+	uint32 send_ecmtask;
+	uint32 recv_ecmtask;
 	uint16 cur_sid;
 
 	int last_nok;
