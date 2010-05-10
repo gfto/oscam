@@ -2205,7 +2205,7 @@ int write_server()
 				fprintf(f, "\n");
 			}
 
-			if (reader[i].detect && isphysical) {
+			if (isphysical) {
 				if (reader[i].detect&0x80)
 					fprintf_conf(f, CONFVARWIDTH, "detect", "!%s\n", RDR_CD_TXT[reader[i].detect&0x7f]);
 				else
@@ -2846,28 +2846,44 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if ((!strcmp(token, "n3_rsakey")) || (!strcmp(token, "rsakey"))) {
-		rdr->has_rsa = 1;
-		if (key_atob_l(value, rdr->rsa_mod, 128)) {
-			fprintf(stderr, "Configuration reader: Error in rsakey\n");
-			exit(1);
+		if(strlen(value) == 0) {
+			memset(rdr->rsa_mod, 0, 120);
+			rdr->has_rsa = 0;
+			return;
+		} else {
+			rdr->has_rsa = 1;
+			if (key_atob_l(value, rdr->rsa_mod, 128)) {
+				fprintf(stderr, "Configuration reader: Error in rsakey\n");
+				exit(1);
+			}
+			return;
 		}
-		return;
 	}
 
 	if (!strcmp(token, "tiger_rsakey")) {
-		if (key_atob_l(value, rdr->rsa_mod, 240)) {
-			fprintf(stderr, "Configuration reader: Error in tiger_rsakey\n");
-			exit(1);
+		if(strlen(value) == 0) {
+			memset(rdr->rsa_mod, 0, 120);
+			return;
+		} else {
+			if (key_atob_l(value, rdr->rsa_mod, 240)) {
+				fprintf(stderr, "Configuration reader: Error in tiger_rsakey\n");
+				exit(1);
+			}
+			return;
 		}
-		return;
 	}
 
 	if ((!strcmp(token, "n3_boxkey")) || (!strcmp(token, "boxkey"))) {
-		if (key_atob_l(value, rdr->nagra_boxkey, 16)) {
-			fprintf(stderr, "Configuration reader: Error in boxkey\n");
-			exit(1);
+		if(strlen(value) == 0) {
+			memset(rdr->nagra_boxkey, 0, 16);
+			return;
+		} else {
+			if (key_atob_l(value, rdr->nagra_boxkey, 16)) {
+				fprintf(stderr, "Configuration reader: Error in boxkey\n");
+				exit(1);
+			}
+			return;
 		}
-		return;
 	}
 
 	if ((!strcmp(token, "atr"))) {

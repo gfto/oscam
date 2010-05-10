@@ -621,7 +621,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 	for(readeridx = 0; readeridx < CS_MAXREADER; readeridx++) {
 		isphysical = 0;
 
-		if(!reader[readeridx].device[0]) break;
+		if(!reader[readeridx].label[0] && !reader[readeridx].typ) break;
 
 		tpl_addVar(vars, 0, "READERNAME", reader[readeridx].label);
 		tpl_addVar(vars, 0, "READERNAMEENC", tpl_addTmp(vars, urlencode(reader[readeridx].label)));
@@ -736,10 +736,11 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		reader[ridx].deprecated = 0;
 		reader[ridx].cachecm = 1;
 		strcpy(reader[ridx].pincode, "none");
-		for (i=1; i<CS_MAXCAIDTAB; reader[ridx].ctab.mask[i++]=0xffff);
-		for(i = 0; i < (*params).paramcount; ++i)
+		for (i = 1; i < CS_MAXCAIDTAB; reader[ridx].ctab.mask[i++] = 0xffff);
+		for (i = 0; i < (*params).paramcount; ++i) {
 			if (strcmp((*params).params[i], "action"))
 				chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
+		}
 
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 		for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
@@ -788,12 +789,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if(reader[ridx].smargopatch)
 		tpl_addVar(vars, 0, "SMARGOPATCHCHECKED", "checked");
 
-	if(reader[ridx].detect) {
-		if (reader[ridx].detect&0x80)
-			tpl_printf(vars, 0, "DETECT", "!%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
-		else
-			tpl_printf(vars, 0, "DETECT", "%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
-	}
+	if (reader[ridx].detect&0x80)
+		tpl_printf(vars, 0, "DETECT", "!%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+	else
+		tpl_printf(vars, 0, "DETECT", "%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
 
 	tpl_printf(vars, 0, "MHZ", "%d", reader[ridx].mhz);
 	tpl_printf(vars, 0, "CARDMHZ", "%d", reader[ridx].cardmhz);
@@ -938,9 +937,14 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 	// Show only parameters which needed for the reader
 	switch (reader[ridx].typ) {
-
+		case R_DB2COM1:
+		case R_DB2COM2:
 		case R_MOUSE :
 			tpl_addVar(vars, 0, "PROTOCOL", "mouse");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
+			break;
+		case R_SC8in1 :
+			tpl_addVar(vars, 0, "PROTOCOL", "sc8in1");
 			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_SMART :
