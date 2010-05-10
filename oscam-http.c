@@ -741,6 +741,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			if (strcmp((*params).params[i], "action"))
 				chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
 		}
+		reader_ = reader[ridx].label;
 
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 		for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
