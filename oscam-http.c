@@ -992,6 +992,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 #endif
+		default :
+			tpl_addVar(vars, 1, "MESSAGE", "<b>Error: protocol not resolvable</b><BR>");
+			tpl_printf(vars, 1, "MESSAGE", "<b>Error: protocol number: %d readername: %s readeridx: %d</b><BR>", reader[ridx].typ, reader[ridx].label, ridx);
+			break;
 
 	}
 	//READERCONFIGMOUSEBIT
