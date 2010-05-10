@@ -101,7 +101,7 @@ struct cc_data {
 	uint32 send_ecmtask;
 	uint32 recv_ecmtask;
 	uint16 cur_sid;
-	int server_init_errors;
+	int proxy_init_errors;
 
 	//int last_nok;
 	//ECM_REQUEST *found;

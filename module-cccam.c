@@ -474,29 +474,24 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			write_ecm_answer(&reader[ridx], fd_c2m, er);
 
 			if (cc) {
-				cc->server_init_errors++;
-				if (cc->server_init_errors > 20) //TODO: Configuration?
+				cc->proxy_init_errors++;
+				if (cc->proxy_init_errors > 20) //TODO: Configuration?
 					cc_cycle_connection();
 			}
 		}
 		return -1;
 	}
 
-	int retry = 5;
-	while (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
-		retry--;
-		cs_sleepms(50);
-		if (retry < 0) {
-			cs_debug_mask(D_TRACE, "%s ecm trylock: failed to get lock",
-					getprefix());
-			cc->server_init_errors++;
-			if (cc->server_init_errors > 20) //TODO: Configuration?
-				cc_cycle_connection();
-			return 0; //pending send...
-		}
+	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
+		cs_debug_mask(D_TRACE, "%s ecm trylock: failed to get lock",
+				getprefix());
+		cc->proxy_init_errors++;
+		if (cc->proxy_init_errors > 20) //TODO: Configuration?
+			cc_cycle_connection();
+		return 0; //pending send...
 	}
 	cs_debug("cccam: ecm trylock: got lock");
-	cc->server_init_errors = 0;
+	cc->proxy_init_errors = 0;
 
 	if ((n = cc_get_nxt_ecm()) < 0) {
 		pthread_mutex_unlock(&cc->ecm_busy);
@@ -606,8 +601,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cc->send_ecmtask = cur_er->idx;
 		reader[ridx].cc_currenthops = cc->cur_card->hop + 1;
 
-		cs_log("%s sending ecm for sid %04X to card %08x, hop %d", getprefix(),
-				cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1);
+		cs_log("%s sending ecm for sid %04X to card %08x, hop %d, ecmtask %d", getprefix(),
+				cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1, cc->send_ecmtask);
 		pthread_mutex_unlock(&cc->list_busy);
 		n = cc_cmd_send(ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
 
@@ -684,15 +679,15 @@ static int cc_send_emm(EMM_PACKET *ep)
 	struct cc_data *cc = reader[ridx].cc;
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
 		cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1 : 0, pfd);
-		cc->server_init_errors++;
-		if (cc->server_init_errors > 20) //TODO: Configuration?
+		cc->proxy_init_errors++;
+		if (cc->proxy_init_errors > 20) //TODO: Configuration?
 			cc_cycle_connection();
 		return -1;
 	}
 
 	pthread_mutex_lock(&cc->ecm_busy); //Unlock by NOK or EMM_ACK
 
-	cc->server_init_errors = 0;
+	cc->proxy_init_errors = 0;
 	cc->cur_card = NULL;
 
 	uint8 ecmbuf[CC_MAXMSGSIZE];
@@ -706,12 +701,14 @@ static int cc_send_emm(EMM_PACKET *ep)
 	ecmbuf[4] = ep->provid[1];
 	ecmbuf[5] = ep->provid[2];
 	ecmbuf[6] = ep->provid[3];
-	//ecmbuf[7] = ??
-	//ecmbuf[8] = ??
-	ecmbuf[9] = ep->l;
-	memcpy(ecmbuf+10, ep->emm, ep->l);
+	ecmbuf[7] = ep->hexserial[0];
+	ecmbuf[8] = ep->hexserial[1];
+	ecmbuf[9] = ep->hexserial[2];
+	ecmbuf[10] = ep->hexserial[3];
+	ecmbuf[11] = ep->l;
+	memcpy(ecmbuf+12, ep->emm, ep->l);
 
-	return cc_cmd_send(ecmbuf, ep->l+10, MSG_EMM_ACK); // send emm
+	return cc_cmd_send(ecmbuf, ep->l+12, MSG_EMM_ACK); // send emm
 }
 
 //SS: Hack
@@ -1129,7 +1126,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 					}
 				}
 			}
-			memset(cc->dcw, 0, 16);
+			//memset(cc->dcw, 0, 16);
 			cc->cur_card = NULL;
 		}
 		//if (cc->found)
@@ -1161,7 +1158,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		} else { //READER:
 			cc_cw_crypt(buf + 4);
 			memcpy(cc->dcw, buf + 4, 16);
-			cs_debug_mask(D_TRACE, "%s cws: %s", getprefix(), cs_hexdump(0,
+			cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(), cc->send_ecmtask, cs_hexdump(0,
 					cc->dcw, 16));
 			cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 			cc->recv_ecmtask = cc->send_ecmtask;
@@ -1201,9 +1198,37 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		ret = 0;
 		break;
 	case MSG_EMM_ACK:
-		cs_log("%s EMM ACK!", getprefix());
-		pthread_mutex_unlock(&cc->ecm_busy);
-		cc_send_ecm(NULL, NULL);
+		if (is_server) { //EMM Request received
+			if (l > 4) {
+				cs_log("%s EMM Request received!", getprefix());
+				EMM_PACKET *emm = malloc(sizeof(EMM_PACKET));
+				memset(emm, 0, sizeof(EMM_PACKET));
+				emm->l = buf[13];
+				memcpy(emm->emm, buf+14, emm->l);
+				emm->caid[0] = buf[4];
+				emm->caid[1] = buf[5];
+				emm->provid[0] = buf[7];
+				emm->provid[1] = buf[8];
+				emm->provid[2] = buf[9];
+				emm->provid[3] = buf[10];
+				emm->hexserial[0] = buf[11];
+				emm->hexserial[1] = buf[12];
+				emm->hexserial[2] = buf[13];
+				emm->hexserial[3] = buf[14];
+				emm->l = buf[15];
+				memcpy(emm->emm, buf+16, emm->l);
+				emm->type = UNKNOWN;
+				emm->cidx = cs_idx;
+				do_emm(emm);
+				free(emm);
+				cc_cmd_send(NULL, 0, MSG_EMM_ACK); //Send back ACK
+			}
+		}
+		else { //Our EMM Request Ack!
+			cs_log("%s EMM ACK!", getprefix());
+			pthread_mutex_unlock(&cc->ecm_busy);
+			cc_send_ecm(NULL, NULL);
+		}
 		ret = 0;
 		break;
 	default:
@@ -1230,7 +1255,7 @@ static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
 		*rc = 1;
 		return (cc->recv_ecmtask);
 	} else if ((buf[1] == (MSG_CW_NOK1)) || (buf[1] == (MSG_CW_NOK2))) {
-		memset(dcw, 0, 16);
+		//memset(dcw, 0, 16);
 		return *rc = 0;
 	}
 
