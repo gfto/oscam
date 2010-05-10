@@ -788,10 +788,12 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if(reader[ridx].smargopatch)
 		tpl_addVar(vars, 0, "SMARGOPATCHCHECKED", "checked");
 
-	if (reader[ridx].detect&0x80)
-		tpl_printf(vars, 0, "DETECT", "!%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
-	else
-		tpl_printf(vars, 0, "DETECT", "%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+	if(reader[ridx].detect) {
+		if (reader[ridx].detect&0x80)
+			tpl_printf(vars, 0, "DETECT", "!%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+		else
+			tpl_printf(vars, 0, "DETECT", "%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+	}
 
 	tpl_printf(vars, 0, "MHZ", "%d", reader[ridx].mhz);
 	tpl_printf(vars, 0, "CARDMHZ", "%d", reader[ridx].cardmhz);
