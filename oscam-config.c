@@ -526,8 +526,13 @@ void chk_t_global(char *token, char *value)
 	}
 
 	if (!strcmp(token, "readerrestartseconds")) {
-		cfg->reader_restart_seconds = atoi(value);
-		return;
+		if (strlen(value) == 0) {
+			cfg->reader_restart_seconds = 0;
+			return;
+		} else {
+			cfg->reader_restart_seconds = atoi(value);
+			return;
+		}
 	}
 
 	if (token[0] != '#')

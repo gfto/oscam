@@ -455,7 +455,7 @@ static void cs_card_info(int i)
 static void restart_cardreader(int pridx) {
 	ridx = pridx;
 	reader[ridx].ridx = ridx; //FIXME
-	if ((reader[ridx].device[0]) && (reader[ridx].enable == 1)) {
+	if ((reader[ridx].device[0]) && (reader[ridx].enable == 1) && (!reader[ridx].deleted)) {
 		switch (cs_fork(0, 99)) {
 		case -1:
 			cs_exit(1);

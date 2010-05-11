@@ -607,8 +607,12 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
 		reader[atoi(getParam(params, "reader"))].deleted = 1;
-		if(write_server()==0)
+		if(write_server()==0) {
 			refresh_oscam(REFR_READERS, in);
+			//printf("would kill now PID %d\n", reader[atoi(getParam(params, "reader"))].pid);
+			if(reader[atoi(getParam(params, "reader"))].pid)
+				kill(reader[atoi(getParam(params, "reader"))].pid, SIGQUIT);
+		}
 		else
 			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -1440,7 +1444,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 #else
 	if (cfg->saveinithistory && strlen(reader_) > 0) {
 		for (ridx=0; ridx<CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
-		printf("we are right %d\n", reader[ridx].typ);
+
 		if (reader[ridx].typ == R_CCCAM) {
 
 			//struct cc_data *ctest = reader[ridx].cc;
