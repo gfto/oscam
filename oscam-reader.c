@@ -189,6 +189,7 @@ cs_debug("conn_nb 9 (fd=%d)", sockfd);
 int network_tcp_connection_open()
 {
   int flags;
+  cs_resolve();
   if( connect_nonb(client[cs_idx].udp_fd, 
       (struct sockaddr *)&client[cs_idx].udp_sa, 
       sizeof(client[cs_idx].udp_sa), 5) < 0)

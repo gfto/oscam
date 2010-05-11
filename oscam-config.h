@@ -13,9 +13,7 @@
 #  endif
 #  define CS_EMBEDDED
 #  ifndef QBOXHD
-#    ifndef FORCESHM
 #      define CS_NOSHM
-#    endif
 #  endif
 #  define NO_FTIME
 #  ifndef COOL
@@ -26,9 +24,7 @@
 
 #ifdef UCLIBC
 #  define CS_EMBEDDED
-#  ifndef FORCESHM
 #    define CS_NOSHM
-#  endif
 #  define NO_FTIME
 #endif
 

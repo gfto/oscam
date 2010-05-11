@@ -990,9 +990,9 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		card->hop = buf[14];
 		memcpy(card->key, buf + 16, 8);
 
-		cs_debug("cccam: card %08x added, caid %04X, hop %d, key %s, count %d",
-				card->id, card->caid, card->hop, cs_hexdump(0, card->key, 8),
-				llist_count(cc->cards));
+		//cs_debug("cccam: card %08x added, caid %04X, hop %d, key %s, count %d",
+		//		card->id, card->caid, card->hop, cs_hexdump(0, card->key, 8),
+		//		llist_count(cc->cards));
 
 		for (i = 0; i < buf[24]; i++) { // providers
 			uint8 *prov = malloc(3);
@@ -1061,11 +1061,12 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		card = llist_itr_init(cc->cards, &itr);
 		while (card) {
 			if (card->id == b2i(4, buf + 4)) {// && card->sub_id == b2i (3, buf + 9)) {
-				cs_debug("cccam: card %08x removed, caid %04X, count %d",
-						card->id, card->caid, llist_count(cc->cards));
+				//cs_debug("cccam: card %08x removed, caid %04X, count %d",
+				//		card->id, card->caid, llist_count(cc->cards));
 				found = 1;
 				//SS: Fix card free:
 				if (card == cc->cur_card) {
+					cs_log("%s current card %08x removed!", getprefix(), card->id);
 					cc->cur_card = NULL;
 					cur_card_removed = 1;
 				}
@@ -1154,7 +1155,12 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
 				get_cw(er);
+				cs_debug_mask(D_TRACE, "%s ECM request from client: caid %04x srvid %04x prid %04x", getprefix(),
+										er->caid, er->srvid, er->prid);
 			}
+			else
+				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());
+
 		} else { //READER:
 			cc_cw_crypt(buf + 4);
 			memcpy(cc->dcw, buf + 4, 16);
@@ -1183,7 +1189,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		l = l - 4;//Header Length=4 Byte
 		cs_log("%s cmd 0x05 recvd, payload length=%d", getprefix(), l);
 		//payload always needs cycle connection after 60 ECMs!!
-		if (cc->limit_ecms && !cc->max_ecms) {
+		if (l && cc->limit_ecms && !cc->max_ecms) {
 			cc->max_ecms = 60;
 			cc->ecm_counter = 0;
 		}
@@ -1193,8 +1199,9 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_CMD_0B:
 		// need to work out algo (reverse) for this...
-		cs_log("%s MSG_CMD_0B received, cycle connection!", getprefix());
-		cc_cycle_connection();
+		//cs_log("%s MSG_CMD_0B received, cycle connection!", getprefix());
+		cs_log("%s MSG_CMD_0B received", getprefix());
+		//cc_cycle_connection();
 		ret = 0;
 		break;
 	case MSG_EMM_ACK:
@@ -1273,11 +1280,11 @@ static void cc_send_dcw(ECM_REQUEST *er) {
 		memcpy(buf, er->cw, sizeof(buf));
 		cc_cw_crypt(buf);
 		NULLFREE(cc->cur_card);
-		cs_debug_mask(D_TRACE, "%s send cw: er->cpti=%d", getprefix(), er->cpti);
+		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(), cs_hexdump(0, er->cw,16), er->cpti);
 		cc_cmd_send(buf, 16, MSG_CW_ECM);
 		cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
 	} else {
-		cs_debug_mask(D_TRACE, "%s send cw NOK: er->cpti=%d!", getprefix(),
+		cs_debug_mask(D_TRACE, "%s send cw: NOK cpti: %d", getprefix(),
 				er->cpti);
 		cc_cmd_send(NULL, 0, MSG_CW_NOK1);
 	}
