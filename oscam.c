@@ -23,6 +23,7 @@ pid_t master_pid=0;   // master pid OUTSIDE shm
 ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 uchar mbuf[1024];   // global buffer
+pthread_mutex_t gethostbyname_lock; //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
 ECM_REQUEST *ecmtask;
 #ifdef CS_ANTICASC
 struct s_acasc ac_stat[CS_MAXPID];
@@ -451,21 +452,22 @@ static void cs_card_info(int i)
 }
 
 //SS: restart cardreader after 5 seconds:
-static void restart_cardreader(int pridx)
-{
-  ridx = pridx;
-  reader[ridx].ridx = ridx; //FIXME
-  if ((reader[ridx].device[0]) && (reader[ridx].enable == 1)) {
-    switch(cs_fork(0, 99)) {
-      case -1:
-	    cs_exit(1);
-      case  0:
-        break;
-      default:
-	    wait4master();
-	    start_cardreader(&reader[ridx]);
-    }
-  }
+static void restart_cardreader(int pridx) {
+	ridx = pridx;
+	reader[ridx].ridx = ridx; //FIXME
+	if ((reader[ridx].device[0]) && (reader[ridx].enable == 1)) {
+		switch (cs_fork(0, 99)) {
+		case -1:
+			cs_exit(1);
+		case 0:
+			break;
+		default:
+			cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
+			cs_log("RESTARTING READER (index=%d)", ridx);
+			wait4master();
+			start_cardreader(&reader[ridx]);
+		}
+	}
 }
 
 
@@ -478,7 +480,6 @@ static void cs_child_chk(int i)
         if ((client[i].typ!='c') && (client[i].typ!='m'))
         {
           char *txt="";
-          *log_fd=0;
           switch(client[i].typ)
           {
 #ifdef CS_ANTICASC
@@ -516,9 +517,6 @@ static void cs_child_chk(int i)
                 client[i].au=(-1);
 
                 cs_log("RESTARTING READER %s in %d seconds (index=%d)", txt, cfg->reader_restart_seconds, ridx);
-                cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
-                cs_log("RESTARTING READER %s (index=%d)", txt, ridx);
-
                 uchar u[2];
                 u[0] = ridx;
                 u[1] = 0;
@@ -527,8 +525,10 @@ static void cs_child_chk(int i)
               }
             }
           }
-          else
-            cs_exit(1);
+          else {
+              *log_fd=0;
+              cs_exit(1);
+          }
         }
         else
         {
@@ -870,6 +870,8 @@ static void init_shm()
   else
     strcpy(client[0].usr, "root");
 
+  pthread_mutex_init(&gethostbyname_lock, NULL); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
+
 #ifdef CS_LOGHISTORY
   *loghistidx=0;
   memset(loghist, 0, CS_MAXLOGHIST*CS_LOGHISTSIZE);
@@ -1006,6 +1008,7 @@ static void cs_client_resolve()
     for (account=cfg->account; account; account=account->next)
       if (account->dyndns[0])
       {
+    	pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
         rht=gethostbyname((const char *)account->dyndns);
         if (rht)
         {
@@ -1015,6 +1018,7 @@ static void cs_client_resolve()
         else
           cs_log("can't resolve hostname %s (user: %s)", account->dyndns, account->usr);
         client[cs_idx].last=time((time_t)0);
+        pthread_mutex_unlock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
       }
     sleep(cfg->resolvedelay);
   }
@@ -1048,6 +1052,7 @@ static void start_thread(void * startroutine, char * nameroutine)
 void cs_resolve()
 {
 	int i, idx;
+	pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
 	struct hostent *rht;
 	struct s_auth;
 	for (i=0; i<CS_MAXREADER; i++)
@@ -1065,6 +1070,7 @@ void cs_resolve()
 				cs_log("can't resolve %s", reader[i].device);
 			client[cs_idx].last=time((time_t)0);
 		}
+	pthread_mutex_unlock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
 }
 
 static void cs_logger(void)

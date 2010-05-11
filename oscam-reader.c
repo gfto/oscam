@@ -226,10 +226,10 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
 
     if (reader->ph.c_init())
     {
-      cs_debug("network_tcp_connection_close() exit(1);");
-      cs_exit(1);
+         cs_debug("network_tcp_connection_close() exit(1);");
+         if (reader->ph.cleanup) reader->ph.cleanup();
+         cs_exit(1);
     }
-
     cs_resolve();
 //  cs_log("last_s=%d, last_g=%d", reader->last_s, reader->last_g);
   }
@@ -679,8 +679,10 @@ void * start_cardreader(void * rdr)
       cs_sleepms(1000);
       cs_exit(1);
     }
-    if (reader->ph.c_init())
-      cs_exit(1);
+    if (reader->ph.c_init()) {
+          if (reader->ph.cleanup) reader->ph.cleanup();
+          cs_exit(1);
+     }
     if ((reader->log_port) && (reader->ph.c_init_log))
       reader->ph.c_init_log();
   }

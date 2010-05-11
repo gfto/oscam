@@ -934,7 +934,7 @@ extern struct s_acasc_shm *acasc;
 extern FILE *fpa;
 extern int use_ac_log;
 #endif
-
+extern pthread_mutex_t gethostbyname_lock; //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
 
 // oscam
 extern int recv_from_udpipe(uchar *);
