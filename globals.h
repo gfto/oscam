@@ -463,6 +463,7 @@ struct geo_cache
 
 struct s_reader  //contains device info, reader info and card info
 {
+  int 		deleted; // if this flag is set the reader is not shown in webif and becomes not writte to oscam.server
   int		smargopatch;
   int		pid;
   int       cs_idx;

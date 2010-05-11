@@ -563,6 +563,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
   <TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD></TR></TABLE><BR>\
   <TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
     <TR>\n\
+	  <TH>Delete</TH>\n\
       <TH>Reader</TH>\n\
       <TH>Protocol</TH>\n\
       <TH>EERR UK / G / S / UQ</TH>\n\
@@ -574,9 +575,10 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     ##READERLIST##\
     <TR>\
 		<form action=\"readerconfig.html\" method=\"get\">\n\
-		<TD COLSPAN=\"2\">New Reader</TD>\
-		<TD COLSPAN=\"2\">Label:&nbsp;&nbsp;<input type=\"text\" name=\"label\" value=\"newreader\"></TD>\
-		<TD COLSPAN=\"2\">Protocol:&nbsp;&nbsp;<select name=\"protocol\">\
+		<TD>&nbsp;</TD>\
+		<TD COLSPAN=\"2\" align=\"center\">New Reader</TD>\
+		<TD COLSPAN=\"2\" align=\"center\">Label:&nbsp;&nbsp;<input type=\"text\" name=\"label\" value=\"##NEXTREADER##\"></TD>\
+		<TD COLSPAN=\"2\" align=\"center\">Protocol:&nbsp;&nbsp;<select name=\"protocol\">\
 			<option>mouse</option>\
 			<option>smartreader</option>\
 			<option>internal</option>\
@@ -590,13 +592,14 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option>gbox</option>\
 			<option>pcsc</option>\
 		</select></TD>\
-		<TD COLSPAN=\"3\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD></TR>\
+		<TD COLSPAN=\"3\" align=\"center\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD></TR>\
 		</form>\
   </TABLE>\n\
 ##TPLFOOTER##"
 
 #define TPLREADERSBIT "\
     <TR>\n\
+	<TD align=\"center\"><A HREF=\"readers.html?reader=##READERIDX##&action=delete\" TITLE=\"Delete this Reader\"><IMG SRC=\"##DELICO##\" BORDER=\"0\" ALT=\"Delete Reader\"/></A></TD>\n\
       <TD>##READERNAME##</TD>\n\
       <TD>##CTYP##</TD>\n\
       <TD align=\"center\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\

@@ -2050,7 +2050,7 @@ int write_server()
 	fprintf(f,"#oscam.server generated automatically\n\n");
 
 	for (i = 0; i < CS_MAXREADER; i++) {
-		if ( reader[i].label[0] ) {
+		if ( reader[i].label[0] && !reader[i].deleted) {
 			isphysical = 0;
 			fprintf(f,"[reader]\n");
 

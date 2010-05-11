@@ -605,6 +605,14 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 	int i;
 	//uchar dummy[1]={0x00};
 
+	if (strcmp(getParam(params, "action"), "delete") == 0) {
+		reader[atoi(getParam(params, "reader"))].deleted = 1;
+		if(write_server()==0)
+			refresh_oscam(REFR_READERS, in);
+		else
+			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+	}
+
 	if (strcmp(getParam(params, "action"), "reread") == 0) {
 		readeridx = atoi(getParam(params, "ridx"));
 		//reset the counters
@@ -618,39 +626,43 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 		refresh_oscam(REFR_READERS, in); // refresh all reader because  write pipe seams not work from here
 	}
 
+	for(readeridx = 0; readeridx < CS_MAXREADER && reader[readeridx].label[0]; readeridx++);
+	tpl_printf(vars, 0, "NEXTREADER", "Reader-%d", readeridx); //Next Readername
+
 	for(readeridx = 0; readeridx < CS_MAXREADER; readeridx++) {
 		isphysical = 0;
 
-		if(!reader[readeridx].label[0] && !reader[readeridx].typ) break;
+		if(reader[readeridx].label[0] && reader[readeridx].typ && !reader[readeridx].deleted) {
 
-		tpl_addVar(vars, 0, "READERNAME", reader[readeridx].label);
-		tpl_addVar(vars, 0, "READERNAMEENC", tpl_addTmp(vars, urlencode(reader[readeridx].label)));
+			tpl_printf(vars, 0, "READERIDX", "%d", readeridx);
+			tpl_addVar(vars, 0, "READERNAME", reader[readeridx].label);
+			tpl_addVar(vars, 0, "READERNAMEENC", tpl_addTmp(vars, urlencode(reader[readeridx].label)));
 
-		switch(reader[readeridx].typ) {
+			switch(reader[readeridx].typ) {
 			case R_MOUSE :
-			ctyp = "mouse";
-			isphysical = 1;
-			break;
+				ctyp = "mouse";
+				isphysical = 1;
+				break;
 			case R_INTERNAL:
-			ctyp = "intern";
-			isphysical = 1;
-			break;
+				ctyp = "intern";
+				isphysical = 1;
+				break;
 			case R_SMART :
-			ctyp = "smartreader";
-			isphysical = 1;
-			break;
+				ctyp = "smartreader";
+				isphysical = 1;
+				break;
 			case R_SERIAL :
-			ctyp = "serial";
-			isphysical = 1;
-			break;
+				ctyp = "serial";
+				isphysical = 1;
+				break;
 			case R_DB2COM1 :
-			ctyp = "dbox COM1";
-			isphysical = 1;
-			break;
+				ctyp = "dbox COM1";
+				isphysical = 1;
+				break;
 			case R_DB2COM2 :
-			ctyp = "dbox COM2";
-			isphysical = 1;
-			break;
+				ctyp = "dbox COM2";
+				isphysical = 1;
+				break;
 			case R_CAMD35 : ctyp="camd 3.5x";break;
 			case R_CAMD33 : ctyp="camd 3.3x";break;
 			case R_NEWCAMD : ctyp="newcamd"; break;
@@ -660,60 +672,61 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 #endif
 #ifdef HAVE_PCSC
 			case R_PCSC :
-			ctyp="pcsc";
-			isphysical = 1;
-			break;
+				ctyp="pcsc";
+				isphysical = 1;
+				break;
 #endif
 			case R_CCCAM : ctyp="cccam"; break;
 			case R_CS378X : ctyp="cs378x"; break;
 			default : ctyp="unknown"; break;
-		}
-
-		tpl_printf(vars, 0, "EMMERRORUK", "%d", reader[readeridx].emmerror[UNKNOWN]);
-		tpl_printf(vars, 0, "EMMERRORG", "%d", reader[readeridx].emmerror[GLOBAL]);
-		tpl_printf(vars, 0, "EMMERRORS", "%d", reader[readeridx].emmerror[SHARED]);
-		tpl_printf(vars, 0, "EMMERRORUQ", "%d", reader[readeridx].emmerror[UNIQUE]);
-
-		tpl_printf(vars, 0, "EMMWRITTENUK", "%d", reader[readeridx].emmwritten[UNKNOWN]);
-		tpl_printf(vars, 0, "EMMWRITTENG", "%d", reader[readeridx].emmwritten[GLOBAL]);
-		tpl_printf(vars, 0, "EMMWRITTENS", "%d", reader[readeridx].emmwritten[SHARED]);
-		tpl_printf(vars, 0, "EMMWRITTENUQ", "%d", reader[readeridx].emmwritten[UNIQUE]);
-
-		tpl_printf(vars, 0, "EMMSKIPPEDUK", "%d", reader[readeridx].emmskipped[UNKNOWN]);
-		tpl_printf(vars, 0, "EMMSKIPPEDG", "%d", reader[readeridx].emmskipped[GLOBAL]);
-		tpl_printf(vars, 0, "EMMSKIPPEDS", "%d", reader[readeridx].emmskipped[SHARED]);
-		tpl_printf(vars, 0, "EMMSKIPPEDUQ", "%d", reader[readeridx].emmskipped[UNIQUE]);
-
-		tpl_printf(vars, 0, "EMMBLOCKEDUK", "%d", reader[readeridx].emmblocked[UNKNOWN]);
-		tpl_printf(vars, 0, "EMMBLOCKEDG", "%d", reader[readeridx].emmblocked[GLOBAL]);
-		tpl_printf(vars, 0, "EMMBLOCKEDS", "%d", reader[readeridx].emmblocked[SHARED]);
-		tpl_printf(vars, 0, "EMMBLOCKEDUQ", "%d", reader[readeridx].emmblocked[UNIQUE]);
-
-
-		if (isphysical == 1) {
-			tpl_printf(vars, 0, "RIDX", "%d", readeridx);
-			tpl_addVar(vars, 0, "REFRICO", ICREF);
-			tpl_addVar(vars, 0, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
-
-			tpl_addVar(vars, 0, "ENTICO", ICENT);
-			tpl_addVar(vars, 0, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
-
-		} else {
-			tpl_printf(vars, 0, "RIDX", "");
-			tpl_addVar(vars, 0, "READERREFRESH","");
-			if (reader[readeridx].typ == R_CCCAM) {
-				tpl_addVar(vars, 0, "ENTICO", ICENT);
-				tpl_addVar(vars, 0, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
-			} else {
-				tpl_addVar(vars, 0, "ENTITLEMENT","");
 			}
 
+			tpl_printf(vars, 0, "EMMERRORUK", "%d", reader[readeridx].emmerror[UNKNOWN]);
+			tpl_printf(vars, 0, "EMMERRORG", "%d", reader[readeridx].emmerror[GLOBAL]);
+			tpl_printf(vars, 0, "EMMERRORS", "%d", reader[readeridx].emmerror[SHARED]);
+			tpl_printf(vars, 0, "EMMERRORUQ", "%d", reader[readeridx].emmerror[UNIQUE]);
+
+			tpl_printf(vars, 0, "EMMWRITTENUK", "%d", reader[readeridx].emmwritten[UNKNOWN]);
+			tpl_printf(vars, 0, "EMMWRITTENG", "%d", reader[readeridx].emmwritten[GLOBAL]);
+			tpl_printf(vars, 0, "EMMWRITTENS", "%d", reader[readeridx].emmwritten[SHARED]);
+			tpl_printf(vars, 0, "EMMWRITTENUQ", "%d", reader[readeridx].emmwritten[UNIQUE]);
+
+			tpl_printf(vars, 0, "EMMSKIPPEDUK", "%d", reader[readeridx].emmskipped[UNKNOWN]);
+			tpl_printf(vars, 0, "EMMSKIPPEDG", "%d", reader[readeridx].emmskipped[GLOBAL]);
+			tpl_printf(vars, 0, "EMMSKIPPEDS", "%d", reader[readeridx].emmskipped[SHARED]);
+			tpl_printf(vars, 0, "EMMSKIPPEDUQ", "%d", reader[readeridx].emmskipped[UNIQUE]);
+
+			tpl_printf(vars, 0, "EMMBLOCKEDUK", "%d", reader[readeridx].emmblocked[UNKNOWN]);
+			tpl_printf(vars, 0, "EMMBLOCKEDG", "%d", reader[readeridx].emmblocked[GLOBAL]);
+			tpl_printf(vars, 0, "EMMBLOCKEDS", "%d", reader[readeridx].emmblocked[SHARED]);
+			tpl_printf(vars, 0, "EMMBLOCKEDUQ", "%d", reader[readeridx].emmblocked[UNIQUE]);
+
+			tpl_addVar(vars, 0, "DELICO", ICDEL);
+
+			if (isphysical == 1) {
+				tpl_printf(vars, 0, "RIDX", "%d", readeridx);
+				tpl_addVar(vars, 0, "REFRICO", ICREF);
+				tpl_addVar(vars, 0, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
+
+				tpl_addVar(vars, 0, "ENTICO", ICENT);
+				tpl_addVar(vars, 0, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
+
+			} else {
+				tpl_printf(vars, 0, "RIDX", "");
+				tpl_addVar(vars, 0, "READERREFRESH","");
+				if (reader[readeridx].typ == R_CCCAM) {
+					tpl_addVar(vars, 0, "ENTICO", ICENT);
+					tpl_addVar(vars, 0, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
+				} else {
+					tpl_addVar(vars, 0, "ENTITLEMENT","");
+				}
+
+			}
+
+			tpl_addVar(vars, 0, "CTYP", ctyp);
+			tpl_addVar(vars, 0, "EDIICO", ICEDI);
+			tpl_addVar(vars, 1, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
-
-		tpl_addVar(vars, 0, "CTYP", ctyp);
-		tpl_addVar(vars, 0, "EDIICO", ICEDI);
-		tpl_addVar(vars, 1, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
-
 	}
 	fputs(tpl_getTpl(vars, "READERS"), f);
 }
@@ -723,9 +736,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	char *reader_ = getParam(params, "reader");
 	char *value;
 
+	for(ridx = 0; ridx < CS_MAXREADER && reader[ridx].label[0]; ridx++); //last reader
+
 	if(strcmp(getParam(params, "action"), "Add") == 0) {
 		// Add new reader
-		for(ridx = 0; ridx < CS_MAXREADER && reader[ridx].label[0]; ridx++);
 		memset(&reader[ridx], 0, sizeof(struct s_reader));
 		reader[ridx].enable = 1;
 		reader[ridx].tcp_rto = 30;
@@ -1372,10 +1386,10 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 			if (reader[ridx].typ == R_CCCAM) {
 
-				struct cc_data *ctest = reader[ridx].cc;
+				//struct cc_data *ctest = reader[ridx].cc;
 
-				tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
-				tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
+				//tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
+				//tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
 				//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 				char fname[40];
@@ -1429,10 +1443,10 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 		printf("we are right %d\n", reader[ridx].typ);
 		if (reader[ridx].typ == R_CCCAM) {
 
-			struct cc_data *ctest = reader[ridx].cc;
+			//struct cc_data *ctest = reader[ridx].cc;
 
-			tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
-			tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
+			//tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
+			//tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
 			//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 			char fname[40];
