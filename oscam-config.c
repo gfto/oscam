@@ -1590,7 +1590,8 @@ int write_services()
 		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
 		return(1);
 	}
-	fprintf(f,"#oscam.services generated automatically\n\n");
+	fprintf(f,"# oscam.services generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
+	fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.services.txt\n\n");
 
 	while(sidtab != NULL){
 		fprintf(f,"[%s]\n", sidtab->label);
@@ -1636,7 +1637,8 @@ int write_config()
 		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
 		return(1);
 	}
-	fprintf(f,"#oscam.conf generated automatically\n\n");
+	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
+	fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.conf.txt\n\n");
 
 	/*global settings*/
 	fprintf(f,"[global]\n");
@@ -1955,7 +1957,8 @@ int write_userdb()
     cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
     return(1);
   }
-  fprintf(f,"#oscam.user generated automatically\n\n");
+  fprintf(f,"# oscam.user generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
+  fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
 
   //each account
 	for (account=cfg->account; (account) ; account=account->next){
@@ -2052,7 +2055,8 @@ int write_server()
 		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
 		return(1);
 	}
-	fprintf(f,"#oscam.server generated automatically\n\n");
+	fprintf(f,"# oscam.server generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
+	fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.server.txt\n\n");
 
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if ( reader[i].label[0] && !reader[i].deleted) {
