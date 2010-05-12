@@ -1314,7 +1314,7 @@ int cc_recv(uchar *buf, int l) {
 	cs_ddump(cbuf, n, "cccam: received %d bytes from %s", n, remote_txt());
 	client[cs_idx].last = time((time_t *) 0);
 
-	if (n == 0) {
+	if (n <= 0) {
 		cs_log("%s connection closed to %s", getprefix(), remote_txt());
 		n = -1;
 	} else if (n < 4) {
