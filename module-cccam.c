@@ -1860,6 +1860,8 @@ static int cc_srv_connect() {
 			}
 		} else if (i <= 0)
 			break;
+		else
+			cmi = 0;
 	}
 
 	cs_disconnect_client();

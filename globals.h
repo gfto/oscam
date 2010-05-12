@@ -976,7 +976,7 @@ extern void set_signal_handler(int , int , void (*)(int));
 extern void cs_log_config(void);
 extern void cs_waitforcardinit(void);
 extern void cs_reinit_clients(void);
-extern int cs_resolve(void);
+extern void cs_resolve(void);
 extern void chk_dcw(int fd);
 
 #ifdef CS_ANTICASC
