@@ -702,11 +702,19 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     /* we can try to get the boxid from the card */
     int boxidOK=0;
     l=do_cmd(reader, ins36, NULL, buff,cta_res);
-    if(l>=0) {
-      /* skipping the initial fixed fields: cmdecho (4) + length (1) + ? (4) + ua (4) */
-      int i=13;
+    if(l<13)
+      cs_log("[videoguard2-reader] ins36: too short answer");
+    else if (buff[7] > 0x0F)
+      cs_log("[videoguard2-reader] ins36: encrypted - can't parse");
+    else {
+      /* skipping the initial fixed fields: cmdecho (4) + length (1) + encr/rev++ (4) */
+      int i=9;
+      int gotUA=0;
       while (i<l) {
-        switch (buff[i]) { /* object length vary depending on type */
+        if (!gotUA && buff[i]<0xF0) { /* then we guess that the next 4 bytes is the UA */
+          gotUA=1;
+          i+=4;
+        } else switch (buff[i]) { /* object length vary depending on type */
             case 0xEF: /* card status */
               i+=3;
               break;
