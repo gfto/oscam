@@ -1190,7 +1190,7 @@ int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep)
       rc=OK;
       }
 
-    cs_log("[videoguard2-reader] EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
+    cs_debug_mask(D_EMM, "[videoguard2-reader] EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
 //cs_dump(ep->emm, 64, "EMM:");
     if (status_ok (cta_res) && (cta_res[1] & 0x01)) {
       read_tiers(reader);
