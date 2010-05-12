@@ -2259,7 +2259,6 @@ void do_emm(EMM_PACKET *ep)
 	else
 		return;
 
-	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 	cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], reader[au].label, cs_hexdump(0, reader[au].hexserial, 8)); 
 
 	switch (ep->type) {
@@ -2282,6 +2281,7 @@ void do_emm(EMM_PACKET *ep)
 			break;
 	}
 
+	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 	client[cs_idx].lastemm = time((time_t)0);
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
