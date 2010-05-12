@@ -1199,9 +1199,8 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_CMD_0B:
 		// need to work out algo (reverse) for this...
-		//cs_log("%s MSG_CMD_0B received, cycle connection!", getprefix());
-		cs_log("%s MSG_CMD_0B received", getprefix());
-		//cc_cycle_connection();
+		cs_log("%s MSG_CMD_0B received, cycle connection!", getprefix());
+		cc_cycle_connection();
 		ret = 0;
 		break;
 	case MSG_EMM_ACK:
