@@ -10,6 +10,11 @@
 #define MAX_ATR_LEN 33         // max. ATR length
 #define MAX_HIST    15         // max. number of historical characters
 
+#define VG2_EMMTYPE_MASK 0xC0 
+#define VG2_EMMTYPE_G 0 
+#define VG2_EMMTYPE_U 1 
+#define VG2_EMMTYPE_S 2 
+
 #define write_cmd_vg(cmd, data) (card_write(reader, cmd, data, cta_res, &cta_lr) == 0)
 
 //////  ====================================================================================
@@ -995,20 +1000,20 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
   int s;
   int l;
   const unsigned char *ptr = NULL;
+  int position=-1;
 
   switch(addr_mode(data)) {
     case 2: s=3; break;
     case 3: case 0: s=4; break;
     default: return NULL;
-    }
+  }
 
-  int position=-1;
   for(l=0;l<num_addr(data);l++) {
     if(!memcmp(&data[l*4+4],a+2,s)) {
       position=l;
       break;
-      }
     }
+  }
 
   /* skip EMM-G but not EMM from cccam */
   if (position == -1 && data[1] != 0x00) return NULL;
@@ -1026,14 +1031,14 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
   }
 
   /* check */
-  if (*ptr != 0x02) return NULL;
+  if (*ptr != 0x02 &&  *ptr != 0x07&&  *ptr != 0x08) return NULL;
 
-  /* skip the 1st timestamp 02 00 or 02 06 xx aabbccdd yy */
+  /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */ 
   ptr += 2 + ptr[1];
 
   for(l=0;l<position;l++) {
 
-    /* skip the payload of the previous SA */
+    /* skip the payload of the previous sub-EMM */
     ptr += 1 + ptr [0];
 
     /* skip optional 00 */
@@ -1045,7 +1050,7 @@ static const unsigned char * payload_addr(const unsigned char *data, const unsig
     /* check */
     if (*ptr != 0x02) return NULL;
 
-    /* skip the timestamp 02 00 or 02 06 xx aabbccdd yy */
+    /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */
     ptr += 2 + ptr[1];
     }
 
@@ -1089,6 +1094,38 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRU
 
 	return FALSE;
 }
+
+/* FIXME: get_emm_type routine from lattjo@UMP, i have no NDS card here so please check this ...
+int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
+
+	uchar emmtype;
+	emmtype=(ep->emm[3]&VG2_EMMTYPE_MASK)>>6;
+	rdr = rdr;
+
+	switch(emmtype) {
+		case VG2_EMMTYPE_G:
+			ep->type=GLOBAL;
+			cs_debug_mask(D_EMM, "VIDEOGUARD2 EMM: GLOBAL");
+			memset(ep->hexserial, 0, 8);
+			break;
+		
+		case VG2_EMMTYPE_U:
+			ep->type=UNIQUE;
+			cs_debug_mask(D_EMM, "VIDEOGUARD2 EMM: UNIQUE");
+			break;
+
+		case VG2_EMMTYPE_S:
+			ep->type=SHARED;
+			cs_debug_mask(D_EMM, "VIDEOGUARD2 EMM: SHARED");
+			break;
+
+		default:
+			ep->type=UNKNOWN;
+			break;
+	}
+}
+
+*/
 
 void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
