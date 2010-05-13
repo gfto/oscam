@@ -230,7 +230,7 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
          if (reader->ph.cleanup) reader->ph.cleanup();
          cs_exit(1);
     }
-    cs_resolve();
+    //cs_resolve_reader(reader->ridx);
 //  cs_log("last_s=%d, last_g=%d", reader->last_s, reader->last_g);
   }
 }
@@ -368,7 +368,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   if (sflag)
   {
     if (!client[cs_idx].udp_sa.sin_addr.s_addr) // once resolved at least
-      cs_resolve();
+      cs_resolve_reader(ridx);
 
     if ((rc=reader->ph.c_send_ecm(&ecmtask[n], buf)))
       casc_check_dcw(reader, n, 0, ecmtask[n].cw);  // simulate "not found"

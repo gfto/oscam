@@ -214,6 +214,7 @@ static void cc_cli_close() {
 		pthread_mutex_destroy(&cc->ecm_busy);
 		pthread_mutex_destroy(&cc->list_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
+		cc->just_logged_in = 0;
 	}
 }
 
@@ -245,10 +246,15 @@ static int cc_msg_recv(uint8 *buf) {
 	if (handle < 0)
 		return -1;
 
-	len = recv(handle, netbuf, 4, MSG_WAITALL);
+	int errorCount = 0;
+	do
+	{
+		len = recv(handle, netbuf, 4, MSG_WAITALL);
+		errorCount++;
+	} while (!len && errorCount < 20);
 
 	if (!len)
-		return 0;
+		return -1;
 
 	if (len != 4) { // invalid header length read
 		cs_log("%s invalid header length", getprefix());
@@ -391,7 +397,7 @@ static int cc_send_cli_data() {
 	memcpy(buf + 29, reader[ridx].cc_version, sizeof(reader[ridx].cc_version)); // cccam version (ascii)
 	memcpy(buf + 61, reader[ridx].cc_build, sizeof(reader[ridx].cc_build)); // build number (ascii)
 
-	cs_log("%s version: %s, build: %s", getprefix(), reader[ridx].cc_version,
+	cs_log("%s sending own version: %s, build: %s", getprefix(), reader[ridx].cc_version,
 			reader[ridx].cc_build);
 
 	i = cc_cmd_send(buf, 20 + 8 + 6 + 26 + 4 + 28 + 1, MSG_CLI_DATA);
@@ -1096,6 +1102,9 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		if (is_server) //for reader only
 			return 0;
 
+		if (cc->just_logged_in) //NOK after login
+			cs_exit(1);
+
 		int f = 0;
 		if (cc->cur_card) {
 			LLIST_ITR itr;
@@ -1162,6 +1171,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());
 
 		} else { //READER:
+			cc->just_logged_in = 0;
 			cc_cw_crypt(buf + 4);
 			memcpy(cc->dcw, buf + 4, 16);
 			cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(), cc->send_ecmtask, cs_hexdump(0,
@@ -1178,6 +1188,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		}
 		break;
 	case MSG_KEEPALIVE:
+		cc->just_logged_in = 0;
 		if (!reader[ridx].cc) {
 			cs_debug("cccam: keepalive ack");
 		} else {
@@ -1186,6 +1197,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		}
 		break;
 	case MSG_BAD_ECM:
+		cc->just_logged_in = 0;
 		l = l - 4;//Header Length=4 Byte
 		cs_log("%s cmd 0x05 recvd, payload length=%d", getprefix(), l);
 		//payload always needs cycle connection after 60 ECMs!!
@@ -1204,6 +1216,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		ret = 0;
 		break;
 	case MSG_EMM_ACK:
+		cc->just_logged_in = 0;
 		if (is_server) { //EMM Request received
 			if (l > 4) {
 				cs_log("%s EMM Request received!", getprefix());
@@ -1361,6 +1374,7 @@ static int cc_cli_connect(void) {
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
+	cc->proxy_init_errors = 0;
 
 	// check cred config
 	if (reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0
@@ -1458,6 +1472,8 @@ static int cc_cli_connect(void) {
 	reader[ridx].tcp_connected = 1;
 	reader[ridx].last_g = reader[ridx].last_s = time((time_t *) 0);
 	reader[ridx].card_status = CARD_INSERTED;
+
+	cc->just_logged_in = 1;
 
 	return 0;
 }
@@ -1927,7 +1943,7 @@ int cc_cli_init() {
 		client[cs_idx].udp_sa.sin_family = AF_INET;
 		client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
 
-		cs_resolve();
+		cs_resolve_reader(ridx);
 
 		uchar *ip = (uchar*) &client[cs_idx].ip;
 		cs_debug("cccam: ip=%d.%d.%d.%d", ip[3], ip[2], ip[1], ip[0]);

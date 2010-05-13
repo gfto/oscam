@@ -1049,28 +1049,40 @@ static void start_thread(void * startroutine, char * nameroutine)
   }
 }
 
-void cs_resolve()
+/**
+ * only for readers
+ * resolve ip for reader i=ridx
+ */
+void cs_resolve_reader(int i)
 {
-	int i, idx;
-	pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
 	struct hostent *rht;
 	struct s_auth;
-	for (i=0; i<CS_MAXREADER; i++)
-		if ((idx=reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK))
-		{
-			client[cs_idx].last=time((time_t)0);
-			rht = gethostbyname(reader[i].device);
-			if (rht)
-			{
-				memcpy(&client[idx].udp_sa.sin_addr, rht->h_addr,
-						sizeof(client[idx].udp_sa.sin_addr));
-				client[idx].ip=cs_inet_order(client[idx].udp_sa.sin_addr.s_addr);
-			}
-			else
-				cs_log("can't resolve %s", reader[i].device);
-			client[cs_idx].last=time((time_t)0);
-		}
+	pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
+
+	int idx = reader[i].cs_idx;
+	client[idx].last=time((time_t)0);
+	rht = gethostbyname(reader[i].device);
+	if (rht)
+	{
+		memcpy(&client[idx].udp_sa.sin_addr, rht->h_addr,
+				sizeof(client[idx].udp_sa.sin_addr));
+		client[idx].ip=cs_inet_order(client[idx].udp_sa.sin_addr.s_addr);
+	}
+	else
+		cs_log("can't resolve %s", reader[i].device);
+	client[idx].last=time((time_t)0);
+
 	pthread_mutex_unlock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
+}
+
+void cs_resolve()
+{
+	int i;
+	for (i=0; i<CS_MAXREADER; i++)
+		if ((reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK))
+		{
+			cs_resolve_reader(i);
+		}
 }
 
 static void cs_logger(void)

@@ -259,7 +259,7 @@ int radegast_cli_init(void)
   client[cs_idx].udp_sa.sin_family = AF_INET;
   client[cs_idx].udp_sa.sin_port = htons((u_short)reader[ridx].r_port);
 
-  cs_resolve();
+  cs_resolve_reader(ridx);
   //pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
   //struct hostent *server;
   //server = gethostbyname(reader[ridx].device);

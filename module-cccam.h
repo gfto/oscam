@@ -96,6 +96,7 @@ struct cc_data {
 	int report_carddata_id; //Server only
 	LLIST *reported_carddatas; //struct cc_reported_carddata
 	LLIST *auto_blocked; //struct cc_auto_blocked
+	int just_logged_in; //true for checking NOW direct after login
 	//SS: Hack end
 
 	uint32 send_ecmtask;
