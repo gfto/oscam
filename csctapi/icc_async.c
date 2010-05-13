@@ -672,6 +672,11 @@ static int SetRightParity (struct s_reader * reader)
 		parity = PARITY_ODD;
 	else if(reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 		parity = PARITY_NONE;
+
+#if defined(LIBUSB)
+	if (reader->typ == R_SMART)
+		reader->sr_config->parity = parity;
+#endif
 	
 	call (ICC_Async_SetParity(reader, parity));
 

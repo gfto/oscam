@@ -429,17 +429,21 @@ if (OSCamOperatingSystem MATCHES "Mac OS X")
 elseif (OSCAM_SYSTEM_NAME MATCHES "NSLU2")
     add_definitions ("-O2 -Winline -Wall -finline-functions -fomit-frame-pointer")
 else (OSCamOperatingSystem MATCHES "Mac OS X")
-    add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer")
+    add_definitions ("-Winline -Wall -Wextra")
+    set (CMAKE_C_FLAGS "-O2 -finline-functions -fomit-frame-pointer")
+    set (CMAKE_C_FLAGS_DEBUG "-O0 -g")
 endif (OSCamOperatingSystem MATCHES "Mac OS X")
 
 # we don't want the '-rdynamic' in the link command
 set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
-# we want to strip
+# we want to strip if not Debug build
 if (OSCamOperatingSystem MATCHES "Mac OS X")
 set (CMAKE_EXE_LINKER_FLAGS "-s -m32")
 else (OSCamOperatingSystem MATCHES "Mac OS X")
-set (CMAKE_EXE_LINKER_FLAGS "-s")
+  if (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
+    set (CMAKE_EXE_LINKER_FLAGS "-s")
+  endif (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
 endif (OSCamOperatingSystem MATCHES "Mac OS X")
 #----------------------- installation -----------------------------
 

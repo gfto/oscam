@@ -14,9 +14,11 @@ if (NOT HAVE_SHA)
 endif (NOT HAVE_SHA)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-add_definitions ("-O2 -Winline -Werror -finline-functions -fomit-frame-pointer -s -m32")
+  add_definitions ("-O2 -Winline -Werror -finline-functions -fomit-frame-pointer -s -m32")
 else (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-add_definitions ("-O2 -Winline -Werror -finline-functions -fomit-frame-pointer -s")
+  add_definitions ("-Winline -Werror")
+  set (CMAKE_C_FLAGS "-O2 -finline-functions -fomit-frame-pointer -s")
+  set (CMAKE_C_FLAGS_DEBUG "-O0 -g")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 set (lib_name "cscrypt")

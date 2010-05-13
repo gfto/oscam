@@ -66,7 +66,7 @@ int SR_Init (struct s_reader *reader)
         return ERROR;
     }
     reader->sr_config=malloc(sizeof(SR_CONFIG));
-    if(!reader) {
+    if(!reader->sr_config) {
         cs_log("Couldn't allocate memory for Device=%s config",reader->device);
         return ERROR;
     }

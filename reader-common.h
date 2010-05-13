@@ -84,6 +84,7 @@ void dre_get_emm_filter(struct s_reader * rdr, uchar *filter);
 #define get_atr \
 		unsigned char atr[64]; \
 		unsigned int atr_size; \
+		memset(atr, 0, sizeof(atr)); \
 		ATR_GetRaw(&newatr, atr, &atr_size);
 
 #define get_hist \
