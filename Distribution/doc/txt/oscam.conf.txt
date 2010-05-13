@@ -354,9 +354,11 @@ DESCRIPTIONS
        au = 0|1
 	  1 = enable AU, default:0
 
-       boxtype = dbox2|dreambox|ufs910
+       boxtype = dbox2|dreambox|ufs910|ipbox
 	  set  boxtype,  auto  detection  of  DVB   API   will	 be   aspired,
 	  default:dreambox
+	  Note: ipbox with camd.socket support, currently only with PGI image
+	  v0.6 or above, tested on HD models only
 
    The [anticasc] section (only if anti-cascading enabled)
        enabled = 0|1
