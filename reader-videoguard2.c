@@ -50,7 +50,7 @@ static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 
   return ERROR;
 }
 
- unsigned short NdTabB001[0x15][0x20]= {  
+static const unsigned short NdTabB001[0x15][0x20]= {  
             {  0xEAF1,0x0237,0x29D0,0xBAD2,0xE9D3,0x8BAE,0x2D6D,0xCD1B,0x538D,0xDE6B,0xA634,0xF81A,0x18B5,0x5087,0x14EA,0x672E,  
                0xF0FC,0x055E,0x62E5,0xB78F,0x5D09,0x0003,0xE4E8,0x2DCE,0x6BE0,0xAC4E,0xF485,0x6967,0xF28C,0x97A0,0x01EF,0x0100  },
             {  0xC539,0xF5B9,0x9099,0x013A,0xD4B9,0x6AB5,0xEA67,0x7EB4,0x6C30,0x4BF0,0xB810,0xB0B5,0xB76D,0xA751,0x1AE7,0x14CA,  
@@ -96,8 +96,8 @@ static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 
 
 };
 
-unsigned short Hash3[] = {0x0123,0x4567,0x89AB,0xCDEF,0xF861,0xCB52};
-unsigned char Hash4[] = {0x0B,0x04,0x07,0x08,0x05,0x09,0x0B,0x0A,0x07,0x02,0x0A,0x05,0x04,0x08,0x0D,0x0F};
+static const unsigned short Hash3[] = {0x0123,0x4567,0x89AB,0xCDEF,0xF861,0xCB52};
+static const unsigned char Hash4[] = {0x0B,0x04,0x07,0x08,0x05,0x09,0x0B,0x0A,0x07,0x02,0x0A,0x05,0x04,0x08,0x0D,0x0F};
 
 static void swap_lb (unsigned char *buff, int len)
 {
@@ -402,7 +402,7 @@ static void cCamCryptVG2_RotateRightAndHash(unsigned char *p)
 
 //////  ====================================================================================
 
-unsigned char CW1[8], CW2[8];
+static unsigned char CW1[8], CW2[8];
 
 extern int io_serial_need_dummy_char;
 
@@ -519,7 +519,7 @@ typedef struct{
    char name[32];
 } GCC_PACK tier_t;
 
-static tier_t skyit_tiers[] =
+static const tier_t skyit_tiers[] =
 {
   { 0x0320, "Promo" },
   { 0x000B, "Service" },
@@ -546,7 +546,7 @@ static tier_t skyit_tiers[] =
   { 0x02FE, "PPV" }
 };
 
-static char *get_tier_name(struct s_reader * reader, unsigned short tier_id){
+static const char *get_tier_name(struct s_reader * reader, unsigned short tier_id){
   static char *empty = "";
   unsigned int i;
 
@@ -587,7 +587,7 @@ static void read_tiers(struct s_reader * reader)
     int y,m,d,H,M,S;
     rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S);
     unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
-    char *tier_name = get_tier_name(reader, tier_id);
+    const char *tier_name = get_tier_name(reader, tier_id);
     cs_ri_log(reader, "[videoguard2-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
     }
 }
@@ -668,13 +668,9 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
 	cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Foxtel Australia (090b)");
 				BASEYEAR = 2000;
     }
-/*    else
-    {
-        // not a known videoguard
-        return (0);
-    }*/
-    //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
-    //this way also unknown videoguard2/NDS cards will work
+
+  //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
+  //this way also unknown videoguard2/NDS cards will work
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
   int l;
@@ -795,13 +791,13 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   cs_log ("[videoguard2-reader] Card not married, exchange for BC Keys");
    */
 
-  unsigned char seed1[] = {
+  static unsigned char seed1[] = {
     0xb9, 0xd5, 0xef, 0xd5, 0xf5, 0xd5, 0xfb, 0xd5, 0x31, 0xd6, 0x43, 0xd6, 0x55, 0xd6, 0x61, 0xd6,
     0x85, 0xd6, 0x9d, 0xd6, 0xaf, 0xd6, 0xc7, 0xd6, 0xd9, 0xd6, 0x09, 0xd7, 0x15, 0xd7, 0x21, 0xd7,
     0x27, 0xd7, 0x3f, 0xd7, 0x45, 0xd7, 0xb1, 0xd7, 0xbd, 0xd7, 0xdb, 0xd7, 0x11, 0xd8, 0x23, 0xd8,
     0x29, 0xd8, 0x2f, 0xd8, 0x4d, 0xd8, 0x8f, 0xd8, 0xa1, 0xd8, 0xad, 0xd8, 0xbf, 0xd8, 0xd7, 0xd8
     };
-  unsigned char seed2[] = {
+  static unsigned char seed2[] = {
     0x01, 0x00, 0xcf, 0x13, 0xe0, 0x60, 0x54, 0xac, 0xab, 0x99, 0xe6, 0x0c, 0x9f, 0x5b, 0x91, 0xb9,
     0x72, 0x72, 0x4d, 0x5b, 0x5f, 0xd3, 0xb7, 0x5b, 0x01, 0x4d, 0xef, 0x9e, 0x6b, 0x8a, 0xb9, 0xd1,
     0xc9, 0x9f, 0xa1, 0x2a, 0x8d, 0x86, 0xb6, 0xd6, 0x39, 0xb4, 0x64, 0x65, 0x13, 0x77, 0xa1, 0x0a,
@@ -850,8 +846,6 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
          reader->caid[0],
          reader->hexserial[2],reader->hexserial[3],reader->hexserial[4],reader->hexserial[5],
          boxID[0],boxID[1],boxID[2],boxID[3]);
-
-  ///read_tiers();
 
   cs_log("[videoguard2-reader] ready for requests");
 
@@ -932,7 +926,6 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data) {
 
 int videoguard_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
-  //unsigned char cw[16];
   unsigned char cta_res[CTA_RES_LEN];
   static unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
   static const unsigned char ins54[5] = { 0xD3,0x54,0x00,0x00,0x00};
@@ -1106,7 +1099,6 @@ int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 		case VG2_EMMTYPE_G:
 			ep->type=GLOBAL;
 			cs_debug_mask(D_EMM, "VIDEOGUARD2 EMM: GLOBAL");
-			memset(ep->hexserial, 0, 8);
 			break;
 		
 		case VG2_EMMTYPE_U:
