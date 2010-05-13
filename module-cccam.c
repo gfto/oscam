@@ -246,13 +246,7 @@ static int cc_msg_recv(uint8 *buf) {
 	if (handle < 0)
 		return -1;
 
-	int errorCount = 0;
-	do
-	{
-		len = recv(handle, netbuf, 4, MSG_WAITALL);
-		errorCount++;
-	} while (!len && errorCount < 20);
-
+	len = recv(handle, netbuf, 4, MSG_WAITALL);
 	if (!len)
 		return -1;
 
@@ -1176,14 +1170,28 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 			memcpy(cc->dcw, buf + 4, 16);
 			cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(), cc->send_ecmtask, cs_hexdump(0,
 					cc->dcw, 16));
-			cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
-			cc->recv_ecmtask = cc->send_ecmtask;
-			pthread_mutex_unlock(&cc->ecm_busy);
-			//cc_abort_user_ecms();
-			cc_send_ecm(NULL, NULL);
 
-			if (cc->max_ecms)
-				cc->ecm_counter++;
+			//SS: fake ecm detection: first or last 8 bytes = 0:
+			if ((!buf[4] && !buf[5] && !buf[6] && !buf[7] && !buf[8] && !buf[9] && !buf[10] && !buf[11]) ||
+					(!buf[12] && !buf[13] && !buf[14] && !buf[15] && !buf[16] && !buf[17] && !buf[18] && !buf[19]))
+			{
+				buf[1] = 0;
+				pthread_mutex_unlock(&cc->ecm_busy);
+				cs_log("%s fake ECM detected! cycle connection forced!", getprefix());
+				cc_cycle_connection();
+				cc_send_ecm(NULL, NULL);
+			}
+			else
+			{
+				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
+				cc->recv_ecmtask = cc->send_ecmtask;
+				pthread_mutex_unlock(&cc->ecm_busy);
+				//cc_abort_user_ecms();
+				cc_send_ecm(NULL, NULL);
+
+				if (cc->max_ecms)
+					cc->ecm_counter++;
+			}
 			ret = 0;
 		}
 		break;
@@ -1201,11 +1209,11 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		l = l - 4;//Header Length=4 Byte
 		cs_log("%s cmd 0x05 recvd, payload length=%d", getprefix(), l);
 		//payload always needs cycle connection after 60 ECMs!!
-		if (l && cc->limit_ecms && !cc->max_ecms) {
+		if (cc->limit_ecms && !cc->max_ecms) {
 			cc->max_ecms = 60;
 			cc->ecm_counter = 0;
 		}
-		cc->cur_card = NULL;
+		//cc->cur_card = NULL;
 		cc_cmd_send(NULL, 0, MSG_BAD_ECM);
 		ret = 0;
 		break;
@@ -1836,6 +1844,8 @@ static int cc_srv_connect() {
 	// recv cli data
 	memset(buf, 0, sizeof(buf));
 	i = cc_msg_recv(buf);
+	if (i < 0)
+		return -1;
 	cs_ddump(buf, i, "cccam: cli data:");
 	memcpy(cc->peer_node_id, buf + 24, 8);
 	cs_log("%s client '%s' (%s) running v%s (%s)", getprefix(), buf + 4,
