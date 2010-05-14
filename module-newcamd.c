@@ -751,16 +751,15 @@ static void newcamd_auth_client(in_addr_t ip)
 
           cs_exit(0);
         }
+	
+	// set userfilter
+        client[cs_idx].ftab.filts[0] = mk_user_ftab();
+        pufilt = &client[cs_idx].ftab.filts[0];
 
 	// set userfilter for au enabled clients    
         if (au != -1)
         {
           client[cs_idx].ftab.filts[0] = mk_user_au_ftab(au);
-          pufilt = &client[cs_idx].ftab.filts[0];
-        }
-        else
-        {
-          client[cs_idx].ftab.filts[0] = mk_user_ftab();
           pufilt = &client[cs_idx].ftab.filts[0];
         }
 
