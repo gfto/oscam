@@ -121,6 +121,12 @@ static void cc_clear_auto_blocked(LLIST *cc_auto_blocked_list) {
 	}
 }
 
+static void cc_free_auto_blocked(LLIST *cc_auto_blocked_list) {
+	if (cc_auto_blocked_list) {
+		cc_clear_auto_blocked(cc_auto_blocked_list);
+		llist_destroy(cc_auto_blocked_list);
+	}
+}
 /**
  * reader
  * removed all caid:prov:xxx from the auto blocked list.
@@ -195,6 +201,59 @@ static int cc_is_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
 		auto_blocked = llist_itr_next(&itr);
 	}
 	return 0;
+}
+
+/**
+ * retrives last cardid for client csidx
+ */
+static struct cc_emm_cards *cc_get_last_cards_for_emm(
+		LLIST *last_cards_for_emm, int csidx) {
+	if (last_cards_for_emm) {
+		LLIST_ITR itr;
+		struct cc_emm_cards *emm_card =
+				llist_itr_init(last_cards_for_emm, &itr);
+		while (emm_card) {
+			if (emm_card->csidx == csidx) {
+				return emm_card;
+			}
+			emm_card = llist_itr_next(&itr);
+		}
+
+	}
+	return NULL;
+}
+
+/**
+ * Add/replaces last cardid id for client csidx
+ */
+static int cc_add_last_cards_for_emm(LLIST *last_cards_for_emm, uint32 id,
+		int csidx) {
+	struct cc_emm_cards *emm_card;
+	if ((emm_card = cc_get_last_cards_for_emm(last_cards_for_emm, csidx))) {
+		emm_card->id = id;
+		return 0;
+	}
+	emm_card = malloc(sizeof(struct cc_emm_cards));
+	emm_card->id = id;
+	emm_card->csidx = csidx;
+	llist_append(last_cards_for_emm, emm_card);
+	return 1;
+}
+
+static void cc_clear_last_cards_for_emm(LLIST *last_cards_for_emm) {
+	LLIST_ITR itr;
+	struct cc_emm_cards *emm_card = llist_itr_init(last_cards_for_emm, &itr);
+	while (emm_card) {
+		free(emm_card);
+		emm_card = llist_itr_remove(&itr);
+	}
+}
+
+static void cc_free_last_cards_for_emm(LLIST *last_cards_for_emm) {
+	if (last_cards_for_emm) {
+		cc_clear_last_cards_for_emm(last_cards_for_emm);
+		llist_destroy(last_cards_for_emm);
+	}
 }
 
 /**
@@ -391,8 +450,8 @@ static int cc_send_cli_data() {
 	memcpy(buf + 29, reader[ridx].cc_version, sizeof(reader[ridx].cc_version)); // cccam version (ascii)
 	memcpy(buf + 61, reader[ridx].cc_build, sizeof(reader[ridx].cc_build)); // build number (ascii)
 
-	cs_log("%s sending own version: %s, build: %s", getprefix(), reader[ridx].cc_version,
-			reader[ridx].cc_build);
+	cs_log("%s sending own version: %s, build: %s", getprefix(),
+			reader[ridx].cc_version, reader[ridx].cc_build);
 
 	i = cc_cmd_send(buf, 20 + 8 + 6 + 26 + 4 + 28 + 1, MSG_CLI_DATA);
 
@@ -601,10 +660,13 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cc->send_ecmtask = cur_er->idx;
 		reader[ridx].cc_currenthops = cc->cur_card->hop + 1;
 
-		cs_log("%s sending ecm for sid %04X to card %08x, hop %d, ecmtask %d", getprefix(),
-				cur_er->srvid, cc->cur_card->id, cc->cur_card->hop + 1, cc->send_ecmtask);
+		cs_log("%s sending ecm for sid %04X to card %08x, hop %d, ecmtask %d",
+				getprefix(), cur_er->srvid, cc->cur_card->id, cc->cur_card->hop
+						+ 1, cc->send_ecmtask);
 		pthread_mutex_unlock(&cc->list_busy);
 		n = cc_cmd_send(ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
+
+		cc_add_last_cards_for_emm(cc->last_cards_for_emm, cc->cur_card->id, cur_er->cidx);
 
 	} else {
 		n = -1;
@@ -674,41 +736,54 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
  * Copied from http://85.17.209.13:6100/file/8ec3c0c5d257/systems/cardclient/cccam2.c
  * ProcessEmm
  * */
-static int cc_send_emm(EMM_PACKET *ep)
-{
+static int cc_send_emm(EMM_PACKET *ep) {
 	struct cc_data *cc = reader[ridx].cc;
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
-		cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1 : 0, pfd);
+		cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1 : 0,
+				pfd);
 		cc->proxy_init_errors++;
 		if (cc->proxy_init_errors > 20) //TODO: Configuration?
 			cc_cycle_connection();
 		return -1;
 	}
 
+	int au = client[cs_idx].au;
+	if ((au < 0) || (au > CS_MAXREADER))
+		return -1;  // TODO
+
+	struct cc_emm_cards *emm_card = cc_get_last_cards_for_emm(cc->last_cards_for_emm, ep->cidx);
+	if (!emm_card) { //Card for emm not found!
+		cs_log("%s emm for client %d not possible, no card found!", getprefix(), ep->cidx);
+		return -1;
+	}
+
+	cs_log("%s emm for client %d caid %04X prov %04X for card %08X", getprefix(), ep->cidx,
+			b2i(2, (uchar*)&ep->caid), b2i(4, (uchar*)&ep->provid), emm_card->id);
+
 	pthread_mutex_lock(&cc->ecm_busy); //Unlock by NOK or EMM_ACK
 
 	cc->proxy_init_errors = 0;
 	cc->cur_card = NULL;
 
-	uint8 ecmbuf[CC_MAXMSGSIZE];
-	memset(ecmbuf, 0, CC_MAXMSGSIZE);
+	uint8 emmbuf[CC_MAXMSGSIZE];
+	memset(emmbuf, 0, CC_MAXMSGSIZE);
 
 	// build ecm message
-	ecmbuf[0] = ep->caid[0];
-	ecmbuf[1] = ep->caid[1];
-	ecmbuf[2] = 0;
-	ecmbuf[3] = ep->provid[0];
-	ecmbuf[4] = ep->provid[1];
-	ecmbuf[5] = ep->provid[2];
-	ecmbuf[6] = ep->provid[3];
-	ecmbuf[7] = ep->hexserial[0];
-	ecmbuf[8] = ep->hexserial[1];
-	ecmbuf[9] = ep->hexserial[2];
-	ecmbuf[10] = ep->hexserial[3];
-	ecmbuf[11] = ep->l;
-	memcpy(ecmbuf+12, ep->emm, ep->l);
+	emmbuf[0] = ep->caid[0];
+	emmbuf[1] = ep->caid[1];
+	emmbuf[2] = 0;
+	emmbuf[3] = ep->provid[0];
+	emmbuf[4] = ep->provid[1];
+	emmbuf[5] = ep->provid[2];
+	emmbuf[6] = ep->provid[3];
+	emmbuf[7] = emm_card->id >> 24;
+	emmbuf[8] = emm_card->id >> 16;
+	emmbuf[9] = emm_card->id >> 8;
+	emmbuf[10] = emm_card->id & 0xff;
+	emmbuf[11] = ep->l;
+	memcpy(emmbuf + 12, ep->emm, ep->l);
 
-	return cc_cmd_send(ecmbuf, ep->l+12, MSG_EMM_ACK); // send emm
+	return cc_cmd_send(emmbuf, ep->l + 12, MSG_EMM_ACK); // send emm
 }
 
 //SS: Hack
@@ -736,6 +811,47 @@ static void freeCaidInfos(LLIST *caid_infos) {
 	}
 }
 
+/**
+ * Server:
+ * Adds a cccam-carddata buffer to the list of reported carddatas
+ */
+static void cc_add_reported_carddata(LLIST *reported_carddatas, uint8 *buf,
+		int len) {
+	struct cc_reported_carddata *carddata = malloc(
+			sizeof(struct cc_reported_carddata));
+	uint8 *buf_copy = malloc(len);
+	memcpy(buf_copy, buf, len);
+	carddata->buf = buf_copy;
+	carddata->len = len;
+	llist_append(reported_carddatas, carddata);
+}
+
+static void cc_clear_reported_carddata(LLIST *reported_carddatas,
+		int send_removed) {
+	LLIST_ITR itr;
+	struct cc_reported_carddata *carddata = llist_itr_init(reported_carddatas,
+			&itr);
+	while (carddata) {
+		if (send_removed)
+			cc_cmd_send(carddata->buf, carddata->len, MSG_CARD_REMOVED);
+		free(carddata->buf);
+		free(carddata);
+		carddata = llist_itr_remove(&itr);
+	}
+
+}
+
+static void cc_free_reported_carddata(LLIST *reported_carddatas,
+		int send_removed) {
+	if (reported_carddatas) {
+		cc_clear_reported_carddata(reported_carddatas, send_removed);
+		llist_destroy(reported_carddatas);
+	}
+}
+
+/**
+ * Clears and free the cc datas
+ */
 static void cc_free(struct cc_data *cc) {
 	if (!cc)
 		return;
@@ -751,6 +867,9 @@ static void cc_free(struct cc_data *cc) {
 		llist_destroy(cc->cards);
 		cc->cards = NULL;
 	}
+	cc_free_reported_carddata(cc->reported_carddatas, 0);
+	cc_free_auto_blocked(cc->auto_blocked);
+	cc_free_last_cards_for_emm(cc->last_cards_for_emm);
 	free(cc);
 }
 
@@ -1066,7 +1185,8 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 				found = 1;
 				//SS: Fix card free:
 				if (card == cc->cur_card) {
-					cs_log("%s current card %08x removed!", getprefix(), card->id);
+					cs_log("%s current card %08x removed!", getprefix(),
+							card->id);
 					cc->cur_card = NULL;
 					cur_card_removed = 1;
 				}
@@ -1158,18 +1278,19 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
 				get_cw(er);
-				cs_debug_mask(D_TRACE, "%s ECM request from client: caid %04x srvid %04x prid %04x", getprefix(),
-										er->caid, er->srvid, er->prid);
-			}
-			else
+				cs_debug_mask(
+						D_TRACE,
+						"%s ECM request from client: caid %04x srvid %04x prid %04x",
+						getprefix(), er->caid, er->srvid, er->prid);
+			} else
 				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());
 
 		} else { //READER:
 			cc->just_logged_in = 0;
 			cc_cw_crypt(buf + 4);
 			memcpy(cc->dcw, buf + 4, 16);
-			cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(), cc->send_ecmtask, cs_hexdump(0,
-					cc->dcw, 16));
+			cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
+					cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
 
 			//SS: fake ecm detection: first or last 8 bytes = 0:
 			//if ((!buf[4] && !buf[5] && !buf[6] && !buf[7] && !buf[8] && !buf[9] && !buf[10] && !buf[11]) ||
@@ -1228,10 +1349,15 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		if (is_server) { //EMM Request received
 			if (l > 4) {
 				cs_log("%s EMM Request received!", getprefix());
+
+				int au = client[cs_idx].au;
+				if ((au < 0) || (au > CS_MAXREADER))
+					return 0;
+
 				EMM_PACKET *emm = malloc(sizeof(EMM_PACKET));
 				memset(emm, 0, sizeof(EMM_PACKET));
 				emm->l = buf[13];
-				memcpy(emm->emm, buf+14, emm->l);
+				memcpy(emm->emm, buf + 14, emm->l);
 				emm->caid[0] = buf[4];
 				emm->caid[1] = buf[5];
 				emm->provid[0] = buf[7];
@@ -1243,15 +1369,14 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 				emm->hexserial[2] = buf[13];
 				emm->hexserial[3] = buf[14];
 				emm->l = buf[15];
-				memcpy(emm->emm, buf+16, emm->l);
+				memcpy(emm->emm, buf + 16, emm->l);
 				emm->type = UNKNOWN;
 				emm->cidx = cs_idx;
 				do_emm(emm);
 				free(emm);
 				cc_cmd_send(NULL, 0, MSG_EMM_ACK); //Send back ACK
 			}
-		}
-		else { //Our EMM Request Ack!
+		} else { //Our EMM Request Ack!
 			cs_log("%s EMM ACK!", getprefix());
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cc_send_ecm(NULL, NULL);
@@ -1300,7 +1425,8 @@ static void cc_send_dcw(ECM_REQUEST *er) {
 		memcpy(buf, er->cw, sizeof(buf));
 		cc_cw_crypt(buf);
 		NULLFREE(cc->cur_card);
-		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(), cs_hexdump(0, er->cw,16), er->cpti);
+		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
+				cs_hexdump(0, er->cw, 16), er->cpti);
 		cc_cmd_send(buf, 16, MSG_CW_ECM);
 		cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
 	} else {
@@ -1379,6 +1505,7 @@ static int cc_cli_connect(void) {
 		cc->cards = llist_create();
 		reader[ridx].cc = cc;
 		cc->auto_blocked = llist_create();
+		cc->last_cards_for_emm = llist_create();
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
@@ -1462,7 +1589,6 @@ static int cc_cli_connect(void) {
 		return -3;
 	}
 
-
 	pthread_mutex_init(&cc->lock, NULL);
 	pthread_mutex_init(&cc->ecm_busy, NULL);
 	pthread_mutex_init(&cc->list_busy, NULL);
@@ -1484,34 +1610,6 @@ static int cc_cli_connect(void) {
 	cc->just_logged_in = 1;
 
 	return 0;
-}
-
-/**
- * Server:
- * Adds a cccam-carddata buffer to the list of reported carddatas
- */
-static void add_reported_carddata(LLIST *reported_carddatas, uint8 *buf,
-		int len) {
-	struct cc_reported_carddata *carddata = malloc(
-			sizeof(struct cc_reported_carddata));
-	uint8 *buf_copy = malloc(len);
-	memcpy(buf_copy, buf, len);
-	carddata->buf = buf_copy;
-	carddata->len = len;
-	llist_append(reported_carddatas, carddata);
-}
-
-static void clear_reported_carddata(LLIST *reported_carddatas) {
-	LLIST_ITR itr;
-	struct cc_reported_carddata *carddata = llist_itr_init(reported_carddatas,
-			&itr);
-	while (carddata) {
-		cc_cmd_send(carddata->buf, carddata->len, MSG_CARD_REMOVED);
-		free(carddata->buf);
-		free(carddata);
-		carddata = llist_itr_remove(&itr);
-	}
-	llist_destroy(reported_carddatas);
 }
 
 /**
@@ -1582,7 +1680,7 @@ static int cc_srv_report_cards() {
 					 */
 					int len = 30 + (k * 7);
 					cc_cmd_send(buf, len, MSG_NEW_CARD);
-					add_reported_carddata(reported_carddatas, buf, len);
+					cc_add_reported_carddata(reported_carddatas, buf, len);
 
 					id++;
 					flt = 1;
@@ -1629,7 +1727,7 @@ static int cc_srv_report_cards() {
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
 					cc_cmd_send(buf, len, MSG_NEW_CARD);
-					add_reported_carddata(reported_carddatas, buf, len);
+					cc_add_reported_carddata(reported_carddatas, buf, len);
 					id++;
 
 					flt = 1;
@@ -1672,7 +1770,7 @@ static int cc_srv_report_cards() {
 					== CARD_INSERTED) /*&& !reader[r].cc_id*/) {
 				reader[r].cc_id = b2i(3, buf + 5);
 				int len = 30 + (j * 7);
-				add_reported_carddata(reported_carddatas, buf, len);
+				cc_add_reported_carddata(reported_carddatas, buf, len);
 				cc_cmd_send(buf, len, MSG_NEW_CARD);
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
 			} else if ((reader[r].card_status != CARD_INSERTED)
@@ -1729,7 +1827,7 @@ static int cc_srv_report_cards() {
 					reader[r].cc_id = b2i(3, buf + 5);
 					int len = 30 + (j * 7);
 					cc_cmd_send(buf, len, MSG_NEW_CARD);
-					add_reported_carddata(reported_carddatas, buf, len);
+					cc_add_reported_carddata(reported_carddatas, buf, len);
 					caid_info = llist_itr_next(&itr);
 				}
 			}
@@ -1739,8 +1837,7 @@ static int cc_srv_report_cards() {
 	cc->report_carddata_id = id;
 
 	//Reported deleted cards:
-	if (cc->reported_carddatas)
-		clear_reported_carddata(cc->reported_carddatas);
+	cc_free_reported_carddata(cc->reported_carddatas, 1);
 	cc->reported_carddatas = reported_carddatas;
 
 	int count = llist_count(reported_carddatas);
@@ -1869,11 +1966,6 @@ static int cc_srv_connect() {
 		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
 		//cs_log("srv process input i=%d cmi=%d", i, cmi);
 		if (i == -9) {
-			int new_caid_info_count = cc->caid_infos ? llist_count(
-					cc->caid_infos) : 0;
-			if (new_caid_info_count != caid_info_count) {
-				cc_srv_report_cards();
-			}
 			cmi += 10;
 			if (cmi >= cfg->cmaxidle) {
 				cmi = 0;
@@ -1883,6 +1975,12 @@ static int cc_srv_connect() {
 							getprefix());
 					i = 1;
 				}
+			}
+			int new_caid_info_count = cc->caid_infos ? llist_count(
+					cc->caid_infos) : 0;
+			if (new_caid_info_count != caid_info_count) {
+				cc_srv_report_cards();
+				cmi += 10;
 			}
 		} else if (i <= 0)
 			break;

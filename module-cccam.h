@@ -74,6 +74,10 @@ struct cc_auto_blocked {
 	time_t time;
 };
 
+struct cc_emm_cards {
+	uint32 id; // cccam card (share) id
+	int csidx; // client-index
+};
 //SS: Hack end
 
 struct cc_data {
@@ -87,16 +91,17 @@ struct cc_data {
 	LLIST *cards; // cards list
 
 	//SS: Hack:
-	LLIST *caid_infos;
+	LLIST *caid_infos; //struct cc_caid_info
 	long caid_size;
 	uint16 needs_rebuild_caidinfo;
 	int limit_ecms;
 	int max_ecms;
 	int ecm_counter;
 	int report_carddata_id; //Server only
-	LLIST *reported_carddatas; //struct cc_reported_carddata
-	LLIST *auto_blocked; //struct cc_auto_blocked
-	int just_logged_in; //true for checking NOW direct after login
+	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
+	LLIST *auto_blocked; //struct cc_auto_blocked //struct cc_auto_blocked
+	int just_logged_in; //true for checking NOK direct after login
+	LLIST *last_cards_for_emm; //stores client-emm infos //struct cc_emm_cards
 	//SS: Hack end
 
 	uint32 send_ecmtask;
