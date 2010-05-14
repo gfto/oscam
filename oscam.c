@@ -2520,6 +2520,7 @@ void cs_waitforcardinit()
 {
 	if (cfg->waitforcards)
 	{
+  		cs_log("waiting for local card init");
 		int card_init_done, i;
 		cs_sleepms(3000);  // short sleep for card detect to work proberly
 		do {
@@ -2533,6 +2534,7 @@ void cs_waitforcardinit()
 			cs_sleepms(300); // wait a little bit
 			alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1); 
 		} while (!card_init_done);
+  		cs_log("init for all local cards done");
 	}
 }
 
@@ -2670,9 +2672,7 @@ int main (int argc, char *argv[])
 #endif
   init_cardreader();
 
-  cs_log("waiting for local card init");
   cs_waitforcardinit();
-  cs_log("init for all local cards done");
 #ifdef CS_LED
   cs_switch_led(LED1A, LED_OFF);
   cs_switch_led(LED1B, LED_ON);
