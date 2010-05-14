@@ -1209,7 +1209,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		l = l - 4;//Header Length=4 Byte
 		cs_log("%s cmd 0x05 recvd, payload length=%d", getprefix(), l);
 		//payload always needs cycle connection after 60 ECMs!!
-		if (cc->limit_ecms && !cc->max_ecms) {
+		if (l && cc->limit_ecms && !cc->max_ecms) {
 			cc->max_ecms = 60;
 			cc->ecm_counter = 0;
 		}
