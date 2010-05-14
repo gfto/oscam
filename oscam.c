@@ -463,8 +463,10 @@ static void restart_cardreader(int pridx) {
 			break;
 		default:
 			cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
-			cs_log("RESTARTING READER (index=%d)", ridx);
+			cs_log("restarting reader %s (index=%d)", reader[ridx].label, ridx);
 			wait4master();
+			uchar dummy[1]={0x00};
+            write_to_pipe(fd_c2m, PIP_ID_KCL, dummy, 1);
 			start_cardreader(&reader[ridx]);
 		}
 	}
@@ -509,14 +511,15 @@ static void cs_child_chk(int i)
     			reader[ridx].cs_idx=0;
     			reader[ridx].last_s = 0;
     			reader[ridx].last_g = 0;
-    			cs_debug_mask(D_TRACE, "closing fd_m2c=%d, fd_m2c_c=%d, ufd=%d", client[i].fd_m2c, client[i].fd_m2c_c, client[i].ufd);
+    			cs_debug_mask(D_TRACE, "%s %s closed (index=%d)", txt, reader[ridx].label, ridx);
                 //if (client[i].fd_m2c) close(client[i].fd_m2c);
                 if (client[i].ufd) close(client[i].ufd);
                 if (client[i].fd_m2c_c) close(client[i].fd_m2c_c);
                 memset(&client[i], 0, sizeof(struct s_client));
                 client[i].au=(-1);
 
-                cs_log("RESTARTING READER %s in %d seconds (index=%d)", txt, cfg->reader_restart_seconds, ridx);
+                cs_log("restarting %s %s in %d seconds (index=%d)", reader[ridx].label, txt,
+                		cfg->reader_restart_seconds, ridx);
                 uchar u[2];
                 u[0] = ridx;
                 u[1] = 0;
@@ -2480,8 +2483,11 @@ static void process_master_pipe()
     case PIP_ID_HUP:
       cs_accounts_chk();
       break;
-    case PIP_ID_RST:
+    case PIP_ID_RST: //Restart Cardreader with ridx=prt[0]
       restart_cardreader(ptr[0]);
+      break;
+    case PIP_ID_KCL: //Kill all clients
+      cs_waitforcardinit();
       restart_clients();
       break;
   }

@@ -167,7 +167,7 @@ extern char *boxdesc[];
 #endif
 
 #ifdef CS_CORE
-char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", NULL  };
+char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
                        "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
@@ -183,9 +183,11 @@ extern char *RDR_CD_TXT[];
 #define PIP_ID_LOG    2
 #define PIP_ID_CIN    3  // CARD_INFO
 #define PIP_ID_HUP    4
-#define PIP_ID_RST    5  // SS:Restart Reader, CCcam for example
-#define PIP_ID_DCW    6
-#define PIP_ID_MAX    PIP_ID_RST
+#define PIP_ID_RST    5  // Schlocke: Restart Reader, CCcam for example
+#define PIP_ID_KCL    6  // Schlocke: Kill all Clients
+
+#define PIP_ID_DCW    7
+#define PIP_ID_MAX    PIP_ID_KCL
 
 
 #define PIP_ID_ERR    (-1)

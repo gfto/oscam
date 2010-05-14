@@ -1969,18 +1969,15 @@ static int cc_srv_connect() {
 			cmi += 10;
 			if (cmi >= cfg->cmaxidle) {
 				cmi = 0;
-				if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) > 0) {
-					cs_debug_mask(D_TRACE,
-							"%s keepalive after maxidle is reached",
-							getprefix());
-					i = 1;
-				}
+				cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached", getprefix());
+				break;
 			}
-			int new_caid_info_count = cc->caid_infos ? llist_count(
-					cc->caid_infos) : 0;
+
+			cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
+
+			int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 			if (new_caid_info_count != caid_info_count) {
 				cc_srv_report_cards();
-				cmi += 10;
 			}
 		} else if (i <= 0)
 			break;
