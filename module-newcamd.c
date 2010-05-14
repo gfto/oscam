@@ -754,15 +754,12 @@ static void newcamd_auth_client(in_addr_t ip)
 	
 	// set userfilter
         client[cs_idx].ftab.filts[0] = mk_user_ftab();
-        pufilt = &client[cs_idx].ftab.filts[0];
 
 	// set userfilter for au enabled clients    
         if (au != -1)
-        {
           client[cs_idx].ftab.filts[0] = mk_user_au_ftab(au);
-          pufilt = &client[cs_idx].ftab.filts[0];
-        }
 
+        pufilt = &client[cs_idx].ftab.filts[0];
         client[cs_idx].ftab.nfilts = 1;
 
         mbuf[0] = MSG_CARD_DATA;
