@@ -1172,16 +1172,16 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 					cc->dcw, 16));
 
 			//SS: fake ecm detection: first or last 8 bytes = 0:
-			if ((!buf[4] && !buf[5] && !buf[6] && !buf[7] && !buf[8] && !buf[9] && !buf[10] && !buf[11]) ||
-					(!buf[12] && !buf[13] && !buf[14] && !buf[15] && !buf[16] && !buf[17] && !buf[18] && !buf[19]))
-			{
-				buf[1] = 0;
-				pthread_mutex_unlock(&cc->ecm_busy);
-				cs_log("%s fake ECM detected! cycle connection forced!", getprefix());
-				cc_cycle_connection();
-				cc_send_ecm(NULL, NULL);
-			}
-			else
+			//if ((!buf[4] && !buf[5] && !buf[6] && !buf[7] && !buf[8] && !buf[9] && !buf[10] && !buf[11]) ||
+			//		(!buf[12] && !buf[13] && !buf[14] && !buf[15] && !buf[16] && !buf[17] && !buf[18] && !buf[19]))
+			//{
+			//	buf[1] = 0;
+			//	pthread_mutex_unlock(&cc->ecm_busy);
+			//	cs_log("%s fake ECM detected! cycle connection forced!", getprefix());
+			//	cc_cycle_connection();
+			//	cc_send_ecm(NULL, NULL);
+			//}
+			//else
 			{
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 				cc->recv_ecmtask = cc->send_ecmtask;
