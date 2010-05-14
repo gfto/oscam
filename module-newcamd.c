@@ -695,6 +695,16 @@ static void newcamd_auth_client(in_addr_t ip)
       usr = 0;
     }
 
+    // check for non ready reader and reject client
+    for(r=0;r<CS_MAXREADER;r++)
+      if(reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
+        break;
+
+    if(reader[r].card_status == CARD_NEED_INIT) {
+      cs_log("init for reader %s not finished -> reject client", reader[r].label);
+      ok = 0;
+    }
+
     if (ok)
     {
       au = client[cs_idx].au;
@@ -720,17 +730,6 @@ static void newcamd_auth_client(in_addr_t ip)
     network_cmd_no_data_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid, 
               (ok)?MSG_CLIENT_2_SERVER_LOGIN_ACK:MSG_CLIENT_2_SERVER_LOGIN_NAK,
               client[cs_idx].ncd_skey, COMMTYPE_SERVER);
-
-
-    // check for non ready reader and reject client
-    for(r=0;r<CS_MAXREADER;r++)
-      if(reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
-        break;
-
-    if(reader[r].card_status == CARD_NEED_INIT) {
-      cs_log("init for reader %s not finished -> reject client", reader[r].label);
-      ok = 0;
-    }
 
     if (ok) 
     {
