@@ -722,7 +722,7 @@ static void newcamd_auth_client(in_addr_t ip)
               client[cs_idx].ncd_skey, COMMTYPE_SERVER);
 
 
-    // check for non ready reader an reject client
+    // check for non ready reader and reject client
     for(r=0;r<CS_MAXREADER;r++)
       if(reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
         break;
@@ -732,7 +732,6 @@ static void newcamd_auth_client(in_addr_t ip)
       ok = 0;
     }
 
-    
     if (ok) 
     {
       FILTER *pufilt = 0;
