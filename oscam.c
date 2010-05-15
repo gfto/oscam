@@ -2458,15 +2458,14 @@ int process_input(uchar *buf, int l, int timeout)
 
 static void restart_clients()
 {
-	  int i;
-	  cs_log("restarting clients");
-	  for (i=0; i<CS_MAXPID; i++) {
-	    if (client[i].typ=='c')
-	    {
-	      kill(client[i].pid, SIGKILL);
-	      cs_log("killing client c%02d pid %d", i, client[i].pid);
-	    }
-	  }
+	int i;
+	cs_log("restarting clients");
+	for (i=0; i<CS_MAXPID; i++) {
+		if (client[i].pid && client[i].typ=='c' && ph[client[i].ctyp].type & MOD_CONN_NET) {
+			kill(client[i].pid, SIGKILL);
+			cs_log("killing client c%02d pid %d", i, client[i].pid);
+		}
+	}
 }
 
 
