@@ -634,6 +634,9 @@ static void reader_do_pipe(struct s_reader * reader)
     case PIP_ID_CIN: 
       reader_card_info(reader); 
       break;
+    case PIP_ID_UPR: //Schlocke: updater reader config
+      update_reader_config(ptr);
+      break;
   }
 }
 

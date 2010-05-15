@@ -541,6 +541,9 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		return -1;
 	}
 
+	if (!llist_count(cc->cards))
+		return 0;
+
 	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
 		cs_debug_mask(D_TRACE, "%s ecm trylock: failed to get lock",
 				getprefix());
@@ -1099,6 +1102,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		if (!card)
 			break;
 
+    reader[ridx].tcp_connected = 2; //we have card
 		memset(card, 0, sizeof(struct cc_card));
 
 		card->provs = llist_create();
@@ -1603,9 +1607,9 @@ static int cc_cli_connect(void) {
 		reader[ridx].prid[n][3] = reader[ridx].ftab.filts[0].prids[n] & 0xff;
 	}
 
-	reader[ridx].tcp_connected = 1;
-	reader[ridx].last_g = reader[ridx].last_s = time((time_t *) 0);
 	reader[ridx].card_status = CARD_INSERTED;
+	reader[ridx].last_g = reader[ridx].last_s = time((time_t *) 0);
+	reader[ridx].tcp_connected = 1;
 
 	cc->just_logged_in = 1;
 
@@ -2072,7 +2076,7 @@ int cc_cli_init() {
 }
 
 void cc_cleanup(void) {
-	cs_debug("cc_cleanup in");
+  cc_cli_close();
 	cc_free(reader[ridx].cc);
 	reader[ridx].cc = NULL;
 	cc_free(client[cs_idx].cc);

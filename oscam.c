@@ -296,6 +296,12 @@ static void cs_sigpipe()
 
 void cs_exit(int sig)
 {
+	
+#ifdef ST_LINUX
+  Fortis_STSMART_Close();
+  Fortis_STPTI_Close();
+#endif
+
   set_signal_handler(SIGCHLD, 1, SIG_IGN);
   set_signal_handler(SIGHUP , 1, SIG_IGN);
   if (sig && (sig!=SIGQUIT))
@@ -451,7 +457,46 @@ static void cs_card_info(int i)
       //kill(client[i].pid, SIGUSR2);
 }
 
-//SS: restart cardreader after 5 seconds:
+void update_reader_config(uchar *ptr) {
+	struct s_update_pipes *update = (struct s_update_pipes*) ptr;
+	int ridx = update->ridx;
+	//reader:
+	reader[ridx].pid    = update->rpid;
+	reader[ridx].enable = update->enable;
+	reader[ridx].fd     = update->fd;
+	reader[ridx].grp    = update->grp;
+	reader[ridx].fallback = update->fallback;
+	reader[ridx].tcp_connected = update->tcp_connected;
+	reader[ridx].deleted = update->deleted;
+
+	int cs_idx = reader[ridx].cs_idx;
+	client[cs_idx].pid = reader[ridx].pid;
+
+	cs_log("reader config %s (ridx=%d) updated", reader[ridx].label, ridx);
+}
+
+static void update_reader_pipes(int ridx) {
+	cs_log("update reader pipes %d",ridx);
+	int size = sizeof(struct s_update_pipes);
+	struct s_update_pipes update;
+	//reader:
+	update.rpid     = reader[ridx].pid;
+	update.ridx     = ridx;
+	update.enable   = reader[ridx].enable;
+	update.fd       = reader[ridx].fd;
+	update.grp      = reader[ridx].grp;
+	update.fallback = reader[ridx].fallback;
+	update.tcp_connected = reader[ridx].tcp_connected;
+	update.deleted  = reader[ridx].deleted;
+	int i;
+	//Send full reader config to the clients:
+	for( i=1; i<CS_MAXPID; i++ )
+		if( client[i].pid && client[i].typ=='c' && client[i].fd_m2c ){
+			write_to_pipe(client[i].fd_m2c, PIP_ID_UPR, (uchar*)&update, size);
+		}
+}
+
+//Schlocke: restart cardreader after 5 seconds:
 static void restart_cardreader(int pridx) {
 	ridx = pridx;
 	reader[ridx].ridx = ridx; //FIXME
@@ -464,9 +509,10 @@ static void restart_cardreader(int pridx) {
 		default:
 			cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
 			cs_log("restarting reader %s (index=%d)", reader[ridx].label, ridx);
-			wait4master();
-			uchar dummy[1]={0x00};
-            write_to_pipe(fd_c2m, PIP_ID_KCL, dummy, 1);
+
+			//send update reader config-task to master:
+			write_to_pipe(fd_c2m, PIP_ID_URM, (uchar*)&ridx, sizeof(ridx));
+
 			start_cardreader(&reader[ridx]);
 		}
 	}
@@ -518,12 +564,11 @@ static void cs_child_chk(int i)
                 memset(&client[i], 0, sizeof(struct s_client));
                 client[i].au=(-1);
 
+                write_to_pipe(fd_c2m, PIP_ID_URM, (uchar*)&ridx, sizeof(ridx));
+
                 cs_log("restarting %s %s in %d seconds (index=%d)", reader[ridx].label, txt,
                 		cfg->reader_restart_seconds, ridx);
-                uchar u[2];
-                u[0] = ridx;
-                u[1] = 0;
-                write_to_pipe(fd_c2m, PIP_ID_RST, u, sizeof(u));
+                write_to_pipe(fd_c2m, PIP_ID_RST, (uchar*)&ridx, sizeof(ridx));
                 break;
               }
             }
@@ -1775,10 +1820,10 @@ int send_dcw(ECM_REQUEST *er)
 		{
 			client[cs_idx].au=(-1);
 		}
-
-		client[cs_idx].au=er->reader[0];
-		if(client[cs_idx].au<0)
-		{
+		//martin
+		//client[cs_idx].au=er->reader[0];
+		//if(client[cs_idx].au<0)
+		//{
 			int r=0;
 			for(r=0;r<CS_MAXREADER;r++)
 			{
@@ -1792,7 +1837,7 @@ int send_dcw(ECM_REQUEST *er)
 			{
 				client[cs_idx].au=(-1);
 			}
-		}
+		//}
 	}
 
 	er->caid = er->ocaid;
@@ -1845,8 +1890,17 @@ int send_dcw(ECM_REQUEST *er)
 void chk_dcw(int fd)
 {
   ECM_REQUEST *er, *ert;
-  if (read_from_pipe(fd, (uchar **)&er, 0)!=PIP_ID_ECM)
+  switch (read_from_pipe(fd, (uchar **)&er, 0))
+  {
+	  case PIP_ID_ECM: break;
+
+	  case PIP_ID_UPR: //Schlocke: updater reader config
+		  update_reader_config((uchar*)er);
+	      return;
+
+	  default:
     return;
+  }
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100)
@@ -2477,18 +2531,21 @@ static void process_master_pipe()
   switch(n=read_from_pipe(mfdr, &ptr, 1))
   {
     case PIP_ID_LOG:
-      cs_write_log((char *)ptr);
-      break;
+    	cs_write_log((char *)ptr);
+    	break;
     case PIP_ID_HUP:
-      cs_accounts_chk();
-      break;
+    	cs_accounts_chk();
+    	break;
     case PIP_ID_RST: //Restart Cardreader with ridx=prt[0]
-      restart_cardreader(ptr[0]);
-      break;
+    	restart_cardreader(*(int*)ptr);
+    	break;
     case PIP_ID_KCL: //Kill all clients
-      cs_waitforcardinit();
-      restart_clients();
-      break;
+    	restart_clients();
+    	break;
+    case PIP_ID_URM: //Update Reader Pipe/Config:
+    	update_reader_pipes(*(int*)ptr);
+    	restart_clients();
+    	break;
   }
 }
 
