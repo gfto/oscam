@@ -230,7 +230,7 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
          if (reader->ph.cleanup) reader->ph.cleanup();
          cs_exit(1);
     }
-    //cs_resolve_reader(reader->ridx);
+    cs_resolve_reader(reader->ridx);
 //  cs_log("last_s=%d, last_g=%d", reader->last_s, reader->last_g);
   }
 }

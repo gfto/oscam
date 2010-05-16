@@ -99,7 +99,11 @@ static void usage()
   fprintf(stderr, "\tbased on streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n");
   fprintf(stderr, "\tinbuilt modules: ");
 #ifdef HAVE_DVBAPI
+#ifdef WITH_STAPI
+  fprintf(stderr, "dvbapi with stapi");
+#else
   fprintf(stderr, "dvbapi ");
+#endif
 #endif
 #ifdef WEBIF
   fprintf(stderr, "webinterface ");
@@ -291,7 +295,12 @@ static void cs_sigpipe()
 {
   if ((cs_idx) && (master_pid!=getppid()))
     cs_exit(0);
-  cs_log("Got sigpipe signal -> captured");
+  if (client[cs_idx].typ == 'c') {
+	  cs_log("Got sigpipe signal -> closing child %d", cs_idx);
+	  cs_exit(1);
+  }
+  else
+    cs_log("Got sigpipe signal -> captured");
 }
 
 void cs_exit(int sig)
@@ -464,9 +473,7 @@ void update_reader_config(uchar *ptr) {
 	reader[ridx].pid    = update->rpid;
 	reader[ridx].enable = update->enable;
 	reader[ridx].fd     = update->fd;
-	reader[ridx].grp    = update->grp;
 	reader[ridx].fallback = update->fallback;
-	reader[ridx].tcp_connected = update->tcp_connected;
 	reader[ridx].deleted = update->deleted;
 
 	int cs_idx = reader[ridx].cs_idx;
@@ -478,15 +485,14 @@ void update_reader_config(uchar *ptr) {
 static void update_reader_pipes(int ridx) {
 	cs_log("update reader pipes %d",ridx);
 	int size = sizeof(struct s_update_pipes);
+
 	struct s_update_pipes update;
 	//reader:
 	update.rpid     = reader[ridx].pid;
 	update.ridx     = ridx;
 	update.enable   = reader[ridx].enable;
 	update.fd       = reader[ridx].fd;
-	update.grp      = reader[ridx].grp;
 	update.fallback = reader[ridx].fallback;
-	update.tcp_connected = reader[ridx].tcp_connected;
 	update.deleted  = reader[ridx].deleted;
 	int i;
 	//Send full reader config to the clients:
@@ -606,6 +612,15 @@ static void cs_child_chk(int i)
           }
 #endif
           client[i].au=(-1);
+
+#ifdef HAVE_DVBAPI
+          int phi = client[i].ctyp;
+          if (client[i].typ == 'c' && ph[phi].type & MOD_CONN_SERIAL) //Schlocke: dvbapi killed? restart
+          {
+              if (ph[phi].s_handler)
+                ph[phi].s_handler(phi);
+          }
+#endif
         }
       }
   return;
@@ -1430,7 +1445,7 @@ void cs_disconnect_client(void)
 	char buf[32]={0};
 	if (client[cs_idx].ip)
 		sprintf(buf, " from %s", cs_inet_ntoa(client[cs_idx].ip));
-	cs_log("%s disconnected%s", username(cs_idx), buf);
+	cs_log("%s disconnected %s", username(cs_idx), buf);
 	cs_exit(0);
 }
 
@@ -2544,7 +2559,6 @@ static void process_master_pipe()
     	break;
     case PIP_ID_URM: //Update Reader Pipe/Config:
     	update_reader_pipes(*(int*)ptr);
-    	restart_clients();
     	break;
   }
 }

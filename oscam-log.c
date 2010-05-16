@@ -1,7 +1,6 @@
 #include "globals.h"
 #include <syslog.h>
 #include <stdlib.h>
-#include <pthread.h>
 
 int number_of_chars_printed = 0;
 
@@ -9,7 +8,6 @@ static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
 static int use_syslog=0;
 static int use_stdout=0;
-static pthread_mutex_t log_lock;
 static char *log_txt;
 static char *log_buf;
 
@@ -81,7 +79,6 @@ int cs_init_log(char *file)
 {
 	static char *head = ">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")";
 
-	pthread_mutex_init(&log_lock, NULL);
 	log_txt = malloc(512);
 	log_buf = malloc(700);
 
@@ -220,21 +217,18 @@ void cs_log(char *fmt,...)
 {
 	if (!log_txt)
 		return;
-	pthread_mutex_lock(&log_lock);
 	get_log_header(1, log_txt);
 	va_list params;
 	va_start(params, fmt);
 	vsprintf(log_txt+11, fmt, params);
 	va_end(params);
 	write_to_log(-1, log_txt);
-	pthread_mutex_unlock(&log_lock);
 }
 
 void cs_close_log(void)
 {
 	if (log_txt) {
 		cs_log("LOG CLOSED");
-		pthread_mutex_destroy(&log_lock);
 		free(log_buf);
 		free(log_txt);
 		log_txt = NULL;
@@ -250,14 +244,12 @@ void cs_debug(char *fmt,...)
 	//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, client[cs_idx].dbglvl ,cs_ptyp & client[cs_idx].dbglvl);
 	if (log_txt && client[cs_idx].dbglvl & cs_ptyp)
 	{
-		pthread_mutex_lock(&log_lock);
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
 		vsprintf(log_txt+11, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
-		pthread_mutex_unlock(&log_lock);
 	}
 }
 
@@ -265,14 +257,12 @@ void cs_debug_mask(unsigned short mask, char *fmt,...)
 {
 	if (log_txt && client[cs_idx].dbglvl & mask)
 	{
-		pthread_mutex_lock(&log_lock);
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
 		vsprintf(log_txt+11, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
-		pthread_mutex_unlock(&log_lock);
 	}
 }
 
@@ -280,7 +270,6 @@ void cs_debug_nolf(char *fmt,...)
 {
 	if (log_txt && client[cs_idx].dbglvl & cs_ptyp)
 	{
-		pthread_mutex_lock(&log_lock);
 		va_list params;
 		va_start(params, fmt);
 		vsprintf(log_txt, fmt, params);
@@ -291,7 +280,6 @@ void cs_debug_nolf(char *fmt,...)
 		else
 			number_of_chars_printed++;
 		write_to_log(number_of_chars_printed, log_txt);
-		pthread_mutex_unlock(&log_lock);
 	}
 }
 
@@ -299,7 +287,6 @@ void cs_dump(uchar *buf, int n, char *fmt, ...)
 {
 	if (!log_txt)
 		return;
-	pthread_mutex_lock(&log_lock);
 	int i;
 
 	if( fmt )
@@ -319,14 +306,12 @@ void cs_dump(uchar *buf, int n, char *fmt, ...)
 		sprintf(log_txt+11, "%s", cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i));
 		write_to_log(-1, log_txt);
 	}
-	pthread_mutex_unlock(&log_lock);
 }
 
 void cs_ddump(uchar *buf, int n, char *fmt, ...)
 {
 	if (!log_txt)
 		return;
-	pthread_mutex_lock(&log_lock);
 	int i;
 
 	//if (((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp) && (fmt))
@@ -350,14 +335,12 @@ void cs_ddump(uchar *buf, int n, char *fmt, ...)
 			write_to_log(-1, log_txt);
 		}
 	}
-	pthread_mutex_unlock(&log_lock);
 }
 
 void cs_ddump_mask(unsigned short mask, uchar *buf, int n, char *fmt, ...)
 {
 	if(!log_txt)
 		return;
-	pthread_mutex_lock(&log_lock);
 	int i;
 
 	//if (((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp) && (fmt))
@@ -381,7 +364,6 @@ void cs_ddump_mask(unsigned short mask, uchar *buf, int n, char *fmt, ...)
 			write_to_log(-1, log_txt);
 		}
 	}
-	pthread_mutex_unlock(&log_lock);
 }
 
 int cs_init_statistics(char *file) 

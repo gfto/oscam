@@ -98,6 +98,10 @@ static void cc_cw_crypt(uint8 *cws) {
 		node_id = b2ll(8, cc->peer_node_id);
 	}
 
+	if (!cc->cur_card) {
+		cs_log("%s error cw_crypt: no cur card!", getprefix());
+
+	}
 	for (i = 0; i < 16; i++) {
 		tmp = cws[i] ^ (node_id >> (4 * i));
 		if (i & 1)
@@ -1210,8 +1214,12 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 						4, buf + 4), llist_count(cc->cards));
 		} else
 			cc->needs_rebuild_caidinfo++;
-		if (cur_card_removed && reader[ridx].tcp_connected)
+		if (cur_card_removed && reader[ridx].tcp_connected) {
+			//if current card is removed we didn't get any further answer:
+			if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY)
+				pthread_mutex_unlock(&cc->ecm_busy);
 			cc_send_ecm(NULL, NULL);
+		}
 	}
 		break;
 	case MSG_CW_NOK1:
@@ -1293,30 +1301,16 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 			cc->just_logged_in = 0;
 			cc_cw_crypt(buf + 4);
 			memcpy(cc->dcw, buf + 4, 16);
+			cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
+			cc->recv_ecmtask = cc->send_ecmtask;
 			cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
 					cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
+			pthread_mutex_unlock(&cc->ecm_busy);
+			//cc_abort_user_ecms();
+			cc_send_ecm(NULL, NULL);
 
-			//SS: fake ecm detection: first or last 8 bytes = 0:
-			//if ((!buf[4] && !buf[5] && !buf[6] && !buf[7] && !buf[8] && !buf[9] && !buf[10] && !buf[11]) ||
-			//		(!buf[12] && !buf[13] && !buf[14] && !buf[15] && !buf[16] && !buf[17] && !buf[18] && !buf[19]))
-			//{
-			//	buf[1] = 0;
-			//	pthread_mutex_unlock(&cc->ecm_busy);
-			//	cs_log("%s fake ECM detected! cycle connection forced!", getprefix());
-			//	cc_cycle_connection();
-			//	cc_send_ecm(NULL, NULL);
-			//}
-			//else
-			{
-				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
-				cc->recv_ecmtask = cc->send_ecmtask;
-				pthread_mutex_unlock(&cc->ecm_busy);
-				//cc_abort_user_ecms();
-				cc_send_ecm(NULL, NULL);
-
-				if (cc->max_ecms)
-					cc->ecm_counter++;
-			}
+			if (cc->max_ecms)
+				cc->ecm_counter++;
 			ret = 0;
 		}
 		break;
@@ -1427,10 +1421,10 @@ static void cc_send_dcw(ECM_REQUEST *er) {
 	if (er->rc <= 3) {
 		cc = client[cs_idx].cc;
 		memcpy(buf, er->cw, sizeof(buf));
+		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
+				cs_hexdump(0, buf, 16), er->cpti);
 		cc_cw_crypt(buf);
 		NULLFREE(cc->cur_card);
-		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
-				cs_hexdump(0, er->cw, 16), er->cpti);
 		cc_cmd_send(buf, 16, MSG_CW_ECM);
 		cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
 	} else {
@@ -1977,7 +1971,8 @@ static int cc_srv_connect() {
 				break;
 			}
 
-			cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
+			if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) <= 0)
+				break;
 
 			int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 			if (new_caid_info_count != caid_info_count) {

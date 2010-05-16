@@ -393,9 +393,7 @@ struct s_update_pipes //Schlocke: Helpstructure for reader config updates
 	int     ridx; //FIXME reader[ridx] reader has to know what number it is, should be replaced by storing pointer to reader instead of array index
 	int     enable;
 	int     fd;
-	ulong   grp;
 	int     fallback;
-	uchar   tcp_connected;
 	int     deleted;
 };
 
