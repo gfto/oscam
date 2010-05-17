@@ -35,7 +35,7 @@ static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not
 
 static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsigned short lenwrite, unsigned short lenread)
 {
-  //int init_phase = (buff[0] == 0x63); //FIXME UGLY
+  int init_phase = (buff[0] == 0x63); //FIXME UGLY
   struct termios termio, termiobackup;
 
   // backup data
@@ -55,26 +55,32 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
     return ERROR;
   }
   cs_ddump_mask (D_DEVICE, buff, lenwrite, "IO: Sending: ");
-  if (!write(reader->handle, buff, lenwrite)) { //dont use IO_Serial_Write since mcr commands dont echo back 
-    cs_log("ERROR: SC8in1 Command write error");
-    return ERROR;
-  }
+  if (!write(reader->handle, buff, lenwrite)) { //dont use IO_Serial_Write since mcr commands dont echo back
+    cs_log("SC8in1 Command write error");
+		return ERROR;
+	}
   tcdrain(reader->handle);
+  // give some time back to the system .. we're in a thread after all
+  sched_yield();
+
   if (IO_Serial_Read (reader, 1000, lenread, buff) == ERROR) {
     cs_log("SC8in1 Command read error");
     return ERROR;
   }
-
+  // give some time back to the system .. we're in a thread after all
+  sched_yield();
   // restore data
   memcpy(&termio,&termiobackup,sizeof(termio));
   if (tcsetattr(reader->handle,TCSANOW,&termio) < 0) {
     cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
     return ERROR;
   }
-
+	if(!init_phase)
   // switch SC8in1 to normal mode
-  IO_Serial_DTR_Clr(reader);
-  return OK;
+  	IO_Serial_DTR_Clr(reader);
+  // give some time back to the system .. we're in a thread after all
+  sched_yield();
+	return OK;
 }
 
 static int readsc8in1(struct s_reader * reader)
@@ -92,7 +98,8 @@ static int readsc8in1(struct s_reader * reader)
   // bit7=1 means Slot8=Smartcard inside
   unsigned char buf[10];
   buf[0]=0x47;
-	if (sc8in1_command(reader, buf, 1, 8) < 0) return (-1);
+  IO_Serial_Flush(reader);
+  if (sc8in1_command(reader, buf, 1, 8) < 0) return (-1);
   if (buf[1]!=0x90) return(-1);
 
   // return result byte
@@ -116,6 +123,9 @@ int Sc8in1_Selectslot(struct s_reader * reader, int slot) {
 	//
   // switch SC8in1 to command mode
   IO_Serial_DTR_Set(reader);
+  // give some time back to the system .. we're in a thread after all
+  sched_yield();
+
   // set communication parameters
   termio.c_cc[VTIME] = 1; // working
   termio.c_cflag = B9600|CS8|CREAD|CLOCAL;
@@ -129,10 +139,14 @@ int Sc8in1_Selectslot(struct s_reader * reader, int slot) {
   tmp[0]=0x53;
   tmp[1]=slot&0x0F;
   IO_Serial_Write (reader, 0, 2, tmp);
+  // give some time back to the system .. we're in a thread after all
+  sched_yield();
 	tcdrain(reader->handle);
 	//tcflush(reader->handle, TCIOFLUSH);
   res=IO_Serial_Read (reader, 1000, 4, tmp); // ignore reader response of 4 bytes
 	current_slot = slot;
+  // give some time back to the system .. we're in a thread after all
+  sched_yield();
   tcdrain(reader->handle);
   // restore rs232 data
   memcpy(&termio, &stored_termio[reader->slot-1], sizeof(termio));
@@ -143,6 +157,8 @@ int Sc8in1_Selectslot(struct s_reader * reader, int slot) {
   // switch SC8in1 to normal mode
   IO_Serial_DTR_Clr(reader);
 	//cs_sleepms(10); //FIXME do I need this?
+  // give some time back to the system .. we're in a thread after all
+  sched_yield();
   return OK;
 }
 
@@ -205,7 +221,7 @@ int Sc8in1_Init(struct s_reader * reader)
 		buff[2] = sc8in1_clock & 0xFF;
 		sc8in1_command(reader,  buff, 3, 0);
 	}
-
+	
 	//IO_Serial_Flush(reader); //FIXME somehow ATR is generated and must be flushed
 	i = -1; //Flag for GetStatus init
 	Sc8in1_GetStatus(reader, &i); //Initialize cardstatus
@@ -221,6 +237,8 @@ int Sc8in1_Card_Changed(struct s_reader * reader) {
   int lineData;
   ioctl(reader->handle, TIOCMGET, &lineData);
   result= (lineData & TIOCM_CTS) / TIOCM_CTS;
+  // give some time back to the system .. we're in a thread after all
+  sched_yield();
   return(result-1);
 }
 
@@ -233,10 +251,15 @@ int Sc8in1_GetStatus (struct s_reader * reader, int * in)
 		int i=readsc8in1(reader); //read cardstatus
 		pthread_mutex_unlock(&sc8in1);
 		cs_debug("SC8in1: unlocked for Getstatus for slot %i",reader->slot);
-		if (i < 0)
-			return ERROR;
+		if (i < 0) {
+            // give some time back to the system .. we're in a thread after all
+            sched_yield();
+            return ERROR;
+        }
 		cardstatus = i;
 	}
 	*in = (cardstatus & 1<<(reader->slot-1));
+    // give some time back to the system .. we're in a thread after all
+    sched_yield();
 	return OK;
 }
