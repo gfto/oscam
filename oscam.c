@@ -1905,7 +1905,7 @@ int send_dcw(ECM_REQUEST *er)
 void chk_dcw(int fd)
 {
   ECM_REQUEST *er, *ert;
-  switch (read_from_pipe(fd, (uchar **)&er, 0))
+  switch (read_from_pipe(fd, (uchar **)(void *)&er, 0))
   {
 	  case PIP_ID_ECM: break;
 
