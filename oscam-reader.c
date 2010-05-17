@@ -37,27 +37,28 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		FILE *fp;
 		char filename[32];
 		char *buffer;
+		size_t bytes_read;
 		mkdir("/tmp/.oscam", S_IRWXU);
 		sprintf(filename, "/tmp/.oscam/reader%d", reader->ridx);
 
-		int size=reader->init_history_pos+strlen(txt)+1;
-		buffer=malloc(size+1);
+		int size = reader->init_history_pos+strlen(txt)+1;
+		buffer = malloc(size+1);
 
-		if (buffer==NULL)
+		if (buffer == NULL)
 			return;
 
 		memset(buffer, 32, size);
 
-		fp=fopen(filename, "r");
+		fp = fopen(filename, "r");
 
 		if (fp) {
-			(void)fread(buffer, 1, reader->init_history_pos, fp);
+			bytes_read = fread(buffer, 1, reader->init_history_pos, fp);
 			fclose(fp);
 		}
 
 		sprintf(buffer+reader->init_history_pos, "%s\n", txt);
 
-		fp=fopen(filename, "w");
+		fp = fopen(filename, "w");
 		fwrite(buffer, 1, reader->init_history_pos+strlen(txt)+1, fp);
 		fclose(fp);
 
