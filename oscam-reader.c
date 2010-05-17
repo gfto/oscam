@@ -51,7 +51,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		fp=fopen(filename, "r");
 
 		if (fp) {
-			fread(buffer, 1, reader->init_history_pos, fp);
+			(void)fread(buffer, 1, reader->init_history_pos, fp);
 			fclose(fp);
 		}
 

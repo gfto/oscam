@@ -546,7 +546,7 @@ static void monitor_set_debuglevel(char *flag){
 
 static void monitor_get_account(){
 	struct s_auth *account;
-	char buf[32];
+	char buf[256];
         int count = 0;
 
 	for (account=cfg->account; (account); account=account->next){

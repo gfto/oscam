@@ -313,7 +313,7 @@ void chk_t_global(char *token, char *value)
 			cfg->logfile = NULL;
 		}
 		if (strlen(value) > 0)
-			asprintf(&(cfg->logfile), "%s", value);
+			(void)asprintf(&(cfg->logfile), "%s", value);
 		return;
 	}
 
@@ -323,7 +323,7 @@ void chk_t_global(char *token, char *value)
 			cfg->pidfile = NULL;
 		}
 		if (strlen(value) > 0)
-			asprintf(&(cfg->pidfile), "%s", value);
+			(void)asprintf(&(cfg->pidfile), "%s", value);
 		return;
 	}
 
@@ -333,7 +333,7 @@ void chk_t_global(char *token, char *value)
 			cfg->usrfile = NULL;
 		}
 		if (strlen(value) > 0)
-			asprintf(&(cfg->usrfile), "%s", value);
+			(void)asprintf(&(cfg->usrfile), "%s", value);
 		return;
 	}
 
@@ -343,7 +343,7 @@ void chk_t_global(char *token, char *value)
 			cfg->cwlogdir = NULL;
 		}
 		if (strlen(value) > 0)
-			asprintf(&(cfg->cwlogdir), "%s", value);
+			(void)asprintf(&(cfg->cwlogdir), "%s", value);
 		return;
 	}
 
@@ -1354,7 +1354,7 @@ int init_config()
 	fclose(fp);
 #ifdef CS_LOGFILE
 	if (cfg->logfile == NULL)
-		asprintf(&(cfg->logfile), "%s", CS_LOGFILE);
+		(void)asprintf(&(cfg->logfile), "%s", CS_LOGFILE);
 #endif
 	cs_init_statistics(cfg->usrfile);
 	cs_init_log(cfg->logfile);
@@ -2730,7 +2730,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			rdr->emmfile = NULL;
 		}
 		if (strlen(value) > 0)
-			asprintf(&(rdr->emmfile), "%s", value);
+			(void)asprintf(&(rdr->emmfile), "%s", value);
 		return;
 	}
 
