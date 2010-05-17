@@ -312,8 +312,10 @@ void chk_t_global(char *token, char *value)
 			free(cfg->logfile);
 			cfg->logfile = NULL;
 		}
-		if (strlen(value) > 0)
-			(void)asprintf(&(cfg->logfile), "%s", value);
+		if (strlen(value) > 0) {
+			if(asprintf(&(cfg->logfile), "%s", value) < 0)
+				fprintf(stderr, "Error allocating string for cfg->logfile\n");
+		}
 		return;
 	}
 
@@ -322,8 +324,10 @@ void chk_t_global(char *token, char *value)
 			free(cfg->pidfile);
 			cfg->pidfile = NULL;
 		}
-		if (strlen(value) > 0)
-			(void)asprintf(&(cfg->pidfile), "%s", value);
+		if (strlen(value) > 0) {
+			if(asprintf(&(cfg->pidfile), "%s", value) < 0)
+				fprintf(stderr, "Error allocating string for cfg->pidfile\n");
+		}
 		return;
 	}
 
@@ -332,8 +336,10 @@ void chk_t_global(char *token, char *value)
 			free(cfg->usrfile);
 			cfg->usrfile = NULL;
 		}
-		if (strlen(value) > 0)
-			(void)asprintf(&(cfg->usrfile), "%s", value);
+		if (strlen(value) > 0) {
+			if(asprintf(&(cfg->usrfile), "%s", value) < 0)
+				fprintf(stderr, "Error allocating string for cfg->usrfile\n");
+		}
 		return;
 	}
 
@@ -342,8 +348,10 @@ void chk_t_global(char *token, char *value)
 			free(cfg->cwlogdir);
 			cfg->cwlogdir = NULL;
 		}
-		if (strlen(value) > 0)
-			(void)asprintf(&(cfg->cwlogdir), "%s", value);
+		if (strlen(value) > 0) {
+			if(asprintf(&(cfg->cwlogdir), "%s", value) < 0)
+				fprintf(stderr, "Error allocating string for cfg->cwlogdir\n");
+		}
 		return;
 	}
 
@@ -1353,8 +1361,10 @@ int init_config()
 	}
 	fclose(fp);
 #ifdef CS_LOGFILE
-	if (cfg->logfile == NULL)
-		(void)asprintf(&(cfg->logfile), "%s", CS_LOGFILE);
+	if (cfg->logfile == NULL) {
+		if(asprintf(&(cfg->logfile), "%s", CS_LOGFILE) < 0)
+			fprintf(stderr, "Error allocating string for cfg->logfile\n");
+	}
 #endif
 	cs_init_statistics(cfg->usrfile);
 	cs_init_log(cfg->logfile);
@@ -2729,8 +2739,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			free(rdr->emmfile);
 			rdr->emmfile = NULL;
 		}
-		if (strlen(value) > 0)
-			(void)asprintf(&(rdr->emmfile), "%s", value);
+		if (strlen(value) > 0) {
+			if(asprintf(&(rdr->emmfile), "%s", value) < 0)
+				fprintf(stderr, "Error allocating string for rdr->emmfile\n");
+		}
 		return;
 	}
 
