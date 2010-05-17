@@ -1298,13 +1298,15 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());
 
 		} else { //READER:
-			cc->just_logged_in = 0;
-			cc_cw_crypt(buf + 4);
-			memcpy(cc->dcw, buf + 4, 16);
-			cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
-			cc->recv_ecmtask = cc->send_ecmtask;
-			cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
-					cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
+			if (cc->cur_card) {
+				cc->just_logged_in = 0;
+				cc_cw_crypt(buf + 4);
+				memcpy(cc->dcw, buf + 4, 16);
+				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
+				cc->recv_ecmtask = cc->send_ecmtask;
+				cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
+						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
+			}
 			pthread_mutex_unlock(&cc->ecm_busy);
 			//cc_abort_user_ecms();
 			cc_send_ecm(NULL, NULL);
@@ -1332,7 +1334,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 			cc->max_ecms = 60;
 			cc->ecm_counter = 0;
 		}
-		//cc->cur_card = NULL;
+		cc->cur_card = NULL; //Clear current card, because next message is NOK.
 		cc_cmd_send(NULL, 0, MSG_BAD_ECM);
 		ret = 0;
 		break;

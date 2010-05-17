@@ -167,7 +167,7 @@ extern char *boxdesc[];
 #endif
 
 #ifdef CS_CORE
-char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", "UPR", "URM", NULL  };
+char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
                        "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
@@ -185,11 +185,9 @@ extern char *RDR_CD_TXT[];
 #define PIP_ID_HUP    4
 #define PIP_ID_RST    5  // Schlocke: Restart Reader, CCcam for example ([0]=ridx)
 #define PIP_ID_KCL    6  // Schlocke: Kill all Clients (no data)
-#define PIP_ID_UPR    7  // Schlocke: Update Reader Pipes/Config (struct s_update_pipes)
-#define PIP_ID_URM    8  // Schlocke: Update Reader Pipes/Config by master (int ridx)
 
-#define PIP_ID_DCW    9
-#define PIP_ID_MAX    PIP_ID_URM
+#define PIP_ID_DCW    7
+#define PIP_ID_MAX    PIP_ID_KCL
 
 
 #define PIP_ID_ERR    (-1)
@@ -386,17 +384,6 @@ struct s_irdeto_quess
   struct s_irdeto_quess *next;
 };
 #endif
-
-struct s_update_pipes //Schlocke: Helpstructure for reader config updates
-{
-	int		rpid;
-	int     ridx; //FIXME reader[ridx] reader has to know what number it is, should be replaced by storing pointer to reader instead of array index
-	int     enable;
-	int     fd;
-	int     fallback;
-	int     deleted;
-};
-
 
 struct s_client
 {

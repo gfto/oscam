@@ -466,42 +466,6 @@ static void cs_card_info(int i)
       //kill(client[i].pid, SIGUSR2);
 }
 
-void update_reader_config(uchar *ptr) {
-	struct s_update_pipes *update = (struct s_update_pipes*) ptr;
-	int ridx = update->ridx;
-	//reader:
-	reader[ridx].pid    = update->rpid;
-	reader[ridx].enable = update->enable;
-	reader[ridx].fd     = update->fd;
-	reader[ridx].fallback = update->fallback;
-	reader[ridx].deleted = update->deleted;
-
-	int cs_idx = reader[ridx].cs_idx;
-	client[cs_idx].pid = reader[ridx].pid;
-
-	cs_log("reader config %s (ridx=%d) updated", reader[ridx].label, ridx);
-}
-
-static void update_reader_pipes(int ridx) {
-	cs_log("update reader pipes %d",ridx);
-	int size = sizeof(struct s_update_pipes);
-
-	struct s_update_pipes update;
-	//reader:
-	update.rpid     = reader[ridx].pid;
-	update.ridx     = ridx;
-	update.enable   = reader[ridx].enable;
-	update.fd       = reader[ridx].fd;
-	update.fallback = reader[ridx].fallback;
-	update.deleted  = reader[ridx].deleted;
-	int i;
-	//Send full reader config to the clients:
-	for( i=1; i<CS_MAXPID; i++ )
-		if( client[i].pid && client[i].typ=='c' && client[i].fd_m2c ){
-			write_to_pipe(client[i].fd_m2c, PIP_ID_UPR, (uchar*)&update, size);
-		}
-}
-
 //Schlocke: restart cardreader after 5 seconds:
 static void restart_cardreader(int pridx) {
 	ridx = pridx;
@@ -516,9 +480,7 @@ static void restart_cardreader(int pridx) {
 			cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
 			cs_log("restarting reader %s (index=%d)", reader[ridx].label, ridx);
 
-			//send update reader config-task to master:
-			write_to_pipe(fd_c2m, PIP_ID_URM, (uchar*)&ridx, sizeof(ridx));
-
+			wait4master();
 			start_cardreader(&reader[ridx]);
 		}
 	}
@@ -569,8 +531,6 @@ static void cs_child_chk(int i)
                 if (client[i].fd_m2c_c) close(client[i].fd_m2c_c);
                 memset(&client[i], 0, sizeof(struct s_client));
                 client[i].au=(-1);
-
-                write_to_pipe(fd_c2m, PIP_ID_URM, (uchar*)&ridx, sizeof(ridx));
 
                 cs_log("restarting %s %s in %d seconds (index=%d)", reader[ridx].label, txt,
                 		cfg->reader_restart_seconds, ridx);
@@ -1905,17 +1865,8 @@ int send_dcw(ECM_REQUEST *er)
 void chk_dcw(int fd)
 {
   ECM_REQUEST *er, *ert;
-  switch (read_from_pipe(fd, (uchar **)(void *)&er, 0))
-  {
-	  case PIP_ID_ECM: break;
-
-	  case PIP_ID_UPR: //Schlocke: updater reader config
-		  update_reader_config((uchar*)er);
-	      return;
-
-	  default:
-    return;
-  }
+  if (read_from_pipe(fd, (uchar **)(void *)&er, 0) != PIP_ID_ECM)
+	  return;
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100)
@@ -2091,13 +2042,16 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
   flag=(flag)?3:1;    // flag specifies with/without fallback-readers
   for (i=0; i<CS_MAXREADER; i++)
   {
+	  //if (reader[i].pid)
+	  //	  cs_log("active reader: %d pid %d fd %d", i, reader[i].pid, reader[i].fd);
+
       switch (reader_types)
       {
           // network and local cards
           default:
           case 0:
               if (er->reader[i]&flag){
-                  //cs_debug_mask(D_TRACE, "request_cw1 ridx=%d fd=%d", i, reader[i].fd);
+                  //cs_debug_mask(D_TRACE, "request_cw1 to reader %s ridx=%d fd=%d", reader[i].label, i, reader[i].fd);
                   write_ecm_request(reader[i].fd, er);
               }
               break;
@@ -2105,7 +2059,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
           case 1:
               if (!(reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag) {
-                	  //cs_debug_mask(D_TRACE, "request_cw1 ridx=%d fd=%d", i, reader[i].fd);
+                	  //cs_debug_mask(D_TRACE, "request_cw2 to reader %s ridx=%d fd=%d", reader[i].label, i, reader[i].fd);
                       write_ecm_request(reader[i].fd, er);
                   }
               break;
@@ -2114,7 +2068,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
         	  //cs_log("request_cw3 ridx=%d fd=%d", i, reader[i].fd);
               if ((reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag) {
-                	  //cs_debug_mask(D_TRACE, "request_cw1 ridx=%d fd=%d", i, reader[i].fd);
+                	  //cs_debug_mask(D_TRACE, "request_cw3 to reader %s ridx=%d fd=%d", reader[i].label, i, reader[i].fd);
                       write_ecm_request(reader[i].fd, er);
                   }
               break;
@@ -2556,9 +2510,6 @@ static void process_master_pipe()
     	break;
     case PIP_ID_KCL: //Kill all clients
     	restart_clients();
-    	break;
-    case PIP_ID_URM: //Update Reader Pipe/Config:
-    	update_reader_pipes(*(int*)ptr);
     	break;
   }
 }
