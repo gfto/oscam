@@ -90,7 +90,7 @@ static void cc_cw_crypt(uint8 *cws) {
 	uint8 tmp;
 	int i;
 
-	if (reader[ridx].cc) {
+	if (!is_server) {
 		cc = reader[ridx].cc;
 		node_id = b2ll(8, cc->node_id);
 	} else {
@@ -100,7 +100,7 @@ static void cc_cw_crypt(uint8 *cws) {
 
 	if (!cc->cur_card) {
 		cs_log("%s error cw_crypt: no cur card!", getprefix());
-
+		return;
 	}
 	for (i = 0; i < 16; i++) {
 		tmp = cws[i] ^ (node_id >> (4 * i));
@@ -299,7 +299,7 @@ static int cc_msg_recv(uint8 *buf) {
 	uint8 netbuf[CC_MAXMSGSIZE + 4];
 	struct cc_data *cc;
 
-	if (reader[ridx].cc)
+	if (!is_server)
 		cc = reader[ridx].cc;
 	else
 		cc = client[cs_idx].cc;
@@ -356,7 +356,7 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	uint8 netbuf[len + 4];
 	struct cc_data *cc;
 
-	if (reader[ridx].cc)
+	if (!is_server)
 		cc = reader[ridx].cc;
 	else
 		cc = client[cs_idx].cc;
@@ -1076,7 +1076,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 	int ret = buf[1];
 	struct cc_data *cc;
 
-	if (reader[ridx].cc)
+	if (!is_server)
 		cc = reader[ridx].cc;
 	else
 		cc = client[cs_idx].cc;
@@ -1106,7 +1106,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		if (!card)
 			break;
 
-    reader[ridx].tcp_connected = 2; //we have card
+		reader[ridx].tcp_connected = 2; //we have card
 		memset(card, 0, sizeof(struct cc_card));
 
 		card->provs = llist_create();
@@ -1318,7 +1318,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_KEEPALIVE:
 		cc->just_logged_in = 0;
-		if (!reader[ridx].cc) {
+		if (is_server) {
 			cs_debug("cccam: keepalive ack");
 		} else {
 			cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
@@ -1441,7 +1441,7 @@ int cc_recv(uchar *buf, int l) {
 	uchar *cbuf;
 	struct cc_data *cc;
 
-	if (reader[ridx].cc)
+	if (!is_server)
 		cc = reader[ridx].cc;
 	else
 		cc = client[cs_idx].cc;
@@ -2073,11 +2073,14 @@ int cc_cli_init() {
 }
 
 void cc_cleanup(void) {
-  cc_cli_close();
-	cc_free(reader[ridx].cc);
-	reader[ridx].cc = NULL;
-	cc_free(client[cs_idx].cc);
-	client[cs_idx].cc = NULL;
+	cc_cli_close();
+	if (!is_server) {
+		cc_free(reader[ridx].cc);
+		reader[ridx].cc = NULL;
+	} else {
+		cc_free(client[cs_idx].cc);
+		client[cs_idx].cc = NULL;
+	}
 	cs_debug("cc_cleanup out");
 }
 
