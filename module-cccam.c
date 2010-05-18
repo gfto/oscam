@@ -1216,8 +1216,7 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 			cc->needs_rebuild_caidinfo++;
 		if (cur_card_removed && reader[ridx].tcp_connected) {
 			//if current card is removed we didn't get any further answer:
-			if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY)
-				pthread_mutex_unlock(&cc->ecm_busy);
+			pthread_mutex_unlock(&cc->ecm_busy);
 			cc_send_ecm(NULL, NULL);
 		}
 	}
@@ -1979,6 +1978,8 @@ static int cc_srv_connect() {
 			int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 			if (new_caid_info_count != caid_info_count) {
 				cc_srv_report_cards();
+				if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) <= 0)
+					break;
 			}
 		} else if (i <= 0)
 			break;
