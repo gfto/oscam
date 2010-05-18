@@ -547,6 +547,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 	if (!llist_count(cc->cards))
 		return 0;
+		
+	cc->just_logged_in = 0;
 
 	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
 		cs_debug_mask(D_TRACE, "%s ecm trylock: failed to get lock",
