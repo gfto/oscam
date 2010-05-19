@@ -345,10 +345,13 @@ DESCRIPTIONS
        au = 0|1
 	  1 = enable AU, default:0
 
-       boxtype = dbox2|dreambox|duckbox|ufs910|ipbox|fortis
+       boxtype = dbox2|dreambox|duckbox|ufs910|ipbox|ipbox-pmt|fortis
 	  set boxtype, auto detection of DVB API will be aspired, default:dreambox
 
 	  ipbox  with  camd.socket support, currently only with PGI image version 0.6 or above, verified on HD models
+	  only
+	  
+	  ipbox-pmt can be used on any DGS based images (with or without camd.socket support), verified on HD models
 	  only
 
    The [anticasc] section (only if anti-cascading enabled)
