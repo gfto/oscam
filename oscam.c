@@ -306,10 +306,10 @@ static void cs_sigpipe()
 void cs_exit(int sig)
 {
 	
-#ifdef ST_LINUX
-  Fortis_STSMART_Close();
-  Fortis_STPTI_Close();
-#endif
+//#ifdef ST_LINUX
+//  Fortis_STSMART_Close();
+//  Fortis_STPTI_Close();
+//#endif
 
   set_signal_handler(SIGCHLD, 1, SIG_IGN);
   set_signal_handler(SIGHUP , 1, SIG_IGN);

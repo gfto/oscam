@@ -1122,6 +1122,9 @@ extern void module_gbox(struct s_module *);
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif
+#ifdef WITH_STAPI
+extern void module_stapi(struct s_module *);
+#endif
 
 
 // module-monitor
@@ -1131,6 +1134,11 @@ extern int cs_idx2ridx(int idx);
 #ifdef WEBIF
 // oscam-http
 extern void http_srv();
+#endif
+
+#ifdef ST_LINUX
+extern void Fortis_STSMART_Close();
+extern void Fortis_STPTI_Close();
 #endif
 
 #endif  // CS_GLOBALS
