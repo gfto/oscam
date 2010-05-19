@@ -59,11 +59,11 @@ static char *get_ncd_client_name(char *client_id)
                                            "6576", "4343", "5456", "414C", "0666", "0667", "9911", "434C", "4765", "5342",
                                            "6E65", "4E58", "4453", "8888", "7363", "0669", "0665", "0769" };
 
-        static char *ncd_service_names[] = { "Generic", "VDRSC", "LCE", "Camd3", "Radegast", "Gbox2CS", "Mgcamd",
-                                             "WinCSC", "newcs", "cx", "Kaffeine", "Evocamd", "CCcam", "Tecview",
-                                             "AlexCS", "Rqcamd", "Rq-echo", "Acamd", "Cardlink", "Octagon", "sbcl",
-                                             "NextYE2k", "NextYE2k", "DiabloCam/UW", "OScam", "Scam", "Rq-sssp/CW",
-                                             "Rq-sssp/CS", "JlsRq", "Unknown - please report" };
+        static char *ncd_service_names[] = { "generic", "vdr-sc", "LCE", "camd3", "radegast", "gbox2CS", "mgcamd",
+                                             "WinCSC", "NewCS", "cx", "Kaffeine", "evocamd", "CCcam", "Tecview",
+                                             "AlexCS", "rqcamd", "rq-echo-client", "ACamd", "Cardlink", "Octagon", "SBCL",
+                                             "NextYE2k", "NextYE2k", "DiabloCam/UW", "OScam", "Scam", "rq-sssp-client/CW",
+                                             "rq-sssp-client/CS", "JlsRq", "unknown - please report" };
 
         int idx = 0;
         for (idx = 0; idx <= max_id_idx; idx++) {
