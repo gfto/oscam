@@ -1306,8 +1306,10 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 				cc->recv_ecmtask = cc->send_ecmtask;
 				cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
-						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
+					cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
 			}
+			else
+	      cs_log("%s warning: ECM-CWS respond by CCCam server without current card!", getprefix());
 			pthread_mutex_unlock(&cc->ecm_busy);
 			//cc_abort_user_ecms();
 			cc_send_ecm(NULL, NULL);
