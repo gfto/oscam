@@ -1343,7 +1343,7 @@ void event_handler(int signal) {
 
 				cs_ddump(dest,len/2,"QboxHD pmt.tmp:");
 				
-				pmt_id = dvbapi_parse_capmt(dest+4, (len/2)-4, -1);
+				pmt_id = dvbapi_parse_capmt(dest+4, (len/2)-4, -1, -1);
 #else
 				if (len>sizeof(dest)) return;
 				cs_ddump(mbuf,len,"pmt:");
@@ -1358,7 +1358,7 @@ void event_handler(int signal) {
 #ifdef WITH_STAPI
 				cs_log("stapi: Found new PMT_FILE %s, pmt_cnt: %d ", pmt_file_list[pmt_cnt], pmt_cnt);
 				global_pmt_num = pmt_cnt;
-				pmt_id_stapi[pmt_cnt] = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1);
+				pmt_id_stapi[pmt_cnt] = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1, -1);
 #else
 				pmt_id = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1, -1);
 #endif //WITH_STAPI
