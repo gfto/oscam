@@ -4,6 +4,7 @@ The base is MpCS version 0.9d. Thanks a lot to all the authors/contributors.
 
 Base code for videoguard2 support is from VDR-SC.
 
+
 Pointers
 --------
 
@@ -16,11 +17,13 @@ Pointers
 - wiki:
     http://streamboard.gmc.to/oscam
 
+
 Get sources from SVN
 --------------------
 
     svn co http://streamboard.gmc.to/svn/oscam/trunk oscam-svn
     cd oscam
+^
 
 Compile options
 ---------------
@@ -32,18 +35,21 @@ Enable features:
 CS_ANTICASC     - enable anti-cascading (default)
 CS_LOGHISTORY   - enable log history (default)
 CS_WITH_GBOX    - enable gbox support
-CS_LED		- enable LED trigger support (currently only working on NSLU2)
+CS_LED          - enable LED trigger support (currently only working on NSLU2)
 DWEBIF          - enable web interface
 IRDETO_GUESSING - enable irdeto guessing support
+WITH_STAPI      - enbale DVBAPI support for STAPI
 
 Enable features with cmake:
 
 -DCS_ANTICASC=1     - enable anti-cascading (default)
 -DCS_LOGHISTORY=1   - enable log history (default)
 -DCS_WITH_GBOX=1    - enable gbox support
--DCS_LED=1	    - enable LED trigger support (currently only working on NSLU2)
+-DCS_LED=1          - enable LED trigger support (currently only working on NSLU2)
 -DWEBIF=1           - enable web interface
 -DIRDETO_GUESSING=1 - enable irdeto guessing support
+-DWITH_STAPI=1      - enbale DVBAPI support for STAPI
+
 
 Build with CMake (new solution for building)
 --------------------------------------------
@@ -53,10 +59,12 @@ Build with CMake (new solution for building)
     cmake ..
     make
 
+
 Build with different toolchain (cross-compilation)
 --------------------------------------------------
 
     cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/toolchain-powerpc-tuxbox.cmake ..
+
 
 Change build parameters (on command line)
 -----------------------------------------
@@ -65,10 +73,12 @@ Change build parameters (on command line)
     cmake -DCMAKE_INSTALL_PREFIX=/where/to/installed ..
     cmake -DCS_CONFDIR=/where/is/config/files -DCMAKE_INSTALL_PREFIX=/where/to/installed ..
 
+
 Change build parameters (with interface)
 ----------------------------------------
 
     ccmake ..
+
 
 Install
 -------
