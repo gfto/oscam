@@ -162,7 +162,8 @@
 #define BOXTYPE_UFS910	3
 #define BOXTYPE_DBOX2	4
 #define BOXTYPE_IPBOX	5
-#define BOXTYPES		5
+#define BOXTYPE_IPBOX_PMT	6
+#define BOXTYPES		6
 extern char *boxdesc[];
 #endif
 

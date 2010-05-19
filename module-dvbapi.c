@@ -13,11 +13,19 @@
 static int stapi_on = 0;
 STPTI_Handle_t global_handle_list[5] = {0, 0, 0, 0, 0};
 STPTI_Signal_t global_signal_list[5] = {0, 0, 0, 0, 0};
+
 char *pmt_file_list[] = 	{ "/tmp/pmt.tmp", "/tmp/pmt1_1.tmp", "/tmp/pmt1_2.tmp", "/tmp/pmt2_1.tmp", "/tmp/pmt2_2.tmp" };
 char *pti_device_list[] = 	{ "PTI2", "PTI", "PTI", "PTI1", "PTI1" };
 int global_pmt_num;
-int pmt_num = 0;
+int   pmt_num = 0;
+
+#else
+
+char *pmt_file_list[] = 	{ "/tmp/pmt.tmp", "/tmp/pmt1.tmp", "/tmp/pmt2.tmp", "/tmp/pmt3.tmp", "/tmp/pmt4.tmp" };
+
 #endif
+
+
 
 int dvbapi_stop_filter(int demux_index, int type);
 
@@ -149,7 +157,7 @@ DEMUXTYPE demux[MAX_DEMUX];
 
 unsigned short global_caid_list[MAX_CAID];
 
-char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "fortis" };
+char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "fortis" };
 
 #define BOX_COUNT 4
 struct box_devices
@@ -989,7 +997,7 @@ void dvbapi_try_caid(int demux_index, int num) {
 }
 
 // from tuxbox camd
-int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
+int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, int demuxID) {
 	unsigned short i;
 	unsigned short ca_mask=0x01, demux_index=0x00;
 
@@ -1002,9 +1010,14 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		ca_mask = buffer[19];
 		demux_index = buffer[20];
 	}
+	// used for ipbox pmts, aston
+	else if (demuxID != -1) {
+		ca_mask = demuxID + 1;
+		demux_index = demuxID;
+	} 
 	
 	// ipbox workaround
-	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
+	if (cfg->dvbapi_boxtype == BOXTYPE_IPBOX || cfg->dvbapi_boxtype == BOXTYPE_IPBOX_PMT) {
 		for (i = 0; i < MAX_DEMUX; i++) {
 			if (demux[i].demux_index == demux_index) {
 				if (demux[i].program_number == program_number) {
@@ -1068,7 +1081,8 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		demux[demux_id].STREAMpids[demux[demux_id].STREAMpidcount++]=elementary_pid;
 
 		if (es_info_length != 0 && es_info_length < length) {
-			dvbapi_parse_descriptor(demux_id, i, es_info_length, buffer);
+			int offset = (program_info_length == 1 && cfg->dvbapi_boxtype == BOXTYPE_IPBOX_PMT) ? i - 1 : i;	
+			dvbapi_parse_descriptor(demux_id, offset, es_info_length, buffer);
 		}
 	}
 	cs_debug("dvbapi: Found %d ECMpids and %d STREAMpids in PMT", demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
@@ -1119,7 +1133,7 @@ void dvbapi_handlesockmsg (unsigned char *buffer, unsigned int len, int connfd) 
 		}
 		switch(buffer[2+k]) {
 			case 0x32:
-				dvbapi_parse_capmt(buffer + size + 3 + k, val, connfd);
+				dvbapi_parse_capmt(buffer + size + 3 + k, val, connfd, -1);
 				break;
 			case 0x3f:
 				//9F 80 3f 04 83 02 00 <demux index>
@@ -1133,7 +1147,19 @@ void dvbapi_handlesockmsg (unsigned char *buffer, unsigned int len, int connfd) 
 							break;
 						}				
 					}			
-				} else {
+          // check do we have any demux running on this fd
+					// ipbox could have few on same fd  
+					short execlose = 1; 
+					for (i = 0; i < MAX_DEMUX; i++) {
+            if (demux[i].socket_fd == connfd) {
+				       execlose = 0;
+				       break;
+				    }
+				  }
+          // nothing is running on fd, so close it
+			    if (execlose) close(connfd); 					   							
+				}
+				else {
 					close(connfd);
 				}
 				break;
@@ -1178,7 +1204,7 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 			ptr3="";
 
 		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3))))
-		{
+		{ 
 			ctab->caid[i]=caid;
 			ctab->cmap[i]=prov >> 8;
 			ctab->mask[i++]=prov;
@@ -1186,37 +1212,75 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 	}
 }
 
-#ifdef WITH_STAPI
+// we can used this for ipbox-pmt + wrapper without stapi
+time_t pmt_timestamp_stapi[MAX_DEMUX] = { 0, 0, 0, 0, 0 };
+int pmt_id_stapi[MAX_DEMUX] = { -1, -1, -1, -1, -1 };
+//int dir_fd=-1, pausecam=0;
 
-time_t pmt_timestamp[MAX_DEMUX] = { 0, 0, 0, 0, 0 };
-int pmt_id[MAX_DEMUX] = { -1, -1, -1, -1, -1 };
-int dir_fd=-1, pausecam=0;
-
-#else
-
-time_t pmt_timestamp=0;
-int pmt_id=-1, dir_fd=-1, pausecam=0;
-
-#endif
+time_t pmt_timestamp = 0;
+int pmt_id = -1, dir_fd = -1, pausecam = 0;
 
 void event_handler(int signal) {
+
 #ifdef WITH_STAPI
-	struct stat pmt_info[pmt_num];
+	struct stat pmt_info_stapi[pmt_num];
 #else
 	struct stat pmt_info;
 #endif
+
 	uchar dest[1024];
 	uint len;
 	signal=signal;
 	
 	int standby_fd = open(STANDBY_FILE, O_RDONLY);
-	if (standby_fd>0)
-		pausecam=1;
-	else
-		pausecam=0;
+	pausecam = (standby_fd > 0) ? 1 : 0;
+
 #ifndef WITH_STAPI
+
 	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX)
 		return;
+
+  //pmt reading for ipbox, aston
+  if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX_PMT) {
+     int i;
+     for (i = 0; i < MAX_DEMUX; i++) {
+  	   if (stat(pmt_file_list[i], &pmt_info) == 0) {
+ 	        if (pmt_timestamp_stapi[i] != pmt_info.st_mtime) {
+				    cs_log("dvbapi: Found new PMT_FILE %s", pmt_file_list[i]); 	      	  
+ 	      	  pmt_timestamp_stapi[i] = pmt_info.st_mtime;
+            cs_sleepms(100);
+
+  	        int pmt_fd = open(pmt_file_list[i], O_RDONLY);
+  	        if (pmt_fd > 0) {
+	   	    	   len = read(pmt_fd, mbuf, sizeof(mbuf));
+  			       close(pmt_fd);  			       
+		           if (len < 1) {
+  			  	      cs_log("dvbapi: pmt file length is to short!");
+  			          return; 
+  			       }
+  			       // stop running demux, this will be executed via,
+  			       // dvbapi_parse_capmt() automaticly
+  			       //if (pmt_id_stapi[i] > -1) dvbapi_stop_descrambling(pmt_id_stapi[i]);
+  			     
+  			       cs_ddump(mbuf,len, "pmt:");
+  					   memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
+  			       dest[1] = mbuf[3];
+  			       dest[2] = mbuf[4];
+  			       dest[5] = mbuf[11]+1;
+  		
+  			       memcpy(dest + 7, mbuf + 12, len - 12 - 4);
+  
+  			       pmt_id_stapi[i] = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1, i);
+            }
+  			  }
+  	   }	
+  	   else if (pmt_id_stapi[i] > -1) {
+  			  dvbapi_stop_descrambling(pmt_id_stapi[i]);
+  			  pmt_id_stapi[i] = -1;
+  	   }
+  	 }
+		 return;
+	}
 
 	if (pmt_id==-2)
 		return;
@@ -1242,12 +1306,12 @@ void event_handler(int signal) {
 	for (pmt_cnt=0;pmt_cnt<pmt_num;pmt_cnt++) {
 		int pmt_fd = open(pmt_file_list[pmt_cnt], O_RDONLY);
 		if(pmt_fd>0) {
-			if (fstat(pmt_fd, &pmt_info[pmt_cnt]) == 0) {
-				if (pmt_info[pmt_cnt].st_mtime == pmt_timestamp[pmt_cnt]) {
+			if (fstat(pmt_fd, &pmt_info_stapi[pmt_cnt]) == 0) {
+				if (pmt_info_stapi[pmt_cnt].st_mtime == pmt_timestamp_stapi[pmt_cnt]) {
 					close(pmt_fd);
 					continue;
 				}
-				pmt_timestamp[pmt_cnt] = pmt_info[pmt_cnt].st_mtime;
+				pmt_timestamp_stapi[pmt_cnt] = pmt_info_stapi[pmt_cnt].st_mtime;
 #endif
 
 				cs_sleepms(100);
@@ -1294,18 +1358,18 @@ void event_handler(int signal) {
 #ifdef WITH_STAPI
 				cs_log("stapi: Found new PMT_FILE %s, pmt_cnt: %d ", pmt_file_list[pmt_cnt], pmt_cnt);
 				global_pmt_num = pmt_cnt;
-				pmt_id[pmt_cnt] = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1);
+				pmt_id_stapi[pmt_cnt] = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1);
 #else
-				pmt_id = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1);
+				pmt_id = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1, -1);
 #endif //WITH_STAPI
 #endif //QBOX
 				close(pmt_fd);
 			}
 		} else {
 #ifdef WITH_STAPI
-			if (pmt_id[pmt_cnt] > -1) {
-				dvbapi_stop_descrambling(pmt_id[pmt_cnt]);
-				pmt_id[pmt_cnt]=-1;
+			if (pmt_id_stapi[pmt_cnt] > -1) {
+				dvbapi_stop_descrambling(pmt_id_stapi[pmt_cnt]);
+				pmt_id_stapi[pmt_cnt]=-1;
 			}
 #else
 			if (pmt_id > -1) {
@@ -1381,7 +1445,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 void dvbapi_main_local() {
 	int maxpfdsize=(MAX_DEMUX*MAX_FILTER)+MAX_DEMUX+2;
 	struct pollfd pfd2[maxpfdsize];
-	int i,rc,pfdcount,g,listenfd,connfd,clilen,j;
+	int i,rc,pfdcount,g,connfd,clilen,j;
 	int ids[maxpfdsize], fdn[maxpfdsize], type[maxpfdsize];
 	struct timeb tp;
 	struct sockaddr_un servaddr;
@@ -1431,6 +1495,7 @@ void dvbapi_main_local() {
 		cs_log("dvbapi: could not detect api version");
 		return;
 	}
+	cs_log("dvbapi: selected boxtype=%s.",	boxdesc[cfg->dvbapi_boxtype]);
 #else
 	for (i=1; i<NSIG; i++)
 		set_signal_handler(i, 3, stapi_off);
@@ -1438,10 +1503,16 @@ void dvbapi_main_local() {
 	selected_api=STAPI;
 	stapi_open();
 #endif
-	listenfd=dvbapi_init_listenfd();
-	if (listenfd<1) {
-		cs_log("dvbapi: could not init camd.socket.");
-		return;
+
+
+  //enable listen on camd.socket if we have one, aston
+  int listenfd = -1;
+  if (cfg->dvbapi_boxtype != BOXTYPE_IPBOX_PMT) {
+	   listenfd = dvbapi_init_listenfd();
+	   if (listenfd < 1) {
+		   cs_log("dvbapi: could not init camd.socket.");
+		   return;
+	   }
 	}
 
 	struct sigaction signal_action;
@@ -1455,6 +1526,10 @@ void dvbapi_main_local() {
 		fcntl(dir_fd, F_SETSIG, SIGRTMIN + 1);
 		fcntl(dir_fd, F_NOTIFY, DN_MODIFY | DN_CREATE | DN_DELETE | DN_MULTISHOT);
 		event_handler(SIGRTMIN + 1);
+	}
+	else if (listenfd == -1) {
+		cs_log("dvbapi/stapi: box does not support camd.socket and could not find tmp folder for pmt reading!");
+		return; 
 	}
 
 	cs_ftime(&tp);
@@ -1472,7 +1547,8 @@ void dvbapi_main_local() {
 		if (master_pid!=getppid())
 			cs_exit(0);
 
-		pfdcount=2;
+		//if we have no camd.socket do not listen, aston
+		pfdcount = (listenfd > 0) ? 2 : 1; 
 
 		chk_pending(tp);
 
@@ -1603,17 +1679,6 @@ void dvbapi_main_local() {
 
 					dvbapi_handlesockmsg(mbuf, len, connfd);
 
-					if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
-						// check do we have any demux running on this fd
-						short execlose = 1;
-						for (j = 0; j < MAX_DEMUX; j++) {
-							if (demux[j].socket_fd == connfd) {
-								execlose = 0;
-								break;
-							}
-						}
-						if (execlose) close(connfd);
-					}
 				} else { // type==0
 					if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0)
 						continue;
