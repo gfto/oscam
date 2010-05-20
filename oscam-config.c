@@ -1077,7 +1077,7 @@ void chk_t_serial(char *token, char *value)
 }
 
 #ifdef CS_WITH_GBOX
-static void chk_t_gbox(char *token, char *value)
+void chk_t_gbox(char *token, char *value)
 {
 	//if (!strcmp(token, "password")) strncpy(cfg->gbox_pwd, i2b(4, a2i(value, 4)), 4);
 	if (!strcmp(token, "password")) {
