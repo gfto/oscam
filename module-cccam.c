@@ -2060,7 +2060,7 @@ int cc_cli_init() {
 		client[cs_idx].udp_sa.sin_family = AF_INET;
 		client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
 
-		cs_resolve_reader(ridx);
+		cs_resolve();
 
 		uchar *ip = (uchar*) &client[cs_idx].ip;
 		cs_debug("cccam: ip=%d.%d.%d.%d", ip[3], ip[2], ip[1], ip[0]);
