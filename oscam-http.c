@@ -1663,7 +1663,36 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_printf(vars, 0, "CLIENTIDLESECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 			if(con == 2) tpl_printf(vars, 0, "CLIENTCON", "Duplicate");
 			else if (con == 1) tpl_printf(vars, 0, "CLIENTCON", "Sleep");
-			else tpl_printf(vars, 0, "CLIENTCON", "OK");
+			else
+			{
+				char *txt = "OK";
+				if (client[i].typ == 'r' || client[i].typ == 'p') //reader or proxy
+				{
+					int ridx;
+					for (ridx = 0; ridx < CS_MAXREADERS; ridx++)
+					{
+						if(reader[ridx].pid == client[i].pid)
+						{
+							switch(reader[ridx].card_status)
+							{
+								case NO_CARD: txt = "OFF"; break;
+								case CARD_NEED_INIT: txt = "NEEDINIT"; break;
+								case CARD_INSERTED:
+									if (reader[ridx].tcp_connected)
+										txt = "CONNECTED";
+									else
+										txt = "CARDOK";
+									break;
+								case CARD_FAILURE: txt = "ERROR"; break;
+								default: txt = "UNDEF";
+							}
+							break;
+						}
+					}
+
+				}
+				tpl_printf(vars, 0, "CLIENTCON", txt);
+			}
 			tpl_addVar(vars, 1, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 		}
 	}
