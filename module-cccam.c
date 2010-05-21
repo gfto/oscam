@@ -266,6 +266,7 @@ static void cc_free_last_cards_for_emm(LLIST *last_cards_for_emm) {
  */
 static void cc_cli_close() {
 	reader[ridx].tcp_connected = 0;
+	reader[ridx].card_status = NO_CARD;
 	//cs_sleepms(100);
 	close(pfd);
 	pfd = 0;
@@ -310,8 +311,9 @@ static int cc_msg_recv(uint8 *buf) {
 		return -1;
 
 	len = recv(handle, netbuf, 4, MSG_WAITALL);
+	
 	if (!len)
-		return -1;
+		return 0;
 
 	if (len != 4) { // invalid header length read
 		cs_log("%s invalid header length", getprefix());
@@ -551,7 +553,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	cc->just_logged_in = 0;
 
 	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
-		cs_debug_mask(D_TRACE, "%s ecm trylock: failed to get lock",
+		cs_debug_mask(D_TRACE, "%s ecm trylock: ecm busy, retrying later after msg-receive",
 				getprefix());
 		cc->proxy_init_errors++;
 		if (cc->proxy_init_errors > 20) //TODO: Configuration?
@@ -1108,7 +1110,6 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		if (!card)
 			break;
 
-		reader[ridx].tcp_connected = 2; //we have card
 		memset(card, 0, sizeof(struct cc_card));
 
 		card->provs = llist_create();
@@ -1229,8 +1230,12 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		if (is_server) //for reader only
 			return 0;
 
-		if (cc->just_logged_in) //NOK after login
-			cs_exit(1);
+		if (cc->just_logged_in) { //NOK after login
+			//cs_exit(1);
+			cs_sleepms(cfg->reader_restart_seconds * 1000);
+			cc_cycle_connection();
+			return 0;
+		}
 
 		int f = 0;
 		if (cc->cur_card) {
@@ -1483,7 +1488,6 @@ int cc_recv(uchar *buf, int l) {
 	if (!is_server && (n == -1)) {
 		cs_debug_mask(D_TRACE, "%s cc_recv: cycle connection", getprefix());
 		cc_cycle_connection();
-		//cs_exit(1);
 	}
 
 	return (n);
@@ -2006,7 +2010,7 @@ void cc_srv_init() {
 }
 
 int cc_cli_init() {
-	if (!reader[ridx].tcp_connected) {
+	while (!reader[ridx].tcp_connected) {
 		static struct sockaddr_in loc_sa;
 		struct protoent *ptrp;
 		int p_proto;
@@ -2035,7 +2039,9 @@ int cc_cli_init() {
 
 		if ((client[cs_idx].udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) < 0) {
 			cs_log("%s Socket creation failed (errno=%d)", getprefix(), errno);
-			cs_exit(1);
+			//cs_exit(1);
+			cs_sleepms(cfg->reader_restart_seconds * 1000);
+			continue;
 		}
 
 #ifdef SO_PRIORITY
