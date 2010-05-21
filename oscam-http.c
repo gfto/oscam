@@ -1669,7 +1669,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				if (client[i].typ == 'r' || client[i].typ == 'p') //reader or proxy
 				{
 					int ridx;
-					for (ridx = 0; ridx < CS_MAXREADERS; ridx++)
+					for (ridx = 0; ridx < CS_MAXREADER; ridx++)
 					{
 						if(reader[ridx].pid == client[i].pid)
 						{
