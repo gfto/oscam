@@ -37,7 +37,6 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		FILE *fp;
 		char filename[32];
 		char *buffer;
-		size_t bytes_read;
 		mkdir("/tmp/.oscam", S_IRWXU);
 		sprintf(filename, "/tmp/.oscam/reader%d", reader->ridx);
 
@@ -52,7 +51,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		fp = fopen(filename, "r");
 
 		if (fp) {
-			bytes_read = fread(buffer, 1, reader->init_history_pos, fp);
+			fread(buffer, 1, reader->init_history_pos, fp);
 			fclose(fp);
 		}
 
@@ -225,13 +224,19 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
     reader->ncd_msgid=0;
     reader->last_s=reader->last_g=0;
 
-    if (reader->ph.c_init())
-    {
+    // aston
+    if (reader->ph.cleanup)
+    	 reader->ph.cleanup();
+    if (client[cs_idx].typ == 'p')
+    	 return;
+
+    if (reader->ph.c_init()) {
          cs_debug("network_tcp_connection_close() exit(1);");
-         if (reader->ph.cleanup) reader->ph.cleanup();
+       if (reader->ph.cleanup)
+       	  reader->ph.cleanup();
          cs_exit(1);
     }
-    cs_resolve();
+    //cs_resolve_reader(reader->ridx);
 //  cs_log("last_s=%d, last_g=%d", reader->last_s, reader->last_g);
   }
 }
@@ -621,7 +626,12 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
 static void reader_do_pipe(struct s_reader * reader)
 {
   uchar *ptr;
-  switch(read_from_pipe(client[reader->cs_idx].fd_m2c_c, &ptr, 0))
+  //aston
+  int pipeCmd = read_from_pipe(client[reader->cs_idx].fd_m2c_c, &ptr, 0);
+  if (reader->tcp_connected != 2 && client[cs_idx].typ == 'p')
+  	 return;
+  
+  switch(pipeCmd)
   {
     case PIP_ID_ECM:
       reader_get_ecm(reader, (ECM_REQUEST *)ptr);
@@ -642,6 +652,15 @@ static void reader_main(struct s_reader * reader)
 {
   while (1)
   {
+    // aston
+    if (!reader->tcp_connected && client[cs_idx].typ == 'p') { 
+    //	 if (!cfg->reader_restart_seconds)
+    	 	  cs_exit(1);
+   //    cs_log("%s not connected! Reconection in %d sec", reader->label, cfg->reader_restart_seconds);
+   //    cs_sleepms(1000 * cfg->reader_restart_seconds);
+   //    if (reader->ph.c_init() && reader->ph.cleanup)
+   // 	    reader->ph.cleanup();
+    }    
     switch(reader_listen(reader, client[reader->cs_idx].fd_m2c_c, pfd))
     {
       case 1: reader_do_pipe(reader)  ; break;
@@ -674,16 +693,21 @@ void * start_cardreader(void * rdr)
       case R_GBOX    : module_gbox(&reader->ph);strcpy(client[cs_idx].usr, reader->label); break;
 #endif
     }
-    if (!(reader->ph.c_init))
-    {
+    
+    if (!(reader->ph.c_init)) {
       cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);
       cs_sleepms(1000);
       cs_exit(1);
     }
+    
+    // aston
     if (reader->ph.c_init()) {
-          if (reader->ph.cleanup) reader->ph.cleanup();
+    	 if (reader->ph.cleanup) 
+    	 	  reader->ph.cleanup();
+    	 if (client[cs_idx].typ != 'p')
           cs_exit(1);
      }
+    
     if ((reader->log_port) && (reader->ph.c_init_log))
       reader->ph.c_init_log();
   }

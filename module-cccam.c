@@ -266,11 +266,17 @@ static void cc_free_last_cards_for_emm(LLIST *last_cards_for_emm) {
  */
 static void cc_cli_close() {
 	reader[ridx].tcp_connected = 0;
-	reader[ridx].card_status = NO_CARD;
+	reader[ridx].card_status = CARD_FAILURE;
 	//cs_sleepms(100);
-	close(pfd);
+	if (pfd) {
+	   close(pfd); pfd = 0;
+	   client[cs_idx].udp_fd = 0;
+	}
+	else if (client[cs_idx].udp_fd) {
+		close(client[cs_idx].udp_fd);
+		client[cs_idx].udp_fd = 0;
 	pfd = 0;
-	client[cs_idx].udp_fd = 0;
+  }
 	//cs_sleepms(100);
 	struct cc_data *cc = reader[ridx].cc;
 	if (cc) {
@@ -1110,6 +1116,8 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		if (!card)
 			break;
 
+		reader[ridx].tcp_connected = 2; //we have card
+		reader[ridx].card_status = CARD_INSERTED;
 		memset(card, 0, sizeof(struct cc_card));
 
 		card->provs = llist_create();
@@ -1230,12 +1238,10 @@ static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
 		if (is_server) //for reader only
 			return 0;
 
-		if (cc->just_logged_in) { //NOK after login
-			//cs_exit(1);
-			cs_sleepms(cfg->reader_restart_seconds * 1000);
-			cc_cycle_connection();
-			return 0;
-		}
+		//if (cc->just_logged_in && cc->cur_card) //NOK after login
+		//aston
+		if (cc->just_logged_in)
+			return -1; // reader restart needed
 
 		int f = 0;
 		if (cc->cur_card) {
@@ -1477,7 +1483,8 @@ int cc_recv(uchar *buf, int l) {
 		n = -1;
 	} else {
 		// parse it and write it back, if we have received something of value
-		cc_parse_msg(cbuf, n);
+		if (cc_parse_msg(cbuf, n) == -1) //aston
+			n = -2; 
 		memcpy(buf, cbuf, l);
 	}
 
@@ -1490,7 +1497,7 @@ int cc_recv(uchar *buf, int l) {
 		cc_cycle_connection();
 	}
 
-	return (n);
+	return n;
 }
 
 static int cc_cli_connect(void) {
@@ -1499,24 +1506,6 @@ static int cc_cli_connect(void) {
 	uint8 hash[SHA_DIGEST_LENGTH];
 	uint8 buf[CC_MAXMSGSIZE];
 	char pwd[64];
-	struct cc_data *cc = reader[ridx].cc;
-
-	if (!cc) {
-		// init internals data struct
-		cc = malloc(sizeof(struct cc_data));
-		if (cc == NULL) {
-			cs_log("%s cannot allocate memory", getprefix());
-			return -1;
-		}
-		memset(cc, 0, sizeof(struct cc_data));
-		cc->cards = llist_create();
-		reader[ridx].cc = cc;
-		cc->auto_blocked = llist_create();
-		cc->last_cards_for_emm = llist_create();
-	}
-	cc->ecm_counter = 0;
-	cc->max_ecms = 0;
-	cc->proxy_init_errors = 0;
 
 	// check cred config
 	if (reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0
@@ -1538,6 +1527,24 @@ static int cc_cli_connect(void) {
 		network_tcp_connection_close(&reader[ridx], handle);
 		return -2;
 	}
+	struct cc_data *cc = reader[ridx].cc;
+
+	if (!cc) {
+		// init internals data struct
+		cc = malloc(sizeof(struct cc_data));
+		if (cc == NULL) {
+			cs_log("%s cannot allocate memory", getprefix());
+			return -1;
+		}
+		memset(cc, 0, sizeof(struct cc_data));
+		cc->cards = llist_create();
+		reader[ridx].cc = cc;
+		cc->auto_blocked = llist_create();
+		cc->last_cards_for_emm = llist_create();
+	}
+	cc->ecm_counter = 0;
+	cc->max_ecms = 0;
+	cc->proxy_init_errors = 0;
 	cs_ddump(data, 16, "cccam: server init seed:");
 
 	cc_xor(data); // XOR init bytes with 'CCcam'
@@ -1610,7 +1617,7 @@ static int cc_cli_connect(void) {
 		reader[ridx].prid[n][3] = reader[ridx].ftab.filts[0].prids[n] & 0xff;
 	}
 
-	reader[ridx].card_status = CARD_INSERTED;
+	reader[ridx].card_status = CARD_NEED_INIT;
 	reader[ridx].last_g = reader[ridx].last_s = time((time_t *) 0);
 	reader[ridx].tcp_connected = 1;
 
@@ -2010,8 +2017,10 @@ void cc_srv_init() {
 }
 
 int cc_cli_init() {
-	while (!reader[ridx].tcp_connected) {
-		static struct sockaddr_in loc_sa;
+	
+	if (reader[ridx].tcp_connected)
+		return -1;
+		
 		struct protoent *ptrp;
 		int p_proto;
 
@@ -2026,22 +2035,20 @@ int cc_cli_init() {
 		else
 			p_proto = 6;
 
-		client[cs_idx].ip = 0;
-		memset((char *) &loc_sa, 0, sizeof(loc_sa));
-		loc_sa.sin_family = AF_INET;
-#ifdef LALL
-		if (cfg->serverip[0])
-		loc_sa.sin_addr.s_addr = inet_addr(cfg->serverip);
-		else
-#endif
-		loc_sa.sin_addr.s_addr = INADDR_ANY;
-		loc_sa.sin_port = htons(reader[ridx].l_port);
+//		client[cs_idx].ip = 0;
+//		memset((char *) &loc_sa, 0, sizeof(loc_sa));
+//		loc_sa.sin_family = AF_INET;
+//#ifdef LALL
+//		if (cfg->serverip[0])
+//		loc_sa.sin_addr.s_addr = inet_addr(cfg->serverip);
+//		else
+//#endif
+//		loc_sa.sin_addr.s_addr = INADDR_ANY;
+//		loc_sa.sin_port = htons(reader[ridx].l_port);
 
 		if ((client[cs_idx].udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) < 0) {
 			cs_log("%s Socket creation failed (errno=%d)", getprefix(), errno);
-			//cs_exit(1);
-			cs_sleepms(cfg->reader_restart_seconds * 1000);
-			continue;
+			cs_exit(1);
 		}
 
 #ifdef SO_PRIORITY
@@ -2055,12 +2062,24 @@ int cc_cli_init() {
 					(void *) &keep_alive, sizeof(ulong));
 		}
 
-		memset((char *) &client[cs_idx].udp_sa, 0,
-				sizeof(client[cs_idx].udp_sa));
-		client[cs_idx].udp_sa.sin_family = AF_INET;
-		client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
-
-		cs_resolve();
+		// aston
+		//cs_resolve_reader(ridx);
+		if (!client[cs_idx].ip) {
+			memset((char *) &client[cs_idx].udp_sa, 0,
+					sizeof(client[cs_idx].udp_sa));
+			client[cs_idx].udp_sa.sin_family = AF_INET;
+			client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
+			//cs_resolve();
+			cs_log("cccam: Waiting for IP resolve of: %s", reader[ridx].device);
+			int safeCounter = 40*cfg->resolvedelay;
+			while (!client[cs_idx].ip && safeCounter--) {
+				cs_sleepms(100);
+			}
+			if (!safeCounter) {
+				cs_log("cccam: resolving $s, 4sec time out!", reader[ridx].device);
+				return -1;
+			}
+		}
 
 		uchar *ip = (uchar*) &client[cs_idx].ip;
 		cs_debug("cccam: ip=%d.%d.%d.%d", ip[3], ip[2], ip[1], ip[0]);
@@ -2078,9 +2097,7 @@ int cc_cli_init() {
 				reader[ridx].cc_maxhop, !reader[ridx].cc_disable_retry_ecm,
 				!reader[ridx].cc_disable_auto_block);
 
-		return (cc_cli_connect());
-	}
-	return (-1);
+	return (cc_cli_connect()); 
 }
 
 void cc_cleanup(void) {
