@@ -981,25 +981,19 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card) {
 	return doSaveCaidInfos;
 }
 
-static struct cc_current_card *cc_get_current_card(struct cc_data *cc, struct cc_card *card) {
-	int i;
-	for (i = 0; i<CS_MAXPID; i++)
-		if (cc->current_card[i].card == card)
-			return &cc->current_card[i];
-	return NULL;
-}
-
 static void cc_clear_current_card(struct cc_data *cc, int cidx) {
 	memset(&cc->current_card[cidx], 0, sizeof(struct cc_current_card));
 }
 
 static int cc_remove_current_card(struct cc_data *cc, struct cc_card *card) {
-	struct cc_current_card *current_card = cc_get_current_card(cc, card);
-	if (current_card) {
-		memset(current_card, 0, sizeof(struct cc_current_card));
-		return 1;
+	int i, c = 0;
+	for (i = 0; i<CS_MAXPID; i++) {
+		if (cc->current_card[i].card == card) {
+			cc_clear_current_card(cc, i);
+			c++;
+		}
 	}
-	return 0;
+	return c;
 }
 
 static void rebuild_caidinfos(struct cc_data *cc) {
@@ -1043,7 +1037,21 @@ static int caid_filtered(int caid) {
 	return defined;
 }
 
-//SS: Hack end
+static void cc_retry_ecm(struct cc_data *cc, struct cc_current_card *current_card) {
+	int n;
+	if (!reader[ridx].cc_disable_retry_ecm
+		&& (n = cc_get_nxt_ecm()) >= 0) {
+		//cs_log("%s ecmtask n: %d rc: %d sid: %d", getprefix(), n, ecmtask[n].rc, ecmtask[n].srvid);
+		if (!current_card || !current_card->card || 
+			(ecmtask[n].caid == current_card->card->caid &&
+			ecmtask[n].prid == current_card->prov &&
+			ecmtask[n].srvid == current_card->sid)) {
+			cc->crc++; //<<-- this is the trick: when crc failed, ecm is send!
+			cs_log("%s retrying ecm for sid %04X...", getprefix(), ecmtask[n].srvid);
+		}
+	}
+
+}
 
 static int cc_parse_msg(uint8 *buf, int l) {
 	int ret = buf[1];
@@ -1154,6 +1162,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		LLIST_ITR itr;
 
 		int found = 0;
+		int current_card_removed = 0;
 
 		card = llist_itr_init(cc->cards, &itr);
 		while (card) {
@@ -1164,6 +1173,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				//SS: Fix card free:
 				if (cc_remove_current_card(cc, card)) {
 					cs_log("%s current card %08x removed!", getprefix(), card->id);
+					current_card_removed = 1;
 				}
 				cc_free_card(card);
 				//SS: Fix card free end
@@ -1180,8 +1190,13 @@ static int cc_parse_msg(uint8 *buf, int l) {
 						4, buf + 4), llist_count(cc->cards));
 		} else
 			cc->needs_rebuild_caidinfo++;
+		if (current_card_removed) {
+			cc_retry_ecm(cc, NULL);
+			cc_send_ecm(NULL, NULL);
+		}
 	}
-		break;
+	break;
+	
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
 		if (is_server || !cc->current_ecm_cidx) //for reader only
@@ -1215,24 +1230,15 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					cs_log("%s added sid block %04X for card %08x",
 							getprefix(), current_card->sid, card->id);
 				}
-				int n;
-				if (!reader[ridx].cc_disable_retry_ecm
-						&& (n = cc_get_nxt_ecm()) >= 0) {
-					//cs_log("%s ecmtask n: %d rc: %d sid: %d", getprefix(), n, ecmtask[n].rc, ecmtask[n].srvid);
-					if (ecmtask[n].caid == card->caid &&
-							ecmtask[n].prid == current_card->prov &&
-							ecmtask[n].srvid == current_card->sid) {
-						cc->crc++;
-						cs_log("%s retrying ecm for sid %04X...", getprefix(),
-								current_card->sid);
-					}
-				}
 			}
-			//memset(cc->dcw, 0, 16);
 			cc_remove_current_card(cc, card);
 		}
-		//if (cc->found)
-		//write_ecm_answer(&reader[ridx], fd_c2m, cc->found);
+		else
+			current_card = NULL;
+			
+		//because we have an valid cc->current_ecm_idx, so we can retry ECM
+		cc_retry_ecm(cc, current_card);
+		
 		pthread_mutex_unlock(&cc->ecm_busy);
 		cc->current_ecm_cidx = 0;
 		cc_send_ecm(NULL, NULL);
