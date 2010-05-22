@@ -1082,7 +1082,7 @@ static int caid_filtered(int caid) {
 
 //SS: Hack end
 
-static cc_msg_type_t cc_parse_msg(uint8 *buf, int l) {
+static int cc_parse_msg(uint8 *buf, int l) {
 	int ret = buf[1];
 	struct cc_data *cc;
 

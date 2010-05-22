@@ -654,12 +654,13 @@ static void reader_main(struct s_reader * reader)
   {
     // aston
     if (!reader->tcp_connected && client[cs_idx].typ == 'p') { 
-    //	 if (!cfg->reader_restart_seconds)
+    	 if (!cfg->reader_restart_seconds)
     	 	  cs_exit(1);
-   //    cs_log("%s not connected! Reconection in %d sec", reader->label, cfg->reader_restart_seconds);
-   //    cs_sleepms(1000 * cfg->reader_restart_seconds);
-   //    if (reader->ph.c_init() && reader->ph.cleanup)
-   // 	    reader->ph.cleanup();
+       cs_log("%s not connected! Reconection in %d sec", reader->label, cfg->reader_restart_seconds);
+       cs_sleepms(1000 * cfg->reader_restart_seconds);
+       if (reader->ph.c_init() && reader->ph.cleanup)
+    	    reader->ph.cleanup();
+       continue;
     }    
     switch(reader_listen(reader, client[reader->cs_idx].fd_m2c_c, pfd))
     {
