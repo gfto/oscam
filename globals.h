@@ -983,7 +983,7 @@ extern void cs_log_config(void);
 extern void cs_waitforcardinit(void);
 extern void cs_reinit_clients(void);
 extern void cs_resolve(void);
-extern void cs_resolve_reader(int i);
+extern void cs_resolve_reader(int ridx);
 extern void chk_dcw(int fd);
 extern void update_reader_config(uchar *ptr);
 

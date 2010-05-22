@@ -2063,13 +2063,12 @@ int cc_cli_init() {
 		}
 
 		// aston
-		//cs_resolve_reader(ridx);
 		if (!client[cs_idx].ip) {
 			memset((char *) &client[cs_idx].udp_sa, 0,
 					sizeof(client[cs_idx].udp_sa));
 			client[cs_idx].udp_sa.sin_family = AF_INET;
 			client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
-			//cs_resolve();
+			cs_resolve();
 			cs_log("cccam: Waiting for IP resolve of: %s", reader[ridx].device);
 			int safeCounter = 40*cfg->resolvedelay;
 			while (!client[cs_idx].ip && safeCounter--) {
