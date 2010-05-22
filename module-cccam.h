@@ -55,7 +55,6 @@ struct cc_card {
 	time_t time;
 };
 
-//SS: Hack:
 struct cc_reported_carddata {
 	uint8 *buf;
 	int len;
@@ -74,11 +73,11 @@ struct cc_auto_blocked {
 	time_t time;
 };
 
-struct cc_emm_cards {
-	uint32 id; // cccam card (share) id
-	int csidx; // client-index
+struct cc_current_card {
+	struct cc_card *card;
+	uint32 prov;
+	uint16 sid;
 };
-//SS: Hack end
 
 struct cc_data {
 	struct cc_crypt_block block[2]; // crypto state blocks
@@ -87,10 +86,8 @@ struct cc_data {
 			peer_node_id[8], // server node id
 			dcw[16]; // control words
 
-	struct cc_card *cur_card; // ptr to selected card
 	LLIST *cards; // cards list
 
-	//SS: Hack:
 	LLIST *caid_infos; //struct cc_caid_info
 	long caid_size;
 	uint16 needs_rebuild_caidinfo;
@@ -101,22 +98,19 @@ struct cc_data {
 	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
 	LLIST *auto_blocked; //struct cc_auto_blocked //struct cc_auto_blocked
 	int just_logged_in; //true for checking NOK direct after login
-	LLIST *last_cards_for_emm; //stores client-emm infos //struct cc_emm_cards
-	//SS: Hack end
 
 	uint32 send_ecmtask;
 	uint32 recv_ecmtask;
-	uint16 cur_sid;
 	int proxy_init_errors;
 
-	//int last_nok;
-	//ECM_REQUEST *found;
+	int current_ecm_cidx; //index to last current_card (reader)
+	struct cc_current_card *current_card; //initialized by reader (index CS_MAXPID)
+	struct cc_card *server_card; 		   //initialized by client
 
 	unsigned long crc;
 
 	pthread_mutex_t lock;
 	pthread_mutex_t ecm_busy;
-	pthread_mutex_t list_busy;
 };
 
 #endif /* MODULECCCAM_H_ */
