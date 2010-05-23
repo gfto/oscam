@@ -222,28 +222,26 @@ int Phoenix_Receive (struct s_reader * reader, BYTE * buffer, unsigned size, uns
 int Phoenix_SetBaudrate (struct s_reader * reader, unsigned long baudrate)
 {
 	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %lu\n", baudrate);
-	if (reader->current_baudrate	!= baudrate)
-	{
-		/* Get current settings */
-		struct termios tio;
-		call (tcgetattr (reader->handle, &tio) != 0);
-		call (IO_Serial_SetBitrate (reader, baudrate, &tio));
+
+	/* Get current settings */
+	struct termios tio;
+	call (tcgetattr (reader->handle, &tio) != 0);
+	call (IO_Serial_SetBitrate (reader, baudrate, &tio));
 #ifndef OS_CYGWIN32
-		/* 
-		* Pause for 200ms as this might help with the PL2303.
-		* Some users reporting that this breaks cygwin, so we exclude this.
-		*/
-	        cs_sleepms(200);
+	/* 
+	* Pause for 200ms as this might help with the PL2303.
+	* Some users reporting that this breaks cygwin, so we exclude this.
+	*/
+        cs_sleepms(200);
 #endif
-		call (IO_Serial_SetProperties(reader, tio));
+	call (IO_Serial_SetProperties(reader, tio));
 #ifndef OS_CYGWIN32
-		/* 
-		* Pause for 200ms as this might help with the PL2303.
-		* Some users reporting that this breaks cygwin, so we exclude this.
-		*/
-	        cs_sleepms(200);
+	/* 
+	* Pause for 200ms as this might help with the PL2303.
+	* Some users reporting that this breaks cygwin, so we exclude this.
+	*/
+        cs_sleepms(200);
 #endif
-	}
 	reader->current_baudrate = baudrate; //so if update fails, reader->current_baudrate is not changed either
 	return OK;
 }

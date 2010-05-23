@@ -608,7 +608,7 @@ static int PPS_Exchange (struct s_reader * reader, BYTE * params, unsigned *leng
 	else
 		ret = OK;
 
-	/* Copy PPS handsake */
+	/* Copy PPS handshake */
 	memcpy (params, confirm, len_confirm);
 	(*length) = len_confirm;
 	return ret;
@@ -694,10 +694,9 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 {
 	double P,I;
 	double F;
-    unsigned long BGT, edc, EGT, CGT, WWT = 0;
-    unsigned int GT;
-    unsigned long gt_ms;
-		reader->current_baudrate = DEFAULT_BAUDRATE;
+    	unsigned long BGT, edc, EGT, CGT, WWT = 0;
+    	unsigned int GT;
+    	unsigned long gt_ms;
     
 	//set the amps and the volts according to ATR
 	if (ATR_GetParameter(atr, ATR_PARAMETER_P, &P) != ATR_OK)
@@ -714,7 +713,9 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 	//because reader->current_baudrate is used in calculation of timings
 	F =	(double) atr_f_table[FI];
 
-	if (deprecated == 0)
+	reader->current_baudrate = DEFAULT_BAUDRATE;
+
+	if (deprecated == 0) {
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
 			unsigned long baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
 			if (reader->typ <= R_MOUSE)
@@ -722,6 +723,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 			cs_debug_mask(D_IFD, "Setting baudrate to %lu", baud_temp);
 			reader->current_baudrate = baud_temp; //this is needed for all readers to calculate work_etu for timings
 		}
+	}
 
 	//set timings according to ATR
 	reader->read_timeout = 0;

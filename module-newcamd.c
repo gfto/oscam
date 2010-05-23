@@ -1052,6 +1052,7 @@ static void newcamd_server()
 
 		for (r=0; r<CS_MAXREADER; r++) {
 			int flt = 0;
+			if (!(reader[r].grp & client[cs_idx].grp)) continue; //test - skip unaccesible readers
 			if (reader[r].ftab.filts) {
 				for (j=0; j<CS_MAXFILTERS; j++) {
 					if (reader[r].ftab.filts[j].caid) {
@@ -1076,10 +1077,10 @@ static void newcamd_server()
 					for (j=0; j<reader[r].nprov; j++) {
 						if (reader[r].card_status == CARD_INSERTED)
 							cd->provid = (reader[r].prid[j][1]) << 16 
-							| (reader[r].prid[j][2] << 8) || reader[r].prid[j][3];
+							| (reader[r].prid[j][2] << 8) | reader[r].prid[j][3];
 						else
 							cd->provid = (reader[r].prid[j][0]) << 16 
-							| (reader[r].prid[j][1] << 8) || reader[r].prid[j][2];
+							| (reader[r].prid[j][1] << 8) | reader[r].prid[j][2];
 
             					cs_debug("newcamd: extended: report card");
             					network_message_send(client[cs_idx].udp_fd, 
