@@ -652,8 +652,8 @@ static void reader_main(struct s_reader * reader)
 {
   while (1)
   {
-    /* FIXME: this breaks newcamd cascading as newcamd only connects if server sends ecm/emm to client */
-    if (!reader->tcp_connected && client[cs_idx].typ == 'p' && reader->typ != R_NEWCAMD) {
+    /* FIXME: this breaks newcamd/camd3 cascading as newcamd/camd35 only connects if server sends ecm/emm to client */
+    if (!reader->tcp_connected && client[cs_idx].typ == 'p' && reader->typ == R_CCCAM) {
     	 if (!cfg->reader_restart_seconds)
     	 	  cs_exit(1);
        cs_log("%s not connected! Reconection in %d sec", reader->label, cfg->reader_restart_seconds);
