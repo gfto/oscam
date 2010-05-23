@@ -216,6 +216,7 @@ cs_log("[viaccess-reader] name: %s", cta_res);
   return OK;
 }
 
+/* findNextEcmStart is not used */
 int findNextEcmStart(const uchar *data, int curLen)
 {
     int dataLen=0;
@@ -299,6 +300,7 @@ void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
+
 int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
@@ -315,8 +317,9 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   int curEcm88len;
   uchar DE04[256];
   memset(DE04, 0, sizeof(DE04)); //fix dorcel de04 bug
-
-  while (ecm88Len && !rc) {
+  int TNTSAT = 0;
+  int i = 0;
+  
     if(ecm88Data[0]==0xd2) {
         // FIXME: use the d2 arguments
         int len = ecm88Data[1] + 2;
@@ -326,6 +329,22 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     }
     else
         hasD2 = 0;
+        
+    if ( ecm88Data[0]==0x80 && ecm88Data[2]==0xd2 && ecm88Data[3]==0x02)//long ecm
+    {
+        hasD2 = 1;
+        TNTSAT = 1;
+        for(i=3;i <ecm88Len; i++)
+        {
+            if ( ecm88Data[i]==0x80 && ecm88Data[i+2]==0xd2 && ecm88Data[i+3]==0x02)//Next ecm
+            {
+                ecm88Len = i;
+                break;
+            }
+        }    
+        ecm88Data += 6;
+        ecm88Len -= 6;
+    }
 
     if ((ecm88Data[0]==0x90 || ecm88Data[0]==0x40) && (ecm88Data[1]==0x03 || ecm88Data[1]==0x07 ) )
     {
@@ -335,16 +354,34 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         int ecmf8Len=0;
     
         memcpy (ident, &ecm88Data[2], sizeof(ident));
+        if(TNTSAT) // fix key not in good place
+        {
+            ident[2] = ecm88Data[5] & 0xf;
+            keynr=ecm88Data[5]&0x0F;
+        }
+        else
+        {
+            keynr=ecm88Data[4]&0x0F;
+        }        
         provid = b2i(3, ident);
         ident[2]&=0xF0;
-        keynr=ecm88Data[4]&0x0F;
+        
         if (!chk_prov(reader, ident, keynr))
         {
           cs_debug("[viaccess-reader] ECM: provider or key not found on card");
           return ERROR;
         }
-        ecm88Data+=5;
-        ecm88Len-=5;
+        if(TNTSAT)
+        {
+            int len = ecm88Data[1] + 2;
+            ecm88Data+=len;
+            ecm88Len-=len;
+        }
+        else
+        {
+            ecm88Data+=5;
+            ecm88Len-=5;
+        }
 
         // DE04
         if (ecm88Data[0]==0xDE && ecm88Data[1]==0x04)
@@ -386,8 +423,9 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
         ins88[2]=ecmf8Len?1:0;
         ins88[3]=keynr;
-        curEcm88len=findNextEcmStart(ecm88Data,ecm88Len);
-        ins88[4]= curEcm88len;
+      //  curEcm88len=findNextEcmStart(ecm88Data,ecm88Len);
+        curEcm88len = ecm88Len;
+        ins88[4]= ecm88Len;
 
         // DE04
         if (DE04[0]==0xDE)
@@ -401,10 +439,15 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         }
         //
         
-        write_cmd(insc0, NULL);	// read dcw
+        write_cmd(insc0, NULL); // read dcw
         if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
-            ecm88Data+=curEcm88len;
-            continue;
+          //  ecm88Data+=curEcm88len;
+          //  continue;
+          cs_debug("TNTSAT OK");
+        }
+        else
+        {
+            cs_debug("ECM ERROR");
         }
         switch(cta_res[0])
         {
@@ -419,8 +462,6 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             break;
         }
     }
-    
-  }
 
   if (hasD2) {
     aes_decrypt(er->cw, 16);
