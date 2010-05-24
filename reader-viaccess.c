@@ -216,23 +216,166 @@ cs_log("[viaccess-reader] name: %s", cta_res);
   return OK;
 }
 
-/* findNextEcmStart is not used */
-int findNextEcmStart(const uchar *data, int curLen)
+int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
-    int dataLen=0;
-    while(curLen) {
-        if(data[0]==0x80 && curLen>3)
-            if(data[2]==0xd2 && data[3]==0x02)
-                return dataLen;
+  def_resp;
+  static unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
+  static unsigned char ins88[] = { 0xca,0x88,0x00,0x00,0x00 }; // set ecm
+  static unsigned char insf8[] = { 0xca,0xf8,0x00,0x00,0x00 }; // set geographic info 
+  static unsigned char insc0[] = { 0xca,0xc0,0x00,0x00,0x12 }; // read dcw
 
-        if( (data[0]==0x90 || data[0]==0x40) && curLen>2)
-            if(data[1]==0x03 || data[1]==0x07 ) 
-                return dataLen;
-        curLen--;
-        data++;
-        dataLen++;
+  const uchar *ecm88Data=er->ecm+4; //XXX what is the 4th byte for ??
+  int ecm88Len=SCT_LEN(er->ecm)-4;
+  ulong provid;
+  int rc=0;
+  int hasD2 = 0;
+  int curEcm88len=0;
+  int nanoLen=0;
+  const uchar *nextEcm;
+  uchar keyToUse=0;
+  uchar DE04[256];
+  memset(DE04, 0, sizeof(DE04)); //fix dorcel de04 bug
+
+  nextEcm=ecm88Data;
+  
+  while (ecm88Len && !rc) {
+    
+    // 80 33 nano 80 (ecm) + len (33)
+    if(ecm88Data[0]==0x80) { // nano 80, give ecm len
+        curEcm88len=ecm88Data[1];
+        nextEcm=ecm88Data+curEcm88len+2;
+        ecm88Data += 2;
+        ecm88Len -= 2;
     }
-    return dataLen;
+
+    if(!curEcm88len) { //there was no nano 80 -> simple ecm
+        curEcm88len=ecm88Len;
+    }
+    
+    // d2 02 0d 02 -> D2 nano, len 2,  select the AES key to be used
+    if(ecm88Data[0]==0xd2) {
+        // FIXME: use the d2 arguments
+        int len = ecm88Data[1] + 2;
+        ecm88Data += len;
+        ecm88Len -= len;
+        curEcm88len -=len;
+        hasD2 = 1;
+    }
+    else
+        hasD2 = 0;
+
+    // 40 07 03 0b 00  -> nano 40, len =7  ident 030B00 (tntsat), key #0  <== we're pointing here
+    // 09 -> use key #9 
+    // 05 67 00
+    if ((ecm88Data[0]==0x90 || ecm88Data[0]==0x40) && (ecm88Data[1]==0x03 || ecm88Data[1]==0x07 ) )
+    {
+        uchar ident[3], keynr;
+        //uchar buff[256]; // MAX_LEN
+        uchar *ecmf8Data=0;
+        int ecmf8Len=0;
+
+        nanoLen=ecm88Data[1] + 2;
+        
+        memcpy (ident, &ecm88Data[2], sizeof(ident));
+        provid = b2i(3, ident);
+        ident[2]&=0xF0;
+        keynr=ecm88Data[4]&0x0F;
+        // 40 07 03 0b 00  -> nano 40, len =7  ident 030B00 (tntsat), key #0  <== we're pointing here
+        // 09 -> use key #9 
+        if(nanoLen>5) {
+            keyToUse=ecm88Data[5];
+            keynr=keyToUse;
+            cs_debug("keyToUse = %d",keyToUse);
+        }
+
+        if (!chk_prov(reader, ident, keynr))
+        {
+          cs_debug("[viaccess-reader] ECM: provider or key not found on card");
+          return ERROR;
+        }
+        
+        ecm88Data+=nanoLen;
+        ecm88Len-=nanoLen;
+        curEcm88len-=nanoLen;
+
+        // DE04
+        if (ecm88Data[0]==0xDE && ecm88Data[1]==0x04)
+        {
+            memcpy (DE04, &ecm88Data[0], 6);
+            ecm88Data+=6;
+        }
+        //
+
+        if( reader->last_geo.provid != provid ) 
+        {
+          reader->last_geo.provid = provid;
+          reader->last_geo.geo_len = 0;
+          reader->last_geo.geo[0]  = 0;
+          write_cmd(insa4, ident); // set provider
+        }
+
+        while(ecm88Len>0 && ecm88Data[0]<0xA0)
+        {
+          int nanoLen=ecm88Data[1]+2;
+          if (!ecmf8Data)
+            ecmf8Data=(uchar *)ecm88Data;
+          ecmf8Len+=nanoLen;
+          ecm88Len-=nanoLen;
+          curEcm88len-=nanoLen;
+          ecm88Data+=nanoLen;
+        }
+        if(ecmf8Len)
+        {
+          if( reader->last_geo.geo_len!=ecmf8Len || 
+             memcmp(reader->last_geo.geo, ecmf8Data, reader->last_geo.geo_len))
+          {
+            memcpy(reader->last_geo.geo, ecmf8Data, ecmf8Len);
+            reader->last_geo.geo_len= ecmf8Len;
+            insf8[3]=keynr;
+            insf8[4]=ecmf8Len;
+            write_cmd(insf8, ecmf8Data);
+          }
+        }
+        ins88[2]=ecmf8Len?1:0;
+        ins88[3]=keynr;
+        ins88[4]= curEcm88len;
+
+        // DE04
+        if (DE04[0]==0xDE)
+        {
+            memcpy(DE04+6, (uchar *)ecm88Data, curEcm88len-6);
+            write_cmd(ins88, DE04); // request dcw
+        }
+        else
+        {
+            write_cmd(ins88, (uchar *)ecm88Data); // request dcw
+        }
+        //
+        write_cmd(insc0, NULL);	// read dcw
+        switch(cta_res[0])
+        {
+          case 0xe8: // even
+            if(cta_res[1]==8) { memcpy(er->cw,cta_res+2,8); rc=1; }
+            break;
+          case 0xe9: // odd
+            if(cta_res[1]==8) { memcpy(er->cw+8,cta_res+2,8); rc=1; }
+            break;
+          case 0xea: // complete
+            if(cta_res[1]==16) { memcpy(er->cw,cta_res+2,16); rc=1; }
+            break;
+          default :
+            ecm88Data=nextEcm;
+            ecm88Len-=curEcm88len;
+            cs_debug("[viaccess-reader] ECM: key to use is not the current one, trying next ECM");
+        }
+    }
+  }
+
+  if (hasD2) {
+    aes_decrypt(er->cw, 16);
+  }
+
+  return(rc?OK:ERROR);
 }
 
 int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
@@ -298,175 +441,6 @@ void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memset(filter+72+1+16, 0xFF, 4);
 
 	return;
-}
-
-
-int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
-{
-  def_resp;
-  static unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
-  static unsigned char ins88[] = { 0xca,0x88,0x00,0x00,0x00 }; // set ecm
-  static unsigned char insf8[] = { 0xca,0xf8,0x00,0x00,0x00 }; // set geographic info 
-  static unsigned char insc0[] = { 0xca,0xc0,0x00,0x00,0x12 }; // read dcw
-
-  const uchar *ecm88Data=er->ecm+4; //XXX what is the 4th byte for ??
-  int ecm88Len=SCT_LEN(er->ecm)-4;
-  ulong provid;
-  int rc=0;
-  int hasD2 = 0;
-  int curEcm88len;
-  uchar DE04[256];
-  memset(DE04, 0, sizeof(DE04)); //fix dorcel de04 bug
-  int TNTSAT = 0;
-  int i = 0;
-  
-    if(ecm88Data[0]==0xd2) {
-        // FIXME: use the d2 arguments
-        int len = ecm88Data[1] + 2;
-        ecm88Data += len;
-        ecm88Len -= len;
-        hasD2 = 1;
-    }
-    else
-        hasD2 = 0;
-        
-    if ( ecm88Data[0]==0x80 && ecm88Data[2]==0xd2 && ecm88Data[3]==0x02)//long ecm
-    {
-        hasD2 = 1;
-        TNTSAT = 1;
-        for(i=3;i <ecm88Len; i++)
-        {
-            if ( ecm88Data[i]==0x80 && ecm88Data[i+2]==0xd2 && ecm88Data[i+3]==0x02)//Next ecm
-            {
-                ecm88Len = i;
-                break;
-            }
-        }    
-        ecm88Data += 6;
-        ecm88Len -= 6;
-    }
-
-    if ((ecm88Data[0]==0x90 || ecm88Data[0]==0x40) && (ecm88Data[1]==0x03 || ecm88Data[1]==0x07 ) )
-    {
-        uchar ident[3], keynr;
-        //uchar buff[256]; // MAX_LEN
-        uchar *ecmf8Data=0;
-        int ecmf8Len=0;
-    
-        memcpy (ident, &ecm88Data[2], sizeof(ident));
-        if(TNTSAT) // fix key not in good place
-        {
-            ident[2] = ecm88Data[5] & 0xf;
-            keynr=ecm88Data[5]&0x0F;
-        }
-        else
-        {
-            keynr=ecm88Data[4]&0x0F;
-        }        
-        provid = b2i(3, ident);
-        ident[2]&=0xF0;
-        
-        if (!chk_prov(reader, ident, keynr))
-        {
-          cs_debug("[viaccess-reader] ECM: provider or key not found on card");
-          return ERROR;
-        }
-        if(TNTSAT)
-        {
-            int len = ecm88Data[1] + 2;
-            ecm88Data+=len;
-            ecm88Len-=len;
-        }
-        else
-        {
-            ecm88Data+=5;
-            ecm88Len-=5;
-        }
-
-        // DE04
-        if (ecm88Data[0]==0xDE && ecm88Data[1]==0x04)
-        {
-            memcpy (DE04, &ecm88Data[0], 6);
-            ecm88Data+=6;
-        }
-        //
-
-        if( reader->last_geo.provid != provid ) 
-        {
-          reader->last_geo.provid = provid;
-          reader->last_geo.geo_len = 0;
-          reader->last_geo.geo[0]  = 0;
-          write_cmd(insa4, ident); // set provider
-        }
-
-        while(ecm88Len>0 && ecm88Data[0]<0xA0)
-        {
-          int nanoLen=ecm88Data[1]+2;
-          if (!ecmf8Data)
-            ecmf8Data=(uchar *)ecm88Data;
-          ecmf8Len+=nanoLen;
-          ecm88Len-=nanoLen;
-          ecm88Data+=nanoLen;
-        }
-        if(ecmf8Len)
-        {
-          if( reader->last_geo.geo_len!=ecmf8Len || 
-             memcmp(reader->last_geo.geo, ecmf8Data, reader->last_geo.geo_len))
-          {
-            memcpy(reader->last_geo.geo, ecmf8Data, ecmf8Len);
-            reader->last_geo.geo_len= ecmf8Len;
-            insf8[3]=keynr;
-            insf8[4]=ecmf8Len;
-            write_cmd(insf8, ecmf8Data);
-          }
-        }
-
-        ins88[2]=ecmf8Len?1:0;
-        ins88[3]=keynr;
-      //  curEcm88len=findNextEcmStart(ecm88Data,ecm88Len);
-        curEcm88len = ecm88Len;
-        ins88[4]= ecm88Len;
-
-        // DE04
-        if (DE04[0]==0xDE)
-        {
-            memcpy(DE04+6, (uchar *)ecm88Data, curEcm88len-6);
-            write_cmd(ins88, DE04); // request dcw
-        }
-        else
-        {
-            write_cmd(ins88, (uchar *)ecm88Data); // request dcw
-        }
-        //
-        
-        write_cmd(insc0, NULL); // read dcw
-        if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
-          //  ecm88Data+=curEcm88len;
-          //  continue;
-          cs_debug("TNTSAT OK");
-        }
-        else
-        {
-            cs_debug("ECM ERROR");
-        }
-        switch(cta_res[0])
-        {
-          case 0xe8: // even
-            if(cta_res[1]==8) { memcpy(er->cw,cta_res+2,8); rc=1; }
-            break;
-          case 0xe9: // odd
-            if(cta_res[1]==8) { memcpy(er->cw+8,cta_res+2,8); rc=1; }
-            break;
-          case 0xea: // complete
-            if(cta_res[1]==16) { memcpy(er->cw,cta_res+2,16); rc=1; }
-            break;
-        }
-    }
-
-  if (hasD2) {
-    aes_decrypt(er->cw, 16);
-  }
-  return(rc?OK:ERROR);
 }
 
 int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
