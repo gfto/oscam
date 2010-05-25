@@ -1190,28 +1190,28 @@ static void chk_token(char *token, char *value, int tag)
 #ifdef CS_WITH_GBOX
 		case TAG_GBOX    : chk_t_gbox(token, value); break;
 #else
-		case TAG_GBOX    : fprintf(stderr, "Warning: OSCam compiled without gbox support.\n"); break;
+		case TAG_GBOX    : fprintf(stderr, "OSCam compiled without gbox support. Parameter %s ignored\n", token); break;
 #endif
 
 
 #ifdef HAVE_DVBAPI
 		case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
 #else
-		case TAG_DVBAPI  : fprintf(stderr, "Warning: OSCam compiled without DVB API support.\n"); break;
+		case TAG_DVBAPI  : fprintf(stderr, "OSCam compiled without DVB API support. Parameter %s ignored\n", token); break;
 #endif
 
 
 #ifdef WEBIF
 		case TAG_WEBIF   : chk_t_webif(token, value); break;
 #else
-		case TAG_WEBIF   : fprintf(stderr, "Warning: OSCam compiled without Webinterface support.\n"); break;
+		case TAG_WEBIF   : fprintf(stderr, "OSCam compiled without Webinterface support. Parameter %s ignored\n", token); break;
 #endif
 
 
 #ifdef CS_ANTICASC
 		case TAG_ANTICASC: chk_t_ac(token, value); break;
 #else
-		case TAG_ANTICASC: fprintf(stderr, "Warning: OSCam compiled without anticascading support.\n"); break;
+		case TAG_ANTICASC: fprintf(stderr, "OSCam compiled without Anticascading support. Parameter %s ignored\n", token); break;
 #endif
 
 	}
