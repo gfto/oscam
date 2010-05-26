@@ -613,13 +613,15 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   unsigned char atr_kbw[] = { 0x3F, 0xFF, 0x14, 0x25, 0x03, 0x10, 0x80, 0x54, 0xB0, 0x01, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x4B, 0x57, 0x01, 0x00, 0x00};
   unsigned char atr_get[] = { 0x3F, 0xFF, 0x14, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x10, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x5A, 0x45, 0x01, 0x00, 0x00};
   unsigned char atr_foxtel_90b[] = { 0x3F, 0x7F, 0x11, 0x25, 0x03, 0x33, 0xB0, 0x09, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x46, 0x44, 0x01, 0x00, 0x00};
+  unsigned char atr_china_988[] = { 0x3F, 0x7F, 0x13, 0x25, 0x04, 0x33, 0xB0, 0x02, 0x69, 0xFF, 0x4A, 0x50, 0xE0, 0x00, 0x00, 0x54, 0x42, 0x00, 0x00, 0x00};
+  unsigned char atr_toptv_9b8[] = { 0x3F, 0xFF, 0x14, 0x25, 0x03, 0x10, 0x80, 0x41, 0xB0, 0x02, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x80, 0x00, 0x58, 0x38, 0x01, 0x00, 0x14};
 
     if ((atr_size == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atr_size) == 0))
     {
         cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard BSkyB");
+	BASEYEAR = 2000;
         /* BSkyB seems to need one additionnal byte in the serial communication... */
         io_serial_need_dummy_char = 1;
-				BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_bskyb_new)) && (memcmp (atr, atr_bskyb_new, atr_size) == 0))
     {
@@ -640,12 +642,12 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     else if ((atr_size == sizeof (atr_viasat_new)) && (memcmp (atr, atr_viasat_new, atr_size) == 0))
     {
         cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Viasat new (093E)");
-				BASEYEAR = 2000;
+	BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_viasat_scandinavia)) && (memcmp (atr, atr_viasat_scandinavia, atr_size) == 0))
     {
         cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Viasat Scandinavia");
-				BASEYEAR = 2000;
+	BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atr_size) == 0))
     {
@@ -658,7 +660,7 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     else if ((atr_size == sizeof (atr_dsmart)) && (memcmp (atr, atr_dsmart, atr_size) == 0))
     {
         cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard DSMART Turkey");
-                                BASEYEAR = 2004;
+	BASEYEAR = 2004;
     }
     else if ((atr_size == sizeof (atr_kbw)) && (memcmp (atr, atr_kbw, atr_size) == 0))
     {
@@ -667,13 +669,21 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     else if ((atr_size == sizeof (atr_get)) && (memcmp (atr, atr_get, atr_size) == 0))
     {
         cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Get Kabel Norway");
-        			BASEYEAR = 2004;
+    	BASEYEAR = 2004;
     }
     else if ((atr_size == sizeof (atr_foxtel_90b)) && (memcmp (atr, atr_foxtel_90b, atr_size) == 0))
     {
 	cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Foxtel Australia (090b)");
 				BASEYEAR = 2000;
     }
+    else if ((atr_size == sizeof (atr_china_988)) && (memcmp (atr, atr_china_988, atr_size) == 0)) 
+    { 
+	cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard China (0988)"); 
+    } 
+    else if ((atr_size == sizeof (atr_toptv_9b8)) && (memcmp (atr, atr_toptv_9b8, atr_size) == 0)) 
+    { 
+	cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard TopTV (09B8)"); 
+    } 
 
   //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
   //this way also unknown videoguard2/NDS cards will work
