@@ -398,6 +398,9 @@ int camd35_client_init()
 
   if (is_udp) pfd=client[cs_idx].udp_fd;
 
+  reader[ridx].tcp_connected = 2;
+  reader[ridx].card_status = CARD_INSERTED;
+
   return(0);
 }
 
