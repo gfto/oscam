@@ -1686,11 +1686,6 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 								case CARD_FAILURE: txt = "ERROR"; break;
 								default: txt = "UNDEF";
 							}
-							//Fixme Workaround because newcamd reader seems not set the card_status
-							if (reader[ridx].tcp_connected)
-								txt = "CONNECTED";
-
-							break;
 						}
 					}
 

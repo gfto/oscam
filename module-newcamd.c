@@ -344,6 +344,10 @@ static int connect_newcamd_server()
     return -3;
   }
 
+  // 3.2 Set connection info
+  //
+  reader[ridx].tcp_connected = 1;
+
   // 4. Send MSG_CARD_DATE_REQ
   //
   key = des_login_key_get(reader[ridx].ncd_key, passwdcrypt, strlen((char *)passwdcrypt));
@@ -377,9 +381,10 @@ static int connect_newcamd_server()
   }
   memcpy(reader[ridx].ncd_skey, key, 16);
 
-  // 6. Set connected info
+  // 6. Set card inserted
   //
-  reader[ridx].tcp_connected=1;
+  reader[ridx].tcp_connected = 2;
+  reader[ridx].card_status = CARD_INSERTED;
   reader[ridx].last_g = reader[ridx].last_s = time((time_t *)0);
 
 //  cs_log("last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
