@@ -272,7 +272,8 @@ int radegast_cli_init(void)
   handle = network_tcp_connection_open();
   if(handle < 0) return -1;
 
-  reader[ridx].tcp_connected = 1;
+  reader[ridx].tcp_connected = 2;
+  reader[ridx].card_status = CARD_INSERTED;
   reader[ridx].last_g = reader[ridx].last_s = time((time_t *)0);
 
   cs_debug("radegast: last_s=%d, last_g=%d", reader[ridx].last_s, reader[ridx].last_g);
