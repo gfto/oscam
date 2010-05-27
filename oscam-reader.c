@@ -212,7 +212,7 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
   if (!is_server)
   {
     int i;
-    pfd=0;
+    pfd = 0;
     reader->tcp_connected = 0;
 
     for (i=0; i<CS_MAXPENDING; i++)
@@ -224,20 +224,21 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
     reader->ncd_msgid=0;
     reader->last_s=reader->last_g=0;
 
-    // aston
-    if (reader->ph.cleanup)
-    	 reader->ph.cleanup();
-    if (client[cs_idx].typ == 'p')
-    	 return;
+    /* FIXME: this changes from r2318 only for CCcam */
+    if (reader->typ == R_CCCAM) {
+      if (reader->ph.cleanup) reader->ph.cleanup();
+      if (client[cs_idx].typ == 'p') return;
+    } 
+    /* END */
 
     if (reader->ph.c_init()) {
          cs_debug("network_tcp_connection_close() exit(1);");
+
        if (reader->ph.cleanup)
-       	  reader->ph.cleanup();
+         reader->ph.cleanup();
+
          cs_exit(1);
     }
-    //cs_resolve_reader(reader->ridx);
-//  cs_log("last_s=%d, last_g=%d", reader->last_s, reader->last_g);
   }
 }
 
@@ -698,7 +699,6 @@ void * start_cardreader(void * rdr)
       cs_exit(1);
     }
     
-    // aston
     if (reader->ph.c_init()) {
     	 if (reader->ph.cleanup) 
     	 	  reader->ph.cleanup();

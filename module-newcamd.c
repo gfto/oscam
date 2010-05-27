@@ -283,7 +283,6 @@ static int connect_newcamd_server(int handle)
   uint8 buf[CWS_NETMSGSIZE];
   uint8 keymod[14];
   uint8 *key;
-
   uint32 index;
   uint8 *passwdcrypt;
   uint8 login_answer;
@@ -291,14 +290,13 @@ static int connect_newcamd_server(int handle)
 
   if(reader[ridx].device[0] == 0 || reader[ridx].r_pwd[0] == 0 || 
      reader[ridx].r_usr[0] == 0 || reader[ridx].r_port == 0)
-    return -5;
+    return -1;
 
   // Get init sequence
   reader[ridx].ncd_msgid = 0;
   if( read(handle, keymod, sizeof(keymod)) != sizeof(keymod)) {
     cs_log("server does not return 14 bytes");
-    network_tcp_connection_close(&reader[ridx], handle);
-    return -2;
+    return -1;
   }
   cs_ddump(keymod, 14, "server init sequence:");
   key = des_login_key_get(keymod, reader[ridx].ncd_key, 14);
@@ -318,18 +316,15 @@ static int connect_newcamd_server(int handle)
   // Get login answer
   login_answer=network_cmd_no_data_receive(handle, &reader[ridx].ncd_msgid, 
                                            key, COMMTYPE_CLIENT);
-  if( login_answer == MSG_CLIENT_2_SERVER_LOGIN_NAK )
-  {
+  if(login_answer == MSG_CLIENT_2_SERVER_LOGIN_NAK) {
     cs_log("login failed for user '%s'", reader[ridx].r_usr);
-    network_tcp_connection_close(&reader[ridx], handle);
-    return -3;
+    return -1;
   }
-  if( login_answer != MSG_CLIENT_2_SERVER_LOGIN_ACK ) 
-  {
+
+  if(login_answer != MSG_CLIENT_2_SERVER_LOGIN_ACK) { 
     cs_log("expected MSG_CLIENT_2_SERVER_LOGIN_ACK (%02X), received %02X", 
              MSG_CLIENT_2_SERVER_LOGIN_ACK, login_answer);
-    network_tcp_connection_close(&reader[ridx], handle);
-    return -3;
+    return -1;
   }
 
   // Send MSG_CARD_DATE_REQ
@@ -339,11 +334,10 @@ static int connect_newcamd_server(int handle)
                            key, COMMTYPE_CLIENT);
   bytes_received = network_message_receive(handle, &reader[ridx].ncd_msgid, buf, 
                                            key, COMMTYPE_CLIENT);
-  if( bytes_received < 16 || buf[2] != MSG_CARD_DATA ) {
+  if(bytes_received < 16 || buf[2] != MSG_CARD_DATA) {
     cs_log("expected MSG_CARD_DATA (%02X), received %02X", 
              MSG_CARD_DATA, buf[2]);
-    network_tcp_connection_close(&reader[ridx], handle);
-    return -4;
+    return -1;
   }
 
   // Parse CAID and PROVID(s)
@@ -372,19 +366,21 @@ static int connect_newcamd_server(int handle)
 
 static int newcamd_connect()
 {
-  if (!reader[ridx].tcp_connected || !client[cs_idx].udp_fd)
+  if (!reader[ridx].tcp_connected)
     return 0;
-  else
-    return 1;
-}
+  
+  if (!client[cs_idx].udp_fd)
+    return 0;
 
+  return 1;
+}
 
 static int newcamd_send(uchar *buf, int ml, ushort sid)
 {
   if(!newcamd_connect())
      return(-1);
 
-  return(network_message_send(client[cs_idx].udp_fd, &reader[ridx].ncd_msgid, 
+  return(network_message_send(client[cs_idx].udp_fd, &reader[ridx].ncd_msgid,
          buf, ml, reader[ridx].ncd_skey, COMMTYPE_CLIENT, sid, NULL));
 }
 
@@ -1129,20 +1125,21 @@ int newcamd_client_init()
   int p_proto, handle = 0;
   char ptxt[16];
 
-  pfd=0;
-  if (reader[ridx].r_port<=0)
-  {
+  pfd = 0;
+  if (reader[ridx].r_port<=0) {
     cs_log("invalid port %d for server %s", reader[ridx].r_port, reader[ridx].device);
-    return(1);
+    return -1;
   }
+
   if( (ptrp=getprotobyname("tcp")) )
     p_proto=ptrp->p_proto;
   else
     p_proto=6;
 
-  client[cs_idx].ip=0;
+  client[cs_idx].ip = 0;
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
+
 #ifdef LALL
   if (cfg->serverip[0])
     loc_sa.sin_addr.s_addr = inet_addr(cfg->serverip);
@@ -1151,8 +1148,7 @@ int newcamd_client_init()
     loc_sa.sin_addr.s_addr = INADDR_ANY;
   loc_sa.sin_port = htons(reader[ridx].l_port);
 
-  if ((client[cs_idx].udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
-  {
+  if ((client[cs_idx].udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0) {
     cs_log("Socket creation failed (errno=%d)", errno);
     cs_exit(1);
   }
@@ -1168,13 +1164,11 @@ int newcamd_client_init()
     (void *)&keep_alive, sizeof(ulong));
   }
 
-  if (reader[ridx].l_port>0)
-  {
-    if (bind(client[cs_idx].udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
-    {
+  if (reader[ridx].l_port > 0) {
+    if (bind(client[cs_idx].udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa)) < 0) {
       cs_log("bind failed (errno=%d)", errno);
       close(client[cs_idx].udp_fd);
-      return(1);
+      return -1;
     }
     sprintf(ptxt, ", port=%d", reader[ridx].l_port);
   }
@@ -1194,16 +1188,19 @@ int newcamd_client_init()
           (ncd_proto==NCD_525)?5:4, client[cs_idx].udp_fd, ptxt);
 
   handle = network_tcp_connection_open();
-
-  if(handle < 0)
-    return -1;
+  if(handle < 0) return -1;
 
   reader[ridx].tcp_connected = 1;
   reader[ridx].last_g = reader[ridx].last_s = time((time_t *)0);
 
   pfd = client[cs_idx].udp_fd;
 
-  return(connect_newcamd_server(handle));
+  if (connect_newcamd_server(handle) < 0) {
+    reader[ridx].card_status = CARD_FAILURE;
+    cs_log("cannot initialize newcamd reader");
+    network_tcp_connection_close(&reader[ridx], handle);
+  }
+  return 0;
 }
 
 static int newcamd_send_ecm(ECM_REQUEST *er, uchar *buf)
@@ -1212,7 +1209,7 @@ static int newcamd_send_ecm(ECM_REQUEST *er, uchar *buf)
     return(-1);
 
   if(!newcamd_connect())
-    return (-1);
+    return(-1);
 
   // check server filters
   if(!chk_rsfilter(&reader[ridx], er, reader[ridx].ncd_disable_server_filt))
@@ -1231,7 +1228,7 @@ static int newcamd_send_emm(EMM_PACKET *ep)
     return(-1);
 
   if(!newcamd_connect())
-    return (-1);
+    return(-1);
 
   memcpy(buf, ep->emm, ep->l);
   return((newcamd_send(buf, ep->l, 0)<1) ? 0 : 1);
