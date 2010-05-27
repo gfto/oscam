@@ -332,9 +332,6 @@ static int connect_newcamd_server(int handle)
     return -3;
   }
 
-  // Set connection info
-  reader[ridx].tcp_connected = 1;
-
   // Send MSG_CARD_DATE_REQ
   key = des_login_key_get(reader[ridx].ncd_key, passwdcrypt, strlen((char *)passwdcrypt));
 
