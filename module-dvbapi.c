@@ -58,7 +58,7 @@ typedef struct demux_s
 	int emm_filter;
 	uchar hexserial[8];
 	struct s_reader *rdr;
-	uchar pmt_file[50];
+	char pmt_file[50];
 	int pmt_time;
 #ifdef WITH_STAPI
 	uint STREAMhandle[ECM_PIDS];
@@ -166,6 +166,8 @@ unsigned short global_caid_list[MAX_CAID];
 DEMUXTYPE demux[MAX_DEMUX];
 
 void dvbapi_stop_descrambling(int);
+int dvbapi_open_device(int, int);
+int dvbapi_stop_filternum(int demux_index, int num);
 
 int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uchar *mask, int timeout, int pidindex, int count, int type) {
 	int ret=-1,n=-1,i,dmx_fd;
@@ -179,7 +181,7 @@ int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uc
 
 	if (n==-1) {
 		cs_log("dvbapi: no free filter");
-		return;
+		return -1;
 	}
 
 	dmx_fd = dvbapi_open_device(demux_id, 0);
@@ -379,7 +381,6 @@ int dvbapi_stop_filternum(int demux_index, int num) {
 }
 
 void dvbapi_start_filter(int demux_id, int pidindex, unsigned short pid, uchar table, uchar mask, int type) {
-	int dmx_fd,i,n=-1;
 	uchar filter[32];
 
 	cs_debug("dvbapi: set filter pid: %04x", pid);
@@ -393,7 +394,7 @@ void dvbapi_start_filter(int demux_id, int pidindex, unsigned short pid, uchar t
 }
 
 void dvbapi_start_emm_filter(int demux_index) {
-	int dmx_fd, i, j, n;
+	int j;
 	uchar nullserial[8];
 	char *typtext[]={"UNKNOWN", "UNIQUE", "SHARED", "GLOBAL"};
 
@@ -851,11 +852,10 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 
 void event_handler(int signal) {
 	struct stat pmt_info;
-	uchar dest[1024];
+	char dest[1024];
 	uint len;
 	DIR *dirp;
 	struct dirent *dp;
-	struct stat buf;
 	int i,pmt_fd,found;
 
 	signal=signal;
