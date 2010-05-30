@@ -403,7 +403,7 @@ static void cs_sighup()
 
 static void cs_accounts_chk()
 {
-  init_userdb();
+  init_userdb(cfg->account);
   cs_reinit_clients();
 #ifdef CS_ANTICASC
   int i;
@@ -2616,7 +2616,7 @@ int main (int argc, char *argv[])
 
   init_sidtab();
   init_readerdb();
-  init_userdb();
+  init_userdb(cfg->account);
   init_signal();
   cs_set_mloc(30, "init");
   init_srvid();

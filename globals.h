@@ -1002,7 +1002,7 @@ extern int chk_class(ECM_REQUEST *, CLASSTAB*, const char*, const char*);
 
 // oscam-config
 extern int  init_config(void);
-extern int  init_userdb(void);
+extern int  init_userdb(struct s_auth *authptr);
 extern int  init_readerdb(void);
 extern int  init_sidtab(void);
 extern int  init_srvid(void);
@@ -1047,7 +1047,7 @@ extern void chk_t_webif(char *token, char *value);
 extern void chk_account(char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
 extern int write_services();
-extern int write_userdb();
+extern int write_userdb(struct s_auth *authptr);
 extern int write_config();
 extern int write_server();
 extern char *mk_t_caidtab(CAIDTAB *ctab);

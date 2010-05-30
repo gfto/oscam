@@ -1949,7 +1949,7 @@ int write_config()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int write_userdb()
+int write_userdb(struct s_auth *authptr)
 {
 	int i;
 	FILE *f;
@@ -1971,7 +1971,7 @@ int write_userdb()
   fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.user.txt\n\n");
 
   //each account
-	for (account=cfg->account; (account) ; account=account->next){
+	for (account=authptr; (account) ; account=account->next){
 		fprintf(f,"[account]\n");
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", account->usr);
 		fprintf_conf(f, CONFVARWIDTH, "pwd", "%s\n", account->pwd);
@@ -2311,7 +2311,7 @@ int write_server()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int init_userdb()
+int init_userdb(struct s_auth *authptr)
 {
 	int tag = 0, nr, nro, expired, disabled;
 	//int first=1;
@@ -2326,7 +2326,7 @@ int init_userdb()
 		return(1);
 	}
 
-	for (nro = 0, ptr = cfg->account; ptr; nro++) {
+	for (nro = 0, ptr = authptr; ptr; nro++) {
 		struct s_auth *ptr_next;
 		ptr_next = ptr->next;
 		free(ptr);
@@ -2386,7 +2386,7 @@ int init_userdb()
 
 	fclose(fp);
 
-	for (expired = 0, disabled = 0, ptr = cfg->account; ptr;) {
+	for (expired = 0, disabled = 0, ptr = authptr; ptr;) {
 
 		if(ptr->expirationdate && ptr->expirationdate < time(NULL))
 			expired++;

@@ -15,6 +15,7 @@
 extern struct s_reader *reader;
 
 static int running = 1;
+static struct s_auth 	*fork_account; //hold the initial pointer
 
 void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 	int i;
@@ -22,6 +23,7 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 		case REFR_ACCOUNTS:
 		cs_log("Refresh Accounts requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
 		kill(client[0].pid, SIGHUP);
+		init_userdb(fork_account);
 #ifdef CS_ANTICASC
 		for (i=0; i<CS_MAXPID; i++)
 		if (client[i].typ=='a') {
@@ -1034,14 +1036,14 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 
 	int i;
 
-	for (account = cfg->account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
+	for (account = fork_account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 
 	// Create a new user if it doesn't yet
 	if (account == NULL) {
 		i = 1;
 		while(strlen(user) < 1) {
 			snprintf(user, sizeof(user)/sizeof(char) - 1, "NEWUSER%d", i);
-			for (account = cfg->account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
+			for (account = fork_account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 			if(account != NULL) user[0] = '\0';
 			++i;
 		}
@@ -1049,9 +1051,9 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 			cs_log("Error allocating memory (errno=%d)", errno);
 			return;
 		}
-		if(cfg->account == NULL) cfg->account = account;
+		if(fork_account == NULL) fork_account = account;
 		else {
-			for (ptr = cfg->account; ptr != NULL && ptr->next != NULL; ptr = ptr->next);
+			for (ptr = fork_account; ptr != NULL && ptr->next != NULL; ptr = ptr->next);
 			ptr->next = account;
 		}
 		memset(account, 0, sizeof(struct s_auth));
@@ -1068,10 +1070,10 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		account->ac_idx = account->ac_idx + 1;
 #endif
 		tpl_addVar(vars, 1, "MESSAGE", "<b>New user has been added with default settings</b><BR>");
-		if (write_userdb()==0) refresh_oscam(REFR_ACCOUNTS, in);
+		if (write_userdb(fork_account)==0) refresh_oscam(REFR_ACCOUNTS, in);
 		else tpl_addVar(vars, 1, "MESSAGE", "<b>Writing configuration to disk failed!</b><BR>");
 		// need to reget account as writing to disk changes account!
-		for (account = cfg->account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
+		for (account = fork_account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 	}
 
 	if((strcmp(getParam(params, "action"), "Save") == 0) || (strcmp(getParam(params, "action"), "Save As") == 0)) {
@@ -1093,10 +1095,10 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		}
 		chk_account("services", servicelabels, account);
 		tpl_addVar(vars, 1, "MESSAGE", "<B>Settings updated</B><BR><BR>");
-		if (write_userdb()==0) refresh_oscam(REFR_ACCOUNTS, in);
+		if (write_userdb(fork_account)==0) refresh_oscam(REFR_ACCOUNTS, in);
 		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
-	for (account = cfg->account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
+	for (account = fork_account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 
 	tpl_addVar(vars, 0, "USERNAME", account->usr);
 	tpl_addVar(vars, 0, "PASSWORD", account->pwd);
@@ -1214,9 +1216,9 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 		if(cfg->http_readonly) {
 			tpl_addVar(vars, 1, "MESSAGE", "<b>Webif is in readonly mode. No deletion will be made!</b><BR>");
 		} else {
-			account=cfg->account;
+			account=fork_account;
 			if(strcmp(account->usr, user) == 0) {
-				cfg->account = account->next;
+				fork_account = account->next;
 				free(account);
 				found = 1;
 			} else if (account->next != NULL) {
@@ -1233,7 +1235,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 
 			if (found > 0) {
 				tpl_addVar(vars, 1, "MESSAGE", "<b>Account has been deleted!</b><BR>");
-				if (write_userdb()==0) refresh_oscam(REFR_ACCOUNTS, in);
+				if (write_userdb(fork_account)==0) refresh_oscam(REFR_ACCOUNTS, in);
 				else tpl_addVar(vars, 1, "MESSAGE", "<b>Writing configuration to disk failed!</b><BR>");
 			} else tpl_addVar(vars, 1, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
 		}
@@ -1242,7 +1244,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 
 
 	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
-		for (account=cfg->account; (account); account=account->next) {
+		for (account=fork_account; (account); account=account->next) {
 			if(strcmp(getParam(params, "user"), account->usr) == 0) {
 				if(strcmp(getParam(params, "action"), "disable") == 0)
 				account->disabled = 1;
@@ -1254,7 +1256,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 
 		if (found > 0) {
 			tpl_addVar(vars, 1, "MESSAGE", "<b>Account has been switched!</b><BR>");
-			if (write_userdb()==0) refresh_oscam(REFR_ACCOUNTS, in);
+			if (write_userdb(fork_account)==0) refresh_oscam(REFR_ACCOUNTS, in);
 			else tpl_addVar(vars, 1, "MESSAGE", "<b>Writing configuration to disk failed!</b><BR>");
 		} else tpl_addVar(vars, 1, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
 	}
@@ -1267,7 +1269,8 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 	time_t now = time((time_t)0);
 	int isec = 0, isonline = 0;
 
-	for (account=cfg->account; (account); account=account->next) {
+	//for (account=cfg->account; (account); account=account->next) {
+	for (account=fork_account; (account); account=account->next) {
 		//clear for next client
 		expired = ""; classname = "offline"; status = "offline";
 		isonline = 0;
@@ -2233,6 +2236,7 @@ void http_srv() {
 	struct sockaddr_in remote;
 	socklen_t len = sizeof(remote);
 	char *tmp;
+	fork_account = cfg->account;
 
 	/* Prepare lookup array for conversion between ascii and hex */
 	tmp = malloc(3 * sizeof(char));
