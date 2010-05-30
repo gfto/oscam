@@ -627,9 +627,10 @@ static void reader_do_pipe(struct s_reader * reader)
   uchar *ptr;
   int pipeCmd = read_from_pipe(client[reader->cs_idx].fd_m2c_c, &ptr, 0);
 
-  if (reader->tcp_connected != 2 && client[cs_idx].typ == 'p')
-  	 return;
-  
+  /* FIXME: this breaks camd35/newcamd cascading as this modules does not set tcp_connected = 2 */
+  if (reader->typ == R_CCCAM && reader->tcp_connected != 2 && client[cs_idx].typ == 'p')
+    return;
+ 
   switch(pipeCmd)
   {
     case PIP_ID_ECM:
@@ -651,7 +652,8 @@ static void reader_main(struct s_reader * reader)
 {
   while (1)
   {
-    if (!reader->tcp_connected && client[cs_idx].typ == 'p') {
+    /* FIXME: this breaks newcamd/camd3 cascading as newcamd/camd35 only connects if server sends ecm/emm to client */
+    if (reader->typ == R_CCCAM && !reader->tcp_connected && client[cs_idx].typ == 'p') {
     	 if (!cfg->reader_restart_seconds)
     	 	  cs_exit(1);
        cs_log("%s not connected! Reconection in %d sec", reader->label, cfg->reader_restart_seconds);
