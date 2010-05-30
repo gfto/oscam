@@ -168,6 +168,7 @@ DEMUXTYPE demux[MAX_DEMUX];
 void dvbapi_stop_descrambling(int);
 int dvbapi_open_device(int, int);
 int dvbapi_stop_filternum(int demux_index, int num);
+int dvbapi_stop_filter(int demux_index, int type);
 
 int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uchar *mask, int timeout, int pidindex, int count, int type) {
 	int ret=-1,n=-1,i,dmx_fd;
@@ -248,7 +249,7 @@ int dvbapi_check_array(unsigned short *array, int len, unsigned short match) {
 }
 
 int dvbapi_detect_api() {
-	int num_apis=2, i,devnum=-1, apinum=-1, dmx_fd=0, ret=-1;
+	int num_apis=2, i,devnum=-1, dmx_fd=0, ret=-1;
 	uchar filter[32];
 	char device_path[128];
 
@@ -286,16 +287,15 @@ int dvbapi_detect_api() {
 		ret = dvbapi_set_filter(0, i, 0x0001, filter, filter+16, 1, 0, 0, TYPE_ECM);
 
 		if (ret >= 0) {
-			apinum=i;
-			dvbapi_stop_descrambling(0);
+			selected_api=i;
+			dvbapi_stop_filter(0, TYPE_ECM);
 			break;
 		}
 	}
 
 	if (ret < 0) return 0;
-	selected_api=apinum;
 
-	cs_debug("dvbapi: Detected %s Api: %d", device_path, apinum);
+	cs_debug("dvbapi: Detected %s Api: %d", device_path, selected_api);
 
 	return 1;
 }
@@ -866,9 +866,6 @@ void event_handler(int signal) {
 	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX)
 		return;
 
-	if (disable_pmt_files)
-  		return; 
-
 	dirp = opendir(TMPDIR);
 	if (!dirp)
 		cs_log("dvbapi: opendir errno %d", errno);
@@ -885,6 +882,9 @@ void event_handler(int signal) {
 			}
 		}
 	}
+
+	if (disable_pmt_files)
+  		return; 
 
 	while (dp = readdir(dirp)) {
 		if (strncmp(dp->d_name, "pmt", 3)==0 && strncmp(dp->d_name+strlen(dp->d_name)-4, ".tmp", 4)==0) {
@@ -1084,7 +1084,7 @@ void dvbapi_main_local() {
 
 		for (i=0;i<MAX_DEMUX;i++) {
 			for (g=0;g<MAX_FILTER;g++) {
-				if (demux[i].demux_fd[g].fd>1) {
+				if (demux[i].demux_fd[g].fd>0 && selected_api != STAPI) {
 					pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
 					pfd2[pfdcount].events = (POLLIN | POLLPRI);
 					ids[pfdcount]=i;
