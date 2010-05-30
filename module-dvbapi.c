@@ -866,10 +866,6 @@ void event_handler(int signal) {
 	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX)
 		return;
 
-	dirp = opendir(TMPDIR);
-	if (!dirp)
-		cs_log("dvbapi: opendir errno %d", errno);
-  
 	for (i=0;i<MAX_DEMUX;i++) {
 		if (demux[i].pmt_file[0] != 0) {
 			sprintf(dest, "%s%s", TMPDIR, demux[i].pmt_file);
@@ -885,6 +881,10 @@ void event_handler(int signal) {
 
 	if (disable_pmt_files)
   		return; 
+
+	dirp = opendir(TMPDIR);
+	if (!dirp)
+		cs_log("dvbapi: opendir errno %d", errno);
 
 	while (dp = readdir(dirp)) {
 		if (strncmp(dp->d_name, "pmt", 3)==0 && strncmp(dp->d_name+strlen(dp->d_name)-4, ".tmp", 4)==0) {
