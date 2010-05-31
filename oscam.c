@@ -2365,7 +2365,7 @@ void do_emm(EMM_PACKET *ep)
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
 	if (reader[au].card_system > 0) {
-		if ((!reader[au].fd) ||	(reader[au].caid[0] != b2i(2,ep->caid))) {   // wrong caid
+		if (reader[au].card_system == SC_CCCAM || (!reader[au].fd) ||	(reader[au].caid[0] != b2i(2,ep->caid))) {   // wrong caid
 			client[cs_idx].emmnok++;
 			return;
 		}

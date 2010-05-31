@@ -416,6 +416,7 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
     case SC_DRE:
       rc=dre_get_emm_type(ep, rdr); break;
     case SC_CCCAM:
+      ep->type = UNKNOWN;
       rc=TRUE;
     default:
       rc=0;
