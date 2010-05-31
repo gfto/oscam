@@ -2353,7 +2353,7 @@ int init_userdb(struct s_auth *authptr)
 			if (account)
 				account->next = ptr;
 			else
-				authptr = ptr;
+				cfg->account = ptr;
 
 			account = ptr;
 			memset(account, 0, sizeof(struct s_auth));
