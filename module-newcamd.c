@@ -357,7 +357,7 @@ static int connect_newcamd_server()
   // 5. Parse CAID and PROVID(s)
   reader[ridx].caid[0] = (ushort)((buf[4+2]<<8) | buf[5+2]);
 
-  /* handle special irdeto and betacrypt serial format in newcamd. See newcamd_auth_client*/
+  /* handle special serial format in newcamd. See newcamd_auth_client */
   if (((reader[ridx].caid[0] >> 8) == 0x17) || ((reader[ridx].caid[0] >> 8) == 0x06)) {
     memcpy(&reader[ridx].hexserial, buf+10+2, 4);
     int hexbase = reader[ridx].hexserial[0];
@@ -366,8 +366,10 @@ static int connect_newcamd_server()
     reader[ridx].hexserial[2] = reader[ridx].hexserial[3];
     reader[ridx].hexserial[3] = hexbase;
   }
+  else if (((reader[ridx].caid[0] >> 8) == 0x05) || ((reader[ridx].caid[0] >> 8) == 0x0D))
+    memcpy(&reader[ridx].hexserial, buf+9+2, 5);
   else
-    memcpy(&reader[ridx].hexserial, buf+6+2, 8);
+    memcpy(&reader[ridx].hexserial, buf+8+2, 6);
 
   cs_log("Newcamd Server: %s:%d - UserID: %i", reader[ridx].device, reader[ridx].r_port, buf[3+2]);
   cs_log("CAID: %04X - UA: %02X%02X%02X%02X%02X%02X%02X%02X - Provider # %i", reader[ridx].caid[0], reader[ridx].hexserial[0], reader[ridx].hexserial[1], reader[ridx].hexserial[2], reader[ridx].hexserial[3], reader[ridx].hexserial[4], reader[ridx].hexserial[5], reader[ridx].hexserial[6], reader[ridx].hexserial[7], buf[14+2]);
