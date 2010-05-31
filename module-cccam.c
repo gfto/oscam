@@ -224,6 +224,8 @@ static void cc_cli_close() {
 	//cs_sleepms(100);
 	struct cc_data *cc = reader[ridx].cc;
 	if (cc) {
+		pthread_mutex_unlock(&cc->lock);
+		pthread_mutex_unlock(&cc->ecm_busy);
 		pthread_mutex_destroy(&cc->lock);
 		pthread_mutex_destroy(&cc->ecm_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
@@ -279,7 +281,7 @@ static int cc_msg_recv(uint8 *buf) {
 	if (size) { // check if any data is expected in msg
 		if (size > CC_MAXMSGSIZE - 2) {
 			cs_log("%s message too big (size=%d)", getprefix(), size);
-			return -1;
+			return 0;
 		}
 
 		len = recv(handle, netbuf + 4, size,
@@ -1039,7 +1041,7 @@ static void cleanup_old_cards(struct cc_data *cc) {
 	}
 }
 
-static int caid_filtered(int caid) {
+static int caid_filtered(int ridx, int caid) {
 	int defined = 0;
 	int i;
 	for (i = 0; i < CS_MAXREADERCAID; i++) {
@@ -1101,7 +1103,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (buf[14] > reader[ridx].cc_maxhop)
 			break;
 
-		if (caid_filtered(b2i(2, buf + 12)))
+		if (caid_filtered(ridx, b2i(2, buf + 12)))
 			break;
 
 		struct cc_card *card = malloc(sizeof(struct cc_card));
@@ -1329,11 +1331,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc->max_ecms = 60;
 				cc->ecm_counter = 0;
 			}
-
-			if (cc->current_ecm_cidx) //Clear current card, because next message is NOK.
-				cc_clear_current_card(cc, cc->current_ecm_cidx);
 			cc_cmd_send(NULL, 0, MSG_BAD_ECM);
-			cc_retry_ecm(cc, NULL);
 		}
 		ret = 0;
 		break;
@@ -2090,11 +2088,14 @@ int cc_cli_init() {
 	return (cc_cli_connect());
 }
 
-int cc_available(READER_STAT *stat) {
+/**
+ * return 1 if we are able to send requests:
+ */
+int cc_available(int ridx, READER_STAT *stat) {
 	if (is_server || !reader[ridx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED)
 		return 0; //We are not initialized or not connected!
 
-	if (caid_filtered(stat->caid)) //caid is filted:
+	if (caid_filtered(ridx, stat->caid)) //caid is filted:
 		return 0;
 
 	struct cc_data *cc = reader[ridx].cc;

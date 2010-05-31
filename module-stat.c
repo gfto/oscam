@@ -145,7 +145,7 @@ int get_best_reader(struct s_reader *reader, ushort caid, ulong prid, ushort srv
 			if (stat && stat->rc == 0 && (!best_stat || stat->time_avg < best_stat->time_avg)) {
 				if (stat->ecm_count >= MIN_ECM_COUNT) {
 					int cs_idx = reader[i].cs_idx;
-					if (!ph[client[cs_idx].ctyp].c_available || ph[client[cs_idx].ctyp].c_available(stat)) {
+					if (!ph[client[cs_idx].ctyp].c_available || ph[client[cs_idx].ctyp].c_available(i, stat)) {
 						best_stat = stat;
 						best_ridx = i;
 					}
