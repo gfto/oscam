@@ -534,25 +534,32 @@ void clear_tuntab(struct s_tuntab *ttab){
 }
 /* Overwrites destfile with tmpfile. If forceBakOverWrite = 0, the bakfile will not be overwritten if it exists, else it will be.*/
 int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int forceBakOverWrite){
-	if(forceBakOverWrite != 0 && file_exists(bakfile)){
-		if(remove(bakfile) < 0) cs_log("Error removing backup conf file %s (errno=%d)! Will try to proceed nonetheless...", bakfile, errno);
-	}
-	if(file_exists(bakfile)){
-		if(remove(destfile) < 0) {
-			cs_log("Error removing original conf file %s (errno=%d). Will maintain original one!", destfile, errno);
-			if(remove(tmpfile) < 0) cs_log("Error removing temp conf file %s (errno=%d)!", tmpfile, errno);
+	if (file_exists(destfile)) {
+		if(forceBakOverWrite != 0 && file_exists(bakfile)){
+			if(remove(bakfile) < 0) cs_log("Error removing backup conf file %s (errno=%d)! Will try to proceed nonetheless...", bakfile, errno);
+		}
+		if(file_exists(bakfile)){
+			if(remove(destfile) < 0) {
+				cs_log("Error removing original conf file %s (errno=%d). Will maintain original one!", destfile, errno);
+				if(remove(tmpfile) < 0) cs_log("Error removing temp conf file %s (errno=%d)!", tmpfile, errno);
+				return(1);
+			}
+		} else {
+			if(rename(destfile, bakfile) < 0){
+				cs_log("Error renaming original conf file %s to %s (errno=%d). Will maintain original one!", destfile, bakfile, errno);
+				if(remove(tmpfile) < 0) cs_log("Error removing temp conf file %s (errno=%d)!", tmpfile, errno);
+				return(1);
+			}
+		}
+		if(rename(tmpfile, destfile) < 0){
+			cs_log("Error renaming new conf file %s to %s (errno=%d). The config will be missing upon next startup as this is non-recoverable!", tmpfile, destfile, errno);
 			return(1);
 		}
 	} else {
-		if(rename(destfile, bakfile) < 0){
-			cs_log("Error renaming original conf file %s to %s (errno=%d). Will maintain original one!", destfile, bakfile, errno);
-			if(remove(tmpfile) < 0) cs_log("Error removing temp conf file %s (errno=%d)!", tmpfile, errno);
+		if(rename(tmpfile, destfile) < 0){
+			cs_log("Error renaming new conf file %s to %s (errno=%d). The config will be missing upon next startup as this is non-recoverable!", tmpfile, destfile, errno);
 			return(1);
 		}
-	}
-	if(rename(tmpfile, destfile) < 0){
-		cs_log("Error renaming new conf file %s to %s (errno=%d). The config will be missing upon next startup as this is non-recoverable!", tmpfile, destfile, errno);
-		return(1);
 	}
 	return(0);
 }
