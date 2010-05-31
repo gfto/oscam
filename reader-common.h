@@ -86,6 +86,8 @@ int dre_get_emm_type(EMM_PACKET *, struct s_reader *);
 int dre_card_info(void);
 void dre_get_emm_filter(struct s_reader * rdr, uchar *filter);
 
+int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
+
 #define write_cmd(cmd, data) \
 { \
         if (card_write(reader, cmd, data, cta_res, &cta_lr)) return ERROR; \

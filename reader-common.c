@@ -564,3 +564,8 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
   return(rc);
 }
+
+int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep)
+{
+	return (rdr->fd && (rdr->caid[0] == b2i(2,ep->caid) || rdr->card_system == SC_CCCAM));
+}

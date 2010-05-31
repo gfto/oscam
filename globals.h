@@ -1134,6 +1134,7 @@ extern int reader_emm(struct s_reader * reader, EMM_PACKET *);
 int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 void get_emm_filter(struct s_reader * rdr, uchar *filter);
 int get_cardsystem(ushort caid);
+extern int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 
 //module-stat
 extern void add_reader_stat(ADD_READER_STAT *add_stat);
