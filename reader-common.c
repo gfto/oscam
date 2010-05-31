@@ -357,13 +357,10 @@ void reader_post_process(struct s_reader * reader)
 int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   int rc=-1, r, m=0;
-  static int loadbalanced_idx = 1;
   if( (rc=reader_checkhealth(reader)) )
   {
-    //cs_log("OUT: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
-    if(((reader->caid[0]>>8)==((er->caid>>8)&0xFF)) && (((reader->loadbalanced) && (loadbalanced_idx == reader->ridx)) || !reader->loadbalanced))
+    if((reader[ridx].caid[0] >> 8) == ((er->caid >> 8) & 0xFF))
     {
-      //cs_log("IN: ridx = %d (0x%x), client = 0x%x, lb_idx = %d", ridx, &reader[ridx], &client[cs_idx], loadbalanced_idx);
       client[cs_idx].last_srvid=er->srvid;
       client[cs_idx].last_caid=er->caid;
       client[cs_idx].last=time((time_t)0);
@@ -394,7 +391,6 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
   for (r=0;r<CS_MAXREADER;r++)
     if (reader[r].caid[0]) m++;
-  if (loadbalanced_idx++ >= m) loadbalanced_idx = 1;
   return(rc);
 }
 

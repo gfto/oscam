@@ -561,7 +561,6 @@ struct s_reader  //contains device info, reader info and card info
   int       gbox_fd;
   struct timeb  gbox_lasthello;   // incoming time stamp
 #endif
-  int       loadbalanced;
 #ifdef CS_RDR_INIT_HIST
   uchar     init_history[4096];
 #endif

@@ -2248,9 +2248,6 @@ int write_server()
 			if (reader[i].cardmhz && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", reader[i].cardmhz);
 
-			if (reader[i].loadbalanced)
-				fprintf_conf(f, CONFVARWIDTH, "loadbalanced", "%d\n", reader[i].loadbalanced);
-
 			value = mk_t_ftab(&reader[i].ftab);
 			fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
 			free(value);
@@ -3048,16 +3045,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		fprintf(stderr, "WARNING: value '%s' in protocol-line not recognized, assuming MOUSE\n",value);
 		rdr->typ = R_MOUSE;
 		return;
-	}
-
-	if (!strcmp(token, "loadbalanced")) {
-		if(strlen(value) == 0) {
-			rdr->loadbalanced = 0;
-			return;
-		} else {
-			rdr->loadbalanced = atoi(value);
-			return;
-		}
 	}
 
 	if (!strcmp(token, "ident")) {

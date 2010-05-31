@@ -52,6 +52,7 @@ OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(module-cccam.o) \
 		  $(LIBFILE1)(module-dvbapi.o) \
 		  $(LIBFILE1)(module-obj-llist.o) \
+		  $(LIBFILE1)(module-stat.o) \
 		  $(LIBFILE1)(oscam-nano.o) \
 		  $(LIBFILE1)(oscam-chk.o) \
 		  $(LIBFILE1)(oscam-http.o) \
