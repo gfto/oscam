@@ -439,8 +439,8 @@ void dvbapi_start_emm_filter(int demux_index) {
 		int emmtype=dmx_filter[startpos];
 		int count=dmx_filter[startpos+1];
 
-		cs_log("dvbapi: starting emm filter %s",typtext[emmtype]);
-		cs_dump(filter, 32, "demux filter:");
+		cs_debug_mask(D_EMM, "dvbapi: starting emm filter %s",typtext[emmtype]);
+		cs_ddump_mask(D_EMM, filter, 32, "demux filter:");
 		dvbapi_set_filter(demux_index, selected_api, demux[demux_index].ECMpids[demux[demux_index].pidindex].EMM_PID, filter, filter+16, 0, demux[demux_index].pidindex, count, TYPE_EMM);
 	}
 
