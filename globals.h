@@ -167,7 +167,7 @@ extern char *boxdesc[];
 #endif
 
 #ifdef CS_CORE
-char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", NULL  };
+char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", "STA", "BES", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
                        "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
@@ -183,11 +183,13 @@ extern char *RDR_CD_TXT[];
 #define PIP_ID_LOG    2
 #define PIP_ID_CIN    3  // CARD_INFO
 #define PIP_ID_HUP    4
-#define PIP_ID_RST    5  // Schlocke: Restart Reader, CCcam for example ([0]=ridx)
-#define PIP_ID_KCL    6  // Schlocke: Kill all Clients (no data)
+#define PIP_ID_RST    5  // Schlocke: Restart Reader, CCcam for example (param: ridx)
+#define PIP_ID_KCL    6  // Schlocke: Kill all Clients (no param)
+#define PIP_ID_STA    7  // Schlocke: Add statistic (param: ADD_READER_STAT)
+#define PIP_ID_BES    8  // Schlocke: Get best reader (param ECM_REQUEST, return to client with data int ridx)
 
-#define PIP_ID_DCW    7
-#define PIP_ID_MAX    PIP_ID_KCL
+#define PIP_ID_DCW    9
+#define PIP_ID_MAX    PIP_ID_BES
 
 
 #define PIP_ID_ERR    (-1)
@@ -371,6 +373,7 @@ struct s_module
   int  (*c_send_emm)();
   int  (*c_init_log)();
   int  (*c_recv_log)();
+  int  (*c_available)(); //Schlocke: available check for load-balancing
   int  c_port;
   PTAB *ptab;
 };
@@ -775,7 +778,8 @@ struct s_config
 	int		waitforcards;
 	int		preferlocalcards;
 	int		saveinithistory;
-	int     reader_restart_seconds; //Schlocke Reader restart auf x seconds, disable = 0
+	int     reader_restart_seconds; //schlocke: reader restart auf x seconds, disable = 0
+	int     reader_auto_loadbalance; //schlocke: reader loadbalancing disable = 0 enable = 1
 
 #ifdef CS_WITH_GBOX
 	uchar		gbox_pwd[8];
@@ -850,6 +854,41 @@ typedef struct ecm_request_t
 #endif
 
 } GCC_PACK      ECM_REQUEST;
+
+#define MAX_STAT_TIME 20
+#define MIN_ECM_COUNT 5
+ 
+typedef struct add_reader_stat_t
+{
+  int           ridx;
+  int           time;
+  int           rc;
+  
+  ushort        caid;
+  ulong         prid;
+  ushort        srvid;
+} GCC_PACK      ADD_READER_STAT;
+
+typedef struct reader_stat_t
+{
+  int           rc;
+  ushort        caid;
+  ulong         prid;
+  ushort        srvid;
+
+  int           ecm_count;  
+  int           time_avg;
+  int           time_stat[MAX_STAT_TIME];
+  int           time_idx;
+} GCC_PACK      READER_STAT;
+
+typedef struct get_reader_stat_t 
+{
+  ushort        caid;
+  ulong         prid;
+  ushort        srvid;
+  int           cidx;
+} GCC_PACK      GET_READER_STAT;
 
 typedef struct emm_packet_t
 {
@@ -1001,7 +1040,7 @@ extern int chk_class(ECM_REQUEST *, CLASSTAB*, const char*, const char*);
 
 // oscam-config
 extern int  init_config(void);
-extern int  init_userdb(struct s_auth *authptr);
+extern int  init_userdb(struct s_auth **authptr_org);
 extern int  init_readerdb(void);
 extern int  init_sidtab(void);
 extern int  init_srvid(void);
@@ -1096,6 +1135,10 @@ extern int reader_emm(struct s_reader * reader, EMM_PACKET *);
 int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 void get_emm_filter(struct s_reader * rdr, uchar *filter);
 int get_cardsystem(ushort caid);
+
+//module-stat
+extern void add_reader_stat(ADD_READER_STAT *add_stat);
+extern int get_best_reader(struct s_reader *reader, ushort caid, ulong prid, ushort srvid);
 
 #ifdef HAVE_PCSC
 // reader-pcsc

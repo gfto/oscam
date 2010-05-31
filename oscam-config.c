@@ -543,6 +543,16 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "readerautoloadbalance")) {
+		if (strlen(value) == 0) {
+			cfg->reader_auto_loadbalance = 0;
+			return;
+		} else {
+			cfg->reader_auto_loadbalance = atoi(value);
+			return;
+		}
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n", token);
 }
@@ -1320,6 +1330,7 @@ int init_config()
 	cfg->pidfile = NULL;
 	cfg->usrfile = NULL;
 	cfg->cwlogdir = NULL;
+	cfg->reader_restart_seconds = 5;
 #ifdef WEBIF
 	strcpy(cfg->http_user, "");
 	strcpy(cfg->http_pwd, "");
@@ -1386,7 +1397,6 @@ int init_config()
 		cs_log("WARNING: DenySamples adjusted to %d", cfg->ac_denysamples);
 	}
 #endif
-	cfg->reader_restart_seconds = 5;
 	return 0;
 }
 
@@ -1678,6 +1688,7 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "preferlocalcards", "%d\n", cfg->preferlocalcards);
 	fprintf_conf(f, CONFVARWIDTH, "saveinithistory", "%d\n", cfg->saveinithistory);
 	fprintf_conf(f, CONFVARWIDTH, "readerrestartseconds", "%d\n", cfg->reader_restart_seconds);
+	fprintf_conf(f, CONFVARWIDTH, "readerautoloadbalance", "%d\n", cfg->reader_auto_loadbalance);
 	fputc((int)'\n', f);
 
 	/*monitor settings*/
@@ -2311,8 +2322,9 @@ int write_server()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int init_userdb(struct s_auth *authptr)
+int init_userdb(struct s_auth **authptr_org)
 {
+	struct s_auth *authptr = *authptr_org;
 	int tag = 0, nr, nro, expired, disabled;
 	//int first=1;
 	FILE *fp;
@@ -2353,7 +2365,7 @@ int init_userdb(struct s_auth *authptr)
 			if (account)
 				account->next = ptr;
 			else
-				cfg->account = ptr;
+				authptr = ptr;
 
 			account = ptr;
 			memset(account, 0, sizeof(struct s_auth));
@@ -2396,6 +2408,8 @@ int init_userdb(struct s_auth *authptr)
 
 		ptr = ptr->next;
 	}
+
+	*authptr_org = authptr;
 
 	cs_log("userdb reloaded: %d accounts freed, %d accounts loaded, %d expired, %d disabled", nro, nr, expired, disabled);
 	return(0);

@@ -23,7 +23,7 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 		case REFR_ACCOUNTS:
 		cs_log("Refresh Accounts requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
 		kill(client[0].pid, SIGHUP);
-		init_userdb(fork_account);
+		init_userdb(&fork_account);
 #ifdef CS_ANTICASC
 		for (i=0; i<CS_MAXPID; i++)
 		if (client[i].typ=='a') {
@@ -113,6 +113,8 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 		tpl_addVar(vars, 0, "SAVEINITHISTORY", "checked");
 	if (cfg->reader_restart_seconds)
 		tpl_printf(vars, 0, "READERRESTARTSECONDS", "%d", cfg->reader_restart_seconds);
+	if (cfg->reader_auto_loadbalance)
+		tpl_printf(vars, 0, "READERAUTOLOADBALANCE", "%d", cfg->reader_auto_loadbalance);
 
 
 	fputs(tpl_getTpl(vars, "CONFIGGLOBAL"), f);

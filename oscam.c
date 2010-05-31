@@ -403,7 +403,7 @@ static void cs_sighup()
 
 static void cs_accounts_chk()
 {
-  init_userdb(cfg->account);
+  init_userdb(&cfg->account);
   cs_reinit_clients();
 #ifdef CS_ANTICASC
   int i;
@@ -1075,7 +1075,7 @@ void cs_resolve()
 	for (i=0; i<CS_MAXREADER; i++)
 		if ((idx=reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK))
 		{
-			client[idx].last=time((time_t)0);
+			//client[idx].last=time((time_t)0);
 			pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
 			rht = gethostbyname(reader[i].device);
 			if (rht)
@@ -1717,6 +1717,23 @@ ECM_REQUEST *get_ecmtask()
 	return(er);
 }
 
+void send_reader_stat(ECM_REQUEST *er)
+{
+	struct timeb tpe;
+	cs_ftime(&tpe);
+	int time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
+
+	ADD_READER_STAT add_stat;
+	memset(&add_stat, 0, sizeof(ADD_READER_STAT));
+	add_stat.ridx = er->reader[0];
+	add_stat.time = time;
+	add_stat.rc   = er->rc;
+	add_stat.caid = er->caid;
+	add_stat.prid = er->prid;
+	add_stat.srvid = er->srvid;
+	write_to_pipe(fd_c2m, PIP_ID_STA, (uchar*)&add_stat, sizeof(ADD_READER_STAT));
+}
+
 int send_dcw(ECM_REQUEST *er)
 {
 	static char *stxt[]={"found", "cache1", "cache2", "emu",
@@ -1763,6 +1780,8 @@ int send_dcw(ECM_REQUEST *er)
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
+	send_reader_stat(er);
+	
 	if(cfg->mon_appendchaninfo)
 		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
@@ -1852,8 +1871,10 @@ void chk_dcw(int fd)
 	  return;
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
-  if (ert->rc<100)
-    return; // already done
+  if (ert->rc<100) {
+	send_reader_stat(ert);
+	return; // already done
+  }
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
     return; // obsolete
   ert->rcEx=er->rcEx;
@@ -1882,8 +1903,10 @@ void chk_dcw(int fd)
     int i;
     ert->reader[er->reader[0]]=0;
     for (i=0; (ert) && (i<CS_MAXREADER); i++)
-      if (ert->reader[i]) // we have still another chance
+      if (ert->reader[i]) {// we have still another chance
+    	send_reader_stat(ert);
         ert=(ECM_REQUEST *)0;
+      }
     if (ert) ert->rc=4;
   }
   if (ert) send_dcw(ert);
@@ -2059,6 +2082,37 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
   }
 }
 
+//receive best reader from master process. Call this function from client!
+int recv_best_reader(ECM_REQUEST *er)
+{
+	if (!cfg->reader_auto_loadbalance)
+		return -1;
+
+	GET_READER_STAT grs;
+	grs.caid = er->caid;
+	grs.prid = er->prid;
+	grs.srvid = er->srvid;
+	grs.cidx = cs_idx;
+	cs_debug_mask(D_TRACE, "requesting client best reader for %04X/%04X/%04X", grs.caid, grs.prid, grs.srvid);
+	write_to_pipe(fd_c2m, PIP_ID_BES, (uchar*)&grs, sizeof(GET_READER_STAT));
+	uchar *ptr;
+	
+	fd_set fds;
+	FD_ZERO(&fds);
+	FD_SET(client[cs_idx].fd_m2c_c, &fds);
+	select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, 0);
+	if (master_pid!=getppid())
+		cs_exit(0);
+	if (FD_ISSET(client[cs_idx].fd_m2c_c, &fds))
+	{
+		int n = read_from_pipe(client[cs_idx].fd_m2c_c, &ptr, 1);
+		cs_debug_mask(D_TRACE, "got best reader: %d", *(int*)ptr);
+		if (n == PIP_ID_BES)
+			return *(int*)ptr;
+	}
+	return -1;
+}
+
 void get_cw(ECM_REQUEST *er)
 {
 	int i, j, m;
@@ -2211,19 +2265,32 @@ void get_cw(ECM_REQUEST *er)
 
 	if(er->rc > 99 && er->rc != 1) {
 
-		for (i = m = 0; i < CS_MAXREADER; i++)
+		int best_ridx = recv_best_reader(er);
+
+		int min;
+		int max;
+		if (best_ridx < 0) { //No reader found, doing old way to all readers:
+			min = 0;
+			max = CS_MAXREADER;
+		}
+		else
+		{
+			min = best_ridx;
+			max = best_ridx+1;
+		}
+		
+		for (i = m = min; i < max; i++)
 			if (matching_reader(er, &reader[i]))
 				m|=er->reader[i] = (reader[i].fallback)? 2: 1;
 
 		switch(m) {
-
 			// no reader -> not found
 			case 0:
 				er->rc = 4;
 				if (!er->rcEx)
 					er->rcEx = E2_GROUP;
 				break;
-
+				
 			// fallbacks only, switch them
 			case 2:
 				for (i = 0; i < CS_MAXREADER; i++)
@@ -2475,6 +2542,15 @@ static void restart_clients()
 }
 
 
+// gets and send the best reader to the client. Called from master-process
+void send_best_reader(GET_READER_STAT *grs)
+{
+	cs_debug_mask(D_TRACE, "got request for best reader for %04X/%04X/%04X", grs->caid, grs->prid, grs->srvid);
+	int ridx = get_best_reader(reader, grs->caid, grs->prid, grs->srvid);
+	cs_debug_mask(D_TRACE, "sending best reader %d", ridx);
+	write_to_pipe(client[grs->cidx].fd_m2c, PIP_ID_BES, (uchar*)&ridx, sizeof(ridx));
+}
+
 static void process_master_pipe()
 {
   int n;
@@ -2494,6 +2570,12 @@ static void process_master_pipe()
     case PIP_ID_KCL: //Kill all clients
     	restart_clients();
     	break;
+    case PIP_ID_STA: //Add reader statistics
+    	add_reader_stat((ADD_READER_STAT *)ptr);
+    	break;
+    case PIP_ID_BES: //Get best reader
+        send_best_reader((GET_READER_STAT *)ptr);
+        break;
   }
 }
 
@@ -2616,7 +2698,7 @@ int main (int argc, char *argv[])
 
   init_sidtab();
   init_readerdb();
-  init_userdb(cfg->account);
+  init_userdb(&cfg->account);
   init_signal();
   cs_set_mloc(30, "init");
   init_srvid();

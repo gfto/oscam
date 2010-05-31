@@ -7,15 +7,6 @@
 
 static int cs_ptyp_orig; //reinit=1, 
 
-#define SC_IRDETO 1
-#define SC_CRYPTOWORKS 2
-#define SC_VIACCESS 3
-#define SC_CONAX 4
-#define SC_SECA 5
-#define SC_VIDEOGUARD2 6
-#define SC_DRE 7
-#define SC_NAGRA 8
-
 #if defined(TUXBOX) && defined(PPC) //dbox2 only
 #include "csctapi/mc_global.h"
 static int reader_device_type(struct s_reader * reader)
@@ -233,7 +224,9 @@ void reader_card_info(struct s_reader * reader)
       case SC_SECA:
          seca_card_info(reader); break;
       case SC_DRE:
-	 dre_card_info(); break;
+    	 dre_card_info(); break;
+      case SC_CCCAM:
+    	 break;
     }
   }
 }
@@ -426,6 +419,8 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
       rc=videoguard_get_emm_type(ep, rdr); break;
     case SC_DRE:
       rc=dre_get_emm_type(ep, rdr); break;
+    case SC_CCCAM:
+      rc=TRUE;
     default:
       rc=0;
   }

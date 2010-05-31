@@ -215,10 +215,11 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
     pfd = 0;
     reader->tcp_connected = 0;
 
-    for (i=0; i<CS_MAXPENDING; i++)
-    {
-      ecmtask[i].idx=0;
-      ecmtask[i].rc=0;
+    if (ecmtask) {
+			for (i = 0; i < CS_MAXPENDING; i++) {
+				ecmtask[i].idx = 0;
+				ecmtask[i].rc = 0;
+			}
     }
 
     reader->ncd_msgid=0;

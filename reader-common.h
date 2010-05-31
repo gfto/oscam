@@ -10,6 +10,16 @@
 
 #include "atr.h"
 
+#define SC_IRDETO 1
+#define SC_CRYPTOWORKS 2
+#define SC_VIACCESS 3
+#define SC_CONAX 4
+#define SC_SECA 5
+#define SC_VIDEOGUARD2 6
+#define SC_DRE 7
+#define SC_NAGRA 8
+#define SC_CCCAM 9
+
 // reader-irdeto
 int irdeto_card_init(struct s_reader * reader, ATR atr);
 int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *);
