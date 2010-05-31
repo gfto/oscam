@@ -105,7 +105,7 @@ be possible for this clients, default:0
 .RE
 .PP
 \fBsleep\fP = \fBminutes\fP
-.RS 3n                
+.RS 3n
 time waiting for inactive users, default:none, can be overwritten per user in \fBoscam.user\fR
 .RE
 .PP
@@ -147,6 +147,11 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 \fBsaveinithistory\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = save SC init history to /tmp/.oscam/reader<number>, default:0
+.RE
+.PP
+\fBreaderautoloadbalance\fP = \fB0\fP|\fB1\fP 
+.RS 3n
+1 = enable ECM dynamic loadbalance, default:0
 .RE
 .SS "The [monitor] section"
 .PP
