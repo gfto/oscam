@@ -225,8 +225,6 @@ void reader_card_info(struct s_reader * reader)
          seca_card_info(reader); break;
       case SC_DRE:
     	 dre_card_info(); break;
-      case SC_CCCAM:
-    	 break;
     }
   }
 }
@@ -415,9 +413,6 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
       rc=videoguard_get_emm_type(ep, rdr); break;
     case SC_DRE:
       rc=dre_get_emm_type(ep, rdr); break;
-    case SC_CCCAM:
-      ep->type = UNKNOWN;
-      rc=TRUE;
     default:
       rc=0;
   }
@@ -567,5 +562,5 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep)
 {
-	return (rdr->fd && (rdr->caid[0] == b2i(2,ep->caid) || rdr->card_system == SC_CCCAM));
+	return (rdr->fd && (rdr->caid[0] == b2i(2,ep->caid) || rdr->typ == R_CCCAM));
 }

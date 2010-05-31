@@ -1607,7 +1607,6 @@ static int cc_cli_connect(void) {
 	reader[ridx].card_status = CARD_NEED_INIT;
 	reader[ridx].last_g = reader[ridx].last_s = time((time_t *) 0);
 	reader[ridx].tcp_connected = 1;
-	reader[ridx].card_system = SC_CCCAM;
 
 	cc->just_logged_in = 1;
 
