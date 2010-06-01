@@ -1502,15 +1502,17 @@ static int cc_cli_connect(void) {
 
 	// connect
 	handle = network_tcp_connection_open();
-	if (handle < 0) {
-		cs_log("%s network connect error!", getprefix());
-		return -1;
-	}
 
 	// get init seed
+	errno = 0;
 	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
-		cs_log("%s server does not return 16 bytes (n=%d, errno=%d)", getprefix(), n, errno);
+		int err = errno;
+		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, errno=%d)", getprefix(), n, handle, err);
 		network_tcp_connection_close(&reader[ridx], handle);
+		if (n == -1) {
+			cs_log("%s connection blocked! Sleeping 60s...", getprefix());
+			cs_sleepms(60*1000);
+		}
 		return -2;
 	}
 	struct cc_data *cc = reader[ridx].cc;
@@ -2038,6 +2040,7 @@ int cc_cli_init() {
 		cs_log("%s Socket creation failed (errno=%d)", getprefix(), errno);
 		return -10;
 	}
+	//cs_log("%s socket created: cs_idx=%d, fd=%d errno=%d", getprefix(), cs_idx, client[cs_idx].udp_fd, errno);
 
 #ifdef SO_PRIORITY
 	if (cfg->netprio)

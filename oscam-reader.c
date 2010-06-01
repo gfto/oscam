@@ -189,6 +189,7 @@ cs_debug("conn_nb 9 (fd=%d)", sockfd);
 int network_tcp_connection_open()
 {
   int flags;
+  errno=0;
   if( connect_nonb(client[cs_idx].udp_fd, 
       (struct sockaddr *)&client[cs_idx].udp_sa, 
       sizeof(client[cs_idx].udp_sa), 5) < 0)
@@ -198,7 +199,6 @@ int network_tcp_connection_open()
   }
   flags = fcntl(client[cs_idx].udp_fd, F_GETFL, 0);
   flags &=~ O_NONBLOCK;
-  //flags = 0;
   fcntl(client[cs_idx].udp_fd, F_SETFL, flags );
 
   return client[cs_idx].udp_fd;
