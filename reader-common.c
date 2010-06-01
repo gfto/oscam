@@ -354,10 +354,10 @@ void reader_post_process(struct s_reader * reader)
 
 int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
-  int rc=-1, r, m=0;
+  int rc=-1;
   if( (rc=reader_checkhealth(reader)) )
   {
-    if((reader[ridx].caid[0] >> 8) == ((er->caid >> 8) & 0xFF))
+    if((reader->caid[0] >> 8) == ((er->caid >> 8) & 0xFF))
     {
       client[cs_idx].last_srvid=er->srvid;
       client[cs_idx].last_caid=er->caid;
@@ -387,8 +387,6 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
     else
       rc=0;
   }
-  for (r=0;r<CS_MAXREADER;r++)
-    if (reader[r].caid[0]) m++;
   return(rc);
 }
 
