@@ -1510,8 +1510,7 @@ static int cc_cli_connect(void) {
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, errno=%d)", getprefix(), n, handle, err);
 		network_tcp_connection_close(&reader[ridx], handle);
 		if (n == -1) {
-			cs_log("%s connection blocked! Sleeping 60s...", getprefix());
-			cs_sleepms(60*1000);
+			cs_exit(1);
 		}
 		return -2;
 	}
