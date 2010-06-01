@@ -69,7 +69,7 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 	if (strcmp(getParam(params, "action"), "execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, 1, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//tpl_printf(vars, 1, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
 				//we use the same function as used for parsing the config tokens
 
 				chk_t_global((*params).params[i], (*params).values[i]);
@@ -114,7 +114,7 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 	if (cfg->reader_restart_seconds)
 		tpl_printf(vars, 0, "READERRESTARTSECONDS", "%d", cfg->reader_restart_seconds);
 	if (cfg->reader_auto_loadbalance)
-		tpl_printf(vars, 0, "READERAUTOLOADBALANCE", "%d", cfg->reader_auto_loadbalance);
+		tpl_addVar(vars, 0, "READERAUTOLOADBALANCE", "checked");
 
 
 	fputs(tpl_getTpl(vars, "CONFIGGLOBAL"), f);
