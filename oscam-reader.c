@@ -197,8 +197,8 @@ int network_tcp_connection_open()
     return -1; 
   }
   flags = fcntl(client[cs_idx].udp_fd, F_GETFL, 0);
-  //flags &=~ O_NONBLOCK;
-  flags = 0;
+  flags &=~ O_NONBLOCK;
+  //flags = 0;
   fcntl(client[cs_idx].udp_fd, F_SETFL, flags );
 
   return client[cs_idx].udp_fd;

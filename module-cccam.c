@@ -1509,7 +1509,7 @@ static int cc_cli_connect(void) {
 
 	// get init seed
 	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
-		cs_log("%s server does not return 16 bytes (n=%d)", getprefix(), n);
+		cs_log("%s server does not return 16 bytes (n=%d, errno=%d)", getprefix(), n, errno);
 		network_tcp_connection_close(&reader[ridx], handle);
 		return -2;
 	}
