@@ -219,7 +219,7 @@ static void cc_cli_close() {
 	else if (client[cs_idx].udp_fd) {
 		close(client[cs_idx].udp_fd);
 		client[cs_idx].udp_fd = 0;
-	pfd = 0;
+	  pfd = 0;
   }
 	//cs_sleepms(100);
 	struct cc_data *cc = reader[ridx].cc;
@@ -2111,6 +2111,7 @@ int cc_available(int ridx, READER_STAT *stat) {
 
 void cc_cleanup(void) {
 	if (!is_server) {
+		cc_cli_close(); // we need to close open fd's 
 		cc_free(reader[ridx].cc);
 		reader[ridx].cc = NULL;
 	} else {
