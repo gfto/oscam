@@ -1788,7 +1788,7 @@ int write_config()
 		dot1 = "";
 		for(i = 0; i < cfg->c35_tcp_ptab.nports; ++i){
 			fprintf(f,"%s%d@%04X", dot1, cfg->c35_tcp_ptab.ports[i].s_port, cfg->c35_tcp_ptab.ports[i].ftab.filts[0].caid);
-			if (cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 0){
+			if (cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1){
 				fprintf(f,":");
 				dot2 = "";
 				for (j = 0; j < cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids; ++j){
