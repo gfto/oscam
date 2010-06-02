@@ -116,7 +116,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int time, int rc)
 	}
 	
 	//debug only:
-	//save_stat_to_file(ridx);
+	save_stat_to_file(ridx);
 }
 
 /**
@@ -127,14 +127,13 @@ void add_reader_stat(ADD_READER_STAT *stat)
 	add_stat(stat->ridx, stat->caid, stat->prid, stat->srvid, stat->time, stat->rc);
 }
 
-/**
+/**	
  * Gets best reader for caid/prid/srvid.
- * reader is reader[] from shmem !
  * Best reader is evaluated by lowest avg time but only if ecm_count > MIN_ECM_COUNT (5)
  * Also the reader is asked if he is "available"
  * returns ridx when found or -1 when not found
  */
-int get_best_reader(struct s_reader *reader, ushort caid, ulong prid, ushort srvid)
+int get_best_reader(ushort caid, ulong prid, ushort srvid)
 {
 	int i;
 	int best_ridx = -1;
@@ -144,8 +143,7 @@ int get_best_reader(struct s_reader *reader, ushort caid, ulong prid, ushort srv
 			stat = get_stat(i, caid, prid, srvid);
 			if (stat && stat->rc == 0 && (!best_stat || stat->time_avg < best_stat->time_avg)) {
 				if (stat->ecm_count >= MIN_ECM_COUNT) {
-					int cs_idx = reader[i].cs_idx;
-					if (!ph[client[cs_idx].ctyp].c_available || ph[client[cs_idx].ctyp].c_available(i, stat)) {
+					if (!reader[i].ph.c_available || reader[i].ph.c_available(i, stat)) {
 						best_stat = stat;
 						best_ridx = i;
 					}

@@ -20,6 +20,7 @@ static uchar fast_rnd() {
 }
 
 static int cc_cli_init();
+static int cc_get_nxt_ecm();
 
 char * prefix = NULL;
 
@@ -104,6 +105,22 @@ static void cc_cw_crypt(uint8 *cws, uint32 cardid) {
 		if (i & 1)
 			tmp = ~tmp;
 		cws[i] = (cardid >> (2 * i)) ^ tmp;
+	}
+}
+
+static void cc_drop_pending_ecms()
+{
+	struct cc_data *cc = reader[ridx].cc;
+	if (cc && cc->current_ecm_cidx) { //dropping pending ecms:
+        	int n;
+        	ECM_REQUEST *er;
+        	while ((n = cc_get_nxt_ecm()) >= 0) {
+        		er = &ecmtask[n];
+        		er->rc = 0;
+        		er->rcEx = 0x27;
+        		write_ecm_answer(&reader[ridx], fd_c2m, er);
+        	}
+        	cc->current_ecm_cidx = 0;
 	}
 }
 
@@ -211,16 +228,18 @@ static int cc_is_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
 static void cc_cli_close() {
 	reader[ridx].tcp_connected = 0;
 	reader[ridx].card_status = CARD_FAILURE;
+
 	//cs_sleepms(100);
 	if (pfd) {
-	   close(pfd); pfd = 0;
-	   client[cs_idx].udp_fd = 0;
+		close(pfd); 
+		pfd = 0;
+		client[cs_idx].udp_fd = 0;
 	}
 	else if (client[cs_idx].udp_fd) {
 		close(client[cs_idx].udp_fd);
 		client[cs_idx].udp_fd = 0;
-	  pfd = 0;
-  }
+		pfd = 0;
+	}
 	//cs_sleepms(100);
 	struct cc_data *cc = reader[ridx].cc;
 	if (cc) {
@@ -1504,15 +1523,13 @@ static int cc_cli_connect(void) {
 	handle = network_tcp_connection_open();
 
 	// get init seed
-	errno = 0;
 	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, errno=%d)", getprefix(), n, handle, err);
-		network_tcp_connection_close(&reader[ridx], handle);
-		if (n == -1) {
-			cs_exit(1);
-		}
-		return -2;
+		//network_tcp_connection_close(&reader[ridx], handle);
+		//return -2;
+		cs_sleepms(fast_rnd()*10);
+		cs_exit(1);
 	}
 	struct cc_data *cc = reader[ridx].cc;
 
@@ -1638,6 +1655,7 @@ static int cc_srv_report_cards() {
 	LLIST *reported_carddatas = llist_create();
 
 	for (r = 0; r < CS_MAXREADER; r++) {
+		if (!(reader[r].grp & client[cs_idx].grp)) continue;
 		flt = 0;
 		if (/*!reader[r].caid[0] && */reader[r].ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
@@ -2039,25 +2057,26 @@ int cc_cli_init() {
 		cs_log("%s Socket creation failed (errno=%d)", getprefix(), errno);
 		return -10;
 	}
-	//cs_log("%s socket created: cs_idx=%d, fd=%d errno=%d", getprefix(), cs_idx, client[cs_idx].udp_fd, errno);
+	//cs_log("%s 1 socket created: cs_idx=%d, fd=%d errno=%d", getprefix(), cs_idx, client[cs_idx].udp_fd, errno);
 
 #ifdef SO_PRIORITY
 	if (cfg->netprio)
-	setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_PRIORITY,
+		setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_PRIORITY,
 			(void *)&cfg->netprio, sizeof(ulong));
 #endif
-	if (!reader[ridx].tcp_ito) {
+	//if (!reader[ridx].tcp_ito) {
 		ulong keep_alive = reader[ridx].tcp_ito ? 1 : 0;
 		setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_KEEPALIVE,
 				(void *) &keep_alive, sizeof(ulong));
-	}
+	//}
 
 	// aston
 	if (!client[cs_idx].ip) {
 		memset((char *) &client[cs_idx].udp_sa, 0,
-				sizeof(client[cs_idx].udp_sa));
+			sizeof(client[cs_idx].udp_sa));
 		client[cs_idx].udp_sa.sin_family = AF_INET;
 		client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
+
 		cs_resolve();
 		cs_log("cccam: Waiting for IP resolve of: %s", reader[ridx].device);
 		int safeCounter = 40 * cfg->resolvedelay;
@@ -2086,26 +2105,22 @@ int cc_cli_init() {
 			reader[ridx].cc_maxhop, !reader[ridx].cc_disable_retry_ecm,
 			!reader[ridx].cc_disable_auto_block);
 
-	return (cc_cli_connect());
+	int ret = cc_cli_connect();
+	if (ret < 0)
+		 cc_drop_pending_ecms();
+	return (ret);
 }
 
 /**
  * return 1 if we are able to send requests:
  */
 int cc_available(int ridx, READER_STAT *stat) {
+	cs_debug_mask(D_TRACE, "checking reader availibility");
 	if (is_server || !reader[ridx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED)
 		return 0; //We are not initialized or not connected!
 
 	if (caid_filtered(ridx, stat->caid)) //caid is filted:
 		return 0;
-
-	struct cc_data *cc = reader[ridx].cc;
-	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) {
-		//ECM is busy:
-		return 0;
-	}
-	else
-		pthread_mutex_unlock(&cc->ecm_busy); //because we get this lock, free it!
 
 	//TODO: check stat for available card or blocking
 	return 1;

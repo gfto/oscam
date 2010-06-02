@@ -189,13 +189,12 @@ cs_debug("conn_nb 9 (fd=%d)", sockfd);
 int network_tcp_connection_open()
 {
   int flags;
-  errno=0;
-  if( connect_nonb(client[cs_idx].udp_fd, 
-      (struct sockaddr *)&client[cs_idx].udp_sa, 
+  if( connect_nonb(client[cs_idx].udp_fd,
+      (struct sockaddr *)&client[cs_idx].udp_sa,
       sizeof(client[cs_idx].udp_sa), 5) < 0)
-  { 
-    cs_log("connect(fd=%d) failed: (errno=%d)", client[cs_idx].udp_fd, errno); 
-    return -1; 
+  {
+    cs_log("connect(fd=%d) failed: (errno=%d)", client[cs_idx].udp_fd, errno);
+    return -1;
   }
   flags = fcntl(client[cs_idx].udp_fd, F_GETFL, 0);
   flags &=~ O_NONBLOCK;
@@ -204,7 +203,7 @@ int network_tcp_connection_open()
   return client[cs_idx].udp_fd;
 }
 
-void network_tcp_connection_close(struct s_reader * reader, int fd) 
+void network_tcp_connection_close(struct s_reader * reader, int fd)
 {
   cs_debug("tcp_conn_close(): fd=%d, is_server=%d", fd, is_server);
   close(fd);
@@ -230,7 +229,7 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
     if (reader->typ == R_CCCAM) {
       if (reader->ph.cleanup) reader->ph.cleanup();
       if (client[cs_idx].typ == 'p') return;
-    } 
+    }
     /* END */
 
     if (reader->ph.c_init()) {

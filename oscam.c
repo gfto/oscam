@@ -1086,7 +1086,8 @@ void cs_resolve()
 			}
 			else
 				cs_log("can't resolve %s", reader[i].device);
-			pthread_mutex_unlock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!			client[cs_idx].last=time((time_t)0);
+			pthread_mutex_unlock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!			
+			//client[cs_idx].last=time((time_t)0);
 		}
 
 }
@@ -1717,7 +1718,7 @@ ECM_REQUEST *get_ecmtask()
 	return(er);
 }
 
-void send_reader_stat(ECM_REQUEST *er)
+void send_reader_stat(int ridx, ECM_REQUEST *er)
 {
 	struct timeb tpe;
 	cs_ftime(&tpe);
@@ -1725,7 +1726,7 @@ void send_reader_stat(ECM_REQUEST *er)
 
 	ADD_READER_STAT add_stat;
 	memset(&add_stat, 0, sizeof(ADD_READER_STAT));
-	add_stat.ridx = er->reader[0];
+	add_stat.ridx = ridx;
 	add_stat.time = time;
 	add_stat.rc   = er->rc;
 	add_stat.caid = er->caid;
@@ -1780,7 +1781,7 @@ int send_dcw(ECM_REQUEST *er)
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
-	send_reader_stat(er);
+	send_reader_stat(er->reader[0], er);
 	
 	if(cfg->mon_appendchaninfo)
 		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s",
@@ -1872,7 +1873,7 @@ void chk_dcw(int fd)
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100) {
-	send_reader_stat(ert);
+	send_reader_stat(er->reader[0], ert);
 	return; // already done
   }
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
@@ -1900,11 +1901,21 @@ void chk_dcw(int fd)
   }
   else    // not found (from ONE of the readers !)
   {
+	//
+    if (cfg->reader_auto_loadbalance && er->load_balance_retry < MAX_READER_RETRY) {
+    	er->load_balance_retry++;
+
+    	ert->rc = 4;
+        send_reader_stat(er->reader[0], ert); //This disables load-balance...
+        ert->rc = 100;
+        ert->rcEx = 0;
+    	get_cw(ert); //...then we can send it to the other readers
+    	return;
+    }
     int i;
     ert->reader[er->reader[0]]=0;
     for (i=0; (ert) && (i<CS_MAXREADER); i++)
       if (ert->reader[i]) {// we have still another chance
-    	send_reader_stat(ert);
         ert=(ECM_REQUEST *)0;
       }
     if (ert) ert->rc=4;
@@ -2093,23 +2104,42 @@ int recv_best_reader(ECM_REQUEST *er)
 	grs.prid = er->prid;
 	grs.srvid = er->srvid;
 	grs.cidx = cs_idx;
-	cs_debug_mask(D_TRACE, "requesting client best reader for %04X/%04X/%04X", grs.caid, grs.prid, grs.srvid);
+	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%04X/%04X", username(cs_idx), grs.caid, grs.prid, grs.srvid);
 	write_to_pipe(fd_c2m, PIP_ID_BES, (uchar*)&grs, sizeof(GET_READER_STAT));
-	uchar *ptr;
 	
+	uchar *ptr;
 	fd_set fds;
-	FD_ZERO(&fds);
-	FD_SET(client[cs_idx].fd_m2c_c, &fds);
-	select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, 0);
-	if (master_pid!=getppid())
-		cs_exit(0);
-	if (FD_ISSET(client[cs_idx].fd_m2c_c, &fds))
+	struct timeval timeout;
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 100;
+	do
 	{
-		int n = read_from_pipe(client[cs_idx].fd_m2c_c, &ptr, 1);
-		cs_debug_mask(D_TRACE, "got best reader: %d", *(int*)ptr);
-		if (n == PIP_ID_BES)
-			return *(int*)ptr;
-	}
+		FD_ZERO(&fds);
+		FD_SET(client[cs_idx].fd_m2c_c, &fds);
+		if (!select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, &timeout)) {
+			cs_debug_mask(D_TRACE, "get best reader timeout!");
+			break; //timeout
+		}
+			
+		if (master_pid!=getppid())
+			cs_exit(0);
+		if (FD_ISSET(client[cs_idx].fd_m2c_c, &fds))
+		{
+			int n = read_from_pipe(client[cs_idx].fd_m2c_c, &ptr, 1);
+			if (n == PIP_ID_BES) {
+				int r = *(int*)ptr;
+				cs_debug_mask(D_TRACE, "got best reader: %s (%d)", reader[r].label, r);
+				return r;
+			}
+			else if (n == PIP_ID_DIR)
+				continue;
+			else //should neven happen
+				cs_debug_mask(D_TRACE, "got best reader: illegal paket? n=%d", n);
+			break;
+		} 
+		else //no data
+			break;
+	} while (1);
 	return -1;
 }
 
@@ -2272,6 +2302,7 @@ void get_cw(ECM_REQUEST *er)
 		if (best_ridx < 0) { //No reader found, doing old way to all readers:
 			min = 0;
 			max = CS_MAXREADER;
+			er->load_balance_retry = MAX_READER_RETRY;
 		}
 		else
 		{
@@ -2545,9 +2576,9 @@ static void restart_clients()
 // gets and send the best reader to the client. Called from master-process
 void send_best_reader(GET_READER_STAT *grs)
 {
-	cs_debug_mask(D_TRACE, "got request for best reader for %04X/%04X/%04X", grs->caid, grs->prid, grs->srvid);
-	int ridx = get_best_reader(reader, grs->caid, grs->prid, grs->srvid);
-	cs_debug_mask(D_TRACE, "sending best reader %d", ridx);
+	//cs_debug_mask(D_TRACE, "got request for best reader for %04X/%04X/%04X", grs->caid, grs->prid, grs->srvid);
+	int ridx = get_best_reader(grs->caid, grs->prid, grs->srvid);
+	//cs_debug_mask(D_TRACE, "sending best reader %d", ridx);
 	write_to_pipe(client[grs->cidx].fd_m2c, PIP_ID_BES, (uchar*)&ridx, sizeof(ridx));
 }
 

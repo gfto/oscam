@@ -843,6 +843,7 @@ typedef struct ecm_request_t
   uchar         rcEx;
   struct timeb  tps;    // incoming time stamp
   uchar         locals_done;
+  int           load_balance_retry;
   int		btun; // mark er as betatunneled
 
 #ifdef CS_WITH_GBOX
@@ -857,6 +858,7 @@ typedef struct ecm_request_t
 
 #define MAX_STAT_TIME 20
 #define MIN_ECM_COUNT 5
+#define MAX_READER_RETRY 4
  
 typedef struct add_reader_stat_t
 {
@@ -1139,7 +1141,7 @@ extern int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 
 //module-stat
 extern void add_reader_stat(ADD_READER_STAT *add_stat);
-extern int get_best_reader(struct s_reader *reader, ushort caid, ulong prid, ushort srvid);
+extern int get_best_reader(ushort caid, ulong prid, ushort srvid);
 
 #ifdef HAVE_PCSC
 // reader-pcsc
