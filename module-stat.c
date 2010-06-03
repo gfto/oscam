@@ -12,10 +12,13 @@ void load_stat_from_file(int ridx)
 	do
 	{
 		READER_STAT *stat = malloc(sizeof(READER_STAT));
+		memset(stat, 0, sizeof(READER_STAT));
 		i = fscanf(file, "rc %d caid %04hX prid %04lX srvid %04hX time avg %dms ecms %d\n",
 			&stat->rc, &stat->caid, &stat->prid, &stat->srvid, &stat->time_avg, &stat->ecm_count);
 		if (i > 4)
 			llist_append(reader_stat[ridx], stat);
+		else
+			free(stat);
 	} while(i != EOF);
 	fclose(file);
 }
@@ -127,28 +130,27 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int time, int rc)
 	if (!stat) {
 		stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
-		stat->rc = rc;
 		stat->caid = caid;
 		stat->prid = prid;
 		stat->srvid = srvid;
-		stat->time_avg = time;
-		stat->time_stat[0] = time;
-		stat->ecm_count = 1;
+		stat->time_avg = 80000; //dummy placeholder
 		llist_append(reader_stat[ridx], stat);
 	}
-	else
-	{
-		stat->rc = rc;
-		stat->time_idx++;
-		if (stat->rc < 4)
+
+	//inc ecm_count if found, drop to 0 if not found:
+	stat->rc = rc;
+	if (rc == 0) {
+		if (stat->ecm_count < INT_MAX)
 			stat->ecm_count++;
-		else
-			stat->ecm_count = 0;
+
+		stat->time_idx++;
 		if (stat->time_idx >= MAX_STAT_TIME)
 			stat->time_idx = 0;
 		stat->time_stat[stat->time_idx] = time;
 		calc_stat(stat);
 	}
+	else if (rc >= 4 && rc < 100) //not found+timeout+etc
+		stat->ecm_count = 0;
 	
 	//debug only:
 	if (cfg->reader_auto_loadbalance_save) {

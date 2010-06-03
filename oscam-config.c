@@ -4,7 +4,7 @@
 #endif
 extern struct s_reader * reader;
 
-#define CONFVARWIDTH 22
+#define CONFVARWIDTH 30
 
 static char *cs_conf="oscam.conf";
 static char *cs_user="oscam.user";
