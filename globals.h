@@ -780,6 +780,7 @@ struct s_config
 	int		saveinithistory;
 	int     reader_restart_seconds; //schlocke: reader restart auf x seconds, disable = 0
 	int     reader_auto_loadbalance; //schlocke: reader loadbalancing disable = 0 enable = 1
+	int     reader_auto_loadbalance_save; //schlocke: load/save statistics to file, save every x ecms
 
 #ifdef CS_WITH_GBOX
 	uchar		gbox_pwd[8];

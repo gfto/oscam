@@ -2115,14 +2115,20 @@ int cc_cli_init() {
  * return 1 if we are able to send requests:
  */
 int cc_available(int ridx, READER_STAT *stat) {
-	cs_debug_mask(D_TRACE, "checking reader availibility");
-	if (is_server || !reader[ridx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED)
+	//cs_debug_mask(D_TRACE, "checking reader %s availibility", reader[ridx].label);
+	if (!reader[ridx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED) {
+		cs_debug_mask(D_TRACE, "checking reader %s availibility=0 (unavail)", reader[ridx].label);
 		return 0; //We are not initialized or not connected!
+	}
 
-	if (caid_filtered(ridx, stat->caid)) //caid is filted:
+	if (caid_filtered(ridx, stat->caid)) { //caid is filtered:
+		cs_debug_mask(D_TRACE, "checking reader %s availibility=0 (caid filtered)", reader[ridx].label);
 		return 0;
+	}
 
 	//TODO: check stat for available card or blocking
+
+	cs_debug_mask(D_TRACE, "checking reader %s availibility=1", reader[ridx].label);
 	return 1;
 }
 

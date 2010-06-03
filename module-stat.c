@@ -1,12 +1,34 @@
 #include "module-stat.h"
 
+void load_stat_from_file(int ridx)
+{
+	char fname[40];
+	sprintf(fname, "/tmp/.oscam/stat.%d", ridx);
+	FILE *file = fopen(fname, "r");
+	if (!file)
+		return;
+
+	int i = 0;
+	do
+	{
+		READER_STAT *stat = malloc(sizeof(READER_STAT));
+		i = fscanf(file, "rc %d caid %04hX prid %04lX srvid %04hX time avg %dms ecms %d\n",
+			&stat->rc, &stat->caid, &stat->prid, &stat->srvid, &stat->time_avg, &stat->ecm_count);
+		if (i > 4)
+			llist_append(reader_stat[ridx], stat);
+	} while(i != EOF);
+	fclose(file);
+}
 /**
  * get statistic values for reader ridx and caid/prid/srvid
  */
 READER_STAT *get_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 {
-	if (!reader_stat[ridx])
+	if (!reader_stat[ridx]) {
 		reader_stat[ridx] = llist_create();
+		if (cfg->reader_auto_loadbalance_save)
+			load_stat_from_file(ridx);
+	}
 
 	LLIST_ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
@@ -69,6 +91,11 @@ void save_stat_to_file(int ridx)
 {
 	char fname[40];
 	sprintf(fname, "/tmp/.oscam/stat.%d", ridx);
+	if (!reader_stat[ridx]) {
+		remove(fname);
+		return;
+	}
+
 	FILE *file = fopen(fname, "w");
 	if (!file)
 		return;
@@ -77,10 +104,18 @@ void save_stat_to_file(int ridx)
 	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
 	while (stat) {
 	
-		fprintf(file, "rc %d caid %04X prid %04lX srvid %04X time avg %dms\n", stat->rc, stat->caid, stat->prid, stat->srvid, stat->time_avg);
+		fprintf(file, "rc %d caid %04hX prid %04lX srvid %04hX time avg %dms ecms %d\n",
+				stat->rc, stat->caid, stat->prid, stat->srvid, stat->time_avg, stat->ecm_count);
 		stat = llist_itr_next(&itr);
 	}
 	fclose(file);
+}
+
+void save_all_stat_to_file()
+{
+	int i;
+	for (i = 0; i < CS_MAXREADER; i++)
+		save_stat_to_file(i);
 }
 
 /**
@@ -116,7 +151,13 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int time, int rc)
 	}
 	
 	//debug only:
-	save_stat_to_file(ridx);
+	if (cfg->reader_auto_loadbalance_save) {
+		stat_load_save++;
+		if (stat_load_save > cfg->reader_auto_loadbalance_save) {
+			stat_load_save = 0;
+			save_all_stat_to_file();
+		}
+	}
 }
 
 /**

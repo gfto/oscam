@@ -553,6 +553,16 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "readerautoloadbalance_save")) {
+		if (strlen(value) == 0) {
+			cfg->reader_auto_loadbalance_save = 0;
+			return;
+		} else {
+			cfg->reader_auto_loadbalance_save = atoi(value);
+			return;
+		}
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in global section not recognized\n", token);
 }
@@ -1689,6 +1699,7 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "saveinithistory", "%d\n", cfg->saveinithistory);
 	fprintf_conf(f, CONFVARWIDTH, "readerrestartseconds", "%d\n", cfg->reader_restart_seconds);
 	fprintf_conf(f, CONFVARWIDTH, "readerautoloadbalance", "%d\n", cfg->reader_auto_loadbalance);
+	fprintf_conf(f, CONFVARWIDTH, "readerautoloadbalance_save", "%d\n", cfg->reader_auto_loadbalance_save);
 	fputc((int)'\n', f);
 
 	/*monitor settings*/
