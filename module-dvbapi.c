@@ -520,7 +520,7 @@ void dvbapi_start_descrambling(int demux_index, unsigned short caid, unsigned sh
 	for (i=0; i<demux[demux_index].ECMpidcount && demux[demux_index].ECMpids[i].CAID != caid && demux[demux_index].ECMpids[i].ECM_PID != pid; i++);
 
 	if (i>=demux[demux_index].ECMpidcount) {
-		cs_log("dvbapi: could not find pid");
+		cs_log("dvbapi: could not find pid %04X", pid);
 		return;
 	}
 
@@ -991,6 +991,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		er->l=len;
 		memcpy(er->ecm, buffer, er->l);
 		get_cw(er);
+		cs_debug("dvbapi: request cw for caid %04X pid %04X", er->caid, er->pid);
 	}
 
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_EMM) {
