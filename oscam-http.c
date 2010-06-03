@@ -800,7 +800,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if(reader[ridx].fallback)
 		tpl_addVar(vars, 0, "FALLBACKCHECKED", "checked");
 	tpl_printf(vars, 0, "LOGPORT", "%d", reader[ridx].log_port);
-	tpl_printf(vars, 0, "BOXID", "%ld", reader[ridx].boxid);
+	tpl_printf(vars, 0, "BOXID", "%08X", reader[ridx].boxid);
 	tpl_addVar(vars, 0, "USER", reader[ridx].r_usr);
 	tpl_addVar(vars, 0, "PASS", reader[ridx].r_pwd);
 	if(reader[ridx].has_rsa) {
