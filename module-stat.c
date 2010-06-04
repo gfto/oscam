@@ -26,7 +26,7 @@ void load_stat_from_file(int ridx)
 			llist_append(reader_stat[ridx], stat);
 		else
 			free(stat);
-	} while(i != EOF);
+	} while(i != EOF && i > 0);
 	fclose(file);
 }
 /**
@@ -106,14 +106,19 @@ void save_stat_to_file(int ridx)
 		return;
 	}
 
+	LLIST_ITR itr;
+	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
+
+	if (!stat) {
+		remove(fname);
+		return;
+	}
+	
 	FILE *file = fopen(fname, "w");
 	if (!file)
 		return;
 		
-	LLIST_ITR itr;
-	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
 	while (stat) {
-	
 		fprintf(file, "rc %d caid %04hX prid %04lX srvid %04hX time avg %dms ecms %d\n",
 				stat->rc, stat->caid, stat->prid, stat->srvid, stat->time_avg, stat->ecm_count);
 		stat = llist_itr_next(&itr);
