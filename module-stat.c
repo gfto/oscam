@@ -1,5 +1,12 @@
 #include "module-stat.h"
 
+#define UNDEF_AVG_TIME 80000
+
+void init_stat()
+{
+	memset(reader_stat, 0, sizeof(reader_stat));
+}
+
 void load_stat_from_file(int ridx)
 {
 	char fname[40];
@@ -82,7 +89,7 @@ void calc_stat(READER_STAT *stat)
 		}
 	}
 	if (!c)
-		stat->time_avg = 9999;
+		stat->time_avg = UNDEF_AVG_TIME;
 	else
 		stat->time_avg = t / c;
 }
@@ -133,7 +140,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int time, int rc)
 		stat->caid = caid;
 		stat->prid = prid;
 		stat->srvid = srvid;
-		stat->time_avg = 80000; //dummy placeholder
+		stat->time_avg = UNDEF_AVG_TIME; //dummy placeholder
 		llist_append(reader_stat[ridx], stat);
 	}
 

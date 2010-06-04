@@ -6,6 +6,8 @@ static int stat_load_save = 0;
 
 extern struct s_reader *reader;
 
+void init_stat();
+
 READER_STAT *get_stat(int ridx, ushort caid, ulong prid, ushort srvid);
 
 int remove_stat(int ridx, ushort caid, ulong prid, ushort srvid);

@@ -1141,6 +1141,7 @@ int get_cardsystem(ushort caid);
 extern int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 
 //module-stat
+extern void init_stat();
 extern void add_reader_stat(ADD_READER_STAT *add_stat);
 extern int get_best_reader(ushort caid, ulong prid, ushort srvid);
 

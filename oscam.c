@@ -893,6 +893,7 @@ static void init_shm()
     strcpy(client[0].usr, "root");
 
   pthread_mutex_init(&gethostbyname_lock, NULL); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
+  init_stat();
 
 #ifdef CS_LOGHISTORY
   *loghistidx=0;
