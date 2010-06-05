@@ -150,8 +150,8 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int time, int rc)
 	}
 
 	//inc ecm_count if found, drop to 0 if not found:
-	stat->rc = rc;
 	if (rc == 0) {
+		stat->rc = rc;
 		if (stat->ecm_count < INT_MAX)
 			stat->ecm_count++;
 
@@ -161,8 +161,10 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int time, int rc)
 		stat->time_stat[stat->time_idx] = time;
 		calc_stat(stat);
 	}
-	else if (rc >= 4 && rc < 100) //not found+timeout+etc
+	else if (rc >= 4 && rc < 100) { //not found+timeout+etc
+		stat->rc = rc;
 		stat->ecm_count = 0;
+	}
 	
 	//debug only:
 	if (cfg->reader_auto_loadbalance_save) {

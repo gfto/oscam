@@ -1723,7 +1723,7 @@ ECM_REQUEST *get_ecmtask()
 	return(er);
 }
 
-void send_reader_stat(int ridx, ECM_REQUEST *er)
+void send_reader_stat(int ridx, ECM_REQUEST *er, int info_only)
 {
 	struct timeb tpe;
 	cs_ftime(&tpe);
@@ -1733,7 +1733,10 @@ void send_reader_stat(int ridx, ECM_REQUEST *er)
 	memset(&add_stat, 0, sizeof(ADD_READER_STAT));
 	add_stat.ridx = ridx;
 	add_stat.time = time;
-	add_stat.rc   = er->rc;
+	if (info_only)
+		add_stat.rc   = er->rc;
+	else
+		add_stat.rc = -1;
 	add_stat.caid = er->caid;
 	add_stat.prid = er->prid;
 	add_stat.srvid = er->srvid;
@@ -1786,7 +1789,7 @@ int send_dcw(ECM_REQUEST *er)
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
-	send_reader_stat(er->reader[0], er);
+	send_reader_stat(er->reader[0], er, 0);
 	
 	if(cfg->mon_appendchaninfo)
 		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s",
@@ -1878,7 +1881,7 @@ void chk_dcw(int fd)
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100) {
-	send_reader_stat(er->reader[0], ert);
+	send_reader_stat(er->reader[0], ert, 1);
 	return; // already done
   }
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
@@ -1911,7 +1914,7 @@ void chk_dcw(int fd)
     	er->load_balance_retry++;
 
     	ert->rc = 4;
-        send_reader_stat(er->reader[0], ert); //This disables load-balance...
+        send_reader_stat(er->reader[0], ert, 0); //This disables load-balance...
         ert->rc = 100;
         ert->rcEx = 0;
     	get_cw(ert); //...then we can send it to the other readers

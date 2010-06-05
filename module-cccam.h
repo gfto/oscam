@@ -31,6 +31,7 @@ typedef enum {
 	MSG_KEEPALIVE = 6,
 	MSG_NEW_CARD = 7,
 	MSG_SRV_DATA = 8,
+	MSG_CMD_0A = 0x0a,
 	MSG_CMD_0B = 0x0b,
 	MSG_CW_NOK1 = 0xfe,
 	MSG_CW_NOK2 = 0xff,
