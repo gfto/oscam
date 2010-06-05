@@ -1733,7 +1733,7 @@ void send_reader_stat(int ridx, ECM_REQUEST *er, int info_only)
 	memset(&add_stat, 0, sizeof(ADD_READER_STAT));
 	add_stat.ridx = ridx;
 	add_stat.time = time;
-	if (info_only)
+	if (!info_only)
 		add_stat.rc   = er->rc;
 	else
 		add_stat.rc = -1;

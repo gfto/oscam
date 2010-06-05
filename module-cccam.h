@@ -84,8 +84,9 @@ struct cc_data {
 	struct cc_crypt_block block[2]; // crypto state blocks
 
 	uint8 node_id[8], // client node id
-			peer_node_id[8], // server node id
-			dcw[16]; // control words
+		peer_node_id[8], // server node id
+		peer_version[8], // server version
+		dcw[16]; // control words
 
 	LLIST *cards; // cards list
 
@@ -99,6 +100,7 @@ struct cc_data {
 	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
 	LLIST *auto_blocked; //struct cc_auto_blocked //struct cc_auto_blocked
 	int just_logged_in; //true for checking NOK direct after login
+	uint8 key_table; //key for CMD 0B
 
 	uint32 send_ecmtask;
 	uint32 recv_ecmtask;

@@ -150,6 +150,8 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int time, int rc)
 	}
 
 	//inc ecm_count if found, drop to 0 if not found:
+	cs_debug_mask(D_TRACE, "adding stat for reader %s (%d): rc %d caid %04hX prid %04lX srvid %04hX time %dms",
+				reader[ridx].label, ridx, rc, caid, prid, srvid, time);
 	if (rc == 0) {
 		stat->rc = rc;
 		if (stat->ecm_count < INT_MAX)
