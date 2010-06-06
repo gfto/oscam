@@ -38,6 +38,37 @@ static char *getprefix() {
 	return prefix;
 }
 
+static void test()
+{
+	cs_log("%s Test", getprefix());
+
+	uint8 buf[16] = {0x86, 0x93, 0xF1, 0x86, 0x3D, 0x58, 0x87, 0x43, 0xF0, 0x6D, 0x35, 0xC8, 0xB4, 0x6B, 0xB3, 0x2B};
+	AES_KEY key;
+	uint8 aeskey[16] = {0x99, 0x2C, 0xF4, 0x31, 0x1D, 0x45, 0xBF, 0x30, 0x32, 0x2E, 0x31, 0x2E, 0x34, 0x00, 0x00, 0x00 };
+	uint8 out[16];
+
+	memset(&key, 0, sizeof(key));
+
+	cs_log("Testdata: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+			buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7],
+			buf[8], buf[9], buf[10], buf[11], buf[12], buf[13], buf[14], buf[15]);
+
+	AES_set_encrypt_key((unsigned char *) &aeskey, 128, &key);
+	AES_encrypt((unsigned char *) buf, (unsigned char *) &out, &key);
+
+	cs_log("Test Encrypt: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+			out[0], out[1], out[2], out[3], out[4], out[5], out[6], out[7],
+			out[8], out[9], out[10], out[11], out[12], out[13], out[14], out[15]);
+
+	AES_set_decrypt_key((unsigned char *) &aeskey, 128, &key);
+	AES_decrypt((unsigned char *) buf, (unsigned char *) &out, &key);
+
+	cs_log("Test Decrypt: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+			out[0], out[1], out[2], out[3], out[4], out[5], out[6], out[7],
+			out[8], out[9], out[10], out[11], out[12], out[13], out[14], out[15]);
+
+}
+
 static void cc_init_crypt(struct cc_crypt_block *block, uint8 *key, int len) {
 	int i = 0;
 	uint8 j = 0;
@@ -1111,14 +1142,20 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		cs_debug("cccam: client data ack");
 		break;
 	case MSG_SRV_DATA:
-		memcpy(cc->peer_node_id, buf + 4, 8);
-		memset(cc->peer_version, 0, 8);
-		memcpy(cc->peer_version, buf + 12, 8);
-
-		cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
-		cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
+		cs_log("%s MSG_SRV_DATA len=%d", getprefix(), l);
+		if (l >= 4+8)
+			memcpy(cc->peer_node_id, buf + 4, 8);
+		if (l >= 12+8) {
+			memset(cc->peer_version, 0, 8);
+			memcpy(cc->peer_version, buf + 12, 8);
+			cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
+		}
+		if (l >= 44+4) {
+			cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
 				cs_hexdump(0, cc->peer_node_id, 8), buf + 12, buf + 44,
 				cc->limit_ecms ? "yes" : "no");
+		}
+		//test();
 		break;
 	case MSG_NEW_CARD: {
 		int i = 0;
