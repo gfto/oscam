@@ -281,6 +281,7 @@ static void cc_cli_close() {
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
 		cc->current_ecm_cidx = 0;
+		cc->cmd0b_aeskey_set = 0;
 	}
 }
 
@@ -1149,13 +1150,17 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (l >= 12+8) {
 			memcpy(cc->peer_version, buf + 12, 8);
 			cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
+
+			if (!cc->cmd0b_aeskey_set) {
+				memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
+				memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
+				cc->cmd0b_aeskey_set = 1;
+			}
 		}
-		if (l == 76) {
+		if (l >= 44+8) {
 			cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
 				cs_hexdump(0, cc->peer_node_id, 8), buf + 12, buf + 44,
 				cc->limit_ecms ? "yes" : "no");
-			memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
-			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
 		}
 		//test();
 		break;
@@ -1613,6 +1618,7 @@ static int cc_cli_connect(void) {
 		cc->current_card = malloc(sizeof(struct cc_current_card)*CS_MAXPID);
 		memset(cc->current_card, 0, sizeof(struct cc_current_card)*CS_MAXPID);
 	}
+	cc->cmd0b_aeskey_set = 0;
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
 	cc->proxy_init_errors = 0;
