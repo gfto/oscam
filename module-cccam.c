@@ -1143,14 +1143,19 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_SRV_DATA:
 		cs_log("%s MSG_SRV_DATA len=%d", getprefix(), l);
-		if (l == 76) {
+		//There are l=76, 19 and 36
+		if (l >= 4+8)
 			memcpy(cc->peer_node_id, buf + 4, 8);
-			memset(cc->peer_version, 0, 8);
+		if (l >= 12+8) {
 			memcpy(cc->peer_version, buf + 12, 8);
 			cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
+		}
+		if (l == 76) {
 			cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
 				cs_hexdump(0, cc->peer_node_id, 8), buf + 12, buf + 44,
 				cc->limit_ecms ? "yes" : "no");
+			memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
+			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
 		}
 		//test();
 		break;
@@ -1401,8 +1406,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		uint8 aeskey[16];
 		uint8 out[16];
 
-		memcpy(aeskey, cc->peer_node_id, 8);
-		memcpy(aeskey + 8, cc->peer_version, 8);
+		memcpy(aeskey, cc->cmd0b_aeskey, 16);
 		memset(&key, 0, sizeof(key));
 
 		cs_ddump(aeskey, 16, "%s CMD_0B AES key:", getprefix());
