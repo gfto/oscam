@@ -369,6 +369,11 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             cs_debug("[viaccess-reader] ECM: key to use is not the current one, trying next ECM");
         }
     }
+    else {
+        ecm88Data=nextEcm;
+        ecm88Len-=curEcm88len;
+        cs_debug("[viaccess-reader] ECM: Unknown ECM type");
+    }
   }
 
   if (hasD2) {

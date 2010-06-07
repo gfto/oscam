@@ -1934,22 +1934,27 @@ void chk_dcw(int fd)
 
 ulong chk_provid(uchar *ecm, ushort caid)
 {
-  int i;
-  ulong provid=0;
-  switch(caid)
-  {
-    case 0x100:     // seca
-      provid=b2i(2, ecm+3);
-      break;
-    case 0x500:     // viaccess
-      i=(ecm[4]==0xD2) ? ecm[5] + 2 : 0;  // skip d2 nano
-      if ((ecm[5+i]==3) && ((ecm[4+i]==0x90) || (ecm[4+i]==0x40)))
-        provid=(b2i(3, ecm+6+i) & 0xFFFFF0);
-    default:
-      // cryptoworks ?
-      if( caid&0x0d00 && ecm[8]==0x83 && ecm[9]==1 )
-        provid=(ulong)ecm[10];
-  }
+    int i;
+    ulong provid=0;
+    switch(caid) {
+        case 0x100:     // seca
+            provid=b2i(2, ecm+3);
+            break;
+
+        case 0x500:     // viaccess
+            i=(ecm[4]==0xD2) ? ecm[5] + 2 : 0;  // skip d2 nano
+            if ((ecm[5+i]==3) && ((ecm[4+i]==0x90) || (ecm[4+i]==0x40)))
+                provid=(b2i(3, ecm+6+i) & 0xFFFFF0);
+            
+            i=(ecm[6]==0xD2) ? ecm[7] + 2 : 0;  // skip d2 nano long ecm
+            if ((ecm[7+i]==7) && ((ecm[6+i]==0x90) || (ecm[6+i]==0x40)))
+                provid=(b2i(3, ecm+8+i) & 0xFFFFF0);
+
+        default:
+            // cryptoworks ?
+            if( caid&0x0d00 && ecm[8]==0x83 && ecm[9]==1 )
+                provid=(ulong)ecm[10];
+      }
   return(provid);
 }
 

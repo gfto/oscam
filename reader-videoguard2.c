@@ -20,7 +20,7 @@
 //////  ====================================================================================
 
 int aes_active=0;
-AES_KEY dkey, ekey;
+AES_KEY dkey, ekey, Astro_Key;
 int BASEYEAR = 1997;
 static void cAES_SetKey(const unsigned char *key)
 {
@@ -427,6 +427,40 @@ static void memorize_cmd_table (const unsigned char *mem, int size){
   memcpy(cmd_table,mem,size);
 }
 
+void Manage_Tag(unsigned char *Answer)
+{
+	unsigned char Tag,Len,Len2;
+	bool Valid_0x55=0;
+	unsigned char *Body;
+	unsigned char Buffer[0x10];
+	int a=0x13;
+	Len2=Answer[4];
+	while(a<Len2)
+	{
+		Tag=Answer[a];
+		Len=Answer[a+1];
+		Body=Answer+a+2;
+		switch(Tag)
+		{
+			case 0x55:{
+				if(Body[0]==0x84)		//Tag 0x56 has valid data...
+					Valid_0x55=1;
+			}break;	
+			case 0x56:{
+				memcpy(Buffer+8,Body,8);
+			}break;
+		}
+		a+=Len+2;	
+	
+	}			
+	if(Valid_0x55)
+	{
+		memcpy(Buffer,Answer+5,8);									//Copy original DW 
+		AES_decrypt(Buffer,Buffer,&Astro_Key);			//Astro_Key declared and filled before...
+		memcpy(CW1,Buffer,8);												//Now copy calculated DW in right place
+	}
+}
+
 static int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode)
 {
   struct CmdTabEntry *pcte=cmd_table->e;
@@ -456,7 +490,9 @@ static int read_cmd_len(struct s_reader * reader, const unsigned char *cmd)
   memcpy(cmd2,cmd,5);
   cmd2[3]=0x80;
   cmd2[4]=1;
-  if(!write_cmd_vg(cmd2,NULL) || cta_res[1] != 0x90 || cta_res[2] != 0x00) {
+  // some card reply with L 91 00 (L being the command length).
+  
+  if(!write_cmd_vg(cmd2,NULL) || !status_ok(cta_res+1)) {
     cs_debug("[videoguard2-reader] failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
     return -1;
     }
@@ -495,12 +531,15 @@ static int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsi
 
   cCamCryptVG2_PostProcess_Decrypt(rxbuff,len,CW1,CW2);
 
+// Start of suggested fix for 09ac cards
   // Log decrypted INS54
   ///if (rxbuff[1] == 0x54) {
   ///  cs_dump (rxbuff, 5, "Decrypted INS54:");
   ///  cs_dump (rxbuff + 5, rxbuff[4], "");
   ///}
 
+  Manage_Tag(rxbuff);
+//	End of suggested fix
   return len;
 }
 
@@ -615,6 +654,9 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   unsigned char atr_foxtel_90b[] = { 0x3F, 0x7F, 0x11, 0x25, 0x03, 0x33, 0xB0, 0x09, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x46, 0x44, 0x01, 0x00, 0x00};
   unsigned char atr_china_988[] = { 0x3F, 0x7F, 0x13, 0x25, 0x04, 0x33, 0xB0, 0x02, 0x69, 0xFF, 0x4A, 0x50, 0xE0, 0x00, 0x00, 0x54, 0x42, 0x00, 0x00, 0x00};
   unsigned char atr_toptv_9b8[] = { 0x3F, 0xFF, 0x14, 0x25, 0x03, 0x10, 0x80, 0x41, 0xB0, 0x02, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x80, 0x00, 0x58, 0x38, 0x01, 0x00, 0x14};
+  unsigned char atr_skyBRgl23[] = { 0x3F, 0xFF, 0x13, 0x25, 0x02, 0x40, 0xB0, 0x12, 0x69, 0xFF, 0x4A, 0x50, 0x90, 0x47, 0x4C, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  unsigned char atr_skyBRgl39[] = { 0x3F, 0xFD, 0x13, 0x25, 0x02, 0x50, 0x80, 0x0F, 0x33, 0xB0, 0x08, 0xFF, 0xFF, 0x4A, 0x50, 0x90, 0x00, 0x00, 0x47, 0x4C, 0x01};
+  unsigned char atr_skyBRgl54[] = { 0x3F, 0xFF, 0x13, 0x25, 0x02, 0x50, 0x80, 0x0F, 0x54, 0xB0, 0x03, 0xFF, 0xFF, 0x4A, 0x50, 0x80, 0x00, 0x00, 0x00, 0x00, 0x47, 0x4C, 0x05 }; 
 
     if ((atr_size == sizeof (atr_bskyb)) && (memcmp (atr, atr_bskyb, atr_size) == 0))
     {
@@ -684,18 +726,37 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     { 
 	cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard TopTV (09B8)"); 
     } 
+    else if ((atr_size == sizeof (atr_skyBRgl23)) && (memcmp (atr, atr_skyBRgl23, atr_size) == 0))
+    { 
+        cs_log("[videoguard2-reader] type: VideoGuard SkyBrasilGL23 (0942)");
+        BASEYEAR = 2000; 
+    }
+    else if ((atr_size == sizeof (atr_skyBRgl39)) && (memcmp (atr, atr_skyBRgl39, atr_size) == 0))
+    { 
+        cs_log("[videoguard2-reader] type: VideoGuard SkyBrasilGL39 (0907)");
+        BASEYEAR = 2004; 
+    }
+    else if ((atr_size == sizeof (atr_skyBRgl54)) && (memcmp (atr, atr_skyBRgl54, atr_size) == 0))
+    { 
+        cs_log("[videoguard2-reader] type: VideoGuard SkyBrasilGL54 (0943)");
+        BASEYEAR = 2009; 
+    } 
 
   //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
   //this way also unknown videoguard2/NDS cards will work
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
   int l;
+  ins7401[3]=0x80;  // from newcs log
+  ins7401[4]=0x01;
   if((l=read_cmd_len(reader, ins7401))<0) return ERROR; //not a videoguard2/NDS card or communication error
+  ins7401[3]=0x00;
   ins7401[4]=l;
   if(!write_cmd_vg(ins7401,NULL) || !status_ok(cta_res+l)) {
     cs_log ("[videoguard2-reader] failed to read cmd list");
     return ERROR;
     }
+
   memorize_cmd_table (cta_res,l);
 
   unsigned char buff[256];
@@ -783,6 +844,16 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     cs_log("[videoguard2-reader] sending boxid failed");
     return ERROR;
     }
+// Start of suggested fix for 09ac cards
+    unsigned char Dimeno_Magic[0x10]={0xF9,0xFB,0xCD,0x5A,0x76,0xB5,0xC4,0x5C,0xC8,0x2E,0x1D,0xE1,0xCC,0x5B,0x6B,0x02}; 
+    int a;
+    for(a=0; a<4; a++)
+        Dimeno_Magic[a]=Dimeno_Magic[a]^boxID[a];
+    //I supposed to declare a AES_KEY Astro_Key somewhere before...
+    AES_set_decrypt_key(Dimeno_Magic,128,&Astro_Key);
+    Astro_Key.rounds=10;     		
+    //Important for ecm decryption...
+//	End of suggested fix
 
   //short int SWIRDstatus = cta_res[1];
   unsigned char ins58[5] = { 0xD0,0x58,0x00,0x00,0x00 };
