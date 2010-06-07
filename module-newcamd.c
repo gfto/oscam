@@ -832,7 +832,7 @@ static void newcamd_auth_client(in_addr_t ip)
         mbuf[14] = pufilt->nprids;
         for( j=0; j<pufilt->nprids; j++) 
         {
-          if ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699))    // Irdeto
+          if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
           {
             mbuf[15+11*j] = 0;
             mbuf[16+11*j] = 0;
@@ -861,7 +861,7 @@ static void newcamd_auth_client(in_addr_t ip)
                 rprid=b2i(3, &reader[au].prid[k][1]);
                 if( rprid==pufilt->prids[j] )
                 {
-                  if ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699))    // Irdeto
+                  if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
                   {
                     mbuf[22+11*j] = reader[au].prid[k][0];
                     mbuf[23+11*j] = reader[au].prid[k][1];
@@ -890,7 +890,7 @@ static void newcamd_auth_client(in_addr_t ip)
           }
           else 
           {
-            if ((pufilt->caid >= 0x0600) && (pufilt->caid <= 0x0699))    // Irdeto
+            if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
             {
               mbuf[22+11*j] = 0x00;
               mbuf[23+11*j] = (uchar)(pufilt->prids[j]>>16);
