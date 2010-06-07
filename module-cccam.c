@@ -1424,6 +1424,13 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		cs_ddump(out, 16, "%s CMD_0B out:", getprefix());
 		cc_cmd_send(out, 16, MSG_CMD_0B);
 
+		if (!cc->max_ecms) {
+			// ~86 minutes = 6160 seconds, every 7second 1ecm = 6160/7=737,14
+			// So we limit to 730 ecms:
+			cc->max_ecms = 730;
+			cc->ecm_counter = 0;
+		}
+
 		ret = 0;
 		break;
 	}
