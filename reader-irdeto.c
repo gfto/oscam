@@ -464,7 +464,8 @@ int irdeto_card_info(struct s_reader * reader)
         {
           sc_GetChanelIds[5]=j; // chid at index j for provider at index i
           reader_chk_cmd(sc_GetChanelIds, 0);
-          if (cta_lr<61) break;
+          if (cta_lr<61) break; // why 61 (0 to 60 in steps of 6 .. is it 10*6 from the 10 in the for loop ?
+
           for(k=0; k<cta_lr; k+=6)
           {
             chid=b2i(2, cta_res+k);
