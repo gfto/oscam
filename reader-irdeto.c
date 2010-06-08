@@ -456,10 +456,13 @@ int irdeto_card_info(struct s_reader * reader)
       if (reader->prid[i][4]!=0xff)
       {
         p++;
-        sc_GetChanelIds[3]=i;
-        for (j=0; j<10; j++)
+        sc_GetChanelIds[3]=i; // provider at index i
+        j=0;
+        // for (j=0; j<10; j++) => why 10 .. do we know for sure the there are only 10 chids !!! 
+        // shouldn't it me the max chid value we read above ?!
+        while(1) // will exit if cta_lr < 61 .. which is the correct break condition.
         {
-          sc_GetChanelIds[5]=j;
+          sc_GetChanelIds[5]=j; // chid at index j for provider at index i
           reader_chk_cmd(sc_GetChanelIds, 0);
           if (cta_lr<61) break;
           for(k=0; k<cta_lr; k+=6)
@@ -478,6 +481,7 @@ int irdeto_card_info(struct s_reader * reader)
               cs_ri_log(reader, "chid: %04X, date: %s - %s", chid, t, t+16);
             }
           }
+        j++;
         }
       }
     }
