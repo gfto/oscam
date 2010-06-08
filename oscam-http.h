@@ -566,10 +566,10 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	  <TH>Delete</TH>\n\
       <TH>Reader</TH>\n\
       <TH>Protocol</TH>\n\
-      <TH>EERR UK / G / S / UQ</TH>\n\
-      <TH>EWRI UK / G / S / UQ</TH>\n\
-      <TH>ESKI UK / G / S / UQ</TH>\n\
-      <TH>EBLO UK / G / S / UQ</TH>\n\
+      <TH>EMM error<br> UK / G / S / UQ</TH>\n\
+      <TH>EMM written<br> UK / G / S / UQ</TH>\n\
+      <TH>EMM skipped<br> UK / G / S / UQ</TH>\n\
+      <TH>EMM blocked<br> UK / G / S / UQ</TH>\n\
       <TH COLSPAN=\"3\">Action</TH>\n\
     </TR>\n\
     ##READERLIST##\
