@@ -222,7 +222,7 @@ static int cc_add_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
 	auto_blocked->sid = sid;
 	auto_blocked->time = time((time_t*) 0);
 	llist_append(cc_auto_blocked_list, auto_blocked);
-	cs_log("%s adding %04X:%04X:%04X to auto block list", getprefix(), caid,
+	cs_debug_mask(D_TRACE, "%s adding %04X:%04X:%04X to auto block list", getprefix(), caid,
 			prov, sid);
 	return 1;
 }
@@ -570,6 +570,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	if ((n = cc_get_nxt_ecm()) < 0) {
 		pthread_mutex_unlock(&cc->ecm_busy);
 		cs_log("%s no ecm pending!", getprefix());
+
 		return 0; // no queued ecms
 	}
 	cur_er = &ecmtask[n];
@@ -780,7 +781,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 		return -1;
 	}
 
-	cs_log("%s emm for client %d caid %04X prov %04X for card %08X", getprefix(), ep->cidx,
+	cs_debug_mask(D_TRACE, "%s emm for client %d caid %04X prov %04X for card %08X", getprefix(), ep->cidx,
 			b2i(2, (uchar*)&ep->caid), b2i(4, (uchar*)&ep->provid), emm_card->id);
 
 	pthread_mutex_lock(&cc->ecm_busy); //Unlock by NOK or EMM_ACK
@@ -1116,7 +1117,7 @@ static int cc_retry_ecm(struct cc_data *cc, struct cc_current_card *current_card
 			ecmtask[n].prid == current_card->prov &&
 			ecmtask[n].srvid == current_card->sid)) {
 			cc->crc++; //<<-- this is the trick: when crc failed, ecm is send!
-			cs_log("%s retrying ecm for sid %04X...", getprefix(), ecmtask[n].srvid);
+			cs_debug_mask(D_TRACE, "%s retrying ecm for sid %04X...", getprefix(), ecmtask[n].srvid);
 			ret = 1;
 		}
 	}
@@ -1285,7 +1286,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				found = 1;
 				//SS: Fix card free:
 				if (cc_remove_current_card(cc, card)) {
-					cs_log("%s current card %08x removed!", getprefix(), card->id);
+					cs_debug_mask(D_TRACE, "%s current card %08x removed!", getprefix(), card->id);
 					current_card_removed = 1;
 				}
 				cc_free_card(card);
@@ -1320,7 +1321,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 		struct cc_current_card *current_card = &cc->current_card[cc->current_ecm_cidx];
 
-		cs_log("%s cw nok (%d), sid = %04X", getprefix(), buf[1], current_card->sid);
+		cs_debug_mask(D_TRACE, "%s cw nok (%d), sid = %04X", getprefix(), buf[1], current_card->sid);
 
 		struct cc_card *card = current_card->card;
 		if (card) {
@@ -1353,9 +1354,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
 				get_cw(er);
-				cs_debug_mask(D_TRACE,
-					"%s ECM request from client: caid %04x srvid %04x prid %04x",
-					getprefix(), er->caid, er->srvid, er->prid);
+				cs_debug_mask(
+						D_TRACE,
+						"%s ECM request from client: caid %04x srvid %04x prid %04x",
+						getprefix(), er->caid, er->srvid, er->prid);
 			} else
 				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());
 
@@ -1384,12 +1386,12 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cc->current_ecm_cidx = 0;
-			
+
 			//cc_abort_user_ecms();
 
-			if (buf[1] == MSG_CW_NOK1) 
+			if (buf[1] == MSG_CW_NOK1)
 				cc_retry_ecm(cc, current_card);
-			else 
+			else
 				cc_send_ecm(NULL, NULL);
 
 			if (cc->max_ecms)
@@ -1410,7 +1412,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (!is_server) {
 			cc->just_logged_in = 0;
 			l = l - 4;//Header Length=4 Byte
-			cs_log("%s cmd 0x05 recvd, payload length=%d", getprefix(), l);
+			cs_log("%s MSG_CMD_05 recvd, payload length=%d", getprefix(), l);
 			//payload always needs cycle connection after 60 ECMs!!
 			if (l && cc->limit_ecms && !cc->max_ecms) {
 				cc->max_ecms = 60;
@@ -1423,7 +1425,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	case MSG_CMD_0B: {
 		// by Project:Keynation
 		/*cs_log("%s MSG_CMD_0B received, cycle connection (payload=%d)!", getprefix(), l-4);*/
-		cs_log("%s MSG_CMD_0B received (payload=%d)!", getprefix(), l-4);
+		cs_debug_mask(D_TRACE, "%s MSG_CMD_0B received (payload=%d)!", getprefix(), l-4);
 		cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
 
 		AES_KEY key;
@@ -1439,17 +1441,16 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		AES_set_encrypt_key((unsigned char *) &aeskey, 128, &key);
 		AES_encrypt((unsigned char *) buf + 4, (unsigned char *) &out, &key);
 
-		cs_log("%s sending CMD_0B! ", getprefix());
+		cs_debug_mask(D_TRACE, "%s sending CMD_0B! ", getprefix());
 		cs_ddump(out, 16, "%s CMD_0B out:", getprefix());
 		cc_cmd_send(out, 16, MSG_CMD_0B);
 
-		if (!cc->max_ecms) {
+		//if (!cc->max_ecms) {
 			// ~86 minutes = 6160 seconds, every 7second 1ecm = 6160/7=737,14
-			// So we limit to 730 ecms:
-			//cc->max_ecms = 730; too big, got fake-ECMs!
-			cc->max_ecms = 600;
-			cc->ecm_counter = 0;
-		}
+			// So we limit to 700 ecms:
+		//	cc->max_ecms = 700;
+		//	cc->ecm_counter = 0;
+		//}
 
 		ret = 0;
 		break;
@@ -1458,7 +1459,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		cc->just_logged_in = 0;
 		if (is_server) { //EMM Request received
 			if (l > 4) {
-				cs_log("%s EMM Request received!", getprefix());
+				cs_debug_mask(D_TRACE, "%s EMM Request received!", getprefix());
 
 				int au = client[cs_idx].au;
 				if ((au < 0) || (au > CS_MAXREADER))
@@ -1487,7 +1488,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc_cmd_send(NULL, 0, MSG_EMM_ACK); //Send back ACK
 			}
 		} else { //Our EMM Request Ack!
-			cs_log("%s EMM ACK!", getprefix());
+			cs_debug_mask(D_TRACE, "%s EMM ACK!", getprefix());
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cc->current_ecm_cidx = 0;
 			cc_send_ecm(NULL, NULL);
@@ -1620,17 +1621,24 @@ static int cc_cli_connect(void) {
 		cs_log("%s network connect error!", getprefix());
 		return -1;
 	}
- 
+
 	// get init seed
 	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
-			     getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
-		network_tcp_connection_close(&reader[ridx], handle);
-		return -2;
+			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
+		if (err == ENOTCONN) {
+			handle = client[cs_idx].udp_fd = pfd = 0;
+			cs_sleepms(fast_rnd()*10);
+			cs_exit(1);
+		}
+		else {
+			network_tcp_connection_close(&reader[ridx], handle);
+			return -2;
+		}
 	}
-
 	struct cc_data *cc = reader[ridx].cc;
+
 	if (!cc) {
 		// init internals data struct
 		cc = malloc(sizeof(struct cc_data));
@@ -1746,7 +1754,7 @@ static int cc_srv_report_cards() {
 		return 0;
 
 	if (!cc->report_carddata_id)
-		id = 1;
+		id = 0x64;
 	else
 		id = cc->report_carddata_id;
 
@@ -2175,6 +2183,7 @@ int cc_cli_init() {
 		client[cs_idx].udp_sa.sin_family = AF_INET;
 		client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
 
+		cs_resolve();
 		cs_log("cccam: Waiting for IP resolve of: %s", reader[ridx].device);
 		int safeCounter = 40 * cfg->resolvedelay;
 		while (!client[cs_idx].ip && safeCounter--) {

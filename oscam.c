@@ -1725,6 +1725,8 @@ ECM_REQUEST *get_ecmtask()
 
 void send_reader_stat(int ridx, ECM_REQUEST *er, int info_only)
 {
+	if (!cfg->reader_auto_loadbalance)
+		return;
 	struct timeb tpe;
 	cs_ftime(&tpe);
 	int time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
