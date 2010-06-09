@@ -1596,21 +1596,21 @@ static int cc_cli_connect(void) {
 
 	// connect
 	handle = network_tcp_connection_open();
-
+	if (handle < 0) {
+		cs_log("%s network connect error!", getprefix());
+		return -1;
+	}
+ 
 	// get init seed
 	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
-			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
-		//if (err == 134)
-		//	handle = client[cs_idx].udp_fd = pfd = 0;
-		//network_tcp_connection_close(&reader[ridx], handle);
-		//return -2;
-		cs_sleepms(fast_rnd()*10);
-		cs_exit(1);
+			     getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
+		network_tcp_connection_close(&reader[ridx], handle);
+		return -2;
 	}
-	struct cc_data *cc = reader[ridx].cc;
 
+	struct cc_data *cc = reader[ridx].cc;
 	if (!cc) {
 		// init internals data struct
 		cc = malloc(sizeof(struct cc_data));
@@ -2156,7 +2156,6 @@ int cc_cli_init() {
 		client[cs_idx].udp_sa.sin_family = AF_INET;
 		client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
 
-		cs_resolve();
 		cs_log("cccam: Waiting for IP resolve of: %s", reader[ridx].device);
 		int safeCounter = 40 * cfg->resolvedelay;
 		while (!client[cs_idx].ip && safeCounter--) {
