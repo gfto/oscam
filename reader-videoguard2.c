@@ -1066,7 +1066,7 @@ static int num_addr(const unsigned char *data)
   return ((data[3]&0x30)>>4)+1;
 }
 
-static const unsigned char * payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a)
+static const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a)
 {
   int s;
   int l;
@@ -1079,13 +1079,6 @@ static const unsigned char * payload_addr(uchar emmtype, const unsigned char *da
     default: s=0;
   }
 
-
-  for(l=0;l<num_addr(data);l++) {
-    if(!memcmp(&data[l*4+4],a+2,s)) {
-      position=l;
-      break;
-    }
-  }
 
   if(s>0) {
     for(l=0;l<num_addr(data);l++) {
