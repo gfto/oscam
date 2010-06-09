@@ -88,7 +88,6 @@ struct cc_data {
 		peer_version[8], // server version
 		dcw[16]; // control words
 	uint8 cmd0b_aeskey[16];
-	int cmd0b_aeskey_set;
 
 	LLIST *cards; // cards list
 

@@ -281,7 +281,6 @@ static void cc_cli_close() {
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
 		cc->current_ecm_cidx = 0;
-		cc->cmd0b_aeskey_set = 0;
 	}
 }
 
@@ -1127,6 +1126,37 @@ static int cc_retry_ecm(struct cc_data *cc, struct cc_current_card *current_card
 	return ret;
 }
 
+static int null_dcw(uint8 *dcw)
+{
+	int i;
+	for (i = 0; i < 15; i++)
+		if (dcw[i])
+			return 0;
+	return 1;
+}
+
+static void add_sid_block(struct cc_card *card, uint16 sid_block) {
+	int f = 0;
+	LLIST_ITR itr;
+	uint16 *sid = llist_itr_init(card->badsids, &itr);
+	while (sid && !f) {
+		if (*sid == sid_block) {
+			f = 1;
+		}
+		sid = llist_itr_next(&itr);
+	}
+
+	if (!f) {
+		sid = malloc(sizeof(uint16));
+		if (sid) {
+			*sid = sid_block;
+			sid = llist_append(card->badsids, sid);
+			cs_log("%s added sid block %04X for card %08x",
+				getprefix(), sid_block, card->id);
+		}
+	}
+}
+
 static int cc_parse_msg(uint8 *buf, int l) {
 	int ret = buf[1];
 	struct cc_data *cc;
@@ -1145,19 +1175,13 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	case MSG_SRV_DATA:
 		cs_log("%s MSG_SRV_DATA len=%d", getprefix(), l);
 		//There are l=76, 19 and 36
-		if (l >= 4+8)
+		if (l == 76) {
 			memcpy(cc->peer_node_id, buf + 4, 8);
-		if (l >= 12+8) {
 			memcpy(cc->peer_version, buf + 12, 8);
 			cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
 
-			if (!cc->cmd0b_aeskey_set) {
-				memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
-				memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
-				cc->cmd0b_aeskey_set = 1;
-			}
-		}
-		if (l >= 44+8) {
+			memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
+			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
 			cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
 				cs_hexdump(0, cc->peer_node_id, 8), buf + 12, buf + 44,
 				cc->limit_ecms ? "yes" : "no");
@@ -1298,28 +1322,9 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 		cs_log("%s cw nok (%d), sid = %04X", getprefix(), buf[1], current_card->sid);
 
-		int f = 0;
 		struct cc_card *card = current_card->card;
 		if (card) {
-			LLIST_ITR itr;
-			uint16 *sid = llist_itr_init(card->badsids, &itr);
-			while (sid && !f) {
-				if (*sid == current_card->sid) {
-					f = 1;
-				}
-				sid = llist_itr_next(&itr);
-			}
-
-			if (!f) {
-				sid = malloc(sizeof(uint16));
-				if (sid) {
-					*sid = current_card->sid;
-
-					sid = llist_append(card->badsids, sid);
-					cs_log("%s added sid block %04X for card %08x",
-							getprefix(), current_card->sid, card->id);
-				}
-			}
+			add_sid_block(card, current_card->sid);
 			cc_remove_current_card(cc, card);
 		}
 		else
@@ -1348,35 +1353,49 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
 				get_cw(er);
-				cs_debug_mask(
-						D_TRACE,
-						"%s ECM request from client: caid %04x srvid %04x prid %04x",
-						getprefix(), er->caid, er->srvid, er->prid);
+				cs_debug_mask(D_TRACE,
+					"%s ECM request from client: caid %04x srvid %04x prid %04x",
+					getprefix(), er->caid, er->srvid, er->prid);
 			} else
 				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());
 
 		} else { //READER:
-			struct cc_card *card = cc->current_card[cc->current_ecm_cidx].card;
+			struct cc_current_card *current_card = &cc->current_card[cc->current_ecm_cidx];
+			struct cc_card *card = current_card->card;
 			if (card) {
 				cc_cw_crypt(buf + 4, card->id);
 				memcpy(cc->dcw, buf + 4, 16);
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
-				cc->recv_ecmtask = cc->send_ecmtask;
-				cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
-					cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
+				if (null_dcw(cc->dcw)) {
+					add_sid_block(card, current_card->sid);
+					cc_remove_current_card(cc, card);
+					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
+				}
+				else {
+					cc->recv_ecmtask = cc->send_ecmtask;
+					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
+						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
+				}
 			}
-			else
+			else {
 				cs_log("%s warning: ECM-CWS respond by CCCam server without current card!", getprefix());
+				current_card = NULL;
+			}
 
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cc->current_ecm_cidx = 0;
+			
 			//cc_abort_user_ecms();
-			cc_send_ecm(NULL, NULL);
+
+			if (buf[1] == MSG_CW_NOK1) 
+				cc_retry_ecm(cc, current_card);
+			else 
+				cc_send_ecm(NULL, NULL);
 
 			if (cc->max_ecms)
 				cc->ecm_counter++;
-			ret = 0;
 		}
+		ret = 0;
 		break;
 	case MSG_KEEPALIVE:
 		cc->just_logged_in = 0;
@@ -1427,7 +1446,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (!cc->max_ecms) {
 			// ~86 minutes = 6160 seconds, every 7second 1ecm = 6160/7=737,14
 			// So we limit to 730 ecms:
-			cc->max_ecms = 730;
+			//cc->max_ecms = 730; too big, got fake-ECMs!
+			cc->max_ecms = 600;
 			cc->ecm_counter = 0;
 		}
 
@@ -1625,7 +1645,6 @@ static int cc_cli_connect(void) {
 		cc->current_card = malloc(sizeof(struct cc_current_card)*CS_MAXPID);
 		memset(cc->current_card, 0, sizeof(struct cc_current_card)*CS_MAXPID);
 	}
-	cc->cmd0b_aeskey_set = 0;
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
 	cc->proxy_init_errors = 0;
