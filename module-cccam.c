@@ -9,6 +9,7 @@
 extern struct s_reader *reader;
 
 int g_flag = 0;
+int connect_error_count = 0;
 
 static unsigned int seed;
 static uchar fast_rnd() {
@@ -1605,17 +1606,18 @@ static int cc_cli_connect(void) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
-		if (err == ENOTCONN) {
-			handle = client[cs_idx].udp_fd = pfd = 0;
-			cs_sleepms(fast_rnd()*10);
-			cs_exit(1);
+		network_tcp_connection_close(&reader[ridx], handle);
+		connect_error_count++; //Expand sleep time
+		if (err == ENOTCONN) { //TCPIP is too busy-we have to wait!
+			int sleeptime = connect_error_count*3000;
+			if (sleeptime > 10*60*1000) //do not wait longer than 10min
+				sleeptime = 10*60*1000;
+			cs_sleepms(sleeptime);
 		}
-		else {
-			network_tcp_connection_close(&reader[ridx], handle);
-			return -2;
-		}
+		return -2;
 	}
 	struct cc_data *cc = reader[ridx].cc;
+	connect_error_count = 0;
 
 	if (!cc) {
 		// init internals data struct
