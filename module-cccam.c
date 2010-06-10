@@ -355,6 +355,9 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(client[cs_idx].udp_fd, netbuf, len, 0);
+	if (n < 0 && is_server) {
+		cs_disconnect_client();
+	}		
 
 	return n;
 }
@@ -527,7 +530,7 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 		if ((n = cc_get_nxt_ecm()) < 0) {
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cs_log("%s no ecm pending!", getprefix());
-
+			cc->current_ecm_cidx = 0;
 			return 0; // no queued ecms
 		}
 		cur_er = &ecmtask[n];
@@ -1098,7 +1101,7 @@ static int caid_filtered(int ridx, int caid) {
 }
 
 static int cc_retry_ecm(struct cc_data *cc, struct cc_current_card *current_card) {
-	if (!reader[ridx].cc_disable_retry_ecm || !cc->current_ecm_cidx) {
+	if (reader[ridx].cc_disable_retry_ecm || (!current_card && !cc->current_ecm_cidx)) {
 		cc_send_ecm(NULL, NULL);
 		return 0;
 	}
@@ -1264,16 +1267,14 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			if (card->id == b2i(4, buf + 4)) {// && card->sub_id == b2i (3, buf + 9)) {
 				//cs_debug("cccam: card %08x removed, caid %04X, count %d",
 				//		card->id, card->caid, llist_count(cc->cards));
-				struct cc_current_card *current_card = cc_find_current_card(cc, card);
-				if (current_card) {
+				
+				struct cc_current_card *current_card;
+				while ((current_card = cc_find_current_card(cc, card))) {
 					cs_debug_mask(D_TRACE, "%s current card %08x removed!", getprefix(), card->id);
 
 					//make a copy of the current card, remove card and retry ECM with the copy:
-					struct cc_current_card *save_current_card = malloc(sizeof(struct cc_current_card));
-					memcpy(save_current_card, current_card, sizeof(struct cc_current_card));
-					cc_remove_current_card(cc, card);
-					cc_retry_ecm(cc, save_current_card);
-					free(save_current_card);
+					current_card->card = NULL;
+					cc_retry_ecm(cc, current_card);
 				}
 				cc_free_card(card);
 
@@ -1300,14 +1301,17 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		struct cc_current_card *current_card = &cc->current_card[cc->current_ecm_cidx];
 
 		cs_debug_mask(D_TRACE, "%s cw nok (%d), sid = %04X", getprefix(), buf[1], current_card->sid);
-
-		struct cc_card *card = current_card->card;
-		if (card) {
-			add_sid_block(card, current_card->sid);
-			cc_remove_current_card(cc, card);
+		if (!cc->bad_ecm_mode) {
+			struct cc_card *card = current_card->card;
+			if (card) {
+				add_sid_block(card, current_card->sid);
+				current_card->card = NULL;
+			}
+			else
+				current_card = NULL;
 		}
-		else
-			current_card = NULL;
+		cc->bad_ecm_mode = 0;
+		pthread_mutex_unlock(&cc->ecm_busy);
 			
 		//because we have an valid cc->current_ecm_idx, so we can retry ECM
 		cc_retry_ecm(cc, current_card);
@@ -1349,7 +1353,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 				if (null_dcw(cc->dcw)) {
 					add_sid_block(card, current_card->sid);
-					cc_remove_current_card(cc, card);
+					current_card->card = NULL;
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
 				else {
@@ -1372,6 +1376,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc_retry_ecm(cc, current_card);
 			else
 				cc_send_ecm(NULL, NULL);
+			
 
 			if (cc->max_ecms)
 				cc->ecm_counter++;
@@ -1397,8 +1402,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc->max_ecms = 60;
 				cc->ecm_counter = 0;
 			}
+			cc->bad_ecm_mode = 1;
 			cc_cmd_send(NULL, 0, MSG_BAD_ECM);
-			cc->current_ecm_cidx = 0; //Because answer is always NOK!
 		}
 		ret = 0;
 		break;

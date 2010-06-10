@@ -90,6 +90,8 @@ struct cc_data {
 		dcw[16]; // control words
 	uint8 cmd0b_aeskey[16];
 
+	int bad_ecm_mode;
+	
 	LLIST *cards; // cards list
 
 	LLIST *caid_infos; //struct cc_caid_info
