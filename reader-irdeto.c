@@ -464,8 +464,11 @@ int irdeto_card_info(struct s_reader * reader)
         {
           sc_GetChanelIds[5]=j; // chid at index j for provider at index i
           reader_chk_cmd(sc_GetChanelIds, 0);
-          if (cta_lr<61) break; // why 61 (0 to 60 in steps of 6 .. is it 10*6 from the 10 in the for loop ?
-
+          // if (cta_lr<61) break; // why 61 (0 to 60 in steps of 6 .. is it 10*6 from the 10 in the for loop ?
+          // what happen if the card only send back.. 9 chids (or less)... we don't see them
+          // so we should check whether or not we have at least 6 byte (1 chid).
+          if (cta_lr<6) break; 
+          
           for(k=0; k<cta_lr; k+=6)
           {
             chid=b2i(2, cta_res+k);

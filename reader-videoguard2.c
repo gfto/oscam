@@ -1072,16 +1072,18 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
   int l;
   const unsigned char *ptr = NULL;
   int position=-1;
-
+  int numAddrs=0;
+  
   switch(emmtype) {
     case VG2_EMMTYPE_S: s=3; break;
     case VG2_EMMTYPE_U: s=4; break;
     default: s=0;
   }
 
-
+  numAddrs=num_addr(data);
+  
   if(s>0) {
-    for(l=0;l<num_addr(data);l++) {
+    for(l=0;l<numAddrs;l++) {
       if(!memcmp(&data[l*4+4],a+2,s)) {
         position=l;
         break;
@@ -1089,7 +1091,7 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
     }
   }
 
-  int num_filter = (position == -1) ? 0 : num_addr(data);
+  int num_filter = (position == -1) ? 0 : numAddrs;
 
   /* skip header and the filter list */
   ptr = data+4+4*num_filter;
@@ -1243,7 +1245,7 @@ int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep)
       }
 
     cs_debug_mask(D_EMM, "[videoguard2-reader] EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
-//cs_dump(ep->emm, 64, "EMM:");
+    //cs_dump(ep->emm, 64, "EMM:");
     if (status_ok (cta_res) && (cta_res[1] & 0x01)) {
       read_tiers(reader);
       }
