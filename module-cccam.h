@@ -78,6 +78,7 @@ struct cc_current_card {
 	struct cc_card *card;
 	uint32 prov;
 	uint16 sid;
+	ECM_REQUEST last_ecm_request;
 };
 
 struct cc_data {
