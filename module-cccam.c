@@ -1398,6 +1398,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc->ecm_counter = 0;
 			}
 			cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+			cc->current_ecm_cidx = 0; //Because answer is always NOK!
 		}
 		ret = 0;
 		break;
