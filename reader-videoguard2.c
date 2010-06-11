@@ -793,6 +793,9 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
           gotUA=1;
           i+=4;
         } else switch (buff[i]) { /* object length vary depending on type */
+            case 0x00: /* padding */
+              i+=1;
+              break;
             case 0xEF: /* card status */
               i+=3;
               break;
@@ -821,6 +824,7 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
             case 0xDE:
             case 0xE2:
             case 0xE9: /* tier dates */
+            case 0xF8: /* Old PPV Event Record */
             case 0xFD:
               i+=buff[i+1]+2; /* skip length + 2 bytes (type and length) */
               break;
