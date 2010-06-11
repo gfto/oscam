@@ -1267,7 +1267,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			if (card->id == b2i(4, buf + 4)) {// && card->sub_id == b2i (3, buf + 9)) {
 				//cs_debug("cccam: card %08x removed, caid %04X, count %d",
 				//		card->id, card->caid, llist_count(cc->cards));
-				
+				struct cc_card *next_card = llist_itr_remove(&itr);
 				struct cc_current_card *current_card;
 				while ((current_card = cc_find_current_card(cc, card))) {
 					cs_debug_mask(D_TRACE, "%s current card %08x removed!", getprefix(), card->id);
@@ -1278,7 +1278,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				}
 				cc_free_card(card);
 
-				card = llist_itr_remove(&itr);
+				card = next_card;
 				//break;
 			} else {
 				card = llist_itr_next(&itr);
