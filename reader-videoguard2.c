@@ -1109,6 +1109,9 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
   /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */ 
   ptr += 2 + ptr[1];
 
+  /* check for EMM boundaries - ptr should not exceed EMM length */
+  if ((int)(ptr - data) >= data[2]) return NULL;
+
   for(l=0;l<position;l++) {
 
     /* skip the payload of the previous sub-EMM */
@@ -1157,6 +1160,8 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 		case VG2_EMMTYPE_U:
 			cs_debug_mask(D_EMM, "VIDEOGUARD2 EMM: UNIQUE");
 			ep->type=UNIQUE;
+			if (ep->emm[1] == 0) // detected UNIQUE EMM from cccam (there is no serial)
+				return TRUE;
 			for (i = 1;i <= serial_count;i++) {
 				if (!memcmp (rdr->hexserial + 2, ep->emm + (serial_len * i), serial_len)) {
 					memcpy(ep->hexserial, ep->emm + (serial_len * i), serial_len);
@@ -1165,6 +1170,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 
 				pos = pos + ep->emm[pos+5] + 5;
 			}
+			return FALSE; // if UNIQUE but no serial match return FALSE
 
 		case VG2_EMMTYPE_S:
 			ep->type=SHARED;
