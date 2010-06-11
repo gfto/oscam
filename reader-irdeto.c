@@ -226,8 +226,8 @@ int irdeto_card_init(struct s_reader * reader, ATR newatr)
   reader_chk_cmd(sc_GetHEXSerial, 18);
   memcpy(reader->hexserial, cta_res+12, 8); 
   reader->nprov=cta_res[10];
-  cs_ri_log(reader, "ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
-          buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
+  cs_ri_log(reader, "Providers : %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+            reader->nprov,buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
 
   /*
    * CardFile
@@ -466,7 +466,7 @@ int irdeto_card_info(struct s_reader * reader)
           reader_chk_cmd(sc_GetChanelIds, 0);
           // if (cta_lr<61) break; // why 61 (0 to 60 in steps of 6 .. is it 10*6 from the 10 in the for loop ?
           // what happen if the card only send back.. 9 chids (or less)... we don't see them
-          // so we should check whether or not we have at least 6 byte (1 chid).
+          // so we should check whether or not we have at least 6 bytes (1 chid).
           if (cta_lr<6) break; 
           
           for(k=0; k<cta_lr; k+=6)
