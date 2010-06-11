@@ -81,6 +81,16 @@ struct cc_current_card {
 	ECM_REQUEST last_ecm_request;
 };
 
+typedef enum {
+	MODE_UNKNOWN = 0,
+	MODE_AES = 1,
+	MODE_CC_CRYPT = 2,
+	MODE_PLAIN = 3,
+	MODE_XOR_CRYPT = 4,
+
+} cc_cmd05_mode;
+
+
 struct cc_data {
 	struct cc_crypt_block block[2]; // crypto state blocks
 
@@ -89,8 +99,11 @@ struct cc_data {
 		peer_version[8], // server version
 		dcw[16]; // control words
 	uint8 cmd0b_aeskey[16];
+	uint8 cmd05_aeskey[16];
+	struct cc_crypt_block cmd05_cryptkey;
 
 	int bad_ecm_mode;
+	cc_cmd05_mode cmd05_mode;
 	
 	LLIST *cards; // cards list
 

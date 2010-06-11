@@ -1161,20 +1161,67 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		cs_debug("cccam: client data ack");
 		break;
 	case MSG_SRV_DATA:
-		cs_log("%s MSG_SRV_DATA len=%d", getprefix(), l);
-		//There are l=76, 19 and 36
-		if (l == 76) {
-			memcpy(cc->peer_node_id, buf + 4, 8);
-			memcpy(cc->peer_version, buf + 12, 8);
-			cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
+		l -= 4;
+		cs_log("%s MSG_SRV_DATA (payload=%d, %02X)", getprefix(), l, l);
+		//There are l=76, 19 and 36 and more!
 
-			memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
-			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
-			cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
-				cs_hexdump(0, cc->peer_node_id, 8), buf + 12, buf + 44,
-				cc->limit_ecms ? "yes" : "no");
+		switch (l) {
+			case 0x48: { //72 bytes: Normal Server Data
+				memcpy(cc->peer_node_id, buf + 4, 8);
+				memcpy(cc->peer_version, buf + 12, 8);
+				cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
+
+				memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
+				memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
+				cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
+						cs_hexdump(0, cc->peer_node_id, 8), buf + 12, buf + 44,
+						cc->limit_ecms ? "yes" : "no");
+				cc->cmd05_mode = MODE_UNKNOWN;
+				break;
+			}
+			case 0x0F: {//15 bytes: Unknown!
+				cc->cmd05_mode = MODE_UNKNOWN;
+				break;
+			}
+			case 0x20: {//32 bytes: set AES128 key for CMD_05, Key=16 bytes [0..15]
+				memcpy(cc->cmd05_aeskey, buf+4, 16);
+				cc->cmd05_mode = MODE_AES;
+				break;
+			}
+			case 0x21: {//33 bytes: xor-algo mit payload-bytes
+				cc_init_crypt(&cc->cmd05_cryptkey, buf+4, l);
+				cc->cmd05_mode = MODE_CC_CRYPT;
+				break;
+			}
+			case 0x22: {//34 bytes: cmd_05 plain back
+				cc->cmd05_mode = MODE_PLAIN;
+				break;
+			}
+			case 0x23: {//35 bytes: Unknown!! 2 256 byte keys exchange
+				cc->cmd05_mode = MODE_UNKNOWN;
+				break;
+			}
+			case 0x2b: {//43 bytes: Special XOR encryption:
+				cc_init_crypt(&cc->cmd05_cryptkey, buf+4, l);
+				cc->cmd05_mode = MODE_XOR_CRYPT;
+				break;
+			}
+			case 0x2c: {//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
+				memcpy(cc->cmd05_aeskey, buf+4+strlen(reader[ridx].r_pwd), 16);
+				cc->cmd05_mode = MODE_AES;
+				break;
+			}
+			case 0x2d: {//45 bytes: set aes128 key, Key=16 bytes [Offset=len(username)]
+				memcpy(cc->cmd05_aeskey, buf+4+strlen(reader[ridx].r_usr), 16);
+				cc->cmd05_mode = MODE_AES;
+				break;
+			}
+			default: {//Unknown!!
+				cs_log("%s received unknown MSG_SRV_DATA!", getprefix());
+				cc->cmd05_mode = MODE_UNKNOWN;
+				break;
+			}
 		}
-		//test();
 		break;
 	case MSG_NEW_CARD: {
 		int i = 0;
@@ -1396,14 +1443,63 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (!is_server) {
 			cc->just_logged_in = 0;
 			l = l - 4;//Header Length=4 Byte
+
 			cs_log("%s MSG_CMD_05 recvd, payload length=%d", getprefix(), l);
-			//payload always needs cycle connection after 60 ECMs!!
-			if (l && cc->limit_ecms && !cc->max_ecms) {
+
+			int unhandled = 0;
+			// by Project:Keynation
+			switch (l) {
+			case 0: { //payload 0, return with payload 0!
+				cc->bad_ecm_mode = 1;
+				cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+				break;
+			}
+			case 256: {
+				switch (cc->cmd05_mode) {
+				case MODE_PLAIN: { //Send plain unencrypted back
+					cc_cmd_send(buf+4, 256, MSG_BAD_ECM);
+					break;
+				}
+				case MODE_AES: { //encrypt with received aes128 key:
+					AES_KEY key;
+					uint8 aeskey[16];
+					uint8 out[256];
+
+					memcpy(aeskey, cc->cmd05_aeskey, 16);
+					memset(&key, 0, sizeof(key));
+
+					AES_set_encrypt_key((unsigned char *) &aeskey, 128, &key);
+					int i;
+					for (i = 0; i < 256; i+=16)
+						AES_encrypt((unsigned char *) buf + 4+i, (unsigned char *) &out+i, &key);
+
+					cc_cmd_send(out, 256, MSG_BAD_ECM);
+					break;
+				}
+				case MODE_CC_CRYPT: { //encrypt with cc_crypt:
+					cc_crypt(&cc->cmd05_cryptkey, buf+4, 256, ENCRYPT);
+					cc_cmd_send(buf+4, 256, MSG_BAD_ECM);
+					break;
+				}
+				case MODE_XOR_CRYPT: {//special xor crypt:
+					int i;
+					for (i = 0; i < 256; i++)
+						buf[4+i] ^= cc->cmd05_cryptkey.keytable[i];
+					cc_cmd_send(buf+4, 256, MSG_BAD_ECM);
+					break;
+				}
+				default:
+					unhandled = 1;
+				}
+			}
+			default: unhandled = 1;
+			}
+
+			//unhandled types always needs cycle connection after 60 ECMs!!
+			if (unhandled && !cc->max_ecms) {
 				cc->max_ecms = 60;
 				cc->ecm_counter = 0;
 			}
-			cc->bad_ecm_mode = 1;
-			cc_cmd_send(NULL, 0, MSG_BAD_ECM);
 		}
 		ret = 0;
 		break;
@@ -1643,6 +1739,9 @@ static int cc_cli_connect(void) {
 	cc->max_ecms = 0;
 	cc->proxy_init_errors = 0;
 	cc->current_ecm_cidx = 0;
+	cc->bad_ecm_mode = 0;
+	cc->cmd05_mode = MODE_UNKNOWN;
+
 	cs_ddump(data, 16, "cccam: server init seed:");
 
 	cc_xor(data); // XOR init bytes with 'CCcam'
