@@ -83,9 +83,9 @@ struct cc_current_card {
 
 typedef enum {
 	MODE_UNKNOWN = 0,
-	MODE_AES = 1,
-	MODE_CC_CRYPT = 2,
-	MODE_PLAIN = 3,
+	MODE_PLAIN = 1,
+	MODE_AES = 2,
+	MODE_CC_CRYPT = 3,
 	MODE_XOR_CRYPT = 4,
 
 } cc_cmd05_mode;

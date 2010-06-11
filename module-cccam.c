@@ -75,6 +75,25 @@ static void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 	}
 }
 
+static void cc_xor_crypt(struct cc_crypt_block *block, uint8 *data, int len,
+		cc_crypt_mode_t mode) {
+	int i;
+	uint8 z;
+
+	for (i = 0; i < len; i++) {
+		block->counter++;
+		block->sum += block->keytable[block->counter];
+		SWAPC(&block->keytable[block->counter], &block->keytable[block->sum]);
+		z = data[i];
+		data[i] = z ^ block->keytable[(block->keytable[block->counter]
+				+ block->keytable[block->sum]) & 0xff];
+		if (!mode)
+			z = data[i];
+		block->state = block->state ^ z;
+	}
+}
+
+
 static void cc_xor(uint8 *buf) {
 	const char cccam[] = "CCcam";
 	uint8 i;
@@ -1179,10 +1198,35 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc->cmd05_mode = MODE_UNKNOWN;
 				break;
 			}
-			case 0x0F: {//15 bytes: Unknown!
-				cc->cmd05_mode = MODE_UNKNOWN;
+			case 0x10:
+			case 0x11:
+			case 0x12:
+			case 0x13:
+			case 0x14:
+			case 0x15:
+			case 0x16:
+			case 0x17:
+			case 0x18:
+			case 0x19:
+			case 0x1a:
+			case 0x1b:
+			case 0x1c:
+			case 0x1d:
+			case 0x1e:
+			case 0x1f:
+			case 0x24:
+			case 0x25:
+			case 0x26:
+			case 0x27:
+			case 0x28:
+			case 0x29:
+			case 0x2a:
+			case 0x2b: {//16..43 bytes: Special XOR encryption:
+				cc_init_crypt(&cc->cmd05_cryptkey, buf+4, l);
+				cc->cmd05_mode = MODE_XOR_CRYPT;
 				break;
 			}
+
 			case 0x20: {//32 bytes: set AES128 key for CMD_05, Key=16 bytes [0..15]
 				memcpy(cc->cmd05_aeskey, buf+4, 16);
 				cc->cmd05_mode = MODE_AES;
@@ -1199,11 +1243,6 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			}
 			case 0x23: {//35 bytes: Unknown!! 2 256 byte keys exchange
 				cc->cmd05_mode = MODE_UNKNOWN;
-				break;
-			}
-			case 0x2b: {//43 bytes: Special XOR encryption:
-				cc_init_crypt(&cc->cmd05_cryptkey, buf+4, l);
-				cc->cmd05_mode = MODE_XOR_CRYPT;
 				break;
 			}
 			case 0x2c: {//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
@@ -1482,9 +1521,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					break;
 				}
 				case MODE_XOR_CRYPT: {//special xor crypt:
-					int i;
-					for (i = 0; i < 256; i++)
-						buf[4+i] ^= cc->cmd05_cryptkey.keytable[i];
+					cc_xor_crypt(&cc->cmd05_cryptkey, buf+4, 256, DECRYPT);
 					cc_cmd_send(buf+4, 256, MSG_BAD_ECM);
 					break;
 				}
