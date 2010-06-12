@@ -213,7 +213,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<H2>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2>"
 
 #define TPLFOOTER "\
-		<HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>Start: ##STARTDATE## - ##STARTTIME## | UpTime: ##UPTIME## | Access from ##CURIP## </H4><H4>embedded Style by Eneen</H4>\
+		<HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>Start: ##STARTDATE## - ##STARTTIME## | UpTime: ##UPTIME## </H4><H4>embedded Style by Eneen</H4>\
 		</BODY>\
 		</HTML>"
 

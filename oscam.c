@@ -2388,21 +2388,41 @@ void do_emm(EMM_PACKET *ep)
 
 	switch (ep->type) {
 		case UNKNOWN:
-			if (reader[au].blockemm_unknown) return;
+			if (reader[au].blockemm_unknown) {
+#ifdef WEBIF
+				reader[au].emmblocked[UNKNOWN]++;
+#endif
+				return;
+			}
 			break;
 
 		case UNIQUE:
-			if (reader[au].blockemm_u) return;
+			if (reader[au].blockemm_u) {
+#ifdef WEBIF
+				reader[au].emmblocked[UNIQUE]++;
+#endif
+				return;
+			}
 			break;
 
 		case SHARED:
-			if (reader[au].blockemm_s) return;
+			if (reader[au].blockemm_s) {
+#ifdef WEBIF
+				reader[au].emmblocked[SHARED]++;
+#endif
+				return;
+			}
 			break;
 
 		// FIXME only camd33 delivers hexserial from the net, newcamd, camd35 copy 
 		// cardreader hexserial in; reader_get_emm_type overwrites this with real SA value if known!
 		case GLOBAL:
-			if (reader[au].blockemm_g) return;
+			if (reader[au].blockemm_g) {
+#ifdef WEBIF
+				reader[au].emmblocked[GLOBAL]++;
+#endif
+				return;
+			}
 			break;
 	}
 
