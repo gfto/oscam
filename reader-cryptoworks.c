@@ -483,6 +483,13 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			}
 
 		case 0x86:
+			if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[5]==0x83 
+			   && ep->emm[6]==0x01 && ep->emm[8]==0x85) {
+				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: GLOBAL");
+				ep->type = GLOBAL;
+				return TRUE;
+			}
+
 		case 0x88:
 		case 0x89:
   	 		if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[8]==0x83 && ep->emm[9]==0x01) {
