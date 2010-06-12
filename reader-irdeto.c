@@ -182,7 +182,7 @@ static int irdeto_card_init_provider(struct s_reader * reader)
       reader->prid[i][0]=0xf;
   }
   if (p)
-    cs_ri_log(reader, "providers: %d (%s)", p, buf+1);
+    cs_ri_log(reader, "usable providers: %d (%s)", p, buf+1);
 
   return OK;
 }
@@ -226,8 +226,8 @@ int irdeto_card_init(struct s_reader * reader, ATR newatr)
   reader_chk_cmd(sc_GetHEXSerial, 18);
   memcpy(reader->hexserial, cta_res+12, 8); 
   reader->nprov=cta_res[10];
-  cs_ri_log(reader, "Providers : %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
-            reader->nprov,buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
+  cs_ri_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+            reader->nprov, buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
 
   /*
    * CardFile
