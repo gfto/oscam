@@ -152,7 +152,7 @@ int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if s
 {
 	cs_debug_mask(D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
 	int i;
-  switch (ep->emm[0]) {
+	switch (ep->emm[0]) {
 		case 0x82:
 			ep->type = UNIQUE;
 			memset(ep->hexserial,0,8);
@@ -160,6 +160,7 @@ int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if s
 			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, ep->hexserial = %s", cs_hexdump(1, ep->hexserial, 6)); 
 			cs_debug_mask(D_EMM, "SECA EMM: UNIQUE, rdr->hexserial = %s", cs_hexdump(1, rdr->hexserial, 6)); 
  			return (!memcmp (rdr->hexserial, ep->hexserial, 6));
+
 		case 0x84:
 			ep->type = SHARED;
 			memset(ep->hexserial,0,8);
@@ -170,6 +171,26 @@ int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if s
 				return FALSE; //do not pass this EMM
 			cs_debug_mask(D_EMM, "SECA EMM: SHARED, rdr->sa[%i] = %s", i, cs_hexdump(1, rdr->sa[i], 3)); 
 			return (!memcmp (rdr->sa[i], ep->hexserial, 3));
+
+		// Unknown EMM types, but allready subbmited to dev's
+		// FIXME: Drop EMM's until there are implemented
+		case 0x83:
+		/* 	EMM-G ?
+			83 00 74 00 00 00 00 00 C4 7B E7 54 8D 25 8D 27
+			CD 9C 87 4F B2 24 85 68 13 81 5E F1 EA AB 73 6D
+			78 A2 86 F3 C9 4E 78 55 48 21 E4 A0 0B A0 54 3B
+			5C 54 4B 01 39 1F FE C6 29 33 B8 6C 48 A0 9F 60
+			47 EB 6A FC D3 CD 4B 9A 50 F2 05 80 66 F3 82 48
+			22 EF E3 04 28 86 1D AB 82 26 9B 4D 09 B1 A8 F1
+			1D D4 50 69 44 E8 94 04 91 5F 21 A2 3C 43 BC CB
+			DD C1 90 AD 71 A7 38
+		*/	
+		case 0x88:
+		case 0x89:
+		// 	EMM-G ?
+			ep->type = UNKNOWN;
+			return FALSE;
+
 		default:
 			ep->type = UNKNOWN;
 			return TRUE;
@@ -223,23 +244,19 @@ int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			ins40[4]= emm_length - 0x07;
 			ins40data_offset = 10;
 			break;
-    case UNIQUE:	
+
+		case UNIQUE:	
 			ins40[3]=ep->emm[12];
 			ins40[4]= emm_length - 0x0A;
 			ins40data_offset = 13;
 			break;
-    case 0x83:  //new unknown EMM
-  /*
-EMM:
-tp   len       shared-- cust
-83 00 74 00 00 00 00 00 38  84C745CB7BFADA4E08F5FB8D0B6A26FA533682D83E6E594F778585F55F4784EF70495B3458C104D3D3F55FEA0F3BD47EC29265E8B2AAC83EBAA396A3890EA87154F41ED16DA6AB46C28E8935B55E4EFAB8215792A1BF61657BDEFAD02050E27F21E62AE29519F4815AB062340B7 */
-    case 0x88:			//GA???
-    case 0x89:			//GA???
-			default:
-			cs_log("[seca-reader] EMM: Congratulations, you have discovered a new EMM on SECA. This has not been decoded yet, so send this output to authors:");
+
+		default:
+    			cs_log("[seca-reader] EMM: Congratulations, you have discovered a new EMM on SECA.");
+			cs_log("This has not been decoded yet, so send this output to authors:");
 			cs_dump (ep->emm, emm_length + 3, "EMM:");
-			return ERROR;	//unknown, no update
-  }	//end of switch
+			return ERROR;
+  }
 
   i=get_prov_index(reader, (char *) ep->emm+9);
   if (i==-1) 
