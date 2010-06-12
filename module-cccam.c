@@ -1244,10 +1244,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			//Unknown!!
 			//
 		} else {
-				cs_log("%s received unknown MSG_SRV_DATA!", getprefix());
-				cc->cmd05_mode = MODE_UNKNOWN;
-				break;
-			}
+			cs_log("%s received unknown MSG_SRV_DATA!", getprefix());
+			cc->cmd05_mode = MODE_UNKNOWN;
+			break;
+		}
 		break;
 	case MSG_NEW_CARD: {
 		int i = 0;

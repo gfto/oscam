@@ -1912,16 +1912,6 @@ void chk_dcw(int fd)
   else    // not found (from ONE of the readers !)
   {
 	//
-    if (cfg->reader_auto_loadbalance && er->load_balance_retry < MAX_READER_RETRY) {
-    	er->load_balance_retry++;
-
-    	ert->rc = 4;
-        send_reader_stat(er->reader[0], ert, 0); //This disables load-balance...
-        ert->rc = 100;
-        ert->rcEx = 0;
-    	get_cw(ert); //...then we can send it to the other readers
-    	return;
-    }
     int i;
     ert->reader[er->reader[0]]=0;
     for (i=0; (ert) && (i<CS_MAXREADER); i++)
@@ -2310,24 +2300,20 @@ void get_cw(ECM_REQUEST *er)
 
 	if(er->rc > 99 && er->rc != 1) {
 
-		int best_ridx = recv_best_reader(er);
-
-		int min;
-		int max;
-		if (best_ridx < 0) { //No reader found, doing old way to all readers:
-			min = 0;
-			max = CS_MAXREADER;
-			er->load_balance_retry = MAX_READER_RETRY;
+		if (cfg->reader_auto_loadbalance) {
+			int best_ridx = recv_best_reader(er);
+			for (i = m = 0; i < CS_MAXREADER; i++)
+				if (matching_reader(er, &reader[i])) {
+					//When autobalance enabled, all other readers are fallbacks:
+					m|=er->reader[i] = (best_ridx >= 0 && best_ridx != i)? 2: 1;
+				}
 		}
 		else
 		{
-			min = best_ridx;
-			max = best_ridx+1;
+			for (i = m = 0; i < CS_MAXREADER; i++)
+				if (matching_reader(er, &reader[i]))
+					m|=er->reader[i] = (reader[i].fallback)? 2: 1;
 		}
-		
-		for (i = m = min; i < max; i++)
-			if (matching_reader(er, &reader[i]))
-				m|=er->reader[i] = (reader[i].fallback)? 2: 1;
 
 		switch(m) {
 			// no reader -> not found

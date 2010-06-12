@@ -847,7 +847,6 @@ typedef struct ecm_request_t
   uchar         rcEx;
   struct timeb  tps;    // incoming time stamp
   uchar         locals_done;
-  int           load_balance_retry;
   int		btun; // mark er as betatunneled
 
 #ifdef CS_WITH_GBOX
