@@ -1184,83 +1184,70 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		cs_log("%s MSG_SRV_DATA (payload=%d, %02X)", getprefix(), l, l);
 		//There are l=76, 19 and 36 and more!
 
-		switch (l) {
-			case 0x48: { //72 bytes: Normal Server Data
-				memcpy(cc->peer_node_id, buf + 4, 8);
-				memcpy(cc->peer_version, buf + 12, 8);
-				cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
+		if (l == 0x48) { //72 bytes: normal server data
+			memcpy(cc->peer_node_id, buf + 4, 8);
+			memcpy(cc->peer_version, buf + 12, 8);
+			cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
 
-				memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
-				memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
-				cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
-						cs_hexdump(0, cc->peer_node_id, 8), buf + 12, buf + 44,
-						cc->limit_ecms ? "yes" : "no");
-				cc->cmd05_mode = MODE_UNKNOWN;
-				break;
-			}
-			case 0x10:
-			case 0x11:
-			case 0x12:
-			case 0x13:
-			case 0x14:
-			case 0x15:
-			case 0x16:
-			case 0x17:
-			case 0x18:
-			case 0x19:
-			case 0x1a:
-			case 0x1b:
-			case 0x1c:
-			case 0x1d:
-			case 0x1e:
-			case 0x1f:
-			case 0x24:
-			case 0x25:
-			case 0x26:
-			case 0x27:
-			case 0x28:
-			case 0x29:
-			case 0x2a:
-			case 0x2b: {//16..43 bytes: Special XOR encryption:
-				cc_init_crypt(&cc->cmd05_cryptkey, buf+4, l);
-				cc->cmd05_mode = MODE_XOR_CRYPT;
-				break;
-			}
-
-			case 0x20: {//32 bytes: set AES128 key for CMD_05, Key=16 bytes [0..15]
-				memcpy(cc->cmd05_aeskey, buf+4, 16);
-				cc->cmd05_mode = MODE_AES;
-				break;
-			}
-			case 0x21: {//33 bytes: xor-algo mit payload-bytes
-				cc_init_crypt(&cc->cmd05_cryptkey, buf+4, l);
-				cc->cmd05_mode = MODE_CC_CRYPT;
-				break;
-			}
-			case 0x22: {//34 bytes: cmd_05 plain back
-				cc->cmd05_mode = MODE_PLAIN;
-				break;
-			}
-			case 0x23: {//35 bytes: Unknown!! 2 256 byte keys exchange
-				cc->cmd05_mode = MODE_UNKNOWN;
-				break;
-			}
-			case 0x2c: {//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
-				memcpy(cc->cmd05_aeskey, buf+4+strlen(reader[ridx].r_pwd), 16);
-				cc->cmd05_mode = MODE_AES;
-				break;
-			}
-			case 0x2d: {//45 bytes: set aes128 key, Key=16 bytes [Offset=len(username)]
-				memcpy(cc->cmd05_aeskey, buf+4+strlen(reader[ridx].r_usr), 16);
-				cc->cmd05_mode = MODE_AES;
-				break;
-			}
-			default: {//Unknown!!
+			memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
+			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
+			cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
+					cs_hexdump(0, cc->peer_node_id, 8), buf + 12, buf + 44,
+					cc->limit_ecms ? "yes" : "no");
+			cc->cmd05_mode = MODE_UNKNOWN;
+			//
+			//Keyoffset is payload-size:
+			//
+		} else if (l >= 0x00 && l <= 0x0F) {
+			cc->cmd05_offset = l;
+			//
+			//16..43 bytes: Special XOR encryption:
+			//
+		} else if ((l >= 0x10 && l <= 0x1f) || (l >= 0x24 && l <= 0x2b)) {
+			cc_init_crypt(&cc->cmd05_cryptkey, buf + 4, l);
+			cc->cmd05_mode = MODE_XOR_CRYPT;
+			//
+			//32 bytes: set AES128 key for CMD_05, Key=16 bytes offset keyoffset
+			//
+		} else if (l == 0x20) {
+			memcpy(cc->cmd05_aeskey, buf+4+cc->cmd05_offset, 16);
+			cc->cmd05_mode = MODE_AES;
+			//
+			//33 bytes: xor-algo mit payload-bytes, offset keyoffset
+			//
+		} else if (l == 0x21) {
+			cc_init_crypt(&cc->cmd05_cryptkey, buf+4+cc->cmd05_offset, l);
+			cc->cmd05_mode = MODE_CC_CRYPT;
+			//
+			//34 bytes: cmd_05 plain back
+			//
+		} else if (l == 0x22) {
+			cc->cmd05_mode = MODE_PLAIN;
+			//
+			//35 bytes: Unknown!! 2 256 byte keys exchange
+			//
+		} else if (l == 0x23) {
+			cc->cmd05_mode = MODE_UNKNOWN;
+			//
+			//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
+			//
+		} else if (l == 0x2c) {
+			memcpy(cc->cmd05_aeskey, buf+4+strlen(reader[ridx].r_pwd), 16);
+			cc->cmd05_mode = MODE_AES;
+			//
+			//45 bytes: set aes128 key, Key=16 bytes [Offset=len(username)]
+			//
+		} else if (l == 0x2d) {
+			memcpy(cc->cmd05_aeskey, buf+4+strlen(reader[ridx].r_usr), 16);
+			cc->cmd05_mode = MODE_AES;
+			//
+			//Unknown!!
+			//
+		} else {
 				cs_log("%s received unknown MSG_SRV_DATA!", getprefix());
 				cc->cmd05_mode = MODE_UNKNOWN;
 				break;
 			}
-		}
 		break;
 	case MSG_NEW_CARD: {
 		int i = 0;
@@ -1483,7 +1470,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			cc->just_logged_in = 0;
 			l = l - 4;//Header Length=4 Byte
 
-			cs_log("%s MSG_CMD_05 recvd, payload length=%d", getprefix(), l);
+			cs_log("%s MSG_CMD_05 recvd, payload length=%d mode=%d", getprefix(), l, cc->cmd05_mode);
 
 			int unhandled = 0;
 			// by Project:Keynation
@@ -1778,6 +1765,7 @@ static int cc_cli_connect(void) {
 	cc->current_ecm_cidx = 0;
 	cc->bad_ecm_mode = 0;
 	cc->cmd05_mode = MODE_UNKNOWN;
+	cc->cmd05_offset = 0;
 
 	cs_ddump(data, 16, "cccam: server init seed:");
 
@@ -2216,7 +2204,7 @@ static int cc_srv_connect() {
 		//cs_log("srv process input i=%d cmi=%d", i, cmi);
 		if (i == -9) {
 			cmi += 10;
-			if (cmi >= cfg->cmaxidle) {
+			if (cfg->cmaxidle && cmi >= cfg->cmaxidle) {
 				cmi = 0;
 				cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached", getprefix());
 				break;

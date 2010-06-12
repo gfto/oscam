@@ -104,6 +104,7 @@ struct cc_data {
 
 	int bad_ecm_mode;
 	cc_cmd05_mode cmd05_mode;
+	int cmd05_offset;
 	
 	LLIST *cards; // cards list
 
