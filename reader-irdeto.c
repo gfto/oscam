@@ -182,7 +182,7 @@ static int irdeto_card_init_provider(struct s_reader * reader)
       reader->prid[i][0]=0xf;
   }
   if (p)
-    cs_ri_log(reader, "usable providers: %d (%s)", p, buf+1);
+    cs_ri_log(reader, "active providers: %d (%s)", p, buf+1);
 
   return OK;
 }
