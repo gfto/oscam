@@ -580,7 +580,6 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 	{
 		card = NULL;
 		current_card->sid = cur_er->srvid;
-		current_card->ecm_count++;
 	}
 
 	//then check all other cards
@@ -1379,10 +1378,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (!cc->bad_ecm_mode) {
 			struct cc_card *card = current_card->card;
 			if (card) {
-				if (current_card->ecm_count < 5) //TODO: option?
-					add_sid_block(card, current_card->sid);
-				else
-					current_card->ecm_count = 0;
+				add_sid_block(card, current_card->sid);
 				current_card->card = NULL;
 			}
 			else
@@ -1435,7 +1431,6 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
 				else {
-					current_card->ecm_count++;
 					cc->recv_ecmtask = cc->send_ecmtask;
 					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
 						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
