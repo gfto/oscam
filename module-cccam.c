@@ -1176,7 +1176,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	cs_debug("%s parse_msg=%d", getprefix(), buf[1]);
 
 	uint8 *data = buf+4;
-	memcpy(cc->receive_buffer, data, l-4);
+	memcpy(&cc->receive_buffer, data, l-4);
 
 	switch (buf[1]) {
 	case MSG_CLI_DATA:
