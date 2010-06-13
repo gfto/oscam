@@ -1175,6 +1175,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 	cs_debug("%s parse_msg=%d", getprefix(), buf[1]);
 
+	uint8 *data = buf+4;
+
 	switch (buf[1]) {
 	case MSG_CLI_DATA:
 		cs_debug("cccam: client data ack");
@@ -1183,17 +1185,15 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		l -= 4;
 		cs_log("%s MSG_SRV_DATA (payload=%d, hex=%02X)", getprefix(), l, l);
 
-		memcpy(&cc->cmd08_buffer, buf+4, l);
-
 		if (l == 0x48) { //72 bytes: normal server data
-			memcpy(cc->peer_node_id, cc->cmd08_buffer, 8);
-			memcpy(cc->peer_version, cc->cmd08_buffer+8, 8);
-			cc->limit_ecms = cc_get_limit_ecms((char*) cc->cmd08_buffer + 8);
+			memcpy(cc->peer_node_id, data, 8);
+			memcpy(cc->peer_version, data+8, 8);
+			cc->limit_ecms = cc_get_limit_ecms((char*) data + 8);
 
 			memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
 			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
 			cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
-					cs_hexdump(0, cc->peer_node_id, 8), cc->cmd08_buffer + 8, cc->cmd08_buffer + 40,
+					cs_hexdump(0, cc->peer_node_id, 8), data + 8, data + 40,
 					cc->limit_ecms ? "yes" : "no");
 			cc->cmd05_mode = MODE_UNKNOWN;
 			//
@@ -1205,19 +1205,19 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			//16..43 bytes: Special XOR encryption:
 			//
 		} else if ((l >= 0x10 && l <= 0x1f) || (l >= 0x24 && l <= 0x2b)) {
-			cc_init_crypt(&cc->cmd05_cryptkey, cc->cmd08_buffer, l);
+			cc_init_crypt(&cc->cmd05_cryptkey, data, l);
 			cc->cmd05_mode = MODE_RC4_CRYPT;
 			//
 			//32 bytes: set AES128 key for CMD_05, Key=16 bytes offset keyoffset
 			//
 		} else if (l == 0x20) {
-			memcpy(cc->cmd05_aeskey, cc->cmd08_buffer+cc->cmd05_offset, 16);
+			memcpy(cc->cmd05_aeskey, data+cc->cmd05_offset, 16);
 			cc->cmd05_mode = MODE_AES;
 			//
 			//33 bytes: xor-algo mit payload-bytes, offset keyoffset
 			//
 		} else if (l == 0x21) {
-			cc_init_crypt(&cc->cmd05_cryptkey, cc->cmd08_buffer+cc->cmd05_offset, l);
+			cc_init_crypt(&cc->cmd05_cryptkey, data+cc->cmd05_offset, l);
 			cc->cmd05_mode = MODE_CC_CRYPT;
 			//
 			//34 bytes: cmd_05 plain back
@@ -1233,13 +1233,13 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
 			//
 		} else if (l == 0x2c) {
-			memcpy(cc->cmd05_aeskey, cc->cmd08_buffer+strlen(reader[ridx].r_pwd), 16);
+			memcpy(cc->cmd05_aeskey, data+strlen(reader[ridx].r_pwd), 16);
 			cc->cmd05_mode = MODE_AES;
 			//
 			//45 bytes: set aes128 key, Key=16 bytes [Offset=len(username)]
 			//
 		} else if (l == 0x2d) {
-			memcpy(cc->cmd05_aeskey, buf+4+strlen(reader[ridx].r_usr), 16);
+			memcpy(cc->cmd05_aeskey, data+strlen(reader[ridx].r_usr), 16);
 			cc->cmd05_mode = MODE_AES;
 			//
 			//Unknown!!
@@ -1401,7 +1401,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			memset(cc->server_card, 0, sizeof(struct cc_card));
 			cc->server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8
 					| buf[13];
-			cc->server_card->caid = b2i(2, buf+4);
+			cc->server_card->caid = b2i(2, data);
 
 			if ((er = get_ecmtask())) {
 				er->caid = b2i(2, buf + 4);
@@ -1484,7 +1484,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			case 256: {
 				switch (cc->cmd05_mode) {
 				case MODE_PLAIN: { //Send plain unencrypted back
-					cc_cmd_send(buf+4, 256, MSG_BAD_ECM);
+					cc_cmd_send(data, 256, MSG_BAD_ECM);
 					break;
 				}
 				case MODE_AES: { //encrypt with received aes128 key:
@@ -1504,13 +1504,13 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					break;
 				}
 				case MODE_CC_CRYPT: { //encrypt with cc_crypt:
-					cc_crypt(&cc->cmd05_cryptkey, buf+4, 256, ENCRYPT);
-					cc_cmd_send(buf+4, 256, MSG_BAD_ECM);
+					cc_crypt(&cc->cmd05_cryptkey, data, 256, ENCRYPT);
+					cc_cmd_send(data, 256, MSG_BAD_ECM);
 					break;
 				}
 				case MODE_RC4_CRYPT: {//special xor crypt:
-					cc_xor_crypt(&cc->cmd05_cryptkey, buf+4, 256, DECRYPT);
-					cc_cmd_send(buf+4, 256, MSG_BAD_ECM);
+					cc_xor_crypt(&cc->cmd05_cryptkey, data, 256, DECRYPT);
+					cc_cmd_send(data, 256, MSG_BAD_ECM);
 					break;
 				}
 				default:
@@ -1669,9 +1669,7 @@ int cc_recv(uchar *buf, int l) {
 
 	if (buf == NULL)
 		return -1;
-	cbuf = malloc(l);
-	if (cbuf == NULL)
-		return -1;
+	cbuf = cc->receive_buffer;
 
 	memcpy(cbuf, buf, l); // make a copy of buf
 
@@ -1694,8 +1692,6 @@ int cc_recv(uchar *buf, int l) {
 			n = -2; 
 		memcpy(buf, cbuf, l);
 	}
-
-	NULLFREE(cbuf);
 
 	pthread_mutex_unlock(&cc->lock);
 

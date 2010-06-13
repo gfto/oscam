@@ -105,7 +105,7 @@ struct cc_data {
 	int bad_ecm_mode;
 	cc_cmd05_mode cmd05_mode;
 	int cmd05_offset;
-	uint8 cmd08_buffer[CC_MAXMSGSIZE];
+	uint8 receive_buffer[CC_MAXMSGSIZE];
 	
 	LLIST *cards; // cards list
 
