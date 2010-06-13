@@ -580,6 +580,7 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 	{
 		card = NULL;
 		current_card->sid = cur_er->srvid;
+		current_card->ecm_count++;
 	}
 
 	//then check all other cards
@@ -1206,7 +1207,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			//
 		} else if ((l >= 0x10 && l <= 0x1f) || (l >= 0x24 && l <= 0x2b)) {
 			cc_init_crypt(&cc->cmd05_cryptkey, cc->cmd08_buffer, l);
-			cc->cmd05_mode = MODE_XOR_CRYPT;
+			cc->cmd05_mode = MODE_RC4_CRYPT;
 			//
 			//32 bytes: set AES128 key for CMD_05, Key=16 bytes offset keyoffset
 			//
@@ -1378,7 +1379,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (!cc->bad_ecm_mode) {
 			struct cc_card *card = current_card->card;
 			if (card) {
-				add_sid_block(card, current_card->sid);
+				if (current_card->ecm_count < 10) //TODO: option?
+					add_sid_block(card, current_card->sid);
 				current_card->card = NULL;
 			}
 			else
@@ -1431,6 +1433,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
 				else {
+					current_card->ecm_count++;
 					cc->recv_ecmtask = cc->send_ecmtask;
 					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
 						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
@@ -1508,7 +1511,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					cc_cmd_send(buf+4, 256, MSG_BAD_ECM);
 					break;
 				}
-				case MODE_XOR_CRYPT: {//special xor crypt:
+				case MODE_RC4_CRYPT: {//special xor crypt:
 					cc_xor_crypt(&cc->cmd05_cryptkey, buf+4, 256, DECRYPT);
 					cc_cmd_send(buf+4, 256, MSG_BAD_ECM);
 					break;

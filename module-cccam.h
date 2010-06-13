@@ -78,6 +78,7 @@ struct cc_current_card {
 	struct cc_card *card;
 	uint32 prov;
 	uint16 sid;
+	int ecm_count;
 	ECM_REQUEST last_ecm_request;
 };
 
@@ -86,7 +87,7 @@ typedef enum {
 	MODE_PLAIN = 1,
 	MODE_AES = 2,
 	MODE_CC_CRYPT = 3,
-	MODE_XOR_CRYPT = 4,
+	MODE_RC4_CRYPT = 4,
 
 } cc_cmd05_mode;
 
