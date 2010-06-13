@@ -1185,7 +1185,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	case MSG_SRV_DATA:
 		l -= 4;
 		cs_log("%s MSG_SRV_DATA (payload=%d, hex=%02X)", getprefix(), l, l);
-		data = &cc->receive_buffer;
+		data = (uint8*)&cc->receive_buffer;
 
 		if (l == 0x48) { //72 bytes: normal server data
 			memcpy(cc->peer_node_id, data, 8);
