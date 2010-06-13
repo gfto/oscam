@@ -1181,18 +1181,19 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_SRV_DATA:
 		l -= 4;
-		cs_log("%s MSG_SRV_DATA (payload=%d, %02X)", getprefix(), l, l);
-		//There are l=76, 19 and 36 and more!
+		cs_log("%s MSG_SRV_DATA (payload=%d, hex=%02X)", getprefix(), l, l);
+
+		memcpy(&cc->cmd08_buffer, buf+4, l);
 
 		if (l == 0x48) { //72 bytes: normal server data
-			memcpy(cc->peer_node_id, buf + 4, 8);
-			memcpy(cc->peer_version, buf + 12, 8);
-			cc->limit_ecms = cc_get_limit_ecms((char*) buf + 12);
+			memcpy(cc->peer_node_id, cc->cmd08_buffer, 8);
+			memcpy(cc->peer_version, cc->cmd08_buffer+8, 8);
+			cc->limit_ecms = cc_get_limit_ecms((char*) cc->cmd08_buffer + 8);
 
 			memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
 			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
 			cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
-					cs_hexdump(0, cc->peer_node_id, 8), buf + 12, buf + 44,
+					cs_hexdump(0, cc->peer_node_id, 8), cc->cmd08_buffer + 8, cc->cmd08_buffer + 40,
 					cc->limit_ecms ? "yes" : "no");
 			cc->cmd05_mode = MODE_UNKNOWN;
 			//
@@ -1204,19 +1205,19 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			//16..43 bytes: Special XOR encryption:
 			//
 		} else if ((l >= 0x10 && l <= 0x1f) || (l >= 0x24 && l <= 0x2b)) {
-			cc_init_crypt(&cc->cmd05_cryptkey, buf + 4, l);
+			cc_init_crypt(&cc->cmd05_cryptkey, cc->cmd08_buffer, l);
 			cc->cmd05_mode = MODE_XOR_CRYPT;
 			//
 			//32 bytes: set AES128 key for CMD_05, Key=16 bytes offset keyoffset
 			//
 		} else if (l == 0x20) {
-			memcpy(cc->cmd05_aeskey, buf+4+cc->cmd05_offset, 16);
+			memcpy(cc->cmd05_aeskey, cc->cmd08_buffer+cc->cmd05_offset, 16);
 			cc->cmd05_mode = MODE_AES;
 			//
 			//33 bytes: xor-algo mit payload-bytes, offset keyoffset
 			//
 		} else if (l == 0x21) {
-			cc_init_crypt(&cc->cmd05_cryptkey, buf+4+cc->cmd05_offset, l);
+			cc_init_crypt(&cc->cmd05_cryptkey, cc->cmd08_buffer+cc->cmd05_offset, l);
 			cc->cmd05_mode = MODE_CC_CRYPT;
 			//
 			//34 bytes: cmd_05 plain back
@@ -1232,7 +1233,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
 			//
 		} else if (l == 0x2c) {
-			memcpy(cc->cmd05_aeskey, buf+4+strlen(reader[ridx].r_pwd), 16);
+			memcpy(cc->cmd05_aeskey, cc->cmd08_buffer+strlen(reader[ridx].r_pwd), 16);
 			cc->cmd05_mode = MODE_AES;
 			//
 			//45 bytes: set aes128 key, Key=16 bytes [Offset=len(username)]
@@ -1247,7 +1248,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			cs_log("%s received unknown MSG_SRV_DATA!", getprefix());
 			cc->cmd05_mode = MODE_UNKNOWN;
 			break;
-		}
+			}
 		break;
 	case MSG_NEW_CARD: {
 		int i = 0;
