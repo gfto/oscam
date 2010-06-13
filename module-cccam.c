@@ -1176,6 +1176,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	cs_debug("%s parse_msg=%d", getprefix(), buf[1]);
 
 	uint8 *data = buf+4;
+	memcpy(cc->receive_buffer, data, l-4);
 
 	switch (buf[1]) {
 	case MSG_CLI_DATA:
@@ -1184,6 +1185,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	case MSG_SRV_DATA:
 		l -= 4;
 		cs_log("%s MSG_SRV_DATA (payload=%d, hex=%02X)", getprefix(), l, l);
+		data = &cc->receive_buffer;
 
 		if (l == 0x48) { //72 bytes: normal server data
 			memcpy(cc->peer_node_id, data, 8);
@@ -1667,10 +1669,9 @@ int cc_recv(uchar *buf, int l) {
 	else
 		cc = client[cs_idx].cc;
 
-	if (buf == NULL)
+	if (buf == NULL || l <= 0)
 		return -1;
-	cbuf = cc->receive_buffer;
-
+	cbuf = malloc(l);
 	memcpy(cbuf, buf, l); // make a copy of buf
 
 	pthread_mutex_lock(&cc->lock);
@@ -1695,6 +1696,8 @@ int cc_recv(uchar *buf, int l) {
 
 	pthread_mutex_unlock(&cc->lock);
 
+	NULLFREE(cbuf);
+		
 	if (!is_server && (n == -1)) {
 		cs_debug_mask(D_TRACE, "%s cc_recv: cycle connection", getprefix());
 		cc_cycle_connection();
