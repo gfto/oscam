@@ -1379,8 +1379,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (!cc->bad_ecm_mode) {
 			struct cc_card *card = current_card->card;
 			if (card) {
-				if (current_card->ecm_count < 10) //TODO: option?
+				if (current_card->ecm_count < 5) //TODO: option?
 					add_sid_block(card, current_card->sid);
+				else
+					current_card->ecm_count = 0;
 				current_card->card = NULL;
 			}
 			else
