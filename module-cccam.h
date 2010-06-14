@@ -103,6 +103,8 @@ struct cc_data {
 	struct cc_crypt_block cmd05_cryptkey;
 
 	int bad_ecm_mode;
+	int bad_ecm_mode_len;
+	uint8 bad_ecm_mode_data[256];
 	cc_cmd05_mode cmd05_mode;
 	int cmd05_offset;
 	uint8 receive_buffer[CC_MAXMSGSIZE];

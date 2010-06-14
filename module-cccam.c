@@ -75,7 +75,7 @@ static void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 	}
 }
 
-static void cc_xor_crypt(struct cc_crypt_block *block, uint8 *data, int len,
+static void cc_rc4_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		cc_crypt_mode_t mode) {
 	int i;
 	uint8 z;
@@ -515,6 +515,82 @@ static int cc_get_nxt_ecm() {
 }
 
 /**
+ * sends the secret cmd05 answer to the server 
+ */
+static int send_cmd05_answer()
+{
+	struct cc_data *cc = reader[ridx].cc;
+	if (!cc->bad_ecm_mode || cc->current_ecm_cidx) //exit if not in cmd05 or waiting for ECM answer
+		return 0;
+		
+	cc->bad_ecm_mode = 0;
+	uint8 *data = cc->bad_ecm_mode_data;
+	int unhandled = 0;
+	// by Project:Keynation
+	switch (cc->bad_ecm_mode_len) {
+		case 0: { //payload 0, return with payload 0!
+			cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: LEN=0", getprefix());
+			cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+			break;
+		}
+		case 256: {
+			switch (cc->cmd05_mode) {
+			case MODE_PLAIN: { //Send plain unencrypted back
+				cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: PLAIN 256", getprefix());
+				cc_cmd_send(data, 256, MSG_BAD_ECM);
+				break;
+			}
+			case MODE_AES: { //encrypt with received aes128 key:
+				cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: AES 128", getprefix());
+				AES_KEY key;
+				uint8 aeskey[16];
+				uint8 out[256];
+
+				memcpy(aeskey, cc->cmd05_aeskey, 16);
+				memset(&key, 0, sizeof(key));
+
+				AES_set_encrypt_key((unsigned char *) &aeskey, 128, &key);
+				int i;
+				for (i = 0; i < 256; i+=16)
+					AES_encrypt((unsigned char *) data+i, (unsigned char *) &out+i, &key);
+
+				cc_cmd_send(out, 256, MSG_BAD_ECM);
+				break;
+			}
+			case MODE_CC_CRYPT: { //encrypt with cc_crypt:
+				cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: CC_CRYPT", getprefix());
+				cc_crypt(&cc->cmd05_cryptkey, data, 256, ENCRYPT);
+				cc_cmd_send(data, 256, MSG_BAD_ECM);
+				break;
+			}
+			case MODE_RC4_CRYPT: {//special xor crypt:
+				cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: RC4", getprefix());
+				cc_rc4_crypt(&cc->cmd05_cryptkey, data, 256, DECRYPT);
+				cc_cmd_send(data, 256, MSG_BAD_ECM);
+				break;
+			}
+			default:
+				unhandled = 1;
+			}
+		}
+		default: unhandled = 1;
+	}
+
+	//unhandled types always needs cycle connection after 60 ECMs!!
+	if (unhandled) {
+		cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: UNHANDLED, limit to 50 ECMs", getprefix());
+		cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+		if (!cc->max_ecms) { //max_ecms already set?
+			cc->max_ecms = 50;
+			cc->ecm_counter = 0;
+		}
+	}
+	
+	return 1;
+}
+
+
+/**
  * reader
  * sends a ecm request to the connected CCCam Server
  */
@@ -550,6 +626,7 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cs_log("%s no ecm pending!", getprefix());
 			cc->current_ecm_cidx = 0;
+			send_cmd05_answer();
 			return 0; // no queued ecms
 		}
 		cur_er = &ecmtask[n];
@@ -564,6 +641,7 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 
 		if (cur_er->rc == 99) {
 			pthread_mutex_unlock(&cc->ecm_busy);
+			send_cmd05_answer();
 			return 0; // ecm already sent
 		}
 	}
@@ -1091,13 +1169,13 @@ static void rebuild_caidinfos(struct cc_data *cc) {
 }
 
 static void cleanup_old_cards(struct cc_data *cc) {
-	time_t clean_time = time((time_t) 0) - 60 * 60 * 3; //TODO: Timeout old cards 60*60*3=3h Config
+	time_t clean_time = time((time_t) 0) - 60 * 60 * 5; //TODO: Timeout old cards 60*60*5=5h Config
 	LLIST_ITR itr;
 	struct cc_card *card = llist_itr_init(cc->cards, &itr);
 	while (card) {
 		if (card->time < clean_time) {
-			cs_log("cccam: old card removed %08x, count %d", card->id,
-					llist_count(cc->cards));
+			//cs_log("cccam: old card removed %08x, count %d", card->id,
+			//		llist_count(cc->cards));
 			cc_remove_current_card(cc, card);
 			cc_free_card(card);
 			card = llist_itr_remove(&itr);
@@ -1377,16 +1455,13 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		struct cc_current_card *current_card = &cc->current_card[cc->current_ecm_cidx];
 
 		cs_debug_mask(D_TRACE, "%s cw nok (%d), sid = %04X", getprefix(), buf[1], current_card->sid);
-		if (!cc->bad_ecm_mode) {
-			struct cc_card *card = current_card->card;
-			if (card) {
-				add_sid_block(card, current_card->sid);
-				current_card->card = NULL;
-			}
-			else
-				current_card = NULL;
+		struct cc_card *card = current_card->card;
+		if (card) {
+			add_sid_block(card, current_card->sid);
+			current_card->card = NULL;
 		}
-		cc->bad_ecm_mode = 0;
+		else
+			current_card = NULL;
 		pthread_mutex_unlock(&cc->ecm_busy);
 			
 		//because we have an valid cc->current_ecm_idx, so we can retry ECM
@@ -1474,59 +1549,11 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			l = l - 4;//Header Length=4 Byte
 
 			cs_log("%s MSG_CMD_05 recvd, payload length=%d mode=%d", getprefix(), l, cc->cmd05_mode);
-
-			int unhandled = 0;
-			// by Project:Keynation
-			switch (l) {
-			case 0: { //payload 0, return with payload 0!
-				cc->bad_ecm_mode = 1;
-				cc_cmd_send(NULL, 0, MSG_BAD_ECM);
-				break;
-			}
-			case 256: {
-				switch (cc->cmd05_mode) {
-				case MODE_PLAIN: { //Send plain unencrypted back
-					cc_cmd_send(data, 256, MSG_BAD_ECM);
-					break;
-				}
-				case MODE_AES: { //encrypt with received aes128 key:
-					AES_KEY key;
-					uint8 aeskey[16];
-					uint8 out[256];
-
-					memcpy(aeskey, cc->cmd05_aeskey, 16);
-					memset(&key, 0, sizeof(key));
-
-					AES_set_encrypt_key((unsigned char *) &aeskey, 128, &key);
-					int i;
-					for (i = 0; i < 256; i+=16)
-						AES_encrypt((unsigned char *) buf + 4+i, (unsigned char *) &out+i, &key);
-
-					cc_cmd_send(out, 256, MSG_BAD_ECM);
-					break;
-				}
-				case MODE_CC_CRYPT: { //encrypt with cc_crypt:
-					cc_crypt(&cc->cmd05_cryptkey, data, 256, ENCRYPT);
-					cc_cmd_send(data, 256, MSG_BAD_ECM);
-					break;
-				}
-				case MODE_RC4_CRYPT: {//special xor crypt:
-					cc_xor_crypt(&cc->cmd05_cryptkey, data, 256, DECRYPT);
-					cc_cmd_send(data, 256, MSG_BAD_ECM);
-					break;
-				}
-				default:
-					unhandled = 1;
-				}
-			}
-			default: unhandled = 1;
-			}
-
-			//unhandled types always needs cycle connection after 60 ECMs!!
-			if (unhandled && !cc->max_ecms) {
-				cc->max_ecms = 60;
-				cc->ecm_counter = 0;
-			}
+			cc->bad_ecm_mode = 1;
+			cc->bad_ecm_mode_len = l;
+			memcpy(&cc->bad_ecm_mode_data, buf+4, l);
+			if (!cc->current_ecm_cidx) //Send only if there is no ECM processing!
+				send_cmd05_answer();
 		}
 		ret = 0;
 		break;
@@ -1763,9 +1790,12 @@ static int cc_cli_connect(void) {
 	cc->max_ecms = 0;
 	cc->proxy_init_errors = 0;
 	cc->current_ecm_cidx = 0;
-	cc->bad_ecm_mode = 0;
 	cc->cmd05_mode = MODE_UNKNOWN;
 	cc->cmd05_offset = 0;
+	
+	cc->bad_ecm_mode = 0;
+	cc->bad_ecm_mode_len = 0;
+	memset(&cc->bad_ecm_mode_data, 0, sizeof(cc->bad_ecm_mode_data));
 
 	cs_ddump(data, 16, "cccam: server init seed:");
 
