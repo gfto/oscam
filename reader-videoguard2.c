@@ -1127,15 +1127,9 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
   /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */ 
   ptr += 2 + ptr[1];
 
-    if(position ==-1) {
-        const unsigned char *tmp_ptr=ptr;
-        /* skip the payload of the previous sub-EMM */
-        tmp_ptr += 1 + ptr [0];
-    
-        /* check for EMM boundaries - ptr should not exceed EMM length */
-        if ((int)(tmp_ptr - (data + 3)) >= data[2]) return NULL;
-    }
-
+    /* check for EMM boundaries - ptr should not exceed EMM length */
+    if ((int)(ptr - (data + 3)) >= data[2]) return NULL;
+   
   for(l=0;l<position;l++) {
     /* skip the payload of the previous sub-EMM */
     ptr += 1 + ptr [0];
