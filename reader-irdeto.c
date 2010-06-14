@@ -479,7 +479,7 @@ int irdeto_card_info(struct s_reader * reader)
               chid_date(date+cta_res[k+4], t+16, 16);
               if (first)
               {
-                cs_ri_log(reader, "provider: %d, id: %06X", p, b2i(3, &reader->prid[i][1]));
+                cs_ri_log(reader, "entitlements for provider: %d, id: %06X", p, b2i(3, &reader->prid[i][1]));
                 first=0;
               }
               cs_ri_log(reader, "chid: %04X, date: %s - %s", chid, t, t+16);
