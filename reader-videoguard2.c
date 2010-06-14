@@ -1069,7 +1069,21 @@ static int num_addr(const unsigned char *data)
 {
   return ((data[3]&0x30)>>4)+1;
 }
-
+/*
+Example of GLOBAL EMM's
+This one has IRD-EMM + Card-EMM
+82 70 20 00 02 06 02 7D 0E 89 53 71 16 90 14 40
+01 ED 17 7D 9E 1F 28 CF 09 97 54 F1 8E 72 06 E7
+51 AF F5
+This one has only IRD-EMM
+82 70 6D 00 07 69 01 30 07 14 5E 0F FF FF 00 06 
+00 0D 01 00 03 01 00 00 00 0F 00 00 00 5E 01 00 
+01 0C 2E 70 E4 55 B6 D2 34 F7 44 86 9E 5C 91 14
+81 FC DF CB D0 86 65 77 DF A9 E1 6B A8 9F 9B DE
+90 92 B9 AA 6C B3 4E 87 D2 EC 92 DA FC 71 EF 27 
+B3 C3 D0 17 CF 0B D6 5E 8C DB EB B3 37 55 6E 09 
+7F 27 3C F1 85 29 C9 4E 0B EE DF 68 BE 00 C9 00
+*/
 static const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a)
 {
   int s;
@@ -1079,8 +1093,8 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
   int numAddrs=0;
   
   switch(emmtype) {
-    case VG2_EMMTYPE_S: s=3; break;
-    case VG2_EMMTYPE_U: s=4; break;
+    case SHARED: s=3; break;
+    case UNIQUE: s=4; break;
     default: s=0;
   }
 
@@ -1113,13 +1127,12 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
   /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */ 
   ptr += 2 + ptr[1];
 
-  /* check for EMM boundaries - ptr should not exceed EMM length */
-  if ((int)(ptr - data) >= data[2]) return NULL;
-
   for(l=0;l<position;l++) {
-
     /* skip the payload of the previous sub-EMM */
     ptr += 1 + ptr [0];
+
+    /* check for EMM boundaries - ptr should not exceed EMM length */
+    if ((int)(ptr - (data + 3)) >= data[2]) return NULL;
 
     /* skip optional 00 */
     if (*ptr == 0x00) ptr++;
@@ -1166,10 +1179,11 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 			ep->type=UNIQUE;
 			if (ep->emm[1] == 0) // detected UNIQUE EMM from cccam (there is no serial)
 				return TRUE;
+
 			for (i = 1;i <= serial_count;i++) {
 				if (!memcmp (rdr->hexserial + 2, ep->emm + (serial_len * i), serial_len)) {
 					memcpy(ep->hexserial, ep->emm + (serial_len * i), serial_len);
-					return TRUE;
+				return TRUE;
 				}
 
 				pos = pos + ep->emm[pos+5] + 5;
