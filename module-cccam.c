@@ -479,16 +479,17 @@ static int cc_get_nxt_ecm() {
 	// struct cc_data *cc = reader[ridx].cc;
 
 	t = time(NULL);
-	for (i = 1, n = 1; i < CS_MAXPENDING; i++) {
+	n = -1;
+	for (i = 0; i < CS_MAXPENDING; i++) {
 		if ((t - (ulong) ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000)
 				+ 1) && (ecmtask[i].rc >= 10)) // drop timeouts
 		{
 			ecmtask[i].rc = 0;
 		}
 
-		if (ecmtask[i].rc >= 10) { // stil active and waiting
+		if (ecmtask[i].rc >= 10 && ecmtask[i].rc != 99) { // stil active and waiting
 			// search for the ecm with the lowest time, this should be the next to go
-			if ((!n || ecmtask[n].tps.time - ecmtask[i].tps.time < 0)
+			if ((n < 0 || ecmtask[n].tps.time - ecmtask[i].tps.time < 0)
 					&& &ecmtask[n])
 				n = i;
 		}
@@ -558,7 +559,7 @@ static int send_cmd05_answer()
 			cmd05_mode = MODE_UNKNOWN;
 	}
 
-	//unhandled types always needs cycle connection after 60 ECMs!!
+	//unhandled types always needs cycle connection after 50 ECMs!!
 	if (cmd05_mode == MODE_UNKNOWN) {
 		cc_cmd_send(NULL, 0, MSG_CMD_05);
 		if (!cc->max_ecms) { //max_ecms already set?
@@ -604,27 +605,29 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 		cur_er = er;
 	}
 	else {
-		if ((n = cc_get_nxt_ecm()) < 0) {
-			pthread_mutex_unlock(&cc->ecm_busy);
-			cs_log("%s no ecm pending!", getprefix());
-			cc->current_ecm_cidx = 0;
-			send_cmd05_answer();
-			return 0; // no queued ecms
-		}
-		cur_er = &ecmtask[n];
-
-		if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
-			//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
-			cur_er->rc = 99;
-		}
-		cc->crc = crc32(0, cur_er->ecm, cur_er->l);
-
-		cs_debug("cccam: ecm crc = 0x%lx", cc->crc);
-
-		if (cur_er->rc == 99) {
-			pthread_mutex_unlock(&cc->ecm_busy);
-			send_cmd05_answer();
-			return 0; // ecm already sent
+		//Search next ECM to send:
+		int found = 0;
+		while (!found) {
+			if ((n = cc_get_nxt_ecm()) < 0) {
+				pthread_mutex_unlock(&cc->ecm_busy);
+				cs_debug("%s no ecm pending!", getprefix());
+				cc->current_ecm_cidx = 0;
+				send_cmd05_answer();
+				return 0; // no queued ecms
+			}
+			//cs_debug("cccam: ecm-task-idx = %d", n);
+			cur_er = &ecmtask[n];
+			
+			if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
+				//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
+				cur_er->rc = 99; //ECM already sendT
+			}
+			cc->crc = crc32(0, cur_er->ecm, cur_er->l);
+			
+			cs_debug("cccam: ecm crc = 0x%lx", cc->crc);
+			
+			if (cur_er->rc != 99)
+				found = 1;
 		}
 	}
 
@@ -1499,9 +1502,9 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				current_card = NULL;
 			}
 
-			pthread_mutex_unlock(&cc->ecm_busy);
 			cc->current_ecm_cidx = 0;
-
+			pthread_mutex_unlock(&cc->ecm_busy);
+			
 			//cc_abort_user_ecms();
 
 			if (buf[1] == MSG_CW_NOK1)
