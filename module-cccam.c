@@ -251,6 +251,7 @@ static int cc_is_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
 static void cc_cli_close() {
 	reader[ridx].tcp_connected = 0;
 	reader[ridx].card_status = CARD_FAILURE;
+	reader[ridx].available = 0;
 
 	//cs_sleepms(100);
 	if (pfd) {
@@ -603,6 +604,7 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 	}
 	cs_debug("cccam: ecm trylock: got lock");
 	cc->proxy_init_errors = 0;
+	reader[ridx].available = 0;
 
 	if (er) {
 		cur_er = er;
@@ -612,6 +614,7 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 		int found = 0;
 		while (!found) {
 			if ((n = cc_get_nxt_ecm()) < 0) {
+				reader[ridx].available = 1;
 				pthread_mutex_unlock(&cc->ecm_busy);
 				cs_debug("%s no ecm pending!", getprefix());
 				cc->current_ecm_cidx = 0;
@@ -645,6 +648,7 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 	else
 	{
 		card = NULL;
+		current_card->prov = cur_er->prid;
 		current_card->sid = cur_er->srvid;
 	}
 
@@ -763,6 +767,7 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 			cc_add_auto_blocked(cc->auto_blocked, cur_er->caid, cur_er->prid,
 					cur_er->srvid);
 		write_ecm_answer(&reader[ridx], fd_c2m, cur_er);
+		reader[ridx].available = 1;
 		pthread_mutex_unlock(&cc->ecm_busy);
 		cc->current_ecm_cidx = 0;
 		
@@ -855,6 +860,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 			b2i(2, (uchar*)&ep->caid), b2i(4, (uchar*)&ep->provid), emm_card->id);
 
 	pthread_mutex_lock(&cc->ecm_busy); //Unlock by NOK or EMM_ACK
+	reader[ridx].available = 0;
 	cc->current_ecm_cidx = ep->cidx;
 
 	cc->proxy_init_errors = 0;
@@ -1415,7 +1421,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 					//make a copy of the current card, remove card and retry ECM with the copy:
 					current_card->card = NULL;
-					cc_retry_ecm(cc, current_card);
+					//Schlocke: disabled because of problems...cc_retry_ecm(cc, current_card);
 				}
 				cc_free_card(card);
 
@@ -1449,6 +1455,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		}
 		else
 			current_card = NULL;
+		reader[ridx].available = 0;
 		pthread_mutex_unlock(&cc->ecm_busy);
 			
 		//because we have an valid cc->current_ecm_idx, so we can retry ECM
@@ -1506,6 +1513,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			}
 
 			cc->current_ecm_cidx = 0;
+			reader[ridx].available = 0;
 			pthread_mutex_unlock(&cc->ecm_busy);
 			
 			//cc_abort_user_ecms();
@@ -1604,6 +1612,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			}
 		} else { //Our EMM Request Ack!
 			cs_debug_mask(D_TRACE, "%s EMM ACK!", getprefix());
+			reader[ridx].available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cc->current_ecm_cidx = 0;
 			cc_send_ecm(NULL, NULL);
@@ -1850,6 +1859,7 @@ static int cc_cli_connect(void) {
 	reader[ridx].card_status = CARD_NEED_INIT;
 	reader[ridx].last_g = reader[ridx].last_s = time((time_t *) 0);
 	reader[ridx].tcp_connected = 1;
+	reader[ridx].available = 1;
 
 	cc->just_logged_in = 1;
 
@@ -2342,7 +2352,8 @@ int cc_cli_init() {
  */
 int cc_available(int ridx, READER_STAT *stat) {
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", reader[ridx].label);
-	if (!reader[ridx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED) {
+	if (!reader[ridx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED ||
+		!reader[ridx].available) {
 		cs_debug_mask(D_TRACE, "checking reader %s availibility=0 (unavail)", reader[ridx].label);
 		return 0; //We are not initialized or not connected!
 	}
