@@ -11,6 +11,9 @@ extern struct s_reader *reader;
 int g_flag = 0;
 int connect_error_count = 0;
 
+//Mode names for CMD_05 command:
+char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4", "LEN=0" };
+
 static unsigned int seed;
 static uchar fast_rnd() {
 	unsigned int offset = 12923;

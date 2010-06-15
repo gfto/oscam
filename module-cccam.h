@@ -90,8 +90,6 @@ typedef enum {
 	MODE_LEN0 = 5,
 } cc_cmd05_mode;
 
-char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4", "LEN=0" };
-
 struct cc_data {
 	struct cc_crypt_block block[2]; // crypto state blocks
 
