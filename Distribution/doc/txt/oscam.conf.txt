@@ -1,4 +1,4 @@
-oscam.conf(5)												oscam.conf(5)
+oscam.conf(5)																				    oscam.conf(5)
 
 
 
@@ -6,9 +6,8 @@ NAME
        oscam.conf - main configuration file for OSCam
 
 SYNOPSIS
-       The  main  configuration file for OSCam contains global parameters such as debugging, logging, monitor, proto‐
-       cols and anti-cascading.  sections in oscam.conf are nonrecurring. The [global] section is required. All other
-       sections are optional.
+       The  main configuration file for OSCam contains global parameters such as debugging, logging, monitor, protocols and anti-cascading.  sections in oscam.conf are nonrecurring. The
+       [global] section is required. All other sections are optional.
 
 DESCRIPTIONS
    The [global] section
@@ -60,9 +59,6 @@ DESCRIPTIONS
        clientmaxidle = seconds
 	  value for client process being idle before disconnect, default:120
 
-       cachedelay = milli-seconds
-	  value to delay cached requests , default:0
-
        bindwait = seconds
 	  value to wait for bind request to complete, default:120
 
@@ -73,8 +69,8 @@ DESCRIPTIONS
 	  delay for DNS resolving, default:30
 
        clientdyndns = 0|1
-	  1  = enable DNS resolving of clients, if you have already defined a hostname for your clients the parameter
-	  must be 1, otherwise no authentication will be possible for this clients, default:0
+	  1 = enable DNS resolving of clients, if you have already defined a hostname for your clients the parameter must be 1, otherwise no authentication will  be  possible	for  this
+	  clients, default:0
 
        sleep = minutes
 	  time waiting for inactive users, default:none, can be overwritten per user in oscam.user
@@ -206,8 +202,7 @@ DESCRIPTIONS
 
    The [newcamd] section
        mgclient = 0|1 (for beta testing only)
-	  1 = enable mgcamd extended newcamd protocol,	allowing for  a  single  connection  to  work  with  mutliple
-	  providers, default:0
+	  1 = enable mgcamd extended newcamd protocol,	allowing for a single connection to work with mutliple providers, default:0
 
        port = port@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...
 	  TCP port/CAID/ident definitions, default:none
@@ -351,11 +346,9 @@ DESCRIPTIONS
        boxtype = dbox2|dreambox|duckbox|ufs910|ipbox|ipbox-pmt|fortis
 	  set boxtype, auto detection of DVB API will be aspired, default:dreambox
 
-	  ipbox  with  camd.socket support, currently only with PGI image version 0.6 or above, verified on HD models
-	  only
+	  ipbox with camd.socket support, currently only with PGI image version 0.6 or above, verified on HD models only
 
-	  ipbox-pmt can be used on any DGS based images (with or without camd.socket support), verified on HD  models
-	  only
+	  ipbox-pmt can be used on any DGS based images (with or without camd.socket support), verified on HD models only
 
    The [anticasc] section (only if anti-cascading enabled)
        enabled = 0|1
@@ -423,8 +416,7 @@ MONITOR
 
        ·  reload
 
-	  reinit  user	db,  clients  and  anti-cascading, for newcamd connections: after reloading the ident, please
-	  restart newcamd client
+	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart newcamd client
 
 
        ·  details <PID>
@@ -458,14 +450,12 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The web interface allows you to create your own template. For developing  your  own  template  request  the
-	  orignal  template  with  the	non-linked  page savetemplates.html. Store your own template in the directory
-	  specified by httptpl.
+	  The web interface allows you to create your own template. For developing your own template request the orignal template with the non-linked page savetemplates.html. Store your
+	  own template in the directory specified by httptpl.
 
        ·  SSL connection to the web interface
 
-	  The Apache module mod_proxy can be used to proxy requests to the web interface. With this module it's  also
-	  possible to use a SSL connection to the web interface.
+	  The Apache module mod_proxy can be used to proxy requests to the web interface. With this module it's also possible to use a SSL connection to the web interface.
 
 	   ProxyRequests Off
 	    <Proxy *>
@@ -479,8 +469,8 @@ WEB INTERFACE
 
        ·  known issues
 
-	  Login  is  not possible by now with the Safari browser because of incorrect stale flag handling. Increasing
-	  the AUTHNONCEVALIDSECS in oscam-http.h would be a workaround, but also a small security risk.
+	  Login is not possible by now with the Safari browser because of incorrect stale flag handling. Increasing the AUTHNONCEVALIDSECS in oscam-http.h would  be  a  workaround,  but
+	  also a small security risk.
 
 EXAMPLES
 	[global]
@@ -518,9 +508,8 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),   oscam.cert(5),   oscam.guess(5),   oscam.ird(5),   oscam.provid(5),
-       oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.user(5)
+       list_smargo(1), oscam(1), oscam.ac(5), oscam.cert(5), oscam.guess(5), oscam.ird(5), oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.user(5)
 
 
 
-													oscam.conf(5)
+																					    oscam.conf(5)
