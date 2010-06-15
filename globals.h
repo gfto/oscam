@@ -505,6 +505,7 @@ struct s_reader  //contains device info, reader info and card info
   ulong     boxid;
   uchar	    nagra_boxkey[16]; //n3 boxkey 8byte  or tiger idea key 16byte
   int       has_rsa;
+  int       force_irdeto;
   uchar     aes_key[16];
   uchar     rsa_mod[120]; //rsa modulus for nagra cards.
   uchar     atr[64];

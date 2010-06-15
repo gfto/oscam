@@ -538,24 +538,29 @@ int nagra2_card_init(struct s_reader * reader, ATR newatr)
 	
 	if (memcmp(atr+11, "DNASP", 5)==0)
 	{
-		cs_ri_log(reader, "detect native NAGRA card T1 protocol");
+		cs_ri_log(reader, "detect native nagra card");
 		memcpy(reader->rom,atr+11,15);
 	}
 	else if (memcmp(atr+11, "TIGER", 5)==0 || (memcmp(atr+11, "NCMED", 5)==0))
 	{
-		cs_ri_log(reader, "detect NAGRA tiger card");
+		cs_ri_log(reader, "detect nagra tiger card");
 		memcpy(reader->rom,atr+11,15);
 		reader->is_tiger=1;
 	}
 	else if ((!memcmp(atr+4, "IRDETO", 6)) && ((atr[14]==0x03) && (atr[15]==0x84) && (atr[16]==0x55)))
 	{
-		cs_ri_log(reader, "detect Irdeto tunneled NAGRA card");
+		cs_ri_log(reader, "detect irdeto tunneled nagra card");
 		if(!reader->has_rsa)
 		{
-			cs_ri_log(reader, "switching back to Irdeto mode");
+			cs_ri_log(reader, "no rsa key configured -> using irdeto mode");
 			return ERROR;
 		}
-		cs_ri_log(reader, "using NAGRA mode");
+		if(reader->force_irdeto)
+		{
+			cs_ri_log(reader, "rsa key configured but irdeto mode forced -> using irdeto mode");
+			return ERROR;
+		}
+		cs_ri_log(reader, "rsa key configured -> using nagra mode");
 		reader->is_pure_nagra=1;
 		if(!do_cmd(reader, 0x10,0x02,0x90,0x11,0,cta_res,&cta_lr))
 		{
@@ -571,7 +576,7 @@ int nagra2_card_init(struct s_reader * reader, ATR newatr)
 		CamStateRequest(reader);
 		if(!do_cmd(reader, 0x12,0x02,0x92,0x06,0,cta_res,&cta_lr)) 
 		{
-			cs_debug("[nagra-reader] get Serial failed");
+			cs_debug("[nagra-reader] get serial failed");
 			return ERROR;
 		}
 		memcpy(reader->hexserial+2, cta_res+2, 4);

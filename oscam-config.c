@@ -2929,6 +2929,17 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
+	if (!strcmp(token, "force_irdeto")) {
+		if(strlen(value) == 0) {
+			rdr->force_irdeto = 0;
+			return;
+		} else {
+			rdr->force_irdeto = atoi(value);
+			return;
+		}
+	}
+
+
 	if ((!strcmp(token, "atr"))) {
 		if(strlen(value) == 0) {
 			memset(rdr->atr, 0, 64);
@@ -3405,6 +3416,7 @@ int init_readerdb()
 			reader[nr].mhz = 357;
 			reader[nr].cardmhz = 357;
 			reader[nr].deprecated = 0;
+			reader[nr].force_irdeto = 0;
 			reader[nr].cachecm = 1;
 			strcpy(reader[nr].pincode, "none");
 			for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
