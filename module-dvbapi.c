@@ -605,88 +605,78 @@ void dvbapi_resort_ecmpids(int demux_index) {
 	return;
 }
 
-int dvbapi_exist_ECMpids(int demux_id,int ca_system,int ecm_pid) {
-int z,added=0;
-  for (z=0;z<demux[demux_id].ECMpidcount;z++) {
-	if (demux[demux_id].ECMpids[z].CAID==ca_system && demux[demux_id].ECMpids[z].ECM_PID==ecm_pid)
-		added=1;
-	}	
-     return added;
+int dvbapi_exist_ECMpids(int demux_id,int ca_system,int ecm_pid)
+{
+    int z,added=0;
+    for (z=0;z<demux[demux_id].ECMpidcount;z++) {
+        if (demux[demux_id].ECMpids[z].CAID==ca_system && demux[demux_id].ECMpids[z].ECM_PID==ecm_pid)
+        added=1;
+    }	
+    return added;
 }
 
-void dvbapi_added_ECMpids(int demux_id,int ca_system,int ecm_pid) {
- 
- demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].ECM_PID=ecm_pid;
- demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CAID=ca_system;
- demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].checked=0;
- demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].notfound=0;
- demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].table=0;
- demux[demux_id].ECMpids[demux[demux_id].ECMpidcount++].EMM_PID=0;
-
+void dvbapi_added_ECMpids(int demux_id,int ca_system,int ecm_pid)
+{
+    demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].ECM_PID=ecm_pid;
+    demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CAID=ca_system;
+    demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].checked=0;
+    demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].notfound=0;
+    demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].table=0;
+    demux[demux_id].ECMpids[demux[demux_id].ECMpidcount++].EMM_PID=0;
 }
 
 void dvbapi_parse_descriptor(int demux_id, int i, unsigned int info_length, unsigned char *buffer) {
- unsigned int length=0;
- int ca_system,ecm_pid,ecm_id,index,j;
+    unsigned int length=0;
+    int ca_system,ecm_pid,ecm_id,index,j;
           
 	
 	for ( index=0; index<info_length; index++)
-	{
-             if ((buffer[index] == 0x09) && (buffer[index+1] >= 4))
-             {
-	      length = buffer[index+1];
-             ca_system = (buffer[index+2] << 8) | buffer[index+3];
-             switch ( ca_system >>8 )
-	     {
-              case 0x01: //Seca
-                       for ( j=2; j<length; j+=15 )
-			{
-                         ecm_pid = ((buffer[index+2+j] & 0x1F) << 8) | buffer[index+2+j+1];
-                         if(dvbapi_exist_ECMpids(demux_id,ca_system,ecm_pid)==0)
-                           {
-			      ecm_id= ( buffer[index+2+j+2] << 8 ) | buffer[index+2+j+3];
-                              dvbapi_added_ECMpids(demux_id,ca_system,ecm_pid);
-                              cs_debug("typ: %02x ca_system_id: %04x ca_pid: %04x ecm_id: %04x", buffer[index], ca_system, ecm_pid,ecm_id);
+    {
+        if ((buffer[index] == 0x09) && (buffer[index+1] >= 4)) {
+            length = buffer[index+1];
+            ca_system = (buffer[index+2] << 8) | buffer[index+3];
 
-                          }
-                        } 
-                break;
+            switch ( ca_system >>8 ) {
+                case 0x01: //Seca
+                    for ( j=2; j<length; j+=15 ) {
+                        ecm_pid = ((buffer[index+2+j] & 0x1F) << 8) | buffer[index+2+j+1];
+                        if(dvbapi_exist_ECMpids(demux_id,ca_system,ecm_pid)==0) {
+                            ecm_id= ( buffer[index+2+j+2] << 8 ) | buffer[index+2+j+3];
+                            dvbapi_added_ECMpids(demux_id,ca_system,ecm_pid);
+                            cs_debug("typ: %02x ca_system_id: %04x ca_pid: %04x ecm_id: %04x", buffer[index], ca_system, ecm_pid,ecm_id);
+                        }
+                    } 
+                    break;
+                    
                 case 0x05://Viaccess
-		if ( buffer[index+12]==0x14 )
-		{
-                       ecm_pid = ((buffer[index+4] & 0x1F) << 8) | buffer[index+5];
-                         if(dvbapi_exist_ECMpids(demux_id,ca_system,ecm_pid)==0)
-                           {
-                              ecm_id=( buffer[index+12+2] << 16 ) | ( buffer[index+12+3] << 8 ) | ( buffer[index+12+4] & 0xf0 );  
-                              dvbapi_added_ECMpids(demux_id,ca_system,ecm_pid); 
+                    if ( buffer[index+12]==0x14 ) {
+                        ecm_pid = ((buffer[index+4] & 0x1F) << 8) | buffer[index+5];
+                        if(dvbapi_exist_ECMpids(demux_id,ca_system,ecm_pid)==0) {
+                            ecm_id=( buffer[index+12+2] << 16 ) | ( buffer[index+12+3] << 8 ) | ( buffer[index+12+4] & 0xf0 );  
+                            dvbapi_added_ECMpids(demux_id,ca_system,ecm_pid); 
+                            cs_debug("typ: %02x ca_system_id: %04x ca_pid: %04x ecm_id: %06x", buffer[index], ca_system, ecm_pid,ecm_id);
+                        }
+                    }
+                    break;
 
-                              cs_debug("typ: %02x ca_system_id: %04x ca_pid: %04x ecm_id: %06x", buffer[index], ca_system, ecm_pid,ecm_id);
-                          }
-
-                }
-	        break;
                 case 0x06:
                 case 0x17://Iderito
                 case 0x0B://Conax
                 case 0x09://NDS
                 case 0x0D://Cryptoworks
                 case 0x18://Nagra
-	                j=2;ecm_id =0;
-                         ecm_pid = ((buffer[index+2+j] & 0x1F) << 8) | buffer[index+2+j+1];
-                         
-                         if(dvbapi_exist_ECMpids(demux_id,ca_system,ecm_pid)==0)
-                           {
-                              
-                              if (buffer[index+1] > 4)//length (caid=2 + ecm_pid=2 +len=1+ ecm_id=2) (if length 4 ecm_id unknow) 
-                              ecm_id= ( buffer[index+2+j+3] << 8 ) | buffer[index+2+j+4];
-                              dvbapi_added_ECMpids(demux_id,ca_system,ecm_pid);
-                              cs_debug("typ: %02x ca_system_id: %04x ca_pid: %04x ecm_id: %04x", buffer[index], ca_system, ecm_pid,ecm_id);
-
-                          }
-              break;          	        
-              }
-          }
+                    j=2;ecm_id =0;
+                    ecm_pid = ((buffer[index+2+j] & 0x1F) << 8) | buffer[index+2+j+1];                    
+                    if(dvbapi_exist_ECMpids(demux_id,ca_system,ecm_pid)==0) {
+                        if (buffer[index+1] > 4)//length (caid=2 + ecm_pid=2 +len=1+ ecm_id=2) (if length 4 ecm_id unknow) 
+                        ecm_id= ( buffer[index+2+j+3] << 8 ) | buffer[index+2+j+4];
+                        dvbapi_added_ECMpids(demux_id,ca_system,ecm_pid);
+                        cs_debug("typ: %02x ca_system_id: %04x ca_pid: %04x ecm_id: %04x", buffer[index], ca_system, ecm_pid,ecm_id);
+                    }
+                    break;          	        
+            }
         }
+    }
 }
 
 
