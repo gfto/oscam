@@ -384,24 +384,6 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 #define CC_DEFAULT_VERSION 1
 char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "" };
 char *build[] = { "2892", "2971", "3094", "3165", "3191", "" };
-int limit_ecms[] = { 0, 0, 1, 1, 1, 0 };
-
-/**
- * reader
- * returns true if connected cccam-server has limit ecms
- */
-static int cc_get_limit_ecms(char *cc_version) {
-	int limit = limit_ecms[CC_DEFAULT_VERSION];
-	int i;
-	for (i = 0; strlen(version[i]); i++)
-		if (!memcmp(cc_version, version[i], strlen(version[i]))) {
-			limit = limit_ecms[i];
-			cs_debug("cccam server version: %s limit ecms: %s", cc_version,
-					limit ? "yes" : "no");
-			break;
-		}
-	return limit;
-}
 
 /**
  * reader+server
@@ -520,28 +502,28 @@ static int cc_get_nxt_ecm() {
 static int send_cmd05_answer()
 {
 	struct cc_data *cc = reader[ridx].cc;
-	if (!cc->bad_ecm_mode || cc->current_ecm_cidx) //exit if not in cmd05 or waiting for ECM answer
+	if (!cc->cmd05_active || cc->current_ecm_cidx) //exit if not in cmd05 or waiting for ECM answer
 		return 0;
 		
-	cc->bad_ecm_mode = 0;
-	uint8 *data = cc->bad_ecm_mode_data;
-	int unhandled = 0;
+	cc->cmd05_active = 0;
+	uint8 *data = cc->cmd05_data;
+	cc_cmd05_mode cmd05_mode = MODE_UNKNOWN;
+	
 	// by Project:Keynation
-	switch (cc->bad_ecm_mode_len) {
+	switch (cc->cmd05_data_len) {
 		case 0: { //payload 0, return with payload 0!
-			cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: LEN=0", getprefix());
-			cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+			cc_cmd_send(NULL, 0, MSG_CMD_05);
+			cmd05_mode = MODE_LEN0;
 			break;
 		}
 		case 256: {
-			switch (cc->cmd05_mode) {
+			cmd05_mode = cc->cmd05_mode;
+			switch (cmd05_mode) {
 			case MODE_PLAIN: { //Send plain unencrypted back
-				cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: PLAIN 256", getprefix());
-				cc_cmd_send(data, 256, MSG_BAD_ECM);
+				cc_cmd_send(data, 256, MSG_CMD_05);
 				break;
 			}
 			case MODE_AES: { //encrypt with received aes128 key:
-				cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: AES 128", getprefix());
 				AES_KEY key;
 				uint8 aeskey[16];
 				uint8 out[256];
@@ -554,37 +536,37 @@ static int send_cmd05_answer()
 				for (i = 0; i < 256; i+=16)
 					AES_encrypt((unsigned char *) data+i, (unsigned char *) &out+i, &key);
 
-				cc_cmd_send(out, 256, MSG_BAD_ECM);
+				cc_cmd_send(out, 256, MSG_CMD_05);
 				break;
 			}
 			case MODE_CC_CRYPT: { //encrypt with cc_crypt:
-				cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: CC_CRYPT", getprefix());
 				cc_crypt(&cc->cmd05_cryptkey, data, 256, ENCRYPT);
-				cc_cmd_send(data, 256, MSG_BAD_ECM);
+				cc_cmd_send(data, 256, MSG_CMD_05);
 				break;
 			}
 			case MODE_RC4_CRYPT: {//special xor crypt:
-				cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: RC4", getprefix());
 				cc_rc4_crypt(&cc->cmd05_cryptkey, data, 256, DECRYPT);
-				cc_cmd_send(data, 256, MSG_BAD_ECM);
+				cc_cmd_send(data, 256, MSG_CMD_05);
 				break;
 			}
 			default:
-				unhandled = 1;
+				cmd05_mode = MODE_UNKNOWN;
 			}
+			break;
 		}
-		default: unhandled = 1;
+		default:
+			cmd05_mode = MODE_UNKNOWN;
 	}
 
 	//unhandled types always needs cycle connection after 60 ECMs!!
-	if (unhandled) {
-		cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: UNHANDLED, limit to 50 ECMs", getprefix());
-		cc_cmd_send(NULL, 0, MSG_BAD_ECM);
+	if (cmd05_mode == MODE_UNKNOWN) {
+		cc_cmd_send(NULL, 0, MSG_CMD_05);
 		if (!cc->max_ecms) { //max_ecms already set?
 			cc->max_ecms = 50;
 			cc->ecm_counter = 0;
 		}
 	}
+	cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: %s len=%d", getprefix(), cmd05_mode_name[cmd05_mode], cc->cmd05_data_len);
 	
 	return 1;
 }
@@ -1268,21 +1250,19 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (l == 0x48) { //72 bytes: normal server data
 			memcpy(cc->peer_node_id, data, 8);
 			memcpy(cc->peer_version, data+8, 8);
-			cc->limit_ecms = cc_get_limit_ecms((char*) data + 8);
 
 			memcpy(cc->cmd0b_aeskey, cc->peer_node_id, 8);
 			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
-			cs_log("%s srv %s running v%s (%s) limit ecms: %s", getprefix(),
-					cs_hexdump(0, cc->peer_node_id, 8), data + 8, data + 40,
-					cc->limit_ecms ? "yes" : "no");
-			cc->cmd05_mode = MODE_UNKNOWN;
+			cs_log("%s srv %s running v%s (%s)", getprefix(),
+					cs_hexdump(0, cc->peer_node_id, 8), data + 8, data + 40);
+			cc->cmd05_mode = MODE_PLAIN;
 			//
 			//Keyoffset is payload-size:
 			//
 		} else if (l >= 0x00 && l <= 0x0F) {
 			cc->cmd05_offset = l;
 			//
-			//16..43 bytes: Special XOR encryption:
+			//16..43 bytes: RC4 encryption:
 			//
 		} else if ((l >= 0x10 && l <= 0x1f) || (l >= 0x24 && l <= 0x2b)) {
 			cc_init_crypt(&cc->cmd05_cryptkey, data, l);
@@ -1325,10 +1305,11 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			//Unknown!!
 			//
 		} else {
-			cs_log("%s received unknown MSG_SRV_DATA!", getprefix());
-			cc->cmd05_mode = MODE_UNKNOWN;
+			cs_log("%s received improper MSG_SRV_DATA! No change to current mode, mode=%d", getprefix(), cc->cmd05_mode);
 			break;
 			}
+		cs_debug_mask(D_TRACE, "%s MSG_SRV_DATA MODE=%s, len=%d", getprefix(), cmd05_mode_name[cc->cmd05_mode], l);
+		
 		break;
 	case MSG_NEW_CARD: {
 		int i = 0;
@@ -1543,15 +1524,15 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			cs_debug("cccam: keepalive");
 		}
 		break;
-	case MSG_BAD_ECM:
+	case MSG_CMD_05:
 		if (!is_server) {
 			cc->just_logged_in = 0;
 			l = l - 4;//Header Length=4 Byte
 
 			cs_log("%s MSG_CMD_05 recvd, payload length=%d mode=%d", getprefix(), l, cc->cmd05_mode);
-			cc->bad_ecm_mode = 1;
-			cc->bad_ecm_mode_len = l;
-			memcpy(&cc->bad_ecm_mode_data, buf+4, l);
+			cc->cmd05_active = 1;
+			cc->cmd05_data_len = l;
+			memcpy(&cc->cmd05_data, buf+4, l);
 			if (!cc->current_ecm_cidx) //Send only if there is no ECM processing!
 				send_cmd05_answer();
 		}
@@ -1579,13 +1560,6 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		cs_debug_mask(D_TRACE, "%s sending CMD_0B! ", getprefix());
 		cs_ddump(out, 16, "%s CMD_0B out:", getprefix());
 		cc_cmd_send(out, 16, MSG_CMD_0B);
-
-		//if (!cc->max_ecms) {
-			// ~86 minutes = 6160 seconds, every 7second 1ecm = 6160/7=737,14
-			// So we limit to 700 ecms:
-		//	cc->max_ecms = 700;
-		//	cc->ecm_counter = 0;
-		//}
 
 		ret = 0;
 		break;
@@ -1792,10 +1766,9 @@ static int cc_cli_connect(void) {
 	cc->current_ecm_cidx = 0;
 	cc->cmd05_mode = MODE_UNKNOWN;
 	cc->cmd05_offset = 0;
-	
-	cc->bad_ecm_mode = 0;
-	cc->bad_ecm_mode_len = 0;
-	memset(&cc->bad_ecm_mode_data, 0, sizeof(cc->bad_ecm_mode_data));
+	cc->cmd05_active = 0;
+	cc->cmd05_data_len = 0;
+	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 
 	cs_ddump(data, 16, "cccam: server init seed:");
 

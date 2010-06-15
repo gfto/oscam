@@ -27,7 +27,7 @@ typedef enum {
 	MSG_CW_ECM = 1,
 	MSG_EMM_ACK = 2,
 	MSG_CARD_REMOVED = 4,
-	MSG_BAD_ECM = 5,
+	MSG_CMD_05 = 5,
 	MSG_KEEPALIVE = 6,
 	MSG_NEW_CARD = 7,
 	MSG_SRV_DATA = 8,
@@ -87,9 +87,10 @@ typedef enum {
 	MODE_AES = 2,
 	MODE_CC_CRYPT = 3,
 	MODE_RC4_CRYPT = 4,
-
+	MODE_LEN0 = 5,
 } cc_cmd05_mode;
 
+char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4", "LEN=0" };
 
 struct cc_data {
 	struct cc_crypt_block block[2]; // crypto state blocks
@@ -102,9 +103,9 @@ struct cc_data {
 	uint8 cmd05_aeskey[16];
 	struct cc_crypt_block cmd05_cryptkey;
 
-	int bad_ecm_mode;
-	int bad_ecm_mode_len;
-	uint8 bad_ecm_mode_data[256];
+	int cmd05_active;
+	int cmd05_data_len;
+	uint8 cmd05_data[256];
 	cc_cmd05_mode cmd05_mode;
 	int cmd05_offset;
 	uint8 receive_buffer[CC_MAXMSGSIZE];
@@ -114,7 +115,6 @@ struct cc_data {
 	LLIST *caid_infos; //struct cc_caid_info
 	long caid_size;
 	uint16 needs_rebuild_caidinfo;
-	int limit_ecms;
 	int max_ecms;
 	int ecm_counter;
 	int report_carddata_id; //Server only
