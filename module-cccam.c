@@ -1203,13 +1203,27 @@ static int caid_filtered(int ridx, int caid) {
 	return defined;
 }
 
-static int null_dcw(uint8 *dcw)
+static int is_null_dcw(uint8 *dcw)
 {
 	int i;
 	for (i = 0; i < 15; i++)
 		if (dcw[i])
 			return 0;
 	return 1;
+}
+
+static int is_dcw_corrupted(uchar *dcw)
+{
+    uchar i;
+    unsigned char c, cs;
+
+    for (i=0; i<16; i+=4)
+    {
+       c = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
+       cs = dcw[i+3];
+       if (cs!=c) return (1);
+    }
+    return 0;
 }
 
 static int cc_parse_msg(uint8 *buf, int l) {
@@ -1473,13 +1487,15 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				memcpy(cc->dcw, buf + 4, 16);
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
-				if (null_dcw(cc->dcw)) {
+				if (is_null_dcw(cc->dcw) || is_dcw_corrupted(cc->dcw)) {
+					cs_log("%s corrupted dcw received! sid=%04X(%d)", current_card->srvid.sid, current_card->srvid.ecmlen);
 					add_sid_block(card, &current_card->srvid);
 					current_card->card = NULL;
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
 				else {
 					cc->recv_ecmtask = cc->send_ecmtask;
+					ecmtask[cc->recv_ecmtask].rc = 99; //Mark as received
 					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
 						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
 				}
@@ -1608,32 +1624,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	return ret;
 }
 
-static int cc_dcw_corrupted(uchar *dcw)
-{
-    uchar i;
-
-    for (i=0; i<16; i+=4)
-    {
-        unsigned char c, cs;
-       c = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
-       cs = dcw[i+3];
-       if (cs!=c) return (1);
-    }
-
-    return 0;
-}
-
 static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
 	struct cc_data *cc = reader[ridx].cc;
 
 	if (buf[1] == MSG_CW_ECM) {
-		if (cc_dcw_corrupted(cc->dcw)) {
-			cc->ecm_counter++;
-			cs_log("%s corrupted ECM detected.", getprefix());
-			return (-1);
-		} else if (cc->ecm_counter)
-			cc->ecm_counter--;
-
 		memcpy(dcw, cc->dcw, 16);
 		cs_debug("cccam: recv chk - MSG_CW %d - %s", cc->recv_ecmtask,
 				cs_hexdump(0, dcw, 16));
