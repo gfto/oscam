@@ -432,7 +432,7 @@ add_definitions ("-D'CS_SVN_VERSION=\"${OSCAM_SVN_REVISION}\"'")
 
 # some optimisations
 if (OSCamOperatingSystem MATCHES "Mac OS X")
-    add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -m32")
+    add_definitions ("-O2 -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
 elseif (OSCAM_SYSTEM_NAME MATCHES "NSLU2")
     add_definitions ("-O2 -Winline -Wall -finline-functions -fomit-frame-pointer")
 else (OSCamOperatingSystem MATCHES "Mac OS X")
@@ -446,7 +446,7 @@ set (CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
 
 # we want to strip if not Debug build
 if (OSCamOperatingSystem MATCHES "Mac OS X")
-set (CMAKE_EXE_LINKER_FLAGS "-s -m32")
+set (CMAKE_EXE_LINKER_FLAGS "-s -m32 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk")
 else (OSCamOperatingSystem MATCHES "Mac OS X")
   if (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
     set (CMAKE_EXE_LINKER_FLAGS "-s")
