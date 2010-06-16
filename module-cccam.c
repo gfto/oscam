@@ -1594,8 +1594,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		break;
 	}
 	default:
-		//cs_log("%s unhandled msg: %d len=%d", getprefix(), buf[1], l);
-		cs_ddump(buf, l, "%s unhandled msg: %d len=%d", getprefix(), l);
+		cs_ddump(buf, l, "%s unhandled msg: %d len=%d", getprefix(), buf[1], l);
 		break;
 	}
 
@@ -1609,13 +1608,35 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	return ret;
 }
 
+static int cc_dcw_corrupted(uchar *dcw)
+{
+    uchar i;
+
+    for (i=0; i<16; i+=4)
+    {
+        unsigned char c, cs;
+       c = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
+       cs = dcw[i+3];
+       if (cs!=c) return (1);
+    }
+
+    return 0;
+}
+
 static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
 	struct cc_data *cc = reader[ridx].cc;
 
 	if (buf[1] == MSG_CW_ECM) {
+		if (cc_dcw_corrupted(cc->dcw)) {
+			cc->ecm_counter++;
+			cs_log("%s corrupted ECM detected.", getprefix());
+			return (-1);
+		} else if (cc->ecm_counter)
+			cc->ecm_counter--;
+
 		memcpy(dcw, cc->dcw, 16);
 		cs_debug("cccam: recv chk - MSG_CW %d - %s", cc->recv_ecmtask,
-			cs_hexdump(0, dcw, 16));
+				cs_hexdump(0, dcw, 16));
 		*rc = 1;
 		return (cc->recv_ecmtask);
 	} else if ((buf[1] == (MSG_CW_NOK1)) || (buf[1] == (MSG_CW_NOK2))) {
@@ -1864,6 +1885,9 @@ static int cc_srv_report_cards() {
 
 	for (r = 0; r < CS_MAXREADER; r++) {
 		if (!(reader[r].grp & client[cs_idx].grp)) continue;
+		reshare = reader[r].cc_reshare;
+		if (!reshare) continue;
+
 		flt = 0;
 		if (/*!reader[r].caid[0] && */reader[r].ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
@@ -1983,7 +2007,7 @@ static int cc_srv_report_cards() {
 			buf[11] = reshare;
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
-				if (reader[r].card_status == CARD_INSERTED)
+				if (!(reader[r].typ & R_IS_CASCADING)) //(reader[r].card_status == CARD_INSERTED)
 					memcpy(buf + 21 + (j * 7), reader[r].prid[j] + 1, 3);
 				else
 					memcpy(buf + 21 + (j * 7), reader[r].prid[j], 3);
@@ -2292,7 +2316,7 @@ int cc_cli_init() {
 			cs_sleepms(100);
 		}
 		if (!safeCounter) {
-			cs_log("cccam: resolving $s, 4sec time out!", reader[ridx].device);
+			cs_log("cccam: resolving %s, 4sec time out!", reader[ridx].device);
 			return -1;
 		}
 	}

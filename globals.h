@@ -546,7 +546,7 @@ struct s_reader  //contains device info, reader info and card info
   void      *cc;            // ptr to cccam internal data struct
   int       cc_disable_retry_ecm; //Schlocke
   int       cc_disable_auto_block; //Schlocke
-  uchar     cc_id;
+  uint      cc_id;
   uchar     tcp_connected;
   int       tcp_ito;      // inactivity timeout
   int       tcp_rto;      // reconnect timeout
@@ -616,6 +616,7 @@ struct s_reader  //contains device info, reader info and card info
 	BIGNUM ucpk;
 	////variables from reader-viaccess.c 
 	struct geo_cache last_geo;
+	uchar cc_reshare;
 };
 
 #ifdef CS_ANTICASC

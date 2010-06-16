@@ -3305,6 +3305,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
+	if (!strcmp(token, "ccchopsaway") || !strcmp(token, "cccreshar")  || !strcmp(token, "cccreshare")) {
+		rdr->cc_reshare = atoi(value);
+		return;
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
 }
@@ -3421,6 +3426,7 @@ int init_readerdb()
 			reader[nr].deprecated = 0;
 			reader[nr].force_irdeto = 0;
 			reader[nr].cachecm = 1;
+			reader[nr].cc_reshare = cfg->cc_reshare; //set global value as init value
 			strcpy(reader[nr].pincode, "none");
 			for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
 			continue;
