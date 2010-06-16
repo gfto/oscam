@@ -1427,7 +1427,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		reader[ridx].available = 0;
 		pthread_mutex_unlock(&cc->ecm_busy);
 		
-		if (!cfg->cc_disable_retry_ecm)	
+		if (!reader[ridx].cc_disable_retry_ecm)	
 			cc_send_ecm(NULL, NULL);
 
 		ret = 0;
