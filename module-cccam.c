@@ -669,11 +669,11 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		//cs_debug("cccam: ecm-task-idx = %d", n);
 		cur_er = &ecmtask[n];
 		
-		//if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
+		if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
 			//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
-		//	cur_er->rc = 99; //ECM already sendT
-		//}
-		//cc->crc = crc32(0, cur_er->ecm, cur_er->l);
+			cur_er->rc = 99; //ECM already sendT
+		}
+		cc->crc = crc32(0, cur_er->ecm, cur_er->l);
 		
 		//cs_debug("cccam: ecm crc = 0x%lx", cc->crc);
 		
@@ -1449,8 +1449,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		reader[ridx].available = 0;
 		pthread_mutex_unlock(&cc->ecm_busy);
 		
-		if (!reader[ridx].cc_disable_retry_ecm)	
+		if (!reader[ridx].cc_disable_retry_ecm)	{
+			cc->crc++;
 			cc_send_ecm(NULL, NULL);
+		}
 
 		ret = 0;
 		
@@ -1488,14 +1490,19 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
 				if (is_null_dcw(cc->dcw) || is_dcw_corrupted(cc->dcw)) {
-					cs_log("%s corrupted dcw received! sid=%04X(%d)", current_card->srvid.sid, current_card->srvid.ecmlen);
+					cs_log("%s corrupted dcw received! sid=%04X(%d)", getprefix(), 
+						current_card->srvid.sid, current_card->srvid.ecmlen);
 					add_sid_block(card, &current_card->srvid);
 					current_card->card = NULL;
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
 				else {
 					cc->recv_ecmtask = cc->send_ecmtask;
-					ecmtask[cc->recv_ecmtask].rc = 99; //Mark as received
+					int i = 0;
+					for (i = 0; i < CS_MAXPENDING; i++) {
+						if (ecmtask[i].idx == cc->send_ecmtask)
+							ecmtask[i].rc = 99; //Mark as received
+					}
 					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
 						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
 				}
