@@ -190,18 +190,23 @@ static int cc_remove_from_auto_blocked(LLIST *cc_auto_blocked_list,
 	return found;
 }
 
+static int sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2) {
+	return (srvid1->sid == srvid2->sid && srvid1->ecmlen == srvid2->ecmlen);
+}
+
+
 /**
  * reader
  * add caid:prov:sid to the autoblock list
  */
 static int cc_add_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
-		uint32 prov, uint16 sid) {
+		uint32 prov, struct cc_srvid *srvid) {
 	LLIST_ITR itr;
 	struct cc_auto_blocked *auto_blocked = llist_itr_init(cc_auto_blocked_list,
 			&itr);
 	while (auto_blocked) {
 		if (auto_blocked->caid == caid && auto_blocked->prov == prov
-				&& auto_blocked->sid == sid) {
+				&& sid_eq(&auto_blocked->srvid, srvid)) {
 			auto_blocked->time = time((time_t*) 0);
 			return 0; //Already blocked
 		}
@@ -211,11 +216,11 @@ static int cc_add_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
 	auto_blocked = malloc(sizeof(struct cc_auto_blocked));
 	auto_blocked->caid = caid;
 	auto_blocked->prov = prov;
-	auto_blocked->sid = sid;
+	auto_blocked->srvid = *srvid;
 	auto_blocked->time = time((time_t*) 0);
 	llist_append(cc_auto_blocked_list, auto_blocked);
-	cs_debug_mask(D_TRACE, "%s adding %04X:%04X:%04X to auto block list", getprefix(), caid,
-			prov, sid);
+	cs_debug_mask(D_TRACE, "%s adding %04X:%04X:%04X(%d) to auto block list", getprefix(), caid,
+			prov, srvid->sid, srvid->ecmlen);
 	return 1;
 }
 
@@ -224,13 +229,13 @@ static int cc_add_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
  * checks if caid:prov:sid is on the autoblock list
  */
 static int cc_is_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
-		uint32 prov, uint16 sid, int timeout) {
+		uint32 prov, struct cc_srvid *srvid, int timeout) {
 	LLIST_ITR itr;
 	struct cc_auto_blocked *auto_blocked = llist_itr_init(cc_auto_blocked_list,
 			&itr);
 	while (auto_blocked) {
 		if (auto_blocked->caid == caid && auto_blocked->prov == prov
-				&& auto_blocked->sid == sid) {
+				&& sid_eq(&auto_blocked->srvid, srvid)) {
 			if (auto_blocked->time < time((time_t*) 0) - timeout) {
 				free(auto_blocked);
 				llist_itr_remove(&itr);
@@ -243,6 +248,33 @@ static int cc_is_auto_blocked(LLIST *cc_auto_blocked_list, uint16 caid,
 	}
 	return 0;
 }
+
+static int is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
+	LLIST_ITR sitr;
+	struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
+	while (srvid) {
+		if (sid_eq(srvid, srvid_blocked)) {
+			return 1;
+		}
+		srvid = llist_itr_next(&sitr);
+	}
+	return 0;
+}
+
+
+static void add_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked) {
+	if (is_sid_blocked(card, srvid_blocked))
+		return;
+		
+	struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
+	if (srvid) {
+		*srvid = *srvid_blocked;
+		llist_append(card->badsids, srvid);
+		cs_log("%s added sid block %04X(%d) for card %08x",
+			getprefix(), srvid_blocked->sid, srvid_blocked->ecmlen, card->id);
+	}
+}
+
 
 /**
  * reader
@@ -651,17 +683,22 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 	if (buf)
 		memcpy(buf, cur_er->ecm, cur_er->l);
+		
+	struct cc_srvid cur_srvid;
+	cur_srvid.sid = cur_er->srvid;
+	cur_srvid.ecmlen = cur_er->l;
 
 	//First check last used card:
 	cc->current_ecm_cidx = cur_er->cidx;
 	current_card = &cc->current_card[cur_er->cidx];
-	if (current_card->card && current_card->prov == cur_er->prid && current_card->sid == cur_er->srvid)
+	if (current_card->card && current_card->prov == cur_er->prid && 
+	  sid_eq(&current_card->srvid, &cur_srvid))
 		card = current_card->card;
 	else
 	{
 		card = NULL;
 		current_card->prov = cur_er->prid;
-		current_card->sid = cur_er->srvid;
+		current_card->srvid = cur_srvid;
 	}
 
 	//then check all other cards
@@ -670,8 +707,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		//check if auto blocked:
 		if (!reader[ridx].cc_disable_auto_block && 
 	  	    cc_is_auto_blocked(
-		    cc->auto_blocked, cur_er->caid, cur_er->prid, cur_er->srvid, 60
-		    * 60 * 1)) { //TODO: Timeout 60*60*1 = 1h, Config?
+		    cc->auto_blocked, cur_er->caid, cur_er->prid, &cur_srvid, 60*60*1)) { //TODO: Timeout 60*60*1 = 1h, Config?
 		        is_auto_blocked = 1;
 			current_card->card = NULL;
 		}
@@ -680,17 +716,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			card = llist_itr_init(cc->cards, &itr);
 			while (card) {
 				if (card->caid == cur_er->caid) { // caid matches
-					int s = 0;
-
-					LLIST_ITR sitr;
-					uint16 *sid = llist_itr_init(card->badsids, &sitr);
-					while (sid) {
-						if (*sid == cur_er->srvid) {
-							s = 1;
-							break;
-						}
-						sid = llist_itr_next(&sitr);
-					}
+					int s = is_sid_blocked(card, &cur_srvid);
 
 					LLIST_ITR pitr;
 					uint8 *prov = llist_itr_init(card->provs, &pitr);
@@ -714,7 +740,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	if (current_card->card) {
 		card = current_card->card;
 		current_card->prov = cur_er->prid;
-		current_card->sid = cur_er->srvid;
+		current_card->srvid = cur_srvid;
 
 		card->time = time((time_t) 0);
 		uint8 ecmbuf[CC_MAXMSGSIZE];
@@ -739,8 +765,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cc->send_ecmtask = cur_er->idx;
 		reader[ridx].cc_currenthops = card->hop + 1;
 
-		cs_log("%s sending ecm for sid %04X to card %08x, hop %d, ecmtask %d",
-				getprefix(), cur_er->srvid, card->id, card->hop
+		cs_log("%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d",
+				getprefix(), cur_er->srvid, cur_er->l, card->id, card->hop
 						+ 1, cc->send_ecmtask);
 		cc_cmd_send(ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
 
@@ -761,20 +787,23 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		while (card) {
 			if (card->caid == cur_er->caid) { // caid matches
 				LLIST_ITR sitr;
-				uint16 *sid = llist_itr_init(card->badsids, &sitr);
-				while (sid) {
-					if (*sid == cur_er->srvid)
-						sid = llist_itr_remove(&sitr);
+				struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
+				while (srvid) {
+					if (sid_eq(srvid, &cur_srvid)) {
+						free(srvid);
+						srvid = llist_itr_remove(&sitr);
+					}
 					else
-						sid = llist_itr_next(&sitr);
+						srvid = llist_itr_next(&sitr);
 				}
 			}
 			card = llist_itr_next(&itr);
 		}
 
-		if (!reader[ridx].cc_disable_auto_block)
+		if (!reader[ridx].cc_disable_auto_block) {
 			cc_add_auto_blocked(cc->auto_blocked, cur_er->caid, cur_er->prid,
-					cur_er->srvid);
+					&cur_srvid);
+		}
 		write_ecm_answer(&reader[ridx], fd_c2m, cur_er);
 		reader[ridx].available = 1;
 		pthread_mutex_unlock(&cc->ecm_busy);
@@ -1183,28 +1212,6 @@ static int null_dcw(uint8 *dcw)
 	return 1;
 }
 
-static void add_sid_block(struct cc_card *card, uint16 sid_block) {
-	int f = 0;
-	LLIST_ITR itr;
-	uint16 *sid = llist_itr_init(card->badsids, &itr);
-	while (sid && !f) {
-		if (*sid == sid_block) {
-			f = 1;
-		}
-		sid = llist_itr_next(&itr);
-	}
-
-	if (!f) {
-		sid = malloc(sizeof(uint16));
-		if (sid) {
-			*sid = sid_block;
-			sid = llist_append(card->badsids, sid);
-			cs_log("%s added sid block %04X for card %08x",
-				getprefix(), sid_block, card->id);
-		}
-	}
-}
-
 static int cc_parse_msg(uint8 *buf, int l) {
 	int ret = buf[1];
 	struct cc_data *cc;
@@ -1416,10 +1423,11 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 		struct cc_current_card *current_card = &cc->current_card[cc->current_ecm_cidx];
 
-		cs_debug_mask(D_TRACE, "%s cw nok (%d), sid = %04X", getprefix(), buf[1], current_card->sid);
+		cs_debug_mask(D_TRACE, "%s cw nok (%d), sid = %04X(%d)", getprefix(), buf[1], 
+			current_card->srvid.sid, current_card->srvid.ecmlen);
 		struct cc_card *card = current_card->card;
 		if (card) {
-			add_sid_block(card, current_card->sid);
+			add_sid_block(card, &current_card->srvid);
 			current_card->card = NULL;
 		}
 		else
@@ -1452,8 +1460,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				get_cw(er);
 				cs_debug_mask(
 						D_TRACE,
-						"%s ECM request from client: caid %04x srvid %04x prid %04x",
-						getprefix(), er->caid, er->srvid, er->prid);
+						"%s ECM request from client: caid %04x srvid %04x(%d) prid %04x",
+						getprefix(), er->caid, er->srvid, er->l, er->prid);
 			} else
 				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());
 
@@ -1466,7 +1474,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
 				if (null_dcw(cc->dcw)) {
-					add_sid_block(card, current_card->sid);
+					add_sid_block(card, &current_card->srvid);
 					current_card->card = NULL;
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}

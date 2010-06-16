@@ -45,6 +45,11 @@ struct cc_crypt_block {
 	uint8 sum;
 };
 
+struct cc_srvid {
+	uint16 sid;
+	uint8 ecmlen;
+};
+
 struct cc_card {
 	uint32 id; // cccam card (share) id
 	uint32 sub_id; // subshare id
@@ -52,7 +57,7 @@ struct cc_card {
 	uint8 hop;
 	uint8 key[8]; // card serial (for au)
 	LLIST *provs; // providers
-	LLIST *badsids; // sids that have failed to decode
+	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
 	time_t time;
 };
 
@@ -70,14 +75,14 @@ struct cc_caid_info {
 struct cc_auto_blocked {
 	uint16 caid;
 	uint32 prov;
-	uint16 sid;
+	struct cc_srvid srvid;
 	time_t time;
 };
 
 struct cc_current_card {
 	struct cc_card *card;
 	uint32 prov;
-	uint16 sid;
+	struct cc_srvid srvid;
 };
 
 typedef enum {
