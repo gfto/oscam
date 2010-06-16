@@ -581,13 +581,30 @@ static int send_cmd05_answer()
  * reader
  * sends a ecm request to the connected CCCam Server
  */
-static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
+static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	int n, h = -1;
 	struct cc_data *cc = reader[ridx].cc;
 	struct cc_card *card;
 	struct cc_current_card *current_card;
 	LLIST_ITR itr;
 	ECM_REQUEST *cur_er;
+
+	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
+		if (er) {
+			er->rc = 0;
+			er->rcEx = 0x27;
+			cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1
+					: 0, pfd);
+			write_ecm_answer(&reader[ridx], fd_c2m, er);
+
+			if (cc) {
+				cc->proxy_init_errors++;
+				if (cc->proxy_init_errors > 20) //TODO: Configuration?
+					cc_cycle_connection();
+			}
+		}
+		return -1;
+	}
 
 	if (!llist_count(cc->cards))
 		return 0;
@@ -606,35 +623,30 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 	cc->proxy_init_errors = 0;
 	reader[ridx].available = 0;
 
-	if (er) {
-		cur_er = er;
-	}
-	else {
-		//Search next ECM to send:
-		int found = 0;
-		while (!found) {
-			if ((n = cc_get_nxt_ecm()) < 0) {
-				reader[ridx].available = 1;
-				pthread_mutex_unlock(&cc->ecm_busy);
-				cs_debug("%s no ecm pending!", getprefix());
-				cc->current_ecm_cidx = 0;
-				send_cmd05_answer();
-				return 0; // no queued ecms
-			}
-			//cs_debug("cccam: ecm-task-idx = %d", n);
-			cur_er = &ecmtask[n];
-			
-			if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
-				//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
-				cur_er->rc = 99; //ECM already sendT
-			}
-			cc->crc = crc32(0, cur_er->ecm, cur_er->l);
-			
-			cs_debug("cccam: ecm crc = 0x%lx", cc->crc);
-			
-			if (cur_er->rc != 99)
-				found = 1;
+	//Search next ECM to send:
+	int found = 0;
+	while (!found) {
+		if ((n = cc_get_nxt_ecm()) < 0) {
+			reader[ridx].available = 1;
+			pthread_mutex_unlock(&cc->ecm_busy);
+			cs_debug("%s no ecm pending!", getprefix());
+			cc->current_ecm_cidx = 0;
+			send_cmd05_answer();
+			return 0; // no queued ecms
 		}
+		//cs_debug("cccam: ecm-task-idx = %d", n);
+		cur_er = &ecmtask[n];
+		
+		//if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
+			//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
+		//	cur_er->rc = 99; //ECM already sendT
+		//}
+		//cc->crc = crc32(0, cur_er->ecm, cur_er->l);
+		
+		//cs_debug("cccam: ecm crc = 0x%lx", cc->crc);
+		
+		if (cur_er->rc != 99)
+			found = 1;
 	}
 
 	if (buf)
@@ -698,9 +710,6 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 			}
 		}
 	}
-
-	//Saving last ECM request so wie can easily retry ECM on CARD_REMOVE:
-	memcpy(&current_card->last_ecm_request, cur_er, sizeof(ECM_REQUEST));
 
 	if (current_card->card) {
 		card = current_card->card;
@@ -774,32 +783,6 @@ static int cc_send_ecm_int(ECM_REQUEST *er, uchar *buf) {
 		return -1;
 	}
 }
-
-/**
- * reader
- * sends a ecm request to the connected CCCam Server
- */
-static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
-	struct cc_data *cc = reader[ridx].cc;
-	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
-		if (er) {
-			er->rc = 0;
-			er->rcEx = 0x27;
-			cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1
-					: 0, pfd);
-			write_ecm_answer(&reader[ridx], fd_c2m, er);
-
-			if (cc) {
-				cc->proxy_init_errors++;
-				if (cc->proxy_init_errors > 20) //TODO: Configuration?
-					cc_cycle_connection();
-			}
-		}
-		return -1;
-	}
-	return cc_send_ecm_int(NULL, buf);
-}
-
 
 /*
  static int cc_abort_user_ecms(){
@@ -1191,20 +1174,6 @@ static int caid_filtered(int ridx, int caid) {
 	return defined;
 }
 
-static int cc_retry_ecm(struct cc_data *cc, struct cc_current_card *current_card) {
-	if (reader[ridx].cc_disable_retry_ecm || (!current_card && !cc->current_ecm_cidx)) {
-		cc_send_ecm(NULL, NULL);
-		return 0;
-	}
-	if (!current_card)
-		current_card = &cc->current_card[cc->current_ecm_cidx];
-
-	cs_debug_mask(D_TRACE, "%s retrying ecm for sid %04X...", getprefix(), current_card->sid);
-	pthread_mutex_unlock(&cc->ecm_busy);
-	cc->current_ecm_cidx = 0;
-	return cc_send_ecm_int(&current_card->last_ecm_request, NULL);
-}
-
 static int null_dcw(uint8 *dcw)
 {
 	int i;
@@ -1457,9 +1426,9 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			current_card = NULL;
 		reader[ridx].available = 0;
 		pthread_mutex_unlock(&cc->ecm_busy);
-			
-		//because we have an valid cc->current_ecm_idx, so we can retry ECM
-		cc_retry_ecm(cc, current_card);
+		
+		if (!cfg->cc_disable_retry_ecm)	
+			cc_send_ecm(NULL, NULL);
 
 		ret = 0;
 		
@@ -1518,11 +1487,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			
 			//cc_abort_user_ecms();
 
-			if (buf[1] == MSG_CW_NOK1)
-				cc_retry_ecm(cc, current_card);
-			else
-				cc_send_ecm(NULL, NULL);
-			
+			cc_send_ecm(NULL, NULL);
 
 			if (cc->max_ecms)
 				cc->ecm_counter++;
@@ -1630,7 +1595,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		cs_log("%s max ecms (%d) reached, cycle connection!", getprefix(),
 				cc->max_ecms);
 		cc_cycle_connection();
-		cc_retry_ecm(cc, NULL);
+		cc_send_ecm(NULL, NULL);
 		ret = 0;
 	}
 	return ret;

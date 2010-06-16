@@ -78,7 +78,6 @@ struct cc_current_card {
 	struct cc_card *card;
 	uint32 prov;
 	uint16 sid;
-	ECM_REQUEST last_ecm_request;
 };
 
 typedef enum {
@@ -128,8 +127,6 @@ struct cc_data {
 	int current_ecm_cidx; //index to last current_card (reader)
 	struct cc_current_card *current_card; //initialized by reader (index CS_MAXPID)
 	struct cc_card *server_card; 		   //initialized by client
-
-	unsigned long crc;
 
 	pthread_mutex_t lock;
 	pthread_mutex_t ecm_busy;
