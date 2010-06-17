@@ -5,6 +5,7 @@
 #include "module-obj-llist.h"
 #include <time.h>
 #include "reader-common.h"
+#include <poll.h>
 
 extern struct s_reader *reader;
 
@@ -336,7 +337,8 @@ static int cc_msg_recv(uint8 *buf) {
 	if (handle < 0)
 		return -1;
 
-	len = recv(handle, netbuf, 4, MSG_WAITALL);
+	//len = recv(handle, netbuf, 4, MSG_WAITALL);
+	len = read(handle, netbuf, 4);
 	
 	if (!len)
 		return 0;
@@ -358,11 +360,12 @@ static int cc_msg_recv(uint8 *buf) {
 			return 0;
 		}
 
-		len = recv(handle, netbuf + 4, size,
-				MSG_WAITALL); // read rest of msg
+		len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
+		//len = read(handle, netbuf + 4, size); // read rest of msg
+		//?? When using read we get "invalid message length" ??
 
 		if (len != size) {
-			cs_log("%s invalid message length read", getprefix());
+			cs_log("%s invalid message length read (expected %d, read=%d)", getprefix(), size, len);
 			return -1;
 		}
 
@@ -541,7 +544,10 @@ static int send_cmd05_answer()
 	if (!cc->cmd05_active || cc->current_ecm_cidx) //exit if not in cmd05 or waiting for ECM answer
 		return 0;
 		
-	cc->cmd05_active = 0;
+	cc->cmd05_active--;
+	if (cc->cmd05_active)
+		return 0;
+		
 	uint8 *data = cc->cmd05_data;
 	cc_cmd05_mode cmd05_mode = MODE_UNKNOWN;
 	
@@ -1216,7 +1222,7 @@ static int is_dcw_corrupted(uchar *dcw)
     uchar i;
     unsigned char c, cs;
 
-    for (i=0; i<16; i+=4)
+    for (i=0; i<12; i+=4)
     {
        c = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
        cs = dcw[i+3];
@@ -1488,10 +1494,12 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				memcpy(cc->dcw, buf + 4, 16);
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
-				if (is_null_dcw(cc->dcw) || is_dcw_corrupted(cc->dcw)) {
+				int dcw_corrupted = is_dcw_corrupted(cc->dcw);
+				if (dcw_corrupted || is_null_dcw(cc->dcw)) {
 					cs_log("%s corrupted dcw received! sid=%04X(%d)", getprefix(), 
 						current_card->srvid.sid, current_card->srvid.ecmlen);
-					add_sid_block(card, &current_card->srvid);
+					if (!dcw_corrupted)
+						add_sid_block(card, &current_card->srvid);
 					current_card->card = NULL;
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
@@ -1539,11 +1547,9 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			l = l - 4;//Header Length=4 Byte
 
 			cs_log("%s MSG_CMD_05 recvd, payload length=%d mode=%d", getprefix(), l, cc->cmd05_mode);
-			cc->cmd05_active = 1;
+			cc->cmd05_active = 4;
 			cc->cmd05_data_len = l;
 			memcpy(&cc->cmd05_data, buf+4, l);
-			if (!cc->current_ecm_cidx) //Send only if there is no ECM processing!
-				send_cmd05_answer();
 		}
 		ret = 0;
 		break;
@@ -1738,7 +1744,8 @@ static int cc_cli_connect(void) {
 	}
 
 	// get init seed
-	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
+	//if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
+	if ((n = read(handle, data, 16)) != 16) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
@@ -1807,7 +1814,8 @@ static int cc_cli_connect(void) {
 	cc_crypt(&cc->block[ENCRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
 	cc_cmd_send(buf, 6, MSG_NO_HEADER); // send 'CCcam' xor w/ pwd
 
-	if ((n = recv(handle, data, 20, MSG_WAITALL)) != 20) {
+	//if ((n = recv(handle, data, 20, MSG_WAITALL)) != 20) {
+	if ((n = read(handle, data, 20)) != 20) {
 		cs_log("%s login failed, pwd ack not received (n = %d)", getprefix(), n);
 		return -2;
 	}
@@ -2145,7 +2153,8 @@ static int cc_srv_connect() {
 	cc_init_crypt(&cc->block[DECRYPT], data, 16);
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
-	if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
+	//if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
+	if ((i = read(pfd, buf, 20)) == 20) {
 		cs_ddump(buf, 20, "cccam: recv:");
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 		cs_ddump(buf, 20, "cccam: hash:");
@@ -2153,7 +2162,8 @@ static int cc_srv_connect() {
 		return -1;
 
 	// receive username
-	if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
+	//if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
+	if ((i = read(pfd, buf, 20)) == 20) {
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 		cs_ddump(buf, 20, "cccam: username '%s':", buf);
 		strncpy(usr, (char *) buf, sizeof(usr));
@@ -2168,7 +2178,8 @@ static int cc_srv_connect() {
 
 	// receive passwd / 'CCcam'
 	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), DECRYPT);
-	if ((i = recv(pfd, buf, 6, MSG_WAITALL)) == 6) {
+	//if ((i = recv(pfd, buf, 6, MSG_WAITALL)) == 6) {
+	if ((i = read(pfd, buf, 6)) == 6) {
 		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
 		cs_ddump(buf, 6, "cccam: pwd check '%s':", buf);
 	} else
