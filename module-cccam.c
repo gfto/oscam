@@ -9,7 +9,6 @@
 extern struct s_reader *reader;
 
 int g_flag = 0;
-int connect_error_count = 0;
 
 //Mode names for CMD_05 command:
 char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4", "LEN=0" };
@@ -1744,17 +1743,12 @@ static int cc_cli_connect(void) {
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
 		network_tcp_connection_close(&reader[ridx], handle);
-		connect_error_count++; //Expand sleep time
-		if (err == ENOTCONN) { //TCPIP is too busy-we have to wait!
-			int sleeptime = connect_error_count*3000;
-			if (sleeptime > 10*60*1000) //do not wait longer than 10min
-				sleeptime = 10*60*1000;
-			cs_sleepms(sleeptime);
+		if (err == ENOTCONN) { //TCPIP : Port/handle not useable
+			handle = client[cs_idx].udp_fd = pfd = 0;
 		}
 		return -2;
 	}
 	struct cc_data *cc = reader[ridx].cc;
-	connect_error_count = 0;
 
 	if (!cc) {
 		// init internals data struct
