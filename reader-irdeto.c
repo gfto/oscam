@@ -198,7 +198,7 @@ int irdeto_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
   cs_ri_log(reader, "detect irdeto card");
   
-  if(reader->has_rsa) // we use rsa from config as camkey
+  if(reader->has_rsa && !reader->force_irdeto) // we use rsa from config as camkey
   {
   	cs_debug("[irdeto-reader] using camkey data from config");
   	memcpy(&sc_GetCamKey383C[5], reader->rsa_mod, 0x40);
