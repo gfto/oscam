@@ -2797,6 +2797,21 @@ int main (int argc, char *argv[])
     fclose(fp);
   }
 
+  // /tmp/oscam.version file (Uptime + Version)
+  FILE *fp;
+  if (!(fp=fopen("/tmp/oscam.version", "w"))) {
+	  cs_log("Cannot open oscam.version (errno=%d)", errno);
+  } else {
+	  time_t now = time((time_t)0);
+	  struct tm *st;
+	  st = localtime(&now);
+	  fprintf(fp, "uxstarttime: %d\n", (int)now);
+	  fprintf(fp, "starttime: %02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
+	  fprintf(fp, " %02d:%02d:%02d\n", st->tm_hour, st->tm_min, st->tm_sec);
+	  fprintf(fp, "version: %s#%s\n", CS_VERSION, CS_SVN_VERSION);
+	  fclose(fp);
+  }
+
   for (i=0; i<CS_MAX_MOD; i++)
     if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )
       for(j=0; j<ph[i].ptab->nports; j++)
