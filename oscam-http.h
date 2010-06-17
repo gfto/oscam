@@ -46,7 +46,8 @@ A:active {color: #050840;}\n\
 A:hover {color: #ff9e5f;}\n\
 DIV.message {float:right}\n\
 IMG{border:0px solid;}\n\
-P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n"
+P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
+H4.styleauthor:after {content:\"Eneen\";}\n"
 
 #define ICMAI "data:image/x-icon;base64,\
 AAABAAEAEBAAAAEACABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAQAEAAAAAAAAAAAAAAAAA\
@@ -213,7 +214,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<H2>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2>"
 
 #define TPLFOOTER "\
-		<HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>Start: ##STARTDATE## - ##STARTTIME## | UpTime: ##UPTIME## </H4><H4>embedded Style by Eneen</H4>\
+		<HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>Start: ##STARTDATE## - ##STARTTIME## | UpTime: ##UPTIME## </H4><H4 CLASS=\"styleauthor\">WebIf Style by </H4>\
 		</BODY>\
 		</HTML>"
 
