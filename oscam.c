@@ -1914,6 +1914,10 @@ void chk_dcw(int fd)
   }
   else    // not found (from ONE of the readers !)
   {
+    //save reader informations for loadbalance-statistics:
+	ECM_REQUEST *save_ert = ert;
+	int save_ridx = er->reader[0];
+
 	//
     int i;
     ert->reader[er->reader[0]]=0;
@@ -1922,6 +1926,7 @@ void chk_dcw(int fd)
         ert=(ECM_REQUEST *)0;
       }
     if (ert) ert->rc=4;
+    else send_reader_stat(save_ridx, save_ert, 0);
   }
   if (ert) send_dcw(ert);
   return;

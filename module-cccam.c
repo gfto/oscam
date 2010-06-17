@@ -284,6 +284,7 @@ static void cc_cli_close() {
 	reader[ridx].tcp_connected = 0;
 	reader[ridx].card_status = CARD_FAILURE;
 	reader[ridx].available = 0;
+	reader[ridx].card_system = 0;
 
 	//cs_sleepms(100);
 	if (pfd) {
@@ -692,6 +693,9 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	struct cc_srvid cur_srvid;
 	cur_srvid.sid = cur_er->srvid;
 	cur_srvid.ecmlen = cur_er->l;
+
+	//For EMM:
+	reader[ridx].card_system = get_cardsystem(cur_er->caid);
 
 	//First check last used card:
 	cc->current_ecm_cidx = cur_er->cidx;
@@ -1857,6 +1861,7 @@ static int cc_cli_connect(void) {
 	reader[ridx].last_g = reader[ridx].last_s = time((time_t *) 0);
 	reader[ridx].tcp_connected = 1;
 	reader[ridx].available = 1;
+	reader[ridx].card_system = get_cardsystem(reader[ridx].caid[0]);
 
 	cc->just_logged_in = 1;
 
