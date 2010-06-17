@@ -335,6 +335,9 @@ void cs_exit(int sig)
                 if (unlink(cfg->pidfile) < 0)
                   cs_log("cannot remove pid file %s errno=(%d)", cfg->pidfile, errno);
               }
+              if (unlink("/tmp/oscam.version") < 0)
+            	  cs_log("cannot remove /tmp/oscam.version errno=(%d)", errno);
+
               cs_log("cardserver down");
 #ifndef CS_NOSHM
               if (ecmcache) shmdt((void *)ecmcache);
