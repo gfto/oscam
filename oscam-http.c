@@ -1713,16 +1713,16 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	tpl_addVar(vars, 0, "LOGHISTORY", "the flag CS_LOGHISTORY is not set in your binary<BR>\n");
 #endif
 
-	tpl_printf(vars, 0, "SDEBUG", "%s&nbsp;%d to&nbsp;\n", "Switch Debug from", cfg->debuglvl);
-	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=0\" title=\"no debugging (default)\">0</A>&nbsp;\n");
-	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=1\" title=\"detailed error messages\">1</A>&nbsp;\n");
-	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=2\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n");
-	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=4\" title=\"traffic from/to the reader\">4</A>&nbsp;\n");
-	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=8\" title=\"traffic from/to the clients\">8</A>&nbsp;\n");
-	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=16\" title=\"traffic to the reader-device on IFD layer\">16</A>&nbsp;\n");
-	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=32\" title=\"traffic to the reader-device on I/O layer\">32</A>&nbsp;\n");
-	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=64\" title=\"EMM logging\">64</A>&nbsp;\n");
-	tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"status.html?debug=255\" title=\"debug all\">255</A>\n");
+	tpl_printf(vars, 0, "SDEBUG", "<SPAN CLASS=\"debugt\"> %s&nbsp;%d to&nbsp;</SPAN>\n", "Switch Debug from", cfg->debuglvl);
+	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=0\" title=\"no debugging (default)\">0</A>&nbsp;\n");
+	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=1\" title=\"detailed error messages\">1</A>&nbsp;\n");
+	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=2\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n");
+	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=4\" title=\"traffic from/to the reader\">4</A>&nbsp;\n");
+	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=8\" title=\"traffic from/to the clients\">8</A>&nbsp;\n");
+	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=16\" title=\"traffic to the reader-device on IFD layer\">16</A>&nbsp;\n");
+	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=32\" title=\"traffic to the reader-device on I/O layer\">32</A>&nbsp;\n");
+	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=64\" title=\"EMM logging\">64</A>&nbsp;\n");
+	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=255\" title=\"debug all\">255</A>\n");
 
 	fputs(tpl_getTpl(vars, "STATUS"), f);
 }
@@ -1963,23 +1963,23 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 			}
 		}
 
-		tpl_printf(vars, 0, "SDEBUG", "%s&nbsp;%d to&nbsp;\n", "Switch Debug from", cfg->debuglvl);
-		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=0\" title=\"no debugging (default)\">0</A>&nbsp;\n");
-		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=1\" title=\"detailed error messages\">1</A>&nbsp;\n");
-		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=2\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n");
-		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=4\" title=\"traffic from/to the reader\">4</A>&nbsp;\n");
-		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=8\" title=\"traffic from/to the clients\">8</A>&nbsp;\n");
-		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=16\" title=\"traffic to the reader-device on IFD layer\">16</A>&nbsp;\n");
-		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=32\" title=\"traffic to the reader-device on I/O layer\">32</A>&nbsp;\n");
-		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=64\" title=\"EMM logging\">64</A>&nbsp;\n");
-		tpl_addVar(vars, 1, "SDEBUG", "<A HREF=\"files.html?part=logfile&debug=255\" title=\"debug all\">255</A>&nbsp;&nbsp;|\n");
+		tpl_printf(vars, 0, "SDEBUG", "<SPAN CLASS=\"debugt\"> %s&nbsp;%d to&nbsp;</SPAN>\n", "Switch Debug from", cfg->debuglvl);
+		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=0\" title=\"no debugging (default)\">0</A>&nbsp;\n");
+		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=1\" title=\"detailed error messages\">1</A>&nbsp;\n");
+		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=2\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n");
+		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=4\" title=\"traffic from/to the reader\">4</A>&nbsp;\n");
+		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=8\" title=\"traffic from/to the clients\">8</A>&nbsp;\n");
+		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=16\" title=\"traffic to the reader-device on IFD layer\">16</A>&nbsp;\n");
+		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=32\" title=\"traffic to the reader-device on I/O layer\">32</A>&nbsp;\n");
+		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=64\" title=\"EMM logging\">64</A>&nbsp;\n");
+		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=255\" title=\"debug all\">255</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|</SPAN>\n");
 
 		if(!cfg->disablelog)
-			tpl_printf(vars, 0, "SLOG", "<A HREF=\"files.html?part=logfile&stoplog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 1, "Stop Log");
+			tpl_printf(vars, 0, "SLOG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
 		else
-			tpl_printf(vars, 0, "SLOG", "<A HREF=\"files.html?part=logfile&stoplog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
+			tpl_printf(vars, 0, "SLOG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 0, "Start Log");
 
-		tpl_printf(vars, 0, "SCLEAR", "<A HREF=\"files.html?part=logfile&clear=logfile\">%s</A><BR><BR>\n", "Clear Log");
+		tpl_printf(vars, 0, "SCLEAR", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&clear=logfile\">%s</A><BR><BR>\n", "Clear Log");
 	}
 	else if (strcmp(getParam(params, "part"), "userfile") == 0) {
 		snprintf(targetfile, 255,"%s", cfg->usrfile);
