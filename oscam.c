@@ -2828,7 +2828,11 @@ int main (int argc, char *argv[])
 #else
 	  fprintf(fp, "gboxsupport: no\n");
 #endif
-
+#ifdef CS_ANTICASC
+	  fprintf(fp, "anticascsupport: yes\n");
+#else
+	  fprintf(fp, "anticascsupport: no\n");
+#endif
 	  fclose(fp);
   }
 

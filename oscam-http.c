@@ -1953,6 +1953,8 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.services");
 	else if (strcmp(getParam(params, "part"), "srvid") == 0)
 	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.srvid");
+	else if (strcmp(getParam(params, "part"), "provid") == 0)
+	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.provid");
 	else if (strcmp(getParam(params, "part"), "logfile") == 0) {
 		snprintf(targetfile, 255,"%s", cfg->logfile);
 
