@@ -2812,6 +2812,23 @@ int main (int argc, char *argv[])
 	  fprintf(fp, "starttime: %02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
 	  fprintf(fp, " %02d:%02d:%02d\n", st->tm_hour, st->tm_min, st->tm_sec);
 	  fprintf(fp, "version: %s#%s\n", CS_VERSION, CS_SVN_VERSION);
+	  fprintf(fp, "maxpid: %d\n", CS_MAXPID);
+#ifdef WEBIF
+	  fprintf(fp, "webifsupport: yes\n");
+#else
+	  fprintf(fp, "webifsupport: no\n");
+#endif
+#ifdef HAVE_DVBAPI
+	  fprintf(fp, "dvbapisupport: yes\n");
+#else
+	  fprintf(fp, "dvbapisupport: no\n");
+#endif
+#ifdef CS_WITH_GBOX
+	  fprintf(fp, "gboxsupport: yes\n");
+#else
+	  fprintf(fp, "gboxsupport: no\n");
+#endif
+
 	  fclose(fp);
   }
 
