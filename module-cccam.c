@@ -1502,7 +1502,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					cc->crc++; //So ecm could retryied
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
-				if (is_null_dcw(cc->dcw)) {
+				else if (is_null_dcw(cc->dcw)) {
 					cs_log("%s null dcw received! sid=%04X(%d)", getprefix(), 
 					  current_card->srvid.sid, current_card->srvid.ecmlen);
 					add_sid_block(card, &current_card->srvid);
