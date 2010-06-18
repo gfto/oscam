@@ -860,9 +860,12 @@ static int cc_send_pending_emms() {
 	uint8 *emmbuf = llist_itr_init(cc->pending_emms, &itr);
 	if (emmbuf) {
 		if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
-			return 0;
+			return 0; //send later with cc_send_ecm
 		}
 		int size = emmbuf[11]+12;
+		
+		cs_debug_mask(D_EMM, "%s emm send for card %08X", getprefix(), b2i(4, emmbuf+7));
+		
 		cc_cmd_send(emmbuf, size, MSG_EMM_ACK); // send emm
  		free(emmbuf);
  		llist_itr_remove(&itr);
@@ -895,7 +898,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 		return -1;
 	}
 
-	cs_debug_mask(D_EMM, "%s emm for client %d caid %04X for card %08X", getprefix(), ep->cidx,
+	cs_debug_mask(D_EMM, "%s emm received for client %d caid %04X for card %08X", getprefix(), ep->cidx,
 			b2i(2, (uchar*)&ep->caid), emm_card->id);
 
 	reader[ridx].available = 0;
@@ -909,13 +912,13 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	memset(emmbuf, 0, CC_MAXMSGSIZE);
 
 	// build ecm message
-	emmbuf[0] = (uint16)(emm_card->caid) >> 8;
-	emmbuf[1] = (uint16)(emm_card->caid) & 0xff;
+	emmbuf[0] = ep->caid[0];
+	emmbuf[1] = ep->caid[1];
 	emmbuf[2] = 0;
-	emmbuf[3] = (ulong)(ep->provid) >> 24;
-	emmbuf[4] = (ulong)(ep->provid) >> 16;
-	emmbuf[5] = (ulong)(ep->provid) >> 8;
-	emmbuf[6] = (ulong)(ep->provid) & 0xff;
+	emmbuf[3] = ep->provid[0];
+	emmbuf[4] = ep->provid[1];
+	emmbuf[5] = ep->provid[2];
+	emmbuf[6] = ep->provid[3];
 	emmbuf[7] = emm_card->id >> 24;
 	emmbuf[8] = emm_card->id >> 16;
 	emmbuf[9] = emm_card->id >> 8;
@@ -923,14 +926,8 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	emmbuf[11] = ep->l;
 	memcpy(emmbuf + 12, ep->emm, ep->l);
 
-	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
-		llist_append(cc->pending_emms, emmbuf);
-	}
-	else {
- 		cc_cmd_send(emmbuf, size, MSG_EMM_ACK); // send emm
- 		free(emmbuf);
-	}
-	return size;
+	llist_append(cc->pending_emms, emmbuf);
+	return cc_send_pending_emms();
 }
 
 //SS: Hack
