@@ -15,6 +15,9 @@ DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
+       cachedelay = milli-seconds
+	  value to delay cached requests, default:0
+
        logfile = filename|/dev/null|/dev/tty|syslog
 	  logging target, default: /var/log/oscam.log
 
