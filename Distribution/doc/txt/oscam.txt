@@ -1,4 +1,4 @@
-oscam(1)							      oscam(1)
+oscam(1)												     oscam(1)
 
 
 
@@ -9,47 +9,45 @@ SYNOPSIS
        oscam
 
 DESCRIPTIONS
-       The  OSCam software is an open source multi-protocol/multi-plattform SC
-       server.
+       The OSCam software is an open source multi-protocol/multi-plattform SC server.
 
        OSCam supports the following protocols:
 
-	 camd 3.3x
+       ·  camd 3.3x
 
-	 camd 3.5x
+       ·  camd 3.5x
 
-	 newcamd with AU support, cascading/remote server ECM support
+       ·  newcamd with AU support, cascading/remote server ECM support
 
-	 radegast
+       ·  radegast
 
-	 serial (HSIC, SSSP, BOMBA, DSR 9500)
+       ·  serial (HSIC, SSSP, BOMBA, DSR 9500)
 
-	 camd 3.57x with AU support, cascading/remote server ECM support
+       ·  camd 3.57x with AU support, cascading/remote server ECM support
 
-	 camd 3.78x with AU support, cascading/remote server ECM support
+       ·  camd 3.78x with AU support, cascading/remote server ECM support
 
-	 gbox with AU support, cascading/remote server ECM support
+       ·  gbox with AU support, cascading/remote server ECM support
 
-	 CCcam with AU support, cascading/remote server ECM support
+       ·  CCcam with AU support, cascading/remote server ECM support
 
-	 DVB API with AU, multi tuner and PIP support
+       ·  DVB API with AU, multi tuner and PIP support
 
        OSCam works on the following plattforms:
 
-	 Linux (tuxbox, arm, mips, mipsel, sh4, powerpc, ...)
+       ·  Linux (tuxbox, arm, mips, mipsel, sh4, powerpc, ...)
 
-	 Windows (based on cygwin1.dll)
+       ·  Windows (based on cygwin1.dll)
 
-	 Mac OS X
+       ·  Mac OS X
 
 OPTIONS
        -b
-	  starts in background
+	  starts in background, writing /tmp/oscam.version with starttime and version info
 
        -c <directory>
-	  read configuration from  <directory>,  default:  see	CS_CONFDIR  in
-	  globals.h, while starting OSCam prints warnings on invalid keywords,
-	  comment lines start with # character.
+	  read	configuration  from  <directory>,  default:  see CS_CONFDIR in globals.h, while starting OSCam prints
+	  warnings on invalid keywords, comment lines start with # character.
 
        -d <level>
 	  debug level mask:
@@ -63,17 +61,16 @@ OPTIONS
 	   255 = debug all
 
        -m <filename>
-	  use <filename> as mmaped memory file, default:  see  CS_MMAPFILE  in
-	  globals.h,  needed  for  embedded  systems without shared memory and
-	  windows
+	  use <filename> as mmaped memory file, default: see CS_MMAPFILE in globals.h, needed  for  embedded  systems
+	  without shared memory and windows
 
        -h
 	  usage
 
 SIGNALS
        SIGHUP
-	  reinit user db, clients and anti-cascading, for newcamd connections:
-	  after reloading the ident, please restart newcamd client
+	  reinit  user	db,  clients  and  anti-cascading, for newcamd connections: after reloading the ident, please
+	  restart newcamd client
 
        SIGUSR1
 	  shift debug level to next level (see debug level mask above)
@@ -82,10 +79,9 @@ SIGNALS
 	  get reader SC info
 
 SEE ALSO
-       list_smargo(1),	  oscam.conf(5),    oscam.user(5),    oscam.server(5),
-       oscam.srvid(5),	 oscam.guess(5),   oscam.cert(5),   oscam.services(5),
-       oscam.ird(5)
+       list_smargo(1), oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.guess(5),  oscam.ird(5),  oscam.provid(5),
+       oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.user(5)
 
 
 
-								      oscam(1)
+													     oscam(1)

@@ -333,8 +333,8 @@ DESCRIPTIONS
        enabled = 0|1
 	  1 = DVB API enabled, default:0
 
-	  Use  the  file /tmp/.pauseoscam to stop DVB API only, e.g. if STB goes into standby and OSCam remains as SC
-	  server only.
+	  Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby and OSCam remains as SC server
+	  only.
 
        user = username
 	  user name for DVB API client, default:anonymous
