@@ -773,9 +773,11 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 						+ 1, cc->send_ecmtask);
 		cc_cmd_send(ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
 
-		//For EMM:
-		reader[ridx].card_system = get_cardsystem(reader[ridx].caid[0]);
-		//reader[ridx].card_system = get_cardsystem(card->caid);
+		//For EMM
+		if (reader[ridx].caid[0])
+			reader[ridx].card_system = get_cardsystem(reader[ridx].caid[0]);
+		else
+			reader[ridx].card_system = get_cardsystem(card->caid);
 		memset(reader[ridx].hexserial, 0, sizeof(reader[ridx].hexserial));
 		memcpy(reader[ridx].hexserial, &card->id, sizeof(card->id));
 
