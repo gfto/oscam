@@ -2005,16 +2005,20 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	snprintf(targetfile, 255,"%s", cfg->ac_logfile);
 #endif
 
-	if((strlen(targetfile) > 0) && (file_exists(targetfile) == 1)) {
-		FILE *fp;
-		char buffer[256];
+	if (!strstr(targetfile, "/dev/")) {
+		if((strlen(targetfile) > 0) && (file_exists(targetfile) == 1)) {
+			FILE *fp;
+			char buffer[256];
 
-		if((fp = fopen(targetfile,"r")) == NULL) return;
-		while (fgets(buffer, sizeof(buffer), fp) != NULL)
-		tpl_printf(vars, 1, "FILECONTENT", "%s", buffer);
-		fclose (fp);
+			if((fp = fopen(targetfile,"r")) == NULL) return;
+			while (fgets(buffer, sizeof(buffer), fp) != NULL)
+				tpl_printf(vars, 1, "FILECONTENT", "%s", buffer);
+			fclose (fp);
+		} else {
+			tpl_addVar(vars, 1, "FILECONTENT", "File not exist");
+		}
 	} else {
-		tpl_addVar(vars, 1, "FILECONTENT", "File not exist");
+		tpl_addVar(vars, 1, "FILECONTENT", "File not valid");
 	}
 
 	fputs(tpl_getTpl(vars, "FILE"), f);
