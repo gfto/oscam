@@ -132,22 +132,6 @@ static void cc_cw_crypt(uint8 *cws, uint32 cardid) {
 	}
 }
 
-static void cc_drop_pending_ecms()
-{
-	struct cc_data *cc = reader[ridx].cc;
-	if (cc && cc->current_ecm_cidx) { //dropping pending ecms:
-        	int n;
-        	ECM_REQUEST *er;
-        	while ((n = cc_get_nxt_ecm()) >= 0) {
-        		er = &ecmtask[n];
-        		er->rc = 0;
-        		er->rcEx = 0x27;
-        		write_ecm_answer(&reader[ridx], fd_c2m, er);
-        	}
-        	cc->current_ecm_cidx = 0;
-	}
-}
-
 /**
  * reader
  * cleans autoblock list
@@ -676,7 +660,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		
 		if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
 			//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
-			cur_er->rc = 99; //ECM already sendT
+			cur_er->rc = 99; //ECM already send
 		}
 		cc->crc = crc32(0, cur_er->ecm, cur_er->l);
 		
@@ -1653,8 +1637,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
 				int au = client[cs_idx].au;
-				if ((au < 0) || (au > CS_MAXREADER))
+				if ((au < 0) || (au > CS_MAXREADER)) {
+					cc_cmd_send(NULL, 0, MSG_CW_NOK2); //Send back NOK
 					return 0;
+				}
 
 				EMM_PACKET *emm = malloc(sizeof(EMM_PACKET));
 				memset(emm, 0, sizeof(EMM_PACKET));
@@ -2409,11 +2395,7 @@ int cc_cli_init() {
 			reader[ridx].cc_maxhop, !reader[ridx].cc_disable_retry_ecm,
 			!reader[ridx].cc_disable_auto_block);
 
-	int ret = cc_cli_connect();
-	if (ret < 0)
-		 cc_drop_pending_ecms();
-
-	return (ret);
+	return cc_cli_connect();
 }
 
 /**
