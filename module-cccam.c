@@ -1462,30 +1462,32 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
-		if (is_server || !cc->current_ecm_cidx) //for reader only
+		if (is_server) //for reader only
 			return 0;
 
 		if (cc->just_logged_in)
 			return -1; // reader restart needed
 
-		struct cc_current_card *current_card = &cc->current_card[cc->current_ecm_cidx];
+		if (cc->current_ecm_cidx) {
+			struct cc_current_card *current_card = &cc->current_card[cc->current_ecm_cidx];
 
-		cs_debug_mask(D_TRACE, "%s cw nok (%d), sid = %04X(%d)", getprefix(), buf[1], 
-			current_card->srvid.sid, current_card->srvid.ecmlen);
-		struct cc_card *card = current_card->card;
-		if (card) {
-			add_sid_block(card, &current_card->srvid);
-			current_card->card = NULL;
+			cs_debug_mask(D_TRACE, "%s cw nok (%d), sid = %04X(%d)", getprefix(), buf[1], 
+				current_card->srvid.sid, current_card->srvid.ecmlen);
+			struct cc_card *card = current_card->card;
+			if (card) {
+				add_sid_block(card, &current_card->srvid);
+				current_card->card = NULL;
+			}
+			else
+				current_card = NULL;
 		}
-		else
-			current_card = NULL;
 		reader[ridx].available = 0;
 		pthread_mutex_unlock(&cc->ecm_busy);
 		
 		if (!reader[ridx].cc_disable_retry_ecm)	{
 			cc->crc++;
-			cc_send_ecm(NULL, NULL);
 		}
+		cc_send_ecm(NULL, NULL);
 
 		ret = 0;
 		
@@ -1557,7 +1559,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					int i = 0;
 					for (i = 0; i < CS_MAXPENDING; i++) {
 						if (ecmtask[i].idx == cc->send_ecmtask)
-							ecmtask[i].rc = 99; //Mark as received
+							ecmtask[i].rc = 0; //Mark as received
 					}
 					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
 						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
