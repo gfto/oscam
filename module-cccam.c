@@ -863,6 +863,12 @@ static int cc_send_pending_emms() {
 			return 0; //send later with cc_send_ecm
 		}
 		int size = emmbuf[11]+12;
+	
+		reader[ridx].available = 0;
+		cc->current_ecm_cidx = ep->cidx;
+
+		cc->proxy_init_errors = 0;
+		cc->just_logged_in = 0;
 		
 		cs_debug_mask(D_EMM, "%s emm send for card %08X", getprefix(), b2i(4, emmbuf+7));
 		
@@ -901,15 +907,9 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	cs_debug_mask(D_EMM, "%s emm received for client %d caid %04X for card %08X", getprefix(), ep->cidx,
 			b2i(2, (uchar*)&ep->caid), emm_card->id);
 
-	reader[ridx].available = 0;
-	cc->current_ecm_cidx = ep->cidx;
-
-	cc->proxy_init_errors = 0;
-	cc->just_logged_in = 0;
-
 	int size = ep->l+12;
 	uint8 *emmbuf = malloc(size);
-	memset(emmbuf, 0, CC_MAXMSGSIZE);
+	memset(emmbuf, 0, size);
 
 	// build ecm message
 	emmbuf[0] = ep->caid[0];
