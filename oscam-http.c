@@ -807,8 +807,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		for (i = 0; i < 64; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", reader[ridx].rsa_mod[i]);
 		for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", reader[ridx].nagra_boxkey[i]);
 	}
-	if ( reader[i].atr[0])
-		for (i = 0; i < 64; i++) tpl_printf(vars, 1, "ATR", "%02X", reader[ridx].atr[i]);
+	if ( reader[ridx].atr[0])
+		for (i = 0; (reader[ridx].atr[i] != '\0') && (i < 64); i++) tpl_printf(vars, 1, "ATR", "%02X", reader[ridx].atr[i]);
 
 	if(reader[ridx].smargopatch)
 		tpl_addVar(vars, 0, "SMARGOPATCHCHECKED", "checked");
@@ -2005,7 +2005,7 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	snprintf(targetfile, 255,"%s", cfg->ac_logfile);
 #endif
 
-	if(strlen(targetfile) > 0 && file_exists(targetfile) == 1) {
+	if((strlen(targetfile) > 0) && (file_exists(targetfile) == 1)) {
 		FILE *fp;
 		char buffer[256];
 
@@ -2013,6 +2013,8 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 		while (fgets(buffer, sizeof(buffer), fp) != NULL)
 		tpl_printf(vars, 1, "FILECONTENT", "%s", buffer);
 		fclose (fp);
+	} else {
+		tpl_addVar(vars, 1, "FILECONTENT", "File not exist");
 	}
 
 	fputs(tpl_getTpl(vars, "FILE"), f);

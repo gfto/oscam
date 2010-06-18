@@ -2243,7 +2243,7 @@ int write_server()
 
 			if ( reader[i].atr[0] && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "atr", "");
-				for (j=0;j<64;j++) {
+				for (j=0; (reader[i].atr[j] != '\0') && (j < 64); j++) {
 					fprintf(f, "%02X", reader[i].atr[j]);
 				}
 				fprintf(f, "\n");
@@ -2944,11 +2944,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 
 	if ((!strcmp(token, "atr"))) {
-		if(strlen(value) == 0) {
-			memset(rdr->atr, 0, 64);
+		memset(rdr->atr, 0, 128);
+		int i = strlen(value);
+		if(i == 0) {
 			return;
 		} else {
-			key_atob_l(value, rdr->atr, 128);
+			key_atob_l(value, rdr->atr, i);
 			return;
 		}
 	}
