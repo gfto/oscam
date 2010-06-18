@@ -1728,7 +1728,7 @@ ECM_REQUEST *get_ecmtask()
 
 void send_reader_stat(int ridx, ECM_REQUEST *er, int info_only)
 {
-	if (!cfg->reader_auto_loadbalance)
+	if (!cfg->reader_auto_loadbalance || er->rc == 100)
 		return;
 	struct timeb tpe;
 	cs_ftime(&tpe);
@@ -1738,10 +1738,10 @@ void send_reader_stat(int ridx, ECM_REQUEST *er, int info_only)
 	memset(&add_stat, 0, sizeof(ADD_READER_STAT));
 	add_stat.ridx = ridx;
 	add_stat.time = time;
-	if (!info_only)
-		add_stat.rc   = er->rc;
-	else
+	if (info_only)
 		add_stat.rc = -1;
+	else
+		add_stat.rc   = er->rc;
 	add_stat.caid = er->caid;
 	add_stat.prid = er->prid;
 	add_stat.srvid = er->srvid;
