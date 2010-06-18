@@ -2275,8 +2275,7 @@ static int cc_srv_connect() {
 			cs_hexdump(0, cc->peer_node_id, 8), buf + 33, buf + 65);
 
 	// send cli data ack
-	if (cc_cmd_send(NULL, 0, MSG_CLI_DATA) < 0)
-		return -1;
+	cc_cmd_send(NULL, 0, MSG_CLI_DATA);
 
 	if (cc_send_srv_data() < 0)
 		return -1;
@@ -2300,13 +2299,13 @@ static int cc_srv_connect() {
 				break;
 			}
 
-			if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) < 0)
+			if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) <= 0)
 				break;
 
 			int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 			if (new_caid_info_count != caid_info_count) {
 				cc_srv_report_cards();
-				if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) < 0)
+				if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) <= 0)
 					break;
 			}
 		} else if (i <= 0)
