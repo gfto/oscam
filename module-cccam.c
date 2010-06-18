@@ -1481,7 +1481,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			else
 				current_card = NULL;
 		}
-		reader[ridx].available = 0;
+		reader[ridx].available = 1;
 		pthread_mutex_unlock(&cc->ecm_busy);
 		
 		if (!reader[ridx].cc_disable_retry_ecm)	{
@@ -1559,7 +1559,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					int i = 0;
 					for (i = 0; i < CS_MAXPENDING; i++) {
 						if (ecmtask[i].idx == cc->send_ecmtask)
-							ecmtask[i].rc = 0; //Mark as received
+							ecmtask[i].rc = 99; //Mark as received
 					}
 					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
 						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
@@ -1571,7 +1571,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			}
 
 			cc->current_ecm_cidx = 0;
-			reader[ridx].available = 0;
+			reader[ridx].available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
 			
 			//cc_abort_user_ecms();
@@ -1639,8 +1639,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
 				int au = client[cs_idx].au;
-				if ((au < 0) || (au > CS_MAXREADER)) {
-					cc_cmd_send(NULL, 0, MSG_CW_NOK2); //Send back NOK
+				if (au != ridx) {
+					cc_cmd_send(NULL, 0, MSG_CW_NOK1); //Send back NOK
 					return 0;
 				}
 
