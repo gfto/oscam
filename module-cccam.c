@@ -865,8 +865,7 @@ static int cc_send_pending_emms() {
 		int size = emmbuf[11]+12;
 	
 		reader[ridx].available = 0;
-		cc->current_ecm_cidx = ep->cidx;
-
+		cc->current_ecm_cidx = 0;
 		cc->proxy_init_errors = 0;
 		cc->just_logged_in = 0;
 		
