@@ -867,11 +867,6 @@ static int cc_send_emm(EMM_PACKET *ep) {
 		return -1;
 	}
 
-	int au = client[cs_idx].au;
-	if ((au < 0) || (au > CS_MAXREADER))
-		return -1;  // TODO
-
-
 	struct cc_card *emm_card = cc->current_card[ep->cidx].card;
 
 	if (!emm_card) { //Card for emm not found!
