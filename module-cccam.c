@@ -1220,17 +1220,25 @@ static int is_null_dcw(uint8 *dcw)
 
 static int is_dcw_corrupted(uchar *dcw)
 {
-    uchar i;
-    unsigned char c, cs;
+    int i;
+    int c, cs;
 
-    for (i=0; i<12; i+=4)
+    for (i=0; i<16; i+=4)
     {
        c = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
        cs = dcw[i+3];
        if (cs!=c) return (1);
     }
-    dcw[15]=dcw[12]+dcw[13]+dcw[14]; //make checksum correct
     return 0;
+}
+
+static void fix_dcw(uchar *dcw)
+{
+    int i;
+    for (i=0; i<16; i+=4)
+    {
+       dcw[i+3] = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
+    }
 }
 
 static int cc_parse_msg(uint8 *buf, int l) {
@@ -1497,12 +1505,28 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
 				if (is_dcw_corrupted(cc->dcw)) {
-					cs_log("%s corrupted dcw received! retrying sid=%04X(%d)", getprefix(), 
-					  current_card->srvid.sid, current_card->srvid.ecmlen);
-					cc->crc++; //So ecm could retryied
-					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
+					fix_dcw(cc->dcw);
+					
+					//cs_log("%s corrupted dcw received! retrying sid=%04X(%d)", getprefix(), 
+					//  current_card->srvid.sid, current_card->srvid.ecmlen);
+					//uint8 *dcw = cc->dcw;
+					//cs_log("%s corrupted dcw: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+					//  getprefix(),
+					//  dcw[0], dcw[1], dcw[2], dcw[3], dcw[4], dcw[5], dcw[6], dcw[7], 
+					//  dcw[8], dcw[9], dcw[10], dcw[11], dcw[12], dcw[13], dcw[14], dcw[15]);
+					//cs_log("%s dcw right:     %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
+					//  getprefix(),
+					//  dcw[0], dcw[1], dcw[2], (dcw[0]+dcw[1]+dcw[2]) & 0xFF, 
+					//  dcw[4], dcw[5], dcw[6], (dcw[4]+dcw[5]+dcw[6]) & 0xFF, 
+					//  dcw[8], dcw[9], dcw[10], (dcw[8]+dcw[9]+dcw[10]) & 0xFF, 
+					//  dcw[12], dcw[13], dcw[14], (dcw[12]+dcw[13]+dcw[14]) & 0xFF);
+					//add_sid_block(card, &current_card->srvid);
+					//current_card->card = NULL;
+					//cc->crc++; //So ecm could retryied
+					//buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
-				else if (is_null_dcw(cc->dcw)) {
+				//else 
+				if (is_null_dcw(cc->dcw)) {
 					cs_log("%s null dcw received! sid=%04X(%d)", getprefix(), 
 					  current_card->srvid.sid, current_card->srvid.ecmlen);
 					add_sid_block(card, &current_card->srvid);
