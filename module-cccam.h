@@ -124,6 +124,8 @@ struct cc_data {
 	LLIST *auto_blocked; //struct cc_auto_blocked //struct cc_auto_blocked
 	int just_logged_in; //true for checking NOK direct after login
 	uint8 key_table; //key for CMD 0B
+
+	LLIST *pending_emms; //pending emm list
 	
 	ulong crc;
 	uint32 send_ecmtask;

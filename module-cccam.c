@@ -25,6 +25,7 @@ static uchar fast_rnd() {
 
 static int cc_cli_init();
 static int cc_get_nxt_ecm();
+static int cc_send_pending_emms();
 
 char * prefix = NULL;
 
@@ -666,7 +667,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cs_debug("%s no ecm pending!", getprefix());
 			cc->current_ecm_cidx = 0;
-			send_cmd05_answer();
+			if (!cc_send_pending_emms())
+				send_cmd05_answer();
 			return 0; // no queued ecms
 		}
 		//cs_debug("cccam: ecm-task-idx = %d", n);
@@ -851,6 +853,24 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
  }
  */
 
+static int cc_send_pending_emms() {
+	struct cc_data *cc = reader[ridx].cc;
+
+	LLIST_ITR itr;
+	uint8 *emmbuf = llist_itr_init(cc->pending_emms, &itr);
+	if (emmbuf) {
+		if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
+			return 0;
+		}
+		int size = emmbuf[11]+12;
+		cc_cmd_send(emmbuf, size, MSG_EMM_ACK); // send emm
+ 		free(emmbuf);
+ 		llist_itr_remove(&itr);
+ 		return size;
+	}
+	return 0;
+}
+
 /**
  * EMM Procession
  * Copied from http://85.17.209.13:6100/file/8ec3c0c5d257/systems/cardclient/cccam2.c
@@ -867,6 +887,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 		return -1;
 	}
 
+
 	struct cc_card *emm_card = cc->current_card[ep->cidx].card;
 
 	if (!emm_card) { //Card for emm not found!
@@ -877,24 +898,24 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	cs_debug_mask(D_EMM, "%s emm for client %d caid %04X for card %08X", getprefix(), ep->cidx,
 			b2i(2, (uchar*)&ep->caid), emm_card->id);
 
-	pthread_mutex_lock(&cc->ecm_busy); //Unlock by NOK or EMM_ACK
 	reader[ridx].available = 0;
 	cc->current_ecm_cidx = ep->cidx;
 
 	cc->proxy_init_errors = 0;
 	cc->just_logged_in = 0;
 
-	uint8 emmbuf[CC_MAXMSGSIZE];
+	int size = ep->l+12;
+	uint8 *emmbuf = malloc(size);
 	memset(emmbuf, 0, CC_MAXMSGSIZE);
 
 	// build ecm message
-	emmbuf[0] = ep->caid[0];
-	emmbuf[1] = ep->caid[1];
+	emmbuf[0] = (uint16)(emm_card->caid) >> 8;
+	emmbuf[1] = (uint16)(emm_card->caid) & 0xff;
 	emmbuf[2] = 0;
-	emmbuf[3] = ep->provid[0];
-	emmbuf[4] = ep->provid[1];
-	emmbuf[5] = ep->provid[2];
-	emmbuf[6] = ep->provid[3];
+	emmbuf[3] = (ulong)(ep->provid) >> 24;
+	emmbuf[4] = (ulong)(ep->provid) >> 16;
+	emmbuf[5] = (ulong)(ep->provid) >> 8;
+	emmbuf[6] = (ulong)(ep->provid) & 0xff;
 	emmbuf[7] = emm_card->id >> 24;
 	emmbuf[8] = emm_card->id >> 16;
 	emmbuf[9] = emm_card->id >> 8;
@@ -902,7 +923,14 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	emmbuf[11] = ep->l;
 	memcpy(emmbuf + 12, ep->emm, ep->l);
 
-	return cc_cmd_send(emmbuf, ep->l + 12, MSG_EMM_ACK); // send emm
+	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
+		llist_append(cc->pending_emms, emmbuf);
+	}
+	else {
+ 		cc_cmd_send(emmbuf, size, MSG_EMM_ACK); // send emm
+ 		free(emmbuf);
+	}
+	return size;
 }
 
 //SS: Hack
@@ -992,6 +1020,16 @@ static void cc_free(struct cc_data *cc) {
 		free(cc->current_card);
 	if (cc->server_card)
 		free(cc->server_card);
+	if (cc->pending_emms) {
+		LLIST_ITR itr;
+		uint8 *ep = llist_itr_init(cc->pending_emms, &itr);
+		while (ep) {
+			free(ep);
+			ep = llist_itr_remove(&itr);
+		}
+		llist_destroy(cc->pending_emms);
+		cc->pending_emms = NULL;
+	}
 	free(cc);
 }
 
@@ -1803,6 +1841,7 @@ static int cc_cli_connect(void) {
 		cc->auto_blocked = llist_create();
 		cc->current_card = malloc(sizeof(struct cc_current_card)*CS_MAXPID);
 		memset(cc->current_card, 0, sizeof(struct cc_current_card)*CS_MAXPID);
+		cc->pending_emms = llist_create();
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
