@@ -877,8 +877,8 @@ static int cc_send_emm(EMM_PACKET *ep) {
 		return -1;
 	}
 
-	cs_debug_mask(D_TRACE, "%s emm for client %d caid %04X prov %04X for card %08X", getprefix(), ep->cidx,
-			b2i(2, (uchar*)&ep->caid), b2i(4, (uchar*)&ep->provid), emm_card->id);
+	cs_debug_mask(D_EMM, "%s emm for client %d caid %04X for card %08X", getprefix(), ep->cidx,
+			b2i(2, (uchar*)&ep->caid), emm_card->id);
 
 	pthread_mutex_lock(&cc->ecm_busy); //Unlock by NOK or EMM_ACK
 	reader[ridx].available = 0;
@@ -1619,7 +1619,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		cc->just_logged_in = 0;
 		if (is_server) { //EMM Request received
 			if (l > 4) {
-				cs_debug_mask(D_TRACE, "%s EMM Request received!", getprefix());
+				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
 				int au = client[cs_idx].au;
 				if ((au < 0) || (au > CS_MAXREADER))
@@ -1648,7 +1648,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cc_cmd_send(NULL, 0, MSG_EMM_ACK); //Send back ACK
 			}
 		} else { //Our EMM Request Ack!
-			cs_debug_mask(D_TRACE, "%s EMM ACK!", getprefix());
+			cs_debug_mask(D_EMM, "%s EMM ACK!", getprefix());
 			reader[ridx].available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cc->current_ecm_cidx = 0;
