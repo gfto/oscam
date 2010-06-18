@@ -1229,6 +1229,7 @@ static int is_dcw_corrupted(uchar *dcw)
        cs = dcw[i+3];
        if (cs!=c) return (1);
     }
+    dcw[15]=dcw[12]+dcw[13]+dcw[14]; //make checksum correct
     return 0;
 }
 
@@ -1495,13 +1496,18 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				memcpy(cc->dcw, buf + 4, 16);
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
-				int dcw_corrupted = is_dcw_corrupted(cc->dcw);
-				if (dcw_corrupted || is_null_dcw(cc->dcw)) {
-					cs_log("%s corrupted dcw received! sid=%04X(%d)", getprefix(), 
-						current_card->srvid.sid, current_card->srvid.ecmlen);
-					if (!dcw_corrupted)
-						add_sid_block(card, &current_card->srvid);
+				if (is_dcw_corrupted(cc->dcw)) {
+					cs_log("%s corrupted dcw received! retrying sid=%04X(%d)", getprefix(), 
+					  current_card->srvid.sid, current_card->srvid.ecmlen);
+					cc->crc++; //So ecm could retryied
+					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
+				}
+				if (is_null_dcw(cc->dcw)) {
+					cs_log("%s null dcw received! sid=%04X(%d)", getprefix(), 
+					  current_card->srvid.sid, current_card->srvid.ecmlen);
+					add_sid_block(card, &current_card->srvid);
 					current_card->card = NULL;
+					cc->crc++; //So ecm could retryied
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
 				else {
