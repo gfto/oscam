@@ -2004,8 +2004,7 @@ static int cc_srv_report_cards() {
 					 cc_cmd_send(buf, 30 + (k*7) + 9, MSG_NEW_CARD);
 					 */
 					int len = 30 + (k * 7);
-					if (cc_cmd_send(buf, len, MSG_NEW_CARD) < 0)
-						return -1;
+					cc_cmd_send(buf, len, MSG_NEW_CARD);
 					cc_add_reported_carddata(reported_carddatas, buf, len);
 
 					id++;
@@ -2052,8 +2051,7 @@ static int cc_srv_report_cards() {
 					buf[21 + 7] = 1;
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
-					if (cc_cmd_send(buf, len, MSG_NEW_CARD) < 0)
-						return -1;
+					cc_cmd_send(buf, len, MSG_NEW_CARD);
 					cc_add_reported_carddata(reported_carddatas, buf, len);
 					id++;
 
@@ -2098,14 +2096,12 @@ static int cc_srv_report_cards() {
 				reader[r].cc_id = b2i(3, buf + 5);
 				int len = 30 + (j * 7);
 				cc_add_reported_carddata(reported_carddatas, buf, len);
-				if (cc_cmd_send(buf, len, MSG_NEW_CARD) < 0)
-					return -1;
+				cc_cmd_send(buf, len, MSG_NEW_CARD);
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
 			} else if ((reader[r].card_status != CARD_INSERTED)
 					&& (!reader[r].tcp_connected) && reader[r].cc_id) {
 				reader[r].cc_id = 0;
-				if (cc_cmd_send(buf, 30 + (j * 7), MSG_CARD_REMOVED) < 0) 
-					return -1;
+				cc_cmd_send(buf, 30 + (j * 7), MSG_CARD_REMOVED);
 				//cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], reader[r].label);
 			}
 		}
@@ -2155,8 +2151,7 @@ static int cc_srv_report_cards() {
 
 					reader[r].cc_id = b2i(3, buf + 5);
 					int len = 30 + (j * 7);
-					if (cc_cmd_send(buf, len, MSG_NEW_CARD) < 0)
-						return -1;
+					cc_cmd_send(buf, len, MSG_NEW_CARD);
 					cc_add_reported_carddata(reported_carddatas, buf, len);
 					caid_info = llist_itr_next(&itr);
 				}
@@ -2289,8 +2284,7 @@ static int cc_srv_connect() {
 	is_server = 1;
 
 	// report cards
-	if (cc_srv_report_cards() < 0)
-		return -1;
+	cc_srv_report_cards();
 	int caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 
 	cmi = 0;
@@ -2311,8 +2305,7 @@ static int cc_srv_connect() {
 
 			int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 			if (new_caid_info_count != caid_info_count) {
-				if (cc_srv_report_cards() < 0)
-					break;
+				cc_srv_report_cards();
 				if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) < 0)
 					break;
 			}
