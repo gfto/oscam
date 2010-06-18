@@ -1819,6 +1819,7 @@ static int cc_cli_connect(void) {
 		network_tcp_connection_close(&reader[ridx], handle);
 		if (err == ENOTCONN) { //TCPIP : Port/handle not useable
 			handle = client[cs_idx].udp_fd = pfd = 0;
+			cs_exit(1);
 		}
 		return -2;
 	}
@@ -2003,7 +2004,8 @@ static int cc_srv_report_cards() {
 					 cc_cmd_send(buf, 30 + (k*7) + 9, MSG_NEW_CARD);
 					 */
 					int len = 30 + (k * 7);
-					cc_cmd_send(buf, len, MSG_NEW_CARD);
+					if (cc_cmd_send(buf, len, MSG_NEW_CARD) < 0)
+						return -1;
 					cc_add_reported_carddata(reported_carddatas, buf, len);
 
 					id++;
@@ -2050,7 +2052,8 @@ static int cc_srv_report_cards() {
 					buf[21 + 7] = 1;
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
-					cc_cmd_send(buf, len, MSG_NEW_CARD);
+					if (cc_cmd_send(buf, len, MSG_NEW_CARD) < 0)
+						return -1;
 					cc_add_reported_carddata(reported_carddatas, buf, len);
 					id++;
 
@@ -2095,12 +2098,14 @@ static int cc_srv_report_cards() {
 				reader[r].cc_id = b2i(3, buf + 5);
 				int len = 30 + (j * 7);
 				cc_add_reported_carddata(reported_carddatas, buf, len);
-				cc_cmd_send(buf, len, MSG_NEW_CARD);
+				if (cc_cmd_send(buf, len, MSG_NEW_CARD) < 0)
+					return -1;
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
 			} else if ((reader[r].card_status != CARD_INSERTED)
 					&& (!reader[r].tcp_connected) && reader[r].cc_id) {
 				reader[r].cc_id = 0;
-				cc_cmd_send(buf, 30 + (j * 7), MSG_CARD_REMOVED);
+				if (cc_cmd_send(buf, 30 + (j * 7), MSG_CARD_REMOVED) < 0) 
+					return -1;
 				//cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], reader[r].label);
 			}
 		}
@@ -2150,7 +2155,8 @@ static int cc_srv_report_cards() {
 
 					reader[r].cc_id = b2i(3, buf + 5);
 					int len = 30 + (j * 7);
-					cc_cmd_send(buf, len, MSG_NEW_CARD);
+					if (cc_cmd_send(buf, len, MSG_NEW_CARD) < 0)
+						return -1;
 					cc_add_reported_carddata(reported_carddatas, buf, len);
 					caid_info = llist_itr_next(&itr);
 				}
@@ -2274,7 +2280,8 @@ static int cc_srv_connect() {
 			cs_hexdump(0, cc->peer_node_id, 8), buf + 33, buf + 65);
 
 	// send cli data ack
-	cc_cmd_send(NULL, 0, MSG_CLI_DATA);
+	if (cc_cmd_send(NULL, 0, MSG_CLI_DATA) < 0)
+		return -1;
 
 	if (cc_send_srv_data() < 0)
 		return -1;
@@ -2282,7 +2289,8 @@ static int cc_srv_connect() {
 	is_server = 1;
 
 	// report cards
-	cc_srv_report_cards();
+	if (cc_srv_report_cards() < 0)
+		return -1;
 	int caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 
 	cmi = 0;
@@ -2298,13 +2306,14 @@ static int cc_srv_connect() {
 				break;
 			}
 
-			if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) <= 0)
+			if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) < 0)
 				break;
 
 			int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 			if (new_caid_info_count != caid_info_count) {
-				cc_srv_report_cards();
-				if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) <= 0)
+				if (cc_srv_report_cards() < 0)
+					break;
+				if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) < 0)
 					break;
 			}
 		} else if (i <= 0)
@@ -2312,9 +2321,6 @@ static int cc_srv_connect() {
 		else
 			cmi = 0;
 	}
-
-	cs_disconnect_client();
-
 	return 0;
 }
 
@@ -2324,6 +2330,8 @@ void cc_srv_init() {
 	if (cc_srv_connect() < 0)
 		cs_log("cccam: %d failed errno: %d (%s)", __LINE__, errno, strerror(
 				errno));
+	cs_disconnect_client();
+
 	cs_exit(1);
 }
 
