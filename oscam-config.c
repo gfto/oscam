@@ -400,16 +400,16 @@ void chk_t_global(char *token, char *value)
 	}
 
 	if (!strcmp(token, "cachedelay")) {
-		/*if (strlen(value) == 0) {
+		if (strlen(value) == 0) {
 			cfg->delay = CS_DELAY;
 			return;
 		} else {
 			cfg->delay = atoi(value);
 			return;
-		}*/
-		cfg->delay = CS_DELAY;
+		}
+		/*cfg->delay = CS_DELAY;
 		fprintf(stderr, "Parameter %s is deprecated -> ignored\n", token);
-		return;
+		return;*/
 	}
 
 	if (!strcmp(token, "bindwait")) {
@@ -1687,7 +1687,7 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout);
 	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout);
 	fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
-	//fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay); //deprecated
+	fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay); //deprecated
 	fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);
 	fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg->netprio);
 	fprintf_conf(f, CONFVARWIDTH, "clientdyndns", "%d\n", cfg->clientdyndns);
@@ -2759,7 +2759,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "readnano") && value[0]) {
+	if (!strcmp(token, "readnano")) {
 		if (rdr->emmfile != NULL) {
 			free(rdr->emmfile);
 			rdr->emmfile = NULL;
