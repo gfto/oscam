@@ -338,14 +338,13 @@ static int cc_msg_recv(uint8 *buf) {
 	if (handle < 0)
 		return -1;
 
-	//len = recv(handle, netbuf, 4, MSG_WAITALL);
-	len = read(handle, netbuf, 4);
+	len = recv(handle, netbuf, 4, MSG_WAITALL);
 	
 	if (!len)
 		return 0;
 
 	if (len != 4) { // invalid header length read
-		cs_log("%s invalid header length", getprefix());
+		cs_log("%s invalid header length (expected 4, read %d)", getprefix(), len);
 		return -1;
 	}
 
@@ -362,11 +361,9 @@ static int cc_msg_recv(uint8 *buf) {
 		}
 
 		len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
-		//len = read(handle, netbuf + 4, size); // read rest of msg
-		//?? When using read we get "invalid message length" ??
 
 		if (len != size) {
-			cs_log("%s invalid message length read (expected %d, read=%d)", getprefix(), size, len);
+			cs_log("%s invalid message length read (expected %d, read %d)", getprefix(), size, len);
 			return -1;
 		}
 
@@ -1551,9 +1548,11 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			l = l - 4;//Header Length=4 Byte
 
 			cs_log("%s MSG_CMD_05 recvd, payload length=%d mode=%d", getprefix(), l, cc->cmd05_mode);
-			cc->cmd05_active = 4;
+			cc->cmd05_active = 1;
 			cc->cmd05_data_len = l;
 			memcpy(&cc->cmd05_data, buf+4, l);
+			if (!cc->current_ecm_cidx)
+				send_cmd05_answer();
 		}
 		ret = 0;
 		break;
@@ -2158,8 +2157,7 @@ static int cc_srv_connect() {
 	cc_init_crypt(&cc->block[DECRYPT], data, 16);
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
-	//if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
-	if ((i = read(pfd, buf, 20)) == 20) {
+	if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
 		cs_ddump(buf, 20, "cccam: recv:");
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 		cs_ddump(buf, 20, "cccam: hash:");
@@ -2167,8 +2165,7 @@ static int cc_srv_connect() {
 		return -1;
 
 	// receive username
-	//if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
-	if ((i = read(pfd, buf, 20)) == 20) {
+	if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 		cs_ddump(buf, 20, "cccam: username '%s':", buf);
 		strncpy(usr, (char *) buf, sizeof(usr));
@@ -2183,8 +2180,7 @@ static int cc_srv_connect() {
 
 	// receive passwd / 'CCcam'
 	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), DECRYPT);
-	//if ((i = recv(pfd, buf, 6, MSG_WAITALL)) == 6) {
-	if ((i = read(pfd, buf, 6)) == 6) {
+	if ((i = recv(pfd, buf, 6, MSG_WAITALL)) == 6) {
 		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
 		cs_ddump(buf, 6, "cccam: pwd check '%s':", buf);
 	} else
