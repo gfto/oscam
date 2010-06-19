@@ -261,7 +261,7 @@ int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
     if( !er->rcEx ) er->rcEx=(E1_READER<<4)|E2_CHID;
     return 0;
   }
-/*
+//fixme re-activated code for testing
   if( rdr->typ=='r' )
   {
     if( rdr->qlen>=rdr->maxqlen )
@@ -276,7 +276,7 @@ int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
       rdr->qlen++;
     }
   }
-*/
+
   return 1;
 }
 

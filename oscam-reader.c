@@ -442,7 +442,8 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   er->rc=reader_ecm(reader, er);
   write_ecm_answer(reader, fd_c2m, er);
   reader_post_process(reader);
-  //if(reader->typ=='r') reader->qlen--;
+  //fixme re-activated code for testing
+  if(reader->typ=='r') reader->qlen--;
   //printf("queue: %d\n",reader->qlen);
 }
 
