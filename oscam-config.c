@@ -2233,6 +2233,10 @@ int write_server()
 				}*/
 			}
 
+			if (reader[i].force_irdeto && isphysical) {
+				fprintf_conf(f, CONFVARWIDTH, "force_irdeto", "%d\n", reader[i].force_irdeto);
+			}
+
 			if (reader[i].nagra_boxkey[0] && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "boxkey", "");
 				for (j=0;j<8;j++) {

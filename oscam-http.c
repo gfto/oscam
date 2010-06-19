@@ -803,6 +803,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_printf(vars, 0, "BOXID", "%08X", reader[ridx].boxid);
 	tpl_addVar(vars, 0, "USER", reader[ridx].r_usr);
 	tpl_addVar(vars, 0, "PASS", reader[ridx].r_pwd);
+
+	if(reader[ridx].force_irdeto)
+		tpl_addVar(vars, 0, "FORCEIRDETOCHECKED", "checked");
+
 	if(reader[ridx].has_rsa) {
 		for (i = 0; i < 64; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", reader[ridx].rsa_mod[i]);
 		for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", reader[ridx].nagra_boxkey[i]);
