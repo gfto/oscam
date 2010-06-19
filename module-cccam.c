@@ -1639,7 +1639,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
 				int au = client[cs_idx].au;
-				if (au != ridx) {
+				if ((au < 0) || (au > CS_MAXREADER))
 					cc_cmd_send(NULL, 0, MSG_CW_NOK1); //Send back NOK
 					return 0;
 				}
