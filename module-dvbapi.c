@@ -625,9 +625,10 @@ void dvbapi_added_ECMpids(int demux_id,int ca_system,int ecm_pid)
     demux[demux_id].ECMpids[demux[demux_id].ECMpidcount++].EMM_PID=0;
 }
 
-void dvbapi_parse_descriptor(int demux_id, int i, unsigned int info_length, unsigned char *buffer) {
+void dvbapi_parse_descriptor(int demux_id, /*int i,*/ unsigned int info_length, unsigned char *buffer) {
     unsigned int length=0;
-    int ca_system,ecm_pid,ecm_id,index,j;
+    unsigned int index, j;
+    int ca_system,ecm_pid,ecm_id;
           
 	
 	for ( index=0; index<info_length; index++)
@@ -698,12 +699,12 @@ void dvbapi_try_caid(int demux_index, int num) {
 }
 
 int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
-	int i, demux_id;
+	unsigned int i, demux_id;
 	unsigned short ca_mask=0x01, demux_index=0x00;
 
 	//int ca_pmt_list_management = buffer[0];
 	unsigned int program_number = (buffer[1] << 8) | buffer[2];
-	int program_info_length = ((buffer[4] & 0x0F) << 8) | buffer[5];
+	unsigned int program_info_length = ((buffer[4] & 0x0F) << 8) | buffer[5];
 
 	if (buffer[17]==0x82 && buffer[18]==0x02) {
 		//enigma2
@@ -748,7 +749,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
   }
 
     if (length !=0)
-        dvbapi_parse_descriptor(demux_id, 1,length, buffer);
+        dvbapi_parse_descriptor(demux_id, /*1,*/length, buffer);
 
 	unsigned int es_info_length=0;
 	for (i = program_info_length + 6; i < length; i += es_info_length + 5) {
@@ -932,7 +933,7 @@ void event_handler(int signal) {
 		 return;
 	}
   
-  while (dp = readdir(dirp)) {
+  while ((dp = readdir(dirp))) {
   	if (strlen(dp->d_name) < 7)
   		continue; 
 		if (strncmp(dp->d_name, "pmt", 3)!=0 || strncmp(dp->d_name+strlen(dp->d_name)-4, ".tmp", 4)!=0) 
@@ -962,7 +963,7 @@ void event_handler(int signal) {
 		cs_log("dvbapi: found pmt file %s", dest);
 		cs_sleepms(100);
 
-		int len = read(pmt_fd,mbuf,sizeof(mbuf));
+		unsigned int len = read(pmt_fd,mbuf,sizeof(mbuf));
 		close(pmt_fd);
 					
 		if (len < 1) {
@@ -975,7 +976,7 @@ void event_handler(int signal) {
 		uint j1,j2;
 	  // QboxHD pmt.tmp is the full capmt written as a string of hex values
 		// pmt.tmp must be longer than 3 bytes (6 hex chars) and even length
-		if ((len<6) || ((len%2) != 0) || ((len/2)>sizeof(dest))) {
+		if ((len<6) || ((len%2) != 0) || ((K/2)>sizeof(dest))) {
 			cs_log("dvbapi: error parsing QboxHD pmt.tmp, incorrect length");
 			continue;
 		}
@@ -1005,7 +1006,7 @@ void event_handler(int signal) {
 
 		memcpy(dest + 7, mbuf + 12, len - 12 - 4);
 
-		pmt_id = dvbapi_parse_capmt(dest, 7 + len - 12 - 4, -1);
+		pmt_id = dvbapi_parse_capmt((uchar*)dest, 7 + len - 12 - 4, -1);
 #endif
 		
 		strcpy(demux[pmt_id].pmt_file, dp->d_name);
@@ -1232,7 +1233,7 @@ void dvbapi_main_local() {
 					int demux_index=ids[i];
 					int n=fdn[i];
 
-					if (pfd2[i].fd==demux[demux_index].demux_fd[n].fd) {
+					if (pfd2[i].fd==(int)demux[demux_index].demux_fd[n].fd) {
 						dvbapi_process_input(demux_index,n,mbuf,len);
 					}
 				}
