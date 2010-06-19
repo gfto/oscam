@@ -580,7 +580,8 @@ void dvbapi_resort_ecmpids(int demux_index) {
 		}
 	}
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
-		if (dvbapi_check_array(cfg->dvbapi_ignoretab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CAID)>=0) {
+		int i = dvbapi_check_array(cfg->dvbapi_ignoretab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CAID);
+		if (i >= 0 && !cfg->dvbapi_ignoretab.cmap[i] && !cfg->dvbapi_ignoretab.mask[i]) {
 			cs_debug("-> ignore %04x", demux[demux_index].ECMpids[n].CAID);
 		} else if (dvbapi_check_array(global_caid_list, MAX_CAID, demux[demux_index].ECMpids[n].CAID)>=0) {
 			cs_debug("-> caid list %04x", demux[demux_index].ECMpids[n].CAID);
@@ -1050,8 +1051,21 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 
 		er->l=len;
 		memcpy(er->ecm, buffer, er->l);
+
+		if (!er->prid)
+			er->prid = chk_provid(er->ecm, er->caid);
+
+		int i;
+		for (i = 0; i < CS_MAXCAIDTAB; i++) {
+			if (cfg->dvbapi_ignoretab.caid[i] == er->caid) {
+				if (cfg->dvbapi_ignoretab.cmap[i] && cfg->dvbapi_ignoretab.cmap[i] == er->prid)
+					return;
+				if (cfg->dvbapi_ignoretab.mask[i] && (cfg->dvbapi_ignoretab.mask[i] & er->prid) == er->prid)
+					return;
+			}
+		}
 		get_cw(er);
-		cs_debug("dvbapi: request cw for caid %04X pid %04X", er->caid, er->pid);
+		cs_debug("dvbapi: request cw for caid %04X provid %04X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
 	}
 
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_EMM) {
