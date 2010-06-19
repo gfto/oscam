@@ -1639,7 +1639,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
 				int au = client[cs_idx].au;
-				if ((au < 0) || (au > CS_MAXREADER))
+				if ((au < 0) || (au > CS_MAXREADER)) {
 					cc_cmd_send(NULL, 0, MSG_CW_NOK1); //Send back NOK
 					return 0;
 				}
@@ -1791,7 +1791,7 @@ static int cc_cli_connect(void) {
 
 	// connect
 	handle = network_tcp_connection_open();
-	if (handle < 0) {
+	if (handle <= 0) {
 		cs_log("%s network connect error!", getprefix());
 		return -1;
 	}
@@ -1803,11 +1803,12 @@ static int cc_cli_connect(void) {
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
 		if (err == ENOTCONN) { //TCPIP : Port/handle not useable
-			handle = client[cs_idx].udp_fd = pfd = 0; //socket unsable!
-			//int t = fast_rnd()*1000;
-			//cs_log("%s sleeping %d seconds (random)", getprefix(), t/1000);
-			//cs_sleepms(t);
+			//handle = client[cs_idx].udp_fd = pfd = 0; //socket unsable!
+			int t = fast_rnd()*1000;
+			cs_log("%s sleeping %d seconds (random)", getprefix(), t/1000);
+			cs_sleepms(t);
 			//cs_exit(1);
+			
 		}
 		network_tcp_connection_close(&reader[ridx], handle);
 	
@@ -2347,7 +2348,7 @@ int cc_cli_init() {
 	//		loc_sa.sin_addr.s_addr = INADDR_ANY;
 	//		loc_sa.sin_port = htons(reader[ridx].l_port);
 
-	if ((client[cs_idx].udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) < 0) {
+	if ((client[cs_idx].udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) <= 0) {
 		cs_log("%s Socket creation failed (errno=%d)", getprefix(), errno);
 		return -10;
 	}
