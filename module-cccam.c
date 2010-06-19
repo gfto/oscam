@@ -1804,11 +1804,15 @@ static int cc_cli_connect(void) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
-		network_tcp_connection_close(&reader[ridx], handle);
 		if (err == ENOTCONN) { //TCPIP : Port/handle not useable
-			handle = client[cs_idx].udp_fd = pfd = 0;
-			cs_exit(1);
+			handle = client[cs_idx].udp_fd = pfd = 0; //socket unsable!
+			//int t = fast_rnd()*1000;
+			//cs_log("%s sleeping %d seconds (random)", getprefix(), t/1000);
+			//cs_sleepms(t);
+			//cs_exit(1);
 		}
+		network_tcp_connection_close(&reader[ridx], handle);
+	
 		return -2;
 	}
 	struct cc_data *cc = reader[ridx].cc;
