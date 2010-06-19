@@ -1646,22 +1646,20 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 				EMM_PACKET *emm = malloc(sizeof(EMM_PACKET));
 				memset(emm, 0, sizeof(EMM_PACKET));
-				emm->l = buf[13];
-				memcpy(emm->emm, buf + 14, emm->l);
 				emm->caid[0] = buf[4];
 				emm->caid[1] = buf[5];
-				emm->provid[0] = buf[7];
-				emm->provid[1] = buf[8];
-				emm->provid[2] = buf[9];
-				emm->provid[3] = buf[10];
-				emm->hexserial[0] = buf[11];
-				emm->hexserial[1] = buf[12];
-				emm->hexserial[2] = buf[13];
-				emm->hexserial[3] = buf[14];
+				//emm->provid[0] = buf[7];
+				//emm->provid[1] = buf[8];
+				//emm->provid[2] = buf[9];
+				//emm->provid[3] = buf[10];
+				//emm->hexserial[0] = buf[11];
+				//emm->hexserial[1] = buf[12];
+				//emm->hexserial[2] = buf[13];
+				//emm->hexserial[3] = buf[14];
 				emm->l = buf[15];
 				memcpy(emm->emm, buf + 16, emm->l);
-				emm->type = UNKNOWN;
-				emm->cidx = cs_idx;
+				//emm->type = UNKNOWN;
+				//emm->cidx = cs_idx;
 				do_emm(emm);
 				free(emm);
 				cc_cmd_send(NULL, 0, MSG_EMM_ACK); //Send back ACK
