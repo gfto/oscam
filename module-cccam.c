@@ -635,11 +635,12 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cs_debug_mask(D_TRACE, "%s ecm trylock: ecm busy, retrying later after msg-receive",
 				getprefix());
 		cc->proxy_init_errors++;
-		if (cc->proxy_init_errors > 20) //TODO: Configuration?
+		if ((cc->proxy_init_errors > 20) || ((cc->ecm_time+(time_t)(cfg->ctimeout*2)) < time(NULL))) //TODO: Configuration?
 			cc_cycle_connection();
 		return 0; //pending send...
 	}
 	cs_debug("cccam: ecm trylock: got lock");
+	cc->ecm_time = time(NULL);
 	cc->proxy_init_errors = 0;
 	reader[ridx].available = 0;
 
@@ -852,6 +853,7 @@ static int cc_send_pending_emms() {
 		cc->current_ecm_cidx = 0;
 		cc->proxy_init_errors = 0;
 		cc->just_logged_in = 0;
+		cc->ecm_time = time(NULL);
 		
 		cs_debug_mask(D_EMM, "%s emm send for card %08X", getprefix(), b2i(4, emmbuf+7));
 		
