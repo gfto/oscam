@@ -1059,7 +1059,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		int i;
 		for (i = 0; i < CS_MAXCAIDTAB; i++) {
 			if (cfg->dvbapi_ignoretab.caid[i] == er->caid) {
-				if (cfg->dvbapi_ignoretab.mask[pid]>0) {
+				if (cfg->dvbapi_ignoretab.mask[i]>0) {
 					ulong ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
 					cs_debug("dvbapi: checking caid %04X cmap %06X mask %06X = provid %06X",
 							cfg->dvbapi_ignoretab.caid[i],
