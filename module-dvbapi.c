@@ -1067,6 +1067,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 						cs_debug("dvbapi: ignoring %04X:%06X !", caid, provid);
 						demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].PROVID = provid;
 						dvbapi_resort_ecmpids(demux_id);
+						demux[i].pidindex = -1;
 						return;
 					}
 				}
