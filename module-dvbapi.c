@@ -21,6 +21,7 @@ extern struct s_reader * reader;
 typedef struct ECMPIDS
 {
 	unsigned short CAID;
+	unsigned long PROVID;
 	unsigned short ECM_PID;
 	unsigned short EMM_PID;
 	int checked;
@@ -564,6 +565,14 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 	do_emm(&epg);
 }
 
+int is_ignore_provid(int i, ulong provid)
+{
+	if (!provid || !cfg->dvbapi_ignoretab.mask[i])
+		return 0;
+	ulong provid_ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
+	return provid_ignore == provid;
+}
+
 void dvbapi_resort_ecmpids(int demux_index) {
 	ECMPIDSTYPE tmppids[ECM_PIDS],tmppids2[ECM_PIDS];
 	int tmppidcount=0,tmppid2count=0,n,i,k=0,j;
@@ -580,14 +589,15 @@ void dvbapi_resort_ecmpids(int demux_index) {
 		}
 	}
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
-		int i = dvbapi_check_array(cfg->dvbapi_ignoretab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CAID);
-		if (i >= 0 && !cfg->dvbapi_ignoretab.mask[i]) {
-			cs_debug("-> ignore %04x", demux[demux_index].ECMpids[n].CAID);
-		} else if (dvbapi_check_array(global_caid_list, MAX_CAID, demux[demux_index].ECMpids[n].CAID)>=0) {
-			cs_debug("-> caid list %04x", demux[demux_index].ECMpids[n].CAID);
+		ushort caid = demux[demux_index].ECMpids[n].CAID;
+		int i = dvbapi_check_array(cfg->dvbapi_ignoretab.caid, CS_MAXCAIDTAB, caid);
+		if (i >= 0 && is_ignore_provid(i, demux[demux_index].ECMpids[n].PROVID)) {
+			cs_debug("-> ignore %04x", caid);
+		} else if (dvbapi_check_array(global_caid_list, MAX_CAID, caid)>=0) {
+			cs_debug("-> caid list %04x", caid);
 			tmppids[tmppidcount++]=demux[demux_index].ECMpids[n];
-		} else if (dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CAID)>=0) {
-			cs_debug("-> priority %04x", demux[demux_index].ECMpids[n].CAID);
+		} else if (dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, caid)>=0) {
+			cs_debug("-> priority %04x", caid);
 			tmppids[tmppidcount++]=demux[demux_index].ECMpids[n];
 		} else {
 			tmppids2[tmppid2count++]=demux[demux_index].ECMpids[n];
@@ -1053,7 +1063,8 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 					ulong provid_ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
 					if (provid == provid_ignore) {
 						cs_debug("dvbapi: ignoring %04X:%06X !", caid, provid);
-						demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].notfound++;
+						demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].PROVID = provid;
+						dvbapi_resort_ecmpids(demux_id);
 						return;
 					}
 				}
