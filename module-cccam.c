@@ -619,7 +619,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 			if (cc) {
 				cc->proxy_init_errors++;
-				if (cc->proxy_init_errors > 20 || ((cc->ecm_time+(time_t)(cfg->ctimeout/1000*2)) < time(NULL))) //TODO: Configuration?
+				if (cc->proxy_init_errors > 20 || ((cc->ecm_time+(time_t)(cfg->ctimeout/500)) < time(NULL))) //TODO: Configuration?
 					cc_cycle_connection();
 			}
 		}
@@ -635,8 +635,12 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cs_debug_mask(D_TRACE, "%s ecm trylock: ecm busy, retrying later after msg-receive",
 				getprefix());
 		cc->proxy_init_errors++;
-		if ((cc->proxy_init_errors > 20) || ((cc->ecm_time+(time_t)(cfg->ctimeout/1000*2)) < time(NULL))) //TODO: Configuration?
+
+		if ((cc->proxy_init_errors > 20) || ((cc->ecm_time+(time_t)(cfg->ctimeout/500)) < time(NULL))) { //TODO: Configuration?
+			cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! ecm time %d timeout %d time %d", getprefix(),
+					cc->ecm_time, cfg->ctimeout/500, time(NULL));
 			cc_cycle_connection();
+		}
 		return 0; //pending send...
 	}
 	cs_debug("cccam: ecm trylock: got lock");
