@@ -2309,6 +2309,9 @@ int write_server()
 			if (reader[i].blockemm_g)
 				fprintf_conf(f, CONFVARWIDTH, "blockemm-g", "%d\n", reader[i].blockemm_g);
 
+			if (reader[i].lb_weight)
+				fprintf_conf(f, CONFVARWIDTH, "lb_weight", "%d\n", reader[i].lb_weight);
+
 			//Todo: write savenano
 
 			if (reader[i].typ == R_CCCAM) {
@@ -3231,6 +3234,16 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 		else {
 			rdr->blockemm_g = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "lb_weight")) {
+		if(strlen(value) == 0) {
+			rdr->lb_weight = 100;
+			return;
+		} else {
+			rdr->lb_weight = atoi(value) ? 1 : 0;
 			return;
 		}
 	}

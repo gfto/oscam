@@ -196,15 +196,19 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 {
 	int i;
 	int best_ridx = -1;
+	int best, current = 0;
 	READER_STAT *stat, *best_stat = NULL;
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
+			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
 			stat = get_stat(i, caid, prid, srvid);
-			if (stat && stat->rc == 0 && (!best_stat || stat->time_avg < best_stat->time_avg)) {
-				if (stat->ecm_count >= MIN_ECM_COUNT) {
+			if (stat) {
+				current = stat->time_avg*100/weight;
+				if (stat->rc == 0 && stat->ecm_count >= MIN_ECM_COUNT && (!best_stat || current < best)) {
 					if (!reader[i].ph.c_available || reader[i].ph.c_available(i, stat)) {
 						best_stat = stat;
 						best_ridx = i;
+						best = current;
 					}
 				}
 			}
