@@ -567,7 +567,9 @@ void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int le
 
 int is_ignore_provid(int i, ulong provid)
 {
-	if (!provid || !cfg->dvbapi_ignoretab.mask[i])
+	if (!cfg->dvbapi_ignoretab.mask[i])
+		return 1;
+	if (!provid)
 		return 0;
 	ulong provid_ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
 	return provid_ignore == provid;
