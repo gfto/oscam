@@ -1033,11 +1033,30 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		if (cfg->dvbapi_au==1)
 			dvbapi_start_emm_filter(demux_id);
 
+		unsigned short caid = demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].CAID;
 		unsigned long provid=0;
-		int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].CAID);
+		int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, caid);
 		if (pid>=0) {
 			if (cfg->dvbapi_prioritytab.mask[pid]>0)
 				provid = (cfg->dvbapi_prioritytab.cmap[pid] << 8 | cfg->dvbapi_prioritytab.mask[pid]);
+		}
+
+		//Schlocke: Ignore caid:provid
+		if (!provid)
+			provid = chk_provid(buffer, caid);
+
+		cs_debug("dvbapi: checking ignore %04X:%06X", caid, provid);
+		int i;
+		for (i = 0; i < CS_MAXCAIDTAB; i++) {
+			if (cfg->dvbapi_ignoretab.caid[i] == caid) {
+				if (cfg->dvbapi_ignoretab.mask[i]>0) {
+					ulong provid_ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
+					if (provid == provid_ignore) {
+						cs_debug("dvbapi: ignoring %04X:%06X !", caid, provid);
+						return;
+					}
+				}
+			}
 		}
 
 		ECM_REQUEST *er;
@@ -1045,34 +1064,13 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 			return;
 
 		er->srvid = demux[demux_id].program_number;
-		er->caid  = demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].CAID;
+		er->caid  = caid;
 		er->pid   = demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].ECM_PID;
 		er->prid  = provid;
 
 		er->l=len;
 		memcpy(er->ecm, buffer, er->l);
 
-		if (!er->prid)
-			er->prid = chk_provid(er->ecm, er->caid);
-
-		cs_debug("dvbapi: checking ignore %04X:%06X:%06X", er->caid, er->prid, er->srvid);
-		int i;
-		for (i = 0; i < CS_MAXCAIDTAB; i++) {
-			if (cfg->dvbapi_ignoretab.caid[i] == er->caid) {
-				if (cfg->dvbapi_ignoretab.mask[i]>0) {
-					ulong ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
-					cs_debug("dvbapi: checking caid %04X cmap %06X mask %06X = provid %06X",
-							cfg->dvbapi_ignoretab.caid[i],
-							cfg->dvbapi_ignoretab.cmap[i],
-							cfg->dvbapi_ignoretab.mask[i],
-							ignore);
-					if (er->prid == ignore) {
-						cs_debug("dvbapi: ignoring %04X:%06X !", er->caid, er->prid);
-						return;
-					}
-				}
-			}
-		}
 		get_cw(er);
 		cs_debug("dvbapi: request cw for caid %04X provid %04X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
 	}
