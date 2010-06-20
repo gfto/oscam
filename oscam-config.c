@@ -3447,6 +3447,7 @@ int init_readerdb()
 			reader[nr].force_irdeto = 0;
 			reader[nr].cachecm = 1;
 			reader[nr].cc_reshare = cfg->cc_reshare; //set global value as init value
+			reader[nr].lb_weight = 100;
 			strcpy(reader[nr].pincode, "none");
 			for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
 			continue;
