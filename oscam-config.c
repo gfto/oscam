@@ -1907,6 +1907,8 @@ int write_config()
 		dot = "";
 		while(cfg->dvbapi_ignoretab.caid[i]) {
 			fprintf(f, "%s%04X", dot, cfg->dvbapi_ignoretab.caid[i]);
+			if(cfg->dvbapi_ignoretab.mask[i])
+				fprintf(f, ":%06X", cfg->dvbapi_ignoretab.mask[i]);
 			dot = ",";
 			i++;
 		}

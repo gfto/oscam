@@ -619,7 +619,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 			if (cc) {
 				cc->proxy_init_errors++;
-				if (cc->proxy_init_errors > 20) //TODO: Configuration?
+				if (cc->proxy_init_errors > 20 || ((cc->ecm_time+(time_t)(cfg->ctimeout/1000*2)) < time(NULL))) //TODO: Configuration?
 					cc_cycle_connection();
 			}
 		}
@@ -635,7 +635,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cs_debug_mask(D_TRACE, "%s ecm trylock: ecm busy, retrying later after msg-receive",
 				getprefix());
 		cc->proxy_init_errors++;
-		if ((cc->proxy_init_errors > 20) || ((cc->ecm_time+(time_t)(cfg->ctimeout*2)) < time(NULL))) //TODO: Configuration?
+		if ((cc->proxy_init_errors > 20) || ((cc->ecm_time+(time_t)(cfg->ctimeout/1000*2)) < time(NULL))) //TODO: Configuration?
 			cc_cycle_connection();
 		return 0; //pending send...
 	}
@@ -1806,11 +1806,10 @@ static int cc_cli_connect(void) {
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
 		if (err == ENOTCONN) { //TCPIP : Port/handle not useable
 			//handle = client[cs_idx].udp_fd = pfd = 0; //socket unsable!
-			int t = fast_rnd()*1000;
-			cs_log("%s sleeping %d seconds (random)", getprefix(), t/1000);
-			cs_sleepms(t);
-			//cs_exit(1);
-			
+			int t = fast_rnd();
+			cs_log("%s sleeping %d seconds (random)", getprefix(), t);
+			cs_sleepms(t*1000);
+			cs_exit(1);
 		}
 		network_tcp_connection_close(&reader[ridx], handle);
 	
