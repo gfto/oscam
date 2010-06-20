@@ -196,7 +196,7 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 {
 	int i;
 	int best_ridx = -1;
-	int best, current = 0;
+	int best = 0, current = 0;
 	READER_STAT *stat, *best_stat = NULL;
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {

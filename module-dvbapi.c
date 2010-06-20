@@ -1057,18 +1057,29 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		if (!provid)
 			provid = chk_provid(buffer, caid);
 
-		cs_debug("dvbapi: checking ignore %04X:%06X", caid, provid);
-		int i;
-		for (i = 0; i < CS_MAXCAIDTAB; i++) {
-			if (cfg->dvbapi_ignoretab.caid[i] == caid) {
-				if (cfg->dvbapi_ignoretab.mask[i]>0) {
-					ulong provid_ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
-					if (provid == provid_ignore) {
-						cs_debug("dvbapi: ignoring %04X:%06X !", caid, provid);
-						demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].PROVID = provid;
-						dvbapi_resort_ecmpids(demux_id);
-						demux[i].pidindex = -1;
-						return;
+		if (!provid) {
+			cs_debug("dvbapi: checking ignore %04X:%06X", caid, provid);
+			int i;
+			for (i = 0; i < CS_MAXCAIDTAB; i++) {
+				if (cfg->dvbapi_ignoretab.caid[i] == caid) {
+					if (cfg->dvbapi_ignoretab.mask[i]>0) {
+						ulong provid_ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
+						if (provid == provid_ignore) {
+							cs_debug("dvbapi: ignoring %04X:%06X !", caid, provid);
+							demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].PROVID = provid;
+							dvbapi_resort_ecmpids(demux_id);
+							demux[i].pidindex = -1;
+							int n;
+							for (n=1; n<demux[i].ECMpidcount; n++) {
+								if (demux[i].ECMpids[n].checked==0) {
+									demux[i].ECMpids[n-1].notfound++;
+									dvbapi_try_caid(demux_id, n);
+									return;
+								}
+							}
+							dvbapi_try_caid(demux_id, 0);
+							return;
+						}
 					}
 				}
 			}
