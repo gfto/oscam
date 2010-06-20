@@ -1053,6 +1053,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 					ulong provid_ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
 					if (provid == provid_ignore) {
 						cs_debug("dvbapi: ignoring %04X:%06X !", caid, provid);
+						demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].notfound++;
 						return;
 					}
 				}
