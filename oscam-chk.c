@@ -266,8 +266,7 @@ int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
   {
     if( rdr->qlen>=rdr->maxqlen )
     {
-      cs_log("reader '%s' max. queue length(%d) reached, rejected", rdr->label,
-               rdr->qlen);
+      cs_log("reader '%s' max. queue length(%d) reached, rejected", rdr->label, rdr->qlen);
       if( !er->rcEx ) er->rcEx=(E1_READER<<4)|E2_QUEUE;
       return 0;
     }

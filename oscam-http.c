@@ -847,6 +847,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_printf(vars, 0, "GRP", "%s", value);
 	free(value);
 
+	if(reader[ridx].lb_weight)
+		tpl_printf(vars, 0, "LBWEIGHT", "%s", reader[ridx].lb_weight);
+
 	//services
 	char sidok[33];
 	long2bitchar(reader[ridx].sidtabok, sidok);

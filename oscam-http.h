@@ -665,7 +665,8 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<TD align=\"center\"><input name=\"blockemm-g\" type=\"hidden\" value=\"0\"><input name=\"blockemm-g\" type=\"checkbox\" value=\"1\" ##BLOCKEMMGLOBALCHK##></TD></TR>\n\
     </TD>\n</TR>\n</TABLE>\n\
     <TR><TD>Ecmcache:<input name=\"ecmcache\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"ecmcache\" type=\"checkbox\" value=\"1\" ##ECMCACHECHECKED##></TD></TR>\n\
-    <TR><TD>Services:</TD><TD>\n<TABLE cellspacing=\"0\" class=\"invisible\">##SIDS##</TD>\n</TR>\n</TABLE>\n\
+    <TR><TD>Loadbalance weight:</TD><TD><input name=\"lb_weight\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##LBWEIGHT##\"></TD></TR>\n\
+	<TR><TD>Services:</TD><TD>\n<TABLE cellspacing=\"0\" class=\"invisible\">##SIDS##</TD>\n</TR>\n</TABLE>\n\
     <TR><TH>&nbsp;</TH><TH>Reader specific settings for protocol ##PROTOCOL##</TH></TR>\n\
     ##READERDEPENDINGCONFIG##\
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" ##BTNDISABLED##>\n</TD></TR>\n\
