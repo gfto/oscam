@@ -271,6 +271,13 @@ write file (usually a copy of a file saved by savenano) to your smartcard, if no
           readnano = /var/oscam/write.emm
 .RE
 .PP
+\fBlb_weight\fP = \fBweight\fP
+.RS 3n
+the higher the value the higher the probability for reader selection, default:100
+
+ It's an divider for the average responstime.
+.RE
+.PP
 \fBforce_irdeto\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
