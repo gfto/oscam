@@ -776,7 +776,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action"))) {
 				if (!strcmp((*params).params[i], "services"))
-					sprintf(servicelabels + strlen(servicelabels), "%s,", (*params).values[i]);
+					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels), "%s,", (*params).values[i]);
 				else
 					chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
 			}
@@ -1100,7 +1100,7 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 				if (!strcmp((*params).params[i], "expdate"))
 				account->expirationdate=(time_t)NULL;
 				if (!strcmp((*params).params[i], "services"))
-				sprintf(servicelabels + strlen(servicelabels), "%s,", (*params).values[i]);
+				snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels), "%s,", (*params).values[i]);
 				else
 				chk_account((*params).params[i], (*params).values[i], account);
 			}
@@ -1412,12 +1412,12 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 				char fname[40];
-				sprintf(fname, "/tmp/.oscam/caidinfos.%d", ridx);
+				snprintf(fname, sizeof(fname), "/tmp/.oscam/caidinfos.%d", ridx);
 				FILE *file = fopen(fname, "r");
 				if (file) {
 					uint16 caid = 0;
 					uint8 hop = 0;
-					char ascprovid[6];
+					char ascprovid[7];
 					char *provider="";
 					do {
 						if (fread(&caid, 1, sizeof(caid), file) <= 0)
@@ -1433,7 +1433,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						while (count > 0) {
 							if (fread(prov, 1, sizeof(prov), file) <= 0)
 								break;
-							sprintf(ascprovid, "%02X%02X%02X", prov[0], prov[1], prov[2]);
+							snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X", prov[0], prov[1], prov[2]);
 							provider = get_provider(caid, a2i(ascprovid, 3));
 
 							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
@@ -1469,12 +1469,12 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 			char fname[40];
-			sprintf(fname, "/tmp/.oscam/caidinfos.%d", ridx);
+			snprintf(fname, sizeof(fname), "/tmp/.oscam/caidinfos.%d", ridx);
 			FILE *file = fopen(fname, "r");
 			if (file) {
 				uint16 caid = 0;
 				uint8 hop = 0;
-				char ascprovid[6];
+				char ascprovid[7];
 				char *provider="";
 				do {
 					if (fread(&caid, 1, sizeof(caid), file) <= 0)
@@ -1490,7 +1490,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					while (count > 0) {
 						if (fread(prov, 1, sizeof(prov), file) <= 0)
 							break;
-						sprintf(ascprovid, "%02X%02X%02X", prov[0], prov[1], prov[2]);
+						snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X", prov[0], prov[1], prov[2]);
 						provider = get_provider(caid, a2i(ascprovid, 3));
 
 						tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
@@ -1508,7 +1508,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			FILE *fp;
 			char filename[32];
 			char buffer[128];
-			sprintf(filename, "/tmp/.oscam/reader%d", reader[ridx].ridx);
+			snprintf(filename, sizeof(filename), "/tmp/.oscam/reader%d", reader[ridx].ridx);
 			fp = fopen(filename, "r");
 
 			if (fp) {
