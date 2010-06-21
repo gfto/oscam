@@ -2069,10 +2069,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
   int i;
   if ((reader_types == 0) || (reader_types == 2))
     er->level=flag;
-  if (cfg->reader_auto_loadbalance)
-	  flag=(flag)?2:1;    // flag specifies no/only fallback-readers
-  else
-	  flag=(flag)?3:1;    // flag specifies with/without fallback-readers
+  flag=(flag)?3:1;    // flag specifies with/without fallback-readers
   for (i=0; i<CS_MAXREADER; i++)
   {
 	  //if (reader[i].pid)
