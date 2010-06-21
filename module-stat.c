@@ -202,14 +202,15 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
 			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
 			stat = get_stat(i, caid, prid, srvid);
-			if (stat) {
-				current = stat->time_avg*100/weight;
-				if (stat->rc == 0 && stat->ecm_count >= MIN_ECM_COUNT && (!best_stat || current < best)) {
-					if (!reader[i].ph.c_available || reader[i].ph.c_available(i, stat)) {
-						best_stat = stat;
-						best_ridx = i;
-						best = current;
-					}
+			if (!stat) 
+				return -1; //this reader is active (now) but we need statistics first!
+				
+			current = stat->time_avg*100/weight;
+			if (stat->rc == 0 && stat->ecm_count >= MIN_ECM_COUNT && (!best_stat || current < best)) {
+				if (!reader[i].ph.c_available || reader[i].ph.c_available(i, stat)) {
+					best_stat = stat;
+					best_ridx = i;
+					best = current;
 				}
 			}
 		}

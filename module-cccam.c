@@ -2323,7 +2323,7 @@ void cc_srv_init() {
 	cs_exit(1);
 }
 
-int cc_cli_init() {
+int cc_cli_init_int() {
 	
 	if (reader[ridx].tcp_connected)
 		return -1;
@@ -2406,6 +2406,16 @@ int cc_cli_init() {
 			!reader[ridx].cc_disable_auto_block);
 
 	return cc_cli_connect();
+}
+
+static int cc_cli_init()
+{
+	while (cc_cli_init_int() != 0) {
+		if (master_pid!=getppid()) cs_exit(0);
+		cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
+		cs_log("restarting reader %s (index=%d)", reader[ridx].label, ridx);                        
+	}
+	return 0;
 }
 
 /**
