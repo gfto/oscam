@@ -3243,7 +3243,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			rdr->lb_weight = 100;
 			return;
 		} else {
-			rdr->lb_weight = atoi(value) ? 1 : 0;
+			rdr->lb_weight = atoi(value);
+			if (rdr->lb_weight > 1000) rdr->lb_weight = 1000;
+			else if (rdr->lb_weight <= 0) rdr->lb_weight = 100;
 			return;
 		}
 	}
