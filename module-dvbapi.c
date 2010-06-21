@@ -1042,9 +1042,6 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 							
 		demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].table = buffer[0];
 
-		if (cfg->dvbapi_au==1)
-			dvbapi_start_emm_filter(demux_id);
-
 		unsigned short caid = demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].CAID;
 		unsigned long provid=0;
 		int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, caid);
@@ -1068,21 +1065,21 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 						ulong provid_ignore = (ulong)(cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
 						if (provid == provid_ignore) {
 							cs_debug("dvbapi: ignoring %04X:%06X !", caid, provid);
-							int n;
-							for (n=1; n<demux[i].ECMpidcount; n++) {
-								if (demux[i].ECMpids[n].checked==0) {
-									demux[i].ECMpids[n-1].notfound++;
-									dvbapi_try_caid(demux_id, n);
-									return;
-								}
-							}
-							dvbapi_try_caid(demux_id, 0);
+							demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].checked = 1;
+							demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex].notfound += 3;
+							demux[demux_id].pidindex++;
+							if (demux[demux_id].pidindex >= demux[demux_id].ECMpidcount)
+								demux[demux_id].pidindex = 0;
+							dvbapi_try_caid(demux_id, demux[demux_id].pidindex);
 							return;
 						}
 					}
 				}
 			}
 		}
+
+		if (cfg->dvbapi_au==1)
+			dvbapi_start_emm_filter(demux_id);
 
 		ECM_REQUEST *er;
 		if (!(er=get_ecmtask()))
