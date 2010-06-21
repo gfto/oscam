@@ -202,8 +202,10 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
 			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
 			stat = get_stat(i, caid, prid, srvid);
-			if (!stat) 
+			if (!stat) {
+				add_stat(i, caid, prid, srvid, 1, 0);
 				return -1; //this reader is active (now) but we need statistics first!
+			}
 				
 			current = stat->time_avg*100/weight;
 			if (stat->rc == 0 && stat->ecm_count >= MIN_ECM_COUNT && (!best_stat || current < best)) {
