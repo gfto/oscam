@@ -378,6 +378,7 @@ struct s_module
   int  (*c_init_log)();
   int  (*c_recv_log)();
   int  (*c_available)(); //Schlocke: available check for load-balancing
+  void (*c_idle)(); //Schlocke: called when reader is idle
   int  c_port;
   PTAB *ptab;
 };

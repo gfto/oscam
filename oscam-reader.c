@@ -595,7 +595,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
 
   if (FD_ISSET(fd1, &fds))
   {
-    if (tcp_toflag)
+    if (tcp_toflag && !reader->ph.c_idle)
     {
       time_t now;
       int time_diff;
@@ -612,7 +612,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
     return(1);
   }
 
-  if (tcp_toflag)
+  if (tcp_toflag && !reader->ph.c_idle)
   {
     cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
              reader->ph.desc, tv.tv_sec, fd2);
@@ -650,6 +650,12 @@ static void reader_do_pipe(struct s_reader * reader)
   }
 }
 
+void reader_do_idle(struct s_reader * reader)
+{
+  if (reader->ph.c_idle) 
+    reader->ph.c_idle();
+}
+
 static void reader_main(struct s_reader * reader)
 {
   while (1)
@@ -666,6 +672,7 @@ static void reader_main(struct s_reader * reader)
     }    
     switch(reader_listen(reader, client[reader->cs_idx].fd_m2c_c, pfd))
     {
+      case 0: reader_do_idle(reader); break;
       case 1: reader_do_pipe(reader)  ; break;
       case 2: casc_do_sock(reader, 0)   ; break;
       case 3: casc_do_sock_log(reader); break;

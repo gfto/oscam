@@ -617,9 +617,10 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 					: 0, pfd);
 			write_ecm_answer(&reader[ridx], fd_c2m, er);
 
-			if (cc) {
-				cc->proxy_init_errors++;
-				if (cc->proxy_init_errors > 20 || ((cc->ecm_time+(time_t)(cfg->ctimeout/500)) < time(NULL))) //TODO: Configuration?
+			if (cc) { cc->proxy_init_errors++; if
+				(cc->proxy_init_errors > 20 ||
+				((cc->ecm_time+(time_t)(cfg->ctimeout/500))
+				< time(NULL))) //TODO: Configuration?
 					cc_cycle_connection();
 			}
 		}
@@ -1265,6 +1266,14 @@ static void fix_dcw(uchar *dcw)
     }
 }
 
+static void cc_idle() {
+	struct cc_data *cc = reader[ridx].cc;
+	cs_debug("%s IDLE", getprefix());
+	cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
+	cc->answer_on_keepalive = time(NULL);
+	
+}
+
 static int cc_parse_msg(uint8 *buf, int l) {
 	int ret = buf[1];
 	struct cc_data *cc;
@@ -1591,11 +1600,15 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_KEEPALIVE:
 		cc->just_logged_in = 0;
-		if (is_server) {
+		if (!is_server) {
 			cs_debug("cccam: keepalive ack");
 		} else {
-			cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
-			cs_debug("cccam: keepalive");
+			//Checking if last answer is one minute ago:
+			if (cc->answer_on_keepalive+55 < time(NULL)) {
+				cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
+				cs_debug("cccam: keepalive");
+				cc->answer_on_keepalive = time(NULL);
+			}
 		}
 		break;
 	case MSG_CMD_05:
@@ -1810,9 +1823,9 @@ static int cc_cli_connect(void) {
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
 		if (err == ENOTCONN) { //TCPIP : Port/handle not useable
 			//handle = client[cs_idx].udp_fd = pfd = 0; //socket unsable!
-			int t = fast_rnd();
-			cs_log("%s sleeping %d seconds (random)", getprefix(), t);
-			cs_sleepms(t*1000);
+			//int t = fast_rnd();
+			//cs_log("%s sleeping %d seconds (random)", getprefix(), t);
+			//cs_sleepms(t*1000);
 			cs_exit(1);
 		}
 		network_tcp_connection_close(&reader[ridx], handle);
@@ -2365,9 +2378,10 @@ int cc_cli_init_int() {
 			(void *)&cfg->netprio, sizeof(ulong));
 #endif
 	//if (!reader[ridx].tcp_ito) {
-		ulong keep_alive = reader[ridx].tcp_ito ? 1 : 0;
-		setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_KEEPALIVE,
-				(void *) &keep_alive, sizeof(ulong));
+	reader[ridx].tcp_ito = 1; //60sec
+	//ulong keep_alive = reader[ridx].tcp_ito ? 1 : 0;
+	//setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_KEEPALIVE,
+	//			(void *) &keep_alive, sizeof(ulong));
 	//}
 
 	// aston
@@ -2460,6 +2474,7 @@ void module_cccam(struct s_module *ph) {
 	ph->cleanup = cc_cleanup;
 	ph->c_multi = 1;
 	ph->c_init = cc_cli_init;
+	ph->c_idle = cc_idle;
 	ph->c_recv_chk = cc_recv_chk;
 	ph->c_send_ecm = cc_send_ecm;
 	ph->c_send_emm = cc_send_emm;
