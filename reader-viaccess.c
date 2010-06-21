@@ -141,7 +141,7 @@ int viaccess_card_init(struct s_reader * reader, ATR newatr)
   static uchar insFAC[] = { 0x87, 0x02, 0x00, 0x00, 0x03 }; // init FAC
   static uchar FacDat[] = { 0x00, 0x00, 0x28 };
 
-  if ((atr[0]!=0x3f) || (atr[1]!=0x77) || ((atr[2]!=0x18) && (atr[2]!=0x11)) || (atr[9]!=0x68)) return ERROR;
+  if ((atr[0]!=0x3f) || (atr[1]!=0x77) || ((atr[2]!=0x18) && (atr[2]!=0x11) && (atr[2]!=0x19)) || (atr[9]!=0x68)) return ERROR;
 
   write_cmd(insFAC, FacDat);
   if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) )
