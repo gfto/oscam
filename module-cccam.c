@@ -883,7 +883,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 		cc->proxy_init_errors++;
 		if (cc->proxy_init_errors > 20) //TODO: Configuration?
 			cc_cycle_connection();
-		return -1;
+		return 0;
 	}
 
 
@@ -891,7 +891,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 
 	if (!emm_card) { //Card for emm not found!
 		cs_log("%s emm for client %d not possible, no card found!", getprefix(), ep->cidx);
-		return -1;
+		return 0;
 	}
 
 	cs_debug_mask(D_EMM, "%s emm received for client %d caid %04X for card %08X", getprefix(), ep->cidx,
@@ -917,7 +917,8 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	memcpy(emmbuf + 12, ep->emm, ep->l);
 
 	llist_append(cc->pending_emms, emmbuf);
-	return cc_send_pending_emms();
+	cc_send_pending_emms();
+	return 1;
 }
 
 //SS: Hack
