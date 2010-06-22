@@ -961,6 +961,9 @@ void event_handler(int signal) {
 		
 		strcpy(demux[pmt_id].pmt_file, dp->d_name);
 		demux[pmt_id].pmt_time = pmt_info.st_mtime;
+
+		if (cfg->dvbapi_pmtmode == 1)
+			disable_pmt_files=1;
 	}
 	closedir(dirp);
 }
@@ -1080,6 +1083,9 @@ void dvbapi_main_local() {
 		cs_log("dvbapi: could not detect api version");
 		return;
 	}
+
+	if (cfg->dvbapi_pmtmode == 2)
+		disable_pmt_files=1;
 
   int listenfd = -1;
   if (cfg->dvbapi_boxtype != BOXTYPE_IPBOX_PMT) {

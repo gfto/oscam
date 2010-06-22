@@ -812,6 +812,7 @@ struct s_config
 	int		dvbapi_au;
 	char		dvbapi_usr[33];
 	int		dvbapi_boxtype;
+	int		dvbapi_pmtmode;
 	CAIDTAB	dvbapi_prioritytab;
 	CAIDTAB	dvbapi_ignoretab;
 	CAIDTAB	dvbapi_delaytab;

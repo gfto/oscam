@@ -1159,6 +1159,11 @@ void chk_t_dvbapi(char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "pmt_mode")) {
+		cfg->dvbapi_pmtmode = atoi(value);
+		return;
+	}
+
 	if (!strcmp(token, "boxtype")) {
 		int i;
 		for (i=1;i<=BOXTYPES;i++) {
