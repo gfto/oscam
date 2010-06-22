@@ -970,6 +970,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 	// Show only parameters which needed for the reader
 	switch (reader[ridx].typ) {
+		case R_CONSTCW:
+			tpl_addVar(vars, 0, "PROTOCOL", "constcw");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
+			break;
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_MOUSE :

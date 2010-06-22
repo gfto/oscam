@@ -592,6 +592,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option>cccam</option>\
 			<option>gbox</option>\
 			<option>pcsc</option>\
+			<option>constcw</option>\
 		</select></TD>\
 		<TD COLSPAN=\"3\" align=\"center\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD></TR>\
 		</form>\
