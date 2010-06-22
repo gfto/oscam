@@ -375,7 +375,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   rc=0;
   if (sflag)
   {
-    if (!client[cs_idx].udp_sa.sin_addr.s_addr) // once resolved at least
+	  if ((!client[cs_idx].udp_sa.sin_addr.s_addr) && (reader[ridx].ph.type != MOD_NO_CONN))  // once resolved at least
       cs_resolve();
 
     if ((rc=reader->ph.c_send_ecm(&ecmtask[n], buf)))
