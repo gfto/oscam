@@ -814,7 +814,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", reader[ridx].nagra_boxkey[i]);
 	}
 	if ( reader[ridx].atr[0])
-		for (i = 0; (reader[ridx].atr[i] != '\0') && (i < 64); i++) tpl_printf(vars, 1, "ATR", "%02X", reader[ridx].atr[i]);
+		for (i = 0; i < reader[ridx].atrlen/2; i++)
+			tpl_printf(vars, 1, "ATR", "%02X", reader[ridx].atr[i]);
 
 	if(reader[ridx].smargopatch)
 		tpl_addVar(vars, 0, "SMARGOPATCHCHECKED", "checked");
