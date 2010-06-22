@@ -170,12 +170,8 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
     // set smartreader+ default values 
     reader->sr_config->F=372; 
     reader->sr_config->D=1.0; 
-    if(reader->mhz==reader->cardmhz && reader->cardmhz*10000 > 3690000)
-        reader->sr_config->fs=reader->cardmhz*10000; 
-    else    
-        reader->sr_config->fs=3690000; 
     reader->sr_config->N=0; 
-    reader->sr_config->T=0; 
+    reader->sr_config->T=1; 
     reader->sr_config->inv=0; 
 
     for(i=0 ; i < 4 ;i++) {
@@ -191,7 +187,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
             reader->sr_config->F=618; /// magic smartreader value
             reader->sr_config->D=1;
             reader->sr_config->T=2; // will be set to T=1 in EnableSmartReader
-            reader->sr_config->irdeto=TRUE;
+            reader->sr_config->fs=6000000;
         }
         
         smart_flush(reader);
@@ -381,7 +377,8 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     ret = smart_write(reader, N, sizeof (N),0);
 
     // command 4 , set parameter T
-    if(reader->sr_config->irdeto && T==2) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
+    if(T==2) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
+    //if(reader->sr_config->irdeto) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
         {
         T=1;
         reader->sr_config->T=1;
