@@ -1738,10 +1738,7 @@ void send_reader_stat(int ridx, ECM_REQUEST *er, int rc)
 	memset(&add_stat, 0, sizeof(ADD_READER_STAT));
 	add_stat.ridx = ridx;
 	add_stat.time = time;
-	//if (info_only)
-	//	add_stat.rc = -1;
-	//else
-		add_stat.rc   = rc;
+	add_stat.rc   = rc;
 	add_stat.caid = er->caid;
 	add_stat.prid = er->prid;
 	add_stat.srvid = er->srvid;
@@ -1886,7 +1883,7 @@ void chk_dcw(int fd)
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100) {
-	send_reader_stat(er->reader[0], ert, er->rc);
+	send_reader_stat(er->reader[0], er, (er->rc==0)?4:-1);
 	return; // already done
   }
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
@@ -1926,7 +1923,7 @@ void chk_dcw(int fd)
         ert=(ECM_REQUEST *)0;
       }
     if (ert) ert->rc=4;
-    else send_reader_stat(save_ridx, save_ert, er->rc);
+    else send_reader_stat(save_ridx, save_ert, 4);
   }
   if (ert) send_dcw(ert);
   return;

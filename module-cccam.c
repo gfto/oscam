@@ -1821,15 +1821,15 @@ static int cc_cli_connect(void) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
+		network_tcp_connection_close(&reader[ridx], handle);
 		if (err == ENOTCONN) { //TCPIP : Port/handle not useable
 			//handle = client[cs_idx].udp_fd = pfd = 0; //socket unsable!
-			//int t = fast_rnd();
-			//cs_log("%s sleeping %d seconds (random)", getprefix(), t);
-			//cs_sleepms(t*1000);
-			cs_exit(1);
+			int t = fast_rnd();
+			cs_log("%s sleeping %d seconds (random)", getprefix(), t);
+			cs_sleepms(t*1000);
+			//cs_exit(1);
 		}
-		network_tcp_connection_close(&reader[ridx], handle);
-	
+			
 		return -2;
 	}
 	struct cc_data *cc = reader[ridx].cc;
@@ -2308,14 +2308,9 @@ static int cc_srv_connect() {
 				break;
 			}
 
-			if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) <= 0)
-				break;
-
 			int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 			if (new_caid_info_count != caid_info_count) {
 				cc_srv_report_cards();
-				if (cc_cmd_send(NULL, 0, MSG_KEEPALIVE) <= 0)
-					break;
 			}
 		} else if (i <= 0)
 			break;
