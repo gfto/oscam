@@ -39,13 +39,14 @@ typedef enum cs_proto_type
 	TAG_CS378X,		// camd 3.5x TCP
 	TAG_GBOX,		// gbox
 	TAG_CCCAM,		// cccam
+	TAG_CONSTCW,		// constcw
 	TAG_DVBAPI,		// dvbapi
 	TAG_WEBIF,		// webif
 	TAG_ANTICASC		// anti-cascading
 } cs_proto_type_t;
 
 static char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", "radegast", "serial",
-		      "cs357x", "cs378x", "gbox", "cccam", "dvbapi", "webif", "anticasc", NULL};
+		      "cs357x", "cs378x", "gbox", "cccam", "constcw", "dvbapi", "webif", "anticasc", NULL};
 
 #ifdef DEBUG_SIDTAB
 static void show_sidtab(struct s_sidtab *sidtab)
@@ -2138,6 +2139,7 @@ int write_server()
 				case R_PCSC		: ctyp = "pcsc";		break;
 #endif
 				case R_CCCAM	: ctyp = "cccam";		break;
+				case R_CONSTCW	: ctyp = "constcw";		break;
 				case R_CS378X	: ctyp = "cs378x";		break;
 				case R_DB2COM1	: ctyp = "internal";	break;
 				case R_DB2COM2	: ctyp = "internal";   break;
@@ -3057,6 +3059,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			//strcpy(value, "1");
 			//chk_caidtab(value, &rdr->ctab); 
 			//this is a MAJOR hack for auto multiple caid support (not currently working due to ncd table issue)
+			return;
+		}
+
+		if (!strcmp(value, "constcw")) {
+			rdr->typ = R_CONSTCW;
 			return;
 		}
 

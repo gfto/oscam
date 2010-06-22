@@ -698,7 +698,8 @@ void * start_cardreader(void * rdr)
       case R_RADEGAST: module_radegast(&reader->ph); break;
       case R_SERIAL  : module_oscam_ser(&reader->ph); break;
       case R_CS378X  : module_camd35_tcp(&reader->ph); break;
-      case R_CCCAM  : module_cccam(&reader->ph); break;
+      case R_CCCAM   : module_cccam(&reader->ph); break;
+      case R_CONSTCW : module_constcw(&reader->ph); break;
 #ifdef CS_WITH_GBOX
       case R_GBOX    : module_gbox(&reader->ph);strcpy(client[cs_idx].usr, reader->label); break;
 #endif

@@ -2711,6 +2711,7 @@ int main (int argc, char *argv[])
            module_camd35_tcp,
            module_newcamd,
            module_cccam,
+           module_constcw,
 #ifdef CS_WITH_GBOX
            module_gbox,
 #endif

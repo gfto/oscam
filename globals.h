@@ -143,6 +143,7 @@
 #define R_NEWCAMD   0x12  // Reader cascading newcamd
 #define R_RADEGAST  0x13  // Reader cascading radegast
 #define R_CS378X    0x14  // Reader cascading camd 3.5x TCP
+#define R_CONSTCW   0x15  // Reader for Constant CW
 /////////////////// peer to peer proxy readers after R_CCCAM
 #ifdef CS_WITH_GBOX
 #define R_GBOX      0x20  // Reader cascading gbox
@@ -158,6 +159,7 @@
 #define MOD_CONN_UDP    2
 #define MOD_CONN_NET    3
 #define MOD_CONN_SERIAL 4
+#define MOD_NO_CONN	5
 
 #ifdef HAVE_DVBAPI
 #define BOXTYPE_DREAMBOX	1
@@ -1170,6 +1172,7 @@ extern void module_newcamd(struct s_module *);
 extern void module_radegast(struct s_module *);
 extern void module_oscam_ser(struct s_module *);
 extern void module_cccam(struct s_module *);
+extern void module_constcw(struct s_module *);
 extern struct timeval *chk_pending(struct timeb tp_ctimeout);
 #ifdef CS_WITH_GBOX
 extern void module_gbox(struct s_module *);

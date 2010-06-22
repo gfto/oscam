@@ -272,6 +272,7 @@ char *monitor_get_proto(int idx)
 			case R_PCSC		: ctyp = "pcsc";		break;
 #endif
 			case R_CCCAM	: ctyp = "cccam";		break;
+			case R_CONSTCW	: ctyp = "constcw";		break;
 			case R_CS378X	: ctyp = "cs378x";		break;
 			case R_DB2COM1	: ctyp = "dbox COM1";	break;
 			case R_DB2COM2	: ctyp = "dbox COM2";   break;
