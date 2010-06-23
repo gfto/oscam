@@ -10,5 +10,5 @@ int Sci_GetStatus (struct s_reader *reader, int * status);
 int Sci_Reset (struct s_reader *reader, ATR * atr);
 int Sci_Activate (struct s_reader *reader);
 int Sci_Deactivate (struct s_reader *reader);
-void Sci_FastReset (struct s_reader *reader);
+int Sci_FastReset (struct s_reader *reader);
 //#endif

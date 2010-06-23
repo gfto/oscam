@@ -18,4 +18,4 @@ int Phoenix_Transmit (struct s_reader * reader, BYTE * buffer, unsigned size, un
 int Phoenix_Receive (struct s_reader * reader, BYTE * buffer, unsigned size, unsigned int timeout);
 int Phoenix_SetBaudrate (struct s_reader * reader, unsigned long baudrate);
 int Phoenix_Close (struct s_reader * reader);
-void Phoenix_FastReset (struct s_reader * reader);
+int Phoenix_FastReset (struct s_reader * reader);

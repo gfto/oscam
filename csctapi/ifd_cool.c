@@ -118,7 +118,7 @@ int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT,
 	return OK;
 }
 
-void Cool_FastReset ()
+int Cool_FastReset ()
 {
 	int n = 40;
 	unsigned char buf[40];
@@ -127,6 +127,8 @@ void Cool_FastReset ()
 	call (cnxt_smc_reset_card (handle, ATR_TIMEOUT, NULL, NULL));
 
 	call (cnxt_smc_get_atr (handle, buf, &n));
+
+    return 0;
 }
 
 #endif

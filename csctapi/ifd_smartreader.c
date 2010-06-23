@@ -330,7 +330,7 @@ int SR_Close (struct s_reader *reader)
 
 }
 
-void SR_FastReset(struct s_reader *reader)
+int SR_FastReset(struct s_reader *reader)
 {
     unsigned char data[40];
     int ret;
@@ -348,7 +348,7 @@ void SR_FastReset(struct s_reader *reader)
     cs_sleepms(20);
     //Read the ATR
     ret = smart_read(reader,data, 40,1);
-
+    return 0;
 }
 
 static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T, unsigned char inv,int parity) {

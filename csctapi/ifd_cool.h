@@ -10,6 +10,6 @@ int Cool_Reset (ATR * atr);
 int Cool_Transmit (BYTE * buffer, unsigned size);
 int Cool_Receive (BYTE * buffer, unsigned size);
 int Cool_SetClockrate (int mhz);
-void Cool_FastReset (void);
+int Cool_FastReset (void);
 void * handle;
 #endif

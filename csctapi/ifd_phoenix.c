@@ -262,7 +262,7 @@ int Phoenix_Close (struct s_reader * reader)
 }
 
 
-void Phoenix_FastReset (struct s_reader * reader)
+int Phoenix_FastReset (struct s_reader * reader)
 {
     IO_Serial_Ioctl_Lock(reader, 1);
 #ifdef USE_GPIO
@@ -291,5 +291,6 @@ void Phoenix_FastReset (struct s_reader * reader)
 
     IO_Serial_Ioctl_Lock(reader, 0);
     IO_Serial_Flush(reader);
+    return 0;
 
 }

@@ -127,7 +127,7 @@ int Sci_Deactivate (struct s_reader * reader)
 }
 
 
-void Sci_FastReset (struct s_reader *reader)
+int Sci_FastReset (struct s_reader *reader)
 {
 	unsigned char buf[SCI_MAX_ATR_SIZE];
 	int n = 0;
@@ -143,6 +143,7 @@ void Sci_FastReset (struct s_reader *reader)
 
     call (ioctl(reader->handle, IOCTL_SET_ATR_READY)<0);
 
+    return 0;
 }
 
 #endif
