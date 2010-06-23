@@ -609,7 +609,7 @@ void dvbapi_resort_ecmpids(int demux_index) {
 void dvbapi_parse_descriptor(int demux_id, int i, unsigned int info_length, unsigned char *buffer) {
 	//int ca_pmt_cmd_id = buffer[i + 5];
 	unsigned int descriptor_length=0;
-	ushort added,j,n;
+	unsigned int added,j,n;
 
 	for (j = 0; j < info_length - 1; j += descriptor_length + 2) {
 		descriptor_length = buffer[i + j + 7];
@@ -619,14 +619,34 @@ void dvbapi_parse_descriptor(int demux_id, int i, unsigned int info_length, unsi
 		cs_debug("typ: %02x\tcaid: %04x\t ca_pid: %04x", buffer[i + j + 6], descriptor_ca_system_id, descriptor_ca_pid);
 
 		if (buffer[i + j + 6] == 0x09) {
-			added=0;
-			for (n=0;n<demux[demux_id].ECMpidcount;n++) {
-				if (demux[demux_id].ECMpids[n].CAID==descriptor_ca_system_id && demux[demux_id].ECMpids[n].ECM_PID==descriptor_ca_pid)
-					added=1;
-			}
-			if (added==0) {
-				demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].ECM_PID=descriptor_ca_pid;
-				demux[demux_id].ECMpids[demux[demux_id].ECMpidcount++].CAID=descriptor_ca_system_id;
+			//Seca workaround
+			if (descriptor_ca_system_id >> 8 == 0x01) {
+				uint u, index = i + j + 6;
+				int ecm_pid, ecm_id; 
+				for ( u=2; u<descriptor_length; u+=15 ) { 
+					ecm_pid = ((buffer[index+2+u] & 0x1F) << 8) | buffer[index+2+u+1];
+					added=0;
+					for (n=0;n<demux[demux_id].ECMpidcount;n++) {
+						if (demux[demux_id].ECMpids[n].CAID==descriptor_ca_system_id && demux[demux_id].ECMpids[n].ECM_PID==ecm_pid)
+							added=1;
+					}
+					if (added==0) {
+						demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].ECM_PID=ecm_pid;
+						demux[demux_id].ECMpids[demux[demux_id].ECMpidcount++].CAID=descriptor_ca_system_id;
+						ecm_id = (buffer[index+2+u+2] << 8) | buffer[index+2+u+3];
+						cs_debug("typ: %02x ca_system_id: %04x ca_pid: %04x ecm_id: %04x", buffer[index], descriptor_ca_system_id, ecm_pid, ecm_id);
+					}
+				}
+			} else {
+				added=0;
+				for (n=0;n<demux[demux_id].ECMpidcount;n++) {
+					if (demux[demux_id].ECMpids[n].CAID==descriptor_ca_system_id && demux[demux_id].ECMpids[n].ECM_PID==descriptor_ca_pid)
+						added=1;
+				}
+				if (added==0) {
+					demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].ECM_PID=descriptor_ca_pid;
+					demux[demux_id].ECMpids[demux[demux_id].ECMpidcount++].CAID=descriptor_ca_system_id;
+				}
 			}
 		}
 	}
@@ -1084,16 +1104,16 @@ void dvbapi_main_local() {
 		return;
 	}
 
-	if (cfg->dvbapi_pmtmode == 2)
+	if (cfg->dvbapi_pmtmode == 1)
 		disable_pmt_files=1;
 
-  int listenfd = -1;
-  if (cfg->dvbapi_boxtype != BOXTYPE_IPBOX_PMT) {
-	   listenfd = dvbapi_init_listenfd();
-	   if (listenfd < 1) {
-		   cs_log("dvbapi: could not init camd.socket.");
-		   return;
-	   }
+	int listenfd = -1;
+	if (cfg->dvbapi_boxtype != BOXTYPE_IPBOX_PMT && cfg->dvbapi_pmtmode != 2) {
+		listenfd = dvbapi_init_listenfd();
+		if (listenfd < 1) {
+			cs_log("dvbapi: could not init camd.socket.");
+			return;
+		}
 	}
 
 	struct sigaction signal_action;
