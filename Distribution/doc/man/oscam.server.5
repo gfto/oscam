@@ -8,7 +8,7 @@ At least one [reader] section is \fIrequired\fR.
 .SH DESCRIPTIONS
 .SS "The [reader] section"
 .PP
-\fBdevice\fP = \fB<device|bus:device>\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP
+\fBdevice\fP = \fB<device|bus:device>\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|\fBconstantcw\fP
 .RS 3n
 define local or remote reader 
  
@@ -16,7 +16,12 @@ define local or remote reader
  \fBbus:devivce\fP: bus name and device name of the Smartreader+
               (get the names with lsusb 'Bus' and 'Device')
  \fBlport\fP:       remapping to local port
- \fBPCSC\fP:        number of PCSC readers, starting with 0 
+ \fBPCSC\fP:        number of PCSC readers, starting with 0
+ \fBconstantcw\fP:  constant CW file name 
+
+constant CW file format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 digits):key (16 Bytes seperated by spaces)
+
+expample: 1234:123456:1234:1234:1234:00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 .RE
 .PP
 \fBenable\fP = \fB0\fP|\fB1\fP
@@ -141,6 +146,7 @@ reader protocol, \fIrequired\fR:
  \fBcccam\fP
  \fBradegast\fP
  \fBpcsc\fP
+ \fBconstcw\fP 
 .RE
 .PP
 \fBcccversion\fP = \fB<main version>.<version>.<sub version>\fP
@@ -449,5 +455,13 @@ internal reader
  device   = /dev/sci0
  group    = 8
  caid     = 0800 
+.TP 3n 
+\(bu
+constant CW 
+ [reader]
+ label    = myconstantcw
+ protocol = constcw
+ device   = /var/keys/constant.cw
+ group    = 9
 .SH "SEE ALSO"
 \fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cert\fR(5), \fBoscam.conf\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.services\fR(5), \fBoscam.srvid\fR(5), \fBoscam.user\fR(5)
