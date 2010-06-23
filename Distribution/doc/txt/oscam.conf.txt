@@ -351,6 +351,9 @@ DESCRIPTIONS
        au = 0|1
 	  1 = enable AU, default:0
 
+       pmt_mode = 0|1
+	  1 = disable PMT file reading, default:0
+
        boxtype = dbox2|dreambox|duckbox|ufs910|ipbox|ipbox-pmt|fortis
 	  set boxtype, auto detection of DVB API will be aspired, default:dreambox
 
