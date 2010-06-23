@@ -10,6 +10,7 @@
 extern struct s_reader *reader;
 
 int g_flag = 0;
+int cc_use_rc4 = 0;
 
 //Mode names for CMD_05 command:
 char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4", "LEN=0" };
@@ -26,6 +27,8 @@ static uchar fast_rnd() {
 static int cc_cli_init();
 static int cc_get_nxt_ecm();
 static int cc_send_pending_emms();
+static void cc_rc4_crypt(struct cc_crypt_block *block, uint8 *data, int len,
+		cc_crypt_mode_t mode);
 
 char * prefix = NULL;
 
@@ -63,6 +66,10 @@ static void cc_init_crypt(struct cc_crypt_block *block, uint8 *key, int len) {
 
 static void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		cc_crypt_mode_t mode) {
+	if (cc_use_rc4) {
+		cc_rc4_crypt(block, data, len, mode);
+		return;
+	}
 	int i;
 	uint8 z;
 
@@ -2186,7 +2193,7 @@ static int cc_srv_connect() {
 	uint seed;
 	uint8 buf[CC_MAXMSGSIZE];
 	uint8 data[16];
-	char usr[20], pwd[20];
+	char usr[21], pwd[21];
 	struct s_auth *account;
 	struct cc_data *cc;
 
@@ -2207,7 +2214,8 @@ static int cc_srv_connect() {
 		memset(client[cs_idx].cc, 0, sizeof(struct cc_data));
 		cc->server_card = malloc(sizeof(struct cc_card));
 	}
-
+	cc_use_rc4 = 0;
+	
 	// calc + send random seed
 	seed = (unsigned int) time((time_t*) 0);
 	for (i = 0; i < 16; i++)
@@ -2221,38 +2229,94 @@ static int cc_srv_connect() {
 	SHA1_Update(&ctx, data, 16);
 	SHA1_Final(buf, &ctx);
 
-	//initialisate crypto states
-	/*
-	 init_crypt(&cc->block[ENCRYPT], buf, 20);
-	 crypto_state__decrypt(&cc->block[ENCRYPT], data, data2, 16);
-	 init_crypt(&cc->block[DECRYPT], data2, 16);
-	 crypto_state__encrypt(&cc->block[DECRYPT], buf, buf2, 20);*/
+	//Special check for 2.0.11 clients
+	//2.0.11 uses rc4 crypt
+	//So we need to test data for validity:
+	struct cc_crypt_block *block_rc4 = malloc(sizeof(struct cc_crypt_block)*2);
+	uint8 *data_rc4 = malloc(16);
+	uint8 *buf_rc4 = malloc(CC_MAXMSGSIZE);
+	memcpy(data_rc4, data, sizeof(data));
+	memcpy(buf_rc4, buf, CC_MAXMSGSIZE);
+	memcpy(block_rc4, cc->block, sizeof(struct cc_crypt_block)*2);
+	char usr_rc4[21];
+	memset(usr_rc4, 0, sizeof(usr_rc4));
 
+	//2.1.1 and newer clients:
 	cc_init_crypt(&cc->block[ENCRYPT], buf, 20);
 	cc_crypt(&cc->block[ENCRYPT], data, 16, DECRYPT);
 	cc_init_crypt(&cc->block[DECRYPT], data, 16);
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
+	//2.0.11 client:
+	cc_init_crypt(&block_rc4[ENCRYPT], buf_rc4, 20);
+	cc_rc4_crypt(&block_rc4[ENCRYPT], data_rc4, 16, DECRYPT);
+	cc_init_crypt(&block_rc4[DECRYPT], data_rc4, 16);
+	cc_rc4_crypt(&block_rc4[DECRYPT], buf_rc4, 20, DECRYPT);
+
 	if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
 		cs_ddump(buf, 20, "cccam: recv:");
+		memcpy(buf_rc4, buf, CC_MAXMSGSIZE);
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
+		cc_rc4_crypt(&block_rc4[DECRYPT], buf_rc4, 20, DECRYPT);
 		cs_ddump(buf, 20, "cccam: hash:");
-	} else
-		return -1;
+		cs_ddump(buf_rc4, 20, "cccam: hash rc4:");
+	} 
 
 	// receive username
 	if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
+		memcpy(buf_rc4, buf, CC_MAXMSGSIZE);
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
-		cs_ddump(buf, 20, "cccam: username '%s':", buf);
-		strncpy(usr, (char *) buf, sizeof(usr));
-	} else
-		return -1;
+		cc_rc4_crypt(&block_rc4[DECRYPT], buf_rc4, 20, DECRYPT);
 
-	for (account = cfg->account; account; account = account->next)
+		strncpy(usr, (char *) buf, sizeof(usr));
+		strncpy(usr_rc4, (char *) buf_rc4, sizeof(usr_rc4));
+		
+		//test for nonprintable characters:
+		cc_use_rc4 = -1;
+		for (i = 0; i < 20; i++)
+		{
+			if (usr[i] > 0 && usr[i] < 0x20) { //found nonprintable char
+				cc_use_rc4 = 1;
+				break;
+			}
+			if (usr_rc4[i] > 0 && usr_rc4[i] < 0x20) { //found nonprintable char
+				cc_use_rc4 = 0;
+				break;
+			}
+		}
+		if (cc_use_rc4 == 0)
+			cs_ddump(buf, 20, "cccam: username '%s':", usr);
+		else if (cc_use_rc4 == 1)
+			cs_ddump(buf_rc4, 20, "cccam: username rc4 '%s':", usr_rc4);
+		else
+			cs_debug("illegal username received");
+	} 
+
+	for (account = cfg->account; account; account = account->next) {
 		if (strcmp(usr, account->usr) == 0) {
 			strncpy(pwd, account->pwd, sizeof(pwd));
+			cc_use_rc4 = 0; //We found a user by cc_crypt
 			break;
 		}
+		if (strcmp(usr_rc4, account->usr) == 0) {
+			strncpy(pwd, account->pwd, sizeof(pwd));
+			cc_use_rc4 = 1; //We found a user by cc_rc4_crypt
+			break;
+		}
+	}
+	 
+	if (!account || cc_use_rc4 == -1) {
+		cs_log("account '%s' not found!", cc_use_rc4?usr_rc4:usr);
+		return -1;
+	}
+	
+	if (cc_use_rc4) {
+		cs_log("%s client is using version 2.0.11 rc4", getprefix());
+		memcpy(cc->block, block_rc4, sizeof(struct cc_crypt_block)*2);
+	}
+	free(block_rc4);
+	free(data_rc4);
+	free(buf_rc4);
 
 	// receive passwd / 'CCcam'
 	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), DECRYPT);
@@ -2263,7 +2327,7 @@ static int cc_srv_connect() {
 		return -1;
 
 	client[cs_idx].crypted = 1;
-	if (cs_auth_client(account, NULL) != 0)
+	if (cs_auth_client(account, NULL))
 		return -1;
 	//cs_auth_client((struct s_auth *)(-1), NULL);
 

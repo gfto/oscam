@@ -96,7 +96,7 @@ typedef enum {
 
 struct cc_data {
 	struct cc_crypt_block block[2]; // crypto state blocks
-
+	
 	uint8 node_id[8], // client node id
 		peer_node_id[8], // server node id
 		peer_version[8], // server version
