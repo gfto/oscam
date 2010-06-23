@@ -260,3 +260,36 @@ int Phoenix_Close (struct s_reader * reader)
 	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader->device);
 	return OK;
 }
+
+
+void Phoenix_FastReset (struct s_reader * reader)
+{
+    IO_Serial_Ioctl_Lock(reader, 1);
+#ifdef USE_GPIO
+    if (gpio_detect)
+        set_gpio(0);
+    else
+#endif
+        IO_Serial_RTS_Set(reader);
+#ifdef OS_CYGWIN32
+    /* 
+    * Pause for 200ms as this might help with the PL2303.
+    * Some users reporting that this breaks cygwin, so we went back to 50ms.
+    */
+    cs_sleepms(50);
+#else
+    cs_sleepms(20);
+#endif
+
+#ifdef USE_GPIO  //felix: set card reset hi (inactive)
+    if (gpio_detect) {
+        set_gpio_input();
+    }
+    else
+#endif
+        IO_Serial_RTS_Clr(reader);
+
+    IO_Serial_Ioctl_Lock(reader, 0);
+    IO_Serial_Flush(reader);
+
+}

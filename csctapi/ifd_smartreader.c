@@ -193,7 +193,6 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         smart_flush(reader);
         EnableSmartReader(reader, reader->sr_config->fs/10000, reader->sr_config->F, (BYTE)reader->sr_config->D, reader->sr_config->N, reader->sr_config->T, reader->sr_config->inv,parity[i]);
         sched_yield();
-        cs_sleepms(500); //smartreader in mouse mode needs this, so it might also be needed in native mode.
         
         //Reset smartcard
     
@@ -202,13 +201,12 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         // A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
         // so if we have a base freq of 3.5712MHz : 40000/3690000 = .0112007168458781 seconds, aka 11ms
         // so if we have a base freq of 6.00MHz : 40000/6000000 = .0066666666666666 seconds, aka 6ms
-        // here were doing 200ms .. is it too much ?
-        cs_sleepms(200);
+        cs_sleepms(20);
         
         //Set the DTR HIGH and RTS LOW
         smartreader_setdtr_rts(reader, 1, 0);
-    
-        cs_sleepms(200);
+ 
+        cs_sleepms(20);
         sched_yield();
     
         //Read the ATR
@@ -332,6 +330,26 @@ int SR_Close (struct s_reader *reader)
 
 }
 
+void SR_FastReset(struct s_reader *reader)
+{
+    unsigned char data[40];
+    int ret;
+
+    //Set the DTR HIGH and RTS HIGH
+    smartreader_setdtr_rts(reader, 1, 1);
+    // A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
+    // so if we have a base freq of 3.5712MHz : 40000/3690000 = .0112007168458781 seconds, aka 11ms
+    // so if we have a base freq of 6.00MHz : 40000/6000000 = .0066666666666666 seconds, aka 6ms
+    cs_sleepms(20);
+    
+    //Set the DTR HIGH and RTS LOW
+    smartreader_setdtr_rts(reader, 1, 0);
+
+    cs_sleepms(20);
+    //Read the ATR
+    ret = smart_read(reader,data, 40,1);
+
+}
 
 static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T, unsigned char inv,int parity) {
 

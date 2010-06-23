@@ -126,4 +126,23 @@ int Sci_Deactivate (struct s_reader * reader)
 	return OK;
 }
 
+
+void Sci_FastReset (struct s_reader *reader)
+{
+	unsigned char buf[SCI_MAX_ATR_SIZE];
+	int n = 0;
+
+	call (ioctl(reader->handle, IOCTL_SET_RESET)<0);
+
+	while(n<SCI_MAX_ATR_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
+	{
+		n++;
+	}
+
+    cs_sleepms(50);
+
+    call (ioctl(reader->handle, IOCTL_SET_ATR_READY)<0);
+
+}
+
 #endif
