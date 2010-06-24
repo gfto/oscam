@@ -152,13 +152,8 @@ int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			else
 #endif
 				IO_Serial_RTS_Clr(reader);
-#ifndef OS_CYGWIN32
-			/* 
-			* Pause for 200ms as this might help with the PL2303.
-			* Some users reporting that this breaks cygwin, so we exclude this.
-			*/
-			cs_sleepms(200);
-#endif
+
+			cs_sleepms(50);
 			IO_Serial_Ioctl_Lock(reader, 0);
 
 			int n=0;
@@ -283,6 +278,9 @@ int Phoenix_FastReset (struct s_reader * reader, int delay)
         IO_Serial_RTS_Clr(reader);
 
     IO_Serial_Ioctl_Lock(reader, 0);
+    
+    cs_sleepms(50);
+
     IO_Serial_Flush(reader);
     return 0;
 

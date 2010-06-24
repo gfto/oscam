@@ -206,7 +206,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         //Set the DTR HIGH and RTS LOW
         smartreader_setdtr_rts(reader, 1, 0);
  
-        cs_sleepms(20);
+        cs_sleepms(50);
         sched_yield();
     
         //Read the ATR
@@ -345,7 +345,7 @@ int SR_FastReset(struct s_reader *reader, int delay)
     //Set the DTR HIGH and RTS LOW
     smartreader_setdtr_rts(reader, 1, 0);
 
-    cs_sleepms(20);
+    cs_sleepms(50);
     //Read the ATR
     ret = smart_read(reader,data, 40,1);
     return 0;

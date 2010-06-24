@@ -55,6 +55,8 @@ int Cool_Reset (ATR * atr)
 	int timeout = 5000; // Timout in ms?
 	call (cnxt_smc_reset_card (handle, ATR_TIMEOUT, NULL, NULL));
 
+    cs_sleepms(50);
+
 	int n = 40;
 	unsigned char buf[40];
 	call (cnxt_smc_get_atr (handle, buf, &n));
@@ -125,6 +127,8 @@ int Cool_FastReset ()
 
 	//reset card
 	call (cnxt_smc_reset_card (handle, ATR_TIMEOUT, NULL, NULL));
+
+    cs_sleepms(50);
 
 	call (cnxt_smc_get_atr (handle, buf, &n));
 

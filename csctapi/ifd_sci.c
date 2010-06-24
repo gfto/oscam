@@ -134,12 +134,13 @@ int Sci_FastReset (struct s_reader *reader)
 
 	call (ioctl(reader->handle, IOCTL_SET_RESET)<0);
 
+    cs_sleepms(50);
+    // flush atr from buffer
 	while(n<SCI_MAX_ATR_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
 	{
 		n++;
 	}
 
-    cs_sleepms(50);
 
     call (ioctl(reader->handle, IOCTL_SET_ATR_READY)<0);
 
