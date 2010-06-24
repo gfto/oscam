@@ -456,7 +456,7 @@ static int cc_send_cli_data() {
 
 	memcpy(buf, reader[ridx].r_usr, sizeof(reader[ridx].r_usr));
 	memcpy(buf + 20, cc->node_id, 8);
-	memcpy(buf + 28, reader[ridx].cc_want_emu, 1);                // <-- Client want to have EMUs, 0 - NO; 1 - YES
+	buf[28] =  reader[ridx].cc_want_emu; // <-- Client want to have EMUs, 0 - NO; 1 - YES
 	memcpy(buf + 29, reader[ridx].cc_version, sizeof(reader[ridx].cc_version)); // cccam version (ascii)
 	memcpy(buf + 61, reader[ridx].cc_build, sizeof(reader[ridx].cc_build)); // build number (ascii)
 
