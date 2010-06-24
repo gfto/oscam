@@ -330,7 +330,7 @@ int SR_Close (struct s_reader *reader)
 
 }
 
-int SR_FastReset(struct s_reader *reader)
+int SR_FastReset(struct s_reader *reader, int delay)
 {
     unsigned char data[40];
     int ret;
@@ -340,7 +340,7 @@ int SR_FastReset(struct s_reader *reader)
     // A card with an active low reset is reset by maintaining RST in state L for at least 40 000 clock cycles
     // so if we have a base freq of 3.5712MHz : 40000/3690000 = .0112007168458781 seconds, aka 11ms
     // so if we have a base freq of 6.00MHz : 40000/6000000 = .0066666666666666 seconds, aka 6ms
-    cs_sleepms(20);
+    cs_sleepms(delay);
     
     //Set the DTR HIGH and RTS LOW
     smartreader_setdtr_rts(reader, 1, 0);

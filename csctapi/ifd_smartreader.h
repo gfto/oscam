@@ -30,7 +30,7 @@ int SR_Receive (struct s_reader *reader, BYTE * buffer, unsigned size);
 int SR_SetBaudrate (struct s_reader *reader);
 int SR_SetParity (struct s_reader *reader, unsigned short parity);
 int SR_Close (struct s_reader *reader);
-int SR_FastReset(struct s_reader *reader);
+int SR_FastReset(struct s_reader *reader, int delay);
 
 #endif // __SMARTREADER__
 #endif // HAVE_LIBUSB
