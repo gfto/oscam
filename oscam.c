@@ -1081,7 +1081,7 @@ void cs_resolve()
 	struct hostent *rht;
 	struct s_auth;
 	for (i=0; i<CS_MAXREADER; i++)
-		if ((idx=reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK))
+		if ((idx=reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK) && (reader[i].typ!=R_CONSTCW))
 		{
 			//client[idx].last=time((time_t)0);
 			pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
