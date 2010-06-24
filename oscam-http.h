@@ -730,9 +730,15 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n"
 #define TPLREADERCONFIGCCCAMBIT "\
 	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
-    <TR><TD>Version:</TD><TD><input name=\"cccversion\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##CCCVERSION##\"></TD></TR>\n\
-    <TR><TD>Build:</TD><TD><input name=\"cccbuild\" type=\"text\" size=\"15\" maxlength=\"15\" value=\"##CCCBUILD##\"></TD></TR>\n\
+    <TR><TD>Version:</TD><TD><SELECT name=\"cccversion\">\
+			<OPTION ##CCCVERSIONSELECTED0##>2.0.11</OPTION>\
+			<OPTION ##CCCVERSIONSELECTED1##>2.1.1</OPTION>\
+			<OPTION ##CCCVERSIONSELECTED2##>2.1.2</OPTION>\
+			<OPTION ##CCCVERSIONSELECTED3##>2.1.3</OPTION>\
+			<OPTION ##CCCVERSIONSELECTED4##>2.1.4</OPTION>\
+		</SELECT></TD></TR>\n\
     <TR><TD>Maxhop:</TD><TD><input name=\"cccmaxhop\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOP##\"></TD></TR>\n\
+    <TR><TD>Want Emu:<input name=\"cccwantemu\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccwantemu\" type=\"checkbox\" value=\"1\" ##CCCWANTEMUCHECKED##></TD></TR>\n\
     <TR><TD>Disable retry ECM: <input name=\"cccdisableretryecm\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccdisableretryecm\" type=\"checkbox\" value=\"1\" ##CCCDISABLERETRYECMCHECKED##></TD></TR>\n\
     <TR><TD>Disable auto blocking of undecodable channels: <input name=\"cccdisableautoblock\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccdisableautoblock\" type=\"checkbox\" value=\"1\" ##CCCDISABLEAUTOBLOCKCHECKED##></TD></TR>\n\
     <TR><TD>Reconnect-timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
@@ -806,8 +812,13 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TH>&nbsp;</TH><TH>Edit Cccam Config</TH></TR>\n\
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##PORT##\"></TD></TR>\n\
 		<TR><TD>Reshare:</TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
-		<TR><TD>Version:</TD><TD><input name=\"version\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##VERSION##\"></TD></TR>\n\
-		<TR><TD>Build:</TD><TD><input name=\"build\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##BUILD##\"></TD></TR>\n\
+		<TR><TD>Version:</TD><TD><SELECT name=\"version\">\
+			<OPTION ##VERSIONSELECTED0##>2.0.11</OPTION>\
+			<OPTION ##VERSIONSELECTED1##>2.1.1</OPTION>\
+			<OPTION ##VERSIONSELECTED2##>2.1.2</OPTION>\
+			<OPTION ##VERSIONSELECTED3##>2.1.3</OPTION>\
+			<OPTION ##VERSIONSELECTED4##>2.1.4</OPTION>\
+		</SELECT></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\

@@ -335,7 +335,18 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 
 	tpl_printf(vars, 1, "PORT", "%d", cfg->cc_port);
 	tpl_printf(vars, 0, "RESHARE", "%d", cfg->cc_reshare);
-	tpl_printf(vars, 0, "VERSION", "%s", cfg->cc_version);
+
+	if (!strcmp(cfg->cc_version,"2.0.11")) {
+		tpl_addVar(vars, 0, "VERSIONSELECTED0", "selected");
+	} else if (!strcmp(cfg->cc_version,"2.1.1")) {
+		tpl_addVar(vars, 0, "VERSIONSELECTED1", "selected");
+	} else if (!strcmp(cfg->cc_version,"2.1.2")) {
+		tpl_addVar(vars, 0, "VERSIONSELECTED2", "selected");
+	} else if (!strcmp(cfg->cc_version,"2.1.3")) {
+		tpl_addVar(vars, 0, "VERSIONSELECTED3", "selected");
+	} else if (!strcmp(cfg->cc_version,"2.1.4")) {
+		tpl_addVar(vars, 0, "VERSIONSELECTED4", "selected");
+	}
 
 	fputs(tpl_getTpl(vars, "CONFIGCCCAM"), f);
 }
@@ -960,12 +971,25 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if (reader[ridx].deprecated)
 		tpl_addVar(vars, 0, "DEPRECATEDCHCHECKED", "checked");
 
-	tpl_addVar(vars, 0, "CCCVERSION", reader[ridx].cc_version);
+	if (!strcmp(reader[ridx].cc_version, "2.0.11")) {
+		tpl_addVar(vars, 0, "CCCVERSIONSELECTED0", "selected");
+	} else if (!strcmp(reader[ridx].cc_version, "2.1.1")) {
+		tpl_addVar(vars, 0, "CCCVERSIONSELECTED1", "selected");
+	} else if (!strcmp(reader[ridx].cc_version, "2.1.2")) {
+		tpl_addVar(vars, 0, "CCCVERSIONSELECTED2", "selected");
+	} else if (!strcmp(reader[ridx].cc_version, "2.1.3")) {
+		tpl_addVar(vars, 0, "CCCVERSIONSELECTED3", "selected");
+	} else if (!strcmp(reader[ridx].cc_version, "2.1.4")) {
+		tpl_addVar(vars, 0, "CCCVERSIONSELECTED4", "selected");
+	}
+
 	tpl_printf(vars, 0, "CCCMAXHOP", "%d", reader[ridx].cc_maxhop);
 	if (reader[ridx].cc_disable_retry_ecm)
 		tpl_addVar(vars, 0, "CCCDISABLERETRYECMCHECKED", "checked");
 	if (reader[ridx].cc_disable_auto_block)
 		tpl_addVar(vars, 0, "CCCDISABLEAUTOBLOCKCHECKED", "checked");
+	if(reader[ridx].cc_want_emu)
+		tpl_addVar(vars, 0, "CCCWANTEMUCHECKED", "checked");
 
 	// Show only parameters which needed for the reader
 	switch (reader[ridx].typ) {
