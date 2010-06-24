@@ -781,7 +781,6 @@ struct s_config
 	int		cc_reshare;
 	in_addr_t	cc_srvip;
 	uchar		cc_version[7];
-	uchar		cc_build[5];
 	struct s_ip *rad_allowed;
 	char		rad_usr[32];
 	char		ser_device[512];

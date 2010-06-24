@@ -1030,16 +1030,6 @@ void chk_t_cccam(char *token, char *value)
 		strncpy((char*)cfg->cc_version, value, sizeof(cfg->cc_version) - 1);
 		return;
 	}
-	// cccam build number
-	if (!strcmp(token, "build")) {
-		if (strlen(value) > sizeof(cfg->cc_build) - 1) {
-			fprintf(stderr, "cccam config build number too long\n");
-			exit(1);
-		}
-		memset(cfg->cc_build, 0, sizeof(cfg->cc_build));
-		strncpy((char*)cfg->cc_build, value, sizeof(cfg->cc_build)-1);
-		return;
-	}
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in cccam section not recognized\n",token);
@@ -1883,7 +1873,6 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->cc_port);
 		fprintf_conf(f, CONFVARWIDTH, "reshare", "%d\n", cfg->cc_reshare);
 		fprintf_conf(f, CONFVARWIDTH, "version", "%s\n", cfg->cc_version);
-		fprintf_conf(f, CONFVARWIDTH, "build", "%s\n", cfg->cc_build);
 		fprintf(f,"\n");
 	}
 
@@ -2324,9 +2313,6 @@ int write_server()
 			if (reader[i].typ == R_CCCAM) {
 				if (reader[i].cc_version[0])
 					fprintf_conf(f, CONFVARWIDTH, "cccversion", "%s\n", reader[i].cc_version);
-
-				if (reader[i].cc_build[0])
-					fprintf_conf(f, CONFVARWIDTH, "cccbuild", "%s\n", reader[i].cc_build);
 
 				if (reader[i].cc_maxhop)
 					fprintf_conf(f, CONFVARWIDTH, "cccmaxhop", "%d\n", reader[i].cc_maxhop);
@@ -3290,18 +3276,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 		memset(rdr->cc_version, 0, sizeof(rdr->cc_version));
 		cs_strncpy(rdr->cc_version, value, sizeof(rdr->cc_version));
-		return;
-	}
-
-	if (!strcmp(token, "cccbuild")) {
-		// cccam build number
-		if (strlen(value) > sizeof(rdr->cc_build) - 1) {
-			fprintf(stderr, "cccam config build number too long\n");
-			exit(1);
-		}
-
-		memset(rdr->cc_build, 0, sizeof(rdr->cc_build));
-		cs_strncpy(rdr->cc_build, value, sizeof(rdr->cc_build));
 		return;
 	}
 

@@ -417,24 +417,20 @@ char *build[] = { "2892", "2971", "3094", "3165", "3191", "" };
  */
 static void cc_check_version(char *cc_version, char *cc_build) {
 	int i;
-
-	if (strlen(cc_version) == 0) {
-		memcpy(cc_version, version[CC_DEFAULT_VERSION], strlen(
-				version[CC_DEFAULT_VERSION]));
-		memcpy(cc_build, build[CC_DEFAULT_VERSION], strlen(
-				build[CC_DEFAULT_VERSION]));
-
-		cs_debug("cccam: auto version set: %s build: %s", cc_version, cc_build);
-		return;
-	}
-
-	for (i = 0; strlen(version[i]); i++)
+	for (i = 0; strlen(version[i]); i++) {
 		if (!memcmp(cc_version, version[i], strlen(version[i]))) {
 			memcpy(cc_build, build[i], strlen(build[i]));
 			cs_debug("cccam: auto build set for version: %s build: %s",
 					cc_version, cc_build);
-			break;
+			return;
 		}
+	}
+	memcpy(cc_version, version[CC_DEFAULT_VERSION], strlen(
+			version[CC_DEFAULT_VERSION]));
+	memcpy(cc_build, build[CC_DEFAULT_VERSION], strlen(
+			build[CC_DEFAULT_VERSION]));
+
+	cs_debug("cccam: auto version set: %s build: %s", cc_version, cc_build);
 }
 
 /**
@@ -486,12 +482,12 @@ static int cc_send_srv_data() {
 	memset(buf, 0, CC_MAXMSGSIZE);
 
 	memcpy(buf, cc->node_id, 8);
-	cc_check_version((char *) cfg->cc_version, (char *) cfg->cc_build);
+	cc_check_version((char *) cfg->cc_version, reader[ridx].cc_build);
 	memcpy(buf + 8, cfg->cc_version, sizeof(reader[ridx].cc_version)); // cccam version (ascii)
-	memcpy(buf + 40, cfg->cc_build, sizeof(reader[ridx].cc_build)); // build number (ascii)
+	memcpy(buf + 40, reader[ridx].cc_build, sizeof(reader[ridx].cc_build)); // build number (ascii)
 
 	cs_log("%s version: %s, build: %s nodeid: %s", getprefix(),
-			cfg->cc_version, cfg->cc_build, cs_hexdump(0, cc->peer_node_id, 8));
+			cfg->cc_version, reader[ridx].cc_build, cs_hexdump(0, cc->peer_node_id, 8));
 
 	return cc_cmd_send(buf, 0x48, MSG_SRV_DATA);
 }

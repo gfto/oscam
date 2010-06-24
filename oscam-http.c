@@ -336,7 +336,6 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 	tpl_printf(vars, 1, "PORT", "%d", cfg->cc_port);
 	tpl_printf(vars, 0, "RESHARE", "%d", cfg->cc_reshare);
 	tpl_printf(vars, 0, "VERSION", "%s", cfg->cc_version);
-	tpl_printf(vars, 0, "BUILD", "%s", cfg->cc_build);
 
 	fputs(tpl_getTpl(vars, "CONFIGCCCAM"), f);
 }
@@ -962,7 +961,6 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		tpl_addVar(vars, 0, "DEPRECATEDCHCHECKED", "checked");
 
 	tpl_addVar(vars, 0, "CCCVERSION", reader[ridx].cc_version);
-	tpl_addVar(vars, 0, "CCCBUILD", reader[ridx].cc_build);
 	tpl_printf(vars, 0, "CCCMAXHOP", "%d", reader[ridx].cc_maxhop);
 	if (reader[ridx].cc_disable_retry_ecm)
 		tpl_addVar(vars, 0, "CCCDISABLERETRYECMCHECKED", "checked");
