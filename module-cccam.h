@@ -105,6 +105,7 @@ struct cc_data {
 	uint8 cmd05_aeskey[16];
 	struct cc_crypt_block cmd05_cryptkey;
 
+	int is_oscam_cccam;
 	int cmd05_active;
 	int cmd05_data_len;
 	uint8 cmd05_data[256];

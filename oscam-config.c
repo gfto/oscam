@@ -2336,6 +2336,9 @@ int write_server()
 
 				if (reader[i].cc_disable_auto_block)
 					fprintf_conf(f, CONFVARWIDTH, "cccdisableautoblock", "%d\n", reader[i].cc_disable_auto_block);
+
+				if (reader[i].cc_want_emu)
+					fprintf_conf(f, CONFVARWIDTH, "cccwantemu", "%d\n", reader[i].cc_want_emu);
 			}
 
 			if (reader[i].deprecated && isphysical)
@@ -3324,6 +3327,16 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		} else {
 			rdr->cc_disable_auto_block = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "cccwantemu")) {
+		if (strlen(value) == 0) {
+			rdr->cc_want_emu = 0;
+			return;
+		} else {
+			rdr->cc_want_emu = atoi(value);
 			return;
 		}
 	}

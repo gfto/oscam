@@ -66,10 +66,6 @@ static void cc_init_crypt(struct cc_crypt_block *block, uint8 *key, int len) {
 
 static void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		cc_crypt_mode_t mode) {
-	if (cc_use_rc4) {
-		cc_rc4_crypt(block, data, len, mode);
-		return;
-	}
 	int i;
 	uint8 z;
 
@@ -79,7 +75,9 @@ static void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		SWAPC(&block->keytable[block->counter], &block->keytable[block->sum]);
 		z = data[i];
 		data[i] = z ^ block->keytable[(block->keytable[block->counter]
-				+ block->keytable[block->sum]) & 0xff] ^ block->state;
+				+ block->keytable[block->sum]) & 0xff];
+		if (!cc_use_rc4)
+			data[i] ^= block->state;
 		if (!mode)
 			z = data[i];
 		block->state = block->state ^ z;
@@ -458,6 +456,7 @@ static int cc_send_cli_data() {
 
 	memcpy(buf, reader[ridx].r_usr, sizeof(reader[ridx].r_usr));
 	memcpy(buf + 20, cc->node_id, 8);
+	memcpy(buf + 28, reader[ridx].cc_want_emu, 1);                // <-- Client want to have EMUs, 0 - NO; 1 - YES
 	memcpy(buf + 29, reader[ridx].cc_version, sizeof(reader[ridx].cc_version)); // cccam version (ascii)
 	memcpy(buf + 61, reader[ridx].cc_build, sizeof(reader[ridx].cc_build)); // build number (ascii)
 
@@ -1347,6 +1346,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			//
 		} else if (l == 0x23) {
 			cc->cmd05_mode = MODE_UNKNOWN;
+			cc_cycle_connection(); //Absolute unknown handling!
 			//
 			//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
 			//
@@ -1485,6 +1485,20 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
+		if (l > 4) {
+			//Received NOK with payload:
+			cs_log("%s %s", getprefix(), (char*) buf+4);
+
+			//Check for PARTNER connection:
+			if (cc->just_logged_in && !cc->is_oscam_cccam && strcmp((char*)buf+4, "PARTNER:") == 0) {
+				//When Data starts with "PARTNER:" we have an Oscam-cccam-compatible client/server!
+				cc->is_oscam_cccam = 1;
+				sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
+				cc_cmd_send(buf, strlen((char*)buf), MSG_CW_NOK1);
+				return 0;
+			}
+		}
+
 		if (is_server) //for reader only
 			return 0;
 
@@ -1869,6 +1883,15 @@ static int cc_cli_connect(void) {
 
 	cs_ddump(data, 16, "cccam: server init seed:");
 
+	uint16 sum = 0x1234;
+	uint16 recv_sum = (data[14] << 8) | data[15];
+	int i;
+	for (i = 0; i < 14; i++) {
+		sum += data[i];
+	}
+	//Create special data to detect oscam-cccam:
+	cc->is_oscam_cccam = sum==recv_sum;
+
 	cc_xor(data); // XOR init bytes with 'CCcam'
 
 	SHA_CTX ctx;
@@ -1924,6 +1947,12 @@ static int cc_cli_connect(void) {
 	if (cc_send_cli_data() <= 0) {
 		cs_log("%s login failed, could not send client data", getprefix());
 		return -3;
+	}
+
+	//Trick: when discovered partner is an Oscam Client, then we send him our version string:
+	if (cc->is_oscam_cccam) {
+		sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
+		cc_cmd_send(buf, strlen((char*)buf), MSG_CW_NOK1);
 	}
 
 	pthread_mutex_init(&cc->lock, NULL);
@@ -2218,8 +2247,15 @@ static int cc_srv_connect() {
 	
 	// calc + send random seed
 	seed = (unsigned int) time((time_t*) 0);
-	for (i = 0; i < 16; i++)
+	uint16 sum = 0x1234;
+	for (i = 0; i < 14; i++) {
 		data[i] = fast_rnd();
+		sum += data[i];
+	}
+	//Create special data to detect oscam-cccam:
+	data[14] = sum >> 8;
+	data[15] = sum & 0xff;
+
 	send(client[cs_idx].udp_fd, data, 16, 0);
 
 	cc_xor(data); // XOR init bytes with 'CCcam'
