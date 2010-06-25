@@ -1486,13 +1486,13 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			cs_log("%s %s", getprefix(), (char*) buf+4);
 
 			//Check for PARTNER connection:
-			if (cc->just_logged_in && !cc->is_oscam_cccam && strcmp((char*)buf+4, "PARTNER:") == 0) {
+			if (!cc->is_oscam_cccam && strncmp((char*)buf+4, "PARTNER:",8) == 0) {
 				//When Data starts with "PARTNER:" we have an Oscam-cccam-compatible client/server!
 				cc->is_oscam_cccam = 1;
 				sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
 				cc_cmd_send(buf, strlen((char*)buf), MSG_CW_NOK1);
-				return 0;
 			}
+			return 0;
 		}
 
 		if (is_server) //for reader only
