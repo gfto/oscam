@@ -321,7 +321,12 @@ is denied from an CCCam server, OSCam sends no new ECM request, default:0
 0 = enables auto block: When an ECM request is send to an CCCam server, it tries the 
 SC with the lowest hop. If it is denied, the SID is blocked on this SC. When all 
 SC are blocked, the CAID:PROV:SID information is stored in a auto block list and 
-is newer send again, 1= disabled auto block, default: 1 
+is newer send again, 1= disabled auto block, default: 1
+.RE
+.PP
+\fBcccwantemu\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = request to provide emu from CCCam server, too, default: 0
 .RE
 .SH OVERCLOCKING
 .TP 3n
