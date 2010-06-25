@@ -336,15 +336,15 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 	tpl_printf(vars, 1, "PORT", "%d", cfg->cc_port);
 	tpl_printf(vars, 0, "RESHARE", "%d", cfg->cc_reshare);
 
-	if (!strcmp(cfg->cc_version,"2.0.11")) {
+	if (!strcmp((char*)cfg->cc_version,"2.0.11")) {
 		tpl_addVar(vars, 0, "VERSIONSELECTED0", "selected");
-	} else if (!strcmp(cfg->cc_version,"2.1.1")) {
+	} else if (!strcmp((char*)cfg->cc_version,"2.1.1")) {
 		tpl_addVar(vars, 0, "VERSIONSELECTED1", "selected");
-	} else if (!strcmp(cfg->cc_version,"2.1.2")) {
+	} else if (!strcmp((char*)cfg->cc_version,"2.1.2")) {
 		tpl_addVar(vars, 0, "VERSIONSELECTED2", "selected");
-	} else if (!strcmp(cfg->cc_version,"2.1.3")) {
+	} else if (!strcmp((char*)cfg->cc_version,"2.1.3")) {
 		tpl_addVar(vars, 0, "VERSIONSELECTED3", "selected");
-	} else if (!strcmp(cfg->cc_version,"2.1.4")) {
+	} else if (!strcmp((char*)cfg->cc_version,"2.1.4")) {
 		tpl_addVar(vars, 0, "VERSIONSELECTED4", "selected");
 	}
 
