@@ -489,15 +489,24 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
                 cs_log ("coulnd't open device %03d:%03d\n", libusb_get_bus_number(dev), libusb_get_device_address(dev));
                 continue;
             }
-
-            if(libusb_get_bus_number(dev)==atoi(busname) && libusb_get_device_address(dev)==atoi(devname)) {
+            
+            // If the device is specified as "Serial:number", check iSerial
+            if(!strcmp(busname,"Serial")) {
+                char iserialbuffer[128];
+                if(libusb_get_string_descriptor_ascii(usb_dev_handle,desc.iSerialNumber,iserialbuffer,sizeof(iserialbuffer))>0)  {
+                    if(!strcmp(iserialbuffer,devname)) {
+                        cs_log("Found reader with serial %s at %03d:%03d",devname,libusb_get_bus_number(dev),libusb_get_device_address(dev));
+                        if(smartreader_check_endpoint(dev))
+                            dev_found=TRUE;
+                    }
+                }
+            }
+            else if(libusb_get_bus_number(dev)==atoi(busname) && libusb_get_device_address(dev)==atoi(devname)) {
                 cs_debug_mask(D_IFD,"IO:SR: Checking FTDI device: %03d on bus %03d",libusb_get_device_address(dev),libusb_get_bus_number(dev));
                 // check for smargo endpoints.
                 if(smartreader_check_endpoint(dev))
                     dev_found=TRUE;
             }
-            
-            
             libusb_close(usb_dev_handle);
         }
 
