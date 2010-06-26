@@ -1839,15 +1839,6 @@ static int cc_cli_connect(void) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
-		network_tcp_connection_close(&reader[ridx], handle);
-		if (err == ENOTCONN) { //TCPIP : Port/handle not useable
-			//handle = client[cs_idx].udp_fd = pfd = 0; //socket unsable!
-			int t = fast_rnd();
-			cs_log("%s sleeping %d seconds (random)", getprefix(), t);
-			cs_sleepms(t*1000);
-			//cs_exit(1);
-		}
-			
 		return -2;
 	}
 	struct cc_data *cc = reader[ridx].cc;
@@ -2459,7 +2450,7 @@ int cc_cli_init_int() {
 	//		loc_sa.sin_port = htons(reader[ridx].l_port);
 
 	if ((client[cs_idx].udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) <= 0) {
-		cs_log("%s Socket creation failed (errno=%d)", getprefix(), errno);
+		cs_log("%s Socket creation failed (errno=%d, socket=%d)", getprefix(), errno, client[cs_idx].udp_fd);
 		return -10;
 	}
 	//cs_log("%s 1 socket created: cs_idx=%d, fd=%d errno=%d", getprefix(), cs_idx, client[cs_idx].udp_fd, errno);
@@ -2511,6 +2502,7 @@ int cc_cli_init_int() {
 static int cc_cli_init()
 {
 	while (cc_cli_init_int() != 0) {
+		network_tcp_connection_close(&reader[ridx], client[cs_idx].udp_fd);
 		if (master_pid!=getppid()) cs_exit(0);
 		cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
 		cs_log("restarting reader %s (index=%d)", reader[ridx].label, ridx);                        
