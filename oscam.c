@@ -2121,7 +2121,7 @@ int recv_best_reader(ECM_REQUEST *er)
 	fd_set fds;
 	struct timeval timeout;
 	timeout.tv_sec = 0;
-	timeout.tv_usec = 100;
+	timeout.tv_usec = 500;
 	do
 	{
 		FD_ZERO(&fds);

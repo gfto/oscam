@@ -1490,7 +1490,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				//When Data starts with "PARTNER:" we have an Oscam-cccam-compatible client/server!
 				cc->is_oscam_cccam = 1;
 				sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
-				cc_cmd_send(buf, strlen((char*)buf), MSG_CW_NOK1);
+				cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
 			}
 			return 0;
 		}
@@ -1948,7 +1948,7 @@ static int cc_cli_connect(void) {
 	//Trick: when discovered partner is an Oscam Client, then we send him our version string:
 	if (cc->is_oscam_cccam) {
 		sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
-		cc_cmd_send(buf, strlen((char*)buf), MSG_CW_NOK1);
+		cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
 	}
 
 	pthread_mutex_init(&cc->lock, NULL);
@@ -2477,10 +2477,9 @@ int cc_cli_init_int() {
 	client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
 
 	if (!client[cs_idx].ip) {
-		cs_resolve();
 		cs_log("cccam: Waiting for IP resolve of: %s", reader[ridx].device);
 		int safeCounter = 40 * cfg->resolvedelay;
-		//Now loop-resolver in oscam do his job:
+		//waiting for loop_resolver to resolve!
 		while (!client[cs_idx].ip && safeCounter--) {
 			cs_sleepms(100);
 		}

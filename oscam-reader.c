@@ -687,6 +687,7 @@ void * start_cardreader(void * rdr)
 
   if ((proxy=reader->typ & R_IS_CASCADING))
   {
+	client[cs_idx].ip = 0;
     client[cs_idx].typ='p';
     client[cs_idx].port=reader->r_port;
     strcpy(client[cs_idx].usr, reader->r_usr);
