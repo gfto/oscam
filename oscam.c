@@ -1088,9 +1088,16 @@ void cs_resolve()
 			rht = gethostbyname(reader[i].device);
 			if (rht)
 			{
+				in_addr_t last_ip = client[idx].ip;
 				memcpy(&client[idx].udp_sa.sin_addr, rht->h_addr,
 						sizeof(client[idx].udp_sa.sin_addr));
 				client[idx].ip=cs_inet_order(client[idx].udp_sa.sin_addr.s_addr);
+				if (client[idx].ip != last_ip)
+				{
+					uint8 *ip = (uint8*)&client[idx].ip;
+					cs_debug_mask(D_TRACE, "resolved %s to %d.%d.%d.%d", reader[i].device,
+							ip[3], ip[2], ip[1], ip[0]);
+				}
 			}
 			else
 				cs_log("can't resolve %s", reader[i].device);

@@ -2477,7 +2477,7 @@ int cc_cli_init_int() {
 	client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
 
 	if (!client[cs_idx].ip) {
-		cs_log("cccam: Waiting for IP resolve of: %s", reader[ridx].device);
+		cs_debug_mask(D_TRACE, "%s waiting for IP resolve of: %s", getprefix(), reader[ridx].device);
 		int safeCounter = 40 * cfg->resolvedelay;
 		//waiting for loop_resolver to resolve!
 		while (!client[cs_idx].ip && safeCounter--) {
