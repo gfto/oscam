@@ -581,7 +581,7 @@ void dvbapi_resort_ecmpids(int demux_index) {
 		}
 	}
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
-		if (dvbapi_check_array(cfg->dvbapi_ignoretab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CAID)>=0) {
+		if ((i=dvbapi_check_array(cfg->dvbapi_ignoretab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[n].CAID))>=0 && cfg->dvbapi_ignoretab.mask[i] == 0) {
 			cs_debug("-> ignore %04x", demux[demux_index].ECMpids[n].CAID);
 		} else if (dvbapi_check_array(global_caid_list, MAX_CAID, demux[demux_index].ECMpids[n].CAID)>=0) {
 			cs_debug("-> caid list %04x", demux[demux_index].ECMpids[n].CAID);
