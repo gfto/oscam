@@ -512,9 +512,13 @@ CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of loca
 1 = enable AU, default:0
 .RE
 .PP
-\fBpmt_mode\fP = \fB0\fP|\fB1\fP
+\fBpmt_mode\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP
 .RS 3n
-1 = disable PMT file reading, default:0
+PMT mode:
+ 0 = use camd.socket and PMT file, default
+ 1 = disable reading PMT file
+ 2 = disable camd.socket
+ 3 = read PMT file on startup only
 .RE
 .PP
 \fBboxtype\fP = \fBdbox2\fP|\fBdreambox\fP|\fBduckbox\fP|\fBufs910\fP|\fBipbox\fP|\fBipbox-pmt\fP|\fBfortis\fP
