@@ -124,12 +124,12 @@ typedef struct ca_pid {
 	int index;		/* -1 == disable*/
 } ca_pid_t;
 
-#define DMX_START		 _IO('o', 41)
-#define DMX_STOP		 _IO('o', 42)
-#define DMX_SET_FILTER		 _IOW('o', 43, struct dmx_sct_filter_params)
+#define DMX_START		_IO('o', 41)
+#define DMX_STOP		_IO('o', 42)
+#define DMX_SET_FILTER	_IOW('o', 43, struct dmx_sct_filter_params)
 
-#define CA_SET_DESCR	  _IOW('o', 134, ca_descr_t)
-#define CA_SET_PID	  _IOW('o', 135, ca_pid_t)
+#define CA_SET_DESCR		_IOW('o', 134, ca_descr_t)
+#define CA_SET_PID		_IOW('o', 135, ca_pid_t)
 
 char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt" };
 
@@ -492,7 +492,7 @@ void dvbapi_stop_descrambling(int demux_id) {
 
 	for (i=0;i<demux[demux_id].STREAMpidcount;i++) {
 		dvbapi_set_pid(demux_id, i, -1);
-	}	
+	}
 
 	int needed=0;
 	for (i=0;i<MAX_DEMUX;i++) {
@@ -709,17 +709,17 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		if (ca_mask & (1 << i)) {
 			demux[demux_id].cadev_index=i;
 			break;
-    }
+		}
 	}
 	cs_debug("dvbapi: id: %d demux index: %d ca index: %d", demux_id, demux[demux_id].demux_index, demux[demux_id].cadev_index);
  
-  if (cfg->dvbapi_boxtype == BOXTYPE_IPBOX_PMT) {
-     ca_mask = demux_id + 1;
-		 demux_index = demux_id;
-  }
+	if (cfg->dvbapi_boxtype == BOXTYPE_IPBOX_PMT) {
+		ca_mask = demux_id + 1;
+		demux_index = demux_id;
+	}
 
-    if (length !=0)
-        dvbapi_parse_descriptor(demux_id, 1, length, buffer);
+	if (length !=0)
+		dvbapi_parse_descriptor(demux_id, 1, length, buffer);
 
 	unsigned int es_info_length=0;
 	for (i = program_info_length + 6; i < length; i += es_info_length + 5) {
@@ -811,7 +811,6 @@ void dvbapi_handlesockmsg (unsigned char *buffer, unsigned int len, int connfd) 
 						}
 					}
 					if (execlose) close(connfd);
-
 				} else {
 					close(connfd);
 				}
@@ -856,8 +855,7 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 		else
 			ptr3="";
 
-		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3))))
-		{ 
+		if (((caid=a2i(ptr1, 2))|(prov=a2i(ptr3, 3)))) { 
 			ctab->caid[i]=caid;
 			ctab->cmap[i]=prov >> 8;
 			ctab->mask[i++]=prov;
@@ -895,17 +893,19 @@ void event_handler(int signal) {
 	}
 
 	if (disable_pmt_files)
-  	return; 
+		return; 
 
-  dirp = opendir(TMPDIR);
+	dirp = opendir(TMPDIR);
 	if (!dirp) {
 		 cs_log("dvbapi: opendir errno %d", errno);
 		 return;
 	}
   
-  while ((dp = readdir(dirp))) {
-  	if (strlen(dp->d_name) < 7)
-  		continue; 
+	while ((dp = readdir(dirp))) {
+		if (disable_pmt_files)
+			break; 
+		if (strlen(dp->d_name) < 7)
+  			continue; 
 		if (strncmp(dp->d_name, "pmt", 3)!=0 || strncmp(dp->d_name+strlen(dp->d_name)-4, ".tmp", 4)!=0) 
 			continue;
 		
@@ -944,7 +944,7 @@ void event_handler(int signal) {
 		int pmt_id;
 #ifdef QBOXHD
 		uint j1,j2;
-	  // QboxHD pmt.tmp is the full capmt written as a string of hex values
+		// QboxHD pmt.tmp is the full capmt written as a string of hex values
 		// pmt.tmp must be longer than 3 bytes (6 hex chars) and even length
 		if ((len<6) || ((len%2) != 0) || ((K/2)>sizeof(dest))) {
 			cs_log("dvbapi: error parsing QboxHD pmt.tmp, incorrect length");
@@ -978,11 +978,10 @@ void event_handler(int signal) {
 
 		pmt_id = dvbapi_parse_capmt((uchar*)dest, 7 + len - 12 - 4, -1);
 #endif
-		
 		strcpy(demux[pmt_id].pmt_file, dp->d_name);
 		demux[pmt_id].pmt_time = pmt_info.st_mtime;
 
-		if (cfg->dvbapi_pmtmode == 1)
+		if (cfg->dvbapi_pmtmode == 3)
 			disable_pmt_files=1;
 	}
 	closedir(dirp);
