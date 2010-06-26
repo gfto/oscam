@@ -8,13 +8,15 @@ At least one [reader] section is \fIrequired\fR.
 .SH DESCRIPTIONS
 .SS "The [reader] section"
 .PP
-\fBdevice\fP = \fB<device|bus:device>\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|\fBconstantcw\fP
+\fBdevice\fP = \fB<device|bus:device>\fP|Serial:Reader \fBserial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|\fBconstantcw\fP
 .RS 3n
 define local or remote reader 
  
  \fBdevice\fP:      device name
  \fBbus:devivce\fP: bus name and device name of the Smartreader+
               (get the names with lsusb 'Bus' and 'Device')
+ \fBserial\fP       serial number of Smartreader+
+              (get the serial number while starting OSCam)
  \fBlport\fP:       remapping to local port
  \fBPCSC\fP:        number of PCSC readers, starting with 0
  \fBconstantcw\fP:  constant CW file name 

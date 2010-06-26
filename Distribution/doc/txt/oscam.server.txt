@@ -11,12 +11,14 @@ SYNOPSIS
 
 DESCRIPTIONS
    The [reader] section
-       device = <device|bus:device>|<ip|hostname>,<port>[,<lport>]|pcsc|constantcw
+       device = <device|bus:device>|Serial:Reader serial|<ip|hostname>,<port>[,<lport>]|pcsc|constantcw
 	  define local or remote reader
 
 	   device:	device name
 	   bus:devivce: bus name and device name of the Smartreader+
 			(get the names with lsusb 'Bus' and 'Device')
+	   serial	serial number of Smartreader+
+			(get the serial number while starting OSCam)
 	   lport:	remapping to local port
 	   PCSC:	number of PCSC readers, starting with 0
 	   constantcw:	constant CW file name
