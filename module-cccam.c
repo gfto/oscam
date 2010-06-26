@@ -2469,23 +2469,18 @@ int cc_cli_init_int() {
 		setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_PRIORITY,
 			(void *)&cfg->netprio, sizeof(ulong));
 #endif
-	//if (!reader[ridx].tcp_ito) {
-	reader[ridx].tcp_ito = 1; //60sec
-	//ulong keep_alive = reader[ridx].tcp_ito ? 1 : 0;
-	//setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_KEEPALIVE,
-	//			(void *) &keep_alive, sizeof(ulong));
-	//}
+	reader[ridx].tcp_ito = 1; //60sec...This now invokes ph_idle()
 
-	// aston
+	memset((char *) &client[cs_idx].udp_sa, 0,
+		sizeof(client[cs_idx].udp_sa));
+	client[cs_idx].udp_sa.sin_family = AF_INET;
+	client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
+
 	if (!client[cs_idx].ip) {
-		memset((char *) &client[cs_idx].udp_sa, 0,
-			sizeof(client[cs_idx].udp_sa));
-		client[cs_idx].udp_sa.sin_family = AF_INET;
-		client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
-
 		cs_resolve();
 		cs_log("cccam: Waiting for IP resolve of: %s", reader[ridx].device);
 		int safeCounter = 40 * cfg->resolvedelay;
+		//Now loop-resolver in oscam do his job:
 		while (!client[cs_idx].ip && safeCounter--) {
 			cs_sleepms(100);
 		}
@@ -2555,6 +2550,7 @@ void cc_cleanup(void) {
 		cc_free(client[cs_idx].cc);
 		client[cs_idx].cc = NULL;
 	}
+	client[cs_idx].ip = 0;
 }
 
 void module_cccam(struct s_module *ph) {
