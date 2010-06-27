@@ -1140,17 +1140,29 @@ void chk_t_gbox(char *token, char *value)
 void chk_t_dvbapi(char *token, char *value)
 {
 	if (!strcmp(token, "enabled")) {
-		cfg->dvbapi_enabled = atoi(value);
+		if(strlen(value) == 0) {
+			cfg->dvbapi_enabled = 0;
+		} else {
+			cfg->dvbapi_enabled = atoi(value);
+		}
 		return;
 	}
 
 	if (!strcmp(token, "au")) {
-		cfg->dvbapi_au = atoi(value);
+		if(strlen(value) == 0) {
+			cfg->dvbapi_au = 0;
+		} else {
+			cfg->dvbapi_au = atoi(value);
+		}
 		return;
 	}
 
 	if (!strcmp(token, "pmt_mode")) {
-		cfg->dvbapi_pmtmode = atoi(value);
+		if(strlen(value) == 0) {
+			cfg->dvbapi_pmtmode = 0;
+		} else {
+			cfg->dvbapi_pmtmode = atoi(value);
+		}
 		return;
 	}
 

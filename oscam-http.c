@@ -523,15 +523,22 @@ void send_oscam_config_dvbapi(struct templatevars *vars, FILE *f, struct uripara
 		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 
-	if (cfg->dvbapi_enabled > 0) tpl_addVar(vars, 0, "ENABLEDCHECKED", "checked");
-	if (cfg->dvbapi_au > 0) tpl_addVar(vars, 0, "AUCHECKED", "checked");
+	if (cfg->dvbapi_enabled > 0)
+		tpl_addVar(vars, 0, "ENABLEDCHECKED", "checked");
+
+	if (cfg->dvbapi_au > 0)
+		tpl_addVar(vars, 0, "AUCHECKED", "checked");
 
 	tpl_printf(vars, 0, "BOXTYPE", "<option value=\"\"%s>None</option>\n", cfg->dvbapi_boxtype == 0 ? " selected" : "");
 	for (i=1; i<=BOXTYPES; i++) {
 		tpl_printf(vars, 1, "BOXTYPE", "<option%s>%s</option>\n", cfg->dvbapi_boxtype == i ? " selected" : "", boxdesc[i]);
 	}
 
-	tpl_addVar(vars, 0, "USER", cfg->dvbapi_usr);
+	if(cfg->dvbapi_usr[0])
+		tpl_addVar(vars, 0, "USER", cfg->dvbapi_usr);
+
+	if(cfg->dvbapi_pmtmode)
+		tpl_printf(vars, 0, "PMTMODE", "%d", cfg->dvbapi_pmtmode);
 
 	i = 0;
 	char *dot = "";
