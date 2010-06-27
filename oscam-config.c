@@ -1,3 +1,4 @@
+
 #include "globals.h"
 #ifdef CS_WITH_BOXKEYS
 #  include "oscam-boxkeys.np"
@@ -891,7 +892,7 @@ void chk_t_camd35(char *token, char *value)
 			return;
 		}
 	}
-
+	
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in camd35 section not recognized\n", token);
 }
@@ -1523,6 +1524,26 @@ void chk_account(char *token, char *value, struct s_auth *account)
 		}
 	}
 
+	if (!strcmp(token, "cccmaxhops")) {
+		if (strlen(value) == 0) {
+			account->cccmaxhops = 10;
+			return;
+		} else {
+			account->cccmaxhops = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "cccreshare")) {
+		if (strlen(value) == 0) {
+			account->cccreshare = 10;
+			return;
+		} else {
+			account->cccreshare = atoi(value);
+			return;
+		}
+	}
+
 	if (!strcmp(token, "keepalive")) {
 		if(strlen(value) == 0) {
 			account->ncd_keepalive = 1;
@@ -2063,6 +2084,12 @@ int write_userdb(struct s_auth *authptr)
 
 		if (account->c35_suppresscmd08)
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
+			
+		if (account->cccmaxhops)
+			fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", account->cccmaxhops);
+
+		if (account->cccreshare)
+			fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", account->cccreshare);
 
 		if (account->c35_sleepsend)
 			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%d\n", account->c35_sleepsend);
@@ -2402,6 +2429,8 @@ int init_userdb(struct s_auth **authptr_org)
 			account->monlvl = cfg->mon_level;
 			account->tosleep = cfg->tosleep;
 			account->c35_suppresscmd08 = cfg->c35_suppresscmd08;
+			account->cccmaxhops = 10;
+			account->cccreshare = cfg->cc_reshare;
 			account->ncd_keepalive = cfg->ncd_keepalive;
 			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
 			for (i = 1; i < CS_MAXTUNTAB; account->ttab.bt_srvid[i++] = 0x0000);

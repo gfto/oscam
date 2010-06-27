@@ -676,6 +676,8 @@ struct s_auth
   int       c35_suppresscmd08;
   int       c35_sleepsend;
   int       ncd_keepalive;
+  int       cccmaxhops;
+  int       cccreshare;
   int       disabled;
   struct   s_auth *next;
 };

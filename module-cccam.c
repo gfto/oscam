@@ -1966,6 +1966,16 @@ static int cc_cli_connect(void) {
 	return 0;
 }
 
+struct s_auth *get_account(char *usr) {
+	struct s_auth *account;
+	for (account = cfg->account; account; account = account->next) {
+		if (strcmp(usr, account->usr) == 0) {
+			return account;
+		}
+	}
+	return NULL;
+}
+
 /**
  * Server:
  * Reports all caid/providers to the connected clients
@@ -1974,11 +1984,19 @@ static int cc_cli_connect(void) {
 static int cc_srv_report_cards() {
 	int j;
 	uint id, r, k;
-	uint8 hop = 0, reshare, flt = 0;
+	uint8 hop = 0, reshare, maxhops, flt = 0;
 	uint8 buf[CC_MAXMSGSIZE];
 	struct cc_data *cc = client[cs_idx].cc;
 
-	reshare = cfg->cc_reshare;
+	struct s_auth *account = get_account(client[cs_idx].usr);
+	if (account) {
+		maxhops = account->cccmaxhops;
+		reshare = account->cccreshare;
+	} else {
+		maxhops = 10;
+		reshare = cfg->cc_reshare;
+	}
+	
 	if (!reshare)
 		return 0;
 
@@ -2152,40 +2170,42 @@ static int cc_srv_report_cards() {
 				struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos,
 						&itr);
 				while (caid_info) {
-					memset(buf, 0, sizeof(buf));
-					buf[0] = id >> 24;
-					buf[1] = id >> 16;
-					buf[2] = id >> 8;
-					buf[3] = id & 0xff;
-					buf[5] = reader[r].cc_id >> 16;
-					buf[6] = reader[r].cc_id >> 8;
-					buf[7] = reader[r].cc_id & 0xFF;
-					if (!reader[r].cc_id) {
-						buf[6] = 0x99;
-						buf[7] = 0x63 + r;
-					}
-					buf[8] = caid_info->caid >> 8;
-					buf[9] = caid_info->caid & 0xff;
-					buf[10] = caid_info->hop + 1;
-					buf[11] = reshare;
-					int j = 0;
-					LLIST_ITR itr_prov;
-					uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
-					while (prov) {
-						memcpy(buf + 21 + (j * 7), prov, 3);
-						prov = llist_itr_next(&itr_prov);
-						j++;
-					}
-					buf[20] = j;
+					if (caid_info->hop+1 <= maxhops) {
+						memset(buf, 0, sizeof(buf));
+						buf[0] = id >> 24;
+						buf[1] = id >> 16;
+						buf[2] = id >> 8;
+						buf[3] = id & 0xff;
+						buf[5] = reader[r].cc_id >> 16;
+						buf[6] = reader[r].cc_id >> 8;
+						buf[7] = reader[r].cc_id & 0xFF;
+						if (!reader[r].cc_id) {
+							buf[6] = 0x99;
+							buf[7] = 0x63 + r;
+						}
+						buf[8] = caid_info->caid >> 8;
+						buf[9] = caid_info->caid & 0xff;
+						buf[10] = caid_info->hop + 1;
+						buf[11] = reshare;
+						int j = 0;
+						LLIST_ITR itr_prov;
+						uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
+						while (prov) {
+							memcpy(buf + 21 + (j * 7), prov, 3);
+							prov = llist_itr_next(&itr_prov);
+							j++;
+						}
+						buf[20] = j;
 
-					buf[21 + (j * 7)] = 1;
-					memcpy(buf + 22 + (j * 7), cc->node_id, 8);
-					id++;
+						buf[21 + (j * 7)] = 1;
+						memcpy(buf + 22 + (j * 7), cc->node_id, 8);
+						id++;
 
-					reader[r].cc_id = b2i(3, buf + 5);
-					int len = 30 + (j * 7);
-					cc_cmd_send(buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(reported_carddatas, buf, len);
+						reader[r].cc_id = b2i(3, buf + 5);
+						int len = 30 + (j * 7);
+						cc_cmd_send(buf, len, MSG_NEW_CARD);
+						cc_add_reported_carddata(reported_carddatas, buf, len);
+					}
 					caid_info = llist_itr_next(&itr);
 				}
 			}
@@ -2481,7 +2501,7 @@ int cc_cli_init_int() {
 	}
 
 	uchar *ip = (uchar*) &client[cs_idx].ip;
-	cs_debug("cccam: ip=%d.%d.%d.%d", ip[3], ip[2], ip[1], ip[0]);
+	cs_debug_mask(D_TRACE, "%s %s=%d.%d.%d.%d", getprefix(), reader[ridx].device, ip[3], ip[2], ip[1], ip[0]);
 
 	if (reader[ridx].tcp_rto <= 0)
 		reader[ridx].tcp_rto = 60 * 60 * 10; // timeout to 10 hours
