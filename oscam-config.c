@@ -1897,8 +1897,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "au", "%d\n", cfg->dvbapi_au);
 		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", boxdesc[cfg->dvbapi_boxtype]);
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->dvbapi_usr);
-		fprintf_conf(f, CONFVARWIDTH, "pmt_mode", "%d\n", dvbapi_pmtmode);
-
+        fprintf_conf(f, CONFVARWIDTH, "pmt_mode", "%d\n", cfg->dvbapi_pmtmode);
 		fprintf_conf(f, CONFVARWIDTH, "priority", "");
 		i = 0;
 		dot = "";
