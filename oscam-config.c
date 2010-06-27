@@ -1695,7 +1695,8 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout);
 	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout);
 	fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
-	fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay); //deprecated
+	if(!cfg->delay == CS_DELAY)
+		fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay); //deprecated
 	fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);
 	fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg->netprio);
 	fprintf_conf(f, CONFVARWIDTH, "clientdyndns", "%d\n", cfg->clientdyndns);
@@ -1896,6 +1897,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "au", "%d\n", cfg->dvbapi_au);
 		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", boxdesc[cfg->dvbapi_boxtype]);
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->dvbapi_usr);
+		fprintf_conf(f, CONFVARWIDTH, "pmt_mode", "%d\n", dvbapi_pmtmode;
 
 		fprintf_conf(f, CONFVARWIDTH, "priority", "");
 		i = 0;
