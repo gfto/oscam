@@ -1976,6 +1976,13 @@ struct s_auth *get_account(char *usr) {
 	return NULL;
 }
 
+int min(int a, int b) {
+	if (a < b)
+		return a;
+	else
+		return b;
+}
+
 /**
  * Server:
  * Reports all caid/providers to the connected clients
@@ -1984,20 +1991,20 @@ struct s_auth *get_account(char *usr) {
 static int cc_srv_report_cards() {
 	int j;
 	uint id, r, k;
-	uint8 hop = 0, reshare, maxhops, flt = 0;
+	uint8 hop = 0, reshare, usr_reshare, reader_reshare, maxhops, flt = 0;
 	uint8 buf[CC_MAXMSGSIZE];
 	struct cc_data *cc = client[cs_idx].cc;
 
 	struct s_auth *account = get_account(client[cs_idx].usr);
 	if (account) {
 		maxhops = account->cccmaxhops;
-		reshare = account->cccreshare;
+		usr_reshare = account->cccreshare;
 	} else {
 		maxhops = 10;
-		reshare = cfg->cc_reshare;
+		usr_reshare = cfg->cc_reshare;
 	}
 	
-	if (!reshare)
+	if (!usr_reshare)
 		return 0;
 
 	if (!cc->report_carddata_id)
@@ -2009,9 +2016,10 @@ static int cc_srv_report_cards() {
 
 	for (r = 0; r < CS_MAXREADER; r++) {
 		if (!(reader[r].grp & client[cs_idx].grp)) continue;
-		reshare = reader[r].cc_reshare;
-		if (!reshare) continue;
+		reader_reshare = reader[r].cc_reshare;
+		if (!reader_reshare) continue;
 
+		reshare = min(reader_reshare-1, usr_reshare-1);
 		flt = 0;
 		if (/*!reader[r].caid[0] && */reader[r].ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
