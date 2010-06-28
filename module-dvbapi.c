@@ -946,7 +946,7 @@ void event_handler(int signal) {
 		uint j1,j2;
 		// QboxHD pmt.tmp is the full capmt written as a string of hex values
 		// pmt.tmp must be longer than 3 bytes (6 hex chars) and even length
-		if ((len<6) || ((len%2) != 0) || ((K/2)>sizeof(dest))) {
+		if ((len<6) || ((len%2) != 0) || ((len/2)>sizeof(dest))) {
 			cs_log("dvbapi: error parsing QboxHD pmt.tmp, incorrect length");
 			continue;
 		}
