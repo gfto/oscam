@@ -143,6 +143,21 @@ default:0
 .RS 3n
 0 = disable keepalive between server and client connection, default:1
 .RE
+.PP
+\fBcccmaxhops\fP = \fBhops\fP
+.RS 3
+maximum hops limit for CCcam clients, default:10
+.RE
+.PP
+\fBcccreshare\fP = \fBlevel\fP
+.RS 3n
+reshare level for CCcam clients, default:none
+
+ 0 = no resharing
+ 1 = resharing for direct peer only
+ 2 = resharing for direct peer and next level
+ x = resharing for direct peer and next x level
+RE
 .SH EXAMPLES
  [account]
  user       = username
