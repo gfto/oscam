@@ -537,8 +537,7 @@ void send_oscam_config_dvbapi(struct templatevars *vars, FILE *f, struct uripara
 	if(cfg->dvbapi_usr[0])
 		tpl_addVar(vars, 0, "USER", cfg->dvbapi_usr);
 
-	if(cfg->dvbapi_pmtmode)
-		tpl_printf(vars, 0, "PMTMODE", "%d", cfg->dvbapi_pmtmode);
+	tpl_printf(vars, 0, "PMTMODE", "%d", cfg->dvbapi_pmtmode);
 
 	i = 0;
 	char *dot = "";
@@ -1241,6 +1240,10 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 	tpl_printf(vars, 0, "AC_USERS", "%d", account->ac_users);
 	tpl_printf(vars, 0, "AC_PENALTY", "%d", account->ac_penalty);
 #endif
+
+	tpl_printf(vars, 0, "CCCMAXHOPS", "%d", account->cccmaxhops);
+	tpl_printf(vars, 0, "CCCRESHARE", "%d", account->cccreshare);
+
 	fputs(tpl_getTpl(vars, "USEREDIT"), f);
 }
 

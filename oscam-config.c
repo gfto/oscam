@@ -1163,6 +1163,8 @@ void chk_t_dvbapi(char *token, char *value)
 			cfg->dvbapi_pmtmode = 0;
 		} else {
 			cfg->dvbapi_pmtmode = atoi(value);
+			if(cfg->dvbapi_pmtmode > 3)
+				cfg->dvbapi_pmtmode = 3;
 		}
 		return;
 	}

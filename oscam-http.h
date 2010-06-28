@@ -27,6 +27,8 @@ TR.p TD {background-color:#fdfbe1;}\n\
 TR.c TD {background-color:#f1f5e6;}\n\
 TR.online TD {background-color:#f1f5e6;}\n\
 TR.expired TD {background-color:#ffe2d4;}\n\
+TR.usrcfg_anticasc TD {background-color:#FEF9BF;}\n\
+TR.usrcfg_cccam TD {background-color:#E6FEBF;}\n\
 DIV.log {border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
 DIV.sidlist {border:1px dotted #AAAAAA; background-color: #fffdf5; padding:2; font-family:\"Courier New\", monospace ; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
 TABLE.menu {border-spacing:0px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
@@ -426,94 +428,48 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 <BR><BR>\n\
   <form action=\"user_edit.html\" method=\"get\">\n\
   <input name=\"user\" type=\"hidden\" value=\"##USERNAME##\">\n\
-  <input name=\"disabled\" type=\"hidden\" value=\"0\">\n\
-  <input name=\"suppresscmd08\" type=\"hidden\" value=\"0\">\n\
-  <input name=\"keepalive\" type=\"hidden\" value=\"0\">\n\
   <TABLE cellspacing=\"0\">\n\
-    <TR>\n\
-      <TH>&nbsp;</TH>\n\
-      <TH>Edit User ##USERNAME##</TH>\n\
-    <TR>\n\
-      <TD>Password:</TD>\n\
-      <TD><input name=\"pwd\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##PASSWORD##\"></TD>\n\
-    </TR>\n\
-    <TR>\
-		<TD>Disabled:</TD>\
-		<TD><input name=\"disabled\" type=\"checkbox\" value=\"1\" ##DISABLEDCHECKED##></TD>\n\
-    <TR>\n\
-      <TD>Exp. Date:</TD>\n\
-      <TD><input name=\"expdate\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##EXPDATE##\"></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>Group:</TD>\n\
-      <TD><input name=\"group\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##GROUPS##\"></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>Hostname:</TD>\n\
-      <TD><input name=\"hostname\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##DYNDNS##\"></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>Uniq:</TD>\n\
-      <TD><select name=\"uniq\">\n\
+    <TR><TH>&nbsp;</TH> <TH>Edit User ##USERNAME##</TH></TR>\n\
+    <TR><TD>Password:</TD><TD><input name=\"pwd\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##PASSWORD##\"></TD></TR>\n\
+    <TR><TD>Disabled:</TD><TD><input name=\"disabled\" type=\"hidden\" value=\"0\"><input name=\"disabled\" type=\"checkbox\" value=\"1\" ##DISABLEDCHECKED##></TD></TR>\n\
+    <TR><TD>Exp. Date:</TD><TD><input name=\"expdate\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##EXPDATE##\"></TD></TR>\n\
+    <TR><TD>Group:</TD><TD><input name=\"group\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##GROUPS##\"></TD></TR>\n\
+    <TR><TD>Hostname:</TD><TD><input name=\"hostname\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##DYNDNS##\"></TD></TR>\n\
+    <TR><TD>Uniq:</TD><TD><select name=\"uniq\">\n\
         <option value=\"0\" ##UNIQSELECTED0##>0 - none</option>\n\
         <option value=\"1\" ##UNIQSELECTED1##>1 - strict first</option>\n\
         <option value=\"2\" ##UNIQSELECTED2##>2 - per IP</option>\n\
         <option value=\"3\" ##UNIQSELECTED3##>3 - strict last</option>\n\
         <option value=\"4\" ##UNIQSELECTED4##>4 - per IP last</option>\n\
-      </SELECT></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>Sleep:</TD>\n\
-      <TD><input name=\"sleep\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##SLEEP##\"></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>Monlevel:</TD>\n\
-      <TD><select name=\"monlevel\">\n\
+      </SELECT></TD></TR>\n\
+    <TR><TD>Sleep:</TD><TD><input name=\"sleep\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##SLEEP##\"></TD></TR>\n\
+    <TR><TD>Monlevel:</TD><TD><select name=\"monlevel\">\n\
         <option value=\"0\" ##MONSELECTED0##>0 - no access to monitor</option>\n\
         <option value=\"1\" ##MONSELECTED1##>1 - only server and own procs</option>\n\
         <option value=\"2\" ##MONSELECTED2##>2 - all procs, but viewing only, default</option>\n\
         <option value=\"3\" ##MONSELECTED3##>3 - all procs, reload of oscam.user possible</option>\n\
         <option value=\"4\" ##MONSELECTED4##>4 - complete access</option>\n\
-      </select></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>AU:</TD>\n\
-      <TD><select name=\"au\">\n\
+      </select></TD></TR>\n\
+    <TR><TD>AU:</TD><TD><select name=\"au\">\n\
         <option value=\" \" ##AUSELECTED##>none</option>\n\
         <option value=\"1\" ##AUTOAUSELECTED##>auto</option>\n\
         ##RDROPTION##\
-      </select></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>Services:</TD>\n\
-      <TD>\n\
+      </select></TD></TR>\n\
+    <TR><TD>Services:</TD><TD>\n\
         <TABLE cellspacing=\"0\" class=\"invisible\">##SIDS##\
             </TD>\n\
           </TR>\n\
         </TABLE>\n\
-    <TR>\n\
-      <TD>CAID:</TD>\n\
-      <TD><input name=\"caid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##CAIDS##\"></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>Ident:</TD>\n\
-      <TD><input name=\"ident\" type=\"text\" size=\"100\" maxlength=\"100\" value=\"##IDENTS##\"></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>Betatunnel:</TD>\n\
-      <TD><textarea name=\"betatunnel\" cols=\"47\" rows=\"4\" class=\"bt\">##BETATUNNELS##</textarea></TD>\
-    </TR>\n\
-     <TR>\n\
-      <TD>Suppresscmd08:</TD>\n\
-      <TD><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD>\n\
-    </TR>\n\
-        <TR>\n\
-      <TD>Sleepsend:</TD>\n\
-      <TD><input name=\"sleepsend\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##SLEEPSEND##\"> 0 or 255</TD>\n\
-    </TR>\n\
+    <TR><TD>CAID:</TD><TD><input name=\"caid\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##CAIDS##\"></TD></TR>\n\
+    <TR><TD>Ident:</TD>     <TD><textarea name=\"ident\"      cols=\"58\" rows=\"3\" class=\"bt\">##IDENTS##</textarea></TD></TR>\n\
+    <TR><TD>Betatunnel:</TD><TD><textarea name=\"betatunnel\" cols=\"58\" rows=\"3\" class=\"bt\">##BETATUNNELS##</textarea></TD></TR>\n\
+    <TR><TD>Suppresscmd08:</TD><TD><input name=\"suppresscmd08\" type=\"hidden\" value=\"0\"><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD></TR>\n\
+    <TR><TD>Sleepsend:</TD><TD><input name=\"sleepsend\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##SLEEPSEND##\"> 0 or 255</TD></TR>\n\
     ##TPLUSEREDITANTICASC##\
-    <TR>\n\
-    <TR><TD>Keepalive:</TD><TD><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\
+    <TR class=\"usrcfg_cccam\"><TD>CCC Maxhops:</TD><TD><input name=\"cccmaxhops\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOPS##\"></TD></TR>\n\
+    <TR class=\"usrcfg_cccam\"><TD>CCC Reshare:</TD><TD><input name=\"cccreshare\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCRESHARE##\"></TD></TR>\n\
+    <TR><TD>Keepalive:</TD><TD><input name=\"keepalive\" type=\"hidden\" value=\"0\"><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\
+    <TR>\
       <TD align=\"center\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save settings and reload users\" ##BTNDISABLED##></TD>\n\
       <TD align=\"center\"><input name=\"newuser\" type=\"text\" size=\"20\" maxlength=\"20\" title=\"Enter new username if you want to clone this user\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" name=\"action\" value=\"Save As\" title=\"Save as new user and reload users\" ##BTNDISABLED##></TD>\n\
     </TR>\n\
@@ -533,14 +489,8 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 
 #ifdef CS_ANTICASC
 # define TPLUSEREDITANTICASC "\
-    <TR>\n\
-      <TD>Anticascading numusers:</TD>\n\
-      <TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\"></TD>\n\
-    </TR>\n\
-    <TR>\n\
-      <TD>Anticascading penalty:</TD>\n\
-      <TD><input name=\"penalty\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_PENALTY##\"></TD>\n\
-    </TR>\n"
+    <TR class=\"usrcfg_anticasc\"><TD>Anticascading numusers:</TD><TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\"></TD></TR>\n\
+    <TR class=\"usrcfg_anticasc\"><TD>Anticascading penalty:</TD><TD><input name=\"penalty\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_PENALTY##\"></TD></TR>\n"
 #endif
 
 #define TPLSIDTAB "\
@@ -654,9 +604,9 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR><TD>Enable:</TD><TD><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
     <TR><TD>Fallback:</TD><TD><input name=\"fallback\" type=\"checkbox\" value=\"1\" ##FALLBACKCHECKED##></TD></TR>\n\
     <TR><TD>Group:</TD><TD><input name=\"group\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##GRP##\"></TD></TR>\n\
-    <TR><TD>Device:</TD><TD><input name=\"device\" type=\"text\" size=\"50\" maxlength=\"150\" value=\"##DEVICE##\"></TD></TR>\n\
-    <TR><TD>Caid:</TD><TD><input name=\"caid\" type=\"text\" size=\"50\" maxlength=\"100\" value=\"##CAIDS##\"></TD></TR>\n\
-    <TR><TD>Ident:</TD><TD><input name=\"ident\" type=\"text\" size=\"100\" maxlength=\"100\" value=\"##IDENTS##\"></TD></TR>\n\
+    <TR><TD>Device:</TD><TD><input name=\"device\" type=\"text\" size=\"60\" maxlength=\"150\" value=\"##DEVICE##\"></TD></TR>\n\
+    <TR><TD>Caid:</TD><TD><input name=\"caid\" type=\"text\" size=\"60\" maxlength=\"100\" value=\"##CAIDS##\"></TD></TR>\n\
+    <TR><TD>Ident:</TD>     <TD><textarea name=\"ident\"      cols=\"58\" rows=\"3\" class=\"bt\">##IDENTS##</textarea></TD></TR>\n\
     <TR><TD>Emmcache:</TD><TD><input name=\"emmcache\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##EMMCACHE##\"></TD></TR>\n\
     <TR><TD>Blockemm:</TD><TD>\n<TABLE cellspacing=\"0\" class=\"invisible\">\
 		<TR><TD align=\"center\">unknown</TD><TD align=\"center\">unique</TD><TD align=\"center\">shared</TD><TD align=\"center\">global</TD></TR>\
@@ -703,11 +653,11 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR><TD>Blocknano:</TD><TD><input name=\"blocknano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##BLOCKNANO##\"></TD></TR>\n\
     <TR><TD>Savenano:</TD><TD><input name=\"savenano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##SAVENANO##\"></TD></TR>\n"
 #define TPLREADERCONFIGCAMD35BIT "\
-    <TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+    <TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
     <TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
     <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n"
 #define TPLREADERCONFIGCS378XBIT "\
-    <TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+    <TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
     <TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##NCD_KEY##\"></TD></TR>\n\
     <TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
     <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n"
@@ -717,19 +667,19 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
     <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n"
 #define TPLREADERCONFIGNCD525BIT "\
-	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
     <TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"40\" maxlength=\"28\" value=\"##NCD_KEY##\"></TD></TR>\n\
     <TR><TD>Inactivity timeout:</TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
     <TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
     <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n"
 #define TPLREADERCONFIGNCD524BIT "\
-	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
     <TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"40\" maxlength=\"28\" value=\"##NCD_KEY##\"></TD></TR>\n\
     <TR><TD>Inactivity timeout:</TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
     <TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
     <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n"
 #define TPLREADERCONFIGCCCAMBIT "\
-	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
     <TR><TD>Version:</TD><TD><SELECT name=\"cccversion\">\
 			<OPTION ##CCCVERSIONSELECTED0##>2.0.11</OPTION>\
 			<OPTION ##CCCVERSIONSELECTED1##>2.1.1</OPTION>\
@@ -902,10 +852,10 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<input name=\"mgclient\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Newcamd Config</TH></TR>\n\
-		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"200\" maxlength=\"400\" value=\"##PORT##\"></TD></TR>\n\
-		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
-		<TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"40\" maxlength=\"28\" value=\"##KEY##\"></TD></TR>\n\
-		<TR><TD>Allowed:</TD><TD><input name=\"allowed\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##ALLOWED##\"></TD></TR>\n\
+		<TR><TD>Port:</TD>     <TD><textarea name=\"port\"      cols=\"58\" rows=\"3\" class=\"bt\">##PORT##</textarea></TD></TR>\n\
+		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"60\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
+		<TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"60\" maxlength=\"28\" value=\"##KEY##\"></TD></TR>\n\
+		<TR><TD>Allowed:</TD>     <TD><textarea name=\"allowed\"      cols=\"58\" rows=\"3\" class=\"bt\">##ALLOWED##</textarea></TD></TR>\n\
 		<TR><TD>Keepalive:</TD><TD><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\
 		<TR><TD>Mgclient:</TD><TD><input name=\"mgclient\" type=\"checkbox\" value=\"1\" ##MGCLIENTCHK##></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
