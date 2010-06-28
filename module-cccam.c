@@ -1367,7 +1367,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_NEW_CARD: {
 		int i = 0;
-		if (buf[14] > reader[ridx].cc_maxhop)
+		if (buf[14]+1 >= reader[ridx].cc_maxhop)
 			break;
 
 		if (caid_filtered(ridx, b2i(2, buf + 12)))
