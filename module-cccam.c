@@ -2178,7 +2178,7 @@ static int cc_srv_report_cards() {
 				struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos,
 						&itr);
 				while (caid_info) {
-					if (caid_info->hop+1 <= maxhops) {
+					if (caid_info->hop <= maxhops) {
 						memset(buf, 0, sizeof(buf));
 						buf[0] = id >> 24;
 						buf[1] = id >> 16;
@@ -2193,7 +2193,7 @@ static int cc_srv_report_cards() {
 						}
 						buf[8] = caid_info->caid >> 8;
 						buf[9] = caid_info->caid & 0xff;
-						buf[10] = caid_info->hop + 1;
+						buf[10] = caid_info->hop+1;
 						buf[11] = reshare;
 						int j = 0;
 						LLIST_ITR itr_prov;
