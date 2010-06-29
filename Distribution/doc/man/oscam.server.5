@@ -165,12 +165,12 @@ define CCcam build, default:none
 example: cccbuild = 5678
 .RE
 .PP
-\fBcccmaxhop\fP = \fBhops\fP
+\fBcccmaxhops\fP = \fBhops\fP
 .RS 3n
-define CCcam maximum SC distance, default:10
- \fB1\fP = local SCs only
- \fB2\fP = local SCs and + 1 hop
- \fB3\fP = local SCs and + 2 hops
+define CCcam maximum SC distance hops, default:10
+ \fB0\fP = local SCs only
+ \fB1\fP = local SCs and + 1 hop
+ \fB2\fP = local SCs and + 2 hops
  and so on
 .RE
 .PP
