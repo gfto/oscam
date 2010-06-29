@@ -53,7 +53,7 @@ int conax_card_init(struct s_reader * reader, ATR newatr)
 
   // Ins82 command needs to use the correct CAID reported in nano 0x28
   ins82[17]=(reader->caid[0]>>8)&0xFF;
-  ins82[18]=(reader->caid[1])&0xFF;
+  ins82[18]=(reader->caid[0])&0xFF;
 
   if ((n=read_record(reader, ins82, ins82+5, cta_res))<=0) return ERROR; // read serial
 
