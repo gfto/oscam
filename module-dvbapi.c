@@ -719,7 +719,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 	}
 
 	if (length !=0)
-		dvbapi_parse_descriptor(demux_id, 1, length, buffer);
+		dvbapi_parse_descriptor(demux_id, 1, program_info_length, buffer);
 
 	unsigned int es_info_length=0;
 	for (i = program_info_length + 6; i < length; i += es_info_length + 5) {
