@@ -201,10 +201,10 @@ void send_oscam_config_camd35tcp(struct templatevars *vars, FILE *f, struct urip
 		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 
-	int j;
-	char *dot1, *dot2;
+	//int j;
+	//char *dot1, *dot2;
 	if ((cfg->c35_tcp_ptab.nports > 0) && (cfg->c35_tcp_ptab.ports[0].s_port > 0)) {
-		dot1 = "";
+		/*dot1 = "";
 		for(i = 0; i < cfg->c35_tcp_ptab.nports; ++i) {
 			tpl_printf(vars, 1, "PORT", "%s%d@%04X", dot1, cfg->c35_tcp_ptab.ports[i].s_port, cfg->c35_tcp_ptab.ports[i].ftab.filts[0].caid);
 			if (cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1) {
@@ -216,7 +216,9 @@ void send_oscam_config_camd35tcp(struct templatevars *vars, FILE *f, struct urip
 				}
 			}
 			dot1=";";
-		}
+		}*/
+
+		tpl_printf(vars, 0, "PORT", "%d", cfg->c35_tcp_ptab.ports[0].s_port);
 
 		if (cfg->c35_tcp_srvip != 0)
 			tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
