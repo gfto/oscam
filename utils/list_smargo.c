@@ -69,6 +69,7 @@ static void print_devs(libusb_device **devs)
 	int i = 0;
 	int ret;
     int busid, devid;
+    unsigned char iserialbuffer[128];
     
 	while ((dev = devs[i++]) != NULL) {
 		struct libusb_device_descriptor desc;
@@ -88,10 +89,11 @@ static void print_devs(libusb_device **devs)
             if(smartreader_check_endpoint(dev)) {
             busid=libusb_get_bus_number(dev);
             devid=libusb_get_device_address(dev);
-            printf("bus %03d, device %03d : %04x:%04x Smartreader (Device=%03d:%03d)\n",
+            libusb_get_string_descriptor_ascii(handle,desc.iSerialNumber,iserialbuffer,sizeof(iserialbuffer));
+            printf("bus %03d, device %03d : %04x:%04x Smartreader (Device=%03d:%03d Serial=%s)\n",
                             busid, devid,
                             desc.idVendor, desc.idProduct,
-                            busid, devid );
+                            busid, devid, iserialbuffer );
             }
             
             libusb_close(handle);

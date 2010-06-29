@@ -88,7 +88,7 @@ endif
 		$(MAKE) -C csctapi
 
 $(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(GENERAL)
-		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBUSB) $(LIBRT) -o "$@" $(LIBS)
+		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o "$@" $(LIBS)
 		$(STRIP) $@
 
 $(EXEFILE2):	utils/list_smargo.c
