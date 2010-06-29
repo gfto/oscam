@@ -720,7 +720,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 					while (prov && !s) {
 						if (!cur_er->prid || b2i(3, prov) == cur_er->prid) { // provid matches
 							if (((h < 0) || (card->hop < h)) && (card->hop
-									<= reader[ridx].cc_maxhop - 1)) { // card is closer and doesn't exceed max hop
+									<= reader[ridx].cc_maxhop)) { // card is closer and doesn't exceed max hop
 								//cc->cur_card = card;
 								current_card->card = card;
 								h = card->hop; // card has been matched
@@ -1367,7 +1367,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_NEW_CARD: {
 		int i = 0;
-		if (buf[14]+1 >= reader[ridx].cc_maxhop)
+		if (buf[14] > reader[ridx].cc_maxhop)
 			break;
 
 		if (caid_filtered(ridx, b2i(2, buf + 12)))
@@ -2514,8 +2514,6 @@ int cc_cli_init_int() {
 	if (reader[ridx].tcp_rto <= 0)
 		reader[ridx].tcp_rto = 60 * 60 * 10; // timeout to 10 hours
 	cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);
-	if (!reader[ridx].cc_maxhop)
-		reader[ridx].cc_maxhop = 5; // default maxhop to 5 if not configured
 	cc_check_version(reader[ridx].cc_version, reader[ridx].cc_build);
 	cs_log(
 			"proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d, retry ecm: %d, auto block: %d",

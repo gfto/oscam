@@ -2357,7 +2357,7 @@ int write_server()
 					fprintf_conf(f, CONFVARWIDTH, "cccversion", "%s\n", reader[i].cc_version);
 
 				if (reader[i].cc_maxhop)
-					fprintf_conf(f, CONFVARWIDTH, "cccmaxhop", "%d\n", reader[i].cc_maxhop);
+					fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", reader[i].cc_maxhop);
 
 				if (reader[i].cc_disable_retry_ecm)
 					fprintf_conf(f, CONFVARWIDTH, "cccdisableretryecm", "%d\n", reader[i].cc_disable_retry_ecm);
@@ -3323,9 +3323,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "cccmaxhop")) {
+	if (!strcmp(token, "cccmaxhop") || !strcmp(token, "cccmaxhops")) { //Schlocke: cccmaxhops is better!
 		// cccam max card distance
-		rdr->cc_maxhop = atoi(value);
+		if (!strlen(value))
+			rdr->cc_maxhop = 10;
+		else
+			rdr->cc_maxhop = atoi(value);
 		return;
 	}
 
@@ -3492,6 +3495,7 @@ int init_readerdb()
 			reader[nr].force_irdeto = 0;
 			reader[nr].cachecm = 1;
 			reader[nr].cc_reshare = cfg->cc_reshare; //set global value as init value
+			reader[nr].cc_maxhop = 10;
 			reader[nr].lb_weight = 100;
 			strcpy(reader[nr].pincode, "none");
 			for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
