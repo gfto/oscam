@@ -874,6 +874,7 @@ void event_handler(int signal) {
 	
 	int standby_fd = open(STANDBY_FILE, O_RDONLY);
 	pausecam = (standby_fd > 0) ? 1 : 0;
+	if (standby_fd) close(standby_fd);
 
 	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX)
 		return;
