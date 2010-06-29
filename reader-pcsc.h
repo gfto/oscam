@@ -2,12 +2,17 @@
 #include "globals.h"
 
 #ifdef HAVE_PCSC
-#include <PCSC/pcsclite.h>
-#include <PCSC/winscard.h>
-#ifdef OS_MACOSX
-#include <PCSC/wintypes.h>
-#else
-#include <PCSC/reader.h>
+  #ifdef OS_CYGWIN32
+    #include <winscard.h>
+  #else
+    #include <PCSC/pcsclite.h> 
+    #include <PCSC/winscard.h>
+    #ifdef OS_MACOSX 
+        #include <PCSC/wintypes.h> 
+    #else 
+        #include <PCSC/reader.h> 
+    #endif 
+  #endif
 #endif
 
 #ifndef ERR_INVALID

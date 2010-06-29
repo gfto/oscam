@@ -58,12 +58,16 @@
 #include "cscrypt/cscrypt.h"
 
 #ifdef HAVE_PCSC 
+  #ifdef OS_CYGWIN32
+    #include <winscard.h>
+  #else
     #include <PCSC/pcsclite.h> 
     #ifdef OS_MACOSX 
         #include <PCSC/wintypes.h> 
     #else 
         #include <PCSC/reader.h> 
     #endif 
+  #endif
 #endif
 
 #if defined(LIBUSB)

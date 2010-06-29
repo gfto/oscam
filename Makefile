@@ -348,6 +348,30 @@ i386-pc-cygwin:
 		DS_RL=ranlib \
 		DS_ST=strip
 
+
+######################################################################
+#
+#	Cygwin native with PCSC
+#
+# 	requires Visual Studio / Visual C++ for the winscard includes
+######################################################################
+i386-pc-cygwin-pcsc:
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		LIBPCSC="cygwin/libwinscard.a" \
+		OS_LIBS="-lcrypto -lm" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-O2 -DOS_CYGWIN32 -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I /tmp/include -I/VS -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=gcc \
+		DS_AR=ar \
+		DS_LD=ld \
+		DS_RL=ranlib \
+		DS_ST=strip
+
 ######################################################################
 #
 #	Solaris 7 crosscompiler
