@@ -362,7 +362,7 @@ i386-pc-cygwin-pcsc:
 		OS_LIBS="-lcrypto -lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_CYGWIN32 -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I /tmp/include -I/VS -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O2 -DOS_CYGWIN32 -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I /tmp/include -I/cygdrive/c/Program\ Files/Microsoft\ Visual\ Studio/VC98/Include -I/cygdrive/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/VC/include -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
