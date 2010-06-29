@@ -537,7 +537,9 @@ void send_oscam_config_dvbapi(struct templatevars *vars, FILE *f, struct uripara
 	if(cfg->dvbapi_usr[0])
 		tpl_addVar(vars, 0, "USER", cfg->dvbapi_usr);
 
-	tpl_printf(vars, 0, "PMTMODE", "%d", cfg->dvbapi_pmtmode);
+	//PMT Mode
+	tpl_printf(vars, 0, "TMP", "PMTMODESELECTED%d", cfg->dvbapi_pmtmode);
+	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
 	i = 0;
 	char *dot = "";
@@ -1150,7 +1152,7 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 
 	//Disabled
 	if(account->disabled)
-	tpl_addVar(vars, 0, "DISABLEDCHECKED", "checked");
+	tpl_addVar(vars, 0, "DISABLEDCHECKED", "selected");
 
 	//Expirationdate
 	struct tm * timeinfo = localtime (&account->expirationdate);
@@ -1227,14 +1229,14 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 
 	//SUPPRESSCMD08
 	if (account->c35_suppresscmd08)
-		tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
+		tpl_addVar(vars, 0, "SUPPRESSCMD08", "selected");
 
 	//Sleepsend
 	tpl_printf(vars, 0, "SLEEPSEND", "%d", account->c35_sleepsend);
 
 	//Keepalive
 	if (account->ncd_keepalive)
-		tpl_addVar(vars, 0, "KEEPALIVE", "checked");
+		tpl_addVar(vars, 0, "KEEPALIVE", "selected");
 
 #ifdef CS_ANTICASC
 	tpl_printf(vars, 0, "AC_USERS", "%d", account->ac_users);

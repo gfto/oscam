@@ -431,7 +431,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
   <TABLE cellspacing=\"0\">\n\
     <TR><TH>&nbsp;</TH> <TH>Edit User ##USERNAME##</TH></TR>\n\
     <TR><TD>Password:</TD><TD><input name=\"pwd\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##PASSWORD##\"></TD></TR>\n\
-    <TR><TD>Disabled:</TD><TD><input name=\"disabled\" type=\"hidden\" value=\"0\"><input name=\"disabled\" type=\"checkbox\" value=\"1\" ##DISABLEDCHECKED##></TD></TR>\n\
+    <TR><TD>Disabled:</TD><TD><SELECT NAME=\"disabled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DISABLEDCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
     <TR><TD>Exp. Date:</TD><TD><input name=\"expdate\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##EXPDATE##\"></TD></TR>\n\
     <TR><TD>Group:</TD><TD><input name=\"group\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##GROUPS##\"></TD></TR>\n\
     <TR><TD>Hostname:</TD><TD><input name=\"hostname\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##DYNDNS##\"></TD></TR>\n\
@@ -463,12 +463,12 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
     <TR><TD>CAID:</TD><TD><input name=\"caid\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##CAIDS##\"></TD></TR>\n\
     <TR><TD>Ident:</TD>     <TD><textarea name=\"ident\"      cols=\"58\" rows=\"3\" class=\"bt\">##IDENTS##</textarea></TD></TR>\n\
     <TR><TD>Betatunnel:</TD><TD><textarea name=\"betatunnel\" cols=\"58\" rows=\"3\" class=\"bt\">##BETATUNNELS##</textarea></TD></TR>\n\
-    <TR><TD>Suppresscmd08:</TD><TD><input name=\"suppresscmd08\" type=\"hidden\" value=\"0\"><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD></TR>\n\
+    <TR><TD>Suppresscmd08:</TD><TD><SELECT NAME=\"suppresscmd08\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##SUPPRESSCMD08##>ON</OPTION></SELECT></TD></TR>\n\
     <TR><TD>Sleepsend:</TD><TD><input name=\"sleepsend\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##SLEEPSEND##\"> 0 or 255</TD></TR>\n\
     ##TPLUSEREDITANTICASC##\
     <TR class=\"usrcfg_cccam\"><TD>CCC Maxhops:</TD><TD><input name=\"cccmaxhops\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOPS##\"></TD></TR>\n\
     <TR class=\"usrcfg_cccam\"><TD>CCC Reshare:</TD><TD><input name=\"cccreshare\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCRESHARE##\"></TD></TR>\n\
-    <TR><TD>Keepalive:</TD><TD><input name=\"keepalive\" type=\"hidden\" value=\"0\"><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\
+    <TR><TD>Keepalive:</TD><TD><SELECT NAME=\"keepalive\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPALIVE##>ON</OPTION></SELECT></TD></TR>\n\
     <TR>\
       <TD align=\"center\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save settings and reload users\" ##BTNDISABLED##></TD>\n\
       <TD align=\"center\"><input name=\"newuser\" type=\"text\" size=\"20\" maxlength=\"20\" title=\"Enter new username if you want to clone this user\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" name=\"action\" value=\"Save As\" title=\"Save as new user and reload users\" ##BTNDISABLED##></TD>\n\
@@ -967,7 +967,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<input name=\"suppresscmd08\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Camd35 TCP Config</TH></TR>\n\
-		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##PORT##\"></TD></TR>\n\
+		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"6\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
 		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
     	<TR><TD>Suppress cmd08:</TD><TD><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD></TR>\n\
     	<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
@@ -1014,7 +1014,12 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>AU:</TD><TD><input name=\"au\" type=\"checkbox\" value=\"1\" ##AUCHECKED##>\n\
 		<TR><TD>Boxtype:</TD><TD><SELECT name=\"boxtype\">##BOXTYPE##</select></TD></TR>\n\
 		<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##USER##\"></TD></TR>\n\
-		<TR><TD>PMT Mode:</TD><TD><input name=\"pmt_mode\" type=\"text\" size=\"3\" maxlength=\"1\" value=\"##PMTMODE##\"></TD></TR>\n\
+		<TR><TD>PMT Mode:</TD><TD><select name=\"pmt_mode\">\n\
+			<option value=\"0\" ##PMTMODESELECTED0##>0 - use camd.socket and PMT file</option>\n\
+			<option value=\"1\" ##PMTMODESELECTED1##>1 - disable reading PMT file</option>\n\
+			<option value=\"2\" ##PMTMODESELECTED2##>2 - disable camd.socket</option>\n\
+			<option value=\"3\" ##PMTMODESELECTED3##>3 - read PMT file on startup only</option>\n\
+		</SELECT></TD></TR>\n\
 		<TR><TD>Priority:</TD><TD><input name=\"priority\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##PRIORITY##\"></TD></TR>\n\
 		<TR><TD>Ignore:</TD><TD><input name=\"ignore\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##IGNORE##\"></TD></TR>\n\
 		<TR><TD>Cw_delay:</TD><TD><input name=\"cw_delay\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##CWDELAY##\"></TD></TR>\n\
