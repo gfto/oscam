@@ -13,11 +13,11 @@
         #include <PCSC/reader.h> 
     #endif 
   #endif
-#endif
 
 #ifndef ERR_INVALID
 #define ERR_INVALID -1
 #endif
+
 #ifndef OK
 #define OK 0
 #endif
