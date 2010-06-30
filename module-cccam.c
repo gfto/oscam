@@ -2567,7 +2567,6 @@ void cc_cleanup(void) {
 		cc_free(client[cs_idx].cc);
 		client[cs_idx].cc = NULL;
 	}
-	client[cs_idx].ip = 0;
 }
 
 void module_cccam(struct s_module *ph) {
