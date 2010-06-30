@@ -8,6 +8,8 @@ static struct s_emm *emmcache;
 static int last_idx=1;
 static ushort idx=1;
 
+void reader_do_idle(struct s_reader * reader);
+
 void cs_ri_brk(struct s_reader * reader, int flag)
 {
   static int brk_pos=0;
@@ -242,8 +244,12 @@ static void casc_do_sock(struct s_reader * reader, int w)
   {
     if (reader->ph.type==MOD_CONN_TCP && reader->typ != R_RADEGAST)
     {
-      cs_debug("casc_do_sock: close connection");
-      network_tcp_connection_close(reader, client[cs_idx].udp_fd);
+      if (reader->ph.c_idle)
+      	reader_do_idle(reader);
+      else {
+        cs_debug("casc_do_sock: close connection");
+        network_tcp_connection_close(reader, client[cs_idx].udp_fd);
+      }
     }
     return;
   }
@@ -331,8 +337,12 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
     int rto = abs(reader->last_s - reader->last_g);
     if (rto >= (reader->tcp_rto*60))
     {
-      cs_debug("rto=%d", rto);
-      network_tcp_connection_close(reader, client[cs_idx].udp_fd);
+      if (reader->ph.c_idle)
+      	reader_do_idle(reader);
+      else {
+        cs_debug("rto=%d", rto);
+        network_tcp_connection_close(reader, client[cs_idx].udp_fd);
+      }
     }
   }
 
@@ -560,7 +570,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
 
   if (FD_ISSET(fd1, &fds))
   {
-    if (tcp_toflag && !reader->ph.c_idle)
+    if (tcp_toflag)
     {
       time_t now;
       int time_diff;
@@ -568,20 +578,28 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
       time_diff = abs(now-reader->last_s);
       if (time_diff>(reader->tcp_ito*60))
       {
-        cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
+        if (reader->ph.c_idle)
+          reader_do_idle(reader);
+        else {
+          cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
                   reader->ph.desc, time_diff, fd2);
-        network_tcp_connection_close(reader, fd2);
+          network_tcp_connection_close(reader, fd2);
+        }
       }
     }
     cs_debug("select: pipe is set");
     return(1);
   }
 
-  if (tcp_toflag && !reader->ph.c_idle)
+  if (tcp_toflag)
   {
-    cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
+    if (reader->ph.c_idle)
+      reader_do_idle(reader);
+    else {
+      cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
              reader->ph.desc, tv.tv_sec, fd2);
-    network_tcp_connection_close(reader, fd2);
+      network_tcp_connection_close(reader, fd2);
+    }
     return(0);
   }
 
