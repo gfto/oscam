@@ -2807,6 +2807,7 @@ int main (int argc, char *argv[])
     fclose(fp);
   }
 
+#ifndef OS_CYGWIN32
   // /tmp/oscam.version file (Uptime + Version)
   FILE *fp;
   if (!(fp=fopen("/tmp/oscam.version", "w"))) {
@@ -2842,6 +2843,7 @@ int main (int argc, char *argv[])
 #endif
 	  fclose(fp);
   }
+#endif
 
   for (i=0; i<CS_MAX_MOD; i++)
     if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )
