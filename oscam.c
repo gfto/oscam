@@ -1057,6 +1057,30 @@ static void loop_resolver()
   {
     cs_resolve();
     cs_sleepms(1000*cfg->resolvedelay);
+
+    //debug only. checking pipe status:
+    FILE *f = fopen("/tmp/oscamdbg.txt", "w");
+    int i;
+    for (i=0; i<CS_MAXPID; i++) {
+    	if (client[i].pid) {
+    		struct stat buf;
+    		fstat(client[i].udp_fd, &buf);
+    		int s_udp_fd = buf.st_size;
+
+    		fstat(client[i].fd_m2c, &buf);
+    		int s_fd_m2c = buf.st_size;
+
+    		fstat(client[i].fd_m2c_c, &buf);
+    		int s_fd_m2c_c = buf.st_size;
+
+    		fprintf(f, "%d typ %c pid %d: udp_fd=%d fd_m2c=%d fs_m2c_c=%d ", i, client[i].typ,
+    				client[i].pid,
+    				s_udp_fd,
+    				s_fd_m2c,
+    				s_fd_m2c_c);
+    	}
+    }
+    fclose(f);
   }
 }
 

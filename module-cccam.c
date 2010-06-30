@@ -1,3 +1,4 @@
+
 #include <string.h>
 #include <stdlib.h>
 #include "globals.h"
@@ -329,6 +330,8 @@ static int cc_msg_recv(uint8 *buf) {
 		return -1;
 
 	len = recv(handle, netbuf, 4, MSG_WAITALL);
+	if (!is_server)
+		reader[ridx].last_g = time(NULL);
 	
 	if (!len)
 		return 0;
@@ -351,6 +354,8 @@ static int cc_msg_recv(uint8 *buf) {
 		}
 
 		len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
+		if (!is_server)
+			reader[ridx].last_g = time(NULL);
 
 		if (len != size) {
 			cs_log("%s invalid message length read (expected %d, read %d)", getprefix(), size, len);
@@ -400,6 +405,9 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(client[cs_idx].udp_fd, netbuf, len, 0);
+	if (!is_server)
+		reader[ridx].last_s = time(NULL);
+
 	if (n < 0 && is_server) {
 		cs_disconnect_client();
 	}		
