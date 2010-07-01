@@ -297,7 +297,7 @@ static void cc_cli_close() {
 		pthread_mutex_destroy(&cc->ecm_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
-		cc->current_ecm_cidx = 0;
+		//cc->current_ecm_cidx = 0;
 	}
 }
 
@@ -647,9 +647,9 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 				getprefix());
 		cc->proxy_init_errors++;
 
-		if ((cc->proxy_init_errors > 20) || ((cc->ecm_time+(time_t)(cfg->ctimeout/500)) < time(NULL))) { //TODO: Configuration?
-			cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! ecm time %d timeout %d time %d", getprefix(),
-					cc->ecm_time, cfg->ctimeout/500, time(NULL));
+		if ((cc->proxy_init_errors > 20) || ((cc->ecm_time+(time_t)(cfg->ctimeout/250)) < time(NULL))) { //TODO: Configuration?
+			cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! ecm time %d timeout %ds time %d", getprefix(),
+					cc->ecm_time, cfg->ctimeout/250, time(NULL));
 			cc_cycle_connection();
 		}
 		return 0; //pending send...
@@ -1869,7 +1869,7 @@ static int cc_cli_connect(void) {
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
 	cc->proxy_init_errors = 0;
-	cc->current_ecm_cidx = 0;
+	//cc->current_ecm_cidx = 0;
 	cc->cmd05_mode = MODE_UNKNOWN;
 	cc->cmd05_offset = 0;
 	cc->cmd05_active = 0;
