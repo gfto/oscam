@@ -149,7 +149,7 @@ int network_tcp_connection_open()
     if (connect(sd, (struct sockaddr *)&client[cs_idx].udp_sa, sizeof(client[cs_idx].udp_sa)) == 0)
 	 return sd;
 	 
-    if (errno == EINPROGRESS) {
+    if (errno == EINPROGRESS || errno == EALREADY) {
    	if(network_select(0,MSTIMEOUT)>0) {
 	    int r=-1;
             unsigned int l=sizeof(r);
@@ -158,6 +158,30 @@ int network_tcp_connection_open()
                     return sd;
 	    }
 	}
+    }
+    else if (errno == EBADF || errno == ENOTSOCK) {
+      cs_log("connect failed: bad socket/descriptor %d", sd);
+      return -1;
+    }
+    else if (errno == EISCONN) {
+      cs_log("already connected!");
+      return sd;
+    }
+    else if (errno == ETIMEDOUT) {
+      cs_log("connect failed: timeout");
+      return -1;
+    }
+    else if (errno == ECONNREFUSED) {
+     cs_log("connection refused");
+     return -1;
+    }
+    else if (errno == ENETUNREACH) {
+      cs_log("connect failed: network unreachable!");
+      return -1;
+    }
+    else if (errno == EADDRINUSE) {
+      cs_log("connect failed: address in use!");
+      return -1;
     }
                                                  
     cs_log("connect(fd=%d) failed: (errno=%d)", sd, errno);
