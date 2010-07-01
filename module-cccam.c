@@ -2503,11 +2503,11 @@ int cc_cli_init_int() {
 	client[cs_idx].udp_sa.sin_family = AF_INET;
 	client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
 
-	if (!client[cs_idx].ip) {
+	if (!client[cs_idx].udp_sa.sin_addr.s_addr) {
 		cs_debug_mask(D_TRACE, "%s waiting for IP resolve of: %s", getprefix(), reader[ridx].device);
 		int safeCounter = 40 * cfg->resolvedelay;
 		//waiting for loop_resolver to resolve!
-		while (!client[cs_idx].ip && safeCounter--) {
+		while (!client[cs_idx].udp_sa.sin_addr.s_addr && safeCounter--) {
 			cs_sleepms(100);
 		}
 		if (!safeCounter) {
