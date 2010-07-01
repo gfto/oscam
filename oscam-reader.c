@@ -113,90 +113,101 @@ static int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec
   return(rc);
 }
 
-#define MSTIMEOUT 0x800000
-
-int network_select(int forRead, int timeout)
+static int connect_nonb(int sockfd, const struct sockaddr *saptr, socklen_t salen, int nsec)
 {
-  int sd = client[cs_idx].udp_fd;
-  if(sd>=0) {
-      fd_set fds;
-      FD_ZERO(&fds); FD_SET(sd,&fds);
-      struct timeval tv;
-      if(timeout&MSTIMEOUT) { tv.tv_sec=0; tv.tv_usec=(timeout&~MSTIMEOUT)*1000; }
-      else { tv.tv_sec=timeout; tv.tv_usec=0; }
-      int r=select(sd+1,forRead ? &fds:0,forRead ? 0:&fds,0,&tv);
-      if(r>0) return 1;
-      else if(r<0) {
-      	cs_debug("socket: select failed: %s",strerror(errno));
-        return -1;
-      }
-      else {
-      	if(timeout>0) 
-      	  cs_debug("socket: select timed out (%d %s)",timeout&~MSTIMEOUT,(timeout&MSTIMEOUT)?"ms":"secs");
-        return 0;
-      }
+  int             flags, n, error;
+  socklen_t       len;
+  fd_set          rset, wset;
+  struct timeval  tval;
+
+  flags = fcntl(sockfd, F_GETFL, 0);
+  fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+
+  error = 0;
+  cs_debug("conn_nb 1 (fd=%d)", sockfd);
+
+  if ( (n = connect(sockfd, saptr, salen)) < 0) {
+    if( errno==EALREADY ) {
+      cs_debug("conn_nb in progress, errno=%d", errno);
+      return(-1);
+    }
+    else if( errno==EISCONN ) {
+      cs_debug("conn_nb already connected, errno=%d", errno);
+      goto done;
+    }
+    cs_debug("conn_nb 2 (fd=%d)", sockfd);
+    if (errno != EINPROGRESS) {
+      cs_debug("conn_nb 3 (fd=%d)", sockfd);
+      return(-1);
+    }
   }
-  return -1;
+
+  cs_debug("n = %d\n", n);
+
+  /* Do whatever we want while the connect is taking place. */
+  if (n == 0)
+    goto done;  /* connect completed immediately */
+
+  FD_ZERO(&rset);
+  FD_SET(sockfd, &rset);
+  wset = rset;
+  tval.tv_sec = nsec;
+  tval.tv_usec = 0;
+
+  if ( (n = select(sockfd+1, &rset, &wset, 0, nsec ? &tval : 0)) == 0) {
+      //close(sockfd);    // timeout
+    cs_debug("conn_nb 4 (fd=%d)", sockfd);
+      errno = ETIMEDOUT;
+      return(-1);
+  }
+
+  cs_debug("conn_nb 5 (fd=%d)", sockfd);
+
+  if (FD_ISSET(sockfd, &rset) || FD_ISSET(sockfd, &wset)) {
+    cs_debug("conn_nb 6 (fd=%d)", sockfd);
+    len = sizeof(error);
+    if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+      cs_debug("conn_nb 7 (fd=%d)", sockfd);
+      return(-1);     // Solaris pending error
+    }
+  } else {
+    cs_debug("conn_nb 8 (fd=%d)", sockfd);
+    return -2;
+  }
+
+done:
+cs_debug("conn_nb 9 (fd=%d)", sockfd);
+  fcntl(sockfd, F_SETFL, flags);  /* restore file status flags */
+
+  if (error) {
+    cs_debug("cccam: conn_nb 10 (fd=%d)", sockfd);
+    //close(sockfd);    /* just in case */
+    errno = error;
+    return(-1);
+  }
+  return(0);
 }
-                                                                                
-/**
-* Connects the socket
-* Implementation changed: Now based on VDR implementation
-*/
+
 int network_tcp_connection_open()
 {
-    int sd = client[cs_idx].udp_fd;
-    if (connect(sd, (struct sockaddr *)&client[cs_idx].udp_sa, sizeof(client[cs_idx].udp_sa)) == 0)
-	 return sd;
-	 
-    if (errno == EINPROGRESS || errno == EALREADY) {
-   	if(network_select(0,MSTIMEOUT)>0) {
-	    int r=-1;
-            unsigned int l=sizeof(r);
-            if(getsockopt(sd,SOL_SOCKET,SO_ERROR,&r,&l)==0) {
-            	if(r==0)
-                    return sd;
-	    }
-	}
-    }
-    else if (errno == EBADF || errno == ENOTSOCK) {
-      cs_log("connect failed: bad socket/descriptor %d", sd);
-      return -1;
-    }
-    else if (errno == EISCONN) {
-      cs_log("already connected!");
-      return sd;
-    }
-    else if (errno == ETIMEDOUT) {
-      cs_log("connect failed: timeout");
-      return -1;
-    }
-    else if (errno == ECONNREFUSED) {
-     cs_log("connection refused");
-     return -1;
-    }
-    else if (errno == ENETUNREACH) {
-      cs_log("connect failed: network unreachable!");
-      return -1;
-    }
-    else if (errno == EADDRINUSE) {
-      cs_log("connect failed: address in use!");
-      return -1;
-    }
-                                                 
-    cs_log("connect(fd=%d) failed: (errno=%d)", sd, errno);
+  int flags;
+  if( connect_nonb(client[cs_idx].udp_fd,
+      (struct sockaddr *)&client[cs_idx].udp_sa,
+      sizeof(client[cs_idx].udp_sa), 5) < 0)
+  {
+    cs_log("connect(fd=%d) failed: (errno=%d)", client[cs_idx].udp_fd, errno);
     return -1;
+  }
+  flags = fcntl(client[cs_idx].udp_fd, F_GETFL, 0);
+  flags &=~ O_NONBLOCK;
+  fcntl(client[cs_idx].udp_fd, F_SETFL, flags );
+
+  return client[cs_idx].udp_fd;
 }
 
-/**
-* Disconnects the socket
-*/
 void network_tcp_connection_close(struct s_reader * reader, int fd)
 {
-  if (fd <= 0)
-  	fd = client[cs_idx].udp_fd;
   cs_debug("tcp_conn_close(): fd=%d, is_server=%d", fd, is_server);
-  shutdown(fd, 2);
   close(fd);
   client[cs_idx].udp_fd = 0;
 
@@ -636,6 +647,10 @@ static void reader_do_pipe(struct s_reader * reader)
   uchar *ptr;
   int pipeCmd = read_from_pipe(client[reader->cs_idx].fd_m2c_c, &ptr, 0);
 
+  /* FIXME: this breaks camd35/newcamd cascading as this modules does not set tcp_connected = 2 */
+  if (reader->typ == R_CCCAM && reader->tcp_connected != 2 && client[cs_idx].typ == 'p')
+    return;
+ 
   switch(pipeCmd)
   {
     case PIP_ID_ECM:
