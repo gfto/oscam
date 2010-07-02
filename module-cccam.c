@@ -654,7 +654,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			
 		//force resend ecm and break lock when fallbacktimeout occured
 		struct timeb timeout = cur_time;
-		timeout.millitm += cfg->ctimeout;
+		timeout.millitm += cfg->ftimeout;
 		timeout.time += timeout.millitm / 1000;
 		timeout.millitm = timeout.millitm % 1000;
 		force_resend_ecm = reader[ridx].cc_force_resend_ecm && comp_timeb(&cur_time, &timeout) > 0;
