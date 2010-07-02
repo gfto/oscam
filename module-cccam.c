@@ -814,22 +814,22 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		//cs_sleepms(300);
 		//reader[ridx].last_s = reader[ridx].last_g;
 
-		card = llist_itr_init(cc->cards, &itr);
-		while (card) {
-			if (card->caid == cur_er->caid) { // caid matches
-				LLIST_ITR sitr;
-				struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
-				while (srvid) {
-					if (sid_eq(srvid, &cur_srvid)) {
-						free(srvid);
-						srvid = llist_itr_remove(&sitr);
-					}
-					else
-						srvid = llist_itr_next(&sitr);
-				}
-			}
-			card = llist_itr_next(&itr);
-		}
+		//card = llist_itr_init(cc->cards, &itr);
+		//while (card) {
+		//	if (card->caid == cur_er->caid) { // caid matches
+		//		LLIST_ITR sitr;
+		//		struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
+		//		while (srvid) {
+		//			if (sid_eq(srvid, &cur_srvid)) {
+		//				free(srvid);
+		//				srvid = llist_itr_remove(&sitr);
+		//			}
+		//			else
+		//				srvid = llist_itr_next(&sitr);
+		//		}
+		//	}
+		//	card = llist_itr_next(&itr);
+		//}
 
 		if (!reader[ridx].cc_disable_auto_block) {
 			cc_add_auto_blocked(cc->auto_blocked, cur_er->caid, cur_er->prid,
