@@ -1997,13 +1997,6 @@ struct s_auth *get_account(char *usr) {
 	return NULL;
 }
 
-int min(int a, int b) {
-	if (a < b)
-		return a;
-	else
-		return b;
-}
-
 /**
  * Server:
  * Reports all caid/providers to the connected clients
@@ -2040,7 +2033,7 @@ static int cc_srv_report_cards() {
 		reader_reshare = reader[r].cc_reshare;
 		if (!reader_reshare) continue;
 
-		reshare = min(reader_reshare-1, usr_reshare-1);
+		reshare = (reader_reshare-1 < usr_reshare-1) ? reader_reshare-1 : usr_reshare-1;
 		flt = 0;
 		if (/*!reader[r].caid[0] && */reader[r].ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
