@@ -611,12 +611,18 @@ void dvbapi_parse_descriptor(int demux_id, int i, unsigned int info_length, unsi
 	unsigned int descriptor_length=0;
 	unsigned int added,j,n;
 
+	if (info_length<1)
+		return;
+
 	for (j = 0; j < info_length - 1; j += descriptor_length + 2) {
 		descriptor_length = buffer[i + j + 7];
 		int descriptor_ca_system_id = (buffer[i + j + 8] << 8) | buffer[i + j + 9];
 		int descriptor_ca_pid = ((buffer[i + j + 10] & 0x1F) << 8) | buffer[i + j + 11];
 
-		cs_debug("typ: %02x\tcaid: %04x\t ca_pid: %04x", buffer[i + j + 6], descriptor_ca_system_id, descriptor_ca_pid);
+		cs_debug("type: %02x\tcaid: %04x\tca_pid: %04x\tlength: %d", buffer[i + j + 6], descriptor_ca_system_id, descriptor_ca_pid, descriptor_length);
+
+		if (demux[demux_id].ECMpidcount>=ECM_PIDS)
+			break;
 
 		if (buffer[i + j + 6] == 0x09) {
 			//Seca workaround
@@ -711,14 +717,14 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 			break;
 		}
 	}
-	cs_debug("dvbapi: id: %d demux index: %d ca index: %d", demux_id, demux[demux_id].demux_index, demux[demux_id].cadev_index);
+	cs_debug("dvbapi: id: %d demux_index: %d ca_index: %d program_info_length: %d", demux_id, demux[demux_id].demux_index, demux[demux_id].cadev_index, program_info_length);
  
 	if (cfg->dvbapi_boxtype == BOXTYPE_IPBOX_PMT) {
 		ca_mask = demux_id + 1;
 		demux_index = demux_id;
 	}
 
-	if (length !=0)
+	if (program_info_length > 0 && program_info_length < length)
 		dvbapi_parse_descriptor(demux_id, 1, program_info_length, buffer);
 
 	unsigned int es_info_length=0;
