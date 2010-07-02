@@ -131,7 +131,6 @@ struct cc_data {
 	ulong crc;
 	uint32 send_ecmtask;
 	uint32 recv_ecmtask;
-	int proxy_init_errors;
 
 	int current_ecm_cidx; //index to last current_card (reader)
 	struct cc_current_card *current_card; //initialized by reader (index CS_MAXPID)
@@ -139,7 +138,7 @@ struct cc_data {
 
 	pthread_mutex_t lock;
 	pthread_mutex_t ecm_busy;
-	time_t ecm_time;
+	struct timeb ecm_time;
 	time_t answer_on_keepalive;
 };
 

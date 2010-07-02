@@ -22,8 +22,10 @@ void load_stat_from_file(int ridx)
 		memset(stat, 0, sizeof(READER_STAT));
 		i = fscanf(file, "rc %d caid %04hX prid %04lX srvid %04hX time avg %dms ecms %d\n",
 			&stat->rc, &stat->caid, &stat->prid, &stat->srvid, &stat->time_avg, &stat->ecm_count);
-		if (i > 4)
+		if (i > 4) {
+			stat->ecm_count = 0; //resetting ecm-count because some readers maybe offline or new readers exists
 			llist_append(reader_stat[ridx], stat);
+		}
 		else
 			free(stat);
 	} while(i != EOF && i > 0);
@@ -200,19 +202,24 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 	READER_STAT *stat, *best_stat = NULL;
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
-			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
-			stat = get_stat(i, caid, prid, srvid);
-			if (!stat) {
-				add_stat(i, caid, prid, srvid, 1, 0);
-				return -1; //this reader is active (now) but we need statistics first!
-			}
+			if (reader[i].tcp_connected || reader[i].card_status == CARD_INSERTED) {
+	 			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
+				stat = get_stat(i, caid, prid, srvid);
+				if (!stat) {
+					add_stat(i, caid, prid, srvid, 1, 0);
+					return -1; //this reader is active (now) but we need statistics first!
+				}
+			
+				//if (stat->rc == 0 && stat->ecm_count < MIN_ECM_COUNT)
+				//	return -1; //first get full statistics before deciding which reader is the best
 				
-			current = stat->time_avg*100/weight;
-			if (stat->rc == 0 && stat->ecm_count >= MIN_ECM_COUNT && (!best_stat || current < best)) {
-				if (!reader[i].ph.c_available || reader[i].ph.c_available(i, stat)) {
-					best_stat = stat;
-					best_ridx = i;
-					best = current;
+				current = stat->time_avg*100/weight;
+				if (stat->rc == 0 && stat->ecm_count >= MIN_ECM_COUNT && (!best_stat || current < best)) {
+					if (!reader[i].ph.c_available || reader[i].ph.c_available(i, stat)) {
+						best_stat = stat;
+						best_ridx = i;
+						best = current;
+					}
 				}
 			}
 		}

@@ -452,6 +452,7 @@ static int tcp_connect()
     if (handle<0) return(0);
 
     reader[ridx].tcp_connected = 1;
+    reader[ridx].card_status = CARD_INSERTED;
     reader[ridx].last_s = reader[ridx].last_g = time((time_t *)0);
     pfd = client[cs_idx].udp_fd = handle;
   }
@@ -473,7 +474,7 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 			stopped = 0;
 		}
 	}
-
+	
 	lastsrvid = er->srvid;
 	lastcaid = er->caid;
 	lastpid = er->pid;
@@ -483,6 +484,8 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 
 	if (!is_udp && !tcp_connect()) return(-1);
 
+	reader[ridx].card_status = CARD_INSERTED; //for udp
+	
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, er->l+15);
 	buf[1]=er->l;
@@ -560,8 +563,10 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 	if (buf[0] == 0x08) {
 		if(buf[21] == 0xFF) {
 			stopped = 2; // server says sleep
+			reader[ridx].card_status = NO_CARD;
 		} else {
 			stopped = 1; // server says invalid
+			reader[ridx].card_status = CARD_FAILURE;
 		}
 		cs_log("%s CMD08 stop request by server (%s)",
 				reader[ridx].label, typtext[stopped]);

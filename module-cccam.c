@@ -47,6 +47,15 @@ static char *getprefix() {
 	return prefix;
 }
 
+static int comp_timeb(struct timeb *tpa, struct timeb *tpb)
+{
+  if (tpa->time>tpb->time) return(1);
+  if (tpa->time<tpb->time) return(-1);
+  if (tpa->millitm>tpb->millitm) return(1);
+  if (tpa->millitm<tpb->millitm) return(-1);
+  return(0);
+}
+          
 static void cc_init_crypt(struct cc_crypt_block *block, uint8 *key, int len) {
 	int i = 0;
 	uint8 j = 0;
@@ -618,6 +627,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	struct cc_current_card *current_card;
 	LLIST_ITR itr;
 	ECM_REQUEST *cur_er;
+	struct timeb cur_time;
+	cs_ftime(&cur_time);
 
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
 		if (er) {
@@ -626,13 +637,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1
 					: 0, pfd);
 			write_ecm_answer(&reader[ridx], fd_c2m, er);
-
-			if (cc) { cc->proxy_init_errors++; if
-				(cc->proxy_init_errors > 20 ||
-				((cc->ecm_time+(time_t)(cfg->ctimeout/500))
-				< time(NULL))) //TODO: Configuration?
-					cc_cycle_connection();
-			}
 		}
 		return -1;
 	}
@@ -642,21 +646,35 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		
 	cc->just_logged_in = 0;
 
+	int force_resend_ecm = 0;
+	
 	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
 		cs_debug_mask(D_TRACE, "%s ecm trylock: ecm busy, retrying later after msg-receive",
-				getprefix());
-		cc->proxy_init_errors++;
-
-		if ((cc->proxy_init_errors > 20) || ((cc->ecm_time+(time_t)(cfg->ctimeout/250)) < time(NULL))) { //TODO: Configuration?
-			cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! ecm time %d timeout %ds time %d", getprefix(),
-					cc->ecm_time, cfg->ctimeout/250, time(NULL));
-			cc_cycle_connection();
+			getprefix());
+			
+		//force resend ecm and break lock when fallbacktimeout occured
+		struct timeb timeout = cur_time;
+		timeout.millitm += cfg->ctimeout;
+		timeout.time += timeout.millitm / 1000;
+		timeout.millitm = timeout.millitm % 1000;
+		force_resend_ecm = reader[ridx].cc_force_resend_ecm && comp_timeb(&cur_time, &timeout) > 0;
+			
+		if (!force_resend_ecm) {
+			timeout = cur_time;
+			timeout.millitm += cfg->ctimeout*4;
+			timeout.time += timeout.millitm / 1000;
+			timeout.millitm = timeout.millitm % 1000;
+			
+			if (comp_timeb(&cur_time, &timeout) > 0) { //TODO: Configuration?
+				cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %ds", getprefix(),
+					cfg->ctimeout*4/1000);
+				cc_cycle_connection();
+			}
+			return 0; //pending send...
 		}
-		return 0; //pending send...
 	}
 	cs_debug("cccam: ecm trylock: got lock");
-	cc->ecm_time = time(NULL);
-	cc->proxy_init_errors = 0;
+	cc->ecm_time = cur_time;
 	reader[ridx].available = 0;
 
 	//Search next ECM to send:
@@ -674,7 +692,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		//cs_debug("cccam: ecm-task-idx = %d", n);
 		cur_er = &ecmtask[n];
 		
-		if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
+		if (!force_resend_ecm && crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
 			//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
 			cur_er->rc = 99; //ECM already send
 		}
@@ -866,9 +884,8 @@ static int cc_send_pending_emms() {
 	
 		reader[ridx].available = 0;
 		cc->current_ecm_cidx = 0;
-		cc->proxy_init_errors = 0;
 		cc->just_logged_in = 0;
-		cc->ecm_time = time(NULL);
+		cs_ftime(&cc->ecm_time);
 		
 		cs_debug_mask(D_EMM, "%s emm send for card %08X", getprefix(), b2i(4, emmbuf+7));
 		
@@ -890,9 +907,6 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
 		cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1 : 0,
 				pfd);
-		cc->proxy_init_errors++;
-		if (cc->proxy_init_errors > 20) //TODO: Configuration?
-			cc_cycle_connection();
 		return 0;
 	}
 
@@ -1868,7 +1882,6 @@ static int cc_cli_connect(void) {
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
-	cc->proxy_init_errors = 0;
 	//cc->current_ecm_cidx = 0;
 	cc->cmd05_mode = MODE_UNKNOWN;
 	cc->cmd05_offset = 0;

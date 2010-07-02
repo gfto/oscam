@@ -550,10 +550,11 @@ struct s_reader  //contains device info, reader info and card info
   char      cc_version[7];  // cccam version
   char      cc_build[5];    // cccam build number
   int       cc_maxhop;      // cccam max distance
-  int		cc_currenthops; // number of hops for CCCam
+  int       cc_currenthops; // number of hops for CCCam
   void      *cc;            // ptr to cccam internal data struct
   int       cc_disable_retry_ecm; //Schlocke
   int       cc_disable_auto_block; //Schlocke
+  int       cc_force_resend_ecm;   //Schlocke
   int       cc_want_emu; //Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
   uint      cc_id;
   uchar     tcp_connected;
