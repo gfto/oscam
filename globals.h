@@ -163,7 +163,7 @@
 #define MOD_CONN_UDP    2
 #define MOD_CONN_NET    3
 #define MOD_CONN_SERIAL 4
-#define MOD_NO_CONN	5
+#define MOD_NO_CONN	8
 
 #ifdef HAVE_DVBAPI
 #define BOXTYPE_DREAMBOX	1

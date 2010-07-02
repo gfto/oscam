@@ -735,6 +735,9 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 
 		cs_debug("stream_type: %02x\telementary_pid: %04x\tes_info_length: %04x", stream_type, elementary_pid, es_info_length);
 
+		if (demux[demux_id].STREAMpidcount >= ECM_PIDS)
+			break;
+
 		demux[demux_id].STREAMpids[demux[demux_id].STREAMpidcount++]=elementary_pid;
 
 		if (es_info_length != 0 && es_info_length < length) {
