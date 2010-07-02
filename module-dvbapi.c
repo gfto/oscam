@@ -569,12 +569,11 @@ void dvbapi_resort_ecmpids(int demux_index) {
 	ECMPIDSTYPE tmppids[ECM_PIDS],tmppids2[ECM_PIDS];
 	int tmppidcount=0,tmppid2count=0,n,i,k=0,j;
 
-	for (i=0;i<MAX_CAID;i++)
-		global_caid_list[i]=0;
+	memset(global_caid_list, 0, sizeof global_caid_list);
 
 	for (i=0;i<CS_MAXREADER;i++) {
-		for (j=0;j<CS_MAXREADER;j++) {
-			if (reader[i].caid[j] != 0 && reader[i].card_status > NO_CARD) {
+		for (j=0;j<CS_MAXREADERCAID;j++) {
+			if (reader[i].caid[j] != 0 && !(reader[i].typ & R_IS_NETWORK)) {
 				if (k+1>=MAX_CAID) break;
 				global_caid_list[k++]=reader[i].caid[j];	
 			}
