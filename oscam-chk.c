@@ -286,7 +286,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
   //oscam can stuck if pipe is full
   if (!rdr->pid || !rdr->enable || rdr->deleted)
     return 0;
-  if (!rdr->tcp_connected && rdr->card_status != CARD_INSERTED)
+  if (rdr->ph.type == MOD_CONN_TCP && !rdr->tcp_connected && rdr->card_status != CARD_INSERTED)
     return 0;
 
   //srv-checks:  
