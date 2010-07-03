@@ -664,6 +664,7 @@ void dvbapi_try_next_caid(int demux_id) {
 
 	if (demux[demux_id].tries > 2) {
 		cs_log("can't decode channel");
+		dvbapi_stop_filter(demux_id, TYPE_ECM);
 		return;
 	}
 
@@ -1059,8 +1060,8 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		er->l=len;
 		memcpy(er->ecm, buffer, er->l);
 
-		get_cw(er);
 		cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
+		get_cw(er);
 	}
 
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_EMM) {
