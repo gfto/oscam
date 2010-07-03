@@ -281,13 +281,15 @@ int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
 
 int matching_reader(ECM_REQUEST *er, struct s_reader *rdr)
 {
-  if (!((rdr->fd) && (rdr->grp&client[cs_idx].grp))) return(0);
-  //Schlocke: These checks are necesary to avoid writing to unavailable readers, because
-  //oscam can stuck if pipe is full
+  if (!((rdr->fd) && (rdr->grp&client[cs_idx].grp)))
+  	 return 0;
+  //Schlocke: These checks are necesary to avoid writing to unavailable readers,
+  //because oscam can stuck if pipe is full
   if (!rdr->pid || !rdr->enable || rdr->deleted)
     return 0;
-  if (rdr->ph.type == MOD_CONN_TCP && !rdr->tcp_connected && rdr->card_status != CARD_INSERTED)
-    return 0;
+
+  //newcamd is connecting on newcamd_send_ecm() so you can not check connected
+  //or card status here as then newcamd will never connect!
 
   //srv-checks:  
   if (!chk_srvid(er, rdr->cs_idx))
