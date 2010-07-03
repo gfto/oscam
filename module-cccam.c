@@ -634,7 +634,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		if (er) {
 			er->rc = 0;
 			er->rcEx = 0x27;
-			cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1
+			cs_debug_mask(D_TRACE, "%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1
 					: 0, pfd);
 			write_ecm_answer(&reader[ridx], fd_c2m, er);
 		}
@@ -659,7 +659,10 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		timeout.millitm = timeout.millitm % 1000;
 		force_resend_ecm = reader[ridx].cc_force_resend_ecm && comp_timeb(&cur_time, &timeout) > 0;
 			
-		if (!force_resend_ecm) {
+		if (force_resend_ecm) {
+			cs_debug_mask(D_TRACE, "%s force_resend");
+		}
+		else {
 			timeout = cur_time;
 			timeout.millitm += cfg->ctimeout*4;
 			timeout.time += timeout.millitm / 1000;
@@ -2018,9 +2021,6 @@ static int cc_srv_report_cards() {
 		usr_reshare = cfg->cc_reshare;
 	}
 	
-	if (!usr_reshare)
-		return 0;
-
 	if (!cc->report_carddata_id)
 		id = 0x64;
 	else
@@ -2031,9 +2031,11 @@ static int cc_srv_report_cards() {
 	for (r = 0; r < CS_MAXREADER; r++) {
 		if (!(reader[r].grp & client[cs_idx].grp)) continue;
 		reader_reshare = reader[r].cc_reshare;
-		if (!reader_reshare) continue;
 
-		reshare = (reader_reshare-1 < usr_reshare-1) ? reader_reshare-1 : usr_reshare-1;
+		reshare = (reader_reshare < usr_reshare) ? reader_reshare : usr_reshare;
+		if (reshare < 0)
+			continue;
+			
 		flt = 0;
 		if (/*!reader[r].caid[0] && */reader[r].ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
