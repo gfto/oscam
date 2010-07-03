@@ -2008,7 +2008,8 @@ struct s_auth *get_account(char *usr) {
 static int cc_srv_report_cards() {
 	int j;
 	uint id, r, k;
-	uint8 hop = 0, reshare, usr_reshare, reader_reshare, maxhops, flt = 0;
+	uint8 hop = 0;
+	int reshare, usr_reshare, reader_reshare, maxhops, flt = 0;
 	uint8 buf[CC_MAXMSGSIZE];
 	struct cc_data *cc = client[cs_idx].cc;
 

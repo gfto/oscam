@@ -1732,7 +1732,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 								case NO_CARD: txt = "OFF"; break;
 								case CARD_NEED_INIT: txt = "NEEDINIT"; break;
 								case CARD_INSERTED:
-									if (reader[ridx].typ='p')
+									if (reader[ridx].typ=='p')
 										txt = "CONNECTED";
 									else
 										txt = "CARDOK";
