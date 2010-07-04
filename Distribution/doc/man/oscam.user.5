@@ -151,13 +151,11 @@ maximum hops limit for CCcam clients, default:10
 .PP
 \fBcccreshare\fP = \fBlevel\fP
 .RS 3n
-reshare level for CCcam clients, default:none
+reshare level for CCcam clients, default:10
 
- 0 = no resharing
- 1 = resharing for direct peer only
- 2 = resharing for direct peer and next level
- x = resharing for direct peer and next x level
-RE
+-1 = no resharing
+ x = resharing for direct peer and share level x
+.RE
 .SH EXAMPLES
  [account]
  user       = username
