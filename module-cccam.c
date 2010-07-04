@@ -812,33 +812,35 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			cs_log("%s no suitable card on server", getprefix());
 		cur_er->rc = 0;
 		cur_er->rcEx = 0x27;
+		write_ecm_answer(&reader[ridx], fd_c2m, cur_er);
 		//cur_er->rc = 1;
 		//cur_er->rcEx = 0;
 		//cs_sleepms(300);
-		//reader[ridx].last_s = reader[ridx].last_g;
+		reader[ridx].last_s = reader[ridx].last_g;
 
-		//card = llist_itr_init(cc->cards, &itr);
-		//while (card) {
-		//	if (card->caid == cur_er->caid) { // caid matches
-		//		LLIST_ITR sitr;
-		//		struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
-		//		while (srvid) {
-		//			if (sid_eq(srvid, &cur_srvid)) {
-		//				free(srvid);
-		//				srvid = llist_itr_remove(&sitr);
-		//			}
-		//			else
-		//				srvid = llist_itr_next(&sitr);
-		//		}
-		//	}
-		//	card = llist_itr_next(&itr);
-		//}
+		if (!force_resend_ecm) {
+			card = llist_itr_init(cc->cards, &itr);
+			while (card) {
+				if (card->caid == cur_er->caid) { // caid matches
+					LLIST_ITR sitr;
+					struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
+					while (srvid) {
+						if (sid_eq(srvid, &cur_srvid)) {
+							free(srvid);
+							srvid = llist_itr_remove(&sitr);
+						}
+						else
+							srvid = llist_itr_next(&sitr);
+					}
+				}
+				card = llist_itr_next(&itr);
+			}
+		}
 
 		if (!reader[ridx].cc_disable_auto_block) {
 			cc_add_auto_blocked(cc->auto_blocked, cur_er->caid, cur_er->prid,
 					&cur_srvid);
 		}
-		write_ecm_answer(&reader[ridx], fd_c2m, cur_er);
 		reader[ridx].available = 1;
 		pthread_mutex_unlock(&cc->ecm_busy);
 		cc->current_ecm_cidx = 0;
