@@ -1992,7 +1992,7 @@ int write_config()
 			dot = ",";
 		}
 		fputc((int)'\n', f);
-		if(strlen(cfg->http_dyndns) > 0)
+		if(strlen((const char *) (cfg->http_dyndns)) > 0)
 			fprintf_conf(f, CONFVARWIDTH, "httpdyndns", "%s\n", cfg->http_dyndns);
 		fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
 		fprintf_conf(f, CONFVARWIDTH, "httpreadonly", "%d\n", cfg->http_readonly);
