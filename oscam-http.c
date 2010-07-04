@@ -543,10 +543,12 @@ void send_oscam_config_dvbapi(struct templatevars *vars, FILE *f, struct uripara
 
 	i = 0;
 	char *dot = "";
+	ulong provid;
 	while(cfg->dvbapi_prioritytab.caid[i]) {
 		tpl_printf(vars, 1, "PRIORITY", "%s%04X", dot, cfg->dvbapi_prioritytab.caid[i]);
 		if(cfg->dvbapi_prioritytab.mask[i])
-			tpl_printf(vars, 1, "PRIORITY", ":%06lX", cfg->dvbapi_prioritytab.mask[i]);
+			provid = (cfg->dvbapi_prioritytab.cmap[i] << 8 | cfg->dvbapi_prioritytab.mask[i]);
+			tpl_printf(vars, 1, "PRIORITY", ":%06lX", provid);
 		dot = ",";
 		i++;
 	}
@@ -556,7 +558,8 @@ void send_oscam_config_dvbapi(struct templatevars *vars, FILE *f, struct uripara
 	while(cfg->dvbapi_ignoretab.caid[i]) {
 		tpl_printf(vars, 1, "IGNORE", "%s%04X", dot, cfg->dvbapi_ignoretab.caid[i]);
 		if(cfg->dvbapi_ignoretab.mask[i])
-			tpl_printf(vars, 1, "IGNORE", ":%06lX", cfg->dvbapi_ignoretab.mask[i]);
+			provid = (cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
+			tpl_printf(vars, 1, "IGNORE", ":%06lX", provid);
 		dot = ",";
 		i++;
 	}

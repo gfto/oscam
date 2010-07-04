@@ -1922,7 +1922,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->dvbapi_usr);
         fprintf_conf(f, CONFVARWIDTH, "pmt_mode", "%d\n", cfg->dvbapi_pmtmode);
 
-        ulong provid;
+        ulong provid = 0;
         if(cfg->dvbapi_prioritytab.caid[0]) {
         	fprintf_conf(f, CONFVARWIDTH, "priority", "");
         	i = 0;
