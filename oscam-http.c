@@ -543,7 +543,7 @@ void send_oscam_config_dvbapi(struct templatevars *vars, FILE *f, struct uripara
 
 	i = 0;
 	char *dot = "";
-	ulong provid;
+	ulong provid = 0;
 	while(cfg->dvbapi_prioritytab.caid[i]) {
 		tpl_printf(vars, 1, "PRIORITY", "%s%04X", dot, cfg->dvbapi_prioritytab.caid[i]);
 		if(cfg->dvbapi_prioritytab.mask[i])
