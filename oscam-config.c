@@ -1921,40 +1921,47 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", boxdesc[cfg->dvbapi_boxtype]);
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->dvbapi_usr);
         fprintf_conf(f, CONFVARWIDTH, "pmt_mode", "%d\n", cfg->dvbapi_pmtmode);
-		fprintf_conf(f, CONFVARWIDTH, "priority", "");
-		i = 0;
-		dot = "";
-		while(cfg->dvbapi_prioritytab.caid[i]) {
-			fprintf(f, "%s%04X", dot, cfg->dvbapi_prioritytab.caid[i]);
-			if(cfg->dvbapi_prioritytab.mask[i])
-				fprintf(f, ":%06X", cfg->dvbapi_prioritytab.mask[i]);
-			dot = ",";
-			i++;
-		}
-		fprintf(f,"\n");
 
-		fprintf_conf(f, CONFVARWIDTH, "ignore", "");
-		i = 0;
-		dot = "";
-		while(cfg->dvbapi_ignoretab.caid[i]) {
-			fprintf(f, "%s%04X", dot, cfg->dvbapi_ignoretab.caid[i]);
-			if(cfg->dvbapi_ignoretab.mask[i])
-				fprintf(f, ":%06X", cfg->dvbapi_ignoretab.mask[i]);
-			dot = ",";
-			i++;
-		}
-		fprintf(f,"\n");
+        if(cfg->dvbapi_prioritytab.caid[0]) {
+        	fprintf_conf(f, CONFVARWIDTH, "priority", "");
+        	i = 0;
+        	dot = "";
+        	while(cfg->dvbapi_prioritytab.caid[i]) {
+        		fprintf(f, "%s%04X", dot, cfg->dvbapi_prioritytab.caid[i]);
+        		if(cfg->dvbapi_prioritytab.mask[i])
+        			fprintf(f, ":%06X", cfg->dvbapi_prioritytab.mask[i]);
+        		dot = ",";
+        		i++;
+        	}
+        	fprintf(f,"\n");
+        }
 
-		fprintf_conf(f, CONFVARWIDTH, "cw_delay", "");
-		i = 0;
-		dot = "";
-		while(cfg->dvbapi_delaytab.caid[i]) {
-			fprintf(f, "%s%04X", dot, cfg->dvbapi_delaytab.caid[i]);
-			fprintf(f, ":%d", cfg->dvbapi_delaytab.mask[i]);
-			dot = ",";
-			i++;
-		}
-		fprintf(f,"\n");
+        if(cfg->dvbapi_ignoretab.caid[0]) {
+        	fprintf_conf(f, CONFVARWIDTH, "ignore", "");
+        	i = 0;
+        	dot = "";
+        	while(cfg->dvbapi_ignoretab.caid[i]) {
+        		fprintf(f, "%s%04X", dot, cfg->dvbapi_ignoretab.caid[i]);
+        		if(cfg->dvbapi_ignoretab.mask[i])
+        			fprintf(f, ":%06X", cfg->dvbapi_ignoretab.mask[i]);
+        		dot = ",";
+        		i++;
+        	}
+        	fprintf(f,"\n");
+        }
+
+        if(cfg->dvbapi_delaytab.caid[0]) {
+        	fprintf_conf(f, CONFVARWIDTH, "cw_delay", "");
+        	i = 0;
+        	dot = "";
+        	while(cfg->dvbapi_delaytab.caid[i]) {
+        		fprintf(f, "%s%04X", dot, cfg->dvbapi_delaytab.caid[i]);
+        		fprintf(f, ":%d", cfg->dvbapi_delaytab.mask[i]);
+        		dot = ",";
+        		i++;
+        	}
+        	fprintf(f,"\n");
+        }
 
 		fputc((int)'\n', f);
 	}
@@ -1965,22 +1972,28 @@ int write_config()
 	if (cfg->http_port > 0) {
 		fprintf(f,"[webif]\n");
 		fprintf_conf(f, CONFVARWIDTH, "httpport", "%d\n", cfg->http_port);
-		fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg->http_user);
-		fprintf_conf(f, CONFVARWIDTH, "httppwd", "%s\n", cfg->http_pwd);
-		fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
-		fprintf_conf(f, CONFVARWIDTH, "httptpl", "%s\n", cfg->http_tpl);
-		fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg->http_script);
+		if(strlen(cfg->http_user) > 0)
+			fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg->http_user);
+		if(strlen(cfg->http_pwd) > 0)
+			fprintf_conf(f, CONFVARWIDTH, "httppwd", "%s\n", cfg->http_pwd);
+		if(strlen(cfg->http_css) > 0)
+			fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
+		if(strlen(cfg->http_tpl) > 0)
+			fprintf_conf(f, CONFVARWIDTH, "httptpl", "%s\n", cfg->http_tpl);
+		if(strlen(cfg->http_script) > 0)
+			fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg->http_script);
 		fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg->http_refresh);
 		fprintf_conf(f, CONFVARWIDTH, "httpallowed", "");
 		struct s_ip *cip;
 		dot = "";
 		for (cip = cfg->http_allowed; cip; cip = cip->next){
 			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-	  	if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
-	  	dot = ",";
+			if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
+			dot = ",";
 		}
 		fputc((int)'\n', f);
-		fprintf_conf(f, CONFVARWIDTH, "httpdyndns", "%s\n", cfg->http_dyndns);
+		if(strlen(cfg->http_dyndns) > 0)
+			fprintf_conf(f, CONFVARWIDTH, "httpdyndns", "%s\n", cfg->http_dyndns);
 		fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
 		fprintf_conf(f, CONFVARWIDTH, "httpreadonly", "%d\n", cfg->http_readonly);
 		fputc((int)'\n', f);
