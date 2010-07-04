@@ -1929,9 +1929,10 @@ int write_config()
         	dot = "";
         	while(cfg->dvbapi_prioritytab.caid[i]) {
         		fprintf(f, "%s%04X", dot, cfg->dvbapi_prioritytab.caid[i]);
-        		if(cfg->dvbapi_prioritytab.mask[i])
+        		if(cfg->dvbapi_prioritytab.mask[i]) {
         			provid = (cfg->dvbapi_prioritytab.cmap[i] << 8 | cfg->dvbapi_prioritytab.mask[i]);
         			fprintf(f, ":%06lX", provid);
+        		}
         		dot = ",";
         		i++;
         	}
@@ -1945,9 +1946,10 @@ int write_config()
         	dot = "";
         	while(cfg->dvbapi_ignoretab.caid[i]) {
         		fprintf(f, "%s%04X", dot, cfg->dvbapi_ignoretab.caid[i]);
-        		if(cfg->dvbapi_ignoretab.mask[i])
+        		if(cfg->dvbapi_ignoretab.mask[i]) {
         			provid = (cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
         			fprintf(f, ":%06lX", provid);
+        		}
         		dot = ",";
         		i++;
         	}
