@@ -1232,8 +1232,8 @@ static void read_callback(struct libusb_transfer *transfer){
                 pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
                 return;
              }
-
-            reader->sr_config->modem_status = transfer->buffer[1];
+            reader->sr_config->modem_status = transfer->buffer[0];
+            
             copy_size = sizeof(reader->sr_config->g_read_buffer) - reader->sr_config->g_read_buffer_size > (unsigned int)transfer->actual_length-2 ? (unsigned int)transfer->actual_length-2: sizeof(reader->sr_config->g_read_buffer) - reader->sr_config->g_read_buffer_size;
             memcpy(reader->sr_config->g_read_buffer+reader->sr_config->g_read_buffer_size,transfer->buffer+2,copy_size);
             reader->sr_config->g_read_buffer_size += copy_size;
@@ -1242,7 +1242,7 @@ static void read_callback(struct libusb_transfer *transfer){
         else {
             if(transfer->actual_length==2) {
                 pthread_mutex_lock(&reader->sr_config->g_read_mutex);
-                reader->sr_config->modem_status=transfer->buffer[1];
+                reader->sr_config->modem_status=transfer->buffer[0];
                 pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
             }
         }
