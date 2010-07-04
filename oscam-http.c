@@ -791,6 +791,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		char servicelabels[255]="";
 		clear_caidtab(&reader[ridx].ctab);
 		clear_ftab(&reader[ridx].ftab);
+		reader[ridx].grp = 0;
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action"))) {
 				if (!strcmp((*params).params[i], "services"))
