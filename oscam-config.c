@@ -1939,6 +1939,7 @@ int write_config()
         }
 
         if(cfg->dvbapi_ignoretab.caid[0]) {
+        	provid = 0;
         	fprintf_conf(f, CONFVARWIDTH, "ignore", "");
         	i = 0;
         	dot = "";
