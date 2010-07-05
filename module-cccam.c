@@ -801,8 +801,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			reader[ridx].card_system = get_cardsystem(reader[ridx].caid[0]);
 		else
 			reader[ridx].card_system = get_cardsystem(card->caid);
-		memset(reader[ridx].hexserial, 0, sizeof(reader[ridx].hexserial));
-		memcpy(reader[ridx].hexserial, &card->id, sizeof(card->id));
+		memcpy(reader[ridx].hexserial, &card->key, sizeof(card->key));
 
 		return 0;
 	} else {
@@ -903,6 +902,23 @@ static int cc_send_pending_emms() {
 }
 
 /**
+ * READER only:
+ * find card by hexserial
+ * */
+struct cc_card *get_card_by_hexserial(uint8 *hexserial) {
+	struct cc_data *cc = reader[ridx].cc;
+	LLIST_ITR itr;
+	struct cc_card *card = llist_itr_init(cc->cards, &itr);
+	while (card) {
+		if (memcmp(card->key, hexserial, 8) == 0) { //found it!
+			return card;
+		}
+		card = llist_itr_next(&itr);
+	}
+	return NULL;
+}
+
+/**
  * EMM Procession
  * Copied from http://85.17.209.13:6100/file/8ec3c0c5d257/systems/cardclient/cccam2.c
  * ProcessEmm
@@ -917,6 +933,10 @@ static int cc_send_emm(EMM_PACKET *ep) {
 
 
 	struct cc_card *emm_card = cc->current_card[ep->cidx].card;
+	
+	if (!emm_card || memcmp(emm_card->key, ep->hexserial, 8) != 0) {
+		emm_card = get_card_by_hexserial(ep->hexserial);
+	}
 
 	if (!emm_card) { //Card for emm not found!
 		cs_log("%s emm for client %d not possible, no card found!", getprefix(), ep->cidx);
@@ -1414,7 +1434,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		card->sub_id = b2i(3, buf + 9);
 		card->caid = b2i(2, buf + 12);
 		card->hop = buf[14];
-		memcpy(card->key, buf + 16, 8);
+		card->maxdown = buf[15];
+		memcpy(card->key, buf + 16, 8); //HEXSERIAL!!
 
 		//cs_debug("cccam: card %08x added, caid %04X, hop %d, key %s, count %d",
 		//		card->id, card->caid, card->hop, cs_hexdump(0, card->key, 8),
@@ -1667,6 +1688,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			memcpy(&cc->cmd05_data, buf+4, l);
 			if (!cc->current_ecm_cidx)
 				send_cmd05_answer();
+			cc->current_ecm_cidx = 0; //After CMD_05 is always a NOK! So retry ECM
 		}
 		ret = 0;
 		break;
