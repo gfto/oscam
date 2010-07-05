@@ -1058,7 +1058,7 @@ static void loop_resolver()
   {
     cs_resolve();
     cs_sleepms(1000*cfg->resolvedelay);
-
+/*
     //debug only. checking pipe status:
     FILE *f = fopen("/tmp/oscamdbg.txt", "w");
     int i;
@@ -1082,6 +1082,7 @@ static void loop_resolver()
     	}
     }
     fclose(f);
+*/
   }
 }
 
