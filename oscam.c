@@ -1967,7 +1967,7 @@ ulong chk_provid(uchar *ecm, ushort caid) {
 	ulong provid = 0;
 
 	switch(caid >> 8) {
-		case 0x10:
+		case 0x01:
 			// seca
 			provid = b2i(2, ecm+3);
 			break;
