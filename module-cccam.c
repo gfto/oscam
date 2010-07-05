@@ -934,8 +934,8 @@ static int cc_send_emm(EMM_PACKET *ep) {
 
 	struct cc_card *emm_card = cc->current_card[ep->cidx].card;
 
-	if (!emm_card || memcmp(emm_card->key, ep->hexserial, 8) != 0 || emm_card->caid != *(uint16*)&ep->caid) {
-		emm_card = get_card_by_hexserial(ep->hexserial, *(uint16*)&ep->caid);
+	if (!emm_card || memcmp(emm_card->key, ep->hexserial, 8) != 0 || emm_card->caid != b2i(2, ep->caid)) {
+		emm_card = get_card_by_hexserial(ep->hexserial, b2i(2, ep->caid));
 	}
 
 	if (!emm_card) { //Card for emm not found!
@@ -944,7 +944,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	}
 
 	cs_debug_mask(D_EMM, "%s emm received for client %d caid %04X for card %08X", getprefix(), ep->cidx,
-			*(uint16*)&ep->caid, emm_card->id);
+			b2i(2, ep->caid), emm_card->id);
 
 	int size = ep->l+12;
 	uint8 *emmbuf = malloc(size);
@@ -1256,7 +1256,7 @@ static void rebuild_caidinfos(struct cc_data *cc) {
 }
 
 static void cleanup_old_cards(struct cc_data *cc) {
-	time_t clean_time = time((time_t) 0) - 60 * 60 * 5; //TODO: Timeout old cards 60*60*5=5h Config
+	time_t clean_time = time((time_t) 0) - 60 * 60 * 48; //TODO: Timeout old cards 60*60*48=48h Config
 	LLIST_ITR itr;
 	struct cc_card *card = llist_itr_init(cc->cards, &itr);
 	while (card) {
