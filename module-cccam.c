@@ -905,12 +905,12 @@ static int cc_send_pending_emms() {
  * READER only:
  * find card by hexserial
  * */
-struct cc_card *get_card_by_hexserial(uint8 *hexserial) {
+struct cc_card *get_card_by_hexserial(uint8 *hexserial, uint16 caid) {
 	struct cc_data *cc = reader[ridx].cc;
 	LLIST_ITR itr;
 	struct cc_card *card = llist_itr_init(cc->cards, &itr);
 	while (card) {
-		if (memcmp(card->key, hexserial, 8) == 0) { //found it!
+		if (memcmp(card->key, hexserial, 8) == 0 && card->caid == caid) { //found it!
 			return card;
 		}
 		card = llist_itr_next(&itr);
@@ -933,9 +933,9 @@ static int cc_send_emm(EMM_PACKET *ep) {
 
 
 	struct cc_card *emm_card = cc->current_card[ep->cidx].card;
-	
-	if (!emm_card || memcmp(emm_card->key, ep->hexserial, 8) != 0) {
-		emm_card = get_card_by_hexserial(ep->hexserial);
+
+	if (!emm_card || memcmp(emm_card->key, ep->hexserial, 8) != 0 || emm_card->caid != *(uint16*)&ep->caid) {
+		emm_card = get_card_by_hexserial(ep->hexserial, *(uint16*)&ep->caid);
 	}
 
 	if (!emm_card) { //Card for emm not found!
@@ -944,7 +944,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	}
 
 	cs_debug_mask(D_EMM, "%s emm received for client %d caid %04X for card %08X", getprefix(), ep->cidx,
-			b2i(2, (uchar*)&ep->caid), emm_card->id);
+			*(uint16*)&ep->caid, emm_card->id);
 
 	int size = ep->l+12;
 	uint8 *emmbuf = malloc(size);
