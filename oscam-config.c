@@ -1738,7 +1738,7 @@ int write_config()
 	fputc((int)'\n', f);
 
 	/*monitor settings*/
-	if(cfg->mon_port || cfg->mon_appendchaninfo) {
+	if(cfg->mon_port || cfg->mon_appendchaninfo || cfg->mon_hideclient_to) {
 		fprintf(f,"[monitor]\n");
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->mon_port);
 		if (cfg->mon_srvip != 0)
