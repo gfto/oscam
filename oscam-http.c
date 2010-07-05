@@ -1463,6 +1463,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				snprintf(fname, sizeof(fname), "/tmp/.oscam/caidinfos.%d", ridx);
 				FILE *file = fopen(fname, "r");
 				if (file) {
+					int cardcount = 0;
 					uint16 caid = 0;
 					uint8 hop = 0;
 					char ascprovid[7];
@@ -1489,8 +1490,11 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 							count--;
 						}
 						tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
+						cardcount++;
 					} while (1);
 					fclose(file);
+					if(cardcount)
+						tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d Cards found on this reader<BR><BR>\n", cardcount);
 					tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
 				} else {
 					tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
@@ -1520,6 +1524,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			snprintf(fname, sizeof(fname), "/tmp/.oscam/caidinfos.%d", ridx);
 			FILE *file = fopen(fname, "r");
 			if (file) {
+				int cardcount = 0;
 				uint16 caid = 0;
 				uint8 hop = 0;
 				char ascprovid[7];
@@ -1546,8 +1551,12 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						count--;
 					}
 					tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
+					cardcount++;
 				} while (1);
 				fclose(file);
+				if(cardcount)
+					tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d Cards found on this reader<BR><BR>\n", cardcount);
+				tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
 			} else {
 				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
 			}

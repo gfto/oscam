@@ -584,6 +584,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 ##TPLMENU##\n\
 <BR><BR>Entitlements for ##READERNAME##<BR><BR>\n\n\
 <DIV class=\"log\">\n\
+  ##LOGSUMMARY##\
   ##LOGHISTORY##\
 </DIV>\n\
 ##TPLFOOTER##"
