@@ -1972,7 +1972,7 @@ ulong chk_provid(uchar *ecm, ushort caid) {
 			provid = b2i(2, ecm+3);
 			break;
 
-		case 0x50:
+		case 0x05:
 			// viaccess
 			i = (ecm[4] == 0xD2) ? ecm[5]+2 : 0;  // skip d2 nano
 			if((ecm[5+i] == 3) && ((ecm[4+i] == 0x90) || (ecm[4+i] == 0x40)))
