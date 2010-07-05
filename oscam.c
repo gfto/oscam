@@ -1963,35 +1963,35 @@ void chk_dcw(int fd)
 }
 
 ulong chk_provid(uchar *ecm, ushort caid) {
-	int i;
-	ulong provid=0;
+	int i, len, descriptor_length = 0;
+	ulong provid = 0;
 
-	switch(caid) {
-		case 0x100:     // seca
-			provid=b2i(2, ecm+3);
+	switch(caid >> 8) {
+		case 0x10:
+			// seca
+			provid = b2i(2, ecm+3);
 			break;
 
-		case 0x500:     // viaccess
-			i=(ecm[4]==0xD2) ? ecm[5] + 2 : 0;  // skip d2 nano
-			if ((ecm[5+i]==3) && ((ecm[4+i]==0x90) || (ecm[4+i]==0x40)))
-				provid=(b2i(3, ecm+6+i) & 0xFFFFF0);
+		case 0x50:
+			// viaccess
+			i = (ecm[4] == 0xD2) ? ecm[5]+2 : 0;  // skip d2 nano
+			if((ecm[5+i] == 3) && ((ecm[4+i] == 0x90) || (ecm[4+i] == 0x40)))
+				provid = (b2i(3, ecm+6+i) & 0xFFFFF0);
             
-			i=(ecm[6]==0xD2) ? ecm[7] + 2 : 0;  // skip d2 nano long ecm
-			if ((ecm[7+i]==7) && ((ecm[6+i]==0x90) || (ecm[6+i]==0x40)))
-				provid=(b2i(3, ecm+8+i) & 0xFFFFF0);
+			i = (ecm[6] == 0xD2) ? ecm[7]+2 : 0;  // skip d2 nano long ecm
+			if((ecm[7+i] == 7) && ((ecm[6+i] == 0x90) || (ecm[6+i] == 0x40)))
+				provid = (b2i(3, ecm+8+i) & 0xFFFFF0);
 
 			break;
-		default:
+
+		case 0x0D:
 			// cryptoworks
-			if (caid&0x0d00) {
-				int descriptor_length=0;
-				int len = (((ecm[1] & 0xf) << 8) | ecm[2]) + 3;
-				for(i=8;i<len;i+=descriptor_length+2) {
-					descriptor_length = ecm[i+1];
-					if (ecm[i]==0x83) {
-						provid=(ulong)ecm[i+2];
-						break;
-					}
+			len = (((ecm[1] & 0xf) << 8) | ecm[2])+3;
+			for(i=8; i<len; i+=descriptor_length+2) {
+				descriptor_length = ecm[i+1];
+				if (ecm[i] == 0x83) {
+					provid = (ulong)ecm[i+2];
+					break;
 				}
 			}
 			break;
