@@ -56,7 +56,7 @@ struct cc_card {
 	uint16 caid;
 	uint8 hop;
 	uint8 maxdown;
-	uint8 key[8]; // card serial (for au)
+	uint8 hexserial[8]; // card serial (for au)
 	LLIST *provs; // providers
 	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
 	time_t time;
