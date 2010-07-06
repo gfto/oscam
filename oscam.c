@@ -1990,7 +1990,7 @@ ulong chk_provid(uchar *ecm, ushort caid) {
 			for(i=8; i<len; i+=descriptor_length+2) {
 				descriptor_length = ecm[i+1];
 				if (ecm[i] == 0x83) {
-					provid = (ulong)ecm[i+2];
+					provid = (ulong)ecm[i+2] & 0xFE;
 					break;
 				}
 			}
