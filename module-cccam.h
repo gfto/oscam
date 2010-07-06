@@ -135,8 +135,9 @@ struct cc_data {
 
 	int current_ecm_cidx; //index to last current_card (reader)
 	struct cc_current_card *current_card; //initialized by reader (index CS_MAXPID)
-	struct cc_card *server_card; 		   //initialized by client
-
+	struct cc_card *server_card; 		   //initialized by server
+	int server_ecm_pending;                    //initialized by server
+	
 	pthread_mutex_t lock;
 	pthread_mutex_t ecm_busy;
 	struct timeb ecm_time;

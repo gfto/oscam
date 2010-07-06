@@ -1578,8 +1578,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			ECM_REQUEST *er;
 
 			memset(cc->server_card, 0, sizeof(struct cc_card));
-			cc->server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8
-					| buf[13];
+			cc->server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8 | buf[13];
 			cc->server_card->caid = b2i(2, data);
 
 			if ((er = get_ecmtask())) {
@@ -1588,6 +1587,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				er->l = buf[16];
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
+				cc->server_ecm_pending = 1;
 				get_cw(er);
 				cs_debug_mask(
 						D_TRACE,
@@ -1807,6 +1807,7 @@ static void cc_send_dcw(ECM_REQUEST *er) {
 		cc_cw_crypt(buf, cc->server_card->id);
 		cc_cmd_send(buf, 16, MSG_CW_ECM);
 		cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
+		cc->server_ecm_pending = 0;
 	} else {
 		cs_debug_mask(D_TRACE, "%s send cw: NOK cpti: %d", getprefix(),
 			er->cpti);
@@ -2024,10 +2025,20 @@ struct s_auth *get_account(char *usr) {
 	return NULL;
 }
 
+static ulong get_reader_hexserial_crc()
+{
+	ulong crc = 0;
+	int r;
+	for (r = 0; r < CS_MAXREADER; r++) {
+		crc += crc32(0, reader[r].hexserial, 8);
+	}
+	return crc;
+}
+
 /**
  * Server:
  * Reports all caid/providers to the connected clients
- * returns count reported cards
+ * returns total count of reported cards
  */
 static int cc_srv_report_cards() {
 	int j;
@@ -2453,6 +2464,7 @@ static int cc_srv_connect() {
 	is_server = 1;
 
 	// report cards
+	ulong hexserial_crc = get_reader_hexserial_crc();
 	cc_srv_report_cards();
 	int caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 
@@ -2468,15 +2480,20 @@ static int cc_srv_connect() {
 				cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached", getprefix());
 				break;
 			}
-
-			int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
-			if (new_caid_info_count != caid_info_count) {
-				cc_srv_report_cards();
-			}
 		} else if (i <= 0)
 			break;
-		else
+		else {
 			cmi = 0;
+			if (!cc->server_ecm_pending) {
+				int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
+				ulong new_hexserial_crc = get_reader_hexserial_crc();
+				if (new_caid_info_count != caid_info_count || new_hexserial_crc != hexserial_crc) {
+					cc_srv_report_cards();
+					caid_info_count = new_caid_info_count;
+					hexserial_crc = new_hexserial_crc;
+				}
+			}
+		}
 	}
 	return 0;
 }
