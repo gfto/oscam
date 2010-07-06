@@ -1121,6 +1121,7 @@ extern int init_provid();
 extern int ridx, logfd;
 extern int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar *response, ushort *response_length);
 extern int card_write(struct s_reader * reader, uchar *, uchar *, uchar *, ushort *);
+extern int check_sct_len(const unsigned char *data, int off);
 extern void cs_ri_brk(struct s_reader * reader, int);
 extern void cs_ri_log(struct s_reader * reader, char *,...);
 extern void * start_cardreader(void *);

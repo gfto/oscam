@@ -49,7 +49,6 @@ int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *);
 int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *);
 int cryptoworks_get_emm_type(EMM_PACKET *, struct s_reader *);
 int cryptoworks_card_info(struct s_reader * reader);
-int CheckSctLen(const uchar *, int);
 void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter);
 
 // reader-seca

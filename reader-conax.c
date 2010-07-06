@@ -112,7 +112,7 @@ int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   unsigned char buf[256];
 
-  if ((n=CheckSctLen(er->ecm, 3))<0)
+  if ((n=check_sct_len(er->ecm, 3))<0)
     return ERROR;
 
   buf[0]=0x14;

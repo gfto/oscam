@@ -91,6 +91,17 @@ int card_write(struct s_reader * reader, uchar *cmd, uchar *data, uchar *respons
     return(reader_cmd2icc(reader, cmd, CMD_LEN, response, response_length));
 }
 
+int check_sct_len(const uchar *data, int off)
+{
+	int l = SCT_LEN(data);
+	if (l+off > MAX_LEN) {
+		cs_debug("check_sct_len(): smartcard section too long %d > %d", l, MAX_LEN-off);
+		l = -1;
+	}
+	return(l);
+}
+
+
 static int reader_card_inserted(struct s_reader * reader)
 {
 #ifndef USE_GPIO

@@ -81,17 +81,6 @@ static int RSA(unsigned char *out, unsigned char *in, int n, BIGNUM *exp, BIGNUM
   return(rc);
 }
 
-int CheckSctLen(const uchar *data, int off)
-{
-  int l=SCT_LEN(data);
-  if (l+off > MAX_LEN)
-  {
-    cs_debug("[cryptoworks-reader] smartcard: section too long %d > %d", l, MAX_LEN-off);
-    l=-1;
-  }
-  return(l);
-}
-
 static char *chid_date(uchar *ptr, char *buf, int l)
 {
   if (buf)
@@ -282,7 +271,7 @@ bool cSmartCardCryptoworks::Decode(const cEcmInfo *ecm, const unsigned char *dat
   static unsigned char ins4c[] = { 0xA4,0x4C,0x00,0x00,0x00 };
 
   unsigned char nanoD4[10];
-  int l=CheckSctLen(data,-5+(ucpkValid ? sizeof(nanoD4):0));
+  int l=check_sct_len(data,-5+(ucpkValid ? sizeof(nanoD4):0));
   if(l>5) {
     unsigned char buff[MAX_LEN];
     if(ucpkValid) {
@@ -356,7 +345,7 @@ int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   static unsigned char ins4C[] = { 0xA4,0x4C,0x00,0x00,0x00 };
   static unsigned char insC0[] = { 0xA4,0xC0,0x00,0x00,0x1C };
   unsigned char nanoD4[10];
-  int secLen=CheckSctLen(er->ecm,-5+(reader->ucpk_valid ? sizeof(nanoD4):0));
+  int secLen=check_sct_len(er->ecm,-5+(reader->ucpk_valid ? sizeof(nanoD4):0));
 
   if(secLen>5)
   {
