@@ -877,6 +877,7 @@ typedef struct ecm_request_t
 
 #define MAX_STAT_TIME 20
 #define MIN_ECM_COUNT 5
+#define MAX_ECM_COUNT 500
 #define MAX_READER_RETRY 4
  
 typedef struct add_reader_stat_t

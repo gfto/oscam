@@ -188,6 +188,19 @@ void add_reader_stat(ADD_READER_STAT *stat)
 	add_stat(stat->ridx, stat->caid, stat->prid, stat->srvid, stat->time, stat->rc);
 }
 
+void reset_stat(ushort caid, ulong prid, ushort srvid)
+{
+	int i;
+	for (i = 0; i < CS_MAXREADER; i++) {
+		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
+			READER_STAT *stat = get_stat(i, caid, prid, srvid);
+			if (stat)
+				stat->ecm_count = 0;
+		}
+	}
+}
+
+
 /**	
  * Gets best reader for caid/prid/srvid.
  * Best reader is evaluated by lowest avg time but only if ecm_count > MIN_ECM_COUNT (5)
@@ -210,6 +223,11 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 					return -1; //this reader is active (now) but we need statistics first!
 				}
 			
+				if (stat->ecm_count > MAX_ECM_COUNT) {
+					reset_stat(caid, prid, srvid);
+					return -1;
+				}
+				
 				//if (stat->rc == 0 && stat->ecm_count < MIN_ECM_COUNT)
 				//	return -1; //first get full statistics before deciding which reader is the best
 				
