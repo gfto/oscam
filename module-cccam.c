@@ -797,11 +797,11 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cc_cmd_send(ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
 
 		//For EMM
-		if (reader[ridx].caid[0])
-			reader[ridx].card_system = get_cardsystem(reader[ridx].caid[0]);
-		else
-			reader[ridx].card_system = get_cardsystem(card->caid);
-		memcpy(reader[ridx].hexserial, &card->hexserial, sizeof(card->hexserial));
+		uint16 caid = reader[ridx].caid[0]?reader[ridx].caid[0]:card->caid;
+		reader[ridx].card_system = get_cardsystem(caid);
+		memcpy(reader[ridx].hexserial, card->hexserial, sizeof(card->hexserial));
+		cs_ddump_mask(D_EMM, card->hexserial, 8, "%s au info: caid %04X card system: %d serial:", 
+			getprefix(), caid, reader[ridx].card_system);
 
 		return 0;
 	} else {
@@ -1725,6 +1725,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 				int au = client[cs_idx].au;
 				if ((au < 0) || (au > CS_MAXREADER)) {
+					cs_debug_mask(D_EMM, "%s EMM Request discarded because au is not assigned to an reader!", getprefix());
 					cc_cmd_send(NULL, 0, MSG_CW_NOK1); //Send back NOK
 					return 0;
 				}
@@ -1733,10 +1734,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				memset(emm, 0, sizeof(EMM_PACKET));
 				emm->caid[0] = buf[4];
 				emm->caid[1] = buf[5];
-				//emm->provid[0] = buf[7];
-				//emm->provid[1] = buf[8];
-				//emm->provid[2] = buf[9];
-				//emm->provid[3] = buf[10];
+				emm->provid[0] = buf[7];
+				emm->provid[1] = buf[8];
+				emm->provid[2] = buf[9];
+				emm->provid[3] = buf[10];
 				//emm->hexserial[0] = buf[11];
 				//emm->hexserial[1] = buf[12];
 				//emm->hexserial[2] = buf[13];
