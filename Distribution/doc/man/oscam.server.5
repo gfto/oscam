@@ -98,6 +98,18 @@ define CAID for reader, some protocols only support one CAID, default:\fBmask\fP
 example: CAID=0100,0200&FFDF
 .RE
 .PP
+\fBaudisabled\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = exclude reader from auto AU, default:0
+.RE
+.PP
+\fBauprovid\fP = \fBprovider ID\fP
+.RS 3n
+set provider ID to use the right reader for auto AU
+
+example = 123456
+.RE
+.PP
 \fBboxid\fP = \fBNDS box ID\fP
 .RS 3n
 NDS receiver box id
