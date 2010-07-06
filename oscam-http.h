@@ -597,13 +597,13 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
   <form action=\"readerconfig.html?action=execute\" method=\"get\">\n\
   <input name=\"reader\" type=\"hidden\" value=\"##READERNAME##\">\n\
   <input name=\"protocol\" type=\"hidden\" value=\"##PROTOCOL##\">\n\
-  <input name=\"enable\" type=\"hidden\" value=\"0\">\n\
-  <input name=\"fallback\" type=\"hidden\" value=\"0\">\n\
   <TABLE cellspacing=\"0\">\n\
     <TR><TH COLSPAN=\"2\">Edit Reader ##READERNAME##</TH></TR>\n\
     <TR><TH>&nbsp;</TH><TH>Reader general settings</TH></TR>\n\
-    <TR><TD>Enable:</TD><TD><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
-    <TR><TD>Fallback:</TD><TD><input name=\"fallback\" type=\"checkbox\" value=\"1\" ##FALLBACKCHECKED##></TD></TR>\n\
+    <TR><TD>Enable:</TD><TD><input name=\"enable\" type=\"hidden\" value=\"0\"><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
+    <TR><TD>AU disabled:</TD><TD><input name=\"audisabled\" type=\"hidden\" value=\"0\"><input name=\"audisabled\" type=\"checkbox\" value=\"1\" ##AUDISABLED##></TD></TR>\n\
+    <TR><TD>AU Provid:</TD><TD><input name=\"auprovid\" type=\"text\" size=\"10\" maxlength=\"6\" value=\"##AUPROVID##\"></TD></TR>\n\
+	<TR><TD>Fallback:</TD><TD><input name=\"fallback\" type=\"hidden\" value=\"0\"><input name=\"fallback\" type=\"checkbox\" value=\"1\" ##FALLBACKCHECKED##></TD></TR>\n\
     <TR><TD>Group:</TD><TD><input name=\"group\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##GRP##\"></TD></TR>\n\
     <TR><TD>Device:</TD><TD><input name=\"device\" type=\"text\" size=\"60\" maxlength=\"150\" value=\"##DEVICE##\"></TD></TR>\n\
     <TR><TD>Caid:</TD><TD><input name=\"caid\" type=\"text\" size=\"60\" maxlength=\"100\" value=\"##CAIDS##\"></TD></TR>\n\

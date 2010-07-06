@@ -2394,6 +2394,12 @@ int write_server()
 			if (reader[i].deprecated && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "deprecated", "%d\n", reader[i].deprecated);
 
+			if (reader[i].audisabled)
+				fprintf_conf(f, CONFVARWIDTH, "audisabled", "%d\n", reader[i].audisabled);
+
+			if (reader[i].auprovid)
+				fprintf_conf(f, CONFVARWIDTH, "auprovid", "%06lX", reader[i].auprovid);
+
 			fprintf(f, "\n\n");
 		}
 	}
@@ -3408,6 +3414,26 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (!strcmp(token, "ccchopsaway") || !strcmp(token, "cccreshar")  || !strcmp(token, "cccreshare")) {
 		rdr->cc_reshare = atoi(value);
 		return;
+	}
+
+	if (!strcmp(token, "audisabled")) {
+		if (strlen(value) == 0) {
+			rdr->audisabled = 0;
+			return;
+		} else {
+			rdr->audisabled = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "auprovid")) {
+		if (strlen(value) == 0) {
+			rdr->auprovid = 0;
+			return;
+		} else {
+			rdr->auprovid = a2i(value, 3);
+			return;
+		}
 	}
 
 	if (token[0] != '#')

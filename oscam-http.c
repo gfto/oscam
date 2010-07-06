@@ -831,6 +831,12 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_addVar(vars, 0, "USER", reader[ridx].r_usr);
 	tpl_addVar(vars, 0, "PASS", reader[ridx].r_pwd);
 
+	if(reader[ridx].audisabled)
+		tpl_addVar(vars, 0, "AUDISABLED", "checked");
+
+	if(reader[ridx].auprovid)
+		tpl_printf(vars, 0, "AUPROVID", "%06lX", reader[ridx].auprovid);
+
 	if(reader[ridx].force_irdeto)
 		tpl_addVar(vars, 0, "FORCEIRDETOCHECKED", "checked");
 

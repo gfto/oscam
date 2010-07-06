@@ -479,6 +479,8 @@ struct geo_cache
 
 struct s_reader  //contains device info, reader info and card info
 {
+  ulong		auprovid; // AU only for this provid
+  int		audisabled; // exclude reader from auto AU
   int 		deleted; // if this flag is set the reader is not shown in webif and becomes not writte to oscam.server
   int		smargopatch;
   int		pid;

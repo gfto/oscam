@@ -1848,7 +1848,7 @@ int send_dcw(ECM_REQUEST *er)
 			int r=0;
 			for(r=0;r<CS_MAXREADER;r++)
 			{
-				if(er->caid==reader[r].caid[0])
+				if((er->caid == reader[r].caid[0]) && (er->prid == reader[r].auprovid) && (!reader[r].audisabled))
 				{
 					client[cs_idx].au=r;
 					break;
