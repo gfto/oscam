@@ -934,7 +934,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 
 	struct cc_card *emm_card = cc->current_card[ep->cidx].card;
 
-	if (!emm_card || memcmp(emm_card->hexserial, ep->hexserial, 8) != 0 || emm_card->caid != b2i(2, ep->caid)) {
+	if (!emm_card || emm_card->caid != b2i(2, ep->caid)) {
 		emm_card = get_card_by_hexserial(ep->hexserial, b2i(2, ep->caid));
 	}
 
