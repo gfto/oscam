@@ -93,8 +93,10 @@ int card_write(struct s_reader * reader, uchar *cmd, uchar *data, uchar *respons
 
 static int reader_card_inserted(struct s_reader * reader)
 {
+#ifndef USE_GPIO
 	if ((reader->detect&0x7f) > 3)
 		return 1;
+#endif
 #ifdef HAVE_PCSC
 	if (reader->typ == R_PCSC) {
 		return(pcsc_check_card_inserted(reader));
