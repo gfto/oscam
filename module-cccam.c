@@ -797,11 +797,10 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cc_cmd_send(ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
 
 		//For EMM
-		uint16 caid = reader[ridx].caid[0]?reader[ridx].caid[0]:card->caid;
-		reader[ridx].card_system = get_cardsystem(caid);
+		reader[ridx].card_system = get_cardsystem(card->caid);
 		memcpy(reader[ridx].hexserial, card->hexserial, sizeof(card->hexserial));
 		cs_ddump_mask(D_EMM, card->hexserial, 8, "%s au info: caid %04X card system: %d serial:", 
-			getprefix(), caid, reader[ridx].card_system);
+			getprefix(), card->caid, reader[ridx].card_system);
 
 		return 0;
 	} else {
@@ -1319,9 +1318,11 @@ static void fix_dcw(uchar *dcw)
 static void cc_idle() {
 	struct cc_data *cc = reader[ridx].cc;
 	cs_debug("%s IDLE", getprefix());
-	cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
-	cc->answer_on_keepalive = time(NULL);
-	
+	if (cc->answer_on_keepalive + 55 < time(NULL)) {
+		cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
+		cs_debug("cccam: keepalive");
+		cc->answer_on_keepalive = time(NULL);
+	}
 }
 
 static int cc_parse_msg(uint8 *buf, int l) {
@@ -1720,13 +1721,13 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	case MSG_EMM_ACK: {
 		cc->just_logged_in = 0;
 		if (is_server) { //EMM Request received
+			cc_cmd_send(NULL, 0, MSG_EMM_ACK); //Send back ACK
 			if (l > 4) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
 				int au = client[cs_idx].au;
 				if ((au < 0) || (au > CS_MAXREADER)) {
 					cs_debug_mask(D_EMM, "%s EMM Request discarded because au is not assigned to an reader!", getprefix());
-					cc_cmd_send(NULL, 0, MSG_CW_NOK1); //Send back NOK
 					return 0;
 				}
 
@@ -1748,7 +1749,6 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				//emm->cidx = cs_idx;
 				do_emm(emm);
 				free(emm);
-				cc_cmd_send(NULL, 0, MSG_EMM_ACK); //Send back ACK
 			}
 		} else { //Our EMM Request Ack!
 			cs_debug_mask(D_EMM, "%s EMM ACK!", getprefix());
@@ -2008,7 +2008,6 @@ static int cc_cli_connect(void) {
 	reader[ridx].last_g = reader[ridx].last_s = time((time_t *) 0);
 	reader[ridx].tcp_connected = 1;
 	reader[ridx].available = 1;
-	reader[ridx].card_system = get_cardsystem(reader[ridx].caid[0]);
 
 	cc->just_logged_in = 1;
 
@@ -2315,6 +2314,7 @@ static int cc_srv_connect() {
 		cc->server_card = malloc(sizeof(struct cc_card));
 	}
 	cc_use_rc4 = 0;
+	is_server = 1;
 	
 	// calc + send random seed
 	seed = (unsigned int) time((time_t*) 0);
@@ -2460,8 +2460,6 @@ static int cc_srv_connect() {
 
 	if (cc_send_srv_data() < 0)
 		return -1;
-
-	is_server = 1;
 
 	// report cards
 	ulong hexserial_crc = get_reader_hexserial_crc();
