@@ -1845,8 +1845,11 @@ int send_dcw(ECM_REQUEST *er)
 		//client[cs_idx].au=er->reader[0];
 		//if(client[cs_idx].au<0)
 		//{
+		if((er->caid == reader[er->reader[0]].caid[0]) && (er->prid == reader[er->reader[0]].auprovid) && (!reader[er->reader[0]].audisabled)) {
+			client[cs_idx].au = er->reader[0]; // First chance - check whether actual reader can AU
+		} else {
 			int r=0;
-			for(r=0;r<CS_MAXREADER;r++)
+			for(r=0;r<CS_MAXREADER;r++) //second chance loop through all readers to find an AU reader
 			{
 				if((er->caid == reader[r].caid[0]) && (er->prid == reader[r].auprovid) && (!reader[r].audisabled))
 				{
@@ -1858,6 +1861,7 @@ int send_dcw(ECM_REQUEST *er)
 			{
 				client[cs_idx].au=(-1);
 			}
+		}
 		//}
 	}
 
