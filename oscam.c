@@ -1845,7 +1845,7 @@ int send_dcw(ECM_REQUEST *er)
 		//client[cs_idx].au=er->reader[0];
 		//if(client[cs_idx].au<0)
 		//{
-		if((er->caid == reader[er->reader[0]].caid[0]) && (er->prid == reader[er->reader[0]].auprovid) && (!reader[er->reader[0]].audisabled)) {
+		if((er->caid == reader[er->reader[0]].caid[0]) && (!reader[er->reader[0]].audisabled)) {
 			client[cs_idx].au = er->reader[0]; // First chance - check whether actual reader can AU
 		} else {
 			int r=0;
