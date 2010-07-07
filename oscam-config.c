@@ -1860,9 +1860,11 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->rad_usr);
 		fprintf_conf(f, CONFVARWIDTH, "allowed", "");
 		struct s_ip *cip;
+		dot="";
 		for (cip = cfg->rad_allowed; cip; cip = cip->next){
-			fprintf(f,"%s%s", dot, inet_ntoa(*(struct in_addr *)&cip->ip[0]));
-			if (cip->ip[0] == cip->ip[1])	fprintf(f,"-%s", inet_ntoa(*(struct in_addr *)&cip->ip[1]));
+			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
+			if (cip->ip[0] != cip->ip[1])
+				fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
 			dot=",";
 		}
 		fprintf(f,"\n\n");

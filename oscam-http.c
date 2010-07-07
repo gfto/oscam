@@ -312,7 +312,8 @@ void send_oscam_config_radegast(struct templatevars *vars, FILE *f, struct uripa
 	char *dot="";
 	for (cip=cfg->rad_allowed; cip; cip=cip->next) {
 		tpl_printf(vars, 1, "ALLOWED", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-		if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, 1, "ALLOWED", "-%s", cs_inet_ntoa(cip->ip[1]));
+		if (cip->ip[0] != cip->ip[1])
+			tpl_printf(vars, 1, "ALLOWED", "-%s", cs_inet_ntoa(cip->ip[1]));
 		dot=",";
 	}
 
