@@ -2411,8 +2411,10 @@ void do_emm(EMM_PACKET *ep)
 	au = client[cs_idx].au;
 	cs_ddump_mask(D_ATR, ep->emm, ep->l, "emm:");
 
-	if ((au < 0) || (au >= CS_MAXREADER))
+	if ((au < 0) || (au >= CS_MAXREADER)) {
+		cs_debug_mask(D_EMM, "emm disabled, client has no au-reader!");
 		return;
+	}
 
 	if (reader[au].card_system>0) {
 		if (!reader_get_emm_type(ep, &reader[au])) { //decodes ep->type and ep->hexserial from the EMM
@@ -2420,8 +2422,10 @@ void do_emm(EMM_PACKET *ep)
 			return;
 		}
 	}
-	else
+	else {
+		cs_debug_mask(D_EMM, "emm skipped, reader %s (%d) has no cardsystem defined!", reader[au].label, au); 
 		return;
+	}
 
 	cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], reader[au].label, cs_hexdump(0, reader[au].hexserial, 8)); 
 	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
