@@ -113,9 +113,9 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 		tpl_addVar(vars, 0, "SAVEINITHISTORY", "checked");
 	if (cfg->reader_restart_seconds)
 		tpl_printf(vars, 0, "READERRESTARTSECONDS", "%d", cfg->reader_restart_seconds);
-	if (cfg->reader_auto_loadbalance)
-		tpl_addVar(vars, 0, "READERAUTOLOADBALANCE", "checked");
 
+	tpl_printf(vars, 0, "TMP", "READERAUTOLOADBALANCE%d", cfg->reader_auto_loadbalance);
+	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
 	fputs(tpl_getTpl(vars, "CONFIGGLOBAL"), f);
 }
@@ -1168,7 +1168,7 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 
 	//Disabled
 	if(account->disabled)
-	tpl_addVar(vars, 0, "DISABLEDCHECKED", "selected");
+		tpl_addVar(vars, 0, "DISABLEDCHECKED", "selected");
 
 	//Expirationdate
 	struct tm * timeinfo = localtime (&account->expirationdate);

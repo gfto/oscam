@@ -880,7 +880,6 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<input name=\"waitforcards\" type=\"hidden\" value=\"0\">\n\
 	<input name=\"preferlocalcards\" type=\"hidden\" value=\"0\">\n\
 	<input name=\"saveinithistory\" type=\"hidden\" value=\"0\">\n\
-	<input name=\"readerautoloadbalance\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Global Config</TH></TR>\n\
 		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
@@ -907,7 +906,13 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>Wait for cards:</TD><TD><input name=\"waitforcards\" type=\"checkbox\" value=\"1\" ##WAITFORCARDS##></TD></TR>\n\
 		<TR><TD>Prefer local cards:</TD><TD><input name=\"preferlocalcards\" type=\"checkbox\" value=\"1\" ##PREFERLOCALCARDS##></TD></TR>\n\
 		<TR><TD>Save init history:</TD><TD><input name=\"saveinithistory\" type=\"checkbox\" value=\"1\" ##SAVEINITHISTORY##></TD></TR>\n\
-		<TR><TD>Reader autoloadbalance:</TD><TD><input name=\"readerautoloadbalance\" type=\"checkbox\" value=\"1\" ##READERAUTOLOADBALANCE##></TD></TR>\n\
+		<TR><TD>Reader autoloadbalance:</TD>\n\
+		<TD><select name=\"readerautoloadbalance\">\n\
+				<option value=\"0\" ##READERAUTOLOADBALANCE0##>0 - Loadbalancer disabled (send to all readers)</option>\n\
+				<option value=\"1\" ##READERAUTOLOADBALANCE1##>1 - Fastest reader first</option>\n\
+				<option value=\"2\" ##READERAUTOLOADBALANCE2##>2 - Oldest reader first</option>\n\
+				<option value=\"3\" ##READERAUTOLOADBALANCE3##>3 - Lowest usagelevel</option>\n\
+			</select></TD></TR>\n\
 		<TR><TD>Reader restart seconds:</TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
