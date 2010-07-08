@@ -931,7 +931,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 				pfd);
 		return 0;
 	}
-	if (reader[ridx].audisabled)) {
+	if (reader[ridx].audisabled) {
 		cs_log("%s au is disabled", getprefix());
 		return 0;
 	}
