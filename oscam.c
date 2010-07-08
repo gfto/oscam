@@ -1845,7 +1845,7 @@ int send_dcw(ECM_REQUEST *er)
 		//client[cs_idx].au=er->reader[0];
 		//if(client[cs_idx].au<0)
 		//{
-		if((er->caid == reader[er->reader[0]].caid[0]) && (!reader[er->reader[0]].audisabled)) {
+		if((er->caid == reader[er->reader[0]].caid[0]) && (er->prid == reader[er->reader[0]].auprovid) && (!reader[er->reader[0]].audisabled)) {
 			client[cs_idx].au = er->reader[0]; // First chance - check whether actual reader can AU
 		} else {
 			int r=0;
@@ -2399,8 +2399,8 @@ void log_emm_request(int auidx)
 {
 //  cs_log("%s send emm-request (reader=%s, caid=%04X)",
 //         cs_inet_ntoa(client[cs_idx].ip), reader[auidx].label, reader[auidx].caid[0]);
-  cs_log("%s emm-request sent (reader=%s, caid=%04X)",
-         username(cs_idx), reader[auidx].label, reader[auidx].caid[0]);
+  cs_log("%s emm-request sent (reader=%s, caid=%04X, provid: %06lX)",
+         username(cs_idx), reader[auidx].label, reader[auidx].caid[0], reader[auidx].auprovid);
 }
 
 void do_emm(EMM_PACKET *ep)
