@@ -635,7 +635,10 @@ struct s_reader  //contains device info, reader info and card info
 	////variables from reader-viaccess.c 
 	struct geo_cache last_geo;
 	int cc_reshare;
-	int lb_weight; //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
+	int lb_weight;     //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
+	int lb_usagelevel; //usagelevel for loadbalancer
+	int lb_usagelevel_ecmcount;
+	time_t lb_usagelevel_time; //time for counting ecms, this creates usagelevel
 };
 
 #ifdef CS_ANTICASC
@@ -883,10 +886,16 @@ typedef struct ecm_request_t
 
 } GCC_PACK      ECM_REQUEST;
 
+//Loadbalance constants:
+#define LB_NONE 0
+#define LB_FASTEST_READER_FIRST 1
+#define LB_OLDEST_READER_FIRST 2
+#define LB_LOWEST_USAGELEVEL 3
+
 #define MAX_STAT_TIME 20
 #define MIN_ECM_COUNT 5
 #define MAX_ECM_COUNT 500
-#define MAX_READER_RETRY 4
+
  
 typedef struct add_reader_stat_t
 {
