@@ -2103,7 +2103,7 @@ static int cc_srv_report_cards() {
 					buf[10] = hop;
 					buf[11] = reshare;
 					if (!reader->audisabled)
-						memcpy(buf + 12, reader->hexserial, 8);
+						memcpy(buf + 12, reader[r].hexserial, 8);
 					buf[20] = reader[r].ftab.filts[j].nprids;
 					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
 					for (k = 0; k < reader[r].ftab.filts[j].nprids; k++) {
@@ -2163,7 +2163,7 @@ static int cc_srv_report_cards() {
 					buf[10] = hop;
 					buf[11] = reshare;
 					if (!reader->audisabled)
-						memcpy(buf + 12, reader->hexserial, 8);
+						memcpy(buf + 12, reader[r].hexserial, 8);
 					buf[20] = 1;
 					//cs_log("CAID map CCcam card report caid: %04X nodeid: %s subid: %06X", lcaid, cs_hexdump(0, cc->peer_node_id, 8), reader[r].cc_id);
 					//buf[21] = 0;
@@ -2200,7 +2200,7 @@ static int cc_srv_report_cards() {
 			buf[10] = hop;
 			buf[11] = reshare;
 			if (!reader->audisabled)
-				memcpy(buf + 12, reader->hexserial, 8);
+				memcpy(buf + 12, reader[r].hexserial, 8);
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
 				if (!(reader[r].typ & R_IS_CASCADING)) //(reader[r].card_status == CARD_INSERTED)
