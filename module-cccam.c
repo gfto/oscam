@@ -800,7 +800,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		if (!reader[ridx].audisabled) {
 			reader[ridx].card_system = get_cardsystem(card->caid);
 			memcpy(reader[ridx].hexserial, card->hexserial, sizeof(card->hexserial));
-			cs_debug_mask(D_EMM, "%s au info: caid %04X card system: %d serial:", 
+			cs_debug_mask(D_EMM, "%s au info: caid %04X card system: %d serial: %s", 
 				getprefix(), card->caid, reader[ridx].card_system, cs_hexdump(0, card->hexserial, 8));
 		}
 
@@ -2102,7 +2102,7 @@ static int cc_srv_report_cards() {
 					buf[9] = reader[r].ftab.filts[j].caid & 0xff;
 					buf[10] = hop;
 					buf[11] = reshare;
-					if (!reader->audisabled)
+					if (!reader[r].audisabled)
 						memcpy(buf + 12, reader[r].hexserial, 8);
 					buf[20] = reader[r].ftab.filts[j].nprids;
 					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
@@ -2162,7 +2162,7 @@ static int cc_srv_report_cards() {
 					buf[9] = lcaid & 0xff;
 					buf[10] = hop;
 					buf[11] = reshare;
-					if (!reader->audisabled)
+					if (!reader[r].audisabled)
 						memcpy(buf + 12, reader[r].hexserial, 8);
 					buf[20] = 1;
 					//cs_log("CAID map CCcam card report caid: %04X nodeid: %s subid: %06X", lcaid, cs_hexdump(0, cc->peer_node_id, 8), reader[r].cc_id);
@@ -2199,7 +2199,7 @@ static int cc_srv_report_cards() {
 			buf[9] = reader[r].caid[0] & 0xff;
 			buf[10] = hop;
 			buf[11] = reshare;
-			if (!reader->audisabled)
+			if (!reader[r].audisabled)
 				memcpy(buf + 12, reader[r].hexserial, 8);
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
