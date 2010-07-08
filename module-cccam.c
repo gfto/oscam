@@ -1,4 +1,4 @@
-
+	
 #include <string.h>
 #include <stdlib.h>
 #include "globals.h"
@@ -800,8 +800,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		if (!reader[ridx].audisabled) {
 			reader[ridx].card_system = get_cardsystem(card->caid);
 			memcpy(reader[ridx].hexserial, card->hexserial, sizeof(card->hexserial));
-			cs_ddump_mask(D_EMM, card->hexserial, 8, "%s au info: caid %04X card system: %d serial:", 
-				getprefix(), card->caid, reader[ridx].card_system);
+			cs_debug_mask(D_EMM, "%s au info: caid %04X card system: %d serial:", 
+				getprefix(), card->caid, reader[ridx].card_system, cs_hexdump(0, card->hexserial, 8));
 		}
 
 		return 0;
