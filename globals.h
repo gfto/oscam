@@ -634,7 +634,7 @@ struct s_reader  //contains device info, reader info and card info
 	BIGNUM ucpk;
 	////variables from reader-viaccess.c 
 	struct geo_cache last_geo;
-	uchar cc_reshare;
+	int cc_reshare;
 	int lb_weight; //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
 };
 
