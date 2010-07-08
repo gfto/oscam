@@ -797,10 +797,12 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cc_cmd_send(ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
 
 		//For EMM
-		reader[ridx].card_system = get_cardsystem(card->caid);
-		memcpy(reader[ridx].hexserial, card->hexserial, sizeof(card->hexserial));
-		cs_ddump_mask(D_EMM, card->hexserial, 8, "%s au info: caid %04X card system: %d serial:", 
-			getprefix(), card->caid, reader[ridx].card_system);
+		if (!reader[ridx].audisabled) {
+			reader[ridx].card_system = get_cardsystem(card->caid);
+			memcpy(reader[ridx].hexserial, card->hexserial, sizeof(card->hexserial));
+			cs_ddump_mask(D_EMM, card->hexserial, 8, "%s au info: caid %04X card system: %d serial:", 
+				getprefix(), card->caid, reader[ridx].card_system);
+		}
 
 		return 0;
 	} else {
@@ -929,6 +931,11 @@ static int cc_send_emm(EMM_PACKET *ep) {
 				pfd);
 		return 0;
 	}
+	if (reader[ridx].audisabled)) {
+		cs_log("%s au is disabled", getprefix());
+		return 0;
+	}
+	
 
 
 	struct cc_card *emm_card = cc->current_card[ep->cidx].card;
@@ -2095,7 +2102,8 @@ static int cc_srv_report_cards() {
 					buf[9] = reader[r].ftab.filts[j].caid & 0xff;
 					buf[10] = hop;
 					buf[11] = reshare;
-					memcpy(buf + 12, reader->hexserial, 8);
+					if (!reader->audisabled)
+						memcpy(buf + 12, reader->hexserial, 8);
 					buf[20] = reader[r].ftab.filts[j].nprids;
 					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
 					for (k = 0; k < reader[r].ftab.filts[j].nprids; k++) {
@@ -2154,7 +2162,8 @@ static int cc_srv_report_cards() {
 					buf[9] = lcaid & 0xff;
 					buf[10] = hop;
 					buf[11] = reshare;
-					memcpy(buf + 12, reader->hexserial, 8);
+					if (!reader->audisabled)
+						memcpy(buf + 12, reader->hexserial, 8);
 					buf[20] = 1;
 					//cs_log("CAID map CCcam card report caid: %04X nodeid: %s subid: %06X", lcaid, cs_hexdump(0, cc->peer_node_id, 8), reader[r].cc_id);
 					//buf[21] = 0;
@@ -2190,7 +2199,8 @@ static int cc_srv_report_cards() {
 			buf[9] = reader[r].caid[0] & 0xff;
 			buf[10] = hop;
 			buf[11] = reshare;
-			memcpy(buf + 12, reader->hexserial, 8);
+			if (!reader->audisabled)
+				memcpy(buf + 12, reader->hexserial, 8);
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
 				if (!(reader[r].typ & R_IS_CASCADING)) //(reader[r].card_status == CARD_INSERTED)
@@ -2599,22 +2609,16 @@ static int cc_cli_init()
 /**
  * return 1 if we are able to send requests:
  */
-int cc_available(int ridx, READER_STAT *stat) {
+int cc_available(int ridx, int checktype) {
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", reader[ridx].label);
-	if (!reader[ridx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED ||
-		!reader[ridx].available) {
+	if (!reader[ridx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED)
+		return 0;
+	
+	if (checktype == AVAIL_CHECK_LOADBALANCE && !reader[ridx].available) {
 		cs_debug_mask(D_TRACE, "checking reader %s availibility=0 (unavail)", reader[ridx].label);
 		return 0; //We are not initialized or not connected!
 	}
 
-	if (caid_filtered(ridx, stat->caid)) { //caid is filtered:
-		cs_debug_mask(D_TRACE, "checking reader %s availibility=0 (caid filtered)", reader[ridx].label);
-		return 0;
-	}
-
-	//TODO: check stat for available card or blocking
-
-	cs_debug_mask(D_TRACE, "checking reader %s availibility=1", reader[ridx].label);
 	return 1;
 }
 

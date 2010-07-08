@@ -283,6 +283,10 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   if (!((rdr->fd) && (rdr->grp&client[cs_idx].grp)))
     return(0);
 
+  //Schlocke reader-defined function 
+  if (rdr->ph.c_available && !rdr->ph.c_available(rdr->ridx, AVAIL_CHECK_CONNECTED))
+    return 0;
+    
   if (!chk_srvid(er, rdr->cs_idx))
     return(0);
 

@@ -362,6 +362,9 @@ struct s_emm
   int   count;
 };
 
+#define AVAIL_CHECK_CONNECTED 0
+#define AVAIL_CHECK_LOADBALANCE 1
+
 struct s_module
 {
   //int  fd;
@@ -383,7 +386,10 @@ struct s_module
   int  (*c_send_emm)();
   int  (*c_init_log)();
   int  (*c_recv_log)();
-  int  (*c_available)(); //Schlocke: available check for load-balancing
+  int  (*c_available)(); //Schlocke: available check for load-balancing, 
+                         //params: 
+                         //int ridx (reader to check)
+                         //int checktype (0=return connected, 1=return loadbalance-avail) return int
   void (*c_idle)(); //Schlocke: called when reader is idle
   int  c_port;
   PTAB *ptab;

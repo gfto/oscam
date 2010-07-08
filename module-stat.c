@@ -233,7 +233,7 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 				
 				current = stat->time_avg*100/weight;
 				if (stat->rc == 0 && stat->ecm_count >= MIN_ECM_COUNT && (!best_stat || current < best)) {
-					if (!reader[i].ph.c_available || reader[i].ph.c_available(i, stat)) {
+					if (!reader[i].ph.c_available || reader[i].ph.c_available(i, AVAIL_CHECK_LOADBALANCE)) {
 						best_stat = stat;
 						best_ridx = i;
 						best = current;
