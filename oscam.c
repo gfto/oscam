@@ -1920,7 +1920,7 @@ void chk_dcw(int fd)
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100) {
-	send_reader_stat(er->reader[0], er, (er->rc==0)?4:-1);
+	send_reader_stat(er->reader[0], er, (er->rc==0)?4:((er->rc==1)?0:er->rc));
 	return; // already done
   }
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )

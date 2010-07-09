@@ -158,9 +158,6 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 	//inc ecm_count if found, drop to 0 if not found:
 	if (rc == 0) {
 		stat->rc = rc;
-	}
-
-	if (rc == 0 || rc == -1) {
 		stat->ecm_count++;
 		stat->time_idx++;
 		
@@ -214,6 +211,7 @@ void add_reader_stat(ADD_READER_STAT *stat)
 
 void reset_stat(ushort caid, ulong prid, ushort srvid)
 {
+	cs_debug_mask(D_TRACE, "loadbalance: resetting ecm count");
 	int i;
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
@@ -253,6 +251,7 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 				}
 				
 				if (stat->rc == 0 && stat->ecm_count < MIN_ECM_COUNT) {
+					cs_debug_mask(D_TRACE, "loadbalance: reader %s needs more statistics", reader[i].label);
 					return -1; //need more statistics!
 				}
 				
@@ -262,6 +261,7 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 					//get
 					switch (cfg->reader_auto_loadbalance) {
 					case LB_NONE:
+						cs_debug_mask(D_TRACE, "loadbalance disabled");
 						return -1;
 					case LB_FASTEST_READER_FIRST:
 						current = stat->time_avg * 100 / weight;
