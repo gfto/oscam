@@ -2,6 +2,8 @@
 
 #define UNDEF_AVG_TIME 80000
 
+time_t nulltime = 0;
+
 void init_stat()
 {
 	memset(reader_stat, 0, sizeof(reader_stat));
@@ -41,6 +43,8 @@ READER_STAT *get_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 		if (cfg->reader_auto_loadbalance_save)
 			load_stat_from_file(ridx);
 	}
+	if (!nulltime)
+		nulltime = time(NULL);
 
 	LLIST_ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
@@ -263,7 +267,7 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 						current = stat->time_avg * 100 / weight;
 						break;
 					case LB_OLDEST_READER_FIRST:
-						current = (reader[i].lb_last % 1000) * 100 / weight;
+						current = (reader[i].lb_last-nulltime) * 100 / weight;
 						break;
 					case LB_LOWEST_USAGELEVEL:
 						current = reader[i].lb_usagelevel * 100 / weight;
