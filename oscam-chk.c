@@ -1,6 +1,6 @@
 #include "globals.h"
 
-static int chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
+int chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
 {
   int i, rc=0;
 

@@ -53,6 +53,7 @@ typedef struct demux_s
 	ECMPIDSTYPE ECMpids[ECM_PIDS];
 	int pidindex;
 	int tries;
+	int max_status;
 	unsigned short program_number;
 	unsigned short STREAMpidcount;
 	unsigned short STREAMpids[ECM_PIDS];
@@ -585,12 +586,14 @@ void dvbapi_resort_ecmpids(int demux_index) {
 		}
 	}
 
+	demux[demux_index].max_status=0;
 	for (n=0; n<demux[demux_index].ECMpidcount; n++) {
-		demux[demux_index].ECMpids[n].status=2;
+		demux[demux_index].ECMpids[n].status=0;
+		
 		for (i=0;i<CS_MAXCAIDTAB;i++) {
 			ulong provid = (cfg->dvbapi_ignoretab.cmap[i] << 8 | cfg->dvbapi_ignoretab.mask[i]);
 			if (cfg->dvbapi_ignoretab.caid[i] == demux[demux_index].ECMpids[n].CAID && (provid == demux[demux_index].ECMpids[n].PROVID || provid == 0)) {
-				demux[demux_index].ECMpids[n].status=0; //ignore
+				demux[demux_index].ECMpids[n].status=-1; //ignore
 				cs_debug("[IGNORE PID %d] %04X:%06X", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID);
 			}
 		}
@@ -598,8 +601,32 @@ void dvbapi_resort_ecmpids(int demux_index) {
 		for (i=0;i<CS_MAXCAIDTAB;i++) {
 			ulong provid = (cfg->dvbapi_prioritytab.cmap[i] << 8 | cfg->dvbapi_prioritytab.mask[i]);
 			if (cfg->dvbapi_prioritytab.caid[i] == demux[demux_index].ECMpids[n].CAID && (provid == demux[demux_index].ECMpids[n].PROVID || provid == 0 || demux[demux_index].ECMpids[n].PROVID == 0)) {
-				demux[demux_index].ECMpids[n].status=1; //priority
-				cs_debug("[PRIORITIZE PID %d] %04X:%06X", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID);
+				demux[demux_index].ECMpids[n].status = i+1; //priority
+				demux[demux_index].max_status = (i+1 > demux[demux_index].max_status) ? i+1 : demux[demux_index].max_status;
+				cs_debug("[PRIORITIZE PID %d] %04X:%06X (position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].status);
+			}
+		}
+
+		if (!client[cs_idx].sidtabok && !client[cs_idx].sidtabno) continue;
+
+		int nr;
+		SIDTAB *sidtab;
+		ECM_REQUEST er;
+		er.caid  = demux[demux_index].ECMpids[n].CAID;
+		er.prid  = demux[demux_index].ECMpids[n].PROVID;
+		er.srvid = demux[demux_index].program_number;
+
+		for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++) {
+			if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid) {
+				if ((client[cs_idx].sidtabno&(1<<nr)) && (chk_srvid_match(&er, sidtab))) {
+					demux[demux_index].ECMpids[n].status = -1; //ignore
+					cs_debug("[IGNORE PID %d] %04X:%06X (service %s) pos %d", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, nr);
+				}
+				if ((client[cs_idx].sidtabok&(1<<nr)) && (chk_srvid_match(&er, sidtab))) {
+					demux[demux_index].ECMpids[n].status = nr+1; //priority
+					demux[demux_index].max_status = (nr+1 > demux[demux_index].max_status) ? nr+1 : demux[demux_index].max_status;
+					cs_debug("[PRIORITIZE PID %d] %04X:%06X (service: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, demux[demux_index].ECMpids[n].status);
+				}
 			}
 		}
 	}
@@ -670,7 +697,7 @@ void dvbapi_try_next_caid(int demux_id) {
 		return;
 	}
 
-	for (j=1; j<3 && num == -1; j++) {	
+	for (j = 1; j <= demux[demux_id].max_status && num == -1; j++) {	
 		for (n=0; n<demux[demux_id].ECMpidcount; n++) {
 			if (demux[demux_id].ECMpids[n].checked == 0 && demux[demux_id].ECMpids[n].status == j) {
 				num=n;
@@ -679,7 +706,17 @@ void dvbapi_try_next_caid(int demux_id) {
 		}
 	}
 
-	if (num==-1) {
+	if (num == -1) {
+		j = 0;
+		for (n=0; n<demux[demux_id].ECMpidcount; n++) {
+			if (demux[demux_id].ECMpids[n].checked == 0 && demux[demux_id].ECMpids[n].status == j) {
+				num=n;
+				break;
+			}
+		}
+	}
+
+	if (num == -1) {
 		demux[demux_id].tries++;
 		cs_log("try pids again #%d", demux[demux_id].tries);
 		for (n=0; n<demux[demux_id].ECMpidcount; n++) {
@@ -1348,6 +1385,7 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 		}
 	}
 }
+
 
 static void dvbapi_handler(int idx) {
 	struct s_auth *account=0;

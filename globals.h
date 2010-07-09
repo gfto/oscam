@@ -1050,6 +1050,7 @@ extern void request_cw(ECM_REQUEST *, int, int);
 extern int send_dcw(ECM_REQUEST *);
 extern int process_input(uchar *, int, int);
 extern int chk_srvid(ECM_REQUEST *, int);
+extern int chk_srvid_match(ECM_REQUEST *, SIDTAB *);
 extern int chk_sfilter(ECM_REQUEST *, PTAB*);
 extern int chk_ufilters(ECM_REQUEST *);
 extern int chk_rfilter(ECM_REQUEST *, struct s_reader *);
