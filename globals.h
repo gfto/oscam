@@ -639,6 +639,7 @@ struct s_reader  //contains device info, reader info and card info
 	int lb_usagelevel; //usagelevel for loadbalancer
 	int lb_usagelevel_ecmcount;
 	time_t lb_usagelevel_time; //time for counting ecms, this creates usagelevel
+	time_t lb_last; //time for oldest reader
 };
 
 #ifdef CS_ANTICASC

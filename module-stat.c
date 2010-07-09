@@ -154,16 +154,23 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 	//inc ecm_count if found, drop to 0 if not found:
 	if (rc == 0) {
 		stat->rc = rc;
-		if (stat->ecm_count < INT_MAX)
-			stat->ecm_count++;
+	}
 
+	if (rc == 0 || rc == -1) {
+		stat->ecm_count++;
 		stat->time_idx++;
+		
+		//FASTEST READER:
 		if (stat->time_idx >= MAX_STAT_TIME)
 			stat->time_idx = 0;
 		stat->time_stat[stat->time_idx] = ecm_time;
 		calc_stat(stat);
 
-		//Usagelevel updaten:
+		//OLDEST READER:
+		if (rc == 0)
+			reader[ridx].lb_last = time(NULL);
+		
+		//USAGELEVEL:
 		int ule = reader[ridx].lb_usagelevel_ecmcount;
 		if (ule > 0 && ((ule / MIN_ECM_COUNT) > 0)) //update every MIN_ECM_COUNT usagelevel:
 		{
@@ -225,7 +232,6 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 	int i;
 	int best_ridx = -1;
 	int best = 0, current = 0;
-	time_t now = time(NULL);
 	READER_STAT *stat, *best_stat = NULL;
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
@@ -241,9 +247,14 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 					reset_stat(caid, prid, srvid);
 					return -1;
 				}
+				
+				if (stat->rc == 0 && stat->ecm_count < MIN_ECM_COUNT) {
+					return -1; //need more statistics!
+				}
+				
 
 				//Reader can decode this service (rc==0) and has MIN_ECM_COUNT ecms:
-				if (stat->rc == 0 && stat->ecm_count >= MIN_ECM_COUNT) {
+				if (stat->rc == 0) {
 					//get
 					switch (cfg->reader_auto_loadbalance) {
 					case LB_NONE:
@@ -252,7 +263,7 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 						current = stat->time_avg * 100 / weight;
 						break;
 					case LB_OLDEST_READER_FIRST:
-						current = (now - client[reader[i].cs_idx].last) * 100 / weight;
+						current = (reader[i].lb_last % 1000) * 100 / weight;
 						break;
 					case LB_LOWEST_USAGELEVEL:
 						current = reader[i].lb_usagelevel * 100 / weight;
@@ -261,6 +272,7 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 						return -1;
 					}
 
+					cs_debug_mask(D_TRACE, "loadbalance reader %s value %d", reader[i].label, current);
 					if (!best_stat || current < best) {
 						if (!reader[i].ph.c_available
 								|| reader[i].ph.c_available(i,
@@ -274,5 +286,9 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 			}
 		}
 	}
+	if (best_ridx >= 0)
+		cs_debug_mask(D_TRACE, "-->loadbalance best reader %s best value %d", reader[best_ridx].label, best);
+	else
+		cs_debug_mask(D_TRACE, "-->loadbalance no best reader!");
 	return best_ridx;
 }
