@@ -38,14 +38,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		FILE *fp;
 		char filename[32];
 		char *buffer;
-#ifdef OS_CYGWIN
-		mkdir(".oscam", S_IRWXU);
-		sprintf(filename, ".oscam/reader%d", reader->ridx);
-#else
-		mkdir("/tmp/.oscam", S_IRWXU);
-		sprintf(filename, "/tmp/.oscam/reader%d", reader->ridx);
-#endif
-
+		sprintf(filename, "%s/reader%d", get_tmp_dir(), reader->ridx);
 		int size = reader->init_history_pos+strlen(txt)+1;
 		buffer = malloc(size+1);
 

@@ -1133,6 +1133,7 @@ extern char *mk_t_group(ulong *grp);
 extern char *mk_t_ftab(FTAB *ftab);
 //Todo #ifdef CCCAM
 extern int init_provid();
+extern char * get_tmp_dir();
 
 // oscam-reader
 extern int ridx, logfd;

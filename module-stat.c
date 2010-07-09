@@ -10,7 +10,7 @@ void init_stat()
 void load_stat_from_file(int ridx)
 {
 	char fname[40];
-	sprintf(fname, "/tmp/.oscam/stat.%d", ridx);
+	sprintf(fname, "%s/stat.%d", get_tmp_dir(), ridx);
 	FILE *file = fopen(fname, "r");
 	if (!file)
 		return;
@@ -102,7 +102,7 @@ void calc_stat(READER_STAT *stat)
 void save_stat_to_file(int ridx)
 {
 	char fname[40];
-	sprintf(fname, "/tmp/.oscam/stat.%d", ridx);
+	sprintf(fname, "%s/stat.%d", get_tmp_dir(), ridx);
 	if (!reader_stat[ridx]) {
 		remove(fname);
 		return;
@@ -252,7 +252,7 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 						current = stat->time_avg * 100 / weight;
 						break;
 					case LB_OLDEST_READER_FIRST:
-						current = (now - reader[i].last_s) * 100 / weight;
+						current = (now - client[reader->cs_idx].last) * 100 / weight;
 						break;
 					case LB_LOWEST_USAGELEVEL:
 						current = reader[i].lb_usagelevel * 100 / weight;

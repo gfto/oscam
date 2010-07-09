@@ -1467,7 +1467,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 				char fname[40];
-				snprintf(fname, sizeof(fname), "/tmp/.oscam/caidinfos.%d", ridx);
+				snprintf(fname, sizeof(fname), "%s/caidinfos.%d", get_tmp_dir(), ridx);
 				FILE *file = fopen(fname, "r");
 				if (file) {
 					int cardcount = 0;
@@ -1528,7 +1528,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
 
 			char fname[40];
-			snprintf(fname, sizeof(fname), "/tmp/.oscam/caidinfos.%d", ridx);
+			snprintf(fname, sizeof(fname), "%s/caidinfos.%d", get_tmp_dir(), ridx);
 			FILE *file = fopen(fname, "r");
 			if (file) {
 				int cardcount = 0;
@@ -1572,7 +1572,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			FILE *fp;
 			char filename[32];
 			char buffer[128];
-			snprintf(filename, sizeof(filename), "/tmp/.oscam/reader%d", reader[ridx].ridx);
+			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(), reader[ridx].ridx);
 			fp = fopen(filename, "r");
 
 			if (fp) {

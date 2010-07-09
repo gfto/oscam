@@ -3810,3 +3810,36 @@ char *mk_t_ftab(FTAB *ftab){
 	value[pos] = '\0';
 	return value;
 }
+
+char tmpdir[200] = {0x00};
+
+/**
+ * get tmp dir
+ **/
+char * get_tmp_dir()
+{
+  if (tmpdir[0])
+    return tmpdir;
+  
+#ifdef OS_CYGWIN
+  char *d = getenv("TMPDIR");
+  if (!d || d[0] == '\0') 
+  	strcpy(tmpdir,"/cygdrive/c/tmp/.oscam");
+  else
+  {
+        strcpy(tmpdir, d);
+    	char *p = tmpdir;
+    	while(*p) p++;
+    	p--;
+    	if (*p != '/' && *p != '\\')
+    		strcat(tmpdir, "/");
+        strcat(tmpdir, ".oscam");
+  }
+                          
+#else
+  strcpy(tmpdir, "/tmp/.oscam");
+#endif
+  mkdir(tmpdir, S_IRWXU);
+  return tmpdir;
+}
+

@@ -448,7 +448,7 @@ static void monitor_process_details_reader(int pid, int idx) {
 		FILE *fp;
 		char filename[32];
 		char buffer[128];
-		sprintf(filename, "/tmp/.oscam/reader%d", reader[ridx].ridx);
+		sprintf(filename, "%s/reader%d", get_tmp_dir(), reader[ridx].ridx);
 		fp = fopen(filename, "r");
 
 		if (fp) {
