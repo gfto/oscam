@@ -151,7 +151,15 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 .PP
 \fBreaderautoloadbalance\fP = \fB0\fP|\fB1\fP 
 .RS 3n
-1 = enable ECM dynamic loadbalance, fallback reader will be disabled, default:0
+loadbalance level:
+
+ 0 = loadbalance disabled, ECMs go to all readers (default)
+ 1 = fastest reader first, after 5 ECMs the reader with the fastest 
+     response time will be selected
+ 2 = oldest reader first, reader with the longest no answer
+ 3 = lowest usage level, the usage level will be calculated by the 
+     sum of 5 ECMS response times, the higher a reader is busy, the 
+     higher is usage level
 .RE
 .SS "The [monitor] section"
 .PP
