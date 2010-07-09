@@ -33,6 +33,11 @@
  */
 
 /* Return codes */
+#ifdef OS_CYGWIN32
+#undef Ok
+#undef ERROR
+#endif
+
 #define OK		0
 #define ERROR	1
 

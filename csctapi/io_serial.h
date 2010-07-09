@@ -35,6 +35,14 @@
 //Type of parity of the serial device
 //Chosen to Smartreader definition
 //Since for io_serial it doesnt matter which values we choose
+#ifdef OS_CYGWIN32
+#undef	PARITY_NONE
+#undef	PARITY_ODD
+#undef	PARITY_EVEN
+#undef	PARITY_MARK
+#undef	PARITY_SPACE
+#endif
+
 #define PARITY_NONE		0
 #define PARITY_ODD		1
 #define PARITY_EVEN		2

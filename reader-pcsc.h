@@ -3,7 +3,7 @@
 
 #ifdef HAVE_PCSC
   #ifdef OS_CYGWIN32
-    #include <winscard.h>
+    #include <WinSCard.h>
   #else
     #include <PCSC/pcsclite.h> 
     #include <PCSC/winscard.h>

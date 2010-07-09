@@ -59,7 +59,7 @@
 
 #ifdef HAVE_PCSC 
   #ifdef OS_CYGWIN32
-    #include <winscard.h>
+    #include "cygwin/WinSCard.h"
   #else
     #include <PCSC/pcsclite.h> 
     #ifdef OS_MACOSX 

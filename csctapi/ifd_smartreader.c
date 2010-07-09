@@ -9,6 +9,13 @@
 #include <string.h>
 #include"ifd_smartreader.h"
 
+#ifdef OS_CYGWIN32
+#undef OK
+#undef ERROR
+#undef LOBYTE
+#undef HIBYTE
+#endif
+
 #define OK 0
 #define ERROR 1
 #define LOBYTE(w) ((BYTE)((w) & 0xff))
@@ -1239,8 +1246,11 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size,
     return ret;
 }
 
+#ifdef OS_CYGWIN32
+static LIBUSB_API read_callback(struct libusb_transfer *transfer){
+#else
 static void read_callback(struct libusb_transfer *transfer){
-
+#endif
     struct s_reader *reader = (struct s_reader*)transfer->user_data;
     int copy_size;
     int ret;

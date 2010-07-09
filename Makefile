@@ -84,7 +84,7 @@ i386-pc-linux:
 i386-pc-linux-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
-        LIBUSB="/usr/local/lib/libusb-1.0.a" \
+        	LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm -lrt" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
@@ -127,7 +127,7 @@ i386-pc-linux-pcsc:
 i386-pc-linux-pcsc-libusb:
 	@-$(MAKE) --no-print-directory \
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
-        LIBUSB="/usr/local/lib/libusb-1.0.a" \
+        	LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm -lrt" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread -lpcsclite" \
@@ -362,7 +362,7 @@ i386-pc-cygwin-pcsc:
 		OS_LIBS="-lcrypto -lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpthread" \
-		DS_OPTS="-O2 -DOS_CYGWIN32 -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I /tmp/include -I/cygdrive/c/Program\ Files/Microsoft\ Visual\ Studio/VC98/Include -I/cygdrive/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/VC/include -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O2 -DOS_CYGWIN32 -D_WIN32 -DCS_CONFDIR=${CS_CONFDIR} -DHAVE_PCSC=1 -I /tmp/include -I ./cygwin -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -371,6 +371,30 @@ i386-pc-cygwin-pcsc:
 		DS_LD=ld \
 		DS_RL=ranlib \
 		DS_ST=strip
+
+######################################################################
+#
+#	Cygwin native with libusb
+#
+# 	requires Visual Studio / Visual C++ for the winscard includes
+######################################################################
+i386-pc-cygwin-libusb:
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst cross-,,$@) \
+		LIBUSB="/usr/lib/libusb-1.0.a" \
+		OS_LIBS="-lcrypto -lm -lSetupAPI -lOle32 -lshell32" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-O2 -DOS_CYGWIN32 -D_WIN32 -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -I /tmp/include -I ./cygwin -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=gcc \
+		DS_AR=ar \
+		DS_LD=ld \
+		DS_RL=ranlib \
+		DS_ST=strip
+
 
 ######################################################################
 #
