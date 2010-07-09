@@ -165,7 +165,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 
 		//Usagelevel updaten:
 		int ule = reader[ridx].lb_usagelevel_ecmcount;
-		if (ule > 0 && ((ule % MIN_ECM_COUNT) == MIN_ECM_COUNT)) //update every MIN_ECM_COUNT usagelevel:
+		if (ule > 0 && ((ule / MIN_ECM_COUNT) > 0)) //update every MIN_ECM_COUNT usagelevel:
 		{
 			time_t t = (time(NULL)-reader[ridx].lb_usagelevel_time);
 			reader[ridx].lb_usagelevel = 1000/(t<1?1:t);
@@ -252,7 +252,7 @@ int get_best_reader(ushort caid, ulong prid, ushort srvid)
 						current = stat->time_avg * 100 / weight;
 						break;
 					case LB_OLDEST_READER_FIRST:
-						current = (now - client[reader->cs_idx].last) * 100 / weight;
+						current = (now - client[reader[i].cs_idx].last) * 100 / weight;
 						break;
 					case LB_LOWEST_USAGELEVEL:
 						current = reader[i].lb_usagelevel * 100 / weight;
