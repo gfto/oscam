@@ -1078,7 +1078,11 @@ static void cc_free(struct cc_data *cc) {
 }
 
 static void fname_caidinfos(char *fname, int index) {
+#ifdef OS_CYGWIN
+	sprintf(fname, ".oscam/caidinfos.%d", index);
+#else
 	sprintf(fname, "/tmp/.oscam/caidinfos.%d", index);
+#endif
 }
 
 static int checkCaidInfos(int index, long *lastSize) {
@@ -1099,7 +1103,11 @@ static int checkCaidInfos(int index, long *lastSize) {
  */
 static void saveCaidInfos(int index, LLIST *caid_infos) {
 	char fname[40];
+#ifdef OS_CYGWIN
+	mkdir(".oscam", S_IRWXU);
+#else
 	mkdir("/tmp/.oscam", S_IRWXU);
+#endif
 	fname_caidinfos(fname, index);
 	FILE *file = fopen(fname, "w");
 	LLIST_ITR itr;
