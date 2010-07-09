@@ -34,13 +34,17 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	if (val>0)
 		snprintf((char *) reader->init_history+reader->init_history_pos, val, "%s", txt);
 #endif
-#ifdef OS_LINUX
 	if (cfg->saveinithistory) {
 		FILE *fp;
 		char filename[32];
 		char *buffer;
+#ifdef OS_CYGWIN
+		mkdir(".oscam", S_IRWXU);
+		sprintf(filename, ".oscam/reader%d", reader->ridx);
+#else
 		mkdir("/tmp/.oscam", S_IRWXU);
 		sprintf(filename, "/tmp/.oscam/reader%d", reader->ridx);
+#endif
 
 		int size = reader->init_history_pos+strlen(txt)+1;
 		buffer = malloc(size+1);
@@ -65,7 +69,6 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 
 		free(buffer);
 	}
-#endif
 	reader->init_history_pos+=strlen(txt)+1;
 }
 
