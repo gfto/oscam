@@ -1778,6 +1778,15 @@ void send_reader_stat(int ridx, ECM_REQUEST *er, int rc)
 	write_to_pipe(fd_c2m, PIP_ID_STA, (uchar*)&add_stat, sizeof(ADD_READER_STAT));
 }
 
+int hexserialset(int ridx)
+{
+	int i;
+	for (i = 0; i < 8; i++)
+		if (reader[ridx].hexserial[i])
+			return 1;
+	return 0;
+}
+
 int send_dcw(ECM_REQUEST *er)
 {
 	static char *stxt[]={"found", "cache1", "cache2", "emu",
@@ -1845,13 +1854,21 @@ int send_dcw(ECM_REQUEST *er)
 		//client[cs_idx].au=er->reader[0];
 		//if(client[cs_idx].au<0)
 		//{
-		if((er->caid == reader[er->reader[0]].caid[0]) && (!reader[er->reader[0]].audisabled)) {
+		struct s_reader *cur = &reader[er->reader[0]];
+		if((er->caid == cur->caid[0]) && (!cur->audisabled)) {
 			client[cs_idx].au = er->reader[0]; // First chance - check whether actual reader can AU
 		} else {
 			int r=0;
 			for(r=0;r<CS_MAXREADER;r++) //second chance loop through all readers to find an AU reader
 			{
-				if((er->caid == reader[r].caid[0]) && (er->prid == reader[r].auprovid) && (!reader[r].audisabled))
+				cur = &reader[r];
+				if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled && 
+					cur->card_system == get_cardsystem(er->caid) && hexserialset(r))
+				{
+					client[cs_idx].au = r;
+					break;
+				}
+				else if((er->caid == cur->caid[0]) && (er->prid == cur->auprovid) && (!cur->audisabled))
 				{
 					client[cs_idx].au=r;
 					break;
