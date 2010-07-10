@@ -1033,6 +1033,7 @@ extern int cs_auth_client(struct s_auth *, char*);
 extern void cs_disconnect_client(void);
 extern int check_ecmcache(ECM_REQUEST *, ulong);
 extern void store_logentry(char *);
+extern int pipe_WaitToWrite (int out_fd, unsigned delay_ms, unsigned timeout_ms);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);
 extern int write_ecm_request(int, ECM_REQUEST *);

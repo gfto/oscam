@@ -1483,6 +1483,51 @@ void store_logentry(char *txt)
 }
 
 /*
+* Check if a fd is ready for a write (fir pipes).
+*/
+int pipe_WaitToWrite (int out_fd, unsigned delay_ms, unsigned timeout_ms)
+{
+   fd_set wfds;
+   fd_set ewfds;
+   struct timeval tv;
+   int select_ret;
+   if (delay_ms > 0)
+      cs_sleepms(delay_ms);
+
+   FD_ZERO(&wfds);
+   FD_SET(out_fd, &wfds);
+   
+   FD_ZERO(&ewfds);
+   FD_SET(out_fd, &ewfds);
+   
+   tv.tv_sec = timeout_ms/1000L;
+   tv.tv_usec = (timeout_ms % 1000) * 1000L;
+
+   select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
+
+   if(select_ret==-1)
+   {
+      printf("select_ret=%d\n" , select_ret);
+      printf("errno =%d\n", errno);
+      fflush(stdout);
+      return 0;
+   }
+
+   if (FD_ISSET(out_fd, &ewfds))
+   {
+      printf("fd is in ewfds\n");
+      printf("errno =%d\n", errno);
+      fflush(stdout);
+      return 0;
+   }
+
+   if (FD_ISSET(out_fd,&wfds))
+		 return 1;
+	 else
+		 return 0;
+}
+
+/*
  * write_to_pipe():
  * write all kind of data to pipe specified by fd
  */
