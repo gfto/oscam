@@ -933,6 +933,8 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab) {
 	}
 }
 
+pthread_mutex_t event_handler_lock;
+
 void event_handler(int signal) {
 	struct stat pmt_info;
 	char dest[1024];
@@ -940,7 +942,7 @@ void event_handler(int signal) {
 	struct dirent *dp;
 	int i, pmt_fd;
 
-	signal=signal;
+	pthread_mutex_lock(&event_handler_lock);
 	
 	int standby_fd = open(STANDBY_FILE, O_RDONLY);
 	pausecam = (standby_fd > 0) ? 1 : 0;
@@ -973,8 +975,6 @@ void event_handler(int signal) {
 	}
   
 	while ((dp = readdir(dirp))) {
-		if (disable_pmt_files)
-			break; 
 		if (strlen(dp->d_name) < 7)
   			continue; 
 		if (strncmp(dp->d_name, "pmt", 3)!=0 || strncmp(dp->d_name+strlen(dp->d_name)-4, ".tmp", 4)!=0) 
@@ -1056,6 +1056,7 @@ void event_handler(int signal) {
 			disable_pmt_files=1;
 	}
 	closedir(dirp);
+  pthread_mutex_unlock(&event_handler_lock);	
 }
 
 void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) {
@@ -1165,6 +1166,11 @@ void dvbapi_main_local() {
 	sigemptyset(&signal_action.sa_mask);
 	signal_action.sa_flags = SA_RESTART;
 	sigaction(SIGRTMIN + 1, &signal_action, NULL);
+
+  pthread_mutexattr_t attr;
+  pthread_mutexattr_init(&attr);
+  pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+  pthread_mutex_init(&event_handler_lock, &attr); 
 	
 	dir_fd = open(TMPDIR, O_RDONLY);
 	if (dir_fd >= 0) {
