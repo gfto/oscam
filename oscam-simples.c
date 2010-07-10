@@ -333,14 +333,35 @@ void cs_sleepus(unsigned int usec)
 
 int bytes_available(int fd)
 {
-  struct pollfd pfds;
-  pfds.fd=fd;
-  pfds.events=POLLIN;
-  pfds.revents=0;
-  if (poll(&pfds, 1, 0)!=1)
-    return(0);
-  else
-    return(((pfds.revents)&POLLIN)==POLLIN);
+   fd_set rfds;
+   fd_set erfds;
+   int select_ret;
+   int in_fd;
+
+   in_fd=fd;
+   
+   FD_ZERO(&rfds);
+   FD_SET(in_fd, &rfds);
+   
+   FD_ZERO(&erfds);
+   FD_SET(in_fd, &erfds);
+   
+   select_ret = select(in_fd+1, &rfds, NULL,  &erfds, NULL);
+   if(select_ret==-1)
+    {
+    cs_log("ERROR reading from fd %d select_ret=%i, errno=%d",in_fd, select_ret, errno);
+    return 0;
+    }
+
+   if (FD_ISSET(in_fd, &erfds))
+   {
+    cs_log("ERROR reading from fd %d select_ret=%i, errno=%d",in_fd, select_ret, errno);
+    return 0;
+   }
+   if (FD_ISSET(in_fd,&rfds))
+		 return 1;
+	 else
+		 return 0;
 }
 
 
