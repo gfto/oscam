@@ -989,8 +989,10 @@ void event_handler(int signal) {
 	pausecam = (standby_fd > 0) ? 1 : 0;
 	if (standby_fd) close(standby_fd);
 
-	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX)
+	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
+	   	pthread_mutex_unlock(&event_handler_lock);	
 		return;
+    }
 
 	for (i=0;i<MAX_DEMUX;i++) {
 		if (demux[i].pmt_file[0] != 0) {
@@ -1006,12 +1008,15 @@ void event_handler(int signal) {
 		}
 	}
 
-	if (disable_pmt_files)
+	if (disable_pmt_files) {
+	   	pthread_mutex_unlock(&event_handler_lock);	
 		return; 
+    }
 
 	dirp = opendir(TMPDIR);
 	if (!dirp) {
 		 cs_log("opendir errno %d", errno);
+         pthread_mutex_unlock(&event_handler_lock);	
 		 return;
 	}
   
@@ -1066,6 +1071,7 @@ void event_handler(int signal) {
 		for(j2=0,j1=0;j2<len;j2+=2,j1++) {
 			if (sscanf((char*)mbuf+j2, "%02X", dest+j1) != 1) {
 				cs_log("error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
+                pthread_mutex_unlock(&event_handler_lock);	
 				return;
 			}
 		}
