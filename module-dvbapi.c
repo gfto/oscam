@@ -983,7 +983,6 @@ void event_handler(int signal) {
 	struct dirent *dp;
 	int i, pmt_fd;
 
-	signal=signal;
 	pthread_mutex_lock(&event_handler_lock);
 	
 	int standby_fd = open(STANDBY_FILE, O_RDONLY);
@@ -1017,8 +1016,6 @@ void event_handler(int signal) {
 	}
   
 	while ((dp = readdir(dirp))) {
-		if (disable_pmt_files) 
-			break;  
 		if (strlen(dp->d_name) < 7)
   			continue; 
 		if (strncmp(dp->d_name, "pmt", 3)!=0 || strncmp(dp->d_name+strlen(dp->d_name)-4, ".tmp", 4)!=0) 
