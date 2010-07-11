@@ -913,6 +913,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 				<option value=\"2\" ##READERAUTOLOADBALANCE2##>2 - Oldest reader first</option>\n\
 				<option value=\"3\" ##READERAUTOLOADBALANCE3##>3 - Lowest usagelevel</option>\n\
 			</select></TD></TR>\n\
+		<TR><TD>Reader autoloadbalance save:</TD><TD><SELECT NAME=\"readerautoloadbalance_save\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##READERAUTOLOADBALANCES##>ON</OPTION></SELECT></TD></TR>\n\
 		<TR><TD>Reader restart seconds:</TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
