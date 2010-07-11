@@ -160,7 +160,7 @@ int network_tcp_connection_open()
   if (res) freeaddrinfo(res); 
   pthread_mutex_unlock(&gethostbyname_lock);	     	
 
-  if (!client[cs_idx].ip)
+  if (!client[cs_idx].udp_sa.sin_addr.s_addr)
   	 return -1; 
   
   if (client[idx].ip != last_ip) {
@@ -689,7 +689,7 @@ static void reader_main(struct s_reader * reader)
        cs_sleepms(1000 * cfg->reader_restart_seconds);
        if (reader->ph.c_init() && reader->ph.cleanup) {
     	    reader->ph.cleanup();
-	    continue;
+    	    continue;
        }
     }    
     switch(reader_listen(reader, client[reader->cs_idx].fd_m2c_c, pfd))
