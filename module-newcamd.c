@@ -1225,8 +1225,8 @@ int newcamd_client_init()
 
 static int newcamd_send_ecm(ECM_REQUEST *er, uchar *buf)
 {
-  if (!client[cs_idx].udp_sa.sin_addr.s_addr)
-    return(-1);
+//  if (!client[cs_idx].udp_sa.sin_addr.s_addr)
+//    return(-1);
 
   if(!newcamd_connect())
     return (-1);
@@ -1244,8 +1244,8 @@ static int newcamd_send_emm(EMM_PACKET *ep)
 {
   uchar buf[200];
 
-  if (!client[cs_idx].udp_sa.sin_addr.s_addr)
-    return(-1);
+//  if (!client[cs_idx].udp_sa.sin_addr.s_addr)
+//    return(-1);
 
   if(!newcamd_connect())
     return (-1);

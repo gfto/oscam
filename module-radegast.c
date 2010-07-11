@@ -259,15 +259,8 @@ int radegast_cli_init(void)
   client[cs_idx].udp_sa.sin_family = AF_INET;
   client[cs_idx].udp_sa.sin_port = htons((u_short)reader[ridx].r_port);
 
-  cs_resolve();
-  //pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
-  //struct hostent *server;
-  //server = gethostbyname(reader[ridx].device);
-  //memmove((char *)&client[cs_idx].udp_sa.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
-  //pthread_mutex_unlock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
-
   cs_log("radegast: proxy %s:%d (fd=%d)",
-          reader[ridx].device, reader[ridx].r_port, client[cs_idx].udp_fd);
+  reader[ridx].device, reader[ridx].r_port, client[cs_idx].udp_fd);
 
   handle = network_tcp_connection_open();
   if(handle < 0) return -1;

@@ -2560,29 +2560,12 @@ int cc_cli_init_int() {
 #endif
 	reader[ridx].tcp_ito = 1; //60sec...This now invokes ph_idle()
 
-	memset((char *) &client[cs_idx].udp_sa, 0,
-		sizeof(client[cs_idx].udp_sa));
+	memset((char *) &client[cs_idx].udp_sa, 0, sizeof(client[cs_idx].udp_sa));
 	client[cs_idx].udp_sa.sin_family = AF_INET;
 	client[cs_idx].udp_sa.sin_port = htons((u_short) reader[ridx].r_port);
 
-	if (!client[cs_idx].udp_sa.sin_addr.s_addr) {
-		cs_debug_mask(D_TRACE, "%s waiting for IP resolve of: %s", getprefix(), reader[ridx].device);
-		int safeCounter = 40 * cfg->resolvedelay;
-		//waiting for loop_resolver to resolve!
-		while (!client[cs_idx].udp_sa.sin_addr.s_addr && safeCounter--) {
-			cs_sleepms(100);
-		}
-		if (!safeCounter) {
-			cs_log("cccam: resolving %s, 4sec time out!", reader[ridx].device);
-			return -1;
-		}
-	}
-
-	uchar *ip = (uchar*) &client[cs_idx].ip;
-	cs_debug_mask(D_TRACE, "%s %s=%d.%d.%d.%d", getprefix(), reader[ridx].device, ip[3], ip[2], ip[1], ip[0]);
-
 	if (reader[ridx].tcp_rto <= 0)
-		reader[ridx].tcp_rto = 60 * 60 * 10; // timeout to 10 hours
+		 reader[ridx].tcp_rto = 60 * 60 * 10; // timeout to 10 hours
 	cs_debug("cccam: reconnect timeout set to: %d", reader[ridx].tcp_rto);
 	cc_check_version(reader[ridx].cc_version, reader[ridx].cc_build);
 	cs_log(

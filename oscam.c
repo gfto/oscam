@@ -1051,41 +1051,6 @@ static void cs_client_resolve()
   }
 }
 
-static void loop_resolver()
-{
-  cs_sleepms(1000); // wait for reader
-  while(1)
-  {
-    cs_resolve();
-    cs_sleepms(1000*cfg->resolvedelay);
-/*
-    //debug only. checking pipe status:
-    FILE *f = fopen("/tmp/oscamdbg.txt", "w");
-    int i;
-    for (i=0; i<CS_MAXPID; i++) {
-    	if (client[i].pid) {
-    		struct stat buf;
-    		fstat(client[i].udp_fd, &buf);
-    		int s_udp_fd = buf.st_size;
-
-    		fstat(client[i].fd_m2c, &buf);
-    		int s_fd_m2c = buf.st_size;
-
-    		fstat(client[i].fd_m2c_c, &buf);
-    		int s_fd_m2c_c = buf.st_size;
-
-    		fprintf(f, "%d typ %c pid %d: udp_fd=%d fd_m2c=%d fs_m2c_c=%d ", i, client[i].typ,
-    				client[i].pid,
-    				s_udp_fd,
-    				s_fd_m2c,
-    				s_fd_m2c_c);
-    	}
-    }
-    fclose(f);
-*/
-  }
-}
-
 static void start_thread(void * startroutine, char * nameroutine)
 {
   int i;
@@ -1099,38 +1064,6 @@ static void start_thread(void * startroutine, char * nameroutine)
     cs_log("%s thread started", nameroutine);
     pthread_detach(tid);
   }
-}
-
-void cs_resolve()
-{
-	int i, idx;
-	struct hostent *rht;
-	struct s_auth;
-	for (i=0; i<CS_MAXREADER; i++)
-		if ((idx=reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK) && (reader[i].typ!=R_CONSTCW))
-		{
-			//client[idx].last=time((time_t)0);
-			pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
-			rht = gethostbyname(reader[i].device);
-			if (rht)
-			{
-				in_addr_t last_ip = client[idx].ip;
-				memcpy(&client[idx].udp_sa.sin_addr, rht->h_addr,
-						sizeof(client[idx].udp_sa.sin_addr));
-				client[idx].ip=cs_inet_order(client[idx].udp_sa.sin_addr.s_addr);
-				if (client[idx].ip != last_ip)
-				{
-					uint8 *ip = (uint8*)&client[idx].ip;
-					cs_debug_mask(D_TRACE, "resolved %s to %d.%d.%d.%d", reader[i].device,
-							ip[3], ip[2], ip[1], ip[0]);
-				}
-			}
-			else
-				cs_log("can't resolve %s", reader[i].device);
-			pthread_mutex_unlock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!			
-			//client[cs_idx].last=time((time_t)0);
-		}
-
 }
 
 static void cs_logger(void)
@@ -1485,15 +1418,12 @@ void store_logentry(char *txt)
 /*
 * Check if a fd is ready for a write (fir pipes).
 */
-int pipe_WaitToWrite (int out_fd, unsigned delay_ms, unsigned timeout_ms)
+int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
 {
    fd_set wfds;
    fd_set ewfds;
    struct timeval tv;
-   int select_ret;
-   if (delay_ms > 0)
-      cs_sleepms(delay_ms);
-
+   
    FD_ZERO(&wfds);
    FD_SET(out_fd, &wfds);
    
@@ -1503,28 +1433,17 @@ int pipe_WaitToWrite (int out_fd, unsigned delay_ms, unsigned timeout_ms)
    tv.tv_sec = timeout_ms/1000L;
    tv.tv_usec = (timeout_ms % 1000) * 1000L;
 
-   select_ret = select(out_fd+1, NULL, &wfds, &ewfds, &tv);
-
-   if(select_ret==-1)
-   {
-      printf("select_ret=%d\n" , select_ret);
-      printf("errno =%d\n", errno);
-      fflush(stdout);
+   if (select(out_fd + 1, NULL, &wfds, &ewfds, &tv) == -1) {
+      cs_log("pipe_WaitToWrite() error on fd=%d, select_ret=-1, errno=%d", out_fd, errno);
       return 0;
    }
 
-   if (FD_ISSET(out_fd, &ewfds))
-   {
-      printf("fd is in ewfds\n");
-      printf("errno =%d\n", errno);
-      fflush(stdout);
+   if (FD_ISSET(out_fd, &ewfds)) {
+      cs_log("pipe_WaitToWrite() error on fd=%d, fd is in ewfds, errno=%d", out_fd, errno);
       return 0;
    }
 
-   if (FD_ISSET(out_fd,&wfds))
-		 return 1;
-	 else
-		 return 0;
+   return (FD_ISSET(out_fd,&wfds)) ? 1 : 0;
 }
 
 /*
@@ -1533,6 +1452,12 @@ int pipe_WaitToWrite (int out_fd, unsigned delay_ms, unsigned timeout_ms)
  */
 int write_to_pipe(int fd, int id, uchar *data, int n)
 {
+	// check is write to pipe ready if fails check 
+	// one more time and give up if fails
+	if (!pipe_WaitToWrite(fd, 100))
+    if (!pipe_WaitToWrite(fd, 100))  	
+  	   return -1;
+
   uchar buf[1024+3+sizeof(int)];
 
 //printf("WRITE_START pid=%d", getpid()); fflush(stdout);
@@ -1545,8 +1470,7 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 //n=write(fd, buf, n);
 //printf("WRITE_END pid=%d", getpid()); fflush(stdout);
 //return(n);
-  if( !fd )
-    cs_log("write_to_pipe: fd==0");
+  if( !fd ) cs_log("write_to_pipe: fd==0");
   return(write(fd, buf, n));
 }
 
@@ -2185,9 +2109,9 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
   flag=(flag)?3:1;    // flag specifies with/without fallback-readers
   for (i=0; i<CS_MAXREADER; i++)
   {
-	  //if (reader[i].pid)
-	  //	  cs_log("active reader: %d pid %d fd %d", i, reader[i].pid, reader[i].fd);
-
+	    //if (reader[i].pid)
+	    //	  cs_log("active reader: %d pid %d fd %d", i, reader[i].pid, reader[i].fd);
+      int status = 0;
       switch (reader_types)
       {
           // network and local cards
@@ -2195,7 +2119,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
           case 0:
               if (er->reader[i]&flag){
                   //cs_debug_mask(D_TRACE, "request_cw1 to reader %s ridx=%d fd=%d", reader[i].label, i, reader[i].fd);
-                  write_ecm_request(reader[i].fd, er);
+                  status = write_ecm_request(reader[i].fd, er);
               }
               break;
               // only local cards
@@ -2203,7 +2127,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
               if (!(reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag) {
                 	  //cs_debug_mask(D_TRACE, "request_cw2 to reader %s ridx=%d fd=%d", reader[i].label, i, reader[i].fd);
-                      write_ecm_request(reader[i].fd, er);
+                    status = write_ecm_request(reader[i].fd, er);
                   }
               break;
               // only network
@@ -2212,10 +2136,11 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
               if ((reader[i].typ & R_IS_NETWORK))
                   if (er->reader[i]&flag) {
                 	  //cs_debug_mask(D_TRACE, "request_cw3 to reader %s ridx=%d fd=%d", reader[i].label, i, reader[i].fd);
-                      write_ecm_request(reader[i].fd, er);
+                    status = write_ecm_request(reader[i].fd, er);
                   }
               break;
       }
+      if (status == -1) cs_log("request_cw() failed on reader %s", reader[i].label);      
   }
 }
 
@@ -2974,7 +2899,7 @@ int main (int argc, char *argv[])
 		start_thread((void *) &cs_client_resolve, "client resolver");
 
   init_service(97); // logger
-  start_thread((void *) &loop_resolver, "resolver");
+
 #ifdef WEBIF
   init_service(95); // http
 #endif

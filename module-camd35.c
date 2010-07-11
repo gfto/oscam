@@ -479,8 +479,8 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 	lastcaid = er->caid;
 	lastpid = er->pid;
 
-	if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
-		return(-1);
+//	if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
+//		return(-1);
 
 	if (!is_udp && !tcp_connect()) return(-1);
 
@@ -504,8 +504,8 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 static int camd35_send_emm(EMM_PACKET *ep)
 {
 	uchar buf[512];
-	if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
-		return(-1);
+	//if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
+	//	return(-1);
 
 	if (!is_udp && !tcp_connect()) return(-1);
 
