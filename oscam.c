@@ -1487,7 +1487,6 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 {
 	// check is write to pipe ready if fails check 
 	// one more time and give up if fails
-	if (!pipe_WaitToWrite(fd, 100))
     if (!pipe_WaitToWrite(fd, 100))  	
   	   return -1;
 
