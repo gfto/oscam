@@ -802,7 +802,12 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		cs_log("error no free id (MAX_DEMUX)");
 		return -1;
 	}
-
+	
+	if (cfg->dvbapi_boxtype == BOXTYPE_IPBOX_PMT) {
+		ca_mask = demux_id + 1;
+		demux_index = demux_id;
+	}
+	
 	cs_ddump(buffer, length, "capmt:");
 
 	memset(&demux[demux_id], 0, sizeof(demux[demux_id]));
@@ -819,12 +824,8 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 			break;
 		}
 	}
+
 	cs_debug("id: %d\tdemux_index: %d\tca_index: %d\tprogram_info_length: %d", demux_id, demux[demux_id].demux_index, demux[demux_id].cadev_index, program_info_length);
- 
-	if (cfg->dvbapi_boxtype == BOXTYPE_IPBOX_PMT) {
-		ca_mask = demux_id + 1;
-		demux_index = demux_id;
-	}
 
 	if (program_info_length > 0 && program_info_length < length)
 		dvbapi_parse_descriptor(demux_id, 1, program_info_length, buffer);
