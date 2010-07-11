@@ -983,22 +983,33 @@ void event_handler(int signal) {
 	struct dirent *dp;
 	int i, pmt_fd;
 
+	signal=signal; //avoid compiler warnings
 	pthread_mutex_lock(&event_handler_lock);
 	
 	int standby_fd = open(STANDBY_FILE, O_RDONLY);
 	pausecam = (standby_fd > 0) ? 1 : 0;
 	if (standby_fd) close(standby_fd);
 
-	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
-	   	pthread_mutex_unlock(&event_handler_lock);	
+	if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX || cfg->dvbapi_pmtmode == 1) {
+		pthread_mutex_unlock(&event_handler_lock);	
 		return;
-    }
+	}
 
 	for (i=0;i<MAX_DEMUX;i++) {
 		if (demux[i].pmt_file[0] != 0) {
 			sprintf(dest, "%s%s", TMPDIR, demux[i].pmt_file);
 			pmt_fd = open(dest, O_RDONLY);
 			if(pmt_fd>0) {
+				if (fstat(pmt_fd, &pmt_info) != 0) {
+					close(pmt_fd);
+					continue;
+				}
+
+				if (pmt_info.st_mtime != demux[i].pmt_time) {
+					cs_log("stoping demux for pmt file %s", dest);
+				 	dvbapi_stop_descrambling(i);
+				}
+
 				close(pmt_fd);
 				continue;
 			} else {
@@ -1011,13 +1022,13 @@ void event_handler(int signal) {
 	if (disable_pmt_files) {
 	   	pthread_mutex_unlock(&event_handler_lock);	
 		return; 
-    }
+	}
 
 	dirp = opendir(TMPDIR);
 	if (!dirp) {
-		 cs_log("opendir errno %d", errno);
-         pthread_mutex_unlock(&event_handler_lock);	
-		 return;
+		cs_log("opendir errno %d", errno);
+		pthread_mutex_unlock(&event_handler_lock);	
+		return;
 	}
   
 	while ((dp = readdir(dirp))) {
@@ -1032,7 +1043,7 @@ void event_handler(int signal) {
 			continue;
 			
 		if (fstat(pmt_fd, &pmt_info) != 0) 
-		 { close(pmt_fd); continue; }
+			{ close(pmt_fd); continue; }
 			 
 		int found=0;
 		for (i=0;i<MAX_DEMUX;i++) {
@@ -1045,7 +1056,7 @@ void event_handler(int signal) {
 			}
 		}
 		if (found)
-		 { close(pmt_fd); continue; }
+			{ close(pmt_fd); continue; }
 					
 		cs_log("found pmt file %s", dest);
 		cs_sleepms(100);
@@ -1071,7 +1082,7 @@ void event_handler(int signal) {
 		for(j2=0,j1=0;j2<len;j2+=2,j1++) {
 			if (sscanf((char*)mbuf+j2, "%02X", dest+j1) != 1) {
 				cs_log("error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
-                pthread_mutex_unlock(&event_handler_lock);	
+				pthread_mutex_unlock(&event_handler_lock);	
 				return;
 			}
 		}
@@ -1099,8 +1110,10 @@ void event_handler(int signal) {
 		strcpy(demux[pmt_id].pmt_file, dp->d_name);
 		demux[pmt_id].pmt_time = pmt_info.st_mtime;
 
-		if (cfg->dvbapi_pmtmode == 3)
+		if (cfg->dvbapi_pmtmode == 3) {
 			disable_pmt_files=1;
+			break;
+		}
 	}
 	closedir(dirp);
 	pthread_mutex_unlock(&event_handler_lock);	
