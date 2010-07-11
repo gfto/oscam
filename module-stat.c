@@ -25,7 +25,6 @@ void load_stat_from_file(int ridx)
 		i = fscanf(file, "rc %d caid %04hX prid %04lX srvid %04hX time avg %dms ecms %d\n",
 			&stat->rc, &stat->caid, &stat->prid, &stat->srvid, &stat->time_avg, &stat->ecm_count);
 		if (i > 4) {
-			stat->ecm_count = 0; //resetting ecm-count because some readers maybe offline or new readers exists
 			llist_append(reader_stat[ridx], stat);
 		}
 		else
