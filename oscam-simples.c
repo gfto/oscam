@@ -92,7 +92,7 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
         key_id++;
     }
     
-    cs_log("%d AES key(s) added o reader %s for %04x:%06x", nb_keys, rdr->label, caid, ident);
+    cs_log("%d AES key(s) added on reader %s for %04x:%06x", nb_keys, rdr->label, caid, ident);
 }
 
 void parse_aes_keys(struct s_reader *rdr,char *value)
@@ -107,7 +107,7 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
         parse_aes_entry(rdr,entry);
     }
     
-    
+    /*
     AES_ENTRY *current;
     current=rdr->aes_list;
     while(current) {
@@ -120,11 +120,7 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
         cs_log("**************************");
         current=current->next;
     }
-    
-    
-    
-    
-    
+    */
 }
 
 int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n)
@@ -138,8 +134,10 @@ int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid,
         current=current->next;
     }
 
-    if(!current)
+    if(!current) {
+        cs_log("AES Decrypt : key id %d not found for CAID %04X , provider %06x",keyid,caid,provid);
         return ERROR; // we don't have the key to decode this buffer.
+        }
     else {
         // decode the key
         for(i=0; i<n; i+=16)
