@@ -68,7 +68,8 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
     char *tmp;
     int nb_keys,key_id;
     uchar aes_key[16];
-    char *save;
+    char *save=NULL;
+
     tmp=strtok_r(value,"@",&save);
     caid=a2i(tmp,2);
     tmp=strtok_r(NULL,":",&save);
@@ -99,7 +100,7 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
 {
     // value format is caid1@ident1:key0,key1;caid2@indent2:key0,key1
     char *entry;
-    char *save;
+    char *save=NULL;
     
     rdr->aes_list=NULL;
     for (entry=strtok_r(value, ";",&save); entry; entry=strtok_r(NULL, ";",&save)) {
