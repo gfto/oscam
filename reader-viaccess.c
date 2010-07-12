@@ -424,15 +424,15 @@ int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
-	filter[1]=3;
+	filter[1]=2;
 
 	filter[2]=GLOBAL;
 	filter[3]=0;
 
 	filter[4+0]     = 0x8D;
-	filter[4+0+16]  = 0xFF;
-	filter[4+1]     = 0xFF; // FIXME: dummy, flood client with EMM's
-	filter[4+1+16]  = 0xFF;
+	filter[4+0+16]  = 0xFE;
+	//filter[4+6]     = 0xA0; // FIXME: dummy, flood client with EMM's
+	//filter[4+6+16]  = 0xF0;
 
 
 	filter[36]=SHARED;

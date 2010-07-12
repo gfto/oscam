@@ -597,12 +597,54 @@ void dvbapi_start_descrambling(int demux_index, unsigned short caid, unsigned sh
 		dvbapi_start_filter(demux_index, demux[demux_index].pidindex, 0x001, 0x01, 0xFF, TYPE_EMM); //CAT
 }
 
-void dvbapi_process_emm (int demux_index, unsigned char *buffer, unsigned int len) {
+void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer, unsigned int len) {
 	EMM_PACKET epg;
+	static uchar viaccess_global_emm[512];
+	static int emm_viaccess_len = 0;
 
 	if (demux[demux_index].pidindex==-1) return;
 
-	cs_ddump(buffer, 16, "emm:");
+	if (demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID >> 8 == 0x05) {
+		if (len>500) return;
+		uchar emmbuf[512];
+		int emm_len = 0, k;
+		switch(buffer[0]) {
+			case 0x8c:
+			case 0x8d:
+				if (!memcmp(viaccess_global_emm, buffer, len)) return;
+				memcpy(viaccess_global_emm, buffer, len);
+				emm_viaccess_len=len;
+				//cs_ddump(buffer, len, "viaccess global emm:");
+				return;
+				break;
+			case 0x8e:
+				if (!emm_viaccess_len) return;
+
+				memcpy(emmbuf, buffer, 7);
+				memcpy(emmbuf+7, "\x9E\x20", 2);
+				memcpy(emmbuf+9, buffer+7, 32);
+				int pos=9+32;
+				for (k=3; k<viaccess_global_emm[1] && k<emm_viaccess_len; k += viaccess_global_emm[k+1]+2) {
+					memcpy(emmbuf+pos, viaccess_global_emm+k, viaccess_global_emm[k+1]+2);
+					pos += viaccess_global_emm[k+1]+2;
+				}
+				memcpy(emmbuf+pos, "\xF0\x08", 2);
+				memcpy(emmbuf+pos+2, buffer+41, 8);
+				emm_len=pos+10;
+				emmbuf[2]=emm_len-3;
+				cs_ddump(buffer, len, "original emm:");
+				memcpy(buffer, emmbuf, emm_len);
+				len=emm_len;
+				break;
+			default:
+				cs_log("type %02X", buffer[0]);
+				return;
+				break;
+		}
+
+	}
+
+	cs_ddump(buffer, len, "emm from fd %d:", demux[demux_index].demux_fd[filter_num].fd);
 
 	memset(&epg, 0, sizeof(epg));
 	epg.caid[0] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID>>8);
@@ -1173,8 +1215,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 			dvbapi_stop_filternum(demux_id, filter_num);
 			return;
 		}
-		cs_debug("EMM Filter fd %d", demux[demux_id].demux_fd[filter_num].fd);
-		dvbapi_process_emm(demux_id, buffer, len);
+		dvbapi_process_emm(demux_id, filter_num, buffer, len);
 	}
 
 	if (demux[demux_id].demux_fd[filter_num].count==1) {
