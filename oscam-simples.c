@@ -32,6 +32,11 @@ void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, u
     
     // create de AES key entry for the linked list
     new_entry=malloc(sizeof(AES_ENTRY));
+    if(!new_entry) {
+            cs_log("Error alocation memory for AES key entry");
+            return;
+    }
+            
     new_entry->caid=caid;
     new_entry->ident=ident;
     new_entry->keyid=keyid;
@@ -51,6 +56,7 @@ void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, u
         current=next;
         next=current->next;
         }
+    
     current->next=new_entry;
 
 }
@@ -63,7 +69,6 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
     int nb_keys,key_id;
     uchar aes_key[16];
     char *save;
-    
     tmp=strtok_r(value,"@",&save);
     caid=a2i(tmp,2);
     tmp=strtok_r(NULL,":",&save);
@@ -80,8 +85,6 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
             key_id++;
             continue;
         }
-        if(len==1 && tmp[0]=='0')
-            cs_debug("key is empty");
         nb_keys++;
         key_atob(tmp,aes_key);
         // now add the key to the reader... TBD
@@ -89,8 +92,7 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
         key_id++;
     }
     
-    cs_log("%d key(s) added on %s for %04x:%06x", nb_keys,rdr->label,caid,ident);
-    
+    cs_log("%d AES key(s) added for %04x:%06x", nb_keys,caid,ident);
 }
 
 void parse_aes_keys(struct s_reader *rdr,char *value)
@@ -104,18 +106,25 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
         cs_debug("AES key entry=%s",entry);
         parse_aes_entry(rdr,entry);
     }
+    
     /*
     AES_ENTRY *current;
     current=rdr->aes_list;
     while(current) {
+        cs_log("**************************");
+        cs_log("current = %p",current);
         cs_log("CAID = %04x",current->caid);
         cs_log("IDENT = %06x",current->ident);
         cs_log("keyID = %d",current->keyid);
-        cs_log("key = %s",cs_hexdump(3,(uchar *)&(current->key),sizeof(AES_KEY)));
         cs_log("next = %p",current->next);
+        cs_log("**************************");
         current=current->next;
     }
     */
+    
+    
+    
+    
 }
 
 int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n)
