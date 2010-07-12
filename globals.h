@@ -345,6 +345,13 @@ typedef struct  {
 } SR_CONFIG;
 #endif
 
+typedef struct aes_entry {
+    ushort      keyid;
+    ushort      caid;
+    uint32      ident;
+    AES_KEY     key;
+    struct aes_entry   *next;
+} AES_ENTRY;
 
 struct s_ecm
 {
@@ -640,6 +647,8 @@ struct s_reader  //contains device info, reader info and card info
 	int lb_usagelevel_ecmcount;
 	time_t lb_usagelevel_time; //time for counting ecms, this creates usagelevel
 	time_t lb_last; //time for oldest reader
+	// multi AES linked list
+	AES_ENTRY *aes_list;
 };
 
 #ifdef CS_ANTICASC
@@ -1166,6 +1175,10 @@ extern void cs_dump(uchar *, int, char *, ...);
 extern void aes_set_key(char *);
 extern void aes_encrypt_idx(int, uchar *, int);
 extern void aes_decrypt(uchar *, int);
+extern int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n);
+
+extern void parse_aes_keys(struct s_reader *rdr,char *value);
+
 #define aes_encrypt(b, n) aes_encrypt_idx(cs_idx, b, n)
 
 // reader-common

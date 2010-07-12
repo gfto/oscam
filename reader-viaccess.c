@@ -226,7 +226,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   const uchar *ecm88Data=er->ecm+4; //XXX what is the 4th byte for ??
   int ecm88Len=SCT_LEN(er->ecm)-4;
-  ulong provid;
+  ulong provid=0;
   int rc=0;
   int hasD2 = 0;
   int curEcm88len=0;
@@ -234,6 +234,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   const uchar *nextEcm;
   uchar keyToUse=0;
   uchar DE04[256];
+  int D2KeyID=0;
   memset(DE04, 0, sizeof(DE04)); //fix dorcel de04 bug
 
   nextEcm=ecm88Data;
@@ -256,6 +257,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     if(ecm88Data[0]==0xd2) {
         // FIXME: use the d2 arguments
         int len = ecm88Data[1] + 2;
+        D2KeyID=ecm88Data[3];
         ecm88Data += len;
         ecm88Len -= len;
         curEcm88len -=len;
@@ -377,7 +379,11 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
 
   if (hasD2) {
-    aes_decrypt(er->cw, 16);
+    if(reader->aes_list) {
+        return (aes_decrypt_from_list(reader->aes_list,0x500, (uint32) provid, D2KeyID,er->cw, 16));
+    }
+    else
+        aes_decrypt(er->cw, 16);
   }
 
   return(rc?OK:ERROR);

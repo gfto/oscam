@@ -3437,6 +3437,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 	}
+    // new code for multiple aes key per reader
+	if (!strcmp(token, "aeskeys")) {
+        parse_aes_keys(rdr,value);
+		return;
+	}
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
@@ -3557,6 +3562,7 @@ int init_readerdb()
 			reader[nr].cc_reshare = cfg->cc_reshare; //set global value as init value
 			reader[nr].cc_maxhop = 10;
 			reader[nr].lb_weight = 100;
+			reader[nr].aes_list=NULL;
 			strcpy(reader[nr].pincode, "none");
 			for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
 			continue;
@@ -3842,4 +3848,5 @@ char * get_tmp_dir()
   mkdir(tmpdir, S_IRWXU);
   return tmpdir;
 }
+
 
