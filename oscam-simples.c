@@ -92,7 +92,7 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
         key_id++;
     }
     
-    cs_log("%d AES key(s) added for %04x:%06x", nb_keys,caid,ident);
+    cs_log("%d AES key(s) added o reader %s for %04x:%06x", nb_keys, rdr->label, caid, ident);
 }
 
 void parse_aes_keys(struct s_reader *rdr,char *value)
@@ -107,7 +107,7 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
         parse_aes_entry(rdr,entry);
     }
     
-    /*
+    
     AES_ENTRY *current;
     current=rdr->aes_list;
     while(current) {
@@ -120,7 +120,7 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
         cs_log("**************************");
         current=current->next;
     }
-    */
+    
     
     
     
