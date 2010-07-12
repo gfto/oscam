@@ -87,6 +87,12 @@ DESCRIPTIONS
        aeskey = AES key
 	  AES key for Viaccess SCs
 
+       aeskeys = CAID@ident:AES key[,AES key],...[;CAID@ident:AES key[,AES key],...]...
+	  mutiple AES keys for Viaccess SCs
+
+	  example: aeskeys = 0100@123456:010a020b0;0200@654321:0a010b,020b01
+		   aeskeys = 0500@030B00:0,0,EF0102030405060708090A0B0C0D0EE3
+
        detect = CD|DSR|CTS|RING|NONE|gpio[1-7]
 	  status detect of card (NONE = no detection), default:CD
 
