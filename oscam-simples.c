@@ -23,8 +23,6 @@ void aes_encrypt_idx(int idx, uchar *buf, int n)
     AES_encrypt(buf+i, buf+i, &client[idx].aeskey);
 }
 
-#define OK 0
-#define ERROR 1
 void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, uchar *aesKey)
 {
     AES_ENTRY *new_entry;
@@ -126,6 +124,8 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
 
 int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n)
 {
+    int OK=1;
+    int ERROR=0;
     AES_ENTRY *current;
     int i;
     current=list;

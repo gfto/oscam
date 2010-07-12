@@ -380,8 +380,8 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   if (hasD2) {
     if(reader->aes_list) {
-        cs_log("Decoding CW : using AES key id %d for provider %06x",D2KeyID,provid);
-        return (aes_decrypt_from_list(reader->aes_list,0x500, (uint32) provid, D2KeyID,er->cw, 16));
+        cs_debug("Decoding CW : using AES key id %d for provider %06x",D2KeyID,provid);
+        rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) provid, D2KeyID,er->cw, 16);
     }
     else
         aes_decrypt(er->cw, 16);
