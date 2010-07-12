@@ -2177,7 +2177,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 }
 
 //receive best reader from master process. Call this function from client!
-int recv_best_reader(ECM_REQUEST *er)
+int recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 {
 	if (!cfg->reader_auto_loadbalance)
 		return -1;
@@ -2187,6 +2187,7 @@ int recv_best_reader(ECM_REQUEST *er)
 	grs.prid = er->prid;
 	grs.srvid = er->srvid;
 	grs.cidx = cs_idx;
+	memcpy(grs.reader_avail, reader_avail, sizeof(int)*CS_MAXREADER);
 	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%04X/%04X", username(cs_idx), grs.caid, grs.prid, grs.srvid);
 	write_to_pipe(fd_c2m, PIP_ID_BES, (uchar*)&grs, sizeof(GET_READER_STAT));
 	
@@ -2379,9 +2380,13 @@ void get_cw(ECM_REQUEST *er)
 	if(er->rc > 99 && er->rc != 1) {
 
 		if (cfg->reader_auto_loadbalance) {
-			int best_ridx = recv_best_reader(er);
+			int reader_avail[CS_MAXREADER];
+			for (i =0; i < CS_MAXREADER; i++)
+				reader_avail[i] = matching_reader(er, &reader[i]);
+				
+			int best_ridx = recv_best_reader(er, reader_avail);
 			for (i = m = 0; i < CS_MAXREADER; i++)
-				if (matching_reader(er, &reader[i])) {
+				if (reader_avail[i]) {
 					//When autobalance enabled, all other readers are fallbacks:
 					m|=er->reader[i] = (best_ridx >= 0 && best_ridx != i)? 2: 1;
 				}
@@ -2593,6 +2598,12 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 				//cs_log("           %d.%03d", tpc.time, tpc.millitm);
 				if (er->stage) {
 					er->rc=5; // timeout
+					if (cfg->reader_auto_loadbalance) {
+						int r;
+						for (r=0; r<CS_MAXREADER; r++)
+							if (er->reader[r])
+								send_reader_stat(r, er, 5);
+					}
 					send_dcw(er);
 					continue;
 				} else {
@@ -2680,7 +2691,7 @@ static void restart_clients()
 void send_best_reader(GET_READER_STAT *grs)
 {
 	//cs_debug_mask(D_TRACE, "got request for best reader for %04X/%04X/%04X", grs->caid, grs->prid, grs->srvid);
-	int ridx = get_best_reader(grs->caid, grs->prid, grs->srvid);
+	int ridx = get_best_reader(grs);
 	//cs_debug_mask(D_TRACE, "sending best reader %d", ridx);
 	write_to_pipe(client[grs->cidx].fd_m2c, PIP_ID_BES, (uchar*)&ridx, sizeof(ridx));
 }

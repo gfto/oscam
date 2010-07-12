@@ -228,62 +228,60 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
  * Also the reader is asked if he is "available"
  * returns ridx when found or -1 when not found
  */
-int get_best_reader(ushort caid, ulong prid, ushort srvid)
+int get_best_reader(GET_READER_STAT *grs)
 {
 	int i;
 	int best_ridx = -1;
 	int best = 0, current = 0;
 	READER_STAT *stat, *best_stat = NULL;
 	for (i = 0; i < CS_MAXREADER; i++) {
-		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
-			if (reader[i].tcp_connected || reader[i].card_status == CARD_INSERTED) {
-	 			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
-				stat = get_stat(i, caid, prid, srvid);
-				if (!stat) {
-					add_stat(i, caid, prid, srvid, 1, 0);
-					return -1; //this reader is active (now) but we need statistics first!
-				}
+		if (reader_stat[i] && grs->reader_avail[i]) {
+ 			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
+			stat = get_stat(i, grs->caid, grs->prid, grs->srvid);
+			if (!stat) {
+				add_stat(i, grs->caid,  grs->prid, grs->srvid, 1, 0);
+				return -1; //this reader is active (now) but we need statistics first!
+			}
 			
-				if (stat->ecm_count > MAX_ECM_COUNT) {
-					reset_stat(caid, prid, srvid);
+			if (stat->ecm_count > MAX_ECM_COUNT) {
+				reset_stat(grs->caid, grs->prid, grs->srvid);
+				return -1;
+			}
+				
+			if (stat->rc == 0 && stat->ecm_count < MIN_ECM_COUNT) {
+				cs_debug_mask(D_TRACE, "loadbalance: reader %s needs more statistics", reader[i].label);
+				return -1; //need more statistics!
+			}
+				
+
+			//Reader can decode this service (rc==0) and has MIN_ECM_COUNT ecms:
+			if (stat->rc == 0) {
+				//get
+				switch (cfg->reader_auto_loadbalance) {
+				case LB_NONE:
+					cs_debug_mask(D_TRACE, "loadbalance disabled");
+					return -1;
+				case LB_FASTEST_READER_FIRST:
+					current = stat->time_avg * 100 / weight;
+					break;
+				case LB_OLDEST_READER_FIRST:
+					current = (reader[i].lb_last-nulltime) * 100 / weight;
+					break;
+				case LB_LOWEST_USAGELEVEL:
+					current = reader[i].lb_usagelevel * 100 / weight;
+					break;
+				default:
 					return -1;
 				}
-				
-				if (stat->rc == 0 && stat->ecm_count < MIN_ECM_COUNT) {
-					cs_debug_mask(D_TRACE, "loadbalance: reader %s needs more statistics", reader[i].label);
-					return -1; //need more statistics!
-				}
-				
 
-				//Reader can decode this service (rc==0) and has MIN_ECM_COUNT ecms:
-				if (stat->rc == 0) {
-					//get
-					switch (cfg->reader_auto_loadbalance) {
-					case LB_NONE:
-						cs_debug_mask(D_TRACE, "loadbalance disabled");
-						return -1;
-					case LB_FASTEST_READER_FIRST:
-						current = stat->time_avg * 100 / weight;
-						break;
-					case LB_OLDEST_READER_FIRST:
-						current = (reader[i].lb_last-nulltime) * 100 / weight;
-						break;
-					case LB_LOWEST_USAGELEVEL:
-						current = reader[i].lb_usagelevel * 100 / weight;
-						break;
-					default:
-						return -1;
-					}
-
-					cs_debug_mask(D_TRACE, "loadbalance reader %s value %d", reader[i].label, current);
-					if (!best_stat || current < best) {
-						if (!reader[i].ph.c_available
-								|| reader[i].ph.c_available(i,
-										AVAIL_CHECK_LOADBALANCE)) {
-							best_stat = stat;
-							best_ridx = i;
-							best = current;
-						}
+				cs_debug_mask(D_TRACE, "loadbalance reader %s value %d", reader[i].label, current);
+				if (!best_stat || current < best) {
+					if (!reader[i].ph.c_available
+							|| reader[i].ph.c_available(i,
+									AVAIL_CHECK_LOADBALANCE)) {
+						best_stat = stat;
+						best_ridx = i;
+						best = current;
 					}
 				}
 			}

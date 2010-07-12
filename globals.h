@@ -928,6 +928,7 @@ typedef struct get_reader_stat_t
   ulong         prid;
   ushort        srvid;
   int           cidx;
+  int           reader_avail[CS_MAXREADER];
 } GCC_PACK      GET_READER_STAT;
 
 typedef struct emm_packet_t
@@ -1181,7 +1182,7 @@ extern int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 //module-stat
 extern void init_stat();
 extern void add_reader_stat(ADD_READER_STAT *add_stat);
-extern int get_best_reader(ushort caid, ulong prid, ushort srvid);
+extern int get_best_reader(GET_READER_STAT *grs);
 
 #ifdef HAVE_PCSC
 // reader-pcsc
