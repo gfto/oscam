@@ -504,7 +504,7 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
-	filter[1]=3;
+	filter[1]=4;
 
 	filter[2]=GLOBAL;
 	filter[3]=0;
@@ -551,6 +551,12 @@ void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[72+11+16] = 0xFF;
 	filter[72+12]    = 0x05;
 	filter[72+12+16] = 0xFF;
+
+	filter[104]=GLOBAL;
+	filter[105]=0;
+
+	filter[106+0]    = 0x86;
+	filter[106+16]   = 0xFF;
 
 	return;
 }
