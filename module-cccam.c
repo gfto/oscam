@@ -1324,6 +1324,9 @@ static void fix_dcw(uchar *dcw)
 
 static void cc_idle() {
 	struct cc_data *cc = reader[ridx].cc;
+	if (!reader[ridx].tcp_connected)
+		return;
+		
 	cs_debug("%s IDLE", getprefix());
 	if (cc->answer_on_keepalive + 55 < time(NULL)) {
 		cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
@@ -1922,6 +1925,7 @@ static int cc_cli_connect(void) {
 	cc->cmd05_offset = 0;
 	cc->cmd05_active = 0;
 	cc->cmd05_data_len = 0;
+	cc->answer_on_keepalive = time(NULL);
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 
 	cs_ddump(data, 16, "cccam: server init seed:");
