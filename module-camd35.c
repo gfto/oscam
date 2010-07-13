@@ -36,12 +36,18 @@ static int camd35_send(uchar *buf)
 	cs_ddump(sbuf, l, "send %d bytes to %s", l, remote_txt());
 	aes_encrypt(sbuf, l);
 
-	if (is_udp)
-		return(sendto(client[cs_idx].udp_fd, rbuf, l+4, 0,
-				(struct sockaddr *)&client[cs_idx].udp_sa,
-				sizeof(client[cs_idx].udp_sa)));
-	else
-		return(send(client[cs_idx].udp_fd, rbuf, l + 4, 0));
+        int status;
+	if (is_udp) {
+	   status = sendto(client[cs_idx].udp_fd, rbuf, l+4, 0,
+				           (struct sockaddr *)&client[cs_idx].udp_sa,
+				            sizeof(client[cs_idx].udp_sa));
+           if (status == -1) client[cs_idx].udp_sa.sin_addr.s_addr = 0;
+        }
+	else {
+	   status = send(client[cs_idx].udp_fd, rbuf, l + 4, 0);
+	   if (status == -1) network_tcp_connection_close(&reader[ridx], pfd);
+        }
+	return status;		
 }
 
 static int camd35_auth_client(uchar *ucrc)
@@ -83,9 +89,9 @@ static int camd35_recv(uchar *buf, int l)
       else
       {
         if (!client[cs_idx].udp_fd) return(-9);
-        rs=recv(client[cs_idx].udp_fd, buf, l, 0);
+        rs = recv(client[cs_idx].udp_fd, buf, l, 0);
       }
-      if (rs<24) rc=-1;
+      if (rs < 24) rc = -1;
       break;
     case 1:
       memcpy(recrc, buf, 4);
@@ -94,7 +100,7 @@ static int camd35_recv(uchar *buf, int l)
       {
         case  0:        break;	// ok
         case  1: rc=-2; break;	// unknown user
-	default: rc=-9; break;	// error's from cs_auth()
+	      default: rc=-9; break;	// error's from cs_auth()
       }
       break;
     case 2:
@@ -397,24 +403,8 @@ int camd35_client_init()
          client[cs_idx].udp_fd, ptxt);
 
   if (is_udp) {
-	pfd=client[cs_idx].udp_fd;
-
-	//TODO: dirty udp hotfix
-	struct addrinfo hints, *res = NULL; 
-   
-	memset(&hints, 0, sizeof(hints)); 
-	hints.ai_socktype = SOCK_STREAM; 
- 	hints.ai_family = client[cs_idx].udp_sa.sin_family; 
-	hints.ai_protocol = IPPROTO_TCP; 
- 	   
-	if (getaddrinfo(reader[ridx].device, NULL, &hints, &res) == 0) { 
- 		client[cs_idx].udp_sa.sin_addr.s_addr =  ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr; 
-		client[cs_idx].ip = cs_inet_order(client[cs_idx].udp_sa.sin_addr.s_addr); 
-	}  else { 
-		cs_log("can't resolve %s", reader[ridx].device); 
- 	}
- 	if (res) freeaddrinfo(res);  
-}
+  	pfd=client[cs_idx].udp_fd;
+  }
 
   return(0);
 }
@@ -497,11 +487,14 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 	lastcaid = er->caid;
 	lastpid = er->pid;
 
-//	if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
-//		return(-1);
-
-	if (!is_udp && !tcp_connect()) return(-1);
-
+	if (is_udp) {
+	   if (!client[cs_idx].udp_sa.sin_addr.s_addr)
+	      if (!hostResolve()) return -1;
+	}
+        else {
+  	   if (!tcp_connect()) return -1;
+        }
+	
 	reader[ridx].card_status = CARD_INSERTED; //for udp
 	
 	memset(buf, 0, 20);
@@ -522,11 +515,15 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 static int camd35_send_emm(EMM_PACKET *ep)
 {
 	uchar buf[512];
-	//if (!client[cs_idx].udp_sa.sin_addr.s_addr)	// once resolved at least
-	//	return(-1);
-
-	if (!is_udp && !tcp_connect()) return(-1);
-
+	
+        if (is_udp) {
+           if (!client[cs_idx].udp_sa.sin_addr.s_addr)
+              if (!hostResolve()) return -1;
+        }
+        else {
+           if (!tcp_connect()) return -1;
+        }
+	
 	memset(buf, 0, 20);
 	memset(buf+20, 0xff, ep->l+15);
 
