@@ -114,6 +114,14 @@ DESCRIPTIONS
 	       sum of 5 ECMS response times, the higher a reader is busy, the
 	       higher is usage level
 
+       readerautoloadbalance_save = 0|counts
+	  save autoloadbalance statistics:
+
+		0 = saving of autoloadbalance statistics disabled (default)
+	   counts = save autoloadbalance statistics every counts ECMs
+
+	  To save CPU power a minimum counts of 100 is recommended.
+
    The [monitor] section
        port = 0|port
 	  UDP port for monitor, port=0 monitor disabled, default:0

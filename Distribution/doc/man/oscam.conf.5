@@ -161,6 +161,16 @@ loadbalance level:
      sum of 5 ECMS response times, the higher a reader is busy, the 
      higher is usage level
 .RE
+.PP
+\fBreaderautoloadbalance_save\fP = \fB0\fP|\fBcounts\fP 
+.RS 3n
+save autoloadbalance statistics:
+
+      0 = saving of autoloadbalance statistics disabled (default)
+ counts = save autoloadbalance statistics every \fBcounts\fP ECMs
+ 
+To save CPU power a minimum counts of 100 is recommended.
+.RE
 .SS "The [monitor] section"
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
