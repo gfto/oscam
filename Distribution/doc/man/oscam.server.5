@@ -117,15 +117,16 @@ NDS receiver box id
 .PP
 \fBaeskey\fP = \fBAES key\fP
 .RS 3n
-AES key for Viaccess SCs
+16 byte AES key for Viaccess SCs
 .RE
 .PP
-\fBaeskeys\fP = \fBCAID\fP@\fBident\fP:\fBAES key\fP[,\fBAES key\fP],...[;\fBCAID\fP@\fBident\fP:\fBAES key\fP[,\fBAES key\fP],...]...
+\fBaeskeys\fP = \fBCAID\fP@\fBident\fP:\fBAES key #1\fP[,\fBAES key #2\fP],...[;\fBCAID\fP@\fBident\fP:\fBAES key #2\fP[,\fBAES key #3\fP],...]...
 .RS 3n
-mutiple AES keys for Viaccess SCs
+mutiple 16 byte AES keys for Viaccess SCs
 
-example: aeskeys = 0100@123456:010a020b0;0200@654321:0a010b,020b01
-         aeskeys = 0500@030B00:0,0,EF0102030405060708090A0B0C0D0EE3
+example: 
+
+aeskeys = 0100@012345:000102030405060708090a0b0c0d0e0f;0200@543210:0,0,0f0e0d0c0b0a090807060504030201
 .RE
 .PP
 \fBdetect\fP = \fBCD\fP|\fBDSR\fP|\fBCTS\fP|\fBRING\fP|\fBNONE\fP|\fBgpio[1-7]\fP
