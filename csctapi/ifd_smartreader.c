@@ -227,7 +227,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
             continue; // this is not a valid ATR.
         }
             
-        if(data[0]==0x03) {
+        if(data[0]==0x03 && data[1]!=0xFF && data[2]!=0x00 ) { // this is to make sure we don't think this 03 FF 00 00 00 00 00 00 00 00 00 00 00 00 00 00  is a valid ATR.
             cs_debug_mask (D_IFD,"IO:SR: Inverse convention detected, setting smartreader inv to 1");
 
             reader->sr_config->inv=1;
