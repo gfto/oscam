@@ -2198,8 +2198,14 @@ int write_server()
 				case R_CCCAM	: ctyp = "cccam";		break;
 				case R_CONSTCW	: ctyp = "constcw";		break;
 				case R_CS378X	: ctyp = "cs378x";		break;
-				case R_DB2COM1	: ctyp = "internal";	break;
-				case R_DB2COM2	: ctyp = "internal";   break;
+				case R_DB2COM1	:
+					ctyp = "mouse";
+					isphysical = 1;
+					break;
+				case R_DB2COM2	:
+					ctyp = "mouse";
+					isphysical = 1;
+					break;
 
 			}
 			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s\n", ctyp);
@@ -2211,7 +2217,7 @@ int write_server()
 				fprintf(f, ",%d", reader[i].l_port);
 			fprintf(f, "\n");
 
-			if (reader[i].ncd_key[0]) {
+			if (reader[i].ncd_key[0] || reader[i].ncd_key[13]) {
 				fprintf_conf(f, CONFVARWIDTH, "key", "");
 				for (j = 0; j < 14; j++) {
 					fprintf(f, "%02X", reader[i].ncd_key[j]);
