@@ -2281,23 +2281,33 @@ int write_server()
 			if (reader[i].aes_key[0] && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", key_btoa(NULL, reader[i].aes_key));
 
+
+			//check for tiger
+			int tigerkey = 0;
+			for (j=64;j<240;j++) {
+				if(reader[i].rsa_mod[j] > 0) {
+					tigerkey = 1;
+					break;
+				}
+			}
+
 			//n3_rsakey
 			if (reader[i].has_rsa && isphysical) {
-				//if (reader[i].is_pure_nagra) {
+				if (!tigerkey) {
 					fprintf_conf(f, CONFVARWIDTH, "rsakey", "");
 					for (j=0;j<64;j++) {
 						fprintf(f, "%02X", reader[i].rsa_mod[j]);
 					}
 					fprintf(f, "\n");
-				/*}
-				else if (reader[i].is_tiger) {
+				}
+				else  {
 					//tiger_rsakey
 					fprintf_conf(f, CONFVARWIDTH, "tiger_rsakey", "");
 					for (j=0;j<240;j++) {
 						fprintf(f, "%02X", reader[i].rsa_mod[j]);
 					}
 					fprintf(f, "\n");
-				}*/
+				}
 			}
 
 			if (reader[i].force_irdeto && isphysical) {
