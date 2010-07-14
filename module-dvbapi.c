@@ -612,15 +612,77 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 		case 0x05:
 			if (len>500) return;
 			switch(buffer[0]) {
+                case 0x88:
+                    // emm-u
+                    //  we should check emm[5 to 7] with the card serial to make sur it's for us.
+                    // there is nothing to do with it .. you can send it directly to the do_emm fucntion.
+                    break;
+
+                case 0x8a:
+                case 0x8b:
+                    // emm-g
+                    return;
+                    break;
+                    
 				case 0x8c:
 				case 0x8d:
-					if (!memcmp(emm_global, buffer, len)) return;
+				    // emm-s part 1
+					if (!memcmp(emm_global, buffer, len))
+					   return;
+				    // we should check that the ident is matghing the one we have on the card.
+				    /*
+                    if( buffer[3] == 0x90 && buffer[4] == 3 && 
+                    buffer[5] == ((ident >> 16) & 0xff) &&
+                    buffer[6] == ((ident >>  8) & 0xff) &&
+                    (buffer[7] & 0xf0) == (ident & 0xff) ) 
+                            // then we're ok
+                    */
+				    // copy first part of the emm-g
 					memcpy(emm_global, buffer, len);
 					emm_global_len=len;
 					//cs_ddump(buffer, len, "viaccess global emm:");
 					return;
+					
 				case 0x8e:
+				    // emm-s part 2
 					if (!emm_global_len) return;
+					/* @_network :  here is some code for emm-re-assembling I have from another project .. which work ...
+                    // in my code the serial is stored in a 8 byte array as well as the SA.
+
+                    // assemble EMM packet from 8c/8d and 8e
+                    // we should check that the SA match ours (emm[3 to 5] should match 3 high byte of SA)
+
+                    if( buffer[3] == serial[4] && 
+                       buffer[4] == serial[5] && 
+                       buffer[5] == serial[6] )
+                        /// then we'er ok and getting the 2nd part of the same emm-s
+                    // emmLen = (((emm_global[4 + 1] & 0xf) << 8) | emm_global[4 + 2]) + 3 + 4; // 4 - offset to store SA
+
+                    // write table header
+                    emmbuf[0] = 0x8e;
+                    emmbuf[1] = 0x70;
+                    emmbuf[2] = 0;
+                    // write SA
+                    emmbuf[3] = serial[4];
+                    emmbuf[4] = serial[5];
+                    emmbuf[5] = serial[6];
+                    emmbuf[6] = 1;
+                    // write ADF
+                    memcpy(emmbuf+7, "\x9E\x20", 2);
+                    emmLen += 2;
+					memcpy(emmbuf+9, buffer+7, 32);
+                    emmLen += 32;
+                    // write signature 
+					memcpy(emmbuf+emmLen, "\xF0\x08", 2);
+                    emmLen += 2;
+					memcpy(emmbuf+pos+2, buffer+41, 8);
+                    emmLen += 8;
+                    // update len
+                    emmbuf[1] |= ((emmLen - 3) >> 8) & 0xf;
+                    emmbuf[2] = (emmLen - 3) & 0xff;
+                    
+                    /// done.. just send this buffer to do_em fucntion.
+                    */
 
 					memcpy(emmbuf, buffer, 7);
 					pos=7;
