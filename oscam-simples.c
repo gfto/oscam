@@ -124,10 +124,11 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
 
 int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n)
 {
-    int OK=1;
-    int ERROR=0;
     AES_ENTRY *current;
     int i;
+    int ok=1;
+    int error=0;
+
     current=list;
     while(current) {
         if(current->caid==caid && current->ident==provid && current->keyid==keyid)
@@ -137,14 +138,14 @@ int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid,
 
     if(!current) {
         cs_log("AES Decrypt : key id %d not found for CAID %04X , provider %06x",keyid,caid,provid);
-        return ERROR; // we don't have the key to decode this buffer.
+        return error; // we don't have the key to decode this buffer.
         }
     else {
         // decode the key
         for(i=0; i<n; i+=16)
             AES_decrypt(buf+i, buf+i, &(current->key));
     }
-    return OK; // all ok, key decoded.
+    return ok; // all ok, key decoded.
 }
 
 char *remote_txt(void)
