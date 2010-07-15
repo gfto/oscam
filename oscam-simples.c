@@ -38,7 +38,10 @@ void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, u
     new_entry->caid=caid;
     new_entry->ident=ident;
     new_entry->keyid=keyid;
-    AES_set_decrypt_key((const unsigned char *)aesKey, 128, &(new_entry->key));
+    if(*aesKey!=0xFF)
+        AES_set_decrypt_key((const unsigned char *)aesKey, 128, &(new_entry->key));
+    else
+        memset(&new_entry->key,0,sizeof(AES_KEY));
     new_entry->next=NULL;
     
     //if list is empty, new_entry is the new head
@@ -61,6 +64,7 @@ void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, u
 
 void parse_aes_entry(struct s_reader *rdr,char *value) {
     ushort caid;
+    ushort dummy;
     uint32 ident;
     int len;
     char *tmp;
@@ -79,10 +83,18 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
     while((tmp=strtok_r(NULL,",",&save))) {
         len=strlen(tmp);
         if(len!=32) {
-            if(len!=1)
+            dummy=a2i(tmp,1);
+            // FF means the card will do the AES decrypt
+            // 00 means we don't have the aes.
+            if((dummy!=0xFF && dummy!=0x00) || len>2) {
+                key_id++;
                 cs_log("AES key length error .. not adding");
-            key_id++;
-            continue;
+                continue;
+            }
+            if(dummy==0x00) {
+                key_id++;
+                continue;
+            }
         }
         nb_keys++;
         key_atob(tmp,aes_key);
@@ -125,6 +137,7 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
 int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n)
 {
     AES_ENTRY *current;
+    AES_KEY   dummy;
     int i;
     int ok=1;
     int error=0;
@@ -141,6 +154,11 @@ int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid,
         return error; // we don't have the key to decode this buffer.
         }
     else {
+        // hack for card that do the AES decrypt themsleves
+        memset(&dummy,0,sizeof(AES_KEY));
+        if(memcmp(&current->key,&dummy,sizeof(AES_KEY))) {
+            return ok;
+        }
         // decode the key
         for(i=0; i<n; i+=16)
             AES_decrypt(buf+i, buf+i, &(current->key));
