@@ -3844,18 +3844,20 @@ char * get_tmp_dir()
   
 #ifdef OS_CYGWIN
   char *d = getenv("TMPDIR");
-  if (!d || d[0] == '\0') 
-  	strcpy(tmpdir,"/cygdrive/c/tmp/.oscam");
-  else
-  {
-        strcpy(tmpdir, d);
-    	char *p = tmpdir;
-    	while(*p) p++;
-    	p--;
-    	if (*p != '/' && *p != '\\')
-    		strcat(tmpdir, "/");
-        strcat(tmpdir, ".oscam");
-  }
+  if (!d || !d[0])
+        d = getenv("TMP");
+  if (!d || !d[0])
+        d = getenv("TEMP");
+  if (!d || !d[0]) 
+  	getcwd(tmpdir, sizeof(tmpdir)-1);
+  
+  strcpy(tmpdir, d);
+  char *p = tmpdir;
+  while(*p) p++;
+  p--;
+  if (*p != '/' && *p != '\\')
+    strcat(tmpdir, "/");
+  strcat(tmpdir, ".oscam");
                           
 #else
   strcpy(tmpdir, "/tmp/.oscam");
