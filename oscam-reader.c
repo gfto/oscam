@@ -444,7 +444,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
     return;
   }
   // cache2
-  if (check_ecmcache(er, client[er->cidx].grp))
+  if (check_ecmcache2(er, client[er->cidx].grp))
   {
     er->rc=2;
     write_ecm_answer(reader, fd_c2m, er);

@@ -1367,26 +1367,53 @@ void cs_disconnect_client(void)
 	cs_exit(0);
 }
 
-int check_ecmcache(ECM_REQUEST *er, ulong grp)
+/**
+ * cache 1: client-invoked
+ * returns found ecm task index
+ **/
+int check_ecmcache1(ECM_REQUEST *er, ulong grp)
 {
-	// disable cache1 and cache2
-	if (!reader[ridx].cachecm) return(0);
-	
 	int i;
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
-	//cs_log("cache CHECK: grp=%lX", grp);
+	//cs_log("cache1 CHECK: grp=%lX", grp);
 	for(i=0; i<CS_ECMCACHESIZE; i++) {
 		if ((grp & ecmcache[i].grp) &&
 		     ecmcache[i].caid==er->caid &&
 		     (!memcmp(ecmcache[i].ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
 		{
-			//cs_log("cache found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
+			//cs_log("cache1 found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
 			memcpy(er->cw, ecmcache[i].cw, 16);
 			return(1);
 		}
 	}
 	return(0);
 }
+
+/**
+ * cache 2: reader-invoked
+ * returns 1 if found in cache. cw is copied to er
+ **/
+int check_ecmcache2(ECM_REQUEST *er, ulong grp)
+{
+	// disable cache2
+	if (!reader[ridx].cachecm) return(0);
+	
+	int i;
+	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
+	//cs_log("cache2 CHECK: grp=%lX", grp);
+	for(i=0; i<CS_ECMCACHESIZE; i++) {
+		if ((grp & ecmcache[i].grp) &&
+		     ecmcache[i].caid==er->caid &&
+		     (!memcmp(ecmcache[i].ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
+		{
+			//cs_log("cache2 found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
+			memcpy(er->cw, ecmcache[i].cw, 16);
+			return(1);
+		}
+	}
+	return(0);
+}
+
 
 static void store_ecm(ECM_REQUEST *er)
 {
@@ -2355,7 +2382,10 @@ void get_cw(ECM_REQUEST *er)
 					break;
 			}
 		}
-
+	}
+	
+	//Schlocke: above checks could change er->rc so 
+	if (er->rc > 99) {
 		/*BetaCrypt tunneling
 		 *moved behind the check routines,
 		 *because newcamd ECM will fail
@@ -2368,7 +2398,7 @@ void get_cw(ECM_REQUEST *er)
 		memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
 
 		// cache1
-		if (check_ecmcache(er, client[cs_idx].grp))
+		if (check_ecmcache1(er, client[cs_idx].grp))
 			er->rc = 1;
 
 #ifdef CS_ANTICASC
@@ -2376,7 +2406,7 @@ void get_cw(ECM_REQUEST *er)
 #endif
 	}
 
-	if(er->rc > 99 && er->rc != 1) {
+	if(er->rc > 99) {
 
 		if (cfg->reader_auto_loadbalance) {
 			int reader_avail[CS_MAXREADER];
