@@ -395,24 +395,31 @@ int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	cs_debug_mask(D_EMM, "Entered viaccess_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
 
 	switch (ep->emm[0]) {
-		case 0x8E:
-			ep->type=SHARED;
-			memset(ep->hexserial, 0, 8);
-			memcpy(ep->hexserial, ep->emm + 3, 3);
-			cs_debug_mask(D_EMM, "VIACCESS EMM: SHARED");
-			return(!memcmp(&rdr->sa[0][0], ep->hexserial, 3));
-
-		case 0x8C:
+		case 0x88:
 			ep->type=UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 3, 3);
 			cs_debug_mask(D_EMM, "VIACCESS EMM: UNIQUE");
 			return(!memcmp(rdr->hexserial + 1, ep->hexserial, 4));
 
-		case 0x8D:
+		case 0x8A:
+		case 0x8B:
 			ep->type=GLOBAL;
 			cs_debug_mask(D_EMM, "VIACCESS EMM: GLOBAL");
 			return TRUE;
+
+		case 0x8C:
+		case 0x8D:
+			ep->type=SHARED;
+			cs_debug_mask(D_EMM, "VIACCESS EMM: SHARED (part)");
+			return FALSE;
+
+		case 0x8E:
+			ep->type=SHARED;
+			memset(ep->hexserial, 0, 8);
+			memcpy(ep->hexserial, ep->emm + 3, 3);
+			cs_debug_mask(D_EMM, "VIACCESS EMM: SHARED");
+			return(!memcmp(&rdr->sa[0][0], ep->hexserial, 3));
 
 		default:
 			ep->type = UNKNOWN;
@@ -424,7 +431,7 @@ int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
-	filter[1]=2;
+	filter[1]=3;
 
 	filter[2]=GLOBAL;
 	filter[3]=0;
@@ -447,7 +454,7 @@ void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[70]=UNIQUE;
 	filter[71]=0;
 
-	filter[72+0]    = 0x8C;
+	filter[72+0]    = 0x88;
 	filter[72+0+16] = 0xFF;
 	memcpy(filter+72+1, rdr->hexserial + 1, 4);
 	memset(filter+72+1+16, 0xFF, 4);
