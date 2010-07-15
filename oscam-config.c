@@ -2284,7 +2284,7 @@ int write_server()
 
 			//check for tiger
 			int tigerkey = 0;
-			for (j=64;j<240;j++) {
+			for (j=64;j<120;j++) {
 				if(reader[i].rsa_mod[j] > 0) {
 					tigerkey = 1;
 					break;
@@ -2303,7 +2303,7 @@ int write_server()
 				else  {
 					//tiger_rsakey
 					fprintf_conf(f, CONFVARWIDTH, "tiger_rsakey", "");
-					for (j=0;j<240;j++) {
+					for (j=0;j<120;j++) {
 						fprintf(f, "%02X", reader[i].rsa_mod[j]);
 					}
 					fprintf(f, "\n");

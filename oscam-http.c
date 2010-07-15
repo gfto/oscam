@@ -846,7 +846,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if(reader[ridx].has_rsa) {
 		//check for tiger
 		int tigerkey = 0;
-		for (i=64;i<240;i++) {
+		for (i=64;i<120;i++) {
 			if(reader[ridx].rsa_mod[i] > 0) {
 				tigerkey = 1;
 				break;
@@ -855,7 +855,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		if (!tigerkey) {
 			for (i = 0; i < 64; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", reader[ridx].rsa_mod[i]);
 		} else {
-			for (i = 0; i < 240; i++) tpl_printf(vars, 1, "TIGERRSAKEY", "%02X", reader[ridx].rsa_mod[i]);
+			for (i = 0; i < 120; i++) tpl_printf(vars, 1, "TIGERRSAKEY", "%02X", reader[ridx].rsa_mod[i]);
 		}
 		for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", reader[ridx].nagra_boxkey[i]);
 	}
