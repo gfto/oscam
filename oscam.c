@@ -2213,6 +2213,7 @@ int recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	grs.prid = er->prid;
 	grs.srvid = er->srvid;
 	grs.cidx = cs_idx;
+	memcpy(grs.ecmd5, er->ecmd5, sizeof(er->ecmd5));
 	memcpy(grs.reader_avail, reader_avail, sizeof(int)*CS_MAXREADER);
 	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%04X/%04X", username(cs_idx), grs.caid, grs.prid, grs.srvid);
 	write_to_pipe(fd_c2m, PIP_ID_BES, (uchar*)&grs, sizeof(GET_READER_STAT));
@@ -2238,7 +2239,7 @@ int recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 			int n = read_from_pipe(client[cs_idx].fd_m2c_c, &ptr, 1);
 			if (n == PIP_ID_BES) {
 				int r = *(int*)ptr;
-				cs_debug_mask(D_TRACE, "got best reader: %s (%d)", reader[r].label, r);
+				cs_debug_mask(D_TRACE, "got best reader: %s (%d)", (r==-2)?"CACHE":(r<0)?"NONE":reader[r].label, r);
 				return r;
 			}
 			else if (n == PIP_ID_DIR)
@@ -2419,6 +2420,9 @@ void get_cw(ECM_REQUEST *er)
 					//When autobalance enabled, all other readers are fallbacks:
 					m|=er->reader[i] = (best_ridx >= 0 && best_ridx != i)? 2: 1;
 				}
+			if (best_ridx == -2) { //Schlocke: already send by another reader!
+				return; //chk_pending does the job!
+			}
 		}
 		else
 		{

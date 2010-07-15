@@ -2,11 +2,42 @@
 
 #define UNDEF_AVG_TIME 80000
 
+#define MAX_ECM_SEND_CACHE 8
+
 time_t nulltime = 0;
+
+int ecm_send_cache_idx = 0;
+typedef struct s_ecm_send_cache {
+   ushort        caid;
+   uchar         ecmd5[CS_ECMSTORESIZE];            
+} ECM_SEND_CACHE;
+ECM_SEND_CACHE *ecm_send_cache;
 
 void init_stat()
 {
 	memset(reader_stat, 0, sizeof(reader_stat));
+	ecm_send_cache = malloc(sizeof(ECM_SEND_CACHE)*MAX_ECM_SEND_CACHE);
+	memset(ecm_send_cache, 0, sizeof(ECM_SEND_CACHE)*MAX_ECM_SEND_CACHE);
+}
+
+int chk_send_cache(int caid, uchar *ecmd5)
+{
+	int i;
+	for (i=0; i<MAX_ECM_SEND_CACHE; i++) {
+		if (ecm_send_cache[i].caid == caid && 
+		  memcmp(ecm_send_cache[i].ecmd5, ecmd5, sizeof(uchar)*CS_ECMSTORESIZE) == 0)
+			return 1;
+	}
+	return 0;
+}
+
+void add_send_cache(int caid, uchar *ecmd5)
+{
+	ecm_send_cache[ecm_send_cache_idx].caid = caid;
+	memcpy(ecm_send_cache[ecm_send_cache_idx].ecmd5, ecmd5, sizeof(uchar)*CS_ECMSTORESIZE);
+	ecm_send_cache_idx++;
+	if (ecm_send_cache_idx >= MAX_ECM_SEND_CACHE)
+		ecm_send_cache_idx = 0;
 }
 
 void load_stat_from_file(int ridx)
@@ -227,9 +258,14 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
  * Best reader is evaluated by lowest avg time but only if ecm_count > MIN_ECM_COUNT (5)
  * Also the reader is asked if he is "available"
  * returns ridx when found or -1 when not found
+ * ONLY FROM MASTER THREAD!
  */
 int get_best_reader(GET_READER_STAT *grs)
 {
+	if (chk_send_cache(grs->caid, grs->ecmd5))
+		return -2;
+	add_send_cache(grs->caid, grs->ecmd5);
+	
 	int i;
 	int best_ridx = -1;
 	int best = 0, current = 0;

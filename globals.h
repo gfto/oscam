@@ -938,6 +938,7 @@ typedef struct get_reader_stat_t
   ushort        srvid;
   int           cidx;
   int           reader_avail[CS_MAXREADER];
+  uchar         ecmd5[CS_ECMSTORESIZE];
 } GCC_PACK      GET_READER_STAT;
 
 typedef struct emm_packet_t
