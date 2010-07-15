@@ -806,7 +806,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 				if (!strcmp((*params).params[i], "services"))
 					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels), "%s,", (*params).values[i]);
 				else
-					chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
+					if(strlen((*params).values[i]) > 0)
+						chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
 			}
 		}
 		chk_reader("services", servicelabels, &reader[ridx]);
