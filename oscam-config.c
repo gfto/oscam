@@ -2292,7 +2292,7 @@ int write_server()
 			}
 
 			//n3_rsakey
-			if (reader[i].has_rsa && isphysical) {
+			if (reader[i].has_rsa) {
 				if (!tigerkey) {
 					fprintf_conf(f, CONFVARWIDTH, "rsakey", "");
 					for (j=0;j<64;j++) {
@@ -2302,11 +2302,13 @@ int write_server()
 				}
 				else  {
 					//tiger_rsakey
-					fprintf_conf(f, CONFVARWIDTH, "tiger_rsakey", "");
-					for (j=0;j<120;j++) {
-						fprintf(f, "%02X", reader[i].rsa_mod[j]);
+					if (tigerkey) {
+						fprintf_conf(f, CONFVARWIDTH, "tiger_rsakey", "");
+						for (j=0;j<120;j++) {
+							fprintf(f, "%02X", reader[i].rsa_mod[j]);
+						}
+						fprintf(f, "\n");
 					}
-					fprintf(f, "\n");
 				}
 			}
 
