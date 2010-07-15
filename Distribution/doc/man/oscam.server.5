@@ -124,9 +124,14 @@ NDS receiver box id
 .RS 3n
 mutiple 16 byte AES keys for Viaccess SCs
 
+special AES keys:
+
+ 00 = no AES key specified, do not return any CW
+ FF = no AES key specified, return CW received from the SC
+
 example: 
 
-aeskeys = 0100@012345:000102030405060708090a0b0c0d0e0f;0200@543210:0,0,0f0e0d0c0b0a090807060504030201
+ aeskeys = 0100@012345:000102030405060708090a0b0c0d0e0f;0200@543210:0,0,0f0e0d0c0b0a090807060504030201
 .RE
 .PP
 \fBdetect\fP = \fBCD\fP|\fBDSR\fP|\fBCTS\fP|\fBRING\fP|\fBNONE\fP|\fBgpio[1-7]\fP
