@@ -299,6 +299,7 @@ static void remove_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocke
 	}
 }
 
+/* currently not used
 static void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	LLIST_ITR sitr;
 	struct cc_srvid *srvid = llist_itr_init(card->goodsids, &sitr);
@@ -310,7 +311,7 @@ static void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 		else
 			srvid = llist_itr_next(&sitr);
 	}
-}
+}*/
 
 static void add_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	if (is_good_sid(card, srvid_good))
@@ -815,28 +816,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		}
 	}
 	
-	//No card found? reopen all blocked sids where we have a good sid.
-	//Sometimes cards get blocked on cccam-faults
-	if (!current_card->card) {
-		card = llist_itr_init(cc->cards, &itr);
-		h = -1;
-		while (card) {
-			if (card->caid == cur_er->caid) { // caid matches
-				if (is_sid_blocked(card, &cur_srvid) && is_good_sid(card, &cur_srvid)) {
-					remove_sid_block(card, &cur_srvid);
-					remove_good_sid(card, &cur_srvid);
-					
-					if (((h < 0) || (card->hop < h)) && (card->hop
-								<= reader[ridx].cc_maxhop)) { // card is closer and doesn't exceed max hop
-						current_card->card = card;
-						h = card->hop; // card has been matched
-					}
-				}
-			}
-			card = llist_itr_next(&itr);
-		}
-	}
-
 	if (current_card->card) {
 		card = current_card->card;
 		current_card->prov = cur_er->prid;
@@ -1374,7 +1353,7 @@ static int is_null_dcw(uint8 *dcw)
 	return 1;
 }
 
-static int is_dcw_corrupted(uchar *dcw)
+/*static int is_dcw_corrupted(uchar *dcw)
 {
     int i;
     int c, cs;
@@ -1395,7 +1374,7 @@ static void fix_dcw(uchar *dcw)
     {
        dcw[i+3] = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
     }
-}
+}*/
 
 static void cc_idle() {
 	struct cc_data *cc = reader[ridx].cc;
@@ -1642,8 +1621,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				current_card->srvid.sid, current_card->srvid.ecmlen);
 			struct cc_card *card = current_card->card;
 			if (card) {
-				add_sid_block(card, &current_card->srvid);
-				current_card->card = NULL;
+				if (!is_good_sid(card, &current_card->srvid)) {
+					add_sid_block(card, &current_card->srvid);
+					current_card->card = NULL;
+				}
 			}
 			else
 				current_card = NULL;
@@ -1691,28 +1672,6 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				memcpy(cc->dcw, buf + 4, 16);
 				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
-				if (is_dcw_corrupted(cc->dcw)) {
-					fix_dcw(cc->dcw);
-					
-					//cs_log("%s corrupted dcw received! retrying sid=%04X(%d)", getprefix(), 
-					//  current_card->srvid.sid, current_card->srvid.ecmlen);
-					//uint8 *dcw = cc->dcw;
-					//cs_log("%s corrupted dcw: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-					//  getprefix(),
-					//  dcw[0], dcw[1], dcw[2], dcw[3], dcw[4], dcw[5], dcw[6], dcw[7], 
-					//  dcw[8], dcw[9], dcw[10], dcw[11], dcw[12], dcw[13], dcw[14], dcw[15]);
-					//cs_log("%s dcw right:     %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X",
-					//  getprefix(),
-					//  dcw[0], dcw[1], dcw[2], (dcw[0]+dcw[1]+dcw[2]) & 0xFF, 
-					//  dcw[4], dcw[5], dcw[6], (dcw[4]+dcw[5]+dcw[6]) & 0xFF, 
-					//  dcw[8], dcw[9], dcw[10], (dcw[8]+dcw[9]+dcw[10]) & 0xFF, 
-					//  dcw[12], dcw[13], dcw[14], (dcw[12]+dcw[13]+dcw[14]) & 0xFF);
-					//add_sid_block(card, &current_card->srvid);
-					//current_card->card = NULL;
-					//cc->crc++; //So ecm could retryied
-					//buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
-				}
-				//else 
 				if (is_null_dcw(cc->dcw)) {
 					cs_log("%s null dcw received! sid=%04X(%d)", getprefix(), 
 					  current_card->srvid.sid, current_card->srvid.ecmlen);
