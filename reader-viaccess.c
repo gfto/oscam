@@ -607,7 +607,7 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     memcpy (insData, ins18Data, ins18Len);
     memcpy (insData + ins18Len, nanoF0Data, nanoF0Data[1] + 2);
     write_cmd(ins18, insData);
-    if( cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0x00 ) {
+    if( (cta_res[cta_lr-2]==0x90 || cta_res[cta_lr-2]==0x91) && cta_res[cta_lr-1]==0x00 ) {
       cs_debug("[viaccess-reader] update successfully written");
       rc=1; // written
     } else {
@@ -630,7 +630,7 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     memcpy (insData + nano92Data[1] + 2, nano81Data, nano81Data[1] + 2);
     memcpy (insData + nano92Data[1] + 2 + nano81Data[1] + 2, nanoF0Data, nanoF0Data[1] + 2);
     write_cmd(ins1c, insData); 
-    if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
+    if( (cta_res[cta_lr-2]!=0x90 && cta_res[cta_lr-2]!=0x91) || cta_res[cta_lr-1]!=0x00 ) {
       /* maybe a 2nd level status, so read it */
       ///cs_dump(ins1c, 5, "set subscription encrypted cmd:");
       ///cs_dump(insData, ins1c[4], "set subscription encrypted data:");
