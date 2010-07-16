@@ -259,11 +259,15 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
  * returns ridx when found or -1 when not found
  * ONLY FROM MASTER THREAD!
  */
-int get_best_reader(GET_READER_STAT *grs)
+int get_best_reader(GET_READER_STAT *grs, int *result)
 {
+	//resulting readers:
+	memset(result, 0, sizeof(int)*CS_MAXREADER);
+
 	if (chk_send_cache(grs->caid, grs->ecmd5))
-		return -2;
-	add_send_cache(grs->caid, grs->ecmd5);
+		return -2; //found in cache
+	add_send_cache(grs->caid, grs->ecmd5); //add to cache
+	
 	
 	int i;
 	int best_ridx = -1;
@@ -275,17 +279,20 @@ int get_best_reader(GET_READER_STAT *grs)
 			stat = get_stat(i, grs->caid, grs->prid, grs->srvid);
 			if (!stat) {
 				add_stat(i, grs->caid,  grs->prid, grs->srvid, 1, 0);
-				return -1; //this reader is active (now) but we need statistics first!
+				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
+				continue; 
 			}
 			
 			if (stat->ecm_count > MAX_ECM_COUNT) {
 				reset_stat(grs->caid, grs->prid, grs->srvid);
-				return -1;
+				result[i] = 1;//max ecm reached, get new statistics
+				continue;
 			}
 				
 			if (stat->rc == 0 && stat->ecm_count < MIN_ECM_COUNT) {
 				cs_debug_mask(D_TRACE, "loadbalance: reader %s needs more statistics", reader[i].label);
-				return -1; //need more statistics!
+				result[i] = 1; //need more statistics!
+				continue;
 			}
 				
 
@@ -293,9 +300,11 @@ int get_best_reader(GET_READER_STAT *grs)
 			if (stat->rc == 0) {
 				//get
 				switch (cfg->reader_auto_loadbalance) {
+				default:
 				case LB_NONE:
 					cs_debug_mask(D_TRACE, "loadbalance disabled");
-					return -1;
+					result[i] = 1;
+					break;
 				case LB_FASTEST_READER_FIRST:
 					current = stat->time_avg * 100 / weight;
 					break;
@@ -305,8 +314,6 @@ int get_best_reader(GET_READER_STAT *grs)
 				case LB_LOWEST_USAGELEVEL:
 					current = reader[i].lb_usagelevel * 100 / weight;
 					break;
-				default:
-					return -1;
 				}
 
 				cs_debug_mask(D_TRACE, "loadbalance reader %s value %d", reader[i].label, current);
@@ -322,9 +329,16 @@ int get_best_reader(GET_READER_STAT *grs)
 			}
 		}
 	}
-	if (best_ridx >= 0)
+	if (best_ridx >= 0) {
 		cs_debug_mask(D_TRACE, "-->loadbalance best reader %s best value %d", reader[best_ridx].label, best);
+		result[best_ridx] = 1;
+	}
 	else
 		cs_debug_mask(D_TRACE, "-->loadbalance no best reader!");
+		
+	//setting all other readers as fallbacks:
+	for (i=0;i<CS_MAXREADER; i++)
+		if (grs->reader_avail[i] && !result[i])
+			result[i] = 2;
 	return best_ridx;
 }
