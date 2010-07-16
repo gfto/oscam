@@ -18,6 +18,7 @@ void init_stat()
 	memset(reader_stat, 0, sizeof(reader_stat));
 	ecm_send_cache = malloc(sizeof(ECM_SEND_CACHE)*MAX_ECM_SEND_CACHE);
 	memset(ecm_send_cache, 0, sizeof(ECM_SEND_CACHE)*MAX_ECM_SEND_CACHE);
+	nulltime = time(NULL);
 }
 
 int chk_send_cache(int caid, uchar *ecmd5)
@@ -73,8 +74,6 @@ READER_STAT *get_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 		if (cfg->reader_auto_loadbalance_save)
 			load_stat_from_file(ridx);
 	}
-	if (!nulltime)
-		nulltime = time(NULL);
 
 	LLIST_ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
@@ -92,7 +91,7 @@ READER_STAT *get_stat(int ridx, ushort caid, ulong prid, ushort srvid)
  */
 int remove_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 {
-	if (reader_stat[ridx])
+	if (!reader_stat[ridx])
 		return 0;
 
 	int c = 0;
@@ -137,7 +136,7 @@ void save_stat_to_file(int ridx)
 {
 	char fname[40];
 	sprintf(fname, "%s/stat.%d", get_tmp_dir(), ridx);
-	if (!reader_stat[ridx]) {
+	if (!reader_stat[ridx] || !llist_count(reader_stat[ridx])) {
 		remove(fname);
 		return;
 	}
@@ -271,7 +270,7 @@ int get_best_reader(GET_READER_STAT *grs)
 	int best = 0, current = 0;
 	READER_STAT *stat, *best_stat = NULL;
 	for (i = 0; i < CS_MAXREADER; i++) {
-		if (reader_stat[i] && grs->reader_avail[i]) {
+		if (grs->reader_avail[i]) {
  			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
 			stat = get_stat(i, grs->caid, grs->prid, grs->srvid);
 			if (!stat) {

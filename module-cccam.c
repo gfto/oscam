@@ -299,7 +299,6 @@ static void remove_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocke
 	}
 }
 
-/* currently not used
 static void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	LLIST_ITR sitr;
 	struct cc_srvid *srvid = llist_itr_init(card->goodsids, &sitr);
@@ -311,7 +310,7 @@ static void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 		else
 			srvid = llist_itr_next(&sitr);
 	}
-}*/
+}
 
 static void add_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	if (is_good_sid(card, srvid_good))
@@ -1625,6 +1624,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					add_sid_block(card, &current_card->srvid);
 					current_card->card = NULL;
 				}
+				else
+					remove_good_sid(card, &current_card->srvid);
 			}
 			else
 				current_card = NULL;
