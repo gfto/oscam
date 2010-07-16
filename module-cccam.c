@@ -261,6 +261,17 @@ static int is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) 
 	return 0;
 }
 
+static int is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
+	LLIST_ITR sitr;
+	struct cc_srvid *srvid = llist_itr_init(card->goodsids, &sitr);
+	while (srvid) {
+		if (sid_eq(srvid, srvid_good)) {
+			return 1;
+		}
+		srvid = llist_itr_next(&sitr);
+	}
+	return 0;
+}
 
 static void add_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked) {
 	if (is_sid_blocked(card, srvid_blocked))
@@ -270,8 +281,48 @@ static void add_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked) 
 	if (srvid) {
 		*srvid = *srvid_blocked;
 		llist_append(card->badsids, srvid);
-		cs_log("%s added sid block %04X(%d) for card %08x",
+		cs_debug_mask(D_TRACE, "%s added sid block %04X(%d) for card %08x",
 			getprefix(), srvid_blocked->sid, srvid_blocked->ecmlen, card->id);
+	}
+}
+
+static void remove_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked) {
+	LLIST_ITR sitr;
+	struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
+	while (srvid) {
+		if (sid_eq(srvid, srvid_blocked)) {
+			free(srvid);
+			srvid = llist_itr_remove(&sitr);
+		}
+		else
+			srvid = llist_itr_next(&sitr);
+	}
+}
+
+static void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
+	LLIST_ITR sitr;
+	struct cc_srvid *srvid = llist_itr_init(card->goodsids, &sitr);
+	while (srvid) {
+		if (sid_eq(srvid, srvid_good)) {
+			free(srvid);
+			srvid = llist_itr_remove(&sitr);
+		}
+		else
+			srvid = llist_itr_next(&sitr);
+	}
+}
+
+static void add_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
+	if (is_good_sid(card, srvid_good))
+		return;
+
+	remove_sid_block(card, srvid_good);		
+	struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
+	if (srvid) {
+		*srvid = *srvid_good;
+		llist_append(card->goodsids, srvid);
+		cs_debug_mask(D_TRACE, "%s added good sid %04X(%d) for card %08x",
+			getprefix(), srvid_good->sid, srvid_good->ecmlen, card->id);
 	}
 }
 
@@ -763,6 +814,28 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			}
 		}
 	}
+	
+	//No card found? reopen all blocked sids where we have a good sid.
+	//Sometimes cards get blocked on cccam-faults
+	if (!current_card->card) {
+		card = llist_itr_init(cc->cards, &itr);
+		h = -1;
+		while (card) {
+			if (card->caid == cur_er->caid) { // caid matches
+				if (is_sid_blocked(card, &cur_srvid) && is_good_sid(card, &cur_srvid)) {
+					remove_sid_block(card, &cur_srvid);
+					remove_good_sid(card, &cur_srvid);
+					
+					if (((h < 0) || (card->hop < h)) && (card->hop
+								<= reader[ridx].cc_maxhop)) { // card is closer and doesn't exceed max hop
+						current_card->card = card;
+						h = card->hop; // card has been matched
+					}
+				}
+			}
+			card = llist_itr_next(&itr);
+		}
+	}
 
 	if (current_card->card) {
 		card = current_card->card;
@@ -986,6 +1059,8 @@ static void cc_free_card(struct cc_card *card) {
 		llist_destroy(card->provs);
 	if (card->badsids)
 		llist_destroy(card->badsids);
+	if (card->goodsids)
+		llist_destroy(card->goodsids);
 	free(card);
 }
 
@@ -1441,6 +1516,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 		card->provs = llist_create();
 		card->badsids = llist_create();
+		card->goodsids = llist_create();
 		card->id = b2i(4, buf + 4);
 		card->sub_id = b2i(3, buf + 9);
 		card->caid = b2i(2, buf + 12);
@@ -1654,6 +1730,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					}
 					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
 						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
+					add_good_sid(card, &current_card->srvid);
 				}
 			}
 			else {

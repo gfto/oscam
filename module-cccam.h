@@ -60,6 +60,7 @@ struct cc_card {
 	LLIST *provs; // providers
 	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
 	time_t time;
+	LLIST *goodsids; //sids that could decoded
 };
 
 struct cc_reported_carddata {
