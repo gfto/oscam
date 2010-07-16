@@ -270,9 +270,10 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	
 	
 	int i;
-	int best_ridx = -1;
-	int best = 0, current = 0;
-	READER_STAT *stat, *best_stat = NULL;
+	int best_ridx = -1, best_ridx2 = -1;
+	int best = 0, best2 = 0;
+	int current = -1;
+	READER_STAT *stat = NULL;
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if (grs->reader_avail[i]) {
  			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
@@ -317,20 +318,25 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 				}
 
 				cs_debug_mask(D_TRACE, "loadbalance reader %s value %d", reader[i].label, current);
-				if (!best_stat || current < best) {
+				if (best_ridx==-1 || current < best) {
 					if (!reader[i].ph.c_available
 							|| reader[i].ph.c_available(i,
 									AVAIL_CHECK_LOADBALANCE)) {
-						best_stat = stat;
 						best_ridx = i;
 						best = current;
 					}
 				}
+				if (best_ridx2==-1 || current < best2) {
+					best_ridx2 = i;
+					best2 = current;
+				}
 			}
 		}
 	}
+	if (best_ridx == -1)
+		best_ridx = best_ridx2;
 	if (best_ridx >= 0) {
-		cs_debug_mask(D_TRACE, "-->loadbalance best reader %s best value %d", reader[best_ridx].label, best);
+		cs_debug_mask(D_TRACE, "-->loadbalance best reader %s best value %d", reader[best_ridx].label, best2);
 		result[best_ridx] = 1;
 	}
 	else
