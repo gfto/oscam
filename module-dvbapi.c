@@ -641,7 +641,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 
 					//cs_log("viaccess global emm_provid: %06X provid: %06X", emm_provid, provider);
 
-					// copy first part of the emm-g
+					// copy first part of the emm-s
 					memcpy(emm_global, buffer, len);
 					emm_global_len=len;
 					//cs_ddump(buffer, len, "viaccess global emm:");
@@ -688,6 +688,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					break;
 			}
 			break;
+        // cryptoworks
 		case 0x0d:
 			if (len>500) return;
 			switch (buffer[0]) {
@@ -720,6 +721,63 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					break;
 			}
 			break;
+
+        // Seca
+        case 0x01: 
+            
+            /*
+            uchar *sa ; // seca SA is 4 byte, of which only 3 byte are used
+            uchar *serial; // card serial
+
+            uchar *emmSA = buffer+5;    
+            uchar *emmUA= buffer+3;
+    
+            switch (emm[0]) {
+                case 0x82:
+                {            
+                    if(memcmp(serial,emmUA,6)==0) {
+                        // this emm is for the card we have... send it to the card
+                        break;
+                    }
+                    else
+                        return; // not for us
+                }
+                    
+                case 0x83:
+                case 0x84:
+                {
+                    if (memcmp(sa,emmSA,3)==0) {
+                        // thise shared emm is for our SA .. send it to the card
+                        break;
+                    }
+                    else
+                        return; // not for us
+                    
+                }
+                
+                default :
+                    // not for us
+                    return;
+                    
+            }
+        */            
+            break;
+
+        // Conax
+        case 0x0b:
+            /*
+            if( buffer[0] == 0x82 )
+            {
+                uchar *sa; card shared address
+                uchar emmSA = buffer+4;
+                
+                if(memcmp(sa,emmSA,6)==0) {
+                    // this emm is for us
+                    break;
+                }
+            }
+            return;
+            */
 	}
 		
 
