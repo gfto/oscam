@@ -163,7 +163,7 @@ int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid,
     else {
         // hack for card that do the AES decrypt themsleves
         memset(&dummy,0,sizeof(AES_KEY));
-        if(memcmp(&current->key,&dummy,sizeof(AES_KEY))) {
+        if(!memcmp(&current->key,&dummy,sizeof(AES_KEY))) {
             return ok;
         }
         // decode the key
