@@ -38,10 +38,14 @@ void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, u
     new_entry->caid=caid;
     new_entry->ident=ident;
     new_entry->keyid=keyid;
-    if(*aesKey!=0xFF)
+    if(memcmp(aesKey,"\xFF\xFF",2)) {
         AES_set_decrypt_key((const unsigned char *)aesKey, 128, &(new_entry->key));
-    else
+        // cs_log("adding key : %s",cs_hexdump(1,aesKey,16));
+    }
+    else {
         memset(&new_entry->key,0,sizeof(AES_KEY));
+        // cs_log("adding fake key");
+    }
     new_entry->next=NULL;
     
     //if list is empty, new_entry is the new head
@@ -81,6 +85,7 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
     nb_keys=0;
     key_id=0;
     while((tmp=strtok_r(NULL,",",&save))) {
+        dummy=0;
         len=strlen(tmp);
         if(len!=32) {
             dummy=a2i(tmp,1);
@@ -97,7 +102,10 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
             }
         }
         nb_keys++;
-        key_atob(tmp,aes_key);
+        if(dummy)
+            memset(aes_key,0xFF,16);
+        else
+            key_atob(tmp,aes_key);
         // now add the key to the reader... TBD
         add_aes_entry(rdr,caid,ident,key_id,aes_key);
         key_id++;
@@ -114,7 +122,6 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
     
     rdr->aes_list=NULL;
     for (entry=strtok_r(value, ";",&save); entry; entry=strtok_r(NULL, ";",&save)) {
-        cs_debug("AES key entry=%s",entry);
         parse_aes_entry(rdr,entry);
     }
     
