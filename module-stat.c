@@ -214,7 +214,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 	}
 	else if (rc >= 4 && rc < 100) { //not found+timeout+etc
 		stat->rc = rc;
-		stat->ecm_count = 0;
+		//stat->ecm_count = 0; Keep ecm_count!
 	}
 
 	cs_debug_mask(D_TRACE, "adding stat for reader %s (%d): rc %d caid %04hX prid %04lX srvid %04hX time %dms usagelevel %d",
@@ -245,8 +245,11 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
 			READER_STAT *stat = get_stat(i, caid, prid, srvid);
-			if (stat)
-				stat->ecm_count = 0;
+			if (stat) {
+				if (stat->ecm_count > 0)
+					stat->ecm_count = 1; //not zero, so we know it's decodeable
+				stat->rc = 0;
+			}
 		}
 	}
 }
@@ -284,7 +287,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 				continue; 
 			}
 			
-			if (stat->ecm_count > MAX_ECM_COUNT) {
+			if (stat->ecm_count > MAX_ECM_COUNT && stat->time_avg > (int)cfg->ftimeout) {
 				reset_stat(grs->caid, grs->prid, grs->srvid);
 				result[i] = 1;//max ecm reached, get new statistics
 				continue;
@@ -331,6 +334,8 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 					best2 = current;
 				}
 			}
+			else if (stat->rc >= 4 && stat->ecm_count == 0) //Never decodeable
+				grs->reader_avail[i] = 0;
 		}
 	}
 	if (best_ridx == -1)
