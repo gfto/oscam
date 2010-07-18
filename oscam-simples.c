@@ -483,8 +483,6 @@ void cs_sleepus(unsigned int usec)
 
 int bytes_available(int fd)
 {
-    // cygwin apparently has issues with select
-#ifndef OS_CYGWIN32	
    fd_set rfds;
    fd_set erfds;
    int select_ret;
@@ -514,17 +512,6 @@ int bytes_available(int fd)
 		 return 1;
 	 else
 		 return 0;
-#else
-    // for cygwin/windows
-    struct pollfd pfds; 
-    pfds.fd=fd; 
-    pfds.events=POLLIN; 
-    pfds.revents=0; 
-    if (poll(&pfds, 1, 0)!=1) 
-        return(0); 
-    else 
-        return(((pfds.revents)&POLLIN)==POLLIN); 
-#endif
 }
 
 

@@ -1482,13 +1482,10 @@ int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
  */
 int write_to_pipe(int fd, int id, uchar *data, int n)
 {
-#ifndef OS_CYGWIN32	
-    // check is write to pipe ready
-    // not working on wincrap.
-    
+	// check is write to pipe ready
     if (!pipe_WaitToWrite(fd, 100))  	
   	   return -1;
-#endif
+
   uchar buf[1024+3+sizeof(int)];
 
 //printf("WRITE_START pid=%d", getpid()); fflush(stdout);
