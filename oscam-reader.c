@@ -137,35 +137,32 @@ int network_select(int forRead, int timeout)
    return -1; 
 } 
 
+// according to documentation getaddrinfo() is thread safe
 int hostResolve()
 {
-  pthread_mutex_lock(&gethostbyname_lock);
-  struct addrinfo hints, *res = NULL;
+   struct addrinfo hints, *res = NULL;
   
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_socktype = SOCK_STREAM;
-  hints.ai_family = client[cs_idx].udp_sa.sin_family;
-  hints.ai_protocol = IPPROTO_TCP;
+   memset(&hints, 0, sizeof(hints));
+   hints.ai_socktype = SOCK_STREAM;
+   hints.ai_family = client[cs_idx].udp_sa.sin_family;
+   hints.ai_protocol = IPPROTO_TCP;
   
-  in_addr_t last_ip = client[idx].ip;
-  if (getaddrinfo(reader[ridx].device, NULL, &hints, &res) == 0) {
-     client[cs_idx].udp_sa.sin_addr.s_addr = 
-          ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-     client[cs_idx].ip = cs_inet_order(client[cs_idx].udp_sa.sin_addr.s_addr);
-     
-     if (client[idx].ip != last_ip) {
-	      uchar *ip = (uchar*) &client[cs_idx].ip;
-	      cs_debug("%s: resolved ip=%d.%d.%d.%d", reader[ridx].device, ip[3], ip[2], ip[1], ip[0]);
-     }
-  }
-  else {
-     client[cs_idx].udp_sa.sin_addr.s_addr = 0;
-     cs_log("can't resolve %s", reader[ridx].device);
-  }
-  if (res) freeaddrinfo(res); 
-  pthread_mutex_unlock(&gethostbyname_lock);	     	
-  
-  return (client[cs_idx].udp_sa.sin_addr.s_addr) ? 1 : 0;
+   int err = getaddrinfo(reader[ridx].device, NULL, &hints, &res);
+   if (err != 0 || !res || !res->ai_addr) {
+      client[cs_idx].udp_sa.sin_addr.s_addr = 0;
+      cs_log("can't resolve %s, error: %s", reader[ridx].device, err ? gai_strerror(err) : "unknown");
+   }
+   else {
+      in_addr_t last_ip = client[cs_idx].ip;
+      client[cs_idx].udp_sa.sin_addr.s_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
+      client[cs_idx].ip = cs_inet_order(client[cs_idx].udp_sa.sin_addr.s_addr);
+      if (client[cs_idx].ip != last_ip) {
+         uchar *ip = (uchar*) &client[cs_idx].ip;
+         cs_log("%s: resolved ip=%d.%d.%d.%d", reader[ridx].device, ip[3], ip[2], ip[1], ip[0]);
+      }
+   }
+   if (res) freeaddrinfo(res);
+   return (client[cs_idx].udp_sa.sin_addr.s_addr) ? 1 : 0;
 }
 
 int network_tcp_connection_open()
