@@ -1448,32 +1448,35 @@ void store_logentry(char *txt)
 */
 int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
 {
-    int i;
-    fd_set wfds;
-    fd_set ewfds;
-    struct timeval tv;
-    
-    FD_ZERO(&wfds);
-    FD_SET(out_fd, &wfds);
-    
-    FD_ZERO(&ewfds);
-    FD_SET(out_fd, &ewfds);
-    
-    tv.tv_sec = timeout_ms/1000L;
-    tv.tv_usec = (timeout_ms % 1000) * 1000L;
-    for(i=0;i<3;i++) {
-        if (select(out_fd + 1, NULL, &wfds, &ewfds, &tv) == -1) {
-            cs_debug("pipe_WaitToWrite() error on fd=%d, select_ret=-1, errno=%d", out_fd, errno);
-            continue;
-        }
-        if (FD_ISSET(out_fd, &ewfds)) {
-            cs_debug("pipe_WaitToWrite() error on fd=%d, fd is in ewfds, errno=%d", out_fd, errno);
-            continue;
-        }
-        break;   
-    }
-    
-    return (FD_ISSET(out_fd,&wfds)) ? 1 : 0;
+  fd_set wfds;
+  fd_set ewfds;
+  struct timeval tv;
+
+  FD_ZERO(&wfds);
+  FD_SET(out_fd, &wfds);
+
+  FD_ZERO(&ewfds);
+  FD_SET(out_fd, &ewfds);
+
+  tv.tv_sec = timeout_ms/1000L;
+  tv.tv_usec = (timeout_ms % 1000) * 1000L;
+
+  if (select(out_fd + 1, NULL, &wfds, &ewfds, &tv) == -1) {
+     cs_log("pipe_WaitToWrite() error on fd=%d, select_ret=-1, errno=%d", out_fd, errno);
+     return 0;
+  }
+
+  if (FD_ISSET(out_fd, &ewfds)) {
+     cs_log("pipe_WaitToWrite() error on fd=%d, fd is in ewfds, errno=%d", out_fd, errno);
+     return 0;
+  }
+
+  if (!FD_ISSET(out_fd, &wfds)) {
+     cs_log("pipe_WaitToWrite() error on fd=%d, fd is not in wfds, errno=%d", out_fd, errno);
+     return 0;
+  }
+
+  return 1;
 }
 
 /*
@@ -1482,9 +1485,9 @@ int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
  */
 int write_to_pipe(int fd, int id, uchar *data, int n)
 {
-	// check is write to pipe ready
-    if (!pipe_WaitToWrite(fd, 100))  	
-  	   return -1;
+  // check is write to pipe ready
+  if (!pipe_WaitToWrite(fd, 100))
+     return -1;
 
   uchar buf[1024+3+sizeof(int)];
 
