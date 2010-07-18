@@ -216,7 +216,8 @@ void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	
 	filter[38+0]    = 0x84;
 	filter[38+0+16] = 0xFF;
-	//FIXME: no filter for sa / provider
+	memcpy(filter+38+3, rdr->hexserial, 3);
+	memset(filter+38+3+16, 0xFF, 3);
 	
 
 	filter[70]=UNIQUE;
