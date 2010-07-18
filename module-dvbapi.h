@@ -63,18 +63,18 @@ typedef struct filter_s
 
 typedef struct demux_s
 {
-	unsigned short demux_index;
+	int demux_index;
 	FILTERTYPE demux_fd[MAX_FILTER];
-	unsigned short cadev_index;
+	int cadev_index;
 	int ca_fd;
 	int socket_fd;
-	unsigned short ECMpidcount;
+	int ECMpidcount;
 	ECMPIDSTYPE ECMpids[ECM_PIDS];
 	int pidindex;
 	int tries;
 	int max_status;
 	unsigned short program_number;
-	unsigned short STREAMpidcount;
+	int STREAMpidcount;
 	unsigned short STREAMpids[ECM_PIDS];
 	unsigned char lastcw[2][8];
 	int emm_filter;
