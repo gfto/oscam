@@ -282,7 +282,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
  			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
 			stat = get_stat(i, grs->caid, grs->prid, grs->srvid);
 			if (!stat) {
-				add_stat(i, grs->caid,  grs->prid, grs->srvid, 1, 0);
+				add_stat(i, grs->caid,  grs->prid, grs->srvid, 1, -1);
 				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
 				continue; 
 			}
