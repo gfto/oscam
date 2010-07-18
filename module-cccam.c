@@ -1660,7 +1660,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				get_cw(er);
 				cs_debug_mask(
 						D_TRACE,
-						"%s ECM request from client: caid %04x srvid %04x(%d) prid %04x",
+						"%s ECM request from client: caid %04x srvid %04x(%d) prid %06x",
 						getprefix(), er->caid, er->srvid, er->l, er->prid);
 			} else
 				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());

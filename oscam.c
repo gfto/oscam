@@ -1,4 +1,4 @@
-#define CS_CORE
+	#define CS_CORE
 #include "globals.h"
 #ifdef CS_WITH_GBOX
 #  include "csgbox/gbox.h"
@@ -2198,7 +2198,16 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
                   }
               break;
       }
-      if (status == -1) cs_log("request_cw() failed on reader %s", reader[i].label);      
+      if (status == -1) {
+      		cs_log("request_cw() failed on reader %s", reader[i].label);
+      		reader[i].fd_error++;
+      		if (reader[i].fd_error > 5) {
+      			kill(client[reader[i].cs_idx].pid, 1); //Schlocke: This should restart the reader!
+			reader[i].fd_error = 0;
+		} 
+      }
+      else
+      	reader[i].fd_error = 0;
   }
 }
 
@@ -2215,7 +2224,7 @@ int recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	grs.cidx = cs_idx;
 	memcpy(grs.ecmd5, er->ecmd5, sizeof(er->ecmd5));
 	memcpy(grs.reader_avail, reader_avail, sizeof(int)*CS_MAXREADER);
-	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%04X/%04X", username(cs_idx), grs.caid, grs.prid, grs.srvid);
+	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", username(cs_idx), grs.caid, grs.prid, grs.srvid);
 	write_to_pipe(fd_c2m, PIP_ID_BES, (uchar*)&grs, sizeof(GET_READER_STAT));
 	
 	uchar *ptr;

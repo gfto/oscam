@@ -501,6 +501,7 @@ struct s_reader  //contains device info, reader info and card info
   int       ridx; //FIXME reader[ridx] reader has to know what number it is, should be replaced by storing pointer to reader instead of array index
   int       enable;
   int       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
+  int       fd_error;
   int       fd;
   ulong     grp;
   int       fallback;

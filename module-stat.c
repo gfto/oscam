@@ -54,7 +54,7 @@ void load_stat_from_file(int ridx)
 	{
 		READER_STAT *stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
-		i = fscanf(file, "rc %d caid %04hX prid %04lX srvid %04hX time avg %dms ecms %d\n",
+		i = fscanf(file, "rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d\n",
 			&stat->rc, &stat->caid, &stat->prid, &stat->srvid, &stat->time_avg, &stat->ecm_count);
 		if (i > 4) {
 			llist_append(reader_stat[ridx], stat);
@@ -154,7 +154,7 @@ void save_stat_to_file(int ridx)
 		return;
 		
 	while (stat) {
-		fprintf(file, "rc %d caid %04hX prid %04lX srvid %04hX time avg %dms ecms %d\n",
+		fprintf(file, "rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d\n",
 				stat->rc, stat->caid, stat->prid, stat->srvid, stat->time_avg, stat->ecm_count);
 		stat = llist_itr_next(&itr);
 	}
@@ -217,7 +217,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 		//stat->ecm_count = 0; Keep ecm_count!
 	}
 
-	cs_debug_mask(D_TRACE, "adding stat for reader %s (%d): rc %d caid %04hX prid %04lX srvid %04hX time %dms usagelevel %d",
+	cs_debug_mask(D_TRACE, "adding stat for reader %s (%d): rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
 				reader[ridx].label, ridx, rc, caid, prid, srvid, ecm_time, reader[ridx].lb_usagelevel);
 	
 	//debug only:
