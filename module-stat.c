@@ -10,6 +10,8 @@ int ecm_send_cache_idx = 0;
 typedef struct s_ecm_send_cache {
    ushort        caid;
    uchar         ecmd5[CS_ECMSTORESIZE];            
+   int           readers[CS_MAXREADER];
+   int           best_reader;
 } ECM_SEND_CACHE;
 ECM_SEND_CACHE *ecm_send_cache;
 
@@ -27,15 +29,18 @@ int chk_send_cache(int caid, uchar *ecmd5)
 	for (i=0; i<MAX_ECM_SEND_CACHE; i++) {
 		if (ecm_send_cache[i].caid == caid && 
 		  memcmp(ecm_send_cache[i].ecmd5, ecmd5, sizeof(uchar)*CS_ECMSTORESIZE) == 0)
-			return 1;
+			return i;
 	}
-	return 0;
+	return -1;
 }
 
-void add_send_cache(int caid, uchar *ecmd5)
+void add_send_cache(int caid, uchar *ecmd5, int *readers, int best_reader)
 {
 	ecm_send_cache[ecm_send_cache_idx].caid = caid;
 	memcpy(ecm_send_cache[ecm_send_cache_idx].ecmd5, ecmd5, sizeof(uchar)*CS_ECMSTORESIZE);
+	memcpy(ecm_send_cache[ecm_send_cache_idx].readers, readers, sizeof(int)*CS_MAXREADER);
+	ecm_send_cache[ecm_send_cache_idx].best_reader = best_reader;
+	
 	ecm_send_cache_idx++;
 	if (ecm_send_cache_idx >= MAX_ECM_SEND_CACHE)
 		ecm_send_cache_idx = 0;
@@ -264,15 +269,16 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
  */
 int get_best_reader(GET_READER_STAT *grs, int *result)
 {
+	int i;
+	i = chk_send_cache(grs->caid, grs->ecmd5);
+	if (i >= 0) { //Found in cache, return same reader because he has the cached cws!
+		memcpy(ecm_send_cache[i].readers, result, sizeof(int)*CS_MAXREADER);
+		return ecm_send_cache[i].best_reader;
+	}
+
 	//resulting readers:
 	memset(result, 0, sizeof(int)*CS_MAXREADER);
-
-	if (chk_send_cache(grs->caid, grs->ecmd5))
-		return -2; //found in cache
-	add_send_cache(grs->caid, grs->ecmd5); //add to cache
 	
-	
-	int i;
 	int best_ridx = -1, best_ridx2 = -1;
 	int best = 0, best2 = 0;
 	int current = -1;
@@ -351,5 +357,8 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	for (i=0;i<CS_MAXREADER; i++)
 		if (grs->reader_avail[i] && !result[i])
 			result[i] = 2;
+	
+	add_send_cache(grs->caid, grs->ecmd5, result, best_ridx); //add to cache
+	
 	return best_ridx;
 }

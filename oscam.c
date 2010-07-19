@@ -2397,15 +2397,13 @@ void get_cw(ECM_REQUEST *er)
 			for (i =0; i < CS_MAXREADER; i++)
 				reader_avail[i] = matching_reader(er, &reader[i]);
 				
-			int res = recv_best_reader(er, reader_avail);
+			recv_best_reader(er, reader_avail);
 				
-			for (i = m = 0; i < CS_MAXREADER; i++)
+			for (i = m = 0; i < CS_MAXREADER; i++) {
 				if (reader_avail[i]) {
 					//When autobalance enabled, all other readers are fallbacks:
 					m|=er->reader[i] = reader_avail[i];
 				}
-			if (res == -2) { //Schlocke: already send by another reader!
-				return; //chk_pending does the job!
 			}
 		}
 		else
