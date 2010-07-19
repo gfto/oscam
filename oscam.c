@@ -1444,8 +1444,8 @@ void store_logentry(char *txt)
 
 /*
 * Check if a fd is ready for a write (for pipes).
-* retry twice in case of an error (so it could take 3 x timeout_ms in case of a hard error to return)
-*/
+* Select version
+*//*
 int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
 {
   fd_set wfds;
@@ -1477,6 +1477,24 @@ int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
   }
 
   return 1;
+}*/
+
+/*
+* Check if a fd is ready for a write (for pipes).
+* Poll version
+*/
+int pipe_WaitToWrite (int fd, unsigned timeout_ms)
+{
+   struct pollfd pfds;
+
+   pfds.fd = fd;
+   pfds.events = POLLOUT;
+   pfds.revents = 0;
+   if (poll(&pfds, 1, timeout_ms) < 1) {
+      cs_log("pipe_WaitToWrite() error on fd=%d, errno=%d, %s", fd, errno, strerror(errno));
+      return 0;
+   }
+   return 1;
 }
 
 /*
