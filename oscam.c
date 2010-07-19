@@ -2561,6 +2561,13 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 
 	for (--i; i>=0; i--) {
 		if (ecmtask[i].rc>=100) { // check all pending ecm-requests 
+			er=&ecmtask[i];
+			if (check_ecmcache1(er, client[cs_idx].grp)) { //Schlocke: caching dupplicate requests from different clients
+				er->rc = 1;
+				send_dcw(er);
+			}
+		}
+		if (ecmtask[i].rc>=100) { // check all pending ecm-requests 
 			int act, j;
 			er=&ecmtask[i];
 			tpc=er->tps;
