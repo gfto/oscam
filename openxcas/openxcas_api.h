@@ -161,6 +161,17 @@ int openxcas_send_private_message(int stream_id, unsigned int sequence, int msg_
 const char * openxcas_get_time(void);
 
 
+
+
+
+
+
+
+
+
+
+
+
 /* RETURN VALUE: filter_index
  * -1   : error
  * >= 0 : success
@@ -179,6 +190,36 @@ int openxcas_stop_filter_ex(int stream_id, unsigned int sequence,
 
 int openxcas_filter_callback_ex(int stream_id, unsigned int sequence,
     struct stOpenXCAS_Data * openxcas_data);
+
+/* RETURN VALUE: status
+ * -1 : error
+ *  0 : timeout
+ *  1 : success
+ */
+int openxcas_create_cipher_ex(int stream_id, unsigned int sequence,
+    unsigned short ca_system_id,
+    unsigned short ecm_pid,
+    unsigned short video_pid, unsigned short video_ecm_pid,
+    unsigned short audio_pid, unsigned short audio_ecm_pid,
+    unsigned short data_pid, unsigned short data_ecm_pid);
+
+/* RETURN VALUE: status
+ * -1 : error
+ *  0 : timeout
+ *  1 : success
+ */
+int openxcas_destory_cipher_ex(int stream_id, unsigned int sequence);
+
+/* RETURN VALUE: status
+ * -1 : error
+ *  0 : timeout
+ *  1 : success
+ */
+int openxcas_set_key_ex(int stream_id, unsigned int sequence,
+    unsigned short ca_system_id,
+    unsigned short ecm_pid,
+    unsigned char * even, unsigned char * odd);
+
 
 #ifdef __cplusplus
 }
