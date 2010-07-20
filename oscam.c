@@ -1,4 +1,4 @@
-	#define CS_CORE
+#define CS_CORE
 #include "globals.h"
 #ifdef CS_WITH_GBOX
 #  include "csgbox/gbox.h"
@@ -2185,11 +2185,8 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 }
 
 //receive best reader from master process. Call this function from client!
-int recv_best_reader(ECM_REQUEST *er, int *reader_avail)
+void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 {
-	if (!cfg->reader_auto_loadbalance)
-		return -1;
-
 	GET_READER_STAT grs;
 	grs.caid = er->caid;
 	grs.prid = er->prid;
@@ -2204,12 +2201,12 @@ int recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	fd_set fds;
 	struct timeval timeout;
 	timeout.tv_sec = 0;
-	timeout.tv_usec = 500;
+	timeout.tv_usec = 700;
 	do
 	{
 		FD_ZERO(&fds);
 		FD_SET(client[cs_idx].fd_m2c_c, &fds);
-		if (!select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, &timeout)) {
+		if (select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, &timeout) < 0) {
 			cs_debug_mask(D_TRACE, "get best reader timeout!");
 			break; //timeout
 		}
@@ -2222,8 +2219,7 @@ int recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 			if (n == PIP_ID_BES) {
 				int *best_readers = (int*)ptr;
 				memcpy(reader_avail, best_readers, sizeof(int)*CS_MAXREADER);
-				int res = best_readers[CS_MAXREADER];
-				return res;
+				return;
 			}
 			else if (n == PIP_ID_DIR)
 				continue;
@@ -2234,7 +2230,6 @@ int recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 		else //no data
 			break;
 	} while (1);
-	return -1;
 }
 
 void get_cw(ECM_REQUEST *er)
@@ -2713,8 +2708,8 @@ static void restart_clients()
 void send_best_reader(GET_READER_STAT *grs)
 {
 	//cs_debug_mask(D_TRACE, "got request for best reader for %04X/%04X/%04X", grs->caid, grs->prid, grs->srvid);
-	int best_reader[CS_MAXREADER+1];
-	best_reader[CS_MAXREADER] = get_best_reader(grs, best_reader);
+	int best_reader[CS_MAXREADER];
+	get_best_reader(grs, best_reader);
 	//cs_debug_mask(D_TRACE, "sending best reader %d", ridx);
 	write_to_pipe(client[grs->cidx].fd_m2c, PIP_ID_BES, (uchar*)&best_reader, sizeof(best_reader));
 }
