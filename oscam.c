@@ -1462,17 +1462,17 @@ int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
   tv.tv_usec = (timeout_ms % 1000) * 1000L;
 
   if (select(out_fd + 1, NULL, &wfds, &ewfds, &tv) == -1) {
-     cs_log("pipe_WaitToWrite() error on fd=%d, select_ret=-1, errno=%d", out_fd, errno);
+     cs_log("pipe_WaitToWrite() error on fd=%d, select_ret=-1, errno=%d %s", out_fd, errno, strerror(errno));
      return 0;
   }
 
   if (FD_ISSET(out_fd, &ewfds)) {
-     cs_log("pipe_WaitToWrite() error on fd=%d, fd is in ewfds, errno=%d", out_fd, errno);
+     cs_log("pipe_WaitToWrite() error on fd=%d, fd is in ewfds, errno=%d %s", out_fd, errno, strerror(errno));
      return 0;
   }
 
   if (!FD_ISSET(out_fd, &wfds)) {
-     cs_log("pipe_WaitToWrite() error on fd=%d, fd is not in wfds, errno=%d", out_fd, errno);
+     cs_log("pipe_WaitToWrite() error on fd=%d, fd is not in wfds, errno=%d %s", out_fd, errno, strerror(errno));
      return 0;
   }
 
@@ -1486,7 +1486,7 @@ int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
 int write_to_pipe(int fd, int id, uchar *data, int n)
 {
   // check is write to pipe ready
-  if (!pipe_WaitToWrite(fd, 1000))
+  if (!pipe_WaitToWrite(fd, 100))
      return -1;
 
   uchar buf[1024+3+sizeof(int)];
