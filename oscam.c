@@ -1486,7 +1486,7 @@ int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
 int write_to_pipe(int fd, int id, uchar *data, int n)
 {
   // check is write to pipe ready
-  if (!pipe_WaitToWrite(fd, 100))
+  if (!pipe_WaitToWrite(fd, 1000))
      return -1;
 
   uchar buf[1024+3+sizeof(int)];
