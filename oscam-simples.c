@@ -194,6 +194,22 @@ int aes_present(AES_ENTRY *list, ushort caid, uint32 provid,int keyid)
     return ok;
 }
 
+void aes_clear_entries(struct s_reader *rdr)
+{
+
+    AES_ENTRY *current;
+    AES_ENTRY *next;
+
+    current=NULL;
+    next=rdr->aes_list;
+    while(next) {
+        current=next;
+        next=current->next;
+        free(current);
+    }
+    rdr->aes_list=NULL;
+}
+
 char *remote_txt(void)
 {
   if (is_server)

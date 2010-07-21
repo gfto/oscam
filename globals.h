@@ -1182,9 +1182,8 @@ extern void aes_encrypt_idx(int, uchar *, int);
 extern void aes_decrypt(uchar *, int);
 extern int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n);
 extern int aes_present(AES_ENTRY *list, ushort caid, uint32 provid,int keyid);
-
-
 extern void parse_aes_keys(struct s_reader *rdr,char *value);
+extern void aes_clear_entries(struct s_reader *rdr);
 
 #define aes_encrypt(b, n) aes_encrypt_idx(cs_idx, b, n)
 

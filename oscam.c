@@ -317,9 +317,16 @@ void cs_exit(int sig)
     	client[cs_idx].last_caid = 0xFFFF;
     	client[cs_idx].last_srvid = 0xFFFF;
     	cs_statistics(cs_idx);
+    	break;
     case 'm': break;
     case 'n': *log_fd=0;
               break;
+    case 'r':
+        // free AES entries allocated memory
+        if(reader[ridx].aes_list) {
+            aes_clear_entries(&reader[ridx]);
+        }
+        break;
     case 's': *log_fd=0;
               int i;
               for (i=1; i<CS_MAXPID; i++)
