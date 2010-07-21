@@ -281,6 +281,14 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         memcpy (ident, &ecm88Data[2], sizeof(ident));
         provid = b2i(3, ident);
         ident[2]&=0xF0;
+
+        if(hasD2) {
+            // check that we have the AES key to decode the CW
+            // if not there is no need to send the ecm to the card
+            if(!aes_present(reader->aes_list, 0x500, (uint32) provid, D2KeyID))
+                return ERROR;
+        }
+
         keynr=ecm88Data[4]&0x0F;
         // 40 07 03 0b 00  -> nano 40, len =7  ident 030B00 (tntsat), key #0  <== we're pointing here
         // 09 -> use key #9 

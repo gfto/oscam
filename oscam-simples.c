@@ -173,6 +173,27 @@ int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid,
     return ok; // all ok, key decoded.
 }
 
+int aes_present(AES_ENTRY *list, ushort caid, uint32 provid,int keyid)
+{
+    AES_ENTRY *current;
+    int ok=1;
+    int error=0;
+
+    current=list;
+    while(current) {
+        if(current->caid==caid && current->ident==provid && current->keyid==keyid)
+            break;
+        current=current->next;
+    }
+
+    if(!current) {
+        cs_log("AES Decrypt : key id %d not found for CAID %04X , provider %06x",keyid,caid,provid);
+        return error; // we don't have the key to decode this buffer.
+        }
+    
+    return ok;
+}
+
 char *remote_txt(void)
 {
   if (is_server)
