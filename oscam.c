@@ -2206,9 +2206,14 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	{
 		FD_ZERO(&fds);
 		FD_SET(client[cs_idx].fd_m2c_c, &fds);
-		if (select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, &timeout) < 0) {
-			cs_debug_mask(D_TRACE, "get best reader timeout!");
-			break; //timeout
+		int res = select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, &timeout);
+		if (res == 0) {
+			cs_debug_mask(D_TRACE, "get best reader: timeout!");
+			return; //timeout
+		}
+		else if (res < 0) {
+			cs_debug_mask(D_TRACE, "get best reader: failed!");
+			return; //failed
 		}
 			
 		if (master_pid!=getppid())
@@ -2224,11 +2229,10 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 			else if (n == PIP_ID_DIR)
 				continue;
 			else //should neven happen
-				cs_debug_mask(D_TRACE, "got best reader: illegal paket? n=%d", n);
+				cs_debug_mask(D_TRACE, "get best reader: illegal paket? n=%d", n);
 			break;
 		} 
-		else //no data
-			break;
+		//no data
 	} while (1);
 }
 
