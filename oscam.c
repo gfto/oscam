@@ -1501,7 +1501,10 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 //n=write(fd, buf, n);
 //printf("WRITE_END pid=%d", getpid()); fflush(stdout);
 //return(n);
-//if( !fd ) cs_log("write_to_pipe: fd==0");
+  if( !fd ) {
+	cs_log("write_to_pipe: fd==0 id: %d", id);
+	return -1;	
+  }
   return(write(fd, buf, n));
 }
 
