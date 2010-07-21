@@ -1209,6 +1209,7 @@ extern int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *c
 extern int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_size);
 extern int pcsc_check_card_inserted(struct s_reader *pcsc_reader);
 extern int pcsc_reader_init(struct s_reader *pcsc_reader, char *device);
+extern void pcsc_close(struct s_reader *pcsc_reader);
 #endif
 
 // protocol modules

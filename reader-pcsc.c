@@ -74,7 +74,8 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
     else {
         cs_debug("PCSC failed establish context (%lx)", rv);
     }
-
+    free(mszReaders);
+    free(readers);
     return 0;
 }
 
@@ -228,6 +229,15 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
     }
     
     return 0;
+}
+
+void pcsc_close(struct s_reader *pcsc_reader)
+{
+	cs_debug_mask (D_IFD, "PSCS : Closing device %s", pcsc_reader->device);
+    SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
+    SCardReleaseContext(pcsc_reader->hContext);
+    pcsc_reader->hCard=0;
+    pcsc_reader->pcsc_has_card=0;
 }
 #endif
 

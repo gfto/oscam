@@ -326,6 +326,8 @@ void cs_exit(int sig)
         if(reader[ridx].aes_list) {
             aes_clear_entries(&reader[ridx]);
         }
+        // close the device
+        reader_device_close(&reader[ridx]);
         break;
     case 's': *log_fd=0;
               int i;
