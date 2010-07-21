@@ -1197,6 +1197,7 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 void get_emm_filter(struct s_reader * rdr, uchar *filter);
 int get_cardsystem(ushort caid);
 extern int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
+extern void reader_device_close(struct s_reader * reader);
 
 //module-stat
 extern void init_stat();
