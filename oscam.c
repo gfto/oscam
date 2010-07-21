@@ -1488,6 +1488,8 @@ int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
   return 1;
 }
 
+static uchar buf[1024+3+sizeof(int)]; //schlocke static buffer instead of stack!
+
 /*
  * write_to_pipe():
  * write all kind of data to pipe specified by fd
@@ -1495,10 +1497,10 @@ int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
 int write_to_pipe(int fd, int id, uchar *data, int n)
 {
   // check is write to pipe ready
-  if (!fd || !pipe_WaitToWrite(fd, 100))
-     return -1;
+  //if (!fd || !pipe_WaitToWrite(fd, 100))
+  //   return -1;
 
-  uchar buf[1024+3+sizeof(int)];
+  //uchar buf[1024+3+sizeof(int)];
 
 //printf("WRITE_START pid=%d", getpid()); fflush(stdout);
   if ((id<0) || (id>PIP_ID_MAX))
@@ -2184,12 +2186,14 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
               break;
       }
       if (status == -1) {
-      		cs_log("request_cw() failed on reader %s", reader[i].label);
-      		reader[i].fd_error++;
-      		if (reader[i].fd_error > 5) {
-      			kill(client[reader[i].cs_idx].pid, 1); //Schlocke: This should restart the reader!
-			reader[i].fd_error = 0;
-		} 
+      		cs_log("request_cw() failed on reader %s (%d)", reader[i].label, i);
+      		if (reader[i].fd && reader[i].pid) {
+ 	     		reader[i].fd_error++;
+      			if (reader[i].fd_error > 5) {
+      				reader[i].fd_error = 0;
+      				kill(client[reader[i].cs_idx].pid, 1); //Schlocke: This should restart the reader!
+      			} 
+		}
       }
       else
       	reader[i].fd_error = 0;
@@ -2200,6 +2204,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 {
 	GET_READER_STAT grs;
+	memset(&grs, 0, sizeof(grs));
 	grs.caid = er->caid;
 	grs.prid = er->prid;
 	grs.srvid = er->srvid;
@@ -2224,8 +2229,6 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 			return; //timeout
 		}
 		else if (res < 0) {
-			if (errno == EINTR)
-				continue;
 			cs_debug_mask(D_TRACE, "get best reader: failed!");
 			return; //failed
 		}
@@ -2244,9 +2247,7 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 				continue;
 			else //should neven happen
 				cs_debug_mask(D_TRACE, "get best reader: illegal paket? n=%d", n);
-			break;
 		} 
-		//no data
 	} while (1);
 }
 
@@ -2414,7 +2415,6 @@ void get_cw(ECM_REQUEST *er)
 				
 			for (i = m = 0; i < CS_MAXREADER; i++) {
 				if (reader_avail[i]) {
-					//When autobalance enabled, all other readers are fallbacks:
 					m|=er->reader[i] = reader_avail[i];
 				}
 			}

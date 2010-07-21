@@ -3834,7 +3834,7 @@ char *mk_t_ftab(FTAB *ftab){
 	return value;
 }
 
-char tmpdir[200] = {0x00};
+static char tmpdir[200] = {0x00};
 
 /**
  * get tmp dir
