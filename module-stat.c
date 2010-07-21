@@ -288,12 +288,14 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
  			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
 			stat = get_stat(i, grs->caid, grs->prid, grs->srvid);
 			if (!stat) {
+				cs_debug_mask(D_TRACE, "loadbalance: starting statistics for reader %s", reader[i].label);
 				add_stat(i, grs->caid,  grs->prid, grs->srvid, 1, -1);
 				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
 				continue; 
 			}
 			
 			if (stat->ecm_count > MAX_ECM_COUNT && stat->time_avg > (int)cfg->ftimeout) {
+				cs_debug_mask(D_TRACE, "loadbalance: max ecms (%d) reached by reader %s, resetting statistics", MAX_ECM_COUNT, reader[i].label);
 				reset_stat(grs->caid, grs->prid, grs->srvid);
 				result[i] = 1;//max ecm reached, get new statistics
 				continue;
@@ -347,7 +349,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	if (best_ridx == -1)
 		best_ridx = best_ridx2;
 	if (best_ridx >= 0) {
-		cs_debug_mask(D_TRACE, "-->loadbalance best reader %s best value %d", reader[best_ridx].label, best2);
+		cs_debug_mask(D_TRACE, "-->loadbalance best reader %s (%d) best value %d", reader[best_ridx].label, best_ridx, best2);
 		result[best_ridx] = 1;
 	}
 	else
@@ -357,6 +359,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	for (i=0;i<CS_MAXREADER; i++)
 		if (grs->reader_avail[i] && !result[i])
 			result[i] = 2;
+	cs_debug_mask(D_TRACE, "readers: %d%d%d%d%d%d%d%d", result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7]);
 	
 	add_send_cache(grs->caid, grs->ecmd5, result, best_ridx); //add to cache
 	
