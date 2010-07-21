@@ -1461,9 +1461,18 @@ int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
   tv.tv_sec = timeout_ms/1000L;
   tv.tv_usec = (timeout_ms % 1000) * 1000L;
 
-  if (select(out_fd + 1, NULL, &wfds, &ewfds, &tv) == -1) {
-     cs_log("pipe_WaitToWrite() error on fd=%d, select_ret=-1, errno=%d %s", out_fd, errno, strerror(errno));
-     return 0;
+  int select_ret = 0;
+  while (select_ret <= 0)
+  {
+    select_ret = select(out_fd + 1, NULL, &wfds, &ewfds, &tv);
+    if (select_ret==-1) {
+      cs_log("pipe_WaitToWrite() error on fd=%d, select_ret=-1, errno=%d %s", out_fd, errno, strerror(errno));
+      if (errno == EINTR) //4
+        continue;
+      return 0;
+    }
+    if (select_ret==0)
+      return 0;
   }
 
   if (FD_ISSET(out_fd, &ewfds)) {
@@ -2215,6 +2224,8 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 			return; //timeout
 		}
 		else if (res < 0) {
+			if (errno == EINTR)
+				continue;
 			cs_debug_mask(D_TRACE, "get best reader: failed!");
 			return; //failed
 		}

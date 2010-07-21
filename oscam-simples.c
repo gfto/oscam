@@ -506,7 +506,7 @@ int bytes_available(int fd)
 {
    fd_set rfds;
    fd_set erfds;
-   int select_ret;
+   int select_ret = 0;
    int in_fd;
 
    in_fd=fd;
@@ -517,13 +517,20 @@ int bytes_available(int fd)
    FD_ZERO(&erfds);
    FD_SET(in_fd, &erfds);
    
-   select_ret = select(in_fd+1, &rfds, NULL,  &erfds, NULL);
-   if(select_ret==-1)
-    {
-    cs_log("ERROR reading from fd %d select_ret=%i, errno=%d",in_fd, select_ret, errno);
-    return 0;
-    }
-
+   while (select_ret <= 0) 
+   {
+      select_ret = select(in_fd+1, &rfds, NULL, &erfds, NULL);
+      if (select_ret==-1)
+      {
+        cs_log("ERROR reading from fd %d select_ret=%i, errno=%d",in_fd, select_ret, errno);
+        if (errno == EINTR) //4
+          continue;
+        return 0;
+      }
+      if (select_ret==0)
+        return 0;
+   }
+      
    if (FD_ISSET(in_fd, &erfds))
    {
     cs_log("ERROR reading from fd %d select_ret=%i, errno=%d",in_fd, select_ret, errno);
