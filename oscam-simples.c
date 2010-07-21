@@ -818,3 +818,9 @@ char *get_provider(int caid, ulong provid){
 	if (!caid) name[0] = '\0';
 	return(name);
 }
+
+void make_non_blocking(int fd) {
+    int fl;
+    fl=fcntl(fd, F_GETFL);
+    fcntl(fd, F_SETFL, fl | O_NONBLOCK | O_NDELAY);
+}
