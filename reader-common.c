@@ -579,11 +579,9 @@ int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep)
 void reader_device_close(struct s_reader * reader)
 {
 #ifdef HAVE_PCSC
-	if (reader->typ == R_PCSC) {
+	if (reader->typ == R_PCSC)
 	   pcsc_close(reader);
-	   return;
-	}
+    else
 #endif
-	ICC_Async_Close(reader);
-	
+	   ICC_Async_Close(reader);
 }
