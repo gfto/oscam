@@ -272,7 +272,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	int i;
 	i = chk_send_cache(grs->caid, grs->ecmd5);
 	if (i >= 0) { //Found in cache, return same reader because he has the cached cws!
-		memcpy(ecm_send_cache[i].readers, result, sizeof(int)*CS_MAXREADER);
+		memcpy(result, ecm_send_cache[i].readers, sizeof(int)*CS_MAXREADER);
 		return ecm_send_cache[i].best_reader;
 	}
 
