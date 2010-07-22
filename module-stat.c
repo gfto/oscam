@@ -319,6 +319,9 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 					break;
 				case LB_FASTEST_READER_FIRST:
 					current = stat->time_avg * 100 / weight;
+#ifdef WEBIF
+					reader[i].lbvalue = current;
+#endif
 					break;
 				case LB_OLDEST_READER_FIRST:
 					current = (reader[i].lb_last-nulltime) * 100 / weight;

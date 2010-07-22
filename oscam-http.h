@@ -324,6 +324,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TH>Online</TH>\n\
 		<TH>CAID:SRVID</TH>\n\
 		<TH>Current Channel</TH>\n\
+		<TH>LB Value</TH>\n\
 		<TH>Idle</TH>\n\
 		<TH>Status</TH>\n\
 		</TR>\n\
@@ -352,6 +353,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TD align=\"center\">##CLIENTLOGINSECS##</TD>\n\
 		<TD align=\"center\">##CLIENTCAID##:##CLIENTSRVID##</TD>\n\
 		<TD>##CLIENTSRVPROVIDER####CLIENTSRVNAME##</TD>\n\
+		<TD align=\"center\">##CLIENTLBVALUE##</TD>\n\
 		<TD align=\"center\">##CLIENTIDLESECS##</TD>\n\
 		<TD align=\"center\">##CLIENTCON##</TD>\n\
 		</TR>\n"

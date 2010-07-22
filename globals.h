@@ -603,6 +603,7 @@ struct s_reader  //contains device info, reader info and card info
   int		emmskipped[4]; //count skipped EMM
   int		emmerror[4];	//count error EMM
   int		emmblocked[4];	//count blocked EMM
+  int		lbvalue;		//loadbalance Value
 #endif
 #ifdef HAVE_PCSC
   SCARDCONTEXT hContext;

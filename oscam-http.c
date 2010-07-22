@@ -1771,6 +1771,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 					{
 						if(reader[ridx].pid == client[i].pid)
 						{
+							tpl_addVar(vars, 0, "CLIENTLBVALUE","");
+							if (reader[ridx].lbvalue)
+								tpl_printf(vars, 0, "CLIENTLBVALUE", "%d", reader[ridx].lbvalue);
+
 							switch(reader[ridx].card_status)
 							{
 								case NO_CARD: txt = "OFF"; break;
