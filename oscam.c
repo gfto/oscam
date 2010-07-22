@@ -1867,7 +1867,12 @@ int send_dcw(ECM_REQUEST *er)
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
 				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby);
 #ifdef WEBIF
-	snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", sby);
+	if(er->rc == 0)
+		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", sby);
+	else if ((er->rc == 1) || (er->rc == 2))
+		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "by %s (cache)", reader[er->reader[0]].label);
+	else
+		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", stxt[er->rc]);
 #endif
 
 	if(!client[cs_idx].ncd_server && client[cs_idx].autoau && er->rcEx==0)
