@@ -3,6 +3,9 @@
 
 #ifdef HAVE_PCSC
   #ifdef OS_CYGWIN32
+    #define __reserved
+    #define __nullnullterminated
+    #include <specstrings.h>
     #include <WinSCard.h>
   #else
     #include <PCSC/pcsclite.h> 
