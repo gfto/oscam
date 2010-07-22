@@ -237,7 +237,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 
 void pcsc_close(struct s_reader *pcsc_reader)
 {
-	cs_debug_mask (D_IFD, "PSCS : Closing device %s", pcsc_reader->device);
+	cs_debug_mask (D_IFD, "PCSC : Closing device %s", pcsc_reader->device);
     SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
     SCardReleaseContext(pcsc_reader->hContext);
     pcsc_reader->hCard=0;

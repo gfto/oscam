@@ -384,7 +384,7 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
         ret = smart_write(reader,FiDi, sizeof (FiDi),0);
     }
     else {
-        cs_log("Not setting F and D as we're in Irdeto mode");
+        cs_debug("Not setting F and D as we're in Irdeto mode");
     }
 
     // command 2, set the frequency in KHz
