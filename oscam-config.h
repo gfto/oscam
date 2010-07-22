@@ -22,10 +22,6 @@
 #  define HAVE_DVBAPI
 #endif
 
-#ifdef AZBOX
-#  define HAVE_DVBAPI
-#endif
-
 #ifdef UCLIBC
 #  define CS_EMBEDDED
 #    define CS_NOSHM
