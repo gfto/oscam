@@ -1814,14 +1814,20 @@ int send_dcw(ECM_REQUEST *er)
 
 	send_reader_stat(er->reader[0], er, er->rc);
 	
-	if(cfg->mon_appendchaninfo)
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s",
-				uname, er->caid, er->prid, er->srvid, er->l, lc,
-				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, get_servicename(er->srvid, er->caid));
+	char nre[20];
+	if (er->n_readers > 1)
+		sprintf(nre, " of %d", er->n_readers);
 	else
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s",
+		nre[0] = 0;
+	
+	if(cfg->mon_appendchaninfo)
+		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s%s - %s",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
-				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby);
+				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, nre, get_servicename(er->srvid, er->caid));
+	else
+		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s%s",
+				uname, er->caid, er->prid, er->srvid, er->l, lc,
+				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, nre);
 #ifdef WEBIF
 	if(er->rc == 0)
 		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", sby);
@@ -2386,9 +2392,12 @@ void get_cw(ECM_REQUEST *er)
 				
 			recv_best_reader(er, reader_avail);
 				
+			er->n_readers = 0; //for logging/found-messages
 			for (i = m = 0; i < CS_MAXREADER; i++) {
 				if (reader_avail[i]) {
 					m|=er->reader[i] = reader_avail[i];
+					if (reader_avail[i] == 1) //count only stage 1
+						er->n_readers++;
 				}
 			}
 		}

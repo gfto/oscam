@@ -882,6 +882,7 @@ typedef struct ecm_request_t
   ushort        pid;
   ushort        idx;
   ulong         prid;
+  int           n_readers;
   int           reader[CS_MAXREADER];
   int           cidx;   // client index
   int           cpti;   // client pending table index
