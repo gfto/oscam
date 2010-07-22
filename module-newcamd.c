@@ -374,7 +374,7 @@ static int connect_newcamd_server()
   cs_log("Newcamd Server: %s:%d - UserID: %i", reader[ridx].device, reader[ridx].r_port, buf[3+2]);
   cs_log("CAID: %04X - UA: %02X%02X%02X%02X%02X%02X%02X%02X - Provider # %i", reader[ridx].caid[0], reader[ridx].hexserial[0], reader[ridx].hexserial[1], reader[ridx].hexserial[2], reader[ridx].hexserial[3], reader[ridx].hexserial[4], reader[ridx].hexserial[5], reader[ridx].hexserial[6], reader[ridx].hexserial[7], buf[14+2]);
   reader[ridx].nprov = buf[14+2];
-  memset(reader[ridx].prid, 0xff, sizeof(reader[ridx].prid));
+  memset(reader[ridx].prid, 0x00, sizeof(reader[ridx].prid));
   for (i=0; i < reader[ridx].nprov; i++) {
     reader[ridx].availkeys[i][0] = 1;
     reader[ridx].prid[i][0] = buf[15+2+11*i];
