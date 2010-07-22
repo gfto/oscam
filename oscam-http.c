@@ -1650,6 +1650,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	else tpl_addVar(vars, 0, "HIDEIDLECLIENTSSELECTED0", "selected");
 
 	for (i=0; i<CS_MAXPID; i++) {
+
+		// Reset template variables
+		tpl_addVar(vars, 0, "CLIENTLBVALUE","");
+
 		if (client[i].pid && client[i].wihidden != 1) {
 
 			if((cfg->http_hide_idle_clients == 1) && (client[i].typ == 'c') && ((now - client[i].lastecm) > cfg->mon_hideclient_to)) continue;
@@ -1705,9 +1709,9 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				}
 			}
 			if(days == 0)
-			tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02d:%02d:%02d", hours, mins, secs);
+				tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02d:%02d:%02d", hours, mins, secs);
 			else
-			tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+				tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 
 			tpl_printf(vars, 0, "CLIENTCAID", "%04X", client[i].last_caid);
 			tpl_printf(vars, 0, "CLIENTSRVID", "%04X", client[i].last_srvid);
@@ -1725,9 +1729,9 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 					}
 				}
 				if (found == 1)
-				break;
+					break;
 				else
-				srvid = srvid->next;
+					srvid = srvid->next;
 			}
 
 			if (found == 1) {
@@ -1756,9 +1760,9 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				}
 			}
 			if(days == 0)
-			tpl_printf(vars, 0, "CLIENTIDLESECS", "%02d:%02d:%02d", hours, mins, secs);
+				tpl_printf(vars, 0, "CLIENTIDLESECS", "%02d:%02d:%02d", hours, mins, secs);
 			else
-			tpl_printf(vars, 0, "CLIENTIDLESECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+				tpl_printf(vars, 0, "CLIENTIDLESECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 			if(con == 2) tpl_printf(vars, 0, "CLIENTCON", "Duplicate");
 			else if (con == 1) tpl_printf(vars, 0, "CLIENTCON", "Sleep");
 			else
@@ -1771,22 +1775,21 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 					{
 						if(reader[ridx].pid == client[i].pid)
 						{
-							tpl_addVar(vars, 0, "CLIENTLBVALUE","");
 							if (reader[ridx].lbvalue)
 								tpl_printf(vars, 0, "CLIENTLBVALUE", "%d", reader[ridx].lbvalue);
 
 							switch(reader[ridx].card_status)
 							{
-								case NO_CARD: txt = "OFF"; break;
-								case CARD_NEED_INIT: txt = "NEEDINIT"; break;
-								case CARD_INSERTED:
-									if (client[i].typ=='p')
-										txt = "CONNECTED";
-									else
-										txt = "CARDOK";
-									break;
-								case CARD_FAILURE: txt = "ERROR"; break;
-								default: txt = "UNDEF";
+							case NO_CARD: txt = "OFF"; break;
+							case CARD_NEED_INIT: txt = "NEEDINIT"; break;
+							case CARD_INSERTED:
+								if (client[i].typ=='p')
+									txt = "CONNECTED";
+								else
+									txt = "CARDOK";
+								break;
+							case CARD_FAILURE: txt = "ERROR"; break;
+							default: txt = "UNDEF";
 							}
 						}
 					}
