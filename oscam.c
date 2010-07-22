@@ -613,6 +613,10 @@ int cs_fork(in_addr_t ip, in_port_t port)
       cs_log("Cannot create pipe (errno=%d)", errno);
       cs_exit(1);
     }
+
+    make_non_blocking(fdp[0]);
+    make_non_blocking(fdp[1]);
+
 		if (reader[ridx].typ == R_SC8in1 && port == 99) { //SC8in1 reader gets threaded, not forked
                         if (reader[ridx].handle == 0)
 				reader_device_init(&reader[ridx]); 
@@ -1452,79 +1456,31 @@ void store_logentry(char *txt)
 }
 
 /*
-* Check if a fd is ready for a write (for pipes).
-* Select version
-*/
-int pipe_WaitToWrite (int out_fd, unsigned timeout_ms)
-{
-  fd_set wfds;
-  fd_set ewfds;
-  struct timeval tv;
-
-  FD_ZERO(&wfds);
-  FD_SET(out_fd, &wfds);
-
-  FD_ZERO(&ewfds);
-  FD_SET(out_fd, &ewfds);
-
-  tv.tv_sec = timeout_ms/1000L;
-  tv.tv_usec = (timeout_ms % 1000) * 1000L;
-
-  int select_ret = 0;
-  while (select_ret <= 0)
-  {
-    select_ret = select(out_fd + 1, NULL, &wfds, &ewfds, &tv);
-    if (select_ret==-1) {
-      cs_log("pipe_WaitToWrite() error on fd=%d, select_ret=-1, errno=%d %s", out_fd, errno, strerror(errno));
-      if (errno == EINTR) //4
-        continue;
-      return 0;
-    }
-    if (select_ret==0)
-      return 0;
-  }
-
-  if (FD_ISSET(out_fd, &ewfds)) {
-     cs_log("pipe_WaitToWrite() error on fd=%d, fd is in ewfds, errno=%d %s", out_fd, errno, strerror(errno));
-     return 0;
-  }
-
-  if (!FD_ISSET(out_fd, &wfds)) {
-     cs_log("pipe_WaitToWrite() error on fd=%d, fd is not in wfds, errno=%d %s", out_fd, errno, strerror(errno));
-     return 0;
-  }
-
-  return 1;
-}
-
-static uchar buf[1024+3+sizeof(int)]; //schlocke static buffer instead of stack!
-
-/*
  * write_to_pipe():
  * write all kind of data to pipe specified by fd
  */
 int write_to_pipe(int fd, int id, uchar *data, int n)
 {
-  // check is write to pipe ready
-  //if (!fd || !pipe_WaitToWrite(fd, 100))
-  //   return -1;
+  static uchar buf[1024+3+sizeof(int)]; //schlocke static buffer instead of stack!
 
-  //uchar buf[1024+3+sizeof(int)];
+  if( !fd ) {
+        cs_log("write_to_pipe: fd==0 id: %d", id);
+        return -1;
+  }
 
 //printf("WRITE_START pid=%d", getpid()); fflush(stdout);
+
   if ((id<0) || (id>PIP_ID_MAX))
     return(PIP_ID_ERR);
   memcpy(buf, PIP_ID_TXT[id], 3);
   memcpy(buf+3, &n, sizeof(int));
   memcpy(buf+3+sizeof(int), data, n);
   n+=3+sizeof(int);
+
 //n=write(fd, buf, n);
 //printf("WRITE_END pid=%d", getpid()); fflush(stdout);
 //return(n);
-  if( !fd ) {
-	cs_log("write_to_pipe: fd==0 id: %d", id);
-	return -1;	
-  }
+
   return(write(fd, buf, n));
 }
 
@@ -2203,7 +2159,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
               break;
       }
       if (status == -1) {
-      		cs_log("request_cw() failed on reader %s (%d)", reader[i].label, i);
+                cs_log("request_cw() failed on reader %s (%d) errno=%d, %s", reader[i].label, i, errno, strerror(errno));
       		if (reader[i].fd && reader[i].pid) {
  	     		reader[i].fd_error++;
       			if (reader[i].fd_error > 5) {
