@@ -1,12 +1,17 @@
 #include "globals.h"
 
+#ifdef AZBOX
+#include "openxcas/openxcas_api.h"
+#include "openxcas/openxcas_message.h"
+#endif
+
 #ifdef HAVE_DVBAPI
 
 #include "module-dvbapi.h"
 
 extern struct s_reader * reader;
 
-char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt" };
+char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "azbox" };
 
 struct box_devices devices[BOX_COUNT] = {
 	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/ca%d",	"/tmp/virtual_adapter/demux%d",	"/tmp/camd.socket" },
@@ -18,70 +23,233 @@ struct box_devices devices[BOX_COUNT] = {
 int selected_box=-1;
 int selected_api=-1;
 int disable_pmt_files=0;
+int openxcas_provid, openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx;
+unsigned char openxcas_cw[16];
+
+unsigned short openxcas_sid, openxcas_caid, openxcas_ecm_pid, openxcas_video_pid, openxcas_audio_pid, openxcas_data_pid;
 int dir_fd=-1, pausecam=0;
 unsigned short global_caid_list[MAX_CAID];
 DEMUXTYPE demux[MAX_DEMUX];
 
-int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uchar *mask, int timeout, int pidindex, int count, int type) {
-	int ret=-1,n=-1,i,dmx_fd;
+void dvbapi_openxcas_ecm_callback(int stream_id, unsigned int sequence, int cipher_index,
+    unsigned int caid, unsigned char *ecm_data, int l, unsigned short pid) {
+  cs_debug("openxcas: ecm callback received");
 
-	for (i=0; i<MAX_FILTER && demux[demux_id].demux_fd[i].fd>0; i++);
+  openxcas_caid;
+  openxcas_ecm_pid = pid;
 
-	if (i>=MAX_FILTER) {
-		cs_log("no free filter");
-		return -1;
-	}
-	n=i;
+  ECM_REQUEST *er;
+  if (!(er=get_ecmtask()))
+    return;
 
-	dmx_fd = dvbapi_open_device(demux_id, 0);
+  er->srvid = openxcas_sid;
+  er->caid  = openxcas_caid;
+  er->pid   = openxcas_ecm_pid;
+  er->prid  = openxcas_provid;
 
-	demux[demux_id].demux_fd[n].fd       = dmx_fd;
-	demux[demux_id].demux_fd[n].pidindex = pidindex;
-	demux[demux_id].demux_fd[n].pid      = pid;
-	demux[demux_id].demux_fd[n].type     = type;
-	demux[demux_id].demux_fd[n].count    = count;
-	
-	switch(api) {
-		case DVBAPI_3:
-			api=api;
-			struct dmx_sct_filter_params sFP2;
+  er->l=l;
+  memcpy(er->ecm, ecm_data, er->l);
 
-			memset(&sFP2,0,sizeof(sFP2));
+  cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
+  get_cw(er);
 
-			sFP2.pid			= pid;
-			sFP2.timeout			= timeout;
-			sFP2.flags			= DMX_IMMEDIATE_START;
-			memcpy(sFP2.filter.filter,filt,16);
-			memcpy(sFP2.filter.mask,mask,16);
-			ret=ioctl(dmx_fd, DMX_SET_FILTER, &sFP2);
+  //openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+  //openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 
-			break;
-		case DVBAPI_1:
-			api=api;
-			struct dmxSctFilterParams sFP1;
+  openxcas_cipher_idx = cipher_index;
 
-			memset(&sFP1,0,sizeof(sFP1));
+  struct timeb tp;
+  cs_ftime(&tp);
+  tp.time+=500;
 
-			sFP1.pid			= pid;
-			sFP1.timeout			= timeout;
-			sFP1.flags			= DMX_IMMEDIATE_START;
-			memcpy(sFP1.filter.filter,filt,16);
-			memcpy(sFP1.filter.mask,mask,16);
-			ret=ioctl(dmx_fd, DMX_SET_FILTER1, &sFP1);
+  chk_pending(tp);
+  //chk_dcw(client[cs_idx].fd_m2c_c);
 
-			break;
-#ifdef WITH_STAPI
-		case STAPI:
-			ret=stapi_set_filter(demux_id, pid, filt, mask, n);
+  struct pollfd pfd;
+  pfd.fd = client[cs_idx].fd_m2c_c;
+  pfd.events = POLLIN | POLLPRI;
 
-			break;
-#endif
-		default:
-			break;
-	}
+  while(1) {
+    chk_pending(tp);
 
-	if (ret < 0)
-		cs_debug("could not start demux filter (Errno: %d)", errno);
+    if (poll(&pfd, 1, 10) < 0)
+      continue;
+
+    if (pfd.revents & (POLLHUP | POLLNVAL)) {
+      cs_debug("openxcas: ecm/cw error");
+      break;
+    }
+
+    if (pfd.revents & (POLLIN | POLLPRI)) {
+      chk_dcw(client[cs_idx].fd_m2c_c);
+      break;
+    }
+  }
+/*
+  unsigned char mask[12];
+  unsigned char comp[12];
+  memset(&mask, 0x00, sizeof(mask));
+  memset(&comp, 0x00, sizeof(comp));
+
+  mask[0] = 0xff;
+  comp[0] = ecm_data[0] ^ 1;
+
+  if (openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)dvbapi_openxcas_ecm_callback) < 0)
+  {
+    cs_log("openxcas: unable to add ecm filter (0)");
+    if (openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, openxcas_caid, 0xffff, openxcas_ecm_pid, mask, comp, (void *)dvbapi_openxcas_ecm_callback) < 0)
+      cs_log("openxcas: unable to add ecm filter (%04x)", openxcas_caid);
+    else
+      cs_debug("openxcas: ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid);
+  } else
+    cs_debug("openxcas: ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid);
+
+  if (openxcas_start_filter(openxcas_stream_id, openxcas_seq, OPENXCAS_FILTER_ECM) < 0)
+    cs_log("openxcas: unable to start ecm filter");
+  else
+    cs_debug("openxcas: ecm filter started");*/
+}
+
+void dvbapi_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsigned int pid, unsigned char *ecm_data, int l) {
+  cs_debug("openxcas: ex callback received");
+
+  openxcas_caid;
+  openxcas_ecm_pid = pid;
+
+  ECM_REQUEST *er;
+  if (!(er=get_ecmtask()))
+    return;
+
+  er->srvid = openxcas_sid;
+  er->caid  = openxcas_caid;
+  er->pid   = openxcas_ecm_pid;
+  er->prid  = openxcas_provid;
+
+  er->l=l;
+  memcpy(er->ecm, ecm_data, er->l);
+
+  cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
+  get_cw(er);
+
+  if (openxcas_stop_filter_ex(openxcas_stream_id, openxcas_seq, openxcas_filter_idx) < 0)
+    cs_log("openxcas: unable to stop ex filter");
+  else
+    cs_debug("openxcas: ex filter stopped");
+
+  struct timeb tp;
+  cs_ftime(&tp);
+  tp.time+=500;
+
+  chk_pending(tp);
+  chk_dcw(client[cs_idx].fd_m2c_c);
+
+  /*
+  struct pollfd pfd;
+  pfd.fd = client[cs_idx].fd_m2c_c;
+  pfd.events = (POLLIN | POLLPRI);
+
+  while(1) {
+    chk_pending(tp);
+
+    poll(&pfd, 1, 10);
+
+    if (pfd.revents & (POLLIN | POLLPRI))
+      chk_dcw(client[cs_idx].fd_m2c_c);
+      break;
+  }*/
+
+  unsigned char mask[12];
+  unsigned char comp[12];
+  memset(&mask, 0x00, sizeof(mask));
+  memset(&comp, 0x00, sizeof(comp));
+
+  mask[0] = 0xff;
+  comp[0] = ecm_data[0] ^ 1;
+
+  if ((openxcas_filter_idx = openxcas_start_filter_ex(openxcas_stream_id, openxcas_seq, openxcas_ecm_pid,
+      mask, comp, (void *)dvbapi_openxcas_ex_callback)) < 0)
+    cs_log("openxcas: unable to start ex filter");
+  else
+    cs_debug("openxcas: ex filter started, pid = %x", openxcas_ecm_pid);
+}
+
+int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uchar *mask, int timeout, int pidindex, int count, int type, unsigned caid) {
+  int ret=-1;
+  if (cfg->dvbapi_boxtype == BOXTYPE_AZBOX) {
+    openxcas_caid = caid;
+    openxcas_ecm_pid = pid;
+/*
+    openxcas_destory_cipher_ex(openxcas_stream_id, openxcas_seq);
+
+    if (!openxcas_create_cipher_ex(openxcas_stream_id, openxcas_seq, 0, openxcas_ecm_pid,
+        openxcas_video_pid, 0xffff, openxcas_audio_pid, 0xffff,
+        0xffff, 0xffff))
+      cs_log("openxcas: failed to create cipher ex");
+    else
+      cs_debug("openxcas: cipher created");*/
+
+    ret = 1;
+  } else {
+    int n=-1,i,dmx_fd;
+
+    for (i=0; i<MAX_FILTER && demux[demux_id].demux_fd[i].fd>0; i++);
+
+    if (i>=MAX_FILTER) {
+      cs_log("no free filter");
+      return -1;
+    }
+    n=i;
+
+    dmx_fd = dvbapi_open_device(demux_id, 0);
+
+    demux[demux_id].demux_fd[n].fd       = dmx_fd;
+    demux[demux_id].demux_fd[n].pidindex = pidindex;
+    demux[demux_id].demux_fd[n].pid      = pid;
+    demux[demux_id].demux_fd[n].type     = type;
+    demux[demux_id].demux_fd[n].count    = count;
+
+    switch(api) {
+      case DVBAPI_3:
+        api=api;
+        struct dmx_sct_filter_params sFP2;
+
+        memset(&sFP2,0,sizeof(sFP2));
+
+        sFP2.pid			= pid;
+        sFP2.timeout			= timeout;
+        sFP2.flags			= DMX_IMMEDIATE_START;
+        memcpy(sFP2.filter.filter,filt,16);
+        memcpy(sFP2.filter.mask,mask,16);
+        ret=ioctl(dmx_fd, DMX_SET_FILTER, &sFP2);
+
+        break;
+      case DVBAPI_1:
+        api=api;
+        struct dmxSctFilterParams sFP1;
+
+        memset(&sFP1,0,sizeof(sFP1));
+
+        sFP1.pid			= pid;
+        sFP1.timeout			= timeout;
+        sFP1.flags			= DMX_IMMEDIATE_START;
+        memcpy(sFP1.filter.filter,filt,16);
+        memcpy(sFP1.filter.mask,mask,16);
+        ret=ioctl(dmx_fd, DMX_SET_FILTER1, &sFP1);
+
+        break;
+  #ifdef WITH_STAPI
+      case STAPI:
+        ret=stapi_set_filter(demux_id, pid, filt, mask, n);
+
+        break;
+  #endif
+      default:
+        break;
+    }
+
+    if (ret < 0)
+      cs_debug("could not start demux filter (Errno: %d)", errno);
+  }
 
 	return ret;
 }
@@ -132,7 +300,7 @@ int dvbapi_detect_api() {
 	filter[16]=0xFF;
 
 	for (i=0;i<num_apis;i++) {
-		ret = dvbapi_set_filter(0, i, 0x0001, filter, filter+16, 1, 0, 0, TYPE_ECM);
+		ret = dvbapi_set_filter(0, i, 0x0001, filter, filter+16, 1, 0, 0, TYPE_ECM, 0);
 
 		if (ret >= 0) {
 			selected_api=i;
@@ -203,13 +371,13 @@ int dvbapi_open_device(int index_demux, int type) {
 }
 
 int dvbapi_stop_filter(int demux_index, int type) {
-	int g;
+  int g;
 
-	for (g=0;g<MAX_FILTER;g++) {
-		if (demux[demux_index].demux_fd[g].type==type) {		
-			dvbapi_stop_filternum(demux_index, g);
-		}
-	}
+  for (g=0;g<MAX_FILTER;g++) {
+    if (demux[demux_index].demux_fd[g].type==type) {
+      dvbapi_stop_filternum(demux_index, g);
+    }
+  }
 
 	return 1;
 }
@@ -227,7 +395,7 @@ int dvbapi_stop_filternum(int demux_index, int num) {
 	return 1;
 }
 
-void dvbapi_start_filter(int demux_id, int pidindex, unsigned short pid, uchar table, uchar mask, int timeout, int type) {
+void dvbapi_start_filter(int demux_id, int pidindex, unsigned short pid, uchar table, uchar mask, int timeout, int type, unsigned short caid) {
 	uchar filter[32];
 
 	cs_debug("set filter pid: %04x", pid);
@@ -237,7 +405,7 @@ void dvbapi_start_filter(int demux_id, int pidindex, unsigned short pid, uchar t
 	filter[0]=table;
 	filter[16]=mask;
 
-	dvbapi_set_filter(demux_id, selected_api, pid, filter, filter+16, timeout, pidindex, 0, type);
+	dvbapi_set_filter(demux_id, selected_api, pid, filter, filter+16, timeout, pidindex, 0, type, caid);
 }
 
 void dvbapi_start_emm_filter(int demux_index) {
@@ -288,7 +456,7 @@ void dvbapi_start_emm_filter(int demux_index) {
 
 		cs_debug_mask(D_EMM, "dvbapi: starting emm filter %s, pid: 0x%04X", typtext[emmtype], demux[demux_index].ECMpids[demux[demux_index].pidindex].EMM_PID);
 		cs_ddump_mask(D_EMM, filter, 32, "demux filter:");
-		dvbapi_set_filter(demux_index, selected_api, demux[demux_index].ECMpids[demux[demux_index].pidindex].EMM_PID, filter, filter+16, 0, demux[demux_index].pidindex, count, TYPE_EMM);
+		dvbapi_set_filter(demux_index, selected_api, demux[demux_index].ECMpids[demux[demux_index].pidindex].EMM_PID, filter, filter+16, 0, demux[demux_index].pidindex, count, TYPE_EMM, 0);
 	}
 
 	memcpy(demux[demux_index].hexserial, demux[demux_index].rdr->hexserial, 8);
@@ -442,7 +610,7 @@ void dvbapi_start_descrambling(int demux_index, unsigned short caid, unsigned sh
 		dvbapi_set_pid(demux_index, i, demux_index);
 
 	if (cfg->dvbapi_au==1)
-		dvbapi_start_filter(demux_index, demux[demux_index].pidindex, 0x001, 0x01, 0xFF, 0, TYPE_EMM); //CAT
+		dvbapi_start_filter(demux_index, demux[demux_index].pidindex, 0x001, 0x01, 0xFF, 0, TYPE_EMM, 0); //CAT
 }
 
 void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer, unsigned int len) {
@@ -740,9 +908,12 @@ void dvbapi_try_next_caid(int demux_id) {
 	dvbapi_stop_filter(demux_id, TYPE_ECM);
 
 	cs_debug("[TRY PID %d] CAID: %04X PROVID: %06X CA_PID: %04X", num, demux[demux_id].ECMpids[num].CAID, demux[demux_id].ECMpids[num].PROVID, demux[demux_id].ECMpids[num].ECM_PID);
+	openxcas_provid = demux[demux_id].ECMpids[num].PROVID;
+  openxcas_caid = demux[demux_id].ECMpids[num].CAID;
+  openxcas_ecm_pid = demux[demux_id].ECMpids[num].ECM_PID;
 
 	//grep ecm
-	dvbapi_start_filter(demux_id, num, demux[demux_id].ECMpids[num].ECM_PID, 0x80, 0xF0, 3000, TYPE_ECM); //ECM
+	dvbapi_start_filter(demux_id, num, demux[demux_id].ECMpids[num].ECM_PID, 0x80, 0xF0, 3000, TYPE_ECM, demux[demux_id].ECMpids[num].CAID); //ECM
 	demux[demux_id].ECMpids[num].checked=1;
 }
 
@@ -825,6 +996,8 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 
 	char *name = get_servicename(demux[demux_id].program_number, demux[demux_id].ECMpidcount>0 ? demux[demux_id].ECMpids[0].CAID : 0);
 	cs_log("new program number: %04X (%s)", program_number, name);
+
+	openxcas_sid = program_number;
 
 	if (demux[demux_id].ECMpidcount>0) {
 		dvbapi_resort_ecmpids(demux_id);
@@ -1159,268 +1332,472 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 }
 
 void dvbapi_main_local() {
-	int maxpfdsize=(MAX_DEMUX*MAX_FILTER)+MAX_DEMUX+2;
-	struct pollfd pfd2[maxpfdsize];
-	int i,rc,pfdcount,g,connfd,clilen,j;
-	int ids[maxpfdsize], fdn[maxpfdsize], type[maxpfdsize];
-	struct timeb tp;
-	struct sockaddr_un servaddr;
-	ssize_t len=0;
+  if (cfg->dvbapi_boxtype == BOXTYPE_AZBOX) {
+    char buf[OPENXCAS_MSG_MAX_LEN];
 
-	for (i=0;i<MAX_DEMUX;i++) {
-		memset(&demux[i], 0, sizeof(demux[i]));
-		demux[i].pidindex=-1;
-		demux[i].rdr=NULL;
-	}
+    openxcas_debug_message_onoff(1);  // debug
 
-	dvbapi_detect_api();
+    if (openxcas_open("oscamCAS") < 0) {
+      cs_log("openxcas: could not init");
+      return;
+    }
 
-	if (selected_box == -1 || selected_api==-1) {
-		cs_log("could not detect api version");
-		return;
-	}
+    struct timeb tp;
+    cs_ftime(&tp);
+    tp.time+=500;
 
-	if (cfg->dvbapi_pmtmode == 1)
-		disable_pmt_files=1;
+    openxcas_msg_t msg;
+    int ret;
+    while ((ret = openxcas_get_message(&msg, 0)) >= 0) {
+      cs_sleepms(10);
+/*
+      struct pollfd pfd;
 
-	int listenfd = -1;
-	if (cfg->dvbapi_boxtype != BOXTYPE_IPBOX_PMT && cfg->dvbapi_pmtmode != 2) {
-		listenfd = dvbapi_init_listenfd();
-		if (listenfd < 1) {
-			cs_log("could not init camd.socket.");
-			return;
-		}
-	}
+      pfd.fd = client[cs_idx].fd_m2c_c;
+      pfd.events = (POLLIN | POLLPRI);
+      poll(&pfd, 1, 10);
+      if (pfd.revents & (POLLIN | POLLPRI))
+        chk_dcw(client[cs_idx].fd_m2c_c);*/
 
-	struct sigaction signal_action;
-	signal_action.sa_handler = event_handler;
-	sigemptyset(&signal_action.sa_mask);
-	signal_action.sa_flags = SA_RESTART;
-	sigaction(SIGRTMIN + 1, &signal_action, NULL);
+      if (ret) {
+        openxcas_stream_id = msg.stream_id;
+        openxcas_seq = msg.sequence;
 
-	pthread_mutexattr_t attr;
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
-	pthread_mutex_init(&event_handler_lock, &attr); 
-	
-	dir_fd = open(TMPDIR, O_RDONLY);
-	if (dir_fd >= 0) {
-		fcntl(dir_fd, F_SETSIG, SIGRTMIN + 1);
-		fcntl(dir_fd, F_NOTIFY, DN_MODIFY | DN_CREATE | DN_DELETE | DN_MULTISHOT);
-		event_handler(SIGRTMIN + 1);
-	}
+        switch(msg.cmd) {
+        case OPENXCAS_SELECT_CHANNEL:
+          cs_debug("openxcas: msg: OPENXCAS_SELECT_CHANNEL");
 
-	cs_ftime(&tp);
-	tp.time+=500;
+          // parse channel info
+          struct stOpenXCASChannel chan;
+          memcpy(&chan, msg.buf, msg.buf_len);
 
-	pfd2[0].fd = client[cs_idx].fd_m2c_c;
-	pfd2[0].events = (POLLIN | POLLPRI);
-	type[0]=0;
+          cs_log("openxcas: channel change: sid = %x, vpid = %x. apid = %x", chan.service_id, chan.v_pid, chan.a_pid);
 
-	pfd2[1].fd = listenfd;
-	pfd2[1].events = (POLLIN | POLLPRI);
-	type[1]=1;
+          openxcas_video_pid = chan.v_pid;
+          openxcas_audio_pid = chan.a_pid;
+          openxcas_data_pid = chan.d_pid;
 
-	while (1) {
-		if (master_pid!=getppid())
-			cs_exit(0);
+          break;
+        case OPENXCAS_START_PMT_ECM:
+          cs_debug("openxcas: msg: OPENXCAS_START_PMT_ECM");
 
-		pfdcount = (listenfd > -1) ? 2 : 1; 
+          // parse pmt
 
-		chk_pending(tp);
+          uchar *dest = malloc(msg.buf_len + 7 - 12 - 4);
 
-		if (pausecam==1) {
-			cs_sleepms(500);
-			continue;
-		}
+          memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
 
-		for (i=0;i<MAX_DEMUX;i++) {
-			for (g=0;g<MAX_FILTER;g++) {
-				if (demux[i].demux_fd[g].fd>0 && selected_api != STAPI) {
-					pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
-					pfd2[pfdcount].events = (POLLIN | POLLPRI);
-					ids[pfdcount]=i;
-					fdn[pfdcount]=g;
-					type[pfdcount++]=0;
-				}
-			}
-		
-			if (demux[i].socket_fd>0) {
-				rc=0;
-				if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
-					for (j = 0; j < pfdcount; j++) {
-						if (pfd2[j].fd == demux[i].socket_fd) {
-							rc=1;
-							break;
-						}
-					}
-					if (rc==1) continue;
-				}
+          dest[1] = msg.buf[3];
+          dest[2] = msg.buf[4];
+          dest[5] = msg.buf[11]+1;
 
-				pfd2[pfdcount].fd=demux[i].socket_fd;
-				pfd2[pfdcount].events = (POLLIN | POLLPRI | POLLHUP);
-				type[pfdcount++]=1;
-			}
-		}
+          memcpy(dest + 7, msg.buf + 12, msg.buf_len - 12 - 4);
 
-		rc = poll(pfd2, pfdcount, 500);
-		if (rc<1) continue;
+          int pmt_id = dvbapi_parse_capmt(dest, 7 + msg.buf_len - 12 - 4, -1);
+          free(dest);
 
-		for (i = 0; i < pfdcount; i++) {
-			if (pfd2[i].revents > 3)
-				cs_debug("event %d on fd %d", pfd2[i].revents, pfd2[i].fd);
-			
-			if (pfd2[i].revents & (POLLHUP | POLLNVAL)) {
-				if (type[i]==1) {
-					for (j=0;j<MAX_DEMUX;j++) {
-						if (demux[j].socket_fd==pfd2[i].fd) {
-							dvbapi_stop_descrambling(j);
-						}
-					}
-					close(pfd2[i].fd);
-					continue;
-				}
-				if (pfd2[i].fd==client[cs_idx].fd_m2c_c) {
-					cs_exit(0);
-				}
-			}
-			if (pfd2[i].revents & (POLLIN | POLLPRI)) {
-				if (pfd2[i].fd==client[cs_idx].fd_m2c_c) {
-					chk_dcw(client[cs_idx].fd_m2c_c);
-					continue;
-				}
+          unsigned char mask[12];
+          unsigned char comp[12];
+          memset(&mask, 0x00, sizeof(mask));
+          memset(&comp, 0x00, sizeof(comp));
 
-				if (type[i]==1) {
-					if (pfd2[i].fd==listenfd) {
-						connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
-						cs_debug("new socket connection fd: %d", connfd);
+          mask[0] = 0xfe;
+          comp[0] = 0x80;
 
-						disable_pmt_files=1;
+          /*
+          if ((openxcas_filter_idx = openxcas_start_filter_ex(msg.stream_id, msg.sequence, openxcas_ecm_pid,
+              mask, comp, (void *)dvbapi_openxcas_ex_callback)) < 0)
+            cs_log("openxcas: unable to start ex filter");
+          else
+            cs_debug("openxcas: ex filter started, pid = %x", openxcas_ecm_pid);
+           */
 
-						if (connfd <= 0) {
-							cs_log("accept() returns error %d, fd event %d", errno, pfd2[i].revents);
-							continue;
-						}
-					} else {
-						cs_debug("New capmt on old socket. Please report.");
-						connfd = pfd2[i].fd;
-					}
+          if ((ret = openxcas_add_filter(msg.stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)dvbapi_openxcas_ecm_callback)) < 0)
+            cs_log("openxcas: unable to add ecm filter");
+          else
+            cs_debug("openxcas: ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid);
 
-					len = read(connfd, mbuf, sizeof(mbuf));
+          if (openxcas_start_filter(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM) < 0)
+            cs_log("openxcas: unable to start ecm filter");
+          else
+            cs_debug("openxcas: ecm filter started");
 
-					if (len < 3) {
-						cs_debug("camd.socket: too short message received");
-						continue;
-					}
+/*
+          unsigned char mask[12];
+          unsigned char comp[12];
+          memset(&mask, 0x00, sizeof(mask));
+          memset(&comp, 0x00, sizeof(comp));
 
-					dvbapi_handlesockmsg(mbuf, len, connfd);
+          mask[0] = 0xfe;
+          comp[0] = 0x80;
 
-				} else { // type==0
-					int demux_index=ids[i];
-					int n=fdn[i];
+          openxcas_stop_filter_ex(openxcas_stream_id, openxcas_seq, openxcas_filter_idx);
+          if ((openxcas_filter_idx = openxcas_start_filter_ex(openxcas_stream_id, openxcas_seq, openxcas_ecm_pid, mask, comp,(void*)dvbapi_openxcas_ex_callback)) < 0)
+            cs_log("openxcas: unable to start ex filter on ecm pid");
+          else
+            cs_debug("openxcas: ex filter on ecm pid started");
+*/
 
-					if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0) {
-						if (demux[demux_index].pidindex==-1) {
-							dvbapi_try_next_caid(demux_index);
-						}
-						continue;
-					}
+          if (!openxcas_create_cipher_ex(openxcas_stream_id, openxcas_seq, 0, openxcas_ecm_pid,
+                  openxcas_video_pid, 0xffff, openxcas_audio_pid, 0xffff,
+                  0xffff, 0xffff))
+            cs_log("openxcas: failed to create cipher ex");
+          else
+            cs_debug("openxcas: cipher created");
 
-					if (pfd2[i].fd==(int)demux[demux_index].demux_fd[n].fd) {
-						dvbapi_process_input(demux_index,n,mbuf,len);
-					}
-				}
-			}
-		}
-	}
+          break;
+        case OPENXCAS_STOP_PMT_ECM:
+          cs_debug("openxcas: msg: OPENXCAS_STOP_PMT_ECM");
+          openxcas_stop_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
+          openxcas_remove_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
+          openxcas_stop_filter_ex(msg.stream_id, msg.sequence, openxcas_filter_idx);
+          openxcas_destory_cipher_ex(msg.stream_id, msg.sequence);
+          memset(&demux, 0, sizeof(demux));
+          break;
+        case OPENXCAS_ECM_CALLBACK:
+          cs_debug("openxcas: msg: OPENXCAS_ECM_CALLBACK");
+
+          struct stOpenXCAS_Data data;
+          memcpy(&data, msg.buf, msg.buf_len);
+          openxcas_filter_callback(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM, &data);
+
+          break;
+        case OPENXCAS_PID_FILTER_CALLBACK:
+          cs_debug("openxcas: msg: OPENXCAS_PID_FILTER_CALLBACK");
+          openxcas_filter_callback_ex(msg.stream_id, msg.sequence, (struct stOpenXCAS_Data *)msg.buf);
+          break;
+        case OPENXCAS_QUIT:
+          cs_debug("openxcas: msg: OPENXCAS_QUIT");
+          openxcas_close();
+          cs_log("openxcas: exited");
+          return;
+          break;
+        case OPENXCAS_UKNOWN_MSG:
+        default:
+          cs_debug("openxcas: msg: OPENXCAS_UKNOWN_MSG (%d)", msg.cmd);
+          //cs_ddump(&msg, sizeof(msg), "msg dump:");
+          break;
+        }
+      }
+    }
+    openxcas_close();
+    cs_log("openxcas: invalid message");
+    return;
+  } else {
+    int maxpfdsize=(MAX_DEMUX*MAX_FILTER)+MAX_DEMUX+2;
+    struct pollfd pfd2[maxpfdsize];
+    int i,rc,pfdcount,g,connfd,clilen,j;
+    int ids[maxpfdsize], fdn[maxpfdsize], type[maxpfdsize];
+    struct timeb tp;
+    struct sockaddr_un servaddr;
+    ssize_t len=0;
+
+    for (i=0;i<MAX_DEMUX;i++) {
+      memset(&demux[i], 0, sizeof(demux[i]));
+      demux[i].pidindex=-1;
+      demux[i].rdr=NULL;
+    }
+
+    dvbapi_detect_api();
+
+    if (selected_box == -1 || selected_api==-1) {
+      cs_log("could not detect api version");
+      return;
+    }
+
+    if (cfg->dvbapi_pmtmode == 1)
+      disable_pmt_files=1;
+
+    int listenfd = -1;
+    if (cfg->dvbapi_boxtype != BOXTYPE_IPBOX_PMT && cfg->dvbapi_pmtmode != 2) {
+      listenfd = dvbapi_init_listenfd();
+      if (listenfd < 1) {
+        cs_log("could not init camd.socket");
+        return;
+      }
+    }
+
+    struct sigaction signal_action;
+    signal_action.sa_handler = event_handler;
+    sigemptyset(&signal_action.sa_mask);
+    signal_action.sa_flags = SA_RESTART;
+    sigaction(SIGRTMIN + 1, &signal_action, NULL);
+
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+    pthread_mutex_init(&event_handler_lock, &attr);
+
+    dir_fd = open(TMPDIR, O_RDONLY);
+    if (dir_fd >= 0) {
+      fcntl(dir_fd, F_SETSIG, SIGRTMIN + 1);
+      fcntl(dir_fd, F_NOTIFY, DN_MODIFY | DN_CREATE | DN_DELETE | DN_MULTISHOT);
+      event_handler(SIGRTMIN + 1);
+    }
+
+    cs_ftime(&tp);
+    tp.time+=500;
+
+    pfd2[0].fd = client[cs_idx].fd_m2c_c;
+    pfd2[0].events = (POLLIN | POLLPRI);
+    type[0]=0;
+
+    pfd2[1].fd = listenfd;
+    pfd2[1].events = (POLLIN | POLLPRI);
+    type[1]=1;
+
+    while (1) {
+      if (master_pid!=getppid())
+        cs_exit(0);
+
+      pfdcount = (listenfd > -1) ? 2 : 1;
+
+      chk_pending(tp);
+
+      if (pausecam==1) {
+        cs_sleepms(500);
+        continue;
+      }
+
+      for (i=0;i<MAX_DEMUX;i++) {
+        for (g=0;g<MAX_FILTER;g++) {
+          if (demux[i].demux_fd[g].fd>0 && selected_api != STAPI) {
+            pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
+            pfd2[pfdcount].events = (POLLIN | POLLPRI);
+            ids[pfdcount]=i;
+            fdn[pfdcount]=g;
+            type[pfdcount++]=0;
+          }
+        }
+
+        if (demux[i].socket_fd>0) {
+          rc=0;
+          if (cfg->dvbapi_boxtype==BOXTYPE_IPBOX) {
+            for (j = 0; j < pfdcount; j++) {
+              if (pfd2[j].fd == demux[i].socket_fd) {
+                rc=1;
+                break;
+              }
+            }
+            if (rc==1) continue;
+          }
+
+          pfd2[pfdcount].fd=demux[i].socket_fd;
+          pfd2[pfdcount].events = (POLLIN | POLLPRI | POLLHUP);
+          type[pfdcount++]=1;
+        }
+      }
+
+      rc = poll(pfd2, pfdcount, 500);
+      if (rc<1) continue;
+
+      for (i = 0; i < pfdcount; i++) {
+        if (pfd2[i].revents > 3)
+          cs_debug("event %d on fd %d", pfd2[i].revents, pfd2[i].fd);
+
+        if (pfd2[i].revents & (POLLHUP | POLLNVAL)) {
+          if (type[i]==1) {
+            for (j=0;j<MAX_DEMUX;j++) {
+              if (demux[j].socket_fd==pfd2[i].fd) {
+                dvbapi_stop_descrambling(j);
+              }
+            }
+            close(pfd2[i].fd);
+            continue;
+          }
+          if (pfd2[i].fd==client[cs_idx].fd_m2c_c) {
+            cs_exit(0);
+          }
+        }
+        if (pfd2[i].revents & (POLLIN | POLLPRI)) {
+          if (pfd2[i].fd==client[cs_idx].fd_m2c_c) {
+            chk_dcw(client[cs_idx].fd_m2c_c);
+            continue;
+          }
+
+          if (type[i]==1) {
+            if (pfd2[i].fd==listenfd) {
+              connfd = accept(listenfd, (struct sockaddr *)&servaddr, (socklen_t *)&clilen);
+              cs_debug("new socket connection fd: %d", connfd);
+
+              disable_pmt_files=1;
+
+              if (connfd <= 0) {
+                cs_log("accept() returns error %d, fd event %d", errno, pfd2[i].revents);
+                continue;
+              }
+            } else {
+              cs_debug("New capmt on old socket. Please report.");
+              connfd = pfd2[i].fd;
+            }
+
+            len = read(connfd, mbuf, sizeof(mbuf));
+
+            if (len < 3) {
+              cs_debug("camd.socket: too short message received");
+              continue;
+            }
+
+            dvbapi_handlesockmsg(mbuf, len, connfd);
+
+          } else { // type==0
+            int demux_index=ids[i];
+            int n=fdn[i];
+
+            if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0) {
+              if (demux[demux_index].pidindex==-1) {
+                dvbapi_try_next_caid(demux_index);
+              }
+              continue;
+            }
+
+            if (pfd2[i].fd==(int)demux[demux_index].demux_fd[n].fd) {
+              dvbapi_process_input(demux_index,n,mbuf,len);
+            }
+          }
+        }
+      }
+    }
+  }
 	return;
 }
 
 void dvbapi_send_dcw(ECM_REQUEST *er) {
-	int i,n;
+  if (cfg->dvbapi_boxtype == BOXTYPE_AZBOX) {
+    cs_debug("openxcas: send_dcw");
 
-	for (i=0;i<MAX_DEMUX;i++) {
-		if (demux[i].program_number==er->srvid) {
-			demux[i].rdr=&reader[er->reader[0]];
+    int i;
+    for (i=0;i<MAX_DEMUX;i++) {
+      if (er->rc>3 && demux[i].pidindex==-1) {
+        dvbapi_try_next_caid(i);
+      }
 
-			if (er->rc<=3 && demux[i].pidindex==-1 && er->caid!=0) {
-				dvbapi_start_descrambling(i, er->caid, er->pid);
-			}
+      if (er->rc>3) {
+        cs_debug("cw not found");
 
-			if (er->rc==4 && cfg->dvbapi_au==1 && dvbapi_check_array(global_caid_list, MAX_CAID, er->caid)>=0 && er->caid!=0x0500 && er->caid!=0x0100) {
-				//local card and not found -> maybe card need emm
-				dvbapi_start_descrambling(i, er->caid, er->pid);
-			}
+        openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+        openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 
-			if (er->rc>3 && demux[i].pidindex==-1) {
-				dvbapi_try_next_caid(i);
-				return;
-			}
+        unsigned char mask[12];
+        unsigned char comp[12];
+        memset(&mask, 0x00, sizeof(mask));
+        memset(&comp, 0x00, sizeof(comp));
 
-			if (er->rc>3) {
-				cs_debug("cw not found");
-				return;
-			}
+        mask[0] = 0xfe;
+        comp[0] = 0x80;
 
-			if (demux[i].ca_fd<=0) {
-				cs_log("could not write cw.");
-				demux[i].ca_fd = dvbapi_open_device(i,1);
-				if (demux[i].ca_fd<=0)
-					return;
-			}
+        if (openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)dvbapi_openxcas_ecm_callback) < 0)
+        {
+          cs_log("openxcas: unable to add ecm filter (0)");
+          if (openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, openxcas_caid, 0xffff, openxcas_ecm_pid, mask, comp, (void *)dvbapi_openxcas_ecm_callback) < 0)
+            cs_log("openxcas: unable to add ecm filter (%04x)", openxcas_caid);
+          else
+            cs_debug("openxcas: ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid);
+        } else
+          cs_debug("openxcas: ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid);
 
-			int dindex = dvbapi_check_array(cfg->dvbapi_delaytab.caid, CS_MAXCAIDTAB, er->caid);
-			if (dindex>=0) {
-				char tmp1[5];
-				sprintf(tmp1, "%04X", cfg->dvbapi_delaytab.mask[dindex]);
-				int cw_delay = strtol(tmp1, '\0', 10);
-				if (cw_delay<1000) {
-					cs_debug("wait %d ms", cw_delay);
-					cs_sleepms(cw_delay);
-				}
-			}
-#ifdef WITH_STAPI
-			stapi_write_cw(i, er->cw);
-#else
-			unsigned char nullcw[8];
-			memset(nullcw, 0, 8);
-			ca_descr_t ca_descr;
-			memset(&ca_descr,0,sizeof(ca_descr));
+        if (openxcas_start_filter(openxcas_stream_id, openxcas_seq, OPENXCAS_FILTER_ECM) < 0)
+          cs_log("openxcas: unable to start ecm filter");
+        else
+          cs_debug("openxcas: ecm filter started");
+        return;
+      }
+    }
 
-			for (n=0;n<2;n++) {
-				if (memcmp(er->cw+(n*8),demux[i].lastcw[n],8)!=0 && memcmp(er->cw+(n*8),nullcw,8)!=0) {
-					ca_descr.index = i;
-					ca_descr.parity = n;
-					memcpy(demux[i].lastcw[n],er->cw+(n*8),8);
-					memcpy(ca_descr.cw,er->cw+(n*8),8);
-					cs_debug("write cw%d index: %d", n, i);
-					if (ioctl(demux[i].ca_fd, CA_SET_DESCR, &ca_descr) < 0)
-						cs_debug("Error CA_SET_DESCR");
-				}
-			}
-#endif
-			// reset idle-Time
-			client[cs_idx].last=time((time_t)0);
+    memcpy(openxcas_cw + (8 * (er->ecm[0] & 1)), er->cw + (8 * (er->ecm[0] & 1)), 8);
 
-			FILE *ecmtxt;
-			ecmtxt = fopen(ECMINFO_FILE, "w");
-			if(ecmtxt != NULL) {
-				fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
-				fprintf(ecmtxt, "reader: %s\n", reader[er->reader[0]].label);
-				if (reader[er->reader[0]].typ & R_IS_CASCADING)
-					fprintf(ecmtxt, "from: %s\n", reader[er->reader[0]].device);
-				else
-					fprintf(ecmtxt, "from: local\n");
-				fprintf(ecmtxt, "protocol: %s\n", reader[er->reader[0]].ph.desc);
-				fprintf(ecmtxt, "hops: %d\n", reader[er->reader[0]].cc_currenthops);
-				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client[cs_idx].cwlastresptime/1000);
-				fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8));
-				fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8));
-				fclose(ecmtxt);
-				ecmtxt = NULL;
-			}
-		}
-	}
+    if (openxcas_set_key(openxcas_stream_id, openxcas_seq, 0, openxcas_cipher_idx, openxcas_cw, openxcas_cw + 8) != 1)
+      cs_log("openxcas: set cw failed");
+    /*if (openxcas_set_key_ex(openxcas_stream_id, openxcas_seq, 0, openxcas_ecm_pid, openxcas_cw, openxcas_cw + 8) != 1)
+      cs_log("openxcas: set cw failed");*/
+    else
+      cs_ddump(openxcas_cw, 16, "openxcas: write cws to descrambler");
+  } else {
+    int i,n;
+
+    for (i=0;i<MAX_DEMUX;i++) {
+      if (demux[i].program_number==er->srvid) {
+        demux[i].rdr=&reader[er->reader[0]];
+
+        if (er->rc<=3 && demux[i].pidindex==-1 && er->caid!=0) {
+          dvbapi_start_descrambling(i, er->caid, er->pid);
+        }
+
+        if (er->rc==4 && cfg->dvbapi_au==1 && dvbapi_check_array(global_caid_list, MAX_CAID, er->caid)>=0 && er->caid!=0x0500 && er->caid!=0x0100) {
+          //local card and not found -> maybe card need emm
+          dvbapi_start_descrambling(i, er->caid, er->pid);
+        }
+
+        if (er->rc>3 && demux[i].pidindex==-1) {
+          dvbapi_try_next_caid(i);
+          return;
+        }
+
+        if (er->rc>3) {
+          cs_debug("cw not found");
+          return;
+        }
+
+        if (demux[i].ca_fd<=0) {
+          cs_log("could not write cw.");
+          demux[i].ca_fd = dvbapi_open_device(i,1);
+          if (demux[i].ca_fd<=0)
+            return;
+        }
+
+        int dindex = dvbapi_check_array(cfg->dvbapi_delaytab.caid, CS_MAXCAIDTAB, er->caid);
+        if (dindex>=0) {
+          char tmp1[5];
+          sprintf(tmp1, "%04X", cfg->dvbapi_delaytab.mask[dindex]);
+          int cw_delay = strtol(tmp1, '\0', 10);
+          if (cw_delay<1000) {
+            cs_debug("wait %d ms", cw_delay);
+            cs_sleepms(cw_delay);
+          }
+        }
+  #ifdef WITH_STAPI
+        stapi_write_cw(i, er->cw);
+  #else
+        unsigned char nullcw[8];
+        memset(nullcw, 0, 8);
+        ca_descr_t ca_descr;
+        memset(&ca_descr,0,sizeof(ca_descr));
+
+        for (n=0;n<2;n++) {
+          if (memcmp(er->cw+(n*8),demux[i].lastcw[n],8)!=0 && memcmp(er->cw+(n*8),nullcw,8)!=0) {
+            ca_descr.index = i;
+            ca_descr.parity = n;
+            memcpy(demux[i].lastcw[n],er->cw+(n*8),8);
+            memcpy(ca_descr.cw,er->cw+(n*8),8);
+            cs_debug("write cw%d index: %d", n, i);
+            if (ioctl(demux[i].ca_fd, CA_SET_DESCR, &ca_descr) < 0)
+              cs_debug("Error CA_SET_DESCR");
+          }
+        }
+  #endif
+        // reset idle-Time
+        client[cs_idx].last=time((time_t)0);
+
+        FILE *ecmtxt;
+        ecmtxt = fopen(ECMINFO_FILE, "w");
+        if(ecmtxt != NULL) {
+          fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
+          fprintf(ecmtxt, "reader: %s\n", reader[er->reader[0]].label);
+          if (reader[er->reader[0]].typ & R_IS_CASCADING)
+            fprintf(ecmtxt, "from: %s\n", reader[er->reader[0]].device);
+          else
+            fprintf(ecmtxt, "from: local\n");
+          fprintf(ecmtxt, "protocol: %s\n", reader[er->reader[0]].ph.desc);
+          fprintf(ecmtxt, "hops: %d\n", reader[er->reader[0]].cc_currenthops);
+          fprintf(ecmtxt, "ecm time: %.3f\n", (float) client[cs_idx].cwlastresptime/1000);
+          fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8));
+          fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8));
+          fclose(ecmtxt);
+          ecmtxt = NULL;
+        }
+      }
+    }
+  }
 }
 
 
