@@ -1179,6 +1179,10 @@ void chk_t_dvbapi(char *token, char *value)
 		}
 
 		cfg->dvbapi_boxtype=0;
+
+#ifdef AZBOX
+    cfg->dvbapi_boxtype = BOXTYPE_AZBOX;
+#endif
 		return;
 	}
 
