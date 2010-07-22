@@ -4,6 +4,20 @@
 
 #include "module-dvbapi.h"
 
+#ifdef AZBOX 
+#include "openxcas/openxcas_api.h" 
+#include "openxcas/openxcas_message.h"
+
+int openxcas_provid, openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx;
+unsigned char openxcas_cw[16];
+unsigned short openxcas_sid, openxcas_caid, openxcas_ecm_pid, openxcas_video_pid, openxcas_audio_pid, openxcas_data_pid;
+
+void dvbapi_openxcas_ecm_callback(int stream_id, unsigned int sequence, int cipher_index, unsigned int caid, unsigned char *ecm_data, int l, unsigned short pid);
+void dvbapi_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsigned int pid, unsigned char *ecm_data, int l);
+void azbox_send_dcw(ECM_REQUEST *er);
+void azbox_main();
+#endif
+
 extern struct s_reader * reader;
 
 char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt" };
@@ -23,6 +37,12 @@ unsigned short global_caid_list[MAX_CAID];
 DEMUXTYPE demux[MAX_DEMUX];
 
 int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uchar *mask, int timeout, int pidindex, int count, int type) {
+#ifdef AZBOX
+	openxcas_caid = demux[demux_id].ECMpids[pidindex].CAID; 
+	openxcas_ecm_pid = pid; 
+
+ 	return 1; 
+#endif
 	int ret=-1,n=-1,i,dmx_fd;
 
 	for (i=0; i<MAX_FILTER && demux[demux_id].demux_fd[i].fd>0; i++);
@@ -741,7 +761,11 @@ void dvbapi_try_next_caid(int demux_id) {
 	dvbapi_stop_filter(demux_id, TYPE_ECM);
 
 	cs_debug("[TRY PID %d] CAID: %04X PROVID: %06X CA_PID: %04X", num, demux[demux_id].ECMpids[num].CAID, demux[demux_id].ECMpids[num].PROVID, demux[demux_id].ECMpids[num].ECM_PID);
-
+#ifdef AZBOX
+	openxcas_provid = demux[demux_id].ECMpids[num].PROVID;
+	openxcas_caid = demux[demux_id].ECMpids[num].CAID;
+	openxcas_ecm_pid = demux[demux_id].ECMpids[num].ECM_PID;
+#endif
 	//grep ecm
 	dvbapi_start_filter(demux_id, num, demux[demux_id].ECMpids[num].ECM_PID, 0x80, 0xF0, 3000, TYPE_ECM); //ECM
 	demux[demux_id].ECMpids[num].checked=1;
@@ -826,6 +850,10 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 
 	char *name = get_servicename(demux[demux_id].program_number, demux[demux_id].ECMpidcount>0 ? demux[demux_id].ECMpids[0].CAID : 0);
 	cs_log("new program number: %04X (%s)", program_number, name);
+
+#ifdef AZBOX
+	openxcas_sid = program_number;
+#endif
 
 	if (demux[demux_id].ECMpidcount>0) {
 		dvbapi_resort_ecmpids(demux_id);
@@ -1338,6 +1366,10 @@ void dvbapi_main_local() {
 }
 
 void dvbapi_send_dcw(ECM_REQUEST *er) {
+#ifdef AZBOX
+	azbox_send_dcw(er);
+	return;
+#endif
 	int i;
 
 	for (i=0;i<MAX_DEMUX;i++) {
@@ -1456,7 +1488,11 @@ static void dvbapi_handler(int idx) {
 
 	cs_auth_client(ok ? account : (struct s_auth *)(-1), "dvbapi");
 
+#ifdef AZBOX
+	azbox_main();
+#else
 	dvbapi_main_local();
+#endif
 
 	cs_log("Module dvbapi error");
 	cs_exit(0);
@@ -1465,7 +1501,274 @@ static void dvbapi_handler(int idx) {
 }
 
 
+#ifdef AZBOX
+void dvbapi_openxcas_ecm_callback(int stream_id, unsigned int sequence, int cipher_index, unsigned int caid, unsigned char *ecm_data, int l, unsigned short pid) { 
+	cs_debug("openxcas: ecm callback received"); 
 
+	openxcas_caid = caid;
+	openxcas_ecm_pid = pid;
+
+	ECM_REQUEST *er;
+	if (!(er=get_ecmtask()))
+		return;
+
+	er->srvid = openxcas_sid;
+	er->caid  = openxcas_caid;
+	er->pid   = openxcas_ecm_pid;
+	er->prid  = openxcas_provid;
+
+	er->l=l;
+	memcpy(er->ecm, ecm_data, er->l);
+
+	cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
+	get_cw(er);
+
+	//openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+	//openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+
+	openxcas_cipher_idx = cipher_index;
+
+	struct timeb tp;
+	cs_ftime(&tp);
+	tp.time+=500;
+
+	chk_pending(tp);
+	//chk_dcw(client[cs_idx].fd_m2c_c);
+
+	struct pollfd pfd;
+	pfd.fd = client[cs_idx].fd_m2c_c;
+	pfd.events = POLLIN | POLLPRI;
+
+	while(1) {
+		chk_pending(tp);
+
+		if (poll(&pfd, 1, 10) < 0)
+			continue;
+
+		if (pfd.revents & (POLLHUP | POLLNVAL)) {
+			cs_debug("openxcas: ecm/cw error");
+			break;
+		}
+
+		if (pfd.revents & (POLLIN | POLLPRI)) {
+			chk_dcw(client[cs_idx].fd_m2c_c);
+			break;
+		}
+	}
+} 
+	 
+
+void dvbapi_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsigned int pid, unsigned char *ecm_data, int l) {
+	cs_debug("openxcas: ex callback received");
+
+	//openxcas_caid;
+	openxcas_ecm_pid = pid;
+
+	ECM_REQUEST *er;
+	if (!(er=get_ecmtask()))
+		return;
+
+	er->srvid = openxcas_sid;
+	er->caid  = openxcas_caid;
+	er->pid   = openxcas_ecm_pid;
+	er->prid  = openxcas_provid;
+
+	er->l=l;
+	memcpy(er->ecm, ecm_data, er->l);
+
+	cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
+	get_cw(er);
+	 
+	if (openxcas_stop_filter_ex(openxcas_stream_id, openxcas_seq, openxcas_filter_idx) < 0)
+		cs_log("openxcas: unable to stop ex filter");
+	else
+		cs_debug("openxcas: ex filter stopped");
+	 
+	struct timeb tp;
+	cs_ftime(&tp);
+	tp.time+=500;
+
+	chk_pending(tp);
+	chk_dcw(client[cs_idx].fd_m2c_c);
+
+	unsigned char mask[12];
+	unsigned char comp[12];
+	memset(&mask, 0x00, sizeof(mask));
+	memset(&comp, 0x00, sizeof(comp));
+
+	mask[0] = 0xff;
+	comp[0] = ecm_data[0] ^ 1;
+
+	if ((openxcas_filter_idx = openxcas_start_filter_ex(openxcas_stream_id, openxcas_seq, openxcas_ecm_pid, mask, comp, (void *)dvbapi_openxcas_ex_callback)) < 0)
+		cs_log("openxcas: unable to start ex filter");
+	else
+		cs_debug("openxcas: ex filter started, pid = %x", openxcas_ecm_pid);
+}
+
+void azbox_main() {
+	char buf[OPENXCAS_MSG_MAX_LEN];
+
+	openxcas_debug_message_onoff(1);  // debug
+
+	if (openxcas_open("oscamCAS") < 0) {
+		cs_log("openxcas: could not init");
+		return;
+	}
+ 
+	struct timeb tp;
+	cs_ftime(&tp);
+	tp.time+=500;
+
+	openxcas_msg_t msg;
+	int ret;
+	while ((ret = openxcas_get_message(&msg, 0)) >= 0) {
+		cs_sleepms(10);
+
+		if (ret) {
+			openxcas_stream_id = msg.stream_id;
+			openxcas_seq = msg.sequence;
+
+			switch(msg.cmd) {
+				case OPENXCAS_SELECT_CHANNEL:
+					cs_debug("openxcas: msg: OPENXCAS_SELECT_CHANNEL");
+
+					// parse channel info
+					struct stOpenXCASChannel chan;
+					memcpy(&chan, msg.buf, msg.buf_len);
+
+					cs_log("openxcas: channel change: sid = %x, vpid = %x. apid = %x", chan.service_id, chan.v_pid, chan.a_pid);
+
+					openxcas_video_pid = chan.v_pid; 
+					openxcas_audio_pid = chan.a_pid;
+					openxcas_data_pid = chan.d_pid;
+					break;
+				case OPENXCAS_START_PMT_ECM: 
+					cs_debug("openxcas: msg: OPENXCAS_START_PMT_ECM");
+
+					 // parse pmt
+					uchar *dest = malloc(msg.buf_len + 7 - 12 - 4);
+
+					memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
+
+					dest[1] = msg.buf[3];
+					dest[2] = msg.buf[4];
+					dest[5] = msg.buf[11]+1;
+
+					memcpy(dest + 7, msg.buf + 12, msg.buf_len - 12 - 4);
+
+					int pmt_id = dvbapi_parse_capmt(dest, 7 + msg.buf_len - 12 - 4, -1);
+					free(dest);
+
+					unsigned char mask[12];
+					unsigned char comp[12];
+					memset(&mask, 0x00, sizeof(mask));
+					memset(&comp, 0x00, sizeof(comp));
+
+					mask[0] = 0xfe;
+					comp[0] = 0x80;
+
+					if ((ret = openxcas_add_filter(msg.stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)dvbapi_openxcas_ecm_callback)) < 0)
+						cs_log("openxcas: unable to add ecm filter");
+					else 
+						cs_debug("openxcas: ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid);
+
+					if (openxcas_start_filter(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM) < 0)
+						cs_log("openxcas: unable to start ecm filter");
+					else
+						cs_debug("openxcas: ecm filter started");
+
+					if (!openxcas_create_cipher_ex(openxcas_stream_id, openxcas_seq, 0, openxcas_ecm_pid, openxcas_video_pid, 0xffff, openxcas_audio_pid, 0xffff, 0xffff, 0xffff))
+						cs_log("openxcas: failed to create cipher ex");
+					else
+						cs_debug("openxcas: cipher created");
+					break;
+				case OPENXCAS_STOP_PMT_ECM:
+					cs_debug("openxcas: msg: OPENXCAS_STOP_PMT_ECM");
+					openxcas_stop_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
+					openxcas_remove_filter(msg.stream_id, OPENXCAS_FILTER_ECM);
+					openxcas_stop_filter_ex(msg.stream_id, msg.sequence, openxcas_filter_idx);
+					openxcas_destory_cipher_ex(msg.stream_id, msg.sequence);
+					memset(&demux, 0, sizeof(demux));
+					break;
+				case OPENXCAS_ECM_CALLBACK:
+					cs_debug("openxcas: msg: OPENXCAS_ECM_CALLBACK");
+					struct stOpenXCAS_Data data;
+					memcpy(&data, msg.buf, msg.buf_len);
+					openxcas_filter_callback(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM, &data);
+					break;
+				case OPENXCAS_PID_FILTER_CALLBACK:
+					cs_debug("openxcas: msg: OPENXCAS_PID_FILTER_CALLBACK");
+					openxcas_filter_callback_ex(msg.stream_id, msg.sequence, (struct stOpenXCAS_Data *)msg.buf);
+					break;
+				case OPENXCAS_QUIT:
+					cs_debug("openxcas: msg: OPENXCAS_QUIT");
+					openxcas_close();
+					cs_log("openxcas: exited");
+					return;
+					break;
+				case OPENXCAS_UKNOWN_MSG:
+				default:
+					cs_debug("openxcas: msg: OPENXCAS_UKNOWN_MSG (%d)", msg.cmd);
+					//cs_ddump(&msg, sizeof(msg), "msg dump:");
+					break;
+			}
+		}
+	}
+	openxcas_close();
+	cs_log("openxcas: invalid message");
+	return;
+}
+
+void azbox_send_dcw(ECM_REQUEST *er) {
+	cs_debug("openxcas: send_dcw");
+
+	int i;
+	for (i=0;i<MAX_DEMUX;i++) {
+		if (er->rc>3 && demux[i].pidindex==-1) {
+			dvbapi_try_next_caid(i);
+		} 
+
+		if (er->rc>3) {
+			cs_debug("cw not found");
+
+			openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+			openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
+
+			unsigned char mask[12];
+			unsigned char comp[12];
+			memset(&mask, 0x00, sizeof(mask));
+			memset(&comp, 0x00, sizeof(comp));
+
+			mask[0] = 0xfe;
+			comp[0] = 0x80;
+
+			if (openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)dvbapi_openxcas_ecm_callback) < 0) {
+				cs_log("openxcas: unable to add ecm filter (0)");
+				if (openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, openxcas_caid, 0xffff, openxcas_ecm_pid, mask, comp, (void *)dvbapi_openxcas_ecm_callback) < 0)
+					cs_log("openxcas: unable to add ecm filter (%04x)", openxcas_caid);
+				else
+					cs_debug("openxcas: ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid);
+			} else
+				cs_debug("openxcas: ecm filter added, pid = %x, caid = %x", openxcas_ecm_pid, openxcas_caid);
+
+			if (openxcas_start_filter(openxcas_stream_id, openxcas_seq, OPENXCAS_FILTER_ECM) < 0)
+				cs_log("openxcas: unable to start ecm filter");
+			else 
+				cs_debug("openxcas: ecm filter started");
+
+			return;
+		}
+	}
+ 
+	memcpy(openxcas_cw + (8 * (er->ecm[0] & 1)), er->cw + (8 * (er->ecm[0] & 1)), 8);
+ 
+	if (openxcas_set_key(openxcas_stream_id, openxcas_seq, 0, openxcas_cipher_idx, openxcas_cw, openxcas_cw + 8) != 1)
+		cs_log("openxcas: set cw failed");
+	else
+		cs_ddump(openxcas_cw, 16, "openxcas: write cws to descrambler");
+	
+}
+#endif
 /*
  *	protocol structure
  */
