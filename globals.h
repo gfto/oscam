@@ -463,6 +463,7 @@ struct s_client
   int		emmnok;	     // count EMM nok
 #ifdef WEBIF
   int		wihidden;	// hidden in webinterface status
+  char      lastreader[32]; // last cw got from this reader
 #endif
   uchar		ucrc[4];    // needed by monitor and used by camd35
   ulong		pcrc;        // pwd crc

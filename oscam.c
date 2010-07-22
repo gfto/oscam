@@ -1866,6 +1866,9 @@ int send_dcw(ECM_REQUEST *er)
 		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
 				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby);
+#ifdef WEBIF
+	snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", sby);
+#endif
 
 	if(!client[cs_idx].ncd_server && client[cs_idx].autoau && er->rcEx==0)
 	{

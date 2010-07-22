@@ -1664,6 +1664,9 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			if (((client[i].typ=='r') || (client[i].typ=='p')) && (con=cs_idx2ridx(i))>=0) usr=reader[con].label;
 
+			if (((client[i].typ!='r') || (client[i].typ!='p')) && (client[i].lastreader[0]))
+				tpl_printf(vars, 0, "CLIENTLBVALUE", "%s", client[i].lastreader);
+
 			if (client[i].dup) con=2;
 			else if ((client[i].tosleep) && (now-client[i].lastswitch>client[i].tosleep)) con=1;
 			else con=0;

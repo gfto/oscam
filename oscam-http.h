@@ -324,7 +324,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TH>Online</TH>\n\
 		<TH>CAID:SRVID</TH>\n\
 		<TH>Current Channel</TH>\n\
-		<TH>LB Value</TH>\n\
+		<TH>LB Value/ Reader</TH>\n\
 		<TH>Idle</TH>\n\
 		<TH>Status</TH>\n\
 		</TR>\n\
