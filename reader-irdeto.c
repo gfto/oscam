@@ -131,7 +131,7 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
     // like we did for NDS
     // 
     // this is the known default value.
-    long date_base=870393600L;
+    long date_base=870393600L; // this is actually 31.07.1997, 17:00
 
     // now check for specific providers base date
     if(!memcmp(reader->country_code,"GRC",3)) {
@@ -143,7 +143,7 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
                 case 0x1542:
                 case 0x1543:
                 case 0x1544:
-                    date_base=977817600L;
+                    date_base=977817600L; // 26.12.2000 00:00
                     break;
             }
         }

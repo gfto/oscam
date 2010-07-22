@@ -282,7 +282,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         provid = b2i(3, ident);
         ident[2]&=0xF0;
 
-        if(hasD2) {
+        if(hasD2 && reader->aes_list) {
             // check that we have the AES key to decode the CW
             // if not there is no need to send the ecm to the card
             if(!aes_present(reader->aes_list, 0x500, (uint32) provid, D2KeyID))
