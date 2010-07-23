@@ -2204,7 +2204,7 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	{
 		struct timeval timeout;
 		timeout.tv_sec = 0;
-		timeout.tv_usec = 700;
+		timeout.tv_usec = 1200;
 		FD_ZERO(&fds);
 		FD_SET(client[cs_idx].fd_m2c_c, &fds);
 		int res = select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, &timeout);
