@@ -94,24 +94,40 @@ endif (CMAKE_CROSSCOMPILING)
 set (OPTIONAL_LINK_DIR "" CACHE STRING "Some optional link directories")
 set (OPTIONAL_INCLUDE_DIR "" CACHE STRING "Some optional include directories")
 
+if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
     ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
     if[CS_WITH_GBOX]
     	${CMAKE_CURRENT_SOURCE_DIR}/csgbox
     endif[CS_WITH_GBOX]
-    if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
         ${CMAKE_CURRENT_SOURCE_DIR}/cygwin
         /usr/include/w32api
-    endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
     ${OPTIONAL_INCLUDE_DIR}
     )
+else (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+include_directories (
+    ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
+    ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
+    if[CS_WITH_GBOX]
+    	${CMAKE_CURRENT_SOURCE_DIR}/csgbox
+    endif[CS_WITH_GBOX]
+    ${OPTIONAL_INCLUDE_DIR}
+    )
+endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+
+if(OSCamOperatingSystem MATCHES "Windows/Cygwin")
 link_directories (
     /usr/lib
     /usr/lib/w32api
     /cygdrive/c/WINDOWS/system32/
     ${OPTIONAL_LINK_DIR}
     )
+else (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+link_directories (
+    ${OPTIONAL_LINK_DIR}
+    )
+endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 
 #----------------------- global options ------------------------------
 
