@@ -143,17 +143,24 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
                 case 0x1542:
                 case 0x1543:
                 case 0x1544:
-                    date_base=977817600L; // 26.12.2000 00:00
+                    date_base=977817600L; // 26.12.2000, 00:00
                     break;
             }
         }
     }
-    // else if(!memcmp(reader->country_code,"XXX",3)) {
-        // check ACS to deduce base date
-        
-    //    date_base=0L
-    //}
-
+/*
+     else if(!memcmp(reader->country_code,"XXX",3)) {
+        // check caid
+        if(reader->caid[0]==0x0628) {
+            // check ACS to deduce base date
+            switch(reader->acs) {
+                case 0x0606:
+                    date_base=977817600L; // 26.12.2000, 00:00
+                    break;
+            }
+        }
+    }
+*/
     time_t ut=date_base+date*(24*3600);  
     if (buf) {
         struct tm *t;

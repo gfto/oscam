@@ -104,6 +104,7 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res,
         //The cbSendLength parameter must be set to four, the size of the T=0 header information (CLA, INS, P1, and P2).
         //The pbRecvBuffer will receive the SW1 and SW2 status codes from the operation.
         //The pcbRecvLength should be at least two and will be set to two upon return.
+        cs_debug("command = %02X %02X %02X %02X %02X", buf[0],buf[1],buf[2],buf[3],buf[4])
         if(buf[4])
             dwSendLength = l;
         else
