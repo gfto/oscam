@@ -2712,7 +2712,12 @@ void send_best_reader(GET_READER_STAT *grs)
 
 void send_clear_reader_stat(int ridx)
 {
-  write_to_pipe(fd_c2m, PIP_ID_RES, (uchar*)&ridx, sizeof(ridx));
+  write_to_pipe(fd_c2m, PIP_ID_RES, (uchar*)&ridx, sizeof(ridx)); 
+}
+
+void send_restart_cardreader(int ridx)
+{
+  write_to_pipe(fd_c2m, PIP_ID_RST, (uchar*)&ridx, sizeof(ridx)); 
 }
 
 static void process_master_pipe()
