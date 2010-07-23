@@ -3719,7 +3719,7 @@ char *mk_t_caidtab(CAIDTAB *ctab){
 			sprintf(value + pos, ",%04X", ctab->caid[i]);
 			pos += 5;
 		}
-		if(ctab->mask[i]){
+		if((ctab->mask[i]) && (ctab->mask[i] != 0xFFFF)){
 			sprintf(value + pos, "&%04X", ctab->mask[i]);
 			pos += 5;
 		}
