@@ -274,9 +274,10 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	if (i >= 0) { //Found in cache, return same reader because he has the cached cws!
 		memcpy(result, ecm_send_cache[i].readers, sizeof(int)*CS_MAXREADER);
 		int best_ridx = ecm_send_cache[i].best_reader;
- 		cs_debug_mask(D_TRACE, "loadbalance best reader: %s (cache) readers: %d%d%d%d%d%d%d%d%d%d", 
+		cs_debug_mask(D_TRACE, "loadbalance best reader: %s (cache) readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
 			best_ridx<0?"NONE":reader[best_ridx].label,
-			result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], result[8], result[9]);
+			result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], 
+			result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]);
 
 		return best_ridx;
 	}
@@ -368,9 +369,10 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 		if (grs->reader_avail[i] && !result[i])
 			result[i] = 2;
 			
-	cs_debug_mask(D_TRACE, "loadbalance best reader: %s readers: %d%d%d%d%d%d%d%d%d%d", 
+	cs_debug_mask(D_TRACE, "loadbalance best reader: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
 		best_ridx<0?"NONE":reader[best_ridx].label,
-		result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], result[8], result[9]);
+		result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], 
+		result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]);
 	
 	add_send_cache(grs->caid, grs->ecmd5, result, best_ridx); //add to cache
 	
