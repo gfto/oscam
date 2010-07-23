@@ -100,9 +100,18 @@ include_directories (
     if[CS_WITH_GBOX]
     	${CMAKE_CURRENT_SOURCE_DIR}/csgbox
     endif[CS_WITH_GBOX]
+    if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+        ${CMAKE_CURRENT_SOURCE_DIR}/cygwin
+        /usr/include/w32api
+    endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
     ${OPTIONAL_INCLUDE_DIR}
     )
-link_directories (${OPTIONAL_LINK_DIR})
+link_directories (
+    /usr/lib
+    /usr/lib/w32api
+    /cygdrive/c/WINDOWS/system32/
+    ${OPTIONAL_LINK_DIR}
+    )
 
 #----------------------- global options ------------------------------
 
@@ -147,7 +156,7 @@ elseif (OSCamOperatingSystem MATCHES "QboxHD")
     add_definitions ("-DOS_LINUX -DSH4 -DQBOXHD -DTUXBOX")
     set (DEFAULT_CS_CONFDIR "/var/tuxbox/config")
 elseif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-    add_definitions ("-DOS_CYGWIN32 -static")
+    add_definitions ("-DOS_CYGWIN32 -static -DHAVE_PCSC")
     set (DEFAULT_CS_CONFDIR ".")
 elseif (OSCamOperatingSystem MATCHES "FreeBSD")
     add_definitions ("-DOS_FREEBSD")
@@ -293,7 +302,13 @@ if (HAVE_PCSC)
 if (OSCamOperatingSystem MATCHES "Linux")
     add_definitions ("-I/usr/include/PCSC")
 endif (OSCamOperatingSystem MATCHES "Linux")
+else (HAVE_PCSC)
+if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+	add_definitions ("-Icygwin")
+	set (HAVE_PCSC "1")
+endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 endif (HAVE_PCSC)
+
 
 #----------------------- subdirectories ------------------------------
 
@@ -350,8 +365,8 @@ if(HAVE_LIBRT AND HAVE_LIBUSB)
         target_link_libraries (${exe_name} rt)
     endif (NOT OSCamOperatingSystem MATCHES "Mac OS X")
     if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-	target_link_libraries (${exe_name} SetupAPI)
-	target_link_libraries (${exe_name} Ole32)
+	target_link_libraries (${exe_name} setupapi)
+	target_link_libraries (${exe_name} ole32)
 	target_link_libraries (${exe_name} shell32)
     endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 endif(HAVE_LIBRT AND HAVE_LIBUSB)
@@ -362,8 +377,8 @@ if (HAVE_LIBRT_STATIC AND HAVE_LIBUSB)
     target_link_libraries (${exe_name} imp_librt)
     endif (NOT OSCamOperatingSystem MATCHES "Mac OS X")
     if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-	target_link_libraries (${exe_name} SetupAPI)
-	target_link_libraries (${exe_name} Ole32)
+	target_link_libraries (${exe_name} setupapi)
+	target_link_libraries (${exe_name} ole32)
 	target_link_libraries (${exe_name} shell32)
     endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 endif (HAVE_LIBRT_STATIC AND HAVE_LIBUSB)
@@ -375,9 +390,12 @@ endif (HAVE_PTHREAD)
 if (HAVE_AES)
     target_link_libraries (${exe_name} crypto)
 endif (HAVE_AES)
+
 if (HAVE_PCSC)
 if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
+if (NOT OSCamOperatingSystem MATCHES "Windows/Cygwin")
     target_link_libraries (${exe_name} pcsclite)
+endif (NOT OSCamOperatingSystem MATCHES "Windows/Cygwin")
 endif (NOT OSCamOperatingSystem MATCHES "Mac OS X")
 endif (HAVE_PCSC)
 
@@ -391,11 +409,11 @@ elseif (OSCamOperatingSystem MATCHES "Mac OS X")
 	FIND_LIBRARY (PCSC_LIBRARY PCSC)
 	message (STATUS "OS X system PCSC : ${PCSC_LIBRARY}")
    	target_link_libraries ( ${exe_name} ${PCSC_LIBRARY})
-    set (HAVE_PCSC "1")
+        set (HAVE_PCSC "1")
         FIND_LIBRARY (IOKit_LIBRARY IOKit)
-   	    target_link_libraries ( ${exe_name} ${IOKit_LIBRARY})
+   	target_link_libraries ( ${exe_name} ${IOKit_LIBRARY})
         FIND_LIBRARY (CoreFoundation_LIBRARY CoreFoundation)
-   	    target_link_libraries ( ${exe_name} ${CoreFoundation_LIBRARY})
+   	target_link_libraries ( ${exe_name} ${CoreFoundation_LIBRARY})
 elseif (OSCamOperatingSystem MATCHES "Tuxbox")
     target_link_libraries ( ${exe_name} dl)
 elseif (OSCamOperatingSystem MATCHES "TripleDragon")
@@ -406,7 +424,12 @@ elseif (OSCamOperatingSystem MATCHES "agv2+w")
 elseif (OSCamOperatingSystem MATCHES "WRT54G")
 elseif (OSCamOperatingSystem MATCHES "Amino")
 elseif (OSCamOperatingSystem MATCHES "QboxHD")
-elseif (OSCamOperatingSystem MATCHES "Windows/cygwin")
+elseif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+    message (STATUS "Windows system PCSC : winscard.dll")
+    target_link_libraries (${exe_name} winscard)
+    target_link_libraries (${exe_name} setupapi )
+    target_link_libraries (${exe_name} ole32)
+    target_link_libraries (${exe_name} shell32)
 elseif (OSCamOperatingSystem MATCHES "NeutrinoHD")
     target_link_libraries ( ${exe_name} rt nxp )
 elseif (OSCamOperatingSystem MATCHES "AZBox")
@@ -473,6 +496,11 @@ else (OSCamOperatingSystem MATCHES "Mac OS X")
     set (CMAKE_EXE_LINKER_FLAGS "-s")
   endif (NOT CMAKE_BUILD_TYPE STREQUAL Debug)
 endif (OSCamOperatingSystem MATCHES "Mac OS X")
+
+if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+	set (CMAKE_EXE_LINKER_FLAGS "--enable-stdcall-fixup")
+endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+
 #----------------------- installation -----------------------------
 
 file (GLOB config_files "${CMAKE_CURRENT_SOURCE_DIR}/Distribution/oscam.*")

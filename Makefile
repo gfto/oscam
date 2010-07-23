@@ -369,8 +369,6 @@ i386-pc-cygwin:
 #
 #	Cygwin native with PCSC
 #
-# 	requires Visual Studio / Visual C++ for the winscard includes
-#LIBPCSC="cygwin/libwinscard.a" \
 ######################################################################
 i386-pc-cygwin-pcsc:
 	@-$(MAKE) --no-print-directory \
