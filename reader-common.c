@@ -317,15 +317,17 @@ int reader_checkhealth(struct s_reader * reader)
     {
       cs_log("card detected");
       reader->card_status  = CARD_NEED_INIT;
-      reader->card_status = (reader_reset(reader) ? CARD_INSERTED : CARD_FAILURE);
-      if (reader->card_status == CARD_FAILURE)
+      //reader->card_status = (reader_reset(reader) ? CARD_INSERTED : CARD_FAILURE);
+      if (!reader_reset(reader)) 
       {
+        reader->card_status = CARD_FAILURE;
         cs_log("card initializing error");
       }
       else
       {
         client[cs_idx].au=reader->ridx;
         reader_card_info(reader);
+        reader->card_status = CARD_INSERTED;
       }
 
       int i;
