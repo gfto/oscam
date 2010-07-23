@@ -1461,14 +1461,14 @@ void store_logentry(char *txt)
  */
 int write_to_pipe(int fd, int id, uchar *data, int n)
 {
-  static uchar buf[1024+3+sizeof(int)]; //schlocke static buffer instead of stack!
-
   if( !fd ) {
         cs_log("write_to_pipe: fd==0 id: %d", id);
         return -1;
   }
 
 //printf("WRITE_START pid=%d", getpid()); fflush(stdout);
+
+  uchar buf[1024+3+sizeof(int)];
 
   if ((id<0) || (id>PIP_ID_MAX))
     return(PIP_ID_ERR);
@@ -2191,15 +2191,20 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	memcpy(grs.ecmd5, er->ecmd5, sizeof(er->ecmd5));
 	memcpy(grs.reader_avail, reader_avail, sizeof(int)*CS_MAXREADER);
 	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", username(cs_idx), grs.caid, grs.prid, grs.srvid);
-	write_to_pipe(fd_c2m, PIP_ID_BES, (uchar*)&grs, sizeof(GET_READER_STAT));
+
+	int res_write = write_to_pipe(fd_c2m, PIP_ID_BES, (uchar*)&grs, sizeof(GET_READER_STAT));
+	if (res_write <= 0) {
+		cs_debug_mask(D_TRACE, "get best reader: write error!");
+		return;
+	}
 	
 	uchar *ptr;
 	fd_set fds;
-	struct timeval timeout;
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 700;
 	do
 	{
+		struct timeval timeout;
+		timeout.tv_sec = 0;
+		timeout.tv_usec = 700;
 		FD_ZERO(&fds);
 		FD_SET(client[cs_idx].fd_m2c_c, &fds);
 		int res = select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, &timeout);
