@@ -54,10 +54,10 @@ typedef struct custom_data
 
 static char *get_ncd_client_name(char *client_id)
 {
-        static const int max_id_idx = 28;
+        static const int max_id_idx = 29;
         static char *ncd_service_ids[] = { "0000", "5644", "4C43", "4333", "7264", "6762", "6D67", "7763", "6E73", "6378", "6B61",
                                            "6576", "4343", "5456", "414C", "0666", "0667", "9911", "434C", "4765", "5342",
-                                           "6E65", "4E58", "4453", "8888", "7363", "0669", "0665", "0769","4543" };
+                                           "6E65", "4E58", "4453", "8888", "7363", "0669", "0665", "0769", "4543" };
 
         static char *ncd_service_names[] = { "generic", "vdr-sc", "LCE", "camd3", "radegast", "gbox2CS", "mgcamd",
                                              "WinCSC", "NewCS", "cx", "Kaffeine", "evocamd", "CCcam", "Tecview",
