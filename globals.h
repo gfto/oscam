@@ -882,7 +882,6 @@ typedef struct ecm_request_t
   ushort        pid;
   ushort        idx;
   ulong         prid;
-  int           n_readers;
   int           reader[CS_MAXREADER];
   int           cidx;   // client index
   int           cpti;   // client pending table index
@@ -1164,7 +1163,7 @@ extern int check_sct_len(const unsigned char *data, int off);
 extern void cs_ri_brk(struct s_reader * reader, int);
 extern void cs_ri_log(struct s_reader * reader, char *,...);
 extern void * start_cardreader(void *);
-extern void reader_card_info(struct s_reader * reader);
+extern void reader_card_info(struct s_reader * reader, int force);
 extern int hostResolve();
 extern int network_tcp_connection_open();
 extern void network_tcp_connection_close(struct s_reader * reader, int);

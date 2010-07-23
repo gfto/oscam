@@ -669,7 +669,7 @@ static void reader_do_pipe(struct s_reader * reader)
       reader_do_emm(reader, (EMM_PACKET *)ptr);
       break;
     case PIP_ID_CIN: 
-      reader_card_info(reader); 
+      reader_card_info(reader, 0); 
       break;
   }
 }
