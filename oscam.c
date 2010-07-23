@@ -2710,6 +2710,11 @@ void send_best_reader(GET_READER_STAT *grs)
 	write_to_pipe(client[grs->cidx].fd_m2c, PIP_ID_BES, (uchar*)&best_reader, sizeof(best_reader));
 }
 
+void send_clear_reader_stat(int ridx)
+{
+  write_to_pipe(fd_c2m, PIP_ID_RES, (uchar*)&ridx, sizeof(ridx));
+}
+
 static void process_master_pipe()
 {
   int n;
@@ -2735,6 +2740,9 @@ static void process_master_pipe()
     case PIP_ID_BES: //Get best reader
         send_best_reader((GET_READER_STAT *)ptr);
         break;
+    case PIP_ID_RES: //Reset reader statistics
+	clear_reader_stat(*(int*)ptr);
+	break;
   }
 }
 

@@ -19,3 +19,5 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int time, int rc)
 void add_reader_stat(ADD_READER_STAT *stat);
 
 int get_best_reader(GET_READER_STAT *grs, int *result);
+
+void clear_reader_stat(int ridx);

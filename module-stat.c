@@ -378,3 +378,21 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	
 	return best_ridx;
 }
+
+/**
+ * clears statistic of reader ridx. WARNING! call only from server process!
+ **/
+void clear_reader_stat(int ridx)
+{
+	if (!reader_stat[ridx])
+		return;
+		
+	LLIST_ITR itr;
+	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
+	while (stat) {
+		free(stat);
+		stat = llist_itr_remove(&itr);
+	}
+	llist_destroy(reader_stat[ridx]);
+	reader_stat[ridx] = NULL;
+}
