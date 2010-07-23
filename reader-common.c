@@ -211,10 +211,10 @@ void do_emm_from_file(struct s_reader * reader)
   }
 }
 
-void reader_card_info(struct s_reader * reader, int force)
+void reader_card_info(struct s_reader * reader)
 {
 //  int rc=-1;
-  if (force || reader_checkhealth(reader))
+  if (reader_checkhealth(reader))
   //if (rc=reader_checkhealth())
   {
     client[cs_idx].last=time((time_t)0);
@@ -326,7 +326,9 @@ int reader_checkhealth(struct s_reader * reader)
       else
       {
         client[cs_idx].au=reader->ridx;
-        reader_card_info(reader, 1);
+        if (cfg->cardinitdone) //do not set CARD_INSERTED before chids are read
+          reader->card_status = CARD_INSERTED;
+        reader_card_info(reader);
         reader->card_status = CARD_INSERTED;
       }
 
