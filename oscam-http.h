@@ -519,10 +519,10 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	  <TH>Delete</TH>\n\
       <TH>Reader</TH>\n\
       <TH>Protocol</TH>\n\
-      <TH>EMM error<br> UK / G / S / UQ</TH>\n\
-      <TH>EMM written<br> UK / G / S / UQ</TH>\n\
-      <TH>EMM skipped<br> UK / G / S / UQ</TH>\n\
-      <TH>EMM blocked<br> UK / G / S / UQ</TH>\n\
+      <TH>EMM error<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
+      <TH>EMM written<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
+      <TH>EMM skipped<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
+      <TH>EMM blocked<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
       <TH COLSPAN=\"3\">Action</TH>\n\
     </TR>\n\
     ##READERLIST##\
