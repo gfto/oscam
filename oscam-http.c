@@ -1619,6 +1619,16 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	if (strcmp(getParam(params, "action"), "kill") == 0)
 		kill(atoi(getParam(params, "pid")), SIGQUIT);
 
+	if (strcmp(getParam(params, "action"), "restart") == 0)
+		for (i = 0; i < CS_MAXREADER; i++)
+			if (reader[i].pid == atoi(getParam(params, "pid")))
+					send_restart_cardreader(i);
+
+	if (strcmp(getParam(params, "action"), "resetstat") == 0)
+		for (i = 0; i < CS_MAXREADER; i++)
+			if (reader[i].pid == atoi(getParam(params, "pid")))
+				send_clear_reader_stat(i);
+
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0) {
 		int lvl = atoi(debuglvl);
@@ -1680,10 +1690,15 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			tpl_printf(vars, 0, "HIDEIDX", "%d", i);
 			tpl_addVar(vars, 0, "HIDEICON", ICHID);
-			if((client[i].typ == 'c' || client[i].typ == 'r' || client[i].typ == 'p') && !cfg->http_readonly) {
+			if(client[i].typ == 'c' && !cfg->http_readonly) {
 				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
 				tpl_printf(vars, 1, "CLIENTPID", "<A HREF=\"status.html?action=kill&pid=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\" STYLE=\"float:right\"></A>", client[i].pid, ICKIL);
-			} else {
+			}
+			else if((client[i].typ == 'r' || client[i].typ == 'p') && !cfg->http_readonly) {
+				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
+				tpl_printf(vars, 1, "CLIENTPID", "<A HREF=\"status.html?action=restart&pid=%d\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Kill\" STYLE=\"float:right\"></A>", client[i].pid, ICKIL);
+			}
+			else {
 				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
 			}
 
@@ -1779,7 +1794,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 						if(reader[ridx].pid == client[i].pid)
 						{
 							if (reader[ridx].lbvalue)
-								tpl_printf(vars, 0, "CLIENTLBVALUE", "%d", reader[ridx].lbvalue);
+								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&pid=%d\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", reader[ridx].pid, reader[ridx].lbvalue);
 
 							switch(reader[ridx].card_status)
 							{
