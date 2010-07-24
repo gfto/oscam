@@ -148,6 +148,17 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
             }
         }
     }
+     else if(!memcmp(reader->country_code,"MCR",3)) {
+        // check caid
+        if(reader->caid[0]==0x0628) {
+            // check ACS to deduce base date
+            switch(reader->acs) {
+                case 0x0606:
+                    date_base=1159574400L; // 29.09.2006, 00:00
+                    break;
+            }
+        }
+    }
 /*
      else if(!memcmp(reader->country_code,"XXX",3)) {
         // check caid
