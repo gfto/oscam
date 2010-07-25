@@ -450,7 +450,7 @@ elseif (OSCamOperatingSystem MATCHES "NeutrinoHD")
     target_link_libraries ( ${exe_name} rt nxp )
 elseif (OSCamOperatingSystem MATCHES "AZBox")
     add_library(xcas STATIC IMPORTED)
-    set_property(TARGET xcas PROPERTY IMPORTED_LOCATION openxcas/libOpenXCASAPI.a)
+    set_property(TARGET xcas PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/openxcas/libOpenXCASAPI.a)
     target_link_libraries(${exe_name} xcas)
 endif (OSCamOperatingSystem MATCHES "Linux")
 
