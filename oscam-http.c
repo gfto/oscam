@@ -2022,7 +2022,7 @@ void send_oscam_scanusb(struct templatevars *vars, FILE *f) {
 	int err=0;
 	char path[1035];
 
-	fp = popen("lsusb", "r");
+	fp = popen("lsusb -v | egrep '^Bus|^ *iSerial|^ *iProduct'", "r");
 	if (fp == NULL) {
 		tpl_addVar(vars, 0, "USBENTRY", "Failed to run lusb");
 		tpl_printf(vars, 0, "USBENTRY", "%s", path);
@@ -2032,7 +2032,13 @@ void send_oscam_scanusb(struct templatevars *vars, FILE *f) {
 
 	if(!err) {
 		while (fgets(path, sizeof(path)-1, fp) != NULL) {
-			tpl_printf(vars, 0, "USBENTRY", "%s", path);
+			tpl_addVar(vars, 0, "USBENTRYCLASS", "");
+			if (strstr(path,"Bus ")) {
+				tpl_printf(vars, 0, "USBENTRY", "%s", path);
+				tpl_addVar(vars, 0, "USBENTRYCLASS", "CLASS=\"scanusbsubhead\"");
+			} else {
+				tpl_printf(vars, 0, "USBENTRY", "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s", path);
+			}
 			tpl_addVar(vars, 1, "USBBIT", tpl_getTpl(vars, "SCANUSBBIT"));
 		}
 	}

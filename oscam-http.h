@@ -29,6 +29,7 @@ TR.online TD {background-color:#f1f5e6;}\n\
 TR.expired TD {background-color:#ffe2d4;}\n\
 TR.usrcfg_anticasc TD {background-color:#FEF9BF;}\n\
 TR.usrcfg_cccam TD {background-color:#E6FEBF;}\n\
+TR.scanusbsubhead TD {background-color:#fdfbe1;}\n\
 DIV.log {border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
 DIV.sidlist {border:1px dotted #AAAAAA; background-color: #fffdf5; padding:2; font-family:\"Courier New\", monospace ; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left;}\n\
 TABLE.menu {border-spacing:0px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
@@ -579,7 +580,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 </TABLE>\n\
 ##TPLFOOTER##"
 
-#define TPLSCANUSBBIT "<TR><TD>##USBENTRY##</TD></TR>\n"
+#define TPLSCANUSBBIT "<TR ##USBENTRYCLASS##><TD>##USBENTRY##</TD></TR>\n"
 
 #define TPLENTITLEMENTS "\
 ##TPLHEADER##\
