@@ -1505,9 +1505,9 @@ static void dvbapi_handler(int idx) {
 void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_index, unsigned int caid, unsigned char *ecm_data, int l, unsigned short pid) {
 	cs_debug("openxcas: ecm callback received"); 
 
-  openxcas_stream_id = stream_id;
-  openxcas_seq = seq;
-	openxcas_caid = caid;
+  //openxcas_stream_id = stream_id;
+  //openxcas_seq = seq;
+	//openxcas_caid = caid;
 	openxcas_ecm_pid = pid;
 
 	ECM_REQUEST *er;
@@ -1534,12 +1534,10 @@ void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_ind
 	cs_ftime(&tp);
 	tp.time+=500;
 
-	chk_pending(tp);
-
 	struct pollfd pfd;
 	pfd.fd = client[cs_idx].fd_m2c_c;
 	pfd.events = POLLIN | POLLPRI;
-
+/*
 	while(1) {
 		chk_pending(tp);
 
@@ -1555,7 +1553,7 @@ void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_ind
 			chk_dcw(client[cs_idx].fd_m2c_c);
 			break;
 		}
-	}
+	}*/
 } 
 	 
 
@@ -1622,6 +1620,8 @@ void azbox_main() {
 	int ret;
 	while ((ret = openxcas_get_message(&msg, 0)) >= 0) {
 		cs_sleepms(10);
+
+	  chk_pending(tp);
 
 		if (ret) {
 			openxcas_stream_id = msg.stream_id;
@@ -1737,7 +1737,7 @@ void azbox_send_dcw(ECM_REQUEST *er) {
 			memset(&mask, 0x00, sizeof(mask));
 			memset(&comp, 0x00, sizeof(comp));
 
-			mask[0] = 0xfe;
+			mask[0] = 0xff;
 			comp[0] = 0x80;
 
 			if (openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)azbox_openxcas_ecm_callback) < 0) {
