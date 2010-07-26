@@ -2411,7 +2411,7 @@ int write_server()
 				if (reader[i].cc_want_emu)
 					fprintf_conf(f, CONFVARWIDTH, "cccwantemu", "%d\n", reader[i].cc_want_emu);
 					
-				if (reader[i].cc_want_emu)
+				if (reader[i].cc_force_resend_ecm)
 					fprintf_conf(f, CONFVARWIDTH, "cccforceresendecm", "%d\n", reader[i].cc_force_resend_ecm);
 			}
 
