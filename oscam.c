@@ -2458,6 +2458,21 @@ void do_emm(EMM_PACKET *ep)
 	au = client[cs_idx].au;
 	cs_ddump_mask(D_ATR, ep->emm, ep->l, "emm:");
 
+	//Unique Id matching for pay-per-view channels:
+	if (client[cs_idx].autoau) {
+		int i;
+		for (i=0;i<CS_MAXREADER;i++) {
+			if (reader[i].card_system>0 && !reader[i].audisabled) {
+				if (reader_get_emm_type(ep, &reader[i])) { //decodes ep->type and ep->hexserial from the EMM
+					if (memcmp(ep->hexserial, reader[i].hexserial, sizeof(ep->hexserial))==0) {
+						au = i;
+						break; //
+					}
+				}
+			}
+		}
+	}
+	
 	if ((au < 0) || (au >= CS_MAXREADER)) {
 		cs_debug_mask(D_EMM, "emm disabled, client has no au-reader!");
 		return;

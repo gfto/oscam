@@ -351,8 +351,15 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 					best2 = current;
 				}
 			}
-			else if (stat->rc >= 4 && stat->ecm_count == 0) //Never decodeable
-				grs->reader_avail[i] = 0;
+			else if (stat->rc >= 4 && stat->ecm_count == 0) { //Never decodeable
+				if (reader[i].audisabled ||
+						(!client[grs->cidx].autoau && client[grs->cidx].au != i))
+					//au disabled or not auto/au not on this reader: never decode it
+					grs->reader_avail[i] = 0;
+				//else reader is selected as fallback.
+				//if no best reader could be selected, fallbackreader elevates to primary readers
+				//so all (au) readers ares asked if user can au
+			}
 		}
 	}
 	if (best_ridx == -1)
@@ -365,9 +372,11 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 		//cs_debug_mask(D_TRACE, "-->loadbalance no best reader!");
 		
 	//setting all other readers as fallbacks:
-	for (i=0;i<CS_MAXREADER; i++)
-		if (grs->reader_avail[i] && !result[i])
+	for (i=0;i<CS_MAXREADER; i++) {
+		if (grs->reader_avail[i] && !result[i]) {
 			result[i] = 2;
+		}
+	}
 			
 	cs_debug_mask(D_TRACE, "loadbalance best reader: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
 		best_ridx<0?"NONE":reader[best_ridx].label,
