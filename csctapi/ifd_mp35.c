@@ -22,7 +22,7 @@ static const char* product_code[] = {"MP3.4", "MP3.5", "MP3.6 USB"};
 int MP35_Init(struct s_reader * reader)
 {
   BYTE rec_buf[32];
-  BYTE parameter;
+  //BYTE parameter;
   int original_mhz;
 
   memset(rec_buf, 0x00, sizeof(rec_buf));
