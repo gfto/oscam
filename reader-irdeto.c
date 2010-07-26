@@ -261,7 +261,7 @@ int irdeto_card_init(struct s_reader * reader, ATR newatr)
   reader->acs=(cta_res[0]<<8)|cta_res[1];
   reader->caid[0]=(cta_res[5]<<8)|cta_res[6];
   memcpy(reader->country_code,cta_res+13,3);
-  cs_ri_log(reader, "caid: %04X, acs: %x.%02x, Country code : %c%c%c",
+  cs_ri_log(reader, "caid: %04X, acs: %x.%02x, country code: %c%c%c",
          reader->caid[0], cta_res[0], cta_res[1], cta_res[13], cta_res[14], cta_res[15]);
 
   /*
