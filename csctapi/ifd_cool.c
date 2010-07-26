@@ -29,10 +29,10 @@ int Cool_Init (char *device)
 		return FALSE;
 
     // this is to stay compatible with olfer config.
-    if(!reader->device)
+    if(!device)
         reader_nb=0;
     else
-        reader_nb=atoi((const char *)&reader->device);
+        reader_nb=atoi((const char *)&device);
     if(reader_nb>1) {
         // there are only 2 readers in the coolstream : 0 or 1
         cs_log("Coolstream reader device can only be 0 or 1");
