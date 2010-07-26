@@ -534,6 +534,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TD COLSPAN=\"2\" align=\"center\">Label:&nbsp;&nbsp;<input type=\"text\" name=\"label\" value=\"##NEXTREADER##\"></TD>\
 		<TD COLSPAN=\"2\" align=\"center\">Protocol:&nbsp;&nbsp;<select name=\"protocol\">\
 			<option>mouse</option>\
+			<option>mp35</option>\
 			<option>smartreader</option>\
 			<option>internal</option>\
 			<option>serial</option>\
