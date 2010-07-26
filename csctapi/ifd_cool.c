@@ -16,8 +16,9 @@ void * handle;
 unsigned char cardbuffer[256];
 int cardbuflen = 0;
 
-int Cool_Init ()
+int Cool_Init (char *device)
 {
+	int reader_nb = 0;
  	if (cnxt_kal_initialize ())
 		return FALSE;
 
@@ -26,9 +27,18 @@ int Cool_Init ()
 
 	if (cnxt_smc_init (NULL) != 1)
 		return FALSE;
-	
-	int reader = 0;
-	if (cnxt_smc_open (&handle, &reader))
+
+    // this is to stay compatible with olfer config.
+    if(!reader->device)
+        reader_nb=0;
+    else
+        reader_nb=atoi((const char *)&reader->device);
+    if(reader_nb>1) {
+        // there are only 2 readers in the coolstream : 0 or 1
+        cs_log("Coolstream reader device can only be 0 or 1");
+        return FALSE;
+    }
+	if (cnxt_smc_open (&handle, &reader_nb))
 		return FALSE;
 
 	return OK;

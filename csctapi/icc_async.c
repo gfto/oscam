@@ -121,7 +121,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 #endif
 		case R_INTERNAL:
 #ifdef COOL
-			return Cool_Init();
+			return Cool_Init(reader->device);
 #elif SCI_DEV
 	#if defined(SH4) || defined(STB04SCI)
 			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
