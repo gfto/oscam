@@ -376,6 +376,10 @@ void IO_Serial_Flush (struct s_reader * reader)
 	while(!IO_Serial_Read(reader, 1000, 1, &b)); //FIXME how about tcflush??
 }
 
+void IO_Serial_Sendbreak(struct s_reader * reader, int duration)
+{
+	tcsendbreak (reader->handle, duration);
+}
 
 bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, BYTE * data)
 {
@@ -440,7 +444,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 	return OK;
 }
 
-bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, BYTE * data)
+bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, const BYTE * data)
 {
 	unsigned count, to_send, i_w;
     BYTE data_w[512];
@@ -491,7 +495,7 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, B
 bool IO_Serial_Close (struct s_reader * reader)
 {
 	
-	cs_debug ("IO: Clossing serial port %s\n", reader->device);
+	cs_debug ("IO: Closing serial port %s\n", reader->device);
 	
 #if defined(TUXBOX) && defined(PPC)
 	close(fdmc);
@@ -697,4 +701,3 @@ bool IO_Serial_InitPnP (struct s_reader * reader)
 
 		return OK;
 }
- 

@@ -33,6 +33,7 @@
 #include "protocol_t1.h"
 #include "io_serial.h"
 #include "ifd_cool.h" 
+#include "ifd_mp35.h" 
 #include "ifd_phoenix.h" 
 #include "ifd_sc8in1.h" 
 #include "ifd_sci.h"
@@ -86,6 +87,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 				cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
 			reader->slot=(int)reader->device[pos+1] - 0x30;//FIXME test boundaries
 			reader->device[pos]= 0; //slot 1 reader now gets correct physicalname
+		case R_MP35:
 		case R_MOUSE:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
@@ -141,7 +143,11 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			return ERROR;
 	}
 	
-	if (reader->typ <= R_MOUSE)
+	if (reader->typ == R_MP35)
+	{
+		MP35_Init(reader);
+	}
+	else if (reader->typ <= R_MOUSE)
 		if (Phoenix_Init(reader)) {
 				cs_log("ERROR: Phoenix_Init returns error");
 				Phoenix_Close (reader);
@@ -181,6 +187,9 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 		case R_SC8in1:
 			call (Sc8in1_GetStatus(reader, &in));
 			break;
+		case R_MP35:
+//			call (MP35_GetStatus(reader, &in));
+//			break;
 		case R_MOUSE:
 			call (Phoenix_GetStatus(reader, &in));
 			break;
@@ -223,6 +232,7 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	}
 	else {
 		switch(reader->typ) {
+			case R_MP35:
 			case R_DB2COM1:
 			case R_DB2COM2:
 			case R_SC8in1:
@@ -329,6 +339,7 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 		sent = data;
 
 	switch(reader->typ) {
+		case R_MP35:
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_SC8in1:
@@ -361,6 +372,7 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
 {
 	switch(reader->typ) {
+		case R_MP35:
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_SC8in1:
@@ -396,6 +408,9 @@ int ICC_Async_Close (struct s_reader *reader)
 	cs_debug_mask (D_IFD, "IFD: Closing device %s", reader->device);
 
 	switch(reader->typ) {
+		case R_MP35:
+			call (MP35_Close(reader));
+			break;
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_MOUSE:
@@ -644,6 +659,7 @@ static unsigned int ETU_to_ms(struct s_reader * reader, unsigned long WWT)
 static int ICC_Async_SetParity (struct s_reader * reader, unsigned short parity)
 {
 	switch(reader->typ) {
+		case R_MP35:
 		case R_DB2COM1:
 		case R_DB2COM2:
 		case R_SC8in1:

@@ -134,31 +134,32 @@
 #define D_FUT				128 // Reserved for future use
 #define D_ALL_DUMP  255 // dumps all
 
-#define R_DB2COM1		0x1 // Reader Dbox2 @ com1
-#define R_DB2COM2		0x2 // Reader Dbox2 @ com1
+#define R_DB2COM1   0x1 // Reader Dbox2 @ com1
+#define R_DB2COM2   0x2 // Reader Dbox2 @ com1
 #define R_SC8in1    0x3 // Reader smartcard mouse
-#define R_MOUSE     0x4 // Reader smartcard mouse
+#define R_MP35      0x4 // AD-Teknik Multiprogrammer 3.5 and 3.6 (only usb tested)
+#define R_MOUSE     0x5 // Reader smartcard mouse
 /////////////////// phoenix readers which need baudrate setting and timings need to be guarded by OSCam: BEFORE R_MOUSE
-#define R_INTERNAL  0x5 // Reader smartcard intern
+#define R_INTERNAL  0x10 // Reader smartcard intern
 /////////////////// internal readers (Dreambox, Coolstream, IPBox) are all R_INTERNAL, they are determined compile-time
 /////////////////// readers that do not reed baudrate setting and timings are guarded by reader itself (large buffer built in): AFTER R_SMART
-#define R_SMART     0x6 // Smartreader+
-#define R_PCSC 			0x7 // PCSC
+#define R_SMART     0x11 // Smartreader+
+#define R_PCSC      0x12 // PCSC
 /////////////////// proxy readers after R_CS378X
-#define R_CAMD35    0x10  // Reader cascading camd 3.5x
-#define R_CAMD33    0x11  // Reader cascading camd 3.3x
-#define R_NEWCAMD   0x12  // Reader cascading newcamd
-#define R_RADEGAST  0x13  // Reader cascading radegast
-#define R_CS378X    0x14  // Reader cascading camd 3.5x TCP
-#define R_CONSTCW   0x15  // Reader for Constant CW
+#define R_CAMD35    0x20  // Reader cascading camd 3.5x
+#define R_CAMD33    0x21  // Reader cascading camd 3.3x
+#define R_NEWCAMD   0x22  // Reader cascading newcamd
+#define R_RADEGAST  0x23  // Reader cascading radegast
+#define R_CS378X    0x24  // Reader cascading camd 3.5x TCP
+#define R_CONSTCW   0x25  // Reader for Constant CW
 /////////////////// peer to peer proxy readers after R_CCCAM
 #ifdef CS_WITH_GBOX
-#define R_GBOX      0x20  // Reader cascading gbox
+#define R_GBOX      0x30  // Reader cascading gbox
 #endif
-#define R_CCCAM     0x25  // Reader cascading cccam
+#define R_CCCAM     0x35  // Reader cascading cccam
 #define R_SERIAL    0x80  // Reader serial
 #define R_IS_NETWORK    0x70
-#define R_IS_CASCADING  0xF0
+#define R_IS_CASCADING  0xE0
 
 
 #define CS_MAX_MOD 12

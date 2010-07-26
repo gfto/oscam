@@ -2163,6 +2163,10 @@ int write_server()
 
 			char *ctyp ="";
 			switch(reader[i].typ) {	/* TODO like ph*/
+				case R_MP35	:
+					ctyp = "mp35";
+					isphysical = 1;
+					break;
 				case R_MOUSE	:
 					ctyp = "mouse";
 					isphysical = 1;
@@ -3085,6 +3089,11 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "protocol")) {
+
+		if (!strcmp(value, "mp35")) {
+			rdr->typ = R_MP35;
+			return;
+		}
 
 		if (!strcmp(value, "mouse")) {
 			rdr->typ = R_MOUSE;

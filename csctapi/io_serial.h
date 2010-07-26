@@ -81,6 +81,7 @@ int IO_Serial_SetParity (struct s_reader * reader, BYTE parity);
 
 /* Input and output */
 bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, BYTE * data);
-bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, BYTE * data);
+bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, const BYTE * data);
+void IO_Serial_Sendbreak (struct s_reader * reader, int duration);
 
 #endif /* IO_SERIAL */

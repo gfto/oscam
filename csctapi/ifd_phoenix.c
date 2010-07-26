@@ -3,9 +3,6 @@
 		This module provides IFD handling functions for Smartmouse/Phoenix reader.
 */
 #include <stdio.h>
-//#include <time.h>
-//#include <string.h>
-//#include "ioctls.h"
 #include "../globals.h"
 #include "atr.h"
 #include <termios.h>
@@ -243,6 +240,7 @@ int Phoenix_SetBaudrate (struct s_reader * reader, unsigned long baudrate)
 
 int Phoenix_Close (struct s_reader * reader)
 {
+	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader->device);
 #ifdef USE_GPIO //felix: close dev if card detected
 	if(gpio_detect) 
 	{
@@ -252,7 +250,6 @@ int Phoenix_Close (struct s_reader * reader)
 	}
 #endif
 	IO_Serial_Close(reader);
-	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader->device);
 	return OK;
 }
 

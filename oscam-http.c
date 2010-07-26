@@ -677,6 +677,10 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_addVar(vars, 0, "READERNAMEENC", tpl_addTmp(vars, urlencode(reader[readeridx].label)));
 
 			switch(reader[readeridx].typ) {
+			case R_MP35 :
+				ctyp = "mp35";
+				isphysical = 1;
+				break;
 			case R_MOUSE :
 				ctyp = "mouse";
 				isphysical = 1;
@@ -1040,6 +1044,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			break;
 		case R_DB2COM1:
 		case R_DB2COM2:
+		case R_MP35:
 		case R_MOUSE :
 			tpl_addVar(vars, 0, "PROTOCOL", "mouse");
 			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
