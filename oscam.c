@@ -2782,7 +2782,6 @@ void cs_log_config()
 
 void cs_waitforcardinit()
 {
-	cfg->cardinitdone = 0;
 	if (cfg->waitforcards)
 	{
   		cs_log("waiting for local card init");
@@ -2799,10 +2798,8 @@ void cs_waitforcardinit()
 			cs_sleepms(300); // wait a little bit
 			alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1); 
 		} while (!card_init_done);
-		cs_sleepms(300);
   		cs_log("init for all local cards done");
 	}
-	cfg->cardinitdone = 1; //for reader-common.c avoiding duplicate chids reading
 }
 
 int main (int argc, char *argv[])
