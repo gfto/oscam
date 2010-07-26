@@ -152,11 +152,11 @@ int dre_card_init (struct s_reader * reader, ATR newatr)
   switch (atr[6]) {
   case 0x11:
     card = "Tricolor Centr";
-    reader->caid[0] = 0x4ae0;
+    reader->caid[0] = 0x4ae1;
     break;			//59 type card = MSP (74 type = ATMEL)
   case 0x12:
     card = "Cable TV";
-    reader->caid[0] = 0x4ae0;	//TODO not sure about this one
+    reader->caid[0] = 0x4ae1;	//TODO not sure about this one
     break;
   case 0x14:
     card = "Tricolor Syberia / Platforma HD new";
@@ -360,19 +360,32 @@ int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
   cs_ddump (ep->emm, emm_length + 3, "EMM:");
 
   if (reader->caid[0] == 0x4ae1) {
-    static uchar emmcmd52[0x3a];
-    emmcmd52[0] = 0x52;
-    int i;
-    for (i = 0; i < 2; i++) {
-      memcpy (emmcmd52 + 1, ep->emm + 5 + 32 + i * 56, 56);
-      // check for shared address
-      if(ep->emm[3]!=reader->sa[0][0]) 
-        return OK; // ignore, wrong address
-      emmcmd52[0x39] = reader->provider;
-      if ((dre_cmd (emmcmd52)))
-				if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
-	  			return ERROR;		//exit if response is not 90 00
-    	}
+    if(ep->type == UNIQUE && ep->emm[39] == 0x3d)
+    { /* For new package activation. */
+        static uchar emmcmd58[26];
+        emmcmd58[0] = 0x58;
+        memcpy(&emmcmd58[1], &ep->emm[40], 24);
+        emmcmd58[25] = 0x15;
+        if ((dre_cmd (emmcmd58)))
+            if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
+                return ERROR;
+    }
+    else
+    {
+        static uchar emmcmd52[0x3a];
+        emmcmd52[0] = 0x52;
+        int i;
+        for (i = 0; i < 2; i++) {
+            memcpy (emmcmd52 + 1, ep->emm + 5 + 32 + i * 56, 56);
+            // check for shared address
+            if(ep->emm[3]!=reader->sa[0][0]) 
+                return OK; // ignore, wrong address
+            emmcmd52[0x39] = reader->provider;
+            if ((dre_cmd (emmcmd52)))
+                if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
+                    return ERROR; //exit if response is not 90 00
+        }
+    }
   }
   else {
     static uchar emmcmd42[] =
