@@ -149,6 +149,7 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
                             {0x0604, 0x0608, "EGY", 999993600L},
                             {0x0604, 0x0606, "EGY", 1003276800L},
                             {0x0627, 0x0608, "EGY", 946598400L},
+                            {0x0664, 0x0608, "TUR", 946598400L},   // 31.12.1999, 00:00
                             {0x0, 0x0, "", 0L}
                             };
 
