@@ -83,6 +83,13 @@ static uchar
                           0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                           0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
+typedef struct chid_base_date {
+    ushort caid;
+    ushort acs;
+    char c_code[4];
+    long base;
+} CHID_BASE_DATE;
+
 static void XRotateLeft8Byte(uchar *buf)
 {
   int k;
@@ -123,6 +130,7 @@ static void ReverseSessionKeyCrypt(const uchar *camkey, uchar *key)
 
 static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
 {
+
     // Irdeto date starts 01.08.1997 which is
     // 870393600 seconds in unix calendar time
     //
@@ -133,45 +141,27 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
     // this is the known default value.
     long date_base=870393600L; // this is actually 31.07.1997, 17:00
 
+    CHID_BASE_DATE table[] = { {0x0604, 0x1541, "GRC", 977817600L}, // 26.12.2000, 00:00
+                            {0x0604, 0x1542, "GRC", 977817600L},    // 26.12.2000, 00:00
+                            {0x0604, 0x1543, "GRC", 977817600L},    // 26.12.2000, 00:00
+                            {0x0604, 0x1544, "GRC", 977817600L},    // 26.12.2000, 17:00
+                            {0x0628, 0x0606, "MCR", 1159574400L},   // 29.09.2006, 00:00
+                            {0x0604, 0x0608, "EGY", 999993600L},
+                            {0x0604, 0x0606, "EGY", 1003276800L},
+                            {0x0627, 0x0608, "EGY", 946598400L},
+                            {0x0, 0x0, "", 0L}
+                            };
+
     // now check for specific providers base date
-    if(!memcmp(reader->country_code,"GRC",3)) {
-        // check caid
-        if(reader->caid[0]==0x0604) {
-            // check ACS to deduce base date
-            switch(reader->acs) {
-                case 0x1541:
-                case 0x1542:
-                case 0x1543:
-                case 0x1544:
-                    date_base=977817600L; // 26.12.2000, 00:00
-                    break;
-            }
+    int i=0;
+    while(table[i].caid) {
+        if(reader->caid[0]==table[i].caid && reader->acs==table[i].acs && !memcmp(reader->country_code,table[i].c_code,3) ) {
+            date_base = table[i].base;
+            break;
         }
+        i++;
     }
-     else if(!memcmp(reader->country_code,"MCR",3)) {
-        // check caid
-        if(reader->caid[0]==0x0628) {
-            // check ACS to deduce base date
-            switch(reader->acs) {
-                case 0x0606:
-                    date_base=1159574400L; // 29.09.2006, 00:00
-                    break;
-            }
-        }
-    }
-/*
-     else if(!memcmp(reader->country_code,"XXX",3)) {
-        // check caid
-        if(reader->caid[0]==0x0628) {
-            // check ACS to deduce base date
-            switch(reader->acs) {
-                case 0x0606:
-                    date_base=977817600L; // 26.12.2000, 00:00
-                    break;
-            }
-        }
-    }
-*/
+
     time_t ut=date_base+date*(24*3600);  
     if (buf) {
         struct tm *t;
