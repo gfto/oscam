@@ -163,9 +163,9 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, unsigned long bitrate, stru
    /* Set the bitrate */
 #ifdef OS_LINUX
   //FIXME workaround for Smargo until native mode works
-  if ((reader->mhz == reader->cardmhz) && (reader->smargopatch != 1))
+  if ((reader->mhz == reader->cardmhz) && (reader->smargopatch != 1) && IO_Serial_Bitrate(bitrate) != B0)
 #endif
-   { //no overcloking
+   { //no overclocking
      cfsetospeed(tio, IO_Serial_Bitrate(bitrate));
      cfsetispeed(tio, IO_Serial_Bitrate(bitrate));
      cs_debug("standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %lu", reader->cardmhz, reader->mhz, bitrate);
@@ -578,9 +578,6 @@ static int IO_Serial_Bitrate(int bitrate)
 #ifdef B50
 		{     50, B50     },
 #endif
-#ifdef B0
-		{      0, B0      }
-#endif
 		};
 
 	int i;
@@ -594,8 +591,11 @@ static int IO_Serial_Bitrate(int bitrate)
 			return BaudRateTab[i].apival;
 		}
 	}
+#ifdef OS_LINUX
+	return B0;
+#else
 	return B38400;
-
+#endif
 }
 
 static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms)
