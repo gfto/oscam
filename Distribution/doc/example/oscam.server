@@ -107,3 +107,27 @@ protocol = internal
 device   = /dev/sci0
 group    = 8
 caid     = 0800
+
+# AD-Teknik AB Multiprogrammer 3.5 serial
+
+[reader]
+label    = reader9
+protocol = mp35
+detect   = CD
+device   = /dev/ttyS1
+group    = 9
+emmcache = 1,3,2
+services = services9
+caid     = 0900
+
+# AD-Teknik AB Multiprogrammer 3.6 USB
+
+[reader]
+label    = reader10
+protocol = mp35
+detect   = CD
+device   = /dev/ttyUSB0
+group    = 10
+emmcache = 1,3,2
+services = services10
+caid     = 1000
