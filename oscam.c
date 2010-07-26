@@ -478,9 +478,32 @@ static void cs_card_info(int i)
       //kill(client[i].pid, SIGUSR2);
 }
 
+static void prepare_reader_restart(int ridx, int cs_idx)
+{
+  reader[ridx].pid = 0;
+  reader[ridx].cc = NULL;
+  reader[ridx].tcp_connected = 0;
+  reader[ridx].fd=0;
+  reader[ridx].cs_idx=0;
+  reader[ridx].last_s = 0;
+  reader[ridx].last_g = 0;
+  cs_debug_mask(D_TRACE, "reader %s closed (index=%d)", reader[ridx].label, ridx);
+  if (client[cs_idx].ufd) close(client[cs_idx].ufd);
+  if (client[cs_idx].fd_m2c_c) close(client[cs_idx].fd_m2c_c);
+  memset(&client[cs_idx], 0, sizeof(struct s_client));
+  client[cs_idx].au=(-1);
+}
+
 //Schlocke: restart cardreader after 5 seconds:
-static void restart_cardreader(int pridx) {
+static void restart_cardreader(int pridx, int force_now) {
 	ridx = pridx;
+	if (reader[ridx].cs_idx) {
+		if (reader[ridx].pid==client[reader[ridx].cs_idx].pid) {
+			int pid = reader[ridx].pid;
+			prepare_reader_restart(ridx, reader[ridx].cs_idx);
+			kill(pid, SIGKILL);
+		}
+	}
 	reader[ridx].ridx = ridx; //FIXME
 	if ((reader[ridx].device[0]) && (reader[ridx].enable == 1) && (!reader[ridx].deleted)) {
 		switch (cs_fork(0, 99)) {
@@ -489,7 +512,8 @@ static void restart_cardreader(int pridx) {
 		case 0:
 			break;
 		default:
-			cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
+			if (!force_now)
+				cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
 			cs_log("restarting reader %s (index=%d)", reader[ridx].label, ridx);
 
 			wait4master();
@@ -530,20 +554,7 @@ static void cs_child_chk(int i)
             {
               if (reader[ridx].pid == old_pid)
               {
-                reader[ridx].pid = 0;
-                reader[ridx].cc = NULL;
-                reader[ridx].tcp_connected = 0;
-    			reader[ridx].fd=0;
-    			reader[ridx].cs_idx=0;
-    			reader[ridx].last_s = 0;
-    			reader[ridx].last_g = 0;
-    			cs_debug_mask(D_TRACE, "%s %s closed (index=%d)", txt, reader[ridx].label, ridx);
-                //if (client[i].fd_m2c) close(client[i].fd_m2c);
-                if (client[i].ufd) close(client[i].ufd);
-                if (client[i].fd_m2c_c) close(client[i].fd_m2c_c);
-                memset(&client[i], 0, sizeof(struct s_client));
-                client[i].au=(-1);
-
+                prepare_reader_restart(ridx, i);
                 cs_log("restarting %s %s in %d seconds (index=%d)", reader[ridx].label, txt,
                 		cfg->reader_restart_seconds, ridx);
                 write_to_pipe(fd_c2m, PIP_ID_RST, (uchar*)&ridx, sizeof(ridx));
@@ -2734,7 +2745,7 @@ static void process_master_pipe()
     	cs_accounts_chk();
     	break;
     case PIP_ID_RST: //Restart Cardreader with ridx=prt[0]
-    	restart_cardreader(*(int*)ptr);
+    	restart_cardreader(*(int*)ptr, 1);
     	break;
     case PIP_ID_KCL: //Kill all clients
     	restart_clients();
