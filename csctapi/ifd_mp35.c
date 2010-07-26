@@ -25,7 +25,7 @@ int MP35_Init(struct s_reader * reader)
   BYTE parameter;
   int original_mhz;
 
-  memset(rec_buf, sizeof(rec_buf), 0x00);
+  memset(rec_buf, 0x00, sizeof(rec_buf));
   call(IO_Serial_InitPnP (reader));
   IO_Serial_Flush(reader);
 
