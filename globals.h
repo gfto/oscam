@@ -975,6 +975,7 @@ extern int cs_atob(uchar *, char *, int);
 extern ulong cs_atoi(char *, int, int);
 extern int byte_atob(char *);
 extern long word_atob(char *);
+extern long dyn_word_atob(char *asc);
 extern int key_atob(char *, uchar *);
 extern int key_atob14(char *, uchar *);
 extern int key_atob_l(char *, uchar *, int);
