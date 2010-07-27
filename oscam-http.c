@@ -1169,6 +1169,8 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		clear_caidtab(&account->ctab);
 		//clear Betatunnel before it re-readed by chk_t
 		clear_tuntab(&account->ttab);
+		//clear ident before it re-readed by chk_t
+		clear_ftab(&account->ftab);
 
 		for(i=0;i<(*params).paramcount;i++) {
 			if ((strcmp((*params).params[i], "action")) && (strcmp((*params).params[i], "user")) && (strcmp((*params).params[i], "newuser"))) {
