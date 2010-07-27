@@ -29,7 +29,7 @@ int Cool_Init (char *device)
 		return FALSE;
 
     // this is to stay compatible with olfer config.
-    if(!device)
+    if(!strlen(device))
         reader_nb=0;
     else
         reader_nb=atoi((const char *)device);
