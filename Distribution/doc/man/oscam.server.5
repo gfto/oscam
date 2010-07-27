@@ -13,17 +13,17 @@ At least one [reader] section is \fIrequired\fR.
 define local or remote reader 
  
  \fBdevice\fP:      device name
- \fBbus:devivce\fP: bus name and device name of the Smartreader+
+ \fBbus:device\fP: bus name and device name of the Smartreader+
               (get the names with lsusb 'Bus' and 'Device')
  \fBserial\fP       serial number of Smartreader+
               (get the serial number while starting OSCam)
  \fBlport\fP:       remapping to local port
- \fBPCSC\fP:        number of PCSC readers, starting with 0
+ \fBPCSC\fP:        number of the PCSC reader, starting from 0
  \fBconstantcw\fP:  constant CW file name 
 
 constant CW file format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 digits):key (16 Bytes seperated by spaces)
 
-expample: 1234:123456:1234:1234:1234:00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+example: 1234:123456:1234:1234:1234:00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 .RE
 .PP
 \fBenable\fP = \fB0\fP|\fB1\fP
@@ -58,7 +58,7 @@ pincode for Conax and Cryptoworks SCs
 .PP
 \fBservices\fP = \fB[!]services[,[!]<services>]...\fP
 .RS 3n
-reader [de]assingment to service group, default=none
+reader [de]assignment to service group, default=none
 .RE
 .PP
 \fBinactivitytimeout\fP = \fBminutes\fP
