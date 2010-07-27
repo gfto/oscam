@@ -324,24 +324,13 @@ long word_atob(char *asc)
 long dyn_word_atob(char *asc)
 {
 	long rc = (-1);
-	int len = strlen(trim(asc));
+	int i, len = strlen(trim(asc));
 
-	if (len <= 4) {
-		switch(len){
-			case 1:
-				rc = gethexval(asc[0]);
-				break;
-			case 2:
-				rc = gethexval(asc[0])<<4 | gethexval(asc[1]);
-				break;
-			case 3:
-				rc = gethexval(asc[0])<<8 | gethexval(asc[1])<<4 | gethexval(asc[2]);
-				break;
-			case 4:
-				rc = gethexval(asc[0])<<12 | gethexval(asc[1])<<8 | gethexval(asc[2])<<4 | gethexval(asc[3]);
-				break;
-		}
-		if (rc&0x10000)
+	if (len <= 4 && len > 0) {
+		for(i = 0, rc = 0; i < len; i++)
+			rc = rc << 4 | gethexval(asc[i]);
+
+		if (rc & 0x10000)
 			rc = (-1);
 	}
 	return(rc);

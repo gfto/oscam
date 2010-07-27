@@ -2774,6 +2774,7 @@ int init_srvid()
 		char *srvidasc = strchr(token, ':');
 		*srvidasc++ = '\0';
 		srvid->srvid = dyn_word_atob(srvidasc);
+		//printf("srvid %s - %d\n",srvidasc,srvid->srvid );
 
 		srvid->ncaid = 0;
 		for (i = 0, ptr1 = strtok(token, ","); (ptr1) && (i < 10) ; ptr1 = strtok(NULL, ","), i++){
