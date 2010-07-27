@@ -805,6 +805,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		clear_caidtab(&reader[ridx].ctab);
 		clear_ftab(&reader[ridx].ftab);
 		reader[ridx].grp = 0;
+		reader[ridx].auprovid = 0;
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action"))) {
 				if (!strcmp((*params).params[i], "services"))
@@ -813,6 +814,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 					if(strlen((*params).values[i]) > 0)
 						chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
 			}
+			//printf("param %s value %s\n",(*params).params[i], (*params).values[i]);
 		}
 		chk_reader("services", servicelabels, &reader[ridx]);
 		if(write_server()==0) refresh_oscam(REFR_READERS, in);
