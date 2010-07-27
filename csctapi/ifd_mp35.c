@@ -22,9 +22,9 @@ static const BYTE smartmouse_6mhz_mode[] = {0x2a, 0x9b};
 
 // Commands for AD-Teknik USB Phoenix
 static const BYTE set_mode_osc[] = {0x2a, 0x42};
-static const BYTE exit_program_mode[] = {0x2a, 0x43}; // Same as above but different meaning for USB Phoenix
+static const BYTE exit_program_mode[] = {0x2a, 0x43};
 
-static const struct product { BYTE code; const char* product; } product_codes[] = {
+static const struct product { BYTE code; const char* product_name; } product_codes[] = {
   {0x10, "USB Phoenix"}, 
   {0x40, "MP3.4"}, 
   {0x41, "MP3.5"},
@@ -40,7 +40,7 @@ static int MP35_product_info(BYTE high, BYTE low, BYTE code)
   {
     if(product_codes[i].code == code)
     {
-      cs_log("MP35_Init: %s - FW:%02d.%02d", product_codes[i].product, high, low);
+      cs_log("MP35_Init: %s - FW:%02d.%02d", product_codes[i].product_name, high, low);
       return OK;
     }
   }

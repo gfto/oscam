@@ -131,3 +131,16 @@ group    = 10
 emmcache = 1,3,2
 services = services10
 caid     = 1000
+
+# AD-Teknik AB USB Phoenix at 6.00MHz, it can be overclocked by using protocol = mp35
+
+[reader]
+label    = reader10
+protocol = mp35
+detect   = CD
+device   = /dev/ttyUSB3
+mhz      = 600
+group    = 10
+emmcache = 1,3,2
+services = services10
+caid     = 1100
