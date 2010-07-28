@@ -8,7 +8,7 @@
 #include "openxcas/openxcas_api.h" 
 #include "openxcas/openxcas_message.h"
 
-int openxcas_provid, openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx;
+int openxcas_provid, openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx, openxcas_busy;
 unsigned char openxcas_cw[16];
 unsigned short openxcas_sid, openxcas_caid, openxcas_ecm_pid, openxcas_video_pid, openxcas_audio_pid, openxcas_data_pid;
 
@@ -1509,6 +1509,7 @@ void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_ind
   //openxcas_seq = seq;
 	//openxcas_caid = caid;
 	openxcas_ecm_pid = pid;
+	openxcas_busy = 1;
 
 	ECM_REQUEST *er;
 	if (!(er=get_ecmtask()))
@@ -1693,7 +1694,8 @@ void azbox_main() {
 					cs_debug("openxcas: msg: OPENXCAS_ECM_CALLBACK");
 					struct stOpenXCAS_Data data;
 					memcpy(&data, msg.buf, msg.buf_len);
-					openxcas_filter_callback(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM, &data);
+					if (!openxcas_busy)
+					  openxcas_filter_callback(msg.stream_id, msg.sequence, OPENXCAS_FILTER_ECM, &data);
 					break;
 				case OPENXCAS_PID_FILTER_CALLBACK:
 					cs_debug("openxcas: msg: OPENXCAS_PID_FILTER_CALLBACK");
@@ -1721,6 +1723,8 @@ void azbox_main() {
 void azbox_send_dcw(ECM_REQUEST *er) {
 	cs_debug("openxcas: send_dcw");
 
+	openxcas_busy = 0;
+
 	int i;
 	for (i=0;i<MAX_DEMUX;i++) {
 		if (er->rc>3) {
@@ -1737,7 +1741,7 @@ void azbox_send_dcw(ECM_REQUEST *er) {
 			memset(&mask, 0x00, sizeof(mask));
 			memset(&comp, 0x00, sizeof(comp));
 
-			mask[0] = 0xff;
+			mask[0] = 0xfe;
 			comp[0] = 0x80;
 
 			if (openxcas_add_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM, 0, 0xffff, openxcas_ecm_pid, mask, comp, (void *)azbox_openxcas_ecm_callback) < 0) {
