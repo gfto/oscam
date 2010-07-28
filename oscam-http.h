@@ -277,7 +277,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
   ##TPLHEADER##\
   ##TPLMENU##\n\
   ##TPLFILEMENU##\n\
-  <BR><BR>##SDEBUG####SLOG####SCLEAR##\n\
+  <BR><BR>##SDEBUG####SLOG####SCLEAR##<BR>##FILTER##\n\
   <DIV class=\"log\">\
   <pre>##FILECONTENT##</pre>\
   </DIV>\n\

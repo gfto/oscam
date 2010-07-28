@@ -2130,6 +2130,17 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 			tpl_printf(vars, 0, "SLOG", "<A HREF=\"files.html?part=userfile&stopusrlog=%d\">%s</A>&nbsp;&nbsp;|&nbsp;&nbsp;\n", 0, "Start Log");
 
 		tpl_printf(vars, 0, "SCLEAR", "<A HREF=\"files.html?part=userfile&clear=usrfile\">%s</A><BR><BR>\n", "Clear Log");
+		tpl_addVar(vars, 0, "FILTER", "<FORM ACTION=\"files.html\" method=\"get\">\n");
+		tpl_addVar(vars, 1, "FILTER", "<INPUT name=\"part\" type=\"hidden\" value=\"userfile\">\n");
+		tpl_addVar(vars, 1, "FILTER", "<SELECT name=\"filter\">\n");
+		tpl_printf(vars, 1, "FILTER", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
+
+		struct s_auth *account = cfg->account;
+		do {
+			tpl_printf(vars, 1, "FILTER", "<OPTION value=\"%s\" %s>%s</OPTION>\n", account->usr, strcmp(getParam(params, "filter"), account->usr) ? "":"selected", account->usr);
+		} while ((account = account->next) && (account->next != NULL));
+
+		tpl_addVar(vars, 1, "FILTER", "</SELECT><input type=\"submit\" name=\"action\" value=\"Filter\" title=\"Filter for a specific user\"></FORM>\n");
 
 	}
 #ifdef CS_ANTICASC
@@ -2144,7 +2155,11 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 
 			if((fp = fopen(targetfile,"r")) == NULL) return;
 			while (fgets(buffer, sizeof(buffer), fp) != NULL)
-				tpl_printf(vars, 1, "FILECONTENT", "%s", buffer);
+				if (!strcmp(getParam(params, "filter"), "all"))
+					tpl_printf(vars, 1, "FILECONTENT", "%s", buffer);
+				else
+					if(strstr(buffer,getParam(params, "filter")))
+						tpl_printf(vars, 1, "FILECONTENT", "%s", buffer);
 			fclose (fp);
 		} else {
 			tpl_addVar(vars, 1, "FILECONTENT", "File not exist");
