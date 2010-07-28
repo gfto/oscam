@@ -8,7 +8,7 @@ At least one [reader] section is \fIrequired\fR.
 .SH DESCRIPTIONS
 .SS "The [reader] section"
 .PP
-\fBdevice\fP = \fB<device|bus:device>\fP|Serial:Reader \fBserial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|\fBconstantcw\fP
+\fBdevice\fP = \fB<device|bus:device>\fP|Serial:Reader \fBserial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
 .RS 3n
 define local or remote reader 
  
@@ -19,6 +19,8 @@ define local or remote reader
               (get the serial number while starting OSCam)
  \fBlport\fP:       remapping to local port
  \fBPCSC\fP:        number of PCSC reader, starting with 0
+ \fB0|1\fP:         for Coolstream HD-1 STB only: select reader 0 or 
+              reader 1
  \fBconstantcw\fP:  constant CW file name 
 
 constant CW file format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 digits):key (16 Bytes seperated by spaces)
