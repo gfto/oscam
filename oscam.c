@@ -1407,6 +1407,7 @@ int check_ecmcache1(ECM_REQUEST *er, ulong grp)
 		{
 			//cs_log("cache1 found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
 			memcpy(er->cw, ecmcache[i].cw, 16);
+			er->reader[0] = ecmcache[i].reader;
 			return(1);
 		}
 	}
@@ -1449,6 +1450,7 @@ static void store_ecm(ECM_REQUEST *er)
 	memcpy(ecmcache[rc].cw, er->cw, 16);
 	ecmcache[rc].caid = er->caid;
 	ecmcache[rc].grp = reader[er->reader[0]].grp;
+	ecmcache[rc].reader = er->reader[0];
 	//cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
 

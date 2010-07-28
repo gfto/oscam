@@ -359,10 +359,11 @@ typedef struct aes_entry {
 
 struct s_ecm
 {
-  uchar  ecmd5[CS_ECMSTORESIZE];
-  uchar  cw[16];
-  ushort caid;
-  ulong  grp;
+  uchar  	ecmd5[CS_ECMSTORESIZE];
+  uchar  	cw[16];
+  ushort 	caid;
+  ulong  	grp;
+  int 		reader;
   //int level;
 };
 
