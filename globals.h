@@ -655,7 +655,7 @@ struct s_reader  //contains device info, reader info and card info
 	int lb_usagelevel; //usagelevel for loadbalancer
 	int lb_usagelevel_ecmcount;
 	time_t lb_usagelevel_time; //time for counting ecms, this creates usagelevel
-	time_t lb_last; //time for oldest reader
+	struct timeb lb_last; //time for oldest reader
 	// multi AES linked list
 	AES_ENTRY *aes_list;
 };
@@ -933,7 +933,9 @@ typedef struct reader_stat_t
   ushort        caid;
   ulong         prid;
   ushort        srvid;
-
+  
+  time_t        last_received;
+  
   int           ecm_count;  
   int           time_avg;
   int           time_stat[MAX_STAT_TIME];
