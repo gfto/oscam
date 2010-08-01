@@ -1606,13 +1606,6 @@ void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsign
 }
 
 void azbox_main() {
-	openxcas_debug_message_onoff(1);  // debug
-
-	if (openxcas_open("oscamCAS") < 0) {
-		cs_log("openxcas: could not init");
-		return;
-	}
- 
 	struct timeb tp;
 	cs_ftime(&tp);
 	tp.time+=500;
@@ -1715,7 +1708,6 @@ void azbox_main() {
 			}
 		}
 	}
-	openxcas_close();
 	cs_log("openxcas: invalid message");
 	return;
 }

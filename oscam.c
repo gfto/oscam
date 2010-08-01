@@ -1,5 +1,8 @@
 #define CS_CORE
 #include "globals.h"
+#ifdef AZBOX
+#  include "openxcas/openxcas_api.h"
+#endif
 #ifdef CS_WITH_GBOX
 #  include "csgbox/gbox.h"
 #  define CS_VERSION_X  CS_VERSION "-gbx-" GBXVERSION
@@ -2981,6 +2984,15 @@ int main (int argc, char *argv[])
   }
 #endif
 
+
+#ifdef AZBOX
+  openxcas_debug_message_onoff(1);  // debug
+
+  if (openxcas_open_with_smartcard("oscamCAS") < 0) {
+    cs_log("openxcas: could not init");
+  }
+#endif
+
   for (i=0; i<CS_MAX_MOD; i++)
     if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab )
       for(j=0; j<ph[i].ptab->nports; j++)
@@ -3135,6 +3147,14 @@ int main (int argc, char *argv[])
       } // if (ph[i].type & MOD_CONN_NET)
     }
   }
+
+
+#ifdef AZBOX
+  if (openxcas_close() < 0) {
+    cs_log("openxcas: could not close");
+  }
+#endif
+
   cs_exit(1);
 }
 
