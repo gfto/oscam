@@ -489,7 +489,7 @@ static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
 
 	if (is_udp) {
 	   if (!client[cs_idx].udp_sa.sin_addr.s_addr)
-	      if (!hostResolve()) return -1;
+	      if (!hostResolve(ridx)) return -1;
 	}
         else {
   	   if (!tcp_connect()) return -1;
@@ -518,7 +518,7 @@ static int camd35_send_emm(EMM_PACKET *ep)
 	
         if (is_udp) {
            if (!client[cs_idx].udp_sa.sin_addr.s_addr)
-              if (!hostResolve()) return -1;
+              if (!hostResolve(ridx)) return -1;
         }
         else {
            if (!tcp_connect()) return -1;
