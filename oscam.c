@@ -26,7 +26,6 @@ pid_t master_pid=0;   // master pid OUTSIDE shm
 ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 uchar mbuf[1024];   // global buffer
-pthread_mutex_t gethostbyname_lock; //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
 ECM_REQUEST *ecmtask;
 #ifdef CS_ANTICASC
 struct s_acasc ac_stat[CS_MAXPID];
@@ -923,7 +922,6 @@ static void init_shm()
   else
     strcpy(client[0].usr, "root");
 
-  pthread_mutex_init(&gethostbyname_lock, NULL); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
   init_stat();
 
 #ifdef CS_LOGHISTORY
@@ -1055,24 +1053,25 @@ static void cs_client_resolve()
 {
   while (1)
   {
-    struct hostent *rht;
+    struct addrinfo hints, *res = NULL;
     struct s_auth *account;
-    struct sockaddr_in udp_sa;
-
+       
     for (account=cfg->account; account; account=account->next)
       if (account->dyndns[0])
       {
-    	pthread_mutex_lock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
-        rht=gethostbyname((const char *)account->dyndns);
-        if (rht)
-        {
-          memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-          account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_family = AF_INET;
+        hints.ai_protocol = IPPROTO_TCP;
+                
+        int err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
+        if (err != 0 || !res || !res->ai_addr) {
+	  cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
+	}
+        else {
+          account->dynip=cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
         }
-        else
-          cs_log("can't resolve hostname %s (user: %s)", account->dyndns, account->usr);
-        client[cs_idx].last=time((time_t)0);
-        pthread_mutex_unlock(&gethostbyname_lock); //gethostbyname ist NOT threadsafe! So we need a mutex-lock!
+        if (res) freeaddrinfo(res);
       }
     sleep(cfg->resolvedelay);
   }
@@ -2833,6 +2832,25 @@ void cs_waitforcardinit()
 	}
 }
 
+void cs_resolve()
+{
+  int i;
+  for (i=0; i<CS_MAXREADER; i++)
+    if ((reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK) && (reader[i].typ!=R_CONSTCW))
+      hostResolve(i);
+}
+
+static void loop_resolver()
+{
+  cs_sleepms(1000); // wait for reader
+  while(1)
+  {
+    cs_resolve();
+    cs_sleepms(1000*cfg->resolvedelay);
+  }
+}
+
+              
 int main (int argc, char *argv[])
 {
 

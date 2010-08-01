@@ -138,10 +138,12 @@ int network_select(int forRead, int timeout)
 } 
 
 // according to documentation getaddrinfo() is thread safe
-int hostResolve()
+int hostResolve(int ridx)
 {
    struct addrinfo hints, *res = NULL;
   
+   int cs_idx = reader[ridx].cs_idx;
+   
    memset(&hints, 0, sizeof(hints));
    hints.ai_socktype = SOCK_STREAM;
    hints.ai_family = client[cs_idx].udp_sa.sin_family;
@@ -169,7 +171,7 @@ int network_tcp_connection_open()
 {
   cs_log("connecting to %s", reader[ridx].device);
 
-  if (!hostResolve())
+  if (!hostResolve(ridx))
      return -1;
  
   int sd = client[cs_idx].udp_fd;
