@@ -38,6 +38,7 @@
 #include "ifd_sc8in1.h" 
 #include "ifd_sci.h"
 #include "ifd_smartreader.h"
+#include "ifd_azbox.h"
 
 // Default T0/T14 settings
 #define DEFAULT_WI		10
@@ -122,6 +123,8 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 		case R_INTERNAL:
 #ifdef COOL
 			return Cool_Init(reader->device);
+#elif AZBOX
+			return Azbox_Init(reader);
 #elif SCI_DEV
 	#if defined(SH4) || defined(STB04SCI)
 			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
@@ -203,6 +206,8 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 			call (Sci_GetStatus(reader, &in));
 #elif COOL
 			call (Cool_GetStatus(&in));
+#elif AZBOX
+			call(Azbox_GetStatus(reader, &in));
 #endif
 			break;
 		default:
@@ -250,6 +255,8 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 				call (Sci_Reset(reader, atr));
 #elif COOL
 				call (Cool_Reset(atr));
+#elif AZBOX
+				call (Azbox_Reset(reader, atr));
 #endif
 				break;
 			default:
@@ -354,6 +361,8 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 		case R_INTERNAL:
 #ifdef COOL
 			call (Cool_Transmit(sent, size));
+#elif AZBOX
+			call (Azbox_Transmit(reader, sent, size));
 #elif SCI_DEV
 			call (Phoenix_Transmit (reader, sent, size, 0, 0)); //the internal reader will provide the delay
 #endif
@@ -387,6 +396,8 @@ int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
 		case R_INTERNAL:
 #ifdef COOL
 	    call (Cool_Receive(data, size));
+#elif AZBOX
+	    call (Azbox_Receive(reader, data, size));
 #elif SCI_DEV
 			call (Phoenix_Receive (reader, data, size, reader->read_timeout));
 #endif
@@ -697,6 +708,9 @@ static int SetRightParity (struct s_reader * reader)
 	call (ICC_Async_SetParity(reader, parity));
 
 #ifdef COOL
+	if (reader->typ != R_INTERNAL)
+#endif
+#ifdef AZBOX
 	if (reader->typ != R_INTERNAL)
 #endif
 #if defined(LIBUSB)
