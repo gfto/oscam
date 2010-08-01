@@ -1,12 +1,27 @@
 
 #include "ifd_azbox.h"
+#include"icc_async.h"
+
+int _GetStatus(struct s_reader *reader, int *in)
+{
+  unsigned char tmp[512];
+  memset (tmp, 0, sizeof(tmp));
+
+  return ioctl(reader->handle, SCARD_IOC_CHECKCARD, &tmp);
+}
 
 int Azbox_Init(struct s_reader *reader)
 {
-  if ((reader->handle = openxcas_get_smartcard_device(0)) < 0)
-    return 0;
+  cs_debug("openxcas sc: init");
 
-  return 1;
+  if ((reader->handle = openxcas_get_smartcard_device(0)) < 0) {
+    cs_debug("openxcas sc: init failed (%d)", reader->handle);
+    return FALSE;
+  }
+
+  cs_debug("openxcas sc: init succeeded");
+
+  return OK;
 }
 
 int Azbox_GetStatus(struct s_reader *reader, int *in)
@@ -14,14 +29,18 @@ int Azbox_GetStatus(struct s_reader *reader, int *in)
   unsigned char tmp[512];
   memset (tmp, 0, sizeof(tmp));
 
-  int status = ioctl(reader->handle, SCARD_IOC_CHECKCARD, &tmp);
+  int status = _GetStatus(reader, in);
 
-  if (status != 1 && status != 3 && in != NULL)
-    *in = 0;
-  else
-    *in = 1;
+  if (in) {
+    if (status != 1 && status != 3)
+      *in = 0;
+    else
+      *in = 1;
 
-  return status;
+    cs_debug("openxcas sc: get status = %d", *in);
+  }
+
+  return OK;
 }
 
 int Azbox_Reset(struct s_reader *reader, ATR *atr)
@@ -37,7 +56,7 @@ int Azbox_Reset(struct s_reader *reader, ATR *atr)
 
   cs_sleepms(500);
 
-  while ((status = Azbox_GetStatus(reader, NULL)) != 3)
+  while ((status = _GetStatus(reader, NULL)) != 3)
     cs_sleepms(50);
 
   memset(tmp, 0, sizeof(tmp));
@@ -45,32 +64,32 @@ int Azbox_Reset(struct s_reader *reader, ATR *atr)
 
   int atr_len = ioctl(reader->handle, SCARD_IOC_CHECKCARD, &tmp);
   if (ATR_InitFromArray(atr, tmp, atr_len) != ATR_OK)
-    return 0;
+    return FALSE;
 
    cs_sleepms(500);
 
-   return 1;
+   return OK;
 }
 
 int Azbox_Transmit(struct s_reader *reader, BYTE *buffer, unsigned size)
 {
   if (write(reader->handle, buffer, size) != size)
-    return 0;
+    return FALSE;
 
-  return 1;
+  return OK;
 }
 
 int Azbox_Receive(struct s_reader *reader, BYTE *buffer, unsigned size)
 {
   if (read(reader->handle, buffer, size) != size)
-    return 0;
+    return FALSE;
 
-  return 1;
+  return OK;
  }
 
 int Azbox_Close(struct s_reader *reader)
 {
   openxcas_release_smartcard_device(0);
 
-  return 1;
+  return OK;
 }
