@@ -630,7 +630,7 @@ void urldecode(char *s){
 /* Helper function for urlencode.*/
 char to_hex(char code){
 	static char hex[] = "0123456789abcdef";
-	return hex[code & 15];
+	return hex[(int)code & 15];
 }
 
 /* Encode values in a http url. Note: Be sure to free() the returned string after use */
