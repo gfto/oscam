@@ -2836,14 +2836,14 @@ void cs_resolve()
 {
   int i;
   for (i=0; i<CS_MAXREADER; i++)
-    if ((reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK) && (reader[i].typ!=R_CONSTCW))
+    if (reader[i].enable && !reader[i].deleted && (reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK) && (reader[i].typ!=R_CONSTCW))
       hostResolve(i);
 }
 
 static void loop_resolver()
 {
   cs_sleepms(1000); // wait for reader
-  while(1)
+  while(cfg->resolvedelay > 0)
   {
     cs_resolve();
     cs_sleepms(1000*cfg->resolvedelay);
@@ -3027,7 +3027,8 @@ int main (int argc, char *argv[])
 
   init_service(97); // logger
 
-  start_thread(&loop_resolver, "Resolver");
+  if (cfg->resolvedelay > 0)
+    start_thread(&loop_resolver, "Resolver");
 #ifdef WEBIF
   init_service(95); // http
 #endif
