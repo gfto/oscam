@@ -237,7 +237,7 @@ static void camd35_send_dcw(ECM_REQUEST *er)
 		 * whoever knows the camd3 protocol related to CMD08 - please help!
 		 * on tests this don't work with native camd3
 		 */
-		buf[21] = 0xFF;
+		buf[21] = client[cs_idx].c35_sleepsend;
 		cs_log("%s stop request send", client[cs_idx].usr);
 	}
 	else
