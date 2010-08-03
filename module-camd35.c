@@ -583,8 +583,8 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 			stopped = 1; // server says invalid
 			reader[ridx].card_status = CARD_FAILURE;
 		}
-		cs_log("%s CMD08 stop request by server (%s)",
-				reader[ridx].label, typtext[stopped]);
+		cs_log("%s CMD08 (%02X - %d) stop request by server (%s)",
+				reader[ridx].label, buf[21], buf[21], typtext[stopped]);
 	}
 
 	// CMD44: old reject command introduced in mpcs
