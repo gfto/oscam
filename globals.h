@@ -158,7 +158,7 @@
 #endif
 #define R_CCCAM     0x35  // Reader cascading cccam
 #define R_SERIAL    0x80  // Reader serial
-#define R_IS_NETWORK    0x70
+#define R_IS_NETWORK    0x60
 #define R_IS_CASCADING  0xE0
 
 
