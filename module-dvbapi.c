@@ -1718,8 +1718,8 @@ void azbox_send_dcw(ECM_REQUEST *er) {
 	openxcas_busy = 0;
 
 	int i;
-	for (i=0;i<MAX_DEMUX;i++) {
-		if (er->rc>3) {
+	for (i=0; i < MAX_DEMUX; i++) {
+		if (er->rc > 3) {
 			cs_debug("cw not found");
 
 			if (demux[i].pidindex==-1)
@@ -1753,8 +1753,17 @@ void azbox_send_dcw(ECM_REQUEST *er) {
 			return;
 		}
 	}
- 
-	memcpy(openxcas_cw + (8 * (er->ecm[0] & 1)), er->cw + (8 * (er->ecm[0] & 1)), 8);
+
+  unsigned char nullcw[8];
+  memset(nullcw, 0, 8);
+
+  int n;
+  for (n=0;n<2;n++) {
+    if (memcmp(er->cw + (n * 8), demux[0].lastcw[n], 8) && memcmp(er->cw + (n * 8), nullcw, 8)) {
+      memcpy(demux[0].lastcw[n], er->cw + (n * 8), 8);
+      memcpy(openxcas_cw + (n * 8), er->cw + (n * 8), 8);
+    }
+  }
  
 	if (openxcas_set_key(openxcas_stream_id, openxcas_seq, 0, openxcas_cipher_idx, openxcas_cw, openxcas_cw + 8) != 1)
 		cs_log("openxcas: set cw failed");
