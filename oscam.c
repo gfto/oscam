@@ -2313,8 +2313,8 @@ void get_cw(ECM_REQUEST *er)
 
 		// user sleeping
 		if ((client[cs_idx].tosleep) && (now - client[cs_idx].lastswitch > client[cs_idx].tosleep)) {
-			if (client[cs_idx].c35_sleepsend == 0xFF) {
-				er->rc = 13; // send stop command CMD08 {00 FF}
+			if (client[cs_idx].c35_sleepsend != 0) {
+				er->rc = 13; // send stop command CMD08 {00 xx}
 			} else {
 				er->rc = 6;
 			}
