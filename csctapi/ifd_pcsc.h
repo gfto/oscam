@@ -1,5 +1,5 @@
 
-#include "globals.h"
+#include "../globals.h"
 
 #ifdef HAVE_PCSC
   #ifdef OS_CYGWIN32

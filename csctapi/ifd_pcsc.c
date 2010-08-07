@@ -1,6 +1,6 @@
 #ifdef HAVE_PCSC
 
-#include "reader-pcsc.h"
+#include "ifd_pcsc.h"
 int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 {
     ULONG rv;

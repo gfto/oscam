@@ -7,11 +7,12 @@ LIBFILE1	= $(LIBDIR)/libcsctapi-$(TYP).a
 
 OBJECTS1	= $(LIBFILE1)(atr.o) \
 		  $(LIBFILE1)(icc_async.o) \
-                  $(LIBFILE1)(ifd_cool.o) \
+		  $(LIBFILE1)(ifd_cool.o) \
 		  $(LIBFILE1)(ifd_sci.o) \
 		  $(LIBFILE1)(ifd_phoenix.o) \
 		  $(LIBFILE1)(ifd_sc8in1.o) \
 		  $(LIBFILE1)(ifd_mp35.o) \
+		  $(LIBFILE1)(ifd_pcsc.o) \
 		  $(LIBFILE1)(io_serial.o) \
 		  $(LIBFILE1)(protocol_t0.o) \
 		  $(LIBFILE1)(protocol_t1.o) \
