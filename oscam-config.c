@@ -2375,6 +2375,8 @@ int write_server()
 
 			if (reader[i].cachecm)
 				fprintf_conf(f, CONFVARWIDTH, "ecmcache", "%d\n", reader[i].cachecm);
+			else
+				fprintf_conf(f, CONFVARWIDTH, "ecmcache", "%d\n", 0);
 
 			//Todo: write blocknano
 
