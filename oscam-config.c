@@ -1355,6 +1355,7 @@ int init_config()
 	cfg->usrfile = NULL;
 	cfg->cwlogdir = NULL;
 	cfg->reader_restart_seconds = 5;
+	cfg->waitforcards = 1;
 #ifdef WEBIF
 	strcpy(cfg->http_user, "");
 	strcpy(cfg->http_pwd, "");
