@@ -92,7 +92,8 @@ int tongfang_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   uchar data[100];
   int data_len = 0;
   ushort status = 0;
-
+  int odd = er->ecm[0] & 0x01;
+  
   if((ecm_len = check_sct_len(er->ecm, 3)) < 0) return ERROR;
 
 	cs_debug_mask(D_IFD, "ECM: %s", cs_hexdump(1, er->ecm, ecm_len));
@@ -129,21 +130,16 @@ int tongfang_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   data_len = tongfang_read_data(reader, read_size, data, &status);
 
-  if(data_len < 0) return ERROR;
+  if(data_len < 0 || data_len < 23) return ERROR;
 
-  if (data_len > 23)
+  if(!(er->ecm[0] & 0x01))
   {
-    if(data[0] == 0x80)
-      memcpy(er->cw, data + 8, 16);
-    else
-    {
-      memcpy(er->cw, data + 16, 8);
-      memcpy(er->cw + 8, data + 8, 8);
-    }
+    memcpy(er->cw, data + 8, 16);
   }
   else
   {
-    return ERROR;
+    memcpy(er->cw, data + 16, 8);
+    memcpy(er->cw + 8, data + 8, 8);
   }
 
   return OK;
