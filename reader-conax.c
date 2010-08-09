@@ -11,7 +11,7 @@ static char *chid_date(const uchar *ptr, char *buf, int l)
   return(buf);
 }
 
-static int read_record(struct s_reader * reader, uchar *cmd, uchar *data, uchar * cta_res)
+static int read_record(struct s_reader * reader, const uchar *cmd, const uchar *data, uchar * cta_res)
 {
   ushort cta_lr;
   uchar insCA[] = {0xDD, 0xCA, 0x00, 0x00, 0x00};
@@ -19,6 +19,7 @@ static int read_record(struct s_reader * reader, uchar *cmd, uchar *data, uchar 
   write_cmd(cmd, data);		// select record
   if (cta_res[0]!=0x98)
     return(-1);
+    
   insCA[4]=cta_res[1];		// get len
   write_cmd(insCA, NULL);	// read record
   if ((cta_res[cta_lr-2]!=0x90) || (cta_res[cta_lr-1]))
@@ -30,7 +31,7 @@ int conax_card_init(struct s_reader * reader, ATR newatr)
 {
   unsigned char cta_res[CTA_RES_LEN];
   int i, j, n;
-  uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x10, 0x01, 0x40};
+  static const uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x10, 0x01, 0x40};
   uchar ins82[] = {0xDD, 0x82, 0x00, 0x00, 0x11, 0x11, 0x0f, 0x01, 0xb0, 0x0f, 0xff, \
                    0xff, 0xfb, 0x00, 0x00, 0x09, 0x04, 0x0b, 0x00, 0xe0, 0x30, 0x2b };
 
@@ -281,11 +282,11 @@ int conax_card_info(struct s_reader * reader)
   int type, i, j, k, n=0;
   ushort provid;
   char provname[32], pdate[32];
-  uchar insC6[] = {0xDD, 0xC6, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x00};
-  uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x01};
+  static const uchar insC6[] = {0xDD, 0xC6, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x00};
+  static const uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x01};
   uchar insCA[] = {0xDD, 0xCA, 0x00, 0x00, 0x00};
   char *txt[] = { "Package", "PPV-Event" };
-  uchar *cmd[] = { insC6, ins26 };
+  static const uchar *cmd[] = { insC6, ins26 };
 
   for (type=0; type<2; type++)
   {

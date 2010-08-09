@@ -228,9 +228,6 @@ enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
       E2_EA_LEN, E2_F0_LEN, E2_OFFLINE, E2_SID};
 
-//typedef unsigned char uchar;
-//typedef unsigned long ulong;
-
 typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
@@ -1165,7 +1162,7 @@ extern char * get_tmp_dir();
 // oscam-reader
 extern int ridx, logfd;
 extern int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar *response, ushort *response_length);
-extern int card_write(struct s_reader * reader, uchar *, uchar *, uchar *, ushort *);
+extern int card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, ushort *);
 extern int check_sct_len(const unsigned char *data, int off);
 extern void cs_ri_brk(struct s_reader * reader, int);
 extern void cs_ri_log(struct s_reader * reader, char *,...);
@@ -1220,10 +1217,6 @@ extern void clear_reader_stat(int ridx);
 
 #ifdef HAVE_PCSC
 // reader-pcsc
-extern int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res, ushort *cta_lr,int l);
-extern int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_size);
-extern int pcsc_check_card_inserted(struct s_reader *pcsc_reader);
-extern int pcsc_reader_init(struct s_reader *pcsc_reader, char *device);
 extern void pcsc_close(struct s_reader *pcsc_reader);
 #endif
 

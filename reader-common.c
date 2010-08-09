@@ -4,7 +4,9 @@
 #include "atr.h"
 #include "icc_async_exports.h"
 #include "csctapi/ifd_sc8in1.h"
-
+#ifdef HAVE_PCSC
+#include "csctapi/ifd_pcsc.h"
+#endif
 static int cs_ptyp_orig; //reinit=1, 
 
 #if defined(TUXBOX) && defined(PPC) //dbox2 only
@@ -79,16 +81,18 @@ int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar * cta_res,
 
 #define CMD_LEN 5
 
-int card_write(struct s_reader * reader, uchar *cmd, uchar *data, uchar *response, ushort * response_length)
+int card_write(struct s_reader * reader, const uchar *cmd, const uchar *data, uchar *response, ushort * response_length)
 {
+  uchar buf[260];
+  // always copy to be able to be able to use const buffer without changing all code  
+  memcpy(buf, cmd, CMD_LEN); 
+
   if (data) {
-    uchar buf[256]; //only allocate buffer when its needed
-    memcpy(buf, cmd, CMD_LEN);
     if (cmd[4]) memcpy(buf+CMD_LEN, data, cmd[4]);
     return(reader_cmd2icc(reader, buf, CMD_LEN+cmd[4], response, response_length));
   }
   else
-    return(reader_cmd2icc(reader, cmd, CMD_LEN, response, response_length));
+    return(reader_cmd2icc(reader, buf, CMD_LEN, response, response_length));
 }
 
 int check_sct_len(const uchar *data, int off)
@@ -563,7 +567,7 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
       case SC_VIDEOGUARD2:
         rc=videoguard_do_emm(reader, ep); break;
       case SC_DRE:
-	rc=dre_do_emm(reader, ep); break;
+        rc=dre_do_emm(reader, ep); break;
       default: rc=0;
     }
   }

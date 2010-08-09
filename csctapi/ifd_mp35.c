@@ -1,5 +1,4 @@
 #include "../globals.h"
-//#include "../reader-common.h"
 #include "icc_async.h"
 #include "io_serial.h"
 #include <termios.h>
@@ -9,7 +8,7 @@
 // Common command for AD-Teknik readers
 static const BYTE fw_version[] = {0x2a, 0x41};
 
-// Commands for AD-Teknik MP3.6 and MP3.6
+// Commands for AD-Teknik MP3.5 and MP3.6
 static const BYTE set_vpp[] = {0x2a, 0x42};
 static const BYTE set_data[] = {0x2a, 0x43};
 static const BYTE set_oscillator[] = {0x2a, 0x5e};
