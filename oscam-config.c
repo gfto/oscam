@@ -510,7 +510,7 @@ void chk_t_global(char *token, char *value)
 
 	if( !strcmp(token, "waitforcards")) {
 		if (strlen(value) == 0) {
-			cfg->waitforcards = 0;
+			cfg->waitforcards = 1;
 			return;
 		} else {
 			cfg->waitforcards = atoi(value);
