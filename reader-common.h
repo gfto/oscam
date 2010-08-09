@@ -18,6 +18,7 @@
 #define SC_VIDEOGUARD2 6
 #define SC_DRE 7
 #define SC_NAGRA 8
+#define SC_TONGFANG 9
 
 // reader-irdeto
 int irdeto_card_init(struct s_reader * reader, ATR atr);
@@ -83,6 +84,14 @@ int dre_do_emm(struct s_reader * reader, EMM_PACKET *);
 int dre_get_emm_type(EMM_PACKET *, struct s_reader *);
 int dre_card_info(void);
 void dre_get_emm_filter(struct s_reader * rdr, uchar *filter);
+
+// reader tongfang
+int tongfang_card_init(struct s_reader * reader, ATR atr);
+int tongfang_do_ecm(struct s_reader * reader, ECM_REQUEST *);
+int tongfang_do_emm(struct s_reader * reader, EMM_PACKET *);
+int tongfang_get_emm_type(EMM_PACKET *, struct s_reader *);
+int tongfang_card_info(struct s_reader * reader);
+void tongfang_get_emm_filter(struct s_reader * rdr, uchar *filter);
 
 int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 void reader_device_close(struct s_reader * reader);

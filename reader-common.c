@@ -240,6 +240,8 @@ void reader_card_info(struct s_reader * reader)
          seca_card_info(reader); break;
       case SC_DRE:
     	 dre_card_info(); break;
+      case SC_TONGFANG:
+    	 tongfang_card_info(reader); break;
     }
   }
 }
@@ -263,6 +265,8 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 		reader->card_system=SC_VIDEOGUARD2;
 	else if (dre_card_init(reader, atr)) 
 		reader->card_system=SC_DRE;
+	else if (tongfang_card_init(reader, atr)) 
+		reader->card_system=SC_TONGFANG;
 	else
 		cs_ri_log(reader, "card system not supported");
 
@@ -396,6 +400,8 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
           rc=(videoguard_do_ecm(reader, er)) ? 1 : 0; break;
         case SC_DRE:
           rc=(dre_do_ecm(reader, er)) ? 1: 0; break;
+        case SC_TONGFANG:
+          rc=(tongfang_do_ecm(reader, er)) ? 1: 0; break;
         default:
           rc=0;
       }
@@ -427,6 +433,8 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
       rc=videoguard_get_emm_type(ep, rdr); break;
     case SC_DRE:
       rc=dre_get_emm_type(ep, rdr); break;
+    case SC_TONGFANG:
+      rc=tongfang_get_emm_type(ep, rdr); break;
     default:
       rc=0;
   }
@@ -453,6 +461,8 @@ int get_cardsystem(ushort caid) {
 			return SC_NAGRA;
 		case 0x4A:
 			return SC_DRE;
+		case 0x4B:
+			return SC_TONGFANG;
 		default: 
 			return 0;
 	}
@@ -568,6 +578,8 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
         rc=videoguard_do_emm(reader, ep); break;
       case SC_DRE:
         rc=dre_do_emm(reader, ep); break;
+      case SC_TONGFANG:
+        rc=tongfang_do_emm(reader, ep); break;
       default: rc=0;
     }
   }
