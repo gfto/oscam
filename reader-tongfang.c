@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "reader-common.h"
 
-static int tongfang_read_data(struct s_reader * reader, uchar size, uchar *cta_res, ushort *status)
+static int tongfang_read_data(struct s_reader *reader, uchar size, uchar *cta_res, ushort *status)
 {
   static uchar read_data_cmd[]={0x00,0xc0,0x00,0x00,0xff};
   ushort cta_lr;
@@ -14,7 +14,7 @@ static int tongfang_read_data(struct s_reader * reader, uchar size, uchar *cta_r
   return(cta_lr - 2);
 }
 
-int tongfang_card_init(struct s_reader * reader, ATR newatr)
+int tongfang_card_init(struct s_reader *reader, ATR newatr)
 {
   static const uchar begin_cmd[] = {0x00,0xa4,0x04,0x00,0x05,0xf9,0x5a,0x54,0x00,0x06};
   static const uchar get_serial_cmd[] = {0x80,0x46,0x00,0x00,0x04,0x01,0x00,0x00,0x04};
@@ -80,7 +80,7 @@ Example ecm:
 A5 1B 8B CA A8 95 E0 D1 24 7D 36 8C F6 89 4A F7
 B2 3A 74 3D D1 D4
 */
-int tongfang_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+int tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
 {
   uchar ecm_cmd[200];
   int ecm_len;
@@ -92,7 +92,6 @@ int tongfang_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   uchar data[100];
   int data_len = 0;
   ushort status = 0;
-  int odd = er->ecm[0] & 0x01;
   
   if((ecm_len = check_sct_len(er->ecm, 3)) < 0) return ERROR;
 
@@ -130,7 +129,7 @@ int tongfang_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   data_len = tongfang_read_data(reader, read_size, data, &status);
 
-  if(data_len < 0 || data_len < 23) return ERROR;
+  if(data_len < 23) return ERROR;
 
   if(!(er->ecm[0] & 0x01))
   {
@@ -145,17 +144,17 @@ int tongfang_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return OK;
 }
 
-int tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader * reader)
+int tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
 {
   ep->type = UNKNOWN;
   return TRUE;
 }
 
-void tongfang_get_emm_filter(struct s_reader * reader, uchar *filter)
+void tongfang_get_emm_filter(struct s_reader *reader, uchar *filter)
 {
 }
 
-int tongfang_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+int tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
   uchar emm_cmd[200];
   def_resp;
@@ -182,7 +181,7 @@ int tongfang_card_info(struct s_reader * reader)
 
   for(i = 0; i < 4; i++)
   {
-    cs_ri_log(reader, "[reader-tongfang] provider:%02x%02x", cta_res[i * 2], cta_res[i * 2 + 1]);
+    cs_ri_log(reader, "[reader-tongfang] Provider:%02x%02x", cta_res[i * 2], cta_res[i * 2 + 1]);
   }
   return OK;
 }
