@@ -1204,6 +1204,14 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 	strftime (buf,80,"%Y-%m-%d",timeinfo);
 	if(strcmp(buf,"1970-01-01")) tpl_addVar(vars, 0, "EXPDATE", buf);
 
+	if(account->allowedtimeframe[0] && account->allowedtimeframe[1]) {
+		tpl_printf(vars, 0, "ALLOWEDTIMEFRAME", "%d:%d-%d:%d",
+				account->allowedtimeframe[0]/60,
+				account->allowedtimeframe[0]%60,
+				account->allowedtimeframe[1]/60,
+				account->allowedtimeframe[1]%60 );
+	}
+
 	//Group
 	char *value = mk_t_group((ulong*)account->grp);
 	tpl_addVar(vars, 0, "GROUPS", value);

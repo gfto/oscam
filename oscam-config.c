@@ -1640,7 +1640,6 @@ void chk_account(char *token, char *value, struct s_auth *account)
 				} else {
 					account->allowedtimeframe[0] = (allowed[0]*60) + allowed[1];
 					account->allowedtimeframe[1] = (allowed[2]*60) + allowed[3];
-					printf("tm ok %d to %d \n",account->allowedtimeframe[0],account->allowedtimeframe[1] );
 				}
 			}
 		}
@@ -2089,6 +2088,14 @@ int write_userdb(struct s_auth *authptr)
 			fprintf_conf(f, CONFVARWIDTH, "expdate", "%s\n", buf);
 		else
 			fprintf_conf(f, CONFVARWIDTH, "expdate", "\n");
+
+		if(account->allowedtimeframe[0] && account->allowedtimeframe[1]) {
+			fprintf_conf(f, CONFVARWIDTH, "allowedtimeframe", "%d:%d-%d:%d\n",
+					account->allowedtimeframe[0]/60,
+					account->allowedtimeframe[0]%60,
+					account->allowedtimeframe[1]/60,
+					account->allowedtimeframe[1]%60 );
+		}
 
 		//group
 		char *value = mk_t_group((ulong*)account->grp);
