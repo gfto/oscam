@@ -113,10 +113,10 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
     netbuf[(ncd_proto==NCD_524)?6:4] = (uchar)(sid>>8); //sid
     netbuf[(ncd_proto==NCD_524)?7:5] = (uchar)(sid);
   }
-  if ((!ncd_proto==NCD_524) && (buffer[0] >= 0xd1) && (buffer[0]<= 0xd8)) { // extended proto for mg
-    cs_debug("newcamd: extended: msg");
+  //if ((!ncd_proto==NCD_524) && (buffer[0] >= 0xd1) && (buffer[0]<= 0xd8)) { // extended proto for mg
+    //cs_debug("newcamd: extended: msg");
     if (cd) {
-      cs_debug("newcamd: extended: has cd");
+      cs_debug("newcamd: has cd");
       netbuf[4] = cd->sid >> 8;
       netbuf[5] = cd->sid & 0xff;
       netbuf[6] = cd->caid >> 8;
@@ -125,7 +125,7 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
       netbuf[9] = (cd->provid >> 8) & 0xff;
       netbuf[10] = cd->provid & 0xff;
     }
-  }
+  //}
   netbuf[0] = (len - 2) >> 8;
   netbuf[1] = (len - 2) & 0xff;
   cs_ddump(netbuf, len, "send %d bytes to %s", len, remote_txt());
@@ -907,8 +907,22 @@ static void newcamd_auth_client(in_addr_t ip)
           }
           len+=11;
         }
+
+        custom_data_t cd;
+        memset(&cd, 0, sizeof(cd));
+
+        if (au != -1)
+        {
+          if (reader[au].blockemm_g)
+            cd.sid |= 4;
+          if (reader[au].blockemm_s)
+            cd.sid |= 2;
+          if (reader[au].blockemm_u)
+            cd.sid |= 1;
+        }
+
         if( network_message_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid,
-            mbuf, len, key, COMMTYPE_SERVER, 0, NULL) <0 )
+            mbuf, len, key, COMMTYPE_SERVER, 0, &cd) <0 )
         {
           if(req)
           {
