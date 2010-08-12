@@ -1622,6 +1622,32 @@ void chk_account(char *token, char *value, struct s_auth *account)
 		return;
 	}
 
+	if (!strcmp(token, "allowedtimeframe")) {
+		if(strlen(value) == 0) {
+			account->allowedtimeframe[0] = 0;
+			account->allowedtimeframe[1] = 0;
+		} else {
+			int allowed[4];
+			if (sscanf(value, "%d:%d-%d:%d", &allowed[0], &allowed[1], &allowed[2], &allowed[3]) != 4) {
+				account->allowedtimeframe[0] = 0;
+				account->allowedtimeframe[1] = 0;
+				fprintf(stderr, "Warning: value '%s' is not valid for allowedtimeframe (hh:mm-hh:mm)\n", value);
+			} else {
+				if(account->allowedtimeframe[0] > account->allowedtimeframe[2]) {
+					account->allowedtimeframe[0] = 0;
+					account->allowedtimeframe[1] = 0;
+					fprintf(stderr, "Warning: value '%s' is not valid for allowedtimeframe (starttime > endtime)\n", value);
+				} else {
+					account->allowedtimeframe[0] = (allowed[0]*60) + allowed[1];
+					account->allowedtimeframe[1] = (allowed[2]*60) + allowed[3];
+					printf("tm ok %d to %d \n",account->allowedtimeframe[0],account->allowedtimeframe[1] );
+				}
+			}
+		}
+		return;
+	}
+
+
 #ifdef CS_ANTICASC
 	if( !strcmp(token, "numusers") ) {
 		account->ac_users = atoi(value);

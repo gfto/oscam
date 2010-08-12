@@ -381,6 +381,8 @@ void cs_reinit_clients()
 				client[i].au		= account->au;
 				client[i].autoau	= account->autoau;
 				client[i].expirationdate = account->expirationdate;
+				client[i].allowedtimeframe[0] = account->allowedtimeframe[0];
+				client[i].allowedtimeframe[1] = account->allowedtimeframe[1];
 				client[i].ncd_keepalive = account->ncd_keepalive;
 				client[i].c35_suppresscmd08 = account->c35_suppresscmd08;
 				client[i].tosleep	= (60*account->tosleep);
@@ -2293,6 +2295,17 @@ void get_cw(ECM_REQUEST *er)
 	// user expired
 	if(client[cs_idx].expirationdate && client[cs_idx].expirationdate < client[cs_idx].lastecm)
 		er->rc = 11;
+
+	// out of timeframe
+	if(client[cs_idx].allowedtimeframe[0] && client[cs_idx].allowedtimeframe[1]) {
+		struct tm *acttm;
+		acttm = localtime(&now);
+		int curtime = (acttm->tm_hour * 60) + acttm->tm_min;
+		int mintime = client[cs_idx].allowedtimeframe[0];
+		int maxtime = client[cs_idx].allowedtimeframe[1];
+		if(!((mintime <= maxtime && curtime > mintime && curtime < maxtime) || (mintime > maxtime && (curtime > mintime || curtime < maxtime))))
+			er->rc = 11;
+	}
 
 	// user disabled
 	if(client[cs_idx].disabled != 0)

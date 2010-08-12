@@ -425,6 +425,7 @@ struct s_client
   time_t	lastemm;
   time_t	lastecm;
   time_t	expirationdate;
+  int		allowedtimeframe[2];
   int		c35_suppresscmd08;
   int		c35_sleepsend;
   int		ncd_keepalive;
@@ -705,6 +706,7 @@ struct s_auth
   in_addr_t dynip;
   uchar     dyndns[64];
   time_t    expirationdate;
+  int		allowedtimeframe[2];
   int       c35_suppresscmd08;
   int       c35_sleepsend;
   int       ncd_keepalive;
