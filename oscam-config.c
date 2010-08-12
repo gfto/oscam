@@ -1633,14 +1633,8 @@ void chk_account(char *token, char *value, struct s_auth *account)
 				account->allowedtimeframe[1] = 0;
 				fprintf(stderr, "Warning: value '%s' is not valid for allowedtimeframe (hh:mm-hh:mm)\n", value);
 			} else {
-				if(account->allowedtimeframe[0] > account->allowedtimeframe[2]) {
-					account->allowedtimeframe[0] = 0;
-					account->allowedtimeframe[1] = 0;
-					fprintf(stderr, "Warning: value '%s' is not valid for allowedtimeframe (starttime > endtime)\n", value);
-				} else {
-					account->allowedtimeframe[0] = (allowed[0]*60) + allowed[1];
-					account->allowedtimeframe[1] = (allowed[2]*60) + allowed[3];
-				}
+				account->allowedtimeframe[0] = (allowed[0]*60) + allowed[1];
+				account->allowedtimeframe[1] = (allowed[2]*60) + allowed[3];
 			}
 		}
 		return;
