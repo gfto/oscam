@@ -557,11 +557,12 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
 			if (NeedsPTS && deprecated == 0) {
 				//						 PTSS	PTS0	PTS1	PCK
-				BYTE req[] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes
+				BYTE req[6] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes or PTS3, 
+																									//but spare 2 bytes in arrayif card responds with it
 				req[1]=0x10 | reader->protocol_type; //PTS0 always flags PTS1 to be sent always
 				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1 
 					req[2] = 0x11; //defaults FI and DI to 1
-				unsigned int len = sizeof(req);
+				unsigned int len = 0;
 				call (SetRightParity (reader));
 				ret = PPS_Exchange (reader, req, &len);
 				if (ret == OK) {
@@ -572,7 +573,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 					cs_debug("PTS Succesfull, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
 				}
 				else
-					cs_ddump(req,4,"PTS Failure, response:");
+					cs_ddump(req,len,"PTS Failure, response:");
 			}
 
 			//When for SCI, T14 protocol, TA1 is obeyed, this goes OK for mosts devices, but somehow on DM7025 Sky S02 card goes wrong when setting ETU (ok on DM800/DM8000)
