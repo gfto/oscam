@@ -27,10 +27,10 @@
 
 #include <termios.h>
 
-#define IO_Serial_DTR_Set(reader) IO_Serial_DTR_RTS(reader, 1, 1)
-#define IO_Serial_DTR_Clr(reader) IO_Serial_DTR_RTS(reader, 1, 0)
-#define IO_Serial_RTS_Set(reader) IO_Serial_DTR_RTS(reader, 0, 1)
-#define IO_Serial_RTS_Clr(reader) IO_Serial_DTR_RTS(reader, 0, 0)
+#define IO_Serial_DTR_Set(reader) {int dtr = 1; IO_Serial_DTR_RTS(reader, &dtr, NULL);}
+#define IO_Serial_DTR_Clr(reader) {int dtr = 0; IO_Serial_DTR_RTS(reader, &dtr, NULL);}
+#define IO_Serial_RTS_Set(reader) {int rts = 1; IO_Serial_DTR_RTS(reader, NULL, &rts);}
+#define IO_Serial_RTS_Clr(reader) {int rts = 0; IO_Serial_DTR_RTS(reader, NULL, &rts);}
 
 //Type of parity of the serial device
 //Chosen to Smartreader definition
@@ -67,7 +67,7 @@ bool IO_Serial_InitPnP (struct s_reader * reader);
 bool IO_Serial_Close (struct s_reader * reader);
 
 /* Transmission properties */
-bool IO_Serial_DTR_RTS(struct s_reader * reader, int, int);
+bool IO_Serial_DTR_RTS(struct s_reader * reader, int * dtr, int * rts);
 #if defined(TUXBOX) && defined(PPC)
 void IO_Serial_Ioctl_Lock(struct s_reader * reader, int);
 #else

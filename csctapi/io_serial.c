@@ -87,7 +87,7 @@ void IO_Serial_Ioctl_Lock(struct s_reader * reader, int flag)
   }
 }
 
-static bool IO_Serial_DTR_RTS_dbox2(int mcport, int dtr, int set)
+static bool IO_Serial_DTR_RTS_dbox2(int mcport, int * dtr, int * rts)
 {
   int rc;
   unsigned short msr;
@@ -102,7 +102,7 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int dtr, int set)
     {
       if (dtr_bits[mcport])
       {
-        if (set)
+        if (*dtr)
           msr&=(unsigned short)(~dtr_bits[mcport]);
         else
           msr|=dtr_bits[mcport];
@@ -111,9 +111,9 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int dtr, int set)
       else
         rc=0;		// Dummy, can't handle using multicam.o
     }
-    else		// RTS
+    if (rts)		// RTS
     {
-      if (set)
+      if (*rts)
         msr&=(unsigned short)(~rts_bits[mcport]);
       else
         msr|=rts_bits[mcport];
@@ -126,31 +126,54 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int dtr, int set)
 }
 #endif
 
-bool IO_Serial_DTR_RTS(struct s_reader * reader, int dtr, int set)
+bool IO_Serial_DTR_RTS(struct s_reader * reader, int * dtr, int * rts)
 {
 	unsigned int msr;
 	unsigned int mbit;
 
 #if defined(TUXBOX) && defined(PPC)
 	if ((reader->typ == R_DB2COM1) || (reader->typ == R_DB2COM2))
-		return(IO_Serial_DTR_RTS_dbox2(reader->typ == R_DB2COM2, dtr, set));
+		return(IO_Serial_DTR_RTS_dbox2(reader->typ == R_DB2COM2, dtr, rts));
 #endif
-
-	mbit=(dtr) ? TIOCM_DTR : TIOCM_RTS;
+  
+  if(dtr)
+  {
+    mbit = TIOCM_DTR;
 #if defined(TIOCMBIS) && defined(TIOBMBIC)
-	if (ioctl (reader->handle, set ? TIOCMBIS : TIOCMBIC, &mbit) < 0)
-		return ERROR;
+    if (ioctl (reader->handle, *dtr ? TIOCMBIS : TIOCMBIC, &mbit) < 0)
+      return ERROR;
 #else
-	if (ioctl(reader->handle, TIOCMGET, &msr) < 0)
-		return ERROR;
-	if (set)
-		msr|=mbit;
-	else
-		msr&=~mbit;
-	if (ioctl(reader->handle, TIOCMSET, &msr)<0)
-		return ERROR;
+    if (ioctl(reader->handle, TIOCMGET, &msr) < 0)
+      return ERROR;
+    if (*dtr)
+      msr|=mbit;
+    else
+      msr&=~mbit;
+    if (ioctl(reader->handle, TIOCMSET, &msr)<0)
+      return ERROR;
 #endif
-	cs_debug("IO: Setting %s=%i",dtr?"DTR":"RTS", set);
+    cs_debug("IO: Setting %s=%i","DTR", *dtr);
+  }  
+
+  if(rts)
+  {
+    mbit = TIOCM_RTS;
+#if defined(TIOCMBIS) && defined(TIOBMBIC)
+    if (ioctl (reader->handle, *rts ? TIOCMBIS : TIOCMBIC, &mbit) < 0)
+      return ERROR;
+#else
+    if (ioctl(reader->handle, TIOCMGET, &msr) < 0)
+      return ERROR;
+    if (*rts)
+      msr|=mbit;
+    else
+      msr&=~mbit;
+    if (ioctl(reader->handle, TIOCMSET, &msr)<0)
+      return ERROR;
+#endif
+    cs_debug("IO: Setting %s=%i","RTS", *rts);
+  }  
+
 	return OK;
 }
 
@@ -275,7 +298,7 @@ bool IO_Serial_SetParams (struct s_reader * reader, unsigned long bitrate, unsig
 	newtio.c_iflag |= IGNPAR;
 	/* Ignore parity errors!!! Windows driver does so why shouldn't I? */
 #endif
-	/* Enable receiber, hang on close, ignore control line */
+	/* Enable receiver, hang on close, ignore control line */
 	newtio.c_cflag |= CREAD | HUPCL | CLOCAL;
 	
 	/* Read 1 byte minimun, no timeout specified */
@@ -288,8 +311,7 @@ bool IO_Serial_SetParams (struct s_reader * reader, unsigned long bitrate, unsig
 	reader->current_baudrate = bitrate;
 
 	IO_Serial_Ioctl_Lock(reader, 1);
-	IO_Serial_DTR_RTS(reader, 0, rts == IO_SERIAL_HIGH);
-	IO_Serial_DTR_RTS(reader, 1, dtr == IO_SERIAL_HIGH);
+	IO_Serial_DTR_RTS(reader, &dtr, &rts);
 	IO_Serial_Ioctl_Lock(reader, 0);
 	return OK;
 }
@@ -304,14 +326,6 @@ bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio)
 //	tcflush(reader->handle, TCIOFLUSH);
 //	if (tcsetattr (reader->handle, TCSAFLUSH, &newtio) < 0)
 //		return ERROR;
-
-  int mctl;
-	if (ioctl (reader->handle, TIOCMGET, &mctl) >= 0) {
-		mctl &= ~TIOCM_RTS; //should be mctl |= TIOCM_RTS; for readers with reversed polarity reset
-		ioctl (reader->handle, TIOCMSET, &mctl);
-	}
-	else
-		cs_log("WARNING: Failed to reset reader %s", reader->label);
 
 	cs_debug("IO: Setting properties\n");
 	return OK;
@@ -381,7 +395,9 @@ int IO_Serial_SetParity (struct s_reader * reader, BYTE parity)
 void IO_Serial_Flush (struct s_reader * reader)
 {
 	BYTE b;
-	while(!IO_Serial_Read(reader, 1000, 1, &b)); //FIXME how about tcflush??
+
+  tcflush(reader->handle, TCIOFLUSH);
+	while(!IO_Serial_Read(reader, 1000, 1, &b));
 }
 
 void IO_Serial_Sendbreak(struct s_reader * reader, int duration)
