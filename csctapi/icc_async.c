@@ -148,7 +148,11 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 	
 	if (reader->typ == R_MP35)
 	{
-		MP35_Init(reader);
+		if (MP35_Init(reader)) {
+				cs_log("ERROR: MP35_Init returns error");
+				MP35_Close (reader);
+				return ERROR;
+		}
 	}
 	else if (reader->typ <= R_MOUSE)
 		if (Phoenix_Init(reader)) {
@@ -191,8 +195,6 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 			call (Sc8in1_GetStatus(reader, &in));
 			break;
 		case R_MP35:
-//			call (MP35_GetStatus(reader, &in));
-//			break;
 		case R_MOUSE:
 			call (Phoenix_GetStatus(reader, &in));
 			break;
