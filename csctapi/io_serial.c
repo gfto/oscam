@@ -95,11 +95,11 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int * dtr, int * rts)
   unsigned short rts_bits[2]={ 0x10, 0x800};
   unsigned short dtr_bits[2]={0x100,     0};
 
-	cs_debug("IO: multicam.o %s %s\n", dtr ? "dtr" : "rts", set ? "set" : "clear"); fflush(stdout);
   if ((rc=ioctl(fdmc, GET_PCDAT, &msr))>=0)
   {
     if (dtr)		// DTR
     {
+      cs_debug("IO: multicam.o DTR:%s\n", *dtr ? "set" : "clear"); fflush(stdout);
       if (dtr_bits[mcport])
       {
         if (*dtr)
@@ -113,6 +113,7 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int * dtr, int * rts)
     }
     if (rts)		// RTS
     {
+      cs_debug("IO: multicam.o RTS:%s\n", *rts ? "set" : "clear"); fflush(stdout);
       if (*rts)
         msr&=(unsigned short)(~rts_bits[mcport]);
       else
