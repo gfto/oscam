@@ -19,6 +19,7 @@ static const BYTE phoenix_mode[] = {0x2a, 0x7d};
 static const BYTE smartmouse_mode[] = {0x2a, 0x7e};
 static const BYTE phoenix_6mhz_mode[] = {0x2a, 0x9a};
 static const BYTE smartmouse_6mhz_mode[] = {0x2a, 0x9b};
+static const BYTE fw_info[] = {0x2a, 0xa2};
 
 // Commands for AD-Teknik USB Phoenix
 static const BYTE set_mode_osc[] = {0x2a, 0x42};
@@ -31,7 +32,7 @@ static const struct product { BYTE code; const char* product_name; } product_cod
   {0x42, "MP3.6 USB"}};
 
 static BYTE current_product;
-
+static ushort product_fw_version;
 static int MP35_product_info(BYTE high, BYTE low, BYTE code)
 {
   int i;
@@ -42,6 +43,7 @@ static int MP35_product_info(BYTE high, BYTE low, BYTE code)
     {
       cs_log("MP35_Init: %s - FW:%02d.%02d", product_codes[i].product_name, high, low);
       current_product = code;
+      product_fw_version = (high << 8) | low;
       return OK;
     }
   }
@@ -63,11 +65,11 @@ int MP35_Init(struct s_reader * reader)
   
   call(IO_Serial_SetParams(reader, 9600, 8, PARITY_NONE, 1, IO_SERIAL_HIGH, IO_SERIAL_HIGH));
 
-  IO_Serial_Sendbreak(reader, 1200);
+  IO_Serial_Sendbreak(reader, 1500);
   IO_Serial_DTR_Clr(reader);
-  IO_Serial_Flush(reader);
-
   IO_Serial_DTR_Set(reader);
+  cs_sleepms(500);
+  IO_Serial_Flush(reader);
 
   memset(rec_buf, 0x00, sizeof(rec_buf));
   call(IO_Serial_Write(reader, 0, 2, fw_version));
@@ -129,14 +131,34 @@ int MP35_Init(struct s_reader * reader)
   }
   else //MP3.5 or MP3.6
   {
-    memset(rec_buf, 0x00, sizeof(rec_buf));
-    call(IO_Serial_Write(reader, 0, 2, power_always_on));
-    call(IO_Serial_Read(reader, 200, 1, rec_buf));
-    if(rec_buf[0] != ACK)
+    if(product_fw_version >= 0x0500)
     {
-      cs_debug_mask (D_IFD, "IFD: Failed MP35 command: power_always_on");
-      return ERROR;
+      int info_len;
+      char info[sizeof(rec_buf) - 2];
+
+      memset(rec_buf, 0x00, sizeof(rec_buf));
+      call(IO_Serial_Write(reader, 0, 2,  fw_info));
+      call(IO_Serial_Read(reader, 200, 1, rec_buf));
+      info_len = rec_buf[0];
+      call(IO_Serial_Read(reader, 200, info_len + 1, rec_buf));
+      if(rec_buf[info_len] != ACK)
+      {
+        cs_debug_mask (D_IFD, "IFD: Failed MP35 command: fw_info");
+        return ERROR;
+      }
+      memcpy(info, rec_buf, info_len);
+      info[info_len] = '\0';
+      cs_log("MP35_Init: FW Info - %s", info);
     }
+
+//    memset(rec_buf, 0x00, sizeof(rec_buf));
+//    call(IO_Serial_Write(reader, 0, 2, power_always_on));
+//    call(IO_Serial_Read(reader, 200, 1, rec_buf));
+//    if(rec_buf[0] != ACK)
+//    {
+//      cs_debug_mask (D_IFD, "IFD: Failed MP35 command: power_always_on");
+//      return ERROR;
+//    }
 
     memset(rec_buf, 0x00, sizeof(rec_buf));
     if(original_mhz == 357)
@@ -171,7 +193,7 @@ int MP35_Close(struct s_reader * reader)
 
   if(current_product != 0x10) // USB Phoenix
   {
-    IO_Serial_Sendbreak(reader, 1200);
+    IO_Serial_Sendbreak(reader, 1500);
     IO_Serial_DTR_Clr(reader);
   }
 
