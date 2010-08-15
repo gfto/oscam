@@ -1505,7 +1505,7 @@ static void dvbapi_handler(int idx) {
 void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_index, unsigned int caid, unsigned char *ecm_data, int l, unsigned short pid) {
 	cs_debug("openxcas: ecm callback received"); 
 
-  //openxcas_stream_id = stream_id;
+  openxcas_stream_id = stream_id;
   //openxcas_seq = seq;
 	//openxcas_caid = caid;
 	openxcas_ecm_pid = pid;
@@ -1561,6 +1561,7 @@ void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_ind
 void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsigned int pid, unsigned char *ecm_data, int l) {
 	cs_debug("openxcas: ex callback received");
 
+	openxcas_stream_id = stream_id;
 	openxcas_ecm_pid = pid;
 	openxcas_cipher_idx = idx; // is this really cipher_idx?
 
@@ -1670,7 +1671,7 @@ void azbox_main() {
 					else
 						cs_debug("openxcas: ecm filter started");
 
-					if (!openxcas_create_cipher_ex(openxcas_stream_id, openxcas_seq, 0, openxcas_ecm_pid, openxcas_video_pid, 0xffff, openxcas_audio_pid, 0xffff, 0xffff, 0xffff))
+					if (!openxcas_create_cipher_ex(msg.stream_id, openxcas_seq, 0, openxcas_ecm_pid, openxcas_video_pid, 0xffff, openxcas_audio_pid, 0xffff, 0xffff, 0xffff))
 						cs_log("openxcas: failed to create cipher ex");
 					else
 						cs_debug("openxcas: cipher created");
