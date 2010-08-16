@@ -427,7 +427,7 @@ void dvbapi_stop_descrambling(int demux_id) {
 			needed=1;
 	}
 
-	if (needed==0) {
+	if (needed==0 && demux[demux_id].ca_fd > 1) {
 		close(demux[demux_id].ca_fd);
 		cs_debug("closing ca device");
 	}
@@ -784,6 +784,8 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		ca_mask = buffer[19];
 		demux_index = buffer[20];
 	}
+
+	cs_ddump(buffer, length, "capmt:");
 	
 	for (i = 0; i < MAX_DEMUX; i++) {
 		if (demux[i].demux_index == demux_index && demux[i].program_number == program_number) {
@@ -803,8 +805,6 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		demux_index = demux_id;
 	}
 	
-	cs_ddump(buffer, length, "capmt:");
-
 	dvbapi_stop_filter(demux_id, TYPE_ECM);
 	dvbapi_stop_filter(demux_id, TYPE_EMM);
 
@@ -1288,6 +1288,7 @@ void dvbapi_main_local() {
 
 				pfd2[pfdcount].fd=demux[i].socket_fd;
 				pfd2[pfdcount].events = (POLLIN | POLLPRI | POLLHUP);
+				ids[pfdcount]=i;
 				type[pfdcount++]=1;
 			}
 		}
@@ -1332,6 +1333,7 @@ void dvbapi_main_local() {
 						}
 					} else {
 						cs_debug("New capmt on old socket. Please report.");
+						dvbapi_stop_descrambling(ids[i]);
 						connfd = pfd2[i].fd;
 					}
 
