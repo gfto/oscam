@@ -59,6 +59,29 @@ int Azbox_Reset(struct s_reader *reader, ATR *atr)
   while ((status = _GetStatus(reader, NULL)) != 3)
     cs_sleepms(50);
 
+  tmp[0] = 0x02;
+  switch(reader->cardmhz)
+  {
+    case 357:
+    case 360:
+      //frequencies: 3571200, 3600000
+      tmp[1] = 0x00;
+      break;
+    case 600:
+      //frequencies: 6000000
+      tmp[1] = 0x03;
+      break;
+    case 368:
+      //frequencies: 3686400, 3686000
+      tmp[1] = 0x04;
+      break;
+    default:
+      //frequencies: 3600000
+      tmp[1] = 0x00;
+      break;
+  }
+  status = ioctl(reader->handle, SCARD_IOC_CHECKCARD, &tmp);
+
   memset(tmp, 0, sizeof(tmp));
   tmp[0] = 1;
 
