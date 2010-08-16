@@ -241,6 +241,12 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   
   while (ecm88Len && !rc) {
     
+    if(ecm88Data[0] ==0x00 &&  ecm88Data[1] == 0x00) {
+        // nano 0x00  and len 0x00 aren't valid ... something is obviously wrong with this ecm.
+        cs_log("[viaccess-reader] ECM: Invalid ECM structure. Rejecting");
+        return ERROR;
+    }
+    
     // 80 33 nano 80 (ecm) + len (33)
     if(ecm88Data[0]==0x80) { // nano 80, give ecm len
         curEcm88len=ecm88Data[1];
@@ -255,7 +261,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     
     // d2 02 0d 02 -> D2 nano, len 2,  select the AES key to be used
     if(ecm88Data[0]==0xd2) {
-        // FIXME: use the d2 arguments
+        // use the d2 arguments to get the key # to be used
         int len = ecm88Data[1] + 2;
         D2KeyID=ecm88Data[3];
         ecm88Data += len;
