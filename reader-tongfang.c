@@ -144,13 +144,13 @@ int tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
   return OK;
 }
 
-int tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *reader)
+int tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *UNUSED(reader))
 {
   ep->type = UNKNOWN;
   return TRUE;
 }
 
-void tongfang_get_emm_filter(struct s_reader *reader, uchar *filter)
+void tongfang_get_emm_filter(struct s_reader *UNUSED(reader), uchar *UNUSED(filter))
 {
 }
 

@@ -44,6 +44,15 @@
 #  define GCC_PACK
 #endif
 
+#ifdef UNUSED 
+#elif defined(__GNUC__) 
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused)) 
+#elif defined(__LCLINT__) 
+# define UNUSED(x) /*@unused@*/ x 
+#else 
+# define UNUSED(x) x 
+#endif
+
 #define call(arg) \
 	if (arg) { \
 		cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.",#arg); \
