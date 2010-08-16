@@ -708,10 +708,11 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		timeout.millitm += cfg->ftimeout;
 		timeout.time += timeout.millitm / 1000;
 		timeout.millitm = timeout.millitm % 1000;
-		force_resend_ecm = reader[ridx].cc_force_resend_ecm && comp_timeb(&cur_time, &timeout) > 0;
+		force_resend_ecm = reader[ridx].cc_force_resend_ecm && comp_timeb(&cur_time, &timeout) >= 0;
 			
 		if (force_resend_ecm) {
 			cs_debug_mask(D_TRACE, "%s force_resend");
+			cc->crc++;
 		}
 		else {
 			timeout = cur_time;
@@ -769,8 +770,14 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	cc->current_ecm_cidx = cur_er->cidx;
 	current_card = &cc->current_card[cur_er->cidx];
 	if (current_card->card && current_card->prov == cur_er->prid && 
-	  sid_eq(&current_card->srvid, &cur_srvid))
+	  sid_eq(&current_card->srvid, &cur_srvid)) {
 		card = current_card->card;
+		if (force_resend_ecm) {
+			add_sid_block(card, &cur_srvid);
+			card = NULL;
+		}
+
+	}
 	else
 	{
 		card = NULL;
@@ -780,40 +787,57 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 	//then check all other cards
 	int is_auto_blocked = 0;
-	if (!card) {
-		//check if auto blocked:
-		if (!reader[ridx].cc_disable_auto_block && 
-	  	    cc_is_auto_blocked(
-		    cc->auto_blocked, cur_er->caid, cur_er->prid, &cur_srvid, 60*60*1)) { //TODO: Timeout 60*60*1 = 1h, Config?
-		        is_auto_blocked = 1;
-			current_card->card = NULL;
-		}
-		else
-		{
-			card = llist_itr_init(cc->cards, &itr);
-			while (card) {
-				if (card->caid == cur_er->caid) { // caid matches
-					int s = is_sid_blocked(card, &cur_srvid);
-
-					LLIST_ITR pitr;
-					uint8 *prov = llist_itr_init(card->provs, &pitr);
-					while (prov && !s) {
-						ulong card_prov = b2i(3, prov);
-						if (!cur_er->prid || !card_prov || card_prov == cur_er->prid) { // provid matches
-							if (((h < 0) || (card->hop < h)) && (card->hop
-									<= reader[ridx].cc_maxhop)) { // card is closer and doesn't exceed max hop
-								//cc->cur_card = card;
-								current_card->card = card;
-								h = card->hop; // card has been matched
+//	int tries = 2;
+//	while (!card && tries) {
+//		tries--;	
+		if (!card) {
+			//check if auto blocked:
+			if (!reader[ridx].cc_disable_auto_block && 
+		  	    cc_is_auto_blocked(
+			    cc->auto_blocked, cur_er->caid, cur_er->prid, &cur_srvid, 60*60*1)) { //TODO: Timeout 60*60*1 = 1h, Config?
+			        is_auto_blocked = 1;
+				current_card->card = NULL;
+//				break;	
+			}
+			else
+			{
+				card = llist_itr_init(cc->cards, &itr);
+				while (card) {
+					if (card->caid == cur_er->caid) { // caid matches
+						int s = is_sid_blocked(card, &cur_srvid);
+						
+						LLIST_ITR pitr;
+						uint8 *prov = llist_itr_init(card->provs, &pitr);
+						while (prov && !s) {
+							ulong card_prov = b2i(3, prov);
+							if (!cur_er->prid || !card_prov || card_prov == cur_er->prid) { // provid matches
+								if (((h < 0) || (card->hop < h)) && (card->hop
+										<= reader[ridx].cc_maxhop)) { // card is closer and doesn't exceed max hop
+									//cc->cur_card = card;
+									current_card->card = card;
+									h = card->hop; // card has been matched
+								}
 							}
+							prov = llist_itr_next(&pitr);
 						}
-						prov = llist_itr_next(&pitr);
 					}
+					card = llist_itr_next(&itr);
 				}
-				card = llist_itr_next(&itr);
 			}
 		}
-	}
+//		if (!card) {
+			//No card found? reopen all blocked cards
+//			card = llist_itr_init(cc->cards, &itr);
+//			while (card) {
+//				if (card->caid == cur_er->caid) {
+//					if (is_sid_blocked(card, &cur_srvid))
+//						remove_sid_block(card, &cur_srvid);
+//				}
+//				card = llist_itr_next(&itr);
+//			}
+//			
+//		}
+//	}
 	
 	if (current_card->card) {
 		card = current_card->card;
@@ -870,23 +894,21 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		//cs_sleepms(300);
 		reader[ridx].last_s = reader[ridx].last_g;
 
-		if (!force_resend_ecm) {
-			card = llist_itr_init(cc->cards, &itr);
-			while (card) {
-				if (card->caid == cur_er->caid) { // caid matches
-					LLIST_ITR sitr;
-					struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
-					while (srvid) {
-						if (sid_eq(srvid, &cur_srvid)) {
-							free(srvid);
-							srvid = llist_itr_remove(&sitr);
-						}
-						else
-							srvid = llist_itr_next(&sitr);
+		card = llist_itr_init(cc->cards, &itr);
+		while (card) {
+			if (card->caid == cur_er->caid) { // caid matches
+				LLIST_ITR sitr;
+				struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
+				while (srvid) {
+					if (sid_eq(srvid, &cur_srvid)) {
+						free(srvid);
+						srvid = llist_itr_remove(&sitr);
 					}
+					else
+						srvid = llist_itr_next(&sitr);
 				}
-				card = llist_itr_next(&itr);
 			}
+			card = llist_itr_next(&itr);
 		}
 
 		if (!reader[ridx].cc_disable_auto_block) {
@@ -1535,7 +1557,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		//build own card/provs list:
 		cc->needs_rebuild_caidinfo++;
 		if (cc->needs_rebuild_caidinfo > CC_CAIDINFO_REBUILD) {
-			cleanup_old_cards(cc);
+			//cleanup_old_cards(cc);
 			rebuild_caidinfos(cc);
 			saveCaidInfos(ridx, cc->caid_infos);
 		} else {
