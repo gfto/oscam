@@ -9,7 +9,7 @@
 
 #include "atr.h"
 
-#define AZBOX_MODES 10
+#define AZBOX_MODES 16
 
 int Azbox_Init(struct s_reader *reader);
 void Azbox_SetMode(int mode);

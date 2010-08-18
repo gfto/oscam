@@ -288,8 +288,7 @@ static int reader_reset(struct s_reader * reader)
     Azbox_SetMode(reader->mode);
     if (!reader_activate_card(reader, &atr, 0)) return(0);
     ret = reader_get_cardsystem(reader, atr);
-  }
-  if (!ret) {
+  } else {
     for (i = 0; i < AZBOX_MODES; i++) {
       Azbox_SetMode(i);
       if (!reader_activate_card(reader, &atr, 0)) return(0);
