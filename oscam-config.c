@@ -875,10 +875,10 @@ void chk_t_camd35(char *token, char *value)
 
 	if (!strcmp(token, "serverip")) {
 		if(strlen(value) == 0) {
-			cfg->c35_tcp_srvip = 0;
+			cfg->c35_srvip = 0;
 			return;
 		} else {
-			cfg->c35_tcp_srvip = inet_addr(value);
+			cfg->c35_srvip = inet_addr(value);
 			return;
 		}
 	}
@@ -1840,8 +1840,8 @@ int write_config()
 	if ( cfg->c35_port > 0) {
 		fprintf(f,"[cs357x]\n");
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->c35_port);
-		if (cfg->c35_tcp_srvip != 0)
-			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
+		if (cfg->c35_srvip != 0)
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->c35_srvip));
 		if (cfg->c35_suppresscmd08)
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg->c35_suppresscmd08);
 		fprintf(f,"\n");
