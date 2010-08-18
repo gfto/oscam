@@ -181,7 +181,7 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
 	atr->length = pointer + 1;
 	
     // check that TA1, if pn==1 , has a valid value for FI
-    if ( (atr->pn==1) && (atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = TRUE)) {
+    if ( (atr->pn==1) && (atr->ib[pn][ATR_INTERFACE_BYTE_TA].present == TRUE)) {
         uchar FI;
         cs_debug("TA1 = %02x",atr->ib[pn][ATR_INTERFACE_BYTE_TA].value);
         FI=(atr->ib[pn][ATR_INTERFACE_BYTE_TA].value & 0xF0)>>4;
