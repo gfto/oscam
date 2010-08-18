@@ -7,6 +7,9 @@
 #ifdef HAVE_PCSC
 #include "csctapi/ifd_pcsc.h"
 #endif
+#ifdef AZBOX
+#include "csctapi/ifd_azbox.h"
+#endif
 static int cs_ptyp_orig; //reinit=1, 
 
 #if defined(TUXBOX) && defined(PPC) //dbox2 only
@@ -276,17 +279,29 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 
 static int reader_reset(struct s_reader * reader)
 {
-	reader_nullcard(reader);
-	ATR atr;
-	unsigned short int deprecated, ret = ERROR;
+  reader_nullcard(reader);
+  ATR atr;
+  unsigned short int ret = ERROR;
+#ifdef AZBOX
+  int i;
+  for (i = 0; i < AZBOX_MODES; i++) {
+    Azbox_SetMode(i);
+    if (!reader_activate_card(reader, &atr, 0)) return(0);
+    ret = reader_get_cardsystem(reader, atr);
+    if (ret)
+      break;
+  }
+#else
+  unsigned short int deprecated;
 	for (deprecated = reader->deprecated; deprecated < 2; deprecated++) {
 		if (!reader_activate_card(reader, &atr, deprecated)) return(0);
-		ret =reader_get_cardsystem(reader, atr);
+		ret = reader_get_cardsystem(reader, atr);
 		if (ret)
 			break;
 		if (!deprecated)
 			cs_log("Normal mode failed, reverting to Deprecated Mode");
 	}
+#endif
 	return(ret);
 }
 

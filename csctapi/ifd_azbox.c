@@ -2,6 +2,8 @@
 #include "ifd_azbox.h"
 #include"icc_async.h"
 
+int sc_mode;
+
 int _GetStatus(struct s_reader *reader, int *in)
 {
   unsigned char tmp[512];
@@ -24,6 +26,12 @@ int Azbox_Init(struct s_reader *reader)
   return OK;
 }
 
+void Azbox_SetMode(int mode)
+{
+  sc_mode = mode;
+  cs_debug("openxcas sc: set mode 0x%0x", sc_mode);
+}
+
 int Azbox_GetStatus(struct s_reader *reader, int *in)
 {
   unsigned char tmp[512];
@@ -37,7 +45,7 @@ int Azbox_GetStatus(struct s_reader *reader, int *in)
     else
       *in = 1;
 
-    cs_debug("openxcas sc: get status = %d", *in);
+    //cs_debug("openxcas sc: get status = %d", *in);
   }
 
   return OK;
@@ -60,26 +68,7 @@ int Azbox_Reset(struct s_reader *reader, ATR *atr)
     cs_sleepms(50);
 
   tmp[0] = 0x02;
-  switch(reader->cardmhz)
-  {
-    case 357:
-    case 360:
-      //frequencies: 3571200, 3600000
-      tmp[1] = 0x00;
-      break;
-    case 600:
-      //frequencies: 6000000
-      tmp[1] = 0x03;
-      break;
-    case 368:
-      //frequencies: 3686400, 3686000
-      tmp[1] = 0x04;
-      break;
-    default:
-      //frequencies: 3600000
-      tmp[1] = 0x00;
-      break;
-  }
+  tmp[1] = sc_mode;
   status = ioctl(reader->handle, SCARD_IOC_CHECKCARD, &tmp);
 
   memset(tmp, 0, sizeof(tmp));
