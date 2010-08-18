@@ -256,7 +256,7 @@ DESCRIPTIONS
 	  1 = request to provide emu from CCCam server, too, default: 0
 
        mode = mode
-	  set mode for AzBox reader, default:none
+	  set card init mode for AzBox reader, default:none
 
 OVERCLOCKING
        ·  Dreambox and other internal readers
