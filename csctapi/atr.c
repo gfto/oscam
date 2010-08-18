@@ -179,6 +179,21 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
 	}
 	
 	atr->length = pointer + 1;
+	
+    // check that TA1, if pn==1 , has a valid value for FI
+    if ( (atr->pn==1) && (atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = TRUE)) {
+        uchar FI;
+        FI=(atr->ib[pn][ATR_INTERFACE_BYTE_TA].value & 0xF0)>>4;
+        if(atr_fs_table[FI]==0) {
+            cs_debug("Invalid ATR as FI is not returning a valid frequency value");
+            return (ATR_MALFORMED);
+        }
+
+        if (atr->ib[pn][ATR_INTERFACE_BYTE_TA].value == 0) {
+            cs_debug("Invalid ATR as FI is not returning a valid frequency value");
+            return (ATR_MALFORMED);
+        }
+    }
 	return (ATR_OK);
 }
 

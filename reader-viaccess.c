@@ -355,7 +355,10 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         ins88[2]=ecmf8Len?1:0;
         ins88[3]=keynr;
         ins88[4]= curEcm88len;
-
+        // 
+        // we should check the nano to make sure the ecm is valid
+        // we should look for at least 1 E3 nano, 1 EA nano and the F0 signature nano
+        //
         // DE04
         if (DE04[0]==0xDE)
         {
