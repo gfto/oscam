@@ -3501,6 +3501,18 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+#ifdef AZBOX
+  if (!strcmp(token, "mode")) {
+    if(strlen(value) == 0) {
+      rdr->mode = -1;
+      return;
+    } else {
+      rdr->mode = atoi(value);
+      return;
+    }
+  }
+#endif
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
 }

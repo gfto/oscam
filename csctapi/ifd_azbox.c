@@ -29,7 +29,7 @@ int Azbox_Init(struct s_reader *reader)
 void Azbox_SetMode(int mode)
 {
   sc_mode = mode;
-  cs_debug("openxcas sc: set mode 0x%0x", sc_mode);
+  cs_log("openxcas sc: set mode %d", sc_mode);
 }
 
 int Azbox_GetStatus(struct s_reader *reader, int *in)

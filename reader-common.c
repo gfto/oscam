@@ -281,15 +281,22 @@ static int reader_reset(struct s_reader * reader)
 {
   reader_nullcard(reader);
   ATR atr;
-  unsigned short int ret = ERROR;
+  unsigned short int ret = 0;
 #ifdef AZBOX
   int i;
-  for (i = 0; i < AZBOX_MODES; i++) {
-    Azbox_SetMode(i);
+  if (reader->mode != -1) {
+    Azbox_SetMode(reader->mode);
     if (!reader_activate_card(reader, &atr, 0)) return(0);
     ret = reader_get_cardsystem(reader, atr);
-    if (ret)
-      break;
+  }
+  if (!ret) {
+    for (i = 0; i < AZBOX_MODES; i++) {
+      Azbox_SetMode(i);
+      if (!reader_activate_card(reader, &atr, 0)) return(0);
+      ret = reader_get_cardsystem(reader, atr);
+      if (ret)
+        break;
+    }
   }
 #else
   unsigned short int deprecated;

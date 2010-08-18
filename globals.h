@@ -627,6 +627,9 @@ struct s_reader  //contains device info, reader info and card info
 #ifdef LIBUSB
   SR_CONFIG *sr_config;
 #endif
+#ifdef AZBOX
+  int mode;
+#endif
 	////variables from icc_async.h start
 	int convention; //Convention of this ICC
 	unsigned char protocol_type; // Type of protocol
