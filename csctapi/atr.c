@@ -191,6 +191,14 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
             return (ATR_MALFORMED);
         }
     }
+    
+    // check that TB1 < 0x80
+    if ( (atr->pn==1) && (atr->ib[pn][ATR_INTERFACE_BYTE_TB].present == TRUE)) {
+        if(atr->ib[pn][ATR_INTERFACE_BYTE_TB].value > 0x80) {
+            cs_debug("Invalid ATR as TB1 has an invalid value");
+            return (ATR_MALFORMED);
+        }
+    }
 	return (ATR_OK);
 }
 
