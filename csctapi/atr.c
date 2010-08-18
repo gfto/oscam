@@ -98,8 +98,6 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
 		if ((TDi | 0xEF) == 0xFF)
 		{
 			pointer++;
-			cs_log("ta = %02X", buffer[pointer]);
-			cs_log("pn = %02X", pn);
 			atr->ib[pn][ATR_INTERFACE_BYTE_TA].value = buffer[pointer];
 			atr->ib[pn][ATR_INTERFACE_BYTE_TA].present = TRUE;
 		}
