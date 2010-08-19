@@ -1,6 +1,20 @@
 #include "globals.h"
 #include "reader-common.h"
 
+static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 if cw is all zeros
+{
+  int i;
+
+  for (i = 0; i < 8; i++)
+  {
+    if (cw[i] != 0) //test if cw = 00
+    {
+      return OK;
+    }
+  }
+  return ERROR;
+}
+
 static int tongfang_read_data(struct s_reader *reader, uchar size, uchar *cta_res, ushort *status)
 {
   static uchar read_data_cmd[]={0x00,0xc0,0x00,0x00,0xff};
@@ -140,6 +154,9 @@ int tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
     memcpy(er->cw, data + 16, 8);
     memcpy(er->cw + 8, data + 8, 8);
   }
+
+  // All zeroes is no valid CW, can be a result of wrong boxid
+  if (!cw_is_valid(er->cw) || !cw_is_valid(er->cw + 8)) return ERROR;
 
   return OK;
 }
