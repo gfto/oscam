@@ -1636,7 +1636,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	if (strcmp(getParam(params, "action"), "restart") == 0)
 		for (i = 0; i < CS_MAXREADER; i++)
 			if (reader[i].pid == atoi(getParam(params, "pid")))
-					send_restart_cardreader(i);
+					send_restart_cardreader(i, 1);
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0)
 		for (i = 0; i < CS_MAXREADER; i++)
