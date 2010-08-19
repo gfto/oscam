@@ -149,6 +149,7 @@ int hostResolve(int ridx)
    hints.ai_family = client[cs_idx].udp_sa.sin_family;
    hints.ai_protocol = IPPROTO_TCP;
   
+   pthread_mutex_lock(&gethostbyname_lock);
    int err = getaddrinfo(reader[ridx].device, NULL, &hints, &res);
    if (err != 0 || !res || !res->ai_addr) {
       client[cs_idx].udp_sa.sin_addr.s_addr = 0;
@@ -164,6 +165,7 @@ int hostResolve(int ridx)
       }
    }
    if (res) freeaddrinfo(res);
+   pthread_mutex_unlock(&gethostbyname_lock);
    return (client[cs_idx].udp_sa.sin_addr.s_addr) ? 1 : 0;
 }
 

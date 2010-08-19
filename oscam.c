@@ -26,6 +26,7 @@ pid_t master_pid=0;   // master pid OUTSIDE shm
 ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 uchar mbuf[1024];   // global buffer
+pthread_mutex_t gethostbyname_lock;
 ECM_REQUEST *ecmtask;
 #ifdef CS_ANTICASC
 struct s_acasc ac_stat[CS_MAXPID];
@@ -924,6 +925,7 @@ static void init_shm()
   else
     strcpy(client[0].usr, "root");
 
+  pthread_mutex_init(&gethostbyname_lock, NULL); 
   init_stat();
 
 #ifdef CS_LOGHISTORY
@@ -1061,6 +1063,7 @@ static void cs_client_resolve()
     for (account=cfg->account; account; account=account->next)
       if (account->dyndns[0])
       {
+        pthread_mutex_lock(&gethostbyname_lock);
         memset(&hints, 0, sizeof(hints));
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_family = AF_INET;
@@ -1068,12 +1071,13 @@ static void cs_client_resolve()
                 
         int err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
         if (err != 0 || !res || !res->ai_addr) {
-	  cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
-	}
+     	  cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
+		}
         else {
           account->dynip=cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
         }
         if (res) freeaddrinfo(res);
+        pthread_mutex_unlock(&gethostbyname_lock);
       }
     sleep(cfg->resolvedelay);
   }

@@ -2191,8 +2191,10 @@ int process_request(FILE *f, struct in_addr in) {
 		if(cfg->http_dynip == addr) {
 			ok = 1;
 		} else {
+		    pthread_mutex_lock(&gethostbyname_lock);
 			struct hostent *rht;
 			struct sockaddr_in udp_sa;
+
 			rht = gethostbyname((const char *) cfg->http_dyndns);
 			if (rht) {
 				memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
@@ -2200,6 +2202,7 @@ int process_request(FILE *f, struct in_addr in) {
 				if (cfg->http_dynip == addr)
 					ok = 1;
 			}
+			pthread_mutex_unlock(&gethostbyname_lock);
 		}
 	}
 
