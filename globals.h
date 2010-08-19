@@ -1099,7 +1099,7 @@ extern void cs_waitforcardinit(void);
 extern void cs_reinit_clients(void);
 extern void chk_dcw(int fd);
 extern void update_reader_config(uchar *ptr);
-extern void send_restart_cardreader(int ridx);
+extern void send_restart_cardreader(int ridx, int force_now);
 extern void send_clear_reader_stat(int ridx);
 
 #ifdef CS_ANTICASC

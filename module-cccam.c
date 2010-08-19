@@ -704,7 +704,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			getprefix());
 			
 		//force resend ecm and break lock when fallbacktimeout occured
-		struct timeb timeout = cur_time;
+		struct timeb timeout = cc->ecm_time;
 		timeout.millitm += cfg->ftimeout;
 		timeout.time += timeout.millitm / 1000;
 		timeout.millitm = timeout.millitm % 1000;
@@ -1299,20 +1299,20 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card) {
 	return doSaveCaidInfos;
 }
 
-static void cc_clear_current_card(struct cc_data *cc, int cidx) {
-	memset(&cc->current_card[cidx], 0, sizeof(struct cc_current_card));
-}
+//static void cc_clear_current_card(struct cc_data *cc, int cidx) {
+//	memset(&cc->current_card[cidx], 0, sizeof(struct cc_current_card));
+//}
 
-static int cc_remove_current_card(struct cc_data *cc, struct cc_card *card) {
-	int i, c = 0;
-	for (i = 0; i<CS_MAXPID; i++) {
-		if (cc->current_card[i].card == card) {
-			cc_clear_current_card(cc, i);
-			c++;
-		}
-	}
-	return c;
-}
+//static int cc_remove_current_card(struct cc_data *cc, struct cc_card *card) {
+//	int i, c = 0;
+//	for (i = 0; i<CS_MAXPID; i++) {
+//		if (cc->current_card[i].card == card) {
+//			cc_clear_current_card(cc, i);
+//			c++;
+//		}
+//	}
+//	return c;
+//}
 
 static struct cc_current_card *cc_find_current_card(struct cc_data *cc, struct cc_card *card) {
 	int i;
@@ -1336,21 +1336,21 @@ static void rebuild_caidinfos(struct cc_data *cc) {
 	cc->needs_rebuild_caidinfo = 0;
 }
 
-static void cleanup_old_cards(struct cc_data *cc) {
-	time_t clean_time = time((time_t) 0) - 60 * 60 * 48; //TODO: Timeout old cards 60*60*48=48h Config
-	LLIST_ITR itr;
-	struct cc_card *card = llist_itr_init(cc->cards, &itr);
-	while (card) {
-		if (card->time < clean_time) {
-			//cs_log("cccam: old card removed %08x, count %d", card->id,
-			//		llist_count(cc->cards));
-			cc_remove_current_card(cc, card);
-			cc_free_card(card);
-			card = llist_itr_remove(&itr);
-		} else
-			card = llist_itr_next(&itr);
-	}
-}
+//static void cleanup_old_cards(struct cc_data *cc) {
+//	time_t clean_time = time((time_t) 0) - 60 * 60 * 48; //TODO: Timeout old cards 60*60*48=48h Config
+//	LLIST_ITR itr;
+//	struct cc_card *card = llist_itr_init(cc->cards, &itr);
+//	while (card) {
+//		if (card->time < clean_time) {
+//			//cs_log("cccam: old card removed %08x, count %d", card->id,
+//			//		llist_count(cc->cards));
+//			cc_remove_current_card(cc, card);
+//			cc_free_card(card);
+//			card = llist_itr_remove(&itr);
+//		} else
+//			card = llist_itr_next(&itr);
+//	}
+//}
 
 static int caid_filtered(int ridx, int caid) {
 	int defined = 0;
@@ -1987,6 +1987,9 @@ static int cc_cli_connect(void) {
 	cc->answer_on_keepalive = time(NULL);
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 
+	pthread_mutex_init(&cc->lock, NULL);
+	pthread_mutex_init(&cc->ecm_busy, NULL);
+
 	cs_ddump(data, 16, "cccam: server init seed:");
 
 	uint16 sum = 0x1234;
@@ -2060,9 +2063,6 @@ static int cc_cli_connect(void) {
 		sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
 		cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
 	}
-
-	pthread_mutex_init(&cc->lock, NULL);
-	pthread_mutex_init(&cc->ecm_busy, NULL);
 
 	reader[ridx].caid[0] = reader[ridx].ftab.filts[0].caid;
 	reader[ridx].nprov = reader[ridx].ftab.filts[0].nprids;

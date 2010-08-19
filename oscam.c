@@ -561,7 +561,7 @@ static void cs_child_chk(int i)
                 prepare_reader_restart(ridx, i);
                 cs_log("restarting %s %s in %d seconds (index=%d)", reader[ridx].label, txt,
                 		cfg->reader_restart_seconds, ridx);
-                write_to_pipe(fd_c2m, PIP_ID_RST, (uchar*)&ridx, sizeof(ridx));
+		send_restart_cardreader(ridx, 0);
                 break;
               }
             }
@@ -2758,9 +2758,12 @@ void send_clear_reader_stat(int ridx)
   write_to_pipe(fd_c2m, PIP_ID_RES, (uchar*)&ridx, sizeof(ridx)); 
 }
 
-void send_restart_cardreader(int ridx)
+void send_restart_cardreader(int ridx, int force_now)
 {
-  write_to_pipe(fd_c2m, PIP_ID_RST, (uchar*)&ridx, sizeof(ridx)); 
+  int restart_info[2];
+  restart_info[0] = ridx;
+  restart_info[1] = force_now;
+  write_to_pipe(fd_c2m, PIP_ID_RST, (uchar*)&restart_info, sizeof(restart_info)); 
 }
 
 static void process_master_pipe()
@@ -2776,9 +2779,10 @@ static void process_master_pipe()
     case PIP_ID_HUP:
     	cs_accounts_chk();
     	break;
-    case PIP_ID_RST: //Restart Cardreader with ridx=prt[0]
-    	restart_cardreader(*(int*)ptr, 1);
-    	break;
+    case PIP_ID_RST:{ //Restart Cardreader with ridx=prt[0] 
+        int *restart_info = (int *)ptr;
+    	restart_cardreader(restart_info[0], restart_info[1]);
+    	break; }
     case PIP_ID_KCL: //Kill all clients
     	restart_clients();
     	break;
