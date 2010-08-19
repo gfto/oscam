@@ -919,16 +919,6 @@ void chk_t_camd35_tcp(char *token, char *value)
 		}
 	}
 
-	if (!strcmp(token, "suppresscmd08")) {
-		if(strlen(value) == 0) {
-			cfg->c35_suppresscmd08 = 0;
-			return;
-		} else {
-			cfg->c35_suppresscmd08 = atoi(value);
-			return;
-		}
-	}
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in camd35 tcp section not recognized\n", token);
 }
