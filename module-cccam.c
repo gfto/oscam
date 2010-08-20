@@ -357,7 +357,6 @@ static void cc_cli_close() {
 		pthread_mutex_destroy(&cc->ecm_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
-		//cc->current_ecm_cidx = 0;
 	}
 }
 
@@ -594,7 +593,7 @@ static int cc_get_nxt_ecm() {
 static int send_cmd05_answer()
 {
 	struct cc_data *cc = reader[ridx].cc;
-	if (!cc->cmd05_active || cc->current_ecm_cidx) //exit if not in cmd05 or waiting for ECM answer
+	if (!cc->cmd05_active || !reader[ridx].available) //exit if not in cmd05 or waiting for ECM answer
 		return 0;
 		
 	cc->cmd05_active--;
@@ -739,7 +738,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			reader[ridx].available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
 			cs_debug("%s no ecm pending!", getprefix());
-			cc->current_ecm_cidx = 0;
 			if (!cc_send_pending_emms())
 				send_cmd05_answer();
 			return 0; // no queued ecms
@@ -917,7 +915,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		}
 		reader[ridx].available = 1;
 		pthread_mutex_unlock(&cc->ecm_busy);
-		cc->current_ecm_cidx = 0;
 		
 		return -1;
 	}
@@ -1720,7 +1717,6 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				current_card = NULL;
 			}
 
-			cc->current_ecm_cidx = 0;
 			reader[ridx].available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
 			
@@ -1755,7 +1751,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			cc->cmd05_active = 1;
 			cc->cmd05_data_len = l;
 			memcpy(&cc->cmd05_data, buf+4, l);
-			if (!cc->current_ecm_cidx)
+			if (reader[ridx].available)
 				send_cmd05_answer();
 			cc->current_ecm_cidx = 0; //After CMD_05 is always a NOK! So retry ECM
 		}
@@ -1979,7 +1975,6 @@ static int cc_cli_connect(void) {
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
-	//cc->current_ecm_cidx = 0;
 	cc->cmd05_mode = MODE_UNKNOWN;
 	cc->cmd05_offset = 0;
 	cc->cmd05_active = 0;
