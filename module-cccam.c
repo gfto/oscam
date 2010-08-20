@@ -710,7 +710,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		force_resend_ecm = reader[ridx].cc_force_resend_ecm && comp_timeb(&cur_time, &timeout) >= 0;
 			
 		if (force_resend_ecm) {
-			cs_debug_mask(D_TRACE, "%s force_resend");
+			cs_debug_mask(D_TRACE, "%s force_resend", getprefix());
 			cc->crc++;
 		}
 		else {
