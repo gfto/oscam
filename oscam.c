@@ -3051,7 +3051,10 @@ int main (int argc, char *argv[])
   if (cfg->resolvedelay > 0)
     start_thread(&loop_resolver, "Resolver");
 #ifdef WEBIF
-  init_service(95); // http
+  if(cfg->http_port == 0) 
+    cs_log("http disabled"); 
+  else 
+    init_service(95); // http 
 #endif
   init_cardreader();
 
