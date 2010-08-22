@@ -1043,9 +1043,12 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			break;
 		case R_DB2COM1:
 		case R_DB2COM2:
-		case R_MP35:
 		case R_MOUSE :
 			tpl_addVar(vars, 0, "PROTOCOL", "mouse");
+			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
+			break;
+		case R_MP35:
+			tpl_addVar(vars, 0, "PROTOCOL", "mp35");
 			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
 			break;
 		case R_SC8in1 :
