@@ -122,7 +122,7 @@ struct cc_data {
 	uint16 needs_rebuild_caidinfo;
 	int max_ecms;
 	int ecm_counter;
-	int report_carddata_id; //Server only
+	uint32 report_carddata_id; //Server only
 	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
 	LLIST *auto_blocked; //struct cc_auto_blocked //struct cc_auto_blocked
 	int just_logged_in; //true for checking NOK direct after login

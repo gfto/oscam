@@ -2115,7 +2115,8 @@ static ulong get_reader_hexserial_crc()
  */
 static int cc_srv_report_cards() {
 	int j;
-	uint id, r, k;
+	uint32 id;
+	uint r, k;
 	uint8 hop = 0;
 	int reshare, usr_reshare, reader_reshare, maxhops, flt = 0;
 	uint8 buf[CC_MAXMSGSIZE];
@@ -2138,6 +2139,7 @@ static int cc_srv_report_cards() {
 	LLIST *reported_carddatas = llist_create();
 
 	for (r = 0; r < CS_MAXREADER; r++) {
+		if (!reader[r].fd || !reader[r].enable || reader[r].deleted) continue;
 		if (!(reader[r].grp & client[cs_idx].grp)) continue;
 		reader_reshare = reader[r].cc_reshare;
 
