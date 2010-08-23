@@ -1625,7 +1625,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	/* calc log file name */
 	time(&t);
 	timeinfo = localtime(&t);
-	strftime(date, sizeof(date), "%y%m%d", timeinfo);
+	strftime(date, sizeof(date), "%Y%m%d", timeinfo);
 	sprintf(buf, "%s/%s_I%04X_%s.cwl", cfg->cwlogdir, date, er->srvid, srvname);
 
 	/* open failed, assuming file does not exist, yet */
