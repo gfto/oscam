@@ -79,6 +79,26 @@ DhwgICAgICAgICAgICD/AiD/AiAgICAgICAgICAg/xog/xogICAgICAgICAgIP8CIP8CICAgICAg\
 ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIMHDYQDAA2UA4AcuAMADbQBAAgAAAAACAAAA\
 0QKAAW4AwAF3AMABbQDgA1wA4ANpAPAHZADwB3MA+A9hAPwfYgA="
 
+#define ICSTA "data:image/png;base64,\
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBI\
+WXMAAABIAAAASABGyWs+AAAACXZwQWcAAAAQAAAAEABcxq3DAAAC3UlEQVQ4y31QTWhUVxg93733\
+3ffeZPIymczoZGISMRi1kh+zEAKiCxfZBrqwpS0yIhFcxH0GFBWDFEQR3NhC7cZAFxU1+JdKsQtL\
+N63Q2lYRNZkkxozOm2TG+Xtz73VhRFqNB87uO+d85xBWkBoZwXd79uCb8fHOiO8PWZXKDlavt4Oo\
+pKT8qxwO35xOJH5dm8+X901MAIkEAIAA4OzgIJZc1+l+9uwzN58/xIrFrSYILBjz5ohzYxzHr3ve\
+pB+JfJ2KRu+nZmdx4eFD8FN9fchz7nySyaTdxcUTVCi0Qyn+VgwA0JpQrbq8VOqzlNpwlYnJpEH1\
+5ossyAD4obNzJOz7Z6hWc0GE1aCENe+vj4w7X3oz8zlM1QOq8HVdXd2xYvG0VCrJOMeHyDkHbGch\
+195ytHVEDzTLl+mQZR7s7in8LVpqtWGHaBNJ+bHk5/lE07Gug+gP0XKKjOFSBAeu/Ob9JBqIdtlS\
+8lXFXGT9ePj4llHR43F/P4zkgI2Qpm2bW4Me4VpWu71Kb8VYPuc1HNl4KLSuxc5/zmCXDRwQAGVA\
+Ta7pENJxgtUMysb8ebuPbq2vyF12tSVt3mwOADDGmKVXpT8Ec90HEhj4oEVdB5fbMr1FMXcYRBLA\
+WwOCRgWEWRE4zg1hzDAH3PcMmIYSdTvgqhUM/1mZ1dm8CMS8mBHielyIu45Su/+v16QR9cJwowAY\
+reQbEBFYSdwNnrJ/xHA0mr1XqYy7Wm+WWre9+xGoG4V4swe1xgKxlQIEUMAXdImdkyleZqcLBQxm\
+Mj9nbXs0kPIx4xyMMdAKY5FGJGMRJGPNSMabkWyKZeM6ml7cS7/QbRtsbGoKY21tZmBu7scnlvXp\
+kpTf1oSY0ZwrQ0w32A6anAYVkeFcRHvXwrnGL15dEN/3nlyjr6fv4N34jY24ODSEaaXkdsa6o0C/\
+qgbl83ur952N4Z2mxP6tPDL3Or4KLV/qmMbvmTsAgNduAx7n+HHZEQAAACV0RVh0Y3JlYXRlLWRh\
+dGUAMjAwOS0wOS0yOFQxMToyNzo1NC0wNDowMEqLuj0AAAAldEVYdG1vZGlmeS1kYXRlADIwMDkt\
+MDUtMThUMTY6MTA6MDAtMDQ6MDAci9a9AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5\
+ccllPAAAAABJRU5ErkJggg=="
+
 #define ICDEL "data:image/png;base64,\
 iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA\
 BGdBTUEAALGeYUxB9wAAACBjSFJNAAB6JQAAgIMAAPn/AACA6AAAUggAARVYAAA6lwAAF2/XWh+Q\
@@ -525,7 +545,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
       <TH>EMM written<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
       <TH>EMM skipped<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
       <TH>EMM blocked<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
-      <TH COLSPAN=\"3\">Action</TH>\n\
+      <TH COLSPAN=\"4\">Action</TH>\n\
     </TR>\n\
     ##READERLIST##\
     <TR>\
@@ -549,7 +569,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option>pcsc</option>\
 			<option>constcw</option>\
 		</select></TD>\
-		<TD COLSPAN=\"3\" align=\"center\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD></TR>\
+		<TD COLSPAN=\"4\" align=\"center\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD></TR>\
 		</form>\
   </TABLE>\n\
 ##TPLFOOTER##"
@@ -566,11 +586,31 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
       <TD align=\"center\"><A HREF=\"readerconfig.html?reader=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG SRC=\"##EDIICO##\" BORDER=\"0\" ALT=\"Edit Reader\"/></A></TD>\
       <TD align=\"center\">##ENTITLEMENT##</TD>\n\
 	  <TD align=\"center\">##READERREFRESH##</TD>\n\
+	  <TD align=\"center\"><A HREF=\"readerstats.html?reader=##READERID##\" TITLE=\"Show loadbalancer statistics\"><IMG SRC=\"##STATICO##\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"/></A></TD>\n\
       </TR>\n"
 
 #define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?reader=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"/></A>\n"
 
 #define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&ridx=##RIDX##\" TITLE=\"Refresh Entitlement\"><IMG SRC=\"##REFRICO##\" BORDER=\"0\" ALT=\"Reset and reload Entitlement\"/></A>"
+
+#define TPLREADERSTATS "\
+##TPLHEADER##\
+##TPLMENU##\n\
+<BR><BR>\n\
+	<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+	<TR><TH colspan=\"6\"> Loadbalance statistics for reader ##READERNAME##</TH></TR>\n\
+	<TR><TH>Channel</TH><TH>Channelname</TH><TH>Result</TH><TH>Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\
+    ##READERSTATSROW##\n\
+	</TABLE>\n\
+##TPLFOOTER##"
+
+#define TPLREADERSTATSBIT "\
+	<TR><TD>##CHANNEL##</TD>\
+	<TD>##CHANNELNAME##</TD>\
+	<TD align=\"center\">##RC##</TD>\
+	<TD align=\"center\">##TIME##</TD>\
+	<TD align=\"center\">##COUNT##</TD>\
+	<TD align=\"center\">##LAST##</TD></TR>\n"
 
 #define TPLSCANUSB "\
 ##TPLHEADER##\
@@ -1142,6 +1182,8 @@ char *tpl[]={
 	"READERSBIT",
 	"READERENTITLEBIT",
 	"READERREFRESHBIT",
+	"READERSTATS",
+	"READERSTATSBIT",
 	"SCANUSB",
 	"SCANUSBBIT",
 	"ENTITLEMENTS",
@@ -1213,6 +1255,8 @@ char *tplmap[]={
 	TPLREADERSBIT,
 	TPLREADERENTITLEBIT,
 	TPLREADERREFRESHBIT,
+	TPLREADERSTATS,
+	TPLREADERSTATSBIT,
 	TPLSCANUSB,
 	TPLSCANUSBBIT,
 	TPLENTITLEMENTS,

@@ -742,6 +742,10 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			tpl_addVar(vars, 0, "DELICO", ICDEL);
 
+			//call stats
+			tpl_addVar(vars, 0, "STATICO", ICSTA);
+			tpl_printf(vars, 0, "READERID", "%d", readeridx);
+
 			if (isphysical == 1) {
 				tpl_printf(vars, 0, "RIDX", "%d", readeridx);
 				tpl_addVar(vars, 0, "REFRICO", ICREF);
@@ -1112,6 +1116,82 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	}
 	//READERCONFIGMOUSEBIT
 	fputs(tpl_getTpl(vars, "READERCONFIG"), f);
+}
+
+void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparams *params) {
+	int readeridx = atoi(getParam(params, "reader"));
+
+	tpl_printf(vars, 0, "READERNAME", "%s",reader[readeridx].label);
+
+	char *stxt[]={"found", "cache1", "cache2", "emu",
+			"not found", "timeout", "sleeping",
+			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
+
+	char fname[40];
+	sprintf(fname, "%s/stat.%d", get_tmp_dir(), readeridx);
+	FILE *file = fopen(fname, "r");
+	if (file){
+
+		int i = 0;
+		int rc, caid, servid, time_avg, ecm_count;
+		long prid, last_received;
+		struct s_srvid *srvid = cfg->srvid;
+
+		do
+		{
+			i = fscanf(file, "rc %d caid %04X prid %06lX srvid %04X time avg %dms ecms %d last %ld\n",
+					&rc, &caid, &prid, &servid, &time_avg, &ecm_count, &last_received);
+
+			if (i > 4) {
+				tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", caid, prid, servid);
+
+				int j, found = 0;
+				srvid = cfg->srvid;
+
+				while (srvid != NULL) {
+					if (srvid->srvid == servid) {
+						for (j=0; j < srvid->ncaid; j++) {
+							if (srvid->caid[j] == caid) {
+								found = 1;
+								break;
+							}
+						}
+					}
+					if (found == 1)
+						break;
+					else
+						srvid = srvid->next;
+				}
+
+				if (found == 1)
+					tpl_printf(vars, 0, "CHANNELNAME","%s : %s", srvid->prov, srvid->name);
+				else
+					tpl_addVar(vars, 0, "CHANNELNAME","unknown");
+
+
+				tpl_printf(vars, 0, "RC", "%s", stxt[rc]);
+				tpl_printf(vars, 0, "TIME", "%dms", time_avg);
+				tpl_printf(vars, 0, "COUNT", "%d", ecm_count);
+
+				if(last_received) {
+					struct tm *lt = localtime(&last_received);
+					tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100, lt->tm_hour, lt->tm_min, lt->tm_sec);
+				} else {
+					tpl_addVar(vars, 0, "LAST","never");
+				}
+
+
+				tpl_addVar(vars, 1, "READERSTATSROW", tpl_getTpl(vars, "READERSTATSBIT"));
+			}
+
+		} while(i != EOF && i > 0);
+		fclose(file);
+
+	} else {
+		tpl_addVar(vars, 1, "READERSTATSROW","<tr><td colspan=\"5\"> No statisticsfile found <\td><\tr>");
+	}
+
+	fputs(tpl_getTpl(vars, "READERSTATS"), f);
 }
 
 void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
@@ -2242,7 +2322,8 @@ int process_request(FILE *f, struct in_addr in) {
 		"/shutdown.html",
 		"/script.html",
 		"/scanusb.html",
-		"/files.html"};
+		"/files.html",
+		"/readerstats.html"};
 
 	int pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 
@@ -2390,6 +2471,7 @@ int process_request(FILE *f, struct in_addr in) {
 			case 12: send_oscam_script(vars, f); break;
 			case 13: send_oscam_scanusb(vars, f); break;
 			case 14: send_oscam_files(vars, f, &params); break;
+			case 15: send_oscam_reader_stats(vars, f, &params); break;
 			default: send_oscam_status(vars, f, &params, in); break;
 		}
 		tpl_clear(vars);
