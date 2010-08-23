@@ -1188,7 +1188,7 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 		fclose(file);
 
 	} else {
-		tpl_addVar(vars, 1, "READERSTATSROW","<tr><td colspan=\"5\"> No statisticsfile found <\td><\tr>");
+		tpl_addVar(vars, 1, "READERSTATSROW","<TR><TD colspan=\"6\"> No statisticsfile found </TD></TR>");
 	}
 
 	fputs(tpl_getTpl(vars, "READERSTATS"), f);
