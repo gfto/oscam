@@ -339,9 +339,9 @@ void cs_exit(int sig)
                   kill(client[i].pid, SIGQUIT);
 #ifdef CS_LED
               cs_switch_led(LED1B, LED_OFF);
-              cs_switch_led(LED1A, LED_ON);
               cs_switch_led(LED2, LED_OFF);
               cs_switch_led(LED3, LED_OFF);
+              cs_switch_led(LED1A, LED_ON);
 #endif
               if (cfg->pidfile != NULL) {
                 if (unlink(cfg->pidfile) < 0)
@@ -3208,16 +3208,29 @@ void cs_switch_led(int led, int action) {
 		char ledfile[256];
 		FILE *f;
 
-		switch(led){
-		case LED1A:snprintf(ledfile, 255, "/sys/class/leds/nslu2:red:status/brightness");
-		break;
-		case LED1B:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:ready/brightness");
-		break;
-		case LED2:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-1/brightness");
-		break;
-		case LED3:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-2/brightness");
-		break;
-		}
+		#ifdef DOCKSTAR
+			switch(led){
+			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/dockstar:orange:misc/brightness");
+			break;
+			case LED1B:snprintf(ledfile, 255, "/sys/class/leds/dockstar:green:health/brightness");
+			break;
+			case LED2:snprintf(ledfile, 255, "/sys/class/leds/dockstar:green:health/brightness");
+			break;
+			case LED3:snprintf(ledfile, 255, "/sys/class/leds/dockstar:orange:misc/brightness");
+			break;
+			}
+		#else		
+			switch(led){
+			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/nslu2:red:status/brightness");
+			break;
+			case LED1B:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:ready/brightness");
+			break;
+			case LED2:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-1/brightness");
+			break;
+			case LED3:snprintf(ledfile, 255, "/sys/class/leds/nslu2:green:disk-2/brightness");
+			break;
+			}
+		#endif
 
 		if (!(f=fopen(ledfile, "w"))){
 			// FIXME: sometimes cs_log was not available when calling cs_switch_led -> signal 11
