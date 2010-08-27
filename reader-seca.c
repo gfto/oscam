@@ -129,7 +129,15 @@ int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   int i;
   i=get_prov_index(reader, (char *) er->ecm+3);
   if ((i == -1) || (reader->availkeys[i][0] == 0)) //if provider not found or expired
+  {
+      if( i == -1 )
+        snprintf( er->msglog, MSGLOGSIZE, "provider not found" );
+      else
+        snprintf( er->msglog, MSGLOGSIZE, "provider expired" );
+
   	return ERROR;
+  }
+
   ins3c[2]=i;
   ins3c[3]=er->ecm[7]; //key nr
   ins3c[4]=(((er->ecm[1]&0x0f) << 8) | er->ecm[2])-0x05;
@@ -141,9 +149,9 @@ int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     write_cmd(ins30, ins30data);
     write_cmd(ins3c, er->ecm+8); //ecm request
   }
-  if ((cta_res[0] != 0x90) || (cta_res[1] != 0x00)) return ERROR;
+  if ((cta_res[0] != 0x90) || (cta_res[1] != 0x00)) { snprintf( er->msglog, MSGLOGSIZE, "ins3c card response: %02x %02x", cta_res[0] , cta_res[1] ); return ERROR; }
   write_cmd(ins3a, NULL); //get cw's
-  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) return ERROR;//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
+  if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) { snprintf( er->msglog, MSGLOGSIZE, "ins3a card response: %02x %02x", cta_res[16] , cta_res[17] ); return ERROR; };//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
   memcpy(er->cw,cta_res,16);
   return OK;
 }
@@ -261,7 +269,11 @@ int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
   i=get_prov_index(reader, (char *) ep->emm+9);
   if (i==-1) 
+  {
+      cs_log("[seca-reader] EMM: provider id not found.");
     return ERROR;
+  }
+
   ins40[2]=i;
   write_cmd(ins40, ep->emm + ins40data_offset); //emm request
   if (cta_res[0] == 0x97) {

@@ -307,6 +307,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         if (!chk_prov(reader, ident, keynr))
         {
           cs_debug("[viaccess-reader] ECM: provider or key not found on card");
+          snprintf( er->msglog, MSGLOGSIZE, "provider(%02x%02x%02x) or key(%d) not found on card", ident[0],ident[1],ident[2], keynr );
           return ERROR;
         }
         
@@ -386,12 +387,14 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             ecm88Data=nextEcm;
             ecm88Len-=curEcm88len;
             cs_debug("[viaccess-reader] ECM: key to use is not the current one, trying next ECM");
+            snprintf( er->msglog, MSGLOGSIZE, "key to use is not the current one, trying next ECM" );
         }
     }
     else {
         ecm88Data=nextEcm;
         ecm88Len-=curEcm88len;
         cs_debug("[viaccess-reader] ECM: Unknown ECM type");
+        snprintf( er->msglog, MSGLOGSIZE, "Unknown ECM type" );
     }
   }
 
@@ -399,6 +402,8 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     if(reader->aes_list) {
         cs_debug("Decoding CW : using AES key id %d for provider %06x",D2KeyID,provid);
         rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) provid, D2KeyID,er->cw, 16);
+        if( rc == 0 )
+            snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, provid );
     }
     else
         aes_decrypt(er->cw, 16);
@@ -525,6 +530,7 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
         provider_ok = 1;
       } else {
         cs_debug("[viaccess-reader] EMM: provider or key not found on card (%x, %x)", ident, keynr);
+        cs_log("[viaccess-reader] EMM: provider or key not found on card (%x, %x)", ident, keynr);
         return ERROR;
       }
 

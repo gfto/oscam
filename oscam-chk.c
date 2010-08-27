@@ -84,6 +84,9 @@ int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
     if(!rc)
     {
       cs_debug("no match, %04X:%06X rejected by server filters", caid, prid);
+      snprintf( er->msglog, MSGLOGSIZE, "no server match %04X:%06X",
+        caid, (unsigned int) prid );
+
       if (!er->rcEx) er->rcEx=(E1_LSERVER<<4)|E2_IDENT;
       return(rc);
     }
@@ -152,6 +155,9 @@ int chk_ufilters(ECM_REQUEST *er)
     if( !rc ) {
       cs_debug("no match, %04X:%06X rejected by user '%s' filters",
                 er->caid, er->prid, client[cs_idx].usr);
+        snprintf( er->msglog, MSGLOGSIZE, "no card support %04X:%06X",
+                er->caid, (unsigned int) er->prid );
+
       if( !er->rcEx ) er->rcEx=(E1_USER<<4)|E2_IDENT;
       return (rc);
     }

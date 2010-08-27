@@ -1032,7 +1032,11 @@ int videoguard_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     l = do_cmd(reader, ins54,NULL,NULL,cta_res);
     if(l>0 && status_ok(cta_res+l)) {
       if (!cw_is_valid(CW1)) //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
+      {
+          snprintf( er->msglog, MSGLOGSIZE, "9000 but cw=00 -> channel not subscribed " );
 	return ERROR;
+      }
+
       if(er->ecm[0]&1) {
         memcpy(er->cw+8,CW1,8);
         memcpy(er->cw+0,CW2,8);
@@ -1062,6 +1066,7 @@ int videoguard_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
       return OK;
     }
   }
+  snprintf( er->msglog, MSGLOGSIZE, "(%d) status not ok %02x %02x",l, cta_res[0],cta_res[1] );
   return ERROR;
 }
 

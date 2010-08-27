@@ -319,8 +319,8 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   memcpy(cta_cmd, sc_EcmCmd, sizeof(sc_EcmCmd));
   cta_cmd[4]=(er->ecm[2])-3;
   memcpy(cta_cmd+sizeof(sc_EcmCmd), &er->ecm[6], cta_cmd[4]);
-  if (irdeto_do_cmd(reader, cta_cmd, 0x9D00, cta_res, &cta_lr)) return ERROR;
-  if (cta_lr<24) return ERROR;
+  if (irdeto_do_cmd(reader, cta_cmd, 0x9D00, cta_res, &cta_lr)) { if(cta_lr>=2) snprintf( er->msglog, MSGLOGSIZE, "irdeto_do_cmd [%d] %02x %02x",cta_lr, cta_res[cta_lr-2], cta_res[cta_lr-1] ); else snprintf( er->msglog, MSGLOGSIZE, "irdeto_do_cmd [%d]<2",cta_lr); return ERROR; }
+  if (cta_lr<24) { snprintf( er->msglog, MSGLOGSIZE, "cta_lr (%d) < 24",cta_lr ); return ERROR; }
   ReverseSessionKeyCrypt(sc_CamKey, cta_res+6);
   ReverseSessionKeyCrypt(sc_CamKey, cta_res+14);
   memcpy(er->cw, cta_res+6, 16);

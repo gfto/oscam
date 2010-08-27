@@ -1836,13 +1836,13 @@ int send_dcw(ECM_REQUEST *er)
 	send_reader_stat(er->reader[0], er, er->rc);
 	
 	if(cfg->mon_appendchaninfo)
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s",
+		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s (%s)",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
-				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, get_servicename(er->srvid, er->caid));
+				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, get_servicename(er->srvid, er->caid), er->msglog);
 	else
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s",
+		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (%s)",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
-				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby);
+				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, er->msglog);
 #ifdef WEBIF
 	if(er->rc == 0)
 		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", sby);
@@ -1957,6 +1957,7 @@ void chk_dcw(int fd)
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
     return; // obsolete
   ert->rcEx=er->rcEx;
+  strcpy(ert->msglog, er->msglog);
   if (er->rc>0) // found
   {
     switch(er->rc)
@@ -2294,6 +2295,7 @@ void get_cw(ECM_REQUEST *er)
 	if (!er->caid) {
 		er->rc = 8;
 		er->rcEx = E2_CAID;
+		snprintf( er->msglog, MSGLOGSIZE, "CAID not supported or found" );
 	}
 
 	// user expired
@@ -2355,13 +2357,18 @@ void get_cw(ECM_REQUEST *er)
 					if (!chk_bcaid(er, &client[cs_idx].ctab)) {
 						er->rc = 8;
 						er->rcEx = E2_CAID;
+						snprintf( er->msglog, MSGLOGSIZE, "invalid caid %x",er->caid );
 						}
 					break;
 
 				case 2:
 					// invalid (srvid)
 					if (!chk_srvid(er, cs_idx))
+					{
 						er->rc = 8;
+					    snprintf( er->msglog, MSGLOGSIZE, "invalid SID" );
+					}
+
 					break;
 
 				case 3:

@@ -459,6 +459,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
     return;
   }
   cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
+  er->msglog[0] = 0;
   er->rc=reader_ecm(reader, er);
   write_ecm_answer(reader, fd_c2m, er);
   reader_post_process(reader);

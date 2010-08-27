@@ -880,6 +880,7 @@ struct s_config
 	//  struct s_reader reader[];
 };
 
+#define MSGLOGSIZE 64
 typedef struct ecm_request_t
 {
 
@@ -913,6 +914,8 @@ typedef struct ecm_request_t
   uchar		gbxForward[16];
   int		gbxRidx;
 #endif
+
+  char msglog[MSGLOGSIZE];
 
 } GCC_PACK      ECM_REQUEST;
 
