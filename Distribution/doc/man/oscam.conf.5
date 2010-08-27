@@ -327,13 +327,14 @@ bind service to specified IP address, default:all
 1 = enable mgcamd extended newcamd protocol,  allowing for a single connection to work with mutliple providers, default:0
 .RE
 .PP
-\fBport\fP = \fBport@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
+\fBport\fP = \fBport[{deskey}]@CAID[:ident][,ident]...[;port[{deskey}]@CAID[:ident][,ident]...]...\fP
 .RS 3n
-TCP port/CAID/ident definitions, default:none
+TCP port/deskey/CAID/ident definitions, default:none
 
- example: port = 10000@0100:100000;20000@0200:200000,300000,400000
+ example: port = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
  
 Each CAID requires a separate port.
+If you don't specify a des key for a port, a default one (see: 'key' below) will be used.
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP

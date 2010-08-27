@@ -310,6 +310,8 @@ typedef struct s_port
 {
   int    fd;
   int    s_port;
+  int    ncd_key_is_set;    //0 or 1
+  uchar  ncd_key[16];
   FTAB   ftab;
 } GCC_PACK PORT;
 

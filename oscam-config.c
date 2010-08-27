@@ -236,6 +236,17 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 		if( (ptr2=strchr(trim(ptr1), '@')) ) {
 			*ptr2++ ='\0';
 			ptab->ports[i].s_port = atoi(ptr1);
+
+			//checking for des key for port
+			ptab->ports[i].ncd_key_is_set = 0;   //default to 0
+			if( (ptr3=strchr(trim(ptr1), '{')) ) {
+				*ptr3++='\0';
+				if (key_atob14(ptr3, ptab->ports[i].ncd_key))
+					fprintf(stderr, "newcamd: error in DES Key for port %s -> ignored\n", ptr1);
+				else
+					ptab->ports[i].ncd_key_is_set = 1;
+			}
+
 			ptr[i] = ptr2;
 			port[i] = ptab->ports[i].s_port;
 			ptab->nports++;

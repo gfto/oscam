@@ -608,7 +608,7 @@ static FILTER mk_user_ftab()
   return filt;
 }
 
-static void newcamd_auth_client(in_addr_t ip)
+static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 {
     int i, r, ok;
     uchar *usr = NULL, *pwd = NULL;
@@ -636,7 +636,7 @@ static void newcamd_auth_client(in_addr_t ip)
 
     // send init sequence
     send(client[cs_idx].udp_fd, buf, 14, 0);
-    key = des_login_key_get(buf, cfg->ncd_key, 14);
+    key = des_login_key_get(buf, deskey, 14);
     memcpy(client[cs_idx].ncd_skey, key, 16);
     client[cs_idx].ncd_msgid = 0;
 
@@ -744,7 +744,7 @@ static void newcamd_auth_client(in_addr_t ip)
     {
       FILTER *pufilt = 0;
 
-      key = des_login_key_get(cfg->ncd_key, passwdcrypt, strlen((char *)passwdcrypt));
+      key = des_login_key_get(deskey, passwdcrypt, strlen((char *)passwdcrypt));
       memcpy(client[cs_idx].ncd_skey, key, 16);
 
       i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
@@ -1060,7 +1060,14 @@ static void newcamd_server()
 	memset(req, 0, CS_MAXPENDING*REQ_SIZE);
 	client[cs_idx].ncd_server = 1;
 	cs_debug("client connected to %d port", cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port);
-	newcamd_auth_client(client[cs_idx].ip);
+
+	if (cfg->ncd_ptab.ports[client[cs_idx].port_idx].ncd_key_is_set) {
+	    //port has a des key specified
+	    newcamd_auth_client(client[cs_idx].ip, cfg->ncd_ptab.ports[client[cs_idx].port_idx].ncd_key);
+	} else {
+	    //default global des key
+	    newcamd_auth_client(client[cs_idx].ip, cfg->ncd_key);
+	}
 
 	// report all cards if using extended mg proto
 	if (cfg->ncd_mgclient) {
