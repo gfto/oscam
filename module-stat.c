@@ -296,6 +296,9 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	int best_ridx = -1, best_ridx2 = -1;
 	int best = 0, best2 = 0;
 	int current = -1;
+	int secondbest_ridx = -1;
+	int secondbest_ridx2 = -1;
+	
 	READER_STAT *stat = NULL;
 	for (i = 0; i < CS_MAXREADER; i++) {
 		if (grs->reader_avail[i]) {
@@ -356,11 +359,13 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 					if (!reader[i].ph.c_available
 							|| reader[i].ph.c_available(i,
 									AVAIL_CHECK_LOADBALANCE)) {
+						secondbest_ridx = best_ridx;
 						best_ridx = i;
 						best = current;
 					}
 				}
 				if (best_ridx2==-1 || current < best2) {
+					secondbest_ridx = best_ridx2;
 					best_ridx2 = i;
 					best2 = current;
 				}
@@ -387,6 +392,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 		}
 	}
 	if (best_ridx == -1)
+		secondbest_ridx = secondbest_ridx2;
 		best_ridx = best_ridx2;
 	if (best_ridx >= 0) {
 		//cs_debug_mask(D_TRACE, "-->loadbalance best reader %s (%d) best value %d", reader[best_ridx].label, best_ridx, best2);
@@ -398,10 +404,17 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	//else
 		//cs_debug_mask(D_TRACE, "-->loadbalance no best reader!");
 		
-	//setting all other readers as fallbacks:
-	for (i=0;i<CS_MAXREADER; i++) {
-		if (grs->reader_avail[i] && !result[i]) {
-			result[i] = 2;
+	//setting second best reader as fallbacks:
+	if (secondbest_ridx >= 0 && !result[secondbest_ridx]) {
+		result[secondbest_ridx] = 2;
+	}
+	else
+	{
+		//setting all other readers as fallbacks:
+		for (i=0;i<CS_MAXREADER; i++) {
+			if (grs->reader_avail[i] && !result[i]) {
+				result[i] = 2;
+			}
 		}
 	}
 
