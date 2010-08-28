@@ -285,6 +285,19 @@ int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
   return 1;
 }
 
+//check reader caid
+int chk_caid(ushort caid, ushort *caidlist) {
+  if (!caid || !caidlist || !caidlist[0])
+    return 1;
+
+  int i;
+  for (i=0; i<CS_MAXREADERCAID; i++)
+    if (caidlist[i] && caid==caidlist[i])
+      return 1;
+      
+  return 0;
+}
+
 int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   if (!((rdr->fd) && (rdr->grp&client[cs_idx].grp)))
     return(0);
@@ -294,6 +307,9 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     
   //Schlocke reader-defined function 
   if (rdr->ph.c_available && !rdr->ph.c_available(rdr->ridx, AVAIL_CHECK_CONNECTED))
+    return 0;
+
+  if (!chk_caid(er->caid, rdr->caid))
     return 0;
     
   if (!chk_srvid(er, rdr->cs_idx))

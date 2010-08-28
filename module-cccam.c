@@ -696,36 +696,22 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		
 	cc->just_logged_in = 0;
 
-	int force_resend_ecm = 0;
-	
 	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
 		cs_debug_mask(D_TRACE, "%s ecm trylock: ecm busy, retrying later after msg-receive",
 			getprefix());
-			
-		//force resend ecm and break lock when fallbacktimeout occured
-		struct timeb timeout = cc->ecm_time;
-		timeout.millitm += cfg->ftimeout;
+		
+		struct timeb timeout;	
+		timeout = cur_time;
+		timeout.millitm += cfg->ctimeout*4;
 		timeout.time += timeout.millitm / 1000;
 		timeout.millitm = timeout.millitm % 1000;
-		force_resend_ecm = reader[ridx].cc_force_resend_ecm && comp_timeb(&cur_time, &timeout) >= 0;
 			
-		if (force_resend_ecm) {
-			cs_debug_mask(D_TRACE, "%s force_resend", getprefix());
-			cc->crc++;
+		if (comp_timeb(&cur_time, &timeout) > 0) { //TODO: Configuration?
+			cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %ds", getprefix(),
+				cfg->ctimeout*4/1000);
+			cc_cycle_connection();
 		}
-		else {
-			timeout = cur_time;
-			timeout.millitm += cfg->ctimeout*4;
-			timeout.time += timeout.millitm / 1000;
-			timeout.millitm = timeout.millitm % 1000;
-			
-			if (comp_timeb(&cur_time, &timeout) > 0) { //TODO: Configuration?
-				cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %ds", getprefix(),
-					cfg->ctimeout*4/1000);
-				cc_cycle_connection();
-			}
-			return 0; //pending send...
-		}
+		return 0; //pending send...
 	}
 	cs_debug("cccam: ecm trylock: got lock");
 	cc->ecm_time = cur_time;
@@ -745,7 +731,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		//cs_debug("cccam: ecm-task-idx = %d", n);
 		cur_er = &ecmtask[n];
 		
-		if (!force_resend_ecm && crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
+		if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
 			//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
 			cur_er->rc = 99; //ECM already send
 		}
@@ -770,11 +756,6 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	if (current_card->card && current_card->prov == cur_er->prid && 
 	  sid_eq(&current_card->srvid, &cur_srvid)) {
 		card = current_card->card;
-		if (force_resend_ecm) {
-			add_sid_block(card, &cur_srvid);
-			card = NULL;
-		}
-
 	}
 	else
 	{
@@ -785,57 +766,40 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 	//then check all other cards
 	int is_auto_blocked = 0;
-//	int tries = 2;
-//	while (!card && tries) {
-//		tries--;	
-		if (!card) {
-			//check if auto blocked:
-			if (!reader[ridx].cc_disable_auto_block && 
-		  	    cc_is_auto_blocked(
-			    cc->auto_blocked, cur_er->caid, cur_er->prid, &cur_srvid, 60*60*1)) { //TODO: Timeout 60*60*1 = 1h, Config?
-			        is_auto_blocked = 1;
-				current_card->card = NULL;
-//				break;	
-			}
-			else
-			{
-				card = llist_itr_init(cc->cards, &itr);
-				while (card) {
-					if (card->caid == cur_er->caid) { // caid matches
-						int s = is_sid_blocked(card, &cur_srvid);
+	if (!card) {
+		//check if auto blocked:
+		if (!reader[ridx].cc_disable_auto_block && 
+	  	    cc_is_auto_blocked(
+		    cc->auto_blocked, cur_er->caid, cur_er->prid, &cur_srvid, 60*60*1)) { //TODO: Timeout 60*60*1 = 1h, Config?
+		        is_auto_blocked = 1;
+			current_card->card = NULL;
+		}
+		else
+		{
+			card = llist_itr_init(cc->cards, &itr);
+			while (card) {
+				if (card->caid == cur_er->caid) { // caid matches
+					int s = is_sid_blocked(card, &cur_srvid);
 						
-						LLIST_ITR pitr;
-						uint8 *prov = llist_itr_init(card->provs, &pitr);
-						while (prov && !s) {
-							ulong card_prov = b2i(3, prov);
-							if (!cur_er->prid || !card_prov || card_prov == cur_er->prid) { // provid matches
-								if (((h < 0) || (card->hop < h)) && (card->hop
-										<= reader[ridx].cc_maxhop)) { // card is closer and doesn't exceed max hop
-									//cc->cur_card = card;
-									current_card->card = card;
-									h = card->hop; // card has been matched
-								}
+					LLIST_ITR pitr;
+					uint8 *prov = llist_itr_init(card->provs, &pitr);
+					while (prov && !s) {
+						ulong card_prov = b2i(3, prov);
+						if (!cur_er->prid || !card_prov || card_prov == cur_er->prid) { // provid matches
+							if (((h < 0) || (card->hop < h)) && (card->hop
+									<= reader[ridx].cc_maxhop)) { // card is closer and doesn't exceed max hop
+								//cc->cur_card = card;
+								current_card->card = card;
+								h = card->hop; // card has been matched
 							}
-							prov = llist_itr_next(&pitr);
 						}
+						prov = llist_itr_next(&pitr);
 					}
-					card = llist_itr_next(&itr);
 				}
+				card = llist_itr_next(&itr);
 			}
 		}
-//		if (!card) {
-			//No card found? reopen all blocked cards
-//			card = llist_itr_init(cc->cards, &itr);
-//			while (card) {
-//				if (card->caid == cur_er->caid) {
-//					if (is_sid_blocked(card, &cur_srvid))
-//						remove_sid_block(card, &cur_srvid);
-//				}
-//				card = llist_itr_next(&itr);
-//			}
-//			
-//		}
-//	}
+	}
 	
 	if (current_card->card) {
 		card = current_card->card;

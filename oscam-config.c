@@ -2451,9 +2451,6 @@ int write_server()
 
 				if (reader[i].cc_want_emu)
 					fprintf_conf(f, CONFVARWIDTH, "cccwantemu", "%d\n", reader[i].cc_want_emu);
-					
-				if (reader[i].cc_force_resend_ecm)
-					fprintf_conf(f, CONFVARWIDTH, "cccforceresendecm", "%d\n", reader[i].cc_force_resend_ecm);
 			}
 
 			if (reader[i].deprecated && isphysical)
@@ -3460,17 +3457,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 	}
-
-	if (!strcmp(token, "cccforceresendecm")) {
-		if (strlen(value) == 0) {
-			rdr->cc_force_resend_ecm = 0;
-			return;
-		} else {
-			rdr->cc_force_resend_ecm = atoi(value);
-			return;
-		}
-	}
-
 
 	if (!strcmp(token, "deprecated")) {
 		if (strlen(value) == 0) {
