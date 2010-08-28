@@ -2559,6 +2559,7 @@ void http_srv() {
 		}
 	}
 
+	cs_log("HTTP Server: Shutdown requested from %s", inet_ntoa(*(struct in_addr *)&remote.sin_addr));
 	close(sock);
 	kill(client[0].pid, SIGQUIT);
 }
