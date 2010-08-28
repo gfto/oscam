@@ -1787,6 +1787,16 @@ int write_config()
 		dot1 = "";
 		for(i = 0; i < cfg->ncd_ptab.nports; ++i){
 			fprintf(f,"%s%d@%04X", dot1, cfg->ncd_ptab.ports[i].s_port, cfg->ncd_ptab.ports[i].ftab.filts[0].caid);
+
+			// separate DES Key
+			if(cfg->ncd_ptab.ports[i].ncd_key_is_set){
+				int k;
+				fprintf(f,"{");
+				for (k = 0; k < 14; k++)
+					fprintf(f,"%02X", cfg->ncd_ptab.ports[i].ncd_key[k]);
+				fprintf(f,"}");
+			}
+
 			if (cfg->ncd_ptab.ports[i].ftab.filts[0].nprids > 0){
 				fprintf(f,":");
 				dot2 = "";
@@ -1802,7 +1812,7 @@ int write_config()
 		if (cfg->ncd_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->ncd_srvip));
 		fprintf_conf(f, CONFVARWIDTH, "key", "");
-		for (i=0;i<14;i++) fprintf(f,"%02X", cfg->ncd_key[i]);
+		for (i = 0; i < 14; i++) fprintf(f,"%02X", cfg->ncd_key[i]);
 		fprintf(f,"\n");
 		fprintf_conf(f, CONFVARWIDTH, "allowed", "");
 		struct s_ip *cip;
