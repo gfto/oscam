@@ -327,14 +327,20 @@ bind service to specified IP address, default:all
 1 = enable mgcamd extended newcamd protocol,  allowing for a single connection to work with mutliple providers, default:0
 .RE
 .PP
-\fBport\fP = \fBport[{deskey}]@CAID[:ident][,ident]...[;port[{deskey}]@CAID[:ident][,ident]...]...\fP
+\fBkey\fP = \fBDES key\fP
 .RS 3n
-TCP port/deskey/CAID/ident definitions, default:none
+default key for newcamd client encryption, default:none
+
+ example key = 0102030405060708091011121314
+.RE
+.PP
+\fBport\fP = \fBport[{DES key}]@CAID[:ident][,ident]...[;port[{DES key}]@CAID[:ident][,ident]...]...\fP
+.RS 3n
+TCP port/DES key/CAID/ident definitions, default:none
 
  example: port = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
- 
-Each CAID requires a separate port.
-If you don't specify a des key for a port, a default one (see: 'key' below) will be used.
+
+Each CAID requires a separate port. If you don't specify a DES key for a port, the default DES Key will be used.
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
@@ -352,13 +358,6 @@ client connections allowed from, default:none
 \fBkeepalive\fP = \fB0\fP|\fB1\fP
 .RS 3n
 0 = disable keepalive, default:1
-.RE
-.PP
-\fBkey\fP = \fBDES key\fP
-.RS 3n
-key for newcamd client encryption, default:none
-
- example key = 0102030405060708091011121314
 .RE
 .SS "The [radegast] section"
 .PP
@@ -726,7 +725,7 @@ be a workaround, but also a small security risk.
  
  [newcamd]
  key          = 0102030405060708091011121314
- port         = 10000@0100:100000;20000@0200:200000,300000,400000
+ port         = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
  
  [radegast]
  port         = 30000
