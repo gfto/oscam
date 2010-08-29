@@ -742,6 +742,15 @@ struct s_srvid
   struct  s_srvid *next;
 };
 
+struct s_tierid
+{
+  int     tierid;
+  int     ncaid;
+  int     caid[10];
+  char    name[33];
+  struct  s_tierid *next;
+};
+
 //Todo #ifdef CCCAM
 struct s_provid
 {
@@ -783,6 +792,7 @@ struct s_config
 	int		usrfileflag;
 	struct s_auth 	*account;
 	struct s_srvid 	*srvid;
+        struct s_tierid *tierid;
 	//Todo #ifdef CCCAM
 	struct s_provid *provid;
 	struct s_sidtab *sidtab;
@@ -1033,6 +1043,7 @@ extern int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile,
 extern void fprintf_conf(FILE *f, int varnameWidth, const char *varname, const char *fmtstring, ...);
 extern void cs_strncpy(char * destination, const char * source, size_t num);
 extern char *get_servicename(int srvid, int caid);
+extern char *get_tiername(int tierid, int caid);
 extern char *get_provider(int caid, ulong provid);
 extern void make_non_blocking(int fd);
 
@@ -1126,6 +1137,7 @@ extern int  init_userdb(struct s_auth **authptr_org);
 extern int  init_readerdb(void);
 extern int  init_sidtab(void);
 extern int  init_srvid(void);
+extern int  init_tierid(void);
 extern int  search_boxkey(ushort, char *);
 extern void init_len4caid(void);
 #ifdef IRDETO_GUESSING

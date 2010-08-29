@@ -841,6 +841,22 @@ char *get_servicename(int srvid, int caid){
 	return(name);
 }
 
+char *get_tiername(int tierid, int caid){
+	int i;
+	struct s_tierid *this = cfg->tierid;
+	static char name[83];
+
+	for (name[0] = 0; this && (!name[0]); this = this->next)
+		if (this->tierid == tierid)
+			for (i=0; i<this->ncaid; i++)
+				if (this->caid[i] == caid)
+					cs_strncpy(name, this->name, 32);
+
+	//if (!name[0]) sprintf(name, "%04X:%04X unknown", caid, tierid);
+	if (!tierid) name[0] = '\0';
+	return(name);
+}
+
 char *get_provider(int caid, ulong provid){
 	struct s_provid *this = cfg->provid;
 	static char name[83];

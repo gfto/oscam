@@ -553,70 +553,6 @@ static void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *d
   *ss=(Date[3]-*mm*32)*2;
 }
 
-typedef struct{
-   unsigned short id;
-   char name[32];
-} GCC_PACK tier_t;
-
-static const tier_t skyit_tiers[] =
-{
-  { 0x0320, "Promo" },
-  { 0x0003, "Vip" },
-  { 0x000B, "Service" },
-  { 0x0218, "Focus HD" },
-  { 0x0219, "Mondo HD" },
-  { 0x021A, "Cinema HD" },
-  { 0x021B, "Cinema" },
-  { 0x0222, "Sport HD" },
-  { 0x0224, "Sky Play IT" },
-  { 0x0226, "Mondo" },
-  { 0x0228, "Sport" },
-  { 0x0229, "Disney Channel" },
-  { 0x022A, "Inter Channel" },
-  { 0x022B, "Milan Channel" },
-  { 0x022C, "Roma Channel" },
-  { 0x022D, "Classica" },
-  { 0x022E, "Music & News" },
-  { 0x022F, "Caccia e Pesca" },
-  { 0x029C, "Multiv. Bambini" },
-  { 0x023D, "Juventus Channel" },
-  { 0x023E, "Moto TV" },
-  { 0x024E, "Service" },
-  { 0x026B, "Calcio HD" },
-  { 0x0275, "Promo" },
-  { 0x0279, "Conto TV" },
-  { 0x028D, "SCT" },
-  { 0x0295, "Calcio" },
-  { 0x0296, "Serie B" },
-  { 0x029A, "Gest. coll. telef." },
-  { 0x029B, "Intrattenimento" },
-  { 0x029C, "Documentari" },
-  { 0x029D, "Bambini" },
-  { 0x029E, "Musica" },
-  { 0x029F, "News" },
-  { 0x02A7, "Conto TV" },
-  { 0x02AA, "Skystar" },
-  { 0x02FE, "PPV" },
-  { 0x02FF, "MySky" }
-};
-
-
-static const char *get_tier_name(struct s_reader * reader, unsigned short tier_id){
-  static char *empty = "";
-  unsigned int i;
-
-  switch (reader->caid[0])
-  {
-    case 0x919:   /* Sky Italia */
-    case 0x93b:
-    for (i = 0; i < sizeof(skyit_tiers) / sizeof(tier_t); ++i)
-      if (skyit_tiers[i].id == tier_id)
-         return skyit_tiers[i].name;
-    break;
-  }
-  return empty;
-}
-
 static void read_tiers(struct s_reader * reader)
 {
   def_resp;
@@ -642,7 +578,7 @@ static void read_tiers(struct s_reader * reader)
     int y,m,d,H,M,S;
     rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S);
     unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
-    const char *tier_name = get_tier_name(reader, tier_id);
+    char *tier_name = get_tiername(tier_id, reader->caid[0]);
     cs_ri_log(reader, "[videoguard2-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
     }
 }

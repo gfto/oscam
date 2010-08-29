@@ -2951,6 +2951,7 @@ int main (int argc, char *argv[])
   init_signal();
   cs_set_mloc(30, "init");
   init_srvid();
+  init_tierid();
   //Todo #ifdef CCCAM
   init_provid();
 

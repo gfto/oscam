@@ -11,6 +11,7 @@ static char *cs_conf="oscam.conf";
 static char *cs_user="oscam.user";
 static char *cs_srvr="oscam.server";
 static char *cs_srid="oscam.srvid";
+static char *cs_trid="oscam.tiers";
 static char *cs_l4ca="oscam.guess";
 static char *cs_cert="oscam.cert";
 static char *cs_sidt="oscam.services";
@@ -2828,6 +2829,73 @@ int init_srvid()
 		cs_log("%d service-id's loaded", nr);
 	else{
 		cs_log("oscam.srvid loading failed, old format");
+	}
+	return(0);
+}
+
+int init_tierid()
+{
+	int nr;
+	FILE *fp;
+	char *payload;
+	static struct s_tierid *tierid=(struct s_tierid *)0;
+	sprintf(token, "%s%s", cs_confdir, cs_trid);
+
+	if (!(fp=fopen(token, "r"))) {
+		cs_log("can't open file \"%s\" (err=%d), no tier-id's loaded", token, errno);
+		return(0);
+	}
+
+	nr=0;
+	while (fgets(token, sizeof(token), fp)) {
+
+		int l;
+		void *ptr;
+		char *tmp;
+		tmp = trim(token);
+
+		if (tmp[0] == '#') continue;
+		if ((l=strlen(tmp)) < 6) continue;
+		if (!(payload=strchr(token, '|'))) continue;
+		*payload++ = '\0';
+
+		if (!(ptr = malloc(sizeof(struct s_tierid)))) {
+			cs_log("Error allocating memory (errno=%d)", errno);
+			return(1);
+		}
+
+		if (tierid)
+			tierid->next = ptr;
+		else
+			cfg->tierid = ptr;
+
+		tierid = ptr;
+		memset(tierid, 0, sizeof(struct s_tierid));
+
+		int i;
+		char *ptr1 = strtok(payload, "|");
+		if (ptr1)
+			cs_strncpy(tierid->name, trim(ptr1), sizeof(tierid->name));
+
+		char *tieridasc = strchr(token, ':');
+		*tieridasc++ = '\0';
+		tierid->tierid = dyn_word_atob(tieridasc);
+		//printf("tierid %s - %d\n",tieridasc,tierid->tierid );
+
+		tierid->ncaid = 0;
+		for (i = 0, ptr1 = strtok(token, ","); (ptr1) && (i < 10) ; ptr1 = strtok(NULL, ","), i++){
+			tierid->caid[i] = dyn_word_atob(ptr1);
+			tierid->ncaid = i+1;
+			// cs_log("ld caid: %04X tierid: %04X name: %s",tierid->caid[i],tierid->tierid,tierid->name);
+		}
+		nr++;
+	}
+
+	fclose(fp);
+	if (nr>0)
+		cs_log("%d tier-id's loaded", nr);
+	else{
+		cs_log("%s loading failed", cs_trid);
 	}
 	return(0);
 }
