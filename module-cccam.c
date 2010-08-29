@@ -701,17 +701,20 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			getprefix());
 		
 		struct timeb timeout;	
-		timeout = cur_time;
+		timeout = cc->ecm_time;
 		timeout.millitm += cfg->ctimeout*4;
 		timeout.time += timeout.millitm / 1000;
 		timeout.millitm = timeout.millitm % 1000;
 			
-		if (comp_timeb(&cur_time, &timeout) > 0) { //TODO: Configuration?
+		if (comp_timeb(&cur_time, &timeout) < 0) { //TODO: Configuration?
+			return 0; //pending send...
+		}
+		else
+		{
 			cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %ds", getprefix(),
 				cfg->ctimeout*4/1000);
 			cc_cycle_connection();
 		}
-		return 0; //pending send...
 	}
 	cs_debug("cccam: ecm trylock: got lock");
 	cc->ecm_time = cur_time;
