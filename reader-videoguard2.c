@@ -657,8 +657,9 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   /* known atrs */
   unsigned char atr_bskyb[] = { 0x3F, 0x7F, 0x13, 0x25, 0x03, 0x33, 0xB0, 0x06, 0x69, 0xFF, 0x4A, 0x50, 0xD0, 0x00, 0x00, 0x53, 0x59, 0x00, 0x00, 0x00 };
   unsigned char atr_bskyb_new[] = { 0x3F, 0xFD, 0x13, 0x25, 0x02, 0x50, 0x00, 0x0F, 0x33, 0xB0, 0x0F, 0x69, 0xFF, 0x4A, 0x50, 0xD0, 0x00, 0x00, 0x53, 0x59, 0x02 };
-  unsigned char atr_skyitalia[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
+  unsigned char atr_skyitalia919[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x0E, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x49, 0x54, 0x02, 0x00, 0x00 };
   unsigned char atr_skyitalia93b[] = { 0x3F, 0xFD, 0x13, 0x25, 0x02, 0x50, 0x80, 0x0F, 0x33, 0xB0, 0x13, 0x69, 0xFF, 0x4A, 0x50, 0xD0, 0x80, 0x00, 0x49, 0x54, 0x03 };
+  unsigned char atr_skyitalia9cd[] = { 0x3F, 0xFD, 0x13, 0x25, 0x02, 0x50, 0x80, 0x0F, 0x54, 0xB0, 0x04, 0x69, 0xFF, 0x4A, 0x50, 0xD0, 0x80, 0x00, 0x49, 0x54, 0x03 };
   unsigned char atr_directv[] = { 0x3F, 0x78, 0x13, 0x25, 0x03, 0x40, 0xB0, 0x20, 0xFF, 0xFF, 0x4A, 0x50, 0x00 };
   unsigned char atr_yes[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x11, 0x69, 0xFF, 0x4A, 0x50, 0x50, 0x00, 0x00, 0x47, 0x54, 0x01, 0x00, 0x00 };
   unsigned char atr_viasat_new[] = { 0x3F, 0x7D, 0x11, 0x25, 0x02, 0x41, 0xB0, 0x03, 0x69, 0xFF, 0x4A, 0x50, 0xF0, 0x80, 0x00, 0x56, 0x54, 0x03};
@@ -685,9 +686,17 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     {
         cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard BSkyB - New");
     }
-    else if ((atr_size == sizeof (atr_skyitalia)) && (memcmp (atr, atr_skyitalia, atr_size) == 0))
+    else if ((atr_size == sizeof (atr_skyitalia919)) && (memcmp (atr, atr_skyitalia919, atr_size) == 0))
     {
-        cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Sky Italia");
+        cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Sky Italia (0919)");
+    }
+    else if ((atr_size == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atr_size) == 0))
+    {
+        cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Sky Italia (093B)");
+    }
+    else if ((atr_size == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atr_size) == 0))
+    {
+        cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Sky Italia (09CD)");
     }
     else if ((atr_size == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atr_size) == 0))
     {
@@ -699,17 +708,13 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     }
     else if ((atr_size == sizeof (atr_viasat_new)) && (memcmp (atr, atr_viasat_new, atr_size) == 0))
     {
-        cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Viasat new (093E)");
+        cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Viasat (093E)");
 	BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_viasat_scandinavia)) && (memcmp (atr, atr_viasat_scandinavia, atr_size) == 0))
     {
         cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Viasat Scandinavia");
 	BASEYEAR = 2000;
-    }
-    else if ((atr_size == sizeof (atr_skyitalia93b)) && (memcmp (atr, atr_skyitalia93b, atr_size) == 0))
-    {
-        cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Sky Italia new (093B)");
     }
     else if ((atr_size == sizeof (atr_premiere)) && (memcmp (atr, atr_premiere, atr_size) == 0))
     {
@@ -731,7 +736,7 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     }
     else if ((atr_size == sizeof (atr_foxtel_90b)) && (memcmp (atr, atr_foxtel_90b, atr_size) == 0))
     {
-	cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Foxtel Australia (090b)");
+	cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Foxtel Australia (090B)");
 				BASEYEAR = 2000;
     }
     else if ((atr_size == sizeof (atr_china_988)) && (memcmp (atr, atr_china_988, atr_size) == 0)) 
@@ -744,17 +749,17 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
     } 
     else if ((atr_size == sizeof (atr_skyBRgl23)) && (memcmp (atr, atr_skyBRgl23, atr_size) == 0))
     { 
-        cs_log("[videoguard2-reader] type: VideoGuard SkyBrasilGL23 (0942)");
+        cs_log("[videoguard2-reader] type: VideoGuard SkyBrasil GL23 (0942)");
         BASEYEAR = 2000; 
     }
     else if ((atr_size == sizeof (atr_skyBRgl39)) && (memcmp (atr, atr_skyBRgl39, atr_size) == 0))
     { 
-        cs_log("[videoguard2-reader] type: VideoGuard SkyBrasilGL39 (0907)");
+        cs_log("[videoguard2-reader] type: VideoGuard SkyBrasil GL39 (0907)");
         BASEYEAR = 2004; 
     }
     else if ((atr_size == sizeof (atr_skyBRgl54)) && (memcmp (atr, atr_skyBRgl54, atr_size) == 0))
     { 
-        cs_log("[videoguard2-reader] type: VideoGuard SkyBrasilGL54 (0943)");
+        cs_log("[videoguard2-reader] type: VideoGuard SkyBrasil GL54 (0943)");
         BASEYEAR = 2009; 
     } 
 
