@@ -561,7 +561,9 @@ typedef struct{
 static const tier_t skyit_tiers[] =
 {
   { 0x0320, "Promo" },
+  { 0x0003, "Vip" },
   { 0x000B, "Service" },
+  { 0x0218, "Focus HD" },
   { 0x0219, "Mondo HD" },
   { 0x021A, "Cinema HD" },
   { 0x021B, "Cinema" },
@@ -576,14 +578,28 @@ static const tier_t skyit_tiers[] =
   { 0x022D, "Classica" },
   { 0x022E, "Music & News" },
   { 0x022F, "Caccia e Pesca" },
+  { 0x029C, "Multiv. Bambini" },
   { 0x023D, "Juventus Channel" },
   { 0x023E, "Moto TV" },
+  { 0x024E, "Service" },
   { 0x026B, "Calcio HD" },
   { 0x0275, "Promo" },
+  { 0x0279, "Conto TV" },
+  { 0x028D, "SCT" },
   { 0x0295, "Calcio" },
   { 0x0296, "Serie B" },
-  { 0x02FE, "PPV" }
+  { 0x029A, "Gest. coll. telef." },
+  { 0x029B, "Intrattenimento" },
+  { 0x029C, "Documentari" },
+  { 0x029D, "Bambini" },
+  { 0x029E, "Musica" },
+  { 0x029F, "News" },
+  { 0x02A7, "Conto TV" },
+  { 0x02AA, "Skystar" },
+  { 0x02FE, "PPV" },
+  { 0x02FF, "MySky" }
 };
+
 
 static const char *get_tier_name(struct s_reader * reader, unsigned short tier_id){
   static char *empty = "";
@@ -591,7 +607,7 @@ static const char *get_tier_name(struct s_reader * reader, unsigned short tier_i
 
   switch (reader->caid[0])
   {
-    case 0x919:
+    case 0x919:   /* Sky Italia */
     case 0x93b:
     for (i = 0; i < sizeof(skyit_tiers) / sizeof(tier_t); ++i)
       if (skyit_tiers[i].id == tier_id)
