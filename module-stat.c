@@ -194,8 +194,27 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 	}
 
 	//inc ecm_count if found, drop to 0 if not found:
-	if (rc == 0) {
-		stat->rc = rc;
+	// rc codes:
+	// 0 = found       +
+	// 1 = cache1      #
+	// 2 = cache2      #
+	// 3 = emu         +
+	// 4 = not found   -
+	// 5 = timeout     #
+	// 6 = sleeping    #
+	// 7 = fake        -
+	// 8 = invalid     -
+	// 9 = corrupt     -
+	// 10= no card     -
+	// 11= expdate     -
+	// 12= disabled    -
+	// 13= stopped     -
+	// 100= unhandled  *
+	//        + = adds statistic values
+	//        # = ignored because of duplicate values or temporary failures
+	//        - = causes loadbalancer to block this reader for this caid/prov/sid
+	if (rc == 0 || rc == 3) {
+		stat->rc = 0;
 		stat->ecm_count++;
 		stat->time_idx++;
 		stat->last_received = time(NULL);
@@ -221,7 +240,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 			reader[ridx].lb_usagelevel_time = time(NULL);
 		reader[ridx].lb_usagelevel_ecmcount = ule+1;
 	}
-	else if (rc >= 4 && rc < 100) { //not found+timeout+etc
+	else if (rc < 100 && (rc == 4 || rc >= 7)) { //not found+errors+etc
 		stat->rc = rc;
 		//stat->ecm_count = 0; Keep ecm_count!
 	}
@@ -370,7 +389,8 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 					best2 = current;
 				}
 			}
-			else if (stat->rc >= 4) {
+			else 
+			{
 				if (stat->last_received+REOPEN_SECONDS < current_time) { //Retrying every 900 seconds
 					stat->last_received = current_time;
 					result[i] = 1;

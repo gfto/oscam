@@ -1787,6 +1787,23 @@ int hexserialset(int ridx)
 	return 0;
 }
 
+// rc codes:
+// 0 = found
+// 1 = cache1
+// 2 = cache2
+// 3 = emu
+// 4 = not found
+// 5 = timeout
+// 6 = sleeping
+// 7 = fake
+// 8 = invalid
+// 9 = corrupt
+// 10= no card
+// 11= expdate
+// 12= disabled
+// 13= stopped
+// 100=unhandled
+                                                                                                                        
 int send_dcw(ECM_REQUEST *er)
 {
 	static char *stxt[]={"found", "cache1", "cache2", "emu",
