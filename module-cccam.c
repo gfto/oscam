@@ -1,4 +1,4 @@
-	
+
 #include <string.h>
 #include <stdlib.h>
 #include "globals.h"
@@ -1642,7 +1642,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				er->l = buf[16];
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
-				cc->server_ecm_pending = 1;
+				cc->server_ecm_pending++;
 				get_cw(er);
 				cs_debug_mask(
 						D_TRACE,
@@ -1839,12 +1839,12 @@ static void cc_send_dcw(ECM_REQUEST *er) {
 		cc_cw_crypt(buf, cc->server_card->id);
 		cc_cmd_send(buf, 16, MSG_CW_ECM);
 		cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
-		cc->server_ecm_pending = 0;
 	} else {
 		cs_debug_mask(D_TRACE, "%s send cw: NOK cpti: %d", getprefix(),
 			er->cpti);
 		cc_cmd_send(NULL, 0, MSG_CW_NOK1);
 	}
+	cc->server_ecm_pending--;
 }
 
 int cc_recv(uchar *buf, int l) {
@@ -2359,6 +2359,7 @@ static int cc_srv_connect() {
 		memset(client[cs_idx].cc, 0, sizeof(struct cc_data));
 		cc->server_card = malloc(sizeof(struct cc_card));
 	}
+	cc->server_ecm_pending = 0;
 	cc_use_rc4 = 0;
 	is_server = 1;
 	
@@ -2511,6 +2512,7 @@ static int cc_srv_connect() {
 	ulong hexserial_crc = get_reader_hexserial_crc();
 	cc_srv_report_cards();
 	int caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
+	cs_ftime(&cc->ecm_time);
 
 	cmi = 0;
 	// check for client timeout, if timeout occurs try to send keepalive
@@ -2529,12 +2531,23 @@ static int cc_srv_connect() {
 		else {
 			cmi = 0;
 			if (!cc->server_ecm_pending) {
+				struct timeb timeout;	
+				struct timeb cur_time;
+				cs_ftime(&cur_time);
+				timeout = cc->ecm_time;
+				timeout.millitm += cfg->ctimeout*20; //ctimeout normaly 6000ms, 20x6000ms = 20x6s = 120s = 2min
+				timeout.time += timeout.millitm / 1000;
+				timeout.millitm = timeout.millitm % 1000;
+			
+				int force_card_updates = comp_timeb(&cur_time, &timeout) > 0;
 				int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 				ulong new_hexserial_crc = get_reader_hexserial_crc();
-				if (new_caid_info_count != caid_info_count || new_hexserial_crc != hexserial_crc) {
+				if (force_card_updates || new_caid_info_count != caid_info_count || new_hexserial_crc != hexserial_crc) {
+					cs_debug_mask(D_TRACE, "%s update share list", getprefix());
 					cc_srv_report_cards();
 					caid_info_count = new_caid_info_count;
 					hexserial_crc = new_hexserial_crc;
+					cc->ecm_time = cur_time;
 				}
 			}
 		}
