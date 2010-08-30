@@ -1057,18 +1057,18 @@ static void cs_client_resolve()
 {
   while (1)
   {
-    struct addrinfo hints, *res = NULL;
     struct s_auth *account;
        
     for (account=cfg->account; account; account=account->next)
       if (account->dyndns[0])
       {
         pthread_mutex_lock(&gethostbyname_lock);
+	struct addrinfo hints, *res = NULL;
         memset(&hints, 0, sizeof(hints));
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_family = AF_INET;
         hints.ai_protocol = IPPROTO_TCP;
-                
+             
         int err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
         if (err != 0 || !res || !res->ai_addr) {
      	  cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
