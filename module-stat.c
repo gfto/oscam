@@ -202,16 +202,16 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 	// 4 = not found   -
 	// 5 = timeout     #
 	// 6 = sleeping    #
-	// 7 = fake        -
+	// 7 = fake        #
 	// 8 = invalid     -
 	// 9 = corrupt     -
-	// 10= no card     -
-	// 11= expdate     -
-	// 12= disabled    -
-	// 13= stopped     -
-	// 100= unhandled  *
+	// 10= no card     #
+	// 11= expdate     #
+	// 12= disabled    #
+	// 13= stopped     #
+	// 100= unhandled  #
 	//        + = adds statistic values
-	//        # = ignored because of duplicate values or temporary failures
+	//        # = ignored because of duplicate values, temporary failures or softblocks
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
 	if (rc == 0 || rc == 3) {
 		stat->rc = 0;
@@ -240,7 +240,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 			reader[ridx].lb_usagelevel_time = time(NULL);
 		reader[ridx].lb_usagelevel_ecmcount = ule+1;
 	}
-	else if (rc < 100 && (rc == 4 || rc >= 7)) { //not found+errors+etc
+	else if (rc == 4 || rc == 8 || rc == 9) { //not found+errors+etc
 		stat->rc = rc;
 		//stat->ecm_count = 0; Keep ecm_count!
 	}
