@@ -286,16 +286,20 @@ int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
 }
 
 //check reader caid
-int chk_caid(ushort caid, ushort *caidlist) {
-  if (!caid || !caidlist || !caidlist[0])
-    return 1;
+int chk_caid(ushort caid, ushort ocaid, ushort *caidlist) {
+  //no caid or no caidlist...
+  if ((!caid && !ocaid) || !caidlist || !caidlist[0])
+    return 1; //...reader is valid
 
   int i;
-  for (i=0; i<CS_MAXREADERCAID; i++)
-    if (caidlist[i] && caid==caidlist[i])
-      return 1;
+  for (i=0; i<CS_MAXREADERCAID; i++) {
+    if (!caidlist[i])
+      break; //no more entries in caidlist
+    if (caid==caidlist[i] || ocaid==caidlist[i]) //if caid matches caidlist-entry i...
+      return 1;///...reader is valid
+  }
       
-  return 0;
+  return 0; //caid not found in caidlist, reader is invalid
 }
 
 int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
@@ -309,7 +313,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   if (rdr->ph.c_available && !rdr->ph.c_available(rdr->ridx, AVAIL_CHECK_CONNECTED))
     return 0;
 
-  if (!chk_caid(er->caid, rdr->caid))
+  if (!chk_caid(er->caid, er->ocaid, rdr->caid))
     return 0;
     
   if (!chk_srvid(er, rdr->cs_idx))
