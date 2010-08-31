@@ -1827,12 +1827,12 @@ static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
 
 static void cc_send_dcw(ECM_REQUEST *er) {
 	uchar buf[16];
-	struct cc_data *cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	memset(buf, 0, sizeof(buf));
 
 	if (er->rc <= 3) {
-		cc = client[cs_idx].cc;
+		
 		memcpy(buf, er->cw, sizeof(buf));
 		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
 			cs_hexdump(0, buf, 16), er->cpti);
