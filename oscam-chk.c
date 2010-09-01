@@ -298,7 +298,7 @@ int chk_caid(ushort caid, ushort ocaid, ushort *caidlist) {
     if (caid==caidlist[i] || ocaid==caidlist[i]) //if caid matches caidlist-entry i...
       return 1;///...reader is valid
   }
-      
+
   return 0; //caid not found in caidlist, reader is invalid
 }
 
@@ -306,27 +306,41 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   if (!((rdr->fd) && (rdr->grp&client[cs_idx].grp)))
     return(0);
 
-  if (!rdr->enable || rdr->deleted)
+  if (!rdr->enable || rdr->deleted) {
+    cs_debug_mask(D_TRACE, "reader disabled/deleted %s", rdr->label);
     return(0);
+  }
     
   //Schlocke reader-defined function 
-  if (rdr->ph.c_available && !rdr->ph.c_available(rdr->ridx, AVAIL_CHECK_CONNECTED))
+  if (rdr->ph.c_available && !rdr->ph.c_available(rdr->ridx, AVAIL_CHECK_CONNECTED)) {
+    cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
     return 0;
+  }
 
-  if (!chk_caid(er->caid, er->ocaid, rdr->caid))
+  if (!chk_caid(er->caid, er->ocaid, rdr->caid)) {
+    cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
     return 0;
+  }
     
-  if (!chk_srvid(er, rdr->cs_idx))
+  if (!chk_srvid(er, rdr->cs_idx)) {
+    cs_debug_mask(D_TRACE, "service %04X not matching  reader %s", er->srvid, rdr->label);
     return(0);
+  }
 
-  if (!chk_rfilter(er, rdr))
+  if (!chk_rfilter(er, rdr)) {
+    cs_debug_mask(D_TRACE, "r-filter reader %s", rdr->label);
     return(0);
+  }
 
-  if (!chk_class(er, &rdr->cltab, "reader", rdr->label))
+  if (!chk_class(er, &rdr->cltab, "reader", rdr->label)) {
+    cs_debug_mask(D_TRACE, "class filter reader %s", rdr->label);    
     return(0);
+  }
 
-  if (!chk_chid(er, &rdr->fchid, "reader", rdr->label))
+  if (!chk_chid(er, &rdr->fchid, "reader", rdr->label)) {
+    cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);    
     return(0);
+  }
  
   return(1);
 }
