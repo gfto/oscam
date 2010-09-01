@@ -138,6 +138,8 @@ struct cc_data {
 	struct cc_current_card *current_card; //initialized by reader (index CS_MAXPID)
 	struct cc_card *server_card; 		   //initialized by server
 	int server_ecm_pending;                    //initialized by server
+	LLIST *server_caid_infos[CS_MAXREADER];
+	long server_caid_size[CS_MAXREADER];
 	
 	pthread_mutex_t lock;
 	pthread_mutex_t ecm_busy;

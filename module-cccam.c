@@ -126,16 +126,15 @@ static void cc_xor(uint8 *buf) {
 }
 
 static void cc_cw_crypt(uint8 *cws, uint32 cardid) {
-	struct cc_data *cc;
+	struct cc_data *cc = client[cs_idx].cc;
 	uint64 node_id;
 	uint8 tmp;
 	int i;
 
+	
 	if (!is_server) {
-		cc = reader[ridx].cc;
 		node_id = b2ll(8, cc->node_id);
 	} else {
-		cc = client[cs_idx].cc;
 		node_id = b2ll(8, cc->peer_node_id);
 	}
 
@@ -349,7 +348,7 @@ static void cc_cli_close() {
 		pfd = 0;
 	}
 	//cs_sleepms(100);
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 	if (cc) {
 		pthread_mutex_unlock(&cc->lock);
 		pthread_mutex_unlock(&cc->ecm_busy);
@@ -376,12 +375,7 @@ static void cc_cycle_connection() {
 static int cc_msg_recv(uint8 *buf) {
 	int len;
 	uint8 netbuf[CC_MAXMSGSIZE + 4];
-	struct cc_data *cc;
-
-	if (!is_server)
-		cc = reader[ridx].cc;
-	else
-		cc = client[cs_idx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	int handle = client[cs_idx].udp_fd;
 
@@ -438,12 +432,7 @@ static int cc_msg_recv(uint8 *buf) {
 static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	int n;
 	uint8 netbuf[len + 4];
-	struct cc_data *cc;
-
-	if (!is_server)
-		cc = reader[ridx].cc;
-	else
-		cc = client[cs_idx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	memset(netbuf, 0, len + 4);
 
@@ -506,7 +495,7 @@ static void cc_check_version(char *cc_version, char *cc_build) {
  */
 static int cc_send_cli_data() {
 	int i;
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	cs_debug("cccam: send client data");
 
@@ -566,7 +555,6 @@ static int cc_send_srv_data() {
 static int cc_get_nxt_ecm() {
 	int n, i;
 	time_t t;
-	// struct cc_data *cc = reader[ridx].cc;
 
 	t = time(NULL);
 	n = -1;
@@ -592,7 +580,7 @@ static int cc_get_nxt_ecm() {
  */
 static int send_cmd05_answer()
 {
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 	if (!cc->cmd05_active || !reader[ridx].available) //exit if not in cmd05 or waiting for ECM answer
 		return 0;
 		
@@ -672,7 +660,7 @@ static int send_cmd05_answer()
  */
 static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	int n, h = -1;
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 	struct cc_card *card;
 	struct cc_current_card *current_card;
 	LLIST_ITR itr;
@@ -915,7 +903,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
  */
 
 static int cc_send_pending_emms() {
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	LLIST_ITR itr;
 	uint8 *emmbuf = llist_itr_init(cc->pending_emms, &itr);
@@ -945,7 +933,7 @@ static int cc_send_pending_emms() {
  * find card by hexserial
  * */
 struct cc_card *get_card_by_hexserial(uint8 *hexserial, uint16 caid) {
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 	LLIST_ITR itr;
 	struct cc_card *card = llist_itr_init(cc->cards, &itr);
 	while (card) {
@@ -963,7 +951,7 @@ struct cc_card *get_card_by_hexserial(uint8 *hexserial, uint16 caid) {
  * ProcessEmm
  * */
 static int cc_send_emm(EMM_PACKET *ep) {
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
 		cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1 : 0,
 				pfd);
@@ -1086,6 +1074,9 @@ static void cc_free(struct cc_data *cc) {
 	if (!cc)
 		return;
 	freeCaidInfos(cc->caid_infos);
+	int i;
+	for (i=0;i<CS_MAXREADER;i++)
+		freeCaidInfos(cc->server_caid_infos[i]);
 
 	if (cc->cards) {
 		LLIST_ITR itr;
@@ -1362,7 +1353,7 @@ static void fix_dcw(uchar *dcw)
 }*/
 
 static void cc_idle() {
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 	if (!reader[ridx].tcp_connected)
 		return;
 		
@@ -1376,12 +1367,7 @@ static void cc_idle() {
 
 static int cc_parse_msg(uint8 *buf, int l) {
 	int ret = buf[1];
-	struct cc_data *cc;
-
-	if (!is_server)
-		cc = reader[ridx].cc;
-	else
-		cc = client[cs_idx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	cs_debug("%s parse_msg=%d", getprefix(), buf[1]);
 
@@ -1808,7 +1794,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 }
 
 static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	if (buf[1] == MSG_CW_ECM) {
 		memcpy(dcw, cc->dcw, 16);
@@ -1850,12 +1836,7 @@ static void cc_send_dcw(ECM_REQUEST *er) {
 int cc_recv(uchar *buf, int l) {
 	int n;
 	uchar *cbuf;
-	struct cc_data *cc;
-
-	if (!is_server)
-		cc = reader[ridx].cc;
-	else
-		cc = client[cs_idx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	if (buf == NULL || l <= 0)
 		return -1;
@@ -1923,7 +1904,7 @@ static int cc_cli_connect(void) {
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
 		return -2;
 	}
-	struct cc_data *cc = reader[ridx].cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	if (!cc) {
 		// init internals data struct
@@ -1934,7 +1915,7 @@ static int cc_cli_connect(void) {
 		}
 		memset(cc, 0, sizeof(struct cc_data));
 		cc->cards = llist_create();
-		reader[ridx].cc = cc;
+		client[cs_idx].cc = cc;
 		cc->auto_blocked = llist_create();
 		cc->current_card = malloc(sizeof(struct cc_current_card)*CS_MAXPID);
 		memset(cc->current_card, 0, sizeof(struct cc_current_card)*CS_MAXPID);
@@ -2267,15 +2248,15 @@ static int cc_srv_report_cards() {
 
 		//SS: Hack:
 		if (reader[r].typ == R_CCCAM && !flt) {
-			if (cc->caid_infos && checkCaidInfos(r, &cc->caid_size)) {
-				freeCaidInfos(cc->caid_infos);
-				cc->caid_infos = NULL;
+			if (cc->server_caid_infos[r] && checkCaidInfos(r, &cc->server_caid_size[r])) {
+				freeCaidInfos(cc->server_caid_infos[r]);
+				cc->server_caid_infos[r] = NULL;
 			}
-			if (!cc->caid_infos)
-				cc->caid_infos = loadCaidInfos(r);
-			if (cc->caid_infos) {
+			if (!cc->server_caid_infos[r])
+				cc->server_caid_infos[r] = loadCaidInfos(r);
+			if (cc->server_caid_infos[r]) {
 				LLIST_ITR itr;
-				struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos,
+				struct cc_caid_info *caid_info = llist_itr_init(cc->server_caid_infos[r],
 						&itr);
 				while (caid_info) {
 					if (caid_info->hop <= maxhops) {
@@ -2340,13 +2321,12 @@ static int cc_srv_connect() {
 	uint8 data[16];
 	char usr[21], pwd[21];
 	struct s_auth *account;
-	struct cc_data *cc;
+	struct cc_data *cc = client[cs_idx].cc;
 
 	memset(usr, 0, sizeof(usr));
 	memset(pwd, 0, sizeof(pwd));
 
 	//SS: Use last cc data for faster reconnects:
-	cc = client[cs_idx].cc;
 	if (!cc) {
 		// init internals data struct
 		cc = malloc(sizeof(struct cc_data));
@@ -2511,7 +2491,6 @@ static int cc_srv_connect() {
 	// report cards
 	ulong hexserial_crc = get_reader_hexserial_crc();
 	cc_srv_report_cards();
-	int caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 	cs_ftime(&cc->ecm_time);
 
 	cmi = 0;
@@ -2540,12 +2519,10 @@ static int cc_srv_connect() {
 				timeout.millitm = timeout.millitm % 1000;
 			
 				int force_card_updates = comp_timeb(&cur_time, &timeout) > 0;
-				int new_caid_info_count = cc->caid_infos ? llist_count(cc->caid_infos) : 0;
 				ulong new_hexserial_crc = get_reader_hexserial_crc();
-				if (force_card_updates || new_caid_info_count != caid_info_count || new_hexserial_crc != hexserial_crc) {
+				if (force_card_updates || new_hexserial_crc != hexserial_crc) {
 					cs_debug_mask(D_TRACE, "%s update share list", getprefix());
 					cc_srv_report_cards();
-					caid_info_count = new_caid_info_count;
 					hexserial_crc = new_hexserial_crc;
 					cc->ecm_time = cur_time;
 				}
@@ -2643,7 +2620,7 @@ static int cc_cli_init()
  */
 int cc_available(int ridx, int checktype) {
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", reader[ridx].label);
-	if (!reader[ridx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED)
+	if (!client[reader[ridx].cs_idx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED)
 		return 0;
 	
 	if (checktype == AVAIL_CHECK_LOADBALANCE && !reader[ridx].available) {
@@ -2657,12 +2634,9 @@ int cc_available(int ridx, int checktype) {
 void cc_cleanup(void) {
 	if (!is_server) {
 		cc_cli_close(); // we need to close open fd's 
-		cc_free(reader[ridx].cc);
-		reader[ridx].cc = NULL;
-	} else {
-		cc_free(client[cs_idx].cc);
-		client[cs_idx].cc = NULL;
 	}
+	cc_free(client[cs_idx].cc);
+	client[cs_idx].cc = NULL;
 }
 
 void module_cccam(struct s_module *ph) {

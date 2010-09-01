@@ -486,7 +486,6 @@ static void cs_card_info(int i)
 static void prepare_reader_restart(int ridx, int cs_idx)
 {
   reader[ridx].pid = 0;
-  reader[ridx].cc = NULL;
   reader[ridx].tcp_connected = 0;
   reader[ridx].fd=0;
   reader[ridx].cs_idx=0;
