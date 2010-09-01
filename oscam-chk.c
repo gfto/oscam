@@ -317,7 +317,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     return 0;
   }
 
-  if (!chk_caid(er->caid, er->ocaid, rdr->caid)) {
+  if (!chk_caid(er->caid, er->ocaid, rdr->ctab.caid)) {
     cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
     return 0;
   }

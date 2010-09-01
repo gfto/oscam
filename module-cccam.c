@@ -2026,7 +2026,7 @@ static int cc_cli_connect(void) {
 		cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
 	}
 
-	//reader[ridx].caid[0] = reader[ridx].ftab.filts[0].caid;
+	reader[ridx].caid[0] = reader[ridx].ftab.filts[0].caid;
 	reader[ridx].nprov = reader[ridx].ftab.filts[0].nprids;
 	for (n = 0; n < reader[ridx].nprov; n++) {
 		reader[ridx].availkeys[n][0] = 1;
