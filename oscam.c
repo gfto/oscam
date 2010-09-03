@@ -2537,6 +2537,53 @@ void do_emm(EMM_PACKET *ep)
 	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
+	client[cs_idx].last=time((time_t)0);
+	if (reader[au].b_nano[ep->emm[0]] & 0x02) //should this nano be saved?
+	{
+		char token[256];
+		//static const uchar emmtail[] = {0x00,0x00,0xFF,0xFF};
+		FILE *fp;
+		time_t rawtime;
+		time (&rawtime);
+		struct tm *timeinfo;
+		timeinfo = localtime (&rawtime);	/* to access LOCAL date/time info */
+		char buf[80];
+		strftime (buf, 80, "%Y/%m/%d %H:%M:%S", timeinfo);
+		sprintf (token, "%sEMM.log", cs_confdir);
+		int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
+
+		if (!(fp = fopen (token, "a")))
+		{
+			cs_log ("ERROR: Cannot open file '%s' (errno=%d)\n", token, errno);
+		}
+		else
+		{
+			cs_log ("Succesfully added EMM to %s.", token);
+			fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, reader[au].hexserial, 8)); 
+			fprintf (fp, "%s\n", cs_hexdump (0, ep->emm, emm_length + 3));
+			fclose (fp);
+		}
+
+		sprintf (token, "%sEMM.bin", cs_confdir);
+		if (!(fp = fopen (token, "ab")))
+		{
+			cs_log ("ERROR: Cannot open file '%s' (errno=%d)\n", token, errno);
+		}
+		else 
+		{
+			if (fwrite(ep->emm, 1, emm_length+3, fp) == 1)
+			{
+				cs_log ("Succesfully added binary EMM to %s.", token);
+				//fwrite(emmtail, 1, 4, fp);
+			}
+			else
+			{
+				cs_log ("ERROR: Cannot write binary EMM to %s (errno=%d)\n", token, errno);
+			}
+			fclose (fp);
+		}
+	}
+
 	switch (ep->type) {
 		case UNKNOWN:
 			if (reader[au].blockemm_unknown) {

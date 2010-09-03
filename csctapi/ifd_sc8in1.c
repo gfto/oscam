@@ -168,10 +168,14 @@ int Sc8in1_Init(struct s_reader * reader)
 	struct termios termio;
 	int i,pos, speed,fd = reader->handle;
 	unsigned int is_mcr, sc8in1_clock = 0;
+	
 	tcgetattr(reader->handle,&termio);
-	for (i=0; i<8; i++)
+	for (i=0; i<8; i++) {
 		//init all stored termios to default comm settings after device init, before ATR
 		memcpy(&stored_termio[i],&termio,sizeof(termio));
+    }
+    
+    // check for a MCR device and how many slots it has.
 	unsigned char buff[] = { 0x74 };
 	sc8in1_command(reader, buff, 1, 1);
 	if (buff[0] == 4 || buff[0] == 8) {
@@ -180,7 +184,9 @@ int Sc8in1_Init(struct s_reader * reader)
 	}
 	else
 		is_mcr = 0;
+
 	tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
+
 	for (i=0; i<CS_MAXREADER; i++) //copy handle to other slots, FIXME change this if multiple sc8in1 readers 
 		if (reader[i].typ == R_SC8in1) {
 			if (reader[i].slot == 0) {//not initialized yet
@@ -191,31 +197,31 @@ int Sc8in1_Init(struct s_reader * reader)
 				reader[i].device[pos]= 0; //slot 1 reader now gets correct physicalname
 			}
 			reader[i].handle = fd;
-			if (!is_mcr)
-				continue;
-			//if MCR set clock
-			switch (reader[i].mhz) {
-				case 357:
-				case 358:
-					continue;
-				case 368:
-				case 369:
-					speed = 1;
-					break;
-				case 600:
-					speed = 2;
-					break;
-				case 800:
-					speed = 3;
-					break;
-				default:
-					speed = 0;
-					cs_log("ERROR Sc8in1, cannot set clockspeed to %i", reader->mhz);
-					break;
-			}
-			sc8in1_clock |= (speed << (reader[i].slot - 1) * 2); 
 		}
+
 	if (is_mcr) {
+        //if MCR set clock
+        switch (reader->mhz) {
+            case 357:
+            case 358:
+                speed=0;
+                break;
+            case 368:
+            case 369:
+                speed = 1;
+                break;
+            case 600:
+                speed = 2;
+                break;
+            case 800:
+                speed = 3;
+                break;
+            default:
+                speed = 0;
+                cs_log("ERROR Sc8in1, cannot set clockspeed to %i", reader->mhz);
+                break;
+        }
+        sc8in1_clock |= (speed << (reader[i].slot - 1) * 2); 
 		buff[0] = 0x63; //MCR set clock
 		buff[1] = (sc8in1_clock >> 8) & 0xFF;
 		buff[2] = sc8in1_clock & 0xFF;

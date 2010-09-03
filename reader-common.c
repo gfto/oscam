@@ -536,52 +536,6 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
   rc=reader_checkhealth(reader);
   if (rc)
   {
-    client[cs_idx].last=time((time_t)0);
-    if (reader->b_nano[ep->emm[0]] & 0x02) //should this nano be saved?
-    {
-      char token[256];
-      FILE *fp;
-
-      time_t rawtime;
-      time (&rawtime);
-      struct tm *timeinfo;
-      timeinfo = localtime (&rawtime);	/* to access LOCAL date/time info */
-      char buf[80];
-      strftime (buf, 80, "%Y%m%d_%H_%M_%S", timeinfo);
-
-      sprintf (token, "%swrite_%s_%s.%s", cs_confdir, (ep->emm[0] == 0x82) ? "UNIQ" : "SHARED", buf, "txt");
-      if (!(fp = fopen (token, "w")))
-      {
-        cs_log ("ERROR: Cannot open EMM.txt file '%s' (errno=%d)\n", token, errno);
-      }
-      else
-      {
-    	cs_log ("Succesfully written text EMM to %s.", token);
-    	int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
-    	fprintf (fp, "%s", cs_hexdump (0, ep->emm, emm_length + 3));
-    	fclose (fp);
-      }
-
-      //sprintf (token, "%s%s.%s", cs_confdir, buf,"emm");
-      sprintf (token, "%swrite_%s_%s.%s", cs_confdir, (ep->emm[0] == 0x82) ? "UNIQ" : "SHARED", buf, "emm");
-      if (!(fp = fopen (token, "wb")))
-      {
-    	cs_log ("ERROR: Cannot open EMM.emm file '%s' (errno=%d)\n", token, errno);
-      }
-      else 
-      {
-    	if (fwrite(ep, sizeof (*ep), 1, fp) == 1)
-        {
-        	cs_log ("Succesfully written binary EMM to %s.", token);
-        }
-        else
-        {
-        	cs_log ("ERROR: Cannot write binary EMM to %s (errno=%d)\n", token, errno);
-        }
-    	fclose (fp);
-      }
-    }
-
     if (reader->b_nano[ep->emm[0]] & 0x01) //should this nano be blcoked?
       return 3;
 
