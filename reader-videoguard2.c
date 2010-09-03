@@ -610,7 +610,8 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   unsigned char atr_skybrgl39[] = { 0x3F, 0xFD, 0x13, 0x25, 0x02, 0x50, 0x80, 0x0F, 0x33, 0xB0, 0x08, 0xFF, 0xFF, 0x4A, 0x50, 0x90, 0x00, 0x00, 0x47, 0x4C, 0x01};
   unsigned char atr_skybrgl54[] = { 0x3F, 0xFF, 0x13, 0x25, 0x02, 0x50, 0x80, 0x0F, 0x54, 0xB0, 0x03, 0xFF, 0xFF, 0x4A, 0x50, 0x80, 0x00, 0x00, 0x00, 0x00, 0x47, 0x4C, 0x05 };
   unsigned char atr_skynz_96a[] = { 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x10, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00, 0x00, 0x4E, 0x5A, 0x01, 0x00, 0x00};
-  
+  unsigned char atr_skynz_969[] = { 0x3F, 0x78, 0x13, 0x25, 0x04, 0x40, 0xB0, 0x09, 0x4A, 0x50, 0x01, 0x4E, 0x5A };
+ 
   if ((atr_size == sizeof (atr_bskyb_new)) && (memcmp (atr, atr_bskyb_new, atr_size) == 0))
   {
       cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard BSkyB (0963)");
@@ -693,7 +694,15 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   }
   else if ((atr_size == sizeof (atr_skynz_96a)) && (memcmp (atr, atr_skynz_96a, atr_size) == 0))
   {
-  cs_log("[videoguard2-reader] type: VideoGuard Sky New Zealand (096A)");
+      cs_log("[videoguard2-reader] type: VideoGuard Sky New Zealand (096A)");
+      BASEYEAR = 1992;
+  }
+  else if ((atr_size == sizeof (atr_skynz_969)) && (memcmp (atr, atr_skynz_969, atr_size) == 0))
+  {
+      cs_log("[videoguard2-reader] type: VideoGuard Sky New Zealand (0969)");
+      BASEYEAR = 1992;
+      cs_log("[videoguard2-reader] NDS1 cards currently not supported, patches welcome");
+      return ERROR;
   }
 
   //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
