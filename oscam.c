@@ -1810,7 +1810,7 @@ int send_dcw(ECM_REQUEST *er)
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
 	static char *stxtEx[]={"", "group", "caid", "ident", "class", "chid", "queue", "peer"};
 	static char *stxtWh[]={"", "user ", "reader ", "server ", "lserver "};
-	char sby[32]="";
+	char sby[32]="", sreason[32]="";
 	char erEx[32]="";
 	char uname[38]="";
 	struct timeb tpe;
@@ -1851,14 +1851,17 @@ int send_dcw(ECM_REQUEST *er)
 
 	send_reader_stat(er->reader[0], er, er->rc);
 	
+	if(er->msglog[0])
+		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
+
 	if(cfg->mon_appendchaninfo)
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s (%s)",
+		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s%s",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
-				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, get_servicename(er->srvid, er->caid), er->msglog);
+				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, get_servicename(er->srvid, er->caid), sreason);
 	else
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (%s)",
+		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s%s",
 				uname, er->caid, er->prid, er->srvid, er->l, lc,
-				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, er->msglog);
+				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, sreason);
 #ifdef WEBIF
 	if(er->rc == 0)
 		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", sby);
