@@ -96,6 +96,13 @@ typedef enum {
 	MODE_LEN0 = 5,
 } cc_cmd05_mode;
 
+struct cc_extended_ecm_idx {
+	uint8 send_idx;
+	ushort ecm_idx;
+	struct cc_card *card;
+	struct cc_srvid srvid;
+} EXTENDED_ECM_IDX;
+
 struct cc_data {
 	struct cc_crypt_block block[2]; // crypto state blocks
 	
@@ -130,21 +137,23 @@ struct cc_data {
 
 	LLIST *pending_emms; //pending emm list
 	
-	ulong crc;
-	uint32 send_ecmtask;
 	uint32 recv_ecmtask;
 
 	int current_ecm_cidx; //index to last current_card (reader)
 	struct cc_current_card *current_card; //initialized by reader (index CS_MAXPID)
-	struct cc_card *server_card; 		   //initialized by server
 	int server_ecm_pending;                    //initialized by server
 	LLIST *server_caid_infos[CS_MAXREADER];
 	long server_caid_size[CS_MAXREADER];
+	ushort server_ecm_idx;
 	
 	pthread_mutex_t lock;
 	pthread_mutex_t ecm_busy;
 	struct timeb ecm_time;
 	time_t answer_on_keepalive;
+
+	//Extended Mode for SPECIAL clients:
+	int extended_mode;
+	LLIST *extended_ecm_idx;
 };
 
 #endif /* MODULECCCAM_H_ */

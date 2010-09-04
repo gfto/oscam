@@ -10,7 +10,7 @@
 
 extern struct s_reader *reader;
 
-int g_flag = 0;
+uint8 g_flag = 0;
 int cc_use_rc4 = 0;
 
 //Mode names for CMD_05 command:
@@ -30,6 +30,7 @@ static int cc_get_nxt_ecm();
 static int cc_send_pending_emms();
 static void cc_rc4_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		cc_crypt_mode_t mode);
+static void free_extended_ecm_idx(struct cc_data *cc);
 
 char * prefix = NULL;
 
@@ -359,6 +360,84 @@ static void cc_cli_close() {
 	}
 }
 
+static struct cc_extended_ecm_idx *add_extended_ecm_idx(
+		uint8 send_idx, ushort ecm_idx, struct cc_card *card, struct cc_srvid srvid) {
+	struct cc_data *cc = client[cs_idx].cc;
+	struct cc_extended_ecm_idx *eei = malloc(sizeof(struct cc_extended_ecm_idx));
+	eei->send_idx=send_idx;
+	eei->ecm_idx=ecm_idx;
+	eei->card=card;
+	eei->srvid=srvid;
+	llist_append(cc->extended_ecm_idx, eei);
+	cs_debug_mask(D_TRACE, "%s add extended ecm-idx: %d:%d", getprefix(), send_idx, ecm_idx);
+	return eei;
+}
+
+static struct cc_extended_ecm_idx *get_extended_ecm_idx(uint8 send_idx, int remove) {
+	struct cc_data *cc = client[cs_idx].cc;
+	struct cc_extended_ecm_idx *eei;
+	LLIST_ITR itr;
+	eei = llist_itr_init(cc->extended_ecm_idx, &itr);
+	while (eei) {
+		if (eei->send_idx == send_idx) {
+			if (remove)
+				llist_itr_remove(&itr);
+			cs_debug_mask(D_TRACE, "%s get by send-idx: %d FOUND: %d",
+					getprefix(), send_idx, eei->ecm_idx);
+			return eei;
+		}
+		eei = llist_itr_next(&itr);
+	}
+	cs_debug_mask(D_TRACE, "%s get by send-idx: %d NOT FOUND", getprefix(), send_idx);
+	return NULL;
+}
+
+static struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(
+		ushort ecm_idx, int remove) {
+	struct cc_data *cc = client[cs_idx].cc;
+	struct cc_extended_ecm_idx *eei;
+	LLIST_ITR itr;
+	eei = llist_itr_init(cc->extended_ecm_idx, &itr);
+	while (eei) {
+		if (eei->ecm_idx == ecm_idx) {
+			if (remove)
+				llist_itr_remove(&itr);
+			cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d FOUND: %d",
+					getprefix(), ecm_idx, eei->send_idx);
+			return eei;
+		}
+		eei = llist_itr_next(&itr);
+	}
+	cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d NOT FOUND", getprefix(), ecm_idx);
+	return NULL;
+}
+
+static void free_extended_ecm_idx_by_card(struct cc_card *card) {
+	struct cc_data *cc = client[cs_idx].cc;
+	struct cc_extended_ecm_idx *eei;
+	LLIST_ITR itr;
+	eei = llist_itr_init(cc->extended_ecm_idx, &itr);
+	while (eei) {
+		if (eei->card == card) {
+			free(eei);
+			eei = llist_itr_remove(&itr);
+		}
+		else
+			eei = llist_itr_next(&itr);
+	}
+}
+
+static void free_extended_ecm_idx(struct cc_data *cc) {
+	struct cc_extended_ecm_idx *eei;
+	LLIST_ITR itr;
+	eei = llist_itr_init(cc->extended_ecm_idx, &itr);
+	while (eei) {
+		free(eei);
+		eei = llist_itr_remove(&itr);
+	}
+}
+
+
 /**
  * reader
  * closes the connection and reopens it.
@@ -684,55 +763,49 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		
 	cc->just_logged_in = 0;
 
-	if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
-		cs_debug_mask(D_TRACE, "%s ecm trylock: ecm busy, retrying later after msg-receive",
-			getprefix());
-		
-		struct timeb timeout;	
-		timeout = cc->ecm_time;
-		timeout.millitm += cfg->ctimeout*4;
-		timeout.time += timeout.millitm / 1000;
-		timeout.millitm = timeout.millitm % 1000;
+	if (!cc->extended_mode)
+	{
+		//Without extended mode, only one ecm at a time could be send
+		//this is a limitation of "O" CCCam
+		if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
+			cs_debug_mask(D_TRACE, "%s ecm trylock: ecm busy, retrying later after msg-receive",
+				getprefix());
 			
-		if (comp_timeb(&cur_time, &timeout) < 0) { //TODO: Configuration?
-			return 0; //pending send...
+			struct timeb timeout;
+			timeout = cc->ecm_time;
+			timeout.millitm += cfg->ctimeout*4;
+			timeout.time += timeout.millitm / 1000;
+			timeout.millitm = timeout.millitm % 1000;
+
+			if (comp_timeb(&cur_time, &timeout) < 0) { //TODO: Configuration?
+				return 0; //pending send...
+			}
+			else
+			{
+				cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %ds", getprefix(),
+					cfg->ctimeout*4/1000);
+				cc_cycle_connection();
+			}
 		}
-		else
-		{
-			cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %ds", getprefix(),
-				cfg->ctimeout*4/1000);
-			cc_cycle_connection();
-		}
+		cs_debug("cccam: ecm trylock: got lock");
 	}
-	cs_debug("cccam: ecm trylock: got lock");
 	cc->ecm_time = cur_time;
-	reader[ridx].available = 0;
+	reader[ridx].available = !cc->extended_mode;
 
 	//Search next ECM to send:
-	int found = 0;
-	while (!found) {
-		if ((n = cc_get_nxt_ecm()) < 0) {
+	if ((n = cc_get_nxt_ecm()) < 0) {
+		if (!cc->extended_mode) {
 			reader[ridx].available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
-			cs_debug("%s no ecm pending!", getprefix());
-			if (!cc_send_pending_emms())
-				send_cmd05_answer();
-			return 0; // no queued ecms
 		}
-		//cs_debug("cccam: ecm-task-idx = %d", n);
-		cur_er = &ecmtask[n];
-		
-		if (crc32(0, cur_er->ecm, cur_er->l) == cc->crc) {
-			//cs_log("%s cur_er->rc=%d", getprefix(), cur_er->rc);
-			cur_er->rc = 99; //ECM already send
-		}
-		cc->crc = crc32(0, cur_er->ecm, cur_er->l);
-		
-		//cs_debug("cccam: ecm crc = 0x%lx", cc->crc);
-		
-		if (cur_er->rc != 99)
-			found = 1;
+		cs_debug("%s no ecm pending!", getprefix());
+		if (!cc_send_pending_emms())
+			send_cmd05_answer();
+		return 0; // no queued ecms
 	}
+	cur_er = &ecmtask[n];
+	cur_er->rc = 99; //mark ECM as already send
+	cs_debug("cccam: ecm-task %d", cur_er->idx);
 
 	if (buf)
 		memcpy(buf, cur_er->ecm, cur_er->l);
@@ -745,7 +818,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	cc->current_ecm_cidx = cur_er->cidx;
 	current_card = &cc->current_card[cur_er->cidx];
 	if (current_card->card && current_card->prov == cur_er->prid && 
-	  sid_eq(&current_card->srvid, &cur_srvid)) {
+	  sid_eq(&current_card->srvid, &cur_srvid) &&
+	  !is_sid_blocked(current_card->card, &cur_srvid)) {
 		card = current_card->card;
 	}
 	else
@@ -753,6 +827,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		card = NULL;
 		current_card->prov = cur_er->prid;
 		current_card->srvid = cur_srvid;
+		current_card->card = NULL;
 	}
 
 	//then check all other cards
@@ -817,12 +892,22 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		ecmbuf[12] = cur_er->l & 0xff;
 		memcpy(ecmbuf + 13, cur_er->ecm, cur_er->l);
 
-		cc->send_ecmtask = cur_er->idx;
+		uint8 send_idx = 1;
+		if (cc->extended_mode) {
+			cc->server_ecm_idx++;
+			if (cc->server_ecm_idx >= 256)
+				cc->server_ecm_idx = 0;
+			g_flag = cc->server_ecm_idx; //Flag is used as index!
+			send_idx = g_flag;
+		}
+
+		add_extended_ecm_idx(send_idx, cur_er->idx, card, cur_srvid);
+
 		reader[ridx].cc_currenthops = card->hop + 1;
 
 		cs_log("%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d",
 				getprefix(), cur_er->srvid, cur_er->l, card->id, card->hop
-						+ 1, cc->send_ecmtask);
+						+ 1, cur_er->idx);
 		cc_cmd_send(ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
 
 		//For EMM
@@ -868,8 +953,10 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			cc_add_auto_blocked(cc->auto_blocked, cur_er->caid, cur_er->prid,
 					&cur_srvid);
 		}
-		reader[ridx].available = 1;
-		pthread_mutex_unlock(&cc->ecm_busy);
+		if (!cc->extended_mode) {
+			reader[ridx].available = 1;
+			pthread_mutex_unlock(&cc->ecm_busy);
+		}
 		
 		return -1;
 	}
@@ -908,12 +995,14 @@ static int cc_send_pending_emms() {
 	LLIST_ITR itr;
 	uint8 *emmbuf = llist_itr_init(cc->pending_emms, &itr);
 	if (emmbuf) {
-		if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
-			return 0; //send later with cc_send_ecm
+		if (!cc->extended_mode) {
+			if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
+				return 0; //send later with cc_send_ecm
+			}
+			reader[ridx].available = 0;
 		}
 		int size = emmbuf[11]+12;
 	
-		reader[ridx].available = 0;
 		cc->current_ecm_cidx = 0;
 		cc->just_logged_in = 0;
 		cs_ftime(&cc->ecm_time);
@@ -1092,8 +1181,6 @@ static void cc_free(struct cc_data *cc) {
 	cc_free_auto_blocked(cc->auto_blocked);
 	if (cc->current_card)
 		free(cc->current_card);
-	if (cc->server_card)
-		free(cc->server_card);
 	if (cc->pending_emms) {
 		LLIST_ITR itr;
 		uint8 *ep = llist_itr_init(cc->pending_emms, &itr);
@@ -1104,6 +1191,8 @@ static void cc_free(struct cc_data *cc) {
 		llist_destroy(cc->pending_emms);
 		cc->pending_emms = NULL;
 	}
+	if (cc->extended_ecm_idx)
+		free_extended_ecm_idx(cc);
 	free(cc);
 }
 
@@ -1352,6 +1441,29 @@ static void fix_dcw(uchar *dcw)
     }
 }*/
 
+static int check_extended_mode(char *msg) {
+	//Extended mode: if PARTNER String is ending with [EXT], extended mode is activated
+	//For future compatibilty the syntax should be compatible with
+	//[PARAM1,PARAM2...PARAMn]
+	//
+	// EXT: Extended ECM Mode: Multiple ECMs could be send and received
+	//                         ECMs are numbered, Flag (byte[0] is the index
+
+	struct cc_data *cc = client[cs_idx].cc;
+	int has_param = 0;
+	char *p = strtok(msg, "[");
+	while (p)
+	{
+		p = strtok(NULL, ",]");
+		if (p && strncmp(p, "EXT", 3)==0) {
+			cc->extended_mode = 1;
+			cs_log("%s extended ECM mode", getprefix());
+			has_param = 1;
+		}
+	}
+	return has_param;
+}
+
 static void cc_idle() {
 	struct cc_data *cc = client[cs_idx].cc;
 	if (!reader[ridx].tcp_connected)
@@ -1549,6 +1661,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					current_card->card = NULL;
 					
 				}
+				free_extended_ecm_idx_by_card(card);
 				cc_free_card(card);
 
 				card = next_card;
@@ -1567,15 +1680,34 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	case MSG_CW_NOK2:
 		if (l > 4) {
 			//Received NOK with payload:
-			cs_log("%s %s", getprefix(), (char*) buf+4);
+			char *msg = (char*)buf+4;
+			cs_log("%s %s", getprefix(), msg);
 
 			//Check for PARTNER connection:
-			if (!cc->is_oscam_cccam && strncmp((char*)buf+4, "PARTNER:",8) == 0) {
+			if (!cc->is_oscam_cccam && strncmp(msg, "PARTNER:",8) == 0) {
 				//When Data starts with "PARTNER:" we have an Oscam-cccam-compatible client/server!
 				cc->is_oscam_cccam = 1;
-				sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
+
+				int has_param = check_extended_mode(msg);
+
+				//send params back. At the moment there is only "EXT"
+				char param[10];
+				if (!has_param)
+					param[0] = 0;
+				else
+				{
+					strcpy(param, " [");
+					if (cc->extended_mode)
+						strcat(param, "EXT");
+					strcat(param, "]");
+				}
+
+				sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s)%s",
+						CS_VERSION, CS_SVN_VERSION, CS_OSTYPE, param);
 				cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
 			}
+			else if (cc->is_oscam_cccam)
+				check_extended_mode(msg);
 			return 0;
 		}
 
@@ -1585,29 +1717,45 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (cc->just_logged_in)
 			return -1; // reader restart needed
 
-		if (cc->current_ecm_cidx) {
-			struct cc_current_card *current_card = &cc->current_card[cc->current_ecm_cidx];
+		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(g_flag, TRUE);
+		if (eei == NULL) {
+			cs_log("%s received extended ecm NOK id %d but not found!",
+					getprefix(), g_flag);
+			cc_cycle_connection();
+			return 0;
+		}
+			
+		ushort ecm_idx = eei->ecm_idx;
+		struct cc_card *card = eei->card;
+		struct cc_srvid srvid = eei->srvid;
+		free(eei);
 
-			cs_debug_mask(D_TRACE, "%s cw nok (%d), sid = %04X(%d)", getprefix(), buf[1], 
-				current_card->srvid.sid, current_card->srvid.ecmlen);
-			struct cc_card *card = current_card->card;
-			if (card) {
-				if (!is_good_sid(card, &current_card->srvid)) {
-					add_sid_block(card, &current_card->srvid);
-					current_card->card = NULL;
+		if (card) {
+			if (!is_good_sid(card, &srvid)) {
+				//Only add this card as bad if not softfail:
+				//Softfail is MSG_CW_NOK2
+				if (buf[1] == MSG_CW_NOK1 || !cc->extended_mode)
+					add_sid_block(card, &srvid);
+			} else
+				remove_good_sid(card, &srvid);
+				
+			if (!reader[ridx].cc_disable_retry_ecm)	{
+				//retry ecm:
+				int i = 0;
+				for (i = 0; i < CS_MAXPENDING; i++) {
+					if (ecmtask[i].idx == ecm_idx)
+						ecmtask[i].rc = 100; //Mark unused
 				}
-				else
-					remove_good_sid(card, &current_card->srvid);
-			}
-			else
-				current_card = NULL;
+			}			
 		}
-		reader[ridx].available = 1;
-		pthread_mutex_unlock(&cc->ecm_busy);
+		else
+			cs_log("%S NOK: NO CARD!", getprefix());
+
+		if (!cc->extended_mode) {
+			reader[ridx].available = 1;
+			pthread_mutex_unlock(&cc->ecm_busy);
+		}
 		
-		if (!reader[ridx].cc_disable_retry_ecm)	{
-			cc->crc++;
-		}
 		cc_send_ecm(NULL, NULL);
 
 		ret = 0;
@@ -1618,9 +1766,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (is_server) { //SERVER:
 			ECM_REQUEST *er;
 
-			memset(cc->server_card, 0, sizeof(struct cc_card));
-			cc->server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8 | buf[13];
-			cc->server_card->caid = b2i(2, data);
+			struct cc_card *server_card = malloc(sizeof(struct cc_card));
+			memset(server_card, 0, sizeof(struct cc_card));
+			server_card->id = buf[10] << 24 | buf[11] << 16 | buf[12] << 8 | buf[13];
+			server_card->caid = b2i(2, data);
 
 			if ((er = get_ecmtask())) {
 				er->caid = b2i(2, buf + 4);
@@ -1629,49 +1778,74 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				memcpy(er->ecm, buf + 17, er->l);
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
-				get_cw(er);
-				cs_debug_mask(
-						D_TRACE,
+				er->idx = ++cc->server_ecm_idx;
+
+				cs_debug_mask(	D_TRACE,
 						"%s ECM request from client: caid %04x srvid %04x(%d) prid %06x",
 						getprefix(), er->caid, er->srvid, er->l, er->prid);
-			} else
+			
+
+				struct cc_srvid srvid;
+				srvid.sid = er->srvid;
+				srvid.ecmlen = er->l;
+				add_extended_ecm_idx(g_flag, er->idx, server_card, srvid);
+
+				get_cw(er);
+
+			} else {
 				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());
+				free(server_card);
+			}
 
 		} else { //READER:
-			struct cc_current_card *current_card = &cc->current_card[cc->current_ecm_cidx];
-			struct cc_card *card = current_card->card;
+			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cc->extended_mode?g_flag:1, TRUE);
+			if (eei == NULL) {
+				cs_log("%s received extended ecm id %d but not found!",
+						getprefix(), g_flag);
+				cc_cycle_connection();
+				return 0;
+			}
+			
+			ushort ecm_idx = eei->ecm_idx;
+			struct cc_card *card = eei->card;
+			struct cc_srvid srvid = eei->srvid;
+			free(eei);
+
 			if (card) {
-				cc_cw_crypt(buf + 4, card->id);
+				if (!cc->extended_mode)
+					cc_cw_crypt(buf + 4, card->id);
 				memcpy(cc->dcw, buf + 4, 16);
-				cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
+				if (!cc->extended_mode)
+					cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
 				if (is_null_dcw(cc->dcw)) {
 					cs_log("%s null dcw received! sid=%04X(%d)", getprefix(), 
-					  current_card->srvid.sid, current_card->srvid.ecmlen);
-					add_sid_block(card, &current_card->srvid);
-					current_card->card = NULL;
-					cc->crc++; //So ecm could retryied
+					  srvid.sid, srvid.ecmlen);
+					add_sid_block(card, &srvid);
+					//ecm retry:
+					int i = 0;
+					for (i = 0; i < CS_MAXPENDING; i++) {
+						if (ecmtask[i].idx == ecm_idx)
+							ecmtask[i].rc = 100; //Mark unused
+					}
+
 					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
 				}
 				else {
-					cc->recv_ecmtask = cc->send_ecmtask;
-					int i = 0;
-					for (i = 0; i < CS_MAXPENDING; i++) {
-						if (ecmtask[i].idx == cc->send_ecmtask)
-							ecmtask[i].rc = 99; //Mark as received
-					}
+					cc->recv_ecmtask = ecm_idx;
 					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
-						cc->send_ecmtask, cs_hexdump(0, cc->dcw, 16));
-					add_good_sid(card, &current_card->srvid);
+						ecm_idx, cs_hexdump(0, cc->dcw, 16));
+					add_good_sid(card, &srvid);
 				}
 			}
 			else {
 				cs_log("%s warning: ECM-CWS respond by CCCam server without current card!", getprefix());
-				current_card = NULL;
 			}
 
-			reader[ridx].available = 1;
-			pthread_mutex_unlock(&cc->ecm_busy);
+			if (!cc->extended_mode) {
+				reader[ridx].available = 1;
+				pthread_mutex_unlock(&cc->ecm_busy);
+			}
 			
 			//cc_abort_user_ecms();
 
@@ -1770,8 +1944,10 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			}
 		} else { //Our EMM Request Ack!
 			cs_debug_mask(D_EMM, "%s EMM ACK!", getprefix());
-			reader[ridx].available = 1;
-			pthread_mutex_unlock(&cc->ecm_busy);
+			if (!cc->extended_mode) {
+				reader[ridx].available = 1;
+				pthread_mutex_unlock(&cc->ecm_busy);
+			}
 			cc->current_ecm_cidx = 0;
 			cc_send_ecm(NULL, NULL);
 		}
@@ -1793,6 +1969,9 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	return ret;
 }
 
+/**
+ * Reader: write dcw to receive
+ */
 static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
 	struct cc_data *cc = client[cs_idx].cc;
 
@@ -1811,26 +1990,62 @@ static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
 	return (-1);
 }
 
+static int is_softfail(int rc)
+{
+	//see oscam.c send_dcw() for a full list
+	switch(rc)
+	{
+		case 5: // 5 = timeout
+		case 6: // 6 = sleeping
+		case 7: // 7 = fake
+		case 10:// 10= no card
+		case 11:// 11= expdate
+		case 12:// 12= disabled
+		case 13:// 13= stopped
+		case 14:// 100= unhandled
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/**
+ * Server: send DCW to client
+ */
 static void cc_send_dcw(ECM_REQUEST *er) {
 	uchar buf[16];
 	struct cc_data *cc = client[cs_idx].cc;
 
 	memset(buf, 0, sizeof(buf));
 
-	if (er->rc <= 3) {
-		
+	struct cc_extended_ecm_idx *eei = get_extended_ecm_idx_by_idx(er->idx, TRUE);
+
+	if (er->rc <= 3 && eei && eei->card) {
+		g_flag = eei->send_idx;
 		memcpy(buf, er->cw, sizeof(buf));
 		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
 			cs_hexdump(0, buf, 16), er->cpti);
-		cc_cw_crypt(buf, cc->server_card->id);
+		if (!cc->extended_mode)
+			cc_cw_crypt(buf, eei->card->id);
 		cc_cmd_send(buf, 16, MSG_CW_ECM);
-		cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
+		if (!cc->extended_mode)
+			cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
+		free(eei->card);
 	} else {
 		cs_debug_mask(D_TRACE, "%s send cw: NOK cpti: %d", getprefix(),
 			er->cpti);
-		cc_cmd_send(NULL, 0, MSG_CW_NOK1);
+
+		if (eei)
+			g_flag = eei->send_idx;
+
+		int nok;
+		if (cc->extended_mode && is_softfail(er->rc)) //timeout
+			nok = MSG_CW_NOK2; //This signals a softfail
+		else
+			nok = MSG_CW_NOK1;
+		cc_cmd_send(NULL, 0, nok);
 	}
 	cc->server_ecm_pending--;
+	free(eei);
 }
 
 int cc_recv(uchar *buf, int l) {
@@ -1897,8 +2112,7 @@ static int cc_cli_connect(void) {
 	}
 
 	// get init seed
-	//if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
-	if ((n = read(handle, data, 16)) != 16) {
+	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, cs_idx=%d, errno=%d)", 
 			getprefix(), n, handle, client[cs_idx].udp_fd, cs_idx, err);
@@ -1920,6 +2134,7 @@ static int cc_cli_connect(void) {
 		cc->current_card = malloc(sizeof(struct cc_current_card)*CS_MAXPID);
 		memset(cc->current_card, 0, sizeof(struct cc_current_card)*CS_MAXPID);
 		cc->pending_emms = llist_create();
+		cc->extended_ecm_idx = llist_create();
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
@@ -1928,6 +2143,7 @@ static int cc_cli_connect(void) {
 	cc->cmd05_active = 0;
 	cc->cmd05_data_len = 0;
 	cc->answer_on_keepalive = time(NULL);
+	cc->extended_mode = 0;
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 
 	pthread_mutex_init(&cc->lock, NULL);
@@ -1975,8 +2191,7 @@ static int cc_cli_connect(void) {
 	cc_crypt(&cc->block[ENCRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
 	cc_cmd_send(buf, 6, MSG_NO_HEADER); // send 'CCcam' xor w/ pwd
 
-	//if ((n = recv(handle, data, 20, MSG_WAITALL)) != 20) {
-	if ((n = read(handle, data, 20)) != 20) {
+	if ((n = recv(handle, data, 20, MSG_WAITALL)) != 20) {
 		cs_log("%s login failed, pwd ack not received (n = %d)", getprefix(), n);
 		return -2;
 	}
@@ -2003,7 +2218,7 @@ static int cc_cli_connect(void) {
 
 	//Trick: when discovered partner is an Oscam Client, then we send him our version string:
 	if (cc->is_oscam_cccam) {
-		sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s)", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
+		sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s) [EXT]", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
 		cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
 	}
 
@@ -2337,9 +2552,10 @@ static int cc_srv_connect() {
 
 		client[cs_idx].cc = cc;
 		memset(client[cs_idx].cc, 0, sizeof(struct cc_data));
-		cc->server_card = malloc(sizeof(struct cc_card));
+		cc->extended_ecm_idx = llist_create();
 	}
 	cc->server_ecm_pending = 0;
+	cc->extended_mode = 0;
 	cc_use_rc4 = 0;
 	is_server = 1;
 	
