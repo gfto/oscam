@@ -1,4 +1,4 @@
-oscam.cert(5)							 oscam.cert(5)
+oscam.cert(5)												    oscam.cert(5)
 
 
 
@@ -10,17 +10,15 @@ SYNOPSIS
 
 DESCRIPTIONS
        CAID:reserved:IPK
-	  mapping  between  CAID  and  IPK/sessions keys in hex, currently for
-	  Cryptoworks only
+	  mapping between CAID and IPK/sessions keys in hex, currently for Cryptoworks only
 
 EXAMPLES
 	0100:00000000:0102030405060708090A0B0C0D0E0F
 
 SEE ALSO
-       list_smargo(1), oscam(1), oscam.conf(5), oscam.user(5) oscam.server(5),
-       oscam.srvid(5),	  oscam.guess(5),   oscam.services(5),	 oscam.ird(5),
-       oscam.ac(5)
+       list_smargo(1),	  oscam(1),    oscam.ac(5),   oscam.conf(5),   oscam.guess(5),	 oscam.ird(5),	 oscam.provid(5),
+       oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
 
-								 oscam.cert(5)
+													    oscam.cert(5)
