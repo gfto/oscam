@@ -2544,7 +2544,6 @@ void do_emm(EMM_PACKET *ep)
 	if (reader[au].b_nano[ep->emm[0]] & 0x02) //should this nano be saved?
 	{
 		char token[256];
-		//static const uchar emmtail[] = {0x00,0x00,0xFF,0xFF};
 		FILE *fp;
 		time_t rawtime;
 		time (&rawtime);
@@ -2552,7 +2551,7 @@ void do_emm(EMM_PACKET *ep)
 		timeinfo = localtime (&rawtime);	/* to access LOCAL date/time info */
 		char buf[80];
 		strftime (buf, 80, "%Y/%m/%d %H:%M:%S", timeinfo);
-		sprintf (token, "%sEMM.log", cs_confdir);
+		sprintf (token, "%s%s_emm.log", cs_confdir, reader[au].label);
 		int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 
 		if (!(fp = fopen (token, "a")))
@@ -2561,23 +2560,22 @@ void do_emm(EMM_PACKET *ep)
 		}
 		else
 		{
-			cs_log ("Succesfully added EMM to %s.", token);
-			fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, reader[au].hexserial, 8)); 
-			fprintf (fp, "%s\n", cs_hexdump (0, ep->emm, emm_length + 3));
+			fprintf (fp, "%s   %s   ", buf, cs_hexdump(0, ep->hexserial, 8)); 
+			fprintf (fp, "%s\n", cs_hexdump(0, ep->emm, emm_length + 3));
 			fclose (fp);
+			cs_log ("Succesfully added EMM to %s.", token);
 		}
 
-		sprintf (token, "%sEMM.bin", cs_confdir);
+		sprintf (token, "%s%s_emm.bin", cs_confdir, reader[au].label);
 		if (!(fp = fopen (token, "ab")))
 		{
 			cs_log ("ERROR: Cannot open file '%s' (errno=%d)\n", token, errno);
 		}
 		else 
 		{
-			if (fwrite(ep->emm, 1, emm_length+3, fp) == 1)
+			if ((int)fwrite(ep->emm, 1, emm_length+3, fp) == emm_length+3)
 			{
 				cs_log ("Succesfully added binary EMM to %s.", token);
-				//fwrite(emmtail, 1, 4, fp);
 			}
 			else
 			{
