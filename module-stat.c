@@ -213,6 +213,10 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 	//        + = adds statistic values
 	//        # = ignored because of duplicate values, temporary failures or softblocks
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
+	
+	if (stat->ecm_count < 0)
+		stat->ecm_count=0;
+		
 	if (rc == 0 || rc == 3) {
 		stat->rc = 0;
 		stat->ecm_count++;
@@ -330,7 +334,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 				continue; 
 			}
 			
-			if (stat->ecm_count > MAX_ECM_COUNT && stat->time_avg > (int)cfg->ftimeout) {
+			if (stat->ecm_count < 0||(stat->ecm_count > MAX_ECM_COUNT && stat->time_avg > (int)cfg->ftimeout)) {
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", MAX_ECM_COUNT, reader[i].label);
 				reset_stat(grs->caid, grs->prid, grs->srvid);
 				result[i] = 1;//max ecm reached, get new statistics
@@ -384,7 +388,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 					}
 				}
 				if (best_ridx2==-1 || current < best2) {
-					secondbest_ridx = best_ridx2;
+					secondbest_ridx2 = best_ridx2;
 					best_ridx2 = i;
 					best2 = current;
 				}
