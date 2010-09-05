@@ -1717,7 +1717,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (cc->just_logged_in)
 			return -1; // reader restart needed
 
-		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(g_flag, TRUE);
+		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cc->extended_mode?g_flag:1, TRUE);
 		if (eei == NULL) {
 			cs_log("%s received extended ecm NOK id %d but not found!",
 					getprefix(), g_flag);
@@ -1788,7 +1788,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				struct cc_srvid srvid;
 				srvid.sid = er->srvid;
 				srvid.ecmlen = er->l;
-				add_extended_ecm_idx(g_flag, er->idx, server_card, srvid);
+				add_extended_ecm_idx(cc->extended_mode?g_flag:1, er->idx, server_card, srvid);
 
 				get_cw(er);
 
