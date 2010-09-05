@@ -2536,6 +2536,14 @@ void do_emm(EMM_PACKET *ep)
 		return;
 	}
 
+	//test: EMM becomes skipped if auprivid doesn't match with provid from EMM
+	if(reader[au].auprovid) {
+		if(reader[au].auprovid != b2i(4, ep->provid)) {
+			cs_debug_mask(D_EMM, "emm skipped, reader %s (%d) auprovid doesn't match %06lX != %06lX!", reader[au].label, au, reader[au].auprovid, b2i(4, ep->provid));
+			return;
+		}
+	}
+
 	cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], reader[au].label, cs_hexdump(0, reader[au].hexserial, 8)); 
 	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
