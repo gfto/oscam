@@ -271,7 +271,7 @@ char *monitor_get_proto(int idx)
 #ifdef HAVE_PCSC
 			case R_PCSC		: ctyp = "pcsc";		break;
 #endif
-			case R_CCCAM	: ctyp = "cccam";		break;
+			case R_CCCAM	: ctyp = client[idx].cc_extended_ecm_mode?"cccam ext":"cccam";	break;
 			case R_CONSTCW	: ctyp = "constcw";		break;
 			case R_CS378X	: ctyp = "cs378x";		break;
 			case R_DB2COM1	: ctyp = "dbox COM1";	break;
@@ -280,7 +280,10 @@ char *monitor_get_proto(int idx)
 			}
 		}
 		break;
-	default		: ctyp = ph[client[idx].ctyp].desc;
+	default		: if (client[idx].cc_extended_ecm_mode)
+				ctyp = "cccam ext";
+			else
+				ctyp = ph[client[idx].ctyp].desc;
 	}
 	return(ctyp);
 }

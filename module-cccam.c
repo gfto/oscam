@@ -1457,6 +1457,7 @@ static int check_extended_mode(char *msg) {
 		p = strtok(NULL, ",]");
 		if (p && strncmp(p, "EXT", 3)==0) {
 			cc->extended_mode = 1;
+			client[cs_idx].cc_extended_ecm_mode=1;
 			cs_log("%s extended ECM mode", getprefix());
 			has_param = 1;
 		}
@@ -2144,6 +2145,7 @@ static int cc_cli_connect(void) {
 	cc->cmd05_data_len = 0;
 	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
+	client[cs_idx].cc_extended_ecm_mode = 0;
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 
 	pthread_mutex_init(&cc->lock, NULL);
@@ -2571,6 +2573,7 @@ static int cc_srv_connect() {
 	}
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
+	client[cs_idx].cc_extended_ecm_mode=0;
 	cc_use_rc4 = 0;
 	is_server = 1;
 	
