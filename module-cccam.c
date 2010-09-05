@@ -903,7 +903,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 		add_extended_ecm_idx(send_idx, cur_er->idx, card, cur_srvid);
 
-		reader[ridx].cc_currenthops = card->hop + 1;
+		reader[ridx].cc_currenthops = card->hop;
 
 		cs_log("%s sending ecm for sid %04X(%d) to card %08x, hop %d, ecmtask %d",
 				getprefix(), cur_er->srvid, cur_er->l, card->id, card->hop
@@ -1582,7 +1582,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		card->id = b2i(4, buf + 4);
 		card->sub_id = b2i(3, buf + 9);
 		card->caid = b2i(2, buf + 12);
-		card->hop = buf[14];
+		card->hop = buf[14] + 1;
 		card->maxdown = buf[15];
 		memcpy(card->hexserial, buf + 16, 8); //HEXSERIAL!!
 
@@ -2475,6 +2475,21 @@ static int cc_srv_report_cards() {
 						&itr);
 				while (caid_info) {
 					if (caid_info->hop <= maxhops) {
+						if (client[cs_idx].ctab.caid[0]) {
+							int i;
+							int found=0;
+							for (i=0;i<CS_MAXCAIDTAB;i++) {
+								if (client[cs_idx].ctab.caid[i]==caid_info->caid) {
+									found=1;
+									break;
+								}
+							}
+							if (!found) {
+								caid_info = llist_itr_next(&itr);
+								continue;
+							}
+							
+						}
 						memset(buf, 0, sizeof(buf));
 						buf[0] = id >> 24;
 						buf[1] = id >> 16;
@@ -2489,7 +2504,7 @@ static int cc_srv_report_cards() {
 						}
 						buf[8] = caid_info->caid >> 8;
 						buf[9] = caid_info->caid & 0xff;
-						buf[10] = caid_info->hop+1;
+						buf[10] = caid_info->hop;
 						buf[11] = reshare;
 						//memcpy(buf + 12, caid_info->hexserial, 8);
 						int j = 0;
