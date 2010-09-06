@@ -1033,6 +1033,14 @@ void chk_t_cccam(char *token, char *value)
 		strncpy((char*)cfg->cc_version, value, sizeof(cfg->cc_version) - 1);
 		return;
 	}
+	// cccam: Update cards interval
+	if (!strcmp(token, "updateinterval")) {
+	        if (strlen(value) == 0) 
+	                cfg->cc_update_interval = 4*60; //4x60s = 4min
+                else
+                        cfg->cc_update_interval = atoi(value);
+	}
+	
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in cccam section not recognized\n",token);
@@ -1943,6 +1951,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg->cc_port);
 		fprintf_conf(f, CONFVARWIDTH, "reshare", "%d\n", cfg->cc_reshare);
 		fprintf_conf(f, CONFVARWIDTH, "version", "%s\n", cfg->cc_version);
+		fprintf_conf(f, CONFVARWIDTH, "updateinterval", "%d\n", cfg->cc_update_interval);
 		fprintf(f,"\n");
 	}
 

@@ -292,6 +292,8 @@ int chk_ctab(ushort caid, CAIDTAB *ctab) {
   int i;
   for (i=0;i<CS_MAXCAIDTAB;i++)
   {
+    if (!ctab->caid[i])
+      return 0;
     if ((caid & ctab->mask[i]) == ctab->caid[i])
       return 1;
   }

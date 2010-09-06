@@ -2306,7 +2306,8 @@ static int cc_srv_report_cards() {
 		flt = 0;
 		if (/*!reader[r].caid[0] && */reader[r].ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
-				if (reader[r].ftab.filts[j].caid) {
+				if (reader[r].ftab.filts[j].caid && 
+						chk_ctab(reader[r].ftab.filts[j].caid, &client[cs_idx].ctab)) {
 					memset(buf, 0, sizeof(buf));
 					buf[0] = id >> 24;
 					buf[1] = id >> 16;
@@ -2355,6 +2356,9 @@ static int cc_srv_report_cards() {
 				//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", reader[r].ctab.caid[j], reader[r].ctab.cmap[j]);
 				ushort lcaid = reader[r].ctab.caid[j];
 
+				if (!chk_ctab(lcaid, &client[cs_idx].ctab))
+					continue;
+					
 				if (!lcaid || (lcaid == 0xFFFF))
 					lcaid = reader[r].ctab.cmap[j];
 
@@ -2390,7 +2394,7 @@ static int cc_srv_report_cards() {
 			}
 		}
 
-		if (reader[r].caid[0] && !flt) {
+		if (reader[r].caid[0] && !flt && chk_ctab(reader[r].caid[0], &client[cs_idx].ctab)) {
 			//cs_log("tcp_connected: %d card_status: %d ", reader[r].tcp_connected, reader[r].card_status);
 			memset(buf, 0, sizeof(buf));
 			buf[0] = id >> 24;
@@ -2701,11 +2705,11 @@ static int cc_srv_connect() {
 				struct timeb cur_time;
 				cs_ftime(&cur_time);
 				timeout = cc->ecm_time;
-				timeout.millitm += cfg->ctimeout*20; //ctimeout normaly 6000ms, 20x6000ms = 20x6s = 120s = 2min
+				timeout.millitm += cfg->cc_update_interval*1000; 
 				timeout.time += timeout.millitm / 1000;
 				timeout.millitm = timeout.millitm % 1000;
 			
-				int force_card_updates = comp_timeb(&cur_time, &timeout) > 0;
+				int force_card_updates = cfg->cc_update_interval && comp_timeb(&cur_time, &timeout) > 0;
 				ulong new_hexserial_crc = get_reader_hexserial_crc();
 				if (force_card_updates || new_hexserial_crc != hexserial_crc) {
 					cs_debug_mask(D_TRACE, "%s update share list", getprefix());
@@ -2772,6 +2776,8 @@ int cc_cli_init_int() {
 			(void *)&cfg->netprio, sizeof(ulong));
 #endif
 	reader[ridx].tcp_ito = 1; //60sec...This now invokes ph_idle()
+	if (reader[ridx].cc_maxhop <= 0)
+		reader[ridx].cc_maxhop = 10;
 
 	memset((char *) &client[cs_idx].udp_sa, 0, sizeof(client[cs_idx].udp_sa));
 	client[cs_idx].udp_sa.sin_family = AF_INET;
