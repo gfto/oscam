@@ -182,6 +182,8 @@ static void camd35_request_emm(ECM_REQUEST *er)
 			memcpy(mbuf + 12, i2b(4, reader[au].auprovid), 4);
 		else
 			memcpy(mbuf + 12, i2b(4, er->prid), 4);
+	} else {
+		memcpy(mbuf + 12, i2b(4, er->prid), 4);
 	}
 
 	memcpy(mbuf + 16, i2b(2, er->pid), 2);
