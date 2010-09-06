@@ -2466,7 +2466,7 @@ static int cc_srv_report_cards() {
 							int i;
 							int found=0;
 							for (i=0;i<CS_MAXCAIDTAB;i++) {
-								if (caid_info->caid & ctab->mask[i] == ctab->caid[i]) {
+								if ((caid_info->caid & ctab->mask[i]) == ctab->caid[i]) {
 									found=1;
 									break;
 								}
