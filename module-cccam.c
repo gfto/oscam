@@ -2312,6 +2312,10 @@ static int cc_srv_report_cards() {
 		if (reshare < 0)
 			continue;
 			
+		if (!reader[r].cc_id) {
+			reader[r].cc_id = fast_rnd() << 8 | fast_rnd();
+		}
+			
 		flt = 0;
 		if (/*!reader[r].caid[0] && */reader[r].ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
@@ -2321,14 +2325,6 @@ static int cc_srv_report_cards() {
 					buf[1] = id >> 16;
 					buf[2] = id >> 8;
 					buf[3] = id & 0xff;
-					//if (!reader[r].cc_id)
-					{
-						buf[6] = 0x49 + r;
-						buf[7] = 0x10 + j;
-						reader[r].cc_id = b2i(3, buf + 5);
-					}
-					//else
-					//reader[r].cc_id++;
 					buf[5] = reader[r].cc_id >> 16;
 					buf[6] = reader[r].cc_id >> 8;
 					buf[7] = reader[r].cc_id & 0xFF;
@@ -2381,14 +2377,6 @@ static int cc_srv_report_cards() {
 					buf[1] = id >> 16;
 					buf[2] = id >> 8;
 					buf[3] = id & 0xff;
-					//if (!reader[r].cc_id)
-					{
-						buf[6] = 0x48 + r;
-						buf[7] = 0x63 + j;
-						reader[r].cc_id = b2i(3, buf + 5);
-					}
-					//else
-					//reader[r].cc_id++;
 					buf[5] = reader[r].cc_id >> 16;
 					buf[6] = reader[r].cc_id >> 8;
 					buf[7] = reader[r].cc_id & 0xFF;
@@ -2425,10 +2413,6 @@ static int cc_srv_report_cards() {
 			buf[5] = reader[r].cc_id >> 16;
 			buf[6] = reader[r].cc_id >> 8;
 			buf[7] = reader[r].cc_id & 0xFF;
-			if (!reader[r].cc_id) {
-				buf[6] = 0x99;
-				buf[7] = 0x63 + r;
-			}
 			buf[8] = reader[r].caid[0] >> 8;
 			buf[9] = reader[r].caid[0] & 0xff;
 			buf[10] = hop;
@@ -2450,14 +2434,14 @@ static int cc_srv_report_cards() {
 
 			if ((reader[r].tcp_connected || reader[r].card_status
 					== CARD_INSERTED) /*&& !reader[r].cc_id*/) {
-				reader[r].cc_id = b2i(3, buf + 5);
+				//reader[r].cc_id = b2i(3, buf + 5);
 				int len = 30 + (j * 7);
 				cc_add_reported_carddata(reported_carddatas, buf, len);
 				cc_cmd_send(buf, len, MSG_NEW_CARD);
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
 			} else if ((reader[r].card_status != CARD_INSERTED)
 					&& (!reader[r].tcp_connected) && reader[r].cc_id) {
-				reader[r].cc_id = 0;
+				//reader[r].cc_id = 0;
 				cc_cmd_send(buf, 30 + (j * 7), MSG_CARD_REMOVED);
 				//cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], reader[r].label);
 			}
@@ -2500,10 +2484,6 @@ static int cc_srv_report_cards() {
 						buf[5] = reader[r].cc_id >> 16;
 						buf[6] = reader[r].cc_id >> 8;
 						buf[7] = reader[r].cc_id & 0xFF;
-						if (!reader[r].cc_id) {
-							buf[6] = 0x99;
-							buf[7] = 0x63 + r;
-						}
 						buf[8] = caid_info->caid >> 8;
 						buf[9] = caid_info->caid & 0xff;
 						buf[10] = caid_info->hop;
@@ -2523,7 +2503,6 @@ static int cc_srv_report_cards() {
 						memcpy(buf + 22 + (j * 7), cc->node_id, 8);
 						id++;
 
-						reader[r].cc_id = b2i(3, buf + 5);
 						int len = 30 + (j * 7);
 						cc_cmd_send(buf, len, MSG_NEW_CARD);
 						cc_add_reported_carddata(reported_carddatas, buf, len);
