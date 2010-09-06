@@ -2461,11 +2461,12 @@ static int cc_srv_report_cards() {
 						&itr);
 				while (caid_info) {
 					if (caid_info->hop <= maxhops) {
-						if (client[cs_idx].ctab.caid[0]) {
+						CAIDTAB *ctab = &client[cs_idx].ctab;
+						if (ctab->caid[0]) {
 							int i;
 							int found=0;
 							for (i=0;i<CS_MAXCAIDTAB;i++) {
-								if (client[cs_idx].ctab.caid[i]==caid_info->caid) {
+								if (caid_info->caid & ctab->mask[i] == ctab->caid[i]) {
 									found=1;
 									break;
 								}
