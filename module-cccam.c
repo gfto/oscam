@@ -2449,7 +2449,7 @@ static int cc_srv_report_cards() {
 				while (caid_info) {
 					if (caid_info->hop <= maxhops &&
 							chk_ctab(caid_info->caid, &client[cs_idx].ctab) &&
-							chk_ctab(caid_info->caid, &reader[ridx].ctab)) {
+							chk_ctab(caid_info->caid, &reader[r].ctab)) {
 						memset(buf, 0, sizeof(buf));
 						buf[0] = id >> 24;
 						buf[1] = id >> 16;
