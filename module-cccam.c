@@ -1396,19 +1396,6 @@ static void rebuild_caidinfos(struct cc_data *cc) {
 //	}
 //}
 
-static int caid_filtered(int ridx, int caid) {
-	int defined = 0;
-	int i;
-	for (i = 0; i < CS_MAXREADERCAID; i++) {
-		if (reader[ridx].caid[i]) {
-			if (reader[ridx].caid[i] == caid)
-				return 0;
-			defined = 1;
-		}
-	}
-	return defined;
-}
-
 static int is_null_dcw(uint8 *dcw)
 {
 	int i;
@@ -1566,7 +1553,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (buf[14] > reader[ridx].cc_maxhop)
 			break;
 
-		if (caid_filtered(ridx, b2i(2, buf + 12)))
+		if (!chk_ctab(b2i(2, buf + 12), &reader[ridx].ctab))
 			break;
 
 		struct cc_card *card = malloc(sizeof(struct cc_card));
@@ -2460,23 +2447,9 @@ static int cc_srv_report_cards() {
 				struct cc_caid_info *caid_info = llist_itr_init(cc->server_caid_infos[r],
 						&itr);
 				while (caid_info) {
-					if (caid_info->hop <= maxhops) {
-						CAIDTAB *ctab = &client[cs_idx].ctab;
-						if (ctab->caid[0]) {
-							int i;
-							int found=0;
-							for (i=0;i<CS_MAXCAIDTAB;i++) {
-								if ((caid_info->caid & ctab->mask[i]) == ctab->caid[i]) {
-									found=1;
-									break;
-								}
-							}
-							if (!found) {
-								caid_info = llist_itr_next(&itr);
-								continue;
-							}
-							
-						}
+					if (caid_info->hop <= maxhops &&
+							chk_ctab(caid_info->caid, &client[cs_idx].ctab) &&
+							chk_ctab(caid_info->caid, &reader[ridx].ctab)) {
 						memset(buf, 0, sizeof(buf));
 						buf[0] = id >> 24;
 						buf[1] = id >> 16;

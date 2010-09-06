@@ -285,7 +285,7 @@ int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
   return 1;
 }
 
-int chk_caid(ushort caid, CAIDTAB *ctab) {
+int chk_ctab(ushort caid, CAIDTAB *ctab) {
   if (!caid || !ctab->caid[0])
     return 1;
     
@@ -313,7 +313,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     return 0;
   }
 
-  if (!chk_caid(er->ocaid, &rdr->ctab) || !chk_caid(er->caid, &rdr->ctab)) {
+  if (!chk_ctab(er->ocaid, &rdr->ctab) || !chk_ctab(er->caid, &rdr->ctab)) {
     cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
     return 0;
   }
