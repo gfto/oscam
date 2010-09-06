@@ -125,10 +125,10 @@ void calc_stat(READER_STAT *stat)
 {
 	int i;
 	int c=0;
-	int t = 0;
+	long t = 0;
 	for (i = 0; i < MAX_STAT_TIME; i++) {
 		if (stat->time_stat[i] > 0) {
-			t += stat->time_stat[i];
+			t += (long)stat->time_stat[i];
 			c++;
 		}
 	}
