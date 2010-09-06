@@ -175,7 +175,15 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	memset(mbuf, 0, sizeof(mbuf));
 	mbuf[2] = mbuf[3] = 0xff;			// must not be zero
 	memcpy(mbuf + 8, i2b(2, er->srvid), 2);
-	memcpy(mbuf + 12, i2b(4, er->prid), 4);
+
+	//override request provid with auprovid if set in CMD05
+	if(reader[au].auprovid) {
+		if(reader[au].auprovid != er->prid)
+			memcpy(mbuf + 12, i2b(4, reader[au].auprovid), 4);
+		else
+			memcpy(mbuf + 12, i2b(4, er->prid), 4);
+	}
+
 	memcpy(mbuf + 16, i2b(2, er->pid), 2);
 	mbuf[0] = 5;
 	mbuf[1] = 111;
