@@ -75,6 +75,14 @@ static void cc_init_crypt(struct cc_crypt_block *block, uint8 *key, int len) {
 	block->sum = 0;
 }
 
+static int is_au() {
+	int au = client[cs_idx].au;
+	if ((au < 0) || (au > CS_MAXREADER)) 
+		return 0;
+	return 1;
+}
+				
+
 static void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		cc_crypt_mode_t mode) {
 	int i;
@@ -1926,8 +1934,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			if (l > 4) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
-				int au = client[cs_idx].au;
-				if ((au < 0) || (au > CS_MAXREADER)) {
+				if (!is_au()) {
 					cs_debug_mask(D_EMM, "%s EMM Request discarded because au is not assigned to an reader!", getprefix());
 					return 0;
 				}
@@ -2268,7 +2275,7 @@ struct s_auth *get_account(char *usr) {
  */
 static ulong get_reader_hexserial_crc()
 {
-	if (!client[cs_idx].au)
+	if (!is_au())
 		return 0;
 		
 	ulong crc = 0;
@@ -2341,7 +2348,7 @@ static int cc_srv_report_cards() {
 					buf[9] = reader[r].ftab.filts[j].caid & 0xff;
 					buf[10] = hop;
 					buf[11] = reshare;
-					if (!reader[r].audisabled && client[cs_idx].au)
+					if (!reader[r].audisabled && is_au())
 						memcpy(buf + 12, reader[r].hexserial, 8);
 					buf[20] = reader[r].ftab.filts[j].nprids;
 					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
@@ -2396,7 +2403,7 @@ static int cc_srv_report_cards() {
 					buf[9] = lcaid & 0xff;
 					buf[10] = hop;
 					buf[11] = reshare;
-					if (!reader[r].audisabled && client[cs_idx].au)
+					if (!reader[r].audisabled && is_au())
 						memcpy(buf + 12, reader[r].hexserial, 8);
 					buf[20] = 1;
 					//cs_log("CAID map CCcam card report caid: %04X nodeid: %s subid: %06X", lcaid, cs_hexdump(0, cc->peer_node_id, 8), reader[r].cc_id);
@@ -2429,7 +2436,7 @@ static int cc_srv_report_cards() {
 			buf[9] = reader[r].caid[0] & 0xff;
 			buf[10] = hop;
 			buf[11] = reshare;
-			if (!reader[r].audisabled && client[cs_idx].au)
+			if (!reader[r].audisabled && is_au())
 				memcpy(buf + 12, reader[r].hexserial, 8);
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
