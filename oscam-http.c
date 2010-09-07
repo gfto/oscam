@@ -357,6 +357,8 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 		tpl_addVar(vars, 0, "VERSIONSELECTED4", "selected");
 	}
 
+	tpl_printf(vars, 0, "UPDATEINTERVAL", "%d", cfg->cc_update_interval);
+
 	fputs(tpl_getTpl(vars, "CONFIGCCCAM"), f);
 }
 

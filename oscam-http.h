@@ -816,6 +816,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<OPTION ##VERSIONSELECTED3##>2.1.3</OPTION>\
 			<OPTION ##VERSIONSELECTED4##>2.1.4</OPTION>\
 		</SELECT></TD></TR>\n\
+		<TR><TD>Update Interval:</TD><TD><input name=\"updateinterval\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##UPDATEINTERVAL##\"></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
