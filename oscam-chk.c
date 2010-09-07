@@ -48,6 +48,48 @@ int chk_srvid(ECM_REQUEST *er, int idx)
   return(rc);
 }
 
+int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab)
+{
+  int i, rc=0;
+
+  if (!sidtab->num_caid)
+    rc|=1;
+  else
+    for (i=0; (i<sidtab->num_caid) && (!(rc&1)); i++)
+      if (caid==sidtab->caid[i]) rc|=1;
+
+  if (!sidtab->num_provid)
+    rc|=2;
+  else
+    for (i=0; (i<sidtab->num_provid) && (!(rc&2)); i++)
+      if (provid==sidtab->provid[i]) rc|=2;
+
+  return(rc==3);
+}
+
+int chk_srvid_by_caid_prov(ushort caid, ulong provid, int idx) {
+  int nr, rc=0;
+  SIDTAB *sidtab;
+
+  if (!client[idx].sidtabok)
+  {
+    if (!client[idx].sidtabno) return(1);
+    rc=1;
+  }
+  for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
+    if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
+    {
+      if ((client[idx].sidtabno&(1<<nr)) &&
+          (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
+        return(0);
+      if ((client[idx].sidtabok&(1<<nr)) &&
+          (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
+        rc=1;
+    }
+  return(rc);
+
+}
+
 // server filter for newcamd
 int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 {
@@ -301,44 +343,52 @@ int chk_ctab(ushort caid, CAIDTAB *ctab) {
 }
 
 int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
+  //Checking connected & group valid:
   if (!((rdr->fd) && (rdr->grp&client[cs_idx].grp)))
     return(0);
 
+  //Checking enabled and not deleted:
   if (!rdr->enable || rdr->deleted) {
     cs_debug_mask(D_TRACE, "reader disabled/deleted %s", rdr->label);
     return(0);
   }
     
-  //Schlocke reader-defined function 
+  //Schlocke reader-defined function, reader-self-check: 
   if (rdr->ph.c_available && !rdr->ph.c_available(rdr->ridx, AVAIL_CHECK_CONNECTED)) {
     cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
     return 0;
   }
 
+  //Checking caids:
   if (!chk_ctab(er->ocaid, &rdr->ctab) || !chk_ctab(er->caid, &rdr->ctab)) {
     cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
     return 0;
   }
     
+  //Checking services:
   if (!chk_srvid(er, rdr->cs_idx)) {
     cs_debug_mask(D_TRACE, "service %04X not matching  reader %s", er->srvid, rdr->label);
     return(0);
   }
 
+  //Checking ident:
   if (!chk_rfilter(er, rdr)) {
     cs_debug_mask(D_TRACE, "r-filter reader %s", rdr->label);
     return(0);
   }
 
+  //Check ECM nanos:
   if (!chk_class(er, &rdr->cltab, "reader", rdr->label)) {
     cs_debug_mask(D_TRACE, "class filter reader %s", rdr->label);    
     return(0);
   }
 
+  //Checking chid:
   if (!chk_chid(er, &rdr->fchid, "reader", rdr->label)) {
     cs_debug_mask(D_TRACE, "chid filter reader %s", rdr->label);    
     return(0);
   }
  
+  //All checks done, reader is matching!
   return(1);
 }

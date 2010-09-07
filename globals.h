@@ -1118,7 +1118,9 @@ extern void update_reader_config(uchar *ptr);
 extern void send_restart_cardreader(int ridx, int force_now);
 extern void send_clear_reader_stat(int ridx);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
-
+extern int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab);
+extern int chk_srvid_by_caid_prov(ushort caid, ulong provid, int idx);
+                                        
 #ifdef CS_ANTICASC
 //extern void start_anticascader(void);
 extern void init_ac(void);
