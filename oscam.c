@@ -1078,7 +1078,10 @@ static void cs_client_resolve()
         if (res) freeaddrinfo(res);
         pthread_mutex_unlock(&gethostbyname_lock);
       }
-    sleep(cfg->resolvedelay);
+    if (cfg->resolvedelay<=0)
+    	sleep(30);
+    else
+        sleep(cfg->resolvedelay);
   }
 }
 
