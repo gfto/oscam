@@ -2494,10 +2494,9 @@ void get_cw(ECM_REQUEST *er)
 
 void log_emm_request(int auidx)
 {
-//  cs_log("%s send emm-request (reader=%s, caid=%04X)",
-//         cs_inet_ntoa(client[cs_idx].ip), reader[auidx].label, reader[auidx].caid[0]);
-  cs_log("%s emm-request sent (reader=%s, caid=%04X)",
-         username(cs_idx), reader[auidx].label, reader[auidx].caid[0]);
+	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06lX)",
+			username(cs_idx), reader[auidx].label, reader[auidx].caid[0],
+			reader[auidx].auprovid ? reader[auidx].auprovid : b2i(4, reader[auidx].prid[0]));
 }
 
 void do_emm(EMM_PACKET *ep)
