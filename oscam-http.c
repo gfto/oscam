@@ -1579,101 +1579,30 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 	/* build entitlements from reader init history */
 	int ridx;
 	char *reader_ = getParam(params, "reader");
-#ifdef CS_RDR_INIT_HIST	
-	char *p;
-	if(strlen(reader_) > 0) {
-		for (ridx=0; ridx<CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
-		if(ridx<CS_MAXREADER) {
 
-			if (reader[ridx].typ == R_CCCAM) {
-
-				//struct cc_data *ctest = reader[ridx].cc;
-
-				//tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
-				//tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
-				//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
-
-				char fname[40];
-				snprintf(fname, sizeof(fname), "%s/caidinfos.%d", get_tmp_dir(), ridx);
-				FILE *file = fopen(fname, "r");
-				if (file) {
-					int cardcount = 0;
-					uint16 version = 0;
-					fread(&version, 1, sizeof(uint16), file);
-					if (version == CAIDFILE_VERSION) {
-						uint16 caid = 0;
-						uint8 hop = 0;
-						uint32 remote_id = 0;
-						char ascprovid[7];
-						char *provider="";
-						do {
-							if (fread(&caid, 1, sizeof(caid), file) <= 0)
-								break;
-							if (fread(&hop, 1, sizeof(hop), file) <= 0)
-								break;
-							if (fread(&remote_id, 1, sizeof(remote_id), file) <= 0)
-								break;
-							tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
-							uint8 count = 0;
-							if (fread(&count, 1, sizeof(count), file) <= 0)
-								break;
-							uint8 prov[3];
-							int revcount = count;
-							while (count > 0) {
-								if (fread(prov, 1, sizeof(prov), file) <= 0)
-									break;
-								snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X", prov[0], prov[1], prov[2]);
-								provider = get_provider(caid, a2i(ascprovid, 3));
-								
-								tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
-										revcount - count, ascprovid, provider);
-								count--;
-							}
-							tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
-							cardcount++;
-						} while (1);
-					}
-					fclose(file);
-					if(cardcount)
-						tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d Cards found on this reader<BR><BR>\n", cardcount);
-					tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
-				} else {
-					tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
-				}
-
-			} else {
-				for (p=(char *)reader[ridx].init_history; *p; p+=strlen(p)+1) {
-					tpl_printf(vars, 1, "LOGHISTORY", "%s<BR>\n", p);
-				}
-			}
-		}
-		tpl_addVar(vars, 0, "READERNAME", reader_);
-	}
-#else
 	if (cfg->saveinithistory && strlen(reader_) > 0) {
-		for (ridx=0; ridx<CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
+		for (ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
 
 		if (reader[ridx].typ == R_CCCAM) {
 
-			//struct cc_data *ctest = reader[ridx].cc;
-
-			//tpl_printf(vars, 1, "LOGHISTORY", "peer node id: %s<BR>\n", cs_hexdump(0, ctest->peer_node_id, 8));
-			//tpl_printf(vars, 1, "LOGHISTORY", "node id: %s<BR>\n", cs_hexdump(0, ctest->node_id, 8));
-			//tpl_printf(vars, 1, "LOGHISTORY", "card cnt: %d<BR><BR>\n", ctest->card_count);
-
 			char fname[40];
 			snprintf(fname, sizeof(fname), "%s/caidinfos.%d", get_tmp_dir(), ridx);
+
 			FILE *file = fopen(fname, "r");
 			if (file) {
+
 				int cardcount = 0;
 				uint16 version = 0;
 				fread(&version, 1, sizeof(uint16), file);
+
 				if (version == CAIDFILE_VERSION) {
+
 					uint16 caid = 0;
 					uint8 hop = 0;
 					uint32 remote_id = 0;
 					char ascprovid[7];
 					char *provider="";
+
 					do {
 						if (fread(&caid, 1, sizeof(caid), file) <= 0)
 							break;
@@ -1682,34 +1611,42 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						if (fread(&remote_id, 1, sizeof(remote_id), file) <= 0)
 							break;
 						tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
+
 						uint8 count = 0;
 						if (fread(&count, 1, sizeof(count), file) <= 0)
 							break;
 						uint8 prov[3];
 						int revcount = count;
+
 						while (count > 0) {
 							if (fread(prov, 1, sizeof(prov), file) <= 0)
 								break;
 							snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X", prov[0], prov[1], prov[2]);
 							provider = get_provider(caid, a2i(ascprovid, 3));
-							
+
 							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
 									revcount - count, ascprovid, provider);
 							count--;
 						}
+
 						tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
 						cardcount++;
+
 					} while (1);
 				}
 				fclose(file);
 				if(cardcount)
 					tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d Cards found on this reader<BR><BR>\n", cardcount);
+
 				tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
+
 			} else {
 				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
 			}
 
 		} else {
+
+			// normal non-cccam reader
 			FILE *fp;
 			char filename[32];
 			char buffer[128];
@@ -1724,11 +1661,13 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			}
 			tpl_addVar(vars, 0, "READERNAME", reader_);
 		}
+
 	} else {
 		tpl_addVar(vars, 0, "LOGHISTORY", "You have to set saveinithistory=1 in your config to see Entitlements!<BR>\n");
 	}
-#endif
+
 	fputs(tpl_getTpl(vars, "ENTITLEMENTS"), f);
+
 }
 
 void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
