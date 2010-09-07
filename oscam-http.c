@@ -1596,34 +1596,41 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				FILE *file = fopen(fname, "r");
 				if (file) {
 					int cardcount = 0;
-					uint16 caid = 0;
-					uint8 hop = 0;
-					char ascprovid[7];
-					char *provider="";
-					do {
-						if (fread(&caid, 1, sizeof(caid), file) <= 0)
-							break;
-						if (fread(&hop, 1, sizeof(hop), file) <= 0)
-							break;
-						tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
-						uint8 count = 0;
-						if (fread(&count, 1, sizeof(count), file) <= 0)
-							break;
-						uint8 prov[3];
-						int revcount = count;
-						while (count > 0) {
-							if (fread(prov, 1, sizeof(prov), file) <= 0)
+					uint16 version = 0;
+					fread(&version, 1, sizeof(uint16), file);
+					if (version == CAIDFILE_VERSION) {
+						uint16 caid = 0;
+						uint8 hop = 0;
+						uint32 remote_id = 0;
+						char ascprovid[7];
+						char *provider="";
+						do {
+							if (fread(&caid, 1, sizeof(caid), file) <= 0)
 								break;
-							snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X", prov[0], prov[1], prov[2]);
-							provider = get_provider(caid, a2i(ascprovid, 3));
-
-							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
-									revcount - count, ascprovid, provider);
-							count--;
-						}
-						tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
-						cardcount++;
-					} while (1);
+							if (fread(&hop, 1, sizeof(hop), file) <= 0)
+								break;
+							if (fread(&remote_id, 1, sizeof(remote_id), file) <= 0)
+								break;
+							tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
+							uint8 count = 0;
+							if (fread(&count, 1, sizeof(count), file) <= 0)
+								break;
+							uint8 prov[3];
+							int revcount = count;
+							while (count > 0) {
+								if (fread(prov, 1, sizeof(prov), file) <= 0)
+									break;
+								snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X", prov[0], prov[1], prov[2]);
+								provider = get_provider(caid, a2i(ascprovid, 3));
+								
+								tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
+										revcount - count, ascprovid, provider);
+								count--;
+							}
+							tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
+							cardcount++;
+						} while (1);
+					}
 					fclose(file);
 					if(cardcount)
 						tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d Cards found on this reader<BR><BR>\n", cardcount);
@@ -1657,34 +1664,41 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			FILE *file = fopen(fname, "r");
 			if (file) {
 				int cardcount = 0;
-				uint16 caid = 0;
-				uint8 hop = 0;
-				char ascprovid[7];
-				char *provider="";
-				do {
-					if (fread(&caid, 1, sizeof(caid), file) <= 0)
-						break;
-					if (fread(&hop, 1, sizeof(hop), file) <= 0)
-						break;
-					tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
-					uint8 count = 0;
-					if (fread(&count, 1, sizeof(count), file) <= 0)
-						break;
-					uint8 prov[3];
-					int revcount = count;
-					while (count > 0) {
-						if (fread(prov, 1, sizeof(prov), file) <= 0)
+				uint16 version = 0;
+				fread(&version, 1, sizeof(uint16), file);
+				if (version == CAIDFILE_VERSION) {
+					uint16 caid = 0;
+					uint8 hop = 0;
+					uint32 remote_id = 0;
+					char ascprovid[7];
+					char *provider="";
+					do {
+						if (fread(&caid, 1, sizeof(caid), file) <= 0)
 							break;
-						snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X", prov[0], prov[1], prov[2]);
-						provider = get_provider(caid, a2i(ascprovid, 3));
-
-						tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
-								revcount - count, ascprovid, provider);
-						count--;
-					}
-					tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
-					cardcount++;
-				} while (1);
+						if (fread(&hop, 1, sizeof(hop), file) <= 0)
+							break;
+						if (fread(&remote_id, 1, sizeof(remote_id), file) <= 0)
+							break;
+						tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
+						uint8 count = 0;
+						if (fread(&count, 1, sizeof(count), file) <= 0)
+							break;
+						uint8 prov[3];
+						int revcount = count;
+						while (count > 0) {
+							if (fread(prov, 1, sizeof(prov), file) <= 0)
+								break;
+							snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X", prov[0], prov[1], prov[2]);
+							provider = get_provider(caid, a2i(ascprovid, 3));
+							
+							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
+									revcount - count, ascprovid, provider);
+							count--;
+						}
+						tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
+						cardcount++;
+					} while (1);
+				}
 				fclose(file);
 				if(cardcount)
 					tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d Cards found on this reader<BR><BR>\n", cardcount);

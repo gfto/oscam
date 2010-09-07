@@ -18,6 +18,8 @@
 #  define MSG_WAITALL 0
 #endif
 
+#define CAIDFILE_VERSION 0xffff
+
 typedef enum {
 	DECRYPT, ENCRYPT
 } cc_crypt_mode_t;

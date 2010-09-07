@@ -1220,6 +1220,11 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
 	char fname[40];
 	fname_caidinfos(fname, index);
 	FILE *file = fopen(fname, "w");
+	
+	//Version handling:
+	uint16 version = CAIDFILE_VERSION;
+	fwrite(&version, 1, sizeof(uint16), file);
+	
 	LLIST_ITR itr;
 	LLIST_ITR itr_prov;
 	int caid_count = 0;
@@ -1228,7 +1233,7 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
 	while (caid_info) {
 		fwrite(&caid_info->caid, 1, sizeof(uint16), file);
 		fwrite(&caid_info->hop, 1, sizeof(uint8), file);
-
+		fwrite(&caid_info->remote_id, 1, sizeof(uint32), file);
 		caid_count++;
 		uint8 count = 0;
 		uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
@@ -1251,6 +1256,7 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
 			prov_count);
 }
 
+
 /**
  * Loads caidinfos from /tmp/caidinfos.<readerindex>
  */
@@ -1261,16 +1267,26 @@ static LLIST *loadCaidInfos(int index) {
 	if (!file)
 		return NULL;
 
+	//Version check to handle caid file changes:
+	uint16 version = 0;
+	fread(&version, 1, sizeof(uint16), file);
+	if (version != CAIDFILE_VERSION)
+		return NULL;
+		 
 	int caid_count = 0;
 	int prov_count = 0;
 
 	uint16 caid = 0;
 	uint8 hop = 0;
+	uint32 remote_id = 0;
+	
 	LLIST *caid_infos = llist_create();
 	do {
 		if (fread(&caid, 1, sizeof(uint16), file) <= 0)
 			break;
 		if (fread(&hop, 1, sizeof(uint8), file) <= 0)
+			break;
+		if (fread(&remote_id, 1, sizeof(uint32), file) <= 0)
 			break;
 		caid_count++;
 		uint8 count = 0;
@@ -1279,6 +1295,7 @@ static LLIST *loadCaidInfos(int index) {
 		struct cc_caid_info *caid_info = malloc(sizeof(struct cc_caid_info));
 		caid_info->caid = caid;
 		caid_info->hop = hop;
+		caid_info->remote_id = remote_id;
 		caid_info->provs = llist_create();
 		uint8 *prov;
 		while (count > 0) {
@@ -1306,7 +1323,9 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card) {
 	LLIST_ITR itr;
 	struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos, &itr);
 	while (caid_info) {
-		if (caid_info->caid == card->caid && caid_info->hop == card->hop)
+		if (caid_info->caid == card->caid && 
+				caid_info->hop == card->hop && 
+				caid_info->remote_id == card->remote_id)
 			if (llist_count(caid_info->provs) < CS_MAXPROV)
 				break;
 		caid_info = llist_itr_next(&itr);
@@ -1316,6 +1335,7 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card) {
 		caid_info->caid = card->caid;
 		caid_info->provs = llist_create();
 		caid_info->hop = card->hop;
+		caid_info->remote_id = card->remote_id;
 		llist_append(cc->caid_infos, caid_info);
 		doSaveCaidInfos = 1;
 	}
@@ -2460,9 +2480,9 @@ static int cc_srv_report_cards() {
 						buf[1] = id >> 16;
 						buf[2] = id >> 8;
 						buf[3] = id & 0xff;
-						buf[5] = reader[r].cc_id >> 16;
-						buf[6] = reader[r].cc_id >> 8;
-						buf[7] = reader[r].cc_id & 0xFF;
+						buf[5] = caid_info->remote_id >> 16;
+						buf[6] = caid_info->remote_id >> 8;
+						buf[7] = caid_info->remote_id & 0xFF;
 						buf[8] = caid_info->caid >> 8;
 						buf[9] = caid_info->caid & 0xff;
 						buf[10] = caid_info->hop;
