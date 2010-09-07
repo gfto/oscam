@@ -1465,6 +1465,34 @@ static void cc_idle() {
 	}
 }
 
+void cc_card_removed(uint32 shareid) {
+	struct cc_data *cc = client[cs_idx].cc;
+	struct cc_card *card;
+	LLIST_ITR itr;
+
+	card = llist_itr_init(cc->cards, &itr);
+	while (card) {
+		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
+			//cs_debug("cccam: card %08x removed, caid %04X, count %d",
+			//		card->id, card->caid, llist_count(cc->cards));
+			struct cc_card *next_card = llist_itr_remove(&itr);
+			struct cc_current_card *current_card;
+			while ((current_card = cc_find_current_card(cc, card))) {
+				cs_debug_mask(D_TRACE, "%s current card %08x removed!", getprefix(), card->id);
+
+				current_card->card = NULL;				
+			}
+			free_extended_ecm_idx_by_card(card);
+			cc_free_card(card);
+			card = next_card;
+			//break;
+		} else {
+			card = llist_itr_next(&itr);
+		}
+	}
+	cc->needs_rebuild_caidinfo++;
+}
+
 static int cc_parse_msg(uint8 *buf, int l) {
 	int ret = buf[1];
 	struct cc_data *cc = client[cs_idx].cc;
@@ -1568,7 +1596,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		card->badsids = llist_create();
 		card->goodsids = llist_create();
 		card->id = b2i(4, buf + 4);
-		card->sub_id = b2i(3, buf + 9);
+		card->remote_id = b2i(3, buf + 9);
 		card->caid = b2i(2, buf + 12);
 		card->hop = buf[14] + 1;
 		card->maxdown = buf[15];
@@ -1633,33 +1661,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	}
 		break;
 	case MSG_CARD_REMOVED: {
-		struct cc_card *card;
-		LLIST_ITR itr;
-
-		card = llist_itr_init(cc->cards, &itr);
-		while (card) {
-			if (card->id == b2i(4, buf + 4)) {// && card->sub_id == b2i (3, buf + 9)) {
-				//cs_debug("cccam: card %08x removed, caid %04X, count %d",
-				//		card->id, card->caid, llist_count(cc->cards));
-				struct cc_card *next_card = llist_itr_remove(&itr);
-				struct cc_current_card *current_card;
-				while ((current_card = cc_find_current_card(cc, card))) {
-					cs_debug_mask(D_TRACE, "%s current card %08x removed!", getprefix(), card->id);
-
-					current_card->card = NULL;
-					
-				}
-				free_extended_ecm_idx_by_card(card);
-				cc_free_card(card);
-
-				card = next_card;
-				//break;
-			} else {
-				card = llist_itr_next(&itr);
-			}
-		}
-		cc->needs_rebuild_caidinfo++;
-
+		cc_card_removed(b2i(4, buf + 4));
 		ret = 0;
 	}
 	break;
@@ -1719,12 +1721,11 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		free(eei);
 
 		if (card) {
-			if (!is_good_sid(card, &srvid)) {
-				//Only add this card as bad if not softfail:
-				//Softfail is MSG_CW_NOK2
-				if (buf[1] == MSG_CW_NOK1 || !cc->extended_mode)
-					add_sid_block(card, &srvid);
-			} else
+			if (buf[1] == MSG_CW_NOK1) //MSG_CW_NOK1: share no more available
+				cc_card_removed(card->id);
+			else if (!is_good_sid(card, &srvid)) //MSG_CW_NOK2: can't decode
+				add_sid_block(card, &srvid);	
+			else
 				remove_good_sid(card, &srvid);
 				
 			if (!reader[ridx].cc_disable_retry_ecm)	{
@@ -1817,7 +1818,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 							ecmtask[i].rc = 100; //Mark unused
 					}
 
-					buf[1] = MSG_CW_NOK1; //So it's really handled like a nok!
+					buf[1] = MSG_CW_NOK2; //So it's really handled like a nok!
 				}
 				else {
 					cc->recv_ecmtask = ecm_idx;
@@ -1978,23 +1979,23 @@ static int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
 	return (-1);
 }
 
-static int is_softfail(int rc)
-{
-	//see oscam.c send_dcw() for a full list
-	switch(rc)
-	{
-		case 5: // 5 = timeout
-		case 6: // 6 = sleeping
-		case 7: // 7 = fake
-		case 10:// 10= no card
-		case 11:// 11= expdate
-		case 12:// 12= disabled
-		case 13:// 13= stopped
-		case 14:// 100= unhandled
-			return TRUE;
-	}
-	return FALSE;
-}
+//static int is_softfail(int rc)
+//{
+//	//see oscam.c send_dcw() for a full list
+//	switch(rc)
+//	{
+//		case 5: // 5 = timeout
+//		case 6: // 6 = sleeping
+//		case 7: // 7 = fake
+//		case 10:// 10= no card
+//		case 11:// 11= expdate
+//		case 12:// 12= disabled
+//		case 13:// 13= stopped
+//		case 14:// 100= unhandled
+//			return TRUE;
+//	}
+//	return FALSE;
+//}
 
 /**
  * Server: send DCW to client
@@ -2026,10 +2027,10 @@ static void cc_send_dcw(ECM_REQUEST *er) {
 			g_flag = eei->send_idx;
 
 		int nok;
-		if (cc->extended_mode && is_softfail(er->rc)) //timeout
-			nok = MSG_CW_NOK2; //This signals a softfail
+		if (!eei || !eei->card)
+			nok = MSG_CW_NOK1; //share no more available
 		else
-			nok = MSG_CW_NOK1;
+			nok = MSG_CW_NOK2; //can't decode
 		cc_cmd_send(NULL, 0, nok);
 	}
 	cc->server_ecm_pending--;

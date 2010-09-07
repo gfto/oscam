@@ -33,8 +33,8 @@ typedef enum {
 	MSG_SRV_DATA = 8,
 	MSG_CMD_0A = 0x0a,
 	MSG_CMD_0B = 0x0b,
-	MSG_CW_NOK1 = 0xfe,
-	MSG_CW_NOK2 = 0xff,
+	MSG_CW_NOK1 = 0xfe, //Node no more available
+	MSG_CW_NOK2 = 0xff, //No decoding
 	MSG_NO_HEADER = 0xffff
 } cc_msg_type_t;
 
@@ -52,7 +52,7 @@ struct cc_srvid {
 
 struct cc_card {
 	uint32 id; // cccam card (share) id
-	uint32 sub_id; // subshare id
+	uint32 remote_id;
 	uint16 caid;
 	uint8 hop;
 	uint8 maxdown;
@@ -70,6 +70,7 @@ struct cc_reported_carddata {
 
 struct cc_caid_info {
 	uint16 caid;
+	uint32 remote_id;
 	LLIST *provs;
 	uint8 hop;
 };
