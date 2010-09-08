@@ -266,10 +266,10 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 		reader->card_system=SC_SECA;
 	else if (viaccess_card_init(reader, atr))
 		reader->card_system=SC_VIACCESS;
+    else if (videoguard1_card_init(reader, atr))
+        reader->card_system=SC_VIDEOGUARD1;
 	else if (videoguard2_card_init(reader, atr))
 		reader->card_system=SC_VIDEOGUARD2;
-        else if (videoguard1_card_init(reader, atr))
-                reader->card_system=SC_VIDEOGUARD1;
 	else if (dre_card_init(reader, atr)) 
 		reader->card_system=SC_DRE;
 	else if (tongfang_card_init(reader, atr)) 
