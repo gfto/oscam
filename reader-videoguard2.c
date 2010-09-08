@@ -21,7 +21,7 @@
 
 int aes_active=0;
 AES_KEY dkey, ekey, Astro_Key;
-int BASEYEAR = 1997;
+int VG2_BASEYEAR = 1997;
 static void cAES_SetKey(const unsigned char *key)
 {
   AES_set_decrypt_key(key,128,&dkey);
@@ -427,7 +427,7 @@ static void memorize_cmd_table (const unsigned char *mem, int size){
   memcpy(cmd_table,mem,size);
 }
 
-void Manage_Tag(unsigned char *Answer)
+static void Manage_Tag(unsigned char *Answer)
 {
 	unsigned char Tag,Len,Len2;
 	bool Valid_0x55=0;
@@ -545,7 +545,7 @@ static int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsi
 
 static void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss)
 {
-  *year=(Date[0]/12)+BASEYEAR;
+  *year=(Date[0]/12)+VG2_BASEYEAR;
   *mon=(Date[0]%12)+1;
   *day=Date[1] & 0x1f;
   *hh=Date[2]/8;
@@ -583,7 +583,7 @@ static void read_tiers(struct s_reader * reader)
     }
 }
 
-int videoguard_card_init(struct s_reader * reader, ATR newatr)
+int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_hist;
 	if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
@@ -639,12 +639,12 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   else if ((atr_size == sizeof (atr_viasat_new)) && (memcmp (atr, atr_viasat_new, atr_size) == 0))
   {
       cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Viasat (093E)");
-      BASEYEAR = 2000;
+      VG2_BASEYEAR = 2000;
   }
   else if ((atr_size == sizeof (atr_viasat_scandinavia)) && (memcmp (atr, atr_viasat_scandinavia, atr_size) == 0))
   {
       cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Viasat Scandinavia");
-      BASEYEAR = 2000;
+      VG2_BASEYEAR = 2000;
   }
   else if ((atr_size == sizeof (atr_premiere)) && (memcmp (atr, atr_premiere, atr_size) == 0))
   {
@@ -653,7 +653,7 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   else if ((atr_size == sizeof (atr_dsmart)) && (memcmp (atr, atr_dsmart, atr_size) == 0))
   {
       cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard DSMART Turkey");
-      BASEYEAR = 2004;
+      VG2_BASEYEAR = 2004;
   }
   else if ((atr_size == sizeof (atr_kbw)) && (memcmp (atr, atr_kbw, atr_size) == 0))
   {
@@ -662,12 +662,12 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   else if ((atr_size == sizeof (atr_get)) && (memcmp (atr, atr_get, atr_size) == 0))
   {
       cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Get Kabel Norway");
-      BASEYEAR = 2004;
+      VG2_BASEYEAR = 2004;
   }
   else if ((atr_size == sizeof (atr_foxtel_90b)) && (memcmp (atr, atr_foxtel_90b, atr_size) == 0))
   {
       cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard Foxtel Australia (090B)");
-      BASEYEAR = 2000;
+      VG2_BASEYEAR = 2000;
   }
   else if ((atr_size == sizeof (atr_china_988)) && (memcmp (atr, atr_china_988, atr_size) == 0))
   {
@@ -680,27 +680,27 @@ int videoguard_card_init(struct s_reader * reader, ATR newatr)
   else if ((atr_size == sizeof (atr_skybrgl23)) && (memcmp (atr, atr_skybrgl23, atr_size) == 0))
   {
       cs_log("[videoguard2-reader] type: VideoGuard SkyBrasil GL23 (0942)");
-      BASEYEAR = 2000;
+      VG2_BASEYEAR = 2000;
   }
   else if ((atr_size == sizeof (atr_skybrgl39)) && (memcmp (atr, atr_skybrgl39, atr_size) == 0))
   {
       cs_log("[videoguard2-reader] type: VideoGuard SkyBrasil GL39 (0907)");
-      BASEYEAR = 2004;
+      VG2_BASEYEAR = 2004;
   }
   else if ((atr_size == sizeof (atr_skybrgl54)) && (memcmp (atr, atr_skybrgl54, atr_size) == 0))
   {
       cs_log("[videoguard2-reader] type: VideoGuard SkyBrasil GL54 (0943)");
-      BASEYEAR = 2009;
+      VG2_BASEYEAR = 2009;
   }
   else if ((atr_size == sizeof (atr_skynz_96a)) && (memcmp (atr, atr_skynz_96a, atr_size) == 0))
   {
       cs_log("[videoguard2-reader] type: VideoGuard Sky New Zealand (096A)");
-      BASEYEAR = 1992;
+      VG2_BASEYEAR = 1992;
   }
   else if ((atr_size == sizeof (atr_skynz_969)) && (memcmp (atr, atr_skynz_969, atr_size) == 0))
   {
       cs_log("[videoguard2-reader] type: VideoGuard Sky New Zealand (0969)");
-      BASEYEAR = 1992;
+      VG2_BASEYEAR = 1992;
       cs_log("[videoguard2-reader] NDS1 cards currently not supported, patches welcome");
       return ERROR;
   }
@@ -978,7 +978,7 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data) {
     }
 }
 
-int videoguard_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   unsigned char cta_res[CTA_RES_LEN];
   static unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
@@ -1121,7 +1121,7 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
   return ptr;
 }
 
-int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+int videoguard2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 
 /*
@@ -1176,12 +1176,12 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 	}
 }
 
-void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
+void videoguard2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
 	filter[1]=3;
 
-	//ToDo videoguard_get_emm_filter basic construction
+	//ToDo videoguard2_get_emm_filter basic construction
 
 	filter[2]=UNIQUE;
 	filter[3]=0;
@@ -1225,7 +1225,7 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+int videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins42[5] = { 0xD1,0x42,0x00,0x00,0xFF };
@@ -1260,7 +1260,7 @@ int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   return(rc);
 }
 
-int videoguard_card_info(struct s_reader * reader)
+int videoguard2_card_info(struct s_reader * reader)
 {
   /* info is displayed in init, or when processing info */
   cs_log("[videoguard2-reader] card detected");

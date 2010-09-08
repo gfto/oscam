@@ -19,6 +19,7 @@
 #define SC_DRE 7
 #define SC_NAGRA 8
 #define SC_TONGFANG 9
+#define SC_VIDEOGUARD1 10
 
 // reader-irdeto
 int irdeto_card_init(struct s_reader * reader, ATR atr);
@@ -36,13 +37,21 @@ int viaccess_get_emm_type(EMM_PACKET *, struct s_reader *);
 int viaccess_card_info(struct s_reader * reader);
 void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter);
 
-// reader-videoguard
-int videoguard_card_init(struct s_reader * reader, ATR atr);
-int videoguard_do_ecm(struct s_reader * reader, ECM_REQUEST *);
-int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *);
-int videoguard_get_emm_type(EMM_PACKET *, struct s_reader *);
-int videoguard_card_info(struct s_reader * reader);
-void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter);
+// reader-videoguard2
+int videoguard2_card_init(struct s_reader * reader, ATR atr);
+int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *);
+int videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *);
+int videoguard2_get_emm_type(EMM_PACKET *, struct s_reader *);
+int videoguard2_card_info(struct s_reader * reader);
+void videoguard2_get_emm_filter(struct s_reader * rdr, uchar *filter);
+
+// reader-videoguard1
+int videoguard1_card_init(struct s_reader * reader, ATR atr);
+int videoguard1_do_ecm(struct s_reader * reader, ECM_REQUEST *);
+int videoguard1_do_emm(struct s_reader * reader, EMM_PACKET *);
+int videoguard1_get_emm_type(EMM_PACKET *, struct s_reader *);
+int videoguard1_card_info(struct s_reader * reader);
+void videoguard1_get_emm_filter(struct s_reader * rdr, uchar *filter);
 
 // reader-cryptoworks
 int cryptoworks_card_init(struct s_reader * reader, ATR atr);

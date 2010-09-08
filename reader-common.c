@@ -238,7 +238,9 @@ void reader_card_info(struct s_reader * reader)
       case SC_CONAX:
         conax_card_info(reader); break;
       case SC_VIDEOGUARD2:
-        videoguard_card_info(reader); break;
+        videoguard2_card_info(reader); break;
+      case SC_VIDEOGUARD1:
+        videoguard1_card_info(reader); break;
       case SC_SECA:
          seca_card_info(reader); break;
       case SC_DRE:
@@ -264,8 +266,10 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 		reader->card_system=SC_SECA;
 	else if (viaccess_card_init(reader, atr))
 		reader->card_system=SC_VIACCESS;
-	else if (videoguard_card_init(reader, atr))
+	else if (videoguard2_card_init(reader, atr))
 		reader->card_system=SC_VIDEOGUARD2;
+        else if (videoguard1_card_init(reader, atr))
+                reader->card_system=SC_VIDEOGUARD1;
 	else if (dre_card_init(reader, atr)) 
 		reader->card_system=SC_DRE;
 	else if (tongfang_card_init(reader, atr)) 
@@ -422,7 +426,9 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
         case SC_SECA:
           rc=(seca_do_ecm(reader, er)) ? 1 : 0; break;
         case SC_VIDEOGUARD2:
-          rc=(videoguard_do_ecm(reader, er)) ? 1 : 0; break;
+          rc=(videoguard2_do_ecm(reader, er)) ? 1 : 0; break;
+        case SC_VIDEOGUARD1:
+          rc=(videoguard1_do_ecm(reader, er)) ? 1 : 0; break;
         case SC_DRE:
           rc=(dre_do_ecm(reader, er)) ? 1: 0; break;
         case SC_TONGFANG:
@@ -455,7 +461,9 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
     case SC_SECA:
       rc=seca_get_emm_type(ep, rdr); break;
     case SC_VIDEOGUARD2:
-      rc=videoguard_get_emm_type(ep, rdr); break;
+      rc=videoguard2_get_emm_type(ep, rdr); break;
+    case SC_VIDEOGUARD1:
+      rc=videoguard1_get_emm_type(ep, rdr); break;
     case SC_DRE:
       rc=dre_get_emm_type(ep, rdr); break;
     case SC_TONGFANG:
@@ -475,7 +483,12 @@ int get_cardsystem(ushort caid) {
 		case 0x06:
 			return SC_IRDETO;
 		case 0x09:
-			return SC_VIDEOGUARD2;
+			if(caid == 0x0969 ) {
+                          return SC_VIDEOGUARD1;
+                        } 
+                        else {
+                          return SC_VIDEOGUARD2;
+                        };
 		case 0x0B:
 			return SC_CONAX;
 		case 0x0D:
@@ -517,8 +530,11 @@ void get_emm_filter(struct s_reader * rdr, uchar *filter) {
 			seca_get_emm_filter(rdr, filter);
 			break;
 		case SC_VIDEOGUARD2:
-			videoguard_get_emm_filter(rdr, filter);
+			videoguard2_get_emm_filter(rdr, filter);
 			break;
+                case SC_VIDEOGUARD1:
+                        videoguard1_get_emm_filter(rdr, filter);
+                        break;
 		case SC_DRE:
 			dre_get_emm_filter(rdr, filter);
 			break;
@@ -554,7 +570,9 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
       case SC_SECA:
         rc=seca_do_emm(reader, ep); break;
       case SC_VIDEOGUARD2:
-        rc=videoguard_do_emm(reader, ep); break;
+        rc=videoguard2_do_emm(reader, ep); break;
+      case SC_VIDEOGUARD1:
+        rc=videoguard1_do_emm(reader, ep); break;
       case SC_DRE:
         rc=dre_do_emm(reader, ep); break;
       case SC_TONGFANG:
