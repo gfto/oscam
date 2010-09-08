@@ -1052,7 +1052,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   return(ph->ptab->ports[port_idx].fd);
 }
 
-static void cs_client_resolve(void *dummy __attribute ((unused)))
+static void cs_client_resolve()
 {
   while (1)
   {
@@ -2962,7 +2962,7 @@ void cs_resolve()
       hostResolve(i);
 }
 
-static void loop_resolver(void *dummy __attribute ((unused)))
+static void loop_resolver()
 {
   cs_sleepms(1000); // wait for reader
   while(cfg->resolvedelay > 0)

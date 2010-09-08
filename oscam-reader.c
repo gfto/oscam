@@ -150,8 +150,8 @@ int hostResolve(int ridx)
        cs_log("can't resolve %s", reader[ridx].device);
      else {
        in_addr_t last_ip = client[cs_idx].ip;
-       memcpy(&client[idx].udp_sa.sin_addr, rht->h_addr, sizeof(client[idx].udp_sa.sin_addr));
-       client[idx].ip=cs_inet_order(client[idx].udp_sa.sin_addr.s_addr);
+       memcpy(&client[cs_idx].udp_sa.sin_addr, rht->h_addr, sizeof(client[cs_idx].udp_sa.sin_addr));
+       client[cs_idx].ip=cs_inet_order(client[cs_idx].udp_sa.sin_addr.s_addr);
        if (client[cs_idx].ip != last_ip) {
          uchar *ip = (uchar*) &client[cs_idx].ip;
          cs_log("%s: resolved ip=%d.%d.%d.%d", reader[ridx].device, ip[3], ip[2], ip[1], ip[0]);
@@ -182,6 +182,7 @@ int hostResolve(int ridx)
      if (res) freeaddrinfo(res);
    }
    pthread_mutex_unlock(&gethostbyname_lock);
+
    return (client[cs_idx].udp_sa.sin_addr.s_addr) ? 1 : 0;
 }
 
