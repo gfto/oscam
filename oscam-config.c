@@ -552,7 +552,7 @@ void chk_t_global(char *token, char *value)
 
 	if (!strcmp(token, "readerrestartseconds")) {
 		if (strlen(value) == 0) {
-			cfg->reader_restart_seconds = 0;
+			cfg->reader_restart_seconds = 5;
 			return;
 		} else {
 			cfg->reader_restart_seconds = atoi(value);
@@ -1039,6 +1039,7 @@ void chk_t_cccam(char *token, char *value)
 	                cfg->cc_update_interval = 4*60; //4x60s = 4min
                 else
                         cfg->cc_update_interval = atoi(value);
+                return;
 	}
 	
 

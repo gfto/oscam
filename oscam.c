@@ -550,7 +550,7 @@ static void cs_child_chk(int i)
 #endif
           }
           cs_log("PANIC: %s lost !! (pid=%d)", txt, client[i].pid);
-          if (cfg->reader_restart_seconds && (client[i].typ == 'r' || client[i].typ == 'p'))
+          if (client[i].typ == 'r' || client[i].typ == 'p')
           {
             int old_pid = client[i].pid;
             client[i].pid = 0;
