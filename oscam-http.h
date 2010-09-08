@@ -962,6 +962,11 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			</select></TD></TR>\n\
 		<TR><TD>Reader autoloadbalance save:</TD><TD><input name=\"readerautoloadbalance_save\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERAUTOLOADBALANCES##\"></TD></TR>\n\
 		<TR><TD>Reader restart seconds:</TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"></TD></TR>\n\
+		<TR><TD>Resolver:</TD>\n\
+		<TD><select name=\"resolvegethostbyname\">\n\
+			<option value=\"0\" ##RESOLVER0##>0 - getadressinfo()</option>\n\
+			<option value=\"1\" ##RESOLVER1##>1 - gethostbyname()</option>\n\
+		</select></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\

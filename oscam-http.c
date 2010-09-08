@@ -119,6 +119,12 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 
 	tpl_printf(vars, 0, "READERAUTOLOADBALANCES", "%d",cfg->reader_auto_loadbalance_save);
 
+	if (cfg->resolve_gethostbyname == 1)
+		tpl_addVar(vars, 0, "RESOLVER1", "selected");
+	else
+		tpl_addVar(vars, 0, "RESOLVER0", "selected");
+
+
 	fputs(tpl_getTpl(vars, "CONFIGGLOBAL"), f);
 }
 
