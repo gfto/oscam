@@ -20,6 +20,7 @@
 #define SC_NAGRA 8
 #define SC_TONGFANG 9
 #define SC_VIDEOGUARD1 10
+#define SC_VIDEOGUARD12 11
 
 // reader-irdeto
 int irdeto_card_init(struct s_reader * reader, ATR atr);
@@ -52,6 +53,14 @@ int videoguard1_do_emm(struct s_reader * reader, EMM_PACKET *);
 int videoguard1_get_emm_type(EMM_PACKET *, struct s_reader *);
 int videoguard1_card_info(struct s_reader * reader);
 void videoguard1_get_emm_filter(struct s_reader * rdr, uchar *filter);
+
+// reader-videoguard12
+int videoguard12_card_init(struct s_reader * reader, ATR atr);
+int videoguard12_do_ecm(struct s_reader * reader, ECM_REQUEST *);
+int videoguard12_do_emm(struct s_reader * reader, EMM_PACKET *);
+int videoguard12_get_emm_type(EMM_PACKET *, struct s_reader *);
+int videoguard12_card_info(struct s_reader * reader);
+void videoguard12_get_emm_filter(struct s_reader * rdr, uchar *filter);
 
 // reader-cryptoworks
 int cryptoworks_card_init(struct s_reader * reader, ATR atr);

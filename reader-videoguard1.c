@@ -247,7 +247,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
   get_hist;
   // 40 B0 09 4A 50 01 4E 5A 
   if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[2] != 0x09) || (hist[3] != 0x4A) || (hist[4] != 0x50)) {
-//return ERROR;
+    return ERROR;
     cs_log("history size = %i, hist1 = 0x%x, hist2 = 0x%x, hist3 = 0x%x, hist4 = 0x%x", hist_size, hist[1], hist[2], hist[3], hist[4]);
   }
 

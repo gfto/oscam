@@ -241,6 +241,8 @@ void reader_card_info(struct s_reader * reader)
         videoguard2_card_info(reader); break;
       case SC_VIDEOGUARD1:
         videoguard1_card_info(reader); break;
+      case SC_VIDEOGUARD12:
+        videoguard12_card_info(reader); break;
       case SC_SECA:
          seca_card_info(reader); break;
       case SC_DRE:
@@ -266,8 +268,10 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 		reader->card_system=SC_SECA;
 	else if (viaccess_card_init(reader, atr))
 		reader->card_system=SC_VIACCESS;
-    else if (videoguard1_card_init(reader, atr))
-        reader->card_system=SC_VIDEOGUARD1;
+        else if (videoguard1_card_init(reader, atr))
+                reader->card_system=SC_VIDEOGUARD1;
+        else if (videoguard12_card_init(reader, atr))
+                reader->card_system=SC_VIDEOGUARD12;
 	else if (videoguard2_card_init(reader, atr))
 		reader->card_system=SC_VIDEOGUARD2;
 	else if (dre_card_init(reader, atr)) 
@@ -429,6 +433,8 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
           rc=(videoguard2_do_ecm(reader, er)) ? 1 : 0; break;
         case SC_VIDEOGUARD1:
           rc=(videoguard1_do_ecm(reader, er)) ? 1 : 0; break;
+        case SC_VIDEOGUARD12:
+          rc=(videoguard12_do_ecm(reader, er)) ? 1 : 0; break;
         case SC_DRE:
           rc=(dre_do_ecm(reader, er)) ? 1: 0; break;
         case SC_TONGFANG:
@@ -464,6 +470,8 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
       rc=videoguard2_get_emm_type(ep, rdr); break;
     case SC_VIDEOGUARD1:
       rc=videoguard1_get_emm_type(ep, rdr); break;
+    case SC_VIDEOGUARD12:
+      rc=videoguard12_get_emm_type(ep, rdr); break;
     case SC_DRE:
       rc=dre_get_emm_type(ep, rdr); break;
     case SC_TONGFANG:
@@ -535,6 +543,9 @@ void get_emm_filter(struct s_reader * rdr, uchar *filter) {
                 case SC_VIDEOGUARD1:
                         videoguard1_get_emm_filter(rdr, filter);
                         break;
+                case SC_VIDEOGUARD12:
+                        videoguard12_get_emm_filter(rdr, filter);
+                        break;
 		case SC_DRE:
 			dre_get_emm_filter(rdr, filter);
 			break;
@@ -573,6 +584,8 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
         rc=videoguard2_do_emm(reader, ep); break;
       case SC_VIDEOGUARD1:
         rc=videoguard1_do_emm(reader, ep); break;
+      case SC_VIDEOGUARD12:
+        rc=videoguard12_do_emm(reader, ep); break;
       case SC_DRE:
         rc=dre_do_emm(reader, ep); break;
       case SC_TONGFANG:
