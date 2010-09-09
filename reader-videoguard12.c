@@ -587,7 +587,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
 {
 
   /* known atrs */
-    NDS_ATR_ENTRY nds12_atr_table[]={ 
+    NDS_ATR_ENTRY nds12_atr_table[]={ // {atr}, atr len, base year, description
         {{ 0x3F, 0x78, 0x13, 0x25, 0x03, 0x40, 0xB0, 0x20, 0xFF, 0xFF, 0x4A, 0x50, 0x00 }, 13, 1997, "VideoGuard DirecTV"},
         {{0},0,0,NULL},
         };

@@ -246,7 +246,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
 {
 
   /* known class 48 only atrs */
-    NDS_ATR_ENTRY nds1_atr_table[]={ 
+    NDS_ATR_ENTRY nds1_atr_table[]={ // {atr}, atr len, base year, description
         {{ 0x3F, 0x78, 0x13, 0x25, 0x04, 0x40, 0xB0, 0x09, 0x4A, 0x50, 0x01, 0x4E, 0x5A }, 13, 1992, "VideoGuard Sky New Zealand (0969)"},
         {{0},0,0,NULL},
         };
