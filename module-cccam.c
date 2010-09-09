@@ -26,6 +26,8 @@ static uchar fast_rnd() {
 }
 
 static int cc_cli_init();
+static int cc_cli_init_int();
+static int cc_cli_connect();
 static int cc_get_nxt_ecm();
 static int cc_send_pending_emms();
 static void cc_rc4_crypt(struct cc_crypt_block *block, uint8 *data, int len,
@@ -341,7 +343,7 @@ static void add_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
  */
 static void cc_cli_close() {
 	reader[ridx].tcp_connected = 0;
-	reader[ridx].card_status = CARD_FAILURE;
+	reader[ridx].card_status = NO_CARD;
 	reader[ridx].available = 0;
 	reader[ridx].card_system = 0;
 
@@ -452,7 +454,7 @@ static void free_extended_ecm_idx(struct cc_data *cc) {
  */
 static void cc_cycle_connection() {
 	cc_cli_close();
-	cc_cli_init();
+	cc_cli_init_int();
 }
 
 /**
@@ -755,6 +757,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	struct timeb cur_time;
 	cs_ftime(&cur_time);
 
+	cc_cli_init_int();
+
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
 		if (er) {
 			er->rc = 0;
@@ -766,6 +770,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		return -1;
 	}
 
+	//No Card? Waiting for shares
 	if (!llist_count(cc->cards))
 		return 0;
 		
@@ -793,6 +798,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 				cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %ds", getprefix(),
 					cfg->ctimeout*4/1000);
 				cc_cycle_connection();
+				return 0;
 			}
 		}
 		cs_debug("cccam: ecm trylock: got lock");
@@ -1048,17 +1054,16 @@ struct cc_card *get_card_by_hexserial(uint8 *hexserial, uint16 caid) {
  * */
 static int cc_send_emm(EMM_PACKET *ep) {
 	struct cc_data *cc = client[cs_idx].cc;
+
+	cc_cli_init_int();
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
-		cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1 : 0,
-				pfd);
+		cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1 : 0, pfd);
 		return 0;
 	}
 	if (reader[ridx].audisabled) {
 		cs_log("%s au is disabled", getprefix());
 		return 0;
 	}
-	
-
 
 	struct cc_card *emm_card = cc->current_card[ep->cidx].card;
 
@@ -1479,18 +1484,18 @@ static int check_extended_mode(char *msg) {
 	return has_param;
 }
 
-static void cc_idle() {
-	struct cc_data *cc = client[cs_idx].cc;
-	if (!reader[ridx].tcp_connected)
-		return;
-		
-	cs_debug("%s IDLE", getprefix());
-	if (cc->answer_on_keepalive + 55 < time(NULL)) {
-		cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
-		cs_debug("cccam: keepalive");
-		cc->answer_on_keepalive = time(NULL);
-	}
-}
+//static void cc_idle() {
+//	struct cc_data *cc = client[cs_idx].cc;
+//	if (!reader[ridx].tcp_connected)
+//		return;
+//
+//	cs_debug("%s IDLE", getprefix());
+//	if (cc->answer_on_keepalive + 55 < time(NULL)) {
+//		cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
+//		cs_debug("cccam: keepalive");
+//		cc->answer_on_keepalive = time(NULL);
+//	}
+//}
 
 void cc_card_removed(uint32 shareid) {
 	struct cc_data *cc = client[cs_idx].cc;
@@ -2837,12 +2842,8 @@ int cc_cli_init_int() {
 
 static int cc_cli_init()
 {
-	while (cc_cli_init_int() != 0) {
-		network_tcp_connection_close(&reader[ridx], client[cs_idx].udp_fd);
-		if (master_pid!=getppid()) cs_exit(0);
-		cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
-		cs_log("restarting reader %s (index=%d)", reader[ridx].label, ridx);                        
-	}
+	if (master_pid!=getppid()) cs_exit(0);
+	cc_cli_init_int();
 	return 0;
 }
 
@@ -2852,11 +2853,11 @@ static int cc_cli_init()
 int cc_available(int ridx, int checktype) {
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", reader[ridx].label);
 	if (!client[reader[ridx].cs_idx].cc || reader[ridx].tcp_connected != 2 || reader[ridx].card_status != CARD_INSERTED)
-		return 0;
+		return 1; //Not connected? Connect!
 	
 	if (checktype == AVAIL_CHECK_LOADBALANCE && !reader[ridx].available) {
 		cs_debug_mask(D_TRACE, "checking reader %s availibility=0 (unavail)", reader[ridx].label);
-		return 0; //We are not initialized or not connected!
+		return 0; //We are processing EMMs/ECMs
 	}
 
 	return 1;
@@ -2879,7 +2880,7 @@ void module_cccam(struct s_module *ph) {
 	ph->cleanup = cc_cleanup;
 	ph->c_multi = 1;
 	ph->c_init = cc_cli_init;
-	ph->c_idle = cc_idle;
+	//ph->c_idle = cc_idle;
 	ph->c_recv_chk = cc_recv_chk;
 	ph->c_send_ecm = cc_send_ecm;
 	ph->c_send_emm = cc_send_emm;

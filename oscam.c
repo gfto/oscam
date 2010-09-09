@@ -1053,73 +1053,68 @@ static int start_listener(struct s_module *ph, int port_idx)
   return(ph->ptab->ports[port_idx].fd);
 }
 
-static void cs_client_resolve(void *dummy __attribute__ ((unused)))
+int cs_user_resolve(struct s_auth *account)
 {
-  while (1)
-  {
-    struct s_auth *account;
     struct hostent *rht;
     struct sockaddr_in udp_sa;
-       
-    pthread_mutex_lock(&gethostbyname_lock);
-    for (account=cfg->account; account; account=account->next) {
-      if (account->dyndns[0])
-      {
-      	in_addr_t lastip = account->dynip;
-        //Resolve with gethostbyname:
-      	if (cfg->resolve_gethostbyname) {
-	  rht = gethostbyname((char*)account->dyndns);
-	  if (!rht)
-	    cs_log("can't resolve %s", account->dyndns);
-	  else {
-            memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-            account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
-	  }
-      	} 
-      	else { //Resolve with getaddrinfo:
-  	  struct addrinfo hints, *res = NULL;
-          memset(&hints, 0, sizeof(hints));
-          hints.ai_socktype = SOCK_STREAM;
-          hints.ai_family = AF_INET;
-          hints.ai_protocol = IPPROTO_TCP;
+    int result=0;  
+    if (account->dyndns[0])
+    {
+      pthread_mutex_lock(&gethostbyname_lock);
+      in_addr_t lastip = account->dynip;
+      //Resolve with gethostbyname:
+      if (cfg->resolve_gethostbyname) {
+        rht = gethostbyname((char*)account->dyndns);
+	if (!rht)
+	  cs_log("can't resolve %s", account->dyndns);
+	else {
+          memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
+          account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
+          result=1;
+	}
+      } 
+      else { //Resolve with getaddrinfo:
+  	struct addrinfo hints, *res = NULL;
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_family = AF_INET;
+        hints.ai_protocol = IPPROTO_TCP;
              
-          int err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
-          if (err != 0 || !res || !res->ai_addr) {
-     	    cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
-	  }
-          else {
-            account->dynip=cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
-          }
-          if (res) freeaddrinfo(res);
+        int err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
+        if (err != 0 || !res || !res->ai_addr) {
+     	  cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
+	}
+        else {
+          account->dynip=cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
+          result=1;
         }
-        if (lastip != account->dynip)  {
-          uchar *ip = (uchar*) &account->dynip;
-          cs_log("%s: resolved ip=%d.%d.%d.%d", (char*)account->dyndns, ip[3], ip[2], ip[1], ip[0]);
-        }
+        if (res) freeaddrinfo(res);
       }
+      if (lastip != account->dynip)  {
+        uchar *ip = (uchar*) &account->dynip;
+        cs_log("%s: resolved ip=%d.%d.%d.%d", (char*)account->dyndns, ip[3], ip[2], ip[1], ip[0]);
+      }
+      pthread_mutex_unlock(&gethostbyname_lock);
     }
-    pthread_mutex_unlock(&gethostbyname_lock);
-    if (cfg->resolvedelay<=0)
-    	sleep(30);
-    else
-        sleep(cfg->resolvedelay);
-  }
+    if (!result)
+    	account->dynip=0;
+    return result;
 }
 
-static void start_thread(void * startroutine, char * nameroutine)
-{
-  int i;
-  pthread_t tid;
-
-  i=pthread_create(&tid, (pthread_attr_t *)0, startroutine, (void *) 0);
-  if (i)
-    cs_log("ERROR: can't create %s thread (err=%d)", i, nameroutine);
-  else
-  {
-    cs_log("%s thread started", nameroutine);
-    pthread_detach(tid);
-  }
-}
+//static void start_thread(void * startroutine, char * nameroutine)
+//{
+//  int i;
+//  pthread_t tid;
+//
+//  i=pthread_create(&tid, (pthread_attr_t *)0, startroutine, (void *) 0);
+//  if (i)
+//    cs_log("ERROR: can't create %s thread (err=%d)", i, nameroutine);
+//  else
+//  {
+//    cs_log("%s thread started", nameroutine);
+//    pthread_detach(tid);
+//  }
+//}
 
 static void cs_logger(void)
 {
@@ -1311,6 +1306,8 @@ int cs_auth_client(struct s_auth *account, char *e_txt)
 	default:            // grant/check access
 		if (client[cs_idx].ip && account->dyndns[0]) {
 			if (cfg->clientdyndns) {
+				if (client[cs_idx].ip != account->dynip)
+					cs_user_resolve(account);
 				if (client[cs_idx].ip != account->dynip)
 					rc=2;
 			}
@@ -2955,23 +2952,23 @@ void cs_waitforcardinit()
 	}
 }
 
-void cs_resolve()
-{
-  int i;
-  for (i=0; i<CS_MAXREADER; i++)
-    if (reader[i].enable && !reader[i].deleted && (reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK) && (reader[i].typ!=R_CONSTCW))
-      hostResolve(i);
-}
+//void cs_resolve()
+//{
+//  int i;
+//  for (i=0; i<CS_MAXREADER; i++)
+//    if (reader[i].enable && !reader[i].deleted && (reader[i].cs_idx) && (reader[i].typ & R_IS_NETWORK) && (reader[i].typ!=R_CONSTCW))
+//      hostResolve(i);
+//}
 
-static void loop_resolver(void *dummy __attribute__ ((unused)))
-{
-  cs_sleepms(1000); // wait for reader
-  while(cfg->resolvedelay > 0)
-  {
-    cs_resolve();
-    cs_sleepms(1000*cfg->resolvedelay);
-  }
-}
+//static void loop_resolver(void *dummy __attribute__ ((unused)))
+//{
+//  cs_sleepms(1000); // wait for reader
+//  while(cfg->resolvedelay > 0)
+//  {
+//    cs_resolve();
+//    cs_sleepms(1000*cfg->resolvedelay);
+//  }
+//}
               
 int main (int argc, char *argv[])
 {
@@ -3146,13 +3143,8 @@ int main (int argc, char *argv[])
 	//set time for server to now to avoid 0 in monitor/webif
 	client[0].last=time((time_t *)0);
 
-	if(cfg->clientdyndns)
-		start_thread((void *) &cs_client_resolve, "client resolver");
-
   init_service(97); // logger
 
-  if (cfg->resolvedelay > 0)
-    start_thread(&loop_resolver, "Resolver");
 #ifdef WEBIF
   if(cfg->http_port == 0) 
     cs_log("http disabled"); 
