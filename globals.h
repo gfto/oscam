@@ -258,6 +258,11 @@ typedef unsigned long long uint64;
 extern void cs_switch_led(int led, int action);
 #endif
 
+
+#define MAX_ATR_LEN 33         // max. ATR length
+#define MAX_HIST    15         // max. number of historical characters
+
+
 typedef struct s_classtab
 {
   uchar an;
@@ -364,6 +369,13 @@ typedef struct aes_entry {
     AES_KEY     key;
     struct aes_entry   *next;
 } AES_ENTRY;
+
+typedef struct nds_atr {
+    char atr[MAX_ATR_LEN];
+    ushort atr_len;
+    int base_year;
+    const char *desc;
+} NDS_ATR_ENTRY;
 
 struct s_ecm
 {

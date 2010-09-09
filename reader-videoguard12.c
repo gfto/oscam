@@ -585,22 +585,32 @@ static void read_tiers(struct s_reader * reader)
 
 int videoguard12_card_init(struct s_reader * reader, ATR newatr)
 {
+
+  /* known atrs */
+    NDS_ATR_ENTRY nds12_atr_table[]={ 
+        {{ 0x3F, 0x78, 0x13, 0x25, 0x03, 0x40, 0xB0, 0x20, 0xFF, 0xFF, 0x4A, 0x50, 0x00 }, 13, 1997, "VideoGuard DirecTV"},
+        {{0},0,0,NULL},
+        };
+
 	get_hist;
 	if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
 		return ERROR;
 	get_atr;
 	def_resp;
   
-  /* known atrs */
-  unsigned char atr_directv[] = { 0x3F, 0x78, 0x13, 0x25, 0x03, 0x40, 0xB0, 0x20, 0xFF, 0xFF, 0x4A, 0x50, 0x00 };
- 
-  if ((atr_size == sizeof (atr_directv)) && (memcmp (atr, atr_directv, atr_size) == 0))
-  {
-      cs_ri_log(reader, "[videoguard12-reader] type: VideoGuard DirecTV");
-  }
-  else {
-      return ERROR;
-  }
+    int i=0;
+    while(nds12_atr_table[i].desc) {
+        if ((atr_size == nds12_atr_table[i].atr_len) && (memcmp (atr, nds12_atr_table[i].atr, atr_size) == 0)) {
+            VG12_BASEYEAR=nds12_atr_table[i].base_year;
+            cs_ri_log(reader, "[videoguard12-reader] type: %s", nds12_atr_table[i].desc);
+            break;
+        }
+        i++;
+    }
+    if(!nds12_atr_table[i].desc)
+        return ERROR; // unknown ATR... probably not NDS1+
+
+
 
   //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
   //this way also unknown videoguard2/NDS cards will work
