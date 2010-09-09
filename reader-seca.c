@@ -267,7 +267,7 @@ int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			return ERROR;
   }
 
-  i=get_prov_index(reader, (char *) ep->emm+9);
+  i=get_prov_index(reader, (char *) ep->emm+3);
   if (i==-1) 
   {
       cs_log("[seca-reader] EMM: provider id not found.");
