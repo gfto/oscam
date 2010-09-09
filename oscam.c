@@ -707,6 +707,7 @@ int cs_fork(in_addr_t ip, in_port_t port)
         close(mfdr);
         //cs_log("FORK-CLIENT: fd_m2c_c=%d", client[i].fd_m2c_c);
         //SS:if( port!=97 ) cs_close_log();
+        pthread_mutex_init(&gethostbyname_lock, NULL);
         mfdr=0;
         cs_ptyp=D_CLIENT;
         cs_idx=i;
@@ -1052,7 +1053,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   return(ph->ptab->ports[port_idx].fd);
 }
 
-static void cs_client_resolve()
+static void cs_client_resolve(void *dummy __attribute__ ((unused)))
 {
   while (1)
   {
@@ -2962,7 +2963,7 @@ void cs_resolve()
       hostResolve(i);
 }
 
-static void loop_resolver()
+static void loop_resolver(void *dummy __attribute__ ((unused)))
 {
   cs_sleepms(1000); // wait for reader
   while(cfg->resolvedelay > 0)
