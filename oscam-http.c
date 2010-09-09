@@ -2054,6 +2054,7 @@ void send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *p
 		tpl_printf(vars, 0, "SECONDS", "%d", SHUTDOWNREFRESH);
 		fputs(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
+		kill(client[0].pid, SIGQUIT); // Test because running=0 seems to have no effect in server loop while socket is blocked/listen
 	} else {
 		fputs(tpl_getTpl(vars, "PRESHUTDOWN"), f);
 	}
