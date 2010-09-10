@@ -370,13 +370,6 @@ typedef struct aes_entry {
     struct aes_entry   *next;
 } AES_ENTRY;
 
-typedef struct nds_atr {
-    char atr[MAX_ATR_LEN];
-    ushort atr_len;
-    int base_year;
-    const char *desc;
-} NDS_ATR_ENTRY;
-
 struct s_ecm
 {
   uchar  	ecmd5[CS_ECMSTORESIZE];

@@ -1,87 +1,11 @@
 #include "globals.h"
 #include "reader-common.h"
-
-#include <termios.h>
-#include <unistd.h>
-#ifdef OS_LINUX
-#include <linux/serial.h>
-#endif
-
-#define VG1_EMMTYPE_MASK 0xC0
-#define VG1_EMMTYPE_G 0
-#define VG1_EMMTYPE_U 1
-#define VG1_EMMTYPE_S 2
-
-#define write_cmd_vg(cmd, data) (card_write(reader, cmd, data, cta_res, &cta_lr) == 0)
-
-//////  ====================================================================================
+#include "reader-videoguard-common.h"
 
 int VG1_BASEYEAR = 1992;
 
-static int cw_is_valid(unsigned char *cw)	//returns 1 if cw_is_valid, returns 0 if cw is all zeros
-{
-  int i;
-  for (i = 0; i < 8; i++)
-    if (cw[i] != 0) {		//test if cw = 00
-      return OK;
-    }
-  return ERROR;
-}
-
 //////  ====================================================================================
 
-static unsigned char CW1[8], CW2[8];
-
-extern int io_serial_need_dummy_char;
-
-static int status_ok(const unsigned char *status)
-{
-  //cs_log("[videoguard1-reader] check status %02x%02x", status[0],status[1]);
-  return (status[0] == 0x90 || status[0] == 0x91)
-      && (status[1] == 0x00 || status[1] == 0x01 || status[1] == 0x20 || status[1] == 0x21 || status[1] == 0x80 || status[1] == 0x81 || status[1] == 0xa0 || status[1] == 0xa1);
-}
-
-static int do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res)
-{
-  ushort cta_lr;
-  unsigned char ins2[5];
-  memcpy(ins2, ins, 5);
-  unsigned char len = 0;
-  len = ins2[4];
-
-  unsigned char tmp[264];
-  if (!rxbuff) {
-    rxbuff = tmp;
-  }
-
-  if (txbuff == NULL) {
-    if (!write_cmd_vg(ins2, NULL) || !status_ok(cta_res + len)) {
-      return -1;
-    }
-    memcpy(rxbuff, ins2, 5);
-    memcpy(rxbuff + 5, cta_res, len);
-    memcpy(rxbuff + 5 + len, cta_res + len, 2);
-  } else {
-    if (!write_cmd_vg(ins2, (uchar *) txbuff) || !status_ok(cta_res)) {
-      return -2;
-    }
-    memcpy(rxbuff, ins2, 5);
-    memcpy(rxbuff + 5, txbuff, len);
-    memcpy(rxbuff + 5 + len, cta_res, 2);
-  }
-
-  return len;
-}
-
-static void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss)
-{
-  *year = (Date[0] / 12) + VG1_BASEYEAR;
-  *mon = (Date[0] % 12) + 1;
-  *day = Date[1] & 0x1f;
-  *hh = Date[2] / 8;
-  *mm = (0x100 * (Date[2] - *hh * 8) + Date[3]) / 32;
-  *ss = (Date[3] - *mm * 32) * 2;
-}
 
 static void read_tiers(struct s_reader *reader)
 {
@@ -120,7 +44,7 @@ static void read_tiers(struct s_reader *reader)
       break;
     }
     int y, m, d, H, M, S;
-    rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S);
+    rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, VG1_BASEYEAR);
     unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
     char *tier_name = get_tiername(tier_id, reader->caid[0]);
     cs_ri_log(reader, "[videoguard1-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, tier_name);
@@ -132,8 +56,8 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
 
   /* known class 48 only atrs */
   NDS_ATR_ENTRY nds1_atr_table[]={ // {atr}, atr len, base year, description
-    {{ 0x3F, 0x78, 0x13, 0x25, 0x04, 0x40, 0xB0, 0x09, 0x4A, 0x50, 0x01, 0x4E, 0x5A }, 13, 1992, "VideoGuard Sky New Zealand (0969)"},
-    {{0},0,0,NULL},
+    {{ 0x3F, 0x78, 0x13, 0x25, 0x04, 0x40, 0xB0, 0x09, 0x4A, 0x50, 0x01, 0x4E, 0x5A }, 13, 1992, NDS1, "VideoGuard Sky New Zealand (0969)"},
+    {{0},0,0,0,NULL},
     };
 
   get_hist;
@@ -463,16 +387,16 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
   int i, pos;
   int serial_count = ((ep->emm[3] >> 4) & 3) + 1;
   int serial_len = (ep->emm[3] & 0x80) ? 3 : 4;
-  uchar emmtype = (ep->emm[3] & VG1_EMMTYPE_MASK) >> 6;
+  uchar emmtype = (ep->emm[3] & VG_EMMTYPE_MASK) >> 6;
   pos = 4 + (serial_len * serial_count) + 2;
   switch (emmtype) {
-  case VG1_EMMTYPE_G:
+  case VG_EMMTYPE_G:
     {
       ep->type = GLOBAL;
       cs_debug_mask(D_EMM, "VIDEOGUARD1 EMM: GLOBAL");
       return TRUE;
     }
-  case VG1_EMMTYPE_U:
+  case VG_EMMTYPE_U:
     {
       cs_debug_mask(D_EMM, "VIDEOGUARD1 EMM: UNIQUE");
       ep->type = UNIQUE;
@@ -491,7 +415,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
       }
       return FALSE;		// if UNIQUE but no serial match return FALSE
     }
-  case VG1_EMMTYPE_S:
+  case VG_EMMTYPE_S:
     {
       ep->type = SHARED;
       cs_debug_mask(D_EMM, "VIDEOGUARD1 EMM: SHARED");
