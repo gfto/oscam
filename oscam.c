@@ -332,6 +332,7 @@ void cs_exit(int sig)
         // close the device
         reader_device_close(&reader[ridx]);
         break;
+    case 'h':
     case 's': *log_fd=0;
               int i;
               for (i=1; i<CS_MAXPID; i++)
