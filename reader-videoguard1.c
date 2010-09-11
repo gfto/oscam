@@ -7,6 +7,38 @@ int VG1_BASEYEAR = 1992;
 //////  ====================================================================================
 
 
+static int vg1_do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res)
+{
+  ushort cta_lr;
+  unsigned char ins2[5];
+  memcpy(ins2, ins, 5);
+  unsigned char len = 0;
+  len = ins2[4];
+
+  unsigned char tmp[264];
+  if (!rxbuff) {
+    rxbuff = tmp;
+  }
+
+  if (txbuff == NULL) {
+    if (!write_cmd_vg(ins2, NULL) || !status_ok(cta_res + len)) {
+      return -1;
+    }
+    memcpy(rxbuff, ins2, 5);
+    memcpy(rxbuff + 5, cta_res, len);
+    memcpy(rxbuff + 5 + len, cta_res + len, 2);
+  } else {
+    if (!write_cmd_vg(ins2, (uchar *) txbuff) || !status_ok(cta_res)) {
+      return -2;
+    }
+    memcpy(rxbuff, ins2, 5);
+    memcpy(rxbuff + 5, txbuff, len);
+    memcpy(rxbuff + 5 + len, cta_res, 2);
+  }
+
+  return len;
+}
+
 static void read_tiers(struct s_reader *reader)
 {
   def_resp;
@@ -15,7 +47,7 @@ static void read_tiers(struct s_reader *reader)
 
   return; // Not working at present so just do nothing
 
-  l = do_cmd(reader, ins2a, NULL, NULL, cta_res);
+  l = vg1_do_cmd(reader, ins2a, NULL, NULL, cta_res);
 //  if (l < 0 || !status_ok(cta_res + l))
 //  {
 //    return;
@@ -36,7 +68,7 @@ static void read_tiers(struct s_reader *reader)
 #endif
   for (i = 0; i < num; i++) {
     ins76[2] = i;
-    l = do_cmd(reader, ins76, NULL, NULL, cta_res);
+    l = vg1_do_cmd(reader, ins76, NULL, NULL, cta_res);
     if (l < 0 || !status_ok(cta_res + l)) {
       return;
     }
@@ -81,7 +113,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
         return ERROR; // unknown ATR... probably not NDS1
 
   /* NDS1 Class 48 only cards only need a very basic initialisation
-     NDS1 Class 48 only cards do not respond to do_cmd(ins7416)
+     NDS1 Class 48 only cards do not respond to vg1_do_cmd(ins7416)
      nor do they return list of valid command therefore do not even try
      NDS1 Class 48 only cards need to be told the length as (48, ins, 00, 80, 01) 
      does not return the length */
@@ -96,7 +128,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
   unsigned char ins36[5] = { 0x48, 0x36, 0x00, 0x00, 0x90 };
   unsigned char boxID[4];
   int boxidOK = 0;
-  l = do_cmd(reader, ins36, NULL, buff, cta_res);
+  l = vg1_do_cmd(reader, ins36, NULL, buff, cta_res);
   if (buff[7] > 0x0F) {
     cs_log("[videoguard1-reader] ins36: encrypted - therefore not an NDS1 card");
     return ERROR;
@@ -204,7 +236,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
   }
 
   unsigned char ins58[5] = { 0x48, 0x58, 0x00, 0x00, 0x17 };
-  l = do_cmd(reader, ins58, NULL, buff, cta_res);
+  l = vg1_do_cmd(reader, ins58, NULL, buff, cta_res);
   if (l < 0) {
     cs_log("[videoguard1-reader] cmd ins58 failed");
     return ERROR;
@@ -236,16 +268,16 @@ int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
   unsigned char cta_res[CTA_RES_LEN];
   static unsigned char ins40[5] = { 0x48, 0x40, 0x00, 0x80, 0xFF };
   static const unsigned char ins54[5] = { 0x48, 0x54, 0x00, 0x00, 0x0D };
-  int posECMpart2 = er->ecm[6] + 8;
-  int lenECMpart2 = er->ecm[posECMpart2] + 1;
+  int posECMpart2 = er->ecm[6] + 7;
+  int lenECMpart2 = er->ecm[posECMpart2];
   unsigned char tbuff[264];
   unsigned char rbuff[264];
   memcpy(&tbuff[0], &(er->ecm[posECMpart2 + 1]), lenECMpart2 - 1);
   ins40[4] = lenECMpart2;
   int l;
-  l = do_cmd(reader, ins40, tbuff, NULL, cta_res);
+  l = vg1_do_cmd(reader, ins40, tbuff, NULL, cta_res);
   if (l > 0 && status_ok(cta_res)) {
-    l = do_cmd(reader, ins54, NULL, rbuff, cta_res);
+    l = vg1_do_cmd(reader, ins54, NULL, rbuff, cta_res);
     if (l > 0 && status_ok(cta_res + l)) {
       memcpy(CW1, rbuff + 5, 8);
       //set to 0 so client will know it is not valid if not overwritten with valid cw
@@ -477,7 +509,7 @@ int videoguard1_do_emm(struct s_reader *reader, EMM_PACKET * ep)
   const unsigned char *payload = payload_addr(ep->type, ep->emm, reader->hexserial);
   while (payload) {
     ins42[4] = *payload;
-    int l = do_cmd(reader, ins42, payload + 1, NULL, cta_res);
+    int l = vg1_do_cmd(reader, ins42, payload + 1, NULL, cta_res);
     if (l > 0 && status_ok(cta_res)) {
       rc = OK;
     }

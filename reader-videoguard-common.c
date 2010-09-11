@@ -380,7 +380,7 @@ int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned c
 
 int status_ok(const unsigned char *status)
 {
-    //cs_log("[videoguard2-reader] check status %02x%02x", status[0],status[1]);
+    //cs_log("[videoguard-reader] check status %02x%02x", status[0],status[1]);
     return (status[0] == 0x90 || status[0] == 0x91)
            && (status[1] == 0x00 || status[1] == 0x01
                || status[1] == 0x20 || status[1] == 0x21
@@ -400,7 +400,7 @@ int read_cmd_len(struct s_reader * reader, const unsigned char *cmd)
   // some card reply with L 91 00 (L being the command length).
   
   if(!write_cmd_vg(cmd2,NULL) || !status_ok(cta_res+1)) {
-    cs_debug("[videoguard2-reader] failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
+    cs_debug("[videoguard-reader] failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
     return -1;
     }
   return cta_res[0];
