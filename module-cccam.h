@@ -153,7 +153,8 @@ struct cc_data {
 	pthread_mutex_t ecm_busy;
 	struct timeb ecm_time;
 	time_t answer_on_keepalive;
-
+	uint8 last_msg;
+	
 	//Extended Mode for SPECIAL clients:
 	int extended_mode;
 	LLIST *extended_ecm_idx;

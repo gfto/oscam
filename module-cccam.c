@@ -748,6 +748,10 @@ static int send_cmd05_answer()
  * sends a ecm request to the connected CCCam Server
  */
 static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
+
+	cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
+	cc_cli_init_int();
+
 	int n, h = -1;
 	struct cc_data *cc = client[cs_idx].cc;
 	struct cc_card *card;
@@ -757,22 +761,27 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	struct timeb cur_time;
 	cs_ftime(&cur_time);
 
-	cc_cli_init_int();
-
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
 		if (er) {
-			er->rc = 0;
-			er->rcEx = 0x27;
+			//er->rc = 0;
+			//er->rcEx = 0x27;
 			cs_debug_mask(D_TRACE, "%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1
 					: 0, pfd);
-			write_ecm_answer(&reader[ridx], fd_c2m, er);
+			//write_ecm_answer(&reader[ridx], fd_c2m, er);
 		}
-		return -1;
+		return 0;
 	}
 
-	//No Card? Waiting for shares
-	if (!llist_count(cc->cards))
+	if (reader[ridx].tcp_connected != 2) {
+		cs_debug_mask(D_TRACE, "%s Waiting for CARDS", getprefix());
 		return 0;
+	}
+	
+	//No Card? Waiting for shares
+	if (!llist_count(cc->cards)) {
+		cs_debug_mask(D_TRACE, "%s NO CARDS!", getprefix());
+		return 0;
+	}
 		
 	cc->just_logged_in = 0;
 
@@ -933,45 +942,52 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 		return 0;
 	} else {
-		if (is_auto_blocked)
-			cs_log("%s no suitable card on server (auto blocked)", getprefix());
-		else
-			cs_log("%s no suitable card on server", getprefix());
-		cur_er->rc = 0;
-		cur_er->rcEx = 0x27;
-		write_ecm_answer(&reader[ridx], fd_c2m, cur_er);
-		//cur_er->rc = 1;
-		//cur_er->rcEx = 0;
-		//cs_sleepms(300);
-		reader[ridx].last_s = reader[ridx].last_g;
-
-		card = llist_itr_init(cc->cards, &itr);
-		while (card) {
-			if (card->caid == cur_er->caid) { // caid matches
-				LLIST_ITR sitr;
-				struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
-				while (srvid) {
-					if (sid_eq(srvid, &cur_srvid)) {
-						free(srvid);
-						srvid = llist_itr_remove(&sitr);
+		//When connecting, it could happen than ecm requests come before all cards are received.
+		//So if the last Message was a MSG_NEW_CARD, this "card receiving" is not already done
+		//if this happens, we do not autoblock it and do not set rc status
+		//So fallback could resolve it
+		if (cc->last_msg != MSG_NEW_CARD) {
+			if (is_auto_blocked)
+				cs_log("%s no suitable card on server (auto blocked)", getprefix());
+			else
+				cs_log("%s no suitable card on server", getprefix());
+			
+			cur_er->rc = 0;
+			cur_er->rcEx = 0x27;
+			write_ecm_answer(&reader[ridx], fd_c2m, cur_er);
+			//cur_er->rc = 1;
+			//cur_er->rcEx = 0;
+			//cs_sleepms(300);
+			reader[ridx].last_s = reader[ridx].last_g;
+			
+			card = llist_itr_init(cc->cards, &itr);
+			while (card) {
+				if (card->caid == cur_er->caid) { // caid matches
+					LLIST_ITR sitr;
+					struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
+					while (srvid) {
+						if (sid_eq(srvid, &cur_srvid)) {
+							free(srvid);
+							srvid = llist_itr_remove(&sitr);
+						}
+						else
+							srvid = llist_itr_next(&sitr);
 					}
-					else
-						srvid = llist_itr_next(&sitr);
 				}
+				card = llist_itr_next(&itr);
 			}
-			card = llist_itr_next(&itr);
-		}
 
-		if (!reader[ridx].cc_disable_auto_block) {
-			cc_add_auto_blocked(cc->auto_blocked, cur_er->caid, cur_er->prid,
-					&cur_srvid);
+			if (!reader[ridx].cc_disable_auto_block) {
+				cc_add_auto_blocked(cc->auto_blocked, cur_er->caid, cur_er->prid,
+						&cur_srvid);
+			}
 		}
 		if (!cc->extended_mode) {
 			reader[ridx].available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
 		}
 		
-		return -1;
+		return cc->last_msg!=MSG_NEW_CARD? -1 : 0; // !=0: ecm is answered, ==0 ecm is processing
 	}
 }
 
@@ -1053,9 +1069,10 @@ struct cc_card *get_card_by_hexserial(uint8 *hexserial, uint16 caid) {
  * ProcessEmm
  * */
 static int cc_send_emm(EMM_PACKET *ep) {
+	cc_cli_init_int();
+
 	struct cc_data *cc = client[cs_idx].cc;
 
-	cc_cli_init_int();
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
 		cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1 : 0, pfd);
 		return 0;
@@ -1334,43 +1351,75 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card) {
 	int doSaveCaidInfos = 0;
 	LLIST_ITR itr;
 	struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos, &itr);
-	while (caid_info) {
-		if (caid_info->caid == card->caid && 
-				caid_info->hop == card->hop && 
-				caid_info->remote_id == card->remote_id)
-			if (llist_count(caid_info->provs) < CS_MAXPROV)
+	
+	if (cfg->cc_minimize_cards) {
+		while (caid_info) {
+			if (caid_info->caid == card->caid)
 				break;
-		caid_info = llist_itr_next(&itr);
-	}
-	if (!caid_info) {
-		caid_info = malloc(sizeof(struct cc_caid_info));
-		caid_info->caid = card->caid;
-		caid_info->provs = llist_create();
-		caid_info->hop = card->hop;
-		caid_info->remote_id = card->remote_id;
-		llist_append(cc->caid_infos, caid_info);
-		doSaveCaidInfos = 1;
-	}
-
-	uint8 *prov_info;
-	uint8 *prov_card;
-	LLIST_ITR itr_info;
-	LLIST_ITR itr_card;
-	prov_card = llist_itr_init(card->provs, &itr_card);
-	while (prov_card) {
-		prov_info = llist_itr_init(caid_info->provs, &itr_info);
-		while (prov_info) {
-			if (b2i(3, prov_info) == b2i(3, prov_card))
-				break;
-			prov_info = llist_itr_next(&itr_info);
+			caid_info = llist_itr_next(&itr);
 		}
-		if (!prov_info) {
+		if (!caid_info) {
+			caid_info = malloc(sizeof(struct cc_caid_info));
+			caid_info->caid = card->caid;
+			caid_info->provs = llist_create();
+			caid_info->hop = card->hop;
+			caid_info->remote_id = card->remote_id;
+			llist_append(cc->caid_infos, caid_info);
+			doSaveCaidInfos = 1;
+
+			//Null-Provider for all Providers!			
 			uint8 *prov_new = malloc(3);
-			memcpy(prov_new, prov_card, 3);
+			memset(prov_new, 0, 3);
 			llist_append(caid_info->provs, prov_new);
+		}
+		else
+		{
+			if (card->hop < caid_info->hop) {
+				caid_info->hop = card->hop;
+				doSaveCaidInfos = 1;
+			}
+		}
+		
+	}
+	else {
+		while (caid_info) {
+			if  (caid_info->caid == card->caid && 
+					caid_info->hop == card->hop && 
+					caid_info->remote_id == card->remote_id)
+				if (llist_count(caid_info->provs) < CS_MAXPROV)
+					break;
+			caid_info = llist_itr_next(&itr);
+		}
+		if (!caid_info) {
+			caid_info = malloc(sizeof(struct cc_caid_info));
+			caid_info->caid = card->caid;
+			caid_info->provs = llist_create();
+			caid_info->hop = card->hop;
+			caid_info->remote_id = card->remote_id;
+			llist_append(cc->caid_infos, caid_info);
 			doSaveCaidInfos = 1;
 		}
-		prov_card = llist_itr_next(&itr_card);
+		
+		uint8 *prov_info;
+		uint8 *prov_card;
+		LLIST_ITR itr_info;
+		LLIST_ITR itr_card;
+		prov_card = llist_itr_init(card->provs, &itr_card);
+		while (prov_card) {
+			prov_info = llist_itr_init(caid_info->provs, &itr_info);
+			while (prov_info) {
+				if (b2i(3, prov_info) == b2i(3, prov_card))
+					break;
+				prov_info = llist_itr_next(&itr_info);
+			}
+			if (!prov_info) {
+				uint8 *prov_new = malloc(3);
+				memcpy(prov_new, prov_card, 3);
+				llist_append(caid_info->provs, prov_new);
+				doSaveCaidInfos = 1;
+			}
+			prov_card = llist_itr_next(&itr_card);
+		}
 	}
 	return doSaveCaidInfos;
 }
@@ -1484,18 +1533,19 @@ static int check_extended_mode(char *msg) {
 	return has_param;
 }
 
-//static void cc_idle() {
-//	struct cc_data *cc = client[cs_idx].cc;
-//	if (!reader[ridx].tcp_connected)
-//		return;
-//
-//	cs_debug("%s IDLE", getprefix());
-//	if (cc->answer_on_keepalive + 55 < time(NULL)) {
-//		cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
-//		cs_debug("cccam: keepalive");
-//		cc->answer_on_keepalive = time(NULL);
-//	}
-//}
+static void cc_idle() {
+	struct cc_data *cc = client[cs_idx].cc;
+	if (!reader[ridx].tcp_connected)
+		return;
+
+	if (!reader[ridx].cc_keepalive)
+		cs_debug("%s IDLE", getprefix());
+	else if (cc->answer_on_keepalive + 55 < time(NULL)) {
+		cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
+		cs_debug("cccam: keepalive");
+		cc->answer_on_keepalive = time(NULL);
+	}
+}
 
 void cc_card_removed(uint32 shareid) {
 	struct cc_data *cc = client[cs_idx].cc;
@@ -1533,7 +1583,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 
 	uint8 *data = buf+4;
 	memcpy(&cc->receive_buffer, data, l-4);
-
+	cc->last_msg = buf[1];
 	switch (buf[1]) {
 	case MSG_CLI_DATA:
 		cs_debug("cccam: client data ack");
@@ -1664,24 +1714,26 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		card->time = time((time_t) 0);
 		llist_append(cc->cards, card);
 
-		//build own card/provs list:
-		cc->needs_rebuild_caidinfo++;
-		if (cc->needs_rebuild_caidinfo > CC_CAIDINFO_REBUILD) {
-			//cleanup_old_cards(cc);
-			rebuild_caidinfos(cc);
-			saveCaidInfos(ridx, cc->caid_infos);
-		} else {
-			if (cc->caid_infos && checkCaidInfos(ridx, &cc->caid_size)) {
-				freeCaidInfos(cc->caid_infos);
-				cc->caid_infos = NULL;
-			}
-			if (!cc->caid_infos)
-				cc->caid_infos = loadCaidInfos(ridx);
-			if (!cc->caid_infos)
-				cc->caid_infos = llist_create();
-
-			if (add_card_to_caidinfo(cc, card))
+		if (cfg->cc_port) { //caidlist is only for active server needed!
+			//build own card/provs list:
+			cc->needs_rebuild_caidinfo++;
+			if (cc->needs_rebuild_caidinfo > CC_CAIDINFO_REBUILD) {
+				//cleanup_old_cards(cc);
+				rebuild_caidinfos(cc);
 				saveCaidInfos(ridx, cc->caid_infos);
+			} else {
+				if (cc->caid_infos && checkCaidInfos(ridx, &cc->caid_size)) {
+					freeCaidInfos(cc->caid_infos);
+					cc->caid_infos = NULL;
+				}
+				if (!cc->caid_infos)
+					cc->caid_infos = loadCaidInfos(ridx);
+				if (!cc->caid_infos)
+					cc->caid_infos = llist_create();
+					
+				if (add_card_to_caidinfo(cc, card))
+					saveCaidInfos(ridx, cc->caid_infos);
+			}
 		}
 		uint8 *prov = llist_itr_init(card->provs, &itr);
 		while (prov) {
@@ -2335,6 +2387,8 @@ static int cc_srv_report_cards() {
 			reader[r].cc_id = fast_rnd() << 8 | fast_rnd();
 		}
 			
+		int au_allowed = !reader[r].audisabled && is_au();
+		
 		flt = 0;
 		if (reader[r].typ != R_CCCAM && reader[r].ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
@@ -2354,17 +2408,21 @@ static int cc_srv_report_cards() {
 					buf[9] = caid & 0xff;
 					buf[10] = hop;
 					buf[11] = reshare;
-					if (!reader[r].audisabled && is_au())
+					//Setting UA: (Unique Address):
+					if (au_allowed)
 						memcpy(buf + 12, reader[r].hexserial, 8);
 					buf[20] = reader[r].ftab.filts[j].nprids;
 					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
 					for (k = 0; k < reader[r].ftab.filts[j].nprids; k++) {
 						ulong prid = reader[r].ftab.filts[j].prids[k];
-						buf[21 + (k * 7)] = prid >> 16;
-						buf[22 + (k * 7)] = prid >> 8;
-						buf[23 + (k * 7)] = prid & 0xFF;
-						if (!chk_srvid_by_caid_prov(caid, prid, cs_idx))
+						if (!chk_srvid_by_caid_prov(caid, prid, cs_idx)) {
 							ignore = 1;
+							break;
+						}
+						int ofs = 21 + (k*7);
+						buf[ofs+0] = prid >> 16;
+						buf[ofs+1] = prid >> 8;
+						buf[ofs+2] = prid & 0xFF;
 						//cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
 					}
 					if (ignore) //Filtered by services
@@ -2412,7 +2470,7 @@ static int cc_srv_report_cards() {
 					buf[9] = lcaid & 0xff;
 					buf[10] = hop;
 					buf[11] = reshare;
-					if (!reader[r].audisabled && is_au())
+					if (au_allowed)
 						memcpy(buf + 12, reader[r].hexserial, 8);
 					buf[20] = 1;
 					//cs_log("CAID map CCcam card report caid: %04X nodeid: %s subid: %06X", lcaid, cs_hexdump(0, cc->peer_node_id, 8), reader[r].cc_id);
@@ -2441,18 +2499,35 @@ static int cc_srv_report_cards() {
 			buf[5] = reader[r].cc_id >> 16;
 			buf[6] = reader[r].cc_id >> 8;
 			buf[7] = reader[r].cc_id & 0xFF;
-			buf[8] = reader[r].caid[0] >> 8;
-			buf[9] = reader[r].caid[0] & 0xff;
+			ushort caid = reader[r].caid[0];
+			buf[8] = caid >> 8;
+			buf[9] = caid & 0xff;
 			buf[10] = hop;
 			buf[11] = reshare;
-			if (!reader[r].audisabled && is_au())
+			if (au_allowed)
 				memcpy(buf + 12, reader[r].hexserial, 8);
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
+				ulong prid = 0;
+				//schlocke: Unknown real handling, code is from cogsy:
 				if (!(reader[r].typ & R_IS_CASCADING)) //(reader[r].card_status == CARD_INSERTED)
-					memcpy(buf + 21 + (j * 7), reader[r].prid[j] + 1, 3);
+					memcpy(&prid, reader[r].prid[j], 4);
+					//memcpy(buf + 21 + (j * 7), reader[r].prid[j] + 1, 3);
 				else
-					memcpy(buf + 21 + (j * 7), reader[r].prid[j], 3);
+					memcpy((&prid)+1, reader[r].prid[j], 3);
+					//memcpy(buf + 21 + (j * 7), reader[r].prid[j], 3);
+				int ofs = 21+(j*7);
+				buf[ofs+0] = prid >> 16;
+				buf[ofs+1] = prid >> 8;
+				buf[ofs+2] = prid & 0xFF;
+				//Setting SA (Shared Addresses):
+				if (au_allowed)
+				{
+					buf[ofs+3] = reader[r].sa[j][0];
+					buf[ofs+4] = reader[r].sa[j][1];
+					buf[ofs+5] = reader[r].sa[j][2];
+					buf[ofs+6] = reader[r].sa[j][3];
+				}
 				//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
 			}
 			buf[21 + (j * 7)] = 1;
@@ -2504,17 +2579,21 @@ static int cc_srv_report_cards() {
 						buf[10] = caid_info->hop;
 						buf[11] = reshare;
 						//memcpy(buf + 12, caid_info->hexserial, 8);
+						//We never reshare UA / SA !!
 						int j = 0;
 						LLIST_ITR itr_prov;
 						uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
 						while (prov) {
 							ulong prid=0;
+							memcpy((&prid)+1, prov, 3);
 							memcpy(buf + 21 + (j * 7), prov, 3);
 							prov = llist_itr_next(&itr_prov);
 							j++;
 							if (!chk_srvid_by_caid_prov(caid_info->caid, prid, cs_idx) ||
-							  !chk_srvid_by_caid_prov(caid_info->caid, prid, reader[r].cs_idx))
+							  !chk_srvid_by_caid_prov(caid_info->caid, prid, reader[r].cs_idx)) {
 								ignore = 1;
+								break;
+							}
 						}
 						if (!ignore) {  //Filtered by service
 							buf[20] = j;
@@ -2880,7 +2959,7 @@ void module_cccam(struct s_module *ph) {
 	ph->cleanup = cc_cleanup;
 	ph->c_multi = 1;
 	ph->c_init = cc_cli_init;
-	//ph->c_idle = cc_idle;
+	ph->c_idle = cc_idle;
 	ph->c_recv_chk = cc_recv_chk;
 	ph->c_send_ecm = cc_send_ecm;
 	ph->c_send_emm = cc_send_emm;

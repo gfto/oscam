@@ -593,6 +593,7 @@ struct s_reader  //contains device info, reader info and card info
   int       cc_disable_auto_block; //Schlocke
   int       cc_want_emu; //Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
   uint      cc_id;
+  int       cc_keepalive;
   uchar     tcp_connected;
   int       tcp_ito;      // inactivity timeout
   int       tcp_rto;      // reconnect timeout
@@ -846,6 +847,7 @@ struct s_config
 	int		cc_update_interval;
 	in_addr_t	cc_srvip;
 	uchar		cc_version[7];
+	int             cc_minimize_cards;
 	struct s_ip *rad_allowed;
 	char		rad_usr[32];
 	char		ser_device[512];
