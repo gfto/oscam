@@ -1054,6 +1054,15 @@ void chk_t_cccam(char *token, char *value)
                 return;
 	}
 	
+	// cccam: Update cards interval
+	if (!strcmp(token, "minimizecards")) {
+	        if (strlen(value) == 0)
+	                cfg->cc_minimize_cards = 0;
+                else
+                        cfg->cc_minimize_cards = atoi(value);
+                return;
+	}
+
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in cccam section not recognized\n",token);
@@ -1966,6 +1975,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "reshare", "%d\n", cfg->cc_reshare);
 		fprintf_conf(f, CONFVARWIDTH, "version", "%s\n", cfg->cc_version);
 		fprintf_conf(f, CONFVARWIDTH, "updateinterval", "%d\n", cfg->cc_update_interval);
+		fprintf_conf(f, CONFVARWIDTH, "minimizecards", "%d\n", cfg->cc_minimize_cards);
 		fprintf(f,"\n");
 	}
 
@@ -2475,6 +2485,9 @@ int write_server()
 
 				if (reader[i].cc_want_emu)
 					fprintf_conf(f, CONFVARWIDTH, "cccwantemu", "%d\n", reader[i].cc_want_emu);
+
+				if (reader[i].cc_keepalive)
+					fprintf_conf(f, CONFVARWIDTH, "ccckeepalive", "%d\n", reader[i].cc_keepalive);
 			}
 
 			if (reader[i].deprecated && isphysical)
@@ -3545,6 +3558,16 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		} else {
 			rdr->cc_want_emu = atoi(value);
+			return;
+		}
+	}
+
+	if (!strcmp(token, "ccckeepalive")) {
+		if (strlen(value) == 0) {
+			rdr->cc_keepalive = 0;
+			return;
+		} else {
+			rdr->cc_keepalive = atoi(value);
 			return;
 		}
 	}

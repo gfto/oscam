@@ -33,6 +33,7 @@ void llist_destroy(LLIST *l)
 		free(o);
 		o = llist_itr_remove(&itr);
 	}
+	pthread_mutex_destroy(&l->lock);
 	free(l);
 	//  llist_itr_release(&itr);
 }
@@ -59,6 +60,36 @@ void *llist_append(LLIST *l, void *o)
 			l->first = ln;
 		}
 		l->last = ln;
+
+		l->items++;
+	}
+	pthread_mutex_unlock(&l->lock);
+
+	return o;
+}
+
+void *llist_insert_first(LLIST *l, void *o)
+{
+	if (!l)
+		return NULL;
+	pthread_mutex_lock(&l->lock);
+	if (o) {
+		struct llist_node *ln = malloc(sizeof(struct llist_node));
+		if (!ln) {
+			pthread_mutex_unlock(&l->lock);
+			return NULL;
+		}
+
+		memset(ln, 0, sizeof(struct llist_node));
+		ln->obj = o;
+
+		if (l->first) {
+			ln->nxt = l->first;
+			ln->nxt->prv = ln;
+		} else {
+			l->last = ln;
+		}
+		l->first = ln;
 
 		l->items++;
 	}

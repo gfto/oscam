@@ -1621,13 +1621,14 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						uint8 count = 0;
 						if (fread(&count, 1, sizeof(count), file) <= 0)
 							break;
-						uint8 prov[3];
+						struct cc_provider prov;
 						int revcount = count;
 
 						while (count > 0) {
-							if (fread(prov, 1, sizeof(prov), file) <= 0)
+							if (fread(&prov, 1, sizeof(prov), file) <= 0)
 								break;
-							snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X", prov[0], prov[1], prov[2]);
+							snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X",
+									(uint)(prov.prov >> 16), (uint)(prov.prov>>8), (uint)(prov.prov & 0xFF));
 							provider = get_provider(caid, a2i(ascprovid, 3));
 
 							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",

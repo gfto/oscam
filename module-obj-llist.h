@@ -41,6 +41,7 @@ LLIST *llist_create(void);                  // init linked list
 void llist_destroy(LLIST *l);               // de-init linked list - frees all objects on the list
 
 void *llist_append(LLIST *l, void *o);       // append object onto bottom of list, returns ptr to obj
+void *llist_insert_first(LLIST *l, void *o);       // append object onto bottom of list, returns ptr to obj
 
 void *llist_itr_init(LLIST *l, LLIST_ITR *itr);       // linked list iterator, returns ptr to first obj
 //void llist_itr_release(LLIST_ITR *itr);               // release iterator

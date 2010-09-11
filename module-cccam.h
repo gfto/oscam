@@ -18,7 +18,11 @@
 #  define MSG_WAITALL 0
 #endif
 
-#define CAIDFILE_VERSION 0xffff
+#define CAIDFILE_VERSION 0xfffe
+
+#define MINIMIZE_NONE 0
+#define MINIMIZE_HOPS 1
+#define MINIMIZE_CAID 2
 
 typedef enum {
 	DECRYPT, ENCRYPT
@@ -52,6 +56,11 @@ struct cc_srvid {
 	uint8 ecmlen;
 };
 
+struct cc_provider {
+	ulong prov;  //provider
+	uint8 sa[4]; //shared address
+};
+
 struct cc_card {
 	uint32 id; // cccam card (share) id
 	uint32 remote_id;
@@ -59,10 +68,10 @@ struct cc_card {
 	uint8 hop;
 	uint8 maxdown;
 	uint8 hexserial[8]; // card serial (for au)
-	LLIST *provs; // providers
+	LLIST *providers; // providers (struct cc_provider)
 	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
 	time_t time;
-	LLIST *goodsids; //sids that could decoded
+	LLIST *goodsids; //sids that could decoded (struct cc_srvid)
 };
 
 struct cc_reported_carddata {
@@ -73,7 +82,7 @@ struct cc_reported_carddata {
 struct cc_caid_info {
 	uint16 caid;
 	uint32 remote_id;
-	LLIST *provs;
+	LLIST *providers; // struct cc_provider
 	uint8 hop;
 };
 
@@ -142,8 +151,7 @@ struct cc_data {
 	
 	uint32 recv_ecmtask;
 
-	int current_ecm_cidx; //index to last current_card (reader)
-	struct cc_current_card *current_card; //initialized by reader (index CS_MAXPID)
+	LLIST *current_cards; //reader: current card cache
 	int server_ecm_pending;                    //initialized by server
 	LLIST *server_caid_infos[CS_MAXREADER];
 	long server_caid_size[CS_MAXREADER];

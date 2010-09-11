@@ -336,6 +336,16 @@ static void add_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	}
 }
 
+void free_current_cards(LLIST *current_cards) {
+	LLIST_ITR itr;
+	struct cc_current_card *c = llist_itr_init(current_cards, &itr);
+	while (c) {
+		free(c);
+		c = llist_itr_remove(&itr);
+	}
+}
+
+
 
 /**
  * reader
@@ -367,6 +377,7 @@ static void cc_cli_close() {
 		pthread_mutex_destroy(&cc->ecm_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
+		free_current_cards(cc->current_cards);
 	}
 }
 
@@ -379,7 +390,7 @@ static struct cc_extended_ecm_idx *add_extended_ecm_idx(
 	eei->card=card;
 	eei->srvid=srvid;
 	llist_append(cc->extended_ecm_idx, eei);
-	cs_debug_mask(D_TRACE, "%s add extended ecm-idx: %d:%d", getprefix(), send_idx, ecm_idx);
+	//cs_debug_mask(D_TRACE, "%s add extended ecm-idx: %d:%d", getprefix(), send_idx, ecm_idx);
 	return eei;
 }
 
@@ -392,8 +403,8 @@ static struct cc_extended_ecm_idx *get_extended_ecm_idx(uint8 send_idx, int remo
 		if (eei->send_idx == send_idx) {
 			if (remove)
 				llist_itr_remove(&itr);
-			cs_debug_mask(D_TRACE, "%s get by send-idx: %d FOUND: %d",
-					getprefix(), send_idx, eei->ecm_idx);
+			//cs_debug_mask(D_TRACE, "%s get by send-idx: %d FOUND: %d",
+			//		getprefix(), send_idx, eei->ecm_idx);
 			return eei;
 		}
 		eei = llist_itr_next(&itr);
@@ -412,8 +423,8 @@ static struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(
 		if (eei->ecm_idx == ecm_idx) {
 			if (remove)
 				llist_itr_remove(&itr);
-			cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d FOUND: %d",
-					getprefix(), ecm_idx, eei->send_idx);
+			//cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d FOUND: %d",
+			//		getprefix(), ecm_idx, eei->send_idx);
 			return eei;
 		}
 		eei = llist_itr_next(&itr);
@@ -742,6 +753,65 @@ static int send_cmd05_answer()
 	return 1;
 }
 
+static struct cc_current_card *cc_find_current_card(struct cc_data *cc, struct cc_card *card) {
+	LLIST_ITR itr;
+	struct cc_current_card *c = llist_itr_init(cc->current_cards, &itr);
+	while (c) {
+		if (c->card == card)
+			return c;
+		c = llist_itr_next(&itr);
+	}
+	return NULL;
+}
+
+static struct cc_current_card *cc_find_current_card_by_srvid(struct cc_data *cc, ushort caid, ulong prov, struct cc_srvid *srvid) {
+	LLIST_ITR itr;
+	struct cc_current_card *c = llist_itr_init(cc->current_cards, &itr);
+	while (c) {
+		if (c->card->caid==caid && c->prov==prov && sid_eq(&c->srvid, srvid))
+			return c;
+		c = llist_itr_next(&itr);
+	}
+	return NULL;
+}
+
+static void cc_remove_current_card(struct cc_data *cc, struct cc_current_card *current_card) {
+	LLIST_ITR itr;
+	struct cc_current_card *c = llist_itr_init(cc->current_cards, &itr);
+	while (c) {
+		if (c == current_card) {
+			free(c);
+			c = llist_itr_remove(&itr);
+		}
+		else
+			c = llist_itr_next(&itr);
+	}
+
+}
+
+static void cc_UA_oscam2cccam(uint8 *in, uint8 *out) {
+	out[7] = in[5];
+	out[6] = in[4];
+	out[5] = in[3];
+	out[4] = in[2];
+	out[3] = in[1];
+	out[2] = in[0];
+	out[1] = in[7];
+	out[0] = in[6];
+}
+
+static void cc_UA_cccam2oscam(uint8 *in, uint8 *out) {
+	out[5] = in[7];
+	out[4] = in[6];
+	out[3] = in[5];
+	out[2] = in[4];
+	out[1] = in[3];
+	out[0] = in[2];
+	out[7] = in[1];
+	out[6] = in[0];
+}
+
+
 
 /**
  * reader
@@ -749,7 +819,7 @@ static int send_cmd05_answer()
  */
 static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
-	cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
+	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
 	cc_cli_init_int();
 
 	int n, h = -1;
@@ -837,21 +907,19 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	cur_srvid.sid = cur_er->srvid;
 	cur_srvid.ecmlen = cur_er->l;
 
-	//First check last used card:
-	cc->current_ecm_cidx = cur_er->cidx;
-	current_card = &cc->current_card[cur_er->cidx];
-	if (current_card->card && current_card->prov == cur_er->prid && 
-	  sid_eq(&current_card->srvid, &cur_srvid) &&
-	  !is_sid_blocked(current_card->card, &cur_srvid)) {
-		card = current_card->card;
-	}
-	else
+	//search cache:
+	current_card = cc_find_current_card_by_srvid(cc, cur_er->caid, cur_er->prid, &cur_srvid);
+	if (current_card)
 	{
-		card = NULL;
-		current_card->prov = cur_er->prid;
-		current_card->srvid = cur_srvid;
-		current_card->card = NULL;
+		if (!current_card->card || is_sid_blocked(current_card->card, &cur_srvid)) {
+			cc_remove_current_card(cc, current_card);
+			current_card = NULL;
+		}
 	}
+	if (current_card)
+		card = current_card->card;
+	else
+		card = NULL;
 
 	//then check all other cards
 	int is_auto_blocked = 0;
@@ -861,39 +929,41 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	  	    cc_is_auto_blocked(
 		    cc->auto_blocked, cur_er->caid, cur_er->prid, &cur_srvid, 60*60*1)) { //TODO: Timeout 60*60*1 = 1h, Config?
 		        is_auto_blocked = 1;
-			current_card->card = NULL;
 		}
 		else
 		{
-			card = llist_itr_init(cc->cards, &itr);
-			while (card) {
-				if (card->caid == cur_er->caid) { // caid matches
-					int s = is_sid_blocked(card, &cur_srvid);
+			struct cc_card *ncard = llist_itr_init(cc->cards, &itr);
+			while (ncard) {
+				if (ncard->caid == cur_er->caid) { // caid matches
+					int s = is_sid_blocked(ncard, &cur_srvid);
 						
 					LLIST_ITR pitr;
-					uint8 *prov = llist_itr_init(card->provs, &pitr);
-					while (prov && !s) {
-						ulong card_prov = b2i(3, prov);
-						if (!cur_er->prid || !card_prov || card_prov == cur_er->prid) { // provid matches
-							if (((h < 0) || (card->hop < h)) && (card->hop
-									<= reader[ridx].cc_maxhop)) { // card is closer and doesn't exceed max hop
-								//cc->cur_card = card;
-								current_card->card = card;
-								h = card->hop; // card has been matched
+					struct cc_provider *provider = llist_itr_init(ncard->providers, &pitr);
+					while (provider && !s) {
+						if (!cur_er->prid || !provider->prov || provider->prov == cur_er->prid) { // provid matches
+							if (((h < 0) || (ncard->hop < h)) && (ncard->hop
+									<= reader[ridx].cc_maxhop)) { // ncard is closer and doesn't exceed max hop
+								//cc->cur_card = ncard;
+								card = ncard;
+								h = ncard->hop; // ncard has been matched
 							}
 						}
-						prov = llist_itr_next(&pitr);
+						provider = llist_itr_next(&pitr);
 					}
 				}
-				card = llist_itr_next(&itr);
+				ncard = llist_itr_next(&itr);
 			}
 		}
 	}
 	
-	if (current_card->card) {
-		card = current_card->card;
-		current_card->prov = cur_er->prid;
-		current_card->srvid = cur_srvid;
+	if (card) {
+		if (!current_card) {
+			current_card = malloc(sizeof(struct cc_current_card));
+			current_card->card = card;
+			current_card->prov = cur_er->prid;
+			current_card->srvid = cur_srvid;
+			llist_insert_first(cc->current_cards, current_card);
+		}
 
 		card->time = time((time_t) 0);
 		uint8 ecmbuf[CC_MAXMSGSIZE];
@@ -935,9 +1005,20 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		//For EMM
 		if (!reader[ridx].audisabled) {
 			reader[ridx].card_system = get_cardsystem(card->caid);
-			memcpy(reader[ridx].hexserial, card->hexserial, sizeof(card->hexserial));
+			cc_UA_cccam2oscam(card->hexserial, reader[ridx].hexserial);
+			
+			reader[ridx].nprov = llist_count(card->providers);
+			LLIST_ITR pitr;
+			int p = 0;
+			struct cc_provider *provider = llist_itr_init(card->providers, &pitr);
+			while (provider) {
+				memcpy(&reader[ridx].prid[p], &provider->prov, sizeof(provider->prov));
+				memcpy(&reader[ridx].sa[p], provider->sa, sizeof(provider->sa));
+				provider = llist_itr_next(&pitr);
+				p++;
+			}
 			cs_debug_mask(D_EMM, "%s au info: caid %04X card system: %d serial: %s", 
-				getprefix(), card->caid, reader[ridx].card_system, cs_hexdump(0, card->hexserial, 8));
+				getprefix(), card->caid, reader[ridx].card_system, cs_hexdump(0, reader[ridx].hexserial, 8));
 		}
 
 		return 0;
@@ -1032,7 +1113,6 @@ static int cc_send_pending_emms() {
 		}
 		int size = emmbuf[11]+12;
 	
-		cc->current_ecm_cidx = 0;
 		cc->just_logged_in = 0;
 		cs_ftime(&cc->ecm_time);
 		
@@ -1055,7 +1135,7 @@ struct cc_card *get_card_by_hexserial(uint8 *hexserial, uint16 caid) {
 	LLIST_ITR itr;
 	struct cc_card *card = llist_itr_init(cc->cards, &itr);
 	while (card) {
-		if (memcmp(card->hexserial, hexserial, 8) == 0 && card->caid == caid) { //found it!
+		if (card->caid == caid && memcmp(card->hexserial, hexserial, 8) == 0) { //found it!
 			return card;
 		}
 		card = llist_itr_next(&itr);
@@ -1082,10 +1162,20 @@ static int cc_send_emm(EMM_PACKET *ep) {
 		return 0;
 	}
 
-	struct cc_card *emm_card = cc->current_card[ep->cidx].card;
+	ushort caid = b2i(2, ep->caid);
 
-	if (!emm_card || emm_card->caid != b2i(2, ep->caid)) {
-		emm_card = get_card_by_hexserial(ep->hexserial, b2i(2, ep->caid));
+	//Last used card is first card of current_cards:
+	LLIST_ITR itr;
+	struct cc_current_card *current_card = llist_itr_init(cc->current_cards, &itr);
+	while (current_card && current_card->card->caid != caid) {
+		current_card = llist_itr_next(&itr);
+	}
+	struct cc_card *emm_card = (current_card != NULL)?current_card->card:NULL;
+
+	if (!emm_card || emm_card->caid != caid) {
+		uint8 hs[8];
+		cc_UA_oscam2cccam(ep->hexserial, hs);
+		emm_card = get_card_by_hexserial(hs, caid);
 	}
 
 	if (!emm_card) { //Card for emm not found!
@@ -1094,7 +1184,7 @@ static int cc_send_emm(EMM_PACKET *ep) {
 	}
 
 	cs_debug_mask(D_EMM, "%s emm received for client %d caid %04X for card %08X", getprefix(), ep->cidx,
-			b2i(2, ep->caid), emm_card->id);
+			caid, emm_card->id);
 
 	int size = ep->l+12;
 	uint8 *emmbuf = malloc(size);
@@ -1125,8 +1215,15 @@ static void cc_free_card(struct cc_card *card) {
 	if (!card)
 		return;
 
-	if (card->provs)
-		llist_destroy(card->provs);
+	if (card->providers) {
+		LLIST_ITR bitr;
+		struct cc_provider *provider = llist_itr_init(card->providers, &bitr);
+		while (provider) {
+			free(provider);
+			provider = llist_itr_remove(&bitr);
+		}
+		llist_destroy(card->providers);
+	}
 	if (card->badsids)
 		llist_destroy(card->badsids);
 	if (card->goodsids)
@@ -1139,7 +1236,15 @@ static void freeCaidInfos(LLIST *caid_infos) {
 		LLIST_ITR itr;
 		struct cc_caid_info *caid_info = llist_itr_init(caid_infos, &itr);
 		while (caid_info) {
-			llist_destroy(caid_info->provs);
+			if (caid_info->providers) {
+				LLIST_ITR pitr;
+				struct cc_provider *provider = llist_itr_init(caid_info->providers, &pitr);
+				while (provider) {
+					free(provider);
+					provider = llist_itr_remove(&pitr);
+				}
+				llist_destroy(caid_info->providers);
+			}
 			free(caid_info);
 			caid_info = llist_itr_remove(&itr);
 		}
@@ -1208,8 +1313,6 @@ static void cc_free(struct cc_data *cc) {
 	}
 	cc_free_reported_carddata(cc->reported_carddatas, 0);
 	cc_free_auto_blocked(cc->auto_blocked);
-	if (cc->current_card)
-		free(cc->current_card);
 	if (cc->pending_emms) {
 		LLIST_ITR itr;
 		uint8 *ep = llist_itr_init(cc->pending_emms, &itr);
@@ -1219,6 +1322,10 @@ static void cc_free(struct cc_data *cc) {
 		}
 		llist_destroy(cc->pending_emms);
 		cc->pending_emms = NULL;
+	}
+	if (cc->current_cards) {
+		free_current_cards(cc->current_cards);
+		llist_destroy(cc->current_cards);
 	}
 	if (cc->extended_ecm_idx)
 		free_extended_ecm_idx(cc);
@@ -1264,16 +1371,11 @@ static void saveCaidInfos(int index, LLIST *caid_infos) {
 		fwrite(&caid_info->hop, 1, sizeof(uint8), file);
 		fwrite(&caid_info->remote_id, 1, sizeof(uint32), file);
 		caid_count++;
-		uint8 count = 0;
-		uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
-		while (prov) {
-			count++;
-			prov = llist_itr_next(&itr_prov);
-		}
+		uint8 count = llist_count(caid_info->providers);
 		fwrite(&count, 1, sizeof(uint8), file);
-		prov = llist_itr_init(caid_info->provs, &itr_prov);
+		struct cc_provider *prov = llist_itr_init(caid_info->providers, &itr_prov);
 		while (prov) {
-			fwrite(prov, 1, 3, file);
+			fwrite(prov, 1, sizeof(struct cc_provider), file);
 			prov = llist_itr_next(&itr_prov);
 		}
 		prov_count += count;
@@ -1325,13 +1427,13 @@ static LLIST *loadCaidInfos(int index) {
 		caid_info->caid = caid;
 		caid_info->hop = hop;
 		caid_info->remote_id = remote_id;
-		caid_info->provs = llist_create();
-		uint8 *prov;
+		caid_info->providers = llist_create();
+		struct cc_provider *prov;
 		while (count > 0) {
-			prov = malloc(3);
-			if (fread(prov, 1, 3, file) <= 0)
+			prov = malloc(sizeof(struct cc_provider));
+			if (fread(prov, 1, sizeof(struct cc_provider), file) <= 0)
 				break;
-			llist_append(caid_info->provs, prov);
+			llist_append(caid_info->providers, prov);
 			count--;
 			prov_count++;
 		}
@@ -1343,6 +1445,29 @@ static LLIST *loadCaidInfos(int index) {
 	return caid_infos;
 }
 
+static int add_caidinfo_providers(struct cc_caid_info *caid_info, struct cc_card *card) {
+	int doSaveCaidInfos = 0;
+	struct cc_provider *prov_info;
+	LLIST_ITR itr_info;
+	LLIST_ITR itr_card;
+	struct cc_provider *provider = llist_itr_init(card->providers, &itr_card);
+	while (provider) {
+		prov_info = llist_itr_init(caid_info->providers, &itr_info);
+		while (prov_info) {
+			if (prov_info->prov == provider->prov)
+				break;
+			prov_info = llist_itr_next(&itr_info);
+		}
+		if (!prov_info) {
+			struct cc_provider *prov_new = malloc(sizeof(struct cc_provider));
+			memcpy(prov_new, provider, sizeof(struct cc_provider));
+			llist_append(caid_info->providers, prov_new);
+			doSaveCaidInfos = 1;
+		}
+		provider = llist_itr_next(&itr_card);
+	}
+	return doSaveCaidInfos;
+}
 /**
  * Adds a new card to the caid_infos. Only caid/provs are used
  * Return 0 if caid already exists, 1 ist this is a new card or provider
@@ -1351,8 +1476,9 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card) {
 	int doSaveCaidInfos = 0;
 	LLIST_ITR itr;
 	struct cc_caid_info *caid_info = llist_itr_init(cc->caid_infos, &itr);
-	
-	if (cfg->cc_minimize_cards) {
+
+	//Minimize all, transmit just CAID
+	if (cfg->cc_minimize_cards==MINIMIZE_CAID) {
 		while (caid_info) {
 			if (caid_info->caid == card->caid)
 				break;
@@ -1361,16 +1487,16 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card) {
 		if (!caid_info) {
 			caid_info = malloc(sizeof(struct cc_caid_info));
 			caid_info->caid = card->caid;
-			caid_info->provs = llist_create();
+			caid_info->providers = llist_create();
 			caid_info->hop = card->hop;
 			caid_info->remote_id = card->remote_id;
 			llist_append(cc->caid_infos, caid_info);
 			doSaveCaidInfos = 1;
 
 			//Null-Provider for all Providers!			
-			uint8 *prov_new = malloc(3);
-			memset(prov_new, 0, 3);
-			llist_append(caid_info->provs, prov_new);
+			struct cc_provider *prov_new = malloc(sizeof(struct cc_provider));
+			memset(prov_new, 0, sizeof(struct cc_provider));
+			llist_append(caid_info->providers, prov_new);
 		}
 		else
 		{
@@ -1381,48 +1507,54 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card) {
 		}
 		
 	}
-	else {
+	else if (cfg->cc_minimize_cards==MINIMIZE_HOPS) {
 		while (caid_info) {
-			if  (caid_info->caid == card->caid && 
-					caid_info->hop == card->hop && 
-					caid_info->remote_id == card->remote_id)
-				if (llist_count(caid_info->provs) < CS_MAXPROV)
-					break;
+			if (caid_info->caid == card->caid &&
+					llist_count(caid_info->providers) < CS_MAXPROV)
+				break;
 			caid_info = llist_itr_next(&itr);
 		}
 		if (!caid_info) {
 			caid_info = malloc(sizeof(struct cc_caid_info));
 			caid_info->caid = card->caid;
-			caid_info->provs = llist_create();
+			caid_info->providers = llist_create();
 			caid_info->hop = card->hop;
 			caid_info->remote_id = card->remote_id;
 			llist_append(cc->caid_infos, caid_info);
 			doSaveCaidInfos = 1;
 		}
-		
-		uint8 *prov_info;
-		uint8 *prov_card;
-		LLIST_ITR itr_info;
-		LLIST_ITR itr_card;
-		prov_card = llist_itr_init(card->provs, &itr_card);
-		while (prov_card) {
-			prov_info = llist_itr_init(caid_info->provs, &itr_info);
-			while (prov_info) {
-				if (b2i(3, prov_info) == b2i(3, prov_card))
-					break;
-				prov_info = llist_itr_next(&itr_info);
-			}
-			if (!prov_info) {
-				uint8 *prov_new = malloc(3);
-				memcpy(prov_new, prov_card, 3);
-				llist_append(caid_info->provs, prov_new);
+		else
+		{
+			if (card->hop < caid_info->hop) {
+				caid_info->hop = card->hop;
 				doSaveCaidInfos = 1;
 			}
-			prov_card = llist_itr_next(&itr_card);
 		}
+		add_caidinfo_providers(caid_info, card);
+	}
+	else {
+		while (caid_info) {
+			if  (caid_info->caid == card->caid && 
+					caid_info->hop == card->hop && 
+					caid_info->remote_id == card->remote_id &&
+					llist_count(caid_info->providers) < CS_MAXPROV)
+				break;
+			caid_info = llist_itr_next(&itr);
+		}
+		if (!caid_info) {
+			caid_info = malloc(sizeof(struct cc_caid_info));
+			caid_info->caid = card->caid;
+			caid_info->providers = llist_create();
+			caid_info->hop = card->hop;
+			caid_info->remote_id = card->remote_id;
+			llist_append(cc->caid_infos, caid_info);
+			doSaveCaidInfos = 1;
+		}
+		add_caidinfo_providers(caid_info, card);
 	}
 	return doSaveCaidInfos;
 }
+
 
 //static void cc_clear_current_card(struct cc_data *cc, int cidx) {
 //	memset(&cc->current_card[cidx], 0, sizeof(struct cc_current_card));
@@ -1438,16 +1570,6 @@ static int add_card_to_caidinfo(struct cc_data *cc, struct cc_card *card) {
 //	}
 //	return c;
 //}
-
-static struct cc_current_card *cc_find_current_card(struct cc_data *cc, struct cc_card *card) {
-	int i;
-	for (i = 0; i<CS_MAXPID; i++) {
-		if (cc->current_card[i].card == card) {
-			return &cc->current_card[i];
-		}
-	}
-	return NULL;
-}
 
 static void rebuild_caidinfos(struct cc_data *cc) {
 	freeCaidInfos(cc->caid_infos);
@@ -1561,8 +1683,7 @@ void cc_card_removed(uint32 shareid) {
 			struct cc_current_card *current_card;
 			while ((current_card = cc_find_current_card(cc, card))) {
 				cs_debug_mask(D_TRACE, "%s current card %08x removed!", getprefix(), card->id);
-
-				current_card->card = NULL;				
+				cc_remove_current_card(cc, current_card);
 			}
 			free_extended_ecm_idx_by_card(card);
 			cc_free_card(card);
@@ -1674,7 +1795,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		reader[ridx].card_status = CARD_INSERTED;
 		memset(card, 0, sizeof(struct cc_card));
 
-		card->provs = llist_create();
+		card->providers = llist_create();
 		card->badsids = llist_create();
 		card->goodsids = llist_create();
 		card->id = b2i(4, buf + 4);
@@ -1689,12 +1810,13 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		//		llist_count(cc->cards));
 
 		for (i = 0; i < buf[24]; i++) { // providers
-			uint8 *prov = malloc(3);
+			struct cc_provider *prov = malloc(sizeof(struct cc_provider));
 			if (prov) {
-				memcpy(prov, buf + 25 + (7 * i), 3);
-				cs_debug("      prov %d, %06x", i + 1, b2i(3, prov));
+				prov->prov = b2i(3, buf + 25 + (7 * i));
+				memcpy(prov->sa, buf+25+(7*i)+3, 4);
+				cs_debug("      prov %d, %06x, sa %08x", i + 1, prov->prov, b2i(4, prov->sa));
 
-				llist_append(card->provs, prov);
+				llist_append(card->providers, prov);
 			}
 		}
 
@@ -1735,15 +1857,15 @@ static int cc_parse_msg(uint8 *buf, int l) {
 					saveCaidInfos(ridx, cc->caid_infos);
 			}
 		}
-		uint8 *prov = llist_itr_init(card->provs, &itr);
+		struct cc_provider *prov = llist_itr_init(card->providers, &itr);
 		while (prov) {
-			cc_remove_from_auto_blocked(cc->auto_blocked, card->caid, b2i(3,
-					prov));
+			cc_remove_from_auto_blocked(cc->auto_blocked, card->caid, prov->prov);
 			prov = llist_itr_next(&itr);
 		}
 		//SS: Hack end
 	}
 		break;
+
 	case MSG_CARD_REMOVED: {
 		cc_card_removed(b2i(4, buf + 4));
 		ret = 0;
@@ -1953,7 +2075,6 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			memcpy(&cc->cmd05_data, buf+4, l);
 			if (reader[ridx].available)
 				send_cmd05_answer();
-			cc->current_ecm_cidx = 0; //After CMD_05 is always a NOK! So retry ECM
 		}
 		ret = 0;
 		break;
@@ -2020,7 +2141,6 @@ static int cc_parse_msg(uint8 *buf, int l) {
 				reader[ridx].available = 1;
 				pthread_mutex_unlock(&cc->ecm_busy);
 			}
-			cc->current_ecm_cidx = 0;
 			cc_send_ecm(NULL, NULL);
 		}
 		ret = 0;
@@ -2203,10 +2323,9 @@ static int cc_cli_connect(void) {
 		cc->cards = llist_create();
 		client[cs_idx].cc = cc;
 		cc->auto_blocked = llist_create();
-		cc->current_card = malloc(sizeof(struct cc_current_card)*CS_MAXPID);
-		memset(cc->current_card, 0, sizeof(struct cc_current_card)*CS_MAXPID);
 		cc->pending_emms = llist_create();
 		cc->extended_ecm_idx = llist_create();
+		cc->current_cards = llist_create();
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
@@ -2410,7 +2529,7 @@ static int cc_srv_report_cards() {
 					buf[11] = reshare;
 					//Setting UA: (Unique Address):
 					if (au_allowed)
-						memcpy(buf + 12, reader[r].hexserial, 8);
+						cc_UA_oscam2cccam(reader[r].hexserial, buf + 12);
 					buf[20] = reader[r].ftab.filts[j].nprids;
 					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
 					for (k = 0; k < reader[r].ftab.filts[j].nprids; k++) {
@@ -2471,7 +2590,7 @@ static int cc_srv_report_cards() {
 					buf[10] = hop;
 					buf[11] = reshare;
 					if (au_allowed)
-						memcpy(buf + 12, reader[r].hexserial, 8);
+						cc_UA_oscam2cccam(reader[r].hexserial, buf + 12);
 					buf[20] = 1;
 					//cs_log("CAID map CCcam card report caid: %04X nodeid: %s subid: %06X", lcaid, cs_hexdump(0, cc->peer_node_id, 8), reader[r].cc_id);
 					//buf[21] = 0;
@@ -2505,7 +2624,7 @@ static int cc_srv_report_cards() {
 			buf[10] = hop;
 			buf[11] = reshare;
 			if (au_allowed)
-				memcpy(buf + 12, reader[r].hexserial, 8);
+				cc_UA_cccam2oscam(reader[r].hexserial, buf + 12);
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
 				ulong prid = 0;
@@ -2582,11 +2701,13 @@ static int cc_srv_report_cards() {
 						//We never reshare UA / SA !!
 						int j = 0;
 						LLIST_ITR itr_prov;
-						uint8 *prov = llist_itr_init(caid_info->provs, &itr_prov);
+						struct cc_provider *prov = llist_itr_init(caid_info->providers, &itr_prov);
 						while (prov) {
-							ulong prid=0;
-							memcpy((&prid)+1, prov, 3);
-							memcpy(buf + 21 + (j * 7), prov, 3);
+							ulong prid = prov->prov;
+							buf[21 + (j * 7)] = prid >> 16;
+							buf[22 + (j * 7)] = prid >> 8;
+							buf[23 + (j * 7)] = prid & 0xFF;
+							//memcpy(buf+24+(j*7), prov->sa, 4);
 							prov = llist_itr_next(&itr_prov);
 							j++;
 							if (!chk_srvid_by_caid_prov(caid_info->caid, prid, cs_idx) ||
