@@ -1,10 +1,49 @@
 #include "globals.h"
 #include "reader-common.h"
-#include "reader-videoguard-common.h"
 
-int VG1_BASEYEAR = 1992;
+#define write_cmd_vg(cmd, data) (card_write(reader, cmd, data, cta_res, &cta_lr) == 0)
 
 //////  ====================================================================================
+
+int VG1_BASEYEAR = 1992;
+#define VG_EMMTYPE_MASK 0xC0 
+#define VG_EMMTYPE_G 0 
+#define VG_EMMTYPE_U 1 
+#define VG_EMMTYPE_S 2 
+
+static int cw_is_valid(unsigned char *cw)	//returns 1 if cw_is_valid, returns 0 if cw is all zeros
+{
+  int i;
+  for (i = 0; i < 8; i++)
+    if (cw[i] != 0) {		//test if cw = 00
+      return OK;
+    }
+  return ERROR;
+}
+
+//////  ====================================================================================
+
+static unsigned char CW1[8], CW2[8];
+
+extern int io_serial_need_dummy_char;
+
+static int status_ok(const unsigned char *status)
+{
+  //cs_log("[videoguard1-reader] check status %02x%02x", status[0],status[1]);
+  return (status[0] == 0x90 || status[0] == 0x91)
+      && (status[1] == 0x00 || status[1] == 0x01 || status[1] == 0x20 || status[1] == 0x21 || status[1] == 0x80 || status[1] == 0x81 || status[1] == 0xa0 || status[1] == 0xa1);
+}
+
+
+static void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss, int base_year)
+{
+  *year = (Date[0] / 12) + base_year;
+  *mon = (Date[0] % 12) + 1;
+  *day = Date[1] & 0x1f;
+  *hh = Date[2] / 8;
+  *mm = (0x100 * (Date[2] - *hh * 8) + Date[3]) / 32;
+  *ss = (Date[3] - *mm * 32) * 2;
+}
 
 
 static int vg1_do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res)
