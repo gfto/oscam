@@ -184,13 +184,14 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     }
 */
 
-  // Read card serial number to initialise the card
+/* Read card serial number to initialise the card
   unsigned char ins52[5] = { 0x48,0x52,0x00,0x00,0x14 };
 
   if(!write_cmd_vg(ins52,NULL) || !status_ok(cta_res+l)) {
     cs_log ("[videoguard12-reader] failed to read serial");
     return ERROR;
     }
+*/
 
   unsigned char ins36[5] = { 0x48,0x36,0x00,0x00,0x00 };
   unsigned char boxID [4];
