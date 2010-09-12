@@ -678,7 +678,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
     }
 */
-/*
+
 /* Read card serial number to initialise the card
   unsigned char ins52[5] = { 0x48,0x52,0x00,0x00,0x14 };
 
