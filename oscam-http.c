@@ -365,7 +365,6 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 
 	tpl_printf(vars, 0, "UPDATEINTERVAL", "%d", cfg->cc_update_interval);
 
-	//Uniq
 	tpl_printf(vars, 0, "TMP", "MINIMIZECARDSELECTED%d", cfg->cc_minimize_cards);
 	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 

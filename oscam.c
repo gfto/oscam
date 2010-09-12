@@ -2352,6 +2352,7 @@ void get_cw(ECM_REQUEST *er)
 		int maxtime = client[cs_idx].allowedtimeframe[1];
 		if(!((mintime <= maxtime && curtime > mintime && curtime < maxtime) || (mintime > maxtime && (curtime > mintime || curtime < maxtime))))
 			er->rc = 11;
+		cs_log("Check Timeframe - result: %d, start: %d, current: %d, end: %d\n",er->rc = 11, mintime, curtime, maxtime);
 	}
 
 	// user disabled
