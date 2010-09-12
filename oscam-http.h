@@ -739,7 +739,8 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR><TD>Disable retry ECM: <input name=\"cccdisableretryecm\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccdisableretryecm\" type=\"checkbox\" value=\"1\" ##CCCDISABLERETRYECMCHECKED##></TD></TR>\n\
     <TR><TD>Disable auto blocking of undecodable channels: <input name=\"cccdisableautoblock\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccdisableautoblock\" type=\"checkbox\" value=\"1\" ##CCCDISABLEAUTOBLOCKCHECKED##></TD></TR>\n\
     <TR><TD>Reconnect-timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
-    <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n"
+    <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n\
+    <TR><TD>Keep alive:</TD><TD><SELECT NAME=\"ccckeepalive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##KEEPALIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n"
 #ifdef CS_WITH_GBOX
 #define TPLREADERCONFIGGBOXBIT "\
 	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
@@ -817,6 +818,11 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<OPTION ##VERSIONSELECTED4##>2.1.4</OPTION>\
 		</SELECT></TD></TR>\n\
 		<TR><TD>Update Interval:</TD><TD><input name=\"updateinterval\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##UPDATEINTERVAL##\"></TD></TR>\n\
+		<TR><TD>Minimize cards:</TD><TD><SELECT name=\"minimizecards\">\
+			<OPTION value=\"0\" ##MINIMIZECARDSELECTED0##>0 - legacy (default)</OPTION>\
+			<OPTION value=\"1\" ##MINIMIZECARDSELECTED1##>1 - smallest hop</OPTION>\
+			<OPTION value=\"2\" ##MINIMIZECARDSELECTED2##>2 - via caid</OPTION>\
+		</SELECT></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\

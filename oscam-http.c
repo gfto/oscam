@@ -365,6 +365,10 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 
 	tpl_printf(vars, 0, "UPDATEINTERVAL", "%d", cfg->cc_update_interval);
 
+	//Uniq
+	tpl_printf(vars, 0, "TMP", "MINIMIZECARDSELECTED%d", cfg->cc_minimize_cards);
+	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
+
 	fputs(tpl_getTpl(vars, "CONFIGCCCAM"), f);
 }
 
@@ -1055,6 +1059,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		tpl_addVar(vars, 0, "CCCDISABLEAUTOBLOCKCHECKED", "checked");
 	if(reader[ridx].cc_want_emu)
 		tpl_addVar(vars, 0, "CCCWANTEMUCHECKED", "checked");
+
+	if(reader[ridx].cc_keepalive)
+		tpl_addVar(vars, 0, "KEEPALIVECHECKED", "selected");
 
 	// Show only parameters which needed for the reader
 	switch (reader[ridx].typ) {
