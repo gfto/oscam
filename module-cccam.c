@@ -1007,13 +1007,17 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			reader[ridx].card_system = get_cardsystem(card->caid);
 			cc_UA_cccam2oscam(card->hexserial, reader[ridx].hexserial);
 			
-			reader[ridx].nprov = llist_count(card->providers);
+			reader[ridx].nprov = 0;
 			LLIST_ITR pitr;
 			int p = 0;
 			struct cc_provider *provider = llist_itr_init(card->providers, &pitr);
 			while (provider) {
-				memcpy(&reader[ridx].prid[p], &provider->prov, sizeof(provider->prov));
-				memcpy(&reader[ridx].sa[p], provider->sa, sizeof(provider->sa));
+				if (provider->prov == cur_er->prid) {
+					memcpy(&reader[ridx].prid[p], &provider->prov, sizeof(provider->prov));
+					memcpy(&reader[ridx].sa[p], provider->sa, sizeof(provider->sa));
+					reader[ridx].nprov = 1;
+					break;
+				}
 				provider = llist_itr_next(&pitr);
 				p++;
 			}
@@ -2629,12 +2633,15 @@ static int cc_srv_report_cards() {
 			for (j = 0; j < reader[r].nprov; j++) {
 				ulong prid = 0;
 				//schlocke: Unknown real handling, code is from cogsy:
-				if (!(reader[r].typ & R_IS_CASCADING)) //(reader[r].card_status == CARD_INSERTED)
-					memcpy(&prid, reader[r].prid[j], 4);
+				if (!(reader[r].typ & R_IS_CASCADING)) { //(reader[r].card_status == CARD_INSERTED)
 					//memcpy(buf + 21 + (j * 7), reader[r].prid[j] + 1, 3);
-				else
-					memcpy((&prid)+1, reader[r].prid[j], 3);
+					prid = reader[r].prid[j][0]<<24|reader[r].prid[j][1]<<16|reader[r].prid[j][2]<<8|reader[r].prid[j][3]&0xFF;
+				}
+				else {
 					//memcpy(buf + 21 + (j * 7), reader[r].prid[j], 3);
+					prid = reader[r].prid[j][0]<<16|reader[r].prid[j][1]<<8|reader[r].prid[j][2]&0xFF;
+				}
+
 				int ofs = 21+(j*7);
 				buf[ofs+0] = prid >> 16;
 				buf[ofs+1] = prid >> 8;
