@@ -263,18 +263,6 @@ extern void cs_switch_led(int led, int action);
 #define MAX_HIST    15         // max. number of historical characters
 
 
-#define NDS1    1
-#define NDS12    12
-#define NDS2    2
-
-typedef struct nds_atr {
-    char atr[MAX_ATR_LEN];
-    ushort atr_len;
-    int base_year;
-    int nds_version;
-    const char *desc;
-} NDS_ATR_ENTRY;
-
 typedef struct s_classtab
 {
   uchar an;
