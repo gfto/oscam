@@ -467,12 +467,23 @@ define CCcam build, default:none
 .PP
 \fBreshare\fP = \fBlevel\fP
 .RS 3n
-reshare level for CCcam clients, default:none
+reshare level for CCcam clients:
 
- 0 = no resharing
+ 0 = no resharing (default)
  1 = resharing for direct peer only
  2 = resharing for direct peer and next level
  x = resharing for direct peer and next x level
+.RE
+.PP
+\fBminimizecards\fP = \fBmode\fP
+.RS 3n
+mode how to provide CCCam servers to CCCam clients:
+
+ 0 = no aggregation, remove duplicates only (default)
+ 1 = based on minimum hop: two SCs with different hops are 
+     summarized, new SCs get a smaller hop
+ 2 = aggregation based on CAIDs: all SCs with the same CAIDs 
+     will be merged, provider will be removed
 .RE
 .SS "The [gbox] section"
 .PP

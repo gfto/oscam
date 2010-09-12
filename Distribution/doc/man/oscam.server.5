@@ -180,22 +180,6 @@ reader protocol, \fIrequired\fR:
  \fBconstcw\fP 
 .RE
 .PP
-\fBcccversion\fP = \fB<main version>.<version>.<sub version>\fP
-.RS 3n
-define CCcam version, default:none
-
-example: cccversion = 1.2.34
-.RE
-.PP
-\fBcccmaxhops\fP = \fBhops\fP
-.RS 3n
-define CCcam maximum SC distance hops, default:10
- \fB0\fP = local SCs only
- \fB1\fP = local SCs and + 1 hop
- \fB2\fP = local SCs and + 2 hops
- and so on
-.RE
-.PP
 \fBident\fP = \fB<CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...\fP
 .RS 3n
 define CAID and ident for reader
@@ -337,6 +321,22 @@ RSA key for Tiger Nagravision SCs
 IDEA key for Tiger Nagravision SCs
 .RE
 .PP
+\fBcccversion\fP = \fB<main version>.<version>.<sub version>\fP
+.RS 3n
+define CCcam version, default:none
+
+example: cccversion = 1.2.34
+.RE
+.PP
+\fBcccmaxhops\fP = \fBhops\fP
+.RS 3n
+define CCcam maximum SC distance hops, default:10
+ \fB0\fP = local SCs only
+ \fB1\fP = local SCs and + 1 hop
+ \fB2\fP = local SCs and + 2 hops
+ and so on
+.RE
+.PP
 \fBcccdisableretryecm\fP = \fB0\fP|\fB1\fP
 .RS 3n
 0 = enables ECM retrying: When an ECM request is denied from an CCCam server, OSCam 
@@ -360,6 +360,11 @@ is newer send again, 1= disabled auto block, default:1
 \fBupdateinval\fP = \fBseconds\fP
 .RS 3n
 interval to provide share list update to CCCam clients, default:240
+.RE
+.PP
+\fBccckeepalive\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = send keepalive messages to keep connection to remote CCCam server up, default:0
 .RE
 .PP
 \fBmode\fP = \fBmode\fP
