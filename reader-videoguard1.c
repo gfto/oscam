@@ -2,10 +2,6 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
-int VG1_BASEYEAR = 1992;
-
-//////  ====================================================================================
-
 
 static int vg1_do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res)
 {
@@ -76,7 +72,7 @@ static void read_tiers(struct s_reader *reader)
       break;
     }
     int y, m, d, H, M, S;
-    rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, VG1_BASEYEAR);
+    rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, VG_BASEYEAR);
     unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
     char *tier_name = get_tiername(tier_id, reader->caid[0]);
     cs_ri_log(reader, "[videoguard1-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, tier_name);
@@ -103,7 +99,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
     int i=0;
     while(nds1_atr_table[i].desc) {
         if ((atr_size == nds1_atr_table[i].atr_len) && (memcmp (atr, nds1_atr_table[i].atr, atr_size) == 0)) {
-            VG1_BASEYEAR=nds1_atr_table[i].base_year;
+            VG_BASEYEAR=nds1_atr_table[i].base_year;
             cs_ri_log(reader, "[videoguard1-reader] type: %s", nds1_atr_table[i].desc);
             break;
         }

@@ -20,6 +20,8 @@
 #define NDS12    12
 #define NDS2    2
 
+int VG_BASEYEAR;
+
 typedef struct nds_atr {
     char atr[MAX_ATR_LEN];
     ushort atr_len;
@@ -60,21 +62,10 @@ extern void __xxor(unsigned char *data, int len, const unsigned char *v1, const 
 #define xor16(v1,v2,d) __xxor((d),16,(v1),(v2))
 #define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point *2/3
 
-unsigned short cardkeys[3][32];
-unsigned char stateD3A[16];
-
-extern void cCamCryptVG_LongMult(unsigned short *pData, unsigned short *pLen, unsigned int mult, unsigned int carry);
-extern void cCamCryptVG_PartialMod(unsigned short val, unsigned int count, unsigned short *outkey, const unsigned short *inkey);
-extern void cCamCryptVG_RotateRightAndHash(unsigned char *p);
-extern void cCamCryptVG_Reorder16A(unsigned char *dest, const unsigned char *src);
-extern void cCamCryptVG_ReorderAndEncrypt(unsigned char *p);
-extern void cCamCryptVG_Process_D0(const unsigned char *ins, unsigned char *data);
-extern void cCamCryptVG_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status);
-extern void cCamCryptVG_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status);
-extern void cCamCryptVG_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2);
 extern void cCamCryptVG_SetSeed(unsigned char *Key1, unsigned char *Key2);
 extern void cCamCryptVG_GetCamKey(unsigned char *buff);
 
+extern void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data);
 extern void memorize_cmd_table (const unsigned char *mem, int size);
 extern void Manage_Tag(unsigned char *Answer);
 extern int status_ok(const unsigned char *status);
