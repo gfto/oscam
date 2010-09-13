@@ -50,6 +50,15 @@ void add_send_cache(int caid, uchar *ecmd5, int *readers, int best_reader)
 		ecm_send_cache_idx = 0;
 }
 
+void clear_from_cache(int caid)
+{
+	int i;
+	for (i=0; i<MAX_ECM_SEND_CACHE; i++) {
+		if (ecm_send_cache[i].caid == caid)
+			ecm_send_cache[i].caid = 0;
+	}
+}
+
 void load_stat_from_file(int ridx)
 {
 	char fname[40];
@@ -115,6 +124,7 @@ int remove_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 		else
 			stat = llist_itr_next(&itr);
 	}
+	clear_from_cache(caid);
 	return c;
 }
 
@@ -247,6 +257,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 	else if (rc == 4 || rc == 8 || rc == 9) { //not found+errors+etc
 		stat->rc = rc;
 		//stat->ecm_count = 0; Keep ecm_count!
+		clear_from_cache(caid);
 	}
 
 	//cs_debug_mask(D_TRACE, "adding stat for reader %s (%d): rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
