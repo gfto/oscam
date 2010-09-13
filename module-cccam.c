@@ -356,6 +356,8 @@ static void cc_cli_close() {
 	reader[ridx].card_status = NO_CARD;
 	reader[ridx].available = 0;
 	reader[ridx].card_system = 0;
+    reader[ridx].ncd_msgid=0;
+    reader[ridx].last_s=reader->last_g=0;
 
 	//cs_sleepms(100);
 	if (pfd) {
@@ -373,8 +375,6 @@ static void cc_cli_close() {
 	if (cc) {
 		pthread_mutex_unlock(&cc->lock);
 		pthread_mutex_unlock(&cc->ecm_busy);
-		pthread_mutex_destroy(&cc->lock);
-		pthread_mutex_destroy(&cc->ecm_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
 		free_current_cards(cc->current_cards);
@@ -556,8 +556,11 @@ static int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	if (!is_server)
 		reader[ridx].last_s = time(NULL);
 
-	if (n < 0 && is_server) {
-		cs_disconnect_client();
+	if (n != len) {
+		if (is_server)
+			cs_disconnect_client();
+		else
+			cc_cli_close();
 	}		
 
 	return n;
@@ -1333,6 +1336,8 @@ static void cc_free(struct cc_data *cc) {
 	}
 	if (cc->extended_ecm_idx)
 		free_extended_ecm_idx(cc);
+	pthread_mutex_destroy(&cc->lock);
+	pthread_mutex_destroy(&cc->ecm_busy);
 	free(cc);
 }
 
@@ -2280,13 +2285,13 @@ int cc_recv(uchar *buf, int l) {
 		
 	if (!is_server && (n == -1)) {
 		cs_debug_mask(D_TRACE, "%s cc_recv: cycle connection", getprefix());
-		cc_cycle_connection();
+		cc_cli_close();
 	}
 
 	return n;
 }
 
-static int cc_cli_connect(void) {
+static int cc_cli_connect() {
 	int handle, n;
 	uint8 data[20];
 	uint8 hash[SHA_DIGEST_LENGTH];
@@ -2330,6 +2335,8 @@ static int cc_cli_connect(void) {
 		cc->pending_emms = llist_create();
 		cc->extended_ecm_idx = llist_create();
 		cc->current_cards = llist_create();
+		pthread_mutex_init(&cc->lock, NULL);
+		pthread_mutex_init(&cc->ecm_busy, NULL);
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
@@ -2341,9 +2348,6 @@ static int cc_cli_connect(void) {
 	cc->extended_mode = 0;
 	client[cs_idx].cc_extended_ecm_mode = 0;
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
-
-	pthread_mutex_init(&cc->lock, NULL);
-	pthread_mutex_init(&cc->ecm_busy, NULL);
 
 	cs_ddump(data, 16, "cccam: server init seed:");
 
@@ -2777,6 +2781,8 @@ static int cc_srv_connect() {
 		client[cs_idx].cc = cc;
 		memset(client[cs_idx].cc, 0, sizeof(struct cc_data));
 		cc->extended_ecm_idx = llist_create();
+		pthread_mutex_init(&cc->lock, NULL);
+		pthread_mutex_init(&cc->ecm_busy, NULL);
 	}
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;

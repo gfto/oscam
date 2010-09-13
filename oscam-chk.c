@@ -327,6 +327,8 @@ int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
   return 1;
 }
 
+extern struct s_reader *reader;
+
 int chk_ctab(ushort caid, CAIDTAB *ctab) {
   if (!caid || !ctab->caid[0])
     return 1;
@@ -334,11 +336,14 @@ int chk_ctab(ushort caid, CAIDTAB *ctab) {
   int i;
   for (i=0;i<CS_MAXCAIDTAB;i++)
   {
-    if (!ctab->caid[i])
+    if (!ctab->caid[i]) {
+      cs_debug_mask(D_TRACE, "CAID FILTERED1: %04x, reader %s", caid, reader[ridx].label);
       return 0;
+    }
     if ((caid & ctab->mask[i]) == ctab->caid[i])
       return 1;
   }
+  cs_debug_mask(D_TRACE, "CAID FILTERED2: %04x, reader %s", caid, reader[ridx].label);
   return 0;
 }
 
