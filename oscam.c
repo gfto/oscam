@@ -1993,7 +1993,7 @@ void chk_dcw(int fd)
   ert=&ecmtask[er->cpti];
   if (ert->rc<100) {
 	cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, reader[er->reader[0]].label);
-	send_reader_stat(er->reader[0], er, (er->rc<=0)?4:((er->rc==1)?0:er->rc));
+	send_reader_stat(er->reader[0], er, (er->rc <= 0)?4:0);
 	return; // already done
   }
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
