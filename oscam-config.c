@@ -2129,7 +2129,7 @@ int write_userdb(struct s_auth *authptr)
 			fprintf_conf(f, CONFVARWIDTH, "expdate", "\n");
 
 		if(account->allowedtimeframe[0] && account->allowedtimeframe[1]) {
-			fprintf_conf(f, CONFVARWIDTH, "allowedtimeframe", "%d:%d-%d:%d\n",
+			fprintf_conf(f, CONFVARWIDTH, "allowedtimeframe", "%02d:%02d-%02d:%02d\n",
 					account->allowedtimeframe[0]/60,
 					account->allowedtimeframe[0]%60,
 					account->allowedtimeframe[1]/60,
