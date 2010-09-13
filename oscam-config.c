@@ -3951,12 +3951,12 @@ char *mk_t_group(ulong *grp){
 		if (grpbit[i] == '1'){
 			if (dot == 0){
 				sprintf(value + pos, "%d", i+1);
-				if (i > 9)pos += 2;
+				if (i > 8)pos += 2;
 				else pos += 1;
 				dot = 1;
 			} else {
 				sprintf(value + pos, ",%d", i+1);
-				if (i > 9)pos += 3;
+				if (i > 8)pos += 3;
 				else pos += 2;
 			}
 		}
