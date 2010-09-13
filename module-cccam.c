@@ -2635,11 +2635,11 @@ static int cc_srv_report_cards() {
 				//schlocke: Unknown real handling, code is from cogsy:
 				if (!(reader[r].typ & R_IS_CASCADING)) { //(reader[r].card_status == CARD_INSERTED)
 					//memcpy(buf + 21 + (j * 7), reader[r].prid[j] + 1, 3);
-					prid = reader[r].prid[j][0]<<24|reader[r].prid[j][1]<<16|reader[r].prid[j][2]<<8|reader[r].prid[j][3]&0xFF;
+					prid = (reader[r].prid[j][0]<<24)|(reader[r].prid[j][1]<<16)|(reader[r].prid[j][2]<<8)|(reader[r].prid[j][3]&0xFF);
 				}
 				else {
 					//memcpy(buf + 21 + (j * 7), reader[r].prid[j], 3);
-					prid = reader[r].prid[j][0]<<16|reader[r].prid[j][1]<<8|reader[r].prid[j][2]&0xFF;
+					prid = (reader[r].prid[j][0]<<16)|(reader[r].prid[j][1]<<8)|(reader[r].prid[j][2]&0xFF);
 				}
 
 				int ofs = 21+(j*7);
