@@ -842,6 +842,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 					: 0, pfd);
 			//write_ecm_answer(&reader[ridx], fd_c2m, er);
 		}
+		cc_cli_close();
 		return 0;
 	}
 
@@ -2284,7 +2285,6 @@ int cc_recv(uchar *buf, int l) {
 	NULLFREE(cbuf);
 		
 	if (!is_server && (n == -1)) {
-		cs_debug_mask(D_TRACE, "%s cc_recv: cycle connection", getprefix());
 		cc_cli_close();
 	}
 
