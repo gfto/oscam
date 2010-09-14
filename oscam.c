@@ -2351,9 +2351,10 @@ void get_cw(ECM_REQUEST *er)
 		int curtime = (acttm->tm_hour * 60) + acttm->tm_min;
 		int mintime = client[cs_idx].allowedtimeframe[0];
 		int maxtime = client[cs_idx].allowedtimeframe[1];
-		if(!((mintime <= maxtime && curtime > mintime && curtime < maxtime) || (mintime > maxtime && (curtime > mintime || curtime < maxtime))))
+		if(!((mintime <= maxtime && curtime > mintime && curtime < maxtime) || (mintime > maxtime && (curtime > mintime || curtime < maxtime)))) {
 			er->rc = 11;
-		cs_debug("Check Timeframe - result: %d, start: %d, current: %d, end: %d\n",er->rc = 11, mintime, curtime, maxtime);
+		}
+		cs_debug("Check Timeframe - result: %d, start: %d, current: %d, end: %d\n",er->rc, mintime, curtime, maxtime);
 	}
 
 	// user disabled
