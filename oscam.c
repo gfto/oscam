@@ -492,6 +492,12 @@ static void prepare_reader_restart(int ridx, int cs_idx)
   reader[ridx].cs_idx=0;
   reader[ridx].last_s = 0;
   reader[ridx].last_g = 0;
+  reader[ridx].card_status = NO_CARD;
+  reader[ridx].available = 0;
+  reader[ridx].card_system = 0;
+  reader[ridx].ncd_msgid=0;
+  reader[ridx].last_s=reader->last_g=0;
+                                        
   cs_debug_mask(D_TRACE, "reader %s closed (index=%d)", reader[ridx].label, ridx);
   if (client[cs_idx].ufd) close(client[cs_idx].ufd);
   if (client[cs_idx].fd_m2c_c) close(client[cs_idx].fd_m2c_c);
@@ -503,12 +509,11 @@ static void prepare_reader_restart(int ridx, int cs_idx)
 static void restart_cardreader(int pridx, int force_now) {
 	ridx = pridx;
 	if (reader[ridx].cs_idx) {
-		if (reader[ridx].pid==client[reader[ridx].cs_idx].pid) {
-			int pid = reader[ridx].pid;
-			prepare_reader_restart(ridx, reader[ridx].cs_idx);
-			kill(pid, SIGKILL);
-		}
+		int pid = reader[ridx].pid;
+		kill(pid, SIGKILL);
+		prepare_reader_restart(ridx, reader[ridx].cs_idx);
 	}
+
 	reader[ridx].ridx = ridx; //FIXME
 	if ((reader[ridx].device[0]) && (reader[ridx].enable == 1) && (!reader[ridx].deleted)) {
 		switch (cs_fork(0, 99)) {
