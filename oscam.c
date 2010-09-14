@@ -2002,7 +2002,7 @@ void chk_dcw(int fd)
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
   ert=&ecmtask[er->cpti];
   if (ert->rc<100) {
-	cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, reader[er->reader[0]].label);
+	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, reader[er->reader[0]].label);
 	send_reader_stat(er->reader[0], er, (er->rc <= 0)?4:0);
 	return; // already done
   }

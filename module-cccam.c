@@ -952,10 +952,8 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 					struct cc_provider *provider = llist_itr_init(ncard->providers, &pitr);
 					while (provider && !s) {
 						if (!cur_er->prid || !provider->prov || provider->prov == cur_er->prid) { // provid matches
-							if (((h < 0) || 
-								(ncard->hop < h || (ncard->hop==h && cc_UA_valid(ncard->hexserial)))) && 
-									(ncard->hop<=reader[ridx].cc_maxhop)) { // ncard is closer and doesn't exceed max hop
-								//cc->cur_card = ncard;
+							if (h < 0 || ncard->hop < h || (ncard->hop==h && cc_UA_valid(ncard->hexserial))) {
+								// ncard is closer
 								card = ncard;
 								h = ncard->hop; // ncard has been matched
 							}
@@ -1031,7 +1029,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 				}
 				provider = llist_itr_next(&pitr);
 			}
-			char saprov[14] = {0};
+			char saprov[20] = {0};
 			if (provider)
 				sprintf(saprov, "%06lX:%02X%02X%02X%02X", provider->prov, provider->sa[0], provider->sa[1], provider->sa[2], provider->sa[3]);
 			cs_debug_mask(D_EMM, "%s au info: caid %04X card system: %d UA: %s SA: %s", 
@@ -1085,7 +1083,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			pthread_mutex_unlock(&cc->ecm_busy);
 		}
 		
-		return cc->last_msg!=MSG_NEW_CARD? -1 : 0; // !=0: ecm is answered, ==0 ecm is processing
+		return -1;
 	}
 }
 
@@ -1813,7 +1811,7 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_NEW_CARD: {
 		int i = 0;
-		if (buf[14] > reader[ridx].cc_maxhop)
+		if (buf[14] >= reader[ridx].cc_maxhop)
 			break;
 
 		if (!chk_ctab(b2i(2, buf + 12), &reader[ridx].ctab))
