@@ -2472,6 +2472,17 @@ static ulong get_reader_hexserial_crc()
 	return crc;
 }
 
+ulong get_reader_prid(int r, int j) {
+	ulong prid;
+	if (!(reader[r].typ & R_IS_CASCADING)) { // Read cardreaders have 4-byte Providers
+		prid = (reader[r].prid[j][0]<<24)|(reader[r].prid[j][1]<<16)|(reader[r].prid[j][2]<<8)|(reader[r].prid[j][3]&0xFF);
+	}
+	else { // Cascading/Network-reader 3-bytes Providers
+		prid = (reader[r].prid[j][0]<<16)|(reader[r].prid[j][1]<<8)|(reader[r].prid[j][2]&0xFF);
+	}
+	return prid;
+}
+
 /**
  * Server:
  * Reports all caid/providers to the connected clients
@@ -2552,6 +2563,16 @@ static int cc_srv_report_cards() {
 						buf[ofs+1] = prid >> 8;
 						buf[ofs+2] = prid & 0xFF;
 						//cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
+						if (au_allowed)
+						{
+							int l;
+							for (l=0;l<reader[r].nprov;l++) {
+								ulong rprid = get_reader_prid(r, l);
+								if (rprid==prid) {
+									memcpy(buf+ofs+3, &reader[r].sa[l][0], 4);
+								}
+							}
+						}
 					}
 					if (ignore) //Filtered by services
 						continue;
@@ -2636,29 +2657,14 @@ static int cc_srv_report_cards() {
 				cc_UA_cccam2oscam(reader[r].hexserial, buf + 12);
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
-				ulong prid = 0;
-				//schlocke: Unknown real handling, code is from cogsy:
-				if (!(reader[r].typ & R_IS_CASCADING)) { //(reader[r].card_status == CARD_INSERTED)
-					//memcpy(buf + 21 + (j * 7), reader[r].prid[j] + 1, 3);
-					prid = (reader[r].prid[j][0]<<24)|(reader[r].prid[j][1]<<16)|(reader[r].prid[j][2]<<8)|(reader[r].prid[j][3]&0xFF);
-				}
-				else {
-					//memcpy(buf + 21 + (j * 7), reader[r].prid[j], 3);
-					prid = (reader[r].prid[j][0]<<16)|(reader[r].prid[j][1]<<8)|(reader[r].prid[j][2]&0xFF);
-				}
-
+				ulong prid = get_reader_prid(r, j);
 				int ofs = 21+(j*7);
 				buf[ofs+0] = prid >> 16;
 				buf[ofs+1] = prid >> 8;
 				buf[ofs+2] = prid & 0xFF;
 				//Setting SA (Shared Addresses):
 				if (au_allowed)
-				{
-					buf[ofs+3] = reader[r].sa[j][0];
-					buf[ofs+4] = reader[r].sa[j][1];
-					buf[ofs+5] = reader[r].sa[j][2];
-					buf[ofs+6] = reader[r].sa[j][3];
-				}
+					memcpy(buf+ofs+3, &reader[r].sa[j][0], 4);
 				//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
 			}
 			buf[21 + (j * 7)] = 1;
