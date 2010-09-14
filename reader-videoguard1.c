@@ -82,12 +82,6 @@ static void read_tiers(struct s_reader *reader)
 int videoguard1_card_init(struct s_reader *reader, ATR newatr)
 {
 
-  /* known class 48 only atrs */
-  NDS_ATR_ENTRY nds1_atr_table[]={ // {atr}, atr len, base year, description
-    {{ 0x3F, 0x78, 0x13, 0x25, 0x04, 0x40, 0xB0, 0x09, 0x4A, 0x50, 0x01, 0x4E, 0x5A }, 13, 1992, NDS1, "VideoGuard Sky New Zealand (0969)"},
-    {{0},0,0,0,NULL},
-    };
-
   get_hist;
   /* 40 B0 09 4A 50 01 4E 5A */
   if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[3] != 0x4A) || (hist[4] != 0x50)) {
@@ -96,17 +90,22 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
 
   get_atr;
   def_resp;
-    int i=0;
-    while(nds1_atr_table[i].desc) {
-        if ((atr_size == nds1_atr_table[i].atr_len) && (memcmp (atr, nds1_atr_table[i].atr, atr_size) == 0)) {
-            VG_BASEYEAR=nds1_atr_table[i].base_year;
-            cs_ri_log(reader, "[videoguard1-reader] type: %s", nds1_atr_table[i].desc);
-            break;
-        }
-        i++;
-    }
-    if(!nds1_atr_table[i].desc)
-        return ERROR; // unknown ATR... probably not NDS1
+
+  /* get information on the card from reader-videoguard-common.c */
+  NDS_ATR_ENTRY nds_atr_entry = {{0},0,0,0,0};
+  memcpy(nds_atr_entry.atr,atr,atr_size);
+  nds_atr_entry.atr_len = atr_size;
+
+  getNdsAtrEntry(&nds_atr_entry);
+
+  if(nds_atr_entry.nds_version != NDS1){
+    return ERROR; // known ATR and not NDS1 or unknown ATR... probably not NDS1
+  }
+
+  if (nds_atr_entry.desc){
+    VG_BASEYEAR=nds_atr_entry.base_year;
+    cs_ri_log(reader, "[videoguard1-reader] type: %s", nds_atr_entry.desc);
+  }
 
   /* NDS1 Class 48 only cards only need a very basic initialisation
      NDS1 Class 48 only cards do not respond to vg1_do_cmd(ins7416)

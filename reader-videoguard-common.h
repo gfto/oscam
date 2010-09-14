@@ -16,14 +16,15 @@
 #define VG_EMMTYPE_U 1 
 #define VG_EMMTYPE_S 2 
 
+#define NDSUNKNOWN    0
 #define NDS1    1
 #define NDS12    12
 #define NDS2    2
 
-int VG_BASEYEAR;
+extern int VG_BASEYEAR;
 
 typedef struct nds_atr {
-    char atr[MAX_ATR_LEN];
+    uchar atr[MAX_ATR_LEN];
     ushort atr_len;
     int base_year;
     int nds_version;
@@ -72,6 +73,7 @@ extern int status_ok(const unsigned char *status);
 extern int read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
 extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char * cta_res);
 extern void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss, int base_year);
+extern void getNdsAtrEntry(NDS_ATR_ENTRY *nds_atr_entry);
 
 #endif // __NDS_COMMON__
 

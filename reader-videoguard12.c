@@ -35,51 +35,37 @@ static void read_tiers(struct s_reader * reader)
 int videoguard12_card_init(struct s_reader * reader, ATR newatr)
 {
 
-  /* known atrs */
-    NDS_ATR_ENTRY nds12_atr_table[]={ // {atr}, atr len, base year, description
-        {{ 0x3F, 0x78, 0x13, 0x25, 0x03, 0x40, 0xB0, 0x20, 0xFF, 0xFF, 0x4A, 0x50, 0x00 }, 13, 1997, NDS12, "VideoGuard DirecTV"},
-        {{0},0,0,0,NULL},
-        };
-
-	get_hist;
-	if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
-		return ERROR;
-	get_atr;
-	def_resp;
-  
-    int i=0;
-    while(nds12_atr_table[i].desc) {
-        if ((atr_size == nds12_atr_table[i].atr_len) && (memcmp (atr, nds12_atr_table[i].atr, atr_size) == 0)) {
-            VG_BASEYEAR=nds12_atr_table[i].base_year;
-            cs_ri_log(reader, "[videoguard12-reader] type: %s", nds12_atr_table[i].desc);
-            break;
-        }
-        i++;
-    }
-    if(!nds12_atr_table[i].desc)
-        return ERROR; // unknown ATR... probably not NDS1+
-
-
-
-  //a non videoguard2/NDS card will fail on read_cmd_len(ins7401)
-  //this way also unknown videoguard2/NDS cards will work
-
-  int l = 0;
-
-/*
-  unsigned char ins7401[5] = { 0x48,0x74,0x01,0x00,0x00 };
-  ins7401[3]=0x80;  // from newcs log
-  ins7401[4]=0x01;
-  if((l=read_cmd_len(reader, ins7401))<0) return ERROR; //not a videoguard2/NDS card or communication error
-  ins7401[3]=0x00;
-  ins7401[4]=l;
-  if(!write_cmd_vg(ins7401,NULL) || !status_ok(cta_res+l)) {
-    cs_log ("[videoguard12-reader] failed to read cmd list");
+  get_hist;
+  if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50)){
     return ERROR;
+  }
+
+  get_atr;
+  def_resp;
+
+  /* get information on the card from reader-videoguard-common.c */
+  NDS_ATR_ENTRY nds_atr_entry = {{0},0,0,0,0};
+  memcpy(nds_atr_entry.atr,atr,atr_size);
+  nds_atr_entry.atr_len = atr_size;
+
+  getNdsAtrEntry(&nds_atr_entry);
+
+  if(nds_atr_entry.nds_version != NDS12) {
+    return ERROR; // known ATR and not NDS12 or unknown ATR... probably not NDS12
+  }
+
+  int l = 1;
+
+  /* NDS1 and NDS1+ cards  return XX 90 00 to this command NDS2 cards fail to respond to this*/
+  unsigned char ins3601[5] = { 0x48,0x36,0x01,0x00,0x01 };
+  if(!write_cmd_vg(ins3601,NULL) || !status_ok(cta_res+l)) {
+    return ERROR;  //  not a possible NDS1+ card
     }
 
-  memorize_cmd_table (cta_res,l);
-*/
+  if (nds_atr_entry.desc){
+    VG_BASEYEAR=nds_atr_entry.base_year;
+    cs_ri_log(reader, "[videoguard1-reader] type: %s", nds_atr_entry.desc);
+  }
 
   unsigned char dummy_cmd_table[132] = {
     0x01, 0x82, 0x20, 0x01,
@@ -119,14 +105,6 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
   memorize_cmd_table (dummy_cmd_table,132);
 
   unsigned char buff[256];
-
-/*
-  unsigned char ins7416[5] = { 0x48,0x74,0x16,0x00,0x00 };
-  if(do_cmd(reader, ins7416, NULL, NULL,cta_res)<0) {
-    cs_log ("[videoguard12-reader] cmd 7416 failed");
-    return ERROR;
-    }
-*/
 
 /* Read card serial number to initialise the card
   unsigned char ins52[5] = { 0x48,0x52,0x00,0x00,0x14 };
