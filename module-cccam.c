@@ -463,10 +463,10 @@ static void free_extended_ecm_idx(struct cc_data *cc) {
  * reader
  * closes the connection and reopens it.
  */
-static void cc_cycle_connection() {
-	cc_cli_close();
-	cc_cli_init_int();
-}
+//static void cc_cycle_connection() {
+//	cc_cli_close();
+//	cc_cli_init_int();
+//}
 
 /**
  * reader+server:
@@ -858,6 +858,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	
 	//No Card? Waiting for shares
 	if (!llist_count(cc->cards)) {
+		reader[ridx].fd_error++;
 		cs_debug_mask(D_TRACE, "%s NO CARDS!", getprefix());
 		return 0;
 	}
@@ -885,14 +886,15 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			{
 				cs_debug_mask(D_TRACE, "%s unlocked-cycleconnection! timeout %ds", getprefix(),
 					cfg->ctimeout*4/1000);
-				cc_cycle_connection();
+				//cc_cycle_connection();
+				cc_cli_close();
 				return 0;
 			}
 		}
 		cs_debug("cccam: ecm trylock: got lock");
 	}
 	cc->ecm_time = cur_time;
-	reader[ridx].available = !cc->extended_mode;
+	reader[ridx].available = cc->extended_mode;
 
 	//Search next ECM to send:
 	if ((n = cc_get_nxt_ecm()) < 0) {
@@ -999,7 +1001,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		if (cc->extended_mode) {
 			cc->server_ecm_idx++;
 			if (cc->server_ecm_idx >= 256)
-				cc->server_ecm_idx = 0;
+				cc->server_ecm_idx = 1;
 			g_flag = cc->server_ecm_idx; //Flag is used as index!
 			send_idx = g_flag;
 		}
@@ -1785,7 +1787,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			//
 		} else if (l == 0x23) {
 			cc->cmd05_mode = MODE_UNKNOWN;
-			cc_cycle_connection(); //Absolute unknown handling!
+			//cycle_connection(); //Absolute unknown handling!
+			cc_cli_close();
 			//
 			//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
 			//
@@ -1946,7 +1949,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 		if (eei == NULL) {
 			cs_log("%s received extended ecm NOK id %d but not found!",
 					getprefix(), g_flag);
-			cc_cycle_connection();
+			//cc_cycle_connection();
+			cc_cli_close();
 			return 0;
 		}
 			
@@ -2026,7 +2030,8 @@ static int cc_parse_msg(uint8 *buf, int l) {
 			if (eei == NULL) {
 				cs_log("%s received extended ecm id %d but not found!",
 						getprefix(), g_flag);
-				cc_cycle_connection();
+				//cc_cycle_connection();
+				cc_cli_close();
 				return 0;
 			}
 			
@@ -2183,8 +2188,9 @@ static int cc_parse_msg(uint8 *buf, int l) {
 	if (cc->max_ecms && (cc->ecm_counter > cc->max_ecms)) {
 		cs_log("%s max ecms (%d) reached, cycle connection!", getprefix(),
 				cc->max_ecms);
-		cc_cycle_connection();
-		cc_send_ecm(NULL, NULL);
+		//cc_cycle_connection();
+		cc_cli_close();
+		//cc_send_ecm(NULL, NULL);
 		ret = 0;
 	}
 	return ret;
