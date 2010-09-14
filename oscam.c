@@ -1843,14 +1843,13 @@ int send_dcw(ECM_REQUEST *er)
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
 	static char *stxtEx[]={"", "group", "caid", "ident", "class", "chid", "queue", "peer"};
 	static char *stxtWh[]={"", "user ", "reader ", "server ", "lserver "};
-	char sby[32]="", sreason[32]="";
+	char sby[32]="", sreason[32]="", schaninfo[32]="";
 	char erEx[32]="";
 	char uname[38]="";
 	struct timeb tpe;
 	ushort lc, *lp;
 	for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
 		lc^=*lp;
-	cs_ftime(&tpe);
 
 #ifdef CS_WITH_GBOX
 	if(er->gbxFrom)
@@ -1876,6 +1875,13 @@ int send_dcw(ECM_REQUEST *er)
 		snprintf(erEx, sizeof(erEx)-1, "rejected %s%s", stxtWh[er->rcEx>>4],
 				stxtEx[er->rcEx&0xf]);
 
+	if(cfg->mon_appendchaninfo)
+		snprintf(schaninfo, sizeof(schaninfo)-1, "%s", get_servicename(er->srvid, er->caid));
+
+	if(er->msglog[0])
+		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
+
+	cs_ftime(&tpe);
 	client[cs_idx].cwlastresptime = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
 
 #ifdef CS_LED
@@ -1883,18 +1889,11 @@ int send_dcw(ECM_REQUEST *er)
 #endif
 
 	send_reader_stat(er->reader[0], er, er->rc);
-	
-	if(er->msglog[0])
-		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
 
-	if(cfg->mon_appendchaninfo)
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s%s",
-				uname, er->caid, er->prid, er->srvid, er->l, lc,
-				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, get_servicename(er->srvid, er->caid), sreason);
-	else
-		cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s%s",
-				uname, er->caid, er->prid, er->srvid, er->l, lc,
-				er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, sreason);
+	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s%s",
+			uname, er->caid, er->prid, er->srvid, er->l, lc,
+			er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, schaninfo, sreason);
+
 #ifdef WEBIF
 	if(er->rc == 0)
 		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", sby);
