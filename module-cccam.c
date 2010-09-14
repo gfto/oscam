@@ -1013,20 +1013,21 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			
 			reader[ridx].nprov = 0;
 			LLIST_ITR pitr;
-			int p = 0;
 			struct cc_provider *provider = llist_itr_init(card->providers, &pitr);
 			while (provider) {
 				if (provider->prov == cur_er->prid) {
-					memcpy(&reader[ridx].prid[p], &provider->prov, sizeof(provider->prov));
-					memcpy(&reader[ridx].sa[p], provider->sa, sizeof(provider->sa));
+					memcpy(&reader[ridx].prid[0], &provider->prov, sizeof(provider->prov));
+					memcpy(&reader[ridx].sa[0], provider->sa, sizeof(provider->sa));
 					reader[ridx].nprov = 1;
 					break;
 				}
 				provider = llist_itr_next(&pitr);
-				p++;
 			}
-			cs_debug_mask(D_EMM, "%s au info: caid %04X card system: %d serial: %s", 
-				getprefix(), card->caid, reader[ridx].card_system, cs_hexdump(0, reader[ridx].hexserial, 8));
+			char saprov[14] = {0};
+			if (provider)
+				sprintf(saprov, "%06lX:%02X%02X%02X%02X", provider->prov, provider->sa[0], provider->sa[1], provider->sa[2], provider->sa[3]);
+			cs_debug_mask(D_EMM, "%s au info: caid %04X card system: %d UA: %s SA: %s", 
+				getprefix(), card->caid, reader[ridx].card_system, cs_hexdump(0, reader[ridx].hexserial, 8), saprov);
 		}
 
 		return 0;
