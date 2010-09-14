@@ -499,20 +499,26 @@ static void prepare_reader_restart(int ridx, int cs_idx)
   reader[ridx].last_s=reader->last_g=0;
                                         
   cs_debug_mask(D_TRACE, "reader %s closed (index=%d)", reader[ridx].label, ridx);
-  if (client[cs_idx].ufd) close(client[cs_idx].ufd);
-  if (client[cs_idx].fd_m2c_c) close(client[cs_idx].fd_m2c_c);
-  memset(&client[cs_idx], 0, sizeof(struct s_client));
-  client[cs_idx].au=(-1);
+  if (cs_idx) {
+	  if (client[cs_idx].ufd) close(client[cs_idx].ufd);
+	  if (client[cs_idx].fd_m2c_c) close(client[cs_idx].fd_m2c_c);
+	  memset(&client[cs_idx], 0, sizeof(struct s_client));
+	  client[cs_idx].au=(-1);
+  }
 }
 
 //Schlocke: restart cardreader after 5 seconds:
 static void restart_cardreader(int pridx, int force_now) {
 	ridx = pridx;
-	if (reader[ridx].cs_idx) {
-		int pid = reader[ridx].pid;
+	int cs_idx = reader[ridx].cs_idx;
+	int pid;
+	if (cs_idx) //Reader is open...
+		pid = client[cs_idx].pid;
+	else //reader is closed...
+  		pid = reader[ridx].pid;
+	if (pid)
 		kill(pid, SIGKILL);
-		prepare_reader_restart(ridx, reader[ridx].cs_idx);
-	}
+	prepare_reader_restart(ridx, cs_idx);
 
 	reader[ridx].ridx = ridx; //FIXME
 	if ((reader[ridx].device[0]) && (reader[ridx].enable == 1) && (!reader[ridx].deleted)) {
@@ -2233,7 +2239,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
  	     		reader[i].fd_error++;
       			if (reader[i].fd_error > 5) {
       				reader[i].fd_error = 0;
-      				kill(client[reader[i].cs_idx].pid, 1); //Schlocke: This should restart the reader!
+      				kill(client[reader[i].cs_idx].pid, SIGKILL); //Schlocke: This should restart the reader!
       			} 
 		}
       }

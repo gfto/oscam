@@ -814,7 +814,12 @@ static void cc_UA_cccam2oscam(uint8 *in, uint8 *out) {
 	out[6] = in[0];
 }
 
-
+static int cc_UA_valid(uint8 *ua) {
+	int i;
+	for (i=0;i<8;i++)
+		if (ua[i]) return 1;
+	return 0;
+}
 
 /**
  * reader
@@ -833,7 +838,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	ECM_REQUEST *cur_er;
 	struct timeb cur_time;
 	cs_ftime(&cur_time);
-
+	
 	if (!cc || (pfd < 1) || !reader[ridx].tcp_connected) {
 		if (er) {
 			//er->rc = 0;
@@ -945,8 +950,9 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 					struct cc_provider *provider = llist_itr_init(ncard->providers, &pitr);
 					while (provider && !s) {
 						if (!cur_er->prid || !provider->prov || provider->prov == cur_er->prid) { // provid matches
-							if (((h < 0) || (ncard->hop < h)) && (ncard->hop
-									<= reader[ridx].cc_maxhop)) { // ncard is closer and doesn't exceed max hop
+							if (((h < 0) || 
+								(ncard->hop < h || (ncard->hop==h && cc_UA_valid(ncard->hexserial)))) && 
+									(ncard->hop<=reader[ridx].cc_maxhop)) { // ncard is closer and doesn't exceed max hop
 								//cc->cur_card = ncard;
 								card = ncard;
 								h = ncard->hop; // ncard has been matched
@@ -1265,8 +1271,7 @@ static void freeCaidInfos(LLIST *caid_infos) {
  * Server:
  * Adds a cccam-carddata buffer to the list of reported carddatas
  */
-static void cc_add_reported_carddata(LLIST *reported_carddatas, uint8 *buf,
-		int len) {
+static void cc_add_reported_carddata(LLIST *reported_carddatas, uint8 *buf, int len, int ridx) {
 	struct cc_reported_carddata *carddata = malloc(
 			sizeof(struct cc_reported_carddata));
 	uint8 *buf_copy = malloc(len);
@@ -1274,6 +1279,19 @@ static void cc_add_reported_carddata(LLIST *reported_carddatas, uint8 *buf,
 	carddata->buf = buf_copy;
 	carddata->len = len;
 	llist_append(reported_carddatas, carddata);
+	
+	cs_debug_mask(D_EMM, "%s:%s reported card %d CAID %04X UA: %02X%02X%02X%02X%02X%02X%02X%02X", 
+		getprefix(), reader[ridx].label, //label
+		b2i(4, buf), //card-id
+		b2i(2, buf+8),  //CAID
+		buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18], buf[19]); //UA
+	int i;
+	for (i=0;i<buf[20];i++) {
+		int ofs = 21+i*7;
+		cs_debug_mask(D_EMM, "   provider: %02X%02X%02X SA: %02X%02X%02X%02X", 
+			buf[ofs], buf[ofs+1], buf[ofs+2],
+			buf[ofs+3], buf[ofs+4], buf[ofs+5], buf[ofs+6]);
+	}
 }
 
 static void cc_clear_reported_carddata(LLIST *reported_carddatas,
@@ -2568,9 +2586,8 @@ static int cc_srv_report_cards() {
 							int l;
 							for (l=0;l<reader[r].nprov;l++) {
 								ulong rprid = get_reader_prid(r, l);
-								if (rprid==prid) {
+								if (rprid==prid)
 									memcpy(buf+ofs+3, &reader[r].sa[l][0], 4);
-								}
 							}
 						}
 					}
@@ -2586,8 +2603,7 @@ static int cc_srv_report_cards() {
 					 */
 					int len = 30 + (k * 7);
 					cc_cmd_send(buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(reported_carddatas, buf, len);
-
+					cc_add_reported_carddata(reported_carddatas, buf, len, r);
 					id++;
 					flt = 1;
 				}
@@ -2630,9 +2646,8 @@ static int cc_srv_report_cards() {
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
 					cc_cmd_send(buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(reported_carddatas, buf, len);
+					cc_add_reported_carddata(reported_carddatas, buf, len, r);
 					id++;
-
 					flt = 1;
 				}
 			}
@@ -2675,7 +2690,7 @@ static int cc_srv_report_cards() {
 					== CARD_INSERTED) /*&& !reader[r].cc_id*/) {
 				//reader[r].cc_id = b2i(3, buf + 5);
 				int len = 30 + (j * 7);
-				cc_add_reported_carddata(reported_carddatas, buf, len);
+				cc_add_reported_carddata(reported_carddatas, buf, len, r);
 				cc_cmd_send(buf, len, MSG_NEW_CARD);
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
 			} else if ((reader[r].card_status != CARD_INSERTED)
@@ -2743,7 +2758,7 @@ static int cc_srv_report_cards() {
 
 							int len = 30 + (j * 7);
 							cc_cmd_send(buf, len, MSG_NEW_CARD);
-							cc_add_reported_carddata(reported_carddatas, buf, len);
+							cc_add_reported_carddata(reported_carddatas, buf, len, r);
 						}
 					}
 					caid_info = llist_itr_next(&itr);
