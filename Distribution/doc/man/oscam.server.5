@@ -53,11 +53,6 @@ for gbox reader
 user and password for remote reader
 .RE
 .PP
-\fBpincode\fP = \fBpincode\fP
-.RS 3n
-pincode for Conax and Cryptoworks SCs
-.RE
-.PP
 \fBservices\fP = \fB[!]services[,[!]<services>]...\fP
 .RS 3n
 reader [de]assignment to service group, default=none
@@ -112,30 +107,6 @@ set provider ID to use the right reader for auto AU
 example: auprovid = 123456
 .RE
 .PP
-\fBboxid\fP = \fBNDS box ID\fP
-.RS 3n
-NDS receiver box id
-.RE
-.PP
-\fBaeskey\fP = \fBAES key\fP
-.RS 3n
-16 byte AES key for Viaccess SCs
-.RE
-.PP
-\fBaeskeys\fP = \fBCAID\fP@\fBident\fP:\fBAES key #1\fP[,\fBAES key #2\fP],...[;\fBCAID\fP@\fBident\fP:\fBAES key #2\fP[,\fBAES key #3\fP],...]...
-.RS 3n
-mutiple 16 byte AES keys for Viaccess SCs
-
-special AES keys:
-
- 00 = no AES key specified, do not return any CW
- FF = no AES key specified, return CW received from the SC
-
-example: 
-
- aeskeys = 0100@012345:000102030405060708090a0b0c0d0e0f;0200@543210:0,0,0f0e0d0c0b0a090807060504030201
-.RE
-.PP
 \fBdetect\fP = \fBCD\fP|\fBDSR\fP|\fBCTS\fP|\fBRING\fP|\fBNONE\fP|\fBgpio[1-7]\fP
 .RS 3n
 status detect of card (NONE = no detection), default:CD
@@ -159,6 +130,11 @@ reverted to deprecated mode, so that the SC speed will not be changed and the co
 will remain on normal ATR speed of 9600 baud.
 
 1 = use deprecated SC mode only, default:0
+.RE
+.PP
+\fBmode\fP = \fBmode\fP
+.RS 3n
+set card init mode for AzBox reader, default:none
 .RE
 .PP
 \fBprotocol\fP = \fBreader protocol\fP
@@ -197,18 +173,6 @@ define provider ID for reader
 define class in hex for reader
 
 example: class = 01,02,!1b,!2b
-.RE
-.PP
-\fBchid\fP = \fBCAID:ChID\fP
-.RS 3n
-define Irdeto ChID for reader
-
-example: chid = 0100:12
-.RE
-.PP
-\fBshowcls\fP = \fBquantity\fP
-.RS 3n
-number of classes subscriptions to show for Viaccess SCs, default=10
 .RE
 .PP
 \fBmaxqlen\fP = \fBsize\fP
@@ -296,31 +260,6 @@ the higher the value the higher the probability for reader selection, default:10
  It's an divider for the average responstime.
 .RE
 .PP
-\fBforce_irdeto\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
-.RE
-.PP
-\fBn3_rsakey\fP|\fBrsakey\fP = \fBRSA key\fP
-.RS 3n
-RSA key for Nagravision SCs / CAM key data for Irdeto SCs 
-.RE
-.PP
-\fBn3_boxkey\fP|\fBboxkey\fP = \fBbox key\fP
-.RS 3n
-box key for Nagravision SCs / CAM key for Irdeto SCs
-.RE
-.PP
-\fBtiger_rsakey\fP = \fBRSA key\fP
-.RS 3n
-RSA key for Tiger Nagravision SCs
-.RE
-.PP
-\fBtiger_ideakey\fP = \fBIDEA key\fP
-.RS 3n
-IDEA key for Tiger Nagravision SCs
-.RE
-.PP
 \fBcccversion\fP = \fB<main version>.<version>.<sub version>\fP
 .RS 3n
 define CCcam version, default:none
@@ -367,9 +306,80 @@ interval to provide share list update to CCCam clients, default:240
 1 = send keepalive messages to keep connection to remote CCCam server up, default:0
 .RE
 .PP
-\fBmode\fP = \fBmode\fP
+\fBpincode\fP = \fBpincode\fP
 .RS 3n
-set card init mode for AzBox reader, default:none
+pincode for Conax and Cryptoworks SCs
+.RE
+.PP
+\fBchid\fP = \fBCAID:ChID\fP
+.RS 3n
+define Irdeto ChID for reader
+
+example: chid = 0100:12
+.RE
+.PP
+\fBforce_irdeto\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
+.RE
+.PP
+\fBn3_rsakey\fP|\fBrsakey\fP = \fBRSA key\fP
+.RS 3n
+RSA key for Nagravision SCs / CAM key data for Irdeto SCs 
+.RE
+.PP
+\fBn3_boxkey\fP|\fBboxkey\fP = \fBbox key\fP
+.RS 3n
+box key for Nagravision SCs / CAM key for Irdeto SCs
+.RE
+.PP
+\fBtiger_rsakey\fP = \fBRSA key\fP
+.RS 3n
+RSA key for Tiger Nagravision SCs
+.RE
+.PP
+\fBtiger_ideakey\fP = \fBIDEA key\fP
+.RS 3n
+IDEA key for Tiger Nagravision SCs
+.RE
+.PP
+\fBaeskey\fP = \fBAES key\fP
+.RS 3n
+16 byte AES key for Viaccess SCs
+.RE
+.PP
+\fBaeskeys\fP = \fBCAID\fP@\fBident\fP:\fBAES key #1\fP[,\fBAES key #2\fP],...[;\fBCAID\fP@\fBident\fP:\fBAES key #2\fP[,\fBAES key #3\fP],...]...
+.RS 3n
+mutiple 16 byte AES keys for Viaccess SCs
+
+special AES keys:
+
+ 00 = no AES key specified, do not return any CW
+ FF = no AES key specified, return CW received from the SC
+
+example: 
+
+ aeskeys = 0100@012345:000102030405060708090a0b0c0d0e0f;0200@543210:0,0,0f0e0d0c0b0a090807060504030201
+.RE
+.PP
+\fBshowcls\fP = \fBquantity\fP
+.RS 3n
+number of classes subscriptions to show for Viaccess SCs, default=10
+.RE
+.PP
+\fBboxid\fP = \fBNDS box ID\fP
+.RS 3n
+NDS receiver box id
+.RE
+.PP
+\fBndsversion\fP = \fB0\fP|\fB1\fP|\fB12\fP|\fB2\fP
+.RS 3n
+set NDS Videoguard version
+
+  0 = autodetection (default)
+  1 = NDS Videoguard 1
+ 12 = NDS Videoguard 1+
+  2 = NDS Videoguard 2
 .RE
 .SH OVERCLOCKING
 .TP 3n
