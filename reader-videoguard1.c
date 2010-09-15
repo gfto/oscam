@@ -98,8 +98,16 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
 
   getNdsAtrEntry(&nds_atr_entry);
 
-  if(nds_atr_entry.nds_version != NDS1){
-    return ERROR; // known ATR and not NDS1 or unknown ATR... probably not NDS1
+  if((reader->ndsversion != NDS1) && ((nds_atr_entry.nds_version != NDS1) || (reader->ndsversion != NDSAUTO))) {
+    /* known ATR and not NDS1
+       or unknown ATR and not forced to NDS1
+       or known NDS1 ATR and forced to another NDS version
+       ... probably not NDS1 */
+    return ERROR;
+  }
+
+  if(reader->ndsversion == NDS1){
+    cs_ri_log(reader, "[videoguard1-reader] Forced to NDS1");
   }
 
   if (nds_atr_entry.desc){

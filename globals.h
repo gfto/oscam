@@ -675,6 +675,8 @@ struct s_reader  //contains device info, reader info and card info
 	struct timeb lb_last; //time for oldest reader
 	// multi AES linked list
 	AES_ENTRY *aes_list;
+        // variables from reader-videoguard*
+        int ndsversion; // 0 auto (default), 1 NDS1, 12 NDS1+, 2 NDS2
 };
 
 #ifdef CS_ANTICASC

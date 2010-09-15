@@ -50,6 +50,18 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 
   getNdsAtrEntry(&nds_atr_entry);
 
+  if((reader->ndsversion != NDS2) &&
+     (((nds_atr_entry.nds_version != NDS2) && (nds_atr_entry.nds_version != NDSUNKNOWN)) ||
+      (reader->ndsversion != NDSAUTO))) {
+    /* known ATR and not NDS2
+       or known NDS2 ATR and forced to another NDS version */
+    return ERROR;
+  }
+
+  if(reader->ndsversion == NDS2){
+    cs_ri_log(reader, "[videoguard2-reader] Forced to NDS2");
+  }
+
   if (nds_atr_entry.desc){
     VG_BASEYEAR=nds_atr_entry.base_year;
     cs_ri_log(reader, "[videoguard2-reader] type: %s", nds_atr_entry.desc);

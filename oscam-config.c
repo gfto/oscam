@@ -2499,6 +2499,9 @@ int write_server()
 			if (reader[i].auprovid)
 				fprintf_conf(f, CONFVARWIDTH, "auprovid", "%06lX", reader[i].auprovid);
 
+                        if (reader[i].ndsversion && isphysical)
+                                fprintf_conf(f, CONFVARWIDTH, "ndsversion", "%d\n", reader[i].ndsversion);
+
 			fprintf(f, "\n\n");
 		}
 	}
@@ -3612,6 +3615,17 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+        if (!strcmp(token, "ndsversion")) {
+                if (strlen(value) == 0) {
+                        rdr->ndsversion = 0;
+                        return;
+                } else {
+                        rdr->ndsversion = atoi(value);
+                        return;
+                }
+        }
+
+
 #ifdef AZBOX
   if (!strcmp(token, "mode")) {
     if(strlen(value) == 0) {
@@ -3744,6 +3758,7 @@ int init_readerdb()
 			reader[nr].cc_maxhop = 10;
 			reader[nr].lb_weight = 100;
 			strcpy(reader[nr].pincode, "none");
+                        reader[nr].ndsversion = 0;
 			for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
 			continue;
 		}

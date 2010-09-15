@@ -17,6 +17,7 @@
 #define VG_EMMTYPE_S 2 
 
 #define NDSUNKNOWN    0
+#define NDSAUTO    0
 #define NDS1    1
 #define NDS12    12
 #define NDS2    2

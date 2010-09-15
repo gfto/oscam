@@ -50,8 +50,16 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
 
   getNdsAtrEntry(&nds_atr_entry);
 
-  if(nds_atr_entry.nds_version != NDS12) {
-    return ERROR; // known ATR and not NDS12 or unknown ATR... probably not NDS12
+  if((reader->ndsversion != NDS12) && ((nds_atr_entry.nds_version != NDS12) || (reader->ndsversion != NDSAUTO))) {
+    /* known ATR and not NDS1+
+       or unknown ATR and not forced to NDS1+
+       or known NDS1+ ATR and forced to another NDS version
+       ... probably not NDS1+ */
+    return ERROR;
+  }
+
+  if(reader->ndsversion == NDS12){
+    cs_ri_log(reader, "[videoguard12-reader] Forced to NDS1+");
   }
 
   if (nds_atr_entry.desc){
@@ -66,7 +74,6 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
   if(!write_cmd_vg(ins3601,NULL) || !status_ok(cta_res+l)) {
     return ERROR;  //  not a possible NDS1+ card
     }
-
 
   unsigned char dummy_cmd_table[132] = {
     0x01, 0x82, 0x20, 0x01,
@@ -198,13 +205,13 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
     }
 // Start of suggested fix for 09ac cards
-    unsigned char Dimeno_Magic[0x10]={0xF9,0xFB,0xCD,0x5A,0x76,0xB5,0xC4,0x5C,0xC8,0x2E,0x1D,0xE1,0xCC,0x5B,0x6B,0x02}; 
+    unsigned char Dimeno_Magic[0x10]={0xF9,0xFB,0xCD,0x5A,0x76,0xB5,0xC4,0x5C,0xC8,0x2E,0x1D,0xE1,0xCC,0x5B,0x6B,0x02};
     int a;
     for(a=0; a<4; a++)
         Dimeno_Magic[a]=Dimeno_Magic[a]^boxID[a];
     //I supposed to declare a AES_KEY Astro_Key somewhere before...
     AES_set_decrypt_key(Dimeno_Magic,128,&Astro_Key);
-    Astro_Key.rounds=10;     		
+    Astro_Key.rounds=10;
     //Important for ecm decryption...
 //	End of suggested fix
 
@@ -358,12 +365,12 @@ This one has IRD-EMM + Card-EMM
 01 ED 17 7D 9E 1F 28 CF 09 97 54 F1 8E 72 06 E7
 51 AF F5
 This one has only IRD-EMM
-82 70 6D 00 07 69 01 30 07 14 5E 0F FF FF 00 06 
-00 0D 01 00 03 01 00 00 00 0F 00 00 00 5E 01 00 
+82 70 6D 00 07 69 01 30 07 14 5E 0F FF FF 00 06
+00 0D 01 00 03 01 00 00 00 0F 00 00 00 5E 01 00
 01 0C 2E 70 E4 55 B6 D2 34 F7 44 86 9E 5C 91 14
 81 FC DF CB D0 86 65 77 DF A9 E1 6B A8 9F 9B DE
-90 92 B9 AA 6C B3 4E 87 D2 EC 92 DA FC 71 EF 27 
-B3 C3 D0 17 CF 0B D6 5E 8C DB EB B3 37 55 6E 09 
+90 92 B9 AA 6C B3 4E 87 D2 EC 92 DA FC 71 EF 27
+B3 C3 D0 17 CF 0B D6 5E 8C DB EB B3 37 55 6E 09
 7F 27 3C F1 85 29 C9 4E 0B EE DF 68 BE 00 C9 00
 */
 static const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a)
@@ -373,7 +380,7 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
   const unsigned char *ptr = NULL;
   int position=-1;
   int numAddrs=0;
-  
+
   switch(emmtype) {
     case SHARED: s=3; break;
     case UNIQUE: s=4; break;
@@ -381,7 +388,7 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
   }
 
   numAddrs=num_addr(data);
-  
+
   if(s>0) {
     for(l=0;l<numAddrs;l++) {
       if(!memcmp(&data[l*4+4],a+2,s)) {
@@ -406,12 +413,12 @@ static const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
   /* check for IRD-EMM */
   if (*ptr != 0x02 &&  *ptr != 0x07) return NULL;
 
-  /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */ 
+  /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */
   ptr += 2 + ptr[1];
 
     /* check for EMM boundaries - ptr should not exceed EMM length */
     if ((int)(ptr - (data + 3)) >= data[2]) return NULL;
-   
+
   for(l=0;l<position;l++) {
     /* skip the payload of the previous sub-EMM */
     ptr += 1 + ptr [0];
@@ -439,10 +446,10 @@ int videoguard12_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 
 /*
-82 30 ad 70 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 00 
-d3 02 00 22 90 20 44 02 4a 50 1d 88 ab 02 ac 79 16 6c df a1 b1 b7 77 00 ba eb 63 b5 c9 a9 30 2b 43 e9 16 a9 d5 14 00 
+82 30 ad 70 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 00
+d3 02 00 22 90 20 44 02 4a 50 1d 88 ab 02 ac 79 16 6c df a1 b1 b7 77 00 ba eb 63 b5 c9 a9 30 2b 43 e9 16 a9 d5 14 00
 d3 02 00 22 90 20 44 02 13 e3 40 bd 29 e4 90 97 c3 aa 93 db 8d f5 6b e4 92 dd 00 9b 51 03 c9 3d d0 e2 37 44 d3 bf 00
-d3 02 00 22 90 20 44 02 97 79 5d 18 96 5f 3a 67 70 55 bb b9 d2 49 31 bd 18 17 2a e9 6f eb d8 76 ec c3 c9 cc 53 39 00 
+d3 02 00 22 90 20 44 02 97 79 5d 18 96 5f 3a 67 70 55 bb b9 d2 49 31 bd 18 17 2a e9 6f eb d8 76 ec c3 c9 cc 53 39 00
 d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10 76 aa 75 ef d6 82 27 2e 44 7b 00
 */
 
@@ -458,7 +465,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 			ep->type=GLOBAL;
 			cs_debug_mask(D_EMM, "VIDEOGUARD12 EMM: GLOBAL");
 			return TRUE;
-		
+
 		case VG_EMMTYPE_U:
 			cs_debug_mask(D_EMM, "VIDEOGUARD12 EMM: UNIQUE");
 			ep->type=UNIQUE;
@@ -481,7 +488,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 			return TRUE; // FIXME: no check for SA
 
 		default:
-			if (ep->emm[pos-2] != 0x00 && ep->emm[pos-1] != 0x00 && ep->emm[pos-1] != 0x01) {	
+			if (ep->emm[pos-2] != 0x00 && ep->emm[pos-1] != 0x00 && ep->emm[pos-1] != 0x01) {
 				//remote emm without serial
 				ep->type=UNKNOWN;
 				return TRUE;
@@ -515,7 +522,7 @@ void videoguard12_get_emm_filter(struct s_reader * rdr, uchar *filter)
 
 	memcpy(filter+38+6, rdr->hexserial+2, 4);
 	memset(filter+38+6+16, 0xFF, 4);
-	
+
 
 	filter[70]=UNIQUE;
 	filter[71]=0;

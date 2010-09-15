@@ -813,6 +813,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		reader[ridx].deprecated = 0;
 		reader[ridx].cachecm = 1;
 		strcpy(reader[ridx].pincode, "none");
+                reader[ridx].ndsversion = 0;
 		for (i = 1; i < CS_MAXCAIDTAB; reader[ridx].ctab.mask[i++] = 0xffff);
 		for (i = 0; i < (*params).paramcount; ++i) {
 			if (strcmp((*params).params[i], "action"))
@@ -1050,6 +1051,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	} else if (!strcmp(reader[ridx].cc_version, "2.1.4")) {
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED4", "selected");
 	}
+
+        tpl_printf(vars, 0, "TMP", "NDSVERSION%d", reader[ridx].ndsversion);
+        tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
 	tpl_printf(vars, 0, "CCCMAXHOP", "%d", reader[ridx].cc_maxhop);
 	if (reader[ridx].cc_disable_retry_ecm)
