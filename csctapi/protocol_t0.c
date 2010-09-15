@@ -150,7 +150,7 @@ static int Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command
 {
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
-	unsigned short * tpdu_lr;
+	unsigned short * tpdu_lr = 0;
     ulong i;
 	
 	unsigned long Lc = (((unsigned long)(command[5]) << 8) | command[6]);
@@ -202,7 +202,7 @@ static int Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command
 	int ret;
 	BYTE buffer[5];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
-	unsigned short * tpdu_lr;
+	unsigned short * tpdu_lr = 0;
 	long Lm, Lx;
 
 	unsigned long Le = ((((unsigned long)(command[5]) << 8) | command[6]) == 0 ? 65536 : (((unsigned long)(command[5]) << 8) | command[6]));
@@ -270,7 +270,7 @@ static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command
 	int ret;
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
-	unsigned short * tpdu_lr;
+	unsigned short * tpdu_lr = 0;
 	long Le;
 	
 	unsigned long Lc = (((unsigned long)(command[5]) << 8) | command[6]);
