@@ -271,7 +271,8 @@ static void cCamCryptVG_PostProcess_Decrypt(unsigned char *buff, int len, unsign
         memcpy(cw1,buff+5,8);
     	memset(cw2,0,8); //set to 0 so client will know it is not valid if not overwritten with valid cw
         int ind;
-        for(ind=13; ind<len+13-8; ind++) {
+        for(ind=15; ind<len+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past buffer
+                                             // we start searching at 15 because start at 13 goes wrong with 090F 090b and 096a
           if(buff[ind]==0x25) {
             //memcpy(cw2,buff+5+ind+2,8);
             memcpy(cw2,buff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919  //don't care whether cw is 0 or not
