@@ -469,6 +469,16 @@ static void cCamCryptVG_RotateRightAndHash(unsigned char *p)
     }
 }
 
+int status_ok(const unsigned char *status)
+{
+    //cs_log("[videoguard-reader] check status %02x%02x", status[0],status[1]);
+    return (status[0] == 0x90 || status[0] == 0x91)
+           && (status[1] == 0x00 || status[1] == 0x01
+               || status[1] == 0x20 || status[1] == 0x21
+               || status[1] == 0x80 || status[1] == 0x81
+               || status[1] == 0xa0 || status[1] == 0xa1);
+}
+
 void memorize_cmd_table (const unsigned char *mem, int size){
   cmd_table=(struct CmdTab *)malloc(sizeof(unsigned char) * size);
   memcpy(cmd_table,mem,size);
@@ -521,14 +531,15 @@ int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned c
   return 0;
 }
 
-int status_ok(const unsigned char *status)
+int cmd_exists(const unsigned char *cmd)
 {
-    //cs_log("[videoguard-reader] check status %02x%02x", status[0],status[1]);
-    return (status[0] == 0x90 || status[0] == 0x91)
-           && (status[1] == 0x00 || status[1] == 0x01
-               || status[1] == 0x20 || status[1] == 0x21
-               || status[1] == 0x80 || status[1] == 0x81
-               || status[1] == 0xa0 || status[1] == 0xa1);
+  struct CmdTabEntry *pcte=cmd_table->e;
+  int i;
+  for(i=0; i<cmd_table->Nentries; i++,pcte++)
+    if(cmd[1]==pcte->cmd) {
+      return 1;
+      }
+  return 0;
 }
 
 int read_cmd_len(struct s_reader * reader, const unsigned char *cmd)

@@ -68,11 +68,14 @@ extern void cCamCryptVG_SetSeed(unsigned char *Key1, unsigned char *Key2);
 extern void cCamCryptVG_GetCamKey(unsigned char *buff);
 
 extern void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data);
-extern void memorize_cmd_table (const unsigned char *mem, int size);
 extern void Manage_Tag(unsigned char *Answer);
 extern int status_ok(const unsigned char *status);
+
+extern void memorize_cmd_table (const unsigned char *mem, int size);
+extern int cmd_exists(const unsigned char *cmd);
 extern int read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
 extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char * cta_res);
+
 extern void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss, int base_year);
 extern void getNdsAtrEntry(NDS_ATR_ENTRY *nds_atr_entry);
 

@@ -6,10 +6,17 @@
 static void vg2_read_tiers(struct s_reader * reader)
 {
   def_resp;
-  static const unsigned char ins2a[5] = { 0xd0,0x2a,0x00,0x00,0x00 };
   int l;
-  l=do_cmd(reader, ins2a,NULL,NULL,cta_res);
-  if(l<0 || !status_ok(cta_res+l)) return;
+
+  static const unsigned char ins2a[5] = { 0xd0,0x2a,0x00,0x00,0x00 };
+  if(cmd_exists(ins2a)) {  //ins2a is not needed and causes an error on some cards eg Sky Italy 09CD
+    l=do_cmd(reader, ins2a,NULL,NULL,cta_res);
+    if(l<0 || !status_ok(cta_res+l)){
+      cs_log ("[videoguard2-reader] cmd ins2a failed");
+      return;
+    }
+  }
+
   static unsigned char ins76[5] = { 0xd0,0x76,0x00,0x00,0x00 };
   ins76[3]=0x7f; ins76[4]=2;
   if(!write_cmd_vg(ins76,NULL) || !status_ok(cta_res+2)) return;
