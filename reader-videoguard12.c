@@ -37,6 +37,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
 
   get_hist;
   if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50)){
+    cs_log("WTF!!!!");
     return ERROR;
   }
 
@@ -54,6 +55,11 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     return ERROR; // known ATR and not NDS12 or unknown ATR... probably not NDS12
   }
 
+  if (nds_atr_entry.desc){
+    VG_BASEYEAR=nds_atr_entry.base_year;
+    cs_ri_log(reader, "[videoguard12-reader] type: %s", nds_atr_entry.desc);
+  }
+
   int l = 1;
 
   /* NDS1 and NDS1+ cards  return XX 90 00 to this command NDS2 cards fail to respond to this*/
@@ -62,10 +68,6 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;  //  not a possible NDS1+ card
     }
 
-  if (nds_atr_entry.desc){
-    VG_BASEYEAR=nds_atr_entry.base_year;
-    cs_ri_log(reader, "[videoguard1-reader] type: %s", nds_atr_entry.desc);
-  }
 
   unsigned char dummy_cmd_table[132] = {
     0x01, 0x82, 0x20, 0x01,
