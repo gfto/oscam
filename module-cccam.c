@@ -668,7 +668,7 @@ static int cc_get_nxt_ecm() {
 			ecmtask[i].rc = 0;
 		}
 
-		if (ecmtask[i].rc >= 10 && ecmtask[i].rc != 99) { // stil active and waiting
+		if (ecmtask[i].rc >= 10 && ecmtask[i].rc != 101) { // stil active and waiting
 			// search for the ecm with the lowest time, this should be the next to go
 			if ((n < 0 || ecmtask[n].tps.time - ecmtask[i].tps.time < 0)
 					&& &ecmtask[n])
@@ -908,7 +908,7 @@ static int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		return 0; // no queued ecms
 	}
 	cur_er = &ecmtask[n];
-	cur_er->rc = 99; //mark ECM as already send
+	cur_er->rc = 101; //mark ECM as already send
 	cs_debug("cccam: ecm-task %d", cur_er->idx);
 
 	if (buf)
