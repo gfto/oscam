@@ -191,6 +191,8 @@ static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 	cs_debug("[nagra-reader] ------------------------------------------");
 	
 	memcpy(reader->hexserial+2, parte_fija+15, 4);
+    memcpy(reader->sa[0], parte_fija+15, 2);
+
 	memcpy(reader->irdId, parte_fija+19, 4);
 	memcpy(d1_rsa_modulo,parte_fija+23,88);
 	
