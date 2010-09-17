@@ -509,7 +509,7 @@ static void prepare_reader_restart(int ridx, int cs_idx)
 
 //Schlocke: restart cardreader after 5 seconds:
 static void restart_cardreader(int pridx, int force_now) {
-	ridx = pridx;
+	ridx = pridx; //set current ridx for fork
 	int cs_idx = reader[ridx].cs_idx;
 	int pid;
 	if (cs_idx) //Reader is open...
@@ -938,7 +938,6 @@ static void init_shm()
     strcpy(client[0].usr, "root");
 
   pthread_mutex_init(&gethostbyname_lock, NULL); 
-  init_stat();
 
 #ifdef CS_LOGHISTORY
   *loghistidx=0;
@@ -1482,6 +1481,10 @@ int check_ecmcache2(ECM_REQUEST *er, ulong grp)
 
 static void store_ecm(ECM_REQUEST *er)
 {
+#ifdef CS_WITH_DOUBLECHECK
+	if (cfg->double_check && er->checked < 2)
+		return;
+#endif
 	int rc;
 	rc=*ecmidx;
 	*ecmidx=(*ecmidx+1) % CS_ECMCACHESIZE;
@@ -1793,7 +1796,7 @@ ECM_REQUEST *get_ecmtask()
 
 void send_reader_stat(int ridx, ECM_REQUEST *er, int rc)
 {
-	if (!cfg->reader_auto_loadbalance || rc == 100)
+	if (!cfg->lb_mode || rc == 100)
 		return;
 	struct timeb tpe;
 	cs_ftime(&tpe);
@@ -1990,6 +1993,34 @@ int send_dcw(ECM_REQUEST *er)
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 	if (er->rc==7) er->rc=0;
+
+#ifdef CS_WITH_DOUBLECHECK
+	if (cfg->double_check && er->rc < 4) {
+	  if (er->checked == 0) {//First CW, save it and wait for next one
+	    er->checked = 1;
+	    er->origin_reader = er->reader[0]; //contains ridx
+	    memcpy(er->cw_checked, er->cw, sizeof(er->cw));
+	    cs_log("DOUBLE CHECK FIRST CW by %s idx %d cpti %d", reader[er->origin_reader].label, er->idx, er->cpti);
+	  }
+	  else if (er->origin_reader != er->reader[0]) { //Second (or third and so on) cw. We have to compare
+	    if (memcmp(er->cw_checked, er->cw, sizeof(er->cw)) == 0) {
+	    	er->checked++;
+	    	cs_log("DOUBLE CHECKED! %d. CW by %s idx %d cpti %d", er->checked, reader[er->reader[0]].label, er->idx, er->cpti);
+	    }
+	    else {
+	    	cs_log("DOUBLE CHECKED NONMATCHING! %d. CW by %s idx %d cpti %d", er->checked, reader[er->reader[0]].label, er->idx, er->cpti);
+	    }
+	  }
+	  
+	  if (er->checked < 2) { //less as two same cw? mark as pending!
+	    er->rc = 100; 
+	    return 0;
+	  }
+
+	  store_ecm(er); //Store in cache!
+	}
+#endif
+	
 	ph[client[cs_idx].ctyp].send_dcw(er);
 	return 0;
 }
@@ -2234,11 +2265,11 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
       }
       if (status == -1) {
                 cs_log("request_cw() failed on reader %s (%d) errno=%d, %s", reader[i].label, i, errno, strerror(errno));
-      		if (reader[i].fd && reader[i].pid) {
+      		if (reader[i].fd) {
  	     		reader[i].fd_error++;
       			if (reader[i].fd_error > 5) {
       				reader[i].fd_error = 0;
-      				kill(client[reader[i].cs_idx].pid, SIGKILL); //Schlocke: This should restart the reader!
+      				send_restart_cardreader(i, 1); //Schlocke: This restarts the reader!
       			} 
 		}
       }
@@ -2477,7 +2508,7 @@ void get_cw(ECM_REQUEST *er)
 
 	if(er->rc > 99) {
 
-		if (cfg->reader_auto_loadbalance) {
+		if (cfg->lb_mode) {
 			int reader_avail[CS_MAXREADER];
 			for (i =0; i < CS_MAXREADER; i++)
 				reader_avail[i] = matching_reader(er, &reader[i]);
@@ -2771,7 +2802,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 				//cs_log("           %d.%03d", tpc.time, tpc.millitm);
 				if (er->stage) {
 					er->rc=5; // timeout
-					if (cfg->reader_auto_loadbalance) {
+					if (cfg->lb_mode) {
 						int r;
 						for (r=0; r<CS_MAXREADER; r++)
 							if (er->reader[r])
@@ -3042,6 +3073,7 @@ int main (int argc, char *argv[])
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
   init_shm();
   init_config();
+  init_stat();
   cfg->debuglvl = cs_dblevel; // give static debuglevel to outer world
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {

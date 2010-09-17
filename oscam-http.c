@@ -114,10 +114,10 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 	if (cfg->reader_restart_seconds)
 		tpl_printf(vars, 0, "READERRESTARTSECONDS", "%d", cfg->reader_restart_seconds);
 
-	tpl_printf(vars, 0, "TMP", "READERAUTOLOADBALANCE%d", cfg->reader_auto_loadbalance);
+	tpl_printf(vars, 0, "TMP", "READERAUTOLOADBALANCE%d", cfg->lb_mode);
 	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
-	tpl_printf(vars, 0, "READERAUTOLOADBALANCES", "%d",cfg->reader_auto_loadbalance_save);
+	tpl_printf(vars, 0, "READERAUTOLOADBALANCES", "%d",cfg->lb_save);
 
 	if (cfg->resolve_gethostbyname == 1)
 		tpl_addVar(vars, 0, "RESOLVER1", "selected");

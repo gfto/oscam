@@ -560,26 +560,56 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 
-	if (!strcmp(token, "readerautoloadbalance")) {
+	if (!strcmp(token, "readerautoloadbalance") || !strcmp(token, "lb_mode")) {
 		if (strlen(value) == 0) {
-			cfg->reader_auto_loadbalance = 0;
+			cfg->lb_mode = 0;
 			return;
 		} else {
-			cfg->reader_auto_loadbalance = atoi(value);
+			cfg->lb_mode = atoi(value);
 			return;
 		}
 	}
 
-	if (!strcmp(token, "readerautoloadbalance_save")) {
+	if (!strcmp(token, "readerautoloadbalance_save") || !strcmp(token, "lb_save")) {
 		if (strlen(value) == 0) {
-			cfg->reader_auto_loadbalance_save = 0;
+			cfg->lb_save = 0;
 			return;
 		} else {
-			cfg->reader_auto_loadbalance_save = atoi(value);
+			cfg->lb_save = atoi(value);
 			return;
 		}
 	}
 	
+	if (!strcmp(token, "lb_nbest_readers")) {
+		if (strlen(value))
+			cfg->lb_nbest_readers = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "lb_nfb_readers")) {
+		if (strlen(value))
+			cfg->lb_nfb_readers = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "lb_min_ecmcount")) {
+		if (strlen(value))
+			cfg->lb_min_ecmcount = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "lb_max_ecmcount")) {
+		if (strlen(value))
+			cfg->lb_max_ecmcount = atoi(value);
+		return;
+	}
+
+	if (!strcmp(token, "lb_reopen_seconds")) {
+		if (strlen(value))
+			cfg->lb_reopen_seconds = atoi(value);
+		return;
+	}
+
 	if (!strcmp(token, "resolvegethostbyname")) {
 		if (strlen(value) == 0) {
 			cfg->resolve_gethostbyname = 0;
@@ -590,6 +620,17 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 	
+#ifdef CS_WITH_DOUBLECHECK
+	if (!strcmp(token, "double_check")) {
+		if (strlen(value) == 0) {
+			cfg->double_check = 0;
+			return;
+		} else {
+			cfg->double_check = atoi(value);
+			return;
+		}
+	}
+#endif
     
 
 	if (token[0] != '#')
@@ -1785,9 +1826,21 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "preferlocalcards", "%d\n", cfg->preferlocalcards);
 	fprintf_conf(f, CONFVARWIDTH, "saveinithistory", "%d\n", cfg->saveinithistory);
 	fprintf_conf(f, CONFVARWIDTH, "readerrestartseconds", "%d\n", cfg->reader_restart_seconds);
-	fprintf_conf(f, CONFVARWIDTH, "readerautoloadbalance", "%d\n", cfg->reader_auto_loadbalance);
-	fprintf_conf(f, CONFVARWIDTH, "readerautoloadbalance_save", "%d\n", cfg->reader_auto_loadbalance_save);
+
+	fprintf_conf(f, CONFVARWIDTH, "lb_mode", "%d\n", cfg->lb_mode);
+	fprintf_conf(f, CONFVARWIDTH, "lb_save", "%d\n", cfg->lb_save);
+	fprintf_conf(f, CONFVARWIDTH, "lb_nbest_readers", "%d\n", cfg->lb_nbest_readers);
+	fprintf_conf(f, CONFVARWIDTH, "lb_nfb_readers", "%d\n", cfg->lb_nfb_readers);
+	fprintf_conf(f, CONFVARWIDTH, "lb_min_ecmcount", "%d\n", cfg->lb_min_ecmcount);
+	fprintf_conf(f, CONFVARWIDTH, "lb_max_ecmcount", "%d\n", cfg->lb_max_ecmcount);
+	fprintf_conf(f, CONFVARWIDTH, "lb_reopen_seconds", "%d\n", cfg->lb_reopen_seconds);
+
 	fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg->resolve_gethostbyname);
+
+#ifdef CS_WITH_DOUBLECHECK
+	fprintf_conf(f, CONFVARWIDTH, "double_check", "%d\n", cfg->double_check);
+#endif
+
 	fputc((int)'\n', f);
 
 	/*monitor settings*/

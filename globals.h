@@ -859,10 +859,22 @@ struct s_config
 	int		preferlocalcards;
 	int		saveinithistory;
 	int     reader_restart_seconds; //schlocke: reader restart auf x seconds, disable = 0
-	int     reader_auto_loadbalance; //schlocke: reader loadbalancing disable = 0 enable = 1
-	int     reader_auto_loadbalance_save; //schlocke: load/save statistics to file, save every x ecms
+
+//Loadbalancer-Config:
+	int     lb_mode; //schlocke: reader loadbalancing mode
+	int     lb_save; //schlocke: load/save statistics to file, save every x ecms
+	int		lb_nbest_readers; // count of best readers
+	int		lb_nfb_readers; // count of fallback readers
+	int		lb_min_ecmcount; // minimal ecm count to evaluate lbvalues
+	int     lb_max_ecmcount; // maximum ecm count before reseting lbvalues
+	int     lb_reopen_seconds; //time between retrying failed readers/caids/prov/srv
+
 	int             resolve_gethostbyname;
 
+#ifdef CS_WITH_DOUBLECHECK
+        int             double_check; //schlocke: Double checks each ecm+dcw from two (or more) readers
+#endif
+        
 #ifdef CS_WITH_GBOX
 	uchar		gbox_pwd[8];
 	uchar		ignorefile[128];
@@ -929,6 +941,12 @@ typedef struct ecm_request_t
   uchar         locals_done;
   int		btun; // mark er as betatunneled
 
+#ifdef CS_WITH_DOUBLECHECK
+  int		checked;
+  uchar		cw_checked[16];
+  int       origin_reader;
+#endif
+
 #ifdef CS_WITH_GBOX
   ushort	gbxCWFrom;
   ushort	gbxFrom;
@@ -947,11 +965,6 @@ typedef struct ecm_request_t
 #define LB_OLDEST_READER_FIRST 2
 #define LB_LOWEST_USAGELEVEL 3
 
-#define MAX_STAT_TIME 20
-#define MIN_ECM_COUNT 5
-#define MAX_ECM_COUNT 500
-
- 
 typedef struct add_reader_stat_t
 {
   int           ridx;
@@ -962,6 +975,8 @@ typedef struct add_reader_stat_t
   ulong         prid;
   ushort        srvid;
 } GCC_PACK      ADD_READER_STAT;
+
+#define MAX_STAT_TIME 20
 
 typedef struct reader_stat_t
 {
