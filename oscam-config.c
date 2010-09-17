@@ -2359,6 +2359,14 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", key_btoa(NULL, reader[i].aes_key));
 
 
+			//check for rsa
+			for (j=0;j<64;j++) {
+				if(reader[i].rsa_mod[j] > 0) {
+					reader[i].has_rsa = 1;
+					break;
+				}
+			}
+
 			//check for tiger
 			int tigerkey = 0;
 			for (j=64;j<120;j++) {
