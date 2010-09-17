@@ -1876,7 +1876,7 @@ int send_dcw(ECM_REQUEST *er)
 				stxtEx[er->rcEx&0xf]);
 
 	if(cfg->mon_appendchaninfo)
-		snprintf(schaninfo, sizeof(schaninfo)-1, "%s", get_servicename(er->srvid, er->caid));
+		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(er->srvid, er->caid));
 
 	if(er->msglog[0])
 		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
@@ -1890,7 +1890,7 @@ int send_dcw(ECM_REQUEST *er)
 
 	send_reader_stat(er->reader[0], er, er->rc);
 
-	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s - %s%s",
+	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s%s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, lc,
 			er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, schaninfo, sreason);
 
