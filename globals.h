@@ -652,10 +652,11 @@ struct s_reader  //contains device info, reader info and card info
 	////variables from reader-nagra.c 
         IDEA_KEY_SCHEDULE ksSession; 
  	int is_pure_nagra; 
- 	int is_tiger; 
+ 	int is_tiger;
+ 	int is_n3_na;
  	int has_dt08; 
  	int swapCW; 
- 	unsigned char rom[15]; 
+ 	unsigned char rom[16]; 
  	unsigned char plainDT08RSA[64]; 
  	unsigned char IdeaCamKey[16]; 
  	unsigned char irdId[4]; 

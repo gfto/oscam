@@ -260,6 +260,107 @@ static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 		
 }
 
+static int NegotiateSessionKey_N3_NA(struct s_reader * reader)
+{
+	def_resp;
+    unsigned char cmd2b[] = {0x21, 0x40, 0x4D, 0xA0, 0xCA, 0x00, 0x00, 0x47, 0x27, 0x45,
+                            0x1C, 0x54, 0xd1, 0x26, 0xe7, 0xe2, 0x40, 0x20,
+                            0xd1, 0x66, 0xf4, 0x18, 0x97, 0x9d, 0x5f, 0x16,
+                            0x8f, 0x7f, 0x7a, 0x55, 0x15, 0x82, 0x31, 0x14,
+                            0x06, 0x57, 0x1a, 0x3f, 0xf0, 0x75, 0x62, 0x41,
+                            0xc2, 0x84, 0xda, 0x4c, 0x2e, 0x84, 0xe9, 0x29,
+                            0x13, 0x81, 0xee, 0xd6, 0xa9, 0xf5, 0xe9, 0xdb,
+                            0xaf, 0x22, 0x51, 0x3d, 0x44, 0xb3, 0x20, 0x83,
+                            0xde, 0xcb, 0x5f, 0x35, 0x2b, 0xb0, 0xce, 0x70,
+                            0x01, 0x02, 0x03, 0x04, //IRD nr
+                            0x01};//ID cmd 26
+
+	unsigned char negot[64];
+	unsigned char tmp[64];
+	unsigned char idea1[16];
+	unsigned char idea2[16];
+	unsigned char sign1[8];
+	unsigned char sign2[8];
+	
+	if (!reader->has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
+	{
+		memcpy(reader->plainDT08RSA, reader->rsa_mod, 64); 
+		memcpy(reader->signature,reader->nagra_boxkey, 8);
+	}
+
+   memcpy(tmp, reader->irdId, 4);
+   tmp[5]=0; //irdId should have trailing NULL
+   if(!do_cmd(reader, 0x26,0x07,0xa6, 0x42, tmp,cta_res,&cta_lr))	{
+        cs_debug("[nagra-reader] CMD$26 failed");
+        return ERROR;
+	}
+
+	// RSA decrypt of cmd$2a data, result is stored in "negot"
+	ReverseMem(cta_res+2, 64);
+	unsigned char vFixed[] = {0,1,2,3};
+	BN_CTX *ctx = BN_CTX_new();
+	BIGNUM *bnN = BN_CTX_get(ctx);
+	BIGNUM *bnE = BN_CTX_get(ctx);
+	BIGNUM *bnCT = BN_CTX_get(ctx);
+	BIGNUM *bnPT = BN_CTX_get(ctx);
+	BN_bin2bn(reader->plainDT08RSA, 64, bnN);
+	BN_bin2bn(vFixed+3, 1, bnE);
+	BN_bin2bn(cta_res+2, 64, bnCT);
+	BN_mod_exp(bnPT, bnCT, bnE, bnN, ctx);
+	memset(negot, 0, 64);
+	BN_bn2bin(bnPT, negot + (64-BN_num_bytes(bnPT)));
+ 		
+	memcpy(tmp, negot, 64);
+	ReverseMem(tmp, 64);
+	
+	// build sessionkey
+	// first halve is IDEA Hashed in chuncs of 8 bytes using the Signature1 from dt08 calc, CamID-Inv.CamID(16 bytes key) the results are the First 8 bytes of the Session key
+	memcpy(idea1, reader->signature, 8); 
+	memcpy(idea1+8, reader->hexserial+2, 4);
+	idea1[12] = ~reader->hexserial[2]; idea1[13] = ~reader->hexserial[3]; idea1[14] = ~reader->hexserial[4]; idea1[15] = ~reader->hexserial[5];
+		
+	Signature(sign1, idea1, tmp, 32);
+	memcpy(idea2,sign1,8); memcpy(idea2+8,sign1,8); 
+	Signature(sign2, idea2, tmp, 32);
+	memcpy(reader->sessi,sign1,8); memcpy(reader->sessi+8,sign2,8);
+		
+	// prepare cmd$2b data
+	BN_bin2bn(negot, 64, bnCT);
+	BN_mod_exp(bnPT, bnCT, bnE, bnN, ctx);
+	memset(cmd2b+10, 0, 64);
+	BN_bn2bin(bnPT, cmd2b+10 + (64-BN_num_bytes(bnPT)));
+	BN_CTX_end(ctx);
+	BN_CTX_free (ctx);
+	ReverseMem(cmd2b+10, 64);
+		
+	IDEA_KEY_SCHEDULE ks;
+	idea_set_encrypt_key(reader->sessi,&ks);
+	idea_set_decrypt_key(&ks,&reader->ksSession);
+	
+    memcpy(cmd2b+74, reader->irdId, 4);
+    if(!do_cmd(reader, 0x27,0x47,0xa7,0x02,cmd2b+10,cta_res,&cta_lr))	{
+        cs_debug("[nagra-reader] CMD$27 failed");
+        return ERROR;
+	}
+
+	cs_debug("[nagra-reader] session key negotiated");
+	
+	DateTimeCMD(reader);
+	
+	if (!CamStateRequest(reader))
+	{
+		cs_debug("[nagra-reader] CamStateRequest failed");
+		return ERROR;
+	}
+	if RENEW_SESSIONKEY()
+	{
+		cs_ri_log(reader, "Negotiate sessionkey was not successfull! Please check rsa key and boxkey");
+		return ERROR;
+	}
+
+	return OK;
+}
+
 static int NegotiateSessionKey(struct s_reader * reader)
 {
 	def_resp;
@@ -280,6 +381,17 @@ static int NegotiateSessionKey(struct s_reader * reader)
 		}
 		return OK;
 	}
+	
+	if (reader->is_n3_na)
+	{
+		if (!NegotiateSessionKey_N3_NA(reader))
+		{
+			cs_debug("[nagra-reader] NegotiateSessionKey_N3_NA failed");
+			return ERROR;
+		}
+		return OK;
+	}
+	
 	if (!reader->has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
 	{
 		memcpy(reader->plainDT08RSA, reader->rsa_mod, 64); 
@@ -532,13 +644,19 @@ int nagra2_card_init(struct s_reader * reader, ATR newatr)
 	reader->nprov = 1;
 	reader->is_pure_nagra = 0; 
 	reader->is_tiger = 0; 
+    reader->is_n3_na = 0;
  	reader->has_dt08 = 0; 
  	reader->swapCW = 0; 
  	memset(reader->irdId, 0xff, 4);
 	memset(reader->hexserial, 0, 8); 
 	reader->caid[0]=SYSTEM_NAGRA;
 	
-	if (memcmp(atr+11, "DNASP", 5)==0)
+	if(memcmp(atr+11,"DNASP240 Rev906m",16)==0) {
+		cs_ri_log(reader, "detect nagra 3 NA card");
+		memcpy(reader->rom,atr+11,16);
+		reader->is_n3_na=1;
+	}
+	else if (memcmp(atr+11, "DNASP", 5)==0)
 	{
 		cs_ri_log(reader, "detect native nagra card");
 		memcpy(reader->rom,atr+11,15);
@@ -573,7 +691,7 @@ int nagra2_card_init(struct s_reader * reader, ATR newatr)
 	}
 	else return ERROR;
 
-	if (!reader->is_tiger)
+	if (!reader->is_tiger && !reader->is_n3_na)
 	{
 		CamStateRequest(reader);
 		if(!do_cmd(reader, 0x12,0x02,0x92,0x06,0,cta_res,&cta_lr)) 
