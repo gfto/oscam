@@ -972,10 +972,16 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option value=\"0\" ##RESOLVER0##>0 - getadressinfo()</option>\n\
 			<option value=\"1\" ##RESOLVER1##>1 - gethostbyname()</option>\n\
 		</select></TD></TR>\n\
+		##DOUBLECHECKBIT##\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
 ##TPLFOOTER##"
+
+#ifdef CS_WITH_DOUBLECHECK
+#define TPLDOUBLECHECKBIT "\
+	<TR><TD>ECM Doublecheck:</TD><TD><SELECT NAME=\"double_check\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DCHECKCSELECTED##>YES</OPTION></SELECT></TD></TR>\n"
+#endif
 
 #define TPLCONFIGLOADBALANCER "\
 ##TPLHEADER##\
@@ -1278,6 +1284,9 @@ char *tpl[]={
 	,"CONFIGMENUGBOX"
 	,"READERCONFIGGBOXBIT"
 #endif
+#ifdef CS_WITH_DOUBLECHECK
+	,"DOUBLECHECKBIT"
+#endif
 };
 
 char *tplmap[]={
@@ -1351,6 +1360,9 @@ char *tplmap[]={
 #ifdef CS_WITH_GBOX
 	,TPLCONFIGMENUGBOX
 	,TPLREADERCONFIGGBOXBIT
+#endif
+#ifdef CS_WITH_DOUBLECHECK
+	,TPLDOUBLECHECKBIT
 #endif
 };
 

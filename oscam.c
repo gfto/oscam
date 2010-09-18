@@ -3164,6 +3164,11 @@ int main (int argc, char *argv[])
 #else
 	  fprintf(fp, "anticascsupport: no\n");
 #endif
+#ifdef CS_WITH_DOUBLECHECK
+	  fprintf(fp, "ECM doublecheck: yes\n");
+#else
+	  fprintf(fp, "ECM doublecheck: no\n");
+#endif
 	  fclose(fp);
   }
 #endif
