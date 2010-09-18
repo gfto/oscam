@@ -653,7 +653,7 @@ int nagra2_card_init(struct s_reader * reader, ATR newatr)
 	
 	if(memcmp(atr+11,"DNASP240 Rev906m",16)==0) {
 		cs_ri_log(reader, "detect nagra 3 NA card");
-		memcpy(reader->rom,atr+11,16);
+		memcpy(reader->rom,atr+11,15);
 		reader->is_n3_na=1;
 	}
 	else if (memcmp(atr+11, "DNASP", 5)==0)
