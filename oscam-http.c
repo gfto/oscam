@@ -1642,7 +1642,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			FILE *file = fopen(fname, "r");
 			if (file) {
 
-				int cardcount = 0;
+				int caidcount = 0;
 				uint16 version = 0;
 				fread(&version, 1, sizeof(uint16), file);
 
@@ -1682,13 +1682,13 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						}
 
 						tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
-						cardcount++;
+						caidcount++;
 
 					} while (1);
 				}
 				fclose(file);
-				if(cardcount)
-					tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d Cards found on this reader<BR><BR>\n", cardcount);
+				if(caidcount)
+					tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d caid found on this reader<BR><BR>\n", caidcount);
 
 				tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
 
