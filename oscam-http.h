@@ -263,6 +263,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=global\">Global</TD>\n\
+		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=loadbalancer\">Loadbalancer</TD>\n\
 		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd33\">Camd3.3</TD>\n\
 		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35\">Camd3.5</TD>\n\
 		<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=camd35tcp\">Camd3.5 TCP</TD>\n\
@@ -965,20 +966,41 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>Wait for cards:</TD><TD><input name=\"waitforcards\" type=\"checkbox\" value=\"1\" ##WAITFORCARDS##></TD></TR>\n\
 		<TR><TD>Prefer local cards:</TD><TD><input name=\"preferlocalcards\" type=\"checkbox\" value=\"1\" ##PREFERLOCALCARDS##></TD></TR>\n\
 		<TR><TD>Save init history:</TD><TD><input name=\"saveinithistory\" type=\"checkbox\" value=\"1\" ##SAVEINITHISTORY##></TD></TR>\n\
-		<TR><TD>Reader autoloadbalance:</TD>\n\
-		<TD><select name=\"readerautoloadbalance\">\n\
-				<option value=\"0\" ##READERAUTOLOADBALANCE0##>0 - Loadbalancer disabled (send to all readers)</option>\n\
-				<option value=\"1\" ##READERAUTOLOADBALANCE1##>1 - Fastest reader first</option>\n\
-				<option value=\"2\" ##READERAUTOLOADBALANCE2##>2 - Oldest reader first</option>\n\
-				<option value=\"3\" ##READERAUTOLOADBALANCE3##>3 - Lowest usagelevel</option>\n\
-			</select></TD></TR>\n\
-		<TR><TD>Reader autoloadbalance save:</TD><TD><input name=\"readerautoloadbalance_save\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERAUTOLOADBALANCES##\"></TD></TR>\n\
 		<TR><TD>Reader restart seconds:</TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"></TD></TR>\n\
 		<TR><TD>Resolver:</TD>\n\
 		<TD><select name=\"resolvegethostbyname\">\n\
 			<option value=\"0\" ##RESOLVER0##>0 - getadressinfo()</option>\n\
 			<option value=\"1\" ##RESOLVER1##>1 - gethostbyname()</option>\n\
 		</select></TD></TR>\n\
+		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
+	</TABLE>\n\
+</form>\n\
+##TPLFOOTER##"
+
+#define TPLCONFIGLOADBALANCER "\
+##TPLHEADER##\
+##TPLMENU##\n\
+##TPLCONFIGMENU##\n\
+<BR><BR>\n\
+##MESSAGE##\
+<form action=\"config.html\" method=\"get\">\n\
+	<input name=\"part\" type=\"hidden\" value=\"loadbalancer\">\n\
+	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
+	<TABLE class=\"config\" cellspacing=\"0\">\n\
+		<TR><TH>&nbsp;</TH><TH>Edit Loadbalancer Config</TH></TR>\n\
+		<TR><TD>Loadbalance Mode:</TD>\n\
+			<TD><select name=\"lb_mode\">\n\
+					<option value=\"0\" ##LBMODE0##>0 - Loadbalancer disabled (send to all readers)</option>\n\
+					<option value=\"1\" ##LBMODE1##>1 - Fastest reader first</option>\n\
+					<option value=\"2\" ##LBMODE2##>2 - Oldest reader first</option>\n\
+					<option value=\"3\" ##LBMODE3##>3 - Lowest usagelevel</option>\n\
+				</select></TD></TR>\n\
+		<TR><TD>Loadbalance Save:</TD><TD><input name=\"lb_save\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBSAVE##\"></TD></TR>\n\
+		<TR><TD>No. best readers:</TD><TD><input name=\"lb_nbest_readers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBNBESTREADERS##\"></TD></TR>\n\
+		<TR><TD>No. fallback readers:</TD><TD><input name=\"lb_nfb_readers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBNFBREADERS##\"></TD></TR>\n\
+		<TR><TD>Min ECM count:</TD><TD><input name=\"lb_min_ecmcount\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBMINECMCOUNT##\"></TD></TR>\n\
+		<TR><TD>Max ECM count:</TD><TD><input name=\"lb_max_ecmcount\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBMAXECEMCOUNT##\"></TD></TR>\n\
+		<TR><TD>Time to reopen:</TD><TD><input name=\"lb_reopen_seconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBREOPENSECONDS##\"></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
@@ -1229,6 +1251,7 @@ char *tpl[]={
 	"CONFIGRADEGAST",
 	"CONFIGNEWCAMD",
 	"CONFIGGLOBAL",
+	"CONFIGLOADBALANCER",
 	"CONFIGCAMD33",
 	"CONFIGCAMD35",
 	"CONFIGCAMD35TCP",
@@ -1302,6 +1325,7 @@ char *tplmap[]={
 	TPLCONFIGRADEGAST,
 	TPLCONFIGNEWCAMD,
 	TPLCONFIGGLOBAL,
+	TPLCONFIGLOADBALANCER,
 	TPLCONFIGCAMD33,
 	TPLCONFIGCAMD35,
 	TPLCONFIGCAMD35TCP,

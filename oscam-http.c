@@ -114,11 +114,6 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 	if (cfg->reader_restart_seconds)
 		tpl_printf(vars, 0, "READERRESTARTSECONDS", "%d", cfg->reader_restart_seconds);
 
-	tpl_printf(vars, 0, "TMP", "READERAUTOLOADBALANCE%d", cfg->lb_mode);
-	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
-
-	tpl_printf(vars, 0, "READERAUTOLOADBALANCES", "%d",cfg->lb_save);
-
 	if (cfg->resolve_gethostbyname == 1)
 		tpl_addVar(vars, 0, "RESOLVER1", "selected");
 	else
@@ -126,6 +121,39 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 
 
 	fputs(tpl_getTpl(vars, "CONFIGGLOBAL"), f);
+}
+
+void send_oscam_config_loadbalancer(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
+	int i;
+	if (strcmp(getParam(params, "action"),"execute") == 0) {
+
+		memset(cfg->ser_device, 0, sizeof(cfg->ser_device));
+		for(i = 0; i < (*params).paramcount; ++i) {
+			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
+				//tpl_printf(vars, 1, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
+				//we use the same function as used for parsing the config tokens
+				if((*params).values[i][0])
+					chk_t_global((*params).params[i], (*params).values[i]);
+			}
+		}
+		tpl_addVar(vars, 1, "MESSAGE", "<BR><BR><B>Configuration Loadbalancer done.</B><BR><BR>");
+		if(write_config()==0) refresh_oscam(REFR_SERVER, in);
+		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+	}
+
+	tpl_printf(vars, 0, "TMP", "LBMODE%d", cfg->lb_mode);
+	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
+
+	tpl_printf(vars, 0, "LBSAVE", "%d",cfg->lb_save);
+
+	tpl_printf(vars, 0, "LBNBESTREADERS", "%d",cfg->lb_nbest_readers);
+	tpl_printf(vars, 0, "LBNFBREADERS", "%d",cfg->lb_nfb_readers);
+	tpl_printf(vars, 0, "LBMINECMCOUNT", "%d",cfg->lb_min_ecmcount);
+	tpl_printf(vars, 0, "LBMAXECEMCOUNT", "%d",cfg->lb_max_ecmcount);
+	tpl_printf(vars, 0, "LBREOPENSECONDS", "%d",cfg->lb_reopen_seconds);
+
+	fputs(tpl_getTpl(vars, "CONFIGLOADBALANCER"), f);
+
 }
 
 void send_oscam_config_camd33(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
@@ -499,7 +527,7 @@ void send_oscam_config_serial(struct templatevars *vars, FILE *f, struct uripara
 					chk_t_serial((*params).params[i], (*params).values[i]);
 			}
 		}
-		tpl_addVar(vars, 1, "MESSAGE", "<BR><BR><B>Configuration Monitor done. You should restart Oscam now.</B><BR><BR>");
+		tpl_addVar(vars, 1, "MESSAGE", "<BR><BR><B>Configuration Serial done. You should restart Oscam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER, in);
 		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -647,6 +675,7 @@ void send_oscam_config(struct templatevars *vars, FILE *f, struct uriparams *par
 #endif
 	else if (!strcmp(part,"monitor")) send_oscam_config_monitor(vars, f, params, in);
 	else if (!strcmp(part,"serial")) send_oscam_config_serial(vars, f, params, in);
+	else if (!strcmp(part,"loadbalancer")) send_oscam_config_loadbalancer(vars, f, params, in);
 	else send_oscam_config_global(vars, f, params, in);
 }
 
