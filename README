@@ -32,23 +32,25 @@ DVBAPI support is automatically compiled in if the target platform supports it.
 
 Enable features:
 
-CS_ANTICASC     - enable anti-cascading (default)
-CS_LOGHISTORY   - enable log history (default)
-CS_WITH_GBOX    - enable gbox support
-CS_LED          - enable LED trigger support (currently only working on NSLU2)
-DWEBIF          - enable web interface
-IRDETO_GUESSING - enable irdeto guessing support
-WITH_STAPI      - enbale DVBAPI support for STAPI
+CS_ANTICASC         - enable anti-cascading (default)
+CS_LOGHISTORY       - enable log history (default)
+CS_WITH_DOUBLECHECK - enable CW double check
+CS_WITH_GBOX        - enable gbox support
+CS_LED              - enable LED trigger support (currently only working on NSLU2)
+DWEBIF              - enable web interface
+IRDETO_GUESSING     - enable irdeto guessing support
+WITH_STAPI          - enbale DVBAPI support for STAPI
 
 Enable features with cmake:
 
--DCS_ANTICASC=1     - enable anti-cascading (default)
--DCS_LOGHISTORY=1   - enable log history (default)
--DCS_WITH_GBOX=1    - enable gbox support
--DCS_LED=1          - enable LED trigger support (currently only working on NSLU2)
--DWEBIF=1           - enable web interface
--DIRDETO_GUESSING=1 - enable irdeto guessing support
--DWITH_STAPI=1      - enbale DVBAPI support for STAPI
+-DCS_ANTICASC=1         - enable anti-cascading (default)
+-DCS_LOGHISTORY=1       - enable log history (default)
+-DCS_WITH_DOUBLECHECK=1 - enable CW double check
+-DCS_WITH_GBOX=1        - enable gbox support
+-DCS_LED=1              - enable LED trigger support (currently only working on NSLU2)
+-DWEBIF=1               - enable web interface
+-DIRDETO_GUESSING=1     - enable irdeto guessing support
+-DWITH_STAPI=1          - enbale DVBAPI support for STAPI
 
 
 Build with CMake (new solution for building)
