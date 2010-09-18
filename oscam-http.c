@@ -1690,10 +1690,10 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				if(caidcount)
 					tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d caid found on this reader<BR><BR>\n", caidcount);
 
-				tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
+				tpl_printf(vars, 1, "LOGHISTORY", "caidfile end<BR>\n");
 
 			} else {
-				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
+				tpl_printf(vars, 1, "LOGHISTORY", "no caidfile found<BR>\n");
 			}
 
 		} else {
