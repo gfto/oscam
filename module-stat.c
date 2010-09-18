@@ -448,7 +448,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 		int best_idx=-1;
 		int j;
 		for (j=0; j<CS_MAXREADER;j++) {
-			if (re[j] && re[j] > best) {
+			if (re[j] && (!best || re[j] < best)) {
 				best_idx=j;
 				best=re[j];
 			}
