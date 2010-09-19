@@ -187,27 +187,27 @@ To save CPU power a minimum counts of 100 is recommended.
 .PP
 \fBlb_nbest_readers\fP = \fBcounts\fP
 .RS 3n
-set count of best readers for loadbalancing, default:none
+set count of best readers for loadbalancing, default:1
 .RE
 .PP
 \fBlb_nfb_readers\fP = \fBcounts\fP
 .RS 3n
-set count of fallback readers for loadbalancing, default:none
+set count of fallback readers for loadbalancing, default:1
 .RE
 .PP
 \fBlb_min_ecmcount\fP = \fBcounts\fP
 .RS 3n
-minimal ECM count to evaluate loadbalancing values, default:none
+minimal ECM count to evaluate loadbalancing values, default:5
 .RE
 .PP
 \fBlb_max_ecmcount\fP = \fBcounts\fP
 .RS 3n
-maximum ECM count before resetting loadbalancing values, default:none
+maximum ECM count before resetting loadbalancing values, default:500
 .RE
 .PP
 \fBlb_reopen_seconds\fP = \fBseconds\fP
 .RS 3n
-time between retrying failed readers/CAIDs/providers/services, default:none
+time between retrying failed readers/CAIDs/providers/services, default:900
 .RE
 .SS "The [monitor] section"
 .PP
