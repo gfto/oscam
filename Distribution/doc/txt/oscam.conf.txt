@@ -108,7 +108,7 @@ DESCRIPTIONS
        saveinithistory = 0|1
 	  1 = save SC init history to /tmp/.oscam/reader<number>, default:0
 
-       double_check=1 = 0|1 (only if CW double check enabled)
+       double_check = 0|1 (only if CW double check enabled)
 	  1 = ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, lb_nbest_readers must be set to 2 or higher, default:0
 
        lb_mode = mode
