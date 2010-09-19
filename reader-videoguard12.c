@@ -58,14 +58,11 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
   }
 
+  cs_ri_log(reader, "[videoguard12-reader] type: %s, baseyear: %i", nds_atr_entry.desc, nds_atr_entry.base_year);
   if(reader->ndsversion == NDS12){
-    cs_ri_log(reader, "[videoguard12-reader] Forced to NDS1+");
+    cs_log("[videoguard12-reader] forced to NDS1+");
   }
-
-  if (nds_atr_entry.desc){
-    VG_BASEYEAR=nds_atr_entry.base_year;
-    cs_ri_log(reader, "[videoguard12-reader] type: %s", nds_atr_entry.desc);
-  }
+  VG_BASEYEAR=nds_atr_entry.base_year;
 
   int l = 1;
 

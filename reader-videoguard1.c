@@ -38,12 +38,12 @@ static int vg1_do_cmd(struct s_reader *reader, const unsigned char *ins, const u
 static void read_tiers(struct s_reader *reader)
 {
   def_resp;
-  static const unsigned char ins2a[5] = {  0x48, 0x2a, 0x00, 0x00, 0x00  };
+//  static const unsigned char ins2a[5] = {  0x48, 0x2a, 0x00, 0x00, 0x00  };
   int l;
 
-  return; // Not working at present so just do nothing
+//  return; // Not working at present so just do nothing
 
-  l = vg1_do_cmd(reader, ins2a, NULL, NULL, cta_res);
+//  l = vg1_do_cmd(reader, ins2a, NULL, NULL, cta_res);
 //  if (l < 0 || !status_ok(cta_res + l))
 //  {
 //    return;
@@ -106,14 +106,11 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
     return ERROR;
   }
 
+  cs_ri_log(reader, "[videoguard1-reader] type: %s, baseyear: %i", nds_atr_entry.desc, nds_atr_entry.base_year);
   if(reader->ndsversion == NDS1){
-    cs_ri_log(reader, "[videoguard1-reader] Forced to NDS1");
+    cs_log("[videoguard1-reader] forced to NDS1");
   }
-
-  if (nds_atr_entry.desc){
-    VG_BASEYEAR=nds_atr_entry.base_year;
-    cs_ri_log(reader, "[videoguard1-reader] type: %s", nds_atr_entry.desc);
-  }
+  VG_BASEYEAR=nds_atr_entry.base_year;
 
   /* NDS1 Class 48 only cards only need a very basic initialisation
      NDS1 Class 48 only cards do not respond to vg1_do_cmd(ins7416)

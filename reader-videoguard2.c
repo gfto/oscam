@@ -78,14 +78,12 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
   }
 
+  cs_ri_log(reader, "[videoguard2-reader] type: %s, baseyear: %i", nds_atr_entry.desc, nds_atr_entry.base_year);
   if(reader->ndsversion == NDS2){
-    cs_ri_log(reader, "[videoguard2-reader] Forced to NDS2");
+    cs_log("[videoguard2-reader] forced to NDS2");
   }
 
-  if (nds_atr_entry.desc){
-    VG_BASEYEAR=nds_atr_entry.base_year;
-    cs_ri_log(reader, "[videoguard2-reader] type: %s", nds_atr_entry.desc);
-  }
+  VG_BASEYEAR=nds_atr_entry.base_year;
 
   //a non videoguard2/NDS2 card will fail on read_cmd_len(ins7401)
   //this way unknown videoguard2/NDS2 cards will also pass this check
