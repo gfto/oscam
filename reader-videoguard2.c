@@ -8,20 +8,11 @@ static void vg2_read_tiers(struct s_reader * reader)
   def_resp;
   int l;
 
-  static unsigned char ins76[5] = { 0xd0,0x76,0x00,0x00,0x00 };
-
-  /* test if ins2a needs to run
-     ins2a is not needed and causes an error on some cards eg Sky Italy 09CD
-     but when not run on others no tier information is returned eg 09AC
-     if we get tier info ins2a is not needed otherwise try running it
+  /* ins2a is not needed and causes an error on some cards eg Sky Italy 09CD
+     check if ins2a is in command table before running it
   */
-  l=do_cmd(reader, ins76,NULL,NULL,cta_res);
-  if(l<0 || !status_ok(cta_res+l)){
-    cs_log ("[videoguard2-reader] cmd ins76 failed");
-    return;
-  }
-  if(cta_res[2]==0 && cta_res[3]==0){ // no tier info try running ins2a
-    static const unsigned char ins2a[5] = { 0xd0,0x2a,0x00,0x00,0x00 };
+  static const unsigned char ins2a[5] = { 0xd0,0x2a,0x00,0x00,0x00 };
+  if(cmd_exists(ins2a)) {
     l=do_cmd(reader, ins2a,NULL,NULL,cta_res);
     if(l<0 || !status_ok(cta_res+l)){
       cs_log ("[videoguard2-reader] cmd ins2a failed");
@@ -35,7 +26,9 @@ static void vg2_read_tiers(struct s_reader * reader)
     return;
   }
   int num=cta_res[1];
+
   int i;
+  static unsigned char ins76[5] = { 0xd0,0x76,0x00,0x00,0x00 };
 #ifdef CS_RDR_INIT_HIST
   reader->init_history_pos = 0; //reset for re-read
   memset(reader->init_history, 0, sizeof(reader->init_history));
