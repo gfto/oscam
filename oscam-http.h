@@ -972,7 +972,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option value=\"0\" ##RESOLVER0##>0 - getadressinfo()</option>\n\
 			<option value=\"1\" ##RESOLVER1##>1 - gethostbyname()</option>\n\
 		</select></TD></TR>\n\
-		##DOUBLECHECKBIT##\
+		##TPLDOUBLECHECKBIT##\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\
