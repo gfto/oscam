@@ -4,10 +4,10 @@
  *  Created on: 23.04.2010
  *      Author: alno
  */
-#include "module-obj-llist.h"
-
 #ifndef MODULECCCAM_H_
 #define MODULECCCAM_H_
+
+#include "module-obj-llist.h"
 
 #define CC_MAXMSGSIZE 512
 #define CC_MAX_PROV   16
@@ -17,8 +17,6 @@
 #if (defined(WIN32) || defined(OS_CYGWIN32)) && !defined(MSG_WAITALL)
 #  define MSG_WAITALL 0
 #endif
-
-#define CAIDFILE_VERSION 0xfffe
 
 #define MINIMIZE_NONE 0
 #define MINIMIZE_HOPS 1
@@ -79,13 +77,6 @@ struct cc_reported_carddata {
 	int len;
 };
 
-struct cc_caid_info {
-	uint16 caid;
-	uint32 remote_id;
-	LLIST *providers; // struct cc_provider
-	uint8 hop;
-};
-
 struct cc_auto_blocked {
 	uint16 caid;
 	uint32 prov;
@@ -136,9 +127,6 @@ struct cc_data {
 	
 	LLIST *cards; // cards list
 
-	LLIST *caid_infos; //struct cc_caid_info
-	long caid_size;
-	uint16 needs_rebuild_caidinfo;
 	int max_ecms;
 	int ecm_counter;
 	uint32 report_carddata_id; //Server only
@@ -167,5 +155,18 @@ struct cc_data {
 	int extended_mode;
 	LLIST *extended_ecm_idx;
 };
+
+int cc_cli_init();
+int cc_cli_init_int();
+int cc_cli_connect();
+int cc_get_nxt_ecm();
+int cc_send_pending_emms();
+void cc_rc4_crypt(struct cc_crypt_block *block, uint8 *data, int len,
+		cc_crypt_mode_t mode);
+void free_extended_ecm_idx(struct cc_data *cc);
+void cc_free_card(struct cc_card *card);
+
+struct cc_card *read_card_from(int pipe);
+int cc_request_server_cards(int ridx, int dest_cs_idx);
 
 #endif /* MODULECCCAM_H_ */

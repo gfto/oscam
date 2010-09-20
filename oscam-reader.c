@@ -674,6 +674,11 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
   return(0);
 }
 
+void reader_ext_card_info(struct s_reader * reader, int client_idx) {
+	if (reader->ph.c_report_cards)
+		reader->ph.c_report_cards(client_idx);
+}
+
 static void reader_do_pipe(struct s_reader * reader)
 {
   uchar *ptr;
@@ -696,6 +701,9 @@ static void reader_do_pipe(struct s_reader * reader)
       break;
     case PIP_ID_CIN: 
       reader_card_info(reader); 
+      break;
+    case PIP_ID_CCC:
+      reader_ext_card_info(reader, *(int*)ptr);
       break;
   }
 }

@@ -1632,68 +1632,51 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 	char *reader_ = getParam(params, "reader");
 
 	if (cfg->saveinithistory && strlen(reader_) > 0) {
-		for (ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ridx++);
+		for (ridx = 0; ridx < CS_MAXREADER && strcmp(reader_,
+				reader[ridx].label) != 0; ridx++)
+			;
 
 		if (reader[ridx].typ == R_CCCAM) {
 
-			char fname[40];
-			snprintf(fname, sizeof(fname), "%s/caidinfos.%d", get_tmp_dir(), ridx);
-
-			FILE *file = fopen(fname, "r");
-			if (file) {
-
+			int pipe = cc_request_server_cards(ridx, cs_idx);
+			if (pipe) {
 				int caidcount = 0;
-				uint16 version = 0;
-				fread(&version, 1, sizeof(uint16), file);
 
-				if (version == CAIDFILE_VERSION) {
+				char *provider = "";
 
-					uint16 caid = 0;
-					uint8 hop = 0;
-					uint32 remote_id = 0;
-					char ascprovid[7];
-					char *provider="";
+				struct cc_card *card;
+				while ((card = read_card_from(pipe))) {
+					tpl_printf(vars, 1, "LOGHISTORY",
+							"caid: %04X hop: %d<BR>\n", card->caid, card->hop);
 
-					do {
-						if (fread(&caid, 1, sizeof(caid), file) <= 0)
-							break;
-						if (fread(&hop, 1, sizeof(hop), file) <= 0)
-							break;
-						if (fread(&remote_id, 1, sizeof(remote_id), file) <= 0)
-							break;
-						tpl_printf(vars, 1, "LOGHISTORY", "caid: %04X hop: %d<BR>\n", caid, hop);
+					int provcount = 0;
+					LLIST_ITR itr;
+					struct cc_provider *prov = llist_itr_init(card->providers, &itr);
+					while (prov) {
+						provider = get_provider(card->caid, prov->prov);
 
-						uint8 count = 0;
-						if (fread(&count, 1, sizeof(count), file) <= 0)
-							break;
-						struct cc_provider prov;
-						int revcount = count;
+						provcount++;
+						tpl_printf(vars, 1, "LOGHISTORY",
+								"&nbsp;&nbsp;-- Provider %d: %06X -- %s<BR>\n",
+								provcount, prov->prov, provider);
+						prov = llist_itr_next(&itr);
+					}
 
-						while (count > 0) {
-							if (fread(&prov, 1, sizeof(prov), file) <= 0)
-								break;
-							snprintf(ascprovid, sizeof(ascprovid), "%02X%02X%02X",
-									(uint)(prov.prov >> 16), (uint)(prov.prov>>8), (uint)(prov.prov & 0xFF));
-							provider = get_provider(caid, a2i(ascprovid, 3));
+					tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
+					caidcount++;
 
-							tpl_printf(vars, 1, "LOGHISTORY", "&nbsp;&nbsp;-- Provider %d: %s -- %s<BR>\n",
-									revcount - count, ascprovid, provider);
-							count--;
-						}
-
-						tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
-						caidcount++;
-
-					} while (1);
+					cc_free_card(card);
 				}
-				fclose(file);
-				if(caidcount)
-					tpl_printf(vars, 1, "LOGSUMMARY", "<BR>%d caid found on this reader<BR><BR>\n", caidcount);
+				close(pipe);
+				if (caidcount)
+					tpl_printf(vars, 1, "LOGSUMMARY",
+							"<BR>%d caid found on this reader<BR><BR>\n",
+							caidcount);
 
-				tpl_printf(vars, 1, "LOGHISTORY", "caidfile end<BR>\n");
+				tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
 
 			} else {
-				tpl_printf(vars, 1, "LOGHISTORY", "no caidfile found<BR>\n");
+				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
 			}
 
 		} else {
@@ -1702,11 +1685,12 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			FILE *fp;
 			char filename[32];
 			char buffer[128];
-			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(), reader[ridx].ridx);
+			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(),
+					reader[ridx].ridx);
 			fp = fopen(filename, "r");
 
 			if (fp) {
-				while(fgets(buffer, 128, fp) != NULL) {
+				while (fgets(buffer, 128, fp) != NULL) {
 					tpl_printf(vars, 1, "LOGHISTORY", "%s<BR>\n", buffer);
 				}
 				fclose(fp);
@@ -1715,11 +1699,11 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 		}
 
 	} else {
-		tpl_addVar(vars, 0, "LOGHISTORY", "You have to set saveinithistory=1 in your config to see Entitlements!<BR>\n");
+		tpl_addVar(vars, 0, "LOGHISTORY",
+				"You have to set saveinithistory=1 in your config to see Entitlements!<BR>\n");
 	}
 
 	fputs(tpl_getTpl(vars, "ENTITLEMENTS"), f);
-
 }
 
 void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {

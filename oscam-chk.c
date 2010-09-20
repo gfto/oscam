@@ -337,13 +337,11 @@ int chk_ctab(ushort caid, CAIDTAB *ctab) {
   for (i=0;i<CS_MAXCAIDTAB;i++)
   {
     if (!ctab->caid[i]) {
-      cs_debug_mask(D_TRACE, "CAID FILTERED1: %04x, reader %s", caid, reader[ridx].label);
       return 0;
     }
     if ((caid & ctab->mask[i]) == ctab->caid[i])
       return 1;
   }
-  cs_debug_mask(D_TRACE, "CAID FILTERED2: %04x, reader %s", caid, reader[ridx].label);
   return 0;
 }
 
