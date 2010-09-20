@@ -1430,7 +1430,8 @@ int cc_request_server_cards(int ridx, int dest_cs_idx) {
 	sprintf(fname, "%s/card%d", get_tmp_dir(), dest_cs_idx);
 	mkfifo(fname, 0666);
 	//Request cards from server:
-    write_to_pipe(reader[ridx].fd, PIP_ID_CCC, (uchar*)&dest_cs_idx, sizeof(dest_cs_idx));
+	int data[2] = {ridx, dest_cs_idx};
+    write_to_pipe(fd_c2m, PIP_ID_CCC, (uchar*)data, sizeof(data));
 
     return open(fname, O_RDONLY);
 }

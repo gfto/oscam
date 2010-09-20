@@ -2298,39 +2298,20 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	}
 	
 	uchar *ptr;
-	fd_set fds;
 	do
 	{
-		struct timeval timeout;
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 500;
-		FD_ZERO(&fds);
-		FD_SET(client[cs_idx].fd_m2c_c, &fds);
-		int res = select(client[cs_idx].fd_m2c_c+1, &fds, 0, 0, &timeout);
-		if (res == 0) {
-			cs_debug_mask(D_TRACE, "get best reader: timeout!");
-			return; //timeout
-		}
-		else if (res < 0) {
-			cs_debug_mask(D_TRACE, "get best reader: failed!");
-			return; //failed
-		}
-			
 		if (master_pid!=getppid())
 			cs_exit(0);
-		if (FD_ISSET(client[cs_idx].fd_m2c_c, &fds))
-		{
-			int n = read_from_pipe(client[cs_idx].fd_m2c_c, &ptr, 1);
-			if (n == PIP_ID_BES) {
-				int *best_readers = (int*)ptr;
-				memcpy(reader_avail, best_readers, sizeof(int)*CS_MAXREADER);
-				return;
-			}
-			else if (n == PIP_ID_DIR)
-				continue;
-			else //should neven happen
-				cs_debug_mask(D_TRACE, "get best reader: illegal paket? n=%d", n);
-		} 
+		int n = read_from_pipe(client[cs_idx].fd_m2c_c, &ptr, 1);
+		if (n == PIP_ID_BES) {
+			int *best_readers = (int*)ptr;
+			memcpy(reader_avail, best_readers, sizeof(int)*CS_MAXREADER);
+			return;
+		}
+		else if (n == PIP_ID_DIR)
+			continue;
+		else //should neven happen
+			cs_debug_mask(D_TRACE, "get best reader: illegal paket? n=%d", n);
 	} while (1);
 }
 
@@ -2941,8 +2922,14 @@ static void process_master_pipe()
         send_best_reader((GET_READER_STAT *)ptr);
         break;
     case PIP_ID_RES: //Reset reader statistics
-	clear_reader_stat(*(int*)ptr);
-	break;
+    	clear_reader_stat(*(int*)ptr);
+    	break;
+    case PIP_ID_CCC: {//Send CCcam cards to clients
+    	int data[2];
+    	data[0] = ((int*)ptr)[0];
+    	data[1] = ((int*)ptr)[1];
+    	write_to_pipe(reader[data[0]].fd, PIP_ID_CCC, (uchar*)&data, sizeof(data));
+    }
   }
 }
 
