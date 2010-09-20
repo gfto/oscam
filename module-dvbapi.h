@@ -43,6 +43,7 @@ typedef struct ECMPIDS
 	unsigned long PROVID;
 	unsigned short ECM_PID;
 	unsigned short EMM_PID;
+	int irdeto_chid;
 	int checked;
 	int status;
 	unsigned char table;
@@ -71,6 +72,7 @@ typedef struct demux_s
 	int ECMpidcount;
 	ECMPIDSTYPE ECMpids[ECM_PIDS];
 	int pidindex;
+	int curindex;
 	int tries;
 	int max_status;
 	unsigned short program_number;
@@ -82,6 +84,7 @@ typedef struct demux_s
 	struct s_reader *rdr;
 	char pmt_file[50];
 	int pmt_time;
+	int irdeto_numchids;
 #ifdef WITH_STAPI
 	uint STREAMhandle[ECM_PIDS];
 #endif
