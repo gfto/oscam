@@ -5,12 +5,12 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
-void getNdsAtrEntry( NDS_ATR_ENTRY * nds_atr_entry) 
+void set_known_card_info(struct s_reader * reader) 
 {
-  /* Initialise values */
-  nds_atr_entry->base_year = 1997;
-  nds_atr_entry->nds_version = NDSUNKNOWN;
-  nds_atr_entry->desc = "VideoGuard Unknown Card";
+  /* Set to sensible default values */
+  reader->card_baseyear = 1997;
+  reader->card_system_version = NDSUNKNOWN;
+  reader->card_desc = "VideoGuard Unknown Card";
 
   NDS_ATR_ENTRY nds_atr_table[]={ // {atr}, atr len, base year, nds version, description
     /* known NDS1 atrs */
@@ -95,11 +95,11 @@ void getNdsAtrEntry( NDS_ATR_ENTRY * nds_atr_entry)
 
   int i=0;
   while(nds_atr_table[i].desc) {
-    if ((nds_atr_entry->atr_len == nds_atr_table[i].atr_len)
-          && (memcmp (nds_atr_entry->atr, nds_atr_table[i].atr, nds_atr_table[i].atr_len) == 0)) {
-        nds_atr_entry->base_year=nds_atr_table[i].base_year;
-        nds_atr_entry->nds_version = nds_atr_table[i].nds_version;
-        nds_atr_entry->desc=nds_atr_table[i].desc;
+    if ((reader->atrlen == nds_atr_table[i].atr_len)
+          && (memcmp (reader->atr, nds_atr_table[i].atr, nds_atr_table[i].atr_len) == 0)) {
+        reader->card_baseyear=nds_atr_table[i].base_year;
+        reader->card_system_version = nds_atr_table[i].nds_version;
+        reader->card_desc = nds_atr_table[i].desc;
         break;
     }
     i++;
@@ -107,7 +107,6 @@ void getNdsAtrEntry( NDS_ATR_ENTRY * nds_atr_entry)
 }
 
 int aes_active=0;
-int VG_BASEYEAR = 1997;
 
 static const unsigned short NdTabB001[0x15][0x20] = {
   {0xEAF1, 0x0237, 0x29D0, 0xBAD2, 0xE9D3, 0x8BAE, 0x2D6D, 0xCD1B, 0x538D, 0xDE6B, 0xA634, 0xF81A, 0x18B5, 0x5087, 0x14EA, 0x672E,

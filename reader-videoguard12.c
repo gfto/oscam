@@ -25,7 +25,7 @@ static void read_tiers(struct s_reader * reader)
     if(l<0 || !status_ok(cta_res+l)) return;
     if(cta_res[2]==0 && cta_res[3]==0) break;
     int y,m,d,H,M,S;
-    rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,VG_BASEYEAR);
+    rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
     unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
     char *tier_name = get_tiername(tier_id, reader->caid[0]);
     cs_ri_log(reader, "[videoguard12-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
@@ -43,14 +43,14 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
   get_atr;
   def_resp;
 
-  /* get information on the card from reader-videoguard-common.c */
-  NDS_ATR_ENTRY nds_atr_entry = {{0},0,0,0,0};
-  memcpy(nds_atr_entry.atr,atr,atr_size);
-  nds_atr_entry.atr_len = atr_size;
+  // Copy  the atr info into the reader, can we not do this in reader-common.c?
+  reader->atrlen = atr_size;
+  memcpy(reader->atr,atr,atr_size);
 
-  getNdsAtrEntry(&nds_atr_entry);
+  /* set information on the card stored in reader-videoguard-common.c */
+  set_known_card_info(reader);
 
-  if((reader->ndsversion != NDS12) && ((nds_atr_entry.nds_version != NDS12) || (reader->ndsversion != NDSAUTO))) {
+  if((reader->ndsversion != NDS12) && ((reader->card_system_version != NDS12) || (reader->ndsversion != NDSAUTO))) {
     /* known ATR and not NDS1+
        or unknown ATR and not forced to NDS1+
        or known NDS1+ ATR and forced to another NDS version
@@ -58,11 +58,10 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
   }
 
-  cs_ri_log(reader, "[videoguard12-reader] type: %s, baseyear: %i", nds_atr_entry.desc, nds_atr_entry.base_year);
+  cs_ri_log(reader, "[videoguard12-reader] type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
   if(reader->ndsversion == NDS12){
     cs_log("[videoguard12-reader] forced to NDS1+");
   }
-  VG_BASEYEAR=nds_atr_entry.base_year;
 
   int l = 1;
 
@@ -582,7 +581,7 @@ int videoguard12_card_info(struct s_reader * reader)
 {
   /* info is displayed in init, or when processing info */
   cs_log("[videoguard12-reader] card detected");
-  cs_log("[videoguard12-reader] type: VideoGuard" );
+  cs_log("[videoguard12-reader] type: %s", reader->card_desc);
   read_tiers (reader);
   return OK;
 }

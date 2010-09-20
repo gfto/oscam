@@ -22,8 +22,6 @@
 #define NDS12    12
 #define NDS2    2
 
-extern int VG_BASEYEAR;
-
 typedef struct nds_atr {
     uchar atr[MAX_ATR_LEN];
     ushort atr_len;
@@ -77,7 +75,7 @@ extern int read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
 extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char * cta_res);
 
 extern void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss, int base_year);
-extern void getNdsAtrEntry(NDS_ATR_ENTRY *nds_atr_entry);
+extern void set_known_card_info(struct s_reader * reader);
 
 #endif // __NDS_COMMON__
 

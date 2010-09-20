@@ -72,7 +72,7 @@ static void read_tiers(struct s_reader *reader)
       break;
     }
     int y, m, d, H, M, S;
-    rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, VG_BASEYEAR);
+    rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, reader->card_baseyear);
     unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
     char *tier_name = get_tiername(tier_id, reader->caid[0]);
     cs_ri_log(reader, "[videoguard1-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, tier_name);
@@ -91,14 +91,14 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
   get_atr;
   def_resp;
 
-  /* get information on the card from reader-videoguard-common.c */
-  NDS_ATR_ENTRY nds_atr_entry = {{0},0,0,0,0};
-  memcpy(nds_atr_entry.atr,atr,atr_size);
-  nds_atr_entry.atr_len = atr_size;
+  // Copy  the atr info into the reader, can we not do this in reader-common.c?
+  reader->atrlen = atr_size;
+  memcpy(reader->atr,atr,atr_size);
 
-  getNdsAtrEntry(&nds_atr_entry);
+  /* set information on the card stored in reader-videoguard-common.c */
+  set_known_card_info(reader);
 
-  if((reader->ndsversion != NDS1) && ((nds_atr_entry.nds_version != NDS1) || (reader->ndsversion != NDSAUTO))) {
+  if((reader->ndsversion != NDS1) && ((reader->card_system_version != NDS1) || (reader->ndsversion != NDSAUTO))) {
     /* known ATR and not NDS1
        or unknown ATR and not forced to NDS1
        or known NDS1 ATR and forced to another NDS version
@@ -106,11 +106,10 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
     return ERROR;
   }
 
-  cs_ri_log(reader, "[videoguard1-reader] type: %s, baseyear: %i", nds_atr_entry.desc, nds_atr_entry.base_year);
+  cs_ri_log(reader, "[videoguard1-reader] type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
   if(reader->ndsversion == NDS1){
-    cs_log("[videoguard1-reader] forced to NDS1");
+    cs_log("[videoguard1-reader] forced to NDS1+");
   }
-  VG_BASEYEAR=nds_atr_entry.base_year;
 
   /* NDS1 Class 48 only cards only need a very basic initialisation
      NDS1 Class 48 only cards do not respond to vg1_do_cmd(ins7416)
@@ -130,7 +129,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
   int boxidOK = 0;
   l = vg1_do_cmd(reader, ins36, NULL, buff, cta_res);
   if (buff[7] > 0x0F) {
-    cs_log("[videoguard1-reader] ins36: encrypted - therefore not an NDS1 card");
+    cs_log("[videoguard1-reader] class48 ins36: encrypted - therefore not an NDS1 card");
     return ERROR;
   } else {
     /* skipping the initial fixed fields: cmdecho (4) + length (1) + encr/rev++ (4) */
@@ -202,7 +201,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
 	  }
 	default:		/* default to assume a length byte */
 	  {
-	    cs_log("[videoguard1-reader] ins36 returned unknown type=0x%02X - parsing may fail", buff[i]);
+	    cs_log("[videoguard1-reader] class48 ins36: returned unknown type=0x%02X - parsing may fail", buff[i]);
 	    i += buff[i + 1] + 2;
 	  }
 	}
@@ -231,30 +230,28 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
   unsigned char payload4C[9] = { 0, 0, 0, 0, 3, 0, 0, 0, 4 };
   memcpy(payload4C, boxID, 4);
   if (!write_cmd_vg(ins4C, payload4C) || !status_ok(cta_res + l)) {
-    cs_log("[videoguard1-reader] sending boxid failed");
+    cs_log("[videoguard1-reader] class48 ins4C: sending boxid failed");
     return ERROR;
   }
 
   unsigned char ins58[5] = { 0x48, 0x58, 0x00, 0x00, 0x17 };
   l = vg1_do_cmd(reader, ins58, NULL, buff, cta_res);
   if (l < 0) {
-    cs_log("[videoguard1-reader] cmd ins58 failed");
+    cs_log("[videoguard1-reader] class48 ins58: failed");
     return ERROR;
   }
 
   memset(reader->hexserial, 0, 8);
   memcpy(reader->hexserial + 2, cta_res + 1, 4);
   memcpy(reader->sa, cta_res + 1, 3);
-  reader->caid[0] = cta_res[24] * 0x100 + cta_res[25];
+  //  reader->caid[0] = cta_res[24] * 0x100 + cta_res[25];
+  /* Force caid until can figure out how to get it */
+  reader->caid[0] = 0x9 * 0x100 + 0x69;
+
   /* we have one provider, 0x0000 */
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
-  cs_ri_log(reader,
-	    "[videoguard1-reader] type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
-	    reader->caid[0], reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], boxID[0], boxID[1], boxID[2], boxID[3]);
 
-  /* Force caid until can figure out how to get it */
-  reader->caid[0] = 0x9 * 0x100 + 0x69;
   cs_ri_log(reader,
 	    "[videoguard1-reader] type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
 	    reader->caid[0], reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], boxID[0], boxID[1], boxID[2], boxID[3]);
@@ -284,7 +281,7 @@ int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
       memset(CW2, 0, 8);
       if (!cw_is_valid(CW1))	//sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
       {
-	snprintf(er->msglog, MSGLOGSIZE, "9000 but cw=00 -> channel not subscribed ");
+	cs_log("[videoguard1-reader] class48 ins54 status 90 00 but cw=00 -> channel not subscribed ");
 	return ERROR;
       }
       if (er->ecm[0] & 1) {
@@ -297,7 +294,7 @@ int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
       return OK;
     }
   }
-  snprintf(er->msglog, MSGLOGSIZE, "(%d) status not ok %02x %02x", l, cta_res[0], cta_res[1]);
+  cs_log("[videoguard1-reader] class48 ins54 (%d) status not ok %02x %02x", l, cta_res[0], cta_res[1]);
   return ERROR;
 }
 
@@ -543,7 +540,7 @@ int videoguard1_card_info(struct s_reader *reader)
 {
   /* info is displayed in init, or when processing info */
   cs_log("[videoguard1-reader] card detected");
-  cs_log("[videoguard1-reader] type: VideoGuard");
+  cs_log("[videoguard1-reader] type: %s", reader->card_desc);
   read_tiers(reader);
   return OK;
 }

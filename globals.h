@@ -528,6 +528,9 @@ struct s_reader  //contains device info, reader info and card info
   int       fallback;
   int       typ;
   int       card_system;
+  const char      * card_desc;
+  int       card_baseyear;
+  int       card_system_version;
   char      label[32];
   char      device[128];
   ushort    slot;   //in case of multiple slots like sc8in1; first slot = 1

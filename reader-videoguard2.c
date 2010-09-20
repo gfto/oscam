@@ -11,24 +11,24 @@ static void vg2_read_tiers(struct s_reader * reader)
   /* ins2a is not needed and causes an error on some cards eg Sky Italy 09CD
      check if ins2a is in command table before running it
   */
-  static const unsigned char ins2a[5] = { 0xd0,0x2a,0x00,0x00,0x00 };
+  static const unsigned char ins2a[5] = { 0xD0,0x2a,0x00,0x00,0x00 };
   if(cmd_exists(ins2a)) {
     l=do_cmd(reader, ins2a,NULL,NULL,cta_res);
     if(l<0 || !status_ok(cta_res+l)){
-      cs_log ("[videoguard2-reader] cmd ins2a failed");
+      cs_log ("[videoguard2-reader] insD02a: failed");
       return;
     }
   }
 
-  static unsigned char ins76007f[5] = { 0xd0,0x76,0x00,0x7f,0x02 };
+  static unsigned char ins76007f[5] = { 0xD0,0x76,0x00,0x7f,0x02 };
   if(!write_cmd_vg(ins76007f,NULL) || !status_ok(cta_res+2)){
-    cs_log ("[videoguard2-reader] cmd ins76007f failed");
+    cs_log ("[videoguard2-reader] insDO76007f: failed");
     return;
   }
   int num=cta_res[1];
 
   int i;
-  static unsigned char ins76[5] = { 0xd0,0x76,0x00,0x00,0x00 };
+  static unsigned char ins76[5] = { 0xD0,0x76,0x00,0x00,0x00 };
 #ifdef CS_RDR_INIT_HIST
   reader->init_history_pos = 0; //reset for re-read
   memset(reader->init_history, 0, sizeof(reader->init_history));
@@ -39,7 +39,7 @@ static void vg2_read_tiers(struct s_reader * reader)
     if(l<0 || !status_ok(cta_res+l)) return;
     if(cta_res[2]==0 && cta_res[3]==0) break;
     int y,m,d,H,M,S;
-    rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,VG_BASEYEAR);
+    rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
     unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
     char *tier_name = get_tiername(tier_id, reader->caid[0]);
     cs_ri_log(reader, "[videoguard2-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
@@ -56,27 +56,25 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   get_atr;
   def_resp;
 
-  /* get information on the card from reader-videoguard-common.c */
-  NDS_ATR_ENTRY nds_atr_entry = {{0},0,0,0,0};
-  memcpy(nds_atr_entry.atr,atr,atr_size);
-  nds_atr_entry.atr_len = atr_size;
+  // Copy  the atr info into the reader, can we not do this in reader-common.c?
+  reader->atrlen = atr_size;
+  memcpy(reader->atr,atr,atr_size);
 
-  getNdsAtrEntry(&nds_atr_entry);
+  /* set information on the card stored in reader-videoguard-common.c */
+  set_known_card_info(reader);
 
   if((reader->ndsversion != NDS2) &&
-     (((nds_atr_entry.nds_version != NDS2) && (nds_atr_entry.nds_version != NDSUNKNOWN)) ||
+     (((reader->card_system_version != NDS2) && (reader->card_system_version != NDSUNKNOWN)) ||
       (reader->ndsversion != NDSAUTO))) {
     /* known ATR and not NDS2
        or known NDS2 ATR and forced to another NDS version */
     return ERROR;
   }
 
-  cs_ri_log(reader, "[videoguard2-reader] type: %s, baseyear: %i", nds_atr_entry.desc, nds_atr_entry.base_year);
+  cs_ri_log(reader, "[videoguard2-reader] type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
   if(reader->ndsversion == NDS2){
     cs_log("[videoguard2-reader] forced to NDS2");
   }
-
-  VG_BASEYEAR=nds_atr_entry.base_year;
 
   //a non videoguard2/NDS2 card will fail on read_cmd_len(ins7401)
   //this way unknown videoguard2/NDS2 cards will also pass this check
@@ -89,7 +87,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   ins7401[3]=0x00;
   ins7401[4]=l;
   if(!write_cmd_vg(ins7401,NULL) || !status_ok(cta_res+l)) {
-    cs_log ("[videoguard2-reader] failed to read cmd list");
+    cs_log ("[videoguard2-reader] insD07401: failed - cmd list not read");
     return ERROR;
     }
 
@@ -99,7 +97,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 
   unsigned char ins7416[5] = { 0xD0,0x74,0x16,0x00,0x00 };
   if(do_cmd(reader, ins7416, NULL, NULL,cta_res)<0) {
-    cs_log ("[videoguard2-reader] cmd 7416 failed");
+    cs_log ("[videoguard2-reader] insD07416: failed");
     return ERROR;
     }
 
@@ -117,9 +115,9 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     int boxidOK=0;
     l=do_cmd(reader, ins36, NULL, buff,cta_res);
     if(l<13)
-      cs_log("[videoguard2-reader] ins36: too short answer");
-    else if (buff[7] > 0x0F)
-      cs_log("[videoguard2-reader] ins36: encrypted - can't parse");
+      cs_log("[videoguard2-reader] insD036: too short answer");
+    else if (buff[7] > 0x0F) 
+      cs_log("[videoguard2-reader] insD036: encrypted - can't parse");
     else {
       /* skipping the initial fixed fields: cmdecho (4) + length (1) + encr/rev++ (4) */
       int i=9;
@@ -165,7 +163,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
               i+=buff[i+1]+2; /* skip length + 2 bytes (type and length) */
               break;
             default: /* default to assume a length byte */
-              cs_log("[videoguard2-reader] ins36 returned unknown type=0x%02X - parsing may fail", buff[i]);
+              cs_log("[videoguard2-reader] insD036: returned unknown type=0x%02X - parsing may fail", buff[i]);
               i+=buff[i+1]+2;
         }
       }
@@ -181,7 +179,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   unsigned char payload4C[9] = { 0,0,0,0, 3,0,0,0,4 };
   memcpy(payload4C,boxID,4);
   if(!write_cmd_vg(ins4C,payload4C) || !status_ok(cta_res+l)) {
-    cs_log("[videoguard2-reader] sending boxid failed");
+    cs_log("[videoguard2-reader] insD04C: failed - sending boxid failed");
     return ERROR;
     }
 // Start of suggested fix for 09ac cards
@@ -199,7 +197,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   unsigned char ins58[5] = { 0xD0,0x58,0x00,0x00,0x00 };
   l=do_cmd(reader, ins58, NULL, buff,cta_res);
   if(l<0) {
-    cs_log("[videoguard2-reader] cmd ins58 failed");
+    cs_log("[videoguard2-reader] insDO58: failed");
     return ERROR;
     }
   memset(reader->hexserial, 0, 8);
@@ -237,39 +235,40 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   cCamCryptVG_GetCamKey(tbuff);
   l=do_cmd(reader, insB4, tbuff, NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
-    cs_log ("[videoguard2-reader] cmd D0B4 failed (%02X%02X)", cta_res[0], cta_res[1]);
+    cs_log ("[videoguard2-reader] insD0B4: failed (%02X%02X)", cta_res[0], cta_res[1]);
     return ERROR;
     }
 
   unsigned char insBC[5] = { 0xD0,0xBC,0x00,0x00,0x00 };
   l=do_cmd(reader, insBC, NULL, NULL,cta_res);
   if(l<0) {
-    cs_log("[videoguard2-reader] cmd D0BC failed");
+    cs_log("[videoguard2-reader] insD0BC: failed");
     return ERROR;
     }
 
   unsigned char insBE[5] = { 0xD3,0xBE,0x00,0x00,0x00 };
   l=do_cmd(reader, insBE, NULL, NULL,cta_res);
   if(l<0) {
-    cs_log("[videoguard2-reader] cmd D3BE failed");
+    cs_log("[videoguard2-reader] insD3BE: failed");
     return ERROR;
     }
 
   unsigned char ins58a[5] = { 0xD1,0x58,0x00,0x00,0x00 };
   l=do_cmd(reader, ins58a, NULL, NULL,cta_res);
   if(l<0) {
-    cs_log("[videoguard2-reader] cmd D158 failed");
+    cs_log("[videoguard2-reader] insD158: failed");
     return ERROR;
     }
 
   unsigned char ins4Ca[5] = { 0xD1,0x4C,0x00,0x00,0x00 };
   l=do_cmd(reader, ins4Ca,payload4C, NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
-    cs_log("[videoguard2-reader] cmd D14Ca failed");
+    cs_log("[videoguard2-reader] insD14Ca: failed");
     return ERROR;
     }
 
-  cs_ri_log(reader, "[videoguard2-reader] type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
+  cs_ri_log(reader, "[videoguard2-reader] type: %s, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
+         reader->card_desc,
          reader->caid[0],
          reader->hexserial[2],reader->hexserial[3],reader->hexserial[4],reader->hexserial[5],
          boxID[0],boxID[1],boxID[2],boxID[3]);
@@ -562,7 +561,7 @@ int videoguard2_card_info(struct s_reader * reader)
 {
   /* info is displayed in init, or when processing info */
   cs_log("[videoguard2-reader] card detected");
-  cs_log("[videoguard2-reader] type: VideoGuard" );
+  cs_log("[videoguard2-reader] type: %s", reader->card_desc );
   vg2_read_tiers (reader);
   return OK;
 }
