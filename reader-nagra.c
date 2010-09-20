@@ -289,7 +289,7 @@ static int NegotiateSessionKey_N3_NA(struct s_reader * reader)
 	}
 
    memcpy(tmp, reader->irdId, 4);
-   tmp[5]=0; //irdId should have trailing NULL
+   tmp[4]=0; //irdId should have trailing NULL
    if(!do_cmd(reader, 0x26,0x07,0xa6, 0x42, tmp,cta_res,&cta_lr))	{
         cs_debug("[nagra-reader] CMD$26 failed");
         return ERROR;
