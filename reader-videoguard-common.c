@@ -119,7 +119,7 @@ static void cCamCryptVG_ReorderAndEncrypt(unsigned char *p);
 static void cCamCryptVG_Process_D0(const unsigned char *ins, unsigned char *data);
 static void cCamCryptVG_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status);
-static void cCamCryptVG_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw);
+static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *buff, int len, unsigned char *cw);
 
 struct CmdTab *cmd_table=NULL;
 
@@ -204,7 +204,7 @@ void cCamCryptVG_GetCamKey(unsigned char *buff)
   swap_lb (buff, 64);
 }
 
-static void cCamCryptVG_PostProcess_Decrypt(unsigned char *rxbuff, int len, unsigned char *cw)
+static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, int len, unsigned char *cw)
 {
   switch(rxbuff[0]) {
     case 0xD0:
@@ -222,13 +222,17 @@ static void cCamCryptVG_PostProcess_Decrypt(unsigned char *rxbuff, int len, unsi
         for(ind=15; ind<len+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past rxbuffer
                                              // we start searching at 15 because start at 13 goes wrong with 090F 090b and 096a
           if(rxbuff[ind]==0x25) {
-            //memcpy(cw2,rxbuff+5+ind+2,8);
             memcpy(cw+8,rxbuff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919  //don't care whether cw is 0 or not
             break;
           }
-/*          if(rxbuff[ind+1]==0) break;
-          ind+=rxbuff[ind+1];*/
         }
+        // fix for 09ac cards
+        // Log decrypted INS54
+        // if (rxbuff[1] == 0x54) {
+        //   cs_dump (rxbuff, 5, "Decrypted INS54:");
+        //   cs_dump (rxbuff + 5, rxbuff[4], "");
+        //}
+        manage_tag(reader, rxbuff, cw);
       }
       break;
   }
@@ -450,7 +454,7 @@ void memorize_cmd_table (const unsigned char *mem, int size){
   memcpy(cmd_table,mem,size);
 }
 
-void manage_tag(unsigned char *rxbuff, unsigned char *cw)
+void manage_tag(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
 {
   unsigned char tag,len,len2;
   bool valid_0x55=FALSE;
@@ -477,9 +481,10 @@ void manage_tag(unsigned char *rxbuff, unsigned char *cw)
     a+=len+2;
   }
   if(valid_0x55){
-    memcpy(buffer,rxbuff+5,8);			//Copy original CW
-    AES_decrypt(buffer,buffer,&Astro_Key);	//Astro_Key declared and filled before...
-    memcpy(cw+0,buffer,8);			//Now copy calculated CW in right place
+    memcpy(buffer,rxbuff+5,8);
+    if(aes_decrypt_from_list(reader->aes_list,reader->caid[0], 0, AESKEY_ASTRO,buffer, 16)) {
+      memcpy(cw+0,buffer,8);	// copy calculated CW in right place
+    }
   }
 }
 
@@ -554,17 +559,10 @@ int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned ch
     memcpy(rxbuff+5+len,cta_res,2);
     }
 
-  cCamCryptVG_PostProcess_Decrypt(rxbuff,len,cw);
+  cCamCryptVG_PostProcess_Decrypt(reader, rxbuff,len,cw);
 
-// Start of suggested fix for 09ac cards
-  // Log decrypted INS54
-  ///if (rxbuff[1] == 0x54) {
-  ///  cs_dump (rxbuff, 5, "Decrypted INS54:");
-  ///  cs_dump (rxbuff + 5, rxbuff[4], "");
-  ///}
+  // manage_tag(reader, rxbuff, cw); moved into cCamCryptVG_PostProcess_Decrypt as only needed on classD3 ins54
 
-  manage_tag(rxbuff, cw);
-//	End of suggested fix
   return len;
 }
 

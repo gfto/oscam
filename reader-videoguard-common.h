@@ -22,6 +22,9 @@
 #define NDS12    12
 #define NDS2    2
 
+#define AESKEY_ASTRO    1
+
+
 typedef struct nds_atr {
     uchar atr[MAX_ATR_LEN];
     ushort atr_len;
@@ -30,7 +33,7 @@ typedef struct nds_atr {
     const char *desc;
 } NDS_ATR_ENTRY;
 
-AES_KEY dkey, ekey, Astro_Key;
+AES_KEY dkey, ekey;
 
 extern int io_serial_need_dummy_char;
 
@@ -64,7 +67,7 @@ extern void cCamCryptVG_SetSeed(unsigned char *Key1, unsigned char *Key2);
 extern void cCamCryptVG_GetCamKey(unsigned char *buff);
 
 extern void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data);
-extern void manage_tag(unsigned char *answer, unsigned char *cw);
+extern void manage_tag(struct s_reader * reader, unsigned char *answer, unsigned char *cw);
 extern int status_ok(const unsigned char *status);
 
 extern void memorize_cmd_table (const unsigned char *mem, int size);

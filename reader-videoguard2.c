@@ -262,9 +262,20 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   int a;
   for(a=0; a<4; a++)
     dimeno_magic[a]=dimeno_magic[a]^boxID[a];
-  // I supposed to declare a AES_KEY Astro_Key somewhere before...
-  AES_set_decrypt_key(dimeno_magic,128,&Astro_Key);
-  Astro_Key.rounds=10;  //Important for ecm decryption...
+  add_aes_entry(reader, reader->caid[0], 0, AESKEY_ASTRO, dimeno_magic);
+
+  AES_ENTRY *current;
+  current=reader->aes_list;
+  while(current) {
+      cs_log("**************************");
+      cs_log("current = %p",current);
+      cs_log("CAID = %04x",current->caid);
+      cs_log("IDENT = %06x",current->ident);
+      cs_log("keyID = %d",current->keyid);
+      cs_log("next = %p",current->next);
+      cs_log("**************************");
+      current=current->next;
+  }
 
   cs_ri_log(reader, "[videoguard2-reader] type: %s, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
          reader->card_desc,

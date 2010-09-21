@@ -200,16 +200,6 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     cs_log("[videoguard12-reader] sending boxid failed");
     return ERROR;
     }
-// Start of suggested fix for 09ac cards
-    unsigned char Dimeno_Magic[0x10]={0xF9,0xFB,0xCD,0x5A,0x76,0xB5,0xC4,0x5C,0xC8,0x2E,0x1D,0xE1,0xCC,0x5B,0x6B,0x02};
-    int a;
-    for(a=0; a<4; a++)
-        Dimeno_Magic[a]=Dimeno_Magic[a]^boxID[a];
-    //I supposed to declare a AES_KEY Astro_Key somewhere before...
-    AES_set_decrypt_key(Dimeno_Magic,128,&Astro_Key);
-    Astro_Key.rounds=10;
-    //Important for ecm decryption...
-//	End of suggested fix
 
   //short int SWIRDstatus = cta_res[1];
   unsigned char ins58[5] = { 0x48,0x58,0x00,0x00,0x00 };
@@ -284,6 +274,26 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     cs_log("[videoguard12-reader] cmd D14Ca failed");
     return ERROR;
     }
+
+  // fix for 09ac cards
+  unsigned char dimeno_magic[0x10]={0xF9,0xFB,0xCD,0x5A,0x76,0xB5,0xC4,0x5C,0xC8,0x2E,0x1D,0xE1,0xCC,0x5B,0x6B,0x02};
+  int a;
+  for(a=0; a<4; a++)
+    dimeno_magic[a]=dimeno_magic[a]^boxID[a];
+  add_aes_entry(reader, reader->caid[0], 0, AESKEY_ASTRO, dimeno_magic);
+
+  AES_ENTRY *current;
+  current=reader->aes_list;
+  while(current) {
+      cs_log("**************************");
+      cs_log("current = %p",current);
+      cs_log("CAID = %04x",current->caid);
+      cs_log("IDENT = %06x",current->ident);
+      cs_log("keyID = %d",current->keyid);
+      cs_log("next = %p",current->next);
+      cs_log("**************************");
+      current=current->next;
+  }
 
   cs_ri_log(reader, "[videoguard12-reader] type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
          reader->caid[0],
