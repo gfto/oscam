@@ -3033,7 +3033,7 @@ char * get_tmp_dir()
   p--;
   if (*p != '/' && *p != '\\')
     strcat(cs_tmpdir, "/");
-  strcat(cs_tmpdir, ".oscam");                                         
+  strcat(cs_tmpdir, "_oscam");
 #else
   strcpy(cs_tmpdir, "/tmp/.oscam");
 #endif
