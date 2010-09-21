@@ -383,7 +383,7 @@ char *key_btoa(char *asc, uchar *bin)
   return(asc);
 }
 
-char *cs_hexdump(int m, uchar *buf, int n)
+char *cs_hexdump(int m, const uchar *buf, int n)
 {
   int i;
   static char dump[520];

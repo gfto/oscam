@@ -283,7 +283,7 @@ void cs_debug_nolf(char *fmt,...)
 	}
 }
 
-void cs_dump(uchar *buf, int n, char *fmt, ...)
+void cs_dump(const uchar *buf, int n, char *fmt, ...)
 {
 	if (!log_txt)
 		return;

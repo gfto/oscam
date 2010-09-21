@@ -43,7 +43,7 @@ static int do_cmd(struct s_reader * reader, unsigned char cmd, int ilen, unsigne
 	*/
 	int msglen=ilen+6;
 	unsigned char msg[msglen];
-	static char nagra_head[] = {0xA0, 0xCA, 0x00, 0x00};
+	static const char nagra_head[] = {0xA0, 0xCA, 0x00, 0x00};
 
 	memset(msg, 0, msglen);
 	memcpy(msg,nagra_head,4);

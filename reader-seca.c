@@ -5,7 +5,7 @@
 static int set_provider_info(struct s_reader * reader, int i)
 {
   def_resp;
-  static uchar ins12[] = { 0xc1, 0x12, 0x00, 0x00, 0x19 }; // get provider info
+  uchar ins12[] = { 0xc1, 0x12, 0x00, 0x00, 0x19 }; // get provider info
   int year, month, day;
   struct tm *lt;
   time_t t;
@@ -50,18 +50,18 @@ int seca_card_init(struct s_reader * reader, ATR newatr)
 	get_atr;
 	def_resp;
 	char *card;
-	static unsigned short pmap=0;	// provider-maptable
+	unsigned short pmap=0;	// provider-maptable
 	unsigned long long serial ;
   uchar buf[256];
-  static uchar ins0e[] = { 0xc1, 0x0e, 0x00, 0x00, 0x08 }; // get serial number (UA)
-  static uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x07 }; // get nr. of prividers
+  static const uchar ins0e[] = { 0xc1, 0x0e, 0x00, 0x00, 0x08 }; // get serial number (UA)
+  static const uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x07 }; // get nr. of prividers
   int i;
 
 // Unlock parental control
 // c1 30 00 01 09
 // 00 00 00 00 00 00 00 00 ff
-  static uchar ins30[] = { 0xc1, 0x30, 0x00, 0x01, 0x09 };
-  static uchar ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff };
+  static const uchar ins30[] = { 0xc1, 0x30, 0x00, 0x01, 0x09 };
+  static const uchar ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff };
 
   buf[0]=0x00;
   if ((atr[10]!=0x0e) || (atr[11]!=0x6c) || (atr[12]!=0xb6) || (atr[13]!=0xd6)) return ERROR;
@@ -294,8 +294,8 @@ int seca_card_info (struct s_reader * reader)
 //This module is therefore optical only
 
   def_resp;
-  static unsigned char ins34[] = { 0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 };				//data following is provider Package Bitmap Records
-  static unsigned char ins32[] = { 0xc1, 0x32, 0x00, 0x00, 0x20 };				// get PBM
+  static const unsigned char ins34[] = { 0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 };				//data following is provider Package Bitmap Records
+  unsigned char ins32[] = { 0xc1, 0x32, 0x00, 0x00, 0x20 };				// get PBM
   int prov;
 
   for (prov = 0; prov < reader->nprov; prov++) {

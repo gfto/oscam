@@ -1041,7 +1041,7 @@ extern int key_atob(char *, uchar *);
 extern int key_atob14(char *, uchar *);
 extern int key_atob_l(char *, uchar *, int);
 extern char *key_btoa(char *, uchar *);
-extern char *cs_hexdump(int, uchar *, int);
+extern char *cs_hexdump(int, const uchar *, int);
 extern in_addr_t cs_inet_order(in_addr_t);
 extern char *cs_inet_ntoa(in_addr_t);
 extern in_addr_t cs_inet_addr(char *txt);
@@ -1250,7 +1250,7 @@ extern void cs_ddump_mask(unsigned short, uchar *, int, char *, ...);
 extern void cs_close_log(void);
 extern int  cs_init_statistics(char *);
 extern void cs_statistics(int);
-extern void cs_dump(uchar *, int, char *, ...);
+extern void cs_dump(const uchar *, int, char *, ...);
 
 // oscam-aes
 extern void aes_set_key(char *);
