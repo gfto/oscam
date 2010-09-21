@@ -2311,9 +2311,9 @@ int cc_cli_connect() {
 	//Receive Cards
 	n = 0;
 	do {
-	 	n = casc_recv_timer(rdr, buf, sizeof(buf), 10);
+	 	n = casc_recv_timer(rdr, buf, sizeof(buf), 100);
 	 	cs_log("n=%d", n);
-	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA);
+	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA || n == MSG_CARD_REMOVED);
 	
 	if (n>0) n = 0;
 	return n;
