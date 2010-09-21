@@ -101,6 +101,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     }
 
   unsigned char ins36[5] = { 0xD0,0x36,0x00,0x00,0x00 };
+  unsigned char ins5e[5] = { 0xD0,0x5E,0x00,0x0C,0x02 };
   unsigned char boxID [4];
 
   if (reader->boxid > 0) {
@@ -112,7 +113,22 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   } else {
     /* we can try to get the boxid from the card */
     int boxidOK=0;
-    l=do_cmd(reader,ins36,NULL,buff,NULL,cta_res);
+    if((ins36[4]=read_cmd_len(reader, ins36))==0 && cmd_exists(ins5e)) {
+        if(!write_cmd_vg(ins5e,NULL) || !status_ok(cta_res+2)){
+          cs_log ("[videoguard2-reader] classD0 ins5e: failed");
+        } else {
+          ins36[3] = cta_res[0];
+          ins36[4] = cta_res[1];
+        }
+    }
+    l=ins36[4];
+    if(!write_cmd_vg(ins36,NULL) || !status_ok(cta_res+l)){
+       cs_log ("[videoguard2-reader] classD0 ins36: failed");
+       return ERROR;
+    }
+    memcpy(buff,ins36,5);
+    memcpy(buff+5,cta_res,l);
+    memcpy(buff+5+l,cta_res+l,2);
     if(l<13)
       cs_log("[videoguard2-reader] classD0 ins36: too short answer");
     else if (buff[7] > 0x0F)
