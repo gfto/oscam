@@ -995,6 +995,11 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_printf(vars, 0, "IDENTS", "%s\n", value);
 	free(value);
 
+	//CHID
+	value = mk_t_ftab(&reader[ridx].fchid);
+	tpl_printf(vars, 0, "CHIDS", "%s\n", value);
+	free(value);
+
 	//class
 	CLASSTAB *clstab = &reader[ridx].cltab;
 	char *dot="";
