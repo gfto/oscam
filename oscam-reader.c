@@ -89,7 +89,7 @@ static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
   }
 }
 
-static int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec)
+int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec)
 {
   struct timeval tv;
   fd_set fds;
@@ -719,15 +719,6 @@ static void reader_main(struct s_reader * reader)
 {
   while (1)
   {
-    /* FIXME: this breaks newcamd/camd3 cascading as newcamd/camd35 only connects if server sends ecm/emm to client */
-    //if (reader->typ == R_CCCAM && !reader->tcp_connected && client[cs_idx].typ == 'p') {
-    //   cs_log("%s not connected! Reconection in %d sec", reader->label, cfg->reader_restart_seconds);
-    //   cs_sleepms(1000 * cfg->reader_restart_seconds);
-    //   if (reader->ph.c_init() && reader->ph.cleanup) {
-    //	    reader->ph.cleanup();
-    //	    continue;
-    //   }
-    //}
     switch(reader_listen(reader, client[reader->cs_idx].fd_m2c_c, pfd))
     {
       case 0: reader_do_idle(reader); break;

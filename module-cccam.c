@@ -473,7 +473,7 @@ void free_extended_ecm_idx(struct cc_data *cc) {
  */
 int cc_msg_recv(uint8 *buf) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = is_server?NULL:&reader[ridx];
 	
 	int len;
 	uint8 netbuf[CC_MAXMSGSIZE + 4];
@@ -535,7 +535,7 @@ int cc_msg_recv(uint8 *buf) {
  */
 int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = is_server?NULL:&reader[ridx];
 	
 	int n;
 	uint8 netbuf[len + 4];
@@ -863,11 +863,11 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 	if (!cc || (pfd < 1) || !rdr->tcp_connected) {
 		if (er) {
-			//er->rc = 0;
-			//er->rcEx = 0x27;
+			er->rc = 0;
+			er->rcEx = 0x27;
 			cs_debug_mask(D_TRACE, "%s server not init! ccinit=%d pfd=%d",
 					getprefix(), cc ? 1 : 0, pfd);
-			//write_ecm_answer(rdr, fd_c2m, er);
+			write_ecm_answer(rdr, fd_c2m, er);
 		}
 		cc_cli_close();
 		return 0;
@@ -1601,7 +1601,7 @@ void cc_card_removed(uint32 shareid) {
 
 int cc_parse_msg(uint8 *buf, int l) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = is_server?NULL:&reader[ridx];
 	
 	int ret = buf[1];
 	struct cc_data *cc = cl->cc;
@@ -2308,7 +2308,15 @@ int cc_cli_connect() {
 
 	cc->just_logged_in = 1;
 
-	return 0;
+	//Receive Cards
+	n = 0;
+	do {
+	 	n = casc_recv_timer(rdr, buf, sizeof(buf), 10);
+	 	cs_log("n=%d", n);
+	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA);
+	
+	if (n>0) n = 0;
+	return n;
 }
 
 struct s_auth *get_account(char *usr) {
@@ -2765,8 +2773,10 @@ void cc_cli_report_cards(int client_idx) {
 	sprintf((char*) buf, "%s/card%d", get_tmp_dir(), client_idx);
 	int pipe = open((char*) buf, O_WRONLY);
 
-	if (!cc || rdr->tcp_connected == 0)
+	if (!cc || rdr->tcp_connected == 0) {
 		cc_cli_init_int();
+		cc = cl->cc;
+	}
 		
 	if (cc && rdr->tcp_connected == 2) {
 

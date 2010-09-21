@@ -4078,38 +4078,3 @@ char *mk_t_ftab(FTAB *ftab){
 	return value;
 }
 
-static char tmpdir[200] = {0x00};
-
-/**
- * get tmp dir
- **/
-char * get_tmp_dir()
-{
-  if (tmpdir[0])
-    return tmpdir;
-  
-#ifdef OS_CYGWIN
-  char *d = getenv("TMPDIR");
-  if (!d || !d[0])
-        d = getenv("TMP");
-  if (!d || !d[0])
-        d = getenv("TEMP");
-  if (!d || !d[0]) 
-  	getcwd(tmpdir, sizeof(tmpdir)-1);
-  
-  strcpy(tmpdir, d);
-  char *p = tmpdir;
-  while(*p) p++;
-  p--;
-  if (*p != '/' && *p != '\\')
-    strcat(tmpdir, "/");
-  strcat(tmpdir, "_oscam");
-                          
-#else
-  strcpy(tmpdir, "/tmp/.oscam");
-#endif
-  mkdir(tmpdir, S_IRWXU);
-  return tmpdir;
-}
-
-
