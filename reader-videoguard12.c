@@ -7,7 +7,7 @@ static void read_tiers(struct s_reader * reader)
   def_resp;
   static const unsigned char ins2a[5] = { 0x48,0x2a,0x00,0x00,0x00 };
   int l;
-  l=do_cmd(reader, ins2a,NULL,NULL,cta_res);
+  l=do_cmd(reader,ins2a,NULL,NULL,NULL,cta_res);
   if(l<0 || !status_ok(cta_res+l)) return;
   static unsigned char ins76[5] = { 0x48,0x76,0x00,0x00,0x00 };
   ins76[3]=0x7f; ins76[4]=2;
@@ -21,7 +21,7 @@ static void read_tiers(struct s_reader * reader)
 #endif
   for(i=0; i<num; i++) {
     ins76[2]=i;
-    l=do_cmd(reader, ins76,NULL,NULL,cta_res);
+    l=do_cmd(reader,ins76,NULL,NULL,NULL,cta_res);
     if(l<0 || !status_ok(cta_res+l)) return;
     if(cta_res[2]==0 && cta_res[3]==0) break;
     int y,m,d,H,M,S;
@@ -131,7 +131,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
   } else {
     /* we can try to get the boxid from the card */
     int boxidOK=0;
-    l=do_cmd(reader, ins36, NULL, buff,cta_res);
+    l=do_cmd(reader,ins36,NULL,buff,NULL,cta_res);
     if(l<13)
       cs_log("[videoguard12-reader] ins36: too short answer");
     else if (buff[7] > 0x0F)
@@ -158,7 +158,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
               i+=5;
               break;
             case 0xF3: /* boxID */
-                  memcpy(&boxID,&buff[i+1],sizeof(boxID));
+                  memcpy(boxID,buff+i+1,sizeof(boxID));
                   boxidOK=1;
               i+=5;
               break;
@@ -213,7 +213,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
 
   //short int SWIRDstatus = cta_res[1];
   unsigned char ins58[5] = { 0x48,0x58,0x00,0x00,0x00 };
-  l=do_cmd(reader, ins58, NULL, buff,cta_res);
+  l=do_cmd(reader,ins58,NULL,buff,NULL,cta_res);
   if(l<0) {
     cs_log("[videoguard12-reader] cmd ins58 failed");
     return ERROR;
@@ -251,35 +251,35 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
   unsigned char insB4[5] = { 0x48,0xB4,0x00,0x00,0x40 };
   unsigned char tbuff[64];
   cCamCryptVG_GetCamKey(tbuff);
-  l=do_cmd(reader, insB4, tbuff, NULL,cta_res);
+  l=do_cmd(reader,insB4,tbuff,NULL,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
     cs_log ("[videoguard12-reader] cmd D0B4 failed (%02X%02X)", cta_res[0], cta_res[1]);
     return ERROR;
     }
 
   unsigned char insBC[5] = { 0x48,0xBC,0x00,0x00,0x00 };
-  l=do_cmd(reader, insBC, NULL, NULL,cta_res);
+  l=do_cmd(reader,insBC,NULL,NULL,NULL,cta_res);
   if(l<0) {
     cs_log("[videoguard12-reader] cmd D0BC failed");
     return ERROR;
     }
 
   unsigned char insBE[5] = { 0x48,0xBE,0x00,0x00,0x00 };
-  l=do_cmd(reader, insBE, NULL, NULL,cta_res);
+  l=do_cmd(reader,insBE,NULL,NULL,NULL,cta_res);
   if(l<0) {
     cs_log("[videoguard12-reader] cmd D3BE failed");
     return ERROR;
     }
 
   unsigned char ins58a[5] = { 0x49,0x58,0x00,0x00,0x00 };
-  l=do_cmd(reader, ins58a, NULL, NULL,cta_res);
+  l=do_cmd(reader,ins58a,NULL,NULL,NULL,cta_res);
   if(l<0) {
     cs_log("[videoguard12-reader] cmd D158 failed");
     return ERROR;
     }
 
   unsigned char ins4Ca[5] = { 0x49,0x4C,0x00,0x00,0x00 };
-  l=do_cmd(reader, ins4Ca,payload4C, NULL,cta_res);
+  l=do_cmd(reader,ins4Ca,payload4C,NULL,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
     cs_log("[videoguard12-reader] cmd D14Ca failed");
     return ERROR;
@@ -304,28 +304,25 @@ int videoguard12_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   int lenECMpart2=er->ecm[posECMpart2]+1;
   unsigned char tbuff[264];
   tbuff[0]=0;
-  memcpy(&tbuff[1],&(er->ecm[posECMpart2+1]),lenECMpart2-1);
+  memcpy(tbuff+1,er->ecm+posECMpart2+1,lenECMpart2-1);
   ins40[4]=lenECMpart2;
   int l;
-  l = do_cmd(reader, ins40,tbuff,NULL,cta_res);
+  l = do_cmd(reader,ins40,tbuff,NULL,NULL,cta_res);
   if(l>0 && status_ok(cta_res)) {
-    l = do_cmd(reader, ins54,NULL,NULL,cta_res);
+    l = do_cmd(reader,ins54,NULL,NULL,er->cw,cta_res);
     if(l>0 && status_ok(cta_res+l)) {
-      if (!cw_is_valid(CW1)) //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
+      if (!cw_is_valid(er->cw+0,0)) //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
       {
-          snprintf( er->msglog, MSGLOGSIZE, "9000 but cw=00 -> channel not subscribed " );
+          cs_log("[reader-videoguard12] ins54 returned status 90 00 but cw=00 -> channel not subscribed " );
 	return ERROR;
       }
 
       if(er->ecm[0]&1) {
-        memcpy(er->cw+8,CW1,8);
-        memcpy(er->cw+0,CW2,8);
+        unsigned char tmpcw[8];
+        memcpy(tmpcw,er->cw+8,8);
+        memcpy(er->cw+8,er->cw+0,8);
+        memcpy(er->cw+0,tmpcw,8);
       }
-      else {
-        memcpy(er->cw+0,CW1,8);
-        memcpy(er->cw+8,CW2,8);
-      }
-
 
       //test for postprocessing marker
       int posB0 = -1;
@@ -346,7 +343,7 @@ int videoguard12_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
       return OK;
     }
   }
-  snprintf( er->msglog, MSGLOGSIZE, "(%d) status not ok %02x %02x",l, cta_res[0],cta_res[1] );
+  cs_log("[reader-videoguard12] ins54 (%d) status not ok %02x %02x",l, cta_res[0],cta_res[1] );
   return ERROR;
 }
 
@@ -551,7 +548,7 @@ int videoguard12_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   const unsigned char *payload = payload_addr(ep->type, ep->emm, reader->hexserial);
   while (payload) {
     ins42[4]=*payload;
-    int l = do_cmd(reader, ins42,payload+1,NULL,cta_res);
+    int l = do_cmd(reader,ins42,payload+1,NULL,NULL,cta_res);
     if(l>0 && status_ok(cta_res)) {
       rc=OK;
       }

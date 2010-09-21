@@ -276,20 +276,18 @@ int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
   if (l > 0 && status_ok(cta_res)) {
     l = vg1_do_cmd(reader, ins54, NULL, rbuff, cta_res);
     if (l > 0 && status_ok(cta_res + l)) {
-      memcpy(CW1, rbuff + 5, 8);
-      //set to 0 so client will know it is not valid if not overwritten with valid cw
-      memset(CW2, 0, 8);
-      if (!cw_is_valid(CW1))	//sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
+      if (!cw_is_valid(rbuff+5,0))    //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
       {
-	cs_log("[videoguard1-reader] class48 ins54 status 90 00 but cw=00 -> channel not subscribed ");
-	return ERROR;
+        cs_log("[videoguard1-reader] class48 ins54 status 90 00 but cw=00 -> channel not subscribed");
+        return ERROR;
       }
-      if (er->ecm[0] & 1) {
-	memcpy(er->cw + 8, CW1, 8);
-	memcpy(er->cw + 0, CW2, 8);
+
+      if(er->ecm[0]&1) {
+        memset(er->cw+0, 0, 8);
+        memcpy(er->cw+8, rbuff + 5, 8);
       } else {
-	memcpy(er->cw + 0, CW1, 8);
-	memcpy(er->cw + 8, CW2, 8);
+        memcpy(er->cw+0, rbuff + 5, 8);
+        memset(er->cw+8, 0, 8);
       }
       return OK;
     }

@@ -11,10 +11,10 @@
 
 #define write_cmd_vg(cmd, data) (card_write(reader, cmd, data, cta_res, &cta_lr) == 0)
 
-#define VG_EMMTYPE_MASK 0xC0 
-#define VG_EMMTYPE_G 0 
-#define VG_EMMTYPE_U 1 
-#define VG_EMMTYPE_S 2 
+#define VG_EMMTYPE_MASK 0xC0
+#define VG_EMMTYPE_G 0
+#define VG_EMMTYPE_U 1
+#define VG_EMMTYPE_S 2
 
 #define NDSUNKNOWN    0
 #define NDSAUTO    0
@@ -31,8 +31,6 @@ typedef struct nds_atr {
 } NDS_ATR_ENTRY;
 
 AES_KEY dkey, ekey, Astro_Key;
-
-unsigned char CW1[8], CW2[8];
 
 extern int io_serial_need_dummy_char;
 
@@ -53,7 +51,7 @@ struct CmdTab {
 
 struct CmdTab *cmd_table;
 
-extern int cw_is_valid(unsigned char *cw);
+extern int cw_is_valid(unsigned char *cw, int start);
 extern void cAES_SetKey(const unsigned char *key);
 extern int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt);
 extern void swap_lb (unsigned char *buff, int len);
@@ -66,14 +64,14 @@ extern void cCamCryptVG_SetSeed(unsigned char *Key1, unsigned char *Key2);
 extern void cCamCryptVG_GetCamKey(unsigned char *buff);
 
 extern void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data);
-extern void Manage_Tag(unsigned char *Answer);
+extern void manage_tag(unsigned char *answer, unsigned char *cw);
 extern int status_ok(const unsigned char *status);
 
 extern void memorize_cmd_table (const unsigned char *mem, int size);
 extern int cmd_exists(const unsigned char *cmd);
 extern int read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
-extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char * cta_res);
-
+extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
+                  unsigned char *cw, unsigned char * cta_res);
 extern void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss, int base_year);
 extern void set_known_card_info(struct s_reader * reader);
 

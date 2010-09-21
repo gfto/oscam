@@ -5,7 +5,7 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
-void set_known_card_info(struct s_reader * reader) 
+void set_known_card_info(struct s_reader * reader)
 {
   /* Set to sensible default values */
   reader->card_baseyear = 1997;
@@ -186,14 +186,14 @@ static void cCamCryptVG_ReorderAndEncrypt(unsigned char *p);
 static void cCamCryptVG_Process_D0(const unsigned char *ins, unsigned char *data);
 static void cCamCryptVG_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status);
-static void cCamCryptVG_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2);
+static void cCamCryptVG_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw);
 
 struct CmdTab *cmd_table=NULL;
 
-int cw_is_valid(unsigned char *cw)	//returns 1 if cw_is_valid, returns 0 if cw is all zeros
+int cw_is_valid(unsigned char *cw, int start)	//returns 1 if cw_is_valid, returns 0 if cw is all zeros
 {
   int i;
-  for (i = 0; i < 8; i++)
+  for (i = start; i < start+8; i++)
     if (cw[i] != 0) {		//test if cw = 00
       return OK;
     }
@@ -271,7 +271,7 @@ void cCamCryptVG_GetCamKey(unsigned char *buff)
   swap_lb (buff, 64);
 }
 
-static void cCamCryptVG_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw1, unsigned char *cw2)
+static void cCamCryptVG_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw)
 {
   switch(buff[0]) {
     case 0xD0:
@@ -283,14 +283,14 @@ static void cCamCryptVG_PostProcess_Decrypt(unsigned char *buff, int len, unsign
     case 0xD3:
       cCamCryptVG_Decrypt_D3(buff,buff+5,buff+buff[4]+5);
       if(buff[1]==0x54) {
-        memcpy(cw1,buff+5,8);
-    	memset(cw2,0,8); //set to 0 so client will know it is not valid if not overwritten with valid cw
+        memcpy(cw+0,buff+5,8);
+    	memset(cw+8,0,8); //set to 0 so client will know it is not valid if not overwritten with valid cw
         int ind;
         for(ind=15; ind<len+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past buffer
                                              // we start searching at 15 because start at 13 goes wrong with 090F 090b and 096a
           if(buff[ind]==0x25) {
             //memcpy(cw2,buff+5+ind+2,8);
-            memcpy(cw2,buff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919  //don't care whether cw is 0 or not
+            memcpy(cw+8,buff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919  //don't care whether cw is 0 or not
             break;
           }
 /*          if(buff[ind+1]==0) break;
@@ -499,38 +499,37 @@ void memorize_cmd_table (const unsigned char *mem, int size){
   memcpy(cmd_table,mem,size);
 }
 
-void Manage_Tag(unsigned char *Answer)
+void manage_tag(unsigned char *rxbuff, unsigned char *cw)
 {
-	unsigned char Tag,Len,Len2;
-	bool Valid_0x55=0;
-	unsigned char *Body;
-	unsigned char Buffer[0x10];
-	int a=0x13;
-	Len2=Answer[4];
-	while(a<Len2)
-	{
-		Tag=Answer[a];
-		Len=Answer[a+1];
-		Body=Answer+a+2;
-		switch(Tag)
-		{
-			case 0x55:{
-				if(Body[0]==0x84)		//Tag 0x56 has valid data...
-					Valid_0x55=1;
-			}break;
-			case 0x56:{
-				memcpy(Buffer+8,Body,8);
-			}break;
-		}
-		a+=Len+2;
-
-	}
-	if(Valid_0x55)
-	{
-		memcpy(Buffer,Answer+5,8);									//Copy original DW 
-		AES_decrypt(Buffer,Buffer,&Astro_Key);			//Astro_Key declared and filled before...
-		memcpy(CW1,Buffer,8);												//Now copy calculated DW in right place
-	}
+  unsigned char tag,len,len2;
+  bool valid_0x55=FALSE;
+  unsigned char *body;
+  unsigned char buffer[0x10];
+  int a=0x13;
+  len2=rxbuff[4];
+  while(a<len2-9)  // -9 (body=8 len=1) to prevent memcpy(buffer+8,body,8) from reading past rxbuff
+  {
+    tag=rxbuff[a];
+    len=rxbuff[a+1];
+    body=rxbuff+a+2;
+    switch(tag)
+    {
+      case 0x55:{
+        if(body[0]==0x84){	//Tag 0x56 has valid data...
+          valid_0x55=TRUE;
+        }
+      }break;
+      case 0x56:{
+        memcpy(buffer+8,body,8);
+      }break;
+    }
+    a+=len+2;
+  }
+  if(valid_0x55){
+    memcpy(buffer,rxbuff+5,8);			//Copy original CW
+    AES_decrypt(buffer,buffer,&Astro_Key);	//Astro_Key declared and filled before...
+    memcpy(cw+0,buffer,8);			//Now copy calculated CW in right place
+  }
 }
 
 int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode)
@@ -573,7 +572,8 @@ int read_cmd_len(struct s_reader * reader, const unsigned char *cmd)
   return cta_res[0];
 }
 
-int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char * cta_res)
+int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
+           unsigned char *cw, unsigned char * cta_res)
 {
   ushort cta_lr;
   unsigned char ins2[5];
@@ -603,7 +603,7 @@ int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned ch
     memcpy(rxbuff+5+len,cta_res,2);
     }
 
-  cCamCryptVG_PostProcess_Decrypt(rxbuff,len,CW1,CW2);
+  cCamCryptVG_PostProcess_Decrypt(rxbuff,len,cw);
 
 // Start of suggested fix for 09ac cards
   // Log decrypted INS54
@@ -612,7 +612,7 @@ int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned ch
   ///  cs_dump (rxbuff + 5, rxbuff[4], "");
   ///}
 
-  Manage_Tag(rxbuff);
+  manage_tag(rxbuff, cw);
 //	End of suggested fix
   return len;
 }
@@ -633,7 +633,7 @@ void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
   unsigned char buffer[0x80];
   unsigned char md5_digest[0x10];
   //ecm_header_data = 01 03 b0 01 01
-  if (!cw_is_valid(cw))         //if cw is all zero, keep it that way
+  if (!cw_is_valid(cw,0))         //if cw is all zero, keep it that way
   {
     return;
   }
