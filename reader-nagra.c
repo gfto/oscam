@@ -386,7 +386,12 @@ static int NegotiateSessionKey(struct s_reader * reader)
 	{
 		if (!NegotiateSessionKey_N3_NA(reader))
 		{
-			cs_debug("[nagra-reader] NegotiateSessionKey_N3_NA failed");
+			cs_debug("[nagra-reader] NegotiateSessionKey_N3_NA first time failed");
+			return ERROR;
+		}
+		if (!NegotiateSessionKey_N3_NA(reader))
+		{
+			cs_debug("[nagra-reader] NegotiateSessionKey_N3_NA second time failed");
 			return ERROR;
 		}
 		return OK;
