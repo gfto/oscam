@@ -271,30 +271,30 @@ void cCamCryptVG_GetCamKey(unsigned char *buff)
   swap_lb (buff, 64);
 }
 
-static void cCamCryptVG_PostProcess_Decrypt(unsigned char *buff, int len, unsigned char *cw)
+static void cCamCryptVG_PostProcess_Decrypt(unsigned char *rxbuff, int len, unsigned char *cw)
 {
-  switch(buff[0]) {
+  switch(rxbuff[0]) {
     case 0xD0:
-      cCamCryptVG_Process_D0(buff,buff+5);
+      cCamCryptVG_Process_D0(rxbuff,rxbuff+5);
       break;
     case 0xD1:
-      cCamCryptVG_Process_D1(buff,buff+5,buff+buff[4]+5);
+      cCamCryptVG_Process_D1(rxbuff,rxbuff+5,rxbuff+rxbuff[4]+5);
       break;
     case 0xD3:
-      cCamCryptVG_Decrypt_D3(buff,buff+5,buff+buff[4]+5);
-      if(buff[1]==0x54) {
-        memcpy(cw+0,buff+5,8);
-    	memset(cw+8,0,8); //set to 0 so client will know it is not valid if not overwritten with valid cw
+      cCamCryptVG_Decrypt_D3(rxbuff,rxbuff+5,rxbuff+rxbuff[4]+5);
+      if(rxbuff[1]==0x54) {
+        memcpy(cw+0,rxbuff+5,8);
+    	memset(cw+8,0,8); //set to 0 so client will know it is invalid unless it is overwritten with a valid cw
         int ind;
-        for(ind=15; ind<len+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past buffer
+        for(ind=15; ind<len+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past rxbuffer
                                              // we start searching at 15 because start at 13 goes wrong with 090F 090b and 096a
-          if(buff[ind]==0x25) {
-            //memcpy(cw2,buff+5+ind+2,8);
-            memcpy(cw+8,buff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919  //don't care whether cw is 0 or not
+          if(rxbuff[ind]==0x25) {
+            //memcpy(cw2,rxbuff+5+ind+2,8);
+            memcpy(cw+8,rxbuff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919  //don't care whether cw is 0 or not
             break;
           }
-/*          if(buff[ind+1]==0) break;
-          ind+=buff[ind+1];*/
+/*          if(rxbuff[ind+1]==0) break;
+          ind+=rxbuff[ind+1];*/
         }
       }
       break;
@@ -507,7 +507,7 @@ void manage_tag(unsigned char *rxbuff, unsigned char *cw)
   unsigned char buffer[0x10];
   int a=0x13;
   len2=rxbuff[4];
-  while(a<len2-9)  // -9 (body=8 len=1) to prevent memcpy(buffer+8,body,8) from reading past rxbuff
+  while(a<len2+5-9)  //  +5 for 5 ins bytes, -9 (body=8 len=1) to prevent memcpy(buffer+8,body,8) from reading past rxbuff
   {
     tag=rxbuff[a];
     len=rxbuff[a+1];
