@@ -31,11 +31,11 @@ extern struct s_reader *reader;
 #define IS_CAT  5	// incoming data is CAT
 #define IS_BAD	0xFF	// incoming data is unknown
 
-static char *proto_txt[]={"unknown", "hsic", "sssp", "bomba", "dsr9500", "gs", 
+static const char *proto_txt[]={"unknown", "hsic", "sssp", "bomba", "dsr9500", "gs", 
                           "alpha", "dsr9500old", "gbox"};
-static char *dsrproto_txt[]={"unknown", "samsung", "openbox", "pioneer",
+static const char *dsrproto_txt[]={"unknown", "samsung", "openbox", "pioneer",
                              "extended", "unknown"};
-static char *incomplete="incomplete request (%d bytes)";
+static const char *incomplete="incomplete request (%d bytes)";
 static int connected=0;
 static struct timeb tps, tpe;
 static char oscam_ser_usr[32]={0};

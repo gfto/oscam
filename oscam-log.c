@@ -213,7 +213,7 @@ static void write_to_log(int flag, char *txt)
 	}
 }
 
-void cs_log(char *fmt,...)
+void cs_log(const char *fmt,...)
 {
 	if (!log_txt)
 		return;

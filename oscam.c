@@ -58,7 +58,7 @@ char    *loghist;     // ptr of log-history
 #endif
 int     *mcl=0;       // Master close log?
 
-static  int  shmsize =  CS_ECMCACHESIZE*(sizeof(struct s_ecm)) +
+static const int  shmsize =  CS_ECMCACHESIZE*(sizeof(struct s_ecm)) +
                         CS_MAXPID*(sizeof(struct s_client)) +
                         CS_MAXREADER*(sizeof(struct s_reader)) +
 #ifdef CS_WITH_GBOX
@@ -84,7 +84,7 @@ char  cs_memfile[128]=CS_MMAPFILE;
 static  char  mloc[128]={0};
 static  int shmid=0;    // Shared Memory ID
 static  int cs_last_idx=0;    // client index of last fork (master only)
-static char *logo = "  ___  ____   ___                \n / _ \\/ ___| / __|__ _ _ __ ___  \n| | | \\___ \\| |  / _` | '_ ` _ \\ \n| |_| |___) | |_| (_| | | | | | |\n \\___/|____/ \\___\\__,_|_| |_| |_|\n";
+static const char *logo = "  ___  ____   ___                \n / _ \\/ ___| / __|__ _ _ __ ___  \n| | | \\___ \\| |  / _` | '_ ` _ \\ \n| |_| |___) | |_| (_| | | | | | |\n \\___/|____/ \\___\\__,_|_| |_| |_|\n";
 
 static void cs_set_mloc(int ato, char *txt)
 {
@@ -1287,7 +1287,7 @@ static void cs_fake_client(char *usr, int uniq, in_addr_t ip)
 
 }
 
-int cs_auth_client(struct s_auth *account, char *e_txt)
+int cs_auth_client(struct s_auth *account, const char *e_txt)
 {
 	int rc=0;
 	char buf[32];
@@ -1841,11 +1841,11 @@ int hexserialset(int ridx)
                                                                                                                         
 int send_dcw(ECM_REQUEST *er)
 {
-	static char *stxt[]={"found", "cache1", "cache2", "emu",
+	static const char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
 			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
-	static char *stxtEx[]={"", "group", "caid", "ident", "class", "chid", "queue", "peer"};
-	static char *stxtWh[]={"", "user ", "reader ", "server ", "lserver "};
+	static const char *stxtEx[]={"", "group", "caid", "ident", "class", "chid", "queue", "peer"};
+	static const char *stxtWh[]={"", "user ", "reader ", "server ", "lserver "};
 	char sby[32]="", sreason[32]="", schaninfo[32]="";
 	char erEx[32]="";
 	char uname[38]="";

@@ -7,23 +7,23 @@ extern struct s_reader * reader;
 
 #define CONFVARWIDTH 30
 
-static char *cs_conf="oscam.conf";
-static char *cs_user="oscam.user";
-static char *cs_srvr="oscam.server";
-static char *cs_srid="oscam.srvid";
-static char *cs_trid="oscam.tiers";
-static char *cs_l4ca="oscam.guess";
-static char *cs_cert="oscam.cert";
-static char *cs_sidt="oscam.services";
+static const char *cs_conf="oscam.conf";
+static const char *cs_user="oscam.user";
+static const char *cs_srvr="oscam.server";
+static const char *cs_srid="oscam.srvid";
+static const char *cs_trid="oscam.tiers";
+static const char *cs_l4ca="oscam.guess";
+static const char *cs_cert="oscam.cert";
+static const char *cs_sidt="oscam.services";
 #ifdef CS_ANTICASC
-static char *cs_ac="oscam.ac";
+static const char *cs_ac="oscam.ac";
 #endif
 
 //Todo #ifdef CCCAM
-static char *cs_provid="oscam.provid";
+static const char *cs_provid="oscam.provid";
 
 #ifdef IRDETO_GUESSING
-static char *cs_ird="oscam.ird";
+static const char *cs_ird="oscam.ird";
 #endif
 
 static char token[4096];
@@ -47,7 +47,7 @@ typedef enum cs_proto_type
 	TAG_ANTICASC		// anti-cascading
 } cs_proto_type_t;
 
-static char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", "radegast", "serial",
+static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", "radegast", "serial",
 		      "cs357x", "cs378x", "gbox", "cccam", "constcw", "dvbapi", "webif", "anticasc", NULL};
 
 #ifdef DEBUG_SIDTAB
