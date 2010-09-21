@@ -1012,6 +1012,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		dot=",";
 	}
 
+	/*
 	//chid
 	int j;
 	dot="";
@@ -1024,7 +1025,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			dot=",";
 		}
 		dot=";";
-	}
+	}*/
 
 	tpl_printf(vars, 0, "SHOWCLS", "%d", reader[ridx].show_cls);
 	tpl_printf(vars, 0, "MAXQLEN", "%d", reader[ridx].maxqlen);
