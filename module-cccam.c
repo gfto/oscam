@@ -1436,6 +1436,13 @@ int cc_request_server_cards(int ridx, int dest_cs_idx) {
     return open(fname, O_RDONLY);
 }
 
+void cc_close_request_server_cards(int pipe, int dest_cs_idx) {
+	close(pipe);
+	char fname[40];
+        sprintf(fname, "%s/card%d", get_tmp_dir(), dest_cs_idx);
+        unlink(fname);
+}
+
 struct cc_card *read_card(uint8 *buf) {
 	struct cc_card *card = malloc(sizeof(struct cc_card));
 	memset(card, 0, sizeof(struct cc_card));
@@ -2632,7 +2639,7 @@ int cc_srv_report_cards() {
 				free(card);
 
 			}
-			close(pipe);
+			cc_close_request_server_cards(pipe, cs_idx);
 			//cs_debug_mask(D_TRACE, "%s end cards from %s", getprefix(), reader[r].label);			
 		}
 	}
@@ -2699,6 +2706,9 @@ void cc_cli_report_cards(int client_idx) {
 	sprintf((char*) buf, "%s/card%d", get_tmp_dir(), client_idx);
 	int pipe = open((char*) buf, O_WRONLY);
 
+	if (!cc || reader[ridx].tcp_connected == 0)
+		cc_cli_init_int();
+		
 	if (cc && reader[ridx].tcp_connected == 2) {
 
 		LLIST_ITR itr;
