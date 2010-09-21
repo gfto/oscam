@@ -4,7 +4,7 @@
 #define OK_RESPONSE 0x61
 #define CMD_BYTE 0x59
 
-static uchar xor (uchar * cmd, int cmdlen)
+static uchar xor (const uchar * cmd, int cmdlen)
 {
   int i;
   uchar checksum = 0x00;
@@ -13,13 +13,13 @@ static uchar xor (uchar * cmd, int cmdlen)
   return checksum;
 }
 
-static int dre_command (struct s_reader * reader, uchar * cmd, int cmdlen, unsigned char * cta_res, unsigned short * p_cta_lr)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return ERROR = err
+static int dre_command (struct s_reader * reader, const uchar * cmd, int cmdlen, unsigned char * cta_res, unsigned short * p_cta_lr)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return ERROR = err
 {
-  static uchar startcmd[] = { 0x80, 0xFF, 0x10, 0x01, 0x05 };	//any command starts with this, 
+  uchar startcmd[] = { 0x80, 0xFF, 0x10, 0x01, 0x05 };	//any command starts with this, 
   //last byte is nr of bytes of the command that will be sent
   //after the startcmd
 //response on startcmd+cmd:     = { 0x61, 0x05 }  //0x61 = "OK", last byte is nr. of bytes card will send
-  static uchar reqans[] = { 0x00, 0xC0, 0x00, 0x00, 0x08 };	//after command answer has to be requested, 
+  uchar reqans[] = { 0x00, 0xC0, 0x00, 0x00, 0x08 };	//after command answer has to be requested, 
   //last byte must be nr. of bytes that card has reported to send
   uchar command[256];
   int headerlen = sizeof (startcmd);
@@ -91,8 +91,8 @@ static int dre_set_provider_info (struct s_reader * reader)
 {
   def_resp;
   int i;
-  static uchar cmd59[] = { 0x59, 0x14 };	// subscriptions
-  static uchar cmd5b[] = { 0x5b, 0x00, 0x14 };	//validity dates
+  uchar cmd59[] = { 0x59, 0x14 };	// subscriptions
+  uchar cmd5b[] = { 0x5b, 0x00, 0x14 };	//validity dates
 
   cmd59[1] = reader->provider;
   if ((dre_cmd (cmd59))) {	//ask subscription packages, returns error on 0x11 card
@@ -135,8 +135,8 @@ int dre_card_init (struct s_reader * reader, ATR newatr)
 {
 	get_atr;
   def_resp;
-  static uchar ua[] = { 0x43, 0x15 };	// get serial number (UA)
-  static uchar providers[] = { 0x49, 0x15 };	// get providers
+  uchar ua[] = { 0x43, 0x15 };	// get serial number (UA)
+  uchar providers[] = { 0x49, 0x15 };	// get providers
   int i;
 	char *card;
 
@@ -174,7 +174,7 @@ int dre_card_init (struct s_reader * reader, ATR newatr)
 
   memset (reader->prid, 0x00, 8);
 
-  static uchar cmd30[] =
+  static const uchar cmd30[] =
     { 0x30, 0x81, 0x00, 0x81, 0x82, 0x03, 0x84, 0x05, 0x06, 0x87, 0x08, 0x09, 0x00, 0x81, 0x82, 0x03, 0x84, 0x05,
     0x00
   };
@@ -184,7 +184,7 @@ response:
 59 03 E2 E3 
 FE 48 */
 
-  static uchar cmd54[] = { 0x54, 0x14 };	// geocode
+  uchar cmd54[] = { 0x54, 0x14 };	// geocode
   cmd54[1] = reader->provider;
   uchar geocode = 0;
   if ((dre_cmd (cmd54)))	//error would not be fatal, like on 0x11 cards
@@ -249,7 +249,7 @@ int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
 {
   def_resp;
   if (reader->caid[0] == 0x4ae0) {
-    static uchar ecmcmd41[] = { 0x41,
+    uchar ecmcmd41[] = { 0x41,
       0x58, 0x1f, 0x00,		//fixed part, dont change 
       0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,	//0x01 - 0x08: next key
       0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,	//0x11 - 0x18: current key
@@ -272,7 +272,7 @@ int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
   }
   else {
 
-    static uchar ecmcmd51[] = { 0x51, 0x02, 0x56, 0x05, 0x00, 0x4A, 0xE3,	//fixed header?
+    uchar ecmcmd51[] = { 0x51, 0x02, 0x56, 0x05, 0x00, 0x4A, 0xE3,	//fixed header?
       0x9C, 0xDA,		//first three nibbles count up, fourth nibble counts down; all ECMs sent twice
       0xC1, 0x71, 0x21, 0x06, 0xF0, 0x14, 0xA7, 0x0E,	//next key?
       0x89, 0xDA, 0xC9, 0xD7, 0xFD, 0xB9, 0x06, 0xFD,	//current key?
@@ -362,7 +362,7 @@ int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
   if (reader->caid[0] == 0x4ae1) {
     if(ep->type == UNIQUE && ep->emm[39] == 0x3d)
     { /* For new package activation. */
-        static uchar emmcmd58[26];
+        uchar emmcmd58[26];
         emmcmd58[0] = 0x58;
         memcpy(&emmcmd58[1], &ep->emm[40], 24);
         emmcmd58[25] = 0x15;
@@ -372,7 +372,7 @@ int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
     }
     else
     {
-        static uchar emmcmd52[0x3a];
+        uchar emmcmd52[0x3a];
         emmcmd52[0] = 0x52;
         int i;
         for (i = 0; i < 2; i++) {
@@ -388,7 +388,7 @@ int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
     }
   }
   else {
-    static uchar emmcmd42[] =
+    uchar emmcmd42[] =
       { 0x42, 0x85, 0x58, 0x01, 0xC8, 0x00, 0x00, 0x00, 0x05, 0xB8, 0x0C, 0xBD, 0x7B, 0x07, 0x04, 0xC8,
       0x77, 0x31, 0x95, 0xF2, 0x30, 0xB7, 0xE9, 0xEE, 0x0F, 0x81, 0x39, 0x1C, 0x1F, 0xA9, 0x11, 0x3E,
       0xE5, 0x0E, 0x8E, 0x50, 0xA4, 0x31, 0xBB, 0x01, 0x00, 0xD6, 0xAF, 0x69, 0x60, 0x04, 0x70, 0x3A,

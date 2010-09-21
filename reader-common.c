@@ -10,7 +10,6 @@
 #ifdef AZBOX
 #include "csctapi/ifd_azbox.h"
 #endif
-static int cs_ptyp_orig; //reinit=1, 
 
 #if defined(TUXBOX) && defined(PPC) //dbox2 only
 #include "csctapi/mc_global.h"
@@ -64,7 +63,7 @@ int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar * cta_res,
 #endif
 
 	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary 
-	cs_ptyp_orig=cs_ptyp;
+	int cs_ptyp_orig=cs_ptyp;
 	cs_ptyp=D_DEVICE;
 	if (reader->typ == R_SC8in1) {
 		pthread_mutex_lock(&sc8in1);
@@ -121,7 +120,7 @@ static int reader_card_inserted(struct s_reader * reader)
 	}
 #endif
 	int card;
-	cs_ptyp_orig=cs_ptyp;
+	int cs_ptyp_orig=cs_ptyp;
 	cs_ptyp=D_IFD;
 	if (ICC_Async_GetStatus (reader, &card)) {
 		cs_log("Error getting status of terminal.");
@@ -148,7 +147,7 @@ static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned sh
 		return 0;
 
   /* Activate card */
-	cs_ptyp_orig=cs_ptyp;
+	int cs_ptyp_orig=cs_ptyp;
 	cs_ptyp=D_DEVICE;
 	if (reader->typ == R_SC8in1) {
 		pthread_mutex_lock(&sc8in1);
@@ -332,7 +331,7 @@ int reader_device_init(struct s_reader * reader)
 #endif
  
 	int rc = -1; //FIXME
-	cs_ptyp_orig=cs_ptyp;
+	int cs_ptyp_orig=cs_ptyp;
 	cs_ptyp=D_DEVICE;
 #if defined(TUXBOX) && defined(PPC)
 	struct stat st;

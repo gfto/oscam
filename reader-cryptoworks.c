@@ -162,7 +162,7 @@ int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
   def_resp;
   int i;
   unsigned int mfid=0x3F20;
-  static uchar cwexp[] = { 1, 0 , 1};
+  static const uchar cwexp[] = { 1, 0 , 1};
   uchar insA4C[]= {0xA4, 0xC0, 0x00, 0x00, 0x11};
   uchar insB8[] = {0xA4, 0xB8, 0x00, 0x00, 0x0c};
   uchar issuerid=0;
@@ -264,86 +264,12 @@ int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-/*
-#ifdef LALL
-bool cSmartCardCryptoworks::Decode(const cEcmInfo *ecm, const unsigned char *data, unsigned char *cw)
-{
-  static unsigned char ins4c[] = { 0xA4,0x4C,0x00,0x00,0x00 };
-
-  unsigned char nanoD4[10];
-  int l=check_sct_len(data,-5+(ucpkValid ? sizeof(nanoD4):0));
-  if(l>5) {
-    unsigned char buff[MAX_LEN];
-    if(ucpkValid) {
-      memcpy(buff,data,l);
-      nanoD4[0]=0xD4;
-      nanoD4[1]=0x08;
-      for(unsigned int i=2; i<sizeof(nanoD4); i++) nanoD4[i]=rand();
-      memcpy(&buff[l],nanoD4,sizeof(nanoD4));
-      data=buff; l+=sizeof(nanoD4);
-      }
-    ins4c[3]=ucpkValid ? 2 : 0;
-    ins4c[4]=l-5;
-    if(IsoWrite(ins4c,&data[5]) && Status() &&
-       (l=GetLen())>0 && ReadData(buff,l)==l) {
-      int r=0;
-      for(int i=0; i<l && r<2; ) {
-        int n=buff[i+1];
-        switch(buff[i]) {
-          case 0x80:
-            de(printf("smartcardcryptoworks: nano 80 (serial)\n"))
-            break;
-          case 0xD4:
-            de(printf("smartcardcryptoworks: nano D4 (rand)\n"))
-            if(n<8 || memcmp(&buff[i],nanoD4,sizeof(nanoD4)))
-              di(printf("smartcardcryptoworks: random data check failed after decrypt\n"))
-            break;
-          case 0xDB: // CW
-            de(printf("smartcardcryptoworks: nano DB (cw)\n"))
-            if(n==0x10) {
-              memcpy(cw,&buff[i+2],16);
-              r|=1;
-              }
-            break;
-          case 0xDF: // signature
-            de(printf("smartcardcryptoworks: nano DF %02x (sig)\n",n))
-            if(n==0x08) {
-              if((buff[i+2]&0x50)==0x50 && !(buff[i+3]&0x01) && (buff[i+5]&0x80))
-                r|=2;
-              }
-            else if(n==0x40) { // camcrypt
-              if(ucpkValid) {
-                RSA(&buff[i+2],&buff[i+2],n,exp,ucpk,false);
-                de(printf("smartcardcryptoworks: after camcrypt "))
-                de(HexDump(&buff[i+2],n))
-                r=0; l=n-4; n=4;
-                }
-              else {
-                di(printf("smartcardcryptoworks: valid UCPK needed for camcrypt!\n"))
-                return false;
-                }
-              }
-            break;
-          default:
-            de(printf("smartcardcryptoworks: nano %02x (unhandled)\n",buff[i]))
-            break;
-          }
-        i+=n+2;
-        }
-      return r==3;
-      }
-    }
-  return false;
-}
-#endif
-*/
-
 int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
 	int r=0;
-  static unsigned char ins4C[] = { 0xA4,0x4C,0x00,0x00,0x00 };
-  static unsigned char insC0[] = { 0xA4,0xC0,0x00,0x00,0x1C };
+  unsigned char ins4C[] = { 0xA4,0x4C,0x00,0x00,0x00 };
+  unsigned char insC0[] = { 0xA4,0xC0,0x00,0x00,0x1C };
   unsigned char nanoD4[10];
   int secLen=check_sct_len(er->ecm,-5+(reader->ucpk_valid ? sizeof(nanoD4):0));
 
