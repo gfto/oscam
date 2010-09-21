@@ -273,7 +273,7 @@ static int NegotiateSessionKey_N3_NA(struct s_reader * reader)
                             0xaf, 0x22, 0x51, 0x3d, 0x44, 0xb3, 0x20, 0x83,
                             0xde, 0xcb, 0x5f, 0x35, 0x2b, 0xb0, 0xce, 0x70,
                             0x01, 0x02, 0x03, 0x04, //IRD nr
-                            0x01};//ID cmd 26
+                            0x00};//ID cmd 26
 
 	unsigned char negot[64];
 	unsigned char tmp[64];
