@@ -2231,6 +2231,11 @@ int write_userdb(struct s_auth *authptr)
 		fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
 		free(value);
 
+		//CHID
+		value = mk_t_ftab(&account->fchid);
+		fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
+		free(value);
+
 		if (account->c35_suppresscmd08)
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 			

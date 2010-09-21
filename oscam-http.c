@@ -1416,6 +1416,11 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 	tpl_printf(vars, 0, "IDENTS", "%s\n", value);
 	free(value);
 
+	//CHID
+	value = mk_t_ftab(&account->fchid);
+	tpl_printf(vars, 0, "CHIDS", "%s\n", value);
+	free(value);
+
 	//Betatunnel
 	value = mk_t_tuntab(&account->ttab);
 	tpl_addVar(vars, 0, "BETATUNNELS", value);
