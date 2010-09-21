@@ -859,8 +859,11 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 		for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
 		char servicelabels[255]="";
+
 		clear_caidtab(&reader[ridx].ctab);
 		clear_ftab(&reader[ridx].ftab);
+		clear_ftab(&reader[ridx].fchid);
+
 		reader[ridx].grp = 0;
 		reader[ridx].auprovid = 0;
 		for(i = 0; i < (*params).paramcount; ++i) {
@@ -1321,6 +1324,8 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		clear_tuntab(&account->ttab);
 		//clear ident before it re-readed by chk_t
 		clear_ftab(&account->ftab);
+		//clear CHID before it re-readed by chk_t
+		clear_ftab(&account->fchid);
 
 		for(i=0;i<(*params).paramcount;i++) {
 			if ((strcmp((*params).params[i], "action")) && (strcmp((*params).params[i], "user")) && (strcmp((*params).params[i], "newuser"))) {
