@@ -260,7 +260,7 @@ static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 		
 }
 
-static int NegotiateSessionKey_N3_NA(struct s_reader * reader)
+static int NegotiateSessionKey_N3_NA(struct s_reader * reader, int keynr)
 {
 	def_resp;
     unsigned char cmd2b[] = {0x21, 0x40, 0x4D, 0xA0, 0xCA, 0x00, 0x00, 0x47, 0x27, 0x45,
@@ -273,7 +273,7 @@ static int NegotiateSessionKey_N3_NA(struct s_reader * reader)
                             0xaf, 0x22, 0x51, 0x3d, 0x44, 0xb3, 0x20, 0x83,
                             0xde, 0xcb, 0x5f, 0x35, 0x2b, 0xb0, 0xce, 0x70,
                             0x01, 0x02, 0x03, 0x04, //IRD nr
-                            0x00};//ID cmd 26
+                            0x00};//keynr
 
 	unsigned char negot[64];
 	unsigned char tmp[64];
@@ -289,7 +289,7 @@ static int NegotiateSessionKey_N3_NA(struct s_reader * reader)
 	}
 
    memcpy(tmp, reader->irdId, 4);
-   tmp[4]=0; //irdId should have trailing NULL
+   tmp[4]=keynr;
    if(!do_cmd(reader, 0x26,0x07,0xa6, 0x42, tmp,cta_res,&cta_lr))	{
         cs_debug("[nagra-reader] CMD$26 failed");
         return ERROR;
@@ -338,6 +338,7 @@ static int NegotiateSessionKey_N3_NA(struct s_reader * reader)
 	idea_set_decrypt_key(&ks,&reader->ksSession);
 	
     memcpy(cmd2b+74, reader->irdId, 4);
+    cmd2b[78] = keynr;
     if(!do_cmd(reader, 0x27,0x47,0xa7,0x02,cmd2b+10,cta_res,&cta_lr))	{
         cs_debug("[nagra-reader] CMD$27 failed");
         return ERROR;
@@ -384,12 +385,12 @@ static int NegotiateSessionKey(struct s_reader * reader)
 	
 	if (reader->is_n3_na)
 	{
-		if (!NegotiateSessionKey_N3_NA(reader))
+		if (!NegotiateSessionKey_N3_NA(reader, 1))
 		{
 			cs_debug("[nagra-reader] NegotiateSessionKey_N3_NA first time failed");
 			return ERROR;
 		}
-		if (!NegotiateSessionKey_N3_NA(reader))
+		if (!NegotiateSessionKey_N3_NA(reader, 0))
 		{
 			cs_debug("[nagra-reader] NegotiateSessionKey_N3_NA second time failed");
 			return ERROR;
