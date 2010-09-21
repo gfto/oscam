@@ -691,7 +691,7 @@ int nagra2_card_init(struct s_reader * reader, ATR newatr)
 	}
 	else return ERROR;
 
-	if (!reader->is_tiger && !reader->is_n3_na)
+	if (!reader->is_tiger)
 	{
 		CamStateRequest(reader);
 		if(!do_cmd(reader, 0x12,0x02,0x92,0x06,0,cta_res,&cta_lr)) 
