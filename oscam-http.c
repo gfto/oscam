@@ -1924,7 +1924,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	tpl_addVar(vars, 0, "LOGHISTORY", "the flag CS_LOGHISTORY is not set in your binary<BR>\n");
 #endif
 
-	tpl_printf(vars, 0, "SDEBUG", "<SPAN CLASS=\"debugt\"> %s&nbsp;%d to&nbsp;</SPAN>\n", "Switch Debug from", cfg->debuglvl);
+	tpl_printf(vars, 0, "SDEBUG", "<SPAN CLASS=\"debugt\"> %s&nbsp;%d to&nbsp;</SPAN>\n", "Switch Debug from", cs_dblevel);
 	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=0\" title=\"no debugging (default)\">0</A>&nbsp;\n");
 	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=1\" title=\"detailed error messages\">1</A>&nbsp;\n");
 	tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"status.html?debug=2\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n");
@@ -2182,7 +2182,7 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 			}
 		}
 
-		tpl_printf(vars, 0, "SDEBUG", "<SPAN CLASS=\"debugt\"> %s&nbsp;%d to&nbsp;</SPAN>\n", "Switch Debug from", cfg->debuglvl);
+		tpl_printf(vars, 0, "SDEBUG", "<SPAN CLASS=\"debugt\"> %s&nbsp;%d to&nbsp;</SPAN>\n", "Switch Debug from", cs_dblevel);
 		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=0\" title=\"no debugging (default)\">0</A>&nbsp;\n");
 		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=1\" title=\"detailed error messages\">1</A>&nbsp;\n");
 		tpl_addVar(vars, 1, "SDEBUG", "<A CLASS=\"debugl\" HREF=\"files.html?part=logfile&debug=2\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n");
