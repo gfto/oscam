@@ -172,6 +172,6 @@ void cc_free_card(struct cc_card *card);
 
 struct cc_card *read_card_from(int pipe);
 int cc_request_server_cards(int ridx, int dest_cs_idx);
-void cc_close_request_server_cards(int pipe, int dest_cs_idx);
+void cc_close_request_server_cards(int pipe, int ridx, int dest_cs_idx);
 
 #endif /* MODULECCCAM_H_ */

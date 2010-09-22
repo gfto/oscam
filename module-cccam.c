@@ -1468,14 +1468,18 @@ void cc_idle() {
  **/
 int cc_request_server_cards(int ridx, int dest_cs_idx) {
 	char fname[40];
-	sprintf(fname, "%s/card%d", get_tmp_dir(), dest_cs_idx);
+	sprintf(fname, "%s/card%d-%d", get_tmp_dir(), ridx, dest_cs_idx);
 	unlink(fname);
 	mkfifo(fname, 0666);
 	//Request cards from server:
 	int data[2] = {ridx, dest_cs_idx};
     write_to_pipe(fd_c2m, PIP_ID_CCC, (uchar*)data, sizeof(data));
 
-    return open(fname, O_RDONLY);
+    int pipe = open(fname, O_RDONLY);
+    if (pipe <= 0)
+	return 0;
+    else 
+    	return pipe;
 }
 
 /**
@@ -1483,10 +1487,10 @@ int cc_request_server_cards(int ridx, int dest_cs_idx) {
  *
  * THREADED: This function should be removed if using threaded
  **/
-void cc_close_request_server_cards(int pipe, int dest_cs_idx) {
+void cc_close_request_server_cards(int pipe, int ridx, int dest_cs_idx) {
 	close(pipe);
 	char fname[40];
-        sprintf(fname, "%s/card%d", get_tmp_dir(), dest_cs_idx);
+        sprintf(fname, "%s/card%d-%d", get_tmp_dir(), ridx, dest_cs_idx);
         unlink(fname);
 }
 
@@ -2310,9 +2314,9 @@ int cc_cli_connect() {
 	//Receive Cards
 	n = 0;
 	do {
-	 	n = casc_recv_timer(rdr, buf, sizeof(buf), 100);
-	 	cs_debug_mask(D_TRACE, "n=%d", n);
-	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA || n == MSG_CARD_REMOVED);
+	 	n = casc_recv_timer(rdr, buf, sizeof(buf), 200);
+	 	//cs_debug_mask(D_TRACE, "n=%d", n);
+	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA || n == MSG_CARD_REMOVED || n == MSG_CW_NOK1);
 	
 	if (n>0) n = 0;
 	return n;
@@ -2677,8 +2681,20 @@ int cc_srv_report_cards() {
 			
 			struct cc_card *card;
 			int pipe = cc_request_server_cards(r, cs_idx);
-			while (pipe && (card = read_card_from(pipe)))
+			
+			//When reader has connection problems, client whould stuck! so we need to get sure he is connected AND has cards:
+			int retry = 3;
+			while (pipe && reader[r].tcp_connected != 2 && retry > 0) {
+				cs_sleepms(200);
+				retry--;
+			}
+			
+			int count = 0;
+			while (reader[r].tcp_connected == 2 && pipe)
 			{
+				card = read_card_from(pipe);
+				if (!card) break;
+				
 				if (card->hop <= maxhops && //card->maxdown > 0 &&
 						chk_ctab(card->caid, &cl->ctab) && chk_ctab(
 						card->caid, &reader[r].ctab)) {
@@ -2700,13 +2716,14 @@ int cc_srv_report_cards() {
 					if (!ignore) { //Filtered by service
 						card->maxdown = reshare;
 						add_card_to_serverlist(server_cards, card);
+						count++;
 					}
 				}
 				free(card);
 
 			}
-			cc_close_request_server_cards(pipe, cs_idx);
-			cs_debug_mask(D_TRACE, "%s got cards from %s", getprefix(), reader[r].label);			
+			cc_close_request_server_cards(pipe, r, cs_idx);
+			cs_debug_mask(D_TRACE, "%s got %d cards from %s", getprefix(), count, reader[r].label);			
 		}
 	}
 
@@ -2771,7 +2788,7 @@ void cc_cli_report_cards(int client_idx) {
 	int count = 0;
 
 	uint8 buf[CC_MAXMSGSIZE];
-	sprintf((char*) buf, "%s/card%d", get_tmp_dir(), client_idx);
+	sprintf((char*) buf, "%s/card%d-%d", get_tmp_dir(), ridx, client_idx);
 	int pipe = open((char*) buf, O_WRONLY);
 
 	cs_debug_mask(D_TRACE, "%s reporting cards...", rdr->label);

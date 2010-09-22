@@ -1683,7 +1683,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 					cc_free_card(card);
 				}
-				cc_close_request_server_cards(pipe, cs_idx);
+				cc_close_request_server_cards(pipe, ridx, cs_idx);
 				
 				if (caidcount)
 					tpl_printf(vars, 1, "LOGSUMMARY",
