@@ -10,7 +10,6 @@
 #define DEFAULT_NFB 1
 
 struct timeb nulltime;
-pthread_mutex_t stat_busy;
 
 int ecm_send_cache_idx = 0;
 typedef struct s_ecm_send_cache {
@@ -40,12 +39,6 @@ void init_stat()
 	if (cfg->lb_reopen_seconds < 10)
 		cfg->lb_reopen_seconds = DEFAULT_REOPEN_SECONDS;
 		
-	pthread_mutex_init(&stat_busy, NULL);
-}
-
-void done_stat()
-{
-	pthread_mutex_destroy(&stat_busy);
 }
 
 int chk_send_cache(int caid, uchar *ecmd5)
@@ -213,8 +206,6 @@ void save_all_stat_to_file()
  */
 void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int rc)
 {
-	pthread_mutex_lock(&stat_busy);
-	
 	READER_STAT *stat = get_stat(ridx, caid, prid, srvid);
 	if (!stat) {
 		stat = malloc(sizeof(READER_STAT));
@@ -294,7 +285,6 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 			save_all_stat_to_file();
 		}
 	}
-	pthread_mutex_unlock(&stat_busy);
 }
 
 /**
@@ -330,7 +320,6 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
  */
 int get_best_reader(GET_READER_STAT *grs, int *result)
 {
-	pthread_mutex_lock(&stat_busy);
 	int i;
 	i = chk_send_cache(grs->caid, grs->ecmd5);
 	if (i >= 0) { //Found in cache, return same reader because he has the cached cws!
@@ -342,7 +331,6 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], 
 			result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]);
 
-		pthread_mutex_unlock(&stat_busy);
 		return best_ridx;
 	}
 
@@ -366,9 +354,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			stat = get_stat(i, grs->caid, grs->prid, grs->srvid);
 			if (!stat) {
 				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", reader[i].label);
-				pthread_mutex_unlock(&stat_busy);
 				add_stat(i, grs->caid,  grs->prid, grs->srvid, 1, -1);
-				pthread_mutex_lock(&stat_busy);
 				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
 				continue; 
 			}
@@ -496,8 +482,6 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	if (new_nulltime.time)
 		nulltime = new_nulltime;
 		
-	pthread_mutex_unlock(&stat_busy);
-	
 	return best_ridx;
 }
 
@@ -509,7 +493,6 @@ void clear_reader_stat(int ridx)
 	if (!reader_stat[ridx])
 		return;
 		
-	pthread_mutex_lock(&stat_busy);
 	LLIST_ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
 	while (stat) {
@@ -518,5 +501,4 @@ void clear_reader_stat(int ridx)
 	}
 	llist_destroy(reader_stat[ridx]);
 	reader_stat[ridx] = NULL;
-	pthread_mutex_unlock(&stat_busy);
 }
