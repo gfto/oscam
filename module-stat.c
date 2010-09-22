@@ -366,7 +366,9 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			stat = get_stat(i, grs->caid, grs->prid, grs->srvid);
 			if (!stat) {
 				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", reader[i].label);
+				pthread_mutex_unlock(&stat_busy);
 				add_stat(i, grs->caid,  grs->prid, grs->srvid, 1, -1);
+				pthread_mutex_lock(&stat_busy);
 				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
 				continue; 
 			}
