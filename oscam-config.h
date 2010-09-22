@@ -1,10 +1,12 @@
 // ADDONS
 #ifndef WEBIF
-//#define WEBIF
+// #define WEBIF
 #endif
 
 #ifndef HAVE_DVBAPI
+#if !defined(OS_CYGWIN32) && !defined(OS_HPUX) && !defined(OS_FREEBSD) && !defined(OS_MACOSX)
 #define HAVE_DVBAPI
+#endif
 #endif
 
 #ifndef IRDETO_GUESSING
@@ -124,15 +126,6 @@
 #  if !defined(COOL) && !defined(ST_LINUX)
 #    define SCI_DEV 1
 #  endif
-#  define HAVE_DVBAPI
-#else
-#ifdef OS_LINUX
-#define HAVE_DVBAPI
-#endif
-#endif
-
-#ifdef AZBOX
-#  define HAVE_DVBAPI
 #endif
 
 #ifdef UCLIBC
