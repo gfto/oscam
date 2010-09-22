@@ -785,6 +785,8 @@ static void start_thread(void * startroutine, char * nameroutine, char typ) {
 	else
 		o=cs_fork(0,97);
 
+	if (o<0) return;
+
 	client[o].typ=typ;
 
 	client[o].ip=client[0].ip;
@@ -841,6 +843,9 @@ static void restart_cardreader(int reader_idx, int restart) {
 		}
 
 		i=cs_fork(0, 99);
+
+		if (i<0) return;
+
 		reader[reader_idx].fd=client[i].fd_m2c;
 		client[i].ridx=reader_idx;
 		cs_log("creating thread for device %s slot %i with ridx %i cs_idx %i", reader[reader_idx].device, reader[reader_idx].slot, reader_idx, i);
@@ -2652,6 +2657,8 @@ int accept_connection(int i, int j) {
 				}
 				o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
 
+				if (o<0) return 0;
+
 				client[o].ufd=fdp[1];
 				client[o].pfd=fdp[0];
 
@@ -2685,7 +2692,9 @@ int accept_connection(int i, int j) {
 		int pfd3;
 		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 			o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
-			
+
+			if (o<0) return 0;			
+
 			client[o].ctyp=i;
 			client[o].udp_fd=pfd3;
 			client[o].port_idx=j;
