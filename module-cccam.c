@@ -1500,7 +1500,7 @@ struct cc_card *read_card(uint8 *buf) {
 	card->id = b2i(4, buf);
 	card->remote_id = b2i(3, buf + 5);
 	card->caid = b2i(2, buf + 8);
-	card->hop = buf[10] + 1;
+	card->hop = buf[10];
 	card->maxdown = buf[11];
 	memcpy(card->hexserial, buf + 12, 8); //HEXSERIAL!!
 
@@ -1703,6 +1703,8 @@ int cc_parse_msg(uint8 *buf, int l) {
 		rdr->card_status = CARD_INSERTED;
 
 		struct cc_card *card = read_card(buf + 4);
+		
+		card->hop++; //inkrementing hop
 
 		//SS: Hack:
 		//Check if we already have this card:
