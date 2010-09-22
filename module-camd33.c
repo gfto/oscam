@@ -223,4 +223,5 @@ void module_camd33(struct s_module *ph)
   ph->s_handler=camd33_server;
   ph->recv=camd33_recv;
   ph->send_dcw=camd33_send_dcw;
+  ph->num=R_CAMD33;
 }

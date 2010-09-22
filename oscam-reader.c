@@ -472,11 +472,13 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
     casc_process_ecm(reader, er);
     return;
   }
+#ifdef WITH_CARDREADER
   cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
   er->msglog[0] = 0;
   er->rc=reader_ecm(reader, er);
   write_ecm_answer(reader, fd_c2m, er);
   reader_post_process(reader);
+#endif
   //fixme re-activated code for testing
   if(reader->typ=='r') reader->qlen--;
   //printf("queue: %d\n",reader->qlen);
@@ -524,7 +526,11 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
                   }
           } else {
                   cs_debug("local emm reader: %s" ,reader->label);
+#ifdef WITH_CARDREADER
                   rc=reader_emm(reader, ep);
+#else
+                  rc=0;
+#endif
           }
 
           if (!ecs)
@@ -658,7 +664,9 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
     return(0);
   }
 
+#ifdef WITH_CARDREADER
   if (!(reader->typ & R_IS_CASCADING)) reader_checkhealth(reader);
+#endif
   return(0);
 }
 
@@ -679,7 +687,9 @@ static void reader_do_pipe(struct s_reader * reader)
       reader_do_emm(reader, (EMM_PACKET *)ptr);
       break;
     case PIP_ID_CIN: 
+#ifdef WITH_CARDREADER
       reader_card_info(reader); 
+#endif
       break;
   }
 }
@@ -716,20 +726,6 @@ void * start_cardreader(void * rdr)
     client[cs_idx].typ='p';
     client[cs_idx].port=reader->r_port;
     strcpy(client[cs_idx].usr, reader->r_usr);
-    switch(reader->typ)
-    {
-      case R_CAMD33  : module_camd33(&reader->ph); break;
-      case R_CAMD35  : module_camd35(&reader->ph); break;
-      case R_NEWCAMD : module_newcamd(&reader->ph); break;
-      case R_RADEGAST: module_radegast(&reader->ph); break;
-      case R_SERIAL  : module_oscam_ser(&reader->ph); break;
-      case R_CS378X  : module_camd35_tcp(&reader->ph); break;
-      case R_CCCAM   : module_cccam(&reader->ph); break;
-      case R_CONSTCW : module_constcw(&reader->ph); break;
-#ifdef CS_WITH_GBOX
-      case R_GBOX    : module_gbox(&reader->ph);strcpy(client[cs_idx].usr, reader->label); break;
-#endif
-    }
     
     if (!(reader->ph.c_init)) {
       cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);
@@ -747,6 +743,7 @@ void * start_cardreader(void * rdr)
     if ((reader->log_port) && (reader->ph.c_init_log))
       reader->ph.c_init_log();
   }
+#ifdef WITH_CARDREADER
   else
   {
     client[cs_idx].ip=cs_inet_addr("127.0.0.1");
@@ -755,6 +752,7 @@ void * start_cardreader(void * rdr)
       	cs_sleepms(60000); // wait 60 secs and try again
   }
 
+#endif
   client[cs_idx].emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));
   if (!client[cs_idx].emmcache)
   {

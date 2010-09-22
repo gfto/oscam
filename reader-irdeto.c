@@ -547,3 +547,15 @@ int irdeto_card_info(struct s_reader * reader)
   cs_log("[irdeto-reader] ready for requests");
   return OK;
 }
+
+void reader_irdeto(struct s_cardsystem *ph) 
+{
+	ph->do_emm=irdeto_do_emm;
+	ph->do_ecm=irdeto_do_ecm;
+	ph->card_info=irdeto_card_info;
+	ph->card_init=irdeto_card_init;
+	ph->get_emm_type=irdeto_get_emm_type;
+	ph->get_emm_filter=irdeto_get_emm_filter;
+	ph->caids[0]=0x06;
+	ph->caids[1]=0x17;
+}

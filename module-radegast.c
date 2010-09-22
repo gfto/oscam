@@ -298,4 +298,5 @@ void module_radegast(struct s_module *ph)
   ph->c_init=radegast_cli_init;
   ph->c_recv_chk=radegast_recv_chk;
   ph->c_send_ecm=radegast_send_ecm;
+  ph->num=R_RADEGAST;
 }

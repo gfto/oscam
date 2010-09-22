@@ -1,5 +1,3 @@
-#ifdef WEBIF
-#include "globals.h"
 
 #define SERVER "webserver/1.0"
 #define PROTOCOL "HTTP/1.0"
@@ -1404,4 +1402,4 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime);
 void send_css(FILE *f);
 char *getParam(struct uriparams *params, char *name);
 int tpl_saveIncludedTpls(const char *path);
-#endif
+

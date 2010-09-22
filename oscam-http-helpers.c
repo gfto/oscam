@@ -1,3 +1,4 @@
+#include "globals.h"
 #ifdef WEBIF
 #include "oscam-http.h"
 

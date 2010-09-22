@@ -13,6 +13,7 @@
         Globals
 *****************************************************************************/
 struct s_module ph[CS_MAX_MOD]; // Protocols
+struct s_cardsystem cardsystem[CS_MAX_MOD]; // Protocols
 
 int mfdr=0;     // Master FD (read)
 int fd_c2m=0;
@@ -38,9 +39,11 @@ struct  s_ecm     *ecmcache;  // Shared Memory
 struct  s_client  *client;    // Shared Memory
 struct  s_reader  *reader;    // Shared Memory
 
+#ifdef CS_WITH_GBOX
 struct  card_struct *Cards;   // Shared Memory
 struct  idstore_struct  *idstore;   // Shared Memory
 unsigned long *IgnoreList;    // Shared Memory
+#endif
 
 struct  s_config  *cfg;       // Shared Memory
 #ifdef CS_ANTICASC
@@ -811,12 +814,30 @@ void start_anticascader()
 #endif
 
 static void restart_cardreader(int reader_idx, int restart) {
-	int i;
+	int i,n;
 	if ((reader[reader_idx].device[0]) && (reader[reader_idx].enable == 1) && (!reader[reader_idx].deleted)) {
 
 		if (restart) {
 			cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
 			cs_log("restarting reader %s (index=%d)", reader[reader_idx].label, reader_idx);
+		}
+
+		if ((reader[reader_idx].typ & R_IS_CASCADING)) {
+			n=0;
+			for (i=0; i<CS_MAX_MOD; i++) {
+				if (ph[i].num) {
+					if (reader[reader_idx].typ==ph[i].num) {
+						cs_debug("reader %s protocol: %s", reader[reader_idx].label, ph[i].desc);
+						reader[reader_idx].ph=ph[i];
+						n=1;
+						break;
+					}
+				}
+			}
+			if (!n) {
+				cs_log("Protocol Support missing.");
+				return;
+			}
 		}
 
 		i=cs_fork(0, 99);
@@ -2755,22 +2776,72 @@ int main (int argc, char *argv[])
   //uchar    buf[2048];
   void (*mod_def[])(struct s_module *)=
   {
+#ifdef MODULE_MONITOR
            module_monitor,
+#endif
+#ifdef MODULE_CAMD33
            module_camd33,
+#endif
+#ifdef MODULE_CAMD35
            module_camd35,
+#endif
+#ifdef MODULE_CAMD35_TCP
            module_camd35_tcp,
+#endif
+#ifdef MODULE_NEWCAMD
            module_newcamd,
+#endif
+#ifdef MODULE_CCCAM
            module_cccam,
+#endif
+#ifdef MODULE_CONSTCW
            module_constcw,
+#endif
 #ifdef CS_WITH_GBOX
            module_gbox,
 #endif
+#ifdef MODULE_RADEGAST
            module_radegast,
+#endif
+#ifdef MODULE_SERIAL
            module_oscam_ser,
+#endif
 #ifdef HAVE_DVBAPI
 	   module_dvbapi,
 #endif
            0
+  };
+
+  void (*cardsystem_def[])(struct s_cardsystem *)=
+  {
+#ifdef READER_NAGRA
+	reader_nagra,
+#endif
+#ifdef READER_IRDETO
+	reader_irdeto,
+#endif
+#ifdef READER_CONAX
+	reader_conax,
+#endif
+#ifdef READER_CRYPTOWORKS
+	reader_cryptoworks,
+#endif
+#ifdef READER_SECA
+	reader_seca,
+#endif
+#ifdef READER_VIACCESS
+	reader_viaccess,
+#endif
+#ifdef READER_VIDEOGUARD
+	reader_videoguard1,
+	reader_videoguard2,
+	reader_videoguard12,
+#endif
+#ifdef READER_DRE
+	reader_dre,
+#endif
+	reader_tongfang,
+	0
   };
 
   while ((i=getopt(argc, argv, "bc:t:d:hm:"))!=EOF)
@@ -2803,6 +2874,12 @@ int main (int argc, char *argv[])
     memset(&ph[i], 0, sizeof(struct s_module));
     mod_def[i](&ph[i]);
   }
+  for (i=0; cardsystem_def[i]; i++)  // must be later BEFORE init_config()
+  {
+    memset(&cardsystem[i], 0, sizeof(struct s_cardsystem));
+    cardsystem_def[i](&cardsystem[i]);
+  }
+
 
   cs_log("auth size=%d", sizeof(struct s_auth));
 

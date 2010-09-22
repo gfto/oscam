@@ -1034,4 +1034,5 @@ void module_oscam_ser(struct s_module *ph)
   ph->c_init=oscam_ser_client_init;
   ph->c_recv_chk=oscam_ser_recv_chk;
   ph->c_send_ecm=oscam_ser_send_ecm;
+  ph->num=R_SERIAL;
 }

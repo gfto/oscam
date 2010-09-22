@@ -318,3 +318,14 @@ int seca_card_info (struct s_reader * reader)
   return OK;
 }
 
+void reader_seca(struct s_cardsystem *ph) 
+{
+	ph->do_emm=seca_do_emm;
+	ph->do_ecm=seca_do_ecm;
+	ph->card_info=seca_card_info;
+	ph->card_init=seca_card_init;
+	ph->get_emm_type=seca_get_emm_type;
+	ph->get_emm_filter=seca_get_emm_filter;
+	ph->caids[0]=0x01;
+}
+

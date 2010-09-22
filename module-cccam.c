@@ -3108,4 +3108,5 @@ void module_cccam(struct s_module *ph) {
 	ptab.ports[0].s_port = cfg->cc_port;
 	ph->ptab = &ptab;
 	ph->ptab->nports = 1;
+  ph->num=R_CCCAM;
 }

@@ -224,63 +224,31 @@ void reader_card_info(struct s_reader * reader)
     client[cs_idx].last=time((time_t)0);
     cs_ri_brk(reader, 0);
     do_emm_from_file(reader);
-    switch(reader->card_system)
-    {
-      case SC_NAGRA:
-        nagra2_card_info(reader); break;
-      case SC_IRDETO:
-        irdeto_card_info(reader); break;
-      case SC_CRYPTOWORKS:
-        cryptoworks_card_info(reader); break;
-      case SC_VIACCESS:
-        viaccess_card_info(reader); break;
-      case SC_CONAX:
-        conax_card_info(reader); break;
-      case SC_VIDEOGUARD2:
-        videoguard2_card_info(reader); break;
-      case SC_VIDEOGUARD1:
-        videoguard1_card_info(reader); break;
-      case SC_VIDEOGUARD12:
-        videoguard12_card_info(reader); break;
-      case SC_SECA:
-         seca_card_info(reader); break;
-      case SC_DRE:
-    	 dre_card_info(); break;
-      case SC_TONGFANG:
-    	 tongfang_card_info(reader); break;
-    }
+
+	if (cardsystem[reader->card_system-1].card_info) {
+		cardsystem[reader->card_system-1].card_info(reader);
+	}
   }
 }
 
 static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 {
+	int i;
+	for (i=0; i<CS_MAX_MOD; i++) {
+		if (cardsystem[i].card_init) {
+			if (cardsystem[i].card_init(reader, atr)) {
+				reader->card_system=i+1;
+				cs_log("found cardsystem");
+				break;
+			}
+		}
+	}
 
-	if (nagra2_card_init(reader, atr))
-		reader->card_system=SC_NAGRA;
-	else if (irdeto_card_init(reader, atr))
-		reader->card_system=SC_IRDETO;
-	else if (conax_card_init(reader, atr))
-		reader->card_system=SC_CONAX;
-	else if (cryptoworks_card_init(reader, atr))
-		reader->card_system=SC_CRYPTOWORKS;
-	else if (seca_card_init(reader, atr))
-		reader->card_system=SC_SECA;
-	else if (viaccess_card_init(reader, atr))
-		reader->card_system=SC_VIACCESS;
-    else if (videoguard1_card_init(reader, atr))
-            reader->card_system=SC_VIDEOGUARD1;
-    else if (videoguard12_card_init(reader, atr))
-            reader->card_system=SC_VIDEOGUARD12;
-	else if (videoguard2_card_init(reader, atr))
-		reader->card_system=SC_VIDEOGUARD2;
-	else if (dre_card_init(reader, atr)) 
-		reader->card_system=SC_DRE;
-	else if (tongfang_card_init(reader, atr)) 
-		reader->card_system=SC_TONGFANG;
-	else
+	if (reader->card_system==0)
 		cs_ri_log(reader, "card system not supported");
 
 	cs_ri_brk(reader, 1);
+
 	return(reader->card_system);
 }
 
@@ -396,12 +364,10 @@ void reader_post_process(struct s_reader * reader)
 {
   // some systems eg. nagra2/3 needs post process after receiving cw from card
   // To save ECM/CW time we added this function after writing ecm answer
-  switch(reader->card_system)
-    {
-      case SC_NAGRA:
-        nagra2_post_process(reader); break;
-      default: break;
-    }
+
+	if (cardsystem[reader->card_system-1].post_process) {
+		cardsystem[reader->card_system-1].post_process(reader);
+	}
 }
 
 int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
@@ -414,33 +380,12 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
       client[cs_idx].last_srvid=er->srvid;
       client[cs_idx].last_caid=er->caid;
       client[cs_idx].last=time((time_t)0);
-      switch(reader->card_system)
-      {
-        case SC_NAGRA:
-          rc=(nagra2_do_ecm(reader, er)) ? 1 : 0; break;
-        case SC_IRDETO:
-          rc=(irdeto_do_ecm(reader, er)) ? 1 : 0; break;
-        case SC_CRYPTOWORKS:
-          rc=(cryptoworks_do_ecm(reader, er)) ? 1 : 0; break;
-        case SC_VIACCESS:
-          rc=(viaccess_do_ecm(reader, er)) ? 1 : 0; break;
-        case SC_CONAX:
-          rc=(conax_do_ecm(reader, er)) ? 1 : 0; break;
-        case SC_SECA:
-          rc=(seca_do_ecm(reader, er)) ? 1 : 0; break;
-        case SC_VIDEOGUARD2:
-          rc=(videoguard2_do_ecm(reader, er)) ? 1 : 0; break;
-        case SC_VIDEOGUARD1:
-          rc=(videoguard1_do_ecm(reader, er)) ? 1 : 0; break;
-        case SC_VIDEOGUARD12:
-          rc=(videoguard12_do_ecm(reader, er)) ? 1 : 0; break;
-        case SC_DRE:
-          rc=(dre_do_ecm(reader, er)) ? 1: 0; break;
-        case SC_TONGFANG:
-          rc=(tongfang_do_ecm(reader, er)) ? 1: 0; break;
-        default:
-          rc=0;
-      }
+
+	if (cardsystem[reader->card_system-1].do_ecm) 
+		rc=cardsystem[reader->card_system-1].do_ecm(reader, er);
+	else
+		rc=0;
+
     }
     else
       rc=0;
@@ -452,104 +397,38 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
 {
 	cs_debug_mask(D_EMM,"Entered reader_get_emm_type cardsystem %i",rdr->card_system);
 	int rc;
-	switch(rdr->card_system) {
-    case SC_NAGRA:
-      rc=nagra2_get_emm_type(ep, rdr); break;
-    case SC_IRDETO:
-      rc=irdeto_get_emm_type(ep, rdr); break;
-    case SC_CRYPTOWORKS:
-      rc=cryptoworks_get_emm_type(ep, rdr); break;
-    case SC_VIACCESS:
-      rc=viaccess_get_emm_type(ep, rdr); break;
-    case SC_CONAX:
-      rc=conax_get_emm_type(ep, rdr); break;
-    case SC_SECA:
-      rc=seca_get_emm_type(ep, rdr); break;
-    case SC_VIDEOGUARD2:
-      rc=videoguard2_get_emm_type(ep, rdr); break;
-    case SC_VIDEOGUARD1:
-      rc=videoguard1_get_emm_type(ep, rdr); break;
-    case SC_VIDEOGUARD12:
-      rc=videoguard12_get_emm_type(ep, rdr); break;
-    case SC_DRE:
-      rc=dre_get_emm_type(ep, rdr); break;
-    case SC_TONGFANG:
-      rc=tongfang_get_emm_type(ep, rdr); break;
-    default:
-      rc=0;
-  }
+
+	if (rdr->card_system<1)
+		return 0;
+
+	if (cardsystem[rdr->card_system-1].get_emm_type) 
+		rc=cardsystem[rdr->card_system-1].get_emm_type(ep, rdr);
+	else
+		rc=0;
+
 	return rc;
 }
 
 int get_cardsystem(ushort caid) {
-	switch(caid >> 8) {
-		case 0x01:
-			return SC_SECA;
-		case 0x05:
-			return SC_VIACCESS;
-		case 0x06:
-			return SC_IRDETO;
-		case 0x09:
-			if(caid == 0x0969 ) {
-                          return SC_VIDEOGUARD1;
-                        } 
-                        else {
-                          return SC_VIDEOGUARD2;
-                        };
-		case 0x0B:
-			return SC_CONAX;
-		case 0x0D:
-			return SC_CRYPTOWORKS;
-		case 0x17:
-			return SC_IRDETO;
-		case 0x18:
-			return SC_NAGRA;
-		case 0x4A:
-			return SC_DRE;
-		case 0x4B:
-			return SC_TONGFANG;
-		default: 
-			return 0;
+	int i,j;
+	for (i=0; i<CS_MAX_MOD; i++) {
+		if (cardsystem[i].caids) {
+			for (j=0;j<2;j++) {
+				if ((cardsystem[i].caids[j]==caid >> 8)) {
+					return i+1;
+				}
+			}
+		}
 	}
+	return 0;
 }
 
 void get_emm_filter(struct s_reader * rdr, uchar *filter) {
 	filter[0]=0xFF;
 	filter[1]=0;
 
-	switch(rdr->card_system) {
-		case SC_NAGRA:
-			nagra2_get_emm_filter(rdr, filter);
-			break;
-		case SC_IRDETO:
-			irdeto_get_emm_filter(rdr, filter);
-			break;
-		case SC_CRYPTOWORKS:
-			cryptoworks_get_emm_filter(rdr, filter);
-			break;
-		case SC_VIACCESS:
-			viaccess_get_emm_filter(rdr, filter);
-			break;
-		case SC_CONAX:
-			conax_get_emm_filter(rdr, filter);
-			break;
-		case SC_SECA:
-			seca_get_emm_filter(rdr, filter);
-			break;
-		case SC_VIDEOGUARD2:
-			videoguard2_get_emm_filter(rdr, filter);
-			break;
-                case SC_VIDEOGUARD1:
-                        videoguard1_get_emm_filter(rdr, filter);
-                        break;
-                case SC_VIDEOGUARD12:
-                        videoguard12_get_emm_filter(rdr, filter);
-                        break;
-		case SC_DRE:
-			dre_get_emm_filter(rdr, filter);
-			break;
-		default:
-			break;
+	if (cardsystem[rdr->card_system-1].get_emm_filter) {
+		cardsystem[rdr->card_system-1].get_emm_filter(rdr, filter);
 	}
 
 	return;
@@ -565,32 +444,10 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
     if (reader->b_nano[ep->emm[0]] & 0x01) //should this nano be blcoked?
       return 3;
 
-    switch(reader->card_system)
-    {
-      case SC_NAGRA:
-        rc=nagra2_do_emm(reader, ep); break;
-      case SC_IRDETO:
-        rc=irdeto_do_emm(reader, ep); break;
-      case SC_CRYPTOWORKS:
-        rc=cryptoworks_do_emm(reader, ep); break;
-      case SC_VIACCESS:
-        rc=viaccess_do_emm(reader, ep); break;
-      case SC_CONAX:
-        rc=conax_do_emm(reader, ep); break;
-      case SC_SECA:
-        rc=seca_do_emm(reader, ep); break;
-      case SC_VIDEOGUARD2:
-        rc=videoguard2_do_emm(reader, ep); break;
-      case SC_VIDEOGUARD1:
-        rc=videoguard1_do_emm(reader, ep); break;
-      case SC_VIDEOGUARD12:
-        rc=videoguard12_do_emm(reader, ep); break;
-      case SC_DRE:
-        rc=dre_do_emm(reader, ep); break;
-      case SC_TONGFANG:
-        rc=tongfang_do_emm(reader, ep); break;
-      default: rc=0;
-    }
+	if (cardsystem[reader->card_system-1].do_emm) 
+		rc=cardsystem[reader->card_system-1].do_emm(reader, ep);
+	else
+		rc=0;
   }
   return(rc);
 }

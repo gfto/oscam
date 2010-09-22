@@ -617,3 +617,13 @@ int cryptoworks_card_info(struct s_reader * reader)
   cs_log("[cryptoworks-reader] ready for requests");
   return OK;
 }
+
+void reader_cryptoworks(struct s_cardsystem *ph) 
+{
+	ph->do_emm=cryptoworks_do_emm;
+	ph->do_ecm=cryptoworks_do_ecm;
+	ph->card_info=cryptoworks_card_info;
+	ph->card_init=cryptoworks_card_init;
+	ph->get_emm_type=cryptoworks_get_emm_type;
+	ph->caids[0]=0x0D;
+}

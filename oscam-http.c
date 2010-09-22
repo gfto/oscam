@@ -1,3 +1,4 @@
+#include "globals.h"
 #ifdef WEBIF
 //
 // OSCam HTTP server module

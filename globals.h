@@ -33,7 +33,7 @@
 
 #ifndef CS_GLOBALS
 #define CS_GLOBALS
-#define CS_VERSION    "1.00svn-threaded"
+#define CS_VERSION    "1.00-svn"
 #ifndef CS_SVN_VERSION
 #	define CS_SVN_VERSION "test"
 #endif
@@ -44,6 +44,8 @@
 #  define GCC_PACK
 #endif
 
+#include "oscam-config.h"
+
 #ifdef UNUSED 
 #elif defined(__GNUC__) 
 # define UNUSED(x) UNUSED_ ## x __attribute__((unused)) 
@@ -53,13 +55,16 @@
 # define UNUSED(x) x 
 #endif
 
+#ifdef WITH_DEBUG
 #define call(arg) \
 	if (arg) { \
 		cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.",#arg); \
 		return ERROR; \
 	}
+#else
+#define call(arg) arg
+#endif
 
-#include "oscam-config.h"
 #ifndef USE_CMAKE
 #  include "oscam-ostype.h"
 #endif
@@ -171,12 +176,16 @@
 #define R_IS_CASCADING  0xE0
 
 
-#define CS_MAX_MOD 12
+#define CS_MAX_MOD 20
 #define MOD_CONN_TCP    1
 #define MOD_CONN_UDP    2
 #define MOD_CONN_NET    3
 #define MOD_CONN_SERIAL 4
 #define MOD_NO_CONN	8
+
+#define MOD_CARDSYSTEM  16
+#define MOD_ADDON       32
+
 
 #ifdef HAVE_DVBAPI
 #define BOXTYPE_DREAMBOX	1
@@ -418,6 +427,20 @@ struct s_module
   void (*c_idle)(); //Schlocke: called when reader is idle
   int  c_port;
   PTAB *ptab;
+  int num;
+};
+
+struct s_cardsystem
+{
+	char desc[16];
+	int  (*card_init)();
+	int  (*card_info)();
+	int  (*do_ecm)();
+	int  (*do_emm)();
+	void (*post_process)();
+	int  (*get_emm_type)();
+	void (*get_emm_filter)();
+	uchar caids[2];
 };
 
 #ifdef IRDETO_GUESSING
@@ -1139,12 +1162,27 @@ extern unsigned long *IgnoreList;
 extern struct s_config *cfg;
 extern char cs_confdir[], *loghist;
 extern struct s_module ph[CS_MAX_MOD];
+extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 //extern ECM_REQUEST *ecmtask;
+
 #ifdef CS_ANTICASC
 extern struct s_acasc_shm *acasc;
 extern FILE *fpa;
 #endif
 extern pthread_mutex_t gethostbyname_lock; 
+
+//reader
+void reader_nagra();
+void reader_irdeto();
+void reader_cryptoworks();
+void reader_viaccess();
+void reader_conax();
+void reader_seca();
+void reader_videoguard1();
+void reader_videoguard2();
+void reader_videoguard12();
+void reader_dre();
+void reader_tongfang();
 
 // oscam
 extern int recv_from_udpipe(uchar *);
@@ -1285,11 +1323,19 @@ extern int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec
 extern int  cs_init_log(char *);
 extern void cs_write_log(char *);
 extern void cs_log(const char *,...);
+#ifdef WITH_DEBUG
 extern void cs_debug(const char *,...);
 extern void cs_debug_nolf(const char *,...);
 extern void cs_debug_mask(unsigned short, const char *,...);
 extern void cs_ddump(const uchar *, int, char *, ...);
 extern void cs_ddump_mask(unsigned short, const uchar *, int, char *, ...);
+#else
+#define cs_debug(...)
+#define cs_debug_mask(...)
+#define cs_debug_nolf(...)
+#define cs_ddump(...)
+#define cs_ddump_mask(...)
+#endif
 extern void cs_close_log(void);
 extern int  cs_init_statistics(char *);
 extern void cs_statistics(int);
@@ -1348,10 +1394,6 @@ extern void module_gbox(struct s_module *);
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif
-#ifdef WITH_STAPI
-extern void module_stapi(struct s_module *);
-#endif
-
 
 // module-monitor
 extern char *monitor_get_proto(int idx);
@@ -1360,11 +1402,6 @@ extern int cs_idx2ridx(int idx);
 #ifdef WEBIF
 // oscam-http
 extern void http_srv();
-#endif
-
-#ifdef ST_LINUX
-extern void Fortis_STSMART_Close();
-extern void Fortis_STPTI_Close();
 #endif
 
 #endif  // CS_GLOBALS

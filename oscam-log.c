@@ -222,7 +222,7 @@ void cs_close_log(void)
 	fclose(fp);
 	fp=(FILE *)0;
 }
-
+#ifdef WITH_DEBUG
 void cs_debug(const char *fmt,...)
 {
 	//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, cs_dblevel ,client[cs_idx].cs_ptyp & cs_dblevel);
@@ -269,7 +269,7 @@ void cs_debug_nolf(const char *fmt,...)
 		write_to_log(number_of_chars_printed, log_txt);
 	}
 }
-
+#endif
 void cs_dump(const uchar *buf, int n, char *fmt, ...)
 {
 	char log_txt[512];
@@ -293,7 +293,7 @@ void cs_dump(const uchar *buf, int n, char *fmt, ...)
 		write_to_log(-1, log_txt);
 	}
 }
-
+#ifdef WITH_DEBUG
 void cs_ddump(const uchar *buf, int n, char *fmt, ...)
 {
 	char log_txt[512];
@@ -349,7 +349,7 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 		}
 	}
 }
-
+#endif
 int cs_init_statistics(char *file) 
 {
 	if ((!fps) && (file != NULL))

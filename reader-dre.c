@@ -444,3 +444,14 @@ int dre_card_info (void)
 {
   return OK;
 }
+
+void reader_dre(struct s_cardsystem *ph) 
+{
+	ph->do_emm=dre_do_emm;
+	ph->do_ecm=dre_do_ecm;
+	ph->card_info=dre_card_info;
+	ph->card_init=dre_card_init;
+	ph->get_emm_type=dre_get_emm_type;
+	ph->get_emm_filter=dre_get_emm_filter;
+	ph->caids[0]=0x4A;
+}

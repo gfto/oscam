@@ -542,3 +542,13 @@ int videoguard1_card_info(struct s_reader *reader)
   read_tiers(reader);
   return OK;
 }
+
+void reader_videoguard1(struct s_cardsystem *ph) 
+{
+	ph->do_emm=videoguard1_do_emm;
+	ph->do_ecm=videoguard1_do_ecm;
+	ph->card_info=videoguard1_card_info;
+	ph->card_init=videoguard1_card_init;
+	ph->get_emm_type=videoguard1_get_emm_type;
+	ph->caids[0]=0x09;
+}
