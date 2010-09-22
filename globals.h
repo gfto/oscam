@@ -568,9 +568,6 @@ struct s_client
 
   uchar	*req;
 
-  //newcamd
-  int ncd_proto;
-
   //camd33
   uchar	camdbug[256];
 

@@ -83,7 +83,7 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
 {
   uint8 netbuf[CWS_NETMSGSIZE];
   int head_size;
-  head_size = (client[cs_idx].ncd_proto==NCD_524)?8:12;
+  head_size = (reader[client[cs_idx].ridx].ncd_proto==NCD_524)?8:12;
 
   if (len < 3 || len + head_size > CWS_NETMSGSIZE || handle < 0) 
     return -1;
@@ -106,10 +106,10 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
   }
   else 
     netbuf[2] = netbuf[3] = 0;
-  memset(netbuf+4, 0, (client[cs_idx].ncd_proto==NCD_524)?4:8);
+  memset(netbuf+4, 0, (reader[client[cs_idx].ridx].ncd_proto==NCD_524)?4:8);
   if( sid ) {
-    netbuf[(client[cs_idx].ncd_proto==NCD_524)?6:4] = (uchar)(sid>>8); //sid
-    netbuf[(client[cs_idx].ncd_proto==NCD_524)?7:5] = (uchar)(sid);
+    netbuf[(reader[client[cs_idx].ridx].ncd_proto==NCD_524)?6:4] = (uchar)(sid>>8); //sid
+    netbuf[(reader[client[cs_idx].ridx].ncd_proto==NCD_524)?7:5] = (uchar)(sid);
   }
   //if ((!ncd_proto==NCD_524) && (buffer[0] >= 0xd1) && (buffer[0]<= 0xd8)) { // extended proto for mg
     //cs_debug("newcamd: extended: msg");
@@ -178,24 +178,24 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   //cs_ddump(netbuf, len, "nmr: decrypted data, len=%d", len);
   msgid = (netbuf[2] << 8) | netbuf[3];
 
-  if( client[cs_idx].ncd_proto==NCD_AUTO ) {
+  if( reader[client[cs_idx].ridx].ncd_proto==NCD_AUTO ) {
     // auto detect
     int l5 = (((netbuf[13] & 0x0f) << 8) | netbuf[14]) + 3;
     int l4 = (((netbuf[9] & 0x0f) << 8) | netbuf[10]) + 3;
     
     if( (l5<=len-12) && ((netbuf[12]&0xF0)==0xE0 || (netbuf[12]&0xF0)==0x80) ) 
-      client[cs_idx].ncd_proto = NCD_525;
+      reader[client[cs_idx].ridx].ncd_proto = NCD_525;
     else if( (l4<=len-8) && ((netbuf[8]&0xF0)==0xE0 || (netbuf[9]&0xF0)==0x80) )
-      client[cs_idx].ncd_proto = NCD_524;
+      reader[client[cs_idx].ridx].ncd_proto = NCD_524;
     else {
       cs_debug("nmr: 4 return -1");
       return -1;
     }
 
-    cs_debug("nmr: autodetect: newcamd52%d used", (client[cs_idx].ncd_proto==NCD_525)?5:4);
+    cs_debug("nmr: autodetect: newcamd52%d used", (reader[client[cs_idx].ridx].ncd_proto==NCD_525)?5:4);
   }
   
-  ncd_off=(client[cs_idx].ncd_proto==NCD_525)?4:0;
+  ncd_off=(reader[client[cs_idx].ridx].ncd_proto==NCD_525)?4:0;
 
   returnLen = (((netbuf[9+ncd_off] & 0x0f) << 8) | netbuf[10+ncd_off]) + 3;
   if ( returnLen > (len-(8+ncd_off)) ) {
@@ -228,8 +228,8 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   switch(commType)
   {
   case COMMTYPE_SERVER:
-    buffer[0]=(client[cs_idx].ncd_proto==NCD_525)?netbuf[4]:netbuf[6]; // sid
-    buffer[1]=(client[cs_idx].ncd_proto==NCD_525)?netbuf[5]:netbuf[7];
+    buffer[0]=(reader[client[cs_idx].ridx].ncd_proto==NCD_525)?netbuf[4]:netbuf[6]; // sid
+    buffer[1]=(reader[client[cs_idx].ridx].ncd_proto==NCD_525)?netbuf[5]:netbuf[7];
   	break;
   case COMMTYPE_CLIENT:
     buffer[0]=netbuf[2]; // msgid
@@ -1236,11 +1236,9 @@ int newcamd_client_init()
   client[cs_idx].udp_sa.sin_family = AF_INET;
   client[cs_idx].udp_sa.sin_port = htons((u_short)reader[client[cs_idx].ridx].r_port);
 
-  client[cs_idx].ncd_proto = reader[client[cs_idx].ridx].ncd_proto;
-
   cs_log("proxy %s:%d newcamd52%d (fd=%d%s)",
           reader[client[cs_idx].ridx].device, reader[client[cs_idx].ridx].r_port,
-          (client[cs_idx].ncd_proto==NCD_525)?5:4, client[cs_idx].udp_fd, ptxt);
+          (reader[client[cs_idx].ridx].ncd_proto==NCD_525)?5:4, client[cs_idx].udp_fd, ptxt);
 
   return(0);
 }
