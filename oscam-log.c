@@ -223,7 +223,7 @@ void cs_close_log(void)
 	fp=(FILE *)0;
 }
 
-void cs_debug(char *fmt,...)
+void cs_debug(const char *fmt,...)
 {
 	//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, client[cs_idx].dbglvl ,client[cs_idx].cs_ptyp & client[cs_idx].dbglvl);
 	char log_txt[512];
@@ -238,7 +238,7 @@ void cs_debug(char *fmt,...)
 	}
 }
 
-void cs_debug_mask(unsigned short mask, char *fmt,...)
+void cs_debug_mask(unsigned short mask, const char *fmt,...)
 {
 	char log_txt[512];
 	if (client[cs_idx].dbglvl & mask)
@@ -252,7 +252,7 @@ void cs_debug_mask(unsigned short mask, char *fmt,...)
 	}
 }
 
-void cs_debug_nolf(char *fmt,...)
+void cs_debug_nolf(const char *fmt,...)
 {
 	char log_txt[512];
 	if (client[cs_idx].dbglvl & client[cs_idx].cs_ptyp)
@@ -294,7 +294,7 @@ void cs_dump(const uchar *buf, int n, char *fmt, ...)
 	}
 }
 
-void cs_ddump(uchar *buf, int n, char *fmt, ...)
+void cs_ddump(const uchar *buf, int n, char *fmt, ...)
 {
 	char log_txt[512];
 	int i;
@@ -322,7 +322,7 @@ void cs_ddump(uchar *buf, int n, char *fmt, ...)
 	}
 }
 
-void cs_ddump_mask(unsigned short mask, uchar *buf, int n, char *fmt, ...)
+void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 {
 
 	char log_txt[512];

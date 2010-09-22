@@ -187,7 +187,7 @@
 #define BOXTYPE_IPBOX_PMT	6
 #define BOXTYPE_DM7000	7
 #define BOXTYPES		7
-extern char *boxdesc[];
+extern const char *boxdesc[];
 #endif
 
 #ifdef CS_CORE
@@ -1272,7 +1272,7 @@ extern char * get_tmp_dir();
 
 // oscam-reader
 extern int logfd;
-extern int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar *response, ushort *response_length);
+extern int reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int l, uchar *response, ushort *response_length);
 extern int card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, ushort *);
 extern int check_sct_len(const unsigned char *data, int off);
 extern void cs_ri_brk(struct s_reader * reader, int);
@@ -1288,11 +1288,11 @@ extern int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec
 extern int  cs_init_log(char *);
 extern void cs_write_log(char *);
 extern void cs_log(const char *,...);
-extern void cs_debug(char *,...);
-extern void cs_debug_nolf(char *,...);
-extern void cs_debug_mask(unsigned short, char *,...);
-extern void cs_ddump(uchar *, int, char *, ...);
-extern void cs_ddump_mask(unsigned short, uchar *, int, char *, ...);
+extern void cs_debug(const char *,...);
+extern void cs_debug_nolf(const char *,...);
+extern void cs_debug_mask(unsigned short, const char *,...);
+extern void cs_ddump(const uchar *, int, char *, ...);
+extern void cs_ddump_mask(unsigned short, const uchar *, int, char *, ...);
 extern void cs_close_log(void);
 extern int  cs_init_statistics(char *);
 extern void cs_statistics(int);

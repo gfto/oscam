@@ -52,7 +52,7 @@ static void reader_nullcard(struct s_reader * reader)
   reader->nprov=0;
 }
 
-int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar * cta_res, ushort * p_cta_lr)
+int reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int l, uchar * cta_res, ushort * p_cta_lr)
 {
 	int rc;
 #ifdef HAVE_PCSC
