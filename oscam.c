@@ -495,118 +495,6 @@ static void cs_card_info(int i)
       //kill(client[i].pid, SIGUSR2);
 }
 
-static void prepare_reader_restart(int ridx, int cidx)
-{
-  reader[ridx].pid = 0;
-  reader[ridx].tcp_connected = 0;
-  reader[ridx].fd=0;
-  reader[ridx].cidx=0;
-  reader[ridx].last_s = 0;
-  reader[ridx].last_g = 0;
-  reader[ridx].card_status = NO_CARD;
-  reader[ridx].available = 0;
-  reader[ridx].card_system = 0;
-  reader[ridx].ncd_msgid=0;
-  reader[ridx].last_s=reader->last_g=0;
-                                        
-  cs_debug_mask(D_TRACE, "reader %s closed (index=%d)", reader[ridx].label, ridx);
-  if (cs_idx) {
-	  if (client[cs_idx].ufd) close(client[cs_idx].ufd);
-	  if (client[cs_idx].fd_m2c_c) close(client[cs_idx].fd_m2c_c);
-	  memset(&client[cs_idx], 0, sizeof(struct s_client));
-	  client[cs_idx].au=(-1);
-  }
-}
-
-static void cs_child_chk(int i)
-{
-	//disabled!
-	return;
-
-  while (waitpid(0, NULL, WNOHANG)>0);
-  for (i=1; i<CS_MAXPID; i++)
-    if (client[i].pid)
-      if (kill(client[i].pid, 0)) {
-        if ((client[i].typ!='c') && (client[i].typ!='m'))
-        {
-          char *txt="";
-          switch(client[i].typ)
-          {
-#ifdef CS_ANTICASC
-            case 'a': txt="anticascader"; break;
-#endif
-            case 'l': txt="logger"; break;
-            case 'p': txt="proxy";  break;
-            case 'r': txt="reader"; break;
-            case 'n': txt="resolver"; break;
-#ifdef WEBIF
-            case 'h': txt="http";	break;
-#endif
-          }
-          cs_log("PANIC: %s lost !! (pid=%d)", txt, client[i].pid);
-          if (client[i].typ == 'r' || client[i].typ == 'p')
-          {
-            int old_pid = client[i].pid;
-            client[i].pid = 0;
-		int ridx;
-            for (ridx = 0; ridx < CS_MAXREADER; ridx++) 
-            {
-              if (reader[ridx].pid == old_pid)
-              {
-                prepare_reader_restart(ridx, i);
-                cs_log("restarting %s %s in %d seconds (index=%d)", reader[ridx].label, txt,
-                		cfg->reader_restart_seconds, ridx);
-		send_restart_cardreader(ridx, 0);
-                break;
-              }
-            }
-          }
-          else {
-              cs_exit(1);
-          }
-        }
-        else
-        {
-#ifdef CS_ANTICASC
-          char usr[32];
-          ushort    ac_idx=0;
-          ushort    ac_limit=0;
-          uchar     ac_penalty=0;
-          if( cfg->ac_enabled )
-          {
-            cs_strncpy(usr, client[i].usr, sizeof(usr));
-            ac_idx = client[i].ac_idx;
-            ac_limit = client[i].ac_limit;
-            ac_penalty = client[i].ac_penalty;
-          }
-#endif
-          if (client[i].fd_m2c) close(client[i].fd_m2c);
-          if (client[i].ufd) close(client[i].ufd);
-          memset(&client[i], 0, sizeof(struct s_client));
-#ifdef CS_ANTICASC
-          if( cfg->ac_enabled )
-          {
-            client[i].ac_idx = ac_idx;
-            client[i].ac_limit = ac_limit;
-            client[i].ac_penalty = ac_penalty;
-            strcpy(client[i].usr, usr);
-          }
-#endif
-          client[i].au=(-1);
-
-#ifdef HAVE_DVBAPI
-          int phi = client[i].ctyp;
-          if (client[i].typ == 'c' && ph[phi].type & MOD_CONN_SERIAL) //Schlocke: dvbapi killed? restart
-          {
-              if (ph[phi].s_handler)
-                ph[phi].s_handler(phi);
-          }
-#endif
-        }
-      }
-  return;
-}
-
 int cs_fork(in_addr_t ip, in_port_t port) {
 	int i;
 
@@ -1473,7 +1361,7 @@ int write_ecm_answer(struct s_reader * reader, int fd, ECM_REQUEST *er)
     }
   }
 
-  er->reader[0]=client[cs_idx].ridx;
+  er->reader[0]=client[reader->cidx].ridx;
 //cs_log("answer from reader %d (rc=%d)", er->reader[0], er->rc);
   er->caid=er->ocaid;
 
