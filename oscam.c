@@ -2557,13 +2557,6 @@ static void process_master_pipe()
     case PIP_ID_RES: //Reset reader statistics
     	clear_reader_stat(*(int*)ptr);
     	break;
-    case PIP_ID_CCC: {//Send CCcam cards to clients
-    	int data[2];
-    	data[0] = ((int*)ptr)[0];
-    	data[1] = ((int*)ptr)[1];
-    	write_to_pipe(reader[data[0]].fd, PIP_ID_CCC, (uchar*)data, sizeof(data));
-    	break;
-    }
   }
 }
 
