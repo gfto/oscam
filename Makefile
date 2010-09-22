@@ -300,11 +300,11 @@ cross-sh4-linux:
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
-		DS_CC=/opt/STM/STLinux-2.0/devkit/sh4/bin/sh4-linux-gcc \
-		DS_AR=/opt/STM/STLinux-2.0/devkit/sh4/bin/sh4-linux-ar \
-		DS_LD=/opt/STM/STLinux-2.0/devkit/sh4/bin/sh4-linux-ld \
-		DS_RL=/opt/STM/STLinux-2.0/devkit/sh4/bin/sh4-linux-ranlib \
-		DS_ST=/opt/STM/STLinux-2.0/devkit/sh4/bin/sh4-linux-strip
+		DS_CC=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-gcc \
+		DS_AR=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-ar \
+		DS_LD=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-ld \
+		DS_RL=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-ranlib \
+		DS_ST=/opt/STM/STLinux-2.3/devkit/sh4/bin/sh4-linux-strip
 
 cross-sh4-linux-stapi:
 	@-$(MAKE) --no-print-directory \

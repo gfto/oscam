@@ -303,7 +303,7 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
 	//cs_debug_mask(D_TRACE, "loadbalance: resetting ecm count");
 	int i;
 	for (i = 0; i < CS_MAXREADER; i++) {
-		if (reader_stat[i] && reader[i].pid && reader[i].cs_idx) {
+		if (reader_stat[i] && reader[i].pid && reader[i].cidx) {
 			READER_STAT *stat = get_stat(i, caid, prid, srvid);
 			if (stat) {
 				if (stat->ecm_count > 0)

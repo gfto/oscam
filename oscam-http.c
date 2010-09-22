@@ -1702,8 +1702,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			FILE *fp;
 			char filename[32];
 			char buffer[128];
-			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(),
-					reader[ridx].ridx);
+			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(), client[cs_idx].ridx);
 			fp = fopen(filename, "r");
 
 			if (fp) {
@@ -2541,18 +2540,16 @@ void http_srv() {
 		return;
 	}
 	cs_log("HTTP Server listening on port %d", cfg->http_port);
-	struct pollfd pfd[1];
+	struct pollfd pfd2[1];
 	int rc;
-	pfd[0].fd = sock;
-	pfd[0].events = (POLLIN | POLLPRI);
+	pfd2[0].fd = sock;
+	pfd2[0].events = (POLLIN | POLLPRI);
 
 	while (running) {
 		int s;
 		FILE *f;
 
-		rc = poll(pfd, 1, 1000);
-		if (master_pid != getppid())
-		cs_exit(0);
+		rc = poll(pfd2, 1, 1000);
 
 		if (rc > 0) {
 			if((s = accept(sock, (struct sockaddr *) &remote, &len)) < 0) {

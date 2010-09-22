@@ -1033,7 +1033,7 @@ void event_handler(int signal) {
 		cs_log("found pmt file %s", dest);
 		cs_sleepms(100);
 
-		unsigned int len = read(pmt_fd,mbuf,sizeof(mbuf));
+		unsigned int len = read(pmt_fd,client[cs_idx].mbuf,sizeof(client[cs_idx].mbuf));
 		close(pmt_fd);
 					
 		if (len < 1) {
@@ -1052,7 +1052,7 @@ void event_handler(int signal) {
 		}
 
 		for(j2=0,j1=0;j2<len;j2+=2,j1++) {
-			if (sscanf((char*)mbuf+j2, "%02X", dest+j1) != 1) {
+			if (sscanf((char*)client[cs_idx].mbuf+j2, "%02X", dest+j1) != 1) {
 				cs_log("error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
 				pthread_mutex_unlock(&event_handler_lock);	
 				return;
@@ -1067,15 +1067,15 @@ void event_handler(int signal) {
 			cs_log("event_handler() dest buffer is to small for pmt data!");
 			continue;
 		}
-		cs_ddump(mbuf,len,"pmt:");
+		cs_ddump(client[cs_idx].mbuf,len,"pmt:");
 
 		memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
 
-		dest[1] = mbuf[3];
-		dest[2] = mbuf[4];
-		dest[5] = mbuf[11]+1;
+		dest[1] = client[cs_idx].mbuf[3];
+		dest[2] = client[cs_idx].mbuf[4];
+		dest[5] = client[cs_idx].mbuf[11]+1;
 
-		memcpy(dest + 7, mbuf + 12, len - 12 - 4);
+		memcpy(dest + 7, client[cs_idx].mbuf + 12, len - 12 - 4);
 
 		pmt_id = dvbapi_parse_capmt((uchar*)dest, 7 + len - 12 - 4, -1);
 #endif
@@ -1175,7 +1175,10 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 	}
 }
 
-void dvbapi_main_local() {
+void dvbapi_main_local(void *idx) {
+	int cidx=(int)idx;
+	client[cidx].thread=pthread_self();
+
 	int maxpfdsize=(MAX_DEMUX*MAX_FILTER)+MAX_DEMUX+2;
 	struct pollfd pfd2[maxpfdsize];
 	int i,rc,pfdcount,g,connfd,clilen,j;
@@ -1183,6 +1186,18 @@ void dvbapi_main_local() {
 	struct timeb tp;
 	struct sockaddr_un servaddr;
 	ssize_t len=0;
+
+	struct s_auth *account=0;
+	int ok=0;
+	if (!account) {
+		client[cs_idx].usr[0]=0;
+		for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
+			if( (ok=!strcmp(cfg->dvbapi_usr, account->usr)) )
+				break;
+	}
+
+	cs_auth_client(ok ? account : (struct s_auth *)(-1), "dvbapi");
+
 
 	for (i=0;i<MAX_DEMUX;i++) {
 		memset(&demux[i], 0, sizeof(demux[i]));
@@ -1240,9 +1255,6 @@ void dvbapi_main_local() {
 	type[1]=1;
 
 	while (1) {
-		if (master_pid!=getppid())
-			cs_exit(0);
-
 		pfdcount = (listenfd > -1) ? 2 : 1; 
 
 		chk_pending(tp);
@@ -1326,19 +1338,19 @@ void dvbapi_main_local() {
 						connfd = pfd2[i].fd;
 					}
 
-					len = read(connfd, mbuf, sizeof(mbuf));
+					len = read(connfd, client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf));
 
 					if (len < 3) {
 						cs_debug("camd.socket: too short message received");
 						continue;
 					}
 
-					dvbapi_handlesockmsg(mbuf, len, connfd);
+					dvbapi_handlesockmsg(client[cs_idx].mbuf, len, connfd);
 				} else { // type==0
 					int demux_index=ids[i];
 					int n=fdn[i];
 
-					if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0) {
+					if ((len=dvbapi_read_device(pfd2[i].fd, client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf))) <= 0) {
 						if (demux[demux_index].pidindex==-1) {
 							dvbapi_try_next_caid(demux_index);
 						}
@@ -1346,7 +1358,7 @@ void dvbapi_main_local() {
 					}
 
 					if (pfd2[i].fd==(int)demux[demux_index].demux_fd[n].fd) {
-						dvbapi_process_input(demux_index,n,mbuf,len);
+						dvbapi_process_input(demux_index,n,client[cs_idx].mbuf,len);
 					}
 				}
 			}
@@ -1461,43 +1473,20 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 	}
 }
 
-
-static void dvbapi_handler(int idx) {
-	struct s_auth *account=0;
-
-	if (cfg->dvbapi_enabled != 1) {
-		cs_log("dvbapi disabled");
-		return;
-	}
-
+static void dvbapi_handler(int ctyp) {
 	//cs_log("dvbapi loaded fd=%d", idx);
-
-	switch(cs_fork(0, idx)) {
-		case  0: //master
-		case -1:
-			return;
-		default:
-			wait4master();
-	}
-
-	int ok=0;
-	if (!account) {
-		client[cs_idx].usr[0]=0;
-		for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
-			if( (ok=!strcmp(cfg->dvbapi_usr, account->usr)) )
-				break;
-	}
-
-	cs_auth_client(ok ? account : (struct s_auth *)(-1), "dvbapi");
-
+	if (cfg->dvbapi_enabled == 1) {
+		int i=cs_fork(0, ctyp);
+		client[i].typ='c';
+              client[i].ip=0;
+		client[i].ctyp=ctyp;
 #ifdef AZBOX
-	azbox_main();
+		pthread_create(&client[i].thread, NULL, (void *)azbox_main, (void*) i);
 #else
-	dvbapi_main_local();
+		pthread_create(&client[i].thread, NULL, (void *)dvbapi_main_local, (void*) i);
 #endif
-
-	cs_log("Module dvbapi error");
-	cs_exit(0);
+		pthread_detach(client[i].thread);
+	}
 
 	return;
 }
@@ -1608,7 +1597,9 @@ void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsign
 		cs_debug("openxcas: ex filter started, pid = %x", openxcas_ecm_pid);
 }
 
-void azbox_main() {
+void azbox_main(void *idx) {
+	int cidx=(int)idx;
+	client[cidx].thread=pthread_self();
 	struct timeb tp;
 	cs_ftime(&tp);
 	tp.time+=500;

@@ -357,7 +357,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   }
     
   //Schlocke reader-defined function, reader-self-check: 
-  if (rdr->ph.c_available && !rdr->ph.c_available(rdr->ridx, AVAIL_CHECK_CONNECTED)) {
+  if (rdr->ph.c_available && !rdr->ph.c_available(client[rdr->cidx].ridx, AVAIL_CHECK_CONNECTED)) {
     cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
     return 0;
   }
@@ -369,7 +369,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   }
     
   //Checking services:
-  if (!chk_srvid(er, rdr->cs_idx)) {
+  if (!chk_srvid(er, rdr->cidx)) {
     cs_debug_mask(D_TRACE, "service %04X not matching  reader %s", er->srvid, rdr->label);
     return(0);
   }

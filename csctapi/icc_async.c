@@ -283,12 +283,12 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	
 	reader->protocol_type = ATR_PROTOCOL_TYPE_T0;
 	
-	unsigned short cs_ptyp_orig=cs_ptyp;
-	cs_ptyp=D_ATR;
+	unsigned short cs_ptyp_orig=client[get_csidx()].cs_ptyp;
+	client[get_csidx()].cs_ptyp=D_ATR;
 	int ret = Parse_ATR(reader, atr, deprecated);
 	if (ret)
 		cs_log("ERROR: Parse_ATR returned error");
-	cs_ptyp=cs_ptyp_orig;
+	client[get_csidx()].cs_ptyp=cs_ptyp_orig;
 	if (ret)
 		return ERROR;		
 	cs_debug_mask (D_IFD, "IFD: Card in reader %s succesfully activated\n", reader->label);

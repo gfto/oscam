@@ -8,17 +8,14 @@ static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
 static int use_syslog=0;
 static int use_stdout=0;
-static char *log_txt;
-static char *log_buf;
 
 #ifdef CS_ANTICASC
 FILE *fpa=(FILE *)0;
-int use_ac_log=0;
 #endif
 
 static void switch_log(char* file, FILE **f, int (*pfinit)(char*))
 {
-	if( cfg->max_log_size && mcl)
+	if( cfg->max_log_size )
 	{
 		struct stat stlog;
 		if( stat(file, &stlog)!=0 )
@@ -49,7 +46,7 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(char*))
 void cs_write_log(char *txt)
 {
 #ifdef CS_ANTICASC
-	if( use_ac_log && fpa ) {
+	if( client[cs_idx].typ == 'a' && fpa ) {
 		switch_log(cfg->ac_logfile, &fpa, ac_init_log);
 		fprintf(fpa, "%s", txt);
 		fflush(fpa);
@@ -78,9 +75,6 @@ void cs_write_log(char *txt)
 int cs_init_log(char *file)
 {
 	static char *head = ">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")";
-
-	log_txt = malloc(512);
-	log_buf = malloc(700);
 
 	if (!strcmp(file, "stdout")) {
 		use_stdout = 1;
@@ -122,10 +116,9 @@ static char *get_log_header(int m, char *txt)
 		if (cs_idx) {
 			switch (client[cs_idx].typ) {
 				case 'r':
-				case 'p':	sprintf(txt+7, "%c%02d ", client[cs_idx].typ, cs_idx - 1);
-							break;
+				case 'p':
 				case 'm':
-				case 'c':	sprintf(txt+7, "%c%02d ", client[cs_idx].typ, cs_idx - cdiff);
+				case 'c':	sprintf(txt+7, "%c%02d ", client[cs_idx].typ, cs_idx);
 							break;
 #ifdef CS_ANTICASC
 				case 'a':
@@ -154,12 +147,13 @@ static void write_to_log(int flag, char *txt)
 	time_t t;
 	struct tm *lt;
 	char sbuf[16];
+	char log_buf[700];
 
 	//  get_log_header(flag, sbuf);
 	//  memcpy(txt, sbuf, 11);
 
 #ifdef CS_ANTICASC
-	if (use_syslog && !use_ac_log) // system-logfile
+	if (use_syslog && client[cs_idx].typ != 'a') // system-logfile
 #else
 	if (use_syslog) // system-logfile
 #endif
@@ -187,10 +181,7 @@ static void write_to_log(int flag, char *txt)
 			sprintf(log_buf, "[LOG000]%s", txt);
 	}
 
-	if ((*log_fd) && (client[cs_idx].typ != 'l') && (client[cs_idx].typ != 'a'))
-		write_to_pipe(*log_fd, PIP_ID_LOG, (uchar *) log_buf+8, strlen(log_buf+8));
-	else
-		cs_write_log(log_buf + 8);
+	cs_write_log(log_buf + 8);
 
 	store_logentry(log_buf);
 
@@ -215,8 +206,7 @@ static void write_to_log(int flag, char *txt)
 
 void cs_log(const char *fmt,...)
 {
-	if (!log_txt)
-		return;
+	char log_txt[512];
 	get_log_header(1, log_txt);
 	va_list params;
 	va_start(params, fmt);
@@ -227,13 +217,7 @@ void cs_log(const char *fmt,...)
 
 void cs_close_log(void)
 {
-	if (log_txt) {
-		cs_log("LOG CLOSED");
-		free(log_buf);
-		free(log_txt);
-		log_txt = NULL;
-		log_buf = NULL;
-	}
+	cs_log("LOG CLOSED");
 	if (use_stdout || use_syslog || !fp) return;
 	fclose(fp);
 	fp=(FILE *)0;
@@ -241,8 +225,9 @@ void cs_close_log(void)
 
 void cs_debug(char *fmt,...)
 {
-	//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, client[cs_idx].dbglvl ,cs_ptyp & client[cs_idx].dbglvl);
-	if (log_txt && client[cs_idx].dbglvl & cs_ptyp)
+	//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, client[cs_idx].dbglvl ,client[cs_idx].cs_ptyp & client[cs_idx].dbglvl);
+	char log_txt[512];
+	if (client[cs_idx].dbglvl & client[cs_idx].cs_ptyp)
 	{
 		get_log_header(1, log_txt);
 		va_list params;
@@ -255,7 +240,8 @@ void cs_debug(char *fmt,...)
 
 void cs_debug_mask(unsigned short mask, char *fmt,...)
 {
-	if (log_txt && client[cs_idx].dbglvl & mask)
+	char log_txt[512];
+	if (client[cs_idx].dbglvl & mask)
 	{
 		get_log_header(1, log_txt);
 		va_list params;
@@ -268,7 +254,8 @@ void cs_debug_mask(unsigned short mask, char *fmt,...)
 
 void cs_debug_nolf(char *fmt,...)
 {
-	if (log_txt && client[cs_idx].dbglvl & cs_ptyp)
+	char log_txt[512];
+	if (client[cs_idx].dbglvl & client[cs_idx].cs_ptyp)
 	{
 		va_list params;
 		va_start(params, fmt);
@@ -285,8 +272,7 @@ void cs_debug_nolf(char *fmt,...)
 
 void cs_dump(const uchar *buf, int n, char *fmt, ...)
 {
-	if (!log_txt)
-		return;
+	char log_txt[512];
 	int i;
 
 	if( fmt )
@@ -310,12 +296,11 @@ void cs_dump(const uchar *buf, int n, char *fmt, ...)
 
 void cs_ddump(uchar *buf, int n, char *fmt, ...)
 {
-	if (!log_txt)
-		return;
+	char log_txt[512];
 	int i;
 
 	//if (((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp) && (fmt))
-	if ((cs_ptyp & client[cs_idx].dbglvl) && (fmt))
+	if ((client[cs_idx].cs_ptyp & client[cs_idx].dbglvl) && (fmt))
 	{
 		get_log_header(1, log_txt);
 		va_list params;
@@ -325,8 +310,8 @@ void cs_ddump(uchar *buf, int n, char *fmt, ...)
 		write_to_log(-1, log_txt);
 		//printf("LOG: %s\n", txt); fflush(stdout);
 	}
-	//if (((cs_ptyp | D_DUMP) & client[cs_idx].dbglvl)==(cs_ptyp | D_DUMP))
-	if (cs_ptyp & client[cs_idx].dbglvl)
+	//if (((client[cs_idx].cs_ptyp | D_DUMP) & client[cs_idx].dbglvl)==(cs_ptyp | D_DUMP))
+	if (client[cs_idx].cs_ptyp & client[cs_idx].dbglvl)
 	{
 		for (i=0; i<n; i+=16)
 		{
@@ -339,10 +324,9 @@ void cs_ddump(uchar *buf, int n, char *fmt, ...)
 
 void cs_ddump_mask(unsigned short mask, uchar *buf, int n, char *fmt, ...)
 {
-	if(!log_txt)
-		return;
-	int i;
 
+	char log_txt[512];
+	int i;
 	//if (((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp) && (fmt))
 	if ((mask & client[cs_idx].dbglvl) && (fmt))
 	{
@@ -444,9 +428,6 @@ void cs_statistics(int idx)
 				client[idx].last_srvid,
 				channel);
 
-		if ((*log_fd) && (client[cs_idx].typ != 'l') && (client[cs_idx].typ != 'a'))
-			write_to_pipe(*log_fd, PIP_ID_LOG, (uchar *) buf, strlen(buf));
-		else
-			cs_write_log(buf);
+		cs_write_log(buf);
 	}
 }

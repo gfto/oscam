@@ -33,7 +33,7 @@
 
 #ifndef CS_GLOBALS
 #define CS_GLOBALS
-#define CS_VERSION    "1.00svn"
+#define CS_VERSION    "0.99.4svn-threaded-"
 #ifndef CS_SVN_VERSION
 #	define CS_SVN_VERSION "test"
 #endif
@@ -204,7 +204,6 @@ extern char *RDR_CD_TXT[];
 
 #define PIP_ID_ECM    0
 #define PIP_ID_EMM    1
-#define PIP_ID_LOG    2
 #define PIP_ID_CIN    3  // CARD_INFO
 #define PIP_ID_HUP    4
 #define PIP_ID_RST    5  // Schlocke: Restart Reader, CCcam for example (param: ridx)
@@ -433,6 +432,49 @@ struct s_irdeto_quess
 };
 #endif
 
+#define MSGLOGSIZE 64
+typedef struct ecm_request_t
+{
+  uchar         ecm[256];
+  uchar         cw[16];
+  uchar         ecmd5[CS_ECMSTORESIZE];
+//  uchar         l;
+  short         l;
+  ushort        caid;
+  ushort        ocaid;
+  ushort        srvid;
+  ushort        chid;
+  ushort        pid;
+  ushort        idx;
+  ulong         prid;
+  int           reader[CS_MAXREADER];
+  int           cidx;   // client index
+  int           cpti;   // client pending table index
+  int           stage;    // processing stage in server module
+  int           level;    // send-level in client module
+  int           rc;
+  uchar         rcEx;
+  struct timeb  tps;    // incoming time stamp
+  uchar         locals_done;
+  int		btun; // mark er as betatunneled
+
+#ifdef CS_WITH_DOUBLECHECK
+  int		checked;
+  uchar		cw_checked[16];
+  int       origin_reader;
+#endif
+
+#ifdef CS_WITH_GBOX
+  ushort	gbxCWFrom;
+  ushort	gbxFrom;
+  ushort	gbxTo;
+  uchar		gbxForward[16];
+  int		gbxRidx;
+#endif
+  char msglog[MSGLOGSIZE];
+
+} GCC_PACK      ECM_REQUEST;
+
 struct s_client
 {
   pid_t		pid;
@@ -489,7 +531,8 @@ struct s_client
 #endif
   uchar		ucrc[4];    // needed by monitor and used by camd35
   ulong		pcrc;        // pwd crc
-  AES_KEY	aeskey;      // needed by monitor and used by camd33, camd35
+  AES_KEY	aeskey;      // encryption key needed by monitor and used by camd33, camd35
+  AES_KEY	aeskey_decrypt;      // decryption key needed by monitor and used by camd33, camd35
   ushort	ncd_msgid;
   uchar		ncd_skey[16];
   void		*cc;
@@ -504,7 +547,53 @@ struct s_client
   FTAB		fchid;
   FTAB		ftab;        // user [caid] and ident filter
   CLASSTAB	cltab;
+
+
+  int pfd;      // Primary FD, must be closed on exit
+  int ridx;
+  int cs_ptyp; // process-type
+  uchar mbuf[1024];   // global buffer
+
+  ECM_REQUEST *ecmtask;
+  struct s_emm *emmcache;
+
+  int is_server;
+  pthread_t thread;
+
+  //reader common
+  int last_idx;
+  ushort idx;
+  //int cs_ptyp_orig;
+  int rotate;
+
+  uchar	*req;
+
+  //newcamd
+  int ncd_proto;
+
+  //camd33
+  uchar	camdbug[256];
+
+  //camd35
+  uchar upwd[64];
+  int is_udp;
+  int stopped;
+  int lastcaid;
+  int lastsrvid;
+  int lastpid;
+  time_t emm_last;
+  int disable_counter;
+  uchar lastserial[8];
+
+  //cccam
+  char * prefix;
+  int g_flag;
+  int cc_use_rc4;
+
+  //monitor
+  int auth;
 };
+
 
 //for viaccess var in s_reader:
 struct geo_cache
@@ -521,8 +610,7 @@ struct s_reader  //contains device info, reader info and card info
   int 		deleted; // if this flag is set the reader is not shown in webif and becomes not writte to oscam.server
   int		smargopatch;
   int		pid;
-  int       cs_idx;
-  int       ridx; //FIXME reader[ridx] reader has to know what number it is, should be replaced by storing pointer to reader instead of array index
+  int	     cidx;
   int       enable;
   int       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
   int       fd_error;
@@ -624,6 +712,7 @@ struct s_reader  //contains device info, reader info and card info
   uchar     init_history[4096];
 #endif
   int       init_history_pos;
+  int       brk_pos;
   int       msg_idx;
 #ifdef WEBIF
   int		emmwritten[4]; //count written EMM
@@ -921,51 +1010,6 @@ struct s_config
 	//  struct s_reader reader[];
 };
 
-#define MSGLOGSIZE 64
-typedef struct ecm_request_t
-{
-
-  uchar         ecm[256];
-  uchar         cw[16];
-  uchar         ecmd5[CS_ECMSTORESIZE];
-//  uchar         l;
-  short         l;
-  ushort        caid;
-  ushort        ocaid;
-  ushort        srvid;
-  ushort        chid;
-  ushort        pid;
-  ushort        idx;
-  ulong         prid;
-  int           reader[CS_MAXREADER];
-  int           cidx;   // client index
-  int           cpti;   // client pending table index
-  int           stage;    // processing stage in server module
-  int           level;    // send-level in client module
-  int           rc;
-  uchar         rcEx;
-  struct timeb  tps;    // incoming time stamp
-  uchar         locals_done;
-  int		btun; // mark er as betatunneled
-
-#ifdef CS_WITH_DOUBLECHECK
-  int		checked;
-  uchar		cw_checked[16];
-  int       origin_reader;
-#endif
-
-#ifdef CS_WITH_GBOX
-  ushort	gbxCWFrom;
-  ushort	gbxFrom;
-  ushort	gbxTo;
-  uchar		gbxForward[16];
-  int		gbxRidx;
-#endif
-
-  char msglog[MSGLOGSIZE];
-
-} GCC_PACK      ECM_REQUEST;
-
 //Loadbalance constants:
 #define LB_NONE 0
 #define LB_FASTEST_READER_FIRST 1
@@ -1079,13 +1123,18 @@ extern char *get_tiername(int tierid, int caid);
 extern char *get_provider(int caid, ulong provid);
 extern void make_non_blocking(int fd);
 
+extern int get_csidx();
+#define cs_idx		get_csidx()
+
+extern int mfdr,fd_c2m;
+
 // oscam variables
-extern int pfd, fd_c2m, cs_idx, *c_start, cs_ptyp, cs_dblevel;
-extern int *logidx, *loghistidx, *log_fd;
-extern int is_server, *mcl;
-extern uchar mbuf[1024];
+
+extern int *c_start, cs_dblevel;
+extern int *logidx, *loghistidx;
+
 extern ushort len4caid[256];
-extern pid_t master_pid;
+
 extern struct s_ecm *ecmcache;
 extern struct s_client *client;
 
@@ -1096,11 +1145,10 @@ extern unsigned long *IgnoreList;
 extern struct s_config *cfg;
 extern char cs_confdir[], *loghist;
 extern struct s_module ph[CS_MAX_MOD];
-extern ECM_REQUEST *ecmtask;
+//extern ECM_REQUEST *ecmtask;
 #ifdef CS_ANTICASC
 extern struct s_acasc_shm *acasc;
 extern FILE *fpa;
-extern int use_ac_log;
 #endif
 extern pthread_mutex_t gethostbyname_lock; 
 
@@ -1226,7 +1274,7 @@ extern int init_provid();
 extern char * get_tmp_dir();
 
 // oscam-reader
-extern int ridx, logfd;
+extern int logfd;
 extern int reader_cmd2icc(struct s_reader * reader, uchar *buf, int l, uchar *response, ushort *response_length);
 extern int card_write(struct s_reader * reader, const uchar *, const uchar *, uchar *, ushort *);
 extern int check_sct_len(const unsigned char *data, int off);

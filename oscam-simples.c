@@ -1,11 +1,9 @@
 #include <sys/time.h>
 #include "globals.h"
 
-static AES_KEY	aeskey;
-
 void aes_set_key(char *key)
 {
-  AES_set_decrypt_key((const unsigned char *)key, 128, &aeskey);
+  AES_set_decrypt_key((const unsigned char *)key, 128, &client[cs_idx].aeskey_decrypt);
   AES_set_encrypt_key((const unsigned char *)key, 128, &client[cs_idx].aeskey);
 }
 
@@ -13,7 +11,7 @@ void aes_decrypt(uchar *buf, int n)
 {
   int i;
   for(i=0; i<n; i+=16)
-    AES_decrypt(buf+i, buf+i, &aeskey);
+    AES_decrypt(buf+i, buf+i, &client[cs_idx].aeskey_decrypt);
 }
 
 void aes_encrypt_idx(int idx, uchar *buf, int n)
@@ -212,7 +210,7 @@ void aes_clear_entries(struct s_reader *rdr)
 
 char *remote_txt(void)
 {
-  if (is_server)
+  if (client[cs_idx].is_server)
     return("client");
   else
     return("remote server");

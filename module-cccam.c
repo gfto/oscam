@@ -32,10 +32,10 @@ char *getprefix() {
 		return cc->prefix;
 
 	cc->prefix = malloc(100);
-	if (is_server)
+	if (client[cs_idx].is_server)
 		sprintf(cc->prefix, "cccam(s) %s: ", cl->usr);
 	else
-		sprintf(cc->prefix, "cccam(r) %s: ", reader[ridx].label);
+		sprintf(cc->prefix, "cccam(r) %s: ", reader[client[cs_idx].ridx].label);
 	while (strlen(cc->prefix) < 22)
 		strcat(cc->prefix, " ");
 	return cc->prefix;
@@ -138,7 +138,7 @@ void cc_cw_crypt(uint8 *cws, uint32 cardid) {
 	uint8 tmp;
 	int i;
 
-	if (!is_server) {
+	if (!client[cs_idx].is_server) {
 		node_id = b2ll(8, cc->node_id);
 	} else {
 		node_id = b2ll(8, cc->peer_node_id);
@@ -345,7 +345,7 @@ void free_current_cards(LLIST *current_cards) {
  */
 void cc_cli_close() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	rdr->tcp_connected = 0;
 	rdr->card_status = NO_CARD;
 	rdr->available = 0;
@@ -354,14 +354,14 @@ void cc_cli_close() {
 	rdr->last_s = reader->last_g = 0;
 
 	//cs_sleepms(100);
-	if (pfd) {
-		close(pfd);
-		pfd = 0;
+	if (client[cs_idx].pfd) {
+		close(client[cs_idx].pfd);
+		client[cs_idx].pfd = 0;
 		cl->udp_fd = 0;
 	} else if (cl->udp_fd) {
 		close(cl->udp_fd);
 		cl->udp_fd = 0;
-		pfd = 0;
+		client[cs_idx].pfd = 0;
 	}
 	//cs_sleepms(100);
 	struct cc_data *cc = cl->cc;
@@ -473,7 +473,7 @@ void free_extended_ecm_idx(struct cc_data *cc) {
  */
 int cc_msg_recv(uint8 *buf) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = is_server?NULL:&reader[ridx];
+	struct s_reader *rdr = client[cs_idx].is_server?NULL:&reader[client[cs_idx].ridx];
 	
 	int len;
 	uint8 netbuf[CC_MAXMSGSIZE + 4];
@@ -485,7 +485,7 @@ int cc_msg_recv(uint8 *buf) {
 		return -1;
 
 	len = recv(handle, netbuf, 4, MSG_WAITALL);
-	if (!is_server)
+	if (!client[cs_idx].is_server)
 		rdr->last_g = time(NULL);
 
 	if (!len)
@@ -510,7 +510,7 @@ int cc_msg_recv(uint8 *buf) {
 		}
 
 		len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
-		if (!is_server)
+		if (!client[cs_idx].is_server)
 			rdr->last_g = time(NULL);
 
 		if (len != size) {
@@ -535,7 +535,7 @@ int cc_msg_recv(uint8 *buf) {
  */
 int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = is_server?NULL:&reader[ridx];
+	struct s_reader *rdr = client[cs_idx].is_server?NULL:&reader[client[cs_idx].ridx];
 	
 	int n;
 	uint8 netbuf[len + 4];
@@ -560,11 +560,11 @@ int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(cl->udp_fd, netbuf, len, 0);
-	if (!is_server)
+	if (!client[cs_idx].is_server)
 		rdr->last_s = time(NULL);
 
 	if (n != len) {
-		if (is_server)
+		if (client[cs_idx].is_server)
 			cs_disconnect_client();
 		else
 			cc_cli_close();
@@ -605,7 +605,7 @@ void cc_check_version(char *cc_version, char *cc_build) {
  */
 int cc_send_cli_data() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	
 	int i;
 	struct cc_data *cc = cl->cc;
@@ -639,7 +639,7 @@ int cc_send_cli_data() {
  */
 int cc_send_srv_data() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	int i;
 	struct cc_data *cc = cl->cc;
 
@@ -675,16 +675,16 @@ int cc_get_nxt_ecm() {
 	t = time(NULL);
 	n = -1;
 	for (i = 0; i < CS_MAXPENDING; i++) {
-		if ((t - (ulong) ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000)
-				+ 1) && (ecmtask[i].rc >= 10)) // drop timeouts
+		if ((t - (ulong) client[cs_idx].ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000)
+				+ 1) && (client[cs_idx].ecmtask[i].rc >= 10)) // drop timeouts
 		{
-			ecmtask[i].rc = 0;
+			client[cs_idx].ecmtask[i].rc = 0;
 		}
 
-		if (ecmtask[i].rc >= 10 && ecmtask[i].rc != 101) { // stil active and waiting
+		if (client[cs_idx].ecmtask[i].rc >= 10 && client[cs_idx].ecmtask[i].rc != 101) { // stil active and waiting
 			// search for the ecm with the lowest time, this should be the next to go
-			if ((n < 0 || ecmtask[n].tps.time - ecmtask[i].tps.time < 0)
-					&& &ecmtask[n])
+			if ((n < 0 || client[cs_idx].ecmtask[n].tps.time - client[cs_idx].ecmtask[i].tps.time < 0)
+					&& &client[cs_idx].ecmtask[n])
 				n = i;
 		}
 	}
@@ -696,7 +696,7 @@ int cc_get_nxt_ecm() {
  */
 int send_cmd05_answer() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	struct cc_data *cc = cl->cc;
 	if (!cc->cmd05_active || !rdr->available) //exit if not in cmd05 or waiting for ECM answer
 		return 0;
@@ -847,7 +847,7 @@ int cc_UA_valid(uint8 *ua) {
  */
 int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
 	cc_cli_init_int();
@@ -861,12 +861,12 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	struct timeb cur_time;
 	cs_ftime(&cur_time);
 
-	if (!cc || (pfd < 1) || !rdr->tcp_connected) {
+	if (!cc || (client[cs_idx].pfd < 1) || !rdr->tcp_connected) {
 		if (er) {
 			er->rc = 0;
 			er->rcEx = 0x27;
 			cs_debug_mask(D_TRACE, "%s server not init! ccinit=%d pfd=%d",
-					getprefix(), cc ? 1 : 0, pfd);
+					getprefix(), cc ? 1 : 0, client[cs_idx].pfd);
 			write_ecm_answer(rdr, fd_c2m, er);
 		}
 		cc_cli_close();
@@ -929,7 +929,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			send_cmd05_answer();
 		return 0; // no queued ecms
 	}
-	cur_er = &ecmtask[n];
+	cur_er = &client[cs_idx].ecmtask[n];
 	cur_er->rc = 101; //mark ECM as already send
 	cs_debug("cccam: ecm-task %d", cur_er->idx);
 
@@ -1130,10 +1130,10 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
  t=time((time_t *)0);
  for (i=1,n=1; i<CS_MAXPENDING; i++)
  {
- if ((t-ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
- (ecmtask[i].rc>=10))      // drop timeouts
+ if ((t-client[cs_idx].ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
+ (client[cs_idx].ecmtask[i].rc>=10))      // drop timeouts
  {
- ecmtask[i].rc=0;
+ client[cs_idx].ecmtask[i].rc=0;
  }
  int td=abs(1000*(ecmtask[i].tps.time-cc->found->tps.time)+ecmtask[i].tps.millitm-cc->found->tps.millitm);
  if (ecmtask[i].rc>=10 && ecmtask[i].cidx==cc->found->cidx && &ecmtask[i]!=cc->found){
@@ -1150,7 +1150,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 int cc_send_pending_emms() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	struct cc_data *cc = cl->cc;
 
 	LLIST_ITR itr;
@@ -1203,15 +1203,15 @@ struct cc_card *get_card_by_hexserial(uint8 *hexserial, uint16 caid) {
  * */
 int cc_send_emm(EMM_PACKET *ep) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	
 	cc_cli_init_int();
 
 	struct cc_data *cc = cl->cc;
 
-	if (!cc || (pfd < 1) || !rdr->tcp_connected) {
+	if (!cc || (client[cs_idx].pfd < 1) || !rdr->tcp_connected) {
 		cs_log("%s server not init! ccinit=%d pfd=%d", getprefix(), cc ? 1 : 0,
-				pfd);
+				client[cs_idx].pfd);
 		return 0;
 	}
 	if (rdr->audisabled) {
@@ -1446,7 +1446,7 @@ int check_extended_mode(char *msg) {
 
 void cc_idle() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	struct cc_data *cc = cl->cc;
 	if (!rdr->tcp_connected)
 		return;
@@ -1604,7 +1604,7 @@ void cc_card_removed(uint32 shareid) {
 
 int cc_parse_msg(uint8 *buf, int l) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = is_server?NULL:&reader[ridx];
+	struct s_reader *rdr = client[cs_idx].is_server?NULL:&reader[client[cs_idx].ridx];
 	
 	int ret = buf[1];
 	struct cc_data *cc = cl->cc;
@@ -1771,7 +1771,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 			return ret;
 		}
 
-		if (is_server) //for reader only
+		if (client[cs_idx].is_server) //for reader only
 			return ret;
 
 		if (cc->just_logged_in)
@@ -1804,8 +1804,8 @@ int cc_parse_msg(uint8 *buf, int l) {
 				//retry ecm:
 				int i = 0;
 				for (i = 0; i < CS_MAXPENDING; i++) {
-					if (ecmtask[i].idx == ecm_idx)
-						ecmtask[i].rc = 100; //Mark unused
+					if (client[cs_idx].ecmtask[i].idx == ecm_idx)
+						client[cs_idx].ecmtask[i].rc = 100; //Mark unused
 				}
 			}
 		} else
@@ -1821,7 +1821,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_CW_ECM:
 		cc->just_logged_in = 0;
-		if (is_server) { //SERVER:
+		if (client[cs_idx].is_server) { //SERVER:
 			ECM_REQUEST *er;
 
 			struct cc_card *server_card = malloc(sizeof(struct cc_card));
@@ -1887,8 +1887,8 @@ int cc_parse_msg(uint8 *buf, int l) {
 					//ecm retry:
 					int i = 0;
 					for (i = 0; i < CS_MAXPENDING; i++) {
-						if (ecmtask[i].idx == ecm_idx)
-							ecmtask[i].rc = 100; //Mark unused
+						if (client[cs_idx].ecmtask[i].idx == ecm_idx)
+							client[cs_idx].ecmtask[i].rc = 100; //Mark unused
 					}
 
 					buf[1] = MSG_CW_NOK2; //So it's really handled like a nok!
@@ -1920,7 +1920,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 		
 	case MSG_KEEPALIVE:
 		cc->just_logged_in = 0;
-		if (!is_server) {
+		if (!client[cs_idx].is_server) {
 			cs_debug("cccam: keepalive ack");
 		} else {
 			//Checking if last answer is one minute ago:
@@ -1933,7 +1933,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 		break;
 		
 	case MSG_CMD_05:
-		if (!is_server) {
+		if (!client[cs_idx].is_server) {
 			cc->just_logged_in = 0;
 			l = l - 4;//Header Length=4 Byte
 
@@ -1974,7 +1974,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 	}
 	case MSG_EMM_ACK: {
 		cc->just_logged_in = 0;
-		if (is_server) { //EMM Request received
+		if (client[cs_idx].is_server) { //EMM Request received
 			cc_cmd_send(NULL, 0, MSG_EMM_ACK); //Send back ACK
 			if (l > 4) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
@@ -2147,7 +2147,7 @@ int cc_recv(uchar *buf, int l) {
 
 	NULLFREE(cbuf);
 
-	if (!is_server && (n == -1)) {
+	if (!client[cs_idx].is_server && (n == -1)) {
 		cc_cli_close();
 	}
 
@@ -2156,7 +2156,7 @@ int cc_recv(uchar *buf, int l) {
 
 int cc_cli_connect() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	
 	int handle, n;
 	uint8 data[20];
@@ -2275,8 +2275,8 @@ int cc_cli_connect() {
 	cs_debug("cccam: last_s=%d, last_g=%d", rdr->last_s,
 			rdr->last_g);
 
-	pfd = cl->udp_fd;
-	cs_debug("cccam: pfd=%d", pfd);
+	client[cs_idx].pfd = cl->udp_fd;
+	cs_debug("cccam: pfd=%d", client[cs_idx].pfd);
 
 	if (cc_send_cli_data() <= 0) {
 		cs_log("%s login failed, could not send client data", getprefix());
@@ -2339,7 +2339,7 @@ ulong get_reader_hexserial_crc() {
 	ulong crc = 0;
 	int r;
 	for (r = 0; r < CS_MAXREADER; r++) {
-		if (reader[r].enable && !reader[r].deleted && reader[r].cs_idx
+		if (reader[r].enable && !reader[r].deleted && reader[r].cidx
 				&& !reader[r].audisabled)
 			crc += crc32(0, reader[r].hexserial, 8);
 	}
@@ -2692,7 +2692,7 @@ int cc_srv_report_cards() {
 						prov = llist_itr_next(&itr_prov);
 						if (!chk_srvid_by_caid_prov(card->caid, prid, cs_idx)
 								|| !chk_srvid_by_caid_prov(card->caid, prid,
-										reader[r].cs_idx)) {
+										reader[r].cidx)) {
 							ignore = 1;
 							break;
 						}
@@ -2766,7 +2766,7 @@ int cc_srv_report_cards() {
 
 void cc_cli_report_cards(int client_idx) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	struct cc_data *cc = cl->cc;
 	int count = 0;
 
@@ -2835,7 +2835,7 @@ int cc_srv_connect() {
 	cc->extended_mode = 0;
 	cl->cc_extended_ecm_mode = 0;
 	cc->cc_use_rc4 = 0;
-	is_server = 1;
+	client[cs_idx].is_server = 1;
 
 	// calc + send random seed
 	seed = (unsigned int) time((time_t*) 0);
@@ -2882,7 +2882,7 @@ int cc_srv_connect() {
 	cc_init_crypt(&block_rc4[DECRYPT], data_rc4, 16);
 	cc_rc4_crypt(&block_rc4[DECRYPT], buf_rc4, 20, DECRYPT);
 
-	if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
+	if ((i = recv(client[cs_idx].pfd, buf, 20, MSG_WAITALL)) == 20) {
 		cs_ddump(buf, 20, "cccam: recv:");
 		memcpy(buf_rc4, buf, CC_MAXMSGSIZE);
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
@@ -2892,7 +2892,7 @@ int cc_srv_connect() {
 	}
 
 	// receive username
-	if ((i = recv(pfd, buf, 20, MSG_WAITALL)) == 20) {
+	if ((i = recv(client[cs_idx].pfd, buf, 20, MSG_WAITALL)) == 20) {
 		memcpy(buf_rc4, buf, CC_MAXMSGSIZE);
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 		cc_rc4_crypt(&block_rc4[DECRYPT], buf_rc4, 20, DECRYPT);
@@ -2948,7 +2948,7 @@ int cc_srv_connect() {
 
 	// receive passwd / 'CCcam'
 	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), DECRYPT);
-	if ((i = recv(pfd, buf, 6, MSG_WAITALL)) == 6) {
+	if ((i = recv(client[cs_idx].pfd, buf, 6, MSG_WAITALL)) == 6) {
 		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
 		cs_ddump(buf, 6, "cccam: pwd check '%s':", buf);
 	} else
@@ -2964,7 +2964,7 @@ int cc_srv_connect() {
 	memcpy(buf, "CCcam\0", 6);
 	cs_ddump(buf, 20, "cccam: send ack:");
 	cc_crypt(&cc->block[ENCRYPT], buf, 20, ENCRYPT);
-	send(pfd, buf, 20, 0);
+	send(client[cs_idx].pfd, buf, 20, 0);
 
 	// recv cli data
 	memset(buf, 0, sizeof(buf));
@@ -2990,7 +2990,7 @@ int cc_srv_connect() {
 	cmi = 0;
 	// check for client timeout, if timeout occurs try to send keepalive
 	for (;;) {
-		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
+		i = process_input(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf), 10); //cfg->cmaxidle);
 		//cs_log("srv process input i=%d cmi=%d", i, cmi);
 		if (i == -9) {
 			cmi += 10;
@@ -3030,7 +3030,7 @@ int cc_srv_connect() {
 
 void cc_srv_init() {
 	struct s_client *cl = &client[cs_idx];
-	pfd = cl->udp_fd;
+	client[cs_idx].pfd = cl->udp_fd;
 	//cc_auth_client(cl->ip);
 	if (cc_srv_connect() < 0)
 		cs_log("cccam: %d failed errno: %d (%s)", __LINE__, errno, strerror(
@@ -3042,14 +3042,14 @@ void cc_srv_init() {
 
 int cc_cli_init_int() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[ridx];
+	struct s_reader *rdr = &reader[client[cs_idx].ridx];
 	if (rdr->tcp_connected)
 		return -1;
 
 	struct protoent *ptrp;
 	int p_proto;
 
-	pfd = 0;
+	client[cs_idx].pfd = 0;
 	if (rdr->r_port <= 0) {
 		cs_log("%s invalid port %d for server %s", getprefix(),
 				rdr->r_port, rdr->device);
@@ -3106,8 +3106,6 @@ int cc_cli_init_int() {
 }
 
 int cc_cli_init() {
-	if (master_pid != getppid())
-		cs_exit(0);
 	cc_cli_init_int();
 	return 0;
 }
@@ -3119,7 +3117,7 @@ int cc_cli_init() {
  */
 int cc_available(int ridx, int checktype) {
 	struct s_reader *rdr = &reader[ridx];
-	struct s_client *cl = &client[rdr->cs_idx];
+	struct s_client *cl = &client[rdr->cidx];
 	
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);
 	if (!cl->cc || rdr->tcp_connected != 2
@@ -3137,7 +3135,7 @@ int cc_available(int ridx, int checktype) {
 
 void cc_cleanup(void) {
 	struct s_client *cl = &client[cs_idx];
-	if (!is_server) {
+	if (!client[cs_idx].is_server) {
 		cc_cli_close(); // we need to close open fd's 
 	}
 	cc_free(cl->cc);
