@@ -1640,20 +1640,28 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 		if (reader[ridx].typ == R_CCCAM) {
 
-			int pipe = cc_request_server_cards(ridx, cs_idx);
-			if (pipe) {
-				int caidcount = 0;
+			int caidcount = 0;
 
-				char *provider = "";
+			char *provider = "";
 
-				struct cc_card *card;
-				while ((card = read_card_from(pipe))) {
+			struct cc_card *card;
+			struct s_client *rc = &client[reader[ridx].cidx];
+			struct cc_data *rcc = rc->cc;
+
+			if (rcc && rcc->cards) {
+				pthread_mutex_lock(&rcc->cards_busy);
+
+				LLIST_ITR itr;
+				card = llist_itr_init(rcc->cards, &itr);
+				while (card) {
+
 					tpl_printf(vars, 1, "LOGHISTORY",
 							"caid: %04X hop: %d<BR>\n", card->caid, card->hop);
 
 					int provcount = 0;
 					LLIST_ITR itr;
-					struct cc_provider *prov = llist_itr_init(card->providers, &itr);
+					struct cc_provider *prov = llist_itr_init(card->providers,
+							&itr);
 					while (prov) {
 						provider = get_provider(card->caid, prov->prov);
 
@@ -1666,18 +1674,15 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 					tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
 					caidcount++;
-
-					cc_free_card(card);
+					card = llist_itr_next(&itr);
 				}
-				cc_close_request_server_cards(pipe, ridx, cs_idx);
-				
-				if (caidcount)
-					tpl_printf(vars, 1, "LOGSUMMARY",
-							"<BR>%d caid found on this reader<BR><BR>\n",
-							caidcount);
+				pthread_mutex_unlock(&rcc->cards_busy);
 
-				tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
+			if (caidcount)
+				tpl_printf(vars, 1, "LOGSUMMARY",
+						"<BR>%d caid found on this reader<BR><BR>\n", caidcount);
 
+			tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
 			} else {
 				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
 			}

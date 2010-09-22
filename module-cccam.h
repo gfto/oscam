@@ -151,6 +151,7 @@ struct cc_data {
 	
 	pthread_mutex_t lock;
 	pthread_mutex_t ecm_busy;
+	pthread_mutex_t cards_busy;
 	struct timeb ecm_time;
 	time_t answer_on_keepalive;
 	uint8 last_msg;
@@ -171,7 +172,5 @@ void free_extended_ecm_idx(struct cc_data *cc);
 void cc_free_card(struct cc_card *card);
 
 struct cc_card *read_card_from(int pipe);
-int cc_request_server_cards(int ridx, int dest_cs_idx);
-void cc_close_request_server_cards(int pipe, int ridx, int dest_cs_idx);
 
 #endif /* MODULECCCAM_H_ */

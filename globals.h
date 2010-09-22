@@ -191,7 +191,7 @@ extern const char *boxdesc[];
 #endif
 
 #ifdef CS_CORE
-char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", "STA", "BES", "RES", "CCC", NULL  };
+char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", "STA", "BES", "RES", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
                        "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
@@ -211,9 +211,8 @@ extern char *RDR_CD_TXT[];
 #define PIP_ID_STA    7  // Schlocke: Add statistic (param: ADD_READER_STAT)
 #define PIP_ID_BES    8  // Schlocke: Get best reader (param ECM_REQUEST, return to client with data int ridx)
 #define PIP_ID_RES    9  // Schlocke: reset reader statistiks
-#define PIP_ID_CCC    10 // Schlocke: Request card from reader
-#define PIP_ID_DCW    11
-#define PIP_ID_MAX    PIP_ID_CCC
+#define PIP_ID_DCW    10
+#define PIP_ID_MAX    PIP_ID_RES
 
 
 #define PIP_ID_ERR    (-1)
@@ -417,7 +416,6 @@ struct s_module
                          //int ridx (reader to check)
                          //int checktype (0=return connected, 1=return loadbalance-avail) return int
   void (*c_idle)(); //Schlocke: called when reader is idle
-  void (*c_report_cards)(); //Schlocke: report cards (CCCam)
   int  c_port;
   PTAB *ptab;
 };

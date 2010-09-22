@@ -35,7 +35,7 @@ char *getprefix() {
 	if (client[cs_idx].is_server)
 		sprintf(cc->prefix, "cccam(s) %s: ", cl->usr);
 	else
-		sprintf(cc->prefix, "cccam(r) %s: ", reader[client[cs_idx].ridx].label);
+		sprintf(cc->prefix, "cccam(r) %s: ", reader[cl->ridx].label);
 	while (strlen(cc->prefix) < 22)
 		strcat(cc->prefix, " ");
 	return cc->prefix;
@@ -345,7 +345,7 @@ void free_current_cards(LLIST *current_cards) {
  */
 void cc_cli_close() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	rdr->tcp_connected = 0;
 	rdr->card_status = NO_CARD;
 	rdr->available = 0;
@@ -368,6 +368,7 @@ void cc_cli_close() {
 	if (cc) {
 		pthread_mutex_unlock(&cc->lock);
 		pthread_mutex_unlock(&cc->ecm_busy);
+		pthread_mutex_unlock(&cc->cards_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
 		free_current_cards(cc->current_cards);
@@ -473,7 +474,7 @@ void free_extended_ecm_idx(struct cc_data *cc) {
  */
 int cc_msg_recv(uint8 *buf) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = client[cs_idx].is_server?NULL:&reader[client[cs_idx].ridx];
+	struct s_reader *rdr = cl->is_server?NULL:&reader[cl->ridx];
 	
 	int len;
 	uint8 netbuf[CC_MAXMSGSIZE + 4];
@@ -535,7 +536,7 @@ int cc_msg_recv(uint8 *buf) {
  */
 int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = client[cs_idx].is_server?NULL:&reader[client[cs_idx].ridx];
+	struct s_reader *rdr = cl->is_server?NULL:&reader[cl->ridx];
 	
 	int n;
 	uint8 netbuf[len + 4];
@@ -605,7 +606,7 @@ void cc_check_version(char *cc_version, char *cc_build) {
  */
 int cc_send_cli_data() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	
 	int i;
 	struct cc_data *cc = cl->cc;
@@ -639,7 +640,7 @@ int cc_send_cli_data() {
  */
 int cc_send_srv_data() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	int i;
 	struct cc_data *cc = cl->cc;
 
@@ -696,7 +697,7 @@ int cc_get_nxt_ecm() {
  */
 int send_cmd05_answer() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	struct cc_data *cc = cl->cc;
 	if (!cc->cmd05_active || !rdr->available) //exit if not in cmd05 or waiting for ECM answer
 		return 0;
@@ -847,7 +848,7 @@ int cc_UA_valid(uint8 *ua) {
  */
 int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
 	cc_cli_init_int();
@@ -940,6 +941,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 	cur_srvid.sid = cur_er->srvid;
 	cur_srvid.ecmlen = cur_er->l;
 
+	pthread_mutex_lock(&cc->cards_busy);
 	//search cache:
 	current_card = cc_find_current_card_by_srvid(cc, cur_er->caid,
 			cur_er->prid, &cur_srvid);
@@ -1068,6 +1070,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 					getprefix(), card->caid, rdr->card_system,
 					cs_hexdump(0, rdr->hexserial, 8), saprov);
 		}
+		pthread_mutex_unlock(&cc->cards_busy);
 
 		return 0;
 	} else {
@@ -1112,6 +1115,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 						cur_er->prid, &cur_srvid);
 			}
 		}
+		pthread_mutex_unlock(&cc->cards_busy);
 		if (!cc->extended_mode) {
 			rdr->available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
@@ -1150,7 +1154,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 int cc_send_pending_emms() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	struct cc_data *cc = cl->cc;
 
 	LLIST_ITR itr;
@@ -1203,7 +1207,7 @@ struct cc_card *get_card_by_hexserial(uint8 *hexserial, uint16 caid) {
  * */
 int cc_send_emm(EMM_PACKET *ep) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	
 	cc_cli_init_int();
 
@@ -1222,6 +1226,7 @@ int cc_send_emm(EMM_PACKET *ep) {
 	ushort caid = b2i(2, ep->caid);
 
 	//Last used card is first card of current_cards:
+	pthread_mutex_lock(&cc->cards_busy);
 	LLIST_ITR itr;
 	struct cc_current_card *current_card = llist_itr_init(cc->current_cards,
 			&itr);
@@ -1240,6 +1245,7 @@ int cc_send_emm(EMM_PACKET *ep) {
 	if (!emm_card) { //Card for emm not found!
 		cs_log("%s emm for client %d not possible, no card found!",
 				getprefix(), ep->cidx);
+		pthread_mutex_unlock(&cc->cards_busy);
 		return 0;
 	}
 
@@ -1265,6 +1271,8 @@ int cc_send_emm(EMM_PACKET *ep) {
 	emmbuf[10] = emm_card->id & 0xff;
 	emmbuf[11] = ep->l;
 	memcpy(emmbuf + 12, ep->emm, ep->l);
+
+	pthread_mutex_unlock(&cc->cards_busy);
 
 	llist_append(cc->pending_emms, emmbuf);
 	cc_send_pending_emms();
@@ -1385,6 +1393,7 @@ void cc_free(struct cc_data *cc) {
 		free_extended_ecm_idx(cc);
 	pthread_mutex_destroy(&cc->lock);
 	pthread_mutex_destroy(&cc->ecm_busy);
+	pthread_mutex_destroy(&cc->cards_busy);
 	free(cc->prefix);
 	free(cc);
 }
@@ -1446,7 +1455,7 @@ int check_extended_mode(char *msg) {
 
 void cc_idle() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	struct cc_data *cc = cl->cc;
 	if (!rdr->tcp_connected)
 		return;
@@ -1458,40 +1467,6 @@ void cc_idle() {
 		cs_debug("cccam: keepalive");
 		cc->answer_on_keepalive = time(NULL);
 	}
-}
-
-/**
- * write card-send-request request via pipe to the reader.
- * reader then sends the cards by fifo-pipe
- *
- * THREADED: This function should be removed if using threaded
- **/
-int cc_request_server_cards(int ridx, int dest_cs_idx) {
-	char fname[40];
-	sprintf(fname, "%s/card%d-%d", get_tmp_dir(), ridx, dest_cs_idx);
-	unlink(fname);
-	mkfifo(fname, 0666);
-	//Request cards from server:
-	int data[2] = {ridx, dest_cs_idx};
-    write_to_pipe(fd_c2m, PIP_ID_CCC, (uchar*)data, sizeof(data));
-
-    int pipe = open(fname, O_RDONLY);
-    if (pipe <= 0)
-	return 0;
-    else 
-    	return pipe;
-}
-
-/**
- * closes fifo-pipe
- *
- * THREADED: This function should be removed if using threaded
- **/
-void cc_close_request_server_cards(int pipe, int ridx, int dest_cs_idx) {
-	close(pipe);
-	char fname[40];
-        sprintf(fname, "%s/card%d-%d", get_tmp_dir(), ridx, dest_cs_idx);
-        unlink(fname);
 }
 
 struct cc_card *read_card(uint8 *buf) {
@@ -1528,21 +1503,6 @@ struct cc_card *read_card(uint8 *buf) {
 }
 
 #define READ_CARD_TIMEOUT 100
-
-struct cc_card *read_card_from(int pipe) {
-		int size = 0;
-		uint8 buf[CC_MAXMSGSIZE];
-
-		int n = read(pipe, &size, sizeof(size));
-		if (n < 0 || size <= 0 || size > CC_MAXMSGSIZE)
-			return NULL;
-
-		n = read(pipe, buf, size);
-		if (n < 0 || n != size)
-			return NULL;
-
-		return read_card(buf);
-}
 
 int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card) {
 	memset(buf, 0, CC_MAXMSGSIZE);
@@ -1608,7 +1568,7 @@ void cc_card_removed(uint32 shareid) {
 
 int cc_parse_msg(uint8 *buf, int l) {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = client[cs_idx].is_server?NULL:&reader[client[cs_idx].ridx];
+	struct s_reader *rdr = cl->is_server?NULL:&reader[cl->ridx];
 	
 	int ret = buf[1];
 	struct cc_data *cc = cl->cc;
@@ -1706,6 +1666,8 @@ int cc_parse_msg(uint8 *buf, int l) {
 		rdr->tcp_connected = 2; //we have card
 		rdr->card_status = CARD_INSERTED;
 
+		pthread_mutex_lock(&cc->cards_busy);
+
 		struct cc_card *card = read_card(buf + 4);
 		
 		card->hop++; //inkrementing hop
@@ -1733,12 +1695,16 @@ int cc_parse_msg(uint8 *buf, int l) {
 					prov->prov);
 			prov = llist_itr_next(&itr);
 		}
+
+		pthread_mutex_unlock(&cc->cards_busy);
 		//SS: Hack end
 	}
 	break;
 
 	case MSG_CARD_REMOVED: {
+		pthread_mutex_lock(&cc->cards_busy);
 		cc_card_removed(b2i(4, buf + 4));
+		pthread_mutex_unlock(&cc->cards_busy);
 	}
 	break;
 
@@ -2160,7 +2126,7 @@ int cc_recv(uchar *buf, int l) {
 
 int cc_cli_connect() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	
 	int handle, n;
 	uint8 data[20];
@@ -2208,6 +2174,7 @@ int cc_cli_connect() {
 		cc->current_cards = llist_create();
 		pthread_mutex_init(&cc->lock, NULL);
 		pthread_mutex_init(&cc->ecm_busy, NULL);
+		pthread_mutex_init(&cc->cards_busy, NULL);
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
@@ -2677,53 +2644,51 @@ int cc_srv_report_cards() {
 
 		if (reader[r].typ == R_CCCAM && !flt && reader[r].fd) {
 
-			cs_debug_mask(D_TRACE, "%s asking reader %s for cards...", getprefix(), reader[r].label);
-			
-			struct cc_card *card;
-			int pipe = cc_request_server_cards(r, cs_idx);
-			
-			//When reader has connection problems, client whould stuck! so we need to get sure he is connected AND has cards:
-			int retry = 3;
-			while (pipe && reader[r].tcp_connected != 2 && retry > 0) {
-				cs_sleepms(200);
-				retry--;
-			}
-			
-			int count = 0;
-			while (reader[r].tcp_connected == 2 && pipe)
-			{
-				card = read_card_from(pipe);
-				if (!card) break;
-				
-				if (card->hop <= maxhops && //card->maxdown > 0 &&
-						chk_ctab(card->caid, &cl->ctab) && chk_ctab(
-						card->caid, &reader[r].ctab)) {
-					int ignore = 0;
+			cs_debug_mask(D_TRACE, "%s asking reader %s for cards...",
+					getprefix(), reader[r].label);
 
-					LLIST_ITR itr_prov;
-					struct cc_provider *prov = llist_itr_init(card->providers,
-							&itr_prov);
-					while (prov) {
-						ulong prid = prov->prov;
-						prov = llist_itr_next(&itr_prov);
-						if (!chk_srvid_by_caid_prov(card->caid, prid, cs_idx)
-								|| !chk_srvid_by_caid_prov(card->caid, prid,
-										reader[r].cidx)) {
-							ignore = 1;
-							break;
+			struct cc_card *card;
+			struct s_client *rc = &client[reader[r].cidx];
+			struct cc_data *rcc = rc->cc;
+
+			if (rcc && rcc->cards) {
+				pthread_mutex_lock(&rcc->cards_busy);
+
+				LLIST_ITR itr;
+				card = llist_itr_init(rcc->cards, &itr);
+				int count = 0;
+				while (card) {
+					if (card->hop <= maxhops && //card->maxdown > 0 &&
+							chk_ctab(card->caid, &cl->ctab) && chk_ctab(
+							card->caid, &reader[r].ctab)) {
+						int ignore = 0;
+
+						LLIST_ITR itr_prov;
+						struct cc_provider *prov = llist_itr_init(
+								card->providers, &itr_prov);
+						while (prov) {
+							ulong prid = prov->prov;
+							prov = llist_itr_next(&itr_prov);
+							if (!chk_srvid_by_caid_prov(card->caid, prid,
+									cs_idx) || !chk_srvid_by_caid_prov(
+									card->caid, prid, reader[r].cidx)) {
+								ignore = 1;
+								break;
+							}
+						}
+						if (!ignore) { //Filtered by service
+							card->maxdown = reshare;
+							add_card_to_serverlist(server_cards, card);
+							count++;
 						}
 					}
-					if (!ignore) { //Filtered by service
-						card->maxdown = reshare;
-						add_card_to_serverlist(server_cards, card);
-						count++;
-					}
-				}
-				free(card);
 
+				}
+				pthread_mutex_unlock(&rcc->cards_busy);
+
+				cs_debug_mask(D_TRACE, "%s got %d cards from %s", getprefix(),
+						count, reader[r].label);
 			}
-			cc_close_request_server_cards(pipe, r, cs_idx);
-			cs_debug_mask(D_TRACE, "%s got %d cards from %s", getprefix(), count, reader[r].label);			
 		}
 	}
 
@@ -2781,44 +2746,6 @@ int cc_srv_report_cards() {
 	return count;
 }
 
-void cc_cli_report_cards(int client_idx) {
-	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
-	struct cc_data *cc = cl->cc;
-	int count = 0;
-
-	uint8 buf[CC_MAXMSGSIZE];
-	sprintf((char*) buf, "%s/card%d-%d", get_tmp_dir(), client[client_idx].ridx, client_idx);
-	int pipe = open((char*) buf, O_WRONLY);
-
-	cs_debug_mask(D_TRACE, "%s reporting cards...", rdr->label);
-	if (!cc || rdr->tcp_connected == 0) {
-		cc_cli_init_int();
-		cc = cl->cc;
-	}
-		
-	if (cc && rdr->tcp_connected == 2) {
-
-		LLIST_ITR itr;
-		struct cc_card *card = llist_itr_init(cc->cards, &itr);
-		//cs_debug_mask(D_TRACE, "%s reporting server cards...", getprefix());
-		while (card) {
-			//cs_debug_mask(D_TRACE, "%s reporting server card %d", getprefix(), card->id);
-			int size = write_card(cc, buf, card);
-			write(pipe, &size, sizeof(size));
-			write(pipe, buf, size);
-			card = llist_itr_next(&itr);
-			count++;
-		}
-	}
-	//No (more) cards:
-	int n = 0;
-	write(pipe, &n, sizeof(n));
-	close(pipe);
-	cs_debug_mask(D_TRACE, "%s finished reporting %d server cards",
-			getprefix(), count);
-}
-
 int cc_srv_connect() {
 	struct s_client *cl = &client[cs_idx];
 	int i;
@@ -2847,6 +2774,7 @@ int cc_srv_connect() {
 		cc->extended_ecm_idx = llist_create();
 		pthread_mutex_init(&cc->lock, NULL);
 		pthread_mutex_init(&cc->ecm_busy, NULL);
+		pthread_mutex_init(&cc->cards_busy, NULL);
 	}
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
@@ -3059,7 +2987,7 @@ void cc_srv_init() {
 
 int cc_cli_init_int() {
 	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[client[cs_idx].ridx];
+	struct s_reader *rdr = &reader[cl->ridx];
 	if (rdr->tcp_connected)
 		return -1;
 
@@ -3176,7 +3104,6 @@ void module_cccam(struct s_module *ph) {
 	ph->s_handler = cc_srv_init;
 	ph->send_dcw = cc_send_dcw;
 	ph->c_available = cc_available;
-	ph->c_report_cards = cc_cli_report_cards;
 	static PTAB ptab;
 	ptab.ports[0].s_port = cfg->cc_port;
 	ph->ptab = &ptab;
