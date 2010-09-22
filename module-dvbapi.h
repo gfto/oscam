@@ -173,7 +173,7 @@ int stapi_write_cw(int demux_id, uchar *cw);
 
 void dvbapi_stop_descrambling(int);
 void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len);
-int dvbapi_open_device(int, int, int);
+int dvbapi_open_device(int, int);
 int dvbapi_stop_filternum(int demux_index, int num);
 int dvbapi_stop_filter(int demux_index, int type);
 

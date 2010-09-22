@@ -149,4 +149,5 @@ void module_constcw(struct s_module *ph)
   ph->c_init = constcw_client_init;
   ph->c_recv_chk = constcw_recv_chk;
   ph->c_send_ecm = constcw_send_ecm;
+  ph->num=R_CONSTCW;
 }

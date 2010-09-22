@@ -61,7 +61,7 @@ int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uc
 	
 	switch(api) {
 		case DVBAPI_3:
-			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(demux_id, 0, demux[demux_id].demux_index);
+			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index);
 			struct dmx_sct_filter_params sFP2;
 
 			memset(&sFP2,0,sizeof(sFP2));
@@ -75,7 +75,7 @@ int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uc
 
 			break;
 		case DVBAPI_1:
-			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(demux_id, 0, demux[demux_id].demux_index);
+			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index);
 			struct dmxSctFilterParams sFP1;
 
 			memset(&sFP1,0,sizeof(sFP1));
@@ -188,7 +188,7 @@ int dvbapi_read_device(int dmx_fd, unsigned char *buf, int length) {
 	return len;
 }
 
-int dvbapi_open_device(int index_demux, int type, int num) {
+int dvbapi_open_device(int type, int num) {
 	int dmx_fd;
 	int ca_offset=0;
 	char device_path[128];
@@ -1389,7 +1389,7 @@ void dvbapi_write_cw(int demux_id, uchar *cw) {
 					cs_debug("write cw%d index: %d (ca%d)", n, demux_id, i);
 
 					if (ca_fd[i]<=0) {
-						ca_fd[i]=dvbapi_open_device(demux_id, 1, i);
+						ca_fd[i]=dvbapi_open_device(1, i);
 						if (ca_fd[i]<=0)
 							return;
 					}

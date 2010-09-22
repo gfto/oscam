@@ -1305,4 +1305,5 @@ void module_newcamd(struct s_module *ph)
   ph->c_recv_chk=newcamd_recv_chk;
   ph->c_send_ecm=newcamd_send_ecm;
   ph->c_send_emm=newcamd_send_emm;
+  ph->num=R_NEWCAMD;
 }
