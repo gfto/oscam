@@ -52,12 +52,12 @@ Mac OS X
 .PP
 \fB-b\fP
 .RS 3n
-starts in background, writing /tmp/oscam.version with starttime and version info
+starts in background, writing oscam.version with starttime and version info in temporary directory
 .RE
 .PP
 \fB-c\fP <directory>
 .RS 3n
-read configuration from <directory>, default: see CS_CONFDIR in \fBglobals.h\fR,
+read configuration from <directory>, default:see CS_CONFDIR in \fBglobals.h\fR,
 while starting OSCam prints warnings on invalid keywords, comment lines start with \fB#\fP character. 
 .RE
 .PP
@@ -76,12 +76,17 @@ debug level mask:
 .PP
 \fB-m\fP <filename>
 .RS 3n
-use <filename> as mmaped memory file, default: see CS_MMAPFILE in \fBglobals.h\fR, needed for embedded systems without shared memory and windows
+use <filename> as mmaped memory file, default:see CS_MMAPFILE in \fBglobals.h\fR, needed for embedded systems without shared memory and windows
 .RE
 .PP
 \fB-h\fP
 .RS 3n
 usage
+.RE
+.PP
+\fB-t\fP <directory>
+.RS 3n
+use <directory> for temporary data, default:temporary directory of OS
 .RE
 .SH SIGNALS
 .PP

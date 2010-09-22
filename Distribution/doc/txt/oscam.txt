@@ -1,4 +1,4 @@
-oscam(1)													 oscam(1)
+oscam(1)																					 oscam(1)
 
 
 
@@ -43,11 +43,10 @@ DESCRIPTIONS
 
 OPTIONS
        -b
-	  starts in background, writing /tmp/oscam.version with starttime and version info
+	  starts in background, writing oscam.version with starttime and version info in temporary directory
 
        -c <directory>
-	  read configuration from <directory>, default: see CS_CONFDIR in globals.h, while starting OSCam prints warnings
-	  on invalid keywords, comment lines start with # character.
+	  read configuration from <directory>, default:see CS_CONFDIR in globals.h, while starting OSCam prints warnings on invalid keywords, comment lines start with # character.
 
        -d <level>
 	  debug level mask:
@@ -61,16 +60,17 @@ OPTIONS
 	   255 = debug all
 
        -m <filename>
-	  use <filename> as mmaped memory file, default: see CS_MMAPFILE in globals.h, needed for embedded systems  with‐
-	  out shared memory and windows
+	  use <filename> as mmaped memory file, default:see CS_MMAPFILE in globals.h, needed for embedded systems without shared memory and windows
 
        -h
 	  usage
 
+       -t <directory>
+	  use <directory> for temporary data, default:temporary directory of OS
+
 SIGNALS
        SIGHUP
-	  reinit  user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart
-	  newcamd client
+	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart newcamd client
 
        SIGUSR1
 	  shift debug level to next level (see debug level mask above)
@@ -79,9 +79,9 @@ SIGNALS
 	  get reader SC info
 
 SEE ALSO
-       list_smargo(1),	oscam.ac(5),  oscam.cert(5),  oscam.conf(5),   oscam.guess(5),	 oscam.ird(5),	 oscam.provid(5),
-       oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
+       list_smargo(1),	oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.guess(5),  oscam.ird(5), oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5),
+       oscam.user(5)
 
 
 
-														 oscam(1)
+																						 oscam(1)
