@@ -1476,7 +1476,7 @@ void send_reader_stat(int ridx9, ECM_REQUEST *er, int rc)
 	add_stat.caid = er->caid;
 	add_stat.prid = er->prid;
 	add_stat.srvid = er->srvid;
-	write_to_pipe(fd_c2m, PIP_ID_STA, (uchar*)&add_stat, sizeof(ADD_READER_STAT));
+	add_reader_stat(&add_stat);
 }
 
 int hexserialset(int ridx)
@@ -1957,26 +1957,7 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	memcpy(grs.reader_avail, reader_avail, sizeof(int)*CS_MAXREADER);
 	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", username(cs_idx), grs.caid, grs.prid, grs.srvid);
 
-	int res_write = write_to_pipe(fd_c2m, PIP_ID_BES, (uchar*)&grs, sizeof(GET_READER_STAT));
-	if (res_write <= 0) {
-		cs_debug_mask(D_TRACE, "get best reader: write error!");
-		return;
-	}
-	
-	uchar *ptr;
-	do
-	{
-		int n = read_from_pipe(client[cs_idx].fd_m2c_c, &ptr, 1);
-		if (n == PIP_ID_BES) {
-			int *best_readers = (int*)ptr;
-			memcpy(reader_avail, best_readers, sizeof(int)*CS_MAXREADER);
-			return;
-		}
-		else if (n == PIP_ID_DIR)
-			continue;
-		else //should neven happen
-			cs_debug_mask(D_TRACE, "get best reader: illegal paket? n=%d", n);
-	} while (1);
+        get_best_reader(&grs, reader_avail);
 }
 
 void get_cw(ECM_REQUEST *er)
@@ -2534,16 +2515,6 @@ static void restart_clients()
 }
 
 
-// gets and send the best reader to the client. Called from master-process
-void send_best_reader(GET_READER_STAT *grs)
-{
-	//cs_debug_mask(D_TRACE, "got request for best reader for %04X/%04X/%04X", grs->caid, grs->prid, grs->srvid);
-	int best_reader[CS_MAXREADER];
-	get_best_reader(grs, best_reader);
-	//cs_debug_mask(D_TRACE, "sending best reader %d", ridx);
-	write_to_pipe(client[grs->cidx].fd_m2c, PIP_ID_BES, (uchar*)&best_reader, sizeof(best_reader));
-}
-
 void send_clear_reader_stat(int ridx)
 {
   write_to_pipe(fd_c2m, PIP_ID_RES, (uchar*)&ridx, sizeof(ridx)); 
@@ -2574,12 +2545,6 @@ static void process_master_pipe()
     case PIP_ID_KCL: //Kill all clients
     	restart_clients();
     	break;
-    case PIP_ID_STA: //Add reader statistics
-    	add_reader_stat((ADD_READER_STAT *)ptr);
-    	break;
-    case PIP_ID_BES: //Get best reader
-        send_best_reader((GET_READER_STAT *)ptr);
-        break;
     case PIP_ID_RES: //Reset reader statistics
     	clear_reader_stat(*(int*)ptr);
     	break;

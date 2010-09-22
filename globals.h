@@ -200,7 +200,7 @@ extern const char *boxdesc[];
 #endif
 
 #ifdef CS_CORE
-char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", "STA", "BES", "RES", NULL  };
+char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", "RES", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
                        "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
@@ -217,10 +217,8 @@ extern char *RDR_CD_TXT[];
 #define PIP_ID_HUP    4
 #define PIP_ID_RST    5  // Schlocke: Restart Reader, CCcam for example (param: ridx)
 #define PIP_ID_KCL    6  // Schlocke: Kill all Clients (no param)
-#define PIP_ID_STA    7  // Schlocke: Add statistic (param: ADD_READER_STAT)
-#define PIP_ID_BES    8  // Schlocke: Get best reader (param ECM_REQUEST, return to client with data int ridx)
-#define PIP_ID_RES    9  // Schlocke: reset reader statistiks
-#define PIP_ID_DCW    10
+#define PIP_ID_RES    7  // Schlocke: reset reader statistiks
+#define PIP_ID_DCW    8
 #define PIP_ID_MAX    PIP_ID_RES
 
 
