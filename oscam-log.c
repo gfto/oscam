@@ -225,9 +225,9 @@ void cs_close_log(void)
 
 void cs_debug(const char *fmt,...)
 {
-	//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, client[cs_idx].dbglvl ,client[cs_idx].cs_ptyp & client[cs_idx].dbglvl);
+	//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, cs_dblevel ,client[cs_idx].cs_ptyp & cs_dblevel);
 	char log_txt[512];
-	if (client[cs_idx].dbglvl & client[cs_idx].cs_ptyp)
+	if (cs_dblevel & client[cs_idx].cs_ptyp)
 	{
 		get_log_header(1, log_txt);
 		va_list params;
@@ -241,7 +241,7 @@ void cs_debug(const char *fmt,...)
 void cs_debug_mask(unsigned short mask, const char *fmt,...)
 {
 	char log_txt[512];
-	if (client[cs_idx].dbglvl & mask)
+	if (cs_dblevel & mask)
 	{
 		get_log_header(1, log_txt);
 		va_list params;
@@ -255,7 +255,7 @@ void cs_debug_mask(unsigned short mask, const char *fmt,...)
 void cs_debug_nolf(const char *fmt,...)
 {
 	char log_txt[512];
-	if (client[cs_idx].dbglvl & client[cs_idx].cs_ptyp)
+	if (cs_dblevel & client[cs_idx].cs_ptyp)
 	{
 		va_list params;
 		va_start(params, fmt);
@@ -299,8 +299,8 @@ void cs_ddump(const uchar *buf, int n, char *fmt, ...)
 	char log_txt[512];
 	int i;
 
-	//if (((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp) && (fmt))
-	if ((client[cs_idx].cs_ptyp & client[cs_idx].dbglvl) && (fmt))
+	//if (((cs_ptyp & cs_dblevel)==cs_ptyp) && (fmt))
+	if ((client[cs_idx].cs_ptyp & cs_dblevel) && (fmt))
 	{
 		get_log_header(1, log_txt);
 		va_list params;
@@ -310,8 +310,8 @@ void cs_ddump(const uchar *buf, int n, char *fmt, ...)
 		write_to_log(-1, log_txt);
 		//printf("LOG: %s\n", txt); fflush(stdout);
 	}
-	//if (((client[cs_idx].cs_ptyp | D_DUMP) & client[cs_idx].dbglvl)==(cs_ptyp | D_DUMP))
-	if (client[cs_idx].cs_ptyp & client[cs_idx].dbglvl)
+	//if (((client[cs_idx].cs_ptyp | D_DUMP) & cs_dblevel)==(cs_ptyp | D_DUMP))
+	if (client[cs_idx].cs_ptyp & cs_dblevel)
 	{
 		for (i=0; i<n; i+=16)
 		{
@@ -327,8 +327,8 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 
 	char log_txt[512];
 	int i;
-	//if (((cs_ptyp & client[cs_idx].dbglvl)==cs_ptyp) && (fmt))
-	if ((mask & client[cs_idx].dbglvl) && (fmt))
+	//if (((cs_ptyp & cs_dblevel)==cs_ptyp) && (fmt))
+	if ((mask & cs_dblevel) && (fmt))
 	{
 		get_log_header(1, log_txt);
 		va_list params;
@@ -338,8 +338,8 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 		write_to_log(-1, log_txt);
 		//printf("LOG: %s\n", txt); fflush(stdout);
 	}
-	//if (((cs_ptyp | D_DUMP) & client[cs_idx].dbglvl)==(cs_ptyp | D_DUMP))
-	if (mask & client[cs_idx].dbglvl)
+	//if (((cs_ptyp | D_DUMP) & cs_dblevel)==(cs_ptyp | D_DUMP))
+	if (mask & cs_dblevel)
 	{
 		for (i=0; i<n; i+=16)
 		{

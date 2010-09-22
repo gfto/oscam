@@ -452,8 +452,6 @@ static void cs_accounts_chk()
 
 static void cs_debug_level()
 {
-	int i;
-
 	//switch debuglevel forward one step if not set from outside
 	if(cfg->debuglvl == cs_dblevel) {
 		switch (cs_dblevel) {
@@ -474,13 +472,7 @@ static void cs_debug_level()
 	}
 
 	cfg->debuglvl = cs_dblevel;
-
-	
-		for (i=0; i<CS_MAXPID && client[i].pid; i++) 
-			client[i].dbglvl = cs_dblevel;
-		
-		client[cs_idx].dbglvl = cs_dblevel;
-		cs_log("%sdebug_level=%d", "all", cs_dblevel);
+	cs_log("%sdebug_level=%d", "all", cs_dblevel);
 }
 
 static void cs_card_info(int i)
@@ -520,7 +512,6 @@ int cs_fork(in_addr_t ip, in_port_t port) {
 		client[i].fd_m2c = fdp[1]; //store client read fd
 
 		//master part
-		client[i].dbglvl=cs_dblevel;
 		client[i].stat=1;
 
 		client[i].login=client[i].last=time((time_t *)0);
@@ -600,7 +591,6 @@ static void init_shm()
   client[0].ip=cs_inet_addr("127.0.0.1");
   client[0].typ='s';
   client[0].au=(-1);
-  client[0].dbglvl=cs_dblevel;
 
   // get username master running under
   struct passwd *pwd;

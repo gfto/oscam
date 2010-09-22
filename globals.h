@@ -497,7 +497,6 @@ struct s_client
   int		au;
   int		autoau;
   int		monlvl;
-  int		dbglvl;
   CAIDTAB	ctab;
   TUNTAB	ttab;
   ulong		sidtabok; // positiv services
