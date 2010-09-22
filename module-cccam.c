@@ -2788,7 +2788,7 @@ void cc_cli_report_cards(int client_idx) {
 	int count = 0;
 
 	uint8 buf[CC_MAXMSGSIZE];
-	sprintf((char*) buf, "%s/card%d-%d", get_tmp_dir(), ridx, client_idx);
+	sprintf((char*) buf, "%s/card%d-%d", get_tmp_dir(), client[client_idx].ridx, client_idx);
 	int pipe = open((char*) buf, O_WRONLY);
 
 	cs_debug_mask(D_TRACE, "%s reporting cards...", rdr->label);
