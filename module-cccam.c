@@ -2682,6 +2682,7 @@ int cc_srv_report_cards() {
 							count++;
 						}
 					}
+					card = llist_itr_next(&itr);
 
 				}
 				pthread_mutex_unlock(&rcc->cards_busy);
