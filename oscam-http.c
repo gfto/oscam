@@ -1010,25 +1010,11 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		tpl_printf(vars, 1, "CLASS", "%s%02x", dot, (int)clstab->aclass[i]);
 		dot=",";
 	}
+
 	for(i = 0; i < clstab->bn; ++i) {
 		tpl_printf(vars, 0, "CLASS", "%s!%02x", dot, (int)clstab->bclass[i]);
 		dot=",";
 	}
-
-	/*
-	//chid
-	int j;
-	dot="";
-	FTAB *ftab = &reader[ridx].fchid;
-	for (i = 0; i < ftab->nfilts; ++i) {
-		tpl_printf(vars, 1, "CHIDS", "%s%04X", dot, ftab->filts[i].caid);
-		dot=":";
-		for (j = 0; j < ftab->filts[i].nprids; ++j) {
-			tpl_printf(vars, 1, "CHIDS", "%s%06lX", dot, ftab->filts[i].prids[j]);
-			dot=",";
-		}
-		dot=";";
-	}*/
 
 	tpl_printf(vars, 0, "SHOWCLS", "%d", reader[ridx].show_cls);
 	tpl_printf(vars, 0, "MAXQLEN", "%d", reader[ridx].maxqlen);
@@ -1743,13 +1729,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				send_clear_reader_stat(i);
 
 	char *debuglvl = getParam(params, "debug");
-	if(strlen(debuglvl) > 0) {
-		int lvl = atoi(debuglvl);
-		if (cfg->debuglvl != lvl) {
-			cfg->debuglvl = lvl;
-			kill(client[0].pid, SIGUSR1);
-		}
-	}
+	if(strlen(debuglvl) > 0)
+		cs_dblevel = atoi(debuglvl);
 
 	char *hideidx = getParam(params, "hide");
 	if(strlen(hideidx) > 0)
@@ -2172,17 +2153,15 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 		cfg->disableuserfile = atoi(stopusrlog);
 
 	char *debuglvl = getParam(params, "debug");
-	if(strlen(debuglvl) > 0) {
-		int lvl = atoi(debuglvl);
-		if (cfg->debuglvl != lvl) {
-			cfg->debuglvl = lvl;
-			kill(client[0].pid, SIGUSR1);
-		}
-	}
+	if(strlen(debuglvl) > 0)
+		cs_dblevel = atoi(debuglvl);
+
 	char targetfile[256];
 
 	if (strcmp(getParam(params, "part"), "conf") == 0)
 	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.conf");
+	else if (strcmp(getParam(params, "part"), "version") == 0)
+	snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
 	else if (strcmp(getParam(params, "part"), "user") == 0)
 	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.user");
 	else if (strcmp(getParam(params, "part"), "server") == 0)

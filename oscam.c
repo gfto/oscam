@@ -2861,9 +2861,12 @@ int main (int argc, char *argv[])
 
 #ifndef OS_CYGWIN32
   // /tmp/oscam.version file (Uptime + Version)
+  char targetfile[256];
+  snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
   FILE *fp;
-  if (!(fp=fopen("/tmp/oscam.version", "w"))) {
-	  cs_log("Cannot open oscam.version (errno=%d)", errno);
+
+  if (!(fp=fopen(targetfile, "w"))) {
+	  cs_log("Cannot open %s (errno=%d)", targetfile, errno);
   } else {
 	  time_t now = time((time_t)0);
 	  struct tm *st;
