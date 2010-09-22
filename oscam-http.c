@@ -1891,7 +1891,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 					int ridx;
 					for (ridx = 0; ridx < CS_MAXREADER; ridx++)
 					{
-						if(reader[ridx].pid == client[i].pid)
+						if(ridx == client[i].ridx)
 						{
 							if (reader[ridx].lbvalue)
 								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&pid=%d\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", reader[ridx].pid, reader[ridx].lbvalue);
