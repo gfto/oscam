@@ -764,11 +764,12 @@ static int monitor_process_request(char *req)
 
 static void monitor_server(void *idx){
 	int n;
+	uchar mbuf[1024];
 
 	int cidx=(int)idx;
        client[cidx].thread=pthread_self();
 	client[cs_idx].typ='m';
-	while (((n = process_input(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf), cfg->cmaxidle)) >= 0) && monitor_process_request((char *)client[cs_idx].mbuf));
+	while (((n = process_input(mbuf, sizeof(mbuf), cfg->cmaxidle)) >= 0) && monitor_process_request((char *)mbuf));
 	cs_disconnect_client();
 }
 

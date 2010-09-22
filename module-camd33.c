@@ -32,18 +32,19 @@ static int camd33_recv(uchar *buf, int l)
 static void camd33_request_emm()
 {
   int au;
+  uchar mbuf[20];
   au=client[cs_idx].au;
   if ((au<0) || (au>CS_MAXREADER)) return;  // TODO
   if (reader[au].hexserial[0])
   {
     log_emm_request(au);
-    client[cs_idx].mbuf[0]=0;
-    client[cs_idx].mbuf[1]=reader[au].caid[0]>>8;
-    client[cs_idx].mbuf[2]=reader[au].caid[0]&0xff;
-    memcpy(client[cs_idx].mbuf+3, reader[au].hexserial, 4);
-    memcpy(client[cs_idx].mbuf+7, &reader[au].prid[0][1], 3);
-    memcpy(client[cs_idx].mbuf+10, &reader[au].prid[2][1], 3);
-    camd33_send(client[cs_idx].mbuf, 13);
+    mbuf[0]=0;
+    mbuf[1]=reader[au].caid[0]>>8;
+    mbuf[2]=reader[au].caid[0]&0xff;
+    memcpy(mbuf+3, reader[au].hexserial, 4);
+    memcpy(mbuf+7, &reader[au].prid[0][1], 3);
+    memcpy(mbuf+10, &reader[au].prid[2][1], 3);
+    camd33_send(mbuf, 13);
   }
 }
 
@@ -52,6 +53,7 @@ static void camd33_auth_client()
   int i, rc;
   uchar *usr=NULL, *pwd=NULL;
   struct s_auth *account;
+  uchar mbuf[1024];
 
   client[cs_idx].crypted=cfg->c33_crypted;
   if (client[cs_idx].crypted)
@@ -64,19 +66,19 @@ static void camd33_auth_client()
   if (client[cs_idx].crypted)
     aes_set_key((char *) cfg->c33_key);
 
-  client[cs_idx].mbuf[0]=0;
-  camd33_send(client[cs_idx].mbuf, 1);	// send login-request
+  mbuf[0]=0;
+  camd33_send(mbuf, 1);	// send login-request
 
-  for (rc=0, client[cs_idx].camdbug[0]=0, client[cs_idx].mbuf[0]=1; (rc<2) && (client[cs_idx].mbuf[0]); rc++)
+  for (rc=0, client[cs_idx].camdbug[0]=0, mbuf[0]=1; (rc<2) && (mbuf[0]); rc++)
   {
-    i=process_input(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf), 1);
-    if ((i>0) && (!client[cs_idx].mbuf[0]))
+    i=process_input(mbuf, sizeof(mbuf), 1);
+    if ((i>0) && (!mbuf[0]))
     {
-      usr=client[cs_idx].mbuf+1;
+      usr=mbuf+1;
       pwd=usr+strlen((char *)usr)+2;
     }
     else
-      memcpy(client[cs_idx].camdbug+1, client[cs_idx].mbuf, client[cs_idx].camdbug[0]=i);
+      memcpy(client[cs_idx].camdbug+1, mbuf, client[cs_idx].camdbug[0]=i);
   }
   for (rc=-1, account=cfg->account; (usr) && (account) && (rc<0); account=account->next)
     if ((!strcmp((char *)usr, account->usr)) && (!strcmp((char *)pwd, account->pwd)))
@@ -142,10 +144,11 @@ static int get_request(uchar *buf, int n)
 
 static void camd33_send_dcw(ECM_REQUEST *er)
 {
-  client[cs_idx].mbuf[0]=2;
-  memcpy(client[cs_idx].mbuf+1, client[cs_idx].req+(er->cpti*REQ_SIZE), 4);	// get pin
-  memcpy(client[cs_idx].mbuf+5, er->cw, 16);
-  camd33_send(client[cs_idx].mbuf, 21);
+  uchar mbuf[1024];
+  mbuf[0]=2;
+  memcpy(mbuf+1, client[cs_idx].req+(er->cpti*REQ_SIZE), 4);	// get pin
+  memcpy(mbuf+5, er->cw, 16);
+  camd33_send(mbuf, 21);
   if (!cfg->c33_passive)
     camd33_request_emm();
 }
@@ -176,6 +179,7 @@ static void camd33_process_emm(uchar *buf, int l)
 static void camd33_server(void* idx)
 {
   int n;
+  uchar mbuf[1024];
 
   int cidx=(int)idx;
   client[cidx].thread=pthread_self();
@@ -190,15 +194,15 @@ static void camd33_server(void* idx)
 
   camd33_auth_client();
 
-  while ((n=get_request(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf)))>0)
+  while ((n=get_request(mbuf, sizeof(mbuf)))>0)
   {
-    switch(client[cs_idx].mbuf[0])
+    switch(mbuf[0])
     {
       case 2:
-        camd33_process_ecm(client[cs_idx].mbuf, n);
+        camd33_process_ecm(mbuf, n);
         break;
       case 3:
-        camd33_process_emm(client[cs_idx].mbuf, n);
+        camd33_process_emm(mbuf, n);
         break;
       default:
         cs_debug("unknown command !");

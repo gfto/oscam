@@ -87,21 +87,22 @@ static int get_request(uchar *buf)
 
 static void radegast_send_dcw(ECM_REQUEST *er)
 {
-  client[cs_idx].mbuf[0]=0x02;		// DCW
+  uchar mbuf[1024];
+  mbuf[0]=0x02;		// DCW
   if (er->rc<4)
   {
-    client[cs_idx].mbuf[1]=0x12;	// len (overall)
-    client[cs_idx].mbuf[2]=0x05;	// ACCESS
-    client[cs_idx].mbuf[3]=0x10;	// len
-    memcpy(client[cs_idx].mbuf+4, er->cw, 16);
+    mbuf[1]=0x12;	// len (overall)
+    mbuf[2]=0x05;	// ACCESS
+    mbuf[3]=0x10;	// len
+    memcpy(mbuf+4, er->cw, 16);
   }
   else
   {
-    client[cs_idx].mbuf[1]=0x02;	// len (overall)
-    client[cs_idx].mbuf[2]=0x04;	// NO ACCESS
-    client[cs_idx].mbuf[3]=0x00;	// len
+    mbuf[1]=0x02;	// len (overall)
+    mbuf[2]=0x04;	// NO ACCESS
+    mbuf[3]=0x00;	// len
   }
-  radegast_send(client[cs_idx].mbuf);
+  radegast_send(mbuf);
 }
 
 static void radegast_process_ecm(uchar *buf, int l)
@@ -152,20 +153,21 @@ static void radegast_process_unknown(uchar *buf)
 static void radegast_server(void *idx)
 {
   int n;
+  uchar mbuf[1024];
 
   int cidx=(int)idx;
   client[cidx].thread=pthread_self();
 
   radegast_auth_client(client[cs_idx].ip);
-  while ((n=get_request(client[cs_idx].mbuf))>0)
+  while ((n=get_request(mbuf))>0)
   {
-    switch(client[cs_idx].mbuf[0])
+    switch(mbuf[0])
     {
       case 1:
-        radegast_process_ecm(client[cs_idx].mbuf+2, client[cs_idx].mbuf[1]);
+        radegast_process_ecm(mbuf+2, mbuf[1]);
         break;
       default:
-        radegast_process_unknown(client[cs_idx].mbuf);
+        radegast_process_unknown(mbuf);
     }
   }
   cs_disconnect_client();

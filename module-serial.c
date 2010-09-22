@@ -520,14 +520,15 @@ static int oscam_ser_recv(uchar *xbuf, int l)
 
 static void oscam_ser_disconnect_client()
 {
+  uchar mbuf[1024];
   switch(connected ? connected : oscam_ser_proto)
   {
     case P_GS:
-      client[cs_idx].mbuf[0] = 0x01;
-      client[cs_idx].mbuf[1] = 0x00;
-      client[cs_idx].mbuf[2] = 0x00;
-      client[cs_idx].mbuf[3] = 0x00;
-      oscam_ser_send(client[cs_idx].mbuf, 4);
+      mbuf[0] = 0x01;
+      mbuf[1] = 0x00;
+      mbuf[2] = 0x00;
+      mbuf[3] = 0x00;
+      oscam_ser_send(mbuf, 4);
       break;
   }
   dsr9500type=P_DSR_AUTO;
@@ -536,16 +537,17 @@ static void oscam_ser_disconnect_client()
 
 static void oscam_ser_init_client()
 {
+  uchar mbuf[1024];
   switch(oscam_ser_proto)		// sure, does not work in auto-mode
   {
     case P_GS:
       oscam_ser_disconnect_client(); // send disconnect first
       cs_sleepms(300);		        // wait a little bit
-      client[cs_idx].mbuf[0] = 0x00;
-      client[cs_idx].mbuf[1] = 0x00;
-      client[cs_idx].mbuf[2] = 0x00;
-      client[cs_idx].mbuf[3] = 0x00;
-      oscam_ser_send(client[cs_idx].mbuf, 4);	// send connect
+      mbuf[0] = 0x00;
+      mbuf[1] = 0x00;
+      mbuf[2] = 0x00;
+      mbuf[3] = 0x00;
+      oscam_ser_send(mbuf, 4);	// send connect
       break;
   }
 }
@@ -583,6 +585,7 @@ static void oscam_ser_auth_client(int proto)
 
 static void oscam_ser_send_dcw(ECM_REQUEST *er)
 {
+  uchar mbuf[1024];
   int i;
   uchar crc;
   if (er->rc<4)		// found
@@ -591,26 +594,26 @@ static void oscam_ser_send_dcw(ECM_REQUEST *er)
       case P_HSIC:
         for (i=0, crc=HSIC_CRC; i<16; i++)
           crc^=er->cw[i];
-        memset(client[cs_idx].mbuf   , 0x04  ,  2);
-        memset(client[cs_idx].mbuf+2 , 0x3a  ,  2);
-        memcpy(client[cs_idx].mbuf+4 , er->cw, 16);
-        memcpy(client[cs_idx].mbuf+20, &crc  ,  1);
-        memset(client[cs_idx].mbuf+21, 0x1b  ,  2);
-        oscam_ser_send(client[cs_idx].mbuf, 23);
+        memset(mbuf   , 0x04  ,  2);
+        memset(mbuf+2 , 0x3a  ,  2);
+        memcpy(mbuf+4 , er->cw, 16);
+        memcpy(mbuf+20, &crc  ,  1);
+        memset(mbuf+21, 0x1b  ,  2);
+        oscam_ser_send(mbuf, 23);
         break;
       case P_SSSP:
-        client[cs_idx].mbuf[0]=0xF2;
-        client[cs_idx].mbuf[1]=0;
-        client[cs_idx].mbuf[2]=16;
-        memcpy(client[cs_idx].mbuf+3, er->cw, 16);
-        oscam_ser_send(client[cs_idx].mbuf, 19);
+        mbuf[0]=0xF2;
+        mbuf[1]=0;
+        mbuf[2]=16;
+        memcpy(mbuf+3, er->cw, 16);
+        oscam_ser_send(mbuf, 19);
         if (!sssp_fix)
         {
-          client[cs_idx].mbuf[0]=0xF1;
-          client[cs_idx].mbuf[1]=0;
-          client[cs_idx].mbuf[2]=2;
-          memcpy(client[cs_idx].mbuf+3, i2b(2, er->pid), 2);
-          oscam_ser_send(client[cs_idx].mbuf, 5);
+          mbuf[0]=0xF1;
+          mbuf[1]=0;
+          mbuf[2]=2;
+          memcpy(mbuf+3, i2b(2, er->pid), 2);
+          oscam_ser_send(mbuf, 5);
           sssp_fix=1;
         }
         break;
@@ -619,44 +622,44 @@ static void oscam_ser_send_dcw(ECM_REQUEST *er)
         oscam_ser_send(er->cw, 16);
         break;
       case P_DSR95:
-        client[cs_idx].mbuf[0]=4;
-        memcpy(client[cs_idx].mbuf+1, er->cw, 16);
-        oscam_ser_send(client[cs_idx].mbuf, 17);
+        mbuf[0]=4;
+        memcpy(mbuf+1, er->cw, 16);
+        oscam_ser_send(mbuf, 17);
         if( dsr9500type==P_DSR_GNUSMAS )
         {
           int i;
           samsung_0a=0;
           for( i=1; i<17; i++ )
-            if( client[cs_idx].mbuf[i]==0x0A )
+            if( mbuf[i]==0x0A )
               samsung_0a++;
           samsung_dcw++;
         }
         break;
       case P_GS:
-        client[cs_idx].mbuf[0]=0x03;
-        client[cs_idx].mbuf[1]=0x08;
-        client[cs_idx].mbuf[2]=0x10;
-        client[cs_idx].mbuf[3]=0x00;
-        memcpy(client[cs_idx].mbuf+4, er->cw, 16);
-        oscam_ser_send(client[cs_idx].mbuf, 20);
+        mbuf[0]=0x03;
+        mbuf[1]=0x08;
+        mbuf[2]=0x10;
+        mbuf[3]=0x00;
+        memcpy(mbuf+4, er->cw, 16);
+        oscam_ser_send(mbuf, 20);
         break;
       case P_ALPHA:
-        client[cs_idx].mbuf[0]=0x88;
-        client[cs_idx].mbuf[1]=0x00;
-        client[cs_idx].mbuf[2]=0x10;
-        memcpy(client[cs_idx].mbuf+3, er->cw, 16);
-        oscam_ser_send(client[cs_idx].mbuf, 19);
+        mbuf[0]=0x88;
+        mbuf[1]=0x00;
+        mbuf[2]=0x10;
+        memcpy(mbuf+3, er->cw, 16);
+        oscam_ser_send(mbuf, 19);
         break;
     } 
   else			// not found
     switch(connected)
     {
       case P_GS:
-        client[cs_idx].mbuf[0]=0x03;
-        client[cs_idx].mbuf[1]=0x09;
-        client[cs_idx].mbuf[2]=0x00;
-        client[cs_idx].mbuf[3]=0x00;
-        oscam_ser_send(client[cs_idx].mbuf, 4);
+        mbuf[0]=0x03;
+        mbuf[1]=0x09;
+        mbuf[2]=0x00;
+        mbuf[3]=0x00;
+        oscam_ser_send(mbuf, 4);
         break;
     }
   serial_errors=0; // clear error counter
@@ -808,11 +811,12 @@ static void oscam_ser_process_ecm(uchar *buf, int l)
 static void oscam_ser_server()
 {
   int n;
+  uchar mbuf[1024];
 
   connected=0;
   oscam_ser_init_client();
 
-  while ((n=process_input(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf), cfg->cmaxidle))>=0)
+  while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>=0)
   {
     if (serial_errors > 3)
     {
@@ -821,17 +825,17 @@ static void oscam_ser_server()
     }
     if (n>0)
     {
-      oscam_ser_auth_client(client[cs_idx].mbuf[0] & 0xF);
-      switch (client[cs_idx].mbuf[0]>>4)
+      oscam_ser_auth_client(mbuf[0] & 0xF);
+      switch (mbuf[0]>>4)
       {
         case IS_ECM:
-          oscam_ser_process_ecm(client[cs_idx].mbuf+1, n-1);
+          oscam_ser_process_ecm(mbuf+1, n-1);
           break;
         case IS_PMT:
-          oscam_ser_process_pmt(client[cs_idx].mbuf+1, n-1);
+          oscam_ser_process_pmt(mbuf+1, n-1);
           break;
         case IS_LGO:
-          oscam_ser_client_logon(client[cs_idx].mbuf+1, n-1);
+          oscam_ser_client_logon(mbuf+1, n-1);
           break;
       }
     }
@@ -898,7 +902,7 @@ void init_oscam_ser(int ctyp)
 		client[i].ip=0;
 		client[i].ctyp=ctyp;
 		pthread_create(&client[i].thread, NULL, (void *)oscam_ser_fork, (void *)p + 1);
-
+		pthread_detach(client[i].thread);
 	}
 
 	int i=cs_fork(0, ctyp);
@@ -906,7 +910,7 @@ void init_oscam_ser(int ctyp)
 	client[i].ip=0;
 	client[i].ctyp=ctyp;
 	pthread_create(&client[i].thread, NULL, (void *)oscam_ser_fork, (void *)sdevice);
-
+	pthread_detach(client[i].thread);
 }
 
 /*

@@ -954,6 +954,7 @@ void event_handler(int signal) {
 	DIR *dirp;
 	struct dirent *dp;
 	int i, pmt_fd;
+	uchar mbuf[1024];
 
 	signal=signal; //avoid compiler warnings
 	pthread_mutex_lock(&event_handler_lock);
@@ -1033,7 +1034,7 @@ void event_handler(int signal) {
 		cs_log("found pmt file %s", dest);
 		cs_sleepms(100);
 
-		unsigned int len = read(pmt_fd,client[cs_idx].mbuf,sizeof(client[cs_idx].mbuf));
+		unsigned int len = read(pmt_fd,mbuf,sizeof(mbuf));
 		close(pmt_fd);
 					
 		if (len < 1) {
@@ -1052,7 +1053,7 @@ void event_handler(int signal) {
 		}
 
 		for(j2=0,j1=0;j2<len;j2+=2,j1++) {
-			if (sscanf((char*)client[cs_idx].mbuf+j2, "%02X", dest+j1) != 1) {
+			if (sscanf((char*)mbuf+j2, "%02X", dest+j1) != 1) {
 				cs_log("error parsing QboxHD pmt.tmp, data not valid in position %d",j2);
 				pthread_mutex_unlock(&event_handler_lock);	
 				return;
@@ -1067,15 +1068,15 @@ void event_handler(int signal) {
 			cs_log("event_handler() dest buffer is to small for pmt data!");
 			continue;
 		}
-		cs_ddump(client[cs_idx].mbuf,len,"pmt:");
+		cs_ddump(mbuf,len,"pmt:");
 
 		memcpy(dest, "\x00\xFF\xFF\x00\x00\x13\x00", 7);
 
-		dest[1] = client[cs_idx].mbuf[3];
-		dest[2] = client[cs_idx].mbuf[4];
-		dest[5] = client[cs_idx].mbuf[11]+1;
+		dest[1] = mbuf[3];
+		dest[2] = mbuf[4];
+		dest[5] = mbuf[11]+1;
 
-		memcpy(dest + 7, client[cs_idx].mbuf + 12, len - 12 - 4);
+		memcpy(dest + 7, mbuf + 12, len - 12 - 4);
 
 		pmt_id = dvbapi_parse_capmt((uchar*)dest, 7 + len - 12 - 4, -1);
 #endif
@@ -1186,6 +1187,7 @@ void dvbapi_main_local(void *idx) {
 	struct timeb tp;
 	struct sockaddr_un servaddr;
 	ssize_t len=0;
+	uchar mbuf[1024];
 
 	struct s_auth *account=0;
 	int ok=0;
@@ -1338,19 +1340,19 @@ void dvbapi_main_local(void *idx) {
 						connfd = pfd2[i].fd;
 					}
 
-					len = read(connfd, client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf));
+					len = read(connfd, mbuf, sizeof(mbuf));
 
 					if (len < 3) {
 						cs_debug("camd.socket: too short message received");
 						continue;
 					}
 
-					dvbapi_handlesockmsg(client[cs_idx].mbuf, len, connfd);
+					dvbapi_handlesockmsg(mbuf, len, connfd);
 				} else { // type==0
 					int demux_index=ids[i];
 					int n=fdn[i];
 
-					if ((len=dvbapi_read_device(pfd2[i].fd, client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf))) <= 0) {
+					if ((len=dvbapi_read_device(pfd2[i].fd, mbuf, sizeof(mbuf))) <= 0) {
 						if (demux[demux_index].pidindex==-1) {
 							dvbapi_try_next_caid(demux_index);
 						}
@@ -1358,7 +1360,7 @@ void dvbapi_main_local(void *idx) {
 					}
 
 					if (pfd2[i].fd==(int)demux[demux_index].demux_fd[n].fd) {
-						dvbapi_process_input(demux_index,n,client[cs_idx].mbuf,len);
+						dvbapi_process_input(demux_index,n,mbuf,len);
 					}
 				}
 			}

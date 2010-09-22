@@ -2757,6 +2757,7 @@ int cc_srv_connect() {
 	char usr[21], pwd[21];
 	struct s_auth *account;
 	struct cc_data *cc = cl->cc;
+	uchar mbuf[1024];
 
 	memset(usr, 0, sizeof(usr));
 	memset(pwd, 0, sizeof(pwd));
@@ -2936,7 +2937,7 @@ int cc_srv_connect() {
 	cmi = 0;
 	// check for client timeout, if timeout occurs try to send keepalive
 	for (;;) {
-		i = process_input(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf), 10); //cfg->cmaxidle);
+		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
 		//cs_log("srv process input i=%d cmi=%d", i, cmi);
 		if (i == -9) {
 			cmi += 10;

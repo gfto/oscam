@@ -618,6 +618,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     uint8 *passwdcrypt = NULL;
     int au=0;
     struct s_ip *p_ip;
+    uchar mbuf[1024];
 
     ok = cfg->ncd_allowed ? 0 : 1;
     for (p_ip=cfg->ncd_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
@@ -639,13 +640,13 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     memcpy(client[cs_idx].ncd_skey, key, 16);
     client[cs_idx].ncd_msgid = 0;
 
-    i=process_input(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf), cfg->cmaxidle);
+    i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
     if ( i>0 )
     {
-      if( client[cs_idx].mbuf[2] != MSG_CLIENT_2_SERVER_LOGIN )
+      if( mbuf[2] != MSG_CLIENT_2_SERVER_LOGIN )
       {
         cs_debug("expected MSG_CLIENT_2_SERVER_LOGIN (%02X), received %02X", 
-        MSG_CLIENT_2_SERVER_LOGIN, client[cs_idx].mbuf[2]);
+        MSG_CLIENT_2_SERVER_LOGIN, mbuf[2]);
         if(client[cs_idx].req)
         {
           free(client[cs_idx].req);
@@ -653,7 +654,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         }
         cs_exit(0);
       }
-      usr=client[cs_idx].mbuf+5;
+      usr=mbuf+5;
       pwd=usr+strlen((char *)usr)+1;
     }
     else
@@ -667,7 +668,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
       cs_exit(0);
     }
 
-    sprintf(client_id, "%02X%02X", client[cs_idx].mbuf[0], client[cs_idx].mbuf[1]);
+    sprintf(client_id, "%02X%02X", mbuf[0], mbuf[1]);
     client_name = get_ncd_client_name(client_id);
 
     for (ok=0, account=cfg->account; (usr) && (account) && (!ok); account=account->next) 
@@ -746,14 +747,14 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
       key = des_login_key_get(deskey, passwdcrypt, strlen((char *)passwdcrypt));
       memcpy(client[cs_idx].ncd_skey, key, 16);
 
-      i=process_input(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf), cfg->cmaxidle);
+      i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
       if( i>0 )
       {
         int j,len=15;
-        if( client[cs_idx].mbuf[2] != MSG_CARD_DATA_REQ)
+        if( mbuf[2] != MSG_CARD_DATA_REQ)
         {
           cs_debug("expected MSG_CARD_DATA_REQ (%02X), received %02X", 
-                   MSG_CARD_DATA_REQ, client[cs_idx].mbuf[2]);
+                   MSG_CARD_DATA_REQ, mbuf[2]);
           if(client[cs_idx].req)
             free(client[cs_idx].req); client[cs_idx].req=0;
 
@@ -770,19 +771,19 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         pufilt = &client[cs_idx].ftab.filts[0];
         client[cs_idx].ftab.nfilts = 1;
 
-        client[cs_idx].mbuf[0] = MSG_CARD_DATA;
-        client[cs_idx].mbuf[1] = 0x00;
-        client[cs_idx].mbuf[2] = 0x00;
+        mbuf[0] = MSG_CARD_DATA;
+        mbuf[1] = 0x00;
+        mbuf[2] = 0x00;
 
         if( au != -1 )
-            client[cs_idx].mbuf[3] = 1;
+            mbuf[3] = 1;
         else
-            client[cs_idx].mbuf[3] = cs_idx+10; // Unique user number
+            mbuf[3] = cs_idx+10; // Unique user number
 
-        client[cs_idx].mbuf[4] = (uchar)(pufilt->caid>>8);
-        client[cs_idx].mbuf[5] = (uchar)(pufilt->caid);
-        client[cs_idx].mbuf[6] = 0x00;
-        client[cs_idx].mbuf[7] = 0x00;
+        mbuf[4] = (uchar)(pufilt->caid>>8);
+        mbuf[5] = (uchar)(pufilt->caid);
+        mbuf[6] = 0x00;
+        mbuf[7] = 0x00;
 
         if (au != -1)
         {
@@ -790,63 +791,63 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
             {
               // only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
               // first 2 Byte always 00
-              client[cs_idx].mbuf[8]=0x00; //serial only 4 bytes
-              client[cs_idx].mbuf[9]=0x00; //serial only 4 bytes
+              mbuf[8]=0x00; //serial only 4 bytes
+              mbuf[9]=0x00; //serial only 4 bytes
               // 1 Byte Hex Base (see reader-irdeto.c how this is stored in "reader[au].hexserial")
-              client[cs_idx].mbuf[10]=reader[au].hexserial[3];
+              mbuf[10]=reader[au].hexserial[3];
               // 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "reader[au].hexserial")
-              client[cs_idx].mbuf[11]=reader[au].hexserial[0];
-              client[cs_idx].mbuf[12]=reader[au].hexserial[1];
-              client[cs_idx].mbuf[13]=reader[au].hexserial[2];
+              mbuf[11]=reader[au].hexserial[0];
+              mbuf[12]=reader[au].hexserial[1];
+              mbuf[13]=reader[au].hexserial[2];
             }
             else if (((pufilt->caid >> 8) == 0x05) || ((pufilt->caid >> 8) == 0x0D))
             {
-              client[cs_idx].mbuf[8] = 0x00;
-              client[cs_idx].mbuf[9] = reader[au].hexserial[0];
-              client[cs_idx].mbuf[10] = reader[au].hexserial[1];
-              client[cs_idx].mbuf[11] = reader[au].hexserial[2];
-              client[cs_idx].mbuf[12] = reader[au].hexserial[3];
-              client[cs_idx].mbuf[13] = reader[au].hexserial[4];
+              mbuf[8] = 0x00;
+              mbuf[9] = reader[au].hexserial[0];
+              mbuf[10] = reader[au].hexserial[1];
+              mbuf[11] = reader[au].hexserial[2];
+              mbuf[12] = reader[au].hexserial[3];
+              mbuf[13] = reader[au].hexserial[4];
             }
             else
             {
-              client[cs_idx].mbuf[8] = reader[au].hexserial[0];
-              client[cs_idx].mbuf[9] = reader[au].hexserial[1];
-              client[cs_idx].mbuf[10] = reader[au].hexserial[2];
-              client[cs_idx].mbuf[11] = reader[au].hexserial[3];
-              client[cs_idx].mbuf[12] = reader[au].hexserial[4];
-              client[cs_idx].mbuf[13] = reader[au].hexserial[5];
+              mbuf[8] = reader[au].hexserial[0];
+              mbuf[9] = reader[au].hexserial[1];
+              mbuf[10] = reader[au].hexserial[2];
+              mbuf[11] = reader[au].hexserial[3];
+              mbuf[12] = reader[au].hexserial[4];
+              mbuf[13] = reader[au].hexserial[5];
             }
         } 
         else 
         {
           client[cs_idx].au = -1;
-          client[cs_idx].mbuf[8] = 0x00;
-          client[cs_idx].mbuf[9] = 0x00;
-          client[cs_idx].mbuf[10] = 0x00;
-          client[cs_idx].mbuf[11] = 0x00;
-          client[cs_idx].mbuf[12] = 0x00;
-          client[cs_idx].mbuf[13] = 0x00;
+          mbuf[8] = 0x00;
+          mbuf[9] = 0x00;
+          mbuf[10] = 0x00;
+          mbuf[11] = 0x00;
+          mbuf[12] = 0x00;
+          mbuf[13] = 0x00;
         }
-        client[cs_idx].mbuf[14] = pufilt->nprids;
+        mbuf[14] = pufilt->nprids;
         for( j=0; j<pufilt->nprids; j++) 
         {
           if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
           {
-            client[cs_idx].mbuf[15+11*j] = 0;
-            client[cs_idx].mbuf[16+11*j] = 0;
-            client[cs_idx].mbuf[17+11*j] = j;
+            mbuf[15+11*j] = 0;
+            mbuf[16+11*j] = 0;
+            mbuf[17+11*j] = j;
           }
           else
           {
-            client[cs_idx].mbuf[15+11*j] = (uchar)(pufilt->prids[j]>>16);
-            client[cs_idx].mbuf[16+11*j] = (uchar)(pufilt->prids[j]>>8);
-            client[cs_idx].mbuf[17+11*j] = (uchar)(pufilt->prids[j]);
+            mbuf[15+11*j] = (uchar)(pufilt->prids[j]>>16);
+            mbuf[16+11*j] = (uchar)(pufilt->prids[j]>>8);
+            mbuf[17+11*j] = (uchar)(pufilt->prids[j]);
           }
-          client[cs_idx].mbuf[18+11*j] = 0x00;
-          client[cs_idx].mbuf[19+11*j] = 0x00;
-          client[cs_idx].mbuf[20+11*j] = 0x00;
-          client[cs_idx].mbuf[21+11*j] = 0x00;
+          mbuf[18+11*j] = 0x00;
+          mbuf[19+11*j] = 0x00;
+          mbuf[20+11*j] = 0x00;
+          mbuf[21+11*j] = 0x00;
           if( au!=-1 ) 
           { 
             // check if user provid from IDENT exists on card
@@ -862,17 +863,17 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
                 {
                   if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
                   {
-                    client[cs_idx].mbuf[22+11*j] = reader[au].prid[k][0];
-                    client[cs_idx].mbuf[23+11*j] = reader[au].prid[k][1];
-                    client[cs_idx].mbuf[24+11*j] = reader[au].prid[k][2];
-                    client[cs_idx].mbuf[25+11*j] = reader[au].prid[k][3];
+                    mbuf[22+11*j] = reader[au].prid[k][0];
+                    mbuf[23+11*j] = reader[au].prid[k][1];
+                    mbuf[24+11*j] = reader[au].prid[k][2];
+                    mbuf[25+11*j] = reader[au].prid[k][3];
                   }
                   else
                   {
-                    client[cs_idx].mbuf[22+11*j] = reader[au].sa[k][0];
-                    client[cs_idx].mbuf[23+11*j] = reader[au].sa[k][1];
-                    client[cs_idx].mbuf[24+11*j] = reader[au].sa[k][2];
-                    client[cs_idx].mbuf[25+11*j] = reader[au].sa[k][3];
+                    mbuf[22+11*j] = reader[au].sa[k][0];
+                    mbuf[23+11*j] = reader[au].sa[k][1];
+                    mbuf[24+11*j] = reader[au].sa[k][2];
+                    mbuf[25+11*j] = reader[au].sa[k][3];
                   }
                   found=1;
                   break;
@@ -881,27 +882,27 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
             }
             if( !found ) 
             {
-              client[cs_idx].mbuf[22+11*j] = 0x00;
-              client[cs_idx].mbuf[23+11*j] = 0x00;
-              client[cs_idx].mbuf[24+11*j] = 0x00;
-              client[cs_idx].mbuf[25+11*j] = 0x00;
+              mbuf[22+11*j] = 0x00;
+              mbuf[23+11*j] = 0x00;
+              mbuf[24+11*j] = 0x00;
+              mbuf[25+11*j] = 0x00;
             }
           }
           else 
           {
             if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
             {
-              client[cs_idx].mbuf[22+11*j] = 0x00;
-              client[cs_idx].mbuf[23+11*j] = (uchar)(pufilt->prids[j]>>16);
-              client[cs_idx].mbuf[24+11*j] = (uchar)(pufilt->prids[j]>>8);
-              client[cs_idx].mbuf[25+11*j] = (uchar)(pufilt->prids[j]);
+              mbuf[22+11*j] = 0x00;
+              mbuf[23+11*j] = (uchar)(pufilt->prids[j]>>16);
+              mbuf[24+11*j] = (uchar)(pufilt->prids[j]>>8);
+              mbuf[25+11*j] = (uchar)(pufilt->prids[j]);
             }
             else
             {
-              client[cs_idx].mbuf[22+11*j] = 0x00;
-              client[cs_idx].mbuf[23+11*j] = 0x00;
-              client[cs_idx].mbuf[24+11*j] = 0x00;
-              client[cs_idx].mbuf[25+11*j] = 0x00;
+              mbuf[22+11*j] = 0x00;
+              mbuf[23+11*j] = 0x00;
+              mbuf[24+11*j] = 0x00;
+              mbuf[25+11*j] = 0x00;
             }
           }
           len+=11;
@@ -921,7 +922,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         }
 
         if( network_message_send(client[cs_idx].udp_fd, &client[cs_idx].ncd_msgid,
-            client[cs_idx].mbuf, len, key, COMMTYPE_SERVER, 0, &cd) <0 )
+            mbuf, len, key, COMMTYPE_SERVER, 0, &cd) <0 )
         {
           if(client[cs_idx].req)
           {
@@ -948,28 +949,29 @@ static void newcamd_send_dcw(ECM_REQUEST *er)
 {
   int len;
   ushort cl_msgid;
+  uchar mbuf[1024];
   
   if (!client[cs_idx].udp_fd) {
     cs_debug("ncd_send_dcw: error: client[cs_idx].udp_fd=%d", client[cs_idx].udp_fd);
     return;  
   }
   memcpy(&cl_msgid, client[cs_idx].req+(er->cpti*REQ_SIZE), 2);	// get client ncd_msgid + 0x8x
-  client[cs_idx].mbuf[0] = er->ecm[0];
+  mbuf[0] = er->ecm[0];
   if( client[cs_idx].ftab.filts[0].nprids==0 || er->rc>3 /*not found*/) 
   {
     len=3;
-    client[cs_idx].mbuf[1] = client[cs_idx].mbuf[2] = 0x00;
+    mbuf[1] = mbuf[2] = 0x00;
   }
   else 
   {
     len = 19;
-    client[cs_idx].mbuf[1] = client[cs_idx].mbuf[2] = 0x10;
-    memcpy(client[cs_idx].mbuf+3, er->cw, 16);
+    mbuf[1] = mbuf[2] = 0x10;
+    memcpy(mbuf+3, er->cw, 16);
   }
 
-  cs_debug("ncd_send_dcw: er->cpti=%d, cl_msgid=%d, %02X", er->cpti, cl_msgid, client[cs_idx].mbuf[0]);
+  cs_debug("ncd_send_dcw: er->cpti=%d, cl_msgid=%d, %02X", er->cpti, cl_msgid, mbuf[0]);
 
-  network_message_send(client[cs_idx].udp_fd, &cl_msgid, client[cs_idx].mbuf, len, 
+  network_message_send(client[cs_idx].udp_fd, &cl_msgid, mbuf, len, 
                        client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0, NULL);
 }
 
@@ -1050,6 +1052,7 @@ static void newcamd_server(void *idx)
 	int rc;
 	int cidx=(int)idx;
        client[cidx].thread=pthread_self();
+	uchar mbuf[1024];
 
 	client[cs_idx].req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
 	if (!client[cs_idx].req)
@@ -1130,13 +1133,13 @@ static void newcamd_server(void *idx)
 	while(rc==-9)
 	{
 		// process_input returns -9 on clienttimeout
-		while ((rc=process_input(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf), cfg->cmaxidle))>0)
+		while ((rc=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
 		{
-			switch(client[cs_idx].mbuf[2])
+			switch(mbuf[2])
 			{
 				case 0x80:
 				case 0x81:
-					newcamd_process_ecm(client[cs_idx].mbuf);
+					newcamd_process_ecm(mbuf);
 					break;
 
 				case MSG_KEEPALIVE:
@@ -1144,10 +1147,10 @@ static void newcamd_server(void *idx)
 					break;
 
 				default:
-					if(client[cs_idx].mbuf[2]>0x81 && client[cs_idx].mbuf[2]<0x90)
-						newcamd_process_emm(client[cs_idx].mbuf+2);
+					if(mbuf[2]>0x81 && mbuf[2]<0x90)
+						newcamd_process_emm(mbuf+2);
 					else
-						cs_debug("unknown newcamd command! (%d)", client[cs_idx].mbuf[2]);
+						cs_debug("unknown newcamd command! (%d)", mbuf[2]);
 			}
 		}
 

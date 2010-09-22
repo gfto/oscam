@@ -572,7 +572,6 @@ struct s_client
   int pfd;      // Primary FD, must be closed on exit
   int ridx;
   int cs_ptyp; // process-type
-  uchar mbuf[1024];   // global buffer
 
   ECM_REQUEST *ecmtask;
   struct s_emm *emmcache;

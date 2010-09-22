@@ -139,6 +139,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
 {
 	int i, au;
 	time_t now;
+	uchar mbuf[1024];
 
 	au = client[cs_idx].au;
 	if ((au < 0) || (au > CS_MAXREADER))
@@ -162,58 +163,58 @@ static void camd35_request_emm(ECM_REQUEST *er)
 		else
 			client[cs_idx].disable_counter++;
 
-	memset(client[cs_idx].mbuf, 0, sizeof(client[cs_idx].mbuf));
-	client[cs_idx].mbuf[2] = client[cs_idx].mbuf[3] = 0xff;			// must not be zero
-	memcpy(client[cs_idx].mbuf + 8, i2b(2, er->srvid), 2);
+	memset(mbuf, 0, sizeof(mbuf));
+	mbuf[2] = mbuf[3] = 0xff;			// must not be zero
+	memcpy(mbuf + 8, i2b(2, er->srvid), 2);
 
 	//override request provid with auprovid if set in CMD05
 	if(reader[au].auprovid) {
 		if(reader[au].auprovid != er->prid)
-			memcpy(client[cs_idx].mbuf + 12, i2b(4, reader[au].auprovid), 4);
+			memcpy(mbuf + 12, i2b(4, reader[au].auprovid), 4);
 		else
-			memcpy(client[cs_idx].mbuf + 12, i2b(4, er->prid), 4);
+			memcpy(mbuf + 12, i2b(4, er->prid), 4);
 	} else {
-		memcpy(client[cs_idx].mbuf + 12, i2b(4, er->prid), 4);
+		memcpy(mbuf + 12, i2b(4, er->prid), 4);
 	}
 
-	memcpy(client[cs_idx].mbuf + 16, i2b(2, er->pid), 2);
-	client[cs_idx].mbuf[0] = 5;
-	client[cs_idx].mbuf[1] = 111;
+	memcpy(mbuf + 16, i2b(2, er->pid), 2);
+	mbuf[0] = 5;
+	mbuf[1] = 111;
 	if (reader[au].caid[0])
 	{
-		client[cs_idx].mbuf[39] = 1;							// no. caids
-		client[cs_idx].mbuf[20] = reader[au].caid[0]>>8;		// caid's (max 8)
-		client[cs_idx].mbuf[21] = reader[au].caid[0]&0xff;
-		memcpy(client[cs_idx].mbuf + 40, reader[au].hexserial, 6);	// serial now 6 bytes
-		client[cs_idx].mbuf[47] = reader[au].nprov;
+		mbuf[39] = 1;							// no. caids
+		mbuf[20] = reader[au].caid[0]>>8;		// caid's (max 8)
+		mbuf[21] = reader[au].caid[0]&0xff;
+		memcpy(mbuf + 40, reader[au].hexserial, 6);	// serial now 6 bytes
+		mbuf[47] = reader[au].nprov;
 		for (i = 0; i < reader[au].nprov; i++)
 		{
 			if (((reader[au].caid[0] >= 0x1700) && (reader[au].caid[0] <= 0x1799))  || // Betacrypt
 					((reader[au].caid[0] >= 0x0600) && (reader[au].caid[0] <= 0x0699)))    // Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
 			{
-				client[cs_idx].mbuf[48 + (i*5)] = reader[au].prid[i][0];
-				memcpy(&client[cs_idx].mbuf[50 + (i*5)], &reader[au].prid[i][1], 3);
+				mbuf[48 + (i*5)] = reader[au].prid[i][0];
+				memcpy(&mbuf[50 + (i*5)], &reader[au].prid[i][1], 3);
 			}
 			else
 			{
-				client[cs_idx].mbuf[48 + (i * 5)] = reader[au].prid[i][2];
-				client[cs_idx].mbuf[49 + (i * 5)] =reader[au].prid[i][3];
-				memcpy(&client[cs_idx].mbuf[50 + (i * 5)], &reader[au].sa[i][0],4); // for conax we need at least 4 Bytes
+				mbuf[48 + (i * 5)] = reader[au].prid[i][2];
+				mbuf[49 + (i * 5)] =reader[au].prid[i][3];
+				memcpy(&mbuf[50 + (i * 5)], &reader[au].sa[i][0],4); // for conax we need at least 4 Bytes
 			}
 		}
 		//we think client/server protocols should deliver all information, and only readers should discard EMM
-		client[cs_idx].mbuf[128] = (reader[au].blockemm_g == 1) ? 0: 1;
-		client[cs_idx].mbuf[129] = (reader[au].blockemm_s == 1) ? 0: 1;
-		client[cs_idx].mbuf[130] = (reader[au].blockemm_u == 1) ? 0: 1;
-		//client[cs_idx].mbuf[131] = reader[au].card_system; //Cardsystem for Oscam client
+		mbuf[128] = (reader[au].blockemm_g == 1) ? 0: 1;
+		mbuf[129] = (reader[au].blockemm_s == 1) ? 0: 1;
+		mbuf[130] = (reader[au].blockemm_u == 1) ? 0: 1;
+		//mbuf[131] = reader[au].card_system; //Cardsystem for Oscam client
 	}
 	else		// disable emm
-		client[cs_idx].mbuf[20] = client[cs_idx].mbuf[39] = client[cs_idx].mbuf[40] = client[cs_idx].mbuf[47] = client[cs_idx].mbuf[49] = 1;
+		mbuf[20] = mbuf[39] = mbuf[40] = mbuf[47] = mbuf[49] = 1;
 
-	memcpy(client[cs_idx].mbuf + 10, client[cs_idx].mbuf + 20, 2);
-	camd35_send(client[cs_idx].mbuf);		// send with data-len 111 for camd3 > 3.890
-	client[cs_idx].mbuf[1]++;
-	camd35_send(client[cs_idx].mbuf);		// send with data-len 112 for camd3 < 3.890
+	memcpy(mbuf + 10, mbuf + 20, 2);
+	camd35_send(mbuf);		// send with data-len 111 for camd3 > 3.890
+	mbuf[1]++;
+	camd35_send(mbuf);		// send with data-len 112 for camd3 < 3.890
 }
 
 static void camd35_send_dcw(ECM_REQUEST *er)
@@ -294,6 +295,7 @@ static void camd35_process_emm(uchar *buf)
 static void camd35_server(void *idx)
 {
   int n;
+  uchar mbuf[1024];
 
   int cidx=(int)idx;
   client[cidx].thread=pthread_self();
@@ -308,20 +310,20 @@ static void camd35_server(void *idx)
 
   client[cs_idx].is_udp = (ph[client[cs_idx].ctyp].type == MOD_CONN_UDP);
 
-  while ((n=process_input(client[cs_idx].mbuf, sizeof(client[cs_idx].mbuf), cfg->cmaxidle))>0)
+  while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
   {
-    switch(client[cs_idx].mbuf[0])
+    switch(mbuf[0])
     {
       case  0:	// ECM
       case  3:	// ECM (cascading)
-        camd35_process_ecm(client[cs_idx].mbuf);
+        camd35_process_ecm(mbuf);
         break;
       case  6:	// EMM
       case 19:  // EMM
-        camd35_process_emm(client[cs_idx].mbuf);
+        camd35_process_emm(mbuf);
         break;
       default:
-        cs_log("unknown camd35 command! (%d)", client[cs_idx].mbuf[0]);
+        cs_log("unknown camd35 command! (%d)", mbuf[0]);
     }
   }
 
