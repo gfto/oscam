@@ -1708,14 +1708,15 @@ int cc_parse_msg(uint8 *buf, int l) {
 		while (old_card) {
 			if (old_card->id == card->id) { //we aready have this card, delete it
 				cc_free_card(card);
-				old_card->time = time((time_t) 0);
-				return 0;
+				card = old_card;
+				break;
 			}
 			old_card = llist_itr_next(&itr);
 		}
 
 		card->time = time((time_t) 0);
-		llist_append(cc->cards, card);
+		if (!old_card)
+			llist_append(cc->cards, card);
 
 		struct cc_provider *prov = llist_itr_init(card->providers, &itr);
 		while (prov) {
@@ -1725,13 +1726,12 @@ int cc_parse_msg(uint8 *buf, int l) {
 		}
 		//SS: Hack end
 	}
-		break;
+	break;
 
 	case MSG_CARD_REMOVED: {
 		cc_card_removed(b2i(4, buf + 4));
-		ret = 0;
 	}
-		break;
+	break;
 
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
@@ -1763,11 +1763,11 @@ int cc_parse_msg(uint8 *buf, int l) {
 				cc_cmd_send(buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
 			} else if (cc->is_oscam_cccam)
 				check_extended_mode(msg);
-			return 0;
+			return ret;
 		}
 
 		if (is_server) //for reader only
-			return 0;
+			return ret;
 
 		if (cc->just_logged_in)
 			return -1; // reader restart needed
@@ -1779,7 +1779,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 					getprefix(), cc->g_flag);
 			//cc_cycle_connection();
 			cc_cli_close();
-			return 0;
+			return ret;
 		}
 
 		ushort ecm_idx = eei->ecm_idx;
@@ -1812,8 +1812,6 @@ int cc_parse_msg(uint8 *buf, int l) {
 		}
 
 		cc_send_ecm(NULL, NULL);
-
-		ret = 0;
 
 		break;
 	case MSG_CW_ECM:
@@ -1862,7 +1860,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 						getprefix(), cc->g_flag);
 				//cc_cycle_connection();
 				cc_cli_close();
-				return 0;
+				return ret;
 			}
 
 			ushort ecm_idx = eei->ecm_idx;
@@ -1913,8 +1911,8 @@ int cc_parse_msg(uint8 *buf, int l) {
 			if (cc->max_ecms)
 				cc->ecm_counter++;
 		}
-		ret = 0;
 		break;
+		
 	case MSG_KEEPALIVE:
 		cc->just_logged_in = 0;
 		if (!is_server) {
@@ -1928,6 +1926,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 			}
 		}
 		break;
+		
 	case MSG_CMD_05:
 		if (!is_server) {
 			cc->just_logged_in = 0;
@@ -1941,7 +1940,6 @@ int cc_parse_msg(uint8 *buf, int l) {
 			if (rdr->available)
 				send_cmd05_answer();
 		}
-		ret = 0;
 		break;
 	case MSG_CMD_0B: {
 		// by Project:Keynation
@@ -1967,7 +1965,6 @@ int cc_parse_msg(uint8 *buf, int l) {
 		cs_ddump(out, 16, "%s CMD_0B out:", getprefix());
 		cc_cmd_send(out, 16, MSG_CMD_0B);
 
-		ret = 0;
 		break;
 	}
 	case MSG_EMM_ACK: {
@@ -1982,7 +1979,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 							D_EMM,
 							"%s EMM Request discarded because au is not assigned to an reader!",
 							getprefix());
-					return 0;
+					return MSG_EMM_ACK;
 				}
 
 				EMM_PACKET *emm = malloc(sizeof(EMM_PACKET));
@@ -2012,7 +2009,6 @@ int cc_parse_msg(uint8 *buf, int l) {
 			}
 			cc_send_ecm(NULL, NULL);
 		}
-		ret = 0;
 		break;
 	}
 	default:
@@ -2026,7 +2022,6 @@ int cc_parse_msg(uint8 *buf, int l) {
 		//cc_cycle_connection();
 		cc_cli_close();
 		//cc_send_ecm(NULL, NULL);
-		ret = 0;
 	}
 	return ret;
 }
@@ -2139,8 +2134,7 @@ int cc_recv(uchar *buf, int l) {
 		n = -1;
 	} else {
 		// parse it and write it back, if we have received something of value
-		if (cc_parse_msg(cbuf, n) == -1) //aston
-			n = -2;
+		n = cc_parse_msg(cbuf, n);
 		memcpy(buf, cbuf, l);
 	}
 
@@ -2312,7 +2306,7 @@ int cc_cli_connect() {
 	n = 0;
 	do {
 	 	n = casc_recv_timer(rdr, buf, sizeof(buf), 100);
-	 	cs_log("n=%d", n);
+	 	cs_debug_mask(D_TRACE, "n=%d", n);
 	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA || n == MSG_CARD_REMOVED);
 	
 	if (n>0) n = 0;
