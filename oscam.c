@@ -2935,7 +2935,8 @@ static void process_master_pipe()
     	int data[2];
     	data[0] = ((int*)ptr)[0];
     	data[1] = ((int*)ptr)[1];
-    	write_to_pipe(reader[data[0]].fd, PIP_ID_CCC, (uchar*)&data, sizeof(data));
+    	write_to_pipe(reader[data[0]].fd, PIP_ID_CCC, (uchar*)data, sizeof(data));
+    	break;
     }
   }
 }

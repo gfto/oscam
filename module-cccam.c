@@ -1469,6 +1469,7 @@ void cc_idle() {
 int cc_request_server_cards(int ridx, int dest_cs_idx) {
 	char fname[40];
 	sprintf(fname, "%s/card%d", get_tmp_dir(), dest_cs_idx);
+	unlink(fname);
 	mkfifo(fname, 0666);
 	//Request cards from server:
 	int data[2] = {ridx, dest_cs_idx};
@@ -1521,6 +1522,8 @@ struct cc_card *read_card(uint8 *buf) {
 	}
 	return card;
 }
+
+#define READ_CARD_TIMEOUT 100
 
 struct cc_card *read_card_from(int pipe) {
 		int size = 0;
@@ -2666,8 +2669,10 @@ int cc_srv_report_cards() {
 			}
 		}
 
-		if (reader[r].typ == R_CCCAM && !flt) {
+		if (reader[r].typ == R_CCCAM && !flt && reader[r].fd) {
 
+			cs_debug_mask(D_TRACE, "%s asking reader %s for cards...", getprefix(), reader[r].label);
+			
 			struct cc_card *card;
 			int pipe = cc_request_server_cards(r, cs_idx);
 			while (pipe && (card = read_card_from(pipe)))
@@ -2699,7 +2704,7 @@ int cc_srv_report_cards() {
 
 			}
 			cc_close_request_server_cards(pipe, cs_idx);
-			//cs_debug_mask(D_TRACE, "%s end cards from %s", getprefix(), reader[r].label);			
+			cs_debug_mask(D_TRACE, "%s got cards from %s", getprefix(), reader[r].label);			
 		}
 	}
 
@@ -2767,6 +2772,7 @@ void cc_cli_report_cards(int client_idx) {
 	sprintf((char*) buf, "%s/card%d", get_tmp_dir(), client_idx);
 	int pipe = open((char*) buf, O_WRONLY);
 
+	cs_debug_mask(D_TRACE, "%s reporting cards...", rdr->label);
 	if (!cc || rdr->tcp_connected == 0) {
 		cc_cli_init_int();
 		cc = cl->cc;
