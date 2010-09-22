@@ -897,6 +897,8 @@ void init_oscam_ser(int ctyp)
 	while( (p=strrchr(sdevice, 1)) )
 	{
 		*p = 0;
+		if ((!p + 1) || (!(p + 1)[0])) return;
+		if (!oscam_ser_parse_url(p + 1)) return;
 		int i=cs_fork(0, ctyp);
 		client[i].typ='c';
 		client[i].ip=0;
@@ -904,6 +906,9 @@ void init_oscam_ser(int ctyp)
 		pthread_create(&client[i].thread, NULL, (void *)oscam_ser_fork, (void *)p + 1);
 		pthread_detach(client[i].thread);
 	}
+
+	if ((!sdevice) || (!sdevice[0])) return;
+	if (!oscam_ser_parse_url(sdevice)) return;
 
 	int i=cs_fork(0, ctyp);
 	client[i].typ='c';
