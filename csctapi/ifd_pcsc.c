@@ -83,7 +83,7 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
     return 0;
 }
 
-int pcsc_reader_do_api(struct s_reader *pcsc_reader, uchar *buf, uchar *cta_res, ushort *cta_lr, int l)
+int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *cta_res, ushort *cta_lr, int l)
 {
      ULONG rv;
      SCARD_IO_REQUEST pioRecvPci;
