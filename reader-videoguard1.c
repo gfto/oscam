@@ -124,7 +124,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
      also used to check if it is an NDS1 card as the returned information will
      not be encrypted if it is an NDS1 card */
 
-  unsigned char ins36[5] = { 0x48, 0x36, 0x00, 0x00, 0x90 };
+  static const unsigned char ins36[5] = { 0x48, 0x36, 0x00, 0x00, 0x90 };
   unsigned char boxID[4];
   int boxidOK = 0;
   l = vg1_do_cmd(reader, ins36, NULL, buff, cta_res);
@@ -226,7 +226,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
   } 
 
   // Send BoxID
-  unsigned char ins4C[5] = { 0x48, 0x4C, 0x00, 0x00, 0x09 };
+  static const unsigned char ins4C[5] = { 0x48, 0x4C, 0x00, 0x00, 0x09 };
   unsigned char payload4C[9] = { 0, 0, 0, 0, 3, 0, 0, 0, 4 };
   memcpy(payload4C, boxID, 4);
   if (!write_cmd_vg(ins4C, payload4C) || !status_ok(cta_res + l)) {
@@ -234,7 +234,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
     return ERROR;
   }
 
-  unsigned char ins58[5] = { 0x48, 0x58, 0x00, 0x00, 0x17 };
+  static const unsigned char ins58[5] = { 0x48, 0x58, 0x00, 0x00, 0x17 };
   l = vg1_do_cmd(reader, ins58, NULL, buff, cta_res);
   if (l < 0) {
     cs_log("[videoguard1-reader] class48 ins58: failed");
@@ -264,7 +264,7 @@ int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0x48, 0x40, 0x00, 0x80, 0xFF };
-  const unsigned char ins54[5] = { 0x48, 0x54, 0x00, 0x00, 0x0D };
+  static const unsigned char ins54[5] = { 0x48, 0x54, 0x00, 0x00, 0x0D };
   int posECMpart2 = er->ecm[6] + 7;
   int lenECMpart2 = er->ecm[posECMpart2];
   unsigned char tbuff[264];
@@ -497,9 +497,7 @@ void videoguard1_get_emm_filter(struct s_reader *rdr, uchar * filter)
 int videoguard1_do_emm(struct s_reader *reader, EMM_PACKET * ep)
 {
   unsigned char cta_res[CTA_RES_LEN];
-  unsigned char ins42[5] = {
-    0x48, 0x42, 0x00, 0x00, 0xFF
-  };
+  unsigned char ins42[5] = { 0x48, 0x42, 0x00, 0x00, 0xFF  };
   int rc = ERROR;
   const unsigned char *payload = payload_addr(ep->type, ep->emm, reader->hexserial);
   while (payload) {

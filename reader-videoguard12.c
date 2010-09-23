@@ -5,7 +5,7 @@
 static void read_tiers(struct s_reader * reader)
 {
   def_resp;
-  const unsigned char ins2a[5] = { 0x48,0x2a,0x00,0x00,0x00 };
+  static const unsigned char ins2a[5] = { 0x48,0x2a,0x00,0x00,0x00 };
   int l;
   l=do_cmd(reader,ins2a,NULL,NULL,NULL,cta_res);
   if(l<0 || !status_ok(cta_res+l)) return;
@@ -66,12 +66,12 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
   int l = 1;
 
   /* NDS1 and NDS1+ cards  return XX 90 00 to this command NDS2 cards fail to respond to this*/
-  unsigned char ins3601[5] = { 0x48,0x36,0x01,0x00,0x01 };
+  static const unsigned char ins3601[5] = { 0x48,0x36,0x01,0x00,0x01 };
   if(!write_cmd_vg(ins3601,NULL) || !status_ok(cta_res+l)) {
     return ERROR;  //  not a possible NDS1+ card
     }
 
-  unsigned char dummy_cmd_table[132] = {
+  static const unsigned char dummy_cmd_table[132] = {
     0x01, 0x82, 0x20, 0x01,
     0x48, 0x0E, 0xFF, 0x02,
     0x48, 0x18, 0x0C, 0x01,
@@ -119,7 +119,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     }
 */
 
-  unsigned char ins36[5] = { 0x48,0x36,0x00,0x00,0x00 };
+  static const unsigned char ins36[5] = { 0x48,0x36,0x00,0x00,0x00 };
   unsigned char boxID [4];
 
   if (reader->boxid > 0) {
@@ -193,7 +193,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
       }
   }
 
-  unsigned char ins4C[5] = { 0x48,0x4C,0x00,0x00,0x09 };
+  static const unsigned char ins4C[5] = { 0x48,0x4C,0x00,0x00,0x09 };
   unsigned char payload4C[9] = { 0,0,0,0, 3,0,0,0,4 };
   memcpy(payload4C,boxID,4);
   if(!write_cmd_vg(ins4C,payload4C) || !status_ok(cta_res+l)) {
@@ -202,7 +202,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     }
 
   //short int SWIRDstatus = cta_res[1];
-  unsigned char ins58[5] = { 0x48,0x58,0x00,0x00,0x00 };
+  static const unsigned char ins58[5] = { 0x48,0x58,0x00,0x00,0x00 };
   l=do_cmd(reader,ins58,NULL,buff,NULL,cta_res);
   if(l<0) {
     cs_log("[videoguard12-reader] cmd ins58 failed");
@@ -224,13 +224,13 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
   cs_log ("[videoguard12-reader] Card not married, exchange for BC Keys");
    */
 
-  const unsigned char seed1[] = {
+  static const unsigned char seed1[] = {
     0xb9, 0xd5, 0xef, 0xd5, 0xf5, 0xd5, 0xfb, 0xd5, 0x31, 0xd6, 0x43, 0xd6, 0x55, 0xd6, 0x61, 0xd6,
     0x85, 0xd6, 0x9d, 0xd6, 0xaf, 0xd6, 0xc7, 0xd6, 0xd9, 0xd6, 0x09, 0xd7, 0x15, 0xd7, 0x21, 0xd7,
     0x27, 0xd7, 0x3f, 0xd7, 0x45, 0xd7, 0xb1, 0xd7, 0xbd, 0xd7, 0xdb, 0xd7, 0x11, 0xd8, 0x23, 0xd8,
     0x29, 0xd8, 0x2f, 0xd8, 0x4d, 0xd8, 0x8f, 0xd8, 0xa1, 0xd8, 0xad, 0xd8, 0xbf, 0xd8, 0xd7, 0xd8
     };
-  const unsigned char seed2[] = {
+  static const unsigned char seed2[] = {
     0x01, 0x00, 0xcf, 0x13, 0xe0, 0x60, 0x54, 0xac, 0xab, 0x99, 0xe6, 0x0c, 0x9f, 0x5b, 0x91, 0xb9,
     0x72, 0x72, 0x4d, 0x5b, 0x5f, 0xd3, 0xb7, 0x5b, 0x01, 0x4d, 0xef, 0x9e, 0x6b, 0x8a, 0xb9, 0xd1,
     0xc9, 0x9f, 0xa1, 0x2a, 0x8d, 0x86, 0xb6, 0xd6, 0x39, 0xb4, 0x64, 0x65, 0x13, 0x77, 0xa1, 0x0a,
@@ -238,7 +238,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     };
   cCamCryptVG_SetSeed(reader,seed1,seed2);
 
-  unsigned char insB4[5] = { 0x48,0xB4,0x00,0x00,0x40 };
+  static const unsigned char insB4[5] = { 0x48,0xB4,0x00,0x00,0x40 };
   unsigned char tbuff[64];
   cCamCryptVG_GetCamKey(reader,tbuff);
   l=do_cmd(reader,insB4,tbuff,NULL,NULL,cta_res);
@@ -247,28 +247,28 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
     }
 
-  unsigned char insBC[5] = { 0x48,0xBC,0x00,0x00,0x00 };
+  static const unsigned char insBC[5] = { 0x48,0xBC,0x00,0x00,0x00 };
   l=do_cmd(reader,insBC,NULL,NULL,NULL,cta_res);
   if(l<0) {
     cs_log("[videoguard12-reader] cmd D0BC failed");
     return ERROR;
     }
 
-  unsigned char insBE[5] = { 0x48,0xBE,0x00,0x00,0x00 };
+  static const unsigned char insBE[5] = { 0x48,0xBE,0x00,0x00,0x00 };
   l=do_cmd(reader,insBE,NULL,NULL,NULL,cta_res);
   if(l<0) {
     cs_log("[videoguard12-reader] cmd D3BE failed");
     return ERROR;
     }
 
-  unsigned char ins58a[5] = { 0x49,0x58,0x00,0x00,0x00 };
+  static const unsigned char ins58a[5] = { 0x49,0x58,0x00,0x00,0x00 };
   l=do_cmd(reader,ins58a,NULL,NULL,NULL,cta_res);
   if(l<0) {
     cs_log("[videoguard12-reader] cmd D158 failed");
     return ERROR;
     }
 
-  unsigned char ins4Ca[5] = { 0x49,0x4C,0x00,0x00,0x00 };
+  static const unsigned char ins4Ca[5] = { 0x49,0x4C,0x00,0x00,0x00 };
   l=do_cmd(reader,ins4Ca,payload4C,NULL,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
     cs_log("[videoguard12-reader] cmd D14Ca failed");
@@ -296,7 +296,7 @@ int videoguard12_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0x49,0x40,0x00,0x80,0xFF };
-  const unsigned char ins54[5] = { 0x4B,0x54,0x00,0x00,0x00};
+  static const unsigned char ins54[5] = { 0x4B,0x54,0x00,0x00,0x00};
   int posECMpart2=er->ecm[6]+7;
   int lenECMpart2=er->ecm[posECMpart2]+1;
   unsigned char tbuff[264];
