@@ -285,7 +285,7 @@ static int connect_newcamd_server()
   int handle=0;
 
   uint32 index;
-  uint8 *passwdcrypt;
+  uchar passwdcrypt[120];
   uint8 login_answer;
   int bytes_received;
 
@@ -312,7 +312,7 @@ static int connect_newcamd_server()
   buf[0] = MSG_CLIENT_2_SERVER_LOGIN;
   buf[1] = 0;
   strcpy((char *)buf+index, reader[client[cs_idx].ridx].r_usr);
-  passwdcrypt = (uint8*)__md5_crypt(reader[client[cs_idx].ridx].r_pwd, "$1$abcdefgh$");
+  __md5_crypt(reader[client[cs_idx].ridx].r_pwd, "$1$abcdefgh$", (char *)passwdcrypt);
   index += strlen(reader[client[cs_idx].ridx].r_usr)+1;
   strcpy((char *)buf+index, (const char *)passwdcrypt);
 
@@ -606,7 +606,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     struct s_auth *account;
     uchar buf[14];
     uchar *key=0;
-    uint8 *passwdcrypt = NULL;
+    uchar passwdcrypt[120];
     int au=0;
     struct s_ip *p_ip;
     uchar mbuf[1024];
@@ -667,7 +667,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
       cs_debug("account->usr=%s", account->usr);
       if (strcmp((char *)usr, account->usr) == 0)
       {
-        passwdcrypt = (uint8*)__md5_crypt(account->pwd, "$1$abcdefgh$");
+        __md5_crypt(account->pwd, "$1$abcdefgh$", (char *)passwdcrypt);
         cs_debug("account->pwd=%s", passwdcrypt);
         if (strcmp((char *)pwd, (const char *)passwdcrypt) == 0)
         {

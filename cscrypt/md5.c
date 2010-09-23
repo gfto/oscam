@@ -538,11 +538,11 @@ static void __md5_to64( char *s, unsigned long v, int n)
  * Use MD5 for what it is best at...
  */
 
-char * __md5_crypt( const char *pw, const char *salt)
+char * __md5_crypt( const char *pw, const char *salt, char *passwd )
 {
 	/* Static stuff */
 	static const char *sp, *ep;
-	static char passwd[120], *p;
+	static char *p;
 
 	unsigned char	final[17];	/* final[16] exists only to aid in looping */
 	int sl,pl,i,__md5__magic_len,pw_len;
