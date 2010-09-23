@@ -106,7 +106,7 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     0x48, 0xBC, 0x50, 0x03,
     0x48, 0xBE, 0x10, 0x03 };
 
-  memorize_cmd_table (dummy_cmd_table,132);
+  memorize_cmd_table (reader,dummy_cmd_table,132);
 
   unsigned char buff[256];
 
@@ -236,11 +236,11 @@ int videoguard12_card_init(struct s_reader * reader, ATR newatr)
     0xc9, 0x9f, 0xa1, 0x2a, 0x8d, 0x86, 0xb6, 0xd6, 0x39, 0xb4, 0x64, 0x65, 0x13, 0x77, 0xa1, 0x0a,
     0x0c, 0xcf, 0xb4, 0x2b, 0x3a, 0x2f, 0xd2, 0x09, 0x92, 0x15, 0x40, 0x47, 0x66, 0x5c, 0xda, 0xc9
     };
-  cCamCryptVG_SetSeed(seed1,seed2);
+  cCamCryptVG_SetSeed(reader,seed1,seed2);
 
   unsigned char insB4[5] = { 0x48,0xB4,0x00,0x00,0x40 };
   unsigned char tbuff[64];
-  cCamCryptVG_GetCamKey(tbuff);
+  cCamCryptVG_GetCamKey(reader,tbuff);
   l=do_cmd(reader,insB4,tbuff,NULL,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
     cs_log ("[videoguard12-reader] cmd D0B4 failed (%02X%02X)", cta_res[0], cta_res[1]);

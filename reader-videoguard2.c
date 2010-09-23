@@ -12,7 +12,7 @@ static void vg2_read_tiers(struct s_reader * reader)
      check if ins2a is in command table before running it
   */
   static const unsigned char ins2a[5] = { 0xD0,0x2a,0x00,0x00,0x00 };
-  if(cmd_exists(ins2a)) {
+  if(cmd_exists(reader,ins2a)) {
     l=do_cmd(reader,ins2a,NULL,NULL,NULL,cta_res);
     if(l<0 || !status_ok(cta_res+l)){
       cs_log ("[videoguard2-reader] classD0 ins2a: failed");
@@ -33,17 +33,26 @@ static void vg2_read_tiers(struct s_reader * reader)
   reader->init_history_pos = 0; //reset for re-read
   memset(reader->init_history, 0, sizeof(reader->init_history));
 #endif
+  int mblank = 0;
+  int cblank = 0;
   for(i=0; i<num; i++) {
     ins76[2]=i;
     l=do_cmd(reader,ins76,NULL,NULL,NULL,cta_res);
     if(l<0 || !status_ok(cta_res+l)) return;
-    if(cta_res[2]==0 && cta_res[3]==0) break;
-    int y,m,d,H,M,S;
-    rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
-    unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
-    char *tier_name = get_tiername(tier_id, reader->caid[0]);
-    cs_ri_log(reader, "[videoguard2-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
+    if(cta_res[2]!=0 || cta_res[3]!=0) {
+      if(cblank > mblank) mblank = cblank;
+      cblank = 0;
+      int y,m,d,H,M,S;
+      rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
+      unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
+      char *tier_name = get_tiername(tier_id, reader->caid[0]);
+      cs_ri_log(reader, "[videoguard2-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
+    } else {
+        if (reader->caid[0]!=0x09AC) break;
+	cblank +=1;
     }
+  }
+  if (mblank>0) cs_ri_log(reader,"[videoguard2-reader] maximum blank tiers = %i", mblank );
 }
 
 int videoguard2_card_init(struct s_reader * reader, ATR newatr)
@@ -82,7 +91,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   int l;
   ins7401[3]=0x80;  // from newcs log
   ins7401[4]=0x01;
-  if((l=read_cmd_len(reader, ins7401))<0) return ERROR; //not a videoguard2/NDS card or communication error
+  if((l=read_cmd_len(reader,ins7401))<0) return ERROR; //not a videoguard2/NDS card or communication error
   ins7401[3]=0x00;
   ins7401[4]=l;
   if(!write_cmd_vg(ins7401,NULL) || !status_ok(cta_res+l)) {
@@ -90,7 +99,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
     }
 
-  memorize_cmd_table (cta_res,l);
+  memorize_cmd_table (reader,cta_res,l);
 
   unsigned char buff[256];
 
@@ -113,7 +122,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   } else {
     /* we can try to get the boxid from the card */
     int boxidOK=0;
-    if((ins36[4]=read_cmd_len(reader, ins36))==0 && cmd_exists(ins5e)) {
+    if((ins36[4]=read_cmd_len(reader,ins36))==0 && cmd_exists(reader,ins5e)) {
         if(!write_cmd_vg(ins5e,NULL) || !status_ok(cta_res+2)){
           cs_log ("[videoguard2-reader] classD0 ins5e: failed");
         } else {
@@ -234,11 +243,11 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     0x0c, 0xcf, 0xb4, 0x2b, 0x3a, 0x2f, 0xd2, 0x09, 0x92, 0x15, 0x40, 0x47, 0x66, 0x5c, 0xda, 0xc9
     };
 
-  cCamCryptVG_SetSeed(seed1,seed2);
+  cCamCryptVG_SetSeed(reader,seed1,seed2);
 
   unsigned char insB4[5] = { 0xD0,0xB4,0x00,0x00,0x40 };
   unsigned char tbuff[64];
-  cCamCryptVG_GetCamKey(tbuff);
+  cCamCryptVG_GetCamKey(reader,tbuff);
   l=do_cmd(reader,insB4,tbuff,NULL,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
     cs_log ("[videoguard2-reader] classD0 insB4: failed (%02X%02X)", cta_res[0], cta_res[1]);
@@ -280,7 +289,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     dimeno_magic[a]=dimeno_magic[a]^boxID[a];
   add_aes_entry(reader, reader->caid[0], 0, AESKEY_ASTRO, dimeno_magic);
 
-  AES_ENTRY *current;
+/*  AES_ENTRY *current;
   current=reader->aes_list;
   while(current) {
       cs_log("**************************");
@@ -292,6 +301,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
       cs_log("**************************");
       current=current->next;
   }
+*/
 
   cs_ri_log(reader, "[videoguard2-reader] type: %s, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
          reader->card_desc,

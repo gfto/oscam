@@ -23,6 +23,8 @@
 #define NDS2    2
 
 #define AESKEY_ASTRO    1
+#define AESKEY_EKEY     2
+#define AESKEY_DKEY     3
 
 
 typedef struct nds_atr {
@@ -33,45 +35,30 @@ typedef struct nds_atr {
     const char *desc;
 } NDS_ATR_ENTRY;
 
-AES_KEY dkey, ekey;
-
 extern int io_serial_need_dummy_char;
 
-struct CmdTabEntry {
-  unsigned char cla;
-  unsigned char cmd;
-  unsigned char len;
-  unsigned char mode;
-};
-
-struct CmdTab {
-  unsigned char index;
-  unsigned char size;
-  unsigned char Nentries;
-  unsigned char dummy;
-  struct CmdTabEntry e[1];
-};
-
-struct CmdTab *cmd_table;
-
 extern int cw_is_valid(unsigned char *cw, int start);
-extern void cAES_SetKey(const unsigned char *key);
-extern int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt);
+extern void cAES_SetKey(struct s_reader * reader, const unsigned char *key);
 extern void swap_lb (const unsigned char *buff, int len);
 
 extern void __xxor(unsigned char *data, int len, const unsigned char *v1, const unsigned char *v2);
 #define xor16(v1,v2,d) __xxor((d),16,(v1),(v2))
 #define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point *2/3
 
+<<<<<<< .mine
+extern void cCamCryptVG_SetSeed(struct s_reader * reader, unsigned char *Key1, unsigned char *Key2);
+extern void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff);
+=======
 extern void cCamCryptVG_SetSeed(const unsigned char *Key1, const unsigned char *Key2);
 extern void cCamCryptVG_GetCamKey(unsigned char *buff);
+>>>>>>> .r3183
 
 extern void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data);
 extern void manage_tag(struct s_reader * reader, unsigned char *answer, unsigned char *cw);
 extern int status_ok(const unsigned char *status);
 
-extern void memorize_cmd_table (const unsigned char *mem, int size);
-extern int cmd_exists(const unsigned char *cmd);
+extern void memorize_cmd_table (struct s_reader * reader, const unsigned char *mem, int size);
+extern int cmd_exists(struct s_reader * reader, const unsigned char *cmd);
 extern int read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
 extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
                   unsigned char *cw, unsigned char * cta_res);

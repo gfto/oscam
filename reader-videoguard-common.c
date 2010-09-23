@@ -107,22 +107,16 @@ void set_known_card_info(struct s_reader * reader)
   }
 }
 
-int aes_active=0;
-
-static unsigned short cardkeys[3][32];
-static unsigned char stateD3A[16];
-
 static void cCamCryptVG_LongMult(unsigned short *pData, unsigned short *pLen, unsigned int mult, unsigned int carry);
 static void cCamCryptVG_PartialMod(unsigned short val, unsigned int count, unsigned short *outkey, const unsigned short *inkey);
 static void cCamCryptVG_RotateRightAndHash(unsigned char *p);
 static void cCamCryptVG_Reorder16A(unsigned char *dest, const unsigned char *src);
-static void cCamCryptVG_ReorderAndEncrypt(unsigned char *p);
-static void cCamCryptVG_Process_D0(const unsigned char *ins, unsigned char *data);
-static void cCamCryptVG_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status);
-static void cCamCryptVG_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status);
+static void cCamCryptVG_ReorderAndEncrypt(struct s_reader * reader, unsigned char *p);
+static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char *ins, unsigned char *data);
+static void cCamCryptVG_Process_D1(struct s_reader * reader, const unsigned char *ins, unsigned char *data, const unsigned char *status);
+static void cCamCryptVG_Decrypt_D3(struct s_reader * reader, unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *buff, int len, unsigned char *cw);
-
-struct CmdTab *cmd_table=NULL;
+static int cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int len);
 
 int cw_is_valid(unsigned char *cw, int start)	//returns 1 if cw_is_valid, returns 0 if cw is all zeros
 {
@@ -134,19 +128,17 @@ int cw_is_valid(unsigned char *cw, int start)	//returns 1 if cw_is_valid, return
   return ERROR;
 }
 
-void cAES_SetKey(const unsigned char *key)
+void cAES_SetKey(struct s_reader * reader, const unsigned char *key)
 {
-  AES_set_decrypt_key(key,128,&dkey);
-  AES_set_encrypt_key(key,128,&ekey);
-  aes_active=1;
+  replace_aes_decrypt_entry(reader, reader->caid[0], 0, AESKEY_DKEY, (uchar *)key);
+  replace_aes_encrypt_entry(reader, reader->caid[0], 0, AESKEY_EKEY, (uchar *)key);
 }
 
-int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt)
+int cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int len)
 {
-  if(aes_active) {
+  if(aes_present(reader->aes_list, reader->caid[0], 0, AESKEY_EKEY)) {
     len=(len+15)&(~15); // pad up to a multiple of 16
-    int i;
-    for(i=0; i<len; i+=16) AES_encrypt(data+i,crypt+i,(const AES_KEY *)&ekey);
+    aes_encrypt_from_list(reader->aes_list,reader->caid[0], 0, AESKEY_EKEY, (uchar *)data, len);
     return len;
     }
   return -1;
@@ -185,23 +177,27 @@ inline void __xxor(unsigned char *data, int len, const unsigned char *v1, const 
     }
 }
 
+<<<<<<< .mine
+void cCamCryptVG_SetSeed(struct s_reader * reader, unsigned char *Key1, unsigned char *Key2)
+=======
 void cCamCryptVG_SetSeed(const unsigned char *Key1, const unsigned char *Key2)
+>>>>>>> .r3183
 {
   swap_lb (Key1, 64);
   swap_lb (Key2, 64);
-  memcpy(cardkeys[1],Key1,sizeof(cardkeys[1]));
-  memcpy(cardkeys[2],Key2,sizeof(cardkeys[2]));
+  memcpy(reader->cardkeys[1],Key1,sizeof(reader->cardkeys[1]));
+  memcpy(reader->cardkeys[2],Key2,sizeof(reader->cardkeys[2]));
   swap_lb (Key1, 64);
   swap_lb (Key2, 64);
 }
 
-void cCamCryptVG_GetCamKey(unsigned char *buff)
+void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff)
 {
   unsigned short *tb2=(unsigned short *)buff, c=1;
   memset(tb2,0,64);
   tb2[0]=1;
   int i;
-  for(i=0; i<32; i++) cCamCryptVG_LongMult(tb2,&c,cardkeys[1][i],0);
+  for(i=0; i<32; i++) cCamCryptVG_LongMult(tb2,&c,reader->cardkeys[1][i],0);
   swap_lb (buff, 64);
 }
 
@@ -209,13 +205,13 @@ static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned c
 {
   switch(rxbuff[0]) {
     case 0xD0:
-      cCamCryptVG_Process_D0(rxbuff,rxbuff+5);
+      cCamCryptVG_Process_D0(reader,rxbuff,rxbuff+5);
       break;
     case 0xD1:
-      cCamCryptVG_Process_D1(rxbuff,rxbuff+5,rxbuff+rxbuff[4]+5);
+      cCamCryptVG_Process_D1(reader,rxbuff,rxbuff+5,rxbuff+rxbuff[4]+5);
       break;
     case 0xD3:
-      cCamCryptVG_Decrypt_D3(rxbuff,rxbuff+5,rxbuff+rxbuff[4]+5);
+      cCamCryptVG_Decrypt_D3(reader,rxbuff,rxbuff+5,rxbuff+rxbuff[4]+5);
       if(rxbuff[1]==0x54) {
         memcpy(cw+0,rxbuff+5,8);
     	memset(cw+8,0,8); //set to 0 so client will know it is invalid unless it is overwritten with a valid cw
@@ -239,20 +235,20 @@ static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned c
   }
 }
 
-static void cCamCryptVG_Process_D0(const unsigned char *ins, unsigned char *data)
+static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char *ins, unsigned char *data)
 {
   switch(ins[1]) {
     case 0xb4:
       swap_lb (data, 64);
-      memcpy(cardkeys[0],data,sizeof(cardkeys[0]));
+      memcpy(reader->cardkeys[0],data,sizeof(reader->cardkeys[0]));
       break;
     case 0xbc:
       {
       swap_lb (data, 64);
       unsigned short *idata=(unsigned short *)data;
-      const unsigned short *key1=(const unsigned short *)cardkeys[1];
+      const unsigned short *key1=(const unsigned short *)reader->cardkeys[1];
       unsigned short key2[32];
-      memcpy(key2,cardkeys[2],sizeof(key2));
+      memcpy(key2,reader->cardkeys[2],sizeof(key2));
       int count2;
       for(count2=0; count2<32; count2++) {
         unsigned int rem=0, div=key1[count2];
@@ -275,19 +271,19 @@ static void cCamCryptVG_Process_D0(const unsigned char *ins, unsigned char *data
       swap_lb (data, 64);
       unsigned char stateD1[16];
       cCamCryptVG_Reorder16A(stateD1,data);
-      cAES_SetKey(stateD1);
+      cAES_SetKey(reader,stateD1);
       break;
       }
   }
 }
 
-static void cCamCryptVG_Process_D1(const unsigned char *ins, unsigned char *data, const unsigned char *status)
+static void cCamCryptVG_Process_D1(struct s_reader * reader, const unsigned char *ins, unsigned char *data, const unsigned char *status)
 {
   unsigned char iter[16], tmp[16];
   memset(iter,0,sizeof(iter));
   memcpy(iter,ins,5);
-  xor16(iter,stateD3A,iter);
-  memcpy(stateD3A,iter,sizeof(iter));
+  xor16(iter,reader->stateD3A,iter);
+  memcpy(reader->stateD3A,iter,sizeof(iter));
 
   int datalen=status-data;
   int datalen1=datalen;
@@ -311,22 +307,22 @@ static void cCamCryptVG_Process_D1(const unsigned char *ins, unsigned char *data
 
     if(docalc) {
       xor16(iter,in,tmp);
-      cCamCryptVG_ReorderAndEncrypt(tmp);
-      xor16(tmp,stateD3A,iter);
+      cCamCryptVG_ReorderAndEncrypt(reader,tmp);
+      xor16(tmp,reader->stateD3A,iter);
       }
     }
-  memcpy(stateD3A,tmp,16);
+  memcpy(reader->stateD3A,tmp,16);
 }
 
-static void cCamCryptVG_Decrypt_D3(unsigned char *ins, unsigned char *data, const unsigned char *status)
+static void cCamCryptVG_Decrypt_D3(struct s_reader * reader, unsigned char *ins, unsigned char *data, const unsigned char *status)
 {
   if(ins[4]>16) ins[4]-=16;
-  if(ins[1]==0xbe) memset(stateD3A,0,sizeof(stateD3A));
+  if(ins[1]==0xbe) memset(reader->stateD3A,0,sizeof(reader->stateD3A));
 
   unsigned char tmp[16];
   memset(tmp,0,sizeof(tmp));
   memcpy(tmp,ins,5);
-  xor16(tmp,stateD3A,stateD3A);
+  xor16(tmp,reader->stateD3A,reader->stateD3A);
 
   int len1=ins[4];
   int blocklen=len1>>4;
@@ -337,36 +333,36 @@ static void cCamCryptVG_Decrypt_D3(unsigned char *ins, unsigned char *data, cons
   int blockindex;
   for(blockindex=0; blockindex<blocklen; blockindex++) {
     iter[0]+=blockindex;
-    xor16(iter,stateD3A,iter);
-    cCamCryptVG_ReorderAndEncrypt(iter);
+    xor16(iter,reader->stateD3A,iter);
+    cCamCryptVG_ReorderAndEncrypt(reader,iter);
     xor16(iter,&data[blockindex*16],states[blockindex]);
     if(blockindex==(len1>>4)) {
       int c=len1-(blockindex*16);
       if(c<16) memset(&states[blockindex][c],0,16-c);
       }
-    xor16(states[blockindex],stateD3A,stateD3A);
-    cCamCryptVG_RotateRightAndHash(stateD3A);
+    xor16(states[blockindex],reader->stateD3A,reader->stateD3A);
+    cCamCryptVG_RotateRightAndHash(reader->stateD3A);
     }
   memset(tmp,0,sizeof(tmp));
   memcpy(tmp+5,status,2);
-  xor16(tmp,stateD3A,stateD3A);
-  cCamCryptVG_ReorderAndEncrypt(stateD3A);
+  xor16(tmp,reader->stateD3A,reader->stateD3A);
+  cCamCryptVG_ReorderAndEncrypt(reader,reader->stateD3A);
 
-  memcpy(stateD3A,status-16,sizeof(stateD3A));
-  cCamCryptVG_ReorderAndEncrypt(stateD3A);
+  memcpy(reader->stateD3A,status-16,sizeof(reader->stateD3A));
+  cCamCryptVG_ReorderAndEncrypt(reader,reader->stateD3A);
 
   memcpy(data,states[0],len1);
   if(ins[1]==0xbe) {
     cCamCryptVG_Reorder16A(tmp,states[0]);
-    cAES_SetKey(tmp);
+    cAES_SetKey(reader,tmp);
     }
 }
 
-static void cCamCryptVG_ReorderAndEncrypt(unsigned char *p)
+static void cCamCryptVG_ReorderAndEncrypt(struct s_reader * reader, unsigned char *p)
 {
   unsigned char tmp[16];
   cCamCryptVG_Reorder16A(tmp,p);
-  cAES_Encrypt(tmp,16,tmp);
+  cAES_Encrypt(reader,tmp,16);
   cCamCryptVG_Reorder16A(p,tmp);
 }
 
@@ -450,9 +446,9 @@ int status_ok(const unsigned char *status)
                || status[1] == 0xa0 || status[1] == 0xa1);
 }
 
-void memorize_cmd_table (const unsigned char *mem, int size){
-  cmd_table=(struct CmdTab *)malloc(sizeof(unsigned char) * size);
-  memcpy(cmd_table,mem,size);
+void memorize_cmd_table (struct s_reader * reader, const unsigned char *mem, int size){
+  reader->cmd_table=(struct s_CmdTab *)malloc(sizeof(unsigned char) * size);
+  memcpy(reader->cmd_table,mem,size);
 }
 
 void manage_tag(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
@@ -489,11 +485,11 @@ void manage_tag(struct s_reader * reader, unsigned char *rxbuff, unsigned char *
   }
 }
 
-int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode)
+int cmd_table_get_info(struct s_reader * reader, const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode)
 {
-  struct CmdTabEntry *pcte=cmd_table->e;
+  struct s_CmdTabEntry *pcte=reader->cmd_table->e;
   int i;
-  for(i=0; i<cmd_table->Nentries; i++,pcte++)
+  for(i=0; i< reader->cmd_table->Nentries; i++,pcte++)
     if(cmd[1]==pcte->cmd) {
       *rlen=pcte->len;
       *rmode=pcte->mode;
@@ -502,11 +498,11 @@ int cmd_table_get_info(const unsigned char *cmd, unsigned char *rlen, unsigned c
   return 0;
 }
 
-int cmd_exists(const unsigned char *cmd)
+int cmd_exists(struct s_reader * reader, const unsigned char *cmd)
 {
-  struct CmdTabEntry *pcte=cmd_table->e;
+  struct s_CmdTabEntry *pcte=reader->cmd_table->e;
   int i;
-  for(i=0; i<cmd_table->Nentries; i++,pcte++)
+  for(i=0; i< reader->cmd_table->Nentries; i++,pcte++)
     if(cmd[1]==pcte->cmd) {
       return 1;
       }
@@ -525,7 +521,7 @@ int read_cmd_len(struct s_reader * reader, const unsigned char *cmd)
   if(!write_cmd_vg(cmd2,NULL) || !status_ok(cta_res+1)) {
     cs_debug("[videoguard-reader] failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
     return -1;
-    }
+  }
   return cta_res[0];
 }
 
@@ -536,9 +532,9 @@ int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned ch
   unsigned char ins2[5];
   memcpy(ins2,ins,5);
   unsigned char len=0, mode=0;
-  if(cmd_table_get_info(ins2,&len,&mode)) {
+  if(cmd_table_get_info(reader,ins2,&len,&mode)) {
     if(len==0xFF && mode==2) {
-      if(ins2[4]==0) ins2[4]=len=read_cmd_len(reader, ins2);
+      if(ins2[4]==0) ins2[4]=len=read_cmd_len(reader,ins2);
       }
     else if(mode!=0) ins2[4]=len;
     }
