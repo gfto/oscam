@@ -1801,11 +1801,11 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_addVar(vars, 0, "HIDEICON", ICHID);
 			if(client[i].typ == 'c' && !cfg->http_readonly) {
 				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
-				tpl_printf(vars, 1, "CLIENTPID", "<A HREF=\"status.html?action=kill&pid=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\" STYLE=\"float:right\"></A>", client[i].pid, ICKIL);
+				//tpl_printf(vars, 1, "CLIENTPID", "<A HREF=\"status.html?action=kill&pid=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\" STYLE=\"float:right\"></A>", client[i].pid, ICKIL);
 			}
 			else if((client[i].typ == 'r' || client[i].typ == 'p') && !cfg->http_readonly) {
 				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
-				tpl_printf(vars, 1, "CLIENTPID", "<A HREF=\"status.html?action=restart&pid=%d\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Kill\" STYLE=\"float:right\"></A>", client[i].pid, ICKIL);
+				//tpl_printf(vars, 1, "CLIENTPID", "<A HREF=\"status.html?action=restart&pid=%d\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Kill\" STYLE=\"float:right\"></A>", client[i].pid, ICKIL);
 			}
 			else {
 				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
