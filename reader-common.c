@@ -353,8 +353,6 @@ int reader_checkhealth(struct s_reader * reader)
       client[cs_idx].lastemm = 0;
       client[cs_idx].lastecm = 0;
       client[cs_idx].au = -1;
-      extern int io_serial_need_dummy_char;
-      io_serial_need_dummy_char = 0;
       cs_log("card ejected slot = %i", reader->slot);
     }
     reader->card_status = NO_CARD;

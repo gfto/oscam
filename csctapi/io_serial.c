@@ -64,9 +64,6 @@ static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, u
 
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms);
 
-static int _in_echo_read = 0;
-int io_serial_need_dummy_char = 0;
-
 extern int fdmc;
 
 #if defined(TUXBOX) && defined(PPC)
@@ -435,7 +432,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 	}
 	
 	cs_debug ("IO: Receiving: ");
-	for (count = 0; count < size * (_in_echo_read ? (1+io_serial_need_dummy_char) : 1); count++)
+	for (count = 0; count < size ; count++)
 	{
 #ifdef SH4
 		gettimeofday(&tv,0);
@@ -452,7 +449,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 		}
 		if(!readed) return ERROR;
 		
-		data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;
+		data[count] = c;
 		cs_debug_nolf ("%02X ", c);
 #else
 		if (!IO_Serial_WaitToRead (reader, 0, timeout))
@@ -462,7 +459,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 				cs_debug_nolf ("ERROR\n");
 				return ERROR;
 			}
-			data[_in_echo_read ? count/(1+io_serial_need_dummy_char) : count] = c;
+			data[count] = c;
 			cs_debug_nolf ("%02X ", c);
 		}
 		else
@@ -474,7 +471,6 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 #endif
 	}
 	cs_debug_nolf("\n"); //UGLY this is essential, resets global var, do not delete
-	_in_echo_read = 0;
 	return OK;
 }
 
@@ -495,15 +491,10 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 		
 		if (!IO_Serial_WaitToWrite (reader, delay, 1000))
 		{
-            for (i_w=0; i_w < to_send; i_w++) {
-            data_w [(1+io_serial_need_dummy_char)*i_w] = data [count + i_w];
-            if (io_serial_need_dummy_char) {
-              data_w [2*i_w+1] = 0x00;
-              }
-            }
-            unsigned int u = write (reader->handle, data_w, (1+io_serial_need_dummy_char)*to_send);
-            _in_echo_read = 1;
-            if (u != (1+io_serial_need_dummy_char)*to_send)
+            for (i_w=0; i_w < to_send; i_w++)
+              data_w [i_w] = data [count + i_w];
+            unsigned int u = write (reader->handle, data_w, to_send);
+            if (u != to_send)
 			{
 				cs_debug ("ERROR\n");
 				if(reader->typ != R_INTERNAL)
@@ -514,7 +505,7 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 			if(reader->typ != R_INTERNAL)
 				reader->written += to_send;
 			
-			cs_ddump (data_w+count, (1+io_serial_need_dummy_char)*to_send, "IO: Sending: ");
+			cs_ddump (data_w+count, to_send, "IO: Sending: ");
 		}
 		else
 		{
