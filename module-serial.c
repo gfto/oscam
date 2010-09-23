@@ -907,7 +907,7 @@ void init_oscam_ser(int ctyp)
 		pthread_detach(client[i].thread);
 	}
 
-	if ((!sdevice) || (!sdevice[0])) return;
+	if (!sdevice[0]) return;
 	if (!oscam_ser_parse_url(sdevice)) return;
 
 	int i=cs_fork(0, ctyp);

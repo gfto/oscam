@@ -475,17 +475,6 @@ int key_atob_l(char *asc, uchar *bin, int l)
   return(rc);
 }
 
-char *key_btoa(char *asc, uchar *bin)
-{
-  int i;//, n1, n2, rc;
-  static char buf[33];
-  if (!asc)
-    asc=buf;
-  for (i=0; i<16; i++)
-    sprintf(asc+(i<<1), "%02X", bin[i]);
-  return(asc);
-}
-
 char *cs_hexdump(int m, const uchar *buf, int n)
 {
   int i;

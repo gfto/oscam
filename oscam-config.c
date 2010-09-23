@@ -2415,7 +2415,7 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", reader[i].boxid);
 
 			if (reader[i].aes_key[0] && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", key_btoa(NULL, reader[i].aes_key));
+				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", cs_hexdump(0, reader[i].aes_key, 16));
 
 
 			//check for rsa

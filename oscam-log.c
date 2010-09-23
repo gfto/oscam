@@ -1,4 +1,4 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
+//oscam-log runs in master thread so doesnt need to be threadsafe
 #include "globals.h"
 #include <syslog.h>
 #include <stdlib.h>
