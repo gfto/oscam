@@ -805,6 +805,8 @@ struct s_reader  //contains device info, reader info and card info
         struct s_CmdTab *cmd_table;
         unsigned short cardkeys[3][32];
         unsigned char stateD3A[16];
+        AES_KEY       ekey;
+        AES_KEY       astrokey;
 };
 
 #ifdef CS_ANTICASC
@@ -1365,16 +1367,11 @@ extern void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int k
 extern void aes_encrypt_idx(int, uchar *, int);
 extern void aes_decrypt(uchar *, int);
 extern int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n);
-extern int aes_encrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n);
 extern int aes_present(AES_ENTRY *list, ushort caid, uint32 provid,int keyid);
 extern void parse_aes_keys(struct s_reader *rdr,char *value);
 extern void aes_clear_entries(struct s_reader *rdr);
-extern void replace_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, uchar *aesKey,
-                              int decryptorencrypt);
 
 #define aes_encrypt(b, n) aes_encrypt_idx(cs_idx, b, n)
-#define replace_aes_decrypt_entry(reader,caid,ident,keyid,aesKey) replace_aes_entry(reader,caid,ident,keyid,aesKey,1)
-#define replace_aes_encrypt_entry(reader,caid,ident,keyid,aesKey) replace_aes_entry(reader,caid,ident,keyid,aesKey,2)
 
 // reader-common
 extern int reader_device_init(struct s_reader * reader);

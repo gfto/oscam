@@ -116,7 +116,7 @@ static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char
 static void cCamCryptVG_Process_D1(struct s_reader * reader, const unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_Decrypt_D3(struct s_reader * reader, unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *buff, int len, unsigned char *cw);
-static int cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int len);
+static int cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int len, unsigned char *crypt);
 
 int cw_is_valid(unsigned char *cw, int start)	//returns 1 if cw_is_valid, returns 0 if cw is all zeros
 {
@@ -130,20 +130,16 @@ int cw_is_valid(unsigned char *cw, int start)	//returns 1 if cw_is_valid, return
 
 void cAES_SetKey(struct s_reader * reader, const unsigned char *key)
 {
-  replace_aes_decrypt_entry(reader, reader->caid[0], 0, AESKEY_DKEY, (uchar *)key);
-  replace_aes_encrypt_entry(reader, reader->caid[0], 0, AESKEY_EKEY, (uchar *)key);
+  AES_set_encrypt_key(key,128,&(reader->ekey));
 }
 
-int cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int len)
+int cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int len, unsigned char *crypt)
 {
-  if(aes_present(reader->aes_list, reader->caid[0], 0, AESKEY_EKEY)) {
     len=(len+15)&(~15); // pad up to a multiple of 16
-    aes_encrypt_from_list(reader->aes_list,reader->caid[0], 0, AESKEY_EKEY, (uchar *)data, len);
+    int i;
+    for(i=0; i<len; i+=16) AES_encrypt(data+i,crypt+i,&(reader->ekey));
     return len;
-    }
-  return -1;
 }
-
 
 void swap_lb (const unsigned char *buff, int len)
 {
@@ -358,7 +354,7 @@ static void cCamCryptVG_ReorderAndEncrypt(struct s_reader * reader, unsigned cha
 {
   unsigned char tmp[16];
   cCamCryptVG_Reorder16A(tmp,p);
-  cAES_Encrypt(reader,tmp,16);
+  cAES_Encrypt(reader,tmp,16,tmp);
   cCamCryptVG_Reorder16A(p,tmp);
 }
 
@@ -475,9 +471,8 @@ void manage_tag(struct s_reader * reader, unsigned char *rxbuff, unsigned char *
   }
   if(valid_0x55){
     memcpy(buffer,rxbuff+5,8);
-    if(aes_decrypt_from_list(reader->aes_list,reader->caid[0], 0, AESKEY_ASTRO,buffer, 16)) {
-      memcpy(cw+0,buffer,8);	// copy calculated CW in right place
-    }
+    AES_decrypt(buffer,buffer,&(reader->astrokey));
+    memcpy(cw+0,buffer,8);	// copy calculated CW in right place
   }
 }
 

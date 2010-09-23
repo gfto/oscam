@@ -22,11 +22,6 @@
 #define NDS12    12
 #define NDS2    2
 
-#define AESKEY_ASTRO    1
-#define AESKEY_EKEY     2
-#define AESKEY_DKEY     3
-
-
 typedef struct nds_atr {
     uchar atr[MAX_ATR_LEN];
     ushort atr_len;
@@ -34,8 +29,6 @@ typedef struct nds_atr {
     int nds_version;
     const char *desc;
 } NDS_ATR_ENTRY;
-
-extern int io_serial_need_dummy_char;
 
 extern int cw_is_valid(unsigned char *cw, int start);
 extern void cAES_SetKey(struct s_reader * reader, const unsigned char *key);

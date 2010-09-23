@@ -38,7 +38,7 @@ static int vg1_do_cmd(struct s_reader *reader, const unsigned char *ins, const u
 static void read_tiers(struct s_reader *reader)
 {
   def_resp;
-//  static const unsigned char ins2a[5] = {  0x48, 0x2a, 0x00, 0x00, 0x00  };
+//  const unsigned char ins2a[5] = {  0x48, 0x2a, 0x00, 0x00, 0x00  };
   int l;
 
 //  return; // Not working at present so just do nothing
@@ -264,7 +264,7 @@ int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0x48, 0x40, 0x00, 0x80, 0xFF };
-  static const unsigned char ins54[5] = { 0x48, 0x54, 0x00, 0x00, 0x0D };
+  const unsigned char ins54[5] = { 0x48, 0x54, 0x00, 0x00, 0x0D };
   int posECMpart2 = er->ecm[6] + 7;
   int lenECMpart2 = er->ecm[posECMpart2];
   unsigned char tbuff[264];

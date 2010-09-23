@@ -11,7 +11,7 @@ static void vg2_read_tiers(struct s_reader * reader)
   /* ins2a is not needed and causes an error on some cards eg Sky Italy 09CD
      check if ins2a is in command table before running it
   */
-  static const unsigned char ins2a[5] = { 0xD0,0x2a,0x00,0x00,0x00 };
+  const unsigned char ins2a[5] = { 0xD0,0x2a,0x00,0x00,0x00 };
   if(cmd_exists(reader,ins2a)) {
     l=do_cmd(reader,ins2a,NULL,NULL,NULL,cta_res);
     if(l<0 || !status_ok(cta_res+l)){
@@ -20,7 +20,7 @@ static void vg2_read_tiers(struct s_reader * reader)
     }
   }
 
-  static const unsigned char ins76007f[5] = { 0xD0,0x76,0x00,0x7f,0x02 };
+  const unsigned char ins76007f[5] = { 0xD0,0x76,0x00,0x7f,0x02 };
   if(!write_cmd_vg(ins76007f,NULL) || !status_ok(cta_res+2)){
     cs_log ("[videoguard2-reader] classD0 ins76007f: failed");
     return;
@@ -110,7 +110,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     }
 
   unsigned char ins36[5] = { 0xD0,0x36,0x00,0x00,0x00 };
-  unsigned char ins5e[5] = { 0xD0,0x5E,0x00,0x0C,0x02 };
+  const unsigned char ins5e[5] = { 0xD0,0x5E,0x00,0x0C,0x02 };
   unsigned char boxID [4];
 
   if (reader->boxid > 0) {
@@ -261,6 +261,8 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
     }
 
+  // Class D1/D3 instructions only work after this point
+
   unsigned char insBE[5] = { 0xD3,0xBE,0x00,0x00,0x00 };
   l=do_cmd(reader,insBE,NULL,NULL,NULL,cta_res);
   if(l<0) {
@@ -287,21 +289,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   int a;
   for(a=0; a<4; a++)
     dimeno_magic[a]=dimeno_magic[a]^boxID[a];
-  add_aes_entry(reader, reader->caid[0], 0, AESKEY_ASTRO, dimeno_magic);
-
-/*  AES_ENTRY *current;
-  current=reader->aes_list;
-  while(current) {
-      cs_log("**************************");
-      cs_log("current = %p",current);
-      cs_log("CAID = %04x",current->caid);
-      cs_log("IDENT = %06x",current->ident);
-      cs_log("keyID = %d",current->keyid);
-      cs_log("next = %p",current->next);
-      cs_log("**************************");
-      current=current->next;
-  }
-*/
+  AES_set_decrypt_key(dimeno_magic,128,&(reader->astrokey));
 
   cs_ri_log(reader, "[videoguard2-reader] type: %s, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
          reader->card_desc,
@@ -318,7 +306,7 @@ int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
-  static const unsigned char ins54[5] = { 0xD3,0x54,0x00,0x00,0x00};
+  const unsigned char ins54[5] = { 0xD3,0x54,0x00,0x00,0x00};
   int posECMpart2=er->ecm[6]+7;
   int lenECMpart2=er->ecm[posECMpart2]+1;
   unsigned char tbuff[264];

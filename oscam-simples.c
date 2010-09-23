@@ -22,78 +22,6 @@ void aes_encrypt_idx(int idx, uchar *buf, int n)
     AES_encrypt(buf+i, buf+i, &client[idx].aeskey);
 }
 
-void replace_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, uchar *aesKey, int decryptorencrypt)
-{
-    AES_ENTRY *new_entry;
-    AES_ENTRY *next,*current;
-
-    current=rdr->aes_list;
-    while(current) {
-        if(current->caid==caid && current->ident==ident && current->keyid==keyid)
-            break;
-        current=current->next;
-    }
-
-    if(current){ //existing key
-      if(memcmp(aesKey,"\xFF\xFF",2)) {
-        if(decryptorencrypt==1) {
-          AES_set_decrypt_key((const unsigned char *)aesKey, 128, &(current->key));
-          // cs_log("adding key : %s",cs_hexdump(1,aesKey,16));
-        } else if(decryptorencrypt==2) {
-          AES_set_encrypt_key((const unsigned char *)aesKey, 128, &(current->key));
-          // cs_log("adding key : %s",cs_hexdump(1,aesKey,16));
-        }
-      }
-      else {
-          memset(&(current->key),0,sizeof(AES_KEY));
-          // cs_log("adding fake key");
-      }
-
-    }else { // new key
-
-      // create de AES key entry for the linked list
-      new_entry=malloc(sizeof(AES_ENTRY));
-      if(!new_entry) {
-              cs_log("Error alocation memory for AES key entry");
-              return;
-      }
-
-      new_entry->caid=caid;
-      new_entry->ident=ident;
-      new_entry->keyid=keyid;
-      if(memcmp(aesKey,"\xFF\xFF",2)) {
-        if(decryptorencrypt==1) {
-          AES_set_decrypt_key((const unsigned char *)aesKey, 128, &(new_entry->key));
-          // cs_log("adding key : %s",cs_hexdump(1,aesKey,16));
-        } else if(decryptorencrypt==2) {
-          AES_set_encrypt_key((const unsigned char *)aesKey, 128, &(new_entry->key));
-          // cs_log("adding key : %s",cs_hexdump(1,aesKey,16));
-        }
-      }
-      else {
-          memset(&new_entry->key,0,sizeof(AES_KEY));
-          // cs_log("adding fake key");
-      }
-      new_entry->next=NULL;
-
-      //if list is empty, new_entry is the new head
-      if(!rdr->aes_list) {
-          rdr->aes_list=new_entry;
-          return;
-      }
-
-      //happend it to the list
-      current=rdr->aes_list;
-      next=current->next;
-      while(next) {
-          current=next;
-          next=current->next;
-          }
-      current->next=new_entry;
-   }
-}
-
-
 void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, uchar *aesKey)
 {
     AES_ENTRY *new_entry;
@@ -210,38 +138,6 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
         current=current->next;
     }
     */
-}
-
-int aes_encrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n)
-{
-    AES_ENTRY *current;
-    AES_KEY   dummy;
-    int i;
-    int ok=1;
-    int error=0;
-
-    current=list;
-    while(current) {
-        if(current->caid==caid && current->ident==provid && current->keyid==keyid)
-            break;
-        current=current->next;
-    }
-
-    if(!current) {
-        cs_log("AES Encrypt : key id %d not found for CAID %04X , provider %06x",keyid,caid,provid);
-        return error; // we don't have the key to decode this buffer.
-        }
-    else {
-        // hack for card that do the AES encryption themsleves
-        memset(&dummy,0,sizeof(AES_KEY));
-        if(!memcmp(&current->key,&dummy,sizeof(AES_KEY))) {
-            return ok;
-        }
-        // decode the key
-        for(i=0; i<n; i+=16)
-            AES_encrypt(buf+i, buf+i, &(current->key));
-    }
-    return ok; // all ok, key encoded.
 }
 
 int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n)
