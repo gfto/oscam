@@ -24,7 +24,7 @@ char  cs_confdir[128]=CS_CONFDIR;
 int cs_dblevel=0;   // Debug Level (TODO !!)
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
-ECM_REQUEST *ecmtask;
+
 #ifdef CS_ANTICASC
 struct s_acasc ac_stat[CS_MAXPID];
 #endif
@@ -302,10 +302,14 @@ void cs_exit(int sig)
 	set_signal_handler(SIGCHLD, 1, SIG_IGN);
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
 
-  set_signal_handler(SIGCHLD, 1, SIG_IGN);
-  set_signal_handler(SIGHUP , 1, SIG_IGN);
+	if (sig==SIGALRM) {
+		cs_debug("thread %d: SIGALRM, skipping", get_csidx());
+		return;
+	}
+
   if (sig && (sig!=SIGQUIT))
     cs_log("exit with signal %d", sig);
+
   switch(client[cs_idx].typ)
   {
     case 'c':
@@ -325,12 +329,7 @@ void cs_exit(int sig)
         reader_device_close(&reader[client[cs_idx].ridx]);
         break;
     case 'h':
-    case 's': { 
-              int i;
-              for (i=1; i<CS_MAXPID; i++)
-                if (client[i].pid)
-                  kill(client[i].pid, SIGQUIT);
-              }
+    case 's':
 #ifdef CS_LED
               cs_switch_led(LED1B, LED_OFF);
               cs_switch_led(LED2, LED_OFF);
@@ -354,7 +353,7 @@ void cs_exit(int sig)
 		if (pthread_equal(client[i].thread, pthread_self())) {
 			client[i].pid=0;
 			if(client[i].ecmtask) 	free(client[i].ecmtask);
-			if(client[i].ecmtask) 	free(client[i].emmcache);
+			if(client[i].emmcache) 	free(client[i].emmcache);
 			if(client[i].req) 		free(client[i].req);
 			if(client[i].prefix) 	free(client[i].prefix);
 			if(client[i].cc) 		free(client[i].cc);
@@ -368,7 +367,7 @@ void cs_exit(int sig)
 
 	for (i=0; i<CS_MAXPID; i++) {
 		if(client[i].ecmtask) 	free(client[i].ecmtask);
-		if(client[i].ecmtask) 	free(client[i].emmcache);
+		if(client[i].emmcache) 	free(client[i].emmcache);
 		if(client[i].req) 		free(client[i].req);
 		if(client[i].prefix) 	free(client[i].prefix);
 		if(client[i].cc) 		free(client[i].cc);
