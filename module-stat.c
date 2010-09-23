@@ -1,4 +1,4 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
+//FIXME Not checked on threadsafety yet; not necessary if only 1 stat running; after checking please remove this line
 #include "module-stat.h"
 
 #define UNDEF_AVG_TIME 80000

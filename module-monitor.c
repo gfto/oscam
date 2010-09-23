@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 #ifdef CS_WITH_GBOX
 #  include "csgbox/gbox.h"
@@ -775,7 +774,7 @@ static void monitor_server(void *idx){
 }
 
 void module_monitor(struct s_module *ph){
-	static PTAB ptab;
+	static PTAB ptab; //since there is always only 1 monitor running, this is threadsafe
 	ptab.ports[0].s_port = cfg->mon_port;
 	ph->ptab = &ptab;
 	ph->ptab->nports = 1;

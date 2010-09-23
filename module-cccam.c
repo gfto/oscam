@@ -3098,7 +3098,7 @@ void module_cccam(struct s_module *ph) {
 	ph->s_handler = cc_srv_init;
 	ph->send_dcw = cc_send_dcw;
 	ph->c_available = cc_available;
-	static PTAB ptab;
+	static PTAB ptab; //since there is always only 1 cccam server running, this is threadsafe
 	ptab.ports[0].s_port = cfg->cc_port;
 	ph->ptab = &ptab;
 	ph->ptab->nports = 1;
