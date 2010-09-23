@@ -1,6 +1,7 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 extern struct s_reader *reader;
+extern unsigned int seed;
 
 #define CWS_NETMSGSIZE 272
 #define NCD_CLIENT_ID 0x8888
@@ -449,16 +450,6 @@ static int newcamd_recv(uchar *buf)
       cs_log("Connection closed to %s", remote_txt());
   }
   return(rc);
-}
-
-static unsigned int seed;
-static uchar fast_rnd() 
-{ 
-  unsigned int offset = 12923; 
-  unsigned int multiplier = 4079; 
-
-  seed = seed * multiplier + offset; 
-  return (uchar)(seed % 0xFF); 
 }
 
 static FILTER mk_user_au_ftab(int au)

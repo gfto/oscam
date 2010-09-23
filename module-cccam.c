@@ -14,14 +14,7 @@ extern struct s_reader *reader;
 char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
 		"LEN=0" };
 
-static unsigned int seed;
-static uchar fast_rnd() {
-	unsigned int offset = 12923;
-	unsigned int multiplier = 4079;
-
-	seed = seed * multiplier + offset;
-	return (uchar) (seed % 0xFF);
-}
+extern unsigned int seed;
 
 char *getprefix() {
 	struct s_client *cl = &client[cs_idx];
@@ -2752,7 +2745,6 @@ int cc_srv_connect() {
 	struct s_client *cl = &client[cs_idx];
 	int i;
 	ulong cmi;
-	uint seed;
 	uint8 buf[CC_MAXMSGSIZE];
 	uint8 data[16];
 	char usr[21], pwd[21];

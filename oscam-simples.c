@@ -978,3 +978,13 @@ void make_non_blocking(int fd) {
     fl=fcntl(fd, F_GETFL);
     fcntl(fd, F_SETFL, fl | O_NONBLOCK | O_NDELAY);
 }
+
+unsigned int seed;
+
+uchar fast_rnd() {
+	unsigned int offset = 12923;
+	unsigned int multiplier = 4079;
+
+	seed = seed * multiplier + offset;
+	return (uchar) (seed % 0xFF);
+}
