@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 extern struct s_reader *reader;
 extern unsigned int seed;
@@ -61,7 +60,7 @@ static char *get_ncd_client_name(char *client_id)
                                            "6576", "4343", "5456", "414C", "0666", "0667", "9911", "434C", "4765", "5342",
                                            "6E65", "4E58", "4453", "8888", "7363", "0669", "0665", "0769", "4543" };
 
-        static char *ncd_service_names[] = { "generic", "vdr-sc", "LCE", "camd3", "radegast", "gbox2CS", "mgcamd",
+        static char *ncd_service_names[] = { "generic", "vdr-sc", "LCE", "camd3", "radegast", "gbox2CS", "mgcamd", //actually a const so threadsafe
                                              "WinCSC", "NewCS", "cx", "Kaffeine", "evocamd", "CCcam", "Tecview",
                                              "AlexCS", "rqcamd", "rq-echo-client", "ACamd", "Cardlink", "Octagon", "SBCL",
                                              "NextYE2k", "NextYE2k", "DiabloCam/UW", "OScam", "Scam", "rq-sssp-client/CW",
@@ -1170,7 +1169,7 @@ static void newcamd_server(void *idx)
 
 int newcamd_client_init()
 {
-  static struct	sockaddr_in loc_sa;
+  struct sockaddr_in loc_sa;
   struct protoent *ptrp;
   int p_proto;
   char ptxt[16];

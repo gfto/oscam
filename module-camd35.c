@@ -347,7 +347,7 @@ static void casc_set_account()
 
 int camd35_client_init()
 {
-  static struct	sockaddr_in loc_sa;
+  struct sockaddr_in loc_sa;
   struct protoent *ptrp;
   int p_proto;//, sock_type;
   char ptxt[16];
@@ -417,7 +417,7 @@ int camd35_client_init()
 
 int camd35_client_init_log()
 {
-  struct	sockaddr_in loc_sa;
+  struct sockaddr_in loc_sa;
   struct protoent *ptrp;
   int p_proto;
 

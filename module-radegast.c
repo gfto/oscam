@@ -218,7 +218,7 @@ static int radegast_send_ecm(ECM_REQUEST *er)
 
 int radegast_cli_init(void)
 {
-  static struct sockaddr_in loc_sa;
+  struct sockaddr_in loc_sa;
   struct protoent *ptrp;
   int p_proto, handle;
 
