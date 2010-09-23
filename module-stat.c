@@ -263,6 +263,8 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 	if (stat->ecm_count < 0)
 		stat->ecm_count=0;
 		
+	stat->request_count = 0;
+		
 	if (rc == 0 || rc == 3) {
 		stat->rc = 0;
 		stat->ecm_count++;
@@ -395,7 +397,14 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 				
 			if (stat->rc == 0 && stat->ecm_count < cfg->lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", reader[i].label);
-				result[i] = 1; //need more statistics!
+				stat->request_count++;
+				//algo for finding unanswered requests (newcamd reader for example:)
+				if (stat->request_count > cfg->lb_min_ecmcount) { //5 unanswered requests? 
+					add_stat(i, grs->caid, grs->prid, grs->srvid, 1, 4); //reader marked as unuseable 
+					result[i] = 0;
+				}
+				else
+					result[i] = 1; //need more statistics!
 				continue;
 			}
 				

@@ -1074,6 +1074,8 @@ typedef struct reader_stat_t
   int           time_avg;
   int           time_stat[MAX_STAT_TIME];
   int           time_idx;
+  
+  int           request_count;
 } GCC_PACK      READER_STAT;
 
 typedef struct get_reader_stat_t 
