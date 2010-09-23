@@ -422,7 +422,8 @@ struct s_module
                          //params: 
                          //int ridx (reader to check)
                          //int checktype (0=return connected, 1=return loadbalance-avail) return int
-  void (*c_idle)(); //Schlocke: called when reader is idle
+  void (*c_idle)();      //Schlocke: called when reader is idle
+  void (*c_card_info)(); //Schlocke: request card infos
   int  c_port;
   PTAB *ptab;
   int num;
