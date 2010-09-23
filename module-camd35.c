@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 extern struct s_reader *reader;
 
@@ -645,7 +644,7 @@ static int camd35_recv_log(ushort *caid, ulong *provid, ushort *srvid)
 
 void module_camd35(struct s_module *ph)
 {
-  static PTAB ptab;
+  static PTAB ptab; //since there is always only 1 camd35 server running, this is threadsafe
   ptab.ports[0].s_port = cfg->c35_port;
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
