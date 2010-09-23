@@ -45,13 +45,8 @@ extern void __xxor(unsigned char *data, int len, const unsigned char *v1, const 
 #define xor16(v1,v2,d) __xxor((d),16,(v1),(v2))
 #define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point *2/3
 
-<<<<<<< .mine
 extern void cCamCryptVG_SetSeed(struct s_reader * reader, unsigned char *Key1, unsigned char *Key2);
 extern void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff);
-=======
-extern void cCamCryptVG_SetSeed(const unsigned char *Key1, const unsigned char *Key2);
-extern void cCamCryptVG_GetCamKey(unsigned char *buff);
->>>>>>> .r3183
 
 extern void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data);
 extern void manage_tag(struct s_reader * reader, unsigned char *answer, unsigned char *cw);

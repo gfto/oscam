@@ -177,11 +177,7 @@ inline void __xxor(unsigned char *data, int len, const unsigned char *v1, const 
     }
 }
 
-<<<<<<< .mine
-void cCamCryptVG_SetSeed(struct s_reader * reader, unsigned char *Key1, unsigned char *Key2)
-=======
 void cCamCryptVG_SetSeed(const unsigned char *Key1, const unsigned char *Key2)
->>>>>>> .r3183
 {
   swap_lb (Key1, 64);
   swap_lb (Key2, 64);
