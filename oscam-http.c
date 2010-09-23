@@ -1295,7 +1295,11 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		account->ac_idx = account->ac_idx + 1;
 #endif
 		tpl_addVar(vars, 1, "MESSAGE", "<b>New user has been added with default settings</b><BR>");
-		refresh_oscam(REFR_ACCOUNTS, in);
+
+		if (write_userdb(cfg->account)==0)
+			refresh_oscam(REFR_ACCOUNTS, in);
+		else
+			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 		// need to reget account as writing to disk changes account!
 		for (account = cfg->account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 	}
@@ -1325,7 +1329,11 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		}
 		chk_account("services", servicelabels, account);
 		tpl_addVar(vars, 1, "MESSAGE", "<B>Settings updated</B><BR><BR>");
-		refresh_oscam(REFR_ACCOUNTS, in);
+
+		if (write_userdb(cfg->account)==0)
+			refresh_oscam(REFR_ACCOUNTS, in);
+		else
+			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 	for (account = cfg->account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 
@@ -1481,7 +1489,12 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 
 			if (found > 0) {
 				tpl_addVar(vars, 1, "MESSAGE", "<b>Account has been deleted!</b><BR>");
-				refresh_oscam(REFR_ACCOUNTS, in);
+
+				if (write_userdb(cfg->account)==0)
+					refresh_oscam(REFR_ACCOUNTS, in);
+				else
+					tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+
 			} else tpl_addVar(vars, 1, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
 		}
 	}
