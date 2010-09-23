@@ -1156,6 +1156,7 @@ extern char *get_servicename(int srvid, int caid);
 extern char *get_tiername(int tierid, int caid);
 extern char *get_provider(int caid, ulong provid);
 extern void make_non_blocking(int fd);
+extern uchar fast_rnd(void);
 
 extern int get_csidx();
 #define cs_idx		get_csidx()

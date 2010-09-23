@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include <string.h>
 #include <stdlib.h>
 #include "globals.h"
@@ -11,7 +10,7 @@
 extern struct s_reader *reader;
 
 //Mode names for CMD_05 command:
-char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
+const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
 		"LEN=0" };
 
 extern unsigned int seed;
