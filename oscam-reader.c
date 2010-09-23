@@ -256,13 +256,6 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
     reader->ncd_msgid=0;
     reader->last_s=reader->last_g=0;
 
-    /* FIXME: this changes from r2318 only for CCcam */
-    if (reader->typ == R_CCCAM) {
-      if (reader->ph.cleanup) reader->ph.cleanup();
-      if (client[cs_idx].typ == 'p') return;
-    }
-    /* END */
-
     if (reader->ph.c_init()) {
          cs_debug("network_tcp_connection_close() exit(1);");
 

@@ -346,17 +346,10 @@ void cc_cli_close() {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = reader->last_g = 0;
 
-	//cs_sleepms(100);
-	if (cl->pfd) {
-		close(cl->pfd);
-		cl->pfd = 0;
-		cl->udp_fd = 0;
-	} else if (cl->udp_fd) {
-		close(cl->udp_fd);
-		cl->udp_fd = 0;
-		cl->pfd = 0;
-	}
-	//cs_sleepms(100);
+	network_tcp_connection_close(rdr, cl->udp_fd);
+	cl->pfd = 0;
+	cl->udp_fd = 0;
+
 	struct cc_data *cc = cl->cc;
 	if (cc) {
 		pthread_mutex_unlock(&cc->lock);
@@ -1455,7 +1448,7 @@ void cc_idle() {
 		return;
 
 	if (!rdr->cc_keepalive) {
-		network_tcp_connection_close(rdr, cl->udp_fd);
+		cc_cli_close();
 	} else if (cc->answer_on_keepalive + 55 < time(NULL)) {
 		cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
 		cs_debug("cccam: keepalive");
@@ -2115,171 +2108,6 @@ int cc_recv(uchar *buf, int l) {
 		cc_cli_close();
 	}
 
-	return n;
-}
-
-int cc_cli_connect() {
-	struct s_client *cl = &client[cs_idx];
-	struct s_reader *rdr = &reader[cl->ridx];
-	
-	int handle, n;
-	uint8 data[20];
-	uint8 hash[SHA_DIGEST_LENGTH];
-	uint8 buf[CC_MAXMSGSIZE];
-	char pwd[64];
-
-	// check cred config
-	if (rdr->device[0] == 0 || rdr->r_pwd[0] == 0
-			|| rdr->r_usr[0] == 0 || rdr->r_port == 0) {
-		cs_log("%s configuration error!", getprefix());
-		return -5;
-	}
-
-	// connect
-	handle = network_tcp_connection_open();
-	if (handle <= 0) {
-		cs_log("%s network connect error!", getprefix());
-		return -1;
-	}
-
-	// get init seed
-	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
-		int err = errno;
-		cs_log(
-				"%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, errno=%d)",
-				getprefix(), n, handle, cl->udp_fd, err);
-		return -2;
-	}
-	struct cc_data *cc = cl->cc;
-
-	if (!cc) {
-		// init internals data struct
-		cc = malloc(sizeof(struct cc_data));
-		if (cc == NULL) {
-			cs_log("%s cannot allocate memory", getprefix());
-			return -1;
-		}
-		memset(cc, 0, sizeof(struct cc_data));
-		cc->cards = llist_create();
-		cl->cc = cc;
-		cc->auto_blocked = llist_create();
-		cc->pending_emms = llist_create();
-		cc->extended_ecm_idx = llist_create();
-		cc->current_cards = llist_create();
-		pthread_mutex_init(&cc->lock, NULL);
-		pthread_mutex_init(&cc->ecm_busy, NULL);
-		pthread_mutex_init(&cc->cards_busy, NULL);
-	}
-	cc->ecm_counter = 0;
-	cc->max_ecms = 0;
-	cc->cmd05_mode = MODE_UNKNOWN;
-	cc->cmd05_offset = 0;
-	cc->cmd05_active = 0;
-	cc->cmd05_data_len = 0;
-	cc->answer_on_keepalive = time(NULL);
-	cc->extended_mode = 0;
-	cl->cc_extended_ecm_mode = 0;
-	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
-
-	cs_ddump(data, 16, "cccam: server init seed:");
-
-	uint16 sum = 0x1234;
-	uint16 recv_sum = (data[14] << 8) | data[15];
-	int i;
-	for (i = 0; i < 14; i++) {
-		sum += data[i];
-	}
-	//Create special data to detect oscam-cccam:
-	cc->is_oscam_cccam = sum == recv_sum;
-
-	cc_xor(data); // XOR init bytes with 'CCcam'
-
-	SHA_CTX ctx;
-	SHA1_Init(&ctx);
-	SHA1_Update(&ctx, data, 16);
-	SHA1_Final(hash, &ctx);
-
-	cs_ddump(hash, sizeof(hash), "cccam: sha1 hash:");
-
-	//initialisate crypto states
-	cc_init_crypt(&cc->block[DECRYPT], hash, 20);
-	cc_crypt(&cc->block[DECRYPT], data, 16, DECRYPT);
-	cc_init_crypt(&cc->block[ENCRYPT], data, 16);
-	cc_crypt(&cc->block[ENCRYPT], hash, 20, DECRYPT);
-
-	cc_cmd_send(hash, 20, MSG_NO_HEADER); // send crypted hash to server
-
-	memset(buf, 0, sizeof(buf));
-	memcpy(buf, rdr->r_usr, strlen(rdr->r_usr));
-	cs_ddump(buf, 20, "cccam: username '%s':", buf);
-	cc_cmd_send(buf, 20, MSG_NO_HEADER); // send usr '0' padded -> 20 bytes
-
-	memset(buf, 0, sizeof(buf));
-	memset(pwd, 0, sizeof(pwd));
-
-	cs_debug("cccam: 'CCcam' xor");
-	memcpy(buf, "CCcam", 5);
-	strncpy(pwd, rdr->r_pwd, sizeof(pwd) - 1);
-	cc_crypt(&cc->block[ENCRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
-	cc_cmd_send(buf, 6, MSG_NO_HEADER); // send 'CCcam' xor w/ pwd
-
-	if ((n = recv(handle, data, 20, MSG_WAITALL)) != 20) {
-		cs_log("%s login failed, pwd ack not received (n = %d)", getprefix(), n);
-		return -2;
-	}
-	cc_crypt(&cc->block[DECRYPT], data, 20, DECRYPT);
-	cs_ddump(data, 20, "cccam: pwd ack received:");
-
-	if (memcmp(data, buf, 5)) { // check server response
-		cs_log("%s login failed, usr/pwd invalid", getprefix());
-		return -2;
-	} else {
-		cs_debug_mask(D_TRACE, "%s login succeeded", getprefix());
-	}
-
-	cs_debug("cccam: last_s=%d, last_g=%d", rdr->last_s,
-			rdr->last_g);
-
-	cl->pfd = cl->udp_fd;
-	cs_debug("cccam: pfd=%d", cl->pfd);
-
-	if (cc_send_cli_data() <= 0) {
-		cs_log("%s login failed, could not send client data", getprefix());
-		return -3;
-	}
-
-	//Trick: when discovered partner is an Oscam Client, then we send him our version string:
-	if (cc->is_oscam_cccam) {
-		sprintf((char*) buf, "PARTNER: OSCam v%s, build #%s (%s) [EXT]",
-				CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
-		cc_cmd_send(buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
-	}
-
-	rdr->caid[0] = rdr->ftab.filts[0].caid;
-	rdr->nprov = rdr->ftab.filts[0].nprids;
-	for (n = 0; n < rdr->nprov; n++) {
-		rdr->availkeys[n][0] = 1;
-		rdr->prid[n][0] = rdr->ftab.filts[0].prids[n] >> 24;
-		rdr->prid[n][1] = rdr->ftab.filts[0].prids[n] >> 16;
-		rdr->prid[n][2] = rdr->ftab.filts[0].prids[n] >> 8;
-		rdr->prid[n][3] = rdr->ftab.filts[0].prids[n] & 0xff;
-	}
-
-	rdr->card_status = CARD_NEED_INIT;
-	rdr->last_g = rdr->last_s = time((time_t *) 0);
-	rdr->tcp_connected = 1;
-	rdr->available = 1;
-
-	cc->just_logged_in = 1;
-
-	//Receive Cards
-	n = 0;
-	do {
-	 	n = casc_recv_timer(rdr, buf, sizeof(buf), 200);
-	 	//cs_debug_mask(D_TRACE, "n=%d", n);
-	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA || n == MSG_CARD_REMOVED || n == MSG_CW_NOK1);
-	
-	if (n>0) n = 0;
 	return n;
 }
 
@@ -2994,6 +2822,171 @@ void cc_srv_init() {
 	cs_disconnect_client();
 
 	cs_exit(1);
+}
+
+int cc_cli_connect() {
+	struct s_client *cl = &client[cs_idx];
+	struct s_reader *rdr = &reader[cl->ridx];
+	
+	int handle, n;
+	uint8 data[20];
+	uint8 hash[SHA_DIGEST_LENGTH];
+	uint8 buf[CC_MAXMSGSIZE];
+	char pwd[64];
+
+	// check cred config
+	if (rdr->device[0] == 0 || rdr->r_pwd[0] == 0
+			|| rdr->r_usr[0] == 0 || rdr->r_port == 0) {
+		cs_log("%s configuration error!", getprefix());
+		return -5;
+	}
+
+	// connect
+	handle = network_tcp_connection_open();
+	if (handle <= 0) {
+		cs_log("%s network connect error!", getprefix());
+		return -1;
+	}
+
+	// get init seed
+	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
+		int err = errno;
+		cs_log(
+				"%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, errno=%d)",
+				getprefix(), n, handle, cl->udp_fd, err);
+		return -2;
+	}
+	struct cc_data *cc = cl->cc;
+
+	if (!cc) {
+		// init internals data struct
+		cc = malloc(sizeof(struct cc_data));
+		if (cc == NULL) {
+			cs_log("%s cannot allocate memory", getprefix());
+			return -1;
+		}
+		memset(cc, 0, sizeof(struct cc_data));
+		cc->cards = llist_create();
+		cl->cc = cc;
+		cc->auto_blocked = llist_create();
+		cc->pending_emms = llist_create();
+		cc->extended_ecm_idx = llist_create();
+		cc->current_cards = llist_create();
+		pthread_mutex_init(&cc->lock, NULL);
+		pthread_mutex_init(&cc->ecm_busy, NULL);
+		pthread_mutex_init(&cc->cards_busy, NULL);
+	}
+	cc->ecm_counter = 0;
+	cc->max_ecms = 0;
+	cc->cmd05_mode = MODE_UNKNOWN;
+	cc->cmd05_offset = 0;
+	cc->cmd05_active = 0;
+	cc->cmd05_data_len = 0;
+	cc->answer_on_keepalive = time(NULL);
+	cc->extended_mode = 0;
+	cl->cc_extended_ecm_mode = 0;
+	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
+
+	cs_ddump(data, 16, "cccam: server init seed:");
+
+	uint16 sum = 0x1234;
+	uint16 recv_sum = (data[14] << 8) | data[15];
+	int i;
+	for (i = 0; i < 14; i++) {
+		sum += data[i];
+	}
+	//Create special data to detect oscam-cccam:
+	cc->is_oscam_cccam = sum == recv_sum;
+
+	cc_xor(data); // XOR init bytes with 'CCcam'
+
+	SHA_CTX ctx;
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx, data, 16);
+	SHA1_Final(hash, &ctx);
+
+	cs_ddump(hash, sizeof(hash), "cccam: sha1 hash:");
+
+	//initialisate crypto states
+	cc_init_crypt(&cc->block[DECRYPT], hash, 20);
+	cc_crypt(&cc->block[DECRYPT], data, 16, DECRYPT);
+	cc_init_crypt(&cc->block[ENCRYPT], data, 16);
+	cc_crypt(&cc->block[ENCRYPT], hash, 20, DECRYPT);
+
+	cc_cmd_send(hash, 20, MSG_NO_HEADER); // send crypted hash to server
+
+	memset(buf, 0, sizeof(buf));
+	memcpy(buf, rdr->r_usr, strlen(rdr->r_usr));
+	cs_ddump(buf, 20, "cccam: username '%s':", buf);
+	cc_cmd_send(buf, 20, MSG_NO_HEADER); // send usr '0' padded -> 20 bytes
+
+	memset(buf, 0, sizeof(buf));
+	memset(pwd, 0, sizeof(pwd));
+
+	cs_debug("cccam: 'CCcam' xor");
+	memcpy(buf, "CCcam", 5);
+	strncpy(pwd, rdr->r_pwd, sizeof(pwd) - 1);
+	cc_crypt(&cc->block[ENCRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
+	cc_cmd_send(buf, 6, MSG_NO_HEADER); // send 'CCcam' xor w/ pwd
+
+	if ((n = recv(handle, data, 20, MSG_WAITALL)) != 20) {
+		cs_log("%s login failed, pwd ack not received (n = %d)", getprefix(), n);
+		return -2;
+	}
+	cc_crypt(&cc->block[DECRYPT], data, 20, DECRYPT);
+	cs_ddump(data, 20, "cccam: pwd ack received:");
+
+	if (memcmp(data, buf, 5)) { // check server response
+		cs_log("%s login failed, usr/pwd invalid", getprefix());
+		return -2;
+	} else {
+		cs_debug_mask(D_TRACE, "%s login succeeded", getprefix());
+	}
+
+	cs_debug("cccam: last_s=%d, last_g=%d", rdr->last_s,
+			rdr->last_g);
+
+	cl->pfd = cl->udp_fd;
+	cs_debug("cccam: pfd=%d", cl->pfd);
+
+	if (cc_send_cli_data() <= 0) {
+		cs_log("%s login failed, could not send client data", getprefix());
+		return -3;
+	}
+
+	//Trick: when discovered partner is an Oscam Client, then we send him our version string:
+	if (cc->is_oscam_cccam) {
+		sprintf((char*) buf, "PARTNER: OSCam v%s, build #%s (%s) [EXT]",
+				CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
+		cc_cmd_send(buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
+	}
+
+	rdr->caid[0] = rdr->ftab.filts[0].caid;
+	rdr->nprov = rdr->ftab.filts[0].nprids;
+	for (n = 0; n < rdr->nprov; n++) {
+		rdr->availkeys[n][0] = 1;
+		rdr->prid[n][0] = rdr->ftab.filts[0].prids[n] >> 24;
+		rdr->prid[n][1] = rdr->ftab.filts[0].prids[n] >> 16;
+		rdr->prid[n][2] = rdr->ftab.filts[0].prids[n] >> 8;
+		rdr->prid[n][3] = rdr->ftab.filts[0].prids[n] & 0xff;
+	}
+
+	rdr->card_status = CARD_NEED_INIT;
+	rdr->last_g = rdr->last_s = time((time_t *) 0);
+	rdr->tcp_connected = 1;
+	rdr->available = 1;
+
+	cc->just_logged_in = 1;
+
+	//Receive Cards
+	n = 0;
+	do {
+	 	n = casc_recv_timer(rdr, buf, sizeof(buf), 200);
+	 	//cs_debug_mask(D_TRACE, "n=%d", n);
+	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA || n == MSG_CARD_REMOVED || n == MSG_CW_NOK1);
+	
+	if (n>0) n = 0;
+	return n;
 }
 
 int cc_cli_init_int() {
