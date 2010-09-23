@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
@@ -49,7 +48,7 @@ static void read_tiers(struct s_reader *reader)
 //  {
 //    return;
 //  }
-  static unsigned char ins76[5] = { 0x48, 0x76, 0x00, 0x00, 0x00 };
+  unsigned char ins76[5] = { 0x48, 0x76, 0x00, 0x00, 0x00 };
   ins76[3] = 0x7f;
   ins76[4] = 2;
   if (!write_cmd_vg(ins76, NULL) || !status_ok(cta_res + 2)) {
@@ -264,7 +263,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
 int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
 {
   unsigned char cta_res[CTA_RES_LEN];
-  static unsigned char ins40[5] = { 0x48, 0x40, 0x00, 0x80, 0xFF };
+  unsigned char ins40[5] = { 0x48, 0x40, 0x00, 0x80, 0xFF };
   static const unsigned char ins54[5] = { 0x48, 0x54, 0x00, 0x00, 0x0D };
   int posECMpart2 = er->ecm[6] + 7;
   int lenECMpart2 = er->ecm[posECMpart2];

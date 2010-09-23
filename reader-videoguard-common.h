@@ -57,13 +57,13 @@ struct CmdTab *cmd_table;
 extern int cw_is_valid(unsigned char *cw, int start);
 extern void cAES_SetKey(const unsigned char *key);
 extern int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt);
-extern void swap_lb (unsigned char *buff, int len);
+extern void swap_lb (const unsigned char *buff, int len);
 
 extern void __xxor(unsigned char *data, int len, const unsigned char *v1, const unsigned char *v2);
 #define xor16(v1,v2,d) __xxor((d),16,(v1),(v2))
 #define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point *2/3
 
-extern void cCamCryptVG_SetSeed(unsigned char *Key1, unsigned char *Key2);
+extern void cCamCryptVG_SetSeed(const unsigned char *Key1, const unsigned char *Key2);
 extern void cCamCryptVG_GetCamKey(unsigned char *buff);
 
 extern void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data);

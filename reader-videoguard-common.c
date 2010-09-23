@@ -153,7 +153,7 @@ int cAES_Encrypt(const unsigned char *data, int len, unsigned char *crypt)
 }
 
 
-void swap_lb (unsigned char *buff, int len)
+void swap_lb (const unsigned char *buff, int len)
 {
 
 #if __BYTE_ORDER != __BIG_ENDIAN
@@ -185,7 +185,7 @@ inline void __xxor(unsigned char *data, int len, const unsigned char *v1, const 
     }
 }
 
-void cCamCryptVG_SetSeed(unsigned char *Key1, unsigned char *Key2)
+void cCamCryptVG_SetSeed(const unsigned char *Key1, const unsigned char *Key2)
 {
   swap_lb (Key1, 64);
   swap_lb (Key2, 64);
