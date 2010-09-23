@@ -103,25 +103,40 @@ set (OPTIONAL_LINK_DIR "" CACHE STRING "Some optional link directories")
 set (OPTIONAL_INCLUDE_DIR "" CACHE STRING "Some optional include directories")
 
 if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-include_directories (
-    ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
-    ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
-    if[CS_WITH_GBOX]
+if(CS_WITH_GBOX)
+    include_directories (
+        ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
+        ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
         ${CMAKE_CURRENT_SOURCE_DIR}/csgbox
-    endif[CS_WITH_GBOX]
         ${CMAKE_CURRENT_SOURCE_DIR}/cygwin
         /usr/include/w32api
-    ${OPTIONAL_INCLUDE_DIR}
+        ${OPTIONAL_INCLUDE_DIR}
     )
-else (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-include_directories (
-    ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
-    ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
-    if[CS_WITH_GBOX]
+else(CS_WITH_GBOX)
+    include_directories (
+        ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
+        ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
         ${CMAKE_CURRENT_SOURCE_DIR}/csgbox
-    endif[CS_WITH_GBOX]
-    ${OPTIONAL_INCLUDE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/cygwin
+        /usr/include/w32api
+        ${OPTIONAL_INCLUDE_DIR}
     )
+endif(CS_WITH_GBOX)
+else (OSCamOperatingSystem MATCHES "Windows/Cygwin")
+if(CS_WITH_GBOX)
+    include_directories (
+        ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
+        ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
+        ${CMAKE_CURRENT_SOURCE_DIR}/csgbox
+        ${OPTIONAL_INCLUDE_DIR}
+        )
+else(CS_WITH_GBOX)
+    include_directories (
+        ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
+        ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
+        ${OPTIONAL_INCLUDE_DIR}
+        )
+endif(CS_WITH_GBOX)
 endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 
 if(OSCamOperatingSystem MATCHES "Windows/Cygwin")
