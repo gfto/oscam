@@ -97,10 +97,10 @@ ATR;
  * Exported variables declaration
  */
 
-extern unsigned long atr_fs_table[16];
-extern unsigned atr_f_table[16];
-extern double atr_d_table[16];
-extern unsigned atr_i_table[4];
+extern const unsigned long atr_fs_table[16];
+extern const unsigned atr_f_table[16];
+extern const double atr_d_table[16];
+extern const unsigned atr_i_table[4];
 
 /*
  * Exported functions declaraton
