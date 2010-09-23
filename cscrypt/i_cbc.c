@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/idea/i_cbc.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.

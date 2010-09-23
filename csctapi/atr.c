@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
     atr.c
     ISO 7816 ICC's answer to reset abstract data type implementation

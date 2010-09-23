@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
     icc_async.c
     Asynchronous ICC's handling functions

@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
  *
  * This program is free software; you can redistribute it and/or modify

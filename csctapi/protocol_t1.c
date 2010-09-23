@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
     protocol_t1.c
     Handling of ISO 7816 T=1 protocol

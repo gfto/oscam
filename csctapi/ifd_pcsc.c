@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 #ifdef HAVE_PCSC
 
 #include "ifd_pcsc.h"

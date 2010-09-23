@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
  * MD5C.C - RSA Data Security, Inc., MD5 message-digest algorithm
  *

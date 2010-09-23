@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

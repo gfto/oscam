@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
 		ifd_phoenix.c
 		This module provides IFD handling functions for Smartmouse/Phoenix reader.

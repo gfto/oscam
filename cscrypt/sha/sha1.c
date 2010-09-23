@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
 SHA-1 in C
 By Steve Reid <sreid@sea-to-sky.net>

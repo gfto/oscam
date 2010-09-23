@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 
 int chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)

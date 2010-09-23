@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
    /*
     io_serial.c
     Serial port input/output functions

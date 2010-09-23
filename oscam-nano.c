@@ -1,3 +1,4 @@
+//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 
 //#define CS_NANO_GEO   0x9F
