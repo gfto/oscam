@@ -354,9 +354,9 @@ void cc_cli_close() {
 
 	struct cc_data *cc = cl->cc;
 	if (cc) {
-		pthread_mutex_unlock(&cc->lock);
-		pthread_mutex_unlock(&cc->ecm_busy);
-		pthread_mutex_unlock(&cc->cards_busy);
+		//pthread_mutex_unlock(&cc->lock);
+		//pthread_mutex_unlock(&cc->ecm_busy);
+		//pthread_mutex_unlock(&cc->cards_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
 		free_current_cards(cc->current_cards);
@@ -1758,8 +1758,8 @@ int cc_parse_msg(uint8 *buf, int l) {
 		if (eei == NULL) {
 			cs_log("%s received extended ecm NOK id %d but not found!",
 					getprefix(), cc->g_flag);
-			cc_cli_close();
 			pthread_mutex_unlock(&cc->cards_busy);
+			cc_cli_close();
 			cs_debug_mask(D_FUT, "cc_parse_msg out");
 			return ret;
 		}
@@ -1843,8 +1843,8 @@ int cc_parse_msg(uint8 *buf, int l) {
 			if (eei == NULL) {
 				cs_log("%s received extended ecm id %d but not found!",
 						getprefix(), cc->g_flag);
-				cc_cli_close();
 				pthread_mutex_unlock(&cc->cards_busy);
+				cc_cli_close();
 				cs_debug_mask(D_FUT, "cc_parse_msg out");
 				return ret;
 			}
@@ -2505,25 +2505,8 @@ int cc_srv_report_cards() {
 			struct s_client *rc = &client[reader[r].cidx];
 			struct cc_data *rcc = rc->cc;
 
-			//reader connected? If not try to connect:
-			if (!rcc || !rcc->cards || reader[r].tcp_connected != 2) {
-				uchar dummy[1] = {0};
-				write_to_pipe(reader[r].fd, PIP_ID_CIN, dummy, 1);
-				
-				//wait until all cards are received. No good solution here, maybe better later
-				int j;
-				for (j=0;j<10;j++) {
-					cs_sleepms(100);
-					if (reader[r].tcp_connected == 2) {
-						cs_sleepms(50);
-						break;
-					}
-				}
-				rcc = rc->cc;
-			}
-
 			int count = 0;
-			if (rcc && reader[r].tcp_connected == 2 && rcc->cards) {
+			if (rcc && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
 
 				LLIST_ITR itr;
@@ -3107,6 +3090,7 @@ int cc_cli_init_int() {
 }
 
 int cc_cli_init() {
+	cc_cli_init_int();
 	return 0;
 }
 
