@@ -1658,7 +1658,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			struct s_client *rc = &client[reader[ridx].cidx];
 			struct cc_data *rcc = rc->cc;
 
-			if (rcc && rcc->cards) {
+			if (rcc && reader[ridx].tcp_connected == 2 && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
 
 				LLIST_ITR itr;

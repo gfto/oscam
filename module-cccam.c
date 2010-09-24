@@ -2833,7 +2833,7 @@ void * cc_srv_init() {
 				errno));
 	cs_disconnect_client();
 
-	cs_exit(1);
+	//cs_exit(1);
 	return NULL; //suppress compiler warning
 }
 
