@@ -407,7 +407,7 @@ struct s_module
   char *logtxt;
   //int  s_port;
   in_addr_t s_ip;
-  void (*s_handler)();
+  void *(*s_handler)();
   int  (*recv)();
   void (*send_dcw)();
   void (*cleanup)();

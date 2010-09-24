@@ -2642,7 +2642,7 @@ int accept_connection(int i, int j) {
 				//	alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
 
 				//ph[i].s_handler(cad);   // never return
-				pthread_create(&client[o].thread, NULL, (void *)ph[i].s_handler, (void *) o);
+				pthread_create(&client[o].thread, NULL, ph[i].s_handler, (void *) &client[o]); //pass client[o] since o is local variable that will not survive the thread
 				pthread_detach(client[o].thread);
 			} else {
 				unsigned short rl;
@@ -2675,7 +2675,7 @@ int accept_connection(int i, int j) {
 			//if (ph[client[o].ctyp].watchdog)
 			//	alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
 
-			pthread_create(&client[o].thread, NULL, (void *)ph[i].s_handler, (void*) o);
+			pthread_create(&client[o].thread, NULL, ph[i].s_handler, (void*) &client[o]);
 			pthread_detach(client[o].thread);
 		}
 	}

@@ -150,13 +150,13 @@ static void radegast_process_unknown(uchar *buf)
   cs_log("unknown request %02X, len=%d", buf[0], buf[1]);
 }
 
-static void radegast_server(void *idx)
+static void * radegast_server(void *cli)
 {
   int n;
   uchar mbuf[1024];
 
-  int cidx=(int)idx;
-  client[cidx].thread=pthread_self();
+	struct s_client * client = (struct s_client *) cli;
+  client->thread=pthread_self();
 
   radegast_auth_client(client[cs_idx].ip);
   while ((n=get_request(mbuf))>0)
@@ -171,6 +171,7 @@ static void radegast_server(void *idx)
     }
   }
   cs_disconnect_client();
+  return NULL;
 }
 
 static int radegast_send_ecm(ECM_REQUEST *er)

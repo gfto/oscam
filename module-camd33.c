@@ -176,21 +176,21 @@ static void camd33_process_emm(uchar *buf, int l)
   do_emm(&epg);
 }
 
-static void camd33_server(void* idx)
+static void * camd33_server(void* cli)
 {
   int n;
   uchar mbuf[1024];
 
-  int cidx=(int)idx;
-  client[cidx].thread=pthread_self();
+	struct s_client * client = (struct s_client *) cli;
+  client->thread=pthread_self();
 
-  client[cs_idx].req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
-  if (!client[cs_idx].req)
+  client->req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
+  if (!client->req)
   {
     cs_log("Cannot allocate memory (errno=%d)", errno);
     cs_exit(1);
   }
-  memset(client[cs_idx].req, 0, CS_MAXPENDING*REQ_SIZE);
+  memset(client->req, 0, CS_MAXPENDING*REQ_SIZE);
 
   camd33_auth_client();
 
@@ -209,6 +209,7 @@ static void camd33_server(void* idx)
     }
   }
   cs_disconnect_client();
+  return NULL;
 }
 
 void module_camd33(struct s_module *ph)

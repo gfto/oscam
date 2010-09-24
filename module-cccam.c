@@ -2812,7 +2812,7 @@ int cc_srv_connect() {
 	return 0;
 }
 
-void cc_srv_init() {
+void * cc_srv_init() {
 	struct s_client *cl = &client[cs_idx];
 	cl->pfd = cl->udp_fd;
 	//cc_auth_client(cl->ip);
@@ -2822,6 +2822,7 @@ void cc_srv_init() {
 	cs_disconnect_client();
 
 	cs_exit(1);
+	return NULL; //suppress compiler warning
 }
 
 int cc_cli_connect() {

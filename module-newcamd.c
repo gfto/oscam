@@ -1038,30 +1038,30 @@ static void newcamd_process_emm(uchar *buf)
                        client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0, NULL);
 }
 
-static void newcamd_server(void *idx)
+static void * newcamd_server(void *cli)
 {
 	int rc;
-	int cidx=(int)idx;
-       client[cidx].thread=pthread_self();
+	struct s_client * client = (struct s_client *) cli;
+	client->thread=pthread_self();
 	uchar mbuf[1024];
 
-	client[cs_idx].req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
-	if (!client[cs_idx].req)
+	client->req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
+	if (!client->req)
 	{
 		cs_log("Cannot allocate memory (errno=%d)", errno);
 		cs_exit(1);
 	}
 
-	memset(client[cs_idx].req, 0, CS_MAXPENDING*REQ_SIZE);
-	client[cs_idx].ncd_server = 1;
-	cs_log("client connected to %d port", cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port);
+	memset(client->req, 0, CS_MAXPENDING*REQ_SIZE);
+	client->ncd_server = 1;
+	cs_log("client connected to %d port", cfg->ncd_ptab.ports[client->port_idx].s_port);
 
-	if (cfg->ncd_ptab.ports[client[cs_idx].port_idx].ncd_key_is_set) {
+	if (cfg->ncd_ptab.ports[client->port_idx].ncd_key_is_set) {
 	    //port has a des key specified
-	    newcamd_auth_client(client[cs_idx].ip, cfg->ncd_ptab.ports[client[cs_idx].port_idx].ncd_key);
+	    newcamd_auth_client(client->ip, cfg->ncd_ptab.ports[client->port_idx].ncd_key);
 	} else {
 	    //default global des key
-	    newcamd_auth_client(client[cs_idx].ip, cfg->ncd_key);
+	    newcamd_auth_client(client->ip, cfg->ncd_key);
 	}
 
 	// report all cards if using extended mg proto
@@ -1077,7 +1077,7 @@ static void newcamd_server(void *idx)
 
 		for (r=0; r<CS_MAXREADER; r++) {
 			int flt = 0;
-			if (!(reader[r].grp & client[cs_idx].grp)) continue; //test - skip unaccesible readers
+			if (!(reader[r].grp & client->grp)) continue; //test - skip unaccesible readers
 			if (reader[r].ftab.filts) {
 				for (j=0; j<CS_MAXFILTERS; j++) {
 					if (reader[r].ftab.filts[j].caid) {
@@ -1086,9 +1086,9 @@ static void newcamd_server(void *idx)
 							cd->provid = reader[r].ftab.filts[j].prids[k];
 							cs_debug("newcamd: extended: report card");
 
-							network_message_send(client[cs_idx].udp_fd, 
-							&client[cs_idx].ncd_msgid, buf, 3, 
-							client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0, cd);
+							network_message_send(client->udp_fd, 
+							&client->ncd_msgid, buf, 3, 
+							client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 
 							flt = 1;
 						}
@@ -1108,9 +1108,9 @@ static void newcamd_server(void *idx)
 							| (reader[r].prid[j][1] << 8) | reader[r].prid[j][2];
 
             					cs_debug("newcamd: extended: report card");
-            					network_message_send(client[cs_idx].udp_fd, 
-						&client[cs_idx].ncd_msgid, buf, 3, 
-						client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0, cd);
+            					network_message_send(client->udp_fd, 
+						&client->ncd_msgid, buf, 3, 
+						client->ncd_skey, COMMTYPE_SERVER, 0, cd);
 					}
 				}	
 			}
@@ -1147,20 +1147,21 @@ static void newcamd_server(void *idx)
 
 		if(rc==-9)
 		{
-			if (client[cs_idx].ncd_keepalive) 
+			if (client->ncd_keepalive) 
 				newcamd_reply_ka();
 			else
 				rc=0;
 		}
 	}
 	
-	if(client[cs_idx].req)
+	if(client->req)
 	{ 
-		free(client[cs_idx].req); 
-		client[cs_idx].req=0;
+		free(client->req); 
+		client->req=0;
 	}
 
 	cs_disconnect_client();
+	return NULL;
 }
 
 /*

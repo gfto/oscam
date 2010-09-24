@@ -1177,9 +1177,9 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 	}
 }
 
-void dvbapi_main_local(void *idx) {
-	int cidx=(int)idx;
-	client[cidx].thread=pthread_self();
+void * dvbapi_main_local(void *cli) {
+	struct s_client * client = (struct s_client *) cli;
+	client->thread=pthread_self();
 
 	int maxpfdsize=(MAX_DEMUX*MAX_FILTER)+MAX_DEMUX+2;
 	struct pollfd pfd2[maxpfdsize];
@@ -1193,7 +1193,7 @@ void dvbapi_main_local(void *idx) {
 	struct s_auth *account=0;
 	int ok=0;
 	if (!account) {
-		client[cs_idx].usr[0]=0;
+		client->usr[0]=0;
 		for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
 			if( (ok=!strcmp(cfg->dvbapi_usr, account->usr)) )
 				break;
@@ -1213,7 +1213,7 @@ void dvbapi_main_local(void *idx) {
 
 	if (selected_box == -1 || selected_api==-1) {
 		cs_log("could not detect api version");
-		return;
+		return NULL;
 	}
 
 	if (cfg->dvbapi_pmtmode == 1)
@@ -1224,7 +1224,7 @@ void dvbapi_main_local(void *idx) {
 		listenfd = dvbapi_init_listenfd();
 		if (listenfd < 1) {
 			cs_log("could not init camd.socket.");
-			return;
+			return NULL;
 		}
 	}
 
@@ -1249,7 +1249,7 @@ void dvbapi_main_local(void *idx) {
 	cs_ftime(&tp);
 	tp.time+=500;
 
-	pfd2[0].fd = client[cs_idx].fd_m2c_c;
+	pfd2[0].fd = client->fd_m2c_c;
 	pfd2[0].events = (POLLIN | POLLPRI);
 	type[0]=0;
 
@@ -1314,13 +1314,13 @@ void dvbapi_main_local(void *idx) {
 					close(pfd2[i].fd);
 					continue;
 				}
-				if (pfd2[i].fd==client[cs_idx].fd_m2c_c) {
+				if (pfd2[i].fd==client->fd_m2c_c) {
 					cs_exit(0);
 				}
 			}
 			if (pfd2[i].revents & (POLLIN | POLLPRI)) {
-				if (pfd2[i].fd==client[cs_idx].fd_m2c_c) {
-					chk_dcw(client[cs_idx].fd_m2c_c);
+				if (pfd2[i].fd==client->fd_m2c_c) {
+					chk_dcw(client->fd_m2c_c);
 					continue;
 				}
 
@@ -1367,7 +1367,7 @@ void dvbapi_main_local(void *idx) {
 			}
 		}
 	}
-	return;
+	return NULL;
 }
 
 void dvbapi_write_cw(int demux_id, uchar *cw) {
@@ -1476,7 +1476,7 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 	}
 }
 
-static void dvbapi_handler(int ctyp) {
+static void * dvbapi_handler(int ctyp) {
 	//cs_log("dvbapi loaded fd=%d", idx);
 	if (cfg->dvbapi_enabled == 1) {
 		int i=cs_fork(0, ctyp);
@@ -1484,14 +1484,14 @@ static void dvbapi_handler(int ctyp) {
               client[i].ip=0;
 		client[i].ctyp=ctyp;
 #ifdef AZBOX
-		pthread_create(&client[i].thread, NULL, (void *)azbox_main, (void*) i);
+		pthread_create(&client[i].thread, NULL, azbox_main, (void*) &client[i]);
 #else
-		pthread_create(&client[i].thread, NULL, (void *)dvbapi_main_local, (void*) i);
+		pthread_create(&client[i].thread, NULL, dvbapi_main_local, (void*) &client[i]);
 #endif
 		pthread_detach(client[i].thread);
 	}
 
-	return;
+	return NULL;
 }
 
 
@@ -1600,9 +1600,9 @@ void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsign
 		cs_debug("openxcas: ex filter started, pid = %x", openxcas_ecm_pid);
 }
 
-void azbox_main(void *idx) {
-	int cidx=(int)idx;
-	client[cidx].thread=pthread_self();
+void * azbox_main(void *cli) {
+	struct s_client * client = (struct s_client *) cli;
+	client->thread=pthread_self();
 	struct timeb tp;
 	cs_ftime(&tp);
 	tp.time+=500;
@@ -1695,7 +1695,7 @@ void azbox_main(void *idx) {
 					cs_debug("openxcas: msg: OPENXCAS_QUIT");
 					openxcas_close();
 					cs_log("openxcas: exited");
-					return;
+					return NULL;
 					break;
 				case OPENXCAS_UKNOWN_MSG:
 				default:
@@ -1706,7 +1706,7 @@ void azbox_main(void *idx) {
 		}
 	}
 	cs_log("openxcas: invalid message");
-	return;
+	return NULL;
 }
 
 void azbox_send_dcw(ECM_REQUEST *er) {

@@ -47,6 +47,7 @@ static int set_provider_info(struct s_reader * reader, int i)
 
 int seca_card_init(struct s_reader * reader, ATR newatr)
 {
+cs_log("DINGO CHECKPOINT 1");
 	get_atr;
 	def_resp;
 	char *card;

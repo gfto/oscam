@@ -762,15 +762,16 @@ static int monitor_process_request(char *req)
 	return(rc);
 }
 
-static void monitor_server(void *idx){
+static void * monitor_server(void *cli){
 	int n;
 	uchar mbuf[1024];
 
-	int cidx=(int)idx;
-       client[cidx].thread=pthread_self();
-	client[cs_idx].typ='m';
+	struct s_client * client = (struct s_client *) cli;
+	client->thread=pthread_self();
+	client->typ='m';
 	while (((n = process_input(mbuf, sizeof(mbuf), cfg->cmaxidle)) >= 0) && monitor_process_request((char *)mbuf));
 	cs_disconnect_client();
+	return NULL;
 }
 
 void module_monitor(struct s_module *ph){

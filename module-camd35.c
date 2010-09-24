@@ -292,23 +292,23 @@ static void camd35_process_emm(uchar *buf)
 	do_emm(&epg);
 }
 
-static void camd35_server(void *idx)
+static void * camd35_server(void *cli)
 {
   int n;
   uchar mbuf[1024];
 
-  int cidx=(int)idx;
-  client[cidx].thread=pthread_self();
+	struct s_client * client = (struct s_client *) cli;
+  client->thread=pthread_self();
 
-  client[cs_idx].req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
-  if (!client[cs_idx].req)
+  client->req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
+  if (!client->req)
   {
     cs_log("Cannot allocate memory (errno=%d)", errno);
     cs_exit(1);
   }
-  memset(client[cs_idx].req, 0, CS_MAXPENDING*REQ_SIZE);
+  memset(client->req, 0, CS_MAXPENDING*REQ_SIZE);
 
-  client[cs_idx].is_udp = (ph[client[cs_idx].ctyp].type == MOD_CONN_UDP);
+  client->is_udp = (ph[client[cs_idx].ctyp].type == MOD_CONN_UDP);
 
   while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
   {
@@ -327,9 +327,10 @@ static void camd35_server(void *idx)
     }
   }
 
-  if(client[cs_idx].req) { free(client[cs_idx].req); client[cs_idx].req=0;}
+  if(client->req) { free(client[cs_idx].req); client[cs_idx].req=0;}
 
   cs_disconnect_client();
+  return NULL; //to prevent compiler message
 }
 
 /*

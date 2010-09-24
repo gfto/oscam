@@ -1,3 +1,4 @@
+//FIXME Not threadsafe & running multiple instances !!!
 #include "globals.h"
 #include <termios.h>
 extern struct s_reader *reader;
@@ -862,13 +863,14 @@ static int init_oscam_ser_device(char *device)
   return(fd);
 }
 
-static void oscam_ser_fork(char *url)
+static void * oscam_ser_fork(void *url2)
 {
   //static char logtxt[32];
+	char *url = (char *) url2;
 
   client[cs_idx].is_server=1;
-  if ((!url) || (!url[0])) return;
-  if (!oscam_ser_parse_url(url)) return;
+  if ((!url) || (!url[0])) return NULL;
+  if (!oscam_ser_parse_url(url)) return NULL;
  // snprintf(logtxt, sizeof(logtxt)-1, ", %s@%s",
  //          oscam_ser_proto>P_MAX ? "auto" : proto_txt[oscam_ser_proto], oscam_ser_device);
  // ph[idx].logtxt=logtxt;
@@ -885,9 +887,10 @@ static void oscam_ser_fork(char *url)
       cs_sleepms(60000);	// retry in 1 min. (USB-Device ?)
     if (client[cs_idx].pfd) close(client[cs_idx].pfd);
   }
+  return NULL;
 }
 
-void init_oscam_ser(int ctyp)
+void * init_oscam_ser(int ctyp)
 {
 	char sdevice[512];
 	cs_strncpy(sdevice, cfg->ser_device, sizeof(sdevice));
@@ -897,25 +900,26 @@ void init_oscam_ser(int ctyp)
 	while( (p=strrchr(sdevice, 1)) )
 	{
 		*p = 0;
-		if ((!p + 1) || (!(p + 1)[0])) return;
-		if (!oscam_ser_parse_url(p + 1)) return;
+		if ((!p + 1) || (!(p + 1)[0])) return NULL;
+		if (!oscam_ser_parse_url(p + 1)) return NULL;
 		int i=cs_fork(0, ctyp);
 		client[i].typ='c';
 		client[i].ip=0;
 		client[i].ctyp=ctyp;
-		pthread_create(&client[i].thread, NULL, (void *)oscam_ser_fork, (void *)p + 1);
+		pthread_create(&client[i].thread, NULL, oscam_ser_fork, (void *) p + 1); //FIXME value of p does not survive thread
 		pthread_detach(client[i].thread);
 	}
 
-	if (!sdevice[0]) return;
-	if (!oscam_ser_parse_url(sdevice)) return;
+	if (!sdevice[0]) return NULL;
+	if (!oscam_ser_parse_url(sdevice)) return NULL;
 
 	int i=cs_fork(0, ctyp);
 	client[i].typ='c';
 	client[i].ip=0;
 	client[i].ctyp=ctyp;
-	pthread_create(&client[i].thread, NULL, (void *)oscam_ser_fork, (void *)sdevice);
+	pthread_create(&client[i].thread, NULL, oscam_ser_fork, (void *) sdevice);
 	pthread_detach(client[i].thread);
+	return NULL;
 }
 
 /*
