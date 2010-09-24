@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #if defined(LIBUSB)
 /*
 		ifd_smartreader.c
@@ -21,9 +20,6 @@
 #define ERROR 1
 #define LOBYTE(w) ((BYTE)((w) & 0xff))
 #define HIBYTE(w) ((BYTE)((w) >> 8))
-
-//local globals
-SR_CONFIG sr_config;
 
 //The number of concurrent bulk reads to queue onto the smartreader
 #define NUM_TXFERS 2
