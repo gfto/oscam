@@ -607,6 +607,9 @@ struct s_client
 
   //monitor
   int auth;
+
+  //cs_hexdump buffer
+  uchar dump[520];
 };
 
 
@@ -1169,7 +1172,7 @@ extern uchar fast_rnd(void);
 extern int get_csidx();
 #define cs_idx		get_csidx()
 
-extern int mfdr,fd_c2m;
+extern int fd_c2m;
 
 // oscam variables
 

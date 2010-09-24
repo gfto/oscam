@@ -16,7 +16,6 @@
 struct s_module ph[CS_MAX_MOD]; // Protocols
 struct s_cardsystem cardsystem[CS_MAX_MOD]; // Protocols
 
-int mfdr=0;     // Master FD (read)
 int fd_c2m=0;
 
 ushort  len4caid[256];    // table for guessing caid (by len)
@@ -375,7 +374,7 @@ void cs_reinit_clients()
 				if (!strcmp(client[i].usr, account->usr))
 					break;
 
-			if (account && client[i].pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), NULL), 16)) {
+			if (account && client[i].pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), client[cs_idx].dump), 16)) {
 				client[i].grp		= account->grp;
 				client[i].au		= account->au;
 				client[i].autoau	= account->autoau;
@@ -522,11 +521,11 @@ static void init_signal()
 #ifdef OS_MACOSX
 		set_signal_handler(SIGEMT, 3, cs_exit);
 #else
-		set_signal_handler(SIGPOLL, 3, cs_exit);
+		//set_signal_handler(SIGPOLL, 3, cs_exit);
 #endif
-		set_signal_handler(SIGPROF, 3, cs_exit);
+		//set_signal_handler(SIGPROF, 3, cs_exit);
 		set_signal_handler(SIGTERM, 3, cs_exit);
-		set_signal_handler(SIGVTALRM, 3, cs_exit);
+		//set_signal_handler(SIGVTALRM, 3, cs_exit);
 
 		set_signal_handler(SIGWINCH, 1, SIG_IGN);
 		//  set_signal_handler(SIGPIPE , 0, SIG_IGN);
@@ -1004,7 +1003,7 @@ int cs_auth_client(struct s_auth *account, const char *e_txt)
 				client[cs_idx].fchid = account->fchid;  // CHID filter
 				client[cs_idx].sidtabok= account->sidtabok;   // services
 				client[cs_idx].sidtabno= account->sidtabno;   // services
-				client[cs_idx].pcrc  = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), NULL), 16);
+				client[cs_idx].pcrc  = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), client[cs_idx].dump), 16);
 				memcpy(&client[cs_idx].ttab, &account->ttab, sizeof(client[cs_idx].ttab));
 #ifdef CS_ANTICASC
 				ac_init_client(account);
@@ -2114,7 +2113,7 @@ void get_cw(ECM_REQUEST *er)
 			cs_betatunnel(er);
     
 		// store ECM in cache
-		memcpy(er->ecmd5, MD5(er->ecm, er->l, NULL), CS_ECMSTORESIZE);
+		memcpy(er->ecmd5, MD5(er->ecm, er->l, client[cs_idx].dump), CS_ECMSTORESIZE);
 
 		// cache1
 		if (check_ecmcache1(er, client[cs_idx].grp))
@@ -2521,7 +2520,7 @@ void send_restart_cardreader(int ridx, int force_now)
   write_to_pipe(fd_c2m, PIP_ID_RST, (uchar*)&restart_info, sizeof(restart_info)); 
 }
 
-static void process_master_pipe()
+static void process_master_pipe(int mfdr)
 {
   int n;
   uchar *ptr;
@@ -2740,6 +2739,7 @@ int main (int argc, char *argv[])
   int      bg=0;
   int      gfd; //nph,
   int      fdp[2];
+  int      mfdr=0;     // Master FD (read)
   //uchar    buf[2048];
   void (*mod_def[])(struct s_module *)=
   {
@@ -3015,7 +3015,7 @@ int main (int argc, char *argv[])
 		client[0].last=time((time_t *)0);
 		
 		if (FD_ISSET(mfdr, &fds)) {
-			process_master_pipe();
+			process_master_pipe(mfdr);
 		}
 		for (i=0; i<CS_MAX_MOD; i++) {
 			if( (ph[i].type & MOD_CONN_NET) && ph[i].ptab ) {

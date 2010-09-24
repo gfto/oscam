@@ -373,12 +373,13 @@ int key_atob_l(char *asc, uchar *bin, int l)
 
 char *cs_hexdump(int m, const uchar *buf, int n)
 {
+  //TODO: not threadsafe
   int i;
-  static char dump[520];
+  char *dump = (char *)client[cs_idx].dump;
 
   dump[i=0]='\0';
   m=(m)?3:2;
-  if (m*n>=(int)sizeof(dump)) n=(sizeof(dump)/m)-1;
+  if (m*n>=(int)sizeof(client[cs_idx].dump)) n=(sizeof(client[cs_idx].dump)/m)-1;
   while (i<n)
     sprintf(dump+(m*i++), "%02X%s", *buf++, (m>2)?" ":"");
   return(dump);

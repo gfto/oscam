@@ -64,10 +64,10 @@ static int secmon_auth_client(uchar *ucrc)
 	crc=(ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3];
 	for (account=cfg->account; (account) && (!client[cs_idx].auth); account=account->next)
 		if ((account->monlvl) &&
-				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), NULL), 16)))
+				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), client[cs_idx].dump), 16)))
 		{
 			memcpy(client[cs_idx].ucrc, ucrc, 4);
-			aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), NULL));
+			aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), client[cs_idx].dump));
 			if (cs_auth_client(account, NULL))
 				cs_exit(0);
 			client[cs_idx].auth=1;

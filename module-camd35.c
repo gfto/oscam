@@ -54,11 +54,11 @@ static int camd35_auth_client(uchar *ucrc)
   client[cs_idx].crypted=1;
   crc=(((ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3]) & 0xffffffffL);
   for (account=cfg->account; (account) && (!client[cs_idx].upwd[0]); account=account->next)
-    if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), NULL), 16))
+    if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), client[cs_idx].dump), 16))
     {
       memcpy(client[cs_idx].ucrc, ucrc, 4);
       strcpy((char *)client[cs_idx].upwd, account->pwd);
-      aes_set_key((char *) MD5(client[cs_idx].upwd, strlen((char *)client[cs_idx].upwd), NULL));
+      aes_set_key((char *) MD5(client[cs_idx].upwd, strlen((char *)client[cs_idx].upwd), client[cs_idx].dump));
       rc=cs_auth_client(account, NULL);
     }
   return(rc);
@@ -340,8 +340,8 @@ static void * camd35_server(void *cli)
 static void casc_set_account()
 {
   strcpy((char *)client[cs_idx].upwd, reader[client[cs_idx].ridx].r_pwd);
-  memcpy(client[cs_idx].ucrc, i2b(4, crc32(0L, MD5((unsigned char *)reader[client[cs_idx].ridx].r_usr, strlen(reader[client[cs_idx].ridx].r_usr), NULL), 16)), 4);
-  aes_set_key((char *)MD5(client[cs_idx].upwd, strlen((char *)client[cs_idx].upwd), NULL));
+  memcpy(client[cs_idx].ucrc, i2b(4, crc32(0L, MD5((unsigned char *)reader[client[cs_idx].ridx].r_usr, strlen(reader[client[cs_idx].ridx].r_usr), client[cs_idx].dump), 16)), 4);
+  aes_set_key((char *)MD5(client[cs_idx].upwd, strlen((char *)client[cs_idx].upwd), client[cs_idx].dump));
   client[cs_idx].crypted=1;
 }
 
