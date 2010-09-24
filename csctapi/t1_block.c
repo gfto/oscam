@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
     t1_block.h
     T=1 block abstract data type implementation

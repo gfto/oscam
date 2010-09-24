@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
     protocol_t0.c
     Handling of ISO 7816 T=0 protocol

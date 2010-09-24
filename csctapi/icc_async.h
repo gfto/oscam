@@ -64,27 +64,5 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *cmd, unsigned s
 int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * buffer);
 int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * buffer);
 
-#define apdu2resp \
-	{ \
-		int remain; \
-		bool err = FALSE; \
-		if (apdu_rsp != NULL) { \
-			remain = MAX ((short)APDU_Rsp_RawLen(apdu_rsp) - (*lr),0); \
-			if (remain > 0) { \
-				cs_log("MEMORY ERROR"); \
-				err = TRUE; \
-			} \
-			(*lr) = MIN ((*lr), (short)APDU_Rsp_RawLen (apdu_rsp)); \
-			memcpy (rsp, APDU_Rsp_Raw (apdu_rsp) + remain, (*lr)); \
-			APDU_Rsp_Delete (apdu_rsp); \
-		} \
-		else  \
-			(*lr) = 0; \
-		if (err) { \
-			cs_log("ERROR creating APDU response"); \
-			return ERROR; \
-		} \
-	}
-
 #endif /* _ICC_ASYNC_ */
 
