@@ -1463,9 +1463,7 @@ void cc_idle() {
 	if (!rdr->tcp_connected)
 		return;
 
-	if (!rdr->cc_keepalive) {
-		cc_cli_close();
-	} else if (cc->answer_on_keepalive + 55 < time(NULL)) {
+	if (rdr->cc_keepalive && cc->answer_on_keepalive + 55 < time(NULL)) {
 		cc_cmd_send(NULL, 0, MSG_KEEPALIVE);
 		cs_debug("cccam: keepalive");
 		cc->answer_on_keepalive = time(NULL);
@@ -2654,6 +2652,7 @@ int cc_srv_connect() {
 	cc->cc_use_rc4 = 0;
 	cl->is_server = 1;
 
+	//Partner detection:
 	// calc + send random seed
 	seed = (unsigned int) time((time_t*) 0);
 	uint16 sum = 0x1234;
