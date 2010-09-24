@@ -5,9 +5,9 @@
 
 
 #ifdef USE_GPIO	//felix: definition of gpio functions
-static void set_gpio(int level);
-static void set_gpio_input(void);
-static int get_gpio(void);
+static void set_gpio(struct s_reader * reader, int level);
+static void set_gpio_input(struct s_reader * reader);
+static int get_gpio(struct s_reader * reader);
 #endif
 
 
