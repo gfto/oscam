@@ -3029,7 +3029,7 @@ int cc_cli_init_int() {
 
 #ifdef SO_PRIORITY
 	if (cfg->netprio)
-	setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY,
+		setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY,
 			(void *)&cfg->netprio, sizeof(ulong));
 #endif
 	rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
@@ -3051,7 +3051,10 @@ int cc_cli_init_int() {
 			rdr->cc_maxhop, !rdr->cc_disable_retry_ecm,
 			!rdr->cc_disable_auto_block);
 
-	return cc_cli_connect();
+	int res = cc_cli_connect();
+	if (res < 0)
+		cc_cli_close();
+	return res;
 }
 
 int cc_cli_init() {
