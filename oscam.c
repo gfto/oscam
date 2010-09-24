@@ -354,8 +354,23 @@ void cs_exit(int sig)
 			cs_log("cardserver down");
 			break;
 	}
-	
+
+	// this is very important - do not remove
 	int i;
+	for (i=1; i<CS_MAXPID; i++) {
+		if (pthread_equal(client[i].thread, pthread_self())) {
+			client[i].pid=0;
+			if(client[i].ecmtask) 	free(client[i].ecmtask);
+			if(client[i].ecmtask) 	free(client[i].emmcache);
+			if(client[i].req) 		free(client[i].req);
+			if(client[i].prefix) 	free(client[i].prefix);
+			if(client[i].cc) 		free(client[i].cc);
+			cs_log("thread %d ended!", i);
+			pthread_exit(NULL);
+			return;
+		}
+	}
+	
 	for (i=0; i<CS_MAXPID; i++) {
 		if(client[i].ecmtask) 	free(client[i].ecmtask);
 		if(client[i].emmcache) 	free(client[i].emmcache);
