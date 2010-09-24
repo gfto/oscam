@@ -33,26 +33,38 @@ static void vg2_read_tiers(struct s_reader * reader)
   reader->init_history_pos = 0; //reset for re-read
   memset(reader->init_history, 0, sizeof(reader->init_history));
 #endif
-  int mblank = 0;
-  int cblank = 0;
-  for(i=0; i<num; i++) {
+  // some cards start real tiers info in middle of tier info
+  // and have blank tiers between old tiers and real tiers eg 09AC
+  int starttier;
+  bool stopemptytier = TRUE;
+  if((starttier = reader->card_tierstart) == -1){
+    stopemptytier = FALSE;
+    starttier = 0;
+  }
+  // check to see if specified start tier is blank and if so start at 0 and ignore blank tiers
+  ins76[2]=starttier;
+  l=do_cmd(reader,ins76,NULL,NULL,NULL,cta_res);
+  if(l<0 || !status_ok(cta_res+l)) return;
+  if(cta_res[2]==0 && cta_res[3]==0 ){
+    stopemptytier = FALSE;
+    starttier = 0;
+  }
+  for(i=starttier; i<num; i++) {
     ins76[2]=i;
     l=do_cmd(reader,ins76,NULL,NULL,NULL,cta_res);
     if(l<0 || !status_ok(cta_res+l)) return;
+    if(cta_res[2]==0 && cta_res[3]==0 && stopemptytier) return;
     if(cta_res[2]!=0 || cta_res[3]!=0) {
-      if(cblank > mblank) mblank = cblank;
-      cblank = 0;
       int y,m,d,H,M,S;
       rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
       unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
       char *tier_name = get_tiername(tier_id, reader->caid[0]);
+      if((starttier = reader->card_tierstart) == -1){
+        cs_ri_log(reader, "[videoguard2-reader] tier-number: 0x%02x, tier: %04x",i,tier_id);
+      }
       cs_ri_log(reader, "[videoguard2-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
-    } else {
-        if (reader->caid[0]!=0x09AC) break;
-	cblank +=1;
     }
   }
-  if (mblank>0) cs_ri_log(reader,"[videoguard2-reader] maximum blank tiers = %i", mblank );
 }
 
 int videoguard2_card_init(struct s_reader * reader, ATR newatr)

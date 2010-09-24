@@ -649,9 +649,6 @@ struct s_reader  //contains device info, reader info and card info
   int       fallback;
   int       typ;
   int       card_system;
-  const char      * card_desc;
-  int       card_baseyear;
-  int       card_system_version;
   char      label[32];
   char      device[128];
   ushort    slot;   //in case of multiple slots like sc8in1; first slot = 1
@@ -803,6 +800,10 @@ struct s_reader  //contains device info, reader info and card info
 	AES_ENTRY *aes_list;
         // variables from reader-videoguard*
         int ndsversion; // 0 auto (default), 1 NDS1, 12 NDS1+, 2 NDS2
+        const char * card_desc;
+        int  card_baseyear;
+        int  card_tierstart;
+        int  card_system_version;
         struct s_CmdTab *cmd_table;
         unsigned short cardkeys[3][32];
         unsigned char stateD3A[16];

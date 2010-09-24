@@ -26,6 +26,7 @@ typedef struct nds_atr {
     uchar atr[MAX_ATR_LEN];
     ushort atr_len;
     int base_year;
+    int tier_start;
     int nds_version;
     const char *desc;
 } NDS_ATR_ENTRY;
