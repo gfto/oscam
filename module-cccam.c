@@ -1531,6 +1531,7 @@ void cc_card_removed(uint32 shareid) {
 	struct cc_card *card;
 	LLIST_ITR itr;
 
+	pthread_mutex_lock(&cc->cards_busy);
 	card = llist_itr_init(cc->cards, &itr);
 	while (card) {
 		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
@@ -1551,6 +1552,7 @@ void cc_card_removed(uint32 shareid) {
 			card = llist_itr_next(&itr);
 		}
 	}
+	pthread_mutex_unlock(&cc->cards_busy);
 }
 
 int cc_parse_msg(uint8 *buf, int l) {
@@ -1689,9 +1691,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 	break;
 
 	case MSG_CARD_REMOVED: {
-		pthread_mutex_lock(&cc->cards_busy);
 		cc_card_removed(b2i(4, buf + 4));
-		pthread_mutex_unlock(&cc->cards_busy);
 	}
 	break;
 
@@ -1734,12 +1734,12 @@ int cc_parse_msg(uint8 *buf, int l) {
 		if (cc->just_logged_in)
 			return -1; // reader restart needed
 
+		pthread_mutex_lock(&cc->cards_busy);
 		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(
 				cc->extended_mode ? cc->g_flag : 1, TRUE);
 		if (eei == NULL) {
 			cs_log("%s received extended ecm NOK id %d but not found!",
 					getprefix(), cc->g_flag);
-			//cc_cycle_connection();
 			cc_cli_close();
 			return ret;
 		}
@@ -1767,7 +1767,8 @@ int cc_parse_msg(uint8 *buf, int l) {
 			}
 		} else
 			cs_log("%S NOK: NO CARD!", getprefix());
-
+		pthread_mutex_unlock(&cc->cards_busy);
+		
 		if (!cc->extended_mode) {
 			rdr->available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
@@ -1815,12 +1816,13 @@ int cc_parse_msg(uint8 *buf, int l) {
 			}
 
 		} else { //READER:
+			pthread_mutex_lock(&cc->cards_busy);
+			
 			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(
 					cc->extended_mode ? cc->g_flag : 1, TRUE);
 			if (eei == NULL) {
 				cs_log("%s received extended ecm id %d but not found!",
 						getprefix(), cc->g_flag);
-				//cc_cycle_connection();
 				cc_cli_close();
 				return ret;
 			}
@@ -1860,6 +1862,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 						"%s warning: ECM-CWS respond by CCCam server without current card!",
 						getprefix());
 			}
+			pthread_mutex_unlock(&cc->cards_busy);
 
 			if (!cc->extended_mode) {
 				rdr->available = 1;
@@ -2491,7 +2494,7 @@ int cc_srv_report_cards() {
 			}
 
 			int count = 0;
-			if (rcc && rcc->cards) {
+			if (rcc && reader[r].tcp_connected == 2 && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
 
 				LLIST_ITR itr;
@@ -2611,9 +2614,18 @@ int cc_srv_connect() {
 		cl->cc = cc;
 		memset(cl->cc, 0, sizeof(struct cc_data));
 		cc->extended_ecm_idx = llist_create();
-		pthread_mutex_init(&cc->lock, NULL);
-		pthread_mutex_init(&cc->ecm_busy, NULL);
-		pthread_mutex_init(&cc->cards_busy, NULL);
+		
+		pthread_mutexattr_t   mta;
+                pthread_mutexattr_init(&mta);
+                pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
+                        		
+		pthread_mutex_init(&cc->lock, &mta);
+		pthread_mutex_init(&cc->ecm_busy, &mta);
+		pthread_mutex_init(&cc->cards_busy, &mta);
+
+		//pthread_mutex_init(&cc->lock, NULL);
+		//pthread_mutex_init(&cc->ecm_busy, NULL);
+		//pthread_mutex_init(&cc->cards_busy, NULL);
 	}
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
