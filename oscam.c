@@ -517,6 +517,14 @@ static void init_signal()
 {
 //  for (i=1; i<NSIG; i++)
 //		set_signal_handler(i, 3, cs_exit); //not catching all signals simplifies debugging
+		set_signal_handler(SIGINT, 3, cs_exit);
+		set_signal_handler(SIGKILL, 3, cs_exit);
+		set_signal_handler(SIGPOLL, 3, cs_exit);
+		set_signal_handler(SIGPROF, 3, cs_exit);
+		set_signal_handler(SIGTERM, 3, cs_exit);
+		set_signal_handler(SIGVTALRM, 3, cs_exit);
+		set_signal_handler(SIGSTKFLT, 3, cs_exit);
+
 		set_signal_handler(SIGWINCH, 1, SIG_IGN);
 		//  set_signal_handler(SIGPIPE , 0, SIG_IGN);
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
