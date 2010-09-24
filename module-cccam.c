@@ -2834,6 +2834,7 @@ void * cc_srv_init() {
 	cs_disconnect_client();
 
 	//cs_exit(1);
+	cc_cleanup();
 	return NULL; //suppress compiler warning
 }
 
