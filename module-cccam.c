@@ -2617,8 +2617,11 @@ int cc_srv_connect() {
 		
 		pthread_mutexattr_t   mta;
                 pthread_mutexattr_init(&mta);
+#ifdef OS_MACOSX
+                pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
+#else
                 pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
-                        		
+#endif                      		
 		pthread_mutex_init(&cc->lock, &mta);
 		pthread_mutex_init(&cc->ecm_busy, &mta);
 		pthread_mutex_init(&cc->cards_busy, &mta);
