@@ -3058,7 +3058,7 @@ int cc_cli_init_int() {
 }
 
 int cc_cli_init() {
-	cc_cli_init_int();
+	//cc_cli_init_int();
 	return 0;
 }
 
