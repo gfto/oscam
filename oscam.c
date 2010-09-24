@@ -298,6 +298,8 @@ static void cs_sigpipe()
 
 void cs_exit(int sig)
 {
+  cs_debug_mask(D_TRACE, "cs_exit %d", sig);
+  
 	set_signal_handler(SIGCHLD, 1, SIG_IGN);
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
 
@@ -316,6 +318,9 @@ void cs_exit(int sig)
     	client[cs_idx].last_caid = 0xFFFF;
     	client[cs_idx].last_srvid = 0xFFFF;
     	cs_statistics(cs_idx);
+    	
+    	return;
+    	
     	break;
     case 'm': break;
     case 'n': break;
@@ -326,6 +331,9 @@ void cs_exit(int sig)
         }
         // close the device
         reader_device_close(&reader[client[cs_idx].ridx]);
+        
+        return;
+        
         break;
     case 'h':
     case 's':
@@ -346,6 +354,7 @@ void cs_exit(int sig)
 			cs_log("cardserver down");
 			break;
 	}
+	
 	int i;
 	for (i=0; i<CS_MAXPID; i++) {
 		if(client[i].ecmtask) 	free(client[i].ecmtask);

@@ -338,6 +338,7 @@ void free_current_cards(LLIST *current_cards) {
  * clears and frees values for reinit
  */
 void cc_cli_close() {
+	cs_debug_mask(D_FUT, "cc_cli_close in");
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
 	rdr->tcp_connected = 0;
@@ -360,6 +361,7 @@ void cc_cli_close() {
 		cc->just_logged_in = 0;
 		free_current_cards(cc->current_cards);
 	}
+	cs_debug_mask(D_FUT, "cc_cli_close out");
 }
 
 struct cc_extended_ecm_idx *add_extended_ecm_idx(uint8 send_idx,
@@ -835,6 +837,7 @@ int cc_UA_valid(uint8 *ua) {
  * sends a ecm request to the connected CCCam Server
  */
 int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
+	cs_debug_mask(D_FUT, "cc_send_ecm in");
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
 	
@@ -859,6 +862,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			write_ecm_answer(rdr, fd_c2m, er);
 		}
 		cc_cli_close();
+		cs_debug_mask(D_FUT, "cc_send_ecm out");
 		return 0;
 	}
 
@@ -899,6 +903,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 						getprefix(), cfg->ctimeout * 4 / 1000);
 				//cc_cycle_connection();
 				cc_cli_close();
+				cs_debug_mask(D_FUT, "cc_send_ecm out");
 				return 0;
 			}
 		}
@@ -916,6 +921,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		cs_debug("%s no ecm pending!", getprefix());
 		if (!cc_send_pending_emms())
 			send_cmd05_answer();
+		cs_debug_mask(D_FUT, "cc_send_ecm out");
 		return 0; // no queued ecms
 	}
 	cur_er = &cl->ecmtask[n];
@@ -1059,7 +1065,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 					cs_hexdump(0, rdr->hexserial, 8), saprov);
 		}
 		pthread_mutex_unlock(&cc->cards_busy);
-
+		cs_debug_mask(D_FUT, "cc_send_ecm out");
 		return 0;
 	} else {
 		//When connecting, it could happen than ecm requests come before all cards are received.
@@ -1108,7 +1114,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 			rdr->available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
 		}
-
+		cs_debug_mask(D_FUT, "cc_send_ecm out");
 		return -1;
 	}
 }
@@ -1141,6 +1147,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
  */
 
 int cc_send_pending_emms() {
+	cs_debug_mask(D_FUT, "cc_send_pending_emms in");
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
 	struct cc_data *cc = cl->cc;
@@ -1167,6 +1174,7 @@ int cc_send_pending_emms() {
 		llist_itr_remove(&itr);
 		return size;
 	}
+	cs_debug_mask(D_FUT, "cc_send_pending_emms out");
 	return 0;
 }
 
@@ -1194,6 +1202,7 @@ struct cc_card *get_card_by_hexserial(uint8 *hexserial, uint16 caid) {
  * ProcessEmm
  * */
 int cc_send_emm(EMM_PACKET *ep) {
+	cs_debug_mask(D_FUT, "cc_send_emm in");
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
 	
@@ -1264,6 +1273,8 @@ int cc_send_emm(EMM_PACKET *ep) {
 
 	llist_append(cc->pending_emms, emmbuf);
 	cc_send_pending_emms();
+	
+	cs_debug_mask(D_FUT, "cc_send_emm out");
 	return 1;
 }
 
@@ -1360,6 +1371,7 @@ void cc_free(struct cc_data *cc) {
 	if (!cc)
 		return;
 
+	cs_debug_mask(D_FUT, "cc_free in");
 	cc_free_cardlist(cc->cards);
 	cc_free_reported_carddata(cc->reported_carddatas, 0);
 	cc_free_auto_blocked(cc->auto_blocked);
@@ -1384,6 +1396,7 @@ void cc_free(struct cc_data *cc) {
 	pthread_mutex_destroy(&cc->cards_busy);
 	free(cc->prefix);
 	free(cc);
+	cs_debug_mask(D_FUT, "cc_free out");
 }
 
 int is_null_dcw(uint8 *dcw) {
@@ -1442,6 +1455,7 @@ int check_extended_mode(char *msg) {
 }
 
 void cc_idle() {
+	cs_debug_mask(D_FUT, "cc_idle in");
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
 	struct cc_data *cc = cl->cc;
@@ -1455,6 +1469,7 @@ void cc_idle() {
 		cs_debug("cccam: keepalive");
 		cc->answer_on_keepalive = time(NULL);
 	}
+	cs_debug_mask(D_FUT, "cc_idle out");
 }
 
 struct cc_card *read_card(uint8 *buf) {
@@ -1557,6 +1572,7 @@ void cc_card_removed(uint32 shareid) {
 }
 
 int cc_parse_msg(uint8 *buf, int l) {
+	cs_debug_mask(D_FUT, "cc_parse_msg in");
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = cl->is_server?NULL:&reader[cl->ridx];
 	
@@ -1726,6 +1742,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 				cc_cmd_send(buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
 			} else if (cc->is_oscam_cccam)
 				check_extended_mode(msg);
+			cs_debug_mask(D_FUT, "cc_parse_msg out");
 			return ret;
 		}
 
@@ -1742,6 +1759,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 			cs_log("%s received extended ecm NOK id %d but not found!",
 					getprefix(), cc->g_flag);
 			cc_cli_close();
+			cs_debug_mask(D_FUT, "cc_parse_msg out");
 			return ret;
 		}
 
@@ -1825,6 +1843,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 				cs_log("%s received extended ecm id %d but not found!",
 						getprefix(), cc->g_flag);
 				cc_cli_close();
+				cs_debug_mask(D_FUT, "cc_parse_msg out");
 				return ret;
 			}
 
@@ -1989,6 +2008,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 		cc_cli_close();
 		//cc_send_ecm(NULL, NULL);
 	}
+	cs_debug_mask(D_FUT, "cc_parse_msg out");
 	return ret;
 }
 
@@ -1996,6 +2016,7 @@ int cc_parse_msg(uint8 *buf, int l) {
  * Reader: write dcw to receive
  */
 int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
+	cs_debug_mask(D_FUT, "cc_recv_chk in");
 	struct s_client *cl = &client[cs_idx];
 	struct cc_data *cc = cl->cc;
 
@@ -2004,13 +2025,16 @@ int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
 		cs_debug("cccam: recv chk - MSG_CW %d - %s", cc->recv_ecmtask,
 				cs_hexdump(0, dcw, 16));
 		*rc = 1;
+		cs_debug_mask(D_FUT, "cc_recv_chk out");
 		return (cc->recv_ecmtask);
 	} else if ((buf[1] == (MSG_CW_NOK1)) || (buf[1] == (MSG_CW_NOK2))) {
 		//memset(dcw, 0, 16);
 		//return *rc = 0;
+		cs_debug_mask(D_FUT, "cc_recv_chk out");
 		return -1;
 	}
 
+	cs_debug_mask(D_FUT, "cc_recv_chk out");
 	return (-1);
 }
 
@@ -2036,6 +2060,7 @@ int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
  * Server: send DCW to client
  */
 void cc_send_dcw(ECM_REQUEST *er) {
+	cs_debug_mask(D_FUT, "cc_send_dcw in");
 	struct s_client *cl = &client[cs_idx];
 	uchar buf[16];
 	struct cc_data *cc = cl->cc;
@@ -2072,6 +2097,7 @@ void cc_send_dcw(ECM_REQUEST *er) {
 	}
 	cc->server_ecm_pending--;
 	free(eei);
+	cs_debug_mask(D_FUT, "cc_send_dcw out");
 }
 
 int cc_recv(uchar *buf, int l) {
@@ -2590,6 +2616,7 @@ int cc_srv_report_cards() {
 }
 
 int cc_srv_connect() {
+	cs_debug_mask(D_FUT, "cc_srv_connect in");
 	struct s_client *cl = &client[cs_idx];
 	int i;
 	ulong cmi;
@@ -2825,10 +2852,13 @@ int cc_srv_connect() {
 			}
 		}
 	}
+	
+	cs_debug_mask(D_FUT, "cc_srv_connect out");
 	return 0;
 }
 
 void * cc_srv_init(struct s_client *cl ) {
+	cs_debug_mask(D_FUT, "cc_srv_init in");
 	//struct s_client *cl = &client[cs_idx];
 	cl->pfd = cl->udp_fd;
 	//cc_auth_client(cl->ip);
@@ -2839,10 +2869,12 @@ void * cc_srv_init(struct s_client *cl ) {
 
 	//cs_exit(1);
 	cc_cleanup();
+	cs_debug_mask(D_FUT, "cc_srv_init out");
 	return NULL; //suppress compiler warning
 }
 
 int cc_cli_connect() {
+	cs_debug_mask(D_FUT, "cc_cli_connect in");
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
 	
@@ -3003,10 +3035,13 @@ int cc_cli_connect() {
 	 	//cs_debug_mask(D_TRACE, "n=%d", n);
 	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA || n == MSG_CARD_REMOVED || n == MSG_CW_NOK1);
 	
+	cs_debug_mask(D_FUT, "cc_cli_connect out");
+	
 	return 0;
 }
 
 int cc_cli_init_int() {
+	cs_debug_mask(D_FUT, "cc_cli_init_int");
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
 	if (rdr->tcp_connected)
@@ -3071,6 +3106,7 @@ int cc_cli_init_int() {
 	int res = cc_cli_connect();
 	if (res < 0)
 		cc_cli_close();
+	cs_debug_mask(D_FUT, "cc_cli_init out");
 	return res;
 }
 
@@ -3106,20 +3142,24 @@ int cc_available(int ridx, int checktype) {
  *
  **/
 void cc_card_info() {
+	cs_debug_mask(D_FUT, "cc_card_info in");
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
 	
 	if (!rdr->tcp_connected)
 		cc_cli_init_int();
+	cs_debug_mask(D_FUT, "cc_card_info out");
 }
 
 void cc_cleanup(void) {
+	cs_debug_mask(D_FUT, "cc_cleanup in");
 	struct s_client *cl = &client[cs_idx];
 	if (!cl->is_server) {
 		cc_cli_close(); // we need to close open fd's 
 	}
 	cc_free(cl->cc);
 	cl->cc = NULL;
+	cs_debug_mask(D_FUT, "cc_cleanup out");
 }
 
 void module_cccam(struct s_module *ph) {
