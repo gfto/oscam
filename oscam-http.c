@@ -2235,11 +2235,10 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 		tpl_addVar(vars, 1, "FILTER", "<SELECT name=\"filter\">\n");
 		tpl_printf(vars, 1, "FILTER", "<OPTION value=\"%s\">%s</OPTION>\n", "all", "all");
 
-		struct s_auth *account = cfg->account;
-		do {
+		struct s_auth *account;
+		for (account = cfg->account; (account); account = account->next) {
 			tpl_printf(vars, 1, "FILTER", "<OPTION value=\"%s\" %s>%s</OPTION>\n", account->usr, strcmp(getParam(params, "filter"), account->usr) ? "":"selected", account->usr);
-		} while ((account = account->next) && (account->next != NULL));
-
+		}
 		tpl_addVar(vars, 1, "FILTER", "</SELECT><input type=\"submit\" name=\"action\" value=\"Filter\" title=\"Filter for a specific user\"></FORM>\n");
 
 	}
