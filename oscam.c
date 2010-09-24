@@ -1215,8 +1215,8 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 int read_from_pipe(int fd, uchar **data, int redir)
 {
   int rc;
-  static int hdr=0;
-  static uchar buf[1024+1+3+sizeof(int)];
+  int hdr=0;
+  uchar buf[1024+1+3+sizeof(int)];
 
   *data=(uchar *)0;
   rc=PIP_ID_NUL;
