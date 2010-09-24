@@ -1759,6 +1759,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 			cs_log("%s received extended ecm NOK id %d but not found!",
 					getprefix(), cc->g_flag);
 			cc_cli_close();
+			pthread_mutex_unlock(&cc->cards_busy);
 			cs_debug_mask(D_FUT, "cc_parse_msg out");
 			return ret;
 		}
@@ -1843,6 +1844,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 				cs_log("%s received extended ecm id %d but not found!",
 						getprefix(), cc->g_flag);
 				cc_cli_close();
+				pthread_mutex_unlock(&cc->cards_busy);
 				cs_debug_mask(D_FUT, "cc_parse_msg out");
 				return ret;
 			}
@@ -2615,6 +2617,23 @@ int cc_srv_report_cards() {
 	return count;
 }
 
+void cc_init_cc(struct cc_data *cc) {
+	pthread_mutexattr_t   mta;
+        pthread_mutexattr_init(&mta);
+#if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)  || defined(OS_MACOSX)
+        pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
+#else
+        pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
+#endif                      		
+	pthread_mutex_init(&cc->lock, &mta);
+	pthread_mutex_init(&cc->ecm_busy, &mta);
+	pthread_mutex_init(&cc->cards_busy, &mta);
+
+	//pthread_mutex_init(&cc->lock, NULL);
+	//pthread_mutex_init(&cc->ecm_busy, NULL);
+	//pthread_mutex_init(&cc->cards_busy, NULL);
+}
+
 int cc_srv_connect() {
 	cs_debug_mask(D_FUT, "cc_srv_connect in");
 	struct s_client *cl = &client[cs_idx];
@@ -2643,20 +2662,7 @@ int cc_srv_connect() {
 		memset(cl->cc, 0, sizeof(struct cc_data));
 		cc->extended_ecm_idx = llist_create();
 		
-		pthread_mutexattr_t   mta;
-                pthread_mutexattr_init(&mta);
-#if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)  || defined(OS_MACOSX)
-                pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
-#else
-                pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
-#endif                      		
-		pthread_mutex_init(&cc->lock, &mta);
-		pthread_mutex_init(&cc->ecm_busy, &mta);
-		pthread_mutex_init(&cc->cards_busy, &mta);
-
-		//pthread_mutex_init(&cc->lock, NULL);
-		//pthread_mutex_init(&cc->ecm_busy, NULL);
-		//pthread_mutex_init(&cc->cards_busy, NULL);
+		cc_init_cc(cc);
 	}
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
@@ -2922,9 +2928,7 @@ int cc_cli_connect() {
 		cc->pending_emms = llist_create();
 		cc->extended_ecm_idx = llist_create();
 		cc->current_cards = llist_create();
-		pthread_mutex_init(&cc->lock, NULL);
-		pthread_mutex_init(&cc->ecm_busy, NULL);
-		pthread_mutex_init(&cc->cards_busy, NULL);
+		cc_init_cc(cc);
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
