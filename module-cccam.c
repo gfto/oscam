@@ -8,6 +8,7 @@
 #include <poll.h>
 
 extern struct s_reader *reader;
+extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind); //Needs extern defined???
 
 //Mode names for CMD_05 command:
 const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
@@ -2827,8 +2828,8 @@ int cc_srv_connect() {
 	return 0;
 }
 
-void * cc_srv_init() {
-	struct s_client *cl = &client[cs_idx];
+void * cc_srv_init(struct s_client *cl ) {
+	//struct s_client *cl = &client[cs_idx];
 	cl->pfd = cl->udp_fd;
 	//cc_auth_client(cl->ip);
 	if (cc_srv_connect() < 0)
