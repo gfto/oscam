@@ -1,0 +1,587 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXFileReference section */
+		93B819DB124D484C00E9DF68 /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = aes.h; path = /usr/src/Dev/oscam/trunk/cscrypt/aes/aes.h; sourceTree = "<absolute>"; };
+		93B819DC124D484C00E9DF68 /* aes_core.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = aes_core.c; path = /usr/src/Dev/oscam/trunk/cscrypt/aes/aes_core.c; sourceTree = "<absolute>"; };
+		93B819DD124D484C00E9DF68 /* bn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bn.h; path = /usr/src/Dev/oscam/trunk/cscrypt/bn.h; sourceTree = "<absolute>"; };
+		93B819DE124D484C00E9DF68 /* bn_add.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_add.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_add.c; sourceTree = "<absolute>"; };
+		93B819DF124D484C00E9DF68 /* bn_asm.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_asm.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_asm.c; sourceTree = "<absolute>"; };
+		93B819E0124D484C00E9DF68 /* bn_ctx.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_ctx.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_ctx.c; sourceTree = "<absolute>"; };
+		93B819E1124D484C00E9DF68 /* bn_div.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_div.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_div.c; sourceTree = "<absolute>"; };
+		93B819E2124D484C00E9DF68 /* bn_exp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_exp.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_exp.c; sourceTree = "<absolute>"; };
+		93B819E3124D484C00E9DF68 /* bn_lcl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bn_lcl.h; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_lcl.h; sourceTree = "<absolute>"; };
+		93B819E4124D484C00E9DF68 /* bn_lib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_lib.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_lib.c; sourceTree = "<absolute>"; };
+		93B819E5124D484C00E9DF68 /* bn_mul.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_mul.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_mul.c; sourceTree = "<absolute>"; };
+		93B819E6124D484C00E9DF68 /* bn_print.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_print.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_print.c; sourceTree = "<absolute>"; };
+		93B819E7124D484C00E9DF68 /* bn_shift.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_shift.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_shift.c; sourceTree = "<absolute>"; };
+		93B819E8124D484C00E9DF68 /* bn_sqr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_sqr.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_sqr.c; sourceTree = "<absolute>"; };
+		93B819E9124D484C00E9DF68 /* bn_word.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bn_word.c; path = /usr/src/Dev/oscam/trunk/cscrypt/bn_word.c; sourceTree = "<absolute>"; };
+		93B819EA124D484C00E9DF68 /* buffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = buffer.h; path = /usr/src/Dev/oscam/trunk/cscrypt/buffer.h; sourceTree = "<absolute>"; };
+		93B819EB124D484C00E9DF68 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CMakeLists.txt; path = /usr/src/Dev/oscam/trunk/cscrypt/CMakeLists.txt; sourceTree = "<absolute>"; };
+		93B819EC124D484C00E9DF68 /* crc32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = crc32.c; path = /usr/src/Dev/oscam/trunk/cscrypt/crc32.c; sourceTree = "<absolute>"; };
+		93B819ED124D484C00E9DF68 /* cscrypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cscrypt.h; path = /usr/src/Dev/oscam/trunk/cscrypt/cscrypt.h; sourceTree = "<absolute>"; };
+		93B819EE124D484C00E9DF68 /* des.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = des.c; path = /usr/src/Dev/oscam/trunk/cscrypt/des.c; sourceTree = "<absolute>"; };
+		93B819EF124D484C00E9DF68 /* des.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = des.h; path = /usr/src/Dev/oscam/trunk/cscrypt/des.h; sourceTree = "<absolute>"; };
+		93B819F0124D484C00E9DF68 /* i_cbc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = i_cbc.c; path = /usr/src/Dev/oscam/trunk/cscrypt/i_cbc.c; sourceTree = "<absolute>"; };
+		93B819F1124D484C00E9DF68 /* i_skey.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = i_skey.c; path = /usr/src/Dev/oscam/trunk/cscrypt/i_skey.c; sourceTree = "<absolute>"; };
+		93B819F2124D484C00E9DF68 /* idea.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = idea.h; path = /usr/src/Dev/oscam/trunk/cscrypt/idea.h; sourceTree = "<absolute>"; };
+		93B819F3124D484C00E9DF68 /* idea_lcl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = idea_lcl.h; path = /usr/src/Dev/oscam/trunk/cscrypt/idea_lcl.h; sourceTree = "<absolute>"; };
+		93B819F4124D484C00E9DF68 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = /usr/src/Dev/oscam/trunk/cscrypt/Makefile; sourceTree = "<absolute>"; };
+		93B819F5124D484C00E9DF68 /* md5.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = md5.c; path = /usr/src/Dev/oscam/trunk/cscrypt/md5.c; sourceTree = "<absolute>"; };
+		93B819F6124D484C00E9DF68 /* mem.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mem.c; path = /usr/src/Dev/oscam/trunk/cscrypt/mem.c; sourceTree = "<absolute>"; };
+		93B819F7124D484C00E9DF68 /* openssl_mods.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = openssl_mods.h; path = /usr/src/Dev/oscam/trunk/cscrypt/openssl_mods.h; sourceTree = "<absolute>"; };
+		93B819F9124D484C00E9DF68 /* sha1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = sha1.c; path = /usr/src/Dev/oscam/trunk/cscrypt/sha/sha1.c; sourceTree = "<absolute>"; };
+		93B819FA124D484C00E9DF68 /* sha1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sha1.h; path = /usr/src/Dev/oscam/trunk/cscrypt/sha/sha1.h; sourceTree = "<absolute>"; };
+		93B819FC124D484C00E9DF68 /* atr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = atr.c; path = /usr/src/Dev/oscam/trunk/csctapi/atr.c; sourceTree = "<absolute>"; };
+		93B819FD124D484C00E9DF68 /* atr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = atr.h; path = /usr/src/Dev/oscam/trunk/csctapi/atr.h; sourceTree = "<absolute>"; };
+		93B819FE124D484C00E9DF68 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CMakeLists.txt; path = /usr/src/Dev/oscam/trunk/csctapi/CMakeLists.txt; sourceTree = "<absolute>"; };
+		93B819FF124D484C00E9DF68 /* defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = defines.h; path = /usr/src/Dev/oscam/trunk/csctapi/defines.h; sourceTree = "<absolute>"; };
+		93B81A00124D484C00E9DF68 /* icc_async.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = icc_async.c; path = /usr/src/Dev/oscam/trunk/csctapi/icc_async.c; sourceTree = "<absolute>"; };
+		93B81A01124D484C00E9DF68 /* icc_async.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = icc_async.h; path = /usr/src/Dev/oscam/trunk/csctapi/icc_async.h; sourceTree = "<absolute>"; };
+		93B81A02124D484C00E9DF68 /* icc_async_exports.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = icc_async_exports.h; path = /usr/src/Dev/oscam/trunk/csctapi/icc_async_exports.h; sourceTree = "<absolute>"; };
+		93B81A03124D484C00E9DF68 /* ifd_azbox.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_azbox.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_azbox.c; sourceTree = "<absolute>"; };
+		93B81A04124D484C00E9DF68 /* ifd_azbox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ifd_azbox.h; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_azbox.h; sourceTree = "<absolute>"; };
+		93B81A05124D484C00E9DF68 /* ifd_cool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_cool.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_cool.c; sourceTree = "<absolute>"; };
+		93B81A06124D484C00E9DF68 /* ifd_cool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ifd_cool.h; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_cool.h; sourceTree = "<absolute>"; };
+		93B81A07124D484C00E9DF68 /* ifd_mp35.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_mp35.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_mp35.c; sourceTree = "<absolute>"; };
+		93B81A08124D484C00E9DF68 /* ifd_mp35.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ifd_mp35.h; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_mp35.h; sourceTree = "<absolute>"; };
+		93B81A09124D484C00E9DF68 /* ifd_pcsc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_pcsc.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_pcsc.c; sourceTree = "<absolute>"; };
+		93B81A0A124D484C00E9DF68 /* ifd_pcsc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ifd_pcsc.h; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_pcsc.h; sourceTree = "<absolute>"; };
+		93B81A0B124D484C00E9DF68 /* ifd_phoenix.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_phoenix.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_phoenix.c; sourceTree = "<absolute>"; };
+		93B81A0C124D484C00E9DF68 /* ifd_phoenix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ifd_phoenix.h; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_phoenix.h; sourceTree = "<absolute>"; };
+		93B81A0D124D484C00E9DF68 /* ifd_sc8in1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_sc8in1.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_sc8in1.c; sourceTree = "<absolute>"; };
+		93B81A0E124D484C00E9DF68 /* ifd_sc8in1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ifd_sc8in1.h; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_sc8in1.h; sourceTree = "<absolute>"; };
+		93B81A0F124D484C00E9DF68 /* ifd_sci.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_sci.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_sci.c; sourceTree = "<absolute>"; };
+		93B81A10124D484C00E9DF68 /* ifd_sci.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ifd_sci.h; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_sci.h; sourceTree = "<absolute>"; };
+		93B81A11124D484C00E9DF68 /* ifd_smartreader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ifd_smartreader.c; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_smartreader.c; sourceTree = "<absolute>"; };
+		93B81A12124D484C00E9DF68 /* ifd_smartreader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ifd_smartreader.h; path = /usr/src/Dev/oscam/trunk/csctapi/ifd_smartreader.h; sourceTree = "<absolute>"; };
+		93B81A13124D484C00E9DF68 /* io_serial.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = io_serial.c; path = /usr/src/Dev/oscam/trunk/csctapi/io_serial.c; sourceTree = "<absolute>"; };
+		93B81A14124D484C00E9DF68 /* io_serial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = io_serial.h; path = /usr/src/Dev/oscam/trunk/csctapi/io_serial.h; sourceTree = "<absolute>"; };
+		93B81A15124D484C00E9DF68 /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; name = Makefile; path = /usr/src/Dev/oscam/trunk/csctapi/Makefile; sourceTree = "<absolute>"; };
+		93B81A16124D484C00E9DF68 /* mc_global.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mc_global.h; path = /usr/src/Dev/oscam/trunk/csctapi/mc_global.h; sourceTree = "<absolute>"; };
+		93B81A17124D484C00E9DF68 /* protocol_t0.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = protocol_t0.c; path = /usr/src/Dev/oscam/trunk/csctapi/protocol_t0.c; sourceTree = "<absolute>"; };
+		93B81A18124D484C00E9DF68 /* protocol_t0.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = protocol_t0.h; path = /usr/src/Dev/oscam/trunk/csctapi/protocol_t0.h; sourceTree = "<absolute>"; };
+		93B81A19124D484C00E9DF68 /* protocol_t1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = protocol_t1.c; path = /usr/src/Dev/oscam/trunk/csctapi/protocol_t1.c; sourceTree = "<absolute>"; };
+		93B81A1A124D484C00E9DF68 /* sci_global.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sci_global.h; path = /usr/src/Dev/oscam/trunk/csctapi/sci_global.h; sourceTree = "<absolute>"; };
+		93B81A1B124D484C00E9DF68 /* sci_ioctl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = sci_ioctl.h; path = /usr/src/Dev/oscam/trunk/csctapi/sci_ioctl.h; sourceTree = "<absolute>"; };
+		93B81A1C124D484C00E9DF68 /* smartreader_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = smartreader_types.h; path = /usr/src/Dev/oscam/trunk/csctapi/smartreader_types.h; sourceTree = "<absolute>"; };
+		93B81A1D124D484C00E9DF68 /* t1_block.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = t1_block.c; path = /usr/src/Dev/oscam/trunk/csctapi/t1_block.c; sourceTree = "<absolute>"; };
+		93B81A1E124D484C00E9DF68 /* t1_block.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = t1_block.h; path = /usr/src/Dev/oscam/trunk/csctapi/t1_block.h; sourceTree = "<absolute>"; };
+		93B81A20124D484C00E9DF68 /* SCardErr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SCardErr.h; path = /usr/src/Dev/oscam/trunk/cygwin/SCardErr.h; sourceTree = "<absolute>"; };
+		93B81A21124D484C00E9DF68 /* WinSCard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WinSCard.h; path = /usr/src/Dev/oscam/trunk/cygwin/WinSCard.h; sourceTree = "<absolute>"; };
+		93B81A22124D484C00E9DF68 /* WinSmCrd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WinSmCrd.h; path = /usr/src/Dev/oscam/trunk/cygwin/WinSmCrd.h; sourceTree = "<absolute>"; };
+		93B81A26124D484C00E9DF68 /* oscam.ac */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.ac; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.ac; sourceTree = "<absolute>"; };
+		93B81A27124D484C00E9DF68 /* oscam.cert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.cert; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.cert; sourceTree = "<absolute>"; };
+		93B81A28124D484C00E9DF68 /* oscam.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.conf; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.conf; sourceTree = "<absolute>"; };
+		93B81A29124D484C00E9DF68 /* oscam.guess */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.guess; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.guess; sourceTree = "<absolute>"; };
+		93B81A2A124D484C00E9DF68 /* oscam.ird */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.ird; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.ird; sourceTree = "<absolute>"; };
+		93B81A2B124D484C00E9DF68 /* oscam.provid */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.provid; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.provid; sourceTree = "<absolute>"; };
+		93B81A2C124D484C00E9DF68 /* oscam.server */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.server; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.server; sourceTree = "<absolute>"; };
+		93B81A2D124D484C00E9DF68 /* oscam.services */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.services; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.services; sourceTree = "<absolute>"; };
+		93B81A2E124D484C00E9DF68 /* oscam.srvid */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.srvid; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.srvid; sourceTree = "<absolute>"; };
+		93B81A2F124D484C00E9DF68 /* oscam.tiers */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.tiers; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.tiers; sourceTree = "<absolute>"; };
+		93B81A30124D484C00E9DF68 /* oscam.user */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.user; path = /usr/src/Dev/oscam/trunk/Distribution/doc/example/oscam.user; sourceTree = "<absolute>"; };
+		93B81A32124D484C00E9DF68 /* list_smargo.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; name = list_smargo.1; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/list_smargo.1; sourceTree = "<absolute>"; };
+		93B81A33124D484C00E9DF68 /* oscam.1 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.man; name = oscam.1; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.1; sourceTree = "<absolute>"; };
+		93B81A34124D484C00E9DF68 /* oscam.ac.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.ac.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.ac.5; sourceTree = "<absolute>"; };
+		93B81A35124D484C00E9DF68 /* oscam.cert.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.cert.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.cert.5; sourceTree = "<absolute>"; };
+		93B81A36124D484C00E9DF68 /* oscam.conf.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.conf.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.conf.5; sourceTree = "<absolute>"; };
+		93B81A37124D484C00E9DF68 /* oscam.guess.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.guess.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.guess.5; sourceTree = "<absolute>"; };
+		93B81A38124D484C00E9DF68 /* oscam.ird.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.ird.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.ird.5; sourceTree = "<absolute>"; };
+		93B81A39124D484C00E9DF68 /* oscam.provid.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.provid.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.provid.5; sourceTree = "<absolute>"; };
+		93B81A3A124D484C00E9DF68 /* oscam.server.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.server.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.server.5; sourceTree = "<absolute>"; };
+		93B81A3B124D484C00E9DF68 /* oscam.services.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.services.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.services.5; sourceTree = "<absolute>"; };
+		93B81A3C124D484C00E9DF68 /* oscam.srvid.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.srvid.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.srvid.5; sourceTree = "<absolute>"; };
+		93B81A3D124D484C00E9DF68 /* oscam.tiers.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.tiers.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.tiers.5; sourceTree = "<absolute>"; };
+		93B81A3E124D484C00E9DF68 /* oscam.user.5 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.user.5; path = /usr/src/Dev/oscam/trunk/Distribution/doc/man/oscam.user.5; sourceTree = "<absolute>"; };
+		93B81A40124D484C00E9DF68 /* list_smargo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = list_smargo.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/list_smargo.txt; sourceTree = "<absolute>"; };
+		93B81A41124D484C00E9DF68 /* oscam.ac.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.ac.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.ac.txt; sourceTree = "<absolute>"; };
+		93B81A42124D484C00E9DF68 /* oscam.cert.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.cert.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.cert.txt; sourceTree = "<absolute>"; };
+		93B81A43124D484C00E9DF68 /* oscam.conf.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.conf.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.conf.txt; sourceTree = "<absolute>"; };
+		93B81A44124D484C00E9DF68 /* oscam.guess.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.guess.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.guess.txt; sourceTree = "<absolute>"; };
+		93B81A45124D484C00E9DF68 /* oscam.ird.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.ird.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.ird.txt; sourceTree = "<absolute>"; };
+		93B81A46124D484C00E9DF68 /* oscam.provid.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.provid.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.provid.txt; sourceTree = "<absolute>"; };
+		93B81A47124D484C00E9DF68 /* oscam.server.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.server.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.server.txt; sourceTree = "<absolute>"; };
+		93B81A48124D484C00E9DF68 /* oscam.services.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.services.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.services.txt; sourceTree = "<absolute>"; };
+		93B81A49124D484C00E9DF68 /* oscam.srvid.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.srvid.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.srvid.txt; sourceTree = "<absolute>"; };
+		93B81A4A124D484C00E9DF68 /* oscam.tiers.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.tiers.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.tiers.txt; sourceTree = "<absolute>"; };
+		93B81A4B124D484C00E9DF68 /* oscam.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.txt; sourceTree = "<absolute>"; };
+		93B81A4C124D484C00E9DF68 /* oscam.user.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = oscam.user.txt; path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt/oscam.user.txt; sourceTree = "<absolute>"; };
+		93B81A4D124D484C00E9DF68 /* list_smargo-1.00-svn3228-macosx-libusb */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = "list_smargo-1.00-svn3228-macosx-libusb"; path = "/usr/src/Dev/oscam/trunk/Distribution/list_smargo-1.00-svn3228-macosx-libusb"; sourceTree = "<absolute>"; };
+		93B81A4E124D484C00E9DF68 /* list_smargo-1.00-svn3228-macosx-libusb.dSYM */ = {isa = PBXFileReference; lastKnownFileType = wrapper.dsym; name = "list_smargo-1.00-svn3228-macosx-libusb.dSYM"; path = "/usr/src/Dev/oscam/trunk/Distribution/list_smargo-1.00-svn3228-macosx-libusb.dSYM"; sourceTree = "<absolute>"; };
+		93B81A50124D484C00E9DF68 /* mpcsmon-src-0.5b.tar */ = {isa = PBXFileReference; lastKnownFileType = archive.tar; name = "mpcsmon-src-0.5b.tar"; path = "/usr/src/Dev/oscam/trunk/Distribution/monitor/mpcsmon-src-0.5b.tar"; sourceTree = "<absolute>"; };
+		93B81A51124D484C00E9DF68 /* mpcsmon.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; name = mpcsmon.sh; path = /usr/src/Dev/oscam/trunk/Distribution/monitor/mpcsmon.sh; sourceTree = "<absolute>"; };
+		93B81A52124D484C00E9DF68 /* globals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = globals.h; path = /usr/src/Dev/oscam/trunk/globals.h; sourceTree = "<absolute>"; };
+		93B81A53124D484C00E9DF68 /* module-camd33.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-camd33.c"; path = "/usr/src/Dev/oscam/trunk/module-camd33.c"; sourceTree = "<absolute>"; };
+		93B81A54124D484C00E9DF68 /* module-camd35.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-camd35.c"; path = "/usr/src/Dev/oscam/trunk/module-camd35.c"; sourceTree = "<absolute>"; };
+		93B81A55124D484C00E9DF68 /* module-cccam.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-cccam.c"; path = "/usr/src/Dev/oscam/trunk/module-cccam.c"; sourceTree = "<absolute>"; };
+		93B81A56124D484C00E9DF68 /* module-cccam.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "module-cccam.h"; path = "/usr/src/Dev/oscam/trunk/module-cccam.h"; sourceTree = "<absolute>"; };
+		93B81A57124D484C00E9DF68 /* module-constcw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-constcw.c"; path = "/usr/src/Dev/oscam/trunk/module-constcw.c"; sourceTree = "<absolute>"; };
+		93B81A58124D484C00E9DF68 /* module-dvbapi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-dvbapi.c"; path = "/usr/src/Dev/oscam/trunk/module-dvbapi.c"; sourceTree = "<absolute>"; };
+		93B81A59124D484C00E9DF68 /* module-dvbapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "module-dvbapi.h"; path = "/usr/src/Dev/oscam/trunk/module-dvbapi.h"; sourceTree = "<absolute>"; };
+		93B81A5A124D484C00E9DF68 /* module-monitor.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-monitor.c"; path = "/usr/src/Dev/oscam/trunk/module-monitor.c"; sourceTree = "<absolute>"; };
+		93B81A5B124D484C00E9DF68 /* module-newcamd.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-newcamd.c"; path = "/usr/src/Dev/oscam/trunk/module-newcamd.c"; sourceTree = "<absolute>"; };
+		93B81A5C124D484C00E9DF68 /* module-obj-llist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-obj-llist.c"; path = "/usr/src/Dev/oscam/trunk/module-obj-llist.c"; sourceTree = "<absolute>"; };
+		93B81A5D124D484C00E9DF68 /* module-obj-llist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "module-obj-llist.h"; path = "/usr/src/Dev/oscam/trunk/module-obj-llist.h"; sourceTree = "<absolute>"; };
+		93B81A5E124D484C00E9DF68 /* module-radegast.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-radegast.c"; path = "/usr/src/Dev/oscam/trunk/module-radegast.c"; sourceTree = "<absolute>"; };
+		93B81A5F124D484C00E9DF68 /* module-serial.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-serial.c"; path = "/usr/src/Dev/oscam/trunk/module-serial.c"; sourceTree = "<absolute>"; };
+		93B81A60124D484C00E9DF68 /* module-stat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "module-stat.c"; path = "/usr/src/Dev/oscam/trunk/module-stat.c"; sourceTree = "<absolute>"; };
+		93B81A61124D484C00E9DF68 /* module-stat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "module-stat.h"; path = "/usr/src/Dev/oscam/trunk/module-stat.h"; sourceTree = "<absolute>"; };
+		93B81A63124D484C00E9DF68 /* libOpenXCASAPI.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libOpenXCASAPI.a; path = /usr/src/Dev/oscam/trunk/openxcas/libOpenXCASAPI.a; sourceTree = "<absolute>"; };
+		93B81A64124D484C00E9DF68 /* openxcas.conf */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = openxcas.conf; path = /usr/src/Dev/oscam/trunk/openxcas/openxcas.conf; sourceTree = "<absolute>"; };
+		93B81A65124D484C00E9DF68 /* openxcas_api.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = openxcas_api.h; path = /usr/src/Dev/oscam/trunk/openxcas/openxcas_api.h; sourceTree = "<absolute>"; };
+		93B81A66124D484C00E9DF68 /* openxcas_message.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = openxcas_message.h; path = /usr/src/Dev/oscam/trunk/openxcas/openxcas_message.h; sourceTree = "<absolute>"; };
+		93B81A67124D484C00E9DF68 /* openxcas_smartcard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = openxcas_smartcard.h; path = /usr/src/Dev/oscam/trunk/openxcas/openxcas_smartcard.h; sourceTree = "<absolute>"; };
+		93B81A68124D484C00E9DF68 /* oscam-ac.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "oscam-ac.c"; path = "/usr/src/Dev/oscam/trunk/oscam-ac.c"; sourceTree = "<absolute>"; };
+		93B81A69124D484C00E9DF68 /* oscam-chk.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "oscam-chk.c"; path = "/usr/src/Dev/oscam/trunk/oscam-chk.c"; sourceTree = "<absolute>"; };
+		93B81A6A124D484C00E9DF68 /* oscam-config.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "oscam-config.c"; path = "/usr/src/Dev/oscam/trunk/oscam-config.c"; sourceTree = "<absolute>"; };
+		93B81A6B124D484C00E9DF68 /* oscam-config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "oscam-config.h"; path = "/usr/src/Dev/oscam/trunk/oscam-config.h"; sourceTree = "<absolute>"; };
+		93B81A6C124D484C00E9DF68 /* oscam-http-helpers.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "oscam-http-helpers.c"; path = "/usr/src/Dev/oscam/trunk/oscam-http-helpers.c"; sourceTree = "<absolute>"; };
+		93B81A6D124D484C00E9DF68 /* oscam-http.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "oscam-http.c"; path = "/usr/src/Dev/oscam/trunk/oscam-http.c"; sourceTree = "<absolute>"; };
+		93B81A6E124D484C00E9DF68 /* oscam-http.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "oscam-http.h"; path = "/usr/src/Dev/oscam/trunk/oscam-http.h"; sourceTree = "<absolute>"; };
+		93B81A6F124D484C00E9DF68 /* oscam-log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "oscam-log.c"; path = "/usr/src/Dev/oscam/trunk/oscam-log.c"; sourceTree = "<absolute>"; };
+		93B81A70124D484C00E9DF68 /* oscam-nano.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "oscam-nano.c"; path = "/usr/src/Dev/oscam/trunk/oscam-nano.c"; sourceTree = "<absolute>"; };
+		93B81A71124D484C00E9DF68 /* oscam-reader.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "oscam-reader.c"; path = "/usr/src/Dev/oscam/trunk/oscam-reader.c"; sourceTree = "<absolute>"; };
+		93B81A72124D484C00E9DF68 /* oscam-simples.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "oscam-simples.c"; path = "/usr/src/Dev/oscam/trunk/oscam-simples.c"; sourceTree = "<absolute>"; };
+		93B81A73124D484C00E9DF68 /* oscam-types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "oscam-types.h"; path = "/usr/src/Dev/oscam/trunk/oscam-types.h"; sourceTree = "<absolute>"; };
+		93B81A74124D484C00E9DF68 /* oscam.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = oscam.c; path = /usr/src/Dev/oscam/trunk/oscam.c; sourceTree = "<absolute>"; };
+		93B81A75124D484C00E9DF68 /* reader-common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-common.c"; path = "/usr/src/Dev/oscam/trunk/reader-common.c"; sourceTree = "<absolute>"; };
+		93B81A76124D484C00E9DF68 /* reader-common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "reader-common.h"; path = "/usr/src/Dev/oscam/trunk/reader-common.h"; sourceTree = "<absolute>"; };
+		93B81A77124D484C00E9DF68 /* reader-conax.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-conax.c"; path = "/usr/src/Dev/oscam/trunk/reader-conax.c"; sourceTree = "<absolute>"; };
+		93B81A78124D484C00E9DF68 /* reader-cryptoworks.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-cryptoworks.c"; path = "/usr/src/Dev/oscam/trunk/reader-cryptoworks.c"; sourceTree = "<absolute>"; };
+		93B81A79124D484C00E9DF68 /* reader-dre.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-dre.c"; path = "/usr/src/Dev/oscam/trunk/reader-dre.c"; sourceTree = "<absolute>"; };
+		93B81A7A124D484C00E9DF68 /* reader-irdeto.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-irdeto.c"; path = "/usr/src/Dev/oscam/trunk/reader-irdeto.c"; sourceTree = "<absolute>"; };
+		93B81A7B124D484C00E9DF68 /* reader-nagra.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-nagra.c"; path = "/usr/src/Dev/oscam/trunk/reader-nagra.c"; sourceTree = "<absolute>"; };
+		93B81A7C124D484C00E9DF68 /* reader-seca.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-seca.c"; path = "/usr/src/Dev/oscam/trunk/reader-seca.c"; sourceTree = "<absolute>"; };
+		93B81A7D124D484C00E9DF68 /* reader-tongfang.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-tongfang.c"; path = "/usr/src/Dev/oscam/trunk/reader-tongfang.c"; sourceTree = "<absolute>"; };
+		93B81A7E124D484C00E9DF68 /* reader-viaccess.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-viaccess.c"; path = "/usr/src/Dev/oscam/trunk/reader-viaccess.c"; sourceTree = "<absolute>"; };
+		93B81A7F124D484C00E9DF68 /* reader-videoguard-common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-videoguard-common.c"; path = "/usr/src/Dev/oscam/trunk/reader-videoguard-common.c"; sourceTree = "<absolute>"; };
+		93B81A80124D484C00E9DF68 /* reader-videoguard-common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "reader-videoguard-common.h"; path = "/usr/src/Dev/oscam/trunk/reader-videoguard-common.h"; sourceTree = "<absolute>"; };
+		93B81A81124D484C00E9DF68 /* reader-videoguard1.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-videoguard1.c"; path = "/usr/src/Dev/oscam/trunk/reader-videoguard1.c"; sourceTree = "<absolute>"; };
+		93B81A82124D484C00E9DF68 /* reader-videoguard2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-videoguard2.c"; path = "/usr/src/Dev/oscam/trunk/reader-videoguard2.c"; sourceTree = "<absolute>"; };
+		93B81A83124D484C00E9DF68 /* reader-videoguard12.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "reader-videoguard12.c"; path = "/usr/src/Dev/oscam/trunk/reader-videoguard12.c"; sourceTree = "<absolute>"; };
+		93B81A84124D484C00E9DF68 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = README; path = /usr/src/Dev/oscam/trunk/README; sourceTree = "<absolute>"; };
+		93B81A86124D484C00E9DF68 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CMakeLists.txt; path = /usr/src/Dev/oscam/trunk/utils/CMakeLists.txt; sourceTree = "<absolute>"; };
+		93B81A87124D484C00E9DF68 /* list_smargo.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = list_smargo.c; path = /usr/src/Dev/oscam/trunk/utils/list_smargo.c; sourceTree = "<absolute>"; };
+		93B81A88124D484C00E9DF68 /* VERSION */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = VERSION; path = /usr/src/Dev/oscam/trunk/VERSION; sourceTree = "<absolute>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		08FB7794FE84155DC02AAC07 /* OSCam */ = {
+			isa = PBXGroup;
+			children = (
+				08FB7795FE84155DC02AAC07 /* Source */,
+				C6A0FF2B0290797F04C91782 /* Documentation */,
+				1AB674ADFE9D54B511CA2CBB /* Products */,
+			);
+			name = OSCam;
+			sourceTree = "<group>";
+		};
+		08FB7795FE84155DC02AAC07 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				93B819D9124D484C00E9DF68 /* cscrypt */,
+				93B819FB124D484C00E9DF68 /* csctapi */,
+				93B81A1F124D484C00E9DF68 /* cygwin */,
+				93B81A23124D484C00E9DF68 /* Distribution */,
+				93B81A52124D484C00E9DF68 /* globals.h */,
+				93B81A53124D484C00E9DF68 /* module-camd33.c */,
+				93B81A54124D484C00E9DF68 /* module-camd35.c */,
+				93B81A55124D484C00E9DF68 /* module-cccam.c */,
+				93B81A56124D484C00E9DF68 /* module-cccam.h */,
+				93B81A57124D484C00E9DF68 /* module-constcw.c */,
+				93B81A58124D484C00E9DF68 /* module-dvbapi.c */,
+				93B81A59124D484C00E9DF68 /* module-dvbapi.h */,
+				93B81A5A124D484C00E9DF68 /* module-monitor.c */,
+				93B81A5B124D484C00E9DF68 /* module-newcamd.c */,
+				93B81A5C124D484C00E9DF68 /* module-obj-llist.c */,
+				93B81A5D124D484C00E9DF68 /* module-obj-llist.h */,
+				93B81A5E124D484C00E9DF68 /* module-radegast.c */,
+				93B81A5F124D484C00E9DF68 /* module-serial.c */,
+				93B81A60124D484C00E9DF68 /* module-stat.c */,
+				93B81A61124D484C00E9DF68 /* module-stat.h */,
+				93B81A62124D484C00E9DF68 /* openxcas */,
+				93B81A68124D484C00E9DF68 /* oscam-ac.c */,
+				93B81A69124D484C00E9DF68 /* oscam-chk.c */,
+				93B81A6A124D484C00E9DF68 /* oscam-config.c */,
+				93B81A6B124D484C00E9DF68 /* oscam-config.h */,
+				93B81A6C124D484C00E9DF68 /* oscam-http-helpers.c */,
+				93B81A6D124D484C00E9DF68 /* oscam-http.c */,
+				93B81A6E124D484C00E9DF68 /* oscam-http.h */,
+				93B81A6F124D484C00E9DF68 /* oscam-log.c */,
+				93B81A70124D484C00E9DF68 /* oscam-nano.c */,
+				93B81A71124D484C00E9DF68 /* oscam-reader.c */,
+				93B81A72124D484C00E9DF68 /* oscam-simples.c */,
+				93B81A73124D484C00E9DF68 /* oscam-types.h */,
+				93B81A74124D484C00E9DF68 /* oscam.c */,
+				93B81A75124D484C00E9DF68 /* reader-common.c */,
+				93B81A76124D484C00E9DF68 /* reader-common.h */,
+				93B81A77124D484C00E9DF68 /* reader-conax.c */,
+				93B81A78124D484C00E9DF68 /* reader-cryptoworks.c */,
+				93B81A79124D484C00E9DF68 /* reader-dre.c */,
+				93B81A7A124D484C00E9DF68 /* reader-irdeto.c */,
+				93B81A7B124D484C00E9DF68 /* reader-nagra.c */,
+				93B81A7C124D484C00E9DF68 /* reader-seca.c */,
+				93B81A7D124D484C00E9DF68 /* reader-tongfang.c */,
+				93B81A7E124D484C00E9DF68 /* reader-viaccess.c */,
+				93B81A7F124D484C00E9DF68 /* reader-videoguard-common.c */,
+				93B81A80124D484C00E9DF68 /* reader-videoguard-common.h */,
+				93B81A81124D484C00E9DF68 /* reader-videoguard1.c */,
+				93B81A82124D484C00E9DF68 /* reader-videoguard2.c */,
+				93B81A83124D484C00E9DF68 /* reader-videoguard12.c */,
+				93B81A84124D484C00E9DF68 /* README */,
+				93B81A85124D484C00E9DF68 /* utils */,
+				93B81A88124D484C00E9DF68 /* VERSION */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+		1AB674ADFE9D54B511CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		93B819D9124D484C00E9DF68 /* cscrypt */ = {
+			isa = PBXGroup;
+			children = (
+				93B819DA124D484C00E9DF68 /* aes */,
+				93B819DD124D484C00E9DF68 /* bn.h */,
+				93B819DE124D484C00E9DF68 /* bn_add.c */,
+				93B819DF124D484C00E9DF68 /* bn_asm.c */,
+				93B819E0124D484C00E9DF68 /* bn_ctx.c */,
+				93B819E1124D484C00E9DF68 /* bn_div.c */,
+				93B819E2124D484C00E9DF68 /* bn_exp.c */,
+				93B819E3124D484C00E9DF68 /* bn_lcl.h */,
+				93B819E4124D484C00E9DF68 /* bn_lib.c */,
+				93B819E5124D484C00E9DF68 /* bn_mul.c */,
+				93B819E6124D484C00E9DF68 /* bn_print.c */,
+				93B819E7124D484C00E9DF68 /* bn_shift.c */,
+				93B819E8124D484C00E9DF68 /* bn_sqr.c */,
+				93B819E9124D484C00E9DF68 /* bn_word.c */,
+				93B819EA124D484C00E9DF68 /* buffer.h */,
+				93B819EB124D484C00E9DF68 /* CMakeLists.txt */,
+				93B819EC124D484C00E9DF68 /* crc32.c */,
+				93B819ED124D484C00E9DF68 /* cscrypt.h */,
+				93B819EE124D484C00E9DF68 /* des.c */,
+				93B819EF124D484C00E9DF68 /* des.h */,
+				93B819F0124D484C00E9DF68 /* i_cbc.c */,
+				93B819F1124D484C00E9DF68 /* i_skey.c */,
+				93B819F2124D484C00E9DF68 /* idea.h */,
+				93B819F3124D484C00E9DF68 /* idea_lcl.h */,
+				93B819F4124D484C00E9DF68 /* Makefile */,
+				93B819F5124D484C00E9DF68 /* md5.c */,
+				93B819F6124D484C00E9DF68 /* mem.c */,
+				93B819F7124D484C00E9DF68 /* openssl_mods.h */,
+				93B819F8124D484C00E9DF68 /* sha */,
+			);
+			name = cscrypt;
+			path = /usr/src/Dev/oscam/trunk/cscrypt;
+			sourceTree = "<absolute>";
+		};
+		93B819DA124D484C00E9DF68 /* aes */ = {
+			isa = PBXGroup;
+			children = (
+				93B819DB124D484C00E9DF68 /* aes.h */,
+				93B819DC124D484C00E9DF68 /* aes_core.c */,
+			);
+			name = aes;
+			path = /usr/src/Dev/oscam/trunk/cscrypt/aes;
+			sourceTree = "<absolute>";
+		};
+		93B819F8124D484C00E9DF68 /* sha */ = {
+			isa = PBXGroup;
+			children = (
+				93B819F9124D484C00E9DF68 /* sha1.c */,
+				93B819FA124D484C00E9DF68 /* sha1.h */,
+			);
+			name = sha;
+			path = /usr/src/Dev/oscam/trunk/cscrypt/sha;
+			sourceTree = "<absolute>";
+		};
+		93B819FB124D484C00E9DF68 /* csctapi */ = {
+			isa = PBXGroup;
+			children = (
+				93B819FC124D484C00E9DF68 /* atr.c */,
+				93B819FD124D484C00E9DF68 /* atr.h */,
+				93B819FE124D484C00E9DF68 /* CMakeLists.txt */,
+				93B819FF124D484C00E9DF68 /* defines.h */,
+				93B81A00124D484C00E9DF68 /* icc_async.c */,
+				93B81A01124D484C00E9DF68 /* icc_async.h */,
+				93B81A02124D484C00E9DF68 /* icc_async_exports.h */,
+				93B81A03124D484C00E9DF68 /* ifd_azbox.c */,
+				93B81A04124D484C00E9DF68 /* ifd_azbox.h */,
+				93B81A05124D484C00E9DF68 /* ifd_cool.c */,
+				93B81A06124D484C00E9DF68 /* ifd_cool.h */,
+				93B81A07124D484C00E9DF68 /* ifd_mp35.c */,
+				93B81A08124D484C00E9DF68 /* ifd_mp35.h */,
+				93B81A09124D484C00E9DF68 /* ifd_pcsc.c */,
+				93B81A0A124D484C00E9DF68 /* ifd_pcsc.h */,
+				93B81A0B124D484C00E9DF68 /* ifd_phoenix.c */,
+				93B81A0C124D484C00E9DF68 /* ifd_phoenix.h */,
+				93B81A0D124D484C00E9DF68 /* ifd_sc8in1.c */,
+				93B81A0E124D484C00E9DF68 /* ifd_sc8in1.h */,
+				93B81A0F124D484C00E9DF68 /* ifd_sci.c */,
+				93B81A10124D484C00E9DF68 /* ifd_sci.h */,
+				93B81A11124D484C00E9DF68 /* ifd_smartreader.c */,
+				93B81A12124D484C00E9DF68 /* ifd_smartreader.h */,
+				93B81A13124D484C00E9DF68 /* io_serial.c */,
+				93B81A14124D484C00E9DF68 /* io_serial.h */,
+				93B81A15124D484C00E9DF68 /* Makefile */,
+				93B81A16124D484C00E9DF68 /* mc_global.h */,
+				93B81A17124D484C00E9DF68 /* protocol_t0.c */,
+				93B81A18124D484C00E9DF68 /* protocol_t0.h */,
+				93B81A19124D484C00E9DF68 /* protocol_t1.c */,
+				93B81A1A124D484C00E9DF68 /* sci_global.h */,
+				93B81A1B124D484C00E9DF68 /* sci_ioctl.h */,
+				93B81A1C124D484C00E9DF68 /* smartreader_types.h */,
+				93B81A1D124D484C00E9DF68 /* t1_block.c */,
+				93B81A1E124D484C00E9DF68 /* t1_block.h */,
+			);
+			name = csctapi;
+			path = /usr/src/Dev/oscam/trunk/csctapi;
+			sourceTree = "<absolute>";
+		};
+		93B81A1F124D484C00E9DF68 /* cygwin */ = {
+			isa = PBXGroup;
+			children = (
+				93B81A20124D484C00E9DF68 /* SCardErr.h */,
+				93B81A21124D484C00E9DF68 /* WinSCard.h */,
+				93B81A22124D484C00E9DF68 /* WinSmCrd.h */,
+			);
+			name = cygwin;
+			path = /usr/src/Dev/oscam/trunk/cygwin;
+			sourceTree = "<absolute>";
+		};
+		93B81A23124D484C00E9DF68 /* Distribution */ = {
+			isa = PBXGroup;
+			children = (
+				93B81A24124D484C00E9DF68 /* doc */,
+				93B81A4D124D484C00E9DF68 /* list_smargo-1.00-svn3228-macosx-libusb */,
+				93B81A4E124D484C00E9DF68 /* list_smargo-1.00-svn3228-macosx-libusb.dSYM */,
+				93B81A4F124D484C00E9DF68 /* monitor */,
+			);
+			name = Distribution;
+			path = /usr/src/Dev/oscam/trunk/Distribution;
+			sourceTree = "<absolute>";
+		};
+		93B81A24124D484C00E9DF68 /* doc */ = {
+			isa = PBXGroup;
+			children = (
+				93B81A25124D484C00E9DF68 /* example */,
+				93B81A31124D484C00E9DF68 /* man */,
+				93B81A3F124D484C00E9DF68 /* txt */,
+			);
+			name = doc;
+			path = /usr/src/Dev/oscam/trunk/Distribution/doc;
+			sourceTree = "<absolute>";
+		};
+		93B81A25124D484C00E9DF68 /* example */ = {
+			isa = PBXGroup;
+			children = (
+				93B81A26124D484C00E9DF68 /* oscam.ac */,
+				93B81A27124D484C00E9DF68 /* oscam.cert */,
+				93B81A28124D484C00E9DF68 /* oscam.conf */,
+				93B81A29124D484C00E9DF68 /* oscam.guess */,
+				93B81A2A124D484C00E9DF68 /* oscam.ird */,
+				93B81A2B124D484C00E9DF68 /* oscam.provid */,
+				93B81A2C124D484C00E9DF68 /* oscam.server */,
+				93B81A2D124D484C00E9DF68 /* oscam.services */,
+				93B81A2E124D484C00E9DF68 /* oscam.srvid */,
+				93B81A2F124D484C00E9DF68 /* oscam.tiers */,
+				93B81A30124D484C00E9DF68 /* oscam.user */,
+			);
+			name = example;
+			path = /usr/src/Dev/oscam/trunk/Distribution/doc/example;
+			sourceTree = "<absolute>";
+		};
+		93B81A31124D484C00E9DF68 /* man */ = {
+			isa = PBXGroup;
+			children = (
+				93B81A32124D484C00E9DF68 /* list_smargo.1 */,
+				93B81A33124D484C00E9DF68 /* oscam.1 */,
+				93B81A34124D484C00E9DF68 /* oscam.ac.5 */,
+				93B81A35124D484C00E9DF68 /* oscam.cert.5 */,
+				93B81A36124D484C00E9DF68 /* oscam.conf.5 */,
+				93B81A37124D484C00E9DF68 /* oscam.guess.5 */,
+				93B81A38124D484C00E9DF68 /* oscam.ird.5 */,
+				93B81A39124D484C00E9DF68 /* oscam.provid.5 */,
+				93B81A3A124D484C00E9DF68 /* oscam.server.5 */,
+				93B81A3B124D484C00E9DF68 /* oscam.services.5 */,
+				93B81A3C124D484C00E9DF68 /* oscam.srvid.5 */,
+				93B81A3D124D484C00E9DF68 /* oscam.tiers.5 */,
+				93B81A3E124D484C00E9DF68 /* oscam.user.5 */,
+			);
+			name = man;
+			path = /usr/src/Dev/oscam/trunk/Distribution/doc/man;
+			sourceTree = "<absolute>";
+		};
+		93B81A3F124D484C00E9DF68 /* txt */ = {
+			isa = PBXGroup;
+			children = (
+				93B81A40124D484C00E9DF68 /* list_smargo.txt */,
+				93B81A41124D484C00E9DF68 /* oscam.ac.txt */,
+				93B81A42124D484C00E9DF68 /* oscam.cert.txt */,
+				93B81A43124D484C00E9DF68 /* oscam.conf.txt */,
+				93B81A44124D484C00E9DF68 /* oscam.guess.txt */,
+				93B81A45124D484C00E9DF68 /* oscam.ird.txt */,
+				93B81A46124D484C00E9DF68 /* oscam.provid.txt */,
+				93B81A47124D484C00E9DF68 /* oscam.server.txt */,
+				93B81A48124D484C00E9DF68 /* oscam.services.txt */,
+				93B81A49124D484C00E9DF68 /* oscam.srvid.txt */,
+				93B81A4A124D484C00E9DF68 /* oscam.tiers.txt */,
+				93B81A4B124D484C00E9DF68 /* oscam.txt */,
+				93B81A4C124D484C00E9DF68 /* oscam.user.txt */,
+			);
+			name = txt;
+			path = /usr/src/Dev/oscam/trunk/Distribution/doc/txt;
+			sourceTree = "<absolute>";
+		};
+		93B81A4F124D484C00E9DF68 /* monitor */ = {
+			isa = PBXGroup;
+			children = (
+				93B81A50124D484C00E9DF68 /* mpcsmon-src-0.5b.tar */,
+				93B81A51124D484C00E9DF68 /* mpcsmon.sh */,
+			);
+			name = monitor;
+			path = /usr/src/Dev/oscam/trunk/Distribution/monitor;
+			sourceTree = "<absolute>";
+		};
+		93B81A62124D484C00E9DF68 /* openxcas */ = {
+			isa = PBXGroup;
+			children = (
+				93B81A63124D484C00E9DF68 /* libOpenXCASAPI.a */,
+				93B81A64124D484C00E9DF68 /* openxcas.conf */,
+				93B81A65124D484C00E9DF68 /* openxcas_api.h */,
+				93B81A66124D484C00E9DF68 /* openxcas_message.h */,
+				93B81A67124D484C00E9DF68 /* openxcas_smartcard.h */,
+			);
+			name = openxcas;
+			path = /usr/src/Dev/oscam/trunk/openxcas;
+			sourceTree = "<absolute>";
+		};
+		93B81A85124D484C00E9DF68 /* utils */ = {
+			isa = PBXGroup;
+			children = (
+				93B81A86124D484C00E9DF68 /* CMakeLists.txt */,
+				93B81A87124D484C00E9DF68 /* list_smargo.c */,
+			);
+			name = utils;
+			path = /usr/src/Dev/oscam/trunk/utils;
+			sourceTree = "<absolute>";
+		};
+		C6A0FF2B0290797F04C91782 /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Documentation;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXLegacyTarget section */
+		93B81AED124D50AA00E9DF68 /* OSCam */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION)";
+			buildConfigurationList = 93B81AF4124D50AD00E9DF68 /* Build configuration list for PBXLegacyTarget "OSCam" */;
+			buildPhases = (
+			);
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = "$(SRCROOT)/cmake-build";
+			dependencies = (
+			);
+			name = OSCam;
+			passBuildSettingsInEnvironment = 1;
+			productName = OSCam;
+		};
+/* End PBXLegacyTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "OSCam" */;
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 1;
+			mainGroup = 08FB7794FE84155DC02AAC07 /* OSCam */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				93B81AED124D50AA00E9DF68 /* OSCam */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB928A08733DD80010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.5;
+			};
+			name = Debug;
+		};
+		1DEB928B08733DD80010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.5;
+			};
+			name = Release;
+		};
+		93B81AEE124D50AA00E9DF68 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = OSCam;
+			};
+			name = Debug;
+		};
+		93B81AEF124D50AA00E9DF68 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				PRODUCT_NAME = OSCam;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "OSCam" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB928A08733DD80010E9CD /* Debug */,
+				1DEB928B08733DD80010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		93B81AF4124D50AD00E9DF68 /* Build configuration list for PBXLegacyTarget "OSCam" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				93B81AEE124D50AA00E9DF68 /* Debug */,
+				93B81AEF124D50AA00E9DF68 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}
