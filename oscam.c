@@ -347,24 +347,7 @@ void cs_exit(int sig)
 			cs_log("cardserver down");
 			break;
 	}
-
 	int i;
-	for (i=1; i<CS_MAXPID; i++) {
-		if (pthread_equal(client[i].thread, pthread_self())) {
-			client[i].pid=0;
-			if(client[i].ecmtask) 	free(client[i].ecmtask);
-			if(client[i].emmcache) 	free(client[i].emmcache);
-			if(client[i].req) 		free(client[i].req);
-			if(client[i].prefix) 	free(client[i].prefix);
-			if(client[i].cc) 		free(client[i].cc);
-			cs_log("thread %d ended!", i);
-			pthread_exit(NULL);
-			return;
-		}
-	}
-
-
-
 	for (i=0; i<CS_MAXPID; i++) {
 		if(client[i].ecmtask) 	free(client[i].ecmtask);
 		if(client[i].emmcache) 	free(client[i].emmcache);
@@ -378,7 +361,7 @@ void cs_exit(int sig)
 
 	if (ecmcache) free((void *)ecmcache);
 
-	exit(sig);
+	exit(sig);  //clears all threads
 }
 
 void cs_reinit_clients()
@@ -532,9 +515,8 @@ int cs_fork(in_addr_t ip, in_port_t port) {
 
 static void init_signal()
 {
-  int i;
-  for (i=1; i<NSIG; i++)
-		set_signal_handler(i, 3, cs_exit);
+//  for (i=1; i<NSIG; i++)
+//		set_signal_handler(i, 3, cs_exit); //not catching all signals simplifies debugging
 		set_signal_handler(SIGWINCH, 1, SIG_IGN);
 		//  set_signal_handler(SIGPIPE , 0, SIG_IGN);
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
