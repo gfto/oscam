@@ -30,7 +30,6 @@
 #include "icc_async.h"
 #include "mc_global.h"
 #include "protocol_t0.h"
-#include "protocol_t1.h"
 #include "io_serial.h"
 #include "ifd_cool.h" 
 #include "ifd_mp35.h" 
@@ -310,7 +309,7 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsign
 				//try to resync
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
 				Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
-				ifsc = DEFAULT_IFSC;
+				reader->ifsc = DEFAULT_IFSC;
 			} while (try <= 3);
 			break;
 		 }
@@ -797,19 +796,19 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 			
 				// Set IFSC
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
-					ifsc = DEFAULT_IFSC;
+					reader->ifsc = DEFAULT_IFSC;
 				else if ((ta != 0x00) && (ta != 0xFF))
-					ifsc = ta;
+					reader->ifsc = ta;
 				else
-					ifsc = DEFAULT_IFSC;
+					reader->ifsc = DEFAULT_IFSC;
 		
 				//FIXME workaround for Smargo until native mode works
 				if (reader->smargopatch == 1)
-					ifsc = MIN (ifsc, 28);
+					reader->ifsc = MIN (reader->ifsc, 28);
 				else
 					// Towitoko does not allow IFSC > 251
 					//FIXME not sure whether this limitation still exists
-					ifsc = MIN (ifsc, MAX_IFSC);
+					reader->ifsc = MIN (reader->ifsc, MAX_IFSC);
 			
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
 				// Calculate CWI and BWI
@@ -848,9 +847,9 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 					edc = tc & 0x01;
 			
 				// Set initial send sequence (NS)
-				ns = 1;
+				reader->ns = 1;
 
-				cs_debug ("Protocol: T=1: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", ifsc, reader->CWT, reader->BWT, BGT, (edc == EDC_LRC) ? "LRC" : "CRC");
+				cs_debug ("Protocol: T=1: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", reader->ifsc, reader->CWT, reader->BWT, BGT, (edc == EDC_LRC) ? "LRC" : "CRC");
 
 				reader->read_timeout = ETU_to_ms(reader, reader->BWT);
 				reader->block_delay = ETU_to_ms(reader, BGT);
@@ -886,12 +885,12 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 
 	//IFS setting in case of T1
-	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (ifsc != DEFAULT_IFSC)) {
+	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC)) {
 		unsigned char rsp[CTA_RES_LEN];
 		unsigned short * lr;
 		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
-		tmp[3] = ifsc; // Information Field size
-		tmp[4] = ifsc ^ 0xE1;
+		tmp[3] = reader->ifsc; // Information Field size
+		tmp[4] = reader->ifsc ^ 0xE1;
 		Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp, lr);
 	}
  return OK;

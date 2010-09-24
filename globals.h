@@ -768,8 +768,11 @@ struct s_reader  //contains device info, reader info and card info
 	unsigned int read_timeout; // Max timeout (ms) to receive characters
 	unsigned int block_delay; // Delay (ms) after starting to transmit
 	unsigned int char_delay; // Delay (ms) after transmiting each sucesive char
-	////variables from io_serial.h start
+	////variables from io_serial.h
 	int written; //keep score of how much bytes are written to serial port, since they are echoed back they have to be read
+	////variables from protocol_t1.h
+	unsigned short ifsc;  /* Information field size for the ICC */
+	unsigned char  ns;              /* Send sequence number */
 	////variables from reader-dre.c 
 	unsigned char provider;
 	////variables from reader-nagra.c 

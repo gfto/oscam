@@ -28,7 +28,6 @@
 #include <string.h>
 #include "../globals.h"
 #include "defines.h"
-#include "protocol_t1.h"
 #include "t1_block.h"
 #include "icc_async.h"
 
@@ -103,7 +102,7 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
         /* Positive IFS Response S-Block received */
         if (rsp_type == T1_BLOCK_S_RESYNCH_RES) {
             cs_debug_mask (D_IFD,"Protocol: Received block S(RESYNCH response)\n");
-						ns = 0;
+						reader->ns = 0;
 				}
       }
 
@@ -112,17 +111,17 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
 
   /* Calculate the number of bytes to send */
   counter = 0;
-  bytes = MIN (command_len, ifsc);
+  bytes = MIN (command_len, reader->ifsc);
 
   /* See if chaining is needed */
-  more = (command_len > ifsc);
+  more = (command_len > reader->ifsc);
 
   /* Increment ns */
-  ns = (ns + 1) %2;
+  reader->ns = (reader->ns == 1) ? 0:1; //toggle from 0 to 1 and back
 
   /* Create an I-Block */
-  block = T1_Block_NewIBlock (bytes, command, ns, more);
-  cs_debug_mask (D_IFD,"Sending block I(%d,%d)\n", ns, more);
+  block = T1_Block_NewIBlock (bytes, command, reader->ns, more);
+  cs_debug_mask (D_IFD,"Sending block I(%d,%d)\n", reader->ns, more);
 
   /* Send a block */
   call (Protocol_T1_SendBlock (reader, block));
@@ -139,18 +138,18 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
           T1_Block_Delete (block);
  
           /* Increment ns  */
-          ns = (ns + 1) % 2;
+          reader->ns = (reader->ns == 1) ? 0:1; //toggle from 0 to 1 and back
 
           /* Calculate the number of bytes to send */
           counter += bytes;
-          bytes = MIN (command_len - counter, ifsc);
+          bytes = MIN (command_len - counter, reader->ifsc);
 
           /* See if chaining is needed */
-          more = (command_len - counter > ifsc);
+          more = (command_len - counter > reader->ifsc);
 
           /* Create an I-Block */
-          block = T1_Block_NewIBlock (bytes, command + counter, ns, more);
-          cs_debug_mask (D_IFD,"Protocol: Sending block I(%d,%d)\n", ns, more);
+          block = T1_Block_NewIBlock (bytes, command + counter, reader->ns, more);
+          cs_debug_mask (D_IFD,"Protocol: Sending block I(%d,%d)\n", reader->ns, more);
 
           /* Send a block */
           call (Protocol_T1_SendBlock (reader, block));
