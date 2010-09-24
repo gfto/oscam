@@ -1669,9 +1669,9 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 							"caid: %04X hop: %d<BR>\n", card->caid, card->hop);
 
 					int provcount = 0;
-					LLIST_ITR itr;
+					LLIST_ITR pitr;
 					struct cc_provider *prov = llist_itr_init(card->providers,
-							&itr);
+							&pitr);
 					while (prov) {
 						provider = get_provider(card->caid, prov->prov);
 
@@ -1679,7 +1679,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						tpl_printf(vars, 1, "LOGHISTORY",
 								"&nbsp;&nbsp;-- Provider %d: %06X -- %s<BR>\n",
 								provcount, prov->prov, provider);
-						prov = llist_itr_next(&itr);
+						prov = llist_itr_next(&pitr);
 					}
 
 					tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
