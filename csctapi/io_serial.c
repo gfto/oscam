@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
    /*
     io_serial.c
     Serial port input/output functions
@@ -64,8 +63,6 @@ static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, u
 
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms);
 
-extern int fdmc;
-
 #if defined(TUXBOX) && defined(PPC)
 void IO_Serial_Ioctl_Lock(struct s_reader * reader, int flag)
 {
@@ -93,7 +90,7 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int * dtr, int * rts)
   unsigned short rts_bits[2]={ 0x10, 0x800};
   unsigned short dtr_bits[2]={0x100,     0};
 
-  if ((rc=ioctl(fdmc, GET_PCDAT, &msr))>=0)
+  if ((rc=ioctl(reader->fdmc, GET_PCDAT, &msr))>=0)
   {
     if (dtr)		// DTR
     {
@@ -104,7 +101,7 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int * dtr, int * rts)
           msr&=(unsigned short)(~dtr_bits[mcport]);
         else
           msr|=dtr_bits[mcport];
-        rc=ioctl(fdmc, SET_PCDAT, &msr);
+        rc=ioctl(reader->fdmc, SET_PCDAT, &msr);
       }
       else
         rc=0;		// Dummy, can't handle using multicam.o
@@ -116,7 +113,7 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int * dtr, int * rts)
         msr&=(unsigned short)(~rts_bits[mcport]);
       else
         msr|=rts_bits[mcport];
-      rc=ioctl(fdmc, SET_PCDAT, &msr);
+      rc=ioctl(reader->fdmc, SET_PCDAT, &msr);
     }
   }
 	if (rc<0)
@@ -523,7 +520,7 @@ bool IO_Serial_Close (struct s_reader * reader)
 	cs_debug ("IO: Closing serial port %s\n", reader->device);
 	
 #if defined(TUXBOX) && defined(PPC)
-	close(fdmc);
+	close(reader->fdmc);
 #endif
 	if (close (reader->handle) != 0)
 		return ERROR;

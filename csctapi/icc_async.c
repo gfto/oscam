@@ -69,14 +69,13 @@ static unsigned int ETU_to_ms(struct s_reader * reader, unsigned long WWT);
 static BYTE PPS_GetPCK (BYTE * block, unsigned length);
 static int SetRightParity (struct s_reader * reader);
 
-int fdmc=(-1);
-
 /*
  * Exported functions definition
  */
 
 int ICC_Async_Device_Init (struct s_reader *reader)
 {
+	reader->fdmc=-1;
 	cs_debug_mask (D_IFD, "IFD: Opening device %s\n", reader->device);
 
 	reader->written = 0;
@@ -105,7 +104,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 				cs_log("ERROR opening device %s",reader->device);
 				return ERROR;
 			}
-			if ((fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {
+			if ((reader->fdmc = open(DEV_MULTICAM, O_RDWR)) < 0) {
 				close(reader->handle);
 				cs_log("ERROR opening device %s",DEV_MULTICAM);
 				return ERROR;
@@ -181,9 +180,8 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 #if defined(TUXBOX) && defined(PPC)
 			{
 			ushort msr=1;
-			extern int fdmc;
 			IO_Serial_Ioctl_Lock(reader, 1);
-			ioctl(fdmc, GET_PCDAT, &msr);
+			ioctl(reader->fdmc, GET_PCDAT, &msr);
 			if (reader->typ == R_DB2COM2)
 				in=(!(msr & 1));
 			else

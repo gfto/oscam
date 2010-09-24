@@ -653,6 +653,7 @@ struct s_reader  //contains device info, reader info and card info
   char      device[128];
   ushort    slot;   //in case of multiple slots like sc8in1; first slot = 1
   int       handle;   //device handle
+  int       fdmc;     //device handle for multicam
 #ifdef ST_LINUX
   unsigned int stsmart_handle; //device handle for stsmart driver
 #endif
