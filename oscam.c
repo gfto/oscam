@@ -2590,7 +2590,7 @@ void cs_waitforcardinit()
 		do {
 			card_init_done = 1;
 			for (i = 0; i < CS_MAXREADER; i++) {
-				if (reader[i].card_status == CARD_NEED_INIT) {
+				if (!(reader[i].typ & R_IS_CASCADING) && reader[i].card_status == CARD_NEED_INIT) {
 					card_init_done = 0;
 					break;
 				}

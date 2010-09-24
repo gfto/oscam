@@ -346,9 +346,7 @@ void cc_cli_close() {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = reader->last_g = 0;
 
-	//network_tcp_connection_close(rdr, cl->udp_fd);
-	close(cl->pfd);
-	close(cl->udp_fd);
+	network_tcp_connection_close(rdr, cl->udp_fd);
 	cl->pfd = 0;
 	cl->udp_fd = 0;
 
@@ -3059,7 +3057,6 @@ int cc_cli_init_int() {
 }
 
 int cc_cli_init() {
-	cc_cli_init_int();
 	return 0;
 }
 
