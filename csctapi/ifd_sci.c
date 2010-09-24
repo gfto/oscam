@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 /*
 		ifd_sci.c
 		This module provides IFD handling functions for SCI internal reader.
