@@ -2618,7 +2618,7 @@ int cc_srv_connect() {
 		
 		pthread_mutexattr_t   mta;
                 pthread_mutexattr_init(&mta);
-#ifdef OS_MACOSX
+#if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)  || defined(OS_MACOSX)
                 pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
 #else
                 pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
