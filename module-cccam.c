@@ -346,7 +346,9 @@ void cc_cli_close() {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = reader->last_g = 0;
 
-	network_tcp_connection_close(rdr, cl->udp_fd);
+	//network_tcp_connection_close(rdr, cl->udp_fd);
+	close(cl->pfd);
+	close(cl->udp_fd);
 	cl->pfd = 0;
 	cl->udp_fd = 0;
 
@@ -2985,8 +2987,7 @@ int cc_cli_connect() {
 	 	//cs_debug_mask(D_TRACE, "n=%d", n);
 	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA || n == MSG_CARD_REMOVED || n == MSG_CW_NOK1);
 	
-	if (n>0) n = 0;
-	return n;
+	return 0;
 }
 
 int cc_cli_init_int() {
@@ -3058,7 +3059,7 @@ int cc_cli_init_int() {
 }
 
 int cc_cli_init() {
-	//cc_cli_init_int();
+	cc_cli_init_int();
 	return 0;
 }
 
