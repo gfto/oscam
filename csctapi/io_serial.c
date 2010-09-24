@@ -82,13 +82,14 @@ void IO_Serial_Ioctl_Lock(struct s_reader * reader, int flag)
   }
 }
 
-static bool IO_Serial_DTR_RTS_dbox2(int mcport, int * dtr, int * rts)
+static bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int * dtr, int * rts)
 {
   int rc;
   unsigned short msr;
   unsigned int mbit;
   unsigned short rts_bits[2]={ 0x10, 0x800};
   unsigned short dtr_bits[2]={0x100,     0};
+  int mcport = (reader->typ == R_DB2COM2);
 
   if ((rc=ioctl(reader->fdmc, GET_PCDAT, &msr))>=0)
   {
@@ -124,13 +125,13 @@ static bool IO_Serial_DTR_RTS_dbox2(int mcport, int * dtr, int * rts)
 
 bool IO_Serial_DTR_RTS(struct s_reader * reader, int * dtr, int * rts)
 {
-	unsigned int msr;
-	unsigned int mbit;
-
 #if defined(TUXBOX) && defined(PPC)
 	if ((reader->typ == R_DB2COM1) || (reader->typ == R_DB2COM2))
-		return(IO_Serial_DTR_RTS_dbox2(reader->typ == R_DB2COM2, dtr, rts));
+		return(IO_Serial_DTR_RTS_dbox2(reader, dtr, rts));
 #endif
+
+	unsigned int msr;
+	unsigned int mbit;
   
   if(dtr)
   {

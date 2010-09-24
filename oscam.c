@@ -523,7 +523,6 @@ static void init_signal()
 		set_signal_handler(SIGPROF, 3, cs_exit);
 		set_signal_handler(SIGTERM, 3, cs_exit);
 		set_signal_handler(SIGVTALRM, 3, cs_exit);
-		set_signal_handler(SIGSTKFLT, 3, cs_exit);
 
 		set_signal_handler(SIGWINCH, 1, SIG_IGN);
 		//  set_signal_handler(SIGPIPE , 0, SIG_IGN);
