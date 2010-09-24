@@ -3032,15 +3032,7 @@ int cc_cli_connect() {
 
 	cc->just_logged_in = 1;
 
-	//Receive Cards
-	n = 0;
-	do {
-	 	n = casc_recv_timer(rdr, buf, sizeof(buf), 200);
-	 	//cs_debug_mask(D_TRACE, "n=%d", n);
-	} while (n == MSG_NEW_CARD || n == MSG_SRV_DATA || n == MSG_CLI_DATA || n == MSG_CARD_REMOVED || n == MSG_CW_NOK1);
-	
 	cs_debug_mask(D_FUT, "cc_cli_connect out");
-	
 	return 0;
 }
 
