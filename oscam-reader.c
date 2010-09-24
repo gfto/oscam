@@ -243,7 +243,7 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
   if (!client[cs_idx].is_server)
   {
     int i;
-    client[cs_idx].pfd = 0;
+    //client[cs_idx].pfd = 0;
     reader->tcp_connected = 0;
 
     if (client[cs_idx].ecmtask) {

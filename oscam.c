@@ -319,8 +319,6 @@ void cs_exit(int sig)
     	client[cs_idx].last_srvid = 0xFFFF;
     	cs_statistics(cs_idx);
     	
-    	return;
-    	
     	break;
     case 'm': break;
     case 'n': break;
@@ -331,8 +329,6 @@ void cs_exit(int sig)
         }
         // close the device
         reader_device_close(&reader[client[cs_idx].ridx]);
-        
-        return;
         
         break;
     case 'h':
@@ -370,7 +366,10 @@ void cs_exit(int sig)
 			return;
 		}
 	}
-	
+
+	if (!sig) // cs_exit(0) - no real exit!
+		return;
+		
 	for (i=0; i<CS_MAXPID; i++) {
 		if(client[i].ecmtask) 	free(client[i].ecmtask);
 		if(client[i].emmcache) 	free(client[i].emmcache);

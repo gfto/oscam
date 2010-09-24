@@ -348,7 +348,8 @@ void cc_cli_close() {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = reader->last_g = 0;
 
-	network_tcp_connection_close(rdr, cl->udp_fd);
+	//network_tcp_connection_close(rdr, cl->udp_fd); Calls c_init, cc_cli_init !!
+	close(cl->udp_fd);
 	cl->pfd = 0;
 	cl->udp_fd = 0;
 
@@ -1572,7 +1573,7 @@ void cc_card_removed(uint32 shareid) {
 }
 
 int cc_parse_msg(uint8 *buf, int l) {
-	cs_debug_mask(D_FUT, "cc_parse_msg in");
+	cs_debug_mask(D_FUT, "cc_parse_msg in %d", buf[1]);
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = cl->is_server?NULL:&reader[cl->ridx];
 	
@@ -3090,7 +3091,10 @@ int cc_cli_init_int() {
 }
 
 int cc_cli_init() {
-	cc_cli_init_int();
+	struct s_client *cl = &client[cs_idx];
+	if (!cl->cc)
+		cc_cli_init_int();
+		
 	return 0;
 }
 
