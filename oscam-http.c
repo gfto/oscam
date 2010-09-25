@@ -697,8 +697,8 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 		if(write_server()==0) {
 			refresh_oscam(REFR_READERS, in);
 			//printf("would kill now PID %d\n", reader[atoi(getParam(params, "reader"))].pid);
-			if(reader[atoi(getParam(params, "reader"))].pid)
-				kill(reader[atoi(getParam(params, "reader"))].pid, SIGQUIT);
+			//if(reader[atoi(getParam(params, "reader"))].pid)
+			//	kill(reader[atoi(getParam(params, "reader"))].pid, SIGQUIT);
 		}
 		else
 			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
