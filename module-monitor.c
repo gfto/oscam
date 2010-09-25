@@ -315,10 +315,8 @@ static char *monitor_client_info(char id, int i){
 					con = 1;
 				else
 					con = 0;
-			if (i - cdiff > 0)
-				cnr = i - cdiff;
-			else
-				cnr=(i > 1) ? i - 1 : 0;
+			
+			cnr=(i > 1) ? i - 1 : 0;
 			if( (cau = client[i].au + 1) )
 				if ((now-client[i].lastemm) /60 > cfg->mon_aulow)
 					cau=-cau;

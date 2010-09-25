@@ -200,7 +200,7 @@ extern const char *boxdesc[];
 #endif
 
 #ifdef CS_CORE
-char *PIP_ID_TXT[] = { "ECM", "EMM", "LOG", "CIN", "HUP", "RST", "KCL", "RES", NULL  };
+char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "RES", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
                        "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
@@ -213,12 +213,9 @@ extern char *RDR_CD_TXT[];
 
 #define PIP_ID_ECM    0
 #define PIP_ID_EMM    1
-#define PIP_ID_CIN    3  // CARD_INFO
-#define PIP_ID_HUP    4
-#define PIP_ID_RST    5  // Schlocke: Restart Reader, CCcam for example (param: ridx)
-#define PIP_ID_KCL    6  // Schlocke: Kill all Clients (no param)
-#define PIP_ID_RES    7  // Schlocke: reset reader statistiks
-#define PIP_ID_DCW    8
+#define PIP_ID_CIN    2  // CARD_INFO
+#define PIP_ID_KCL    3  // Schlocke: Kill all Clients (no param)
+#define PIP_ID_RES    4  // Schlocke: reset reader statistiks
 #define PIP_ID_MAX    PIP_ID_RES
 
 
@@ -610,6 +607,9 @@ struct s_client
 
   //cs_hexdump buffer
   uchar dump[520];
+
+  //oscam.c
+  struct timeval tv;
 };
 
 
@@ -1172,12 +1172,9 @@ extern uchar fast_rnd(void);
 extern int get_csidx();
 #define cs_idx		get_csidx()
 
-extern int fd_c2m;
-
 // oscam variables
 
-extern int *c_start, cs_dblevel;
-extern int *logidx, *loghistidx;
+extern int cs_dblevel, *loghistidx;
 
 extern ushort len4caid[256];
 
@@ -1261,7 +1258,8 @@ extern void send_clear_reader_stat(int ridx);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab);
 extern int chk_srvid_by_caid_prov(ushort caid, ulong provid, int idx);
-                                        
+extern void kill_thread(int cidx);
+                 
 #ifdef CS_ANTICASC
 //extern void start_anticascader(void);
 extern void init_ac(void);

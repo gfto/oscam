@@ -78,7 +78,7 @@ static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
       }
       else
         client[cs_idx].ecmtask[i].rc=0;    
-      write_ecm_answer(reader, fd_c2m, &client[cs_idx].ecmtask[i]);
+      write_ecm_answer(reader, client[0].fd_m2c, &client[cs_idx].ecmtask[i]);
       client[cs_idx].ecmtask[i].idx=0;
     }
   }
@@ -449,14 +449,14 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
     cs_debug("caid %04X filtered", er->caid);
     er->rcEx=E2_CAID;
     er->rc=0;
-    write_ecm_answer(reader, fd_c2m, er);
+    write_ecm_answer(reader, client[0].fd_m2c, er);
     return;
   }
   // cache2
   if (check_ecmcache2(er, client[er->cidx].grp))
   {
     er->rc=2;
-    write_ecm_answer(reader, fd_c2m, er);
+    write_ecm_answer(reader, client[0].fd_m2c, er);
     return;
   }
   if (reader->typ & R_IS_CASCADING)
@@ -470,20 +470,12 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
   er->msglog[0] = 0;
   er->rc=reader_ecm(reader, er);
-  write_ecm_answer(reader, fd_c2m, er);
+  write_ecm_answer(reader, client[0].fd_m2c, er);
   reader_post_process(reader);
 #endif
   //fixme re-activated code for testing
   if(reader->typ=='r') reader->qlen--;
   //printf("queue: %d\n",reader->qlen);
-}
-
-static void reader_send_DCW(ECM_REQUEST *er)
-{
-  if ((er->rc<10) )
-    {
-      send_dcw(er);
-    }
 }
 
 static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
@@ -674,9 +666,6 @@ static void reader_do_pipe(struct s_reader * reader)
     case PIP_ID_ECM:
       reader_get_ecm(reader, (ECM_REQUEST *)ptr);
       break;
-    case PIP_ID_DCW:
-      reader_send_DCW((ECM_REQUEST *)ptr);
-      break;  
     case PIP_ID_EMM:
       reader_do_emm(reader, (EMM_PACKET *)ptr);
       break;

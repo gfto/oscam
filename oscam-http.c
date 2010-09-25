@@ -1788,8 +1788,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			else if ((client[i].tosleep) && (now-client[i].lastswitch>client[i].tosleep)) con=1;
 			else con=0;
 
-			if (i-cdiff>0) cnr=i-cdiff;
-			else cnr=(i>1) ? i-1 : 0;
+			cnr=(i>1) ? i-1 : 0;
 
 			if( (cau=client[i].au+1) && (now-client[i].lastemm)/60 > cfg->mon_aulow) cau=-cau;
 
@@ -2094,8 +2093,12 @@ void send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *p
 		tpl_printf(vars, 0, "SECONDS", "%d", SHUTDOWNREFRESH);
 		fputs(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
-		cs_exit(SIGQUIT);
-		kill(client[0].pid, SIGQUIT); // Test because running=0 seems to have no effect in server loop while socket is blocked/listen
+
+		int i;
+		for (i=1; i<CS_MAXPID; i++) {
+			kill_thread(i);
+		}
+		exit(SIGQUIT);
 	} else {
 		fputs(tpl_getTpl(vars, "PRESHUTDOWN"), f);
 	}
