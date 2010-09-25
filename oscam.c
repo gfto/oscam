@@ -309,12 +309,14 @@ void cs_exit(int sig)
   if (sig && (sig!=SIGQUIT))
     cs_log("exit with signal %d", sig);
 
+  struct s_client *cl = &client[cs_idx];
+  
   switch(client[cs_idx].typ)
   {
     case 'c':
     	cs_statistics(cs_idx);
-    	client[cs_idx].last_caid = 0xFFFF;
-    	client[cs_idx].last_srvid = 0xFFFF;
+    	cl->last_caid = 0xFFFF;
+    	cl->last_srvid = 0xFFFF;
     	cs_statistics(cs_idx);
     	break;
     case 'm': break;
@@ -357,6 +359,9 @@ void cs_exit(int sig)
 			if(client[i].req) 		free(client[i].req);
 			if(client[i].prefix) 	free(client[i].prefix);
 			if(client[i].cc) 		free(client[i].cc);
+			if(client[i].udp_fd)	close(client[i].udp_fd);
+			if(client[i].pfd)	close(client[i].pfd);
+
 			cs_log("thread %d ended!", i);
 			pthread_exit(NULL);
 			return;

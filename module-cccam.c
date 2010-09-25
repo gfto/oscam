@@ -345,11 +345,11 @@ void cc_cli_close() {
 	rdr->card_status = NO_CARD;
 	rdr->available = 0;
 	rdr->card_system = 0;
-	rdr->ncd_msgid = 0;
-	rdr->last_s = reader->last_g = 0;
+	//rdr->ncd_msgid = 0;
+	//rdr->last_s = reader->last_g = 0;
 
-	//network_tcp_connection_close(rdr, cl->udp_fd); Calls c_init, cc_cli_init !!
-	close(cl->udp_fd);
+	network_tcp_connection_close(rdr, cl->udp_fd); //Calls c_init, cc_cli_init !!
+	//close(cl->udp_fd);
 	cl->pfd = 0;
 	cl->udp_fd = 0;
 
@@ -2135,8 +2135,11 @@ int cc_recv(uchar *buf, int l) {
 
 	NULLFREE(cbuf);
 
-	if (!cl->is_server && (n == -1)) {
-		cc_cli_close();
+	if (n == -1) {
+		if (cl->is_server)
+			cs_disconnect_client();
+		else
+			cc_cli_close();
 	}
 
 	return n;
