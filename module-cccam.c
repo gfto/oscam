@@ -2619,9 +2619,8 @@ void cc_init_cc(struct cc_data *cc) {
 	//pthread_mutex_init(&cc->cards_busy, NULL);
 }
 
-int cc_srv_connect() {
+int cc_srv_connect(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_srv_connect in");
-	struct s_client *cl = &client[cs_idx];
 	int i;
 	ulong cmi;
 	uint8 buf[CC_MAXMSGSIZE];
@@ -2854,7 +2853,7 @@ void * cc_srv_init(struct s_client *cl ) {
 	//struct s_client *cl = &client[cs_idx];
 	cl->pfd = cl->udp_fd;
 	//cc_auth_client(cl->ip);
-	if (cc_srv_connect() < 0)
+	if (cc_srv_connect(cl) < 0)
 		cs_log("cccam: %d failed errno: %d (%s)", __LINE__, errno, strerror(
 				errno));
 	cs_disconnect_client();
