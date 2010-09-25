@@ -1739,9 +1739,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 					send_restart_cardreader(i, 1);
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0)
-		for (i = 0; i < CS_MAXREADER; i++)
-			if (reader[i].pid == atoi(getParam(params, "pid")))
-				send_clear_reader_stat(i);
+		send_clear_reader_stat(atoi(getParam(params, "ridx")));
 
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0)
@@ -1903,7 +1901,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 						if(ridx == client[i].ridx)
 						{
 							if (reader[ridx].lbvalue)
-								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&pid=%d\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", reader[ridx].pid, reader[ridx].lbvalue);
+								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&ridx=%d\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", ridx, reader[ridx].lbvalue);
 
 							switch(reader[ridx].card_status)
 							{
