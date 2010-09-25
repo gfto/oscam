@@ -1514,7 +1514,8 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 
 		if (found > 0) {
 			tpl_addVar(vars, 1, "MESSAGE", "<b>Account has been switched!</b><BR>");
-			refresh_oscam(REFR_ACCOUNTS, in);
+			if (write_userdb(cfg->account)==0)
+				refresh_oscam(REFR_ACCOUNTS, in);
 		} else tpl_addVar(vars, 1, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
 	}
 
@@ -1703,7 +1704,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			FILE *fp;
 			char filename[32];
 			char buffer[128];
-			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(), client[cs_idx].ridx);
+			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(), ridx);
 			fp = fopen(filename, "r");
 
 			if (fp) {
