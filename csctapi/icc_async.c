@@ -218,8 +218,8 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 		*card = TRUE;
 	else
 		*card = FALSE;
-
-	cs_debug_mask (D_IFD, "IFD: Status = %s", in ? "card": "no card");
+    // this debug is not really useful and polute the log in debug mode
+	// cs_debug_mask (D_IFD, "IFD: Status = %s", in ? "card": "no card");
 	
 	return OK;
 }
