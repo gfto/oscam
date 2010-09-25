@@ -73,22 +73,12 @@ char  cs_memfile[128]=CS_MMAPFILE;
 int get_csidx() {
 	int i;
 
-	for (i=0; i<CS_MAXPID; i++) {
+	for (i=1; i<CS_MAXPID; i++) {
 		if (pthread_equal(client[i].thread, pthread_self())) {
 			return i;
 		}
 	}
 	
-	cs_sleepms(100); //see Ticket #901
-
-	//Search again because of eventualy race condition
-	for (i=0; i<CS_MAXPID; i++) {
-		if (pthread_equal(client[i].thread, pthread_self())) {
-			return i;
-		}
-	}
-
-
 	return 0; // main process
 }
 
@@ -599,7 +589,6 @@ static void init_shm()
   client[0].ip=cs_inet_addr("127.0.0.1");
   client[0].typ='s';
   client[0].au=(-1);
-  client[0].thread=pthread_self();
 
   // get username master running under
   struct passwd *pwd;
