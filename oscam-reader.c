@@ -685,7 +685,11 @@ static void reader_do_pipe(struct s_reader * reader)
       reader_card_info(reader); 
 #endif
       break;
+    default:
+       cs_log("unhandled pipe message %d", pipeCmd);
+       break;
   }
+  if (ptr) free(ptr);
 }
 
 void reader_do_idle(struct s_reader * reader)

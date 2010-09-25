@@ -298,8 +298,6 @@ static void cs_sigpipe()
 
 void cs_exit(int sig)
 {
-  cs_debug_mask(D_TRACE, "cs_exit %d", sig);
-  
 	set_signal_handler(SIGCHLD, 1, SIG_IGN);
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
 
@@ -318,7 +316,6 @@ void cs_exit(int sig)
     	client[cs_idx].last_caid = 0xFFFF;
     	client[cs_idx].last_srvid = 0xFFFF;
     	cs_statistics(cs_idx);
-    	
     	break;
     case 'm': break;
     case 'n': break;
@@ -329,7 +326,6 @@ void cs_exit(int sig)
         }
         // close the device
         reader_device_close(&reader[client[cs_idx].ridx]);
-        
         break;
     case 'h':
     case 's':
@@ -357,7 +353,7 @@ void cs_exit(int sig)
 		if (pthread_equal(client[i].thread, pthread_self())) {
 			client[i].pid=0;
 			if(client[i].ecmtask) 	free(client[i].ecmtask);
-			if(client[i].ecmtask) 	free(client[i].emmcache);
+			if(client[i].emmcache) 	free(client[i].emmcache);
 			if(client[i].req) 		free(client[i].req);
 			if(client[i].prefix) 	free(client[i].prefix);
 			if(client[i].cc) 		free(client[i].cc);
@@ -1187,39 +1183,54 @@ void store_logentry(char *txt)
 #endif
 }
 
+// only for debug
+int get_thread_by_pipefd(int fd) {
+	int i;
+
+	if (fd==fd_c2m)
+		return 0;
+
+	for (i=1;i<CS_MAXPID;i++) {
+		if (fd==client[i].fd_m2c || fd==client[i].fd_m2c_c)
+			return i;
+
+	}
+	return -1;
+}
+
 /*
  * write_to_pipe():
  * write all kind of data to pipe specified by fd
  */
 int write_to_pipe(int fd, int id, uchar *data, int n)
 {
-  if( !fd ) {
-        cs_log("write_to_pipe: fd==0 id: %d", id);
-        return -1;
-  }
+	if (!fd) {
+		cs_log("write_to_pipe: fd==0 id: %d", id);
+		return -1;
+	}
 
-//printf("WRITE_START pid=%d", getpid()); fflush(stdout);
+	cs_debug("write to pipe %d (%s) cs_idx: %d to %d", fd, PIP_ID_TXT[id], cs_idx, get_thread_by_pipefd(fd));
 
-  uchar buf[1024+3+sizeof(int)];
+	uchar buf[3+sizeof(int)];
 
-  if ((id<0) || (id>PIP_ID_MAX))
-    return(PIP_ID_ERR);
-  memcpy(buf, PIP_ID_TXT[id], 3);
-  memcpy(buf+3, &n, sizeof(int));
-  memcpy(buf+3+sizeof(int), data, n);
-  n+=3+sizeof(int);
+	// fixme
+	// copy data to allocated memory
+	// needed for compatibility
+	// need to be freed after read_from_pipe
+	void *d = malloc(n);
+	memcpy(d, data, n);
 
-//n=write(fd, buf, n);
-//printf("WRITE_END pid=%d", getpid()); fflush(stdout);
-//return(n);
+	if ((id<0) || (id>PIP_ID_MAX))
+		return(PIP_ID_ERR);
 
-  if( !fd ) {
-    cs_log("write_to_pipe: fd==0");
-    return(PIP_ID_ERR);
-  }
+	memcpy(buf, PIP_ID_TXT[id], 3);
+	memcpy(buf+3, &d, sizeof(int));
 
-  return(write(fd, buf, n));
+	n=3+sizeof(int);
+
+	return(write(fd, buf, n));
 }
+
 
 /*
  * read_from_pipe():
@@ -1228,68 +1239,48 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
  */
 int read_from_pipe(int fd, uchar **data, int redir)
 {
-  int rc;
-  int hdr=0;
-  uchar buf[1024+1+3+sizeof(int)];
+	int rc, hdr;
+	uchar buf[3+sizeof(int)];
+	memset(buf, 0, 3+sizeof(int));
 
-  *data=(uchar *)0;
-  rc=PIP_ID_NUL;
+	redir=redir;
+	*data=(uchar *)0;
+	rc=PIP_ID_NUL;
 
-  if (!hdr)
-  {
-    if (bytes_available(fd))
-    {
-      if (read(fd, buf, 3+sizeof(int))==3+sizeof(int))
-        memcpy(&hdr, buf+3, sizeof(int));
-      else
-        cs_log("WARNING: pipe header to small !");
-    }
-  }
-  if (hdr)
-  {
-    int l;
-    for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)
-      if (!memcmp(buf, PIP_ID_TXT[l], 3))
-        rc=l;
+	if (bytes_available(fd)) {
+		if (read(fd, buf, 3+sizeof(int))==3+sizeof(int)) {
+			memcpy(&hdr, buf+3, sizeof(int));
+		} else {
+			cs_log("WARNING: pipe header to small !");
+			return PIP_ID_ERR;
+		}
+	} else {
+		cs_log("!bytes_available(fd)");
+		return PIP_ID_NUL;
+	}
 
-    if (rc<0)
-    {
-      fprintf(stderr, "WARNING: pipe garbage from pipe %i", fd);
-      fflush(stderr);
-      cs_log("WARNING: pipe garbage from pipe %i", fd);
-      rc=PIP_ID_ERR;
-    }
-    else
-    {
-      l=hdr;
-      if ((l+3-1+sizeof(int))>sizeof(buf))
-      {
-        cs_log("WARNING: packet size (%d) to large", l);
-        l=sizeof(buf)+3-1+sizeof(int);
-      }
-      if (!bytes_available(fd))
-        return(PIP_ID_NUL);
-      hdr=0;
-      if (read(fd, buf+3+sizeof(int), l)==l)
-        *data=buf+3+sizeof(int);
-      else
-      {
-        cs_log("WARNING: pipe data to small !");
-        return(PIP_ID_ERR);
-      }
-      buf[l+3+sizeof(int)]=0;
-      if ((redir) && (rc==PIP_ID_ECM))
-      {
-        //int idx;
-        ECM_REQUEST *er;
-        er=(ECM_REQUEST *)(buf+3+sizeof(int));
-        if( er->cidx && client[er->cidx].fd_m2c )
-            if (!write(client[er->cidx].fd_m2c, buf, l+3+sizeof(int))) cs_exit(1);
-        rc=PIP_ID_DIR;
-      }
-    }
-  }
-  return(rc);
+	uchar id[4];
+	memcpy(id, buf, 3);
+	id[3]='\0';
+
+	cs_debug("read from pipe %d (%s) cs_idx: %d from %d", fd, id, cs_idx, get_thread_by_pipefd(fd));
+
+	int l;
+	for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)
+		if (!memcmp(buf, PIP_ID_TXT[l], 3))
+			rc=l;
+
+	if (rc<0) {
+		fprintf(stderr, "WARNING: pipe garbage from pipe %i", fd);
+		fflush(stderr);
+		cs_log("WARNING: pipe garbage from pipe %i", fd);
+		rc=PIP_ID_ERR;
+		return rc;
+	}
+
+	*data = (void*)hdr;
+
+	return(rc);
 }
 
 /*
@@ -1406,6 +1397,11 @@ int write_ecm_answer(struct s_reader * reader, int fd, ECM_REQUEST *er)
   /* CWL logging only if cwlogdir is set in config */
   if (cfg->cwlogdir != NULL)
     logCWtoFile(er);
+  }
+
+  if( er->cidx && client[er->cidx].fd_m2c ) {
+	//fixme
+	fd=client[er->cidx].fd_m2c;
   }
 
   return(write_ecm_request(fd, er));
@@ -1759,6 +1755,7 @@ void chk_dcw(int fd)
     else send_reader_stat(save_ridx, save_ert, 4);
   }
   if (ert) send_dcw(ert);
+  if (er) free(er);
   return;
 }
 
@@ -2554,7 +2551,7 @@ static void process_master_pipe(int mfdr)
     	cs_accounts_chk();
     	break;
     case PIP_ID_RST:{ //Restart Cardreader with ridx=prt[0] 
-        int *restart_info = (int *)ptr;
+       int *restart_info = (int *)ptr;
     	restart_cardreader(restart_info[0], restart_info[1]);
     	break; }
     case PIP_ID_KCL: //Kill all clients
@@ -2563,7 +2560,11 @@ static void process_master_pipe(int mfdr)
     case PIP_ID_RES: //Reset reader statistics
     	clear_reader_stat(*(int*)ptr);
     	break;
+    default:
+       cs_log("unhandled pipe message %d", n);
+       break;
   }
+  if (ptr) free(ptr);
 }
 
 void cs_log_config()
