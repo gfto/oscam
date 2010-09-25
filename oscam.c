@@ -78,6 +78,16 @@ int get_csidx() {
 			return i;
 		}
 	}
+	
+	sleep(10); //see Ticket #901
+
+	//Search again because of eventualy race condition
+	for (i=1; i<CS_MAXPID; i++) {
+		if (pthread_equal(client[i].thread, pthread_self())) {
+			return i;
+		}
+	}
+
 
 	return 0; // main process
 }
