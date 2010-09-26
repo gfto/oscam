@@ -31,7 +31,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 #endif
 	if (cfg->saveinithistory) {
 		FILE *fp;
-		char filename[32];
+		char filename[256];
 		char *buffer;
 		sprintf(filename, "%s/reader%d", get_tmp_dir(), client[cs_idx].ridx);
 		int size = reader->init_history_pos+strlen(txt)+1;

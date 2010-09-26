@@ -2821,23 +2821,28 @@ int main (int argc, char *argv[])
 
   while ((i=getopt(argc, argv, "bc:t:d:hm:"))!=EOF)
   {
-    switch(i)
-    {
-      case 'b': bg=1;
-                break;
-      case 'c': cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir));
-                break;
-      case 'd': cs_dblevel=atoi(optarg);
-                break;
-      case 't': cs_strncpy(cs_tmpdir, optarg, sizeof(cs_tmpdir));
-      case 'm':
+	  switch(i) {
+		  case 'b':
+			  bg=1;
+			  break;
+		  case 'c':
+			  cs_strncpy(cs_confdir, optarg, sizeof(cs_confdir));
+			  break;
+		  case 'd':
+			  cs_dblevel=atoi(optarg);
+			  break;
+		  case 't':
+			  cs_strncpy(cs_tmpdir, optarg, sizeof(cs_tmpdir));
+			  break;
+		  case 'm':
 #ifdef CS_NOSHM
-                cs_strncpy(cs_memfile, optarg, sizeof(cs_memfile));
-                break;
+			  cs_strncpy(cs_memfile, optarg, sizeof(cs_memfile));
+			  break;
 #endif
-      case 'h':
-      default : usage();
-    }
+		  case 'h':
+		  default :
+			  usage();
+	  }
   }
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
   init_shm();

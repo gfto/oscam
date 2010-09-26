@@ -82,7 +82,7 @@ void clear_from_cache(int caid)
 
 void load_stat_from_file(int ridx)
 {
-	char fname[40];
+	char fname[256];
 	sprintf(fname, "%s/stat.%d", get_tmp_dir(), ridx);
 	FILE *file = fopen(fname, "r");
 	if (!file)
@@ -181,7 +181,7 @@ void calc_stat(READER_STAT *stat)
 void save_stat_to_file(int ridx)
 {
 	pthread_mutex_lock(&stat_busy);
-	char fname[40];
+	char fname[256];
 	sprintf(fname, "%s/stat.%d", get_tmp_dir(), ridx);
 	if (!reader_stat[ridx] || !llist_count(reader_stat[ridx])) {
 		remove(fname);

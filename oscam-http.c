@@ -1702,7 +1702,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 			// normal non-cccam reader
 			FILE *fp;
-			char filename[32];
+			char filename[256];
 			char buffer[128];
 			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(), ridx);
 			fp = fopen(filename, "r");
