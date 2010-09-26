@@ -345,11 +345,11 @@ void cc_cli_close() {
 	rdr->card_status = NO_CARD;
 	rdr->available = 0;
 	rdr->card_system = 0;
-	//rdr->ncd_msgid = 0;
-	//rdr->last_s = reader->last_g = 0;
+	rdr->ncd_msgid = 0;
+	rdr->last_s = reader->last_g = 0;
 
-	network_tcp_connection_close(rdr, cl->udp_fd); //Calls c_init, cc_cli_init !!
-	//close(cl->udp_fd);
+	//network_tcp_connection_close(rdr, cl->udp_fd); //Calls c_init, cc_cli_init -->recursive crash
+	close(cl->udp_fd);
 	cl->pfd = 0;
 	cl->udp_fd = 0;
 
