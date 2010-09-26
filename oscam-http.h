@@ -587,7 +587,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
       <TD align=\"center\"><A HREF=\"readerconfig.html?reader=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG SRC=\"##EDIICO##\" BORDER=\"0\" ALT=\"Edit Reader\"/></A></TD>\
       <TD align=\"center\">##ENTITLEMENT##</TD>\n\
 	  <TD align=\"center\">##READERREFRESH##</TD>\n\
-	  <TD align=\"center\"><A HREF=\"readerstats.html?reader=##READERID##\" TITLE=\"Show loadbalancer statistics\"><IMG SRC=\"##STATICO##\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"/></A></TD>\n\
+	  <TD align=\"center\"><A HREF=\"readerstats.html?reader=##READERID##&hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG SRC=\"##STATICO##\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"/></A></TD>\n\
       </TR>\n"
 
 #define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?reader=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"/></A>\n"
@@ -597,7 +597,14 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 #define TPLREADERSTATS "\
 ##TPLHEADER##\
 ##TPLMENU##\n\
-<BR><BR>\n\
+	<BR><BR>\n\
+	<TABLE border=0 class=\"configmenu\">\n\
+		<TR>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?reader=##READERID##&hide=-1\">show all</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?reader=##READERID##&hide=4\">hide 'not found'</A></TD>\n\
+		</TR>\n\
+	</TABLE>\
+	<BR><BR>\n\
 	<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
 	<TR><TH colspan=\"6\"> Loadbalance statistics for reader ##READERNAME##</TH></TR>\n\
 	<TR><TH>Channel</TH><TH>Channelname</TH><TH>Result</TH><TH>Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\

@@ -1202,13 +1202,20 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparams *params) {
 
+
 	int readeridx = atoi(getParam(params, "reader"));
-	tpl_printf(vars, 0, "READERNAME", "%s",reader[readeridx].label);
+
+	tpl_printf(vars, 0, "READERID", "%d", readeridx);
+	tpl_printf(vars, 0, "READERNAME", "%s", reader[readeridx].label);
 
 	char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
 			"fake", "invalid", "corrupt", "no card", "expdate",
 			"disabled", "stopped"};
+
+	int rc2hide = (-1);
+	if (strlen(getParam(params, "hide")) > 0)
+			rc2hide = atoi(getParam(params, "hide"));
 
 	LLIST_ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[readeridx], &itr);
@@ -1216,19 +1223,23 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	pthread_mutex_lock(&stat_busy);
 	if (stat) {
 		while (stat) {
-			tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
-			tpl_printf(vars, 0, "CHANNELNAME","%s", get_servicename(stat->srvid, stat->caid));
-			tpl_printf(vars, 0, "RC", "%s", stxt[stat->rc]);
-			tpl_printf(vars, 0, "TIME", "%dms", stat->time_avg);
-			tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
 
-			if(stat->last_received) {
-				struct tm *lt = localtime(&stat->last_received);
-				tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100, lt->tm_hour, lt->tm_min, lt->tm_sec);
-			} else {
-				tpl_addVar(vars, 0, "LAST","never");
+			if (!(stat->rc == rc2hide)) {
+
+				tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
+				tpl_printf(vars, 0, "CHANNELNAME","%s", get_servicename(stat->srvid, stat->caid));
+				tpl_printf(vars, 0, "RC", "%s", stxt[stat->rc]);
+				tpl_printf(vars, 0, "TIME", "%dms", stat->time_avg);
+				tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
+
+				if(stat->last_received) {
+					struct tm *lt = localtime(&stat->last_received);
+					tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100, lt->tm_hour, lt->tm_min, lt->tm_sec);
+				} else {
+					tpl_addVar(vars, 0, "LAST","never");
+				}
+				tpl_addVar(vars, 1, "READERSTATSROW", tpl_getTpl(vars, "READERSTATSBIT"));
 			}
-			tpl_addVar(vars, 1, "READERSTATSROW", tpl_getTpl(vars, "READERSTATSBIT"));
 
 			stat = llist_itr_next(&itr);
 		}
