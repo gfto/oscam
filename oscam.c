@@ -218,8 +218,7 @@ static int idx_from_ip(in_addr_t ip, in_port_t port)
 {
   int i, idx;
   for (i=idx=0; (i<CS_MAXPID) && (!idx); i++)
-    if ((client[i].ip==ip) && (client[i].port==port) &&
-        ((client[i].typ=='c') || (client[i].typ=='m')))
+    if (client[i].pid && (client[i].ip==ip) && (client[i].port==port) && ((client[i].typ=='c') || (client[i].typ=='m')))
       idx=i;
   return(idx);
 }
@@ -354,7 +353,6 @@ void cs_exit(int sig)
 			if(client[i].req) 		free(client[i].req);
 			if(client[i].prefix) 	free(client[i].prefix);
 			if(client[i].cc) 		free(client[i].cc);
-			if(client[i].udp_fd)	close(client[i].udp_fd);
 			if(client[i].pfd)	close(client[i].pfd);
 
 			cs_log("thread %d ended!", i);
@@ -2476,8 +2474,8 @@ int process_input(uchar *buf, int l, int timeout)
   if (!client[cs_idx].pfd) return(-1);
   cs_ftime(&tp);
   tp.time+=timeout;
-  if (ph[client[cs_idx].ctyp].watchdog)
-      alarm(cfg->cmaxidle + (cfg->ctimeout + 500) / 1000 + 1);
+  //if (ph[client[cs_idx].ctyp].watchdog)
+  //    alarm(cfg->cmaxidle + (cfg->ctimeout + 500) / 1000 + 1);
   while (1)
   {
     FD_ZERO(&fds);
@@ -2505,8 +2503,8 @@ int process_input(uchar *buf, int l, int timeout)
       break;
     }
   }
-  if (ph[client[cs_idx].ctyp].watchdog)
-      alarm(cfg->cmaxidle + (cfg->ctimeout + 500) / 1000 + 1);
+  //if (ph[client[cs_idx].ctyp].watchdog)
+  //    alarm(cfg->cmaxidle + (cfg->ctimeout + 500) / 1000 + 1);
   return(rc);
 }
 
