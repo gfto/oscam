@@ -50,6 +50,11 @@ unique level:
 time waiting for inactive user, default:none
 .RE
 .PP
+\fBsleepsend\fP = \fB0\fP|\fB255\fP
+.RS 3n
+255 = \fIOSCam client only\fR: stopping requests until next zap, 255 = \fIcamd3 only\fR: stopping requests until restart of camd3 client, default:0
+.RE
+.PP
 \fBcaid\fP = \fB<CAID>[&<mask>][:<CAID>[&<mask>]...\fP
 .RS 3n
 limit CAIDs, default:all CAIDs, \fIrequired\fR

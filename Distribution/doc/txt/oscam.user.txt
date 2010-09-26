@@ -41,6 +41,10 @@ DESCRIPTIONS
        sleep = minutes
 	  time waiting for inactive user, default:none
 
+       sleepsend = 0|255
+	  255 = OSCam client only: stopping requests until next zap, 255 = camd3 only: stopping requests until restart of
+	  camd3 client, default:0
+
        caid = <CAID>[&<mask>][:<CAID>[&<mask>]...
 	  limit CAIDs, default:all CAIDs, required
 
@@ -132,7 +136,7 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       list_smargo(1),	  oscam(1),    oscam.ac(5),    oscam.cert(5),	 oscam.conf(5),   oscam.guess(5),   oscam.ird(5),
+       list_smargo(1),	 oscam(1),   oscam.ac(5),    oscam.cert(5),    oscam.conf(5),	 oscam.guess(5),    oscam.ird(5),
        oscam.provid(5), oscam.server(5), oscam.services(5), oscam.tiers(5), oscam.srvid(5)
 
 
