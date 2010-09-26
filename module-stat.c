@@ -12,7 +12,6 @@
 
 static int stat_load_save = 0;
 static struct timeb nulltime;
-static pthread_mutex_t stat_busy;
 
 int ecm_send_cache_idx = 0;
 typedef struct s_ecm_send_cache {

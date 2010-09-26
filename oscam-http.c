@@ -1213,6 +1213,7 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	LLIST_ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[readeridx], &itr);
 
+	pthread_mutex_lock(&stat_busy);
 	if (stat) {
 		while (stat) {
 			tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
@@ -1231,7 +1232,9 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 
 			stat = llist_itr_next(&itr);
 		}
+		pthread_mutex_unlock(&stat_busy);
 	} else {
+		pthread_mutex_unlock(&stat_busy);
 		tpl_addVar(vars, 1, "READERSTATSROW","<TR><TD colspan=\"6\"> No statistics found </TD></TR>");
 	}
 
