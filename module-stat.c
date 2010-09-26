@@ -10,6 +10,7 @@
 #define DEFAULT_NBEST 1
 #define DEFAULT_NFB 1
 
+static int stat_load_save = 0;
 static struct timeb nulltime;
 static pthread_mutex_t stat_busy;
 

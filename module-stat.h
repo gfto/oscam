@@ -2,7 +2,6 @@
 #include "module-obj-llist.h"
 
 LLIST *reader_stat[CS_MAXREADER];
-static int stat_load_save = 0;
 
 extern struct s_reader *reader;
 

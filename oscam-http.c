@@ -1,5 +1,4 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
-#include "globals.h"
 #ifdef WEBIF
 //
 // OSCam HTTP server module
@@ -11,8 +10,10 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/socket.h>
+#include "globals.h"
 #include "oscam-http-helpers.c"
 #include "module-cccam.h"
+#include "module-stat.h"
 
 extern struct s_reader *reader;
 
@@ -1200,76 +1201,38 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 }
 
 void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparams *params) {
-	int readeridx = atoi(getParam(params, "reader"));
 
+	int readeridx = atoi(getParam(params, "reader"));
 	tpl_printf(vars, 0, "READERNAME", "%s",reader[readeridx].label);
 
 	char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
-			"fake", "invalid", "corrupt", "no card", "expdate", "disabled", "stopped"};
+			"fake", "invalid", "corrupt", "no card", "expdate",
+			"disabled", "stopped"};
 
-	char fname[40];
-	sprintf(fname, "%s/stat.%d", get_tmp_dir(), readeridx);
-	FILE *file = fopen(fname, "r");
-	if (file){
+	LLIST_ITR itr;
+	READER_STAT *stat = llist_itr_init(reader_stat[readeridx], &itr);
 
-		int i = 0;
-		int rc, caid, servid, time_avg, ecm_count;
-		long prid, last_received;
-		struct s_srvid *srvid = cfg->srvid;
+	if (stat) {
+		while (stat) {
+			tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
+			tpl_printf(vars, 0, "CHANNELNAME","%s", get_servicename(stat->srvid, stat->caid));
+			tpl_printf(vars, 0, "RC", "%s", stxt[stat->rc]);
+			tpl_printf(vars, 0, "TIME", "%dms", stat->time_avg);
+			tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
 
-		do
-		{
-			i = fscanf(file, "rc %d caid %04X prid %06lX srvid %04X time avg %dms ecms %d last %ld\n",
-					&rc, &caid, &prid, &servid, &time_avg, &ecm_count, &last_received);
-
-			if (i > 4) {
-				tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", caid, prid, servid);
-
-				int j, found = 0;
-				srvid = cfg->srvid;
-
-				while (srvid != NULL) {
-					if (srvid->srvid == servid) {
-						for (j=0; j < srvid->ncaid; j++) {
-							if (srvid->caid[j] == caid) {
-								found = 1;
-								break;
-							}
-						}
-					}
-					if (found == 1)
-						break;
-					else
-						srvid = srvid->next;
-				}
-
-				if (found == 1)
-					tpl_printf(vars, 0, "CHANNELNAME","%s : %s", srvid->prov, srvid->name);
-				else
-					tpl_addVar(vars, 0, "CHANNELNAME","unknown");
-
-
-				tpl_printf(vars, 0, "RC", "%s", stxt[rc]);
-				tpl_printf(vars, 0, "TIME", "%dms", time_avg);
-				tpl_printf(vars, 0, "COUNT", "%d", ecm_count);
-
-				if(last_received) {
-					struct tm *lt = localtime(&last_received);
-					tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100, lt->tm_hour, lt->tm_min, lt->tm_sec);
-				} else {
-					tpl_addVar(vars, 0, "LAST","never");
-				}
-
-
-				tpl_addVar(vars, 1, "READERSTATSROW", tpl_getTpl(vars, "READERSTATSBIT"));
+			if(stat->last_received) {
+				struct tm *lt = localtime(&stat->last_received);
+				tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100, lt->tm_hour, lt->tm_min, lt->tm_sec);
+			} else {
+				tpl_addVar(vars, 0, "LAST","never");
 			}
+			tpl_addVar(vars, 1, "READERSTATSROW", tpl_getTpl(vars, "READERSTATSBIT"));
 
-		} while(i != EOF && i > 0);
-		fclose(file);
-
+			stat = llist_itr_next(&itr);
+		}
 	} else {
-		tpl_addVar(vars, 1, "READERSTATSROW","<TR><TD colspan=\"6\"> No statisticsfile found </TD></TR>");
+		tpl_addVar(vars, 1, "READERSTATSROW","<TR><TD colspan=\"6\"> No statistics found </TD></TR>");
 	}
 
 	fputs(tpl_getTpl(vars, "READERSTATS"), f);
