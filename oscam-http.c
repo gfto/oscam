@@ -878,27 +878,39 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			//printf("param %s value %s\n",(*params).params[i], (*params).values[i]);
 		}
 		chk_reader("services", servicelabels, &reader[ridx]);
-		if(write_server()==0) refresh_oscam(REFR_READERS, in);
-		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+
+		if(write_server()==0)
+			refresh_oscam(REFR_READERS, in);
+		else
+			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 
 	for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
 
 	tpl_addVar(vars, 0, "READERNAME", reader[ridx].label);
+
 	if(reader[ridx].enable)
 		tpl_addVar(vars, 0, "ENABLED", "checked");
 
 	tpl_printf(vars, 0, "ACCOUNT",  "%s,%s\n", reader[ridx].r_usr, reader[ridx].r_pwd);
-	for (i=0; i<14; i++) tpl_printf(vars, 1, "NCD_KEY", "%02X", reader[ridx].ncd_key[i]);
+
+	for (i=0; i<14; i++)
+		tpl_printf(vars, 1, "NCD_KEY", "%02X", reader[ridx].ncd_key[i]);
+
 	tpl_addVar(vars, 0, "PINCODE", reader[ridx].pincode);
 	//tpl_addVar(vars, 0, "EMMFILE", (char *)reader[ridx].emmfile);
 	tpl_printf(vars, 0, "INACTIVITYTIMEOUT", "%d", reader[ridx].tcp_ito);
 	tpl_printf(vars, 0, "RECEIVETIMEOUT", "%d", reader[ridx].tcp_rto);
 	tpl_printf(vars, 0, "DISABLESERVERFILTER", "%d", reader[ridx].ncd_disable_server_filt);
+
 	if(reader[ridx].fallback)
 		tpl_addVar(vars, 0, "FALLBACKCHECKED", "checked");
+
 	tpl_printf(vars, 0, "LOGPORT", "%d", reader[ridx].log_port);
-	tpl_printf(vars, 0, "BOXID", "%08X", reader[ridx].boxid);
+
+	if(reader[ridx].boxid)
+		tpl_printf(vars, 0, "BOXID", "%08X", reader[ridx].boxid);
+
 	tpl_addVar(vars, 0, "USER", reader[ridx].r_usr);
 	tpl_addVar(vars, 0, "PASS", reader[ridx].r_pwd);
 
@@ -911,9 +923,20 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if(reader[ridx].force_irdeto)
 		tpl_addVar(vars, 0, "FORCEIRDETOCHECKED", "checked");
 
+	//aeskey
+	int has_aeskey = 0;
+	for (i = 0; i < 16 ;i++) {
+		if(reader[ridx].aes_key[i]) {
+			has_aeskey++;
+		}
+	}
+	if (has_aeskey) {
+		for (i = 0; i < 16; i++) tpl_printf(vars, 1, "AESKEY", "%02X", reader[ridx].aes_key[i]);
+	}
+
 	//check for tiger
 	int tigerkey = 0;
-	for (i=64;i<120;i++) {
+	for (i = 64; i < 120; i++) {
 		if(reader[ridx].rsa_mod[i] > 0) {
 			tigerkey = 1;
 			break;
