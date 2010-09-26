@@ -1,6 +1,6 @@
 // ADDONS
 #ifndef WEBIF
-// #define WEBIF
+//#define WEBIF
 #endif
 
 #ifndef HAVE_DVBAPI

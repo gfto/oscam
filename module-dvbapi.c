@@ -393,6 +393,8 @@ void dvbapi_set_pid(int demux_id, int num, int index) {
 		default:
 			for (i=0;i<8;i++) {
 				if (demux[demux_id].ca_mask & (1 << i)) {
+					if (ca_fd[i]<=0)
+						ca_fd[i]=dvbapi_open_device(1, i);
 					if (ca_fd[i]>0) {
 						ca_pid_t ca_pid2;
 						memset(&ca_pid2,0,sizeof(ca_pid2));
