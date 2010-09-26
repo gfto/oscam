@@ -2498,7 +2498,7 @@ int cc_srv_report_cards() {
 			}
 		}
 
-		if (reader[r].typ == R_CCCAM && !flt && reader[r].fd) {
+		if (reader[r].typ == R_CCCAM && !flt) {
 
 			cs_debug_mask(D_TRACE, "%s asking reader %s for cards...",
 					getprefix(), reader[r].label);
@@ -2617,6 +2617,28 @@ void cc_init_cc(struct cc_data *cc) {
 	//pthread_mutex_init(&cc->lock, NULL);
 	//pthread_mutex_init(&cc->ecm_busy, NULL);
 	//pthread_mutex_init(&cc->cards_busy, NULL);
+}
+
+/**
+ * Starting readers to get cards:
+ **/
+int cc_srv_wakeup_readers(struct s_client *cl) {
+	int r;
+	int wakeup = 0;
+	for (r = 0; r < CS_MAXREADER; r++) {
+		if (reader[r].typ != R_CCCAM)
+			continue;
+		if (!reader[r].fd || !reader[r].enable || reader[r].deleted || reader[r].tcp_connected == 2)
+			continue;
+		if (!(reader[r].grp & cl->grp))
+			continue;
+	
+		//This wakeups the reader:
+		uchar dummy;
+		write_to_pipe(reader[r].fd, PIP_ID_CIN, &dummy, sizeof(dummy));
+		wakeup++;
+	}
+	return wakeup;
 }
 
 int cc_srv_connect(struct s_client *cl) {
@@ -2777,6 +2799,9 @@ int cc_srv_connect(struct s_client *cl) {
 		return -1;
 	//cs_auth_client((struct s_auth *)(-1), NULL);
 
+	//Starting readers to get cards:
+	int wakeup = cc_srv_wakeup_readers(cl);
+	
 	// send passwd ack
 	memset(buf, 0, 20);
 	memcpy(buf, "CCcam\0", 6);
@@ -2794,6 +2819,7 @@ int cc_srv_connect(struct s_client *cl) {
 	cs_log("%s client '%s' (%s) running v%s (%s)", getprefix(), buf + 4,
 			cs_hexdump(0, cc->peer_node_id, 8), buf + 33, buf + 65);
 
+	
 	// send cli data ack
 	cc_cmd_send(NULL, 0, MSG_CLI_DATA);
 
@@ -2802,6 +2828,10 @@ int cc_srv_connect(struct s_client *cl) {
 
 	// report cards
 	ulong hexserial_crc = get_reader_hexserial_crc();
+	
+	if (wakeup > 0) //give readers time to get cards:
+	  cs_sleepms(500);
+	
 	cc_srv_report_cards();
 	cs_ftime(&cc->ecm_time);
 

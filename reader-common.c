@@ -229,8 +229,6 @@ void reader_card_info(struct s_reader * reader)
 		cardsystem[reader->card_system-1].card_info(reader);
 	}
   }
-  if (reader->ph.c_card_info)
-  	reader->ph.c_card_info();
 }
 
 static int reader_get_cardsystem(struct s_reader * reader, ATR atr)

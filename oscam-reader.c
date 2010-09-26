@@ -656,6 +656,15 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
   return(0);
 }
 
+void reader_do_card_info(struct s_reader * reader)
+{
+#ifdef WITH_CARDREADER
+      reader_card_info(reader); 
+#endif
+      if (reader->ph.c_card_info)
+      	reader->ph.c_card_info();
+}
+
 static void reader_do_pipe(struct s_reader * reader)
 {
   uchar *ptr;
@@ -670,9 +679,7 @@ static void reader_do_pipe(struct s_reader * reader)
       reader_do_emm(reader, (EMM_PACKET *)ptr);
       break;
     case PIP_ID_CIN: 
-#ifdef WITH_CARDREADER
-      reader_card_info(reader); 
-#endif
+      reader_do_card_info(reader);
       break;
     default:
        cs_log("unhandled pipe message %d", pipeCmd);
