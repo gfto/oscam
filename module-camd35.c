@@ -308,7 +308,7 @@ static void * camd35_server(void *cli)
   }
   memset(client->req, 0, CS_MAXPENDING*REQ_SIZE);
 
-  client->is_udp = (ph[client[cs_idx].ctyp].type == MOD_CONN_UDP);
+  client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
 
   while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
   {
@@ -327,7 +327,7 @@ static void * camd35_server(void *cli)
     }
   }
 
-  if(client->req) { free(client[cs_idx].req); client[cs_idx].req=0;}
+  if(client->req) { free(client->req); client->req=0;}
 
   cs_disconnect_client();
   return NULL; //to prevent compiler message
