@@ -2392,7 +2392,7 @@ int write_server()
 			if (reader[i].tcp_ito && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "inactivitytimeout", "%d\n", reader[i].tcp_ito);
 
-			if (reader[i].tcp_rto && !isphysical && !reader[i].tcp_rto == 30)
+			if (reader[i].tcp_rto && !isphysical )
 				fprintf_conf(f, CONFVARWIDTH, "reconnecttimeout", "%d\n", reader[i].tcp_rto);
 
 			if (reader[i].ncd_disable_server_filt && !isphysical)
