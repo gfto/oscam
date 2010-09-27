@@ -451,7 +451,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			else 
 			{
 				int seconds = cfg->lb_reopen_seconds;
-				if (!reader[i].audisabled && (!client[grs->cidx].autoau || client[grs->cidx].au != i))
+				if (!reader[i].audisabled && (client[grs->cidx].autoau || client[grs->cidx].au == i))
 					seconds = seconds/10;
 				
 				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
@@ -468,7 +468,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	int best_ridx = -1;
 
 	nfb_readers += nbest_readers;
-
+	
 	int n=0;
 	for (i=0;i<CS_MAXREADER;i++) {
 		int best=0;
@@ -499,6 +499,11 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			else
 				break;
 		}
+	}
+	
+	if (!n) {
+		cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, trying all readers");
+		memcpy(result, grs->reader_avail, sizeof(grs->reader_avail));
 	}
 
 	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
