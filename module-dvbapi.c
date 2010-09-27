@@ -445,10 +445,10 @@ void dvbapi_start_descrambling(int demux_id) {
 
 static void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int len)
 {
-    int w=0, c=-1;
+    int w=0, c=-1, j=0;
     while(1) {
         int n=0x100;
-        for(int j=0; j<len;) {
+        for(j=0; j<len;) {
             int l=src[j+1]+2;
             if(src[j]==c) {
                 if(w+l>len) {
