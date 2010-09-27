@@ -443,6 +443,32 @@ void dvbapi_start_descrambling(int demux_id) {
 		dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x01, 0xFF, 0, TYPE_EMM); //CAT
 }
 
+static void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int len)
+{
+    int w=0, c=-1;
+    while(1) {
+        int n=0x100;
+        for(int j=0; j<len;) {
+            int l=src[j+1]+2;
+            if(src[j]==c) {
+                if(w+l>len) {
+                    cs_debug("sortnanos: sanity check failed. Exceeding memory area. Probably corrupted nanos!");
+                    memset(dest,0,len); // zero out everything
+                    return;
+                }
+                memcpy(&dest[w],&src[j],l);
+                w+=l;
+            }
+            else if(src[j]>c && src[j]<n)
+                n=src[j];
+            j+=l;
+        }
+        if(n==0x100) break;
+        c=n;
+    }
+}
+
+
 void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer, unsigned int len) {
 	EMM_PACKET epg;
 	static uchar emm_global[512];
@@ -550,32 +576,48 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
       			// on nagra. Auprovid filter is in oscam.c do_emm()
 			if (len>500) return;
 			switch (buffer[0]) {
-				case 0x86:
+				case 0x84:
 					if (!memcmp(emm_global, buffer, len)) return;
 					//cs_log("provider %06X - %02X", provider , buffer[7]);
 					memcpy(emm_global, buffer, len);
 					emm_global_len=len;
-					cs_ddump(buffer, len, "cryptoworks global emm:");
+					cs_ddump(buffer, len, "cryptoworks shared emm (EMM-SH):");
 					return;
-				case 0x84:
+				case 0x86:
 					if (!emm_global_len) return;
+					cs_ddump(buffer, len, "cryptoworks shared emm (EMM-SB):");
 
-					if (buffer[18] == 0x86) return;
+					// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
+					// now we need to append the payload of the 0x86 emm (EMM-SB)
+					// starting after the header (buffer[5])
+					// then the rest of the payload from EMM-SH
+					// so we should have :
+					// EMM-SH[0:12] + EMM-SB[5:len_EMM-SB] + EMM-SH[12:EMM-SH_len]
+					// and we need to update the emm len (emmBuf[1:2]
+					pos=12;    
+				    emm_len=len-5 + emm_global_len-12;
+                    unsigned char *tmp=malloc(emm_len);
+                    unsigned char *assembled_EMM=malloc(emm_len+12);
 
-					memcpy(emmbuf, buffer, 18);
-					pos=18;
-					for (k=5; k<emm_global[2]+2 && k<emm_global_len; k += emm_global[k+1]+2) {
-						memcpy(emmbuf+pos, emm_global+k, emm_global[k+1]+2);
-						pos += emm_global[k+1]+2;
-					}
-					memcpy(emmbuf+pos, buffer+18, len-18);
-					emm_len=pos+(len-18);
-					emmbuf[2]=emm_len-3;
-					emmbuf[11]=emm_len-3-9;
-					cs_ddump(buffer, len, "original emm:");
-					memcpy(buffer, emmbuf, emm_len);
+                    memcpy(tmp,&buffer[5], len-5);
+                    memcpy(tmp+len-5,&emm_global[12],emm_global_len-12);
+
+                    memcpy(assembled_EMM,emm_global,12);
+                    dvbapi_sort_nanos(assembledEMM+12,tmp,emm_len);
+
+                    assembledEMM[1]=((emm_len+9)>>8) | 0x70;
+                    assembledEMM[2]=(emm_len+9) & 0xFF;
+
+					memcpy(buffer, assembledEMM, emm_len);
 					len=emm_len;
-				
+				    free(tmp);
+				    free(assembledEMM);
+                    if(assembledEMM[11]!=emm_len) { // sanity check
+                        // error in emm assembly
+                        return;
+                    }
+                    cs_ddump(buffer, len, "cryptoworks shared emm (assembled):");
+
 					break;
 			}
 			break;
