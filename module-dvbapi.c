@@ -544,6 +544,10 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
             // it should be all data from id 0x84 and then append the data from id 0x86
             // I'll work on a fix (RoRoTheTroll)
             // 
+      			// Whoever implement the fix - could you have a look at setting a right provid
+      			// in each EMM struct? In the moment just in nagra is a right provid and in CW
+      			// we found smthg but not the right provid. This is why _auprovid_ work just
+      			// on nagra. Auprovid filter is in oscam.c do_emm()
 			if (len>500) return;
 			switch (buffer[0]) {
 				case 0x86:
