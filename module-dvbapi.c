@@ -603,16 +603,16 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
                     memcpy(tmp+len-5,&emm_global[12],emm_global_len-12);
 
                     memcpy(assembled_EMM,emm_global,12);
-                    dvbapi_sort_nanos(assembledEMM+12,tmp,emm_len);
+                    dvbapi_sort_nanos(assembled_EMM+12,tmp,emm_len);
 
-                    assembledEMM[1]=((emm_len+9)>>8) | 0x70;
-                    assembledEMM[2]=(emm_len+9) & 0xFF;
+                    assembled_EMM[1]=((emm_len+9)>>8) | 0x70;
+                    assembled_EMM[2]=(emm_len+9) & 0xFF;
 
-					memcpy(buffer, assembledEMM, emm_len);
+					memcpy(buffer, assembled_EMM, emm_len);
 					len=emm_len;
 				    free(tmp);
-				    free(assembledEMM);
-                    if(assembledEMM[11]!=emm_len) { // sanity check
+				    free(assembled_EMM);
+                    if(assembled_EMM[11]!=emm_len) { // sanity check
                         // error in emm assembly
                         return;
                     }
