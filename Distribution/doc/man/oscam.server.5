@@ -38,19 +38,19 @@ example: 1234:123456:1234:1234:1234:00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E
 key for newcamd remote reader encryption
 .RE
 .PP
-\fBpassword\fP = \fBpassword\fP
-.RS 3n
-password for remote gbox reader
-.RE
-.PP
 \fBpremium\fP = \fB???\fP
 .RS 3n
 for gbox reader
 .RE
 .PP
-\fBaccount\fP = \fBuser,password\fP
+\fBaccount\fP = \fBuser,password\fP \fI(delimiter not allowed)\fR
 .RS 3n
-user and password for remote reader
+user and password for remote reader, overrides password of \fBpassword\fP, first come first serve
+.RE
+.PP
+\fBpassword\fP = \fBpassword\fP
+.RS 3n
+password for remote reader, overrides password of \fBaccount\fP, first come first serve
 .RE
 .PP
 \fBservices\fP = \fB[!]services[,[!]<services>]...\fP
