@@ -130,6 +130,7 @@ struct cc_data {
 	uint8 receive_buffer[CC_MAXMSGSIZE];
 	
 	LLIST *cards; // cards list
+	int cards_modified;
 
 	int max_ecms;
 	int ecm_counter;

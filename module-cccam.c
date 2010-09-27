@@ -1073,7 +1073,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		//So if the last Message was a MSG_NEW_CARD, this "card receiving" is not already done
 		//if this happens, we do not autoblock it and do not set rc status
 		//So fallback could resolve it
-		if (cc->last_msg != MSG_NEW_CARD) {
+		if (cc->last_msg != MSG_NEW_CARD && !cc->just_logged_in) {
 			if (is_auto_blocked)
 				cs_log("%s no suitable card on server (auto blocked)",
 						getprefix());
@@ -1562,6 +1562,7 @@ void cc_card_removed(uint32 shareid) {
 			free_extended_ecm_idx_by_card(card);
 			cc_free_card(card);
 			card = next_card;
+			cc->cards_modified = 1;
 			//break;
 		} else {
 			card = llist_itr_next(&itr);
@@ -1700,6 +1701,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 					prov->prov);
 			prov = llist_itr_next(&itr);
 		}
+		cc->cards_modified = 1;
 
 		pthread_mutex_unlock(&cc->cards_busy);
 		//SS: Hack end
@@ -2641,6 +2643,23 @@ int cc_srv_wakeup_readers(struct s_client *cl) {
 	return wakeup;
 }
 
+int cc_cards_modified() {
+	int r, modified = 0;
+	for (r = 0; r < CS_MAXREADER; r++) {
+        	if (reader[r].typ == R_CCCAM) {
+        		struct s_client *clr = &client[reader[r].cidx];
+        		if (clr->cc) {
+        			struct cc_data *ccr = clr->cc;
+        			if (ccr->cards_modified) {
+        				ccr->cards_modified = 0;
+        				modified = 1;
+        			}
+        		}
+                }
+	}
+	return modified;	                                         
+}
+
 int cc_srv_connect(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_srv_connect in");
 	int i;
@@ -2840,18 +2859,25 @@ int cc_srv_connect(struct s_client *cl) {
 	for (;;) {
 		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
 		//cs_log("srv process input i=%d cmi=%d", i, cmi);
+		int update_cards = 0;
 		if (i == -9) {
 			cmi += 10;
 			if (cfg->cmaxidle && cmi >= cfg->cmaxidle) {
 				cmi = 0;
 				cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached",
 						getprefix());
-				break;
+				break; //Disconnect client
 			}
+			update_cards = 1;
+			
 		} else if (i <= 0)
-			break;
+			break; //Disconnected by client
 		else {
 			cmi = 0;
+			update_cards = 1;
+		}
+		
+		if (update_cards) {
 			if (!cc->server_ecm_pending) {
 				struct timeb timeout;
 				struct timeb cur_time;
@@ -2864,7 +2890,7 @@ int cc_srv_connect(struct s_client *cl) {
 				int force_card_updates = cfg->cc_update_interval && comp_timeb(
 						&cur_time, &timeout) > 0;
 				ulong new_hexserial_crc = get_reader_hexserial_crc();
-				if (force_card_updates || new_hexserial_crc != hexserial_crc) {
+				if (force_card_updates || new_hexserial_crc != hexserial_crc || cc_cards_modified()) {
 					cs_debug_mask(D_TRACE, "%s update share list", getprefix());
 					cc_srv_report_cards();
 					hexserial_crc = new_hexserial_crc;
