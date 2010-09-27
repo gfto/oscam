@@ -455,7 +455,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 	ulong provider = demux[demux_index].ECMpids[demux[demux_index].pidindex].PROVID;
 	ulong emm_provid;		
 	switch (demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID >> 8) {
-		case 0x05:
+		case 0x05:    // Viaccess
 			if (len>500) return;
 			switch(buffer[0]) {
 				case 0x88:
@@ -532,7 +532,18 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					break;
 			}
 			break;
-      		case 0x0d:
+      		case 0x0d:  // Cryptoworks
+      		// the code bellow can't work.
+      		// here is th description on how to assemble cryptoworks emm
+      		//   Cryptoworks EMM-S have to be assembled by the client from an EMM-SH with table
+            //   id 0x84 and a corresponding EMM-SB (body) with table id 0x86. A pseudo EMM-S
+            //   with table id 0x84 has to be build containing all nano commands from both the
+            //    original EMM-SH and EMM-SB in ascending order.
+            //
+            // Here the 2 part are assembled in the wrong order
+            // it should be all data from id 0x84 and then append the data from id 0x86
+            // I'll work on a fix (RoRoTheTroll)
+            // 
 			if (len>500) return;
 			switch (buffer[0]) {
 				case 0x86:
