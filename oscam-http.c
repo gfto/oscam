@@ -893,7 +893,18 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if(reader[ridx].enable)
 		tpl_addVar(vars, 0, "ENABLED", "checked");
 
-	tpl_printf(vars, 0, "ACCOUNT",  "%s,%s\n", reader[ridx].r_usr, reader[ridx].r_pwd);
+	tpl_printf(vars, 0, "ACCOUNT",  "%s", reader[ridx].r_usr);
+
+#ifdef CS_WITH_GBOX
+	if (strlen(reader[i].gbox_pwd) > 0)
+		tpl_printf(vars, 0, "PASSWORD",  "%s", reader[i].gbox_pwd);
+	else if (strlen(reader[ridx].r_pwd) > 0)
+		tpl_printf(vars, 0, "PASSWORD",  "%s", reader[ridx].r_pwd);
+	else
+		tpl_printf(vars, 0, "PASSWORD",  "%s", "");
+#else
+	tpl_printf(vars, 0, "PASSWORD",  "%s", reader[ridx].r_pwd);
+#endif
 
 	for (i=0; i<14; i++)
 		tpl_printf(vars, 1, "NCD_KEY", "%02X", reader[ridx].ncd_key[i]);

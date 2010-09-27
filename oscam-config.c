@@ -2361,15 +2361,19 @@ int write_server()
 				fprintf(f, "\n");
 			}
 
+			if (reader[i].r_usr[0] && !isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "account", "%s\n", reader[i].r_usr);
+
 #ifdef CS_WITH_GBOX
 			if (reader[i].typ == R_GBOX) {
-				fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", reader[i].gbox_pwd);
+				if (strlen(reader[i].gbox_pwd) > 0)
+					fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", reader[i].gbox_pwd);
 				fprintf_conf(f, CONFVARWIDTH, "premium", "%d\n", reader[i].gbox_prem);
 			}
 #endif
 
-			if (reader[i].r_usr[0] && !isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "account", "%s,%s\n", reader[i].r_usr, reader[i].r_pwd);
+			if (strlen(reader[i].r_pwd) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", reader[i].r_pwd);
 
 			if(strcmp(reader[i].pincode, "none"))
 				fprintf_conf(f, CONFVARWIDTH, "pincode", "%s\n", reader[i].pincode);
@@ -3041,29 +3045,37 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-#ifdef CS_WITH_GBOX
 	if (!strcmp(token, "password")) {
+#ifdef CS_WITH_GBOX
 		cs_strncpy((char *)rdr->gbox_pwd, (const char *)i2b(4, a2i(value, 4)), 4); 
+#endif
+		cs_strncpy(rdr->r_pwd, value, sizeof(rdr->r_pwd));
 		return;
 	}
 
+#ifdef CS_WITH_GBOX
 	if (!strcmp(token, "premium")) {
 		rdr->gbox_prem = 1;
 		return;
 	}
 #endif
-	if (!strcmp(token, "account")) {
-		for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
-			trim(ptr);
-			switch(i) {
-				case 0:
-					cs_strncpy(rdr->r_usr, ptr, sizeof(rdr->r_usr));
-					break;
 
-				case 1:
-					cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd));
-					break;
+	if (!strcmp(token, "account")) {
+		if (strstr(value, ",")) {
+			for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
+				trim(ptr);
+				switch(i) {
+					case 0:
+						cs_strncpy(rdr->r_usr, ptr, sizeof(rdr->r_usr));
+						break;
+
+					case 1:
+						cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd));
+						break;
+				}
 			}
+		} else {
+			cs_strncpy(rdr->r_usr, value, sizeof(rdr->r_usr));
 		}
 		return;
 	}
