@@ -450,20 +450,14 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			}
 			else 
 			{
-				if (stat->last_received+cfg->lb_reopen_seconds < current_time) { //Retrying every 900 seconds
+				int seconds = cfg->lb_reopen_seconds;
+				if (!reader[i].audisabled && (!client[grs->cidx].autoau || client[grs->cidx].au != i))
+					seconds = seconds/10;
+				
+				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
 					stat->last_received = current_time;
 					result[i] = 1;
 					cs_log("loadbalancer: retrying reader %s", reader[i].label);
-				}
-				
-				if (stat->ecm_count == 0) { //Never decodeable
-					if (reader[i].audisabled ||
-						(!client[grs->cidx].autoau && client[grs->cidx].au != i))
-						//au disabled or not auto/au not on this reader: never decode it
-						grs->reader_avail[i] = 0;
-					//else reader is selected as fallback.
-					//if no best reader could be selected, fallbackreader elevates to primary readers
-					//so all (au) readers ares asked if user can au
 				}
 			}
 		}
