@@ -630,7 +630,20 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 	epg.caid[0] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID>>8);
 	epg.caid[1] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
 
+    // This will only works on some emm as each emm set the provider id differently.
+    // at this point buffer contains the current emm, which can be for any of the provider we're supporting
+    // and each emm has a different structure depending on the CA system and store the provider ID at a different
+    // position. So extracting it like this will probably only work for 1 CA (viaccess, nds, conax, seca, ....).
+    // As we get the provide from the demux above, why are we doing this ? the provider ID for this emm should be the
+    // one from : ulong provider = demux[demux_index].ECMpids[demux[demux_index].pidindex].PROVID;
+    // and below, after defining it with (buffer[10] << 8) | buffer[11];, it's potentialy overwriten by :
+    // provid = (cfg->dvbapi_prioritytab.cmap[pid] << 8 | cfg->dvbapi_prioritytab.mask[pid]);
+    //  but if we don't find it in there we endup with a provider id which can be completely wrong !!!
+    // So I think the line bellow should be :
+    // unsigned long provid = provider;
+    //
 	unsigned long provid = (buffer[10] << 8) | buffer[11];
+	
 	int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
 	if (pid>=0) {
 		if (cfg->dvbapi_prioritytab.mask[pid]>0)
