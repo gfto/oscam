@@ -1,4 +1,5 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
+#include "globals.h"
 #ifdef WEBIF
 //
 // OSCam HTTP server module
@@ -10,7 +11,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/socket.h>
-#include "globals.h"
 #include "oscam-http-helpers.c"
 #include "module-cccam.h"
 #include "module-stat.h"
