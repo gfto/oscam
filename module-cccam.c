@@ -808,10 +808,10 @@ void cc_UA_oscam2cccam(uint8 *in, uint8 *out) {
 	out[6] = in[4];
 	out[5] = in[3];
 	out[4] = in[2];
-	out[3] = in[1];
-	out[2] = in[0];
-	out[1] = in[7];
-	out[0] = in[6];
+	out[3] = 0;//in[1];
+	out[2] = 0;//in[0];
+	out[1] = 0;//in[7];
+	out[0] = 0;//in[6];
 }
 
 void cc_UA_cccam2oscam(uint8 *in, uint8 *out) {
@@ -823,6 +823,20 @@ void cc_UA_cccam2oscam(uint8 *in, uint8 *out) {
 	out[0] = in[2];
 	out[7] = in[1];
 	out[6] = in[0];
+}
+
+void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
+	out[3] = in[0];
+	out[2] = 0;
+	out[1] = 0;
+	out[0] = 0;
+}
+
+void cc_SA_cccam2oscam(uint8 *in, uint8 *out) {
+	out[3] = 0;
+	out[2] = 0;
+	out[1] = 0;
+	out[0] = in[3];
 }
 
 int cc_UA_valid(uint8 *ua) {
@@ -1048,8 +1062,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 				if (provider->prov == cur_er->prid) {
 					memcpy(&rdr->prid[0], &provider->prov,
 							sizeof(provider->prov));
-					memcpy(&rdr->sa[0], provider->sa,
-							sizeof(provider->sa));
+					cc_SA_cccam2oscam(provider->sa, rdr->sa[0]);
 					rdr->nprov = 1;
 					break;
 				}
@@ -2384,8 +2397,7 @@ int cc_srv_report_cards() {
 							for (l = 0; l < reader[r].nprov; l++) {
 								ulong rprid = get_reader_prid(r, l);
 								if (rprid == prid)
-									memcpy(buf + ofs + 3, &reader[r].sa[l][0],
-											4);
+									cc_SA_oscam2cccam(&reader[r].sa[l][0], buf+ofs+3);
 							}
 						}
 					}
@@ -2468,7 +2480,7 @@ int cc_srv_report_cards() {
 			buf[10] = hop;
 			buf[11] = reshare;
 			if (au_allowed)
-				cc_UA_cccam2oscam(reader[r].hexserial, buf + 12);
+				cc_UA_oscam2cccam(reader[r].hexserial, buf + 12);
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
 				ulong prid = get_reader_prid(r, j);
@@ -2478,7 +2490,7 @@ int cc_srv_report_cards() {
 				buf[ofs + 2] = prid & 0xFF;
 				//Setting SA (Shared Addresses):
 				if (au_allowed)
-					memcpy(buf + ofs + 3, &reader[r].sa[j][0], 4);
+					cc_SA_oscam2cccam(&reader[r].sa[j][0], buf+ofs+3);
 				//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
 			}
 			buf[21 + (j * 7)] = 1;
