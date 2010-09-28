@@ -577,15 +577,15 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 			if (len>500) return;
 			switch (buffer[0]) {
 				case 0x84:
+					cs_ddump(buffer, len, "cryptoworks shared emm (EMM-SH):");
 					if (!memcmp(emm_global, buffer, len)) return;
 					//cs_log("provider %06X - %02X", provider , buffer[7]);
 					memcpy(emm_global, buffer, len);
 					emm_global_len=len;
-					cs_ddump(buffer, len, "cryptoworks shared emm (EMM-SH):");
 					return;
 				case 0x86:
-					if (!emm_global_len) return;
 					cs_ddump(buffer, len, "cryptoworks shared emm (EMM-SB):");
+					if (!emm_global_len) return;
 
 					// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
 					// now we need to append the payload of the 0x86 emm (EMM-SB)
@@ -594,7 +594,6 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					// so we should have :
 					// EMM-SH[0:12] + EMM-SB[5:len_EMM-SB] + EMM-SH[12:EMM-SH_len]
 					// and we need to update the emm len (emmBuf[1:2]
-					pos=12;    
 				    emm_len=len-5 + emm_global_len-12;
                     unsigned char *tmp=malloc(emm_len);
                     unsigned char *assembled_EMM=malloc(emm_len+12);
@@ -612,11 +611,12 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					len=emm_len;
 				    free(tmp);
 				    free(assembled_EMM);
+                    cs_ddump(buffer, len, "cryptoworks shared emm (assembled):");
                     if(assembled_EMM[11]!=emm_len) { // sanity check
                         // error in emm assembly
+                        cs_log("Error assembling Cryptoworks EMM-S");
                         return;
                     }
-                    cs_ddump(buffer, len, "cryptoworks shared emm (assembled):");
 
 					break;
 			}
