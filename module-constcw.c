@@ -120,7 +120,7 @@ static int constcw_send_ecm(ECM_REQUEST *er, uchar *msgbuf)
     }
 
     //cs_sleepms(50);
-    write_ecm_answer(reader, client[0].fd_m2c, er);
+    write_ecm_answer(&reader[client[cs_idx].ridx], client[0].fd_m2c, er);
     
     client[cs_idx].last = t;
     reader[client[cs_idx].ridx].last_g = t;

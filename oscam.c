@@ -355,7 +355,8 @@ void cs_exit(int sig)
 			if(client[i].cc) 		free(client[i].cc);
 			if(client[i].pfd)	close(client[i].pfd); //Closing Network socket
 			if(client[i].fd_m2c_c)  close(client[i].fd_m2c_c); //Closing client read fd
-			if(client[i].fd_m2c)    close(client[i].fd_m2c);; //Closing client read fd
+			if(client[i].fd_m2c)		close(client[i].fd_m2c); //Closing client read fd
+			if(client[i].ufd)		close(client[i].ufd);
 			                
 			cs_log("thread %d ended!", i);
 			pthread_exit(NULL);
@@ -809,6 +810,11 @@ void kill_thread(int cidx) {
 	if(client[cidx].req) 	free(client[cidx].req);
 	if(client[cidx].prefix) 	free(client[cidx].prefix);
 	if(client[cidx].cc) 		free(client[cidx].cc);
+
+	if(client[cidx].pfd)		close(client[cidx].pfd); //Closing Network socket
+	if(client[cidx].fd_m2c_c)	close(client[cidx].fd_m2c_c); //Closing client read fd
+	if(client[cidx].fd_m2c)	close(client[cidx].fd_m2c); //Closing client read fd
+	if(client[cidx].ufd)		close(client[cidx].ufd);
 
 	client[cidx].pid=0;
 
