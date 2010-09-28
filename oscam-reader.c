@@ -23,12 +23,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	vsprintf(txt, fmt, params);
 	va_end(params);
 	cs_log("%s", txt);
-#ifdef CS_RDR_INIT_HIST
-	int val;
-	val=sizeof(reader->init_history)-reader->init_history_pos-1;
-	if (val>0)
-		snprintf((char *) reader->init_history+reader->init_history_pos, val, "%s", txt);
-#endif
+
 	if (cfg->saveinithistory) {
 		FILE *fp;
 		char filename[256];

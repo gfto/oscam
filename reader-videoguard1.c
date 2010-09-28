@@ -58,10 +58,7 @@ static void read_tiers(struct s_reader *reader)
   ins76[4] = 0x0a;
   int num = cta_res[1];
   int i;
-#ifdef CS_RDR_INIT_HIST
-  reader->init_history_pos = 0;	//reset for re-read
-  memset(reader->init_history, 0, sizeof(reader->init_history));
-#endif
+
   for (i = 0; i < num; i++) {
     ins76[2] = i;
     l = vg1_do_cmd(reader, ins76, NULL, NULL, cta_res);

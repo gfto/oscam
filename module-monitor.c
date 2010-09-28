@@ -444,14 +444,7 @@ static void monitor_process_details_master(char *buf, int pid){
 
 static void monitor_process_details_reader(int pid, int idx) {
 	int r_idx;
-#ifdef CS_RDR_INIT_HIST
-	char *p;
-	if ((r_idx=cs_idx2ridx(idx))>=0)
-		for (p=(char *)reader[r_idx].init_history; *p; p+=strlen(p)+1)
-			monitor_send_details(p, pid);
-	else
-		monitor_send_details("Missing reader index !", pid);
-#else
+
 	if ((r_idx=cs_idx2ridx(idx))>=0 && cfg->saveinithistory) {
 		FILE *fp;
 		char filename[32];
@@ -465,8 +458,10 @@ static void monitor_process_details_reader(int pid, int idx) {
 			}
 			fclose(fp);
 		}
+	} else {
+		monitor_send_details("Missing reader index or entitlement not saved!", pid);
 	}
-#endif
+
 }
 
 

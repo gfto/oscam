@@ -135,7 +135,6 @@
 #define CS_MAXPENDING   (CS_MAXPID<<1)
 #define CS_ECMCACHESIZE   CS_MAXPID
 #define CS_EMMCACHESIZE   (CS_MAXPID<<1)
-#define CS_RDR_INIT_HIST
 #endif
 
 #define D_TRACE     1 // Generate very detailed error/trace messages per routine
@@ -739,9 +738,7 @@ struct s_reader  //contains device info, reader info and card info
   int       gbox_fd;
   struct timeb  gbox_lasthello;   // incoming time stamp
 #endif
-#ifdef CS_RDR_INIT_HIST
-  uchar     init_history[4096];
-#endif
+
   int       init_history_pos;
   int       brk_pos;
   int       msg_idx;

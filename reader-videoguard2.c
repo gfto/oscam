@@ -29,10 +29,7 @@ static void vg2_read_tiers(struct s_reader * reader)
 
   int i;
   unsigned char ins76[5] = { 0xD0,0x76,0x00,0x00,0x00 };
-#ifdef CS_RDR_INIT_HIST
-  reader->init_history_pos = 0; //reset for re-read
-  memset(reader->init_history, 0, sizeof(reader->init_history));
-#endif
+
   // some cards start real tiers info in middle of tier info
   // and have blank tiers between old tiers and real tiers eg 09AC
   int starttier;

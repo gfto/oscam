@@ -170,9 +170,7 @@ static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned sh
   if (i<100) return(0);
 
   reader->init_history_pos=0;
-#ifdef CS_RDR_INIT_HIST
-  memset(reader->init_history, 0, sizeof(reader->init_history));
-#endif
+
 //  cs_ri_log("ATR: %s", cs_hexdump(1, atr, atr_size));//FIXME
   cs_sleepms(1000);
   return(1);
