@@ -2604,7 +2604,7 @@ void cs_waitforcardinit()
 				}
 			}
 			cs_sleepms(300); // wait a little bit
-			alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1); 
+			//alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1); 
 		} while (!card_init_done);
   		cs_log("init for all local cards done");
 	}
