@@ -2302,45 +2302,37 @@ void do_emm(EMM_PACKET *ep)
 		}
 	}
 
+	int is_blocked = 0;
 	switch (ep->type) {
-		case UNKNOWN:
-			if (reader[au].blockemm_unknown) {
-#ifdef WEBIF
-				reader[au].emmblocked[UNKNOWN]++;
-#endif
-				return;
-			}
+		case UNKNOWN: is_blocked = reader[au].blockemm_unknown;
 			break;
-
-		case UNIQUE:
-			if (reader[au].blockemm_u) {
-#ifdef WEBIF
-				reader[au].emmblocked[UNIQUE]++;
-#endif
-				return;
-			}
+		case UNIQUE: is_blocked = reader[au].blockemm_u;
 			break;
-
-		case SHARED:
-			if (reader[au].blockemm_s) {
-#ifdef WEBIF
-				reader[au].emmblocked[SHARED]++;
-#endif
-				return;
-			}
+		case SHARED: is_blocked = reader[au].blockemm_s;
 			break;
-
-		// FIXME only camd33 delivers hexserial from the net, newcamd, camd35 copy 
-		// cardreader hexserial in; reader_get_emm_type overwrites this with real SA value if known!
-		case GLOBAL:
-			if (reader[au].blockemm_g) {
-#ifdef WEBIF
-				reader[au].emmblocked[GLOBAL]++;
-#endif
-				return;
-			}
+		case GLOBAL: is_blocked = reader[au].blockemm_g;
 			break;
 	}
+
+	if (is_blocked != 0) {
+#ifdef WEBIF
+		reader[au].emmblocked[ep->type]++;
+		is_blocked = reader[au].emmblocked[ep->type];
+#endif
+		/* we have to write the log for blocked EMM here because
+	  	 this EMM never reach the reader module where the rest
+		 of EMM log is done. */
+		if (reader[au].logemm & 0x08)  {
+			cs_log("%s emmtype=%s, len=%d, idx=0, cnt=%d: blocked (0 ms) by %s",
+					username(ep->cidx),
+					typtext[ep->type],
+					ep->emm[2],
+					is_blocked,
+					reader[au].label);
+		}
+		return;
+	}
+
 
 	client[cs_idx].lastemm = time((time_t)0);
 
