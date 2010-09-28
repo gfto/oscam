@@ -353,8 +353,10 @@ void cs_exit(int sig)
 			if(client[i].req) 		free(client[i].req);
 			if(client[i].prefix) 	free(client[i].prefix);
 			if(client[i].cc) 		free(client[i].cc);
-			if(client[i].pfd)	close(client[i].pfd);
-
+			if(client[i].pfd)	close(client[i].pfd); //Closing Network socket
+			if(client[i].fd_m2c_c)  close(client[i].fd_m2c_c); //Closing client read fd
+			if(client[i].fd_m2c)    close(client[i].fd_m2c);; //Closing client read fd
+			                
 			cs_log("thread %d ended!", i);
 			pthread_exit(NULL);
 			return;
@@ -2991,7 +2993,7 @@ int main (int argc, char *argv[])
 
 	init_cardreader();
 
-	//cs_waitforcardinit();
+	cs_waitforcardinit();
 
 #ifdef CS_LED
 	cs_switch_led(LED1A, LED_OFF);
