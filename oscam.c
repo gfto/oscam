@@ -2324,8 +2324,8 @@ void do_emm(EMM_PACKET *ep)
 		 of EMM log is done. */
 		if (reader[au].logemm & 0x08)  {
 			cs_log("%s emmtype=%s, len=%d, idx=0, cnt=%d: blocked (0 ms) by %s",
-					username(ep->cidx),
-					typtext[ep->type],
+					client[cs_idx].usr,
+					strtolower(typtext[ep->type]),
 					ep->emm[2],
 					is_blocked,
 					reader[au].label);
