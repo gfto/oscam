@@ -59,7 +59,7 @@ static void vg2_read_tiers(struct s_reader * reader)
       rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
       unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
       char *tier_name = get_tiername(tier_id, reader->caid[0]);
-      if((starttier = reader->card_tierstart) == -1){
+      if(reader->card_tierstart == -1){
         cs_ri_log(reader, "[videoguard2-reader] tier-number: 0x%02x, tier: %04x",i,tier_id);
       }
       cs_ri_log(reader, "[videoguard2-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
@@ -72,16 +72,13 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   get_hist;
   if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
     return ERROR;
+    cs_log("[videoguard2-reader] in videoguard2_card_init");
 
   get_atr;
   def_resp;
 
-  // Copy  the atr info into the reader, can we not do this in reader-common.c?
-  reader->atrlen = atr_size;
-  memcpy(reader->atr,atr,atr_size);
-
  /* set information on the card stored in reader-videoguard-common.c */
-  set_known_card_info(reader);
+  set_known_card_info(reader,atr,&atr_size);
 
   if((reader->ndsversion != NDS2) &&
      (((reader->card_system_version != NDS2) && (reader->card_system_version != NDSUNKNOWN)) ||

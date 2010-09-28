@@ -91,12 +91,8 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
   get_atr;
   def_resp;
 
-  // Copy  the atr info into the reader, can we not do this in reader-common.c?
-  reader->atrlen = atr_size;
-  memcpy(reader->atr,atr,atr_size);
-
   /* set information on the card stored in reader-videoguard-common.c */
-  set_known_card_info(reader);
+  set_known_card_info(reader,atr,&atr_size);
 
   if((reader->ndsversion != NDS1) && ((reader->card_system_version != NDS1) || (reader->ndsversion != NDSAUTO))) {
     /* known ATR and not NDS1

@@ -6,7 +6,7 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
-void set_known_card_info(struct s_reader * reader)
+void set_known_card_info(struct s_reader * reader, const unsigned char * atr, const unsigned int *atr_size)
 {
   /* Set to sensible default values */
   reader->card_baseyear = 1997;
@@ -55,6 +55,9 @@ void set_known_card_info(struct s_reader * reader)
     {{ 0x3F, 0xFF, 0x13, 0x25, 0x03, 0x10, 0x80, 0x33, 0xB0, 0x10, 0x69, 0xFF, 0x4A, 0x50, 0x70, 0x00,
        0x00, 0x4E, 0x5A, 0x01, 0x00, 0x00 },
        22, 1992, 0, NDS2, "VideoGuard Sky New Zealand (096A)"},
+    {{ 0x3F, 0xFD, 0x11, 0x25, 0x02, 0x50, 0x80, 0x0F, 0x41, 0xB0, 0x03, 0x69, 0xFF, 0x4A, 0x50, 0xF0,
+       0x80, 0x00, 0x46, 0x44, 0x03 },
+       20, 2000, 0, NDS2, "VideoGuard Foxtel Australia (096C)"},
     {{ 0x3F, 0x7F, 0x13, 0x25, 0x04, 0x33, 0xB0, 0x02, 0x69, 0xFF, 0x4A, 0x50, 0xE0, 0x00, 0x00, 0x54,
        0x42, 0x00, 0x00, 0x00 },
        20, 1997, 0, NDS2, "VideoGuard China (0988)"},
@@ -97,8 +100,8 @@ void set_known_card_info(struct s_reader * reader)
 
   int i=0;
   while(nds_atr_table[i].desc) {
-    if ((reader->atrlen == nds_atr_table[i].atr_len)
-          && (memcmp (reader->atr, nds_atr_table[i].atr, nds_atr_table[i].atr_len) == 0)) {
+    if ((*atr_size == nds_atr_table[i].atr_len)
+          && (memcmp (atr, nds_atr_table[i].atr, nds_atr_table[i].atr_len) == 0)) {
         reader->card_baseyear=nds_atr_table[i].base_year;
         reader->card_tierstart=nds_atr_table[i].tier_start;
         reader->card_system_version = nds_atr_table[i].nds_version;

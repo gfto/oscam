@@ -52,7 +52,7 @@ extern int read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
 extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
                   unsigned char *cw, unsigned char * cta_res);
 extern void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss, int base_year);
-extern void set_known_card_info(struct s_reader * reader);
+extern void set_known_card_info(struct s_reader * reader, const unsigned char *atr, const unsigned int *atr_size);
 
 #endif // __NDS_COMMON__
 
