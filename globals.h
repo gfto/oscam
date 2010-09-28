@@ -1321,6 +1321,7 @@ extern int write_services();
 extern int write_userdb(struct s_auth *authptr);
 extern int write_config();
 extern int write_server();
+extern void write_versionfile();
 extern char *mk_t_caidtab(CAIDTAB *ctab);
 extern char *mk_t_tuntab(TUNTAB *ttab);
 extern char *mk_t_group(ulong *grp);

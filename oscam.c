@@ -2922,53 +2922,6 @@ int main (int argc, char *argv[])
     fclose(fp);
   }
 
-#ifndef OS_CYGWIN32
-  // /tmp/oscam.version file (Uptime + Version)
-  char targetfile[256];
-  snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
-  FILE *fp;
-
-  if (!(fp=fopen(targetfile, "w"))) {
-	  cs_log("Cannot open %s (errno=%d)", targetfile, errno);
-  } else {
-	  time_t now = time((time_t)0);
-	  struct tm *st;
-	  st = localtime(&now);
-	  fprintf(fp, "uxstarttime: %d\n", (int)now);
-	  fprintf(fp, "starttime: %02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
-	  fprintf(fp, " %02d:%02d:%02d\n", st->tm_hour, st->tm_min, st->tm_sec);
-	  fprintf(fp, "version: %s#%s\n", CS_VERSION, CS_SVN_VERSION);
-	  fprintf(fp, "maxpid: %d\n", CS_MAXPID);
-#ifdef WEBIF
-	  fprintf(fp, "webifsupport: yes\n");
-#else
-	  fprintf(fp, "webifsupport: no\n");
-#endif
-#ifdef HAVE_DVBAPI
-	  fprintf(fp, "dvbapisupport: yes\n");
-#else
-	  fprintf(fp, "dvbapisupport: no\n");
-#endif
-#ifdef CS_WITH_GBOX
-	  fprintf(fp, "gboxsupport: yes\n");
-#else
-	  fprintf(fp, "gboxsupport: no\n");
-#endif
-#ifdef CS_ANTICASC
-	  fprintf(fp, "anticascsupport: yes\n");
-#else
-	  fprintf(fp, "anticascsupport: no\n");
-#endif
-#ifdef CS_WITH_DOUBLECHECK
-	  fprintf(fp, "ECM doublecheck: yes\n");
-#else
-	  fprintf(fp, "ECM doublecheck: no\n");
-#endif
-	  fclose(fp);
-  }
-#endif
-
-
 #ifdef AZBOX
   openxcas_debug_message_onoff(1);  // debug
 
@@ -3053,6 +3006,8 @@ int main (int argc, char *argv[])
 			} // if (ph[i].type & MOD_CONN_NET)
 		}
 	}
+
+	write_versionfile();
 
 #ifdef AZBOX
   if (openxcas_close() < 0) {
