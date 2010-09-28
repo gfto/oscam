@@ -2920,6 +2920,8 @@ int main (int argc, char *argv[])
     fclose(fp);
   }
 
+  write_versionfile();
+
 #ifdef AZBOX
   openxcas_debug_message_onoff(1);  // debug
 
@@ -3004,8 +3006,6 @@ int main (int argc, char *argv[])
 			} // if (ph[i].type & MOD_CONN_NET)
 		}
 	}
-
-	write_versionfile();
 
 #ifdef AZBOX
   if (openxcas_close() < 0) {

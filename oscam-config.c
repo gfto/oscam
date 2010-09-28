@@ -2595,42 +2595,148 @@ void write_versionfile() {
 	  time_t now = time((time_t)0);
 	  struct tm *st;
 	  st = localtime(&now);
-	  fprintf(fp, "uxstarttime: %d\n", (int)now);
-	  fprintf(fp, "starttime: %02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
+	  fprintf(fp, "uxstarttime:    %d\n", (int)now);
+	  fprintf(fp, "starttime:      %02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
 	  fprintf(fp, " %02d:%02d:%02d\n", st->tm_hour, st->tm_min, st->tm_sec);
-	  fprintf(fp, "version: %s#%s\n", CS_VERSION, CS_SVN_VERSION);
-	  fprintf(fp, "maxpid: %d\n\n", CS_MAXPID);
+	  fprintf(fp, "version:        %s  Rev. %s\n", CS_VERSION, CS_SVN_VERSION);
+	  fprintf(fp, "maxpid:         %d\n\n\n", CS_MAXPID);
 	  fprintf(fp, "active modules:\n");
 
 #ifdef WEBIF
-	  fprintf(fp, "webifsupport: yes\n");
+	  fprintf(fp, "webifsupport:     yes\n");
 #else
-	  fprintf(fp, "webifsupport: no\n");
+	  fprintf(fp, "webifsupport:     no\n");
 #endif
 #ifdef HAVE_DVBAPI
-	  fprintf(fp, "dvbapisupport: yes\n");
+	  fprintf(fp, "dvbapisupport:    yes\n");
 #else
-	  fprintf(fp, "dvbapisupport: no\n");
+	  fprintf(fp, "dvbapisupport:    no\n");
 #endif
 #ifdef CS_WITH_GBOX
-	  fprintf(fp, "gboxsupport: yes\n");
+	  fprintf(fp, "gboxsupport:      yes\n");
 #else
-	  fprintf(fp, "gboxsupport: no\n");
+	  fprintf(fp, "gboxsupport:      no\n");
 #endif
 #ifdef CS_ANTICASC
-	  fprintf(fp, "anticascsupport: yes\n");
+	  fprintf(fp, "anticascsupport:  yes\n");
 #else
-	  fprintf(fp, "anticascsupport: no\n");
+	  fprintf(fp, "anticascsupport:  no\n");
 #endif
 #ifdef CS_WITH_DOUBLECHECK
-	  fprintf(fp, "ECM doublecheck: yes\n");
+	  fprintf(fp, "ECM doublecheck:  yes\n");
 #else
-	  fprintf(fp, "ECM doublecheck: no\n");
+	  fprintf(fp, "ECM doublecheck:  no\n");
 #endif
+#ifdef IRDETO_GUESSING
+	  fprintf(fp, "Irdeto guessing:  yes\n");
+#else
+	  fprintf(fp, "Irdeto guessing:  no\n");
+#endif
+#ifdef WITH_DEBUG
+	  fprintf(fp, "Debug:            yes\n");
+#else
+	  fprintf(fp, "Debug:            no\n");
+#endif
+#ifdef CS_LED
+	  fprintf(fp, "LED support:      yes\n");
+#else
+	  fprintf(fp, "LED support:      no\n");
+#endif
+#ifdef MODULE_MONITOR
+	  fprintf(fp, "Monitor:          yes\n");
+#else
+	  fprintf(fp, "Monitor:          no\n");
+#endif
+#ifdef MODULE_CAMD33
+	  fprintf(fp, "Camd33:           yes\n");
+#else
+	  fprintf(fp, "Camd33:           no\n");
+#endif
+#ifdef MODULE_CAMD35
+	  fprintf(fp, "Camd35 UDP:       yes\n");
+#else
+	  fprintf(fp, "Camd35 UDP:       no\n");
+#endif
+#ifdef MODULE_CAMD35_TCP
+	  fprintf(fp, "Camd35 TCP:       yes\n");
+#else
+	  fprintf(fp, "Camd35 TCP:       no\n");
+#endif
+#ifdef MODULE_NEWCAMD
+	  fprintf(fp, "Newcamd:          yes\n");
+#else
+	  fprintf(fp, "Newcamd:          no\n");
+#endif
+#ifdef MODULE_CCCAM
+	  fprintf(fp, "Cccam:            yes\n");
+#else
+	  fprintf(fp, "Cccam:            no\n");
+#endif
+#ifdef MODULE_RADEGAST
+	  fprintf(fp, "Radegast:         yes\n");
+#else
+	  fprintf(fp, "Radegast:         no\n");
+#endif
+#ifdef MODULE_SERIAL
+	  fprintf(fp, "Serial:           yes\n");
+#else
+	  fprintf(fp, "Serial:           no\n");
+#endif
+#ifdef MODULE_CONSTCW
+	  fprintf(fp, "ConstCW:          yes\n");
+#else
+	  fprintf(fp, "ConstCW:          no\n");
+#endif
+#ifdef WITH_CARDREADER
+	  fprintf(fp, "Cardreader:       yes\n");
+
+	#ifdef READER_NAGRA
+		  fprintf(fp, "Nagra:            yes\n");
+	#else
+		  fprintf(fp, "Nagra:            no\n");
+	#endif
+	#ifdef READER_IRDETO
+		  fprintf(fp, "Irdeto:           yes\n");
+	#else
+		  fprintf(fp, "Irdeto:           no\n");
+	#endif
+	#ifdef READER_CONAX
+		  fprintf(fp, "Conax:            yes\n");
+	#else
+		  fprintf(fp, "Conax:            no\n");
+	#endif
+	#ifdef READER_CRYPTOWORKS
+		  fprintf(fp, "Cryptoworks:      yes\n");
+	#else
+		  fprintf(fp, "Cryptoworks:      no\n");
+	#endif
+	#ifdef READER_SECA
+		  fprintf(fp, "Seca:             yes\n");
+	#else
+		  fprintf(fp, "Seca:             no\n");
+	#endif
+	#ifdef READER_VIACCESS
+		  fprintf(fp, "Viaccess:         yes\n");
+	#else
+		  fprintf(fp, "Viaccess:         no\n");
+	#endif
+	#ifdef READER_VIDEOGUARD
+		  fprintf(fp, "Videoguard:       yes\n");
+	#else
+		  fprintf(fp, "Videoguard:       no\n");
+	#endif
+	#ifdef READER_DRE
+		  fprintf(fp, "Dre:              yes\n");
+	#else
+		  fprintf(fp, "Dre:              no\n");
+	#endif
+#else
+	  fprintf(fp, "Cardreader:       no\n");
+#endif
+
 	  fclose(fp);
   }
 #endif
-
 
 }
 
