@@ -1222,7 +1222,7 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 
 	cs_debug("write to pipe %d (%s) cs_idx: %d to %d", fd, PIP_ID_TXT[id], cs_idx, get_thread_by_pipefd(fd));
 
-	uchar buf[3+sizeof(int)];
+	uchar buf[3+sizeof(void*)];
 
 	// fixme
 	// copy data to allocated memory
@@ -1235,9 +1235,9 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 		return(PIP_ID_ERR);
 
 	memcpy(buf, PIP_ID_TXT[id], 3);
-	memcpy(buf+3, &d, sizeof(int));
+	memcpy(buf+3, &d, sizeof(void*));
 
-	n=3+sizeof(int);
+	n=3+sizeof(void*);
 
 	return(write(fd, buf, n));
 }
@@ -1250,17 +1250,18 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
  */
 int read_from_pipe(int fd, uchar **data, int redir)
 {
-	int rc, hdr;
-	uchar buf[3+sizeof(int)];
-	memset(buf, 0, 3+sizeof(int));
+	int rc;
+	long hdr=0;
+	uchar buf[3+sizeof(void*)];
+	memset(buf, 0, sizeof(buf));
 
 	redir=redir;
 	*data=(uchar *)0;
 	rc=PIP_ID_NUL;
 
 	if (bytes_available(fd)) {
-		if (read(fd, buf, 3+sizeof(int))==3+sizeof(int)) {
-			memcpy(&hdr, buf+3, sizeof(int));
+		if (read(fd, buf, sizeof(buf))==sizeof(buf)) {
+			memcpy(&hdr, buf+3, sizeof(void*));
 		} else {
 			cs_log("WARNING: pipe header to small !");
 			return PIP_ID_ERR;
@@ -1274,7 +1275,7 @@ int read_from_pipe(int fd, uchar **data, int redir)
 	memcpy(id, buf, 3);
 	id[3]='\0';
 
-	cs_debug("read from pipe %d (%s) cs_idx: %d from %d", fd, id, cs_idx, get_thread_by_pipefd(fd));
+	cs_debug("read from pipe %d (%s) cs_idx: %d", fd, id, cs_idx);
 
 	int l;
 	for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)
@@ -1282,11 +1283,8 @@ int read_from_pipe(int fd, uchar **data, int redir)
 			rc=l;
 
 	if (rc<0) {
-		fprintf(stderr, "WARNING: pipe garbage from pipe %i", fd);
-		fflush(stderr);
 		cs_log("WARNING: pipe garbage from pipe %i", fd);
-		rc=PIP_ID_ERR;
-		return rc;
+		return PIP_ID_ERR;
 	}
 
 	*data = (void*)hdr;
