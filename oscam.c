@@ -2843,7 +2843,14 @@ int main (int argc, char *argv[])
 			  cs_dblevel=atoi(optarg);
 			  break;
 		  case 't':
-			  cs_strncpy(cs_tmpdir, optarg, sizeof(cs_tmpdir));
+			  mkdir(optarg, S_IRWXU);
+			  j = open(optarg, O_RDONLY);
+			  if (j >= 0) {
+			 	close(j);
+			 	cs_strncpy(cs_tmpdir, optarg, sizeof(cs_tmpdir));
+			  } else {
+				printf("WARNING: tmpdir does not exist. using default value.\n");
+			  }
 			  break;
 		  case 'm':
 #ifdef CS_NOSHM

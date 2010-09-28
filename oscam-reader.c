@@ -52,8 +52,10 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		sprintf(buffer+reader->init_history_pos, "%s\n", txt);
 
 		fp = fopen(filename, "w");
-		fwrite(buffer, 1, reader->init_history_pos+strlen(txt)+1, fp);
-		fclose(fp);
+		if (fp) {
+			fwrite(buffer, 1, reader->init_history_pos+strlen(txt)+1, fp);
+			fclose(fp);
+		}
 
 		free(buffer);
 	}
