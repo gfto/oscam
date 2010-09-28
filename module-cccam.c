@@ -2646,7 +2646,7 @@ int cc_srv_wakeup_readers(struct s_client *cl) {
 int cc_cards_modified() {
 	int r, modified = 0;
 	for (r = 0; r < CS_MAXREADER; r++) {
-        	if (reader[r].typ == R_CCCAM) {
+        	if (reader[r].typ == R_CCCAM && reader[r].fd) {
         		struct s_client *clr = &client[reader[r].cidx];
         		if (clr->cc) {
         			struct cc_data *ccr = clr->cc;
