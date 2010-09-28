@@ -337,8 +337,10 @@ void cs_exit(int sig)
 					cs_log("cannot remove pid file %s errno=(%d)", cfg->pidfile, errno);
 			}
 #ifndef OS_CYGWIN32
- 			if (unlink("/tmp/oscam.version") < 0)
-				cs_log("cannot remove /tmp/oscam.version errno=(%d)", errno);
+			char targetfile[256];
+			snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
+ 			if (unlink(targetfile) < 0)
+				cs_log("cannot remove oscam version file %s errno=(%d)", targetfile, errno);
 #endif
 			break;
 	}
