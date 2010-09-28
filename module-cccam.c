@@ -1338,7 +1338,7 @@ void cc_clear_reported_carddata(LLIST *reported_carddatas,
 			&itr);
 	while (carddata) {
 		if (send_removed)
-			cc_cmd_send(carddata->buf, carddata->len, MSG_CARD_REMOVED);
+			cc_cmd_send(carddata->buf, 4, MSG_CARD_REMOVED);
 		free(carddata->buf);
 		free(carddata);
 		carddata = llist_itr_remove(&itr);
