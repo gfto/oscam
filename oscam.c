@@ -2816,7 +2816,9 @@ int main (int argc, char *argv[])
 #ifdef READER_DRE
 	reader_dre,
 #endif
+#ifdef READER_TONGFANG
 	reader_tongfang,
+#endif
 	0
   };
 

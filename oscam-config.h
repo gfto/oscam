@@ -105,6 +105,10 @@
 #ifndef READER_DRE
 #define READER_DRE
 #endif
+
+#ifndef READER_TONGFANG
+#define READER_TONGFANG
+#endif
 #endif
 
 
