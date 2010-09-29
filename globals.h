@@ -228,7 +228,7 @@ extern char *RDR_CD_TXT[];
 #define NCD_524     1
 #define NCD_525     2
 
-#define CS_ANTICASC
+//#define CS_ANTICASC
 
 // moved from reader-common.h
 #define NO_CARD        0

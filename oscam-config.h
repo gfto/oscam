@@ -13,6 +13,10 @@
 //#define IRDETO_GUESSING
 #endif
 
+#ifndef CS_ANTICASC
+#define CS_ANTICASC
+#endif
+
 #ifndef WITH_DEBUG
 #define WITH_DEBUG
 #endif
