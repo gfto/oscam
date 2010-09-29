@@ -826,17 +826,17 @@ void cc_UA_cccam2oscam(uint8 *in, uint8 *out) {
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
-	out[0] = in[3];
-	out[1] = 0;
+	out[3] = in[0];
 	out[2] = 0;
-	out[3] = 0;
+	out[1] = 0;
+	out[0] = 0;
 }
 
 void cc_SA_cccam2oscam(uint8 *in, uint8 *out) {
-	out[0] = 0;
-	out[1] = 0;
+	out[3] = 0;
 	out[2] = 0;
-	out[3] = in[3];
+	out[1] = 0;
+	out[0] = in[3];
 }
 
 int cc_UA_valid(uint8 *ua) {
@@ -2896,7 +2896,7 @@ int cc_srv_connect(struct s_client *cl) {
 				timeout.time += timeout.millitm / 1000;
 				timeout.millitm = timeout.millitm % 1000;
 
-				int needs_card_updates = cfg->cc_update_interval && comp_timeb(
+				int needs_card_updates = (cfg->cc_update_interval >=0) && comp_timeb(
 						&cur_time, &timeout) > 0;
 						
 				if (needs_card_updates) {
