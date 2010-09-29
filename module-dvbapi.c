@@ -559,6 +559,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 			}
 			break;
       		case 0x0d:  // Cryptoworks
+				    cs_log("cryptoworks shared emm (EMM-S): %s" , cs_hexdump(1, buffer, len));
       		// the code bellow can't work.
       		// here is th description on how to assemble cryptoworks emm
       		//   Cryptoworks EMM-S have to be assembled by the client from an EMM-SH with table
