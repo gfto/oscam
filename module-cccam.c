@@ -1575,7 +1575,7 @@ void cc_card_removed(uint32 shareid) {
 			free_extended_ecm_idx_by_card(card);
 			cc_free_card(card);
 			card = next_card;
-			cc->cards_modified = 1;
+			cc->cards_modified++;
 			//break;
 		} else {
 			card = llist_itr_next(&itr);
@@ -1714,7 +1714,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 					prov->prov);
 			prov = llist_itr_next(&itr);
 		}
-		cc->cards_modified = 1;
+		cc->cards_modified++;
 
 		pthread_mutex_unlock(&cc->cards_busy);
 		//SS: Hack end
@@ -2662,10 +2662,7 @@ int cc_cards_modified() {
         		struct s_client *clr = &client[reader[r].cidx];
         		if (clr->cc) {
         			struct cc_data *ccr = clr->cc;
-        			if (ccr->cards_modified) {
-        				ccr->cards_modified = 0;
-        				modified = 1;
-        			}
+       				modified += ccr->cards_modified;
         		}
                 }
 	}
@@ -2899,14 +2896,21 @@ int cc_srv_connect(struct s_client *cl) {
 				timeout.time += timeout.millitm / 1000;
 				timeout.millitm = timeout.millitm % 1000;
 
-				int force_card_updates = cfg->cc_update_interval && comp_timeb(
+				int needs_card_updates = cfg->cc_update_interval && comp_timeb(
 						&cur_time, &timeout) > 0;
-				ulong new_hexserial_crc = get_reader_hexserial_crc();
-				if (force_card_updates || new_hexserial_crc != hexserial_crc || cc_cards_modified()) {
-					cs_debug_mask(D_TRACE, "%s update share list", getprefix());
-					cc_srv_report_cards();
-					hexserial_crc = new_hexserial_crc;
+						
+				if (needs_card_updates) {
 					cc->ecm_time = cur_time;
+					ulong new_hexserial_crc = get_reader_hexserial_crc();
+					int cards_modified = cc_cards_modified();
+					if (new_hexserial_crc != hexserial_crc || cards_modified != cc->cards_modified) {
+						cs_debug_mask(D_TRACE, "%s update share list", getprefix());
+						
+						hexserial_crc = new_hexserial_crc;
+						cc->cards_modified = cards_modified;
+						
+						cc_srv_report_cards();
+					}
 				}
 			}
 		}
