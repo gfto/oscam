@@ -826,17 +826,17 @@ void cc_UA_cccam2oscam(uint8 *in, uint8 *out) {
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
-	out[3] = in[0];
-	out[2] = 0;
+	out[0] = in[3];
 	out[1] = 0;
-	out[0] = 0;
+	out[2] = 0;
+	out[3] = 0;
 }
 
 void cc_SA_cccam2oscam(uint8 *in, uint8 *out) {
-	out[3] = 0;
-	out[2] = 0;
+	out[0] = 0;
 	out[1] = 0;
-	out[0] = in[3];
+	out[2] = 0;
+	out[3] = in[3];
 }
 
 int cc_UA_valid(uint8 *ua) {
