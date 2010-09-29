@@ -70,6 +70,7 @@ struct cc_card {
 	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
 	time_t time;
 	LLIST *goodsids; //sids that could decoded (struct cc_srvid)
+	LLIST *remote_nodes; 
 };
 
 struct cc_reported_carddata {
