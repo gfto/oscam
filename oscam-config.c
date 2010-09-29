@@ -2732,9 +2732,9 @@ void write_versionfile() {
 	#endif
 
 	#ifdef READER_TONGFANG
-		  fprintf(fp, "Tongfang:              yes\n");
+		  fprintf(fp, "Tongfang:         yes\n");
 	#else
-		  fprintf(fp, "Tongfang:              no\n");
+		  fprintf(fp, "Tongfang:         no\n");
 	#endif
 #else
 	  fprintf(fp, "Cardreader:       no\n");
