@@ -716,7 +716,7 @@ struct s_reader  //contains device info, reader info and card info
   int       cc_disable_retry_ecm; //Schlocke
   int       cc_disable_auto_block; //Schlocke
   int       cc_want_emu; //Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
-  uint      cc_id;
+  uint32    cc_id;
   int       cc_keepalive;
   uchar     tcp_connected;
   int       tcp_ito;      // inactivity timeout

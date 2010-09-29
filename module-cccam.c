@@ -826,17 +826,19 @@ void cc_UA_cccam2oscam(uint8 *in, uint8 *out) {
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
-	out[3] = in[0];
-	out[2] = 0;
-	out[1] = 0;
-	out[0] = 0;
+//	out[0] = in[3];
+//	out[1] = in[2];
+//	out[2] = in[1];
+//	out[3] = in[0];
+	memcpy(out, in, 4);
 }
 
 void cc_SA_cccam2oscam(uint8 *in, uint8 *out) {
-	out[3] = 0;
-	out[2] = 0;
-	out[1] = 0;
-	out[0] = in[3];
+//	out[0] = in[3];
+//	out[1] = in[2];
+//	out[2] = in[1];
+//	out[3] = in[0];
+	memcpy(out, in, 4);
 }
 
 int cc_UA_valid(uint8 *ua) {
@@ -1309,6 +1311,8 @@ void cc_free_card(struct cc_card *card) {
 		llist_destroy(card->badsids);
 	if (card->goodsids)
 		llist_destroy(card->goodsids);
+	if (card->remote_nodes)
+		llist_destroy(card->remote_nodes);
 	free(card);
 }
 
@@ -1491,8 +1495,9 @@ struct cc_card *read_card(uint8 *buf) {
 	card->providers = llist_create();
 	card->badsids = llist_create();
 	card->goodsids = llist_create();
+	card->remote_nodes = llist_create();
 	card->id = b2i(4, buf);
-	card->remote_id = b2i(3, buf + 5);
+	card->remote_id = b2i(4, buf + 4);
 	card->caid = b2i(2, buf + 8);
 	card->hop = buf[10];
 	card->maxdown = buf[11];
@@ -1514,6 +1519,14 @@ struct cc_card *read_card(uint8 *buf) {
 			llist_append(card->providers, prov);
 		}
 	}
+	uint8 *ptr = buf+21+i*7;
+	int remote_count = ptr[0];
+	ptr++;
+	for (i = 0; i < remote_count; i++) {
+		uint8 *remote_node = malloc(8);
+		memcpy(remote_node, ptr+i*8, 8);
+		llist_append(card->remote_nodes, remote_node);
+	}
 	return card;
 }
 
@@ -1525,6 +1538,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card) {
 	buf[1] = card->id >> 16;
 	buf[2] = card->id >> 8;
 	buf[3] = card->id & 0xff;
+	buf[4] = card->remote_id >> 24;
 	buf[5] = card->remote_id >> 16;
 	buf[6] = card->remote_id >> 8;
 	buf[7] = card->remote_id & 0xFF;
@@ -2200,18 +2214,20 @@ ulong get_reader_prid(int r, int j) {
 	return prid;
 }
 
-int add_card_providers(struct cc_card *dest_card, struct cc_card *card) {
+int add_card_providers(struct cc_card *dest_card, struct cc_card *card, int copy_remote_nodes) {
 	int modified = 0;
+	
+	//1. Copy nonexisting providers, ignore double:
 	struct cc_provider *prov_info;
-	LLIST_ITR itr_info;
-	LLIST_ITR itr_card;
-	struct cc_provider *provider = llist_itr_init(card->providers, &itr_card);
+	LLIST_ITR itr_dest;
+	LLIST_ITR itr_src;
+	struct cc_provider *provider = llist_itr_init(card->providers, &itr_src);
 	while (provider) {
-		prov_info = llist_itr_init(dest_card->providers, &itr_info);
+		prov_info = llist_itr_init(dest_card->providers, &itr_dest);
 		while (prov_info) {
 			if (prov_info->prov == provider->prov)
 				break;
-			prov_info = llist_itr_next(&itr_info);
+			prov_info = llist_itr_next(&itr_dest);
 		}
 		if (!prov_info) {
 			struct cc_provider *prov_new = malloc(sizeof(struct cc_provider));
@@ -2219,7 +2235,28 @@ int add_card_providers(struct cc_card *dest_card, struct cc_card *card) {
 			llist_append(dest_card->providers, prov_new);
 			modified = 1;
 		}
-		provider = llist_itr_next(&itr_card);
+		provider = llist_itr_next(&itr_src);
+	}
+	
+	if (copy_remote_nodes) {
+		//2. Copy nonexisting remote_nodes, ignoring existing:
+		uint8 *remote_node = llist_itr_init(card->remote_nodes, &itr_src);
+		uint8 *remote_node2;
+		while (remote_node) {
+			remote_node2 = llist_itr_init(dest_card->remote_nodes, &itr_dest);
+			while (remote_node2) {
+				if (memcmp(remote_node, remote_node2, 8) == 0)
+					break;
+				remote_node2 = llist_itr_next(&itr_dest);
+			}
+			if (!remote_node2) {
+				uint8* remote_node_new = malloc(8);
+				memcpy(remote_node_new, remote_node, 8);
+				llist_append(dest_card->remote_nodes, remote_node_new);
+				modified = 1;
+			}
+			remote_node = llist_itr_next(&itr_src);
+		}
 	}
 	return modified;
 }
@@ -2230,8 +2267,30 @@ struct cc_card *create_card(struct cc_card *card) {
 	card2->providers = llist_create();
 	card2->badsids = llist_create();
 	card2->goodsids = llist_create();
+	card2->remote_nodes = llist_create();
 	return card2;
 }
+
+int same_nodes(struct cc_card *card1, struct cc_card *card2) {
+
+	if (llist_count(card1->remote_nodes) != llist_count(card2->remote_nodes))
+		return 0;
+		
+	LLIST_ITR itr1;
+	LLIST_ITR itr2;
+	
+	uint8 *node1 = llist_itr_init(card1->remote_nodes, &itr1);
+	uint8 *node2 = llist_itr_init(card2->remote_nodes, &itr2);
+	
+	while (node1 && node2) {
+		if (memcmp(node1, node2, 8) != 0)
+			return 0;
+		node1 = llist_itr_next(&itr1);
+		node2 = llist_itr_next(&itr2);
+	}
+	return 1;
+}
+
 /**
  * Adds a new card to a cardlist.
  */
@@ -2284,26 +2343,30 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
 				modified = 1;
 			}
 		}
-		if (add_card_providers(card2, card))
+		if (add_card_providers(card2, card, 0))
 			modified = 1;
 	} else {
 		while (card2) {
 			if (card2->caid == card->caid && card2->hop == card->hop
-					&& card2->remote_id == card->remote_id && llist_count(
-					card2->providers) < CS_MAXPROV)
+					&& card2->remote_id == card->remote_id 
+					&& llist_count(card2->providers) < CS_MAXPROV 
+					&& same_nodes(card2, card))
 				break;
 			card2 = llist_itr_next(&itr);
 		}
 		if (!card2) {
 			card2 = create_card(card);
-			card2->providers = llist_create();
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			llist_append(cardlist, card2);
 			modified = 1;
+			if (add_card_providers(card2, card, 1))
+				modified = 1;
 		}
-		if (add_card_providers(card2, card))
-			modified = 1;
+		else
+			if (add_card_providers(card2, card, 0))
+				modified = 1;
+			
 	}
 	return modified;
 }
@@ -2352,7 +2415,7 @@ int cc_srv_report_cards() {
 			continue;
 
 		if (!reader[r].cc_id) {
-			reader[r].cc_id = fast_rnd() << 8 | fast_rnd();
+			reader[r].cc_id = (r+0x64)<<16 | fast_rnd()<<8 | fast_rnd();
 		}
 
 		int au_allowed = !reader[r].audisabled && is_au();
@@ -2368,9 +2431,10 @@ int cc_srv_report_cards() {
 					buf[1] = id >> 16;
 					buf[2] = id >> 8;
 					buf[3] = id & 0xff;
+					buf[4] = reader[r].cc_id >> 24;
 					buf[5] = reader[r].cc_id >> 16;
-					buf[6] = reader[r].cc_id >> 8;
-					buf[7] = reader[r].cc_id & 0xFF;
+					buf[6] = j >> 8;
+					buf[7] = j & 0xFF;
 					ushort caid = reader[r].ftab.filts[j].caid;
 					buf[8] = caid >> 8;
 					buf[9] = caid & 0xff;
@@ -2406,11 +2470,6 @@ int cc_srv_report_cards() {
 
 					buf[21 + (k * 7)] = 1;
 					memcpy(buf + 22 + (k * 7), cc->node_id, 8);
-					/*
-					 buf[21 + (k*7)+8] = 1;
-					 memcpy(buf + 22 + (k*7)+8, cc->node_id, 7);//8);
-					 cc_cmd_send(buf, 30 + (k*7) + 9, MSG_NEW_CARD);
-					 */
 					int len = 30 + (k * 7);
 					cc_cmd_send(buf, len, MSG_NEW_CARD);
 					cc_add_reported_carddata(reported_carddatas, buf, len, &reader[r]);
@@ -2438,9 +2497,10 @@ int cc_srv_report_cards() {
 					buf[1] = id >> 16;
 					buf[2] = id >> 8;
 					buf[3] = id & 0xff;
+					buf[4] = reader[r].cc_id >> 24;
 					buf[5] = reader[r].cc_id >> 16;
-					buf[6] = reader[r].cc_id >> 8;
-					buf[7] = reader[r].cc_id & 0xFF;
+					buf[6] = j >> 8;
+					buf[7] = j & 0xFF;
 					buf[8] = lcaid >> 8;
 					buf[9] = lcaid & 0xff;
 					buf[10] = hop;
@@ -2448,10 +2508,6 @@ int cc_srv_report_cards() {
 					if (au_allowed)
 						cc_UA_oscam2cccam(reader[r].hexserial, buf + 12);
 					buf[20] = 1;
-					//cs_log("CAID map CCcam card report caid: %04X nodeid: %s subid: %06X", lcaid, cs_hexdump(0, cc->peer_node_id, 8), reader[r].cc_id);
-					//buf[21] = 0;
-					//buf[22] = 0;
-					//buf[23] = 0;
 					buf[21 + 7] = 1;
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
@@ -2471,6 +2527,7 @@ int cc_srv_report_cards() {
 			buf[1] = id >> 16;
 			buf[2] = id >> 8;
 			buf[3] = id & 0xff;
+			buf[4] = reader[r].cc_id >> 24;
 			buf[5] = reader[r].cc_id >> 16;
 			buf[6] = reader[r].cc_id >> 8;
 			buf[7] = reader[r].cc_id & 0xFF;
@@ -2507,7 +2564,7 @@ int cc_srv_report_cards() {
 			} else if ((reader[r].card_status != CARD_INSERTED)
 					&& (!reader[r].tcp_connected) && reader[r].cc_id) {
 				//reader[r].cc_id = 0;
-				cc_cmd_send(buf, 30 + (j * 7), MSG_CARD_REMOVED);
+				cc_cmd_send(buf, 4, MSG_CARD_REMOVED);
 				//cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], reader[r].label);
 			}
 		}
@@ -2573,6 +2630,7 @@ int cc_srv_report_cards() {
 		buf[1] = id >> 16;
 		buf[2] = id >> 8;
 		buf[3] = id & 0xff;
+		buf[4] = card->remote_id >> 24;
 		buf[5] = card->remote_id >> 16;
 		buf[6] = card->remote_id >> 8;
 		buf[7] = card->remote_id & 0xFF;
@@ -2592,16 +2650,33 @@ int cc_srv_report_cards() {
 			buf[23 + (j * 7)] = prid & 0xFF;
 			//memcpy(buf+24+(j*7), prov->sa, 4);
 			prov = llist_itr_next(&itr_prov);
+			//cs_debug_mask(D_TRACE, "%s prov %06X", getprefix(), prid);
 			j++;
 		}
 		buf[20] = j;
-		buf[21 + (j * 7)] = 1;
-		memcpy(buf + 22 + (j * 7), cc->node_id, 8);
+		int ofs = 21+(j*7);
+		buf[ofs] = 1+llist_count(card->remote_nodes);
+		//cs_debug_mask(D_TRACE, "%s count=%d", getprefix(), buf[ofs]);
+		ofs++;
+		
+		//Add own node id:
+		memcpy(buf+ofs, cc->node_id, 8);
+		ofs+=8;
+		
+		//Add all the others node id:
+		LLIST_ITR itr_node;
+		uint8 *remote_node = llist_itr_init(card->remote_nodes, &itr_node);
+		while (remote_node) {
+			memcpy(buf+ofs, remote_node, 8);
+			remote_node = llist_itr_next(&itr_node);
+			ofs+=8;
+		}
+		
 		id++;
 
-		int len = 30 + (j * 7);
-		cc_cmd_send(buf, len, MSG_NEW_CARD);
-		cc_add_reported_carddata(reported_carddatas, buf, len, &reader[r]);
+		//cs_debug_mask(D_TRACE, "%s ofs=%d", getprefix(), ofs);
+		cc_cmd_send(buf, ofs, MSG_NEW_CARD);
+		cc_add_reported_carddata(reported_carddatas, buf, ofs, &reader[r]);
 		card = llist_itr_next(&itr);
 	}
 	cc_free_cardlist(server_cards);
