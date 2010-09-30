@@ -2271,24 +2271,15 @@ struct cc_card *create_card(struct cc_card *card) {
 	return card2;
 }
 
-int same_nodes(struct cc_card *card1, struct cc_card *card2) {
+int same_last_node(struct cc_card *card1, struct cc_card *card2) {
 
-	if (llist_count(card1->remote_nodes) != llist_count(card2->remote_nodes))
+	if (!card1->remote_nodes->last || !card2->remote_nodes->last)
 		return 0;
 		
-	LLIST_ITR itr1;
-	LLIST_ITR itr2;
-	
-	uint8 *node1 = llist_itr_init(card1->remote_nodes, &itr1);
-	uint8 *node2 = llist_itr_init(card2->remote_nodes, &itr2);
-	
-	while (node1 && node2) {
-		if (memcmp(node1, node2, 8) != 0)
-			return 0;
-		node1 = llist_itr_next(&itr1);
-		node2 = llist_itr_next(&itr2);
-	}
-	return 1;
+	uint8 *node1 = card1->remote_nodes->last->obj;
+	uint8 *node2 = card2->remote_nodes->last->obj;
+
+	return !memcmp(node1, node2, 8);
 }
 
 /**
@@ -2347,10 +2338,9 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
 			modified = 1;
 	} else {
 		while (card2) {
-			if (card2->caid == card->caid && card2->hop == card->hop
+			if (card2->caid == card->caid
 					&& card2->remote_id == card->remote_id 
-					&& llist_count(card2->providers) < CS_MAXPROV 
-					&& same_nodes(card2, card))
+					&& same_last_node(card2, card))
 				break;
 			card2 = llist_itr_next(&itr);
 		}
@@ -2363,10 +2353,6 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
 			if (add_card_providers(card2, card, 1))
 				modified = 1;
 		}
-		else
-			if (add_card_providers(card2, card, 0))
-				modified = 1;
-			
 	}
 	return modified;
 }
