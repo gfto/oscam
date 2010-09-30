@@ -501,7 +501,8 @@ typedef struct ecm_request_t
 
 struct s_client
 {
-  pid_t		pid;
+  int		cidx;
+  pid_t	pid;
   in_addr_t	ip;
   in_port_t	port;
   time_t	login;
@@ -605,7 +606,6 @@ struct s_client
   uchar lastserial[8];
 
   //cccam
-  char * prefix;
   int g_flag;
   int cc_use_rc4;
 

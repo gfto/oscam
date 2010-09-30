@@ -1680,6 +1680,17 @@ void * azbox_main(void *cli) {
 	cs_ftime(&tp);
 	tp.time+=500;
 
+	struct s_auth *account=0;
+	int ok=0;
+	if (!account) {
+		client->usr[0]=0;
+		for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
+			if( (ok=!strcmp(cfg->dvbapi_usr, account->usr)) )
+				break;
+	}
+
+	cs_auth_client(ok ? account : (struct s_auth *)(-1), "dvbapi");
+
 	openxcas_msg_t msg;
 	int ret;
 	while ((ret = openxcas_get_message(&msg, 0)) >= 0) {

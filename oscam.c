@@ -362,23 +362,23 @@ void cs_exit(int sig)
 
   struct s_client *cl = &client[cs_idx];
   
-  switch(client[cs_idx].typ)
+  switch(cl->typ)
   {
     case 'c':
-    	cs_statistics(cs_idx);
+    	cs_statistics(cl->cidx);
     	cl->last_caid = 0xFFFF;
     	cl->last_srvid = 0xFFFF;
-    	cs_statistics(cs_idx);
+    	cs_statistics(cl->cidx);
     	break;
     case 'm': break;
     case 'n': break;
     case 'r':
         // free AES entries allocated memory
-        if(reader[client[cs_idx].ridx].aes_list) {
-            aes_clear_entries(&reader[client[cs_idx].ridx]);
+        if(reader[cl->ridx].aes_list) {
+            aes_clear_entries(&reader[cl->ridx]);
         }
         // close the device
-        reader_device_close(&reader[client[cs_idx].ridx]);
+        reader_device_close(&reader[cl->ridx]);
         break;
     case 'h':
     case 's':
@@ -402,28 +402,22 @@ void cs_exit(int sig)
 	}
 
 	// this is very important - do not remove
-	int i;
-	for (i=1; i<CS_MAXPID; i++) {
-		if (pthread_equal(client[i].thread, pthread_self())) {
-			client[i].pid=0;
-			if(client[i].ecmtask) 	free(client[i].ecmtask);
-			if(client[i].emmcache) 	free(client[i].emmcache);
-			if(client[i].req) 		free(client[i].req);
-			if(client[i].prefix) 	free(client[i].prefix);
-			if(client[i].cc) 		free(client[i].cc);
-			if(client[i].pfd)	close(client[i].pfd); //Closing Network socket
-			if(client[i].fd_m2c_c)  close(client[i].fd_m2c_c); //Closing client read fd
-			if(client[i].fd_m2c)		close(client[i].fd_m2c); //Closing client read fd
-			if(client[i].ufd)		close(client[i].ufd);
-			                
-			cs_log("thread %d ended!", i);
-			pthread_exit(NULL);
-			return;
-		}
-	}
+	if (cl->cidx>0) {
+		if(cl->ecmtask) 	free(cl->ecmtask);
+		if(cl->emmcache) 	free(cl->emmcache);
+		if(cl->req) 		free(cl->req);
+		if(cl->cc) 		free(cl->cc);
 
-	for (i=1; i<CS_MAXPID; i++) {
-		kill_thread(i);
+		if(cl->pfd)		close(cl->pfd); //Closing Network socket
+		if(cl->fd_m2c_c)	close(cl->fd_m2c_c); //Closing client read fd
+		if(cl->fd_m2c)	close(cl->fd_m2c); //Closing client read fd
+		if(cl->ufd)		close(cl->ufd);
+
+		cs_log("thread %d ended!", cl->cidx);
+		cl->pid=0;
+
+		pthread_exit(NULL);
+		return;
 	}
 	
 	cs_log("cardserver down");
@@ -566,6 +560,8 @@ int cs_fork(in_addr_t ip, in_port_t port) {
 
 		client[i].login=client[i].last=time((time_t *)0);
 		client[i].pid=pid;    // MUST be last -> wait4master()
+
+		client[i].cidx=i;
 
 		cs_last_idx=i;
 
@@ -866,7 +862,6 @@ void kill_thread(int cidx) {
 	if(client[cidx].ecmtask) 	free(client[cidx].ecmtask);
 	if(client[cidx].emmcache) 	free(client[cidx].emmcache);
 	if(client[cidx].req) 	free(client[cidx].req);
-	if(client[cidx].prefix) 	free(client[cidx].prefix);
 	if(client[cidx].cc) 		free(client[cidx].cc);
 
 	if(client[cidx].pfd)		close(client[cidx].pfd); //Closing Network socket
@@ -2669,23 +2664,21 @@ int accept_connection(int i, int j) {
 	if (ph[i].type==MOD_CONN_UDP) {
 
 		if ((n=recvfrom(ph[i].ptab->ports[j].fd, buf+3, sizeof(buf)-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
-
-			if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
-				return 0;
-
 			int idx;
 			idx=idx_from_ip(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
 
 			if (!idx) {
+				if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
+					return 0;
+				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
+
+				o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
+				if (o<0) return 0;
+
 				if (pipe(fdp)) {
 					cs_log("Cannot create pipe (errno=%d)", errno);
 					return 0;
 				}
-
-				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
-				o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
-
-				if (o<0) return 0;
 
 				client[o].ufd=fdp[1];
 				client[o].pfd=fdp[0];
