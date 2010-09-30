@@ -584,22 +584,11 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 			}
 			break;
       		case 0x0d:  // Cryptoworks
-				    cs_log("cryptoworks shared emm (EMM-S): %s" , cs_hexdump(1, buffer, len));
-      		// the code bellow can't work.
-      		// here is th description on how to assemble cryptoworks emm
       		//   Cryptoworks EMM-S have to be assembled by the client from an EMM-SH with table
             //   id 0x84 and a corresponding EMM-SB (body) with table id 0x86. A pseudo EMM-S
             //   with table id 0x84 has to be build containing all nano commands from both the
             //    original EMM-SH and EMM-SB in ascending order.
-            //
-            // Here the 2 part are assembled in the wrong order
-            // it should be all data from id 0x84 and then append the data from id 0x86
-            // I'll work on a fix (RoRoTheTroll)
             // 
-      			// Whoever implement the fix - could you have a look at setting a right provid
-      			// in each EMM struct? In the moment just in nagra is a right provid and in CW
-      			// we found smthg but not the right provid. This is why _auprovid_ work just
-      			// on nagra. Auprovid filter is in oscam.c do_emm()
 			if (len>500) return;
 			switch (buffer[0]) {
 				case 0x84:
@@ -615,11 +604,13 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 
 					// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
 					// now we need to append the payload of the 0x86 emm (EMM-SB)
-					// starting after the header (buffer[5])
+					// starting after the header (&buffer[5])
 					// then the rest of the payload from EMM-SH
 					// so we should have :
 					// EMM-SH[0:12] + EMM-SB[5:len_EMM-SB] + EMM-SH[12:EMM-SH_len]
-					// and we need to update the emm len (emmBuf[1:2]
+					// then sort the nano in ascending order
+					// update the emm len (emmBuf[1:2])
+					//
 				    emm_len=len-5 + emm_global_len-12;
                     unsigned char *tmp=malloc(emm_len);
                     unsigned char *assembled_EMM=malloc(emm_len+12);
@@ -632,7 +623,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 
                     assembled_EMM[1]=((emm_len+9)>>8) | 0x70;
                     assembled_EMM[2]=(emm_len+9) & 0xFF;
-                    //copy back the asembled emm in the working buffer
+                    //copy back the assembled emm in the working buffer
 					memcpy(buffer, assembled_EMM, emm_len+12);
 					len=emm_len+12;
 				    free(tmp);
