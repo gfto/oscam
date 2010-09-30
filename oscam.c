@@ -2436,9 +2436,10 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			int act, j;
 			er=&client[cs_idx].ecmtask[i];
 			tpc=er->tps;
-			tpc.millitm += (er->stage) ? cfg->ctimeout : cfg->ftimeout;
-			tpc.time += tpc.millitm / 1000;
-			tpc.millitm = tpc.millitm % 1000;
+			unsigned int tt;
+			tt = (er->stage) ? cfg->ctimeout : cfg->ftimeout;
+			tpc.time +=tt / 1000;
+			tpc.millitm += tt % 1000;
 			if (!er->stage) {
 				for (j=0, act=1; (act) && (j<CS_MAXREADER); j++) {
 					if (cfg->preferlocalcards && !er->locals_done) {
@@ -2466,19 +2467,20 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 								inc_stage = 0;
 						}
 					}
+					unsigned int tt;
 					if (!inc_stage) {
 						request_cw(er, er->stage, 2);
-						tpc.millitm += 1000 * (tpn.time - er->tps.time) + tpn.millitm - er->tps.millitm;
-						tpc.time += tpc.millitm / 1000;
-						tpc.millitm = tpc.millitm % 1000;
+						tt = 1000 * (tpn.time - er->tps.time) + tpn.millitm - er->tps.millitm;
+						tpc.time += tt / 1000;
+						tpc.millitm += tt % 1000;
 					} else {
 						er->locals_done = 0;
 						er->stage++;
 						request_cw(er, er->stage, cfg->preferlocalcards ? 1 : 0);
 
-						tpc.millitm += (cfg->ctimeout-cfg->ftimeout);
-						tpc.time += tpc.millitm / 1000;
-						tpc.millitm = tpc.millitm % 1000;
+						tt = (cfg->ctimeout-cfg->ftimeout);
+						tpc.time += tt / 1000;
+						tpc.millitm += tt % 1000;
 					}
 				}
 			}
@@ -2498,9 +2500,10 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 				} else {
 					er->stage++;
 					request_cw(er, er->stage, 0);
-					tpc.millitm += (cfg->ctimeout-cfg->ftimeout);
-					tpc.time += tpc.millitm / 1000;
-					tpc.millitm = tpc.millitm % 1000;
+					unsigned int tt;
+					tt = (cfg->ctimeout-cfg->ftimeout);
+					tpc.time += tt / 1000;
+					tpc.millitm += tt % 1000;
 				}
 			}
 			//build_delay(&tpe, &tpc);

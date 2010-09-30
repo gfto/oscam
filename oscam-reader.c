@@ -333,9 +333,9 @@ static void casc_get_dcw(struct s_reader * reader, int n)
   struct timeb tps, tpe;
   tpe=client[cs_idx].ecmtask[n].tps;
   //tpe.millitm+=1500;    // TODO: timeout of 1500 should be config
-  tpe.millitm+=cfg->srtimeout;
-  tpe.time+=(tpe.millitm/1000);
-  tpe.millitm%=1000;
+
+  tpe.time += cfg->srtimeout/1000;
+  tpe.millitm += cfg->srtimeout%1000;
   
   cs_ftime(&tps);
   while (((w=1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm)>0)

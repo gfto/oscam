@@ -918,9 +918,10 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 
 			struct timeb timeout;
 			timeout = cc->ecm_time;
-			timeout.millitm += cfg->ctimeout * 4;
-			timeout.time += timeout.millitm / 1000;
-			timeout.millitm = timeout.millitm % 1000;
+			unsigned int tt;
+			tt = cfg->ctimeout * 4;
+			timeout.time += tt / 1000;
+			timeout.millitm += tt % 1000;
 
 			if (comp_timeb(&cur_time, &timeout) < 0) { //TODO: Configuration?
 				return 0; //pending send...
@@ -2965,9 +2966,8 @@ int cc_srv_connect(struct s_client *cl) {
 				struct timeb cur_time;
 				cs_ftime(&cur_time);
 				timeout = cc->ecm_time;
-				timeout.millitm += cfg->cc_update_interval * 1000;
-				timeout.time += timeout.millitm / 1000;
-				timeout.millitm = timeout.millitm % 1000;
+				timeout.time += cfg->cc_update_interval;
+		
 
 				int needs_card_updates = (cfg->cc_update_interval >=0) && comp_timeb(
 						&cur_time, &timeout) > 0;
