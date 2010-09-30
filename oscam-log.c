@@ -183,9 +183,9 @@ static void write_to_log(int flag, char *txt)
 	}
 
 	cs_write_log(log_buf + 8);
-
+#ifdef CS_LOGHISTORY
 	store_logentry(log_buf);
-
+#endif
 	for (i = 0; i < CS_MAXPID; i++)	// monitor-clients
 	{
 		if ((client[i].pid) && (client[i].log))

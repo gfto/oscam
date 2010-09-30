@@ -826,7 +826,7 @@ int cs_user_resolve(struct s_auth *account)
     	account->dynip=0;
     return result;
 }
-
+#if defined(CS_ANTICASC) || defined(WEBIF) 
 static void start_thread(void * startroutine, char * nameroutine, char typ) {
 	int i,o;
 
@@ -851,7 +851,7 @@ static void start_thread(void * startroutine, char * nameroutine, char typ) {
 		pthread_detach(client[o].thread);
 	}
 }
-
+#endif
 void kill_thread(int cidx) {
 
 	if (client[cidx].pid==0) return;
@@ -1234,10 +1234,10 @@ static void store_ecm(ECM_REQUEST *er)
 	ecmcache[rc].reader = er->reader[0];
 	//cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
-
+#ifdef CS_LOGHISTORY
 void store_logentry(char *txt)
 {
-#ifdef CS_LOGHISTORY
+
 	char *ptr;
 	ptr=(char *)(loghist+(*loghistidx*CS_LOGHISTSIZE));
 	ptr[0]='\1';    // make username unusable
@@ -1246,9 +1246,9 @@ void store_logentry(char *txt)
 		cs_strncpy(ptr, client[cs_idx].usr, 31);
 	cs_strncpy(ptr+32, txt, CS_LOGHISTSIZE-33);
 	*loghistidx=(*loghistidx+1) % CS_MAXLOGHIST;
-#endif
-}
 
+}
+#endif
 // only for debug
 int get_thread_by_pipefd(int fd) {
 	int i;
