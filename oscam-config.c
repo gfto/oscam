@@ -621,6 +621,16 @@ void chk_t_global(char *token, char *value)
 		}
 	}
 	
+	if (!strcmp(token, "failbantime")) {
+		if(strlen(value) == 0) {
+			cfg->failbantime = 0;
+			return;
+		} else {
+			cfg->failbantime = atoi(value);
+			return;
+		}
+	}
+
 #ifdef CS_WITH_DOUBLECHECK
 	if (!strcmp(token, "double_check")) {
 		if (strlen(value) == 0) {
@@ -1812,6 +1822,7 @@ int write_config()
 	fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout);
 	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout);
 	fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
+	fprintf_conf(f, CONFVARWIDTH, "failbantime", "%d\n", cfg->failbantime);
 	if(!cfg->delay == CS_DELAY)
 		fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay); //deprecated
 	fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);

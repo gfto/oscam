@@ -10,6 +10,7 @@
 #else
 #  define CS_VERSION_X  CS_VERSION
 #endif
+
 /*****************************************************************************
         Globals
 *****************************************************************************/
@@ -82,6 +83,60 @@ int get_csidx() {
 	return 0; // main process
 }
 
+int cs_check_violation(uint ip) {
+	if (cfg->failbantime) {
+
+		time_t now = time((time_t)0);
+		LLIST_ITR itr;
+		V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
+
+		while (v_ban_entry) {
+			if (ip == v_ban_entry->v_ip) {
+				if ((now - v_ban_entry->v_time) >= (cfg->failbantime * 60)) {
+					// housekeeping
+					free(v_ban_entry);
+					llist_itr_remove(&itr);
+					return 0;
+				}
+				cs_debug("banned ip %d - %ld seconds left",
+						v_ban_entry->v_ip,(cfg->failbantime * 60) - (now - v_ban_entry->v_time));
+				return 1;
+			}
+			v_ban_entry = llist_itr_next(&itr);
+		}
+	}
+	return 0;
+}
+
+void cs_add_violation(uint ip) {
+	if (cfg->failbantime) {
+
+		if (!cfg->v_list)
+			cfg->v_list = llist_create();
+
+		LLIST_ITR itr;
+		V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
+		while (v_ban_entry) {
+			if (ip == v_ban_entry->v_ip) {
+				cs_debug("banned ip %d - already exist in list", v_ban_entry->v_ip);
+				return ;
+			}
+			v_ban_entry = llist_itr_next(&itr);
+		}
+
+		v_ban_entry = malloc(sizeof(V_BAN));
+		memset(v_ban_entry, 0, sizeof(V_BAN));
+
+		v_ban_entry->v_time = time((time_t *)0);
+		v_ban_entry->v_ip = ip;
+
+		llist_append(cfg->v_list, v_ban_entry);
+
+		cs_debug("ban ip: %d timestamp: %d", v_ban_entry->v_ip, v_ban_entry->v_time);
+
+	}
+}
+//Alno Test End
 /*****************************************************************************
         Statics
 *****************************************************************************/
@@ -993,6 +1048,7 @@ int cs_auth_client(struct s_auth *account, const char *e_txt)
 #endif
 	case 0:           // reject access
 		rc=1;
+		cs_add_violation((uint)client[cs_idx].ip);
 		cs_log("%s %s-client %s%s (%s)",
 				client[cs_idx].crypted ? t_crypt : t_plain,
 				ph[client[cs_idx].ctyp].desc,
@@ -2612,6 +2668,10 @@ int accept_connection(int i, int j) {
 	if (ph[i].type==MOD_CONN_UDP) {
 
 		if ((n=recvfrom(ph[i].ptab->ports[j].fd, buf+3, sizeof(buf)-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
+
+			if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
+				return 0;
+
 			int idx;
 			idx=idx_from_ip(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
 
@@ -2620,6 +2680,8 @@ int accept_connection(int i, int j) {
 					cs_log("Cannot create pipe (errno=%d)", errno);
 					return 0;
 				}
+
+				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
 				o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
 
 				if (o<0) return 0;
@@ -2656,6 +2718,10 @@ int accept_connection(int i, int j) {
 
 		int pfd3;
 		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
+
+			if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
+				return 0;
+
 			o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
 
 			if (o<0) return 0;			

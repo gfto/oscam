@@ -28,6 +28,8 @@
 
 #include <pthread.h>
 
+#include "module-obj-llist.h"
+
 //for reader-nagra variables in s_reader: 
 #include "cscrypt/idea.h" 
 
@@ -389,6 +391,12 @@ struct s_emm
   uchar type;
   int   count;
 };
+
+// failban listmember
+typedef struct v_ban {
+	uint v_ip;
+	int v_time;
+} GCC_PACK V_BAN;
 
 #define AVAIL_CHECK_CONNECTED 0
 #define AVAIL_CHECK_LOADBALANCE 1
@@ -960,6 +968,8 @@ struct s_config
 	in_addr_t	http_dynip;
 	uchar		http_dyndns[64];
 #endif
+	int			failbantime;
+	LLIST 		*v_list; //failban list
 	int		c33_port;
 	in_addr_t	c33_srvip;
 	uchar		c33_key[16];
