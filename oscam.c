@@ -104,6 +104,7 @@ int cs_check_violation(uint ip) {
 			}
 			v_ban_entry = llist_itr_next(&itr);
 		}
+		return 0;
 	}
 	return 0;
 }
