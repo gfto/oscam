@@ -121,6 +121,9 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 	else
 		tpl_addVar(vars, 0, "RESOLVER0", "selected");
 
+	tpl_printf(vars, 0, "FAILBANTIME", "%d", cfg->failbantime);
+
+
 #ifdef CS_WITH_DOUBLECHECK
 	if(cfg->double_check == 1)
 		tpl_addVar(vars, 0, "DCHECKCSELECTED", "selected");

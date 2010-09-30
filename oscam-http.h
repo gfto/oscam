@@ -985,6 +985,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>Log file:</TD><TD><input name=\"logfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##LOGFILE##\"></TD></TR>\n\
 		<TR><TD>Usr file flag:</TD><TD><input name=\"usrfileflag\" type=\"text\" size=\"5\" maxlength=\"1\" value=\"##USERFILEFLAG##\"></TD></TR>\n\
 		<TR><TD>CW log dir:</TD><TD><input name=\"cwlogdir\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##CWLOGDIR##\"></TD></TR>\n\
+		<TR><TD>Failban time:</TD><TD><input name=\"failbantime\" type=\"text\" size=\"7\" maxlength=\"6\" value=\"##FAILBANTIME##\"></TD></TR>\n\
 		<TR><TD>Client timeout:</TD><TD><input name=\"clienttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTTIMEOUT##\"> ms</TD></TR>\n\
 		<TR><TD>Fallback timeout:</TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> ms</TD></TR>\n\
 		<TR><TD>Cache delay:</TD><TD><input name=\"cachedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms</TD></TR>\n\
