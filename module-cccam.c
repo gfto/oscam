@@ -355,12 +355,22 @@ void cc_cli_close() {
 
 	struct cc_data *cc = cl->cc;
 	if (cc) {
-		//pthread_mutex_unlock(&cc->lock);
-		//pthread_mutex_unlock(&cc->ecm_busy);
-		//pthread_mutex_unlock(&cc->cards_busy);
+		pthread_mutex_unlock(&cc->lock);
+		pthread_mutex_unlock(&cc->ecm_busy);
+		pthread_mutex_unlock(&cc->cards_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
 		free_current_cards(cc->current_cards);
+		if (cc->cards) 
+		{
+			LLIST_ITR itr;
+			struct cc_card *card = llist_itr_init(cc->cards, &itr);
+			while (card) 
+			{
+				cc_free_card(card);
+				card = llist_itr_remove(&itr);
+			}
+		}
 	}
 	cs_debug_mask(D_FUT, "cc_cli_close out");
 }
@@ -2678,6 +2688,7 @@ int cc_srv_report_cards() {
 }
 
 void cc_init_cc(struct cc_data *cc) {
+/*	
 	pthread_mutexattr_t   mta;
         pthread_mutexattr_init(&mta);
 #if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)  || defined(OS_MACOSX)
@@ -2688,10 +2699,11 @@ void cc_init_cc(struct cc_data *cc) {
 	pthread_mutex_init(&cc->lock, &mta);
 	pthread_mutex_init(&cc->ecm_busy, &mta);
 	pthread_mutex_init(&cc->cards_busy, &mta);
-
-	//pthread_mutex_init(&cc->lock, NULL);
-	//pthread_mutex_init(&cc->ecm_busy, NULL);
-	//pthread_mutex_init(&cc->cards_busy, NULL);
+*/
+//Gorlan.Ng : Fixme if recursive lock must be used
+	pthread_mutex_init(&cc->lock, NULL);
+	pthread_mutex_init(&cc->ecm_busy, NULL);
+	pthread_mutex_init(&cc->cards_busy, NULL);
 }
 
 /**
