@@ -632,13 +632,13 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 
                     assembled_EMM[1]=((emm_len+9)>>8) | 0x70;
                     assembled_EMM[2]=(emm_len+9) & 0xFF;
-
-					memcpy(buffer, assembled_EMM+12, emm_len);
-					len=emm_len;
+                    //copy back the asembled emm in the working buffer
+					memcpy(buffer, assembled_EMM, emm_len+12);
+					len=emm_len+12;
 				    free(tmp);
 				    free(assembled_EMM);
 				    emm_global_len=0;
-				    cs_log("cryptoworks shared emm (assembled): %s" , cs_hexdump(1, buffer, len));
+				    cs_log("cryptoworks shared emm (assembled): %s" , cs_hexdump(1, buffer, emm_len+12));
                     if(assembled_EMM[11]!=emm_len) { // sanity check
                         // error in emm assembly
                         cs_log("Error assembling Cryptoworks EMM-S");
