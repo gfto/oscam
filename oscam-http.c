@@ -2283,6 +2283,47 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	fputs(tpl_getTpl(vars, "FILE"), f);
 }
 
+void send_oscam_failban(struct templatevars *vars, FILE *f, struct uriparams *params) {
+
+	uint ip2delete = 0;
+	LLIST_ITR itr;
+	V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
+
+	if (strcmp(getParam(params, "action"), "delete") == 0) {
+		ip2delete = atoi(getParam(params, "intip"));
+		while (v_ban_entry) {
+			if (v_ban_entry->v_ip) {
+				free(v_ban_entry);
+				llist_itr_remove(&itr);
+				break;
+			}
+		}
+	}
+
+	time_t now = time((time_t)0);
+	v_ban_entry = llist_itr_init(cfg->v_list, &itr);
+
+	while (v_ban_entry) {
+		tpl_addVar(vars, 0, "DELICO", ICDEL);
+		tpl_printf(vars, 0, "IPADDRESS", "%s", cs_inet_ntoa(v_ban_entry->v_ip));
+
+		struct tm *st ;
+		st = localtime(&v_ban_entry->v_time);
+
+		tpl_printf(vars, 0, "VIOLATIONDATE", "%02d.%02d.%02d %02d:%02d:%02d",
+				st->tm_mday, st->tm_mon+1,
+				st->tm_year%100, st->tm_hour,
+				st->tm_min, st->tm_sec);
+
+		tpl_printf(vars, 0, "LEFTTIME", "%u", (cfg->failbantime * 60) - (now - v_ban_entry->v_time));
+		tpl_printf(vars, 0, "INTIP", "%u", v_ban_entry->v_ip);
+		tpl_addVar(vars, 1, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
+		v_ban_entry = llist_itr_next(&itr);
+	}
+
+	fputs(tpl_getTpl(vars, "FAILBAN"), f);
+}
+
 int process_request(FILE *f, struct in_addr in) {
 
 	client[cs_idx].last = time((time_t)0); //reset last busy time
@@ -2347,7 +2388,8 @@ int process_request(FILE *f, struct in_addr in) {
 		"/script.html",
 		"/scanusb.html",
 		"/files.html",
-		"/readerstats.html"};
+		"/readerstats.html",
+		"/failban.html"};
 
 	int pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 
@@ -2496,6 +2538,7 @@ int process_request(FILE *f, struct in_addr in) {
 			case 13: send_oscam_scanusb(vars, f); break;
 			case 14: send_oscam_files(vars, f, &params); break;
 			case 15: send_oscam_reader_stats(vars, f, &params); break;
+			case 16: send_oscam_failban(vars, f, &params); break;
 			default: send_oscam_status(vars, f, &params, in); break;
 		}
 		tpl_clear(vars);

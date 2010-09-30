@@ -395,7 +395,7 @@ struct s_emm
 // failban listmember
 typedef struct v_ban {
 	uint v_ip;
-	int v_time;
+	time_t v_time;
 } GCC_PACK V_BAN;
 
 #define AVAIL_CHECK_CONNECTED 0
