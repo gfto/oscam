@@ -2659,10 +2659,6 @@ int cc_srv_report_cards() {
 		//cs_debug_mask(D_TRACE, "%s count=%d", getprefix(), buf[ofs]);
 		ofs++;
 		
-		//Add own node id:
-		memcpy(buf+ofs, cc->node_id, 8);
-		ofs+=8;
-		
 		//Add all the others node id:
 		LLIST_ITR itr_node;
 		uint8 *remote_node = llist_itr_init(card->remote_nodes, &itr_node);
@@ -2671,6 +2667,10 @@ int cc_srv_report_cards() {
 			remote_node = llist_itr_next(&itr_node);
 			ofs+=8;
 		}
+
+		//Add own node id:
+		memcpy(buf+ofs, cc->node_id, 8);
+		ofs+=8;
 		
 		id++;
 
