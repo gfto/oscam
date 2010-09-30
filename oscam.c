@@ -2259,7 +2259,7 @@ void log_emm_request(int auidx)
 void do_emm(EMM_PACKET *ep)
 {
 	int au;
-	char *typtext[]={"UNKNOWN", "UNIQUE", "SHARED", "GLOBAL"}; 
+	char *typtext[]={"unknown", "unique", "shared", "global"};
 
 	au = client[cs_idx].au;
 	cs_ddump_mask(D_ATR, ep->emm, ep->l, "emm:");
@@ -2375,7 +2375,7 @@ void do_emm(EMM_PACKET *ep)
 		if (reader[au].logemm & 0x08)  {
 			cs_log("%s emmtype=%s, len=%d, idx=0, cnt=%d: blocked (0 ms) by %s",
 					client[cs_idx].usr,
-					strtolower(typtext[ep->type]),
+					typtext[ep->type],
 					ep->emm[2],
 					is_blocked,
 					reader[au].label);
