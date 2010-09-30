@@ -637,6 +637,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					len=emm_len;
 				    free(tmp);
 				    free(assembled_EMM);
+				    emm_global_len=0;
 				    cs_log("cryptoworks shared emm (assembled): %s" , cs_hexdump(1, buffer, len));
                     if(assembled_EMM[11]!=emm_len) { // sanity check
                         // error in emm assembly
