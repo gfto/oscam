@@ -1,5 +1,5 @@
 #ifndef __NDS_COMMON__
-#define __NDS_COMMON
+#define __NDS_COMMON__
 
 #include "globals.h"
 
@@ -33,13 +33,12 @@ typedef struct nds_atr {
 
 extern int cw_is_valid(unsigned char *cw, int start);
 extern void cAES_SetKey(struct s_reader * reader, const unsigned char *key);
-extern void swap_lb (const unsigned char *buff, int len);
 
 extern void __xxor(unsigned char *data, int len, const unsigned char *v1, const unsigned char *v2);
 #define xor16(v1,v2,d) __xxor((d),16,(v1),(v2))
 #define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point *2/3
 
-extern void cCamCryptVG_SetSeed(struct s_reader * reader, const unsigned char *Key1, const unsigned char *Key2);
+extern void cCamCryptVG_SetSeed(struct s_reader * reader);
 extern void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff);
 
 extern void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data);
@@ -53,6 +52,7 @@ extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsi
                   unsigned char *cw, unsigned char * cta_res);
 extern void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss, int base_year);
 extern void set_known_card_info(struct s_reader * reader, const unsigned char *atr, const unsigned int *atr_size);
-
+extern int num_addr(const unsigned char *data);
+extern const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a);
 #endif // __NDS_COMMON__
 

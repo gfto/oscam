@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 //
 // Common videoguard functions.
 //
@@ -122,6 +121,7 @@ static void cCamCryptVG_Process_D1(struct s_reader * reader, const unsigned char
 static void cCamCryptVG_Decrypt_D3(struct s_reader * reader, unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *buff, int len, unsigned char *cw);
 static int cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int len, unsigned char *crypt);
+static void swap_lb (const unsigned char *buff, int len);
 
 int cw_is_valid(unsigned char *cw, int start)	//returns 1 if cw_is_valid, returns 0 if cw is all zeros
 {
@@ -146,7 +146,7 @@ int cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int len, u
     return len;
 }
 
-void swap_lb (const unsigned char *buff, int len)
+static void swap_lb (const unsigned char *buff, int len)
 {
 
 #if __BYTE_ORDER != __BIG_ENDIAN
@@ -178,14 +178,27 @@ inline void __xxor(unsigned char *data, int len, const unsigned char *v1, const 
     }
 }
 
-void cCamCryptVG_SetSeed(struct s_reader * reader, const unsigned char *Key1, const unsigned char *Key2)
+void cCamCryptVG_SetSeed(struct s_reader * reader)
 {
-  swap_lb (Key1, 64);
-  swap_lb (Key2, 64);
-  memcpy(reader->cardkeys[1],Key1,sizeof(reader->cardkeys[1]));
-  memcpy(reader->cardkeys[2],Key2,sizeof(reader->cardkeys[2]));
-  swap_lb (Key1, 64);
-  swap_lb (Key2, 64);
+  static const unsigned char key1[] = {
+    0xb9, 0xd5, 0xef, 0xd5, 0xf5, 0xd5, 0xfb, 0xd5, 0x31, 0xd6, 0x43, 0xd6, 0x55, 0xd6, 0x61, 0xd6,
+    0x85, 0xd6, 0x9d, 0xd6, 0xaf, 0xd6, 0xc7, 0xd6, 0xd9, 0xd6, 0x09, 0xd7, 0x15, 0xd7, 0x21, 0xd7,
+    0x27, 0xd7, 0x3f, 0xd7, 0x45, 0xd7, 0xb1, 0xd7, 0xbd, 0xd7, 0xdb, 0xd7, 0x11, 0xd8, 0x23, 0xd8,
+    0x29, 0xd8, 0x2f, 0xd8, 0x4d, 0xd8, 0x8f, 0xd8, 0xa1, 0xd8, 0xad, 0xd8, 0xbf, 0xd8, 0xd7, 0xd8
+    };
+  static const unsigned char key2[] = {
+    0x01, 0x00, 0xcf, 0x13, 0xe0, 0x60, 0x54, 0xac, 0xab, 0x99, 0xe6, 0x0c, 0x9f, 0x5b, 0x91, 0xb9,
+    0x72, 0x72, 0x4d, 0x5b, 0x5f, 0xd3, 0xb7, 0x5b, 0x01, 0x4d, 0xef, 0x9e, 0x6b, 0x8a, 0xb9, 0xd1,
+    0xc9, 0x9f, 0xa1, 0x2a, 0x8d, 0x86, 0xb6, 0xd6, 0x39, 0xb4, 0x64, 0x65, 0x13, 0x77, 0xa1, 0x0a,
+    0x0c, 0xcf, 0xb4, 0x2b, 0x3a, 0x2f, 0xd2, 0x09, 0x92, 0x15, 0x40, 0x47, 0x66, 0x5c, 0xda, 0xc9
+    };
+
+  swap_lb (key1, 64);
+  swap_lb (key2, 64);
+  memcpy(reader->cardkeys[1],key1,sizeof(reader->cardkeys[1]));
+  memcpy(reader->cardkeys[2],key2,sizeof(reader->cardkeys[2]));
+  swap_lb (key1, 64);
+  swap_lb (key2, 64);
 }
 
 void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff)
@@ -211,7 +224,7 @@ static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned c
       cCamCryptVG_Decrypt_D3(reader,rxbuff,rxbuff+5,rxbuff+rxbuff[4]+5);
       if(rxbuff[1]==0x54) {
         memcpy(cw+0,rxbuff+5,8);
-    	memset(cw+8,0,8); //set to 0 so client will know it is invalid unless it is overwritten with a valid cw
+        memset(cw+8,0,8); //set to 0 so client will know it is invalid unless it is overwritten with a valid cw
         int ind;
         for(ind=15; ind<len+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past rxbuffer
                                              // we start searching at 15 because start at 13 goes wrong with 090F 090b and 096a
@@ -748,4 +761,108 @@ void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
       }
     }
   }
+}
+
+int num_addr(const unsigned char *data)
+{
+  return ((data[3] & 0x30) >> 4) + 1;
+}
+
+/*
+Example of GLOBAL EMM's
+This one has IRD-EMM + Card-EMM
+82 70 20 00 02 06 02 7D 0E 89 53 71 16 90 14 40
+01 ED 17 7D 9E 1F 28 CF 09 97 54 F1 8E 72 06 E7
+51 AF F5
+This one has only IRD-EMM
+82 70 6D 00 07 69 01 30 07 14 5E 0F FF FF 00 06
+00 0D 01 00 03 01 00 00 00 0F 00 00 00 5E 01 00
+01 0C 2E 70 E4 55 B6 D2 34 F7 44 86 9E 5C 91 14
+81 FC DF CB D0 86 65 77 DF A9 E1 6B A8 9F 9B DE
+90 92 B9 AA 6C B3 4E 87 D2 EC 92 DA FC 71 EF 27
+B3 C3 D0 17 CF 0B D6 5E 8C DB EB B3 37 55 6E 09
+7F 27 3C F1 85 29 C9 4E 0B EE DF 68 BE 00 C9 00
+*/
+const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a)
+{
+  int s;
+  int l;
+  const unsigned char *ptr = NULL;
+  int position = -1;
+  int numAddrs = 0;
+  switch (emmtype) {
+  case SHARED:
+    {
+      s = 3;
+      break;
+    }
+  case UNIQUE:
+    {
+      s = 4;
+      break;
+    }
+  default:
+    {
+      s = 0;
+    }
+  }
+
+  numAddrs = num_addr(data);
+  if (s > 0) {
+    for (l = 0; l < numAddrs; l++) {
+      if (!memcmp(&data[l * 4 + 4], a + 2, s)) {
+        position = l;
+        break;
+      }
+    }
+  }
+
+  int num_filter = (position == -1) ? 0 : numAddrs;
+  /* skip header and the filter list */
+  ptr = data + 4 + 4 * num_filter;
+  if (*ptr != 0x02 && *ptr != 0x07)	// some clients omit 00 00 separator */
+  {
+    ptr += 2;			// skip 00 00 separator
+    if (*ptr == 0x00)
+      ptr++;			// skip optional 00
+    ptr++;			// skip the 1st bitmap len
+  }
+
+  /* check for IRD-EMM */
+  if (*ptr != 0x02 && *ptr != 0x07) {
+    return NULL;
+  }
+
+  /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */
+  ptr += 2 + ptr[1];
+  /* check for EMM boundaries - ptr should not exceed EMM length */
+  if ((int) (ptr - (data + 3)) >= data[2]) {
+    return NULL;
+  }
+
+  for (l = 0; l < position; l++) {
+    /* skip the payload of the previous sub-EMM */
+    ptr += 1 + ptr[0];
+    /* check for EMM boundaries - ptr should not exceed EMM length */
+    if ((int) (ptr - (data + 3)) >= data[2]) {
+      return NULL;
+    }
+
+    /* skip optional 00 */
+    if (*ptr == 0x00) {
+      ptr++;
+    }
+
+    /* skip the bitmap len */
+    ptr++;
+    /* check for IRD-EMM */
+    if (*ptr != 0x02 && *ptr != 0x07) {
+      return NULL;
+    }
+
+    /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */
+    ptr += 2 + ptr[1];
+  }
+
+  return ptr;
 }
