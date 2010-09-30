@@ -71,7 +71,7 @@ int reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int l, ucha
 		Sc8in1_Selectslot(reader, reader->slot);
 	}
 	cs_ddump(buf, l, "write to cardreader %s:",reader->label);
-	rc=ICC_Async_CardWrite(reader, buf, (unsigned short)l, cta_res, p_cta_lr);
+	rc=ICC_Async_CardWrite(reader, (uchar *)buf, (unsigned short)l, cta_res, p_cta_lr);
 	cs_ddump(cta_res, *p_cta_lr, "answer from cardreader %s:", reader->label);
 	if (reader->typ == R_SC8in1) {
 		cs_debug("SC8in1: unlocked for CardWrite of slot %i", reader->slot);
