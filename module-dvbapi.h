@@ -47,6 +47,9 @@ typedef struct ECMPIDS
 	int checked;
 	int status;
 	unsigned char table;
+	int index;
+	unsigned char slen;
+	char stream[8];
 } ECMPIDSTYPE;
 
 typedef struct filter_s
