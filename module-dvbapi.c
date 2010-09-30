@@ -633,7 +633,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
                     assembled_EMM[1]=((emm_len+9)>>8) | 0x70;
                     assembled_EMM[2]=(emm_len+9) & 0xFF;
 
-					memcpy(buffer, assembled_EMM, emm_len);
+					memcpy(buffer, assembled_EMM+12, emm_len);
 					len=emm_len;
 				    free(tmp);
 				    free(assembled_EMM);
