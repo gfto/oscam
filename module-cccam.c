@@ -2863,6 +2863,8 @@ int cc_srv_connect(struct s_client *cl) {
 			cs_debug("illegal username received");
 	}
 
+	cl->crypted = 1;
+
 	for (account = cfg->account; account; account = account->next) {
 		if (strcmp(usr, account->usr) == 0) {
 			strncpy(pwd, account->pwd, sizeof(pwd));
@@ -2897,7 +2899,6 @@ int cc_srv_connect(struct s_client *cl) {
 	} else
 		return -1;
 
-	cl->crypted = 1;
 	//Starting readers to get cards:
 	int wakeup = cc_srv_wakeup_readers(cl);
 	
