@@ -81,7 +81,9 @@ static int get_request(uchar *buf)
       cs_log("WARNING: protocol error (garbage)");
   }
   if (n>0)
+  {
     cs_ddump(buf, n, "received %d bytes from client", n);
+  }
   return(rc);
 }
 

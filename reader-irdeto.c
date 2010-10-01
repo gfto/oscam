@@ -481,7 +481,9 @@ int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			return(irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) ? 0 : 1);
 		}
 		else
+		{
 			cs_debug("[irdeto-reader] addrlen %d > %d", l, ADDRLEN);
+		}
 	}
 	return ERROR;
 }

@@ -160,9 +160,11 @@ static int chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)
         }
       }
 
-  if( !rc ) cs_debug("no match, %04X:%04X rejected by %s '%s' CHID filter(s)", 
+  if( !rc )
+  {
+    cs_debug("no match, %04X:%04X rejected by %s '%s' CHID filter(s)", 
                       er->caid, er->chid, type, name);
-  
+  }
   return (rc);
 }
 

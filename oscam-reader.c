@@ -120,8 +120,9 @@ int network_select(int forRead, int timeout)
          return -1; 
        } 
        else { 
-         if(timeout>0)  
-           cs_debug("socket: select timed out (%d %s)",timeout&~MSTIMEOUT,(timeout&MSTIMEOUT)?"ms":"secs"); 
+         if(timeout>0) {
+           cs_debug("socket: select timed out (%d %s)",timeout&~MSTIMEOUT,(timeout&MSTIMEOUT)?"ms":"secs");
+         }
          errno=ETIMEDOUT;
          return 0; 
        } 

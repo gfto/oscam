@@ -201,7 +201,9 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName
 		ftab->nfilts++;
 	}
 
-	if( ftab->nfilts ) cs_debug("%s '%s' %s filter(s):", zType, zName, zFiltName);
+	if( ftab->nfilts ) {
+	    cs_debug("%s '%s' %s filter(s):", zType, zName, zFiltName);
+	}
 	for( i = 0; i < ftab->nfilts; i++ ) {
 		cs_debug("CAID #%d: %04X", i, ftab->filts[i].caid);
 		for( j = 0, ptr3 = strtok(ptr[i], ","); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok(NULL, ","), j++ ) {

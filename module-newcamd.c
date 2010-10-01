@@ -1141,7 +1141,9 @@ static void * newcamd_server(void *cli)
 					if(mbuf[2]>0x81 && mbuf[2]<0x90)
 						newcamd_process_emm(mbuf+2);
 					else
+					{
 						cs_debug("unknown newcamd command! (%d)", mbuf[2]);
+					}
 			}
 		}
 

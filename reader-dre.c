@@ -355,9 +355,8 @@ void dre_get_emm_filter(struct s_reader * rdr, uchar *filter)
 int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
 {
   def_resp;
-  int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
 
-  cs_ddump (ep->emm, emm_length + 3, "EMM:");
+  cs_ddump (ep->emm, ((ep->emm[1] & 0x0f) << 8) + ep->emm[2] + 3, "EMM:");
 
   if (reader->caid[0] == 0x4ae1) {
     if(ep->type == UNIQUE && ep->emm[39] == 0x3d)

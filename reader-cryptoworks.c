@@ -308,8 +308,9 @@ int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             break;
           case 0xD4:
             cs_debug("[cryptoworks-reader] nano D4 (rand)");
-            if(n<8 || memcmp(&cta_res[i],nanoD4,sizeof(nanoD4)))
+            if(n<8 || memcmp(&cta_res[i],nanoD4,sizeof(nanoD4))){
               cs_debug("[cryptoworks-reader] random data check failed after decrypt");
+            }
             break;
           case 0xDB: // CW
             cs_debug("[cryptoworks-reader] nano DB (cw)");

@@ -2860,8 +2860,9 @@ int cc_srv_connect(struct s_client *cl) {
 			cs_ddump(buf, 20, "cccam: username '%s':", usr);
 		else if (cc->cc_use_rc4 == 1)
 			cs_ddump(buf_rc4, 20, "cccam: username rc4 '%s':", usr_rc4);
-		else
+		else {
 			cs_debug("illegal username received");
+		}
 	}
 
 	cl->crypted = 1;

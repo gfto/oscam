@@ -100,12 +100,16 @@ static int camd35_recv(uchar *buf, int l)
       aes_decrypt(buf, rs);
       cs_ddump(buf, rs, "received %d bytes from %s", rs, remote_txt());
       if (rs!=boundary(4, rs))
+      {
         cs_debug("WARNING: packet size has wrong decryption boundary");
+      }
       //n=(buf[0]==3) ? n=0x34 : 0; this was original, but statement below seems more logical -- dingo35
       n=(buf[0]==3) ? 0x34 : 0;
       n=boundary(4, n+20+buf[1]);
       if (n<rs)
+      {
         cs_debug("ignoring %d bytes of garbage", rs-n);
+      }
       else
         if (n>rs) rc=-3;
       break;
@@ -115,7 +119,9 @@ static int camd35_recv(uchar *buf, int l)
       break;
   }
   if ((rs>0) && ((rc==-1)||(rc==-2)))
+  {
     cs_ddump(buf, rs, "received %d bytes from %s (native)", rs, remote_txt);
+  }
   client[cs_idx].last=time((time_t *) 0);
   switch(rc)
   {

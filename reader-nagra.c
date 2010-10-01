@@ -494,7 +494,9 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
   	bn_data = BN_new ();
   	bn_res = BN_new ();
   	ctx= BN_CTX_new();
-	if (ctx == NULL) cs_debug("[nagra-reader] RSA Error in dt08 decrypt");
+	if (ctx == NULL) { 
+	  cs_debug("[nagra-reader] RSA Error in dt08 decrypt");
+	}
   	ReverseMem(static_dt08+1, 64);
   	BN_bin2bn (reader->rsa_mod, 64, bn_mod); // rsa modulus
   	BN_bin2bn (vFixed+3, 1, bn_exp); // exponent
