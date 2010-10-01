@@ -520,6 +520,14 @@ mode how to provide CCCam servers to CCCam clients:
  2 = aggregation based on CAIDs: all SCs with the same CAIDs 
      will be merged, provider will be removed
 .RE
+.PP
+\fBupdateinterval\fP = \fBseconds\fP
+.RS 3n
+interval to provide share list update to CCCam clients, default:240:
+
+  0 = updates based on server updates
+ -1 = disable
+.RE
 .SS "The [gbox] section"
 .PP
 \fBpassword\fP = \fBpassword\fP

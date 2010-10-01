@@ -224,9 +224,6 @@ DESCRIPTIONS
        cccwantemu = 0|1
 	  1 = request to provide emu from CCCam server, too, default:0
 
-       updateinterval = seconds
-	  interval to provide share list update to CCCam clients, default:240
-
        ccckeepalive = 0|1
 	  1 = send keepalive messages to keep connection to remote CCCam server up, default:0
 
