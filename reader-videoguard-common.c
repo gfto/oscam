@@ -119,7 +119,7 @@ static void cCamCryptVG_ReorderAndEncrypt(struct s_reader * reader, unsigned cha
 static void cCamCryptVG_Process_D0(struct s_reader * reader, const unsigned char *ins, unsigned char *data);
 static void cCamCryptVG_Process_D1(struct s_reader * reader, const unsigned char *ins, unsigned char *data, const unsigned char *status);
 static void cCamCryptVG_Decrypt_D3(struct s_reader * reader, unsigned char *ins, unsigned char *data, const unsigned char *status);
-static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *buff, int len, unsigned char *cw);
+static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff);
 static int cAES_Encrypt(struct s_reader * reader, const unsigned char *data, int len, unsigned char *crypt);
 static void swap_lb (const unsigned char *buff, int len);
 
@@ -211,7 +211,7 @@ void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff)
   swap_lb (buff, 64);
 }
 
-static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, int len, unsigned char *cw)
+static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff)
 {
   switch(rxbuff[0]) {
     case 0xD0:
@@ -222,25 +222,6 @@ static void cCamCryptVG_PostProcess_Decrypt(struct s_reader * reader, unsigned c
       break;
     case 0xD3:
       cCamCryptVG_Decrypt_D3(reader,rxbuff,rxbuff+5,rxbuff+rxbuff[4]+5);
-      if(rxbuff[1]==0x54) {
-        memcpy(cw+0,rxbuff+5,8);
-        memset(cw+8,0,8); //set to 0 so client will know it is invalid unless it is overwritten with a valid cw
-        int ind;
-        for(ind=15; ind<len+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past rxbuffer
-                                             // we start searching at 15 because start at 13 goes wrong with 090F 090b and 096a
-          if(rxbuff[ind]==0x25) {
-            memcpy(cw+8,rxbuff+ind+3,8); //tested on viasat 093E, sky uk 0963, sky it 919  //don't care whether cw is 0 or not
-            break;
-          }
-        }
-        // fix for 09ac cards
-        // Log decrypted INS54
-        // if (rxbuff[1] == 0x54) {
-        //   cs_dump (rxbuff, 5, "Decrypted INS54:");
-        //   cs_dump (rxbuff + 5, rxbuff[4], "");
-        //}
-        manage_tag(reader, rxbuff, cw);
-      }
       break;
   }
 }
@@ -461,39 +442,6 @@ void memorize_cmd_table (struct s_reader * reader, const unsigned char *mem, int
   memcpy(reader->cmd_table,mem,size);
 }
 
-void manage_tag(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
-{
-  unsigned char tag,len,len2;
-  bool valid_0x55=FALSE;
-  unsigned char *body;
-  unsigned char buffer[0x10];
-  int a=0x13;
-  len2=rxbuff[4];
-  while(a<len2+5-9)  //  +5 for 5 ins bytes, -9 (body=8 len=1) to prevent memcpy(buffer+8,body,8) from reading past rxbuff
-  {
-    tag=rxbuff[a];
-    len=rxbuff[a+1];
-    body=rxbuff+a+2;
-    switch(tag)
-    {
-      case 0x55:{
-        if(body[0]==0x84){	//Tag 0x56 has valid data...
-          valid_0x55=TRUE;
-        }
-      }break;
-      case 0x56:{
-        memcpy(buffer+8,body,8);
-      }break;
-    }
-    a+=len+2;
-  }
-  if(valid_0x55){
-    memcpy(buffer,rxbuff+5,8);
-    AES_decrypt(buffer,buffer,&(reader->astrokey));
-    memcpy(cw+0,buffer,8);	// copy calculated CW in right place
-  }
-}
-
 int cmd_table_get_info(struct s_reader * reader, const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode)
 {
   struct s_CmdTabEntry *pcte=reader->cmd_table->e;
@@ -535,7 +483,7 @@ int read_cmd_len(struct s_reader * reader, const unsigned char *cmd)
 }
 
 int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
-           unsigned char *cw, unsigned char * cta_res)
+           unsigned char * cta_res)
 {
   ushort cta_lr;
   unsigned char ins2[5];
@@ -565,9 +513,7 @@ int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned ch
     memcpy(rxbuff+5+len,cta_res,2);
     }
 
-  cCamCryptVG_PostProcess_Decrypt(reader, rxbuff,len,cw);
-
-  // manage_tag(reader, rxbuff, cw); moved into cCamCryptVG_PostProcess_Decrypt as only needed on classD3 ins54
+  cCamCryptVG_PostProcess_Decrypt(reader,rxbuff);
 
   return len;
 }

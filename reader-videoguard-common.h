@@ -40,19 +40,16 @@ extern void __xxor(unsigned char *data, int len, const unsigned char *v1, const 
 
 extern void cCamCryptVG_SetSeed(struct s_reader * reader);
 extern void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff);
-
-extern void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data);
-extern void manage_tag(struct s_reader * reader, unsigned char *answer, unsigned char *cw);
 extern int status_ok(const unsigned char *status);
-
 extern void memorize_cmd_table (struct s_reader * reader, const unsigned char *mem, int size);
 extern int cmd_exists(struct s_reader * reader, const unsigned char *cmd);
 extern int read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
 extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
-                  unsigned char *cw, unsigned char * cta_res);
+                  unsigned char * cta_res);
 extern void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss, int base_year);
 extern void set_known_card_info(struct s_reader * reader, const unsigned char *atr, const unsigned int *atr_size);
 extern int num_addr(const unsigned char *data);
 extern const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a);
+
 #endif // __NDS_COMMON__
 
