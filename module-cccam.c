@@ -2383,9 +2383,6 @@ int cc_srv_report_cards() {
 	uint8 buf[CC_MAXMSGSIZE];
 	struct cc_data *cc = cl->cc;
 
-	//Reported deleted cards:
-	cc_free_reported_carddata(cc->reported_carddatas, 1);
-
 	struct s_auth *account = get_account(cl->usr);
 	if (account) {
 		maxhops = account->cccmaxhops;
@@ -2680,6 +2677,10 @@ int cc_srv_report_cards() {
 		card = llist_itr_next(&itr);
 	}
 	cc_free_cardlist(server_cards);
+
+	//Reported deleted cards:
+	cc_free_reported_carddata(cc->reported_carddatas, 1);
+
 
 	cc->report_carddata_id = id;
 	cc->reported_carddatas = reported_carddatas;
