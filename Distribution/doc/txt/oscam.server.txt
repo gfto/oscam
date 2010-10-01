@@ -224,7 +224,7 @@ DESCRIPTIONS
        cccwantemu = 0|1
 	  1 = request to provide emu from CCCam server, too, default:0
 
-       updateinval = seconds
+       updateinterval = seconds
 	  interval to provide share list update to CCCam clients, default:240
 
        ccckeepalive = 0|1
