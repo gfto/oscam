@@ -642,7 +642,13 @@ struct s_CmdTab {
   unsigned char dummy;
   struct s_CmdTabEntry e[1];
 };
-
+//ratelimit
+struct ecmrl {
+	ushort        srvid;
+	time_t	last;
+};
+#define MAXECMRATELIMIT	20
+	
 struct s_reader  //contains device info, reader info and card info
 {
   ulong		auprovid; // AU only for this provid
@@ -821,6 +827,10 @@ struct s_reader  //contains device info, reader info and card info
         unsigned char stateD3A[16];
         AES_KEY       ekey;
         AES_KEY       astrokey;
+	//ratelimit
+	int ratelimitecm;
+	int ratelimitseconds;
+	struct ecmrl    rlecmh[MAXECMRATELIMIT];
 };
 
 #ifdef CS_ANTICASC

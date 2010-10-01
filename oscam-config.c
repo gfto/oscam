@@ -2584,6 +2584,10 @@ int write_server()
                         if (reader[i].ndsversion && isphysical)
                                 fprintf_conf(f, CONFVARWIDTH, "ndsversion", "%d\n", reader[i].ndsversion);
 
+                        if (reader[i].ratelimitecm && isphysical) {
+                                fprintf_conf(f, CONFVARWIDTH, "ratelimitecm", "%d\n", reader[i].ratelimitecm);
+                                fprintf_conf(f, CONFVARWIDTH, "ratelimitseconds", "%d\n", reader[i].ratelimitseconds);
+			}
 			fprintf(f, "\n\n");
 		}
 	}
@@ -3893,6 +3897,31 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
   }
 #endif
 
+	//ratelimit
+        if (!strcmp(token, "ratelimitecm")) {
+                if (strlen(value) == 0) {
+                        rdr->ratelimitecm = 0;
+                        return;
+                } else {
+                        rdr->ratelimitecm = atoi(value);
+			int h;
+			for (h=0;h<rdr->ratelimitecm;h++) rdr->rlecmh[h].last=-1;
+                        return;
+                }
+        }
+        if (!strcmp(token, "ratelimitseconds")) {
+                if (strlen(value) == 0) {
+			if (rdr->ratelimitecm>0) {
+                        	rdr->ratelimitseconds = 10;
+			} else {
+                        	rdr->ratelimitseconds = 0;
+			}
+                        return;
+                } else {
+                        rdr->ratelimitseconds = atoi(value);
+                        return;
+                }
+        }
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
 }

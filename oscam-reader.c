@@ -440,6 +440,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
       send_dcw(er);
       return;
     }
+  
   er->ocaid=er->caid;
   if (!chk_bcaid(er, &reader->ctab))
   {
@@ -464,6 +465,42 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
     return;
   }
 #ifdef WITH_CARDREADER
+  if (reader->ratelimitecm) {
+	cs_debug("ratelimit idx:%d rc:%d caid:%04X srvid:%04X",er->idx,er->rc,er->caid,er->srvid);
+	int foundspace=-1;
+	int h;
+	for (h=0;h<reader->ratelimitecm;h++) {
+		if (reader->rlecmh[h].srvid == er->srvid) {
+			foundspace=h;
+			cs_debug("ratelimit found srvid in use at pos: %d",h);
+			break;
+		} 
+	}
+	if (foundspace<0) {
+		for (h=0;h<reader->ratelimitecm;h++) {
+			if ((reader->rlecmh[h].last ==- 1) || ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds)) {
+				foundspace=h;
+				cs_debug("ratelimit found space at pos: %d old seconds %d",h,reader->rlecmh[h].last);
+				break;
+			} 
+		}
+	}
+	if (foundspace<0) {
+		//drop
+		cs_debug("ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
+		er->rcEx=32;
+		er->rc=0;
+		int clcw;
+		for (clcw=0;clcw<16;clcw++) er->cw[clcw]=(uchar)0;
+		snprintf( er->msglog, MSGLOGSIZE, "ECMratelimit no space for srvid" );
+		write_ecm_answer(reader, client[0].fd_m2c, er);
+		return;
+	} else {
+		reader->rlecmh[foundspace].last=time(NULL);
+		reader->rlecmh[foundspace].srvid=er->srvid;
+	}
+
+  }
   cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
   er->msglog[0] = 0;
   er->rc=reader_ecm(reader, er);

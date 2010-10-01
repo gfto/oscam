@@ -209,6 +209,16 @@ set EMM cache of local reader:
 1 = enable ECM caching, default:1
 .RE
 .PP
+\fBratelimitecm\fP = \fBcount\fP
+.RS 3n
+number of different SIDs in ECMs allowed for an interval, default:0
+.RE
+.PP
+\fBratelimitseconds\fP = \fBseconds\fP
+.RS 3n
+interval for rate limit, default:0
+.RE
+.PP
 \fBblocknano\fP = \fBnano[,nano]...\fP|\fPall\fP
 .RS 3n
 list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, only valid for physical readers, default:none
