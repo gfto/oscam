@@ -147,7 +147,7 @@ static int monitor_recv(uchar *buf, int l)
 			// cs_log("DO >>>> copy-back");
 			memcpy(bbuf, buf+bsize, bpos=n-bsize);
 			n=bsize;
-			if (!write(client[cs_idx].ufd, nbuf, sizeof(nbuf))) cs_exit(1);	// trigger new event
+			write_to_pipe(client[cs_idx].fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
 		}
 		else if (n<bsize)
 		{
@@ -172,7 +172,7 @@ static int monitor_recv(uchar *buf, int l)
 		{
 			memcpy(bbuf, p+1, bpos);
 			n=p-buf;
-			if (!write(client[cs_idx].ufd, nbuf, sizeof(nbuf))) cs_exit(1);	// trigger new event
+			write_to_pipe(client[cs_idx].fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
 		}
 	}
 	buf[n]='\0';

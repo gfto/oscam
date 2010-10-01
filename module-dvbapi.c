@@ -1432,7 +1432,7 @@ void * dvbapi_main_local(void *cli) {
 			}
 			if (pfd2[i].revents & (POLLIN | POLLPRI)) {
 				if (pfd2[i].fd==client->fd_m2c_c) {
-					chk_dcw(client->fd_m2c_c);
+					process_client_pipe(client, NULL, 0);
 					continue;
 				}
 
@@ -1704,7 +1704,7 @@ void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsign
 	tp.time+=500;
 
 	chk_pending(tp);
-	chk_dcw(client[cs_idx].fd_m2c_c);
+	process_client_pipe(&client[cs_idx], NULL, 0);
 
 	unsigned char mask[12];
 	unsigned char comp[12];

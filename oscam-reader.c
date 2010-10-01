@@ -304,8 +304,8 @@ static void casc_do_sock(struct s_reader * reader, int w)
         cs_debug("casc_do_sock: close connection");
         network_tcp_connection_close(reader, client[cs_idx].udp_fd);
       }
+      return;
     }
-    return;
   }
   client[cs_idx].last=time((time_t)0);
   idx=reader->ph.c_recv_chk(dcw, &rc, buf, n);

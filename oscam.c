@@ -251,15 +251,16 @@ static int daemon(int nochdir, int noclose)
 int recv_from_udpipe(uchar *buf)
 {
   unsigned short n;
-  if (!client[cs_idx].pfd) return(-9);
-  if (!read(client[cs_idx].pfd, buf, 3)) cs_exit(1);
   if (buf[0]!='U')
   {
     cs_log("INTERNAL PIPE-ERROR");
     cs_exit(1);
   }
   memcpy(&n, buf+1, 2);
-  return(read(client[cs_idx].pfd, buf, n));
+ 
+  memmove(buf, buf+3, n);
+
+  return n;
 }
 
 char *username(int idx)
@@ -411,7 +412,6 @@ void cs_exit(int sig)
 		if(cl->pfd)		close(cl->pfd); //Closing Network socket
 		if(cl->fd_m2c_c)	close(cl->fd_m2c_c); //Closing client read fd
 		if(cl->fd_m2c)	close(cl->fd_m2c); //Closing client read fd
-		if(cl->ufd)		close(cl->ufd);
 
 		cs_log("thread %d ended!", cl->cidx);
 		cl->pid=0;
@@ -867,7 +867,6 @@ void kill_thread(int cidx) {
 	if(client[cidx].pfd)		close(client[cidx].pfd); //Closing Network socket
 	if(client[cidx].fd_m2c_c)	close(client[cidx].fd_m2c_c); //Closing client read fd
 	if(client[cidx].fd_m2c)	close(client[cidx].fd_m2c); //Closing client read fd
-	if(client[cidx].ufd)		close(client[cidx].ufd);
 
 	client[cidx].pid=0;
 
@@ -1758,13 +1757,12 @@ int send_dcw(ECM_REQUEST *er)
 	return 0;
 }
 
-void chk_dcw(int fd)
+void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 {
-  ECM_REQUEST *er, *ert;
-  if (read_from_pipe(fd, (uchar **)(void *)&er, 0) != PIP_ID_ECM)
-	  return;
+  ECM_REQUEST *ert;
+
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
-  ert=&client[cs_idx].ecmtask[er->cpti];
+  ert=&cl->ecmtask[er->cpti];
   if (ert->rc<100) {
 	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, reader[er->reader[0]].label);
 	send_reader_stat(er->reader[0], er, (er->rc <= 0)?4:0);
@@ -1811,7 +1809,6 @@ void chk_dcw(int fd)
     else send_reader_stat(save_ridx, save_ert, 4);
   }
   if (ert) send_dcw(ert);
-  if (er) free(er);
   return;
 }
 
@@ -2417,24 +2414,26 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	cs_ftime(&tpn);
 	tpe=tp_ctimeout;    // latest delay -> disconnect
 
-	if (client[cs_idx].ecmtask)
-		i=(ph[client[cs_idx].ctyp].multi)?CS_MAXPENDING:1;
+	struct s_client *cl = &client[cs_idx];
+
+	if (cl->ecmtask)
+		i=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
 	else
 		i=0;
 
 	//cs_log("num pend=%d", i);
 
 	for (--i; i>=0; i--) {
-		if (client[cs_idx].ecmtask[i].rc>=100) { // check all pending ecm-requests 
-			er=&client[cs_idx].ecmtask[i];
-			if (check_ecmcache1(er, client[cs_idx].grp)) { //Schlocke: caching dupplicate requests from different clients
+		if (cl->ecmtask[i].rc>=100) { // check all pending ecm-requests 
+			er=&cl->ecmtask[i];
+			if (check_ecmcache1(er, cl->grp)) { //Schlocke: caching dupplicate requests from different clients
 				er->rc = 1;
 				send_dcw(er);
 			}
 		}
-		if (client[cs_idx].ecmtask[i].rc>=100) { // check all pending ecm-requests 
+		if (cl->ecmtask[i].rc>=100) { // check all pending ecm-requests 
 			int act, j;
-			er=&client[cs_idx].ecmtask[i];
+			er=&cl->ecmtask[i];
 			tpc=er->tps;
 			unsigned int tt;
 			tt = (er->stage) ? cfg->ctimeout : cfg->ftimeout;
@@ -2515,53 +2514,55 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	}
 
 	td=(tpe.time-tpn.time)*1000+(tpe.millitm-tpn.millitm)+5;
-	client[cs_idx].tv.tv_sec = td/1000;
-	client[cs_idx].tv.tv_usec = (td%1000)*1000;
+	cl->tv.tv_sec = td/1000;
+	cl->tv.tv_usec = (td%1000)*1000;
 	//cs_log("delay %d.%06d", tv.tv_sec, tv.tv_usec);
-	return(&client[cs_idx].tv);
+	return(&cl->tv);
 }
 
 int process_input(uchar *buf, int l, int timeout)
 {
-  int rc;
-  fd_set fds;
-  struct timeb tp;
+	int rc;
+	fd_set fds;
+	struct timeb tp;
 
-  if (!client[cs_idx].pfd) return(-1);
-  cs_ftime(&tp);
-  tp.time+=timeout;
-  //if (ph[client[cs_idx].ctyp].watchdog)
-  //    alarm(cfg->cmaxidle + (cfg->ctimeout + 500) / 1000 + 1);
-  while (1)
-  {
-    FD_ZERO(&fds);
-    FD_SET(client[cs_idx].pfd, &fds);
-    FD_SET(client[cs_idx].fd_m2c_c, &fds);
+	struct s_client *cl = &client[cs_idx];
 
-    rc=select(((client[cs_idx].pfd>client[cs_idx].fd_m2c_c)?client[cs_idx].pfd:client[cs_idx].fd_m2c_c)+1, &fds, 0, 0, chk_pending(tp));
-    if (rc<0)
-    {
-      if (errno==EINTR) continue;
-      else return(0);
-    }
+	cs_ftime(&tp);
+	tp.time+=timeout;
 
-    if (FD_ISSET(client[cs_idx].fd_m2c_c, &fds))   // read from pipe
-      chk_dcw(client[cs_idx].fd_m2c_c);
+	while (1) {
+		FD_ZERO(&fds);
 
-    if (FD_ISSET(client[cs_idx].pfd, &fds))    // read from client
-    {
-      rc=ph[client[cs_idx].ctyp].recv(buf, l);
-      break;
-    }
-    if (tp.time<=time((time_t *)0)) // client maxidle reached
-    {
-      rc=(-9);
-      break;
-    }
-  }
-  //if (ph[client[cs_idx].ctyp].watchdog)
-  //    alarm(cfg->cmaxidle + (cfg->ctimeout + 500) / 1000 + 1);
-  return(rc);
+		if (cl->pfd)
+			FD_SET(cl->pfd, &fds);
+
+		FD_SET(cl->fd_m2c_c, &fds);
+
+		rc=select(((cl->pfd > cl->fd_m2c_c) ? cl->pfd : cl->fd_m2c_c)+1, &fds, 0, 0, chk_pending(tp));
+		if (rc<0) {
+			if (errno==EINTR) continue;
+			else return(0);
+		}
+
+		if (FD_ISSET(cl->fd_m2c_c, &fds)) { // read from pipe
+			if (process_client_pipe(cl, buf, l)==PIP_ID_UDP) {
+				rc=ph[cl->ctyp].recv(buf, l);
+				break;
+			}
+		}
+
+		if (cl->pfd && FD_ISSET(cl->pfd, &fds)) { // read from client
+			rc=ph[cl->ctyp].recv(buf, l);
+			break;
+		}
+
+		if (tp.time<=time((time_t *)0)) { // client maxidle reached
+			rc=(-9);
+			break;
+		}
+	}
+	return(rc);
 }
 
 static void restart_clients()
@@ -2615,6 +2616,33 @@ static void process_master_pipe(int mfdr)
   if (ptr) free(ptr);
 }
 
+
+int process_client_pipe(struct s_client *cl, uchar *buf, int l) {
+	uchar *ptr;
+	unsigned short n;
+	int pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr, 0);
+
+	switch(pipeCmd) {
+		case PIP_ID_ECM:
+			chk_dcw(cl, (ECM_REQUEST *)ptr);
+			break;
+		case PIP_ID_UDP:	
+			if (ptr[0]!='U') {
+				cs_log("INTERNAL PIPE-ERROR");
+			}
+			memcpy(&n, ptr+1, 2);
+			if (n+3<=l) {
+				memcpy(buf, ptr, n+3);
+			}
+			break;
+		default:
+			cs_log("unhandled pipe message %d", pipeCmd);
+			break;
+	}
+	if (ptr) free(ptr);
+	return pipeCmd;
+}
+
 void cs_log_config()
 {
   uchar buf[20];
@@ -2662,7 +2690,6 @@ int accept_connection(int i, int j) {
 	int scad,n,o;
 	scad = sizeof(cad);
 	uchar    buf[2048];
-	int      fdp[2];
 
 	if (ph[i].type==MOD_CONN_UDP) {
 
@@ -2678,14 +2705,6 @@ int accept_connection(int i, int j) {
 				o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
 				if (o<0) return 0;
 
-				if (pipe(fdp)) {
-					cs_log("Cannot create pipe (errno=%d)", errno);
-					return 0;
-				}
-
-				client[o].ufd=fdp[1];
-				client[o].pfd=fdp[0];
-
 				client[o].is_server=1; //FIXME global should be local per thread
 
 				client[o].ctyp=i;
@@ -2697,10 +2716,6 @@ int accept_connection(int i, int j) {
 				client[o].port=ntohs(cad.sin_port);
 				client[o].typ='c';
 
-				//if (ph[client[o].ctyp].watchdog)
-				//	alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
-
-				//ph[i].s_handler(cad);   // never return
 				pthread_create(&client[o].thread, NULL, ph[i].s_handler, (void *) &client[o]); //pass client[o] since o is local variable that will not survive the thread
 				pthread_detach(client[o].thread);
 			} else {
@@ -2708,7 +2723,7 @@ int accept_connection(int i, int j) {
 				rl=n;
 				buf[0]='U';
 				memcpy(buf+1, &rl, 2);
-				if (!write(client[idx].ufd, buf, n+3)) return 0;
+				write_to_pipe(client[idx].fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
 			}
 		}
 	} else { //TCP
@@ -2720,7 +2735,6 @@ int accept_connection(int i, int j) {
 				return 0;
 
 			o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
-
 			if (o<0) return 0;			
 
 			client[o].ctyp=i;
@@ -2734,9 +2748,6 @@ int accept_connection(int i, int j) {
 			client[o].ip=cs_inet_order(cad.sin_addr.s_addr);
 			client[o].port=ntohs(cad.sin_port);
 			client[o].typ='c';
-
-			//if (ph[client[o].ctyp].watchdog)
-			//	alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
 
 			pthread_create(&client[o].thread, NULL, ph[i].s_handler, (void*) &client[o]);
 			pthread_detach(client[o].thread);

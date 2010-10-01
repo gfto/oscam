@@ -201,7 +201,7 @@ extern const char *boxdesc[];
 #endif
 
 #ifdef CS_CORE
-char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "RES", NULL  };
+char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "RES", "UDP", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
                        "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
@@ -217,7 +217,8 @@ extern char *RDR_CD_TXT[];
 #define PIP_ID_CIN    2  // CARD_INFO
 #define PIP_ID_KCL    3  // Schlocke: Kill all Clients (no param)
 #define PIP_ID_RES    4  // Schlocke: reset reader statistiks
-#define PIP_ID_MAX    PIP_ID_RES
+#define PIP_ID_UDP    5
+#define PIP_ID_MAX    PIP_ID_UDP
 
 
 #define PIP_ID_ERR    (-1)
@@ -529,7 +530,6 @@ struct s_client
   int		typ;
   int		ctyp;
   int		stat;
-  int		ufd;
   int		last_srvid;
   int		last_caid;
   int		tosleep;
@@ -1268,7 +1268,7 @@ extern void set_signal_handler(int , int , void (*)(int));
 extern void cs_log_config(void);
 extern void cs_waitforcardinit(void);
 extern void cs_reinit_clients(void);
-extern void chk_dcw(int fd);
+extern int process_client_pipe(struct s_client *cl, uchar *buf, int l);
 extern void update_reader_config(uchar *ptr);
 extern void send_restart_cardreader(int ridx, int force_now);
 extern void send_clear_reader_stat(int ridx);
