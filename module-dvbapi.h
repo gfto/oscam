@@ -181,11 +181,15 @@ int dvbapi_stop_filternum(int demux_index, int num);
 int dvbapi_stop_filter(int demux_index, int type);
 
 #ifdef WITH_STAPI
-  #define cs_log(x...)	cs_log("stapi: "x) 
-  #define cs_debug(x...)	cs_debug("stapi: "x) 
+	#define cs_log(x...)	cs_log("stapi: "x)
+	#ifdef WITH_DEBUG
+		#define cs_debug(x...)	cs_debug("stapi: "x)
+	#endif
 #else
-  #define cs_log(x...)	cs_log("dvbapi: "x) 
-  #define cs_debug(x...)	cs_debug("dvbapi: "x) 
+	#define cs_log(x...)	cs_log("dvbapi: "x)
+	#ifdef WITH_DEBUG
+		#define cs_debug(x...)	cs_debug("dvbapi: "x)
+	#endif
 #endif
 
 #endif // MODULEDVBAPI_H_
