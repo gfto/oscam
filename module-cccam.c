@@ -2383,6 +2383,9 @@ int cc_srv_report_cards() {
 	uint8 buf[CC_MAXMSGSIZE];
 	struct cc_data *cc = cl->cc;
 
+	//Reported deleted cards:
+	cc_free_reported_carddata(cc->reported_carddatas, 1);
+
 	struct s_auth *account = get_account(cl->usr);
 	if (account) {
 		maxhops = account->cccmaxhops;
@@ -2679,8 +2682,6 @@ int cc_srv_report_cards() {
 	cc_free_cardlist(server_cards);
 
 	cc->report_carddata_id = id;
-	//Reported deleted cards:
-	cc_free_reported_carddata(cc->reported_carddatas, 1);
 	cc->reported_carddatas = reported_carddatas;
 
 	int count = llist_count(reported_carddatas);
@@ -2875,8 +2876,8 @@ int cc_srv_connect(struct s_client *cl) {
 		}
 	}
 
-	if (!account || cc->cc_use_rc4 == -1) {
-		cs_log("account '%s' not found!", cc->cc_use_rc4 ? usr_rc4 : usr);
+	if (cs_auth_client(account, NULL)) { //cs_auth_client returns 0 if account is valid/active/accessible
+		cs_log("account '%s' not found!", cc->cc_use_rc4 > 0 ? usr_rc4 : usr);
 		return -1;
 	}
 
@@ -2897,10 +2898,6 @@ int cc_srv_connect(struct s_client *cl) {
 		return -1;
 
 	cl->crypted = 1;
-	if (cs_auth_client(account, NULL))
-		return -1;
-	//cs_auth_client((struct s_auth *)(-1), NULL);
-
 	//Starting readers to get cards:
 	int wakeup = cc_srv_wakeup_readers(cl);
 	
