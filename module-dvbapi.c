@@ -322,7 +322,7 @@ void dvbapi_add_ecmpid(int demux_id, ushort caid, ushort ecmpid, ulong provid, i
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].slen =  demux[demux_id].ECMpids[caid].slen;
 		memcpy(demux[demux_id].ECMpids[caid].stream,demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].stream,8);
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_chid = chid;
-		cs_log("[ADD PID %d] CAID: %04X\tIRDETO CHID: %#X STREAM: %#x", demux[demux_id].ECMpidcount, chid,stream);
+		cs_log("[ADD PID %d] IRDETO CHID: %#X STREAM: %#x", demux[demux_id].ECMpidcount, chid,stream);
 		demux[demux_id].ECMpidcount++;
 	}else
 	{
