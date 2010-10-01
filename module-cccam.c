@@ -2392,6 +2392,9 @@ int cc_srv_report_cards() {
 		usr_reshare = cfg->cc_reshare;
 	}
 
+	//Reported deleted cards:
+	cc_free_reported_carddata(cc->reported_carddatas, 1);
+
 	if (!cc->report_carddata_id)
 		id = 0x64;
 	else
@@ -2678,10 +2681,6 @@ int cc_srv_report_cards() {
 	}
 	cc_free_cardlist(server_cards);
 
-	//Reported deleted cards:
-	cc_free_reported_carddata(cc->reported_carddatas, 1);
-
-
 	cc->report_carddata_id = id;
 	cc->reported_carddatas = reported_carddatas;
 
@@ -2691,7 +2690,6 @@ int cc_srv_report_cards() {
 }
 
 void cc_init_cc(struct cc_data *cc) {
-/*	
 	pthread_mutexattr_t   mta;
         pthread_mutexattr_init(&mta);
 #if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)  || defined(OS_MACOSX)
@@ -2702,11 +2700,10 @@ void cc_init_cc(struct cc_data *cc) {
 	pthread_mutex_init(&cc->lock, &mta);
 	pthread_mutex_init(&cc->ecm_busy, &mta);
 	pthread_mutex_init(&cc->cards_busy, &mta);
-*/
-//Gorlan.Ng : Fixme if recursive lock must be used
-	pthread_mutex_init(&cc->lock, NULL);
-	pthread_mutex_init(&cc->ecm_busy, NULL);
-	pthread_mutex_init(&cc->cards_busy, NULL);
+
+//	pthread_mutex_init(&cc->lock, NULL);
+//	pthread_mutex_init(&cc->ecm_busy, NULL);
+//	pthread_mutex_init(&cc->cards_busy, NULL);
 }
 
 /**
