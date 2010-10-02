@@ -2697,13 +2697,9 @@ void cc_init_cc(struct cc_data *cc) {
 #else
         pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
 #endif                      		
-	pthread_mutex_init(&cc->lock, &mta);
-	pthread_mutex_init(&cc->ecm_busy, &mta);
-	pthread_mutex_init(&cc->cards_busy, &mta);
-
-//	pthread_mutex_init(&cc->lock, NULL);
-//	pthread_mutex_init(&cc->ecm_busy, NULL);
-//	pthread_mutex_init(&cc->cards_busy, NULL);
+	pthread_mutex_init(&cc->lock, NULL);       //No recursive lock
+	pthread_mutex_init(&cc->ecm_busy, NULL);   //No recusive lock
+	pthread_mutex_init(&cc->cards_busy, &mta); //Recursive lock
 }
 
 /**
