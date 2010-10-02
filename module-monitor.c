@@ -737,7 +737,7 @@ static int monitor_process_request(char *req)
 			case  1:	rc=0; break;	// exit
 			case  2:	monitor_logsend(arg); break;	// log
 			case  3:	monitor_process_info(); break;	// status
-			case  4:	if (client[cs_idx].monlvl > 3) kill(client[0].pid, SIGQUIT); break;	// shutdown
+			case  4:	if (client[cs_idx].monlvl > 3) exit(SIGQUIT); break;	// shutdown
 			case  5:	if (client[cs_idx].monlvl > 2) kill(client[0].pid, SIGHUP); break;	// reload
 			case  6:	monitor_process_details(arg); break;	// details
 			case  7:	monitor_send_details_version(); break;	// version
