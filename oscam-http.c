@@ -1746,12 +1746,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	struct tm *lt;
 
 	if (strcmp(getParam(params, "action"), "kill") == 0)
-		kill(atoi(getParam(params, "pid")), SIGQUIT);
+		kill_thread(atoi(getParam(params, "csidx")));
 
 	if (strcmp(getParam(params, "action"), "restart") == 0)
-		for (i = 0; i < CS_MAXREADER; i++)
-			if (reader[i].pid == atoi(getParam(params, "pid")))
-					send_restart_cardreader(i, 1);
+		send_restart_cardreader(atoi(getParam(params, "ridx")), 1);
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0)
 		send_clear_reader_stat(atoi(getParam(params, "ridx")));
@@ -1812,15 +1810,15 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_printf(vars, 0, "HIDEIDX", "%d", i);
 			tpl_addVar(vars, 0, "HIDEICON", ICHID);
 			if(client[i].typ == 'c' && !cfg->http_readonly) {
-				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
-				//tpl_printf(vars, 1, "CLIENTPID", "<A HREF=\"status.html?action=kill&pid=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\" STYLE=\"float:right\"></A>", client[i].pid, ICKIL);
+				//tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", i);
+				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&csidx=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\"></A>", i, ICKIL);
 			}
 			else if((client[i].typ == 'r' || client[i].typ == 'p') && !cfg->http_readonly) {
-				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
-				//tpl_printf(vars, 1, "CLIENTPID", "<A HREF=\"status.html?action=restart&pid=%d\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Kill\" STYLE=\"float:right\"></A>", client[i].pid, ICKIL);
+				//tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].ridx);
+				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&ridx=%d\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Restart\"></A>", client[i].ridx, ICKIL);
 			}
 			else {
-				tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", client[i].pid);
+				tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", client[i].pid);
 			}
 
 			tpl_printf(vars, 0, "CLIENTTYPE", "%c", client[i].typ);
