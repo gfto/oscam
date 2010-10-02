@@ -247,6 +247,8 @@ int irdeto_card_init(struct s_reader * reader, ATR newatr)
 		cs_debug("[irdeto-reader]      camkey: %s", cs_hexdump (0, reader->nagra_boxkey, 8));
 		cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[5], 32));
 		cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[37], 32));
+	} else {
+		memcpy(reader->nagra_boxkey, "\x11\x22\x33\x44\x55\x66\x77\x88", 8);
 	}
 
 	/*
