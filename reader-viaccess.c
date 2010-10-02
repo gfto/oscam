@@ -403,7 +403,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         cs_debug("Decoding CW : using AES key id %d for provider %06x",D2KeyID,provid);
         rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) provid, D2KeyID,er->cw, 16);
         if( rc == 0 )
-            snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, provid );
+            snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, provid & 0xFFFFF0 );
     }
     else
         aes_decrypt(er->cw, 16);
