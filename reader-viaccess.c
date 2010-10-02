@@ -537,7 +537,11 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
       // as we are maybe changing the used provider, clear the cache, so the next ecm will re-select the correct one
       memset(&reader->last_geo, 0, sizeof(reader->last_geo));
 
-      // set provider
+      // set provider -> newcs doesn't do this and it works on all cards apparently.
+      // I'm commenting this code for now. If it breaks some card I suspect this is related
+      // to the ADF being encrypted or not. When not encrypted, we might need to set the provider,
+      // if it's encrypted , don't set the provider.
+      /*
       write_cmd(insa4, soid);             
       if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
         cs_dump(insa4, 5, "set provider cmd:");
@@ -545,6 +549,7 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
         cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
         return ERROR;
       }
+      */
     } else if (emmParsed[0]==0x9e && emmParsed[1]==0x20) {
       /* adf */
 
