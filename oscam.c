@@ -2697,6 +2697,11 @@ int accept_connection(int i, int j) {
 			int idx;
 			idx=idx_from_ip(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
 
+			unsigned short rl;
+			rl=n;
+			buf[0]='U';
+			memcpy(buf+1, &rl, 2);
+
 			if (!idx) {
 				if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
 					return 0;
@@ -2716,13 +2721,11 @@ int accept_connection(int i, int j) {
 				client[o].port=ntohs(cad.sin_port);
 				client[o].typ='c';
 
+				write_to_pipe(client[o].fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
+
 				pthread_create(&client[o].thread, NULL, ph[i].s_handler, (void *) &client[o]); //pass client[o] since o is local variable that will not survive the thread
 				pthread_detach(client[o].thread);
 			} else {
-				unsigned short rl;
-				rl=n;
-				buf[0]='U';
-				memcpy(buf+1, &rl, 2);
 				write_to_pipe(client[idx].fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
 			}
 		}
