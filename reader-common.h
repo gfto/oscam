@@ -10,18 +10,6 @@
 
 #include "atr.h"
 
-void reader_nagra();
-void reader_irdeto();
-void reader_cryptoworks();
-void reader_viaccess();
-void reader_conax();
-void reader_seca();
-void reader_videoguard1();
-void reader_videoguard2();
-void reader_videoguard12();
-void reader_dre();
-void reader_tongfang();
-
 int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 void reader_device_close(struct s_reader * reader);
 

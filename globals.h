@@ -1408,6 +1408,18 @@ extern void clear_reader_stat(int ridx);
 extern void pcsc_close(struct s_reader *pcsc_reader);
 #endif
 
+void reader_nagra();
+void reader_irdeto();
+void reader_cryptoworks();
+void reader_viaccess();
+void reader_conax();
+void reader_seca();
+void reader_videoguard1();
+void reader_videoguard2();
+void reader_videoguard12();
+void reader_dre();
+void reader_tongfang();
+
 // protocol modules
 extern int  monitor_send_idx(int, char *);
 extern void module_monitor(struct s_module *);
