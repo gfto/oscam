@@ -975,20 +975,6 @@ static void init_cardreader() {
 	}
 }
 
-void wait4master()
-{
-  //int i;
-  //for (i=0; (i<1000) && (client[cs_idx].pid!=getpid()); i++)
-    //cs_sleepms(1);
-  if (client[cs_idx].pid!=getpid())
-  {
-    cs_log("PANIC: client not found in shared memory");
-    //cs_exit(1);
-  }
-  cs_debug("starting client %d with ip %s",
-            cs_idx, cs_inet_ntoa(client[cs_idx].ip));
-}
-
 static void cs_fake_client(char *usr, int uniq, in_addr_t ip)
 {
     /* Uniq = 1: only one connection per user
