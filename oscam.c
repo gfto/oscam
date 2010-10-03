@@ -1,6 +1,7 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #define CS_CORE
 #include "globals.h"
+#include "reader-common.h"
 #ifdef AZBOX
 #  include "openxcas/openxcas_api.h"
 #endif

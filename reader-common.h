@@ -10,17 +10,17 @@
 
 #include "atr.h"
 
-#define SC_IRDETO 1
-#define SC_CRYPTOWORKS 2
-#define SC_VIACCESS 3
-#define SC_CONAX 4
-#define SC_SECA 5
-#define SC_VIDEOGUARD2 6
-#define SC_DRE 7
-#define SC_NAGRA 8
-#define SC_TONGFANG 9
-#define SC_VIDEOGUARD1 10
-#define SC_VIDEOGUARD12 11
+void reader_nagra();
+void reader_irdeto();
+void reader_cryptoworks();
+void reader_viaccess();
+void reader_conax();
+void reader_seca();
+void reader_videoguard1();
+void reader_videoguard2();
+void reader_videoguard12();
+void reader_dre();
+void reader_tongfang();
 
 int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 void reader_device_close(struct s_reader * reader);

@@ -1214,19 +1214,6 @@ extern FILE *fpa;
 #endif
 extern pthread_mutex_t gethostbyname_lock; 
 
-//reader
-void reader_nagra();
-void reader_irdeto();
-void reader_cryptoworks();
-void reader_viaccess();
-void reader_conax();
-void reader_seca();
-void reader_videoguard1();
-void reader_videoguard2();
-void reader_videoguard12();
-void reader_dre();
-void reader_tongfang();
-
 // oscam
 extern int recv_from_udpipe(uchar *);
 extern char* username(int);
