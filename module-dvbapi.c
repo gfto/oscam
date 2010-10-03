@@ -1311,7 +1311,7 @@ void * dvbapi_main_local(void *cli) {
 				break;
 	}
 
-	cs_auth_client(ok ? account : (struct s_auth *)(-1), "dvbapi");
+	cs_auth_client(client, ok ? account : (struct s_auth *)(-1), "dvbapi");
 
 
 	for (i=0;i<MAX_DEMUX;i++) {
@@ -1736,7 +1736,7 @@ void * azbox_main(void *cli) {
 				break;
 	}
 
-	cs_auth_client(ok ? account : (struct s_auth *)(-1), "dvbapi");
+	cs_auth_client(client, ok ? account : (struct s_auth *)(-1), "dvbapi");
 
 	openxcas_msg_t msg;
 	int ret;

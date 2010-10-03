@@ -265,10 +265,10 @@ int recv_from_udpipe(uchar *buf)
   return n;
 }
 
-char *username(int idx)
+char *username(struct s_client * client)
 {
-  if (client[idx].usr[0])
-    return(client[idx].usr);
+  if (client->usr[0])
+    return(client->usr);
   else
     return("anonymous");
 }
@@ -1015,7 +1015,7 @@ static void cs_fake_client(char *usr, int uniq, in_addr_t ip)
 
 }
 
-int cs_auth_client(struct s_auth *account, const char *e_txt)
+int cs_auth_client(struct s_client * client, struct s_auth *account, const char *e_txt)
 {
 	int rc=0;
 	char buf[32];
@@ -1024,31 +1024,31 @@ int cs_auth_client(struct s_auth *account, const char *e_txt)
 	char *t_grant=" granted";
 	char *t_reject=" rejected";
 	char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason" };
-	client[cs_idx].grp=0xffffffff;
-	client[cs_idx].au=(-1);
+	client->grp=0xffffffff;
+	client->au=(-1);
 	switch((long)account)
 	{
 #ifdef CS_WITH_GBOX
 	case -2:            // gbx-dummy
-	client[cs_idx].dup=0;
+	client->dup=0;
 	break;
 #endif
 	case 0:           // reject access
 		rc=1;
-		cs_add_violation((uint)client[cs_idx].ip);
+		cs_add_violation((uint)client->ip);
 		cs_log("%s %s-client %s%s (%s)",
-				client[cs_idx].crypted ? t_crypt : t_plain,
-				ph[client[cs_idx].ctyp].desc,
-				client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
-				client[cs_idx].ip ? t_reject : t_reject+1,
+				client->crypted ? t_crypt : t_plain,
+				ph[client->ctyp].desc,
+				client->ip ? cs_inet_ntoa(client->ip) : "",
+				client->ip ? t_reject : t_reject+1,
 				e_txt ? e_txt : t_msg[rc]);
 		break;
 	default:            // grant/check access
-		if (client[cs_idx].ip && account->dyndns[0]) {
+		if (client->ip && account->dyndns[0]) {
 			if (cfg->clientdyndns) {
-				if (client[cs_idx].ip != account->dynip)
+				if (client->ip != account->dynip)
 					cs_user_resolve(account);
-				if (client[cs_idx].ip != account->dynip)
+				if (client->ip != account->dynip)
 					rc=2;
 			}
 			else
@@ -1057,61 +1057,61 @@ int cs_auth_client(struct s_auth *account, const char *e_txt)
 
 		if (!rc)
 		{
-			client[cs_idx].dup=0;
-			if (client[cs_idx].typ=='c')
+			client->dup=0;
+			if (client->typ=='c')
 			{
-				client[cs_idx].last_caid = 0xFFFE;
-				client[cs_idx].last_srvid = 0xFFFE;
-				client[cs_idx].expirationdate=account->expirationdate;
-				client[cs_idx].disabled=account->disabled;
-				client[cs_idx].c35_suppresscmd08 = account->c35_suppresscmd08;
-				client[cs_idx].ncd_keepalive = account->ncd_keepalive;
-				client[cs_idx].grp=account->grp;
-				client[cs_idx].au=account->au;
-				client[cs_idx].autoau=account->autoau;
-				client[cs_idx].tosleep=(60*account->tosleep);
-				client[cs_idx].c35_sleepsend = account->c35_sleepsend;
-				memcpy(&client[cs_idx].ctab, &account->ctab, sizeof(client[cs_idx].ctab));
+				client->last_caid = 0xFFFE;
+				client->last_srvid = 0xFFFE;
+				client->expirationdate=account->expirationdate;
+				client->disabled=account->disabled;
+				client->c35_suppresscmd08 = account->c35_suppresscmd08;
+				client->ncd_keepalive = account->ncd_keepalive;
+				client->grp=account->grp;
+				client->au=account->au;
+				client->autoau=account->autoau;
+				client->tosleep=(60*account->tosleep);
+				client->c35_sleepsend = account->c35_sleepsend;
+				memcpy(&client->ctab, &account->ctab, sizeof(client->ctab));
 				if (account->uniq)
-					cs_fake_client(account->usr, account->uniq, client[cs_idx].ip);
-				client[cs_idx].ftab  = account->ftab;   // IDENT filter
-				client[cs_idx].cltab = account->cltab;  // CLASS filter
-				client[cs_idx].fchid = account->fchid;  // CHID filter
-				client[cs_idx].sidtabok= account->sidtabok;   // services
-				client[cs_idx].sidtabno= account->sidtabno;   // services
-				client[cs_idx].pcrc  = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), client[cs_idx].dump), 16);
-				memcpy(&client[cs_idx].ttab, &account->ttab, sizeof(client[cs_idx].ttab));
+					cs_fake_client(account->usr, account->uniq, client->ip);
+				client->ftab  = account->ftab;   // IDENT filter
+				client->cltab = account->cltab;  // CLASS filter
+				client->fchid = account->fchid;  // CHID filter
+				client->sidtabok= account->sidtabok;   // services
+				client->sidtabno= account->sidtabno;   // services
+				client->pcrc  = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), client->dump), 16);
+				memcpy(&client->ttab, &account->ttab, sizeof(client->ttab));
 #ifdef CS_ANTICASC
 				ac_init_client(account);
 #endif
 			}
 		}
-		client[cs_idx].monlvl=account->monlvl;
-		strcpy(client[cs_idx].usr, account->usr);
+		client->monlvl=account->monlvl;
+		strcpy(client->usr, account->usr);
 	case -1:            // anonymous grant access
 	if (rc)
 		t_grant=t_reject;
 	else
 	{
-		if (client[cs_idx].typ=='m')
-			sprintf(t_msg[0], "lvl=%d", client[cs_idx].monlvl);
+		if (client->typ=='m')
+			sprintf(t_msg[0], "lvl=%d", client->monlvl);
 		else
 		{
-			if(client[cs_idx].autoau)
+			if(client->autoau)
 			{
-				if(client[cs_idx].ncd_server)
+				if(client->ncd_server)
 				{
 					int r=0;
 					for(r=0;r<CS_MAXREADER;r++)
 					{
-						if(reader[r].caid[0]==cfg->ncd_ptab.ports[client[cs_idx].port_idx].ftab.filts[0].caid)
+						if(reader[r].caid[0]==cfg->ncd_ptab.ports[client->port_idx].ftab.filts[0].caid)
 						{
-							client[cs_idx].au=r;
+							client->au=r;
 							break;
 						}
 					}
-					if(client[cs_idx].au<0) sprintf(t_msg[0], "au(auto)=%d", client[cs_idx].au+1);
-					else sprintf(t_msg[0], "au(auto)=%s", reader[client[cs_idx].au].label);
+					if(client->au<0) sprintf(t_msg[0], "au(auto)=%d", client->au+1);
+					else sprintf(t_msg[0], "au(auto)=%s", reader[client->au].label);
 				}
 				else
 				{
@@ -1120,29 +1120,29 @@ int cs_auth_client(struct s_auth *account, const char *e_txt)
 			}
 			else
 			{
-				if(client[cs_idx].au<0) sprintf(t_msg[0], "au=%d", client[cs_idx].au+1);
-				else sprintf(t_msg[0], "au=%s", reader[client[cs_idx].au].label);
+				if(client->au<0) sprintf(t_msg[0], "au=%d", client->au+1);
+				else sprintf(t_msg[0], "au=%s", reader[client->au].label);
 			}
 		}
 	}
-	if(client[cs_idx].ncd_server)
+	if(client->ncd_server)
 	{
 		cs_log("%s %s:%d-client %s%s (%s, %s)",
-				client[cs_idx].crypted ? t_crypt : t_plain,
-				e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,
-				cfg->ncd_ptab.ports[client[cs_idx].port_idx].s_port,
-				client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
-				client[cs_idx].ip ? t_grant : t_grant+1,
-				username(cs_idx), t_msg[rc]);
+				client->crypted ? t_crypt : t_plain,
+				e_txt ? e_txt : ph[client->ctyp].desc,
+				cfg->ncd_ptab.ports[client->port_idx].s_port,
+				client->ip ? cs_inet_ntoa(client->ip) : "",
+				client->ip ? t_grant : t_grant+1,
+				username(client), t_msg[rc]);
 	}
 	else
 	{
 		cs_log("%s %s-client %s%s (%s, %s)",
-				client[cs_idx].crypted ? t_crypt : t_plain,
-				e_txt ? e_txt : ph[client[cs_idx].ctyp].desc,
-				client[cs_idx].ip ? cs_inet_ntoa(client[cs_idx].ip) : "",
-				client[cs_idx].ip ? t_grant : t_grant+1,
-				username(cs_idx), t_msg[rc]);
+				client->crypted ? t_crypt : t_plain,
+				e_txt ? e_txt : ph[client->ctyp].desc,
+				client->ip ? cs_inet_ntoa(client->ip) : "",
+				client->ip ? t_grant : t_grant+1,
+				username(client), t_msg[rc]);
 	}
 
 	break;
@@ -1150,12 +1150,12 @@ int cs_auth_client(struct s_auth *account, const char *e_txt)
 	return(rc);
 }
 
-void cs_disconnect_client(void)
+void cs_disconnect_client(struct s_client * client)
 {
 	char buf[32]={0};
-	if (client[cs_idx].ip)
-		sprintf(buf, " from %s", cs_inet_ntoa(client[cs_idx].ip));
-	cs_log("%s disconnected %s", username(cs_idx), buf);
+	if (client->ip)
+		sprintf(buf, " from %s", cs_inet_ntoa(client->ip));
+	cs_log("%s disconnected %s", username(client), buf);
 	cs_exit(0);
 }
 
@@ -1580,10 +1580,10 @@ int send_dcw(ECM_REQUEST *er)
 
 #ifdef CS_WITH_GBOX
 	if(er->gbxFrom)
-		snprintf(uname,sizeof(uname)-1, "%s(%04X)", username(cs_idx), er->gbxFrom);
+		snprintf(uname,sizeof(uname)-1, "%s(%04X)", username(&client[cs_idx]), er->gbxFrom);
 	else
 #endif
-		snprintf(uname,sizeof(uname)-1, "%s", username(cs_idx));
+		snprintf(uname,sizeof(uname)-1, "%s", username(&client[cs_idx]));
 	if (er->rc==0)
 	{
 #ifdef CS_WITH_GBOX
@@ -2012,7 +2012,7 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	grs.cidx = cs_idx;
 	memcpy(grs.ecmd5, er->ecmd5, sizeof(er->ecmd5));
 	memcpy(grs.reader_avail, reader_avail, sizeof(int)*CS_MAXREADER);
-	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", username(cs_idx), grs.caid, grs.prid, grs.srvid);
+	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", username(&client[cs_idx]), grs.caid, grs.prid, grs.srvid);
 
         get_best_reader(&grs, reader_avail);
 }
@@ -2241,7 +2241,7 @@ void get_cw(ECM_REQUEST *er)
 void log_emm_request(int auidx)
 {
 	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06lX)",
-			username(cs_idx), reader[auidx].label, reader[auidx].caid[0],
+			username(&client[cs_idx]), reader[auidx].label, reader[auidx].caid[0],
 			reader[auidx].auprovid ? reader[auidx].auprovid : b2i(4, reader[auidx].prid[0]));
 }
 

@@ -59,7 +59,7 @@ static int camd35_auth_client(uchar *ucrc)
       memcpy(client[cs_idx].ucrc, ucrc, 4);
       strcpy((char *)client[cs_idx].upwd, account->pwd);
       aes_set_key((char *) MD5(client[cs_idx].upwd, strlen((char *)client[cs_idx].upwd), client[cs_idx].dump));
-      rc=cs_auth_client(account, NULL);
+      rc=cs_auth_client(&client[cs_idx], account, NULL);
     }
   return(rc);
 }
@@ -127,7 +127,7 @@ static int camd35_recv(uchar *buf, int l)
   {
     case -1: cs_log("packet to small (%d bytes)", rs);
              break;
-    case -2: cs_auth_client(0, "unknown user");
+    case -2: cs_auth_client(&client[cs_idx], 0, "unknown user");
              break;
     case -3: cs_log("incomplete request !");
              break;
@@ -335,7 +335,7 @@ static void * camd35_server(void *cli)
 
   if(client->req) { free(client->req); client->req=0;}
 
-  cs_disconnect_client();
+  cs_disconnect_client(client);
   return NULL; //to prevent compiler message
 }
 

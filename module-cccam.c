@@ -566,7 +566,7 @@ int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 
 	if (n != len) {
 		if (cl->is_server)
-			cs_disconnect_client();
+			cs_disconnect_client(cl);
 		else
 			cc_cli_close();
 	}
@@ -2178,7 +2178,7 @@ int cc_recv(uchar *buf, int l) {
 
 	if (n == -1) {
 		if (cl->is_server)
-			cs_disconnect_client();
+			cs_disconnect_client(cl);
 		else
 			cc_cli_close();
 	}
@@ -2874,7 +2874,7 @@ int cc_srv_connect(struct s_client *cl) {
 		}
 	}
 
-	if (cs_auth_client(account, NULL)) { //cs_auth_client returns 0 if account is valid/active/accessible
+	if (cs_auth_client(cl, account, NULL)) { //cs_auth_client returns 0 if account is valid/active/accessible
 		cs_log("account '%s' not found!", cc->cc_use_rc4 > 0 ? usr_rc4 : usr);
 		return -1;
 	}
@@ -2996,7 +2996,7 @@ void * cc_srv_init(struct s_client *cl ) {
 	if (cc_srv_connect(cl) < 0)
 		cs_log("cccam: %d failed errno: %d (%s)", __LINE__, errno, strerror(
 				errno));
-	cs_disconnect_client();
+	cs_disconnect_client(cl);
 
 	//cs_exit(1);
 	cc_cleanup();

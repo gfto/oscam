@@ -53,19 +53,19 @@ static void radegast_auth_client(in_addr_t ip)
 
   if (!ok)
   {
-    cs_auth_client((struct s_auth *)0, NULL);
+    cs_auth_client(&client[cs_idx], (struct s_auth *)0, NULL);
     cs_exit(0);
   }
 
   for (ok=0, account=cfg->account; (cfg->rad_usr[0]) && (account) && (!ok); account=account->next)
   {
     ok=(!strcmp(cfg->rad_usr, account->usr));
-    if (ok && cs_auth_client(account, NULL))
+    if (ok && cs_auth_client(&client[cs_idx], account, NULL))
       cs_exit(0);
   }
 
   if (!ok)
-    cs_auth_client((struct s_auth *)(-1), NULL);
+    cs_auth_client(&client[cs_idx], (struct s_auth *)(-1), NULL);
 }
 
 static int get_request(uchar *buf)
@@ -172,7 +172,7 @@ static void * radegast_server(void *cli)
         radegast_process_unknown(mbuf);
     }
   }
-  cs_disconnect_client();
+  cs_disconnect_client(client);
   return NULL;
 }
 

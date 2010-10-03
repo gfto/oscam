@@ -17,7 +17,7 @@ static void monitor_check_ip()
 		ok=((client[cs_idx].ip>=p_ip->ip[0]) && (client[cs_idx].ip<=p_ip->ip[1]));
 	if (!ok)
 	{
-		cs_auth_client((struct s_auth *)0, "invalid ip");
+		cs_auth_client(&client[cs_idx], (struct s_auth *)0, "invalid ip");
 		cs_exit(0);
 	}
 }
@@ -29,7 +29,7 @@ static void monitor_auth_client(char *usr, char *pwd)
 	if (client[cs_idx].auth) return;
 	if ((!usr) || (!pwd))
 	{
-		cs_auth_client((struct s_auth *)0, NULL);
+		cs_auth_client(&client[cs_idx], (struct s_auth *)0, NULL);
 		cs_exit(0);
 	}
 	for (account=cfg->account, client[cs_idx].auth=0; (account) && (!client[cs_idx].auth);)
@@ -41,10 +41,10 @@ static void monitor_auth_client(char *usr, char *pwd)
 	}
 	if (!client[cs_idx].auth)
 	{
-		cs_auth_client((struct s_auth *)0, "invalid account");
+		cs_auth_client(&client[cs_idx], (struct s_auth *)0, "invalid account");
 		cs_exit(0);
 	}
-	if (cs_auth_client(account, NULL))
+	if (cs_auth_client(&client[cs_idx], account, NULL))
 		cs_exit(0);
 }
 
@@ -68,13 +68,13 @@ static int secmon_auth_client(uchar *ucrc)
 		{
 			memcpy(client[cs_idx].ucrc, ucrc, 4);
 			aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), client[cs_idx].dump));
-			if (cs_auth_client(account, NULL))
+			if (cs_auth_client(&client[cs_idx], account, NULL))
 				cs_exit(0);
 			client[cs_idx].auth=1;
 		}
 	if (!client[cs_idx].auth)
 	{
-		cs_auth_client((struct s_auth *)0, "invalid user");
+		cs_auth_client(&client[cs_idx], (struct s_auth *)0, "invalid user");
 		cs_exit(0);
 	}
 	return(client[cs_idx].auth);
@@ -763,7 +763,7 @@ static void * monitor_server(void *cli){
 	client->thread=pthread_self();
 	client->typ='m';
 	while (((n = process_input(mbuf, sizeof(mbuf), cfg->cmaxidle)) >= 0) && monitor_process_request((char *)mbuf));
-	cs_disconnect_client();
+	cs_disconnect_client(cli);
 	return NULL;
 }
 

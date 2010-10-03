@@ -617,7 +617,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 
     if (!ok)
     {
-      cs_auth_client((struct s_auth *)0, NULL);
+      cs_auth_client(&client[cs_idx], (struct s_auth *)0, NULL);
       cs_exit(0);
     }
 
@@ -673,7 +673,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         {
           client[cs_idx].crypted=1;
 
-          if(cs_auth_client(account, NULL) == 2) {
+          if(cs_auth_client(&client[cs_idx], account, NULL) == 2) {
             cs_log("hostname or ip mismatch for user %s (%s)", usr, client_name);
             break;
           }
@@ -926,7 +926,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     }
     else
     {
-      cs_auth_client(0, usr ? "login failure" : "no such user");
+      cs_auth_client(&client[cs_idx], 0, usr ? "login failure" : "no such user");
       if(client[cs_idx].req)
       {
         free(client[cs_idx].req);
@@ -1162,7 +1162,7 @@ static void * newcamd_server(void *cli)
 		client->req=0;
 	}
 
-	cs_disconnect_client();
+	cs_disconnect_client(client);
 	return NULL;
 }
 
