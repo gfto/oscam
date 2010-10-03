@@ -123,7 +123,9 @@ void ac_init_client(struct s_auth *account)
               account->ac_users*100+80, account->ac_penalty);
     }
     else
+    {
       cs_debug("anti-cascading not used for login '%s'", account->usr);
+    }
   }
 }
 

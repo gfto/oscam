@@ -349,7 +349,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
   }
 }
 
-void videoguard1_get_emm_filter(struct s_reader *rdr, uchar * filter)
+static void videoguard1_get_emm_filter(struct s_reader *rdr, uchar * filter)
 {
   filter[0] = 0xFF;
   filter[1] = 3;
@@ -437,5 +437,6 @@ void reader_videoguard1(struct s_cardsystem *ph)
 	ph->card_info=videoguard1_card_info;
 	ph->card_init=videoguard1_card_init;
 	ph->get_emm_type=videoguard1_get_emm_type;
+	ph->get_emm_filter=videoguard1_get_emm_filter;
 	ph->caids[0]=0x09;
 }
