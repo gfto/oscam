@@ -364,7 +364,7 @@ int cs_init_statistics(char *file)
 	return(fps<=(FILE *)0);
 }
 
-void cs_statistics(int idx)
+void cs_statistics(struct s_client * client)
 {
 	if (!cfg->disableuserfile){
 		time_t t;
@@ -375,23 +375,23 @@ void cs_statistics(int idx)
 
 		time(&t);
 		lt=localtime(&t);
-		if (client[idx].cwfound+client[idx].cwnot>0)
+		if (client->cwfound+client->cwnot>0)
 		{
-			cwps=client[idx].last-client[idx].login;
-			cwps/=client[idx].cwfound+client[idx].cwnot;
+			cwps=client->last-client->login;
+			cwps/=client->cwfound+client->cwnot;
 		}
 		else
 			cwps=0;
 
 		char *channel ="";
 		if(cfg->mon_appendchaninfo)
-			channel = get_servicename(client[idx].last_srvid,client[idx].last_caid);
+			channel = get_servicename(client->last_srvid,client->last_caid);
 
 		int lsec;
-		if ((client[idx].last_caid == 0xFFFF) && (client[idx].last_srvid == 0xFFFF))
-			lsec = client[idx].last - client[idx].login; //client leave calc total duration
+		if ((client->last_caid == 0xFFFF) && (client->last_srvid == 0xFFFF))
+			lsec = client->last - client->login; //client leave calc total duration
 		else
-			lsec = client[idx].last - client[idx].lastswitch;
+			lsec = client->last - client->lastswitch;
 
 		int secs = 0, fullmins = 0, mins = 0, fullhours = 0;
 
@@ -412,21 +412,21 @@ void cs_statistics(int idx)
 		sprintf(buf, "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %02d:%02d:%02d %s %04X:%04X %s\n",
 				lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
 				lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
-				client[idx].usr[0] ? client[idx].usr : "-",
-				cs_inet_ntoa(client[idx].ip),
-				client[idx].port,
-				client[idx].cwfound,
-				client[idx].cwcache,
-				client[idx].cwnot,
-				client[idx].cwignored,
-				client[idx].cwtout,
-				client[idx].cwtun,
-				client[idx].login,
-				client[idx].last,
+				client->usr[0] ? client->usr : "-",
+				cs_inet_ntoa(client->ip),
+				client->port,
+				client->cwfound,
+				client->cwcache,
+				client->cwnot,
+				client->cwignored,
+				client->cwtout,
+				client->cwtun,
+				client->login,
+				client->last,
 				fullhours, mins, secs,
-				ph[client[idx].ctyp].desc,
-				client[idx].last_caid,
-				client[idx].last_srvid,
+				ph[client->ctyp].desc,
+				client->last_caid,
+				client->last_srvid,
 				channel);
 
 		cs_write_log(buf);

@@ -11,6 +11,8 @@
 #  define CS_VERSION_X  CS_VERSION
 #endif
 
+extern void cs_statistics(struct s_client * client);
+
 /*****************************************************************************
         Globals
 *****************************************************************************/
@@ -366,10 +368,10 @@ void cs_exit(int sig)
   switch(cl->typ)
   {
     case 'c':
-    	cs_statistics(cl->cidx);
+    	cs_statistics(cl);
     	cl->last_caid = 0xFFFF;
     	cl->last_srvid = 0xFFFF;
-    	cs_statistics(cl->cidx);
+    	cs_statistics(cl);
     	break;
     case 'm': break;
     case 'n': break;
@@ -403,7 +405,7 @@ void cs_exit(int sig)
 	}
 
 	// this is very important - do not remove
-	if (cl->cidx>0) {
+	if (cs_idx>0) {
 		if(cl->ecmtask) 	free(cl->ecmtask);
 		if(cl->emmcache) 	free(cl->emmcache);
 		if(cl->req) 		free(cl->req);
@@ -413,7 +415,7 @@ void cs_exit(int sig)
 		if(cl->fd_m2c_c)	close(cl->fd_m2c_c); //Closing client read fd
 		if(cl->fd_m2c)	close(cl->fd_m2c); //Closing client read fd
 
-		cs_log("thread %d ended!", cl->cidx);
+		cs_log("thread %d ended!", cs_idx);
 		cl->pid=0;
 
 		pthread_exit(NULL);
@@ -560,9 +562,6 @@ int cs_fork(in_addr_t ip, in_port_t port) {
 
 		client[i].login=client[i].last=time((time_t *)0);
 		client[i].pid=pid;    // MUST be last -> wait4master()
-
-		client[i].cidx=i;
-
 		cs_last_idx=i;
 
 		
@@ -2102,7 +2101,7 @@ void get_cw(ECM_REQUEST *er)
 
 		if ((i != client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch)) {
 			if(cfg->usrfileflag)
-				cs_statistics(cs_idx);
+				cs_statistics(&client[cs_idx]);
 			client[cs_idx].lastswitch = now;
 		}
 

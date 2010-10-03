@@ -502,7 +502,6 @@ typedef struct ecm_request_t
 
 struct s_client
 {
-  int		cidx;
   pid_t	pid;
   in_addr_t	ip;
   in_port_t	port;
@@ -1370,7 +1369,6 @@ extern void cs_ddump_mask(unsigned short, const uchar *, int, char *, ...);
 #endif
 extern void cs_close_log(void);
 extern int  cs_init_statistics(char *);
-extern void cs_statistics(int);
 extern void cs_dump(const uchar *, int, char *, ...);
 
 // oscam-aes
