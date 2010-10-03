@@ -293,6 +293,7 @@ int SR_WriteSettings (struct s_reader *reader, unsigned short F, BYTE D, BYTE N,
 		if (reader->mhz >=436)  reader->mhz =  436; else
 		if (reader->mhz >=400)  reader->mhz =  400; else
 		if (reader->mhz >=369)  reader->mhz =  369; else
+		if (reader->mhz ==368)  reader->mhz =  369; else
 		if (reader->mhz >=343)  reader->mhz =  343; else
 			reader->mhz =  320;
     EnableSmartReader(reader, reader->mhz, F, D, N, T, reader->sr_config->inv,reader->sr_config->parity);
