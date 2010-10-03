@@ -45,7 +45,7 @@ static int set_provider_info(struct s_reader * reader, int i)
   return OK;
 }
 
-int seca_card_init(struct s_reader * reader, ATR newatr)
+static int seca_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
 	def_resp;
@@ -121,7 +121,7 @@ static int get_prov_index(struct s_reader * rdr, char *provid)	//returns provide
 }
 	
 
-int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
@@ -156,7 +156,7 @@ int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return OK;
 }
 
-int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+static int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
 	cs_debug_mask(D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
 	int i;
@@ -205,7 +205,7 @@ int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if s
 	}
 }
 
-void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
 	filter[1]=3;
@@ -239,7 +239,7 @@ void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 	
-int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
   unsigned char ins40[] = { 0xc1,0x40,0x00,0x00,0x00 };
@@ -286,7 +286,7 @@ int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   return ERROR;
 }
 
-int seca_card_info (struct s_reader * reader)
+static int seca_card_info (struct s_reader * reader)
 {
 //SECA Package BitMap records (PBM) can be used to determine whether the channel is part of the package that the SECA card can decrypt. This module reads the PBM
 //from the SECA card. It cannot be used to check the channel, because this information seems to reside in the CA-descriptor, which seems not to be passed on through servers like camd, newcamd, radegast etc.
@@ -328,4 +328,3 @@ void reader_seca(struct s_cardsystem *ph)
 	ph->get_emm_filter=seca_get_emm_filter;
 	ph->caids[0]=0x01;
 }
-

@@ -76,7 +76,7 @@ static void read_tiers(struct s_reader *reader)
   }
 }
 
-int videoguard1_card_init(struct s_reader *reader, ATR newatr)
+static int videoguard1_card_init(struct s_reader *reader, ATR newatr)
 {
 
   get_hist;
@@ -253,7 +253,7 @@ int videoguard1_card_init(struct s_reader *reader, ATR newatr)
   return OK;
 }
 
-int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
+static int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0x48, 0x40, 0x00, 0x80, 0xFF };
@@ -289,7 +289,7 @@ int videoguard1_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
   return ERROR;
 }
 
-int videoguard1_get_emm_type(EMM_PACKET * ep, struct s_reader *rdr)
+static int videoguard1_get_emm_type(EMM_PACKET * ep, struct s_reader *rdr)
 {
 
 /*
@@ -383,7 +383,7 @@ void videoguard1_get_emm_filter(struct s_reader *rdr, uchar * filter)
   return;
 }
 
-int videoguard1_do_emm(struct s_reader *reader, EMM_PACKET * ep)
+static int videoguard1_do_emm(struct s_reader *reader, EMM_PACKET * ep)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins42[5] = { 0x48, 0x42, 0x00, 0x00, 0xFF  };
@@ -421,7 +421,7 @@ int videoguard1_do_emm(struct s_reader *reader, EMM_PACKET * ep)
   return (rc);
 }
 
-int videoguard1_card_info(struct s_reader *reader)
+static int videoguard1_card_info(struct s_reader *reader)
 {
   /* info is displayed in init, or when processing info */
   cs_log("[videoguard1-reader] card detected");

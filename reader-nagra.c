@@ -644,7 +644,7 @@ static int GetDataType(struct s_reader * reader, unsigned char dt, int len, int 
   	return OK;
 }
 
-int nagra2_card_init(struct s_reader * reader, ATR newatr)
+static int nagra2_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
 	def_resp;
@@ -748,7 +748,7 @@ int nagra2_card_init(struct s_reader * reader, ATR newatr)
 	return OK;
 }
 
-int nagra2_card_info(struct s_reader * reader)
+static int nagra2_card_info(struct s_reader * reader)
 {
 	int i;
 	cs_ri_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
@@ -774,7 +774,7 @@ void nagra2_post_process(struct s_reader * reader)
 	}
 }
 
-int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
 	def_resp;
 	if (!reader->is_tiger)
@@ -872,7 +872,7 @@ int nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if
 	}
 }
 
-void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
 	filter[1]=3;
@@ -910,7 +910,8 @@ void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	
 	return;
 }
-int nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+
+static int nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
 	def_resp;
 	if (!reader->is_tiger)

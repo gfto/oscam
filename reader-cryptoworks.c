@@ -156,7 +156,7 @@ static int cryptoworks_disable_pin(struct s_reader * reader)
   return OK;
 }
 
-int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
+static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
 {
   get_atr;
   def_resp;
@@ -264,7 +264,7 @@ int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
 	int r=0;
@@ -370,7 +370,7 @@ int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return((r==3) ? 1 : 0);
 }
 
-int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
   char dumprdrserial[18];
 
@@ -428,7 +428,7 @@ int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	}
 }
 
-void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
 	filter[1]=4;
@@ -490,7 +490,7 @@ void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
   uchar insEMM_GA[] = {0xA4, 0x44, 0x00, 0x00, 0x00};
@@ -555,7 +555,7 @@ int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   return(rc);
 }
 
-int cryptoworks_card_info(struct s_reader * reader)
+static int cryptoworks_card_info(struct s_reader * reader)
 {
   def_resp;
 	int i;

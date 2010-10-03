@@ -278,7 +278,7 @@ static void vg2_read_tiers(struct s_reader * reader)
   }
 }
 
-int videoguard2_card_init(struct s_reader * reader, ATR newatr)
+static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 {
   get_hist;
   if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
@@ -509,7 +509,7 @@ int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
@@ -588,7 +588,7 @@ int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
 }
 
-int videoguard2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+static int videoguard2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 
 /*
@@ -643,7 +643,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 	}
 }
 
-void videoguard2_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static void videoguard2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
 	filter[1]=3;
@@ -724,7 +724,7 @@ int videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   return(rc);
 }
 
-int videoguard2_card_info(struct s_reader * reader)
+static int videoguard2_card_info(struct s_reader * reader)
 {
   /* info is displayed in init, or when processing info */
   cs_log("[videoguard2-reader] card detected");

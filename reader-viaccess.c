@@ -127,7 +127,7 @@ static int chk_prov(struct s_reader * reader, uchar *id, uchar keynr)
   return(rc);
 }
 
-int viaccess_card_init(struct s_reader * reader, ATR newatr)
+static int viaccess_card_init(struct s_reader * reader, ATR newatr)
 {
   get_atr;
   def_resp;
@@ -216,7 +216,7 @@ cs_log("[viaccess-reader] name: %s", cta_res);
   return OK;
 }
 
-int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
   static const unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
@@ -412,7 +412,7 @@ int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return(rc?OK:ERROR);
 }
 
-int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+static int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 	cs_debug_mask(D_EMM, "Entered viaccess_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
 
@@ -450,7 +450,7 @@ int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	}	
 }
 
-void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
 	filter[1]=3;
@@ -484,7 +484,7 @@ void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
   static const unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
@@ -701,7 +701,7 @@ int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   return rc;
 }
 
-int viaccess_card_info(struct s_reader * reader)
+static int viaccess_card_info(struct s_reader * reader)
 {
   def_resp;
   int i, l, scls, show_cls;

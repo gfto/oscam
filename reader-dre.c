@@ -131,7 +131,7 @@ static int dre_set_provider_info (struct s_reader * reader)
   return OK;
 }
 
-int dre_card_init (struct s_reader * reader, ATR newatr)
+static int dre_card_init (struct s_reader * reader, ATR newatr)
 {
 	get_atr;
   def_resp;
@@ -245,7 +245,7 @@ FE 48 */
   return OK;
 }
 
-int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
+static int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
 {
   def_resp;
   if (reader->caid[0] == 0x4ae0) {
@@ -294,7 +294,7 @@ int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
   return ERROR;
 }
 
-int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+static int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
   switch (ep->emm[0]) {
 		case 0x87:
@@ -352,7 +352,7 @@ void dre_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
+static int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
 {
   def_resp;
 
@@ -439,7 +439,7 @@ int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
   return OK;			//success
 }
 
-int dre_card_info (void)
+static int dre_card_info (void)
 {
   return OK;
 }

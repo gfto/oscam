@@ -216,7 +216,7 @@ static int irdeto_card_init_provider(struct s_reader * reader)
 
 
 
-int irdeto_card_init(struct s_reader * reader, ATR newatr)
+static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 {
 	def_resp;
 	get_atr;
@@ -346,7 +346,7 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	return OK;
 }
 
-int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
+static int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 	int i, l = (ep->emm[3]&0x07);
 	int base = (ep->emm[3]>>3);
@@ -403,7 +403,7 @@ int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 }
 
-void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
 	filter[1]=3;
@@ -442,7 +442,7 @@ void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
 	def_resp;
 	static const uchar sc_EmmCmd[] = { 0x01,0x00,0x00,0x00,0x00 };
@@ -491,7 +491,7 @@ int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	return ERROR;
 }
 
-int irdeto_card_info(struct s_reader * reader)
+static int irdeto_card_info(struct s_reader * reader)
 {
   def_resp;
   int i, p;

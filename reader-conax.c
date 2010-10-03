@@ -27,7 +27,7 @@ static int read_record(struct s_reader * reader, const uchar *cmd, const uchar *
   return(cta_lr-2);
 }
 
-int conax_card_init(struct s_reader * reader, ATR newatr)
+static int conax_card_init(struct s_reader * reader, ATR newatr)
 {
   unsigned char cta_res[CTA_RES_LEN];
   int i, j, n;
@@ -104,7 +104,7 @@ static int conax_send_pin(struct s_reader * reader)
 }
 
 
-int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
   int i,j,n, rc=0;
@@ -183,7 +183,7 @@ int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     return ERROR;
 }
 
-int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+static int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 	int i, ok = 0;
 
@@ -218,7 +218,7 @@ int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	}
 }
 
-void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
+static void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;	//header
 	filter[1]=3;		//filter count
@@ -253,7 +253,7 @@ void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-int conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
   unsigned char insEMM[] = { 0xDD,0x84,0x00,0x00,0x00 };
@@ -276,7 +276,7 @@ int conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     return ERROR;
 }
 
-int conax_card_info(struct s_reader * reader)
+static int conax_card_info(struct s_reader * reader)
 {
   def_resp;
   int type, i, j, k, n=0;

@@ -28,7 +28,7 @@ static int tongfang_read_data(struct s_reader *reader, uchar size, uchar *cta_re
   return(cta_lr - 2);
 }
 
-int tongfang_card_init(struct s_reader *reader, ATR newatr)
+static int tongfang_card_init(struct s_reader *reader, ATR newatr)
 {
   static const uchar begin_cmd[] = {0x00,0xa4,0x04,0x00,0x05,0xf9,0x5a,0x54,0x00,0x06};
   static const uchar get_serial_cmd[] = {0x80,0x46,0x00,0x00,0x04,0x01,0x00,0x00,0x04};
@@ -94,7 +94,7 @@ Example ecm:
 A5 1B 8B CA A8 95 E0 D1 24 7D 36 8C F6 89 4A F7
 B2 3A 74 3D D1 D4
 */
-int tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
+static int tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
 {
   uchar ecm_cmd[200];
   int ecm_len;
@@ -161,17 +161,13 @@ int tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
   return OK;
 }
 
-int tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *UNUSED(reader))
+static int tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *UNUSED(reader))
 {
   ep->type = UNKNOWN;
   return TRUE;
 }
 
-void tongfang_get_emm_filter(struct s_reader *UNUSED(reader), uchar *UNUSED(filter))
-{
-}
-
-int tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)
+static int tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
   uchar emm_cmd[200];
   def_resp;
@@ -187,7 +183,7 @@ int tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)
   return OK;
 }
 
-int tongfang_card_info(struct s_reader * reader)
+static int tongfang_card_info(struct s_reader * reader)
 {
   static const uchar get_provider_cmd[] = {0x80,0x44,0x00,0x00,0x08};
   def_resp;
