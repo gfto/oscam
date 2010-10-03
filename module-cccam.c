@@ -646,9 +646,15 @@ int cc_send_srv_data() {
 
 	cs_debug("cccam: send server data");
 
+	//Partner Detection:
 	seed = (unsigned int) time((time_t*) 0);
-	for (i = 0; i < 8; i++)
+	uint16 sum = 0x1234; //This is our checksum
+	for (i = 0; i < 8; i++) {
 		cc->node_id[i] = fast_rnd();
+		sum += cc->node_id[i];
+	}
+	cc->node_id[6] = sum >> 8;
+	cc->node_id[7] = sum & 0xff;
 
 	uint8 buf[CC_MAXMSGSIZE];
 	memset(buf, 0, CC_MAXMSGSIZE);
@@ -813,26 +819,52 @@ void cc_remove_current_card(struct cc_data *cc,
 
 }
 
-void cc_UA_oscam2cccam(uint8 *in, uint8 *out) {
-	out[7] = in[5];
-	out[6] = in[4];
-	out[5] = in[3];
-	out[4] = in[2];
-	out[3] = 0;//in[1];
-	out[2] = 0;//in[0];
-	out[1] = 0;//in[7];
-	out[0] = 0;//in[6];
+int get_UA_len(uint16 caid) {
+	int len=0;
+	switch(caid>>8) {
+		case 0x0D://CRYPTOWORKS:
+			len=5; 
+			break;
+		case 0x0B: //CONAX:
+			len=4;
+			break;
+		case 0x06:
+		case 0x17: //IRDETO:
+			len=8;
+			break;
+		case 0x4B: //TONGFANG:
+			len=4;
+			break;
+		case 0x09: //VIDEOGUARD:
+			len=4;
+			break;
+		case 0x18: //NAGRA:
+			len=4;
+			break;
+		case 0x05: //VIACCESS:
+			len=5;
+			break;
+		case 0x4A: //DRE:
+			len=1;
+			break;
+		case 0x01: //SECA:
+			len=6;
+			break;
+		default:
+			len=8;
+			break;
+	}
+	return len;
 }
 
-void cc_UA_cccam2oscam(uint8 *in, uint8 *out) {
-	out[5] = in[7];
-	out[4] = in[6];
-	out[3] = in[5];
-	out[2] = in[4];
-	out[1] = in[3];
-	out[0] = in[2];
-	out[7] = in[1];
-	out[6] = in[0];
+void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
+	int len = get_UA_len(caid);
+	memcpy(&out[8-len], in, len);
+}
+
+void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
+	int len = get_UA_len(caid);
+	memcpy(out, in, len);
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
@@ -1065,7 +1097,7 @@ int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
 		//For EMM
 		if (!rdr->audisabled) {
 			rdr->card_system = get_cardsystem(card->caid);
-			cc_UA_cccam2oscam(card->hexserial, rdr->hexserial);
+			cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid[0]);
 
 			rdr->nprov = 0;
 			LLIST_ITR pitr;
@@ -1262,7 +1294,7 @@ int cc_send_emm(EMM_PACKET *ep) {
 
 	if (!emm_card || emm_card->caid != caid) {
 		uint8 hs[8];
-		cc_UA_oscam2cccam(ep->hexserial, hs);
+		cc_UA_oscam2cccam(ep->hexserial, hs, rdr->caid[0]);
 		emm_card = get_card_by_hexserial(hs, caid);
 	}
 
@@ -1640,6 +1672,21 @@ int cc_parse_msg(uint8 *buf, int l) {
 			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
 			cs_log("%s srv %s running v%s (%s)", getprefix(), cs_hexdump(0,
 					cc->peer_node_id, 8), data + 8, data + 40);
+					
+			uint16 sum = 0x1234;
+			uint16 recv_sum = (cc->peer_node_id[6] << 8) | cc->peer_node_id[7];
+			int i;
+			for (i = 0; i < 8; i++) {
+			        sum += cc->peer_node_id[i];
+			}
+			//Create special data to detect oscam-cccam:
+			cc->is_oscam_cccam = sum==recv_sum;
+			        
+			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
+			if (cc->is_oscam_cccam) {
+			        sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s) [EXT]", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
+			                cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
+			}			
 			cc->cmd05_mode = MODE_PLAIN;
 			//
 			//Keyoffset is payload-size:
@@ -2404,6 +2451,8 @@ int cc_srv_report_cards() {
 	LLIST *server_cards = llist_create();
 	LLIST *reported_carddatas = llist_create();
 
+	int isau = is_au();
+	
 	for (r = 0; r < CS_MAXREADER; r++) {
 		if (!reader[r].fd || !reader[r].enable || reader[r].deleted)
 			continue;
@@ -2419,7 +2468,7 @@ int cc_srv_report_cards() {
 			reader[r].cc_id = (r+0x64)<<16 | fast_rnd()<<8 | fast_rnd();
 		}
 
-		int au_allowed = !reader[r].audisabled && is_au();
+		int au_allowed = !reader[r].audisabled && isau;
 
 		flt = 0;
 		if (reader[r].typ != R_CCCAM && reader[r].ftab.filts) {
@@ -2443,7 +2492,7 @@ int cc_srv_report_cards() {
 					buf[11] = reshare;
 					//Setting UA: (Unique Address):
 					if (au_allowed)
-						cc_UA_oscam2cccam(reader[r].hexserial, buf + 12);
+						cc_UA_oscam2cccam(reader[r].hexserial, buf + 12, caid);
 					buf[20] = reader[r].ftab.filts[j].nprids;
 					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
 					for (k = 0; k < reader[r].ftab.filts[j].nprids; k++) {
@@ -2507,7 +2556,7 @@ int cc_srv_report_cards() {
 					buf[10] = hop;
 					buf[11] = reshare;
 					if (au_allowed)
-						cc_UA_oscam2cccam(reader[r].hexserial, buf + 12);
+						cc_UA_oscam2cccam(reader[r].hexserial, buf + 12, lcaid);
 					buf[20] = 1;
 					buf[21 + 7] = 1;
 					memcpy(buf + 22 + 7, cc->node_id, 8);
@@ -2538,7 +2587,7 @@ int cc_srv_report_cards() {
 			buf[10] = hop;
 			buf[11] = reshare;
 			if (au_allowed)
-				cc_UA_oscam2cccam(reader[r].hexserial, buf + 12);
+				cc_UA_oscam2cccam(reader[r].hexserial, buf + 12, caid);
 			buf[20] = reader[r].nprov;
 			for (j = 0; j < reader[r].nprov; j++) {
 				ulong prid = get_reader_prid(r, j);
@@ -2639,8 +2688,8 @@ int cc_srv_report_cards() {
 		buf[9] = card->caid & 0xff;
 		buf[10] = card->hop;
 		buf[11] = card->maxdown;
-		//memcpy(buf + 12, card->hexserial, 8);
-		//We never reshare UA / SA !!
+		if (isau)
+			memcpy(buf + 12, card->hexserial, 8);
 		int j = 0;
 		LLIST_ITR itr_prov;
 		struct cc_provider *prov = llist_itr_init(card->providers, &itr_prov);
@@ -2649,7 +2698,8 @@ int cc_srv_report_cards() {
 			buf[21 + (j * 7)] = prid >> 16;
 			buf[22 + (j * 7)] = prid >> 8;
 			buf[23 + (j * 7)] = prid & 0xFF;
-			//memcpy(buf+24+(j*7), prov->sa, 4);
+			if (isau)
+				memcpy(buf+24+(j*7), prov->sa, 4);
 			prov = llist_itr_next(&itr_prov);
 			//cs_debug_mask(D_TRACE, "%s prov %06X", getprefix(), prid);
 			j++;
@@ -2774,18 +2824,11 @@ int cc_srv_connect(struct s_client *cl) {
 	cc->cc_use_rc4 = 0;
 	cl->is_server = 1;
 
-	//Partner detection:
-	// calc + send random seed
-	seed = (unsigned int) time((time_t*) 0);
-	uint16 sum = 0x1234;
-	for (i = 0; i < 14; i++) {
-		data[i] = fast_rnd();
-		sum += data[i];
-	}
-	//Create special data to detect oscam-cccam:
-	data[14] = sum >> 8;
-	data[15] = sum & 0xff;
-
+	//Create checksum for "O" cccam
+	for (i = 0; i < 3; i++) {
+        	data[12+i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
+        }
+        
 	send(cl->udp_fd, data, 16, 0);
 
 	cc_xor(data); // XOR init bytes with 'CCcam'
