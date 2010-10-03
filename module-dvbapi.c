@@ -1266,7 +1266,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		memcpy(er->ecm, buffer, er->l);
 
 		cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X chid %02X", er->caid, er->prid, er->srvid, er->pid, (caid >> 8) == 0x06 ? buffer[7] : 0);
-		get_cw(er);
+		get_cw(&client[cs_idx], er);
 	}
 
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_EMM) {
@@ -1638,7 +1638,7 @@ void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_ind
 	memcpy(er->ecm, ecm_data, er->l);
 
 	cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
-	get_cw(er);
+	get_cw(&client[cs_idx], er);
 
 	//openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 	//openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
@@ -1692,7 +1692,7 @@ void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsign
 	memcpy(er->ecm, ecm_data, er->l);
 
 	cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
-	get_cw(er);
+	get_cw(&client[cs_idx], er);
 	 
 	if (openxcas_stop_filter_ex(stream_id, seq, openxcas_filter_idx) < 0)
 		cs_log("openxcas: unable to stop ex filter");

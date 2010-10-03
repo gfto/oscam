@@ -805,7 +805,7 @@ static void oscam_ser_process_ecm(uchar *buf, int l)
     case 2: er->rc=9; return;	// error without log
     case 1: er->rc=9;		      // error with log
   }
-  get_cw(er);
+  get_cw(&client[cs_idx], er);
 }
 
 

@@ -162,7 +162,7 @@ static void camd33_process_ecm(uchar *buf, int l)
   er->l=l-7;
   er->caid=b2i(2, buf+1);
   memcpy(er->ecm , buf+7, er->l);
-  get_cw(er);
+  get_cw(&client[cs_idx], er);
 }
 
 static void camd33_process_emm(uchar *buf, int l)

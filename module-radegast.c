@@ -142,7 +142,7 @@ static void radegast_process_ecm(uchar *buf, int l)
   if (l!=i)
     cs_log("WARNING: ECM-request corrupt");
   else
-    get_cw(er);
+    get_cw(&client[cs_idx], er);
 }
 
 static void radegast_process_unknown(uchar *buf)

@@ -1243,11 +1243,11 @@ extern void guess_cardsystem(ECM_REQUEST *);
 #ifdef IRDETO_GUESSING
 extern void guess_irdeto(ECM_REQUEST *); 
 #endif
-extern void get_cw(ECM_REQUEST *);
+extern void get_cw(struct s_client *, ECM_REQUEST *);
 extern void do_emm(EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
 extern void request_cw(ECM_REQUEST *, int, int);
-extern int send_dcw(ECM_REQUEST *);
+extern int send_dcw(struct s_client *, ECM_REQUEST *);
 extern int process_input(uchar *, int, int);
 extern int chk_srvid(ECM_REQUEST *, int);
 extern int chk_srvid_match(ECM_REQUEST *, SIDTAB *);

@@ -984,7 +984,7 @@ static void newcamd_process_ecm(uchar *buf)
   if( cfg->ncd_ptab.nports && cfg->ncd_ptab.nports >= pi )
     er->caid=cfg->ncd_ptab.ports[pi].ftab.filts[0].caid;
   memcpy(er->ecm, buf+2, er->l);
-  get_cw(er);
+  get_cw(&client[cs_idx], er);
 }
 
 static void newcamd_process_emm(uchar *buf)

@@ -1563,7 +1563,7 @@ int hexserialset(int ridx)
 // 13= stopped
 // 100=unhandled
                                                                                                                         
-int send_dcw(ECM_REQUEST *er)
+int send_dcw(struct s_client * client, ECM_REQUEST *er)
 {
 	static const char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
@@ -1580,10 +1580,10 @@ int send_dcw(ECM_REQUEST *er)
 
 #ifdef CS_WITH_GBOX
 	if(er->gbxFrom)
-		snprintf(uname,sizeof(uname)-1, "%s(%04X)", username(&client[cs_idx]), er->gbxFrom);
+		snprintf(uname,sizeof(uname)-1, "%s(%04X)", username(client), er->gbxFrom);
 	else
 #endif
-		snprintf(uname,sizeof(uname)-1, "%s", username(&client[cs_idx]));
+		snprintf(uname,sizeof(uname)-1, "%s", username(client));
 	if (er->rc==0)
 	{
 #ifdef CS_WITH_GBOX
@@ -1609,7 +1609,7 @@ int send_dcw(ECM_REQUEST *er)
 		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
 
 	cs_ftime(&tpe);
-	client[cs_idx].cwlastresptime = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
+	client->cwlastresptime = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
 
 #ifdef CS_LED
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
@@ -1619,34 +1619,34 @@ int send_dcw(ECM_REQUEST *er)
 
 	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s%s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, lc,
-			er->rcEx?erEx:stxt[er->rc], client[cs_idx].cwlastresptime, sby, schaninfo, sreason);
+			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);
 
 #ifdef WEBIF
 	if(er->rc == 0)
-		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", sby);
+		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", sby);
 	else if ((er->rc == 1) || (er->rc == 2))
-		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "by %s (cache)", reader[er->reader[0]].label);
+		snprintf(client->lastreader, sizeof(client->lastreader)-1, "by %s (cache)", reader[er->reader[0]].label);
 	else
-		snprintf(client[cs_idx].lastreader, sizeof(client[cs_idx].lastreader)-1, "%s", stxt[er->rc]);
+		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", stxt[er->rc]);
 #endif
 
-	if(!client[cs_idx].ncd_server && client[cs_idx].autoau && er->rcEx==0)
+	if(!client->ncd_server && client->autoau && er->rcEx==0)
 	{
-		if(client[cs_idx].au>=0 && er->caid!=reader[client[cs_idx].au].caid[0])
+		if(client->au>=0 && er->caid!=reader[client->au].caid[0])
 		{
-			client[cs_idx].au=(-1);
+			client->au=(-1);
 		}
 		//martin
-		//client[cs_idx].au=er->reader[0];
-		//if(client[cs_idx].au<0)
+		//client->au=er->reader[0];
+		//if(client->au<0)
 		//{
 		struct s_reader *cur = &reader[er->reader[0]];
 		
 		if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled && 
 				cur->card_system == get_cardsystem(er->caid) && hexserialset(er->reader[0]))
-			client[cs_idx].au = er->reader[0];
+			client->au = er->reader[0];
 		else if((er->caid == cur->caid[0]) && (!cur->audisabled)) {
-			client[cs_idx].au = er->reader[0]; // First chance - check whether actual reader can AU
+			client->au = er->reader[0]; // First chance - check whether actual reader can AU
 		} else {
 			int r=0;
 			for(r=0;r<CS_MAXREADER;r++) //second chance loop through all readers to find an AU reader
@@ -1656,19 +1656,19 @@ int send_dcw(ECM_REQUEST *er)
 					if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled && 
 						cur->card_system == get_cardsystem(er->caid) && hexserialset(r))
 					{
-						client[cs_idx].au = r;
+						client->au = r;
 						break;
 					}
 					else if((er->caid == cur->caid[0]) && (er->prid == cur->auprovid) && (!cur->audisabled))
 					{
-						client[cs_idx].au=r;
+						client->au=r;
 						break;
 					}
 				}
 			}
 			if(r==CS_MAXREADER)
 			{
-				client[cs_idx].au=(-1);
+				client->au=(-1);
 			}
 		}
 		//}
@@ -1680,14 +1680,14 @@ int send_dcw(ECM_REQUEST *er)
 		case 3:
 			// 0 - found
 			// 3 - emu FIXME: obsolete ?
-					client[cs_idx].cwfound++;
+					client->cwfound++;
 					break;
 
 		case 1:
 		case 2:
 			// 1 - cache1
 			// 2 - cache2
-			client[cs_idx].cwcache++;
+			client->cwcache++;
 			break;
 
 		case 4:
@@ -1697,18 +1697,18 @@ int send_dcw(ECM_REQUEST *er)
 			// 9 - corrupt
 			// 10 - no card
 			if (er->rcEx)
-				client[cs_idx].cwignored++;
+				client->cwignored++;
 			else
-				client[cs_idx].cwnot++;
+				client->cwnot++;
 			break;
 
 		case 5:
 			// 5 - timeout
-			client[cs_idx].cwtout++;
+			client->cwtout++;
 			break;
 
 		default:
-			client[cs_idx].cwignored++;
+			client->cwignored++;
 	}
 
 #ifdef CS_ANTICASC
@@ -1745,7 +1745,7 @@ int send_dcw(ECM_REQUEST *er)
 	}
 #endif
 	
-	ph[client[cs_idx].ctyp].send_dcw(er);
+	ph[client->ctyp].send_dcw(er);
 	return 0;
 }
 
@@ -1800,7 +1800,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
     if (ert) ert->rc=4;
     else send_reader_stat(save_ridx, save_ert, 4);
   }
-  if (ert) send_dcw(ert);
+  if (ert) send_dcw(cl, ert);
   return;
 }
 
@@ -2017,12 +2017,12 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
         get_best_reader(&grs, reader_avail);
 }
 
-void get_cw(ECM_REQUEST *er)
+void get_cw(struct s_client * client, ECM_REQUEST *er)
 {
 	int i, j, m;
 	time_t now = time((time_t)0);
 
-	client[cs_idx].lastecm = now;
+	client->lastecm = now;
 
 	if (!er->caid)
 		guess_cardsystem(er);
@@ -2051,8 +2051,8 @@ void get_cw(ECM_REQUEST *er)
 		er->prid = chk_provid(er->ecm, er->caid);
 
 	// Set providerid for newcamd clients if none is given
-	if( (!er->prid) && client[cs_idx].ncd_server ) {
-		int pi = client[cs_idx].port_idx;
+	if( (!er->prid) && client->ncd_server ) {
+		int pi = client->port_idx;
 		if( pi >= 0 && cfg->ncd_ptab.nports && cfg->ncd_ptab.nports >= pi )
 			er->prid = cfg->ncd_ptab.ports[pi].ftab.filts[0].prids[0];
 	}
@@ -2065,16 +2065,16 @@ void get_cw(ECM_REQUEST *er)
 	}
 
 	// user expired
-	if(client[cs_idx].expirationdate && client[cs_idx].expirationdate < client[cs_idx].lastecm)
+	if(client->expirationdate && client->expirationdate < client->lastecm)
 		er->rc = 11;
 
 	// out of timeframe
-	if(client[cs_idx].allowedtimeframe[0] && client[cs_idx].allowedtimeframe[1]) {
+	if(client->allowedtimeframe[0] && client->allowedtimeframe[1]) {
 		struct tm *acttm;
 		acttm = localtime(&now);
 		int curtime = (acttm->tm_hour * 60) + acttm->tm_min;
-		int mintime = client[cs_idx].allowedtimeframe[0];
-		int maxtime = client[cs_idx].allowedtimeframe[1];
+		int mintime = client->allowedtimeframe[0];
+		int maxtime = client->allowedtimeframe[1];
 		if(!((mintime <= maxtime && curtime > mintime && curtime < maxtime) || (mintime > maxtime && (curtime > mintime || curtime < maxtime)))) {
 			er->rc = 11;
 		}
@@ -2082,7 +2082,7 @@ void get_cw(ECM_REQUEST *er)
 	}
 
 	// user disabled
-	if(client[cs_idx].disabled != 0)
+	if(client->disabled != 0)
 		er->rc = 12;
 
 	// rc<100 -> ecm error
@@ -2092,23 +2092,23 @@ void get_cw(ECM_REQUEST *er)
 		er->ocaid = er->caid;
 		i = er->srvid;
 
-		if ((i != client[cs_idx].last_srvid) || (!client[cs_idx].lastswitch)) {
+		if ((i != client->last_srvid) || (!client->lastswitch)) {
 			if(cfg->usrfileflag)
-				cs_statistics(&client[cs_idx]);
-			client[cs_idx].lastswitch = now;
+				cs_statistics(client);
+			client->lastswitch = now;
 		}
 
 		// user sleeping
-		if ((client[cs_idx].tosleep) && (now - client[cs_idx].lastswitch > client[cs_idx].tosleep)) {
-			if (client[cs_idx].c35_sleepsend != 0) {
+		if ((client->tosleep) && (now - client->lastswitch > client->tosleep)) {
+			if (client->c35_sleepsend != 0) {
 				er->rc = 13; // send stop command CMD08 {00 xx}
 			} else {
 				er->rc = 6;
 			}
 		}
 
-		client[cs_idx].last_srvid = i;
-		client[cs_idx].last_caid = m;
+		client->last_srvid = i;
+		client->last_caid = m;
 
 		for (j = 0; (j < 6) && (er->rc > 99); j++)
 		{
@@ -2116,13 +2116,13 @@ void get_cw(ECM_REQUEST *er)
 
 				case 0:
 					// fake (uniq)
-					if (client[cs_idx].dup)
+					if (client->dup)
 						er->rc = 7;
 					break;
 
 				case 1:
 					// invalid (caid)
-					if (!chk_bcaid(er, &client[cs_idx].ctab)) {
+					if (!chk_bcaid(er, &client->ctab)) {
 						er->rc = 8;
 						er->rcEx = E2_CAID;
 						snprintf( er->msglog, MSGLOGSIZE, "invalid caid %x",er->caid );
@@ -2147,7 +2147,7 @@ void get_cw(ECM_REQUEST *er)
 
 				case 4:
 					// invalid (sfilter)
-					if (!chk_sfilter(er, ph[client[cs_idx].ctyp].ptab))
+					if (!chk_sfilter(er, ph[client->ctyp].ptab))
 						er->rc = 8;
 					break;
 
@@ -2174,14 +2174,14 @@ void get_cw(ECM_REQUEST *er)
 		 *because newcamd ECM will fail
 		 *if ECM is converted before
 		 */
-		if (&client[cs_idx].ttab)
+		if (&client->ttab)
 			cs_betatunnel(er);
     
 		// store ECM in cache
-		memcpy(er->ecmd5, MD5(er->ecm, er->l, client[cs_idx].dump), CS_ECMSTORESIZE);
+		memcpy(er->ecmd5, MD5(er->ecm, er->l, client->dump), CS_ECMSTORESIZE);
 
 		// cache1
-		if (check_ecmcache1(er, client[cs_idx].grp))
+		if (check_ecmcache1(er, client->grp))
 			er->rc = 1;
 
 #ifdef CS_ANTICASC
@@ -2230,7 +2230,7 @@ void get_cw(ECM_REQUEST *er)
 		if (cfg->delay)
 			cs_sleepms(cfg->delay);
 
-		send_dcw(er);
+		send_dcw(client, er);
 		return;
 	}
 
@@ -2420,7 +2420,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			er=&cl->ecmtask[i];
 			if (check_ecmcache1(er, cl->grp)) { //Schlocke: caching dupplicate requests from different clients
 				er->rc = 1;
-				send_dcw(er);
+				send_dcw(cl, er);
 			}
 		}
 		if (cl->ecmtask[i].rc>=100) { // check all pending ecm-requests 
@@ -2486,7 +2486,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 							if (er->reader[r])
 								send_reader_stat(r, er, 5);
 					}
-					send_dcw(er);
+					send_dcw(cl, er);
 					continue;
 				} else {
 					er->stage++;

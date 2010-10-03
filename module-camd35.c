@@ -281,7 +281,7 @@ static void camd35_process_ecm(uchar *buf)
 	er->prid = b2i(4, buf+12);
 	er->pid  = b2i(2, buf+16);
 	memcpy(er->ecm, buf + 20, er->l);
-	get_cw(er);
+	get_cw(&client[cs_idx], er);
 }
 
 static void camd35_process_emm(uchar *buf)

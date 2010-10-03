@@ -438,7 +438,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
   if ((er->rc<10) )
     {
-      send_dcw(er);
+      send_dcw(&client[reader->cidx], er);
       return;
     }
   

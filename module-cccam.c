@@ -1868,7 +1868,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 				add_extended_ecm_idx(cc->extended_mode ? cc->g_flag : 1, er->idx,
 						server_card, srvid);
 
-				get_cw(er);
+				get_cw(cl, er);
 
 			} else {
 				cs_debug_mask(D_TRACE, "%s NO ECMTASK!!!!", getprefix());
