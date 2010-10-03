@@ -22,7 +22,7 @@ int find_nano(uchar *ecm, int l, uchar nano, int s)
   return (s<l)?++s:0;
 }
 
-int chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *type, const char *name)
+int chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *D_USE(type), const char *D_USE(name))
 {
   int i, j, an, cl_n, l;
   uchar ecm_class;

@@ -180,7 +180,7 @@ void chk_services(char *labels, ulong *sidok, ulong *sidno)
 	}
 }
 
-void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName)
+void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char *D_USE(zName), const char *zFiltName)
 {
 	int i, j;
 	char *ptr1, *ptr2, *ptr3;

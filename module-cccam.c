@@ -1332,7 +1332,7 @@ void cc_free_card(struct cc_card *card) {
  * Adds a cccam-carddata buffer to the list of reported carddatas
  */
 void cc_add_reported_carddata(LLIST *reported_carddatas, uint8 *buf,
-		int len, struct s_reader *rdr) {
+		int len, struct s_reader *D_USE(rdr)) {
 	struct cc_reported_carddata *carddata = malloc(
 			sizeof(struct cc_reported_carddata));
 	uint8 *buf_copy = malloc(len);
@@ -1351,8 +1351,9 @@ void cc_add_reported_carddata(LLIST *reported_carddatas, uint8 *buf,
 			buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18],
 			buf[19]); //UA
 	int i;
+	int ofs;
 	for (i = 0; i < buf[20]; i++) {
-		int ofs = 21 + i * 7;
+		ofs = 21 + i * 7;
 		cs_debug_mask(D_EMM, "   provider: %02X%02X%02X SA: %02X%02X%02X%02X",
 				buf[ofs], buf[ofs + 1], buf[ofs + 2], buf[ofs + 3],
 				buf[ofs + 4], buf[ofs + 5], buf[ofs + 6]);

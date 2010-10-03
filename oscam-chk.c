@@ -137,7 +137,7 @@ int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
   return (rc);
 }
 
-static int chk_chid(ECM_REQUEST *er, FTAB *fchid, char *type, char *name)
+static int chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D_USE(name))
 {
   int rc=1, i, j;
 

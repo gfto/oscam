@@ -58,13 +58,21 @@
 #endif
 
 #ifdef WITH_DEBUG
-#define call(arg) \
+# define call(arg) \
 	if (arg) { \
 		cs_debug_mask(D_TRACE, "ERROR, function call %s returns error.",#arg); \
 		return ERROR; \
 	}
+# define D_USE(x) x
 #else
-#define call(arg) arg
+# define call(arg) arg
+# if defined(__GNUC__)
+#  define D_USE(x) D_USE_ ## x __attribute__((unused))
+# elif defined(__LCLINT__)
+#  define D_USE(x) /*@debug use only@*/ x
+# else
+#  define D_USE(x) x
+# endif
 #endif
 
 #ifndef USE_CMAKE
