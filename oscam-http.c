@@ -16,7 +16,7 @@
 #include "module-stat.h"
 
 extern struct s_reader *reader;
-
+extern void restart_cardreader(int ridx, int restart);
 static int running = 1;
 
 void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
@@ -1749,7 +1749,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		kill_thread(atoi(getParam(params, "csidx")));
 
 	if (strcmp(getParam(params, "action"), "restart") == 0)
-		send_restart_cardreader(atoi(getParam(params, "ridx")), 1);
+		restart_cardreader(atoi(getParam(params, "ridx")), 1);
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0)
 		send_clear_reader_stat(atoi(getParam(params, "ridx")));

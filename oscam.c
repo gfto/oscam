@@ -888,8 +888,15 @@ void start_anticascader()
 }
 #endif
 
-static void restart_cardreader(int reader_idx, int restart) {
+void restart_cardreader(int reader_idx, int restart) {
 	int i,n;
+	if (restart) //kill old thread, even when .deleted flag is set
+		for (i=1; i<CS_MAXPID; i++)
+			if (client[i].ridx==reader_idx) {
+				kill_thread(i);
+				break;
+			}
+
 	if ((reader[reader_idx].device[0]) && (reader[reader_idx].enable == 1) && (!reader[reader_idx].deleted)) {
 
 		if (restart) {
@@ -1999,7 +2006,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
  	     		reader[i].fd_error++;
       			if (reader[i].fd_error > 5) {
       				reader[i].fd_error = 0;
-      				send_restart_cardreader(i, 1); //Schlocke: This restarts the reader!
+      				restart_cardreader(i, 1); //Schlocke: This restarts the reader!
       			} 
 		}
       }
@@ -2582,18 +2589,6 @@ void send_clear_reader_stat(int ridx)
   write_to_pipe(client[0].fd_m2c, PIP_ID_RES, (uchar*)&ridx, sizeof(ridx)); 
 }
 
-void send_restart_cardreader(int ridx, int force_now)
-{
-  int i;
-  for (i=1; i<CS_MAXPID; i++) {
-	if (client[i].ridx==ridx) {
-		kill_thread(i);
-		break;
-	}
-  }
-
-  restart_cardreader(ridx, force_now);
-}
 
 static void process_master_pipe(int mfdr)
 {
