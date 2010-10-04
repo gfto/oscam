@@ -209,7 +209,7 @@ extern const char *boxdesc[];
 #endif
 
 #ifdef CS_CORE
-char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "RES", "UDP", NULL  };
+char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "UDP", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
                        "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
@@ -224,8 +224,7 @@ extern char *RDR_CD_TXT[];
 #define PIP_ID_EMM    1
 #define PIP_ID_CIN    2  // CARD_INFO
 #define PIP_ID_KCL    3  // Schlocke: Kill all Clients (no param)
-#define PIP_ID_RES    4  // Schlocke: reset reader statistiks
-#define PIP_ID_UDP    5
+#define PIP_ID_UDP    4
 #define PIP_ID_MAX    PIP_ID_UDP
 
 
@@ -1264,7 +1263,7 @@ extern void cs_waitforcardinit(void);
 extern void cs_reinit_clients(void);
 extern int process_client_pipe(struct s_client *cl, uchar *buf, int l);
 extern void update_reader_config(uchar *ptr);
-extern void send_clear_reader_stat(int ridx);
+extern void clear_reader_stat(int ridx);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab);
 extern int chk_srvid_by_caid_prov(ushort caid, ulong provid, int idx);

@@ -346,7 +346,6 @@ static void cs_master_alarm()
 
 static void cs_sigpipe()
 {
-
   cs_log("Got sigpipe signal -> captured");
 }
 
@@ -2570,12 +2569,6 @@ static void restart_clients()
 }
 
 
-void send_clear_reader_stat(int ridx)
-{
-  write_to_pipe(client[0].fd_m2c, PIP_ID_RES, (uchar*)&ridx, sizeof(ridx)); 
-}
-
-
 static void process_master_pipe(int mfdr)
 {
   int n;
@@ -2585,9 +2578,6 @@ static void process_master_pipe(int mfdr)
   {
     case PIP_ID_KCL: //Kill all clients
     	restart_clients();
-    	break;
-    case PIP_ID_RES: //Reset reader statistics
-    	clear_reader_stat(*(int*)ptr);
     	break;
     default:
        cs_log("unhandled pipe message %d", n);

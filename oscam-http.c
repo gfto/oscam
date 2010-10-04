@@ -1752,7 +1752,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		restart_cardreader(atoi(getParam(params, "ridx")), 1);
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0)
-		send_clear_reader_stat(atoi(getParam(params, "ridx")));
+		clear_reader_stat(atoi(getParam(params, "ridx")));
 
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0)
