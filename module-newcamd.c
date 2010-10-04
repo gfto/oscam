@@ -1238,16 +1238,17 @@ int newcamd_client_init()
   return(0);
 }
 
-static int newcamd_send_ecm(ECM_REQUEST *er, uchar *buf)
+static int newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 {
 //  if (!client[cs_idx].udp_sa.sin_addr.s_addr)
 //    return(-1);
+  struct s_reader *rdr = &reader[client->ridx];
 
   if(!newcamd_connect())
     return (-1);
 
   // check server filters
-  if(!chk_rsfilter(&reader[client[cs_idx].ridx], er, reader[client[cs_idx].ridx].ncd_disable_server_filt))
+  if(!chk_rsfilter(rdr, er))
     return(-1);
 
   memcpy(buf, er->ecm, er->l);

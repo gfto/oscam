@@ -934,7 +934,7 @@ static int oscam_ser_client_init()
   return((client[cs_idx].pfd>0) ? 0 : 1);
 }
 
-static int oscam_ser_send_ecm(ECM_REQUEST *er, uchar *buf)
+static int oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 {
   switch(oscam_ser_proto)
   {

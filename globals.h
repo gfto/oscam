@@ -1255,7 +1255,7 @@ extern int chk_srvid_match(ECM_REQUEST *, SIDTAB *);
 extern int chk_sfilter(ECM_REQUEST *, PTAB*);
 extern int chk_ufilters(ECM_REQUEST *);
 extern int chk_rfilter(ECM_REQUEST *, struct s_reader *);
-extern int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *, int);
+extern int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *);
 extern int chk_avail_reader(ECM_REQUEST *, struct s_reader *);
 extern int matching_reader(ECM_REQUEST *, struct s_reader *);
 extern void set_signal_handler(int , int , void (*)(int));

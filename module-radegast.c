@@ -176,7 +176,7 @@ static void * radegast_server(void *cli)
   return NULL;
 }
 
-static int radegast_send_ecm(ECM_REQUEST *er)
+static int radegast_send_ecm(struct s_client *client, ECM_REQUEST *er)
 {
   int n;
   uchar provid_buf[8];
@@ -207,8 +207,8 @@ static int radegast_send_ecm(ECM_REQUEST *er)
   memcpy(ecmbuf + 8 + sizeof(header), er->ecm, er->l);
   ecmbuf[4] = er->caid >> 8;
 
-  reader[client[cs_idx].ridx].msg_idx = er->idx;
-  n = send(client[cs_idx].pfd, ecmbuf, er->l + 30, 0);
+  reader[client->ridx].msg_idx = er->idx;
+  n = send(client->pfd, ecmbuf, er->l + 30, 0);
 
   cs_log("radegast: sending ecm");
   cs_ddump(ecmbuf, er->l + 30, "ecm:");

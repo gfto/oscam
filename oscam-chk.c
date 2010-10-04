@@ -219,13 +219,13 @@ int chk_ufilters(ECM_REQUEST *er)
   return (rc);
 }
 
-int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er, int disable_server_filt)
+int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
 {
   int i, rc=1;
   ushort caid;
   ulong prid;
 
-  if( disable_server_filt )
+  if( reader->ncd_disable_server_filt )
   { 
     cs_debug("%04X:%06X allowed - server filters disabled",
               er->caid, er->prid);

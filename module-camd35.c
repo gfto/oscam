@@ -480,34 +480,34 @@ static int tcp_connect()
   return(1);
 }
 
-static int camd35_send_ecm(ECM_REQUEST *er, uchar *buf)
+static int camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 {
-	char *typtext[]={"ok", "invalid", "sleeping"};
+	static const char *typtext[]={"ok", "invalid", "sleeping"};
 
-	if (client[cs_idx].stopped) {
-		if (er->srvid == client[cs_idx].lastsrvid && er->caid == client[cs_idx].lastcaid && er->pid == client[cs_idx].lastpid){
+	if (client->stopped) {
+		if (er->srvid == client->lastsrvid && er->caid == client->lastcaid && er->pid == client->lastpid){
 			cs_log("%s is stopped - requested by server (%s)",
-					reader[client[cs_idx].ridx].label, typtext[client[cs_idx].stopped]);
+					reader[client->ridx].label, typtext[client->stopped]);
 			return(-1);
 		}
 		else {
-			client[cs_idx].stopped = 0;
+			client->stopped = 0;
 		}
 	}
 	
-	client[cs_idx].lastsrvid = er->srvid;
-	client[cs_idx].lastcaid = er->caid;
-	client[cs_idx].lastpid = er->pid;
+	client->lastsrvid = er->srvid;
+	client->lastcaid = er->caid;
+	client->lastpid = er->pid;
 
-	if (client[cs_idx].is_udp) {
-	   if (!client[cs_idx].udp_sa.sin_addr.s_addr || reader[client[cs_idx].ridx].last_s-reader[client[cs_idx].ridx].last_g > reader[client[cs_idx].ridx].tcp_rto)
-	      if (!hostResolve(client[cs_idx].ridx)) return -1;
+	if (client->is_udp) {
+	   if (!client->udp_sa.sin_addr.s_addr || reader[client->ridx].last_s-reader[client->ridx].last_g > reader[client->ridx].tcp_rto)
+	      if (!hostResolve(client->ridx)) return -1;
 	}
         else {
   	   if (!tcp_connect()) return -1;
         }
 	
-	reader[client[cs_idx].ridx].card_status = CARD_INSERTED; //for udp
+	reader[client->ridx].card_status = CARD_INSERTED; //for udp
 	
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, er->l+15);

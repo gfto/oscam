@@ -405,7 +405,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   rc=0;
   if (sflag)
   {
-    if ((rc=reader->ph.c_send_ecm(&client[cs_idx].ecmtask[n], buf)))
+    if ((rc=reader->ph.c_send_ecm(&client[cs_idx], &client[cs_idx].ecmtask[n], buf)))
       casc_check_dcw(reader, n, 0, client[cs_idx].ecmtask[n].cw);  // simulate "not found"
     else
       client[cs_idx].last_idx = client[cs_idx].ecmtask[n].idx;

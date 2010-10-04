@@ -897,9 +897,8 @@ int cc_UA_valid(uint8 *ua) {
  * reader
  * sends a ecm request to the connected CCCam Server
  */
-int cc_send_ecm(ECM_REQUEST *er, uchar *buf) {
+int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	cs_debug_mask(D_FUT, "cc_send_ecm in");
-	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
 	
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
@@ -1886,7 +1885,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 			pthread_mutex_unlock(&cc->ecm_busy);
 		}
 
-		cc_send_ecm(NULL, NULL);
+		cc_send_ecm(cl, NULL, NULL); //FIXME second param of ALL send_ecm routines in OSCcam could be killed if not these two calls in cccam... #dingo35
 
 		break;
 	case MSG_CW_ECM:
@@ -1985,7 +1984,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 
 			//cc_abort_user_ecms();
 
-			cc_send_ecm(NULL, NULL);
+			cc_send_ecm(cl, NULL, NULL);
 
 			if (cc->max_ecms)
 				cc->ecm_counter++;
@@ -2086,7 +2085,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 				rdr->available = 1;
 				pthread_mutex_unlock(&cc->ecm_busy);
 			}
-			cc_send_ecm(NULL, NULL);
+			cc_send_ecm(cl, NULL, NULL);
 		}
 		break;
 	}
