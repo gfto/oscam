@@ -719,7 +719,7 @@ static void reader_do_pipe(struct s_reader * reader)
       reader_do_card_info(reader);
       break;
     default:
-       cs_log("unhandled pipe message %d", pipeCmd);
+       cs_log("unhandled pipe message %d (reader %s)", pipeCmd, reader->label);
        break;
   }
   if (ptr) free(ptr);

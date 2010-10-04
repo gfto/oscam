@@ -2580,7 +2580,7 @@ static void process_master_pipe(int mfdr)
     	restart_clients();
     	break;
     default:
-       cs_log("unhandled pipe message %d", n);
+       cs_log("unhandled pipe message %d (master pipe)", n);
        break;
   }
   if (ptr) free(ptr);
@@ -2606,7 +2606,7 @@ int process_client_pipe(struct s_client *cl, uchar *buf, int l) {
 			}
 			break;
 		default:
-			cs_log("unhandled pipe message %d", pipeCmd);
+			cs_log("unhandled pipe message %d (client %s)", pipeCmd, cl->usr);
 			break;
 	}
 	if (ptr) free(ptr);
