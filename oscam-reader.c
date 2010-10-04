@@ -236,7 +236,8 @@ int network_tcp_connection_open()
 void network_tcp_connection_close(struct s_reader * reader, int fd)
 {
   cs_debug("tcp_conn_close(): fd=%d, client[cs_idx].is_server=%d", fd, client[cs_idx].is_server);
-  close(fd);
+  if (fd)
+    close(fd);
   client[cs_idx].udp_fd = 0;
 
   if (!client[cs_idx].is_server)
@@ -255,7 +256,7 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
     reader->ncd_msgid=0;
     reader->last_s=reader->last_g=0;
 
-    if (reader->ph.c_init()) {
+    if (reader->ph.c_init(&client[cs_idx])) {
          cs_debug("network_tcp_connection_close() exit(1);");
 
        if (reader->ph.cleanup)
@@ -763,7 +764,7 @@ void * start_cardreader(void * rdr)
       cs_exit(1);
     }
     
-    if (reader->ph.c_init()) {
+    if (reader->ph.c_init(&client[cs_idx])) {
     	 if (reader->ph.cleanup) 
     	 	  reader->ph.cleanup();
     	 if (client[cs_idx].typ != 'p')

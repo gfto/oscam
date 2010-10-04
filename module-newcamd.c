@@ -416,7 +416,7 @@ static int newcamd_send(uchar *buf, int ml, ushort sid)
          buf, ml, reader[client[cs_idx].ridx].ncd_skey, COMMTYPE_CLIENT, sid, NULL));
 }
 
-static int newcamd_recv(struct s_client *client, uchar *buf)
+static int newcamd_recv(struct s_client *client, uchar *buf, int l)
 {
   int rc, rs;
 

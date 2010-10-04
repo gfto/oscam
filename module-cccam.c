@@ -3274,8 +3274,7 @@ int cc_cli_init_int() {
 	return res;
 }
 
-int cc_cli_init() {
-	struct s_client *cl = &client[cs_idx];
+int cc_cli_init(struct s_client *cl) {
 	if (!cl->cc)
 		cc_cli_init_int();
 		
