@@ -2,6 +2,10 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
+#ifdef WITH_DEBUG
+  #define cs_debug(x...)  cs_debug("[reader-videoguard2] "x)
+#endif
+
 static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
 {
   unsigned char tag,len,len2;
@@ -426,10 +430,13 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     cs_log("[videoguard2-reader] classD0 ins4C: failed - sending boxid failed");
     return ERROR;
     }
+  cs_debug_mask(D_READER, "classD0 cmd4C status: %02x %02x",cta_res[0],cta_res[1]);
+
 
   //short int SWIRDstatus = cta_res[1];
   static const unsigned char ins58[5] = { 0xD0,0x58,0x00,0x00,0x00 };
   l=do_cmd(reader,ins58,NULL,buff,cta_res);
+  cs_debug_mask(D_READER, "classD0 cmd58 length: %d status: %02x %02x",l,cta_res[0],cta_res[1]);
   if(l<0) {
     cs_log("[videoguard2-reader] classD0 ins58: failed");
     return ERROR;
