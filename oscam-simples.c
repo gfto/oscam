@@ -874,3 +874,7 @@ uchar fast_rnd() {
 	seed = seed * multiplier + offset;
 	return (uchar) (seed % 0xFF);
 }
+
+void init_rnd() {
+	 seed = (unsigned int) time((time_t*)0);
+}

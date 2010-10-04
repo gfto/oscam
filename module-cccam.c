@@ -14,8 +14,6 @@ extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind); 
 const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
 		"LEN=0" };
 
-extern unsigned int seed;
-
 char *getprefix() {
 	struct s_client *cl = &client[cs_idx];
 	struct cc_data *cc = cl->cc;
@@ -613,7 +611,6 @@ int cc_send_cli_data() {
 
 	cs_debug("cccam: send client data");
 
-	seed = (unsigned int) time((time_t*) 0);
 	for (i = 0; i < 8; i++)
 		cc->node_id[i] = fast_rnd();
 
@@ -647,9 +644,8 @@ int cc_send_srv_data() {
 	cs_debug("cccam: send server data");
 
 	//Partner Detection:
-	seed = (unsigned int) time((time_t*) 0);
 	uint16 sum = 0x1234; //This is our checksum
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 6; i++) {
 		cc->node_id[i] = fast_rnd();
 		sum += cc->node_id[i];
 	}
@@ -1677,7 +1673,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 				uint16 sum = 0x1234;
 				uint16 recv_sum = (cc->peer_node_id[6] << 8) | cc->peer_node_id[7];
 				int i;
-				for (i = 0; i < 8; i++) {
+				for (i = 0; i < 6; i++) {
 				        sum += cc->peer_node_id[i];
 				}
 				//Create special data to detect oscam-cccam:
@@ -2826,21 +2822,14 @@ int cc_srv_connect(struct s_client *cl) {
 	cl->is_server = 1;
 
         //Partner detection: 
-        // calc + send random seed 
-        seed = (unsigned int) time((time_t*) 0); 
-        uint16 sum = 0x1234; 
-        for (i = 0; i < 14; i++) { 
+        for (i = 0; i < 12; i++) { 
         	data[i] = fast_rnd(); 
-                sum += data[i]; 
         } 
-        //Create special data to detect oscam-cccam: 
-        data[14] = sum >> 8; 
-        data[15] = sum & 0xff; 
 	
 	//Create checksum for "O" cccam:
-	//for (i = 0; i < 3; i++) {
-        //	data[12+i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
-        //}
+	for (i = 0; i < 4; i++) {
+        	data[12+i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
+        }
         
 	send(cl->udp_fd, data, 16, 0);
 

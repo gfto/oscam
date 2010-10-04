@@ -2930,6 +2930,7 @@ int main (int argc, char *argv[])
 
   cs_log("auth size=%d", sizeof(struct s_auth));
 
+  init_rnd();
   init_sidtab();
   init_readerdb();
   init_userdb(&cfg->account);
