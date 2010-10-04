@@ -1684,7 +1684,14 @@ int cc_parse_msg(uint8 *buf, int l) {
 				}
 				//Create special data to detect oscam-cccam:
 				cc->is_oscam_cccam = sum==recv_sum;
-			}	        
+			}
+			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
+			if (cc->is_oscam_cccam) {
+				sprintf((char*) buf, "PARTNER: OSCam v%s, build #%s (%s) [EXT]",
+					CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
+				cc_cmd_send(buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
+			}
+				        
 			cc->cmd05_mode = MODE_PLAIN;
 			//
 			//Keyoffset is payload-size:
@@ -3177,13 +3184,6 @@ int cc_cli_connect() {
 	if (cc_send_cli_data() <= 0) {
 		cs_log("%s login failed, could not send client data", getprefix());
 		return -3;
-	}
-
-	//Trick: when discovered partner is an Oscam Client, then we send him our version string:
-	if (cc->is_oscam_cccam) {
-		sprintf((char*) buf, "PARTNER: OSCam v%s, build #%s (%s) [EXT]",
-				CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
-		cc_cmd_send(buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
 	}
 
 	rdr->caid[0] = rdr->ftab.filts[0].caid;
