@@ -273,14 +273,20 @@ static int reader_reset(struct s_reader * reader)
     }
   } else {
 #endif
+  int i;
   unsigned short int deprecated;
-	for (deprecated = reader->deprecated; deprecated < 2; deprecated++) {
-		if (!reader_activate_card(reader, &atr, deprecated)) return(0);
-		ret = reader_get_cardsystem(reader, atr);
+	for (i = 0; i < 4; i++) {
+		cs_log("Card activation attempt %d...", i+1);
+		for (deprecated = reader->deprecated; deprecated < 2; deprecated++) {
+			if (!reader_activate_card(reader, &atr, deprecated)) return(0);
+			ret = reader_get_cardsystem(reader, atr);
+			if (ret)
+				break;
+			if (!deprecated)
+				cs_log("Normal mode failed, reverting to Deprecated Mode");
+		}
 		if (ret)
 			break;
-		if (!deprecated)
-			cs_log("Normal mode failed, reverting to Deprecated Mode");
 	}
 #ifdef AZBOX
   }
