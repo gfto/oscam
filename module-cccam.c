@@ -2838,9 +2838,9 @@ int cc_srv_connect(struct s_client *cl) {
         data[15] = sum & 0xff; 
 	
 	//Create checksum for "O" cccam:
-	for (i = 0; i < 3; i++) {
-        	data[12+i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
-        }
+	//for (i = 0; i < 3; i++) {
+        //	data[12+i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
+        //}
         
 	send(cl->udp_fd, data, 16, 0);
 
