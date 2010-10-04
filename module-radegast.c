@@ -87,7 +87,7 @@ static int get_request(uchar *buf)
   return(rc);
 }
 
-static void radegast_send_dcw(ECM_REQUEST *er)
+static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   uchar mbuf[1024];
   mbuf[0]=0x02;		// DCW

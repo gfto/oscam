@@ -2152,9 +2152,8 @@ int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
 /**
  * Server: send DCW to client
  */
-void cc_send_dcw(ECM_REQUEST *er) {
+void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	cs_debug_mask(D_FUT, "cc_send_dcw in");
-	struct s_client *cl = &client[cs_idx];
 	uchar buf[16];
 	struct cc_data *cc = cl->cc;
 

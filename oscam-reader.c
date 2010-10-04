@@ -615,7 +615,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
       if(client[cs_idx].ecmtask[x].rc == 10 && ms > cfg->ctimeout && client[cs_idx].ridx == client[cs_idx].ecmtask[x].gbxRidx) {
         //cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",client[cs_idx].ecmtask[x].rc,client[cs_idx].ecmtask[x].idx,x,ridx,client[cs_idx].ecmtask[x].gbxRidx);
         client[cs_idx].ecmtask[x].rc=5;
-        send_dcw(&client[cs_idx].ecmtask[x]);
+        send_dcw(&client[cs_idx], &client[cs_idx].ecmtask[x]);
       }
     }
   }

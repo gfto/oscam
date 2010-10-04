@@ -223,10 +223,10 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	camd35_send(mbuf);		// send with data-len 112 for camd3 < 3.890
 }
 
-static void camd35_send_dcw(ECM_REQUEST *er)
+static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
 	uchar *buf;
-	buf = client[cs_idx].req + (er->cpti * REQ_SIZE);	// get orig request
+	buf = client->req + (er->cpti * REQ_SIZE);	// get orig request
 
 	if (((er->rcEx > 0) || (er->rc == 8)) && !client[cs_idx].c35_suppresscmd08)
 	{
@@ -244,8 +244,8 @@ static void camd35_send_dcw(ECM_REQUEST *er)
 		 * whoever knows the camd3 protocol related to CMD08 - please help!
 		 * on tests this don't work with native camd3
 		 */
-		buf[21] = client[cs_idx].c35_sleepsend;
-		cs_log("%s stop request send", client[cs_idx].usr);
+		buf[21] = client->c35_sleepsend;
+		cs_log("%s stop request send", client->usr);
 	}
 	else
 	{

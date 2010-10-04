@@ -1519,9 +1519,9 @@ void dvbapi_write_cw(int demux_id, uchar *cw) {
 	}
 }
 
-void dvbapi_send_dcw(ECM_REQUEST *er) {
+void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 #ifdef AZBOX
-	azbox_send_dcw(er);
+	azbox_send_dcw(client, er);
 	return;
 #endif
 	int i;
@@ -1573,7 +1573,7 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 			dvbapi_write_cw(i|(j<<8), er->cw);
 #endif
 			// reset idle-Time
-			client[cs_idx].last=time((time_t)0);
+			client->last=time((time_t)0);
 
 			FILE *ecmtxt;
 			ecmtxt = fopen(ECMINFO_FILE, "w");
@@ -1586,7 +1586,7 @@ void dvbapi_send_dcw(ECM_REQUEST *er) {
 					fprintf(ecmtxt, "from: local\n");
 				fprintf(ecmtxt, "protocol: %s\n", reader[er->reader[0]].ph.desc);
 				fprintf(ecmtxt, "hops: %d\n", reader[er->reader[0]].cc_currenthops);
-				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client[cs_idx].cwlastresptime/1000);
+				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
 				fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8));
 				fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8));
 				fclose(ecmtxt);
@@ -1840,7 +1840,7 @@ void * azbox_main(void *cli) {
 	return NULL;
 }
 
-void azbox_send_dcw(ECM_REQUEST *er) {
+void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 	cs_debug("openxcas: send_dcw");
 
 	openxcas_busy = 0;

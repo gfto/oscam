@@ -1745,7 +1745,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	}
 #endif
 	
-	ph[client->ctyp].send_dcw(er);
+	ph[client->ctyp].send_dcw(client, er);
 	return 0;
 }
 

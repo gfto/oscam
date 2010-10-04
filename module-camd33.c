@@ -142,11 +142,11 @@ static int get_request(uchar *buf, int n)
   return(rc);
 }
 
-static void camd33_send_dcw(ECM_REQUEST *er)
+static void camd33_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   uchar mbuf[1024];
   mbuf[0]=2;
-  memcpy(mbuf+1, client[cs_idx].req+(er->cpti*REQ_SIZE), 4);	// get pin
+  memcpy(mbuf+1, client->req+(er->cpti*REQ_SIZE), 4);	// get pin
   memcpy(mbuf+5, er->cw, 16);
   camd33_send(mbuf, 21);
   if (!cfg->c33_passive)

@@ -584,7 +584,7 @@ static void oscam_ser_auth_client(int proto)
   cs_auth_client(&client[cs_idx], ok ? account : (struct s_auth *)(-1), proto_txt[connected]);
 }
 
-static void oscam_ser_send_dcw(ECM_REQUEST *er)
+static void oscam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   uchar mbuf[1024];
   int i;

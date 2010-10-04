@@ -934,19 +934,19 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     }
 }
 
-static void newcamd_send_dcw(ECM_REQUEST *er)
+static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   int len;
   ushort cl_msgid;
   uchar mbuf[1024];
   
-  if (!client[cs_idx].udp_fd) {
-    cs_debug("ncd_send_dcw: error: client[cs_idx].udp_fd=%d", client[cs_idx].udp_fd);
+  if (!client->udp_fd) {
+    cs_debug("ncd_send_dcw: error: client[cs_idx].udp_fd=%d", client->udp_fd);
     return;  
   }
-  memcpy(&cl_msgid, client[cs_idx].req+(er->cpti*REQ_SIZE), 2);	// get client ncd_msgid + 0x8x
+  memcpy(&cl_msgid, client->req+(er->cpti*REQ_SIZE), 2);	// get client ncd_msgid + 0x8x
   mbuf[0] = er->ecm[0];
-  if( client[cs_idx].ftab.filts[0].nprids==0 || er->rc>3 /*not found*/) 
+  if( client->ftab.filts[0].nprids==0 || er->rc>3 /*not found*/) 
   {
     len=3;
     mbuf[1] = mbuf[2] = 0x00;
@@ -960,8 +960,8 @@ static void newcamd_send_dcw(ECM_REQUEST *er)
 
   cs_debug("ncd_send_dcw: er->cpti=%d, cl_msgid=%d, %02X", er->cpti, cl_msgid, mbuf[0]);
 
-  network_message_send(client[cs_idx].udp_fd, &cl_msgid, mbuf, len, 
-                       client[cs_idx].ncd_skey, COMMTYPE_SERVER, 0, NULL);
+  network_message_send(client->udp_fd, &cl_msgid, mbuf, len, 
+                       client->ncd_skey, COMMTYPE_SERVER, 0, NULL);
 }
 
 static void newcamd_process_ecm(uchar *buf)
