@@ -1672,21 +1672,22 @@ int cc_parse_msg(uint8 *buf, int l) {
 			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
 			cs_log("%s srv %s running v%s (%s)", getprefix(), cs_hexdump(0,
 					cc->peer_node_id, 8), data + 8, data + 40);
-					
-			uint16 sum = 0x1234;
-			uint16 recv_sum = (cc->peer_node_id[6] << 8) | cc->peer_node_id[7];
-			int i;
-			for (i = 0; i < 8; i++) {
-			        sum += cc->peer_node_id[i];
-			}
-			//Create special data to detect oscam-cccam:
-			cc->is_oscam_cccam = sum==recv_sum;
-			        
+			
+			if (!cc->is_oscam_cccam) {//Allready discovered oscam-cccam:
+				uint16 sum = 0x1234;
+				uint16 recv_sum = (cc->peer_node_id[6] << 8) | cc->peer_node_id[7];
+				int i;
+				for (i = 0; i < 8; i++) {
+				        sum += cc->peer_node_id[i];
+				}
+				//Create special data to detect oscam-cccam:
+				cc->is_oscam_cccam = sum==recv_sum;
+			}	        
 			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
 			if (cc->is_oscam_cccam) {
 			        sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s) [EXT]", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
-			                cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
-			}			
+			        cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
+			}
 			cc->cmd05_mode = MODE_PLAIN;
 			//
 			//Keyoffset is payload-size:
@@ -2824,7 +2825,19 @@ int cc_srv_connect(struct s_client *cl) {
 	cc->cc_use_rc4 = 0;
 	cl->is_server = 1;
 
-	//Create checksum for "O" cccam
+        //Partner detection: 
+        // calc + send random seed 
+        seed = (unsigned int) time((time_t*) 0); 
+        uint16 sum = 0x1234; 
+        for (i = 0; i < 14; i++) { 
+        	data[i] = fast_rnd(); 
+                sum += data[i]; 
+        } 
+        //Create special data to detect oscam-cccam: 
+        data[14] = sum >> 8; 
+        data[15] = sum & 0xff; 
+	
+	//Create checksum for "O" cccam:
 	for (i = 0; i < 3; i++) {
         	data[12+i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
         }
