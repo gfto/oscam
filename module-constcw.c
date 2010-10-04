@@ -69,33 +69,33 @@ static int constcw_recv(struct s_client *client, uchar *buf, int l)
 //************************************************************************************************************************
 //*       client functions
 //************************************************************************************************************************
-int constcw_client_init()
+int constcw_client_init(struct s_client *client)
 {
     int fdp[2];
     
-    client[cs_idx].pfd = 0;
+    client->pfd = 0;
     if (socketpair(PF_LOCAL, SOCK_STREAM, 0, fdp))
     {
 	cs_log("Socket creation failed (%s)", strerror(errno));
 	cs_exit(1);
     }
-    client[cs_idx].udp_fd =fdp[0];
+    client->udp_fd =fdp[0];
     pserver = fdp[1];
 
-    memset((char *) &client[cs_idx].udp_sa, 0, sizeof(client[cs_idx].udp_sa));
-    client[cs_idx].udp_sa.sin_family = AF_INET;
+    memset((char *) &client->udp_sa, 0, sizeof(client->udp_sa));
+    client->udp_sa.sin_family = AF_INET;
 
     // Oscam has no reader.au in s_reader like ki's mpcs ;)
     // reader[ridx].au = 0;
     // cs_log("local reader: %s (file: %s) constant cw au=0", reader[ridx].label, reader[ridx].device);
-    cs_log("local reader: %s (file: %s) constant cw", reader[client[cs_idx].ridx].label, reader[client[cs_idx].ridx].device);
+    cs_log("local reader: %s (file: %s) constant cw", reader[client->ridx].label, reader[client->ridx].device);
 
-    client[cs_idx].pfd = client[cs_idx].udp_fd;
+    client->pfd = client->udp_fd;
     
     if (constcw_file_available())
     {
-	reader[client[cs_idx].ridx].tcp_connected = 2;
-        reader[client[cs_idx].ridx].card_status = CARD_INSERTED;
+	reader[client->ridx].tcp_connected = 2;
+        reader[client->ridx].card_status = CARD_INSERTED;
     }
 
     return(0);

@@ -1168,17 +1168,17 @@ static void * newcamd_server(void *cli)
 *	client functions
 */
 
-int newcamd_client_init()
+int newcamd_client_init(struct s_client *client)
 {
   struct sockaddr_in loc_sa;
   struct protoent *ptrp;
   int p_proto;
   char ptxt[16];
 
-  client[cs_idx].pfd=0;
-  if (reader[client[cs_idx].ridx].r_port<=0)
+  client->pfd=0;
+  if (reader[client->ridx].r_port<=0)
   {
-    cs_log("invalid port %d for server %s", reader[client[cs_idx].ridx].r_port, reader[client[cs_idx].ridx].device);
+    cs_log("invalid port %d for server %s", reader[client->ridx].r_port, reader[client->ridx].device);
     return(1);
   }
   if( (ptrp=getprotobyname("tcp")) )
@@ -1186,7 +1186,7 @@ int newcamd_client_init()
   else
     p_proto=6;
 
-  client[cs_idx].ip=0;
+  client->ip=0;
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
 #ifdef LALL
@@ -1195,9 +1195,9 @@ int newcamd_client_init()
   else
 #endif
     loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(reader[client[cs_idx].ridx].l_port);
+  loc_sa.sin_port = htons(reader[client->ridx].l_port);
 
-  if ((client[cs_idx].udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
+  if ((client->udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
   {
     cs_log("Socket creation failed (errno=%d)", errno);
     cs_exit(1);
@@ -1205,35 +1205,35 @@ int newcamd_client_init()
 
 #ifdef SO_PRIORITY
   if (cfg->netprio)
-    setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_PRIORITY, 
+    setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, 
                (void *)&cfg->netprio, sizeof(ulong));
 #endif
-  if (!reader[client[cs_idx].ridx].tcp_ito) { 
-    ulong keep_alive = reader[client[cs_idx].ridx].tcp_ito?1:0;
-    setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_KEEPALIVE, 
+  if (!reader[client->ridx].tcp_ito) { 
+    ulong keep_alive = reader[client->ridx].tcp_ito?1:0;
+    setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, 
     (void *)&keep_alive, sizeof(ulong));
   }
 
-  if (reader[client[cs_idx].ridx].l_port>0)
+  if (reader[client->ridx].l_port>0)
   {
-    if (bind(client[cs_idx].udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
+    if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
     {
       cs_log("bind failed (errno=%d)", errno);
-      close(client[cs_idx].udp_fd);
+      close(client->udp_fd);
       return(1);
     }
-    sprintf(ptxt, ", port=%d", reader[client[cs_idx].ridx].l_port);
+    sprintf(ptxt, ", port=%d", reader[client->ridx].l_port);
   }
   else
     ptxt[0]='\0';
 
-  memset((char *)&client[cs_idx].udp_sa,0,sizeof(client[cs_idx].udp_sa));
-  client[cs_idx].udp_sa.sin_family = AF_INET;
-  client[cs_idx].udp_sa.sin_port = htons((u_short)reader[client[cs_idx].ridx].r_port);
+  memset((char *)&client->udp_sa,0,sizeof(client->udp_sa));
+  client->udp_sa.sin_family = AF_INET;
+  client->udp_sa.sin_port = htons((u_short)reader[client->ridx].r_port);
 
   cs_log("proxy %s:%d newcamd52%d (fd=%d%s)",
-          reader[client[cs_idx].ridx].device, reader[client[cs_idx].ridx].r_port,
-          (reader[client[cs_idx].ridx].ncd_proto==NCD_525)?5:4, client[cs_idx].udp_fd, ptxt);
+          reader[client->ridx].device, reader[client->ridx].r_port,
+          (reader[client->ridx].ncd_proto==NCD_525)?5:4, client->udp_fd, ptxt);
 
   return(0);
 }

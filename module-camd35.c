@@ -351,26 +351,26 @@ static void casc_set_account()
   client[cs_idx].crypted=1;
 }
 
-int camd35_client_init()
+int camd35_client_init(struct s_client *client)
 {
   struct sockaddr_in loc_sa;
   struct protoent *ptrp;
   int p_proto;//, sock_type;
   char ptxt[16];
 
-  client[cs_idx].pfd=0;
-  if (reader[client[cs_idx].ridx].r_port<=0)
+  client->pfd=0;
+  if (reader[client->ridx].r_port<=0)
   {
-    cs_log("invalid port %d for server %s", reader[client[cs_idx].ridx].r_port, reader[client[cs_idx].ridx].device);
+    cs_log("invalid port %d for server %s", reader[client->ridx].r_port, reader[client->ridx].device);
     return(1);
   }
-  client[cs_idx].is_udp=(reader[client[cs_idx].ridx].typ==R_CAMD35);
-  if( (ptrp=getprotobyname(client[cs_idx].is_udp ? "udp" : "tcp")) )
+  client->is_udp=(reader[client->ridx].typ==R_CAMD35);
+  if( (ptrp=getprotobyname(client->is_udp ? "udp" : "tcp")) )
     p_proto=ptrp->p_proto;
   else
-    p_proto=(client[cs_idx].is_udp) ? 17 : 6;	// use defaults on error
+    p_proto=(client->is_udp) ? 17 : 6;	// use defaults on error
 
-  client[cs_idx].ip=0;
+  client->ip=0;
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
 #ifdef LALL
@@ -379,9 +379,9 @@ int camd35_client_init()
   else
 #endif
     loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(reader[client[cs_idx].ridx].l_port);
+  loc_sa.sin_port = htons(reader[client->ridx].l_port);
 
-  if ((client[cs_idx].udp_fd=socket(PF_INET, client[cs_idx].is_udp ? SOCK_DGRAM : SOCK_STREAM, p_proto))<0)
+  if ((client->udp_fd=socket(PF_INET, client->is_udp ? SOCK_DGRAM : SOCK_STREAM, p_proto))<0)
   {
     cs_log("Socket creation failed (errno=%d)", errno);
     cs_exit(1);
@@ -389,33 +389,33 @@ int camd35_client_init()
 
 #ifdef SO_PRIORITY
   if (cfg->netprio)
-    setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg->netprio, sizeof(ulong));
+    setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg->netprio, sizeof(ulong));
 #endif
 
-  if (reader[client[cs_idx].ridx].l_port>0)
+  if (reader[client->ridx].l_port>0)
   {
-    if (bind(client[cs_idx].udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
+    if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
     {
       cs_log("bind failed (errno=%d)", errno);
-      close(client[cs_idx].udp_fd);
+      close(client->udp_fd);
       return(1);
     }
-    sprintf(ptxt, ", port=%d", reader[client[cs_idx].ridx].l_port);
+    sprintf(ptxt, ", port=%d", reader[client->ridx].l_port);
   }
   else
     ptxt[0]='\0';
 
   casc_set_account();
-  memset((char *)&client[cs_idx].udp_sa, 0, sizeof(client[cs_idx].udp_sa));
-  client[cs_idx].udp_sa.sin_family=AF_INET;
-  client[cs_idx].udp_sa.sin_port=htons((u_short)reader[client[cs_idx].ridx].r_port);
+  memset((char *)&client->udp_sa, 0, sizeof(client->udp_sa));
+  client->udp_sa.sin_family=AF_INET;
+  client->udp_sa.sin_port=htons((u_short)reader[client->ridx].r_port);
 
   cs_log("proxy %s:%d (fd=%d%s)",
-         reader[client[cs_idx].ridx].device, reader[client[cs_idx].ridx].r_port,
-         client[cs_idx].udp_fd, ptxt);
+         reader[client->ridx].device, reader[client->ridx].r_port,
+         client->udp_fd, ptxt);
 
-  if (client[cs_idx].is_udp) {
-  	client[cs_idx].pfd=client[cs_idx].udp_fd;
+  if (client->is_udp) {
+  	client->pfd=client->udp_fd;
   }
 
   return(0);
