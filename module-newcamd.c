@@ -1,6 +1,5 @@
 #include "globals.h"
 extern struct s_reader *reader;
-extern unsigned int seed;
 
 #define CWS_NETMSGSIZE 272
 #define NCD_CLIENT_ID 0x8888
@@ -622,7 +621,6 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     }
 
     // make random 14 bytes
-    seed = (unsigned int) time((time_t*)0);
     for( i=0; i<14; i++ ) buf[i]=fast_rnd();
 
     // send init sequence

@@ -611,8 +611,14 @@ int cc_send_cli_data() {
 
 	cs_debug("cccam: send client data");
 
-	for (i = 0; i < 8; i++)
+	//Partner Detection:
+	uint16 sum = 0x1234; //This is our checksum 
+	for (i = 0; i < 8; i++) {
 		cc->node_id[i] = fast_rnd();
+		sum += cc->node_id[i];
+	}
+	cc->node_id[6] = sum >> 8; 
+        cc->node_id[7] = sum & 0xff;
 
 	uint8 buf[CC_MAXMSGSIZE];
 	memset(buf, 0, CC_MAXMSGSIZE);
@@ -1679,11 +1685,6 @@ int cc_parse_msg(uint8 *buf, int l) {
 				//Create special data to detect oscam-cccam:
 				cc->is_oscam_cccam = sum==recv_sum;
 			}	        
-			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
-			if (cc->is_oscam_cccam) {
-			        sprintf((char*)buf, "PARTNER: OSCam v%s, build #%s (%s) [EXT]", CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
-			        cc_cmd_send(buf, strlen((char*)buf)+1, MSG_CW_NOK1);
-			}
 			cc->cmd05_mode = MODE_PLAIN;
 			//
 			//Keyoffset is payload-size:
