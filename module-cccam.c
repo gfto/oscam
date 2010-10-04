@@ -613,7 +613,7 @@ int cc_send_cli_data() {
 
 	//Partner Detection:
 	uint16 sum = 0x1234; //This is our checksum 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 6; i++) {
 		cc->node_id[i] = fast_rnd();
 		sum += cc->node_id[i];
 	}
