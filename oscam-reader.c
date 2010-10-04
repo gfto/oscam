@@ -296,7 +296,7 @@ static void casc_do_sock(struct s_reader * reader, int w)
   uchar buf[1024];
   uchar dcw[16];
 
-  if ((n=casc_recv_timer(&client[reader->cidx], buf, sizeof(buf), w))<=0)
+  if ((n=casc_recv_timer(reader, buf, sizeof(buf), w))<=0)
   {
     if (reader->ph.type==MOD_CONN_TCP && reader->typ != R_RADEGAST)
     {
