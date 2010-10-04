@@ -2539,13 +2539,13 @@ int process_input(uchar *buf, int l, int timeout)
 
 		if (FD_ISSET(cl->fd_m2c_c, &fds)) { // read from pipe
 			if (process_client_pipe(cl, buf, l)==PIP_ID_UDP) {
-				rc=ph[cl->ctyp].recv(buf, l);
+				rc=ph[cl->ctyp].recv(cl, buf, l);
 				break;
 			}
 		}
 
 		if (cl->pfd && FD_ISSET(cl->pfd, &fds)) { // read from client
-			rc=ph[cl->ctyp].recv(buf, l);
+			rc=ph[cl->ctyp].recv(cl, buf, l);
 			break;
 		}
 

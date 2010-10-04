@@ -15,14 +15,14 @@ static int camd33_send(uchar *buf, int ml)
   return(send(client[cs_idx].pfd, buf, l, 0));
 }
 
-static int camd33_recv(uchar *buf, int l)
+static int camd33_recv(struct s_client * client, uchar *buf, int l)
 {
   int n;
-  if (!client[cs_idx].pfd) return(-1);
-  if ((n=recv(client[cs_idx].pfd, buf, l, 0))>0)
+  if (!client->pfd) return(-1);
+  if ((n=recv(client->pfd, buf, l, 0))>0)
   {
-    client[cs_idx].last=time((time_t *) 0);
-    if (client[cs_idx].crypted)
+    client->last=time((time_t *) 0);
+    if (client->crypted)
       aes_decrypt(buf, n);
   }
   cs_ddump(buf, n, "received %d bytes from client", n);

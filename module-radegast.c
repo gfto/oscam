@@ -7,17 +7,17 @@ static int radegast_send(uchar *buf)
   return(send(client[cs_idx].pfd, buf, l, 0));
 }
 
-static int radegast_recv(uchar *buf, int l)
+static int radegast_recv(struct s_client *client, uchar *buf, int l)
 {
   int n;
-  if (!client[cs_idx].pfd) return(-1);
-  if (client[cs_idx].is_server) {  // server code
-    if ((n=recv(client[cs_idx].pfd, buf, l, 0))>0)
-      client[cs_idx].last=time((time_t *) 0);
+  if (!client->pfd) return(-1);
+  if (client->is_server) {  // server code
+    if ((n=recv(client->pfd, buf, l, 0))>0)
+      client->last=time((time_t *) 0);
   } else {  // client code
-    if ((n=recv(client[cs_idx].pfd, buf, l, 0))>0) {
+    if ((n=recv(client->pfd, buf, l, 0))>0) {
       cs_ddump(buf, n, "radegast: received %d bytes from %s", n, remote_txt());
-      client[cs_idx].last = time((time_t *) 0);
+      client->last = time((time_t *) 0);
 
       if (buf[0] == 2) {  // dcw received
         if (buf[3] != 0x10) {  // dcw ok

@@ -86,16 +86,17 @@ int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec)
   struct timeval tv;
   fd_set fds;
   int rc;
+  struct s_client *cl = &client[reader->cidx];
 
-  if (!client[cs_idx].pfd) return(-1);
+  if (!cl->pfd) return(-1);
   tv.tv_sec = msec/1000;
   tv.tv_usec = (msec%1000)*1000;
   FD_ZERO(&fds);
-  FD_SET(client[cs_idx].pfd, &fds);
-  select(client[cs_idx].pfd+1, &fds, 0, 0, &tv);
+  FD_SET(cl->pfd, &fds);
+  select(cl->pfd+1, &fds, 0, 0, &tv);
   rc=0;
-  if (FD_ISSET(client[cs_idx].pfd, &fds))
-    if (!(rc=reader->ph.recv(buf, l)))
+  if (FD_ISSET(cl->pfd, &fds))
+    if (!(rc=reader->ph.recv(cl, buf, l)))
       rc=-1;
 
   return(rc);
@@ -295,7 +296,7 @@ static void casc_do_sock(struct s_reader * reader, int w)
   uchar buf[1024];
   uchar dcw[16];
 
-  if ((n=casc_recv_timer(reader, buf, sizeof(buf), w))<=0)
+  if ((n=casc_recv_timer(&client[reader->cidx], buf, sizeof(buf), w))<=0)
   {
     if (reader->ph.type==MOD_CONN_TCP && reader->typ != R_RADEGAST)
     {

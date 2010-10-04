@@ -108,7 +108,7 @@ int monitor_send_idx(int idx, char *txt)
 
 #define monitor_send(t) monitor_send_idx(cs_idx, t)
 
-static int monitor_recv(uchar *buf, int l)
+static int monitor_recv(struct s_client * client, uchar *buf, int l)
 {
 	int n;
 	uchar nbuf[3] = { 'U', 0, 0 };
@@ -147,7 +147,7 @@ static int monitor_recv(uchar *buf, int l)
 			// cs_log("DO >>>> copy-back");
 			memcpy(bbuf, buf+bsize, bpos=n-bsize);
 			n=bsize;
-			write_to_pipe(client[cs_idx].fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
+			write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
 		}
 		else if (n<bsize)
 		{
@@ -172,12 +172,12 @@ static int monitor_recv(uchar *buf, int l)
 		{
 			memcpy(bbuf, p+1, bpos);
 			n=p-buf;
-			write_to_pipe(client[cs_idx].fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
+			write_to_pipe(client->fd_m2c, PIP_ID_UDP, (uchar*)&nbuf, sizeof(nbuf));
 		}
 	}
 	buf[n]='\0';
 	n=strlen(trim((char *)buf));
-	if (n) client[cs_idx].last=time((time_t *) 0);
+	if (n) client->last=time((time_t *) 0);
 	return(n);
 }
 

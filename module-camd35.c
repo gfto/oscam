@@ -64,25 +64,25 @@ static int camd35_auth_client(uchar *ucrc)
   return(rc);
 }
 
-static int camd35_recv(uchar *buf, int l)
+static int camd35_recv(struct s_client *client, uchar *buf, int l)
 {
   int rc, s, rs, n=0;
   unsigned char recrc[4];
   for (rc=rs=s=0; !rc; s++) switch(s)
   {
     case 0:
-      if (client[cs_idx].is_server)
+      if (client->is_server)
       {
-        if (!client[cs_idx].udp_fd) return(-9);
-        if (client[cs_idx].is_udp)
+        if (!client->udp_fd) return(-9);
+        if (client->is_udp)
           rs=recv_from_udpipe(buf);
         else
-          rs=recv(client[cs_idx].udp_fd, buf, l, 0);
+          rs=recv(client->udp_fd, buf, l, 0);
       }
       else
       {
-        if (!client[cs_idx].udp_fd) return(-9);
-        rs = recv(client[cs_idx].udp_fd, buf, l, 0);
+        if (!client->udp_fd) return(-9);
+        rs = recv(client->udp_fd, buf, l, 0);
       }
       if (rs < 24) rc = -1;
       break;
@@ -122,12 +122,12 @@ static int camd35_recv(uchar *buf, int l)
   {
     cs_ddump(buf, rs, "received %d bytes from %s (native)", rs, remote_txt);
   }
-  client[cs_idx].last=time((time_t *) 0);
+  client->last=time((time_t *) 0);
   switch(rc)
   {
     case -1: cs_log("packet to small (%d bytes)", rs);
              break;
-    case -2: cs_auth_client(&client[cs_idx], 0, "unknown user");
+    case -2: cs_auth_client(client, 0, "unknown user");
              break;
     case -3: cs_log("incomplete request !");
              break;

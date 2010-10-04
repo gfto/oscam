@@ -416,29 +416,29 @@ static int newcamd_send(uchar *buf, int ml, ushort sid)
          buf, ml, reader[client[cs_idx].ridx].ncd_skey, COMMTYPE_CLIENT, sid, NULL));
 }
 
-static int newcamd_recv(uchar *buf)
+static int newcamd_recv(struct s_client *client, uchar *buf)
 {
   int rc, rs;
 
-  if (client[cs_idx].is_server)
+  if (client->is_server)
   {
-    rs=network_message_receive(client[cs_idx].udp_fd, 
-                               &client[cs_idx].ncd_msgid, buf, 
-                               client[cs_idx].ncd_skey, COMMTYPE_SERVER);
+    rs=network_message_receive(client->udp_fd, 
+                               &client->ncd_msgid, buf, 
+                               client->ncd_skey, COMMTYPE_SERVER);
   }
   else
   {
-    if (!client[cs_idx].udp_fd) return(-1);
-    rs=network_message_receive(client[cs_idx].udp_fd, 
-                               &reader[client[cs_idx].ridx].ncd_msgid,buf, 
-                               reader[client[cs_idx].ridx].ncd_skey, COMMTYPE_CLIENT);
+    if (!client->udp_fd) return(-1);
+    rs=network_message_receive(client->udp_fd, 
+                               &reader[client->ridx].ncd_msgid,buf, 
+                               reader[client->ridx].ncd_skey, COMMTYPE_CLIENT);
   }
 
   if (rs<5) rc=(-1);
   else rc=rs;
 
   cs_ddump(buf, rs, "received %d bytes from %s", rs, remote_txt());
-  client[cs_idx].last = time((time_t *) 0);
+  client->last = time((time_t *) 0);
 
   if( rc==-1 )
   {

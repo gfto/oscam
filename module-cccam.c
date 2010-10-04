@@ -1885,7 +1885,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 			pthread_mutex_unlock(&cc->ecm_busy);
 		}
 
-		cc_send_ecm(cl, NULL, NULL); //FIXME second param of ALL send_ecm routines in OSCcam could be killed if not these two calls in cccam... #dingo35
+		cc_send_ecm(cl, NULL, NULL);
 
 		break;
 	case MSG_CW_ECM:
@@ -2192,8 +2192,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	cs_debug_mask(D_FUT, "cc_send_dcw out");
 }
 
-int cc_recv(uchar *buf, int l) {
-	struct s_client *cl = &client[cs_idx];
+int cc_recv(struct s_client *cl, uchar *buf, int l) {
 	int n;
 	uchar *cbuf;
 	struct cc_data *cc = cl->cc;

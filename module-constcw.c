@@ -55,14 +55,14 @@ int constcw_analyse_file(ushort c_caid, uint c_prid, ushort c_sid, uchar *dcw)
 //************************************************************************************************************************
 //* client/server common functions
 //************************************************************************************************************************
-static int constcw_recv(uchar *buf, int l)
+static int constcw_recv(struct s_client *client, uchar *buf, int l)
 {
     int ret;
 
-    if (!client[cs_idx].udp_fd) return(-9);
-    ret = read(client[cs_idx].udp_fd, buf, l);
+    if (!client->udp_fd) return(-9);
+    ret = read(client->udp_fd, buf, l);
     if (ret < 1) return(-1);
-    client[cs_idx].last = time(NULL);
+    client->last = time(NULL);
     return(ret);
 }
 
