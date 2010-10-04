@@ -1025,7 +1025,7 @@ static void newcamd_process_emm(uchar *buf)
   
   memcpy(epg.emm, buf, epg.l);
   if( ok ) 
-    do_emm(&epg);
+    do_emm(&client[cs_idx], &epg);
   }
 
   // Should always send an answer to client (also if au is disabled),

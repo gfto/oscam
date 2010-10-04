@@ -677,7 +677,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 	epg.l=len;
 	memcpy(epg.emm, buffer, epg.l);
 
-	do_emm(&epg);
+	do_emm(&client[cs_idx], &epg);
 }
 
 void dvbapi_resort_ecmpids(int demux_index) {

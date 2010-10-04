@@ -295,7 +295,7 @@ static void camd35_process_emm(uchar *buf)
 	memcpy(epg.caid, buf + 10, 2);
 	memcpy(epg.provid, buf + 12 , 4);
 	memcpy(epg.emm, buf + 20, epg.l);
-	do_emm(&epg);
+	do_emm(&client[cs_idx], &epg);
 }
 
 static void * camd35_server(void *cli)

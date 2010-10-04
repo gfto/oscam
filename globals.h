@@ -1245,7 +1245,7 @@ extern void guess_cardsystem(ECM_REQUEST *);
 extern void guess_irdeto(ECM_REQUEST *); 
 #endif
 extern void get_cw(struct s_client *, ECM_REQUEST *);
-extern void do_emm(EMM_PACKET *);
+extern void do_emm(struct s_client *, EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
 extern void request_cw(ECM_REQUEST *, int, int);
 extern int send_dcw(struct s_client *, ECM_REQUEST *);

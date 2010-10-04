@@ -173,7 +173,7 @@ static void camd33_process_emm(uchar *buf, int l)
   memcpy(epg.caid     , buf+1, 2);
   memcpy(epg.hexserial, buf+3, 4);
   memcpy(epg.emm      , buf+7, epg.l);
-  do_emm(&epg);
+  do_emm(&client[cs_idx], &epg);
 }
 
 static void * camd33_server(void* cli)

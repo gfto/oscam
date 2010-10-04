@@ -2077,7 +2077,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 				memcpy(emm->emm, buf + 16, emm->l);
 				//emm->type = UNKNOWN;
 				//emm->cidx = cs_idx;
-				do_emm(emm);
+				do_emm(cl, emm);
 				free(emm);
 			}
 		} else { //Our EMM Request Ack!
