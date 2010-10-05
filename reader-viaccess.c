@@ -487,7 +487,7 @@ static void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
-  // static const unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
+  static const unsigned char insa4[] = { 0xca,0xa4,0x04,0x00,0x03 }; // set provider id
   unsigned char insf0[] = { 0xca,0xf0,0x00,0x01,0x22 }; // set adf
   unsigned char insf4[] = { 0xca,0xf4,0x00,0x01,0x00 }; // set adf, encrypted
   unsigned char ins18[] = { 0xca,0x18,0x01,0x01,0x00 }; // set subscription
@@ -517,40 +517,38 @@ static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     ///cs_dump (emmParsed, emmParsed[1] + 2, "NANO");
 
     if (emmParsed[0]==0x90 && emmParsed[1]==0x03) {
-      /* identification of the service operator */
-
-      uchar soid[3], ident[3], i;
-
-      for (i=0; i<3; i++) {
-        soid[i]=ident[i]=emmParsed[2+i];
-      }
-      ident[2]&=0xF0;
-      keynr=soid[2]&0x0F;
-      if (chk_prov(reader, ident, keynr)) {
-        provider_ok = 1;
-      } else {
-        cs_debug("[viaccess-reader] EMM: provider or key not found on card (%x, %x)", ident, keynr);
-        cs_log("[viaccess-reader] EMM: provider or key not found on card (%x, %x)", ident, keynr);
-        return ERROR;
-      }
-
-      // as we are maybe changing the used provider, clear the cache, so the next ecm will re-select the correct one
-      memset(&reader->last_geo, 0, sizeof(reader->last_geo));
-
-      // set provider -> newcs doesn't do this and it works on all cards apparently.
-      // I'm commenting this code for now. If it breaks some card I suspect this is related
-      // to the ADF being encrypted or not. When not encrypted, we might need to set the provider,
-      // if it's encrypted , don't set the provider.
-      /*
-      write_cmd(insa4, soid);             
-      if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
-        cs_dump(insa4, 5, "set provider cmd:");
-        cs_dump(soid, 3, "set provider data:");
-        cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
-        return ERROR;
-      }
-      */
-    } else if (emmParsed[0]==0x9e && emmParsed[1]==0x20) {
+        /* identification of the service operator */
+        
+        uchar soid[3], ident[3], i;
+        
+        for (i=0; i<3; i++) {
+            soid[i]=ident[i]=emmParsed[2+i];
+        }
+        ident[2]&=0xF0;
+        keynr=soid[2]&0x0F;
+        if (chk_prov(reader, ident, keynr)) {
+            provider_ok = 1;
+        } else {
+            cs_debug("[viaccess-reader] EMM: provider or key not found on card (%x, %x)", ident, keynr);
+            cs_log("[viaccess-reader] EMM: provider or key not found on card (%x, %x)", ident, keynr);
+            return ERROR;
+        }
+        
+        // check if the provider changes. If yes, set the new one. If not, don't .. card will return an error if we do.
+        if( memcmp(&reader->last_geo.provid,ident,3)) {
+            write_cmd(insa4, soid);             
+            if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
+                cs_dump(insa4, 5, "set provider cmd:");
+                cs_dump(soid, 3, "set provider data:");
+                cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
+                return ERROR;
+            }
+        }
+        // as we are maybe changing the used provider, clear the cache, so the next ecm will re-select the correct one
+        memset(&reader->last_geo, 0, sizeof(reader->last_geo));
+        
+    } 
+    else if (emmParsed[0]==0x9e && emmParsed[1]==0x20) {
       /* adf */
 
       if (!nano91Data) {
@@ -606,10 +604,11 @@ static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     if (!nano91Data) {
       // set adf
       insf0[3] = keynr;  // key
+      insf0[4] = nano9EData[1] + 2;
       write_cmd(insf0, nano9EData); 
       if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
         cs_dump(insf0, 5, "set adf cmd:");
-        cs_dump(nano9EData, 0x22, "set adf data:");
+        cs_dump(nano9EData, insf0[4] , "set adf data:");
         cs_log("[viaccess-reader] update error: %02X %02X", cta_res[cta_lr-2], cta_res[cta_lr-1]);
         return ERROR;
       }
@@ -630,7 +629,9 @@ static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
 
   if (!nano92Data) {
-    // send subscription
+    // send subscription 
+    ins18[2] = nano9EData ? 0x01: 0x00; // found 9E nano ?
+    ins18[3] = keynr;  // key
     ins18[4] = ins18Len + nanoF0Data[1] + 2;
     memcpy (insData, ins18Data, ins18Len);
     memcpy (insData + ins18Len, nanoF0Data, nanoF0Data[1] + 2);
@@ -652,6 +653,7 @@ static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
       return ERROR; // error
     }
 
+    ins1c[2] = nano9EData ? 0x01: 0x00; // found 9E nano ?
     ins1c[3] = keynr;  // key
     ins1c[4] = nano92Data[1] + 2 + nano81Data[1] + 2 + nanoF0Data[1] + 2;
     memcpy (insData, nano92Data, nano92Data[1] + 2);
