@@ -536,7 +536,7 @@ static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
         
         // check if the provider changes. If yes, set the new one. If not, don't .. card will return an error if we do.
         if( memcmp(&reader->last_geo.provid,ident,3)) {
-            write_cmd(insa4, soid);             
+            write_cmd(insa4, ident);             
             if( cta_res[cta_lr-2]!=0x90 || cta_res[cta_lr-1]!=0x00 ) {
                 cs_dump(insa4, 5, "set provider cmd:");
                 cs_dump(soid, 3, "set provider data:");
