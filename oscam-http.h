@@ -311,7 +311,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 	<BR><BR>\n\
 	<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
 	<TR><TH colspan=\"4\">List of banned IP Addresses</TH></TR>\n\
-	<TR><TH>IP Address</TH><TH>Violation date</TH><TH>left ban time (min)</TH><TH>Action</TH></TR>\n\
+	<TR><TH>IP Address</TH><TH>Violation date</TH><TH>left ban time</TH><TH>Action</TH></TR>\n\
     ##FAILBANROW##\n\
 	</TABLE><BR>\n\
 ##TPLFOOTER##"

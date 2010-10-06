@@ -2316,7 +2316,25 @@ void send_oscam_failban(struct templatevars *vars, FILE *f, struct uriparams *pa
 				st->tm_year%100, st->tm_hour,
 				st->tm_min, st->tm_sec);
 
-		tpl_printf(vars, 0, "LEFTTIME", "%u", ((cfg->failbantime * 60) - (now - v_ban_entry->v_time))/60);
+		int lsec = (cfg->failbantime * 60) - (now - v_ban_entry->v_time);
+		int secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
+		if(lsec > 0) {
+			secs = lsec % 60;
+			if (lsec > 60) {
+				fullmins = lsec / 60;
+				mins = fullmins % 60;
+				if(fullmins > 60) {
+					fullhours = fullmins / 60;
+					hours = fullhours % 24;
+					days = fullhours / 24;
+				}
+			}
+		}
+		if(days == 0)
+			tpl_printf(vars, 0, "LEFTTIME", "%02d:%02d:%02d", hours, mins, secs);
+		else
+			tpl_printf(vars, 0, "LEFTTIME", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+
 		tpl_printf(vars, 0, "INTIP", "%u", v_ban_entry->v_ip);
 		tpl_addVar(vars, 1, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
 		v_ban_entry = llist_itr_next(&itr);

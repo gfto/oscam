@@ -100,8 +100,8 @@ int cs_check_violation(uint ip) {
 					llist_itr_remove(&itr);
 					return 0;
 				}
-				cs_debug("banned ip %u - %ld seconds left",
-						v_ban_entry->v_ip,(cfg->failbantime * 60) - (now - v_ban_entry->v_time));
+				cs_debug_mask(D_TRACE, "failban: banned ip %s - %ld seconds left",
+						cs_inet_ntoa(v_ban_entry->v_ip),(cfg->failbantime * 60) - (now - v_ban_entry->v_time));
 				return 1;
 			}
 			v_ban_entry = llist_itr_next(&itr);
@@ -121,7 +121,7 @@ void cs_add_violation(uint ip) {
 		V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
 		while (v_ban_entry) {
 			if (ip == v_ban_entry->v_ip) {
-				cs_debug("banned ip %u - already exist in list", v_ban_entry->v_ip);
+				cs_debug_mask(D_TRACE, "failban: banned ip %s - already exist in list", cs_inet_ntoa(v_ban_entry->v_ip));
 				return ;
 			}
 			v_ban_entry = llist_itr_next(&itr);
@@ -135,7 +135,7 @@ void cs_add_violation(uint ip) {
 
 		llist_append(cfg->v_list, v_ban_entry);
 
-		cs_debug("ban ip: %u timestamp: %d", v_ban_entry->v_ip, v_ban_entry->v_time);
+		cs_debug_mask(D_TRACE, "failban: ban ip %s with timestamp %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_time);
 
 	}
 }
