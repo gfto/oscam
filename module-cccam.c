@@ -353,22 +353,9 @@ void cc_cli_close() {
 
 	struct cc_data *cc = cl->cc;
 	if (cc) {
-		pthread_mutex_unlock(&cc->lock);
-		pthread_mutex_unlock(&cc->ecm_busy);
-		pthread_mutex_unlock(&cc->cards_busy);
 		cc_clear_auto_blocked(cc->auto_blocked);
 		cc->just_logged_in = 0;
 		free_current_cards(cc->current_cards);
-		if (cc->cards) 
-		{
-			LLIST_ITR itr;
-			struct cc_card *card = llist_itr_init(cc->cards, &itr);
-			while (card) 
-			{
-				cc_free_card(card);
-				card = llist_itr_remove(&itr);
-			}
-		}
 	}
 	cs_debug_mask(D_FUT, "cc_cli_close out");
 }
@@ -3104,6 +3091,20 @@ int cc_cli_connect() {
 		cc->extended_ecm_idx = llist_create();
 		cc->current_cards = llist_create();
 		cc_init_cc(cc);
+	}else
+	{
+		if (cc->cards) 
+		{
+			LLIST_ITR itr;
+			struct cc_card *card = llist_itr_init(cc->cards, &itr);
+			while (card) 
+			{
+				cc_free_card(card);
+				card = llist_itr_remove(&itr);
+			}
+		}
+		pthread_mutex_trylock(&cc->ecm_busy);
+		pthread_mutex_unlock(&cc->ecm_busy);
 	}
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
