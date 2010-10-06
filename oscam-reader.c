@@ -721,6 +721,9 @@ static void reader_do_pipe(struct s_reader * reader)
     case PIP_ID_CIN: 
       reader_do_card_info(reader);
       break;
+    case PIP_ID_ERR:
+      cs_exit(1);
+      break;
     default:
        cs_log("unhandled pipe message %d (reader %s)", pipeCmd, reader->label);
        break;

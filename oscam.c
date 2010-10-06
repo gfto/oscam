@@ -344,9 +344,14 @@ static void cs_master_alarm()
   fflush(stderr);
 }
 
+static int in_sigpipe=0;
+
 static void cs_sigpipe()
 {
+  if (in_sigpipe) return; //This avoids recusive signals!
+  in_sigpipe = 1;
   cs_log("Got sigpipe signal -> captured");
+  in_sigpipe = 0;
 }
 
 void cs_exit(int sig)
@@ -2574,6 +2579,9 @@ static void process_master_pipe(int mfdr)
     case PIP_ID_KCL: //Kill all clients
     	restart_clients();
     	break;
+    case PIP_ID_ERR: 
+        cs_exit(1); //better than reading from dead pipe!
+        break;
     default:
        cs_log("unhandled pipe message %d (master pipe)", n);
        break;
@@ -2599,6 +2607,9 @@ int process_client_pipe(struct s_client *cl, uchar *buf, int l) {
 			if (n+3<=l) {
 				memcpy(buf, ptr, n+3);
 			}
+			break;
+		case PIP_ID_ERR:
+			cs_exit(1);
 			break;
 		default:
 			cs_log("unhandled pipe message %d (client %s)", pipeCmd, cl->usr);
