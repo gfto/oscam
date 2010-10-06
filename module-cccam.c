@@ -14,6 +14,8 @@ extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind); 
 const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
 		"LEN=0" };
 
+static uint8 cc_node_id[8];
+
 char *getprefix() {
 	struct s_client *cl = &client[cs_idx];
 	struct cc_data *cc = cl->cc;
@@ -598,14 +600,7 @@ int cc_send_cli_data() {
 
 	cs_debug("cccam: send client data");
 
-	//Partner Detection:
-	uint16 sum = 0x1234; //This is our checksum 
-	for (i = 0; i < 6; i++) {
-		cc->node_id[i] = fast_rnd();
-		sum += cc->node_id[i];
-	}
-	cc->node_id[6] = sum >> 8; 
-        cc->node_id[7] = sum & 0xff;
+	memcpy(cc->node_id, cc_node_id, sizeof(cc_node_id));
 
 	uint8 buf[CC_MAXMSGSIZE];
 	memset(buf, 0, CC_MAXMSGSIZE);
@@ -631,19 +626,11 @@ int cc_send_cli_data() {
 int cc_send_srv_data() {
 	struct s_client *cl = &client[cs_idx];
 	struct s_reader *rdr = &reader[cl->ridx];
-	int i;
 	struct cc_data *cc = cl->cc;
 
 	cs_debug("cccam: send server data");
 
-	//Partner Detection:
-	uint16 sum = 0x1234; //This is our checksum
-	for (i = 0; i < 6; i++) {
-		cc->node_id[i] = fast_rnd();
-		sum += cc->node_id[i];
-	}
-	cc->node_id[6] = sum >> 8;
-	cc->node_id[7] = sum & 0xff;
+	memcpy(cc->node_id, cc_node_id, sizeof(cc_node_id));
 
 	uint8 buf[CC_MAXMSGSIZE];
 	memset(buf, 0, CC_MAXMSGSIZE);
@@ -2813,12 +2800,10 @@ int cc_srv_connect(struct s_client *cl) {
 	cc->cc_use_rc4 = 0;
 	cl->is_server = 1;
 
-        //Partner detection: 
+	//Create checksum for "O" cccam:
         for (i = 0; i < 12; i++) { 
         	data[i] = fast_rnd(); 
         } 
-	
-	//Create checksum for "O" cccam:
 	for (i = 0; i < 4; i++) {
         	data[12+i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
         }
@@ -3353,4 +3338,14 @@ void module_cccam(struct s_module *ph) {
 	ph->ptab = &ptab;
 	ph->ptab->nports = 1;
 	ph->num=R_CCCAM;
+	
+	//Partner Detection:
+	uint16 sum = 0x1234; //This is our checksum 
+	int i;
+	for (i = 0; i < 6; i++) {
+		cc_node_id[i] = fast_rnd();
+		sum += cc_node_id[i];
+	}
+	cc_node_id[6] = sum >> 8; 
+        cc_node_id[7] = sum & 0xff;
 }
