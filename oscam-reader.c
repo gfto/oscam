@@ -296,6 +296,7 @@ static void casc_do_sock(struct s_reader * reader, int w)
   int i, n, idx, rc, j;
   uchar buf[1024];
   uchar dcw[16];
+  struct s_client *cl = &client[reader->cidx]; 
 
   if ((n=casc_recv_timer(reader, buf, sizeof(buf), w))<=0)
   {
@@ -305,23 +306,23 @@ static void casc_do_sock(struct s_reader * reader, int w)
       	reader_do_idle(reader);
       else {
         cs_debug("casc_do_sock: close connection");
-        network_tcp_connection_close(reader, client[cs_idx].udp_fd);
+        network_tcp_connection_close(reader, cl->udp_fd);
       }
       return;
     }
   }
-  client[cs_idx].last=time((time_t)0);
-  idx=reader->ph.c_recv_chk(&client[cs_idx], dcw, &rc, buf, n);
+  cl->last=time((time_t)0);
+  idx=reader->ph.c_recv_chk(cl, dcw, &rc, buf, n);
 
   if (idx<0) return;  // no dcw received
   reader->last_g=time((time_t*)0); // for reconnect timeout
 //cs_log("casc_do_sock: last_s=%d, last_g=%d", reader->last_s, reader->last_g);
-  if (!idx) idx=client[cs_idx].last_idx;
+  if (!idx) idx=cl->last_idx;
   j=0;
   for (i=1; i<CS_MAXPENDING; i++)
   {
 
-   if (client[cs_idx].ecmtask[i].idx==idx)
+   if (cl->ecmtask[i].idx==idx)
     {
       casc_check_dcw(reader, i, rc, dcw);
       j=1;
