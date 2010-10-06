@@ -48,6 +48,7 @@ typedef struct ECMPIDS
 	int status;
 	unsigned char table;
 	int index;
+	unsigned char sflag;
 	unsigned char slen;
 	char stream[8];
 } ECMPIDSTYPE;

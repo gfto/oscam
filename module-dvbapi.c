@@ -306,7 +306,7 @@ void dvbapi_start_emm_filter(int demux_index) {
 	demux[demux_index].emm_filter=1;
 }
 
-void dvbapi_add_ecmpid(int demux_id, ushort caid, ushort ecmpid, ulong provid, int chid, char stream) {
+void dvbapi_add_ecmpid(int demux_id, ushort caid, ushort ecmpid, ulong provid, int chid, char stream, unsigned char streamtype) {
 	int n,added=0;
 
 	if (demux[demux_id].ECMpidcount>=ECM_PIDS)
@@ -319,10 +319,11 @@ void dvbapi_add_ecmpid(int demux_id, ushort caid, ushort ecmpid, ulong provid, i
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].ECM_PID = demux[demux_id].ECMpids[caid].ECM_PID;
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CAID = demux[demux_id].ECMpids[caid].CAID;
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].PROVID = demux[demux_id].ECMpids[caid].PROVID;
+		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].sflag =  demux[demux_id].ECMpids[caid].sflag;
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].slen =  demux[demux_id].ECMpids[caid].slen;
 		memcpy(demux[demux_id].ECMpids[caid].stream,demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].stream,8);
 		demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].irdeto_chid = chid;
-		cs_log("[ADD PID %d] IRDETO CHID: %#X STREAM: %#x", demux[demux_id].ECMpidcount, chid,stream);
+		cs_log("[ADD PID %d] IRDETO CHID: %#X STREAM: %#x SFLAG: %#x", demux[demux_id].ECMpidcount, chid,stream,demux[demux_id].ECMpids[caid].sflag);
 		demux[demux_id].ECMpidcount++;
 	}else
 	{
@@ -331,7 +332,8 @@ void dvbapi_add_ecmpid(int demux_id, ushort caid, ushort ecmpid, ulong provid, i
 			{
 				added=1;
 				demux[demux_id].ECMpids[n].stream[demux[demux_id].ECMpids[n].slen++]=stream;
-				cs_log("[ADD PID %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X STREAM: %#x", n, caid, ecmpid, provid,stream);
+				if (demux[demux_id].ECMpids[n].sflag != 0 && demux[demux_id].ECMpids[n].sflag != streamtype) demux[demux_id].ECMpids[n].sflag=0;
+				cs_log("[ADD PID %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X STREAM: %#x SFLAG: %#x", n, caid, ecmpid, provid,stream,demux[demux_id].ECMpids[n].sflag);
 			}
 		}
 	
@@ -340,7 +342,8 @@ void dvbapi_add_ecmpid(int demux_id, ushort caid, ushort ecmpid, ulong provid, i
 			demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].CAID = caid;
 			demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].PROVID = provid;
 			demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].stream[demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].slen++]=stream;
-			cs_log("[ADD PID %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X STREAM: %#x", demux[demux_id].ECMpidcount, caid, ecmpid, provid,stream);
+			demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].sflag=streamtype;
+			cs_log("[ADD PID %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X STREAM: %#x SFLAG: %#x", demux[demux_id].ECMpidcount, caid, ecmpid, provid,stream,demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].sflag);
 			demux[demux_id].ECMpidcount++;
 		}
 	}
@@ -456,11 +459,14 @@ void dvbapi_start_descrambling(int demux_id) {
 	unsigned char ar[8];
 	cs_log("Start descrambling PID #%d (CAID: %04X)", demux[demux_id].curindex, demux[demux_id].ECMpids[demux[demux_id].curindex].CAID);
 
-	demux[demux_id].pidindex=demux[demux_id].curindex;
 	i=demux[demux_id].curindex;
-	for (j=0; j<demux[demux_id].ECMpidcount; j++)
-		if (demux[demux_id].ECMpids[j].checked>0 && demux[demux_id].ECMpids[i].CAID == demux[demux_id].ECMpids[j].CAID && demux[demux_id].ECMpids[i].PROVID == demux[demux_id].ECMpids[j].PROVID ) ar[l++]=j;
-	
+	demux[demux_id].pidindex=i;
+	if (demux[demux_id].ECMpids[i].sflag == 0) ar[l++]=i;
+	else 
+	{
+		for (j=0; j<demux[demux_id].ECMpidcount; j++)
+			if (demux[demux_id].ECMpids[j].checked>0 && demux[demux_id].ECMpids[i].CAID == demux[demux_id].ECMpids[j].CAID && demux[demux_id].ECMpids[i].PROVID == demux[demux_id].ECMpids[j].PROVID ) ar[l++]=j;
+	}
 	for (i=0;i<l;i++)
 		for (j=0; j<demux[demux_id].ECMpids[ar[i]].slen; j++)
 			if (demux[demux_id].ECMpids[ar[i]].stream[j]!=(char)-1) dvbapi_set_pid(demux_id, demux[demux_id].ECMpids[ar[i]].stream[j],demux[demux_id].ECMpids[ar[i]].index);
@@ -743,7 +749,7 @@ void dvbapi_resort_ecmpids(int demux_index) {
 }
 
 
-void dvbapi_parse_descriptor(int demux_id, unsigned int info_length, unsigned char *buffer, char stream) {
+void dvbapi_parse_descriptor(int demux_id, unsigned int info_length, unsigned char *buffer, char stream, unsigned char streamtype) {
 	//int ca_pmt_cmd_id = buffer[i + 5];
 	unsigned int descriptor_length=0;
 	unsigned int j,u;
@@ -773,7 +779,7 @@ void dvbapi_parse_descriptor(int demux_id, unsigned int info_length, unsigned ch
 			for (u=2; u<descriptor_length; u+=15) { 
 				descriptor_ca_pid = ((buffer[j+2+u] & 0x1F) << 8) | buffer[j+2+u+1];
 				descriptor_ca_provider = (buffer[j+2+u+2] << 8) | buffer[j+2+u+3];
-				dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider, 0, stream);
+				dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider, 0, stream, streamtype);
 			}
 		} else {
 			if (descriptor_ca_system_id >> 8 == 0x05 && descriptor_length == 0x0F && buffer[j+12] == 0x14)
@@ -782,7 +788,7 @@ void dvbapi_parse_descriptor(int demux_id, unsigned int info_length, unsigned ch
 			if (descriptor_ca_system_id >> 8 == 0x18 && descriptor_length == 0x07)
 				descriptor_ca_provider = buffer[j+6] << 16 | (buffer[j+7] << 8| (buffer[j+8]));
 			
-			dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider, 0, stream);
+			dvbapi_add_ecmpid(demux_id, descriptor_ca_system_id, descriptor_ca_pid, descriptor_ca_provider, 0, stream, streamtype);
 		}
 	}
 }
@@ -811,7 +817,7 @@ void dvbapi_try_next_caid(int demux_id) {
 				num=n;
 				ar[k++]=n;
 				cs_debug("APPEND(P) PID %#x", demux[demux_id].ECMpids[n].ECM_PID);
-				if (demux[demux_id].ECMpids[n].slen>1) break;
+				if (demux[demux_id].ECMpids[n].sflag == 0 ) break;
 			}
 		}
 	}
@@ -829,7 +835,7 @@ void dvbapi_try_next_caid(int demux_id) {
 				num=n;
 				ar[k++]=n;
 				cs_debug("APPEND PID %#x", demux[demux_id].ECMpids[n].ECM_PID);
-				if (demux[demux_id].ECMpids[n].slen>1) break;
+				if (demux[demux_id].ECMpids[n].sflag == 0) break;
 			}
 		}
 	}
@@ -911,7 +917,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 	cs_debug("id: %d\tdemux_index: %d\tca_mask: %02x\tprogram_info_length: %d", demux_id, demux[demux_id].demux_index, demux[demux_id].ca_mask, program_info_length);
 
 	if (program_info_length > 1 && program_info_length < length)
-		dvbapi_parse_descriptor(demux_id, program_info_length-1, buffer+7,-1);
+		dvbapi_parse_descriptor(demux_id, program_info_length-1, buffer+7,-1,0);
 
 	unsigned int es_info_length=0;
 	for (i = program_info_length + 6; i < length; i += es_info_length + 5) {
@@ -928,7 +934,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 
 		if (es_info_length != 0 && es_info_length < length) {
 			//int offset = (cfg->dvbapi_boxtype == BOXTYPE_IPBOX_PMT) ? i - 1 : i;         
-			dvbapi_parse_descriptor(demux_id, es_info_length, buffer+i+5,demux[demux_id].STREAMpidcount-1);  
+			dvbapi_parse_descriptor(demux_id, es_info_length, buffer+i+5,demux[demux_id].STREAMpidcount-1,(unsigned char)stream_type);  
 		}
 	}
 	cs_debug("Found %d ECMpids and %d STREAMpids in PMT", demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
@@ -1228,7 +1234,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 				cs_log("IRDETO ECM CHIDs: %d", buffer[5]);
 				//TODO: remove no longer used chids
 				for (i=1;i<=buffer[5];i++) {
-					dvbapi_add_ecmpid(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, -1, 0, i,(char)-1);
+					dvbapi_add_ecmpid(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, -1, 0, i,(char)-1,0);
 				}
 				demux[demux_id].irdeto_numchids = buffer[5];
 				//demux[demux_id].irdeto_curchid = 0;
@@ -1506,7 +1512,7 @@ void dvbapi_write_cw(int demux_id, uchar *cw) {
 				if (demux[demux_id].ca_mask & (1 << i)) {
 
 					//cs_log("mask %02X write to %d", demux[demux_id].ca_mask, i);
-					cs_debug("write cw%d index: %d (ca%d)", n, demux_id, i);
+					cs_debug("write cw%d index: %d (ca%d)", n, ca_descr.index, i);
 
 					if (ca_fd[i]<=0) {
 						ca_fd[i]=dvbapi_open_device(1, i);
