@@ -228,7 +228,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	uchar *buf;
 	buf = client->req + (er->cpti * REQ_SIZE);	// get orig request
 
-	if (((er->rcEx > 0) || (er->rc == 8)) && !client[cs_idx].c35_suppresscmd08)
+	if (((er->rcEx > 0) || (er->rc == 8)) && !client->c35_suppresscmd08)
 	{
 		buf[0] = 0x08;
 		buf[1] = 2;
@@ -590,7 +590,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 				reader[client[cs_idx].ridx].auprovid);
 	}
 
-	if (buf[0] == 0x08) {
+	if (buf[0] == 0x08 && !reader[client[cs_idx].ridx].c35_suppresscmd08) {
 		if(buf[21] == 0xFF) {
 			client[cs_idx].stopped = 2; // server says sleep
 			reader[client[cs_idx].ridx].card_status = NO_CARD;
