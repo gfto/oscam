@@ -548,58 +548,59 @@ static int camd35_send_emm(EMM_PACKET *ep)
 	return((camd35_send(buf)<1) ? 0 : 1);
 }
 
-static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
+static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf)
 {
 	ushort idx;
-	char *typtext[]={"ok", "invalid", "sleeping"};
+	static const char *typtext[]={"ok", "invalid", "sleeping"};
+  struct s_reader *rdr = &reader[client->ridx];
 
 	// reading CMD05 Emm request and set serial
 	if (buf[0] == 0x05 && buf[1] == 111) {
 
 		//cs_log("CMD05: %s", cs_hexdump(1, buf, buf[1]));
-		reader[client[cs_idx].ridx].nprov = 0; //reset if number changes on reader change
-		reader[client[cs_idx].ridx].nprov = buf[47];
-		reader[client[cs_idx].ridx].caid[0] = b2i(2, buf + 20);
-		reader[client[cs_idx].ridx].auprovid = b2i(4, buf + 12);
+		rdr->nprov = 0; //reset if number changes on reader change
+		rdr->nprov = buf[47];
+		rdr->caid[0] = b2i(2, buf + 20);
+		rdr->auprovid = b2i(4, buf + 12);
 
 		int i;
-		for (i=0; i<reader[client[cs_idx].ridx].nprov; i++) {
-			if (((reader[client[cs_idx].ridx].caid[0] >= 0x1700) && (reader[client[cs_idx].ridx].caid[0] <= 0x1799))  ||	// Betacrypt
-					((reader[client[cs_idx].ridx].caid[0] >= 0x0600) && (reader[client[cs_idx].ridx].caid[0] <= 0x0699)))	// Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
+		for (i=0; i<rdr->nprov; i++) {
+			if (((rdr->caid[0] >= 0x1700) && (rdr->caid[0] <= 0x1799))  ||	// Betacrypt
+					((rdr->caid[0] >= 0x0600) && (rdr->caid[0] <= 0x0699)))	// Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
 			{
-				reader[client[cs_idx].ridx].prid[i][0] = buf[48 + (i*5)];
-				memcpy(&reader[client[cs_idx].ridx].prid[i][1], &buf[50 + (i * 5)], 3);
+				rdr->prid[i][0] = buf[48 + (i*5)];
+				memcpy(&rdr->prid[i][1], &buf[50 + (i * 5)], 3);
 			} else {
-				reader[client[cs_idx].ridx].prid[i][2] = buf[48 + (i * 5)];
-				reader[client[cs_idx].ridx].prid[i][3] = buf[49+ (i * 5)];
-				memcpy(&reader[client[cs_idx].ridx].sa[i][0], &buf[50 + (i * 5)], 4);
+				rdr->prid[i][2] = buf[48 + (i * 5)];
+				rdr->prid[i][3] = buf[49+ (i * 5)];
+				memcpy(&rdr->sa[i][0], &buf[50 + (i * 5)], 4);
 			}
 		}
 
-		memcpy(reader[client[cs_idx].ridx].hexserial, buf + 40, 6);
-		reader[client[cs_idx].ridx].hexserial[6] = 0;
-		reader[client[cs_idx].ridx].hexserial[7] = 0;
+		memcpy(rdr->hexserial, buf + 40, 6);
+		rdr->hexserial[6] = 0;
+		rdr->hexserial[7] = 0;
 
-		reader[client[cs_idx].ridx].blockemm_g = (buf[128]==1) ? 0: 1;
-		reader[client[cs_idx].ridx].blockemm_s = (buf[129]==1) ? 0: 1;
-		reader[client[cs_idx].ridx].blockemm_u = (buf[130]==1) ? 0: 1;
-		reader[client[cs_idx].ridx].card_system = get_cardsystem(reader[client[cs_idx].ridx].caid[0]);
+		rdr->blockemm_g = (buf[128]==1) ? 0: 1;
+		rdr->blockemm_s = (buf[129]==1) ? 0: 1;
+		rdr->blockemm_u = (buf[130]==1) ? 0: 1;
+		rdr->card_system = get_cardsystem(rdr->caid[0]);
 		cs_log("%s CMD05 AU request for caid: %04X auprovid: %06lX",
-				reader[client[cs_idx].ridx].label,
-				reader[client[cs_idx].ridx].caid[0],
-				reader[client[cs_idx].ridx].auprovid);
+				rdr->label,
+				rdr->caid[0],
+				rdr->auprovid);
 	}
 
 	if (buf[0] == 0x08 && !cfg->c35_suppresscmd08) {
 		if(buf[21] == 0xFF) {
-			client[cs_idx].stopped = 2; // server says sleep
-			reader[client[cs_idx].ridx].card_status = NO_CARD;
+			client->stopped = 2; // server says sleep
+			rdr->card_status = NO_CARD;
 		} else {
-			client[cs_idx].stopped = 1; // server says invalid
-			reader[client[cs_idx].ridx].card_status = CARD_FAILURE;
+			client->stopped = 1; // server says invalid
+			rdr->card_status = CARD_FAILURE;
 		}
 		cs_log("%s CMD08 (%02X - %d) stop request by server (%s)",
-				reader[client[cs_idx].ridx].label, buf[21], buf[21], typtext[client[cs_idx].stopped]);
+				rdr->label, buf[21], buf[21], typtext[client->stopped]);
 	}
 
 	// CMD44: old reject command introduced in mpcs

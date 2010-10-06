@@ -30,13 +30,13 @@ static int radegast_recv(struct s_client *client, uchar *buf, int l)
   return(n);
 }
 
-static int radegast_recv_chk(uchar *dcw, int *rc, uchar *buf)
+static int radegast_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf)
 {
   if ((buf[0] == 2) && (buf[1] == 0x12)) {
     memcpy(dcw, buf+4, 16);
     cs_debug("radegast: recv chk - %s", cs_hexdump(0, dcw, 16));
     *rc = 1;
-    return(reader[client[cs_idx].ridx].msg_idx);
+    return(reader[client->ridx].msg_idx);
   }
 
   return (-1);

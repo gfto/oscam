@@ -128,9 +128,10 @@ static int constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msg
     return(0);
 }
 
-static int constcw_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
+static int constcw_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int n)
 {
     // FIXME
+    *client = *client;
     dcw = dcw;
     n = n;
     buf = buf;

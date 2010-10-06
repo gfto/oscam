@@ -2082,9 +2082,8 @@ int cc_parse_msg(uint8 *buf, int l) {
 /**
  * Reader: write dcw to receive
  */
-int cc_recv_chk(uchar *dcw, int *rc, uchar *buf) {
+int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf) {
 	cs_debug_mask(D_FUT, "cc_recv_chk in");
-	struct s_client *cl = &client[cs_idx];
 	struct cc_data *cc = cl->cc;
 
 	if (buf[1] == MSG_CW_ECM) {

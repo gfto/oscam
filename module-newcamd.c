@@ -1270,10 +1270,10 @@ static int newcamd_send_emm(EMM_PACKET *ep)
   return((newcamd_send(buf, ep->l, 0)<1) ? 0 : 1);
 }
 
-static int newcamd_recv_chk(uchar *dcw, int *rc, uchar *buf, int n)
+static int newcamd_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int n)
 {
   ushort idx; 
-
+  *client = *client; //suppress compiler error, but recv_chk should comply to other recv_chk routines...
   if( n<21 )	// no cw, ignore others
     return(-1);
   *rc = 1;

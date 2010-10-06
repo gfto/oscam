@@ -311,7 +311,7 @@ static void casc_do_sock(struct s_reader * reader, int w)
     }
   }
   client[cs_idx].last=time((time_t)0);
-  idx=reader->ph.c_recv_chk(dcw, &rc, buf, n);
+  idx=reader->ph.c_recv_chk(&client[cs_idx], dcw, &rc, buf, n);
 
   if (idx<0) return;  // no dcw received
   reader->last_g=time((time_t*)0); // for reconnect timeout
