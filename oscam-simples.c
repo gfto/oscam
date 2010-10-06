@@ -669,6 +669,26 @@ void create_rand_str(char *dst, int size){
 }
 #endif
 
+/* Converts a long64 value to a char array in bitwise representation.
+   Note that the result array MUST be at least 65 bit large and that
+   this function assumes long values to hold only values up to 64bits and to be positive!
+   the result of e.g. long 7 is 1110000000000000000000000000000000000000000000000000000000000000 this means the array
+   is reversed */
+void sidtabbits2bitchar(SIDTABBITS value, char *result){
+	int pos;
+	for (pos=0;pos<MAX_SIDBITS;pos++) result[pos]='0';
+	result[pos] = '\0';
+
+	pos=0;
+	while (value > 0 && pos < MAX_SIDBITS){
+		if(value % 2 == 1) result[pos]='1';
+		else result[pos]='0';
+		value=value / 2;
+		pos++;
+	}
+}
+
+
 /* Converts a long value to a char array in bitwise representation.
    Note that the result array MUST be at least 33 bit large and that
    this function assumes long values to hold only values up to 32bits and to be positive!

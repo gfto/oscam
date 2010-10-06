@@ -166,7 +166,7 @@ void chk_tuntab(char *tunasc, TUNTAB *ttab)
 	}
 }
 
-void chk_services(char *labels, ulong *sidok, ulong *sidno)
+void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
 {
 	int i;
 	char *ptr;
@@ -174,8 +174,8 @@ void chk_services(char *labels, ulong *sidok, ulong *sidno)
 	*sidok = *sidno = 0;
 	for (ptr=strtok(labels, ","); ptr; ptr=strtok(NULL, ",")) {
 		for (trim(ptr), i = 0, sidtab = cfg->sidtab; sidtab; sidtab = sidtab->next, i++) {
-			if (!strcmp(sidtab->label, ptr)) *sidok|=(1<<i);
-			if ((ptr[0]=='!') && (!strcmp(sidtab->label, ptr+1))) *sidno|=(1<<i);
+			if (!strcmp(sidtab->label, ptr)) *sidok|=((SIDTABBITS)1<<i);
+			if ((ptr[0]=='!') && (!strcmp(sidtab->label, ptr+1))) *sidno|=((SIDTABBITS)1<<i);
 		}
 	}
 }
@@ -1460,6 +1460,9 @@ int init_config()
 	cfg->ac_fakedelay = 1000;
 	strcpy(cfg->ac_logfile, "./oscam_ac.log");
 #endif
+#ifdef MODULE_CCCAM
+	cfg->cc_update_interval = 240;
+#endif  
 	sprintf(token, "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d)\n", token, errno);
@@ -2219,8 +2222,8 @@ int write_userdb(struct s_auth *authptr)
 		if (account->autoau == 1) fprintf_conf(f, CONFVARWIDTH, "au", "1\n");
 
 		fprintf_conf(f, CONFVARWIDTH, "services", "");
-		char sidok[33]; long2bitchar(account->sidtabok,sidok);
-		char sidno[33];	long2bitchar(account->sidtabno,sidno);
+		char sidok[MAX_SIDBITS+1]; sidtabbits2bitchar(account->sidtabok,sidok);
+		char sidno[MAX_SIDBITS+1]; sidtabbits2bitchar(account->sidtabno,sidno);
 		struct s_sidtab *sidtab = cfg->sidtab;
 		i=0; dot = "";
 		for (; sidtab; sidtab=sidtab->next){
@@ -2395,8 +2398,8 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", reader[i].emmfile);
 
 			fprintf_conf(f, CONFVARWIDTH, "services", "");
-			char sidok[33]; long2bitchar(reader[i].sidtabok, sidok);
-			char sidno[33];	long2bitchar(reader[i].sidtabno, sidno);
+			char sidok[MAX_SIDBITS+1]; sidtabbits2bitchar(reader[i].sidtabok, sidok);
+			char sidno[MAX_SIDBITS+1]; sidtabbits2bitchar(reader[i].sidtabno, sidno);
 			struct s_sidtab *sidtab = cfg->sidtab;
 			j=0; dot = "";
 			for (; sidtab; sidtab=sidtab->next){

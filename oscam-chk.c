@@ -39,10 +39,10 @@ int chk_srvid(ECM_REQUEST *er, int idx)
   for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
     {
-      if ((client[idx].sidtabno&(1<<nr)) &&
+      if ((client[idx].sidtabno&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match(er, sidtab)))
         return(0);
-      if ((client[idx].sidtabok&(1<<nr)) &&
+      if ((client[idx].sidtabok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match(er, sidtab)))
         rc=1;
     }
@@ -80,10 +80,10 @@ int chk_srvid_by_caid_prov(ushort caid, ulong provid, int idx) {
   for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
     {
-      if ((client[idx].sidtabno&(1<<nr)) &&
+      if ((client[idx].sidtabno&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         return(0);
-      if ((client[idx].sidtabok&(1<<nr)) &&
+      if ((client[idx].sidtabok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         rc=1;
     }

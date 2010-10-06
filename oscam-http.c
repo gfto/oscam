@@ -1008,10 +1008,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		tpl_printf(vars, 0, "LBWEIGHT", "%d", reader[ridx].lb_weight);
 
 	//services
-	char sidok[33];
-	long2bitchar(reader[ridx].sidtabok, sidok);
-	char sidno[33];
-	long2bitchar(reader[ridx].sidtabno,sidno);
+	char sidok[MAX_SIDBITS+1];
+	sidtabbits2bitchar(reader[ridx].sidtabok, sidok);
+	char sidno[MAX_SIDBITS+1];
+	sidtabbits2bitchar(reader[ridx].sidtabno,sidno);
 	struct s_sidtab *sidtab = cfg->sidtab;
 	//build matrix
 	i = 0;
@@ -1405,10 +1405,10 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 
 	/* SERVICES */
 	//services - first we have to move the long sidtabok/sidtabno to a binary array
-	char sidok[33];
-	long2bitchar(account->sidtabok,sidok);
-	char sidno[33];
-	long2bitchar(account->sidtabno,sidno);
+	char sidok[MAX_SIDBITS+1];
+	sidtabbits2bitchar(account->sidtabok,sidok);
+	char sidno[MAX_SIDBITS+1];
+	sidtabbits2bitchar(account->sidtabno,sidno);
 	struct s_sidtab *sidtab = cfg->sidtab;
 	//build matrix
 	i=0;

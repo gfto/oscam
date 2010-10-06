@@ -275,6 +275,10 @@ extern void cs_switch_led(int led, int action);
 #define MAX_ATR_LEN 33         // max. ATR length
 #define MAX_HIST    15         // max. number of historical characters
 
+#define MAX_SIDBITS 64         // max services
+#define SIDTABBITS uint64      // 64bit type for services, if a system does not support this type,
+                               // please use a define and define it as uint32 / MAX_SIDBITS 32
+
 
 typedef struct s_classtab
 {
@@ -531,8 +535,8 @@ struct s_client
   int		monlvl;
   CAIDTAB	ctab;
   TUNTAB	ttab;
-  ulong		sidtabok; // positiv services
-  ulong		sidtabno; // negative services
+  SIDTABBITS	sidtabok; // positiv services
+  SIDTABBITS	sidtabno; // negative services
   int		typ;
   int		ctyp;
   int		stat;
@@ -700,8 +704,8 @@ struct s_reader  //contains device info, reader info and card info
   uchar     rsa_mod[120]; //rsa modulus for nagra cards.
   uchar     atr[64];
   int		atrlen;
-  ulong     sidtabok;	// positiv services
-  ulong     sidtabno;	// negative services
+  SIDTABBITS    sidtabok;	// positiv services
+  SIDTABBITS    sidtabno;	// negative services
   uchar     hexserial[8];
   int       nprov;
   uchar     prid[CS_MAXPROV][8];
@@ -873,8 +877,8 @@ struct s_auth
   ulong    grp;
   int      tosleep;
   CAIDTAB  ctab;
-  ulong    sidtabok;  // positiv services
-  ulong    sidtabno;  // negative services
+  SIDTABBITS   sidtabok;  // positiv services
+  SIDTABBITS   sidtabno;  // negative services
   FTAB     fchid;
   FTAB     ftab;       // user [caid] and ident filter
   CLASSTAB cltab;
@@ -1176,6 +1180,7 @@ extern char *urlencode(char *str);
 extern char *char_to_hex(const unsigned char* p_array, unsigned int p_array_len, char hex2ascii[256][2]);
 extern void create_rand_str(char *dst, int size);
 #endif
+extern void sidtabbits2bitchar(SIDTABBITS value, char *result);
 extern void long2bitchar(long value, char *result);
 extern int file_exists(const char * filename);
 extern void clear_sip(struct s_ip **sip);
@@ -1296,7 +1301,7 @@ extern int  init_irdeto_guess_tab(void);
 #endif
 extern void chk_caidtab(char *caidasc, CAIDTAB *ctab);
 extern void chk_tuntab(char *tunasc, TUNTAB *ttab);
-extern void chk_services(char *labels, ulong *sidok, ulong *sidno);
+extern void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno);
 extern void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *zType, const char *zName, const char *zFiltName);
 extern void chk_cltab(char *classasc, CLASSTAB *clstab);
 extern void chk_iprange(char *value, struct s_ip **base);

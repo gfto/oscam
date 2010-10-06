@@ -726,11 +726,11 @@ void dvbapi_resort_ecmpids(int demux_index) {
 
 		for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++) {
 			if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid) {
-				if ((client[cs_idx].sidtabno&(1<<nr)) && (chk_srvid_match(&er, sidtab))) {
+				if ((client[cs_idx].sidtabno&((SIDTABBITS)1<<nr)) && (chk_srvid_match(&er, sidtab))) {
 					demux[demux_index].ECMpids[n].status = -1; //ignore
 					cs_debug("[IGNORE PID %d] %04X:%06X (service %s) pos %d", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, nr);
 				}
-				if ((client[cs_idx].sidtabok&(1<<nr)) && (chk_srvid_match(&er, sidtab))) {
+				if ((client[cs_idx].sidtabok&((SIDTABBITS)1<<nr)) && (chk_srvid_match(&er, sidtab))) {
 					demux[demux_index].ECMpids[n].status = nr+1; //priority
 					demux[demux_index].max_status = (nr+1 > demux[demux_index].max_status) ? nr+1 : demux[demux_index].max_status;
 					cs_debug("[PRIORITIZE PID %d] %04X:%06X (service: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, demux[demux_index].ECMpids[n].status);
