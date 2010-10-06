@@ -1356,7 +1356,7 @@ extern void cs_ri_brk(struct s_reader * reader, int);
 extern void cs_ri_log(struct s_reader * reader, char *,...);
 extern void * start_cardreader(void *);
 extern void reader_card_info(struct s_reader * reader);
-extern int hostResolve(int ridx);
+extern int hostResolve(struct s_reader * reader);
 extern int network_tcp_connection_open();
 extern void network_tcp_connection_close(struct s_reader * reader, int);
 extern int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec);

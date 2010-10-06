@@ -132,23 +132,25 @@ int network_select(int forRead, int timeout)
 } 
 
 // according to documentation getaddrinfo() is thread safe
-int hostResolve(int ridx)
+int hostResolve(struct s_reader *rdr)
 {
    int result = 0;
-   //int cs_idx = reader[ridx].cs_idx;
+   //int cs_idx = rdr->cs_idx;
+   //struct s_client *cl = &client[reader->cidx]; //FIXME reader->cidx != cs_idx ; seems like hostResolve is running in wrong thread...
+   struct s_client *cl = &client[cs_idx];
    
    pthread_mutex_lock(&gethostbyname_lock);
    
-   in_addr_t last_ip = client[cs_idx].ip;
+   in_addr_t last_ip = cl->ip;
    
    if (cfg->resolve_gethostbyname) { //Resolve with gethostbyname:
-     struct hostent *rht = gethostbyname(reader[ridx].device);
+     struct hostent *rht = gethostbyname(rdr->device);
      if (!rht) {
-       cs_log("can't resolve %s", reader[ridx].device);
+       cs_log("can't resolve %s", rdr->device);
        result = 0;
      } else {
-       memcpy(&client[cs_idx].udp_sa.sin_addr, rht->h_addr, sizeof(client[cs_idx].udp_sa.sin_addr));
-       client[cs_idx].ip=cs_inet_order(client[cs_idx].udp_sa.sin_addr.s_addr);
+       memcpy(&cl->udp_sa.sin_addr, rht->h_addr, sizeof(cl->udp_sa.sin_addr));
+       cl->ip=cs_inet_order(cl->udp_sa.sin_addr.s_addr);
        result = 1;
      }
    }
@@ -156,27 +158,27 @@ int hostResolve(int ridx)
      struct addrinfo hints, *res = NULL;
      memset(&hints, 0, sizeof(hints));
      hints.ai_socktype = SOCK_STREAM;
-     hints.ai_family = client[cs_idx].udp_sa.sin_family;
+     hints.ai_family = cl->udp_sa.sin_family;
      hints.ai_protocol = IPPROTO_TCP;
 
-     int err = getaddrinfo(reader[ridx].device, NULL, &hints, &res);
+     int err = getaddrinfo(rdr->device, NULL, &hints, &res);
      if (err != 0 || !res || !res->ai_addr) {
-       cs_log("can't resolve %s, error: %s", reader[ridx].device, err ? gai_strerror(err) : "unknown");
+       cs_log("can't resolve %s, error: %s", rdr->device, err ? gai_strerror(err) : "unknown");
        result = 0;
      } else {
-       client[cs_idx].udp_sa.sin_addr.s_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-       client[cs_idx].ip = cs_inet_order(client[cs_idx].udp_sa.sin_addr.s_addr);
+       cl->udp_sa.sin_addr.s_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
+       cl->ip = cs_inet_order(cl->udp_sa.sin_addr.s_addr);
        result = 1;
      }
      if (res) freeaddrinfo(res);
    }
 
    if (!result) {
-     client[cs_idx].udp_sa.sin_addr.s_addr = 0;
-     client[cs_idx].ip = 0;
-   } else if (client[cs_idx].ip != last_ip) {
-     uchar *ip = (uchar*) &client[cs_idx].ip;
-     cs_log("%s: resolved ip=%d.%d.%d.%d", reader[ridx].device, ip[3], ip[2], ip[1], ip[0]);
+     cl->udp_sa.sin_addr.s_addr = 0;
+     cl->ip = 0;
+   } else if (cl->ip != last_ip) {
+     uchar *ip = (uchar*) &cl->ip;
+     cs_log("%s: resolved ip=%d.%d.%d.%d", rdr->device, ip[3], ip[2], ip[1], ip[0]);
    }
 
    pthread_mutex_unlock(&gethostbyname_lock);
@@ -188,7 +190,7 @@ int network_tcp_connection_open()
 {
   cs_log("connecting to %s", reader[client[cs_idx].ridx].device);
 
-  if (!hostResolve(client[cs_idx].ridx))
+  if (!hostResolve(&reader[client[cs_idx].ridx]))
      return -1;
  
   int sd = client[cs_idx].udp_fd;

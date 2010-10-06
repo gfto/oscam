@@ -501,7 +501,7 @@ static int camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 
 	if (client->is_udp) {
 	   if (!client->udp_sa.sin_addr.s_addr || reader[client->ridx].last_s-reader[client->ridx].last_g > reader[client->ridx].tcp_rto)
-	      if (!hostResolve(client->ridx)) return -1;
+	      if (!hostResolve(&reader[client->ridx])) return -1;
 	}
         else {
   	   if (!tcp_connect()) return -1;
@@ -530,7 +530,7 @@ static int camd35_send_emm(EMM_PACKET *ep)
 	
         if (client[cs_idx].is_udp) {
            if (!client[cs_idx].udp_sa.sin_addr.s_addr || reader[client[cs_idx].ridx].last_s-reader[client[cs_idx].ridx].last_g > reader[client[cs_idx].ridx].tcp_rto)
-              if (!hostResolve(client[cs_idx].ridx)) return -1;
+              if (!hostResolve(&reader[client[cs_idx].ridx])) return -1;
         }
         else {
            if (!tcp_connect()) return -1;
