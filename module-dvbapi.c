@@ -810,13 +810,15 @@ void dvbapi_try_next_caid(int demux_id) {
 				}else if (caid!=demux[demux_id].ECMpids[n].CAID||provid!=demux[demux_id].ECMpids[n].PROVID) continue;
 				num=n;
 				ar[k++]=n;
-				cs_debug("APPEND PID %#x", demux[demux_id].ECMpids[n].ECM_PID);
+				cs_debug("APPEND(P) PID %#x", demux[demux_id].ECMpids[n].ECM_PID);
+				if (demux[demux_id].ECMpids[n].slen>1) break;
 			}
 		}
 	}
 
 	if (num == -1) {
 		j = 0;
+		caid = 0;
 		for (n=0; n<demux[demux_id].ECMpidcount; n++) {
 			if (demux[demux_id].ECMpids[n].checked == 0 && demux[demux_id].ECMpids[n].status == j) {
 				if (!caid) 
@@ -827,6 +829,7 @@ void dvbapi_try_next_caid(int demux_id) {
 				num=n;
 				ar[k++]=n;
 				cs_debug("APPEND PID %#x", demux[demux_id].ECMpids[n].ECM_PID);
+				if (demux[demux_id].ECMpids[n].slen>1) break;
 			}
 		}
 	}
