@@ -2,8 +2,9 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
+#define cs_log(x...)  cs_log("[videoguard2-reader] "x)
 #ifdef WITH_DEBUG
-  #define cs_debug(x...)  cs_debug("[reader-videoguard2] "x)
+  #define cs_debug(x...)  cs_debug("[videoguard2-reader] "x)
 #endif
 
 static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
@@ -196,7 +197,7 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
           }
           cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
           cw[7] = (cw[4] + cw[5] + cw[6]) & 0xFF;
-          cs_ddump(cw, 8, "Postprocessed Case 1 DW:");
+          cs_ddump(cw, 8, "[videoguard2-reader] Postprocessed Case 1 DW:");
           break;
         }
       case 3:
@@ -206,7 +207,7 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
           memcpy(buffer + 8, &ecm_header_data[ecmi + 3], ecm_header_data[ecmi] - 2);
           MD5(buffer, 8 + ecm_header_data[ecmi] - 2, md5_digest);
           memcpy(cw, md5_digest, 8);
-          cs_ddump(cw, 8, "Postprocessed Case 3 DW:");
+          cs_ddump(cw, 8, "[videoguard2-reader] Postprocessed Case 3 DW:");
           break;
         }
       case 2:
@@ -233,14 +234,14 @@ static void vg2_read_tiers(struct s_reader * reader)
   if(cmd_exists(reader,ins2a)) {
     l=do_cmd(reader,ins2a,NULL,NULL,cta_res);
     if(l<0 || !status_ok(cta_res+l)){
-      cs_log ("[videoguard2-reader] classD0 ins2a: failed");
+      cs_log("classD0 ins2a: failed");
       return;
     }
   }
 
   static const unsigned char ins76007f[5] = { 0xD0,0x76,0x00,0x7f,0x02 };
   if(!write_cmd_vg(ins76007f,NULL) || !status_ok(cta_res+2)){
-    cs_log ("[videoguard2-reader] classD0 ins76007f: failed");
+    cs_log("classD0 ins76007f: failed");
     return;
   }
   int num=cta_res[1];
@@ -256,7 +257,7 @@ static void vg2_read_tiers(struct s_reader * reader)
     stopemptytier = FALSE;
     starttier = 0;
   }
-  // check to see if specified start tier is blank and if so start at 0 and ignore blank tiers
+  // check to see if specified start tier is blank and if blank, start at 0 and ignore blank tiers
   ins76[2]=starttier;
   l=do_cmd(reader,ins76,NULL,NULL,cta_res);
   if(l<0 || !status_ok(cta_res+l)) return;
@@ -274,8 +275,8 @@ static void vg2_read_tiers(struct s_reader * reader)
       rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
       unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
       char *tier_name = get_tiername(tier_id, reader->caid[0]);
-      if(reader->card_tierstart == -1){
-        cs_ri_log(reader, "[videoguard2-reader] tier-number: 0x%02x, tier: %04x",i,tier_id);
+      if(!stopemptytier){
+        cs_debug("tier: %04x, tier-number: 0x%02x",tier_id,i);
       }
       cs_ri_log(reader, "[videoguard2-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
     }
@@ -285,9 +286,11 @@ static void vg2_read_tiers(struct s_reader * reader)
 static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 {
   get_hist;
-  if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50))
+  if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50)){
+    cs_debug("failed history check");
     return ERROR;
-    cs_log("[videoguard2-reader] in videoguard2_card_init");
+  }
+  cs_debug("passed history check");
 
   get_atr;
   def_resp;
@@ -303,9 +306,9 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
   }
 
-  cs_ri_log(reader, "[videoguard2-reader] type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
+  cs_debug("type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
   if(reader->ndsversion == NDS2){
-    cs_log("[videoguard2-reader] forced to NDS2");
+    cs_debug("forced to NDS2");
   }
 
   //a non videoguard2/NDS2 card will fail on read_cmd_len(ins7401)
@@ -315,13 +318,15 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   int l;
   ins7401[3]=0x80;  // from newcs log
   ins7401[4]=0x01;
-  if((l=read_cmd_len(reader,ins7401))<0) return ERROR; //not a videoguard2/NDS card or communication error
+  if((l=read_cmd_len(reader,ins7401))<0){ //not a videoguard2/NDS card or communication error
+   return ERROR;
+  }
   ins7401[3]=0x00;
   ins7401[4]=l;
   if(!write_cmd_vg(ins7401,NULL) || !status_ok(cta_res+l)) {
-    cs_log ("[videoguard2-reader] classD0 ins7401: failed - cmd list not read");
+    cs_log("classD0 ins7401: failed - cmd list not read");
     return ERROR;
-    }
+  }
 
   memorize_cmd_table (reader,cta_res,l);
 
@@ -329,9 +334,9 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 
   static const unsigned char ins7416[5] = { 0xD0,0x74,0x16,0x00,0x00 };
   if(do_cmd(reader,ins7416,NULL,NULL,cta_res)<0) {
-    cs_log ("[videoguard2-reader] classD0 ins7416: failed");
+    cs_log("classD0 ins7416: failed");
     return ERROR;
-    }
+  }
 
   unsigned char ins36[5] = { 0xD0,0x36,0x00,0x00,0x00 };
   static const unsigned char ins5e[5] = { 0xD0,0x5E,0x00,0x0C,0x02 };
@@ -348,7 +353,7 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     int boxidOK=0;
     if((ins36[4]=read_cmd_len(reader,ins36))==0 && cmd_exists(reader,ins5e)) {
         if(!write_cmd_vg(ins5e,NULL) || !status_ok(cta_res+2)){
-          cs_log ("[videoguard2-reader] classD0 ins5e: failed");
+          cs_log("classD0 ins5e: failed");
         } else {
           ins36[3] = cta_res[0];
           ins36[4] = cta_res[1];
@@ -356,14 +361,14 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     }
     l=ins36[4];
     if(!write_cmd_vg(ins36,NULL) || !status_ok(cta_res+l)){
-       cs_log ("[videoguard2-reader] classD0 ins36: failed");
+       cs_log("classD0 ins36: failed");
        return ERROR;
     }
     memcpy(buff,ins36,5);
     memcpy(buff+5,cta_res,l);
     memcpy(buff+5+l,cta_res+l,2);
     if(l<13)
-      cs_log("[videoguard2-reader] classD0 ins36: too short answer");
+      cs_log("classD0 ins36: answer too short");
     else if (buff[7] > 0x0F)
       cs_log("[videoguard2-reader] classD0 ins36: encrypted - can't parse");
     else {
@@ -411,14 +416,14 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
               i+=buff[i+1]+2; /* skip length + 2 bytes (type and length) */
               break;
             default: /* default to assume a length byte */
-              cs_log("[videoguard2-reader] classD0 ins36: returned unknown type=0x%02X - parsing may fail", buff[i]);
+              cs_log("classD0 ins36: returned unknown type=0x%02X - parsing may fail", buff[i]);
               i+=buff[i+1]+2;
         }
       }
     }
 
     if(!boxidOK) {
-      cs_log ("[videoguard2-reader] no boxID available");
+      cs_log ("no boxID available");
       return ERROR;
       }
   }
@@ -427,18 +432,15 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   unsigned char payload4C[9] = { 0,0,0,0, 3,0,0,0,4 };
   memcpy(payload4C,boxID,4);
   if(!write_cmd_vg(ins4C,payload4C) || !status_ok(cta_res+l)) {
-    cs_log("[videoguard2-reader] classD0 ins4C: failed - sending boxid failed");
+    cs_log("classD0 ins4C: failed - sending boxid failed");
     return ERROR;
     }
-  cs_debug_mask(D_READER, "classD0 cmd4C status: %02x %02x",cta_res[0],cta_res[1]);
-
 
   //short int SWIRDstatus = cta_res[1];
   static const unsigned char ins58[5] = { 0xD0,0x58,0x00,0x00,0x00 };
-  l=do_cmd(reader,ins58,NULL,buff,cta_res);
-  cs_debug_mask(D_READER, "classD0 cmd58 length: %d status: %02x %02x",l,cta_res[0],cta_res[1]);
+  l=do_cmd(reader,ins58,NULL,NULL,cta_res);
   if(l<0) {
-    cs_log("[videoguard2-reader] classD0 ins58: failed");
+    cs_log("classD0 ins58: failed");
     return ERROR;
     }
   memset(reader->hexserial, 0, 8);
@@ -451,10 +453,10 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
   /*
-  cs_log ("[videoguard2-reader] INS58 : Fuse byte=0x%02X, IRDStatus=0x%02X", cta_res[2],SWIRDstatus);
+  cs_log ("INS58 : Fuse byte=0x%02X, IRDStatus=0x%02X", cta_res[2],SWIRDstatus);
   if (SWIRDstatus==4)  {
   // If swMarriage=4, not married then exchange for BC Key
-  cs_log ("[videoguard2-reader] Card not married, exchange for BC Keys");
+  cs_log ("Card not married, exchange for BC Keys");
    */
 
   cCamCryptVG_SetSeed(reader);
@@ -464,14 +466,14 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   cCamCryptVG_GetCamKey(reader,tbuff);
   l=do_cmd(reader,insB4,tbuff,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
-    cs_log ("[videoguard2-reader] classD0 insB4: failed (%02X%02X)", cta_res[0], cta_res[1]);
+    cs_log("classD0 insB4: failed");
     return ERROR;
     }
 
   static const unsigned char insBC[5] = { 0xD0,0xBC,0x00,0x00,0x00 };
   l=do_cmd(reader,insBC,NULL,NULL,cta_res);
   if(l<0) {
-    cs_log("[videoguard2-reader] classD0 insBC: failed");
+    cs_log("classD0 insBC: failed");
     return ERROR;
     }
 
@@ -480,21 +482,21 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   static const unsigned char insBE[5] = { 0xD3,0xBE,0x00,0x00,0x00 };
   l=do_cmd(reader,insBE,NULL,NULL,cta_res);
   if(l<0) {
-    cs_log("[videoguard2-reader] classD3 insBE: failed");
+    cs_log("classD3 insBE: failed");
     return ERROR;
     }
 
   static const unsigned char ins58a[5] = { 0xD1,0x58,0x00,0x00,0x00 };
   l=do_cmd(reader,ins58a,NULL,NULL,cta_res);
   if(l<0) {
-    cs_log("[videoguard2-reader] classD1 ins58: failed");
+    cs_log("classD1 ins58: failed");
     return ERROR;
     }
 
   static const unsigned char ins4Ca[5] = { 0xD1,0x4C,0x00,0x00,0x00 };
   l=do_cmd(reader,ins4Ca,payload4C,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
-    cs_log("[videoguard2-reader] classD1 ins4Ca: failed");
+    cs_log("classD1 ins4Ca: failed");
     return ERROR;
     }
 
@@ -505,13 +507,14 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     dimeno_magic[a]=dimeno_magic[a]^boxID[a];
   AES_set_decrypt_key(dimeno_magic,128,&(reader->astrokey));
 
-  cs_ri_log(reader, "[videoguard2-reader] type: %s, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
+  cs_ri_log(reader, "[videoguard2-reader] type: %s, caid: %04X",
          reader->card_desc,
-         reader->caid[0],
+         reader->caid[0]);
+  cs_ri_log(reader, "[videoguard2-reader] serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X, baseyear: %i",
          reader->hexserial[2],reader->hexserial[3],reader->hexserial[4],reader->hexserial[5],
-         boxID[0],boxID[1],boxID[2],boxID[3]);
-
-  cs_log("[videoguard2-reader] ready for requests");
+         boxID[0],boxID[1],boxID[2],boxID[3],
+         reader->card_baseyear);
+  cs_log("ready for requests");
 
   return OK;
 }
@@ -534,20 +537,21 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   l = do_cmd(reader,ins40,tbuff,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
-    cs_log ("[videoguard2-reader] classD0 ins40: (%d) status not ok %02x %02x",l,cta_res[0],cta_res[1]);
+    cs_log ("classD0 ins40: (%d) status not ok %02x %02x",l,cta_res[0],cta_res[1]);
     return ERROR;
   } else {
     l = do_cmd(reader,ins54,NULL,rbuff,cta_res);
     if(l<0 || !status_ok(cta_res+l)) {
-      cs_log("[reader-videoguard2] classD3 ins54: (%d) status not ok %02x %02x",l,cta_res[0],cta_res[1]);
+      cs_log("classD3 ins54: (%d) status not ok %02x %02x",l,cta_res[0],cta_res[1]);
       return ERROR;
     } else {
+
       // Log decrypted INS54
-      // cs_dump (rbuff, 5, "Decrypted INS54:");
+      // cs_dump (rbuff, 5, "[videoguard2-reader] Decrypted INS54:");
       // cs_dump (rbuff + 5, rbuff[4], "");
 
       if (!cw_is_valid(rbuff+5,0)){ //sky cards report 90 00 = ok but send cw = 00 when channel not subscribed
-        cs_log("[reader-videoguard2] classD3 ins54: status 90 00 = ok but cw=00 -> channel not subscribed " );
+        cs_log("classD3 ins54: status 90 00 = ok but cw=00 -> channel not subscribed " );
         return ERROR;
       }
 
@@ -616,11 +620,11 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 	switch(emmtype) {
 		case VG_EMMTYPE_G:
 			ep->type=GLOBAL;
-			cs_debug_mask(D_EMM, "VIDEOGUARD2 EMM: GLOBAL");
+			cs_debug_mask(D_EMM, "[videoguard2-reader] EMM: GLOBAL");
 			return TRUE;
 
 		case VG_EMMTYPE_U:
-			cs_debug_mask(D_EMM, "VIDEOGUARD2 EMM: UNIQUE");
+			cs_debug_mask(D_EMM, "[videoguard2-reader] EMM: UNIQUE");
 			ep->type=UNIQUE;
 			if (ep->emm[1] == 0) // detected UNIQUE EMM from cccam (there is no serial)
 				return TRUE;
@@ -637,7 +641,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 
 		case VG_EMMTYPE_S:
 			ep->type=SHARED;
-			cs_debug_mask(D_EMM, "VIDEOGUARD2 EMM: SHARED");
+			cs_debug_mask(D_EMM, "[videoguard2-reader] EMM: SHARED");
 			return TRUE; // FIXME: no check for SA
 
 		default:
@@ -696,7 +700,7 @@ static void videoguard2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-int videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins42[5] = { 0xD1,0x42,0x00,0x00,0xFF };
@@ -734,9 +738,9 @@ int videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 static int videoguard2_card_info(struct s_reader * reader)
 {
   /* info is displayed in init, or when processing info */
-  cs_log("[videoguard2-reader] card detected");
-  cs_log("[videoguard2-reader] type: %s", reader->card_desc );
-  vg2_read_tiers (reader);
+  cs_log("card detected");
+  cs_log("type: %s", reader->card_desc );
+  vg2_read_tiers(reader);
   return OK;
 }
 
