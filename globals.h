@@ -537,7 +537,7 @@ struct s_client
   TUNTAB	ttab;
   SIDTABBITS	sidtabok; // positiv services
   SIDTABBITS	sidtabno; // negative services
-  int		typ;
+  int		typ;        // first s_client is type s=starting (master) thread; type r = physical reader, type p = proxy reader both always have 1 s_reader struct allocated; type c = client (user logging in into oscam) type m = monitor type h = http server a = anticascader 
   int		ctyp;
   int		stat;
   int		last_srvid;
@@ -1232,7 +1232,7 @@ extern char* username(struct s_client *);
 extern int idx_from_pid(pid_t);
 extern int chk_bcaid(ECM_REQUEST *, CAIDTAB *);
 extern void cs_exit(int sig);
-extern int cs_fork(in_addr_t, in_port_t);
+extern int cs_fork(in_addr_t);
 extern int cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
 extern int check_ecmcache1(ECM_REQUEST *, ulong);

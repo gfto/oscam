@@ -248,8 +248,6 @@ char *monitor_get_proto(int idx)
 	char *ctyp;
 	switch(client[idx].typ) {
 	case 's'	: ctyp = "server"   ; break;
-	case 'n'	: ctyp = "resolver" ; break;
-	case 'l'	: ctyp = "logger"   ; break;
 	case 'p'	:
 	case 'r'	:
 		if ((i = cs_idx2ridx(idx)) < 0)	// should never happen

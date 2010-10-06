@@ -240,29 +240,29 @@ static int oscam_ser_poll(int event)
     return(((pfds.revents)&event)==event);
 }
 
-static int oscam_ser_write(uchar *buf, int n)
+static int oscam_ser_write(struct s_client *client, uchar *buf, int n)
 {
   int i;
   for (i=0; (i<n) && (oscam_ser_poll(POLLOUT)); i++)
   {
     if (oscam_ser_delay)
       cs_sleepms(oscam_ser_delay);
-    if (write(client[cs_idx].pfd, buf+i, 1)<1)
+    if (write(client->pfd, buf+i, 1)<1)
       break;
   }
   return(i);
 }
 
-static int oscam_ser_send(uchar *buf, int l)
+static int oscam_ser_send(struct s_client *client, uchar *buf, int l)
 {
   int n;
-  if (!client[cs_idx].pfd) return(0);
+  if (!client->pfd) return(0);
   cs_ftime(&tps);
   tpe=tps;
   tpe.millitm+=oscam_ser_timeout+(l*(oscam_ser_delay+1));
   tpe.time+=(tpe.millitm/1000);
   tpe.millitm%=1000;
-  n=oscam_ser_write(buf, l);
+  n=oscam_ser_write(client, buf, l);
   cs_ftime(&tpe);
   cs_ddump(buf, l, "send %d of %d bytes to %s in %d msec", n, l, remote_txt(),
                     1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
@@ -529,7 +529,7 @@ static void oscam_ser_disconnect_client()
       mbuf[1] = 0x00;
       mbuf[2] = 0x00;
       mbuf[3] = 0x00;
-      oscam_ser_send(mbuf, 4);
+      oscam_ser_send(&client[cs_idx], mbuf, 4);
       break;
   }
   dsr9500type=P_DSR_AUTO;
@@ -548,7 +548,7 @@ static void oscam_ser_init_client()
       mbuf[1] = 0x00;
       mbuf[2] = 0x00;
       mbuf[3] = 0x00;
-      oscam_ser_send(mbuf, 4);	// send connect
+      oscam_ser_send(&client[cs_idx], mbuf, 4);	// send connect
       break;
   }
 }
@@ -600,32 +600,32 @@ static void oscam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
         memcpy(mbuf+4 , er->cw, 16);
         memcpy(mbuf+20, &crc  ,  1);
         memset(mbuf+21, 0x1b  ,  2);
-        oscam_ser_send(mbuf, 23);
+        oscam_ser_send(client, mbuf, 23);
         break;
       case P_SSSP:
         mbuf[0]=0xF2;
         mbuf[1]=0;
         mbuf[2]=16;
         memcpy(mbuf+3, er->cw, 16);
-        oscam_ser_send(mbuf, 19);
+        oscam_ser_send(client, mbuf, 19);
         if (!sssp_fix)
         {
           mbuf[0]=0xF1;
           mbuf[1]=0;
           mbuf[2]=2;
           memcpy(mbuf+3, i2b(2, er->pid), 2);
-          oscam_ser_send(mbuf, 5);
+          oscam_ser_send(client, mbuf, 5);
           sssp_fix=1;
         }
         break;
       case P_GBOX:
       case P_BOMBA:
-        oscam_ser_send(er->cw, 16);
+        oscam_ser_send(client, er->cw, 16);
         break;
       case P_DSR95:
         mbuf[0]=4;
         memcpy(mbuf+1, er->cw, 16);
-        oscam_ser_send(mbuf, 17);
+        oscam_ser_send(client, mbuf, 17);
         if( dsr9500type==P_DSR_GNUSMAS )
         {
           int i;
@@ -642,14 +642,14 @@ static void oscam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
         mbuf[2]=0x10;
         mbuf[3]=0x00;
         memcpy(mbuf+4, er->cw, 16);
-        oscam_ser_send(mbuf, 20);
+        oscam_ser_send(client, mbuf, 20);
         break;
       case P_ALPHA:
         mbuf[0]=0x88;
         mbuf[1]=0x00;
         mbuf[2]=0x10;
         memcpy(mbuf+3, er->cw, 16);
-        oscam_ser_send(mbuf, 19);
+        oscam_ser_send(client, mbuf, 19);
         break;
     } 
   else			// not found
@@ -660,7 +660,7 @@ static void oscam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
         mbuf[1]=0x09;
         mbuf[2]=0x00;
         mbuf[3]=0x00;
-        oscam_ser_send(mbuf, 4);
+        oscam_ser_send(client, mbuf, 4);
         break;
     }
   serial_errors=0; // clear error counter
@@ -687,7 +687,7 @@ static void oscam_ser_process_pmt(uchar *buf, int l)
       sbuf[0]=0xF1;
       sbuf[1]=0;
       sbuf[2]=(sssp_num<<1);
-      oscam_ser_send(sbuf, sbuf[2]+3);
+      oscam_ser_send(&client[cs_idx], sbuf, sbuf[2]+3);
       break;
   }
 }
@@ -704,7 +704,7 @@ static void oscam_ser_client_logon(uchar *buf, int l)
         buf[1] = 0x04;
         buf[2] = 0x00;
         buf[3] = 0x00;
-        oscam_ser_send(buf, 4);
+        oscam_ser_send(&client[cs_idx], buf, 4);
       }
       break;
   }
@@ -902,10 +902,11 @@ void * init_oscam_ser(int ctyp)
 		*p = 0;
 		if ((!p + 1) || (!(p + 1)[0])) return NULL;
 		if (!oscam_ser_parse_url(p + 1)) return NULL;
-		int i=cs_fork(0, ctyp);
+		int i=cs_fork(0);
 		client[i].typ='c';
 		client[i].ip=0;
 		client[i].ctyp=ctyp;
+		client[i].is_server=1;
 		pthread_create(&client[i].thread, NULL, oscam_ser_fork, (void *) p + 1); //FIXME value of p does not survive thread
 		pthread_detach(client[i].thread);
 	}
@@ -913,10 +914,11 @@ void * init_oscam_ser(int ctyp)
 	if (!sdevice[0]) return NULL;
 	if (!oscam_ser_parse_url(sdevice)) return NULL;
 
-	int i=cs_fork(0, ctyp);
+	int i=cs_fork(0);
 	client[i].typ='c';
 	client[i].ip=0;
 	client[i].ctyp=ctyp;
+	client[i].is_server=1;
 	pthread_create(&client[i].thread, NULL, oscam_ser_fork, (void *) sdevice);
 	pthread_detach(client[i].thread);
 	return NULL;
@@ -946,23 +948,23 @@ static int oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *b
       memcpy(buf+ 6, i2b(2, er->pid  ), 2);
       memcpy(buf+10, i2b(2, er->srvid), 2);
       memcpy(buf+12, er->ecm, er->l);
-      oscam_ser_send(buf, 12+er->l);
+      oscam_ser_send(client, buf, 12+er->l);
       break;
     case P_BOMBA:
-      oscam_ser_send(er->ecm, er->l);
+      oscam_ser_send(client, er->ecm, er->l);
       break;
     case P_DSR95:
       if( dsr9500type==P_DSR_WITHSID )
       {
         sprintf((char *)buf, "%c%08lX%04X%s%04X\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l), er->srvid);
-        oscam_ser_send(buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
+        oscam_ser_send(client, buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
       }
       else
       {
         sprintf((char *)buf, "%c%08lX%04X%s\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l));
-        oscam_ser_send(buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
+        oscam_ser_send(client, buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
       }
       break;
     case P_ALPHA:
@@ -970,7 +972,7 @@ static int oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *b
       memcpy(buf+1, i2b(2, 2+er->l), 2);
       memcpy(buf+3, i2b(2, er->caid), 2);
       memcpy(buf+5, er->ecm, er->l);
-      oscam_ser_send(buf, oscam_ser_alpha_convert(buf, 5+er->l));
+      oscam_ser_send(client, buf, oscam_ser_alpha_convert(buf, 5+er->l));
       break;
   }
   return(0);

@@ -373,7 +373,6 @@ void cs_exit(int sig)
     	cs_statistics(cl);
     	break;
     case 'm': break;
-    case 'n': break;
     case 'r':
         // free AES entries allocated memory
         if(reader[cl->ridx].aes_list) {
@@ -532,7 +531,7 @@ static void cs_card_info(int i)
       //kill(client[i].pid, SIGUSR2);
 }
 
-int cs_fork(in_addr_t ip, in_port_t port) {
+int cs_fork(in_addr_t ip) {
 	int i;
 
 	pid_t pid=getpid();
@@ -549,9 +548,6 @@ int cs_fork(in_addr_t ip, in_port_t port) {
 
 		//make_non_blocking(fdp[0]);
 		//make_non_blocking(fdp[1]);
-
-		client[i].is_server=((ip) || (port<90)) ? 1 : 0; //FIXME global should be local per thread
-		   
 		client[i].cs_ptyp=D_CLIENT;
 		client[i].fd_m2c_c = fdp[0]; //store client read fd
 		client[i].fd_m2c = fdp[1]; //store client read fd
@@ -828,14 +824,12 @@ int cs_user_resolve(struct s_auth *account)
 static void start_thread(void * startroutine, char * nameroutine, char typ) {
 	int i,o;
 
-	if (typ == 'h')
-		o=cs_fork(0,95);
-	else
-		o=cs_fork(0,97);
+	o=cs_fork(0);
 
 	if (o<0) return;
 
-	client[o].typ=typ;
+	client[o].typ=typ; //'h' or 'a'
+	client[o].is_server=0;
 
 	client[o].ip=client[0].ip;
 	strcpy(client[o].usr, client[0].usr);
@@ -921,7 +915,7 @@ void restart_cardreader(int reader_idx, int restart) {
 			}
 		}
 
-		i=cs_fork(0, 99);
+		i=cs_fork(0);
 
 		if (i<0) return;
 
@@ -937,6 +931,7 @@ void restart_cardreader(int reader_idx, int restart) {
 		reader[reader_idx].cidx=i;
 
 		client[i].typ='r';
+		client[i].is_server=0;
 		//client[i].ctyp=99;
 		pthread_create(&client[i].thread, NULL, start_cardreader, (void *)&reader[reader_idx]);
 		pthread_detach(client[i].thread);
@@ -2677,10 +2672,10 @@ int accept_connection(int i, int j) {
 					return 0;
 				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
 
-				o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
+				o=cs_fork(cs_inet_order(cad.sin_addr.s_addr));
 				if (o<0) return 0;
 
-				client[o].is_server=1; //FIXME global should be local per thread
+				client[o].is_server=1;
 
 				client[o].ctyp=i;
 				client[o].port_idx=j;
@@ -2707,7 +2702,7 @@ int accept_connection(int i, int j) {
 			if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
 				return 0;
 
-			o=cs_fork(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
+			o=cs_fork(cs_inet_order(cad.sin_addr.s_addr));
 			if (o<0) return 0;			
 
 			client[o].ctyp=i;
@@ -2716,7 +2711,7 @@ int accept_connection(int i, int j) {
 
 			client[o].pfd=pfd3;
 
-			client[o].is_server=1; //FIXME global should be local per thread
+			client[o].is_server=1;
 
 			client[o].ip=cs_inet_order(cad.sin_addr.s_addr);
 			client[o].port=ntohs(cad.sin_port);
@@ -2991,8 +2986,6 @@ int main (int argc, char *argv[])
 
 	//set time for server to now to avoid 0 in monitor/webif
 	client[0].last=time((time_t *)0);
-
-	//start_thread((void *) &cs_logger, "logger", 'l'); //97;
 
 #ifdef WEBIF
   if(cfg->http_port == 0) 

@@ -1,10 +1,10 @@
 #include "globals.h"
 extern struct s_reader * reader;
 
-static int radegast_send(uchar *buf)
+static int radegast_send(struct s_client * client, uchar *buf)
 {
   int l=buf[1]+2;
-  return(send(client[cs_idx].pfd, buf, l, 0));
+  return(send(client->pfd, buf, l, 0));
 }
 
 static int radegast_recv(struct s_client *client, uchar *buf, int l)
@@ -104,7 +104,7 @@ static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
     mbuf[2]=0x04;	// NO ACCESS
     mbuf[3]=0x00;	// len
   }
-  radegast_send(mbuf);
+  radegast_send(client, mbuf);
 }
 
 static void radegast_process_ecm(uchar *buf, int l)
@@ -148,7 +148,7 @@ static void radegast_process_ecm(uchar *buf, int l)
 static void radegast_process_unknown(uchar *buf)
 {
   uchar answer[2]={0x81, 0x00};
-  radegast_send(answer);
+  radegast_send(&client[cs_idx], answer);
   cs_log("unknown request %02X, len=%d", buf[0], buf[1]);
 }
 
