@@ -590,7 +590,7 @@ static int camd35_recv_chk(uchar *dcw, int *rc, uchar *buf)
 				reader[client[cs_idx].ridx].auprovid);
 	}
 
-	if (buf[0] == 0x08 && !reader[client[cs_idx].ridx].c35_suppresscmd08) {
+	if (buf[0] == 0x08 && !cfg->c35_suppresscmd08) {
 		if(buf[21] == 0xFF) {
 			client[cs_idx].stopped = 2; // server says sleep
 			reader[client[cs_idx].ridx].card_status = NO_CARD;
