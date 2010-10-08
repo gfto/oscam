@@ -944,7 +944,7 @@ void restart_cardreader(int reader_idx, int restart) {
    
 		reader[reader_idx].pid=getpid();
 
-		reader[reader_idx].cidx=i;
+		reader[reader_idx].client=&client[i];
 
 		client[i].typ='r';
 		client[i].is_server=0;
@@ -1440,7 +1440,7 @@ int write_ecm_answer(struct s_reader * reader, int fd, ECM_REQUEST *er)
     }
   }
 
-  er->reader[0]=client[reader->cidx].ridx;
+  er->reader[0]=reader->client->ridx;
 //cs_log("answer from reader %d (rc=%d)", er->reader[0], er->rc);
   er->caid=er->ocaid;
 
@@ -2141,7 +2141,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 				case 2:
 					// invalid (srvid)
-					if (!chk_srvid(er, cs_idx))
+					if (!chk_srvid(client, er))
 					{
 						er->rc = 8;
 					    snprintf( er->msglog, MSGLOGSIZE, "invalid SID" );

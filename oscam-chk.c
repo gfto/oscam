@@ -26,23 +26,23 @@ int chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
   return(rc==7);
 }
 
-int chk_srvid(ECM_REQUEST *er, int idx)
+int chk_srvid(struct s_client *cl, ECM_REQUEST *er)
 {
   int nr, rc=0;
   SIDTAB *sidtab;
 
-  if (!client[idx].sidtabok)
+  if (!cl->sidtabok)
   {
-    if (!client[idx].sidtabno) return(1);
+    if (!cl->sidtabno) return(1);
     rc=1;
   }
   for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
     {
-      if ((client[idx].sidtabno&((SIDTABBITS)1<<nr)) &&
+      if ((cl->sidtabno&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match(er, sidtab)))
         return(0);
-      if ((client[idx].sidtabok&((SIDTABBITS)1<<nr)) &&
+      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match(er, sidtab)))
         rc=1;
     }
@@ -360,7 +360,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   }
     
   //Schlocke reader-defined function, reader-self-check: 
-  if (rdr->ph.c_available && !rdr->ph.c_available(client[rdr->cidx].ridx, AVAIL_CHECK_CONNECTED)) {
+  if (rdr->ph.c_available && !rdr->ph.c_available(rdr->client->ridx, AVAIL_CHECK_CONNECTED)) {
     cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
     return 0;
   }
@@ -372,7 +372,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   }
     
   //Checking services:
-  if (!chk_srvid(er, rdr->cidx)) {
+  if (!chk_srvid(rdr->client, er)) {
     cs_debug_mask(D_TRACE, "service %04X not matching  reader %s", er->srvid, rdr->label);
     return(0);
   }

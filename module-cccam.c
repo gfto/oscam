@@ -2229,7 +2229,7 @@ ulong get_reader_hexserial_crc() {
 	ulong crc = 0;
 	int r;
 	for (r = 0; r < CS_MAXREADER; r++) {
-		if (reader[r].enable && !reader[r].deleted && reader[r].cidx
+		if (reader[r].enable && !reader[r].deleted && reader[r].client
 				&& !reader[r].audisabled)
 			crc += crc32(0, reader[r].hexserial, 8);
 	}
@@ -2603,7 +2603,7 @@ int cc_srv_report_cards() {
 					getprefix(), reader[r].label);
 
 			struct cc_card *card;
-			struct s_client *rc = &client[reader[r].cidx];
+			struct s_client *rc = reader[r].client;
 			struct cc_data *rcc = rc->cc;
 
 			int count = 0;
@@ -2627,7 +2627,7 @@ int cc_srv_report_cards() {
 							        ulong prid = prov->prov;
                                                                 prov = llist_itr_next(&itr_prov);
                                                                 if (!chk_srvid_by_caid_prov(cur_client(), card->caid, prid) || 
-                                                                                !chk_srvid_by_caid_prov(&client[reader[r].cidx], card->caid, prid)) {
+                                                                                !chk_srvid_by_caid_prov(reader[r].client, card->caid, prid)) {
                                                                         ignore = 1;
                                                                         break;
                                                                 }
@@ -2759,7 +2759,7 @@ int cc_cards_modified() {
 	int r, modified = 0;
 	for (r = 0; r < CS_MAXREADER; r++) {
         	if (reader[r].typ == R_CCCAM && reader[r].fd) {
-        		struct s_client *clr = &client[reader[r].cidx];
+        		struct s_client *clr = reader[r].client;
         		if (clr->cc) {
         			struct cc_data *ccr = clr->cc;
        				modified += ccr->cards_modified;
@@ -3280,7 +3280,7 @@ int cc_cli_init(struct s_client *cl) {
  */
 int cc_available(int ridx, int checktype) {
 	struct s_reader *rdr = &reader[ridx];
-	struct s_client *cl = &client[rdr->cidx];
+	struct s_client *cl = rdr->client;
 	
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);
 	if (!cl->cc || rdr->tcp_connected != 2

@@ -86,7 +86,7 @@ int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec)
   struct timeval tv;
   fd_set fds;
   int rc;
-  struct s_client *cl = &client[reader->cidx];
+  struct s_client *cl = reader->client;
 
   if (!cl->pfd) return(-1);
   tv.tv_sec = msec/1000;
@@ -296,7 +296,7 @@ static void casc_do_sock(struct s_reader * reader, int w)
   int i, n, idx, rc, j;
   uchar buf[1024];
   uchar dcw[16];
-  struct s_client *cl = &client[reader->cidx]; 
+  struct s_client *cl = reader->client; 
 
   if ((n=casc_recv_timer(reader, buf, sizeof(buf), w))<=0)
   {
@@ -441,7 +441,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
   if ((er->rc<10) )
     {
-      send_dcw(&client[reader->cidx], er);
+      send_dcw(reader->client, er);
       return;
     }
   
@@ -739,7 +739,7 @@ static void reader_main(struct s_reader * reader)
 {
   while (1)
   {
-    switch(reader_listen(reader, client[reader->cidx].fd_m2c_c, cur_client()->pfd))
+    switch(reader_listen(reader, reader->client->fd_m2c_c, cur_client()->pfd))
     {
       case 0: reader_do_idle(reader); break;
       case 1: reader_do_pipe(reader)  ; break;
@@ -753,8 +753,8 @@ void * start_cardreader(void * rdr)
 {
 	struct s_reader * reader = (struct s_reader *) rdr; //FIXME can be made simpler
 
-	client[reader->cidx].thread=pthread_self();
-	pthread_setspecific(getclient, &client[reader->cidx]);
+	reader->client->thread=pthread_self();
+	pthread_setspecific(getclient, reader->client);
 	cur_client()->cs_ptyp=D_READER;
 
   if (reader->typ & R_IS_CASCADING)

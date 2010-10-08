@@ -666,7 +666,7 @@ struct s_reader  //contains device info, reader info and card info
   int 		deleted; // if this flag is set the reader is not shown in webif and becomes not writte to oscam.server
   int		smargopatch;
   int		pid;
-  int	     cidx;
+  struct s_client * client;
   int       enable;
   int       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
   int       fd_error;
@@ -1257,7 +1257,7 @@ extern ECM_REQUEST *get_ecmtask(void);
 extern void request_cw(ECM_REQUEST *, int, int);
 extern int send_dcw(struct s_client *, ECM_REQUEST *);
 extern int process_input(uchar *, int, int);
-extern int chk_srvid(ECM_REQUEST *, int);
+extern int chk_srvid(struct s_client *, ECM_REQUEST *);
 extern int chk_srvid_match(ECM_REQUEST *, SIDTAB *);
 extern int chk_sfilter(ECM_REQUEST *, PTAB*);
 extern int chk_ufilters(ECM_REQUEST *);

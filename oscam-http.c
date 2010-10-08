@@ -1670,7 +1670,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			char *provider = "";
 
 			struct cc_card *card;
-			struct s_client *rc = &client[reader[ridx].cidx];
+			struct s_client *rc = reader[ridx].client;
 			struct cc_data *rcc = rc->cc;
 
 			if (rcc && reader[ridx].tcp_connected == 2 && rcc->cards) {
