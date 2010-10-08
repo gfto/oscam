@@ -75,8 +75,6 @@ int is_au() {
 
 void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		cc_crypt_mode_t mode) {
-	struct s_client *cl = cur_client();
-	struct cc_data *cc = cl->cc;
 	int i;
 	uint8 z;
 
@@ -87,8 +85,7 @@ void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		z = data[i];
 		data[i] = z ^ block->keytable[(block->keytable[block->counter]
 				+ block->keytable[block->sum]) & 0xff];
-		if (!cc->cc_use_rc4)
-			data[i] ^= block->state;
+                data[i] ^= block->state;
 		if (!mode)
 			z = data[i];
 		block->state = block->state ^ z;
@@ -2803,7 +2800,6 @@ int cc_srv_connect(struct s_client *cl) {
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
 	cl->cc_extended_ecm_mode = 0;
-	cc->cc_use_rc4 = 0;
 	cl->is_server = 1;
 
 	//Create checksum for "O" cccam:
@@ -2823,69 +2819,32 @@ int cc_srv_connect(struct s_client *cl) {
 	SHA1_Update(&ctx, data, 16);
 	SHA1_Final(buf, &ctx);
 
-	//Special check for 2.0.11 clients
-	//2.0.11 uses rc4 crypt
-	//So we need to test data for validity:
-	struct cc_crypt_block *block_rc4 =
-			malloc(sizeof(struct cc_crypt_block) * 2);
-	uint8 *data_rc4 = malloc(16);
-	uint8 *buf_rc4 = malloc(CC_MAXMSGSIZE);
-	memcpy(data_rc4, data, sizeof(data));
-	memcpy(buf_rc4, buf, CC_MAXMSGSIZE);
-	memcpy(block_rc4, cc->block, sizeof(struct cc_crypt_block) * 2);
-	char usr_rc4[21];
-	memset(usr_rc4, 0, sizeof(usr_rc4));
-
-	//2.1.1 and newer clients:
 	cc_init_crypt(&cc->block[ENCRYPT], buf, 20);
 	cc_crypt(&cc->block[ENCRYPT], data, 16, DECRYPT);
 	cc_init_crypt(&cc->block[DECRYPT], data, 16);
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
-	//2.0.11 client:
-	cc_init_crypt(&block_rc4[ENCRYPT], buf_rc4, 20);
-	cc_rc4_crypt(&block_rc4[ENCRYPT], data_rc4, 16, DECRYPT);
-	cc_init_crypt(&block_rc4[DECRYPT], data_rc4, 16);
-	cc_rc4_crypt(&block_rc4[DECRYPT], buf_rc4, 20, DECRYPT);
-
 	if ((i = recv(cl->pfd, buf, 20, MSG_WAITALL)) == 20) {
 		cs_ddump(buf, 20, "cccam: recv:");
-		memcpy(buf_rc4, buf, CC_MAXMSGSIZE);
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
-		cc_rc4_crypt(&block_rc4[DECRYPT], buf_rc4, 20, DECRYPT);
 		cs_ddump(buf, 20, "cccam: hash:");
-		cs_ddump(buf_rc4, 20, "cccam: hash rc4:");
 	}
 	else return -1;
 
 	// receive username
 	if ((i = recv(cl->pfd, buf, 20, MSG_WAITALL)) == 20) {
-		memcpy(buf_rc4, buf, CC_MAXMSGSIZE);
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
-		cc_rc4_crypt(&block_rc4[DECRYPT], buf_rc4, 20, DECRYPT);
 
 		strncpy(usr, (char *) buf, sizeof(usr));
-		strncpy(usr_rc4, (char *) buf_rc4, sizeof(usr_rc4));
 
 		//test for nonprintable characters:
-		cc->cc_use_rc4 = -1;
 		for (i = 0; i < 20; i++) {
 			if (usr[i] > 0 && usr[i] < 0x20) { //found nonprintable char
-				cc->cc_use_rc4 = 1;
-				break;
-			}
-			if (usr_rc4[i] > 0 && usr_rc4[i] < 0x20) { //found nonprintable char
-				cc->cc_use_rc4 = 0;
-				break;
+				cs_debug("illegal username received");
+				return -1;
 			}
 		}
-		if (cc->cc_use_rc4 == 0)
-			cs_ddump(buf, 20, "cccam: username '%s':", usr);
-		else if (cc->cc_use_rc4 == 1)
-			cs_ddump(buf_rc4, 20, "cccam: username rc4 '%s':", usr_rc4);
-		else {
-			cs_debug("illegal username received");
-		}
+		cs_ddump(buf, 20, "cccam: username '%s':", usr);
 	}
 	else return -1;
 
@@ -2894,28 +2853,14 @@ int cc_srv_connect(struct s_client *cl) {
 	for (account = cfg->account; account; account = account->next) {
 		if (strcmp(usr, account->usr) == 0) {
 			strncpy(pwd, account->pwd, sizeof(pwd));
-			cc->cc_use_rc4 = 0; //We found a user by cc_crypt
-			break;
-		}
-		if (strcmp(usr_rc4, account->usr) == 0) {
-			strncpy(pwd, account->pwd, sizeof(pwd));
-			cc->cc_use_rc4 = 1; //We found a user by cc_rc4_crypt
 			break;
 		}
 	}
 
 	if (cs_auth_client(cl, account, NULL)) { //cs_auth_client returns 0 if account is valid/active/accessible
-		cs_log("account '%s' not found!", cc->cc_use_rc4 > 0 ? usr_rc4 : usr);
+		cs_log("account '%s' not found!", usr);
 		return -1;
 	}
-
-	if (cc->cc_use_rc4) {
-		cs_log("%s client is using version 2.0.11 rc4", getprefix());
-		memcpy(cc->block, block_rc4, sizeof(struct cc_crypt_block) * 2);
-	}
-	free(block_rc4);
-	free(data_rc4);
-	free(buf_rc4);
 
 	// receive passwd / 'CCcam'
 	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), DECRYPT);

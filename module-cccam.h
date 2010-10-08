@@ -109,7 +109,6 @@ struct cc_extended_ecm_idx {
 
 struct cc_data {
 	uint8 g_flag;
-	int cc_use_rc4;
 	char *prefix;
 
 	struct cc_crypt_block block[2]; // crypto state blocks
