@@ -2856,6 +2856,7 @@ int cc_srv_connect(struct s_client *cl) {
 		cs_ddump(buf, 20, "cccam: hash:");
 		cs_ddump(buf_rc4, 20, "cccam: hash rc4:");
 	}
+	else return -1;
 
 	// receive username
 	if ((i = recv(cl->pfd, buf, 20, MSG_WAITALL)) == 20) {
@@ -2886,6 +2887,7 @@ int cc_srv_connect(struct s_client *cl) {
 			cs_debug("illegal username received");
 		}
 	}
+	else return -1;
 
 	cl->crypted = 1;
 
