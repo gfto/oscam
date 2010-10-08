@@ -114,7 +114,9 @@
 #endif
 #endif
 
+#ifndef CS_LOGHISTORY
 #define CS_LOGHISTORY
+#endif
 
 #ifdef OS_FREEBSD
 #  define NO_ENDIAN_H
