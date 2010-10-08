@@ -575,8 +575,8 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     cs_ftime(&tpe);
 
     cs_log("%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%d ms) by %s",
-           username(&client[ep->cidx]), typedesc[cur_client()->emmcache[i].type], ep->emm[2],
-           i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm, reader->label);
+           username(ep->client), typedesc[cur_client()->emmcache[i].type], ep->emm[2],
+           i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm, reader->label); //FIXME not sure why emmtyp must come from ep->client and typedesc can be of cur_client
   }
 
 #ifdef WEBIF

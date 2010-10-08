@@ -2391,7 +2391,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		}
 		client->emmok++;
 	}
-	ep->cidx = cs_idx;
+	ep->client = cur_client();
 	cs_debug_mask(D_EMM, "emm is being sent to reader %s.", reader[au].label);
 	write_to_pipe(reader[au].fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
 }

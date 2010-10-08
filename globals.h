@@ -1135,7 +1135,7 @@ typedef struct emm_packet_t
   uchar provid[4];
   uchar hexserial[8];					 //contains hexserial or SA of EMM
   uchar type;
-  int   cidx;
+  struct s_client *client;
 } GCC_PACK EMM_PACKET;
 
 //EMM types:

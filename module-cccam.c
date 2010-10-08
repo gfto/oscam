@@ -1274,15 +1274,15 @@ int cc_send_emm(EMM_PACKET *ep) {
 	}
 
 	if (!emm_card) { //Card for emm not found!
-		cs_log("%s emm for client %d not possible, no card found!",
-				getprefix(), ep->cidx);
+		cs_log("%s emm for client %08lX not possible, no card found!",
+				getprefix(), ep->client->thread);
 		pthread_mutex_unlock(&cc->cards_busy);
 		return 0;
 	}
 
 	cs_debug_mask(D_EMM,
-			"%s emm received for client %d caid %04X for card %08X",
-			getprefix(), ep->cidx, caid, emm_card->id);
+			"%s emm received for client %08lX caid %04X for card %08X",
+			getprefix(), ep->client->thread, caid, emm_card->id);
 
 	int size = ep->l + 12;
 	uint8 *emmbuf = malloc(size);
