@@ -622,7 +622,8 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 				case 0x86:
 				    cs_log("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, len));
 					if (!emm_global_len) return;
-
+                    provid[4]=buffer[7];
+                    
 					// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
 					// now we need to append the payload of the 0x86 emm (EMM-SB)
 					// starting after the header (&buffer[5])
