@@ -2633,8 +2633,10 @@ int cc_srv_report_cards() {
                                                                 }
                                                         }
                                                         if (!ignore) { //Filtered by service
-          							add_card_to_serverlist(server_cards, card, 
-          							  cfg->cc_ignore_reshare?reshare:card->maxdown-1);
+                                                                int new_reshare=cfg->cc_ignore_reshare?reshare:card->maxdown-1;
+                                                                if (new_reshare>reshare)
+                                                                  new_reshare=reshare;
+          							add_card_to_serverlist(server_cards, card, new_reshare);
 		        					count++;
                                                         }
 						}
