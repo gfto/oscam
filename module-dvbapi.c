@@ -1301,6 +1301,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 void * dvbapi_main_local(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
+	pthread_setspecific(getclient, cli);
 
 	int maxpfdsize=(MAX_DEMUX*MAX_FILTER)+MAX_DEMUX+2;
 	struct pollfd pfd2[maxpfdsize];
@@ -1733,6 +1734,7 @@ void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsign
 void * azbox_main(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
+	pthread_setspecific(getclient, cli);
 	struct timeb tp;
 	cs_ftime(&tp);
 	tp.time+=500;

@@ -756,6 +756,7 @@ void * start_cardreader(void * rdr)
 	struct s_reader * reader = (struct s_reader *) rdr; //FIXME can be made simpler
 
 	client[reader->cidx].thread=pthread_self();
+	pthread_setspecific(getclient, &client[reader->cidx]);
 	client[cs_idx].cs_ptyp=D_READER;
 
   if (reader->typ & R_IS_CASCADING)

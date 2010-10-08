@@ -3010,6 +3010,8 @@ int cc_srv_connect(struct s_client *cl) {
 
 void * cc_srv_init(struct s_client *cl ) {
 	cl->thread=pthread_self();
+	pthread_setspecific(getclient, cl);
+
 	cs_debug_mask(D_FUT, "cc_srv_init in");
 	//struct s_client *cl = &client[cs_idx];
 	cl->pfd = cl->udp_fd;

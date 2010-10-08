@@ -159,6 +159,7 @@ static void * radegast_server(void *cli)
 
 	struct s_client * client = (struct s_client *) cli;
   client->thread=pthread_self();
+  pthread_setspecific(getclient, cli);
 
   radegast_auth_client(client[cs_idx].ip);
   while ((n=get_request(mbuf))>0)

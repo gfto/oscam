@@ -1041,6 +1041,7 @@ static void * newcamd_server(void *cli)
 	int rc;
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
+	pthread_setspecific(getclient, cli);
 	uchar mbuf[1024];
 
 	client->req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);

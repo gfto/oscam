@@ -24,6 +24,7 @@ char  cs_confdir[128]=CS_CONFDIR;
 int cs_dblevel=0;   // Debug Level (TODO !!)
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
+pthread_key_t getclient;
 
 #ifdef CS_ANTICASC
 struct s_acasc ac_stat[CS_MAXPID];
@@ -83,6 +84,12 @@ int get_csidx() {
 	}
 	
 	return 0; // main process
+}
+
+struct s_client * cur_client(void) 
+{
+	struct s_client *cl = (struct s_client *) pthread_getspecific(getclient);
+	return cl;
 }
 
 int cs_check_violation(uint ip) {
@@ -643,6 +650,12 @@ static void init_shm()
   client[0].ip=cs_inet_addr("127.0.0.1");
   client[0].typ='s';
   client[0].au=(-1);
+  client[0].thread=pthread_self();
+  if (pthread_setspecific(getclient, &client[0])) {
+    fprintf(stderr, "Could not setspecific getclient in master process, exiting...");
+  exit(1);
+  }
+
 
   // get username master running under
   struct passwd *pwd;
@@ -839,7 +852,7 @@ static void start_thread(void * startroutine, char * nameroutine, char typ) {
 	client[o].ip=client[0].ip;
 	strcpy(client[o].usr, client[0].usr);
 
-	i=pthread_create(&client[o].thread, (pthread_attr_t *)0, startroutine, (void *) 0);
+	i=pthread_create(&client[o].thread, (pthread_attr_t *)0, startroutine, (void *) &client[o]);
 
 	if (i)
 		cs_log("ERROR: can't create %s thread (err=%d)", i, nameroutine);
@@ -873,10 +886,11 @@ void kill_thread(int cidx) {
 }
 
 #ifdef CS_ANTICASC
-void start_anticascader()
+void start_anticascader(struct s_client *cl)
 {
   set_signal_handler(SIGHUP, 1, ac_init_stat);
-
+	cl->thread = pthread_self();
+  pthread_setspecific(getclient, cl);
   ac_init_stat();
   while(1)
   {
@@ -2787,6 +2801,11 @@ char * get_tmp_dir()
                                                                             
 int main (int argc, char *argv[])
 {
+
+if (pthread_key_create(&getclient, NULL)) {
+  fprintf(stderr, "Could not create getclient, exiting...");
+  exit(1);
+}
 
 #ifdef CS_LED
   cs_switch_led(LED1A, LED_DEFAULT);

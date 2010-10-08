@@ -181,8 +181,9 @@ static void * camd33_server(void* cli)
   int n;
   uchar mbuf[1024];
 
-	struct s_client * client = (struct s_client *) cli;
+  struct s_client * client = (struct s_client *) cli;
   client->thread=pthread_self();
+  pthread_setspecific(getclient, cli);
 
   client->req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
   if (!client->req)

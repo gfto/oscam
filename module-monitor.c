@@ -759,6 +759,7 @@ static void * monitor_server(void *cli){
 
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
+	pthread_setspecific(getclient, cli);
 	client->typ='m';
 	while (((n = process_input(mbuf, sizeof(mbuf), cfg->cmaxidle)) >= 0) && monitor_process_request((char *)mbuf));
 	cs_disconnect_client(cli);
