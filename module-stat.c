@@ -354,7 +354,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 		memcpy(result, ecm_send_cache[i].readers, sizeof(int)*CS_MAXREADER);
 		int best_ridx = ecm_send_cache[i].best_reader;
 		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d (cache)", 
-			username(&client[grs->cidx]), grs->caid, grs->prid, grs->srvid,
+			username(grs->client), grs->caid, grs->prid, grs->srvid,
 			best_ridx<0?"NONE":reader[best_ridx].label,
 			result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], 
 			result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]);
@@ -451,7 +451,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			else 
 			{
 				int seconds = cfg->lb_reopen_seconds;
-				if (!reader[i].audisabled && (client[grs->cidx].autoau || client[grs->cidx].au == i))
+				if (!reader[i].audisabled && (grs->client->autoau || grs->client->au == i))
 					seconds = seconds/10;
 				
 				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
@@ -507,7 +507,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	}
 
 	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
-		username(&client[grs->cidx]), grs->caid, grs->prid, grs->srvid,
+		username(grs->client), grs->caid, grs->prid, grs->srvid,
 		best_ridx<0?"NONE":reader[best_ridx].label,
 		result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], 
 		result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]);

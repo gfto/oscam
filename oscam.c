@@ -2019,7 +2019,7 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	grs.caid = er->caid;
 	grs.prid = er->prid;
 	grs.srvid = er->srvid;
-	grs.cidx = cs_idx;
+	grs.client = cur_client();
 	memcpy(grs.ecmd5, er->ecmd5, sizeof(er->ecmd5));
 	memcpy(grs.reader_avail, reader_avail, sizeof(int)*CS_MAXREADER);
 	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", username(cur_client()), grs.caid, grs.prid, grs.srvid);

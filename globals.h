@@ -1122,7 +1122,7 @@ typedef struct get_reader_stat_t
   ushort        caid;
   ulong         prid;
   ushort        srvid;
-  int           cidx;
+  struct s_client *client;
   int           reader_avail[CS_MAXREADER];
   uchar         ecmd5[CS_ECMSTORESIZE];
 } GCC_PACK      GET_READER_STAT;
