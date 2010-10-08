@@ -110,14 +110,14 @@ void ac_do_stat()
 
 void ac_init_client(struct s_auth *account)
 {
-  client[cs_idx].ac_idx = account->ac_idx;
-  client[cs_idx].ac_limit = 0;
+  cur_client()->ac_idx = account->ac_idx;
+  cur_client()->ac_limit = 0;
   if( cfg->ac_enabled )
   {
     if( account->ac_users )
     {
-      client[cs_idx].ac_limit = (account->ac_users*100+80)*cfg->ac_stime;
-      client[cs_idx].ac_penalty = account->ac_penalty;
+      cur_client()->ac_limit = (account->ac_users*100+80)*cfg->ac_stime;
+      cur_client()->ac_penalty = account->ac_penalty;
       cs_debug("login '%s', ac_idx=%d, users=%d, stime=%d min, dwlimit=%d per min, penalty=%d", 
               account->usr, account->ac_idx, account->ac_users, cfg->ac_stime, 
               account->ac_users*100+80, account->ac_penalty);
@@ -148,22 +148,22 @@ static int ac_dw_weight(ECM_REQUEST *er)
 
 void ac_chk(ECM_REQUEST *er, int level)
 {
-  if( !client[cs_idx].ac_limit || !cfg->ac_enabled ) return;
+  if( !cur_client()->ac_limit || !cfg->ac_enabled ) return;
 
   if( level==1 ) 
   {
-    if( er->rc==7 ) acasc[client[cs_idx].ac_idx].ac_count++;
+    if( er->rc==7 ) acasc[cur_client()->ac_idx].ac_count++;
     if( er->rc>3 ) return; // not found
     if( memcmp(ac_ecmd5, er->ecmd5, CS_ECMSTORESIZE) != 0 )
     {
-      acasc[client[cs_idx].ac_idx].ac_count+=ac_dw_weight(er);
+      acasc[cur_client()->ac_idx].ac_count+=ac_dw_weight(er);
       memcpy(ac_ecmd5, er->ecmd5, CS_ECMSTORESIZE);
     }
     return;
   }
 
-  if( acasc[client[cs_idx].ac_idx].ac_deny )
-    if( client[cs_idx].ac_penalty ) 
+  if( acasc[cur_client()->ac_idx].ac_deny )
+    if( cur_client()->ac_penalty ) 
     {
       cs_debug("send fake dw");
       er->rc=7; // fake

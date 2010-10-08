@@ -4,15 +4,15 @@
 
 void aes_set_key(char *key)
 {
-  AES_set_decrypt_key((const unsigned char *)key, 128, &client[cs_idx].aeskey_decrypt);
-  AES_set_encrypt_key((const unsigned char *)key, 128, &client[cs_idx].aeskey);
+  AES_set_decrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey_decrypt);
+  AES_set_encrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey);
 }
 
 void aes_decrypt(uchar *buf, int n)
 {
   int i;
   for(i=0; i<n; i+=16)
-    AES_decrypt(buf+i, buf+i, &client[cs_idx].aeskey_decrypt);
+    AES_decrypt(buf+i, buf+i, &cur_client()->aeskey_decrypt);
 }
 
 void aes_encrypt_idx(int idx, uchar *buf, int n)
@@ -211,7 +211,7 @@ void aes_clear_entries(struct s_reader *rdr)
 
 char *remote_txt(void)
 {
-  if (client[cs_idx].is_server)
+  if (cur_client()->is_server)
     return("client");
   else
     return("remote server");
@@ -375,11 +375,11 @@ char *cs_hexdump(int m, const uchar *buf, int n)
 {
   //TODO: not threadsafe
   int i;
-  char *dump = (char *)client[cs_idx].dump;
+  char *dump = (char *)cur_client()->dump;
 
   dump[i=0]='\0';
   m=(m)?3:2;
-  if (m*n>=(int)sizeof(client[cs_idx].dump)) n=(sizeof(client[cs_idx].dump)/m)-1;
+  if (m*n>=(int)sizeof(cur_client()->dump)) n=(sizeof(cur_client()->dump)/m)-1;
   while (i<n)
     sprintf(dump+(m*i++), "%02X%s", *buf++, (m>2)?" ":"");
   return(dump);

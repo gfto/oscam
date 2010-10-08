@@ -683,7 +683,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 	epg.l=len;
 	memcpy(epg.emm, buffer, epg.l);
 
-	do_emm(&client[cs_idx], &epg);
+	do_emm(cur_client(), &epg);
 }
 
 void dvbapi_resort_ecmpids(int demux_index) {
@@ -721,7 +721,7 @@ void dvbapi_resort_ecmpids(int demux_index) {
 			}
 		}
 
-		if (!client[cs_idx].sidtabok && !client[cs_idx].sidtabno) continue;
+		if (!cur_client()->sidtabok && !cur_client()->sidtabno) continue;
 
 		int nr;
 		SIDTAB *sidtab;
@@ -732,11 +732,11 @@ void dvbapi_resort_ecmpids(int demux_index) {
 
 		for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++) {
 			if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid) {
-				if ((client[cs_idx].sidtabno&((SIDTABBITS)1<<nr)) && (chk_srvid_match(&er, sidtab))) {
+				if ((cur_client()->sidtabno&((SIDTABBITS)1<<nr)) && (chk_srvid_match(&er, sidtab))) {
 					demux[demux_index].ECMpids[n].status = -1; //ignore
 					cs_debug("[IGNORE PID %d] %04X:%06X (service %s) pos %d", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, nr);
 				}
-				if ((client[cs_idx].sidtabok&((SIDTABBITS)1<<nr)) && (chk_srvid_match(&er, sidtab))) {
+				if ((cur_client()->sidtabok&((SIDTABBITS)1<<nr)) && (chk_srvid_match(&er, sidtab))) {
 					demux[demux_index].ECMpids[n].status = nr+1; //priority
 					demux[demux_index].max_status = (nr+1 > demux[demux_index].max_status) ? nr+1 : demux[demux_index].max_status;
 					cs_debug("[PRIORITIZE PID %d] %04X:%06X (service: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, demux[demux_index].ECMpids[n].status);
@@ -956,10 +956,10 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 			dvbapi_try_next_caid(demux_id);
 	} else {
 		// set channel srvid+caid
-		client[cs_idx].last_srvid = demux[demux_id].program_number;
-		client[cs_idx].last_caid = 0;
+		cur_client()->last_srvid = demux[demux_id].program_number;
+		cur_client()->last_caid = 0;
 		// reset idle-Time
-		client[cs_idx].last=time((time_t)0);
+		cur_client()->last=time((time_t)0);
 	}
 
 	return demux_id;
@@ -1275,7 +1275,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		memcpy(er->ecm, buffer, er->l);
 
 		cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X chid %02X", er->caid, er->prid, er->srvid, er->pid, (caid >> 8) == 0x06 ? buffer[7] : 0);
-		get_cw(&client[cs_idx], er);
+		get_cw(cur_client(), er);
 	}
 
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_EMM) {
@@ -1649,7 +1649,7 @@ void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_ind
 	memcpy(er->ecm, ecm_data, er->l);
 
 	cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
-	get_cw(&client[cs_idx], er);
+	get_cw(cur_client(), er);
 
 	//openxcas_stop_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
 	//openxcas_remove_filter(openxcas_stream_id, OPENXCAS_FILTER_ECM);
@@ -1661,7 +1661,7 @@ void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_ind
 	tp.time+=500;
 
 	struct pollfd pfd;
-	pfd.fd = client[cs_idx].fd_m2c_c;
+	pfd.fd = cur_client()->fd_m2c_c;
 	pfd.events = POLLIN | POLLPRI;
 /*
 	while(1) {
@@ -1676,7 +1676,7 @@ void azbox_openxcas_ecm_callback(int stream_id, unsigned int seq, int cipher_ind
 		}
 
 		if (pfd.revents & (POLLIN | POLLPRI)) {
-			chk_dcw(client[cs_idx].fd_m2c_c);
+			chk_dcw(cur_client()->fd_m2c_c);
 			break;
 		}
 	}*/
@@ -1703,7 +1703,7 @@ void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsign
 	memcpy(er->ecm, ecm_data, er->l);
 
 	cs_debug("request cw for caid %04X provid %06X srvid %04X pid %04X", er->caid, er->prid, er->srvid, er->pid);
-	get_cw(&client[cs_idx], er);
+	get_cw(cur_client(), er);
 	 
 	if (openxcas_stop_filter_ex(stream_id, seq, openxcas_filter_idx) < 0)
 		cs_log("openxcas: unable to stop ex filter");
@@ -1715,7 +1715,7 @@ void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsign
 	tp.time+=500;
 
 	chk_pending(tp);
-	process_client_pipe(&client[cs_idx], NULL, 0);
+	process_client_pipe(cur_client(), NULL, 0);
 
 	unsigned char mask[12];
 	unsigned char comp[12];

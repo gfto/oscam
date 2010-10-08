@@ -8,7 +8,7 @@ int constcw_file_available(void)
 {
     FILE *fp;
     
-    fp=fopen(reader[client[cs_idx].ridx].device, "r");
+    fp=fopen(reader[cur_client()->ridx].device, "r");
     if (!fp) return (0);
     fclose(fp);
     return (1);
@@ -26,7 +26,7 @@ int constcw_analyse_file(ushort c_caid, uint c_prid, ushort c_sid, uchar *dcw)
     // FIXME
     c_prid = c_prid;
 
-    fp=fopen(reader[client[cs_idx].ridx].device, "r");
+    fp=fopen(reader[cur_client()->ridx].device, "r");
     if (!fp) return (0);
     
     while (fgets(token, sizeof(token), fp))

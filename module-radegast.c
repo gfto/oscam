@@ -53,19 +53,19 @@ static void radegast_auth_client(in_addr_t ip)
 
   if (!ok)
   {
-    cs_auth_client(&client[cs_idx], (struct s_auth *)0, NULL);
+    cs_auth_client(cur_client(), (struct s_auth *)0, NULL);
     cs_exit(0);
   }
 
   for (ok=0, account=cfg->account; (cfg->rad_usr[0]) && (account) && (!ok); account=account->next)
   {
     ok=(!strcmp(cfg->rad_usr, account->usr));
-    if (ok && cs_auth_client(&client[cs_idx], account, NULL))
+    if (ok && cs_auth_client(cur_client(), account, NULL))
       cs_exit(0);
   }
 
   if (!ok)
-    cs_auth_client(&client[cs_idx], (struct s_auth *)(-1), NULL);
+    cs_auth_client(cur_client(), (struct s_auth *)(-1), NULL);
 }
 
 static int get_request(uchar *buf)
@@ -142,13 +142,13 @@ static void radegast_process_ecm(uchar *buf, int l)
   if (l!=i)
     cs_log("WARNING: ECM-request corrupt");
   else
-    get_cw(&client[cs_idx], er);
+    get_cw(cur_client(), er);
 }
 
 static void radegast_process_unknown(uchar *buf)
 {
   uchar answer[2]={0x81, 0x00};
-  radegast_send(&client[cs_idx], answer);
+  radegast_send(cur_client(), answer);
   cs_log("unknown request %02X, len=%d", buf[0], buf[1]);
 }
 
@@ -161,7 +161,7 @@ static void * radegast_server(void *cli)
   client->thread=pthread_self();
   pthread_setspecific(getclient, cli);
 
-  radegast_auth_client(client[cs_idx].ip);
+  radegast_auth_client(cur_client()->ip);
   while ((n=get_request(mbuf))>0)
   {
     switch(mbuf[0])
@@ -225,10 +225,10 @@ int radegast_cli_init(struct s_client *cl)
   struct protoent *ptrp;
   int p_proto, handle;
 
-  client[cs_idx].pfd=0;
-  if (reader[client[cs_idx].ridx].r_port<=0)
+  cur_client()->pfd=0;
+  if (reader[cur_client()->ridx].r_port<=0)
   {
-    cs_log("radegast: invalid port %d for server %s", reader[client[cs_idx].ridx].r_port, reader[client[cs_idx].ridx].device);
+    cs_log("radegast: invalid port %d for server %s", reader[cur_client()->ridx].r_port, reader[cur_client()->ridx].device);
     return(1);
   }
   if( (ptrp=getprotobyname("tcp")) )
@@ -236,7 +236,7 @@ int radegast_cli_init(struct s_client *cl)
   else
     p_proto=6;
 
-  client[cs_idx].ip=0;
+  cur_client()->ip=0;
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
 #ifdef LALL
@@ -245,9 +245,9 @@ int radegast_cli_init(struct s_client *cl)
   else
 #endif
     loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(reader[client[cs_idx].ridx].l_port);
+  loc_sa.sin_port = htons(reader[cur_client()->ridx].l_port);
 
-  if ((client[cs_idx].udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
+  if ((cur_client()->udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
   {
     cs_log("radegast: Socket creation failed (errno=%d)", errno);
     cs_exit(1);
@@ -255,32 +255,32 @@ int radegast_cli_init(struct s_client *cl)
 
 #ifdef SO_PRIORITY
   if (cfg->netprio)
-    setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_PRIORITY,
+    setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_PRIORITY,
                (void *)&cfg->netprio, sizeof(ulong));
 #endif
-  if (!reader[client[cs_idx].ridx].tcp_ito) {
-    ulong keep_alive = reader[client[cs_idx].ridx].tcp_ito?1:0;
-    setsockopt(client[cs_idx].udp_fd, SOL_SOCKET, SO_KEEPALIVE,
+  if (!reader[cur_client()->ridx].tcp_ito) {
+    ulong keep_alive = reader[cur_client()->ridx].tcp_ito?1:0;
+    setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_KEEPALIVE,
     (void *)&keep_alive, sizeof(ulong));
   }
 
-  memset((char *)&client[cs_idx].udp_sa,0,sizeof(client[cs_idx].udp_sa));
-  client[cs_idx].udp_sa.sin_family = AF_INET;
-  client[cs_idx].udp_sa.sin_port = htons((u_short)reader[client[cs_idx].ridx].r_port);
+  memset((char *)&cur_client()->udp_sa,0,sizeof(cur_client()->udp_sa));
+  cur_client()->udp_sa.sin_family = AF_INET;
+  cur_client()->udp_sa.sin_port = htons((u_short)reader[cur_client()->ridx].r_port);
 
   cs_log("radegast: proxy %s:%d (fd=%d)",
-  reader[client[cs_idx].ridx].device, reader[client[cs_idx].ridx].r_port, client[cs_idx].udp_fd);
+  reader[cur_client()->ridx].device, reader[cur_client()->ridx].r_port, cur_client()->udp_fd);
 
   handle = network_tcp_connection_open();
   if(handle < 0) return -1;
 
-  reader[client[cs_idx].ridx].tcp_connected = 2;
-  reader[client[cs_idx].ridx].card_status = CARD_INSERTED;
-  reader[client[cs_idx].ridx].last_g = reader[client[cs_idx].ridx].last_s = time((time_t *)0);
+  reader[cur_client()->ridx].tcp_connected = 2;
+  reader[cur_client()->ridx].card_status = CARD_INSERTED;
+  reader[cur_client()->ridx].last_g = reader[cur_client()->ridx].last_s = time((time_t *)0);
 
-  cs_debug("radegast: last_s=%d, last_g=%d", reader[client[cs_idx].ridx].last_s, reader[client[cs_idx].ridx].last_g);
+  cs_debug("radegast: last_s=%d, last_g=%d", reader[cur_client()->ridx].last_s, reader[cur_client()->ridx].last_g);
 
-  client[cs_idx].pfd=client[cs_idx].udp_fd;
+  cur_client()->pfd=cur_client()->udp_fd;
 
   return(0);
 }

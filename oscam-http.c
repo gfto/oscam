@@ -2345,7 +2345,7 @@ void send_oscam_failban(struct templatevars *vars, FILE *f, struct uriparams *pa
 
 int process_request(FILE *f, struct in_addr in) {
 
-	client[cs_idx].last = time((time_t)0); //reset last busy time
+	cur_client()->last = time((time_t)0); //reset last busy time
 
 	int ok=0;
 	struct s_ip *p_ip;

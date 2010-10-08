@@ -374,7 +374,7 @@ void cs_exit(int sig)
   if (sig && (sig!=SIGQUIT))
     cs_log("exit with signal %d", sig);
 
-  struct s_client *cl = &client[cs_idx];
+  struct s_client *cl = cur_client();
   
   switch(cl->typ)
   {
@@ -451,7 +451,7 @@ void cs_reinit_clients()
 				if (!strcmp(client[i].usr, account->usr))
 					break;
 
-			if (account && client[i].pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), client[cs_idx].dump), 16)) {
+			if (account && client[i].pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16)) {
 				client[i].grp		= account->grp;
 				client[i].au		= account->au;
 				client[i].autoau	= account->autoau;
@@ -1478,12 +1478,12 @@ static int cs_read_timer(int fd, uchar *buf, int l, int msec)
   tv.tv_sec = msec / 1000;
   tv.tv_usec = (msec % 1000) * 1000;
   FD_ZERO(&fds);
-  FD_SET(client[cs_idx].pfd, &fds);
+  FD_SET(cur_client()->pfd, &fds);
 
   select(fd+1, &fds, 0, 0, &tv);
 
   rc=0;
-  if (FD_ISSET(client[cs_idx].pfd, &fds))
+  if (FD_ISSET(cur_client()->pfd, &fds))
     if (!(rc=read(fd, buf, l)))
       rc=-1;
 
@@ -1495,28 +1495,28 @@ ECM_REQUEST *get_ecmtask()
 	int i, n;
 	ECM_REQUEST *er=0;
 
-	if (!client[cs_idx].ecmtask)
+	if (!cur_client()->ecmtask)
 	{
-		n=(ph[client[cs_idx].ctyp].multi)?CS_MAXPENDING:1;
-		if( (client[cs_idx].ecmtask=(ECM_REQUEST *)malloc(n*sizeof(ECM_REQUEST))) )
-			memset(client[cs_idx].ecmtask, 0, n*sizeof(ECM_REQUEST));
+		n=(ph[cur_client()->ctyp].multi)?CS_MAXPENDING:1;
+		if( (cur_client()->ecmtask=(ECM_REQUEST *)malloc(n*sizeof(ECM_REQUEST))) )
+			memset(cur_client()->ecmtask, 0, n*sizeof(ECM_REQUEST));
 	}
 
 	n=(-1);
-	if (!client[cs_idx].ecmtask)
+	if (!cur_client()->ecmtask)
 	{
 		cs_log("Cannot allocate memory (errno=%d)", errno);
 		n=(-2);
 	}
 	else
-		if (ph[client[cs_idx].ctyp].multi)
+		if (ph[cur_client()->ctyp].multi)
 		{
 			for (i=0; (n<0) && (i<CS_MAXPENDING); i++)
-				if (client[cs_idx].ecmtask[i].rc<100)
-					er=&client[cs_idx].ecmtask[n=i];
+				if (cur_client()->ecmtask[i].rc<100)
+					er=&cur_client()->ecmtask[n=i];
 		}
 		else
-			er=&client[cs_idx].ecmtask[n=0];
+			er=&cur_client()->ecmtask[n=0];
 
 	if (n<0)
 		cs_log("WARNING: ecm pending table overflow !");
@@ -1898,7 +1898,7 @@ void cs_betatunnel(ECM_REQUEST *er)
 	int n;
 	ulong mask_all = 0xFFFF;
 	TUNTAB *ttab;
-	ttab = &client[cs_idx].ttab;
+	ttab = &cur_client()->ttab;
 	for (n = 0; (n < CS_MAXTUNTAB); n++) {
 		if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all)) {
 			uchar hack_n3[13] = {0x70, 0x51, 0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12, 0x07};
@@ -1918,7 +1918,7 @@ void cs_betatunnel(ECM_REQUEST *er)
 			er->l += 10;
 			er->ecm[2] = er->l-3;
 			er->btun = 1;
-			client[cs_idx].cwtun++;
+			cur_client()->cwtun++;
 			cs_debug("ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
 				ttab->bt_caidfrom[n], ttab->bt_caidto[n], ttab->bt_srvid[n]);
 		}
@@ -2025,7 +2025,7 @@ void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
 	grs.cidx = cs_idx;
 	memcpy(grs.ecmd5, er->ecmd5, sizeof(er->ecmd5));
 	memcpy(grs.reader_avail, reader_avail, sizeof(int)*CS_MAXREADER);
-	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", username(&client[cs_idx]), grs.caid, grs.prid, grs.srvid);
+	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", username(cur_client()), grs.caid, grs.prid, grs.srvid);
 
         get_best_reader(&grs, reader_avail);
 }
@@ -2254,7 +2254,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 void log_emm_request(int auidx)
 {
 	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06lX)",
-			username(&client[cs_idx]), reader[auidx].label, reader[auidx].caid[0],
+			username(cur_client()), reader[auidx].label, reader[auidx].caid[0],
 			reader[auidx].auprovid ? reader[auidx].auprovid : b2i(4, reader[auidx].prid[0]));
 }
 
@@ -2419,7 +2419,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	cs_ftime(&tpn);
 	tpe=tp_ctimeout;    // latest delay -> disconnect
 
-	struct s_client *cl = &client[cs_idx];
+	struct s_client *cl = cur_client();
 
 	if (cl->ecmtask)
 		i=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
@@ -2531,7 +2531,7 @@ int process_input(uchar *buf, int l, int timeout)
 	fd_set fds;
 	struct timeb tp;
 
-	struct s_client *cl = &client[cs_idx];
+	struct s_client *cl = cur_client();
 
 	cs_ftime(&tp);
 	tp.time+=timeout;

@@ -117,7 +117,7 @@ static int oscam_ser_parse_url(char *url)
       if (!strcmp(service, proto_txt[i]))
         oscam_ser_proto=i;
   }
-  if ((!client[cs_idx].is_server) && (oscam_ser_proto==P_AUTO)) return(0);
+  if ((!cur_client()->is_server) && (oscam_ser_proto==P_AUTO)) return(0);
   switch(oscam_ser_proto)	// set the defaults
   {
     case P_GS:
@@ -136,7 +136,7 @@ static int oscam_ser_parse_url(char *url)
   switch( oscam_ser_proto )
   {
     case P_DSR95:
-      dsr9500type=(client[cs_idx].is_server)?P_DSR_AUTO:P_DSR_WITHSID;
+      dsr9500type=(cur_client()->is_server)?P_DSR_AUTO:P_DSR_WITHSID;
       break;
     case P_DSR95_OLD:
       dsr9500type=P_DSR_AUTO;
@@ -149,11 +149,11 @@ static int oscam_ser_parse_url(char *url)
     *dev++='\0';
     if( (dummy=strchr(usr, ':')) )	// fake pwd
       *dummy++='\0';
-    if ((client[cs_idx].is_server) && (!usr[0])) return(0);
+    if ((cur_client()->is_server) && (!usr[0])) return(0);
   }
   else
   {
-    if (client[cs_idx].is_server) return(0);	// user needed in server-mode
+    if (cur_client()->is_server) return(0);	// user needed in server-mode
     dev=usr;
   }
   if( (baud=strchr(dev, ':'))	)// port = baud
@@ -231,7 +231,7 @@ static int oscam_ser_poll(int event)
   msec=1000*(tpe.time-tpc.time)+tpe.millitm-tpc.millitm;
   if (msec<0)
     return(0);
-  pfds.fd=client[cs_idx].pfd;
+  pfds.fd=cur_client()->pfd;
   pfds.events=event;
   pfds.revents=0;
   if (poll(&pfds, 1, msec)!=1)
@@ -278,7 +278,7 @@ static int oscam_ser_selrec(uchar *buf, int n, int l, int *c)
     n=l-*c;
   if (n<=0) return(0);
   for (i=0; (i<n) && (oscam_ser_poll(POLLIN)); i++)
-    if (read(client[cs_idx].pfd, buf+*c, 1)<1 )
+    if (read(cur_client()->pfd, buf+*c, 1)<1 )
       return(0);
     else
       (*c)++;
@@ -529,7 +529,7 @@ static void oscam_ser_disconnect_client()
       mbuf[1] = 0x00;
       mbuf[2] = 0x00;
       mbuf[3] = 0x00;
-      oscam_ser_send(&client[cs_idx], mbuf, 4);
+      oscam_ser_send(cur_client(), mbuf, 4);
       break;
   }
   dsr9500type=P_DSR_AUTO;
@@ -548,7 +548,7 @@ static void oscam_ser_init_client()
       mbuf[1] = 0x00;
       mbuf[2] = 0x00;
       mbuf[3] = 0x00;
-      oscam_ser_send(&client[cs_idx], mbuf, 4);	// send connect
+      oscam_ser_send(cur_client(), mbuf, 4);	// send connect
       break;
   }
 }
@@ -557,7 +557,7 @@ static void oscam_ser_disconnect()
 {
   oscam_ser_disconnect_client();
   if (connected)
-    cs_log("%s disconnected (%s)", username(&client[cs_idx]), proto_txt[connected]);
+    cs_log("%s disconnected (%s)", username(cur_client()), proto_txt[connected]);
   connected=0;
 }
 
@@ -576,12 +576,12 @@ static void oscam_ser_auth_client(int proto)
   connected=proto;
   if( !account )
   {
-    client[cs_idx].usr[0]=0;
+    cur_client()->usr[0]=0;
     for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
       if( (ok=!strcmp(oscam_ser_usr, account->usr)) )
         break;
   }
-  cs_auth_client(&client[cs_idx], ok ? account : (struct s_auth *)(-1), proto_txt[connected]);
+  cs_auth_client(cur_client(), ok ? account : (struct s_auth *)(-1), proto_txt[connected]);
 }
 
 static void oscam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
@@ -687,7 +687,7 @@ static void oscam_ser_process_pmt(uchar *buf, int l)
       sbuf[0]=0xF1;
       sbuf[1]=0;
       sbuf[2]=(sssp_num<<1);
-      oscam_ser_send(&client[cs_idx], sbuf, sbuf[2]+3);
+      oscam_ser_send(cur_client(), sbuf, sbuf[2]+3);
       break;
   }
 }
@@ -704,7 +704,7 @@ static void oscam_ser_client_logon(uchar *buf, int l)
         buf[1] = 0x04;
         buf[2] = 0x00;
         buf[3] = 0x00;
-        oscam_ser_send(&client[cs_idx], buf, 4);
+        oscam_ser_send(cur_client(), buf, 4);
       }
       break;
   }
@@ -805,7 +805,7 @@ static void oscam_ser_process_ecm(uchar *buf, int l)
     case 2: er->rc=9; return;	// error without log
     case 1: er->rc=9;		      // error with log
   }
-  get_cw(&client[cs_idx], er);
+  get_cw(cur_client(), er);
 }
 
 
@@ -869,7 +869,7 @@ static void * oscam_ser_fork(void *url2)
 	char *url = (char *) url2;
   pthread_setspecific(getclient, &client[get_csidx()]); //FIXME dont think this will work without   client->thread=pthread_self();
 
-  client[cs_idx].is_server=1;
+  cur_client()->is_server=1;
   if ((!url) || (!url[0])) return NULL;
   if (!oscam_ser_parse_url(url)) return NULL;
  // snprintf(logtxt, sizeof(logtxt)-1, ", %s@%s",
@@ -878,15 +878,15 @@ static void * oscam_ser_fork(void *url2)
 
   while(1)
   {
-    client[cs_idx].au=(-1);
-    client[cs_idx].usr[0]='\0';
-    client[cs_idx].login=time((time_t *)0);
-    client[cs_idx].pfd=init_oscam_ser_device(oscam_ser_device);
-    if (client[cs_idx].pfd)
+    cur_client()->au=(-1);
+    cur_client()->usr[0]='\0';
+    cur_client()->login=time((time_t *)0);
+    cur_client()->pfd=init_oscam_ser_device(oscam_ser_device);
+    if (cur_client()->pfd)
       oscam_ser_server();
     else
       cs_sleepms(60000);	// retry in 1 min. (USB-Device ?)
-    if (client[cs_idx].pfd) close(client[cs_idx].pfd);
+    if (cur_client()->pfd) close(cur_client()->pfd);
   }
   return NULL;
 }

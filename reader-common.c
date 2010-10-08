@@ -63,8 +63,8 @@ int reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int l, ucha
 #endif
 
 	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary 
-	int cs_ptyp_orig=client[cs_idx].cs_ptyp;
-	client[cs_idx].cs_ptyp=D_DEVICE;
+	int cs_ptyp_orig=cur_client()->cs_ptyp;
+	cur_client()->cs_ptyp=D_DEVICE;
 	if (reader->typ == R_SC8in1) {
 		pthread_mutex_lock(&sc8in1);
 		cs_debug("SC8in1: locked for CardWrite of slot %i", reader->slot);
@@ -77,7 +77,7 @@ int reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int l, ucha
 		cs_debug("SC8in1: unlocked for CardWrite of slot %i", reader->slot);
 		pthread_mutex_unlock(&sc8in1);
 	}
-	client[cs_idx].cs_ptyp=cs_ptyp_orig;
+	cur_client()->cs_ptyp=cs_ptyp_orig;
 	return rc;
 }
 
@@ -120,13 +120,13 @@ static int reader_card_inserted(struct s_reader * reader)
 	}
 #endif
 	int card;
-	int cs_ptyp_orig=client[cs_idx].cs_ptyp;
-	client[cs_idx].cs_ptyp=D_IFD;
+	int cs_ptyp_orig=cur_client()->cs_ptyp;
+	cur_client()->cs_ptyp=D_IFD;
 	if (ICC_Async_GetStatus (reader, &card)) {
 		cs_log("Error getting status of terminal.");
 		return 0; //corresponds with no card inside!!
 	}
-	client[cs_idx].cs_ptyp=cs_ptyp_orig;
+	cur_client()->cs_ptyp=cs_ptyp_orig;
 	return (card);
 }
 
@@ -147,8 +147,8 @@ static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned sh
 		return 0;
 
   /* Activate card */
-	int cs_ptyp_orig=client[cs_idx].cs_ptyp;
-	client[cs_idx].cs_ptyp=D_DEVICE;
+	int cs_ptyp_orig=cur_client()->cs_ptyp;
+	cur_client()->cs_ptyp=D_DEVICE;
 	if (reader->typ == R_SC8in1) {
 		pthread_mutex_lock(&sc8in1);
 		cs_debug_mask(D_ATR, "SC8in1: locked for Activation of slot %i", reader->slot);
@@ -166,7 +166,7 @@ static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned sh
 		cs_debug_mask(D_ATR, "SC8in1: unlocked for Activation of slot %i", reader->slot);
 		pthread_mutex_unlock(&sc8in1);
 	}
-	client[cs_idx].cs_ptyp=cs_ptyp_orig;
+	cur_client()->cs_ptyp=cs_ptyp_orig;
   if (i<100) return(0);
 
   reader->init_history_pos=0;
@@ -219,7 +219,7 @@ void reader_card_info(struct s_reader * reader)
 {
   if ((reader->card_status == CARD_NEED_INIT) || (reader->card_status == CARD_INSERTED))
   {
-    client[cs_idx].last=time((time_t)0);
+    cur_client()->last=time((time_t)0);
     cs_ri_brk(reader, 0);
     do_emm_from_file(reader);
 
@@ -303,8 +303,8 @@ int reader_device_init(struct s_reader * reader)
 #endif
  
 	int rc = -1; //FIXME
-	int cs_ptyp_orig=client[cs_idx].cs_ptyp;
-	client[cs_idx].cs_ptyp=D_DEVICE;
+	int cs_ptyp_orig=cur_client()->cs_ptyp;
+	cur_client()->cs_ptyp=D_DEVICE;
 #if defined(TUXBOX) && defined(PPC)
 	struct stat st;
 	if (!stat(DEV_MULTICAM, &st))
@@ -315,7 +315,7 @@ int reader_device_init(struct s_reader * reader)
 	else
 		rc = OK;
   cs_debug("ct_init on %s: %d", reader->device, rc);
-  client[cs_idx].cs_ptyp=cs_ptyp_orig;
+  cur_client()->cs_ptyp=cs_ptyp_orig;
   return((rc!=OK) ? 2 : 0);
 }
 
@@ -334,7 +334,7 @@ int reader_checkhealth(struct s_reader * reader)
       }
       else
       {
-        client[cs_idx].au = client[cs_idx].ridx;
+        cur_client()->au = cur_client()->ridx;
         reader_card_info(reader);
         reader->card_status = CARD_INSERTED;
       }
@@ -352,9 +352,9 @@ int reader_checkhealth(struct s_reader * reader)
     if (reader->card_status == CARD_INSERTED)
     {
       reader_nullcard(reader);
-      client[cs_idx].lastemm = 0;
-      client[cs_idx].lastecm = 0;
-      client[cs_idx].au = -1;
+      cur_client()->lastemm = 0;
+      cur_client()->lastecm = 0;
+      cur_client()->au = -1;
       cs_log("card ejected slot = %i", reader->slot);
     }
     reader->card_status = NO_CARD;
@@ -379,9 +379,9 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
   {
     if((reader->caid[0] >> 8) == ((er->caid >> 8) & 0xFF))
     {
-      client[cs_idx].last_srvid=er->srvid;
-      client[cs_idx].last_caid=er->caid;
-      client[cs_idx].last=time((time_t)0);
+      cur_client()->last_srvid=er->srvid;
+      cur_client()->last_caid=er->caid;
+      cur_client()->last=time((time_t)0);
 
 	if (cardsystem[reader->card_system-1].do_ecm) 
 		rc=cardsystem[reader->card_system-1].do_ecm(reader, er);

@@ -102,7 +102,7 @@ int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 
   caid = er->caid;
   prid = er->prid;
-  pi = client[cs_idx].port_idx;
+  pi = cur_client()->port_idx;
 
   if (ptab->nports && ptab->ports[pi].ftab.nfilts)
   {
@@ -175,9 +175,9 @@ int chk_ufilters(ECM_REQUEST *er)
   ulong  uprid;
 
   rc=1;
-  if( client[cs_idx].ftab.nfilts )
+  if( cur_client()->ftab.nfilts )
   {
-    FTAB *f = &client[cs_idx].ftab;
+    FTAB *f = &cur_client()->ftab;
     for( i=rc=0; (!rc) && (i<f->nfilts); i++ )
     {
       ucaid = f->filts[i].caid;
@@ -187,19 +187,19 @@ int chk_ufilters(ECM_REQUEST *er)
         {
           uprid = f->filts[i].prids[j];
           cs_debug("trying user '%s' filter %04X:%06X",
-                   client[cs_idx].usr, ucaid, uprid);
+                   cur_client()->usr, ucaid, uprid);
           if( er->prid == uprid )
           {
             rc=1;
             cs_debug("%04X:%06X allowed by user '%s' filter %04X:%06X",
-                      er->caid, er->prid, client[cs_idx].usr, ucaid, uprid);
+                      er->caid, er->prid, cur_client()->usr, ucaid, uprid);
           }
         }
       }
     }
     if( !rc ) {
       cs_debug("no match, %04X:%06X rejected by user '%s' filters",
-                er->caid, er->prid, client[cs_idx].usr);
+                er->caid, er->prid, cur_client()->usr);
         snprintf( er->msglog, MSGLOGSIZE, "no card support %04X:%06X",
                 er->caid, (unsigned int) er->prid );
 
@@ -208,10 +208,10 @@ int chk_ufilters(ECM_REQUEST *er)
     }
   }
 
-  if( !(rc=chk_class(er, &client[cs_idx].cltab, "user", client[cs_idx].usr)) ) {
+  if( !(rc=chk_class(er, &cur_client()->cltab, "user", cur_client()->usr)) ) {
     if( !er->rcEx ) er->rcEx=(E1_USER<<4)|E2_CLASS;
   }
-  else if( !(rc=chk_chid(er, &client[cs_idx].fchid, "user", client[cs_idx].usr)) )
+  else if( !(rc=chk_chid(er, &cur_client()->fchid, "user", cur_client()->usr)) )
     if( !er->rcEx ) er->rcEx=(E1_USER<<4)|E2_CHID;
 
   if( rc ) er->rcEx=0;
@@ -350,7 +350,7 @@ int chk_ctab(ushort caid, CAIDTAB *ctab) {
 
 int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //Checking connected & group valid:
-  if (!((rdr->fd) && (rdr->grp&client[cs_idx].grp)))
+  if (!((rdr->fd) && (rdr->grp&cur_client()->grp)))
     return(0);
 
   //Checking enabled and not deleted:

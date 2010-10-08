@@ -6,13 +6,13 @@ extern struct s_reader *reader;
 static int camd33_send(uchar *buf, int ml)
 {
   int l;
-  if (!client[cs_idx].pfd) return(-1);
+  if (!cur_client()->pfd) return(-1);
   l=boundary(4, ml);
   memset(buf+ml, 0, l-ml);
   cs_ddump(buf, l, "send %d bytes to client", l);
-  if (client[cs_idx].crypted)
+  if (cur_client()->crypted)
     aes_encrypt(buf, l);
-  return(send(client[cs_idx].pfd, buf, l, 0));
+  return(send(cur_client()->pfd, buf, l, 0));
 }
 
 static int camd33_recv(struct s_client * client, uchar *buf, int l)
@@ -33,7 +33,7 @@ static void camd33_request_emm()
 {
   int au;
   uchar mbuf[20];
-  au=client[cs_idx].au;
+  au=cur_client()->au;
   if ((au<0) || (au>CS_MAXREADER)) return;  // TODO
   if (reader[au].hexserial[0])
   {
@@ -55,21 +55,21 @@ static void camd33_auth_client()
   struct s_auth *account;
   uchar mbuf[1024];
 
-  client[cs_idx].crypted=cfg->c33_crypted;
-  if (client[cs_idx].crypted)
+  cur_client()->crypted=cfg->c33_crypted;
+  if (cur_client()->crypted)
   {
     struct s_ip *p_ip;
-    for (p_ip=cfg->c33_plain; (p_ip) && (client[cs_idx].crypted); p_ip=p_ip->next)
-      if ((client[cs_idx].ip>=p_ip->ip[0]) && (client[cs_idx].ip<=p_ip->ip[1]))
-        client[cs_idx].crypted=0;
+    for (p_ip=cfg->c33_plain; (p_ip) && (cur_client()->crypted); p_ip=p_ip->next)
+      if ((cur_client()->ip>=p_ip->ip[0]) && (cur_client()->ip<=p_ip->ip[1]))
+        cur_client()->crypted=0;
   }
-  if (client[cs_idx].crypted)
+  if (cur_client()->crypted)
     aes_set_key((char *) cfg->c33_key);
 
   mbuf[0]=0;
   camd33_send(mbuf, 1);	// send login-request
 
-  for (rc=0, client[cs_idx].camdbug[0]=0, mbuf[0]=1; (rc<2) && (mbuf[0]); rc++)
+  for (rc=0, cur_client()->camdbug[0]=0, mbuf[0]=1; (rc<2) && (mbuf[0]); rc++)
   {
     i=process_input(mbuf, sizeof(mbuf), 1);
     if ((i>0) && (!mbuf[0]))
@@ -78,16 +78,16 @@ static void camd33_auth_client()
       pwd=usr+strlen((char *)usr)+2;
     }
     else
-      memcpy(client[cs_idx].camdbug+1, mbuf, client[cs_idx].camdbug[0]=i);
+      memcpy(cur_client()->camdbug+1, mbuf, cur_client()->camdbug[0]=i);
   }
   for (rc=-1, account=cfg->account; (usr) && (account) && (rc<0); account=account->next)
     if ((!strcmp((char *)usr, account->usr)) && (!strcmp((char *)pwd, account->pwd)))
-      rc=cs_auth_client(&client[cs_idx], account, NULL);
+      rc=cs_auth_client(cur_client(), account, NULL);
   if (!rc)
     camd33_request_emm();
   else
   {
-    if (rc<0) cs_auth_client(&client[cs_idx], 0, usr ? "invalid account" : "no user given");
+    if (rc<0) cs_auth_client(cur_client(), 0, usr ? "invalid account" : "no user given");
     cs_exit(0);
   }
 }
@@ -96,10 +96,10 @@ static int get_request(uchar *buf, int n)
 {
   int rc, w;
 
-  if (client[cs_idx].camdbug[0])
+  if (cur_client()->camdbug[0])
   {
-    memcpy(buf, client[cs_idx].camdbug+1, rc=client[cs_idx].camdbug[0]);
-    client[cs_idx].camdbug[0]=0;
+    memcpy(buf, cur_client()->camdbug+1, rc=cur_client()->camdbug[0]);
+    cur_client()->camdbug[0]=0;
     return(rc);
   }
   for (rc=w=0; !rc;)
@@ -120,9 +120,9 @@ static int get_request(uchar *buf, int n)
       case -1:
         break;
       default:
-        if (!memcmp(buf+1, client[cs_idx].usr, strlen(client[cs_idx].usr)))
+        if (!memcmp(buf+1, cur_client()->usr, strlen(cur_client()->usr)))
         {
-          cs_log("%s still alive", cs_inet_ntoa(client[cs_idx].ip));
+          cs_log("%s still alive", cs_inet_ntoa(cur_client()->ip));
           rc=w=0;
         }
 	      else
@@ -158,11 +158,11 @@ static void camd33_process_ecm(uchar *buf, int l)
   ECM_REQUEST *er;
   if (!(er=get_ecmtask()))
     return;
-  memcpy(client[cs_idx].req+(er->cpti*REQ_SIZE), buf+3, 4);	// save pin
+  memcpy(cur_client()->req+(er->cpti*REQ_SIZE), buf+3, 4);	// save pin
   er->l=l-7;
   er->caid=b2i(2, buf+1);
   memcpy(er->ecm , buf+7, er->l);
-  get_cw(&client[cs_idx], er);
+  get_cw(cur_client(), er);
 }
 
 static void camd33_process_emm(uchar *buf, int l)
@@ -173,7 +173,7 @@ static void camd33_process_emm(uchar *buf, int l)
   memcpy(epg.caid     , buf+1, 2);
   memcpy(epg.hexserial, buf+3, 4);
   memcpy(epg.emm      , buf+7, epg.l);
-  do_emm(&client[cs_idx], &epg);
+  do_emm(cur_client(), &epg);
 }
 
 static void * camd33_server(void* cli)

@@ -19,9 +19,9 @@ static int camd35_send(uchar *buf)
 	int l;
 	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
 
-	if (!client[cs_idx].udp_fd) return(-1);
+	if (!cur_client()->udp_fd) return(-1);
 	l = 20 + buf[1] + (((buf[0] == 3) || (buf[0] == 4)) ? 0x34 : 0);
-	memcpy(rbuf, client[cs_idx].ucrc, 4);
+	memcpy(rbuf, cur_client()->ucrc, 4);
 	memcpy(sbuf, buf, l);
 	memset(sbuf + l, 0xff, 15);	// set unused space to 0xff for newer camd3's
 	memcpy(sbuf + 4, i2b(4, crc32(0L, sbuf+20, sbuf[1])), 4);
@@ -30,15 +30,15 @@ static int camd35_send(uchar *buf)
 	aes_encrypt(sbuf, l);
 
         int status;
-	if (client[cs_idx].is_udp) {
-	   status = sendto(client[cs_idx].udp_fd, rbuf, l+4, 0,
-				           (struct sockaddr *)&client[cs_idx].udp_sa,
-				            sizeof(client[cs_idx].udp_sa));
-           if (status == -1) client[cs_idx].udp_sa.sin_addr.s_addr = 0;
+	if (cur_client()->is_udp) {
+	   status = sendto(cur_client()->udp_fd, rbuf, l+4, 0,
+				           (struct sockaddr *)&cur_client()->udp_sa,
+				            sizeof(cur_client()->udp_sa));
+           if (status == -1) cur_client()->udp_sa.sin_addr.s_addr = 0;
         }
 	else {
-	   status = send(client[cs_idx].udp_fd, rbuf, l + 4, 0);
-	   if (status == -1) network_tcp_connection_close(&reader[client[cs_idx].ridx], client[cs_idx].pfd);
+	   status = send(cur_client()->udp_fd, rbuf, l + 4, 0);
+	   if (status == -1) network_tcp_connection_close(&reader[cur_client()->ridx], cur_client()->pfd);
         }
 	return status;		
 }
@@ -49,17 +49,17 @@ static int camd35_auth_client(uchar *ucrc)
   ulong crc;
   struct s_auth *account;
 
-  if (client[cs_idx].upwd[0])
-    return(memcmp(client[cs_idx].ucrc, ucrc, 4) ? 1 : 0);
-  client[cs_idx].crypted=1;
+  if (cur_client()->upwd[0])
+    return(memcmp(cur_client()->ucrc, ucrc, 4) ? 1 : 0);
+  cur_client()->crypted=1;
   crc=(((ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3]) & 0xffffffffL);
-  for (account=cfg->account; (account) && (!client[cs_idx].upwd[0]); account=account->next)
-    if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), client[cs_idx].dump), 16))
+  for (account=cfg->account; (account) && (!cur_client()->upwd[0]); account=account->next)
+    if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cur_client()->dump), 16))
     {
-      memcpy(client[cs_idx].ucrc, ucrc, 4);
-      strcpy((char *)client[cs_idx].upwd, account->pwd);
-      aes_set_key((char *) MD5(client[cs_idx].upwd, strlen((char *)client[cs_idx].upwd), client[cs_idx].dump));
-      rc=cs_auth_client(&client[cs_idx], account, NULL);
+      memcpy(cur_client()->ucrc, ucrc, 4);
+      strcpy((char *)cur_client()->upwd, account->pwd);
+      aes_set_key((char *) MD5(cur_client()->upwd, strlen((char *)cur_client()->upwd), cur_client()->dump));
+      rc=cs_auth_client(cur_client(), account, NULL);
     }
   return(rc);
 }
@@ -147,27 +147,27 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	time_t now;
 	uchar mbuf[1024];
 
-	au = client[cs_idx].au;
+	au = cur_client()->au;
 	if ((au < 0) || (au > CS_MAXREADER))
 		return;  // TODO
 
 	time(&now);
-	if (!memcmp(client[cs_idx].lastserial, reader[au].hexserial, 8))
-		if (abs(now-client[cs_idx].last) < 180) return;
+	if (!memcmp(cur_client()->lastserial, reader[au].hexserial, 8))
+		if (abs(now-cur_client()->last) < 180) return;
 
-	memcpy(client[cs_idx].lastserial, reader[au].hexserial, 8);
-	client[cs_idx].last = now;
+	memcpy(cur_client()->lastserial, reader[au].hexserial, 8);
+	cur_client()->last = now;
 
 	if (reader[au].caid[0])
 	{
-		client[cs_idx].disable_counter = 0;
+		cur_client()->disable_counter = 0;
 		log_emm_request(au);
 	}
 	else
-		if (client[cs_idx].disable_counter > 2)
+		if (cur_client()->disable_counter > 2)
 			return;
 		else
-			client[cs_idx].disable_counter++;
+			cur_client()->disable_counter++;
 
 	memset(mbuf, 0, sizeof(mbuf));
 	mbuf[2] = mbuf[3] = 0xff;			// must not be zero
@@ -275,13 +275,13 @@ static void camd35_process_ecm(uchar *buf)
 	if (!(er = get_ecmtask()))
 		return;
 	er->l = buf[1];
-	memcpy(client[cs_idx].req + (er->cpti*REQ_SIZE), buf, 0x34 + 20 + er->l);	// save request
+	memcpy(cur_client()->req + (er->cpti*REQ_SIZE), buf, 0x34 + 20 + er->l);	// save request
 	er->srvid = b2i(2, buf+ 8);
 	er->caid = b2i(2, buf+10);
 	er->prid = b2i(4, buf+12);
 	er->pid  = b2i(2, buf+16);
 	memcpy(er->ecm, buf + 20, er->l);
-	get_cw(&client[cs_idx], er);
+	get_cw(cur_client(), er);
 }
 
 static void camd35_process_emm(uchar *buf)
@@ -289,13 +289,13 @@ static void camd35_process_emm(uchar *buf)
 	int au;
 	EMM_PACKET epg;
 	memset(&epg, 0, sizeof(epg));
-	au = client[cs_idx].au;
+	au = cur_client()->au;
 	if ((au < 0) || (au > CS_MAXREADER)) return;  // TODO
 	epg.l = buf[1];
 	memcpy(epg.caid, buf + 10, 2);
 	memcpy(epg.provid, buf + 12 , 4);
 	memcpy(epg.emm, buf + 20, epg.l);
-	do_emm(&client[cs_idx], &epg);
+	do_emm(cur_client(), &epg);
 }
 
 static void * camd35_server(void *cli)
@@ -346,10 +346,10 @@ static void * camd35_server(void *cli)
 
 static void casc_set_account()
 {
-  strcpy((char *)client[cs_idx].upwd, reader[client[cs_idx].ridx].r_pwd);
-  memcpy(client[cs_idx].ucrc, i2b(4, crc32(0L, MD5((unsigned char *)reader[client[cs_idx].ridx].r_usr, strlen(reader[client[cs_idx].ridx].r_usr), client[cs_idx].dump), 16)), 4);
-  aes_set_key((char *)MD5(client[cs_idx].upwd, strlen((char *)client[cs_idx].upwd), client[cs_idx].dump));
-  client[cs_idx].crypted=1;
+  strcpy((char *)cur_client()->upwd, reader[cur_client()->ridx].r_pwd);
+  memcpy(cur_client()->ucrc, i2b(4, crc32(0L, MD5((unsigned char *)reader[cur_client()->ridx].r_usr, strlen(reader[cur_client()->ridx].r_usr), cur_client()->dump), 16)), 4);
+  aes_set_key((char *)MD5(cur_client()->upwd, strlen((char *)cur_client()->upwd), cur_client()->dump));
+  cur_client()->crypted=1;
 }
 
 int camd35_client_init(struct s_client *client)
@@ -428,9 +428,9 @@ int camd35_client_init_log()
   struct protoent *ptrp;
   int p_proto;
 
-  if (reader[client[cs_idx].ridx].log_port<=0)
+  if (reader[cur_client()->ridx].log_port<=0)
   {
-    cs_log("invalid port %d for camd3-loghost", reader[client[cs_idx].ridx].log_port);
+    cs_log("invalid port %d for camd3-loghost", reader[cur_client()->ridx].log_port);
     return(1);
   }
 
@@ -443,7 +443,7 @@ int camd35_client_init_log()
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
   loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(reader[client[cs_idx].ridx].log_port);
+  loc_sa.sin_port = htons(reader[cur_client()->ridx].log_port);
 
   if ((logfd=socket(PF_INET, SOCK_DGRAM, p_proto))<0)
   {
@@ -459,25 +459,25 @@ int camd35_client_init_log()
   }
 
   cs_log("camd3 loghost initialized (fd=%d, port=%d)",
-         logfd, reader[client[cs_idx].ridx].log_port);
+         logfd, reader[cur_client()->ridx].log_port);
 
   return(0);
 }
 
 static int tcp_connect()
 {
-  if (!reader[client[cs_idx].ridx].tcp_connected)
+  if (!reader[cur_client()->ridx].tcp_connected)
   {
     int handle=0;
     handle = network_tcp_connection_open();
     if (handle<0) return(0);
 
-    reader[client[cs_idx].ridx].tcp_connected = 1;
-    reader[client[cs_idx].ridx].card_status = CARD_INSERTED;
-    reader[client[cs_idx].ridx].last_s = reader[client[cs_idx].ridx].last_g = time((time_t *)0);
-    client[cs_idx].pfd = client[cs_idx].udp_fd = handle;
+    reader[cur_client()->ridx].tcp_connected = 1;
+    reader[cur_client()->ridx].card_status = CARD_INSERTED;
+    reader[cur_client()->ridx].last_s = reader[cur_client()->ridx].last_g = time((time_t *)0);
+    cur_client()->pfd = cur_client()->udp_fd = handle;
   }
-  if (!client[cs_idx].udp_fd) return(0);
+  if (!cur_client()->udp_fd) return(0);
   return(1);
 }
 
@@ -529,9 +529,9 @@ static int camd35_send_emm(EMM_PACKET *ep)
 {
 	uchar buf[512];
 	
-        if (client[cs_idx].is_udp) {
-           if (!client[cs_idx].udp_sa.sin_addr.s_addr || reader[client[cs_idx].ridx].last_s-reader[client[cs_idx].ridx].last_g > reader[client[cs_idx].ridx].tcp_rto)
-              if (!hostResolve(&reader[client[cs_idx].ridx])) return -1;
+        if (cur_client()->is_udp) {
+           if (!cur_client()->udp_sa.sin_addr.s_addr || reader[cur_client()->ridx].last_s-reader[cur_client()->ridx].last_g > reader[cur_client()->ridx].tcp_rto)
+              if (!hostResolve(&reader[cur_client()->ridx])) return -1;
         }
         else {
            if (!tcp_connect()) return -1;

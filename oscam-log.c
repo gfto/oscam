@@ -190,7 +190,7 @@ static void write_to_log(int flag, char *txt)
 		{
 			if (client[i].monlvl<2)
 			{
-				if ((cur_client()->typ != 'c') && (client[cs_idx].typ != 'm'))
+				if ((cur_client()->typ != 'c') && (cur_client()->typ != 'm'))
 					continue;
 				if (strcmp(cur_client()->usr, client[i].usr))
 					continue;
