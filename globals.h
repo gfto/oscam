@@ -1012,6 +1012,7 @@ struct s_config
 	in_addr_t	rad_srvip;
 	int		cc_port;
 	int		cc_reshare;
+	int		cc_ignore_reshare;
 	int		cc_update_interval;
 	in_addr_t	cc_srvip;
 	uchar		cc_version[7];

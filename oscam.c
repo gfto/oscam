@@ -351,14 +351,11 @@ static void cs_master_alarm()
   fflush(stderr);
 }
 
-static int in_sigpipe=0;
-
 static void cs_sigpipe()
 {
-  if (in_sigpipe) return; //This avoids recusive signals!
-  in_sigpipe = 1;
-  cs_log("Got sigpipe signal -> captured");
-  in_sigpipe = 0;
+  //cs_log("Got sigpipe signal -> captured");
+  cs_log("Got sigpipe signal --> closing!");
+  cs_exit(1);
 }
 
 void cs_exit(int sig)

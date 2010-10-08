@@ -2319,7 +2319,7 @@ int same_last_node(struct cc_card *card1, struct cc_card *card2) {
 /**
  * Adds a new card to a cardlist.
  */
-int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
+int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 	int modified = 0;
 	LLIST_ITR itr;
 	struct cc_card *card2 = llist_itr_init(cardlist, &itr);
@@ -2335,6 +2335,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
 			card2 = create_card(card);
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
+			card2->maxdown = reshare;
 			llist_append(cardlist, card2);
 			modified = 1;
 
@@ -2360,6 +2361,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
 			card2 = create_card(card);
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
+			card2->maxdown = reshare;
 			llist_append(cardlist, card2);
 			modified = 1;
 		} else {
@@ -2382,6 +2384,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
 			card2 = create_card(card);
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
+			card2->maxdown = reshare;
 			llist_append(cardlist, card2);
 			modified = 1;
 			if (add_card_providers(card2, card, 1))
@@ -2610,27 +2613,30 @@ int cc_srv_report_cards() {
 				LLIST_ITR itr;
 				card = llist_itr_init(rcc->cards, &itr);
 				while (card) {
-					if (card->hop <= maxhops && //card->maxdown > 0 &&
+					if (card->hop <= maxhops && 
 							chk_ctab(card->caid, &cl->ctab) && chk_ctab(
 							card->caid, &reader[r].ctab)) {
-						int ignore = 0;
+                                                      
+                                                if (cfg->cc_ignore_reshare || card->maxdown > 0) {
+                                                        int ignore = 0;
 
-						LLIST_ITR itr_prov;
-						struct cc_provider *prov = llist_itr_init(
+                                                        LLIST_ITR itr_prov;
+                                                        struct cc_provider *prov = llist_itr_init(
 								card->providers, &itr_prov);
-						while (prov) {
-							ulong prid = prov->prov;
-							prov = llist_itr_next(&itr_prov);
-							if (!chk_srvid_by_caid_prov(cur_client(), card->caid, prid) || !chk_srvid_by_caid_prov(
-									&client[reader[r].cidx], card->caid, prid)) {
-								ignore = 1;
-								break;
-							}
-						}
-						if (!ignore) { //Filtered by service
-							card->maxdown = reshare;
-							add_card_to_serverlist(server_cards, card);
-							count++;
+                                                        while (prov) {
+							        ulong prid = prov->prov;
+                                                                prov = llist_itr_next(&itr_prov);
+                                                                if (!chk_srvid_by_caid_prov(cur_client(), card->caid, prid) || 
+                                                                                !chk_srvid_by_caid_prov(&client[reader[r].cidx], card->caid, prid)) {
+                                                                        ignore = 1;
+                                                                        break;
+                                                                }
+                                                        }
+                                                        if (!ignore) { //Filtered by service
+          							add_card_to_serverlist(server_cards, card, 
+          							  cfg->cc_ignore_reshare?reshare:card->maxdown-1);
+		        					count++;
+                                                        }
 						}
 					}
 					card = llist_itr_next(&itr);

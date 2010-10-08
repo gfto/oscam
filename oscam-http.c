@@ -1679,9 +1679,25 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				LLIST_ITR itr;
 				card = llist_itr_init(rcc->cards, &itr);
 				while (card) {
+					char *node_str = malloc(llist_count(card->remote_nodes)*16+2);
+					char *node_ptr = node_str;
+					LLIST_ITR nitr;
+					uint8 *node = llist_itr_init(card->remote_nodes, &nitr);
+					while (node) {
+						if (node_ptr != node_str) {
+							strcat(node_ptr, ",");
+							node_ptr++;
+						}
+						sprintf(node_ptr, "%02X%02X%02X%02X%02X%02X%02X%02X", 
+							node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
+						node_ptr += 16;
+						node = llist_itr_next(&nitr);
+					}
 
 					tpl_printf(vars, 1, "LOGHISTORY",
-							"caid: %04X hop: %d<BR>\n", card->caid, card->hop);
+							"caid: %04X hop: %d reshare: %d remote nodes: %s<BR>\n", 
+							card->caid, card->hop, card->maxdown, node_str);
+					free(node_str);
 
 					int provcount = 0;
 					LLIST_ITR pitr;
