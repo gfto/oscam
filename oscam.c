@@ -1426,7 +1426,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	fclose(pfCWL);
 }
 
-int write_ecm_answer(struct s_reader * reader, int fd, ECM_REQUEST *er)
+int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 {
   int i;
   uchar c;
@@ -1456,12 +1456,11 @@ int write_ecm_answer(struct s_reader * reader, int fd, ECM_REQUEST *er)
     logCWtoFile(er);
   }
 
-  if( er->client && er->client->fd_m2c ) {
+  if( er->client && er->client->fd_m2c )
 	//fixme
-	fd=er->client->fd_m2c;
-  }
-
-  return(write_ecm_request(fd, er));
+    return(write_ecm_request(er->client->fd_m2c, er));
+  else
+    return(write_ecm_request(client[0].fd_m2c, er)); //does this ever happen?
 }
 
   /*

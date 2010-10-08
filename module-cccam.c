@@ -893,7 +893,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			er->rcEx = 0x27;
 			cs_debug_mask(D_TRACE, "%s server not init! ccinit=%d pfd=%d",
 					getprefix(), cc ? 1 : 0, cl->pfd);
-			write_ecm_answer(rdr, client[0].fd_m2c, er);
+			write_ecm_answer(rdr, er);
 		}
 		cc_cli_close();
 		cs_debug_mask(D_FUT, "cc_send_ecm out");
@@ -1115,7 +1115,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 			cur_er->rc = 0;
 			cur_er->rcEx = 0x27;
-			write_ecm_answer(rdr, client[0].fd_m2c, cur_er);
+			write_ecm_answer(rdr, cur_er);
 			//cur_er->rc = 1;
 			//cur_er->rcEx = 0;
 			//cs_sleepms(300);

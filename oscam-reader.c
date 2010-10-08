@@ -75,7 +75,7 @@ static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
       }
       else
         cur_client()->ecmtask[i].rc=0;    
-      write_ecm_answer(reader, client[0].fd_m2c, &cur_client()->ecmtask[i]);
+      write_ecm_answer(reader, &cur_client()->ecmtask[i]);
       cur_client()->ecmtask[i].idx=0;
     }
   }
@@ -451,14 +451,14 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
     cs_debug("caid %04X filtered", er->caid);
     er->rcEx=E2_CAID;
     er->rc=0;
-    write_ecm_answer(reader, client[0].fd_m2c, er);
+    write_ecm_answer(reader, er);
     return;
   }
   // cache2
   if (check_ecmcache2(er, er->client->grp))
   {
     er->rc=2;
-    write_ecm_answer(reader, client[0].fd_m2c, er);
+    write_ecm_answer(reader, er);
     return;
   }
   if (reader->typ & R_IS_CASCADING)
@@ -497,7 +497,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		int clcw;
 		for (clcw=0;clcw<16;clcw++) er->cw[clcw]=(uchar)0;
 		snprintf( er->msglog, MSGLOGSIZE, "ECMratelimit no space for srvid" );
-		write_ecm_answer(reader, client[0].fd_m2c, er);
+		write_ecm_answer(reader, er);
 		return;
 	} else {
 		reader->rlecmh[foundspace].last=time(NULL);
@@ -508,7 +508,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
   er->msglog[0] = 0;
   er->rc=reader_ecm(reader, er);
-  write_ecm_answer(reader, client[0].fd_m2c, er);
+  write_ecm_answer(reader, er);
   reader_post_process(reader);
 #endif
   //fixme re-activated code for testing

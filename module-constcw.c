@@ -121,7 +121,7 @@ static int constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msg
     }
 
     //cs_sleepms(50);
-    write_ecm_answer(reader, client[0].fd_m2c, er);
+    write_ecm_answer(reader, er);
     
     client->last = t;
     rdr->last_g = t;
