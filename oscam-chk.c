@@ -68,22 +68,22 @@ int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab)
   return(rc==3);
 }
 
-int chk_srvid_by_caid_prov(ushort caid, ulong provid, int idx) {
+int chk_srvid_by_caid_prov(struct s_client *cl, ushort caid, ulong provid) {
   int nr, rc=0;
   SIDTAB *sidtab;
 
-  if (!client[idx].sidtabok)
+  if (!cl->sidtabok)
   {
-    if (!client[idx].sidtabno) return(1);
+    if (!cl->sidtabno) return(1);
     rc=1;
   }
   for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
     {
-      if ((client[idx].sidtabno&((SIDTABBITS)1<<nr)) &&
+      if ((cl->sidtabno&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         return(0);
-      if ((client[idx].sidtabok&((SIDTABBITS)1<<nr)) &&
+      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         rc=1;
     }

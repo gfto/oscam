@@ -2472,7 +2472,7 @@ int cc_srv_report_cards() {
 					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
 					for (k = 0; k < reader[r].ftab.filts[j].nprids; k++) {
 						ulong prid = reader[r].ftab.filts[j].prids[k];
-						if (!chk_srvid_by_caid_prov(caid, prid, cs_idx)) {
+						if (!chk_srvid_by_caid_prov(cur_client(), caid, prid)) {
 							ignore = 1;
 							break;
 						}
@@ -2621,9 +2621,8 @@ int cc_srv_report_cards() {
 						while (prov) {
 							ulong prid = prov->prov;
 							prov = llist_itr_next(&itr_prov);
-							if (!chk_srvid_by_caid_prov(card->caid, prid,
-									cs_idx) || !chk_srvid_by_caid_prov(
-									card->caid, prid, reader[r].cidx)) {
+							if (!chk_srvid_by_caid_prov(cur_client(), card->caid, prid) || !chk_srvid_by_caid_prov(
+									&client[reader[r].cidx], card->caid, prid)) {
 								ignore = 1;
 								break;
 							}

@@ -289,13 +289,13 @@ static int idx_from_ip(in_addr_t ip, in_port_t port)
   return(idx);
 }
 
-int idx_from_pid(pid_t pid)
+struct s_client * idx_from_tid(unsigned long tid) //FIXME untested!! no longer pid in output...
 {
   int i, idx;
   for (i=0, idx=(-1); (i<CS_MAXPID) && (idx<0); i++)
-    if (client[i].pid==pid)
+    if (client[i].thread==tid)
       idx=i;
-  return(idx);
+  return &client[idx];
 }
 
 static long chk_caid(ushort caid, CAIDTAB *ctab)

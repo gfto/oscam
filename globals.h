@@ -1231,7 +1231,7 @@ extern pthread_mutex_t gethostbyname_lock;
 // oscam
 extern int recv_from_udpipe(uchar *);
 extern char* username(struct s_client *);
-extern int idx_from_pid(pid_t);
+extern struct s_client * idx_from_tid(unsigned long);
 extern int chk_bcaid(ECM_REQUEST *, CAIDTAB *);
 extern void cs_exit(int sig);
 extern int cs_fork(in_addr_t);
@@ -1273,7 +1273,7 @@ extern void update_reader_config(uchar *ptr);
 extern void clear_reader_stat(int ridx);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab);
-extern int chk_srvid_by_caid_prov(ushort caid, ulong provid, int idx);
+extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
 extern void kill_thread(int cidx);
                  
 #ifdef CS_ANTICASC
@@ -1451,8 +1451,7 @@ extern void module_dvbapi(struct s_module *);
 #endif
 
 // module-monitor
-extern char *monitor_get_proto(int idx);
-extern int cs_idx2ridx(int idx);
+extern char *monitor_get_proto(struct s_client *);
 
 #ifdef WEBIF
 // oscam-http

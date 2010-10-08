@@ -1587,7 +1587,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 			if ((now - client[i].lastecm) < hideclient) {
 				status = "<b>online</b>"; classname="online";
 				isonline = 1;
-				proto = monitor_get_proto(i);
+				proto = monitor_get_proto(&client[i]);
 				lastchan = get_servicename(client[i].last_srvid, client[i].last_caid);
 				lastresponsetm = client[i].cwlastresptime;
 				isec = now - client[i].last;
@@ -1792,7 +1792,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			isec=now-client[i].last;
 			usr=client[i].usr;
 
-			if (((client[i].typ=='r') || (client[i].typ=='p')) && (con=cs_idx2ridx(i))>=0) usr=reader[con].label;
+			if (((client[i].typ=='r') || (client[i].typ=='p')) && (con=client[i].ridx)>=0) usr=reader[con].label;
 
 			if (((client[i].typ!='r') || (client[i].typ!='p')) && (client[i].lastreader[0]))
 				tpl_printf(vars, 0, "CLIENTLBVALUE", "%s", client[i].lastreader);
@@ -1828,7 +1828,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", client[i].crypted);
 			tpl_printf(vars, 0, "CLIENTIP", "%s", cs_inet_ntoa(client[i].ip));
 			tpl_printf(vars, 0, "CLIENTPORT", "%d", client[i].port);
-			tpl_addVar(vars, 0, "CLIENTPROTO", monitor_get_proto(i));
+			tpl_addVar(vars, 0, "CLIENTPROTO", monitor_get_proto(&client[i]));
 			tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
 			tpl_printf(vars, 0, "CLIENTLOGINTIME", "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
 
