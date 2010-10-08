@@ -508,7 +508,8 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 	static int emm_global_len = 0;
 	int pos, emm_len = 0, k;
 	uchar emmbuf[512];
-
+    unsigned long provid=0;
+    
 	if (demux[demux_index].pidindex==-1) return;
 
 	ulong provider = demux[demux_index].ECMpids[demux[demux_index].pidindex].PROVID;
@@ -519,6 +520,11 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 			switch(buffer[0]) {
 				case 0x88:
 					// emm-u
+					if (buffer[3] == 0x90 && buffer[4] == 0x03) {
+						provid = buffer[5] << 16 | buffer[6] << 8 | (buffer[7] & 0xFE);
+					}
+					else // we should get there but just to make sure we're not sending crap.
+					   provid=0;
 					break;
 
 				case 0x8a:
@@ -542,6 +548,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					if (emm_provid!=provider)
 						return;
 
+                    provid=emm_provid;
 					//cs_log("viaccess global emm_provid: %06X provid: %06X", emm_provid, provider);
 
 					// copy first part of the emm-s
@@ -556,6 +563,12 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 
 					if (buffer[6]!=0x00) return;
 
+					if (emm_global[3] == 0x90 && emm_global[4] == 0x03) {
+						provid = emm_global[5] << 16 | emm_global[6] << 8 | (emm_global[7] & 0xFE);
+					}
+					else // we should get there but just to make sure we're not sending crap.
+					   provid=0;
+					   
 					memcpy(emmbuf, buffer, 7);
 					pos=7;
 
@@ -660,7 +673,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
     // at this point buffer contains the current emm, which can be for any of the provider we're supporting
     // and each emm has a different structure depending on the CA system and store the provider ID at a different
     // position. So extracting it like this will probably only work for 1 CA (viaccess, nds, conax, seca, ....).
-    // As we get the provide from the demux above, why are we doing this ? the provider ID for this emm should be the
+    // As we get the provider from the demux above, why are we doing this ? the provider ID for this emm should be the
     // one from : ulong provider = demux[demux_index].ECMpids[demux[demux_index].pidindex].PROVID;
     // and below, after defining it with (buffer[10] << 8) | buffer[11];, it's potentialy overwriten by :
     // provid = (cfg->dvbapi_prioritytab.cmap[pid] << 8 | cfg->dvbapi_prioritytab.mask[pid]);
@@ -668,13 +681,15 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
     // So I think the line bellow should be :
     // unsigned long provid = provider;
     //
-	unsigned long provid = (buffer[10] << 8) | buffer[11];
-	
-	int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
-	if (pid>=0) {
-		if (cfg->dvbapi_prioritytab.mask[pid]>0)
-			provid = (cfg->dvbapi_prioritytab.cmap[pid] << 8 | cfg->dvbapi_prioritytab.mask[pid]);
-	}
+	// unsigned long provid = (buffer[10] << 8) | buffer[11];
+
+	if(!provid) {
+        int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
+        if (pid>=0) {
+            if (cfg->dvbapi_prioritytab.mask[pid]>0) 
+                provid = ((cfg->dvbapi_prioritytab.cmap[pid] << 8 | cfg->dvbapi_prioritytab.mask[pid]))<<8; // provid is 3 byte .. not 2 so I added a <<8
+        }
+    }
 
 	epg.provid[1] = (uchar)(provid>>16);
 	epg.provid[2] = (uchar)(provid>>8);
