@@ -113,13 +113,12 @@ int cs_init_log(char *file)
 static char *get_log_header(int m, char *txt)
 {
 	if(m) {
-		sprintf(txt, "%6d ", getpid());
-		if (cs_idx) {
 			switch (cur_client()->typ) {
 				case 'r':
 				case 'p':
 				case 'm':
-				case 'c':	sprintf(txt+7, "%c%02d ", cur_client()->typ, cs_idx);
+				case 's':
+				case 'c':	sprintf(txt, "%c %08lX ", cur_client()->typ, (unsigned long) pthread_self());
 							break;
 #ifdef CS_ANTICASC
 				case 'a':
@@ -129,12 +128,9 @@ static char *get_log_header(int m, char *txt)
 #endif
 							break;
 			}
-		} else {
-			strcpy(txt+7, "s   ");
-		}
-	} else {
-		sprintf(txt, "%-11.11s", "");
 	}
+	else
+		sprintf(txt, "%-11.11s", "");
 	return(txt);
 }
 
@@ -198,7 +194,7 @@ static void write_to_log(int flag, char *txt)
 			sprintf(sbuf, "%03d", client[i].logcounter);
 			client[i].logcounter = (client[i].logcounter+1) % 1000;
 			memcpy(log_buf + 4, sbuf, 3);
-			monitor_send_idx(i, log_buf);
+			monitor_send_idx(&client[i], log_buf);
 		}
 	}
 }

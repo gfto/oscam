@@ -15,11 +15,11 @@ void aes_decrypt(uchar *buf, int n)
     AES_decrypt(buf+i, buf+i, &cur_client()->aeskey_decrypt);
 }
 
-void aes_encrypt_idx(int idx, uchar *buf, int n)
+void aes_encrypt_idx(struct s_client *cl, uchar *buf, int n)
 {
   int i;
   for(i=0; i<n; i+=16)
-    AES_encrypt(buf+i, buf+i, &client[idx].aeskey);
+    AES_encrypt(buf+i, buf+i, &cl->aeskey);
 }
 
 void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, uchar *aesKey)

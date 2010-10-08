@@ -80,33 +80,33 @@ static int secmon_auth_client(uchar *ucrc)
 	return(cur_client()->auth);
 }
 
-int monitor_send_idx(int idx, char *txt)
+int monitor_send_idx(struct s_client *cl, char *txt)
 {
 	int l;
 	unsigned char buf[256+32];
-	if (!client[idx].udp_fd)
+	if (!cl->udp_fd)
 		return(-1);
 	struct timespec req_ts;
 	req_ts.tv_sec = 0;
 	req_ts.tv_nsec = 500000;
 	nanosleep (&req_ts, NULL);//avoid lost udp-pakkets
-	if (!client[idx].crypted)
-		return(sendto(client[idx].udp_fd, txt, strlen(txt), 0,
-				(struct sockaddr *)&client[idx].udp_sa,
-				sizeof(client[idx].udp_sa)));
+	if (!cl->crypted)
+		return(sendto(cl->udp_fd, txt, strlen(txt), 0,
+				(struct sockaddr *)&cl->udp_sa,
+				sizeof(cl->udp_sa)));
 	buf[0]='&';
 	buf[9]=l=strlen(txt);
 	l=boundary(4, l+5)+5;
-	memcpy(buf+1, client[idx].ucrc, 4);
+	memcpy(buf+1, cl->ucrc, 4);
 	strcpy((char *)buf+10, txt);
 	memcpy(buf+5, i2b(4, crc32(0L, buf+10, l-10)), 4);
-	aes_encrypt_idx(idx, buf+5, l-5);
-	return(sendto(client[idx].udp_fd, buf, l, 0,
-			(struct sockaddr *)&client[idx].udp_sa,
-			sizeof(client[idx].udp_sa)));
+	aes_encrypt_idx(cl, buf+5, l-5);
+	return(sendto(cl->udp_fd, buf, l, 0,
+			(struct sockaddr *)&cl->udp_sa,
+			sizeof(cl->udp_sa)));
 }
 
-#define monitor_send(t) monitor_send_idx(cs_idx, t)
+#define monitor_send(t) monitor_send_idx(cur_client(), t)
 
 static int monitor_recv(struct s_client * client, uchar *buf, int l)
 {

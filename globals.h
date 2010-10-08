@@ -1387,14 +1387,14 @@ extern void cs_dump(const uchar *, int, char *, ...);
 // oscam-aes
 extern void aes_set_key(char *);
 extern void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, uchar *aesKey);
-extern void aes_encrypt_idx(int, uchar *, int);
+extern void aes_encrypt_idx(struct s_client *, uchar *, int);
 extern void aes_decrypt(uchar *, int);
 extern int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n);
 extern int aes_present(AES_ENTRY *list, ushort caid, uint32 provid,int keyid);
 extern void parse_aes_keys(struct s_reader *rdr,char *value);
 extern void aes_clear_entries(struct s_reader *rdr);
 
-#define aes_encrypt(b, n) aes_encrypt_idx(cs_idx, b, n)
+#define aes_encrypt(b, n) aes_encrypt_idx(cur_client(), b, n)
 
 // reader-common
 extern int reader_device_init(struct s_reader * reader);
@@ -1432,7 +1432,7 @@ void reader_dre();
 void reader_tongfang();
 
 // protocol modules
-extern int  monitor_send_idx(int, char *);
+extern int  monitor_send_idx(struct s_client *, char *);
 extern void module_monitor(struct s_module *);
 extern void module_camd35(struct s_module *);
 extern void module_camd35_tcp(struct s_module *);
