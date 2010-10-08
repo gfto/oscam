@@ -412,7 +412,7 @@ void cs_exit(int sig)
 	}
 
 	// this is very important - do not remove
-	if (cs_idx>0) {
+	if (cl->typ != 's') {
 		if(cl->ecmtask) 	free(cl->ecmtask);
 		if(cl->emmcache) 	free(cl->emmcache);
 		if(cl->req) 		free(cl->req);
@@ -422,7 +422,7 @@ void cs_exit(int sig)
 		if(cl->fd_m2c_c)	close(cl->fd_m2c_c); //Closing client read fd
 		if(cl->fd_m2c)	close(cl->fd_m2c); //Closing client read fd
 
-		cs_log("thread %d ended!", cs_idx);
+		cs_log("thread %08lX ended!", pthread_self());
 		cl->pid=0;
 
 		pthread_exit(NULL);
@@ -862,7 +862,7 @@ static void start_thread(void * startroutine, char * nameroutine, char typ) {
 void kill_thread(int cidx) {
 
 	if (client[cidx].pid==0) return;
-	if (cs_idx==cidx) return; //cant kill yourself
+	if (pthread_equal(client[cidx].thread, pthread_self())) return; //cant kill yourself
 
 	pthread_cancel(client[cidx].thread);
 
@@ -937,7 +937,7 @@ void restart_cardreader(int reader_idx, int restart) {
 
 		reader[reader_idx].fd=client[i].fd_m2c;
 		client[i].ridx=reader_idx;
-		cs_log("creating thread for device %s slot %i with ridx %i cs_idx %i", reader[reader_idx].device, reader[reader_idx].slot, reader_idx, i);
+		cs_log("creating thread for device %s slot %i with ridx %i", reader[reader_idx].device, reader[reader_idx].slot, reader_idx);
              	
 		client[i].sidtabok=reader[reader_idx].sidtabok;
 		client[i].sidtabno=reader[reader_idx].sidtabno;
@@ -1010,13 +1010,13 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 			{
 				client[i].dup = 1;
 				client[i].au = -1;
-				cs_log("client(%d) duplicate user '%s' from %s set to fake (uniq=%d)", i, usr, cs_inet_ntoa(ip), uniq);
+				cs_log("client(%08lX) duplicate user '%s' from %s set to fake (uniq=%d)", client[i].thread, usr, cs_inet_ntoa(ip), uniq);
 			}
 			else
 			{
 				client->dup = 1;
 				client->au = -1;
-				cs_log("client(%d) duplicate user '%s' from %s set to fake (uniq=%d)", cs_idx, usr, cs_inet_ntoa(ip), uniq);
+				cs_log("client(%08lX) duplicate user '%s' from %s set to fake (uniq=%d)", pthread_self(), usr, cs_inet_ntoa(ip), uniq);
 				break;
 			}
 
@@ -1273,7 +1273,7 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 		return -1;
 	}
 
-	cs_debug("write to pipe %d (%s) cs_idx: %d to %d", fd, PIP_ID_TXT[id], cs_idx, get_thread_by_pipefd(fd));
+	cs_debug("write to pipe %d (%s) thread: %08lX to %d", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd));
 
 	uchar buf[3+sizeof(void*)];
 
@@ -1328,7 +1328,7 @@ int read_from_pipe(int fd, uchar **data, int redir)
 	memcpy(id, buf, 3);
 	id[3]='\0';
 
-	cs_debug("read from pipe %d (%s) cs_idx: %d", fd, id, cs_idx);
+	cs_debug("read from pipe %d (%s) thread: %08lX", fd, id, pthread_self());
 
 	int l;
 	for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)

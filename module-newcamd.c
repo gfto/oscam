@@ -510,7 +510,7 @@ static FILTER mk_user_ftab()
   }
 
   // search CAID in client IDENT
-  cs_debug("client[%d].%s nfilts=%d, filt.caid=%04X", cs_idx,
+  cs_debug("client[%08lX].%s nfilts=%d, filt.caid=%04X", pthread_self(),
            cur_client()->usr, cur_client()->ftab.nfilts, filt.caid);
 
   if( !filt.caid && cur_client()->ftab.nfilts ) 
