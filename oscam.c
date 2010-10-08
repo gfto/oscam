@@ -1456,9 +1456,9 @@ int write_ecm_answer(struct s_reader * reader, int fd, ECM_REQUEST *er)
     logCWtoFile(er);
   }
 
-  if( er->cidx && client[er->cidx].fd_m2c ) {
+  if( er->client && er->client->fd_m2c ) {
 	//fixme
-	fd=client[er->cidx].fd_m2c;
+	fd=er->client->fd_m2c;
   }
 
   return(write_ecm_request(fd, er));
@@ -1522,7 +1522,7 @@ ECM_REQUEST *get_ecmtask()
 		memset(er, 0, sizeof(ECM_REQUEST));
 		er->rc=100;
 		er->cpti=n;
-		er->cidx=cs_idx;
+		er->client=cur_client();
 		cs_ftime(&er->tps);
 	}
 	return(er);
