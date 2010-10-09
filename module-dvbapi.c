@@ -622,7 +622,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 				case 0x86:
 				    cs_log("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, len));
 					if (!emm_global_len) return;
-                    provid[4]=buffer[7];
+                    provid=buffer[7];
                     
 					// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
 					// now we need to append the payload of the 0x86 emm (EMM-SB)
@@ -667,34 +667,9 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 	cs_ddump(buffer, len, "emm from fd %d:", demux[demux_index].demux_fd[filter_num].fd);
 
 	memset(&epg, 0, sizeof(epg));
-	epg.caid[0] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID>>8);
-	epg.caid[1] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
 
-    // This will only works on some emm as each emm set the provider id differently.
-    // at this point buffer contains the current emm, which can be for any of the provider we're supporting
-    // and each emm has a different structure depending on the CA system and store the provider ID at a different
-    // position. So extracting it like this will probably only work for 1 CA (viaccess, nds, conax, seca, ....).
-    // As we get the provider from the demux above, why are we doing this ? the provider ID for this emm should be the
-    // one from : ulong provider = demux[demux_index].ECMpids[demux[demux_index].pidindex].PROVID;
-    // and below, after defining it with (buffer[10] << 8) | buffer[11];, it's potentialy overwriten by :
-    // provid = (cfg->dvbapi_prioritytab.cmap[pid] << 8 | cfg->dvbapi_prioritytab.mask[pid]);
-    //  but if we don't find it in there we endup with a provider id which can be completely wrong !!!
-    // So I think the line bellow should be :
-    // unsigned long provid = provider;
-    //
-	// unsigned long provid = (buffer[10] << 8) | buffer[11];
-
-	if(!provid) {
-        int pid = dvbapi_check_array(cfg->dvbapi_prioritytab.caid, CS_MAXCAIDTAB, demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
-        if (pid>=0) {
-            if (cfg->dvbapi_prioritytab.mask[pid]>0) 
-                provid = ((cfg->dvbapi_prioritytab.cmap[pid] << 8 | cfg->dvbapi_prioritytab.mask[pid]))<<8; // provid is 3 byte .. not 2 so I added a <<8
-        }
-    }
-
-	epg.provid[1] = (uchar)(provid>>16);
-	epg.provid[2] = (uchar)(provid>>8);
-	epg.provid[3] = (uchar)(provid);
+	memcpy(&epg.caid, &demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID, 2);
+	memcpy(&epg.provid, &provid, 4);
 
 	epg.l=len;
 	memcpy(epg.emm, buffer, epg.l);
