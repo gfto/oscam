@@ -455,23 +455,17 @@ void dvbapi_stop_descrambling(int demux_id) {
 
 void dvbapi_start_descrambling(int demux_id) {
 	int i;
-	int j,k,l=0;
-	unsigned char ar[8];
+	int j,k;
+	
 	cs_log("Start descrambling PID #%d (CAID: %04X)", demux[demux_id].curindex, demux[demux_id].ECMpids[demux[demux_id].curindex].CAID);
 
 	i=demux[demux_id].curindex;
 	demux[demux_id].pidindex=i;
-	if (demux[demux_id].ECMpids[i].sflag == 0) ar[l++]=i;
-	else 
-	{
-		for (j=0; j<demux[demux_id].ECMpidcount; j++)
-			if (demux[demux_id].ECMpids[j].checked>0 && demux[demux_id].ECMpids[i].CAID == demux[demux_id].ECMpids[j].CAID && demux[demux_id].ECMpids[i].PROVID == demux[demux_id].ECMpids[j].PROVID ) ar[l++]=j;
-	}
-	for (i=0;i<l;i++)
-		for (j=0; j<demux[demux_id].ECMpids[ar[i]].slen; j++)
-			if (demux[demux_id].ECMpids[ar[i]].stream[j]!=(char)-1) dvbapi_set_pid(demux_id, demux[demux_id].ECMpids[ar[i]].stream[j],demux[demux_id].ECMpids[ar[i]].index);
-			else for (k=0;k<demux[demux_id].STREAMpidcount;k++) dvbapi_set_pid(demux_id, k,demux[demux_id].ECMpids[ar[i]].index);
-
+	if (demux[demux_id].ECMpids[i].sflag == 0) 	for (k=0;k<demux[demux_id].STREAMpidcount;k++) dvbapi_set_pid(demux_id, k,demux[demux_id].ECMpids[i].index);
+	else for (j=0; j<demux[demux_id].ECMpidcount; j++)
+			if (demux[demux_id].ECMpids[j].checked>0 && demux[demux_id].ECMpids[i].CAID == demux[demux_id].ECMpids[j].CAID && demux[demux_id].ECMpids[i].PROVID == demux[demux_id].ECMpids[j].PROVID ) 
+				for (k=0; k<demux[demux_id].ECMpids[j].slen; k++)	 dvbapi_set_pid(demux_id, demux[demux_id].ECMpids[j].stream[k],demux[demux_id].ECMpids[j].index);
+			
 	if (cfg->dvbapi_au==1)
 		dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x01, 0xFF, 0, TYPE_EMM); //CAT
 }
