@@ -850,7 +850,8 @@ int nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if
 {
 	unsigned long provid = (ep->emm[10] << 8) | ep->emm[11];
 
-	memcpy(&ep->provid, &provid, 4);
+	ep->provid[2] = (uchar)(provid>>8);
+	ep->provid[3] = (uchar)(provid);
 
 	switch (ep->emm[0]) {
 		case 0x83:

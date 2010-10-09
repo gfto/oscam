@@ -113,24 +113,10 @@ int cs_init_log(char *file)
 static char *get_log_header(int m, char *txt)
 {
 	if(m) {
-			switch (cur_client()->typ) {
-				case 'r':
-				case 'p':
-				case 'm':
-				case 's':
-				case 'c':	sprintf(txt, "%c %08lX ", cur_client()->typ, (unsigned long) pthread_self());
-							break;
-#ifdef CS_ANTICASC
-				case 'a':
-#endif
-#ifdef WEBIF
-				case 'h':
-#endif
-							break;
-			}
-	}
-	else
+		sprintf(txt, "%c %08lX ", cur_client()->typ, (unsigned long) pthread_self());
+	} else
 		sprintf(txt, "%-11.11s", "");
+
 	return(txt);
 }
 

@@ -668,8 +668,13 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 
 	memset(&epg, 0, sizeof(epg));
 
-	memcpy(&epg.caid, &demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID, 2);
-	memcpy(&epg.provid, &provid, 4);
+	epg.caid[0] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID>>8); 
+	epg.caid[1] = (uchar)(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID); 
+
+	epg.provid[0] = (uchar)(provid>>24); 
+	epg.provid[1] = (uchar)(provid>>16); 
+	epg.provid[2] = (uchar)(provid>>8); 
+	epg.provid[3] = (uchar)(provid); 
 
 	epg.l=len;
 	memcpy(epg.emm, buffer, epg.l);
