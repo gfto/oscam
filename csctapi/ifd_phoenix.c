@@ -70,10 +70,7 @@ int Phoenix_Init (struct s_reader * reader)
 	
 	/* Default serial port settings */
 	if (reader->atr[0] == 0) {
-        int br = DEFAULT_BAUDRATE;
-        if ((reader->mhz != reader->cardmhz) && (reader->cardmhz > 0))
-            br = reader->mhz * DEFAULT_BAUDRATE / reader->cardmhz;
-        call (IO_Serial_SetParams (reader, br, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
+        call (IO_Serial_SetParams (reader, DEFAULT_BAUDRATE, 8, PARITY_EVEN, 2, IO_SERIAL_HIGH, IO_SERIAL_LOW));
 		IO_Serial_Flush(reader);
 	}
 	return OK;
@@ -114,11 +111,7 @@ int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		unsigned char buf[ATR_MAX_SIZE];
 		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 
-        int br = DEFAULT_BAUDRATE;
-        if ((reader->mhz != reader->cardmhz) && (reader->cardmhz > 0))
-            br = reader->mhz * DEFAULT_BAUDRATE / reader->cardmhz;
-
-		call (Phoenix_SetBaudrate (reader, br));
+		call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
 
 		for(i=0; i<3; i++) {
 #ifndef OS_CYGWIN32
