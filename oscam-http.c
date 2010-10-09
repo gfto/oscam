@@ -23,6 +23,7 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 	int i;
 	switch (refreshtype) {
 		case REFR_ACCOUNTS:
+			//todo cs_log just produces empty logentries?!
 		cs_log("Refresh Accounts requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
 		//kill(client[0].pid, SIGHUP);
 		init_userdb(&cfg->account);
@@ -1462,6 +1463,9 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 
 	tpl_printf(vars, 0, "CCCMAXHOPS", "%d", account->cccmaxhops);
 	tpl_printf(vars, 0, "CCCRESHARE", "%d", account->cccreshare);
+
+	//Failban
+	tpl_printf(vars, 0, "FAILBAN", "%d", account->failban);
 
 	fputs(tpl_getTpl(vars, "USEREDIT"), f);
 }

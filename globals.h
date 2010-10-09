@@ -279,6 +279,9 @@ extern void cs_switch_led(int led, int action);
 #define SIDTABBITS uint64      // 64bit type for services, if a system does not support this type,
                                // please use a define and define it as uint32 / MAX_SIDBITS 32
 
+#define BAN_UNKNOWN 1			//failban mask for anonymous/ unknown contact
+#define BAN_DISABLED 2			//failban mask for disabled user
+#define BAN_SLEEPING 4			//failban mask for sleeping user
 
 typedef struct s_classtab
 {
@@ -626,6 +629,9 @@ struct s_client
 
   //oscam.c
   struct timeval tv;
+
+  //failban value set bitwise - compared with BAN_
+  int failban;
 };
 
 
@@ -897,6 +903,7 @@ struct s_auth
   int       cccmaxhops;
   int       cccreshare;
   int       disabled;
+  int 		failban;
   struct   s_auth *next;
 };
 

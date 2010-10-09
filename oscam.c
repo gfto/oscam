@@ -470,6 +470,7 @@ void cs_reinit_clients()
 
 				client[i].sidtabok	= account->sidtabok;   // services
 				client[i].sidtabno	= account->sidtabno;   // services
+				client[i].failban	= account->failban;
 
 				memcpy(&client[i].ctab, &account->ctab, sizeof(client[i].ctab));
 				memcpy(&client[i].ttab, &account->ttab, sizeof(client[i].ttab));
@@ -1071,6 +1072,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				client->last_srvid = 0xFFFE;
 				client->expirationdate=account->expirationdate;
 				client->disabled=account->disabled;
+				client->failban=account->failban;
 				client->c35_suppresscmd08 = account->c35_suppresscmd08;
 				client->ncd_keepalive = account->ncd_keepalive;
 				client->grp=account->grp;
@@ -2088,8 +2090,14 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	// user disabled
-	if(client->disabled != 0)
+	if(client->disabled != 0) {
+		if (client->failban & BAN_DISABLED){
+			cs_add_violation(client->ip);
+			cs_exit(SIGQUIT);
+		}
 		er->rc = 12;
+	}
+
 
 	// rc<100 -> ecm error
 	if (er->rc > 99) {
@@ -2106,6 +2114,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 		// user sleeping
 		if ((client->tosleep) && (now - client->lastswitch > client->tosleep)) {
+
+			if (client->failban & BAN_SLEEPING) {
+				cs_add_violation(client->ip);
+				cs_exit(SIGQUIT);
+			}
+
 			if (client->c35_sleepsend != 0) {
 				er->rc = 13; // send stop command CMD08 {00 xx}
 			} else {
