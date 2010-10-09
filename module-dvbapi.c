@@ -517,14 +517,18 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					if (buffer[3] == 0x90 && buffer[4] == 0x03) {
 						provid = buffer[5] << 16 | buffer[6] << 8 | (buffer[7] & 0xFE);
 					}
-					else // we should get there but just to make sure we're not sending crap.
+					else // we should never get there but just to make sure we're not sending crap.
 					   provid=0;
 					break;
 
 				case 0x8a:
 				case 0x8b:
 					// emm-g
-					return;
+					if (buffer[3] == 0x90 && buffer[4] == 0x03) {
+						provid = buffer[5] << 16 | buffer[6] << 8 | (buffer[7] & 0xFE);
+					}
+					else // we should never get there but just to make sure we're not sending crap.
+					   provid=0;
 					break;
                     
 				case 0x8c:
@@ -560,7 +564,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					if (emm_global[3] == 0x90 && emm_global[4] == 0x03) {
 						provid = emm_global[5] << 16 | emm_global[6] << 8 | (emm_global[7] & 0xFE);
 					}
-					else // we should get there but just to make sure we're not sending crap.
+					else // we should never get there but just to make sure we're not sending crap.
 					   provid=0;
 					   
 					memcpy(emmbuf, buffer, 7);
@@ -614,8 +618,10 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 					emm_global_len=len;
 					return;
 				case 0x86:
-				    cs_log("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, len));
 					if (!emm_global_len) return;
+
+				    cs_log("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, len));
+					// not sure about this one, need more doc.
                     provid=buffer[7];
                     
 					// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
