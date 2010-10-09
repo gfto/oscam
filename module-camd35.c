@@ -71,7 +71,7 @@ static int camd35_recv(struct s_client *client, uchar *buf, int l)
   for (rc=rs=s=0; !rc; s++) switch(s)
   {
     case 0:
-      if (client->is_server)
+      if (client->typ == 'c')
       {
         if (!client->udp_fd) return(-9);
         if (client->is_udp)

@@ -420,7 +420,7 @@ static int newcamd_recv(struct s_client *client, uchar *buf, int l)
 {
   int rc, rs;
 
-  if (client->is_server)
+  if (client->typ == 'c')
   {
     rs=network_message_receive(client->udp_fd, 
                                &client->ncd_msgid, buf, 

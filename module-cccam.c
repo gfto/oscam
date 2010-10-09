@@ -26,7 +26,7 @@ char *getprefix() {
 		return cc->prefix;
 
 	cc->prefix = malloc(100);
-	if (cl->is_server)
+	if (cl->typ == 'c')
 		sprintf(cc->prefix, "cccam(s) %s: ", cl->usr);
 	else
 		sprintf(cc->prefix, "cccam(r) %s: ", reader[cl->ridx].label);
@@ -129,7 +129,7 @@ void cc_cw_crypt(uint8 *cws, uint32 cardid) {
 	uint8 tmp;
 	int i;
 
-	if (!cl->is_server) {
+	if (cl->typ != 'c') {
 		node_id = b2ll(8, cc->node_id);
 	} else {
 		node_id = b2ll(8, cc->peer_node_id);
@@ -458,7 +458,7 @@ void free_extended_ecm_idx(struct cc_data *cc) {
  */
 int cc_msg_recv(uint8 *buf) {
 	struct s_client *cl = cur_client();
-	struct s_reader *rdr = cl->is_server?NULL:&reader[cl->ridx];
+	struct s_reader *rdr = (cl->typ == 'c')?NULL:&reader[cl->ridx];
 	
 	int len;
 	uint8 netbuf[CC_MAXMSGSIZE + 4];
@@ -470,7 +470,7 @@ int cc_msg_recv(uint8 *buf) {
 		return -1;
 
 	len = recv(handle, netbuf, 4, MSG_WAITALL);
-	if (!cl->is_server)
+	if (cl->typ != 'c')
 		rdr->last_g = time(NULL);
 
 	if (!len)
@@ -495,7 +495,7 @@ int cc_msg_recv(uint8 *buf) {
 		}
 
 		len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
-		if (!cl->is_server)
+		if (cl->typ != 'c')
 			rdr->last_g = time(NULL);
 
 		if (len != size) {
@@ -520,7 +520,7 @@ int cc_msg_recv(uint8 *buf) {
  */
 int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	struct s_client *cl = cur_client();
-	struct s_reader *rdr = cl->is_server?NULL:&reader[cl->ridx];
+	struct s_reader *rdr = (cl->typ == 'c')?NULL:&reader[cl->ridx];
 	
 	int n;
 	uint8 netbuf[len + 4];
@@ -545,11 +545,11 @@ int cc_cmd_send(uint8 *buf, int len, cc_msg_type_t cmd) {
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(cl->udp_fd, netbuf, len, 0);
-	if (!cl->is_server)
+	if (cl->typ != 'c')
 		rdr->last_s = time(NULL);
 
 	if (n != len) {
-		if (cl->is_server)
+		if (cl->typ == 'c')
 			cs_disconnect_client(cl);
 		else
 			cc_cli_close();
@@ -1617,7 +1617,7 @@ void cc_card_removed(uint32 shareid) {
 int cc_parse_msg(uint8 *buf, int l) {
 	cs_debug_mask(D_FUT, "cc_parse_msg in %d", buf[1]);
 	struct s_client *cl = cur_client();
-	struct s_reader *rdr = cl->is_server?NULL:&reader[cl->ridx];
+	struct s_reader *rdr = (cl->typ == 'c')?NULL:&reader[cl->ridx];
 	
 	int ret = buf[1];
 	struct cc_data *cc = cl->cc;
@@ -1808,7 +1808,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 			return ret;
 		}
 
-		if (cl->is_server) //for reader only
+		if (cl->typ == 'c') //for reader only
 			return ret;
 
 		if (cc->just_logged_in)
@@ -1861,7 +1861,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 		break;
 	case MSG_CW_ECM:
 		cc->just_logged_in = 0;
-		if (cl->is_server) { //SERVER:
+		if (cl->typ == 'c') { //SERVER:
 			ECM_REQUEST *er;
 
 			struct cc_card *server_card = malloc(sizeof(struct cc_card));
@@ -1964,7 +1964,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 		
 	case MSG_KEEPALIVE:
 		cc->just_logged_in = 0;
-		if (!cl->is_server) {
+		if (cl->typ != 'c') {
 			cs_debug("cccam: keepalive ack");
 		} else {
 			//Checking if last answer is one minute ago:
@@ -1977,7 +1977,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 		break;
 		
 	case MSG_CMD_05:
-		if (!cl->is_server) {
+		if (cl->typ != 'c') {
 			cc->just_logged_in = 0;
 			l = l - 4;//Header Length=4 Byte
 
@@ -2018,7 +2018,7 @@ int cc_parse_msg(uint8 *buf, int l) {
 	}
 	case MSG_EMM_ACK: {
 		cc->just_logged_in = 0;
-		if (cl->is_server) { //EMM Request received
+		if (cl->typ == 'c') { //EMM Request received
 			cc_cmd_send(NULL, 0, MSG_EMM_ACK); //Send back ACK
 			if (l > 4) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
@@ -2196,7 +2196,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 	NULLFREE(cbuf);
 
 	if (n == -1) {
-		if (cl->is_server)
+		if (cl->typ == 'c')
 			cs_disconnect_client(cl);
 		else
 			cc_cli_close();
@@ -2800,7 +2800,6 @@ int cc_srv_connect(struct s_client *cl) {
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
 	cl->cc_extended_ecm_mode = 0;
-	cl->is_server = 1;
 
 	//Create checksum for "O" cccam:
         for (i = 0; i < 12; i++) { 
@@ -3262,7 +3261,7 @@ void cc_card_info() {
 void cc_cleanup(void) {
 	cs_debug_mask(D_FUT, "cc_cleanup in");
 	struct s_client *cl = cur_client();
-	if (!cl->is_server) {
+	if (cl->typ != 'c') {
 		cc_cli_close(); // we need to close open fd's 
 	}
 	cc_free(cl->cc);

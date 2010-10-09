@@ -235,12 +235,12 @@ int network_tcp_connection_open()
 
 void network_tcp_connection_close(struct s_reader * reader, int fd)
 {
-  cs_debug("tcp_conn_close(): fd=%d, cur_client()->is_server=%d", fd, cur_client()->is_server);
+  cs_debug("tcp_conn_close(): fd=%d, cur_client()->typ == 'c'=%d", fd, cur_client()->typ == 'c');
   if (fd)
     close(fd);
   cur_client()->udp_fd = 0;
 
-  if (!cur_client()->is_server)
+  if (!cur_client()->typ == 'c')
   {
     int i;
     //cur_client()->pfd = 0;

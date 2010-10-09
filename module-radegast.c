@@ -11,7 +11,7 @@ static int radegast_recv(struct s_client *client, uchar *buf, int l)
 {
   int n;
   if (!client->pfd) return(-1);
-  if (client->is_server) {  // server code
+  if (client->typ == 'c') {  // server code
     if ((n=recv(client->pfd, buf, l, 0))>0)
       client->last=time((time_t *) 0);
   } else {  // client code

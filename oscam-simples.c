@@ -211,7 +211,7 @@ void aes_clear_entries(struct s_reader *rdr)
 
 char *remote_txt(void)
 {
-  if (cur_client()->is_server)
+  if (cur_client()->typ == 'c')
     return("client");
   else
     return("remote server");

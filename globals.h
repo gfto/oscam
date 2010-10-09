@@ -590,7 +590,6 @@ struct s_client
   ECM_REQUEST *ecmtask;
   struct s_emm *emmcache;
 
-  int is_server;
   pthread_t thread;
 
   //reader common

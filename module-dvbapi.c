@@ -1629,7 +1629,6 @@ static void * dvbapi_handler(int ctyp) {
 		client[i].typ='c';
 		client[i].ip=0;
 		client[i].ctyp=ctyp;
-		client[i].is_server=1;
 #ifdef AZBOX
 		pthread_create(&client[i].thread, NULL, azbox_main, (void*) &client[i]);
 #else

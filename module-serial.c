@@ -117,7 +117,7 @@ static int oscam_ser_parse_url(char *url)
       if (!strcmp(service, proto_txt[i]))
         oscam_ser_proto=i;
   }
-  if ((!cur_client()->is_server) && (oscam_ser_proto==P_AUTO)) return(0);
+  if ((!cur_client()->typ == 'c') && (oscam_ser_proto==P_AUTO)) return(0);
   switch(oscam_ser_proto)	// set the defaults
   {
     case P_GS:
@@ -136,7 +136,7 @@ static int oscam_ser_parse_url(char *url)
   switch( oscam_ser_proto )
   {
     case P_DSR95:
-      dsr9500type=(cur_client()->is_server)?P_DSR_AUTO:P_DSR_WITHSID;
+      dsr9500type=(cur_client()->typ == 'c')?P_DSR_AUTO:P_DSR_WITHSID;
       break;
     case P_DSR95_OLD:
       dsr9500type=P_DSR_AUTO;
@@ -149,11 +149,11 @@ static int oscam_ser_parse_url(char *url)
     *dev++='\0';
     if( (dummy=strchr(usr, ':')) )	// fake pwd
       *dummy++='\0';
-    if ((cur_client()->is_server) && (!usr[0])) return(0);
+    if ((cur_client()->typ == 'c') && (!usr[0])) return(0);
   }
   else
   {
-    if (cur_client()->is_server) return(0);	// user needed in server-mode
+    if (cur_client()->typ == 'c') return(0);	// user needed in server-mode
     dev=usr;
   }
   if( (baud=strchr(dev, ':'))	)// port = baud
@@ -321,7 +321,7 @@ static int oscam_ser_recv(struct s_client *client, uchar *xbuf, int l)
         if (oscam_ser_selrec(buf, 1, l, &n)) // now we have 3 bytes in buf
         {
           p=(-2);
-          if (client->is_server)		 // HERE IS SERVER
+          if (client->typ == 'c')		 // HERE IS SERVER
           {
             job=IS_ECM;		// assume ECM
             switch(buf[0])
@@ -362,7 +362,7 @@ static int oscam_ser_recv(struct s_client *client, uchar *xbuf, int l)
         }
         break;
       case 2:		// STAGE 2: examine length
-        if (client->is_server) switch(p)
+        if (client->typ == 'c') switch(p)
         {
           case P_SSSP  : r=(buf[1]<<8)|buf[2]; break;
           case P_BOMBA : r=buf[2]; break;
@@ -425,7 +425,7 @@ static int oscam_ser_recv(struct s_client *client, uchar *xbuf, int l)
               p=(-1);
           }
           // auto detect DSR9500 protocol
-          if( client->is_server && p==P_DSR95 && dsr9500type==P_DSR_AUTO )
+          if( client->typ == 'c' && p==P_DSR95 && dsr9500type==P_DSR_AUTO )
           {
             tpe.millitm+=20;
             if( oscam_ser_selrec(buf, 2, l, &n) ) 
@@ -457,7 +457,7 @@ static int oscam_ser_recv(struct s_client *client, uchar *xbuf, int l)
                       dsrproto_txt[dsr9500type]);
           } 
           // gbox
-          if( client->is_server && p==P_GBOX )
+          if( client->typ == 'c' && p==P_GBOX )
           {
             int j;
             for( j=0; (j<3) && (p>0); j++)
@@ -500,7 +500,7 @@ static int oscam_ser_recv(struct s_client *client, uchar *xbuf, int l)
   client->last=tpe.time;
   switch(p)
   {
-    case (-1): if (client->is_server&&(n>2)&&(buf[0]==2)&&(buf[1]==2)&&(buf[2]==2))
+    case (-1): if (client->typ == 'c'&&(n>2)&&(buf[0]==2)&&(buf[1]==2)&&(buf[2]==2))
                {
                  oscam_ser_disconnect();
                  cs_log("humax powered on");	// this is nice ;)
@@ -869,7 +869,6 @@ static void * oscam_ser_fork(void *url2)
 	char *url = (char *) url2;
   pthread_setspecific(getclient, &client[get_csidx()]); //FIXME dont think this will work without   client->thread=pthread_self();
 
-  cur_client()->is_server=1;
   if ((!url) || (!url[0])) return NULL;
   if (!oscam_ser_parse_url(url)) return NULL;
  // snprintf(logtxt, sizeof(logtxt)-1, ", %s@%s",
@@ -907,7 +906,6 @@ void * init_oscam_ser(int ctyp)
 		client[i].typ='c';
 		client[i].ip=0;
 		client[i].ctyp=ctyp;
-		client[i].is_server=1;
 		pthread_create(&client[i].thread, NULL, oscam_ser_fork, (void *) p + 1); //FIXME value of p does not survive thread
 		pthread_detach(client[i].thread);
 	}
@@ -919,7 +917,6 @@ void * init_oscam_ser(int ctyp)
 	client[i].typ='c';
 	client[i].ip=0;
 	client[i].ctyp=ctyp;
-	client[i].is_server=1;
 	pthread_create(&client[i].thread, NULL, oscam_ser_fork, (void *) sdevice);
 	pthread_detach(client[i].thread);
 	return NULL;
