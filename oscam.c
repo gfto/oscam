@@ -541,7 +541,7 @@ static void cs_card_info(int i)
       //kill(client[i].pid, SIGUSR2);
 }
 
-int cs_fork(in_addr_t ip) {
+struct s_client * cs_fork(in_addr_t ip) {
 	int i;
 
 	pid_t pid=getpid();
@@ -572,9 +572,9 @@ int cs_fork(in_addr_t ip) {
 		
 	} else {
 		cs_log("max connections reached -> reject client %s", cs_inet_ntoa(ip));
-		i=(-1);
+		return NULL;
 	}
-	return(i);
+	return(&client[i]);
 }
 
 static void init_signal()
@@ -838,23 +838,21 @@ int cs_user_resolve(struct s_auth *account)
 }
 #if defined(CS_ANTICASC) || defined(WEBIF) 
 static void start_thread(void * startroutine, char * nameroutine, char typ) {
-	int i,o;
+	int i;
 
-	o=cs_fork(0);
+	struct s_client * cl = cs_fork(0);
+	if (cl == NULL) return;
+	cl->typ=typ; //'h' or 'a'
+	cl->ip=client[0].ip;
+	strcpy(cl->usr, client[0].usr);
 
-	if (o<0) return;
-
-	client[o].typ=typ; //'h' or 'a'
-	client[o].ip=client[0].ip;
-	strcpy(client[o].usr, client[0].usr);
-
-	i=pthread_create(&client[o].thread, (pthread_attr_t *)0, startroutine, (void *) &client[o]);
+	i=pthread_create(&cl->thread, (pthread_attr_t *)0, startroutine, (void *) cl);
 
 	if (i)
 		cs_log("ERROR: can't create %s thread (err=%d)", i, nameroutine);
 	else {
 		cs_log("%s thread started", nameroutine);
-		pthread_detach(client[o].thread);
+		pthread_detach(cl->thread);
 	}
 }
 #endif
@@ -930,27 +928,27 @@ void restart_cardreader(int reader_idx, int restart) {
 			}
 		}
 
-		i=cs_fork(0);
+		struct s_client * cl = cs_fork(0);
+		if (cl == NULL) return;
 
-		if (i<0) return;
 
-		reader[reader_idx].fd=client[i].fd_m2c;
-		client[i].ridx=reader_idx;
+		reader[reader_idx].fd=cl->fd_m2c;
+		cl->ridx=reader_idx;
 		cs_log("creating thread for device %s slot %i with ridx %i", reader[reader_idx].device, reader[reader_idx].slot, reader_idx);
              	
-		client[i].sidtabok=reader[reader_idx].sidtabok;
-		client[i].sidtabno=reader[reader_idx].sidtabno;
+		cl->sidtabok=reader[reader_idx].sidtabok;
+		cl->sidtabno=reader[reader_idx].sidtabno;
    
 		reader[reader_idx].pid=getpid();
 
-		reader[reader_idx].client=&client[i];
+		reader[reader_idx].client=cl;
 
-		client[i].typ='r';
+		cl->typ='r';
 		//client[i].ctyp=99;
-		pthread_create(&client[i].thread, NULL, start_cardreader, (void *)&reader[reader_idx]);
-		pthread_detach(client[i].thread);
+		pthread_create(&cl->thread, NULL, start_cardreader, (void *)&reader[reader_idx]);
+		pthread_detach(cl->thread);
 
-       	if (reader[reader_idx].r_port)
+		if (reader[reader_idx].r_port)
 			cs_log("proxy thread started (pid=%d, server=%s)",reader[reader_idx].pid, reader[reader_idx].device);
 		else {
 			switch(reader[reader_idx].typ) {
@@ -968,8 +966,8 @@ void restart_cardreader(int reader_idx, int restart) {
 				default:
 					cs_log("reader thread started (pid=%d, device=%s)",reader[reader_idx].pid, reader[reader_idx].device);
 			}
-			client[i].ip=client[0].ip;
-			strcpy(client[i].usr, client[0].usr);
+			cl->ip=client[0].ip;
+			strcpy(cl->usr, client[0].usr);
 		}  
 	}
 }
@@ -2684,7 +2682,7 @@ void cs_waitforcardinit()
 
 int accept_connection(int i, int j) {
 	struct   sockaddr_in cad;
-	int scad,n,o;
+	int scad,n;
 	scad = sizeof(cad);
 	uchar    buf[2048];
 
@@ -2704,22 +2702,22 @@ int accept_connection(int i, int j) {
 					return 0;
 				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
 
-				o=cs_fork(cs_inet_order(cad.sin_addr.s_addr));
-				if (o<0) return 0;
+				struct s_client * cl = cs_fork(cs_inet_order(cad.sin_addr.s_addr));
+				if (cl == NULL) return 0;
 
-				client[o].ctyp=i;
-				client[o].port_idx=j;
-				client[o].udp_fd=ph[i].ptab->ports[j].fd;
-				client[o].udp_sa=cad;
+				cl->ctyp=i;
+				cl->port_idx=j;
+				cl->udp_fd=ph[i].ptab->ports[j].fd;
+				cl->udp_sa=cad;
 
-             	       	client[o].ip=cs_inet_order(cad.sin_addr.s_addr);
-				client[o].port=ntohs(cad.sin_port);
-				client[o].typ='c';
+             	       	cl->ip=cs_inet_order(cad.sin_addr.s_addr);
+				cl->port=ntohs(cad.sin_port);
+				cl->typ='c';
 
-				write_to_pipe(client[o].fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
+				write_to_pipe(cl->fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
 
-				pthread_create(&client[o].thread, NULL, ph[i].s_handler, (void *) &client[o]); //pass client[o] since o is local variable that will not survive the thread
-				pthread_detach(client[o].thread);
+				pthread_create(&cl->thread, NULL, ph[i].s_handler, (void *) cl);
+				pthread_detach(cl->thread);
 			} else {
 				write_to_pipe(client[idx].fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
 			}
@@ -2732,21 +2730,21 @@ int accept_connection(int i, int j) {
 			if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
 				return 0;
 
-			o=cs_fork(cs_inet_order(cad.sin_addr.s_addr));
-			if (o<0) return 0;			
+			struct s_client * cl = cs_fork(cs_inet_order(cad.sin_addr.s_addr));
+			if (cl == NULL) return 0;
 
-			client[o].ctyp=i;
-			client[o].udp_fd=pfd3;
-			client[o].port_idx=j;
+			cl->ctyp=i;
+			cl->udp_fd=pfd3;
+			cl->port_idx=j;
 
-			client[o].pfd=pfd3;
+			cl->pfd=pfd3;
 
-			client[o].ip=cs_inet_order(cad.sin_addr.s_addr);
-			client[o].port=ntohs(cad.sin_port);
-			client[o].typ='c';
+			cl->ip=cs_inet_order(cad.sin_addr.s_addr);
+			cl->port=ntohs(cad.sin_port);
+			cl->typ='c';
 
-			pthread_create(&client[o].thread, NULL, ph[i].s_handler, (void*) &client[o]);
-			pthread_detach(client[o].thread);
+			pthread_create(&cl->thread, NULL, ph[i].s_handler, (void*) cl);
+			pthread_detach(cl->thread);
 		}
 	}
 	return 0;

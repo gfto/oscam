@@ -1605,16 +1605,16 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 static void * dvbapi_handler(int ctyp) {
 	//cs_log("dvbapi loaded fd=%d", idx);
 	if (cfg->dvbapi_enabled == 1) {
-		int i=cs_fork(0);
-		client[i].typ='c';
-		client[i].ip=0;
-		client[i].ctyp=ctyp;
+		struct s_client * cl = cs_fork(0);
+		cl->typ='c';
+		cl->ip=0;
+		cl->ctyp=ctyp;
 #ifdef AZBOX
-		pthread_create(&client[i].thread, NULL, azbox_main, (void*) &client[i]);
+		pthread_create(&cl->thread, NULL, azbox_main, (void*) cl);
 #else
-		pthread_create(&client[i].thread, NULL, dvbapi_main_local, (void*) &client[i]);
+		pthread_create(&cl->thread, NULL, dvbapi_main_local, (void*) cl);
 #endif
-		pthread_detach(client[i].thread);
+		pthread_detach(cl->thread);
 	}
 
 	return NULL;
