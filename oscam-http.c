@@ -20,12 +20,14 @@ extern void restart_cardreader(int ridx, int restart);
 static int running = 1;
 
 void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
+
+#ifdef CS_ANTICASC
 	int i;
+#endif
+
 	switch (refreshtype) {
 		case REFR_ACCOUNTS:
-			//todo cs_log just produces empty logentries?!
 		cs_log("Refresh Accounts requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
-		//kill(client[0].pid, SIGHUP);
 		init_userdb(&cfg->account);
 		cs_reinit_clients();
 
@@ -65,6 +67,8 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 		}
 		break;
 #endif
+		default:
+			break;
 	}
 }
 
