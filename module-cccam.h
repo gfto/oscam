@@ -162,16 +162,14 @@ struct cc_data {
 };
 
 int cc_cli_init();
-int cc_cli_init_int();
+int cc_cli_init_int(struct s_client *cl);
 void cc_cleanup(void);
-int cc_cli_connect();
-int cc_get_nxt_ecm();
-int cc_send_pending_emms();
+int cc_cli_connect(struct s_client *cl);
+int cc_get_nxt_ecm(struct s_client *cl);
+int cc_send_pending_emms(struct s_client *cl);
 void cc_rc4_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		cc_crypt_mode_t mode);
 void free_extended_ecm_idx(struct cc_data *cc);
 void cc_free_card(struct cc_card *card);
-
-struct cc_card *read_card_from(int pipe);
 
 #endif /* MODULECCCAM_H_ */

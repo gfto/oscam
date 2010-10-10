@@ -763,7 +763,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	struct s_reader *rdr = &reader[cl->ridx];
 	
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
-	cc_cli_init_int();
+	cc_cli_init_int(cl);
 	
 	int n, h = -1;
 	struct cc_data *cc = cl->cc;
@@ -841,7 +841,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			pthread_mutex_unlock(&cc->ecm_busy);
 		}
 		cs_debug("%s no ecm pending!", getprefix());
-		if (!cc_send_pending_emms())
+		if (!cc_send_pending_emms(cl))
 			send_cmd05_answer(cl);
 		cs_debug_mask(D_FUT, "cc_send_ecm out");
 		return 0; // no queued ecms
@@ -1108,7 +1108,7 @@ int cc_send_emm(EMM_PACKET *ep) {
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = &reader[cl->ridx];
 	
-	cc_cli_init_int();
+	cc_cli_init_int(cl);
 
 	struct cc_data *cc = cl->cc;
 
