@@ -1605,9 +1605,8 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 static void * dvbapi_handler(int ctyp) {
 	//cs_log("dvbapi loaded fd=%d", idx);
 	if (cfg->dvbapi_enabled == 1) {
-		struct s_client * cl = cs_fork(0);
+		struct s_client * cl = cs_fork(0); // or should it be cs_fork(client[0].ip)  ??
 		cl->typ='c';
-		cl->ip=0;
 		cl->ctyp=ctyp;
 #ifdef AZBOX
 		pthread_create(&cl->thread, NULL, azbox_main, (void*) cl);

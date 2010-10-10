@@ -564,6 +564,7 @@ struct s_client * cs_fork(in_addr_t ip) {
 		cl->cs_ptyp=D_CLIENT;
 		cl->fd_m2c_c = fdp[0]; //store client read fd
 		cl->fd_m2c = fdp[1]; //store client read fd
+		cl->ip=ip;
 
 		//master part
 		cl->stat=1;
@@ -842,10 +843,9 @@ int cs_user_resolve(struct s_auth *account)
 static void start_thread(void * startroutine, char * nameroutine, char typ) {
 	int i;
 
-	struct s_client * cl = cs_fork(0);
+	struct s_client * cl = cs_fork(client[0].ip);
 	if (cl == NULL) return;
 	cl->typ=typ; //'h' or 'a'
-	cl->ip=client[0].ip;
 	strcpy(cl->usr, client[0].usr);
 
 	i=pthread_create(&cl->thread, (pthread_attr_t *)0, startroutine, (void *) cl);
@@ -930,7 +930,7 @@ void restart_cardreader(int reader_idx, int restart) {
 			}
 		}
 
-		struct s_client * cl = cs_fork(0);
+		struct s_client * cl = cs_fork(client[0].ip);
 		if (cl == NULL) return;
 
 
@@ -968,7 +968,6 @@ void restart_cardreader(int reader_idx, int restart) {
 				default:
 					cs_log("reader thread started (pid=%d, device=%s)",reader[reader_idx].pid, reader[reader_idx].device);
 			}
-			cl->ip=client[0].ip;
 			strcpy(cl->usr, client[0].usr);
 		}  
 	}
@@ -2712,7 +2711,6 @@ int accept_connection(int i, int j) {
 				cl->udp_fd=ph[i].ptab->ports[j].fd;
 				cl->udp_sa=cad;
 
-             	       	cl->ip=cs_inet_order(cad.sin_addr.s_addr);
 				cl->port=ntohs(cad.sin_port);
 				cl->typ='c';
 
@@ -2740,8 +2738,6 @@ int accept_connection(int i, int j) {
 			cl->port_idx=j;
 
 			cl->pfd=pfd3;
-
-			cl->ip=cs_inet_order(cad.sin_addr.s_addr);
 			cl->port=ntohs(cad.sin_port);
 			cl->typ='c';
 

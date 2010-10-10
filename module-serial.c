@@ -904,7 +904,6 @@ void * init_oscam_ser(int ctyp)
 		if (!oscam_ser_parse_url(p + 1)) return NULL;
 		struct s_client *cl=cs_fork(0);
 		cl->typ='c';
-		cl->ip=0;
 		cl->ctyp=ctyp;
 		pthread_create(&cl->thread, NULL, oscam_ser_fork, (void *) p + 1); //FIXME value of p does not survive thread
 		pthread_detach(cl->thread);
@@ -915,7 +914,6 @@ void * init_oscam_ser(int ctyp)
 
 	struct s_client *cl=cs_fork(0);
 	cl->typ='c';
-	cl->ip=0;
 	cl->ctyp=ctyp;
 	pthread_create(&cl->thread, NULL, oscam_ser_fork, (void *) sdevice);
 	pthread_detach(cl->thread);
