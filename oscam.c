@@ -277,13 +277,13 @@ char *username(struct s_client * client)
     return("anonymous");
 }
 
-static int idx_from_ip(in_addr_t ip, in_port_t port)
+static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port) //warning: does not search master process!!!
 {
-  int i, idx;
-  for (i=idx=0; (i<CS_MAXPID) && (!idx); i++)
-    if (client[i].pid && (client[i].ip==ip) && (client[i].port==port) && ((client[i].typ=='c') || (client[i].typ=='m')))
-      idx=i;
-  return(idx);
+  struct s_client *prev, *cl; 
+  for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+    if (cl->pid && (cl->ip==ip) && (cl->port==port) && ((cl->typ=='c') || (cl->typ=='m')))
+      return cl;
+  return NULL;
 }
 
 struct s_client * idx_from_tid(unsigned long tid) //FIXME untested!! no longer pid in output...
@@ -2688,21 +2688,21 @@ int accept_connection(int i, int j) {
 	if (ph[i].type==MOD_CONN_UDP) {
 
 		if ((n=recvfrom(ph[i].ptab->ports[j].fd, buf+3, sizeof(buf)-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
-			int idx;
-			idx=idx_from_ip(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
+			struct s_client *cl;
+			cl=idx_from_ip(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
 
 			unsigned short rl;
 			rl=n;
 			buf[0]='U';
 			memcpy(buf+1, &rl, 2);
 
-			if (!idx) {
+			if (!cl) {
 				if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
 					return 0;
 				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
 
-				struct s_client * cl = cs_fork(cs_inet_order(cad.sin_addr.s_addr));
-				if (cl == NULL) return 0;
+				cl = cs_fork(cs_inet_order(cad.sin_addr.s_addr));
+				if (!cl) return 0;
 
 				cl->ctyp=i;
 				cl->port_idx=j;
@@ -2717,7 +2717,7 @@ int accept_connection(int i, int j) {
 				pthread_create(&cl->thread, NULL, ph[i].s_handler, (void *) cl);
 				pthread_detach(cl->thread);
 			} else {
-				write_to_pipe(client[idx].fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
+				write_to_pipe(cl->fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
 			}
 		}
 	} else { //TCP
