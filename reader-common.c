@@ -1,4 +1,4 @@
-#Include "globals.h"
+#include "globals.h"
 #include "reader-common.h"
 #include "defines.h"
 #include "atr.h"
@@ -282,8 +282,6 @@ static int reader_reset(struct s_reader * reader)
 		if (!deprecated)
 			cs_log("Normal mode failed, reverting to Deprecated Mode");
 	}
-	if (ret)
-		break;
 #ifdef AZBOX
   }
 #endif
