@@ -2116,7 +2116,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 			if (client->failban & BAN_SLEEPING) {
 				cs_add_violation(client->ip);
-				cs_exit(SIGQUIT); // don't know whether this is best way to kill the thread
+				cs_exit(SIGQUIT); // don't know whether this is best way to kill the thread ?!
 			}
 
 			if (client->c35_sleepsend != 0) {
