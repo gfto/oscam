@@ -2645,7 +2645,7 @@ int cc_srv_connect(struct s_client *cl) {
 		// init internals data struct
 		cc = malloc(sizeof(struct cc_data));
 		if (cc == NULL) {
-			cs_log("%s cannot allocate memory", getprefix());
+			cs_log("cannot allocate memory");
 			return -1;
 		}
 
@@ -2655,6 +2655,8 @@ int cc_srv_connect(struct s_client *cl) {
 		
 		cc_init_cc(cc);
 	}
+	update_prefix(cl);
+	
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
 	cl->cc_extended_ecm_mode = 0;
@@ -2823,8 +2825,6 @@ void * cc_srv_init(struct s_client *cl ) {
 	cl->thread=pthread_self();
 	pthread_setspecific(getclient, cl);
 
-	update_prefix(cl);
-	
 	cs_debug_mask(D_FUT, "cc_srv_init in");
 	cl->pfd = cl->udp_fd;
 	if (cc_srv_connect(cl) < 0)
