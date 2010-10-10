@@ -35,21 +35,24 @@ void ac_init_stat()
     cs_exit(0);
 }
 
-int idx_from_ac_idx(int ac_idx)
+static struct s_client *idx_from_ac_idx(int ac_idx)
 {
-  int i;
-
-  for( i=0; i<CS_MAXPID; i++ )
-    if( client[i].ac_idx==ac_idx ) return i;
-
-  return -1;
+	struct s_client *cl;
+	for (cl=first_client; ; cl=cl->next) {
+    if( cl->ac_idx==ac_idx )
+      return cl;
+    if (cl->next == NULL)
+      return NULL;
+  }
 }
 
 void ac_do_stat()
 {
   int i, j, idx, exceeds, maxval, prev_deny=0;
-  int cl_idx;
+  struct s_client *cl_idx;
 
+	struct s_client *prev, *cl;
+	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
   for( i=0; i<CS_MAXPID; i++ ) 
   {
     idx = ac_stat[i].idx;
@@ -59,13 +62,13 @@ void ac_do_stat()
 
     if( ac_stat[i].stat[idx] ) 
     {
-      if( cl_idx==-1 ) {
+      if( cl_idx == NULL ) {
         cs_log("ERROR: can't find client with ac_idx=%d", i);
         continue;
       }
 
-      if( client[cl_idx].ac_penalty==2 ) {// banned
-        cs_debug("user '%s' banned", client[cl_idx].usr);
+      if( cl_idx->ac_penalty==2 ) {// banned
+        cs_debug("user '%s' banned", cl_idx->usr);
         acasc[i].ac_deny=1;
       }
       else
@@ -74,31 +77,31 @@ void ac_do_stat()
         {
           if( ac_stat[i].stat[j] > maxval ) 
             maxval=ac_stat[i].stat[j];
-          exceeds+=(ac_stat[i].stat[j]>client[cl_idx].ac_limit);
+          exceeds+=(ac_stat[i].stat[j]>cl_idx->ac_limit);
         }
         prev_deny=acasc[i].ac_deny;
         acasc[i].ac_deny = (exceeds >= cfg->ac_denysamples);
         
         cs_debug("%s limit=%d, max=%d, samples=%d, dsamples=%d, ac[ci=%d][si=%d]:",
-          client[cl_idx].usr, client[cl_idx].ac_limit, maxval, 
+          cl_idx->usr, cl_idx->ac_limit, maxval, 
           cfg->ac_samples, cfg->ac_denysamples, i, idx);
         cs_debug("%d %d %d %d %d %d %d %d %d %d ", ac_stat[i].stat[0], 
           ac_stat[i].stat[1], ac_stat[i].stat[2], ac_stat[i].stat[3], 
           ac_stat[i].stat[4], ac_stat[i].stat[5], ac_stat[i].stat[6], 
           ac_stat[i].stat[7], ac_stat[i].stat[8], ac_stat[i].stat[9]);
         if( acasc[i].ac_deny ) {
-          cs_log("user '%s' exceeds limit", client[cl_idx].usr);
+          cs_log("user '%s' exceeds limit", cl_idx->usr);
           ac_stat[i].stat[idx] = 0;
         } else if( prev_deny )
-          cs_log("user '%s' restored access", client[cl_idx].usr);
+          cs_log("user '%s' restored access", cl_idx->usr);
       }
     }
     else if( acasc[i].ac_deny ) 
     {
       prev_deny=1;
       acasc[i].ac_deny=0;
-      if( cl_idx!=-1 )
-        cs_log("restored access for inactive user '%s'", client[cl_idx].usr);
+      if( cl_idx != NULL )
+        cs_log("restored access for inactive user '%s'", cl_idx->usr);
       else
         cs_log("restored access for unknown user (ac_idx=%d)", i);
     }
