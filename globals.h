@@ -140,8 +140,8 @@
 #define CS_ECMCACHESIZE   CS_MAXPID
 #define CS_EMMCACHESIZE   (CS_MAXPID<<1)
 #else
-#define CS_MAXPID   512
-#define CS_MAXREADER    (CS_MAXPID>>2)
+#define CS_MAXPID   2048
+#define CS_MAXREADER    128
 #define CS_MAXPENDING   (CS_MAXPID<<1)
 #define CS_ECMCACHESIZE   CS_MAXPID
 #define CS_EMMCACHESIZE   (CS_MAXPID<<1)
@@ -743,8 +743,6 @@ struct s_reader  //contains device info, reader info and card info
   char      cc_build[5];    // cccam build number
   int       cc_maxhop;      // cccam max distance
   int       cc_currenthops; // number of hops for CCCam
-  int       cc_disable_retry_ecm; //Schlocke
-  int       cc_disable_auto_block; //Schlocke
   int       cc_want_emu; //Schlocke: Client want to have EMUs, 0 - NO; 1 - YES
   uint32    cc_id;
   int       cc_keepalive;

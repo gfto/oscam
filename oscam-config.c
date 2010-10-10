@@ -2584,12 +2584,6 @@ int write_server()
 				if (reader[i].cc_maxhop)
 					fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", reader[i].cc_maxhop);
 
-				if (reader[i].cc_disable_retry_ecm)
-					fprintf_conf(f, CONFVARWIDTH, "cccdisableretryecm", "%d\n", reader[i].cc_disable_retry_ecm);
-
-				if (reader[i].cc_disable_auto_block)
-					fprintf_conf(f, CONFVARWIDTH, "cccdisableautoblock", "%d\n", reader[i].cc_disable_auto_block);
-
 				if (reader[i].cc_want_emu)
 					fprintf_conf(f, CONFVARWIDTH, "cccwantemu", "%d\n", reader[i].cc_want_emu);
 
@@ -3817,26 +3811,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		else
 			rdr->cc_maxhop = atoi(value);
 		return;
-	}
-
-	if (!strcmp(token, "cccdisableretryecm")) {
-		if (strlen(value) == 0) {
-			rdr->cc_disable_retry_ecm = 0;
-			return;
-		} else {
-			rdr->cc_disable_retry_ecm = atoi(value);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "cccdisableautoblock")) {
-		if (strlen(value) == 0) {
-			rdr->cc_disable_auto_block = 0;
-			return;
-		} else {
-			rdr->cc_disable_auto_block = atoi(value);
-			return;
-		}
 	}
 
 	if (!strcmp(token, "cccwantemu")) {

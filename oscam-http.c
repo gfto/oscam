@@ -1132,10 +1132,6 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
         tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
 	tpl_printf(vars, 0, "CCCMAXHOP", "%d", reader[ridx].cc_maxhop);
-	if (reader[ridx].cc_disable_retry_ecm)
-		tpl_addVar(vars, 0, "CCCDISABLERETRYECMCHECKED", "checked");
-	if (reader[ridx].cc_disable_auto_block)
-		tpl_addVar(vars, 0, "CCCDISABLEAUTOBLOCKCHECKED", "checked");
 	if(reader[ridx].cc_want_emu)
 		tpl_addVar(vars, 0, "CCCWANTEMUCHECKED", "checked");
 

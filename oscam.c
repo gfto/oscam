@@ -355,6 +355,15 @@ static void cs_sigpipe()
   cs_exit(1);
 }
 
+void nullclose(int *fd)
+{
+	//if closing an already closed pipe, we get a sigpipe signal, and this causes a cs_exit
+	//and this causes a close and this causes a sigpipe...and so on
+	int f = *fd;
+	*fd = 0; //so first null client-fd
+	close(f); //then close fd
+}
+
 void cs_exit(int sig)
 {
 	set_signal_handler(SIGCHLD, 1, SIG_IGN);
@@ -415,9 +424,9 @@ void cs_exit(int sig)
 		if(cl->req) 		free(cl->req);
 		if(cl->cc) 		free(cl->cc);
 
-		if(cl->pfd)		close(cl->pfd); //Closing Network socket
-		if(cl->fd_m2c_c)	close(cl->fd_m2c_c); //Closing client read fd
-		if(cl->fd_m2c)	close(cl->fd_m2c); //Closing client read fd
+		if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
+		if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
+		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 
 		cs_log("thread %08lX ended!", pthread_self());
 		cl->pid=0;
