@@ -789,10 +789,6 @@ void dvbapi_parse_descriptor(int demux_id, unsigned int info_length, unsigned ch
 
 void dvbapi_try_next_caid(int demux_id) {
 	int num=-1, n, j;
-	int k=0;
-	unsigned char ar[8];
-	unsigned short caid=0;
-	unsigned long provid=0;
 
 	if (demux[demux_id].ECMpids[demux[demux_id].curindex].irdeto_curchid+1 < demux[demux_id].ECMpids[demux[demux_id].curindex].irdeto_numchids) {
 		demux[demux_id].ECMpids[demux[demux_id].curindex].irdeto_curchid++;
@@ -815,14 +811,8 @@ void dvbapi_try_next_caid(int demux_id) {
 		for (j = start; j <= end && num == -1; j++) {	
 			for (n=0; n<demux[demux_id].ECMpidcount; n++) {
 				if (demux[demux_id].ECMpids[n].checked == 0 && demux[demux_id].ECMpids[n].status == j) {
-					if (!caid) {
-						caid=demux[demux_id].ECMpids[n].CAID;
-						provid=demux[demux_id].ECMpids[n].PROVID;
-					} else if (caid!=demux[demux_id].ECMpids[n].CAID||provid!=demux[demux_id].ECMpids[n].PROVID)
-						continue;
 					num=n;
-					ar[k++]=n;
-					cs_debug("APPEND PID %#x", demux[demux_id].ECMpids[n].ECM_PID);
+					break;
 				}
 			}
 		}
@@ -830,7 +820,6 @@ void dvbapi_try_next_caid(int demux_id) {
 		//values for second run (status==0)
 		start=0;
 		end=0;
-		caid=0;
 	} 
 
 	if (num == -1) {
@@ -855,13 +844,9 @@ void dvbapi_try_next_caid(int demux_id) {
 #endif
 	demux[demux_id].curindex=num;
 
-	//grep ecm
-	for (j=0;j<k;j++)
-	{
-		dvbapi_start_filter(demux_id, ar[j], demux[demux_id].ECMpids[ar[j]].ECM_PID, 0x80, 0xF0, 3000, TYPE_ECM); //ECM
-		demux[demux_id].ECMpids[ar[j]].index=j+(demux_id*10);
-		demux[demux_id].ECMpids[ar[j]].checked=1;
-	}
+	dvbapi_start_filter(demux_id, num, demux[demux_id].ECMpids[num].ECM_PID, 0x80, 0xF0, 3000, TYPE_ECM); //ECM
+	demux[demux_id].ECMpids[num].index=demux_id*10;
+	demux[demux_id].ECMpids[num].checked=1;
 }
 
 int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
