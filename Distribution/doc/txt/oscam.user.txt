@@ -1,4 +1,4 @@
-oscam.user(5)												oscam.user(5)
+oscam.user(5)																				    oscam.user(5)
 
 
 
@@ -6,8 +6,7 @@ NAME
        oscam.user - user configuration file for OSCam
 
 SYNOPSIS
-       The  user  configuration file for OSCam contains user definitions. [account] sections in oscam.user are recur‐
-       ring (more than one account).
+       The user configuration file for OSCam contains user definitions. [account] sections in oscam.user are recurring (more than one account).
 
 DESCRIPTIONS
    The [account] section
@@ -21,8 +20,7 @@ DESCRIPTIONS
 	  host from which user connection is allowed
 
        betatunnel = <CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>: <target CAID>]...
-	  define Betacrypt tunneling (max. see CS_MAXTUNTAB in globals.h).  The ServiceID can also be used for	wild‐
-	  carded CAIDs.
+	  define Betacrypt tunneling (max. see CS_MAXTUNTAB in globals.h).  The ServiceID can also be used for wildcarded CAIDs.
 
 	   example: betatunnel = 0100.0001:0200,0300.0004:0500
 		    betatunnel = 0600.FFFF:0700
@@ -42,8 +40,7 @@ DESCRIPTIONS
 	  time waiting for inactive user, default:none
 
        sleepsend = 0|255
-	  255  =  OSCam  client  only:	stopping  requests  until next zap, 255 = camd3 only: stopping requests until
-	  restart of camd3 client, default:0
+	  255 = OSCam client only: stopping requests until next zap, 255 = camd3 only: stopping requests until restart of camd3 client, default:0
 
        caid = <CAID>[&<mask>][:<CAID>[&<mask>]...
 	  limit CAIDs, default:all CAIDs, required
@@ -107,15 +104,14 @@ DESCRIPTIONS
 	   2 = disbable user temporary
 
        failban = 0|2|4
-	  type for IP based blocking:
+	  mask for IP based blocking:
 
 	   0 = ignore (default)
 	   2 = block IP of a disabled account on connecting
 	   4 = block IP of a sleeping account while sleeping comes up
 
        suppresscmd08 = 0|1
-	  0 = CMD08 for camd3 3.57x/3.78x clients  enabled,  1	=  CMD08  for  camd3  3.57x/3.78x  clients  disabled,
-	  default:0
+	  0 = CMD08 for camd3 3.57x/3.78x clients enabled, 1 = CMD08 for camd3 3.57x/3.78x clients disabled, default:0
 
        keepalive = 0|1
 	  0 = disable keepalive between server and client connection, default:1
@@ -142,9 +138,9 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cert(5),   oscam.conf(5),   oscam.guess(5),	oscam.ird(5),
-       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.tiers(5), oscam.srvid(5)
+       list_smargo(1),	 oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.guess(5),  oscam.ird(5),  oscam.provid(5),  oscam.server(5),  oscam.services(5),  oscam.tiers(5),
+       oscam.srvid(5)
 
 
 
-													oscam.user(5)
+																					    oscam.user(5)
