@@ -76,13 +76,11 @@ char  cs_memfile[128]=CS_MMAPFILE;
 
 int get_csidx() {
 	int i;
+	struct s_client *prev, *cl;
 
-	for (i=1; i<CS_MAXPID; i++) {
-		if (pthread_equal(client[i].thread, pthread_self())) {
+	for (prev=first_client, cl=first_client->next, i=1; prev->next != NULL; prev=prev->next, cl=cl->next, i++)
+		if (pthread_equal(cl->thread, pthread_self()))
 			return i;
-		}
-	}
-	
 	return 0; // main process
 }
 
