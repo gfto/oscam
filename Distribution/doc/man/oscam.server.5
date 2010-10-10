@@ -286,21 +286,6 @@ define CCcam maximum SC distance hops, default:10
  and so on
 .RE
 .PP
-\fBcccdisableretryecm\fP = \fB0\fP|\fB1\fP
-.RS 3n
-0 = enables ECM retrying: When an ECM request is denied from an CCCam server, OSCam 
-immediatelly sends a new ECM request, 1= disables ECM retrying: When an ECM request 
-is denied from an CCCam server, OSCam sends no new ECM request, default:0
-.RE
-.PP
-\fBcccdisableautoblock\fP = \fB0\fP|\fB1\fP
-.RS 3n
-0 = enables auto block: When an ECM request is send to an CCCam server, it tries the 
-SC with the lowest hop. If it is denied, the SID is blocked on this SC. When all 
-SC are blocked, the CAID:PROV:SID information is stored in a auto block list and 
-is newer send again, 1= disabled auto block, default:1
-.RE
-.PP
 \fBcccwantemu\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = request to provide emu from CCCam server, too, default:0
