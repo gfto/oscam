@@ -625,7 +625,7 @@ static void monitor_set_account(char *args){
 	}
 
 	if (write_userdb(cfg->account)==0)
-		kill(client[0].pid, SIGHUP);
+		cs_reinit_clients();
 
 	sprintf(buf, "[S-0000]setuser: %s done - param %s set to %s\n", tmp, argarray[1], argarray[2]);
 	monitor_send_info(buf, 1);
@@ -721,7 +721,7 @@ static int monitor_process_request(char *req)
 			case  2:	monitor_logsend(arg); break;	// log
 			case  3:	monitor_process_info(); break;	// status
 			case  4:	if (cur_client()->monlvl > 3) cs_exit(SIGQUIT); break;	// shutdown
-			case  5:	if (cur_client()->monlvl > 2) kill(client[0].pid, SIGHUP); break;	// reload
+			case  5:	if (cur_client()->monlvl > 2) cs_reinit_clients(); break;	// reload
 			case  6:	monitor_process_details(arg); break;	// details
 			case  7:	monitor_send_details_version(); break;	// version
 			case  8:	if (cur_client()->monlvl > 3) monitor_set_debuglevel(arg); break;	// debuglevel
