@@ -18,7 +18,7 @@ extern void cs_statistics(struct s_client * client);
 *****************************************************************************/
 struct s_module ph[CS_MAX_MOD]; // Protocols
 struct s_cardsystem cardsystem[CS_MAX_MOD]; // Protocols
-
+struct s_client * first_client = NULL; //Pointer to clients list, first client is master
 ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 int cs_dblevel=0;   // Debug Level (TODO !!)
@@ -150,7 +150,6 @@ void cs_add_violation(uint ip) {
 /*****************************************************************************
         Statics
 *****************************************************************************/
-static  int cs_last_idx=0;    // client index of last fork (master only)
 static const char *logo = "  ___  ____   ___                \n / _ \\/ ___| / __|__ _ _ __ ___  \n| | | \\___ \\| |  / _` | '_ ` _ \\ \n| |_| |___) | |_| (_| | | | | | |\n \\___/|____/ \\___\\__,_|_| |_| |_|\n";
 
 static void usage()
@@ -542,14 +541,18 @@ static void cs_card_info(int i)
 }
 
 struct s_client * cs_fork(in_addr_t ip) {
-	int i;
+	int i=1;
+	struct s_client *cl;
 
 	pid_t pid=getpid();
-	for (i=1; (i<CS_MAXPID) && (client[i].pid); i++); //find next available client index i
+	for (cl=first_client; cl->next != NULL; cl=cl->next) i++; //ends with cl on last usable client and i to next empty slot
 	if (i<CS_MAXPID) {
+		cl->next = &client[i];
+		cl = cl->next; //move to next empty slot
+		cl->next = NULL;
 		int fdp[2];
-		memset(&client[i], 0, sizeof(struct s_client));
-		client[i].au=(-1);
+		memset(cl, 0, sizeof(struct s_client));
+		cl->au=(-1);
 		if (pipe(fdp)) {
 			cs_log("Cannot create pipe (errno=%d)", errno);
 			cs_exit(1);
@@ -558,23 +561,20 @@ struct s_client * cs_fork(in_addr_t ip) {
 
 		//make_non_blocking(fdp[0]);
 		//make_non_blocking(fdp[1]);
-		client[i].cs_ptyp=D_CLIENT;
-		client[i].fd_m2c_c = fdp[0]; //store client read fd
-		client[i].fd_m2c = fdp[1]; //store client read fd
+		cl->cs_ptyp=D_CLIENT;
+		cl->fd_m2c_c = fdp[0]; //store client read fd
+		cl->fd_m2c = fdp[1]; //store client read fd
 
 		//master part
-		client[i].stat=1;
+		cl->stat=1;
 
-		client[i].login=client[i].last=time((time_t *)0);
-		client[i].pid=pid;    // MUST be last -> wait4master()
-		cs_last_idx=i;
-
-		
+		cl->login=cl->last=time((time_t *)0);
+		cl->pid=pid;
 	} else {
 		cs_log("max connections reached -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
 	}
-	return(&client[i]);
+	return(cl);
 }
 
 static void init_signal()
@@ -649,6 +649,8 @@ static void init_shm()
   client[0].typ='s';
   client[0].au=(-1);
   client[0].thread=pthread_self();
+  first_client = &client[0];
+  client[0].next = NULL; //terminate clients list with NULL
   if (pthread_setspecific(getclient, &client[0])) {
     fprintf(stderr, "Could not setspecific getclient in master process, exiting...");
   exit(1);
