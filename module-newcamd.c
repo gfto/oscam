@@ -767,7 +767,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         if( au != -1 )
             mbuf[3] = 1;
         else
-            mbuf[3] = cs_idx+10; // Unique user number
+            mbuf[3] = get_csidx()+10; // Unique user number
 
         mbuf[4] = (uchar)(pufilt->caid>>8);
         mbuf[5] = (uchar)(pufilt->caid);
