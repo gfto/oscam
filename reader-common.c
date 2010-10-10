@@ -332,13 +332,6 @@ int reader_checkhealth(struct s_reader * reader)
         reader_card_info(reader);
         reader->card_status = CARD_INSERTED;
       }
-
-      int i;
-      for( i=1; i<CS_MAXPID; i++ ) {
-        if( client[i].pid && client[i].typ=='c' && client[i].usr[0] && ph[client[i].ctyp].type & MOD_CONN_NET) {
-          //kill(client[i].pid, SIGQUIT);
-        }
-      }
     }
   }
   else
