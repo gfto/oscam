@@ -491,13 +491,10 @@ static void cs_accounts_chk()
   init_userdb(&cfg->account);
   cs_reinit_clients();
 #ifdef CS_ANTICASC
-  int i;
-  for (i=0; i<CS_MAXPID; i++)
-    if (client[i].typ=='a')
-    {
-      //kill(client[i].pid, SIGHUP);
+	struct s_client *prev, *cl;
+	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+    if (cl->typ=='a')
       break;
-    }
 #endif
 }
 
@@ -529,12 +526,11 @@ static void cs_debug_level()
 static void cs_card_info(int i)
 {
   uchar dummy[1]={0x00};
-
-  for( i=1; i<CS_MAXPID; i++ )
-    if( client[i].pid && client[i].typ=='r' && client[i].fd_m2c ){
-      write_to_pipe(client[i].fd_m2c, PIP_ID_CIN, dummy, 1);
-    }
-
+	i=i; //suppress compiler warning
+	struct s_client *prev, *cl;
+	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+    if( cl->pid && cl->typ=='r' && cl->fd_m2c )
+      write_to_pipe(cl->fd_m2c, PIP_ID_CIN, dummy, 1);
       //kill(client[i].pid, SIGUSR2);
 }
 
@@ -545,7 +541,7 @@ struct s_client * cs_fork(in_addr_t ip) {
 	pid_t pid=getpid();
 	for (cl=first_client; cl->next != NULL; cl=cl->next) i++; //ends with cl on last usable client and i to next empty slot
 	if (i<CS_MAXPID) {
-		cl->next = &client[i];
+		cl->next = &client[i]; //here new created s_client malloc should be linked
 		cl = cl->next; //move to next empty slot
 		cl->next = NULL;
 		int fdp[2];
@@ -642,15 +638,15 @@ static void init_shm()
 
   *ecmidx=0;
   *oscam_sem=0;
-  client[0].pid=getpid();
-  client[0].login=time((time_t *)0);
-  client[0].ip=cs_inet_addr("127.0.0.1");
-  client[0].typ='s';
-  client[0].au=(-1);
-  client[0].thread=pthread_self();
-  first_client = &client[0];
-  client[0].next = NULL; //terminate clients list with NULL
-  if (pthread_setspecific(getclient, &client[0])) {
+  first_client = &client[0]; //here first client should be linked after creation with malloc
+  first_client->next = NULL; //terminate clients list with NULL
+  first_client->pid=getpid();
+  first_client->login=time((time_t *)0);
+  first_client->ip=cs_inet_addr("127.0.0.1");
+  first_client->typ='s';
+  first_client->au=(-1);
+  first_client->thread=pthread_self();
+  if (pthread_setspecific(getclient, first_client)) {
     fprintf(stderr, "Could not setspecific getclient in master process, exiting...");
   exit(1);
   }
@@ -659,9 +655,9 @@ static void init_shm()
   // get username master running under
   struct passwd *pwd;
   if ((pwd = getpwuid(getuid())) != NULL)
-    strcpy(client[0].usr, pwd->pw_name);
+    strcpy(first_client->usr, pwd->pw_name);
   else
-    strcpy(client[0].usr, "root");
+    strcpy(first_client->usr, "root");
 
   pthread_mutex_init(&gethostbyname_lock, NULL); 
 
@@ -841,10 +837,10 @@ int cs_user_resolve(struct s_auth *account)
 static void start_thread(void * startroutine, char * nameroutine, char typ) {
 	int i;
 
-	struct s_client * cl = cs_fork(client[0].ip);
+	struct s_client * cl = cs_fork(first_client->ip);
 	if (cl == NULL) return;
 	cl->typ=typ; //'h' or 'a'
-	strcpy(cl->usr, client[0].usr);
+	strcpy(cl->usr, first_client->usr);
 
 	i=pthread_create(&cl->thread, (pthread_attr_t *)0, startroutine, (void *) cl);
 
@@ -931,7 +927,7 @@ void restart_cardreader(int reader_idx, int restart) {
 			}
 		}
 
-		struct s_client * cl = cs_fork(client[0].ip);
+		struct s_client * cl = cs_fork(first_client->ip);
 		if (cl == NULL) return;
 
 
@@ -969,7 +965,7 @@ void restart_cardreader(int reader_idx, int restart) {
 				default:
 					cs_log("reader thread started (pid=%d, device=%s)",reader[reader_idx].pid, reader[reader_idx].device);
 			}
-			strcpy(cl->usr, client[0].usr);
+			strcpy(cl->usr, first_client->usr);
 		}  
 	}
 }
@@ -998,17 +994,17 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
      *           different, but only the last login will survive
      */
 
-	int i;
-	for (i=1; i<CS_MAXPID; i++)
+	struct s_client *prev, *cl;
+	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
 	{
-		if (client[i].pid && (client[i].typ == 'c') && !client[i].dup && !strcmp(client[i].usr, usr)
-		   && (uniq < 5) && ((uniq % 2) || (client[i].ip != ip)))
+		if (cl->pid && (cl->typ == 'c') && !cl->dup && !strcmp(cl->usr, usr)
+		   && (uniq < 5) && ((uniq % 2) || (cl->ip != ip)))
 		{
 			if (uniq  == 3 || uniq == 4)
 			{
-				client[i].dup = 1;
-				client[i].au = -1;
-				cs_log("client(%08lX) duplicate user '%s' from %s set to fake (uniq=%d)", client[i].thread, usr, cs_inet_ntoa(ip), uniq);
+				cl->dup = 1;
+				cl->au = -1;
+				cs_log("client(%08lX) duplicate user '%s' from %s set to fake (uniq=%d)", cl->thread, usr, cs_inet_ntoa(ip), uniq);
 			}
 			else
 			{
@@ -1198,7 +1194,7 @@ int check_ecmcache1(ECM_REQUEST *er, ulong grp)
 int check_ecmcache2(ECM_REQUEST *er, ulong grp)
 {
 	// disable cache2
-	if (!reader[client[get_csidx()].ridx].cachecm) return(0);
+	if (!reader[cur_client()->ridx].cachecm) return(0);
 	
 	int i;
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
@@ -1242,7 +1238,7 @@ void store_logentry(char *txt)
 	ptr=(char *)(loghist+(*loghistidx*CS_LOGHISTSIZE));
 	ptr[0]='\1';    // make username unusable
 	ptr[1]='\0';
-	if ((client[0].typ=='c') || (client[0].typ=='m')) //FIXME this cannot work since store_logentry only runs in master thread ...
+	if ((first_client->typ=='c') || (first_client->typ=='m')) //FIXME this cannot work since store_logentry only runs in master thread ...
 		cs_strncpy(ptr, client->usr, 31);
 	cs_strncpy(ptr+32, txt, CS_LOGHISTSIZE-33);
 	*loghistidx=(*loghistidx+1) % CS_MAXLOGHIST;
@@ -1250,15 +1246,13 @@ void store_logentry(char *txt)
 }
 #endif
 // only for debug
-int get_thread_by_pipefd(int fd) {
-	int i;
-
-	for (i=0;i<CS_MAXPID;i++) {
-		if (fd==client[i].fd_m2c || fd==client[i].fd_m2c_c)
-			return i;
-
-	}
-	return -1;
+static struct s_client * get_thread_by_pipefd(int fd)
+{
+	struct s_client *prev, *cl;
+	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+		if (fd==cl->fd_m2c || fd==cl->fd_m2c_c)
+			return cl;
+	return first_client; //master process
 }
 
 /*
@@ -1272,7 +1266,7 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 		return -1;
 	}
 
-	cs_debug("write to pipe %d (%s) thread: %08lX to %d", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd));
+	cs_debug("write to pipe %d (%s) thread: %08lX to %08lX", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd)->thread);
 
 	uchar buf[3+sizeof(void*)];
 
@@ -1459,7 +1453,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 	//fixme
     return(write_ecm_request(er->client->fd_m2c, er));
   else
-    return(write_ecm_request(client[0].fd_m2c, er)); //does this ever happen?
+    return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen?
 }
 
   /*
@@ -2969,8 +2963,8 @@ if (pthread_key_create(&getclient, NULL)) {
   fd_c2m=fdp[1];
   gfd=mfdr+1;
 
-  client[0].fd_m2c=fd_c2m;
-  client[0].fd_m2c_c=mfdr;
+  first_client->fd_m2c=fd_c2m;
+  first_client->fd_m2c_c=mfdr;
 
 #ifdef OS_MACOSX
   if (bg && daemon_compat(1,0))
@@ -3014,7 +3008,7 @@ if (pthread_key_create(&getclient, NULL)) {
       }
 
 	//set time for server to now to avoid 0 in monitor/webif
-	client[0].last=time((time_t *)0);
+	first_client->last=time((time_t *)0);
 
 #ifdef WEBIF
   if(cfg->http_port == 0) 
@@ -3063,7 +3057,7 @@ if (pthread_key_create(&getclient, NULL)) {
 			select(gfd, &fds, 0, 0, 0);
 		} while (errno==EINTR);
 
-		client[0].last=time((time_t *)0);
+		first_client->last=time((time_t *)0);
 		
 		if (FD_ISSET(mfdr, &fds)) {
 			process_master_pipe(mfdr);
