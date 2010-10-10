@@ -270,80 +270,81 @@ char *monitor_get_proto(struct s_client *cl)
 	return(ctyp);
 }
 
-static char *monitor_client_info(char id, int i){
+static char *monitor_client_info(char id, struct s_client *cl){
 	static char sbuf[256];
 	sbuf[0] = '\0';
 
-	if (client[i].pid){
+	if (cl->pid){
 		char ldate[16], ltime[16], *usr;
-		int lsec, isec, cnr, con, cau, lrt;
+		int lsec, isec, con, cau, lrt;
 		time_t now;
 		struct tm *lt;
 		now=time((time_t)0);
 
 		if	((cfg->mon_hideclient_to <= 0) ||
-				(now-client[i].lastecm < cfg->mon_hideclient_to) ||
-				(now-client[i].lastemm < cfg->mon_hideclient_to) ||
-				(client[i].typ != 'c'))
+				(now-cl->lastecm < cfg->mon_hideclient_to) ||
+				(now-cl->lastemm < cfg->mon_hideclient_to) ||
+				(cl->typ != 'c'))
 		{
-			lsec=now-client[i].login;
-			isec=now-client[i].last;
-			usr=client[i].usr;
-			if (((client[i].typ == 'r') || (client[i].typ == 'p')) && (con=client[i].ridx) >= 0)
+			lsec=now-cl->login;
+			isec=now-cl->last;
+			usr=cl->usr;
+			if (((cl->typ == 'r') || (cl->typ == 'p')) && (con=cl->ridx) >= 0)
 				usr=reader[con].label;
-			if (client[i].dup)
+			if (cl->dup)
 				con=2;
 			else
-				if ((client[i].tosleep) && (now-client[i].lastswitch>client[i].tosleep))
+				if ((cl->tosleep) && (now-cl->lastswitch>cl->tosleep))
 					con = 1;
 				else
 					con = 0;
 			
-			cnr=(i > 1) ? i - 1 : 0;
-			if( (cau = client[i].au + 1) )
-				if ((now-client[i].lastemm) /60 > cfg->mon_aulow)
+			if( (cau = cl->au + 1) )
+				if ((now-cl->lastemm) /60 > cfg->mon_aulow)
 					cau=-cau;
-			if( client[i].typ == 'r')
+			if( cl->typ == 'r')
 			{
-			    lrt = client[i].ridx;
+			    lrt = cl->ridx;
 			    if( lrt >= 0 )
                     lrt = 10 + reader[lrt].card_status;
 			}
 			else
-                lrt = client[i].cwlastresptime;
-			lt = localtime(&client[i].login);
+                lrt = cl->cwlastresptime;
+			lt = localtime(&cl->login);
 			sprintf(ldate, "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year % 100);
 			sprintf(ltime, "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
-                        sprintf(sbuf, "[%c--CCC]%d|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",    
-					id, client[i].pid, client[i].typ, cnr, usr, cau, client[i].crypted,
-					cs_inet_ntoa(client[i].ip), client[i].port, monitor_get_proto(&client[i]),
-					ldate, ltime, lsec, client[i].last_caid, client[i].last_srvid,
-					get_servicename(client[i].last_srvid, client[i].last_caid), isec, con,
-                                        client[i].cwfound, client[i].cwnot, client[i].cwcache, client[i].cwignored,
-                                        client[i].cwtout, client[i].emmok, client[i].emmnok, lrt);
+                        sprintf(sbuf, "[%c--CCC]%d|%c|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",    
+					id, cl->pid, cl->typ, usr, cau, cl->crypted,
+					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),
+					ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
+					get_servicename(cl->last_srvid, cl->last_caid), isec, con,
+                                        cl->cwfound, cl->cwnot, cl->cwcache, cl->cwignored,
+                                        cl->cwtout, cl->emmok, cl->emmnok, lrt);
 		}
 	}
 	return(sbuf);
 }
 
 static void monitor_process_info(){
-	int i;
 	time_t now = time((time_t)0);
 
-	for (i = 0; i < CS_MAXPID; i++){
+	struct s_client *cl;
+	for (cl=first_client; ; cl=cl->next) {
 		if	((cfg->mon_hideclient_to <= 0) ||
-				( now-client[i].lastecm < cfg->mon_hideclient_to) ||
-				( now-client[i].lastemm < cfg->mon_hideclient_to) ||
-				( client[i].typ != 'c')){
-			if (client[i].pid) {
-				if ((cur_client()->monlvl < 2) && (client[i].typ != 's')) {
-					if 	((strcmp(cur_client()->usr, client[i].usr)) ||
-							((client[i].typ != 'c') && (client[i].typ != 'm')))
+				( now-cl->lastecm < cfg->mon_hideclient_to) ||
+				( now-cl->lastemm < cfg->mon_hideclient_to) ||
+				( cl->typ != 'c')){
+			if (cl->pid) {
+				if ((cur_client()->monlvl < 2) && (cl->typ != 's')) {
+					if 	((strcmp(cur_client()->usr, cl->usr)) ||
+							((cl->typ != 'c') && (cl->typ != 'm')))
 						continue;
 				}
-				monitor_send_info(monitor_client_info('I', i), 0);
+				monitor_send_info(monitor_client_info('I', cl), 0);
 			}
 		}
+	if (cl->next == NULL)
+		return;
 	}
 	monitor_send_info(NULL, 1);
 }
@@ -452,7 +453,7 @@ static void monitor_process_details(char *arg){
 	struct s_client *cl;
 	char sbuf[256];
 	if (!arg) return;
-		cl = idx_from_tid(client[0].thread); //FIXME (*cl = idx_from_tid(tid = atoi(arg))) //FIXME tid should be derived from arg
+		cl = idx_from_tid(first_client->thread); //FIXME (*cl = idx_from_tid(tid = atoi(arg))) //FIXME tid should be derived from arg
 //		monitor_send_details("Invalid TID", tid); //thread is always valid, so no need for testing
 //	else
 	{
@@ -528,7 +529,7 @@ static void monitor_logsend(char *flag){
 
 static void monitor_set_debuglevel(char *flag){
 	cfg->debuglvl = atoi(flag);
-	kill(client[0].pid, SIGUSR1);
+	kill(first_client->pid, SIGUSR1);
 }
 
 static void monitor_get_account(){
@@ -687,7 +688,7 @@ static void monitor_set_server(char *args){
 		sprintf(buf, "[S-0000]setserver WARNING: clienttimeout adjusted to %lu ms\n", cfg->ctimeout);
 		monitor_send_info(buf, 1);
 	}
-	//kill(client[0].pid, SIGUSR1);
+	//kill(first_client->pid, SIGUSR1);
 }
 
 static void monitor_list_commands(char *args[], int cmdcnt){
@@ -730,7 +731,7 @@ static int monitor_process_request(char *req)
 			case 11:	if (cur_client()->monlvl > 3) monitor_set_server(arg); break;	// setserver
 			case 12:	if (cur_client()->monlvl > 3) monitor_list_commands(cmd, cmdcnt); break;	// list commands
 			case 13:	if (cur_client()->monlvl > 3) monitor_send_keepalive_ack(); break;	// keepalive
-			case 14:	{ char buf[64];sprintf(buf, "[S-0000]reread\n");monitor_send_info(buf, 1); kill(client[0].pid, SIGUSR2); break; } // reread
+			case 14:	{ char buf[64];sprintf(buf, "[S-0000]reread\n");monitor_send_info(buf, 1); kill(first_client->pid, SIGUSR2); break; } // reread
 			default:	continue;
 			}
 			break;
