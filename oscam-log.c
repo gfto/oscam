@@ -113,7 +113,16 @@ int cs_init_log(char *file)
 static char *get_log_header(int m, char *txt)
 {
 	if(m) {
-		sprintf(txt, "%c %08lX ", cur_client()->typ, (unsigned long) pthread_self());
+		switch (cur_client()->typ) {
+			case 'r':
+			case 'c':
+			case 'p':
+				sprintf(txt, "%c %8d ", cur_client()->typ, get_threadnum(cur_client()));
+				break;
+			default:
+				sprintf(txt, "%c          ", cur_client()->typ);
+				break;
+		}
 	} else
 		sprintf(txt, "%-11.11s", "");
 
@@ -196,7 +205,6 @@ void cs_log(const char *fmt,...)
 
 void cs_close_log(void)
 {
-	cs_log("LOG CLOSED");
 	if (use_stdout || use_syslog || !fp) return;
 	fclose(fp);
 	fp=(FILE *)0;

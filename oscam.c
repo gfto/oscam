@@ -74,6 +74,19 @@ static const int  shmsize =  CS_ECMCACHESIZE*(sizeof(struct s_ecm)) +
 char  cs_memfile[128]=CS_MMAPFILE;
 #endif
 
+int get_threadnum(struct s_client *client) {
+	struct s_client *prev, *cl;
+	int count=0;
+
+	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next) {
+		if (cl->typ==client->typ)
+			count++;
+		if(cl==client)
+			return count;
+	}
+	return 0;
+}
+
 int get_csidx() {
 	int i;
 	struct s_client *prev, *cl;

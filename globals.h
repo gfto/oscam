@@ -1281,6 +1281,7 @@ extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab);
 extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
 extern void kill_thread(struct s_client *cl);
+extern int get_threadnum(struct s_client *client);
                  
 #ifdef CS_ANTICASC
 //extern void start_anticascader(void);
