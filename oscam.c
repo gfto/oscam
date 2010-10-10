@@ -288,11 +288,11 @@ static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port) //warning: do
 
 struct s_client * idx_from_tid(unsigned long tid) //FIXME untested!! no longer pid in output...
 {
-  int i, idx;
-  for (i=0, idx=(-1); (i<CS_MAXPID) && (idx<0); i++)
-    if (client[i].thread==tid)
-      idx=i;
-  return &client[idx];
+  struct s_client *prev, *cl; 
+  for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next) //warning does not search master process!!!
+    if (cl->thread==tid)
+      return cl;
+  return NULL;
 }
 
 static long chk_caid(ushort caid, CAIDTAB *ctab)
@@ -436,51 +436,51 @@ void cs_exit(int sig)
 
 void cs_reinit_clients()
 {
-	int i;
 	struct s_auth *account;
 
-	for( i = 1; i < CS_MAXPID; i++ )
-		if( client[i].pid && client[i].typ == 'c' && client[i].usr[0] ) {
+	struct s_client *prev, *cl;
+	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+		if( cl->pid && cl->typ == 'c' && cl->usr[0] ) {
 			for (account = cfg->account; (account) ; account = account->next)
-				if (!strcmp(client[i].usr, account->usr))
+				if (!strcmp(cl->usr, account->usr))
 					break;
 
-			if (account && client[i].pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16)) {
-				client[i].grp		= account->grp;
-				client[i].au		= account->au;
-				client[i].autoau	= account->autoau;
-				client[i].expirationdate = account->expirationdate;
-				client[i].allowedtimeframe[0] = account->allowedtimeframe[0];
-				client[i].allowedtimeframe[1] = account->allowedtimeframe[1];
-				client[i].ncd_keepalive = account->ncd_keepalive;
-				client[i].c35_suppresscmd08 = account->c35_suppresscmd08;
-				client[i].tosleep	= (60*account->tosleep);
-				client[i].c35_sleepsend = account->c35_sleepsend;
-				client[i].monlvl	= account->monlvl;
-				client[i].disabled	= account->disabled;
-				client[i].fchid		= account->fchid;  // CHID filters
-				client[i].cltab		= account->cltab;  // Class
+			if (account && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16)) {
+				cl->grp		= account->grp;
+				cl->au		= account->au;
+				cl->autoau	= account->autoau;
+				cl->expirationdate = account->expirationdate;
+				cl->allowedtimeframe[0] = account->allowedtimeframe[0];
+				cl->allowedtimeframe[1] = account->allowedtimeframe[1];
+				cl->ncd_keepalive = account->ncd_keepalive;
+				cl->c35_suppresscmd08 = account->c35_suppresscmd08;
+				cl->tosleep	= (60*account->tosleep);
+				cl->c35_sleepsend = account->c35_sleepsend;
+				cl->monlvl	= account->monlvl;
+				cl->disabled	= account->disabled;
+				cl->fchid		= account->fchid;  // CHID filters
+				cl->cltab		= account->cltab;  // Class
 
 				// newcamd module dosent like ident reloading
-				if(!client[i].ncd_server)
-					client[i].ftab	= account->ftab;   // Ident
+				if(!cl->ncd_server)
+					cl->ftab	= account->ftab;   // Ident
 
-				client[i].sidtabok	= account->sidtabok;   // services
-				client[i].sidtabno	= account->sidtabno;   // services
-				client[i].failban	= account->failban;
+				cl->sidtabok	= account->sidtabok;   // services
+				cl->sidtabno	= account->sidtabno;   // services
+				cl->failban	= account->failban;
 
-				memcpy(&client[i].ctab, &account->ctab, sizeof(client[i].ctab));
-				memcpy(&client[i].ttab, &account->ttab, sizeof(client[i].ttab));
+				memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
+				memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
 
 #ifdef CS_ANTICASC
-				client[i].ac_idx	= account->ac_idx;
-				client[i].ac_penalty= account->ac_penalty;
-				client[i].ac_limit	= (account->ac_users * 100 + 80) * cfg->ac_stime;
+				cl->ac_idx	= account->ac_idx;
+				cl->ac_penalty= account->ac_penalty;
+				cl->ac_limit	= (account->ac_users * 100 + 80) * cfg->ac_stime;
 #endif
 			} else {
-				if (ph[client[i].ctyp].type & MOD_CONN_NET) {
-					cs_debug("client '%s', pid=%d not found in db (or password changed)", client[i].usr, client[i].pid);
-					kill_thread(i);
+				if (ph[cl->ctyp].type & MOD_CONN_NET) {
+					cs_debug("client '%s', pid=%d not found in db (or password changed)", cl->usr, cl->pid);
+					kill_thread(cl);
 				}
 			}
 		}
@@ -856,25 +856,25 @@ static void start_thread(void * startroutine, char * nameroutine, char typ) {
 	}
 }
 #endif
-void kill_thread(int cidx) {
+void kill_thread(struct s_client *cl) {
 
-	if (client[cidx].pid==0) return;
-	if (pthread_equal(client[cidx].thread, pthread_self())) return; //cant kill yourself
+	if (cl->pid==0) return;
+	if (pthread_equal(cl->thread, pthread_self())) return; //cant kill yourself
 
-	pthread_cancel(client[cidx].thread);
+	pthread_cancel(cl->thread);
 
-	if(client[cidx].ecmtask) 	free(client[cidx].ecmtask);
-	if(client[cidx].emmcache) 	free(client[cidx].emmcache);
-	if(client[cidx].req) 	free(client[cidx].req);
-	if(client[cidx].cc) 		free(client[cidx].cc);
+	if(cl->ecmtask) 	free(cl->ecmtask);
+	if(cl->emmcache) 	free(cl->emmcache);
+	if(cl->req) 	free(cl->req);
+	if(cl->cc) 		free(cl->cc);
 
-	if(client[cidx].pfd)		close(client[cidx].pfd); //Closing Network socket
-	if(client[cidx].fd_m2c_c)	close(client[cidx].fd_m2c_c); //Closing client read fd
-	if(client[cidx].fd_m2c)	close(client[cidx].fd_m2c); //Closing client read fd
+	if(cl->pfd)		close(cl->pfd); //Closing Network socket
+	if(cl->fd_m2c_c)	close(cl->fd_m2c_c); //Closing client read fd
+	if(cl->fd_m2c)	close(cl->fd_m2c); //Closing client read fd
 
-	client[cidx].pid=0;
+	cl->pid=0;
 
-	cs_log("thread %d killed!", cidx);
+	cs_log("thread %08lX killed!", cl->thread);
 
 	return;
 }
@@ -895,13 +895,15 @@ void start_anticascader(struct s_client *cl)
 #endif
 
 void restart_cardreader(int reader_idx, int restart) {
-	int i,n;
-	if (restart) //kill old thread, even when .deleted flag is set
-		for (i=1; i<CS_MAXPID; i++)
-			if (client[i].ridx==reader_idx) {
-				kill_thread(i);
+	int n;
+	if (restart) {//kill old thread, even when .deleted flag is set
+	  struct s_client *prev, *cl;
+		for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+			if (cl->ridx==reader_idx) {
+				kill_thread(cl);
 				break;
 			}
+	}
 
 	if ((reader[reader_idx].device[0]) && (reader[reader_idx].enable == 1) && (!reader[reader_idx].deleted)) {
 
@@ -912,6 +914,7 @@ void restart_cardreader(int reader_idx, int restart) {
 
 		if ((reader[reader_idx].typ & R_IS_CASCADING)) {
 			n=0;
+			int i;
 			for (i=0; i<CS_MAX_MOD; i++) {
 				if (ph[i].num) {
 					if (reader[reader_idx].typ==ph[i].num) {
@@ -2576,14 +2579,13 @@ int process_input(uchar *buf, int l, int timeout)
 
 static void restart_clients()
 {
-	int i;
 	cs_log("restarting clients");
-	for (i=0; i<CS_MAXPID; i++) {
-		if (client[i].pid && client[i].typ=='c' && ph[client[i].ctyp].type & MOD_CONN_NET) {
-			kill_thread(i);
-			cs_log("killing client c%02d pid %d", i, client[i].pid);
+	struct s_client *prev, *cl;
+	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+		if (cl->pid && cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
+			kill_thread(cl);
+			cs_log("killing client c%08lX pid %d", cl->thread, cl->pid);
 		}
-	}
 }
 
 

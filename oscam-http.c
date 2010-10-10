@@ -1766,7 +1766,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	struct tm *lt;
 
 	if (strcmp(getParam(params, "action"), "kill") == 0)
-		kill_thread(atoi(getParam(params, "csidx")));
+		kill_thread(&client[atoi(getParam(params, "csidx"))]);
 
 	if (strcmp(getParam(params, "action"), "restart") == 0)
 		restart_cardreader(atoi(getParam(params, "ridx")), 1);
@@ -2127,10 +2127,9 @@ void send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *p
 		fputs(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
 
-		int i;
-		for (i=1; i<CS_MAXPID; i++) {
-			kill_thread(i);
-		}
+		struct s_client *prev, *cl;
+		for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+			kill_thread(cl);
 		exit(SIGQUIT);
 	} else {
 		fputs(tpl_getTpl(vars, "PRESHUTDOWN"), f);

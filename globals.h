@@ -1210,6 +1210,7 @@ extern int get_csidx();
 #define cs_idx		get_csidx()
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);
+extern struct s_client *first_client;
 
 // oscam variables
 
@@ -1282,7 +1283,7 @@ extern void clear_reader_stat(int ridx);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab);
 extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
-extern void kill_thread(int cidx);
+extern void kill_thread(struct s_client *cl);
                  
 #ifdef CS_ANTICASC
 //extern void start_anticascader(void);
