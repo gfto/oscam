@@ -221,6 +221,7 @@ static int radegast_send_ecm(struct s_client *client, ECM_REQUEST *er)
 
 int radegast_cli_init(struct s_client *cl)
 {
+  *cl = *cl; //prevent compiler warning
   struct sockaddr_in loc_sa;
   struct protoent *ptrp;
   int p_proto, handle;

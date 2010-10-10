@@ -1020,6 +1020,7 @@ static void oscam_ser_process_dcw(uchar *dcw, int *rc, uchar *buf, int l)
 
 static int oscam_ser_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int n)
 {
+  *client = *client; //prevent compiler message
   *rc=(-1);
   switch (buf[0]>>4)
   {
