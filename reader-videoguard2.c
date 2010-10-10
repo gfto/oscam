@@ -500,6 +500,17 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
     }
 
+  // Get Parental Control Settings
+  static const unsigned char ins74e[5] = { 0xD0,0x74,0x0E,0x00,0x00 };
+  if (cmd_exists(reader,ins74e)) {
+    l=do_cmd(reader,ins74e,NULL,NULL,cta_res);
+    if(l<0 || !status_ok(cta_res+l)) {
+      cs_log("classD0 ins74e: failed to get Parental Control Settings");
+    } else {
+      cs_dump(cta_res,l,"[videoguard2-reader] Parental Control Setting:");
+    }
+  }
+
   // fix for 09ac cards
   unsigned char dimeno_magic[0x10]={0xF9,0xFB,0xCD,0x5A,0x76,0xB5,0xC4,0x5C,0xC8,0x2E,0x1D,0xE1,0xCC,0x5B,0x6B,0x02};
   int a;
