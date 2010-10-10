@@ -137,11 +137,18 @@ anti-cascading: user per account, 0 = anti-cascading disabled, default:0
 .RS 3n
 level of penalty:
 
- 0 = only logging
+ 0 = only logging (default)
  1 = send fake CWs
  2 = disbable user temporary
+.RE
+.PP
+\fBfailban\fP = \fB0\fP|\fB2\fP|\fB4\fP
+.RS 3n
+type for IP based blocking:
 
-default:0
+ 0 = ignore (default)
+ 2 = block IP of a disabled account on connecting
+ 4 = block IP of a sleeping account while sleeping comes up
 .RE
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
