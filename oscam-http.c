@@ -27,6 +27,8 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 		cs_log("Refresh Accounts requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
 		//kill(client[0].pid, SIGHUP);
 		init_userdb(&cfg->account);
+		cs_reinit_clients();
+
 #ifdef CS_ANTICASC
 		for (i=0; i<CS_MAXPID; i++)
 		if (client[i].typ=='a') {
@@ -50,7 +52,7 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 		case REFR_SERVICES:
 		cs_log("Refresh Services requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
 		//init_sidtab();
-		kill(client[0].pid, SIGHUP);
+		cs_reinit_clients();
 		break;
 
 #ifdef CS_ANTICASC
