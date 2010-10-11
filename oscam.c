@@ -76,8 +76,7 @@ int get_csidx() {
 
 struct s_client * cur_client(void) 
 {
-	struct s_client *cl = (struct s_client *) pthread_getspecific(getclient);
-	return cl;
+	return (struct s_client *) pthread_getspecific(getclient);
 }
 
 int cs_check_violation(uint ip) {
@@ -1458,29 +1457,30 @@ ECM_REQUEST *get_ecmtask()
 {
 	int i, n;
 	ECM_REQUEST *er=0;
+  struct s_client *cl = cur_client();
 
-	if (!cur_client()->ecmtask)
+	if (!cl->ecmtask)
 	{
-		n=(ph[cur_client()->ctyp].multi)?CS_MAXPENDING:1;
-		if( (cur_client()->ecmtask=(ECM_REQUEST *)malloc(n*sizeof(ECM_REQUEST))) )
-			memset(cur_client()->ecmtask, 0, n*sizeof(ECM_REQUEST));
+		n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
+		if( (cl->ecmtask=(ECM_REQUEST *)malloc(n*sizeof(ECM_REQUEST))) )
+			memset(cl->ecmtask, 0, n*sizeof(ECM_REQUEST));
 	}
 
 	n=(-1);
-	if (!cur_client()->ecmtask)
+	if (!cl->ecmtask)
 	{
 		cs_log("Cannot allocate memory (errno=%d)", errno);
 		n=(-2);
 	}
 	else
-		if (ph[cur_client()->ctyp].multi)
+		if (ph[cl->ctyp].multi)
 		{
 			for (i=0; (n<0) && (i<CS_MAXPENDING); i++)
-				if (cur_client()->ecmtask[i].rc<100)
-					er=&cur_client()->ecmtask[n=i];
+				if (cl->ecmtask[i].rc<100)
+					er=&cl->ecmtask[n=i];
 		}
 		else
-			er=&cur_client()->ecmtask[n=0];
+			er=&cl->ecmtask[n=0];
 
 	if (n<0)
 		cs_log("WARNING: ecm pending table overflow !");
@@ -1489,7 +1489,7 @@ ECM_REQUEST *get_ecmtask()
 		memset(er, 0, sizeof(ECM_REQUEST));
 		er->rc=100;
 		er->cpti=n;
-		er->client=cur_client();
+		er->client=cl;
 		cs_ftime(&er->tps);
 	}
 	return(er);
@@ -1860,9 +1860,10 @@ void guess_irdeto(ECM_REQUEST *er)
 void cs_betatunnel(ECM_REQUEST *er)
 {
 	int n;
+  struct s_client *cl = cur_client();
 	ulong mask_all = 0xFFFF;
 	TUNTAB *ttab;
-	ttab = &cur_client()->ttab;
+	ttab = &cl->ttab;
 	for (n = 0; (n < CS_MAXTUNTAB); n++) {
 		if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all)) {
 			uchar hack_n3[13] = {0x70, 0x51, 0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12, 0x07};
@@ -1882,7 +1883,7 @@ void cs_betatunnel(ECM_REQUEST *er)
 			er->l += 10;
 			er->ecm[2] = er->l-3;
 			er->btun = 1;
-			cur_client()->cwtun++;
+			cl->cwtun++;
 			cs_debug("ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
 				ttab->bt_caidfrom[n], ttab->bt_caidto[n], ttab->bt_srvid[n]);
 		}
