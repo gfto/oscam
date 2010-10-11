@@ -18,10 +18,11 @@ static int camd35_send(uchar *buf)
 {
 	int l;
 	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
+  struct s_client *cl = cur_client();
 
-	if (!cur_client()->udp_fd) return(-1);
+	if (!cl->udp_fd) return(-1);
 	l = 20 + buf[1] + (((buf[0] == 3) || (buf[0] == 4)) ? 0x34 : 0);
-	memcpy(rbuf, cur_client()->ucrc, 4);
+	memcpy(rbuf, cl->ucrc, 4);
 	memcpy(sbuf, buf, l);
 	memset(sbuf + l, 0xff, 15);	// set unused space to 0xff for newer camd3's
 	memcpy(sbuf + 4, i2b(4, crc32(0L, sbuf+20, sbuf[1])), 4);
@@ -30,15 +31,15 @@ static int camd35_send(uchar *buf)
 	aes_encrypt(sbuf, l);
 
         int status;
-	if (cur_client()->is_udp) {
-	   status = sendto(cur_client()->udp_fd, rbuf, l+4, 0,
-				           (struct sockaddr *)&cur_client()->udp_sa,
-				            sizeof(cur_client()->udp_sa));
-           if (status == -1) cur_client()->udp_sa.sin_addr.s_addr = 0;
+	if (cl->is_udp) {
+	   status = sendto(cl->udp_fd, rbuf, l+4, 0,
+				           (struct sockaddr *)&cl->udp_sa,
+				            sizeof(cl->udp_sa));
+           if (status == -1) cl->udp_sa.sin_addr.s_addr = 0;
         }
 	else {
-	   status = send(cur_client()->udp_fd, rbuf, l + 4, 0);
-	   if (status == -1) network_tcp_connection_close(&reader[cur_client()->ridx], cur_client()->pfd);
+	   status = send(cl->udp_fd, rbuf, l + 4, 0);
+	   if (status == -1) network_tcp_connection_close(&reader[cl->ridx], cl->pfd);
         }
 	return status;		
 }
@@ -48,18 +49,19 @@ static int camd35_auth_client(uchar *ucrc)
   int rc=1;
   ulong crc;
   struct s_auth *account;
+  struct s_client *cl = cur_client();
 
-  if (cur_client()->upwd[0])
-    return(memcmp(cur_client()->ucrc, ucrc, 4) ? 1 : 0);
-  cur_client()->crypted=1;
+  if (cl->upwd[0])
+    return(memcmp(cl->ucrc, ucrc, 4) ? 1 : 0);
+  cl->crypted=1;
   crc=(((ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3]) & 0xffffffffL);
-  for (account=cfg->account; (account) && (!cur_client()->upwd[0]); account=account->next)
-    if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cur_client()->dump), 16))
+  for (account=cfg->account; (account) && (!cl->upwd[0]); account=account->next)
+    if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cl->dump), 16))
     {
-      memcpy(cur_client()->ucrc, ucrc, 4);
-      strcpy((char *)cur_client()->upwd, account->pwd);
-      aes_set_key((char *) MD5(cur_client()->upwd, strlen((char *)cur_client()->upwd), cur_client()->dump));
-      rc=cs_auth_client(cur_client(), account, NULL);
+      memcpy(cl->ucrc, ucrc, 4);
+      strcpy((char *)cl->upwd, account->pwd);
+      aes_set_key((char *) MD5(cl->upwd, strlen((char *)cl->upwd), cl->dump));
+      rc=cs_auth_client(cl, account, NULL);
     }
   return(rc);
 }
@@ -146,28 +148,29 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	int i, au;
 	time_t now;
 	uchar mbuf[1024];
+  struct s_client *cl = cur_client();
 
-	au = cur_client()->au;
+	au = cl->au;
 	if ((au < 0) || (au > CS_MAXREADER))
 		return;  // TODO
 
 	time(&now);
-	if (!memcmp(cur_client()->lastserial, reader[au].hexserial, 8))
-		if (abs(now-cur_client()->last) < 180) return;
+	if (!memcmp(cl->lastserial, reader[au].hexserial, 8))
+		if (abs(now-cl->last) < 180) return;
 
-	memcpy(cur_client()->lastserial, reader[au].hexserial, 8);
-	cur_client()->last = now;
+	memcpy(cl->lastserial, reader[au].hexserial, 8);
+	cl->last = now;
 
 	if (reader[au].caid[0])
 	{
-		cur_client()->disable_counter = 0;
+		cl->disable_counter = 0;
 		log_emm_request(au);
 	}
 	else
-		if (cur_client()->disable_counter > 2)
+		if (cl->disable_counter > 2)
 			return;
 		else
-			cur_client()->disable_counter++;
+			cl->disable_counter++;
 
 	memset(mbuf, 0, sizeof(mbuf));
 	mbuf[2] = mbuf[3] = 0xff;			// must not be zero
@@ -346,10 +349,11 @@ static void * camd35_server(void *cli)
 
 static void casc_set_account()
 {
-  strcpy((char *)cur_client()->upwd, reader[cur_client()->ridx].r_pwd);
-  memcpy(cur_client()->ucrc, i2b(4, crc32(0L, MD5((unsigned char *)reader[cur_client()->ridx].r_usr, strlen(reader[cur_client()->ridx].r_usr), cur_client()->dump), 16)), 4);
-  aes_set_key((char *)MD5(cur_client()->upwd, strlen((char *)cur_client()->upwd), cur_client()->dump));
-  cur_client()->crypted=1;
+  struct s_client *cl = cur_client();
+  strcpy((char *)cl->upwd, reader[cl->ridx].r_pwd);
+  memcpy(cl->ucrc, i2b(4, crc32(0L, MD5((unsigned char *)reader[cl->ridx].r_usr, strlen(reader[cl->ridx].r_usr), cl->dump), 16)), 4);
+  aes_set_key((char *)MD5(cl->upwd, strlen((char *)cl->upwd), cl->dump));
+  cl->crypted=1;
 }
 
 int camd35_client_init(struct s_client *client)
@@ -427,10 +431,11 @@ int camd35_client_init_log()
   struct sockaddr_in loc_sa;
   struct protoent *ptrp;
   int p_proto;
+  struct s_client *cl = cur_client();
 
-  if (reader[cur_client()->ridx].log_port<=0)
+  if (reader[cl->ridx].log_port<=0)
   {
-    cs_log("invalid port %d for camd3-loghost", reader[cur_client()->ridx].log_port);
+    cs_log("invalid port %d for camd3-loghost", reader[cl->ridx].log_port);
     return(1);
   }
 
@@ -443,7 +448,7 @@ int camd35_client_init_log()
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
   loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(reader[cur_client()->ridx].log_port);
+  loc_sa.sin_port = htons(reader[cl->ridx].log_port);
 
   if ((logfd=socket(PF_INET, SOCK_DGRAM, p_proto))<0)
   {
@@ -459,25 +464,26 @@ int camd35_client_init_log()
   }
 
   cs_log("camd3 loghost initialized (fd=%d, port=%d)",
-         logfd, reader[cur_client()->ridx].log_port);
+         logfd, reader[cl->ridx].log_port);
 
   return(0);
 }
 
 static int tcp_connect()
 {
-  if (!reader[cur_client()->ridx].tcp_connected)
+  struct s_client *cl = cur_client();
+  if (!reader[cl->ridx].tcp_connected)
   {
     int handle=0;
     handle = network_tcp_connection_open();
     if (handle<0) return(0);
 
-    reader[cur_client()->ridx].tcp_connected = 1;
-    reader[cur_client()->ridx].card_status = CARD_INSERTED;
-    reader[cur_client()->ridx].last_s = reader[cur_client()->ridx].last_g = time((time_t *)0);
-    cur_client()->pfd = cur_client()->udp_fd = handle;
+    reader[cl->ridx].tcp_connected = 1;
+    reader[cl->ridx].card_status = CARD_INSERTED;
+    reader[cl->ridx].last_s = reader[cl->ridx].last_g = time((time_t *)0);
+    cl->pfd = cl->udp_fd = handle;
   }
-  if (!cur_client()->udp_fd) return(0);
+  if (!cl->udp_fd) return(0);
   return(1);
 }
 
@@ -528,10 +534,11 @@ static int camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 static int camd35_send_emm(EMM_PACKET *ep)
 {
 	uchar buf[512];
+  struct s_client *cl = cur_client();
 	
-        if (cur_client()->is_udp) {
-           if (!cur_client()->udp_sa.sin_addr.s_addr || reader[cur_client()->ridx].last_s-reader[cur_client()->ridx].last_g > reader[cur_client()->ridx].tcp_rto)
-              if (!hostResolve(&reader[cur_client()->ridx])) return -1;
+        if (cl->is_udp) {
+           if (!cl->udp_sa.sin_addr.s_addr || reader[cl->ridx].last_s-reader[cl->ridx].last_g > reader[cl->ridx].tcp_rto)
+              if (!hostResolve(&reader[cl->ridx])) return -1;
         }
         else {
            if (!tcp_connect()) return -1;

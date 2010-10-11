@@ -275,20 +275,21 @@ static void casc_do_sock_log(struct s_reader * reader)
   int i, idx;
   ushort caid, srvid;
   ulong provid;
+  struct s_client *cl = cur_client();
 
   idx=reader->ph.c_recv_log(&caid, &provid, &srvid);
-  cur_client()->last=time((time_t)0);
+  cl->last=time((time_t)0);
   if (idx<0) return;        // no dcw-msg received
 
   for (i=1; i<CS_MAXPENDING; i++)
   {
-    if (  (cur_client()->ecmtask[i].rc>=10)
-       && (cur_client()->ecmtask[i].idx==idx)
-       && (cur_client()->ecmtask[i].caid==caid)
-       && (cur_client()->ecmtask[i].prid==provid)
-       && (cur_client()->ecmtask[i].srvid==srvid))
+    if (  (cl->ecmtask[i].rc>=10)
+       && (cl->ecmtask[i].idx==idx)
+       && (cl->ecmtask[i].caid==caid)
+       && (cl->ecmtask[i].prid==provid)
+       && (cl->ecmtask[i].srvid==srvid))
     {
-      casc_check_dcw(reader, i, 0, cur_client()->ecmtask[i].cw);  // send "not found"
+      casc_check_dcw(reader, i, 0, cl->ecmtask[i].cw);  // send "not found"
       break;
     }
   }
@@ -338,7 +339,8 @@ static void casc_get_dcw(struct s_reader * reader, int n)
 {
   int w;
   struct timeb tps, tpe;
-  tpe=cur_client()->ecmtask[n].tps;
+  struct s_client *cl = cur_client();
+  tpe=cl->ecmtask[n].tps;
   //tpe.millitm+=1500;    // TODO: timeout of 1500 should be config
 
   tpe.time += cfg->srtimeout/1000;
@@ -346,13 +348,13 @@ static void casc_get_dcw(struct s_reader * reader, int n)
   
   cs_ftime(&tps);
   while (((w=1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm)>0)
-          && (cur_client()->ecmtask[n].rc>=10))
+          && (cl->ecmtask[n].rc>=10))
   {
     casc_do_sock(reader, w);
     cs_ftime(&tps);
   }
-  if (cur_client()->ecmtask[n].rc>=10)
-    casc_check_dcw(reader, n, 0, cur_client()->ecmtask[n].cw);  // simulate "not found"
+  if (cl->ecmtask[n].rc>=10)
+    casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw);  // simulate "not found"
 }
 
 
@@ -361,22 +363,23 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   int rc, n, i, sflag;
   time_t t;//, tls;
+  struct s_client *cl = cur_client();
   
   uchar buf[512];
 
   t=time((time_t *)0);
   for (n=0, i=sflag=1; i<CS_MAXPENDING; i++)
   {
-    if ((t-(ulong)cur_client()->ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
-        (cur_client()->ecmtask[i].rc>=10))      // drop timeouts
+    if ((t-(ulong)cl->ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
+        (cl->ecmtask[i].rc>=10))      // drop timeouts
         {
-          cur_client()->ecmtask[i].rc=0;
+          cl->ecmtask[i].rc=0;
         }
-    if ((!n) && (cur_client()->ecmtask[i].rc<10))   // free slot found
+    if ((!n) && (cl->ecmtask[i].rc<10))   // free slot found
       n=i;
-    if ((cur_client()->ecmtask[i].rc>=10) &&      // ecm already pending
-        (!memcmp(er->ecmd5, cur_client()->ecmtask[i].ecmd5, CS_ECMSTORESIZE)) &&
-        (er->level<=cur_client()->ecmtask[i].level))    // ... this level at least
+    if ((cl->ecmtask[i].rc>=10) &&      // ecm already pending
+        (!memcmp(er->ecmd5, cl->ecmtask[i].ecmd5, CS_ECMSTORESIZE)) &&
+        (er->level<=cl->ecmtask[i].level))    // ... this level at least
       sflag=0;
   }
   if (!n)
@@ -384,14 +387,14 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
     cs_log("WARNING: ecm pending table overflow !!");
     return(-2);
   }
-  memcpy(&cur_client()->ecmtask[n], er, sizeof(ECM_REQUEST));
+  memcpy(&cl->ecmtask[n], er, sizeof(ECM_REQUEST));
   if( reader->typ == R_NEWCAMD )
-    cur_client()->ecmtask[n].idx=(reader->ncd_msgid==0)?2:reader->ncd_msgid+1;
+    cl->ecmtask[n].idx=(reader->ncd_msgid==0)?2:reader->ncd_msgid+1;
   else
-    cur_client()->ecmtask[n].idx=cur_client()->idx++;
-  cur_client()->ecmtask[n].rc=10;
+    cl->ecmtask[n].idx=cl->idx++;
+  cl->ecmtask[n].rc=10;
   cs_debug("---- ecm_task %d, idx %d, sflag=%d, level=%d", 
-           n, cur_client()->ecmtask[n].idx, sflag, er->level);
+           n, cl->ecmtask[n].idx, sflag, er->level);
 
   if( reader->ph.type==MOD_CONN_TCP && reader->tcp_rto )
   {
@@ -402,7 +405,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
       	reader_do_idle(reader);
       else {
         cs_debug("rto=%d", rto);
-        network_tcp_connection_close(reader, cur_client()->udp_fd);
+        network_tcp_connection_close(reader, cl->udp_fd);
       }
     }
   }
@@ -411,10 +414,10 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   rc=0;
   if (sflag)
   {
-    if ((rc=reader->ph.c_send_ecm(cur_client(), &cur_client()->ecmtask[n], buf)))
-      casc_check_dcw(reader, n, 0, cur_client()->ecmtask[n].cw);  // simulate "not found"
+    if ((rc=reader->ph.c_send_ecm(cl, &cl->ecmtask[n], buf)))
+      casc_check_dcw(reader, n, 0, cl->ecmtask[n].cw);  // simulate "not found"
     else
-      cur_client()->last_idx = cur_client()->ecmtask[n].idx;
+      cl->last_idx = cl->ecmtask[n].idx;
     reader->last_s = t;   // used for inactive_timeout and reconnect_timeout in TCP reader
 
     if (!reader->ph.c_multi)
@@ -423,7 +426,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 //cs_log("casc_process_ecm 1: last_s=%d, last_g=%d", reader->last_s, reader->last_g);
 
-  if (cur_client()->idx>0x1ffe) cur_client()->idx=1;
+  if (cl->idx>0x1ffe) cl->idx=1;
   return(rc);
 }
 
