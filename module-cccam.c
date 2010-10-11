@@ -7,7 +7,7 @@
 #include "reader-common.h"
 #include <poll.h>
 
-extern struct s_reader *reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind); //Needs extern defined???
 
 //Mode names for CMD_05 command:

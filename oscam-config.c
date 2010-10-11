@@ -4,7 +4,7 @@
 #ifdef CS_WITH_BOXKEYS
 #  include "oscam-boxkeys.np"
 #endif
-extern struct s_reader * reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 
 #define CONFVARWIDTH 30
 

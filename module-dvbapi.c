@@ -19,7 +19,7 @@ void azbox_send_dcw(ECM_REQUEST *er);
 void * azbox_main(void * cli);
 #endif
 
-extern struct s_reader * reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 
 const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000" };
 

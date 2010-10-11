@@ -1,5 +1,5 @@
 #include "globals.h"
-extern struct s_reader *reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 
 //CMD00 - ECM (request)
 //CMD01 - ECM (response)

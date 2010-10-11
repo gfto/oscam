@@ -1211,24 +1211,25 @@ extern struct s_client *first_client;
 
 // oscam variables
 
-extern int cs_dblevel, *loghistidx;
+extern int cs_dblevel, loghistidx;
 
 extern ushort len4caid[256];
 
-extern struct s_ecm *ecmcache;
+//extern struct s_ecm *ecmcache;
 
 extern struct card_struct *Cards;
 extern struct idstore_struct *idstore;
 extern unsigned long *IgnoreList;
 
 extern struct s_config *cfg;
-extern char cs_confdir[], *loghist;
+extern char cs_confdir[];
+extern char loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];
 extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 //extern ECM_REQUEST *ecmtask;
 
 #ifdef CS_ANTICASC
-extern struct s_acasc_shm *acasc;
+extern struct  s_acasc_shm   acasc[CS_MAXPID];
 extern FILE *fpa;
 #endif
 extern pthread_mutex_t gethostbyname_lock; 

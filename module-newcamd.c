@@ -1,5 +1,5 @@
 #include "globals.h"
-extern struct s_reader *reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 
 #define CWS_NETMSGSIZE 272
 #define NCD_CLIENT_ID 0x8888

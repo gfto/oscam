@@ -330,7 +330,7 @@ int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
   return 1;
 }
 
-extern struct s_reader *reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 
 int chk_ctab(ushort caid, CAIDTAB *ctab) {
   if (!caid || !ctab->caid[0])

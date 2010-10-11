@@ -2,7 +2,7 @@
 #include "globals.h"
 
 int logfd=0;
-extern struct s_reader * reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 
 void reader_do_idle(struct s_reader * reader);
 

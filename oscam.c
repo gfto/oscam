@@ -33,40 +33,25 @@ struct s_acasc ac_stat[CS_MAXPID];
 /*****************************************************************************
         Shared Memory
 *****************************************************************************/
-int     *ecmidx;  // Shared Memory
-int     *oscam_sem; // sem (multicam.o)
-struct  s_ecm     *ecmcache;  // Shared Memory
-struct  s_reader  *reader;    // Shared Memory
+int     ecmidx;
+int     oscam_sem;
+struct  s_ecm     ecmcache[CS_ECMCACHESIZE];
+struct  s_reader  reader[CS_MAXREADER];
 
 #ifdef CS_WITH_GBOX
-struct  card_struct *Cards;   // Shared Memory
-struct  idstore_struct  *idstore;   // Shared Memory
-unsigned long *IgnoreList;    // Shared Memory
+struct  card_struct Cards[CS_MAXCARDS];
+struct  idstore_struct  idstore[CS_MAXPID];
+unsigned long IgnoreList[CS_MAXIGNORE];
 #endif
 
-struct  s_config  *cfg;       // Shared Memory
+struct  s_config  *cfg;
 #ifdef CS_ANTICASC
-struct  s_acasc_shm   *acasc; // anti-cascading table indexed by account.ac_idx
+struct  s_acasc_shm   acasc[CS_MAXPID]; // anti-cascading table indexed by account.ac_idx
 #endif
 #ifdef CS_LOGHISTORY
-int     *loghistidx;  // ptr to current entry
-char    *loghist;     // ptr of log-history
+int     loghistidx;  // ptr to current entry
+char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
 #endif
-
-static const int  shmsize =  CS_ECMCACHESIZE*(sizeof(struct s_ecm)) +
-                        CS_MAXREADER*(sizeof(struct s_reader)) +
-#ifdef CS_WITH_GBOX
-                        CS_MAXCARDS*(sizeof(struct card_struct))+
-                        CS_MAXIGNORE*(sizeof(long))+
-                        CS_MAXPID*(sizeof(struct idstore_struct))+
-#endif
-#ifdef CS_ANTICASC
-                        CS_MAXPID*(sizeof(struct s_acasc_shm)) +
-#endif
-#ifdef CS_LOGHISTORY
-                        CS_MAXLOGHIST*CS_LOGHISTSIZE + sizeof(int) +
-#endif
-                        sizeof(struct s_config)+(6*sizeof(int));
 
 int get_threadnum(struct s_client *client) {
 	struct s_client *prev, *cl;
@@ -466,7 +451,6 @@ void cs_exit(int sig)
 	cs_log("cardserver down");
 	cs_close_log();
 
-	if (ecmcache) free((void *)ecmcache);
 	if (cl) free(cl);
 
 	exit(sig);  //clears all threads
@@ -635,33 +619,8 @@ static void init_signal()
 
 static void init_shm()
 {
-	ecmcache=(struct s_ecm *)malloc(shmsize);
-	memset(ecmcache, 0, shmsize);
-
-#ifdef CS_ANTICASC
-  acasc=(struct s_acasc_shm *)&ecmcache[CS_ECMCACHESIZE];
-  ecmidx=(int *)&acasc[CS_MAXPID];
-#else
-  ecmidx=(int *)&ecmcache[CS_ECMCACHESIZE];
-#endif
-  oscam_sem=(int *)((void *)ecmidx+sizeof(int));
-  reader=(struct s_reader *)((void *)oscam_sem+sizeof(int));
-#ifdef CS_WITH_GBOX
-  Cards=(struct card_struct*)&reader[CS_MAXREADER];
-  IgnoreList=(unsigned long*)&Cards[CS_MAXCARDS];
-  idstore=(struct idstore_struct*)&IgnoreList[CS_MAXIGNORE];
-  cfg=(struct s_config *)&idstore[CS_MAXPID];
-#else
-  cfg=(struct s_config *)&reader[CS_MAXREADER];
-#endif
-#ifdef CS_LOGHISTORY
-  loghistidx=(int *)((void *)cfg+sizeof(struct s_config));
-  loghist=(char *)((void *)loghistidx+sizeof(int));
-#endif
-
-
-  *ecmidx=0;
-  *oscam_sem=0;
+  ecmidx=0;
+  oscam_sem=0;
   first_client = malloc(sizeof(struct s_client));
 	if (!first_client) {
     fprintf(stderr, "Could not allocate memory for master client, exiting...");
@@ -690,7 +649,7 @@ static void init_shm()
   pthread_mutex_init(&gethostbyname_lock, NULL); 
 
 #ifdef CS_LOGHISTORY
-  *loghistidx=0;
+  loghistidx=0;
   memset(loghist, 0, CS_MAXLOGHIST*CS_LOGHISTSIZE);
 #endif
 }
@@ -1236,8 +1195,8 @@ static void store_ecm(ECM_REQUEST *er)
 		return;
 #endif
 	int rc;
-	rc=*ecmidx;
-	*ecmidx=(*ecmidx+1) % CS_ECMCACHESIZE;
+	rc=ecmidx;
+	ecmidx=(ecmidx+1) % CS_ECMCACHESIZE;
 	//cs_log("store ecm from reader %d", er->reader[0]);
 	memcpy(ecmcache[rc].ecmd5, er->ecmd5, CS_ECMSTORESIZE);
 	memcpy(ecmcache[rc].cw, er->cw, 16);
@@ -1251,13 +1210,13 @@ void store_logentry(char *txt)
 {
 
 	char *ptr;
-	ptr=(char *)(loghist+(*loghistidx*CS_LOGHISTSIZE));
+	ptr=(char *)(loghist+(loghistidx*CS_LOGHISTSIZE));
 	ptr[0]='\1';    // make username unusable
 	ptr[1]='\0';
 	if ((cur_client()->typ=='c') || (cur_client()->typ=='m'))
 		cs_strncpy(ptr, cur_client()->usr, 31);
 	cs_strncpy(ptr+32, txt, CS_LOGHISTSIZE-33);
-	*loghistidx=(*loghistidx+1) % CS_MAXLOGHIST;
+	loghistidx=(loghistidx+1) % CS_MAXLOGHIST;
 
 }
 #endif
@@ -2830,6 +2789,7 @@ if (pthread_key_create(&getclient, NULL)) {
   int      fdp[2];
   int      mfdr=0;     // Master FD (read)
   int      fd_c2m=0;
+	cfg = malloc(sizeof(struct s_config));
   //uchar    buf[2048];
   void (*mod_def[])(struct s_module *)=
   {

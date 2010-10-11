@@ -1,5 +1,5 @@
 #include "globals.h"
-extern struct s_reader *reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 
 #define REQ_SIZE	4
 

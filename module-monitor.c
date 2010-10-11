@@ -5,7 +5,7 @@
 #else
 #  define CS_VERSION_X  CS_VERSION
 #endif
-extern struct s_reader *reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 
 static void monitor_check_ip()
 {
@@ -507,7 +507,7 @@ static void monitor_logsend(char *flag){
 		return;
 #ifdef CS_LOGHISTORY
 	if (!strcmp(flag, "on")){
-		for (i = (*loghistidx + 3) % CS_MAXLOGHIST; i != *loghistidx; i = (i + 1) % CS_MAXLOGHIST){
+		for (i = (loghistidx + 3) % CS_MAXLOGHIST; i != loghistidx; i = (i + 1) % CS_MAXLOGHIST){
 			char *p_usr, *p_txt;
 			p_usr=(char *)(loghist+(i*CS_LOGHISTSIZE));
 			p_txt = p_usr + 32;

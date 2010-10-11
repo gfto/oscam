@@ -4,7 +4,7 @@
 LLIST *reader_stat[CS_MAXREADER];
 static pthread_mutex_t stat_busy;
 
-extern struct s_reader *reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 
 void init_stat();
 

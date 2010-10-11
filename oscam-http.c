@@ -15,7 +15,7 @@
 #include "module-cccam.h"
 #include "module-stat.h"
 
-extern struct s_reader *reader;
+extern struct  s_reader  reader[CS_MAXREADER];
 extern void restart_cardreader(int ridx, int restart);
 static int running = 1;
 
@@ -1963,7 +1963,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	}
 
 #ifdef CS_LOGHISTORY
-	for (i=(*loghistidx+3) % CS_MAXLOGHIST; i!=*loghistidx; i=(i+1) % CS_MAXLOGHIST) {
+	for (i=(loghistidx+3) % CS_MAXLOGHIST; i!=loghistidx; i=(i+1) % CS_MAXLOGHIST) {
 		char *p_usr, *p_txt;
 		p_usr=(char *)(loghist+(i*CS_LOGHISTSIZE));
 		p_txt=p_usr+32;
