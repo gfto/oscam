@@ -873,12 +873,11 @@ int cs_user_resolve(struct s_auth *account)
     return result;
 }
 #if defined(CS_ANTICASC) || defined(WEBIF) 
-static void start_thread(void * startroutine, char * nameroutine, char typ) {
+static void start_thread(void * startroutine, char * nameroutine) {
 	int i;
 
 	struct s_client * cl = cs_fork(first_client->ip);
 	if (cl == NULL) return;
-	cl->typ=typ; //'h' or 'a'
 	strcpy(cl->usr, first_client->usr);
 
 	i=pthread_create(&cl->thread, (pthread_attr_t *)0, startroutine, (void *) cl);
@@ -908,6 +907,7 @@ void start_anticascader(struct s_client *cl)
   set_signal_handler(SIGHUP, 1, ac_init_stat);
 	cl->thread = pthread_self();
   pthread_setspecific(getclient, cl);
+  cl->typ = 'a';
   ac_init_stat();
   while(1)
   {
@@ -3041,7 +3041,7 @@ if (pthread_key_create(&getclient, NULL)) {
   if(cfg->http_port == 0) 
     cs_log("http disabled"); 
   else 
-    start_thread((void *) &http_srv, "http", 'h');
+    start_thread((void *) &http_srv, "http");
 #endif
 
 	init_cardreader();
@@ -3058,7 +3058,7 @@ if (pthread_key_create(&getclient, NULL)) {
 		cs_log("anti cascading disabled");
 	else {
 		init_ac();
-		start_thread((void *) &start_anticascader, "anticascader", 'a'); // 96
+		start_thread((void *) &start_anticascader, "anticascader"); // 96
 		
 	}
 #endif

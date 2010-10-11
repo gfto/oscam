@@ -2591,6 +2591,7 @@ int process_request(FILE *f, struct in_addr in) {
 void http_srv(struct s_client *cl) {
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
+	cl->typ = 'h';
 	int i,sock, reuse = 1;
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
