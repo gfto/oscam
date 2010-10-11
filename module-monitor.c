@@ -454,11 +454,12 @@ static void monitor_process_details(char *arg){
 	struct s_client *cl;
 	char sbuf[256];
 	if (!arg) return;
-		cl = idx_from_tid(first_client->thread); //FIXME (*cl = idx_from_tid(tid = atoi(arg))) //FIXME tid should be derived from arg
-//		monitor_send_details("Invalid TID", tid); //thread is always valid, so no need for testing
-//	else
+	cl = idx_from_tid(first_client->thread); //FIXME (*cl = idx_from_tid(tid = atoi(arg))) //FIXME tid should be derived from arg
+	if (!cl)
+		monitor_send_details("Invalid TID", tid); //thread is always valid, so no need for testing
+	else
 	{
-//		monitor_send_info(monitor_client_info('D', idx), 0); //FIXME
+		//monitor_send_info(monitor_client_info('D', idx), 0); //FIXME
 		switch(cl->typ)
 		{
 		case 's':
