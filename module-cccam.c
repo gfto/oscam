@@ -245,10 +245,11 @@ void cc_cli_close(struct s_client *cl) {
 	rdr->last_s = reader->last_g = 0;
 
 	//network_tcp_connection_close(rdr, cl->udp_fd); //Calls c_init, cc_cli_init -->recursive crash
-	if (cl->udp_fd)
-	  close(cl->udp_fd);
+	int udp_fd = cl->udp_fd;
 	cl->pfd = 0;
 	cl->udp_fd = 0;
+	if (udp_fd)
+	  close(udp_fd);
 
 	struct cc_data *cc = cl->cc;
 	if (cc) {
@@ -779,7 +780,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			er->rc = 0;
 			er->rcEx = 0x27;
 			cs_debug_mask(D_TRACE, "%s server not init! ccinit=%d pfd=%d",
-					getprefix(), cc ? 1 : 0, cl->pfd);
+					rdr->label, cc ? 1 : 0, cl->pfd);
 			write_ecm_answer(rdr, er);
 		}
 		cc_cli_close(cl);
@@ -3065,7 +3066,7 @@ int cc_cli_init_int(struct s_client *cl) {
 	int res = cc_cli_connect(cl);
 	if (res < 0)
 		cc_cli_close(cl);
-	cs_debug_mask(D_FUT, "cc_cli_init out");
+	cs_debug_mask(D_FUT, "cc_cli_init_int out");
 	return res;
 }
 

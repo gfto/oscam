@@ -1809,7 +1809,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	else tpl_addVar(vars, 0, "HIDEIDLECLIENTSSELECTED0", "selected");
 
 	struct s_client *cl;
-	for (i=0, cl=first_client; ; cl=cl->next, i++) {
+	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
 		// Reset template variables
 		tpl_addVar(vars, 0, "CLIENTLBVALUE","");
 

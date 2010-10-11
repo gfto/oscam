@@ -363,10 +363,21 @@ static void cs_master_alarm()
 
 static void cs_sigpipe()
 {
-  //cs_log("Got sigpipe signal -> captured");
-  cs_log("Got sigpipe signal --> closing!");
-  cs_exit(1);
+  cs_log("Got sigpipe signal -> captured");
 }
+
+static void cs_accounts_chk()
+{
+  init_userdb(&cfg->account);
+  cs_reinit_clients();
+#ifdef CS_ANTICASC
+	struct s_client *prev, *cl;
+	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+    if (cl->typ=='a')
+      break;
+#endif
+}
+
 
 void nullclose(int *fd)
 {
@@ -381,6 +392,7 @@ void cs_exit(int sig)
 {
 	set_signal_handler(SIGCHLD, 1, SIG_IGN);
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
+	set_signal_handler(SIGPIPE, 1, SIG_IGN);
 
 	if (sig==SIGALRM) {
 		cs_debug("thread %d: SIGALRM, skipping", get_csidx());
@@ -453,6 +465,10 @@ void cs_exit(int sig)
 		else
 			prev->next = cl2->next; //remove client from list
 
+		//Restore signals before exiting thread
+		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
+		set_signal_handler(SIGHUP  , 1, cs_accounts_chk);
+		
 		pthread_exit(NULL);
 		return;
 	}
@@ -515,18 +531,6 @@ void cs_reinit_clients()
 				}
 			}
 		}
-}
-
-static void cs_accounts_chk()
-{
-  init_userdb(&cfg->account);
-  cs_reinit_clients();
-#ifdef CS_ANTICASC
-	struct s_client *prev, *cl;
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
-    if (cl->typ=='a')
-      break;
-#endif
 }
 
 static void cs_debug_level()
