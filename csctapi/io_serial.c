@@ -66,18 +66,18 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, unsigned delay_ms, 
 #if defined(TUXBOX) && defined(PPC)
 void IO_Serial_Ioctl_Lock(struct s_reader * reader, int flag)
 {
-  extern int *oscam_sem;
+  static int oscam_sem=0;
   if ((reader->typ != R_DB2COM1) && (reader->typ != R_DB2COM2)) return;
   if (!flag)
-    *oscam_sem=0;
-  else while (*oscam_sem!=reader->typ)
+    oscam_sem=0;
+  else while (oscam_sem!=reader->typ)
   {
-    while (*oscam_sem)
+    while (oscam_sem)
 			if (reader->typ == R_DB2COM1)
 				cs_sleepms(6);
 			else
 				cs_sleepms(8);
-    *oscam_sem=reader->typ;
+    oscam_sem=reader->typ;
     cs_sleepms(1);
   }
 }

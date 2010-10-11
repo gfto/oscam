@@ -34,7 +34,7 @@ struct s_acasc ac_stat[CS_MAXPID];
         Shared Memory
 *****************************************************************************/
 int     ecmidx;
-int     oscam_sem;
+
 struct  s_ecm     ecmcache[CS_ECMCACHESIZE];
 struct  s_reader  reader[CS_MAXREADER];
 
@@ -620,7 +620,6 @@ static void init_signal()
 static void init_shm()
 {
   ecmidx=0;
-  oscam_sem=0;
   first_client = malloc(sizeof(struct s_client));
 	if (!first_client) {
     fprintf(stderr, "Could not allocate memory for master client, exiting...");
