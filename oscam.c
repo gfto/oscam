@@ -895,8 +895,8 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 	if (pthread_equal(cl->thread, pthread_self())) return; //cant kill yourself
 
 	pthread_cancel(cl->thread);
-	cleanup_thread(cl); //FIXME what about when cancellation was not granted immediately?
 	cs_log("thread %08lX killed!", cl->thread);
+	cleanup_thread(cl); //FIXME what about when cancellation was not granted immediately?
 	return;
 }
 
