@@ -418,11 +418,6 @@ static void monitor_process_details_master(char *buf, int pid){
 	sprintf(buf, "Nice=%d", cfg->nice);
 	monitor_send_details(buf, pid);
 
-	//#ifdef CS_NOSHM
-	//  sprintf(buf, "shared memory initialized (size=%d, fd=%d)", shmsize, shmid);
-	//#else
-	//  sprintf(buf, "shared memory initialized (size=%d, id=%d)", shmsize, shmid);
-	//#endif
 	//  monitor_send_details(buf, pid);
 }
 

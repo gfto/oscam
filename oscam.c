@@ -68,10 +68,6 @@ static const int  shmsize =  CS_ECMCACHESIZE*(sizeof(struct s_ecm)) +
 #endif
                         sizeof(struct s_config)+(6*sizeof(int));
 
-#ifdef CS_NOSHM
-char  cs_memfile[128]=CS_MMAPFILE;
-#endif
-
 int get_threadnum(struct s_client *client) {
 	struct s_client *prev, *cl;
 	int count=0;
@@ -198,9 +194,6 @@ static void usage()
 #endif
   fprintf(stderr, "\n\n");
   fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
-#ifdef CS_NOSHM
-  fprintf(stderr, " [-m memory-file]");
-#endif
   fprintf(stderr, " [-h]");
   fprintf(stderr, "\n\n\t-b         : start in background\n");
   fprintf(stderr, "\t-c <dir>   : read configuration from <dir>\n");
@@ -221,10 +214,6 @@ static void usage()
   fprintf(stderr, "\t              32 = traffic to the reader-device on I/O layer\n");
   fprintf(stderr, "\t              64 = EMM logging\n");
   fprintf(stderr, "\t             255 = debug all\n");
-#ifdef CS_NOSHM
-  fprintf(stderr, "\t-m <file>  : use <file> as mmaped memory file\n");
-  fprintf(stderr, "\t             default = %s\n", CS_MMAPFILE);
-#endif
   fprintf(stderr, "\t-h         : show this help\n");
   fprintf(stderr, "\n");
   exit(1);
@@ -2937,10 +2926,8 @@ if (pthread_key_create(&getclient, NULL)) {
 			  }
 			  break;
 		  case 'm':
-#ifdef CS_NOSHM
-			  cs_strncpy(cs_memfile, optarg, sizeof(cs_memfile));
-			  break;
-#endif
+				printf("WARNING: -m parameter is deprecated, ignoring it.\n");
+				break;
 		  case 'h':
 		  default :
 			  usage();

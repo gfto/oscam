@@ -130,9 +130,6 @@
 #    define CS_LOGFILE "/dev/tty"
 #  endif
 #  define CS_EMBEDDED
-#  ifndef QBOXHD
-#      define CS_NOSHM
-#  endif
 #  define NO_FTIME
 #  if !defined(COOL) && !defined(ST_LINUX)
 #    define SCI_DEV 1
@@ -144,12 +141,10 @@
 
 #ifdef UCLIBC
 #  define CS_EMBEDDED
-#    define CS_NOSHM
 #  define NO_FTIME
 #endif
 
 #ifdef OS_CYGWIN32
-#  define CS_NOSHM
 #  define CS_MMAPFILE "oscam.mem"
 #  define CS_LOGFILE "/dev/tty"
 #  define NO_ENDIAN_H
@@ -184,12 +179,10 @@
 
 #ifdef ARM
 #  define CS_EMBEDDED
-#  define CS_NOSHM
 #  define NO_FTIME
 #endif
 
 //#ifdef ALIGNMENT
 //#  define STRUCTS_PACKED
 //#endif
-
 #endif //OSCAM_CONFIG_H_
