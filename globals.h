@@ -137,13 +137,13 @@
 #define CS_MAXPID   32
 #define CS_MAXREADER    (CS_MAXPID>>1)
 #define CS_MAXPENDING   CS_MAXPID
-#define CS_EMMCACHESIZE   (CS_MAXPID<<1)
 #else
 #define CS_MAXPID   512
 #define CS_MAXREADER    (CS_MAXPID<<2)
 #define CS_MAXPENDING   (CS_MAXPID<<1)
-#define CS_EMMCACHESIZE   (CS_MAXPID<<1)
 #endif
+
+#define CS_EMMCACHESIZE  5 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
 
 #define D_TRACE     1 // Generate very detailed error/trace messages per routine
 #define D_ATR       2 // Debug ATR parsing, dump of ecm, cw
