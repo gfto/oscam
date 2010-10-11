@@ -330,7 +330,7 @@ static void monitor_process_info(){
 	time_t now = time((time_t)0);
 
 	struct s_client *cl;
-	for (cl=first_client; ; cl=cl->next) {
+	for (cl=first_client; cl ; cl=cl->next) {
 		if	((cfg->mon_hideclient_to <= 0) ||
 				( now-cl->lastecm < cfg->mon_hideclient_to) ||
 				( now-cl->lastemm < cfg->mon_hideclient_to) ||

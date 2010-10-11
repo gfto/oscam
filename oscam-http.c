@@ -1587,7 +1587,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 		char *proto = "";
 
 		struct s_client *cl;
-		for (cl=first_client; ; cl=cl->next) {
+		for (cl=first_client; cl ; cl=cl->next) {
 		 if (!strcmp(cl->usr, account->usr)) {
 			//set client to offline depending on hideclient_to
 			if ((now - cl->lastecm) < hideclient) {
@@ -1616,8 +1616,6 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 			emmok += cl->emmok;
 			emmnok += cl->emmnok;
 		 }
-     if (cl->next == NULL)
-      break;
 		}
 		if ( isonline > 0 ) {
 			tpl_printf(vars, 0, "CWOK", "%d", cwok);
@@ -1790,11 +1788,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	if(strlen(hideidle) > 0) {
 		if (atoi(hideidle) == 2) {
 			struct s_client *cl;
-			for (cl=first_client; ; cl=cl->next) {
+			for (cl=first_client; cl ; cl=cl->next)
 				cl->wihidden = 0;
-				if (cl->next == NULL)
-					break;
-			}
 		}
 		else {
 			int oldval = cfg->http_hide_idle_clients;

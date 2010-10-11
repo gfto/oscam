@@ -38,12 +38,10 @@ void ac_init_stat()
 static struct s_client *idx_from_ac_idx(int ac_idx)
 {
 	struct s_client *cl;
-	for (cl=first_client; ; cl=cl->next) {
+	for (cl=first_client; cl ; cl=cl->next)
     if( cl->ac_idx==ac_idx )
       return cl;
-    if (cl->next == NULL)
-      return NULL;
-  }
+  return NULL;
 }
 
 void ac_do_stat()
