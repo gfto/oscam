@@ -137,13 +137,11 @@
 #define CS_MAXPID   32
 #define CS_MAXREADER    (CS_MAXPID>>1)
 #define CS_MAXPENDING   CS_MAXPID
-#define CS_ECMCACHESIZE   CS_MAXPID
 #define CS_EMMCACHESIZE   (CS_MAXPID<<1)
 #else
 #define CS_MAXPID   512
 #define CS_MAXREADER    (CS_MAXPID<<2)
 #define CS_MAXPENDING   (CS_MAXPID<<1)
-#define CS_ECMCACHESIZE   CS_MAXPID
 #define CS_EMMCACHESIZE   (CS_MAXPID<<1)
 #endif
 
@@ -397,6 +395,7 @@ struct s_ecm
   ushort 	caid;
   ulong  	grp;
   int 		reader;
+  struct s_ecm *next;
   //int level;
 };
 
@@ -1214,8 +1213,6 @@ extern struct s_client *first_client;
 extern int cs_dblevel, loghistidx;
 
 extern ushort len4caid[256];
-
-//extern struct s_ecm *ecmcache;
 
 extern struct card_struct *Cards;
 extern struct idstore_struct *idstore;

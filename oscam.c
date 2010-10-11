@@ -19,6 +19,7 @@ extern void cs_statistics(struct s_client * client);
 struct s_module ph[CS_MAX_MOD]; // Protocols
 struct s_cardsystem cardsystem[CS_MAX_MOD]; // Protocols
 struct s_client * first_client = NULL; //Pointer to clients list, first client is master
+
 ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 int cs_dblevel=0;   // Debug Level (TODO !!)
@@ -30,12 +31,9 @@ pthread_key_t getclient;
 struct s_acasc ac_stat[CS_MAXPID];
 #endif
 
-/*****************************************************************************
-        Shared Memory
-*****************************************************************************/
-int     ecmidx;
 
-struct  s_ecm     ecmcache[CS_ECMCACHESIZE];
+struct  s_ecm     *ecmcache;
+struct  s_ecm     *ecmidx;
 struct  s_reader  reader[CS_MAXREADER];
 
 #ifdef CS_WITH_GBOX
@@ -380,6 +378,13 @@ static void cleanup_thread(struct s_client *cl)
 	else
 		prev->next = cl2->next; //remove client from list
 	if (cl) free (cl);
+  //decrease ecmcache
+	struct s_ecm *ecmc;
+	if (ecmcache->next != NULL) { //keep it at least on one entry big
+		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next);
+		if (ecmc->next) free(ecmc->next);
+		ecmc->next = NULL; //remove last ecmcache from list
+	}
 }
 
 void cs_exit(int sig)
@@ -548,7 +553,7 @@ struct s_client * cs_fork(in_addr_t ip) {
 	struct s_client *cl;
 
 	pid_t pid=getpid();
-	for (cl=first_client; cl->next != NULL; cl=cl->next); //ends with cl on last usable client
+	for (cl=first_client; cl->next != NULL; cl=cl->next); //ends with cl on last client
 	cl->next = malloc(sizeof(struct s_client));
 	if (cl->next) {
 		cl = cl->next; //move to next empty slot
@@ -574,6 +579,12 @@ struct s_client * cs_fork(in_addr_t ip) {
 
 		cl->login=cl->last=time((time_t *)0);
 		cl->pid=pid;
+		//increase ecmcache
+		struct s_ecm *ecmc;
+		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
+		ecmc->next = malloc(sizeof(struct s_ecm));
+		if (ecmc->next)
+			memset(ecmc, 0, sizeof(struct s_ecm));
 	} else {
 		cs_log("max connections reached -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
@@ -619,7 +630,8 @@ static void init_signal()
 
 static void init_shm()
 {
-  ecmidx=0;
+  ecmidx=ecmcache=malloc(sizeof(struct s_ecm));
+  ecmcache->next = NULL;
   first_client = malloc(sizeof(struct s_client));
 	if (!first_client) {
     fprintf(stderr, "Could not allocate memory for master client, exiting...");
@@ -1144,20 +1156,19 @@ void cs_disconnect_client(struct s_client * client)
  **/
 int check_ecmcache1(ECM_REQUEST *er, ulong grp)
 {
-	int i;
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
-	for(i=0; i<CS_ECMCACHESIZE; i++) {
-		if ((grp & ecmcache[i].grp) &&
-		     ecmcache[i].caid==er->caid &&
-		     (!memcmp(ecmcache[i].ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
+	struct s_ecm *ecmc;
+	for (ecmc=ecmcache; ecmc ; ecmc=ecmc->next)
+		if ((grp & ecmc->grp) &&
+		     ecmc->caid==er->caid &&
+		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
 		{
-			//cs_log("cache1 found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
-			memcpy(er->cw, ecmcache[i].cw, 16);
-			er->reader[0] = ecmcache[i].reader;
+			//cs_log("cache1 found: grp=%lX cgrp=%lX", grp, ecmc->grp);
+			memcpy(er->cw, ecmc->cw, 16);
+			er->reader[0] = ecmc->reader;
 			return(1);
 		}
-	}
 	return(0);
 }
 
@@ -1169,21 +1180,10 @@ int check_ecmcache2(ECM_REQUEST *er, ulong grp)
 {
 	// disable cache2
 	if (!reader[cur_client()->ridx].cachecm) return(0);
-	
-	int i;
-	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
-	//cs_log("cache2 CHECK: grp=%lX", grp);
-	for(i=0; i<CS_ECMCACHESIZE; i++) {
-		if ((grp & ecmcache[i].grp) &&
-		     ecmcache[i].caid==er->caid &&
-		     (!memcmp(ecmcache[i].ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
-		{
-			//cs_log("cache2 found: grp=%lX cgrp=%lX", grp, ecmcache[i].grp);
-			memcpy(er->cw, ecmcache[i].cw, 16);
-			return(1);
-		}
-	}
-	return(0);
+	int save = er->reader[0];
+	int rc = check_ecmcache1(er, grp);
+	er->reader[0] = save;
+  return rc;
 }
 
 
@@ -1193,15 +1193,16 @@ static void store_ecm(ECM_REQUEST *er)
 	if (cfg->double_check && er->checked < 2)
 		return;
 #endif
-	int rc;
-	rc=ecmidx;
-	ecmidx=(ecmidx+1) % CS_ECMCACHESIZE;
+	if (ecmidx->next)
+		ecmidx=ecmidx->next;
+	else
+		ecmidx=ecmcache;
 	//cs_log("store ecm from reader %d", er->reader[0]);
-	memcpy(ecmcache[rc].ecmd5, er->ecmd5, CS_ECMSTORESIZE);
-	memcpy(ecmcache[rc].cw, er->cw, 16);
-	ecmcache[rc].caid = er->caid;
-	ecmcache[rc].grp = reader[er->reader[0]].grp;
-	ecmcache[rc].reader = er->reader[0];
+	memcpy(ecmidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
+	memcpy(ecmidx->cw, er->cw, 16);
+	ecmidx->caid = er->caid;
+	ecmidx->grp = reader[er->reader[0]].grp;
+	ecmidx->reader = er->reader[0];
 	//cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
 #ifdef CS_LOGHISTORY
@@ -2616,7 +2617,7 @@ void cs_log_config()
   else
     buf[0]='\0';
   cs_log("version=%s, build #%s, system=%s-%s-%s%s", CS_VERSION_X, CS_SVN_VERSION, CS_OS_CPU, CS_OS_HW, CS_OS_SYS, buf);
-  cs_log("max. clients=%d, client max. idle=%d sec, debug level=%d", CS_MAXPID-3, cfg->cmaxidle, cs_dblevel);
+  cs_log("client max. idle=%d sec, debug level=%d", cfg->cmaxidle, cs_dblevel);
 
   if( cfg->max_log_size )
     sprintf((char *)buf, "%d Kb", cfg->max_log_size);
