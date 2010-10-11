@@ -423,4 +423,12 @@ char *getParam(struct uriparams *params, char *name){
 	}
 	return "";
 }
+
+char *getParamDef(struct uriparams *params, char *name, char* def){
+	int i;
+	for(i=(*params).paramcount-1; i>=0; --i){
+		if(strcmp((*params).params[i], name) == 0) return (*params).values[i];
+	}
+	return def;
+}
 #endif
