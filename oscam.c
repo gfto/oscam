@@ -378,14 +378,35 @@ static void cs_accounts_chk()
 #endif
 }
 
-
-void nullclose(int *fd)
+static void nullclose(int *fd)
 {
 	//if closing an already closed pipe, we get a sigpipe signal, and this causes a cs_exit
 	//and this causes a close and this causes a sigpipe...and so on
 	int f = *fd;
 	*fd = 0; //so first null client-fd
 	close(f); //then close fd
+}
+
+static void cleanup_thread(struct s_client *cl)
+{
+	if(cl->ecmtask) 	free(cl->ecmtask);
+	if(cl->emmcache) 	free(cl->emmcache);
+	if(cl->req) 		free(cl->req);
+	if(cl->cc) 		free(cl->cc);
+
+	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
+	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
+	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
+	cl->pid=0;
+
+	struct s_client *prev, *cl2;
+	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
+		if (cl == cl2)
+			break;
+	if (cl != cl2)
+		cs_log("FATAL ERROR: could not find client to remove from list.");
+	else
+		prev->next = cl2->next; //remove client from list
 }
 
 void cs_exit(int sig)
@@ -444,27 +465,8 @@ void cs_exit(int sig)
 
 	// this is very important - do not remove
 	if (cl->typ != 's') {
-		if(cl->ecmtask) 	free(cl->ecmtask);
-		if(cl->emmcache) 	free(cl->emmcache);
-		if(cl->req) 		free(cl->req);
-		if(cl->cc) 		free(cl->cc);
-
-		if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
-		if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
-		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
-
 		cs_log("thread %08lX ended!", pthread_self());
-		cl->pid=0;
-		//free client FIXME
-		struct s_client *prev, *cl2;
-		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
-			if (cl == cl2)
-				break;
-		if (cl != cl2)
-			cs_log("FATAL ERROR: could not find client to remove from list.");
-		else
-			prev->next = cl2->next; //remove client from list
-
+		cleanup_thread(cl);
 		//Restore signals before exiting thread
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
 		set_signal_handler(SIGHUP  , 1, cs_accounts_chk);
@@ -887,26 +889,14 @@ static void start_thread(void * startroutine, char * nameroutine, char typ) {
 	}
 }
 #endif
-void kill_thread(struct s_client *cl) {
+void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
 
 	if (cl->pid==0) return;
 	if (pthread_equal(cl->thread, pthread_self())) return; //cant kill yourself
 
 	pthread_cancel(cl->thread);
-
-	if(cl->ecmtask) 	free(cl->ecmtask);
-	if(cl->emmcache) 	free(cl->emmcache);
-	if(cl->req) 	free(cl->req);
-	if(cl->cc) 		free(cl->cc);
-
-	if(cl->pfd)		close(cl->pfd); //Closing Network socket
-	if(cl->fd_m2c_c)	close(cl->fd_m2c_c); //Closing client read fd
-	if(cl->fd_m2c)	close(cl->fd_m2c); //Closing client read fd
-
-	cl->pid=0;
-
+	cleanup_thread(cl); //FIXME what about when cancellation was not granted immediately?
 	cs_log("thread %08lX killed!", cl->thread);
-
 	return;
 }
 
