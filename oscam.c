@@ -441,6 +441,9 @@ void cs_exit(int sig)
 		if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
 		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 
+		cs_log("thread %08lX ended!", pthread_self());
+		cl->pid=0;
+		//free client FIXME
 		struct s_client *prev, *cl2;
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 			if (cl == cl2)
@@ -449,10 +452,6 @@ void cs_exit(int sig)
 			cs_log("FATAL ERROR: could not find client to remove from list.");
 		else
 			prev->next = cl2->next; //remove client from list
-		
-		cs_log("thread %08lX ended!", pthread_self());
-		cl->pid=0;
-		//free client FIXME
 
 		pthread_exit(NULL);
 		return;
