@@ -36,7 +36,6 @@ struct s_acasc ac_stat[CS_MAXPID];
 int     *ecmidx;  // Shared Memory
 int     *oscam_sem; // sem (multicam.o)
 struct  s_ecm     *ecmcache;  // Shared Memory
-struct  s_client  *client;    // Shared Memory
 struct  s_reader  *reader;    // Shared Memory
 
 #ifdef CS_WITH_GBOX
@@ -55,7 +54,6 @@ char    *loghist;     // ptr of log-history
 #endif
 
 static const int  shmsize =  CS_ECMCACHESIZE*(sizeof(struct s_ecm)) +
-                        CS_MAXPID*(sizeof(struct s_client)) +
                         CS_MAXREADER*(sizeof(struct s_reader)) +
 #ifdef CS_WITH_GBOX
                         CS_MAXCARDS*(sizeof(struct card_struct))+
@@ -407,6 +405,7 @@ static void cleanup_thread(struct s_client *cl)
 		cs_log("FATAL ERROR: could not find client to remove from list.");
 	else
 		prev->next = cl2->next; //remove client from list
+	if (cl) free (cl);
 }
 
 void cs_exit(int sig)
@@ -479,6 +478,7 @@ void cs_exit(int sig)
 	cs_close_log();
 
 	if (ecmcache) free((void *)ecmcache);
+	if (cl) free(cl);
 
 	exit(sig);  //clears all threads
 }
@@ -572,17 +572,16 @@ static void cs_card_info(int i)
 }
 
 struct s_client * cs_fork(in_addr_t ip) {
-	int i=1;
 	struct s_client *cl;
 
 	pid_t pid=getpid();
-	for (cl=first_client; cl->next != NULL; cl=cl->next) i++; //ends with cl on last usable client and i to next empty slot
-	if (i<CS_MAXPID) {
-		cl->next = &client[i]; //here new created s_client malloc should be linked
+	for (cl=first_client; cl->next != NULL; cl=cl->next); //ends with cl on last usable client
+	cl->next = malloc(sizeof(struct s_client));
+	if (cl->next) {
 		cl = cl->next; //move to next empty slot
+		memset(cl, 0, sizeof(struct s_client));
 		cl->next = NULL;
 		int fdp[2];
-		memset(cl, 0, sizeof(struct s_client));
 		cl->au=(-1);
 		if (pipe(fdp)) {
 			cs_log("Cannot create pipe (errno=%d)", errno);
@@ -657,8 +656,7 @@ static void init_shm()
   ecmidx=(int *)&ecmcache[CS_ECMCACHESIZE];
 #endif
   oscam_sem=(int *)((void *)ecmidx+sizeof(int));
-  client=(struct s_client *)((void *)oscam_sem+sizeof(int));
-  reader=(struct s_reader *)&client[CS_MAXPID];
+  reader=(struct s_reader *)((void *)oscam_sem+sizeof(int));
 #ifdef CS_WITH_GBOX
   Cards=(struct card_struct*)&reader[CS_MAXREADER];
   IgnoreList=(unsigned long*)&Cards[CS_MAXCARDS];
@@ -675,7 +673,11 @@ static void init_shm()
 
   *ecmidx=0;
   *oscam_sem=0;
-  first_client = &client[0]; //here first client should be linked after creation with malloc
+  first_client = malloc(sizeof(struct s_client));
+	if (!first_client) {
+    fprintf(stderr, "Could not allocate memory for master client, exiting...");
+  exit(1);
+  }
   first_client->next = NULL; //terminate clients list with NULL
   first_client->pid=getpid();
   first_client->login=time((time_t *)0);

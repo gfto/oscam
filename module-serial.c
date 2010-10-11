@@ -867,7 +867,7 @@ static void * oscam_ser_fork(void *url2)
 {
   //static char logtxt[32];
 	char *url = (char *) url2;
-  pthread_setspecific(getclient, &client[get_csidx()]); //FIXME dont think this will work without   client->thread=pthread_self();
+  //pthread_setspecific(getclient, &client[get_csidx()]); //FIXME dont think this will work without   client->thread=pthread_self();
 
   if ((!url) || (!url[0])) return NULL;
   if (!oscam_ser_parse_url(url)) return NULL;

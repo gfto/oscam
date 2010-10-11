@@ -1216,7 +1216,6 @@ extern int cs_dblevel, *loghistidx;
 extern ushort len4caid[256];
 
 extern struct s_ecm *ecmcache;
-extern struct s_client *client;
 
 extern struct card_struct *Cards;
 extern struct idstore_struct *idstore;

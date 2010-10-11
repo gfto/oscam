@@ -1768,7 +1768,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	struct tm *lt;
 
 	if (strcmp(getParam(params, "action"), "kill") == 0)
-		kill_thread(&client[atoi(getParam(params, "csidx"))]);
+		kill_thread((struct s_client *)atoi(getParam(params, "csidx"))); //FIXME untested
 
 	if (strcmp(getParam(params, "action"), "restart") == 0)
 		restart_cardreader(atoi(getParam(params, "ridx")), 1);
@@ -1780,9 +1780,9 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	if(strlen(debuglvl) > 0)
 		cs_dblevel = atoi(debuglvl);
 
-	char *hideidx = getParam(params, "hide");
-	if(strlen(hideidx) > 0)
-	client[atoi(hideidx)].wihidden = 1;
+	struct s_client *hideidx = (struct s_client *)getParam(params, "hide");
+	//if(strlen(hideidx) > 0)
+	hideidx->wihidden = 1; //FIXME untested
 
 	char *hideidle = getParam(params, "hideidle");
 	if(strlen(hideidle) > 0) {
@@ -1829,11 +1829,11 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			lt=localtime(&cl->login);
 
-			tpl_printf(vars, 0, "HIDEIDX", "%d", i);
+			tpl_printf(vars, 0, "HIDEIDX", "%d", cl);
 			tpl_addVar(vars, 0, "HIDEICON", ICHID);
 			if(cl->typ == 'c' && !cfg->http_readonly) {
 				//tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", i);
-				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&csidx=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\"></A>", i, ICKIL);
+				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&csidx=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\"></A>", cl, ICKIL);
 			}
 			else if((cl->typ == 'r' || cl->typ == 'p') && !cfg->http_readonly) {
 				//tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", cl->ridx);
@@ -1850,7 +1850,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", cl->crypted);
 			tpl_printf(vars, 0, "CLIENTIP", "%s", cs_inet_ntoa(cl->ip));
 			tpl_printf(vars, 0, "CLIENTPORT", "%d", cl->port);
-			tpl_addVar(vars, 0, "CLIENTPROTO", monitor_get_proto(&client[i]));
+			tpl_addVar(vars, 0, "CLIENTPROTO", monitor_get_proto(cl));
 			tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
 			tpl_printf(vars, 0, "CLIENTLOGINTIME", "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
 
