@@ -60,23 +60,24 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
 {
   int i;
+  struct s_client *cl = cur_client();
   for (i=1; i<CS_MAXPENDING; i++)
   {
-    if ((cur_client()->ecmtask[i].rc>=10) &&
-        (!memcmp(cur_client()->ecmtask[i].ecmd5, cur_client()->ecmtask[idx].ecmd5, CS_ECMSTORESIZE)))
+    if ((cl->ecmtask[i].rc>=10) &&
+        (!memcmp(cl->ecmtask[i].ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE)))
     {
       if (rc)
       {
-        cur_client()->ecmtask[i].rc=(i==idx) ? 1 : 2;
+        cl->ecmtask[i].rc=(i==idx) ? 1 : 2;
 #ifdef CS_WITH_GBOX
-        if(cur_client()->ecmtask[i].gbxRidx)cur_client()->ecmtask[i].rc=0;
+        if(cl->ecmtask[i].gbxRidx)cl->ecmtask[i].rc=0;
 #endif
-        memcpy(cur_client()->ecmtask[i].cw, cw, 16);
+        memcpy(cl->ecmtask[i].cw, cw, 16);
       }
       else
-        cur_client()->ecmtask[i].rc=0;    
-      write_ecm_answer(reader, &cur_client()->ecmtask[i]);
-      cur_client()->ecmtask[i].idx=0;
+        cl->ecmtask[i].rc=0;    
+      write_ecm_answer(reader, &cl->ecmtask[i]);
+      cl->ecmtask[i].idx=0;
     }
   }
 }
@@ -186,13 +187,14 @@ int hostResolve(struct s_reader *rdr)
 
 int network_tcp_connection_open()
 {
-  cs_log("connecting to %s", reader[cur_client()->ridx].device);
+  struct s_client *cl = cur_client();
+  cs_log("connecting to %s", reader[cl->ridx].device);
 
-  if (!hostResolve(&reader[cur_client()->ridx]))
+  if (!hostResolve(&reader[cl->ridx]))
      return -1;
  
-  int sd = cur_client()->udp_fd;
-  if (connect(sd, (struct sockaddr *)&cur_client()->udp_sa, sizeof(cur_client()->udp_sa)) == 0)
+  int sd = cl->udp_fd;
+  if (connect(sd, (struct sockaddr *)&cl->udp_sa, sizeof(cl->udp_sa)) == 0)
      return sd;
 	 
   if (errno == EINPROGRESS || errno == EALREADY) {
@@ -235,28 +237,29 @@ int network_tcp_connection_open()
 
 void network_tcp_connection_close(struct s_reader * reader, int fd)
 {
-  cs_debug("tcp_conn_close(): fd=%d, cur_client()->typ == 'c'=%d", fd, cur_client()->typ == 'c');
+  struct s_client *cl = cur_client();
+  cs_debug("tcp_conn_close(): fd=%d, cl->typ == 'c'=%d", fd, cl->typ == 'c');
   if (fd)
     close(fd);
-  cur_client()->udp_fd = 0;
+  cl->udp_fd = 0;
 
-  if (!cur_client()->typ == 'c')
+  if (!cl->typ == 'c')
   {
     int i;
-    //cur_client()->pfd = 0;
+    //cl->pfd = 0;
     reader->tcp_connected = 0;
 
-    if (cur_client()->ecmtask) {
+    if (cl->ecmtask) {
 	for (i = 0; i < CS_MAXPENDING; i++) {
-	   cur_client()->ecmtask[i].idx = 0;
-	   cur_client()->ecmtask[i].rc = 0;
+	   cl->ecmtask[i].idx = 0;
+	   cl->ecmtask[i].rc = 0;
 	}
     }
 
     reader->ncd_msgid=0;
     reader->last_s=reader->last_g=0;
 
-    if (reader->ph.c_init(cur_client())) {
+    if (reader->ph.c_init(cl)) {
          cs_debug("network_tcp_connection_close() exit(1);");
 
        if (reader->ph.cleanup)
@@ -427,12 +430,13 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 static int reader_store_emm(uchar *emm, uchar type)
 {
   int rc;
-  memcpy(cur_client()->emmcache[cur_client()->rotate].emm, emm, emm[2]);
-  cur_client()->emmcache[cur_client()->rotate].type=type;
-  cur_client()->emmcache[cur_client()->rotate].count=1;
+  struct s_client *cl = cur_client();
+  memcpy(cl->emmcache[cl->rotate].emm, emm, emm[2]);
+  cl->emmcache[cl->rotate].type=type;
+  cl->emmcache[cl->rotate].count=1;
 //  cs_debug("EMM stored (index %d)", rotate);
-  rc=cur_client()->rotate;
-  cur_client()->rotate=(cur_client()->rotate+1) % CS_EMMCACHESIZE;
+  rc=cl->rotate;
+  cl->rotate=(cl->rotate+1) % CS_EMMCACHESIZE;
   return(rc);
 }
 
@@ -522,18 +526,19 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   char *rtxt[] = { "error", (reader->typ & R_IS_CASCADING) ? "sent" : "written", "skipped", "blocked" };
   char *typedesc[]= { "unknown", "unique", "shared", "global" };
   struct timeb tps, tpe;
+  struct s_client *cl = cur_client();
 
   cs_ftime(&tps);
 
   no=0;
   for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++)
-          if (!memcmp(cur_client()->emmcache[i].emm, ep->emm, ep->emm[2]))
+          if (!memcmp(cl->emmcache[i].emm, ep->emm, ep->emm[2]))
           {
                   if (reader->cachemm)
-                          ecs=(reader->rewritemm > cur_client()->emmcache[i].count) ? 1 : 2;
+                          ecs=(reader->rewritemm > cl->emmcache[i].count) ? 1 : 2;
                   else
                           ecs=1;
-                  no=++cur_client()->emmcache[i].count;
+                  no=++cl->emmcache[i].count;
                   i--;
           }
 
@@ -564,7 +569,7 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
           }
   }
 
-  if (rc) cur_client()->lastemm=time((time_t)0);
+  if (rc) cl->lastemm=time((time_t)0);
 
 #ifdef CS_LED
   if (rc) cs_switch_led(LED3, LED_BLINK_ON);
@@ -575,7 +580,7 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     cs_ftime(&tpe);
 
     cs_log("%s emmtype=%s, len=%d, idx=%d, cnt=%d: %s (%d ms) by %s",
-           username(ep->client), typedesc[cur_client()->emmcache[i].type], ep->emm[2],
+           username(ep->client), typedesc[cl->emmcache[i].type], ep->emm[2],
            i, no, rtxt[rc], 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm, reader->label); //FIXME not sure why emmtyp must come from ep->client and typedesc can be of cur_client
   }
 
@@ -614,11 +619,11 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
     ulong ms;
     cs_ftime(&tpe);
     for(x=0;x<CS_MAXPENDING;x++){
-      ms=1000*(tpe.time-cur_client()->ecmtask[x].tps.time)+tpe.millitm-cur_client()->ecmtask[x].tps.millitm;
-      if(cur_client()->ecmtask[x].rc == 10 && ms > cfg->ctimeout && cur_client()->ridx == cur_client()->ecmtask[x].gbxRidx) {
-        //cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",cur_client()->ecmtask[x].rc,cur_client()->ecmtask[x].idx,x,ridx,cur_client()->ecmtask[x].gbxRidx);
-        cur_client()->ecmtask[x].rc=5;
-        send_dcw(cur_client(), &cur_client()->ecmtask[x]);
+      ms=1000*(tpe.time-cl->ecmtask[x].tps.time)+tpe.millitm-cl->ecmtask[x].tps.millitm;
+      if(cl->ecmtask[x].rc == 10 && ms > cfg->ctimeout && cl->ridx == cl->ecmtask[x].gbxRidx) {
+        //cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",cl->ecmtask[x].rc,cl->ecmtask[x].idx,x,ridx,cl->ecmtask[x].gbxRidx);
+        cl->ecmtask[x].rc=5;
+        send_dcw(cl, &cl->ecmtask[x]);
       }
     }
   }
@@ -751,17 +756,17 @@ static void reader_main(struct s_reader * reader)
 
 void * start_cardreader(void * rdr)
 {
-	struct s_reader * reader = (struct s_reader *) rdr; //FIXME can be made simpler
+	struct s_reader * reader = (struct s_reader *) rdr;
 
 	reader->client->thread=pthread_self();
 	pthread_setspecific(getclient, reader->client);
-	cur_client()->cs_ptyp=D_READER;
+	reader->client->cs_ptyp=D_READER;
 
   if (reader->typ & R_IS_CASCADING)
   {
-    cur_client()->typ='p';
-    cur_client()->port=reader->r_port;
-    strcpy(cur_client()->usr, reader->r_usr);
+    reader->client->typ='p';
+    reader->client->port=reader->r_port;
+    strcpy(reader->client->usr, reader->r_usr);
     
     if (!(reader->ph.c_init)) {
       cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);
@@ -769,10 +774,10 @@ void * start_cardreader(void * rdr)
       cs_exit(1);
     }
     
-    if (reader->ph.c_init(cur_client())) {
+    if (reader->ph.c_init(reader->client)) {
     	 if (reader->ph.cleanup) 
     	 	  reader->ph.cleanup();
-    	 if (cur_client()->typ != 'p')
+    	 if (reader->client->typ != 'p')
           cs_exit(1);
      }
     
@@ -782,28 +787,28 @@ void * start_cardreader(void * rdr)
 #ifdef WITH_CARDREADER
   else
   {
-    cur_client()->ip=cs_inet_addr("127.0.0.1");
+    reader->client->ip=cs_inet_addr("127.0.0.1");
 		if (reader->typ != R_SC8in1)
      	while (reader_device_init(reader)==2)
       	cs_sleepms(60000); // wait 60 secs and try again
   }
 
 #endif
-  cur_client()->emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));
-  if (!cur_client()->emmcache)
+  reader->client->emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));
+  if (!reader->client->emmcache)
   {
     cs_log("Cannot allocate memory (errno=%d)", errno);
     cs_exit(1);
   }
-  memset(cur_client()->emmcache, 0, CS_EMMCACHESIZE*(sizeof(struct s_emm)));
+  memset(reader->client->emmcache, 0, CS_EMMCACHESIZE*(sizeof(struct s_emm)));
 
-  cur_client()->ecmtask=(ECM_REQUEST *)malloc(CS_MAXPENDING*(sizeof(ECM_REQUEST)));
-  if (!cur_client()->ecmtask)
+  reader->client->ecmtask=(ECM_REQUEST *)malloc(CS_MAXPENDING*(sizeof(ECM_REQUEST)));
+  if (!reader->client->ecmtask)
   {
     cs_log("Cannot allocate memory (errno=%d)", errno);
     cs_exit(1);
   }
-  memset(cur_client()->ecmtask, 0, CS_MAXPENDING*(sizeof(ECM_REQUEST)));
+  memset(reader->client->ecmtask, 0, CS_MAXPENDING*(sizeof(ECM_REQUEST)));
   reader_main(reader);
   cs_exit(0);
 	return NULL; //dummy to prevent compiler error
