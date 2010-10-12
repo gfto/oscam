@@ -510,7 +510,7 @@ add_custom_target (
 
 #if the svnversion program is absent, this will leave the SVN_REVISION string empty,
 #but won't stop CMake.
-execute_process (COMMAND "svnversion" "-n" "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_VARIABLE OSCAM_SVN_REVISION)
+execute_process (COMMAND "svnversion" "-n" "-c" "${CMAKE_CURRENT_SOURCE_DIR}" OUTPUT_VARIABLE OSCAM_SVN_REVISION)
 
 if (OSCAM_SVN_REVISION)
     string (REGEX REPLACE "[0-9]+:" "" OSCAM_SVN_REVISION "${OSCAM_SVN_REVISION}")
