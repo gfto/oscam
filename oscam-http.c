@@ -1844,7 +1844,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			}
 
 			tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
-			tpl_printf(vars, 0, "CLIENTCNR", "%d", (i>1) ? i-1 : 0);
+			tpl_printf(vars, 0, "CLIENTCNR", "%d", get_threadnum(cl));
 			tpl_addVar(vars, 0, "CLIENTUSER", usr);
 			tpl_printf(vars, 0, "CLIENTCAU", "%d", cau);
 			tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", cl->crypted);
