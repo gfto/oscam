@@ -117,14 +117,14 @@ static char *get_log_header(int m, char *txt)
 			case 'r':
 			case 'c':
 			case 'p':
-				sprintf(txt, "%c %8d ", cur_client()->typ, get_threadnum(cur_client()));
+				sprintf(txt, "%08X %c%04d ",(unsigned long) cur_client()->thread, cur_client()->typ, get_threadnum(cur_client()));
 				break;
 			default:
-				sprintf(txt, "%c          ", cur_client()->typ);
+				sprintf(txt, "%c              ", cur_client()->typ);
 				break;
 		}
 	} else
-		sprintf(txt, "%-11.11s", "");
+		sprintf(txt, "%-13.13s", "");
 
 	return(txt);
 }
@@ -198,7 +198,7 @@ void cs_log(const char *fmt,...)
 	get_log_header(1, log_txt);
 	va_list params;
 	va_start(params, fmt);
-	vsprintf(log_txt+11, fmt, params);
+	vsprintf(log_txt+15, fmt, params);
 	va_end(params);
 	write_to_log(-1, log_txt);
 }
@@ -219,7 +219,7 @@ void cs_debug(const char *fmt,...)
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
+		vsprintf(log_txt+15, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
 	}
@@ -233,7 +233,7 @@ void cs_debug_mask(unsigned short mask, const char *fmt,...)
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
+		vsprintf(log_txt+15, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
 	}
@@ -267,7 +267,7 @@ void cs_dump(const uchar *buf, int n, char *fmt, ...)
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
+		vsprintf(log_txt+15, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
 		//printf("LOG: %s\n", txt); fflush(stdout);
@@ -292,7 +292,7 @@ void cs_ddump(const uchar *buf, int n, char *fmt, ...)
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
+		vsprintf(log_txt+15, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
 		//printf("LOG: %s\n", txt); fflush(stdout);
@@ -320,7 +320,7 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
+		vsprintf(log_txt+15, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
 		//printf("LOG: %s\n", txt); fflush(stdout);
