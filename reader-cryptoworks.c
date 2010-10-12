@@ -436,16 +436,13 @@ static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[2]=GLOBAL;
 	filter[3]=0;
 
-	filter[4+0]    = 0x89;
-	filter[4+0+16] = 0xFF;
+	filter[4+0]    = 0x88;
+	filter[4+0+16] = 0xFE;
 	filter[4+1]    = 0xA9;
 	filter[4+1+16] = 0xFF;
 	filter[4+2]    = 0xFF;
 	filter[4+2+16] = 0xFF;
-	filter[4+6]    = 0x83;
-	filter[4+6+16] = 0xFF;
-	filter[4+7]    = 0x01;
-	filter[4+7+16] = 0xFF;
+
 
 	filter[36]=SHARED;
 	filter[37]=0;
@@ -458,10 +455,7 @@ static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[38+2+16] = 0xFF;
 	memcpy(filter+38+3, rdr->hexserial, 4);
 	memset(filter+38+3+16, 0xFF, 4);
-	filter[38+10]    = 0x80;
-	filter[38+10+16] = 0xFF;
-	filter[38+11]    = 0x04;
-	filter[38+11+16] = 0xFF;
+
 
 	filter[70]=UNIQUE;
 	filter[71]=0;
@@ -474,18 +468,17 @@ static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[72+2+16] = 0xFF;
 	memcpy(filter+72+3, rdr->hexserial, 5);
 	memset(filter+72+3+16, 0xFF, 5);
-	filter[72+11]    = 0x80;
-	filter[72+11+16] = 0xFF;
-	filter[72+12]    = 0x05;
-	filter[72+12+16] = 0xFF;
+
 
 	filter[104]=GLOBAL;
 	filter[105]=0;
 
 	filter[106+0]    = 0x86;
 	filter[106+16]   = 0xFF;
-	filter[106+6]    = 0x84;
-	filter[106+6+16] = 0xFF;
+	filter[106+1]    = 0xA9;
+	filter[106+1+16] = 0xFF;
+	filter[106+2]    = 0xFF;
+	filter[106+2+16] = 0xFF;
 
 	return;
 }
