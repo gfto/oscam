@@ -415,8 +415,11 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
  * send a message
  */
 int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
+        if (!cl->udp_fd) //disconnected
+          return 0;
+          
 	struct s_reader *rdr = (cl->typ == 'c')?NULL:&reader[cl->ridx];
-	
+	  
 	int n;
 	uint8 netbuf[len + 4];
 	struct cc_data *cc = cl->cc;
