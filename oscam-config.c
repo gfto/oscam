@@ -1635,7 +1635,7 @@ void chk_account(char *token, char *value, struct s_auth *account)
 
 	if (!strcmp(token, "cccreshare")) {
 		if (strlen(value) == 0) {
-			account->cccreshare = 10;
+			account->cccreshare = 0;
 			return;
 		} else {
 			account->cccreshare = atoi(value);

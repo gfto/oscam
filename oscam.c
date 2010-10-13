@@ -1594,9 +1594,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	send_reader_stat(er->reader[0], er, er->rc);
 
-	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s%s%s",
+	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d)%s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, lc,
-			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, schaninfo, sreason);
+			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, schaninfo, sreason);
 
 #ifdef WEBIF
 	if(er->rc == 0)
@@ -2180,7 +2180,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	if(er->rc > 99) {
-
+		er->reader_count=0;
 		if (cfg->lb_mode) {
 			int reader_avail[CS_MAXREADER];
 			for (i =0; i < CS_MAXREADER; i++)
@@ -2191,14 +2191,19 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			for (i = m = 0; i < CS_MAXREADER; i++) {
 				if (reader_avail[i]) {
 					m|=er->reader[i] = reader_avail[i];
+					if (reader_avail[i] == 1) // do not count fallback readers (==2 fallback)
+						er->reader_count++;
 				}
 			}
 		}
 		else
 		{
 			for (i = m = 0; i < CS_MAXREADER; i++)
-				if (matching_reader(er, &reader[i]))
+				if (matching_reader(er, &reader[i])) {
 					m|=er->reader[i] = (reader[i].fallback)? 2: 1;
+					if (!reader[i].fallback) // do not count fallback readers
+						er->reader_count++;
+				}
 		}
 
 		switch(m) {
