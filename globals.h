@@ -1284,7 +1284,7 @@ extern int get_threadnum(struct s_client *client);
 //extern void start_anticascader(void);
 extern void init_ac(void);
 extern void ac_init_stat();
-extern int  ac_init_log(char*);
+extern int  ac_init_log();
 extern void ac_do_stat(void);
 extern void ac_init_client(struct s_auth *);
 extern void ac_chk(ECM_REQUEST*, int);
@@ -1368,7 +1368,7 @@ extern void network_tcp_connection_close(struct s_reader * reader, int);
 extern int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec);
 
 // oscam-log
-extern int  cs_init_log(char *);
+extern int  cs_init_log();
 extern void cs_write_log(char *);
 extern void cs_log(const char *,...);
 #ifdef WITH_DEBUG
@@ -1385,7 +1385,7 @@ extern void cs_ddump_mask(unsigned short, const uchar *, int, char *, ...);
 #define cs_ddump_mask(...)
 #endif
 extern void cs_close_log(void);
-extern int  cs_init_statistics(char *);
+extern int  cs_init_statistics();
 extern void cs_dump(const uchar *, int, char *, ...);
 
 // oscam-aes

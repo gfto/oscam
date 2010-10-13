@@ -7,14 +7,15 @@
 static uchar  ac_ecmd5[CS_ECMSTORESIZE];
 struct s_acasc ac_stat[CS_MAXPID];
 
-int ac_init_log(char *file)
+int ac_init_log(void)
 {
-  if( (!fpa)  && (file[0]))
+
+  if( (!fpa)  && (cfg->ac_logfile[0]))
   {
-    if( (fpa=fopen(file, "a+"))<=(FILE *)0 )
+    if( (fpa=fopen(cfg->ac_logfile, "a+"))<=(FILE *)0 )
     {
       fpa=(FILE *)0;
-      fprintf(stderr, "can't open anti-cascading logfile: %s\n", file);
+      fprintf(stderr, "can't open anti-cascading logfile: %s\n", cfg->ac_logfile);
     }
     else
       cs_log("anti-cascading log initialized");
@@ -31,7 +32,7 @@ void ac_init_stat()
   if( fpa )
     fclose(fpa);
   fpa=(FILE *)0;
-  if( ac_init_log(cfg->ac_logfile) )
+  if( ac_init_log() )
     cs_exit(0);
 }
 

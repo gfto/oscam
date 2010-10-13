@@ -1499,7 +1499,7 @@ int init_config()
 	}
 #endif
 	cs_init_statistics(cfg->usrfile);
-	cs_init_log(cfg->logfile);
+	cs_init_log();
 	if (cfg->ftimeout >= cfg->ctimeout) {
 		cfg->ftimeout = cfg->ctimeout - 100;
 		cs_log("WARNING: fallbacktimeout adjusted to %lu ms (must be smaller than clienttimeout (%lu ms))", cfg->ftimeout, cfg->ctimeout);

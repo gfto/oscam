@@ -7,18 +7,18 @@ int number_of_chars_printed = 0;
 
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
-static int use_syslog=0;
-static int use_stdout=0;
 
 #ifdef CS_ANTICASC
 FILE *fpa=(FILE *)0;
 #endif
 
-static void switch_log(char* file, FILE **f, int (*pfinit)(char*))
+static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 {
-	if( cfg->max_log_size )
+	if( cfg->max_log_size) //only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
+																					 //at the same time, it is ok to have the other logs switching 1 entry later
 	{
 		struct stat stlog;
+
 		if( stat(file, &stlog)!=0 )
 		{
 			fprintf(stderr, "stat('%s',..) failed (errno=%d)\n", file, errno);
@@ -38,8 +38,9 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(char*))
 				fprintf(stderr, "rename(%s, %s) failed (errno=%d)\n",
 						file, prev_log, errno);
 			}
-			else if( pfinit(file))
-				cs_exit(0);
+			else
+				if( pfinit())
+					fprintf(stderr, "Initialisation of log file failed, continuing without logging thread %08lX.", pthread_self());
 		}
 	}
 }
@@ -62,33 +63,31 @@ void cs_write_log(char *txt)
 				fflush(fps);
 			}
 		} else {
-			if (fp || use_stdout) {
-				if( !use_stdout && !use_syslog)
+			int use_stdout = (strcmp(cfg->logfile, "stdout"))?0:1;
+			if (fp && !use_stdout && strcmp(cfg->logfile, "syslog"))
 					switch_log(cfg->logfile, &fp, cs_init_log);
-				if (!cfg->disablelog){
+			if ((fp || use_stdout) && (!cfg->disablelog)){
 					fprintf(fp, "%s", txt);
 					fflush(fp);
-				}
 			}
 		}
 }
 
-int cs_init_log(char *file)
+int cs_init_log(void)
 {
 	static char *head = ">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")";
 
-	if (!strcmp(file, "stdout")) {
-		use_stdout = 1;
+	if (!strcmp(cfg->logfile, "stdout")) {//log to stdout
 		fp = stdout;
 		cs_log(head);
 		cs_log_config();
 		return(0);
 	}
-	if (strcmp(file, "syslog")) {
+	if (strcmp(cfg->logfile, "syslog")) {//log to file
 		if (!fp) {
-			if ((fp = fopen(file, "a+")) <= (FILE *)0) {
+			if ((fp = fopen(cfg->logfile, "a+")) <= (FILE *)0) {
 				fp = (FILE *)0;
-				fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", file, errno);
+				fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", cfg->logfile, errno);
 			} else {
 				time_t t;
 				char line[80];
@@ -101,9 +100,8 @@ int cs_init_log(char *file)
 			}
 		}
 		return(fp <= (FILE *)0);
-	} else {
+	} else { //log to syslog
 		openlog("oscam", LOG_NDELAY, LOG_DAEMON);
-		use_syslog = 1;
 		cs_log(head);
 		cs_log_config();
 		return(0);
@@ -142,9 +140,9 @@ static void write_to_log(int flag, char *txt)
 	//  memcpy(txt, sbuf, 11);
 
 #ifdef CS_ANTICASC
-	if (use_syslog && cur_client()->typ != 'a') // system-logfile
+	if ((!strcmp(cfg->logfile, "syslog")) && cur_client()->typ != 'a') // system-logfile
 #else
-	if (use_syslog) // system-logfile
+	if (!strcmp(cfg->logfile, "syslog")) // system-logfile
 #endif
 		syslog(LOG_INFO, "%s", txt);
 
@@ -205,7 +203,7 @@ void cs_log(const char *fmt,...)
 
 void cs_close_log(void)
 {
-	if (use_stdout || use_syslog || !fp) return;
+	if (!strcmp(cfg->logfile, "stdout") || (!strcmp(cfg->logfile, "syslog")) || !fp) return;
 	fclose(fp);
 	fp=(FILE *)0;
 }
@@ -337,14 +335,14 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 	}
 }
 #endif
-int cs_init_statistics(char *file) 
+int cs_init_statistics(void) 
 {
-	if ((!fps) && (file != NULL))
+	if ((!fps) && (cfg->usrfile != NULL))
 	{
-		if ((fps=fopen(file, "a+"))<=(FILE *)0)
+		if ((fps=fopen(cfg->usrfile, "a+"))<=(FILE *)0)
 		{
 			fps=(FILE *)0;
-			cs_log("couldn't open statistics file: %s", file);
+			cs_log("couldn't open statistics file: %s", cfg->usrfile);
 		}
 	}
 	return(fps<=(FILE *)0);
