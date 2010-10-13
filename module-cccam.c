@@ -214,7 +214,7 @@ void add_good_sid(struct s_client *cl, struct cc_card *card, struct cc_srvid *sr
 	remove_sid_block(card, srvid_good);
 	struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
 	if (srvid) {
-		*srvid = *srvid_good;
+		memcpy(srvid, srvid_good, sizeof(struct cc_srvid));
 		llist_append(card->goodsids, srvid);
 		cs_debug_mask(D_TRACE, "%s added good sid %04X(%d) for card %08x",
 				getprefix(), srvid_good->sid, srvid_good->ecmlen, card->id);
@@ -2901,7 +2901,12 @@ int cc_cli_connect(struct s_client *cl) {
 				cc_free_card(card);
 				card = llist_itr_remove(&itr);
 			}
-		}
+                }
+                if (cc->current_cards)
+		        free_current_cards(cc->current_cards);
+        	if (cc->extended_ecm_idx)
+          		free_extended_ecm_idx(cc);
+          		
 		pthread_mutex_trylock(&cc->ecm_busy);
 		pthread_mutex_unlock(&cc->ecm_busy);
 	}
