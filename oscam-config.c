@@ -2637,24 +2637,24 @@ void write_versionfile() {
 	  fprintf(fp, "active modules:\n");
 
 #ifdef WEBIF
-	  fprintf(fp, "webifsupport:     yes\n");
+	  fprintf(fp, "Webif support:    yes\n");
 #else
-	  fprintf(fp, "webifsupport:     no\n");
+	  fprintf(fp, "Webif support:    no\n");
 #endif
 #ifdef HAVE_DVBAPI
-	  fprintf(fp, "dvbapisupport:    yes\n");
+	  fprintf(fp, "Dvbapi support:   yes\n");
 #else
-	  fprintf(fp, "dvbapisupport:    no\n");
+	  fprintf(fp, "Dvbapi support:   no\n");
 #endif
 #ifdef CS_WITH_GBOX
-	  fprintf(fp, "gboxsupport:      yes\n");
+	  fprintf(fp, "Gbox support:     yes\n");
 #else
-	  fprintf(fp, "gboxsupport:      no\n");
+	  fprintf(fp, "Gbox support:     no\n");
 #endif
 #ifdef CS_ANTICASC
-	  fprintf(fp, "anticascsupport:  yes\n");
+	  fprintf(fp, "Anticasc support: yes\n");
 #else
-	  fprintf(fp, "anticascsupport:  no\n");
+	  fprintf(fp, "Anticasc support: no\n");
 #endif
 #ifdef CS_WITH_DOUBLECHECK
 	  fprintf(fp, "ECM doublecheck:  yes\n");
@@ -2675,6 +2675,11 @@ void write_versionfile() {
 	  fprintf(fp, "LED support:      yes\n");
 #else
 	  fprintf(fp, "LED support:      no\n");
+#endif
+#ifdef CS_LOGHISTORY
+	  fprintf(fp, "Log history:      yes\n");
+#else
+	  fprintf(fp, "Log history:      no\n");
 #endif
 #ifdef MODULE_MONITOR
 	  fprintf(fp, "Monitor:          yes\n");

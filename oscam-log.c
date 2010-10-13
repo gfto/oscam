@@ -120,14 +120,14 @@ static char *get_log_header(int m, char *txt)
 			case 'r':
 			case 'c':
 			case 'p':
-				sprintf(txt, "%08X %c%04d ",(unsigned long) cur_client()->thread, cur_client()->typ, get_threadnum(cur_client()));
+				sprintf(txt, "%08lX %c%04d ",(unsigned long) cur_client()->thread, cur_client()->typ, get_threadnum(cur_client()));
 				break;
 			default:
 				sprintf(txt, "%c              ", cur_client()->typ);
 				break;
 		}
 	} else
-		sprintf(txt, "%-13.13s", "");
+		sprintf(txt, "%-15.15s", "");
 
 	return(txt);
 }
