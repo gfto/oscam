@@ -7,6 +7,7 @@ int number_of_chars_printed = 0;
 
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
+static pthread_mutex_t switching_log;
 
 #ifdef CS_ANTICASC
 FILE *fpa=(FILE *)0;
@@ -29,18 +30,22 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 			int rc;
 			char prev_log[128];
 			sprintf(prev_log, "%s-prev", file);
-			fprintf(*f, "switch log file\n");
-			fflush(*f);
-			fclose(*f);
-			*f = (FILE *)0;
-			rc = rename(file, prev_log);
-			if( rc!=0 ) {
-				fprintf(stderr, "rename(%s, %s) failed (errno=%d)\n",
-						file, prev_log, errno);
+			if ( pthread_mutex_trylock(&switching_log) == 0) { //I got the lock so I am the first thread detecting a switchlog is needed
+				fprintf(*f, "switch log file\n");
+				fflush(*f);
+				fclose(*f);
+				*f = (FILE *)0;
+				rc = rename(file, prev_log);
+				if( rc!=0 ) {
+					fprintf(stderr, "rename(%s, %s) failed (errno=%d)\n", file, prev_log, errno);
+				}
+				else
+					if( pfinit())
+						fprintf(stderr, "Initialisation of log file failed, continuing without logging thread %08lX.", pthread_self());
 			}
-			else
-				if( pfinit())
-					fprintf(stderr, "Initialisation of log file failed, continuing without logging thread %08lX.", pthread_self());
+			else //I am not the first to detect a switchlog is needed, so I need to wait for the first thread to complete
+				pthread_mutex_lock(&switching_log); //wait on 1st thread
+			pthread_mutex_unlock(&switching_log); //release after processing or after waiting
 		}
 	}
 }
