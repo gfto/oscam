@@ -1204,7 +1204,6 @@ extern void make_non_blocking(int fd);
 extern uchar fast_rnd(void);
 extern void init_rnd(void);
 
-extern int get_csidx();
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);
 extern struct s_client *first_client;

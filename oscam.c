@@ -64,16 +64,6 @@ int get_threadnum(struct s_client *client) {
 	return 0;
 }
 
-int get_csidx() {
-	int i;
-	struct s_client *prev, *cl;
-
-	for (prev=first_client, cl=first_client->next, i=1; prev->next != NULL; prev=prev->next, cl=cl->next, i++)
-		if (pthread_equal(cl->thread, pthread_self()))
-			return i;
-	return 0; // main process
-}
-
 struct s_client * cur_client(void) 
 {
 	return (struct s_client *) pthread_getspecific(getclient);
@@ -393,7 +383,7 @@ void cs_exit(int sig)
 	set_signal_handler(SIGPIPE, 1, SIG_IGN);
 
 	if (sig==SIGALRM) {
-		cs_debug("thread %d: SIGALRM, skipping", get_csidx());
+		cs_debug("thread %08lX: SIGALRM, skipping", pthread_self());
 		return;
 	}
 
