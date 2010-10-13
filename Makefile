@@ -76,6 +76,20 @@ i386-pc-linux:
 		DS_LD=ld \
 		DS_RL=ranlib \
 		DS_ST=strip
+i386-pc-linux-debug:
+	@-$(MAKE) --no-print-directory \
+		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
+		OS_LIBS="-lcrypto -lm" \
+		OS_CULI="-lncurses" \
+		OS_PTLI="-lpthread" \
+		DS_OPTS="-g -ggdb -gstabs+ -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_CFLAGS="-c" \
+		DS_LDFLAGS="" \
+		DS_ARFLAGS="-rvsl" \
+		DS_CC=gcc \
+		DS_AR=ar \
+		DS_LD=ld \
+		DS_RL=ranlib
 ######################################################################
 #
 #	LINUX native with libusb (smartreader)
