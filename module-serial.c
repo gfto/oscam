@@ -867,7 +867,11 @@ static void * oscam_ser_fork(void *url2)
 {
   //static char logtxt[32];
 	char *url = (char *) url2;
-  //pthread_setspecific(getclient, &client[get_csidx()]); //FIXME dont think this will work without   client->thread=pthread_self();
+	struct s_client *cl=cs_fork(0);
+	pthread_setspecific(getclient, cl);
+	cl->thread=pthread_self();
+	cl->typ='c';
+	//cl->ctyp=ctyp; //FIXME this param should be passed to thread...
 
   if ((!url) || (!url[0])) return NULL;
   if (!oscam_ser_parse_url(url)) return NULL;
@@ -894,29 +898,23 @@ void * init_oscam_ser(int ctyp)
 {
 	char sdevice[512];
 	cs_strncpy(sdevice, cfg->ser_device, sizeof(sdevice));
-
+	ctyp=ctyp; //suppress compiler warning
 	//TODO: untested (threaded)
 	char *p;
+	pthread_t temp;
 	while( (p=strrchr(sdevice, 1)) )
 	{
 		*p = 0;
 		if ((!p + 1) || (!(p + 1)[0])) return NULL;
 		if (!oscam_ser_parse_url(p + 1)) return NULL;
-		struct s_client *cl=cs_fork(0);
-		cl->typ='c';
-		cl->ctyp=ctyp;
-		pthread_create(&cl->thread, NULL, oscam_ser_fork, (void *) p + 1); //FIXME value of p does not survive thread
-		pthread_detach(cl->thread);
+		pthread_create(&temp, NULL, oscam_ser_fork, (void *) p + 1); //FIXME value of p does not survive thread
+		pthread_detach(temp);
 	}
 
 	if (!sdevice[0]) return NULL;
 	if (!oscam_ser_parse_url(sdevice)) return NULL;
-
-	struct s_client *cl=cs_fork(0);
-	cl->typ='c';
-	cl->ctyp=ctyp;
-	pthread_create(&cl->thread, NULL, oscam_ser_fork, (void *) sdevice);
-	pthread_detach(cl->thread);
+	pthread_create(&temp, NULL, oscam_ser_fork, (void *) sdevice);//FIXME value of sdevice does not survive thread
+	pthread_detach(temp); 
 	return NULL;
 }
 
