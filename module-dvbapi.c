@@ -508,6 +508,25 @@ static void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int
     }
 }
 
+static unsigned long dvbapi_get_cw_emm_provid(unsigned char *buffer, int len)
+{
+    unsigned long provid=0;
+    int i=0;
+    
+    for(i=0; i<len;) {
+        switch (buffer[i]) {
+            case 0x83:
+                provid=buffer[i+2];
+                return provid;
+                break;
+            default:
+                i+=buffer[i+1]+2;
+                break;
+        }
+        
+    }
+    return provid;
+}
 
 void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer, unsigned int len) {
 	EMM_PACKET epg;
@@ -664,7 +683,8 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
                         cs_log("Error assembling Cryptoworks EMM-S");
                         return;
                     }
-
+                    // get emm provid for the 0x83 nano
+                    provid=dvbapi_get_cw_emm_provid(assembled_EMM+12, emm_len);
 					break;
 			}
 			break;
