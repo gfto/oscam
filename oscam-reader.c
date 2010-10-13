@@ -243,7 +243,7 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
     close(fd);
   cl->udp_fd = 0;
 
-  if (!cl->typ == 'c')
+  if (cl->typ != 'c')
   {
     int i;
     //cl->pfd = 0;
