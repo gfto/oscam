@@ -1780,9 +1780,13 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	if(strlen(debuglvl) > 0)
 		cs_dblevel = atoi(debuglvl);
 
-	struct s_client *hideidx = (struct s_client *)getParamDef(params, "hide", NULL);
-	if(hideidx)
-  		hideidx->wihidden = 1; //FIXME untested
+	if(getParamDef(params, "hide", NULL)) {
+		uint clidx;
+		clidx = atoi(getParamDef(params, "hide", NULL));
+		struct s_client *hideidx = (struct s_client *)clidx;
+		if(hideidx)
+			hideidx->wihidden = 1;
+	}
 
 	char *hideidle = getParam(params, "hideidle");
 	if(strlen(hideidle) > 0) {
