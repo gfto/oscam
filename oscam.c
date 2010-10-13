@@ -822,19 +822,12 @@ int cs_user_resolve(struct s_auth *account)
 }
 #if defined(CS_ANTICASC) || defined(WEBIF) 
 static void start_thread(void * startroutine, char * nameroutine) {
-	int i;
-
-	struct s_client * cl = cs_fork(first_client->ip);
-	if (cl == NULL) return;
-	strcpy(cl->usr, first_client->usr);
-
-	i=pthread_create(&cl->thread, (pthread_attr_t *)0, startroutine, (void *) cl);
-
-	if (i)
-		cs_log("ERROR: can't create %s thread (err=%d)", i, nameroutine);
+	pthread_t temp;
+	if (pthread_create(&temp, (pthread_attr_t *)0, startroutine, NULL))
+		cs_log("ERROR: can't create %s thread", nameroutine);
 	else {
 		cs_log("%s thread started", nameroutine);
-		pthread_detach(cl->thread);
+		pthread_detach(temp);
 	}
 }
 #endif
@@ -850,12 +843,16 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 }
 
 #ifdef CS_ANTICASC
-void start_anticascader(struct s_client *cl)
+void start_anticascader()
 {
-  set_signal_handler(SIGHUP, 1, ac_init_stat);
-	cl->thread = pthread_self();
+  struct s_client * cl = cs_fork(first_client->ip);
+  if (cl == NULL) return;
+  cl->thread = pthread_self();
   pthread_setspecific(getclient, cl);
+  strcpy(cl->usr, first_client->usr);
   cl->typ = 'a';
+
+  set_signal_handler(SIGHUP, 1, ac_init_stat);
   ac_init_stat();
   while(1)
   {

@@ -2592,9 +2592,12 @@ int process_request(FILE *f, struct in_addr in) {
 	return 0;
 }
 
-void http_srv(struct s_client *cl) {
+void http_srv() {
+	struct s_client * cl = cs_fork(first_client->ip);
+	if (cl == NULL) return;
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
+	strcpy(cl->usr, first_client->usr);
 	cl->typ = 'h';
 	int i,sock, reuse = 1;
 	struct sockaddr_in sin;

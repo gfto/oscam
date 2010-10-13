@@ -1281,7 +1281,6 @@ extern void kill_thread(struct s_client *cl);
 extern int get_threadnum(struct s_client *client);
                  
 #ifdef CS_ANTICASC
-//extern void start_anticascader(void);
 extern void init_ac(void);
 extern void ac_init_stat();
 extern int  ac_init_log();
