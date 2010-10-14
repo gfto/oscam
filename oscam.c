@@ -1715,6 +1715,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 {
+  if (!cl || !cl->ecmtask)
+  	return;
+  	
   ECM_REQUEST *ert;
 
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->reader[0], er->cpti, er->rc);
