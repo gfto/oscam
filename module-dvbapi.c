@@ -201,7 +201,7 @@ int dvbapi_open_device(int type, int num, int adapter) {
 
 	if (type==0) {
 		sprintf(device_path2, devices[selected_box].demux_device, num);
-		sprintf(device_path, devices[selected_box].path, 0);
+		sprintf(device_path, devices[selected_box].path, adapter);
 
 		sprintf(device_path, "%s%s", device_path, device_path2);
 	} else {
@@ -209,7 +209,7 @@ int dvbapi_open_device(int type, int num, int adapter) {
 			ca_offset=1;
 		
 		sprintf(device_path2, devices[selected_box].ca_device, num+ca_offset);
-		sprintf(device_path, devices[selected_box].path, 0);
+		sprintf(device_path, devices[selected_box].path, adapter);
 
 		sprintf(device_path, "%s%s", device_path, device_path2);
 	}
@@ -839,7 +839,7 @@ void dvbapi_resort_ecmpids(int demux_index) {
 		for (i=0;i<CS_MAXCAIDTAB;i++) {
 			ulong provid = (cfg->dvbapi_prioritytab.cmap[i] << 8 | cfg->dvbapi_prioritytab.mask[i]);
 			if (cfg->dvbapi_prioritytab.caid[i] == demux[demux_index].ECMpids[n].CAID && (provid == demux[demux_index].ECMpids[n].PROVID || provid == 0 || demux[demux_index].ECMpids[n].PROVID == 0)) {
-				demux[demux_index].ECMpids[n].status = new_status; //priority
+				demux[demux_index].ECMpids[n].status = new_status++; //priority
 				cs_debug("[PRIORITIZE PID %d] %04X:%06X (position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, demux[demux_index].ECMpids[n].status);
 			}
 		}
