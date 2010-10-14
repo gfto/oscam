@@ -208,6 +208,9 @@ int dvbapi_open_device(int type, int num, int adapter) {
 		if (cfg->dvbapi_boxtype==BOXTYPE_DUCKBOX || cfg->dvbapi_boxtype==BOXTYPE_DBOX2 || cfg->dvbapi_boxtype==BOXTYPE_UFS910)
 			ca_offset=1;
 		
+		if (cfg->dvbapi_boxtype==BOXTYPE_QBOXHD)
+			num=0;
+			
 		sprintf(device_path2, devices[selected_box].ca_device, num+ca_offset);
 		sprintf(device_path, devices[selected_box].path, adapter);
 
@@ -864,10 +867,10 @@ void dvbapi_resort_ecmpids(int demux_index) {
 					cs_debug("[PRIORITIZE PID %d] %04X:%06X (service: %s position: %d)", n, demux[demux_index].ECMpids[n].CAID, demux[demux_index].ECMpids[n].PROVID, sidtab->label, demux[demux_index].ECMpids[n].status);
 				}
 			}
-		}
-		demux[demux_index].max_status = new_status;
+		}	
 	}
 
+	demux[demux_index].max_status = new_status;
 	return;
 }
 
@@ -937,7 +940,7 @@ void dvbapi_try_next_caid(int demux_id) {
 	int end=demux[demux_id].max_status;
 
 	while (num==-1) {
-		for (j = start; j <= end && num == -1; j++) {	
+		for (j = start; j <= end && num == -1; j++) {
 			for (n=0; n<demux[demux_id].ECMpidcount; n++) {
 				if (demux[demux_id].ECMpids[n].checked == 0 && demux[demux_id].ECMpids[n].status == j) {
 					num=n;
@@ -1012,9 +1015,10 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 	}
 
 	if (cfg->dvbapi_boxtype == BOXTYPE_QBOXHD && buffer[17]==0x82 && buffer[18]==0x03) {
-		ca_mask = buffer[19];       // with STONE 1.0.4 always 0x01
+		//ca_mask = buffer[19];     // with STONE 1.0.4 always 0x01
 		demux_index = buffer[20];   // with STONE 1.0.4 always 0x00
 		adapter_index = buffer[21]; // with STONE 1.0.4 adapter index can be 0,1,2
+		ca_mask = (1 << adapter_index); // use adapter_index as ca_mask (used as index for ca_fd[] array)
 	}
 
 	dvbapi_stop_filter(demux_id, TYPE_ECM);
