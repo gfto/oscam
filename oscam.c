@@ -376,7 +376,6 @@ static void cleanup_thread(struct s_client *cl)
 	if (ecmcache->next != NULL) { //keep it at least on one entry big
 		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next);
 		if (ecmc->next) free(ecmc->next);
-		ecmc->next = NULL; //remove last ecmcache from list
 	}
 }
 
