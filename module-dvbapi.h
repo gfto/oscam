@@ -43,12 +43,12 @@ typedef struct ECMPIDS
 	unsigned long PROVID;
 	unsigned short ECM_PID;
 	unsigned short EMM_PID;
-	int irdeto_chid;
+	int irdeto_numchids;
+	int irdeto_curchid;
 	int checked;
 	int status;
 	unsigned char table;
 	int index;
-	unsigned char sflag;
 	unsigned char slen;
 	char stream[8];
 } ECMPIDSTYPE;
@@ -87,11 +87,21 @@ typedef struct demux_s
 	struct s_reader *rdr;
 	char pmt_file[50];
 	int pmt_time;
-	int irdeto_numchids;
 #ifdef WITH_STAPI
 	uint STREAMhandle[ECM_PIDS];
 #endif
 } DEMUXTYPE;
+
+struct s_dvbapi_priority
+{
+	char type; // p or i
+	ushort caid;
+	ulong provid;
+	ushort srvid;
+	ushort chid;
+	struct s_dvbapi_priority *next;
+	
+};
 
 
 #define DMX_FILTER_SIZE 16
