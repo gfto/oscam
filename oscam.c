@@ -367,6 +367,7 @@ static void cleanup_thread(struct s_client *cl)
 	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
 	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 	if (cl) free (cl);
+	cl = NULL; //should prevent other threads for accessing this client
 
   //decrease ecmcache
 	struct s_ecm *ecmc;
