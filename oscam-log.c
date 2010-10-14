@@ -120,6 +120,9 @@ static char *get_log_header(int m, char *txt)
 			case 'r':
 			case 'c':
 			case 'p':
+			case 'h':
+			case 's':
+			case 'a':
 				sprintf(txt, "%08lX %c%04d ",(unsigned long) cur_client()->thread, cur_client()->typ, get_threadnum(cur_client()));
 				break;
 			default:
