@@ -439,7 +439,7 @@ static int reader_store_emm(uchar *emm, uchar type)
   cl->emmcache[cl->rotate].count=1;
 //  cs_debug("EMM stored (index %d)", rotate);
   rc=cl->rotate;
-  cl->rotate=(cl->rotate+1) % CS_EMMCACHESIZE;
+  cl->rotate=(cl->rotate++ < CS_EMMCACHESIZE)?cl->rotate:0;
   return(rc);
 }
 
