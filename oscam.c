@@ -1193,21 +1193,7 @@ static void store_ecm(ECM_REQUEST *er)
 	ecmidx->reader = er->reader[0];
 	//cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
-#ifdef CS_LOGHISTORY
-void store_logentry(char *txt)
-{
 
-	char *ptr;
-	ptr=(char *)(loghist+(loghistidx*CS_LOGHISTSIZE));
-	ptr[0]='\1';    // make username unusable
-	ptr[1]='\0';
-	if ((cur_client()->typ=='c') || (cur_client()->typ=='m'))
-		cs_strncpy(ptr, cur_client()->usr, 31);
-	cs_strncpy(ptr+32, txt, CS_LOGHISTSIZE-33);
-	loghistidx=(loghistidx+1) % CS_MAXLOGHIST;
-
-}
-#endif
 // only for debug
 static struct s_client * get_thread_by_pipefd(int fd)
 {

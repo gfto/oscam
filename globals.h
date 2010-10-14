@@ -1247,7 +1247,6 @@ extern int cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
 extern int check_ecmcache1(ECM_REQUEST *, ulong);
 extern int check_ecmcache2(ECM_REQUEST *, ulong);
-extern void store_logentry(char *);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);
 extern int write_ecm_request(int, ECM_REQUEST *);

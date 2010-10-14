@@ -175,7 +175,13 @@ static void write_to_log(int flag, char *txt)
 
 	cs_write_log(log_buf + 8);
 #ifdef CS_LOGHISTORY
-	store_logentry(log_buf);
+	char *ptr=(char *)(loghist+(loghistidx*CS_LOGHISTSIZE));
+	ptr[0]='\1';    // make username unusable
+	ptr[1]='\0';
+	if ((cur_client()->typ=='c') || (cur_client()->typ=='m'))
+		cs_strncpy(ptr, cur_client()->usr, 31);
+	cs_strncpy(ptr+32, log_buf, CS_LOGHISTSIZE-33);
+	loghistidx=(loghistidx++ < CS_MAXLOGHIST)?loghistidx:0;
 #endif
 	if ((cur_client()->typ != 'c') && (cur_client()->typ != 'm'))
 		return;
