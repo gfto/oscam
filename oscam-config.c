@@ -1498,7 +1498,7 @@ int init_config()
 			fprintf(stderr, "Error allocating string for cfg->logfile\n");
 	}
 #endif
-	cs_init_statistics(cfg->usrfile);
+	cs_init_statistics();
 	cs_init_log();
 	if (cfg->ftimeout >= cfg->ctimeout) {
 		cfg->ftimeout = cfg->ctimeout - 100;

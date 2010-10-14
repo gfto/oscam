@@ -496,6 +496,7 @@ typedef struct ecm_request_t
   uchar         locals_done;
   int		btun; // mark er as betatunneled
   int           reader_count; //count of requesting readers
+  int		reader_avail; //count of available readers
 
 #ifdef CS_WITH_DOUBLECHECK
   int		checked;
