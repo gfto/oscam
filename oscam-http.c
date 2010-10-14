@@ -22,8 +22,8 @@ static int running = 1;
 #ifdef CS_ANTICASC
 static void kill_ac_client(void)
 {
-		struct s_client *prev, *cl;
-		for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+		struct s_client *cl;
+		for (cl=first_client->next; cl ; cl=cl->next)
 		if (cl->typ=='a') {
 			kill(cl->pid, SIGHUP);
 			break;
@@ -2135,8 +2135,8 @@ void send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *p
 		fputs(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
 
-		struct s_client *prev, *cl;
-		for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+		struct s_client *cl;
+		for (cl=first_client->next; cl ; cl=cl->next)
 			kill_thread(cl);
 		exit(SIGQUIT);
 	} else {

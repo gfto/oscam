@@ -52,10 +52,10 @@ char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
 #endif
 
 int get_threadnum(struct s_client *client) {
-	struct s_client *prev, *cl;
+	struct s_client *cl;
 	int count=0;
 
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next) {
+	for (cl=first_client->next; cl ; cl=cl->next) {
 		if (cl->typ==client->typ)
 			count++;
 		if(cl==client)
@@ -249,10 +249,10 @@ char *username(struct s_client * client)
     return("anonymous");
 }
 
-static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port) //warning: does not search master process!!!
+static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port)
 {
-  struct s_client *prev, *cl; 
-  for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+  struct s_client *cl; 
+  for (cl=first_client; cl ; cl=cl->next)
     if (cl->pid && (cl->ip==ip) && (cl->port==port) && ((cl->typ=='c') || (cl->typ=='m')))
       return cl;
   return NULL;
@@ -260,8 +260,8 @@ static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port) //warning: do
 
 struct s_client * idx_from_tid(unsigned long tid) //FIXME untested!! no longer pid in output...
 {
-  struct s_client *prev, *cl; 
-  for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next) //warning does not search master process!!!
+  struct s_client *cl; 
+  for (cl=first_client; cl ; cl=cl->next)
     if (cl->thread==tid)
       return cl;
   return NULL;
@@ -330,8 +330,8 @@ static void cs_accounts_chk()
   init_userdb(&cfg->account);
   cs_reinit_clients();
 #ifdef CS_ANTICASC
-	struct s_client *prev, *cl;
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next)
     if (cl->typ=='a')
       break;
 #endif
@@ -348,14 +348,6 @@ static void nullclose(int *fd)
 
 static void cleanup_thread(struct s_client *cl)
 {
-	if(cl->ecmtask) 	free(cl->ecmtask);
-	if(cl->emmcache) 	free(cl->emmcache);
-	if(cl->req) 		free(cl->req);
-	if(cl->cc) 		free(cl->cc);
-
-	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
-	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
-	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 	cl->pid=0;
 
 	struct s_client *prev, *cl2;
@@ -366,7 +358,16 @@ static void cleanup_thread(struct s_client *cl)
 		cs_log("FATAL ERROR: could not find client to remove from list.");
 	else
 		prev->next = cl2->next; //remove client from list
+
+	if(cl->ecmtask) 	free(cl->ecmtask);
+	if(cl->emmcache) 	free(cl->emmcache);
+	if(cl->req) 		free(cl->req);
+	if(cl->cc) 		free(cl->cc);
+	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
+	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
+	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 	if (cl) free (cl);
+
   //decrease ecmcache
 	struct s_ecm *ecmc;
 	if (ecmcache->next != NULL) { //keep it at least on one entry big
@@ -454,8 +455,8 @@ void cs_reinit_clients()
 {
 	struct s_auth *account;
 
-	struct s_client *prev, *cl;
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next)
 		if( cl->pid && cl->typ == 'c' && cl->usr[0] ) {
 			for (account = cfg->account; (account) ; account = account->next)
 				if (!strcmp(cl->usr, account->usr))
@@ -531,8 +532,8 @@ static void cs_card_info(int i)
 {
   uchar dummy[1]={0x00};
 	i=i; //suppress compiler warning
-	struct s_client *prev, *cl;
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next)
     if( cl->pid && cl->typ=='r' && cl->fd_m2c )
       write_to_pipe(cl->fd_m2c, PIP_ID_CIN, dummy, 1);
       //kill(client[i].pid, SIGUSR2);
@@ -865,8 +866,8 @@ void start_anticascader()
 void restart_cardreader(int reader_idx, int restart) {
 	int n;
 	if (restart) {//kill old thread, even when .deleted flag is set
-	  struct s_client *prev, *cl;
-		for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+		struct s_client *cl;
+		for (cl=first_client->next; cl ; cl=cl->next)
 			if (cl->ridx==reader_idx) {
 				kill_thread(cl);
 				break;
@@ -966,8 +967,8 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
      *           different, but only the last login will survive
      */
 
-	struct s_client *prev, *cl;
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next)
 	{
 		if (cl->pid && (cl->typ == 'c') && !cl->dup && !strcmp(cl->usr, usr)
 		   && (uniq < 5) && ((uniq % 2) || (cl->ip != ip)))
@@ -1209,8 +1210,8 @@ void store_logentry(char *txt)
 // only for debug
 static struct s_client * get_thread_by_pipefd(int fd)
 {
-	struct s_client *prev, *cl;
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next)
 		if (fd==cl->fd_m2c || fd==cl->fd_m2c_c)
 			return cl;
 	return first_client; //master process
@@ -2544,8 +2545,8 @@ int process_input(uchar *buf, int l, int timeout)
 static void restart_clients()
 {
 	cs_log("restarting clients");
-	struct s_client *prev, *cl;
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next)
 		if (cl->pid && cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
 			kill_thread(cl);
 			cs_log("killing client c%08lX pid %d", cl->thread, cl->pid);

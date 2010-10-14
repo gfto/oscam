@@ -179,8 +179,8 @@ static void write_to_log(int flag, char *txt)
 #endif
 	if ((cur_client()->typ != 'c') && (cur_client()->typ != 'm'))
 		return;
-	struct s_client *prev, *cl;
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next)
 	{
 		if ((cl->pid) && (cl->log))
 		{

@@ -48,11 +48,9 @@ static struct s_client *idx_from_ac_idx(int ac_idx)
 void ac_do_stat()
 {
   int i, j, idx, exceeds, maxval, prev_deny=0;
-  struct s_client *cl_idx;
+  struct s_client *cl_idx, *cl;
 
-	struct s_client *prev, *cl;
-	for (prev=first_client, cl=first_client->next; prev->next != NULL; prev=prev->next, cl=cl->next)
-  for( i=0; i<CS_MAXPID; i++ ) 
+	for (i=1, cl=first_client->next; cl ; cl=cl->next, i++)
   {
     idx = ac_stat[i].idx;
     ac_stat[i].stat[idx] = acasc[i].ac_count;
