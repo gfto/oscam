@@ -712,7 +712,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
               &&  cfg->ncd_ptab.ports[cur_client()->port_idx].ftab.filts[0].caid != reader[au].ftab.filts[0].caid)
           {
             cs_log("AU wont be used on this port -> disable AU");
-            au = -1;
+            //au = -1; schlocke: this breaks cccam-au because caid is set on the first ecm
           }
           else
           {
