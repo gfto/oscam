@@ -359,6 +359,7 @@ static void cleanup_thread(struct s_client *cl)
 	else
 		prev->next = cl2->next; //remove client from list
 
+	cs_sleepms(2000); //wait some time before cleanup to prevent segfaults
 	if(cl->ecmtask) 	free(cl->ecmtask);
 	if(cl->emmcache) 	free(cl->emmcache);
 	if(cl->req) 		free(cl->req);
@@ -366,6 +367,7 @@ static void cleanup_thread(struct s_client *cl)
 	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
 	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
 	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
+
 	if (cl) free (cl);
 	cl = NULL; //should prevent other threads for accessing this client
 
