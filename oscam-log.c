@@ -71,7 +71,7 @@ void cs_write_log(char *txt)
 			int use_stdout = (strcmp(cfg->logfile, "stdout"))?0:1;
 			if (fp && !use_stdout && strcmp(cfg->logfile, "syslog"))
 					switch_log(cfg->logfile, &fp, cs_init_log);
-			if ((fp || use_stdout) && (!cfg->disablelog)){
+			if ((fp) && (!cfg->disablelog)){
 					fprintf(fp, "%s", txt);
 					fflush(fp);
 			}
