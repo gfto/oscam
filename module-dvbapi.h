@@ -32,9 +32,10 @@
 
 struct box_devices
 {
-	char ca_device_path[32];
-	char demux_device_path[32];
-	char cam_socket_path[32];
+	char *path;
+	char *ca_device;
+	char *demux_device;
+	char *cam_socket_path;
 };
 
 typedef struct ECMPIDS
@@ -71,6 +72,7 @@ typedef struct demux_s
 	int demux_index;
 	FILTERTYPE demux_fd[MAX_FILTER];
 	int ca_mask;
+	int adapter_index;
 	int socket_fd;
 	int ECMpidcount;
 	ECMPIDSTYPE ECMpids[ECM_PIDS];
@@ -187,7 +189,7 @@ int stapi_write_cw(int demux_id, uchar *cw);
 
 void dvbapi_stop_descrambling(int);
 void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len);
-int dvbapi_open_device(int, int);
+int dvbapi_open_device(int, int, int);
 int dvbapi_stop_filternum(int demux_index, int num);
 int dvbapi_stop_filter(int demux_index, int type);
 

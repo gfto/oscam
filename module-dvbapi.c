@@ -20,13 +20,13 @@ void * azbox_main(void * cli);
 
 extern struct  s_reader  reader[CS_MAXREADER];
 
-const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000" };
+const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd" };
 
 const struct box_devices devices[BOX_COUNT] = {
-	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/ca%d",	"/tmp/virtual_adapter/demux%d",	"/tmp/camd.socket" },
-	/* dreambox (dvb-api-3)*/	{ "/dev/dvb/adapter0/ca%d", 	"/dev/dvb/adapter0/demux%d",	"/tmp/camd.socket" },
-	/* dreambox (dvb-api-1)*/	{ "/dev/dvb/card0/ca%d", 		"/dev/dvb/card0/demux%d",		"/tmp/camd.socket" },
-	/* sh4      (stapi)*/	{ "/dev/stapi/stpti4_ioctl", 	"/dev/stapi/stpti4_ioctl",		"/tmp/camd.socket" }
+	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/", 	"ca%d",		"demux%d",			"/tmp/camd.socket" },
+	/* dreambox (dvb-api-3)*/	{ "/dev/dvb/adapter%d/",	"ca%d", 		"demux%d",			"/tmp/camd.socket" },
+	/* dreambox (dvb-api-1)*/	{ "/dev/dvb/card%d/",	"ca%d",		"demux%d",			"/tmp/camd.socket" },
+	/* sh4      (stapi)*/	{ "/dev/stapi/", 		"stpti4_ioctl",	"stpti4_ioctl",		"/tmp/camd.socket" }
 };
 
 int selected_box=-1;
@@ -63,7 +63,7 @@ int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uc
 	
 	switch(api) {
 		case DVBAPI_3:
-			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index);
+			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
 			struct dmx_sct_filter_params sFP2;
 
 			memset(&sFP2,0,sizeof(sFP2));
@@ -77,7 +77,7 @@ int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uc
 
 			break;
 		case DVBAPI_1:
-			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index);
+			demux[demux_id].demux_fd[n].fd = dvbapi_open_device(0, demux[demux_id].demux_index, demux[demux_id].adapter_index);
 			struct dmxSctFilterParams sFP1;
 
 			memset(&sFP1,0,sizeof(sFP1));
@@ -120,10 +120,14 @@ int dvbapi_check_array(unsigned short *array, int len, unsigned short match) {
 int dvbapi_detect_api() {
 	int num_apis=2, i,devnum=-1, dmx_fd=0, ret=-1;
 	uchar filter[32];
-	char device_path[128];
+	char device_path[128], device_path2[128];
 
 	for (i=0;i<BOX_COUNT;i++) {
-		sprintf(device_path, devices[i].demux_device_path, 0);
+		sprintf(device_path2, devices[i].demux_device, 0);
+		sprintf(device_path, devices[i].path, 0);
+
+		sprintf(device_path, "%s%s", device_path, device_path2);
+
 		if ((dmx_fd = open(device_path, O_RDWR)) > 0) {
 			devnum=i;
 			break;
@@ -190,18 +194,24 @@ int dvbapi_read_device(int dmx_fd, unsigned char *buf, int length) {
 	return len;
 }
 
-int dvbapi_open_device(int type, int num) {
+int dvbapi_open_device(int type, int num, int adapter) {
 	int dmx_fd;
 	int ca_offset=0;
-	char device_path[128];
+	char device_path[128], device_path2[128];
 
-	if (type==0)
-		sprintf(device_path, devices[selected_box].demux_device_path, num);
-	else {
+	if (type==0) {
+		sprintf(device_path2, devices[selected_box].demux_device, num);
+		sprintf(device_path, devices[selected_box].path, 0);
+
+		sprintf(device_path, "%s%s", device_path, device_path2);
+	} else {
 		if (cfg->dvbapi_boxtype==BOXTYPE_DUCKBOX || cfg->dvbapi_boxtype==BOXTYPE_DBOX2 || cfg->dvbapi_boxtype==BOXTYPE_UFS910)
 			ca_offset=1;
 		
-		sprintf(device_path, devices[selected_box].ca_device_path, num+ca_offset);
+		sprintf(device_path2, devices[selected_box].ca_device, num+ca_offset);
+		sprintf(device_path, devices[selected_box].path, 0);
+
+		sprintf(device_path, "%s%s", device_path, device_path2);
 	}
 
 	if ((dmx_fd = open(device_path, O_RDWR)) < 0) {
@@ -419,7 +429,7 @@ void dvbapi_set_pid(int demux_id, int num, int index) {
 			for (i=0;i<8;i++) {
 				if (demux[demux_id].ca_mask & (1 << i)) {
 					if (ca_fd[i]<=0)
-						ca_fd[i]=dvbapi_open_device(1, i);
+						ca_fd[i]=dvbapi_open_device(1, i, demux[demux_id].adapter_index);
 					if (ca_fd[i]>0) {
 						ca_pid_t ca_pid2;
 						memset(&ca_pid2,0,sizeof(ca_pid2));
@@ -969,7 +979,7 @@ void dvbapi_try_next_caid(int demux_id) {
 
 int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 	unsigned int i, demux_id;
-	unsigned short ca_mask=0x01, demux_index=0x00;
+	unsigned short ca_mask=0x01, demux_index=0x00, adapter_index=0x00;
 
 	//int ca_pmt_list_management = buffer[0];
 	unsigned int program_number = (buffer[1] << 8) | buffer[2];
@@ -1000,13 +1010,20 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		ca_mask = demux_id + 1;
 		demux_index = demux_id;
 	}
-	
+
+	if (cfg->dvbapi_boxtype == BOXTYPE_QBOXHD && buffer[17]==0x82 && buffer[18]==0x03) {
+		ca_mask = buffer[19];       // with STONE 1.0.4 always 0x01
+		demux_index = buffer[20];   // with STONE 1.0.4 always 0x00
+		adapter_index = buffer[21]; // with STONE 1.0.4 adapter index can be 0,1,2
+	}
+
 	dvbapi_stop_filter(demux_id, TYPE_ECM);
 	dvbapi_stop_filter(demux_id, TYPE_EMM);
 
 	memset(&demux[demux_id], 0, sizeof(demux[demux_id]));
 	demux[demux_id].program_number=((buffer[1] << 8) | buffer[2]);
 	demux[demux_id].demux_index=demux_index;
+	demux[demux_id].adapter_index=adapter_index;
 	demux[demux_id].ca_mask=ca_mask;
 	demux[demux_id].socket_fd=connfd;
 	demux[demux_id].rdr=NULL;
@@ -1031,7 +1048,6 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
 		demux[demux_id].STREAMpids[demux[demux_id].STREAMpidcount++]=elementary_pid;
 
 		if (es_info_length != 0 && es_info_length < length) {
-			//int offset = (cfg->dvbapi_boxtype == BOXTYPE_IPBOX_PMT) ? i - 1 : i;         
 			dvbapi_parse_descriptor(demux_id, es_info_length, buffer+i+5);  
 		}
 	}
@@ -1604,7 +1620,7 @@ void dvbapi_write_cw(int demux_id, uchar *cw, int index) {
 					cs_debug("write cw%d index: %d (ca%d)", n, ca_descr.index, i);
 
 					if (ca_fd[i]<=0) {
-						ca_fd[i]=dvbapi_open_device(1, i);
+						ca_fd[i]=dvbapi_open_device(1, i, demux[demux_id].adapter_index);
 						if (ca_fd[i]<=0)
 							return;
 					}
