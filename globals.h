@@ -133,17 +133,16 @@
 #define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
 #define CS_MAXREADERCAID  16
 
+#ifndef PTHREAD_STACK_MIN
+#define PTHREAD_STACK_MIN 8192
+#endif
+
 #ifdef  CS_EMBEDDED
 //#define CS_MAXPID   32
 //#define CS_MAXREADER    (CS_MAXPID>>1)
 #define CS_MAXREADER    16
 //#define CS_MAXPENDING   CS_MAXPID
 #define CS_MAXPENDING   8
-
-#ifndef PTHREAD_STACK_MIN
-#define PTHREAD_STACK_MIN 8192
-#endif
-
 #define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+8000
 #else
 //#define CS_MAXPID   512
