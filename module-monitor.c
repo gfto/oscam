@@ -339,7 +339,7 @@ static void monitor_process_info(){
 
 static void monitor_send_details(char *txt, unsigned long tid){
 	char buf[256];
-	snprintf(buf, 255, "[D-----]%lu|%s\n", tid, txt);
+	snprintf(buf, 255, "[D-----]%08lX|%s\n", tid, txt);
 	monitor_send_info(buf, 0);
 }
 
