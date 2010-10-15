@@ -2832,6 +2832,8 @@ int init_userdb(struct s_auth **authptr_org)
 
 			account = ptr;
 			memset(account, 0, sizeof(struct s_auth));
+			account->allowedtimeframe[0] = 0;
+			account->allowedtimeframe[1] = 0;
 			account->au = (-1);
 			account->monlvl = cfg->mon_level;
 			account->tosleep = cfg->tosleep;

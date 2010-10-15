@@ -1041,15 +1041,17 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 			{
 				client->last_caid = 0xFFFE;
 				client->last_srvid = 0xFFFE;
-				client->expirationdate=account->expirationdate;
-				client->disabled=account->disabled;
-				client->failban=account->failban;
+				client->expirationdate = account->expirationdate;
+				client->disabled = account->disabled;
+				client->allowedtimeframe[0] = account->allowedtimeframe[0];
+				client->allowedtimeframe[1] = account->allowedtimeframe[1];
+				client->failban = account->failban;
 				client->c35_suppresscmd08 = account->c35_suppresscmd08;
 				client->ncd_keepalive = account->ncd_keepalive;
-				client->grp=account->grp;
-				client->au=account->au;
-				client->autoau=account->autoau;
-				client->tosleep=(60*account->tosleep);
+				client->grp = account->grp;
+				client->au = account->au;
+				client->autoau = account->autoau;
+				client->tosleep = (60*account->tosleep);
 				client->c35_sleepsend = account->c35_sleepsend;
 				memcpy(&client->ctab, &account->ctab, sizeof(client->ctab));
 				if (account->uniq)
