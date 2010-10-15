@@ -768,23 +768,14 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 				ctyp = "dbox COM2";
 				isphysical = 1;
 				break;
-			case R_CAMD35 : ctyp="camd 3.5x";break;
-			case R_CAMD33 : ctyp="camd 3.3x";break;
-			case R_NEWCAMD : ctyp="newcamd"; break;
-			case R_RADEGAST: ctyp="radegast"; break;
-#ifdef CS_WITH_GBOX
-			case R_GBOX : ctyp="gbox"; break;
-#endif
 #ifdef HAVE_PCSC
 			case R_PCSC :
 				ctyp="pcsc";
 				isphysical = 1;
 				break;
 #endif
-			case R_CCCAM : ctyp="cccam"; break;
-			case R_CS378X : ctyp="cs378x"; break;
-			default : ctyp="unknown"; break;
-			}
+			default : ctyp = reader[readeridx].ph.desc;   break;
+}
 
 			tpl_printf(vars, 0, "EMMERRORUK", "%d", reader[readeridx].emmerror[UNKNOWN]);
 			tpl_printf(vars, 0, "EMMERRORG", "%d", reader[readeridx].emmerror[GLOBAL]);

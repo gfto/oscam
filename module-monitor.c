@@ -243,23 +243,12 @@ char *monitor_get_proto(struct s_client *cl)
 			case R_MOUSE	: ctyp = "mouse";		break;
 			case R_INTERNAL	: ctyp = "intern";		break;
 			case R_SMART	: ctyp = "smartreader";	break;
-			case R_CAMD35	: ctyp = "camd 3.5x";	break;
-			case R_CAMD33	: ctyp = "camd 3.3x";	break;
-			case R_NEWCAMD	: ctyp = "newcamd";		break;
-			case R_RADEGAST	: ctyp = "radegast";	break;
-			case R_SERIAL	: ctyp = "serial";		break;
-#ifdef CS_WITH_GBOX
-			case R_GBOX		: ctyp = "gbox";		break;
-#endif
 #ifdef HAVE_PCSC
 			case R_PCSC		: ctyp = "pcsc";		break;
 #endif
-			case R_CCCAM	: ctyp = cl->cc_extended_ecm_mode?"cccam ext":"cccam";	break;
-			case R_CONSTCW	: ctyp = "constcw";		break;
-			case R_CS378X	: ctyp = "cs378x";		break;
 			case R_DB2COM1	: ctyp = "dbox COM1";	break;
 			case R_DB2COM2	: ctyp = "dbox COM2";   break;
-			default			: ctyp = "unknown";		break;
+			default			: ctyp = reader[cl->ridx].ph.desc;   break;
 			}
 		break;
 	default		: if (cl->cc_extended_ecm_mode)
