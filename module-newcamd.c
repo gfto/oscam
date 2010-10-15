@@ -1003,6 +1003,12 @@ static void newcamd_process_emm(uchar *buf)
   caid = cur_client()->ftab.filts[0].caid;
   epg.caid[0] = (uchar)(caid>>8);
   epg.caid[1] = (uchar)(caid);
+  
+  epg.provid[0] = (uchar)(reader[au].auprovid>>24);
+  epg.provid[1] = (uchar)(reader[au].auprovid>>16);
+  epg.provid[2] = (uchar)(reader[au].auprovid>>8);
+  epg.provid[3] = (uchar)(reader[au].auprovid);
+    
 /*  if (caid == 0x0500)
   {
     ushort emm_head;
