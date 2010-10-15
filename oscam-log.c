@@ -113,26 +113,12 @@ int cs_init_log(void)
 	}
 }
 
-static char *get_log_header(int m, char *txt)
+static void get_log_header(int m, char *txt)
 {
-	if(m) {
-		switch (cur_client()->typ) {
-			case 'r':
-			case 'c':
-			case 'p':
-			case 'h':
-			case 's':
-			case 'a':
-				sprintf(txt, "%08lX %c%04d ",(unsigned long) cur_client()->thread, cur_client()->typ, get_threadnum(cur_client()));
-				break;
-			default:
-				sprintf(txt, "%c              ", cur_client()->typ);
-				break;
-		}
-	} else
+	if(m)
+		sprintf(txt, "%08lX %c%04d ",(unsigned long) cur_client()->thread, cur_client()->typ, get_threadnum(cur_client()));
+	else
 		sprintf(txt, "%-15.15s", "");
-
-	return(txt);
 }
 
 static void write_to_log(int flag, char *txt)
