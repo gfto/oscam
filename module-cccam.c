@@ -2837,7 +2837,7 @@ void * cc_srv_init(struct s_client *cl ) {
 	cs_disconnect_client(cl);
 
 	//cs_exit(1);
-	cc_cleanup();
+	cc_cleanup(cl);
 	cs_debug_mask(D_FUT, "cc_srv_init out");
 	return NULL; //suppress compiler warning
 }
@@ -3122,9 +3122,8 @@ void cc_card_info() {
 	cs_debug_mask(D_FUT, "cc_card_info out");
 }
 
-void cc_cleanup(void) {
+void cc_cleanup(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cleanup in");
-	struct s_client *cl = cur_client();
 	if (cl->typ != 'c') {
 		cc_cli_close(cl); // we need to close open fd's 
 	}

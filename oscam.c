@@ -356,6 +356,7 @@ static void cleanup_thread(struct s_client *cl)
 	if(cl->ecmtask) 	free(cl->ecmtask);
 	if(cl->emmcache) 	free(cl->emmcache);
 	if(cl->req) 		free(cl->req);
+	if(ph[cl->ctyp].cleanup) ph[cl->ctyp].cleanup(cl);
 	if(cl->cc) 		free(cl->cc);
 	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
 	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd

@@ -163,7 +163,7 @@ struct cc_data {
 
 int cc_cli_init();
 int cc_cli_init_int(struct s_client *cl);
-void cc_cleanup(void);
+void cc_cleanup(struct s_client *cl);
 int cc_cli_connect(struct s_client *cl);
 int cc_get_nxt_ecm(struct s_client *cl);
 int cc_send_pending_emms(struct s_client *cl);

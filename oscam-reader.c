@@ -263,7 +263,7 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
          cs_debug("network_tcp_connection_close() exit(1);");
 
        if (reader->ph.cleanup)
-         reader->ph.cleanup();
+         reader->ph.cleanup(cl);
 
          cs_exit(1);
     }
@@ -779,7 +779,7 @@ void * start_cardreader(void * rdr)
     
     if (reader->ph.c_init(reader->client)) {
     	 if (reader->ph.cleanup) 
-    	 	  reader->ph.cleanup();
+    	 	  reader->ph.cleanup(reader->client);
     	 if (reader->client->typ != 'p')
           cs_exit(1);
      }
