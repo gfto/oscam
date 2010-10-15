@@ -871,6 +871,12 @@ static void * oscam_ser_fork(void *url2)
 	pthread_setspecific(getclient, cl);
 	cl->thread=pthread_self();
 	cl->typ='c';
+	//FIXME this can be made simpler:
+	int i;
+	for (i=0; i<CS_MAX_MOD; i++)
+		if (ph[i].type & MOD_CONN_SERIAL)   // for look for oscam_ser
+			cl->ctyp=i;
+
 	//cl->ctyp=ctyp; //FIXME this param should be passed to thread...
 
   if ((!url) || (!url[0])) return NULL;
