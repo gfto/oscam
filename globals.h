@@ -1329,7 +1329,7 @@ extern void chk_t_serial(char *token, char *value);
 extern void chk_t_gbox(char *token, char *value);
 #endif
 extern void chk_t_cccam(char *token, char *value);
-extern void chk_t_global(char *token, char *value);
+extern void chk_t_global(const char *token, char *value);
 extern void chk_t_monitor(char *token, char *value);
 extern void chk_reader(char *token, char *value, struct s_reader *rdr);
 
@@ -1342,7 +1342,7 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab);
 extern void chk_t_webif(char *token, char *value);
 #endif
 
-extern void chk_account(char *token, char *value, struct s_auth *account);
+extern void chk_account(const char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
 extern int write_services();
 extern int write_userdb(struct s_auth *authptr);

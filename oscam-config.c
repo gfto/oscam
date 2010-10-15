@@ -292,7 +292,7 @@ static void chk_srvip(char *value, in_addr_t *ip)
 }
 #endif
 
-void chk_t_global(char *token, char *value)
+void chk_t_global(const char *token, char *value)
 {
 	if (!strcmp(token, "disablelog")) {
 		if (strlen(value) == 0) {
@@ -1521,7 +1521,7 @@ int init_config()
 	return 0;
 }
 
-void chk_account(char *token, char *value, struct s_auth *account)
+void chk_account(const char *token, char *value, struct s_auth *account)
 {
 	int i;
 	char *ptr1;
