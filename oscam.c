@@ -2788,8 +2788,12 @@ if (pthread_key_create(&getclient, NULL)) {
   int      fdp[2];
   int      mfdr=0;     // Master FD (read)
   int      fd_c2m=0;
+
 	cfg = malloc(sizeof(struct s_config));
-  //uchar    buf[2048];
+	memset(cfg, 0, sizeof(struct s_config));
+
+	memset(reader, 0, sizeof(struct s_reader)*CS_MAXREADER);
+
   void (*mod_def[])(struct s_module *)=
   {
 #ifdef MODULE_MONITOR
