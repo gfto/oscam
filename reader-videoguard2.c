@@ -2,9 +2,12 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
+// Redefine logging funtion to include reader name
 #define cs_log(x...)  cs_log("[videoguard2-reader] "x)
+#define cs_ri_log(x,y...)  cs_ri_log(x,"[videoguard2-reader] "y)
 #ifdef WITH_DEBUG
   #define cs_debug(x...)  cs_debug("[videoguard2-reader] "x)
+  #define cs_debug_mask(x,y...) cs_debug_mask(x,"[videoguard2-reader] "y)
 #endif
 
 static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
@@ -278,7 +281,7 @@ static void vg2_read_tiers(struct s_reader * reader)
       if(!stopemptytier){
         cs_debug("tier: %04x, tier-number: 0x%02x",tier_id,i);
       }
-      cs_ri_log(reader, "[videoguard2-reader] tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
+      cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
     }
   }
 }
@@ -370,7 +373,7 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     if(l<13)
       cs_log("classD0 ins36: answer too short");
     else if (buff[7] > 0x0F)
-      cs_log("[videoguard2-reader] classD0 ins36: encrypted - can't parse");
+      cs_log("classD0 ins36: encrypted - can't parse");
     else {
       /* skipping the initial fixed fields: cmdecho (4) + length (1) + encr/rev++ (4) */
       int i=9;
@@ -500,14 +503,26 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
     }
 
-  // Get Parental Control Settings
-  static const unsigned char ins74e[5] = { 0xD0,0x74,0x0E,0x00,0x00 };
-  if (cmd_exists(reader,ins74e)) {
+
+  /* get parental lock settings */
+  static const unsigned char ins74e[5] = {0xD0,0x74,0x0E,0x00,0x00};
+  if(cmd_exists(reader,ins74e)) {
     l=do_cmd(reader,ins74e,NULL,NULL,cta_res);
-    if(l<0 || !status_ok(cta_res+l)) {
-      cs_log("classD0 ins74e: failed to get Parental Control Settings");
+    if (l<0 || !status_ok(cta_res+l)) {
+      cs_log("classD0 ins74e: failed to get parental lock settings");
     } else {
-      cs_dump(cta_res,l,"[videoguard2-reader] Parental Control Setting:");
+      cs_log("parental lock setting: %s",cs_hexdump(1, cta_res+2, l-2));
+    }
+  }
+
+  /* disable parental lock */
+  static const uchar ins2e[5] = {0xD0, 0x2E, 0x00, 0x00, 0x04};
+  static const uchar payload2e[4] = {0xFF, 0xFF, 0xFF, 0xFF};
+  if(cfg->ulparent) {
+    if(cmd_exists(reader,ins74e) && write_cmd_vg(ins2e,payload2e) && status_ok(cta_res+l)) {
+      cs_log("parental lock disabled");
+    }else{
+      cs_log("cannot disable parental lock");
     }
   }
 
@@ -518,10 +533,10 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     dimeno_magic[a]=dimeno_magic[a]^boxID[a];
   AES_set_decrypt_key(dimeno_magic,128,&(reader->astrokey));
 
-  cs_ri_log(reader, "[videoguard2-reader] type: %s, caid: %04X",
+  cs_ri_log(reader, "type: %s, caid: %04X",
          reader->card_desc,
          reader->caid[0]);
-  cs_ri_log(reader, "[videoguard2-reader] serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X, baseyear: %i",
+  cs_ri_log(reader, "serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X, baseyear: %i",
          reader->hexserial[2],reader->hexserial[3],reader->hexserial[4],reader->hexserial[5],
          boxID[0],boxID[1],boxID[2],boxID[3],
          reader->card_baseyear);
@@ -542,6 +557,27 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   memset(er->cw+0,0,16); //set cw to 0 so client will know it is invalid unless it is overwritten with a valid cw
   memcpy(tbuff+1,er->ecm+posECMpart2+1,lenECMpart2-1);
+
+/*
+  //log parental lock byte
+  int j;
+  for (j = posECMpart2+1; j < lenECMpart2+posECMpart2+1-4; j++){
+    if (er->ecm[j] == 0x02 && er->ecm[j+3] == 0x02) {
+      cs_log("channel parental lock mask: %02X%02X, channel parental lock byte: %02X",er->ecm[j+1],er->ecm[j+2],er->ecm[j+4]);
+      break;
+    }
+  }
+
+  //log tiers
+  int k;
+  for (k = posECMpart2+1; k < lenECMpart2+posECMpart2+1-4; k++){
+    if (er->ecm[k] == 0x03 && er->ecm[k+3] == 0x80) {
+      unsigned short vtier_id = (er->ecm[k+1] << 8) | er->ecm[k+2];
+      char *vtier_name = get_tiername(vtier_id, reader->caid[0]);
+      cs_log("valid tier: %04x %s",vtier_id,vtier_name);
+    }
+  }
+*/
 
   ins40[4]=lenECMpart2;
   int l;
@@ -631,11 +667,11 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 	switch(emmtype) {
 		case VG_EMMTYPE_G:
 			ep->type=GLOBAL;
-			cs_debug_mask(D_EMM, "[videoguard2-reader] EMM: GLOBAL");
+			cs_debug_mask(D_EMM, "EMM: GLOBAL");
 			return TRUE;
 
 		case VG_EMMTYPE_U:
-			cs_debug_mask(D_EMM, "[videoguard2-reader] EMM: UNIQUE");
+			cs_debug_mask(D_EMM, "EMM: UNIQUE");
 			ep->type=UNIQUE;
 			if (ep->emm[1] == 0) // detected UNIQUE EMM from cccam (there is no serial)
 				return TRUE;
@@ -652,7 +688,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 
 		case VG_EMMTYPE_S:
 			ep->type=SHARED;
-			cs_debug_mask(D_EMM, "[videoguard2-reader] EMM: SHARED");
+			cs_debug_mask(D_EMM, "EMM: SHARED");
 			return TRUE; // FIXME: no check for SA
 
 		default:
@@ -725,7 +761,7 @@ static int videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
       rc=OK;
       }
 
-    cs_debug_mask(D_EMM, "[videoguard2-reader] EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
+    cs_debug_mask(D_EMM, "EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
     //cs_dump(ep->emm, 64, "EMM:");
     if (status_ok (cta_res) && (cta_res[1] & 0x01)) {
       vg2_read_tiers(reader);
