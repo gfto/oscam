@@ -665,14 +665,13 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 			if (len>500) return;
 			switch (buffer[0]) {
 				case 0x84:
-				    cs_log("cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(1, buffer, len));
+				    cs_debug("cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(1, buffer, len));
 					if (!memcmp(emm_global, buffer, len)) return;
-					//cs_log("provider %06X - %02X", provider , buffer[7]);
 					memcpy(emm_global, buffer, len);
 					emm_global_len=len;
 					return;
 				case 0x86:
-				    cs_log("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, len));
+				    cs_debug("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, len));
 					if (!emm_global_len) return;
                     provid=buffer[7];
                     
@@ -703,13 +702,13 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 				    free(tmp);
 				    free(assembled_EMM);
 				    emm_global_len=0;
-				    cs_log("cryptoworks shared emm (assembled): %s" , cs_hexdump(1, buffer, emm_len+12));
+				    cs_debug("cryptoworks shared emm (assembled): %s" , cs_hexdump(1, buffer, emm_len+12));
                     if(assembled_EMM[11]!=emm_len) { // sanity check
                         // error in emm assembly
-                        cs_log("Error assembling Cryptoworks EMM-S");
+                        cs_debug("Error assembling Cryptoworks EMM-S");
                         return;
                     }
-                    // get emm provid for the 0x83 nano
+                    // get emm provid from the 0x83 nano
                     provid=dvbapi_get_cw_emm_provid(assembled_EMM+12, emm_len);
 					break;
 			}
