@@ -709,10 +709,11 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
       if (au != -1)
       {
           if (cfg->ncd_ptab.ports[cur_client()->port_idx].ftab.filts[0].caid != reader[au].caid[0]
-              &&  cfg->ncd_ptab.ports[cur_client()->port_idx].ftab.filts[0].caid != reader[au].ftab.filts[0].caid)
+              &&  cfg->ncd_ptab.ports[cur_client()->port_idx].ftab.filts[0].caid != reader[au].ftab.filts[0].caid
+              && reader[au].typ != R_CCCAM) // disabling AU breaks cccam-au when cascading over newcamd, but with enabled au client was receiving wrong card data on faulty configured newcamd filters and when using betatunnel
           {
             cs_log("AU wont be used on this port -> disable AU");
-            //au = -1; schlocke: this breaks cccam-au because caid is set on the first ecm
+            au = -1;
           }
           else
           {
