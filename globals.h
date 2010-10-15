@@ -134,13 +134,19 @@
 #define CS_MAXREADERCAID  16
 
 #ifdef  CS_EMBEDDED
-#define CS_MAXPID   32
-#define CS_MAXREADER    (CS_MAXPID>>1)
-#define CS_MAXPENDING   CS_MAXPID
+//#define CS_MAXPID   32
+//#define CS_MAXREADER    (CS_MAXPID>>1)
+#define CS_MAXREADER    16
+//#define CS_MAXPENDING   CS_MAXPID
+#define CS_MAXPENDING   8
+#define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+8000
 #else
-#define CS_MAXPID   512
-#define CS_MAXREADER    (CS_MAXPID<<2)
-#define CS_MAXPENDING   (CS_MAXPID<<1)
+//#define CS_MAXPID   512
+//#define CS_MAXREADER    (CS_MAXPID<<2)
+#define CS_MAXREADER    256
+//#define CS_MAXPENDING   (CS_MAXPID<<1)
+#define CS_MAXPENDING   20
+#define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+10000
 #endif
 
 #define CS_EMMCACHESIZE  5 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
@@ -236,8 +242,6 @@ extern char *RDR_CD_TXT[];
 #define NCD_AUTO    0
 #define NCD_524     1
 #define NCD_525     2
-
-//#define CS_ANTICASC
 
 // moved from reader-common.h
 #define NO_CARD        0
@@ -1221,7 +1225,7 @@ extern int cs_dblevel, loghistidx;
 extern ushort len4caid[256];
 
 extern struct card_struct *Cards;
-extern struct idstore_struct *idstore;
+//extern struct idstore_struct *idstore;
 extern unsigned long *IgnoreList;
 
 extern struct s_config *cfg;
@@ -1232,7 +1236,6 @@ extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 //extern ECM_REQUEST *ecmtask;
 
 #ifdef CS_ANTICASC
-extern struct  s_acasc_shm   acasc[CS_MAXPID];
 extern FILE *fpa;
 #endif
 extern pthread_mutex_t gethostbyname_lock; 
@@ -1288,6 +1291,8 @@ extern int get_threadnum(struct s_client *client);
 #ifdef CS_ANTICASC
 extern void init_ac(void);
 extern void ac_init_stat();
+extern void ac_clear();
+extern void ac_done_stat();
 extern int  ac_init_log();
 extern void ac_do_stat(void);
 extern void ac_init_client(struct s_auth *);

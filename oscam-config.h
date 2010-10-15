@@ -3,7 +3,7 @@
 
 // ADDONS
 #ifndef WEBIF
-//#define WEBIF
+#define WEBIF
 #endif
 
 #ifndef HAVE_DVBAPI
@@ -13,7 +13,7 @@
 #endif
 
 #ifndef IRDETO_GUESSING
-//#define IRDETO_GUESSING
+#define IRDETO_GUESSING
 #endif
 
 #ifndef CS_ANTICASC

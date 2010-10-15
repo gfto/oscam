@@ -27,25 +27,17 @@ char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
 pthread_key_t getclient;
 
-#ifdef CS_ANTICASC
-struct s_acasc ac_stat[CS_MAXPID];
-#endif
-
-
 struct  s_ecm     *ecmcache;
 struct  s_ecm     *ecmidx;
 struct  s_reader  reader[CS_MAXREADER];
 
 #ifdef CS_WITH_GBOX
 struct  card_struct Cards[CS_MAXCARDS];
-struct  idstore_struct  idstore[CS_MAXPID];
+//struct  idstore_struct  idstore[CS_MAXPID];
 unsigned long IgnoreList[CS_MAXIGNORE];
 #endif
 
 struct  s_config  *cfg;
-#ifdef CS_ANTICASC
-struct  s_acasc_shm   acasc[CS_MAXPID]; // anti-cascading table indexed by account.ac_idx
-#endif
 #ifdef CS_LOGHISTORY
 int     loghistidx;  // ptr to current entry
 char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
@@ -330,10 +322,11 @@ static void cs_accounts_chk()
   init_userdb(&cfg->account);
   cs_reinit_clients();
 #ifdef CS_ANTICASC
-	struct s_client *cl;
-	for (cl=first_client->next; cl ; cl=cl->next)
-    if (cl->typ=='a')
-      break;
+//	struct s_client *cl;
+//	for (cl=first_client->next; cl ; cl=cl->next)
+//    if (cl->typ=='a')
+//      break;
+  ac_clear();
 #endif
 }
 
@@ -826,12 +819,17 @@ int cs_user_resolve(struct s_auth *account)
 #if defined(CS_ANTICASC) || defined(WEBIF) 
 static void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
-	if (pthread_create(&temp, (pthread_attr_t *)0, startroutine, NULL))
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+
+	if (pthread_create(&temp, &attr, startroutine, NULL))
 		cs_log("ERROR: can't create %s thread", nameroutine);
 	else {
 		cs_log("%s thread started", nameroutine);
 		pthread_detach(temp);
 	}
+	pthread_attr_destroy(&attr);
 }
 #endif
 void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
@@ -919,8 +917,13 @@ void restart_cardreader(int reader_idx, int restart) {
 
 		cl->typ='r';
 		//client[i].ctyp=99;
-		pthread_create(&cl->thread, NULL, start_cardreader, (void *)&reader[reader_idx]);
+		pthread_attr_t attr;
+		pthread_attr_init(&attr);
+		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+
+		pthread_create(&cl->thread, &attr, start_cardreader, (void *)&reader[reader_idx]);
 		pthread_detach(cl->thread);
+		pthread_attr_destroy(&attr);
 
 		if (reader[reader_idx].r_port)
 			cs_log("proxy thread started (pid=%d, server=%s)",reader[reader_idx].pid, reader[reader_idx].device);
@@ -2671,8 +2674,13 @@ int accept_connection(int i, int j) {
 
 				write_to_pipe(cl->fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
 
-				pthread_create(&cl->thread, NULL, ph[i].s_handler, (void *) cl);
+				pthread_attr_t attr;
+				pthread_attr_init(&attr);
+				pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+
+				pthread_create(&cl->thread, &attr, ph[i].s_handler, (void *) cl);
 				pthread_detach(cl->thread);
+				pthread_attr_destroy(&attr);
 			} else {
 				write_to_pipe(cl->fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
 			}
@@ -2696,8 +2704,13 @@ int accept_connection(int i, int j) {
 			cl->port=ntohs(cad.sin_port);
 			cl->typ='c';
 
-			pthread_create(&cl->thread, NULL, ph[i].s_handler, (void*) cl);
+			pthread_attr_t attr;
+			pthread_attr_init(&attr);
+			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
+
+			pthread_create(&cl->thread, &attr, ph[i].s_handler, (void*) cl);
 			pthread_detach(cl->thread);
+			pthread_attr_destroy(&attr);
 		}
 	}
 	return 0;

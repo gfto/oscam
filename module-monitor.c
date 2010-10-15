@@ -362,7 +362,7 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 	monitor_send_details(buf, pid);
 	sprintf(buf, "DebugLevel=%d", cfg->debuglvl);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "MaxClients=%d", CS_MAXPID - 2);
+	sprintf(buf, "MaxClients=UNLIMITED");
 	monitor_send_details(buf, pid);
 	sprintf(buf, "ClientMaxIdle=%ld sec", cfg->cmaxidle);
 	monitor_send_details(buf, pid);

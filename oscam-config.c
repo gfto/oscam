@@ -2633,7 +2633,7 @@ void write_versionfile() {
 	  fprintf(fp, "starttime:      %02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
 	  fprintf(fp, " %02d:%02d:%02d\n", st->tm_hour, st->tm_min, st->tm_sec);
 	  fprintf(fp, "version:        %s  Rev. %s\n", CS_VERSION, CS_SVN_VERSION);
-	  fprintf(fp, "maxpid:         %d\n\n\n", CS_MAXPID);
+	  fprintf(fp, "maxpid:         UNLIMITED\n\n\n");
 	  fprintf(fp, "active modules:\n");
 
 #ifdef WEBIF
