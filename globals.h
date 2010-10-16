@@ -685,7 +685,6 @@ struct s_reader  //contains device info, reader info and card info
   int		audisabled; // exclude reader from auto AU
   int 		deleted; // if this flag is set the reader is not shown in webif and becomes not writte to oscam.server
   int		smargopatch;
-  int		pid;
   struct s_client * client; //pointer to 'r'client this reader is running in
   int       enable;
   int       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function

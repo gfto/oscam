@@ -912,8 +912,6 @@ void restart_cardreader(int reader_idx, int restart) {
 		cl->sidtabok=reader[reader_idx].sidtabok;
 		cl->sidtabno=reader[reader_idx].sidtabno;
    
-		reader[reader_idx].pid=getpid();
-
 		reader[reader_idx].client=cl;
 
 		cl->typ='r';
@@ -925,27 +923,6 @@ void restart_cardreader(int reader_idx, int restart) {
 		pthread_create(&cl->thread, &attr, start_cardreader, (void *)&reader[reader_idx]);
 		pthread_detach(cl->thread);
 		pthread_attr_destroy(&attr);
-
-		if (reader[reader_idx].r_port)
-			cs_log("proxy thread started (pid=%d, server=%s)",reader[reader_idx].pid, reader[reader_idx].device);
-		else {
-			switch(reader[reader_idx].typ) {
-				case R_MOUSE:
-				case R_SMART:
-					cs_log("reader thread started (pid=%d, device=%s, detect=%s%s, mhz=%d, cardmhz=%d)",reader[reader_idx].pid, 
-						reader[reader_idx].device,reader[reader_idx].detect&0x80 ? "!" : "",RDR_CD_TXT[reader[reader_idx].detect&0x7f],
-						reader[reader_idx].mhz,reader[reader_idx].cardmhz);
-					break;
-				case R_SC8in1:
-					cs_log("reader thread started (pid=%d, device=%s:%i, detect=%s%s, mhz=%d, cardmhz=%d)",reader[reader_idx].pid, 
-						reader[reader_idx].device,reader[reader_idx].slot,reader[reader_idx].detect&0x80 ? "!" : "",
-						RDR_CD_TXT[reader[reader_idx].detect&0x7f],reader[reader_idx].mhz,reader[reader_idx].cardmhz);
-					break;
-				default:
-					cs_log("reader thread started (pid=%d, device=%s)",reader[reader_idx].pid, reader[reader_idx].device);
-			}
-			strcpy(cl->usr, first_client->usr);
-		}  
 	}
 }
 

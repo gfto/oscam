@@ -764,12 +764,14 @@ void * start_cardreader(void * rdr)
 	reader->client->thread=pthread_self();
 	pthread_setspecific(getclient, reader->client);
 	reader->client->cs_ptyp=D_READER;
+	strcpy(reader->client->usr, first_client->usr);
 
   if (reader->typ & R_IS_CASCADING)
   {
     reader->client->typ='p';
     reader->client->port=reader->r_port;
     strcpy(reader->client->usr, reader->r_usr);
+    cs_log("proxy thread started (thread=%9lX, server=%s)",pthread_self(), reader->device);
     
     if (!(reader->ph.c_init)) {
       cs_log("FATAL: %s-protocol not supporting cascading", reader->ph.desc);
@@ -791,9 +793,16 @@ void * start_cardreader(void * rdr)
   else
   {
     reader->client->ip=cs_inet_addr("127.0.0.1");
-		if (reader->typ != R_SC8in1)
+		if (reader->typ != R_SC8in1) {
+      cs_log("reader thread started (thread=%9lX, device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", pthread_self(), 
+        reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
      	while (reader_device_init(reader)==2)
       	cs_sleepms(60000); // wait 60 secs and try again
+		}
+		else {
+      cs_log("reader thread started (thread=%9lX, device=%s:%i, detect=%s%s, mhz=%d, cardmhz=%d)", pthread_self(), 
+        reader->device, reader->slot,reader->detect&0x80 ? "!" : "", RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
+		}
   }
 
 #endif
