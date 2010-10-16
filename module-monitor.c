@@ -303,8 +303,8 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			sprintf(ldate, "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year % 100);
 			int cnr=get_threadnum(cl);
 			sprintf(ltime, "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
-                        sprintf(sbuf, "[%c--CCC]%08lX|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
-					id, (unsigned long) cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
+                        sprintf(sbuf, "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
+					id, (unsigned int) cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
 					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),
 					ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
 					get_servicename(cl->last_srvid, cl->last_caid), isec, con,
@@ -337,9 +337,9 @@ static void monitor_process_info(){
 	monitor_send_info(NULL, 1);
 }
 
-static void monitor_send_details(char *txt, unsigned long tid){
+static void monitor_send_details(char *txt, unsigned int tid){
 	char buf[256];
-	snprintf(buf, 255, "[D-----]%08lX|%s\n", tid, txt);
+	snprintf(buf, 255, "[D-----]%8X|%s\n", tid, txt);
 	monitor_send_info(buf, 0);
 }
 

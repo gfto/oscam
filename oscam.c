@@ -380,7 +380,7 @@ void cs_exit(int sig)
 	set_signal_handler(SIGPIPE, 1, SIG_IGN);
 
 	if (sig==SIGALRM) {
-		cs_debug("thread %08lX: SIGALRM, skipping", pthread_self());
+		cs_debug("thread %8X: SIGALRM, skipping", pthread_self());
 		return;
 	}
 
@@ -429,7 +429,7 @@ void cs_exit(int sig)
 
 	// this is very important - do not remove
 	if (cl->typ != 's') {
-		cs_log("thread %08lX ended!", pthread_self());
+		cs_log("thread %8X ended!", pthread_self());
 		cleanup_thread(cl);
 		//Restore signals before exiting thread
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
@@ -839,7 +839,7 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 	if (pthread_equal(cl->thread, pthread_self())) return; //cant kill yourself
 
 	pthread_cancel(cl->thread);
-	cs_log("thread %08lX killed!", cl->thread);
+	cs_log("thread %8X killed!", cl->thread);
 	cleanup_thread(cl); //FIXME what about when cancellation was not granted immediately?
 	return;
 }
@@ -960,13 +960,13 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 			{
 				cl->dup = 1;
 				cl->au = -1;
-				cs_log("client(%08lX) duplicate user '%s' from %s set to fake (uniq=%d)", cl->thread, usr, cs_inet_ntoa(ip), uniq);
+				cs_log("client(%8X) duplicate user '%s' from %s set to fake (uniq=%d)", cl->thread, usr, cs_inet_ntoa(ip), uniq);
 			}
 			else
 			{
 				client->dup = 1;
 				client->au = -1;
-				cs_log("client(%08lX) duplicate user '%s' from %s set to fake (uniq=%d)", pthread_self(), usr, cs_inet_ntoa(ip), uniq);
+				cs_log("client(%8X) duplicate user '%s' from %s set to fake (uniq=%d)", pthread_self(), usr, cs_inet_ntoa(ip), uniq);
 				break;
 			}
 
@@ -1199,7 +1199,7 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 		return -1;
 	}
 
-	cs_debug("write to pipe %d (%s) thread: %08lX to %08lX", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd)->thread);
+	cs_debug("write to pipe %d (%s) thread: %8X to %8X", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd)->thread);
 
 	uchar buf[3+sizeof(void*)];
 
@@ -1254,7 +1254,7 @@ int read_from_pipe(int fd, uchar **data, int redir)
 	memcpy(id, buf, 3);
 	id[3]='\0';
 
-	cs_debug("read from pipe %d (%s) thread: %08lX", fd, id, pthread_self());
+	cs_debug("read from pipe %d (%s) thread: %9lX", fd, id, pthread_self());
 
 	int l;
 	for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)
@@ -2520,7 +2520,7 @@ static void restart_clients()
 	for (cl=first_client->next; cl ; cl=cl->next)
 		if (cl->pid && cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
 			kill_thread(cl);
-			cs_log("killing client c%08lX pid %d", cl->thread, cl->pid);
+			cs_log("killing client c%9lX pid %d", cl->thread, cl->pid);
 		}
 }
 
