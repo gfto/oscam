@@ -530,7 +530,6 @@ typedef struct ecm_request_t
 
 struct s_client
 {
-  pid_t	pid;
   in_addr_t	ip;
   in_port_t	port;
   time_t	login;
@@ -1277,7 +1276,7 @@ extern int chk_rfilter(ECM_REQUEST *, struct s_reader *);
 extern int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *);
 extern int chk_avail_reader(ECM_REQUEST *, struct s_reader *);
 extern int matching_reader(ECM_REQUEST *, struct s_reader *);
-extern void set_signal_handler(int , int , void (*)(int));
+extern void set_signal_handler(int , int , void (*));
 extern void cs_log_config(void);
 extern void cs_waitforcardinit(void);
 extern void cs_reinit_clients(void);
@@ -1289,6 +1288,8 @@ extern int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidta
 extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
 extern void kill_thread(struct s_client *cl);
 extern int get_threadnum(struct s_client *client);
+extern void cs_card_info(void);
+extern void cs_debug_level(void);
                  
 #ifdef CS_ANTICASC
 extern void init_ac(void);
@@ -1349,6 +1350,7 @@ void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab);
 extern void chk_t_webif(char *token, char *value);
 #endif
 
+extern void cs_accounts_chk(void);
 extern void chk_account(const char *token, char *value, struct s_auth *account);
 extern void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab);
 extern int write_services();

@@ -245,7 +245,7 @@ static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port)
 {
   struct s_client *cl; 
   for (cl=first_client; cl ; cl=cl->next)
-    if (cl->pid && (cl->ip==ip) && (cl->port==port) && ((cl->typ=='c') || (cl->typ=='m')))
+    if ((cl->ip==ip) && (cl->port==port) && ((cl->typ=='c') || (cl->typ=='m')))
       return cl;
   return NULL;
 }
@@ -282,7 +282,7 @@ int chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
  * void set_signal_handler(int sig, int flags, void (*sighandler)(int))
  * flags: 1 = restart, 2 = don't modify if SIG_IGN, may be combined
  */
-void set_signal_handler(int sig, int flags, void (*sighandler)(int))
+void set_signal_handler(int sig, int flags, void (*sighandler))
 {
 #ifdef CS_SIGBSD
   if ((signal(sig, sighandler)==SIG_IGN) && (flags & 2))
@@ -317,7 +317,7 @@ static void cs_sigpipe()
   cs_log("Got sigpipe signal -> captured");
 }
 
-static void cs_accounts_chk()
+void cs_accounts_chk()
 {
   init_userdb(&cfg->account);
   cs_reinit_clients();
@@ -341,8 +341,6 @@ static void nullclose(int *fd)
 
 static void cleanup_thread(struct s_client *cl)
 {
-	cl->pid=0;
-
 	struct s_client *prev, *cl2;
 	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 		if (cl == cl2)
@@ -451,7 +449,7 @@ void cs_reinit_clients()
 
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
-		if( cl->pid && cl->typ == 'c' && cl->usr[0] ) {
+		if( cl->typ == 'c' && cl->usr[0] ) {
 			for (account = cfg->account; (account) ; account = account->next)
 				if (!strcmp(cl->usr, account->usr))
 					break;
@@ -490,14 +488,14 @@ void cs_reinit_clients()
 #endif
 			} else {
 				if (ph[cl->ctyp].type & MOD_CONN_NET) {
-					cs_debug("client '%s', pid=%d not found in db (or password changed)", cl->usr, cl->pid);
+					cs_debug("client '%s', thread=%8X not found in db (or password changed)", cl->usr, cl->thread);
 					kill_thread(cl);
 				}
 			}
 		}
 }
 
-static void cs_debug_level()
+void cs_debug_level()
 {
 	//switch debuglevel forward one step if not set from outside
 	if(cfg->debuglvl == cs_dblevel) {
@@ -522,13 +520,12 @@ static void cs_debug_level()
 	cs_log("%sdebug_level=%d", "all", cs_dblevel);
 }
 
-static void cs_card_info(int i)
+void cs_card_info()
 {
   uchar dummy[1]={0x00};
-	i=i; //suppress compiler warning
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
-    if( cl->pid && cl->typ=='r' && cl->fd_m2c )
+    if( cl->typ=='r' && cl->fd_m2c )
       write_to_pipe(cl->fd_m2c, PIP_ID_CIN, dummy, 1);
       //kill(client[i].pid, SIGUSR2);
 }
@@ -536,7 +533,6 @@ static void cs_card_info(int i)
 struct s_client * cs_fork(in_addr_t ip) {
 	struct s_client *cl;
 
-	pid_t pid=getpid();
 	for (cl=first_client; cl->next != NULL; cl=cl->next); //ends with cl on last client
 	cl->next = malloc(sizeof(struct s_client));
 	if (cl->next) {
@@ -562,7 +558,6 @@ struct s_client * cs_fork(in_addr_t ip) {
 		cl->stat=1;
 
 		cl->login=cl->last=time((time_t *)0);
-		cl->pid=pid;
 		//increase ecmcache
 		struct s_ecm *ecmc;
 		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
@@ -622,7 +617,6 @@ static void init_shm()
   exit(1);
   }
   first_client->next = NULL; //terminate clients list with NULL
-  first_client->pid=getpid();
   first_client->login=time((time_t *)0);
   first_client->ip=cs_inet_addr("127.0.0.1");
   first_client->typ='s';
@@ -833,7 +827,7 @@ static void start_thread(void * startroutine, char * nameroutine) {
 #endif
 void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
 
-	if (cl->pid==0) return;
+	if (cl) return;
 	if (pthread_equal(cl->thread, pthread_self())) return; //cant kill yourself
 
 	pthread_cancel(cl->thread);
@@ -951,7 +945,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
 	{
-		if (cl->pid && (cl->typ == 'c') && !cl->dup && !strcmp(cl->usr, usr)
+		if ((cl->typ == 'c') && !cl->dup && !strcmp(cl->usr, usr)
 		   && (uniq < 5) && ((uniq % 2) || (cl->ip != ip)))
 		{
 			if (uniq  == 3 || uniq == 4)
@@ -2516,9 +2510,9 @@ static void restart_clients()
 	cs_log("restarting clients");
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
-		if (cl->pid && cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
+		if (cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
 			kill_thread(cl);
-			cs_log("killing client c%9lX pid %d", cl->thread, cl->pid);
+			cs_log("killing client c%9lX", cl->thread);
 		}
 }
 

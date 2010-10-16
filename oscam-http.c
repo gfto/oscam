@@ -25,7 +25,7 @@ static void kill_ac_client(void)
 		struct s_client *cl;
 		for (cl=first_client->next; cl ; cl=cl->next)
 		if (cl->typ=='a') {
-			kill(cl->pid, SIGHUP);
+			 cs_accounts_chk();
 			break;
 		}
 }
@@ -45,7 +45,7 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 		break;
 
 		case REFR_READERS:
-		kill(first_client->pid, SIGUSR2);
+		cs_card_info();
 		cs_log("Refresh Reader/Tiers requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
 		break;
 
@@ -1802,7 +1802,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		// Reset template variables
 		tpl_addVar(vars, 0, "CLIENTLBVALUE","");
 
-		if (cl->pid && cl->wihidden != 1) {
+		if (cl->wihidden != 1) {
 
 			if((cfg->http_hide_idle_clients == 1) && (cl->typ == 'c') && ((now - cl->lastecm) > cfg->mon_hideclient_to)) continue;
 
@@ -1834,7 +1834,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&ridx=%d\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Restart\"></A>", cl->ridx, ICKIL);
 			}
 			else {
-				tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", cl->pid);
+				tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", cl->thread);
 			}
 
 			tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);

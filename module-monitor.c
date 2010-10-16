@@ -263,7 +263,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 	static char sbuf[256];
 	sbuf[0] = '\0';
 
-	if (cl->pid){
+	if (cl){
 		char ldate[16], ltime[16], *usr;
 		int lsec, isec, con, cau, lrt;
 		time_t now;
@@ -324,14 +324,12 @@ static void monitor_process_info(){
 				( now-cl->lastecm < cfg->mon_hideclient_to) ||
 				( now-cl->lastemm < cfg->mon_hideclient_to) ||
 				( cl->typ != 'c')){
-			if (cl->pid) {
-				if ((cur_client()->monlvl < 2) && (cl->typ != 's')) {
+			if ((cur_client()->monlvl < 2) && (cl->typ != 's')) {
 					if 	((strcmp(cur_client()->usr, cl->usr)) ||
 							((cl->typ != 'c') && (cl->typ != 'm')))
 						continue;
-				}
-				monitor_send_info(monitor_client_info('I', cl), 0);
 			}
+			monitor_send_info(monitor_client_info('I', cl), 0);
 		}
 	}
 	monitor_send_info(NULL, 1);
@@ -520,7 +518,7 @@ static void monitor_logsend(char *flag){
 
 static void monitor_set_debuglevel(char *flag){
 	cfg->debuglvl = atoi(flag);
-	kill(first_client->pid, SIGUSR1);
+	cs_debug_level();
 }
 
 static void monitor_get_account(){
@@ -722,7 +720,7 @@ static int monitor_process_request(char *req)
 			case 11:	if (cur_client()->monlvl > 3) monitor_set_server(arg); break;	// setserver
 			case 12:	if (cur_client()->monlvl > 3) monitor_list_commands(cmd, cmdcnt); break;	// list commands
 			case 13:	if (cur_client()->monlvl > 3) monitor_send_keepalive_ack(); break;	// keepalive
-			case 14:	{ char buf[64];sprintf(buf, "[S-0000]reread\n");monitor_send_info(buf, 1); kill(first_client->pid, SIGUSR2); break; } // reread
+			case 14:	{ char buf[64];sprintf(buf, "[S-0000]reread\n");monitor_send_info(buf, 1); cs_card_info(); break; } // reread
 			default:	continue;
 			}
 			break;
