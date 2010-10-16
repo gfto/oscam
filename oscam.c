@@ -354,22 +354,21 @@ static void cleanup_thread(struct s_client *cl)
 
 	cs_sleepms(2000); //wait some time before cleanup to prevent segfaults
 	if(ph[cl->ctyp].cleanup) ph[cl->ctyp].cleanup(cl);
-	if(cl->ecmtask) 	free(cl->ecmtask);
-	if(cl->emmcache) 	free(cl->emmcache);
-	if(cl->req) 		free(cl->req);
-	if(cl->cc) 		free(cl->cc);
+	NULLFREE(cl->ecmtask);
+	NULLFREE(cl->emmcache);
+	NULLFREE(cl->req);
+	NULLFREE(cl->cc);
 	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
 	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
 	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 
-	if (cl) free (cl);
-	cl = NULL; //should prevent other threads for accessing this client
+	NULLFREE (cl);
 
   //decrease ecmcache
 	struct s_ecm *ecmc;
 	if (ecmcache->next != NULL) { //keep it at least on one entry big
 		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next);
-		if (ecmc->next) free(ecmc->next);
+		NULLFREE(ecmc->next);
 	}
 }
 

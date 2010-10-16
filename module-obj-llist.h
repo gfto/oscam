@@ -17,8 +17,6 @@
 
 #include <pthread.h>
 
-#define NULLFREE(X) do { if (X) { free(X); X = NULL; } } while(0)
-
 struct llist_node {
 	void *obj;
 	struct llist_node *prv;

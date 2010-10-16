@@ -290,9 +290,9 @@ extern void cs_switch_led(int led, int action);
 #define BAN_DISABLED 2			//failban mask for disabled user
 #define BAN_SLEEPING 4			//failban mask for sleeping user
 
-#define free(a) \
-	free(a); \
-	a=NULL;
+
+//checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
+#define NULLFREE(X) free(X); X = NULL; 
 
 typedef struct s_classtab
 {

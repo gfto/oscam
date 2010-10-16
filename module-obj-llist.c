@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "module-obj-llist.h"
+#include "globals.h"
 
 LLIST *llist_create(void)
 {
