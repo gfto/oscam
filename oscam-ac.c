@@ -25,18 +25,6 @@ int ac_init_log(void)
   return(fpa<=(FILE *)0);
 }
 
-void ac_init_stat()
-{
-  ac_stat_list = llist_create();
-  acasc_list = llist_create();
-
-  if( fpa )
-    fclose(fpa);
-  fpa=(FILE *)0;
-  if( ac_init_log() )
-    cs_exit(0);
-}
-
 void ac_clear()
 {
 	llist_clear(acasc_list);
@@ -48,6 +36,21 @@ void ac_done_stat()
 	ac_clear();
 	llist_destroy(acasc_list);
 	llist_destroy(ac_stat_list);
+}
+
+void ac_init_stat()
+{
+  if (acasc_list)
+    ac_done_stat();
+    
+  ac_stat_list = llist_create();
+  acasc_list = llist_create();
+
+  if( fpa )
+    fclose(fpa);
+  fpa=(FILE *)0;
+  if( ac_init_log() )
+    cs_exit(0);
 }
 
 static struct s_client *idx_from_ac_idx(int ac_idx)
@@ -135,7 +138,7 @@ void ac_do_stat()
     if (ac_stat_next)
     	ac_stat = llist_itr_next(&itr1);
     else
-    	ac_stat = 0;
+    	ac_stat = NULL;
     acasc = llist_itr_next(&itr2);
     i++;
   }
