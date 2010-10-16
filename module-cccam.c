@@ -712,7 +712,7 @@ int get_UA_len(uint16 caid) {
 			len=5;
 			break;
 		case 0x4A: //DRE:
-			len=1;
+			len=4;
 			break;
 		case 0x01: //SECA:
 			len=6;
