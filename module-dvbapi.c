@@ -721,7 +721,7 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 				case 0x88: // emm-g
 				case 0x89: // emm-g
 				    cs_debug("cryptoworks global emm (EMM-G): %s" , cs_hexdump(1, buffer, len));
-                    provid=dvbapi_get_cw_emm_provid(buffer+7, len-7);
+                    provid=dvbapi_get_cw_emm_provid(buffer+8, len-8);
 				    break;
 				
 			}    
