@@ -970,7 +970,8 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 	char *t_grant=" granted";
 	char *t_reject=" rejected";
 	char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason" };
-	client->grp=0xffffffff;
+	memset(&client->grp, 0xff, sizeof(uint64));
+	//client->grp=0xffffffffffffff;
 	client->au=(-1);
 	switch((long)account)
 	{
@@ -1112,7 +1113,7 @@ void cs_disconnect_client(struct s_client * client)
  * cache 1: client-invoked
  * returns found ecm task index
  **/
-int check_ecmcache1(ECM_REQUEST *er, ulong grp)
+int check_ecmcache1(ECM_REQUEST *er, uint64 grp)
 {
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
@@ -1134,7 +1135,7 @@ int check_ecmcache1(ECM_REQUEST *er, ulong grp)
  * cache 2: reader-invoked
  * returns 1 if found in cache. cw is copied to er
  **/
-int check_ecmcache2(ECM_REQUEST *er, ulong grp)
+int check_ecmcache2(ECM_REQUEST *er, uint64 grp)
 {
 	// disable cache2
 	if (!reader[cur_client()->ridx].cachecm) return(0);

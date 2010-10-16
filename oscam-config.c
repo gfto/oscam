@@ -1653,7 +1653,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ",")) {
 			int g;
 			g = atoi(ptr1);
-			if ((g>0) && (g < 33)) account->grp|=(1<<(g-1));
+			if ((g>0) && (g < 65)) account->grp|=(((uint64)1)<<(g-1));
 		}
 		return;
 	}
@@ -2201,7 +2201,7 @@ int write_userdb(struct s_auth *authptr)
 		}
 
 		//group
-		char *value = mk_t_group((ulong*)account->grp);
+		char *value = mk_t_group(account->grp);
 		fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
 		free(value);
 
@@ -2523,7 +2523,7 @@ int write_server()
 			if (reader[i].maxqlen && !reader[i].maxqlen == CS_MAXQLEN)
 				fprintf_conf(f, CONFVARWIDTH, "maxqlen", "%d\n", reader[i].maxqlen);
 
-			value = mk_t_group((ulong*)reader[i].grp);
+			value = mk_t_group(reader[i].grp);
 			fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
 			free(value);
 
@@ -3630,8 +3630,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
 				int g;
 				g = atoi(ptr);
-				if ((g>0) && (g<33)) {
-					rdr->grp |= (1<<(g-1));
+				if ((g>0) && (g<65)) {
+					rdr->grp |= (((uint64)1)<<(g-1));
 				}
 			}
 			return;
@@ -4215,12 +4215,12 @@ char *mk_t_tuntab(TUNTAB *ttab){
 /*
  * makes a char ready to write a token into config or webIf
  */
-char *mk_t_group(ulong *grp){
+char *mk_t_group(uint64 grp){
 	int i = 0, needed = 1, pos = 0, dot = 0;
-	char grpbit[33];
-	long2bitchar((long) grp, grpbit);
+	char grpbit[65];
+	uint642bitchar(grp, grpbit);
 
-	for(i = 0; i < 32; i++){
+	for(i = 0; i < 64; i++){
 		if (grpbit[i] == '1'){
 			needed += 2;
 			if(i > 9) needed += 1;
@@ -4228,7 +4228,7 @@ char *mk_t_group(ulong *grp){
 	}
 	char *value = (char *) malloc(needed * sizeof(char));
 
-	for(i = 0; i < 32; i++){
+	for(i = 0; i < 64; i++){
 		if (grpbit[i] == '1'){
 			if (dot == 0){
 				sprintf(value + pos, "%d", i+1);

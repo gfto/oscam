@@ -406,7 +406,7 @@ struct s_ecm
   uchar  	ecmd5[CS_ECMSTORESIZE];
   uchar  	cw[16];
   ushort 	caid;
-  ulong  	grp;
+  uint64  	grp;
   int 		reader;
   struct s_ecm *next;
   //int level;
@@ -543,7 +543,7 @@ struct s_client
   int		c35_sleepsend;
   int		ncd_keepalive;
   int		disabled;
-  ulong		grp;
+  uint64	grp;
   int		crypted;
   int		dup;
   int		au;
@@ -689,7 +689,7 @@ struct s_reader  //contains device info, reader info and card info
   int       available; //Schlocke: New flag for loadbalancing. Only reader if reader supports ph.c_available function
   int       fd_error;
   int       fd;
-  ulong     grp;
+  uint64    grp;
   int       fallback;
   int       typ;
   int       card_system;
@@ -891,7 +891,7 @@ struct s_auth
   int      au;
   int      autoau;
   int      monlvl;
-  ulong    grp;
+  uint64   grp;
   int      tosleep;
   CAIDTAB  ctab;
   SIDTABBITS   sidtabok;  // positiv services
@@ -1200,6 +1200,7 @@ extern void create_rand_str(char *dst, int size);
 #endif
 extern void sidtabbits2bitchar(SIDTABBITS value, char *result);
 extern void long2bitchar(long value, char *result);
+extern void uint642bitchar(uint64 value, char *result);
 extern int file_exists(const char * filename);
 extern void clear_sip(struct s_ip **sip);
 extern void clear_ptab(struct s_ptab *ptab);
@@ -1251,8 +1252,8 @@ extern void cs_exit(int sig);
 extern struct s_client * cs_fork(in_addr_t);
 extern int cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
-extern int check_ecmcache1(ECM_REQUEST *, ulong);
-extern int check_ecmcache2(ECM_REQUEST *, ulong);
+extern int check_ecmcache1(ECM_REQUEST *, uint64);
+extern int check_ecmcache2(ECM_REQUEST *, uint64);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);
 extern int write_ecm_request(int, ECM_REQUEST *);
@@ -1361,7 +1362,7 @@ extern int write_server();
 extern void write_versionfile();
 extern char *mk_t_caidtab(CAIDTAB *ctab);
 extern char *mk_t_tuntab(TUNTAB *ttab);
-extern char *mk_t_group(ulong *grp);
+extern char *mk_t_group(uint64 grp);
 extern char *mk_t_ftab(FTAB *ftab);
 //Todo #ifdef CCCAM
 extern int init_provid();

@@ -996,7 +996,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	}
 
 	//group
-	value = mk_t_group((ulong*)reader[ridx].grp);
+	value = mk_t_group(reader[ridx].grp);
 	tpl_printf(vars, 0, "GRP", "%s", value);
 	free(value);
 
@@ -1365,7 +1365,7 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 	}
 
 	//Group
-	char *value = mk_t_group((ulong*)account->grp);
+	char *value = mk_t_group(account->grp);
 	tpl_addVar(vars, 0, "GROUPS", value);
 	free(value);
 

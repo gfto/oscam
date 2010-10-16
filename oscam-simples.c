@@ -683,7 +683,7 @@ void sidtabbits2bitchar(SIDTABBITS value, char *result){
 	while (value > 0 && pos < MAX_SIDBITS){
 		if(value % 2 == 1) result[pos]='1';
 		else result[pos]='0';
-		value=value / 2;
+		value=value / (SIDTABBITS)2;
 		pos++;
 	}
 }
@@ -704,6 +704,25 @@ void long2bitchar(long value, char *result){
 		if(value % 2 == 1) result[pos]='1';
 		else result[pos]='0';
 		value=value / 2;
+		pos++;
+	}
+}
+
+/* Converts a uint64 value to a char array in bitwise representation.
+   Note that the result array MUST be at least 65 bit large and that
+   this function assumes long values to hold only values up to 64bits and to be positive!
+   the result of e.g. long 7 is 11100000000000000000000000000000000000000000000000000000000000000 this means the array
+   is reversed */
+void uint642bitchar(uint64 value, char *result){
+	int pos;
+	for (pos=0;pos<64;pos++) result[pos]='0';
+	result[pos] = '\0';
+
+	pos=0;
+	while (value > 0 && pos < 64){
+		if(value % 2 == 1) result[pos]='1';
+		else result[pos]='0';
+		value=value / (uint64)2;
 		pos++;
 	}
 }
