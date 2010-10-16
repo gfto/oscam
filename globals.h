@@ -857,6 +857,7 @@ struct s_reader  //contains device info, reader info and card info
 	int ratelimitecm;
 	int ratelimitseconds;
 	struct ecmrl    rlecmh[MAXECMRATELIMIT];
+	struct s_reader *next;
 };
 
 #ifdef CS_ANTICASC

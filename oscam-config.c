@@ -4009,6 +4009,7 @@ int init_readerdb()
 			tag = (!strcmp("reader", strtolower(token+1)));
 			if (reader[nr].label[0] && reader[nr].typ) nr++;
 			memset(&reader[nr], 0, sizeof(struct s_reader));
+			reader[nr].next = &reader[nr+1]; //FIXME
 			reader[nr].enable = 1;
 			reader[nr].tcp_rto = 30;
 			reader[nr].show_cls = 10;
@@ -4035,6 +4036,7 @@ int init_readerdb()
 		chk_reader(trim(strtolower(token)), trim(value), &reader[nr]);
 	}
 	fclose(fp);
+	reader[nr].next = NULL; //FIXME terminate reader list
 	return(0);
 }
 
