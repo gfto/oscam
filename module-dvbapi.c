@@ -664,13 +664,18 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
             // 
 			if (len>500) return;
 			switch (buffer[0]) {
-				case 0x84:
+                case 0x82 : // emm-u
+                    provid=dvbapi_get_cw_emm_provid(buffer+12, len-12);
+                    break;
+                    
+				case 0x84: // emm-sh
 				    cs_debug("cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(1, buffer, len));
 					if (!memcmp(emm_global, buffer, len)) return;
 					memcpy(emm_global, buffer, len);
 					emm_global_len=len;
 					return;
-				case 0x86:
+
+				case 0x86: // emm-sb
 				    cs_debug("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, len));
 					if (!emm_global_len) return;
                     provid=buffer[7];
@@ -711,7 +716,13 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
                     // get emm provid from the 0x83 nano
                     provid=dvbapi_get_cw_emm_provid(assembled_EMM+12, emm_len);
 					break;
-			}
+				
+				case 0x88: // emm-g
+				case 0x89: // emm-g
+                    provid=dvbapi_get_cw_emm_provid(buffer+7, len-7);
+				    break;
+				
+			}    
 			break;
 	}
 		
