@@ -292,7 +292,7 @@ extern void cs_switch_led(int led, int action);
 
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
-#define NULLFREE(X) free(X); X = NULL; 
+#define NULLFREE(X) {if (X) {free(X); X = NULL; }}
 
 typedef struct s_classtab
 {

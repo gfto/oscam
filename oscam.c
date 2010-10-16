@@ -365,8 +365,8 @@ static void cleanup_thread(struct s_client *cl)
   //decrease ecmcache
 	struct s_ecm *ecmc;
 	if (ecmcache->next != NULL) { //keep it at least on one entry big
-		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next);
-		NULLFREE(ecmc->next);
+		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next)
+			NULLFREE(ecmc->next);
 	}
 }
 
