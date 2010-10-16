@@ -96,12 +96,6 @@ int SR_Init (struct s_reader *reader)
     reader->sr_config->in_ep = 0x1;
     reader->sr_config->out_ep = 0x82;
 
-    //open the first smartreader found in the system, this
-    //would need to be changed to an enumerate function
-    //of some sort using the ftdi library. /dev/ttyUSB0 wont exist
-    //as we are accessing the device directly so you will have
-    //to have some other way of addressing the smartreader within
-    //OSCam config files etc...
     if ((ret=smartreader_usb_open_dev(reader))) {
         cs_log("unable to open smartreader device %s in bus %s (ret=%d)\n", devname,busname,ret);
         return ERROR;
@@ -634,9 +628,6 @@ int smartreader_usb_reset(S_READER *reader)
         return (-1);
     }
 
-    // Invalidate data in the readbuffer
-    // ftdi->readbuffer_offset = 0;
-    // ftdi->readbuffer_remaining = 0;
 
     return 0;
 }
@@ -1183,7 +1174,7 @@ int smartreader_write_data(S_READER *reader, unsigned char *buf, unsigned int si
         }
         cs_ddump(buf+offset, written, "SR IO: Transmit: ");
         total_written += written;
-        offset += write_size;//FIXME shouldnt this be written?
+        offset += write_size;
     }
 
     return total_written;
