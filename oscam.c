@@ -375,6 +375,8 @@ static void cleanup_thread(struct s_client *cl)
 
 void cs_exit(int sig)
 {
+	char targetfile[256];
+
 	set_signal_handler(SIGCHLD, 1, SIG_IGN);
 	set_signal_handler(SIGHUP , 1, SIG_IGN);
 	set_signal_handler(SIGPIPE, 1, SIG_IGN);
@@ -397,6 +399,7 @@ void cs_exit(int sig)
     	cl->last_srvid = 0xFFFF;
     	cs_statistics(cl);
     	break;
+
     case 'm': break;
     case 'r':
         // free AES entries allocated memory
@@ -406,22 +409,22 @@ void cs_exit(int sig)
         // close the device
         reader_device_close(&reader[cl->ridx]);
         break;
+
     case 'h':
     case 's':
 #ifdef CS_LED
-              cs_switch_led(LED1B, LED_OFF);
-              cs_switch_led(LED2, LED_OFF);
-              cs_switch_led(LED3, LED_OFF);
-              cs_switch_led(LED1A, LED_ON);
+	cs_switch_led(LED1B, LED_OFF);
+	cs_switch_led(LED2, LED_OFF);
+	cs_switch_led(LED3, LED_OFF);
+	cs_switch_led(LED1A, LED_ON);
 #endif
 #ifndef OS_CYGWIN32
-			char targetfile[256];
-			snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
- 			if (unlink(targetfile) < 0)
-				cs_log("cannot remove oscam version file %s errno=(%d)", targetfile, errno);
+	snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
+	if (unlink(targetfile) < 0)
+		cs_log("cannot remove oscam version file %s errno=(%d)", targetfile, errno);
 #endif
-			break;
-	}
+	break;
+  }
 
 	// this is very important - do not remove
 	if (cl->typ != 's') {
