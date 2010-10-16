@@ -6,8 +6,8 @@
 //static time_t ac_last_chk;
 static uchar  ac_ecmd5[CS_ECMSTORESIZE];
 
-LLIST *ac_stat_list; //struct s_acasc
-LLIST *acasc_list;   //struct  s_acasc_shm
+LLIST *ac_stat_list = NULL; //struct s_acasc
+LLIST *acasc_list = NULL;   //struct  s_acasc_shm
 
 int ac_init_log(void)
 {
@@ -41,10 +41,11 @@ void ac_done_stat()
 void ac_init_stat()
 {
   if (acasc_list)
-    ac_done_stat();
-    
-  ac_stat_list = llist_create();
-  acasc_list = llist_create();
+    ac_clear();
+  else {
+    ac_stat_list = llist_create();
+    acasc_list = llist_create();
+  }
 
   if( fpa )
     fclose(fpa);
@@ -203,7 +204,7 @@ struct s_acasc_shm *get_acasc(ushort ac_idx) {
 void ac_chk(ECM_REQUEST *er, int level)
 {
   struct s_client *cl = cur_client();
-  if (!cl->ac_limit || !cfg->ac_enabled ) return;
+  if (!cl->ac_limit || !cfg->ac_enabled ||!acasc_list) return;
 
   struct s_acasc_shm *acasc = get_acasc(cl->ac_idx);
 
