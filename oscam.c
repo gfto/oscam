@@ -440,7 +440,7 @@ void cs_exit(int sig)
 	cs_log("cardserver down");
 	cs_close_log();
 
-	if (cl) free(cl);
+	NULLFREE(cl);
 
 	exit(sig);  //clears all threads
 }

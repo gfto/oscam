@@ -325,10 +325,7 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "logfile")) {
-		if (cfg->logfile != NULL) {
-			free(cfg->logfile);
-			cfg->logfile = NULL;
-		}
+		NULLFREE(cfg->logfile);
 		if (strlen(value) > 0) {
 			if(asprintf(&(cfg->logfile), "%s", value) < 0)
 				fprintf(stderr, "Error allocating string for cfg->logfile\n");
@@ -337,10 +334,7 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "usrfile")) {
-		if (cfg->usrfile != NULL) {
-			free(cfg->usrfile);
-			cfg->usrfile = NULL;
-		}
+		NULLFREE(cfg->usrfile);
 		if (strlen(value) > 0) {
 			if(asprintf(&(cfg->usrfile), "%s", value) < 0)
 				fprintf(stderr, "Error allocating string for cfg->usrfile\n");
@@ -349,10 +343,7 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "cwlogdir")) {
-		if (cfg->cwlogdir != NULL) {
-			free(cfg->cwlogdir);
-			cfg->cwlogdir = NULL;
-		}
+		NULLFREE(cfg->cwlogdir);
 		if (strlen(value) > 0) {
 			if(asprintf(&(cfg->cwlogdir), "%s", value) < 0)
 				fprintf(stderr, "Error allocating string for cfg->cwlogdir\n");
@@ -2940,9 +2931,9 @@ int init_sidtab()
   {
     struct s_sidtab *ptr_next;
     ptr_next=ptr->next;
-    if (ptr->caid) free(ptr->caid);
-    if (ptr->provid) free(ptr->provid);
-    if (ptr->srvid) free(ptr->srvid);
+    free(ptr->caid); //no need to check on NULL first, freeing NULL doesnt do anything
+    free(ptr->provid);
+    free(ptr->srvid);
     free(ptr);
     ptr=ptr_next;
   }
@@ -3278,10 +3269,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "readnano")) {
-		if (rdr->emmfile != NULL) {
-			free(rdr->emmfile);
-			rdr->emmfile = NULL;
-		}
+		NULLFREE(rdr->emmfile);
 		if (strlen(value) > 0) {
 			if(asprintf(&(rdr->emmfile), "%s", value) < 0)
 				fprintf(stderr, "Error allocating string for rdr->emmfile\n");

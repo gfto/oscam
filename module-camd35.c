@@ -337,7 +337,7 @@ static void * camd35_server(void *cli)
     }
   }
 
-  if(client->req) { free(client->req); client->req=0;}
+  NULLFREE(client->req);
 
   cs_disconnect_client(client);
   return NULL; //to prevent compiler message
