@@ -524,6 +524,14 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     }else{
       cs_log("cannot disable parental lock");
     }
+    if(cmd_exists(reader,ins74e)) {
+      l=do_cmd(reader,ins74e,NULL,NULL,cta_res);
+      if (l<0 || !status_ok(cta_res+l)) {
+        cs_log("classD0 ins74e: failed to get parental lock settings");
+      } else {
+        cs_log("parental lock setting after disabling: %s",cs_hexdump(1, cta_res+2, l-2));
+      }
+    }
   }
 
   // fix for 09ac cards
