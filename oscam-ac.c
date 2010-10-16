@@ -87,13 +87,13 @@ void ac_do_stat()
     acasc->ac_count=0;
     cl_idx = idx_from_ac_idx(i);
 
-    if( ac_stat->stat[idx] )
+    if( ac_stat->stat[idx] && cl_idx)
     {
-      if( cl_idx == NULL ) {
-        cs_log("ERROR: can't find client with ac_idx=%d", i);
-        continue;
-      }
-
+      //if( cl_idx == NULL ) {
+        //cs_log("ERROR: can't find client with ac_idx=%d", i);
+        //client is no longer connected
+      //}
+      
       if( cl_idx->ac_penalty==2 ) {// banned
         cs_debug("user '%s' banned", cl_idx->usr);
         acasc->ac_deny=1;
