@@ -110,12 +110,12 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *ct
         else
             dwSendLength = l-1;
         cs_debug("sending %d bytes to PCSC", dwSendLength);
-        rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T0, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
+        rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T0, buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, &dwRecvLength);
     }
     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
         dwSendLength = l;
         cs_debug("sending %d bytes to PCSC", dwSendLength);
-        rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T1, buf, dwSendLength, &pioRecvPci, cta_res, &dwRecvLength);
+        rv = SCardTransmit(pcsc_reader->hCard, SCARD_PCI_T1, buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, &dwRecvLength);
     }
     else {
         cs_debug("PCSC invalid protocol (T=%d)", pcsc_reader->dwActiveProtocol);
