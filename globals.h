@@ -972,7 +972,6 @@ struct s_config
 	int		clientdyndns;
 	int		tosleep;
 	in_addr_t	srvip;
-	char		*pidfile;
 	char		*usrfile;
 	char		*cwlogdir;
 	char		*logfile;

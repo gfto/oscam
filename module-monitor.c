@@ -390,8 +390,6 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
         }
 	sprintf(buf, "LogFile=%s", cfg->logfile);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "PidFile=%s", cfg->pidfile);
-	monitor_send_details(buf, pid);
 	if( cfg->usrfile ) {
 	        sprintf(buf, "UsrFile=%s", cfg->usrfile);
 	        monitor_send_details(buf, pid);

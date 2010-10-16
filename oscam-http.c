@@ -89,7 +89,6 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 	}
 	if (cfg->srvip != 0)
 	tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->srvip));
-	if (cfg->pidfile != NULL) tpl_addVar(vars, 0, "PIDFILE", cfg->pidfile);
 	if(cfg->disableuserfile == 1)
 		tpl_addVar(vars, 0, "CHKDISABLEUSERFILE", "checked");
 	if (cfg->usrfile != NULL) tpl_addVar(vars, 0, "USERFILE", cfg->usrfile);

@@ -336,18 +336,6 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
-	if (!strcmp(token, "pidfile")) {
-		if (cfg->pidfile != NULL) {
-			free(cfg->pidfile);
-			cfg->pidfile = NULL;
-		}
-		if (strlen(value) > 0) {
-			if(asprintf(&(cfg->pidfile), "%s", value) < 0)
-				fprintf(stderr, "Error allocating string for cfg->pidfile\n");
-		}
-		return;
-	}
-
 	if (!strcmp(token, "usrfile")) {
 		if (cfg->usrfile != NULL) {
 			free(cfg->usrfile);
@@ -1444,7 +1432,6 @@ int init_config()
 	cfg->srtimeout = 1500;
 	cfg->ulparent = 0;
 	cfg->logfile = NULL;
-	cfg->pidfile = NULL;
 	cfg->usrfile = NULL;
 	cfg->cwlogdir = NULL;
 	cfg->reader_restart_seconds = 5;
@@ -1833,7 +1820,6 @@ int write_config()
 	fprintf(f,"[global]\n");
 	if (cfg->srvip != 0)
 		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->srvip));
-	if (cfg->pidfile != NULL) fprintf_conf(f, CONFVARWIDTH, "pidfile", "%s\n", cfg->pidfile);
 	if (cfg->usrfile != NULL) fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg->usrfile);
 	if (cfg->logfile != NULL) fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", cfg->logfile);
 	if (cfg->cwlogdir != NULL) fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg->cwlogdir);

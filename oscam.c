@@ -414,10 +414,6 @@ void cs_exit(int sig)
               cs_switch_led(LED3, LED_OFF);
               cs_switch_led(LED1A, LED_ON);
 #endif
-			if (cfg->pidfile != NULL) {
-				if (unlink(cfg->pidfile) < 0)
-					cs_log("cannot remove pid file %s errno=(%d)", cfg->pidfile, errno);
-			}
 #ifndef OS_CYGWIN32
 			char targetfile[256];
 			snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
@@ -2929,18 +2925,6 @@ if (pthread_key_create(&getclient, NULL)) {
   {
     cs_log("Error starting in background (errno=%d)", errno);
     cs_exit(1);
-  }
-
-  if (cfg->pidfile != NULL)
-  {
-    FILE *fp;
-    if (!(fp=fopen(cfg->pidfile, "w")))
-    {
-      cs_log("Cannot open pid-file (errno=%d)", errno);
-      cs_exit(1);
-    }
-    fprintf(fp, "%d\n", getpid());
-    fclose(fp);
   }
 
   write_versionfile();
