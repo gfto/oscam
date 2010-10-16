@@ -216,6 +216,21 @@ cs_log("[viaccess-reader] name: %s", cta_res);
   return OK;
 }
 
+bool check_crc( uchar *data )
+{
+ int valid = 0;
+
+     uchar sum1=data[0] + data[1] + data[2] ;
+     uchar sum2=data[4] + data[5] + data[6] ;
+     uchar sum3=data[8] + data[9] + data[10] ;
+     uchar sum4=data[12] + data[13] + data[14] ;
+     
+     if ( ( sum1 == data[3] ) && ( sum2 == data[7] ) && ( sum3 == data[11] )&& ( sum4 == data[15] ) )
+        valid = 1;
+
+  return valid;
+}
+
 static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
@@ -398,7 +413,7 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     }
   }
 
-  if (hasD2) {
+  if ( hasD2 && !check_crc(er->cw)) {
     if(reader->aes_list) {
         cs_debug("Decoding CW : using AES key id %d for provider %06x",D2KeyID,provid);
         rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) provid, D2KeyID,er->cw, 16);
