@@ -858,14 +858,8 @@ void start_anticascader()
 
 void restart_cardreader(int reader_idx, int restart) {
 	int n;
-	if (restart) {//kill old thread, even when .deleted flag is set
-		struct s_client *cl;
-		for (cl=first_client->next; cl ; cl=cl->next)
-			if (cl->ridx==reader_idx) {
-				kill_thread(cl);
-				break;
-			}
-	}
+	if (restart) //kill old thread, even when .deleted flag is set
+		kill_thread(reader[reader_idx].client);
 
 	if ((reader[reader_idx].device[0]) && (reader[reader_idx].enable == 1) && (!reader[reader_idx].deleted)) {
 
