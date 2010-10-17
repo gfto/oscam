@@ -1220,6 +1220,7 @@ extern void init_rnd(void);
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);
 extern struct s_client *first_client;
+extern struct s_reader *first_reader;
 
 // oscam variables
 

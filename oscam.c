@@ -19,6 +19,8 @@ extern void cs_statistics(struct s_client * client);
 struct s_module ph[CS_MAX_MOD]; // Protocols
 struct s_cardsystem cardsystem[CS_MAX_MOD]; // Protocols
 struct s_client * first_client = NULL; //Pointer to clients list, first client is master
+struct  s_reader  reader[CS_MAXREADER];
+struct s_reader * first_reader = &reader[0];
 
 ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
@@ -29,7 +31,6 @@ pthread_key_t getclient;
 
 struct  s_ecm     *ecmcache;
 struct  s_ecm     *ecmidx;
-struct  s_reader  reader[CS_MAXREADER];
 
 #ifdef CS_WITH_GBOX
 struct  card_struct Cards[CS_MAXCARDS];
@@ -42,6 +43,15 @@ struct  s_config  *cfg;
 int     loghistidx;  // ptr to current entry
 char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
 #endif
+
+int get_ridx(struct s_reader *reader) {
+	int i;
+	struct s_reader *rdr;
+	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
+		if (reader == rdr)
+			return i;
+	return -1;
+}
 
 int get_threadnum(struct s_client *client) {
 	struct s_client *cl;
@@ -856,26 +866,26 @@ void start_anticascader()
 }
 #endif
 
-void restart_cardreader(int reader_idx, int restart) {
+void restart_cardreader(struct s_reader *rdr, int restart) {
 	int n;
 	if (restart) //kill old thread, even when .deleted flag is set
-		kill_thread(reader[reader_idx].client);
+		kill_thread(rdr->client);
 
-	if ((reader[reader_idx].device[0]) && (reader[reader_idx].enable == 1) && (!reader[reader_idx].deleted)) {
+	if ((rdr->device[0]) && (rdr->enable == 1) && (!rdr->deleted)) {
 
 		if (restart) {
 			cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
-			cs_log("restarting reader %s (index=%d)", reader[reader_idx].label, reader_idx);
+			cs_log("restarting reader %s", rdr->label);
 		}
 
-		if ((reader[reader_idx].typ & R_IS_CASCADING)) {
+		if ((rdr->typ & R_IS_CASCADING)) {
 			n=0;
 			int i;
 			for (i=0; i<CS_MAX_MOD; i++) {
 				if (ph[i].num) {
-					if (reader[reader_idx].typ==ph[i].num) {
-						cs_debug("reader %s protocol: %s", reader[reader_idx].label, ph[i].desc);
-						reader[reader_idx].ph=ph[i];
+					if (rdr->typ==ph[i].num) {
+						cs_debug("reader %s protocol: %s", rdr->label, ph[i].desc);
+						rdr->ph=ph[i];
 						n=1;
 						break;
 					}
@@ -891,14 +901,14 @@ void restart_cardreader(int reader_idx, int restart) {
 		if (cl == NULL) return;
 
 
-		reader[reader_idx].fd=cl->fd_m2c;
-		cl->ridx=reader_idx;
-		cs_log("creating thread for device %s slot %i with ridx %i", reader[reader_idx].device, reader[reader_idx].slot, reader_idx);
+		rdr->fd=cl->fd_m2c;
+		cl->ridx=get_ridx(rdr);
+		cs_log("creating thread for device %s slot %i", rdr->device, rdr->slot);
              	
-		cl->sidtabok=reader[reader_idx].sidtabok;
-		cl->sidtabno=reader[reader_idx].sidtabno;
+		cl->sidtabok=rdr->sidtabok;
+		cl->sidtabno=rdr->sidtabno;
    
-		reader[reader_idx].client=cl;
+		rdr->client=cl;
 
 		cl->typ='r';
 		//client[i].ctyp=99;
@@ -906,19 +916,17 @@ void restart_cardreader(int reader_idx, int restart) {
 		pthread_attr_init(&attr);
 		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 
-		pthread_create(&cl->thread, &attr, start_cardreader, (void *)&reader[reader_idx]);
+		pthread_create(&cl->thread, &attr, start_cardreader, (void *)rdr);
 		pthread_detach(cl->thread);
 		pthread_attr_destroy(&attr);
 	}
 }
 
 static void init_cardreader() {
-	int reader_idx;
-	for (reader_idx=0; reader_idx<CS_MAXREADER; reader_idx++) {
-		if ((reader[reader_idx].device[0]) && (reader[reader_idx].enable == 1)) {
-			restart_cardreader(reader_idx, 0);
-		}
-	}
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next)
+		if ((rdr->device[0]) && (rdr->enable == 1))
+			restart_cardreader(rdr, 0);
 }
 
 static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr_t ip)
@@ -1052,14 +1060,12 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				if(client->ncd_server)
 				{
 					int r=0;
-					for(r=0;r<CS_MAXREADER;r++)
-					{
-						if(reader[r].caid[0]==cfg->ncd_ptab.ports[client->port_idx].ftab.filts[0].caid)
-						{
+					struct s_reader *rdr;
+					for (r=0,rdr=first_reader; rdr ; rdr=rdr->next, r++)
+						if(rdr->caid[0]==cfg->ncd_ptab.ports[client->port_idx].ftab.filts[0].caid) {
 							client->au=r;
 							break;
 						}
-					}
 					if(client->au<0) sprintf(t_msg[0], "au(auto)=%d", client->au+1);
 					else sprintf(t_msg[0], "au(auto)=%s", reader[client->au].label);
 				}
@@ -1572,9 +1578,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 			client->au = er->reader[0]; // First chance - check whether actual reader can AU
 		} else {
 			int r=0;
-			for(r=0;r<CS_MAXREADER;r++) //second chance loop through all readers to find an AU reader
-			{
-				cur = &reader[r];
+			for (r=0,cur=first_reader; cur ; cur=cur->next, r++) { //second chance loop through all readers to find an AU reader
 				if (matching_reader(er, cur)) {
 					if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled && 
 						cur->card_system == get_cardsystem(er->caid) && hexserialset(r))
@@ -1589,8 +1593,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 					}
 				}
 			}
-			if(r==CS_MAXREADER)
-			{
+			if(!cur) {
 				client->au=(-1);
 			}
 		}
@@ -1919,7 +1922,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
  	     		reader[i].fd_error++;
       			if (reader[i].fd_error > 5) {
       				reader[i].fd_error = 0;
-      				restart_cardreader(i, 1); //Schlocke: This restarts the reader!
+      				restart_cardreader(&reader[i], 1); //Schlocke: This restarts the reader!
       			} 
 		}
       }
