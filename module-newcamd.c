@@ -539,27 +539,27 @@ static FILTER mk_user_ftab()
   // 2. PROVID
   if( !cur_client()->ftab.nfilts )
   {
-    int r, add;
+    int add;
     for (i=0; i<psfilt->nprids; i++) {
       // use server PROVID(s) (and only those which are in user's groups)
       add = 0;
-      for (r=0; !add && r<CS_MAXREADER; r++) {
-	if (reader[r].grp & cur_client()->grp) {
-	  if (!reader[r].ftab.nfilts) {
-	    if (reader[r].typ & R_IS_NETWORK) add = 1;
-	    for (j=0; !add && j<reader[r].nprov; j++)
-	      if (b2i(3, &reader[r].prid[j][1]) == psfilt->prids[i]) add = 1;
-	  } else {
-	    for (j=0; !add && j<reader[r].ftab.nfilts; j++) {
-	      ulong rcaid = reader[r].ftab.filts[j].caid;
-	      if (!rcaid || rcaid == filt.caid) {
-	        for (k=0; !add && k<reader[r].ftab.filts[j].nprids; k++)
-	          if (reader[r].ftab.filts[j].prids[k] == psfilt->prids[i]) add = 1;
-	      }
-	    }
-	  }
-	}
-      }
+      struct s_reader *rdr;
+      for (rdr=first_reader; rdr ; rdr=rdr->next)
+        if (rdr->grp & cur_client()->grp) {
+          if (!rdr->ftab.nfilts) {
+            if (rdr->typ & R_IS_NETWORK) add = 1;
+            for (j=0; !add && j<rdr->nprov; j++)
+              if (b2i(3, &rdr->prid[j][1]) == psfilt->prids[i]) add = 1;
+          } else {
+            for (j=0; !add && j<rdr->ftab.nfilts; j++) {
+              ulong rcaid = rdr->ftab.filts[j].caid;
+              if (!rcaid || rcaid == filt.caid) {
+                for (k=0; !add && k<rdr->ftab.filts[j].nprids; k++)
+                  if (rdr->ftab.filts[j].prids[k] == psfilt->prids[i]) add = 1;
+              }
+            }
+          }
+        }
       if (add) filt.prids[filt.nprids++] = psfilt->prids[i];
     }
     return filt;
@@ -1055,7 +1055,7 @@ static void * newcamd_server(void *cli)
 	// report all cards if using extended mg proto
 	if (cfg->ncd_mgclient) {
 		cs_debug("newcamd: extended: report all available cards");
-		int r, j, k;
+		int j, k;
 		uint8 buf[512];
 		custom_data_t *cd = malloc(sizeof(struct custom_data));
 		memset(cd, 0, sizeof(struct custom_data));
@@ -1063,15 +1063,16 @@ static void * newcamd_server(void *cli)
 
 		buf[0] = MSG_SERVER_2_CLIENT_ADDCARD;
 
-		for (r=0; r<CS_MAXREADER; r++) {
+    struct s_reader *rdr;
+    for (rdr=first_reader; rdr ; rdr=rdr->next) {
 			int flt = 0;
-			if (!(reader[r].grp & client->grp)) continue; //test - skip unaccesible readers
-			if (reader[r].ftab.filts) {
+			if (!(rdr->grp & client->grp)) continue; //test - skip unaccesible readers
+			if (rdr->ftab.filts) {
 				for (j=0; j<CS_MAXFILTERS; j++) {
-					if (reader[r].ftab.filts[j].caid) {
-						cd->caid = reader[r].ftab.filts[j].caid;
-						for (k=0; k<reader[r].ftab.filts[j].nprids; k++) {
-							cd->provid = reader[r].ftab.filts[j].prids[k];
+					if (rdr->ftab.filts[j].caid) {
+						cd->caid = rdr->ftab.filts[j].caid;
+						for (k=0; k<rdr->ftab.filts[j].nprids; k++) {
+							cd->provid = rdr->ftab.filts[j].prids[k];
 							cs_debug("newcamd: extended: report card");
 
 							network_message_send(client->udp_fd, 
@@ -1084,16 +1085,16 @@ static void * newcamd_server(void *cli)
 				}
 			}
 
-			if (reader[r].caid[0] && !flt) {
-				if ((reader[r].tcp_connected || reader[r].card_status == CARD_INSERTED)) {
-					cd->caid = reader[r].caid[0];
-					for (j=0; j<reader[r].nprov; j++) {
-						if (reader[r].card_status == CARD_INSERTED)
-							cd->provid = (reader[r].prid[j][1]) << 16 
-							| (reader[r].prid[j][2] << 8) | reader[r].prid[j][3];
+			if (rdr->caid[0] && !flt) {
+				if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED)) {
+					cd->caid = rdr->caid[0];
+					for (j=0; j<rdr->nprov; j++) {
+						if (rdr->card_status == CARD_INSERTED)
+							cd->provid = (rdr->prid[j][1]) << 16 
+							| (rdr->prid[j][2] << 8) | rdr->prid[j][3];
 						else
-							cd->provid = (reader[r].prid[j][0]) << 16 
-							| (reader[r].prid[j][1] << 8) | reader[r].prid[j][2];
+							cd->provid = (rdr->prid[j][0]) << 16 
+							| (rdr->prid[j][1] << 8) | rdr->prid[j][2];
 
             					cs_debug("newcamd: extended: report card");
             					network_message_send(client->udp_fd, 
