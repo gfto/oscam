@@ -179,9 +179,10 @@ static void write_to_log(int flag, char *txt)
 	{
 		if ((cl->log) && (cl->typ == 'm') && (cl->monlvl>0))
 		{
-			if (cl->monlvl<2)
+			if (cl->monlvl<2) {
 				if (strcmp(cur_client()->usr, cl->usr))
 					continue;
+			}
 			sprintf(sbuf, "%03d", cl->logcounter);
 			cl->logcounter = (cl->logcounter+1) % 1000;
 			memcpy(log_buf + 4, sbuf, 3);
