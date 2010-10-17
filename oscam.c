@@ -53,6 +53,13 @@ int get_ridx(struct s_reader *reader) {
 	return -1;
 }
 
+int get_nr_of_readers() {
+	int i;
+	struct s_reader *rdr;
+	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++);
+	return i;
+}
+
 int get_threadnum(struct s_client *client) {
 	struct s_client *cl;
 	int count=0;

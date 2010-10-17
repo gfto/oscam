@@ -217,7 +217,7 @@ void save_all_stat_to_file()
 {
 	pthread_mutex_lock(&stat_busy);
 	int i;
-	for (i = 0; i < CS_MAXREADER; i++)
+	for (i = 0; i < get_nr_of_readers(); i++)
 		save_stat_to_file(i);
 	pthread_mutex_unlock(&stat_busy);
 }
@@ -325,8 +325,9 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
 	pthread_mutex_lock(&stat_busy);
 	//cs_debug_mask(D_TRACE, "loadbalance: resetting ecm count");
 	int i;
-	for (i = 0; i < CS_MAXREADER; i++) {
-		if (reader_stat[i] && reader[i].client) {
+	struct s_reader *rdr;
+	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
+		if (reader_stat[i] && rdr->client) {
 			READER_STAT *stat = get_stat(i, caid, prid, srvid);
 			if (stat) {
 				if (stat->ecm_count > 0)
@@ -377,26 +378,27 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	int current = -1;
 	
 	READER_STAT *stat = NULL;
-	for (i = 0; i < CS_MAXREADER; i++) {
+	struct s_reader *rdr;
+	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 		if (grs->reader_avail[i]) {
- 			int weight = reader[i].lb_weight <= 0?100:reader[i].lb_weight;
+ 			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 			stat = get_stat(i, grs->caid, grs->prid, grs->srvid);
 			if (!stat) {
-				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", reader[i].label);
+				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", rdr->label);
 				add_stat(i, grs->caid,  grs->prid, grs->srvid, 1, -1);
 				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
 				continue; 
 			}
 			
 			if (stat->ecm_count < 0||(stat->ecm_count > cfg->lb_max_ecmcount && stat->time_avg > (int)cfg->ftimeout)) {
-				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg->lb_max_ecmcount, reader[i].label);
+				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg->lb_max_ecmcount, rdr->label);
 				reset_stat(grs->caid, grs->prid, grs->srvid);
 				result[i] = 1;//max ecm reached, get new statistics
 				continue;
 			}
 				
 			if (stat->rc == 0 && stat->ecm_count < cfg->lb_min_ecmcount) {
-				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", reader[i].label);
+				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				stat->request_count++;
 				//algo for finding unanswered requests (newcamd reader for example:)
 				if (stat->request_count > cfg->lb_min_ecmcount) { //5 unanswered requests? 
@@ -423,23 +425,23 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 					current = stat->time_avg * 100 / weight;
 					break;
 				case LB_OLDEST_READER_FIRST:
-					if (!reader[i].lb_last.time)
-						reader[i].lb_last = nulltime;
-					current = (1000*(reader[i].lb_last.time-nulltime.time)+
-						reader[i].lb_last.millitm-nulltime.millitm);
-					if (!new_nulltime.time || (1000*(reader[i].lb_last.time-new_nulltime.time)+
-						reader[i].lb_last.millitm-new_nulltime.millitm) < 0)
-						new_nulltime = reader[i].lb_last;
+					if (!rdr->lb_last.time)
+						rdr->lb_last = nulltime;
+					current = (1000*(rdr->lb_last.time-nulltime.time)+
+						rdr->lb_last.millitm-nulltime.millitm);
+					if (!new_nulltime.time || (1000*(rdr->lb_last.time-new_nulltime.time)+
+						rdr->lb_last.millitm-new_nulltime.millitm) < 0)
+						new_nulltime = rdr->lb_last;
 					break;
 				case LB_LOWEST_USAGELEVEL:
-					current = reader[i].lb_usagelevel * 100 / weight;
+					current = rdr->lb_usagelevel * 100 / weight;
 					break;
 				}
 #ifdef WEBIF
-				reader[i].lbvalue = current;
+				rdr->lbvalue = current;
 #endif
-				if (!reader[i].ph.c_available
-						|| reader[i].ph.c_available(i,
+				if (!rdr->ph.c_available
+						|| rdr->ph.c_available(i,
 								AVAIL_CHECK_LOADBALANCE)) {
 					current=current/2;
 				}
@@ -451,13 +453,13 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			else 
 			{
 				int seconds = cfg->lb_reopen_seconds;
-				if (!reader[i].audisabled && (grs->client->autoau || grs->client->au == i))
+				if (!rdr->audisabled && (grs->client->autoau || grs->client->au == i))
 					seconds = seconds/10;
 				
 				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
 					stat->last_received = current_time;
 					result[i] = 1;
-					cs_log("loadbalancer: retrying reader %s", reader[i].label);
+					cs_log("loadbalancer: retrying reader %s", rdr->label);
 				}
 			}
 		}
@@ -470,11 +472,12 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	nfb_readers += nbest_readers;
 	
 	int n=0;
-	for (i=0;i<CS_MAXREADER;i++) {
+	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 		int best=0;
 		int best_idx=-1;
 		int j;
-		for (j=0; j<CS_MAXREADER;j++) {
+		struct s_reader *rdr2;
+		for (j=0,rdr2=first_reader; rdr2 ; rdr2=rdr2->next, j++) {
 			if (re[j] && (!best || re[j] < best)) {
 				best_idx=j;
 				best=re[j];
