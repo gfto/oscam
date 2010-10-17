@@ -1722,10 +1722,10 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 	//
     int i;
     ert->reader[er->reader[0]]=0;
-    for (i=0; (ert) && (i<CS_MAXREADER); i++)
-      if (ert->reader[i]) {// we have still another chance
+    struct s_reader *rdr;
+    for (i=0,rdr=first_reader; (ert) && rdr ; rdr=rdr->next, i++)
+      if (ert->reader[i]) // we have still another chance
         ert=(ECM_REQUEST *)0;
-      }
     if (ert) ert->rc=4;
     else send_reader_stat(save_ridx, save_ert, 4);
   }
@@ -1883,8 +1883,8 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
   if ((reader_types == 0) || (reader_types == 2))
     er->level=flag;
   flag=(flag)?3:1;    // flag specifies with/without fallback-readers
-  for (i=0; i<CS_MAXREADER; i++)
-  {
+	struct s_reader *rdr;
+	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
 	    //if (reader[i].pid)
 	    //	  cs_log("active reader: %d pid %d fd %d", i, reader[i].pid, reader[i].fd);
       int status = 0;
@@ -1894,40 +1894,40 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
           default:
           case 0:
               if (er->reader[i]&flag){
-                  cs_debug_mask(D_TRACE, "request_cw1 to reader %s ridx=%d fd=%d", reader[i].label, i, reader[i].fd);
-                  status = write_ecm_request(reader[i].fd, er);
+                  cs_debug_mask(D_TRACE, "request_cw1 to reader %s ridx=%d fd=%d", rdr->label, i, rdr->fd);
+                  status = write_ecm_request(rdr->fd, er);
               }
               break;
               // only local cards
           case 1:
-              if (!(reader[i].typ & R_IS_NETWORK))
+              if (!(rdr->typ & R_IS_NETWORK))
                   if (er->reader[i]&flag) {
-                	  cs_debug_mask(D_TRACE, "request_cw2 to reader %s ridx=%d fd=%d", reader[i].label, i, reader[i].fd);
-                    status = write_ecm_request(reader[i].fd, er);
+                	  cs_debug_mask(D_TRACE, "request_cw2 to reader %s ridx=%d fd=%d", rdr->label, i, rdr->fd);
+                    status = write_ecm_request(rdr->fd, er);
                   }
               break;
               // only network
           case 2:
-        	  //cs_log("request_cw3 ridx=%d fd=%d", i, reader[i].fd);
-              if ((reader[i].typ & R_IS_NETWORK))
+        	  //cs_log("request_cw3 ridx=%d fd=%d", i, rdr->fd);
+              if ((rdr->typ & R_IS_NETWORK))
                   if (er->reader[i]&flag) {
-                	  cs_debug_mask(D_TRACE, "request_cw3 to reader %s ridx=%d fd=%d", reader[i].label, i, reader[i].fd);
-                    status = write_ecm_request(reader[i].fd, er);
+                	  cs_debug_mask(D_TRACE, "request_cw3 to reader %s ridx=%d fd=%d", rdr->label, i, rdr->fd);
+                    status = write_ecm_request(rdr->fd, er);
                   }
               break;
       }
       if (status == -1) {
-                cs_log("request_cw() failed on reader %s (%d) errno=%d, %s", reader[i].label, i, errno, strerror(errno));
-      		if (reader[i].fd) {
- 	     		reader[i].fd_error++;
-      			if (reader[i].fd_error > 5) {
-      				reader[i].fd_error = 0;
+                cs_log("request_cw() failed on reader %s (%d) errno=%d, %s", rdr->label, i, errno, strerror(errno));
+      		if (rdr->fd) {
+ 	     		rdr->fd_error++;
+      			if (rdr->fd_error > 5) {
+      				rdr->fd_error = 0;
       				restart_cardreader(&reader[i], 1); //Schlocke: This restarts the reader!
       			} 
 		}
       }
       else
-      	reader[i].fd_error = 0;
+      	rdr->fd_error = 0;
   }
 }
 
@@ -2134,9 +2134,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if(er->rc > 99) {
 		er->reader_count=0;
 		er->reader_avail=0;
+		struct s_reader *rdr;
 		if (cfg->lb_mode) {
-			int reader_avail[CS_MAXREADER];
-			for (i =0; i < CS_MAXREADER; i++) {
+			int reader_avail[CS_MAXREADER]; //FIXME limits reader list!!!
+			for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
 				reader_avail[i] = matching_reader(er, &reader[i]);
 				if (reader_avail[i] == 1)
 					er->reader_avail++;
@@ -2144,7 +2145,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				
 			recv_best_reader(er, reader_avail);
 				
-			for (i = m = 0; i < CS_MAXREADER; i++) {
+			for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
 				if (reader_avail[i]) {
 					m|=er->reader[i] = reader_avail[i];
 					if (reader_avail[i] == 1) // do not count fallback readers (==2: fallback)
@@ -2154,10 +2155,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 		else
 		{
-			for (i = m = 0; i < CS_MAXREADER; i++)
-				if (matching_reader(er, &reader[i])) {
-					m|=er->reader[i] = (reader[i].fallback)? 2: 1;
-					if (!reader[i].fallback) { // do not count fallback readers
+			for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)	
+				if (matching_reader(er, rdr)) {
+					m|=er->reader[i] = (rdr->fallback)? 2: 1;
+					if (!rdr->fallback) { // do not count fallback readers
 						er->reader_count++;
 						er->reader_avail++;
 					}
@@ -2174,7 +2175,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				
 			// fallbacks only, switch them
 			case 2:
-				for (i = 0; i < CS_MAXREADER; i++)
+				for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)	
 					er->reader[i]>>=1;
 		}
 	}
