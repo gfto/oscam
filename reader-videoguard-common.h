@@ -42,6 +42,7 @@ extern void cCamCryptVG_SetSeed(struct s_reader * reader);
 extern void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff);
 extern int status_ok(const unsigned char *status);
 extern void memorize_cmd_table (struct s_reader * reader, const unsigned char *mem, int size);
+extern int cmd_table_get_info(struct s_reader * reader, const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode);
 extern int cmd_exists(struct s_reader * reader, const unsigned char *cmd);
 extern int read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
 extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
