@@ -599,7 +599,7 @@ static FILTER mk_user_ftab()
 
 static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 {
-    int i, r, ok;
+    int i, ok;
     uchar *usr = NULL, *pwd = NULL;
     char client_id[5], *client_name = NULL;
     struct s_auth *account;
@@ -686,12 +686,13 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     }
 
     // check for non ready reader and reject client
-    for(r=0;r<CS_MAXREADER;r++)
-      if(reader[r].caid[0]==cfg->ncd_ptab.ports[cur_client()->port_idx].ftab.filts[0].caid)
+    struct s_reader *rdr;
+    for (rdr=first_reader; rdr ; rdr=rdr->next)
+      if(rdr->caid[0]==cfg->ncd_ptab.ports[cur_client()->port_idx].ftab.filts[0].caid)
         break;
 
-    if(reader[r].card_status == CARD_NEED_INIT) {
-      cs_log("init for reader %s not finished -> reject client", reader[r].label);
+    if(rdr->card_status == CARD_NEED_INIT) {
+      cs_log("init for reader %s not finished -> reject client", rdr->label);
       ok = 0;
     }
 
