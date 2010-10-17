@@ -1642,8 +1642,9 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 
 		if(value && value[0] == '1')
 			account->autoau = 1;
-		for (i = 0; i < CS_MAXREADER; i++)
-			if ((reader[i].label[0]) && (!strncmp(reader[i].label, value, strlen(reader[i].label))))
+		struct s_reader *rdr;
+		for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
+			if ((rdr->label[0]) && (!strncmp(rdr->label, value, strlen(rdr->label))))
 				account->au = i;
 		return;
 	}
@@ -2277,7 +2278,7 @@ int write_userdb(struct s_auth *authptr)
 
 int write_server()
 {
-	int i,j;
+	int j;
 	int isphysical = 0;
 	char *value;
 	FILE *f;
@@ -2298,16 +2299,17 @@ int write_server()
 	fprintf(f,"# oscam.server generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
 	fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.server.txt\n\n");
 
-	for (i = 0; i < CS_MAXREADER; i++) {
-		if ( reader[i].label[0] && !reader[i].deleted) {
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+		if ( rdr->label[0] && !rdr->deleted) {
 			isphysical = 0;
 			fprintf(f,"[reader]\n");
 
-			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", reader[i].label);
-			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", reader[i].enable);
+			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", rdr->label);
+			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", rdr->enable);
 
 			char *ctyp ="";
-			switch(reader[i].typ) {	/* TODO like ph*/
+			switch(rdr->typ) {	/* TODO like ph*/
 				case R_MP35	:
 					ctyp = "mp35";
 					isphysical = 1;
@@ -2331,7 +2333,7 @@ int write_server()
 				case R_CAMD35	: ctyp = "camd35";	break;
 				case R_CAMD33	: ctyp = "camd33";	break;
 				case R_NEWCAMD	:
-					if (reader[i].ncd_proto == NCD_524)
+					if (rdr->ncd_proto == NCD_524)
 						ctyp = "newcamd524";
 					else
 						ctyp = "newcamd";
@@ -2359,44 +2361,44 @@ int write_server()
 			}
 			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s\n", ctyp);
 
-			fprintf_conf(f, CONFVARWIDTH, "device", "%s", reader[i].device);
-			if (reader[i].r_port)
-				fprintf(f, ",%d", reader[i].r_port);
-			if (reader[i].l_port)
-				fprintf(f, ",%d", reader[i].l_port);
+			fprintf_conf(f, CONFVARWIDTH, "device", "%s", rdr->device);
+			if (rdr->r_port)
+				fprintf(f, ",%d", rdr->r_port);
+			if (rdr->l_port)
+				fprintf(f, ",%d", rdr->l_port);
 			fprintf(f, "\n");
 
-			if (reader[i].ncd_key[0] || reader[i].ncd_key[13]) {
+			if (rdr->ncd_key[0] || rdr->ncd_key[13]) {
 				fprintf_conf(f, CONFVARWIDTH, "key", "");
 				for (j = 0; j < 14; j++) {
-					fprintf(f, "%02X", reader[i].ncd_key[j]);
+					fprintf(f, "%02X", rdr->ncd_key[j]);
 				}
 				fprintf(f, "\n");
 			}
 
-			if (reader[i].r_usr[0] && !isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "account", "%s\n", reader[i].r_usr);
+			if (rdr->r_usr[0] && !isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "account", "%s\n", rdr->r_usr);
 
 #ifdef CS_WITH_GBOX
-			if (reader[i].typ == R_GBOX) {
-				if (strlen(reader[i].gbox_pwd) > 0)
-					fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", reader[i].gbox_pwd);
-				fprintf_conf(f, CONFVARWIDTH, "premium", "%d\n", reader[i].gbox_prem);
+			if (rdr->typ == R_GBOX) {
+				if (strlen(rdr->gbox_pwd) > 0)
+					fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", rdr->gbox_pwd);
+				fprintf_conf(f, CONFVARWIDTH, "premium", "%d\n", rdr->gbox_prem);
 			}
 #endif
 
-			if (strlen(reader[i].r_pwd) > 0)
-				fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", reader[i].r_pwd);
+			if (strlen(rdr->r_pwd) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", rdr->r_pwd);
 
-			if(strcmp(reader[i].pincode, "none"))
-				fprintf_conf(f, CONFVARWIDTH, "pincode", "%s\n", reader[i].pincode);
+			if(strcmp(rdr->pincode, "none"))
+				fprintf_conf(f, CONFVARWIDTH, "pincode", "%s\n", rdr->pincode);
 
-			if (reader[i].emmfile && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", reader[i].emmfile);
+			if (rdr->emmfile && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", rdr->emmfile);
 
 			fprintf_conf(f, CONFVARWIDTH, "services", "");
-			char sidok[MAX_SIDBITS+1]; sidtabbits2bitchar(reader[i].sidtabok, sidok);
-			char sidno[MAX_SIDBITS+1]; sidtabbits2bitchar(reader[i].sidtabno, sidno);
+			char sidok[MAX_SIDBITS+1]; sidtabbits2bitchar(rdr->sidtabok, sidok);
+			char sidno[MAX_SIDBITS+1]; sidtabbits2bitchar(rdr->sidtabno, sidno);
 			struct s_sidtab *sidtab = cfg->sidtab;
 			j=0; dot = "";
 			for (; sidtab; sidtab=sidtab->next){
@@ -2406,39 +2408,39 @@ int write_server()
 			}
 			fputc((int)'\n', f);
 
-			if (reader[i].tcp_ito && !isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "inactivitytimeout", "%d\n", reader[i].tcp_ito);
+			if (rdr->tcp_ito && !isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "inactivitytimeout", "%d\n", rdr->tcp_ito);
 
-			if (reader[i].tcp_rto && !isphysical )
-				fprintf_conf(f, CONFVARWIDTH, "reconnecttimeout", "%d\n", reader[i].tcp_rto);
+			if (rdr->tcp_rto && !isphysical )
+				fprintf_conf(f, CONFVARWIDTH, "reconnecttimeout", "%d\n", rdr->tcp_rto);
 
-			if (reader[i].ncd_disable_server_filt && !isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "disableserverfilter", "%d\n", reader[i].ncd_disable_server_filt);
+			if (rdr->ncd_disable_server_filt && !isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "disableserverfilter", "%d\n", rdr->ncd_disable_server_filt);
 
-			if (reader[i].smargopatch && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", reader[i].smargopatch);
+			if (rdr->smargopatch && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", rdr->smargopatch);
 
-			if (reader[i].fallback)
-				fprintf_conf(f, CONFVARWIDTH, "fallback", "%d\n", reader[i].fallback);
+			if (rdr->fallback)
+				fprintf_conf(f, CONFVARWIDTH, "fallback", "%d\n", rdr->fallback);
 
-			if (reader[i].log_port)
-				fprintf_conf(f, CONFVARWIDTH, "logport", "%d\n", reader[i].log_port);
+			if (rdr->log_port)
+				fprintf_conf(f, CONFVARWIDTH, "logport", "%d\n", rdr->log_port);
 
-			value = mk_t_caidtab(&reader[i].ctab);
+			value = mk_t_caidtab(&rdr->ctab);
 			fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
 			free(value);
 
-			if (reader[i].boxid && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", reader[i].boxid);
+			if (rdr->boxid && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", rdr->boxid);
 
-			if (reader[i].aes_key[0] && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", cs_hexdump(0, reader[i].aes_key, 16));
+			if (rdr->aes_key[0] && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", cs_hexdump(0, rdr->aes_key, 16));
 
 
 			//check for rsa
 			for (j=0;j<64;j++) {
-				if(reader[i].rsa_mod[j] > 0) {
-					reader[i].has_rsa = 1;
+				if(rdr->rsa_mod[j] > 0) {
+					rdr->has_rsa = 1;
 					break;
 				}
 			}
@@ -2446,18 +2448,18 @@ int write_server()
 			//check for tiger
 			int tigerkey = 0;
 			for (j=64;j<120;j++) {
-				if(reader[i].rsa_mod[j] > 0) {
+				if(rdr->rsa_mod[j] > 0) {
 					tigerkey = 1;
 					break;
 				}
 			}
 
 			//n3_rsakey
-			if (reader[i].has_rsa) {
+			if (rdr->has_rsa) {
 				if (!tigerkey) {
 					fprintf_conf(f, CONFVARWIDTH, "rsakey", "");
 					for (j=0;j<64;j++) {
-						fprintf(f, "%02X", reader[i].rsa_mod[j]);
+						fprintf(f, "%02X", rdr->rsa_mod[j]);
 					}
 					fprintf(f, "\n");
 				}
@@ -2466,123 +2468,123 @@ int write_server()
 					if (tigerkey) {
 						fprintf_conf(f, CONFVARWIDTH, "tiger_rsakey", "");
 						for (j=0;j<120;j++) {
-							fprintf(f, "%02X", reader[i].rsa_mod[j]);
+							fprintf(f, "%02X", rdr->rsa_mod[j]);
 						}
 						fprintf(f, "\n");
 					}
 				}
 			}
 
-			if (reader[i].force_irdeto && isphysical) {
-				fprintf_conf(f, CONFVARWIDTH, "force_irdeto", "%d\n", reader[i].force_irdeto);
+			if (rdr->force_irdeto && isphysical) {
+				fprintf_conf(f, CONFVARWIDTH, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
 
-			if (reader[i].nagra_boxkey[0] && isphysical) {
+			if (rdr->nagra_boxkey[0] && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "boxkey", "");
 				for (j=0;j<8;j++) {
-					fprintf(f, "%02X", reader[i].nagra_boxkey[j]);
+					fprintf(f, "%02X", rdr->nagra_boxkey[j]);
 				}
 				fprintf(f, "\n");
 			}
 
-			if ( reader[i].atr[0] && isphysical) {
+			if ( rdr->atr[0] && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "atr", "");
-				for (j=0; j < reader[i].atrlen/2; j++) {
-					fprintf(f, "%02X", reader[i].atr[j]);
+				for (j=0; j < rdr->atrlen/2; j++) {
+					fprintf(f, "%02X", rdr->atr[j]);
 				}
 				fprintf(f, "\n");
 			}
 
 			if (isphysical) {
-				if (reader[i].detect&0x80)
-					fprintf_conf(f, CONFVARWIDTH, "detect", "!%s\n", RDR_CD_TXT[reader[i].detect&0x7f]);
+				if (rdr->detect&0x80)
+					fprintf_conf(f, CONFVARWIDTH, "detect", "!%s\n", RDR_CD_TXT[rdr->detect&0x7f]);
 				else
-					fprintf_conf(f, CONFVARWIDTH, "detect", "%s\n", RDR_CD_TXT[reader[i].detect&0x7f]);
+					fprintf_conf(f, CONFVARWIDTH, "detect", "%s\n", RDR_CD_TXT[rdr->detect&0x7f]);
 			}
 
-			if (reader[i].mhz && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", reader[i].mhz);
+			if (rdr->mhz && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", rdr->mhz);
 
-			if (reader[i].cardmhz && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", reader[i].cardmhz);
+			if (rdr->cardmhz && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", rdr->cardmhz);
 
-			value = mk_t_ftab(&reader[i].ftab);
+			value = mk_t_ftab(&rdr->ftab);
 			fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
 			free(value);
 
 			//Todo: write reader class
 
-			value = mk_t_ftab(&reader[i].fchid);
+			value = mk_t_ftab(&rdr->fchid);
 			if(value[0])
 				fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
 			free(value);
 
-			if (reader[i].show_cls && !reader[i].show_cls == 10)
-				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", reader[i].show_cls);
+			if (rdr->show_cls && !rdr->show_cls == 10)
+				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
 
-			if (reader[i].maxqlen && !reader[i].maxqlen == CS_MAXQLEN)
-				fprintf_conf(f, CONFVARWIDTH, "maxqlen", "%d\n", reader[i].maxqlen);
+			if (rdr->maxqlen && !rdr->maxqlen == CS_MAXQLEN)
+				fprintf_conf(f, CONFVARWIDTH, "maxqlen", "%d\n", rdr->maxqlen);
 
-			value = mk_t_group(reader[i].grp);
+			value = mk_t_group(rdr->grp);
 			fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
 			free(value);
 
-			if (reader[i].cachemm)
-				fprintf_conf(f, CONFVARWIDTH, "emmcache", "%d,%d,%d\n", reader[i].cachemm, reader[i].rewritemm, reader[i].logemm);
+			if (rdr->cachemm)
+				fprintf_conf(f, CONFVARWIDTH, "emmcache", "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 
-			if (reader[i].cachecm)
-				fprintf_conf(f, CONFVARWIDTH, "ecmcache", "%d\n", reader[i].cachecm);
+			if (rdr->cachecm)
+				fprintf_conf(f, CONFVARWIDTH, "ecmcache", "%d\n", rdr->cachecm);
 			else
 				fprintf_conf(f, CONFVARWIDTH, "ecmcache", "%d\n", 0);
 
 			//Todo: write blocknano
 
-			if (reader[i].blockemm_unknown)
-				fprintf_conf(f, CONFVARWIDTH, "blockemm-unknown", "%d\n", reader[i].blockemm_unknown);
+			if (rdr->blockemm_unknown)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-unknown", "%d\n", rdr->blockemm_unknown);
 
-			if (reader[i].blockemm_u)
-				fprintf_conf(f, CONFVARWIDTH, "blockemm-u", "%d\n", reader[i].blockemm_u);
+			if (rdr->blockemm_u)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-u", "%d\n", rdr->blockemm_u);
 
-			if (reader[i].blockemm_s)
-				fprintf_conf(f, CONFVARWIDTH, "blockemm-s", "%d\n", reader[i].blockemm_s);
+			if (rdr->blockemm_s)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-s", "%d\n", rdr->blockemm_s);
 
-			if (reader[i].blockemm_g)
-				fprintf_conf(f, CONFVARWIDTH, "blockemm-g", "%d\n", reader[i].blockemm_g);
+			if (rdr->blockemm_g)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-g", "%d\n", rdr->blockemm_g);
 
-			if (reader[i].lb_weight)
-				fprintf_conf(f, CONFVARWIDTH, "lb_weight", "%d\n", reader[i].lb_weight);
+			if (rdr->lb_weight)
+				fprintf_conf(f, CONFVARWIDTH, "lb_weight", "%d\n", rdr->lb_weight);
 
 			//Todo: write savenano
 
-			if (reader[i].typ == R_CCCAM) {
-				if (reader[i].cc_version[0])
-					fprintf_conf(f, CONFVARWIDTH, "cccversion", "%s\n", reader[i].cc_version);
+			if (rdr->typ == R_CCCAM) {
+				if (rdr->cc_version[0])
+					fprintf_conf(f, CONFVARWIDTH, "cccversion", "%s\n", rdr->cc_version);
 
-				if (reader[i].cc_maxhop)
-					fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", reader[i].cc_maxhop);
+				if (rdr->cc_maxhop)
+					fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", rdr->cc_maxhop);
 
-				if (reader[i].cc_want_emu)
-					fprintf_conf(f, CONFVARWIDTH, "cccwantemu", "%d\n", reader[i].cc_want_emu);
+				if (rdr->cc_want_emu)
+					fprintf_conf(f, CONFVARWIDTH, "cccwantemu", "%d\n", rdr->cc_want_emu);
 
-				if (reader[i].cc_keepalive)
-					fprintf_conf(f, CONFVARWIDTH, "ccckeepalive", "%d\n", reader[i].cc_keepalive);
+				if (rdr->cc_keepalive)
+					fprintf_conf(f, CONFVARWIDTH, "ccckeepalive", "%d\n", rdr->cc_keepalive);
 			}
 
-			if (reader[i].deprecated && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "deprecated", "%d\n", reader[i].deprecated);
+			if (rdr->deprecated && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "deprecated", "%d\n", rdr->deprecated);
 
-			if (reader[i].audisabled)
-				fprintf_conf(f, CONFVARWIDTH, "audisabled", "%d\n", reader[i].audisabled);
+			if (rdr->audisabled)
+				fprintf_conf(f, CONFVARWIDTH, "audisabled", "%d\n", rdr->audisabled);
 
-			if (reader[i].auprovid)
-				fprintf_conf(f, CONFVARWIDTH, "auprovid", "%06lX", reader[i].auprovid);
+			if (rdr->auprovid)
+				fprintf_conf(f, CONFVARWIDTH, "auprovid", "%06lX", rdr->auprovid);
 
-                        if (reader[i].ndsversion && isphysical)
-                                fprintf_conf(f, CONFVARWIDTH, "ndsversion", "%d\n", reader[i].ndsversion);
+                        if (rdr->ndsversion && isphysical)
+                                fprintf_conf(f, CONFVARWIDTH, "ndsversion", "%d\n", rdr->ndsversion);
 
-                        if (reader[i].ratelimitecm && isphysical) {
-                                fprintf_conf(f, CONFVARWIDTH, "ratelimitecm", "%d\n", reader[i].ratelimitecm);
-                                fprintf_conf(f, CONFVARWIDTH, "ratelimitseconds", "%d\n", reader[i].ratelimitseconds);
+                        if (rdr->ratelimitecm && isphysical) {
+                                fprintf_conf(f, CONFVARWIDTH, "ratelimitecm", "%d\n", rdr->ratelimitecm);
+                                fprintf_conf(f, CONFVARWIDTH, "ratelimitseconds", "%d\n", rdr->ratelimitseconds);
 			}
 			fprintf(f, "\n\n");
 		}
