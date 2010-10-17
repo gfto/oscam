@@ -689,7 +689,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 	for (i=0,rdr=first_reader; rdr && rdr->label[0]; rdr=rdr->next, i++);
 	tpl_printf(vars, 0, "NEXTREADER", "Reader-%d", i); //Next Readername
 
-	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
+	for (readeridx=0,rdr=first_reader; rdr ; rdr=rdr->next, readeridx++) {
 		if(reader[readeridx].label[0] && reader[readeridx].typ && !reader[readeridx].deleted) {
 
 			tpl_printf(vars, 0, "READERIDX", "%d", readeridx);
