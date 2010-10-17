@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include "globals.h"
-#include "datastruct-llist.h"
+#include "oscam-datastruct-llist.h"
 
 static void _destroy(LLIST *l)
 {
@@ -42,7 +42,7 @@ void ll_clear(LLIST *l)
     void *obj;
 
     LL_ITER *it = ll_iter_create(l);
-    while (obj = ll_iter_next(it))
+    while ((obj = ll_iter_next(it)))
         ll_iter_remove(it);
     ll_iter_release(it);
 }
@@ -52,7 +52,7 @@ void ll_clear_data(LLIST *l)
     void *obj;
 
     LL_ITER *it = ll_iter_create(l);
-    while (obj = ll_iter_next(it))
+    while ((obj = ll_iter_next(it)))
         ll_iter_remove_data(it);
     ll_iter_release(it);
 }
@@ -164,7 +164,7 @@ int ll_count(LLIST *l)
     int c = 0;
 
     LL_ITER *it = ll_iter_create(l);;
-    while (obj = ll_iter_next(it)) c++;
+    while ((obj = ll_iter_next(it))) c++;
     ll_iter_release(it);
 
     return c;
@@ -186,7 +186,7 @@ void ll_insert_at(LLIST *l, void *obj, int pos)
     new->nxt = n;
 
     if (n->prv) n->prv->nxt = new;
-    else n->initial = new;
+    else l->initial = new;
     
     n->prv = new;
 }
