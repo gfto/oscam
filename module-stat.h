@@ -1,7 +1,7 @@
 #include "globals.h"
-#include "module-obj-llist.h"
+#include "oscam-datastruct-llist.h"
 
-LLIST_D_ *reader_stat[CS_MAXREADER];
+LLIST *reader_stat[CS_MAXREADER];
 static pthread_mutex_t stat_busy;
 
 extern struct  s_reader  reader[CS_MAXREADER];

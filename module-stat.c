@@ -96,7 +96,7 @@ void load_stat_from_file(int ridx)
 		i = fscanf(file, "rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
 			&stat->rc, &stat->caid, &stat->prid, &stat->srvid, &stat->time_avg, &stat->ecm_count, &stat->last_received);
 		if (i > 4) {
-			llist_append(reader_stat[ridx], stat);
+			ll_append(reader_stat[ridx], stat);
 		}
 		else
 			free(stat);
@@ -110,21 +110,21 @@ READER_STAT *get_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 {
 	pthread_mutex_lock(&stat_busy);
 	if (!reader_stat[ridx]) {
-		reader_stat[ridx] = llist_create();
+		reader_stat[ridx] = ll_create();
 		if (cfg->lb_save)
 			load_stat_from_file(ridx);
 	}
 
-	LLIST_D__ITR itr;
-	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
-	while (stat) {
+    LL_ITER *it = ll_iter_create(reader_stat[ridx]);
+	READER_STAT *stat;
+	while ((stat = ll_iter_next(it))) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
 			pthread_mutex_unlock(&stat_busy);
+            ll_iter_release(it);
 			return stat;
 		}
-		
-		stat = llist_itr_next(&itr);
 	}
+    ll_iter_release(it);
 	pthread_mutex_unlock(&stat_busy);
 	return NULL;
 }
@@ -139,17 +139,15 @@ int remove_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 
 	pthread_mutex_lock(&stat_busy);
 	int c = 0;
-	LLIST_D__ITR itr;
-	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
-	while (stat) {
+    LL_ITER *it = ll_iter_create(reader_stat[ridx]);
+	READER_STAT *stat;
+	while ((stat = ll_iter_next(it))) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
-			free(stat);
-			stat = llist_itr_remove(&itr);
+			ll_iter_remove_data(it);
 			c++;
 		}
-		else
-			stat = llist_itr_next(&itr);
 	}
+    ll_iter_release(it);
 	clear_from_cache(caid);
 	pthread_mutex_unlock(&stat_busy);
 	return c;
@@ -183,32 +181,34 @@ void save_stat_to_file(int ridx)
 	pthread_mutex_lock(&stat_busy);
 	char fname[256];
 	sprintf(fname, "%s/stat.%d", get_tmp_dir(), ridx);
-	if (!reader_stat[ridx] || !llist_count(reader_stat[ridx])) {
+	if (!reader_stat[ridx] || !ll_count(reader_stat[ridx])) {
 		remove(fname);
 		pthread_mutex_unlock(&stat_busy);
 		return;
 	}
 
-	LLIST_D__ITR itr;
-	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
-
-	if (!stat) {
+    LL_ITER *it = ll_iter_create(reader_stat[ridx]);
+	READER_STAT *stat = ll_iter_next(it);
+    if (!stat) {
 		remove(fname);
 		pthread_mutex_unlock(&stat_busy);
+	    ll_iter_release(it);
 		return;
 	}
 	
 	FILE *file = fopen(fname, "w");
 	if (!file) {
 		pthread_mutex_unlock(&stat_busy);
+        ll_iter_release(it);
 		return;
 	}
 		
-	while (stat) {
+	while ((stat = ll_iter_next(it))) {
 		fprintf(file, "rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
 				stat->rc, stat->caid, stat->prid, stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received);
-		stat = llist_itr_next(&itr);
 	}
+    ll_iter_release(it);
+
 	fclose(file);
 	pthread_mutex_unlock(&stat_busy);
 }
@@ -236,7 +236,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 		stat->prid = prid;
 		stat->srvid = srvid;
 		stat->time_avg = UNDEF_AVG_TIME; //dummy placeholder
-		llist_append(reader_stat[ridx], stat);
+		ll_append(reader_stat[ridx], stat);
 	}
 
 	//inc ecm_count if found, drop to 0 if not found:
@@ -534,15 +534,10 @@ void clear_reader_stat(int ridx)
 		return;
 
 	pthread_mutex_lock(&stat_busy);
-			
-	LLIST_D__ITR itr;
-	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
-	while (stat) {
-		free(stat);
-		stat = llist_itr_remove(&itr);
-	}
-	llist_destroy(reader_stat[ridx]);
-	reader_stat[ridx] = NULL;
+		
+	ll_destroy_data(reader_stat[ridx]);
+	
+    reader_stat[ridx] = NULL;
 	
 	pthread_mutex_unlock(&stat_busy);
 }
