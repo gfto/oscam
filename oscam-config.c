@@ -2279,7 +2279,6 @@ int write_userdb(struct s_auth *authptr)
 int write_server()
 {
 	int j;
-	int isphysical = 0;
 	char *value;
 	FILE *f;
 
@@ -2302,63 +2301,21 @@ int write_server()
 	struct s_reader *rdr;
 	for (rdr=first_reader; rdr ; rdr=rdr->next) {
 		if ( rdr->label[0] && !rdr->deleted) {
-			isphysical = 0;
 			fprintf(f,"[reader]\n");
 
 			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", rdr->label);
 			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", rdr->enable);
 
+			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
 			char *ctyp ="";
-			switch(rdr->typ) {	/* TODO like ph*/
-				case R_MP35	:
-					ctyp = "mp35";
-					isphysical = 1;
-					break;
-				case R_MOUSE	:
-					ctyp = "mouse";
-					isphysical = 1;
-					break;
-				case R_INTERNAL	:
-					ctyp = "internal";
-					isphysical = 1;
-					break;
-				case R_SC8in1	:
-					ctyp = "sc8in1";
-					isphysical = 1;
-					break;
-				case R_SMART	:
-					ctyp = "smartreader";
-					isphysical = 1;
-					break;
-				case R_CAMD35	: ctyp = "camd35";	break;
-				case R_CAMD33	: ctyp = "camd33";	break;
-				case R_NEWCAMD	:
-					if (rdr->ncd_proto == NCD_524)
-						ctyp = "newcamd524";
-					else
-						ctyp = "newcamd";
-					break;
-				case R_RADEGAST	: ctyp = "radegast";	break;
-				case R_SERIAL	: ctyp = "serial";		break;
-#ifdef CS_WITH_GBOX
-				case R_GBOX		: ctyp = "gbox";		break;
-#endif
-#ifdef HAVE_PCSC
-				case R_PCSC		: ctyp = "pcsc";		break;
-#endif
-				case R_CCCAM	: ctyp = "cccam";		break;
-				case R_CONSTCW	: ctyp = "constcw";		break;
-				case R_CS378X	: ctyp = "cs378x";		break;
-				case R_DB2COM1	:
-					ctyp = "mouse";
-					isphysical = 1;
-					break;
-				case R_DB2COM2	:
-					ctyp = "mouse";
-					isphysical = 1;
-					break;
+			static const char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
+			if (isphysical)
+				ctyp = typtxt[rdr->typ];
+			else
+				ctyp = rdr->ph.desc;
+			if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
+				ctyp = "newcamd524";
 
-			}
 			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s\n", ctyp);
 
 			fprintf_conf(f, CONFVARWIDTH, "device", "%s", rdr->device);

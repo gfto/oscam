@@ -171,11 +171,11 @@
 #define R_MP35      0x4 // AD-Teknik Multiprogrammer 3.5 and 3.6 (only usb tested)
 #define R_MOUSE     0x5 // Reader smartcard mouse
 /////////////////// phoenix readers which need baudrate setting and timings need to be guarded by OSCam: BEFORE R_MOUSE
-#define R_INTERNAL  0x10 // Reader smartcard intern
+#define R_INTERNAL  0x6 // Reader smartcard intern
 /////////////////// internal readers (Dreambox, Coolstream, IPBox) are all R_INTERNAL, they are determined compile-time
 /////////////////// readers that do not reed baudrate setting and timings are guarded by reader itself (large buffer built in): AFTER R_SMART
-#define R_SMART     0x11 // Smartreader+
-#define R_PCSC      0x12 // PCSC
+#define R_SMART     0x7 // Smartreader+
+#define R_PCSC      0x8 // PCSC
 /////////////////// proxy readers after R_CS378X
 #define R_CAMD35    0x20  // Reader cascading camd 3.5x
 #define R_CAMD33    0x21  // Reader cascading camd 3.3x
