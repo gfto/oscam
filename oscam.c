@@ -2210,10 +2210,11 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	//Unique Id matching for pay-per-view channels:
 	if (client->autoau) {
 		int i;
-		for (i=0;i<CS_MAXREADER;i++) {
-			if (reader[i].card_system>0 && !reader[i].audisabled) {
+		struct s_reader *rdr;
+		for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
+			if (rdr->card_system>0 && !rdr->audisabled) {
 				if (reader_get_emm_type(ep, &reader[i])) { //decodes ep->type and ep->hexserial from the EMM
-					if (memcmp(ep->hexserial, reader[i].hexserial, sizeof(ep->hexserial))==0) {
+					if (memcmp(ep->hexserial, rdr->hexserial, sizeof(ep->hexserial))==0) {
 						au = i;
 						break; //
 					}
@@ -2379,12 +2380,13 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			tpc.time +=tt / 1000;
 			tpc.millitm += tt % 1000;
 			if (!er->stage) {
-				for (j=0, act=1; (act) && (j<CS_MAXREADER); j++) {
+				struct s_reader *rdr;
+				for (j=0, act=1, rdr=first_reader; (act) && rdr ; rdr=rdr->next, j++) {	
 					if (cfg->preferlocalcards && !er->locals_done) {
-						if ((er->reader[j]&1) && !(reader[j].typ & R_IS_NETWORK))
+						if ((er->reader[j]&1) && !(rdr->typ & R_IS_NETWORK))
 							act=0;
 					} else if (cfg->preferlocalcards && er->locals_done) {
-						if ((er->reader[j]&1) && (reader[j].typ & R_IS_NETWORK))
+						if ((er->reader[j]&1) && (rdr->typ & R_IS_NETWORK))
 							act=0;
 					} else {
 						if (er->reader[j]&1)
@@ -2400,10 +2402,10 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					int inc_stage = 1;
 					if (cfg->preferlocalcards && !er->locals_done) {
 						er->locals_done = 1;
-						for (j = 0; j < CS_MAXREADER; j++) {
-							if (reader[j].typ & R_IS_NETWORK)
+						struct s_reader *rdr;
+						for (rdr=first_reader; rdr ; rdr=rdr->next)	
+							if (rdr->typ & R_IS_NETWORK)
 								inc_stage = 0;
-						}
 					}
 					unsigned int tt;
 					if (!inc_stage) {
@@ -2429,7 +2431,8 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					er->rc=5; // timeout
 					if (cfg->lb_mode) {
 						int r;
-						for (r=0; r<CS_MAXREADER; r++)
+						struct s_reader *rdr;
+						for (r=0,rdr=first_reader; rdr ; rdr=rdr->next, r++)	
 							if (er->reader[r])
 								send_reader_stat(r, er, 5);
 					}
@@ -2591,16 +2594,16 @@ void cs_waitforcardinit()
 	if (cfg->waitforcards)
 	{
   		cs_log("waiting for local card init");
-		int card_init_done, i;
+		int card_init_done;
 		cs_sleepms(3000);  // short sleep for card detect to work proberly
 		do {
 			card_init_done = 1;
-			for (i = 0; i < CS_MAXREADER; i++) {
-				if (!(reader[i].typ & R_IS_CASCADING) && reader[i].card_status == CARD_NEED_INIT) {
+			struct s_reader *rdr;
+			for (rdr=first_reader; rdr ; rdr=rdr->next)	
+				if (!(rdr->typ & R_IS_CASCADING) && rdr->card_status == CARD_NEED_INIT) {
 					card_init_done = 0;
 					break;
 				}
-			}
 			cs_sleepms(300); // wait a little bit
 			//alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1); 
 		} while (!card_init_done);
