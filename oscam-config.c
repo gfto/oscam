@@ -2267,7 +2267,7 @@ int write_server()
 
 			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
 			char *ctyp ="";
-			static const char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
+			static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
 			if (isphysical)
 				ctyp = typtxt[rdr->typ];
 			else

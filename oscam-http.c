@@ -15,7 +15,6 @@
 #include "module-cccam.h"
 #include "module-stat.h"
 
-extern struct  s_reader  reader[CS_MAXREADER];
 extern void restart_cardreader(int ridx, int restart);
 static int running = 1;
 
@@ -657,8 +656,7 @@ void send_oscam_config(struct templatevars *vars, FILE *f, struct uriparams *par
 }
 
 void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
-	int readeridx, isphysical = 0;
-	char *ctyp;
+	int readeridx=0;
 	int i;
 	//uchar dummy[1]={0x00};
 
@@ -687,55 +685,26 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 		refresh_oscam(REFR_READERS, in); // refresh all reader because  write pipe seams not work from here
 	}
 
-	for(readeridx = 0; readeridx < CS_MAXREADER && reader[readeridx].label[0]; readeridx++);
-	tpl_printf(vars, 0, "NEXTREADER", "Reader-%d", readeridx); //Next Readername
+	struct s_reader *rdr;
+	for (i=0,rdr=first_reader; rdr && rdr->label[0]; rdr=rdr->next, i++);
+	tpl_printf(vars, 0, "NEXTREADER", "Reader-%d", i); //Next Readername
 
-	for(readeridx = 0; readeridx < CS_MAXREADER; readeridx++) {
-		isphysical = 0;
-
+	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 		if(reader[readeridx].label[0] && reader[readeridx].typ && !reader[readeridx].deleted) {
 
 			tpl_printf(vars, 0, "READERIDX", "%d", readeridx);
 			tpl_addVar(vars, 0, "READERNAME", reader[readeridx].label);
 			tpl_addVar(vars, 0, "READERNAMEENC", tpl_addTmp(vars, urlencode(reader[readeridx].label)));
 
-			switch(reader[readeridx].typ) {
-			case R_MP35 :
-				ctyp = "mp35";
-				isphysical = 1;
-				break;
-			case R_MOUSE :
-				ctyp = "mouse";
-				isphysical = 1;
-				break;
-			case R_INTERNAL:
-				ctyp = "intern";
-				isphysical = 1;
-				break;
-			case R_SMART :
-				ctyp = "smartreader";
-				isphysical = 1;
-				break;
-			case R_SERIAL :
-				ctyp = "serial";
-				isphysical = 1;
-				break;
-			case R_DB2COM1 :
-				ctyp = "dbox COM1";
-				isphysical = 1;
-				break;
-			case R_DB2COM2 :
-				ctyp = "dbox COM2";
-				isphysical = 1;
-				break;
-#ifdef HAVE_PCSC
-			case R_PCSC :
-				ctyp="pcsc";
-				isphysical = 1;
-				break;
-#endif
-			default : ctyp = reader[readeridx].ph.desc;   break;
-}
+			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
+			char *ctyp ="";
+			static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
+			if (isphysical)
+				ctyp = typtxt[rdr->typ];
+			else
+				ctyp = rdr->ph.desc;
+			if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
+				ctyp = "newcamd524";
 
 			tpl_printf(vars, 0, "EMMERRORUK", "%d", reader[readeridx].emmerror[UNKNOWN]);
 			tpl_printf(vars, 0, "EMMERRORG", "%d", reader[readeridx].emmerror[GLOBAL]);
@@ -796,38 +765,41 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	char *reader_ = getParam(params, "reader");
 	char *value;
 
-	for(ridx = 0; ridx < CS_MAXREADER && reader[ridx].label[0]; ridx++); //last reader
+	struct s_reader *rdr;
+	for (ridx=0,rdr=first_reader; rdr && rdr->label[0]; rdr=rdr->next, ridx++); //last reader
 
 	if(strcmp(getParam(params, "action"), "Add") == 0) {
 		// Add new reader
-		memset(&reader[ridx], 0, sizeof(struct s_reader));
-		reader[ridx].enable = 1;
-		reader[ridx].tcp_rto = 30;
-		reader[ridx].show_cls = 10;
-		reader[ridx].maxqlen = CS_MAXQLEN;
-		reader[ridx].mhz = 357;
-		reader[ridx].cardmhz = 357;
-		reader[ridx].deprecated = 0;
-		reader[ridx].cachecm = 1;
-		strcpy(reader[ridx].pincode, "none");
-                reader[ridx].ndsversion = 0;
-		for (i = 1; i < CS_MAXCAIDTAB; reader[ridx].ctab.mask[i++] = 0xffff);
+		reader[ridx-1].next = rdr; //FIXME
+		rdr->next = NULL;
+		memset(&rdr, 0, sizeof(struct s_reader));
+		rdr->enable = 1;
+		rdr->tcp_rto = 30;
+		rdr->show_cls = 10;
+		rdr->maxqlen = CS_MAXQLEN;
+		rdr->mhz = 357;
+		rdr->cardmhz = 357;
+		rdr->deprecated = 0;
+		rdr->cachecm = 1;
+		strcpy(rdr->pincode, "none");
+		rdr->ndsversion = 0;
+		for (i = 1; i < CS_MAXCAIDTAB; rdr->ctab.mask[i++] = 0xffff);
 		for (i = 0; i < (*params).paramcount; ++i) {
 			if (strcmp((*params).params[i], "action"))
 				chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
 		}
-		reader_ = reader[ridx].label;
+		reader_ = rdr->label;
 
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
-		for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
+		for (ridx=0,rdr=first_reader; rdr  && strcmp(reader_, rdr->label); rdr=rdr->next, ++ridx);
 		char servicelabels[255]="";
 
-		clear_caidtab(&reader[ridx].ctab);
-		clear_ftab(&reader[ridx].ftab);
-		clear_ftab(&reader[ridx].fchid);
+		clear_caidtab(&rdr->ctab);
+		clear_ftab(&rdr->ftab);
+		clear_ftab(&rdr->fchid);
 
-		reader[ridx].grp = 0;
-		reader[ridx].auprovid = 0;
+		rdr->grp = 0;
+		rdr->auprovid = 0;
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action"))) {
 				if (!strcmp((*params).params[i], "services"))
@@ -838,7 +810,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			}
 			//printf("param %s value %s\n",(*params).params[i], (*params).values[i]);
 		}
-		chk_reader("services", servicelabels, &reader[ridx]);
+		chk_reader("services", servicelabels, rdr);
 
 		if(write_server()==0)
 			refresh_oscam(REFR_READERS, in);
@@ -846,129 +818,128 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 
-	for(ridx = 0; ridx < CS_MAXREADER && strcmp(reader_, reader[ridx].label) != 0; ++ridx);
+	for (ridx=0,rdr=first_reader; rdr  && strcmp(reader_, rdr->label); rdr=rdr->next, ++ridx);
+	tpl_addVar(vars, 0, "READERNAME", rdr->label);
 
-	tpl_addVar(vars, 0, "READERNAME", reader[ridx].label);
-
-	if(reader[ridx].enable)
+	if(rdr->enable)
 		tpl_addVar(vars, 0, "ENABLED", "checked");
 
-	tpl_printf(vars, 0, "ACCOUNT",  "%s", reader[ridx].r_usr);
+	tpl_printf(vars, 0, "ACCOUNT",  "%s", rdr->r_usr);
 
 #ifdef CS_WITH_GBOX
 	if (strlen(reader[i].gbox_pwd) > 0)
 		tpl_printf(vars, 0, "PASSWORD",  "%s", reader[i].gbox_pwd);
-	else if (strlen(reader[ridx].r_pwd) > 0)
-		tpl_printf(vars, 0, "PASSWORD",  "%s", reader[ridx].r_pwd);
+	else if (strlen(rdr->r_pwd) > 0)
+		tpl_printf(vars, 0, "PASSWORD",  "%s", rdr->r_pwd);
 	else
 		tpl_printf(vars, 0, "PASSWORD",  "%s", "");
 #else
-	tpl_printf(vars, 0, "PASSWORD",  "%s", reader[ridx].r_pwd);
+	tpl_printf(vars, 0, "PASSWORD",  "%s", rdr->r_pwd);
 #endif
 
 	for (i=0; i<14; i++)
-		tpl_printf(vars, 1, "NCD_KEY", "%02X", reader[ridx].ncd_key[i]);
+		tpl_printf(vars, 1, "NCD_KEY", "%02X", rdr->ncd_key[i]);
 
-	tpl_addVar(vars, 0, "PINCODE", reader[ridx].pincode);
-	//tpl_addVar(vars, 0, "EMMFILE", (char *)reader[ridx].emmfile);
-	tpl_printf(vars, 0, "INACTIVITYTIMEOUT", "%d", reader[ridx].tcp_ito);
-	tpl_printf(vars, 0, "RECEIVETIMEOUT", "%d", reader[ridx].tcp_rto);
-	tpl_printf(vars, 0, "DISABLESERVERFILTER", "%d", reader[ridx].ncd_disable_server_filt);
+	tpl_addVar(vars, 0, "PINCODE", rdr->pincode);
+	//tpl_addVar(vars, 0, "EMMFILE", (char *)rdr->emmfile);
+	tpl_printf(vars, 0, "INACTIVITYTIMEOUT", "%d", rdr->tcp_ito);
+	tpl_printf(vars, 0, "RECEIVETIMEOUT", "%d", rdr->tcp_rto);
+	tpl_printf(vars, 0, "DISABLESERVERFILTER", "%d", rdr->ncd_disable_server_filt);
 
-	if(reader[ridx].fallback)
+	if(rdr->fallback)
 		tpl_addVar(vars, 0, "FALLBACKCHECKED", "checked");
 
-	tpl_printf(vars, 0, "LOGPORT", "%d", reader[ridx].log_port);
+	tpl_printf(vars, 0, "LOGPORT", "%d", rdr->log_port);
 
-	if(reader[ridx].boxid)
-		tpl_printf(vars, 0, "BOXID", "%08X", reader[ridx].boxid);
+	if(rdr->boxid)
+		tpl_printf(vars, 0, "BOXID", "%08X", rdr->boxid);
 
-	tpl_addVar(vars, 0, "USER", reader[ridx].r_usr);
-	tpl_addVar(vars, 0, "PASS", reader[ridx].r_pwd);
+	tpl_addVar(vars, 0, "USER", rdr->r_usr);
+	tpl_addVar(vars, 0, "PASS", rdr->r_pwd);
 
-	if(reader[ridx].audisabled)
+	if(rdr->audisabled)
 		tpl_addVar(vars, 0, "AUDISABLED", "checked");
 
-	if(reader[ridx].auprovid)
-		tpl_printf(vars, 0, "AUPROVID", "%06lX", reader[ridx].auprovid);
+	if(rdr->auprovid)
+		tpl_printf(vars, 0, "AUPROVID", "%06lX", rdr->auprovid);
 
-	if(reader[ridx].force_irdeto)
+	if(rdr->force_irdeto)
 		tpl_addVar(vars, 0, "FORCEIRDETOCHECKED", "checked");
 
 	//aeskey
 	int has_aeskey = 0;
 	for (i = 0; i < 16 ;i++) {
-		if(reader[ridx].aes_key[i]) {
+		if(rdr->aes_key[i]) {
 			has_aeskey++;
 		}
 	}
 	if (has_aeskey) {
-		for (i = 0; i < 16; i++) tpl_printf(vars, 1, "AESKEY", "%02X", reader[ridx].aes_key[i]);
+		for (i = 0; i < 16; i++) tpl_printf(vars, 1, "AESKEY", "%02X", rdr->aes_key[i]);
 	}
 
 	//check for tiger
 	int tigerkey = 0;
 	for (i = 64; i < 120; i++) {
-		if(reader[ridx].rsa_mod[i] > 0) {
+		if(rdr->rsa_mod[i] > 0) {
 			tigerkey = 1;
 			break;
 		}
 	}
 
-	if(reader[ridx].has_rsa) {
+	if(rdr->has_rsa) {
 		if (!tigerkey) {
-			for (i = 0; i < 64; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", reader[ridx].rsa_mod[i]);
-			for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", reader[ridx].nagra_boxkey[i]);
+			for (i = 0; i < 64; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", rdr->rsa_mod[i]);
+			for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", rdr->nagra_boxkey[i]);
 		}
 	}
 	if (tigerkey) {
-		for (i = 0; i < 120; i++) tpl_printf(vars, 1, "TIGERRSAKEY", "%02X", reader[ridx].rsa_mod[i]);
-		for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", reader[ridx].nagra_boxkey[i]);
+		for (i = 0; i < 120; i++) tpl_printf(vars, 1, "TIGERRSAKEY", "%02X", rdr->rsa_mod[i]);
+		for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", rdr->nagra_boxkey[i]);
 	}
 
-	if ( reader[ridx].atr[0])
-		for (i = 0; i < reader[ridx].atrlen/2; i++)
-			tpl_printf(vars, 1, "ATR", "%02X", reader[ridx].atr[i]);
+	if ( rdr->atr[0])
+		for (i = 0; i < rdr->atrlen/2; i++)
+			tpl_printf(vars, 1, "ATR", "%02X", rdr->atr[i]);
 
-	if(reader[ridx].smargopatch)
+	if(rdr->smargopatch)
 		tpl_addVar(vars, 0, "SMARGOPATCHCHECKED", "checked");
 
-	if (reader[ridx].detect&0x80)
-		tpl_printf(vars, 0, "DETECT", "!%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+	if (rdr->detect&0x80)
+		tpl_printf(vars, 0, "DETECT", "!%s", RDR_CD_TXT[rdr->detect&0x7f]);
 	else
-		tpl_printf(vars, 0, "DETECT", "%s", RDR_CD_TXT[reader[ridx].detect&0x7f]);
+		tpl_printf(vars, 0, "DETECT", "%s", RDR_CD_TXT[rdr->detect&0x7f]);
 
-	tpl_printf(vars, 0, "MHZ", "%d", reader[ridx].mhz);
-	tpl_printf(vars, 0, "CARDMHZ", "%d", reader[ridx].cardmhz);
+	tpl_printf(vars, 0, "MHZ", "%d", rdr->mhz);
+	tpl_printf(vars, 0, "CARDMHZ", "%d", rdr->cardmhz);
 
 #ifdef CS_WITH_GBOX
-	tpl_addVar(vars, 0, "GBOXPWD", (char *)reader[ridx].gbox_pwd);
-	tpl_addVar(vars, 0, "PREMIUM", reader[ridx].gbox_prem);
+	tpl_addVar(vars, 0, "GBOXPWD", (char *)rdr->gbox_pwd);
+	tpl_addVar(vars, 0, "PREMIUM", rdr->gbox_prem);
 #endif
 
-	tpl_printf(vars, 0, "DEVICE", "%s", reader[ridx].device);
-	if(reader[ridx].r_port)
-		tpl_printf(vars, 1, "DEVICE", ",%d", reader[ridx].r_port);
-	if(reader[ridx].l_port) {
-		if(reader[ridx].r_port)
-			tpl_printf(vars, 1, "DEVICE", ",%d", reader[ridx].l_port);
+	tpl_printf(vars, 0, "DEVICE", "%s", rdr->device);
+	if(rdr->r_port)
+		tpl_printf(vars, 1, "DEVICE", ",%d", rdr->r_port);
+	if(rdr->l_port) {
+		if(rdr->r_port)
+			tpl_printf(vars, 1, "DEVICE", ",%d", rdr->l_port);
 		else
-			tpl_printf(vars, 1, "DEVICE", ",,%d", reader[ridx].l_port);
+			tpl_printf(vars, 1, "DEVICE", ",,%d", rdr->l_port);
 	}
 
 	//group
-	value = mk_t_group(reader[ridx].grp);
+	value = mk_t_group(rdr->grp);
 	tpl_printf(vars, 0, "GRP", "%s", value);
 	free(value);
 
-	if(reader[ridx].lb_weight)
-		tpl_printf(vars, 0, "LBWEIGHT", "%d", reader[ridx].lb_weight);
+	if(rdr->lb_weight)
+		tpl_printf(vars, 0, "LBWEIGHT", "%d", rdr->lb_weight);
 
 	//services
 	char sidok[MAX_SIDBITS+1];
-	sidtabbits2bitchar(reader[ridx].sidtabok, sidok);
+	sidtabbits2bitchar(rdr->sidtabok, sidok);
 	char sidno[MAX_SIDBITS+1];
-	sidtabbits2bitchar(reader[ridx].sidtabno,sidno);
+	sidtabbits2bitchar(rdr->sidtabno,sidno);
 	struct s_sidtab *sidtab = cfg->sidtab;
 	//build matrix
 	i = 0;
@@ -985,22 +956,22 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	}
 
 	// CAID
-	value = mk_t_caidtab(&reader[ridx].ctab);
+	value = mk_t_caidtab(&rdr->ctab);
 	tpl_addVar(vars, 0, "CAIDS", value);
 	free(value);
 
 	//ident
-	value = mk_t_ftab(&reader[ridx].ftab);
+	value = mk_t_ftab(&rdr->ftab);
 	tpl_printf(vars, 0, "IDENTS", "%s", value);
 	free(value);
 
 	//CHID
-	value = mk_t_ftab(&reader[ridx].fchid);
+	value = mk_t_ftab(&rdr->fchid);
 	tpl_printf(vars, 0, "CHIDS", "%s", value);
 	free(value);
 
 	//class
-	CLASSTAB *clstab = &reader[ridx].cltab;
+	CLASSTAB *clstab = &rdr->cltab;
 	char *dot="";
 	for(i = 0; i < clstab->an; ++i) {
 		tpl_printf(vars, 1, "CLASS", "%s%02x", dot, (int)clstab->aclass[i]);
@@ -1012,17 +983,17 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		dot=",";
 	}
 
-	tpl_printf(vars, 0, "SHOWCLS", "%d", reader[ridx].show_cls);
-	tpl_printf(vars, 0, "MAXQLEN", "%d", reader[ridx].maxqlen);
+	tpl_printf(vars, 0, "SHOWCLS", "%d", rdr->show_cls);
+	tpl_printf(vars, 0, "MAXQLEN", "%d", rdr->maxqlen);
 
-	if(reader[ridx].cachemm)
-		tpl_printf(vars, 0, "EMMCACHE", "%d,%d,%d", reader[ridx].cachemm, reader[ridx].rewritemm, reader[ridx].logemm);
+	if(rdr->cachemm)
+		tpl_printf(vars, 0, "EMMCACHE", "%d,%d,%d", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 
 	//savenano
 	int all = 1;
 	dot="";
 	for(i = 0; i < 256; ++i) {
-		if(!(reader[ridx].b_nano[i] & 0x02)) {
+		if(!(rdr->b_nano[i] & 0x02)) {
 			all = 0;
 			break;
 		}
@@ -1030,7 +1001,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if (all == 1) tpl_addVar(vars, 0, "SAVENANO", "all");
 	else {
 		for(i = 0; i < 256; ++i) {
-			if(reader[ridx].b_nano[i] & 0x02) tpl_printf(vars, 1, "SAVENANO", "%s%02x\n", dot, i);
+			if(rdr->b_nano[i] & 0x02) tpl_printf(vars, 1, "SAVENANO", "%s%02x\n", dot, i);
 			dot=",";
 		}
 	}
@@ -1038,7 +1009,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	//blocknano
 	dot="";
 	for(i = 0; i < 256; ++i) {
-		if(!(reader[ridx].b_nano[i] & 0x01)) {
+		if(!(rdr->b_nano[i] & 0x01)) {
 			all = 0;
 			break;
 		}
@@ -1046,50 +1017,50 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if (all == 1) tpl_addVar(vars, 0, "BLOCKNANO", "all");
 	else {
 		for(i = 0; i < 256; ++i) {
-			if(reader[ridx].b_nano[i] & 0x01) tpl_printf(vars, 1, "BLOCKNANO", "%s%02x\n", dot, i);
+			if(rdr->b_nano[i] & 0x01) tpl_printf(vars, 1, "BLOCKNANO", "%s%02x\n", dot, i);
 			dot=",";
 		}
 	}
 
-	if (reader[ridx].cachecm)
+	if (rdr->cachecm)
 		tpl_addVar(vars, 0, "ECMCACHECHECKED", "checked");
 
-	if (reader[ridx].blockemm_unknown)
+	if (rdr->blockemm_unknown)
 		tpl_addVar(vars, 0, "BLOCKEMMUNKNOWNCHK", "checked");
-	if (reader[ridx].blockemm_u)
+	if (rdr->blockemm_u)
 		tpl_addVar(vars, 0, "BLOCKEMMUNIQCHK", "checked");
-	if (reader[ridx].blockemm_s)
+	if (rdr->blockemm_s)
 		tpl_addVar(vars, 0, "BLOCKEMMSHAREDCHK", "checked");
-	if (reader[ridx].blockemm_g)
+	if (rdr->blockemm_g)
 		tpl_addVar(vars, 0, "BLOCKEMMGLOBALCHK", "checked");
 
-	if (reader[ridx].deprecated)
+	if (rdr->deprecated)
 		tpl_addVar(vars, 0, "DEPRECATEDCHCHECKED", "checked");
 
-	if (!strcmp(reader[ridx].cc_version, "2.0.11")) {
+	if (!strcmp(rdr->cc_version, "2.0.11")) {
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED0", "selected");
-	} else if (!strcmp(reader[ridx].cc_version, "2.1.1")) {
+	} else if (!strcmp(rdr->cc_version, "2.1.1")) {
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED1", "selected");
-	} else if (!strcmp(reader[ridx].cc_version, "2.1.2")) {
+	} else if (!strcmp(rdr->cc_version, "2.1.2")) {
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED2", "selected");
-	} else if (!strcmp(reader[ridx].cc_version, "2.1.3")) {
+	} else if (!strcmp(rdr->cc_version, "2.1.3")) {
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED3", "selected");
-	} else if (!strcmp(reader[ridx].cc_version, "2.1.4")) {
+	} else if (!strcmp(rdr->cc_version, "2.1.4")) {
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED4", "selected");
 	}
 
-        tpl_printf(vars, 0, "TMP", "NDSVERSION%d", reader[ridx].ndsversion);
+        tpl_printf(vars, 0, "TMP", "NDSVERSION%d", rdr->ndsversion);
         tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
-	tpl_printf(vars, 0, "CCCMAXHOP", "%d", reader[ridx].cc_maxhop);
-	if(reader[ridx].cc_want_emu)
+	tpl_printf(vars, 0, "CCCMAXHOP", "%d", rdr->cc_maxhop);
+	if(rdr->cc_want_emu)
 		tpl_addVar(vars, 0, "CCCWANTEMUCHECKED", "checked");
 
-	if(reader[ridx].cc_keepalive)
+	if(rdr->cc_keepalive)
 		tpl_addVar(vars, 0, "KEEPALIVECHECKED", "selected");
 
 	// Show only parameters which needed for the reader
-	switch (reader[ridx].typ) {
+	switch (rdr->typ) {
 		case R_CONSTCW:
 			tpl_addVar(vars, 0, "PROTOCOL", "constcw");
 			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGSTDHWREADERBIT"));
@@ -1133,10 +1104,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGRADEGASTBIT"));
 			break;
 		case R_NEWCAMD :
-			if ( reader[ridx].ncd_proto == NCD_525 ){
+			if ( rdr->ncd_proto == NCD_525 ){
 				tpl_addVar(vars, 0, "PROTOCOL", "newcamd525");
 				tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD525BIT"));
-			} else if ( reader[ridx].ncd_proto == NCD_524 ) {
+			} else if ( rdr->ncd_proto == NCD_524 ) {
 				tpl_addVar(vars, 0, "PROTOCOL", "newcamd524");
 				tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGNCD524BIT"));
 			}
@@ -1159,7 +1130,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 #endif
 		default :
 			tpl_addVar(vars, 1, "MESSAGE", "<b>Error: protocol not resolvable</b><BR>");
-			tpl_printf(vars, 1, "MESSAGE", "<b>Error: protocol number: %d readername: %s readeridx: %d</b><BR>", reader[ridx].typ, reader[ridx].label, ridx);
+			tpl_printf(vars, 1, "MESSAGE", "<b>Error: protocol number: %d readername: %s readeridx: %d</b><BR>", rdr->typ, rdr->label, ridx);
 			break;
 
 	}
@@ -1347,10 +1318,11 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 	//AU Selector
 	if (!account->au) tpl_addVar(vars, 0, "AUSELECTED", "selected");
 	if (account->autoau == 1) tpl_addVar(vars, 0, "AUTOAUSELECTED", "selected");
+	struct s_reader *rdr;
 	int ridx;
-	for (ridx=0; ridx<CS_MAXREADER; ridx++) {
-		if(!reader[ridx].device[0]) break;
-		tpl_addVar(vars, 0, "READERNAME", reader[ridx].label);
+	for (ridx=0,rdr=first_reader; rdr ; rdr=rdr->next, ridx++) {
+		if(!rdr->device[0]) break;
+		tpl_addVar(vars, 0, "READERNAME", rdr->label);
 		if (account->au == ridx) tpl_addVar(vars, 0, "SELECTED", "selected");
 		else tpl_addVar(vars, 0, "SELECTED", "");
 		tpl_addVar(vars, 1, "RDROPTION", tpl_getTpl(vars, "USEREDITRDRSELECTED"));
@@ -1616,9 +1588,8 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 	char *reader_ = getParam(params, "reader");
 
 	if (cfg->saveinithistory && strlen(reader_) > 0) {
-		for (ridx = 0; ridx < CS_MAXREADER && strcmp(reader_,
-				reader[ridx].label) != 0; ridx++)
-			;
+		struct s_reader *rdr;
+		for (ridx=0,rdr=first_reader; rdr  && strcmp(reader_, rdr->label); rdr=rdr->next, ridx++);
 
 		if (reader[ridx].typ == R_CCCAM) {
 
@@ -1884,15 +1855,11 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				char *txt = "OK";
 				if (cl->typ == 'r' || cl->typ == 'p') //reader or proxy
 				{
-					int ridx;
-					for (ridx = 0; ridx < CS_MAXREADER; ridx++)
-					{
-						if(ridx == cl->ridx)
-						{
-							if (reader[ridx].lbvalue)
-								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&ridx=%d\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", ridx, reader[ridx].lbvalue);
+					struct s_reader *rdr = &reader[cl->ridx];
+							if (rdr->lbvalue)
+								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&ridx=%d\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", cl->ridx, rdr->lbvalue);
 
-							switch(reader[ridx].card_status)
+							switch(rdr->card_status)
 							{
 							case NO_CARD: txt = "OFF"; break;
 							case CARD_NEED_INIT: txt = "NEEDINIT"; break;
@@ -1905,9 +1872,6 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 							case CARD_FAILURE: txt = "ERROR"; break;
 							default: txt = "UNDEF";
 							}
-						}
-					}
-
 				}
 				tpl_printf(vars, 0, "CLIENTCON", txt);
 			}
