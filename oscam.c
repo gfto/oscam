@@ -2144,6 +2144,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		struct s_reader *rdr;
 		if (cfg->lb_mode) {
 			int reader_avail[CS_MAXREADER]; //FIXME limits reader list!!!
+			memset(reader_avail, 0, sizeof(reader_avail));
 			for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
 				reader_avail[i] = matching_reader(er, &reader[i]);
 				if (reader_avail[i] == 1)
