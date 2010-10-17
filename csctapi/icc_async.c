@@ -533,7 +533,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 		ATR_GetProtocolType(atr,1,&(reader->protocol_type)); //get protocol from TD1
 		BYTE TA2;
 		//if TA2 present, and specific mode bit (bit 8) set then specific mode, else negotiable mode
-		bool SpecificMode = ((ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TA, &TA2) == ATR_OK) && ((TA2 & 0x80) == 0x80));
+		bool SpecificMode = (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TA, &TA2) == ATR_OK);
 		if (SpecificMode) {
 			reader->protocol_type = TA2 & 0x0F;
 			if ((TA2 & 0x10) != 0x10) { //bit 5 set to 0 means F and D explicitly defined in interface characters
