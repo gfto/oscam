@@ -31,7 +31,8 @@ void ll_destroy_data(LLIST *l); // same as ll_clear_data() but frees up obj allo
 void ll_clear(LLIST *l);        // frees up all llnodes nodes but not data held in obj ptrs
 void ll_clear_data(LLIST *l);   // same as ll_clear_data() but frees up obj allocations as well
 
-void ll_append(LLIST *l, void *obj);    // append obj to llist
+void ll_append(LLIST *l, void *obj);                // append obj to llist
+void ll_insert_at(LLIST *l, void *obj, int pos);    // insert at pos
 
 LL_ITER *ll_iter_create(LLIST *l);              // return ptr to iterator obj
 void ll_iter_release(LL_ITER *it);              // free up the iterator obj

@@ -170,3 +170,24 @@ int ll_count(LLIST *l)
     return c;
 }
 
+void ll_insert_at(LLIST *l, void *obj, int pos)
+{
+    LL_NODE *new = calloc(1, sizeof(LL_NODE));
+    LL_NODE *n = l->initial;
+    int i;
+    
+    for (i = 0; i < pos; i++)
+        if (n)
+            n = n->nxt;
+        else
+            break;
+
+    new->obj = obj;
+    new->nxt = n;
+
+    if (n->prv) n->prv->nxt = new;
+    else n->initial = new;
+    
+    n->prv = new;
+}
+
