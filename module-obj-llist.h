@@ -5,8 +5,8 @@
  *      Author: alno
  */
 
-#ifndef OSCAMLLIST_H_
-#define OSCAMLLIST_H_
+#ifndef OSCAMLLIST_D__H_
+#define OSCAMLLIST_D__H_
 
 /******************************** */
 /* LINKED LIST CODE - IF IT'S USEFUL ELSEWHERE, IT SHOULD BE SPLIT OFF INTO linkedlist.h/.c */
@@ -28,27 +28,27 @@ typedef struct llist {
 	struct llist_node *last;
 	int items;
 	pthread_mutex_t lock;
-} LLIST;
+} LLIST_D_;
 
 typedef struct llist_itr {
-	LLIST *l;
+	LLIST_D_ *l;
 	struct llist_node *cur;
-} LLIST_ITR;
+} LLIST_D__ITR;
 
-LLIST *llist_create(void);                  // init linked list
-void llist_destroy(LLIST *l);               // de-init linked list - frees all objects on the list
-void llist_clear(LLIST *l);                 // frees all objects on the list
+LLIST_D_ *llist_create(void);                  // init linked list
+void llist_destroy(LLIST_D_ *l);               // de-init linked list - frees all objects on the list
+void llist_clear(LLIST_D_ *l);                 // frees all objects on the list
 
-void *llist_append(LLIST *l, void *o);       // append object onto bottom of list, returns ptr to obj
-void *llist_insert_first(LLIST *l, void *o);       // append object onto bottom of list, returns ptr to obj
+void *llist_append(LLIST_D_ *l, void *o);       // append object onto bottom of list, returns ptr to obj
+void *llist_insert_first(LLIST_D_ *l, void *o);       // append object onto bottom of list, returns ptr to obj
 
-void *llist_itr_init(LLIST *l, LLIST_ITR *itr);       // linked list iterator, returns ptr to first obj
-//void llist_itr_release(LLIST_ITR *itr);               // release iterator
-void *llist_itr_next(LLIST_ITR *itr);                 // iterates, returns ptr to next obj
+void *llist_itr_init(LLIST_D_ *l, LLIST_D__ITR *itr);       // linked list iterator, returns ptr to first obj
+//void llist_itr_release(LLIST_D__ITR *itr);               // release iterator
+void *llist_itr_next(LLIST_D__ITR *itr);                 // iterates, returns ptr to next obj
 
-void *llist_itr_insert(LLIST_ITR *itr, void *o);  // insert object at itr point, iterates to and returns ptr to new obj
-void *llist_itr_remove(LLIST_ITR *itr);           // remove obj at itr, iterates to and returns ptr to next obj
+void *llist_itr_insert(LLIST_D__ITR *itr, void *o);  // insert object at itr point, iterates to and returns ptr to new obj
+void *llist_itr_remove(LLIST_D__ITR *itr);           // remove obj at itr, iterates to and returns ptr to next obj
 
-int llist_count(LLIST *l);    // returns number of obj in list
+int llist_count(LLIST_D_ *l);    // returns number of obj in list
 
-#endif /* OSCAMLLIST_H_ */
+#endif /* OSCAMLLIST_D__H_ */

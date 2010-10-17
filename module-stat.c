@@ -115,7 +115,7 @@ READER_STAT *get_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 			load_stat_from_file(ridx);
 	}
 
-	LLIST_ITR itr;
+	LLIST_D__ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
 	while (stat) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
@@ -139,7 +139,7 @@ int remove_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 
 	pthread_mutex_lock(&stat_busy);
 	int c = 0;
-	LLIST_ITR itr;
+	LLIST_D__ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
 	while (stat) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
@@ -189,7 +189,7 @@ void save_stat_to_file(int ridx)
 		return;
 	}
 
-	LLIST_ITR itr;
+	LLIST_D__ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
 
 	if (!stat) {
@@ -535,7 +535,7 @@ void clear_reader_stat(int ridx)
 
 	pthread_mutex_lock(&stat_busy);
 			
-	LLIST_ITR itr;
+	LLIST_D__ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[ridx], &itr);
 	while (stat) {
 		free(stat);

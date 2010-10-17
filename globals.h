@@ -1006,7 +1006,7 @@ struct s_config
 	uchar		http_dyndns[64];
 #endif
 	int			failbantime;
-	LLIST 		*v_list; //failban list
+	LLIST_D_ 		*v_list; //failban list
 	int		c33_port;
 	in_addr_t	c33_srvip;
 	uchar		c33_key[16];

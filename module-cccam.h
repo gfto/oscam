@@ -66,11 +66,11 @@ struct cc_card {
 	uint8 hop;
 	uint8 maxdown;
 	uint8 hexserial[8]; // card serial (for au)
-	LLIST *providers; // providers (struct cc_provider)
-	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
+	LLIST_D_ *providers; // providers (struct cc_provider)
+	LLIST_D_ *badsids; // sids that have failed to decode (struct cc_srvid)
 	time_t time;
-	LLIST *goodsids; //sids that could decoded (struct cc_srvid)
-	LLIST *remote_nodes; //remote note id, 8 bytes
+	LLIST_D_ *goodsids; //sids that could decoded (struct cc_srvid)
+	LLIST_D_ *remote_nodes; //remote note id, 8 bytes
 };
 
 struct cc_reported_carddata {
@@ -129,23 +129,23 @@ struct cc_data {
 	int cmd05_offset;
 	uint8 receive_buffer[CC_MAXMSGSIZE];
 	
-	LLIST *cards; // cards list
+	LLIST_D_ *cards; // cards list
 	int cards_modified;
 
 	int max_ecms;
 	int ecm_counter;
 	uint32 report_carddata_id; //Server only
-	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
+	LLIST_D_ *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
 	int just_logged_in; //true for checking NOK direct after login
 	uint8 key_table; //key for CMD 0B
 
-	LLIST *pending_emms; //pending emm list
+	LLIST_D_ *pending_emms; //pending emm list
 	
 	uint32 recv_ecmtask;
 
-	LLIST *current_cards; //reader: current card cache
+	LLIST_D_ *current_cards; //reader: current card cache
 	int server_ecm_pending;                    //initialized by server
-	LLIST *server_caid_infos[CS_MAXREADER];
+	LLIST_D_ *server_caid_infos[CS_MAXREADER];
 	long server_caid_size[CS_MAXREADER];
 	ushort server_ecm_idx;
 	
@@ -158,7 +158,7 @@ struct cc_data {
 	
 	//Extended Mode for SPECIAL clients:
 	int extended_mode;
-	LLIST *extended_ecm_idx;
+	LLIST_D_ *extended_ecm_idx;
 };
 
 int cc_cli_init();

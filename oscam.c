@@ -82,7 +82,7 @@ int cs_check_violation(uint ip) {
 	if (cfg->failbantime) {
 
 		time_t now = time((time_t)0);
-		LLIST_ITR itr;
+		LLIST_D__ITR itr;
 		V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
 
 		while (v_ban_entry) {
@@ -110,7 +110,7 @@ void cs_add_violation(uint ip) {
 		if (!cfg->v_list)
 			cfg->v_list = llist_create();
 
-		LLIST_ITR itr;
+		LLIST_D__ITR itr;
 		V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
 		while (v_ban_entry) {
 			if (ip == v_ban_entry->v_ip) {

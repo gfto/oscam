@@ -10,12 +10,12 @@
 #include "module-obj-llist.h"
 #include "globals.h"
 
-LLIST *llist_create(void)
+LLIST_D_ *llist_create(void)
 {
-	LLIST *l = malloc(sizeof(LLIST));
+	LLIST_D_ *l = malloc(sizeof(LLIST_D_));
 	if (!l)
 		return NULL;
-	memset(l, 0, sizeof(LLIST));
+	memset(l, 0, sizeof(LLIST_D_));
 
 	pthread_mutex_init(&l->lock, NULL);
 
@@ -24,9 +24,9 @@ LLIST *llist_create(void)
 	return l;
 }
 
-void llist_destroy(LLIST *l)
+void llist_destroy(LLIST_D_ *l)
 {
-	LLIST_ITR itr;
+	LLIST_D__ITR itr;
 	if (!l)
 		return;
 	void *o = llist_itr_init(l, &itr);
@@ -38,9 +38,9 @@ void llist_destroy(LLIST *l)
 	free(l);
 }
 
-void llist_clear(LLIST *l)
+void llist_clear(LLIST_D_ *l)
 {
-	LLIST_ITR itr;
+	LLIST_D__ITR itr;
 	if (!l)
 		return;
 	void *o = llist_itr_init(l, &itr);
@@ -51,7 +51,7 @@ void llist_clear(LLIST *l)
 	pthread_mutex_destroy(&l->lock);
 }
 
-void *llist_append(LLIST *l, void *o)
+void *llist_append(LLIST_D_ *l, void *o)
 {
 	if (!l)
 		return NULL;
@@ -81,7 +81,7 @@ void *llist_append(LLIST *l, void *o)
 	return o;
 }
 
-void *llist_insert_first(LLIST *l, void *o)
+void *llist_insert_first(LLIST_D_ *l, void *o)
 {
 	if (!l)
 		return NULL;
@@ -111,14 +111,14 @@ void *llist_insert_first(LLIST *l, void *o)
 	return o;
 }
 
-void *llist_itr_init(LLIST *l, LLIST_ITR *itr)
+void *llist_itr_init(LLIST_D_ *l, LLIST_D__ITR *itr)
 {
 	if (!l || !itr)
 		return NULL;
 	// pthread_mutex_lock(&l->lock);
 	if (l->first) {
 
-		memset(itr, 0, sizeof(LLIST_ITR));
+		memset(itr, 0, sizeof(LLIST_D__ITR));
 		itr->cur = l->first;
 		itr->l = l;
 
@@ -128,12 +128,12 @@ void *llist_itr_init(LLIST *l, LLIST_ITR *itr)
 	return NULL;
 }
 /*
-void llist_itr_release(LLIST_ITR *itr)
+void llist_itr_release(LLIST_D__ITR *itr)
 {
  // pthread_mutex_unlock(&itr->l->lock);
 }
  */
-void *llist_itr_next(LLIST_ITR *itr)
+void *llist_itr_next(LLIST_D__ITR *itr)
 {
 	if (itr->cur->nxt) {
 		itr->cur = itr->cur->nxt;
@@ -143,7 +143,7 @@ void *llist_itr_next(LLIST_ITR *itr)
 	return NULL;
 }
 
-void *llist_itr_remove(LLIST_ITR *itr)  // this needs cleaning - I was lazy
+void *llist_itr_remove(LLIST_D__ITR *itr)  // this needs cleaning - I was lazy
 {
 	if (!itr || !itr->l || itr->l->items == 0)
 		return NULL;
@@ -175,7 +175,7 @@ void *llist_itr_remove(LLIST_ITR *itr)  // this needs cleaning - I was lazy
 	return itr->cur->obj;
 }
 
-int llist_count(LLIST *l)
+int llist_count(LLIST_D_ *l)
 {
 	return l->items;
 }

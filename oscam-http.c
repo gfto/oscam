@@ -1155,7 +1155,7 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
 
-	LLIST_ITR itr;
+	LLIST_D__ITR itr;
 	READER_STAT *stat = llist_itr_init(reader_stat[readeridx], &itr);
 
 	pthread_mutex_lock(&stat_busy);
@@ -1604,12 +1604,12 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			if (rcc && reader[ridx].tcp_connected == 2 && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
 
-				LLIST_ITR itr;
+				LLIST_D__ITR itr;
 				card = llist_itr_init(rcc->cards, &itr);
 				while (card) {
 					char *node_str = malloc(llist_count(card->remote_nodes)*(16+2));
 					char *node_ptr = node_str;
-					LLIST_ITR nitr;
+					LLIST_D__ITR nitr;
 					uint8 *node = llist_itr_init(card->remote_nodes, &nitr);
 					while (node) {
 						if (node_ptr != node_str) {
@@ -1628,7 +1628,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					free(node_str);
 
 					int provcount = 0;
-					LLIST_ITR pitr;
+					LLIST_D__ITR pitr;
 					struct cc_provider *prov = llist_itr_init(card->providers,
 							&pitr);
 					while (prov) {
@@ -2229,7 +2229,7 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 void send_oscam_failban(struct templatevars *vars, FILE *f, struct uriparams *params) {
 
 	uint ip2delete = 0;
-	LLIST_ITR itr;
+	LLIST_D__ITR itr;
 	V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {

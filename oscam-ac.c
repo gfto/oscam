@@ -6,8 +6,8 @@
 //static time_t ac_last_chk;
 static uchar  ac_ecmd5[CS_ECMSTORESIZE];
 
-LLIST *ac_stat_list = NULL; //struct s_acasc
-LLIST *acasc_list = NULL;   //struct  s_acasc_shm
+LLIST_D_ *ac_stat_list = NULL; //struct s_acasc
+LLIST_D_ *acasc_list = NULL;   //struct  s_acasc_shm
 
 int ac_init_log(void)
 {
@@ -68,7 +68,7 @@ void ac_do_stat()
   int i, j, idx, exceeds, maxval, prev_deny=0;
   struct s_client *cl_idx;
 
-  LLIST_ITR itr1, itr2;
+  LLIST_D__ITR itr1, itr2;
   i = 1;
   struct s_acasc *ac_stat = llist_itr_init(ac_stat_list, &itr1);
   struct s_acasc_shm *acasc = llist_itr_init(acasc_list, &itr2);
@@ -186,7 +186,7 @@ static int ac_dw_weight(ECM_REQUEST *er)
 
 struct s_acasc_shm *get_acasc(ushort ac_idx) {
 	int i=1;
-	LLIST_ITR itr;
+	LLIST_D__ITR itr;
 
 	struct s_acasc_shm *acasc = llist_itr_init(acasc_list, &itr);
 	while (acasc) {
