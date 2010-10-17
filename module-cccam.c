@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include "globals.h"
 #include "module-cccam.h"
-#include "module-obj-llist.h"
 #include <time.h>
 #include "reader-common.h"
 #include <poll.h>
@@ -145,26 +144,28 @@ int sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2) {
 }
 
 int is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
-	LLIST_D__ITR sitr;
-	struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
-	while (srvid) {
+	LL_ITER *it = ll_iter_create(card->badsids);
+	struct cc_srvid *srvid; 
+	while ((srvid = ll_iter_next(it))) {
 		if (sid_eq(srvid, srvid_blocked)) {
+            ll_iter_release(it);
 			return 1;
 		}
-		srvid = llist_itr_next(&sitr);
 	}
+    ll_iter_release(it);
 	return 0;
 }
 
 int is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
-	LLIST_D__ITR sitr;
-	struct cc_srvid *srvid = llist_itr_init(card->goodsids, &sitr);
-	while (srvid) {
+	LL_ITER *it = ll_iter_create(card->goodsids);
+	struct cc_srvid *srvid;
+	while ((srvid = ll_iter_next(it))) {
 		if (sid_eq(srvid, srvid_good)) {
+            ll_iter_release(it);
 			return 1;
 		}
-		srvid = llist_itr_next(&sitr);
 	}
+    ll_iter_release(it);
 	return 0;
 }
 
@@ -175,7 +176,7 @@ void add_sid_block(struct s_client *cl, struct cc_card *card, struct cc_srvid *s
 	struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
 	if (srvid) {
 		*srvid = *srvid_blocked;
-		llist_append(card->badsids, srvid);
+		ll_append(card->badsids, srvid);
 		cs_debug_mask(D_TRACE, "%s added sid block %04X(%d) for card %08x",
 				getprefix(), srvid_blocked->sid, srvid_blocked->ecmlen,
 				card->id);
@@ -184,27 +185,21 @@ void add_sid_block(struct s_client *cl, struct cc_card *card, struct cc_srvid *s
 
 void remove_sid_block(struct cc_card *card,
 		struct cc_srvid *srvid_blocked) {
-	LLIST_D__ITR sitr;
-	struct cc_srvid *srvid = llist_itr_init(card->badsids, &sitr);
-	while (srvid) {
-		if (sid_eq(srvid, srvid_blocked)) {
-			free(srvid);
-			srvid = llist_itr_remove(&sitr);
-		} else
-			srvid = llist_itr_next(&sitr);
-	}
+	LL_ITER *it = ll_iter_create(card->badsids);
+	struct cc_srvid *srvid;
+	while ((srvid = ll_iter_next(it)))
+		if (sid_eq(srvid, srvid_blocked))
+			ll_iter_remove_data(it);
+    ll_iter_release(it);
 }
 
 void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
-	LLIST_D__ITR sitr;
-	struct cc_srvid *srvid = llist_itr_init(card->goodsids, &sitr);
-	while (srvid) {
-		if (sid_eq(srvid, srvid_good)) {
-			free(srvid);
-			srvid = llist_itr_remove(&sitr);
-		} else
-			srvid = llist_itr_next(&sitr);
-	}
+	LL_ITER *it = ll_iter_create(card->goodsids);
+	struct cc_srvid *srvid;
+	while ((srvid = ll_iter_next(it)))
+		if (sid_eq(srvid, srvid_good))
+            ll_iter_remove_data(it);
+    ll_iter_release(it);
 }
 
 void add_good_sid(struct s_client *cl, struct cc_card *card, struct cc_srvid *srvid_good) {
@@ -215,19 +210,18 @@ void add_good_sid(struct s_client *cl, struct cc_card *card, struct cc_srvid *sr
 	struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
 	if (srvid) {
 		memcpy(srvid, srvid_good, sizeof(struct cc_srvid));
-		llist_append(card->goodsids, srvid);
+		ll_append(card->goodsids, srvid);
 		cs_debug_mask(D_TRACE, "%s added good sid %04X(%d) for card %08x",
 				getprefix(), srvid_good->sid, srvid_good->ecmlen, card->id);
 	}
 }
 
-void free_current_cards(LLIST_D_ *current_cards) {
-	LLIST_D__ITR itr;
-	struct cc_current_card *c = llist_itr_init(current_cards, &itr);
-	while (c) {
-		free(c);
-		c = llist_itr_remove(&itr);
-	}
+void free_current_cards(LLIST *current_cards) {
+	LL_ITER *it = ll_iter_create(current_cards);
+	struct cc_current_card *c;
+	while ((c = ll_iter_next(it)))
+        c = ll_iter_remove(it);
+    ll_iter_release(it);
 }
 
 /**
@@ -268,7 +262,7 @@ struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl, uint8 send
 	eei->ecm_idx = ecm_idx;
 	eei->card = card;
 	eei->srvid = srvid;
-	llist_append(cc->extended_ecm_idx, eei);
+	ll_append(cc->extended_ecm_idx, eei);
 	//cs_debug_mask(D_TRACE, "%s add extended ecm-idx: %d:%d", getprefix(), send_idx, ecm_idx);
 	return eei;
 }
@@ -277,18 +271,18 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx(struct s_client *cl, uint8 send
 		int remove) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
-	LLIST_D__ITR itr;
-	eei = llist_itr_init(cc->extended_ecm_idx, &itr);
-	while (eei) {
+	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(it))) {
 		if (eei->send_idx == send_idx) {
 			if (remove)
-				llist_itr_remove(&itr);
+                ll_iter_remove(it);
 			//cs_debug_mask(D_TRACE, "%s get by send-idx: %d FOUND: %d",
 			//		getprefix(), send_idx, eei->ecm_idx);
+            ll_iter_release(it);
 			return eei;
 		}
-		eei = llist_itr_next(&itr);
 	}
+    ll_iter_release(it);
 	cs_debug_mask(D_TRACE, "%s get by send-idx: %d NOT FOUND", getprefix(),
 			send_idx);
 	return NULL;
@@ -298,17 +292,17 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl, ush
 		int remove) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
-	LLIST_D__ITR itr;
-	eei = llist_itr_init(cc->extended_ecm_idx, &itr);
-	while (eei) {
+	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
+    while ((eei = ll_iter_next(it))) {
 		if (eei->ecm_idx == ecm_idx) {
 			if (remove)
-				llist_itr_remove(&itr);
+				ll_iter_remove(it);
 			//cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d FOUND: %d",
 			//		getprefix(), ecm_idx, eei->send_idx);
-			return eei;
+			ll_iter_release(it);
+            return eei;
 		}
-		eei = llist_itr_next(&itr);
+        ll_iter_release(it);
 	}
 	cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d NOT FOUND", getprefix(),
 			ecm_idx);
@@ -316,28 +310,21 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl, ush
 }
 
 void free_extended_ecm_idx_by_card(struct s_client *cl, struct cc_card *card) {
-        struct cc_data *cc = cl->cc;
+    struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
-	LLIST_D__ITR itr;
-
-	eei = llist_itr_init(cc->extended_ecm_idx, &itr);
-	while (eei) {
-		if (eei->card == card) {
-			free(eei);
-			eei = llist_itr_remove(&itr);
-		} else
-			eei = llist_itr_next(&itr);
-	}
+	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(it)))
+		if (eei->card == card)
+			ll_iter_remove_data(it);
+    ll_iter_release(it);
 }
 
 void free_extended_ecm_idx(struct cc_data *cc) {
 	struct cc_extended_ecm_idx *eei;
-	LLIST_D__ITR itr;
-	eei = llist_itr_init(cc->extended_ecm_idx, &itr);
-	while (eei) {
-		free(eei);
-		eei = llist_itr_remove(&itr);
-	}
+	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
+	while ((eei = ll_iter_next(it)))
+		ll_iter_remove_data(it);
+    ll_iter_release(it);
 }
 
 /**
@@ -649,40 +636,39 @@ int send_cmd05_answer(struct s_client *cl) {
 
 struct cc_current_card *cc_find_current_card(struct cc_data *cc,
 		struct cc_card *card) {
-	LLIST_D__ITR itr;
-	struct cc_current_card *c = llist_itr_init(cc->current_cards, &itr);
-	while (c) {
-		if (c->card == card)
+    LL_ITER *it = ll_iter_create(cc->current_cards);
+    struct cc_current_card *c;
+    while ((c = ll_iter_next(it)))
+		if (c->card == card) {
+            ll_iter_release(it);
 			return c;
-		c = llist_itr_next(&itr);
-	}
+        }
+    ll_iter_release(it);
 	return NULL;
 }
 
 struct cc_current_card *cc_find_current_card_by_srvid(
 		struct cc_data *cc, ushort caid, ulong prov, struct cc_srvid *srvid) {
-	LLIST_D__ITR itr;
-	struct cc_current_card *c = llist_itr_init(cc->current_cards, &itr);
-	while (c) {
+    LL_ITER *it = ll_iter_create(cc->current_cards);
+    struct cc_current_card *c;
+    while ((c = ll_iter_next(it)))
 		if (c->card->caid == caid && c->prov == prov
-				&& sid_eq(&c->srvid, srvid))
+				&& sid_eq(&c->srvid, srvid)) {
+            ll_iter_release(it);
 			return c;
-		c = llist_itr_next(&itr);
-	}
+        }
+    ll_iter_release(it);
 	return NULL;
 }
 
 void cc_remove_current_card(struct cc_data *cc,
 		struct cc_current_card *current_card) {
-	LLIST_D__ITR itr;
-	struct cc_current_card *c = llist_itr_init(cc->current_cards, &itr);
-	while (c) {
-		if (c == current_card) {
-			free(c);
-			c = llist_itr_remove(&itr);
-		} else
-			c = llist_itr_next(&itr);
-	}
+    LL_ITER *it = ll_iter_create(cc->current_cards);
+    struct cc_current_card *c;
+    while ((c = ll_iter_next(it)))
+		if (c == current_card)
+            ll_iter_remove_data(it);
+	ll_iter_release(it);
 
 }
 
@@ -773,7 +759,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
 	struct cc_current_card *current_card;
-	LLIST_D__ITR itr;
+	LL_ITER *it;
 	ECM_REQUEST *cur_er;
 	struct timeb cur_time;
 	cs_ftime(&cur_time);
@@ -797,7 +783,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	}
 
 	//No Card? Waiting for shares
-	if (!llist_count(cc->cards)) {
+	if (!ll_count(cc->cards)) {
 		rdr->fd_error++;
 		cs_debug_mask(D_TRACE, "%s NO CARDS!", getprefix());
 		return 0;
@@ -879,15 +865,15 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	//then check all other cards
 	if (!card) {
-			struct cc_card *ncard = llist_itr_init(cc->cards, &itr);
-			while (ncard) {
+            it = ll_iter_create(cc->cards);
+			struct cc_card *ncard;
+			while ((ncard = ll_iter_next(it))) {
 				if (ncard->caid == cur_er->caid) { // caid matches
 					int s = is_sid_blocked(ncard, &cur_srvid);
 
-					LLIST_D__ITR pitr;
-					struct cc_provider *provider = llist_itr_init(
-							ncard->providers, &pitr);
-					while (provider && !s) {
+					LL_ITER *it2 = ll_iter_create(ncard->providers);
+					struct cc_provider *provider;
+                    while ((provider = ll_iter_next(it)) && !s) {
 						if (!cur_er->prid || !provider->prov || provider->prov
 								== cur_er->prid) { // provid matches
 							if (h < 0 || ncard->hop < h || (ncard->hop == h
@@ -897,11 +883,11 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 								h = ncard->hop; // ncard has been matched
 							}
 						}
-						provider = llist_itr_next(&pitr);
 					}
+                    ll_iter_release(it2);
 				}
-				ncard = llist_itr_next(&itr);
 			}
+            ll_iter_release(it);
 	}
 
 	if (card) {
@@ -910,7 +896,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			current_card->card = card;
 			current_card->prov = cur_er->prid;
 			current_card->srvid = cur_srvid;
-			llist_insert_first(cc->current_cards, current_card);
+            ll_insert_at(cc->current_cards, current_card, 0);
 		}
 
 		card->time = time((time_t) 0);
@@ -958,10 +944,9 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid[0]);
 
 			rdr->nprov = 0;
-			LLIST_D__ITR pitr;
-			struct cc_provider *provider = llist_itr_init(card->providers,
-					&pitr);
-			while (provider) {
+			LL_ITER *it2 = ll_iter_create(card->providers);
+			struct cc_provider *provider;
+			while ((provider = ll_iter_next(it2))) {
 				if (provider->prov == cur_er->prid) {
 					memcpy(&rdr->prid[0], &provider->prov,
 							sizeof(provider->prov));
@@ -969,8 +954,8 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 					rdr->nprov = 1;
 					break;
 				}
-				provider = llist_itr_next(&pitr);
 			}
+            ll_iter_release(it2);
 			char saprov[20] = { 0 };
 			if (provider)
 				sprintf(saprov, "%06lX:%02X%02X%02X%02X", provider->prov,
@@ -999,32 +984,27 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			//cur_er->rcEx = 0;
 			//cs_sleepms(300);
 			rdr->last_s = rdr->last_g;
-
-			card = llist_itr_init(cc->cards, &itr);
-			while (card) {
+            it = ll_iter_create(cc->cards);
+			while ((card = ll_iter_next(it))) {
 				if (card->caid == cur_er->caid) { // caid matches
-					LLIST_D__ITR sitr;
-					struct cc_srvid *srvid = llist_itr_init(card->badsids,
-							&sitr);
-					while (srvid) {
-						if (sid_eq(srvid, &cur_srvid)) {
-							free(srvid);
-							srvid = llist_itr_remove(&sitr);
-						} else
-							srvid = llist_itr_next(&sitr);
+					LL_ITER *it2 = ll_iter_create(card->badsids);
+					struct cc_srvid *srvid;
+					while ((srvid = ll_iter_next(it2)))
+						if (sid_eq(srvid, &cur_srvid))
+                            ll_iter_remove_data(it2);
+                    ll_iter_release(it2);
 					}
 				}
-				card = llist_itr_next(&itr);
-			}
-		}
-		pthread_mutex_unlock(&cc->cards_busy);
-		if (!cc->extended_mode) {
-			rdr->available = 1;
-			pthread_mutex_unlock(&cc->ecm_busy);
-		}
-		cs_debug_mask(D_FUT, "cc_send_ecm out");
-		return -1;
-	}
+        }
+        ll_iter_release(it);
+    }
+    pthread_mutex_unlock(&cc->cards_busy);
+    if (!cc->extended_mode) {
+        rdr->available = 1;
+        pthread_mutex_unlock(&cc->ecm_busy);
+    }
+    cs_debug_mask(D_FUT, "cc_send_ecm out");
+    return -1;
 }
 
 /*
@@ -1059,9 +1039,9 @@ int cc_send_pending_emms(struct s_client *cl) {
 	struct s_reader *rdr = &reader[cl->ridx];
 	struct cc_data *cc = cl->cc;
 
-	LLIST_D__ITR itr;
-	uint8 *emmbuf = llist_itr_init(cc->pending_emms, &itr);
-	if (emmbuf) {
+	LL_ITER *it = ll_iter_create(cc->pending_emms);;
+	uint8 *emmbuf;
+	if ((emmbuf = ll_iter_next(it))) {
 		if (!cc->extended_mode) {
 			if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
 				return 0; //send later with cc_send_ecm
@@ -1077,10 +1057,14 @@ int cc_send_pending_emms(struct s_client *cl) {
 				emmbuf + 7));
 
 		cc_cmd_send(cl, emmbuf, size, MSG_EMM_ACK); // send emm
-		free(emmbuf);
-		llist_itr_remove(&itr);
-		return size;
+        
+        ll_iter_remove_data(it);
+        ll_iter_release(it);
+		
+        return size;
 	}
+    ll_iter_release(it);
+
 	cs_debug_mask(D_FUT, "cc_send_pending_emms out");
 	return 0;
 }
@@ -1091,14 +1075,14 @@ int cc_send_pending_emms(struct s_client *cl) {
  * */
 struct cc_card *get_card_by_hexserial(struct s_client *cl, uint8 *hexserial, uint16 caid) {
 	struct cc_data *cc = cl->cc;
-	LLIST_D__ITR itr;
-	struct cc_card *card = llist_itr_init(cc->cards, &itr);
-	while (card) {
+	LL_ITER *it = ll_iter_create(cc->cards);;
+	struct cc_card *card;
+	while ((card = ll_iter_next(it)))
 		if (card->caid == caid && memcmp(card->hexserial, hexserial, 8) == 0) { //found it!
+            ll_iter_release(it);
 			return card;
 		}
-		card = llist_itr_next(&itr);
-	}
+    ll_iter_release(it);
 	return NULL;
 }
 
@@ -1130,13 +1114,12 @@ int cc_send_emm(EMM_PACKET *ep) {
 
 	//Last used card is first card of current_cards:
 	pthread_mutex_lock(&cc->cards_busy);
-	LLIST_D__ITR itr;
-	struct cc_current_card *current_card = llist_itr_init(cc->current_cards,
-			&itr);
-	while (current_card && current_card->card->caid != caid) {
-		current_card = llist_itr_next(&itr);
-	}
-	struct cc_card *emm_card = (current_card != NULL) ? current_card->card
+    LL_ITER *it = ll_iter_create(cc->current_cards);
+	struct cc_current_card *current_card;
+	while ((current_card = ll_iter_next(it)) && current_card->card->caid != caid);
+    ll_iter_release(it);
+	
+    struct cc_card *emm_card = (current_card != NULL) ? current_card->card
 			: NULL;
 
 	if (!emm_card || emm_card->caid != caid) {
@@ -1177,7 +1160,7 @@ int cc_send_emm(EMM_PACKET *ep) {
 
 	pthread_mutex_unlock(&cc->cards_busy);
 
-	llist_append(cc->pending_emms, emmbuf);
+	ll_append(cc->pending_emms, emmbuf);
 	cc_send_pending_emms(cl);
 	
 	cs_debug_mask(D_FUT, "cc_send_emm out");
@@ -1188,29 +1171,19 @@ void cc_free_card(struct cc_card *card) {
 	if (!card)
 		return;
 
-	if (card->providers) {
-		LLIST_D__ITR bitr;
-		struct cc_provider *provider = llist_itr_init(card->providers, &bitr);
-		while (provider) {
-			free(provider);
-			provider = llist_itr_remove(&bitr);
-		}
-		llist_destroy(card->providers);
-	}
-	if (card->badsids)
-		llist_destroy(card->badsids);
-	if (card->goodsids)
-		llist_destroy(card->goodsids);
-	if (card->remote_nodes)
-		llist_destroy(card->remote_nodes);
-	free(card);
+    ll_destroy_data(card->providers);
+    ll_destroy_data(card->badsids);
+    ll_destroy_data(card->goodsids);
+    ll_destroy_data(card->remote_nodes);
+	
+    free(card);
 }
 
 /**
  * Server:
  * Adds a cccam-carddata buffer to the list of reported carddatas
  */
-void cc_add_reported_carddata(struct s_client *cl, LLIST_D_ *reported_carddatas, uint8 *buf,
+void cc_add_reported_carddata(struct s_client *cl, LLIST *reported_carddatas, uint8 *buf,
 		int len, struct s_reader *D_USE(rdr)) {
 	struct cc_reported_carddata *carddata = malloc(
 			sizeof(struct cc_reported_carddata));
@@ -1218,7 +1191,7 @@ void cc_add_reported_carddata(struct s_client *cl, LLIST_D_ *reported_carddatas,
 	memcpy(buf_copy, buf, len);
 	carddata->buf = buf_copy;
 	carddata->len = len;
-	llist_append(reported_carddatas, carddata);
+	ll_append(reported_carddatas, carddata);
 
 	cs_debug_mask(
 			D_EMM,
@@ -1239,40 +1212,31 @@ void cc_add_reported_carddata(struct s_client *cl, LLIST_D_ *reported_carddatas,
 	}
 }
 
-void cc_clear_reported_carddata(struct s_client *cl, LLIST_D_ *reported_carddatas,
+void cc_clear_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
 		int send_removed) {
-	LLIST_D__ITR itr;
-	struct cc_reported_carddata *carddata = llist_itr_init(reported_carddatas,
-			&itr);
-	while (carddata) {
+	LL_ITER *it = ll_iter_create(reported_carddatas);
+	struct cc_reported_carddata *carddata;
+	while ((carddata = ll_iter_next(it))) {
 		if (send_removed)
 			cc_cmd_send(cl, carddata->buf, 4, MSG_CARD_REMOVED);
 		free(carddata->buf);
-		free(carddata);
-		carddata = llist_itr_remove(&itr);
+        ll_iter_remove_data(it);
 	}
-
+    ll_iter_release(it);
 }
 
-void cc_free_reported_carddata(struct s_client *cl, LLIST_D_ *reported_carddatas,
+void cc_free_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
 		int send_removed) {
 	if (reported_carddatas) {
 		cc_clear_reported_carddata(cl, reported_carddatas, send_removed);
-		llist_destroy(reported_carddatas);
+		ll_destroy(reported_carddatas);
 	}
 }
 
-void cc_free_cardlist(LLIST_D_ *card_list) {
-	if (card_list) {
-		LLIST_D__ITR itr;
-		struct cc_card *card = llist_itr_init(card_list, &itr);
-		while (card) {
-			cc_free_card(card);
-			card = llist_itr_remove(&itr);
-		}
-		llist_destroy(card_list);
-	}
+void cc_free_cardlist(LLIST *card_list) {
+    ll_destroy_data(card_list);
 }
+
 /**
  * Clears and free the cc datas
  */
@@ -1284,20 +1248,9 @@ void cc_free(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_free in");
 	cc_free_cardlist(cc->cards);
 	cc_free_reported_carddata(cl, cc->reported_carddatas, 0);
-	if (cc->pending_emms) {
-		LLIST_D__ITR itr;
-		uint8 *ep = llist_itr_init(cc->pending_emms, &itr);
-		while (ep) {
-			free(ep);
-			ep = llist_itr_remove(&itr);
-		}
-		llist_destroy(cc->pending_emms);
-		cc->pending_emms = NULL;
-	}
-	if (cc->current_cards) {
-		free_current_cards(cc->current_cards);
-		llist_destroy(cc->current_cards);
-	}
+    ll_destroy_data(cc->pending_emms);
+    free_current_cards(cc->current_cards);
+    ll_destroy(cc->current_cards);
 	if (cc->extended_ecm_idx)
 		free_extended_ecm_idx(cc);
 	pthread_mutex_destroy(&cc->lock);
@@ -1382,10 +1335,10 @@ struct cc_card *read_card(uint8 *buf) {
 	struct cc_card *card = malloc(sizeof(struct cc_card));
 	memset(card, 0, sizeof(struct cc_card));
 
-	card->providers = llist_create();
-	card->badsids = llist_create();
-	card->goodsids = llist_create();
-	card->remote_nodes = llist_create();
+	card->providers = ll_create();
+	card->badsids = ll_create();
+	card->goodsids = ll_create();
+	card->remote_nodes = ll_create();
 	card->id = b2i(4, buf);
 	card->remote_id = b2i(4, buf + 4);
 	card->caid = b2i(2, buf + 8);
@@ -1395,7 +1348,7 @@ struct cc_card *read_card(uint8 *buf) {
 
 	//cs_debug("cccam: card %08x added, caid %04X, hop %d, key %s, count %d",
 	//		card->id, card->caid, card->hop, cs_hexdump(0, card->hexserial, 8),
-	//		llist_count(cc->cards));
+	//		ll_count(cc->cards));
 
 	int i;
 	for (i = 0; i < buf[20]; i++) { // providers
@@ -1406,7 +1359,7 @@ struct cc_card *read_card(uint8 *buf) {
 			cs_debug("      prov %d, %06x, sa %08x", i + 1, prov->prov, b2i(4,
 					prov->sa));
 
-			llist_append(card->providers, prov);
+			ll_append(card->providers, prov);
 		}
 	}
 	uint8 *ptr = buf+21+i*7;
@@ -1415,7 +1368,7 @@ struct cc_card *read_card(uint8 *buf) {
 	for (i = 0; i < remote_count; i++) {
 		uint8 *remote_node = malloc(8);
 		memcpy(remote_node, ptr+i*8, 8);
-		llist_append(card->remote_nodes, remote_node);
+		ll_append(card->remote_nodes, remote_node);
 	}
 	return card;
 }
@@ -1438,17 +1391,17 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card) {
 	buf[11] = card->maxdown;
 	memcpy(buf + 12, card->hexserial, 8);
 	int j = 0;
-	LLIST_D__ITR itr_prov;
-	struct cc_provider *prov = llist_itr_init(card->providers, &itr_prov);
-	while (prov) {
+    LL_ITER *it = ll_iter_create(card->providers);
+	struct cc_provider *prov;
+	while ((prov = ll_iter_next(it))) {
 		ulong prid = prov->prov;
 		buf[21 + (j * 7)] = prid >> 16;
 		buf[22 + (j * 7)] = prid >> 8;
 		buf[23 + (j * 7)] = prid & 0xFF;
 		memcpy(buf + 24 + (j * 7), prov->sa, 4);
-		prov = llist_itr_next(&itr_prov);
 		j++;
 	}
+    ll_iter_release(it);
 	buf[20] = j;
 
 	buf[21 + (j * 7)] = 1;
@@ -1460,15 +1413,15 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card) {
 void cc_card_removed( struct s_client *cl, uint32 shareid) {
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
-	LLIST_D__ITR itr;
+	LL_ITER *it = ll_iter_create(cc->cards);
 
 	pthread_mutex_lock(&cc->cards_busy);
-	card = llist_itr_init(cc->cards, &itr);
-	while (card) {
+	while ((card = ll_iter_next(it))) {
 		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
 			//cs_debug("cccam: card %08x removed, caid %04X, count %d",
-			//		card->id, card->caid, llist_count(cc->cards));
-			struct cc_card *next_card = llist_itr_remove(&itr);
+			//		card->id, card->caid, ll_count(cc->cards));
+			struct cc_card *next_card;
+            ll_iter_remove(it);
 			struct cc_current_card *current_card;
 			while ((current_card = cc_find_current_card(cc, card))) {
 				cs_debug_mask(D_TRACE, "%s current card %08x removed!",
@@ -1480,11 +1433,10 @@ void cc_card_removed( struct s_client *cl, uint32 shareid) {
 			card = next_card;
 			cc->cards_modified++;
 			//break;
-		} else {
-			card = llist_itr_next(&itr);
 		}
 	}
 	pthread_mutex_unlock(&cc->cards_busy);
+    ll_iter_release(it);
 }
 
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
@@ -1613,20 +1565,20 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		//SS: Hack:
 		//Check if we already have this card:
-		LLIST_D__ITR itr;
-		struct cc_card *old_card = llist_itr_init(cc->cards, &itr);
-		while (old_card) {
+        LL_ITER *it = ll_iter_create(cc->cards);
+		struct cc_card *old_card;
+		while ((old_card = ll_iter_next(it))) {
 			if (old_card->id == card->id) { //we aready have this card, delete it
 				cc_free_card(card);
 				card = old_card;
 				break;
 			}
-			old_card = llist_itr_next(&itr);
 		}
+        ll_iter_release(it);
 
 		card->time = time((time_t) 0);
 		if (!old_card)
-			llist_append(cc->cards, card);
+			ll_append(cc->cards, card);
 		cc->cards_modified++;
 
 		pthread_mutex_unlock(&cc->cards_busy);
@@ -2113,44 +2065,44 @@ int add_card_providers(struct cc_card *dest_card, struct cc_card *card, int copy
 	
 	//1. Copy nonexisting providers, ignore double:
 	struct cc_provider *prov_info;
-	LLIST_D__ITR itr_dest;
-	LLIST_D__ITR itr_src;
-	struct cc_provider *provider = llist_itr_init(card->providers, &itr_src);
-	while (provider) {
-		prov_info = llist_itr_init(dest_card->providers, &itr_dest);
-		while (prov_info) {
+    LL_ITER *it_dst, *it_src = ll_iter_create(card->providers);
+	struct cc_provider *provider;   
+	while ((provider = ll_iter_next(it_src))) {
+		it_dst = ll_iter_create(dest_card->providers);
+		while ((prov_info = ll_iter_next(it_dst))) {
 			if (prov_info->prov == provider->prov)
 				break;
-			prov_info = llist_itr_next(&itr_dest);
 		}
+        ll_iter_release(it_dst);
 		if (!prov_info) {
 			struct cc_provider *prov_new = malloc(sizeof(struct cc_provider));
 			memcpy(prov_new, provider, sizeof(struct cc_provider));
-			llist_append(dest_card->providers, prov_new);
+			ll_append(dest_card->providers, prov_new);
 			modified = 1;
 		}
-		provider = llist_itr_next(&itr_src);
 	}
+    ll_iter_release(it_src);
 	
 	if (copy_remote_nodes) {
 		//2. Copy nonexisting remote_nodes, ignoring existing:
-		uint8 *remote_node = llist_itr_init(card->remote_nodes, &itr_src);
+        it_src = ll_iter_create(card->remote_nodes);
+		uint8 *remote_node;
 		uint8 *remote_node2;
-		while (remote_node) {
-			remote_node2 = llist_itr_init(dest_card->remote_nodes, &itr_dest);
-			while (remote_node2) {
+		while ((remote_node = ll_iter_next(it_src))) {
+            it_dst = ll_iter_create(dest_card->remote_nodes);
+			while ((remote_node2 = ll_iter_next(it_dst))) {
 				if (memcmp(remote_node, remote_node2, 8) == 0)
 					break;
-				remote_node2 = llist_itr_next(&itr_dest);
 			}
+            ll_iter_release(it_dst);
 			if (!remote_node2) {
 				uint8* remote_node_new = malloc(8);
 				memcpy(remote_node_new, remote_node, 8);
-				llist_append(dest_card->remote_nodes, remote_node_new);
+				ll_append(dest_card->remote_nodes, remote_node_new);
 				modified = 1;
 			}
-			remote_node = llist_itr_next(&itr_src);
 		}
+        ll_iter_release(it_src);
 	}
 	return modified;
 }
@@ -2158,20 +2110,27 @@ int add_card_providers(struct cc_card *dest_card, struct cc_card *card, int copy
 struct cc_card *create_card(struct cc_card *card) {
 	struct cc_card *card2 = malloc(sizeof(struct cc_card));
 	memcpy(card2, card, sizeof(struct cc_card));
-	card2->providers = llist_create();
-	card2->badsids = llist_create();
-	card2->goodsids = llist_create();
-	card2->remote_nodes = llist_create();
+	card2->providers = ll_create();
+	card2->badsids = ll_create();
+	card2->goodsids = ll_create();
+	card2->remote_nodes = ll_create();
 	return card2;
 }
 
 int same_last_node(struct cc_card *card1, struct cc_card *card2) {
+    uint8 *node1 = NULL, *node2 = NULL;
+    int i;
+    int nodes1 = ll_count(card1->remote_nodes), nodes2 = ll_count(card2->remote_nodes);
+    
+    LL_ITER *it = ll_iter_create(card1->remote_nodes);
+    for (i = 0; i < nodes1; i++) node1 = ll_iter_next(it);
+    ll_iter_release(it);
+	
+    it = ll_iter_create(card2->remote_nodes);
+    for (i = 0; i < nodes2; i++) node2 = ll_iter_next(it);
+    ll_iter_release(it);
 
-	if (!card1->remote_nodes->last || !card2->remote_nodes->last)
-		return 0;
-		
-	uint8 *node1 = card1->remote_nodes->last->obj;
-	uint8 *node2 = card2->remote_nodes->last->obj;
+    if (!node1 || !node2) return 0;
 
 	return !memcmp(node1, node2, 8);
 }
@@ -2179,30 +2138,28 @@ int same_last_node(struct cc_card *card1, struct cc_card *card2) {
 /**
  * Adds a new card to a cardlist.
  */
-int add_card_to_serverlist(LLIST_D_ *cardlist, struct cc_card *card, int reshare) {
+int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 	int modified = 0;
-	LLIST_D__ITR itr;
-	struct cc_card *card2 = llist_itr_init(cardlist, &itr);
+    LL_ITER *it = ll_iter_create(cardlist);
+	struct cc_card *card2;
 
 	//Minimize all, transmit just CAID
 	if (cfg->cc_minimize_cards == MINIMIZE_CAID) {
-		while (card2) {
+		while ((card2 = ll_iter_next(it)))
 			if (card2->caid == card->caid)
 				break;
-			card2 = llist_itr_next(&itr);
-		}
 		if (!card2) {
 			card2 = create_card(card);
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
-			llist_append(cardlist, card2);
+			ll_append(cardlist, card2);
 			modified = 1;
 
 			//Null-Provider for all Providers!
 			struct cc_provider *prov_new = malloc(sizeof(struct cc_provider));
 			memset(prov_new, 0, sizeof(struct cc_provider));
-			llist_append(card2->providers, prov_new);
+			ll_append(card2->providers, prov_new);
 		} else {
 			if (card->hop < card2->hop) {
 				card2->hop = card->hop;
@@ -2211,18 +2168,17 @@ int add_card_to_serverlist(LLIST_D_ *cardlist, struct cc_card *card, int reshare
 		}
 
 	} else if (cfg->cc_minimize_cards == MINIMIZE_HOPS) {
-		while (card2) {
-			if (card2->caid == card->caid && llist_count(card2->providers)
+		while ((card2 = ll_iter_next(it))) {
+			if (card2->caid == card->caid && ll_count(card2->providers)
 					< CS_MAXPROV)
 				break;
-			card2 = llist_itr_next(&itr);
 		}
 		if (!card2) {
 			card2 = create_card(card);
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
-			llist_append(cardlist, card2);
+			ll_append(cardlist, card2);
 			modified = 1;
 		} else {
 			if (card->hop < card2->hop) {
@@ -2233,24 +2189,24 @@ int add_card_to_serverlist(LLIST_D_ *cardlist, struct cc_card *card, int reshare
 		if (add_card_providers(card2, card, 0))
 			modified = 1;
 	} else {
-		while (card2) {
+		while ((card2 = ll_iter_next(it))) {
 			if (card2->caid == card->caid
 					&& card2->remote_id == card->remote_id 
 					&& same_last_node(card2, card))
 				break;
-			card2 = llist_itr_next(&itr);
 		}
 		if (!card2) {
 			card2 = create_card(card);
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
-			llist_append(cardlist, card2);
+			ll_append(cardlist, card2);
 			modified = 1;
 			if (add_card_providers(card2, card, 1))
 				modified = 1;
 		}
 	}
+    ll_iter_release(it);
 	return modified;
 }
 
@@ -2285,8 +2241,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 	else
 		id = cc->report_carddata_id;
 
-	LLIST_D_ *server_cards = llist_create();
-	LLIST_D_ *reported_carddatas = llist_create();
+	LLIST *server_cards = ll_create();
+	LLIST *reported_carddatas = ll_create();
 
 	int isau = is_au(cl);
 	
@@ -2470,9 +2426,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 			if (rcc && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
 
-				LLIST_D__ITR itr;
-				card = llist_itr_init(rcc->cards, &itr);
-				while (card) {
+                LL_ITER *it = ll_iter_create(rcc->cards);
+				while ((card = ll_iter_next(it))) {
 					if (card->hop <= maxhops && 
 							chk_ctab(card->caid, &cl->ctab) && chk_ctab(
 							card->caid, &rdr->ctab)) {
@@ -2480,18 +2435,17 @@ int cc_srv_report_cards(struct s_client *cl) {
                                                 if (cfg->cc_ignore_reshare || card->maxdown > 0) {
                                                         int ignore = 0;
 
-                                                        LLIST_D__ITR itr_prov;
-                                                        struct cc_provider *prov = llist_itr_init(
-								card->providers, &itr_prov);
-                                                        while (prov) {
+                                                        LL_ITER *it2 = ll_iter_create(card->providers);
+                                                        struct cc_provider *prov;
+                                                        while ((prov = ll_iter_next(it2))) {
 							        ulong prid = prov->prov;
-                                                                prov = llist_itr_next(&itr_prov);
                                                                 if (!chk_srvid_by_caid_prov(cl, card->caid, prid) || 
                                                                                 !chk_srvid_by_caid_prov(rdr->client, card->caid, prid)) {
                                                                         ignore = 1;
                                                                         break;
                                                                 }
                                                         }
+                                                        ll_iter_release(it2);
                                                         if (!ignore) { //Filtered by service
                                                                 int new_reshare=cfg->cc_ignore_reshare?reshare:(card->maxdown-1);
                                                                 if (new_reshare>reshare)
@@ -2501,9 +2455,8 @@ int cc_srv_report_cards(struct s_client *cl) {
                                                         }
 						}
 					}
-					card = llist_itr_next(&itr);
-
 				}
+                ll_iter_release(it);
 				pthread_mutex_unlock(&rcc->cards_busy);
 			}
 			cs_debug_mask(D_TRACE, "%s got %d cards from %s", getprefix(),
@@ -2512,10 +2465,10 @@ int cc_srv_report_cards(struct s_client *cl) {
 	}
 
 	//report reshare cards:
-	//cs_debug_mask(D_TRACE, "%s reporting %d cards", getprefix(), llist_count(server_cards));
-	LLIST_D__ITR itr;
-	struct cc_card *card = llist_itr_init(server_cards, &itr);
-	while (card) {
+	//cs_debug_mask(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
+    LL_ITER *it = ll_iter_create(server_cards);
+	struct cc_card *card;
+	while ((card = ll_iter_next(it))) {
 		//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
 		memset(buf, 0, sizeof(buf));
 		buf[0] = id >> 24;
@@ -2533,33 +2486,33 @@ int cc_srv_report_cards(struct s_client *cl) {
 		if (isau)
 			memcpy(buf + 12, card->hexserial, 8);
 		int j = 0;
-		LLIST_D__ITR itr_prov;
-		struct cc_provider *prov = llist_itr_init(card->providers, &itr_prov);
-		while (prov) {
+        LL_ITER *it2 = ll_iter_create(card->providers);
+		struct cc_provider *prov;
+		while ((prov = ll_iter_next(it2))) {
 			ulong prid = prov->prov;
 			buf[21 + (j * 7)] = prid >> 16;
 			buf[22 + (j * 7)] = prid >> 8;
 			buf[23 + (j * 7)] = prid & 0xFF;
 			if (isau)
 				memcpy(buf+24+(j*7), prov->sa, 4);
-			prov = llist_itr_next(&itr_prov);
 			//cs_debug_mask(D_TRACE, "%s prov %06X", getprefix(), prid);
 			j++;
 		}
+        ll_iter_release(it2);
 		buf[20] = j;
 		int ofs = 21+(j*7);
-		buf[ofs] = 1+llist_count(card->remote_nodes);
+		buf[ofs] = 1+ll_count(card->remote_nodes);
 		//cs_debug_mask(D_TRACE, "%s count=%d", getprefix(), buf[ofs]);
 		ofs++;
 		
 		//Add all the others node id:
-		LLIST_D__ITR itr_node;
-		uint8 *remote_node = llist_itr_init(card->remote_nodes, &itr_node);
-		while (remote_node) {
+		LL_ITER *itr_node = ll_iter_create(card->remote_nodes);
+		uint8 *remote_node;
+		while ((remote_node = ll_iter_next(itr_node))) {
 			memcpy(buf+ofs, remote_node, 8);
-			remote_node = llist_itr_next(&itr_node);
 			ofs+=8;
 		}
+        ll_iter_release(itr_node);
 
 		//Add own node id:
 		memcpy(buf+ofs, cc->node_id, 8);
@@ -2570,14 +2523,14 @@ int cc_srv_report_cards(struct s_client *cl) {
 		//cs_debug_mask(D_TRACE, "%s ofs=%d", getprefix(), ofs);
 		cc_cmd_send(cl, buf, ofs, MSG_NEW_CARD);
 		cc_add_reported_carddata(cl, reported_carddatas, buf, ofs, &reader[r]);
-		card = llist_itr_next(&itr);
 	}
+    ll_iter_release(it);
 	cc_free_cardlist(server_cards);
 
 	cc->report_carddata_id = id;
 	cc->reported_carddatas = reported_carddatas;
 
-	int count = llist_count(reported_carddatas);
+	int count = ll_count(reported_carddatas);
 	cs_log("%s reported %d cards to client", getprefix(), count);
 	return count;
 }
@@ -2657,7 +2610,7 @@ int cc_srv_connect(struct s_client *cl) {
 
 		cl->cc = cc;
 		memset(cl->cc, 0, sizeof(struct cc_data));
-		cc->extended_ecm_idx = llist_create();
+		cc->extended_ecm_idx = ll_create();
 		
 		cc_init_cc(cc);
 	}
@@ -2886,24 +2839,24 @@ int cc_cli_connect(struct s_client *cl) {
 			return -1;
 		}
 		memset(cc, 0, sizeof(struct cc_data));
-		cc->cards = llist_create();
+		cc->cards = ll_create();
 		cl->cc = cc;
-		cc->pending_emms = llist_create();
-		cc->extended_ecm_idx = llist_create();
-		cc->current_cards = llist_create();
+		cc->pending_emms = ll_create();
+		cc->extended_ecm_idx = ll_create();
+		cc->current_cards = ll_create();
 		cc_init_cc(cc);
 	}else
 	{
 		if (cc->cards) 
 		{
-			LLIST_D__ITR itr;
-			struct cc_card *card = llist_itr_init(cc->cards, &itr);
-			while (card) 
-			{
+            LL_ITER *it = ll_iter_create(cc->cards);
+			struct cc_card *card;
+			while ((card = ll_iter_next(it))) {
 				cc_free_card(card);
-				card = llist_itr_remove(&itr);
-			}
-                }
+                ll_iter_remove(it);
+            }
+            ll_iter_release(it);
+        }
                 if (cc->current_cards)
 		        free_current_cards(cc->current_cards);
         	if (cc->extended_ecm_idx)
@@ -3168,3 +3121,4 @@ void module_cccam(struct s_module *ph) {
 	cc_node_id[6] = sum >> 8; 
         cc_node_id[7] = sum & 0xff;
 }
+

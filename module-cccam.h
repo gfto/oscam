@@ -7,7 +7,7 @@
 #ifndef MODULECCCAM_H_
 #define MODULECCCAM_H_
 
-#include "module-obj-llist.h"
+#include "oscam-datastruct-llist.h"
 
 #define CC_MAXMSGSIZE 512
 #define CC_MAX_PROV   16
@@ -66,11 +66,11 @@ struct cc_card {
 	uint8 hop;
 	uint8 maxdown;
 	uint8 hexserial[8]; // card serial (for au)
-	LLIST_D_ *providers; // providers (struct cc_provider)
-	LLIST_D_ *badsids; // sids that have failed to decode (struct cc_srvid)
+	LLIST *providers; // providers (struct cc_provider)
+	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
 	time_t time;
-	LLIST_D_ *goodsids; //sids that could decoded (struct cc_srvid)
-	LLIST_D_ *remote_nodes; //remote note id, 8 bytes
+	LLIST *goodsids; //sids that could decoded (struct cc_srvid)
+	LLIST *remote_nodes; //remote note id, 8 bytes
 };
 
 struct cc_reported_carddata {
@@ -129,23 +129,23 @@ struct cc_data {
 	int cmd05_offset;
 	uint8 receive_buffer[CC_MAXMSGSIZE];
 	
-	LLIST_D_ *cards; // cards list
+	LLIST *cards; // cards list
 	int cards_modified;
 
 	int max_ecms;
 	int ecm_counter;
 	uint32 report_carddata_id; //Server only
-	LLIST_D_ *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
+	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
 	int just_logged_in; //true for checking NOK direct after login
 	uint8 key_table; //key for CMD 0B
 
-	LLIST_D_ *pending_emms; //pending emm list
+	LLIST *pending_emms; //pending emm list
 	
 	uint32 recv_ecmtask;
 
-	LLIST_D_ *current_cards; //reader: current card cache
+	LLIST *current_cards; //reader: current card cache
 	int server_ecm_pending;                    //initialized by server
-	LLIST_D_ *server_caid_infos[CS_MAXREADER];
+	LLIST *server_caid_infos[CS_MAXREADER];
 	long server_caid_size[CS_MAXREADER];
 	ushort server_ecm_idx;
 	
@@ -158,7 +158,7 @@ struct cc_data {
 	
 	//Extended Mode for SPECIAL clients:
 	int extended_mode;
-	LLIST_D_ *extended_ecm_idx;
+	LLIST *extended_ecm_idx;
 };
 
 int cc_cli_init();

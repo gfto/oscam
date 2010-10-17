@@ -1604,14 +1604,13 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			if (rcc && reader[ridx].tcp_connected == 2 && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
 
-				LLIST_D__ITR itr;
-				card = llist_itr_init(rcc->cards, &itr);
-				while (card) {
-					char *node_str = malloc(llist_count(card->remote_nodes)*(16+2));
+                LL_ITER *it = ll_iter_create(rcc->cards);
+				while ((card = ll_iter_next(it))) {
+					char *node_str = malloc(ll_count(card->remote_nodes)*(16+2));
 					char *node_ptr = node_str;
-					LLIST_D__ITR nitr;
-					uint8 *node = llist_itr_init(card->remote_nodes, &nitr);
-					while (node) {
+                    LL_ITER *nit = ll_iter_create(card->remote_nodes);
+					uint8 *node;
+					while ((node = ll_iter_next(nit))) {
 						if (node_ptr != node_str) {
 							strcat(node_ptr, ",");
 							node_ptr++;
@@ -1619,8 +1618,8 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						sprintf(node_ptr, "%02X%02X%02X%02X%02X%02X%02X%02X", 
 							node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
 						node_ptr += 16;
-						node = llist_itr_next(&nitr);
 					}
+                    ll_iter_release(nit);
 
 					tpl_printf(vars, 1, "LOGHISTORY",
 							"caid: %04X hop: %d reshare: %d remote nodes: %s<BR>\n", 
@@ -1628,23 +1627,22 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					free(node_str);
 
 					int provcount = 0;
-					LLIST_D__ITR pitr;
-					struct cc_provider *prov = llist_itr_init(card->providers,
-							&pitr);
-					while (prov) {
+                    LL_ITER *pit = ll_iter_create(card->providers);
+					struct cc_provider *prov;
+					while ((prov = ll_iter_next(pit))) {
 						provider = get_provider(card->caid, prov->prov);
 
 						provcount++;
 						tpl_printf(vars, 1, "LOGHISTORY",
 								"&nbsp;&nbsp;-- Provider %d: %06X -- %s<BR>\n",
 								provcount, prov->prov, provider);
-						prov = llist_itr_next(&pitr);
 					}
+                    ll_iter_release(pit);
 
 					tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
 					caidcount++;
-					card = llist_itr_next(&itr);
 				}
+                ll_iter_release(it);
 				pthread_mutex_unlock(&rcc->cards_busy);
 
 			if (caidcount)
