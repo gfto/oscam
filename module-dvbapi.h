@@ -101,8 +101,12 @@ struct s_dvbapi_priority
 	ulong provid;
 	ushort srvid;
 	ushort chid;
+	ushort ecmpid;
+	ushort mapcaid;
+	ulong mapprovid;
+	int delay;
+	int force;
 	struct s_dvbapi_priority *next;
-	
 };
 
 
@@ -192,6 +196,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len);
 int dvbapi_open_device(int, int, int);
 int dvbapi_stop_filternum(int demux_index, int num);
 int dvbapi_stop_filter(int demux_index, int type);
+struct s_dvbapi_priority *dvbapi_check_prio_match(int demux_id, int pidindex, char type);
 
 #ifdef WITH_STAPI
 	#define cs_log(x...)	cs_log("stapi: "x)

@@ -1151,9 +1151,6 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option value=\"2\" ##PMTMODESELECTED2##>2 - disable camd.socket</option>\n\
 			<option value=\"3\" ##PMTMODESELECTED3##>3 - read PMT file on startup only</option>\n\
 		</SELECT></TD></TR>\n\
-		<TR><TD>Priority:</TD>   <TD><textarea name=\"priority\"    cols=\"98\" rows=\"4\" class=\"bt\">##PRIORITY##</textarea></TD></TR>\n\
-		<TR><TD>Ignore:</TD>     <TD><textarea name=\"ignore\"      cols=\"98\" rows=\"4\" class=\"bt\">##IGNORE##</textarea></TD></TR>\n\
-		<TR><TD>Cw_delay:</TD><TD><input name=\"cw_delay\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##CWDELAY##\"></TD></TR>\n\
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
 </form>\n\

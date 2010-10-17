@@ -1079,9 +1079,8 @@ struct s_config
 	char		dvbapi_usr[33];
 	int		dvbapi_boxtype;
 	int		dvbapi_pmtmode;
-	CAIDTAB	dvbapi_prioritytab;
-	CAIDTAB	dvbapi_ignoretab;
-	CAIDTAB	dvbapi_delaytab;
+	SIDTABBITS    dvbapi_sidtabok;	// positiv services
+	SIDTABBITS    dvbapi_sidtabno;	// negative services
 #endif
 
 #ifdef CS_ANTICASC
@@ -1346,7 +1345,7 @@ extern void chk_reader(char *token, char *value, struct s_reader *rdr);
 
 #ifdef HAVE_DVBAPI
 extern void chk_t_dvbapi(char *token, char *value);
-void dvbapi_chk_caidtab(char *caidasc, CAIDTAB *ctab);
+void dvbapi_chk_caidtab(char *caidasc, char type);
 #endif
 
 #ifdef WEBIF
