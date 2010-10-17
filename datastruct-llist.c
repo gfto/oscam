@@ -117,9 +117,9 @@ void ll_iter_insert(LL_ITER *it, void *obj)
 {
     if(obj) {
         LL_NODE *n = calloc(1, sizeof(LL_NODE));
-
         n->obj = obj;
         n->nxt = it->cur;
+        n->prv = it->cur->prv;
 
         it->cur->prv->nxt = n;
         it->cur->prv = n;
