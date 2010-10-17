@@ -1754,6 +1754,10 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 					//not found -> maybe card need emm
 					if (forceentry->force>0)
 						dvbapi_start_descrambling(i);
+					else {
+						dvbapi_try_next_caid(i);
+						return;
+					}
 				} else {
 					dvbapi_try_next_caid(i);
 					return;
