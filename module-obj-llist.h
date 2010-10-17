@@ -23,7 +23,7 @@ struct llist_node {
 	struct llist_node *nxt;
 };
 
-typedef struct llist {
+typedef struct llist_d {
 	struct llist_node *first;
 	struct llist_node *last;
 	int items;
