@@ -2087,11 +2087,11 @@ ulong get_reader_hexserial_crc(struct s_client *cl) {
 		return 0;
 
 	ulong crc = 0;
-	int r;
-	for (r = 0; r < CS_MAXREADER; r++) {
-		if (reader[r].enable && !reader[r].deleted && reader[r].client
-				&& !reader[r].audisabled)
-			crc += crc32(0, reader[r].hexserial, 8);
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+		if (rdr->enable && !rdr->deleted && rdr->client
+				&& !rdr->audisabled)
+			crc += crc32(0, rdr->hexserial, 8);
 	}
 	return crc;
 }
@@ -2290,50 +2290,51 @@ int cc_srv_report_cards(struct s_client *cl) {
 
 	int isau = is_au(cl);
 	
-	for (r = 0; r < CS_MAXREADER; r++) {
-		if (!reader[r].fd || !reader[r].enable || reader[r].deleted)
+	struct s_reader *rdr;
+	for (r=0,rdr=first_reader; rdr ; rdr=rdr->next, r++) {
+		if (!rdr->fd || !rdr->enable || rdr->deleted)
 			continue;
-		if (!(reader[r].grp & cl->grp))
+		if (!(rdr->grp & cl->grp))
 			continue;
-		reader_reshare = reader[r].cc_reshare;
+		reader_reshare = rdr->cc_reshare;
 
 		reshare = (reader_reshare < usr_reshare) ? reader_reshare : usr_reshare;
 		if (reshare < 0)
 			continue;
 
-		if (!reader[r].cc_id) {
-			reader[r].cc_id = (r+0x64)<<16 | fast_rnd()<<8 | fast_rnd();
+		if (!rdr->cc_id) {
+			rdr->cc_id = (r+0x64)<<16 | fast_rnd()<<8 | fast_rnd();
 		}
 
-		int au_allowed = !reader[r].audisabled && isau;
+		int au_allowed = !rdr->audisabled && isau;
 
 		flt = 0;
-		if (reader[r].typ != R_CCCAM && reader[r].ftab.filts) {
+		if (rdr->typ != R_CCCAM && rdr->ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
-				if (reader[r].ftab.filts[j].caid && chk_ctab(
-						reader[r].ftab.filts[j].caid, &cl->ctab)) {
+				if (rdr->ftab.filts[j].caid && chk_ctab(
+						rdr->ftab.filts[j].caid, &cl->ctab)) {
 					int ignore = 0;
 					memset(buf, 0, sizeof(buf));
 					buf[0] = id >> 24;
 					buf[1] = id >> 16;
 					buf[2] = id >> 8;
 					buf[3] = id & 0xff;
-					buf[4] = reader[r].cc_id >> 24;
-					buf[5] = reader[r].cc_id >> 16;
+					buf[4] = rdr->cc_id >> 24;
+					buf[5] = rdr->cc_id >> 16;
 					buf[6] = j >> 8;
 					buf[7] = j & 0xFF;
-					ushort caid = reader[r].ftab.filts[j].caid;
+					ushort caid = rdr->ftab.filts[j].caid;
 					buf[8] = caid >> 8;
 					buf[9] = caid & 0xff;
 					buf[10] = hop;
 					buf[11] = reshare;
 					//Setting UA: (Unique Address):
 					if (au_allowed)
-						cc_UA_oscam2cccam(reader[r].hexserial, buf + 12, caid);
-					buf[20] = reader[r].ftab.filts[j].nprids;
-					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", reader[r].ftab.filts[j].caid, reader[r].label, reader[r].cc_id);
-					for (k = 0; k < reader[r].ftab.filts[j].nprids; k++) {
-						ulong prid = reader[r].ftab.filts[j].prids[k];
+						cc_UA_oscam2cccam(rdr->hexserial, buf + 12, caid);
+					buf[20] = rdr->ftab.filts[j].nprids;
+					//cs_log("Ident CCcam card report caid: %04X readr %s subid: %06X", rdr->ftab.filts[j].caid, rdr->label, rdr->cc_id);
+					for (k = 0; k < rdr->ftab.filts[j].nprids; k++) {
+						ulong prid = rdr->ftab.filts[j].prids[k];
 						if (!chk_srvid_by_caid_prov(cl, caid, prid)) {
 							ignore = 1;
 							break;
@@ -2345,10 +2346,10 @@ int cc_srv_report_cards(struct s_client *cl) {
 						//cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
 						if (au_allowed) {
 							int l;
-							for (l = 0; l < reader[r].nprov; l++) {
+							for (l = 0; l < rdr->nprov; l++) {
 								ulong rprid = get_reader_prid(r, l);
 								if (rprid == prid)
-									cc_SA_oscam2cccam(&reader[r].sa[l][0], buf+ofs+3);
+									cc_SA_oscam2cccam(&rdr->sa[l][0], buf+ofs+3);
 							}
 						}
 					}
@@ -2366,17 +2367,17 @@ int cc_srv_report_cards(struct s_client *cl) {
 			}
 		}
 
-		if (reader[r].typ != R_CCCAM && !reader[r].caid[0] && !flt) {
+		if (rdr->typ != R_CCCAM && !rdr->caid[0] && !flt) {
 			flt = 0;
 			for (j = 0; j < CS_MAXCAIDTAB; j++) {
-				//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", reader[r].ctab.caid[j], reader[r].ctab.cmap[j]);
-				ushort lcaid = reader[r].ctab.caid[j];
+				//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", rdr->ctab.caid[j], rdr->ctab.cmap[j]);
+				ushort lcaid = rdr->ctab.caid[j];
 
 				if (!chk_ctab(lcaid, &cl->ctab))
 					continue;
 
 				if (!lcaid || (lcaid == 0xFFFF))
-					lcaid = reader[r].ctab.cmap[j];
+					lcaid = rdr->ctab.cmap[j];
 
 				if (lcaid && (lcaid != 0xFFFF)) {
 					memset(buf, 0, sizeof(buf));
@@ -2384,8 +2385,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 					buf[1] = id >> 16;
 					buf[2] = id >> 8;
 					buf[3] = id & 0xff;
-					buf[4] = reader[r].cc_id >> 24;
-					buf[5] = reader[r].cc_id >> 16;
+					buf[4] = rdr->cc_id >> 24;
+					buf[5] = rdr->cc_id >> 16;
 					buf[6] = j >> 8;
 					buf[7] = j & 0xFF;
 					buf[8] = lcaid >> 8;
@@ -2393,7 +2394,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 					buf[10] = hop;
 					buf[11] = reshare;
 					if (au_allowed)
-						cc_UA_oscam2cccam(reader[r].hexserial, buf + 12, lcaid);
+						cc_UA_oscam2cccam(rdr->hexserial, buf + 12, lcaid);
 					buf[20] = 1;
 					buf[21 + 7] = 1;
 					memcpy(buf + 22 + 7, cc->node_id, 8);
@@ -2406,27 +2407,27 @@ int cc_srv_report_cards(struct s_client *cl) {
 			}
 		}
 
-		if (reader[r].typ != R_CCCAM && reader[r].caid[0] && !flt && chk_ctab(
-				reader[r].caid[0], &cl->ctab)) {
-			//cs_log("tcp_connected: %d card_status: %d ", reader[r].tcp_connected, reader[r].card_status);
+		if (rdr->typ != R_CCCAM && rdr->caid[0] && !flt && chk_ctab(
+				rdr->caid[0], &cl->ctab)) {
+			//cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
 			memset(buf, 0, sizeof(buf));
 			buf[0] = id >> 24;
 			buf[1] = id >> 16;
 			buf[2] = id >> 8;
 			buf[3] = id & 0xff;
-			buf[4] = reader[r].cc_id >> 24;
-			buf[5] = reader[r].cc_id >> 16;
-			buf[6] = reader[r].cc_id >> 8;
-			buf[7] = reader[r].cc_id & 0xFF;
-			ushort caid = reader[r].caid[0];
+			buf[4] = rdr->cc_id >> 24;
+			buf[5] = rdr->cc_id >> 16;
+			buf[6] = rdr->cc_id >> 8;
+			buf[7] = rdr->cc_id & 0xFF;
+			ushort caid = rdr->caid[0];
 			buf[8] = caid >> 8;
 			buf[9] = caid & 0xff;
 			buf[10] = hop;
 			buf[11] = reshare;
 			if (au_allowed)
-				cc_UA_oscam2cccam(reader[r].hexserial, buf + 12, caid);
-			buf[20] = reader[r].nprov;
-			for (j = 0; j < reader[r].nprov; j++) {
+				cc_UA_oscam2cccam(rdr->hexserial, buf + 12, caid);
+			buf[20] = rdr->nprov;
+			for (j = 0; j < rdr->nprov; j++) {
 				ulong prid = get_reader_prid(r, j);
 				int ofs = 21 + (j * 7);
 				buf[ofs + 0] = prid >> 16;
@@ -2434,35 +2435,35 @@ int cc_srv_report_cards(struct s_client *cl) {
 				buf[ofs + 2] = prid & 0xFF;
 				//Setting SA (Shared Addresses):
 				if (au_allowed)
-					cc_SA_oscam2cccam(&reader[r].sa[j][0], buf+ofs+3);
+					cc_SA_oscam2cccam(&rdr->sa[j][0], buf+ofs+3);
 				//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
 			}
 			buf[21 + (j * 7)] = 1;
 			memcpy(buf + 22 + (j * 7), cc->node_id, 8);
 			id++;
 
-			if ((reader[r].tcp_connected || reader[r].card_status
-					== CARD_INSERTED) /*&& !reader[r].cc_id*/) {
-				//reader[r].cc_id = b2i(3, buf + 5);
+			if ((rdr->tcp_connected || rdr->card_status
+					== CARD_INSERTED) /*&& !rdr->cc_id*/) {
+				//rdr->cc_id = b2i(3, buf + 5);
 				int len = 30 + (j * 7);
 				cc_add_reported_carddata(cl, reported_carddatas, buf, len, &reader[r]);
 				cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], reader[r].card_status, reader[r].tcp_connected, reader[r].label, reader[r].cc_id);
-			} else if ((reader[r].card_status != CARD_INSERTED)
-					&& (!reader[r].tcp_connected) && reader[r].cc_id) {
-				//reader[r].cc_id = 0;
+				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], rdr->card_status, rdr->tcp_connected, rdr->label, rdr->cc_id);
+			} else if ((rdr->card_status != CARD_INSERTED)
+					&& (!rdr->tcp_connected) && rdr->cc_id) {
+				//rdr->cc_id = 0;
 				cc_cmd_send(cl, buf, 4, MSG_CARD_REMOVED);
-				//cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], reader[r].label);
+				//cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], rdr->label);
 			}
 		}
 
-		if (reader[r].typ == R_CCCAM && !flt) {
+		if (rdr->typ == R_CCCAM && !flt) {
 
 			cs_debug_mask(D_TRACE, "%s asking reader %s for cards...",
-					getprefix(), reader[r].label);
+					getprefix(), rdr->label);
 
 			struct cc_card *card;
-			struct s_client *rc = reader[r].client;
+			struct s_client *rc = rdr->client;
 			struct cc_data *rcc = rc->cc;
 
 			int count = 0;
@@ -2474,7 +2475,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				while (card) {
 					if (card->hop <= maxhops && 
 							chk_ctab(card->caid, &cl->ctab) && chk_ctab(
-							card->caid, &reader[r].ctab)) {
+							card->caid, &rdr->ctab)) {
                                                       
                                                 if (cfg->cc_ignore_reshare || card->maxdown > 0) {
                                                         int ignore = 0;
@@ -2486,7 +2487,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 							        ulong prid = prov->prov;
                                                                 prov = llist_itr_next(&itr_prov);
                                                                 if (!chk_srvid_by_caid_prov(cl, card->caid, prid) || 
-                                                                                !chk_srvid_by_caid_prov(reader[r].client, card->caid, prid)) {
+                                                                                !chk_srvid_by_caid_prov(rdr->client, card->caid, prid)) {
                                                                         ignore = 1;
                                                                         break;
                                                                 }
@@ -2506,7 +2507,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				pthread_mutex_unlock(&rcc->cards_busy);
 			}
 			cs_debug_mask(D_TRACE, "%s got %d cards from %s", getprefix(),
-					count, reader[r].label);
+					count, rdr->label);
 		}
 	}
 
@@ -2598,34 +2599,35 @@ void cc_init_cc(struct cc_data *cc) {
  * Starting readers to get cards:
  **/
 int cc_srv_wakeup_readers(struct s_client *cl) {
-	int r;
 	int wakeup = 0;
-	for (r = 0; r < CS_MAXREADER; r++) {
-		if (reader[r].typ != R_CCCAM)
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+		if (rdr->typ != R_CCCAM)
 			continue;
-		if (!reader[r].fd || !reader[r].enable || reader[r].deleted || reader[r].tcp_connected == 2)
+		if (!rdr->fd || !rdr->enable || rdr->deleted || rdr->tcp_connected == 2)
 			continue;
-		if (!(reader[r].grp & cl->grp))
+		if (!(rdr->grp & cl->grp))
 			continue;
 	
 		//This wakeups the reader:
 		uchar dummy;
-		write_to_pipe(reader[r].fd, PIP_ID_CIN, &dummy, sizeof(dummy));
+		write_to_pipe(rdr->fd, PIP_ID_CIN, &dummy, sizeof(dummy));
 		wakeup++;
 	}
 	return wakeup;
 }
 
 int cc_cards_modified() {
-	int r, modified = 0;
-	for (r = 0; r < CS_MAXREADER; r++) {
-        	if (reader[r].typ == R_CCCAM && reader[r].fd) {
-        		struct s_client *clr = reader[r].client;
-        		if (clr->cc) {
-        			struct cc_data *ccr = clr->cc;
-       				modified += ccr->cards_modified;
-        		}
-                }
+	int modified = 0;
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+		if (rdr->typ == R_CCCAM && rdr->fd) {
+			struct s_client *clr = rdr->client;
+			if (clr->cc) {
+				struct cc_data *ccr = clr->cc;
+				modified += ccr->cards_modified;
+			}
+		}
 	}
 	return modified;	                                         
 }
