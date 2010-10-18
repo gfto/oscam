@@ -1420,7 +1420,7 @@ void cc_card_removed( struct s_client *cl, uint32 shareid) {
 		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
 			//cs_debug("cccam: card %08x removed, caid %04X, count %d",
 			//		card->id, card->caid, ll_count(cc->cards));
-			struct cc_card *next_card;
+			struct cc_card *next_card = ll_iter_peek(it, 0);
             ll_iter_remove(it);
 			struct cc_current_card *current_card;
 			while ((current_card = cc_find_current_card(cc, card))) {
