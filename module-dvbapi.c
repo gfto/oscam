@@ -859,8 +859,8 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int demux_id, int pidindex, ch
 
 		if (p->caid 	&& p->caid 	!= demux[demux_id].ECMpids[pidindex].CAID)	continue;
 		if (p->provid && p->provid 	!= demux[demux_id].ECMpids[pidindex].PROVID)	continue;
-		if (p->srvid 	&& p->srvid 	!= demux[demux_id].ECMpids[pidindex].ECM_PID)	continue;
-		if (p->ecmpid && p->ecmpid 	!= demux[demux_id].program_number)			continue;
+		if (p->ecmpid	&& p->ecmpid 	!= demux[demux_id].ECMpids[pidindex].ECM_PID)	continue;
+		if (p->srvid	&& p->srvid 	!= demux[demux_id].program_number)			continue;
 		if (p->chid	&& p->chid 	!= 0)							continue;
 
 		return p;
@@ -898,8 +898,8 @@ void dvbapi_resort_ecmpids(int demux_index) {
 
 				if (p->caid 	&& p->caid 	!= demux[demux_index].ECMpids[n].CAID)	continue;
 				if (p->provid && p->provid 	!= demux[demux_index].ECMpids[n].PROVID)	continue;
-				if (p->srvid 	&& p->srvid 	!= demux[demux_index].ECMpids[n].ECM_PID)	continue;
-				if (p->ecmpid && p->ecmpid 	!= demux[demux_index].program_number)	continue;
+				if (p->ecmpid	&& p->ecmpid 	!= demux[demux_index].ECMpids[n].ECM_PID)	continue;
+				if (p->srvid	&& p->srvid	!= demux[demux_index].program_number)	continue;
 				if (p->chid	&& p->chid 	!= 0)						continue;
 
 				if (p->type=='p') {
