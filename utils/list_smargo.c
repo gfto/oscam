@@ -18,12 +18,15 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
 
 #include <libusb-1.0/libusb.h>
 #define FALSE 0
 #define TRUE 1
+
+int out_endpoint;
 
 static int smartreader_check_endpoint(libusb_device *usb_dev)
 {
@@ -52,8 +55,13 @@ static int smartreader_check_endpoint(libusb_device *usb_dev)
             for(k=0; k<configDesc->interface[j].num_altsetting; k++)
                 for(l=0; l<configDesc->interface[j].altsetting[k].bNumEndpoints; l++) {
                     tmpEndpointAddress=configDesc->interface[j].altsetting[k].endpoint[l].bEndpointAddress;
-                    if((tmpEndpointAddress== 0x1) || (tmpEndpointAddress== 0x82))
-                        nb_endpoint_ok++;
+                    if((tmpEndpointAddress== 0x1) || (tmpEndpointAddress== 0x81) || (tmpEndpointAddress== 0x82))
+                    	{
+                            if(tmpEndpointAddress == 0x1 || tmpEndpointAddress==out_endpoint)
+                            {
+                                nb_endpoint_ok++;
+                            }
+                      }
                 }
     }
     
@@ -90,10 +98,10 @@ static void print_devs(libusb_device **devs)
             busid=libusb_get_bus_number(dev);
             devid=libusb_get_device_address(dev);
             libusb_get_string_descriptor_ascii(handle,desc.iSerialNumber,iserialbuffer,sizeof(iserialbuffer));
-            printf("bus %03d, device %03d : %04x:%04x Smartreader (Device=%03d:%03d Serial=%s)\n",
+            printf("bus %03d, device %03d : %04x:%04x Smartreader (Device=%03d:%03d EndPoint=0x%2X Serial=%s)\n",
                             busid, devid,
                             desc.idVendor, desc.idProduct,
-                            busid, devid, iserialbuffer );
+                            busid, devid, out_endpoint, iserialbuffer);
             }
             
             libusb_close(handle);
@@ -102,7 +110,7 @@ static void print_devs(libusb_device **devs)
 	}
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 	libusb_device **devs;
 	int r;
@@ -111,12 +119,22 @@ int main(void)
 	r = libusb_init(NULL);
 	if (r < 0)
 		return r;
+    
+    out_endpoint=0x82;
+    if(argc==2) {
+        sscanf(argv[1],"%x",&out_endpoint);
+    }
+    else
+        out_endpoint=0x82;
 
+    printf("Looking for smartreader with an out endpoint = %02x :\n",out_endpoint);
+    
 	cnt = libusb_get_device_list(NULL, &devs);
-	if (cnt < 0)
+	if (cnt < 0) 
 		return (int) cnt;
+    
 
-	print_devs(devs);
+    print_devs(devs);
 	libusb_free_device_list(devs, 1);
 
 	libusb_exit(NULL);
