@@ -385,12 +385,12 @@ static int NegotiateSessionKey(struct s_reader * reader)
 	
 	if (reader->is_n3_na)
 	{
-		if (!NegotiateSessionKey_N3_NA(reader, 1))
+		if (!NegotiateSessionKey_N3_NA(reader, 0))
 		{
 			cs_debug("[nagra-reader] NegotiateSessionKey_N3_NA first time failed");
 			return ERROR;
 		}
-		if (!NegotiateSessionKey_N3_NA(reader, 0))
+		if (!NegotiateSessionKey_N3_NA(reader, 1))
 		{
 			cs_debug("[nagra-reader] NegotiateSessionKey_N3_NA second time failed");
 			return ERROR;
@@ -780,18 +780,21 @@ static int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	if (!reader->is_tiger)
 	{
 		int retry=0;
-		if(!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2,cta_res,&cta_lr)) 
+		
+		while (!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2,cta_res,&cta_lr))
 		{
-			cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
-			cs_sleepms(10);
-			if(!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2,cta_res,&cta_lr))
-			{
+			if (retry == 0)
+				cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
+			else {
 				cs_debug("[nagra-reader] nagra2_do_ecm failed, retry failed!");
 				return ERROR;
 			}
-	
+			retry++;
+			cs_sleepms(10);
 		}
 		cs_sleepms(10);
+
+		retry=0;
 		while(!CamStateRequest(reader) && retry < 3)
 		{
 			cs_debug("[nagra-reader] CamStateRequest failed, try: %d", retry);
