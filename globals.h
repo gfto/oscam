@@ -752,7 +752,7 @@ struct s_reader  //contains device info, reader info and card info
   ushort    ncd_msgid;
   int       ncd_proto;
   char      cc_version[7];  // cccam version
-  char      cc_build[5];    // cccam build number
+  char      cc_build[6];    // cccam build number
   int       cc_maxhop;      // cccam max distance
   int       cc_currenthops; // number of hops for CCCam
   int       cc_want_emu; //Schlocke: Client want to have EMUs, 0 - NO; 1 - YES

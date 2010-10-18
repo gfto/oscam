@@ -916,6 +916,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 		cl->sidtabno=rdr->sidtabno;
    
 		rdr->client=cl;
+		cl->reader=rdr;
 
 		cl->typ='r';
 		//client[i].ctyp=99;
