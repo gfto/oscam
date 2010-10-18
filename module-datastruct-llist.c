@@ -199,9 +199,9 @@ void ll_insert_at(LLIST *l, void *obj, int pos)
     new->obj = obj;
     new->nxt = n;
 
-    if (n->prv) n->prv->nxt = new;
+    if (n && n->prv) n->prv->nxt = new;
     else l->initial = new;
     
-    n->prv = new;
+    if (n) n->prv = new;
 }
 
