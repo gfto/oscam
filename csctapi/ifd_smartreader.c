@@ -1243,7 +1243,7 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size,
 }
 
 #ifdef OS_CYGWIN32
-static LIBUSB_API read_callback(struct libusb_transfer *transfer){
+static WINAPI read_callback(struct libusb_transfer *transfer){
 #else
 static void read_callback(struct libusb_transfer *transfer){
 #endif
