@@ -108,6 +108,20 @@ void *ll_iter_next(LL_ITER *it)
     return NULL;
 }
 
+void *ll_iter_peek(LL_ITER *it, int offset)
+{
+    LL_NODE *n = it->cur;
+    int i;
+
+    for (i = 0; i < offset; i++)
+        if (n)
+            n = n->nxt;
+        else
+            return NULL;
+
+    return n->obj;
+}
+
 void ll_iter_reset(LL_ITER *it)
 {
     it->cur = it->l->initial;
