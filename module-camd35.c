@@ -665,7 +665,7 @@ void module_camd35(struct s_module *ph)
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
-  strcpy(ph->desc, "camd 3.5x");
+  strcpy(ph->desc, "camd35");
   ph->type=MOD_CONN_UDP;
   ph->multi=1;
   ph->watchdog=1;

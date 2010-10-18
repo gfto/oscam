@@ -220,7 +220,7 @@ void module_camd33(struct s_module *ph)
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
-  strcpy(ph->desc, "camd 3.3x");
+  strcpy(ph->desc, "camd33");
   ph->type=MOD_CONN_TCP;
   ph->logtxt=cfg->c33_crypted ? ", crypted" : ", UNCRYPTED!";
   ph->multi=1;

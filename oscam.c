@@ -874,34 +874,29 @@ void start_anticascader()
 #endif
 
 void restart_cardreader(struct s_reader *rdr, int restart) {
-	int n;
+	int i;
 	if (restart) //kill old thread, even when .deleted flag is set
 		kill_thread(rdr->client);
 
-	if ((rdr->device[0]) && (rdr->enable == 1) && (!rdr->deleted)) {
+	if (rdr->device[0] && (rdr->typ & R_IS_CASCADING))
+		for (i=0; i<CS_MAX_MOD; i++)
+			if (ph[i].num && rdr->typ==ph[i].num)
+				rdr->ph=ph[i];
 
+	if (!rdr->ph.num) {
+		cs_log("Protocol Support missing. (typ=%d)", rdr->typ);
+		return;
+	}
+
+	cs_debug("reader %s protocol: %s", rdr->label, rdr->ph.desc);
+
+	if (rdr->enable == 0)
+		return;
+
+	if ((rdr->device[0]) && (!rdr->deleted)) {
 		if (restart) {
 			cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
 			cs_log("restarting reader %s", rdr->label);
-		}
-
-		if ((rdr->typ & R_IS_CASCADING)) {
-			n=0;
-			int i;
-			for (i=0; i<CS_MAX_MOD; i++) {
-				if (ph[i].num) {
-					if (rdr->typ==ph[i].num) {
-						cs_debug("reader %s protocol: %s", rdr->label, ph[i].desc);
-						rdr->ph=ph[i];
-						n=1;
-						break;
-					}
-				}
-			}
-			if (!n) {
-				cs_log("Protocol Support missing.");
-				return;
-			}
 		}
 
 		struct s_client * cl = cs_fork(first_client->ip);
@@ -933,7 +928,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 static void init_cardreader() {
 	struct s_reader *rdr;
 	for (rdr=first_reader; rdr ; rdr=rdr->next)
-		if ((rdr->device[0]) && (rdr->enable == 1))
+		if (rdr->device[0])
 			restart_cardreader(rdr, 0);
 }
 
