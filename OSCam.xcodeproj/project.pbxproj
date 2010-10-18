@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		9348D819126BE60B0090C25C /* oscam-datastruct-llist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "oscam-datastruct-llist.c"; sourceTree = "<group>"; };
+		9348D81A126BE60B0090C25C /* oscam-datastruct-llist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "oscam-datastruct-llist.h"; sourceTree = "<group>"; };
 		93B819DB124D484C00E9DF68 /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = aes.h; path = /usr/src/Dev/oscam/trunk/cscrypt/aes/aes.h; sourceTree = "<absolute>"; };
 		93B819DC124D484C00E9DF68 /* aes_core.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = aes_core.c; path = /usr/src/Dev/oscam/trunk/cscrypt/aes/aes_core.c; sourceTree = "<absolute>"; };
 		93B819DD124D484C00E9DF68 /* bn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bn.h; path = /usr/src/Dev/oscam/trunk/cscrypt/bn.h; sourceTree = "<absolute>"; };
@@ -211,6 +213,8 @@
 				93B81A69124D484C00E9DF68 /* oscam-chk.c */,
 				93B81A6A124D484C00E9DF68 /* oscam-config.c */,
 				93B81A6B124D484C00E9DF68 /* oscam-config.h */,
+				9348D819126BE60B0090C25C /* oscam-datastruct-llist.c */,
+				9348D81A126BE60B0090C25C /* oscam-datastruct-llist.h */,
 				93B81A6C124D484C00E9DF68 /* oscam-http-helpers.c */,
 				93B81A6D124D484C00E9DF68 /* oscam-http.c */,
 				93B81A6E124D484C00E9DF68 /* oscam-http.h */,
@@ -508,7 +512,14 @@
 			isa = PBXProject;
 			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "OSCam" */;
 			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
 			mainGroup = 08FB7794FE84155DC02AAC07 /* OSCam */;
 			projectDirPath = "";
 			projectRoot = "";
