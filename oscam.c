@@ -878,17 +878,17 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 	if (restart) //kill old thread, even when .deleted flag is set
 		kill_thread(rdr->client);
 
-	if (rdr->device[0] && (rdr->typ & R_IS_CASCADING))
+	if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
 		for (i=0; i<CS_MAX_MOD; i++)
 			if (ph[i].num && rdr->typ==ph[i].num)
 				rdr->ph=ph[i];
 
-	if (!rdr->ph.num) {
-		cs_log("Protocol Support missing. (typ=%d)", rdr->typ);
-		return;
+		if (!rdr->ph.num) {
+			cs_log("Protocol Support missing. (typ=%d)", rdr->typ);
+			return;
+		}
+		cs_debug("reader %s protocol: %s", rdr->label, rdr->ph.desc);
 	}
-
-	cs_debug("reader %s protocol: %s", rdr->label, rdr->ph.desc);
 
 	if (rdr->enable == 0)
 		return;
@@ -911,7 +911,6 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 		cl->sidtabno=rdr->sidtabno;
    
 		rdr->client=cl;
-		cl->reader=rdr;
 
 		cl->typ='r';
 		//client[i].ctyp=99;
