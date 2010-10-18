@@ -127,7 +127,7 @@ int main(int argc, char **argv)
     else
         out_endpoint=0x82;
 
-    printf("Looking for smartreader with an out endpoint = %02x :\n",out_endpoint);
+    printf("Looking for smartreader with an out endpoint = 0x%02x :\n",out_endpoint);
     
 	cnt = libusb_get_device_list(NULL, &devs);
 	if (cnt < 0) 
