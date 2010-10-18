@@ -371,8 +371,8 @@ typedef struct  {
 	libusb_device *usb_dev;
 	libusb_device_handle *usb_dev_handle;
     enum smartreader_chip_type type;
-    int in_ep;  // 0x01
-    int out_ep; // 0x82
+    uint8_t in_ep;  // 0x01
+    uint8_t out_ep; // 0x82
     int index;
     /** usb read timeout */
     int usb_read_timeout;
@@ -795,6 +795,7 @@ struct s_reader  //contains device info, reader info and card info
   DWORD dwActiveProtocol;
 #endif
 #ifdef LIBUSB
+  uint8_t  device_endpoint; // usb endpoint for Infinity USB Smart in smartreader mode.
   SR_CONFIG *sr_config;
 #endif
 #ifdef AZBOX

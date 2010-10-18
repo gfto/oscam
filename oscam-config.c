@@ -2283,7 +2283,9 @@ int write_server()
 			if (rdr->l_port)
 				fprintf(f, ",%d", rdr->l_port);
 			fprintf(f, "\n");
-
+#ifdef LIBUSB
+            fprintf_conf(f, CONFVARWIDTH, "device_out_endpoint", "0x%2X\n", rdr->device_endpoint);
+#endif
 			if (rdr->ncd_key[0] || rdr->ncd_key[13]) {
 				fprintf_conf(f, CONFVARWIDTH, "key", "");
 				for (j = 0; j < 14; j++) {
@@ -3137,6 +3139,14 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 		return;
 	}
+
+#ifdef LIBUSB
+    if (!strcmp(token, "device_out_endpoint")) {
+        sscanf(value, "0x%2X", &i);
+        rdr->device_endpoint = i;
+        return;
+    }
+#endif
 
 	if (!strcmp(token, "key")) {
 		if (key_atob14(value, rdr->ncd_key)) {
