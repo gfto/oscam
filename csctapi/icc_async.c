@@ -609,7 +609,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 			FI = ATR_DEFAULT_FI;
 			d = ATR_DEFAULT_D;
 		}
-		cs_debug("Only TO available, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
+		cs_debug("Only T0 available, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
 	}
 	
 	//make sure no zero values
