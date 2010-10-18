@@ -15,7 +15,7 @@
 #include "module-cccam.h"
 #include "module-stat.h"
 
-extern void restart_cardreader(int ridx, int restart);
+extern void restart_cardreader(struct s_reader *rdr, int restart);
 static int running = 1;
 
 #ifdef CS_ANTICASC
@@ -1690,8 +1690,12 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	if (strcmp(getParam(params, "action"), "kill") == 0)
 		kill_thread((struct s_client *)atoi(getParam(params, "csidx"))); //FIXME untested
 
-	if (strcmp(getParam(params, "action"), "restart") == 0)
-		restart_cardreader(atoi(getParam(params, "ridx")), 1);
+	if (strcmp(getParam(params, "action"), "restart") == 0) {
+		struct s_reader *rdr;
+		for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
+			if (strcmp(rdr->label, getParam(params, "label")) == 0)
+				restart_cardreader(rdr, 1);
+	}
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0)
 		clear_reader_stat(atoi(getParam(params, "ridx")));
@@ -1761,7 +1765,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			}
 			else if((cl->typ == 'r' || cl->typ == 'p') && !cfg->http_readonly) {
 				//tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", cl->ridx);
-				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&ridx=%d\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Restart\"></A>", get_ridx(cl->reader), ICKIL);
+				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Restart\"></A>", cl->reader->label, ICKIL);
 			}
 			else {
 				tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", cl->thread);
