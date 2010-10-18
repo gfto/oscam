@@ -119,6 +119,9 @@ void *ll_iter_peek(LL_ITER *it, int offset)
         else
             return NULL;
 
+    if (!n)
+      return NULL;
+      
     return n->obj;
 }
 

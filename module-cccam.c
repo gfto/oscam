@@ -1,4 +1,4 @@
-  #include <string.h>
+#include <string.h>
 #include <stdlib.h>
 #include "globals.h"
 #include "module-cccam.h"
@@ -6,8 +6,8 @@
 #include "reader-common.h"
 #include <poll.h>
 
-extern struct  s_reader  reader[CS_MAXREADER];
-extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind); //Needs extern defined???
+extern struct s_reader reader[CS_MAXREADER];
+extern int pthread_mutexattr_settype(pthread_mutexattr_t *__attr, int __kind); //Needs extern defined???
 
 //Mode names for CMD_05 command:
 const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
@@ -20,11 +20,11 @@ static uint8 cc_node_id[8];
 void update_prefix(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
 	if (!cc)
-	  return;
-	  
-        if (!cc->prefix)
-    	  cc->prefix = malloc(100);
-    	  
+		return;
+
+	if (!cc->prefix)
+		cc->prefix = malloc(100);
+
 	if (cl->typ == 'c')
 		sprintf(cc->prefix, "cccam(s) %s: ", cl->usr);
 	else
@@ -82,7 +82,7 @@ void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		z = data[i];
 		data[i] = z ^ block->keytable[(block->keytable[block->counter]
 				+ block->keytable[block->sum]) & 0xff];
-                data[i] ^= block->state;
+		data[i] ^= block->state;
 		if (!mode)
 			z = data[i];
 		block->state = block->state ^ z;
@@ -145,14 +145,14 @@ int sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2) {
 
 int is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
 	LL_ITER *it = ll_iter_create(card->badsids);
-	struct cc_srvid *srvid; 
+	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(it))) {
 		if (sid_eq(srvid, srvid_blocked)) {
-            ll_iter_release(it);
+			ll_iter_release(it);
 			return 1;
 		}
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 	return 0;
 }
 
@@ -161,15 +161,16 @@ int is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(it))) {
 		if (sid_eq(srvid, srvid_good)) {
-            ll_iter_release(it);
+			ll_iter_release(it);
 			return 1;
 		}
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 	return 0;
 }
 
-void add_sid_block(struct s_client *cl, struct cc_card *card, struct cc_srvid *srvid_blocked) {
+void add_sid_block(struct s_client *cl, struct cc_card *card,
+		struct cc_srvid *srvid_blocked) {
 	if (is_sid_blocked(card, srvid_blocked))
 		return;
 
@@ -183,14 +184,13 @@ void add_sid_block(struct s_client *cl, struct cc_card *card, struct cc_srvid *s
 	}
 }
 
-void remove_sid_block(struct cc_card *card,
-		struct cc_srvid *srvid_blocked) {
+void remove_sid_block(struct cc_card *card, struct cc_srvid *srvid_blocked) {
 	LL_ITER *it = ll_iter_create(card->badsids);
 	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(it)))
 		if (sid_eq(srvid, srvid_blocked))
 			ll_iter_remove_data(it);
-    ll_iter_release(it);
+	ll_iter_release(it);
 }
 
 void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
@@ -198,11 +198,12 @@ void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(it)))
 		if (sid_eq(srvid, srvid_good))
-            ll_iter_remove_data(it);
-    ll_iter_release(it);
+			ll_iter_remove_data(it);
+	ll_iter_release(it);
 }
 
-void add_good_sid(struct s_client *cl, struct cc_card *card, struct cc_srvid *srvid_good) {
+void add_good_sid(struct s_client *cl, struct cc_card *card,
+		struct cc_srvid *srvid_good) {
 	if (is_good_sid(card, srvid_good))
 		return;
 
@@ -220,8 +221,8 @@ void free_current_cards(LLIST *current_cards) {
 	LL_ITER *it = ll_iter_create(current_cards);
 	struct cc_current_card *c;
 	while ((c = ll_iter_next(it)))
-        c = ll_iter_remove(it);
-    ll_iter_release(it);
+		c = ll_iter_remove(it);
+	ll_iter_release(it);
 }
 
 /**
@@ -243,7 +244,7 @@ void cc_cli_close(struct s_client *cl) {
 	cl->pfd = 0;
 	cl->udp_fd = 0;
 	if (udp_fd)
-	  close(udp_fd);
+		close(udp_fd);
 
 	struct cc_data *cc = cl->cc;
 	if (cc) {
@@ -253,8 +254,9 @@ void cc_cli_close(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cli_close out");
 }
 
-struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl, uint8 send_idx,
-		ushort ecm_idx, struct cc_card *card, struct cc_srvid srvid) {
+struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl,
+		uint8 send_idx, ushort ecm_idx, struct cc_card *card,
+		struct cc_srvid srvid) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei =
 			malloc(sizeof(struct cc_extended_ecm_idx));
@@ -267,56 +269,56 @@ struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl, uint8 send
 	return eei;
 }
 
-struct cc_extended_ecm_idx *get_extended_ecm_idx(struct s_client *cl, uint8 send_idx,
-		int remove) {
+struct cc_extended_ecm_idx *get_extended_ecm_idx(struct s_client *cl,
+		uint8 send_idx, int remove) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
 	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
 	while ((eei = ll_iter_next(it))) {
 		if (eei->send_idx == send_idx) {
 			if (remove)
-                ll_iter_remove(it);
+				ll_iter_remove(it);
 			//cs_debug_mask(D_TRACE, "%s get by send-idx: %d FOUND: %d",
 			//		getprefix(), send_idx, eei->ecm_idx);
-            ll_iter_release(it);
+			ll_iter_release(it);
 			return eei;
 		}
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 	cs_debug_mask(D_TRACE, "%s get by send-idx: %d NOT FOUND", getprefix(),
 			send_idx);
 	return NULL;
 }
 
-struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl, ushort ecm_idx,
-		int remove) {
+struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl,
+		ushort ecm_idx, int remove) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
 	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
-    while ((eei = ll_iter_next(it))) {
+	while ((eei = ll_iter_next(it))) {
 		if (eei->ecm_idx == ecm_idx) {
 			if (remove)
 				ll_iter_remove(it);
 			//cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d FOUND: %d",
 			//		getprefix(), ecm_idx, eei->send_idx);
 			ll_iter_release(it);
-            return eei;
+			return eei;
 		}
-        ll_iter_release(it);
 	}
+	ll_iter_release(it);
 	cs_debug_mask(D_TRACE, "%s get by ecm-idx: %d NOT FOUND", getprefix(),
 			ecm_idx);
 	return NULL;
 }
 
 void free_extended_ecm_idx_by_card(struct s_client *cl, struct cc_card *card) {
-    struct cc_data *cc = cl->cc;
+	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
 	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
 	while ((eei = ll_iter_next(it)))
 		if (eei->card == card)
 			ll_iter_remove_data(it);
-    ll_iter_release(it);
+	ll_iter_release(it);
 }
 
 void free_extended_ecm_idx(struct cc_data *cc) {
@@ -324,7 +326,7 @@ void free_extended_ecm_idx(struct cc_data *cc) {
 	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
 	while ((eei = ll_iter_next(it)))
 		ll_iter_remove_data(it);
-    ll_iter_release(it);
+	ll_iter_release(it);
 }
 
 /**
@@ -341,8 +343,8 @@ void free_extended_ecm_idx(struct cc_data *cc) {
  * receive a message
  */
 int cc_msg_recv(struct s_client *cl, uint8 *buf) {
-	struct s_reader *rdr = (cl->typ == 'c')?NULL:cl->reader;
-	
+	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
+
 	int len;
 	uint8 netbuf[CC_MAXMSGSIZE + 4];
 	struct cc_data *cc = cl->cc;
@@ -402,11 +404,11 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
  * send a message
  */
 int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
-        if (!cl->udp_fd) //disconnected
-          return 0;
-          
-	struct s_reader *rdr = (cl->typ == 'c')?NULL:cl->reader;
-	  
+	if (!cl->udp_fd) //disconnected
+		return 0;
+
+	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
+
 	int n;
 	uint8 netbuf[len + 4];
 	struct cc_data *cc = cl->cc;
@@ -455,7 +457,7 @@ void cc_check_version(char *cc_version, char *cc_build) {
 	int i;
 	for (i = 0; strlen(version[i]); i++) {
 		if (!memcmp(cc_version, version[i], strlen(version[i]))) {
-			memcpy(cc_build, build[i], strlen(build[i]));
+			memcpy(cc_build, build[i], strlen(build[i]) + 1);
 			cs_debug("cccam: auto build set for version: %s build: %s",
 					cc_version, cc_build);
 			return;
@@ -475,7 +477,7 @@ void cc_check_version(char *cc_version, char *cc_build) {
  */
 int cc_send_cli_data(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
-	
+
 	int i;
 	struct cc_data *cc = cl->cc;
 
@@ -505,7 +507,6 @@ int cc_send_cli_data(struct s_client *cl) {
  * sends version information to the client
  */
 int cc_send_srv_data(struct s_client *cl) {
-	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 
 	cs_debug("cccam: send server data");
@@ -516,13 +517,13 @@ int cc_send_srv_data(struct s_client *cl) {
 	memset(buf, 0, CC_MAXMSGSIZE);
 
 	memcpy(buf, cc->node_id, 8);
-	cc_check_version((char *) cfg->cc_version, rdr->cc_build);
-	memcpy(buf + 8, cfg->cc_version, sizeof(rdr->cc_version)); // cccam version (ascii)
-	memcpy(buf + 40, rdr->cc_build, sizeof(rdr->cc_build)); // build number (ascii)
+	char cc_build[7];
+	cc_check_version((char *) cfg->cc_version, cc_build);
+	memcpy(buf + 8, cfg->cc_version, sizeof(cfg->cc_version)); // cccam version (ascii)
+	memcpy(buf + 40, cc_build, sizeof(cc_build)); // build number (ascii)
 
 	cs_log("%s version: %s, build: %s nodeid: %s", getprefix(),
-			cfg->cc_version, rdr->cc_build, cs_hexdump(0,
-					cc->peer_node_id, 8));
+			cfg->cc_version, cc_build, cs_hexdump(0, cc->peer_node_id, 8));
 
 	return cc_cmd_send(cl, buf, 0x48, MSG_SRV_DATA);
 }
@@ -538,8 +539,8 @@ int cc_get_nxt_ecm(struct s_client *cl) {
 	t = time(NULL);
 	n = -1;
 	for (i = 0; i < CS_MAXPENDING; i++) {
-		if ((t - (ulong) cl->ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000)
-				+ 1) && (cl->ecmtask[i].rc >= 10)) // drop timeouts
+		if ((t - (ulong) cl->ecmtask[i].tps.time > ((cfg->ctimeout + 500)
+				/ 1000) + 1) && (cl->ecmtask[i].rc >= 10)) // drop timeouts
 		{
 			cl->ecmtask[i].rc = 0;
 		}
@@ -636,83 +637,83 @@ int send_cmd05_answer(struct s_client *cl) {
 
 struct cc_current_card *cc_find_current_card(struct cc_data *cc,
 		struct cc_card *card) {
-    LL_ITER *it = ll_iter_create(cc->current_cards);
-    struct cc_current_card *c;
-    while ((c = ll_iter_next(it)))
+	LL_ITER *it = ll_iter_create(cc->current_cards);
+	struct cc_current_card *c;
+	while ((c = ll_iter_next(it)))
 		if (c->card == card) {
-            ll_iter_release(it);
+			ll_iter_release(it);
 			return c;
-        }
-    ll_iter_release(it);
+		}
+	ll_iter_release(it);
 	return NULL;
 }
 
-struct cc_current_card *cc_find_current_card_by_srvid(
-		struct cc_data *cc, ushort caid, ulong prov, struct cc_srvid *srvid) {
-    LL_ITER *it = ll_iter_create(cc->current_cards);
-    struct cc_current_card *c;
-    while ((c = ll_iter_next(it)))
+struct cc_current_card *cc_find_current_card_by_srvid(struct cc_data *cc,
+		ushort caid, ulong prov, struct cc_srvid *srvid) {
+	LL_ITER *it = ll_iter_create(cc->current_cards);
+	struct cc_current_card *c;
+	while ((c = ll_iter_next(it)))
 		if (c->card->caid == caid && c->prov == prov
 				&& sid_eq(&c->srvid, srvid)) {
-            ll_iter_release(it);
+			ll_iter_release(it);
 			return c;
-        }
-    ll_iter_release(it);
+		}
+	ll_iter_release(it);
 	return NULL;
 }
 
 void cc_remove_current_card(struct cc_data *cc,
 		struct cc_current_card *current_card) {
-    LL_ITER *it = ll_iter_create(cc->current_cards);
-    struct cc_current_card *c;
-    while ((c = ll_iter_next(it)))
+	LL_ITER *it = ll_iter_create(cc->current_cards);
+	struct cc_current_card *c;
+	while ((c = ll_iter_next(it)))
 		if (c == current_card)
-            ll_iter_remove_data(it);
+			ll_iter_remove_data(it);
 	ll_iter_release(it);
 
 }
 
 int get_UA_len(uint16 caid) {
-	int len=0;
-	switch(caid>>8) {
-		case 0x0D://CRYPTOWORKS:
-			len=5; 
-			break;
-		case 0x0B: //CONAX:
-			len=4;
-			break;
-		case 0x06:
-		case 0x17: //IRDETO:
-			len=8;
-			break;
-		case 0x4B: //TONGFANG:
-			len=4;
-			break;
-		case 0x09: //VIDEOGUARD:
-			len=4;
-			break;
-		case 0x18: //NAGRA:
-			len=4;
-			break;
-		case 0x05: //VIACCESS:
-			len=5;
-			break;
-		case 0x4A: //DRE:
-			len=4;
-			break;
-		case 0x01: //SECA:
-			len=6;
-			break;
-		default:
-			len=8;
-			break;
+	int len = 0;
+	switch (caid >> 8) {
+	case 0x0D://CRYPTOWORKS:
+		len = 5;
+		break;
+	case 0x0B: //CONAX:
+		len = 4;
+		break;
+	case 0x06:
+	case 0x17: //IRDETO:
+		len = 8;
+		break;
+	case 0x4B: //TONGFANG:
+		len = 4;
+		break;
+	case 0x09: //VIDEOGUARD:
+		len = 4;
+		break;
+	case 0x18: //NAGRA:
+		len = 4;
+		break;
+	case 0x05: //VIACCESS:
+		len = 5;
+		break;
+	case 0x4A: //DRE:
+		len = 4;
+		break;
+	case 0x01: //SECA:
+		len = 6;
+		break;
+	default:
+		len = 8;
+		break;
 	}
 	return len;
 }
 
 void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
 	int len = get_UA_len(caid);
-	memcpy(&out[8-len], in, len);
+	memcpy(&out[8 - len], in, len);
 }
 
 void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
@@ -721,18 +722,18 @@ void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
-//	out[0] = in[3];
-//	out[1] = in[2];
-//	out[2] = in[1];
-//	out[3] = in[0];
+	//	out[0] = in[3];
+	//	out[1] = in[2];
+	//	out[2] = in[1];
+	//	out[3] = in[0];
 	memcpy(out, in, 4);
 }
 
 void cc_SA_cccam2oscam(uint8 *in, uint8 *out) {
-//	out[0] = in[3];
-//	out[1] = in[2];
-//	out[2] = in[1];
-//	out[3] = in[0];
+	//	out[0] = in[3];
+	//	out[1] = in[2];
+	//	out[2] = in[1];
+	//	out[3] = in[0];
 	memcpy(out, in, 4);
 }
 
@@ -751,10 +752,10 @@ int cc_UA_valid(uint8 *ua) {
 int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	cs_debug_mask(D_FUT, "cc_send_ecm in");
 	struct s_reader *rdr = cl->reader;
-	
+
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
 	cc_cli_init_int(cl);
-	
+
 	int n, h = -1;
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
@@ -865,29 +866,29 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	//then check all other cards
 	if (!card) {
-            it = ll_iter_create(cc->cards);
-			struct cc_card *ncard;
-			while ((ncard = ll_iter_next(it))) {
-				if (ncard->caid == cur_er->caid) { // caid matches
-					int s = is_sid_blocked(ncard, &cur_srvid);
+		it = ll_iter_create(cc->cards);
+		struct cc_card *ncard;
+		while ((ncard = ll_iter_next(it))) {
+			if (ncard->caid == cur_er->caid) { // caid matches
+				int s = is_sid_blocked(ncard, &cur_srvid);
 
-					LL_ITER *it2 = ll_iter_create(ncard->providers);
-					struct cc_provider *provider;
-                    while ((provider = ll_iter_next(it)) && !s) {
-						if (!cur_er->prid || !provider->prov || provider->prov
-								== cur_er->prid) { // provid matches
-							if (h < 0 || ncard->hop < h || (ncard->hop == h
-									&& cc_UA_valid(ncard->hexserial))) {
-								// ncard is closer
-								card = ncard;
-								h = ncard->hop; // ncard has been matched
-							}
+				LL_ITER *it2 = ll_iter_create(ncard->providers);
+				struct cc_provider *provider;
+				while ((provider = ll_iter_next(it)) && !s) {
+					if (!cur_er->prid || !provider->prov || provider->prov
+							== cur_er->prid) { // provid matches
+						if (h < 0 || ncard->hop < h || (ncard->hop == h
+								&& cc_UA_valid(ncard->hexserial))) {
+							// ncard is closer
+							card = ncard;
+							h = ncard->hop; // ncard has been matched
 						}
 					}
-                    ll_iter_release(it2);
 				}
+				ll_iter_release(it2);
 			}
-            ll_iter_release(it);
+		}
+		ll_iter_release(it);
 	}
 
 	if (card) {
@@ -896,7 +897,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			current_card->card = card;
 			current_card->prov = cur_er->prid;
 			current_card->srvid = cur_srvid;
-            ll_insert_at(cc->current_cards, current_card, 0);
+			ll_insert_at(cc->current_cards, current_card, 0);
 		}
 
 		card->time = time((time_t) 0);
@@ -955,7 +956,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 					break;
 				}
 			}
-            ll_iter_release(it2);
+			ll_iter_release(it2);
 			char saprov[20] = { 0 };
 			if (provider)
 				sprintf(saprov, "%06lX:%02X%02X%02X%02X", provider->prov,
@@ -963,8 +964,8 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 						provider->sa[3]);
 			cs_debug_mask(D_EMM,
 					"%s au info: caid %04X card system: %d UA: %s SA: %s",
-					getprefix(), card->caid, rdr->card_system,
-					cs_hexdump(0, rdr->hexserial, 8), saprov);
+					getprefix(), card->caid, rdr->card_system, cs_hexdump(0,
+							rdr->hexserial, 8), saprov);
 		}
 		pthread_mutex_unlock(&cc->cards_busy);
 		cs_debug_mask(D_FUT, "cc_send_ecm out");
@@ -984,27 +985,27 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			//cur_er->rcEx = 0;
 			//cs_sleepms(300);
 			rdr->last_s = rdr->last_g;
-            it = ll_iter_create(cc->cards);
+			it = ll_iter_create(cc->cards);
 			while ((card = ll_iter_next(it))) {
 				if (card->caid == cur_er->caid) { // caid matches
 					LL_ITER *it2 = ll_iter_create(card->badsids);
 					struct cc_srvid *srvid;
 					while ((srvid = ll_iter_next(it2)))
 						if (sid_eq(srvid, &cur_srvid))
-                            ll_iter_remove_data(it2);
-                    ll_iter_release(it2);
-					}
+							ll_iter_remove_data(it2);
+					ll_iter_release(it2);
 				}
-        }
-        ll_iter_release(it);
-    }
-    pthread_mutex_unlock(&cc->cards_busy);
-    if (!cc->extended_mode) {
-        rdr->available = 1;
-        pthread_mutex_unlock(&cc->ecm_busy);
-    }
-    cs_debug_mask(D_FUT, "cc_send_ecm out");
-    return -1;
+			}
+			ll_iter_release(it);
+		}
+	}
+	pthread_mutex_unlock(&cc->cards_busy);
+	if (!cc->extended_mode) {
+		rdr->available = 1;
+		pthread_mutex_unlock(&cc->ecm_busy);
+	}
+	cs_debug_mask(D_FUT, "cc_send_ecm out");
+	return -1;
 }
 
 /*
@@ -1039,7 +1040,8 @@ int cc_send_pending_emms(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 
-	LL_ITER *it = ll_iter_create(cc->pending_emms);;
+	LL_ITER *it = ll_iter_create(cc->pending_emms);
+	;
 	uint8 *emmbuf;
 	if ((emmbuf = ll_iter_next(it))) {
 		if (!cc->extended_mode) {
@@ -1057,13 +1059,13 @@ int cc_send_pending_emms(struct s_client *cl) {
 				emmbuf + 7));
 
 		cc_cmd_send(cl, emmbuf, size, MSG_EMM_ACK); // send emm
-        
-        ll_iter_remove_data(it);
-        ll_iter_release(it);
-		
-        return size;
+
+		ll_iter_remove_data(it);
+		ll_iter_release(it);
+
+		return size;
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 
 	cs_debug_mask(D_FUT, "cc_send_pending_emms out");
 	return 0;
@@ -1073,16 +1075,18 @@ int cc_send_pending_emms(struct s_client *cl) {
  * READER only:
  * find card by hexserial
  * */
-struct cc_card *get_card_by_hexserial(struct s_client *cl, uint8 *hexserial, uint16 caid) {
+struct cc_card *get_card_by_hexserial(struct s_client *cl, uint8 *hexserial,
+		uint16 caid) {
 	struct cc_data *cc = cl->cc;
-	LL_ITER *it = ll_iter_create(cc->cards);;
+	LL_ITER *it = ll_iter_create(cc->cards);
+	;
 	struct cc_card *card;
 	while ((card = ll_iter_next(it)))
 		if (card->caid == caid && memcmp(card->hexserial, hexserial, 8) == 0) { //found it!
-            ll_iter_release(it);
+			ll_iter_release(it);
 			return card;
 		}
-    ll_iter_release(it);
+	ll_iter_release(it);
 	return NULL;
 }
 
@@ -1095,7 +1099,7 @@ int cc_send_emm(EMM_PACKET *ep) {
 	cs_debug_mask(D_FUT, "cc_send_emm in");
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
-	
+
 	cc_cli_init_int(cl);
 
 	struct cc_data *cc = cl->cc;
@@ -1114,12 +1118,14 @@ int cc_send_emm(EMM_PACKET *ep) {
 
 	//Last used card is first card of current_cards:
 	pthread_mutex_lock(&cc->cards_busy);
-    LL_ITER *it = ll_iter_create(cc->current_cards);
+	LL_ITER *it = ll_iter_create(cc->current_cards);
 	struct cc_current_card *current_card;
-	while ((current_card = ll_iter_next(it)) && current_card->card->caid != caid);
-    ll_iter_release(it);
-	
-    struct cc_card *emm_card = (current_card != NULL) ? current_card->card
+	while ((current_card = ll_iter_next(it)) && current_card->card->caid
+			!= caid)
+		;
+	ll_iter_release(it);
+
+	struct cc_card *emm_card = (current_card != NULL) ? current_card->card
 			: NULL;
 
 	if (!emm_card || emm_card->caid != caid) {
@@ -1162,7 +1168,7 @@ int cc_send_emm(EMM_PACKET *ep) {
 
 	ll_append(cc->pending_emms, emmbuf);
 	cc_send_pending_emms(cl);
-	
+
 	cs_debug_mask(D_FUT, "cc_send_emm out");
 	return 1;
 }
@@ -1171,20 +1177,20 @@ void cc_free_card(struct cc_card *card) {
 	if (!card)
 		return;
 
-    ll_destroy_data(card->providers);
-    ll_destroy_data(card->badsids);
-    ll_destroy_data(card->goodsids);
-    ll_destroy_data(card->remote_nodes);
-	
-    free(card);
+	ll_destroy_data(card->providers);
+	ll_destroy_data(card->badsids);
+	ll_destroy_data(card->goodsids);
+	ll_destroy_data(card->remote_nodes);
+
+	free(card);
 }
 
 /**
  * Server:
  * Adds a cccam-carddata buffer to the list of reported carddatas
  */
-void cc_add_reported_carddata(struct s_client *cl, LLIST *reported_carddatas, uint8 *buf,
-		int len, struct s_reader *D_USE(rdr)) {
+void cc_add_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
+		uint8 *buf, int len, struct s_reader *D_USE(rdr)) {
 	struct cc_reported_carddata *carddata = malloc(
 			sizeof(struct cc_reported_carddata));
 	uint8 *buf_copy = malloc(len);
@@ -1220,9 +1226,9 @@ void cc_clear_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
 		if (send_removed)
 			cc_cmd_send(cl, carddata->buf, 4, MSG_CARD_REMOVED);
 		free(carddata->buf);
-        ll_iter_remove_data(it);
+		ll_iter_remove_data(it);
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 }
 
 void cc_free_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
@@ -1234,23 +1240,33 @@ void cc_free_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
 }
 
 void cc_free_cardlist(LLIST *card_list) {
-    ll_destroy_data(card_list);
+	if (card_list) {
+		LL_ITER *it = ll_iter_create(card_list);
+		struct cc_card *card;
+		while ((card = ll_iter_next(it))) {
+			cc_free_card(card);
+			ll_iter_remove(it);
+		}
+		ll_iter_release(it);
+		ll_destroy_data(card_list);
+		card_list = NULL;
+	}
 }
 
 /**
  * Clears and free the cc datas
  */
 void cc_free(struct s_client *cl) {
-        struct cc_data *cc = cl->cc;
+	struct cc_data *cc = cl->cc;
 	if (!cc)
 		return;
 
 	cs_debug_mask(D_FUT, "cc_free in");
 	cc_free_cardlist(cc->cards);
 	cc_free_reported_carddata(cl, cc->reported_carddatas, 0);
-    ll_destroy_data(cc->pending_emms);
-    free_current_cards(cc->current_cards);
-    ll_destroy(cc->current_cards);
+	ll_destroy_data(cc->pending_emms);
+	free_current_cards(cc->current_cards);
+	ll_destroy(cc->current_cards);
 	if (cc->extended_ecm_idx)
 		free_extended_ecm_idx(cc);
 	pthread_mutex_destroy(&cc->lock);
@@ -1362,12 +1378,12 @@ struct cc_card *read_card(uint8 *buf) {
 			ll_append(card->providers, prov);
 		}
 	}
-	uint8 *ptr = buf+21+i*7;
+	uint8 *ptr = buf + 21 + i * 7;
 	int remote_count = ptr[0];
 	ptr++;
 	for (i = 0; i < remote_count; i++) {
 		uint8 *remote_node = malloc(8);
-		memcpy(remote_node, ptr+i*8, 8);
+		memcpy(remote_node, ptr + i * 8, 8);
 		ll_append(card->remote_nodes, remote_node);
 	}
 	return card;
@@ -1391,7 +1407,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card) {
 	buf[11] = card->maxdown;
 	memcpy(buf + 12, card->hexserial, 8);
 	int j = 0;
-    LL_ITER *it = ll_iter_create(card->providers);
+	LL_ITER *it = ll_iter_create(card->providers);
 	struct cc_provider *prov;
 	while ((prov = ll_iter_next(it))) {
 		ulong prid = prov->prov;
@@ -1401,7 +1417,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card) {
 		memcpy(buf + 24 + (j * 7), prov->sa, 4);
 		j++;
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 	buf[20] = j;
 
 	buf[21 + (j * 7)] = 1;
@@ -1410,18 +1426,18 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card) {
 	return 30 + (j * 7);
 }
 
-void cc_card_removed( struct s_client *cl, uint32 shareid) {
+void cc_card_removed(struct s_client *cl, uint32 shareid) {
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
+	pthread_mutex_lock(&cc->cards_busy);
 	LL_ITER *it = ll_iter_create(cc->cards);
 
-	pthread_mutex_lock(&cc->cards_busy);
 	while ((card = ll_iter_next(it))) {
 		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
 			//cs_debug("cccam: card %08x removed, caid %04X, count %d",
 			//		card->id, card->caid, ll_count(cc->cards));
 			struct cc_card *next_card = ll_iter_peek(it, 0);
-            ll_iter_remove(it);
+			ll_iter_remove(it);
 			struct cc_current_card *current_card;
 			while ((current_card = cc_find_current_card(cc, card))) {
 				cs_debug_mask(D_TRACE, "%s current card %08x removed!",
@@ -1435,14 +1451,14 @@ void cc_card_removed( struct s_client *cl, uint32 shareid) {
 			//break;
 		}
 	}
+	ll_iter_release(it);
 	pthread_mutex_unlock(&cc->cards_busy);
-    ll_iter_release(it);
 }
 
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	cs_debug_mask(D_FUT, "cc_parse_msg in %d", buf[1]);
-	struct s_reader *rdr = (cl->typ == 'c')?NULL:cl->reader;
-	
+	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
+
 	int ret = buf[1];
 	struct cc_data *cc = cl->cc;
 
@@ -1468,24 +1484,26 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			memcpy(cc->cmd0b_aeskey + 8, cc->peer_version, 8);
 			cs_log("%s srv %s running v%s (%s)", getprefix(), cs_hexdump(0,
 					cc->peer_node_id, 8), data + 8, data + 40);
-			
+
 			if (!cc->is_oscam_cccam) {//Allready discovered oscam-cccam:
 				uint16 sum = 0x1234;
-				uint16 recv_sum = (cc->peer_node_id[6] << 8) | cc->peer_node_id[7];
+				uint16 recv_sum = (cc->peer_node_id[6] << 8)
+						| cc->peer_node_id[7];
 				int i;
 				for (i = 0; i < 6; i++) {
-				        sum += cc->peer_node_id[i];
+					sum += cc->peer_node_id[i];
 				}
 				//Create special data to detect oscam-cccam:
-				cc->is_oscam_cccam = sum==recv_sum;
+				cc->is_oscam_cccam = sum == recv_sum;
 			}
 			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
 			if (cc->is_oscam_cccam) {
-				sprintf((char*) buf, "PARTNER: OSCam v%s, build #%s (%s) [EXT]",
-					CS_VERSION, CS_SVN_VERSION, CS_OSTYPE);
+				sprintf((char*) buf,
+						"PARTNER: OSCam v%s, build #%s (%s) [EXT]", CS_VERSION,
+						CS_SVN_VERSION, CS_OSTYPE);
 				cc_cmd_send(cl, buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
 			}
-				        
+
 			cc->cmd05_mode = MODE_PLAIN;
 			//
 			//Keyoffset is payload-size:
@@ -1560,12 +1578,12 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		pthread_mutex_lock(&cc->cards_busy);
 
 		struct cc_card *card = read_card(buf + 4);
-		
+
 		card->hop++; //inkrementing hop
 
 		//SS: Hack:
 		//Check if we already have this card:
-        LL_ITER *it = ll_iter_create(cc->cards);
+		LL_ITER *it = ll_iter_create(cc->cards);
 		struct cc_card *old_card;
 		while ((old_card = ll_iter_next(it))) {
 			if (old_card->id == card->id) { //we aready have this card, delete it
@@ -1574,7 +1592,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				break;
 			}
 		}
-        ll_iter_release(it);
+		ll_iter_release(it);
 
 		card->time = time((time_t) 0);
 		if (!old_card)
@@ -1584,12 +1602,12 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		pthread_mutex_unlock(&cc->cards_busy);
 		//SS: Hack end
 	}
-	break;
+		break;
 
 	case MSG_CARD_REMOVED: {
 		cc_card_removed(cl, b2i(4, buf + 4));
 	}
-	break;
+		break;
 
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
@@ -1632,7 +1650,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			return -1; // reader restart needed
 
 		pthread_mutex_lock(&cc->cards_busy);
-		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl, 
+		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
 				cc->extended_mode ? cc->g_flag : 1, TRUE);
 		if (eei == NULL) {
 			cs_log("%s received extended ecm NOK id %d but not found!",
@@ -1646,7 +1664,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		ushort ecm_idx = eei->ecm_idx;
 		struct cc_card *card = eei->card;
 		struct cc_srvid srvid = eei->srvid;
-		free(eei);
+		free(eei)
+		;
 
 		if (card) {
 			if (buf[1] == MSG_CW_NOK1) //MSG_CW_NOK1: share no more available
@@ -1665,7 +1684,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		} else
 			cs_log("%S NOK: NO CARD!", getprefix());
 		pthread_mutex_unlock(&cc->cards_busy);
-		
+
 		if (!cc->extended_mode) {
 			rdr->available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
@@ -1702,8 +1721,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				struct cc_srvid srvid;
 				srvid.sid = er->srvid;
 				srvid.ecmlen = er->l;
-				add_extended_ecm_idx(cl, cc->extended_mode ? cc->g_flag : 1, er->idx,
-						server_card, srvid);
+				add_extended_ecm_idx(cl, cc->extended_mode ? cc->g_flag : 1,
+						er->idx, server_card, srvid);
 
 				get_cw(cl, er);
 
@@ -1714,7 +1733,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		} else { //READER:
 			pthread_mutex_lock(&cc->cards_busy);
-			
+
 			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
 					cc->extended_mode ? cc->g_flag : 1, TRUE);
 			if (eei == NULL) {
@@ -1776,7 +1795,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				cc->ecm_counter++;
 		}
 		break;
-		
+
 	case MSG_KEEPALIVE:
 		cc->just_logged_in = 0;
 		if (cl->typ != 'c') {
@@ -1790,7 +1809,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			}
 		}
 		break;
-		
+
 	case MSG_CMD_05:
 		if (cl->typ != 'c') {
 			cc->just_logged_in = 0;
@@ -1944,8 +1963,8 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 
 	memset(buf, 0, sizeof(buf));
 
-	struct cc_extended_ecm_idx *eei =
-			get_extended_ecm_idx_by_idx(cl, er->idx, TRUE);
+	struct cc_extended_ecm_idx *eei = get_extended_ecm_idx_by_idx(cl, er->idx,
+			TRUE);
 
 	if (er->rc <= 3 && eei && eei->card) {
 		cc->g_flag = eei->send_idx;
@@ -2040,9 +2059,8 @@ ulong get_reader_hexserial_crc(struct s_client *cl) {
 
 	ulong crc = 0;
 	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) {
-		if (rdr->enable && !rdr->deleted && rdr->client
-				&& !rdr->audisabled)
+	for (rdr = first_reader; rdr; rdr = rdr->next) {
+		if (rdr->enable && !rdr->deleted && rdr->client && !rdr->audisabled)
 			crc += crc32(0, rdr->hexserial, 8);
 	}
 	return crc;
@@ -2060,20 +2078,21 @@ ulong get_reader_prid(int r, int j) {
 	return prid;
 }
 
-int add_card_providers(struct cc_card *dest_card, struct cc_card *card, int copy_remote_nodes) {
+int add_card_providers(struct cc_card *dest_card, struct cc_card *card,
+		int copy_remote_nodes) {
 	int modified = 0;
-	
+
 	//1. Copy nonexisting providers, ignore double:
 	struct cc_provider *prov_info;
-    LL_ITER *it_dst, *it_src = ll_iter_create(card->providers);
-	struct cc_provider *provider;   
+	LL_ITER *it_dst, *it_src = ll_iter_create(card->providers);
+	struct cc_provider *provider;
 	while ((provider = ll_iter_next(it_src))) {
 		it_dst = ll_iter_create(dest_card->providers);
 		while ((prov_info = ll_iter_next(it_dst))) {
 			if (prov_info->prov == provider->prov)
 				break;
 		}
-        ll_iter_release(it_dst);
+		ll_iter_release(it_dst);
 		if (!prov_info) {
 			struct cc_provider *prov_new = malloc(sizeof(struct cc_provider));
 			memcpy(prov_new, provider, sizeof(struct cc_provider));
@@ -2081,20 +2100,20 @@ int add_card_providers(struct cc_card *dest_card, struct cc_card *card, int copy
 			modified = 1;
 		}
 	}
-    ll_iter_release(it_src);
-	
+	ll_iter_release(it_src);
+
 	if (copy_remote_nodes) {
 		//2. Copy nonexisting remote_nodes, ignoring existing:
-        it_src = ll_iter_create(card->remote_nodes);
+		it_src = ll_iter_create(card->remote_nodes);
 		uint8 *remote_node;
 		uint8 *remote_node2;
 		while ((remote_node = ll_iter_next(it_src))) {
-            it_dst = ll_iter_create(dest_card->remote_nodes);
+			it_dst = ll_iter_create(dest_card->remote_nodes);
 			while ((remote_node2 = ll_iter_next(it_dst))) {
 				if (memcmp(remote_node, remote_node2, 8) == 0)
 					break;
 			}
-            ll_iter_release(it_dst);
+			ll_iter_release(it_dst);
 			if (!remote_node2) {
 				uint8* remote_node_new = malloc(8);
 				memcpy(remote_node_new, remote_node, 8);
@@ -2102,7 +2121,7 @@ int add_card_providers(struct cc_card *dest_card, struct cc_card *card, int copy
 				modified = 1;
 			}
 		}
-        ll_iter_release(it_src);
+		ll_iter_release(it_src);
 	}
 	return modified;
 }
@@ -2118,19 +2137,23 @@ struct cc_card *create_card(struct cc_card *card) {
 }
 
 int same_last_node(struct cc_card *card1, struct cc_card *card2) {
-    uint8 *node1 = NULL, *node2 = NULL;
-    int i;
-    int nodes1 = ll_count(card1->remote_nodes), nodes2 = ll_count(card2->remote_nodes);
-    
-    LL_ITER *it = ll_iter_create(card1->remote_nodes);
-    for (i = 0; i < nodes1; i++) node1 = ll_iter_next(it);
-    ll_iter_release(it);
-	
-    it = ll_iter_create(card2->remote_nodes);
-    for (i = 0; i < nodes2; i++) node2 = ll_iter_next(it);
-    ll_iter_release(it);
+	uint8 *node1 = NULL, *node2 = NULL;
+	int i;
+	int nodes1 = ll_count(card1->remote_nodes), nodes2 = ll_count(
+			card2->remote_nodes);
 
-    if (!node1 || !node2) return 0;
+	LL_ITER *it = ll_iter_create(card1->remote_nodes);
+	for (i = 0; i < nodes1; i++)
+		node1 = ll_iter_next(it);
+	ll_iter_release(it);
+
+	it = ll_iter_create(card2->remote_nodes);
+	for (i = 0; i < nodes2; i++)
+		node2 = ll_iter_next(it);
+	ll_iter_release(it);
+
+	if (!node1 || !node2)
+		return 0;
 
 	return !memcmp(node1, node2, 8);
 }
@@ -2140,7 +2163,7 @@ int same_last_node(struct cc_card *card1, struct cc_card *card2) {
  */
 int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 	int modified = 0;
-    LL_ITER *it = ll_iter_create(cardlist);
+	LL_ITER *it = ll_iter_create(cardlist);
 	struct cc_card *card2;
 
 	//Minimize all, transmit just CAID
@@ -2190,9 +2213,8 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 			modified = 1;
 	} else {
 		while ((card2 = ll_iter_next(it))) {
-			if (card2->caid == card->caid
-					&& card2->remote_id == card->remote_id 
-					&& same_last_node(card2, card))
+			if (card2->caid == card->caid && card2->remote_id
+					== card->remote_id && same_last_node(card2, card))
 				break;
 		}
 		if (!card2) {
@@ -2206,7 +2228,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 				modified = 1;
 		}
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 	return modified;
 }
 
@@ -2245,9 +2267,9 @@ int cc_srv_report_cards(struct s_client *cl) {
 	LLIST *reported_carddatas = ll_create();
 
 	int isau = is_au(cl);
-	
+
 	struct s_reader *rdr;
-	for (r=0,rdr=first_reader; rdr ; rdr=rdr->next, r++) {
+	for (r = 0, rdr = first_reader; rdr; rdr = rdr->next, r++) {
 		if (!rdr->fd || !rdr->enable || rdr->deleted)
 			continue;
 		if (!(rdr->grp & cl->grp))
@@ -2259,7 +2281,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			continue;
 
 		if (!rdr->cc_id) {
-			rdr->cc_id = (r+0x64)<<16 | fast_rnd()<<8 | fast_rnd();
+			rdr->cc_id = (r + 0x64) << 16 | fast_rnd() << 8 | fast_rnd();
 		}
 
 		int au_allowed = !rdr->audisabled && isau;
@@ -2305,7 +2327,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 							for (l = 0; l < rdr->nprov; l++) {
 								ulong rprid = get_reader_prid(r, l);
 								if (rprid == prid)
-									cc_SA_oscam2cccam(&rdr->sa[l][0], buf+ofs+3);
+									cc_SA_oscam2cccam(&rdr->sa[l][0], buf + ofs
+											+ 3);
 							}
 						}
 					}
@@ -2316,7 +2339,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 					memcpy(buf + 22 + (k * 7), cc->node_id, 8);
 					int len = 30 + (k * 7);
 					cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(cl, reported_carddatas, buf, len, &reader[r]);
+					cc_add_reported_carddata(cl, reported_carddatas, buf, len,
+							&reader[r]);
 					id++;
 					flt = 1;
 				}
@@ -2356,7 +2380,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
 					cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(cl, reported_carddatas, buf, len, &reader[r]);
+					cc_add_reported_carddata(cl, reported_carddatas, buf, len,
+							&reader[r]);
 					id++;
 					flt = 1;
 				}
@@ -2391,18 +2416,18 @@ int cc_srv_report_cards(struct s_client *cl) {
 				buf[ofs + 2] = prid & 0xFF;
 				//Setting SA (Shared Addresses):
 				if (au_allowed)
-					cc_SA_oscam2cccam(&rdr->sa[j][0], buf+ofs+3);
+					cc_SA_oscam2cccam(&rdr->sa[j][0], buf + ofs + 3);
 				//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
 			}
 			buf[21 + (j * 7)] = 1;
 			memcpy(buf + 22 + (j * 7), cc->node_id, 8);
 			id++;
 
-			if ((rdr->tcp_connected || rdr->card_status
-					== CARD_INSERTED) /*&& !rdr->cc_id*/) {
+			if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED) /*&& !rdr->cc_id*/) {
 				//rdr->cc_id = b2i(3, buf + 5);
 				int len = 30 + (j * 7);
-				cc_add_reported_carddata(cl, reported_carddatas, buf, len, &reader[r]);
+				cc_add_reported_carddata(cl, reported_carddatas, buf, len,
+						&reader[r]);
 				cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], rdr->card_status, rdr->tcp_connected, rdr->label, rdr->cc_id);
 			} else if ((rdr->card_status != CARD_INSERTED)
@@ -2426,37 +2451,40 @@ int cc_srv_report_cards(struct s_client *cl) {
 			if (rcc && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
 
-                LL_ITER *it = ll_iter_create(rcc->cards);
+				LL_ITER *it = ll_iter_create(rcc->cards);
 				while ((card = ll_iter_next(it))) {
-					if (card->hop <= maxhops && 
-							chk_ctab(card->caid, &cl->ctab) && chk_ctab(
-							card->caid, &rdr->ctab)) {
-                                                      
-                                                if (cfg->cc_ignore_reshare || card->maxdown > 0) {
-                                                        int ignore = 0;
+					if (card->hop <= maxhops && chk_ctab(card->caid, &cl->ctab)
+							&& chk_ctab(card->caid, &rdr->ctab)) {
 
-                                                        LL_ITER *it2 = ll_iter_create(card->providers);
-                                                        struct cc_provider *prov;
-                                                        while ((prov = ll_iter_next(it2))) {
-							        ulong prid = prov->prov;
-                                                                if (!chk_srvid_by_caid_prov(cl, card->caid, prid) || 
-                                                                                !chk_srvid_by_caid_prov(rdr->client, card->caid, prid)) {
-                                                                        ignore = 1;
-                                                                        break;
-                                                                }
-                                                        }
-                                                        ll_iter_release(it2);
-                                                        if (!ignore) { //Filtered by service
-                                                                int new_reshare=cfg->cc_ignore_reshare?reshare:(card->maxdown-1);
-                                                                if (new_reshare>reshare)
-                                                                  new_reshare=reshare;
-          							add_card_to_serverlist(server_cards, card, new_reshare);
-		        					count++;
-                                                        }
+						if (cfg->cc_ignore_reshare || card->maxdown > 0) {
+							int ignore = 0;
+
+							LL_ITER *it2 = ll_iter_create(card->providers);
+							struct cc_provider *prov;
+							while ((prov = ll_iter_next(it2))) {
+								ulong prid = prov->prov;
+								if (!chk_srvid_by_caid_prov(cl, card->caid,
+										prid) || !chk_srvid_by_caid_prov(
+										rdr->client, card->caid, prid)) {
+									ignore = 1;
+									break;
+								}
+							}
+							ll_iter_release(it2);
+							if (!ignore) { //Filtered by service
+								int new_reshare =
+										cfg->cc_ignore_reshare ? reshare
+												: (card->maxdown - 1);
+								if (new_reshare > reshare)
+									new_reshare = reshare;
+								add_card_to_serverlist(server_cards, card,
+										new_reshare);
+								count++;
+							}
 						}
 					}
 				}
-                ll_iter_release(it);
+				ll_iter_release(it);
 				pthread_mutex_unlock(&rcc->cards_busy);
 			}
 			cs_debug_mask(D_TRACE, "%s got %d cards from %s", getprefix(),
@@ -2466,7 +2494,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 
 	//report reshare cards:
 	//cs_debug_mask(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
-    LL_ITER *it = ll_iter_create(server_cards);
+	LL_ITER *it = ll_iter_create(server_cards);
 	struct cc_card *card;
 	while ((card = ll_iter_next(it))) {
 		//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
@@ -2486,7 +2514,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 		if (isau)
 			memcpy(buf + 12, card->hexserial, 8);
 		int j = 0;
-        LL_ITER *it2 = ll_iter_create(card->providers);
+		LL_ITER *it2 = ll_iter_create(card->providers);
 		struct cc_provider *prov;
 		while ((prov = ll_iter_next(it2))) {
 			ulong prid = prov->prov;
@@ -2494,37 +2522,37 @@ int cc_srv_report_cards(struct s_client *cl) {
 			buf[22 + (j * 7)] = prid >> 8;
 			buf[23 + (j * 7)] = prid & 0xFF;
 			if (isau)
-				memcpy(buf+24+(j*7), prov->sa, 4);
+				memcpy(buf + 24 + (j * 7), prov->sa, 4);
 			//cs_debug_mask(D_TRACE, "%s prov %06X", getprefix(), prid);
 			j++;
 		}
-        ll_iter_release(it2);
+		ll_iter_release(it2);
 		buf[20] = j;
-		int ofs = 21+(j*7);
-		buf[ofs] = 1+ll_count(card->remote_nodes);
+		int ofs = 21 + (j * 7);
+		buf[ofs] = 1 + ll_count(card->remote_nodes);
 		//cs_debug_mask(D_TRACE, "%s count=%d", getprefix(), buf[ofs]);
 		ofs++;
-		
+
 		//Add all the others node id:
 		LL_ITER *itr_node = ll_iter_create(card->remote_nodes);
 		uint8 *remote_node;
 		while ((remote_node = ll_iter_next(itr_node))) {
-			memcpy(buf+ofs, remote_node, 8);
-			ofs+=8;
+			memcpy(buf + ofs, remote_node, 8);
+			ofs += 8;
 		}
-        ll_iter_release(itr_node);
+		ll_iter_release(itr_node);
 
 		//Add own node id:
-		memcpy(buf+ofs, cc->node_id, 8);
-		ofs+=8;
-		
+		memcpy(buf + ofs, cc->node_id, 8);
+		ofs += 8;
+
 		id++;
 
 		//cs_debug_mask(D_TRACE, "%s ofs=%d", getprefix(), ofs);
 		cc_cmd_send(cl, buf, ofs, MSG_NEW_CARD);
 		cc_add_reported_carddata(cl, reported_carddatas, buf, ofs, &reader[r]);
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 	cc_free_cardlist(server_cards);
 
 	cc->report_carddata_id = id;
@@ -2536,15 +2564,15 @@ int cc_srv_report_cards(struct s_client *cl) {
 }
 
 void cc_init_cc(struct cc_data *cc) {
-	pthread_mutexattr_t   mta;
-        pthread_mutexattr_init(&mta);
+	pthread_mutexattr_t mta;
+	pthread_mutexattr_init(&mta);
 #if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)  || defined(OS_MACOSX)
-        pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
 #else
-        pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
+	pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
 #endif                      		
-	pthread_mutex_init(&cc->lock, NULL);       //No recursive lock
-	pthread_mutex_init(&cc->ecm_busy, NULL);   //No recusive lock
+	pthread_mutex_init(&cc->lock, NULL); //No recursive lock
+	pthread_mutex_init(&cc->ecm_busy, NULL); //No recusive lock
 	pthread_mutex_init(&cc->cards_busy, &mta); //Recursive lock
 }
 
@@ -2554,14 +2582,14 @@ void cc_init_cc(struct cc_data *cc) {
 int cc_srv_wakeup_readers(struct s_client *cl) {
 	int wakeup = 0;
 	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+	for (rdr = first_reader; rdr; rdr = rdr->next) {
 		if (rdr->typ != R_CCCAM)
 			continue;
 		if (!rdr->fd || !rdr->enable || rdr->deleted || rdr->tcp_connected == 2)
 			continue;
 		if (!(rdr->grp & cl->grp))
 			continue;
-	
+
 		//This wakeups the reader:
 		uchar dummy;
 		write_to_pipe(rdr->fd, PIP_ID_CIN, &dummy, sizeof(dummy));
@@ -2573,7 +2601,7 @@ int cc_srv_wakeup_readers(struct s_client *cl) {
 int cc_cards_modified() {
 	int modified = 0;
 	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+	for (rdr = first_reader; rdr; rdr = rdr->next) {
 		if (rdr->typ == R_CCCAM && rdr->fd) {
 			struct s_client *clr = rdr->client;
 			if (clr->cc) {
@@ -2582,7 +2610,7 @@ int cc_cards_modified() {
 			}
 		}
 	}
-	return modified;	                                         
+	return modified;
 }
 
 int cc_srv_connect(struct s_client *cl) {
@@ -2611,23 +2639,23 @@ int cc_srv_connect(struct s_client *cl) {
 		cl->cc = cc;
 		memset(cl->cc, 0, sizeof(struct cc_data));
 		cc->extended_ecm_idx = ll_create();
-		
+
 		cc_init_cc(cc);
 	}
 	update_prefix(cl);
-	
+
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
 	cl->cc_extended_ecm_mode = 0;
 
 	//Create checksum for "O" cccam:
-        for (i = 0; i < 12; i++) { 
-        	data[i] = fast_rnd(); 
-        } 
+	for (i = 0; i < 12; i++) {
+		data[i] = fast_rnd();
+	}
 	for (i = 0; i < 4; i++) {
-        	data[12+i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
-        }
-        
+		data[12 + i] = (data[i] + data[4 + i] + data[8 + i]) & 0xff;
+	}
+
 	send(cl->udp_fd, data, 16, 0);
 
 	cc_xor(data); // XOR init bytes with 'CCcam'
@@ -2646,8 +2674,8 @@ int cc_srv_connect(struct s_client *cl) {
 		cs_ddump(buf, 20, "cccam: recv:");
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 		cs_ddump(buf, 20, "cccam: hash:");
-	}
-	else return -1;
+	} else
+		return -1;
 
 	// receive username
 	if ((i = recv(cl->pfd, buf, 20, MSG_WAITALL)) == 20) {
@@ -2663,8 +2691,8 @@ int cc_srv_connect(struct s_client *cl) {
 			}
 		}
 		cs_ddump(buf, 20, "cccam: username '%s':", usr);
-	}
-	else return -1;
+	} else
+		return -1;
 
 	cl->crypted = 1;
 
@@ -2690,7 +2718,7 @@ int cc_srv_connect(struct s_client *cl) {
 
 	//Starting readers to get cards:
 	int wakeup = cc_srv_wakeup_readers(cl);
-	
+
 	// send passwd ack
 	memset(buf, 0, 20);
 	memcpy(buf, "CCcam\0", 6);
@@ -2708,7 +2736,6 @@ int cc_srv_connect(struct s_client *cl) {
 	cs_log("%s client '%s' (%s) running v%s (%s)", getprefix(), buf + 4,
 			cs_hexdump(0, cc->peer_node_id, 8), buf + 33, buf + 65);
 
-	
 	// send cli data ack
 	cc_cmd_send(cl, NULL, 0, MSG_CLI_DATA);
 
@@ -2717,10 +2744,10 @@ int cc_srv_connect(struct s_client *cl) {
 
 	// report cards
 	ulong hexserial_crc = get_reader_hexserial_crc(cl);
-	
+
 	if (wakeup > 0) //give readers time to get cards:
-	  cs_sleepms(500);
-	
+		cs_sleepms(500);
+
 	cc_srv_report_cards(cl);
 	cs_ftime(&cc->ecm_time);
 
@@ -2739,14 +2766,14 @@ int cc_srv_connect(struct s_client *cl) {
 				break; //Disconnect client
 			}
 			update_cards = 1;
-			
+
 		} else if (i <= 0)
 			break; //Disconnected by client
 		else {
 			cmi = 0;
 			update_cards = 1;
 		}
-		
+
 		if (update_cards) {
 			if (!cc->server_ecm_pending) {
 				struct timeb timeout;
@@ -2754,34 +2781,35 @@ int cc_srv_connect(struct s_client *cl) {
 				cs_ftime(&cur_time);
 				timeout = cc->ecm_time;
 				timeout.time += cfg->cc_update_interval;
-		
 
-				int needs_card_updates = (cfg->cc_update_interval >=0) && comp_timeb(
-						&cur_time, &timeout) > 0;
-						
+				int needs_card_updates = (cfg->cc_update_interval >= 0)
+						&& comp_timeb(&cur_time, &timeout) > 0;
+
 				if (needs_card_updates) {
 					cc->ecm_time = cur_time;
 					ulong new_hexserial_crc = get_reader_hexserial_crc(cl);
 					int cards_modified = cc_cards_modified();
-					if (new_hexserial_crc != hexserial_crc || cards_modified != cc->cards_modified) {
-						cs_debug_mask(D_TRACE, "%s update share list", getprefix());
-						
+					if (new_hexserial_crc != hexserial_crc || cards_modified
+							!= cc->cards_modified) {
+						cs_debug_mask(D_TRACE, "%s update share list",
+								getprefix());
+
 						hexserial_crc = new_hexserial_crc;
 						cc->cards_modified = cards_modified;
-						
+
 						cc_srv_report_cards(cl);
 					}
 				}
 			}
 		}
 	}
-	
+
 	cs_debug_mask(D_FUT, "cc_srv_connect out");
 	return 0;
 }
 
-void * cc_srv_init(struct s_client *cl ) {
-	cl->thread=pthread_self();
+void * cc_srv_init(struct s_client *cl) {
+	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 
 	cs_debug_mask(D_FUT, "cc_srv_init in");
@@ -2800,7 +2828,7 @@ void * cc_srv_init(struct s_client *cl ) {
 int cc_cli_connect(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cli_connect in");
 	struct s_reader *rdr = cl->reader;
-	
+
 	int handle, n;
 	uint8 data[20];
 	uint8 hash[SHA_DIGEST_LENGTH];
@@ -2808,8 +2836,8 @@ int cc_cli_connect(struct s_client *cl) {
 	char pwd[64];
 
 	// check cred config
-	if (rdr->device[0] == 0 || rdr->r_pwd[0] == 0
-			|| rdr->r_usr[0] == 0 || rdr->r_port == 0) {
+	if (rdr->device[0] == 0 || rdr->r_pwd[0] == 0 || rdr->r_usr[0] == 0
+			|| rdr->r_port == 0) {
 		cs_log("%s configuration error!", rdr->label);
 		return -5;
 	}
@@ -2845,23 +2873,21 @@ int cc_cli_connect(struct s_client *cl) {
 		cc->extended_ecm_idx = ll_create();
 		cc->current_cards = ll_create();
 		cc_init_cc(cc);
-	}else
-	{
-		if (cc->cards) 
-		{
-            LL_ITER *it = ll_iter_create(cc->cards);
+	} else {
+		if (cc->cards) {
+			LL_ITER *it = ll_iter_create(cc->cards);
 			struct cc_card *card;
 			while ((card = ll_iter_next(it))) {
 				cc_free_card(card);
-                ll_iter_remove(it);
-            }
-            ll_iter_release(it);
-        }
-                if (cc->current_cards)
-		        free_current_cards(cc->current_cards);
-        	if (cc->extended_ecm_idx)
-          		free_extended_ecm_idx(cc);
-          		
+				ll_iter_remove(it);
+			}
+			ll_iter_release(it);
+		}
+		if (cc->current_cards)
+			free_current_cards(cc->current_cards);
+		if (cc->extended_ecm_idx)
+			free_extended_ecm_idx(cc);
+
 		pthread_mutex_trylock(&cc->ecm_busy);
 		pthread_mutex_unlock(&cc->ecm_busy);
 	}
@@ -2933,8 +2959,7 @@ int cc_cli_connect(struct s_client *cl) {
 		cs_debug_mask(D_TRACE, "%s login succeeded", getprefix());
 	}
 
-	cs_debug("cccam: last_s=%d, last_g=%d", rdr->last_s,
-			rdr->last_g);
+	cs_debug("cccam: last_s=%d, last_g=%d", rdr->last_s, rdr->last_g);
 
 	cl->pfd = cl->udp_fd;
 	cs_debug("cccam: pfd=%d", cl->pfd);
@@ -2976,8 +3001,8 @@ int cc_cli_init_int(struct s_client *cl) {
 
 	cl->pfd = 0;
 	if (rdr->r_port <= 0) {
-		cs_log("%s invalid port %d for server %s", getprefix(),
-				rdr->r_port, rdr->device);
+		cs_log("%s invalid port %d for server %s", getprefix(), rdr->r_port,
+				rdr->device);
 		return (1);
 	}
 	if ((ptrp = getprotobyname("tcp")))
@@ -3005,7 +3030,7 @@ int cc_cli_init_int(struct s_client *cl) {
 
 #ifdef SO_PRIORITY
 	if (cfg->netprio)
-		setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY,
+	setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY,
 			(void *)&cfg->netprio, sizeof(ulong));
 #endif
 	rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
@@ -3020,11 +3045,9 @@ int cc_cli_init_int(struct s_client *cl) {
 		rdr->tcp_rto = 60 * 60 * 10; // timeout to 10 hours
 	cs_debug("cccam: reconnect timeout set to: %d", rdr->tcp_rto);
 	cc_check_version(rdr->cc_version, rdr->cc_build);
-	cs_log(
-			"proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d",
-			rdr->label, rdr->device, rdr->r_port,
-			rdr->cc_version, rdr->cc_build,
-			rdr->cc_maxhop);
+	cs_log("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d",
+			rdr->label, rdr->device, rdr->r_port, rdr->cc_version,
+			rdr->cc_build, rdr->cc_maxhop);
 
 	int res = cc_cli_connect(cl);
 	if (res < 0)
@@ -3036,7 +3059,7 @@ int cc_cli_init_int(struct s_client *cl) {
 int cc_cli_init(struct s_client *cl) {
 	if (!cl->cc)
 		cc_cli_init_int(cl);
-	update_prefix(cl);	
+	update_prefix(cl);
 	return 0;
 }
 
@@ -3048,10 +3071,9 @@ int cc_cli_init(struct s_client *cl) {
 int cc_available(int ridx, int checktype) {
 	struct s_reader *rdr = &reader[ridx];
 	struct s_client *cl = rdr->client;
-	
+
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);
-	if (!cl->cc || rdr->tcp_connected != 2
-			|| rdr->card_status != CARD_INSERTED)
+	if (!cl->cc || rdr->tcp_connected != 2 || rdr->card_status != CARD_INSERTED)
 		return 1; //Not connected? Connect!
 
 	if (checktype == AVAIL_CHECK_LOADBALANCE && !rdr->available) {
@@ -3071,7 +3093,7 @@ void cc_card_info() {
 	cs_debug_mask(D_FUT, "cc_card_info in");
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
-	
+
 	if (!rdr->tcp_connected)
 		cc_cli_init_int(cl);
 	cs_debug_mask(D_FUT, "cc_card_info out");
@@ -3109,8 +3131,8 @@ void module_cccam(struct s_module *ph) {
 	ptab.ports[0].s_port = cfg->cc_port;
 	ph->ptab = &ptab;
 	ph->ptab->nports = 1;
-	ph->num=R_CCCAM;
-	
+	ph->num = R_CCCAM;
+
 	//Partner Detection:
 	uint16 sum = 0x1234; //This is our checksum 
 	int i;
@@ -3118,7 +3140,7 @@ void module_cccam(struct s_module *ph) {
 		cc_node_id[i] = fast_rnd();
 		sum += cc_node_id[i];
 	}
-	cc_node_id[6] = sum >> 8; 
-        cc_node_id[7] = sum & 0xff;
+	cc_node_id[6] = sum >> 8;
+	cc_node_id[7] = sum & 0xff;
 }
 
