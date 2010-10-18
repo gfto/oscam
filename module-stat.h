@@ -1,5 +1,5 @@
 #include "globals.h"
-#include "oscam-datastruct-llist.h"
+#include "module-datastruct-llist.h"
 
 LLIST *reader_stat[CS_MAXREADER];
 static pthread_mutex_t stat_busy;

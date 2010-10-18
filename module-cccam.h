@@ -7,7 +7,7 @@
 #ifndef MODULECCCAM_H_
 #define MODULECCCAM_H_
 
-#include "oscam-datastruct-llist.h"
+#include "module-datastruct-llist.h"
 
 #define CC_MAXMSGSIZE 512
 #define CC_MAX_PROV   16

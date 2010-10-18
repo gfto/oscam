@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include "globals.h"
-#include "oscam-datastruct-llist.h"
+#include "module-datastruct-llist.h"
 
 static void _destroy(LLIST *l)
 {
