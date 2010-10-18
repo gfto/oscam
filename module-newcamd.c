@@ -83,7 +83,7 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
 {
   uint8 netbuf[CWS_NETMSGSIZE];
   int head_size;
-  head_size = (reader[cur_client()->ridx].ncd_proto==NCD_524)?8:12;
+  head_size = (cur_client()->reader->ncd_proto==NCD_524)?8:12;
 
   if (len < 3 || len + head_size > CWS_NETMSGSIZE || handle < 0) 
     return -1;
@@ -106,10 +106,10 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
   }
   else 
     netbuf[2] = netbuf[3] = 0;
-  memset(netbuf+4, 0, (reader[cur_client()->ridx].ncd_proto==NCD_524)?4:8);
+  memset(netbuf+4, 0, (cur_client()->reader->ncd_proto==NCD_524)?4:8);
   if( sid ) {
-    netbuf[(reader[cur_client()->ridx].ncd_proto==NCD_524)?6:4] = (uchar)(sid>>8); //sid
-    netbuf[(reader[cur_client()->ridx].ncd_proto==NCD_524)?7:5] = (uchar)(sid);
+    netbuf[(cur_client()->reader->ncd_proto==NCD_524)?6:4] = (uchar)(sid>>8); //sid
+    netbuf[(cur_client()->reader->ncd_proto==NCD_524)?7:5] = (uchar)(sid);
   }
   //if ((!ncd_proto==NCD_524) && (buffer[0] >= 0xd1) && (buffer[0]<= 0xd8)) { // extended proto for mg
     //cs_debug("newcamd: extended: msg");
@@ -147,12 +147,12 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   cs_debug("nmr(): len=%d, errno=%d", len, (len==-1)?errno:0);
   if (!len) {
     cs_debug("nmr: 1 return 0");
-    network_tcp_connection_close(&reader[cur_client()->ridx], handle);
+    network_tcp_connection_close(cur_client()->reader, handle);
     return 0;
   }
   if (len != 2) {
     cs_debug("nmr: len!=2");
-    network_tcp_connection_close(&reader[cur_client()->ridx], handle);
+    network_tcp_connection_close(cur_client()->reader, handle);
     return -1;
   }
   if (((netbuf[0] << 8) | netbuf[1]) > CWS_NETMSGSIZE - 2) {
@@ -178,24 +178,24 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   //cs_ddump(netbuf, len, "nmr: decrypted data, len=%d", len);
   msgid = (netbuf[2] << 8) | netbuf[3];
 
-  if( reader[cur_client()->ridx].ncd_proto==NCD_AUTO ) {
+  if( cur_client()->reader->ncd_proto==NCD_AUTO ) {
     // auto detect
     int l5 = (((netbuf[13] & 0x0f) << 8) | netbuf[14]) + 3;
     int l4 = (((netbuf[9] & 0x0f) << 8) | netbuf[10]) + 3;
     
     if( (l5<=len-12) && ((netbuf[12]&0xF0)==0xE0 || (netbuf[12]&0xF0)==0x80) ) 
-      reader[cur_client()->ridx].ncd_proto = NCD_525;
+      cur_client()->reader->ncd_proto = NCD_525;
     else if( (l4<=len-8) && ((netbuf[8]&0xF0)==0xE0 || (netbuf[9]&0xF0)==0x80) )
-      reader[cur_client()->ridx].ncd_proto = NCD_524;
+      cur_client()->reader->ncd_proto = NCD_524;
     else {
       cs_debug("nmr: 4 return -1");
       return -1;
     }
 
-    cs_debug("nmr: autodetect: newcamd52%d used", (reader[cur_client()->ridx].ncd_proto==NCD_525)?5:4);
+    cs_debug("nmr: autodetect: newcamd52%d used", (cur_client()->reader->ncd_proto==NCD_525)?5:4);
   }
   
-  ncd_off=(reader[cur_client()->ridx].ncd_proto==NCD_525)?4:0;
+  ncd_off=(cur_client()->reader->ncd_proto==NCD_525)?4:0;
 
   returnLen = (((netbuf[9+ncd_off] & 0x0f) << 8) | netbuf[10+ncd_off]) + 3;
   if ( returnLen > (len-(8+ncd_off)) ) {
@@ -228,8 +228,8 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   switch(commType)
   {
   case COMMTYPE_SERVER:
-    buffer[0]=(reader[cur_client()->ridx].ncd_proto==NCD_525)?netbuf[4]:netbuf[6]; // sid
-    buffer[1]=(reader[cur_client()->ridx].ncd_proto==NCD_525)?netbuf[5]:netbuf[7];
+    buffer[0]=(cur_client()->reader->ncd_proto==NCD_525)?netbuf[4]:netbuf[6]; // sid
+    buffer[1]=(cur_client()->reader->ncd_proto==NCD_525)?netbuf[5]:netbuf[7];
   	break;
   case COMMTYPE_CLIENT:
     buffer[0]=netbuf[2]; // msgid
@@ -288,8 +288,8 @@ static int connect_newcamd_server()
   uint8 login_answer;
   int bytes_received;
 
-  if(reader[cur_client()->ridx].device[0] == 0 || reader[cur_client()->ridx].r_pwd[0] == 0 || 
-     reader[cur_client()->ridx].r_usr[0] == 0 || reader[cur_client()->ridx].r_port == 0)
+  if(cur_client()->reader->device[0] == 0 || cur_client()->reader->r_pwd[0] == 0 || 
+     cur_client()->reader->r_usr[0] == 0 || cur_client()->reader->r_port == 0)
     return -5;
 
   // 1. Connect
@@ -297,97 +297,96 @@ static int connect_newcamd_server()
   if(handle < 0) return -1;
   
   // 2. Get init sequence
-  reader[cur_client()->ridx].ncd_msgid = 0;
+  cur_client()->reader->ncd_msgid = 0;
   if( read(handle, keymod, sizeof(keymod)) != sizeof(keymod)) {
     cs_log("server does not return 14 bytes");
-    network_tcp_connection_close(&reader[cur_client()->ridx], handle);
+    network_tcp_connection_close(cur_client()->reader, handle);
     return -2;
   }
   cs_ddump(keymod, 14, "server init sequence:");
-  key = des_login_key_get(keymod, reader[cur_client()->ridx].ncd_key, 14);
+  key = des_login_key_get(keymod, cur_client()->reader->ncd_key, 14);
 
   // 3. Send login info
   index = 3;
   buf[0] = MSG_CLIENT_2_SERVER_LOGIN;
   buf[1] = 0;
-  strcpy((char *)buf+index, reader[cur_client()->ridx].r_usr);
-  __md5_crypt(reader[cur_client()->ridx].r_pwd, "$1$abcdefgh$", (char *)passwdcrypt);
-  index += strlen(reader[cur_client()->ridx].r_usr)+1;
+  strcpy((char *)buf+index, cur_client()->reader->r_usr);
+  __md5_crypt(cur_client()->reader->r_pwd, "$1$abcdefgh$", (char *)passwdcrypt);
+  index += strlen(cur_client()->reader->r_usr)+1;
   strcpy((char *)buf+index, (const char *)passwdcrypt);
 
   network_message_send(handle, 0, buf, index+strlen((char *)passwdcrypt)+1, key, 
                        COMMTYPE_CLIENT, NCD_CLIENT_ID, NULL);
 
   // 3.1 Get login answer
-  login_answer=network_cmd_no_data_receive(handle, &reader[cur_client()->ridx].ncd_msgid, 
+  login_answer=network_cmd_no_data_receive(handle, &cur_client()->reader->ncd_msgid, 
                                            key, COMMTYPE_CLIENT);
   if( login_answer == MSG_CLIENT_2_SERVER_LOGIN_NAK )
   {
-    cs_log("login failed for user '%s'", reader[cur_client()->ridx].r_usr);
-    network_tcp_connection_close(&reader[cur_client()->ridx], handle);
+    cs_log("login failed for user '%s'", cur_client()->reader->r_usr);
+    network_tcp_connection_close(cur_client()->reader, handle);
     return -3;
   }
   if( login_answer != MSG_CLIENT_2_SERVER_LOGIN_ACK ) 
   {
     cs_log("expected MSG_CLIENT_2_SERVER_LOGIN_ACK (%02X), received %02X", 
              MSG_CLIENT_2_SERVER_LOGIN_ACK, login_answer);
-    network_tcp_connection_close(&reader[cur_client()->ridx], handle);
+    network_tcp_connection_close(cur_client()->reader, handle);
     return -3;
   }
 
   // 3.2 Set connection info
-  reader[cur_client()->ridx].tcp_connected = 1;
+  cur_client()->reader->tcp_connected = 1;
 
   // 4. Send MSG_CARD_DATE_REQ
-  key = des_login_key_get(reader[cur_client()->ridx].ncd_key, passwdcrypt, strlen((char *)passwdcrypt));
+  key = des_login_key_get(cur_client()->reader->ncd_key, passwdcrypt, strlen((char *)passwdcrypt));
 
-  network_cmd_no_data_send(handle, &reader[cur_client()->ridx].ncd_msgid, MSG_CARD_DATA_REQ, 
+  network_cmd_no_data_send(handle, &cur_client()->reader->ncd_msgid, MSG_CARD_DATA_REQ, 
                            key, COMMTYPE_CLIENT);
-  bytes_received = network_message_receive(handle, &reader[cur_client()->ridx].ncd_msgid, buf, 
+  bytes_received = network_message_receive(handle, &cur_client()->reader->ncd_msgid, buf, 
                                            key, COMMTYPE_CLIENT);
   if( bytes_received < 16 || buf[2] != MSG_CARD_DATA ) {
     cs_log("expected MSG_CARD_DATA (%02X), received %02X", 
              MSG_CARD_DATA, buf[2]);
-    network_tcp_connection_close(&reader[cur_client()->ridx], handle);
+    network_tcp_connection_close(cur_client()->reader, handle);
     return -4;
   }
 
   // 5. Parse CAID and PROVID(s)
-  reader[cur_client()->ridx].caid[0] = (ushort)((buf[4+2]<<8) | buf[5+2]);
+  cur_client()->reader->caid[0] = (ushort)((buf[4+2]<<8) | buf[5+2]);
 
   /* handle special serial format in newcamd. See newcamd_auth_client */
-  if (((reader[cur_client()->ridx].caid[0] >> 8) == 0x17) || ((reader[cur_client()->ridx].caid[0] >> 8) == 0x06)) {
-    memcpy(&reader[cur_client()->ridx].hexserial, buf+10+2, 4);
-    int hexbase = reader[cur_client()->ridx].hexserial[0];
-    reader[cur_client()->ridx].hexserial[0] = reader[cur_client()->ridx].hexserial[1];
-    reader[cur_client()->ridx].hexserial[1] = reader[cur_client()->ridx].hexserial[2];
-    reader[cur_client()->ridx].hexserial[2] = reader[cur_client()->ridx].hexserial[3];
-    reader[cur_client()->ridx].hexserial[3] = hexbase;
+  if (((cur_client()->reader->caid[0] >> 8) == 0x17) || ((cur_client()->reader->caid[0] >> 8) == 0x06)) {
+    memcpy(&cur_client()->reader->hexserial, buf+10+2, 4);
+    int hexbase = cur_client()->reader->hexserial[0];
+    cur_client()->reader->hexserial[0] = cur_client()->reader->hexserial[1];
+    cur_client()->reader->hexserial[1] = cur_client()->reader->hexserial[2];
+    cur_client()->reader->hexserial[2] = cur_client()->reader->hexserial[3];
+    cur_client()->reader->hexserial[3] = hexbase;
   }
-  else if (((reader[cur_client()->ridx].caid[0] >> 8) == 0x05) || ((reader[cur_client()->ridx].caid[0] >> 8) == 0x0D))
-    memcpy(&reader[cur_client()->ridx].hexserial, buf+9+2, 5);
+  else if (((cur_client()->reader->caid[0] >> 8) == 0x05) || ((cur_client()->reader->caid[0] >> 8) == 0x0D))
+    memcpy(&cur_client()->reader->hexserial, buf+9+2, 5);
   else
-    memcpy(&reader[cur_client()->ridx].hexserial, buf+8+2, 6);
+    memcpy(&cur_client()->reader->hexserial, buf+8+2, 6);
 
-  int ridx = cur_client()->ridx;
-  cs_log("Newcamd Server: %s:%d - UserID: %i", reader[ridx].device, reader[ridx].r_port, buf[3+2]);
-  cs_log("CAID: %04X - UA: %02X%02X%02X%02X%02X%02X%02X%02X - Provider # %i", reader[ridx].caid[0], reader[ridx].hexserial[0], reader[ridx].hexserial[1], reader[ridx].hexserial[2], reader[ridx].hexserial[3], reader[ridx].hexserial[4], reader[ridx].hexserial[5], reader[ridx].hexserial[6], reader[ridx].hexserial[7], buf[14+2]);
-  reader[ridx].nprov = buf[14+2];
-  memset(reader[ridx].prid, 0x00, sizeof(reader[ridx].prid));
-  for (i=0; i < reader[ridx].nprov; i++) {
-    reader[ridx].availkeys[i][0] = 1;
-    reader[ridx].prid[i][0] = buf[15+2+11*i];
-    reader[ridx].prid[i][1] = buf[16+2+11*i];
-    reader[ridx].prid[i][2] = buf[17+2+11*i];
-    memcpy(&reader[ridx].sa[i], buf+22+2+11*i, 4); // the 4 first bytes are not read
-    cs_log("Provider ID: %02X%02X%02X - SA: %02X%02X%02X%02X", reader[ridx].prid[i][0],  reader[ridx].prid[i][1], reader[ridx].prid[i][2], reader[ridx].sa[i][0], reader[ridx].sa[i][1], reader[ridx].sa[i][2], reader[ridx].sa[i][3]);
+  cs_log("Newcamd Server: %s:%d - UserID: %i", cur_client()->reader->device, cur_client()->reader->r_port, buf[3+2]);
+  cs_log("CAID: %04X - UA: %02X%02X%02X%02X%02X%02X%02X%02X - Provider # %i", cur_client()->reader->caid[0], cur_client()->reader->hexserial[0], cur_client()->reader->hexserial[1], cur_client()->reader->hexserial[2], cur_client()->reader->hexserial[3], cur_client()->reader->hexserial[4], cur_client()->reader->hexserial[5], cur_client()->reader->hexserial[6], cur_client()->reader->hexserial[7], buf[14+2]);
+  cur_client()->reader->nprov = buf[14+2];
+  memset(cur_client()->reader->prid, 0x00, sizeof(cur_client()->reader->prid));
+  for (i=0; i < cur_client()->reader->nprov; i++) {
+    cur_client()->reader->availkeys[i][0] = 1;
+    cur_client()->reader->prid[i][0] = buf[15+2+11*i];
+    cur_client()->reader->prid[i][1] = buf[16+2+11*i];
+    cur_client()->reader->prid[i][2] = buf[17+2+11*i];
+    memcpy(&cur_client()->reader->sa[i], buf+22+2+11*i, 4); // the 4 first bytes are not read
+    cs_log("Provider ID: %02X%02X%02X - SA: %02X%02X%02X%02X", cur_client()->reader->prid[i][0],  cur_client()->reader->prid[i][1], cur_client()->reader->prid[i][2], cur_client()->reader->sa[i][0], cur_client()->reader->sa[i][1], cur_client()->reader->sa[i][2], cur_client()->reader->sa[i][3]);
   }
-  memcpy(reader[cur_client()->ridx].ncd_skey, key, 16);
+  memcpy(cur_client()->reader->ncd_skey, key, 16);
 
   // 6. Set card inserted
-  reader[cur_client()->ridx].tcp_connected = 2;
-  reader[cur_client()->ridx].card_status = CARD_INSERTED;
-  reader[cur_client()->ridx].last_g = reader[cur_client()->ridx].last_s = time((time_t *)0);
+  cur_client()->reader->tcp_connected = 2;
+  cur_client()->reader->card_status = CARD_INSERTED;
+  cur_client()->reader->last_g = cur_client()->reader->last_s = time((time_t *)0);
 
   // Only after connect() on cur_client()->udp_fd (Linux)
   cur_client()->pfd=cur_client()->udp_fd;     
@@ -397,7 +396,7 @@ static int connect_newcamd_server()
 
 static int newcamd_connect()
 {
-  if (reader[cur_client()->ridx].tcp_connected < 2 && connect_newcamd_server() < 0)
+  if (cur_client()->reader->tcp_connected < 2 && connect_newcamd_server() < 0)
     return 0;
 
   if (!cur_client()->udp_fd)
@@ -412,8 +411,8 @@ static int newcamd_send(uchar *buf, int ml, ushort sid)
   if(!newcamd_connect())
      return(-1);
 
-  return(network_message_send(cur_client()->udp_fd, &reader[cur_client()->ridx].ncd_msgid, 
-         buf, ml, reader[cur_client()->ridx].ncd_skey, COMMTYPE_CLIENT, sid, NULL));
+  return(network_message_send(cur_client()->udp_fd, &cur_client()->reader->ncd_msgid, 
+         buf, ml, cur_client()->reader->ncd_skey, COMMTYPE_CLIENT, sid, NULL));
 }
 
 static int newcamd_recv(struct s_client *client, uchar *buf, int UNUSED(l))
@@ -430,8 +429,8 @@ static int newcamd_recv(struct s_client *client, uchar *buf, int UNUSED(l))
   {
     if (!client->udp_fd) return(-1);
     rs=network_message_receive(client->udp_fd, 
-                               &reader[client->ridx].ncd_msgid,buf, 
-                               reader[client->ridx].ncd_skey, COMMTYPE_CLIENT);
+                               &client->reader->ncd_msgid,buf, 
+                               client->reader->ncd_skey, COMMTYPE_CLIENT);
   }
 
   if (rs<5) rc=(-1);
@@ -1163,9 +1162,9 @@ int newcamd_client_init(struct s_client *client)
   char ptxt[16];
 
   client->pfd=0;
-  if (reader[client->ridx].r_port<=0)
+  if (client->reader->r_port<=0)
   {
-    cs_log("invalid port %d for server %s", reader[client->ridx].r_port, reader[client->ridx].device);
+    cs_log("invalid port %d for server %s", client->reader->r_port, client->reader->device);
     return(1);
   }
   if( (ptrp=getprotobyname("tcp")) )
@@ -1182,7 +1181,7 @@ int newcamd_client_init(struct s_client *client)
   else
 #endif
     loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(reader[client->ridx].l_port);
+  loc_sa.sin_port = htons(client->reader->l_port);
 
   if ((client->udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
   {
@@ -1195,13 +1194,13 @@ int newcamd_client_init(struct s_client *client)
     setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, 
                (void *)&cfg->netprio, sizeof(ulong));
 #endif
-  if (!reader[client->ridx].tcp_ito) { 
-    ulong keep_alive = reader[client->ridx].tcp_ito?1:0;
+  if (!client->reader->tcp_ito) { 
+    ulong keep_alive = client->reader->tcp_ito?1:0;
     setsockopt(client->udp_fd, SOL_SOCKET, SO_KEEPALIVE, 
     (void *)&keep_alive, sizeof(ulong));
   }
 
-  if (reader[client->ridx].l_port>0)
+  if (client->reader->l_port>0)
   {
     if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
     {
@@ -1209,18 +1208,18 @@ int newcamd_client_init(struct s_client *client)
       close(client->udp_fd);
       return(1);
     }
-    sprintf(ptxt, ", port=%d", reader[client->ridx].l_port);
+    sprintf(ptxt, ", port=%d", client->reader->l_port);
   }
   else
     ptxt[0]='\0';
 
   memset((char *)&client->udp_sa,0,sizeof(client->udp_sa));
   client->udp_sa.sin_family = AF_INET;
-  client->udp_sa.sin_port = htons((u_short)reader[client->ridx].r_port);
+  client->udp_sa.sin_port = htons((u_short)client->reader->r_port);
 
   cs_log("proxy %s:%d newcamd52%d (fd=%d%s)",
-          reader[client->ridx].device, reader[client->ridx].r_port,
-          (reader[client->ridx].ncd_proto==NCD_525)?5:4, client->udp_fd, ptxt);
+          client->reader->device, client->reader->r_port,
+          (client->reader->ncd_proto==NCD_525)?5:4, client->udp_fd, ptxt);
 
   return(0);
 }
@@ -1229,7 +1228,7 @@ static int newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf
 {
 //  if (!cur_client()->udp_sa.sin_addr.s_addr)
 //    return(-1);
-  struct s_reader *rdr = &reader[client->ridx];
+  struct s_reader *rdr = client->reader;
 
   if(!newcamd_connect())
     return (-1);

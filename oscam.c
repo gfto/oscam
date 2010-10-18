@@ -417,11 +417,11 @@ void cs_exit(int sig)
     case 'm': break;
     case 'r':
         // free AES entries allocated memory
-        if(reader[cl->ridx].aes_list) {
-            aes_clear_entries(&reader[cl->ridx]);
+        if(cl->reader->aes_list) {
+            aes_clear_entries(cl->reader);
         }
         // close the device
-        reader_device_close(&reader[cl->ridx]);
+        reader_device_close(cl->reader);
         break;
 
     case 'h':
@@ -909,7 +909,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 
 
 		rdr->fd=cl->fd_m2c;
-		cl->ridx=get_ridx(rdr);
+		cl->reader=rdr;
 		cs_log("creating thread for device %s slot %i", rdr->device, rdr->slot);
              	
 		cl->sidtabok=rdr->sidtabok;
@@ -1151,7 +1151,7 @@ int check_ecmcache1(ECM_REQUEST *er, uint64 grp)
 int check_ecmcache2(ECM_REQUEST *er, uint64 grp)
 {
 	// disable cache2
-	if (!reader[cur_client()->ridx].cachecm) return(0);
+	if (!cur_client()->reader->cachecm) return(0);
 	int save = er->reader[0];
 	int rc = check_ecmcache1(er, grp);
 	er->reader[0] = save;
@@ -1366,7 +1366,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
     }
   }
 
-  er->reader[0]=reader->client->ridx;
+  er->reader[0]=get_ridx(reader);
 //cs_log("answer from reader %d (rc=%d)", er->reader[0], er->rc);
   er->caid=er->ocaid;
 

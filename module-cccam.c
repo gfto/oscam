@@ -28,7 +28,7 @@ void update_prefix(struct s_client *cl) {
 	if (cl->typ == 'c')
 		sprintf(cc->prefix, "cccam(s) %s: ", cl->usr);
 	else
-		sprintf(cc->prefix, "cccam(r) %s: ", reader[cl->ridx].label);
+		sprintf(cc->prefix, "cccam(r) %s: ", cl->reader->label);
 	while (strlen(cc->prefix) < 22)
 		strcat(cc->prefix, " ");
 }
@@ -230,7 +230,7 @@ void free_current_cards(LLIST *current_cards) {
  */
 void cc_cli_close(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cli_close in");
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	rdr->tcp_connected = 0;
 	rdr->card_status = NO_CARD;
 	rdr->available = 0;
@@ -341,7 +341,7 @@ void free_extended_ecm_idx(struct cc_data *cc) {
  * receive a message
  */
 int cc_msg_recv(struct s_client *cl, uint8 *buf) {
-	struct s_reader *rdr = (cl->typ == 'c')?NULL:&reader[cl->ridx];
+	struct s_reader *rdr = (cl->typ == 'c')?NULL:cl->reader;
 	
 	int len;
 	uint8 netbuf[CC_MAXMSGSIZE + 4];
@@ -405,7 +405,7 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
         if (!cl->udp_fd) //disconnected
           return 0;
           
-	struct s_reader *rdr = (cl->typ == 'c')?NULL:&reader[cl->ridx];
+	struct s_reader *rdr = (cl->typ == 'c')?NULL:cl->reader;
 	  
 	int n;
 	uint8 netbuf[len + 4];
@@ -474,7 +474,7 @@ void cc_check_version(char *cc_version, char *cc_build) {
  * sends own version information to the CCCam server
  */
 int cc_send_cli_data(struct s_client *cl) {
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	
 	int i;
 	struct cc_data *cc = cl->cc;
@@ -505,7 +505,7 @@ int cc_send_cli_data(struct s_client *cl) {
  * sends version information to the client
  */
 int cc_send_srv_data(struct s_client *cl) {
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 
 	cs_debug("cccam: send server data");
@@ -558,7 +558,7 @@ int cc_get_nxt_ecm(struct s_client *cl) {
  * sends the secret cmd05 answer to the server 
  */
 int send_cmd05_answer(struct s_client *cl) {
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	if (!cc->cmd05_active || !rdr->available) //exit if not in cmd05 or waiting for ECM answer
 		return 0;
@@ -750,7 +750,7 @@ int cc_UA_valid(uint8 *ua) {
  */
 int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	cs_debug_mask(D_FUT, "cc_send_ecm in");
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
 	cc_cli_init_int(cl);
@@ -1036,7 +1036,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 int cc_send_pending_emms(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_send_pending_emms in");
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 
 	LL_ITER *it = ll_iter_create(cc->pending_emms);;
@@ -1094,7 +1094,7 @@ struct cc_card *get_card_by_hexserial(struct s_client *cl, uint8 *hexserial, uin
 int cc_send_emm(EMM_PACKET *ep) {
 	cs_debug_mask(D_FUT, "cc_send_emm in");
 	struct s_client *cl = cur_client();
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	
 	cc_cli_init_int(cl);
 
@@ -1318,7 +1318,7 @@ int check_extended_mode(struct s_client *cl, char *msg) {
 void cc_idle() {
 	cs_debug_mask(D_FUT, "cc_idle in");
 	struct s_client *cl = cur_client();
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	if (!rdr->tcp_connected)
 		return;
@@ -1441,7 +1441,7 @@ void cc_card_removed( struct s_client *cl, uint32 shareid) {
 
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	cs_debug_mask(D_FUT, "cc_parse_msg in %d", buf[1]);
-	struct s_reader *rdr = (cl->typ == 'c')?NULL:&reader[cl->ridx];
+	struct s_reader *rdr = (cl->typ == 'c')?NULL:cl->reader;
 	
 	int ret = buf[1];
 	struct cc_data *cc = cl->cc;
@@ -2799,7 +2799,7 @@ void * cc_srv_init(struct s_client *cl ) {
 
 int cc_cli_connect(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cli_connect in");
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	
 	int handle, n;
 	uint8 data[20];
@@ -2967,7 +2967,7 @@ int cc_cli_connect(struct s_client *cl) {
 
 int cc_cli_init_int(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cli_init_int");
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	if (rdr->tcp_connected)
 		return -1;
 
@@ -3070,7 +3070,7 @@ int cc_available(int ridx, int checktype) {
 void cc_card_info() {
 	cs_debug_mask(D_FUT, "cc_card_info in");
 	struct s_client *cl = cur_client();
-	struct s_reader *rdr = &reader[cl->ridx];
+	struct s_reader *rdr = cl->reader;
 	
 	if (!rdr->tcp_connected)
 		cc_cli_init_int(cl);

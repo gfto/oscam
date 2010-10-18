@@ -930,8 +930,8 @@ void * init_oscam_ser(int ctyp)
 
 static int oscam_ser_client_init(struct s_client *client)
 {
-  if ((!reader[client->ridx].device[0])) cs_exit(1);
-  if (!oscam_ser_parse_url(reader[client->ridx].device)) cs_exit(1);
+  if ((!client->reader->device[0])) cs_exit(1);
+  if (!oscam_ser_parse_url(client->reader->device)) cs_exit(1);
   client->pfd=init_oscam_ser_device(oscam_ser_device);
   return((client->pfd>0) ? 0 : 1);
 }

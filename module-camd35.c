@@ -39,7 +39,7 @@ static int camd35_send(uchar *buf)
         }
 	else {
 	   status = send(cl->udp_fd, rbuf, l + 4, 0);
-	   if (status == -1) network_tcp_connection_close(&reader[cl->ridx], cl->pfd);
+	   if (status == -1) network_tcp_connection_close(cl->reader, cl->pfd);
         }
 	return status;		
 }
@@ -350,8 +350,8 @@ static void * camd35_server(void *cli)
 static void casc_set_account()
 {
   struct s_client *cl = cur_client();
-  strcpy((char *)cl->upwd, reader[cl->ridx].r_pwd);
-  memcpy(cl->ucrc, i2b(4, crc32(0L, MD5((unsigned char *)reader[cl->ridx].r_usr, strlen(reader[cl->ridx].r_usr), cl->dump), 16)), 4);
+  strcpy((char *)cl->upwd, cl->reader->r_pwd);
+  memcpy(cl->ucrc, i2b(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), cl->dump), 16)), 4);
   aes_set_key((char *)MD5(cl->upwd, strlen((char *)cl->upwd), cl->dump));
   cl->crypted=1;
 }
@@ -364,12 +364,12 @@ int camd35_client_init(struct s_client *client)
   char ptxt[16];
 
   client->pfd=0;
-  if (reader[client->ridx].r_port<=0)
+  if (client->reader->r_port<=0)
   {
-    cs_log("invalid port %d for server %s", reader[client->ridx].r_port, reader[client->ridx].device);
+    cs_log("invalid port %d for server %s", client->reader->r_port, client->reader->device);
     return(1);
   }
-  client->is_udp=(reader[client->ridx].typ==R_CAMD35);
+  client->is_udp=(client->reader->typ==R_CAMD35);
   if( (ptrp=getprotobyname(client->is_udp ? "udp" : "tcp")) )
     p_proto=ptrp->p_proto;
   else
@@ -384,7 +384,7 @@ int camd35_client_init(struct s_client *client)
   else
 #endif
     loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(reader[client->ridx].l_port);
+  loc_sa.sin_port = htons(client->reader->l_port);
 
   if ((client->udp_fd=socket(PF_INET, client->is_udp ? SOCK_DGRAM : SOCK_STREAM, p_proto))<0)
   {
@@ -397,7 +397,7 @@ int camd35_client_init(struct s_client *client)
     setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg->netprio, sizeof(ulong));
 #endif
 
-  if (reader[client->ridx].l_port>0)
+  if (client->reader->l_port>0)
   {
     if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
     {
@@ -405,7 +405,7 @@ int camd35_client_init(struct s_client *client)
       close(client->udp_fd);
       return(1);
     }
-    sprintf(ptxt, ", port=%d", reader[client->ridx].l_port);
+    sprintf(ptxt, ", port=%d", client->reader->l_port);
   }
   else
     ptxt[0]='\0';
@@ -413,10 +413,10 @@ int camd35_client_init(struct s_client *client)
   casc_set_account();
   memset((char *)&client->udp_sa, 0, sizeof(client->udp_sa));
   client->udp_sa.sin_family=AF_INET;
-  client->udp_sa.sin_port=htons((u_short)reader[client->ridx].r_port);
+  client->udp_sa.sin_port=htons((u_short)client->reader->r_port);
 
   cs_log("proxy %s:%d (fd=%d%s)",
-         reader[client->ridx].device, reader[client->ridx].r_port,
+         client->reader->device, client->reader->r_port,
          client->udp_fd, ptxt);
 
   if (client->is_udp) {
@@ -433,9 +433,9 @@ int camd35_client_init_log()
   int p_proto;
   struct s_client *cl = cur_client();
 
-  if (reader[cl->ridx].log_port<=0)
+  if (cl->reader->log_port<=0)
   {
-    cs_log("invalid port %d for camd3-loghost", reader[cl->ridx].log_port);
+    cs_log("invalid port %d for camd3-loghost", cl->reader->log_port);
     return(1);
   }
 
@@ -448,7 +448,7 @@ int camd35_client_init_log()
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
   loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(reader[cl->ridx].log_port);
+  loc_sa.sin_port = htons(cl->reader->log_port);
 
   if ((logfd=socket(PF_INET, SOCK_DGRAM, p_proto))<0)
   {
@@ -464,7 +464,7 @@ int camd35_client_init_log()
   }
 
   cs_log("camd3 loghost initialized (fd=%d, port=%d)",
-         logfd, reader[cl->ridx].log_port);
+         logfd, cl->reader->log_port);
 
   return(0);
 }
@@ -472,15 +472,15 @@ int camd35_client_init_log()
 static int tcp_connect()
 {
   struct s_client *cl = cur_client();
-  if (!reader[cl->ridx].tcp_connected)
+  if (!cl->reader->tcp_connected)
   {
     int handle=0;
     handle = network_tcp_connection_open();
     if (handle<0) return(0);
 
-    reader[cl->ridx].tcp_connected = 1;
-    reader[cl->ridx].card_status = CARD_INSERTED;
-    reader[cl->ridx].last_s = reader[cl->ridx].last_g = time((time_t *)0);
+    cl->reader->tcp_connected = 1;
+    cl->reader->card_status = CARD_INSERTED;
+    cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
     cl->pfd = cl->udp_fd = handle;
   }
   if (!cl->udp_fd) return(0);
@@ -494,7 +494,7 @@ static int camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 	if (client->stopped) {
 		if (er->srvid == client->lastsrvid && er->caid == client->lastcaid && er->pid == client->lastpid){
 			cs_log("%s is stopped - requested by server (%s)",
-					reader[client->ridx].label, typtext[client->stopped]);
+					client->reader->label, typtext[client->stopped]);
 			return(-1);
 		}
 		else {
@@ -507,14 +507,14 @@ static int camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 	client->lastpid = er->pid;
 
 	if (client->is_udp) {
-	   if (!client->udp_sa.sin_addr.s_addr || reader[client->ridx].last_s-reader[client->ridx].last_g > reader[client->ridx].tcp_rto)
-	      if (!hostResolve(&reader[client->ridx])) return -1;
+	   if (!client->udp_sa.sin_addr.s_addr || client->reader->last_s-client->reader->last_g > client->reader->tcp_rto)
+	      if (!hostResolve(client->reader)) return -1;
 	}
         else {
   	   if (!tcp_connect()) return -1;
         }
 	
-	reader[client->ridx].card_status = CARD_INSERTED; //for udp
+	client->reader->card_status = CARD_INSERTED; //for udp
 	
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, er->l+15);
@@ -537,8 +537,8 @@ static int camd35_send_emm(EMM_PACKET *ep)
   struct s_client *cl = cur_client();
 	
         if (cl->is_udp) {
-           if (!cl->udp_sa.sin_addr.s_addr || reader[cl->ridx].last_s-reader[cl->ridx].last_g > reader[cl->ridx].tcp_rto)
-              if (!hostResolve(&reader[cl->ridx])) return -1;
+           if (!cl->udp_sa.sin_addr.s_addr || cl->reader->last_s-cl->reader->last_g > cl->reader->tcp_rto)
+              if (!hostResolve(cl->reader)) return -1;
         }
         else {
            if (!tcp_connect()) return -1;
@@ -560,7 +560,7 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 {
 	ushort idx;
 	static const char *typtext[]={"ok", "invalid", "sleeping"};
-  struct s_reader *rdr = &reader[client->ridx];
+  struct s_reader *rdr = client->reader;
 
 	// reading CMD05 Emm request and set serial
 	if (buf[0] == 0x05 && buf[1] == 111) {

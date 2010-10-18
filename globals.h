@@ -600,7 +600,7 @@ struct s_client
 
 
   int pfd;      // Primary FD, must be closed on exit
-  int ridx;
+  struct s_reader *reader; //points to s_reader when cl->typ='r'
   int cs_ptyp; // process-type
 
   ECM_REQUEST *ecmtask;
@@ -1291,6 +1291,7 @@ extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
 extern void kill_thread(struct s_client *cl);
 extern int get_threadnum(struct s_client *client);
 extern int get_nr_of_readers(void);
+extern int get_ridx(struct s_reader *reader);
 
 extern void cs_card_info(void);
 extern void cs_debug_level(void);

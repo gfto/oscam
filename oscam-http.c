@@ -1740,7 +1740,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			isec=now-cl->last;
 			usr=cl->usr;
 
-			if (((cl->typ=='r') || (cl->typ=='p')) && (con=cl->ridx)>=0) usr=reader[con].label;
+			if (((cl->typ=='r') || (cl->typ=='p')) && (con=get_ridx(cl->reader)>=0)) usr=cl->reader->label;
 
 			if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0]))
 				tpl_printf(vars, 0, "CLIENTLBVALUE", "%s", cl->lastreader);
@@ -1761,7 +1761,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			}
 			else if((cl->typ == 'r' || cl->typ == 'p') && !cfg->http_readonly) {
 				//tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", cl->ridx);
-				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&ridx=%d\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Restart\"></A>", cl->ridx, ICKIL);
+				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&ridx=%d\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Restart\"></A>", get_ridx(cl->reader), ICKIL);
 			}
 			else {
 				tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", cl->thread);
@@ -1853,9 +1853,9 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				char *txt = "OK";
 				if (cl->typ == 'r' || cl->typ == 'p') //reader or proxy
 				{
-					struct s_reader *rdr = &reader[cl->ridx];
+					struct s_reader *rdr = cl->reader;
 							if (rdr->lbvalue)
-								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&ridx=%d\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", cl->ridx, rdr->lbvalue);
+								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&ridx=%d\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", get_ridx(rdr), rdr->lbvalue);
 
 							switch(rdr->card_status)
 							{

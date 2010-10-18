@@ -28,7 +28,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		FILE *fp;
 		char filename[256];
 		char *buffer;
-		sprintf(filename, "%s/reader%d", get_tmp_dir(), cur_client()->ridx);
+		sprintf(filename, "%s/reader%d", get_tmp_dir(), get_ridx(reader));
 		int size = reader->init_history_pos+strlen(txt)+1;
 		buffer = malloc(size+1);
 
@@ -188,9 +188,9 @@ int hostResolve(struct s_reader *rdr)
 int network_tcp_connection_open()
 {
   struct s_client *cl = cur_client();
-  cs_log("connecting to %s", reader[cl->ridx].device);
+  cs_log("connecting to %s", cur_client()->reader->device);
 
-  if (!hostResolve(&reader[cl->ridx]))
+  if (!hostResolve(cur_client()->reader))
      return -1;
  
   int sd = cl->udp_fd;

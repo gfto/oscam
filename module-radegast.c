@@ -36,7 +36,7 @@ static int radegast_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar
     memcpy(dcw, buf+4, 16);
     cs_debug("radegast: recv chk - %s", cs_hexdump(0, dcw, 16));
     *rc = 1;
-    return(reader[client->ridx].msg_idx);
+    return(client->reader->msg_idx);
   }
 
   return (-1);
@@ -208,7 +208,7 @@ static int radegast_send_ecm(struct s_client *client, ECM_REQUEST *er)
   memcpy(ecmbuf + 8 + sizeof(header), er->ecm, er->l);
   ecmbuf[4] = er->caid >> 8;
 
-  reader[client->ridx].msg_idx = er->idx;
+  client->reader->msg_idx = er->idx;
   n = send(client->pfd, ecmbuf, er->l + 30, 0);
 
   cs_log("radegast: sending ecm");
@@ -227,9 +227,9 @@ int radegast_cli_init(struct s_client *cl)
   int p_proto, handle;
 
   cur_client()->pfd=0;
-  if (reader[cur_client()->ridx].r_port<=0)
+  if (cur_client()->reader->r_port<=0)
   {
-    cs_log("radegast: invalid port %d for server %s", reader[cur_client()->ridx].r_port, reader[cur_client()->ridx].device);
+    cs_log("radegast: invalid port %d for server %s", cur_client()->reader->r_port, cur_client()->reader->device);
     return(1);
   }
   if( (ptrp=getprotobyname("tcp")) )
@@ -246,7 +246,7 @@ int radegast_cli_init(struct s_client *cl)
   else
 #endif
     loc_sa.sin_addr.s_addr = INADDR_ANY;
-  loc_sa.sin_port = htons(reader[cur_client()->ridx].l_port);
+  loc_sa.sin_port = htons(cur_client()->reader->l_port);
 
   if ((cur_client()->udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
   {
@@ -259,27 +259,27 @@ int radegast_cli_init(struct s_client *cl)
     setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_PRIORITY,
                (void *)&cfg->netprio, sizeof(ulong));
 #endif
-  if (!reader[cur_client()->ridx].tcp_ito) {
-    ulong keep_alive = reader[cur_client()->ridx].tcp_ito?1:0;
+  if (!cur_client()->reader->tcp_ito) {
+    ulong keep_alive = cur_client()->reader->tcp_ito?1:0;
     setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_KEEPALIVE,
     (void *)&keep_alive, sizeof(ulong));
   }
 
   memset((char *)&cur_client()->udp_sa,0,sizeof(cur_client()->udp_sa));
   cur_client()->udp_sa.sin_family = AF_INET;
-  cur_client()->udp_sa.sin_port = htons((u_short)reader[cur_client()->ridx].r_port);
+  cur_client()->udp_sa.sin_port = htons((u_short)cur_client()->reader->r_port);
 
   cs_log("radegast: proxy %s:%d (fd=%d)",
-  reader[cur_client()->ridx].device, reader[cur_client()->ridx].r_port, cur_client()->udp_fd);
+  cur_client()->reader->device, cur_client()->reader->r_port, cur_client()->udp_fd);
 
   handle = network_tcp_connection_open();
   if(handle < 0) return -1;
 
-  reader[cur_client()->ridx].tcp_connected = 2;
-  reader[cur_client()->ridx].card_status = CARD_INSERTED;
-  reader[cur_client()->ridx].last_g = reader[cur_client()->ridx].last_s = time((time_t *)0);
+  cur_client()->reader->tcp_connected = 2;
+  cur_client()->reader->card_status = CARD_INSERTED;
+  cur_client()->reader->last_g = cur_client()->reader->last_s = time((time_t *)0);
 
-  cs_debug("radegast: last_s=%d, last_g=%d", reader[cur_client()->ridx].last_s, reader[cur_client()->ridx].last_g);
+  cs_debug("radegast: last_s=%d, last_g=%d", cur_client()->reader->last_s, cur_client()->reader->last_g);
 
   cur_client()->pfd=cur_client()->udp_fd;
 

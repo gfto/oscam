@@ -8,7 +8,7 @@ int constcw_file_available(void)
 {
     FILE *fp;
     
-    fp=fopen(reader[cur_client()->ridx].device, "r");
+    fp=fopen(cur_client()->reader->device, "r");
     if (!fp) return (0);
     fclose(fp);
     return (1);
@@ -26,7 +26,7 @@ int constcw_analyse_file(ushort c_caid, uint c_prid, ushort c_sid, uchar *dcw)
     // FIXME
     c_prid = c_prid;
 
-    fp=fopen(reader[cur_client()->ridx].device, "r");
+    fp=fopen(cur_client()->reader->device, "r");
     if (!fp) return (0);
     
     while (fgets(token, sizeof(token), fp))
@@ -88,14 +88,14 @@ int constcw_client_init(struct s_client *client)
     // Oscam has no reader.au in s_reader like ki's mpcs ;)
     // reader[ridx].au = 0;
     // cs_log("local reader: %s (file: %s) constant cw au=0", reader[ridx].label, reader[ridx].device);
-    cs_log("local reader: %s (file: %s) constant cw", reader[client->ridx].label, reader[client->ridx].device);
+    cs_log("local reader: %s (file: %s) constant cw", client->reader->label, client->reader->device);
 
     client->pfd = client->udp_fd;
     
     if (constcw_file_available())
     {
-	reader[client->ridx].tcp_connected = 2;
-        reader[client->ridx].card_status = CARD_INSERTED;
+	client->reader->tcp_connected = 2;
+        client->reader->card_status = CARD_INSERTED;
     }
 
     return(0);
@@ -104,7 +104,7 @@ int constcw_client_init(struct s_client *client)
 static int constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msgbuf)
 {
     time_t t;
-    struct s_reader *rdr = &reader[client->ridx];
+    struct s_reader *rdr = client->reader;
 
     // FIXME
     msgbuf = msgbuf;

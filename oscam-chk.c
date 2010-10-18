@@ -360,7 +360,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   }
     
   //Schlocke reader-defined function, reader-self-check: 
-  if (rdr->ph.c_available && !rdr->ph.c_available(rdr->client->ridx, AVAIL_CHECK_CONNECTED)) {
+  if (rdr->ph.c_available && !rdr->ph.c_available(get_ridx(rdr), AVAIL_CHECK_CONNECTED)) {
     cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
     return 0;
   }
