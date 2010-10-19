@@ -32,6 +32,15 @@ static void kill_ac_client(void)
 }
 #endif
 
+struct s_reader *get_reader_by_label(char *lbl){
+	struct s_reader *rdr;
+	for (rdr = first_reader; rdr ; rdr = rdr->next) {
+		if (strcmp(lbl, rdr->label) == 0)
+			return rdr;
+	}
+	return NULL;
+}
+
 void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 
 	switch (refreshtype) {
@@ -734,7 +743,6 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			//call stats
 			tpl_addVar(vars, 0, "STATICO", ICSTA);
-			tpl_printf(vars, 0, "READERID", "%d", readeridx);
 
 			if (isphysical == 1) {
 				tpl_printf(vars, 0, "RIDX", "%d", readeridx);
@@ -1147,10 +1155,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparams *params) {
 
-	int readeridx = atoi(getParam(params, "reader"));
+	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 
-	tpl_printf(vars, 0, "READERID", "%d", readeridx);
-	tpl_printf(vars, 0, "READERNAME", "%s", reader[readeridx].label);
+	tpl_printf(vars, 0, "LABEL", "%s", rdr->label);
 
 	char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
@@ -1161,10 +1168,10 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
 
-	if (reader[readeridx].lb_stat) {
+	if (rdr->lb_stat) {
 
 		pthread_mutex_lock(&stat_busy);
-		LL_ITER *it = ll_iter_create(reader[readeridx].lb_stat);
+		LL_ITER *it = ll_iter_create(rdr->lb_stat);
 		READER_STAT *stat = ll_iter_next(it);
 		while (stat) {
 
@@ -1695,13 +1702,12 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	struct tm *lt;
 
 	if (strcmp(getParam(params, "action"), "kill") == 0)
-		kill_thread((struct s_client *)atoi(getParam(params, "csidx"))); //FIXME untested
+		kill_thread((struct s_client *)atoi(getParam(params, "threadid"))); //FIXME untested
 
 	if (strcmp(getParam(params, "action"), "restart") == 0) {
-		struct s_reader *rdr;
-		for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
-			if (strcmp(rdr->label, getParam(params, "label")) == 0)
-				restart_cardreader(rdr, 1);
+		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
+		if(rdr)
+			restart_cardreader(rdr, 1);
 	}
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0)
@@ -1768,9 +1774,9 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_addVar(vars, 0, "HIDEICON", ICHID);
 			if(cl->typ == 'c' && !cfg->http_readonly) {
 				//tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", i);
-				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&csidx=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\"></A>", cl, ICKIL);
+				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%d\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\"></A>", cl, ICKIL);
 			}
-			else if((cl->typ == 'r' || cl->typ == 'p') && !cfg->http_readonly) {
+			else if((cl->typ == 'p') && !cfg->http_readonly) {
 				//tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", cl->ridx);
 				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Restart\"></A>", cl->reader->label, ICKIL);
 			}
