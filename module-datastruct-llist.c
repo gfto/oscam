@@ -8,6 +8,7 @@
 
 static void _destroy(LLIST *l)
 {
+    if (!l) return;
     pthread_mutex_unlock(&l->lock);
     pthread_mutex_destroy(&l->lock);
 
@@ -25,6 +26,7 @@ LLIST *ll_create()
 
 void ll_destroy(LLIST *l)
 {
+    if (!l) return;
     ll_clear(l);
 
     _destroy(l);
@@ -32,6 +34,7 @@ void ll_destroy(LLIST *l)
 
 void ll_destroy_data(LLIST *l)
 {
+    if (!l) return;
     ll_clear_data(l);
 
     _destroy(l);
