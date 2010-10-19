@@ -435,7 +435,7 @@ static int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		case 0x88:
 			ep->type=UNIQUE;
 			memset(ep->hexserial, 0, 8);
-			memcpy(ep->hexserial, ep->emm + 3, 3);
+			memcpy(ep->hexserial, ep->emm + 4, 4);
 			cs_debug_mask(D_EMM, "VIACCESS EMM: UNIQUE");
 			return(!memcmp(rdr->hexserial + 1, ep->hexserial, 4));
 
@@ -510,13 +510,15 @@ static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   static const unsigned char insc8[] = { 0xca,0xc8,0x00,0x00,0x02 }; // read extended status
   // static const unsigned char insc8Data[] = { 0x00,0x00 }; // data for read extended status
 
-  int emmLen=SCT_LEN(ep->emm)-7;
+  int emmdatastart=7;
+  if (ep->type == UNIQUE) emmdatastart++;
+  int emmLen=SCT_LEN(ep->emm)-emmdatastart;
   int rc=0;
 
-  ///cs_dump(ep->emm, emmLen+7, "RECEIVED EMM VIACCESS");
+  ///cs_dump(ep->emm, emmLen+emmdatastart, "RECEIVED EMM VIACCESS");
 
   int emmUpToEnd;
-  uchar *emmParsed = ep->emm+7;
+  uchar *emmParsed = ep->emm+emmdatastart;
   int provider_ok = 0;
   unsigned int emm_provid;
   uchar keynr = 0;
@@ -671,6 +673,7 @@ static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     }
 
     ins1c[2] = nano9EData ? 0x01: 0x00; // found 9E nano ?
+    if (ep->type == UNIQUE) ins1c[2] = 0x02;
     ins1c[3] = keynr;  // key
     ins1c[4] = nano92Data[1] + 2 + nano81Data[1] + 2 + nanoF0Data[1] + 2;
     memcpy (insData, nano92Data, nano92Data[1] + 2);
@@ -686,12 +689,12 @@ static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
         if( cta_res[cta_lr-2]&0x1 )
             cs_log("[viaccess-reader] update not written. Data already exists or unknown address");
     
-        if( cta_res[cta_lr-2]&0x8 ) {
+        //if( cta_res[cta_lr-2]&0x8 ) {
             write_cmd(insc8, NULL);
             if( (cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0x00) ) {
                 cs_log("[viaccess-reader] extended status  %02X %02X", cta_res[0], cta_res[1]);
             }
-        } 
+        //} 
       return ERROR;
     }
 
