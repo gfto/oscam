@@ -169,7 +169,7 @@ int is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	return 0;
 }
 
-void add_sid_block(struct s_client *cl, struct cc_card *card,
+void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *card,
 		struct cc_srvid *srvid_blocked) {
 	if (is_sid_blocked(card, srvid_blocked))
 		return;
@@ -202,7 +202,7 @@ void remove_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	ll_iter_release(it);
 }
 
-void add_good_sid(struct s_client *cl, struct cc_card *card,
+void add_good_sid(struct s_client *cl __attribute__((unused)), struct cc_card *card,
 		struct cc_srvid *srvid_good) {
 	if (is_good_sid(card, srvid_good))
 		return;
@@ -1189,7 +1189,8 @@ void cc_free_card(struct cc_card *card) {
  * Server:
  * Adds a cccam-carddata buffer to the list of reported carddatas
  */
-void cc_add_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
+void cc_add_reported_carddata(struct s_client *cl __attribute__((unused)), 
+		LLIST *reported_carddatas,
 		uint8 *buf, int len, struct s_reader *D_USE(rdr)) {
 	struct cc_reported_carddata *carddata = malloc(
 			sizeof(struct cc_reported_carddata));
