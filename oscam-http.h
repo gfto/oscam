@@ -597,22 +597,22 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 
 #define TPLREADERSBIT "\
     <TR>\n\
-	<TD align=\"center\"><A HREF=\"readers.html?reader=##READERIDX##&action=delete\" TITLE=\"Delete this Reader\"><IMG SRC=\"##DELICO##\" BORDER=\"0\" ALT=\"Delete Reader\"/></A></TD>\n\
+	<TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&action=delete\" TITLE=\"Delete this Reader\"><IMG SRC=\"##DELICO##\" BORDER=\"0\" ALT=\"Delete Reader\"/></A></TD>\n\
       <TD>##READERNAME##</TD>\n\
       <TD>##CTYP##</TD>\n\
       <TD align=\"center\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\
       <TD align=\"center\">##EMMWRITTENUK## / ##EMMWRITTENG## / ##EMMWRITTENS## / ##EMMWRITTENUQ##</TD>\n\
       <TD align=\"center\">##EMMSKIPPEDUK## / ##EMMSKIPPEDG## / ##EMMSKIPPEDS## / ##EMMSKIPPEDUQ##</TD>\n\
       <TD align=\"center\">##EMMBLOCKEDUK## / ##EMMBLOCKEDG## / ##EMMBLOCKEDS## / ##EMMBLOCKEDUQ##</TD>\n\
-      <TD align=\"center\"><A HREF=\"readerconfig.html?reader=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG SRC=\"##EDIICO##\" BORDER=\"0\" ALT=\"Edit Reader\"/></A></TD>\
+      <TD align=\"center\"><A HREF=\"readerconfig.html?label=##READERNAMEENC##\" TITLE=\"Edit this Reader\"><IMG SRC=\"##EDIICO##\" BORDER=\"0\" ALT=\"Edit Reader\"/></A></TD>\
       <TD align=\"center\">##ENTITLEMENT##</TD>\n\
 	  <TD align=\"center\">##READERREFRESH##</TD>\n\
-	  <TD align=\"center\"><A HREF=\"readerstats.html?label=##READERNAME##&hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG SRC=\"##STATICO##\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"/></A></TD>\n\
+	  <TD align=\"center\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG SRC=\"##STATICO##\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"/></A></TD>\n\
       </TR>\n"
 
-#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?reader=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"/></A>\n"
+#define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"/></A>\n"
 
-#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&ridx=##RIDX##\" TITLE=\"Refresh Entitlement\"><IMG SRC=\"##REFRICO##\" BORDER=\"0\" ALT=\"Reset and reload Entitlement\"/></A>"
+#define TPLREADERREFRESHBIT "<A HREF=\"readers.html?action=reread&label=##READERNAMEENC##\" TITLE=\"Refresh Entitlement\"><IMG SRC=\"##REFRICO##\" BORDER=\"0\" ALT=\"Reset and reload Entitlement\"/></A>"
 
 #define TPLREADERSTATS "\
 ##TPLHEADER##\
