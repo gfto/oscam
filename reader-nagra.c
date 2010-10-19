@@ -780,17 +780,34 @@ static int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	if (!reader->is_tiger)
 	{
 		int retry=0;
-		
-		while (!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2,cta_res,&cta_lr))
-		{
-			if (retry == 0)
-				cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
-			else {
-				cs_debug("[nagra-reader] nagra2_do_ecm failed, retry failed!");
-				return ERROR;
+		if (reader->is_n3_na) {
+			unsigned char ecm_pkt[256+16];
+			memset(ecm_pkt, 0, sizeof(ecm_pkt));
+			memcpy(ecm_pkt, er->ecm+3+2, er->ecm[4]);
+			
+			while (!do_cmd(reader, er->ecm[3]+1,er->ecm[4]+5+2,0x88,0x04, ecm_pkt,cta_res,&cta_lr)) {
+				if (retry == 0)
+					cs_debug("[nagra-reader] nagra2_do_ecm (N3_NA) failed, retry");
+				else {
+					cs_debug("[nagra-reader] nagra2_do_ecm (N3_NA) failed, retry failed!");
+					return ERROR;
+				}
+				retry++;
+				cs_sleepms(10);
 			}
-			retry++;
-			cs_sleepms(10);
+		}
+		else {
+			while (!do_cmd(reader, er->ecm[3],er->ecm[4]+2,0x87,0x02, er->ecm+3+2,cta_res,&cta_lr))
+			{
+				if (retry == 0)
+					cs_debug("[nagra-reader] nagra2_do_ecm failed, retry");
+				else {
+					cs_debug("[nagra-reader] nagra2_do_ecm failed, retry failed!");
+					return ERROR;
+				}
+				retry++;
+				cs_sleepms(10);
+			}
 		}
 		cs_sleepms(10);
 
