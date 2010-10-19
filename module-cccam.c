@@ -1678,7 +1678,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			//retry ecm:
 			int i = 0;
 			for (i = 0; i < CS_MAXPENDING; i++) {
-				if (cl->ecmtask[i].idx == ecm_idx)
+				if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc == 101)
 					cl->ecmtask[i].rc = 100; //Mark unused
 			}
 		} else
@@ -1764,7 +1764,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 					//ecm retry:
 					int i = 0;
 					for (i = 0; i < CS_MAXPENDING; i++) {
-						if (cl->ecmtask[i].idx == ecm_idx)
+						if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc==101)
 							cl->ecmtask[i].rc = 100; //Mark unused
 					}
 

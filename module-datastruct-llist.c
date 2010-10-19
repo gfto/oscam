@@ -79,7 +79,10 @@ LL_ITER *ll_iter_create(LLIST *l)
     LL_ITER *it = malloc(sizeof(LL_ITER));
 
     it->l = l;
-    it->cur = l->initial;
+    if (l)
+      it->cur = l->initial;
+    else
+      it->cur = NULL;
 
     pthread_mutex_lock(&l->lock);
 
