@@ -1140,7 +1140,6 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparams *params) {
 
-
 	int readeridx = atoi(getParam(params, "reader"));
 
 	tpl_printf(vars, 0, "READERID", "%d", readeridx);
@@ -1155,35 +1154,36 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
 
-	LLIST_D__ITR itr;
-	READER_STAT *stat = llist_itr_init(reader_stat[readeridx], &itr);
+	if (reader_stat[readeridx]) {
 
-	pthread_mutex_lock(&stat_busy);
-	if (stat) {
+		pthread_mutex_lock(&stat_busy);
+		LL_ITER *it = ll_iter_create(reader_stat[readeridx]);
+		READER_STAT *stat = ll_iter_next(it);
 		while (stat) {
 
 			if (!(stat->rc == rc2hide)) {
-
 				tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
 				tpl_printf(vars, 0, "CHANNELNAME","%s", get_servicename(stat->srvid, stat->caid));
 				tpl_printf(vars, 0, "RC", "%s", stxt[stat->rc]);
 				tpl_printf(vars, 0, "TIME", "%dms", stat->time_avg);
 				tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
-
 				if(stat->last_received) {
 					struct tm *lt = localtime(&stat->last_received);
 					tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100, lt->tm_hour, lt->tm_min, lt->tm_sec);
+
 				} else {
 					tpl_addVar(vars, 0, "LAST","never");
 				}
 				tpl_addVar(vars, 1, "READERSTATSROW", tpl_getTpl(vars, "READERSTATSBIT"));
 			}
 
-			stat = llist_itr_next(&itr);
+		stat = ll_iter_next(it);
 		}
+
+		ll_iter_release(it);
 		pthread_mutex_unlock(&stat_busy);
+
 	} else {
-		pthread_mutex_unlock(&stat_busy);
 		tpl_addVar(vars, 1, "READERSTATSROW","<TR><TD colspan=\"6\"> No statistics found </TD></TR>");
 	}
 
@@ -1615,14 +1615,14 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 							strcat(node_ptr, ",");
 							node_ptr++;
 						}
-						sprintf(node_ptr, "%02X%02X%02X%02X%02X%02X%02X%02X", 
+						sprintf(node_ptr, "%02X%02X%02X%02X%02X%02X%02X%02X",
 							node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
 						node_ptr += 16;
 					}
                     ll_iter_release(nit);
 
 					tpl_printf(vars, 1, "LOGHISTORY",
-							"caid: %04X hop: %d reshare: %d remote nodes: %s<BR>\n", 
+							"caid: %04X hop: %d reshare: %d remote nodes: %s<BR>\n",
 							card->caid, card->hop, card->maxdown, node_str);
 					free(node_str);
 
