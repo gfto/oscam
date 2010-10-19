@@ -16,7 +16,6 @@
 #include "module-stat.h"
 
 extern void restart_cardreader(struct s_reader *rdr, int restart);
-extern struct s_reader reader[CS_MAXREADER];
 
 static int running = 1;
 
@@ -768,6 +767,10 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_addVar(vars, 1, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
 	}
+
+	//Todo: Disabled the Add Reader functionality temporarly
+	tpl_addVar(vars, 1, "BTNDISABLED", "DISABLED");
+
 	fputs(tpl_getTpl(vars, "READERS"), f);
 }
 
@@ -781,6 +784,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 	if(strcmp(getParam(params, "action"), "Add") == 0) {
 		// Add new reader
+		tpl_addVar(vars, 1, "MESSAGE", "<B>Add Reader is disabled and under construction</B><BR><BR>");
+		//Todo: Disabled the Add Reader functionality temporarly
+		/*
 		reader[ridx-1].next = rdr; //FIXME
 		rdr->next = NULL;
 		memset(&rdr, 0, sizeof(struct s_reader));
@@ -797,12 +803,14 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		for (i = 1; i < CS_MAXCAIDTAB; rdr->ctab.mask[i++] = 0xffff);
 		for (i = 0; i < (*params).paramcount; ++i) {
 			if (strcmp((*params).params[i], "action"))
-				chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
+				chk_reader((*params).params[i], (*params).values[i], rdr);
 		}
 		reader_ = rdr->label;
+		*/
 
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
-		for (ridx=0,rdr=first_reader; rdr  && strcmp(reader_, rdr->label); rdr=rdr->next, ++ridx);
+
+		rdr = get_reader_by_label(getParam(params, "label"));
 		char servicelabels[255]="";
 
 		clear_caidtab(&rdr->ctab);
@@ -817,7 +825,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels), "%s,", (*params).values[i]);
 				else
 					if(strlen((*params).values[i]) > 0)
-						chk_reader((*params).params[i], (*params).values[i], &reader[ridx]);
+						chk_reader((*params).params[i], (*params).values[i], rdr);
 			}
 			//printf("param %s value %s\n",(*params).params[i], (*params).values[i]);
 		}
@@ -838,8 +846,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_printf(vars, 0, "ACCOUNT",  "%s", rdr->r_usr);
 
 #ifdef CS_WITH_GBOX
-	if (strlen(reader[i].gbox_pwd) > 0)
-		tpl_printf(vars, 0, "PASSWORD",  "%s", reader[i].gbox_pwd);
+	if (strlen(rdr->gbox_pwd) > 0)
+		tpl_printf(vars, 0, "PASSWORD",  "%s", rdr->gbox_pwd);
 	else if (strlen(rdr->r_pwd) > 0)
 		tpl_printf(vars, 0, "PASSWORD",  "%s", rdr->r_pwd);
 	else
@@ -1600,7 +1608,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 	char *reader_ = getParam(params, "label");
 
 	if (cfg->saveinithistory && strlen(reader_) > 0) {
-		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));;
+		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 
 		if (rdr->typ == R_CCCAM) {
 
@@ -1707,12 +1715,13 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 	if (strcmp(getParam(params, "action"), "restart") == 0) {
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-		if(rdr)
-			restart_cardreader(rdr, 1);
+		if(rdr)	restart_cardreader(rdr, 1);
 	}
 
-	if (strcmp(getParam(params, "action"), "resetstat") == 0)
-		clear_reader_stat(&reader[atoi(getParam(params, "ridx"))]);
+	if (strcmp(getParam(params, "action"), "resetstat") == 0) {
+		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
+		if(rdr) clear_reader_stat(rdr);
+	}
 
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0)
@@ -1873,7 +1882,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				{
 					struct s_reader *rdr = cl->reader;
 							if (rdr->lbvalue)
-								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&ridx=%d\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", get_ridx(rdr), rdr->lbvalue);
+								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", rdr->label, rdr->lbvalue);
 
 							switch(rdr->card_status)
 							{
