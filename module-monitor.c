@@ -5,6 +5,8 @@
 #else
 #  define CS_VERSION_X  CS_VERSION
 #endif
+#include "module-cccam.h"
+
 extern struct  s_reader  reader[CS_MAXREADER];
 
 static void monitor_check_ip()
@@ -248,13 +250,18 @@ char *monitor_get_proto(struct s_client *cl)
 #endif
 			case R_DB2COM1	: ctyp = "dbox COM1";	break;
 			case R_DB2COM2	: ctyp = "dbox COM2";   break;
+			case R_CCCAM    : {
+				if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode)
+					ctyp = "cccam ext";
+				else
+					ctyp = ph[cl->ctyp].desc;
+				break;
+			}
+			
 			default			: ctyp = cl->reader->ph.desc;   break;
 			}
 		break;
-	default		: if (cl->cc_extended_ecm_mode)
-				ctyp = "cccam ext";
-			else
-				ctyp = ph[cl->ctyp].desc;
+	default		: ctyp = ph[cl->ctyp].desc;
 	}
 	return(ctyp);
 }

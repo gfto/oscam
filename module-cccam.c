@@ -1324,7 +1324,6 @@ int check_extended_mode(struct s_client *cl, char *msg) {
 		p = strtok(NULL, ",]");
 		if (p && strncmp(p, "EXT", 3) == 0) {
 			cc->extended_mode = 1;
-			cl->cc_extended_ecm_mode = 1;
 			cs_log("%s extended ECM mode", getprefix());
 			has_param = 1;
 		}
@@ -2647,7 +2646,6 @@ int cc_srv_connect(struct s_client *cl) {
 
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
-	cl->cc_extended_ecm_mode = 0;
 
 	//Create checksum for "O" cccam:
 	for (i = 0; i < 12; i++) {
@@ -2901,7 +2899,6 @@ int cc_cli_connect(struct s_client *cl) {
 	cc->cmd05_data_len = 0;
 	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
-	cl->cc_extended_ecm_mode = 0;
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 
 	cs_ddump(data, 16, "cccam: server init seed:");

@@ -707,6 +707,8 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 				ctyp = rdr->ph.desc;
 			if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
 				ctyp = "newcamd524";
+			else if (rdr->client && rdr->client->cc && ((struct cc_data *)rdr->client->cc)->extended_mode)
+				ctyp = "cccam ext";
 
 			tpl_printf(vars, 0, "EMMERRORUK", "%d", reader[readeridx].emmerror[UNKNOWN]);
 			tpl_printf(vars, 0, "EMMERRORG", "%d", reader[readeridx].emmerror[GLOBAL]);
@@ -1115,7 +1117,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			}
 			break;
 		case R_CCCAM :
-			tpl_addVar(vars, 0, "PROTOCOL", "cccam");
+			if (rdr->client && rdr->client->cc && ((struct cc_data *)rdr->client->cc)->extended_mode)
+				tpl_addVar(vars, 0, "PROTOCOL", "cccam ext");
+			else
+				tpl_addVar(vars, 0, "PROTOCOL", "cccam");
 			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
 			break;
 #ifdef CS_WITH_GBOX

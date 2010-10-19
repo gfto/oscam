@@ -587,7 +587,6 @@ struct s_client
   ushort	ncd_msgid;
   uchar		ncd_skey[16];
   void		*cc;
-  int           cc_extended_ecm_mode; //Schlocke extended ecm mode active
   int		port_idx;    // index in server ptab
   int		ncd_server;  // newcamd server
 #ifdef CS_ANTICASC
