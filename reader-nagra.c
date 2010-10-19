@@ -281,13 +281,10 @@ static int NegotiateSessionKey_N3_NA(struct s_reader * reader, int keynr)
 	unsigned char idea2[16];
 	unsigned char sign1[8];
 	unsigned char sign2[8];
-	
-	if (!reader->has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
-	{
-		memcpy(reader->plainDT08RSA, reader->rsa_mod, 64); 
-		memcpy(reader->signature,reader->nagra_boxkey, 8);
-	}
 
+  if(!do_cmd(reader, 0x29,0x02,0xA9,0x04, NULL,cta_res,&cta_lr))
+		return ERROR;
+	
    memcpy(tmp, reader->irdId, 4);
    tmp[4]=keynr;
    if(!do_cmd(reader, 0x26,0x07,0xa6, 0x42, tmp,cta_res,&cta_lr))	{
@@ -382,6 +379,12 @@ static int NegotiateSessionKey(struct s_reader * reader)
 		}
 		return OK;
 	}
+
+	if (!reader->has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
+	{
+		memcpy(reader->plainDT08RSA, reader->rsa_mod, 64); 
+		memcpy(reader->signature,reader->nagra_boxkey, 8);
+	}
 	
 	if (reader->is_n3_na)
 	{
@@ -398,11 +401,6 @@ static int NegotiateSessionKey(struct s_reader * reader)
 		return OK;
 	}
 	
-	if (!reader->has_dt08) // if we have no valid dt08 calc then we use rsa from config and hexserial for calc of sessionkey
-	{
-		memcpy(reader->plainDT08RSA, reader->rsa_mod, 64); 
-		memcpy(reader->signature,reader->nagra_boxkey, 8);
-	}
 	if(!do_cmd(reader, 0x2a,0x02,0xaa,0x42,NULL,cta_res,&cta_lr))
 	{
 		cs_debug("[nagra-reader] CMD$2A failed");
