@@ -85,7 +85,7 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
   int head_size;
   struct s_client *cl = cur_client();
 
-  head_size = (cl->reader->ncd_proto==NCD_524)?8:12;
+  head_size = (cl->ncd_proto==NCD_524)?8:12;
 
   if (len < 3 || len + head_size > CWS_NETMSGSIZE || handle < 0) 
     return -1;
@@ -108,10 +108,10 @@ static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer,
   }
   else 
     netbuf[2] = netbuf[3] = 0;
-  memset(netbuf+4, 0, (cl->reader->ncd_proto==NCD_524)?4:8);
+  memset(netbuf+4, 0, (cl->ncd_proto==NCD_524)?4:8);
   if( sid ) {
-    netbuf[(cl->reader->ncd_proto==NCD_524)?6:4] = (uchar)(sid>>8); //sid
-    netbuf[(cl->reader->ncd_proto==NCD_524)?7:5] = (uchar)(sid);
+    netbuf[(cl->ncd_proto==NCD_524)?6:4] = (uchar)(sid>>8); //sid
+    netbuf[(cl->ncd_proto==NCD_524)?7:5] = (uchar)(sid);
   }
   //if ((!ncd_proto==NCD_524) && (buffer[0] >= 0xd1) && (buffer[0]<= 0xd8)) { // extended proto for mg
     //cs_debug("newcamd: extended: msg");
@@ -181,24 +181,24 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   //cs_ddump(netbuf, len, "nmr: decrypted data, len=%d", len);
   msgid = (netbuf[2] << 8) | netbuf[3];
 
-  if( cl->reader->ncd_proto==NCD_AUTO ) {
+  if( cl->ncd_proto==NCD_AUTO ) {
     // auto detect
     int l5 = (((netbuf[13] & 0x0f) << 8) | netbuf[14]) + 3;
     int l4 = (((netbuf[9] & 0x0f) << 8) | netbuf[10]) + 3;
     
     if( (l5<=len-12) && ((netbuf[12]&0xF0)==0xE0 || (netbuf[12]&0xF0)==0x80) ) 
-      cl->reader->ncd_proto = NCD_525;
+      cl->ncd_proto = NCD_525;
     else if( (l4<=len-8) && ((netbuf[8]&0xF0)==0xE0 || (netbuf[9]&0xF0)==0x80) )
-      cl->reader->ncd_proto = NCD_524;
+      cl->ncd_proto = NCD_524;
     else {
       cs_debug("nmr: 4 return -1");
       return -1;
     }
 
-    cs_debug("nmr: autodetect: newcamd52%d used", (cl->reader->ncd_proto==NCD_525)?5:4);
+    cs_debug("nmr: autodetect: newcamd52%d used", (cl->ncd_proto==NCD_525)?5:4);
   }
   
-  ncd_off=(cl->reader->ncd_proto==NCD_525)?4:0;
+  ncd_off=(cl->ncd_proto==NCD_525)?4:0;
 
   returnLen = (((netbuf[9+ncd_off] & 0x0f) << 8) | netbuf[10+ncd_off]) + 3;
   if ( returnLen > (len-(8+ncd_off)) ) {
@@ -231,8 +231,8 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   switch(commType)
   {
   case COMMTYPE_SERVER:
-    buffer[0]=(cl->reader->ncd_proto==NCD_525)?netbuf[4]:netbuf[6]; // sid
-    buffer[1]=(cl->reader->ncd_proto==NCD_525)?netbuf[5]:netbuf[7];
+    buffer[0]=(cl->ncd_proto==NCD_525)?netbuf[4]:netbuf[6]; // sid
+    buffer[1]=(cl->ncd_proto==NCD_525)?netbuf[5]:netbuf[7];
   	break;
   case COMMTYPE_CLIENT:
     buffer[0]=netbuf[2]; // msgid
@@ -699,13 +699,14 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 
     // check for non ready reader and reject client
     struct s_reader *rdr;
-    for (rdr=first_reader; rdr ; rdr=rdr->next)
-      if(rdr->caid[0]==cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid)
+    for (rdr=first_reader; rdr ; rdr=rdr->next) {
+      if(rdr->caid[0]==cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid) {
+        if(rdr->card_status == CARD_NEED_INIT) {
+          cs_log("init for reader %s not finished -> reject client", rdr->label);
+          ok = 0;
+        }
         break;
-
-    if(rdr->card_status == CARD_NEED_INIT) {
-      cs_log("init for reader %s not finished -> reject client", rdr->label);
-      ok = 0;
+      }
     }
 
     if (ok)
@@ -1232,6 +1233,8 @@ int newcamd_client_init(struct s_client *client)
   memset((char *)&client->udp_sa,0,sizeof(client->udp_sa));
   client->udp_sa.sin_family = AF_INET;
   client->udp_sa.sin_port = htons((u_short)client->reader->r_port);
+
+  client->ncd_proto=client->reader->ncd_proto;
 
   cs_log("proxy %s:%d newcamd52%d (fd=%d%s)",
           client->reader->device, client->reader->r_port,

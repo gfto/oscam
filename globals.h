@@ -620,6 +620,8 @@ struct s_client
   //camd33
   uchar	camdbug[256];
 
+  int       ncd_proto;
+
   //camd35
   uchar upwd[64];
   int is_udp;
