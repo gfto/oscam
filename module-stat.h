@@ -1,23 +1,18 @@
 #include "globals.h"
+//#include "module-datastruct-llist.h"
 #include "module-datastruct-llist.h"
-
-LLIST *reader_stat[CS_MAXREADER];
 static pthread_mutex_t stat_busy;
-
-extern struct  s_reader  reader[CS_MAXREADER];
 
 void init_stat();
 
-READER_STAT *get_stat(int ridx, ushort caid, ulong prid, ushort srvid);
+READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid);
 
-int remove_stat(int ridx, ushort caid, ulong prid, ushort srvid);
+int remove_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid);
 
 void calc_stat(READER_STAT *stat);
 
-void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int time, int rc);
+void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int time, int rc);
 
-void add_reader_stat(ADD_READER_STAT *stat);
+struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result);
 
-int get_best_reader(GET_READER_STAT *grs, int *result);
-
-void clear_reader_stat(int ridx);
+void clear_reader_stat(struct s_reader *rdr);

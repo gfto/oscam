@@ -79,19 +79,21 @@ LL_ITER *ll_iter_create(LLIST *l)
     LL_ITER *it = malloc(sizeof(LL_ITER));
 
     it->l = l;
-    if (l)
+    if (l) {
       it->cur = l->initial;
+      pthread_mutex_lock(&l->lock);
+    }
     else
       it->cur = NULL;
 
-    pthread_mutex_lock(&l->lock);
 
     return it;
 }
 
 void ll_iter_release(LL_ITER *it)
 {
-    pthread_mutex_unlock(&it->l->lock);
+    if(it->l)
+      pthread_mutex_unlock(&it->l->lock);
 
     NULLFREE(it);
 }

@@ -29,6 +29,7 @@
 #include <pthread.h>
 
 #include "module-obj-llist.h"
+#include "module-datastruct-llist.h"
 
 //for reader-nagra variables in s_reader: 
 #include "cscrypt/idea.h" 
@@ -841,6 +842,7 @@ struct s_reader  //contains device info, reader info and card info
 	int lb_usagelevel_ecmcount;
 	time_t lb_usagelevel_time; //time for counting ecms, this creates usagelevel
 	struct timeb lb_last; //time for oldest reader
+	LLIST *lb_stat; //loadbalancer reader statistics
 	// multi AES linked list
 	AES_ENTRY *aes_list;
         // variables from reader-videoguard*
@@ -1103,19 +1105,7 @@ struct s_config
 #define LB_FASTEST_READER_FIRST 1
 #define LB_OLDEST_READER_FIRST 2
 #define LB_LOWEST_USAGELEVEL 3
-
-typedef struct add_reader_stat_t
-{
-  int           ridx;
-  int           time;
-  int           rc;
-  
-  ushort        caid;
-  ulong         prid;
-  ushort        srvid;
-} GCC_PACK      ADD_READER_STAT;
-
-#define MAX_STAT_TIME 20
+#define LB_MAX_STAT_TIME 20
 
 typedef struct reader_stat_t
 {
@@ -1128,7 +1118,7 @@ typedef struct reader_stat_t
   
   int           ecm_count;  
   int           time_avg;
-  int           time_stat[MAX_STAT_TIME];
+  int           time_stat[LB_MAX_STAT_TIME];
   int           time_idx;
   
   int           request_count;
@@ -1285,7 +1275,6 @@ extern void cs_waitforcardinit(void);
 extern void cs_reinit_clients(void);
 extern int process_client_pipe(struct s_client *cl, uchar *buf, int l);
 extern void update_reader_config(uchar *ptr);
-extern void clear_reader_stat(int ridx);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab);
 extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
@@ -1433,10 +1422,9 @@ extern void reader_device_close(struct s_reader * reader);
 
 //module-stat
 extern void init_stat();
-extern void add_reader_stat(ADD_READER_STAT *add_stat);
-extern int get_best_reader(GET_READER_STAT *grs, int *result);
-extern void clear_reader_stat(int ridx);
-
+extern struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result);
+extern void clear_reader_stat(struct s_reader *reader);
+extern void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int ecm_time, int rc);
 #ifdef HAVE_PCSC
 // reader-pcsc
 extern void pcsc_close(struct s_reader *pcsc_reader);

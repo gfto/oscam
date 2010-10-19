@@ -1336,7 +1336,7 @@ void cc_idle() {
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
-	if (!rdr->tcp_connected)
+	if (!rdr->tcp_connected || !cl || !cc || !rdr)
 		return;
 
 	if (rdr->cc_keepalive && cc->answer_on_keepalive + 55 < time(NULL)) {

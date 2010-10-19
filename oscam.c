@@ -844,7 +844,7 @@ static void start_thread(void * startroutine, char * nameroutine) {
 #endif
 void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
 
-	if (cl) return;
+	if (!cl) return;
 	if (pthread_equal(cl->thread, pthread_self())) return; //cant kill yourself
 
 	pthread_cancel(cl->thread);
@@ -878,6 +878,8 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 	if (restart) //kill old thread, even when .deleted flag is set
 		kill_thread(rdr->client);
 
+	rdr->tcp_connected = 0;
+	rdr->card_status = NO_CARD;
 	if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
 		for (i=0; i<CS_MAX_MOD; i++)
 			if (ph[i].num && rdr->typ==ph[i].num)
@@ -1457,15 +1459,7 @@ void send_reader_stat(int ridx9, ECM_REQUEST *er, int rc)
 	cs_ftime(&tpe);
 	int time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
 
-	ADD_READER_STAT add_stat;
-	memset(&add_stat, 0, sizeof(ADD_READER_STAT));
-	add_stat.ridx = ridx9;
-	add_stat.time = time;
-	add_stat.rc   = rc;
-	add_stat.caid = er->caid;
-	add_stat.prid = er->prid;
-	add_stat.srvid = er->srvid;
-	add_reader_stat(&add_stat);
+	add_stat(&reader[ridx9], er->caid, er->prid, er->srvid, time, rc);
 }
 
 int hexserialset(int ridx)

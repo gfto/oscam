@@ -72,45 +72,45 @@
 
 // CARDREADER
 #ifndef WITH_CARDREADER
-#define WITH_CARDREADER
+//#define WITH_CARDREADER
 #endif
 
 
 #ifdef WITH_CARDREADER
 #ifndef READER_NAGRA
-#define READER_NAGRA
+//#define READER_NAGRA
 #endif
 
 #ifndef READER_IRDETO
-#define READER_IRDETO
+//#define READER_IRDETO
 #endif
 
 #ifndef READER_CONAX
-#define READER_CONAX
+//#define READER_CONAX
 #endif
 
 #ifndef READER_CRYPTOWORKS
-#define READER_CRYPTOWORKS
+//#define READER_CRYPTOWORKS
 #endif
 
 #ifndef READER_SECA
-#define READER_SECA
+//#define READER_SECA
 #endif
 
 #ifndef READER_VIACCESS
-#define READER_VIACCESS
+//#define READER_VIACCESS
 #endif
 
 #ifndef READER_VIDEOGUARD
-#define READER_VIDEOGUARD
+//#define READER_VIDEOGUARD
 #endif
 
 #ifndef READER_DRE
-#define READER_DRE
+//#define READER_DRE
 #endif
 
 #ifndef READER_TONGFANG
-#define READER_TONGFANG
+//#define READER_TONGFANG
 #endif
 #endif
 

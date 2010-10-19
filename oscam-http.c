@@ -16,6 +16,8 @@
 #include "module-stat.h"
 
 extern void restart_cardreader(struct s_reader *rdr, int restart);
+extern struct s_reader reader[CS_MAXREADER];
+
 static int running = 1;
 
 #ifdef CS_ANTICASC
@@ -1154,10 +1156,10 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
 
-	if (reader_stat[readeridx]) {
+	if (reader[readeridx].lb_stat) {
 
 		pthread_mutex_lock(&stat_busy);
-		LL_ITER *it = ll_iter_create(reader_stat[readeridx]);
+		LL_ITER *it = ll_iter_create(reader[readeridx].lb_stat);
 		READER_STAT *stat = ll_iter_next(it);
 		while (stat) {
 
@@ -1698,7 +1700,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	}
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0)
-		clear_reader_stat(atoi(getParam(params, "ridx")));
+		clear_reader_stat(&reader[atoi(getParam(params, "ridx"))]);
 
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0)

@@ -10,7 +10,7 @@
 #define DEFAULT_NBEST 1
 #define DEFAULT_NFB 1
 
-static int stat_load_save = 0;
+static int stat_load_save = -100;
 static struct timeb nulltime;
 
 int ecm_send_cache_idx = 0;
@@ -18,13 +18,12 @@ typedef struct s_ecm_send_cache {
    ushort        caid;
    uchar         ecmd5[CS_ECMSTORESIZE];            
    int           readers[CS_MAXREADER];
-   int           best_reader;
+   struct s_reader *best_reader;
 } ECM_SEND_CACHE;
 ECM_SEND_CACHE *ecm_send_cache;
 
 void init_stat()
 {
-	memset(reader_stat, 0, sizeof(reader_stat));
 	ecm_send_cache = malloc(sizeof(ECM_SEND_CACHE)*MAX_ECM_SEND_CACHE);
 	memset(ecm_send_cache, 0, sizeof(ECM_SEND_CACHE)*MAX_ECM_SEND_CACHE);
 	cs_ftime(&nulltime);
@@ -59,7 +58,7 @@ int chk_send_cache(int caid, uchar *ecmd5)
 	return -1;
 }
 
-void add_send_cache(int caid, uchar *ecmd5, int *readers, int best_reader)
+void add_send_cache(int caid, uchar *ecmd5, int *readers, struct s_reader *best_reader)
 {
 	ecm_send_cache[ecm_send_cache_idx].caid = caid;
 	memcpy(ecm_send_cache[ecm_send_cache_idx].ecmd5, ecmd5, sizeof(uchar)*CS_ECMSTORESIZE);
@@ -80,23 +79,38 @@ void clear_from_cache(int caid)
 	}
 }
 
-void load_stat_from_file(int ridx)
+void load_stat_from_file()
 {
-	char fname[256];
-	sprintf(fname, "%s/stat.%d", get_tmp_dir(), ridx);
-	FILE *file = fopen(fname, "r");
+	stat_load_save = 0;
+	char buf[256];
+	sprintf(buf, "%s/stat", get_tmp_dir());
+	FILE *file = fopen(buf, "r");
 	if (!file)
 		return;
 
-	int i = 0;
+	struct s_reader *rdr = NULL;
+	int i=0;
 	do
 	{
 		READER_STAT *stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
-		i = fscanf(file, "rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
-			&stat->rc, &stat->caid, &stat->prid, &stat->srvid, &stat->time_avg, &stat->ecm_count, &stat->last_received);
-		if (i > 4) {
-			ll_append(reader_stat[ridx], stat);
+		i = fscanf(file, "[%s] rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
+			buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
+			&stat->time_avg, &stat->ecm_count, &stat->last_received);
+		if (i > 5) {
+			if (rdr == NULL || strcmp(buf, rdr->label) != 0) {
+				for (rdr=first_reader; rdr ; rdr=rdr->next) {
+					if (strcmp(rdr->label, buf) == 0) {
+						break;
+					}
+				}
+			}
+			
+			if (rdr != NULL && strcmp(buf, rdr->label) == 0) {
+				if (!rdr->lb_stat)
+					rdr->lb_stat = ll_create();
+				ll_append(rdr->lb_stat, stat);
+			}
 		}
 		else
 			free(stat);
@@ -106,40 +120,37 @@ void load_stat_from_file(int ridx)
 /**
  * get statistic values for reader ridx and caid/prid/srvid
  */
-READER_STAT *get_stat(int ridx, ushort caid, ulong prid, ushort srvid)
+READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid)
 {
 	pthread_mutex_lock(&stat_busy);
-	if (!reader_stat[ridx]) {
-		reader_stat[ridx] = ll_create();
-		if (cfg->lb_save)
-			load_stat_from_file(ridx);
-	}
+	if (stat_load_save < 0 && cfg->lb_save)
+		load_stat_from_file();
+	if (!rdr->lb_stat)
+		rdr->lb_stat = ll_create();
 
-    LL_ITER *it = ll_iter_create(reader_stat[ridx]);
-	READER_STAT *stat;
+	LL_ITER *it = ll_iter_create(rdr->lb_stat);
+	READER_STAT *stat = NULL;
 	while ((stat = ll_iter_next(it))) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
-			pthread_mutex_unlock(&stat_busy);
-            ll_iter_release(it);
-			return stat;
+			break;
 		}
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 	pthread_mutex_unlock(&stat_busy);
-	return NULL;
+	return stat;
 }
 
 /**
  * removes caid/prid/srvid from stat-list of reader ridx
  */
-int remove_stat(int ridx, ushort caid, ulong prid, ushort srvid)
+int remove_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid)
 {
-	if (!reader_stat[ridx])
+	if (!rdr->lb_stat)
 		return 0;
 
 	pthread_mutex_lock(&stat_busy);
 	int c = 0;
-    LL_ITER *it = ll_iter_create(reader_stat[ridx]);
+	LL_ITER *it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
 	while ((stat = ll_iter_next(it))) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
@@ -147,7 +158,7 @@ int remove_stat(int ridx, ushort caid, ulong prid, ushort srvid)
 			c++;
 		}
 	}
-    ll_iter_release(it);
+	ll_iter_release(it);
 	clear_from_cache(caid);
 	pthread_mutex_unlock(&stat_busy);
 	return c;
@@ -161,7 +172,7 @@ void calc_stat(READER_STAT *stat)
 	int i;
 	int c=0;
 	long t = 0;
-	for (i = 0; i < MAX_STAT_TIME; i++) {
+	for (i = 0; i < LB_MAX_STAT_TIME; i++) {
 		if (stat->time_stat[i] > 0) {
 			t += (long)stat->time_stat[i];
 			c++;
@@ -176,59 +187,43 @@ void calc_stat(READER_STAT *stat)
 /**
  * Saves statistik to /tmp/.oscam/stat.n where n is reader-index
  */
-void save_stat_to_file(int ridx)
+void save_stat_to_file()
 {
 	pthread_mutex_lock(&stat_busy);
 	char fname[256];
-	sprintf(fname, "%s/stat.%d", get_tmp_dir(), ridx);
-	if (!reader_stat[ridx] || !ll_count(reader_stat[ridx])) {
-		remove(fname);
-		pthread_mutex_unlock(&stat_busy);
-		return;
-	}
+	sprintf(fname, "%s/stat", get_tmp_dir());
 
-    LL_ITER *it = ll_iter_create(reader_stat[ridx]);
-	READER_STAT *stat = ll_iter_next(it);
-    if (!stat) {
-		remove(fname);
-		pthread_mutex_unlock(&stat_busy);
-	    ll_iter_release(it);
-		return;
-	}
-	
 	FILE *file = fopen(fname, "w");
 	if (!file) {
 		pthread_mutex_unlock(&stat_busy);
-        ll_iter_release(it);
 		return;
 	}
-		
-	while ((stat = ll_iter_next(it))) {
-		fprintf(file, "rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
-				stat->rc, stat->caid, stat->prid, stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received);
+
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+		if (rdr->lb_stat) {
+			LL_ITER *it = ll_iter_create(rdr->lb_stat);
+			READER_STAT *stat;
+			while ((stat = ll_iter_next(it))) {
+				fprintf(file, "[%s] rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
+					rdr->label, stat->rc, stat->caid, stat->prid, 
+					stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received);
+			}
+			ll_iter_release(it);
+		}
 	}
-    ll_iter_release(it);
-
+	
 	fclose(file);
-	pthread_mutex_unlock(&stat_busy);
-}
-
-void save_all_stat_to_file()
-{
-	pthread_mutex_lock(&stat_busy);
-	int i;
-	for (i = 0; i < get_nr_of_readers(); i++)
-		save_stat_to_file(i);
 	pthread_mutex_unlock(&stat_busy);
 }
 
 /**
  * Adds caid/prid/srvid to stat-list for reader ridx with time/rc
  */
-void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int rc)
+void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int ecm_time, int rc)
 {
 	pthread_mutex_lock(&stat_busy);
-	READER_STAT *stat = get_stat(ridx, caid, prid, srvid);
+	READER_STAT *stat = get_stat(rdr, caid, prid, srvid);
 	if (!stat) {
 		stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
@@ -236,7 +231,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 		stat->prid = prid;
 		stat->srvid = srvid;
 		stat->time_avg = UNDEF_AVG_TIME; //dummy placeholder
-		ll_append(reader_stat[ridx], stat);
+		ll_append(rdr->lb_stat, stat);
 	}
 
 	//inc ecm_count if found, drop to 0 if not found:
@@ -272,7 +267,7 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 		stat->last_received = time(NULL);
 		
 		//FASTEST READER:
-		if (stat->time_idx >= MAX_STAT_TIME)
+		if (stat->time_idx >= LB_MAX_STAT_TIME)
 			stat->time_idx = 0;
 		stat->time_stat[stat->time_idx] = ecm_time;
 		calc_stat(stat);
@@ -281,16 +276,16 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 		
 		
 		//USAGELEVEL:
-		int ule = reader[ridx].lb_usagelevel_ecmcount;
+		int ule = rdr->lb_usagelevel_ecmcount;
 		if (ule > 0 && ((ule / cfg->lb_min_ecmcount) > 0)) //update every MIN_ECM_COUNT usagelevel:
 		{
-			time_t t = (time(NULL)-reader[ridx].lb_usagelevel_time);
-			reader[ridx].lb_usagelevel = 1000/(t<1?1:t);
+			time_t t = (time(NULL)-rdr->lb_usagelevel_time);
+			rdr->lb_usagelevel = 1000/(t<1?1:t);
 			ule = 0;
 		}
 		if (ule == 0)
-			reader[ridx].lb_usagelevel_time = time(NULL);
-		reader[ridx].lb_usagelevel_ecmcount = ule+1;
+			rdr->lb_usagelevel_time = time(NULL);
+		rdr->lb_usagelevel_ecmcount = ule+1;
 	}
 	else if (rc == 4 || rc == 8 || rc == 9) { //not found+errors+etc
 		stat->rc = rc;
@@ -299,36 +294,27 @@ void add_stat(int ridx, ushort caid, ulong prid, ushort srvid, int ecm_time, int
 	}
 
 	//cs_debug_mask(D_TRACE, "adding stat for reader %s (%d): rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
-	//			reader[ridx].label, ridx, rc, caid, prid, srvid, ecm_time, reader[ridx].lb_usagelevel);
+	//			rdr->label, ridx, rc, caid, prid, srvid, ecm_time, rdr->lb_usagelevel);
 	
 	//debug only:
 	if (cfg->lb_save) {
 		stat_load_save++;
 		if (stat_load_save > cfg->lb_save) {
 			stat_load_save = 0;
-			save_all_stat_to_file();
+			save_stat_to_file();
 		}
 	}
 	pthread_mutex_unlock(&stat_busy);
-}
-
-/**
- * Adds to stat-list
- */
-void add_reader_stat(ADD_READER_STAT *stat)
-{
-	add_stat(stat->ridx, stat->caid, stat->prid, stat->srvid, stat->time, stat->rc);
 }
 
 void reset_stat(ushort caid, ulong prid, ushort srvid)
 {
 	pthread_mutex_lock(&stat_busy);
 	//cs_debug_mask(D_TRACE, "loadbalance: resetting ecm count");
-	int i;
 	struct s_reader *rdr;
-	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
-		if (reader_stat[i] && rdr->client) {
-			READER_STAT *stat = get_stat(i, caid, prid, srvid);
+	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+		if (rdr->lb_stat && rdr->client) {
+			READER_STAT *stat = get_stat(rdr, caid, prid, srvid);
 			if (stat) {
 				if (stat->ecm_count > 0)
 					stat->ecm_count = 1; //not zero, so we know it's decodeable
@@ -346,22 +332,22 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
  * Also the reader is asked if he is "available"
  * returns ridx when found or -1 when not found
  */
-int get_best_reader(GET_READER_STAT *grs, int *result)
+struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result)
 {
 	pthread_mutex_lock(&stat_busy);
 	int i;
 	i = chk_send_cache(grs->caid, grs->ecmd5);
 	if (i >= 0) { //Found in cache, return same reader because he has the cached cws!
 		memcpy(result, ecm_send_cache[i].readers, sizeof(int)*CS_MAXREADER);
-		int best_ridx = ecm_send_cache[i].best_reader;
+		struct s_reader *best_rdr = ecm_send_cache[i].best_reader;
 		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d (cache)", 
 			username(grs->client), grs->caid, grs->prid, grs->srvid,
-			best_ridx<0?"NONE":reader[best_ridx].label,
+			best_rdr?best_rdr->label:"NONE",
 			result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], 
 			result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]);
 
 		pthread_mutex_unlock(&stat_busy);
-		return best_ridx;
+		return best_rdr;
 	}
 
 	int re[CS_MAXREADER];
@@ -382,10 +368,10 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 		if (grs->reader_avail[i]) {
  			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
-			stat = get_stat(i, grs->caid, grs->prid, grs->srvid);
+			stat = get_stat(rdr, grs->caid, grs->prid, grs->srvid);
 			if (!stat) {
 				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", rdr->label);
-				add_stat(i, grs->caid,  grs->prid, grs->srvid, 1, -1);
+				add_stat(rdr, grs->caid,  grs->prid, grs->srvid, 1, -1);
 				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
 				continue; 
 			}
@@ -402,7 +388,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 				stat->request_count++;
 				//algo for finding unanswered requests (newcamd reader for example:)
 				if (stat->request_count > cfg->lb_min_ecmcount) { //5 unanswered requests? 
-					add_stat(i, grs->caid, grs->prid, grs->srvid, 1, 4); //reader marked as unuseable 
+					add_stat(rdr, grs->caid, grs->prid, grs->srvid, 1, 4); //reader marked as unuseable 
 					result[i] = 0;
 				}
 				else
@@ -468,6 +454,8 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 	int nbest_readers = cfg->lb_nbest_readers;
 	int nfb_readers = cfg->lb_nfb_readers;
 	int best_ridx = -1;
+	struct s_reader *best_rdr = NULL;
+	struct s_reader *best_rdri = NULL;
 
 	nfb_readers += nbest_readers;
 	
@@ -481,6 +469,7 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			if (re[j] && (!best || re[j] < best)) {
 				best_idx=j;
 				best=re[j];
+				best_rdri = rdr2;
 			}
 		}
 		if (best_idx<0)
@@ -491,9 +480,11 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 			if (n<=nbest_readers) {
 				result[best_idx] = 1;
 				//OLDEST_READER:
-				cs_ftime(&reader[best_idx].lb_last);
-				if (best_ridx <0)
+				cs_ftime(&best_rdri->lb_last);
+				if (best_ridx <0) {
 					best_ridx = best_idx;
+					best_rdr = best_rdri;
+				}
 			}
 			else if (n<=nfb_readers) {
 				if (!result[best_idx])
@@ -511,33 +502,30 @@ int get_best_reader(GET_READER_STAT *grs, int *result)
 
 	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
 		username(grs->client), grs->caid, grs->prid, grs->srvid,
-		best_ridx<0?"NONE":reader[best_ridx].label,
+		best_rdr?best_rdr->label:"NONE",
 		result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], 
 		result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]);
 	
-	add_send_cache(grs->caid, grs->ecmd5, result, best_ridx); //add to cache
+	add_send_cache(grs->caid, grs->ecmd5, result, best_rdr); //add to cache
 	
 	if (new_nulltime.time)
 		nulltime = new_nulltime;
 		
 	pthread_mutex_unlock(&stat_busy);
 	
-	return best_ridx;
+	return best_rdr;
 }
 
 /**
  * clears statistic of reader ridx.
  **/
-void clear_reader_stat(int ridx)
+void clear_reader_stat(struct s_reader *rdr)
 {
-	if (!reader_stat[ridx]) 
+	if (!rdr->lb_stat) 
 		return;
 
 	pthread_mutex_lock(&stat_busy);
-		
-	ll_destroy_data(reader_stat[ridx]);
-	
-    reader_stat[ridx] = NULL;
-	
+	ll_destroy_data(rdr->lb_stat);
+	rdr->lb_stat = NULL;
 	pthread_mutex_unlock(&stat_busy);
 }
