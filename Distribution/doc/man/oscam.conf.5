@@ -34,11 +34,6 @@ logging target, default: /var/log/oscam.log
 1 = avoid logging although \fBlogfile\fP is set, default:0
 .RE
 .PP
-\fBpidfile\fP = \fBfilename\fP
-.RS 3n
-PID file, default:no PID file
-.RE
-.PP
 \fBusrfile\fP = \fBfilename\fP
 .RS 3n
 log file for user logging, default:none
@@ -779,7 +774,6 @@ be a workaround, but also a small security risk.
  [global]
  logfile      = /var/log/oscam/oscam.log
  usrfile      = /var/log/oscam/oscamuser.log
- pidfile      = /var/run/oscam.pid
 
  waitforcards = 1
 
