@@ -1801,7 +1801,33 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", cl->crypted);
 			tpl_printf(vars, 0, "CLIENTIP", "%s", cs_inet_ntoa(cl->ip));
 			tpl_printf(vars, 0, "CLIENTPORT", "%d", cl->port);
-			tpl_addVar(vars, 0, "CLIENTPROTO", monitor_get_proto(cl));
+
+			char *ctyp="";
+			switch(cl->typ) {
+				case 's'	: ctyp = "server";
+					break;
+				case 'p'	:
+				case 'r'	: {
+
+					int isphysical = (cl->reader->typ & R_IS_NETWORK)?0:1;
+
+					static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
+					if (isphysical)
+						ctyp = typtxt[cl->reader->typ];
+					else
+						ctyp = cl->reader->ph.desc;
+
+					if ((cl->reader->typ == R_NEWCAMD) && (cl->reader->ncd_proto == NCD_524))
+						ctyp = "newcamd524";
+					else if (cl->reader->client && cl->reader->client->cc && ((struct cc_data *)cl->reader->client->cc)->extended_mode)
+						ctyp = "cccam ext";
+					break;
+				}
+
+				default		: ctyp = ph[cl->ctyp].desc;
+			}
+
+			tpl_addVar(vars, 0, "CLIENTPROTO", ctyp);
 			tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
 			tpl_printf(vars, 0, "CLIENTLOGINTIME", "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
 
