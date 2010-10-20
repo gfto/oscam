@@ -874,7 +874,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 				LL_ITER *it2 = ll_iter_create(ncard->providers);
 				struct cc_provider *provider;
-				while ((provider = ll_iter_next(it)) && !s) {
+				while ((provider = ll_iter_next(it2)) && !s) {
 					if (!cur_er->prid || !provider->prov || provider->prov
 							== cur_er->prid) { // provid matches
 						if (h < 0 || ncard->hop < h || (ncard->hop == h
