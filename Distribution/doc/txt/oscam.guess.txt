@@ -1,4 +1,4 @@
-oscam.guess(5)												   oscam.guess(5)
+oscam.guess(5)												oscam.guess(5)
 
 
 
@@ -10,16 +10,17 @@ SYNOPSIS
 
 DESCRIPTIONS
        <length of ECM>:<CAID>
-	  CAID	guessing table by len in hex, only needed for protocols (at the moment BOMBA protocol only) that does not
-	  pass CAIDs
+	  CAID	guessing  table by len in hex, only needed for protocols (at the moment BOMBA protocol only) that does
+	  not pass CAIDs
 
 EXAMPLES
 	12:3456
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),   oscam.ac(5),    oscam.cert(5),    oscam.conf(5),	 oscam.guess(5),    oscam.ird(5),
-       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
+       list_smargo(1),	oscam(1),  oscam.ac(5),   oscam.cert(5),   oscam.conf(5),   oscam.dvbapi(5),   oscam.guess(5),
+       oscam.ird(5),	oscam.provid(5),    oscam.server(5),	oscam.services(5),   oscam.srvid(5),   oscam.tiers(5),
+       oscam.user(5)
 
 
 
-													   oscam.guess(5)
+													oscam.guess(5)

@@ -1,0 +1,42 @@
+.TH oscam.tiers 5
+.SH NAME
+\fBoscam.dvbapi\fR - DVBAPI configuration file for OSCam
+.SH SYNOPSIS
+DVBAPI settings
+.SH DESCRIPTIONS
+.PP
+\fBP\fP: \fBCAID\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP
+.RS 3n
+ set priority
+.RE
+.PP
+\fBI\fP: \fBCAID\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP
+.RS 3n
+ set ignore
+.RE
+.PP
+\fBD\fP: \fBCAID\fP:\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP \fBdelay\fP
+.RS 3n
+ set delay in milli seconds writing CWs
+.RE
+.PP
+\fBM\fP: \fBCAID\fP,\fB[provider ID]\fP:\fB[service ID]\fP:\fB[ECM PID]\fP \fBCAID\fP:\fB[provider ID]\fP
+.RS 3n
+ mapping
+.RE
+.RE
+.SH ANNONTATIONS
+\fIPlease use Unix text file format only.\fR
+.SH EXAMPLES
+ P: 0100:123456       # prioritise CAID 0100 with provider 123456
+ P: :::1234           # prioritise ECM with provider ID 1234 on 
+                        on any service
+ P: 0200              # prioritise CAID 0200
+ P: 0300::9ABC        # prioritise CAID 0300 on service 9ABC only
+ M: 0400 0500:123456  # map CAID 0400 to provider ID 123456 with 
+                        CAID 0500 always
+ D: 0600 200          # wait 200 ms before writing CW for CAID 0600
+ I: :654321           # ignore provider ID 654321 for every service
+ I: 0                 # ignore every CAID that was not handled before
+.SH "SEE ALSO"
+\fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cert\fR(5), \fBoscam.conf\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.server\fR(5), \fBoscam.services\fR(5), \fBoscam.user\fR(5)

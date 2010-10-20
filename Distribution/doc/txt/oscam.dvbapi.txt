@@ -1,0 +1,45 @@
+oscam.tiers(5)												oscam.tiers(5)
+
+
+
+NAME
+       oscam.dvbapi - DVBAPI configuration file for OSCam
+
+SYNOPSIS
+       DVBAPI settings
+
+DESCRIPTIONS
+       P: CAID:[provider ID]:[service ID]:[ECM PID]
+	   set priority
+
+       I: CAID:[provider ID]:[service ID]:[ECM PID]
+	   set ignore
+
+       D: CAID:[provider ID]:[service ID]:[ECM PID] delay
+	   set delay in milli seconds writing CWs
+
+       M: CAID,[provider ID]:[service ID]:[ECM PID] CAID:[provider ID]
+	   mapping
+
+ANNONTATIONS
+       Please use Unix text file format only.
+
+EXAMPLES
+	P: 0100:123456	     # prioritise CAID 0100 with provider 123456
+	P: :::1234	     # prioritise ECM with provider ID 1234 on
+			       on any service
+	P: 0200 	     # prioritise CAID 0200
+	P: 0300::9ABC	     # prioritise CAID 0300 on service 9ABC only
+	M: 0400 0500:123456  # map CAID 0400 to provider ID 123456 with
+			       CAID 0500 always
+	D: 0600 200	     # wait 200 ms before writing CW for CAID 0600
+	I: :654321	     # ignore provider ID 654321 for every service
+	I: 0		     # ignore every CAID that was not handled before
+
+SEE ALSO
+       list_smargo(1),	  oscam(1),   oscam.ac(5),   oscam.cert(5),   oscam.conf(5),   oscam.guess(5),	 oscam.ird(5),
+       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.user(5)
+
+
+
+													oscam.tiers(5)
