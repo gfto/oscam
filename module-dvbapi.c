@@ -538,7 +538,7 @@ static unsigned long dvbapi_get_cw_emm_provid(unsigned char *buffer, int len)
     for(i=0; i<len;) {
         switch (buffer[i]) {
             case 0x83:
-                provid=buffer[i+2];
+                provid=buffer[i+2] & 0xfc;
                 return provid;
                 break;
             default:
