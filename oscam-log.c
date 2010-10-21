@@ -172,14 +172,14 @@ static void write_to_log(int flag, char *txt)
 	cs_strncpy(ptr+32, log_buf, CS_LOGHISTSIZE-33);
 	loghistidx=(++loghistidx < CS_MAXLOGHIST)?loghistidx:0;
 #endif
-	if ((cur_client()->typ != 'c') && (cur_client()->typ != 'm'))
-		return;
 	struct s_client *cl;
 	for (cl=first_client; cl ; cl=cl->next)
 	{
 		if ((cl->log) && (cl->typ == 'm') && (cl->monlvl>0))
 		{
 			if (cl->monlvl<2) {
+				if ((cur_client()->typ != 'c') && (cur_client()->typ != 'm'))
+					continue;
 				if (strcmp(cur_client()->usr, cl->usr))
 					continue;
 			}
