@@ -1134,7 +1134,7 @@ int check_ecmcache1(ECM_REQUEST *er, uint64 grp)
 		{
 			//cs_log("cache1 found: grp=%lX cgrp=%lX", grp, ecmc->grp);
 			memcpy(er->cw, ecmc->cw, 16);
-			er->reader[0] = get_ridx(ecmc->reader);
+			er->reader[0] = ecmc->reader;
 			return(1);
 		}
 	return(0);
@@ -1170,7 +1170,7 @@ static void store_ecm(ECM_REQUEST *er)
 	memcpy(ecmidx->cw, er->cw, 16);
 	ecmidx->caid = er->caid;
 	ecmidx->grp = reader[er->reader[0]].grp;
-	ecmidx->reader = &reader[er->reader[0]];
+	ecmidx->reader = er->reader[0];
 	//cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
 
