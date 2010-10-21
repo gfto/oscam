@@ -120,7 +120,6 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
      NDS12 Class 48/49/4A/4B cards need to be told the length as (48, ins, 00, 80, 01) 
      does not return the length */
 
-/*
   static const unsigned char ins4852[5] = { 0x48, 0x52, 0x00, 0x00, 0x14 };
   if (!write_cmd_vg(ins4852,NULL) || !status_ok(cta_res+cta_lr-2)) {
     cs_log("class48 ins52: failed");
@@ -130,9 +129,12 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
     cs_log("class48 ins52: failed");
     //return ERROR;
   }
-*/
 
-  /* Try to get the boxid from the card, even if BoxID specified in the config file */
+  unsigned char boxID[4];
+  int boxidOK = 0;
+
+/*
+  // Try to get the boxid from the card, even if BoxID specified in the config file 
   unsigned char ins36[5] = { 0x48, 0x36, 0x00, 0x00, 0x53 };
 
   // get the length of ins36
@@ -145,8 +147,6 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
     ins36[4] = cta_res[1];
   }
 
-  unsigned char boxID[4];
-  int boxidOK = 0;
 
   if (!write_cmd_vg(ins36,NULL) || !status_ok(cta_res+cta_lr-2)) {
     cs_log("class48 ins36: failed");
@@ -157,21 +157,21 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
     cs_log("class48 ins36: encrypted - therefore not an NDS12 card");
     // return ERROR;
   } else {
-    /* skipping the initial fixed fields: encr/rev++ (4) */
+    // skipping the initial fixed fields: encr/rev++ (4)
     int i = 4;
     int gotUA = 0;
     while (i < (cta_lr-2)) {
-      if (!gotUA && cta_res[i] < 0xF0) {	/* then we guess that the next 4 bytes is the UA */
+      if (!gotUA && cta_res[i] < 0xF0) {	// then we guess that the next 4 bytes is the UA
         gotUA = 1;
         i += 4;
       } else {
-        switch (cta_res[i]) {	/* object length vary depending on type */
-          case 0x00:		/* padding */
+        switch (cta_res[i]) {	// object length vary depending on type
+          case 0x00:		// padding
             {
               i += 1;
               break;
             }
-          case 0xEF:		/* card status */
+          case 0xEF:		// card status
             {
               i += 3;
               break;
@@ -181,12 +181,12 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
               i += 4;
               break;
             }
-          case 0xDF:		/* next server contact */
+          case 0xDF:		// next server contact
             {
               i += 5;
               break;
             }
-          case 0xF3:		/* boxID */
+          case 0xF3:		// boxID
             {
               memcpy(&boxID, &cta_res[i + 1], sizeof(boxID));
               boxidOK = 1;
@@ -198,12 +198,12 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
               i += 6;
               break;
             }
-          case 0xFC:		/* No idea NDS1/NDS12 */
+          case 0xFC:		// No idea NDS1/NDS12
             {
               i += 14;
               break;
             }
-          case 0x01:		/* date & time */
+          case 0x01:		// date & time
             {
               i += 7;
               break;
@@ -214,17 +214,17 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
               break;
             }
           case 0x5E:
-          case 0x67:		/* signature */
+          case 0x67:		// signature
           case 0xDE:
           case 0xE2:
-          case 0xE9:		/* tier dates */
-          case 0xF8:		/* Old PPV Event Record */
+          case 0xE9:		// tier dates
+          case 0xF8:		// Old PPV Event Record
           case 0xFD:
             {
-              i += cta_res[i + 1] + 2;	/* skip length + 2 bytes (type and length) */
+              i += cta_res[i + 1] + 2;	// skip length + 2 bytes (type and length)
               break;
             }
-          default:		/* default to assume a length byte */
+          default:		// default to assume a length byte
             {
               cs_log("class48 ins36: returned unknown type=0x%02X - parsing may fail", cta_res[i]);
               i += cta_res[i + 1] + 2;
@@ -235,6 +235,7 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
     }//ele
 
   cs_debug("calculated BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
+*/
 
   /* the boxid is specified in the config */
   if (reader->boxid > 0) {
@@ -280,12 +281,11 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
     //return ERROR;
   }
 
-/*  static const unsigned char ins4952[5] = { 0x49, 0x52, 0x00, 0x00, 0x14 };
+  static const unsigned char ins4952[5] = { 0x49, 0x52, 0x00, 0x00, 0x14 };
   if (!write_cmd_vg(ins4952,NULL) || !status_ok(cta_res+cta_lr-2)) {
     cs_log("class49 ins52: failed");
     //return ERROR;
   }
-*/
 
   static const unsigned char ins4958[5] = { 0x49, 0x58, 0x00, 0x00, 0x35 };
   if (!write_cmd_vg(ins4958,NULL) || !status_ok(cta_res+cta_lr-2)) {
@@ -300,13 +300,11 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
     //return ERROR;
   }
 
-/*
   static const unsigned char ins0C[5] = { 0x49, 0x0C, 0x00, 0x00, 0x0A };
   if (!write_cmd_vg(ins0C,NULL) || !status_ok(cta_res+cta_lr-2)) {
     cs_log("class49 ins0C: failed");
     //return ERROR;
   }
-*/
 
   cs_ri_log(reader,
             "type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
