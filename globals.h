@@ -892,7 +892,7 @@ struct s_auth
   char     usr[33];
   char     pwd[33];
   int      uniq;
-  int      au;
+  struct s_reader *aureader;
   int      autoau;
   int      monlvl;
   uint64   grp;

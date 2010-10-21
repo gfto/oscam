@@ -1229,7 +1229,7 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		}
 		memset(account, 0, sizeof(struct s_auth));
 		cs_strncpy((char *)account->usr, user, sizeof(account->usr));
-		account->au=(-1);
+		account->aureader=NULL;
 		account->monlvl=cfg->mon_level;
 		account->tosleep=cfg->tosleep;
 		for (i=1; i<CS_MAXCAIDTAB; account->ctab.mask[i++]=0xffff);
@@ -1324,14 +1324,13 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
 	//AU Selector
-	if (!account->au) tpl_addVar(vars, 0, "AUSELECTED", "selected");
+	if (account->aureader == first_reader) tpl_addVar(vars, 0, "AUSELECTED", "selected"); //FIXME or should it be: if (!account->aureader) ???
 	if (account->autoau == 1) tpl_addVar(vars, 0, "AUTOAUSELECTED", "selected");
 	struct s_reader *rdr;
-	int ridx;
-	for (ridx=0,rdr=first_reader; rdr ; rdr=rdr->next, ridx++) {
+	for (rdr=first_reader; rdr ; rdr=rdr->next) {
 		if(!rdr->device[0]) break;
 		tpl_addVar(vars, 0, "READERNAME", rdr->label);
-		if (account->au == ridx) tpl_addVar(vars, 0, "SELECTED", "selected");
+		if (account->aureader == rdr) tpl_addVar(vars, 0, "SELECTED", "selected");
 		else tpl_addVar(vars, 0, "SELECTED", "");
 		tpl_addVar(vars, 1, "RDROPTION", tpl_getTpl(vars, "USEREDITRDRSELECTED"));
 	}

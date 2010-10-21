@@ -473,7 +473,7 @@ void cs_reinit_clients()
 
 			if (account && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16)) {
 				cl->grp		= account->grp;
-				cl->aureader		= &reader[account->au];
+				cl->aureader		= account->aureader;
 				cl->autoau	= account->autoau;
 				cl->expirationdate = account->expirationdate;
 				cl->allowedtimeframe[0] = account->allowedtimeframe[0];
@@ -1029,7 +1029,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				client->c35_suppresscmd08 = account->c35_suppresscmd08;
 				client->ncd_keepalive = account->ncd_keepalive;
 				client->grp = account->grp;
-				client->aureader = &reader[account->au];
+				client->aureader = account->aureader;
 				client->autoau = account->autoau;
 				client->tosleep = (60*account->tosleep);
 				client->c35_sleepsend = account->c35_sleepsend;
