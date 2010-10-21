@@ -6,7 +6,6 @@
 #include "reader-common.h"
 #include <poll.h>
 
-extern struct s_reader reader[CS_MAXREADER];
 extern int pthread_mutexattr_settype(pthread_mutexattr_t *__attr, int __kind); //Needs extern defined???
 
 //Mode names for CMD_05 command:
@@ -230,7 +229,7 @@ void cc_cli_close(struct s_client *cl) {
 	rdr->available = 0;
 	rdr->card_system = 0;
 	rdr->ncd_msgid = 0;
-	rdr->last_s = reader->last_g = 0;
+	rdr->last_s = rdr->last_g = 0;
 
 	//network_tcp_connection_close(rdr, cl->udp_fd); //Calls c_init, cc_cli_init -->recursive crash
 	int udp_fd = cl->udp_fd;
@@ -2059,14 +2058,14 @@ ulong get_reader_hexserial_crc(struct s_client *cl) {
 	return crc;
 }
 
-ulong get_reader_prid(int r, int j) {
+ulong get_reader_prid(struct s_reader *rdr, int j) {
 	ulong prid;
-	if (!(reader[r].typ & R_IS_CASCADING)) { // Read cardreaders have 4-byte Providers
-		prid = (reader[r].prid[j][0] << 24) | (reader[r].prid[j][1] << 16)
-				| (reader[r].prid[j][2] << 8) | (reader[r].prid[j][3] & 0xFF);
+	if (!(rdr->typ & R_IS_CASCADING)) { // Read cardreaders have 4-byte Providers
+		prid = (rdr->prid[j][0] << 24) | (rdr->prid[j][1] << 16)
+				| (rdr->prid[j][2] << 8) | (rdr->prid[j][3] & 0xFF);
 	} else { // Cascading/Network-reader 3-bytes Providers
-		prid = (reader[r].prid[j][0] << 16) | (reader[r].prid[j][1] << 8)
-				| (reader[r].prid[j][2] & 0xFF);
+		prid = (rdr->prid[j][0] << 16) | (rdr->prid[j][1] << 8)
+				| (rdr->prid[j][2] & 0xFF);
 	}
 	return prid;
 }
@@ -2233,7 +2232,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 int cc_srv_report_cards(struct s_client *cl) {
 	int j;
 	uint32 id;
-	uint r, k;
+	uint k;
 	uint8 hop = 0;
 	int reshare, usr_reshare, reader_reshare, maxhops, flt = 0;
 	uint8 buf[CC_MAXMSGSIZE];
@@ -2262,7 +2261,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 	int isau = (cl->aureader)?1:0;
 
 	struct s_reader *rdr;
-	for (r = 0, rdr = first_reader; rdr; rdr = rdr->next, r++) {
+	for (rdr = first_reader; rdr; rdr = rdr->next) {
 		if (!rdr->fd || !rdr->enable || rdr->deleted)
 			continue;
 		if (!(rdr->grp & cl->grp))
@@ -2274,7 +2273,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			continue;
 
 		if (!rdr->cc_id) {
-			rdr->cc_id = (r + 0x64) << 16 | fast_rnd() << 8 | fast_rnd();
+			rdr->cc_id = (get_ridx(rdr) + 0x64) << 16 | fast_rnd() << 8 | fast_rnd();
 		}
 
 		int au_allowed = !rdr->audisabled && isau;
@@ -2318,7 +2317,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 						if (au_allowed) {
 							int l;
 							for (l = 0; l < rdr->nprov; l++) {
-								ulong rprid = get_reader_prid(r, l);
+								ulong rprid = get_reader_prid(rdr, l);
 								if (rprid == prid)
 									cc_SA_oscam2cccam(&rdr->sa[l][0], buf + ofs
 											+ 3);
@@ -2332,8 +2331,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 					memcpy(buf + 22 + (k * 7), cc->node_id, 8);
 					int len = 30 + (k * 7);
 					cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(cl, reported_carddatas, buf, len,
-							&reader[r]);
+					cc_add_reported_carddata(cl, reported_carddatas, buf, len, rdr);
 					id++;
 					flt = 1;
 				}
@@ -2373,8 +2371,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
 					cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(cl, reported_carddatas, buf, len,
-							&reader[r]);
+					cc_add_reported_carddata(cl, reported_carddatas, buf, len, rdr);
 					id++;
 					flt = 1;
 				}
@@ -2402,7 +2399,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				cc_UA_oscam2cccam(rdr->hexserial, buf + 12, caid);
 			buf[20] = rdr->nprov;
 			for (j = 0; j < rdr->nprov; j++) {
-				ulong prid = get_reader_prid(r, j);
+				ulong prid = get_reader_prid(rdr, j);
 				int ofs = 21 + (j * 7);
 				buf[ofs + 0] = prid >> 16;
 				buf[ofs + 1] = prid >> 8;
@@ -2419,8 +2416,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED) /*&& !rdr->cc_id*/) {
 				//rdr->cc_id = b2i(3, buf + 5);
 				int len = 30 + (j * 7);
-				cc_add_reported_carddata(cl, reported_carddatas, buf, len,
-						&reader[r]);
+				cc_add_reported_carddata(cl, reported_carddatas, buf, len, rdr);
 				cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], rdr->card_status, rdr->tcp_connected, rdr->label, rdr->cc_id);
 			} else if ((rdr->card_status != CARD_INSERTED)
@@ -2543,7 +2539,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 
 		//cs_debug_mask(D_TRACE, "%s ofs=%d", getprefix(), ofs);
 		cc_cmd_send(cl, buf, ofs, MSG_NEW_CARD);
-		cc_add_reported_carddata(cl, reported_carddatas, buf, ofs, &reader[r]);
+		cc_add_reported_carddata(cl, reported_carddatas, buf, ofs, rdr);
 	}
 	ll_iter_release(it);
 	cc_free_cardlist(server_cards);
@@ -3059,8 +3055,7 @@ int cc_cli_init(struct s_client *cl) {
  *
  * THREADED: ridx should be replaced with reader-pointer
  */
-int cc_available(int ridx, int checktype) {
-	struct s_reader *rdr = &reader[ridx];
+int cc_available(struct s_reader *rdr, int checktype) {
 	struct s_client *cl = rdr->client;
 
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);

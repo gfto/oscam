@@ -427,7 +427,7 @@ struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result)
 				rdr->lbvalue = current;
 #endif
 				if (!rdr->ph.c_available
-						|| rdr->ph.c_available(i,
+						|| rdr->ph.c_available(rdr,
 								AVAIL_CHECK_LOADBALANCE)) {
 					current=current/2;
 				}

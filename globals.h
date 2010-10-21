@@ -452,7 +452,7 @@ struct s_module
   int  (*c_recv_log)();
   int  (*c_available)(); //Schlocke: available check for load-balancing, 
                          //params: 
-                         //int ridx (reader to check)
+                         //rdr (reader to check)
                          //int checktype (0=return connected, 1=return loadbalance-avail) return int
   void (*c_idle)();      //Schlocke: called when reader is idle
   void (*c_card_info)(); //Schlocke: request card infos
