@@ -408,7 +408,7 @@ struct s_ecm
   uchar  	cw[16];
   ushort 	caid;
   uint64  	grp;
-  int 		reader;
+  struct s_reader *reader;
   struct s_ecm *next;
   //int level;
 };
