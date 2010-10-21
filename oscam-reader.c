@@ -113,7 +113,7 @@ int network_select(int forRead, int timeout)
        FD_ZERO(&fds); FD_SET(sd,&fds); 
        struct timeval tv; 
        if(timeout&MSTIMEOUT) { tv.tv_sec=0; tv.tv_usec=(timeout&~MSTIMEOUT)*1000; } 
-       else { tv.tv_sec=timeout; tv.tv_usec=0; } 
+       else { tv.tv_sec=0; tv.tv_usec=timeout*1000; } 
        int r=select(sd+1,forRead ? &fds:0,forRead ? 0:&fds,0,&tv); 
        if(r>0) return 1; 
        else if(r<0) { 
@@ -184,53 +184,91 @@ int hostResolve(struct s_reader *rdr)
    return result;
 }
 
+void clear_block_delay(struct s_reader *rdr) {
+   rdr->tcp_block_delay = 100;
+   cs_ftime(&rdr->tcp_block_connect_till);
+}
+
 int network_tcp_connection_open()
 {
   struct s_client *cl = cur_client();
-  cs_log("connecting to %s", cur_client()->reader->device);
+  struct s_reader *rdr = cl->reader;
+  struct timeb cur_time;
+  cs_log("connecting to %s", rdr->device);
 
-  if (!hostResolve(cur_client()->reader))
+  in_addr_t last_ip = cl->ip;
+  if (!hostResolve(rdr))
      return -1;
- 
+
+  if (last_ip != cl->ip) //clean blocking delay on ip change:
+    clear_block_delay(rdr);
+  cs_ftime(&cur_time);
+  if (comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0) { //inside of blocking delay, do not connect!
+    cs_log("tcp connect blocking delay asserted for %s", rdr->label);
+    return -1;
+  }
+  
   int sd = cl->udp_fd;
-  if (connect(sd, (struct sockaddr *)&cl->udp_sa, sizeof(cl->udp_sa)) == 0)
+  int fl = fcntl(sd, F_GETFL);
+  fcntl(sd, F_SETFL, O_NONBLOCK); //set to nonblocking mode to avoid "endless" connecting loops and pipe-overflows:
+  int res =connect(sd, (struct sockaddr *)&cl->udp_sa, sizeof(cl->udp_sa));
+  if (res == 0) { 
+     fcntl(sd, F_SETFL, fl); //connect sucessfull, restore blocking mode
      return sd;
-	 
+  }
+
+  cs_log("connect error %d for %s", errno, rdr->label);
+  	 
   if (errno == EINPROGRESS || errno == EALREADY) {
-     if (network_select(0, DEFAULT_CONNECT_TIMEOUT) > 0) {
+     if (network_select(0, DEFAULT_CONNECT_TIMEOUT) > 0) { //if connect is in progress, wait apr. 500ms
         int r = -1;
         uint l = sizeof(r);
         if (getsockopt(sd, SOL_SOCKET, SO_ERROR, &r, (socklen_t*)&l) == 0) {
-           if (r == 0) return sd;
+           if (r == 0) {
+              fcntl(sd, F_SETFL, fl);
+              return sd; //now we are connected
+           }
 	}
      }
   }
-  else if (errno == EBADF || errno == ENOTSOCK) {
-    cs_log("connect failed: bad socket/descriptor %d", sd);
-    return -1;
-  }
+  //else we are not connected - or already connected:
   else if (errno == EISCONN) {
     cs_log("already connected!");
+    fcntl(sd, F_SETFL, fl);
     return sd;
+  }
+  
+  if (errno == EBADF || errno == ENOTSOCK) {
+    cs_log("connect failed: bad socket/descriptor %d", sd);
   }
   else if (errno == ETIMEDOUT) {
     cs_log("connect failed: timeout");
-    return -1;
   }
   else if (errno == ECONNREFUSED) {
     cs_log("connection refused");
-    return -1;
   }
   else if (errno == ENETUNREACH) {
     cs_log("connect failed: network unreachable!");
-    return -1;
   }
   else if (errno == EADDRINUSE) {
     cs_log("connect failed: address in use!");
-    return -1;
   }
-                                                 
-  cs_log("connect(fd=%d) failed: (errno=%d)", sd, errno);
+  else                                                 
+    cs_log("connect(fd=%d) failed: (errno=%d)", sd, errno);
+
+  fcntl(sd, F_SETFL, fl); //restore blocking mode
+  
+  //connect has failed. Block connect for a while:
+  if (!rdr->tcp_block_delay)
+  	rdr->tcp_block_delay = 100;
+  cs_debug_mask(D_TRACE, "tcp connect blocking delay set to %d", rdr->tcp_block_delay);
+  rdr->tcp_block_connect_till = cur_time;
+  rdr->tcp_block_connect_till.time += rdr->tcp_block_delay / 1000;
+  rdr->tcp_block_connect_till.millitm += rdr->tcp_block_delay % 1000;
+  rdr->tcp_block_delay *= 2; //increment timeouts
+  if (rdr->tcp_block_delay >= 60*1000)
+  	rdr->tcp_block_delay = 60*1000; //max 60s
+      
   return -1; 
 }
 
@@ -241,6 +279,7 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
   if (fd)
     close(fd);
   cl->udp_fd = 0;
+  clear_block_delay(reader);
 
   if (cl->typ != 'c')
   {

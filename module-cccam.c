@@ -16,33 +16,6 @@ static uint8 cc_node_id[8];
 
 #define getprefix() ((struct cc_data *)(cl->cc))->prefix
 
-void update_prefix(struct s_client *cl) {
-	struct cc_data *cc = cl->cc;
-	if (!cc)
-		return;
-
-	if (!cc->prefix)
-		cc->prefix = malloc(100);
-
-	if (cl->typ == 'c')
-		sprintf(cc->prefix, "cccam(s) %s: ", cl->usr);
-	else
-		sprintf(cc->prefix, "cccam(r) %s: ", cl->reader->label);
-	while (strlen(cc->prefix) < 22)
-		strcat(cc->prefix, " ");
-}
-
-int comp_timeb(struct timeb *tpa, struct timeb *tpb) {
-	if (tpa->time > tpb->time)
-		return (1);
-	if (tpa->time < tpb->time)
-		return (-1);
-	if (tpa->millitm > tpb->millitm)
-		return (1);
-	if (tpa->millitm < tpb->millitm)
-		return (-1);
-	return (0);
-}
 
 void cc_init_crypt(struct cc_crypt_block *block, uint8 *key, int len) {
 	int i = 0;
@@ -231,12 +204,7 @@ void cc_cli_close(struct s_client *cl) {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = rdr->last_g = 0;
 
-	//network_tcp_connection_close(rdr, cl->udp_fd); //Calls c_init, cc_cli_init -->recursive crash
-	int udp_fd = cl->udp_fd;
-	cl->pfd = 0;
-	cl->udp_fd = 0;
-	if (udp_fd)
-		close(udp_fd);
+	network_tcp_connection_close(rdr, cl->udp_fd);
 
 	struct cc_data *cc = cl->cc;
 	if (cc) {
@@ -327,7 +295,7 @@ void free_extended_ecm_idx(struct cc_data *cc) {
  */
 //static void cc_cycle_connection() {
 //	cc_cli_close();
-//	cc_cli_init_int();
+//	cc_cli_init();
 //}
 
 /**
@@ -746,7 +714,8 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	struct s_reader *rdr = cl->reader;
 
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
-	cc_cli_init_int(cl);
+	if (!rdr->tcp_connected)
+		cc_cli_connect(cl);
 
 	int n, h = -1;
 	struct cc_data *cc = cl->cc;
@@ -765,7 +734,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 					rdr->label, cc ? 1 : 0, cl->pfd);
 			write_ecm_answer(rdr, er);
 		}
-		cc_cli_close(cl);
+		//cc_cli_close(cl);
 		cs_debug_mask(D_FUT, "cc_send_ecm out");
 		return 0;
 	}
@@ -788,10 +757,9 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		//Without extended mode, only one ecm at a time could be send
 		//this is a limitation of "O" CCCam
 		if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
-			cs_debug_mask(
-					D_TRACE,
-					"%s ecm trylock: ecm busy, retrying later after msg-receive",
-					getprefix());
+			cs_debug_mask(D_TRACE, 
+				"%s ecm trylock: ecm busy, retrying later after msg-receive",
+				getprefix());
 
 			struct timeb timeout;
 			timeout = cc->ecm_time;
@@ -1092,7 +1060,8 @@ int cc_send_emm(EMM_PACKET *ep) {
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
 
-	cc_cli_init_int(cl);
+	if (!rdr->tcp_connected)
+		cc_cli_connect(cl);
 
 	struct cc_data *cc = cl->cc;
 
@@ -1181,9 +1150,8 @@ void cc_free_card(struct cc_card *card) {
  * Server:
  * Adds a cccam-carddata buffer to the list of reported carddatas
  */
-void cc_add_reported_carddata(struct s_client *cl __attribute__((unused)), 
-		LLIST *reported_carddatas,
-		uint8 *buf, int len, struct s_reader *D_USE(rdr)) {
+void cc_add_reported_carddata(LLIST *reported_carddatas,
+		uint8 *buf, int len) {
 	struct cc_reported_carddata *carddata = malloc(
 			sizeof(struct cc_reported_carddata));
 	uint8 *buf_copy = malloc(len);
@@ -1192,22 +1160,10 @@ void cc_add_reported_carddata(struct s_client *cl __attribute__((unused)),
 	carddata->len = len;
 	ll_append(reported_carddatas, carddata);
 
-	cs_debug_mask(
-			D_EMM,
-			"%s:%s reported card %d CAID %04X UA: %02X%02X%02X%02X%02X%02X%02X%02X",
-			getprefix(),
-			rdr->label, //label
-			b2i(4, buf), //card-id
-			b2i(2, buf + 8), //CAID
-			buf[12], buf[13], buf[14], buf[15], buf[16], buf[17], buf[18],
-			buf[19]); //UA
 	int i;
 	int ofs;
 	for (i = 0; i < buf[20]; i++) {
 		ofs = 21 + i * 7;
-		cs_debug_mask(D_EMM, "   provider: %02X%02X%02X SA: %02X%02X%02X%02X",
-				buf[ofs], buf[ofs + 1], buf[ofs + 2], buf[ofs + 3],
-				buf[ofs + 4], buf[ofs + 5], buf[ofs + 6]);
 	}
 }
 
@@ -2331,7 +2287,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 					memcpy(buf + 22 + (k * 7), cc->node_id, 8);
 					int len = 30 + (k * 7);
 					cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(cl, reported_carddatas, buf, len, rdr);
+					cc_add_reported_carddata(reported_carddatas, buf, len);
 					id++;
 					flt = 1;
 				}
@@ -2371,7 +2327,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
 					cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(cl, reported_carddatas, buf, len, rdr);
+					cc_add_reported_carddata(reported_carddatas, buf, len);
 					id++;
 					flt = 1;
 				}
@@ -2416,7 +2372,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED) /*&& !rdr->cc_id*/) {
 				//rdr->cc_id = b2i(3, buf + 5);
 				int len = 30 + (j * 7);
-				cc_add_reported_carddata(cl, reported_carddatas, buf, len, rdr);
+				cc_add_reported_carddata(reported_carddatas, buf, len);
 				cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], rdr->card_status, rdr->tcp_connected, rdr->label, rdr->cc_id);
 			} else if ((rdr->card_status != CARD_INSERTED)
@@ -2539,7 +2495,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 
 		//cs_debug_mask(D_TRACE, "%s ofs=%d", getprefix(), ofs);
 		cc_cmd_send(cl, buf, ofs, MSG_NEW_CARD);
-		cc_add_reported_carddata(cl, reported_carddatas, buf, ofs, rdr);
+		cc_add_reported_carddata(reported_carddatas, buf, ofs);
 	}
 	ll_iter_release(it);
 	cc_free_cardlist(server_cards);
@@ -2631,8 +2587,6 @@ int cc_srv_connect(struct s_client *cl) {
 
 		cc_init_cc(cc);
 	}
-	update_prefix(cl);
-
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
 
@@ -2696,6 +2650,10 @@ int cc_srv_connect(struct s_client *cl) {
 		return -1;
 	}
 
+	if (!cc->prefix)
+		cc->prefix = malloc(strlen(cl->usr)+20);
+	sprintf(cc->prefix, "cccam(s) %s: ", cl->usr);
+	
 	// receive passwd / 'CCcam'
 	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), DECRYPT);
 	if ((i = recv(cl->pfd, buf, 6, MSG_WAITALL)) == 6) {
@@ -2879,7 +2837,10 @@ int cc_cli_connect(struct s_client *cl) {
 		pthread_mutex_trylock(&cc->ecm_busy);
 		pthread_mutex_unlock(&cc->ecm_busy);
 	}
-	update_prefix(cl);
+	if (!cc->prefix)
+		cc->prefix = malloc(strlen(cl->reader->label)+20);
+	sprintf(cc->prefix, "cccam(r) %s: ", cl->reader->label);
+
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
 	cc->cmd05_mode = MODE_UNKNOWN;
@@ -3017,7 +2978,7 @@ int cc_cli_init_int(struct s_client *cl) {
 
 #ifdef SO_PRIORITY
 	if (cfg->netprio)
-	setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY,
+		setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY,
 			(void *)&cfg->netprio, sizeof(ulong));
 #endif
 	rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
@@ -3033,21 +2994,19 @@ int cc_cli_init_int(struct s_client *cl) {
 	cs_debug("cccam: reconnect timeout set to: %d", rdr->tcp_rto);
 	cc_check_version(rdr->cc_version, rdr->cc_build);
 	cs_log("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d",
-			rdr->label, rdr->device, rdr->r_port, rdr->cc_version,
-			rdr->cc_build, rdr->cc_maxhop);
+		rdr->label, rdr->device, rdr->r_port, rdr->cc_version,
+		rdr->cc_build, rdr->cc_maxhop);
 
-	int res = cc_cli_connect(cl);
-	if (res < 0)
-		cc_cli_close(cl);
 	cs_debug_mask(D_FUT, "cc_cli_init_int out");
-	return res;
+	return 0;
 }
 
 int cc_cli_init(struct s_client *cl) {
-	if (!cl->cc)
-		cc_cli_init_int(cl);
-	update_prefix(cl);
-	return 0;
+	int res = cc_cli_init_int(cl);
+	if (res == 0 && !cl->cc && cl->reader && !cl->reader->tcp_connected) {
+		cc_cli_connect(cl);
+	}
+	return res;
 }
 
 /**
@@ -3080,8 +3039,8 @@ void cc_card_info() {
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
 
-	if (!rdr->tcp_connected)
-		cc_cli_init_int(cl);
+	if (rdr && !rdr->tcp_connected)
+		cc_cli_connect(cl);
 	cs_debug_mask(D_FUT, "cc_card_info out");
 }
 

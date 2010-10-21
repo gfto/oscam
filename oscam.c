@@ -2335,7 +2335,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	write_to_pipe(aureader->fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
 }
 
-static int comp_timeb(struct timeb *tpa, struct timeb *tpb)
+int comp_timeb(struct timeb *tpa, struct timeb *tpb)
 {
   if (tpa->time>tpb->time) return(1);
   if (tpa->time<tpb->time) return(-1);

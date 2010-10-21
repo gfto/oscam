@@ -143,14 +143,14 @@
 //#define CS_MAXREADER    (CS_MAXPID>>1)
 #define CS_MAXREADER    16
 //#define CS_MAXPENDING   CS_MAXPID
-#define CS_MAXPENDING   8
+#define CS_MAXPENDING   16
 #define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+8000
 #else
 //#define CS_MAXPID   512
 //#define CS_MAXREADER    (CS_MAXPID<<2)
 #define CS_MAXREADER    256
 //#define CS_MAXPENDING   (CS_MAXPID<<1)
-#define CS_MAXPENDING   20
+#define CS_MAXPENDING   32
 #define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+10000
 #endif
 
@@ -763,6 +763,8 @@ struct s_reader  //contains device info, reader info and card info
   uchar     tcp_connected;
   int       tcp_ito;      // inactivity timeout
   int       tcp_rto;      // reconnect timeout
+  struct timeb	tcp_block_connect_till; //time tcp connect ist blocked
+  int       tcp_block_delay; //incrementing block time
   time_t    last_g;       // get (if last_s-last_g>tcp_rto - reconnect )
   time_t    last_s;       // send
   uchar     show_cls;     // number of classes subscription showed on kill -31
@@ -1241,6 +1243,7 @@ extern char* username(struct s_client *);
 extern struct s_client * idx_from_tid(unsigned long);
 extern int chk_bcaid(ECM_REQUEST *, CAIDTAB *);
 extern void cs_exit(int sig);
+extern int comp_timeb(struct timeb *tpa, struct timeb *tpb);
 extern struct s_client * cs_fork(in_addr_t);
 extern int cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);

@@ -3473,7 +3473,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 #endif
 
-		if (!strcmp(value, "cccam")) {
+		if (!strcmp(value, "cccam") || !strcmp(value, "cccam ext")) {
 			rdr->typ = R_CCCAM;
 			//strcpy(value, "1");
 			//chk_caidtab(value, &rdr->ctab); 
