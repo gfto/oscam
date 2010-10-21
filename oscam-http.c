@@ -755,9 +755,6 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 		}
 	}
 
-	//Todo: Disabled the Add Reader functionality temporarly
-	//tpl_addVar(vars, 1, "BTNDISABLED", "DISABLED");
-
 	fputs(tpl_getTpl(vars, "READERS"), f);
 }
 
