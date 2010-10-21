@@ -1324,7 +1324,7 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
 	//AU Selector
-	if (account->aureader == first_reader) tpl_addVar(vars, 0, "AUSELECTED", "selected"); //FIXME or should it be: if (!account->aureader) ???
+	if (!account->aureader) tpl_addVar(vars, 0, "AUSELECTED", "selected");
 	if (account->autoau == 1) tpl_addVar(vars, 0, "AUTOAUSELECTED", "selected");
 	struct s_reader *rdr;
 	for (rdr=first_reader; rdr ; rdr=rdr->next) {
