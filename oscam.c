@@ -881,6 +881,9 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 
 	rdr->tcp_connected = 0;
 	rdr->card_status = NO_CARD;
+	rdr->tcp_block_delay = 100;
+	cs_ftime(&rdr->tcp_block_connect_till);
+	
 	if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
 		for (i=0; i<CS_MAX_MOD; i++)
 			if (ph[i].num && rdr->typ==ph[i].num)

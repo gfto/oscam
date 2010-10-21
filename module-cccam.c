@@ -706,6 +706,43 @@ int cc_UA_valid(uint8 *ua) {
 }
 
 /**
+ * Updates AU Data: UA (Unique ID / Hexserial) und SA (Shared ID - Provider)
+ */
+void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card, ECM_REQUEST *cur_er) {
+	if (rdr->audisabled || !cc_UA_valid(card->hexserial))
+		return;
+		
+	rdr->card_system = get_cardsystem(card->caid);
+	cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid[0]);
+
+	cs_debug_mask(D_EMM,
+			"%s au info: caid %04X card system: %d UA: %s",
+			getprefix(), card->caid, rdr->card_system, cs_hexdump(0,
+					rdr->hexserial, 8));
+
+	rdr->nprov = 0;
+	LL_ITER *it2 = ll_iter_create(card->providers);
+	struct cc_provider *provider;
+	int p = 0;
+	while ((provider = ll_iter_next(it2))) {
+		if (!cur_er || provider->prov == cur_er->prid) {
+			memcpy(&rdr->prid[p], &provider->prov, sizeof(provider->prov));
+			cc_SA_cccam2oscam(provider->sa, rdr->sa[p]);
+
+			cs_debug_mask(D_EMM, "%s au info: provider: %06lX:%02X%02X%02X%02X", 
+				provider->prov,
+				provider->sa[0], provider->sa[1], provider->sa[2],
+				provider->sa[3]);
+
+			p++;
+			rdr->nprov = p;
+			if (p >= CS_MAXPROV) break;
+		}
+	}
+	ll_iter_release(it2);
+}
+
+/**
  * reader
  * sends a ecm request to the connected CCCam Server
  */
@@ -900,33 +937,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		cc_cmd_send(cl, ecmbuf, cur_er->l + 13, MSG_CW_ECM); // send ecm
 
 		//For EMM
-		if (!rdr->audisabled) {
-			rdr->card_system = get_cardsystem(card->caid);
-			cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid[0]);
-
-			rdr->nprov = 0;
-			LL_ITER *it2 = ll_iter_create(card->providers);
-			struct cc_provider *provider;
-			while ((provider = ll_iter_next(it2))) {
-				if (provider->prov == cur_er->prid) {
-					memcpy(&rdr->prid[0], &provider->prov,
-							sizeof(provider->prov));
-					cc_SA_cccam2oscam(provider->sa, rdr->sa[0]);
-					rdr->nprov = 1;
-					break;
-				}
-			}
-			ll_iter_release(it2);
-			char saprov[20] = { 0 };
-			if (provider)
-				sprintf(saprov, "%06lX:%02X%02X%02X%02X", provider->prov,
-						provider->sa[0], provider->sa[1], provider->sa[2],
-						provider->sa[3]);
-			cs_debug_mask(D_EMM,
-					"%s au info: caid %04X card system: %d UA: %s SA: %s",
-					getprefix(), card->caid, rdr->card_system, cs_hexdump(0,
-							rdr->hexserial, 8), saprov);
-		}
+		set_au_data(cl, rdr, card, cur_er);
 		pthread_mutex_unlock(&cc->cards_busy);
 		cs_debug_mask(D_FUT, "cc_send_ecm out");
 		return 0;
@@ -1543,8 +1554,10 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		ll_iter_release(it);
 
 		card->time = time((time_t) 0);
-		if (!old_card)
+		if (!old_card) {
 			ll_append(cc->cards, card);
+		}
+		set_au_data(cl, rdr, card, NULL);
 		cc->cards_modified++;
 
 		pthread_mutex_unlock(&cc->cards_busy);
