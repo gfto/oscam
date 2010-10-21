@@ -279,13 +279,15 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
   if (fd)
     close(fd);
   cl->udp_fd = 0;
-  clear_block_delay(reader);
+  if(reader)
+      clear_block_delay(reader);
 
   if (cl->typ != 'c')
   {
     int i;
     //cl->pfd = 0;
-    reader->tcp_connected = 0;
+    if(reader)
+        reader->tcp_connected = 0;
 
     if (cl->ecmtask) {
 	for (i = 0; i < CS_MAXPENDING; i++) {
@@ -294,16 +296,18 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
 	}
     }
 
-    reader->ncd_msgid=0;
-    reader->last_s=reader->last_g=0;
-
-    if (reader->ph.c_init(cl)) {
-         cs_debug("network_tcp_connection_close() exit(1);");
-
-       if (reader->ph.cleanup)
-         reader->ph.cleanup(cl);
-
-         cs_exit(1);
+    if(reader) {
+        reader->ncd_msgid=0;
+        reader->last_s=reader->last_g=0;
+        
+        if (reader->ph.c_init(cl)) {
+            cs_debug("network_tcp_connection_close() exit(1);");
+            
+            if (reader->ph.cleanup)
+                reader->ph.cleanup(cl);
+            
+            cs_exit(1);
+        }
     }
   }
 }
