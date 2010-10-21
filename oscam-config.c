@@ -3920,6 +3920,7 @@ int init_readerdb()
 		return(1);
 	}
 	nr = 0;
+	struct s_reader *rdr = first_reader;
 	while (fgets(token, sizeof(token), fp)) {
 		int i, l;
 		if ((l = strlen(trim(token))) < 3)
@@ -3928,23 +3929,24 @@ int init_readerdb()
 			token[l-1] = 0;
 			tag = (!strcmp("reader", strtolower(token+1)));
 			if (reader[nr].label[0] && reader[nr].typ) nr++;
-			memset(&reader[nr], 0, sizeof(struct s_reader));
-			reader[nr].next = &reader[nr+1]; //FIXME
-			reader[nr].enable = 1;
-			reader[nr].tcp_rto = 30;
-			reader[nr].show_cls = 10;
-			reader[nr].maxqlen = CS_MAXQLEN;
-			reader[nr].mhz = 357;
-			reader[nr].cardmhz = 357;
-			reader[nr].deprecated = 0;
-			reader[nr].force_irdeto = 0;
-			reader[nr].cachecm = 1;
-			reader[nr].cc_reshare = cfg->cc_reshare; //set global value as init value
-			reader[nr].cc_maxhop = 10;
-			reader[nr].lb_weight = 100;
-			strcpy(reader[nr].pincode, "none");
-                        reader[nr].ndsversion = 0;
-			for (i=1; i<CS_MAXCAIDTAB; reader[nr].ctab.mask[i++]=0xffff);
+			rdr = &reader[nr];//FIXME
+			memset(rdr, 0, sizeof(struct s_reader));
+			rdr->next = &reader[nr+1]; //FIXME
+			rdr->enable = 1;
+			rdr->tcp_rto = 30;
+			rdr->show_cls = 10;
+			rdr->maxqlen = CS_MAXQLEN;
+			rdr->mhz = 357;
+			rdr->cardmhz = 357;
+			rdr->deprecated = 0;
+			rdr->force_irdeto = 0;
+			rdr->cachecm = 1;
+			rdr->cc_reshare = cfg->cc_reshare; //set global value as init value
+			rdr->cc_maxhop = 10;
+			rdr->lb_weight = 100;
+			strcpy(rdr->pincode, "none");
+			rdr->ndsversion = 0;
+			for (i=1; i<CS_MAXCAIDTAB; rdr->ctab.mask[i++]=0xffff);
 			continue;
 		}
 
@@ -3953,10 +3955,10 @@ int init_readerdb()
 		if (!(value=strchr(token, '=')))
 			continue;
 		*value++ ='\0';
-		chk_reader(trim(strtolower(token)), trim(value), &reader[nr]);
+		chk_reader(trim(strtolower(token)), trim(value), rdr);
 	}
 	fclose(fp);
-	reader[nr].next = NULL; //FIXME terminate reader list
+	rdr->next = NULL; //FIXME terminate reader list
 	return(0);
 }
 
