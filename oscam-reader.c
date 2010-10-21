@@ -472,7 +472,7 @@ static int reader_store_emm(uchar *emm, uchar type)
 {
   int rc;
   struct s_client *cl = cur_client();
-  memcpy(cl->emmcache[cl->rotate].emm, emm, emm[2]);
+  memcpy(cl->emmcache[cl->rotate].emmd5, MD5(emm, emm[2], cl->dump), CS_EMMSTORESIZE);
   cl->emmcache[cl->rotate].type=type;
   cl->emmcache[cl->rotate].count=1;
 //  cs_debug("EMM stored (index %d)", rotate);
@@ -571,17 +571,19 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
   cs_ftime(&tps);
 
-  no=0;
-  for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++)
-          if (!memcmp(cl->emmcache[i].emm, ep->emm, ep->emm[2]))
-          {
-                  if (reader->cachemm)
-                          ecs=(reader->rewritemm > cl->emmcache[i].count) ? 1 : 2;
-                  else
-                          ecs=1;
-                  no=++cl->emmcache[i].count;
-                  i--;
-          }
+	MD5(ep->emm, ep->emm[2], cl->dump);
+
+	no=0;
+	for (i=ecs=0; (i<CS_EMMCACHESIZE) && (!ecs); i++) {
+       	if (!memcmp(cl->emmcache[i].emmd5, cl->dump, CS_EMMSTORESIZE)) {
+			if (reader->cachemm)
+				ecs=(reader->rewritemm > cl->emmcache[i].count) ? 1 : 2;
+			else
+				ecs=1;
+			no=++cl->emmcache[i].count;
+			i--;
+		}
+	}
 
   if ((rc=ecs)<2)
   {

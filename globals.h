@@ -124,7 +124,7 @@
 #define CS_MAXIGNORE      1024
 #define CS_MAXLOCALS      16
 #define CS_ECMSTORESIZE   16  // use MD5()
-#define CS_EMMSTORESIZE   270
+#define CS_EMMSTORESIZE   16  // use MD5()
 #define CS_CLIENT_TIMEOUT 5000
 #define CS_CLIENT_MAXIDLE 120
 #define CS_BIND_TIMEOUT   120
@@ -154,7 +154,7 @@
 #define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+10000
 #endif
 
-#define CS_EMMCACHESIZE  5 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
+#define CS_EMMCACHESIZE  64 //nr of EMMs that each client will cache; cache is per client, so memory-expensive...
 
 #define D_TRACE     1 // Generate very detailed error/trace messages per routine
 #define D_ATR       2 // Debug ATR parsing, dump of ecm, cw
@@ -415,7 +415,7 @@ struct s_ecm
 
 struct s_emm
 {
-  uchar emm[CS_EMMSTORESIZE];
+  uchar emmd5[CS_EMMSTORESIZE];
   uchar type;
   int   count;
 };
