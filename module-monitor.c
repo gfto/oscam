@@ -233,35 +233,29 @@ static void monitor_send_info(char *txt, int last)
 	btxt[0]=0;
 }
 
+char *reader_get_type_desc(struct s_reader * rdr)
+{
+	char *desc ="";
+	static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
+	if (rdr->typ & R_IS_NETWORK)
+		desc = rdr->ph.desc;
+	else
+		desc = typtxt[rdr->typ];
+	if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
+		desc = "newcamd524";
+	else if ((rdr->client->cc) && ((struct cc_data *)rdr->client->cc)->extended_mode) 
+		desc = "cccam ext";
+	return (desc);
+}
 
 char *monitor_get_proto(struct s_client *cl)
 {
-	char *ctyp;
+	char *ctyp="";
 	switch(cl->typ) {
-	case 's'	: ctyp = "server"   ; break;
-	case 'p'	:
-	case 'r'	:
-			switch(cl->reader->typ) {	/* TODO like ph*/
-			case R_MOUSE	: ctyp = "mouse";		break;
-			case R_INTERNAL	: ctyp = "intern";		break;
-			case R_SMART	: ctyp = "smartreader";	break;
-#ifdef HAVE_PCSC
-			case R_PCSC		: ctyp = "pcsc";		break;
-#endif
-			case R_DB2COM1	: ctyp = "dbox COM1";	break;
-			case R_DB2COM2	: ctyp = "dbox COM2";   break;
-			case R_CCCAM    : {
-				if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode)
-					ctyp = "cccam ext";
-				else
-					ctyp = ph[cl->ctyp].desc;
-				break;
-			}
-			
-			default			: ctyp = cl->reader->ph.desc;   break;
-			}
-		break;
-	default		: ctyp = ph[cl->ctyp].desc;
+		case 's'	: ctyp = "server"; break;
+		case 'p'	:
+		case 'r'	: ctyp = reader_get_type_desc(cl->reader); break;
+		default		: ctyp = ph[cl->ctyp].desc;
 	}
 	return(ctyp);
 }

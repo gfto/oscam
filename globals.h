@@ -1465,6 +1465,8 @@ extern void module_dvbapi(struct s_module *);
 // module-monitor
 extern char *monitor_get_proto(struct s_client *);
 
+extern char *reader_get_type_desc(struct s_reader * rdr);
+
 #ifdef WEBIF
 // oscam-http
 extern void http_srv();

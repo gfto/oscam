@@ -2264,16 +2264,7 @@ int write_server()
 
 			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", rdr->label);
 			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", rdr->enable);
-
-			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
-			char *ctyp ="";
-			static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
-			if (isphysical)
-				ctyp = typtxt[rdr->typ];
-			else
-				ctyp = rdr->ph.desc;
-			if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
-				ctyp = "newcamd524";
+			char *ctyp = reader_get_type_desc(rdr);
 
 			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s\n", ctyp);
 
@@ -2294,6 +2285,7 @@ int write_server()
 				fprintf(f, "\n");
 			}
 
+			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
 			if (rdr->r_usr[0] && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "account", "%s\n", rdr->r_usr);
 

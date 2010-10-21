@@ -706,19 +706,6 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			tpl_addVar(vars, 0, "READERNAME", rdr->label);
 			tpl_addVar(vars, 0, "READERNAMEENC", tpl_addTmp(vars, urlencode(rdr->label)));
-
-			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
-			char *ctyp ="";
-			static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
-			if (isphysical)
-				ctyp = typtxt[rdr->typ];
-			else
-				ctyp = rdr->ph.desc;
-			if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
-				ctyp = "newcamd524";
-			else if (rdr->client && rdr->client->cc && ((struct cc_data *)rdr->client->cc)->extended_mode)
-				ctyp = "cccam ext";
-
 			tpl_printf(vars, 0, "EMMERRORUK", "%d", rdr->emmerror[UNKNOWN]);
 			tpl_printf(vars, 0, "EMMERRORG", "%d", rdr->emmerror[GLOBAL]);
 			tpl_printf(vars, 0, "EMMERRORS", "%d", rdr->emmerror[SHARED]);
@@ -744,7 +731,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			//call stats
 			tpl_addVar(vars, 0, "STATICO", ICSTA);
 
-			if (isphysical == 1) {
+			if (!(rdr->typ & R_IS_NETWORK)) { //reader is physical
 				tpl_addVar(vars, 0, "REFRICO", ICREF);
 				tpl_addVar(vars, 0, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
 
@@ -762,7 +749,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			}
 
-			tpl_addVar(vars, 0, "CTYP", ctyp);
+			tpl_addVar(vars, 0, "CTYP", reader_get_type_desc(rdr));
 			tpl_addVar(vars, 0, "EDIICO", ICEDI);
 			tpl_addVar(vars, 1, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
@@ -1801,33 +1788,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", cl->crypted);
 			tpl_printf(vars, 0, "CLIENTIP", "%s", cs_inet_ntoa(cl->ip));
 			tpl_printf(vars, 0, "CLIENTPORT", "%d", cl->port);
-
-			char *ctyp="";
-			switch(cl->typ) {
-				case 's'	: ctyp = "server";
-					break;
-				case 'p'	:
-				case 'r'	: {
-
-					int isphysical = (cl->reader->typ & R_IS_NETWORK)?0:1;
-
-					static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
-					if (isphysical)
-						ctyp = typtxt[cl->reader->typ];
-					else
-						ctyp = cl->reader->ph.desc;
-
-					if ((cl->reader->typ == R_NEWCAMD) && (cl->reader->ncd_proto == NCD_524))
-						ctyp = "newcamd524";
-					else if (cl->reader->client && cl->reader->client->cc && ((struct cc_data *)cl->reader->client->cc)->extended_mode)
-						ctyp = "cccam ext";
-					break;
-				}
-
-				default		: ctyp = ph[cl->ctyp].desc;
-			}
-
-			tpl_addVar(vars, 0, "CLIENTPROTO", ctyp);
+			tpl_addVar(vars, 0, "CLIENTPROTO", monitor_get_proto(cl));
 			tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
 			tpl_printf(vars, 0, "CLIENTLOGINTIME", "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
 
