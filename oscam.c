@@ -831,8 +831,9 @@ static void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
+#ifndef TUXBOX
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-
+#endif
 	if (pthread_create(&temp, &attr, startroutine, NULL))
 		cs_log("ERROR: can't create %s thread", nameroutine);
 	else {
@@ -918,8 +919,9 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 		//client[i].ctyp=99;
 		pthread_attr_t attr;
 		pthread_attr_init(&attr);
+#ifndef TUXBOX
 		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-
+#endif
 		pthread_create(&cl->thread, &attr, start_cardreader, (void *)rdr);
 		pthread_detach(cl->thread);
 		pthread_attr_destroy(&attr);
@@ -2641,8 +2643,9 @@ int accept_connection(int i, int j) {
 
 				pthread_attr_t attr;
 				pthread_attr_init(&attr);
+#ifndef TUXBOX
 				pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-
+#endif
 				pthread_create(&cl->thread, &attr, ph[i].s_handler, (void *) cl);
 				pthread_detach(cl->thread);
 				pthread_attr_destroy(&attr);
@@ -2671,8 +2674,9 @@ int accept_connection(int i, int j) {
 
 			pthread_attr_t attr;
 			pthread_attr_init(&attr);
+#ifndef TUXBOX
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-
+#endif
 			pthread_create(&cl->thread, &attr, ph[i].s_handler, (void*) cl);
 			pthread_detach(cl->thread);
 			pthread_attr_destroy(&attr);
