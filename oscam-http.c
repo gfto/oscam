@@ -1763,7 +1763,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			else if ((cl->tosleep) && (now-cl->lastswitch>cl->tosleep)) con=1;
 			else con=0;
 
-			if( (cau=cl->au+1) && (now-cl->lastemm)/60 > cfg->mon_aulow) cau=-cau;
+			if( (cau=get_ridx(cl->aureader)+1) && (now-cl->lastemm)/60 > cfg->mon_aulow) cau=-cau;
 
 			lt=localtime(&cl->login);
 

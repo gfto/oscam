@@ -328,7 +328,7 @@ int reader_checkhealth(struct s_reader * reader)
       }
       else
       {
-        cur_client()->au = get_ridx(cur_client()->reader);
+        cur_client()->aureader = cur_client()->reader;
         reader_card_info(reader);
         reader->card_status = CARD_INSERTED;
       }
@@ -341,7 +341,7 @@ int reader_checkhealth(struct s_reader * reader)
       reader_nullcard(reader);
       cur_client()->lastemm = 0;
       cur_client()->lastecm = 0;
-      cur_client()->au = -1;
+      cur_client()->aureader = NULL;
       cs_log("card ejected slot = %i", reader->slot);
     }
     reader->card_status = NO_CARD;

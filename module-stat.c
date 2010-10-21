@@ -439,7 +439,7 @@ struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result)
 			else 
 			{
 				int seconds = cfg->lb_reopen_seconds;
-				if (!rdr->audisabled && (grs->client->autoau || grs->client->au == i))
+				if (!rdr->audisabled && (grs->client->autoau || grs->client->aureader == rdr))
 					seconds = seconds/10;
 				
 				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds

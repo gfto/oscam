@@ -617,7 +617,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     uchar buf[14];
     uchar *key=0;
     uchar passwdcrypt[120];
-    int au=0;
+    struct s_reader *aureader=first_reader; //FIXME strange enough au was initialized to 0 = first reader, and not to -1 = no reader
     struct s_ip *p_ip;
     struct s_client *cl = cur_client();
     uchar mbuf[1024];
@@ -711,19 +711,19 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 
     if (ok)
     {
-      au = cl->au;
-      if (au != -1)
+      aureader = cl->aureader;
+      if (aureader)
       {
-          if (cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != reader[au].caid[0]
-              &&  cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != reader[au].ftab.filts[0].caid
-              && reader[au].typ != R_CCCAM) // disabling AU breaks cccam-au when cascading over newcamd, but with enabled au client was receiving wrong card data on faulty configured newcamd filters and when using betatunnel
+          if (cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != aureader->caid[0]
+              &&  cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != aureader->ftab.filts[0].caid
+              && aureader->typ != R_CCCAM) // disabling AU breaks cccam-au when cascading over newcamd, but with enabled au client was receiving wrong card data on faulty configured newcamd filters and when using betatunnel
           {
             cs_log("AU wont be used on this port -> disable AU");
-            au = -1;
+            aureader = NULL;
           }
           else
           {
-            cs_log("AU enabled for user %s on reader %s", usr, reader[au].label);
+            cs_log("AU enabled for user %s on reader %s", usr, aureader->label);
           }
       }
       else
@@ -759,8 +759,8 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         cl->ftab.filts[0] = mk_user_ftab();
 
 	// set userfilter for au enabled clients    
-        if (au != -1)
-          cl->ftab.filts[0] = mk_user_au_ftab(au);
+        if (aureader)
+          cl->ftab.filts[0] = mk_user_au_ftab(get_ridx(aureader));
 
         pufilt = &cl->ftab.filts[0];
         cl->ftab.nfilts = 1;
@@ -769,7 +769,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         mbuf[1] = 0x00;
         mbuf[2] = 0x00;
 
-        if( au != -1 )
+        if(aureader)
             mbuf[3] = 1;
         else
             mbuf[3] = get_threadnum(cl)+10; // Unique user number
@@ -779,7 +779,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         mbuf[6] = 0x00;
         mbuf[7] = 0x00;
 
-        if (au != -1)
+        if (aureader)
         {
             if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
             {
@@ -787,35 +787,35 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
               // first 2 Byte always 00
               mbuf[8]=0x00; //serial only 4 bytes
               mbuf[9]=0x00; //serial only 4 bytes
-              // 1 Byte Hex Base (see reader-irdeto.c how this is stored in "reader[au].hexserial")
-              mbuf[10]=reader[au].hexserial[3];
-              // 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "reader[au].hexserial")
-              mbuf[11]=reader[au].hexserial[0];
-              mbuf[12]=reader[au].hexserial[1];
-              mbuf[13]=reader[au].hexserial[2];
+              // 1 Byte Hex Base (see reader-irdeto.c how this is stored in "aureader->hexserial")
+              mbuf[10]=aureader->hexserial[3];
+              // 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "aureader->hexserial")
+              mbuf[11]=aureader->hexserial[0];
+              mbuf[12]=aureader->hexserial[1];
+              mbuf[13]=aureader->hexserial[2];
             }
             else if (((pufilt->caid >> 8) == 0x05) || ((pufilt->caid >> 8) == 0x0D))
             {
               mbuf[8] = 0x00;
-              mbuf[9] = reader[au].hexserial[0];
-              mbuf[10] = reader[au].hexserial[1];
-              mbuf[11] = reader[au].hexserial[2];
-              mbuf[12] = reader[au].hexserial[3];
-              mbuf[13] = reader[au].hexserial[4];
+              mbuf[9] = aureader->hexserial[0];
+              mbuf[10] = aureader->hexserial[1];
+              mbuf[11] = aureader->hexserial[2];
+              mbuf[12] = aureader->hexserial[3];
+              mbuf[13] = aureader->hexserial[4];
             }
             else
             {
-              mbuf[8] = reader[au].hexserial[0];
-              mbuf[9] = reader[au].hexserial[1];
-              mbuf[10] = reader[au].hexserial[2];
-              mbuf[11] = reader[au].hexserial[3];
-              mbuf[12] = reader[au].hexserial[4];
-              mbuf[13] = reader[au].hexserial[5];
+              mbuf[8] = aureader->hexserial[0];
+              mbuf[9] = aureader->hexserial[1];
+              mbuf[10] = aureader->hexserial[2];
+              mbuf[11] = aureader->hexserial[3];
+              mbuf[12] = aureader->hexserial[4];
+              mbuf[13] = aureader->hexserial[5];
             }
         } 
         else 
         {
-          cl->au = -1;
+          cl->aureader = NULL;
           mbuf[8] = 0x00;
           mbuf[9] = 0x00;
           mbuf[10] = 0x00;
@@ -842,32 +842,32 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
           mbuf[19+11*j] = 0x00;
           mbuf[20+11*j] = 0x00;
           mbuf[21+11*j] = 0x00;
-          if( au!=-1 ) 
+          if (aureader) 
           { 
             // check if user provid from IDENT exists on card
             int k, found;
             ulong rprid;
             found=0;
-            if( pufilt->caid==reader[au].caid[0] )
+            if( pufilt->caid==aureader->caid[0] )
             {
-              for( k=0; (k<reader[au].nprov); k++ )
+              for( k=0; (k<aureader->nprov); k++ )
               {
-                rprid=b2i(3, &reader[au].prid[k][1]);
+                rprid=b2i(3, &aureader->prid[k][1]);
                 if( rprid==pufilt->prids[j] )
                 {
                   if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
                   {
-                    mbuf[22+11*j] = reader[au].prid[k][0];
-                    mbuf[23+11*j] = reader[au].prid[k][1];
-                    mbuf[24+11*j] = reader[au].prid[k][2];
-                    mbuf[25+11*j] = reader[au].prid[k][3];
+                    mbuf[22+11*j] = aureader->prid[k][0];
+                    mbuf[23+11*j] = aureader->prid[k][1];
+                    mbuf[24+11*j] = aureader->prid[k][2];
+                    mbuf[25+11*j] = aureader->prid[k][3];
                   }
                   else
                   {
-                    mbuf[22+11*j] = reader[au].sa[k][0];
-                    mbuf[23+11*j] = reader[au].sa[k][1];
-                    mbuf[24+11*j] = reader[au].sa[k][2];
-                    mbuf[25+11*j] = reader[au].sa[k][3];
+                    mbuf[22+11*j] = aureader->sa[k][0];
+                    mbuf[23+11*j] = aureader->sa[k][1];
+                    mbuf[24+11*j] = aureader->sa[k][2];
+                    mbuf[25+11*j] = aureader->sa[k][3];
                   }
                   found=1;
                   break;
@@ -905,13 +905,13 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         custom_data_t cd;
         memset(&cd, 0, sizeof(cd));
 
-        if (au != -1)
+        if (aureader)
         {
-          if (reader[au].blockemm_g)
+          if (aureader->blockemm_g)
             cd.sid |= 4;
-          if (reader[au].blockemm_s)
+          if (aureader->blockemm_s)
             cd.sid |= 2;
-          if (reader[au].blockemm_u)
+          if (aureader->blockemm_u)
             cd.sid |= 1;
         }
 
@@ -986,27 +986,27 @@ static void newcamd_process_ecm(uchar *buf)
 
 static void newcamd_process_emm(uchar *buf)
 {
-  int au, ok=1;
+  int ok=1;
   ushort caid;
   struct s_client *cl = cur_client();
   EMM_PACKET epg;
 
   memset(&epg, 0, sizeof(epg));
-  au=cl->au;
+  struct s_reader *aureader=cl->aureader;
 
   // if client is not allowed to do AU just send back the OK-answer to
   // the client and do nothing else with the received data
-  if ((au>=0) && (au<=CS_MAXREADER))
+  if (aureader)
   {
   epg.l=buf[2]+3;
   caid = cl->ftab.filts[0].caid;
   epg.caid[0] = (uchar)(caid>>8);
   epg.caid[1] = (uchar)(caid);
   
-  epg.provid[0] = (uchar)(reader[au].auprovid>>24);
-  epg.provid[1] = (uchar)(reader[au].auprovid>>16);
-  epg.provid[2] = (uchar)(reader[au].auprovid>>8);
-  epg.provid[3] = (uchar)(reader[au].auprovid);
+  epg.provid[0] = (uchar)(aureader->auprovid>>24);
+  epg.provid[1] = (uchar)(aureader->auprovid>>16);
+  epg.provid[2] = (uchar)(aureader->auprovid>>8);
+  epg.provid[3] = (uchar)(aureader->auprovid);
     
 /*  if (caid == 0x0500)
   {
@@ -1017,7 +1017,7 @@ static void newcamd_process_emm(uchar *buf)
     {
       case 0x8e70:  // EMM-S
         memcpy(epg.hexserial+1, buf+3, 4);
-        epg.hexserial[4]=reader[au].hexserial[4];
+        epg.hexserial[4]=aureader->hexserial[4];
         break;
       case 0x8870:  // EMM-U
       case 0x8c70:  // confidential ?

@@ -473,7 +473,7 @@ void cs_reinit_clients()
 
 			if (account && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16)) {
 				cl->grp		= account->grp;
-				cl->au		= account->au;
+				cl->aureader		= &reader[account->au];
 				cl->autoau	= account->autoau;
 				cl->expirationdate = account->expirationdate;
 				cl->allowedtimeframe[0] = account->allowedtimeframe[0];
@@ -557,7 +557,7 @@ struct s_client * cs_fork(in_addr_t ip) {
 		memset(cl, 0, sizeof(struct s_client));
 		cl->next = NULL;
 		int fdp[2];
-		cl->au=(-1);
+		cl->aureader=NULL;
 		if (pipe(fdp)) {
 			cs_log("Cannot create pipe (errno=%d)", errno);
 			cs_exit(1);
@@ -637,7 +637,7 @@ static void init_shm()
   first_client->login=time((time_t *)0);
   first_client->ip=cs_inet_addr("127.0.0.1");
   first_client->typ='s';
-  first_client->au=(-1);
+  first_client->aureader=NULL;
   first_client->thread=pthread_self();
   if (pthread_setspecific(getclient, first_client)) {
     fprintf(stderr, "Could not setspecific getclient in master process, exiting...");
@@ -957,13 +957,13 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 			if (uniq  == 3 || uniq == 4)
 			{
 				cl->dup = 1;
-				cl->au = -1;
+				cl->aureader = NULL;
 				cs_log("client(%8X) duplicate user '%s' from %s set to fake (uniq=%d)", cl->thread, usr, cs_inet_ntoa(ip), uniq);
 			}
 			else
 			{
 				client->dup = 1;
-				client->au = -1;
+				client->aureader = NULL;
 				cs_log("client(%8X) duplicate user '%s' from %s set to fake (uniq=%d)", pthread_self(), usr, cs_inet_ntoa(ip), uniq);
 				break;
 			}
@@ -984,7 +984,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 	char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason" };
 	memset(&client->grp, 0xff, sizeof(uint64));
 	//client->grp=0xffffffffffffff;
-	client->au=(-1);
+	client->aureader=NULL;
 	switch((long)account)
 	{
 #ifdef CS_WITH_GBOX
@@ -1029,7 +1029,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				client->c35_suppresscmd08 = account->c35_suppresscmd08;
 				client->ncd_keepalive = account->ncd_keepalive;
 				client->grp = account->grp;
-				client->au = account->au;
+				client->aureader = &reader[account->au];
 				client->autoau = account->autoau;
 				client->tosleep = (60*account->tosleep);
 				client->c35_sleepsend = account->c35_sleepsend;
@@ -1063,15 +1063,14 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 			{
 				if(client->ncd_server)
 				{
-					int r=0;
 					struct s_reader *rdr;
-					for (r=0,rdr=first_reader; rdr ; rdr=rdr->next, r++)
+					for (rdr=first_reader; rdr ; rdr=rdr->next)
 						if(rdr->caid[0]==cfg->ncd_ptab.ports[client->port_idx].ftab.filts[0].caid) {
-							client->au=r;
+							client->aureader=rdr;
 							break;
 						}
-					if(client->au<0) sprintf(t_msg[0], "au(auto)=%d", client->au+1);
-					else sprintf(t_msg[0], "au(auto)=%s", reader[client->au].label);
+					if(!client->aureader) sprintf(t_msg[0], "au(auto)=%d", get_ridx(client->aureader)+1);
+					else sprintf(t_msg[0], "au(auto)=%s", client->aureader->label);
 				}
 				else
 				{
@@ -1080,8 +1079,8 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 			}
 			else
 			{
-				if(client->au<0) sprintf(t_msg[0], "au=%d", client->au+1);
-				else sprintf(t_msg[0], "au=%s", reader[client->au].label);
+				if(!client->aureader) sprintf(t_msg[0], "au=%d", get_ridx(client->aureader)+1);
+				else sprintf(t_msg[0], "au=%s", client->aureader->label);
 			}
 		}
 	}
@@ -1462,11 +1461,11 @@ void send_reader_stat(int ridx9, ECM_REQUEST *er, int rc)
 	add_stat(&reader[ridx9], er->caid, er->prid, er->srvid, time, rc);
 }
 
-int hexserialset(int ridx)
+static int hexserialset(struct s_reader *rdr)
 {
 	int i;
 	for (i = 0; i < 8; i++)
-		if (reader[ridx].hexserial[i])
+		if (rdr->hexserial[i])
 			return 1;
 	return 0;
 }
@@ -1557,9 +1556,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	if(!client->ncd_server && client->autoau && er->rcEx==0)
 	{
-		if(client->au>=0 && er->caid!=reader[client->au].caid[0])
+		if(client->aureader && er->caid!=client->aureader->caid[0])
 		{
-			client->au=(-1);
+			client->aureader=NULL;
 		}
 		//martin
 		//client->au=er->reader[0];
@@ -1568,29 +1567,28 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 		struct s_reader *cur = &reader[er->reader[0]];
 		
 		if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled && 
-				cur->card_system == get_cardsystem(er->caid) && hexserialset(er->reader[0]))
-			client->au = er->reader[0];
+				cur->card_system == get_cardsystem(er->caid) && hexserialset(&reader[er->reader[0]]))
+			client->aureader= &reader[er->reader[0]];
 		else if((er->caid == cur->caid[0]) && (!cur->audisabled)) {
-			client->au = er->reader[0]; // First chance - check whether actual reader can AU
+			client->aureader = &reader[er->reader[0]]; // First chance - check whether actual reader can AU
 		} else {
-			int r=0;
-			for (r=0,cur=first_reader; cur ; cur=cur->next, r++) { //second chance loop through all readers to find an AU reader
+			for (cur=first_reader; cur ; cur=cur->next) { //second chance loop through all readers to find an AU reader
 				if (matching_reader(er, cur)) {
 					if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled && 
-						cur->card_system == get_cardsystem(er->caid) && hexserialset(r))
+						cur->card_system == get_cardsystem(er->caid) && hexserialset(cur))
 					{
-						client->au = r;
+						client->aureader = cur;
 						break;
 					}
 					else if((er->caid == cur->caid[0]) && (er->prid == cur->auprovid) && (!cur->audisabled))
 					{
-						client->au=r;
+						client->aureader = cur;
 						break;
 					}
 				}
 			}
 			if(!cur) {
-				client->au=(-1);
+				client->aureader=NULL;
 			}
 		}
 		//}
@@ -2198,21 +2196,19 @@ void log_emm_request(int auidx)
 
 void do_emm(struct s_client * client, EMM_PACKET *ep)
 {
-	int au;
 	char *typtext[]={"unknown", "unique", "shared", "global"};
 
-	au = client->au;
+	struct s_reader *aureader = client->aureader;
 	cs_ddump_mask(D_ATR, ep->emm, ep->l, "emm:");
 
 	//Unique Id matching for pay-per-view channels:
 	if (client->autoau) {
-		int i;
 		struct s_reader *rdr;
-		for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
+		for (rdr=first_reader; rdr ; rdr=rdr->next) {	
 			if (rdr->card_system>0 && !rdr->audisabled) {
-				if (reader_get_emm_type(ep, &reader[i])) { //decodes ep->type and ep->hexserial from the EMM
+				if (reader_get_emm_type(ep, rdr)) { //decodes ep->type and ep->hexserial from the EMM
 					if (memcmp(ep->hexserial, rdr->hexserial, sizeof(ep->hexserial))==0) {
-						au = i;
+						aureader = rdr;
 						break; //
 					}
 				}
@@ -2220,36 +2216,36 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		}
 	}
 	
-	if ((au < 0) || (au >= CS_MAXREADER)) {
+	if (!aureader) {
 		cs_debug_mask(D_EMM, "emm disabled, client has no au-reader!");
 		return;
 	}
 
-	if (reader[au].card_system>0) {
-		if (!reader_get_emm_type(ep, &reader[au])) { //decodes ep->type and ep->hexserial from the EMM
+	if (aureader->card_system>0) {
+		if (!reader_get_emm_type(ep, aureader)) { //decodes ep->type and ep->hexserial from the EMM
 			cs_debug_mask(D_EMM, "emm skipped");
 			return;
 		}
 	}
 	else {
-		cs_debug_mask(D_EMM, "emm skipped, reader %s (%d) has no cardsystem defined!", reader[au].label, au); 
+		cs_debug_mask(D_EMM, "emm skipped, reader %s (%d) has no cardsystem defined!", aureader->label, get_ridx(aureader)); 
 		return;
 	}
 
 	//test: EMM becomes skipped if auprivid doesn't match with provid from EMM
-	if(reader[au].auprovid) {
-		if(reader[au].auprovid != b2i(4, ep->provid)) {
-			cs_debug_mask(D_EMM, "emm skipped, reader %s (%d) auprovid doesn't match %06lX != %06lX!", reader[au].label, au, reader[au].auprovid, b2i(4, ep->provid));
+	if(aureader->auprovid) {
+		if(aureader->auprovid != b2i(4, ep->provid)) {
+			cs_debug_mask(D_EMM, "emm skipped, reader %s (%d) auprovid doesn't match %06lX != %06lX!", aureader->label, get_ridx(aureader), aureader->auprovid, b2i(4, ep->provid));
 			return;
 		}
 	}
 
-	cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], reader[au].label, cs_hexdump(0, reader[au].hexserial, 8)); 
+	cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8)); 
 	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
 	client->last=time((time_t)0);
-	if (reader[au].b_nano[ep->emm[0]] & 0x02) //should this nano be saved?
+	if (aureader->b_nano[ep->emm[0]] & 0x02) //should this nano be saved?
 	{
 		char token[256];
 		FILE *fp;
@@ -2259,7 +2255,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		timeinfo = localtime (&rawtime);	/* to access LOCAL date/time info */
 		char buf[80];
 		strftime (buf, 80, "%Y/%m/%d %H:%M:%S", timeinfo);
-		sprintf (token, "%s%s_emm.log", cs_confdir, reader[au].label);
+		sprintf (token, "%s%s_emm.log", cs_confdir, aureader->label);
 		int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 
 		if (!(fp = fopen (token, "a")))
@@ -2274,7 +2270,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			cs_log ("Succesfully added EMM to %s.", token);
 		}
 
-		sprintf (token, "%s%s_emm.bin", cs_confdir, reader[au].label);
+		sprintf (token, "%s%s_emm.bin", cs_confdir, aureader->label);
 		if (!(fp = fopen (token, "ab")))
 		{
 			cs_log ("ERROR: Cannot open file '%s' (errno=%d)\n", token, errno);
@@ -2295,31 +2291,31 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 	int is_blocked = 0;
 	switch (ep->type) {
-		case UNKNOWN: is_blocked = reader[au].blockemm_unknown;
+		case UNKNOWN: is_blocked = aureader->blockemm_unknown;
 			break;
-		case UNIQUE: is_blocked = reader[au].blockemm_u;
+		case UNIQUE: is_blocked = aureader->blockemm_u;
 			break;
-		case SHARED: is_blocked = reader[au].blockemm_s;
+		case SHARED: is_blocked = aureader->blockemm_s;
 			break;
-		case GLOBAL: is_blocked = reader[au].blockemm_g;
+		case GLOBAL: is_blocked = aureader->blockemm_g;
 			break;
 	}
 
 	if (is_blocked != 0) {
 #ifdef WEBIF
-		reader[au].emmblocked[ep->type]++;
-		is_blocked = reader[au].emmblocked[ep->type];
+		aureader->emmblocked[ep->type]++;
+		is_blocked = aureader->emmblocked[ep->type];
 #endif
 		/* we have to write the log for blocked EMM here because
 	  	 this EMM never reach the reader module where the rest
 		 of EMM log is done. */
-		if (reader[au].logemm & 0x08)  {
+		if (aureader->logemm & 0x08)  {
 			cs_log("%s emmtype=%s, len=%d, idx=0, cnt=%d: blocked (0 ms) by %s",
 					client->usr,
 					typtext[ep->type],
 					ep->emm[2],
 					is_blocked,
-					reader[au].label);
+					aureader->label);
 		}
 		return;
 	}
@@ -2327,16 +2323,16 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 	client->lastemm = time((time_t)0);
 
-	if (reader[au].card_system > 0) {
-		if (!check_emm_cardsystem(&reader[au], ep)) {   // wrong caid
+	if (aureader->card_system > 0) {
+		if (!check_emm_cardsystem(aureader, ep)) {   // wrong caid
 			client->emmnok++;
 			return;
 		}
 		client->emmok++;
 	}
 	ep->client = cur_client();
-	cs_debug_mask(D_EMM, "emm is being sent to reader %s.", reader[au].label);
-	write_to_pipe(reader[au].fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
+	cs_debug_mask(D_EMM, "emm is being sent to reader %s.", aureader->label);
+	write_to_pipe(aureader->fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));
 }
 
 static int comp_timeb(struct timeb *tpa, struct timeb *tpb)

@@ -1,5 +1,4 @@
 #include "globals.h"
-extern struct  s_reader  reader[CS_MAXREADER];
 
 #define REQ_SIZE	4
 
@@ -31,19 +30,18 @@ static int camd33_recv(struct s_client * client, uchar *buf, int l)
 
 static void camd33_request_emm()
 {
-  int au;
   uchar mbuf[20];
-  au=cur_client()->au;
-  if ((au<0) || (au>CS_MAXREADER)) return;  // TODO
-  if (reader[au].hexserial[0])
+  struct s_reader *aureader=cur_client()->aureader;
+  if (!aureader) return;  // TODO
+  if (aureader->hexserial[0])
   {
-    log_emm_request(au);
+    log_emm_request(get_ridx(aureader));
     mbuf[0]=0;
-    mbuf[1]=reader[au].caid[0]>>8;
-    mbuf[2]=reader[au].caid[0]&0xff;
-    memcpy(mbuf+3, reader[au].hexserial, 4);
-    memcpy(mbuf+7, &reader[au].prid[0][1], 3);
-    memcpy(mbuf+10, &reader[au].prid[2][1], 3);
+    mbuf[1]=aureader->caid[0]>>8;
+    mbuf[2]=aureader->caid[0]&0xff;
+    memcpy(mbuf+3, aureader->hexserial, 4);
+    memcpy(mbuf+7, &aureader->prid[0][1], 3);
+    memcpy(mbuf+10, &aureader->prid[2][1], 3);
     camd33_send(mbuf, 13);
   }
 }

@@ -1,5 +1,4 @@
 #include "globals.h"
-extern struct  s_reader  reader[CS_MAXREADER];
 
 //CMD00 - ECM (request)
 //CMD01 - ECM (response)
@@ -145,26 +144,26 @@ static int camd35_recv(struct s_client *client, uchar *buf, int l)
 
 static void camd35_request_emm(ECM_REQUEST *er)
 {
-	int i, au;
+	int i;
 	time_t now;
 	uchar mbuf[1024];
   struct s_client *cl = cur_client();
 
-	au = cl->au;
-	if ((au < 0) || (au > CS_MAXREADER))
+	struct s_reader *aureader = cl->aureader;
+	if (!aureader)
 		return;  // TODO
 
 	time(&now);
-	if (!memcmp(cl->lastserial, reader[au].hexserial, 8))
+	if (!memcmp(cl->lastserial, aureader->hexserial, 8))
 		if (abs(now-cl->last) < 180) return;
 
-	memcpy(cl->lastserial, reader[au].hexserial, 8);
+	memcpy(cl->lastserial, aureader->hexserial, 8);
 	cl->last = now;
 
-	if (reader[au].caid[0])
+	if (aureader->caid[0])
 	{
 		cl->disable_counter = 0;
-		log_emm_request(au);
+		log_emm_request(get_ridx(aureader));
 	}
 	else
 		if (cl->disable_counter > 2)
@@ -177,9 +176,9 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	memcpy(mbuf + 8, i2b(2, er->srvid), 2);
 
 	//override request provid with auprovid if set in CMD05
-	if(reader[au].auprovid) {
-		if(reader[au].auprovid != er->prid)
-			memcpy(mbuf + 12, i2b(4, reader[au].auprovid), 4);
+	if(aureader->auprovid) {
+		if(aureader->auprovid != er->prid)
+			memcpy(mbuf + 12, i2b(4, aureader->auprovid), 4);
 		else
 			memcpy(mbuf + 12, i2b(4, er->prid), 4);
 	} else {
@@ -189,33 +188,33 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	memcpy(mbuf + 16, i2b(2, er->pid), 2);
 	mbuf[0] = 5;
 	mbuf[1] = 111;
-	if (reader[au].caid[0])
+	if (aureader->caid[0])
 	{
 		mbuf[39] = 1;							// no. caids
-		mbuf[20] = reader[au].caid[0]>>8;		// caid's (max 8)
-		mbuf[21] = reader[au].caid[0]&0xff;
-		memcpy(mbuf + 40, reader[au].hexserial, 6);	// serial now 6 bytes
-		mbuf[47] = reader[au].nprov;
-		for (i = 0; i < reader[au].nprov; i++)
+		mbuf[20] = aureader->caid[0]>>8;		// caid's (max 8)
+		mbuf[21] = aureader->caid[0]&0xff;
+		memcpy(mbuf + 40, aureader->hexserial, 6);	// serial now 6 bytes
+		mbuf[47] = aureader->nprov;
+		for (i = 0; i < aureader->nprov; i++)
 		{
-			if (((reader[au].caid[0] >= 0x1700) && (reader[au].caid[0] <= 0x1799))  || // Betacrypt
-					((reader[au].caid[0] >= 0x0600) && (reader[au].caid[0] <= 0x0699)))    // Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
+			if (((aureader->caid[0] >= 0x1700) && (aureader->caid[0] <= 0x1799))  || // Betacrypt
+					((aureader->caid[0] >= 0x0600) && (aureader->caid[0] <= 0x0699)))    // Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
 			{
-				mbuf[48 + (i*5)] = reader[au].prid[i][0];
-				memcpy(&mbuf[50 + (i*5)], &reader[au].prid[i][1], 3);
+				mbuf[48 + (i*5)] = aureader->prid[i][0];
+				memcpy(&mbuf[50 + (i*5)], &aureader->prid[i][1], 3);
 			}
 			else
 			{
-				mbuf[48 + (i * 5)] = reader[au].prid[i][2];
-				mbuf[49 + (i * 5)] =reader[au].prid[i][3];
-				memcpy(&mbuf[50 + (i * 5)], &reader[au].sa[i][0],4); // for conax we need at least 4 Bytes
+				mbuf[48 + (i * 5)] = aureader->prid[i][2];
+				mbuf[49 + (i * 5)] =aureader->prid[i][3];
+				memcpy(&mbuf[50 + (i * 5)], &aureader->sa[i][0],4); // for conax we need at least 4 Bytes
 			}
 		}
 		//we think client/server protocols should deliver all information, and only readers should discard EMM
-		mbuf[128] = (reader[au].blockemm_g == 1) ? 0: 1;
-		mbuf[129] = (reader[au].blockemm_s == 1) ? 0: 1;
-		mbuf[130] = (reader[au].blockemm_u == 1) ? 0: 1;
-		//mbuf[131] = reader[au].card_system; //Cardsystem for Oscam client
+		mbuf[128] = (aureader->blockemm_g == 1) ? 0: 1;
+		mbuf[129] = (aureader->blockemm_s == 1) ? 0: 1;
+		mbuf[130] = (aureader->blockemm_u == 1) ? 0: 1;
+		//mbuf[131] = aureader->card_system; //Cardsystem for Oscam client
 	}
 	else		// disable emm
 		mbuf[20] = mbuf[39] = mbuf[40] = mbuf[47] = mbuf[49] = 1;
@@ -289,11 +288,9 @@ static void camd35_process_ecm(uchar *buf)
 
 static void camd35_process_emm(uchar *buf)
 {
-	int au;
 	EMM_PACKET epg;
 	memset(&epg, 0, sizeof(epg));
-	au = cur_client()->au;
-	if ((au < 0) || (au > CS_MAXREADER)) return;  // TODO
+	if (!cur_client()->aureader ) return;  // TODO
 	epg.l = buf[1];
 	memcpy(epg.caid, buf + 10, 2);
 	memcpy(epg.provid, buf + 12 , 4);

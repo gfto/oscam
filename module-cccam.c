@@ -63,13 +63,6 @@ void cc_init_crypt(struct cc_crypt_block *block, uint8 *key, int len) {
 	block->sum = 0;
 }
 
-int is_au(struct s_client *cl) {
-	int au = cl->au;
-	if ((au < 0) || (au > CS_MAXREADER))
-		return 0;
-	return 1;
-}
-
 void cc_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		cc_crypt_mode_t mode) {
 	int i;
@@ -1857,7 +1850,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			if (l > 4) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
-				if (!is_au(cl)) {
+				if (!cl->aureader) {
 					cs_debug_mask(
 							D_EMM,
 							"%s EMM Request discarded because au is not assigned to an reader!",
@@ -2054,7 +2047,7 @@ struct s_auth *get_account(char *usr) {
  * We update the share-list if a card has changed
  */
 ulong get_reader_hexserial_crc(struct s_client *cl) {
-	if (!is_au(cl))
+	if (!cl->aureader)
 		return 0;
 
 	ulong crc = 0;
@@ -2266,7 +2259,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 	LLIST *server_cards = ll_create();
 	LLIST *reported_carddatas = ll_create();
 
-	int isau = is_au(cl);
+	int isau = (cl->aureader)?1:0;
 
 	struct s_reader *rdr;
 	for (r = 0, rdr = first_reader; rdr; rdr = rdr->next, r++) {
