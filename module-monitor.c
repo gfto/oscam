@@ -233,8 +233,8 @@ static void monitor_send_info(char *txt, int last)
 
 char *reader_get_type_desc(struct s_reader * rdr)
 {
-	char *desc ="";
 	static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
+	char *desc = typtxt[0];
 	if (rdr->typ & R_IS_NETWORK)
 		desc = rdr->ph.desc;
 	else
@@ -248,7 +248,7 @@ char *reader_get_type_desc(struct s_reader * rdr)
 
 char *monitor_get_proto(struct s_client *cl)
 {
-	char *ctyp="";
+	char *ctyp;
 	switch(cl->typ) {
 		case 's'	: ctyp = "server"; break;
 		case 'p'	:
