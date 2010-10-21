@@ -7,8 +7,6 @@
 #endif
 #include "module-cccam.h"
 
-extern struct  s_reader  reader[CS_MAXREADER];
-
 static void monitor_check_ip()
 {
 	int ok=0;
@@ -280,7 +278,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			isec=now-cl->last;
 			usr=cl->usr;
 			if (((cl->typ == 'r') || (cl->typ == 'p')) && (con=get_ridx(cl->reader)) >= 0)
-				usr=reader[con].label;
+				usr=cl->reader->label;
 			if (cl->dup)
 				con=2;
 			else
@@ -296,7 +294,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			{
 			    lrt = get_ridx(cl->reader);
 			    if( lrt >= 0 )
-                    lrt = 10 + reader[lrt].card_status;
+                    lrt = 10 + cl->reader->card_status;
 			}
 			else
                 lrt = cl->cwlastresptime;
