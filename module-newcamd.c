@@ -1,5 +1,4 @@
 #include "globals.h"
-extern struct  s_reader  reader[CS_MAXREADER];
 
 #define CWS_NETMSGSIZE 272
 #define NCD_CLIENT_ID 0x8888
@@ -459,21 +458,21 @@ static int newcamd_recv(struct s_client *client, uchar *buf, int UNUSED(l))
   return(rc);
 }
 
-static FILTER mk_user_au_ftab(int au)
+static FILTER mk_user_au_ftab(struct s_reader *aureader)
 {
   int i,j,found;
   struct s_client *cl = cur_client();
   FILTER filt;
   FILTER *pufilt;
 
-  filt.caid = reader[au].caid[0];
+  filt.caid = aureader->caid[0];
   if (filt.caid == 0) filt.caid = cl->ftab.filts[0].caid;
   filt.nprids = 0;
   memset(&filt.prids, 0, sizeof(filt.prids));
   pufilt = &cl->ftab.filts[0];
 
-  for( i=0; i<reader[au].nprov; i++ )
-    filt.prids[filt.nprids++] = b2i(3, &reader[au].prid[i][1]);
+  for( i=0; i<aureader->nprov; i++ )
+    filt.prids[filt.nprids++] = b2i(3, &aureader->prid[i][1]);
 
   for( i=0; i<pufilt->nprids; i++ )
   {
@@ -760,7 +759,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 
 	// set userfilter for au enabled clients    
         if (aureader)
-          cl->ftab.filts[0] = mk_user_au_ftab(get_ridx(aureader));
+          cl->ftab.filts[0] = mk_user_au_ftab(aureader);
 
         pufilt = &cl->ftab.filts[0];
         cl->ftab.nfilts = 1;

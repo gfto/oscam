@@ -1,7 +1,6 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 
-extern struct  s_reader  reader[CS_MAXREADER];
 int pserver = 0;
 
 int constcw_file_available(void)
@@ -121,7 +120,7 @@ static int constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msg
     }
 
     //cs_sleepms(50);
-    write_ecm_answer(reader, er);
+    write_ecm_answer(rdr, er);
     
     client->last = t;
     rdr->last_g = t;
