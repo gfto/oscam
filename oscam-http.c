@@ -756,7 +756,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 	}
 
 	//Todo: Disabled the Add Reader functionality temporarly
-	tpl_addVar(vars, 1, "BTNDISABLED", "DISABLED");
+	//tpl_addVar(vars, 1, "BTNDISABLED", "DISABLED");
 
 	fputs(tpl_getTpl(vars, "READERS"), f);
 }
@@ -771,29 +771,24 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 	if(strcmp(getParam(params, "action"), "Add") == 0) {
 		// Add new reader
-		tpl_addVar(vars, 1, "MESSAGE", "<B>Add Reader is disabled and under construction</B><BR><BR>");
-		//Todo: Disabled the Add Reader functionality temporarly
-		/*
-		reader[ridx-1].next = rdr; //FIXME
-		rdr->next = NULL;
-		memset(&rdr, 0, sizeof(struct s_reader));
-		rdr->enable = 1;
-		rdr->tcp_rto = 30;
-		rdr->show_cls = 10;
-		rdr->maxqlen = CS_MAXQLEN;
-		rdr->mhz = 357;
-		rdr->cardmhz = 357;
-		rdr->deprecated = 0;
-		rdr->cachecm = 1;
-		strcpy(rdr->pincode, "none");
-		rdr->ndsversion = 0;
-		for (i = 1; i < CS_MAXCAIDTAB; rdr->ctab.mask[i++] = 0xffff);
-		for (i = 0; i < (*params).paramcount; ++i) {
-			if (strcmp((*params).params[i], "action"))
-				chk_reader((*params).params[i], (*params).values[i], rdr);
+		struct s_reader *newrdr;
+		newrdr = malloc(sizeof(struct s_reader));
+
+		if (newrdr) {
+			memset(newrdr, 0, sizeof(struct s_reader));
+			for (rdr = first_reader; rdr->next ; rdr = rdr->next); // get last rdr
+			rdr->next = newrdr;
+			newrdr->next = NULL; // terminate list
+			newrdr->enable = 0; // do not start the reader because must configured before
+			strcpy(newrdr->pincode, "none");
+			for (i = 1; i < CS_MAXCAIDTAB; newrdr->ctab.mask[i++] = 0xffff);
+			for (i = 0; i < (*params).paramcount; ++i) {
+				if (strcmp((*params).params[i], "action"))
+					chk_reader((*params).params[i], (*params).values[i], newrdr);
+			}
+			reader_ = newrdr->label;
 		}
-		reader_ = rdr->label;
-		*/
+
 
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
@@ -818,8 +813,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		}
 		chk_reader("services", servicelabels, rdr);
 
-		if(write_server()==0)
+		if(write_server()==0) {
 			refresh_oscam(REFR_READERS, in);
+			restart_cardreader(rdr, 0);
+		}
 		else
 			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
@@ -1777,7 +1774,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG SRC=\"%s\" ALT=\"Restart\"></A>", cl->reader->label, ICKIL);
 			}
 			else {
-				tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", cl->thread);
+				tpl_printf(vars, 0, "CSIDX", "%8X&nbsp;", cl->thread);
 			}
 
 			tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
