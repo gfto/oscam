@@ -2661,11 +2661,16 @@ int accept_connection(int i, int j) {
 		int pfd3;
 		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 
-			if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
+			if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr))) {
+				close(pfd3);
 				return 0;
+			}
 
 			struct s_client * cl = cs_fork(cs_inet_order(cad.sin_addr.s_addr));
-			if (cl == NULL) return 0;
+			if (cl == NULL) {
+				close(pfd3);
+				return 0;
+			}
 
 			cl->ctyp=i;
 			cl->udp_fd=pfd3;
