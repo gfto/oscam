@@ -779,7 +779,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
     <TR><TD>Maxhop:</TD><TD><input name=\"cccmaxhop\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOP##\"></TD></TR>\n\
     <TR><TD>Want Emu:<input name=\"cccwantemu\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccwantemu\" type=\"checkbox\" value=\"1\" ##CCCWANTEMUCHECKED##></TD></TR>\n\
     <TR><TD>Reconnect-timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
-    <TR><TD>Ignore reshare:</TD><TD><input name=\"ignorereshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##IGNORERESHARE##\"></TD></TR>\n\
+    <TR><TD>Reshare:</TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
     <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n\
     <TR><TD>Keep alive:</TD><TD><SELECT NAME=\"ccckeepalive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##KEEPALIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n"
 #ifdef CS_WITH_GBOX
@@ -852,6 +852,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TH>&nbsp;</TH><TH>Edit Cccam Config</TH></TR>\n\
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##PORT##\"></TD></TR>\n\
 		<TR><TD>Reshare:</TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
+		<TR><TD>Ignore reshare:</TD><TD><input name=\"ignorereshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##IGNORERESHARE##\"></TD></TR>\n\
 		<TR><TD>Version:</TD><TD><SELECT name=\"version\">\
 			<OPTION ##VERSIONSELECTED0##>2.0.11</OPTION>\
 			<OPTION ##VERSIONSELECTED1##>2.1.1</OPTION>\
