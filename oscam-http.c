@@ -421,6 +421,9 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 	tpl_printf(vars, 0, "TMP", "MINIMIZECARDSELECTED%d", cfg->cc_minimize_cards);
 	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
+	tpl_printf(vars, 0, "IGNORERESHARE", "%d", cfg->cc_ignore_reshare);
+
+
 	fputs(tpl_getTpl(vars, "CONFIGCCCAM"), f);
 }
 
@@ -1058,6 +1061,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 	if(rdr->cc_keepalive)
 		tpl_addVar(vars, 0, "KEEPALIVECHECKED", "selected");
+
+	if(rdr->cc_reshare)
+		tpl_printf(vars, 0, "RESHARE", "%d", rdr->cc_reshare);
 
 	// Show only parameters which needed for the reader
 	switch (rdr->typ) {
