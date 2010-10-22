@@ -386,7 +386,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 					      cs_hexdump(1, ep->hexserial, 5), dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 5)); // check for serial
 			}
-
+			break;
 		case 0x84:
 	  	 	if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[12]==0x80 && ep->emm[13]==0x04) {
 				ep->type = SHARED;
@@ -397,7 +397,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 					      cs_hexdump(1, ep->hexserial, 4), dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 4)); // check for SA
 			}
-
+			break;
 		case 0x86:
 			if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[5]==0x83 
 			   && ep->emm[6]==0x01 && ep->emm[8]==0x85) {
@@ -405,7 +405,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				ep->type = GLOBAL;
 				return TRUE;
 			}
-
+			break;
 		case 0x88:
 		case 0x89:
   	 		if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[8]==0x83 && ep->emm[9]==0x01) {
@@ -413,11 +413,19 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				ep->type = GLOBAL;
 				return TRUE;
 			}
-
-		/* FIXME: Dont know how to handle camd3 cryptoworks emms correct */
+			break;
 		case 0x8F:
 			ep->type = UNKNOWN;
-			cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNKNOWN 0x8F via camd3");
+			cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: 0x8F via camd3");
+
+			switch(ep->emm[4]) {
+				case 0x44:
+					ep->type = GLOBAL; break;
+				case 0x48:
+					ep->type = SHARED; break;		
+				case 0x42:
+					ep->type = UNIQUE; break;
+			}
 			return TRUE;
 
 		/* FIXME: Seems to be that all other EMM types are rejected by the card */
@@ -426,6 +434,9 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNKNOWN");
 			return FALSE; // skip emm
 	}
+
+	cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: invaild");
+	return FALSE;
 }
 
 static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
@@ -492,27 +503,16 @@ static int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   int rc=0;
   uchar *emm=ep->emm;
   
-  /* FIXME: this is the original code how to deal with camd3 EMM's
-  if ((emm[0]==0x8f) && (emm[3]==0xa4))		// emm via camd3.5x
-  {    
-    ep->type=emm[4];
-    write_cmd(emm+3, emm+3+CMD_LEN);
-    if ((cta_lr==2) && (cta_res[0]==0x90) && (cta_res[1]==0))
-      rc=1;
-  }
-  */
-   
+	if(emm[0]==0x8f && emm[3]==0xA4) {
+		//camd3 emm	    
+		write_cmd(emm+3, emm+3+CMD_LEN);
+		rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));
+		return(rc);	
+	}
+
+
   switch(ep->type)
   {
-  	 // emm via camd3.5x
-  	 case UNKNOWN:  	 	  
-		  if(emm[3]==0xA4)
-		  {		    
-		    write_cmd(emm+3, emm+3+CMD_LEN);
-		    rc=((cta_res[0]==0x90)&&(cta_res[1]==0x00));	
-		  }
-  	 	break;
-
   	 //GA    	 
   	 case GLOBAL:
 				insEMM_GA[4]=ep->emm[2]-2;
