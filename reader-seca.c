@@ -207,37 +207,44 @@ static int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TR
 
 static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	filter[0]=0xFF;
-	filter[1]=3;
+	int numfilter=1;
 
-
-	filter[2]=GLOBAL;
+	filter[2]=UNIQUE;
 	filter[3]=0;
-
-	// FIXME: Seems to be that seca has no EMM-G ?!
-	filter[4+0]    = 0xFF;
+	
+	filter[4+0]    = 0x82;
 	filter[4+0+16] = 0xFF;
-	
+	memcpy(filter+4+1, rdr->hexserial, 6);
+	memset(filter+4+1+16, 0xFF, 6);
 
-	filter[36]=SHARED;
-	filter[37]=0;
-	
-	filter[38+0]    = 0x84;
-	filter[38+0+16] = 0xFF;
-	memcpy(filter+38+3, rdr->hexserial, 3);
-	memset(filter+38+3+16, 0xFF, 3);
-	
+	int prov, startpos=36;
+	for (prov=0; prov<rdr->nprov; prov++) {
+		filter[startpos++]=SHARED;
+		filter[startpos++]=0;
 
-	filter[70]=UNIQUE;
-	filter[71]=0;
+		filter[startpos+0]    = 0x84;
+		filter[startpos+0+16] = 0xFF;
+		
+		memcpy(filter+startpos+1, &rdr->prid[prov][2], 2);
+		memset(filter+startpos+1+16, 0xFF, 2);
 
-	filter[72+0]    = 0x82;
-	filter[72+0+16] = 0xFF;
-	memcpy(filter+72+1, rdr->hexserial, 6);
-	memset(filter+72+1+16, 0xFF, 6);
+		memcpy(filter+startpos+3, &rdr->sa[prov], 3);
+		memset(filter+startpos+3+16, 0xFF, 2);
+
+		numfilter++;
+		startpos+=34;
+		if (startpos>221) {
+			cs_log("seca_get_emm_filter: could not start all emm filter");
+			break;
+		}
+	}
+
+	filter[0]=0xFF;
+	filter[1]=numfilter;
 
 	return;
 }
+
 	
 static int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
