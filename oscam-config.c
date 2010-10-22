@@ -2212,8 +2212,7 @@ int write_userdb(struct s_auth *authptr)
 		if (account->cccmaxhops)
 			fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", account->cccmaxhops);
 
-		if (account->cccreshare)
-			fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", account->cccreshare);
+		fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", account->cccreshare);
 
 		if (account->c35_sleepsend)
 			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%d\n", account->c35_sleepsend);
