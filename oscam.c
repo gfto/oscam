@@ -1544,8 +1544,8 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 #ifdef CS_LED
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
-	if (er->selected_reader) //FIXME in case of lbmode=1, timeout stage=1 rc=5 it is possible to get here without a reader selected not sure what to do but avoid segfault
-		send_reader_stat(er->selected_reader, er, er->rc);
+
+	send_reader_stat(er->selected_reader, er, er->rc);
 
 	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, lc,
