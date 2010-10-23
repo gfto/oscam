@@ -2134,33 +2134,30 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->reader_count=0;
 		er->reader_avail=0;
 		struct s_reader *rdr;
-		if (cfg->lb_mode) {
-			for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
-				er->reader[i] = matching_reader(er, rdr);
-				if (er->reader[i] == 1)
-					er->reader_avail++;
-			}
-				
-			recv_best_reader(er, er->reader);
-				
-			for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
-				if (er->reader[i]) {
-					m|=er->reader[i]; //or should this be  m|=er->reader[i] = (rdr->fallback)? 2: 1;
-					if (!rdr->fallback) // do not count fallback readers (==2: fallback)
-						er->reader_count++;
+		for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
+			if (matching_reader(er, rdr)) {
+				m|=er->reader[i] = (rdr->fallback)? 2: 1;
+				if (cfg->lb_mode) {
+					er->reader_avail++;  //count regardless of fallback
 				}
-			}
-		}
-		else
-		{
-			for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)	
-				if (matching_reader(er, rdr)) {
-					m|=er->reader[i] = (rdr->fallback)? 2: 1;
+				else {
 					if (!rdr->fallback) { // do not count fallback readers
 						er->reader_count++;
 						er->reader_avail++;
 					}
 				}
+			}
+		}
+		if (cfg->lb_mode) {
+			recv_best_reader(er, er->reader);
+			for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
+				if (er->reader[i]) {
+					er->reader[i] = 1 ; //needed because value 2 means something different in recv_best_reader; now it means fallback!!!
+					m|=er->reader[i]; //or should this be  m|=er->reader[i] = (rdr->fallback)? 2: 1;
+					if (!rdr->fallback) // do not count fallback readers (==2: fallback)
+						er->reader_count++;
+				}
+			}
 		}
 
 		switch(m) {
