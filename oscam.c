@@ -1139,7 +1139,7 @@ int check_ecmcache1(ECM_REQUEST *er, uint64 grp)
 		{
 			//cs_log("cache1 found: grp=%lX cgrp=%lX", grp, ecmc->grp);
 			memcpy(er->cw, ecmc->cw, 16);
-			er->reader[0] = ecmc->reader;
+			er->reader0 = ecmc->reader;
 			return(1);
 		}
 	return(0);
@@ -1153,9 +1153,9 @@ int check_ecmcache2(ECM_REQUEST *er, uint64 grp)
 {
 	// disable cache2
 	if (!cur_client()->reader->cachecm) return(0);
-	int save = er->reader[0];
+	struct s_reader *save = er->reader0;
 	int rc = check_ecmcache1(er, grp);
-	er->reader[0] = save;
+	er->reader0 = save;
   return rc;
 }
 
@@ -1174,8 +1174,8 @@ static void store_ecm(ECM_REQUEST *er)
 	memcpy(ecmidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
 	memcpy(ecmidx->cw, er->cw, 16);
 	ecmidx->caid = er->caid;
-	ecmidx->grp = reader[er->reader[0]].grp;
-	ecmidx->reader = er->reader[0];
+	ecmidx->grp = er->reader0->grp;
+	ecmidx->reader = er->reader0;
 	//cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
 
@@ -1367,7 +1367,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
     }
   }
 
-  er->reader[0]=get_ridx(reader);
+  er->reader0=reader;
 //cs_log("answer from reader %d (rc=%d)", er->reader[0], er->rc);
   er->caid=er->ocaid;
 
@@ -1522,9 +1522,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 #endif
 			// add marker to reader if ECM_REQUEST was betatunneled
 			if(er->btun)
-				snprintf(sby, sizeof(sby)-1, " by %s(btun)", reader[er->reader[0]].label);
+				snprintf(sby, sizeof(sby)-1, " by %s(btun)", er->reader0->label);
 			else
-				snprintf(sby, sizeof(sby)-1, " by %s", reader[er->reader[0]].label);
+				snprintf(sby, sizeof(sby)-1, " by %s", er->reader0->label);
 	}
 	if (er->rc<4) er->rcEx=0;
 	if (er->rcEx)
@@ -1544,7 +1544,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
 #endif
 
-	send_reader_stat(er->reader[0], er, er->rc);
+	send_reader_stat(get_ridx(er->reader0), er, er->rc);
 
 	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, lc,
@@ -1554,7 +1554,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if(er->rc == 0)
 		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", sby);
 	else if ((er->rc == 1) || (er->rc == 2))
-		snprintf(client->lastreader, sizeof(client->lastreader)-1, "by %s (cache)", reader[er->reader[0]].label);
+		snprintf(client->lastreader, sizeof(client->lastreader)-1, "by %s (cache)", er->reader0->label);
 	else
 		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", stxt[er->rc]);
 #endif
@@ -1569,13 +1569,13 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 		//client->au=er->reader[0];
 		//if(client->au<0)
 		//{
-		struct s_reader *cur = &reader[er->reader[0]];
+		struct s_reader *cur = er->reader0;
 		
 		if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled && 
-				cur->card_system == get_cardsystem(er->caid) && hexserialset(&reader[er->reader[0]]))
-			client->aureader= &reader[er->reader[0]];
+				cur->card_system == get_cardsystem(er->caid) && hexserialset(er->reader0))
+			client->aureader= er->reader0;
 		else if((er->caid == cur->caid[0]) && (!cur->audisabled)) {
-			client->aureader = &reader[er->reader[0]]; // First chance - check whether actual reader can AU
+			client->aureader = er->reader0; // First chance - check whether actual reader can AU
 		} else {
 			for (cur=first_reader; cur ; cur=cur->next) { //second chance loop through all readers to find an AU reader
 				if (matching_reader(er, cur)) {
@@ -1685,7 +1685,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
   ert=&cl->ecmtask[er->cpti];
   if (ert->rc<100) {
 	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, reader[er->reader[0]].label);
-	send_reader_stat(er->reader[0], er, (er->rc <= 0)?4:0);
+	send_reader_stat(get_ridx(er->reader0), er, (er->rc <= 0)?4:0);
 	return; // already done
   }
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
@@ -1706,7 +1706,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
         ert->rc=0;
     }
     ert->rcEx=0;
-    ert->reader[0]=er->reader[0];
+    ert->reader0=er->reader0;
     memcpy(ert->cw , er->cw , sizeof(er->cw));
 #ifdef CS_WITH_GBOX
     ert->gbxCWFrom=er->gbxCWFrom;
@@ -1716,17 +1716,17 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
   {
     //save reader informations for loadbalance-statistics:
 	ECM_REQUEST *save_ert = ert;
-	int save_ridx = er->reader[0];
+	struct s_reader *save_ridx = er->reader0;
 
 	//
     int i;
-    ert->reader[er->reader[0]]=0;
+    ert->reader0=0; //FIXME or should this have been ert->reader[get_ridx(er->reader0)]=0; dont think so but cannot be sure - dingo
     struct s_reader *rdr;
     for (i=0,rdr=first_reader; (ert) && rdr ; rdr=rdr->next, i++)
       if (ert->reader[i]) // we have still another chance
         ert=(ECM_REQUEST *)0;
     if (ert) ert->rc=4;
-    else send_reader_stat(save_ridx, save_ert, 4);
+    else send_reader_stat(get_ridx(save_ridx), save_ert, 4);
   }
   if (ert) send_dcw(cl, ert);
   return;

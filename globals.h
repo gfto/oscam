@@ -408,7 +408,7 @@ struct s_ecm
   uchar  	cw[16];
   ushort 	caid;
   uint64  	grp;
-  int 		reader;
+  struct s_reader *reader;
   struct s_ecm *next;
   //int level;
 };
@@ -499,6 +499,7 @@ typedef struct ecm_request_t
   ushort        pid;
   ushort        idx;
   ulong         prid;
+  struct s_reader *reader0;
   int           reader[CS_MAXREADER];
   struct s_client *client; //contains pointer to 'c' client while running in 'r' client
   int           cpti;   // client pending table index
