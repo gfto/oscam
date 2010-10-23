@@ -2135,20 +2135,18 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		er->reader_avail=0;
 		struct s_reader *rdr;
 		if (cfg->lb_mode) {
-			int reader_avail[CS_MAXREADER]; //FIXME limits reader list!!!
-			memset(reader_avail, 0, sizeof(reader_avail));
 			for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
-				reader_avail[i] = matching_reader(er, &reader[i]);
-				if (reader_avail[i] == 1)
+				er->reader[i] = matching_reader(er, rdr);
+				if (er->reader[i] == 1)
 					er->reader_avail++;
 			}
 				
-			recv_best_reader(er, reader_avail);
+			recv_best_reader(er, er->reader);
 				
 			for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
-				if (reader_avail[i]) {
-					m|=er->reader[i] = reader_avail[i];
-					if (reader_avail[i] == 1) // do not count fallback readers (==2: fallback)
+				if (er->reader[i]) {
+					m|=er->reader[i]; //or should this be  m|=er->reader[i] = (rdr->fallback)? 2: 1;
+					if (!rdr->fallback) // do not count fallback readers (==2: fallback)
 						er->reader_count++;
 				}
 			}
