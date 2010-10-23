@@ -1717,7 +1717,8 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 
 	//
     int i;
-    ert->selected_reader=0; //FIXME or should this have been ert->matching_rdr[get_ridx(er->selected_reader)]=0; dont think so but cannot be sure - dingo
+    ert->matching_rdr[get_ridx(er->selected_reader)]=0; //FIXME one of these two might be superfluous
+    ert->selected_reader=0; //FIXME 
     struct s_reader *rdr;
     for (i=0,rdr=first_reader; (ert) && rdr ; rdr=rdr->next, i++)
       if (ert->matching_rdr[i]) // we have still another chance
