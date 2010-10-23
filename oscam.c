@@ -2149,9 +2149,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			recv_best_reader(er, er->matching_rdr);
 			for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {	
 				if (er->matching_rdr[i]) {
-					er->matching_rdr[i] = 1 ; //needed because value 2 means something different in recv_best_reader; now it means fallback!!!
-					m|=er->matching_rdr[i]; //or should this be  m|=er->matching_rdr[i] = (rdr->fallback)? 2: 1;
-					if (!rdr->fallback) // do not count fallback readers (==2: fallback)
+					m|=er->matching_rdr[i];
+					if (er->matching_rdr[i] == 1) // do not count fallback readers (==2: fallback)
 						er->reader_count++;
 				}
 			}
