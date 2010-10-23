@@ -35,7 +35,7 @@ static void camd33_request_emm()
   if (!aureader) return;  // TODO
   if (aureader->hexserial[0])
   {
-    log_emm_request(get_ridx(aureader));
+    log_emm_request(aureader);
     mbuf[0]=0;
     mbuf[1]=aureader->caid[0]>>8;
     mbuf[2]=aureader->caid[0]&0xff;

@@ -163,7 +163,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	if (aureader->caid[0])
 	{
 		cl->disable_counter = 0;
-		log_emm_request(get_ridx(aureader));
+		log_emm_request(aureader);
 	}
 	else
 		if (cl->disable_counter > 2)
