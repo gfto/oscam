@@ -499,8 +499,8 @@ typedef struct ecm_request_t
   ushort        pid;
   ushort        idx;
   ulong         prid;
-  struct s_reader *reader0;
-  int           reader[CS_MAXREADER];
+  struct s_reader *selected_reader;
+  int           matching_rdr[CS_MAXREADER];
   struct s_client *client; //contains pointer to 'c' client while running in 'r' client
   int           cpti;   // client pending table index
   int           stage;    // processing stage in server module
