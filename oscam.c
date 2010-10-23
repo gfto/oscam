@@ -19,8 +19,7 @@ extern void cs_statistics(struct s_client * client);
 struct s_module ph[CS_MAX_MOD]; // Protocols
 struct s_cardsystem cardsystem[CS_MAX_MOD]; // Protocols
 struct s_client * first_client = NULL; //Pointer to clients list, first client is master
-struct  s_reader  reader[CS_MAXREADER];
-struct s_reader * first_reader = &reader[0];
+struct s_reader * first_reader = NULL;
 
 ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
@@ -2741,8 +2740,6 @@ if (pthread_key_create(&getclient, NULL)) {
 
 	cfg = malloc(sizeof(struct s_config));
 	memset(cfg, 0, sizeof(struct s_config));
-
-	memset(reader, 0, sizeof(struct s_reader)*CS_MAXREADER);
 
   void (*mod_def[])(struct s_module *)=
   {
