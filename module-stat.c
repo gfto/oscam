@@ -222,6 +222,8 @@ void save_stat_to_file()
  */
 void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int ecm_time, int rc)
 {
+	if (!rdr)
+		return;
 	pthread_mutex_lock(&stat_busy);
 	READER_STAT *stat = get_stat(rdr, caid, prid, srvid);
 	if (!stat) {
