@@ -1266,11 +1266,11 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		for(i=0;i<(*params).paramcount;i++) {
 			if ((strcmp((*params).params[i], "action")) && (strcmp((*params).params[i], "user")) && (strcmp((*params).params[i], "newuser"))) {
 				if (!strcmp((*params).params[i], "expdate"))
-				account->expirationdate=(time_t)NULL;
+					account->expirationdate=(time_t)NULL;
 				if (!strcmp((*params).params[i], "services"))
-				snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels), "%s,", (*params).values[i]);
+					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels), "%s,", (*params).values[i]);
 				else
-				chk_account((*params).params[i], (*params).values[i], account);
+					chk_account((*params).params[i], (*params).values[i], account);
 			}
 		}
 		chk_account("services", servicelabels, account);
@@ -1547,7 +1547,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 			emmnok += cl->emmnok;
 		 }
 		}
-		if ( isonline > 0 ) {
+		if ( isonline > 0 || ((isonline == 0) && (!cfg->http_hide_idle_clients))) {
 			tpl_printf(vars, 0, "CWOK", "%d", cwok);
 			tpl_printf(vars, 0, "CWNOK", "%d", cwnok);
 			tpl_printf(vars, 0, "CWIGN", "%d", cwign);
