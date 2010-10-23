@@ -516,7 +516,7 @@ typedef struct ecm_request_t
 #ifdef CS_WITH_DOUBLECHECK
   int		checked;
   uchar		cw_checked[16];
-  int       origin_reader;
+  struct s_reader *origin_reader;
 #endif
 
 #ifdef CS_WITH_GBOX

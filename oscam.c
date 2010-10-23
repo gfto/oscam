@@ -1517,7 +1517,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	{
 #ifdef CS_WITH_GBOX
 		if(reader[er->reader[0]].typ==R_GBOX)
-			snprintf(sby, sizeof(sby)-1, " by %s(%04X)", reader[er->reader[0]].label,er->gbxCWFrom);
+			snprintf(sby, sizeof(sby)-1, " by %s(%04X)", er->reader0->label,er->gbxCWFrom);
 		else
 #endif
 			// add marker to reader if ECM_REQUEST was betatunneled
@@ -1647,17 +1647,17 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (cfg->double_check && er->rc < 4) {
 	  if (er->checked == 0) {//First CW, save it and wait for next one
 	    er->checked = 1;
-	    er->origin_reader = er->reader[0]; //contains ridx
+	    er->origin_reader = er->selected_reader; 
 	    memcpy(er->cw_checked, er->cw, sizeof(er->cw));
-	    cs_log("DOUBLE CHECK FIRST CW by %s idx %d cpti %d", reader[er->origin_reader].label, er->idx, er->cpti);
+	    cs_log("DOUBLE CHECK FIRST CW by %s idx %d cpti %d", er->origin_reader->label, er->idx, er->cpti);
 	  }
-	  else if (er->origin_reader != er->reader[0]) { //Second (or third and so on) cw. We have to compare
+	  else if (er->origin_reader != er->selected_reader) { //Second (or third and so on) cw. We have to compare
 	    if (memcmp(er->cw_checked, er->cw, sizeof(er->cw)) == 0) {
 	    	er->checked++;
-	    	cs_log("DOUBLE CHECKED! %d. CW by %s idx %d cpti %d", er->checked, reader[er->reader[0]].label, er->idx, er->cpti);
+	    	cs_log("DOUBLE CHECKED! %d. CW by %s idx %d cpti %d", er->checked, er->selected_reader->label, er->idx, er->cpti);
 	    }
 	    else {
-	    	cs_log("DOUBLE CHECKED NONMATCHING! %d. CW by %s idx %d cpti %d", er->checked, reader[er->reader[0]].label, er->idx, er->cpti);
+	    	cs_log("DOUBLE CHECKED NONMATCHING! %d. CW by %s idx %d cpti %d", er->checked, er->selected_reader->label, er->idx, er->cpti);
 	    }
 	  }
 	  
