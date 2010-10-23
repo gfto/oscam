@@ -2777,8 +2777,11 @@ void * cc_srv_init(struct s_client *cl) {
 		cs_log("cccam: %d failed errno: %d (%s)", __LINE__, errno, strerror(
 				errno));
 	cs_disconnect_client(cl);
-
-	//cs_exit(1);
+	if (cl->udp_fd) {
+		close(cl->udp_fd);
+		cl->udp_fd = 0;
+		cl->pfd = 0;
+	}
 	cc_cleanup(cl);
 	cs_debug_mask(D_FUT, "cc_srv_init out");
 	return NULL; //suppress compiler warning
