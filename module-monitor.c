@@ -254,12 +254,10 @@ char *monitor_get_proto(struct s_client *cl)
 		case 'p'	:
 		case 'r'	: ctyp = reader_get_type_desc(cl->reader); break;
 		case 'c'	:
-			if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode)
+			if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode) {
 				ctyp = "cccam ext";
-			else
-				ctyp = ph[cl->ctyp].desc;
-			break;
-
+				break;
+			}
 		default		: ctyp = ph[cl->ctyp].desc;
 	}
 	return(ctyp);
