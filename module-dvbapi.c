@@ -1742,7 +1742,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 
 	for (i=0;i<MAX_DEMUX;i++) {
 		if (demux[i].program_number==er->srvid) {
-			demux[i].rdr=&reader[er->reader[0]];
+			demux[i].rdr=er->reader0;
 
 			if (er->rc<=3 && demux[i].pidindex==-1 && er->caid!=0) {
 				dvbapi_start_descrambling(i);
@@ -1795,13 +1795,13 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 			ecmtxt = fopen(ECMINFO_FILE, "w");
 			if(ecmtxt != NULL) {
 				fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
-				fprintf(ecmtxt, "reader: %s\n", reader[er->reader[0]].label);
-				if (reader[er->reader[0]].typ & R_IS_CASCADING)
-					fprintf(ecmtxt, "from: %s\n", reader[er->reader[0]].device);
+				fprintf(ecmtxt, "reader: %s\n", er->reader0->label);
+				if (er->reader0->typ & R_IS_CASCADING)
+					fprintf(ecmtxt, "from: %s\n", er->reader0->device);
 				else
 					fprintf(ecmtxt, "from: local\n");
-				fprintf(ecmtxt, "protocol: %s\n", reader[er->reader[0]].ph.desc);
-				fprintf(ecmtxt, "hops: %d\n", reader[er->reader[0]].cc_currenthops);
+				fprintf(ecmtxt, "protocol: %s\n", er->reader0->ph.desc);
+				fprintf(ecmtxt, "hops: %d\n", er->reader0->cc_currenthops);
 				fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
 				fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8));
 				fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8));
