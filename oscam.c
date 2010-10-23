@@ -1011,8 +1011,10 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 			if (cfg->clientdyndns) {
 				if (client->ip != account->dynip)
 					cs_user_resolve(account);
-				if (client->ip != account->dynip)
+				if (client->ip != account->dynip) {
+					cs_add_violation((uint)client->ip);
 					rc=2;
+				}
 			}
 			else
 				cs_log("Warning: clientdyndns disabled in config. Enable clientdyndns to use hostname restrictions");
