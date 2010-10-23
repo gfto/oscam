@@ -525,15 +525,9 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 		cs_debug("%i protocol types detected. Historical bytes: %s",numprottype, cs_hexdump(1,atr->hb,atr->hbn));
 
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(n));
-		
-	/* if TD1 is present then we might have multiple protocols avialable and/or be able to negotiate,
-	   if TD1 is missing only T0 available */
-	BYTE TD1;
-	if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TD, &TD1) == ATR_OK) {
 		ATR_GetProtocolType(atr,1,&(reader->protocol_type)); //get protocol from TD1
 		BYTE TA2;
-		//if TA2 present, and specific mode bit (bit 8) set then specific mode, else negotiable mode
-		bool SpecificMode = (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TA, &TA2) == ATR_OK);
+		bool SpecificMode = (ATR_GetInterfaceByte (atr, 2, ATR_INTERFACE_BYTE_TA, &TA2) == ATR_OK); //if TA2 present, specific mode, else negotiable mode
 		if (SpecificMode) {
 			reader->protocol_type = TA2 & 0x0F;
 			if ((TA2 & 0x10) != 0x10) { //bit 5 set to 0 means F and D explicitly defined in interface characters
@@ -552,9 +546,10 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 				FI = ATR_DEFAULT_FI;
 				d = ATR_DEFAULT_D;
 			}
-			cs_debug("Specific mode, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
+			cs_debug("Specific mode: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
 		}
 		else { //negotiable mode
+
 			bool PPS_success = FALSE; 
 			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
 			if (NeedsPTS && deprecated == 0) {
@@ -594,24 +589,10 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 						d = 0; // viaccess cards that fail PTS need this
 				}
 
-				cs_debug("No PTS %s, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", reader->protocol_type, (double) atr_f_table[FI], d, n);
+				cs_debug("No PTS %s, selected protocol T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", reader->protocol_type, (double) atr_f_table[FI], d, n);
 			}
 		}//end negotiable mode
-	}
-	else { // No TD1 therefore T0 is the only protocol available
-		reader->protocol_type = 0;
-		BYTE TA1;
-		if (ATR_GetInterfaceByte (atr, 1 , ATR_INTERFACE_BYTE_TA, &TA1) == ATR_OK) {
-			FI = TA1 >> 4;
-			ATR_GetParameter (atr, ATR_PARAMETER_D, &(d));
-		}
-		else { //do not obey TA1
-			FI = ATR_DEFAULT_FI;
-			d = ATR_DEFAULT_D;
-		}
-		cs_debug("Only T0 available, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
-	}
-	
+		
 	//make sure no zero values
 	double F =	(double) atr_f_table[FI];
 	if (!F) {
