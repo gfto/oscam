@@ -2167,11 +2167,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					er->reader_avail++;
 			}
 
-		if (cfg->lb_mode)
+		if (cfg->lb_mode) {
 			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", 
 				username(client), er->caid, er->prid, er->srvid);
 			if (!get_best_reader(er))
 				return; //ecm already requested by another client, see distribute ecm for details
+		}
 
 		for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
 			m|=er->matching_rdr[i];
