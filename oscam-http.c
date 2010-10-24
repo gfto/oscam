@@ -2468,6 +2468,7 @@ int process_request(FILE *f, struct in_addr in) {
 		st = localtime(&first_client->login);
 		tpl_printf(vars, 0, "STARTDATE", "%02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
 		tpl_printf(vars, 0, "STARTTIME", "%02d:%02d:%02d", st->tm_hour, st->tm_min, st->tm_sec);
+		tpl_printf(vars, 0, "PROCESSID", "%d", getpid());
 
 		time_t now = time((time_t)0);
 		int lsec = now - first_client->login;

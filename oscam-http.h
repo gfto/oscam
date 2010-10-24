@@ -235,7 +235,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<H2>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2>"
 
 #define TPLFOOTER "\
-		<HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>Start: ##STARTDATE## - ##STARTTIME## | UpTime: ##UPTIME## </H4><H4 CLASS=\"styleauthor\">WebIf Style by </H4>\
+		<HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>Start: ##STARTDATE## - ##STARTTIME## | UpTime: ##UPTIME## | Process ID: ##PROCESSID##</H4><H4 CLASS=\"styleauthor\">WebIf Style by </H4>\
 		</BODY>\
 		</HTML>"
 
@@ -350,7 +350,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TABLE WIDTH=\"100%\" cellspacing=\"0\" class=\"status\">\n\
 		<TR>\n\
 		<TH>hide</TH>\n\
-		<TH>PID</TH>\n\
+		<TH>Thread ID</TH>\n\
 		<TH>Type</TH>\n\
 		<TH>ID</TH>\n\
 		<TH>Label</TH>\n\
