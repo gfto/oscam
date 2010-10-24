@@ -2132,26 +2132,18 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if(er->rc > 99) {
 		er->reader_avail=0;
 		struct s_reader *rdr;
-		for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
+		for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
 			if (matching_reader(er, rdr)) {
 				er->matching_rdr[i] = (rdr->fallback)? 2: 1;
-				if (cfg->lb_mode) {
-					er->reader_avail++;  //count regardless of fallback
-				}
-				else {
-					if (!rdr->fallback) { // do not count fallback readers
-						er->reader_avail++;
-					}
-				}
+				if (cfg->lb_mode || (!cfg->lb_mode && !rdr->fallback))
+					er->reader_avail++;
 			}
-		}
 
 		if (cfg->lb_mode)
 			recv_best_reader(er, er->matching_rdr);
 
-		for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)	
-			if (er->matching_rdr[i])
-				m|=er->matching_rdr[i];
+		for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
+			m|=er->matching_rdr[i];
 		switch(m) {
 			// no reader -> not found
 			case 0:
