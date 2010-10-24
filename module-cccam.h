@@ -145,8 +145,6 @@ struct cc_data {
 
 	LLIST *current_cards; //reader: current card cache
 	int server_ecm_pending;                    //initialized by server
-	LLIST *server_caid_infos[CS_MAXREADER];
-	long server_caid_size[CS_MAXREADER];
 	ushort server_ecm_idx;
 	
 	pthread_mutex_t lock;
