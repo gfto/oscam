@@ -1060,13 +1060,10 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 	if (rc)
 		t_grant=t_reject;
 	else
-	{
 		if (client->typ=='m')
 			sprintf(t_msg[0], "lvl=%d", client->monlvl);
 		else
-		{
 			if(client->autoau)
-			{
 				if(client->ncd_server)
 				{
 					struct s_reader *rdr;
@@ -1075,21 +1072,19 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 							client->aureader=rdr;
 							break;
 						}
-					if(!client->aureader) sprintf(t_msg[0], "au(auto)=%d", get_ridx(client->aureader)+1);
-					else sprintf(t_msg[0], "au(auto)=%s", client->aureader->label);
+					if(!client->aureader)
+						sprintf(t_msg[0], "au(auto)=0"); //FIXME dont think this is correct, but this was old behaviour
+					else 
+						sprintf(t_msg[0], "au(auto)=%s", client->aureader->label);
 				}
 				else
-				{
 					sprintf(t_msg[0], "au=auto");
-				}
-			}
 			else
-			{
-				if(!client->aureader) sprintf(t_msg[0], "au=%d", get_ridx(client->aureader)+1);
-				else sprintf(t_msg[0], "au=%s", client->aureader->label);
-			}
-		}
-	}
+				if(!client->aureader)
+					sprintf(t_msg[0], "au(auto)=0"); //FIXME dont think this is correct, but this was old behaviour
+				else 
+					sprintf(t_msg[0], "au=%s", client->aureader->label);
+
 	if(client->ncd_server)
 	{
 		cs_log("%s %s:%d-client %s%s (%s, %s)",
@@ -1256,7 +1251,7 @@ int read_from_pipe(int fd, uchar **data, int redir)
 	memcpy(id, buf, 3);
 	id[3]='\0';
 
-	cs_debug("read from pipe %d (%s) thread: %9lX", fd, id, pthread_self());
+	cs_debug("read from pipe %d (%s) thread: %8X", fd, id, (unsigned int)pthread_self());
 
 	int l;
 	for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)
@@ -2200,16 +2195,13 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	//Unique Id matching for pay-per-view channels:
 	if (client->autoau) {
 		struct s_reader *rdr;
-		for (rdr=first_reader; rdr ; rdr=rdr->next) {	
-			if (rdr->card_system>0 && !rdr->audisabled) {
-				if (reader_get_emm_type(ep, rdr)) { //decodes ep->type and ep->hexserial from the EMM
+		for (rdr=first_reader; rdr ; rdr=rdr->next)	
+			if (rdr->card_system>0 && !rdr->audisabled)
+				if (reader_get_emm_type(ep, rdr)) //decodes ep->type and ep->hexserial from the EMM
 					if (memcmp(ep->hexserial, rdr->hexserial, sizeof(ep->hexserial))==0) {
 						aureader = rdr;
 						break; //
 					}
-				}
-			}
-		}
 	}
 	
 	if (!aureader) {
@@ -2224,14 +2216,14 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		}
 	}
 	else {
-		cs_debug_mask(D_EMM, "emm skipped, reader %s (%d) has no cardsystem defined!", aureader->label, get_ridx(aureader)); 
+		cs_debug_mask(D_EMM, "emm skipped, reader %s (thread %8X) has no cardsystem defined!", aureader->label, (unsigned int)aureader->client->thread); 
 		return;
 	}
 
 	//test: EMM becomes skipped if auprivid doesn't match with provid from EMM
 	if(aureader->auprovid) {
 		if(aureader->auprovid != b2i(4, ep->provid)) {
-			cs_debug_mask(D_EMM, "emm skipped, reader %s (%d) auprovid doesn't match %06lX != %06lX!", aureader->label, get_ridx(aureader), aureader->auprovid, b2i(4, ep->provid));
+			cs_debug_mask(D_EMM, "emm skipped, reader %s (thread %8X) auprovid doesn't match %06lX != %06lX!", aureader->label, (unsigned int) aureader->client->thread, aureader->auprovid, b2i(4, ep->provid));
 			return;
 		}
 	}
@@ -2503,7 +2495,7 @@ static void restart_clients()
 	for (cl=first_client->next; cl ; cl=cl->next)
 		if (cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
 			kill_thread(cl);
-			cs_log("killing client c%9lX", cl->thread);
+			cs_log("killing client c %8X", (unsigned int)cl->thread);
 		}
 }
 
