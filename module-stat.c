@@ -502,6 +502,7 @@ int get_best_reader(ECM_REQUEST *er)
 	
 	if (n)
 		memcpy(er->matching_rdr, result, sizeof(result));
+#ifdef WITH_DEBUG 
 	else
 		cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, trying all readers");
 
@@ -512,7 +513,7 @@ int get_best_reader(ECM_REQUEST *er)
 		er->matching_rdr[4], er->matching_rdr[5], er->matching_rdr[6], er->matching_rdr[7], 
 		er->matching_rdr[8], er->matching_rdr[9], er->matching_rdr[10], er->matching_rdr[11], 
 		er->matching_rdr[12], er->matching_rdr[13], er->matching_rdr[14], er->matching_rdr[15]);
-	
+#endif	
 	add_send_cache(er->caid, er->ecmd5, er->matching_rdr, best_rdr); //add to cache
 	
 	if (new_nulltime.time)

@@ -713,7 +713,7 @@ int cc_UA_valid(uint8 *ua) {
 /**
  * Updates AU Data: UA (Unique ID / Hexserial) und SA (Shared ID - Provider)
  */
-void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card, ECM_REQUEST *cur_er) {
+void set_au_data(struct s_client *cl __attribute__((unused)), struct s_reader *rdr, struct cc_card *card, ECM_REQUEST *cur_er) {
 	if (rdr->audisabled || !cc_UA_valid(card->hexserial))
 		return;
 		

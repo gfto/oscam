@@ -1587,7 +1587,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	int i, reader_count=0;
 	struct s_reader *rdr;
 	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
-		if (er->matching_rdr[i])
+		if (er->matching_rdr[i] == 1) //do not count 2=loadbalancer
 			if (!rdr->fallback) //do not count fallback readers 
 				reader_count++;
 

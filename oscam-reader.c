@@ -217,8 +217,6 @@ int network_tcp_connection_open()
      return sd;
   }
 
-  cs_log("connect error %d for %s", errno, rdr->label);
-  	 
   if (errno == EINPROGRESS || errno == EALREADY) {
      if (network_select(0, DEFAULT_CONNECT_TIMEOUT) > 0) { //if connect is in progress, wait apr. 500ms
         int r = -1;
@@ -237,7 +235,7 @@ int network_tcp_connection_open()
     fcntl(sd, F_SETFL, fl);
     return sd;
   }
-  
+
   if (errno == EBADF || errno == ENOTSOCK) {
     cs_log("connect failed: bad socket/descriptor %d", sd);
   }
