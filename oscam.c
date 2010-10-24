@@ -1603,7 +1603,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", stxt[er->rc]);
 #endif
 
-	if(!client->ncd_server && client->autoau && er->rcEx==0)
+	if(!client->ncd_server && client->autoau && er->rcEx==0 && er->selected_reader)
 	{
 		if(client->aureader && er->caid!=client->aureader->caid[0])
 		{
