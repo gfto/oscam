@@ -1421,7 +1421,8 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   if (er->rc==1) {
 #endif
     //Wie got an ECM. Now we should check for another clients waiting for it:
-    distribute_ecm(reader->client, er);
+    if (cfg->lb_mode)
+      distribute_ecm(reader->client, er);
   }
     
   return res;
