@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		9348D819126BE60B0090C25C /* oscam-datastruct-llist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "oscam-datastruct-llist.c"; sourceTree = "<group>"; };
-		9348D81A126BE60B0090C25C /* oscam-datastruct-llist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "oscam-datastruct-llist.h"; sourceTree = "<group>"; };
+		9348D96B12732B380090C25C /* module-datastruct-llist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = "module-datastruct-llist.c"; sourceTree = "<group>"; };
+		9348D96C12732B380090C25C /* module-datastruct-llist.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "module-datastruct-llist.h"; sourceTree = "<group>"; };
 		93B819DB124D484C00E9DF68 /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = aes.h; path = /usr/src/Dev/oscam/trunk/cscrypt/aes/aes.h; sourceTree = "<absolute>"; };
 		93B819DC124D484C00E9DF68 /* aes_core.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = aes_core.c; path = /usr/src/Dev/oscam/trunk/cscrypt/aes/aes_core.c; sourceTree = "<absolute>"; };
 		93B819DD124D484C00E9DF68 /* bn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bn.h; path = /usr/src/Dev/oscam/trunk/cscrypt/bn.h; sourceTree = "<absolute>"; };
@@ -198,6 +198,8 @@
 				93B81A55124D484C00E9DF68 /* module-cccam.c */,
 				93B81A56124D484C00E9DF68 /* module-cccam.h */,
 				93B81A57124D484C00E9DF68 /* module-constcw.c */,
+				9348D96B12732B380090C25C /* module-datastruct-llist.c */,
+				9348D96C12732B380090C25C /* module-datastruct-llist.h */,
 				93B81A58124D484C00E9DF68 /* module-dvbapi.c */,
 				93B81A59124D484C00E9DF68 /* module-dvbapi.h */,
 				93B81A5A124D484C00E9DF68 /* module-monitor.c */,
@@ -213,8 +215,6 @@
 				93B81A69124D484C00E9DF68 /* oscam-chk.c */,
 				93B81A6A124D484C00E9DF68 /* oscam-config.c */,
 				93B81A6B124D484C00E9DF68 /* oscam-config.h */,
-				9348D819126BE60B0090C25C /* oscam-datastruct-llist.c */,
-				9348D81A126BE60B0090C25C /* oscam-datastruct-llist.h */,
 				93B81A6C124D484C00E9DF68 /* oscam-http-helpers.c */,
 				93B81A6D124D484C00E9DF68 /* oscam-http.c */,
 				93B81A6E124D484C00E9DF68 /* oscam-http.h */,
