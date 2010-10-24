@@ -18,7 +18,7 @@ typedef struct s_ecm_send_cache {
    ushort        caid;
    uchar         ecmd5[CS_ECMSTORESIZE];            
    int           readers[CS_MAXREADER];
-   struct s_reader *best_reader;
+   struct s_reader * best_rdr;
 } ECM_SEND_CACHE;
 ECM_SEND_CACHE *ecm_send_cache;
 
@@ -58,13 +58,12 @@ int chk_send_cache(int caid, uchar *ecmd5)
 	return -1;
 }
 
-void add_send_cache(int caid, uchar *ecmd5, int *readers, struct s_reader *best_reader)
+void add_send_cache(int caid, uchar *ecmd5, int *readers, struct s_reader *best_rdr)
 {
 	ecm_send_cache[ecm_send_cache_idx].caid = caid;
 	memcpy(ecm_send_cache[ecm_send_cache_idx].ecmd5, ecmd5, sizeof(uchar)*CS_ECMSTORESIZE);
 	memcpy(ecm_send_cache[ecm_send_cache_idx].readers, readers, sizeof(int)*CS_MAXREADER);
-	ecm_send_cache[ecm_send_cache_idx].best_reader = best_reader;
-	
+	ecm_send_cache[ecm_send_cache_idx].best_rdr = best_rdr;
 	ecm_send_cache_idx++;
 	if (ecm_send_cache_idx >= MAX_ECM_SEND_CACHE)
 		ecm_send_cache_idx = 0;
@@ -111,6 +110,8 @@ void load_stat_from_file()
 					rdr->lb_stat = ll_create();
 				ll_append(rdr->lb_stat, stat);
 			}
+			else
+				cs_log("loadbalancer statistics could not be loaded for %s", buf);
 		}
 		else
 			free(stat);
@@ -334,28 +335,30 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
  * Also the reader is asked if he is "available"
  * returns ridx when found or -1 when not found
  */
-struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result)
+int get_best_reader(ECM_REQUEST *er)
 {
 	pthread_mutex_lock(&stat_busy);
 	int i;
-	i = chk_send_cache(grs->caid, grs->ecmd5);
+	i = chk_send_cache(er->caid, er->ecmd5);
 	if (i >= 0) { //Found in cache, return same reader because he has the cached cws!
-		memcpy(result, ecm_send_cache[i].readers, sizeof(int)*CS_MAXREADER);
-		struct s_reader *best_rdr = ecm_send_cache[i].best_reader;
+		memcpy(er->matching_rdr, ecm_send_cache[i].readers, sizeof(int)*CS_MAXREADER);
+		struct s_reader * best_rdr = ecm_send_cache[i].best_rdr;
 		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d (cache)", 
-			username(grs->client), grs->caid, grs->prid, grs->srvid,
+			username(er->client), er->caid, er->prid, er->srvid,
 			best_rdr?best_rdr->label:"NONE",
-			result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], 
-			result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]);
+			er->matching_rdr[0], er->matching_rdr[1], er->matching_rdr[2], er->matching_rdr[3], 
+			er->matching_rdr[4], er->matching_rdr[5], er->matching_rdr[6], er->matching_rdr[7], 
+			er->matching_rdr[8], er->matching_rdr[9], er->matching_rdr[10], er->matching_rdr[11], 
+			er->matching_rdr[12], er->matching_rdr[13], er->matching_rdr[14], er->matching_rdr[15]);
 
 		pthread_mutex_unlock(&stat_busy);
-		return best_rdr;
+		return 0;
 	}
 
+	int result[CS_MAXREADER];
+	memset(result, 0, sizeof(result));
 	int re[CS_MAXREADER];
 
-	//resulting readers:
-	memset(result, 0, sizeof(int)*CS_MAXREADER);
 	//resulting values:
 	memset(re, 0, sizeof(re));
 
@@ -368,19 +371,19 @@ struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result)
 	READER_STAT *stat = NULL;
 	struct s_reader *rdr;
 	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
-		if (grs->reader_avail[i]) {
+		if (er->matching_rdr[i]) {
  			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
-			stat = get_stat(rdr, grs->caid, grs->prid, grs->srvid);
+			stat = get_stat(rdr, er->caid, er->prid, er->srvid);
 			if (!stat) {
 				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", rdr->label);
-				add_stat(rdr, grs->caid,  grs->prid, grs->srvid, 1, -1);
+				add_stat(rdr, er->caid,  er->prid, er->srvid, 1, -1);
 				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
 				continue; 
 			}
 			
 			if (stat->ecm_count < 0||(stat->ecm_count > cfg->lb_max_ecmcount && stat->time_avg > (int)cfg->ftimeout)) {
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg->lb_max_ecmcount, rdr->label);
-				reset_stat(grs->caid, grs->prid, grs->srvid);
+				reset_stat(er->caid, er->prid, er->srvid);
 				result[i] = 1;//max ecm reached, get new statistics
 				continue;
 			}
@@ -390,7 +393,7 @@ struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result)
 				stat->request_count++;
 				//algo for finding unanswered requests (newcamd reader for example:)
 				if (stat->request_count > cfg->lb_min_ecmcount) { //5 unanswered requests? 
-					add_stat(rdr, grs->caid, grs->prid, grs->srvid, 1, 4); //reader marked as unuseable 
+					add_stat(rdr, er->caid, er->prid, er->srvid, 1, 4); //reader marked as unuseable 
 					result[i] = 0;
 				}
 				else
@@ -401,7 +404,7 @@ struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result)
 
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
 			if (stat->rc == 0) {
-				//get
+					
 				switch (cfg->lb_mode) {
 				default:
 				case LB_NONE:
@@ -441,7 +444,7 @@ struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result)
 			else 
 			{
 				int seconds = cfg->lb_reopen_seconds;
-				if (!rdr->audisabled && (grs->client->autoau || grs->client->aureader == rdr))
+				if (!rdr->audisabled && (er->client->autoau || er->client->aureader == rdr))
 					seconds = seconds/10;
 				
 				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
@@ -497,25 +500,27 @@ struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result)
 		}
 	}
 	
-	if (!n) {
+	if (n)
+		memcpy(er->matching_rdr, result, sizeof(result));
+	else
 		cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, trying all readers");
-		memcpy(result, grs->reader_avail, sizeof(grs->reader_avail));
-	}
 
 	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
-		username(grs->client), grs->caid, grs->prid, grs->srvid,
+		username(er->client), er->caid, er->prid, er->srvid,
 		best_rdr?best_rdr->label:"NONE",
-		result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7], 
-		result[8], result[9], result[10], result[11], result[12], result[13], result[14], result[15]);
+		er->matching_rdr[0], er->matching_rdr[1], er->matching_rdr[2], er->matching_rdr[3], 
+		er->matching_rdr[4], er->matching_rdr[5], er->matching_rdr[6], er->matching_rdr[7], 
+		er->matching_rdr[8], er->matching_rdr[9], er->matching_rdr[10], er->matching_rdr[11], 
+		er->matching_rdr[12], er->matching_rdr[13], er->matching_rdr[14], er->matching_rdr[15]);
 	
-	add_send_cache(grs->caid, grs->ecmd5, result, best_rdr); //add to cache
+	add_send_cache(er->caid, er->ecmd5, er->matching_rdr, best_rdr); //add to cache
 	
 	if (new_nulltime.time)
 		nulltime = new_nulltime;
 		
 	pthread_mutex_unlock(&stat_busy);
 	
-	return best_rdr;
+	return 1;
 }
 
 /**
@@ -528,6 +533,6 @@ void clear_reader_stat(struct s_reader *rdr)
 
 	pthread_mutex_lock(&stat_busy);
 	ll_destroy_data(rdr->lb_stat);
-	rdr->lb_stat = NULL;
+	rdr->lb_stat = ll_create();
 	pthread_mutex_unlock(&stat_busy);
 }

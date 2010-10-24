@@ -1,4 +1,4 @@
-#include <string.h>
+	#include <string.h>
 #include <stdlib.h>
 #include "globals.h"
 #include "module-cccam.h"
@@ -322,8 +322,10 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 		return 0;
 
 	if (len != 4) { // invalid header length read
-		cs_log("%s invalid header length (expected 4, read %d)", getprefix(),
-				len);
+		if (len < 0)
+			cs_log("%s disconnected by remote server", getprefix());
+		else
+			cs_log("%s invalid header length (expected 4, read %d)", getprefix(), len);
 		return -1;
 	}
 
@@ -344,7 +346,10 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 			rdr->last_g = time(NULL);
 
 		if (len != size) {
-			cs_log("%s invalid message length read (expected %d, read %d)",
+			if (len < 0)
+				cs_log("%s disconnected by remote", getprefix());
+			else
+				cs_log("%s invalid message length read (expected %d, read %d)",
 					getprefix(), size, len);
 			return -1;
 		}
@@ -1295,7 +1300,7 @@ void cc_idle() {
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
-	if (!rdr->tcp_connected || !cl || !cc || !rdr)
+	if (!rdr || !rdr->tcp_connected || !cl || !cc)
 		return;
 
 	if (rdr->cc_keepalive && cc->answer_on_keepalive + 55 < time(NULL)) {

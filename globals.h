@@ -1126,16 +1126,6 @@ typedef struct reader_stat_t
   int           request_count;
 } GCC_PACK      READER_STAT;
 
-typedef struct get_reader_stat_t 
-{
-  ushort        caid;
-  ulong         prid;
-  ushort        srvid;
-  struct s_client *client;
-  int           reader_avail[CS_MAXREADER];
-  uchar         ecmd5[CS_ECMSTORESIZE];
-} GCC_PACK      GET_READER_STAT;
-
 typedef struct emm_packet_t
 {
   uchar emm[258];
@@ -1425,7 +1415,7 @@ extern void reader_device_close(struct s_reader * reader);
 
 //module-stat
 extern void init_stat();
-extern struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result);
+extern int get_best_reader(ECM_REQUEST *er);
 extern void clear_reader_stat(struct s_reader *reader);
 extern void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int ecm_time, int rc);
 #ifdef HAVE_PCSC

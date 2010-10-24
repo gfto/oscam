@@ -13,6 +13,6 @@ void calc_stat(READER_STAT *stat);
 
 void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int time, int rc);
 
-struct s_reader *get_best_reader(GET_READER_STAT *grs, int *result);
+int get_best_reader(ECM_REQUEST *er);
 
 void clear_reader_stat(struct s_reader *rdr);

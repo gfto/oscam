@@ -1349,6 +1349,39 @@ void logCWtoFile(ECM_REQUEST *er)
 	fclose(pfCWL);
 }
 
+/**
+ * Notifies all the other clients waiting for the same request
+ **/
+void distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
+    struct s_client *cl;
+    for (cl=first_client; cl; cl=cl->next) {
+        if (cl != client && cl->fd_m2c) {
+            int i;
+            ECM_REQUEST *ecmtask = cl->ecmtask;
+	    if (ecmtask)
+		i=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
+	    else
+		i=0;
+
+	    // check all pending ecm-requests:
+	    for (--i; i>=0; i--) {
+	        ECM_REQUEST *ecm = ecmtask+i;
+		if (ecm->rc>=100 
+		    && (cl->grp&client->grp)
+		    && ecm->caid==er->caid  
+		    && memcmp(ecm->ecmd5, er->ecmd5, sizeof(er->ecmd5)) == 0) {
+		       memcpy(ecm->cw, er->cw, sizeof(er->cw));
+		       ecm->caid = ecmtask[i].ocaid;
+		       ecm->selected_reader = er->selected_reader;
+		       ecm->rc = 2; //cache2
+	
+		       write_ecm_request(cl->fd_m2c, ecm);
+		    }
+	    }
+        }
+    }
+}
+
 int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 {
   int i;
@@ -1374,16 +1407,26 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 #endif
     store_ecm(er);
 
-  /* CWL logging only if cwlogdir is set in config */
-  if (cfg->cwlogdir != NULL)
-    logCWtoFile(er);
+    /* CWL logging only if cwlogdir is set in config */
+    if (cfg->cwlogdir != NULL)
+      logCWtoFile(er);
   }
 
+  int res=0;
   if( er->client && er->client->fd_m2c )
-	//fixme
-    return(write_ecm_request(er->client->fd_m2c, er));
-  else
-    return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen?
+    res = write_ecm_request(er->client->fd_m2c, er);
+    //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
+
+#ifdef CS_WITH_GBOX
+  if (er->rc==1||(er->gbxRidx&&er->rc==0)) {
+#else
+  if (er->rc==1) {
+#endif
+    //Wie got an ECM. Now we should check for another clients waiting for it:
+    distribute_ecm(reader->client, er);
+  }
+    
+  return res;
 }
 
   /*
@@ -1720,7 +1763,8 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 
 	//
     int i;
-    ert->matching_rdr[get_ridx(er->selected_reader)]=0; //FIXME one of these two might be superfluous
+    if (er->selected_reader)
+        ert->matching_rdr[get_ridx(er->selected_reader)]=0; //FIXME one of these two might be superfluous
     ert->selected_reader=0; //FIXME 
     struct s_reader *rdr;
     for (i=0,rdr=first_reader; (ert) && rdr ; rdr=rdr->next, i++)
@@ -1929,21 +1973,6 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
   }
 }
 
-//receive best reader from master process. Call this function from client!
-void recv_best_reader(ECM_REQUEST *er, int *reader_avail)
-{
-	GET_READER_STAT grs;
-	memset(&grs, 0, sizeof(grs));
-	grs.caid = er->caid;
-	grs.prid = er->prid;
-	grs.srvid = er->srvid;
-	grs.client = cur_client();
-	memcpy(grs.ecmd5, er->ecmd5, sizeof(er->ecmd5));
-	memcpy(grs.reader_avail, reader_avail, sizeof(int)*CS_MAXREADER);
-	cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", username(cur_client()), grs.caid, grs.prid, grs.srvid);
-
-        get_best_reader(&grs, reader_avail);
-}
 
 void get_cw(struct s_client * client, ECM_REQUEST *er)
 {
@@ -2140,7 +2169,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			}
 
 		if (cfg->lb_mode)
-			recv_best_reader(er, er->matching_rdr);
+			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", 
+				username(client), er->caid, er->prid, er->srvid);
+			if (!get_best_reader(er))
+				return; //ecm already requested by another client, see distribute ecm for details
 
 		for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
 			m|=er->matching_rdr[i];
