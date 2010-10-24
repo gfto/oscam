@@ -1025,9 +1025,6 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		}
 	}
 
-	if (rdr->cachecm)
-		tpl_addVar(vars, 0, "ECMCACHECHECKED", "checked");
-
 	if (rdr->blockemm_unknown)
 		tpl_addVar(vars, 0, "BLOCKEMMUNKNOWNCHK", "checked");
 	if (rdr->blockemm_u)

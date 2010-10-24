@@ -2439,11 +2439,6 @@ int write_server()
 			if (rdr->cachemm)
 				fprintf_conf(f, CONFVARWIDTH, "emmcache", "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 
-			if (rdr->cachecm)
-				fprintf_conf(f, CONFVARWIDTH, "ecmcache", "%d\n", rdr->cachecm);
-			else
-				fprintf_conf(f, CONFVARWIDTH, "ecmcache", "%d\n", 0);
-
 			//Todo: write blocknano
 
 			if (rdr->blockemm_unknown)
@@ -3591,16 +3586,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
-	if (!strcmp(token, "ecmcache")) {
-		if(strlen(value) == 0) {
-			rdr->cachecm = 1;
-			return;
-		} else {
-			rdr->cachecm = atoi(value);
-			return;
-		}
-	}
-
 	if (!strcmp(token, "blocknano")) {
 		//wildcard is used
 		if (!strcmp(value,"all")) {
@@ -3939,7 +3924,6 @@ int init_readerdb()
 			rdr->cardmhz = 357;
 			rdr->deprecated = 0;
 			rdr->force_irdeto = 0;
-			rdr->cachecm = 1;
 			rdr->cc_reshare = cfg->cc_reshare; //set global value as init value
 			rdr->cc_maxhop = 10;
 			rdr->lb_weight = 100;

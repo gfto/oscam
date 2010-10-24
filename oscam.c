@@ -28,7 +28,7 @@ char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
 pthread_key_t getclient;
 
-struct  s_ecm     *ecmcache;
+struct  s_ecm     *cwcache;
 struct  s_ecm     *ecmidx;
 
 #ifdef CS_WITH_GBOX
@@ -378,10 +378,10 @@ static void cleanup_thread(struct s_client *cl)
 
 	NULLFREE (cl);
 
-  //decrease ecmcache
+  //decrease cwcache
 	struct s_ecm *ecmc;
-	if (ecmcache->next != NULL) { //keep it at least on one entry big
-		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next) ; //find last element
+	if (cwcache->next != NULL) { //keep it at least on one entry big
+		for (ecmc=cwcache; ecmc->next->next ; ecmc=ecmc->next) ; //find last element
 		NULLFREE(ecmc->next); //free last element
 	}
 }
@@ -574,9 +574,9 @@ struct s_client * cs_fork(in_addr_t ip) {
 		cl->stat=1;
 
 		cl->login=cl->last=time((time_t *)0);
-		//increase ecmcache
+		//increase cwcache
 		struct s_ecm *ecmc;
-		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
+		for (ecmc=cwcache; ecmc->next ; ecmc=ecmc->next); //ends on last cwcache entry
 		ecmc->next = malloc(sizeof(struct s_ecm));
 		if (ecmc->next)
 			memset(ecmc, 0, sizeof(struct s_ecm));
@@ -625,8 +625,8 @@ static void init_signal()
 
 static void init_shm()
 {
-  ecmidx=ecmcache=malloc(sizeof(struct s_ecm));
-  ecmcache->next = NULL;
+  ecmidx=cwcache=malloc(sizeof(struct s_ecm));
+  cwcache->next = NULL;
   first_client = malloc(sizeof(struct s_client));
 	if (!first_client) {
     fprintf(stderr, "Could not allocate memory for master client, exiting...");
@@ -1123,12 +1123,12 @@ void cs_disconnect_client(struct s_client * client)
  * cache 1: client-invoked
  * returns found ecm task index
  **/
-int check_ecmcache1(ECM_REQUEST *er, uint64 grp)
+static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 {
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
 	struct s_ecm *ecmc;
-	for (ecmc=ecmcache; ecmc ; ecmc=ecmc->next)
+	for (ecmc=cwcache; ecmc ; ecmc=ecmc->next)
 		if ((grp & ecmc->grp) &&
 		     ecmc->caid==er->caid &&
 		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
@@ -1145,12 +1145,10 @@ int check_ecmcache1(ECM_REQUEST *er, uint64 grp)
  * cache 2: reader-invoked
  * returns 1 if found in cache. cw is copied to er
  **/
-int check_ecmcache2(ECM_REQUEST *er, uint64 grp)
+int check_cwcache2(ECM_REQUEST *er, uint64 grp)
 {
-	// disable cache2
-	if (!cur_client()->reader->cachecm) return(0);
 	struct s_reader *save = er->selected_reader;
-	int rc = check_ecmcache1(er, grp);
+	int rc = check_cwcache1(er, grp);
 	er->selected_reader = save;
   return rc;
 }
@@ -1165,14 +1163,14 @@ static void store_ecm(ECM_REQUEST *er)
 	if (ecmidx->next)
 		ecmidx=ecmidx->next;
 	else
-		ecmidx=ecmcache;
+		ecmidx=cwcache;
 	//cs_log("store ecm from reader %d", er->selected_reader);
 	memcpy(ecmidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
 	memcpy(ecmidx->cw, er->cw, 16);
 	ecmidx->caid = er->caid;
 	ecmidx->grp = er->selected_reader->grp;
 	ecmidx->reader = er->selected_reader;
-	//cs_ddump(ecmcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
+	//cs_ddump(cwcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
 
 // only for debug
@@ -2150,7 +2148,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		memcpy(er->ecmd5, MD5(er->ecm, er->l, client->dump), CS_ECMSTORESIZE);
 
 		// cache1
-		if (check_ecmcache1(er, client->grp))
+		if (check_cwcache1(er, client->grp))
 			er->rc = 1;
 
 #ifdef CS_ANTICASC

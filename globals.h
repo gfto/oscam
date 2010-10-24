@@ -743,7 +743,6 @@ struct s_reader  //contains device info, reader info and card info
   int		ucpk_valid;
   int       logemm;
   int       cachemm;
-  int       cachecm;
   int       rewritemm;
   int       card_status;
   int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
@@ -1236,8 +1235,7 @@ extern int comp_timeb(struct timeb *tpa, struct timeb *tpb);
 extern struct s_client * cs_fork(in_addr_t);
 extern int cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
-extern int check_ecmcache1(ECM_REQUEST *, uint64);
-extern int check_ecmcache2(ECM_REQUEST *, uint64);
+extern int check_cwcache2(ECM_REQUEST *, uint64);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);
 extern int write_ecm_request(int, ECM_REQUEST *);
