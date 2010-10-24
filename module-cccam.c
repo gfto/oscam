@@ -271,13 +271,24 @@ struct cc_extended_ecm_idx *get_extended_ecm_idx_by_idx(struct s_client *cl,
 	return NULL;
 }
 
+void cc_reset_pending(struct s_client *cl, int ecm_idx) {
+	int i = 0;
+	for (i = 0; i < CS_MAXPENDING; i++) {
+		if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc == 101)
+			cl->ecmtask[i].rc = 100; //Mark unused
+	}
+}
+
 void free_extended_ecm_idx_by_card(struct s_client *cl, struct cc_card *card) {
 	struct cc_data *cc = cl->cc;
 	struct cc_extended_ecm_idx *eei;
 	LL_ITER *it = ll_iter_create(cc->extended_ecm_idx);
-	while ((eei = ll_iter_next(it)))
-		if (eei->card == card)
+	while ((eei = ll_iter_next(it))) {
+		if (eei->card == card) {
+			cc_reset_pending(cl, eei->ecm_idx);
 			ll_iter_remove_data(it);
+		}
+	}
 	ll_iter_release(it);
 }
 
@@ -1407,7 +1418,7 @@ void cc_card_removed(struct s_client *cl, uint32 shareid) {
 				cs_debug_mask(D_TRACE, "%s current card %08x removed!",
 						getprefix(), card->id);
 				cc_remove_current_card(cc, current_card);
-			}
+			}		
 			free_extended_ecm_idx_by_card(cl, card);
 			cc_free_card(card);
 			card = next_card;
@@ -1618,37 +1629,34 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		pthread_mutex_lock(&cc->cards_busy);
 		struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
 				cc->extended_mode ? cc->g_flag : 1, TRUE);
-		if (eei == NULL) {
+		if (!eei) {
 			cs_log("%s received extended ecm NOK id %d but not found!",
 					getprefix(), cc->g_flag);
-			pthread_mutex_unlock(&cc->cards_busy);
-			cc_cli_close(cl);
-			cs_debug_mask(D_FUT, "cc_parse_msg out");
-			return ret;
 		}
+		else
+		{
+			ushort ecm_idx = eei->ecm_idx;
+			struct cc_card *card = eei->card;
+			struct cc_srvid srvid = eei->srvid;
+			free(eei);
 
-		ushort ecm_idx = eei->ecm_idx;
-		struct cc_card *card = eei->card;
-		struct cc_srvid srvid = eei->srvid;
-		free(eei)
-		;
+			if (card) {
+				if (buf[1] == MSG_CW_NOK1) //MSG_CW_NOK1: share no more available
+					cc_card_removed(cl, card->id);
+				else if (!is_good_sid(card, &srvid)) //MSG_CW_NOK2: can't decode
+					add_sid_block(cl, card, &srvid);
+				else
+					remove_good_sid(card, &srvid);
 
-		if (card) {
-			if (buf[1] == MSG_CW_NOK1) //MSG_CW_NOK1: share no more available
-				cc_card_removed(cl, card->id);
-			else if (!is_good_sid(card, &srvid)) //MSG_CW_NOK2: can't decode
-				add_sid_block(cl, card, &srvid);
-			else
-				remove_good_sid(card, &srvid);
-
-			//retry ecm:
-			int i = 0;
-			for (i = 0; i < CS_MAXPENDING; i++) {
-				if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc == 101)
-					cl->ecmtask[i].rc = 100; //Mark unused
-			}
-		} else
-			cs_log("%S NOK: NO CARD!", getprefix());
+				//retry ecm:
+				int i = 0;
+				for (i = 0; i < CS_MAXPENDING; i++) {
+					if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc == 101)
+						cl->ecmtask[i].rc = 100; //Mark unused
+				}
+			} else
+				cs_log("%S NOK: NO CARD!", getprefix());
+		}
 		pthread_mutex_unlock(&cc->cards_busy);
 
 		if (!cc->extended_mode) {
@@ -1657,8 +1665,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		}
 
 		cc_send_ecm(cl, NULL, NULL);
-
 		break;
+		
 	case MSG_CW_ECM:
 		cc->just_logged_in = 0;
 		if (cl->typ == 'c') { //SERVER:
@@ -1705,46 +1713,44 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			if (eei == NULL) {
 				cs_log("%s received extended ecm id %d but not found!",
 						getprefix(), cc->g_flag);
-				pthread_mutex_unlock(&cc->cards_busy);
-				cc_cli_close(cl);
-				cs_debug_mask(D_FUT, "cc_parse_msg out");
-				return ret;
 			}
+			else
+			{
+				ushort ecm_idx = eei->ecm_idx;
+				struct cc_card *card = eei->card;
+				struct cc_srvid srvid = eei->srvid;
+				free(eei);
 
-			ushort ecm_idx = eei->ecm_idx;
-			struct cc_card *card = eei->card;
-			struct cc_srvid srvid = eei->srvid;
-			free(eei);
+				if (card) {
+					if (!cc->extended_mode)
+						cc_cw_crypt(cl, buf + 4, card->id);
+					memcpy(cc->dcw, buf + 4, 16);
+					if (!cc->extended_mode)
+						cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
-			if (card) {
-				if (!cc->extended_mode)
-					cc_cw_crypt(cl, buf + 4, card->id);
-				memcpy(cc->dcw, buf + 4, 16);
-				if (!cc->extended_mode)
-					cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
+						if (is_null_dcw(cc->dcw)) {
+						cs_log("%s null dcw received! sid=%04X(%d)", getprefix(),
+								srvid.sid, srvid.ecmlen);
+						add_sid_block(cl, card, &srvid);
+						//ecm retry:
+						int i = 0;
+						for (i = 0; i < CS_MAXPENDING; i++) {
+							if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc==101)
+								cl->ecmtask[i].rc = 100; //Mark unused
+						}
 
-				if (is_null_dcw(cc->dcw)) {
-					cs_log("%s null dcw received! sid=%04X(%d)", getprefix(),
-							srvid.sid, srvid.ecmlen);
-					add_sid_block(cl, card, &srvid);
-					//ecm retry:
-					int i = 0;
-					for (i = 0; i < CS_MAXPENDING; i++) {
-						if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc==101)
-							cl->ecmtask[i].rc = 100; //Mark unused
+						buf[1] = MSG_CW_NOK2; //So it's really handled like a nok!
+					} else {
+						cc->recv_ecmtask = ecm_idx;
+						cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
+								ecm_idx, cs_hexdump(0, cc->dcw, 16));
+						add_good_sid(cl, card, &srvid);
 					}
-
-					buf[1] = MSG_CW_NOK2; //So it's really handled like a nok!
 				} else {
-					cc->recv_ecmtask = ecm_idx;
-					cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
-							ecm_idx, cs_hexdump(0, cc->dcw, 16));
-					add_good_sid(cl, card, &srvid);
+					cs_log(
+							"%s warning: ECM-CWS respond by CCCam server without current card!",
+							getprefix());
 				}
-			} else {
-				cs_log(
-						"%s warning: ECM-CWS respond by CCCam server without current card!",
-						getprefix());
 			}
 			pthread_mutex_unlock(&cc->cards_busy);
 
@@ -2222,7 +2228,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 	}
 
 	//Reported deleted cards:
-	cc_free_reported_carddata(cl, cc->reported_carddatas, 1);
+	if (!cc->extended_mode) //"O" CCCam needs removed-then add, but in extended mode this could cause "not found" messages
+		cc_free_reported_carddata(cl, cc->reported_carddatas, 1); 
 
 	if (!cc->report_carddata_id)
 		id = 0x64;
@@ -2517,6 +2524,10 @@ int cc_srv_report_cards(struct s_client *cl) {
 	}
 	ll_iter_release(it);
 	cc_free_cardlist(server_cards);
+
+	//Reported deleted cards:
+	if (cc->extended_mode) //"O" CCCam needs removed-then add, but in extended mode this could cause "not found" messages
+		cc_free_reported_carddata(cl, cc->reported_carddatas, 1); 
 
 	cc->report_carddata_id = id;
 	cc->reported_carddatas = reported_carddatas;
