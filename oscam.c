@@ -1353,7 +1353,7 @@ void logCWtoFile(ECM_REQUEST *er)
 void distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
     struct s_client *cl;
     for (cl=first_client; cl; cl=cl->next) {
-        if (cl != client && cl->fd_m2c) {
+        if (cl != client && cl->fd_m2c && (cl->grp&client->grp)) {
             int i;
             ECM_REQUEST *ecmtask = cl->ecmtask;
 	    if (ecmtask)
@@ -1365,15 +1365,18 @@ void distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 	    for (--i; i>=0; i--) {
 	        ECM_REQUEST *ecm = ecmtask+i;
 		if (ecm->rc>=100 
-		    && (cl->grp&client->grp)
 		    && ecm->caid==er->caid  
 		    && memcmp(ecm->ecmd5, er->ecmd5, sizeof(er->ecmd5)) == 0) {
-		       memcpy(ecm->cw, er->cw, sizeof(er->cw));
-		       ecm->caid = ecmtask[i].ocaid;
-		       ecm->selected_reader = er->selected_reader;
-		       ecm->rc = 2; //cache2
+		       //Do not modify original ecm request, use copy!
+		       ECM_REQUEST * new_ecm = malloc(sizeof(ECM_REQUEST));
+		       memcpy(new_ecm, ecm, sizeof(ECM_REQUEST));
+		       memcpy(new_ecm->cw, er->cw, sizeof(er->cw));
+		       new_ecm->caid = ecm->ocaid;
+		       new_ecm->selected_reader = er->selected_reader;
+		       new_ecm->rc = 2; //cache2
 	
-		       write_ecm_request(cl->fd_m2c, ecm);
+		       write_ecm_request(cl->fd_m2c, new_ecm);
+		       free(new_ecm);
 		    }
 	    }
         }
