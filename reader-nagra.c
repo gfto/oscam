@@ -784,9 +784,7 @@ static int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 int nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
 	unsigned long provid = (ep->emm[10] << 8) | ep->emm[11];
-
-	ep->provid[2] = (uchar)(provid>>8);
-	ep->provid[3] = (uchar)(provid);
+	memcpy(ep->provid, i2b(4, provid), 4);
 
 	switch (ep->emm[0]) {
 		case 0x83:

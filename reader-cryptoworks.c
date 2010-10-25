@@ -370,6 +370,8 @@ static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return((r==3) ? 1 : 0);
 }
 
+static unsigned long cryptoworks_get_emm_provid(unsigned char *buffer, int len);
+
 static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
   char dumprdrserial[18];
@@ -382,6 +384,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 5);
 				strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 5));
+				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNIQUE, ep = %s rdr = %s", 
 					      cs_hexdump(1, ep->hexserial, 5), dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 5)); // check for serial
@@ -393,6 +396,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 4);
 				strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 4));
+				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: SHARED, ep = %s rdr = %s", 
 					      cs_hexdump(1, ep->hexserial, 4), dumprdrserial);
 				return (!memcmp(ep->emm + 5, rdr->hexserial, 4)); // check for SA
@@ -403,6 +407,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 			   && ep->emm[6]==0x01 && ep->emm[8]==0x85) {
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: GLOBAL");
 				ep->type = GLOBAL;
+				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8)), 4);
 				return TRUE;
 			}
 			break;
@@ -411,6 +416,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
   	 		if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[8]==0x83 && ep->emm[9]==0x01) {
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: GLOBAL");
 				ep->type = GLOBAL;
+				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8)), 4);
 				return TRUE;
 			}
 			break;
@@ -420,10 +426,13 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 			switch(ep->emm[4]) {
 				case 0x44:
+					memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8)), 4);
 					ep->type = GLOBAL; break;
 				case 0x48:
+					memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
 					ep->type = SHARED; break;		
 				case 0x42:
+					memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
 					ep->type = UNIQUE; break;
 			}
 			return TRUE;
@@ -611,6 +620,128 @@ static int cryptoworks_card_info(struct s_reader * reader)
   cs_log("[cryptoworks-reader] ready for requests");
   return OK;
 }
+
+#ifdef HAVE_DVBAPI
+static void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int len)
+{
+    int w=0, c=-1, j=0;
+    while(1) {
+        int n=0x100;
+        for(j=0; j<len;) {
+            int l=src[j+1]+2;
+            if(src[j]==c) {
+                if(w+l>len) {
+                    cs_debug("sortnanos: sanity check failed. Exceeding memory area. Probably corrupted nanos!");
+                    memset(dest,0,len); // zero out everything
+                    return;
+                }
+                memcpy(&dest[w],&src[j],l);
+                w+=l;
+            }
+            else if(src[j]>c && src[j]<n)
+                n=src[j];
+            j+=l;
+        }
+        if(n==0x100) break;
+        c=n;
+    }
+}
+
+static unsigned long cryptoworks_get_emm_provid(unsigned char *buffer, int len)
+{
+    unsigned long provid=0;
+    int i=0;
+    
+    for(i=0; i<len;) {
+        switch (buffer[i]) {
+            case 0x83:
+                provid=buffer[i+2] & 0xfc;
+                return provid;
+                break;
+            default:
+                i+=buffer[i+1]+2;
+                break;
+        }
+        
+    }
+    return provid;
+}
+
+
+void cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
+	static uchar emm_global[512];
+	static int emm_global_len = 0;
+	int emm_len = 0;
+
+	// Cryptoworks
+	//   Cryptoworks EMM-S have to be assembled by the client from an EMM-SH with table
+	//   id 0x84 and a corresponding EMM-SB (body) with table id 0x86. A pseudo EMM-S
+	//   with table id 0x84 has to be build containing all nano commands from both the
+	//    original EMM-SH and EMM-SB in ascending order.
+	// 
+	if (*len>500) return;
+	
+	switch (buffer[0]) {
+		case 0x82 : // emm-u
+			cs_debug("cryptoworks unique emm (EMM-U): %s" , cs_hexdump(1, buffer, *len));
+			break;
+
+		case 0x84: // emm-sh
+			cs_debug("cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(1, buffer, *len));
+			if (!memcmp(emm_global, buffer, *len)) return;
+			memcpy(emm_global, buffer, *len);
+			emm_global_len=*len;
+			return;
+
+		case 0x86: // emm-sb
+			cs_debug("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, *len));
+			if (!emm_global_len) return;
+
+			// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
+			// now we need to append the payload of the 0x86 emm (EMM-SB)
+			// starting after the header (&buffer[5])
+			// then the rest of the payload from EMM-SH
+			// so we should have :
+			// EMM-SH[0:12] + EMM-SB[5:len_EMM-SB] + EMM-SH[12:EMM-SH_len]
+			// then sort the nano in ascending order
+			// update the emm len (emmBuf[1:2])
+			//
+
+			emm_len=*len-5 + emm_global_len-12;
+			unsigned char *tmp=malloc(emm_len);
+			unsigned char *assembled_EMM=malloc(emm_len+12);
+			memcpy(tmp,&buffer[5], *len-5);
+			memcpy(tmp+*len-5,&emm_global[12],emm_global_len-12);
+			memcpy(assembled_EMM,emm_global,12);
+			dvbapi_sort_nanos(assembled_EMM+12,tmp,emm_len);
+
+			assembled_EMM[1]=((emm_len+9)>>8) | 0x70;
+			assembled_EMM[2]=(emm_len+9) & 0xFF;
+			//copy back the assembled emm in the working buffer
+			memcpy(buffer, assembled_EMM, emm_len+12);
+			*len=emm_len+12;
+
+			free(tmp);
+			free(assembled_EMM);
+
+			emm_global_len=0;
+
+			cs_debug("cryptoworks shared emm (assembled): %s" , cs_hexdump(1, buffer, emm_len+12));
+			if(assembled_EMM[11]!=emm_len) { // sanity check
+				// error in emm assembly
+				cs_debug("Error assembling Cryptoworks EMM-S");
+				return;
+			}
+			break;
+				
+		case 0x88: // emm-g
+		case 0x89: // emm-g
+			cs_debug("cryptoworks global emm (EMM-G): %s" , cs_hexdump(1, buffer, *len));
+			break;
+				
+	}    
+}
+#endif
 
 void reader_cryptoworks(struct s_cardsystem *ph) 
 {

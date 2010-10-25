@@ -429,7 +429,13 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 static int viaccess_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
+	ulong provid=0;
 	cs_debug_mask(D_EMM, "Entered viaccess_get_emm_type ep->emm[0]=%02x",ep->emm[0]);
+
+	if (ep->emm[3] == 0x90 && ep->emm[4] == 0x03) {
+		provid = ep->emm[5] << 16 | ep->emm[6] << 8 | (ep->emm[7] & 0xFE);
+		memcpy(ep->provid, i2b(4, provid), 4);
+	}
 
 	switch (ep->emm[0]) {
 		case 0x88:
@@ -811,6 +817,75 @@ static int viaccess_card_info(struct s_reader * reader)
   //return ERROR;
   return OK;
 }
+
+#ifdef HAVE_DVBAPI
+void viaccess_reassemble_emm(uchar *buffer, uint *len) {
+	static uchar emm_global[512];
+	static int emm_global_len = 0;
+
+	int pos, emm_len = 0, k;
+	uchar emmbuf[512];
+
+	// Viaccess
+	if (*len>500) return;
+
+	switch(buffer[0]) {
+		case 0x8c:
+		case 0x8d:
+			// emm-s part 1
+			if (!memcmp(emm_global, buffer, *len))
+				return;
+
+			//cs_log("viaccess global emm_provid: %06X provid: %06X", emm_provid, provider);
+
+			// copy first part of the emm-s
+			memcpy(emm_global, buffer, *len);
+			emm_global_len=*len;
+			//cs_ddump(buffer, len, "viaccess global emm:");
+			return;
+					
+		case 0x8e:
+			// emm-s part 2
+			if (!emm_global_len) return;
+
+			if (buffer[6]!=0x00) return;
+					   
+			memcpy(emmbuf, buffer, 7);
+			pos=7;
+
+			for (k=3; k<emm_global[2]+2 && k<emm_global_len; k += emm_global[k+1]+2) {
+				if (emm_global[k]!=0x90) continue;
+				memcpy(emmbuf+pos, emm_global+k, emm_global[k+1]+2);
+				pos += emm_global[k+1]+2;
+			}
+
+			memcpy(emmbuf+pos, "\x9E\x20", 2);
+			memcpy(emmbuf+pos+2, buffer+7, 32);
+			pos+=34;
+
+			int found=0;
+			for (k=8; k<emm_global[2]+2 && k<emm_global_len; k += emm_global[k+1]+2) {
+				if (emm_global[k] == 0xA1 || emm_global[k] == 0xA8 || emm_global[k] == 0xA9 || emm_global[k] == 0xB6) {
+					memcpy(emmbuf+pos, emm_global+k, emm_global[k+1]+2);
+					pos += emm_global[k+1]+2;
+					found=1;
+				}
+			}
+			if (found==0) return;
+
+			memcpy(emmbuf+pos, "\xF0\x08", 2);
+			memcpy(emmbuf+pos+2, buffer+39, 8);
+			pos+=10;
+
+			emm_len=pos;
+			emmbuf[2]=emm_len-3;
+			cs_ddump(buffer, *len, "original emm:");
+			memcpy(buffer, emmbuf, emm_len);
+			*len=emm_len;
+			break;
+	}
+}
+#endif
 
 void reader_viaccess(struct s_cardsystem *ph) 
 {
