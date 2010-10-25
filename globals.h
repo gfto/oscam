@@ -263,6 +263,8 @@ typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef unsigned long long uint64;
 
+int server_pid; //alno: PID of server - set while startup
+
 // constants
 #define CTA_RES_LEN 512
 

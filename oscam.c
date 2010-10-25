@@ -2736,6 +2736,8 @@ char * get_tmp_dir()
 int main (int argc, char *argv[])
 {
 
+server_pid = getpid();
+
 if (pthread_key_create(&getclient, NULL)) {
   fprintf(stderr, "Could not create getclient, exiting...");
   exit(1);
