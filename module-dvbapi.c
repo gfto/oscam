@@ -444,6 +444,8 @@ void dvbapi_set_pid(int demux_id, int num, int index) {
 void dvbapi_stop_descrambling(int demux_id) {
 	int i;
 
+	if (demux[demux_id].program_number==0) return;
+
 	cs_debug("stop descrambling (demux_id: %d)", demux_id);
 	
 	dvbapi_stop_filter(demux_id, TYPE_ECM);
@@ -1569,7 +1571,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 			if (j==demux[i].ECMpidcount) continue;
 
 #ifdef WITH_STAPI
-			stapi_write_cw(i, er->cw);
+			stapi_write_cw(i, er->cw, demux[i].STREAMpids, demux[i].STREAMpidcount);
 #else
 			dvbapi_write_cw(i, er->cw, demux[i].ECMpids[j].index-1);
 #endif

@@ -62,10 +62,6 @@ typedef struct filter_s
 	int pid;
 	ushort type;
 	int count;
-#ifdef WITH_STAPI
-	uint	SlotHandle;
-	uint  	BufferHandle;
-#endif
 } FILTERTYPE;
 
 typedef struct demux_s
@@ -90,9 +86,6 @@ typedef struct demux_s
 	struct s_reader *rdr;
 	char pmt_file[50];
 	int pmt_time;
-#ifdef WITH_STAPI
-	uint STREAMhandle[ECM_PIDS];
-#endif
 } DEMUXTYPE;
 
 struct s_dvbapi_priority
@@ -183,13 +176,12 @@ typedef struct ca_pid {
 #ifdef WITH_STAPI
 void *stapi_read_thread(void *);
 void stapi_off(int);
-int stapi_write_cw(int demux_id, uchar *cw);
 int stapi_get_device(int demux_id, int pid);
 int stapi_open();
 int stapi_set_filter(int demux_id, ushort pid, uchar *filter, uchar *mask, int num);
 int stapi_remove_filter(int demux_id, int num);
 int stapi_set_pid(int demux_id, int num, int index);
-int stapi_write_cw(int demux_id, uchar *cw);
+int stapi_write_cw(int demux_id, uchar *cw, ushort *, int);
 #endif
 
 void dvbapi_stop_descrambling(int);
