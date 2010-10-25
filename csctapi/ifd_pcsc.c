@@ -156,7 +156,7 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
     }
     
     
-    cs_debug("PCSC getting ATR for card in (%s)", pcsc_reader->pcsc_name);
+    cs_log("PCSC getting ATR for card in (%s) %d", pcsc_reader->pcsc_name, pcsc_reader->hCard);
     rv = SCardStatus(pcsc_reader->hCard,NULL, &dwReaderLen, &dwState, &pcsc_reader->dwActiveProtocol, pbAtr, &dwAtrLen);
     if ( rv == SCARD_S_SUCCESS ) {
         cs_debug("PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
@@ -194,7 +194,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
             // no card in reader
             pcsc_reader->pcsc_has_card=0;
             if(pcsc_reader->hCard) {
-                SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
+//                //SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
                 pcsc_reader->hCard=0;
             }
             // cs_debug("PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
@@ -226,7 +226,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
         return CARD_INSERTED;
     } 
     else {
-        SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
+        //SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
         pcsc_reader->hCard=0;
         pcsc_reader->pcsc_has_card=0;
     }
@@ -237,7 +237,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 void pcsc_close(struct s_reader *pcsc_reader)
 {
 	cs_debug_mask (D_IFD, "PCSC : Closing device %s", pcsc_reader->device);
-    SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
+    //SCardDisconnect(pcsc_reader->hCard,SCARD_RESET_CARD);
     SCardReleaseContext(pcsc_reader->hContext);
     pcsc_reader->hCard=0;
     pcsc_reader->pcsc_has_card=0;
