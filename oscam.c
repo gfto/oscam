@@ -921,8 +921,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 		//client[i].ctyp=99;
 		pthread_attr_t attr;
 		pthread_attr_init(&attr);
-#if !defined(TUXBOX) && !defined(HAVE_PCSC) 
-        /* pcsc doesn't like this either - causes segfault on x86, x86_64 */
+#ifndef TUXBOX
 		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
 		pthread_create(&cl->thread, &attr, start_cardreader, (void *)rdr);
