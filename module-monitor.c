@@ -409,23 +409,23 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 }
 
 
-static void monitor_process_details_reader(unsigned long tid) {
+static void monitor_process_details_reader(struct s_client *cl) {
 
 	if (cfg->saveinithistory) {
 		FILE *fp;
 		char filename[32];
 		char buffer[128];
-		sprintf(filename, "%s/reader%d", get_tmp_dir(), get_ridx(cur_client()->reader));
+		sprintf(filename, "%s/reader%d", get_tmp_dir(), get_ridx(cl->reader));
 		fp = fopen(filename, "r");
 
 		if (fp) {
 			while(fgets(buffer, 128, fp) != NULL) {
-				monitor_send_details(buffer, tid);
+				monitor_send_details(buffer, cl->thread);
 			}
 			fclose(fp);
 		}
 	} else {
-		monitor_send_details("Missing reader index or entitlement not saved!", tid);
+		monitor_send_details("Missing reader index or entitlement not saved!", cl->thread);
 	}
 
 }
@@ -458,7 +458,7 @@ static void monitor_process_details(char *arg){
 			monitor_send_details(monitor_client_info(1, cl), cl->thread);
 			break;
 		case 'r':
-			monitor_process_details_reader(tid);//with client->typ='r' client->ridx is always filled and valid, so no need checking
+			monitor_process_details_reader(cl);//with client->typ='r' client->ridx is always filled and valid, so no need checking
 			break;
 		case 'p':
 			monitor_send_details(monitor_client_info(1, cl), cl->thread);
