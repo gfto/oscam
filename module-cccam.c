@@ -883,22 +883,34 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		struct cc_card *ncard;
 		while ((ncard = ll_iter_next(it))) {
 			if (ncard->caid == cur_er->caid) { // caid matches
-				int s = is_sid_blocked(ncard, &cur_srvid);
-
-				LL_ITER *it2 = ll_iter_create(ncard->providers);
-				struct cc_provider *provider;
-				while ((provider = ll_iter_next(it2)) && !s) {
-					if (!cur_er->prid || !provider->prov || provider->prov
-							== cur_er->prid) { // provid matches
-						if (h < 0 || ncard->hop < h || (ncard->hop == h
-								&& cc_UA_valid(ncard->hexserial))) {
-							// ncard is closer
-							card = ncard;
-							h = ncard->hop; // ncard has been matched
+				if (is_sid_blocked(ncard, &cur_srvid))
+					continue;
+				
+				if (!ncard->providers || !ncard->providers->initial) { //card has no providers:
+					if (h < 0 || ncard->hop < h || (ncard->hop == h
+							&& cc_UA_valid(ncard->hexserial))) {
+						// ncard is closer
+						card = ncard;
+						h = ncard->hop; // ncard has been matched
+					}
+					
+				}
+				else { //card has providers
+					LL_ITER *it2 = ll_iter_create(ncard->providers);
+					struct cc_provider *provider;
+					while ((provider = ll_iter_next(it2))) {
+						if (!cur_er->prid || !provider->prov || provider->prov
+								== cur_er->prid) { // provid matches
+							if (h < 0 || ncard->hop < h || (ncard->hop == h
+									&& cc_UA_valid(ncard->hexserial))) {
+								// ncard is closer
+								card = ncard;
+								h = ncard->hop; // ncard has been matched
+							}
 						}
 					}
+					ll_iter_release(it2);
 				}
-				ll_iter_release(it2);
 			}
 		}
 		ll_iter_release(it);
