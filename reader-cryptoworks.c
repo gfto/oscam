@@ -621,6 +621,26 @@ static int cryptoworks_card_info(struct s_reader * reader)
   return OK;
 }
 
+static unsigned long cryptoworks_get_emm_provid(unsigned char *buffer, int len)
+{
+    unsigned long provid=0;
+    int i=0;
+    
+    for(i=0; i<len;) {
+        switch (buffer[i]) {
+            case 0x83:
+                provid=buffer[i+2] & 0xfc;
+                return provid;
+                break;
+            default:
+                i+=buffer[i+1]+2;
+                break;
+        }
+        
+    }
+    return provid;
+}
+
 #ifdef HAVE_DVBAPI
 static void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int len)
 {
@@ -646,27 +666,6 @@ static void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int
         c=n;
     }
 }
-
-static unsigned long cryptoworks_get_emm_provid(unsigned char *buffer, int len)
-{
-    unsigned long provid=0;
-    int i=0;
-    
-    for(i=0; i<len;) {
-        switch (buffer[i]) {
-            case 0x83:
-                provid=buffer[i+2] & 0xfc;
-                return provid;
-                break;
-            default:
-                i+=buffer[i+1]+2;
-                break;
-        }
-        
-    }
-    return provid;
-}
-
 
 void cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
 	static uchar emm_global[512];
