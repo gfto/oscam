@@ -430,7 +430,9 @@ void dvbapi_set_pid(int demux_id, int num, int index) {
 						ca_pid2.pid = demux[demux_id].STREAMpids[num];
 						ca_pid2.index = index;
 						if (ioctl(ca_fd[i], CA_SET_PID, &ca_pid2)==-1)
-							cs_debug("Error Stream SET_PID");
+							cs_debug("Error CA_SET_PID pid=0x%04x index=%d errno=%d", ca_pid2.pid, ca_pid2.index, errno);
+						else
+							cs_debug("CA_SET_PID pid=0x%04x index=%d", ca_pid2.pid, ca_pid2.index);
 					}
 				}
 			}
@@ -463,6 +465,8 @@ void dvbapi_start_descrambling(int demux_id) {
 	int j,k;
 	int streamcount=0;
 
+	demux[demux_id].pidindex = demux[demux_id].curindex;
+
 	for (j=0; j<demux[demux_id].ECMpidcount; j++) {
 		if (demux[demux_id].curindex == j || (demux[demux_id].ECMpids[demux[demux_id].curindex].CAID == demux[demux_id].ECMpids[j].CAID 
 				&& demux[demux_id].ECMpids[demux[demux_id].curindex].PROVID == demux[demux_id].ECMpids[j].PROVID 
@@ -487,8 +491,6 @@ void dvbapi_start_descrambling(int demux_id) {
 	}
 
 	cs_log("Start descrambling PID #%d (CAID: %04X) %d", demux[demux_id].curindex, demux[demux_id].ECMpids[demux[demux_id].curindex].CAID, streamcount);
-
-	demux[demux_id].pidindex = demux[demux_id].curindex;
 			
 	if (cfg->dvbapi_au==1)
 		dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x01, 0xFF, 0, TYPE_EMM); //CAT
