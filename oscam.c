@@ -1513,15 +1513,6 @@ static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int rc)
 	add_stat(rdr, er->caid, er->prid, er->srvid, time, rc);
 }
 
-static int hexserialset(struct s_reader *rdr)
-{
-	int i;
-	for (i = 0; i < 8; i++)
-		if (rdr->hexserial[i])
-			return 1;
-	return 0;
-}
-
 // rc codes:
 // 0 = found
 // 1 = cache1

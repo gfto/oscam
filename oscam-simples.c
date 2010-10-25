@@ -917,3 +917,15 @@ uchar fast_rnd() {
 void init_rnd() {
 	 seed = (unsigned int) time((time_t*)0);
 }
+
+int hexserialset(struct s_reader *rdr)
+{
+	int i;
+
+	if (!rdr) return 0;
+
+	for (i = 0; i < 8; i++)
+		if (rdr->hexserial[i])
+			return 1;
+	return 0;
+}

@@ -46,6 +46,7 @@ typedef struct ECMPIDS
 	unsigned short EMM_PID;
 	int irdeto_numchids;
 	int irdeto_curchid;
+	int irdeto_chid;
 	int checked;
 	int status;
 	unsigned char table;
