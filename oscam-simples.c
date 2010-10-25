@@ -448,7 +448,7 @@ ullong b2ll(int n, uchar *b)
 
 uchar *i2b(int n, ulong i)
 {
-  static uchar b[4];
+  uchar *b = cur_client()->dump;
   switch(n)
   {
     case 2:
