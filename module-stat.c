@@ -2,7 +2,7 @@
 #include "module-stat.h"
 
 #define UNDEF_AVG_TIME 80000
-#define MAX_ECM_SEND_CACHE 8
+#define MAX_ECM_SEND_CACHE 16
 
 #define DEFAULT_REOPEN_SECONDS 900
 #define DEFAULT_MIN_ECM_COUNT 5
@@ -16,6 +16,7 @@ static struct timeb nulltime;
 int ecm_send_cache_idx = 0;
 typedef struct s_ecm_send_cache {
    ushort        caid;
+   uint64        grp;
    uchar         ecmd5[CS_ECMSTORESIZE];            
    int           readers[CS_MAXREADER];
    struct s_reader * best_rdr;
@@ -47,23 +48,24 @@ void init_stat()
 	pthread_mutex_init(&stat_busy, &mta);
 }
 
-int chk_send_cache(int caid, uchar *ecmd5)
+int chk_send_cache(int caid, uchar *ecmd5, uint64 grp)
 {
 	int i;
 	for (i=0; i<MAX_ECM_SEND_CACHE; i++) {
-		if (ecm_send_cache[i].caid == caid && 
+		if (ecm_send_cache[i].caid == caid && (grp&ecm_send_cache[i].grp) && 
 		  memcmp(ecm_send_cache[i].ecmd5, ecmd5, sizeof(uchar)*CS_ECMSTORESIZE) == 0)
 			return i;
 	}
 	return -1;
 }
 
-void add_send_cache(int caid, uchar *ecmd5, int *readers, struct s_reader *best_rdr)
+void add_send_cache(int caid, uchar *ecmd5, int *readers, struct s_reader *best_rdr, uint64 grp)
 {
 	ecm_send_cache[ecm_send_cache_idx].caid = caid;
 	memcpy(ecm_send_cache[ecm_send_cache_idx].ecmd5, ecmd5, sizeof(uchar)*CS_ECMSTORESIZE);
 	memcpy(ecm_send_cache[ecm_send_cache_idx].readers, readers, sizeof(int)*CS_MAXREADER);
 	ecm_send_cache[ecm_send_cache_idx].best_rdr = best_rdr;
+	ecm_send_cache[ecm_send_cache_idx].grp = grp;
 	ecm_send_cache_idx++;
 	if (ecm_send_cache_idx >= MAX_ECM_SEND_CACHE)
 		ecm_send_cache_idx = 0;
@@ -339,7 +341,7 @@ int get_best_reader(ECM_REQUEST *er)
 {
 	pthread_mutex_lock(&stat_busy);
 	int i;
-	i = chk_send_cache(er->caid, er->ecmd5);
+	i = chk_send_cache(er->caid, er->ecmd5, er->client->grp);
 	if (i >= 0) { //Found in cache, return same reader because he has the cached cws!
 		memcpy(er->matching_rdr, ecm_send_cache[i].readers, sizeof(int)*CS_MAXREADER);
 		struct s_reader * best_rdr = ecm_send_cache[i].best_rdr;
@@ -514,7 +516,7 @@ int get_best_reader(ECM_REQUEST *er)
 		er->matching_rdr[8], er->matching_rdr[9], er->matching_rdr[10], er->matching_rdr[11], 
 		er->matching_rdr[12], er->matching_rdr[13], er->matching_rdr[14], er->matching_rdr[15]);
 #endif	
-	add_send_cache(er->caid, er->ecmd5, er->matching_rdr, best_rdr); //add to cache
+	add_send_cache(er->caid, er->ecmd5, er->matching_rdr, best_rdr, er->client->grp); //add to cache
 	
 	if (new_nulltime.time)
 		nulltime = new_nulltime;

@@ -1351,14 +1351,15 @@ void logCWtoFile(ECM_REQUEST *er)
 /**
  * Notifies all the other clients waiting for the same request
  **/
-void distribute_ecm(ECM_REQUEST *er) {
+int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
     struct s_client *cl;
     ECM_REQUEST *ecm;
+    int res = 0;
     
     cs_debug_mask(D_TRACE, "start distribute ecm from %s", er->selected_reader->label);
     
     for (cl=first_client; cl; cl=cl->next) {
-        if (cl != er->client && cl->fd_m2c && (cl->grp&er->client->grp)) {
+        if (cl->fd_m2c && (cl->grp&er->client->grp)) {
             int i;
             ECM_REQUEST *ecmtask = cl->ecmtask;
 	    if (ecmtask)
@@ -1378,15 +1379,19 @@ void distribute_ecm(ECM_REQUEST *er) {
 		       memcpy(new_ecm->cw, er->cw, sizeof(er->cw));
 		       new_ecm->caid = ecm->ocaid;
 		       new_ecm->selected_reader = er->selected_reader;
-		       new_ecm->rc = 2; //cache2
+		      
+		       new_ecm->rc = er->rc; 
+		       if (er->rc == 1 && cl!=client)
+			       new_ecm->rc = 2; //cache2
 	
 		       cs_debug_mask(D_TRACE, "distribute ecm to %s", cl->reader?cl->reader->label:username(cl));
-		       write_ecm_request(cl->fd_m2c, new_ecm);
+		       res = write_ecm_request(cl->fd_m2c, new_ecm);
 		       free(new_ecm);
 		    }
 	    }
         }
     }
+    return res;
 }
 
 int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
@@ -1420,18 +1425,13 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   }
 
   int res=0;
-  if( er->client && er->client->fd_m2c )
-    res = write_ecm_request(er->client->fd_m2c, er);
-    //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
-
-#ifdef CS_WITH_GBOX
-  if (er->rc==1||(er->gbxRidx&&er->rc==0)) {
-#else
-  if (er->rc==1) {
-#endif
-    //Wie got an ECM. Now we should check for another clients waiting for it:
+  if( er->client && er->client->fd_m2c ) {
+    //Wie got an ECM (or nok). Now we should check for another clients waiting for it:
     if (cfg->lb_mode)
-      distribute_ecm(er);
+      res = distribute_ecm(er->client, er);
+    else
+      res = write_ecm_request(er->client->fd_m2c, er);
+    //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
   }
     
   return res;
