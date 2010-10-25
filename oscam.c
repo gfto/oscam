@@ -1351,11 +1351,14 @@ void logCWtoFile(ECM_REQUEST *er)
 /**
  * Notifies all the other clients waiting for the same request
  **/
-void distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
-    cs_debug_mask(D_TRACE, "start distribute ecm from %s", er->selected_reader->label);
+void distribute_ecm(ECM_REQUEST *er) {
     struct s_client *cl;
+    ECM_REQUEST *ecm;
+    
+    cs_debug_mask(D_TRACE, "start distribute ecm from %s", er->selected_reader->label);
+    
     for (cl=first_client; cl; cl=cl->next) {
-        if (cl != client && cl->fd_m2c && (cl->grp&client->grp)) {
+        if (cl != er->client && cl->fd_m2c && (cl->grp&er->client->grp)) {
             int i;
             ECM_REQUEST *ecmtask = cl->ecmtask;
 	    if (ecmtask)
@@ -1365,10 +1368,10 @@ void distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 
 	    // check all pending ecm-requests:
 	    for (--i; i>=0; i--) {
-	        ECM_REQUEST *ecm = ecmtask+i;
+	        ecm = &ecmtask[i];
 		if (ecm->rc>=100 
 		    && (ecm->caid==er->caid || ecm->ocaid==er->ocaid) 
-		    && memcmp(ecm->ecmd5, er->ecmd5, sizeof(er->ecmd5)) == 0) {
+		    && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE) == 0) {
 		       //Do not modify original ecm request, use copy!
 		       ECM_REQUEST * new_ecm = malloc(sizeof(ECM_REQUEST));
 		       memcpy(new_ecm, ecm, sizeof(ECM_REQUEST));
@@ -1428,7 +1431,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 #endif
     //Wie got an ECM. Now we should check for another clients waiting for it:
     if (cfg->lb_mode)
-      distribute_ecm(reader->client, er);
+      distribute_ecm(er);
   }
     
   return res;
