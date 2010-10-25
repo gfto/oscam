@@ -1352,6 +1352,7 @@ void logCWtoFile(ECM_REQUEST *er)
  * Notifies all the other clients waiting for the same request
  **/
 void distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
+    cs_debug_mask(D_TRACE, "start distribute ecm from %s", er->selected_reader->label);
     struct s_client *cl;
     for (cl=first_client; cl; cl=cl->next) {
         if (cl != client && cl->fd_m2c && (cl->grp&client->grp)) {
@@ -1366,7 +1367,7 @@ void distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 	    for (--i; i>=0; i--) {
 	        ECM_REQUEST *ecm = ecmtask+i;
 		if (ecm->rc>=100 
-		    && ecm->caid==er->caid  
+		    && (ecm->caid==er->caid || ecm->ocaid==er->ocaid) 
 		    && memcmp(ecm->ecmd5, er->ecmd5, sizeof(er->ecmd5)) == 0) {
 		       //Do not modify original ecm request, use copy!
 		       ECM_REQUEST * new_ecm = malloc(sizeof(ECM_REQUEST));
@@ -1376,6 +1377,7 @@ void distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 		       new_ecm->selected_reader = er->selected_reader;
 		       new_ecm->rc = 2; //cache2
 	
+		       cs_debug_mask(D_TRACE, "distribute ecm to %s", cl->reader?cl->reader->label:username(cl));
 		       write_ecm_request(cl->fd_m2c, new_ecm);
 		       free(new_ecm);
 		    }
