@@ -1857,28 +1857,35 @@ void cs_betatunnel(ECM_REQUEST *er)
 	int n;
 	struct s_client *cl = cur_client();
 	ulong mask_all = 0xFFFF;
+	uchar headerN3[11] = {0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12, 0x07};
+	uchar headerN2[11] = {0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12, 0x07};
 	TUNTAB *ttab;
 	ttab = &cl->ttab;
+
 	for (n = 0; (n < CS_MAXTUNTAB); n++) {
 		if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all)) {
-			uchar hack_n3[11] = {0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12, 0x07};
-			uchar hack_n2[11] = {0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12, 0x07};
+
 			er->caid = ttab->bt_caidto[n];
 			er->prid = 0;
 			er->l = er->ecm[2] + 3;
-			memmove(er->ecm + 14, er->ecm + 4, er->l);
+
+			memmove(er->ecm + 14, er->ecm + 4, er->l - 4);
+
 			if (er->l > 0x88) {
-				memcpy(er->ecm + 3, hack_n3, 11);
+				memcpy(er->ecm + 3, headerN3, 11);
+
 				if (er->ecm[0] == 0x81)
 					er->ecm[12] += 1;
 			}
-			else {
-				memcpy(er->ecm + 3, hack_n2, 11);
-			}
+			else
+				memcpy(er->ecm + 3, headerN2, 11);
+
                         er->l += 10;
 			er->ecm[2] = er->l - 3;
 			er->btun = 1;
+
 			cl->cwtun++;
+
 			cs_debug("ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
 				ttab->bt_caidfrom[n], ttab->bt_caidto[n], ttab->bt_srvid[n]);
 		}
