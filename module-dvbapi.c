@@ -994,7 +994,12 @@ int dvbapi_init_listenfd() {
 		return 0;
 	if (listen(listenfd, 5) < 0)
 		return 0;
-
+    // change the access right on the camd.socket 
+    // this will allow oscam to run as root if needed
+    // and still allow non root client to connect to the socket
+    
+    chmod(devices[selected_box].cam_socket_path, S_IRWXU | S_IRWXG | S_IRWXO);
+    
 	return listenfd;
 }
 
