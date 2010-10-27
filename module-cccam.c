@@ -1571,6 +1571,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		uint8 *remote_id;
 		while ((remote_id = ll_iter_next(it))) {
 			if (memcmp(remote_id, cc_node_id, sizeof(cc_node_id)) == 0) { //this card is from us!
+				cs_debug_mask(D_TRACE, "filtered card because of recursive nodeid: id=%08X, caid=%04X", card->id, card->caid);
 				cc_free_card(card);
 				card=NULL;
 				break;
@@ -3134,6 +3135,7 @@ void module_cccam(struct s_module *ph) {
 	ph->num = R_CCCAM;
 
 	//Partner Detection:
+	init_rnd();
 	uint16 sum = 0x1234; //This is our checksum 
 	int i;
 	for (i = 0; i < 6; i++) {
