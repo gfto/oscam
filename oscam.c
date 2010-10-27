@@ -1359,7 +1359,7 @@ int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
     cs_debug_mask(D_TRACE, "start distribute ecm from %s", er->selected_reader->label);
     
     for (cl=first_client; cl; cl=cl->next) {
-        if (cl->fd_m2c && cl->typ='c' && (cl->grp&er->client->grp)) {
+        if (cl->fd_m2c && cl->typ=='c' && (cl->grp&er->client->grp)) {
             int i;
             ECM_REQUEST *ecmtask = cl->ecmtask;
 	    if (ecmtask)
