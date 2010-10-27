@@ -10,7 +10,7 @@
 #define DEFAULT_NBEST 1
 #define DEFAULT_NFB 1
 
-static int stat_load_save = -100;
+static int stat_load_save;
 static struct timeb nulltime;
 
 int ecm_send_cache_idx = 0;
@@ -28,6 +28,7 @@ void init_stat()
 	ecm_send_cache = malloc(sizeof(ECM_SEND_CACHE)*MAX_ECM_SEND_CACHE);
 	memset(ecm_send_cache, 0, sizeof(ECM_SEND_CACHE)*MAX_ECM_SEND_CACHE);
 	cs_ftime(&nulltime);
+	stat_load_save = -100;
 
 	//checking config
 	if (cfg->lb_nbest_readers < 2)
@@ -86,18 +87,25 @@ void load_stat_from_file()
 	char buf[256];
 	sprintf(buf, "%s/stat", get_tmp_dir());
 	FILE *file = fopen(buf, "r");
-	if (!file)
+	if (!file) {
+		cs_log("can't read from file %s", buf);
 		return;
-
+	}
+	cs_debug_mask(D_TRACE, "loadbalancer load statistics from %s", buf);
+	
 	struct s_reader *rdr = NULL;
-	int i=0;
+	int i=1;
+	int count=0;
 	do
 	{
+		
 		READER_STAT *stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
-		i = fscanf(file, "[%s] rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
+		i = fscanf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
 			buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
 			&stat->time_avg, &stat->ecm_count, &stat->last_received);
+			
+		
 		if (i > 5) {
 			if (rdr == NULL || strcmp(buf, rdr->label) != 0) {
 				for (rdr=first_reader; rdr ; rdr=rdr->next) {
@@ -111,14 +119,22 @@ void load_stat_from_file()
 				if (!rdr->lb_stat)
 					rdr->lb_stat = ll_create();
 				ll_append(rdr->lb_stat, stat);
+				count++;
 			}
-			else
+			else 
+			{
 				cs_log("loadbalancer statistics could not be loaded for %s", buf);
+				free(stat);
+			}
 		}
-		else
+		else 
+		{
+			cs_debug_mask(D_TRACE, "loadbalancer statistics ERROR  %s rc=%d i=%d", buf, stat->rc, i);
 			free(stat);
+		}
 	} while(i != EOF && i > 0);
 	fclose(file);
+	cs_debug_mask(D_TRACE, "loadbalancer statistic loaded %d records", count);
 }
 /**
  * get statistic values for reader ridx and caid/prid/srvid
@@ -193,24 +209,28 @@ void calc_stat(READER_STAT *stat)
 void save_stat_to_file()
 {
 	pthread_mutex_lock(&stat_busy);
+	stat_load_save = 0;
 	char fname[256];
 	sprintf(fname, "%s/stat", get_tmp_dir());
 
 	FILE *file = fopen(fname, "w");
 	if (!file) {
+		cs_log("can't write to file %s", fname);
 		pthread_mutex_unlock(&stat_busy);
 		return;
 	}
 
+	int count=0;
 	struct s_reader *rdr;
 	for (rdr=first_reader; rdr ; rdr=rdr->next) {
 		if (rdr->lb_stat) {
 			LL_ITER *it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
 			while ((stat = ll_iter_next(it))) {
-				fprintf(file, "[%s] rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
+				fprintf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
 					rdr->label, stat->rc, stat->caid, stat->prid, 
 					stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received);
+				count++;
 			}
 			ll_iter_release(it);
 		}
@@ -218,6 +238,7 @@ void save_stat_to_file()
 	
 	fclose(file);
 	pthread_mutex_unlock(&stat_busy);
+	cs_log("loadbalacer statistic saved %d records", count);
 }
 
 /**
@@ -305,7 +326,6 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 	if (cfg->lb_save) {
 		stat_load_save++;
 		if (stat_load_save > cfg->lb_save) {
-			stat_load_save = 0;
 			save_stat_to_file();
 		}
 	}
