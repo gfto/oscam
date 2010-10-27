@@ -1566,11 +1566,22 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		struct cc_card *card = read_card(buf + 4);
 
-		card->hop++; //inkrementing hop
+		//Check if this card is from us:
+		LL_ITER *it = ll_iter_create(card->remote_nodes);
+		uint8 *remote_id;
+		while ((remote_id = ll_iter_next(it))) {
+			if (memcmp(remote_id, cc_node_id, sizeof(cc_node_id)) == 0) { //this card is from us!
+				cc_free_card(card);
+				card=NULL;
+				break;
+			}
+		}
+		ll_iter_release(it);
+		if (!card)
+			break;
 
-		//SS: Hack:
 		//Check if we already have this card:
-		LL_ITER *it = ll_iter_create(cc->cards);
+		it = ll_iter_create(cc->cards);
 		struct cc_card *old_card;
 		while ((old_card = ll_iter_next(it))) {
 			if (old_card->id == card->id) { //we aready have this card, delete it
@@ -1581,6 +1592,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		}
 		ll_iter_release(it);
 
+		card->hop++; //inkrementing hop
 		card->time = time((time_t) 0);
 		if (!old_card) {
 			ll_append(cc->cards, card);
@@ -1589,14 +1601,14 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		cc->cards_modified++;
 
 		pthread_mutex_unlock(&cc->cards_busy);
-		//SS: Hack end
-	}
+
 		break;
+	}
 
 	case MSG_CARD_REMOVED: {
 		cc_card_removed(cl, b2i(4, buf + 4));
-	}
 		break;
+	}
 
 	case MSG_CW_NOK1:
 	case MSG_CW_NOK2:
