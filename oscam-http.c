@@ -1606,7 +1606,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 	if (cfg->saveinithistory && strlen(reader_) > 0) {
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 
-		if (rdr->typ == R_CCCAM) {
+		if (rdr->typ == R_CCCAM && rdr->enable == 1) {
 
 			int caidcount = 0;
 
