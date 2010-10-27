@@ -431,6 +431,23 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		##USERCONFIGS##\
 		##NEWUSERFORM##\
 		</TABLE><BR>\n\
+		<TH>Totals for the server : </TH>\n\
+		<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+		<TR>\
+		<TH>OK</TH>\n\
+		<TH>NOK</TH>\n\
+		<TH>IGN</TH>\n\
+		<TH>TOUT</TH>\n\
+		<TH>CACHE</TH>\n\
+		<TH>TUN</TH>\n\
+		</TR>\n\
+		<TD align=\"center\">##TOTAL_CWOK##</TD>\n\
+		<TD align=\"center\">##TOTAL_CWNOK##</TD>\n\
+		<TD align=\"center\">##TOTAL_CWIGN##</TD>\n\
+		<TD align=\"center\">##TOTAL_CWTOUT##</TD>\n\
+		<TD align=\"center\">##TOTAL_CWCACHE##</TD>\n\
+		<TD align=\"center\">##TOTAL_CWTUN##</TD>\n\
+		</TABLE><BR>\n\
 		##TPLFOOTER##"
 
 #define TPLADDNEWUSER "\
