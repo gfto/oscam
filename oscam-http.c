@@ -1707,7 +1707,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	struct tm *lt;
 
 	if (strcmp(getParam(params, "action"), "kill") == 0)
-		kill_thread((struct s_client *)atoi(getParam(params, "threadid"))); //FIXME untested
+		kill_thread(get_client_by_tid(atoi(getParam(params, "threadid")))); //FIXME untested
 
 	if (strcmp(getParam(params, "action"), "restart") == 0) {
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
@@ -1726,7 +1726,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	if(getParamDef(params, "hide", NULL)) {
 		uint clidx;
 		clidx = atoi(getParamDef(params, "hide", NULL));
-		struct s_client *hideidx = (struct s_client *)clidx;
+		struct s_client *hideidx = get_client_by_tid(clidx);
 		if(hideidx)
 			hideidx->wihidden = 1;
 	}
@@ -1776,7 +1776,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			lt=localtime(&cl->login);
 
-			tpl_printf(vars, 0, "HIDEIDX", "%d", cl);
+			tpl_printf(vars, 0, "HIDEIDX", "%d", cl->thread);
 			tpl_addVar(vars, 0, "HIDEICON", ICHID);
 			if(cl->typ == 'c' && !cfg->http_readonly) {
 				//tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", i);

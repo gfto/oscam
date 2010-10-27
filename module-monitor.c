@@ -440,7 +440,7 @@ static void monitor_process_details(char *arg){
 		cl = first_client; // no arg - show master
 	else
 		if (sscanf(arg,"%lX",&tid) == 1)
-			cl = idx_from_tid(tid);
+			cl = get_client_by_tid(tid);
 		else
 			cl = NULL;
 

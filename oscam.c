@@ -266,7 +266,7 @@ static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port)
   return NULL;
 }
 
-struct s_client * idx_from_tid(unsigned long tid) //FIXME untested!! no longer pid in output...
+struct s_client * get_client_by_tid(unsigned long tid) //FIXME untested!! no longer pid in output...
 {
   struct s_client *cl; 
   for (cl=first_client; cl ; cl=cl->next)

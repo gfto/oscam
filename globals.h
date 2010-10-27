@@ -1231,7 +1231,7 @@ extern pthread_mutex_t gethostbyname_lock;
 // oscam
 extern int recv_from_udpipe(uchar *);
 extern char* username(struct s_client *);
-extern struct s_client * idx_from_tid(unsigned long);
+extern struct s_client * get_client_by_tid(unsigned long);
 extern int chk_bcaid(ECM_REQUEST *, CAIDTAB *);
 extern void cs_exit(int sig);
 extern int comp_timeb(struct timeb *tpa, struct timeb *tpb);
