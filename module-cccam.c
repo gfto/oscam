@@ -1577,28 +1577,27 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			}
 		}
 		ll_iter_release(it);
-		if (!card)
-			break;
-
-		//Check if we already have this card:
-		it = ll_iter_create(cc->cards);
-		struct cc_card *old_card;
-		while ((old_card = ll_iter_next(it))) {
-			if (old_card->id == card->id) { //we aready have this card, delete it
-				cc_free_card(card);
-				card = old_card;
-				break;
+		if (card) {
+			//Check if we already have this card:
+			it = ll_iter_create(cc->cards);
+			struct cc_card *old_card;
+			while ((old_card = ll_iter_next(it))) {
+				if (old_card->id == card->id) { //we aready have this card, delete it
+					cc_free_card(card);
+					card = old_card;
+					break;
+				}
 			}
-		}
-		ll_iter_release(it);
+			ll_iter_release(it);
 
-		card->hop++; //inkrementing hop
-		card->time = time((time_t) 0);
-		if (!old_card) {
-			ll_append(cc->cards, card);
+			card->hop++; //inkrementing hop
+			card->time = time((time_t) 0);
+			if (!old_card) {
+				ll_append(cc->cards, card);
+			}
+			set_au_data(cl, rdr, card, NULL);
+			cc->cards_modified++;
 		}
-		set_au_data(cl, rdr, card, NULL);
-		cc->cards_modified++;
 
 		pthread_mutex_unlock(&cc->cards_busy);
 
