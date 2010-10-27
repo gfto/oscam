@@ -1876,6 +1876,8 @@ void cs_betatunnel(ECM_REQUEST *er)
 
 				if (er->ecm[0] == 0x81)
 					er->ecm[12] += 1;
+
+				er->ecm[1]=0x70;
 			}
 			else
 				memcpy(er->ecm + 3, headerN2, 10);
@@ -2007,6 +2009,13 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	// Quickfix for 0500:D20200
 	if (er->caid == 0x500 && er->prid == 0xD20200)
 		er->prid = 0x030600; 
+
+	//make sure betacrypt tunneled ecm have the same header for cache
+	if(er->caid==0x1702) {
+		er->ecm[0]=0x80;
+		er->ecm[1]=0x70;
+		er->ecm[12]=0x13;
+	}
 
 	/* END quickfixes */
 
