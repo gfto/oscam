@@ -2010,13 +2010,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if (er->caid == 0x500 && er->prid == 0xD20200)
 		er->prid = 0x030600; 
 
-	//make sure betacrypt tunneled ecm have the same header for cache
-	if(er->caid==0x1702) {
-		er->ecm[0]=0x80;
-		er->ecm[1]=0x70;
-		er->ecm[12]=0x13;
-	}
-
 	/* END quickfixes */
 
 	if (!er->prid)
@@ -2162,7 +2155,11 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			cs_betatunnel(er);
     
 		// store ECM in cache
-		memcpy(er->ecmd5, MD5(er->ecm, er->l, client->dump), CS_ECMSTORESIZE);
+		int offset=3;
+		if (er->caid==0x1702)
+			offset=13;
+
+		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, client->dump), CS_ECMSTORESIZE);
 
 		// cache1
 		if (check_cwcache1(er, client->grp))
