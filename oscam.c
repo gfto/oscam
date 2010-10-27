@@ -1381,7 +1381,7 @@ int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 		       new_ecm->selected_reader = er->selected_reader;
 		      
 		       new_ecm->rc = er->rc; 
-		       if (er->rc == 0 && (cl!=client || er->cpti != new_ecm->cpti))
+		       if (er->rc == 1 && (cl!=client || er->cpti != new_ecm->cpti))
 			       new_ecm->rc = 2; //cache2
 	
 		       cs_debug_mask(D_TRACE, "distribute ecm to %s", cl->reader?cl->reader->label:username(cl));
