@@ -1359,7 +1359,7 @@ int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
     cs_debug_mask(D_TRACE, "start distribute ecm from %s", er->selected_reader->label);
     
     for (cl=first_client; cl; cl=cl->next) {
-        if (cl->fd_m2c && (cl->grp&er->client->grp)) {
+        if (cl->fd_m2c && cl->typ='c' && (cl->grp&er->client->grp)) {
             int i;
             ECM_REQUEST *ecmtask = cl->ecmtask;
 	    if (ecmtask)
@@ -1371,17 +1371,17 @@ int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 	    for (--i; i>=0; i--) {
 	        ecm = &ecmtask[i];
 		if (ecm->rc>=100 
-		    && (ecm->caid==er->caid || ecm->ocaid==er->ocaid) 
+		    && (ecm->caid==er->caid)
 		    && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE) == 0) {
 		       //Do not modify original ecm request, use copy!
 		       ECM_REQUEST * new_ecm = malloc(sizeof(ECM_REQUEST));
 		       memcpy(new_ecm, ecm, sizeof(ECM_REQUEST));
 		       memcpy(new_ecm->cw, er->cw, sizeof(er->cw));
-		       new_ecm->caid = ecm->ocaid;
+		       new_ecm->caid = new_ecm->ocaid;
 		       new_ecm->selected_reader = er->selected_reader;
 		      
 		       new_ecm->rc = er->rc; 
-		       if (er->rc == 1 && cl!=client)
+		       if (er->rc == 1 && (cl!=client || er->cpti != new_ecm->cpti))
 			       new_ecm->rc = 2; //cache2
 	
 		       cs_debug_mask(D_TRACE, "distribute ecm to %s", cl->reader?cl->reader->label:username(cl));
