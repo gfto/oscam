@@ -1370,9 +1370,9 @@ int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 	    // check all pending ecm-requests:
 	    for (--i; i>=0; i--) {
 	        ecm = &ecmtask[i];
-		if (ecm->rc>=100 
-		    && (ecm->caid==er->caid || ecm->ocaid==er->ocaid)
-		    && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE) == 0) {
+		if (ecm->rc>=100
+			&& ecm->caid==er->caid
+			&& memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE) == 0) {
 		       //Do not modify original ecm request, use copy!
 		       ECM_REQUEST * new_ecm = malloc(sizeof(ECM_REQUEST));
 		       memcpy(new_ecm, ecm, sizeof(ECM_REQUEST));
@@ -1391,6 +1391,8 @@ int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 	    }
         }
     }
+    if (er->btun)
+    	res = write_ecm_request(client->fd_m2c, er);
     return res;
 }
 
@@ -1584,16 +1586,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	send_reader_stat(er->selected_reader, er, er->rc);
 
-	int i, reader_count=0;
-	struct s_reader *rdr;
-	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
-		if (er->matching_rdr[i] == 1) //do not count 2=loadbalancer
-			if (cfg->lb_mode || !rdr->fallback) //do not count fallback readers 
-				reader_count++;
-
 	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, lc,
-			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, reader_count, er->reader_avail, schaninfo, sreason);
+			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
 
 #ifdef WEBIF
 	if(er->rc == 0)
@@ -1756,11 +1751,6 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
   }
   else    // not found (from ONE of the readers !)
   {
-    //save reader informations for loadbalance-statistics:
-	ECM_REQUEST *save_ert = ert;
-	struct s_reader *save_ridx = er->selected_reader;
-
-	//
     int i;
     if (er->selected_reader)
         ert->matching_rdr[get_ridx(er->selected_reader)]=0; //FIXME one of these two might be superfluous
@@ -1769,8 +1759,9 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
     for (i=0,rdr=first_reader; (ert) && rdr ; rdr=rdr->next, i++)
       if (ert->matching_rdr[i]) // we have still another chance
         ert=(ECM_REQUEST *)0;
+        
     if (ert) ert->rc=4;
-    else send_reader_stat(save_ridx, save_ert, 4);
+    else send_reader_stat(er->selected_reader, er, 4);
   }
   if (ert) send_dcw(cl, ert);
   return;
@@ -2189,8 +2180,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				return; //ecm already requested by another client, see distribute ecm for details
 		}
 
-		for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
+		for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 			m|=er->matching_rdr[i];
+			if (er->matching_rdr[i] == 1)
+				er->reader_count++;
+			
+		}
 		switch(m) {
 			// no reader -> not found
 			case 0:
