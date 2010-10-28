@@ -535,9 +535,8 @@ int cc_get_nxt_ecm(struct s_client *cl) {
  * sends the secret cmd05 answer to the server 
  */
 int send_cmd05_answer(struct s_client *cl) {
-	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
-	if (!cc->cmd05_active || !rdr->available) //exit if not in cmd05 or waiting for ECM answer
+	if (!cc->cmd05_active) //exit if not in cmd05 or waiting for ECM answer
 		return 0;
 
 	cc->cmd05_active--;
@@ -608,6 +607,7 @@ int send_cmd05_answer(struct s_client *cl) {
 	cs_debug_mask(D_TRACE, "%s sending CMD_05 back! MODE: %s len=%d",
 			getprefix(), cmd05_mode_name[cmd05_mode], cc->cmd05_data_len);
 
+	cc->cmd05NOK = 1;
 	return 1;
 }
 
@@ -984,6 +984,8 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			//cur_er->rcEx = 0;
 			//cs_sleepms(300);
 			rdr->last_s = rdr->last_g;
+			
+			//reopen all blocked sids for this srvid:
 			it = ll_iter_create(cc->cards);
 			while ((card = ll_iter_next(it))) {
 				if (card->caid == cur_er->caid) { // caid matches
@@ -1326,7 +1328,7 @@ void cc_idle() {
 	if (!rdr || !rdr->tcp_connected || !cl || !cc)
 		return;
 
-	if (rdr->cc_keepalive && cc->answer_on_keepalive + 55 < time(NULL)) {
+	if (rdr->cc_keepalive && cc->answer_on_keepalive + 60 < time(NULL)) {
 		cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
 		cs_debug("cccam: keepalive");
 		cc->answer_on_keepalive = time(NULL);
@@ -1440,6 +1442,34 @@ void cc_card_removed(struct s_client *cl, uint32 shareid) {
 	}
 	ll_iter_release(it);
 	pthread_mutex_unlock(&cc->cards_busy);
+}
+
+void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
+
+	struct cc_data *cc = cl->cc;
+
+	LL_ITER *it = ll_iter_create(cc->cards);
+	struct cc_card *card;
+	while ((card = ll_iter_next(it))) {
+		if (card == card_to_move) { //we aready have this card, delete it
+			ll_iter_remove(it);
+			break;
+		}
+	}
+	ll_iter_release(it);
+	if (card) {
+		cs_debug_mask(D_TRACE, "%s CMD05: Moving card %08X to the end...", getprefix(), card_to_move->id);
+		//cleaning current cards:
+		it = ll_iter_create(cc->cards);
+		struct cc_current_card *current_card;
+		while ((current_card = cc_find_current_card(cc, card))) {
+			cc_remove_current_card(cc, current_card);
+		}	
+		ll_iter_release(it);	
+		free_extended_ecm_idx_by_card(cl, card);
+
+		ll_append(cc->cards, card_to_move);
+	}
 }
 
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
@@ -1667,6 +1697,10 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			if (card) {
 				if (buf[1] == MSG_CW_NOK1) //MSG_CW_NOK1: share no more available
 					cc_card_removed(cl, card->id);
+				else if (cc->cmd05NOK) {
+					move_card_to_end(cl, card);
+					add_sid_block(cl, card, &srvid);
+				}
 				else if (!is_good_sid(card, &srvid)) //MSG_CW_NOK2: can't decode
 					add_sid_block(cl, card, &srvid);
 				else
@@ -1681,6 +1715,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			} else
 				cs_log("%S NOK: NO CARD!", getprefix());
 		}
+		cc->cmd05NOK = 0;
 		pthread_mutex_unlock(&cc->cards_busy);
 
 		if (!cc->extended_mode) {
@@ -1816,8 +1851,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cc->cmd05_active = 1;
 			cc->cmd05_data_len = l;
 			memcpy(&cc->cmd05_data, buf + 4, l);
-			if (rdr->available)
-				send_cmd05_answer(cl);
+			send_cmd05_answer(cl);
 		}
 		break;
 	case MSG_CMD_0B: {
@@ -1854,7 +1888,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
 				if (!cl->aureader) {
-					cs_debug_mask(
+						cs_debug_mask(
 							D_EMM,
 							"%s EMM Request discarded because au is not assigned to an reader!",
 							getprefix());
@@ -2228,6 +2262,54 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 	return modified;
 }
 
+int remove_reported_card(struct s_client * cl, uint8 *buf, int len, int force)
+{
+	struct cc_data *cc = cl->cc;
+	
+	uint8 *nodeid = buf+22+buf[20]*7;
+	
+	LL_ITER *it = ll_iter_create(cc->reported_carddatas);
+	uint8 *card;
+	while ((card = ll_iter_next(it))) {
+		if (memcmp(buf+4, card+4, 4)==0) { //remoteid matches 
+			uint8 * nodeid2 = card + 22+card[20]*7; //nodeid
+			if (memcmp(nodeid, nodeid2, 8) == 0) //first nodeid matches
+				break; //old card found
+		}
+	}
+	ll_iter_release(it);
+
+	if (card) {
+		if (!force) { //compare if equal:
+			int l2 = 22+card[20]*7+card[21+card[20]*7]*8+8;
+			if (len == l2 && memcmp(buf+4, card+4, len-4) == 0)
+				return 0; //Old card and new card are equal! Nothing to do!
+		}
+	
+		cc_cmd_send(cl, card, 4, MSG_CARD_REMOVED);	
+		return 1; //Card removed!
+	}
+	return 1; //Card not found
+}
+
+void report_card(struct s_client *cl, uint8 *buf, int len, int remove)
+{
+	struct cc_data *cc = cl->cc;
+	if (remove_reported_card(cl, buf, len, remove)) {
+		if (remove)
+			return;
+			
+		if (!cc->report_carddata_id)
+			cc->report_carddata_id = 0x64;
+		memcpy(buf, &cc->report_carddata_id, 4);
+		cc->report_carddata_id++;
+		
+		cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
+		cc_add_reported_carddata(cc->reported_carddatas, buf, len);
+		cc->card_update_count++;
+	}
+}
+
 /**
  * Server:
  * Reports all caid/providers to the connected clients
@@ -2235,7 +2317,6 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
  */
 int cc_srv_report_cards(struct s_client *cl) {
 	int j;
-	uint32 id;
 	uint k;
 	uint8 hop = 0;
 	int reshare, usr_reshare, reader_reshare, maxhops, flt = 0;
@@ -2251,17 +2332,10 @@ int cc_srv_report_cards(struct s_client *cl) {
 		usr_reshare = cfg->cc_reshare;
 	}
 
-	//Reported deleted cards:
-	if (!cc->extended_mode) //"O" CCCam needs removed-then add, but in extended mode this could cause "not found" messages
-		cc_free_reported_carddata(cl, cc->reported_carddatas, 1); 
-
-	if (!cc->report_carddata_id)
-		id = 0x64;
-	else
-		id = cc->report_carddata_id;
-
 	LLIST *server_cards = ll_create();
-	LLIST *reported_carddatas = ll_create();
+	if (!cc->reported_carddatas)
+		cc->reported_carddatas = ll_create();
+	cc->card_update_count = 0;
 
 	int isau = (cl->aureader)?1:0;
 
@@ -2290,10 +2364,6 @@ int cc_srv_report_cards(struct s_client *cl) {
 						rdr->ftab.filts[j].caid, &cl->ctab)) {
 					int ignore = 0;
 					memset(buf, 0, sizeof(buf));
-					buf[0] = id >> 24;
-					buf[1] = id >> 16;
-					buf[2] = id >> 8;
-					buf[3] = id & 0xff;
 					buf[4] = rdr->cc_id >> 24;
 					buf[5] = rdr->cc_id >> 16;
 					buf[6] = j >> 8;
@@ -2329,15 +2399,12 @@ int cc_srv_report_cards(struct s_client *cl) {
 							}
 						}
 					}
-					if (ignore) //Filtered by services
-						continue;
 
 					buf[21 + (k * 7)] = 1;
 					memcpy(buf + 22 + (k * 7), cc->node_id, 8);
 					int len = 30 + (k * 7);
-					cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(reported_carddatas, buf, len);
-					id++;
+					
+					report_card(cl, buf, len, ignore);
 					flt = 1;
 				}
 			}
@@ -2349,18 +2416,11 @@ int cc_srv_report_cards(struct s_client *cl) {
 				//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", rdr->ctab.caid[j], rdr->ctab.cmap[j]);
 				ushort lcaid = rdr->ctab.caid[j];
 
-				if (!chk_ctab(lcaid, &cl->ctab))
-					continue;
-
 				if (!lcaid || (lcaid == 0xFFFF))
 					lcaid = rdr->ctab.cmap[j];
 
 				if (lcaid && (lcaid != 0xFFFF)) {
 					memset(buf, 0, sizeof(buf));
-					buf[0] = id >> 24;
-					buf[1] = id >> 16;
-					buf[2] = id >> 8;
-					buf[3] = id & 0xff;
 					buf[4] = rdr->cc_id >> 24;
 					buf[5] = rdr->cc_id >> 16;
 					buf[6] = j >> 8;
@@ -2375,9 +2435,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 					buf[21 + 7] = 1;
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
-					cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-					cc_add_reported_carddata(reported_carddatas, buf, len);
-					id++;
+					
+					report_card(cl, buf, len, !chk_ctab(lcaid, &cl->ctab));
 					flt = 1;
 				}
 			}
@@ -2387,10 +2446,6 @@ int cc_srv_report_cards(struct s_client *cl) {
 				rdr->caid[0], &cl->ctab)) {
 			//cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
 			memset(buf, 0, sizeof(buf));
-			buf[0] = id >> 24;
-			buf[1] = id >> 16;
-			buf[2] = id >> 8;
-			buf[3] = id & 0xff;
 			buf[4] = rdr->cc_id >> 24;
 			buf[5] = rdr->cc_id >> 16;
 			buf[6] = rdr->cc_id >> 8;
@@ -2416,18 +2471,16 @@ int cc_srv_report_cards(struct s_client *cl) {
 			}
 			buf[21 + (j * 7)] = 1;
 			memcpy(buf + 22 + (j * 7), cc->node_id, 8);
-			id++;
+			int len = 30 + (j * 7);
 
 			if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED) /*&& !rdr->cc_id*/) {
 				//rdr->cc_id = b2i(3, buf + 5);
-				int len = 30 + (j * 7);
-				cc_add_reported_carddata(reported_carddatas, buf, len);
-				cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
+				report_card(cl, buf, len, 0);
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], rdr->card_status, rdr->tcp_connected, rdr->label, rdr->cc_id);
 			} else if ((rdr->card_status != CARD_INSERTED)
 					&& (!rdr->tcp_connected) && rdr->cc_id) {
 				//rdr->cc_id = 0;
-				cc_cmd_send(cl, buf, 4, MSG_CARD_REMOVED);
+				report_card(cl, buf, len, 1);
 				//cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], rdr->label);
 			}
 		}
@@ -2493,10 +2546,6 @@ int cc_srv_report_cards(struct s_client *cl) {
 	while ((card = ll_iter_next(it))) {
 		//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
 		memset(buf, 0, sizeof(buf));
-		buf[0] = id >> 24;
-		buf[1] = id >> 16;
-		buf[2] = id >> 8;
-		buf[3] = id & 0xff;
 		buf[4] = card->remote_id >> 24;
 		buf[5] = card->remote_id >> 16;
 		buf[6] = card->remote_id >> 8;
@@ -2540,25 +2589,14 @@ int cc_srv_report_cards(struct s_client *cl) {
 		memcpy(buf + ofs, cc->node_id, 8);
 		ofs += 8;
 
-		id++;
-
 		//cs_debug_mask(D_TRACE, "%s ofs=%d", getprefix(), ofs);
-		cc_cmd_send(cl, buf, ofs, MSG_NEW_CARD);
-		cc_add_reported_carddata(reported_carddatas, buf, ofs);
+		report_card(cl, buf, ofs, 0);
 	}
 	ll_iter_release(it);
 	cc_free_cardlist(server_cards);
 
-	//Reported deleted cards:
-	if (cc->extended_mode) //"O" CCCam needs removed-then add, but in extended mode this could cause "not found" messages
-		cc_free_reported_carddata(cl, cc->reported_carddatas, 1); 
-
-	cc->report_carddata_id = id;
-	cc->reported_carddatas = reported_carddatas;
-
-	int count = ll_count(reported_carddatas);
-	cs_log("%s reported %d cards to client", getprefix(), count);
-	return count;
+	cs_log("%s reported/updated %d cards to client", getprefix(), cc->card_update_count);
+	return cc->card_update_count;
 }
 
 void cc_init_cc(struct cc_data *cc) {
@@ -3059,7 +3097,7 @@ int cc_cli_init_int(struct s_client *cl) {
 
 int cc_cli_init(struct s_client *cl) {
 	int res = cc_cli_init_int(cl);
-	if (res == 0 && !cl->cc && cl->reader && !cl->reader->tcp_connected) {
+	if (res == 0 && cl->reader && (cl->reader->cc_keepalive || !cl->cc) && !cl->reader->tcp_connected) {
 		cc_cli_connect(cl);
 	}
 	return res;
@@ -3068,7 +3106,6 @@ int cc_cli_init(struct s_client *cl) {
 /**
  * return 1 if we are able to send requests:
  *
- * THREADED: ridx should be replaced with reader-pointer
  */
 int cc_available(struct s_reader *rdr, int checktype) {
 	struct s_client *cl = rdr->client;

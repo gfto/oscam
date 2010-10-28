@@ -136,6 +136,7 @@ struct cc_data {
 	int ecm_counter;
 	uint32 report_carddata_id; //Server only
 	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
+	int card_update_count;
 	int just_logged_in; //true for checking NOK direct after login
 	uint8 key_table; //key for CMD 0B
 
@@ -153,6 +154,7 @@ struct cc_data {
 	struct timeb ecm_time;
 	time_t answer_on_keepalive;
 	uint8 last_msg;
+	uint8 cmd05NOK;
 	
 	//Extended Mode for SPECIAL clients:
 	int extended_mode;
