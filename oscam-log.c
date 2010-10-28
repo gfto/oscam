@@ -118,7 +118,7 @@ static void get_log_header(int m, char *txt)
 	if(m)
 		sprintf(txt, "%8X %c ",(unsigned int) cur_client()->thread, cur_client()->typ);
 	else
-		sprintf(txt, "%-11.11s", "");
+		sprintf(txt, "%8X%-3.3s",(unsigned int) cur_client()->thread, "");
 }
 
 static void write_to_log(int flag, char *txt)
