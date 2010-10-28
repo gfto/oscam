@@ -819,7 +819,7 @@ static int viaccess_card_info(struct s_reader * reader)
 }
 
 #ifdef HAVE_DVBAPI
-void viaccess_reassemble_emm(uchar *buffer, uint *len) {
+int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 	static uchar emm_global[512];
 	static int emm_global_len = 0;
 
@@ -827,14 +827,14 @@ void viaccess_reassemble_emm(uchar *buffer, uint *len) {
 	uchar emmbuf[512];
 
 	// Viaccess
-	if (*len>500) return;
+	if (*len>500) return 0;
 
 	switch(buffer[0]) {
 		case 0x8c:
 		case 0x8d:
 			// emm-s part 1
 			if (!memcmp(emm_global, buffer, *len))
-				return;
+				return 0;
 
 			//cs_log("viaccess global emm_provid: %06X provid: %06X", emm_provid, provider);
 
@@ -842,13 +842,13 @@ void viaccess_reassemble_emm(uchar *buffer, uint *len) {
 			memcpy(emm_global, buffer, *len);
 			emm_global_len=*len;
 			//cs_ddump(buffer, len, "viaccess global emm:");
-			return;
+			return 0;
 					
 		case 0x8e:
 			// emm-s part 2
-			if (!emm_global_len) return;
+			if (!emm_global_len) return 0;
 
-			if (buffer[6]!=0x00) return;
+			if (buffer[6]!=0x00) return 0;
 					   
 			memcpy(emmbuf, buffer, 7);
 			pos=7;
@@ -871,7 +871,7 @@ void viaccess_reassemble_emm(uchar *buffer, uint *len) {
 					found=1;
 				}
 			}
-			if (found==0) return;
+			if (found==0) return 0;
 
 			memcpy(emmbuf+pos, "\xF0\x08", 2);
 			memcpy(emmbuf+pos+2, buffer+39, 8);
@@ -884,6 +884,7 @@ void viaccess_reassemble_emm(uchar *buffer, uint *len) {
 			*len=emm_len;
 			break;
 	}
+	return 1;
 }
 #endif
 

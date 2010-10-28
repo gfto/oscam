@@ -667,7 +667,7 @@ static void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int
     }
 }
 
-void cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
+int cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
 	static uchar emm_global[512];
 	static int emm_global_len = 0;
 	int emm_len = 0;
@@ -678,7 +678,7 @@ void cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
 	//   with table id 0x84 has to be build containing all nano commands from both the
 	//    original EMM-SH and EMM-SB in ascending order.
 	// 
-	if (*len>500) return;
+	if (*len>500) return 0;
 	
 	switch (buffer[0]) {
 		case 0x82 : // emm-u
@@ -687,14 +687,14 @@ void cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
 
 		case 0x84: // emm-sh
 			cs_debug("cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(1, buffer, *len));
-			if (!memcmp(emm_global, buffer, *len)) return;
+			if (!memcmp(emm_global, buffer, *len)) return 0;
 			memcpy(emm_global, buffer, *len);
 			emm_global_len=*len;
-			return;
+			return 0;
 
 		case 0x86: // emm-sb
 			cs_debug("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, *len));
-			if (!emm_global_len) return;
+			if (!emm_global_len) return 0;
 
 			// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
 			// now we need to append the payload of the 0x86 emm (EMM-SB)
@@ -729,7 +729,7 @@ void cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
 			if(assembled_EMM[11]!=emm_len) { // sanity check
 				// error in emm assembly
 				cs_debug("Error assembling Cryptoworks EMM-S");
-				return;
+				return 0;
 			}
 			break;
 				
@@ -737,8 +737,8 @@ void cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
 		case 0x89: // emm-g
 			cs_debug("cryptoworks global emm (EMM-G): %s" , cs_hexdump(1, buffer, *len));
 			break;
-				
-	}    
+	}
+	return 1;
 }
 #endif
 
