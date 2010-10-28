@@ -2153,12 +2153,14 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		 */
 		if (&client->ttab)
 			cs_betatunnel(er);
-    
-		// store ECM in cache
-		int offset=3;
-		if (er->caid==0x1702)
-			offset=13;
 
+		// ignore ecm ...
+		int offset = 3;
+		// ... and betacrypt header for cache md5 calculation
+		if ((er->caid >> 8) == 0x17)
+			offset = 13;
+
+		// store ECM in cache
 		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, client->dump), CS_ECMSTORESIZE);
 
 		// cache1
