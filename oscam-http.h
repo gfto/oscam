@@ -750,6 +750,11 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
                         <OPTION  value=\"1\" ##NDSVERSION1##>1 - NDS1 Forced</OPTION>\
                         <OPTION  value=\"12\" ##NDSVERSION21##>12 - NDS1+ Forced</OPTION>\
                         <OPTION  value=\"2\" ##NDSVERSION2##>2 - NDS2 Forced</OPTION>\
+                </SELECT></TD></TR>\n\
+    <TR><TD>Read Nagra Records:</TD><TD><SELECT name=\"nagra_read\">\
+                        <OPTION  value=\"0\" ##NAGRAREAD0##>0 - Disabled</OPTION>\
+                        <OPTION  value=\"1\" ##NAGRAREAD1##>1 - Read all records</OPTION>\
+                        <OPTION  value=\"2\" ##NAGRAREAD2##>2 - Read only valid records</OPTION>\
                 </SELECT></TD></TR>\n"
 #define TPLREADERCONFIGCAMD35BIT "\
     <TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\

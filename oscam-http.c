@@ -1052,6 +1052,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
         tpl_printf(vars, 0, "TMP", "NDSVERSION%d", rdr->ndsversion);
         tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
+        tpl_printf(vars, 0, "TMP", "NAGRAREAD%d", rdr->nagra_read);
+        tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
+
 	tpl_printf(vars, 0, "CCCMAXHOP", "%d", rdr->cc_maxhop);
 	if(rdr->cc_want_emu)
 		tpl_addVar(vars, 0, "CCCWANTEMUCHECKED", "checked");

@@ -2409,6 +2409,9 @@ int write_server()
 					fprintf_conf(f, CONFVARWIDTH, "detect", "%s\n", RDR_CD_TXT[rdr->detect&0x7f]);
 			}
 
+			if (rdr->nagra_read && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "nagra_read", "%d\n", rdr->nagra_read);
+
 			if (rdr->mhz && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", rdr->mhz);
 
@@ -3385,6 +3388,16 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+	if (!strcmp(token, "nagra_read")) {
+		if(strlen(value) == 0) {
+			rdr->nagra_read = 0;
+			return;
+		} else {
+			rdr->nagra_read = atoi(value);
+			return;
+		}
+	}
+
 	if (!strcmp(token, "mhz")) {
 		if(strlen(value) == 0) {
 			rdr->mhz = 0;
@@ -3920,6 +3933,7 @@ int init_readerdb()
 			rdr->tcp_rto = 30;
 			rdr->show_cls = 10;
 			rdr->maxqlen = CS_MAXQLEN;
+			rdr->nagra_read = 0;
 			rdr->mhz = 357;
 			rdr->cardmhz = 357;
 			rdr->deprecated = 0;

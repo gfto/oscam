@@ -220,6 +220,13 @@ DESCRIPTIONS
        force_irdeto = 0|1
 	  1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
 
+       nagra_read = 0|1|2
+	  read nagra records (only on NCMED cards)
+
+	    0 = disabled (default)
+	    1 = read all records also with expired rights
+	    2 = read only records with valid rights
+
        n3_rsakey|rsakey = RSA key
 	  RSA key for Nagravision SCs / CAM key data for Irdeto SCs
 
