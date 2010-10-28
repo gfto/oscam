@@ -1879,6 +1879,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 					struct s_reader *rdr = cl->reader;
 							if (rdr->lbvalue)
 								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", rdr->label, rdr->lbvalue);
+							else
+								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%s</A>", rdr->label, "no data");
 
 							switch(rdr->card_status)
 							{

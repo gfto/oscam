@@ -94,11 +94,21 @@ void load_stat_from_file()
 	cs_debug_mask(D_TRACE, "loadbalancer load statistics from %s", buf);
 	
 	struct s_reader *rdr = NULL;
+	
+	//Whitespace problem: reader label can't contain spaces!
+	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+		char *ch = rdr->label;
+		while (*ch) { 
+			if (*ch == '_')
+				*ch = ' ';
+			ch++;
+		}
+	}
+		
 	int i=1;
 	int count=0;
 	do
 	{
-		
 		READER_STAT *stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
 		i = fscanf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
@@ -210,12 +220,12 @@ void save_stat_to_file()
 {
 	pthread_mutex_lock(&stat_busy);
 	stat_load_save = 0;
-	char fname[256];
-	sprintf(fname, "%s/stat", get_tmp_dir());
+	char buf[256];
+	sprintf(buf, "%s/stat", get_tmp_dir());
 
-	FILE *file = fopen(fname, "w");
+	FILE *file = fopen(buf, "w");
 	if (!file) {
-		cs_log("can't write to file %s", fname);
+		cs_log("can't write to file %s", buf);
 		pthread_mutex_unlock(&stat_busy);
 		return;
 	}
@@ -223,10 +233,19 @@ void save_stat_to_file()
 	int count=0;
 	struct s_reader *rdr;
 	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+		//Replace spaces in reader names to _ because fscanf can't read spaces
+		char *ch = rdr->label;
+		while (*ch) {
+			if (*ch == ' ')
+				*ch = '_';
+			ch++;
+		}
+		
 		if (rdr->lb_stat) {
 			LL_ITER *it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
 			while ((stat = ll_iter_next(it))) {
+				
 				fprintf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
 					rdr->label, stat->rc, stat->caid, stat->prid, 
 					stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received);
@@ -487,9 +506,9 @@ int get_best_reader(ECM_REQUEST *er)
 	nfb_readers += nbest_readers;
 	
 	int n=0;
-	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
-		int best=0;
+	while (1) {
 		int best_idx=-1;
+		int best=0;
 		int j;
 		struct s_reader *rdr2;
 		for (j=0,rdr2=first_reader; rdr2 ; rdr2=rdr2->next, j++) {
