@@ -1351,7 +1351,7 @@ void logCWtoFile(ECM_REQUEST *er)
 /**
  * Notifies all the other clients waiting for the same request
  **/
-int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
+int distribute_ecm(ECM_REQUEST *er) {
     struct s_client *cl;
     ECM_REQUEST *ecm;
     int res = 0;
@@ -1377,12 +1377,10 @@ int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 		       ECM_REQUEST * new_ecm = malloc(sizeof(ECM_REQUEST));
 		       memcpy(new_ecm, ecm, sizeof(ECM_REQUEST));
 		       memcpy(new_ecm->cw, er->cw, sizeof(er->cw));
-		       new_ecm->caid = new_ecm->ocaid;
+		       new_ecm->caid = er->ocaid;
 		       new_ecm->selected_reader = er->selected_reader;
 		      
 		       new_ecm->rc = er->rc; 
-		       if (er->rc == 1 && (cl!=client || er->cpti != new_ecm->cpti))
-			       new_ecm->rc = 2; //cache2
 	
 		       cs_debug_mask(D_TRACE, "distribute ecm to %s", cl->reader?cl->reader->label:username(cl));
 		       res = write_ecm_request(cl->fd_m2c, new_ecm);
@@ -1391,8 +1389,6 @@ int distribute_ecm(struct s_client * client, ECM_REQUEST *er) {
 	    }
         }
     }
-    if (er->btun)
-    	res = write_ecm_request(client->fd_m2c, er);
     return res;
 }
 
@@ -1430,7 +1426,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   if( er->client && er->client->fd_m2c ) {
     //Wie got an ECM (or nok). Now we should check for another clients waiting for it:
     if (cfg->lb_mode)
-      res = distribute_ecm(er->client, er);
+      res = distribute_ecm(er);
     else
       res = write_ecm_request(er->client->fd_m2c, er);
     //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
