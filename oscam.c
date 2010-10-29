@@ -1359,7 +1359,7 @@ int distribute_ecm(ECM_REQUEST *er) {
     cs_debug_mask(D_TRACE, "start distribute ecm from %s", er->selected_reader->label);
     
     for (cl=first_client; cl; cl=cl->next) {
-        if (cl->fd_m2c && cl->typ=='c' && (cl->grp&er->client->grp)) {
+        if (cl->fd_m2c && cl->typ=='c') {
             int i;
             ECM_REQUEST *ecmtask = cl->ecmtask;
 	    if (ecmtask)
@@ -1369,21 +1369,24 @@ int distribute_ecm(ECM_REQUEST *er) {
 
 	    // check all pending ecm-requests:
 	    for (--i; i>=0; i--) {
+	       if (cl==er->client && i==er->cpti)
+	       		continue; //already distributed!
+	
 	        ecm = &ecmtask[i];
 		if (ecm->caid==er->caid
 			&& memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE) == 0) {
 		       //Do not modify original ecm request, use copy!
 		       ECM_REQUEST * new_ecm = malloc(sizeof(ECM_REQUEST));
-		       memcpy(new_ecm, ecm, sizeof(ECM_REQUEST));
 		       memcpy(new_ecm->cw, er->cw, sizeof(er->cw));
 		       new_ecm->caid = er->ocaid;
 		       new_ecm->selected_reader = er->selected_reader;
-		      
-		       new_ecm->rc = er->rc;
-		       if (er->rc == 1 && (cl!=er->client || new_ecm->cpti != er->cpti))
-		       		new_ecm->rc = 2;
-	
-		       cs_debug_mask(D_TRACE, "distribute ecm to %s", cl->reader?cl->reader->label:username(cl));
+		  
+		       if (er->rc==1)
+		       		new_ecm->rc = 2; //cache2
+		       else
+		       		new_ecm->rc = er->rc;
+		       
+		       cs_debug_mask(D_TRACE, "distribute ecm to %s", username(cl));
 		       res = write_ecm_request(cl->fd_m2c, new_ecm);
 		       free(new_ecm);
 		    }
@@ -1426,10 +1429,9 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   int res=0;
   if( er->client && er->client->fd_m2c ) {
     //Wie got an ECM (or nok). Now we should check for another clients waiting for it:
+    res = write_ecm_request(er->client->fd_m2c, er);
     if (cfg->lb_mode)
       res = distribute_ecm(er);
-    else
-      res = write_ecm_request(er->client->fd_m2c, er);
     //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
   }
     
