@@ -1379,7 +1379,9 @@ int distribute_ecm(ECM_REQUEST *er) {
 		       new_ecm->caid = er->ocaid;
 		       new_ecm->selected_reader = er->selected_reader;
 		      
-		       new_ecm->rc = er->rc; 
+		       new_ecm->rc = er->rc;
+		       if (er->rc == 1 && (cl!=er->client || new_ecm->cpti != er->cpti))
+		       		new_ecm->rc = 2;
 	
 		       cs_debug_mask(D_TRACE, "distribute ecm to %s", cl->reader?cl->reader->label:username(cl));
 		       res = write_ecm_request(cl->fd_m2c, new_ecm);
@@ -1967,6 +1969,16 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
   }
 }
 
+static int update_reader_count(ECM_REQUEST *er) {
+	int i, m;
+	struct s_reader *rdr;
+	for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
+        	m|=er->matching_rdr[i];
+                if (er->matching_rdr[i] == 1)
+                	er->reader_count++;
+	}
+	return m;
+}
 
 void get_cw(struct s_client * client, ECM_REQUEST *er)
 {
@@ -2171,16 +2183,14 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		if (cfg->lb_mode) {
 			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", 
 				username(client), er->caid, er->prid, er->srvid);
-			if (!get_best_reader(er))
+			if (!get_best_reader(er)) {
+				update_reader_count(er);
 				return; //ecm already requested by another client, see distribute ecm for details
+			}
 		}
 
-		for (i=m=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
-			m|=er->matching_rdr[i];
-			if (er->matching_rdr[i] == 1)
-				er->reader_count++;
-			
-		}
+		m = update_reader_count(er);
+		
 		switch(m) {
 			// no reader -> not found
 			case 0:
