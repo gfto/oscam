@@ -1348,54 +1348,6 @@ void logCWtoFile(ECM_REQUEST *er)
 	fclose(pfCWL);
 }
 
-/**
- * Notifies all the other clients waiting for the same request
- **/
-int distribute_ecm(ECM_REQUEST *er) {
-    struct s_client *cl;
-    ECM_REQUEST *ecm;
-    int res = 0;
-    
-    cs_debug_mask(D_TRACE, "start distribute ecm from %s", er->selected_reader->label);
-    
-    for (cl=first_client; cl; cl=cl->next) {
-        if (cl->fd_m2c && cl->typ=='c') {
-            int i;
-            ECM_REQUEST *ecmtask = cl->ecmtask;
-	    if (ecmtask)
-		i=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
-	    else
-		i=0;
-
-	    // check all pending ecm-requests:
-	    for (--i; i>=0; i--) {
-	       if (cl==er->client && i==er->cpti)
-	       		continue; //already distributed!
-	
-	        ecm = &ecmtask[i];
-		if (ecm->caid==er->caid
-			&& memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE) == 0) {
-		       //Do not modify original ecm request, use copy!
-		       ECM_REQUEST * new_ecm = malloc(sizeof(ECM_REQUEST));
-		       memcpy(new_ecm->cw, er->cw, sizeof(er->cw));
-		       new_ecm->caid = er->ocaid;
-		       new_ecm->selected_reader = er->selected_reader;
-		  
-		       if (er->rc==1)
-		       		new_ecm->rc = 2; //cache2
-		       else
-		       		new_ecm->rc = er->rc;
-		       
-		       cs_debug_mask(D_TRACE, "distribute ecm to %s", username(cl));
-		       res = write_ecm_request(cl->fd_m2c, new_ecm);
-		       free(new_ecm);
-		    }
-	    }
-        }
-    }
-    return res;
-}
-
 int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 {
   int i;
@@ -1430,8 +1382,6 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   if( er->client && er->client->fd_m2c ) {
     //Wie got an ECM (or nok). Now we should check for another clients waiting for it:
     res = write_ecm_request(er->client->fd_m2c, er);
-    if (cfg->lb_mode)
-      res = distribute_ecm(er);
     //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
   }
     
@@ -2185,10 +2135,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		if (cfg->lb_mode) {
 			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X", 
 				username(client), er->caid, er->prid, er->srvid);
-			if (!get_best_reader(er)) {
-				update_reader_count(er);
-				return; //ecm already requested by another client, see distribute ecm for details
-			}
+			get_best_reader(er);
 		}
 
 		m = update_reader_count(er);
