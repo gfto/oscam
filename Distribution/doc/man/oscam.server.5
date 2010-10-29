@@ -11,7 +11,7 @@ At least one [reader] section is \fIrequired\fR.
 \fBdevice\fP = \fB<device|bus:device>\fP|Serial:Reader \fBserial\fP|\fB<ip|hostname>,<port>[,<lport>]\fP|\fBpcsc\fP|<\fB0|1\fP>|\fBconstantcw\fP
 .RS 3n
 define local or remote reader 
- 
+
  \fBdevice\fP:      device name
  \fBbus:device\fP: bus name and device name of the Smartreader+
               (get the names with lsusb 'Bus' and 'Device')
@@ -26,6 +26,14 @@ define local or remote reader
 constant CW file format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 digits):key (16 Bytes seperated by spaces)
 
 example: 1234:123456:1234:1234:1234:00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+.RE
+.PP
+\fBdevice_out_endpoint\fP = \fBaddress\fP
+.RS 3n
+set endpoint address for FTDI chips,default:0x81
+
+ 0x81: Infinity USB Smart (default)
+ 0x82: Smartreader+
 .RE
 .PP
 \fBenable\fP = \fB0\fP|\fB1\fP
@@ -312,9 +320,9 @@ example: chid = 0100:12
 .RS 3n
 read Nagravison records (on NCMED cards only):
 
-  1 = disabled (default)
-  2 = read all records with expired rights
-  3 = read records with valid rights only
+  0 = disabled (default)
+  1 = read all records with expired rights
+  2 = read records with valid rights only
 .RE
 .PP
 \fBn3_rsakey\fP|\fBrsakey\fP = \fBRSA key\fP
