@@ -2292,7 +2292,7 @@ int remove_reported_card(struct s_client * cl, uint8 *buf, int len, int force)
 	return 1; //Card not found
 }
 
-void report_card(struct s_client *cl, uint8 *buf, int len, int remove)
+void report_card(LLIST * new_reported_carddatas, struct s_client *cl, uint8 *buf, int len, int remove)
 {
 	struct cc_data *cc = cl->cc;
 	if (remove_reported_card(cl, buf, len, remove)) {
@@ -2305,7 +2305,7 @@ void report_card(struct s_client *cl, uint8 *buf, int len, int remove)
 		cc->report_carddata_id++;
 		
 		cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
-		cc_add_reported_carddata(cc->reported_carddatas, buf, len);
+		cc_add_reported_carddata(new_reported_carddatas, buf, len);
 		cc->card_update_count++;
 	}
 }
@@ -2335,6 +2335,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 	LLIST *server_cards = ll_create();
 	if (!cc->reported_carddatas)
 		cc->reported_carddatas = ll_create();
+	LLIST * new_reported_carddatas = ll_create();
+	
 	cc->card_update_count = 0;
 
 	int isau = (cl->aureader)?1:0;
@@ -2404,7 +2406,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 					memcpy(buf + 22 + (k * 7), cc->node_id, 8);
 					int len = 30 + (k * 7);
 					
-					report_card(cl, buf, len, ignore);
+					report_card(new_reported_carddatas, cl, buf, len, ignore);
 					flt = 1;
 				}
 			}
@@ -2436,7 +2438,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 					memcpy(buf + 22 + 7, cc->node_id, 8);
 					int len = 30 + 7;
 					
-					report_card(cl, buf, len, !chk_ctab(lcaid, &cl->ctab));
+					report_card(new_reported_carddatas, cl, buf, len, !chk_ctab(lcaid, &cl->ctab));
 					flt = 1;
 				}
 			}
@@ -2475,12 +2477,12 @@ int cc_srv_report_cards(struct s_client *cl) {
 
 			if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED) /*&& !rdr->cc_id*/) {
 				//rdr->cc_id = b2i(3, buf + 5);
-				report_card(cl, buf, len, 0);
+				report_card(new_reported_carddatas, cl, buf, len, 0);
 				//cs_log("CCcam: local card or newcamd reader  %02X report ADD caid: %02X%02X %d %d %s subid: %06X", buf[7], buf[8], buf[9], rdr->card_status, rdr->tcp_connected, rdr->label, rdr->cc_id);
 			} else if ((rdr->card_status != CARD_INSERTED)
 					&& (!rdr->tcp_connected) && rdr->cc_id) {
 				//rdr->cc_id = 0;
-				report_card(cl, buf, len, 1);
+				report_card(new_reported_carddatas, cl, buf, len, 1);
 				//cs_log("CCcam: local card or newcamd reader %02X report REMOVE caid: %02X%02X %s", buf[7], buf[8], buf[9], rdr->label);
 			}
 		}
@@ -2590,10 +2592,13 @@ int cc_srv_report_cards(struct s_client *cl) {
 		ofs += 8;
 
 		//cs_debug_mask(D_TRACE, "%s ofs=%d", getprefix(), ofs);
-		report_card(cl, buf, ofs, 0);
+		report_card(new_reported_carddatas, cl, buf, ofs, 0);
 	}
 	ll_iter_release(it);
 	cc_free_cardlist(server_cards);
+	
+	cc_free_reported_carddata(cl, cc->reported_carddatas, 1);
+	cc->reported_carddatas = new_reported_carddatas;
 
 	cs_log("%s reported/updated %d cards to client", getprefix(), cc->card_update_count);
 	return cc->card_update_count;
@@ -2884,6 +2889,10 @@ int cc_cli_connect(struct s_client *cl) {
 
 	// connect
 	handle = network_tcp_connection_open();
+	if (errno == EISCONN) {
+		cc_cli_close(cl);
+		return -1;
+	}
 	if (handle <= 0) {
 		cs_log("%s network connect error!", rdr->label);
 		return -1;
@@ -3083,9 +3092,9 @@ int cc_cli_init_int(struct s_client *cl) {
 	cl->udp_sa.sin_family = AF_INET;
 	cl->udp_sa.sin_port = htons((u_short) rdr->r_port);
 
-	if (rdr->tcp_rto <= 0)
-		rdr->tcp_rto = 60 * 60 * 10; // timeout to 10 hours
-	cs_debug("cccam: reconnect timeout set to: %d", rdr->tcp_rto);
+	if (rdr->tcp_rto <= 60)
+		rdr->tcp_rto = 120; // timeout to 120s
+	cs_debug("cccam: timeout set to: %d", rdr->tcp_rto);
 	cc_check_version(rdr->cc_version, rdr->cc_build);
 	cs_log("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d",
 		rdr->label, rdr->device, rdr->r_port, rdr->cc_version,
@@ -3097,7 +3106,8 @@ int cc_cli_init_int(struct s_client *cl) {
 
 int cc_cli_init(struct s_client *cl) {
 	int res = cc_cli_init_int(cl);
-	if (res == 0 && cl->reader && (cl->reader->cc_keepalive || !cl->cc) && !cl->reader->tcp_connected) {
+	struct s_reader *reader = cl->reader;
+	if (res == 0 && reader && (reader->cc_keepalive || !cl->cc) && !reader->tcp_connected) {
 		cc_cli_connect(cl);
 	}
 	return res;
