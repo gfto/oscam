@@ -308,6 +308,15 @@ example: chid = 0100:12
 1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
 .RE
 .PP
+\fBnagra_read\fP = \fB0\fP|\fB1\fP|\fB2\fP
+.RS 3n
+read Nagravison records (on NCMED cards only):
+
+  1 = disabled (default)
+  2 = read all records with expired rights
+  3 = read records with valid rights only
+.RE
+.PP
 \fBn3_rsakey\fP|\fBrsakey\fP = \fBRSA key\fP
 .RS 3n
 RSA key for Nagravision SCs / CAM key data for Irdeto SCs 
