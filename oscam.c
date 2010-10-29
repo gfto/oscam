@@ -1370,8 +1370,7 @@ int distribute_ecm(ECM_REQUEST *er) {
 	    // check all pending ecm-requests:
 	    for (--i; i>=0; i--) {
 	        ecm = &ecmtask[i];
-		if (ecm->rc>=100
-			&& ecm->caid==er->caid
+		if (ecm->caid==er->caid
 			&& memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE) == 0) {
 		       //Do not modify original ecm request, use copy!
 		       ECM_REQUEST * new_ecm = malloc(sizeof(ECM_REQUEST));
