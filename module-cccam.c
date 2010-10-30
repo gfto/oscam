@@ -3045,16 +3045,16 @@ int cc_cli_init_int(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cli_init_int");
 	struct s_reader *rdr = cl->reader;
 	if (rdr->tcp_connected)
-		return -1;
+		return 1;
 
 	struct protoent *ptrp;
 	int p_proto;
 
 	cl->pfd = 0;
 	if (rdr->r_port <= 0) {
-		cs_log("%s invalid port %d for server %s", getprefix(), rdr->r_port,
+		cs_log("%s invalid port %d for server %s", rdr->label, rdr->r_port,
 				rdr->device);
-		return (1);
+		return 1;
 	}
 	if ((ptrp = getprotobyname("tcp")))
 		p_proto = ptrp->p_proto;
@@ -3073,9 +3073,9 @@ int cc_cli_init_int(struct s_client *cl) {
 	//		loc_sa.sin_port = htons(rdr->l_port);
 
 	if ((cl->udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) <= 0) {
-		cs_log("%s Socket creation failed (errno=%d, socket=%d)", getprefix(),
+		cs_log("%s Socket creation failed (errno=%d, socket=%d)", rdr->label,
 				errno, cl->udp_fd);
-		return -10;
+		return 1;
 	}
 	//cs_log("%s 1 socket created: cs_idx=%d, fd=%d errno=%d", getprefix(), cs_idx, cl->udp_fd, errno);
 

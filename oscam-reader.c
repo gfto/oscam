@@ -822,12 +822,10 @@ void * start_cardreader(void * rdr)
       cs_exit(1);
     }
     
-    if (reader->ph.c_init(reader->client)) {
-    	 if (reader->ph.cleanup) 
-    	 	  reader->ph.cleanup(reader->client);
-    	 if (reader->client->typ != 'p')
-          cs_exit(1);
-     }
+	if (reader->ph.c_init(reader->client)) {
+		//proxy reader start failed
+		cs_exit(1);
+	}
     
     if ((reader->log_port) && (reader->ph.c_init_log))
       reader->ph.c_init_log();
