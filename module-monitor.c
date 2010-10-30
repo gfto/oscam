@@ -5,7 +5,7 @@
 #else
 #  define CS_VERSION_X  CS_VERSION
 #endif
-#include "module-cccam.h"
+
 
 static void monitor_check_ip()
 {

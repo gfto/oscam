@@ -1207,7 +1207,7 @@ extern uchar fast_rnd(void);
 extern void init_rnd(void);
 extern int hexserialset(struct s_reader *rdr);
 extern char *monitor_get_proto(struct s_client *);
-extern char *reader_get_type_desc(struct s_reader * rdr);
+extern char *reader_get_type_desc(struct s_reader * rdr, int extended);
 
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);

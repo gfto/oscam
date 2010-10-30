@@ -931,7 +931,7 @@ int hexserialset(struct s_reader *rdr)
 	return 0;
 }
 
-char *reader_get_type_desc(struct s_reader * rdr)
+char *reader_get_type_desc(struct s_reader * rdr, int extended)
 {
 	static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
 	char *desc = typtxt[0];
@@ -942,7 +942,8 @@ char *reader_get_type_desc(struct s_reader * rdr)
 	if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
 		desc = "newcamd524";
 	else if (rdr->client && rdr->client->cc && ((struct cc_data *)rdr->client->cc)->extended_mode)
-		desc = "cccam ext";
+		if(extended)
+			desc = "cccam ext";
 	return (desc);
 }
 
@@ -952,7 +953,7 @@ char *monitor_get_proto(struct s_client *cl)
 	switch(cl->typ) {
 		case 's'	: ctyp = "server"; break;
 		case 'p'	:
-		case 'r'	: ctyp = reader_get_type_desc(cl->reader); break;
+		case 'r'	: ctyp = reader_get_type_desc(cl->reader, 1); break;
 		case 'c'	:
 			if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode) {
 				ctyp = "cccam ext";

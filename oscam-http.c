@@ -752,7 +752,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			}
 
-			tpl_addVar(vars, 0, "CTYP", reader_get_type_desc(rdr));
+			tpl_addVar(vars, 0, "CTYP", reader_get_type_desc(rdr, 1));
 			tpl_addVar(vars, 0, "EDIICO", ICEDI);
 			tpl_addVar(vars, 1, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
