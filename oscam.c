@@ -2179,7 +2179,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	char *typtext[]={"unknown", "unique", "shared", "global"};
 
 	struct s_reader *aureader = client->aureader;
-	cs_ddump_mask(D_ATR, ep->emm, ep->l, "emm:");
+	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
 	//Unique Id matching for pay-per-view channels:
 	if (client->autoau) {
@@ -2205,21 +2205,20 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		}
 	}
 	else {
-		cs_debug_mask(D_EMM, "emm skipped, reader %s (thread %8X) has no cardsystem defined!", aureader->label, (unsigned int)aureader->client->thread); 
+		cs_debug_mask(D_EMM, "emm skipped, reader %s has no cardsystem defined!", aureader->label); 
 		return;
 	}
 
 	//test: EMM becomes skipped if auprivid doesn't match with provid from EMM
-	if(aureader->auprovid) {
+	if(aureader->auprovid && b2i(4, ep->provid)) {
 		if(aureader->auprovid != b2i(4, ep->provid)) {
-			cs_debug_mask(D_EMM, "emm skipped, reader %s (thread %8X) auprovid doesn't match %06lX != %06lX!", aureader->label, (unsigned int) aureader->client->thread, aureader->auprovid, b2i(4, ep->provid));
+			cs_debug_mask(D_EMM, "emm skipped, reader %s auprovid doesn't match %06lX != %06lX!", aureader->label, aureader->auprovid, b2i(4, ep->provid));
 			return;
 		}
 	}
 
 	cs_debug_mask(D_EMM, "emmtype %s. Reader %s has serial %s.", typtext[ep->type], aureader->label, cs_hexdump(0, aureader->hexserial, 8)); 
 	cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
-	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
 	client->last=time((time_t)0);
 	if (aureader->b_nano[ep->emm[0]] & 0x02) //should this nano be saved?
