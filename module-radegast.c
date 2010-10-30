@@ -29,7 +29,7 @@ static int radegast_recv(struct s_client *client, uchar *buf, int l)
   return(n);
 }
 
-static int radegast_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf)
+static int radegast_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int UNUSED(n))
 {
   if ((buf[0] == 2) && (buf[1] == 0x12)) {
     memcpy(dcw, buf+4, 16);
@@ -176,7 +176,7 @@ static void * radegast_server(void *cli)
   return NULL;
 }
 
-static int radegast_send_ecm(struct s_client *client, ECM_REQUEST *er)
+static int radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(buf))
 {
   int n;
   uchar provid_buf[8];

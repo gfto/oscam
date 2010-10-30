@@ -431,6 +431,10 @@ typedef struct v_ban {
 #define AVAIL_CHECK_CONNECTED 0
 #define AVAIL_CHECK_LOADBALANCE 1
 
+struct s_client ;
+struct ecm_request_t ;
+struct emm_packet_t ;
+
 struct s_module
 {
   //int  fd;
@@ -442,22 +446,22 @@ struct s_module
   //int  s_port;
   in_addr_t s_ip;
   void *(*s_handler)();
-  int  (*recv)();
-  void (*send_dcw)();
-  void (*cleanup)();
+  int  (*recv)(struct s_client *, uchar *, int);
+  void (*send_dcw)(struct s_client*, struct ecm_request_t *);
+  void (*cleanup)(struct s_client*);
   int  c_multi;
-  int  (*c_recv_chk)();
-  int  (*c_init)();
-  int  (*c_send_ecm)();
-  int  (*c_send_emm)();
-  int  (*c_init_log)();
-  int  (*c_recv_log)();
-  int  (*c_available)(); //Schlocke: available check for load-balancing, 
+  int  (*c_recv_chk)(struct s_client*, uchar *, int *, uchar *, int);
+  int  (*c_init)(struct s_client*);
+  int  (*c_send_ecm)(struct s_client *, struct ecm_request_t *, uchar *);
+  int  (*c_send_emm)(struct emm_packet_t *);
+  int  (*c_init_log)(void);
+  int  (*c_recv_log)(ushort *, ulong *, ushort *);
+  int  (*c_available)(struct s_reader *, int); 	//Schlocke: available check for load-balancing, 
                          //params: 
                          //rdr (reader to check)
                          //int checktype (0=return connected, 1=return loadbalance-avail) return int
-  void (*c_idle)();      //Schlocke: called when reader is idle
-  void (*c_card_info)(); //Schlocke: request card infos
+  void (*c_idle)(void);      //Schlocke: called when reader is idle
+  void (*c_card_info)(void); //Schlocke: request card infos
   int  c_port;
   PTAB *ptab;
   int num;

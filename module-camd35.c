@@ -553,7 +553,7 @@ static int camd35_send_emm(EMM_PACKET *ep)
 	return((camd35_send(buf)<1) ? 0 : 1);
 }
 
-static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf)
+static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int UNUSED(n))
 {
 	ushort idx;
 	static const char *typtext[]={"ok", "invalid", "sleeping"};

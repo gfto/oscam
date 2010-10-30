@@ -1943,7 +1943,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 /**
  * Reader: write dcw to receive
  */
-int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf) {
+int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf, int UNUSED(n)) {
 	cs_debug_mask(D_FUT, "cc_recv_chk in");
 	struct cc_data *cc = cl->cc;
 
