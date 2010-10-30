@@ -300,10 +300,6 @@ void network_tcp_connection_close(struct s_reader * reader, int fd)
         
         if (reader->ph.c_init(cl)) {
             cs_debug("network_tcp_connection_close() exit(1);");
-            
-            if (reader->ph.cleanup)
-                reader->ph.cleanup(cl);
-            
             cs_exit(1);
         }
     }
