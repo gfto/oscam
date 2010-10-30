@@ -758,6 +758,10 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 		}
 	}
 
+#ifdef CS_WITH_GBOX
+	tpl_addVar(vars, 0, "ADDPROTOCOL", "<option>gbox</option>");
+#endif
+
 	fputs(tpl_getTpl(vars, "READERS"), f);
 }
 

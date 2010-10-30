@@ -603,9 +603,9 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option>newcamd525</option>\
 			<option>newcamd524</option>\
 			<option>cccam</option>\
-			<option>gbox</option>\
 			<option>pcsc</option>\
 			<option>constcw</option>\
+			##ADDPROTOCOL##\
 		</select></TD>\
 		<TD COLSPAN=\"4\" align=\"center\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD></TR>\
 		</form>\

@@ -3260,6 +3260,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "label")) {
+		int found = 0;
+		for(i = 0; i < (int)strlen(value); i++) {
+			if (value[i] == ' ') {
+				value[i] = '_';
+				found++;
+			}
+		}
+
+		if (found) fprintf(stderr, "Configuration reader: corrected label to %s\n",value);
 		cs_strncpy(rdr->label, value, sizeof(rdr->label));
 		return;
 	}
