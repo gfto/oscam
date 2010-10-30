@@ -1202,6 +1202,8 @@ extern void make_non_blocking(int fd);
 extern uchar fast_rnd(void);
 extern void init_rnd(void);
 extern int hexserialset(struct s_reader *rdr);
+extern char *monitor_get_proto(struct s_client *);
+extern char *reader_get_type_desc(struct s_reader * rdr);
 
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);
@@ -1456,11 +1458,6 @@ extern void module_gbox(struct s_module *);
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif
-
-// module-monitor
-extern char *monitor_get_proto(struct s_client *);
-
-extern char *reader_get_type_desc(struct s_reader * rdr);
 
 #ifdef WEBIF
 // oscam-http

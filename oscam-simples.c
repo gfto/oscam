@@ -1,6 +1,7 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include <sys/time.h>
 #include "globals.h"
+#include "module-cccam.h"
 
 void aes_set_key(char *key)
 {
@@ -928,4 +929,36 @@ int hexserialset(struct s_reader *rdr)
 		if (rdr->hexserial[i])
 			return 1;
 	return 0;
+}
+
+char *reader_get_type_desc(struct s_reader * rdr)
+{
+	static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
+	char *desc = typtxt[0];
+	if (rdr->typ & R_IS_NETWORK)
+		desc = rdr->ph.desc;
+	else
+		desc = typtxt[rdr->typ];
+	if ((rdr->typ == R_NEWCAMD) && (rdr->ncd_proto == NCD_524))
+		desc = "newcamd524";
+	else if (rdr->client && rdr->client->cc && ((struct cc_data *)rdr->client->cc)->extended_mode)
+		desc = "cccam ext";
+	return (desc);
+}
+
+char *monitor_get_proto(struct s_client *cl)
+{
+	char *ctyp;
+	switch(cl->typ) {
+		case 's'	: ctyp = "server"; break;
+		case 'p'	:
+		case 'r'	: ctyp = reader_get_type_desc(cl->reader); break;
+		case 'c'	:
+			if (cl->cc && ((struct cc_data *)cl->cc)->extended_mode) {
+				ctyp = "cccam ext";
+				break;
+			}
+		default		: ctyp = ph[cl->ctyp].desc;
+	}
+	return(ctyp);
 }
