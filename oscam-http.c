@@ -2219,7 +2219,12 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	}
 #ifdef CS_ANTICASC
 	else if (strcmp(getParam(params, "part"), "anticasc") == 0)
-	snprintf(targetfile, 255,"%s", cfg->ac_logfile);
+		snprintf(targetfile, 255,"%s", cfg->ac_logfile);
+#endif
+
+#ifdef HAVE_DVBAPI
+	else if (strcmp(getParam(params, "part"), "dvbapi") == 0)
+		snprintf(targetfile, 255, "%s%s", cs_confdir, "oscam.dvbapi");
 #endif
 
 	if (!strstr(targetfile, "/dev/")) {

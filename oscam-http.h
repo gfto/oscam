@@ -291,6 +291,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=logfile\">logfile</TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=userfile\">userfile</TD>\n\
 			##TPLFILEMENUANTICASC##\
+			##TPLFILEMENUDVBAPI##\
 		</TR>\n\
 	</TABLE>"
 
@@ -341,6 +342,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 
 #ifdef HAVE_DVBAPI
 #define TPLCONFIGMENUDVBAPI "<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=dvbapi\">DVB-Api</A></TD>\n"
+#define TPLFILEMENUDVBAPI "<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=dvbapi\">oscam.dvbapi</A></TD>\n"
 #endif
 
 #ifdef CS_WITH_GBOX
@@ -1341,6 +1343,7 @@ char *tpl[]={
 #ifdef HAVE_DVBAPI
 	,"CONFIGDVBAPI"
 	,"CONFIGMENUDVBAPI"
+	,"FILEMENUDVBAPI"
 #endif
 #ifdef CS_ANTICASC
 	,"USEREDITANTICASC"
@@ -1421,6 +1424,7 @@ char *tplmap[]={
 #ifdef HAVE_DVBAPI
 	,TPLCONFIGDVBAPI
 	,TPLCONFIGMENUDVBAPI
+	,TPLFILEMENUDVBAPI
 #endif
 #ifdef CS_ANTICASC
 	,TPLUSEREDITANTICASC
