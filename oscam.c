@@ -1960,6 +1960,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if (er->caid == 0x500 && er->prid == 0xD20200)
 		er->prid = 0x030600; 
 
+	//betacrypt ecm with nagra header
+	if (er->caid == 0x1702 && er->l == 0x89 && er->ecm[3] == 0x07 && er->ecm[4] == 0x84)
+		er->caid = 0x1833;
+
 	/* END quickfixes */
 
 	if (!er->prid)
