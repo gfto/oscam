@@ -2179,6 +2179,7 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 
 		// Debuglevel Selector
 		tpl_addVar(vars, 0, "NEXTPAGE", "files.html");
+		tpl_addVar(vars, 0, "CUSTOMPARAM", "&part=logfile");
 		tpl_printf(vars, 0, "ACTDEBUG", "%d", cs_dblevel);
 		tpl_addVar(vars, 0, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
 

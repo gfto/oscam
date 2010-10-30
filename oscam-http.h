@@ -306,15 +306,15 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 
 #define TPLDEBUGSELECT "\
 	<SPAN CLASS=\"debugt\"> Switch Debug from&nbsp;##ACTDEBUG## to&nbsp;</SPAN>\n\
-	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=0\" title=\"no debugging (default)\">0</A>&nbsp;\n\
-	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=1\" title=\"detailed error messages\">1</A>&nbsp;\n\
-	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=2\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n\
-	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=4\" title=\"traffic from/to the reader\">4</A>&nbsp;\n\
-	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=8\" title=\"traffic from/to the clients\">8</A>&nbsp;\n\
-	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=16\" title=\"traffic to the reader-device on IFD layer\">16</A>&nbsp;\n\
-	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=32\" title=\"traffic to the reader-device on I/O layer\">32</A>&nbsp;\n\
-	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=64\" title=\"EMM logging\">64</A>&nbsp;\n\
-	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=255\" title=\"debug all\">255</A>\n"
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=0##CUSTOMPARAM##\" title=\"no debugging (default)\">0</A>&nbsp;\n\
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=1##CUSTOMPARAM##\" title=\"detailed error messages\">1</A>&nbsp;\n\
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=2##CUSTOMPARAM##\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n\
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=4##CUSTOMPARAM##\" title=\"traffic from/to the reader\">4</A>&nbsp;\n\
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=8##CUSTOMPARAM##\" title=\"traffic from/to the clients\">8</A>&nbsp;\n\
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=16##CUSTOMPARAM##\" title=\"traffic to the reader-device on IFD layer\">16</A>&nbsp;\n\
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=32##CUSTOMPARAM##\" title=\"traffic to the reader-device on I/O layer\">32</A>&nbsp;\n\
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=64##CUSTOMPARAM##\" title=\"EMM logging\">64</A>&nbsp;\n\
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=255##CUSTOMPARAM##\" title=\"debug all\">255</A>\n"
 
 #define TPLFAILBAN "\
 ##TPLHEADER##\
