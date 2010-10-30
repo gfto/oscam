@@ -149,12 +149,12 @@ static int network_message_receive(int handle, uint16 *netMsgId, uint8 *buffer,
   cs_debug("nmr(): len=%d, errno=%d", len, (len==-1)?errno:0);
   if (!len) {
     cs_debug("nmr: 1 return 0");
-    network_tcp_connection_close(cl->reader, handle);
+    network_tcp_connection_close(cl, handle);
     return 0;
   }
   if (len != 2) {
     cs_debug("nmr: len!=2");
-    network_tcp_connection_close(cl->reader, handle);
+    network_tcp_connection_close(cl, handle);
     return -1;
   }
   if (((netbuf[0] << 8) | netbuf[1]) > CWS_NETMSGSIZE - 2) {
@@ -305,7 +305,7 @@ static int connect_newcamd_server()
   cl->reader->ncd_msgid = 0;
   if( read(handle, keymod, sizeof(keymod)) != sizeof(keymod)) {
     cs_log("server does not return 14 bytes");
-    network_tcp_connection_close(cl->reader, handle);
+    network_tcp_connection_close(cl, handle);
     return -2;
   }
   cs_ddump(keymod, 14, "server init sequence:");
@@ -329,14 +329,14 @@ static int connect_newcamd_server()
   if( login_answer == MSG_CLIENT_2_SERVER_LOGIN_NAK )
   {
     cs_log("login failed for user '%s'", cl->reader->r_usr);
-    network_tcp_connection_close(cl->reader, handle);
+    network_tcp_connection_close(cl, handle);
     return -3;
   }
   if( login_answer != MSG_CLIENT_2_SERVER_LOGIN_ACK ) 
   {
     cs_log("expected MSG_CLIENT_2_SERVER_LOGIN_ACK (%02X), received %02X", 
              MSG_CLIENT_2_SERVER_LOGIN_ACK, login_answer);
-    network_tcp_connection_close(cl->reader, handle);
+    network_tcp_connection_close(cl, handle);
     return -3;
   }
 
@@ -353,7 +353,7 @@ static int connect_newcamd_server()
   if( bytes_received < 16 || buf[2] != MSG_CARD_DATA ) {
     cs_log("expected MSG_CARD_DATA (%02X), received %02X", 
              MSG_CARD_DATA, buf[2]);
-    network_tcp_connection_close(cl->reader, handle);
+    network_tcp_connection_close(cl, handle);
     return -4;
   }
 

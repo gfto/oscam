@@ -270,9 +270,10 @@ int network_tcp_connection_open()
   return -1; 
 }
 
-void network_tcp_connection_close(struct s_reader * reader, int fd)
+void network_tcp_connection_close(struct s_client *cl, int fd)
 {
-  struct s_client *cl = reader->client;
+  if(!cl) return;
+  struct s_reader *reader = cl->reader;
   cs_debug("tcp_conn_close(): fd=%d, cl->typ == 'c'=%d", fd, cl->typ == 'c');
   if (fd)
     close(fd);
@@ -346,7 +347,7 @@ static void casc_do_sock(struct s_reader * reader, int w)
       	reader_do_idle(reader);
       else {
         cs_debug("casc_do_sock: close connection");
-        network_tcp_connection_close(reader, cl->udp_fd);
+        network_tcp_connection_close(reader->client, cl->udp_fd);
       }
       return;
     }
@@ -441,7 +442,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
       	reader_do_idle(reader);
       else {
         cs_debug("rto=%d", rto);
-        network_tcp_connection_close(reader, cl->udp_fd);
+        network_tcp_connection_close(reader->client, cl->udp_fd);
       }
     }
   }
@@ -715,7 +716,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
         else {
           cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
                   reader->ph.desc, time_diff, fd2);
-          network_tcp_connection_close(reader, fd2);
+          network_tcp_connection_close(reader->client, fd2);
         }
       }
     }
@@ -730,7 +731,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
     else {
       cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
              reader->ph.desc, tv.tv_sec, fd2);
-      network_tcp_connection_close(reader, fd2);
+      network_tcp_connection_close(reader->client, fd2);
     }
     return(0);
   }

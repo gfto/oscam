@@ -38,7 +38,7 @@ static int camd35_send(uchar *buf)
         }
 	else {
 	   status = send(cl->udp_fd, rbuf, l + 4, 0);
-	   if (status == -1) network_tcp_connection_close(cl->reader, cl->pfd);
+	   if (status == -1) network_tcp_connection_close(cl, cl->pfd);
         }
 	return status;		
 }

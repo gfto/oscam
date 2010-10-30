@@ -204,7 +204,7 @@ void cc_cli_close(struct s_client *cl) {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = rdr->last_g = 0;
 
-	network_tcp_connection_close(rdr, cl->udp_fd);
+	network_tcp_connection_close(cl, cl->udp_fd);
 
 	struct cc_data *cc = cl->cc;
 	if (cc) {
