@@ -1054,6 +1054,7 @@ struct s_config
 	int			http_readonly;
 	in_addr_t	http_dynip;
 	uchar		http_dyndns[64];
+	int			http_full_cfg;
 #endif
 	int			failbantime;
 	LLIST_D_ 		*v_list; //failban list

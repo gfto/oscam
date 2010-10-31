@@ -871,6 +871,16 @@ void chk_t_webif(char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "httpsavefullcfg")) {
+		if(strlen(value) == 0) {
+			cfg->http_full_cfg = 0;
+			return;
+		} else {
+			cfg->http_full_cfg = atoi(value);
+			return;
+		}
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in webif section not recognized\n",token);
 }
@@ -2112,6 +2122,8 @@ int write_config()
 			fprintf_conf(f, CONFVARWIDTH, "httpdyndns", "%s\n", cfg->http_dyndns);
 		fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
 		fprintf_conf(f, CONFVARWIDTH, "httpreadonly", "%d\n", cfg->http_readonly);
+		fprintf_conf(f, CONFVARWIDTH, "httpsavefullcfg", "%d\n", cfg->http_full_cfg);
+
 		fputc((int)'\n', f);
 	}
 #endif
@@ -2141,6 +2153,7 @@ int write_userdb(struct s_auth *authptr)
 	int i;
 	FILE *f;
 	struct s_auth *account;
+	char *value;
 	char *dot = ""; //flag for comma
 	char tmpfile[256];
 	char destfile[256];
@@ -2162,14 +2175,20 @@ int write_userdb(struct s_auth *authptr)
 		fprintf(f,"[account]\n");
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", account->usr);
 		fprintf_conf(f, CONFVARWIDTH, "pwd", "%s\n", account->pwd);
-		fprintf_conf(f, CONFVARWIDTH, "disabled", "%d\n", account->disabled);
-		struct tm * timeinfo = localtime (&account->expirationdate);
-		char buf [80];
-		strftime (buf,80,"%Y-%m-%d",timeinfo);
-		if(strcmp(buf,"1970-01-01"))
-			fprintf_conf(f, CONFVARWIDTH, "expdate", "%s\n", buf);
-		else
-			fprintf_conf(f, CONFVARWIDTH, "expdate", "\n");
+
+		if (account->disabled || (!account->disabled && cfg->http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "disabled", "%d\n", account->disabled);
+
+		if (account->expirationdate || (!account->expirationdate && cfg->http_full_cfg)) {
+			struct tm * timeinfo = localtime (&account->expirationdate);
+			char buf [80];
+			strftime (buf,80,"%Y-%m-%d",timeinfo);
+			if(strcmp(buf,"1970-01-01"))
+				fprintf_conf(f, CONFVARWIDTH, "expdate", "%s\n", buf);
+			else
+				fprintf_conf(f, CONFVARWIDTH, "expdate", "\n");
+		}
+
 
 		if(account->allowedtimeframe[0] && account->allowedtimeframe[1]) {
 			fprintf_conf(f, CONFVARWIDTH, "allowedtimeframe", "%02d:%02d-%02d:%02d\n",
@@ -2177,73 +2196,100 @@ int write_userdb(struct s_auth *authptr)
 					account->allowedtimeframe[0]%60,
 					account->allowedtimeframe[1]/60,
 					account->allowedtimeframe[1]%60 );
+		} else {
+			if (cfg->http_full_cfg)
+				fprintf_conf(f, CONFVARWIDTH, "allowedtimeframe", "\n");
 		}
 
 		//group
-		char *value = mk_t_group(account->grp);
-		fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
-		free(value);
+		if (account->grp || (!account->grp && cfg->http_full_cfg)) {
+			value = mk_t_group(account->grp);
+			fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
+			free(value);
+		}
 
-		fprintf_conf(f, CONFVARWIDTH, "hostname", "%s\n", account->dyndns);
-		fprintf_conf(f, CONFVARWIDTH, "uniq", "%d\n", account->uniq);
-		fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", account->tosleep);
-		fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", account->monlvl);
+		if (account->dyndns[0] || (!account->dyndns[0] && cfg->http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "hostname", "%s\n", account->dyndns);
+
+		if (account->uniq || (!account->uniq && cfg->http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "uniq", "%d\n", account->uniq);
+
+		if (account->tosleep || (!account->tosleep && cfg->http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", account->tosleep);
+
+		if (account->monlvl || (!account->monlvl && cfg->http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", account->monlvl);
 
 		if (account->aureader)
-				fprintf_conf(f, CONFVARWIDTH, "au", "%s\n", account->aureader->label);
-		if (account->autoau == 1) fprintf_conf(f, CONFVARWIDTH, "au", "1\n");
+			fprintf_conf(f, CONFVARWIDTH, "au", "%s\n", account->aureader->label);
+		if (account->autoau == 1)
+			fprintf_conf(f, CONFVARWIDTH, "au", "1\n");
 
-		fprintf_conf(f, CONFVARWIDTH, "services", "");
-		char sidok[MAX_SIDBITS+1]; sidtabbits2bitchar(account->sidtabok,sidok);
-		char sidno[MAX_SIDBITS+1]; sidtabbits2bitchar(account->sidtabno,sidno);
-		struct s_sidtab *sidtab = cfg->sidtab;
-		i=0; dot = "";
-		for (; sidtab; sidtab=sidtab->next){
-			if(sidok[i]=='1')	{fprintf(f,"%s%s", dot, sidtab->label); dot = ",";}
-			if(sidno[i]=='1') {fprintf(f,"%s!%s", dot, sidtab->label); dot = ",";}
-			i++;
+		if ((account->sidtabok + account->sidtabno > 0) || ((account->sidtabok + account->sidtabno == 0) && cfg->http_full_cfg)) {
+			fprintf_conf(f, CONFVARWIDTH, "services", "");
+			char sidok[MAX_SIDBITS+1]; sidtabbits2bitchar(account->sidtabok,sidok);
+			char sidno[MAX_SIDBITS+1]; sidtabbits2bitchar(account->sidtabno,sidno);
+			struct s_sidtab *sidtab = cfg->sidtab;
+			i=0; dot = "";
+			for (; sidtab; sidtab=sidtab->next){
+				if(sidok[i]=='1')	{fprintf(f,"%s%s", dot, sidtab->label); dot = ",";}
+				if(sidno[i]=='1') {fprintf(f,"%s!%s", dot, sidtab->label); dot = ",";}
+				i++;
+			}
+			fputc((int)'\n', f);
 		}
-		fputc((int)'\n', f);
 
 		//CAID
-		value = mk_t_caidtab(&account->ctab);
-		fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
-		free(value);
+		if (account->ctab.caid[0] || (!account->ctab.caid[0] && cfg->http_full_cfg)) {
+			value = mk_t_caidtab(&account->ctab);
+			fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
+			free(value);
+		}
 
 		//betatunnel
-		value = mk_t_tuntab(&account->ttab);
-		fprintf_conf(f, CONFVARWIDTH, "betatunnel", "%s\n", value);
-		free(value);
+		if (account->ttab.bt_caidfrom[0] || (!account->ttab.bt_caidfrom[0] && cfg->http_full_cfg)) {
+			value = mk_t_tuntab(&account->ttab);
+			fprintf_conf(f, CONFVARWIDTH, "betatunnel", "%s\n", value);
+			free(value);
+		}
 
 		//ident
-		value = mk_t_ftab(&account->ftab);
-		fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
-		free(value);
+		if (account->ftab.nfilts || (!account->ftab.nfilts && cfg->http_full_cfg)) {
+			value = mk_t_ftab(&account->ftab);
+			fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
+			free(value);
+		}
 
 		//CHID
-		value = mk_t_ftab(&account->fchid);
-		fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
-		free(value);
+		if (account->fchid.nfilts || (!account->fchid.nfilts && cfg->http_full_cfg)) {
+			value = mk_t_ftab(&account->fchid);
+			fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
+			free(value);
+		}
 
-		if (account->c35_suppresscmd08)
+		if ((account->c35_suppresscmd08 != cfg->c35_suppresscmd08) || ((account->c35_suppresscmd08 == cfg->c35_suppresscmd08) && cfg->http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 			
-		if (account->cccmaxhops)
+		if (account->cccmaxhops != 10 || ((account->cccmaxhops == 10) && cfg->http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", account->cccmaxhops);
 
-		fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", account->cccreshare);
+		if ((account->cccreshare != cfg->cc_reshare) || ((account->cccreshare == cfg->cc_reshare) && cfg->http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", account->cccreshare);
 
-		if (account->c35_sleepsend)
+		if (account->c35_sleepsend || (!account->c35_sleepsend && cfg->http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%d\n", account->c35_sleepsend);
 
-		if (account->failban)
+		if (account->failban || (!account->failban && cfg->http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "failban", "%d\n", account->failban);
 
-		fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", account->ncd_keepalive);
+		if ((account->ncd_keepalive != cfg->ncd_keepalive) || ((account->ncd_keepalive == cfg->ncd_keepalive) && cfg->http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", account->ncd_keepalive);
 
 #ifdef CS_ANTICASC
-		fprintf_conf(f, CONFVARWIDTH, "numusers", "%d\n", account->ac_users);
-		fprintf_conf(f, CONFVARWIDTH, "penalty", "%d\n", account->ac_penalty);
+		if (account->ac_users || (!account->ac_users && cfg->http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "numusers", "%d\n", account->ac_users);
+		if (account->ac_penalty || (!account->ac_penalty && cfg->http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "penalty", "%d\n", account->ac_penalty);
 #endif
 		fputc((int)'\n', f);
 	}

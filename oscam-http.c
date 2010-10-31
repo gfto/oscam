@@ -539,6 +539,9 @@ void send_oscam_config_monitor(struct templatevars *vars, FILE *f, struct uripar
 	tpl_printf(vars, 0, "TMP", "MONSELECTED%d", cfg->mon_level);
 	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
+	if (cfg->http_full_cfg)
+		tpl_addVar(vars, 0, "HTTPSAVEFULLSELECT", "selected");
+
 	fputs(tpl_getTpl(vars, "CONFIGMONITOR"), f);
 }
 
