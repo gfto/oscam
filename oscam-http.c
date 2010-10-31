@@ -2324,19 +2324,45 @@ int process_request(FILE *f, struct in_addr in) {
 	if (!ok && cfg->http_dyndns[0]) {
 		if(cfg->http_dynip == addr) {
 			ok = 1;
-		} else {
-		    pthread_mutex_lock(&gethostbyname_lock);
-			struct hostent *rht;
-			struct sockaddr_in udp_sa;
 
-			rht = gethostbyname((const char *) cfg->http_dyndns);
-			if (rht) {
-				memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-				cfg->http_dynip = cs_inet_order(udp_sa.sin_addr.s_addr);
-				if (cfg->http_dynip == addr)
+		} else {
+
+			if (cfg->resolve_gethostbyname) {
+
+				pthread_mutex_lock(&gethostbyname_lock);
+				struct hostent *rht;
+				struct sockaddr_in udp_sa;
+
+				rht = gethostbyname((const char *) cfg->http_dyndns);
+				if (rht) {
+					memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
+					cfg->http_dynip = cs_inet_order(udp_sa.sin_addr.s_addr);
+					if (cfg->http_dynip == addr)
+						ok = 1;
+				} else {
+					cs_log("can't resolve %s", cfg->http_dyndns);
+				}
+				pthread_mutex_unlock(&gethostbyname_lock);
+
+			} else {
+
+				struct addrinfo hints, *res = NULL;
+				memset(&hints, 0, sizeof(hints));
+				hints.ai_socktype = SOCK_STREAM;
+				hints.ai_family = AF_INET;
+				hints.ai_protocol = IPPROTO_TCP;
+
+				int err = getaddrinfo((const char*)cfg->http_dyndns, NULL, &hints, &res);
+				if (err != 0 || !res || !res->ai_addr) {
+					cs_log("can't resolve %s, error: %s", cfg->http_dyndns, err ? gai_strerror(err) : "unknown");
+				}
+				else {
+					cfg->http_dynip = cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
 					ok = 1;
+				}
+				if (res) freeaddrinfo(res);
+
 			}
-			pthread_mutex_unlock(&gethostbyname_lock);
 		}
 	}
 

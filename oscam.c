@@ -780,50 +780,50 @@ static int start_listener(struct s_module *ph, int port_idx)
 
 int cs_user_resolve(struct s_auth *account)
 {
-    struct hostent *rht;
-    struct sockaddr_in udp_sa;
-    int result=0;  
-    if (account->dyndns[0])
-    {
-      pthread_mutex_lock(&gethostbyname_lock);
-      in_addr_t lastip = account->dynip;
-      //Resolve with gethostbyname:
-      if (cfg->resolve_gethostbyname) {
-        rht = gethostbyname((char*)account->dyndns);
-	if (!rht)
-	  cs_log("can't resolve %s", account->dyndns);
-	else {
-          memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-          account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
-          result=1;
+	struct hostent *rht;
+	struct sockaddr_in udp_sa;
+	int result=0;
+	if (account->dyndns[0])
+	{
+		pthread_mutex_lock(&gethostbyname_lock);
+		in_addr_t lastip = account->dynip;
+		//Resolve with gethostbyname:
+		if (cfg->resolve_gethostbyname) {
+			rht = gethostbyname((char*)account->dyndns);
+			if (!rht)
+				cs_log("can't resolve %s", account->dyndns);
+			else {
+				memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
+				account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
+				result=1;
+			}
+		}
+		else { //Resolve with getaddrinfo:
+			struct addrinfo hints, *res = NULL;
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_socktype = SOCK_STREAM;
+			hints.ai_family = AF_INET;
+			hints.ai_protocol = IPPROTO_TCP;
+
+			int err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
+			if (err != 0 || !res || !res->ai_addr) {
+				cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
+			}
+			else {
+				account->dynip=cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
+				result=1;
+			}
+			if (res) freeaddrinfo(res);
+		}
+		if (lastip != account->dynip)  {
+			uchar *ip = (uchar*) &account->dynip;
+			cs_log("%s: resolved ip=%d.%d.%d.%d", (char*)account->dyndns, ip[3], ip[2], ip[1], ip[0]);
+		}
+		pthread_mutex_unlock(&gethostbyname_lock);
 	}
-      } 
-      else { //Resolve with getaddrinfo:
-  	struct addrinfo hints, *res = NULL;
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_socktype = SOCK_STREAM;
-        hints.ai_family = AF_INET;
-        hints.ai_protocol = IPPROTO_TCP;
-             
-        int err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
-        if (err != 0 || !res || !res->ai_addr) {
-     	  cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
-	}
-        else {
-          account->dynip=cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
-          result=1;
-        }
-        if (res) freeaddrinfo(res);
-      }
-      if (lastip != account->dynip)  {
-        uchar *ip = (uchar*) &account->dynip;
-        cs_log("%s: resolved ip=%d.%d.%d.%d", (char*)account->dyndns, ip[3], ip[2], ip[1], ip[0]);
-      }
-      pthread_mutex_unlock(&gethostbyname_lock);
-    }
-    if (!result)
-    	account->dynip=0;
-    return result;
+	if (!result)
+		account->dynip=0;
+	return result;
 }
 #if defined(CS_ANTICASC) || defined(WEBIF) 
 static void start_thread(void * startroutine, char * nameroutine) {
