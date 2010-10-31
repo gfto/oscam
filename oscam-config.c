@@ -1445,6 +1445,10 @@ int init_config()
 	cfg->cwlogdir = NULL;
 	cfg->reader_restart_seconds = 5;
 	cfg->waitforcards = 1;
+#ifdef QBOXHD_LED
+    cfg->disableqboxhdled = 1;
+#endif
+
 #ifdef WEBIF
 	strcpy(cfg->http_user, "");
 	strcpy(cfg->http_pwd, "");
