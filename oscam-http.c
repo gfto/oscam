@@ -1714,17 +1714,28 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	time_t now = time((time_t)0);
 	struct tm *lt;
 
-	if (strcmp(getParam(params, "action"), "kill") == 0)
-		kill_thread(get_client_by_tid(atoi(getParam(params, "threadid")))); //FIXME untested
+	if (strcmp(getParam(params, "action"), "kill") == 0) {
+		struct s_client *cl = get_client_by_tid(atoi(getParam(params, "threadid")));
+		if (cl) {
+			kill_thread(get_client_by_tid(atoi(getParam(params, "threadid")))); //FIXME untested
+			cs_log("Client %s killed by WebIF from %s", cl->usr, inet_ntoa(*(struct in_addr *)&in));
+		}
+	}
 
 	if (strcmp(getParam(params, "action"), "restart") == 0) {
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-		if(rdr)	restart_cardreader(rdr, 1);
+		if(rdr)	{
+			restart_cardreader(rdr, 1);
+			cs_log("Reader %s restarted by WebIF from %s", rdr->label, inet_ntoa(*(struct in_addr *)&in));
+		}
 	}
 
 	if (strcmp(getParam(params, "action"), "resetstat") == 0) {
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-		if(rdr) clear_reader_stat(rdr);
+		if(rdr) {
+			clear_reader_stat(rdr);
+			cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, inet_ntoa(*(struct in_addr *)&in));
+		}
 	}
 
 	char *debuglvl = getParam(params, "debug");
