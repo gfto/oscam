@@ -172,6 +172,9 @@ static void usage()
 #ifdef CS_LED
   fprintf(stderr, "led-trigger ");
 #endif
+#ifdef QBOXHD_LED
+  fprintf(stderr, "QboxHD-led-trigger ");
+#endif
   fprintf(stderr, "\n\n");
   fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
   fprintf(stderr, " [-h]");
@@ -431,6 +434,14 @@ void cs_exit(int sig)
 	cs_switch_led(LED3, LED_OFF);
 	cs_switch_led(LED1A, LED_ON);
 #endif
+#ifdef QBOXHD_LED
+    qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
+    qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
+    qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
+    qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
+    qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
+#endif
+
 #ifndef OS_CYGWIN32
 	snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
 	if (unlink(targetfile) < 0)
@@ -1653,10 +1664,20 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	  }
 
 	  store_ecm(er); //Store in cache!
+
 	}
 #endif
 	
 	ph[client->ctyp].send_dcw(client, er);
+
+#ifdef QBOXHD_LED
+    if (er->rc < 4) {
+        qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN, QBOXHD_LED_BLINK_MEDIUM);
+    } else if (er->rc < 14) {
+        qboxhd_led_blink(QBOXHD_LED_COLOR_RED, QBOXHD_LED_BLINK_MEDIUM);
+    }
+#endif
+
 	return 0;
 }
 
@@ -2925,6 +2946,16 @@ if (pthread_key_create(&getclient, NULL)) {
 	cs_switch_led(LED1B, LED_ON);
 #endif
 
+#ifdef QBOXHD_LED
+	if(!cfg->disableqboxhdled)
+		cs_log("QboxHD LED enabled");
+    qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
+    qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
+    qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_FAST);
+    qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_FAST);
+    qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_FAST);
+#endif
+
 #ifdef CS_ANTICASC
 	if( !cfg->ac_enabled )
 		cs_log("anti cascading disabled");
@@ -3039,5 +3070,79 @@ void cs_switch_led(int led, int action) {
 			break;
 		}
 	}
+}
+#endif
+
+#ifdef QBOXHD_LED
+void qboxhd_led_blink(int color, int duration) {
+    int f;
+
+    if (cfg->disableqboxhdled) {
+        return;
+    }
+
+    // try QboxHD-MINI first
+    if ( (f = open ( QBOXHDMINI_LED_DEVICE,  O_RDWR |O_NONBLOCK )) > -1 ) {
+        qboxhdmini_led_color_struct qbminiled;
+        ulong qboxhdmini_color = 0x000000;
+
+        if (color != QBOXHD_LED_COLOR_OFF) {
+            switch(color) {
+                case QBOXHD_LED_COLOR_RED:
+                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_RED;
+                    break;
+                case QBOXHD_LED_COLOR_GREEN:
+                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_GREEN;
+                    break;
+                case QBOXHD_LED_COLOR_BLUE:
+                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_BLUE;
+                    break;
+                case QBOXHD_LED_COLOR_YELLOW:
+                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_YELLOW;
+                    break;
+                case QBOXHD_LED_COLOR_MAGENTA:
+                    qboxhdmini_color = QBOXHDMINI_LED_COLOR_MAGENTA;
+                    break;
+            }
+
+            // set LED on with color
+            qbminiled.red = (uchar)((qboxhdmini_color&0xFF0000)>>16);  // R
+            qbminiled.green = (uchar)((qboxhdmini_color&0x00FF00)>>8); // G
+            qbminiled.blue = (uchar)(qboxhdmini_color&0x0000FF);       // B
+
+            ioctl(f,QBOXHDMINI_IOSET_RGB,&qbminiled);
+            cs_sleepms(duration);
+        }
+
+        // set LED off
+        qbminiled.red = 0;
+        qbminiled.green = 0;
+        qbminiled.blue = 0;
+
+        ioctl(f,QBOXHDMINI_IOSET_RGB,&qbminiled);
+        close(f);
+
+    } else if ( (f = open ( QBOXHD_LED_DEVICE,  O_RDWR |O_NONBLOCK )) > -1 ) {
+
+        qboxhd_led_color_struct qbled;
+
+        if (color != QBOXHD_LED_COLOR_OFF) {
+            // set LED on with color
+            qbled.H = color;
+            qbled.S = 99;
+            qbled.V = 99;
+            ioctl(f,QBOXHD_SET_LED_ALL_PANEL_COLOR, &qbled);
+            cs_sleepms(duration);
+        }
+
+        // set LED off
+        qbled.H = 0;
+        qbled.S = 0;
+        qbled.V = 0;
+        ioctl(f,QBOXHD_SET_LED_ALL_PANEL_COLOR, &qbled);
+        close(f);
+    }
+
+    return;
 }
 #endif

@@ -293,6 +293,19 @@ static void chk_srvip(char *value, in_addr_t *ip)
 
 void chk_t_global(const char *token, char *value)
 {
+
+#ifdef QBOXHD_LED
+	if (!strcmp(token, "disableqboxhdled")) {
+		if (strlen(value) == 0) {
+			cfg->disableqboxhdled = 0;
+			return;
+		} else {
+			cfg->disableqboxhdled = atoi(value);
+			return;
+		}
+	}
+#endif
+
 	if (!strcmp(token, "disablelog")) {
 		if (strlen(value) == 0) {
 			cfg->disablelog = 0;
@@ -1820,6 +1833,9 @@ int write_config()
 	if (cfg->usrfile != NULL) fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg->usrfile);
 	if (cfg->logfile != NULL) fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", cfg->logfile);
 	if (cfg->cwlogdir != NULL) fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg->cwlogdir);
+#ifdef QBOXHD_LED
+    fprintf_conf(f, CONFVARWIDTH, "disableqboxhdled", "%d\n", cfg->disableqboxhdled);
+#endif
 	fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg->disablelog);
 	fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg->disableuserfile);
 	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg->usrfileflag);

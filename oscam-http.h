@@ -445,7 +445,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		##USERCONFIGS##\
 		##NEWUSERFORM##\
 		</TABLE><BR>\n\
-		<TH>Totals for the server : </TH>\n\
+		<TH>Totals for the server: </TH>\n\
 		<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
 		<TR>\
 		<TH>OK</TH>\n\

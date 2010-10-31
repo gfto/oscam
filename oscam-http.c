@@ -1860,7 +1860,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			}
 
 			if (found == 1) {
-				tpl_printf(vars, 0, "CLIENTSRVPROVIDER","%s : ", srvid->prov);
+				tpl_printf(vars, 0, "CLIENTSRVPROVIDER","%s: ", srvid->prov);
 				tpl_addVar(vars, 0, "CLIENTSRVNAME", srvid->name);
 				tpl_addVar(vars, 0, "CLIENTSRVTYPE", srvid->type);
 				tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION", srvid->desc);

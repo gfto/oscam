@@ -645,6 +645,11 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   }
 #endif
 
+#ifdef QBOXHD_LED
+  if (rc) qboxhd_led_blink(QBOXHD_LED_COLOR_BLUE,QBOXHD_LED_BLINK_MEDIUM);
+#endif
+
+
   return(rc);
 }
 
