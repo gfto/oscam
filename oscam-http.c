@@ -1720,9 +1720,9 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	struct tm *lt;
 
 	if (strcmp(getParam(params, "action"), "kill") == 0) {
-		struct s_client *cl = get_client_by_tid(atoi(getParam(params, "threadid")));
+		struct s_client *cl = get_client_by_tid(atol(getParam(params, "threadid")));
 		if (cl) {
-			kill_thread(get_client_by_tid(atoi(getParam(params, "threadid")))); //FIXME untested
+			kill_thread(cl);
 			cs_log("Client %s killed by WebIF from %s", cl->usr, inet_ntoa(*(struct in_addr *)&in));
 		}
 	}
@@ -1748,8 +1748,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		cs_dblevel = atoi(debuglvl);
 
 	if(getParamDef(params, "hide", NULL)) {
-		uint clidx;
-		clidx = atoi(getParamDef(params, "hide", NULL));
+		ulong clidx;
+		clidx = atol(getParamDef(params, "hide", NULL));
 		struct s_client *hideidx = get_client_by_tid(clidx);
 		if(hideidx)
 			hideidx->wihidden = 1;
@@ -1800,11 +1800,11 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			lt=localtime(&cl->login);
 
-			tpl_printf(vars, 0, "HIDEIDX", "%d", cl->thread);
+			tpl_printf(vars, 0, "HIDEIDX", "%ld", cl->thread);
 			tpl_addVar(vars, 0, "HIDEICON", ICHID);
 			if(cl->typ == 'c' && !cfg->http_readonly) {
 				//tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", i);
-				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\"></A>", cl, ICKIL);
+				tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG SRC=\"%s\" ALT=\"Kill\"></A>", cl->thread, ICKIL);
 			}
 			else if((cl->typ == 'p') && !cfg->http_readonly) {
 				//tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", cl->ridx);
