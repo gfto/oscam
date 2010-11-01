@@ -408,6 +408,20 @@ void send_css(FILE *f){
 	}
 }
 
+void send_js(FILE *f){
+	if(strlen(cfg->http_jscript) > 0 && file_exists(cfg->http_jscript) == 1){
+		FILE *fp;
+		char buffer[1024];
+		int read;
+
+		if((fp = fopen(cfg->http_jscript,"r"))==NULL) return;
+		while((read = fread(&buffer,sizeof(char),1024,fp)) > 0) fwrite(&buffer, sizeof(char), read, f);
+		fclose (fp);
+	} else {
+		fputs(JSCRIPT, f);
+	}
+}
+
 void send_error(FILE *f, int status, char *title, char *extra, char *text){
   send_headers(f, status, title, extra, "text/html");
   fprintf(f, "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);

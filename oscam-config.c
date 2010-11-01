@@ -809,6 +809,11 @@ void chk_t_webif(char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "httpjscript")) {
+		cs_strncpy(cfg->http_jscript, value, sizeof(cfg->http_jscript));
+		return;
+	}
+
 	if (!strcmp(token, "httpscript")) {
 		cs_strncpy(cfg->http_script, value, sizeof(cfg->http_script));
 		return;
@@ -2104,6 +2109,8 @@ int write_config()
 			fprintf_conf(f, CONFVARWIDTH, "httppwd", "%s\n", cfg->http_pwd);
 		if(strlen(cfg->http_css) > 0)
 			fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
+		if(strlen(cfg->http_jscript) > 0)
+			fprintf_conf(f, CONFVARWIDTH, "httpjscript", "%s\n", cfg->http_jscript);
 		if(strlen(cfg->http_tpl) > 0)
 			fprintf_conf(f, CONFVARWIDTH, "httptpl", "%s\n", cfg->http_tpl);
 		if(strlen(cfg->http_script) > 0)

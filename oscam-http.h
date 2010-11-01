@@ -50,6 +50,9 @@ IMG{border:0px solid;}\n\
 P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
 H4.styleauthor:after {content:\"Eneen\";}\n"
 
+#define JSCRIPT "\
+	function do_nothing(){}"
+
 #define ICMAI "data:image/x-icon;base64,\
 AAABAAEAEBAAAAEACABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAQAEAAAAAAAAAAAAAAAAA\
 AAAAAADw//8A7/D/AODg4ADf8P8A0PD/AM///wDA4P8Az8/PALDw/wCQz/8AsLC/AGDP/wBgz88A\
@@ -230,6 +233,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
 		<link href=\"##ICO##\" rel=\"icon\" type=\"image/x-icon\"/>\
 		##REFRESH##\
+		<script type=\"text/javascript\" src=\"oscam.js\"></script>\
 		</HEAD>\n\
 		<BODY>\n\
 		<H2>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2>"
@@ -939,6 +943,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>Http user:</TD><TD><input name=\"httpuser\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##HTTPUSER##\"></TD></TR>\n\
 		<TR><TD>Http pwd:</TD><TD><input name=\"httppwd\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##HTTPPASSWORD##\"></TD></TR>\n\
 		<TR><TD>Http css:</TD><TD><SELECT name=\"httpcss\">##CSSOPTIONS##</select></TD></TR>\n\
+		<TR><TD>Http javascript:</TD><TD><input name=\"httpjscript\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPJSCRIPT##\"></TD></TR>\n\
 		<TR><TD>Http refresh:</TD><TD><input name=\"httprefresh\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HTTPREFRESH##\"> s</TD></TR>\n\
 		<TR><TD>Http tpl:</TD><TD><input name=\"httptpl\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPTPL##\"></TD></TR>\n\
 		<TR><TD>Http script:</TD><TD><input name=\"httpscript\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPSCRIPT##\"></TD></TR>\n\
@@ -1475,6 +1480,7 @@ void calculate_nonce(char *result, int resultlen);
 int check_auth(char *authstring, char *method, char *path, char *expectednonce);
 void send_headers(FILE *f, int status, char *title, char *extra, char *mime);
 void send_css(FILE *f);
+void send_js(FILE *f);
 char *getParam(struct uriparams *params, char *name);
 int tpl_saveIncludedTpls(const char *path);
 

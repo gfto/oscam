@@ -516,6 +516,8 @@ void send_oscam_config_monitor(struct templatevars *vars, FILE *f, struct uripar
 	tpl_printf(vars, 0, "HTTPREFRESH", "%d", cfg->http_refresh);
 	tpl_addVar(vars, 0, "HTTPTPL", cfg->http_tpl);
 	tpl_addVar(vars, 0, "HTTPSCRIPT", cfg->http_script);
+	tpl_addVar(vars, 0, "HTTPJSCRIPT", cfg->http_jscript);
+
 	if (cfg->http_hide_idle_clients > 0) tpl_addVar(vars, 0, "CHECKED", "checked");
 
 	struct s_ip *cip;
@@ -2415,7 +2417,8 @@ int process_request(FILE *f, struct in_addr in) {
 		"/scanusb.html",
 		"/files.html",
 		"/readerstats.html",
-		"/failban.html"};
+		"/failban.html",
+		"/oscam.js"};
 
 	int pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 
@@ -2500,6 +2503,7 @@ int process_request(FILE *f, struct in_addr in) {
 	/*build page*/
 	send_headers(f, 200, "OK", NULL, "text/html");
 	if(pgidx == 8) send_css(f);
+	else if (pgidx == 17) send_js(f);
 	else {
 		time_t t;
 		struct templatevars *vars = tpl_create();

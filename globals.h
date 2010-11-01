@@ -1046,6 +1046,7 @@ struct s_config
 	char		http_user[65];
 	char		http_pwd[65];
 	char		http_css[128];
+	char		http_jscript[128];
 	char		http_tpl[128];
 	char		http_script[128];
 	int			http_refresh;
