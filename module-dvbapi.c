@@ -852,7 +852,8 @@ void dvbapi_try_next_caid(int demux_id) {
 }
 
 int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd) {
-	int i, demux_id=-1;
+	unsigned int i;
+	int demux_id=-1;
 	unsigned short ca_mask=0x01, demux_index=0x00, adapter_index=0x00;
 
 	int ca_pmt_list_management = buffer[0];

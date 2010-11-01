@@ -41,7 +41,7 @@
 #	define CS_SVN_VERSION "test"
 #endif
 
-#if defined(__GNUC__)
+#if defined(__GNUC__)  && !defined(__arm__)
 #  define GCC_PACK __attribute__((packed))
 #else
 #  define GCC_PACK
