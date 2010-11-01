@@ -312,6 +312,17 @@ http web interface connections allowed, default:none
 http web interface connections allowed, default:none
  example: httpdyndns = my.dynexample.com
 .RE
+
+.PP
+\fBhttpsavefullcfg\fP = \fB0\fP|\fB1\fP
+.RS 3n
+write config:
+
+ 0 = all not empty parameters, all not default parameters, all 
+     parameters not containing the same value as the same 
+     parameter in global configuration (default)
+ 1 = all parameters
+.RE
 .PP
 \fBhttpreadonly\fP = \fB0\fP|\fB1\fP
 .RS 3n
