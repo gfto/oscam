@@ -150,8 +150,8 @@ static int Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command
 {
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
-	unsigned short * tpdu_lr = 0;
-    ulong i;
+	unsigned short tpdu_lr = 0;
+	ulong i;
 	
 	unsigned long Lc = (((unsigned long)(command[5]) << 8) | command[6]);
 	if (Lc < 256)
@@ -174,22 +174,22 @@ static int Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command
 			/* Create envelope command TPDU */
 			buffer[4] = MIN (255, command_len - i);
 			memcpy (buffer + 5, command + i, buffer[4]);
-			call (Protocol_T0_ExchangeTPDU(reader, buffer, buffer[4] + 5, tpdu_rsp, tpdu_lr));
+			call (Protocol_T0_ExchangeTPDU(reader, buffer, buffer[4] + 5, tpdu_rsp, &tpdu_lr));
 				/*  Card does support envelope command */
-				if (tpdu_rsp[*tpdu_lr - 2] == 0x90)
+				if (tpdu_rsp[tpdu_lr - 2] == 0x90)
 				{
 					/* This is not the last segment */
 					if (buffer[4] + i < command_len)
-						*tpdu_lr = 0;
+						tpdu_lr = 0;
 					else {
-						memcpy(rsp, tpdu_rsp, *tpdu_lr); // Map response TPDU onto APDU
-						*lr = *tpdu_lr;
+						memcpy(rsp, tpdu_rsp, tpdu_lr); // Map response TPDU onto APDU
+						*lr = tpdu_lr;
 					}
 				}	
 				else /* Card does not support envelope command or error */
 				{
-					memcpy(rsp, tpdu_rsp, *tpdu_lr); // Map response TPDU onto APDU
-					*lr = *tpdu_lr;
+					memcpy(rsp, tpdu_rsp, tpdu_lr); // Map response TPDU onto APDU
+					*lr = tpdu_lr;
 					break;
 				}
 		}
@@ -202,7 +202,7 @@ static int Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command
 	int ret;
 	BYTE buffer[5];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
-	unsigned short * tpdu_lr = 0;
+	unsigned short tpdu_lr = 0;
 	long Lm, Lx;
 
 	unsigned long Le = ((((unsigned long)(command[5]) << 8) | command[6]) == 0 ? 65536 : (((unsigned long)(command[5]) << 8) | command[6]));
@@ -216,24 +216,24 @@ static int Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command
 
 	/* Map APDU onto command TPDU */
 	buffer[4] = 0x00;
-	call (Protocol_T0_ExchangeTPDU(reader, buffer, 5 , tpdu_rsp, tpdu_lr));
+	call (Protocol_T0_ExchangeTPDU(reader, buffer, 5 , tpdu_rsp, &tpdu_lr));
 
-	if (tpdu_rsp[*tpdu_lr - 2] == 0x6C) {/* Le not accepted, La indicated */
+	if (tpdu_rsp[tpdu_lr - 2] == 0x6C) {/* Le not accepted, La indicated */
 		/* Map command APDU onto TPDU */
 		memcpy (buffer, command, 4);
-		buffer[4] = tpdu_rsp[*tpdu_lr - 1];
+		buffer[4] = tpdu_rsp[tpdu_lr - 1];
 
 		/* Delete response TPDU */
-		*tpdu_lr = 0;
+		tpdu_lr = 0;
 		
 		return Protocol_T0_ExchangeTPDU(reader, buffer, 5, rsp, lr); //Reissue command
 	}
 	
-	memcpy(rsp, tpdu_rsp, *tpdu_lr);//Map response TPDU onto APDU without change , also for SW1 = 0x67
-	*lr = *tpdu_lr;
+	memcpy(rsp, tpdu_rsp, tpdu_lr);//Map response TPDU onto APDU without change , also for SW1 = 0x67
+	*lr = tpdu_lr;
 	ret = OK;
-	if (tpdu_rsp[*tpdu_lr - 2] == 0x61) {/* Command processed, Lx indicated */
-		Lx = (tpdu_rsp[*tpdu_lr - 1] == 0x00) ? 256 : tpdu_rsp[*tpdu_lr - 1];
+	if (tpdu_rsp[tpdu_lr - 2] == 0x61) {/* Command processed, Lx indicated */
+		Lx = (tpdu_rsp[tpdu_lr - 1] == 0x00) ? 256 : tpdu_rsp[tpdu_lr - 1];
 		Lm = Le - (*lr - 2);
 		
 		/* Prepare Get Response TPDU */
@@ -245,18 +245,18 @@ static int Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command
 		while (Lm > 0)
 		{
 			buffer[4] = (BYTE) MIN (Lm, Lx);
-			call (Protocol_T0_ExchangeTPDU(reader, buffer, 5, tpdu_rsp, tpdu_lr));
+			call (Protocol_T0_ExchangeTPDU(reader, buffer, 5, tpdu_rsp, &tpdu_lr));
 
 			/* Append response TPDU to APDU  */
-			if ((*lr + *tpdu_lr) > CTA_RES_LEN) {
-				cs_log("TPDU Append error, new length %i exceeds max length %i", *lr + *tpdu_lr, CTA_RES_LEN);
+			if ((*lr + tpdu_lr) > CTA_RES_LEN) {
+				cs_log("TPDU Append error, new length %i exceeds max length %i", *lr + tpdu_lr, CTA_RES_LEN);
 				return ERROR;
 			}
-			memcpy (rsp + (*lr - 2), tpdu_rsp, *tpdu_lr);
-			*lr += *tpdu_lr;
+			memcpy (rsp + (*lr - 2), tpdu_rsp, tpdu_lr);
+			*lr += tpdu_lr;
 			
 			/* Delete response TPDU */
-			*tpdu_lr = 0;
+			tpdu_lr = 0;
 			
 			Lm = Le - (*lr - 2);
 		}/* Lm == 0 */
@@ -270,7 +270,7 @@ static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command
 	int ret;
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
-	unsigned short * tpdu_lr = 0;
+	unsigned short tpdu_lr = 0;
 	long Le;
 	
 	unsigned long Lc = (((unsigned long)(command[5]) << 8) | command[6]);
@@ -280,23 +280,23 @@ static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command
 		memcpy(buffer,command,4);
 		buffer[4] = (BYTE) Lc;
 		memcpy (buffer + 5, command, buffer[4]);
-		ret = Protocol_T0_ExchangeTPDU(reader, buffer, buffer[4] + 5, tpdu_rsp, tpdu_lr);
+		ret = Protocol_T0_ExchangeTPDU(reader, buffer, buffer[4] + 5, tpdu_rsp, &tpdu_lr);
 	}
 	else /* 4E2 */
-		ret = Protocol_T0_Case2E (reader, command, command_len, tpdu_rsp, tpdu_lr);
+		ret = Protocol_T0_Case2E (reader, command, command_len, tpdu_rsp, &tpdu_lr);
 	
 	/* 4E1 a) b) and c) */
 	if (ret == OK)
 	{
 		Le = ((((unsigned long)(command[command_len - 2]) << 8) | command[command_len - 1]) == 0 ? 65536 : (((unsigned long)(command[command_len - 2]) << 8) | command[command_len - 1]));
-		if (tpdu_rsp[*tpdu_lr - 2] == 0x61)
+		if (tpdu_rsp[tpdu_lr - 2] == 0x61)
 		{
 			/* Lm == (Le - APDU_Rsp_RawLen (tpdu_rsp)) == 0 */
-			if (tpdu_rsp[*tpdu_lr - 1] != 0x00)
-				Le = MIN(tpdu_rsp[*tpdu_lr - 1], Le);
+			if (tpdu_rsp[tpdu_lr - 1] != 0x00)
+				Le = MIN(tpdu_rsp[tpdu_lr - 1], Le);
 			
 			/* Delete response TPDU */
-			*tpdu_lr = 0;
+			tpdu_lr = 0;
 			
 			/* Prepare extended Get Response APDU command */
 			buffer[0] = command[0];
@@ -308,16 +308,16 @@ static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command
 			buffer[6] = (BYTE) (Le & 0x00FF);      /* B3 = BL */
 			ret = Protocol_T0_Case3E (reader, buffer, rsp, lr);
 		}
-		else if ((tpdu_rsp[*tpdu_lr - 2] & 0xF0) == 0x60)
+		else if ((tpdu_rsp[tpdu_lr - 2] & 0xF0) == 0x60)
 		{
 			/* Map response TPDU onto APDU without change */
-			memcpy(rsp, tpdu_rsp, *tpdu_lr);
-			*lr = *tpdu_lr;
+			memcpy(rsp, tpdu_rsp, tpdu_lr);
+			*lr = tpdu_lr;
 		}
 		else
 		{
 			/* Delete response TPDU */
-			*tpdu_lr = 0;
+			tpdu_lr = 0;
 			
 			/* Prepare extended Get Response APDU command */
 			buffer[0] = command[0];
