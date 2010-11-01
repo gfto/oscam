@@ -31,8 +31,8 @@
 #include "module-obj-llist.h"
 #include "module-datastruct-llist.h"
 
-//for reader-nagra variables in s_reader: 
-#include "cscrypt/idea.h" 
+//for reader-nagra variables in s_reader:
+#include "cscrypt/idea.h"
 
 #ifndef CS_GLOBALS
 #define CS_GLOBALS
@@ -49,13 +49,13 @@
 
 #include "oscam-config.h"
 
-#ifdef UNUSED 
-#elif defined(__GNUC__) 
-# define UNUSED(x) UNUSED_ ## x __attribute__((unused)) 
-#elif defined(__LCLINT__) 
-# define UNUSED(x) /*@unused@*/ x 
-#else 
-# define UNUSED(x) x 
+#ifdef UNUSED
+#elif defined(__GNUC__)
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
 #endif
 
 #ifdef WITH_DEBUG
@@ -82,19 +82,19 @@
 #include "oscam-types.h"
 #include "cscrypt/cscrypt.h"
 
-#ifdef HAVE_PCSC 
+#ifdef HAVE_PCSC
   #ifdef OS_CYGWIN32
     #define __reserved
     #define __nullnullterminated
     #include <specstrings.h>
     #include "cygwin/WinSCard.h"
   #else
-    #include <PCSC/pcsclite.h> 
-    #ifdef OS_MACOSX 
-        #include <PCSC/wintypes.h> 
-    #else 
-        #include <PCSC/reader.h> 
-    #endif 
+    #include <PCSC/pcsclite.h>
+    #ifdef OS_MACOSX
+        #include <PCSC/wintypes.h>
+    #else
+        #include <PCSC/reader.h>
+    #endif
   #endif
 #endif
 
@@ -222,7 +222,7 @@ extern const char *boxdesc[];
 char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "UDP", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
 #ifdef USE_GPIO
-                       "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used 
+                       "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7", //felix: changed so that gpio can be used
 #endif
                        NULL };
 #else
@@ -282,7 +282,7 @@ extern void cs_switch_led(int led, int action);
 #endif
 
 #ifdef QBOXHD_LED
-typedef struct {   
+typedef struct {
 	unsigned short H;  // range 0-359
 	unsigned char S;   // range 0-99
 	unsigned char V;   // range 0-99
@@ -421,7 +421,7 @@ typedef struct  {
     unsigned int writebuffer_chunksize;
     unsigned char bitbang_enabled;
     int baudrate;
-    int interface;   // 0 or 1 
+    int interface;   // 0 or 1
     /** maximum packet size. Needed for filtering modem status bytes every n packets. */
     unsigned int max_packet_size;
     unsigned char g_read_buffer[4096];
@@ -493,8 +493,8 @@ struct s_module
   int  (*c_send_emm)(struct emm_packet_t *);
   int  (*c_init_log)(void);
   int  (*c_recv_log)(ushort *, ulong *, ushort *);
-  int  (*c_available)(struct s_reader *, int); 	//Schlocke: available check for load-balancing, 
-                         //params: 
+  int  (*c_available)(struct s_reader *, int); 	//Schlocke: available check for load-balancing,
+                         //params:
                          //rdr (reader to check)
                          //int checktype (0=return connected, 1=return loadbalance-avail) return int
   void (*c_idle)(void);      //Schlocke: called when reader is idle
@@ -598,7 +598,7 @@ struct s_client
   TUNTAB	ttab;
   SIDTABBITS	sidtabok; // positiv services
   SIDTABBITS	sidtabno; // negative services
-  int		typ;        // first s_client is type s=starting (master) thread; type r = physical reader, type p = proxy reader both always have 1 s_reader struct allocated; type c = client (user logging in into oscam) type m = monitor type h = http server a = anticascader 
+  int		typ;        // first s_client is type s=starting (master) thread; type r = physical reader, type p = proxy reader both always have 1 s_reader struct allocated; type c = client (user logging in into oscam) type m = monitor type h = http server a = anticascader
   int		ctyp;
   int		stat;
   int		last_srvid;
@@ -606,8 +606,8 @@ struct s_client
   int		tosleep;
   char		usr[32];
   int		udp_fd;
-  int		fd_m2c; //master writes to this fd 
-  int		fd_m2c_c; //client reads from this fd 
+  int		fd_m2c; //master writes to this fd
+  int		fd_m2c_c; //client reads from this fd
   struct	sockaddr_in udp_sa;
   int		log;
   int		logcounter;
@@ -723,7 +723,7 @@ struct ecmrl {
 	time_t	last;
 };
 #define MAXECMRATELIMIT	20
-	
+
 struct s_reader  //contains device info, reader info and card info
 {
   ulong		auprovid; // AU only for this provid
@@ -862,26 +862,26 @@ struct s_reader  //contains device info, reader info and card info
 	////variables from protocol_t1.h
 	unsigned short ifsc;  /* Information field size for the ICC */
 	unsigned char  ns;              /* Send sequence number */
-	////variables from reader-dre.c 
+	////variables from reader-dre.c
 	unsigned char provider;
-	////variables from reader-nagra.c 
-        IDEA_KEY_SCHEDULE ksSession; 
- 	int is_pure_nagra; 
+	////variables from reader-nagra.c
+        IDEA_KEY_SCHEDULE ksSession;
+ 	int is_pure_nagra;
  	int is_tiger;
  	int is_n3_na;
- 	int has_dt08; 
- 	int swapCW; 
- 	unsigned char rom[15]; 
- 	unsigned char plainDT08RSA[64]; 
- 	unsigned char IdeaCamKey[16]; 
- 	unsigned char irdId[4]; 
- 	unsigned char sessi[16]; 
- 	unsigned char signature[8]; 
- 	unsigned char cam_state[3]; 
+ 	int has_dt08;
+ 	int swapCW;
+ 	unsigned char rom[15];
+ 	unsigned char plainDT08RSA[64];
+ 	unsigned char IdeaCamKey[16];
+ 	unsigned char irdId[4];
+ 	unsigned char sessi[16];
+ 	unsigned char signature[8];
+ 	unsigned char cam_state[3];
 	////variables from reader-cryptoworks.c
 	BIGNUM exp;
 	BIGNUM ucpk;
-	////variables from reader-viaccess.c 
+	////variables from reader-viaccess.c
 	struct geo_cache last_geo;
 	int cc_reshare;
 	int lb_weight;     //loadbalance weight factor, if unset, weight=100. The higher the value, the higher the usage-possibility
@@ -1055,8 +1055,8 @@ struct s_config
 	int			http_readonly;
 	in_addr_t	http_dynip;
 	uchar		http_dyndns[64];
-	int			http_full_cfg;
 #endif
+	int			http_full_cfg;
 	int			failbantime;
 	LLIST_D_ 		*v_list; //failban list
 	int		c33_port;
@@ -1110,7 +1110,7 @@ struct s_config
 #ifdef CS_WITH_DOUBLECHECK
         int             double_check; //schlocke: Double checks each ecm+dcw from two (or more) readers
 #endif
-        
+
 #ifdef CS_WITH_GBOX
 	uchar		gbox_pwd[8];
 	uchar		ignorefile[128];
@@ -1165,14 +1165,14 @@ typedef struct reader_stat_t
   ushort        caid;
   ulong         prid;
   ushort        srvid;
-  
+
   time_t        last_received;
-  
-  int           ecm_count;  
+
+  int           ecm_count;
   int           time_avg;
   int           time_stat[LB_MAX_STAT_TIME];
   int           time_idx;
-  
+
   int           request_count;
 } GCC_PACK      READER_STAT;
 
@@ -1277,7 +1277,7 @@ extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 #ifdef CS_ANTICASC
 extern FILE *fpa;
 #endif
-extern pthread_mutex_t gethostbyname_lock; 
+extern pthread_mutex_t gethostbyname_lock;
 
 // oscam
 extern int recv_from_udpipe(uchar *);
@@ -1298,7 +1298,7 @@ extern void log_emm_request(struct s_reader *);
 extern ulong chk_provid(uchar *, ushort);
 extern void guess_cardsystem(ECM_REQUEST *);
 #ifdef IRDETO_GUESSING
-extern void guess_irdeto(ECM_REQUEST *); 
+extern void guess_irdeto(ECM_REQUEST *);
 #endif
 extern void get_cw(struct s_client *, ECM_REQUEST *);
 extern void do_emm(struct s_client *, EMM_PACKET *);
@@ -1330,7 +1330,7 @@ extern int get_ridx(struct s_reader *reader);
 
 extern void cs_card_info(void);
 extern void cs_debug_level(void);
-                 
+
 #ifdef CS_ANTICASC
 extern void init_ac(void);
 extern void ac_init_stat();
@@ -1355,7 +1355,7 @@ extern int  init_tierid(void);
 extern int  search_boxkey(ushort, char *);
 extern void init_len4caid(void);
 #ifdef IRDETO_GUESSING
-extern int  init_irdeto_guess_tab(void); 
+extern int  init_irdeto_guess_tab(void);
 #endif
 extern void chk_caidtab(char *caidasc, CAIDTAB *ctab);
 extern void chk_tuntab(char *tunasc, TUNTAB *ttab);
