@@ -114,6 +114,10 @@
 #endif
 #endif
 
+#ifndef QBOXHD_LED
+#define QBOXHD_LED
+#endif
+
 #ifndef CS_LOGHISTORY
 #define CS_LOGHISTORY
 #endif
