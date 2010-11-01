@@ -167,8 +167,14 @@ static void write_to_log(int flag, char *txt)
 	char *ptr=(char *)(loghist+(loghistidx*CS_LOGHISTSIZE));
 	ptr[0]='\1';    // make username unusable
 	ptr[1]='\0';
+
 	if ((cur_client()->typ=='c') || (cur_client()->typ=='m'))
 		cs_strncpy(ptr, cur_client()->usr, 31);
+	else if ((cur_client()->typ=='p') || (cur_client()->typ=='r'))
+		cs_strncpy(ptr, cur_client()->reader->label, 31);
+	else
+		cs_strncpy(ptr, "server", 31);
+
 	cs_strncpy(ptr+32, log_buf, CS_LOGHISTSIZE-33);
 	loghistidx=(++loghistidx < CS_MAXLOGHIST)?loghistidx:0;
 #endif

@@ -1933,7 +1933,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		char *p_usr, *p_txt;
 		p_usr=(char *)(loghist+(i*CS_LOGHISTSIZE));
 		p_txt=p_usr+32;
-		if (p_txt[0]) tpl_printf(vars, 1, "LOGHISTORY", "%s<BR>\n", p_txt+8);
+		if (p_txt[0]) tpl_printf(vars, 1, "LOGHISTORY", "<span class=\"%s\">%s</span><br>\n", p_usr, p_txt+8);
 	}
 #else
 	tpl_addVar(vars, 0, "LOGHISTORY", "the flag CS_LOGHISTORY is not set in your binary<BR>\n");

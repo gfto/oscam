@@ -326,7 +326,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 ##TPLMENU##\n\
 	<BR><BR>\n\
 	<BR><BR>\n\
-	<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+	<TABLE CLASS=\"stats\">\n\
 	<TR><TH colspan=\"4\">List of banned IP Addresses</TH></TR>\n\
 	<TR><TH>IP Address</TH><TH>Violation date</TH><TH>left ban time</TH><TH>Action</TH></TR>\n\
     ##FAILBANROW##\n\
@@ -427,7 +427,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</TD>\
 		</TR>\
 		</TABLE><BR>\
-		<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+		<TABLE CLASS=\"users\">\n\
 		<TR>\n\
 		<TH>Lock</TH>\n\
 		<TH>Label</TH>\n\
@@ -505,7 +505,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 <BR><BR>\n\
   <form action=\"user_edit.html\" method=\"get\">\n\
   <input name=\"user\" type=\"hidden\" value=\"##USERNAME##\">\n\
-  <TABLE cellspacing=\"0\">\n\
+  <TABLE CLASS=\"config\">\n\
     <TR><TH>&nbsp;</TH> <TH>Edit User ##USERNAME##</TH></TR>\n\
     <TR><TD>Password:</TD><TD><input name=\"pwd\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##PASSWORD##\"></TD></TR>\n\
     <TR><TD>Disabled:</TD><TD><SELECT NAME=\"disabled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DISABLEDCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
@@ -592,7 +592,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 ##TPLMENU##\n\
 <BR><BR>\n\
   <TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD></TR></TABLE><BR>\
-  <TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+  <TABLE CLASS=\"readers\">\n\
     <TR>\n\
 	  <TH>Delete</TH>\n\
       <TH>Reader</TH>\n\
@@ -660,7 +660,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		</TR>\n\
 	</TABLE>\
 	<BR><BR>\n\
-	<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+	<TABLE CLASS=\"stats\">\n\
 	<TR><TH colspan=\"6\"> Loadbalance statistics for reader ##LABEL##</TH></TR>\n\
 	<TR><TH>Channel</TH><TH>Channelname</TH><TH>Result</TH><TH>Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\
     ##READERSTATSROW##\n\
@@ -705,7 +705,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
   <form action=\"readerconfig.html?action=execute\" method=\"get\">\n\
   <input name=\"label\" type=\"hidden\" value=\"##READERNAME##\">\n\
   <input name=\"protocol\" type=\"hidden\" value=\"##PROTOCOL##\">\n\
-  <TABLE cellspacing=\"0\">\n\
+  <TABLE CLASS=\"config\">\n\
     <TR><TH COLSPAN=\"2\">Edit Reader ##READERNAME##</TH></TR>\n\
     <TR><TH>&nbsp;</TH><TH>Reader general settings</TH></TR>\n\
     <TR><TD>Enable:</TD><TD><input name=\"enable\" type=\"hidden\" value=\"0\"><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
@@ -1098,7 +1098,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<input name=\"part\" type=\"hidden\" value=\"camd33\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 	<input name=\"passive\" type=\"hidden\" value=\"0\">\n\
-	<TABLE class=\"config\" cellspacing=\"0\">\n\
+	<TABLE CLASS=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Camd33 Config</TH></TR>\n\
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
 		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
