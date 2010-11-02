@@ -631,7 +631,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 ##TPLFOOTER##"
 
 #define TPLREADERSBIT "\
-    <TR>\n\
+    <TR CLASS =\"##READERCLASS##\">\n\
 	<TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&action=delete\" TITLE=\"Delete this Reader\"><IMG SRC=\"##DELICO##\" BORDER=\"0\" ALT=\"Delete Reader\"/></A></TD>\n\
       <TD>##READERNAME##</TD>\n\
       <TD>##CTYP##</TD>\n\

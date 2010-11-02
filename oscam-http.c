@@ -712,6 +712,11 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 	for (rdr = first_reader; rdr ; rdr = rdr->next) {
 		if(rdr->label[0] && rdr->typ && !rdr->deleted) {
 
+			if (rdr->enable)
+				tpl_addVar(vars, 0, "READERCLASS", "enabledreader");
+			else
+				tpl_addVar(vars, 0, "READERCLASS", "disabledreader");
+
 			tpl_addVar(vars, 0, "READERNAME", rdr->label);
 			tpl_addVar(vars, 0, "READERNAMEENC", tpl_addTmp(vars, urlencode(rdr->label)));
 			tpl_printf(vars, 0, "EMMERRORUK", "%d", rdr->emmerror[UNKNOWN]);
