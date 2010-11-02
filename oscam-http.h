@@ -618,7 +618,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option>camd35</option>\
 			<option>cs378x</option>\
 			<option>radegast</option>\
-			<option>newcamd525</option>\
+			<option>newcamd</option>\
 			<option>newcamd524</option>\
 			<option>cccam</option>\
 			<option>pcsc</option>\
