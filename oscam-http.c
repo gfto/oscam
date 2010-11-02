@@ -829,8 +829,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 		if(write_server()==0) {
 			refresh_oscam(REFR_READERS, in);
+			/*// fixme: restart_cardreader causes segfaults sometimes
 			if (rdr->typ & R_IS_NETWORK)
-				restart_cardreader(rdr, 1); //physical readers make trouble if re-started
+				restart_cardreader(rdr, 1); //physical readers make trouble if re-started */
 		}
 		else
 			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
