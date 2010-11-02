@@ -1699,6 +1699,12 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
     return; // obsolete
   ert->rcEx=er->rcEx;
   strcpy(ert->msglog, er->msglog);
+
+	// different er->rc codes:
+	// 0 error
+	// 1 found
+	// 2 cache 2
+	// 3 (emu?)
   if (er->rc>0) // found
   {
     switch(er->rc)
@@ -1718,23 +1724,24 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 #ifdef CS_WITH_GBOX
     ert->gbxCWFrom=er->gbxCWFrom;
 #endif
-  }
-  else    // not found (from ONE of the readers !)
-  {
-    int i;
-    if (er->selected_reader)
-        ert->matching_rdr[get_ridx(er->selected_reader)]=0; //FIXME one of these two might be superfluous
-    ert->selected_reader=0; //FIXME 
-    struct s_reader *rdr;
-    for (i=0,rdr=first_reader; (ert) && rdr ; rdr=rdr->next, i++)
-      if (ert->matching_rdr[i]) // we have still another chance
-        ert=(ECM_REQUEST *)0;
-        
-    if (ert) ert->rc=4;
-    else send_reader_stat(er->selected_reader, er, 4);
-  }
-  if (ert) send_dcw(cl, ert);
-  return;
+	} else { // not found (from ONE of the readers !)
+		int i;
+		if (er->selected_reader)
+			ert->matching_rdr[get_ridx(er->selected_reader)]=0; //FIXME one of these two might be superfluous
+
+		struct s_reader *rdr;
+		for (i=0,rdr=first_reader; (ert) && rdr ; rdr=rdr->next, i++) {
+			if (ert->matching_rdr[i]) { // we have still another chance
+				ert->selected_reader=0;
+				ert=(ECM_REQUEST *)0;
+			}
+		}
+
+		if (ert) ert->rc=4;
+		else send_reader_stat(er->selected_reader, er, 4);
+	}
+	if (ert) send_dcw(cl, ert);
+	return;
 }
 
 ulong chk_provid(uchar *ecm, ushort caid) {
