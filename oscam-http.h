@@ -236,10 +236,16 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<script type=\"text/javascript\" src=\"oscam.js\"></script>\
 		</HEAD>\n\
 		<BODY>\n\
-		<H2>OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2>"
+		<DIV CLASS=\"header\">\
+		<H2 CLASS=\"headline1\">OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2>\
+		</DIV>"
 
 #define TPLFOOTER "\
-		<HR/><H4>OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4><H4>Start: ##STARTDATE## - ##STARTTIME## | UpTime: ##UPTIME## | Process ID: ##PROCESSID##</H4><H4 CLASS=\"styleauthor\">WebIf Style by </H4>\
+		<BR><HR/><BR><DIV CLASS=\"footer\">\n\
+		<H4 CLASS=\"footline1\">OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4>\n\
+		<H4 CLASS=\"footline2\">Start: ##STARTDATE## - ##STARTTIME## | UpTime: ##UPTIME## | Process ID: ##PROCESSID##</H4>\n\
+		<H4 CLASS=\"styleauthor\">WebIf Style by </H4>\
+		</DIV>\n\
 		</BODY>\
 		</HTML>"
 
@@ -1204,7 +1210,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
   ##TPLMENU##\n\
   ##MESSAGE##\
   <BR><BR>\
-  <TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+  <TABLE CLASS=\"stats\">\n\
     <TR>\n\
       <TH>Label</TH>\n\
       <TH colspan=\"3\" align=\"center\">Action</TH>\n\
@@ -1238,7 +1244,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 <BR><BR>\n\
   <form action=\"services_edit.html\" method=\"get\">\n\
   <input name=\"service\" type=\"hidden\" value=\"##LABELENC##\">\n\
-  <TABLE cellspacing=\"0\">\n\
+  <TABLE CLASS=\"stats\">\n\
     <TR>\n<TH>&nbsp;</TH>\n<TH>Edit Service ##LABEL##</TH>\n</TR>\n\
     <TR>\n<TD>caid: </TD><TD><input name=\"caid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##CAIDS##\"></TD></TR>\
     <TR>\n<TD>provid: </TD><TD><input name=\"provid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##PROVIDS##\"></TD></TR>\
