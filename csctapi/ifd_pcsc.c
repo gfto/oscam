@@ -147,14 +147,14 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
     
     cs_debug("PCSC resetting card in (%s)", pcsc_reader->pcsc_name);
     rv = SCardReconnect((SCARDHANDLE)(pcsc_reader->hCard), SCARD_SHARE_EXCLUSIVE, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,  SCARD_RESET_CARD, &pcsc_reader->dwActiveProtocol);
-    cs_debug("PCSC resetting done on card in (%s)", pcsc_reader->pcsc_name);
-    cs_debug("PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
 
     if ( rv != SCARD_S_SUCCESS )  {
         cs_debug("Error PCSC failed to reset card (%lx)", rv);
         return(0);
     }
     
+    cs_debug("PCSC resetting done on card in (%s)", pcsc_reader->pcsc_name);
+    cs_debug("PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
     
     cs_debug("PCSC getting ATR for card in (%s)", pcsc_reader->pcsc_name);
     rv = SCardStatus((SCARDHANDLE)(pcsc_reader->hCard),NULL, &dwReaderLen, &dwState, &pcsc_reader->dwActiveProtocol, pbAtr, &dwAtrLen);
