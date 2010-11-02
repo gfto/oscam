@@ -9,7 +9,11 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
     char *ptr, **readers = NULL;
     int nbReaders;
     int reader_nb;
-    
+
+    pcsc_reader->pcsc_has_card=0;
+    pcsc_reader->hCard=0;
+    pcsc_reader->hContext=0;
+     
     cs_debug("PCSC establish context for PCSC reader %s", device);
     rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, &pcsc_reader->hContext);
     if ( rv == SCARD_S_SUCCESS ) {
@@ -19,21 +23,22 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
         rv = SCardListReaders(pcsc_reader->hContext, NULL, NULL, &dwReaders);
         if( rv != SCARD_S_SUCCESS ) {
             cs_debug("PCSC failed listing readers [1] : (%lx)", rv);
-            return  0;
+            return  2;
         }
         mszReaders = malloc(sizeof(char)*dwReaders);
         if (mszReaders == NULL) {
             cs_debug("PCSC failed malloc");
-            return  0;
+            return  2;
         }
         rv = SCardListReaders(pcsc_reader->hContext, NULL, mszReaders, &dwReaders);
         if( rv != SCARD_S_SUCCESS ) {
             cs_debug("PCSC failed listing readers [2]: (%lx)", rv);
             free(mszReaders);
-            return  0;
+            return  2;
         }
         /* Extract readers from the null separated string and get the total
-         * number of readers */
+         * number of readers 
+         */
         nbReaders = 0;
         ptr = mszReaders;
         while (*ptr != '\0') {
@@ -42,15 +47,15 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
         }
         
         if (nbReaders == 0) {
-            cs_debug("PCSC : no reader found");
+            cs_log("PCSC : no reader found");
             free(mszReaders);
-            return  0;
+            return  2;
         }
 
         readers = calloc(nbReaders, sizeof(char *));
         if (readers == NULL) {
-            cs_debug("PCSC failed malloc");
-            return  0;
+            cs_log("PCSC failed calloc");
+            return  2;
         }
 
         /* fill the readers table */
@@ -65,20 +70,19 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 
         reader_nb=atoi((const char *)&pcsc_reader->device);
         if (reader_nb < 0 || reader_nb >= nbReaders) {
-            cs_debug("Wrong reader index: %d\n", reader_nb);
+            cs_log("Wrong reader index: %d\n", reader_nb);
             free(mszReaders);
             free(readers);
-            return  0;
+            return  2;
         }
 
         snprintf(pcsc_reader->pcsc_name,sizeof(pcsc_reader->pcsc_name),"%s",readers[reader_nb]);
-        pcsc_reader->pcsc_has_card=0;
-        pcsc_reader->hCard=0;
         free(mszReaders);
         free(readers);
     }
     else {
-        cs_debug("PCSC failed establish context (%lx)", rv);
+        cs_log("PCSC failed establish context (%lx)", rv);
+        return 2;
     }
     return 0;
 }
