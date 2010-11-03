@@ -779,7 +779,18 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
                         <OPTION  value=\"0\" ##NAGRAREAD0##>0 - Disabled</OPTION>\
                         <OPTION  value=\"1\" ##NAGRAREAD1##>1 - Read all records</OPTION>\
                         <OPTION  value=\"2\" ##NAGRAREAD2##>2 - Read only valid records</OPTION>\
-                </SELECT></TD></TR>\n"
+                </SELECT></TD></TR>\n\
+    <TR><TD>Device Out Endpoint:</TD><TD>##DEVICEEP##</TD></TR>\n"
+
+#ifdef LIBUSB
+#define TPLREADERCONFIGDEVICEEPBIT "\
+	<SELECT name=\"device_out_endpoint\">\
+		<OPTION  value=\"\" ##DEVICEOUTEP0##>None</OPTION>\
+        <OPTION  value=\"0x82\" ##DEVICEOUTEP1##>0x82 - Smargo+</OPTION>\
+        <OPTION  value=\"0x81\" ##DEVICEOUTEP2##>0x81 - Infinity USB Smart</OPTION>\
+     </SELECT>"
+#endif
+
 #define TPLREADERCONFIGCAMD35BIT "\
     <TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
     <TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
@@ -1370,6 +1381,9 @@ char *tpl[]={
 #ifdef CS_WITH_DOUBLECHECK
 	,"DOUBLECHECKBIT"
 #endif
+#ifdef LIBUSB
+	,"READERCONFIGDEVICEEPBIT"
+#endif
 };
 
 char *tplmap[]={
@@ -1450,6 +1464,9 @@ char *tplmap[]={
 #endif
 #ifdef CS_WITH_DOUBLECHECK
 	,TPLDOUBLECHECKBIT
+#endif
+#ifdef LIBUSB
+	,TPLREADERCONFIGDEVICEEPBIT
 #endif
 };
 

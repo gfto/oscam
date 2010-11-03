@@ -1065,11 +1065,25 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED4", "selected");
 	}
 
-        tpl_printf(vars, 0, "TMP", "NDSVERSION%d", rdr->ndsversion);
-        tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
+#ifdef LIBUSB
+	tpl_addVar(vars, 0, "DEVICEEP", tpl_getTpl(vars, "READERCONFIGDEVICEEPBIT"));
 
-        tpl_printf(vars, 0, "TMP", "NAGRAREAD%d", rdr->nagra_read);
-        tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
+	if(!rdr->device_endpoint) {
+		tpl_addVar(vars, 0, "DEVICEOUTEP0", "selected");
+	} else if (rdr->device_endpoint == 0x82) {
+		tpl_addVar(vars, 0, "DEVICEOUTEP1", "selected");
+	} else if (rdr->device_endpoint == 0x81) {
+		tpl_addVar(vars, 0, "DEVICEOUTEP2", "selected");
+	}
+#else
+	tpl_addVar(vars, 0, "DEVICEEP", "not avail LIBUSB");
+#endif
+
+	tpl_printf(vars, 0, "TMP", "NDSVERSION%d", rdr->ndsversion);
+	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
+
+	tpl_printf(vars, 0, "TMP", "NAGRAREAD%d", rdr->nagra_read);
+	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
 	tpl_printf(vars, 0, "CCCMAXHOP", "%d", rdr->cc_maxhop);
 	if(rdr->cc_want_emu)
