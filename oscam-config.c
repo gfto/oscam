@@ -5,8 +5,6 @@
 #  include "oscam-boxkeys.np"
 #endif
 
-#include "module-stat.h"
-
 #define CONFVARWIDTH 30
 
 static const char *cs_conf="oscam.conf";
