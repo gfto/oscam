@@ -600,14 +600,14 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
   <TABLE CLASS=\"configmenu\"><TR><TD CLASS=\"configmenu\"><A HREF=\"scanusb.html\">Scan USB</A></TD></TR></TABLE><BR>\
   <TABLE CLASS=\"readers\">\n\
     <TR>\n\
-	  <TH>Delete</TH>\n\
+	  <TH>Lock</TH>\n\
       <TH>Reader</TH>\n\
       <TH>Protocol</TH>\n\
       <TH>EMM error<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
       <TH>EMM written<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
       <TH>EMM skipped<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
       <TH>EMM blocked<br><span title=\"unknown EMM\"> UK </span>/<span title=\"global EMM\"> G </span>/<span title=\"shared EMM\"> S </span>/<span title=\"unique EMM\"> UQ </span></TH>\n\
-      <TH COLSPAN=\"4\">Action</TH>\n\
+      <TH COLSPAN=\"5\">Action</TH>\n\
     </TR>\n\
     ##READERLIST##\
     <TR>\
@@ -631,14 +631,14 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option>constcw</option>\
 			##ADDPROTOCOL##\
 		</select></TD>\
-		<TD COLSPAN=\"4\" align=\"center\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD></TR>\
+		<TD COLSPAN=\"5\" align=\"center\"><input type=\"submit\" name=\"action\" value=\"Add\" ##BTNDISABLED##></TD></TR>\
 		</form>\
   </TABLE>\n\
 ##TPLFOOTER##"
 
 #define TPLREADERSBIT "\
     <TR CLASS =\"##READERCLASS##\">\n\
-	<TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&action=delete\" TITLE=\"Delete this Reader\"><IMG SRC=\"##DELICO##\" BORDER=\"0\" ALT=\"Delete Reader\"/></A></TD>\n\
+      <TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"/></A></TD>\n\
       <TD>##READERNAME##</TD>\n\
       <TD>##CTYP##</TD>\n\
       <TD align=\"center\">##EMMERRORUK## / ##EMMERRORG## / ##EMMERRORS## / ##EMMERRORUQ##</TD>\n\
@@ -649,6 +649,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
       <TD align=\"center\">##ENTITLEMENT##</TD>\n\
 	  <TD align=\"center\">##READERREFRESH##</TD>\n\
 	  <TD align=\"center\"><A HREF=\"readerstats.html?label=##READERNAMEENC##&hide=4\" TITLE=\"Show loadbalancer statistics\"><IMG SRC=\"##STATICO##\" BORDER=\"0\" ALT=\"Loadbalancer statistics\"/></A></TD>\n\
+	  <TD align=\"center\"><A HREF=\"readers.html?label=##READERNAMEENC##&action=delete\" TITLE=\"Delete this Reader\"><IMG SRC=\"##DELICO##\" BORDER=\"0\" ALT=\"Delete Reader\"/></A></TD>\n\
       </TR>\n"
 
 #define TPLREADERENTITLEBIT "<A HREF=\"entitlements.html?label=##READERNAMEENC##\" TITLE=\"Show Entitlement\"><IMG SRC=\"##ENTICO##\" BORDER=\"0\" ALT=\"Show Entitlement\"/></A>\n"
