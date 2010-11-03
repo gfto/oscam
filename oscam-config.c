@@ -1867,7 +1867,7 @@ int write_config()
     	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg->usrfileflag);
 	if (cfg->ctimeout != CS_CLIENT_TIMEOUT || (cfg->ctimeout != CS_CLIENT_TIMEOUT && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout);
-	if (cfg->ftimeout != CS_CLIENT_TIMEOUT || (cfg->ftimeout != CS_CLIENT_TIMEOUT && cfg->http_full_cfg))
+	if (cfg->ftimeout || (!cfg->ftimeout && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout);
 	if (cfg->cmaxidle != CS_CLIENT_MAXIDLE || (cfg->cmaxidle == CS_CLIENT_MAXIDLE && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
@@ -1881,7 +1881,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg->netprio);
 	if (cfg->clientdyndns || (!cfg->clientdyndns && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "clientdyndns", "%d\n", cfg->clientdyndns);
-	if (cfg->resolvedelay || (!cfg->resolvedelay && cfg->http_full_cfg))
+	if (cfg->resolvedelay != CS_RESOLVE_DELAY || (cfg->resolvedelay == CS_RESOLVE_DELAY && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "resolvedelay", "%d\n", cfg->resolvedelay);
 	if (cfg->tosleep ||(!cfg->tosleep && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", cfg->tosleep);
