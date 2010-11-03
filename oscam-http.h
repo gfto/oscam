@@ -392,7 +392,13 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TH>Idle</TH>\n\
 		<TH>Status</TH>\n\
 		</TR>\n\
-		##CLIENTSTATUS##\
+		##SERVERSTATUS##\n\
+		##READERHEADLINE##\n\
+		##READERSTATUS##\n\
+		##PROXYHEADLINE##\n\
+		##PROXYSTATUS##\n\
+		##CLIENTHEADLINE##\n\
+		##CLIENTSTATUS##\n\
 		</TABLE><BR>\n\
 		<DIV class=\"log\">\n\
 		##LOGHISTORY##\

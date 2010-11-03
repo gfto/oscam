@@ -1960,7 +1960,23 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				}
 				tpl_printf(vars, 0, "CLIENTCON", txt);
 			}
-			tpl_addVar(vars, 1, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+
+			// select right suborder
+			if (cl->typ == 'c') {
+				tpl_addVar(vars, 1, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				tpl_addVar(vars, 0, "CLIENTHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"18\">Clients</TD></TR>\n");
+			}
+			else if (cl->typ == 'r') {
+				tpl_addVar(vars, 1, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				tpl_addVar(vars, 0, "READERHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"18\">Readers</TD></TR>\n");
+			}
+			else if (cl->typ == 'p') {
+				tpl_addVar(vars, 1, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				tpl_addVar(vars, 0, "PROXYHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"18\">Proxies</TD></TR>\n");
+			}
+			else
+				tpl_addVar(vars, 1, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+
 		}
 		if (cl->next == NULL)
 			break;
