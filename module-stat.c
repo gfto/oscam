@@ -4,12 +4,6 @@
 #define UNDEF_AVG_TIME 80000
 #define MAX_ECM_SEND_CACHE 16
 
-#define DEFAULT_REOPEN_SECONDS 900
-#define DEFAULT_MIN_ECM_COUNT 5
-#define DEFAULT_MAX_ECM_COUNT 500
-#define DEFAULT_NBEST 1
-#define DEFAULT_NFB 1
-
 static int stat_load_save;
 static struct timeb nulltime;
 

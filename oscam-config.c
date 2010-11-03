@@ -5,6 +5,8 @@
 #  include "oscam-boxkeys.np"
 #endif
 
+#include "module-stat.h"
+
 #define CONFVARWIDTH 30
 
 static const char *cs_conf="oscam.conf";
@@ -1847,49 +1849,82 @@ int write_config()
 
 	/*global settings*/
 	fprintf(f,"[global]\n");
-	if (cfg->srvip != 0)
+	if (cfg->srvip != 0 || (cfg->srvip == 0 && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->srvip));
-	if (cfg->usrfile != NULL) fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg->usrfile);
-	if (cfg->logfile != NULL) fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", cfg->logfile);
-	if (cfg->cwlogdir != NULL) fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg->cwlogdir);
+	if (cfg->usrfile != NULL || (cfg->usrfile == NULL && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg->usrfile);
+	if (cfg->logfile != NULL || (cfg->logfile == NULL && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", cfg->logfile);
+	if (cfg->cwlogdir != NULL || (cfg->cwlogdir == NULL && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg->cwlogdir);
 #ifdef QBOXHD_LED
-    fprintf_conf(f, CONFVARWIDTH, "disableqboxhdled", "%d\n", cfg->disableqboxhdled);
+	if (cfg->disableqboxhdled || (!cfg->disableqboxhdled && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "disableqboxhdled", "%d\n", cfg->disableqboxhdled);
 #endif
-	fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg->disablelog);
-	fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg->disableuserfile);
-	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg->usrfileflag);
-	fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout);
-	fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout);
-	fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
-	fprintf_conf(f, CONFVARWIDTH, "failbantime", "%d\n", cfg->failbantime);
-	if(!cfg->delay == CS_DELAY)
+    if (cfg->disablelog || (!cfg->disablelog && cfg->http_full_cfg))
+    	fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg->disablelog);
+    if (cfg->disableuserfile || (!cfg->disableuserfile && cfg->http_full_cfg))
+    	fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg->disableuserfile);
+    if (cfg->usrfileflag || (!cfg->usrfileflag && cfg->http_full_cfg))
+    	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg->usrfileflag);
+	if (cfg->ctimeout != CS_CLIENT_TIMEOUT || (cfg->ctimeout != CS_CLIENT_TIMEOUT && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout);
+	if (cfg->ftimeout != CS_CLIENT_TIMEOUT || (cfg->ftimeout != CS_CLIENT_TIMEOUT && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout);
+	if (cfg->cmaxidle != CS_CLIENT_MAXIDLE || (cfg->cmaxidle == CS_CLIENT_MAXIDLE && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
+	if (cfg->failbantime || (!cfg->failbantime && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "failbantime", "%d\n", cfg->failbantime);
+	if (cfg->delay != CS_DELAY || (cfg->delay == CS_DELAY && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay); //deprecated
-	fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);
-	fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg->netprio);
-	fprintf_conf(f, CONFVARWIDTH, "clientdyndns", "%d\n", cfg->clientdyndns);
-	fprintf_conf(f, CONFVARWIDTH, "resolvedelay", "%d\n", cfg->resolvedelay);
-	if (cfg->tosleep) fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", cfg->tosleep);
-	fprintf_conf(f, CONFVARWIDTH, "unlockparental", "%d\n", cfg->ulparent);
-	fprintf_conf(f, CONFVARWIDTH, "nice", "%d\n", cfg->nice);
-	fprintf_conf(f, CONFVARWIDTH, "serialreadertimeout", "%d\n", cfg->srtimeout);
-	fprintf_conf(f, CONFVARWIDTH, "maxlogsize", "%d\n", cfg->max_log_size);
-	fprintf_conf(f, CONFVARWIDTH, "waitforcards", "%d\n", cfg->waitforcards);
-	fprintf_conf(f, CONFVARWIDTH, "preferlocalcards", "%d\n", cfg->preferlocalcards);
-	fprintf_conf(f, CONFVARWIDTH, "saveinithistory", "%d\n", cfg->saveinithistory);
-	fprintf_conf(f, CONFVARWIDTH, "readerrestartseconds", "%d\n", cfg->reader_restart_seconds);
+	if (cfg->bindwait != CS_BIND_TIMEOUT || (cfg->bindwait != CS_BIND_TIMEOUT && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);
+	if (cfg->netprio || (!cfg->netprio && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg->netprio);
+	if (cfg->clientdyndns || (!cfg->clientdyndns && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "clientdyndns", "%d\n", cfg->clientdyndns);
+	if (cfg->resolvedelay || (!cfg->resolvedelay && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "resolvedelay", "%d\n", cfg->resolvedelay);
+	if (cfg->tosleep ||(!cfg->tosleep && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", cfg->tosleep);
+	if (cfg->ulparent ||(!cfg->ulparent && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "unlockparental", "%d\n", cfg->ulparent);
+	if (cfg->nice != 99 || (cfg->nice == 99 && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "nice", "%d\n", cfg->nice);
+	if (cfg->srtimeout != 1500 || (cfg->srtimeout == 1500 && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "serialreadertimeout", "%d\n", cfg->srtimeout);
+	if (cfg->max_log_size != 10 || (cfg->max_log_size == 10 && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "maxlogsize", "%d\n", cfg->max_log_size);
+	if (cfg->waitforcards ||(!cfg->waitforcards && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "waitforcards", "%d\n", cfg->waitforcards);
+	if (cfg->preferlocalcards ||(!cfg->preferlocalcards && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "preferlocalcards", "%d\n", cfg->preferlocalcards);
+	if (cfg->saveinithistory ||(!cfg->saveinithistory && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "saveinithistory", "%d\n", cfg->saveinithistory);
+	if (cfg->reader_restart_seconds != 5 ||(cfg->reader_restart_seconds == 5 && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "readerrestartseconds", "%d\n", cfg->reader_restart_seconds);
 
-	fprintf_conf(f, CONFVARWIDTH, "lb_mode", "%d\n", cfg->lb_mode);
-	fprintf_conf(f, CONFVARWIDTH, "lb_save", "%d\n", cfg->lb_save);
-	fprintf_conf(f, CONFVARWIDTH, "lb_nbest_readers", "%d\n", cfg->lb_nbest_readers);
-	fprintf_conf(f, CONFVARWIDTH, "lb_nfb_readers", "%d\n", cfg->lb_nfb_readers);
-	fprintf_conf(f, CONFVARWIDTH, "lb_min_ecmcount", "%d\n", cfg->lb_min_ecmcount);
-	fprintf_conf(f, CONFVARWIDTH, "lb_max_ecmcount", "%d\n", cfg->lb_max_ecmcount);
-	fprintf_conf(f, CONFVARWIDTH, "lb_reopen_seconds", "%d\n", cfg->lb_reopen_seconds);
+	if (cfg->lb_mode ||(!cfg->lb_mode && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "lb_mode", "%d\n", cfg->lb_mode);
+	if (cfg->lb_save ||(!cfg->lb_save && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "lb_save", "%d\n", cfg->lb_save);
+	if (cfg->lb_nbest_readers != DEFAULT_NBEST ||(cfg->lb_nbest_readers == DEFAULT_NBEST && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "lb_nbest_readers", "%d\n", cfg->lb_nbest_readers);
+	if (cfg->lb_nfb_readers != DEFAULT_NFB ||(cfg->lb_nfb_readers == DEFAULT_NFB  && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "lb_nfb_readers", "%d\n", cfg->lb_nfb_readers);
+	if (cfg->lb_min_ecmcount != DEFAULT_MIN_ECM_COUNT ||(cfg->lb_min_ecmcount == DEFAULT_MIN_ECM_COUNT  && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "lb_min_ecmcount", "%d\n", cfg->lb_min_ecmcount);
+	if (cfg->lb_max_ecmcount != DEFAULT_MAX_ECM_COUNT ||(cfg->lb_max_ecmcount == DEFAULT_MAX_ECM_COUNT  && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "lb_max_ecmcount", "%d\n", cfg->lb_max_ecmcount);
+	if (cfg->lb_reopen_seconds != DEFAULT_REOPEN_SECONDS ||(cfg->lb_reopen_seconds == DEFAULT_REOPEN_SECONDS  && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "lb_reopen_seconds", "%d\n", cfg->lb_reopen_seconds);
 
-	fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg->resolve_gethostbyname);
+	if (cfg->resolve_gethostbyname ||(!cfg->resolve_gethostbyname && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg->resolve_gethostbyname);
 
 #ifdef CS_WITH_DOUBLECHECK
-	fprintf_conf(f, CONFVARWIDTH, "double_check", "%d\n", cfg->double_check);
+	if (cfg->double_check ||(!cfg->double_check && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "double_check", "%d\n", cfg->double_check);
 #endif
 
 	fputc((int)'\n', f);
