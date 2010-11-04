@@ -210,7 +210,6 @@ cs_log("[viaccess-reader] name: %s", cta_res);
         // the pin need to be coded in bcd, so we need to convert from ascii to bcd, so '1234' -> 0x12 0x34
         cmDPL[6]=((reader->pincode[0]-0x30)<<4) | ((reader->pincode[1]-0x30) & 0x0f);
         cmDPL[7]=((reader->pincode[2]-0x30)<<4) | ((reader->pincode[3]-0x30) & 0x0f);
-        cs_dump(cmDPL,9,"cmDPL :");
       }
       else {
         cs_log("[viaccess-reader] Using PIN 0000!");
