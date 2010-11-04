@@ -383,8 +383,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TH>Address</TH>\n\
 		<TH>Port</TH>\n\
 		<TH>Protocol</TH>\n\
-		<TH>Login Date</TH>\n\
-		<TH>Login Time</TH>\n\
+		<TH>Login</TH>\n\
 		<TH>Online</TH>\n\
 		<TH>CAID:SRVID</TH>\n\
 		<TH>Current Channel</TH>\n\
@@ -419,7 +418,6 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TD align=\"center\">##CLIENTPORT##</TD>\n\
 		<TD>##CLIENTPROTO##</TD>\n\
 		<TD align=\"center\">##CLIENTLOGINDATE##</TD>\n\
-		<TD align=\"center\">##CLIENTLOGINTIME##</TD>\n\
 		<TD align=\"center\">##CLIENTLOGINSECS##</TD>\n\
 		<TD align=\"center\">##CLIENTCAID##:##CLIENTSRVID##</TD>\n\
 		<TD>##CLIENTSRVPROVIDER####CLIENTSRVNAME##</TD>\n\
