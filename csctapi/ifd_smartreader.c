@@ -95,6 +95,8 @@ int SR_Init (struct s_reader *reader)
     else
         out_endpoint = 0x82;
     
+    reader->sr_config->out_ep=out_endpoint;
+    
     cs_log("Using 0x%2X as endpoint for smartreader hardware detection", out_endpoint);
 
     smartreader_init(reader,out_endpoint);
