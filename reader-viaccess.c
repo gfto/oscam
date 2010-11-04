@@ -220,7 +220,7 @@ cs_log("[viaccess-reader] name: %s", cta_res);
                 cs_log("[viaccess-reader] Can't disable parental lock. Wrong PIN? OSCam used 0000!");
             }
             else {
-                cs_log("[viaccess-reader] Can't disable parental lock. Wrong PIN? OSCam used %c%c%c%c!",reader->pincode[0],reader->pincode[1],reader->pincode[2],reader->pincode[3]);
+                cs_log("[viaccess-reader] Can't disable parental lock. Wrong PIN? OSCam used %s!",reader->pincode);
             }
       }
       else
