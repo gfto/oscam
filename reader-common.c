@@ -319,7 +319,7 @@ int reader_checkhealth(struct s_reader * reader)
   {
     if (reader->card_status == NO_CARD)
     {
-      cs_log("card detected");
+      cs_log("%s card detected", reader->label);
       reader->card_status = CARD_NEED_INIT;
       if (!reader_reset(reader)) 
       {

@@ -483,7 +483,7 @@ static int videoguard12_do_emm(struct s_reader *reader, EMM_PACKET * ep)
 static int videoguard12_card_info(struct s_reader *reader)
 {
   /* info is displayed in init, or when processing info */
-  cs_log("card detected");
+  cs_log("%s card detected", reader->label);
   cs_log("type: %s", reader->card_desc);
   read_tiers(reader);
   return OK;
