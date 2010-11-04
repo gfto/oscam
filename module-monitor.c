@@ -388,12 +388,12 @@ static void monitor_process_details_reader(struct s_client *cl) {
 
 		if (fp) {
 			while(fgets(buffer, 128, fp) != NULL) {
-				monitor_send_details(buffer, cl->thread);
+				monitor_send_details(buffer, (unsigned int)(cl->thread));
 			}
 			fclose(fp);
 		}
 	} else {
-		monitor_send_details("Missing reader index or entitlement not saved!", cl->thread);
+		monitor_send_details("Missing reader index or entitlement not saved!", (unsigned int)(cl->thread));
 	}
 
 }
@@ -420,16 +420,16 @@ static void monitor_process_details(char *arg){
 		switch(cl->typ)
 		{
 		case 's':
-			monitor_process_details_master(sbuf, cl->thread);
+			monitor_process_details_master(sbuf, (unsigned int)(cl->thread));
 			break;
 		case 'c': case 'm':
-			monitor_send_details(monitor_client_info(1, cl), cl->thread);
+			monitor_send_details(monitor_client_info(1, cl), (unsigned int)(cl->thread));
 			break;
 		case 'r':
 			monitor_process_details_reader(cl);//with client->typ='r' client->ridx is always filled and valid, so no need checking
 			break;
 		case 'p':
-			monitor_send_details(monitor_client_info(1, cl), cl->thread);
+			monitor_send_details(monitor_client_info(1, cl), (unsigned int)(cl->thread));
 			break;
 		}
 	}
