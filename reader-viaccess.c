@@ -127,6 +127,37 @@ static int chk_prov(struct s_reader * reader, uchar *id, uchar keynr)
   return(rc);
 }
 
+static int unlock_parental(struct s_reader * reader)
+{
+    /* disabling parental lock. assuming pin "0000" if no pin code is provided in the config */
+    def_resp;
+
+    static const uchar inDPL[] = {0xca, 0x24, 0x02, 0x00, 0x09};
+    uchar cmDPL[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F};
+    if (strcmp(reader->pincode, "none")) {
+        cs_log("[viaccess-reader] Using PIN %c%c%c%c",reader->pincode[0],reader->pincode[1],reader->pincode[2],reader->pincode[3]);
+        // the pin need to be coded in bcd, so we need to convert from ascii to bcd, so '1234' -> 0x12 0x34
+        cmDPL[6]=((reader->pincode[0]-0x30)<<4) | ((reader->pincode[1]-0x30) & 0x0f);
+        cmDPL[7]=((reader->pincode[2]-0x30)<<4) | ((reader->pincode[3]-0x30) & 0x0f);
+    }
+    else {
+        cs_log("[viaccess-reader] Using PIN 0000!");
+    }
+    write_cmd(inDPL,cmDPL);
+    if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) ) {
+        if (strcmp(reader->pincode, "none")) {
+            cs_log("[viaccess-reader] Can't disable parental lock. Wrong PIN? OSCam used 0000!");
+        }
+        else {
+            cs_log("[viaccess-reader] Can't disable parental lock. Wrong PIN? OSCam used %s!",reader->pincode);
+        }
+    }
+    else
+        cs_log("[viaccess-reader] Parental lock disabled");
+
+    return 0;
+}
+
 static int viaccess_card_init(struct s_reader * reader, ATR newatr)
 {
   get_atr;
@@ -200,32 +231,8 @@ cs_log("[viaccess-reader] name: %s", cta_res);
   /* init the maybe existing aes key */
   aes_set_key((char *)reader->aes_key);
 
-  /* disabling parental lock. assuming pin "0000" */
-  if (cfg->ulparent) {
-      static const uchar inDPL[] = {0xca, 0x24, 0x02, 0x00, 0x09};
-      uchar cmDPL[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F};
-      if (strcmp(reader->pincode, "none")) {
-        // int pin=atoi(reader->pincode);
-        cs_log("[viaccess-reader] Using PIN %c%c%c%c",reader->pincode[0],reader->pincode[1],reader->pincode[2],reader->pincode[3]);
-        // the pin need to be coded in bcd, so we need to convert from ascii to bcd, so '1234' -> 0x12 0x34
-        cmDPL[6]=((reader->pincode[0]-0x30)<<4) | ((reader->pincode[1]-0x30) & 0x0f);
-        cmDPL[7]=((reader->pincode[2]-0x30)<<4) | ((reader->pincode[3]-0x30) & 0x0f);
-      }
-      else {
-        cs_log("[viaccess-reader] Using PIN 0000!");
-      }
-      write_cmd(inDPL,cmDPL);
-      if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) ) {
-            if (strcmp(reader->pincode, "none")) {
-                cs_log("[viaccess-reader] Can't disable parental lock. Wrong PIN? OSCam used 0000!");
-            }
-            else {
-                cs_log("[viaccess-reader] Can't disable parental lock. Wrong PIN? OSCam used %s!",reader->pincode);
-            }
-      }
-      else
-          cs_log("[viaccess-reader] Parental lock disabled");
-  }
+  if (cfg->ulparent)
+    unlock_parental(reader);
 
   cs_log("[viaccess-reader] ready for requests");
   memset(&reader->last_geo, 0, sizeof(reader->last_geo));
