@@ -45,6 +45,31 @@ static int set_provider_info(struct s_reader * reader, int i)
   return OK;
 }
 
+static int unlock_parental(struct s_reader * reader)
+{
+    // Unlock parental control
+    // c1 30 00 01 09
+    // 00 00 00 00 00 00 00 00 ff
+    static const uchar ins30[] = { 0xc1, 0x30, 0x00, 0x01, 0x09 };
+    static uchar ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff };
+
+    def_resp;
+
+    if (strcmp(reader->pincode, "none")) {
+        cs_log("[seca-reader] Using PIN %s",reader->pincode);
+        // the pin need to be coded in bcd, so we need to convert from ascii to bcd, so '1234' -> 0x12 0x34
+        ins30data[6]=((reader->pincode[0]-0x30)<<4) | ((reader->pincode[1]-0x30) & 0x0f);
+        ins30data[7]=((reader->pincode[2]-0x30)<<4) | ((reader->pincode[3]-0x30) & 0x0f);
+    }
+    else {
+        cs_log("[seca-reader] Using PIN 0000!");
+    }
+
+    write_cmd(ins30, ins30data); 
+    cs_ri_log (reader, "[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
+    return 0;
+}
+
 static int seca_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
@@ -57,11 +82,6 @@ static int seca_card_init(struct s_reader * reader, ATR newatr)
   static const uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x07 }; // get nr. of prividers
   int i;
 
-// Unlock parental control
-// c1 30 00 01 09
-// 00 00 00 00 00 00 00 00 ff
-  static const uchar ins30[] = { 0xc1, 0x30, 0x00, 0x01, 0x09 };
-  static const uchar ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff };
 
   buf[0]=0x00;
   if ((atr[10]!=0x0e) || (atr[11]!=0x6c) || (atr[12]!=0xb6) || (atr[13]!=0xd6)) return ERROR;
@@ -102,8 +122,7 @@ static int seca_card_init(struct s_reader * reader, ATR newatr)
   cs_ri_log (reader, "providers: %d (%s)", reader->nprov, buf+1);
 // Unlock parental control
   if( cfg->ulparent != 0 ){
-	  write_cmd(ins30, ins30data); 
-	  cs_ri_log (reader, "[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
+    unlock_parental(reader);
   }else {
 	  cs_ri_log (reader, "[seca-reader] parental locked");
   }	

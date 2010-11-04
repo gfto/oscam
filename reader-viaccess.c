@@ -130,12 +130,13 @@ static int chk_prov(struct s_reader * reader, uchar *id, uchar keynr)
 static int unlock_parental(struct s_reader * reader)
 {
     /* disabling parental lock. assuming pin "0000" if no pin code is provided in the config */
-    def_resp;
 
     static const uchar inDPL[] = {0xca, 0x24, 0x02, 0x00, 0x09};
     uchar cmDPL[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0F};
+    def_resp;
+
     if (strcmp(reader->pincode, "none")) {
-        cs_log("[viaccess-reader] Using PIN %c%c%c%c",reader->pincode[0],reader->pincode[1],reader->pincode[2],reader->pincode[3]);
+        cs_log("[viaccess-reader] Using PIN %s",reader->pincode);
         // the pin need to be coded in bcd, so we need to convert from ascii to bcd, so '1234' -> 0x12 0x34
         cmDPL[6]=((reader->pincode[0]-0x30)<<4) | ((reader->pincode[1]-0x30) & 0x0f);
         cmDPL[7]=((reader->pincode[2]-0x30)<<4) | ((reader->pincode[3]-0x30) & 0x0f);

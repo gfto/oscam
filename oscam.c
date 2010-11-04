@@ -273,7 +273,7 @@ struct s_client * get_client_by_tid(unsigned long tid) //FIXME untested!! no lon
 {
   struct s_client *cl; 
   for (cl=first_client; cl ; cl=cl->next)
-    if (cl->thread==tid)
+    if ((unsigned int)(cl->thread)==tid)
       return cl;
   return NULL;
 }
