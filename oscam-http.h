@@ -792,7 +792,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 #ifdef LIBUSB
 #define TPLREADERCONFIGDEVICEEPBIT "\
 	<SELECT name=\"device_out_endpoint\">\
-		<OPTION  value=\"\" ##DEVICEOUTEP0##>None</OPTION>\
+		<OPTION  value=\"\" ##DEVICEOUTEP0##>default</OPTION>\
         <OPTION  value=\"0x82\" ##DEVICEOUTEP1##>0x82 - Smargo+</OPTION>\
         <OPTION  value=\"0x81\" ##DEVICEOUTEP2##>0x81 - Infinity USB Smart</OPTION>\
      </SELECT>"

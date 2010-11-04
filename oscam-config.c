@@ -3238,11 +3238,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 #ifdef LIBUSB
-    if (!strcmp(token, "device_out_endpoint")) {
-        sscanf(value, "0x%2X", &i);
-        rdr->device_endpoint = i;
-        return;
-    }
+	if (!strcmp(token, "device_out_endpoint")) {
+		if (strlen(value) > 0) {
+			sscanf(value, "0x%2X", &i);
+			rdr->device_endpoint = i;
+		} else {
+			rdr->device_endpoint = 0;
+		}
+		return;
+	}
 #endif
 
 	if (!strcmp(token, "key")) {
