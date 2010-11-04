@@ -66,7 +66,18 @@ static int unlock_parental(struct s_reader * reader)
     }
 
     write_cmd(ins30, ins30data); 
-    cs_ri_log (reader, "[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
+    if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) ) {
+        if (strcmp(reader->pincode, "none")) {
+            cs_log("[seca-reader] Can't disable parental lock. Wrong PIN? OSCam used %s!",reader->pincode);
+        }
+        else {
+            cs_log("[seca-reader] Can't disable parental lock. Wrong PIN? OSCam used 0000!");
+        }
+    }
+    else
+        cs_log("[seca-reader] Parental lock disabled");
+    
+    cs_debug (reader, "[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
     return 0;
 }
 
