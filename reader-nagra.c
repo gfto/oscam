@@ -210,6 +210,11 @@ static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 	BN_bn2bin(bnPT1, parte_variable + (88-BN_num_bytes(bnPT1)));
 	BN_CTX_end(ctx1);
 	BN_CTX_free (ctx1);
+
+        reader->ActivationDate[0] = parte_variable[65];
+        reader->ActivationDate[1] = parte_variable[66];
+        reader->ExpiryDate[0] = parte_variable[69];
+        reader->ExpiryDate[1] = parte_variable[70];
 	
 	reader->prid[0][0]=0x00;
 	reader->prid[0][1]=0x00;
@@ -666,12 +671,14 @@ static int nagra2_card_init(struct s_reader * reader, ATR newatr)
 static char *tiger_date(uint8_t *ndays, int offset, char *result)
 {
    struct tm tms;
-         
    memset(&tms, 0, sizeof(tms));
-   tms.tm_year = 92;
-   tms.tm_mday = (ndays[0] << 8 | ndays[1]) + offset + 1;
+   int days = (ndays[0] << 8 | ndays[1]) + offset;
+   int year_offset = 0;
+   if (days > 0x41B4) year_offset = 68; // to overcome 32-bit systems limitations
+   tms.tm_year = 92 - year_offset;
+   tms.tm_mday = days + 1;
    mktime(&tms);
-   sprintf(result, "%02d/%02d/%04d", tms.tm_mday, tms.tm_mon + 1, tms.tm_year + 1900);
+   sprintf(result, "%02d/%02d/%04d", tms.tm_mday, tms.tm_mon + 1, tms.tm_year + 1900 + year_offset);
    return result;
 }
 
@@ -681,6 +688,7 @@ typedef struct
    char date2[11];
    uint8_t type;
    uint16_t value;
+   uint16_t price;
 } ncmed_rec;
 
 int reccmp(const void *r1, const void *r2)
@@ -693,15 +701,19 @@ int reccmp(const void *r1, const void *r2)
    return (v1 == v2) ? 0 : (v1 < v2) ? -1 : 1;
 }
 
-
 static int nagra2_card_info(struct s_reader * reader)
 {
 	int i;
+        char currdate[11];
 	cs_ri_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
 	cs_ri_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
 	cs_ri_log(reader, "SER:    %s", cs_hexdump (1, reader->hexserial+2, 4));
 	cs_ri_log(reader, "CAID:   %04X",reader->caid[0]);
 	cs_ri_log(reader, "Prv.ID: %s(sysid)",cs_hexdump (1,reader->prid[0],4));
+
+	cs_ri_log(reader, "Activation Date : %s", tiger_date(reader->ActivationDate, 0, currdate));
+	cs_ri_log(reader, "Expiry Date     : %s", tiger_date(reader->ExpiryDate, 0, currdate));
+
 	for (i=1; i<reader->nprov; i++)
 	{
 		cs_ri_log(reader, "Prv.ID: %s",cs_hexdump (1,reader->prid[i],4));
@@ -714,16 +726,21 @@ static int nagra2_card_info(struct s_reader * reader)
            uint8_t tier_cmd2[] = { 0x01, 0x00 };
            def_resp;
            int j;
-           do_cmd(reader, 0xD0, 0x04, 0xFF, 0x0A, tier_cmd1, cta_res, &cta_lr);
+           do_cmd(reader, 0xD0, 0x04, 0x50, 0x0A, tier_cmd1, cta_res, &cta_lr);
            if (cta_lr == 0x0C)
            {
-              //cs_ri_log(reader, "Expiry date    : %s", tiger_date(&cta_res[5], 0, date1));
               int prepaid = 0;
               int credit = 0;
-              for (i = 0; i < 32; ++i)
+              int balance = 0;
+
+              uint16_t credit_in = cta_res[8] << 8 | cta_res[9];
+              uint16_t credit_out = cta_res[5] << 8 | cta_res[6]; 
+              balance = (credit_in - credit_out) / 100;
+
+              for (i = 0; i < 13; ++i)
               {
                  tier_cmd2[1] = i;
-                 do_cmd(reader, 0xD0, 0x04, 0xFF, 0xAA, tier_cmd2, cta_res, &cta_lr);
+                 do_cmd(reader, 0xD0, 0x04, 0x50, 0xAA, tier_cmd2, cta_res, &cta_lr);
                  if (cta_lr == 0xAC)
                  {
                     //cs_dump(cta_res, cta_lr, "NCMED Card Record #%d", i+1);
@@ -733,30 +750,31 @@ static int nagra2_card_info(struct s_reader * reader)
                        {
                           int val_offs = 0;
                           tiger_date(&cta_res[j+6], 0, records[num_records].date2);
-                          tiger_date(&cta_res[j+8], 0, records[num_records].date1);
+
                           switch (cta_res[j+1])
                           {
                              case 0x00:
                              case 0x01:
-                                val_offs = 4;
+                             case 0x20:
+                             case 0x21:
+                             case 0x29:
+                                tiger_date(&cta_res[j+8], 0, records[num_records].date1);
+                                val_offs = 1;
                                 break;
+
                              case 0x80:
                                 tiger_date(&cta_res[j+6], 0, records[num_records].date1);
-                                val_offs = 11;
+                                val_offs = 1;
                                 break;
-                             case 0x21:
-                                val_offs = 11;
-                                break;
-                             case 0x29:
-                                val_offs = 11;
-                                break;
+
                              default:
                                 cs_ri_log(reader, "Unknown record : %s", cs_hexdump(1, &cta_res[j], 17));
                           }
                           if (val_offs > 0)
                           {
                              records[num_records].type = cta_res[j+1];
-                             records[num_records++].value = cta_res[j+val_offs] << 8 | cta_res[j+val_offs+1];
+                             records[num_records].value = cta_res[j+4] << 8 | cta_res[j+5];
+                             records[num_records++].price = cta_res[j+11] << 8 | cta_res[j+12];
                           }
                           j += 16;
                        }
@@ -771,20 +789,35 @@ static int nagra2_card_info(struct s_reader * reader)
               struct tm * timeinfo;
               time ( &rawtime );
               timeinfo = localtime ( &rawtime );
-              char currdate[11];
               sprintf(currdate, "%02d/%02d/%04d", timeinfo->tm_mday, timeinfo->tm_mon+1, timeinfo->tm_year+1900);
               
               for (i = 0; i < num_records; ++i)
               {  
-                 if( (records[i].type == 0x00) || (records[i].type == 0x01) )
+                 switch (records[i].type)
                  {
-                      tier_name = get_tiername(records[i].value, reader->caid[0]);
-                      if( (reader->nagra_read == 2) && (reccmp(records[i].date2,currdate) >= 0) )
-                        cs_ri_log(reader, "tier: %04X, expiry date: %s %s",
-                                  records[i].value, records[i].date2, tier_name);
-                      else if(reader->nagra_read == 1)
-                        cs_ri_log(reader, "Activation     : from %s to %s  ( %04X ) %s",
-                                  records[i].date1, records[i].date2, records[i].value, tier_name);
+                    case 0x00:
+                    case 0x01:  
+                       tier_name = get_tiername(records[i].value, reader->caid[0]);
+                       if( (reader->nagra_read == 2) && (reccmp(records[i].date2,currdate) >= 0) )
+                         cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
+                                   records[i].value, records[i].date2, tier_name);
+                       else if(reader->nagra_read == 1)
+                       {
+                         euro = (records[i].price / 100);
+                         cs_ri_log(reader, "Activation     : ( %04X ) from %s to %s  (%3d euro) %s",
+                                   records[i].value, records[i].date1, records[i].date2, euro, tier_name);
+                       }
+                       break;
+                 
+                    case 0x20:
+                    case 0x21:
+                       if( (reader->nagra_read == 2) && (reccmp(records[i].date2,currdate) >= 0) )
+                       {
+                         tier_name = get_tiername(records[i].value, reader->caid[0]);
+                         cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
+                                   records[i].value, records[i].date2, tier_name);
+                       }
+                       break;
                  }
               }  
 
@@ -793,30 +826,38 @@ static int nagra2_card_info(struct s_reader * reader)
                  switch (records[i].type)
                  {  
                     case 0x80:
-                       euro = (records[i].value / 100) - prepaid;
-                       credit += euro;
-                       prepaid += euro;
-                       cs_ri_log(reader, "Recharge       : %s                     (%3d euro)",
-                                 records[i].date1, euro);
+                       if(reader->nagra_read == 1)
+                       {
+                         euro = (records[i].price / 100) - prepaid;
+                         credit += euro;
+                         prepaid += euro;
+                         if(euro)
+                           cs_ri_log(reader, "Recharge       :               %s                (%3d euro)",
+                                     records[i].date2, euro);
+                       }
                        break;
-                        
+
+                    case 0x20:
                     case 0x21:
-                       euro = records[i].value / 100;
-                       credit -= euro;
-                       if( !( (reader->nagra_read == 2) && (reccmp(currdate,records[i].date2) == 1) ) )
-                         cs_ri_log(reader, "Subscription   : from %s to %s  (%3d euro)",
-                                   records[i].date1, records[i].date2, euro);
+                       if(reader->nagra_read == 1)
+                       {
+                         euro = records[i].price / 100;
+                         credit -= euro;
+                         tier_name = get_tiername(records[i].value, reader->caid[0]);
+                         cs_ri_log(reader, "Subscription   : ( %04X ) from %s to %s  (%3d euro) %s",
+                                   records[i].value, records[i].date1, records[i].date2, euro, tier_name);
+                       }
                        break;
 
                     case 0x29:
-                       euro = records[i].value / 100;
-                       credit -= euro;
-                       cs_ri_log(reader, "Event purchase : %s                     (%3d euro)",
-                                 records[i].date1, euro);
+                       euro = records[i].price / 100;
+                       if(reader->nagra_read == 1) credit -= euro;
+                       cs_ri_log(reader, "Event purchase : ( %04X ) from %s to %s  (%3d euro)",
+                                 records[i].value, records[i].date1, records[i].date2, euro);
                        break;
                  }
               }
-              cs_ri_log(reader, "Credit         :                                 %3d euro", credit);
+              cs_ri_log(reader, "Credit         :                                          %3d euro", balance);
            }
         }
 	cs_log("[nagra-reader] ready for requests"); 

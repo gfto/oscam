@@ -878,6 +878,8 @@ struct s_reader  //contains device info, reader info and card info
  	int is_n3_na;
  	int has_dt08;
  	int swapCW;
+        uint8_t ExpiryDate[2];
+        uint8_t ActivationDate[2];
  	unsigned char rom[15];
  	unsigned char plainDT08RSA[64];
  	unsigned char IdeaCamKey[16];

@@ -70,7 +70,7 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 
         reader_nb=atoi((const char *)&pcsc_reader->device);
         if (reader_nb < 0 || reader_nb >= nbReaders) {
-            cs_log("Wrong reader index: %d\n", reader_nb);
+            cs_log("Wrong reader index: %d", reader_nb);
             free(mszReaders);
             free(readers);
             return  2;
