@@ -82,13 +82,11 @@ int SR_Init (struct s_reader *reader)
         return ret;
     }
 
-    
     //Overwrite default endpoint if config has a value for it
     if(reader->device_endpoint != 0)
     	out_endpoint = reader->device_endpoint;
     else
         out_endpoint = 0x82;
-    
     
     cs_log("Using 0x%2X as endpoint for smartreader hardware detection", out_endpoint);
 

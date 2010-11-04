@@ -710,18 +710,20 @@ static int nagra2_card_info(struct s_reader * reader)
 	cs_ri_log(reader, "SER:    %s", cs_hexdump (1, reader->hexserial+2, 4));
 	cs_ri_log(reader, "CAID:   %04X",reader->caid[0]);
 	cs_ri_log(reader, "Prv.ID: %s(sysid)",cs_hexdump (1,reader->prid[0],4));
-
-	cs_ri_log(reader, "Activation Date : %s", tiger_date(reader->ActivationDate, 0, currdate));
-	cs_ri_log(reader, "Expiry Date     : %s", tiger_date(reader->ExpiryDate, 0, currdate));
-
 	for (i=1; i<reader->nprov; i++)
 	{
-		cs_ri_log(reader, "Prv.ID: %s",cs_hexdump (1,reader->prid[i],4));
+          cs_ri_log(reader, "Prv.ID: %s",cs_hexdump (1,reader->prid[i],4));
 	}
+        if(reader->is_tiger)
+        {
+	  cs_ri_log(reader, "Activation Date : %s", tiger_date(reader->ActivationDate, 0, currdate));
+	  cs_ri_log(reader, "Expiry Date : %s", tiger_date(reader->ExpiryDate, 0, currdate));
+        }
         if (reader->nagra_read && reader->is_tiger && memcmp(reader->rom, "NCMED", 5) == 0)
         {
            ncmed_rec records[255];
            int num_records = 0;
+           int res_err = 0;
            uint8_t tier_cmd1[] = { 0x00, 0x00 };
            uint8_t tier_cmd2[] = { 0x01, 0x00 };
            def_resp;
@@ -857,7 +859,10 @@ static int nagra2_card_info(struct s_reader * reader)
                        break;
                  }
               }
-              cs_ri_log(reader, "Credit         :                                          %3d euro", balance);
+              if(reader->nagra_read == 1)
+                cs_ri_log(reader, "Credit         :                                          %3d euro", credit);
+              else
+                cs_ri_log(reader, "Credit : %3d euro", balance);
            }
         }
 	cs_log("[nagra-reader] ready for requests"); 
