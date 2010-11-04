@@ -273,7 +273,7 @@ struct s_client * get_client_by_tid(unsigned long tid) //FIXME untested!! no lon
 {
   struct s_client *cl; 
   for (cl=first_client; cl ; cl=cl->next)
-    if ((unsigned int)(cl->thread)==tid)
+    if (cl->thread==tid)
       return cl;
   return NULL;
 }
@@ -1697,8 +1697,10 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
   }
   if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
     return; // obsolete
-  ert->rcEx=er->rcEx;
-  strcpy(ert->msglog, er->msglog);
+
+	ert->rcEx=er->rcEx;
+	strcpy(ert->msglog, er->msglog);
+	ert->selected_reader=er->selected_reader;
 
 	// different er->rc codes:
 	// 0 error
@@ -1719,7 +1721,6 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
         ert->rc=0;
     }
     ert->rcEx=0;
-    ert->selected_reader=er->selected_reader;
     memcpy(ert->cw , er->cw , sizeof(er->cw));
 #ifdef CS_WITH_GBOX
     ert->gbxCWFrom=er->gbxCWFrom;
