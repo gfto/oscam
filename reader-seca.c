@@ -77,7 +77,7 @@ static int unlock_parental(struct s_reader * reader)
     else
         cs_log("[seca-reader] Parental lock disabled");
     
-    cs_debug (reader, "[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
+    cs_debug ("[seca-reader] ins30_answer: %02x%02x",cta_res[0], cta_res[1]);
     return 0;
 }
 

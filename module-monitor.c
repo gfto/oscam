@@ -276,7 +276,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			int cnr=get_threadnum(cl);
 			sprintf(ltime, "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
                         sprintf(sbuf, "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
-					id, (unsigned int) cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
+					id, cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
 					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),
 					ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
 					get_servicename(cl->last_srvid, cl->last_caid), isec, con,
@@ -388,12 +388,12 @@ static void monitor_process_details_reader(struct s_client *cl) {
 
 		if (fp) {
 			while(fgets(buffer, 128, fp) != NULL) {
-				monitor_send_details(buffer, (unsigned int)(cl->thread));
+				monitor_send_details(buffer, (unsigned long)(cl->thread));
 			}
 			fclose(fp);
 		}
 	} else {
-		monitor_send_details("Missing reader index or entitlement not saved!", (unsigned int)(cl->thread));
+		monitor_send_details("Missing reader index or entitlement not saved!", (unsigned long)(cl->thread));
 	}
 
 }
@@ -420,16 +420,16 @@ static void monitor_process_details(char *arg){
 		switch(cl->typ)
 		{
 		case 's':
-			monitor_process_details_master(sbuf, (unsigned int)(cl->thread));
+			monitor_process_details_master(sbuf, (unsigned long)(cl->thread));
 			break;
 		case 'c': case 'm':
-			monitor_send_details(monitor_client_info(1, cl), (unsigned int)(cl->thread));
+			monitor_send_details(monitor_client_info(1, cl), (unsigned long)(cl->thread));
 			break;
 		case 'r':
 			monitor_process_details_reader(cl);//with client->typ='r' client->ridx is always filled and valid, so no need checking
 			break;
 		case 'p':
-			monitor_send_details(monitor_client_info(1, cl), (unsigned int)(cl->thread));
+			monitor_send_details(monitor_client_info(1, cl), (unsigned long)(cl->thread));
 			break;
 		}
 	}

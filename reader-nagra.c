@@ -723,7 +723,6 @@ static int nagra2_card_info(struct s_reader * reader)
         {
            ncmed_rec records[255];
            int num_records = 0;
-           int res_err = 0;
            uint8_t tier_cmd1[] = { 0x00, 0x00 };
            uint8_t tier_cmd2[] = { 0x01, 0x00 };
            def_resp;

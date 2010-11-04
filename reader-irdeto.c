@@ -137,6 +137,7 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
                             {0x0604, 0x0606, "EGY", 1003276800L},   // 16.10.2001, 17:00
                             {0x0627, 0x0608, "EGY", 946598400L},    // 30.12.1999, 16:00
                             {0x0664, 0x0608, "TUR", 946598400L},    // 31.12.1999, 00:00
+                            // {0x1702, 0x0384, "AUT", XXXXXXXXXL},     // -> we need the base date for this
                             // {0x1702, 0x0384, "GER", 888883200L},     // 02.03.1998, 16:00 -> this fixes some card but break others (S02).
                             {0x0, 0x0, "", 0L}
                             };

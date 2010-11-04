@@ -273,7 +273,7 @@ struct s_client * get_client_by_tid(unsigned long tid) //FIXME untested!! no lon
 {
   struct s_client *cl; 
   for (cl=first_client; cl ; cl=cl->next)
-    if ((unsigned int)(cl->thread)==tid)
+    if ((unsigned long)(cl->thread)==tid)
       return cl;
   return NULL;
 }
@@ -2516,7 +2516,7 @@ static void restart_clients()
 	for (cl=first_client->next; cl ; cl=cl->next)
 		if (cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
 			kill_thread(cl);
-			cs_log("killing client c %8X", (unsigned int)cl->thread);
+			cs_log("killing client c %8X", (unsigned long)(cl->thread));
 		}
 }
 
