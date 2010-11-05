@@ -88,16 +88,6 @@ void load_stat_from_file()
 	cs_debug_mask(D_TRACE, "loadbalancer load statistics from %s", buf);
 	
 	struct s_reader *rdr = NULL;
-	
-	//Whitespace problem: reader label can't contain spaces!
-	for (rdr=first_reader; rdr ; rdr=rdr->next) {
-		char *ch = rdr->label;
-		while (*ch) { 
-			if (*ch == '_')
-				*ch = ' ';
-			ch++;
-		}
-	}
 		
 	int i=1;
 	int count=0;
@@ -227,13 +217,6 @@ void save_stat_to_file()
 	int count=0;
 	struct s_reader *rdr;
 	for (rdr=first_reader; rdr ; rdr=rdr->next) {
-		//Replace spaces in reader names to _ because fscanf can't read spaces
-		char *ch = rdr->label;
-		while (*ch) {
-			if (*ch == ' ')
-				*ch = '_';
-			ch++;
-		}
 		
 		if (rdr->lb_stat) {
 			LL_ITER *it = ll_iter_create(rdr->lb_stat);

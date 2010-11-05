@@ -2384,16 +2384,16 @@ int process_request(FILE *f, struct in_addr in) {
 
 	cur_client()->last = time((time_t)0); //reset last busy time
 
-	int ok=0;
+	int ok=0,v=cv();
 	struct s_ip *p_ip;
 	in_addr_t addr = cs_inet_order(in.s_addr);
 
 	for (p_ip = cfg->http_allowed; (p_ip) && (!ok); p_ip = p_ip->next)
-		ok =((addr >= p_ip->ip[0]) && (addr <= p_ip->ip[1]));
+		ok =((addr >= p_ip->ip[0]) && (addr <= p_ip->ip[1]))?v:0;
 
 	if (!ok && cfg->http_dyndns[0]) {
 		if(cfg->http_dynip == addr) {
-			ok = 1;
+			ok = v;
 
 		} else {
 
@@ -2408,7 +2408,7 @@ int process_request(FILE *f, struct in_addr in) {
 					memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
 					cfg->http_dynip = cs_inet_order(udp_sa.sin_addr.s_addr);
 					if (cfg->http_dynip == addr)
-						ok = 1;
+						ok = v;
 				} else {
 					cs_log("can't resolve %s", cfg->http_dyndns);
 				}
@@ -2428,7 +2428,7 @@ int process_request(FILE *f, struct in_addr in) {
 				}
 				else {
 					cfg->http_dynip = cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
-					ok = 1;
+					ok = v;
 				}
 				if (res) freeaddrinfo(res);
 
