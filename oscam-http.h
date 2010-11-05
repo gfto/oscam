@@ -416,7 +416,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TD align=\"center\">##CLIENTCRYPTED##</TD>\n\
 		<TD align=\"center\">##CLIENTIP##</TD>\n\
 		<TD align=\"center\">##CLIENTPORT##</TD>\n\
-		<TD><SPAN TITLE=\"CLIENTPROTOTITLE\">##CLIENTPROTO##</SPAN></TD>\n\
+		<TD><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 		<TD align=\"center\">##CLIENTLOGINDATE##</TD>\n\
 		<TD align=\"center\">##CLIENTLOGINSECS##</TD>\n\
 		<TD align=\"center\">##CLIENTCAID##:##CLIENTSRVID##</TD>\n\
