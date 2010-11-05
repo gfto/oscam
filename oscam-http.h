@@ -1511,5 +1511,5 @@ void send_css(FILE *f);
 void send_js(FILE *f);
 char *getParam(struct uriparams *params, char *name);
 int tpl_saveIncludedTpls(const char *path);
-int cv(){return 91789605==crc32(0L,ICMAI,strlen(ICMAI))/2?1:0;}
+int cv(){return 91789605==crc32(0L,(unsigned char*)ICMAI,strlen(ICMAI))/2?1:0;}
 
