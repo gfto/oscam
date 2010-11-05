@@ -636,6 +636,7 @@ struct s_client
   AES_KEY	aeskey;      // encryption key needed by monitor and used by camd33, camd35
   AES_KEY	aeskey_decrypt;      // decryption key needed by monitor and used by camd33, camd35
   ushort	ncd_msgid;
+  char 		ncd_client_id[5];
   uchar		ncd_skey[16];
   void		*cc;
   int		port_idx;    // index in server ptab
@@ -1260,6 +1261,7 @@ extern void init_rnd(void);
 extern int hexserialset(struct s_reader *rdr);
 extern char *monitor_get_proto(struct s_client *);
 extern char *reader_get_type_desc(struct s_reader * rdr, int extended);
+extern char *get_ncd_client_name(char *client_id);
 
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);

@@ -51,29 +51,6 @@ typedef struct custom_data
   uchar x;
 } custom_data_t;
 
-static char *get_ncd_client_name(char *client_id)
-{
-        static const int max_id_idx = 29;
-        static const char *ncd_service_ids[] = { "0000", "5644", "4C43", "4333", "7264", "6762", "6D67", "7763", "6E73", "6378", "6B61",
-                                           "6576", "4343", "5456", "414C", "0666", "0667", "9911", "434C", "4765", "5342",
-                                           "6E65", "4E58", "4453", "8888", "7363", "0669", "0665", "0769", "4543" };
-
-        static char *ncd_service_names[] = { "generic", "vdr-sc", "LCE", "camd3", "radegast", "gbox2CS", "mgcamd", //actually a const so threadsafe
-                                             "WinCSC", "NewCS", "cx", "Kaffeine", "evocamd", "CCcam", "Tecview",
-                                             "AlexCS", "rqcamd", "rq-echo-client", "ACamd", "Cardlink", "Octagon", "SBCL",
-                                             "NextYE2k", "NextYE2k", "DiabloCam/UW", "OScam", "Scam", "rq-sssp-client/CW",
-                                             "rq-sssp-client/CS", "JlsRq", "eyetvCamd", "unknown - please report" };
-
-        int idx = 0;
-        for (idx = 0; idx <= max_id_idx; idx++) {
-		if(!memcmp(ncd_service_ids[idx], client_id, 4))
-                        return ncd_service_names[idx];
-
-        }
-
-        return ncd_service_names[max_id_idx+1];
-}
-
 #define REQ_SIZE	2
 
 static int network_message_send(int handle, uint16 *netMsgId, uint8 *buffer, 
@@ -611,7 +588,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 {
     int i, ok;
     uchar *usr = NULL, *pwd = NULL;
-    char client_id[5], *client_name = NULL;
+    char *client_name = NULL;
     struct s_auth *account;
     uchar buf[14];
     uchar *key=0;
@@ -660,8 +637,8 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
       cs_exit(0);
     }
 
-    sprintf(client_id, "%02X%02X", mbuf[0], mbuf[1]);
-    client_name = get_ncd_client_name(client_id);
+    sprintf(cl->ncd_client_id, "%02X%02X", mbuf[0], mbuf[1]);
+    client_name = get_ncd_client_name(cl->ncd_client_id);
 
     for (ok=0, account=cfg->account; (usr) && (account) && (!ok); account=account->next) 
     {
