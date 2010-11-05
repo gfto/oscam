@@ -1863,6 +1863,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			if ((strcmp(proto,"newcamd") == 0) && (cl->typ == 'c'))
 				tpl_printf(vars, 0, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(cl->ncd_client_id));
+			else if ((strcmp(proto,"cccam") == 0) && (cl->typ == 'c')) {
+				struct cc_data *cc = cl->cc;
+				tpl_printf(vars, 0, "CLIENTPROTO","%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
+			}
 			else
 				tpl_printf(vars, 0, "CLIENTPROTO","%s", proto);
 
