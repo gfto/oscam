@@ -2291,15 +2291,11 @@ int remove_reported_card(struct s_client * cl, uint8 *buf, int len)
 	if (card) {
 		int l2 = 22+card[20]*7+card[21+card[20]*7]*8;
 		if (len == l2 && memcmp(buf+4, card+4, len-4) == 0) {
+			ll_iter_remove_data(it);
 			ll_iter_release(it);
 			return 0; //Old card and new card are equal! Nothing to do!
 		}
-		cs_debug_mask(D_TRACE, "rrc:len1/2 %d/%d", len, l2);
-		cs_ddump_mask(D_TRACE, buf, len, "card1:");
-		cs_ddump_mask(D_TRACE, card, l2, "card2:");
-
 		cc_cmd_send(cl, card, 4, MSG_CARD_REMOVED);
-		ll_iter_remove_data(it);
 		ll_iter_release(it);
 		cc->card_removed_count++;
 		return 1; //Card removed!
