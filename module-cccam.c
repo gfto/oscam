@@ -2770,8 +2770,12 @@ int cc_srv_connect(struct s_client *cl) {
 		return -1;
 	cs_ddump(buf, i, "cccam: cli data:");
 	memcpy(cc->peer_node_id, buf + 24, 8);
+	
+	strncpy(cc->remote_version, buf+33, sizeof(cc->remote_version)-1);
+	strncpy(cc->remote_build, buf+65, sizeof(cc->remote_build)-1);
+	
 	cs_log("%s client '%s' (%s) running v%s (%s)", getprefix(), buf + 4,
-			cs_hexdump(0, cc->peer_node_id, 8), buf + 33, buf + 65);
+			cs_hexdump(0, cc->peer_node_id, 8), cc->remote_version, cc->remote_build);
 
 	// send cli data ack
 	cc_cmd_send(cl, NULL, 0, MSG_CLI_DATA);
