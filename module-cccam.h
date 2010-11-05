@@ -73,11 +73,6 @@ struct cc_card {
 	LLIST *remote_nodes; //remote note id, 8 bytes
 };
 
-struct cc_reported_carddata {
-	uint8 *buf;
-	int len;
-};
-
 struct cc_auto_blocked {
 	uint16 caid;
 	uint32 prov;
@@ -136,7 +131,8 @@ struct cc_data {
 	int ecm_counter;
 	uint32 report_carddata_id; //Server only
 	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
-	int card_update_count;
+	int card_added_count;
+	int card_removed_count;
 	int just_logged_in; //true for checking NOK direct after login
 	uint8 key_table; //key for CMD 0B
 
@@ -155,6 +151,10 @@ struct cc_data {
 	time_t answer_on_keepalive;
 	uint8 last_msg;
 	uint8 cmd05NOK;
+
+	char remote_version[7];
+	char remote_build[7];
+	char remote_oscam[200];
 	
 	//Extended Mode for SPECIAL clients:
 	int extended_mode;
