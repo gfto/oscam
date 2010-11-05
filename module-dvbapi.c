@@ -879,8 +879,6 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, c
 				dvbapi_stop_descrambling(i);
 			if (ca_pmt_list_management == 0x02)
 				demux_id=i;
-		} else if (demux[i].demux_index == demux_index && demux[i].program_number == program_number) {
-			return -1; //same pmt on same demux, exit
 		}
 	}
 
@@ -1229,8 +1227,10 @@ void event_handler(int signal) {
 
 		pmt_id = dvbapi_parse_capmt((uchar*)dest, 7 + len - 12 - 4, -1, dp->d_name);
 #endif
-		strcpy(demux[pmt_id].pmt_file, dp->d_name);
-		demux[pmt_id].pmt_time = pmt_info.st_mtime;
+		if (pmt_id>=0) {
+			strcpy(demux[pmt_id].pmt_file, dp->d_name);
+			demux[pmt_id].pmt_time = pmt_info.st_mtime;
+		}
 
 		if (cfg->dvbapi_pmtmode == 3) {
 			disable_pmt_files=1;
