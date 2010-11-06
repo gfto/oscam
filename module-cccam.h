@@ -133,6 +133,7 @@ struct cc_data {
 	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
 	int card_added_count;
 	int card_removed_count;
+	int card_dup_count;
 	int just_logged_in; //true for checking NOK direct after login
 	uint8 key_table; //key for CMD 0B
 

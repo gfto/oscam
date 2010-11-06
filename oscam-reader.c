@@ -756,6 +756,19 @@ void reader_do_card_info(struct s_reader * reader)
       	reader->ph.c_card_info();
 }
 
+void clear_reader_pipe(struct s_reader * reader)
+{
+	uchar *ptr;
+	int pipeCmd;
+	while (reader && reader->client && reader->client->fd_m2c_c)
+	{
+		pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr, 0);
+		if (ptr) free(ptr);
+		if (pipeCmd==PIP_ID_ERR || pipeCmd==PIP_ID_NUL)
+			break;
+	}
+}
+
 static void reader_do_pipe(struct s_reader * reader)
 {
   uchar *ptr;

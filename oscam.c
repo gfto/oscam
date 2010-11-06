@@ -911,7 +911,6 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 
 	if ((rdr->device[0]) && (!rdr->deleted)) {
 		if (restart) {
-			cs_sleepms(cfg->reader_restart_seconds * 1000); // SS: wait
 			cs_log("restarting reader %s", rdr->label);
 		}
 

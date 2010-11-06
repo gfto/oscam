@@ -509,12 +509,12 @@ int cc_send_srv_data(struct s_client *cl) {
  * retrieves the next waiting ecm request
  */
 int cc_get_nxt_ecm(struct s_client *cl) {
-	int n, i;
+	int n, i, j, found;
 	time_t t;
 
 	t = time(NULL);
 	n = -1;
-	for (i = 0; i < CS_MAXPENDING; i++) {
+	for (i = 1; i < CS_MAXPENDING; i++) {
 		if ((t - (ulong) cl->ecmtask[i].tps.time > ((cfg->ctimeout + 500)
 				/ 1000) + 1) && (cl->ecmtask[i].rc >= 10)) // drop timeouts
 		{
@@ -524,8 +524,21 @@ int cc_get_nxt_ecm(struct s_client *cl) {
 		if (cl->ecmtask[i].rc >= 10 && cl->ecmtask[i].rc != 101) { // stil active and waiting
 			// search for the ecm with the lowest time, this should be the next to go
 			if ((n < 0 || cl->ecmtask[n].tps.time - cl->ecmtask[i].tps.time < 0)
-					&& &cl->ecmtask[n])
-				n = i;
+					&& &cl->ecmtask[n]) {
+					
+				//check for already pending:
+				found=0;
+				for (j=1;j<CS_MAXPENDING;j++) {
+					if (i!=j) {
+						if (cl->ecmtask[i].ecmd5==cl->ecmtask[j].ecmd5) {
+							found=1;
+							break;
+						}
+					}
+				}
+				if (!found)
+					n = i;
+			}
 		}
 	}
 	return n;
@@ -1954,8 +1967,6 @@ int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf, int UNUSED
 		cs_debug_mask(D_FUT, "cc_recv_chk out");
 		return (cc->recv_ecmtask);
 	} else if ((buf[1] == (MSG_CW_NOK1)) || (buf[1] == (MSG_CW_NOK2))) {
-		//memset(dcw, 0, 16);
-		//return *rc = 0;
 		cs_debug_mask(D_FUT, "cc_recv_chk out");
 		return -1;
 	}
@@ -2186,7 +2197,7 @@ int same_card(struct cc_card *card1, struct cc_card *card2) {
 /**
  * Adds a new card to a cardlist.
  */
-int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
+int add_card_to_serverlist(struct cc_data *cc, LLIST *cardlist, struct cc_card *card, int reshare) {
 	int modified = 0;
 	LL_ITER *it = ll_iter_create(cardlist);
 	struct cc_card *card2;
@@ -2213,6 +2224,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 				card2->hop = card->hop;
 				modified = 1;
 			}
+			else cc->card_dup_count++;
 		}
 
 	} else if (cfg->cc_minimize_cards == MINIMIZE_HOPS) {
@@ -2233,6 +2245,8 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 				card2->hop = card->hop;
 				modified = 1;
 			}
+			else cc->card_dup_count++;
+			
 		}
 		if (add_card_providers(card2, card, 0))
 			modified = 1;
@@ -2245,6 +2259,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 			cc_free_card(card2);
 			ll_iter_remove(it);
 			card2 = NULL;
+			cc->card_dup_count++;
 		}
 		if (!card2) {
 			card2 = create_card(card);
@@ -2256,6 +2271,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 			if (add_card_providers(card2, card, 1))
 				modified = 1;
 		}
+		else cc->card_dup_count++;
 	}
 	ll_iter_release(it);
 	return modified;
@@ -2264,9 +2280,9 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card, int reshare) {
 /**
  * Adds a new card to a cardlist, buffer format
  */
-int add_card_to_serverlist_buf(LLIST *cardlist, uint8 *buf, int reshare) {
+int add_card_to_serverlist_buf(struct cc_data *cc, LLIST *cardlist, uint8 *buf, int reshare) {
 	struct cc_card *card = read_card(buf);
-	return add_card_to_serverlist(cardlist, card, reshare);
+	return add_card_to_serverlist(cc, cardlist, card, reshare);
 	cc_free_card(card);
 }
 
@@ -2348,6 +2364,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 		
 	cc->card_added_count = 0;
 	cc->card_removed_count = 0;
+	cc->card_dup_count = 0;
 
 	int isau = (cl->aureader)?1:0;
 
@@ -2412,7 +2429,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 						}
 					}
 
-					if (!ignore) add_card_to_serverlist_buf(server_cards, buf, reshare);
+					if (!ignore) add_card_to_serverlist_buf(cc, server_cards, buf, reshare);
 					flt = 1;
 				}
 			}
@@ -2442,7 +2459,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 					buf[20] = 1; //one provider, nullprovider!
 					
 					if (chk_ctab(lcaid, &cl->ctab))
-						add_card_to_serverlist_buf(server_cards, buf, reshare);
+						add_card_to_serverlist_buf(cc, server_cards, buf, reshare);
 					flt = 1;
 				}
 			}
@@ -2477,7 +2494,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 			}
 			if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED) /*&& !rdr->cc_id*/) {
 				//rdr->cc_id = b2i(3, buf + 5);
-				add_card_to_serverlist_buf(server_cards, buf, reshare);
+				add_card_to_serverlist_buf(cc, server_cards, buf, reshare);
 			}
 		}
 
@@ -2520,7 +2537,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 												: (card->maxdown - 1);
 								if (new_reshare > reshare)
 									new_reshare = reshare;
-								add_card_to_serverlist(server_cards, card,
+								add_card_to_serverlist(cc, server_cards, card,
 										new_reshare);
 								count++;
 							}
@@ -2596,7 +2613,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 	
 	cc->reported_carddatas = new_reported_carddatas;
 	
-	cs_log("%s reported/updated +%d/-%d of %d cards to client", getprefix(), cc->card_added_count, cc->card_removed_count, ll_count(cc->reported_carddatas));
+	cs_log("%s reported/updated +%d/-%d/dup %d of %d cards to client", getprefix(), cc->card_added_count, cc->card_removed_count, cc->card_dup_count, ll_count(cc->reported_carddatas));
 }
 
 void cc_init_cc(struct cc_data *cc) {
@@ -2771,8 +2788,8 @@ int cc_srv_connect(struct s_client *cl) {
 	cs_ddump(buf, i, "cccam: cli data:");
 	memcpy(cc->peer_node_id, buf + 24, 8);
 	
-	strncpy(cc->remote_version, buf+33, sizeof(cc->remote_version)-1);
-	strncpy(cc->remote_build, buf+65, sizeof(cc->remote_build)-1);
+	strncpy(cc->remote_version, (char*)buf+33, sizeof(cc->remote_version)-1);
+	strncpy(cc->remote_build, (char*)buf+65, sizeof(cc->remote_build)-1);
 	
 	cs_log("%s client '%s' (%s) running v%s (%s)", getprefix(), buf + 4,
 			cs_hexdump(0, cc->peer_node_id, 8), cc->remote_version, cc->remote_build);
@@ -3108,6 +3125,13 @@ int cc_cli_init(struct s_client *cl) {
 	struct s_reader *reader = cl->reader;
 	if (res == 0 && reader && (reader->cc_keepalive || !cl->cc) && !reader->tcp_connected) {
 		cc_cli_connect(cl);
+		while (!reader->tcp_connected && reader->cc_keepalive && cfg->reader_restart_seconds > 0) {
+			cs_log("%s restarting reader in %d seconds", getprefix(), cfg->reader_restart_seconds);
+			cs_sleepms(cfg->reader_restart_seconds*1000);
+			cs_log("%s restarting reader...", getprefix());
+			clear_reader_pipe(reader); //this avoids full running reader queues
+			cc_cli_connect(cl);	
+		}
 	}
 	return res;
 }
