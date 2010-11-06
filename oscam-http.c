@@ -1868,6 +1868,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				tpl_printf(vars, 0, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
 				if(strcmp(proto,"cccam ext") == 0)
 					tpl_printf(vars, 0, "CLIENTPROTOTITLE", "%s", cc->remote_oscam);
+				else
+					tpl_addVar(vars, 0, "CLIENTPROTOTITLE", ""); //unset tpl var
 			}
 			else
 				tpl_printf(vars, 0, "CLIENTPROTO","%s", proto);
