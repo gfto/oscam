@@ -1955,7 +1955,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "port", "");
 		dot1 = "";
 		for(i = 0; i < cfg->ncd_ptab.nports; ++i){
-			fprintf(f,"%s%d@%04X", dot1, cfg->ncd_ptab.ports[i].s_port, cfg->ncd_ptab.ports[i].ftab.filts[0].caid);
+			fprintf(f,"%s%d", dot1, cfg->ncd_ptab.ports[i].s_port);
 
 			// separate DES Key
 			if(cfg->ncd_ptab.ports[i].ncd_key_is_set){
@@ -1965,6 +1965,8 @@ int write_config()
 					fprintf(f,"%02X", cfg->ncd_ptab.ports[i].ncd_key[k]);
 				fprintf(f,"}");
 			}
+
+			fprintf(f,"@%04X", cfg->ncd_ptab.ports[i].ftab.filts[0].caid);
 
 			if (cfg->ncd_ptab.ports[i].ftab.filts[0].nprids > 0){
 				fprintf(f,":");
