@@ -460,6 +460,8 @@ static void monitor_logsend(char *flag){
 #ifdef CS_LOGHISTORY
 	int i;
 #endif
+	if (!flag[0]) return; //no arg
+
 	if (strcmp(flag, "on")) {
 		if (strcmp(flag, "onwohist")) {
 			cur_client()->log=0;
