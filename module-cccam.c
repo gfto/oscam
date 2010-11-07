@@ -529,7 +529,7 @@ int cc_get_nxt_ecm(struct s_client *cl) {
 				//check for already pending:
 				found=0;
 				for (j=0;j<CS_MAXPENDING;j++) {
-					if (i!=j && cl->ecmtask[i].rc >= 10) {
+					if (i!=j && cl->ecmtask[j].rc == 101) {
 						if (cl->ecmtask[i].ecmd5==cl->ecmtask[j].ecmd5) {
 							found=1;
 							break;
