@@ -60,7 +60,7 @@ static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
 {
   int i;
   struct s_client *cl = reader->client;
-  for (i=1; i<CS_MAXPENDING; i++)
+  for (i=0; i<CS_MAXPENDING; i++)
   {
     if ((cl->ecmtask[i].rc>=10) &&
         (!memcmp(cl->ecmtask[i].ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE)))
@@ -318,7 +318,7 @@ static void casc_do_sock_log(struct s_reader * reader)
   cl->last=time((time_t)0);
   if (idx<0) return;        // no dcw-msg received
 
-  for (i=1; i<CS_MAXPENDING; i++)
+  for (i=0; i<CS_MAXPENDING; i++)
   {
     if (  (cl->ecmtask[i].rc>=10)
        && (cl->ecmtask[i].idx==idx)
@@ -360,7 +360,7 @@ static void casc_do_sock(struct s_reader * reader, int w)
 //cs_log("casc_do_sock: last_s=%d, last_g=%d", reader->last_s, reader->last_g);
   if (!idx) idx=cl->last_idx;
   j=0;
-  for (i=1; i<CS_MAXPENDING; i++)
+  for (i=0; i<CS_MAXPENDING; i++)
   {
 
    if (cl->ecmtask[i].idx==idx)
@@ -405,21 +405,21 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   uchar buf[512];
 
   t=time((time_t *)0);
-  for (n=0, i=sflag=1; i<CS_MAXPENDING; i++)
+  for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++)
   {
     if ((t-(ulong)cl->ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
         (cl->ecmtask[i].rc>=10))      // drop timeouts
         {
           cl->ecmtask[i].rc=0;
         }
-    if ((!n) && (cl->ecmtask[i].rc<10))   // free slot found
+    if (n<0 && (cl->ecmtask[i].rc<10))   // free slot found
       n=i;
     if ((cl->ecmtask[i].rc>=10) &&      // ecm already pending
         (!memcmp(er->ecmd5, cl->ecmtask[i].ecmd5, CS_ECMSTORESIZE)) &&
         (er->level<=cl->ecmtask[i].level))    // ... this level at least
       sflag=0;
   }
-  if (!n)
+  if (n<0)
   {
     cs_log("WARNING: ecm pending table overflow !!");
     return(-2);
