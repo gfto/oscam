@@ -1863,7 +1863,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cc->cmd05_active = 1;
 			cc->cmd05_data_len = l;
 			memcpy(&cc->cmd05_data, buf + 4, l);
-			send_cmd05_answer(cl);
+			if (rdr->available)
+				send_cmd05_answer(cl);
 		}
 		break;
 	case MSG_CMD_0B: {
