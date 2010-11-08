@@ -3126,10 +3126,10 @@ int cc_cli_init(struct s_client *cl) {
 	if (res == 0 && reader && (reader->cc_keepalive || !cl->cc) && !reader->tcp_connected) {
 		cc_cli_connect(cl);
 		while (!reader->tcp_connected && reader->cc_keepalive && cfg->reader_restart_seconds > 0) {
-			cs_log("%s restarting reader in %d seconds", getprefix(), cfg->reader_restart_seconds);
+			cs_log("%s restarting reader in %d seconds", reader->label, cfg->reader_restart_seconds);
 			cs_sleepms(cfg->reader_restart_seconds*1000);
-			cs_log("%s restarting reader...", getprefix());
-			clear_reader_pipe(reader); //this avoids full running reader queues
+			cs_log("%s restarting reader...", reader->label);
+			//clear_reader_pipe(reader); //_n: bytes_available() in read_from_pipe blocks indefinitely
 			cc_cli_connect(cl);	
 		}
 	}
