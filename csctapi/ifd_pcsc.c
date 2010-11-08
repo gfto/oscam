@@ -89,7 +89,7 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 
 int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *cta_res, ushort *cta_lr, int l)
 {
-     ULONG rv;
+     LONG rv;
      SCARD_IO_REQUEST pioRecvPci;
      DWORD dwSendLength, dwRecvLength;
 
@@ -99,6 +99,7 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *ct
     }
 
     dwRecvLength = CTA_RES_LEN;
+    *cta_lr = 0;
 
     if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0) {
         //  explanantion as to why we do the test on buf[4] :
@@ -115,21 +116,22 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *ct
             dwSendLength = l-1;
         cs_debug("sending %d bytes to PCSC", dwSendLength);
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T0, (LPCBYTE) buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
+        *cta_lr=dwRecvLength;
     }
     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
         dwSendLength = l;
         cs_debug("sending %d bytes to PCSC", dwSendLength);
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T1, (LPCBYTE) buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
+        *cta_lr=dwRecvLength;
     }
     else {
         cs_debug("PCSC invalid protocol (T=%d)", pcsc_reader->dwActiveProtocol);
         return ERR_INVALID;
     }
 
-     *cta_lr=dwRecvLength;
      cs_debug("received %d bytes from PCSC with rv=%lx", *cta_lr, rv);
+     cs_debug("PCSC doapi (%lx ) (T=%d), %d", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), *cta_lr );
 
-     cs_debug("PCSC doapi (%lx ) (T=%d), %d", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), dwRecvLength );
      if ( rv  == SCARD_S_SUCCESS ){
          return OK;
      }
@@ -141,7 +143,7 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *ct
 
 int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_size)
 {
-    ULONG rv;
+    LONG rv;
     DWORD dwState, dwAtrLen, dwReaderLen;
     BYTE pbAtr[64];
     
@@ -183,7 +185,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 {
     DWORD dwState, dwAtrLen, dwReaderLen;
     BYTE pbAtr[64];
-    ULONG rv;
+    LONG rv;
     
     dwAtrLen = sizeof(pbAtr);
     rv=0;
@@ -240,7 +242,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 
 void pcsc_close(struct s_reader *pcsc_reader)
 {
-	cs_debug_mask (D_IFD, "PCSC : Closing device %s", pcsc_reader->device);
+    cs_debug_mask (D_IFD, "PCSC : Closing device %s", pcsc_reader->device);
     SCardDisconnect((SCARDHANDLE)(pcsc_reader->hCard),SCARD_RESET_CARD);
     SCardReleaseContext(pcsc_reader->hContext);
     pcsc_reader->hCard=0;
