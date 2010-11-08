@@ -686,6 +686,8 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			rdr->enable = 1;
 		else
 			rdr->enable = 0;
+		if(write_server()==0)
+			refresh_oscam(REFR_READERS, in);
 	}
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
@@ -2246,19 +2248,21 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	char targetfile[256];
 
 	if (strcmp(getParam(params, "part"), "conf") == 0)
-	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.conf");
+		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.conf");
 	else if (strcmp(getParam(params, "part"), "version") == 0)
-	snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
+		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
+	else if (strcmp(getParam(params, "part"), "dvbapi") == 0)
+		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "oscam.dvbapi");
 	else if (strcmp(getParam(params, "part"), "user") == 0)
-	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.user");
+		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.user");
 	else if (strcmp(getParam(params, "part"), "server") == 0)
-	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.server");
+		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.server");
 	else if (strcmp(getParam(params, "part"), "services") == 0)
-	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.services");
+		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.services");
 	else if (strcmp(getParam(params, "part"), "srvid") == 0)
-	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.srvid");
+		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.srvid");
 	else if (strcmp(getParam(params, "part"), "provid") == 0)
-	snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.provid");
+		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.provid");
 	else if (strcmp(getParam(params, "part"), "logfile") == 0) {
 		snprintf(targetfile, 255,"%s", cfg->logfile);
 
