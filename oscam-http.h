@@ -674,7 +674,9 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<TABLE CLASS=\"stats\">\n\
 	<TR><TH colspan=\"6\"> Loadbalance statistics for reader ##LABEL##</TH></TR>\n\
 	<TR><TH>Channel</TH><TH>Channelname</TH><TH>Result</TH><TH>Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\
-    ##READERSTATSROW##\n\
+    ##READERSTATSROWFOUND##\n\
+    ##READERSTATSNFHEADLINE##\n\
+    ##READERSTATSROWNOTFOUND##\n\
 	</TABLE>\n\
 ##TPLFOOTER##"
 

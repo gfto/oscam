@@ -1232,7 +1232,12 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 				} else {
 					tpl_addVar(vars, 0, "LAST","never");
 				}
-				tpl_addVar(vars, 1, "READERSTATSROW", tpl_getTpl(vars, "READERSTATSBIT"));
+				if(stat->rc == 4) {
+					tpl_addVar(vars, 1, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
+					tpl_addVar(vars, 0, "READERSTATSNFHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"6\">Not found</TD></TR>\n");
+				}
+				else
+					tpl_addVar(vars, 1, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
 			}
 
 		stat = ll_iter_next(it);
