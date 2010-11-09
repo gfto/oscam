@@ -341,7 +341,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 	}
 
 	cc_crypt(&cc->block[DECRYPT], netbuf, 4, DECRYPT);
-	cs_ddump(netbuf, 4, "cccam: decrypted header:");
+	//cs_ddump(netbuf, 4, "cccam: decrypted header:");
 
 	cc->g_flag = netbuf[0];
 
@@ -2060,7 +2060,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 
 	n = cc_msg_recv(cl, cbuf); // recv and decrypt msg
 
-	cs_ddump(cbuf, n, "cccam: received %d bytes from %s", n, remote_txt());
+	//cs_ddump(cbuf, n, "cccam: received %d bytes from %s", n, remote_txt());
 	cl->last = time((time_t *) 0);
 
 	if (n <= 0) {
@@ -2399,8 +2399,9 @@ void cc_srv_report_cards(struct s_client *cl) {
 		flt = 0;
 		if (rdr->typ != R_CCCAM && rdr->ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
-				if (rdr->ftab.filts[j].caid && chk_ctab(
-						rdr->ftab.filts[j].caid, &cl->ctab)) {
+				//if (rdr->ftab.filts[j].caid && chk_ctab( //Do not check for disabled services (ChrisO problem 1702/!1702)
+				//		rdr->ftab.filts[j].caid, &cl->ctab)) {
+				if (rdr->ftab.filts[j].caid) {
 					int ignore = 0;
 					memset(buf, 0, sizeof(buf));
 					buf[4] = rdr->cc_id >> 24;
@@ -2475,8 +2476,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 			}
 		}
 
-		if (rdr->typ != R_CCCAM && rdr->caid[0] && !flt && chk_ctab(
-				rdr->caid[0], &cl->ctab)) {
+		if (rdr->typ != R_CCCAM && rdr->caid[0] && !flt && chk_ctab(rdr->caid[0], &cl->ctab)) {
 			//cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
 			memset(buf, 0, sizeof(buf));
 			buf[4] = rdr->cc_id >> 24;
