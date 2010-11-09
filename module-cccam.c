@@ -1491,6 +1491,15 @@ void check_peer_changed(struct cc_data *cc, uint8 *node_id, uint8 *version) {
 	}
 }
 
+void fix_dcw(uchar *dcw)
+{
+	int i;
+	for (i=0; i<16; i+=4)
+	{
+		dcw[i+3] = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
+	}
+}
+
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	cs_debug_mask(D_FUT, "cc_parse_msg in %d", buf[1]);
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
@@ -1810,7 +1819,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 					if (!cc->extended_mode)
 						cc_cw_crypt(cl, buf + 4, card->id);
 					memcpy(cc->dcw, buf + 4, 16);
-					fix_cw(cc->dcw);
+					fix_dcw(cc->dcw);
 					if (!cc->extended_mode)
 						cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
@@ -2009,15 +2018,6 @@ int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf, int UNUSED
 //	return FALSE;
 //}
 
-void fix_dcw(uchar *dcw)
-{
-	int i;
-	for (i=0; i<16; i+=4)
-	{
-		dcw[i+3] = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
-	}
-}
-
 
 
 /**
@@ -2036,7 +2036,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	if (er->rc <= 3 && eei && eei->card) {
 		cc->g_flag = eei->send_idx;
 		memcpy(buf, er->cw, sizeof(buf));
-		fix_cw(buf);
+		fix_dcw(buf);
 		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
 				cs_hexdump(0, buf, 16), er->cpti);
 		if (!cc->extended_mode)
