@@ -52,5 +52,8 @@ extern void set_known_card_info(struct s_reader * reader, const unsigned char *a
 extern int num_addr(const unsigned char *data);
 extern const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a);
 
+int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr);
+void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter);
+
 #endif // __NDS_COMMON__
 

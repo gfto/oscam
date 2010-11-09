@@ -830,3 +830,129 @@ const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, cons
 
   return ptr;
 }
+
+
+
+int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+{
+
+/*
+82 30 ad 70 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 00
+d3 02 00 22 90 20 44 02 4a 50 1d 88 ab 02 ac 79 16 6c df a1 b1 b7 77 00 ba eb 63 b5 c9 a9 30 2b 43 e9 16 a9 d5 14 00
+d3 02 00 22 90 20 44 02 13 e3 40 bd 29 e4 90 97 c3 aa 93 db 8d f5 6b e4 92 dd 00 9b 51 03 c9 3d d0 e2 37 44 d3 bf 00
+d3 02 00 22 90 20 44 02 97 79 5d 18 96 5f 3a 67 70 55 bb b9 d2 49 31 bd 18 17 2a e9 6f eb d8 76 ec c3 c9 cc 53 39 00
+d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10 76 aa 75 ef d6 82 27 2e 44 7b 00
+*/
+
+	int i, pos;
+	int serial_count = ((ep->emm[3] >> 4) & 3) + 1;
+	int serial_len = (ep->emm[3] & 0x80) ? 3 : 4;
+	uchar emmtype = (ep->emm[3] & VG_EMMTYPE_MASK) >> 6;
+
+	pos = 4 + (serial_len * serial_count) + 2;
+
+	switch(emmtype) {
+		case VG_EMMTYPE_G:
+			ep->type=GLOBAL;
+			cs_debug_mask(D_EMM, "EMM: GLOBAL");
+			return TRUE;
+
+		case VG_EMMTYPE_U:
+			cs_debug_mask(D_EMM, "EMM: UNIQUE");
+			ep->type=UNIQUE;
+			if (ep->emm[1] == 0) // detected UNIQUE EMM from cccam (there is no serial)
+				return TRUE;
+
+			for (i = 1;i <= serial_count;i++) {
+				if (!memcmp (rdr->hexserial + 2, ep->emm + (serial_len * i), serial_len)) {
+					memcpy(ep->hexserial, ep->emm + (serial_len * i), serial_len);
+				return TRUE;
+				}
+
+				pos = pos + ep->emm[pos+5] + 5;
+			}
+			return FALSE; // if UNIQUE but no serial match return FALSE
+
+		case VG_EMMTYPE_S:
+			ep->type=SHARED;
+			cs_debug_mask(D_EMM, "EMM: SHARED");
+
+			for (i = 0; i < serial_count; i++) {
+				if (!memcmp(&ep->emm[i * 4 + 4], rdr->hexserial + 2, serial_len)) {
+					memcpy(ep->hexserial, &ep->emm[i * 4 + 4], serial_len);
+					return TRUE;
+				}
+			}
+
+			return TRUE; // FIXME: no check for SA
+
+		default:
+			if (ep->emm[pos-2] != 0x00 && ep->emm[pos-1] != 0x00 && ep->emm[pos-1] != 0x01) {
+				//remote emm without serial
+				ep->type=UNKNOWN;
+				return TRUE;
+			}
+			return FALSE;
+	}
+}
+
+void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
+{
+	filter[0]=0xFF;
+	filter[1]=5;
+
+	//ToDo videoguard_get_emm_filter basic construction
+	filter[2]=UNIQUE;
+	filter[3]=0;
+
+	filter[4+0]    = 0x82;
+	filter[4+0+16] = 0xFF;
+	filter[4+1]    = 0x40;
+	filter[4+1+16] = 0xC0;
+	memcpy(filter+4+2, rdr->hexserial+2, 4);
+	memset(filter+4+2+16, 0xFF, 4);
+
+	filter[36]=UNIQUE;
+	filter[37]=0;
+
+	filter[38+0]    = 0x82;
+	filter[38+0+16] = 0xFF;
+	filter[38+1]    = 0x40;
+	filter[38+1+16] = 0xC0;
+	memcpy(filter+38+6, rdr->hexserial+2, 4);
+	memset(filter+38+6+16, 0xFF, 4);
+
+	filter[70]=UNIQUE;
+	filter[71]=0;
+
+	filter[72+0]    = 0x82;
+	filter[72+0+16] = 0xFF;
+	filter[72+1]    = 0x40;
+	filter[72+1+16] = 0xC0;
+	memcpy(filter+72+10, rdr->hexserial+2, 4);
+	memset(filter+72+10+16, 0xFF, 4);
+
+	// fourth serial position does not fit within the 16bytes demux filter
+
+
+	filter[104]=SHARED;
+	filter[105]=0;
+
+	filter[106+0]    = 0x82;
+	filter[106+0+16] = 0xFF;
+	filter[106+1]    = 0x80;
+	filter[106+1+16] = 0xC0;
+
+
+	filter[138]=GLOBAL;
+	filter[139]=0;
+
+	filter[140+0]    = 0x82;
+	filter[140+0+16] = 0xFF;
+	filter[140+1]    = 0x00;
+	filter[140+1+16] = 0xC0;
+
+
+	return;
+}
+
