@@ -40,6 +40,7 @@ TD.shutdown {font-color:black; background-color:white; font-family: Arial; font-
 TD.shutdown A:hover {color: red;}\n\
 TD.configmenu {font-color:black; background-color:white; font-family: Arial; font-size:11px; font-weight:bold;}\n\
 textarea.bt{font-family: Arial; font-size: 12px;}\n\
+textarea.editor {width:100%; height:450px;border:1px dotted #AAAAAA; background-color: #FAFAFA; padding:10; font-family:\"Courier New\", monospace; color:#666666; font-size: 11px; word-wrap:break-word; text-align:left; }\n\
 input{font-family: Arial; font-size: 12px;}\n\
 A:link {color: #050840;}\n\
 A:visited {color: #050840;}\n\
@@ -292,7 +293,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=version\">oscam.version</TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=dvbapi\">oscam.dvbapi</TD>\n\
+			##TPLFILEMENUDVBAPI##\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=conf\">oscam.conf</TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=user\">oscam.user</TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=server\">oscam.server</TD>\n\
@@ -302,7 +303,6 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=logfile\">logfile</TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=userfile\">userfile</TD>\n\
 			##TPLFILEMENUANTICASC##\
-			##TPLFILEMENUDVBAPI##\
 		</TR>\n\
 	</TABLE>"
 
@@ -311,9 +311,11 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
   ##TPLMENU##\n\
   ##TPLFILEMENU##\n\
   <BR><BR>##SDEBUG####SLOG####SCLEAR##<BR>##FILTER##\n\
-  <DIV class=\"log\">\
-  <pre>##FILECONTENT##</pre>\
-  </DIV><BR>\n\
+  <FORM ACTION=\"files.html\" method=\"get\">\n\
+  <INPUT TYPE=\"hidden\" NAME=\"part\" VALUE=\"##PART##\">\n\
+  <TEXTAREA NAME=\"filecontent\" CLASS=\"editor\">##FILECONTENT##</TEXTAREA><BR>saving files is not yet implemented<BR>\n\
+  <INPUT TYPE=\"submit\" NAME=\"action\" VALUE=\"Save\" TITLE=\"Save file is not yet implemented\" ##BTNDISABLED##>\n\
+  </FORM>\n\
   ##TPLFOOTER##"
 
 #define TPLDEBUGSELECT "\

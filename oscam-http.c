@@ -2251,8 +2251,6 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.conf");
 	else if (strcmp(getParam(params, "part"), "version") == 0)
 		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
-	else if (strcmp(getParam(params, "part"), "dvbapi") == 0)
-		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.dvbapi");
 	else if (strcmp(getParam(params, "part"), "user") == 0)
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.user");
 	else if (strcmp(getParam(params, "part"), "server") == 0)
@@ -2342,6 +2340,9 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	} else {
 		tpl_addVar(vars, 1, "FILECONTENT", "File not valid");
 	}
+
+	tpl_addVar(vars, 0, "PART", getParam(params, "part"));
+	tpl_addVar(vars, 0, "BTNDISABLED", "DISABLED");
 
 	fputs(tpl_getTpl(vars, "FILE"), f);
 }
