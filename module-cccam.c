@@ -1240,7 +1240,7 @@ int cc_free_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
 	return i;
 }
 
-void cc_free_cardlist(LLIST *card_list) {
+void cc_free_cardlist(LLIST *card_list, int destroy_list) {
 	if (card_list) {
 		LL_ITER *it = ll_iter_create(card_list);
 		struct cc_card *card;
@@ -1249,8 +1249,8 @@ void cc_free_cardlist(LLIST *card_list) {
 			ll_iter_remove(it);
 		}
 		ll_iter_release(it);
-		ll_destroy_data(card_list);
-		card_list = NULL;
+		if (destroy_list)
+			ll_destroy_data(card_list);
 	}
 }
 
@@ -1263,7 +1263,7 @@ void cc_free(struct s_client *cl) {
 		return;
 
 	cs_debug_mask(D_FUT, "cc_free in");
-	cc_free_cardlist(cc->cards);
+	cc_free_cardlist(cc->cards, TRUE);
 	cc_free_reported_carddata(cl, cc->reported_carddatas, 0);
 	ll_destroy_data(cc->pending_emms);
 	free_current_cards(cc->current_cards);
@@ -1491,6 +1491,14 @@ void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
 	}
 }
 
+void check_peer_changed(struct cc_data *cc, uint8 *node_id, uint8 *version) {
+	if (memcmp(cc->peer_node_id, node_id, 8) != 0 || memcmp(cc->peer_version, version, 8) != 0) {
+		//Remote Id has changed, clear cached data:
+		cc_free_cardlist(cc->cards, FALSE);
+		free_current_cards(cc->current_cards);
+	}
+}
+
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	cs_debug_mask(D_FUT, "cc_parse_msg in %d", buf[1]);
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
@@ -1513,6 +1521,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		data = (uint8*) &cc->receive_buffer;
 
 		if (l == 0x48) { //72 bytes: normal server data
+			check_peer_changed(cc, data, data+8);
+			
 			memcpy(cc->peer_node_id, data, 8);
 			memcpy(cc->peer_version, data + 8, 8);
 
@@ -2324,9 +2334,7 @@ int remove_reported_card(struct s_client * cl, uint8 *buf, int len)
 			ll_iter_release(it);
 			return 0; //Old card and new card are equal! Nothing to do!
 		}
-		cc_cmd_send(cl, card, 4, MSG_CARD_REMOVED);
 		ll_iter_release(it);
-		cc->card_removed_count++;
 		return 1; //Card removed!
 	}
 	ll_iter_release(it);
@@ -2619,10 +2627,10 @@ void cc_srv_report_cards(struct s_client *cl) {
 		report_card(cl, buf, ofs, new_reported_carddatas);
 	}
 	ll_iter_release(it);
-	cc_free_cardlist(server_cards);
+	cc_free_cardlist(server_cards, TRUE);
 	
 	//remove unsed, remaining cards:
-	cc->card_removed_count += cc_free_reported_carddata(cl, cc->reported_carddatas, 1);
+	cc->card_removed_count += cc_free_reported_carddata(cl, cc->reported_carddatas, TRUE);
 	
 	cc->reported_carddatas = new_reported_carddatas;
 	
