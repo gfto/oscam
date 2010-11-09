@@ -408,11 +408,11 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(cl->udp_fd, netbuf, len, 0);
-	if (cl->typ != 'c')
+	if (rdr)
 		rdr->last_s = time(NULL);
 
 	if (n != len) {
-		if (cl->typ == 'c')
+		if (!rdr)
 			cs_disconnect_client(cl);
 		else
 			cc_cli_close(cl);
@@ -1299,15 +1299,7 @@ int is_null_dcw(uint8 *dcw) {
  }
  return 0;
  }
-
- void fix_dcw(uchar *dcw)
- {
- int i;
- for (i=0; i<16; i+=4)
- {
- dcw[i+3] = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
- }
- }*/
+*/
 
 int check_extended_mode(struct s_client *cl, char *msg) {
 	//Extended mode: if PARTNER String is ending with [EXT], extended mode is activated
@@ -1818,10 +1810,11 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 					if (!cc->extended_mode)
 						cc_cw_crypt(cl, buf + 4, card->id);
 					memcpy(cc->dcw, buf + 4, 16);
+					fix_cw(cc->dcw);
 					if (!cc->extended_mode)
 						cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
-						if (is_null_dcw(cc->dcw)) {
+					if (is_null_dcw(cc->dcw)) {
 						cs_log("%s null dcw received! sid=%04X(%d)", getprefix(),
 								srvid.sid, srvid.ecmlen);
 						add_sid_block(cl, card, &srvid);
@@ -2016,6 +2009,17 @@ int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf, int UNUSED
 //	return FALSE;
 //}
 
+void fix_dcw(uchar *dcw)
+{
+	int i;
+	for (i=0; i<16; i+=4)
+	{
+		dcw[i+3] = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
+	}
+}
+
+
+
 /**
  * Server: send DCW to client
  */
@@ -2032,6 +2036,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	if (er->rc <= 3 && eei && eei->card) {
 		cc->g_flag = eei->send_idx;
 		memcpy(buf, er->cw, sizeof(buf));
+		fix_cw(buf);
 		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
 				cs_hexdump(0, buf, 16), er->cpti);
 		if (!cc->extended_mode)
