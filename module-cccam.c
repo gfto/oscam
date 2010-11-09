@@ -509,7 +509,7 @@ int cc_send_srv_data(struct s_client *cl) {
  * retrieves the next waiting ecm request
  */
 int cc_get_nxt_ecm(struct s_client *cl) {
-	int n, i, j, found;
+	int n, i;
 	time_t t;
 
 	t = time(NULL);
@@ -523,20 +523,23 @@ int cc_get_nxt_ecm(struct s_client *cl) {
 
 		if (cl->ecmtask[i].rc >= 10 && cl->ecmtask[i].rc != 101) { // stil active and waiting
 			// search for the ecm with the lowest time, this should be the next to go
-			if ((n < 0 || cl->ecmtask[n].tps.time - cl->ecmtask[i].tps.time < 0)
-					&& &cl->ecmtask[n]) {
+			if (n < 0 || cl->ecmtask[n].tps.time - cl->ecmtask[i].tps.time < 0) {
 					
 				//check for already pending:
-				found=0;
-				for (j=0;j<CS_MAXPENDING;j++) {
-					if (i!=j && cl->ecmtask[j].rc == 101) {
-						if (cl->ecmtask[i].ecmd5==cl->ecmtask[j].ecmd5) {
+				if (((struct cc_data*)cl->cc)->extended_mode) {
+					int j,found;
+					for (found=j=0;j<CS_MAXPENDING;j++) {
+						if (i!=j && cl->ecmtask[j].rc == 101 &&
+							cl->ecmtask[i].caid==cl->ecmtask[j].caid &&
+							cl->ecmtask[i].ecmd5==cl->ecmtask[j].ecmd5) {
 							found=1;
 							break;
 						}
 					}
+					if (!found)
+						n = i;
 				}
-				if (!found)
+				else
 					n = i;
 			}
 		}
