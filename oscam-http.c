@@ -2252,7 +2252,7 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	else if (strcmp(getParam(params, "part"), "version") == 0)
 		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
 	else if (strcmp(getParam(params, "part"), "dvbapi") == 0)
-		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "oscam.dvbapi");
+		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.dvbapi");
 	else if (strcmp(getParam(params, "part"), "user") == 0)
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.user");
 	else if (strcmp(getParam(params, "part"), "server") == 0)
