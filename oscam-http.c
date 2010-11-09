@@ -2233,6 +2233,8 @@ void send_oscam_scanusb(struct templatevars *vars, FILE *f) {
 
 void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *params) {
 
+	int writable=0;
+
 	char *stoplog = getParam(params, "stoplog");
 	if(strlen(stoplog) > 0)
 		cfg->disablelog = atoi(stoplog);
@@ -2247,20 +2249,32 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 
 	char targetfile[256];
 
-	if (strcmp(getParam(params, "part"), "conf") == 0)
+	if (strcmp(getParam(params, "part"), "conf") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.conf");
+		writable = 1;
+	}
 	else if (strcmp(getParam(params, "part"), "version") == 0)
 		snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
-	else if (strcmp(getParam(params, "part"), "user") == 0)
+	else if (strcmp(getParam(params, "part"), "user") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.user");
-	else if (strcmp(getParam(params, "part"), "server") == 0)
+		writable = 1;
+	}
+	else if (strcmp(getParam(params, "part"), "server") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.server");
-	else if (strcmp(getParam(params, "part"), "services") == 0)
+		writable = 1;
+	}
+	else if (strcmp(getParam(params, "part"), "services") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.services");
-	else if (strcmp(getParam(params, "part"), "srvid") == 0)
+		writable = 1;
+	}
+	else if (strcmp(getParam(params, "part"), "srvid") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.srvid");
-	else if (strcmp(getParam(params, "part"), "provid") == 0)
+		writable = 1;
+	}
+	else if (strcmp(getParam(params, "part"), "provid") == 0) {
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.provid");
+		writable = 1;
+	}
 	else if (strcmp(getParam(params, "part"), "logfile") == 0) {
 		snprintf(targetfile, 255,"%s", cfg->logfile);
 
@@ -2317,11 +2331,28 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 #endif
 
 #ifdef HAVE_DVBAPI
-	else if (strcmp(getParam(params, "part"), "dvbapi") == 0)
+	else if (strcmp(getParam(params, "part"), "dvbapi") == 0) {
 		snprintf(targetfile, 255, "%s%s", cs_confdir, "oscam.dvbapi");
+		writable = 1;
+	}
 #endif
 
+
 	if (!strstr(targetfile, "/dev/")) {
+
+		if (strcmp(getParam(params, "action"), "Save") == 0) {
+			if((strlen(targetfile) > 0) && (file_exists(targetfile) == 1)) {
+				FILE *fpsave;
+				char *fcontent = getParam(params, "filecontent");
+				urldecode(fcontent);
+
+				if((fpsave = fopen(targetfile,"w"))){
+					fprintf(fpsave,"%s",fcontent);
+					fclose(fpsave);
+				}
+			}
+		}
+
 		if((strlen(targetfile) > 0) && (file_exists(targetfile) == 1)) {
 			FILE *fp;
 			char buffer[256];
@@ -2342,7 +2373,12 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	}
 
 	tpl_addVar(vars, 0, "PART", getParam(params, "part"));
-	tpl_addVar(vars, 0, "BTNDISABLED", "DISABLED");
+
+	if (!writable) {
+		tpl_addVar(vars, 0, "WRITEPROTECTION", "You cannot change content of this file");
+		tpl_addVar(vars, 0, "BTNDISABLED", "DISABLED");
+	}
+
 
 	fputs(tpl_getTpl(vars, "FILE"), f);
 }

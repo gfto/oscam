@@ -313,7 +313,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
   <BR><BR>##SDEBUG####SLOG####SCLEAR##<BR>##FILTER##\n\
   <FORM ACTION=\"files.html\" method=\"get\">\n\
   <INPUT TYPE=\"hidden\" NAME=\"part\" VALUE=\"##PART##\">\n\
-  <TEXTAREA NAME=\"filecontent\" CLASS=\"editor\">##FILECONTENT##</TEXTAREA><BR>saving files is not yet implemented<BR>\n\
+  <TEXTAREA NAME=\"filecontent\" CLASS=\"editor\">##FILECONTENT##</TEXTAREA><BR>##WRITEPROTECTION##<BR>\n\
   <INPUT TYPE=\"submit\" NAME=\"action\" VALUE=\"Save\" TITLE=\"Save file is not yet implemented\" ##BTNDISABLED##>\n\
   </FORM>\n\
   ##TPLFOOTER##"
