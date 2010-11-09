@@ -1893,7 +1893,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "serialreadertimeout", "%d\n", cfg->srtimeout);
 	if (cfg->max_log_size != 10 || (cfg->max_log_size == 10 && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "maxlogsize", "%d\n", cfg->max_log_size);
-	if (cfg->waitforcards ||(!cfg->waitforcards && cfg->http_full_cfg))
+	if (!cfg->waitforcards ||(cfg->waitforcards && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "waitforcards", "%d\n", cfg->waitforcards);
 	if (cfg->preferlocalcards ||(!cfg->preferlocalcards && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "preferlocalcards", "%d\n", cfg->preferlocalcards);
