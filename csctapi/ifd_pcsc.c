@@ -170,7 +170,7 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
         *atr_size=dwAtrLen;
         pcsc_reader->init_history_pos=0;
 
-        //cs_ri_log("ATR: %s", cs_hexdump(1, (uchar *)pbAtr, dwAtrLen));
+        cs_log("%s ATR: %s",pcsc_reader->label, cs_hexdump(1, (uchar *)pbAtr, dwAtrLen));
         return(1);
     }
     else {
