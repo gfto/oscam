@@ -494,9 +494,12 @@ void dvbapi_start_descrambling(int demux_id) {
 		}
 	}
 
+	if(cfg->dvbapi_au==2 && demux[demux_id].rdr)
+		dvbapi_client->aureader=demux[demux_id].rdr;
+
 	cs_log("Start descrambling PID #%d (CAID: %04X) %d", demux[demux_id].curindex, demux[demux_id].ECMpids[demux[demux_id].curindex].CAID, streamcount);
 
-	if (cfg->dvbapi_au==1)
+	if (cfg->dvbapi_au>0)
 		dvbapi_start_filter(demux_id, demux[demux_id].pidindex, 0x001, 0x01, 0xFF, 0, TYPE_EMM); //CAT
 }
 
@@ -600,6 +603,7 @@ int dvbapi_read_prio() {
 		count++;
 
 		char c_srvid[34];
+		c_srvid[0]='\0';
 		uint caid=0, provid=0, srvid=0, ecmpid=0, chid=0;
 		sscanf(str1, "%4x:%6x:%33s:%4x:%4x", &caid, &provid, c_srvid, &ecmpid, &chid);
 
@@ -1294,7 +1298,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		if (provid != curpid->PROVID)
 			curpid->PROVID = provid;
 
-		if (cfg->dvbapi_au==1)
+		if (cfg->dvbapi_au>0)
 			dvbapi_start_emm_filter(demux_id);
 
 		ECM_REQUEST *er;
@@ -1307,9 +1311,9 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		er->prid  = provid;
 
 		if (mapentry) {
-			cs_debug("Mapping ECM from %04X:%06X to %04X:%06X", er->caid, er->prid, mapentry->caid, mapentry->provid);
-			er->caid = mapentry->caid;
-			er->prid = mapentry->provid;
+			cs_debug("Mapping ECM from %04X:%06X to %04X:%06X", er->caid, er->prid, mapentry->mapcaid, mapentry->mapprovid);
+			er->caid = mapentry->mapcaid;
+			er->prid = mapentry->mapprovid;
 		}
 
 		er->l=len;
