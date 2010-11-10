@@ -1332,7 +1332,7 @@ void cc_idle() {
 		return;
 
 	if (rdr->cc_keepalive) {
-		if (cc->answer_on_keepalive + 60 < time(NULL)) {
+		if (cc->answer_on_keepalive + 60 <= time(NULL)) {
 			cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
 			cs_debug("cccam: keepalive");
 			cc->answer_on_keepalive = time(NULL);
@@ -1869,7 +1869,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cs_debug("cccam: keepalive ack");
 		} else {
 			//Checking if last answer is one minute ago:
-			if (cc->answer_on_keepalive + 55 < time(NULL)) {
+			if (cc->answer_on_keepalive + 55 <= time(NULL)) {
 				cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
 				cs_debug("cccam: keepalive");
 				cc->answer_on_keepalive = time(NULL);
@@ -2840,8 +2840,9 @@ int cc_srv_connect(struct s_client *cl) {
 	for (;;) {
 		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
 		//cs_log("srv process input i=%d cmi=%d", i, cmi);
-		int update_cards = 0;
-		if (i == -9) {
+		if (i == MSG_KEEPALIVE) {
+			cmi = 0;
+		} else if (i == -9) {
 			cmi += 10;
 			if (cfg->cmaxidle && cmi >= cfg->cmaxidle) {
 				cmi = 0;
@@ -2849,40 +2850,35 @@ int cc_srv_connect(struct s_client *cl) {
 						getprefix());
 				break; //Disconnect client
 			}
-			update_cards = 1;
-
 		} else if (i <= 0)
 			break; //Disconnected by client
 		else {
 			cmi = 0;
-			update_cards = 1;
 		}
 		                                                        
-		if (update_cards) {
-			if (!cc->server_ecm_pending) {
-				struct timeb timeout;
-				struct timeb cur_time;
-				cs_ftime(&cur_time);
-				timeout = cc->ecm_time;
-				timeout.time += cfg->cc_update_interval;
+		if (!cc->server_ecm_pending) {
+			struct timeb timeout;
+			struct timeb cur_time;
+			cs_ftime(&cur_time);
+			timeout = cc->ecm_time;
+			timeout.time += cfg->cc_update_interval;
 
-				int needs_card_updates = (cfg->cc_update_interval >= 0)
-						&& comp_timeb(&cur_time, &timeout) > 0;
+			int needs_card_updates = (cfg->cc_update_interval >= 0)
+					&& comp_timeb(&cur_time, &timeout) > 0;
 
-				if (needs_card_updates) {
-					cc->ecm_time = cur_time;
-					ulong new_hexserial_crc = get_reader_hexserial_crc(cl);
-					int cards_modified = cc_cards_modified();
-					if (new_hexserial_crc != hexserial_crc || cards_modified
-							!= cc->cards_modified) {
-						cs_debug_mask(D_TRACE, "%s update share list",
-								getprefix());
+			if (needs_card_updates) {
+				cc->ecm_time = cur_time;
+				ulong new_hexserial_crc = get_reader_hexserial_crc(cl);
+				int cards_modified = cc_cards_modified();
+				if (new_hexserial_crc != hexserial_crc || cards_modified
+						!= cc->cards_modified) {
+					cs_debug_mask(D_TRACE, "%s update share list",
+							getprefix());
 
-						hexserial_crc = new_hexserial_crc;
-						cc->cards_modified = cards_modified;
+					hexserial_crc = new_hexserial_crc;
+					cc->cards_modified = cards_modified;
 
-						cc_srv_report_cards(cl);
-					}
+					cc_srv_report_cards(cl);
 				}
 			}
 		}
