@@ -15,6 +15,11 @@
 #define DVBAPI_1	1
 #define STAPI		2
 
+
+#define T_UNIQUE 1
+#define T_SHARED 2
+#define T_GLOBAL 4
+
 #define TMPDIR	"/tmp/"
 #define STANDBY_FILE	"/tmp/.pauseoscam"
 #define ECMINFO_FILE	"/tmp/ecm.info"
@@ -38,7 +43,7 @@ struct box_devices
 	char *cam_socket_path;
 };
 
-typedef struct ECMPIDS
+struct s_ecmpids
 {
 	unsigned short CAID;
 	unsigned long PROVID;
@@ -53,7 +58,7 @@ typedef struct ECMPIDS
 	int index;
 	unsigned char slen;
 	char stream[8];
-} ECMPIDSTYPE;
+};
 
 typedef struct filter_s
 {
@@ -64,6 +69,14 @@ typedef struct filter_s
 	int count;
 } FILTERTYPE;
 
+struct s_emmpids
+{
+	ushort CAID;
+	ulong PROVID;
+	ushort PID;
+	uint8 type;
+};
+
 typedef struct demux_s
 {
 	int demux_index;
@@ -72,19 +85,21 @@ typedef struct demux_s
 	int adapter_index;
 	int socket_fd;
 	int ECMpidcount;
-	ECMPIDSTYPE ECMpids[ECM_PIDS];
+	struct s_ecmpids ECMpids[ECM_PIDS];
+	int EMMpidcount;
+	struct s_emmpids EMMpids[ECM_PIDS];
+	int STREAMpidcount;
+	unsigned short STREAMpids[ECM_PIDS];
 	int pidindex;
 	int curindex;
 	int tries;
 	int max_status;
 	unsigned short program_number;
-	int STREAMpidcount;
-	unsigned short STREAMpids[ECM_PIDS];
 	unsigned char lastcw[2][8];
 	int emm_filter;
 	uchar hexserial[8];
 	struct s_reader *rdr;
-	char pmt_file[50];
+	char pmt_file[30];
 	int pmt_time;
 } DEMUXTYPE;
 
