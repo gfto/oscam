@@ -276,7 +276,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			int cnr=get_threadnum(cl);
 			sprintf(ltime, "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
                         sprintf(sbuf, "[%c--CCC]%8lX|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
-					id, cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
+					id, (unsigned long)cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
 					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),
 					ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
 					get_servicename(cl->last_srvid, cl->last_caid), isec, con,

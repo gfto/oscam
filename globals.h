@@ -709,6 +709,7 @@ struct geo_cache
 	ulong provid;
 	uchar geo[256];
 	uchar geo_len;
+	int number_ecm;
 };
 // for videoguard in s_reader
 struct s_CmdTabEntry {

@@ -109,18 +109,17 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *ct
         //The cbSendLength parameter must be set to four, the size of the T=0 header information (CLA, INS, P1, and P2).
         //The pbRecvBuffer will receive the SW1 and SW2 status codes from the operation.
         //The pcbRecvLength should be at least two and will be set to two upon return.
-        cs_debug("command = %02X %02X %02X %02X %02X", buf[0],buf[1],buf[2],buf[3],buf[4]);
         if(buf[4])
             dwSendLength = l;
         else
             dwSendLength = l-1;
-        cs_debug("sending %d bytes to PCSC", dwSendLength);
+        cs_debug("sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T0, (LPCBYTE) buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
         dwSendLength = l;
-        cs_debug("sending %d bytes to PCSC", dwSendLength);
+        cs_debug("sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T1, (LPCBYTE) buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
@@ -129,7 +128,8 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *ct
         return ERR_INVALID;
     }
 
-     cs_debug("received %d bytes from PCSC with rv=%lx", *cta_lr, rv);
+     cs_debug("received %d bytes from PCSC with rv=%lx : %s", *cta_lr, rv,cs_hexdump(1,cta_res,*cta_lr));
+
      cs_debug("PCSC doapi (%lx ) (T=%d), %d", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), *cta_lr );
 
      if ( rv  == SCARD_S_SUCCESS ){
