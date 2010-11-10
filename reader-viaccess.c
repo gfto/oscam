@@ -176,11 +176,26 @@ static int viaccess_card_init(struct s_reader * reader, ATR newatr)
     static unsigned char ins8706[] = { 0x87, 0x06, 0x00, 0x00, 0x04 };
 
 
-  if ((atr[0]!=0x3f) || (atr[1]!=0x77) || ((atr[2]!=0x18) && (atr[2]!=0x11) && (atr[2]!=0x19)) || (atr[9]!=0x68)) return ERROR;
+    if ((atr[0]!=0x3f) || (atr[1]!=0x77) || ((atr[2]!=0x18) && (atr[2]!=0x11) && (atr[2]!=0x19)) || (atr[9]!=0x68)) 
+        return ERROR;
+    
+    write_cmd(insFAC, FacDat);
+    if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) )
+        return ERROR;
 
-  write_cmd(insFAC, FacDat);
-  if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) )
-    return ERROR;
+    reader->last_geo.number_ecm = 0;
+    write_cmd(insFAC, ins8702_data);
+    if ((cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0x00)) {
+        write_cmd(ins8704, NULL);
+        if ((cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0x00)) {
+            write_cmd(ins8706, NULL);
+            if ((cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0x00)) {
+                reader->last_geo.number_ecm =(cta_res[2]<<8) | (cta_res[3]);
+                cs_log("using ecm #%04x for long viaccess ecm",reader->last_geo.number_ecm);
+            }
+        }
+    }
+
 
 //  switch((atr[atrsize-4]<<8)|atr[atrsize-3])
 //  {
@@ -237,16 +252,6 @@ cs_log("[viaccess-reader] name: %s", cta_res);
     
     if (cfg->ulparent)
         unlock_parental(reader);
-
-    if(card_write(reader, insFAC, ins8702_data, cta_res, &cta_lr) && 
-        card_write(reader, ins8704, NULL, cta_res, &cta_lr) &&
-        card_write(reader, ins8706, NULL, cta_res, &cta_lr) &&
-        (cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0x00)) {
-        reader->last_geo.number_ecm =(cta_res[2]<<8) | (cta_res[3]);
-        cs_log("using ecm #%04x for long viaccess ecm",reader->last_geo.number_ecm);
-    }
-    else 
-        reader->last_geo.number_ecm = 0;
 
     cs_log("[viaccess-reader] ready for requests");
     memset(&reader->last_geo, 0, sizeof(reader->last_geo));
