@@ -280,8 +280,6 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 	if (stat->ecm_count < 0)
 		stat->ecm_count=0;
 		
-	stat->request_count = 0;
-		
 	if (rc == 0 || rc == 3) {
 		stat->rc = 0;
 		stat->ecm_count++;
@@ -432,7 +430,7 @@ int get_best_reader(ECM_REQUEST *er)
 
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
 			if (stat->rc == 0) {
-					
+				stat->request_count++;	
 				switch (cfg->lb_mode) {
 				default:
 				case LB_NONE:
