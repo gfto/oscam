@@ -191,7 +191,7 @@ static int viaccess_card_init(struct s_reader * reader, ATR newatr)
             write_cmd(ins8706, NULL);
             if ((cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0x00)) {
                 reader->last_geo.number_ecm =(cta_res[2]<<8) | (cta_res[3]);
-                cs_log("using ecm #%04x for long viaccess ecm",reader->last_geo.number_ecm);
+                cs_log("[viaccess-reader] using ecm #%x for long viaccess ecm",reader->last_geo.number_ecm);
             }
         }
     }
@@ -371,7 +371,7 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         if(hasD2 && reader->aes_list) {
             // check that we have the AES key to decode the CW
             // if not there is no need to send the ecm to the card
-            if(!aes_present(reader->aes_list, 0x500, (uint32) provid, D2KeyID))
+            if(!aes_present(reader->aes_list, 0x500, (uint32) (provid & 0xFFFFF0) , D2KeyID))
                 return ERROR;
         }
 
@@ -472,10 +472,10 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   if ( hasD2 && !check_crc(er->cw)) {
     if(reader->aes_list) {
-        cs_debug("Decoding CW : using AES key id %d for provider %06x",D2KeyID,provid);
-        rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) provid, D2KeyID,er->cw, 16);
+        cs_debug("Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
+        rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) (provid & 0xFFFFF0), D2KeyID,er->cw, 16);
         if( rc == 0 )
-            snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, provid & 0xFFFFF0 );
+            snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, (provid & 0xFFFFF0) );
     }
     else
         aes_decrypt(er->cw, 16);
