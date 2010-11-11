@@ -247,15 +247,15 @@ DESCRIPTIONS
 	  IDEA key for Tiger Nagravision SCs
 
        aeskey = AES key
-	  16 byte AES key for Viaccess SCs
+	  16 bytes AES key for Viaccess SCs
 
-       aeskeys = CAID@ident:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID@ident:AES key #0 CAID #1[,AES key #1 CAID #1],...]...
-	  mutiple 16 byte AES keys for Viaccess SCs
+       aeskeys = CAID #0@ident:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID #1@ident:AES key #0 CAID #1[,AES key #1 CAID #1],...]...
+	  multiple 16 bytes AES keys for Viaccess SCs
 
 	  special AES keys:
 
-	   00 = no AES key specified, do not return any CW
-	   FF = no AES key specified, return CW received from the SC
+	   00 = do not return any CW, no AES key specified
+	   FF = return CW received from the S, no AES key specified
 
 	  example:
 

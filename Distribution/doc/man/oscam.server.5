@@ -347,17 +347,17 @@ IDEA key for Tiger Nagravision SCs
 .PP
 \fBaeskey\fP = \fBAES key\fP
 .RS 3n
-16 byte AES key for Viaccess SCs
+16 bytes AES key for Viaccess SCs
 .RE
 .PP
-\fBaeskeys\fP = \fBCAID\fP@\fBident\fP:\fBAES key #0 CAID #0\fP[,\fBAES key #1 CAID #0\fP],...[;\fBCAID\fP@\fBident\fP:\fBAES key #0 CAID #1\fP[,\fBAES key #1 CAID #1\fP],...]...
+\fBaeskeys\fP = \fBCAID #0\fP@\fBident\fP:\fBAES key #0 CAID #0\fP[,\fBAES key #1 CAID #0\fP],...[;\fBCAID #1\fP@\fBident\fP:\fBAES key #0 CAID #1\fP[,\fBAES key #1 CAID #1\fP],...]...
 .RS 3n
-mutiple 16 byte AES keys for Viaccess SCs
+multiple 16 bytes AES keys for Viaccess SCs
 
 special AES keys:
 
- 00 = no AES key specified, do not return any CW
- FF = no AES key specified, return CW received from the SC
+ 00 = do not return any CW, no AES key specified
+ FF = return CW received from the S, no AES key specified
 
 example: 
 
