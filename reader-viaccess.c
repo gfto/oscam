@@ -178,12 +178,12 @@ static int viaccess_card_init(struct s_reader * reader, ATR newatr)
 
     if ((atr[0]!=0x3f) || (atr[1]!=0x77) || ((atr[2]!=0x18) && (atr[2]!=0x11) && (atr[2]!=0x19)) || (atr[9]!=0x68)) 
         return ERROR;
-    
+
     write_cmd(insFAC, FacDat);
     if( !(cta_res[cta_lr-2]==0x90 && cta_res[cta_lr-1]==0) )
         return ERROR;
 
-    reader->last_geo.number_ecm = 0;
+    memset(&reader->last_geo, 0, sizeof(reader->last_geo));
     write_cmd(insFAC, ins8702_data);
     if ((cta_res[cta_lr-2]==0x90) && (cta_res[cta_lr-1]==0x00)) {
         write_cmd(ins8704, NULL);
@@ -254,7 +254,6 @@ cs_log("[viaccess-reader] name: %s", cta_res);
         unlock_parental(reader);
 
     cs_log("[viaccess-reader] ready for requests");
-    memset(&reader->last_geo, 0, sizeof(reader->last_geo));
     return OK;
 }
 
