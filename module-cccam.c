@@ -762,7 +762,7 @@ void set_au_data(struct s_client *cl __attribute__((unused)), struct s_reader *r
 			memcpy(&rdr->prid[p], &provider->prov, sizeof(provider->prov));
 			cc_SA_cccam2oscam(provider->sa, rdr->sa[p]);
 
-			cs_debug_mask(D_EMM, "%s au info: provider: %06lX:%02X%02X%02X%02X", 
+			cs_debug_mask(D_EMM, "%s au info: provider: %06lX:%02X%02X%02X%02X", getprefix(),
 				provider->prov,
 				provider->sa[0], provider->sa[1], provider->sa[2],
 				provider->sa[3]);
