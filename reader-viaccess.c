@@ -631,7 +631,9 @@ static int viaccess_do_emm(struct s_reader * reader, EMM_PACKET *ep)
             }
         }
         // as we are maybe changing the used provider, clear the cache, so the next ecm will re-select the correct one
-        memset(&reader->last_geo, 0, sizeof(reader->last_geo));
+        reader->last_geo.provid = 0;
+        reader->last_geo.geo_len = 0;
+        reader->last_geo.geo[0]  = 0;
         
     } 
     else if (emmParsed[0]==0x9e && emmParsed[1]==0x20) {
@@ -804,7 +806,9 @@ static int viaccess_card_info(struct s_reader * reader)
   static const uchar pin[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04};
 
   show_cls=reader->show_cls;
-  memset(&reader->last_geo, 0, sizeof(reader->last_geo));
+  reader->last_geo.provid  = 0;
+  reader->last_geo.geo_len = 0;
+  reader->last_geo.geo[0]  = 0;
 
   cs_log("[viaccess-reader] card detected"); 
   
