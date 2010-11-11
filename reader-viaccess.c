@@ -289,7 +289,6 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   int curEcm88len=0;
   int nanoLen=0;
   const uchar *nextEcm;
-  uchar keyToUse=0;
   uchar DE04[256];
   int D2KeyID=0;
   int curnumber_ecm=0;
@@ -338,30 +337,36 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     if ((ecm88Data[0]==0x90 || ecm88Data[0]==0x40) && (ecm88Data[1]==0x03 || ecm88Data[1]==0x07 ) )
     {
         uchar ident[3], keynr;
-        //uchar buff[256]; // MAX_LEN
         uchar *ecmf8Data=0;
         int ecmf8Len=0;
 
         nanoLen=ecm88Data[1] + 2;
-        curnumber_ecm =(ecm88Data[6]<<8) | (ecm88Data[7]);
         keynr=ecm88Data[4]&0x0F;        
 
         // 40 07 03 0b 00  -> nano 40, len =7  ident 030B00 (tntsat), key #0  <== we're pointing here
         // 09 -> use key #9 
         if(nanoLen>5) {
-            if( reader->last_geo.number_ecm > 0 && reader->last_geo.number_ecm ==curnumber_ecm ) {
-    
-                keyToUse=ecm88Data[5];
-                keynr=keyToUse;
-                cs_debug("keyToUse = %d",keyToUse);
+            curnumber_ecm =(ecm88Data[6]<<8) | (ecm88Data[7]);
+            cs_debug("checking if the ecm number (%x) match the card one (%x)",curnumber_ecm,reader->last_geo.number_ecm);
+            // if we have an ecm number we check it.
+            // we can't assume that if the nano len is 5 or more we have an ecm number
+            // as some card don't support this
+            if( reader->last_geo.number_ecm > 0 ) {
+                if(reader->last_geo.number_ecm ==curnumber_ecm ) {
+                    keynr=ecm88Data[5];
+                    cs_debug("keyToUse = %02x",ecm88Data[5]);
+                }
+                else
+                {
+                    ecm88Data=nextEcm;
+                    ecm88Len-=curEcm88len;
+                    continue; //loop to next ecm
+                }
             }
-            else
-            {
-                ecm88Data=nextEcm;
-                ecm88Len-=curEcm88len;
-                continue; //loop to next ecm
+            else { // long ecm but we don't have an ecm number so we have to try them all.
+                keynr=ecm88Data[5];
+                cs_debug("keyToUse = %02x",ecm88Data[5]);
             }
-        
         }
 
         memcpy (ident, &ecm88Data[2], sizeof(ident));
