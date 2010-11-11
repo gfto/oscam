@@ -1171,10 +1171,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 			}
 			break;
 		case R_CCCAM :
-			if (rdr->client && rdr->client->cc && ((struct cc_data *)rdr->client->cc)->extended_mode)
-				tpl_addVar(vars, 0, "PROTOCOL", "cccam ext");
-			else
-				tpl_addVar(vars, 0, "PROTOCOL", "cccam");
+			tpl_addVar(vars, 0, "PROTOCOL", "cccam");
 			tpl_addVar(vars, 1, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
 			break;
 #ifdef CS_WITH_GBOX
