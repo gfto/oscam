@@ -2368,6 +2368,50 @@ void report_card(struct s_client *cl, uint8 *buf, int len, LLIST *new_reported_c
 }
 
 /**
+ * if idents defined on an cccam reader, the cards caid+provider are checked.
+ * return 1 a) if no ident defined b) card is in identlist
+ *        0 if card is not in identlist
+ * 
+ * a card is in the identlist, if the cards caid is matching and mininum a provider is matching
+ **/
+int chk_ident(struct s_reader *rdr, struct cc_card *card) {
+
+	int j, k;
+	int res = 1;
+
+	if (rdr->typ == R_CCCAM && rdr->ftab.filts) {
+		for (j = 0; j < CS_MAXFILTERS; j++) {
+			if (rdr->ftab.filts[j].caid) {
+				res = 0;
+				if (rdr->ftab.filts[j].caid==card->caid) { //caid matches!
+			
+					int nprids = rdr->ftab.filts[j].nprids;
+					if (!nprids) // No Provider ->Ok
+						return 1;
+					
+			
+					LL_ITER *it = ll_iter_create(card->providers);
+					struct cc_provider *prov;
+				
+					while ((prov = ll_iter_next(it))) {
+						for (k = 0; k < nprids; k++) {
+							ulong prid = rdr->ftab.filts[j].prids[k];
+							if (prid == prov->prov) { //Provider matches
+							
+								ll_iter_release(it);
+								return 1;	
+							}			
+						}
+					}
+					ll_iter_release(it);
+				}
+			}
+		}
+	}
+	return res;
+}
+
+/**
  * Server:
  * Reports all caid/providers to the connected clients
  * returns total count of reported cards
@@ -2548,7 +2592,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 					if (card->hop <= maxhops && chk_ctab(card->caid, &cl->ctab)
 							&& chk_ctab(card->caid, &rdr->ctab)) {
 
-						if (cfg->cc_ignore_reshare || card->maxdown > 0) {
+						if ((cfg->cc_ignore_reshare || card->maxdown > 0) && chk_ident(rdr, card)) {
 							int ignore = 0;
 
 							LL_ITER *it2 = ll_iter_create(card->providers);
@@ -2563,6 +2607,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 								}
 							}
 							ll_iter_release(it2);
+							
 							if (!ignore) { //Filtered by service
 								int new_reshare =
 										cfg->cc_ignore_reshare ? reshare
