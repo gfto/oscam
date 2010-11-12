@@ -720,7 +720,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<TABLE CLASS=\"stats\">\
 	<TR><TH>Host</TH><TH>Caid</TH><TH>System</TH><TH>id card</TH><TH>Uphops</TH><TH>Maxdown</TH><TH>Providers</TH><TH>Nodes</TH></TR>\
 	##CCCAMSTATSENTRY##\
-	</TABLE><BR>##TOTALS##"
+	</TABLE><BR><DIV CLASS=\"cccamentitlementtotals\">##TOTALS##</DIV>"
 
 #define TPLENTITLEMENTCCCAMENTRYBIT "\
 	<TR><TD>##HOST##</TD><TD>##CAID##</TD><TD>##SYSTEM##</TD><TD>##IDCARD##</TD><TD>##UPHOPS##</TD><TD>##MAXDOWN##</TD><TD>##PROVIDERS##</TD><TD>##NODES##</TD></TR>"
