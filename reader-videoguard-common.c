@@ -866,7 +866,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 			for (i = 1;i <= serial_count;i++) {
 				if (!memcmp (rdr->hexserial + 2, ep->emm + (serial_len * i), serial_len)) {
 					memcpy(ep->hexserial, ep->emm + (serial_len * i), serial_len);
-				return TRUE;
+					return TRUE;
 				}
 
 				pos = pos + ep->emm[pos+5] + 5;
@@ -884,7 +884,7 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 				}
 			}
 
-			return TRUE; // FIXME: no check for SA
+			return FALSE;
 
 		default:
 			if (ep->emm[pos-2] != 0x00 && ep->emm[pos-1] != 0x00 && ep->emm[pos-1] != 0x01) {
@@ -942,6 +942,8 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[106+0+16] = 0xFF;
 	filter[106+1]    = 0x80;
 	filter[106+1+16] = 0xC0;
+	memcpy(filter+106+2, rdr->hexserial+2, 3);
+	memset(filter+106+2+16, 0xFF, 3);
 
 
 	filter[138]=GLOBAL;
