@@ -1665,6 +1665,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 		if (rdr->typ == R_CCCAM && rdr->enable == 1) {
 
+			
 			//// load cccam template
 			//tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
 
@@ -1679,6 +1680,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			UPHOPS
 			MAXDOWN
 			PROVIDERS
+			NODES
 
 			// Append Table row
 			tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
@@ -1698,52 +1700,59 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			if (rcc && rdr->tcp_connected == 2 && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
 
+
                 LL_ITER *it = ll_iter_create(rcc->cards);
 				while ((card = ll_iter_next(it))) {
-					char *node_str = malloc(ll_count(card->remote_nodes)*(16+2));
-					char *node_ptr = node_str;
-                    LL_ITER *nit = ll_iter_create(card->remote_nodes);
-					uint8 *node;
-					while ((node = ll_iter_next(nit))) {
-						if (node_ptr != node_str) {
-							strcat(node_ptr, ",");
-							node_ptr++;
-						}
-						sprintf(node_ptr, "%02X%02X%02X%02X%02X%02X%02X%02X",
-							node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
-						node_ptr += 16;
-					}
-                    ll_iter_release(nit);
 
-					tpl_printf(vars, 1, "LOGHISTORY",
-							"caid: %04X hop: %d reshare: %d remote nodes: %s<BR>\n",
-							card->caid, card->hop, card->maxdown, node_str);
-					free(node_str);
+					tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
+				
+	                		tpl_printf(vars, 1, "HOST", "%s:%d", rdr->device, rdr->r_port);
 
-					int provcount = 0;
+					tpl_printf(vars, 1, "CAID", "%04X", card->caid);
+					
+					int cs = get_cardsystem(card->caid);
+					if (cs)
+						tpl_printf(vars, 1, "SYSTEM", "%s", cardsystem[cs-1].desc);
+					else
+						tpl_printf(vars, 1, "SYSTEM", "???");
+				
+					tpl_printf(vars, 1, "IDCARD", "%08X", card->remote_id);
+					
+					tpl_printf(vars, 1, "UPHOPS", "%d", card->hop),
+					
+					tpl_printf(vars, 1, "MAXDOWN", "%d", card->maxdown);
+					
                     LL_ITER *pit = ll_iter_create(card->providers);
 					struct cc_provider *prov;
 					while ((prov = ll_iter_next(pit))) {
 						provider = get_provider(card->caid, prov->prov);
 
-						provcount++;
-						tpl_printf(vars, 1, "LOGHISTORY",
-								"&nbsp;&nbsp;-- Provider %d: %06X -- %s<BR>\n",
-								provcount, prov->prov, provider);
+						tpl_printf(vars, 1, "PROVIDERS", "%s<BR>\n", provider);
 					}
                     ll_iter_release(pit);
 
-					tpl_addVar(vars, 1, "LOGHISTORY", "<BR>\n");
+					
+                    LL_ITER *nit = ll_iter_create(card->remote_nodes);
+					uint8 *node;
+					while ((node = ll_iter_next(nit))) {
+						tpl_printf(vars, 1, "NODES", "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
+							node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
+					}
+
+                    ll_iter_release(nit);
+
+					
+					
 					caidcount++;
 				}
                 ll_iter_release(it);
 				pthread_mutex_unlock(&rcc->cards_busy);
 
-			if (caidcount)
-				tpl_printf(vars, 1, "LOGSUMMARY",
+				if (caidcount)
+					tpl_printf(vars, 1, "LOGSUMMARY",
 						"<BR>%d caid found on this reader<BR><BR>\n", caidcount);
 
-			tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
+				tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
 			} else {
 				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
 			}
