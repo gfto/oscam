@@ -197,6 +197,7 @@ void free_current_cards(LLIST *current_cards) {
 void cc_cli_close(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cli_close in");
 	struct s_reader *rdr = cl->reader;
+	struct cc_data *cc = cl->cc;
 	rdr->tcp_connected = 0;
 	rdr->card_status = NO_CARD;
 	rdr->available = 0;
@@ -204,9 +205,9 @@ void cc_cli_close(struct s_client *cl) {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = rdr->last_g = 0;
 
-	network_tcp_connection_close(cl, cl->udp_fd);
+	if (cc && cc->mode == CCCAM_MODE_NORMAL) 
+		network_tcp_connection_close(cl, cl->udp_fd); 
 
-	struct cc_data *cc = cl->cc;
 	if (cc) {
 		cc->just_logged_in = 0;
 		free_current_cards(cc->current_cards);
@@ -1221,7 +1222,7 @@ int cc_clear_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
 	LL_ITER *it = ll_iter_create(reported_carddatas);
 	uint8 *buf;
 	while ((buf = ll_iter_next(it))) {
-		if (send_removed)
+		if (send_removed && (*(uint32*)buf))
 			cc_cmd_send(cl, buf, 4, MSG_CARD_REMOVED);
 		i++;
 		ll_iter_remove_data(it);
@@ -1275,6 +1276,7 @@ void cc_free(struct s_client *cl) {
 	pthread_mutex_destroy(&cc->cards_busy);
 	free(cc->prefix);
 	free(cc);
+	cl->cc=NULL;
 	cs_debug_mask(D_FUT, "cc_free out");
 }
 
@@ -1491,14 +1493,14 @@ void check_peer_changed(struct cc_data *cc, uint8 *node_id, uint8 *version) {
 	}
 }
 
-void fix_dcw(uchar *dcw)
+/*void fix_dcw(uchar *dcw)
 {
 	int i;
 	for (i=0; i<16; i+=4)
 	{
 		dcw[i+3] = (dcw[i] + dcw[i+1] + dcw[i+2]) & 0xFF;
 	}
-}
+}*/
 
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	cs_debug_mask(D_FUT, "cc_parse_msg in %d", buf[1]);
@@ -1819,7 +1821,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 					if (!cc->extended_mode)
 						cc_cw_crypt(cl, buf + 4, card->id);
 					memcpy(cc->dcw, buf + 4, 16);
-					fix_dcw(cc->dcw);
+					//fix_dcw(cc->dcw);
 					if (!cc->extended_mode)
 						cc_crypt(&cc->block[DECRYPT], buf + 4, l - 4, ENCRYPT); // additional crypto step
 
@@ -2034,13 +2036,14 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 			TRUE);
 
 	if (er->rc <= 3 && eei && eei->card) {
-		cc->g_flag = eei->send_idx;
 		memcpy(buf, er->cw, sizeof(buf));
-		fix_dcw(buf);
+		//fix_dcw(buf);
 		cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
 				cs_hexdump(0, buf, 16), er->cpti);
 		if (!cc->extended_mode)
 			cc_cw_crypt(cl, buf, eei->card->id);
+		else
+			cc->g_flag = eei->send_idx;
 		cc_cmd_send(cl, buf, 16, MSG_CW_ECM);
 		if (!cc->extended_mode)
 			cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
@@ -2049,7 +2052,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 		cs_debug_mask(D_TRACE, "%s send cw: NOK cpti: %d", getprefix(),
 				er->cpti);
 
-		if (eei)
+		if (eei && cc->extended_mode)
 			cc->g_flag = eei->send_idx;
 
 		int nok;
@@ -2352,7 +2355,10 @@ void report_card(struct s_client *cl, uint8 *buf, int len, LLIST *new_reported_c
 	if (remove_reported_card(cl, buf, len)) {
 		if (!cc->report_carddata_id)
 			cc->report_carddata_id = 0x64;
-		memcpy(buf, &cc->report_carddata_id, 4);
+		buf[0] = cc->report_carddata_id >> 24;
+		buf[1] = cc->report_carddata_id >> 16;
+		buf[2] = cc->report_carddata_id >> 8;
+		buf[3] = cc->report_carddata_id & 0xFF;
 		cc->report_carddata_id++;
 		
 		cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
@@ -2407,7 +2413,8 @@ void cc_srv_report_cards(struct s_client *cl) {
 			continue;
 
 		if (!rdr->cc_id) {
-			rdr->cc_id = (get_ridx(rdr) + 0x64) << 16 | fast_rnd() << 8 | fast_rnd();
+			int r = get_ridx(rdr) + 0x64;
+			rdr->cc_id = r << 24 | r << 16 | fast_rnd() << 8 | fast_rnd();
 		}
 
 		int au_allowed = !rdr->audisabled && isau;
@@ -2610,7 +2617,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 		ll_iter_release(it2);
 		buf[20] = j;
 		int ofs = 21 + (j * 7);
-		buf[ofs] = 1 + ll_count(card->remote_nodes);
+		buf[ofs] = ll_count(card->remote_nodes)+1;
 		//cs_debug_mask(D_TRACE, "%s count=%d", getprefix(), buf[ofs]);
 		ofs++;
 
@@ -2627,6 +2634,30 @@ void cc_srv_report_cards(struct s_client *cl) {
 		memcpy(buf + ofs, cc->node_id, 8);
 		ofs += 8;
 
+		if (card->maxdown > 100 || card->hop > 100 || !card->caid || !card->remote_id)
+			continue;
+		/*if (card->caid == 0x0500) {
+			cs_log("%04X card: hop %d down %d nprov %d nremote %d", card->caid, card->hop, card->maxdown, ll_count(card->providers),
+				ll_count(card->remote_nodes)); 
+			it2 = ll_iter_create(card->providers);
+			struct cc_provider *prov;
+			j = 1;
+			while ((prov = ll_iter_next(it2))) {
+				ulong prid = prov->prov;
+				cs_log("  %d prid %08X", j, prid);
+				j++;
+			}
+			ll_iter_release(it2);
+
+			itr_node = ll_iter_create(card->remote_nodes);
+			j = 1;
+			uint32 *remote_node;
+			while ((remote_node = ll_iter_next(itr_node))) {
+				cs_log("  %d remote %08X%08X", j, remote_node[0], remote_node[1]);
+				j++;
+			}
+			ll_iter_release(itr_node);
+		}*/
 		//cs_debug_mask(D_TRACE, "%s ofs=%d", getprefix(), ofs);
 		report_card(cl, buf, ofs, new_reported_carddatas);
 	}
@@ -2852,6 +2883,8 @@ int cc_srv_connect(struct s_client *cl) {
 		else {
 			cmi = 0;
 		}
+		if (cc->mode != CCCAM_MODE_NORMAL)
+			break;
 		                                                        
 		if (!cc->server_ecm_pending) {
 			struct timeb timeout;
@@ -2908,6 +2941,10 @@ void * cc_srv_init(struct s_client *cl) {
 int cc_cli_connect(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cli_connect in");
 	struct s_reader *rdr = cl->reader;
+	struct cc_data *cc = cl->cc;
+	
+	if (cc && cc->mode != CCCAM_MODE_NORMAL)
+		return -99;
 
 	int handle, n;
 	uint8 data[20];
@@ -2941,7 +2978,6 @@ int cc_cli_connect(struct s_client *cl) {
 				rdr->label, n, handle, cl->udp_fd, err);
 		return -2;
 	}
-	struct cc_data *cc = cl->cc;
 
 	if (!cc) {
 		// init internals data struct
@@ -3140,16 +3176,22 @@ int cc_cli_init_int(struct s_client *cl) {
 }
 
 int cc_cli_init(struct s_client *cl) {
+	struct cc_data *cc = cl->cc;
+	if (cc && cc->mode == CCCAM_MODE_SHUTDOWN)
+		return -1;
 	int res = cc_cli_init_int(cl);
 	struct s_reader *reader = cl->reader;
 	if (res == 0 && reader && (reader->cc_keepalive || !cl->cc) && !reader->tcp_connected) {
 		cc_cli_connect(cl);
+		if (cc && cc->mode == CCCAM_MODE_SHUTDOWN)
+			return -1;
 		while (!reader->tcp_connected && reader->cc_keepalive && cfg->reader_restart_seconds > 0) {
 			cs_log("%s restarting reader in %d seconds", reader->label, cfg->reader_restart_seconds);
 			cs_sleepms(cfg->reader_restart_seconds*1000);
 			cs_log("%s restarting reader...", reader->label);
-			//clear_reader_pipe(reader); //_n: bytes_available() in read_from_pipe blocks indefinitely
-			cc_cli_connect(cl);	
+			cc_cli_connect(cl);
+			if (cc && cc->mode == CCCAM_MODE_SHUTDOWN)
+				return -1;
 		}
 	}
 	return res;
@@ -3191,11 +3233,13 @@ void cc_card_info() {
 
 void cc_cleanup(struct s_client *cl) {
 	cs_debug_mask(D_FUT, "cc_cleanup in");
+	struct cc_data *cc = cl->cc;
+	if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
+	
 	if (cl->typ != 'c') {
 		cc_cli_close(cl); // we need to close open fd's 
 	}
 	cc_free(cl);
-	cl->cc = NULL;
 	cs_debug_mask(D_FUT, "cc_cleanup out");
 }
 

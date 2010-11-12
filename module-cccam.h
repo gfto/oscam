@@ -11,7 +11,6 @@
 
 #define CC_MAXMSGSIZE 512
 #define CC_MAX_PROV   16
-#define CC_CAIDINFO_REBUILD 200 //SS: Rebuid Caidinfos after 200 Card-Updates
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 
 #if (defined(WIN32) || defined(OS_CYGWIN32)) && !defined(MSG_WAITALL)
@@ -21,6 +20,9 @@
 #define MINIMIZE_NONE 0
 #define MINIMIZE_HOPS 1
 #define MINIMIZE_CAID 2
+
+#define CCCAM_MODE_NORMAL 0
+#define CCCAM_MODE_SHUTDOWN 0xFF
 
 typedef enum {
 	DECRYPT, ENCRYPT
@@ -116,8 +118,8 @@ struct cc_data {
 	uint8 cmd05_aeskey[16];
 	struct cc_crypt_block cmd05_cryptkey;
 
-	int is_oscam_cccam;
-	int cmd05_active;
+	uint8 is_oscam_cccam;
+	uint8 cmd05_active;
 	int cmd05_data_len;
 	uint8 cmd05_data[256];
 	cc_cmd05_mode cmd05_mode;
@@ -134,7 +136,7 @@ struct cc_data {
 	int card_added_count;
 	int card_removed_count;
 	int card_dup_count;
-	int just_logged_in; //true for checking NOK direct after login
+	uint8 just_logged_in; //true for checking NOK direct after login
 	uint8 key_table; //key for CMD 0B
 
 	LLIST *pending_emms; //pending emm list
@@ -156,9 +158,11 @@ struct cc_data {
 	char remote_version[7];
 	char remote_build[7];
 	char remote_oscam[200];
-	
+
+	uint8 mode;
+		
 	//Extended Mode for SPECIAL clients:
-	int extended_mode;
+	uint8 extended_mode;
 	LLIST *extended_ecm_idx;
 };
 
