@@ -1704,7 +1704,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
                 LL_ITER *it = ll_iter_create(rcc->cards);
 				while ((card = ll_iter_next(it))) {
 
-					tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
+
 				
 	                		tpl_printf(vars, 1, "HOST", "%s:%d", rdr->device, rdr->r_port);
 
@@ -1742,17 +1742,22 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
                     ll_iter_release(nit);
 
 					
-					
+                    tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
 					caidcount++;
 				}
                 ll_iter_release(it);
 				pthread_mutex_unlock(&rcc->cards_busy);
 
+				/*// LOGSUMMARY und LOGHISTORY gibts in dem BIT nicht
 				if (caidcount)
 					tpl_printf(vars, 1, "LOGSUMMARY",
 						"<BR>%d caid found on this reader<BR><BR>\n", caidcount);
 
 				tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
+				*/
+
+				tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
+
 			} else {
 				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
 			}
