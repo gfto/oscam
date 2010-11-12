@@ -345,4 +345,5 @@ void reader_videoguard1(struct s_cardsystem *ph)
 	ph->get_emm_type=videoguard_get_emm_type;
 	ph->get_emm_filter=videoguard_get_emm_filter;
 	ph->caids[0]=0x09;
+	ph->desc="videoguard1";
 }

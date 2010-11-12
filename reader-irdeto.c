@@ -566,4 +566,5 @@ void reader_irdeto(struct s_cardsystem *ph)
 	ph->get_emm_filter=irdeto_get_emm_filter;
 	ph->caids[0]=0x06;
 	ph->caids[1]=0x17;
+	ph->desc="irdeto";
 }

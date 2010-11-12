@@ -453,4 +453,5 @@ void reader_dre(struct s_cardsystem *ph)
 	ph->get_emm_type=dre_get_emm_type;
 	ph->get_emm_filter=dre_get_emm_filter;
 	ph->caids[0]=0x4A;
+	ph->desc="dre";
 }

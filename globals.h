@@ -513,7 +513,7 @@ struct s_module
 
 struct s_cardsystem
 {
-	char desc[16];
+	char *desc;
 	int  (*card_init)();
 	int  (*card_info)();
 	int  (*do_ecm)();

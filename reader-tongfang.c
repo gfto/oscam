@@ -207,4 +207,5 @@ void reader_tongfang(struct s_cardsystem *ph)
 	ph->card_init=tongfang_card_init;
 	ph->get_emm_type=tongfang_get_emm_type;
 	ph->caids[0]=0x4B;
+	ph->desc="tongfang";
 }

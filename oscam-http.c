@@ -1656,6 +1656,11 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 	fputs(tpl_getTpl(vars, "USERCONFIGLIST"), f);
 }
 
+char *strend(char *ch) {
+	while (*ch) ch++;
+	return ch;
+}
+
 void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams *params) {
 	/* build entitlements from reader init history */
 	char *reader_ = getParam(params, "label");
@@ -1699,6 +1704,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 			if (rcc && rdr->tcp_connected == 2 && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
+				char *buf = malloc(4000);
 
 
                 LL_ITER *it = ll_iter_create(rcc->cards);
@@ -1706,38 +1712,45 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 
 				
-	                		tpl_printf(vars, 1, "HOST", "%s:%d", rdr->device, rdr->r_port);
+	                		tpl_printf(vars, 0, "HOST", "%s:%d", rdr->device, rdr->r_port);
 
-					tpl_printf(vars, 1, "CAID", "%04X", card->caid);
+					tpl_printf(vars, 0, "CAID", "%04X", card->caid);
 					
 					int cs = get_cardsystem(card->caid);
 					if (cs)
-						tpl_printf(vars, 1, "SYSTEM", "%s", cardsystem[cs-1].desc);
+						tpl_printf(vars, 0, "SYSTEM", "%s", cardsystem[cs-1].desc);
 					else
-						tpl_printf(vars, 1, "SYSTEM", "???");
+						tpl_printf(vars, 0, "SYSTEM", "???");
 				
-					tpl_printf(vars, 1, "IDCARD", "%08X", card->remote_id);
+					tpl_printf(vars, 0, "IDCARD", "%08X", card->remote_id);
 					
-					tpl_printf(vars, 1, "UPHOPS", "%d", card->hop),
+					tpl_printf(vars, 0, "UPHOPS", "%d", card->hop),
 					
-					tpl_printf(vars, 1, "MAXDOWN", "%d", card->maxdown);
+					tpl_printf(vars, 0, "MAXDOWN", "%d", card->maxdown);
 					
                     LL_ITER *pit = ll_iter_create(card->providers);
+					char *p = buf;
+					*p = 0;
 					struct cc_provider *prov;
 					while ((prov = ll_iter_next(pit))) {
 						provider = get_provider(card->caid, prov->prov);
-
-						tpl_printf(vars, 1, "PROVIDERS", "%s<BR>\n", provider);
+						sprintf(p, "%s<BR>\n", provider);
+						p = strend(p);
 					}
+					tpl_printf(vars, 0, "PROVIDERS", buf);
                     ll_iter_release(pit);
 
 					
                     LL_ITER *nit = ll_iter_create(card->remote_nodes);
+                    			p = buf;
+                    			*p = 0;
 					uint8 *node;
 					while ((node = ll_iter_next(nit))) {
-						tpl_printf(vars, 1, "NODES", "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
+						sprintf(p, "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
 							node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
+						p = strend(p);
 					}
+					tpl_printf(vars, 0, "NODES", buf);
 
                     ll_iter_release(nit);
 
@@ -1746,6 +1759,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					caidcount++;
 				}
                 ll_iter_release(it);
+				free(buf);
 				pthread_mutex_unlock(&rcc->cards_busy);
 
 				/*// LOGSUMMARY und LOGHISTORY gibts in dem BIT nicht
@@ -1763,7 +1777,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			}
 
 			//remove following line if code above is implemented (needed to fill tpl on legacy way)
-			tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+			//tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 
 		} else {
 			tpl_addVar(vars, 0, "LOGHISTORY", "->");

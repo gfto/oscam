@@ -334,4 +334,5 @@ void reader_conax(struct s_cardsystem *ph)
 	ph->get_emm_type=conax_get_emm_type;
 	ph->get_emm_filter=conax_get_emm_filter;
 	ph->caids[0]=0x0B;
+	ph->desc="conax";
 }

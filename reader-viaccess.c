@@ -962,4 +962,5 @@ void reader_viaccess(struct s_cardsystem *ph)
 	ph->get_emm_type=viaccess_get_emm_type;
 	ph->get_emm_filter=viaccess_get_emm_filter;
 	ph->caids[0]=0x05;
+	ph->desc="viaccess";
 }

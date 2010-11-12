@@ -342,6 +342,7 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
 				if (stat->ecm_count > 0)
 					stat->ecm_count = 1; //not zero, so we know it's decodeable
 				stat->rc = 0;
+				stat->request_count = 0;
 			}
 		}
 	}

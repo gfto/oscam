@@ -751,4 +751,5 @@ void reader_cryptoworks(struct s_cardsystem *ph)
 	ph->get_emm_type=cryptoworks_get_emm_type;
 	ph->get_emm_filter=cryptoworks_get_emm_filter;
 	ph->caids[0]=0x0D;
+	ph->desc="cryptoworks";
 }

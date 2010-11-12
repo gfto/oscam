@@ -364,4 +364,5 @@ void reader_seca(struct s_cardsystem *ph)
 	ph->get_emm_type=seca_get_emm_type;
 	ph->get_emm_filter=seca_get_emm_filter;
 	ph->caids[0]=0x01;
+	ph->desc="seca";
 }
