@@ -1670,33 +1670,9 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 		if (rdr->typ == R_CCCAM && rdr->enable == 1) {
 
-			
-			//// load cccam template
-			//tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
-
-			/* loop start
-
-			TPL Variables set with tplAddVar or tplprintf !! Set variable always to defined state - also to "" if not needed!!:
-
-			HOST
-			CAID
-			SYSTEM
-			IDCARD
-			UPHOPS
-			MAXDOWN
-			PROVIDERS
-			NODES
-
-			// Append Table row
-			tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
-
-			loop end*/
-
-
 			tpl_addVar(vars, 0, "READERNAME", rdr->label);
-			
-			int caidcount = 0;
 
+			int caidcount = 0;
 			char *provider = "";
 
 			struct cc_card *card;
@@ -1708,28 +1684,24 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				char *buf = malloc(4000);
 
 
-                LL_ITER *it = ll_iter_create(rcc->cards);
+				LL_ITER *it = ll_iter_create(rcc->cards);
 				while ((card = ll_iter_next(it))) {
 
-
-				
-	                		tpl_printf(vars, 0, "HOST", "%s:%d", rdr->device, rdr->r_port);
-
+					tpl_printf(vars, 0, "HOST", "%s:%d", rdr->device, rdr->r_port);
 					tpl_printf(vars, 0, "CAID", "%04X", card->caid);
-					
+
 					int cs = get_cardsystem(card->caid);
+					
 					if (cs)
 						tpl_printf(vars, 0, "SYSTEM", "%s", cardsystem[cs-1].desc);
 					else
 						tpl_printf(vars, 0, "SYSTEM", "???");
-				
+
 					tpl_printf(vars, 0, "IDCARD", "%08X", card->remote_id);
-					
-					tpl_printf(vars, 0, "UPHOPS", "%d", card->hop),
-					
+					tpl_printf(vars, 0, "UPHOPS", "%d", card->hop);
 					tpl_printf(vars, 0, "MAXDOWN", "%d", card->maxdown);
-					
-                    LL_ITER *pit = ll_iter_create(card->providers);
+
+					LL_ITER *pit = ll_iter_create(card->providers);
 					char *p = buf;
 					*p = 0;
 					struct cc_provider *prov;
@@ -1738,41 +1710,37 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						sprintf(p, "%s<BR>\n", provider);
 						p = strend(p);
 					}
-					tpl_printf(vars, 0, "PROVIDERS", buf);
-                    ll_iter_release(pit);
 
-					
-                    LL_ITER *nit = ll_iter_create(card->remote_nodes);
-                    			p = buf;
-                    			*p = 0;
+					tpl_printf(vars, 0, "PROVIDERS", buf);
+
+					ll_iter_release(pit);
+					LL_ITER *nit = ll_iter_create(card->remote_nodes);
+					p = buf;
+					*p = 0;
 					uint8 *node;
 					while ((node = ll_iter_next(nit))) {
 						sprintf(p, "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
-							node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
+								node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
 						p = strend(p);
 					}
 					tpl_printf(vars, 0, "NODES", buf);
 
-                    ll_iter_release(nit);
+					ll_iter_release(nit);
 
-					
-                    tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
+					tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
 					caidcount++;
 				}
-                ll_iter_release(it);
+				ll_iter_release(it);
 				free(buf);
 				pthread_mutex_unlock(&rcc->cards_busy);
 
 				tpl_printf(vars, 0, "TOTALS", "card count=%d", caidcount);
-
 				tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
 
 			} else {
-				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
+				tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+				tpl_printf(vars, 0, "LOGHISTORY", "no cardfile found<BR>\n");
 			}
-
-			//remove following line if code above is implemented (needed to fill tpl on legacy way)
-			//tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 
 		} else {
 			tpl_addVar(vars, 0, "LOGHISTORY", "->");
