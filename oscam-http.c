@@ -1693,7 +1693,8 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			loop end*/
 
 
-
+			tpl_addVar(vars, 0, "READERNAME", rdr->label);
+			
 			int caidcount = 0;
 
 			char *provider = "";
@@ -1762,13 +1763,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				free(buf);
 				pthread_mutex_unlock(&rcc->cards_busy);
 
-				/*// LOGSUMMARY und LOGHISTORY gibts in dem BIT nicht
-				if (caidcount)
-					tpl_printf(vars, 1, "LOGSUMMARY",
-						"<BR>%d caid found on this reader<BR><BR>\n", caidcount);
-
-				tpl_printf(vars, 1, "LOGHISTORY", "cardfile end<BR>\n");
-				*/
+				tpl_printf(vars, 0, "TOTALS", "card count=%d", caidcount);
 
 				tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
 
