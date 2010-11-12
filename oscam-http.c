@@ -1665,6 +1665,29 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 		if (rdr->typ == R_CCCAM && rdr->enable == 1) {
 
+			//// load cccam template
+			//tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
+
+			/* loop start
+
+			TPL Variables set with tplAddVar or tplprintf !! Set variable always to defined state - also to "" if not needed!!:
+
+			HOST
+			CAID
+			SYSTEM
+			IDCARD
+			UPHOPS
+			MAXDOWN
+			PROVIDERS
+
+			// Append Table row
+			tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
+
+			loop end*/
+
+			//remove following line if code above is implemented (needed to fill tpl on legacy way)
+			tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+
 			int caidcount = 0;
 
 			char *provider = "";
@@ -1728,6 +1751,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 		} else {
 
+			tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 			// normal non-cccam reader
 			FILE *fp;
 			char filename[256];
@@ -1749,6 +1773,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 		}
 
 	} else {
+		tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 		tpl_addVar(vars, 0, "LOGHISTORY",
 				"You have to set saveinithistory=1 in your config to see Entitlements!<BR>\n");
 	}
