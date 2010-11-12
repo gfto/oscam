@@ -1685,8 +1685,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 			loop end*/
 
-			//remove following line if code above is implemented (needed to fill tpl on legacy way)
-			tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+
 
 			int caidcount = 0;
 
@@ -1749,9 +1748,11 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				tpl_printf(vars, 1, "LOGHISTORY", "no cardfile found<BR>\n");
 			}
 
-		} else {
-
+			//remove following line if code above is implemented (needed to fill tpl on legacy way)
 			tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+
+		} else {
+			tpl_addVar(vars, 0, "LOGHISTORY", "->");
 			// normal non-cccam reader
 			FILE *fp;
 			char filename[256];
@@ -1770,12 +1771,13 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				fclose(fp);
 			}
 			tpl_addVar(vars, 0, "READERNAME", rdr->label);
+			tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 		}
 
 	} else {
-		tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 		tpl_addVar(vars, 0, "LOGHISTORY",
 				"You have to set saveinithistory=1 in your config to see Entitlements!<BR>\n");
+		tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 	}
 
 	fputs(tpl_getTpl(vars, "ENTITLEMENTS"), f);
