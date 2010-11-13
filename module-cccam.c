@@ -194,7 +194,7 @@ void free_current_cards(LLIST *current_cards) {
  * reader
  * clears and frees values for reinit
  */
-void cc_cli_close(struct s_client *cl) {
+void cc_cli_close(struct s_client *cl, int call_conclose) {
 	cs_debug_mask(D_FUT, "cc_cli_close in");
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
@@ -205,8 +205,13 @@ void cc_cli_close(struct s_client *cl) {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = rdr->last_g = 0;
 
-	if (cc && cc->mode == CCCAM_MODE_NORMAL) 
+	if (cc && cc->mode == CCCAM_MODE_NORMAL && call_conclose) 
 		network_tcp_connection_close(cl, cl->udp_fd); 
+	else {
+		if (cl->udp_fd)
+			close(cl->udp_fd);
+		cl->udp_fd = 0;
+	}
 
 	if (cc) {
 		cc->just_logged_in = 0;
@@ -416,7 +421,7 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 		if (!rdr)
 			cs_disconnect_client(cl);
 		else
-			cc_cli_close(cl);
+			cc_cli_close(cl, TRUE);
 	}
 
 	return n;
@@ -846,7 +851,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 						"%s unlocked-cycleconnection! timeout %ds",
 						getprefix(), cfg->ctimeout * 4 / 1000);
 				//cc_cycle_connection();
-				cc_cli_close(cl);
+				cc_cli_close(cl, FALSE);
 				cs_debug_mask(D_FUT, "cc_send_ecm out");
 				return 0;
 			}
@@ -1464,7 +1469,7 @@ void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
 	LL_ITER *it = ll_iter_create(cc->cards);
 	struct cc_card *card;
 	while ((card = ll_iter_next(it))) {
-		if (card == card_to_move) { //we aready have this card, delete it
+		if (card == card_to_move) {
 			ll_iter_remove(it);
 			break;
 		}
@@ -1592,7 +1597,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		} else if (l == 0x23) {
 			cc->cmd05_mode = MODE_UNKNOWN;
 			//cycle_connection(); //Absolute unknown handling!
-			cc_cli_close(cl);
+			cc_cli_close(cl, FALSE);
 			//
 			//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
 			//
@@ -1842,6 +1847,16 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 						cs_debug_mask(D_TRACE, "%s cws: %d %s", getprefix(),
 								ecm_idx, cs_hexdump(0, cc->dcw, 16));
 						add_good_sid(cl, card, &srvid);
+						
+						//check response time, if > fallbacktime, switch cards!
+						struct timeb tpe;
+						cs_ftime(&tpe);
+						ulong cwlastresptime = 1000*(tpe.time-cc->ecm_time.time)+tpe.millitm-cc->ecm_time.millitm;
+						if (cwlastresptime > cfg->ftimeout) {
+							cs_log("%s card %04X is too slow, moving to the end...", getprefix(), card->id);
+							move_card_to_end(cl, card);
+						}
+						
 					}
 				} else {
 					cs_log(
@@ -1972,7 +1987,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		cs_log("%s max ecms (%d) reached, cycle connection!", getprefix(),
 				cc->max_ecms);
 		//cc_cycle_connection();
-		cc_cli_close(cl);
+		cc_cli_close(cl, FALSE);
 		//cc_send_ecm(NULL, NULL);
 	}
 	cs_debug_mask(D_FUT, "cc_parse_msg out");
@@ -2104,7 +2119,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 		if (cl->typ == 'c')
 			cs_disconnect_client(cl);
 		else
-			cc_cli_close(cl);
+			cc_cli_close(cl, FALSE);
 	}
 
 	return n;
@@ -3006,10 +3021,6 @@ int cc_cli_connect(struct s_client *cl) {
 
 	// connect
 	handle = network_tcp_connection_open();
-	if (errno == EISCONN) {
-		cc_cli_close(cl);
-		return -1;
-	}
 	if (handle <= 0) {
 		cs_log("%s network connect error!", rdr->label);
 		return -1;
@@ -3230,7 +3241,15 @@ int cc_cli_init(struct s_client *cl) {
 		cc_cli_connect(cl);
 		if (cc && cc->mode == CCCAM_MODE_SHUTDOWN)
 			return -1;
+			
 		while (!reader->tcp_connected && reader->cc_keepalive && cfg->reader_restart_seconds > 0) {
+
+			if (!reader->tcp_connected) {
+				cc_cli_close(cl, FALSE);
+				res = cc_cli_init_int(cl);
+				if (res)
+					return res;
+			}
 			cs_log("%s restarting reader in %d seconds", reader->label, cfg->reader_restart_seconds);
 			cs_sleepms(cfg->reader_restart_seconds*1000);
 			cs_log("%s restarting reader...", reader->label);
@@ -3282,7 +3301,7 @@ void cc_cleanup(struct s_client *cl) {
 	if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
 	
 	if (cl->typ != 'c') {
-		cc_cli_close(cl); // we need to close open fd's 
+		cc_cli_close(cl, FALSE); // we need to close open fd's 
 	}
 	cc_free(cl);
 	cs_debug_mask(D_FUT, "cc_cleanup out");
