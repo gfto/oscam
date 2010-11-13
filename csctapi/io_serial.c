@@ -463,7 +463,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 		}
 		else
 		{
-			cs_log("TIMEOUT in IO_Serial_Read");
+			cs_debug("TIMEOUT in IO_Serial_Read");
 			tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}

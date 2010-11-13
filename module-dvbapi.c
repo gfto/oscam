@@ -928,10 +928,6 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, c
 		ca_mask = (1 << adapter_index); // use adapter_index as ca_mask (used as index for ca_fd[] array)
 	}
 
-	dvbapi_stop_filter(demux_id, TYPE_ECM);
-	dvbapi_stop_filter(demux_id, TYPE_EMM);
-
-	memset(&demux[demux_id], 0, sizeof(demux[demux_id]));
 	demux[demux_id].program_number=((buffer[1] << 8) | buffer[2]);
 	demux[demux_id].demux_index=demux_index;
 	demux[demux_id].adapter_index=adapter_index;
