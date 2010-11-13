@@ -2469,7 +2469,7 @@ int process_request(FILE *f, struct in_addr in) {
 		ok =((addr >= p_ip->ip[0]) && (addr <= p_ip->ip[1]))?v:0;
 
 	if (!ok && cfg->http_dyndns[0]) {
-		if(cfg->http_dynip == addr) {
+		if(cfg->http_dynip && cfg->http_dynip == addr) {
 			ok = v;
 
 		} else {
