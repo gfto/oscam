@@ -454,7 +454,8 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 		{
 			if (read (reader->handle, &c, 1) != 1)
 			{
-				cs_debug_nolf ("ERROR\n");
+				cs_log("ERROR in IO_Serial_Read errno=%d", errno);
+				tcflush (reader->handle, TCIFLUSH);
 				return ERROR;
 			}
 			data[count] = c;
@@ -462,7 +463,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 		}
 		else
 		{
-			cs_debug_nolf ("TIMEOUT\n");
+			cs_log("TIMEOUT in IO_Serial_Read");
 			tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
@@ -475,7 +476,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, const BYTE * data)
 {
 	unsigned count, to_send, i_w;
-    BYTE data_w[512];
+	BYTE data_w[512];
 	
 	/* Discard input data from previous commands */
 //	tcflush (reader->handle, TCIFLUSH);
@@ -489,14 +490,15 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 		
 		if (!IO_Serial_WaitToWrite (reader, delay, 1000))
 		{
-            for (i_w=0; i_w < to_send; i_w++)
-              data_w [i_w] = data [count + i_w];
-            unsigned int u = write (reader->handle, data_w, to_send);
-            if (u != to_send)
+			for (i_w=0; i_w < to_send; i_w++)
+				data_w [i_w] = data [count + i_w];
+			unsigned int u = write (reader->handle, data_w, to_send);
+			if (u != to_send)
 			{
-				cs_debug ("ERROR\n");
+				cs_log("ERROR in IO_Serial_Write u=%d to_send=%d errno=%d", u, to_send, errno);
 				if(reader->typ != R_INTERNAL)
 					reader->written += u;
+				tcflush (reader->handle, TCIFLUSH);
 				return ERROR;
 			}
 			
@@ -507,8 +509,8 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 		}
 		else
 		{
-			cs_debug ("TIMEOUT\n");
-//			tcflush (reader->handle, TCIFLUSH);
+			cs_log("TIMEOUT in IO_Serial_Write");
+			tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
 	}
@@ -641,8 +643,18 @@ static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, u
    select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
    if(select_ret==-1)
    {
-			cs_log("ERROR in IO_Serial_WaitToRead: select_ret=%i, errno=%d", select_ret, errno);
-      return ERROR;
+	cs_log("ERROR in IO_Serial_WaitToRead: select_ret=%i, errno=%d", select_ret, errno);
+	if (errno==4) {
+		//FIXME
+		// try again in case of Interrupted system call
+		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
+		if(select_ret==-1) {
+			cs_log("ERROR in IO_Serial_WaitToRead(2): select_ret=%i, errno=%d", select_ret, errno);
+			return ERROR;
+		}
+
+	} else
+		return ERROR;
    }
 
    if (FD_ISSET(in_fd, &erfds))
@@ -687,18 +699,14 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, unsigned delay_ms, 
 
    if(select_ret==-1)
    {
-      printf("select_ret=%d\n" , select_ret);
-      printf("errno =%d\n", errno);
-      fflush(stdout);
-      return ERROR;
+	cs_log("ERROR in IO_Serial_WaitToWrite: select_ret=%i, errno=%d", select_ret, errno);
+	return ERROR;
    }
 
    if (FD_ISSET(out_fd, &ewfds))
    {
-      printf("fd is in ewfds\n");
-      printf("errno =%d\n", errno);
-      fflush(stdout);
-      return ERROR;
+	cs_log("ERROR in IO_Serial_WaitToWrite: fd is in error fds, errno=%d", errno);
+	return ERROR;
    }
 
    if (FD_ISSET(out_fd,&wfds))
