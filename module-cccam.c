@@ -1490,6 +1490,25 @@ void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
 	}
 }
 
+int same_first_node(struct cc_card *card1, struct cc_card *card2) {
+	uint8 * node1 = card1->remote_nodes->obj;
+	uint8 * node2 = card2->remote_nodes->obj;
+
+	if (!node1 && !node2) return 1; //both NULL, same!
+	
+	if (!node1 || !node2) return 0; //one NULL, not same!
+	
+	return !memcmp(node1, node2, 8); //same?
+}
+
+int same_card(struct cc_card *card1, struct cc_card *card2) {
+	return (card1->caid == card2->caid && 
+		card1->remote_id == card2->remote_id && 
+		same_first_node(card1, card2) &&
+		memcmp(card1->hexserial, card2->hexserial, sizeof(card1->hexserial))==0);
+}
+
+
 void check_peer_changed(struct cc_data *cc, uint8 *node_id, uint8 *version) {
 	if (memcmp(cc->peer_node_id, node_id, 8) != 0 || memcmp(cc->peer_version, version, 8) != 0) {
 		//Remote Id has changed, clear cached data:
@@ -1654,7 +1673,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			it = ll_iter_create(cc->cards);
 			struct cc_card *old_card;
 			while ((old_card = ll_iter_next(it))) {
-				if (old_card->id == card->id) { //we aready have this card, delete it
+				if (old_card->id == card->id || //we aready have this card, delete it
+						same_card(old_card, card)) {
 					cc_free_card(card);
 					card = old_card;
 					break;
@@ -2220,24 +2240,6 @@ struct cc_card *create_card(struct cc_card *card) {
 	card2->goodsids = ll_create();
 	card2->remote_nodes = ll_create();
 	return card2;
-}
-
-int same_first_node(struct cc_card *card1, struct cc_card *card2) {
-	uint8 * node1 = card1->remote_nodes->obj;
-	uint8 * node2 = card2->remote_nodes->obj;
-
-	if (!node1 && !node2) return 1; //both NULL, same!
-	
-	if (!node1 || !node2) return 0; //one NULL, not same!
-	
-	return !memcmp(node1, node2, 8); //same?
-}
-
-int same_card(struct cc_card *card1, struct cc_card *card2) {
-	return (card1->caid == card2->caid && 
-		card1->remote_id == card2->remote_id && 
-		same_first_node(card1, card2) &&
-		memcmp(card1->hexserial, card2->hexserial, sizeof(card1->hexserial))==0);
 }
 
 /**
