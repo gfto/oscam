@@ -2352,9 +2352,9 @@ uint32 find_reported_card(struct s_client * cl, uint8 *buf, int len)
 	if (card) {
 		int l2 = 22+card[20]*7+card[21+card[20]*7]*8;
 		if (len == l2 && memcmp(buf+4, card+4, len-4) == 0) {
+			memcpy(buf, card, 4); //Set old id !!
 			ll_iter_remove_data(it);
 			ll_iter_release(it);
-			memcpy(buf, card, 4); //Set old id !!
 			return 1; //Old card and new card are equal!
 		}
 		ll_iter_release(it);
