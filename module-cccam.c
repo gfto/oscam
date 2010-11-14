@@ -1227,7 +1227,7 @@ int cc_clear_reported_carddata(struct s_client *cl, LLIST *reported_carddatas,
 	LL_ITER *it = ll_iter_create(reported_carddatas);
 	uint8 *buf;
 	while ((buf = ll_iter_next(it))) {
-		if (send_removed && (*(uint32*)buf))
+		if (send_removed)
 			cc_cmd_send(cl, buf, 4, MSG_CARD_REMOVED);
 		i++;
 		ll_iter_remove_data(it);
@@ -1270,7 +1270,7 @@ void cc_free(struct s_client *cl) {
 
 	cs_debug_mask(D_FUT, "cc_free in");
 	cc_free_cardlist(cc->cards, TRUE);
-	cc_free_reported_carddata(cl, cc->reported_carddatas, 0);
+	cc_free_reported_carddata(cl, cc->reported_carddatas, FALSE);
 	ll_destroy_data(cc->pending_emms);
 	free_current_cards(cc->current_cards);
 	ll_destroy(cc->current_cards);
@@ -2119,7 +2119,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 		if (cl->typ == 'c')
 			cs_disconnect_client(cl);
 		else
-			cc_cli_close(cl, FALSE);
+			cc_cli_close(cl, TRUE);
 	}
 
 	return n;
@@ -2332,7 +2332,7 @@ int add_card_to_serverlist_buf(struct cc_data *cc, LLIST *cardlist, uint8 *buf, 
 	cc_free_card(card);
 }
 
-int remove_reported_card(struct s_client * cl, uint8 *buf, int len)
+uint32 find_reported_card(struct s_client * cl, uint8 *buf, int len)
 {
 	struct cc_data *cc = cl->cc;
 	
@@ -2344,30 +2344,31 @@ int remove_reported_card(struct s_client * cl, uint8 *buf, int len)
 		if (memcmp(buf+8, card+8, 2)==0 && memcmp(buf+4, card+4, 4)==0) { //caid+remoteid matches 
 			uint8 * nodeid2 = card + 22+card[20]*7; //nodeid
 			if (memcmp(nodeid, nodeid2, 8) == 0) {  //first nodeid matches
-				if (memcmp(card+12, buf+12, 8)==0) //ua matches
-					break; //old card found
+				break; //old card found
 			}
 		}
 	}
 
 	if (card) {
+		memcpy(%res, buf, 4);
 		int l2 = 22+card[20]*7+card[21+card[20]*7]*8;
 		if (len == l2 && memcmp(buf+4, card+4, len-4) == 0) {
 			ll_iter_remove_data(it);
 			ll_iter_release(it);
-			return 0; //Old card and new card are equal! Nothing to do!
+			return res; //Old card and new card are equal! keep id
 		}
 		ll_iter_release(it);
-		return 1; //Card removed!
+		return 0; //Card NOT equal/changed!
 	}
 	ll_iter_release(it);
-	return 2; //Card not found
+	return 0; //Card not found
 }
 
 void report_card(struct s_client *cl, uint8 *buf, int len, LLIST *new_reported_carddatas)
 {
 	struct cc_data *cc = cl->cc;
-	if (remove_reported_card(cl, buf, len)) {
+	uint32 old_id = find_reported_card(cl, buf, len);
+	if (!old_card) { //Add new card:
 		if (!cc->report_carddata_id)
 			cc->report_carddata_id = 0x64;
 		buf[0] = cc->report_carddata_id >> 24;
@@ -2378,8 +2379,14 @@ void report_card(struct s_client *cl, uint8 *buf, int len, LLIST *new_reported_c
 		
 		cc_cmd_send(cl, buf, len, MSG_NEW_CARD);
 		cc->card_added_count++;
+	
+		cc_add_reported_carddata(new_reported_carddatas, buf, len);
 	}
-	cc_add_reported_carddata(new_reported_carddatas, buf, len);
+	else //Rememeber old card:
+	{
+		memcpy(buf, &old_card, 4); //save existing id
+		cc_add_reported_carddata(new_reported_carddatas, buf, len);
+	}
 }
 
 /**
@@ -2694,31 +2701,6 @@ void cc_srv_report_cards(struct s_client *cl) {
 		memcpy(buf + ofs, cc->node_id, 8);
 		ofs += 8;
 
-		if (card->maxdown > 100 || card->hop > 100 || !card->caid || !card->remote_id)
-			continue;
-		/*if (card->caid == 0x0500) {
-			cs_log("%04X card: hop %d down %d nprov %d nremote %d", card->caid, card->hop, card->maxdown, ll_count(card->providers),
-				ll_count(card->remote_nodes)); 
-			it2 = ll_iter_create(card->providers);
-			struct cc_provider *prov;
-			j = 1;
-			while ((prov = ll_iter_next(it2))) {
-				ulong prid = prov->prov;
-				cs_log("  %d prid %08X", j, prid);
-				j++;
-			}
-			ll_iter_release(it2);
-
-			itr_node = ll_iter_create(card->remote_nodes);
-			j = 1;
-			uint32 *remote_node;
-			while ((remote_node = ll_iter_next(itr_node))) {
-				cs_log("  %d remote %08X%08X", j, remote_node[0], remote_node[1]);
-				j++;
-			}
-			ll_iter_release(itr_node);
-		}*/
-		//cs_debug_mask(D_TRACE, "%s ofs=%d", getprefix(), ofs);
 		report_card(cl, buf, ofs, new_reported_carddatas);
 	}
 	ll_iter_release(it);
