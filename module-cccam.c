@@ -2350,7 +2350,8 @@ uint32 find_reported_card(struct s_client * cl, uint8 *buf, int len)
 	}
 
 	if (card) {
-		memcpy(%res, buf, 4);
+        uint32_t res;
+		memcpy(&res, buf, 4);
 		int l2 = 22+card[20]*7+card[21+card[20]*7]*8;
 		if (len == l2 && memcmp(buf+4, card+4, len-4) == 0) {
 			ll_iter_remove_data(it);
@@ -2368,7 +2369,7 @@ void report_card(struct s_client *cl, uint8 *buf, int len, LLIST *new_reported_c
 {
 	struct cc_data *cc = cl->cc;
 	uint32 old_id = find_reported_card(cl, buf, len);
-	if (!old_card) { //Add new card:
+	if (!old_id) { //Add new card:
 		if (!cc->report_carddata_id)
 			cc->report_carddata_id = 0x64;
 		buf[0] = cc->report_carddata_id >> 24;
@@ -2384,7 +2385,7 @@ void report_card(struct s_client *cl, uint8 *buf, int len, LLIST *new_reported_c
 	}
 	else //Rememeber old card:
 	{
-		memcpy(buf, &old_card, 4); //save existing id
+		memcpy(buf, &old_id, 4); //save existing id
 		cc_add_reported_carddata(new_reported_carddatas, buf, len);
 	}
 }
