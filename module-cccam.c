@@ -1954,6 +1954,30 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		break;
 	}
+
+	case MSG_CMD_0C:
+	case MSG_CMD_0D:
+	case MSG_CMD_0E: {
+		//Unkwn commands, maybe attacking commands. Block this user
+		if (cl->typ == 'c') //client connection
+		{
+			cs_log("%s CCCAM-BACKDOOR COMMANDS DETECTED! BLOCKING USER %s", getprefix(), cl->usr);
+			struct s_auth *account;
+			for (account = cfg->account; (account) ; account = account->next) {
+				 if (!strcmp(cl->usr, account->usr))
+				 	account->disabled = TRUE;
+			}
+			cs_disconnect_client(cl);
+		}
+		else //reader connection
+		{
+			cs_log("%s CCCAM-BACKDOOR COMMANDS DETECTED! BLOCKING READER %s", getprefix(), cl->reader->label);
+			cl->reader->enable = FALSE;
+			cc_cli_close(cl, FALSE);
+		}
+		break;
+	}
+	                               
 	case MSG_EMM_ACK: {
 		cc->just_logged_in = 0;
 		if (cl->typ == 'c') { //EMM Request received
@@ -3210,17 +3234,22 @@ int cc_cli_init_int(struct s_client *cl) {
 
 int cc_cli_init(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
-	if (cc && cc->mode == CCCAM_MODE_SHUTDOWN)
-		return -1;
-	int res = cc_cli_init_int(cl);
 	struct s_reader *reader = cl->reader;
+	
+	if ((cc && cc->mode == CCCAM_MODE_SHUTDOWN) || !cl->reader->enable || cl->reader->deleted)
+		return -1;
+		
+	int res = cc_cli_init_int(cl); //Create socket
+	
 	if (res == 0 && reader && (reader->cc_keepalive || !cl->cc) && !reader->tcp_connected) {
-		cc_cli_connect(cl);
-		if (cc && cc->mode == CCCAM_MODE_SHUTDOWN)
-			return -1;
-			
+		
+		cc_cli_connect(cl); //connect to remote server
+		
 		while (!reader->tcp_connected && reader->cc_keepalive && cfg->reader_restart_seconds > 0) {
 
+			if ((cc && cc->mode == CCCAM_MODE_SHUTDOWN) || !cl->reader->enable || cl->reader->deleted)
+				return -1;
+				
 			if (!reader->tcp_connected) {
 				cc_cli_close(cl, FALSE);
 				res = cc_cli_init_int(cl);
@@ -3231,8 +3260,6 @@ int cc_cli_init(struct s_client *cl) {
 			cs_sleepms(cfg->reader_restart_seconds*1000);
 			cs_log("%s restarting reader...", reader->label);
 			cc_cli_connect(cl);
-			if (cc && cc->mode == CCCAM_MODE_SHUTDOWN)
-				return -1;
 		}
 	}
 	return res;
