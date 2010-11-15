@@ -1432,7 +1432,9 @@ extern int network_tcp_connection_open();
 extern void network_tcp_connection_close(struct s_client *, int);
 extern int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec);
 extern void clear_reader_pipe(struct s_reader * reader);
-
+extern void block_connect(struct s_reader *rdr);
+extern int is_connect_blocked(struct s_reader *rdr);
+            
 // oscam-log
 extern int  cs_init_log();
 extern void cs_write_log(char *);

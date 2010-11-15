@@ -1682,13 +1682,13 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			}
 			ll_iter_release(it);
 
-			card->hop++; //inkrementing hop
 			card->time = time((time_t) 0);
 			if (!old_card) {
+				card->hop++; //inkrementing hop
 				ll_append(cc->cards, card);
+				set_au_data(cl, rdr, card, NULL);
+				cc->cards_modified++;
 			}
-			set_au_data(cl, rdr, card, NULL);
-			cc->cards_modified++;
 		}
 
 		pthread_mutex_unlock(&cc->cards_busy);
@@ -3007,6 +3007,11 @@ int cc_cli_connect(struct s_client *cl) {
 	if (cc && cc->mode != CCCAM_MODE_NORMAL)
 		return -99;
 
+	if (is_connect_blocked(rdr)) {
+		cs_log("%s connection blocked, retrying later", rdr->label);
+		return -1;
+	}
+	
 	int handle, n;
 	uint8 data[20];
 	uint8 hash[SHA_DIGEST_LENGTH];
@@ -3026,6 +3031,12 @@ int cc_cli_connect(struct s_client *cl) {
 		cs_log("%s network connect error!", rdr->label);
 		return -1;
 	}
+	if (errno == EISCONN) {
+		cc_cli_close(cl, FALSE);
+		
+		block_connect(rdr);
+		return -1;
+	}
 
 	// get init seed
 	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
@@ -3033,6 +3044,7 @@ int cc_cli_connect(struct s_client *cl) {
 		cs_log(
 				"%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, errno=%d)",
 				rdr->label, n, handle, cl->udp_fd, err);
+		block_connect(rdr);
 		return -2;
 	}
 

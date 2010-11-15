@@ -189,11 +189,27 @@ void clear_block_delay(struct s_reader *rdr) {
    cs_ftime(&rdr->tcp_block_connect_till);
 }
 
+void block_connect(struct s_reader *rdr) {
+  if (!rdr->tcp_block_delay)
+  	rdr->tcp_block_delay = 100;
+  rdr->tcp_block_connect_till.time += rdr->tcp_block_delay / 1000;
+  rdr->tcp_block_connect_till.millitm += rdr->tcp_block_delay % 1000;
+  rdr->tcp_block_delay *= 2; //increment timeouts
+  if (rdr->tcp_block_delay >= 30*60*1000)
+    rdr->tcp_block_delay = 30*60*1000; //max 30min, todo config
+  cs_debug_mask(D_TRACE, "tcp connect blocking delay for %s set to %d", rdr->label, rdr->tcp_block_delay);
+}
+
+int is_connect_blocked(struct s_reader *rdr) {
+  struct timeb cur_time;
+  cs_ftime(&cur_time);
+  return (comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0);
+}
+                
 int network_tcp_connection_open()
 {
   struct s_client *cl = cur_client();
   struct s_reader *rdr = cl->reader;
-  struct timeb cur_time;
   cs_log("connecting to %s", rdr->device);
 
   in_addr_t last_ip = cl->ip;
@@ -202,8 +218,7 @@ int network_tcp_connection_open()
 
   if (last_ip != cl->ip) //clean blocking delay on ip change:
     clear_block_delay(rdr);
-  cs_ftime(&cur_time);
-  if (comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0) { //inside of blocking delay, do not connect!
+  if (is_connect_blocked(rdr)) { //inside of blocking delay, do not connect!
     cs_log("tcp connect blocking delay asserted for %s", rdr->label);
     return -1;
   }
@@ -257,15 +272,7 @@ int network_tcp_connection_open()
   fcntl(sd, F_SETFL, fl); //restore blocking mode
   
   //connect has failed. Block connect for a while:
-  if (!rdr->tcp_block_delay)
-  	rdr->tcp_block_delay = 100;
-  cs_debug_mask(D_TRACE, "tcp connect blocking delay set to %d", rdr->tcp_block_delay);
-  rdr->tcp_block_connect_till = cur_time;
-  rdr->tcp_block_connect_till.time += rdr->tcp_block_delay / 1000;
-  rdr->tcp_block_connect_till.millitm += rdr->tcp_block_delay % 1000;
-  rdr->tcp_block_delay *= 2; //increment timeouts
-  if (rdr->tcp_block_delay >= 60*1000)
-  	rdr->tcp_block_delay = 60*1000; //max 60s
+  block_connect(rdr);
       
   return -1; 
 }
@@ -275,11 +282,12 @@ void network_tcp_connection_close(struct s_client *cl, int fd)
   if(!cl) return;
   struct s_reader *reader = cl->reader;
   cs_debug("tcp_conn_close(): fd=%d, cl->typ == 'c'=%d", fd, cl->typ == 'c');
-  if (fd)
+  if (fd) {
     close(fd);
-  cl->udp_fd = 0;
-  if(reader)
+    if(reader)
       clear_block_delay(reader);
+  }
+  cl->udp_fd = 0;
 
   if (cl->typ != 'c')
   {
