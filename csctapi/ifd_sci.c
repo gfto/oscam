@@ -43,7 +43,10 @@ int Sci_Reset (struct s_reader * reader, ATR * atr)
 	
 	call (ioctl(reader->handle, IOCTL_SET_PARAMETERS, &params)!=0);
 	call (ioctl(reader->handle, IOCTL_SET_RESET)<0);
-
+#if defined(PPC)
+    // looks like PPC box need a delay here. From the data provided we need at least 64ms so I'll chose 80ms to be safe
+    cs_sleepms(80);
+#endif
 	while(n<SCI_MAX_ATR_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
 	{
 		n++;
