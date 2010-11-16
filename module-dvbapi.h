@@ -115,6 +115,11 @@ struct s_dvbapi_priority
 	ulong mapprovid;
 	int delay;
 	int force;
+#ifdef WITH_STAPI
+	char devname[30];
+	char pmtfile[30];
+	int disablefilter;
+#endif
 	struct s_dvbapi_priority *next;
 };
 
@@ -189,8 +194,6 @@ typedef struct ca_pid {
 // --------------------------------------------------------------------
 
 #ifdef WITH_STAPI
-void *stapi_read_thread(void *);
-void stapi_off(int);
 int stapi_open();
 int stapi_set_filter(int demux_id, ushort pid, uchar *filter, uchar *mask, int num, char *pmtfile);
 int stapi_remove_filter(int demux_id, int num, char *pmtfile);

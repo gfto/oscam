@@ -574,8 +574,8 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 	do_emm(dvbapi_client, &epg);
 }
 
-int dvbapi_read_prio() {
-  	FILE *fp;
+void dvbapi_read_priority() {
+	FILE *fp;
 	char token[128], str1[128];
 	char type;
 	int i, ret, count=0;
@@ -587,7 +587,17 @@ int dvbapi_read_prio() {
 
 	if (!fp) {
 		cs_log("can't open priority file %s", token);
-		return 0;
+		return;
+	}
+
+	if (dvbapi_priority) {
+		cs_log("reread priority file %s", cs_prio);
+		struct s_dvbapi_priority *o, *p;
+		for (p = dvbapi_priority; p != NULL; p = o) {
+			o = p->next;
+			free(p);
+		}
+		dvbapi_priority = NULL;
 	}
 
 	while (fgets(token, sizeof(token), fp)) {
@@ -608,10 +618,15 @@ int dvbapi_read_prio() {
 		}
 
 		type = 0;
+#ifdef WITH_STAPI
+		uint disablefilter=0;
+		ret = sscanf(trim(token), "%c: %63s %63s %d", &type, str1, str1+64, &disablefilter);
+#else
 		ret = sscanf(trim(token), "%c: %63s %63s", &type, str1, str1+64);
+#endif
 		type = tolower(type);
 
-		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd'))
+		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's'))
 			continue;
 
 		struct s_dvbapi_priority *entry = malloc(sizeof(struct s_dvbapi_priority));
@@ -621,6 +636,18 @@ int dvbapi_read_prio() {
 		entry->next=NULL;
 
 		count++;
+
+#ifdef WITH_STAPI
+		if (type=='s') {
+			strncpy(entry->devname, str1, 29);
+			strncpy(entry->pmtfile, str1+64, 29);
+
+			entry->disablefilter=disablefilter;
+
+			cs_debug("stapi prio: ret=%d | %c: %s %s | disable %d", ret, type, entry->devname, entry->pmtfile, disablefilter);
+			continue;
+		}
+#endif
 
 		char c_srvid[34];
 		c_srvid[0]='\0';
@@ -693,7 +720,7 @@ int dvbapi_read_prio() {
 	cs_log("%d entries read from %s", count, cs_prio);
 
 	fclose(fp);
-	return 0;
+	return;
 }
 
 struct s_dvbapi_priority *dvbapi_check_prio_match(int demux_id, int pidindex, char type) {
@@ -1396,7 +1423,7 @@ void * dvbapi_main_local(void *cli) {
 		return NULL;
 	}
 
-	dvbapi_read_prio();
+	dvbapi_read_priority();
 
 	if (cfg->dvbapi_pmtmode == 1)
 		disable_pmt_files=1;

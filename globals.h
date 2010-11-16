@@ -1396,6 +1396,7 @@ extern void chk_reader(char *token, char *value, struct s_reader *rdr);
 #ifdef HAVE_DVBAPI
 extern void chk_t_dvbapi(char *token, char *value);
 void dvbapi_chk_caidtab(char *caidasc, char type);
+void dvbapi_read_priority();
 #endif
 
 #ifdef WEBIF
