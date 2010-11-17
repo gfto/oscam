@@ -845,7 +845,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 					if(strlen((*params).values[i]) > 0)
 						chk_reader((*params).params[i], (*params).values[i], rdr);
 			}
-			//printf("param %s value %s\n",(*params).params[i], (*params).values[i]);
+			printf("param %s value %s\n",(*params).params[i], (*params).values[i]);
 		}
 		chk_reader("services", servicelabels, rdr);
 
@@ -2364,6 +2364,11 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 				if((fpsave = fopen(targetfile,"w"))){
 					fprintf(fpsave,"%s",fcontent);
 					fclose(fpsave);
+
+#ifdef HAVE_DVBAPI
+					 if (strcmp(getParam(params, "part"), "dvbapi") == 0)
+						 dvbapi_read_priority()
+#endif
 				}
 			}
 		}
