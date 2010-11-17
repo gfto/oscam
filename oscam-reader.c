@@ -267,7 +267,7 @@ int network_tcp_connection_open()
     cs_log("connect failed: address in use!");
   }
   else                                                 
-    cs_log("connect(fd=%d) failed: (errno=%d)", sd, errno);
+    cs_log("connect(fd=%d) failed: (errno=%d: %s)", sd, errno, strerror(errno));
 
   fcntl(sd, F_SETFL, fl); //restore blocking mode
   

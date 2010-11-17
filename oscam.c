@@ -569,8 +569,9 @@ struct s_client * cs_fork(in_addr_t ip) {
 		int fdp[2];
 		cl->aureader=NULL;
 		if (pipe(fdp)) {
-			cs_log("Cannot create pipe (errno=%d)", errno);
-			cs_exit(1);
+			cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
+			//cs_exit(1);
+			return NULL;
 		}
 		//client part
 
@@ -718,14 +719,14 @@ static int start_listener(struct s_module *ph, int port_idx)
 
   if ((ph->ptab->ports[port_idx].fd=socket(PF_INET,is_udp ? SOCK_DGRAM : SOCK_STREAM, ov))<0)
   {
-    cs_log("%s: Cannot create socket (errno=%d)", ph->desc, errno);
+    cs_log("%s: Cannot create socket (errno=%d: %s)", ph->desc, errno, strerror(errno));
     return(0);
   }
 
   ov=1;
   if (setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_REUSEADDR, (void *)&ov, sizeof(ov))<0)
   {
-    cs_log("%s: setsockopt failed (errno=%d)", ph->desc, errno);
+    cs_log("%s: setsockopt failed (errno=%d: %s)", ph->desc, errno, strerror(errno));
     close(ph->ptab->ports[port_idx].fd);
     return(ph->ptab->ports[port_idx].fd=0);
   }
@@ -770,7 +771,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   if (!is_udp)
     if (listen(ph->ptab->ports[port_idx].fd, CS_QLEN)<0)
     {
-      cs_log("%s: Cannot start listen mode (errno=%d)", ph->desc, errno);
+      cs_log("%s: Cannot start listen mode (errno=%d: %s)", ph->desc, errno, strerror(errno));
       close(ph->ptab->ports[port_idx].fd);
       return(ph->ptab->ports[port_idx].fd=0);
     }
@@ -2268,7 +2269,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		if (!(fp = fopen (token, "a")))
 		{
-			cs_log ("ERROR: Cannot open file '%s' (errno=%d)\n", token, errno);
+			cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 		}
 		else
 		{
@@ -2281,7 +2282,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		sprintf (token, "%s%s_emm.bin", cs_confdir, aureader->label);
 		if (!(fp = fopen (token, "ab")))
 		{
-			cs_log ("ERROR: Cannot open file '%s' (errno=%d)\n", token, errno);
+			cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 		}
 		else 
 		{
@@ -2291,7 +2292,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			}
 			else
 			{
-				cs_log ("ERROR: Cannot write binary EMM to %s (errno=%d)\n", token, errno);
+				cs_log ("ERROR: Cannot write binary EMM to %s (errno=%d: %s)\n", token, errno, strerror(errno));
 			}
 			fclose (fp);
 		}
@@ -2895,7 +2896,7 @@ if (pthread_key_create(&getclient, NULL)) {
 
   if (pipe(fdp))
   {
-    cs_log("Cannot create pipe (errno=%d)", errno);
+    cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
     cs_exit(1);
   }
   mfdr=fdp[0];
@@ -2911,7 +2912,7 @@ if (pthread_key_create(&getclient, NULL)) {
   if (bg && daemon(1,0))
 #endif
   {
-    cs_log("Error starting in background (errno=%d)", errno);
+    cs_log("Error starting in background (errno=%d: %s)", errno, strerror(errno));
     cs_exit(1);
   }
 
