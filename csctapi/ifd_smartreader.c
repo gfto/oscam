@@ -362,7 +362,8 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     unsigned char N[2];
     unsigned char Prot[2];
     unsigned char Invert[2];
-       
+    unsigned char temp_T;
+    
     ret = smartreader_set_baudrate(reader, 9600);
     smartreader_setflowctrl(reader, 0);
     ret = smartreader_set_line_property(reader, (enum smartreader_bits_type) 5, STOP_BIT_2, NONE);
@@ -397,11 +398,13 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     ret = smart_write(reader, N, sizeof (N),0);
 
     // command 4 , set parameter T
+    temp_T=T;
     if(T==2) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
     //if(reader->sr_config->irdeto) // special trick to get ATR for Irdeto card, we need T=1 at reset, after that oscam takes care of T1 protocol, so we need T=0
         {
         T=1;
         reader->sr_config->T=1;
+        temp_T=1;
         }
     else if (T==1)
         T=0; // T=1 protocol is handled by oscam
@@ -420,7 +423,10 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     ret = smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
     //  send break for 350ms, also comes from JoePub debugging.
     cs_sleepms(350);
-    ret = smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_OFF);
+    if(temp_T==1) 
+        ret = smartreader_set_line_property2(reader, BITS_8, STOP_BIT_1, parity, BREAK_OFF);
+    else
+        ret = smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_OFF);
 
     smart_flush(reader);
 }
