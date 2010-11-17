@@ -516,7 +516,7 @@ reshare level for CCcam clients:
  x = resharing for direct peer and next x level
 .RE
 .PP
-\fBignorereshare\fP = \fB0\fP:\fB1\fP
+\fBignorereshare\fP = \fB0\fP|\fB1\fP
 .RS 3n
 CCcam reshare setting:
 
@@ -526,7 +526,7 @@ CCcam reshare setting:
 .PP
 \fBminimizecards\fP = \fBmode\fP
 .RS 3n
-mode how to provide CCCam servers to CCCam clients:
+mode how to provide CCcam servers to CCcam clients:
 
  0 = no aggregation, remove duplicates only (default)
  1 = based on minimum hop: two SCs with different hops are 
@@ -537,10 +537,18 @@ mode how to provide CCCam servers to CCCam clients:
 .PP
 \fBupdateinterval\fP = \fBseconds\fP
 .RS 3n
-interval to provide share list update to CCCam clients, default:240:
+interval to provide share list update to CCcam clients, default:240:
 
   0 = updates based on server updates
  -1 = disable
+.RE
+.PP
+\fBkeepconnected\fP = \fB0\fP|\fB1\fP
+.RS 3n
+set CCcam keepalive modus:
+
+  0 = disconnect client when max idle time is reached
+  1 = keep client connected (default)
 .RE
 .SS "The [gbox] section"
 .PP
