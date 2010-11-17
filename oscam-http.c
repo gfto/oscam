@@ -2367,7 +2367,7 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 
 #ifdef HAVE_DVBAPI
 					 if (strcmp(getParam(params, "part"), "dvbapi") == 0)
-						 dvbapi_read_priority()
+						 dvbapi_read_priority();
 #endif
 				}
 			}
