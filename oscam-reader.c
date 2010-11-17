@@ -191,12 +191,12 @@ void clear_block_delay(struct s_reader *rdr) {
 
 void block_connect(struct s_reader *rdr) {
   if (!rdr->tcp_block_delay)
-  	rdr->tcp_block_delay = 100;
+  	rdr->tcp_block_delay = 100; //starting blocking time, 100ms
   rdr->tcp_block_connect_till.time += rdr->tcp_block_delay / 1000;
   rdr->tcp_block_connect_till.millitm += rdr->tcp_block_delay % 1000;
   rdr->tcp_block_delay *= 2; //increment timeouts
-  if (rdr->tcp_block_delay >= 30*60*1000)
-    rdr->tcp_block_delay = 30*60*1000; //max 30min, todo config
+  if (rdr->tcp_block_delay >= 60*1000)
+    rdr->tcp_block_delay = 60*1000; //max 1min, todo config
   cs_debug_mask(D_TRACE, "tcp connect blocking delay for %s set to %d", rdr->label, rdr->tcp_block_delay);
 }
 
@@ -229,6 +229,7 @@ int network_tcp_connection_open()
   int res =connect(sd, (struct sockaddr *)&cl->udp_sa, sizeof(cl->udp_sa));
   if (res == 0) { 
      fcntl(sd, F_SETFL, fl); //connect sucessfull, restore blocking mode
+     clear_block_delay(rdr);
      return sd;
   }
 
@@ -239,6 +240,7 @@ int network_tcp_connection_open()
         if (getsockopt(sd, SOL_SOCKET, SO_ERROR, &r, (socklen_t*)&l) == 0) {
            if (r == 0) {
               fcntl(sd, F_SETFL, fl);
+              clear_block_delay(rdr);
               return sd; //now we are connected
            }
 	}
@@ -248,6 +250,7 @@ int network_tcp_connection_open()
   else if (errno == EISCONN) {
     cs_log("already connected!");
     fcntl(sd, F_SETFL, fl);
+    clear_block_delay(rdr);
     return sd;
   }
 
