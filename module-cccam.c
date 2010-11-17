@@ -2933,7 +2933,7 @@ int cc_srv_connect(struct s_client *cl) {
 		//cs_log("srv process input i=%d cmi=%d", i, cmi);
 		if (i == -9) {
 			cmi += 10;
-			if (cfg->cmaxidle && cmi >= cfg->cmaxidle) {
+			if (cfg->cmaxidle && cmi >= cfg->cmaxidle && !cl->ncd_keepalive && !cfg->cc_keep_connected) {
 				cmi = 0;
 				cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached",
 						getprefix());
@@ -3285,8 +3285,15 @@ int cc_available(struct s_reader *rdr, int checktype) {
 	struct s_client *cl = rdr->client;
 
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);
-	if (!cl->cc || rdr->tcp_connected != 2 || rdr->card_status != CARD_INSERTED)
-		return 1; //Not connected? Connect!
+	if (!cl->cc || rdr->tcp_connected != 2 || rdr->card_status != CARD_INSERTED) {
+		//Two cases: 
+		// 1. Keepalive ON but not connected: Do NOT send requests, 
+		//     because we can't connect - problem of full running pipes
+		// 2. Keepalive OFF but not connected: Send requests to connect
+		//     pipe won't run full, because we are reading from pipe to
+		//     get the ecm request
+		return !rdr->cc_keepalive; //Not connected? Connect!
+	}
 
 	if (checktype == AVAIL_CHECK_LOADBALANCE && !rdr->available) {
 		cs_debug_mask(D_TRACE, "checking reader %s availibility=0 (unavail)",

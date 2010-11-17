@@ -423,7 +423,11 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 	tpl_printf(vars, 0, "TMP", "MINIMIZECARDSELECTED%d", cfg->cc_minimize_cards);
 	tpl_addVar(vars, 0, tpl_getVar(vars, "TMP"), "selected");
 
-	tpl_printf(vars, 0, "IGNORERESHARE", "%d", cfg->cc_ignore_reshare);
+	if (cfg->cc_ignore_reshare)
+		tpl_printf(vars, 0, "IGNORERESHARE", "selected");
+	
+	if (cfg->cc_keep_connected)
+		tpl_printf(vars, 0, "KEEPCONNECTED", "selected");
 
 
 	fputs(tpl_getTpl(vars, "CONFIGCCCAM"), f);

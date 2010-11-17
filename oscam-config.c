@@ -1121,12 +1121,21 @@ void chk_t_cccam(char *token, char *value)
                 return;
 	}
 	
-	// cccam: Update cards interval
+	// cccam: Kind of card updates
 	if (!strcmp(token, "minimizecards")) {
 	        if (strlen(value) == 0)
 	                cfg->cc_minimize_cards = 0;
                 else
                         cfg->cc_minimize_cards = atoi(value);
+                return;
+	}
+
+	// cccam: keep clients connected
+	if (!strcmp(token, "keepconnected")) {
+	        if (strlen(value) == 0)
+	                cfg->cc_keep_connected = 1;
+                else
+                        cfg->cc_keep_connected = atoi(value);
                 return;
 	}
 
@@ -1484,6 +1493,7 @@ int init_config()
 #endif
 #ifdef MODULE_CCCAM
 	cfg->cc_update_interval = 240;
+	cfg->cc_keep_connected = 1;
 #endif  
 	sprintf(token, "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
@@ -2116,6 +2126,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "version", "%s\n", cfg->cc_version);
 		fprintf_conf(f, CONFVARWIDTH, "updateinterval", "%d\n", cfg->cc_update_interval);
 		fprintf_conf(f, CONFVARWIDTH, "minimizecards", "%d\n", cfg->cc_minimize_cards);
+		fprintf_conf(f, CONFVARWIDTH, "keepconnected", "%d\n", cfg->cc_keep_connected);
 		fprintf(f,"\n");
 	}
 
