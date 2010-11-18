@@ -428,8 +428,8 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 }
 
 #define CC_DEFAULT_VERSION 1
-char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "" };
-char *build[] = { "2892", "2971", "3094", "3165", "3191", "" };
+char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "" };
+char *build[] = { "2892", "2971", "3094", "3165", "3191", "3290", "" };
 
 /**
  * reader+server
