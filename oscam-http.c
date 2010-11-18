@@ -416,6 +416,8 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 		tpl_addVar(vars, 0, "VERSIONSELECTED3", "selected");
 	} else if (!strcmp((char*)cfg->cc_version,"2.1.4")) {
 		tpl_addVar(vars, 0, "VERSIONSELECTED4", "selected");
+	} else if (!strcmp((char*)cfg->cc_version,"2.2.0")) {
+		tpl_addVar(vars, 0, "VERSIONSELECTED5", "selected");
 	}
 
 	tpl_printf(vars, 0, "UPDATEINTERVAL", "%d", cfg->cc_update_interval);
@@ -1089,6 +1091,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED3", "selected");
 	} else if (!strcmp(rdr->cc_version, "2.1.4")) {
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED4", "selected");
+	} else if (!strcmp(rdr->cc_version, "2.2.0")) {
+		tpl_addVar(vars, 0, "CCCVERSIONSELECTED5", "selected");
 	}
 
 #ifdef LIBUSB

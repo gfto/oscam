@@ -853,6 +853,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<OPTION ##CCCVERSIONSELECTED2##>2.1.2</OPTION>\
 			<OPTION ##CCCVERSIONSELECTED3##>2.1.3</OPTION>\
 			<OPTION ##CCCVERSIONSELECTED4##>2.1.4</OPTION>\
+			<OPTION ##CCCVERSIONSELECTED5##>2.2.0</OPTION>\
 		</SELECT></TD></TR>\n\
     <TR><TD>Maxhop:</TD><TD><input name=\"cccmaxhop\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOP##\"></TD></TR>\n\
     <TR><TD>Want Emu:<input name=\"cccwantemu\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccwantemu\" type=\"checkbox\" value=\"1\" ##CCCWANTEMUCHECKED##></TD></TR>\n\
@@ -937,6 +938,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<OPTION ##VERSIONSELECTED2##>2.1.2</OPTION>\
 			<OPTION ##VERSIONSELECTED3##>2.1.3</OPTION>\
 			<OPTION ##VERSIONSELECTED4##>2.1.4</OPTION>\
+			<OPTION ##VERSIONSELECTED5##>2.2.0</OPTION>\
 		</SELECT></TD></TR>\n\
 		<TR><TD>Update Interval:</TD><TD><input name=\"updateinterval\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##UPDATEINTERVAL##\"></TD></TR>\n\
 		<TR><TD>Minimize cards:</TD><TD><SELECT name=\"minimizecards\">\

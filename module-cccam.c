@@ -105,7 +105,7 @@ void cc_cw_crypt(struct s_client *cl, uint8 *cws, uint32 cardid) {
 }
 
 int sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2) {
-	return (srvid1->sid == srvid2->sid && srvid1->ecmlen == srvid2->ecmlen);
+	return (srvid1->sid == srvid2->sid && (srvid1->ecmlen == srvid2->ecmlen || !srvid1->ecmlen || !srvid2->ecmlen));
 }
 
 int is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
@@ -997,7 +997,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		//So if the last Message was a MSG_NEW_CARD, this "card receiving" is not already done
 		//if this happens, we do not autoblock it and do not set rc status
 		//So fallback could resolve it
-		if (cc->last_msg != MSG_NEW_CARD && !cc->just_logged_in) {
+		if (cc->last_msg != MSG_NEW_CARD && cc->last_msg != MSG_NEW_CARD_SIDINFO && !cc->just_logged_in) {
 			cs_log("%s no suitable card on server", getprefix());
 
 			cur_er->rc = 0;
@@ -1402,10 +1402,11 @@ struct cc_card *read_card(uint8 *buf, int ext) {
     if (ext) {
         for (i = 0; i < nassign; i++) {
             uint16_t sid = b2i(2, ptr + 2 * i);
-            cs_debug("      assigned sid = 0x%x, added to good sid list", sid);
+            cs_debug("      assigned sid = %04X, added to good sid list", sid);
 
             struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
             srvid->sid = sid;
+            srvid->ecmlen = 0;
             ll_append(card->goodsids, srvid);
         }
 
@@ -1417,6 +1418,7 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 
             struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
             srvid->sid = sid;
+            srvid->ecmlen = 0;
             ll_append(card->badsids, srvid);
         }
 
@@ -1679,58 +1681,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				cmd05_mode_name[cc->cmd05_mode], l);
 
 		break;
-	case MSG_NEW_CARD_SIDINFO: {
-		if (buf[14] >= rdr->cc_maxhop)
-			break;
-
-		if (!chk_ctab(b2i(2, buf + 12), &rdr->ctab))
-			break;
-
-		rdr->tcp_connected = 2; //we have card
-		rdr->card_status = CARD_INSERTED;
-
-		pthread_mutex_lock(&cc->cards_busy);
-
-		struct cc_card *card = read_card(data, 1);
-
-		//Check if this card is from us:
-		LL_ITER *it = ll_iter_create(card->remote_nodes);
-		uint8 *remote_id;
-		while ((remote_id = ll_iter_next(it))) {
-			if (memcmp(remote_id, cc_node_id, sizeof(cc_node_id)) == 0) { //this card is from us!
-				cs_debug_mask(D_TRACE, "filtered card because of recursive nodeid: id=%08X, caid=%04X", card->id, card->caid);
-				cc_free_card(card);
-				card=NULL;
-				break;
-			}
-		}
-		ll_iter_release(it);
-		if (card) {
-			//Check if we already have this card:
-			it = ll_iter_create(cc->cards);
-			struct cc_card *old_card;
-			while ((old_card = ll_iter_next(it))) {
-				if (old_card->id == card->id) { //we aready have this card, delete it
-					cc_free_card(card);
-					card = old_card;
-					break;
-				}
-			}
-			ll_iter_release(it);
-
-			card->hop++; //inkrementing hop
-			card->time = time((time_t) 0);
-			if (!old_card) {
-				ll_append(cc->cards, card);
-			}
-			set_au_data(cl, rdr, card, NULL);
-			cc->cards_modified++;
-		}
-
-		pthread_mutex_unlock(&cc->cards_busy);
-
-		break;
-	}
+	case MSG_NEW_CARD_SIDINFO: 
 	case MSG_NEW_CARD: {
 		if (buf[14] >= rdr->cc_maxhop)
 			break;
@@ -1743,7 +1694,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		pthread_mutex_lock(&cc->cards_busy);
 
-		struct cc_card *card = read_card(data, 0);
+		struct cc_card *card = read_card(data, buf[1]==MSG_NEW_CARD_SIDINFO);
 
 		//Check if this card is from us:
 		LL_ITER *it = ll_iter_create(card->remote_nodes);
