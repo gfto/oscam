@@ -1402,14 +1402,22 @@ struct cc_card *read_card(uint8 *buf, int ext) {
     if (ext) {
         for (i = 0; i < nassign; i++) {
             uint16_t sid = b2i(2, ptr + 2 * i);
-            cs_debug("      assigned sid = 0x%x", sid);
+            cs_debug("      assigned sid = 0x%x, added to good sid list", sid);
+
+            struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
+            srvid->sid = sid;
+            ll_append(card->goodsids, srvid);
         }
 
         ptr = ptr + 2 * i;
 
         for (i = 0; i < nreject; i++) {
             uint16_t sid = b2i(2, ptr + 2 * i);
-            cs_debug("      rejected sid = 0x%x", sid);
+            cs_debug("      rejected sid = %04X, added to sid block list", sid);
+
+            struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
+            srvid->sid = sid;
+            ll_append(card->badsids, srvid);
         }
 
         ptr = ptr + 2 * i;
