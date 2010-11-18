@@ -1358,7 +1358,7 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 	struct cc_card *card = malloc(sizeof(struct cc_card));
 	memset(card, 0, sizeof(struct cc_card));
 
-    int nprov, offset = 21;
+    int nprov, nassign = 0, nreject = 0, offset = 21;
 
 	card->providers = ll_create();
 	card->badsids = ll_create();
@@ -1378,8 +1378,8 @@ struct cc_card *read_card(uint8 *buf, int ext) {
     nprov = buf[20];
 
     if (ext) {
-        int nassign = buf[21];
-        int nreject = buf[22];
+        nassign = buf[21];
+        nreject = buf[22];
 
         offset += 2;
     }
