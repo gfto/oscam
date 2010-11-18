@@ -718,12 +718,13 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 
 #define TPLENTITLEMENTCCCAMBIT "\
 	<TABLE CLASS=\"stats\">\
-	<TR><TH>Host</TH><TH>Caid</TH><TH>System</TH><TH>id card</TH><TH>Uphops</TH><TH>Maxdown</TH><TH>Providers</TH><TH>Nodes</TH></TR>\
-	##CCCAMSTATSENTRY##\
+	<TR><TH>Host</TH><TH>Caid</TH><TH>System</TH><TH>share id</TH><TH>remote id</TH><TH>Uphops</TH><TH>Maxdown</TH><TH>Providers</TH><TH>Nodes</TH></TR>\
+    ##CCCAMSTATSENTRY##\
 	</TABLE><BR><DIV CLASS=\"cccamentitlementtotals\">##TOTALS##</DIV>"
 
 #define TPLENTITLEMENTCCCAMENTRYBIT "\
-	<TR><TD>##HOST##</TD><TD>##CAID##</TD><TD>##SYSTEM##</TD><TD>##IDCARD##</TD><TD>##UPHOPS##</TD><TD>##MAXDOWN##</TD><TD>##PROVIDERS##</TD><TD>##NODES##</TD></TR>"
+    <TR><TD>##HOST##</TD><TD>##CAID##</TD><TD>##SYSTEM##</TD><TD>##SHAREID##</TD><TD>##REMOTEID##</TD><TD>##UPHOPS##</TD><TD>##MAXDOWN##</TD><TD>##PROVIDERS##</TD><TD>##NODES##</TD></TR>"
+ 
 
 #define TPLREADERCONFIG "\
 ##TPLHEADER##\

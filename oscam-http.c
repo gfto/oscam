@@ -1705,7 +1705,8 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					else
 						tpl_printf(vars, 0, "SYSTEM", "???");
 
-					tpl_printf(vars, 0, "IDCARD", "%08X", card->remote_id);
+                    tpl_printf(vars, 0, "SHAREID", "%08X", card->id);
+                    tpl_printf(vars, 0, "REMOTEID", "%08X", card->remote_id);
 					tpl_printf(vars, 0, "UPHOPS", "%d", card->hop);
 					tpl_printf(vars, 0, "MAXDOWN", "%d", card->maxdown);
 
