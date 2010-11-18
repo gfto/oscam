@@ -42,6 +42,7 @@ typedef enum {
 	MSG_CMD_0C = 0x0c, //Attacking Commands! Just logging the user
 	MSG_CMD_0D = 0x0d, // "
 	MSG_CMD_0E = 0x0e, // "
+	MSG_NEW_CARD_SIDINFO = 0x0f,
 	MSG_CW_NOK1 = 0xfe, //Node no more available
 	MSG_CW_NOK2 = 0xff, //No decoding
 	MSG_NO_HEADER = 0xffff

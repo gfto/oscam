@@ -1354,9 +1354,11 @@ void cc_idle() {
 	cs_debug_mask(D_FUT, "cc_idle out");
 }
 
-struct cc_card *read_card(uint8 *buf) {
+struct cc_card *read_card(uint8 *buf, int ext) {
 	struct cc_card *card = malloc(sizeof(struct cc_card));
 	memset(card, 0, sizeof(struct cc_card));
+
+    int nprov, offset = 21;
 
 	card->providers = ll_create();
 	card->badsids = ll_create();
@@ -1373,19 +1375,46 @@ struct cc_card *read_card(uint8 *buf) {
 	//		card->id, card->caid, card->hop, cs_hexdump(0, card->hexserial, 8),
 	//		ll_count(cc->cards));
 
+    nprov = buf[20];
+
+    if (ext) {
+        int nassign = buf[21];
+        int nreject = buf[22];
+
+        offset += 2;
+    }
+
 	int i;
-	for (i = 0; i < buf[20]; i++) { // providers
+	for (i = 0; i < nprov; i++) { // providers
 		struct cc_provider *prov = malloc(sizeof(struct cc_provider));
 		if (prov) {
-			prov->prov = b2i(3, buf + 21 + (7 * i));
-			memcpy(prov->sa, buf + 21 + (7 * i) + 3, 4);
+			prov->prov = b2i(3, buf + offset + (7 * i));
+			memcpy(prov->sa, buf + offset + (7 * i) + 3, 4);
 			cs_debug("      prov %d, %06x, sa %08x", i + 1, prov->prov, b2i(4,
 					prov->sa));
 
 			ll_append(card->providers, prov);
 		}
 	}
-	uint8 *ptr = buf + 21 + i * 7;
+
+	uint8 *ptr = buf + offset + i * 7;
+
+    if (ext) {
+        for (i = 0; i < nassign; i++) {
+            uint16_t sid = b2i(2, ptr + 2 * i);
+            cs_debug("     assigned sid = 0x%x", sid);
+        }
+
+        ptr = ptr + 2 * i;
+
+        for (i = 0; i < nreject; i++) {
+            uint16_t sid = b2i(2, ptr + 2 * i);
+            cs_debug("     rejected sid = 0x%x", sid);
+        }
+
+        ptr = ptr + 2 * i;
+    }
+
 	int remote_count = ptr[0];
 	ptr++;
 	for (i = 0; i < remote_count; i++) {
@@ -1642,6 +1671,58 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				cmd05_mode_name[cc->cmd05_mode], l);
 
 		break;
+	case MSG_NEW_CARD_SIDINFO: {
+		if (buf[14] >= rdr->cc_maxhop)
+			break;
+
+		if (!chk_ctab(b2i(2, buf + 12), &rdr->ctab))
+			break;
+
+		rdr->tcp_connected = 2; //we have card
+		rdr->card_status = CARD_INSERTED;
+
+		pthread_mutex_lock(&cc->cards_busy);
+
+		struct cc_card *card = read_card(data, 1);
+
+		//Check if this card is from us:
+		LL_ITER *it = ll_iter_create(card->remote_nodes);
+		uint8 *remote_id;
+		while ((remote_id = ll_iter_next(it))) {
+			if (memcmp(remote_id, cc_node_id, sizeof(cc_node_id)) == 0) { //this card is from us!
+				cs_debug_mask(D_TRACE, "filtered card because of recursive nodeid: id=%08X, caid=%04X", card->id, card->caid);
+				cc_free_card(card);
+				card=NULL;
+				break;
+			}
+		}
+		ll_iter_release(it);
+		if (card) {
+			//Check if we already have this card:
+			it = ll_iter_create(cc->cards);
+			struct cc_card *old_card;
+			while ((old_card = ll_iter_next(it))) {
+				if (old_card->id == card->id) { //we aready have this card, delete it
+					cc_free_card(card);
+					card = old_card;
+					break;
+				}
+			}
+			ll_iter_release(it);
+
+			card->hop++; //inkrementing hop
+			card->time = time((time_t) 0);
+			if (!old_card) {
+				ll_append(cc->cards, card);
+			}
+			set_au_data(cl, rdr, card, NULL);
+			cc->cards_modified++;
+		}
+
+		pthread_mutex_unlock(&cc->cards_busy);
+
+		break;
+	}
 	case MSG_NEW_CARD: {
 		if (buf[14] >= rdr->cc_maxhop)
 			break;
@@ -1654,7 +1735,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		pthread_mutex_lock(&cc->cards_busy);
 
-		struct cc_card *card = read_card(data);
+		struct cc_card *card = read_card(data, 0);
 
 		//Check if this card is from us:
 		LL_ITER *it = ll_iter_create(card->remote_nodes);
@@ -2353,7 +2434,7 @@ int add_card_to_serverlist(struct cc_data *cc, LLIST *cardlist, struct cc_card *
  * Adds a new card to a cardlist, buffer format
  */
 int add_card_to_serverlist_buf(struct cc_data *cc, LLIST *cardlist, uint8 *buf, int reshare) {
-	struct cc_card *card = read_card(buf);
+	struct cc_card *card = read_card(buf, 0);
 	return add_card_to_serverlist(cc, cardlist, card, reshare);
 	cc_free_card(card);
 }
