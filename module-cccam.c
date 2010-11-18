@@ -1964,7 +1964,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cc->cmd05_active = 1;
 			cc->cmd05_data_len = l;
 			memcpy(&cc->cmd05_data, buf + 4, l);
-			if (rdr->available)
+			if (rdr->available && ll_count(cc->cards))
 				send_cmd05_answer(cl);
 		}
 		break;
@@ -1998,21 +1998,18 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	case MSG_CMD_0C:
 	case MSG_CMD_0D:
 	case MSG_CMD_0E: {
-		//Unkwn commands, maybe attacking commands. Block this user
+		cs_log("cccam 2.2.0 commands not implemented");
+		//Unkwon commands...need workout algo
 		if (cl->typ == 'c') //client connection
 		{
-			cs_log("%s CCCAM-BACKDOOR COMMANDS DETECTED! BLOCKING USER %s", getprefix(), cl->usr);
-			struct s_auth *account;
-			for (account = cfg->account; (account) ; account = account->next) {
-				 if (!strcmp(cl->usr, account->usr))
-				 	account->disabled = TRUE;
-			}
+			//switching to an oder version and then disconnect...
+			strcpy(cfg->cc_version, version[0]);
 			cs_disconnect_client(cl);
 		}
 		else //reader connection
 		{
-			cs_log("%s CCCAM-BACKDOOR COMMANDS DETECTED! BLOCKING READER %s", getprefix(), cl->reader->label);
-			cl->reader->enable = FALSE;
+			strcpy(cl->reader->cc_version, version[0]);
+			strcpy(cl->reader->cc_build, build[0]);
 			cc_cli_close(cl, FALSE);
 		}
 		break;
@@ -3047,6 +3044,9 @@ int cc_cli_connect(struct s_client *cl) {
 	if (cc && cc->mode != CCCAM_MODE_NORMAL)
 		return -99;
 
+	if (!cl->udp_fd)
+		cc_cli_init_int(cl);
+		
 	if (is_connect_blocked(rdr)) {
 		cs_log("%s connection blocked, retrying later", rdr->label);
 		return -1;
