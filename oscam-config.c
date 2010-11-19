@@ -2169,6 +2169,8 @@ int write_config()
 			fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg->http_user);
 		if(strlen(cfg->http_pwd) > 0)
 			fprintf_conf(f, CONFVARWIDTH, "httppwd", "%s\n", cfg->http_pwd);
+		if(strlen(cfg->http_cert) > 0)
+			fprintf_conf(f, CONFVARWIDTH, "httpcert", "%s\n", cfg->http_cert);
 		if(strlen(cfg->http_css) > 0)
 			fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg->http_css);
 		if(strlen(cfg->http_jscript) > 0)
