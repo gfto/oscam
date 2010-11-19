@@ -331,12 +331,11 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 	if (handle < 0)
 		return -1;
 
-	len = recv(handle, netbuf, 4, MSG_WAITALL);
-	if (cl->typ != 'c')
-		rdr->last_g = time(NULL);
-
-	if (!len)
-		return 0;
+	do {
+		len = recv(handle, netbuf, 4, MSG_WAITALL);
+		if (cl->typ != 'c')
+			rdr->last_g = time(NULL);
+	} while (!len);
 
 	if (len != 4) { // invalid header length read
 		if (len < 0)
@@ -358,9 +357,11 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 			return 0;
 		}
 
-		len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
-		if (cl->typ != 'c')
-			rdr->last_g = time(NULL);
+		do {
+			len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
+			if (cl->typ != 'c')
+				rdr->last_g = time(NULL);
+		} while (!len);
 
 		if (len != size) {
 			if (len < 0)
@@ -2181,7 +2182,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 	cl->last = time((time_t *) 0);
 
 	if (n <= 0) {
-		cs_log("%s connection closed to %s", getprefix(), remote_txt());
+		cs_log("%s connection closed by %s", getprefix(), remote_txt());
 		n = -1;
 	} else if (n < 4) {
 		cs_log("%s packet to small (%d bytes)", getprefix(), n);
@@ -2304,9 +2305,57 @@ struct cc_card *create_card(struct cc_card *card) {
 }
 
 /**
+ * if idents defined on an cccam reader, the cards caid+provider are checked.
+ * return 1 a) if no ident defined b) card is in identlist
+ *        0 if card is not in identlist
+ * 
+ * a card is in the identlist, if the cards caid is matching and mininum a provider is matching
+ **/
+int chk_ident(FTAB *ftab, struct cc_card *card) {
+
+	int j, k;
+	int res = 1;
+	
+	if (ftab && ftab->filts) {
+		for (j = 0; j < ftab->nfilts; j++) {
+			if (ftab->filts[j].caid) {
+				res = 0;
+				if (ftab->filts[j].caid==card->caid) { //caid matches!
+			
+					int nprids = ftab->filts[j].nprids;
+					if (!nprids) // No Provider ->Ok
+						return 1;
+					
+			
+					LL_ITER *it = ll_iter_create(card->providers);
+					struct cc_provider *prov;
+				
+					while ((prov = ll_iter_next(it))) {
+						for (k = 0; k < nprids; k++) {
+							ulong prid = ftab->filts[j].prids[k];
+							if (prid == prov->prov) { //Provider matches
+								ll_iter_release(it);
+								return 1;	
+							}			
+						}
+					}
+					ll_iter_release(it);
+				}
+			}
+		}
+	}
+	return res;
+}
+
+/**
  * Adds a new card to a cardlist.
  */
-int add_card_to_serverlist(struct cc_data *cc, LLIST *cardlist, struct cc_card *card, int reshare) {
+int add_card_to_serverlist(struct s_client *cl, LLIST *cardlist, struct cc_card *card, int reshare) {
+
+	if (!chk_ident(&cl->ftab, card))
+		return 0;
+		
+	struct cc_data *cc = cl->cc;
 	int modified = 0;
 	LL_ITER *it = ll_iter_create(cardlist);
 	struct cc_card *card2;
@@ -2389,9 +2438,9 @@ int add_card_to_serverlist(struct cc_data *cc, LLIST *cardlist, struct cc_card *
 /**
  * Adds a new card to a cardlist, buffer format
  */
-int add_card_to_serverlist_buf(struct cc_data *cc, LLIST *cardlist, uint8 *buf, int reshare) {
+int add_card_to_serverlist_buf(struct s_client *cl, LLIST *cardlist, uint8 *buf, int reshare) {
 	struct cc_card *card = read_card(buf, 0);
-	return add_card_to_serverlist(cc, cardlist, card, reshare);
+	return add_card_to_serverlist(cl, cardlist, card, reshare);
 	cc_free_card(card);
 }
 
@@ -2443,50 +2492,6 @@ void report_card(struct s_client *cl, uint8 *buf, int len, LLIST *new_reported_c
 		cc->card_added_count++;
 	}	
 	cc_add_reported_carddata(new_reported_carddatas, buf, len);
-}
-
-/**
- * if idents defined on an cccam reader, the cards caid+provider are checked.
- * return 1 a) if no ident defined b) card is in identlist
- *        0 if card is not in identlist
- * 
- * a card is in the identlist, if the cards caid is matching and mininum a provider is matching
- **/
-int chk_ident(FTAB *ftab, struct cc_card *card) {
-
-	int j, k;
-	int res = 1;
-
-	if (ftab && ftab->filts) {
-		for (j = 0; j < CS_MAXFILTERS; j++) {
-			if (ftab->filts[j].caid) {
-				res = 0;
-				if (ftab->filts[j].caid==card->caid) { //caid matches!
-			
-					int nprids = ftab->filts[j].nprids;
-					if (!nprids) // No Provider ->Ok
-						return 1;
-					
-			
-					LL_ITER *it = ll_iter_create(card->providers);
-					struct cc_provider *prov;
-				
-					while ((prov = ll_iter_next(it))) {
-						for (k = 0; k < nprids; k++) {
-							ulong prid = ftab->filts[j].prids[k];
-							if (prid == prov->prov) { //Provider matches
-							
-								ll_iter_release(it);
-								return 1;	
-							}			
-						}
-					}
-					ll_iter_release(it);
-				}
-			}
-		}
-	}
-	return res;
 }
 
 /**
@@ -2544,8 +2549,8 @@ void cc_srv_report_cards(struct s_client *cl) {
 		flt = 0;
 		if (rdr->typ != R_CCCAM && rdr->ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
-				if (rdr->ftab.filts[j].caid && chk_ctab( //Do not check for disabled services (ChrisO problem 1702/!1702)
-						rdr->ftab.filts[j].caid, &cl->ctab)) {
+				if (rdr->ftab.filts[j].caid && 
+						chk_ctab(rdr->ftab.filts[j].caid, &cl->ctab)) {
 					int ignore = 0;
 					memset(buf, 0, sizeof(buf));
 					buf[4] = rdr->cc_id >> 24;
@@ -2584,7 +2589,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 						}
 					}
 
-					if (!ignore) add_card_to_serverlist_buf(cc, server_cards, buf, reshare);
+					if (!ignore) add_card_to_serverlist_buf(cl, server_cards, buf, reshare);
 					flt = 1;
 				}
 			}
@@ -2614,7 +2619,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 					buf[20] = 1; //one provider, nullprovider!
 					
 					if (chk_ctab(lcaid, &cl->ctab))
-						add_card_to_serverlist_buf(cc, server_cards, buf, reshare);
+						add_card_to_serverlist_buf(cl, server_cards, buf, reshare);
 					flt = 1;
 				}
 			}
@@ -2648,7 +2653,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 			}
 			if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED) /*&& !rdr->cc_id*/) {
 				//rdr->cc_id = b2i(3, buf + 5);
-				add_card_to_serverlist_buf(cc, server_cards, buf, reshare);
+				add_card_to_serverlist_buf(cl, server_cards, buf, reshare);
 			}
 		}
 
@@ -2671,7 +2676,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 							&& chk_ctab(card->caid, &rdr->ctab)) {
 
 						if ((cfg->cc_ignore_reshare || card->maxdown > 0) && 
-								chk_ident(&rdr->ftab, card) && chk_ident(&cl->ftab, card)) {
+								chk_ident(&rdr->ftab, card)) {
 							int ignore = 0;
 
 							LL_ITER *it2 = ll_iter_create(card->providers);
@@ -2693,7 +2698,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 												: (card->maxdown - 1);
 								if (new_reshare > reshare)
 									new_reshare = reshare;
-								add_card_to_serverlist(cc, server_cards, card,
+								add_card_to_serverlist(cl, server_cards, card,
 										new_reshare);
 								count++;
 							}
@@ -2714,6 +2719,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 	struct cc_card *card;
 	while ((card = ll_iter_next(it))) {
 		//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
+		
 		memset(buf, 0, sizeof(buf));
 		buf[4] = card->remote_id >> 24;
 		buf[5] = card->remote_id >> 16;
@@ -2966,16 +2972,25 @@ int cc_srv_connect(struct s_client *cl) {
 
 	cmi = 0;
 	// check for client timeout, if timeout occurs try to send keepalive
-	for (;;) {
+	while (cl->pfd)
+	{
 		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
 		//cs_log("srv process input i=%d cmi=%d", i, cmi);
 		if (i == -9) {
 			cmi += 10;
-			if (cfg->cmaxidle && cmi >= cfg->cmaxidle && !cl->ncd_keepalive && !cfg->cc_keep_connected) {
+			if (cfg->cmaxidle && cmi >= cfg->cmaxidle) {
 				cmi = 0;
-				cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached",
-						getprefix());
-				break; //Disconnect client
+				if (!cl->ncd_keepalive && !cfg->cc_keep_connected) {
+					cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached",
+							getprefix());
+					break; //Disconnect client
+				}
+				else
+				{
+					cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
+        		                cs_debug("cccam: keepalive");
+        		                cc->answer_on_keepalive = time(NULL);
+				}
 			}
 		} else if (i <= 0)
 			break; //Disconnected by client
