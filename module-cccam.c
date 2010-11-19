@@ -2967,9 +2967,7 @@ int cc_srv_connect(struct s_client *cl) {
 	// check for client timeout, if timeout occurs try to send keepalive
 	while (cl->pfd)
 	{
-		cs_log("srv process input listening...");
 		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
-		cs_log("srv process input i=%d cmi=%d", i, cmi);
 		if (i == -9) {
 			cmi += 10;
 			if (cfg->cmaxidle && cmi >= cfg->cmaxidle) {
