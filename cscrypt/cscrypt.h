@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+
 #ifdef HAVE_AES
 #include <openssl/aes.h>
 #else
@@ -11,7 +13,12 @@
 #endif
 
 #include "des.h"
-#include "bn.h"
+
+#ifndef WITH_SSL
+#  include "bn.h"
+#else
+#  include <openssl/bn.h>
+#endif
 
 #ifndef HEADER_CSCRYPT_H
 #define HEADER_CSCRYPT_H

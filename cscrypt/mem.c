@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_SSL
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/mem.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -270,3 +272,4 @@ long CRYPTO_get_mem_debug_options(void)
 		return get_debug_options_func();
 	return 0;
 	}
+#endif

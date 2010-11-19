@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_SSL
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_div.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -377,3 +379,4 @@ int BN_mod(BIGNUM *rem, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 #endif
 	}
 
+#endif

@@ -2721,8 +2721,6 @@ int process_request(FILE *f, struct in_addr in) {
 }
 
 #ifdef WITH_SSL
-#define SERVER_CERT     "/etc/webmin/miniserv.pem"
-
 SSL_CTX *webif_init_ssl() {
 	SSL_library_init();
 	SSL_load_error_strings();
@@ -2733,26 +2731,31 @@ SSL_CTX *webif_init_ssl() {
 	meth = SSLv3_method();
  
 	ctx = SSL_CTX_new(meth);
- 
+
+	if (cfg->http_cert[0]==0) {
+		sprintf(cfg->http_cert, "%s/oscam.pem", cs_confdir);
+	}
+
 	if (!ctx) {
 		ERR_print_errors_fp(stderr);
 		return NULL;
        }
 
-	if (SSL_CTX_use_certificate_file(ctx, SERVER_CERT, SSL_FILETYPE_PEM) <= 0) {
+	if (SSL_CTX_use_certificate_file(ctx, cfg->http_cert, SSL_FILETYPE_PEM) <= 0) {
 		ERR_print_errors_fp(stderr);
 		return NULL;
 	}
  
-	if (SSL_CTX_use_PrivateKey_file(ctx, SERVER_CERT, SSL_FILETYPE_PEM) <= 0) {
+	if (SSL_CTX_use_PrivateKey_file(ctx, cfg->http_cert, SSL_FILETYPE_PEM) <= 0) {
 		ERR_print_errors_fp(stderr);
 		return NULL;
 	}
  
        if (!SSL_CTX_check_private_key(ctx)) {
-		cs_log("Private key does not match the certificate public key");
+		cs_log("SSL: Private key does not match the certificate public key");
 		return NULL;
 	}
+	cs_log("load ssl certificate file %s", cfg->http_cert);
 	return ctx;
 }
 #endif
@@ -2804,14 +2807,16 @@ void http_srv() {
 		close(sock);
 		return;
 	}
-	cs_log("HTTP Server listening on port %d", cfg->http_port);
+	cs_log("HTTP Server listening on port %d%s", cfg->http_port, cfg->http_use_ssl ? " (SSL)" : "");
 	struct pollfd pfd2[1];
 	int rc;
 	pfd2[0].fd = sock;
 	pfd2[0].events = (POLLIN | POLLPRI);
 
 #ifdef WITH_SSL
-	SSL_CTX *ctx = webif_init_ssl();
+	SSL_CTX *ctx = NULL;
+	if (cfg->http_use_ssl)
+		ctx = webif_init_ssl();
 #endif
 
 	while (running) {
@@ -2825,29 +2830,33 @@ void http_srv() {
 				break;
 			}
 #ifdef WITH_SSL
-			SSL *ssl;
-			ssl = SSL_new(ctx);
-			SSL_set_fd(ssl, s);
-			if (SSL_accept(ssl) != -1)
-				process_request((FILE *)ssl, remote.sin_addr);
-			else
-				ERR_print_errors_fp(stderr);
-			SSL_shutdown(ssl);
-			close(s);
-			SSL_free(ssl);
-#else
-			FILE *f;
-			f = fdopen(s, "r+");
-			process_request(f, remote.sin_addr);
-			fflush(f);
-			fclose(f);
-			shutdown(s, SHUT_WR);
-			close(s);
+			if (cfg->http_use_ssl) {
+				SSL *ssl;
+				ssl = SSL_new(ctx);
+				SSL_set_fd(ssl, s);
+				if (SSL_accept(ssl) != -1)
+					process_request((FILE *)ssl, remote.sin_addr);
+				else
+					ERR_print_errors_fp(stderr);
+				SSL_shutdown(ssl);
+				close(s);
+				SSL_free(ssl);
+			} else
 #endif
+			{
+				FILE *f;
+				f = fdopen(s, "r+");
+				process_request(f, remote.sin_addr);
+				fflush(f);
+				fclose(f);
+				shutdown(s, SHUT_WR);
+				close(s);
+			}
 		}
 	}
 #ifdef WITH_SSL
-	SSL_CTX_free(ctx);
+	if (cfg->http_use_ssl)
+		SSL_CTX_free(ctx);
 #endif
 	cs_log("HTTP Server: Shutdown requested from %s", inet_ntoa(*(struct in_addr *)&remote.sin_addr));
 	close(sock);

@@ -1066,6 +1066,8 @@ struct s_config
 	int			http_readonly;
 	in_addr_t	http_dynip;
 	uchar		http_dyndns[64];
+	int		http_use_ssl;
+	char		http_cert[128];
 #endif
 	int			http_full_cfg;
 	int			failbantime;

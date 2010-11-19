@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_SSL
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_mul.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -794,3 +796,4 @@ void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
 		b+=4;
 		}
 	}
+#endif

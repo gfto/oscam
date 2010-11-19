@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_SSL
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_print.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -285,4 +287,5 @@ void bn_dump1(FILE *o, const char *a, BN_ULONG *b,int n)
 		fprintf(o, "%08lX", b[i]); /* assumes 32-bit BN_ULONG */
 	fprintf(o, "\n");
 	}
+#endif
 #endif

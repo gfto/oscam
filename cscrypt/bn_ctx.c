@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_SSL
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_ctx.c */
 /* Written by Ulf Moeller for the OpenSSL project. */
@@ -140,3 +142,4 @@ void BN_CTX_end(BN_CTX *ctx)
 	if (ctx->depth < BN_CTX_NUM_POS)
 		ctx->tos = ctx->pos[ctx->depth];
 	}
+#endif

@@ -4,6 +4,11 @@ ifeq ($(wildcard oscam-boxkeys.np), oscam-boxkeys.np)
   KFLAG		= -DCS_WITH_BOXKEYS
 endif
 
+WITH_SSL=$(subst ",,$(filter-out \#define, $(shell grep '^\#define WITH_SSL' oscam-config.h)))
+ifeq ($(WITH_SSL), WITH_SSL)
+	LIBSSL=-lssl
+endif
+
 CC		= $(DS_CC)
 AR		= $(DS_AR)
 STRIP		= $(DS_ST)
@@ -11,7 +16,7 @@ RANLIB		= $(DS_RL)
 CFLAGS		= $(DS_OPTS) $(KFLAG) $(DS_CFLAGS)
 LDFLAGS		= $(DS_OPTS) $(DS_LDFLAGS)
 ARFLAGS		= $(DS_ARFLAGS)
-LIBS		= $(DS_LIBS) $(OS_LIBS) $(OS_PTLI)
+LIBS		= $(DS_LIBS) $(OS_LIBS) $(OS_PTLI) $(LIBSSL)
 export		CC AR STRIP RANLIB CFLAGS LDFLAGS ARFLAGS
 
 GENERAL		= Makefile Maketype globals.h oscam-config.h

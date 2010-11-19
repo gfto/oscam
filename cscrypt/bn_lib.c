@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_SSL
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_lib.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -731,3 +733,4 @@ int bn_cmp_words(BN_ULONG *a, BN_ULONG *b, int n)
 	return(0);
 	}
 
+#endif

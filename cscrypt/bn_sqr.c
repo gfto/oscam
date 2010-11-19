@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_SSL
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_sqr.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -287,4 +289,5 @@ printf(" bn_sqr_recursive %d * %d\n",n2,n2);
 			}
 		}
 	}
+#endif
 #endif

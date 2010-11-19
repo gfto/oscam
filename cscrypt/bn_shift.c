@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_SSL
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_shift.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -205,3 +207,4 @@ int BN_rshift(BIGNUM *r, BIGNUM *a, int n)
 	bn_fix_top(r);
 	return(1);
 	}
+#endif

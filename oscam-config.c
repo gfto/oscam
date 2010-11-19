@@ -789,7 +789,14 @@ void chk_t_webif(char *token, char *value)
 			cfg->http_port = 0;
 			return;
 		} else {
-			cfg->http_port = atoi(value);
+			if (value[0]=='+') {
+#ifdef WITH_SSL
+				cfg->http_use_ssl=1;
+#endif
+				cfg->http_port = atoi(value+1);
+			} else {
+				cfg->http_port = atoi(value);
+			}
 			return;
 		}
 	}
@@ -816,6 +823,11 @@ void chk_t_webif(char *token, char *value)
 
 	if (!strcmp(token, "httpscript")) {
 		cs_strncpy(cfg->http_script, value, sizeof(cfg->http_script));
+		return;
+	}
+
+	if (!strcmp(token, "httpcert")) {
+		cs_strncpy(cfg->http_cert, value, sizeof(cfg->http_cert));
 		return;
 	}
 
@@ -2148,7 +2160,11 @@ int write_config()
 	/*webinterface*/
 	if (cfg->http_port > 0) {
 		fprintf(f,"[webif]\n");
-		fprintf_conf(f, CONFVARWIDTH, "httpport", "%d\n", cfg->http_port);
+		if (cfg->http_use_ssl) {
+			fprintf_conf(f, CONFVARWIDTH, "httpport", "+%d\n", cfg->http_port);
+		} else {
+			fprintf_conf(f, CONFVARWIDTH, "httpport", "%d\n", cfg->http_port);
+		}
 		if(strlen(cfg->http_user) > 0)
 			fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg->http_user);
 		if(strlen(cfg->http_pwd) > 0)

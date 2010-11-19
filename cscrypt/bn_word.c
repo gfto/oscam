@@ -1,3 +1,5 @@
+#include "../oscam-config.h"
+#ifndef WITH_SSL
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_word.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
@@ -198,3 +200,4 @@ int BN_mul_word(BIGNUM *a, BN_ULONG w)
 	return(1);
 	}
 
+#endif

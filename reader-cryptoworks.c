@@ -60,7 +60,7 @@ static int Output(unsigned char *out, int n, BIGNUM *r, int LE)
   return(s);
 }
 
-static int RSA(unsigned char *out, unsigned char *in, int n, BIGNUM *exp, BIGNUM *mod, int LE)
+static int cw_RSA(unsigned char *out, unsigned char *in, int n, BIGNUM *exp, BIGNUM *mod, int LE)
 {
   int rc=0;
   BN_CTX *ctx;
@@ -217,7 +217,7 @@ static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
       ipk=BN_new();
       BN_bin2bn(cwexp, sizeof(cwexp), &reader->exp);
       BN_bin2bn(keybuf, 64, ipk);
-      RSA(cta_res+2, cta_res+2, 0x40, &reader->exp, ipk, 0);
+      cw_RSA(cta_res+2, cta_res+2, 0x40, &reader->exp, ipk, 0);
       BN_free(ipk);
       reader->ucpk_valid =(cta_res[2]==((mfid & 0xFF)>>1));
       if (reader->ucpk_valid)
@@ -331,7 +331,7 @@ static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             {
               if(reader->ucpk_valid)
               {
-                RSA(&cta_res[i+2],&cta_res[i+2], n, &reader->exp, &reader->ucpk, 0);
+                cw_RSA(&cta_res[i+2],&cta_res[i+2], n, &reader->exp, &reader->ucpk, 0);
                 cs_debug("[cryptoworks-reader] after camcrypt ");
                 r=0; secLen=n-4; n=4;
               }
