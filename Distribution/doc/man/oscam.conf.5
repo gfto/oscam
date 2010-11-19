@@ -264,14 +264,14 @@ time to hide clients in the monitor if not sending requests, 0 = disabled, defau
 1 = append channel name on log messages, default:0
 .RE
 .SS "The [webif] section" \fI(only if web interface module enabled)\fR
-\fBhttpport\fP = \fBport\fP
+\fBhttpport\fP = [\fB+\fP]\fBport\fP
 .RS 3n
-port for web interface, 0 = disabled, default:none, \fIrequired\fR
+port for web interface, 0 = disabled, praefix + = enable SSL, default:none, \fIrequired\fR
 .RE
 .PP
-\fBhttpcert\fP = \fBpath\fP
+\fBhttpcert\fP = \fBfile\fP
 .RS 3n
-path for http SSL certificate, default:none
+file for http SSL certificate, default:\fBoscam.pem\fP
 .RE
 .PP
 \fBhttpuser\fP = \fBusername\fP

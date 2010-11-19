@@ -186,11 +186,11 @@ DESCRIPTIONS
 	  1 = append channel name on log messages, default:0
 
    The [webif] section (only if web interface module enabled)
-       httpport = port
-	  port for web interface, 0 = disabled, default:none, required
+       httpport = [+]port
+	  port for web interface, 0 = disabled, praefix + = enable SSL, default:none, required
 
-       httpcert = path
-	  path for http SSL certificate, default:none
+       httpcert = file
+	  file for http SSL certificate, default:oscam.pem
 
        httpuser = username
 	  username for password protection, default:none
