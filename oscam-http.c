@@ -2534,7 +2534,7 @@ int process_request(FILE *f, struct in_addr in) {
 	}
 
 	char buf[4096];
-	char tmp[4096];
+	char *tmp;
 
 	int authok = 0;
 	char expectednonce[64];
@@ -2575,13 +2575,17 @@ int process_request(FILE *f, struct in_addr in) {
 
 	/* First line always includes the GET/POST request */
 	char *saveptr1=NULL;
-	if (!webif_read(buf, sizeof(buf), f)) return -1;
-	strcpy(tmp, buf);
+	int n;
+	if ((n=webif_read(buf, sizeof(buf), f)) <= 0) {
+		cs_debug("webif read error %d", n);
+		return -1;
+	}
 
 	method = strtok_r(buf, " ", &saveptr1);
 	path = strtok_r(NULL, " ", &saveptr1);
 	protocol = strtok_r(NULL, "\r", &saveptr1);
 	if(method == NULL || path == NULL || protocol == NULL) return -1;
+	tmp=protocol+strlen(protocol)+2;
 
 	pch=path;
 	/* advance pointer to beginning of query string */
@@ -2727,26 +2731,31 @@ SSL_CTX *webif_init_ssl() {
 
 	SSL_METHOD *meth;
 	SSL_CTX *ctx;
+
+	static const char *cs_cert="oscam.pem";
  
 	meth = SSLv3_method();
  
 	ctx = SSL_CTX_new(meth);
 
-	if (cfg->http_cert[0]==0) {
-		sprintf(cfg->http_cert, "%s/oscam.pem", cs_confdir);
-	}
+	char path[128];
+
+	if (cfg->http_cert[0]==0)
+		sprintf(path, "%s%s", cs_confdir, cs_cert);
+	else
+		strcpy(path, cfg->http_cert);
 
 	if (!ctx) {
 		ERR_print_errors_fp(stderr);
 		return NULL;
        }
 
-	if (SSL_CTX_use_certificate_file(ctx, cfg->http_cert, SSL_FILETYPE_PEM) <= 0) {
+	if (SSL_CTX_use_certificate_file(ctx, path, SSL_FILETYPE_PEM) <= 0) {
 		ERR_print_errors_fp(stderr);
 		return NULL;
 	}
  
-	if (SSL_CTX_use_PrivateKey_file(ctx, cfg->http_cert, SSL_FILETYPE_PEM) <= 0) {
+	if (SSL_CTX_use_PrivateKey_file(ctx, path, SSL_FILETYPE_PEM) <= 0) {
 		ERR_print_errors_fp(stderr);
 		return NULL;
 	}
@@ -2755,7 +2764,7 @@ SSL_CTX *webif_init_ssl() {
 		cs_log("SSL: Private key does not match the certificate public key");
 		return NULL;
 	}
-	cs_log("load ssl certificate file %s", cfg->http_cert);
+	cs_log("load ssl certificate file %s", path);
 	return ctx;
 }
 #endif
