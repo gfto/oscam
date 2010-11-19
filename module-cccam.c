@@ -328,17 +328,15 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 
 	int handle = cl->udp_fd;
 
-	if (handle < 0)
+	if (handle <= 0)
 		return -1;
 
-	do {
-		len = recv(handle, netbuf, 4, MSG_WAITALL);
-		if (cl->typ != 'c')
-			rdr->last_g = time(NULL);
-	} while (!len);
+	len = recv(handle, netbuf, 4, MSG_WAITALL);
+	if (cl->typ != 'c')
+		rdr->last_g = time(NULL);
 
 	if (len != 4) { // invalid header length read
-		if (len < 0)
+		if (len <= 0)
 			cs_log("%s disconnected by remote server", getprefix());
 		else
 			cs_log("%s invalid header length (expected 4, read %d)", getprefix(), len);
@@ -357,14 +355,12 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 			return 0;
 		}
 
-		do {
-			len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
-			if (cl->typ != 'c')
-				rdr->last_g = time(NULL);
-		} while (!len);
+		len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
+		if (cl->typ != 'c')
+			rdr->last_g = time(NULL);
 
 		if (len != size) {
-			if (len < 0)
+			if (len <= 0)
 				cs_log("%s disconnected by remote", getprefix());
 			else
 				cs_log("%s invalid message length read (expected %d, read %d)",
@@ -388,7 +384,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
  */
 int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 	if (!cl->udp_fd) //disconnected
-		return 0;
+		return -1;
 
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 
@@ -419,9 +415,7 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 		rdr->last_s = time(NULL);
 
 	if (n != len) {
-		if (!rdr)
-			cs_disconnect_client(cl);
-		else
+		if (rdr)
 			cc_cli_close(cl, TRUE);
 	}
 
@@ -2005,7 +1999,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		{
 			//switching to an oder version and then disconnect...
 			strcpy(cfg->cc_version, version[0]);
-			cs_disconnect_client(cl);
+			ret = -1;
 		}
 		else //reader connection
 		{
@@ -2198,9 +2192,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 	NULLFREE(cbuf);
 
 	if (n == -1) {
-		if (cl->typ == 'c')
-			cs_disconnect_client(cl);
-		else
+		if (cl->typ != 'c')
 			cc_cli_close(cl, TRUE);
 	}
 
@@ -2975,8 +2967,9 @@ int cc_srv_connect(struct s_client *cl) {
 	// check for client timeout, if timeout occurs try to send keepalive
 	while (cl->pfd)
 	{
+		cs_log("srv process input listening...");
 		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
-		//cs_log("srv process input i=%d cmi=%d", i, cmi);
+		cs_log("srv process input i=%d cmi=%d", i, cmi);
 		if (i == -9) {
 			cmi += 10;
 			if (cfg->cmaxidle && cmi >= cfg->cmaxidle) {
@@ -2988,7 +2981,8 @@ int cc_srv_connect(struct s_client *cl) {
 				}
 				else
 				{
-					cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
+					if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
+						break;
         		                cs_debug("cccam: keepalive");
         		                cc->answer_on_keepalive = time(NULL);
 				}
