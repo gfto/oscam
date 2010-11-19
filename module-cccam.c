@@ -2350,9 +2350,11 @@ int chk_ident(FTAB *ftab, struct cc_card *card) {
 /**
  * Adds a new card to a cardlist.
  */
-int add_card_to_serverlist(struct s_client *cl, LLIST *cardlist, struct cc_card *card, int reshare) {
+int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *cardlist, struct cc_card *card, int reshare) {
 
 	if (!chk_ident(&cl->ftab, card))
+		return 0;
+	if (rdr && !chk_ident(&rdr->client->ftab, card))
 		return 0;
 		
 	struct cc_data *cc = cl->cc;
@@ -2438,9 +2440,9 @@ int add_card_to_serverlist(struct s_client *cl, LLIST *cardlist, struct cc_card 
 /**
  * Adds a new card to a cardlist, buffer format
  */
-int add_card_to_serverlist_buf(struct s_client *cl, LLIST *cardlist, uint8 *buf, int reshare) {
+int add_card_to_serverlist_buf(struct s_reader *rdr, struct s_client *cl, LLIST *cardlist, uint8 *buf, int reshare) {
 	struct cc_card *card = read_card(buf, 0);
-	return add_card_to_serverlist(cl, cardlist, card, reshare);
+	return add_card_to_serverlist(rdr, cl, cardlist, card, reshare);
 	cc_free_card(card);
 }
 
@@ -2589,7 +2591,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 						}
 					}
 
-					if (!ignore) add_card_to_serverlist_buf(cl, server_cards, buf, reshare);
+					if (!ignore) add_card_to_serverlist_buf(rdr, cl, server_cards, buf, reshare);
 					flt = 1;
 				}
 			}
@@ -2619,7 +2621,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 					buf[20] = 1; //one provider, nullprovider!
 					
 					if (chk_ctab(lcaid, &cl->ctab))
-						add_card_to_serverlist_buf(cl, server_cards, buf, reshare);
+						add_card_to_serverlist_buf(rdr, cl, server_cards, buf, reshare);
 					flt = 1;
 				}
 			}
@@ -2653,7 +2655,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 			}
 			if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED) /*&& !rdr->cc_id*/) {
 				//rdr->cc_id = b2i(3, buf + 5);
-				add_card_to_serverlist_buf(cl, server_cards, buf, reshare);
+				add_card_to_serverlist_buf(rdr, cl, server_cards, buf, reshare);
 			}
 		}
 
@@ -2675,8 +2677,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 					if (card->hop <= maxhops && chk_ctab(card->caid, &cl->ctab)
 							&& chk_ctab(card->caid, &rdr->ctab)) {
 
-						if ((cfg->cc_ignore_reshare || card->maxdown > 0) && 
-								chk_ident(&rdr->ftab, card)) {
+						if ((cfg->cc_ignore_reshare || card->maxdown > 0)) {
 							int ignore = 0;
 
 							LL_ITER *it2 = ll_iter_create(card->providers);
@@ -2698,7 +2699,7 @@ void cc_srv_report_cards(struct s_client *cl) {
 												: (card->maxdown - 1);
 								if (new_reshare > reshare)
 									new_reshare = reshare;
-								add_card_to_serverlist(cl, server_cards, card,
+								add_card_to_serverlist(rdr, cl, server_cards, card,
 										new_reshare);
 								count++;
 							}
