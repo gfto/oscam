@@ -2817,6 +2817,9 @@ void http_srv() {
 	SSL_CTX *ctx = NULL;
 	if (cfg->http_use_ssl)
 		ctx = webif_init_ssl();
+
+	if (ctx==NULL)
+		cfg->http_use_ssl = 0;
 #endif
 
 	while (running) {
