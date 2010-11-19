@@ -2839,8 +2839,14 @@ void http_srv() {
 				SSL_set_fd(ssl, s);
 				if (SSL_accept(ssl) != -1)
 					process_request((FILE *)ssl, remote.sin_addr);
-				else
-					ERR_print_errors_fp(stderr);
+				else {
+					cfg->http_use_ssl=0;
+					FILE *f;
+					f = fdopen(s, "r+");
+					send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.");
+					fclose(f);
+					cfg->http_use_ssl=1;
+				}
 				SSL_shutdown(ssl);
 				close(s);
 				SSL_free(ssl);

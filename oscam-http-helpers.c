@@ -407,24 +407,24 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime){
   char buf[1024];
 
   sprintf(buf, "%s %d %s\r\n", PROTOCOL, status, title);
-  sprintf(buf, "Server: %s\r\n", SERVER);
+  sprintf(buf+strlen(buf), "Server: %s\r\n", SERVER);
 
   now = time(NULL);
   strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&now));
-  sprintf(buf, "Date: %s\r\n", timebuf);
+  sprintf(buf+strlen(buf), "Date: %s\r\n", timebuf);
 
 	if (extra)
-		sprintf(buf, "%s\r\n", extra);
+		sprintf(buf+strlen(buf), "%s\r\n", extra);
 
 	if (mime)
-		sprintf(buf, "Content-Type: %s\r\n", mime);
+		sprintf(buf+strlen(buf), "Content-Type: %s\r\n", mime);
 
 	strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&now));
-	sprintf(buf, "Cache-Control: no-store, no-cache, must-revalidate\r\n");
-	sprintf(buf, "Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
-	sprintf(buf, "Last-Modified: %s\r\n", timebuf);
-	sprintf(buf, "Connection: close\r\n");
-	sprintf(buf, "\r\n");
+	sprintf(buf+strlen(buf), "Cache-Control: no-store, no-cache, must-revalidate\r\n");
+	sprintf(buf+strlen(buf), "Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
+	sprintf(buf+strlen(buf), "Last-Modified: %s\r\n", timebuf);
+	sprintf(buf+strlen(buf), "Connection: close\r\n");
+	sprintf(buf+strlen(buf), "\r\n");
 	webif_write(buf, f);
 }
 
@@ -460,9 +460,9 @@ void send_error(FILE *f, int status, char *title, char *extra, char *text){
 	char buf[1024];
 	send_headers(f, status, title, extra, "text/html");
 	sprintf(buf, "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
-	sprintf(buf, "<BODY><H4>%d %s</H4>\r\n", status, title);
-	sprintf(buf, "%s\r\n", text);
-	sprintf(buf, "</BODY></HTML>\r\n");
+	sprintf(buf+strlen(buf), "<BODY><H4>%d %s</H4>\r\n", status, title);
+	sprintf(buf+strlen(buf), "%s\r\n", text);
+	sprintf(buf+strlen(buf), "</BODY></HTML>\r\n");
 	webif_write(buf, f);
 }
 
