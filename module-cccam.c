@@ -1551,6 +1551,50 @@ void check_peer_changed(struct cc_data *cc, uint8 *node_id, uint8 *version) {
 	}
 }
 
+/**
+ * if idents defined on an cccam reader, the cards caid+provider are checked.
+ * return 1 a) if no ident defined b) card is in identlist
+ *        0 if card is not in identlist
+ * 
+ * a card is in the identlist, if the cards caid is matching and mininum a provider is matching
+ **/
+int chk_ident(FTAB *ftab, struct cc_card *card) {
+
+	int j, k;
+	int res = 1;
+	
+	if (ftab && ftab->filts) {
+		for (j = 0; j < ftab->nfilts; j++) {
+			if (ftab->filts[j].caid) {
+				res = 0;
+				if (ftab->filts[j].caid==card->caid) { //caid matches!
+			
+					int nprids = ftab->filts[j].nprids;
+					if (!nprids) // No Provider ->Ok
+						return 1;
+					
+			
+					LL_ITER *it = ll_iter_create(card->providers);
+					struct cc_provider *prov;
+				
+					while ((prov = ll_iter_next(it))) {
+						for (k = 0; k < nprids; k++) {
+							ulong prid = ftab->filts[j].prids[k];
+							if (prid == prov->prov) { //Provider matches
+								ll_iter_release(it);
+								return 1;	
+							}			
+						}
+					}
+					ll_iter_release(it);
+				}
+			}
+		}
+	}
+	return res;
+}
+
+
 /*void fix_dcw(uchar *dcw)
 {
 	int i;
@@ -1683,7 +1727,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		if (!chk_ctab(b2i(2, buf + 12), &rdr->ctab))
 			break;
-
+			
 		rdr->tcp_connected = 2; //we have card
 		rdr->card_status = CARD_INSERTED;
 
@@ -1703,6 +1747,15 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			}
 		}
 		ll_iter_release(it);
+		
+		//Check Ident filter:
+		if (card) {
+			if (!chk_ident(&rdr->ftab, card)) {
+				cc_free_card(card);
+				card=NULL;
+			}
+		}
+				
 		if (card) {
 			//Check if we already have this card:
 			it = ll_iter_create(cc->cards);
@@ -2324,49 +2377,6 @@ struct cc_card *create_card(struct cc_card *card) {
 	card2->goodsids = ll_create();
 	card2->remote_nodes = ll_create();
 	return card2;
-}
-
-/**
- * if idents defined on an cccam reader, the cards caid+provider are checked.
- * return 1 a) if no ident defined b) card is in identlist
- *        0 if card is not in identlist
- * 
- * a card is in the identlist, if the cards caid is matching and mininum a provider is matching
- **/
-int chk_ident(FTAB *ftab, struct cc_card *card) {
-
-	int j, k;
-	int res = 1;
-	
-	if (ftab && ftab->filts) {
-		for (j = 0; j < ftab->nfilts; j++) {
-			if (ftab->filts[j].caid) {
-				res = 0;
-				if (ftab->filts[j].caid==card->caid) { //caid matches!
-			
-					int nprids = ftab->filts[j].nprids;
-					if (!nprids) // No Provider ->Ok
-						return 1;
-					
-			
-					LL_ITER *it = ll_iter_create(card->providers);
-					struct cc_provider *prov;
-				
-					while ((prov = ll_iter_next(it))) {
-						for (k = 0; k < nprids; k++) {
-							ulong prid = ftab->filts[j].prids[k];
-							if (prid == prov->prov) { //Provider matches
-								ll_iter_release(it);
-								return 1;	
-							}			
-						}
-					}
-					ll_iter_release(it);
-				}
-			}
-		}
-	}
-	return res;
 }
 
 /**
