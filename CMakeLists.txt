@@ -224,36 +224,45 @@ add_definitions ("-DCS_OS_CPU=\\\"${CS_OS_CPU}\\\"")
 add_definitions ("-DCS_OS_HW=\\\"${CS_OS_HW}\\\"")
 add_definitions ("-DCS_OS_SYS=\\\"${CS_OS_SYS}\\\"")
 
+# Manage oscam-config.h based on command line parameters
+# Manipulate config file based on given parameters and read unset parameters
+
+# Available options
+set(addons WEBIF HAVE_DVBAPI IRDETO_GUESSING CS_ANTICASC WITH_DEBUG CS_WITH_DOUBLECHECK CS_LED QBOXHD_LED CS_LOGHISTORY WITH_SSL)
+set(protocols MODULE_CAMD33 MODULE_CAMD35 MODULE_CAMD35_TCP MODULE_NEWCAMD MODULE_CCCAM MODULE_RADEGAST MODULE_SERIAL MODULE_MONITOR MODULE_CONSTCW)
+set(readers WITH_CARDREADER READER_NAGRA READER_IRDETO READER_CONAX READER_CRYPTOWORKS READER_SECA READER_VIACCESS READER_VIDEOGUARD READER_DRE READER_TONGFANG)
+
+MACRO(GENERATE_OSCAM_CONFIG fullpath)
+	file(READ ${fullpath} config)
+	foreach(option ${addons} ${protocols} ${readers})
+		if(DEFINED ${option})
+			# Note: cmake does not read the file as individual lines but as a long
+			#		string, hence we use \n instead of ^ to determine where a line begins
+
+			if(${option})
+				string(REGEX REPLACE "\n//#define ${option}" "\n#define ${option}" config ${config})
+			else(${option})
+				string(REGEX REPLACE "\n#define ${option}" "\n//#define ${option}" config ${config})
+			endif(${option})
+		else(DEFINED ${option})
+			# read value from current oscam-config.h
+
+			if(${config} MATCHES "\n#define ${option}")
+				SET(${option} TRUE)
+			endif(${config} MATCHES "\n#define ${option}")
+		endif(DEFINED ${option})
+	endforeach(option)
+	file(WRITE ${fullpath} ${config})
+ENDMACRO(GENERATE_OSCAM_CONFIG fullpath)
+
 #----------------------- subdirectories ------------------------------
 
 include (CheckIncludeFile)
-if(CS_ANTICASC)
-    add_definitions ("-DCS_ANTICASC")
-endif(CS_ANTICASC)
-
-if(CS_LOGHISTORY)
-    add_definitions ("-DCS_LOGHISTORY")
-endif(CS_LOGHISTORY)
+GENERATE_OSCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/oscam-config.h")
 
 if(CS_WITH_GBOX)
     add_definitions ("-DCS_WITH_GBOX")
 endif(CS_WITH_GBOX)
-
-if(CS_LED)
-    add_definitions ("-DCS_LED")
-endif (CS_LED)
-
-if(QBOXHD_LED)
-    add_definitions ("-DQBOXHD_LED")
-endif (QBOXHD_LED)
-
-if (WEBIF)
-    add_definitions ("-DWEBIF")
-endif (WEBIF)
-
-if(IRDETO_GUESSING)
-    add_definitions ("-DIRDETO_GUESSING")
-endif (IRDETO_GUESSING)
 
 check_include_file ("pthread.h" HAVE_PTHREAD)
 if (HAVE_PTHREAD)
@@ -273,6 +282,16 @@ if (HAVE_SHA)
     add_definitions ("-DHAVE_SHA")
 endif (HAVE_SHA)
 
+find_package(OpenSSL QUIET)
+if (OPENSSL_FOUND)
+    include_directories(${OPENSSL_INCLUDE_DIR})
+    message(STATUS "  openssl found.")
+else (OPENSSL_FOUND)
+    message(STATUS "  openssl not found.")
+    if (WITH_SSL)
+        message(FATAL "  ssl support requested but not found! ")
+    endif (WITH_SSL)
+endif (OPENSSL_FOUND)
 
 if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
    if (LIBRTDIR)
@@ -439,6 +458,10 @@ endif (HAVE_LIBRT_STATIC AND HAVE_LIBUSB)
 if (HAVE_PTHREAD)
     target_link_libraries (${exe_name} pthread)
 endif (HAVE_PTHREAD)
+
+if (WITH_SSL)
+    target_link_libraries (${exe_name} ssl)
+endif (WITH_SSL)
 
 if (HAVE_AES)
     target_link_libraries (${exe_name} crypto)
@@ -648,20 +671,8 @@ endif (HAVE_PTHREAD)
 if (HAVE_LIBUSB)
     message (STATUS "  use system libusb functions")
 endif (HAVE_LIBUSB)
-if (WEBIF)
-    message (STATUS "  web interface enabled")
-endif (WEBIF)
-if (IRDETO_GUESSING)
-    message (STATUS "  irdeto guessing enabled")
-endif (IRDETO_GUESSING)
 if(CS_WITH_GBOX)
     message (STATUS "  gbox protocol enabled")
 endif(CS_WITH_GBOX)
-if(CS_LED)
-    message (STATUS "  led trigger support enabled")
-endif(CS_LED)
-if(QBOXHD_LED)
-    message (STATUS "  QboxHD led trigger support enabled")
-endif(QBOXHD_LED)
 
 message (STATUS "")

@@ -1,12 +1,12 @@
 #include "../oscam-config.h"
 
-#ifdef HAVE_AES
+#if defined(HAVE_AES) || defined(WITH_SSL)
 #include <openssl/aes.h>
 #else
 #include "aes/aes.h"
 #endif
 
-#ifdef HAVE_SHA
+#if defined(HAVE_SHA) || defined(WITH_SSL)
 #  include <openssl/sha.h>
 #else
 #  include "sha/sha1.h"

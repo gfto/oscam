@@ -147,11 +147,6 @@
 #  endif
 #endif
 
-#ifdef WITH_SSL
-#  define HAVE_AES
-#  define HAVE_SHA
-#endif
-
 #ifdef UCLIBC
 #  define CS_EMBEDDED
 #  define NO_FTIME
