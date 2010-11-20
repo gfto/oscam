@@ -687,7 +687,7 @@ int get_UA_len(uint16 caid) {
 		len = 4;
 		break;
 	case 0x18: //NAGRA:
-		len = 4;
+		len = 6;
 		break;
 	case 0x05: //VIACCESS:
 		len = 5;
