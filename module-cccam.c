@@ -1978,10 +1978,10 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		memset(&key, 0, sizeof(key));
 
 		cs_ddump(aeskey, 16, "%s CMD_0B AES key:", getprefix());
-		cs_ddump(buf + 4, 16, "%s CMD_0B received data:", getprefix());
+		cs_ddump(data, 16, "%s CMD_0B received data:", getprefix());
 
 		AES_set_encrypt_key((unsigned char *) &aeskey, 128, &key);
-		AES_encrypt((unsigned char *) buf + 4, (unsigned char *) &out, &key);
+		AES_encrypt((unsigned char *) data, (unsigned char *) &out, &key);
 
 		cs_debug_mask(D_TRACE, "%s sending CMD_0B! ", getprefix());
 		cs_ddump(out, 16, "%s CMD_0B out:", getprefix());
@@ -1990,7 +1990,37 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		break;
 	}
 
-	case MSG_CMD_0C:
+	case MSG_CMD_0C: { //New CCCAM 2.2.0 Server fake check!
+		int len = l-4;
+		
+		cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
+		cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
+		
+		uint8 bytes[0x20];
+		if (len < 0x20) //if less then 0x20 bytes, clear others:
+			memset(data+len, 0, 0x20-len);
+		
+		//change first 0x10 bytes to the second:
+		memcpy(bytes, data+0x10, 0x10);
+		memcpy(bytes+0x10, data, 0x10);
+		
+		//xor data:
+		int i;
+		for (i=0;i<0x20;i++)
+			bytes[i] = bytes[i] ^ (data[i] & 0x7F);
+			
+		//key is now the 16bit hash of md5:
+		uint8 md5hash[0x10];
+		MD5(bytes, 0x20, md5hash);
+		memcpy(bytes, md5hash, 0x10);
+		
+		cs_debug_mask(D_TRACE, "%s sending CMD_0C! ", getprefix());
+		cs_ddump(bytes, 0x20, "%s CMD_0C out:", getprefix());
+		cc_cmd_send(cl, bytes, 0x20, MSG_CMD_0C);	
+		
+		break;
+	}
+		
 	case MSG_CMD_0D:
 	case MSG_CMD_0E: {
 		cs_log("cccam 2.2.0 commands not implemented");
