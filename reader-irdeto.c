@@ -376,6 +376,10 @@ static int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 				// hex addressed
 				return (base == rdr->hexserial[3] && !memcmp(ep->emm + 4, rdr->hexserial, l));
 			}
+			else if (base == 0) {
+				// FIXME: shared emm but hexbase was zero, dont see yet, but we should accept this
+				return TRUE;
+			}
 			else {
 				// provider addressed
 				for(i = 0; i < rdr->nprov; i++)
@@ -451,24 +455,21 @@ static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 	int i, l = (ep->emm[3] & 0x07), ok = 0;
 	int mode = (ep->emm[3] >> 3);
-
 	uchar *emm = ep->emm;
-	if (mode & 0x10)		// Hex addressed
-	{
+
+	if (mode & 0x10) {		// Hex addressed
 		ok=(mode == reader->hexserial[3] &&
 				(!l || !memcmp(&emm[4], reader->hexserial, l)));
 	}
-	else				// Provider addressed
-	{
-		for(i = 0; i < reader->nprov; i++)
-		{
+	else {				// Provider addressed
+		for(i = 0; i < reader->nprov; i++) {
 			ok=(mode == reader->prid[i][0] &&
 					(!l || !memcmp(&emm[4], &reader->prid[i][1], l)));
 			if (ok) break;
 		}
 	}
 
-	if (ok)
+	if (ok || mode == 0)
 	{
 		l++;
 		if (l <= ADDRLEN)
