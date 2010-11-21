@@ -2101,9 +2101,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	}
 
 	case MSG_CMD_0C: { //New CCCAM 2.2.0 Server fake check!
+		int len = l-4;
 		if (cl->typ == 'c') { //Only im comming from "client"
-			int len = l-4;
-		
 			cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
 			cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
 		
@@ -2111,7 +2110,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			if (len < 0x20) //if less then 0x20 bytes, clear others:
 				memset(data+len, 0, 0x20-len);
 		
-				//change first 0x10 bytes to the second:
+			//change first 0x10 bytes to the second:
 			memcpy(bytes, data+0x10, 0x10);
 			memcpy(bytes+0x10, data, 0x10);
 		
@@ -2131,20 +2130,29 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		}
 		else //reader
 		{
-			//unknown handling!!
-			switch(data[0]) {
-				case 0x00: //unknown
-				case 0x01: //something with cc_init_crypt
-				case 0x02: //unknown	
-				case 0x03: //something with init AES
-				case 0x04: //unknown
-				case 0x05: //unknown
-				case 0x06: //unknown
-				case 0x07: //unknown
-					break;
-			}
-			cs_log("%s cycle connection because of unknown commands!", getprefix());
-			cc_cli_close(cl, TRUE);
+			cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
+			cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
+			uint8 CMD_0x0C_CMD = data[0];
+			
+			cs_log("%s received MSG_CMD_0C from server! CMD_0x0C_CMD=%d, cycle connection!", getprefix(), CMD_0x0C_CMD);
+						
+			//Unkown commands...need workout algo
+			if (CMD_0x0C_CMD < 5)
+				cc_cli_close(cl, TRUE);
+				
+			//TODO
+			//    * CMD_0x0C_01
+			//     1. Set Mode to CMD_0x0C_01
+			//     2. cc_init_crypt(BlockCMD_0x0C, data) with $20 received Bytes
+			//     3. CW with cc_cw_crypt and cc_rc4_crypt(BlockCMD_0x0C, ENCRYPT)
+			//                      
+			//    * CMD_0x0C_02
+			//     1. Set Mode to CMD_0x0C_02
+		 	//     2. cc_init_crypt(BlockCMD_0x0C, data) with $20 received Bytes
+			//     3. CW with cc_cw_crypt and cc_crypt(BlockCMD_0x0C, DECRYPT)
+			//                                            
+			                            
+			                                            
 		}
 		break;
 	}
