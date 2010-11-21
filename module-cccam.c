@@ -2102,33 +2102,34 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	}
 
 	case MSG_CMD_0C: { //New CCCAM 2.2.0 Server fake check!
-		int len = l-4;
+		if (cl->typ != 'c') { //Only im comming from "reader"
+			int len = l-4;
 		
-		cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
-		cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
+			cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
+			cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
 		
-		uint8 bytes[0x20];
-		if (len < 0x20) //if less then 0x20 bytes, clear others:
-			memset(data+len, 0, 0x20-len);
+			uint8 bytes[0x20];
+			if (len < 0x20) //if less then 0x20 bytes, clear others:
+				memset(data+len, 0, 0x20-len);
 		
-		//change first 0x10 bytes to the second:
-		memcpy(bytes, data+0x10, 0x10);
-		memcpy(bytes+0x10, data, 0x10);
+				//change first 0x10 bytes to the second:
+			memcpy(bytes, data+0x10, 0x10);
+			memcpy(bytes+0x10, data, 0x10);
 		
-		//xor data:
-		int i;
-		for (i=0;i<0x20;i++)
-			bytes[i] = bytes[i] ^ (data[i] & 0x7F);
+			//xor data:
+			int i;
+			for (i=0;i<0x20;i++)
+				bytes[i] = bytes[i] ^ (data[i] & 0x7F);
 			
-		//key is now the 16bit hash of md5:
-		uint8 md5hash[0x10];
-		MD5(bytes, 0x20, md5hash);
-		memcpy(bytes, md5hash, 0x10);
-		
-		cs_debug_mask(D_TRACE, "%s sending CMD_0C! ", getprefix());
-		cs_ddump(bytes, 0x20, "%s CMD_0C out:", getprefix());
-		cc_cmd_send(cl, bytes, 0x20, MSG_CMD_0C);	
-		
+				//key is now the 16bit hash of md5:
+			uint8 md5hash[0x10];
+			MD5(data, 0x20, md5hash);
+			memcpy(bytes, md5hash, 0x10);
+			
+			cs_debug_mask(D_TRACE, "%s sending CMD_0C! ", getprefix());
+			cs_ddump(bytes, 0x20, "%s CMD_0C out:", getprefix());
+			cc_cmd_send(cl, bytes, 0x20, MSG_CMD_0C);	
+		}
 		break;
 	}
 		
