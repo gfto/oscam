@@ -2102,7 +2102,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	}
 
 	case MSG_CMD_0C: { //New CCCAM 2.2.0 Server fake check!
-		if (cl->typ != 'c') { //Only im comming from "reader"
+		if (cl->typ == 'c') { //Only im comming from "reader"
 			int len = l-4;
 		
 			cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
