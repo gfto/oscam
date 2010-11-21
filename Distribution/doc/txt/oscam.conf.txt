@@ -559,21 +559,6 @@ WEB INTERFACE
 	  orignal template with the non-linked page savetemplates.html. Store your own template  in  the  directory
 	  specified by httptpl.
 
-       ·  SSL connection to the web interface
-
-	  The  Apache  module  mod_proxy  can be used to proxy requests to the web interface. With this module it's
-	  also possible to use a SSL connection to the web interface.
-
-	   ProxyRequests Off
-	    <Proxy *>
-	     Order deny,allow
-	     Allow from all
-	    </Proxy>
-	    ProxyPass /oscam/ http://localhost:8080/
-	    ProxyPassReverse /oscam/ http://localhost:8080/
-
-	  For further information please read the Apache documentation.
-
        ·  known issues
 
 	  Login is not possible by now with the Safari browser because of incorrect stale flag handling. Increasing
@@ -614,7 +599,7 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),   oscam.ac(5),  oscam.cert(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5),
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.dvbapi(5),   oscam.guess(5),   oscam.ird(5),
        oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 

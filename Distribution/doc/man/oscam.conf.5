@@ -780,23 +780,6 @@ own template request the orignal template with the non-linked page
 by \fBhttptpl\fP. 
 .TP 3n
 \(bu
-SSL connection to the web interface
-
-The Apache module \fBmod_proxy\fP can be used to proxy requests to the web 
-interface. With this module it's also possible to use a SSL connection to 
-the web interface. 
-
- ProxyRequests Off
-  <Proxy *>
-   Order deny,allow
-   Allow from all
-  </Proxy>
-  ProxyPass /oscam/ http://localhost:8080/
-  ProxyPassReverse /oscam/ http://localhost:8080/
-
-For further information please read the Apache documentation. 
-.TP 3n
-\(bu
 known issues
 
 Login is not possible by now with the Safari browser because of incorrect 
