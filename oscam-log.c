@@ -3,8 +3,6 @@
 #include <syslog.h>
 #include <stdlib.h>
 
-int number_of_chars_printed = 0;
-
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
 static pthread_mutex_t switching_log;
@@ -15,8 +13,8 @@ FILE *fpa=(FILE *)0;
 
 static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 {
-	if( cfg->max_log_size) //only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
-																					 //at the same time, it is ok to have the other logs switching 1 entry later
+	if( cfg->max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
+					//at the same time, it is ok to have the other logs switching 1 entry later
 	{
 		struct stat stlog;
 
@@ -26,7 +24,7 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 			return;
 		}
 
-		if( stlog.st_size >= cfg->max_log_size*1024 ) {
+		if( stlog.st_size >= cfg->max_log_size*1024 && *f != NULL) {
 			int rc;
 			char prev_log[128];
 			sprintf(prev_log, "%s-prev", file);
@@ -154,10 +152,6 @@ static void write_to_log(int flag, char *txt)
 					lt->tm_year+1900, lt->tm_mon+1, lt->tm_mday,
 					lt->tm_hour, lt->tm_min, lt->tm_sec, txt);
 			break;
-		case 16:
-			number_of_chars_printed = 0;
-			sprintf(log_buf, "[LOG000]%s\n", txt);
-			break;
 		default:
 			sprintf(log_buf, "[LOG000]%s", txt);
 	}
@@ -241,24 +235,6 @@ void cs_debug_mask(unsigned short mask, const char *fmt,...)
 		vsprintf(log_txt+11, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
-	}
-}
-
-void cs_debug_nolf(const char *fmt,...)
-{
-	char log_txt[512];
-	if (cs_dblevel & cur_client()->cs_ptyp)
-	{
-		va_list params;
-		va_start(params, fmt);
-		vsprintf(log_txt, fmt, params);
-		va_end(params);
-		if(!memcmp(log_txt,"\n", 1)) {
-			number_of_chars_printed = 0;
-		}
-		else
-			number_of_chars_printed++;
-		write_to_log(number_of_chars_printed, log_txt);
 	}
 }
 #endif

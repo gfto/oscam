@@ -429,7 +429,6 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 			return ERROR;
 	}
 	
-	cs_debug ("IO: Receiving: ");
 	for (count = 0; count < size ; count++)
 	{
 #ifdef SH4
@@ -445,31 +444,32 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
  			}
  			gettimeofday(&tv_spent,0);
 		}
-		if(!readed) return ERROR;
-		
-		data[count] = c;
-		cs_debug_nolf ("%02X ", c);
+		if(!readed) {
+			cs_ddump(data, count, "IO: Receiving:");
+			return ERROR;
+		}
 #else
 		if (!IO_Serial_WaitToRead (reader, 0, timeout))
 		{
 			if (read (reader->handle, &c, 1) != 1)
 			{
+				cs_ddump(data, count, "IO: Receiving:");
 				cs_log("ERROR in IO_Serial_Read errno=%d", errno);
 				tcflush (reader->handle, TCIFLUSH);
 				return ERROR;
 			}
-			data[count] = c;
-			cs_debug_nolf ("%02X ", c);
 		}
 		else
 		{
+			cs_ddump(data, count, "IO: Receiving:");
 			cs_debug("TIMEOUT in IO_Serial_Read");
 			tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
 #endif
+		data[count] = c;
 	}
-	cs_debug_nolf("\n"); //UGLY this is essential, resets global var, do not delete
+	cs_ddump(data, count, "IO: Receiving:");
 	return OK;
 }
 

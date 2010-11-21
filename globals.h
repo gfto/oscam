@@ -1445,14 +1445,12 @@ extern void cs_write_log(char *);
 extern void cs_log(const char *,...);
 #ifdef WITH_DEBUG
 extern void cs_debug(const char *,...);
-extern void cs_debug_nolf(const char *,...);
 extern void cs_debug_mask(unsigned short, const char *,...);
 extern void cs_ddump(const uchar *, int, char *, ...);
 extern void cs_ddump_mask(unsigned short, const uchar *, int, char *, ...);
 #else
 #define cs_debug(...)
 #define cs_debug_mask(...)
-#define cs_debug_nolf(...)
 #define cs_ddump(...)
 #define cs_ddump_mask(...)
 #endif
