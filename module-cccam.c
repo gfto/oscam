@@ -1521,7 +1521,6 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 		ofs+=8;
 		buf[nremote_ofs]++;
 	}
-	buf[10] = buf[nremote_ofs];
 	return ofs;
 }
 
@@ -2102,7 +2101,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	}
 
 	case MSG_CMD_0C: { //New CCCAM 2.2.0 Server fake check!
-		if (cl->typ == 'c') { //Only im comming from "reader"
+		//if (cl->typ = 'c') { //Only im comming from "reader"
 			int len = l-4;
 		
 			cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
@@ -2129,7 +2128,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cs_debug_mask(D_TRACE, "%s sending CMD_0C! ", getprefix());
 			cs_ddump(bytes, 0x20, "%s CMD_0C out:", getprefix());
 			cc_cmd_send(cl, bytes, 0x20, MSG_CMD_0C);	
-		}
+		//}
 		break;
 	}
 		
@@ -2704,8 +2703,6 @@ void cc_srv_report_cards(struct s_client *cl) {
 			struct cc_card *card = create_card2(rdr, j, caid, hop, reshare);
 			if (au_allowed)
 				cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
-			if (au_allowed)
-				cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
 			for (j = 0; j < rdr->nprov; j++) {
 				ulong prid = get_reader_prid(rdr, j);
 				struct cc_provider *prov = malloc(sizeof(struct cc_provider));
@@ -2848,7 +2845,7 @@ int cc_cards_modified() {
 	int modified = 0;
 	struct s_reader *rdr;
 	for (rdr = first_reader; rdr; rdr = rdr->next) {
-		if (rdr->typ == R_CCCAM && rdr->fd) {
+		if (rdr->typ == R_CCCAM && rdr->fd && rdr->enable && !rdr->deleted) {
 			struct s_client *clr = rdr->client;
 			if (clr->cc) {
 				struct cc_data *ccr = clr->cc;
