@@ -2663,6 +2663,11 @@ void write_versionfile() {
 
 #ifdef WEBIF
 	  fprintf(fp, "Webif support:    yes\n");
+#ifdef WITH_SSL
+	  fprintf(fp, "Webif SSL:        yes\n");
+#else
+	  fprintf(fp, "Webif SSL:        no\n");
+#endif
 #else
 	  fprintf(fp, "Webif support:    no\n");
 #endif
