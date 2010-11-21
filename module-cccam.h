@@ -162,6 +162,7 @@ struct cc_data {
 	char remote_version[7];
 	char remote_build[7];
 	char remote_oscam[200];
+	uint8 cccam220;
 
 	uint8 mode;
 		
