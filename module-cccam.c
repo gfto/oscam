@@ -2101,7 +2101,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	}
 
 	case MSG_CMD_0C: { //New CCCAM 2.2.0 Server fake check!
-		//if (cl->typ = 'c') { //Only im comming from "reader"
+		if (cl->typ == 'c') { //Only im comming from "client"
 			int len = l-4;
 		
 			cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
@@ -2118,7 +2118,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			//xor data:
 			int i;
 			for (i=0;i<0x20;i++)
-				bytes[i] = bytes[i] ^ (data[i] & 0x7F);
+				bytes[i] ^= (data[i] & 0x7F);
 			
 				//key is now the 16bit hash of md5:
 			uint8 md5hash[0x10];
@@ -2128,7 +2128,24 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cs_debug_mask(D_TRACE, "%s sending CMD_0C! ", getprefix());
 			cs_ddump(bytes, 0x20, "%s CMD_0C out:", getprefix());
 			cc_cmd_send(cl, bytes, 0x20, MSG_CMD_0C);	
-		//}
+		}
+		else //reader
+		{
+			//unknown handling!!
+			switch(data[0]) {
+				case 0x00: //unknown
+				case 0x01: //something with cc_init_crypt
+				case 0x02: //unknown	
+				case 0x03: //something with init AES
+				case 0x04: //unknown
+				case 0x05: //unknown
+				case 0x06: //unknown
+				case 0x07: //unknown
+					break;
+			}
+			cs_log("%s cycle connection because of unknown commands!", getprefix());
+			cc_cli_close(cl, TRUE);
+		}
 		break;
 	}
 		
