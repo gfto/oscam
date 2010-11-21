@@ -4,14 +4,15 @@
 // ADDONS
 #ifndef WEBIF
 #define WEBIF
-#ifndef WITH_SSL
-#define WITH_SSL
 #endif
+
+#ifndef WITH_SSL
+//#define WITH_SSL
 #endif
 
 #ifndef HAVE_DVBAPI
 #if !defined(OS_CYGWIN32) && !defined(OS_HPUX) && !defined(OS_FREEBSD) && !defined(OS_MACOSX)
-#define HAVE_DVBAPI
+//#define HAVE_DVBAPI
 #endif
 #endif
 
@@ -28,11 +29,11 @@
 #endif
 
 #ifndef CS_LED
-#define CS_LED
+//#define CS_LED
 #endif
 
 #ifndef CS_WITH_DOUBLECHECK
-#define CS_WITH_DOUBLECHECK
+//#define CS_WITH_DOUBLECHECK
 #endif
 
 // MODULE
@@ -118,7 +119,7 @@
 #endif
 
 #ifndef QBOXHD_LED
-#define QBOXHD_LED
+//#define QBOXHD_LED
 #endif
 
 #ifndef CS_LOGHISTORY

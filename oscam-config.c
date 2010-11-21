@@ -792,6 +792,8 @@ void chk_t_webif(char *token, char *value)
 			if (value[0]=='+') {
 #ifdef WITH_SSL
 				cfg->http_use_ssl=1;
+#else
+				fprintf(stderr, "Warning: OSCam compiled without SSL support.\n");
 #endif
 				cfg->http_port = atoi(value+1);
 			} else {
