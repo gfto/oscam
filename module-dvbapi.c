@@ -341,6 +341,11 @@ void dvbapi_add_ecmpid(int demux_id, ushort caid, ushort ecmpid, ulong provid) {
 	int stream = demux[demux_id].STREAMpidcount-1;
 	for (n=0;n<demux[demux_id].ECMpidcount;n++) {
 		if (stream>-1 && demux[demux_id].ECMpids[n].CAID == caid && demux[demux_id].ECMpids[n].ECM_PID == ecmpid) {
+			if (demux[demux_id].ECMpids[n].slen == 0) {
+				//we already got this caid/ecmpid as global, no need to add the single stream
+				cs_debug("[SKIP STREAM %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", n, caid, ecmpid, provid);
+				continue;
+			}
 			added=1;
 			demux[demux_id].ECMpids[n].stream[demux[demux_id].ECMpids[n].slen++]=stream;
 			cs_debug("[ADD STREAM %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", n, caid, ecmpid, provid);
