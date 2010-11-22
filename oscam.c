@@ -2244,6 +2244,12 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		return;
 	}
 
+	//2nd check for audisabled.
+	if (aureader->audisabled) {
+		cs_debug_mask(D_EMM, "AU is disabled for reader %s", aureader->label);
+		return;
+	}
+
 	if (aureader->card_system>0) {
 		if (!reader_get_emm_type(ep, aureader)) { //decodes ep->type and ep->hexserial from the EMM
 			cs_debug_mask(D_EMM, "emm skipped");
