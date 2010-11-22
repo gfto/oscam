@@ -28,7 +28,12 @@ char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
 pthread_key_t getclient;
 
+//Cache for **found** cws:
 struct  s_ecm     *cwcache;
+struct  s_ecm     *cwidx;
+
+//Cache for **requesting** ecms:
+struct  s_ecm     *ecmcache;
 struct  s_ecm     *ecmidx;
 
 #ifdef CS_WITH_GBOX
@@ -398,6 +403,15 @@ static void cleanup_thread(struct s_client *cl)
 	struct s_ecm *ecmc;
 	if (cwcache->next != NULL) { //keep it at least on one entry big
 		for (ecmc=cwcache; ecmc->next->next ; ecmc=ecmc->next) ; //find last element
+		if (cwidx==ecmc->next)
+		  cwidx = cwcache;
+		NULLFREE(ecmc->next); //free last element
+	}
+  //decrease ecmache
+	if (ecmcache->next != NULL) { //keep it at least on one entry big
+		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next) ; //find last element
+		if (ecmidx==ecmc->next)
+		  ecmidx = ecmcache;
 		NULLFREE(ecmc->next); //free last element
 	}
 }
@@ -605,6 +619,11 @@ struct s_client * cs_fork(in_addr_t ip) {
 		ecmc->next = malloc(sizeof(struct s_ecm));
 		if (ecmc->next)
 			memset(ecmc, 0, sizeof(struct s_ecm));
+		//increase ecmcache
+		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
+		ecmc->next = malloc(sizeof(struct s_ecm));
+		if (ecmc->next)
+			memset(ecmc, 0, sizeof(struct s_ecm));
 	} else {
 		cs_log("max connections reached -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
@@ -650,8 +669,11 @@ static void init_signal()
 
 static void init_shm()
 {
-  ecmidx=cwcache=malloc(sizeof(struct s_ecm));
+  cwidx=cwcache=malloc(sizeof(struct s_ecm));
   cwcache->next = NULL;
+  ecmidx=ecmcache=malloc(sizeof(struct s_ecm));
+  ecmcache->next = NULL;
+
   first_client = malloc(sizeof(struct s_client));
 	if (!first_client) {
     fprintf(stderr, "Could not allocate memory for master client, exiting...");
@@ -1145,6 +1167,22 @@ void cs_disconnect_client(struct s_client * client)
 }
 
 /**
+ * ecm cache
+ **/
+int check_ecmcache(ECM_REQUEST *er, uint64 grp)
+{
+	struct s_ecm *ecmc;
+	for (ecmc=ecmcache; ecmc ; ecmc=ecmc->next)
+		if ((grp & ecmc->grp) &&
+		     ecmc->caid==er->caid &&
+		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
+		{
+			return(1);
+		}
+	return(0);
+}
+
+/**
  * cache 1: client-invoked
  * returns found ecm task index
  **/
@@ -1179,23 +1217,35 @@ int check_cwcache2(ECM_REQUEST *er, uint64 grp)
 }
 
 
-static void store_ecm(ECM_REQUEST *er)
+static void store_cw(ECM_REQUEST *er, uint64 grp)
 {
 #ifdef CS_WITH_DOUBLECHECK
 	if (cfg->double_check && er->checked < 2)
 		return;
 #endif
+	if (cwidx->next)
+		cwidx=cwidx->next;
+	else
+		cwidx=cwcache;
+	//cs_log("store ecm from reader %d", er->selected_reader);
+	memcpy(cwidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
+        memcpy(cwidx->cw, er->cw, 16);
+	cwidx->caid = er->caid;
+	cwidx->grp = grp;
+	cwidx->reader = er->selected_reader;
+	//cs_ddump(cwcache[*cwidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *cwidx);
+}
+
+static void store_ecm(ECM_REQUEST *er, uint64 grp)
+{
 	if (ecmidx->next)
 		ecmidx=ecmidx->next;
 	else
-		ecmidx=cwcache;
-	//cs_log("store ecm from reader %d", er->selected_reader);
+		ecmidx=ecmcache;
 	memcpy(ecmidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
-	memcpy(ecmidx->cw, er->cw, 16);
 	ecmidx->caid = er->caid;
-	ecmidx->grp = er->selected_reader->grp;
+	ecmidx->grp = grp;
 	ecmidx->reader = er->selected_reader;
-	//cs_ddump(cwcache[*ecmidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *ecmidx);
 }
 
 // only for debug
@@ -1372,6 +1422,29 @@ void logCWtoFile(ECM_REQUEST *er)
 	fclose(pfCWL);
 }
 
+void distribute_ecm(ECM_REQUEST *er)
+{
+  struct s_client *cl;
+  ECM_REQUEST *ecm;
+  int n, i;
+  er->rc = 2; //cache
+  
+  for (cl=first_client->next; cl ; cl=cl->next) {
+    if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask) {
+     
+      n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
+      for (i=0; i<n; i++) {
+        ecm = &cl->ecmtask[i];
+        if (ecm->rc == 99 && ecm->ocaid==er->ocaid && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)==0) {
+          er->cpti = ecm->cpti;
+          write_ecm_request(cl->fd_m2c, er);
+        }
+      }
+    }
+  }
+}
+
+
 int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 {
   int i;
@@ -1395,7 +1468,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 #else
   if (er->rc==1) {
 #endif
-    store_ecm(er);
+    store_cw(er, reader->grp);
 
     /* CWL logging only if cwlogdir is set in config */
     if (cfg->cwlogdir != NULL)
@@ -1408,6 +1481,8 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
     res = write_ecm_request(er->client->fd_m2c, er);
     //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
   }
+  if (er->rc==1)
+    distribute_ecm(er);
 
   return res;
 }
@@ -1458,7 +1533,7 @@ ECM_REQUEST *get_ecmtask()
 		if (ph[cl->ctyp].multi)
 		{
 			for (i=0; (n<0) && (i<CS_MAXPENDING); i++)
-				if (cl->ecmtask[i].rc<100)
+				if (cl->ecmtask[i].rc<99)
 					er=&cl->ecmtask[n=i];
 		}
 		else
@@ -1676,7 +1751,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	    return 0;
 	  }
 
-	  store_ecm(er); //Store in cache!
+	  store_cw(er, er->selected_reader->grp); //Store in cache!
 
 	}
 #endif
@@ -1703,7 +1778,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->selected_reader, er->cpti, er->rc);
   ert=&cl->ecmtask[er->cpti];
-  if (ert->rc<100) {
+  if (ert->rc<99) {
 	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, er->selected_reader->label);
 	send_reader_stat(er->selected_reader, er, (er->rc <= 0)?4:0);
 	return; // already done
@@ -2162,6 +2237,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		// cache1
 		if (check_cwcache1(er, client->grp))
 			er->rc = 1;
+                else if (check_ecmcache(er, client->grp)) {
+                        er->rc = 99;
+                        return; //ecm already requested!
+                }
+                else
+                        store_ecm(er, client->grp); //Only ECM, no CW!
 
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);
