@@ -563,7 +563,16 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
   cs_ddump_mask(D_ATR, er->ecm, er->l, "ecm:");
   er->msglog[0] = 0;
+  struct timeb tps, tpe;
+  cs_ftime(&tps);
   er->rc=reader_ecm(reader, er);
+  cs_ftime(&tpe);
+  if (cs_dblevel) {
+	ushort lc, *lp;
+	for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
+		lc^=*lp;
+	cs_debug_mask(D_TRACE, "reader: %s ecm: %04X real time: %d ms", reader->label, lc, 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
+  }
   write_ecm_answer(reader, er);
   reader_post_process(reader);
 #endif
