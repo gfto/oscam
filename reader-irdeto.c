@@ -223,7 +223,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 	get_atr;
 	int camkey = 0;
 	uchar buf[256] = {0};
-       uchar sc_GetCamKey383C[]  = { 0x02, 0x09, 0x03, 0x00, 0x40,
+	uchar sc_GetCamKey383C[]  = { 0x02, 0x09, 0x03, 0x00, 0x40,
                           0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
                           0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
                           0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
@@ -463,10 +463,8 @@ static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	}
 	else {
 		// not hex addressed and emm mode zero
-		if (mode == 0) {
+		if (mode == 0)
 			ok = 1;
-			l = 2;
-		}
 		else {
 			// provider addressed
 			for(i = 0; i < reader->nprov; i++) {
@@ -482,12 +480,12 @@ static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			const int dataLen = SCT_LEN(emm) - 5 - l;		// sizeof of emm bytes (nanos)
 			uchar *ptr = cta_cmd;
 			memcpy(ptr, sc_EmmCmd, sizeof(sc_EmmCmd));		// copy card command
-			ptr[4] = dataLen + ADDRLEN;						// set card command emm size
+			ptr[4] = dataLen + ADDRLEN;				// set card command emm size
 			ptr += sizeof(sc_EmmCmd); emm += 3;
-			memset(ptr, 0, ADDRLEN);						// clear addr range
-			memcpy(ptr, emm, l);							// copy addr bytes
+			memset(ptr, 0, ADDRLEN);				// clear addr range
+			memcpy(ptr, emm, l);					// copy addr bytes
 			ptr += ADDRLEN; emm += l;
-			memcpy(ptr, &emm[2], dataLen);					// copy emm bytes
+			memcpy(ptr, &emm[2], dataLen);				// copy emm bytes
 			return(irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr) ? 0 : 1);
 		}
 		else
