@@ -1427,10 +1427,11 @@ void distribute_ecm(ECM_REQUEST *er)
   struct s_client *cl;
   ECM_REQUEST *ecm;
   int n, i;
-  er->rc = 2; //cache
+  if (er->rc==1) //found converte to cache...
+    er->rc = 2; //cache
   
   for (cl=first_client->next; cl ; cl=cl->next) {
-    if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask) {
+    if (cl->fd_m2c && cl->pfd && cl->typ=='c' && cl->ecmtask && (er->selected_reader->grp & cl->grp)) {
      
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
