@@ -501,8 +501,12 @@ void dvbapi_start_descrambling(int demux_id) {
 				&& demux[demux_id].ECMpids[demux[demux_id].curindex].PROVID == demux[demux_id].ECMpids[j].PROVID
 				&& demux[demux_id].ECMpids[j].PROVID > 0)) {
 
-			if (demux[demux_id].curindex != j)
+			if (demux[demux_id].curindex != j) {
+				if (demux[demux_id].ECMpids[j].status < 0 || demux[demux_id].ECMpids[demux[demux_id].curindex].slen == 0)
+					continue;
+
 				dvbapi_start_filter(demux_id, j, demux[demux_id].ECMpids[j].ECM_PID, 0x80, 0xF0, 3000, TYPE_ECM);
+			}
 
 			demux[demux_id].ECMpids[j].index=dvbapi_get_descindex();
 			demux[demux_id].ECMpids[j].checked=1;
