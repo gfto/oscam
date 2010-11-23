@@ -1481,8 +1481,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
     res = write_ecm_request(er->client->fd_m2c, er);
     //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
   }
-  if (er->rc==1)
-    distribute_ecm(er);
+  distribute_ecm(er);
 
   return res;
 }
