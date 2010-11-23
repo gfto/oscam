@@ -1,8 +1,5 @@
 #include "globals.h"
-//#include "module-datastruct-llist.h"
 #include "module-datastruct-llist.h"
-
-static pthread_mutex_t stat_busy;
 
 void init_stat();
 
