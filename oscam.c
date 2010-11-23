@@ -1422,12 +1422,15 @@ void logCWtoFile(ECM_REQUEST *er)
 	fclose(pfCWL);
 }
 
+/**
+ * distributes found ecm-request to all clients with rc=99
+ **/
 void distribute_ecm(ECM_REQUEST *er)
 {
   struct s_client *cl;
   ECM_REQUEST *ecm;
   int n, i;
-  if (er->rc==1) //found converte to cache...
+  if (er->rc==1) //found converted to cache...
     er->rc = 2; //cache
   
   for (cl=first_client->next; cl ; cl=cl->next) {
@@ -2473,7 +2476,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	//cs_log("num pend=%d", i);
 
 	for (--i; i>=0; i--) {
-		if (cl->ecmtask[i].rc>=100) { // check all pending ecm-requests
+		if (cl->ecmtask[i].rc>=99) { // check all pending ecm-requests
 			int act, j;
 			er=&cl->ecmtask[i];
 			tpc=er->tps;
@@ -2481,7 +2484,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			tt = (er->stage) ? cfg->ctimeout : cfg->ftimeout;
 			tpc.time +=tt / 1000;
 			tpc.millitm += tt % 1000;
-			if (!er->stage) {
+			if (!er->stage && er->rc>=100) {
 				struct s_reader *rdr;
 				for (j=0, act=1, rdr=first_reader; (act) && rdr ; rdr=rdr->next, j++) {
 					if (cfg->preferlocalcards && !er->locals_done) {
@@ -2542,7 +2545,8 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					continue;
 				} else {
 					er->stage++;
-					request_cw(er, er->stage, 0);
+					if (er->rc>=100) //do not request rc=99
+					        request_cw(er, er->stage, 0);
 					unsigned int tt;
 					tt = (cfg->ctimeout-cfg->ftimeout);
 					tpc.time += tt / 1000;
