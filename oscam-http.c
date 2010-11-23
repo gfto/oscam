@@ -418,6 +418,8 @@ void send_oscam_config_cccam(struct templatevars *vars, FILE *f, struct uriparam
 		tpl_addVar(vars, 0, "VERSIONSELECTED4", "selected");
 	} else if (!strcmp((char*)cfg->cc_version,"2.2.0")) {
 		tpl_addVar(vars, 0, "VERSIONSELECTED5", "selected");
+	} else if (!strcmp((char*)cfg->cc_version,"2.2.1")) {
+		tpl_addVar(vars, 0, "VERSIONSELECTED6", "selected");
 	}
 
 	tpl_printf(vars, 0, "UPDATEINTERVAL", "%d", cfg->cc_update_interval);
@@ -1093,6 +1095,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED4", "selected");
 	} else if (!strcmp(rdr->cc_version, "2.2.0")) {
 		tpl_addVar(vars, 0, "CCCVERSIONSELECTED5", "selected");
+	} else if (!strcmp(rdr->cc_version, "2.2.1")) {
+		tpl_addVar(vars, 0, "CCCVERSIONSELECTED6", "selected");
 	}
 
 #ifdef LIBUSB
@@ -1221,7 +1225,6 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 
 	if (rdr->lb_stat) {
 
-		pthread_mutex_lock(&stat_busy);
 		LL_ITER *it = ll_iter_create(rdr->lb_stat);
 		READER_STAT *stat = ll_iter_next(it);
 		while (stat) {
@@ -1251,7 +1254,6 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 		}
 
 		ll_iter_release(it);
-		pthread_mutex_unlock(&stat_busy);
 
 	} else {
 		tpl_addVar(vars, 1, "READERSTATSROW","<TR><TD colspan=\"6\"> No statistics found </TD></TR>");

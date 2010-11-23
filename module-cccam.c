@@ -423,8 +423,8 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 }
 
 #define CC_DEFAULT_VERSION 1
-char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "" };
-char *build[] = { "2892", "2971", "3094", "3165", "3191", "3290", "" };
+char *version[] = { "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "2.2.1", "" };
+char *build[] = { "2892", "2971", "3094", "3165", "3191", "3290", "3316", "" };
 
 /**
  * reader+server
@@ -2865,7 +2865,9 @@ int cc_srv_wakeup_readers(struct s_client *cl) {
 			continue;
 		if (!(rdr->grp & cl->grp))
 			continue;
-
+		if (rdr->cc_keepalive) //if reader has keepalive but is NOT connected, reader can't connect. so don't ask him
+			continue;
+		
 		//This wakeups the reader:
 		uchar dummy;
 		write_to_pipe(rdr->fd, PIP_ID_CIN, &dummy, sizeof(dummy));
@@ -2878,7 +2880,7 @@ int cc_cards_modified() {
 	int modified = 0;
 	struct s_reader *rdr;
 	for (rdr = first_reader; rdr; rdr = rdr->next) {
-		if (rdr->typ == R_CCCAM && rdr->fd && rdr->enable && !rdr->deleted && !rdr->cc_keepalive) {
+		if (rdr->typ == R_CCCAM && rdr->fd && rdr->enable && !rdr->deleted) {
 			struct s_client *clr = rdr->client;
 			if (clr->cc) {
 				struct cc_data *ccr = clr->cc;
@@ -2891,8 +2893,12 @@ int cc_cards_modified() {
 
 int check_cccam_compat(struct cc_data *cc) {
 	int res = 0;
-	if (strcmp(cfg->cc_version, "2.2.0") == 0 && strcmp(cc->remote_version, "2.2.0") == 0)
-		res = 1;
+	if (strcmp(cfg->cc_version, "2.2.0") == 0 || strcmp(cfg->cc_version, "2.2.1") == 0) {
+	
+		if (strcmp(cc->remote_version, "2.2.0") == 0 || strcmp(cc->remote_version, "2.2.1") == 0) {
+			res = 1;
+		}
+	}
 	return res;
 }
 
