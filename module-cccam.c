@@ -3043,6 +3043,7 @@ int cc_srv_connect(struct s_client *cl) {
 	cs_ftime(&cc->ecm_time);
 
 	cmi = 0;
+	wait_for_keepalive = 0;
 	// check for client timeout, if timeout occurs try to send keepalive
 	while (cl->pfd)
 	{
