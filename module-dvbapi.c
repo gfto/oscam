@@ -933,7 +933,14 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, c
 	for (i = 0; i < MAX_DEMUX; i++) {
 		if (connfd>0 && demux[i].socket_fd == connfd) {
 			//PMT Update
-			if (ca_pmt_list_management == 0x03 || ca_pmt_list_management == 0x01 || ca_pmt_list_management == 0x05)
+			if (ca_pmt_list_management == 0x05) {
+				demux_id = i;
+				demux[demux_id].curindex = demux[demux_id].pidindex;
+				demux[demux_id].STREAMpidcount=0;
+				demux[demux_id].ECMpidcount=0;
+				demux[demux_id].EMMpidcount=0;
+			}
+			if (ca_pmt_list_management == 0x03 || ca_pmt_list_management == 0x01)
 				dvbapi_stop_descrambling(i);
 			if (ca_pmt_list_management == 0x02)
 				demux_id=i;
@@ -1002,7 +1009,9 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, c
 	openxcas_sid = program_number;
 #endif
 
-	if (demux[demux_id].ECMpidcount>0 && ca_pmt_list_management != 0x01) {
+	if (ca_pmt_list_management == 0x05) {
+		dvbapi_start_descrambling(demux_id);
+	} else if (demux[demux_id].ECMpidcount>0 && ca_pmt_list_management != 0x01) {
 		dvbapi_resort_ecmpids(demux_id);
 		dvbapi_try_next_caid(demux_id);
 	} else {
