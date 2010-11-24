@@ -293,7 +293,7 @@ else (OPENSSL_FOUND)
         message(FATAL "  ssl support requested but not found! ")
     endif (WITH_SSL)
 endif (OPENSSL_FOUND)
-if (WITH_SSL)
+endif (WITH_SSL)
 
 if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
    if (LIBRTDIR)
