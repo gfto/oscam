@@ -1320,12 +1320,16 @@ int is_null_dcw(uint8 *dcw) {
 */
 
 int check_extended_mode(struct s_client *cl, char *msg) {
-	//Extended mode: if PARTNER String is ending with [EXT], extended mode is activated
+	//Extended mode: if PARTNER String is ending with [PARAM], extended mode is activated
 	//For future compatibilty the syntax should be compatible with
 	//[PARAM1,PARAM2...PARAMn]
 	//
 	// EXT: Extended ECM Mode: Multiple ECMs could be send and received
 	//                         ECMs are numbered, Flag (byte[0] is the index
+	//
+	// SID: Exchange of good sids/bad sids activated (like cccam 2.2.x)
+	//      card exchange command MSG_NEW_CARD_SIDINFO instead MSG_NEW_CARD is used
+	//
 
 	struct cc_data *cc = cl->cc;
 	int has_param = 0;
@@ -1335,6 +1339,11 @@ int check_extended_mode(struct s_client *cl, char *msg) {
 		if (p && strncmp(p, "EXT", 3) == 0) {
 			cc->extended_mode = 1;
 			cs_log("%s extended ECM mode", getprefix());
+			has_param = 1;
+		}
+		else if (p && strncmp(p, "SID", 3)==0) {
+			cc->cccam220 = 1;
+			cs_log("%s extra SID mode", getprefix());
 			has_param = 1;
 		}
 	}
@@ -1661,6 +1670,16 @@ int chk_ident(FTAB *ftab, struct cc_card *card) {
 	}
 }*/
 
+void addParam(char *param, char *value)
+{
+	if (strlen(param) == 1)
+		strcat(param, value);
+	else {
+		strcat(param, ",");
+		strcat(param, value);
+	}
+}
+
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	cs_debug_mask(D_FUT, "cc_parse_msg in %d", buf[1]);
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
@@ -1711,7 +1730,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
 			if (cc->is_oscam_cccam) {
 				sprintf((char*) buf,
-						"PARTNER: OSCam v%s, build #%s (%s) [EXT]", CS_VERSION,
+						"PARTNER: OSCam v%s, build #%s (%s) [EXT,SID]", CS_VERSION,
 						CS_SVN_VERSION, CS_OSTYPE);
 				cc_cmd_send(cl, buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
 			}
@@ -1868,7 +1887,9 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				else {
 					strcpy(param, " [");
 					if (cc->extended_mode)
-						strcat(param, "EXT");
+						addParam(param, "EXT");
+					if (cc->cccam220)
+						addParam(param, "SID");
 					strcat(param, "]");
 				}
 
