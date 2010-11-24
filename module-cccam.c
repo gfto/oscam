@@ -211,6 +211,7 @@ void cc_cli_close(struct s_client *cl, int call_conclose) {
 		if (cl->udp_fd)
 			close(cl->udp_fd);
 		cl->udp_fd = 0;
+		cl->pfd = 0;
 	}
 
 	if (cc) {
@@ -3114,7 +3115,7 @@ int cc_srv_connect(struct s_client *cl) {
 							getprefix());
 					break; //Disconnect client
 				}
-				else
+				else if (cc->extended_mode) //special handling for "oscam"-cccam clients:
 				{
 					if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
 						break;
@@ -3178,14 +3179,9 @@ void * cc_srv_init(struct s_client *cl) {
 	if (cc_srv_connect(cl) < 0)
 		cs_log("cccam: %d failed errno: %d (%s)", __LINE__, errno, strerror(
 				errno));
-	cs_disconnect_client(cl);
-	if (cl->udp_fd) {
-		close(cl->udp_fd);
-		cl->udp_fd = 0;
-		cl->pfd = 0;
-	}
 	cc_cleanup(cl);
 	cs_debug_mask(D_FUT, "cc_srv_init out");
+	cs_disconnect_client(cl);
 	return NULL; //suppress compiler warning
 }
 
@@ -3234,8 +3230,7 @@ int cc_cli_connect(struct s_client *cl) {
 	// get init seed
 	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
 		int err = errno;
-		cs_log(
-				"%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, errno=%d)",
+		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, errno=%d)",
 				rdr->label, n, handle, cl->udp_fd, err);
 		block_connect(rdr);
 		return -2;
@@ -3405,6 +3400,9 @@ int cc_cli_init_int(struct s_client *cl) {
 	//		loc_sa.sin_addr.s_addr = INADDR_ANY;
 	//		loc_sa.sin_port = htons(rdr->l_port);
 
+	if (cl->udp_fd)
+		cc_cli_close(cl, FALSE);
+		
 	if ((cl->udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) <= 0) {
 		cs_log("%s Socket creation failed (errno=%d, socket=%d)", rdr->label,
 				errno, cl->udp_fd);
