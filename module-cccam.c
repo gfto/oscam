@@ -1912,7 +1912,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				int has_param = check_extended_mode(cl, msg);
 
 				//send params back. At the moment there is only "EXT"
-				char param[10];
+				char param[14];
 				if (!has_param)
 					param[0] = 0;
 				else {
