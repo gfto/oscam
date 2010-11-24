@@ -1434,15 +1434,18 @@ void distribute_ecm(ECM_REQUEST *er)
     er->rc = 2; //cache
   
   for (cl=first_client->next; cl ; cl=cl->next) {
-    if (cl->fd_m2c && cl->pfd && cl->typ=='c' && cl->ecmtask && (er->selected_reader->grp & cl->grp)) {
+    if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (er->selected_reader->grp & cl->grp)) {
      
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
         if (ecm->rc == 99 && ecm->ocaid==er->ocaid && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)==0) {
           er->cpti = ecm->cpti;
+          //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
           write_ecm_request(cl->fd_m2c, er);
         }
+        //else if (ecm->rc == 99)
+        //  cs_log("NO-distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));        
       }
     }
   }
@@ -1786,7 +1789,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 	send_reader_stat(er->selected_reader, er, (er->rc <= 0)?4:0);
 	return; // already done
   }
-  if( (er->caid!=ert->caid) || memcmp(er->ecm , ert->ecm , sizeof(er->ecm)) )
+  if( (er->caid!=ert->caid) || memcmp(er->ecmd5, ert->ecmd5, sizeof(er->ecmd5)) )
     return; // obsolete
 
 	ert->rcEx=er->rcEx;
