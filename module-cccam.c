@@ -664,7 +664,6 @@ void cc_remove_current_card(struct cc_data *cc,
 		if (c == current_card)
 			ll_iter_remove_data(it);
 	ll_iter_release(it);
-
 }
 
 int get_UA_len(uint16 caid) {
@@ -705,14 +704,45 @@ int get_UA_len(uint16 caid) {
 	return len;
 }
 
+int get_UA_ofs(uint16 caid) {
+	int ofs = 0;
+	switch (caid >> 8) {
+	case 0x4B: //TONGFANG:
+		ofs = 2;
+		break;
+	case 0x09: //VIDEOGUARD:
+		ofs = 2;
+		break;
+	case 0x18: //NAGRA:
+		ofs = 2;
+		break;
+	case 0x4A: //DRE:
+		ofs = 2;
+		break;
+	}
+	return ofs;
+}
+
 void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
 	int len = get_UA_len(caid);
-	memcpy(&out[8 - len], in, len);
+	int ofs = get_UA_ofs(caid);
+	memset(out, 0, 8);
+	memcpy(out+8-len, in+ofs, len); //set UA trailing/leading zeros
 }
 
 void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
 	int len = get_UA_len(caid);
-	memcpy(out, in, len);
+	int ofs_oscam = get_UA_ofs(caid);
+	int ofs_cccam = 0;
+	int i;
+	for (i=0;i<(8-len);i++) {
+		if (!in[ofs_cccam]) //ignore leading "00"
+			ofs_cccam++;
+		else
+			break;
+	}
+	memset(out, 0, 8);
+	memcpy(out+ofs_oscam, in+ofs_cccam, len);
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
@@ -3528,4 +3558,3 @@ void module_cccam(struct s_module *ph) {
 	cc_node_id[6] = sum >> 8;
 	cc_node_id[7] = sum & 0xff;
 }
-
