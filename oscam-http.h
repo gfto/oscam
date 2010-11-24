@@ -849,13 +849,13 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
 	<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
     <TR><TD>Version:</TD><TD><SELECT name=\"cccversion\">\
-			<OPTION ##CCCVERSIONSELECTED0##>2.0.11</OPTION>\
-			<OPTION ##CCCVERSIONSELECTED1##>2.1.1</OPTION>\
-			<OPTION ##CCCVERSIONSELECTED2##>2.1.2</OPTION>\
-			<OPTION ##CCCVERSIONSELECTED3##>2.1.3</OPTION>\
-			<OPTION ##CCCVERSIONSELECTED4##>2.1.4</OPTION>\
-			<OPTION ##CCCVERSIONSELECTED5##>2.2.0 (experimental)</OPTION>\
-			<OPTION ##CCCVERSIONSELECTED6##>2.2.1 (experimental)</OPTION>\
+			<OPTION value=\"2.0.11\" ##CCCVERSIONSELECTED0##>2.0.11</OPTION>\
+			<OPTION value=\"2.1.1\"##CCCVERSIONSELECTED1##>2.1.1</OPTION>\
+			<OPTION value=\"2.1.2\"##CCCVERSIONSELECTED2##>2.1.2</OPTION>\
+			<OPTION value=\"2.1.3\"##CCCVERSIONSELECTED3##>2.1.3</OPTION>\
+			<OPTION value=\"2.1.4\"##CCCVERSIONSELECTED4##>2.1.4</OPTION>\
+			<OPTION value=\"2.2.0\"##CCCVERSIONSELECTED5##>2.2.0 (experimental)</OPTION>\
+			<OPTION value=\"2.2.1\"##CCCVERSIONSELECTED6##>2.2.1 (experimental)</OPTION>\
 		</SELECT></TD></TR>\n\
     <TR><TD>Maxhop:</TD><TD><input name=\"cccmaxhop\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOP##\"></TD></TR>\n\
     <TR><TD>Want Emu:<input name=\"cccwantemu\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccwantemu\" type=\"checkbox\" value=\"1\" ##CCCWANTEMUCHECKED##></TD></TR>\n\
@@ -935,13 +935,13 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 		<TR><TD>Ignore reshare:</TD><TD><SELECT NAME=\"ignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##IGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
 		<TR><TD>Keep clients connected:</TD><TD><SELECT NAME=\"keepconnected\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPCONNECTED##>ON</OPTION></SELECT></TD></TR>\n\
 		<TR><TD>Version:</TD><TD><SELECT name=\"version\">\
-			<OPTION ##VERSIONSELECTED0##>2.0.11</OPTION>\
-			<OPTION ##VERSIONSELECTED1##>2.1.1</OPTION>\
-			<OPTION ##VERSIONSELECTED2##>2.1.2</OPTION>\
-			<OPTION ##VERSIONSELECTED3##>2.1.3</OPTION>\
-			<OPTION ##VERSIONSELECTED4##>2.1.4</OPTION>\
-			<OPTION ##VERSIONSELECTED5##>2.2.0 (experimental)</OPTION>\
-			<OPTION ##VERSIONSELECTED6##>2.2.1 (experimental)</OPTION>\
+			<OPTION value=\"2.0.11\" ##VERSIONSELECTED0##>2.0.11</OPTION>\
+			<OPTION value=\"2.1.1\" ##VERSIONSELECTED1##>2.1.1</OPTION>\
+			<OPTION value=\"2.1.2\" ##VERSIONSELECTED2##>2.1.2</OPTION>\
+			<OPTION value=\"2.1.3\" ##VERSIONSELECTED3##>2.1.3</OPTION>\
+			<OPTION value=\"2.1.4\" ##VERSIONSELECTED4##>2.1.4</OPTION>\
+			<OPTION value=\"2.2.0\" ##VERSIONSELECTED5##>2.2.0 (experimental)</OPTION>\
+			<OPTION value=\"2.2.1\" ##VERSIONSELECTED6##>2.2.1 (experimental)</OPTION>\
 		</SELECT></TD></TR>\n\
 		<TR><TD>Update Interval:</TD><TD><input name=\"updateinterval\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##UPDATEINTERVAL##\"></TD></TR>\n\
 		<TR><TD>Minimize cards:</TD><TD><SELECT name=\"minimizecards\">\
