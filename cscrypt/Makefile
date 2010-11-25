@@ -21,7 +21,8 @@ OBJECTS1	= $(LIBFILE1)(md5.o) \
 		  $(LIBFILE1)(bn_word.o) \
 		  $(LIBFILE1)(i_cbc.o) \
 		  $(LIBFILE1)(i_skey.o) \
-		  $(LIBFILE1)(mem.o)
+		  $(LIBFILE1)(mem.o) \
+		  $(LIBFILE1)(rc6.o)
 
 all:		$(LIBFILE1)
 
