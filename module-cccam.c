@@ -1434,57 +1434,55 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 	int i;
 	for (i = 0; i < nprov; i++) { // providers
 		struct cc_provider *prov = malloc(sizeof(struct cc_provider));
-		if (prov) {
-			prov->prov = b2i(3, buf + offset + (7 * i));
-			memcpy(prov->sa, buf + offset + (7 * i) + 3, 4);
-			cs_debug("      prov %d, %06x, sa %08x", i + 1, prov->prov, b2i(4,
-					prov->sa));
+		prov->prov = b2i(3, buf + offset);
+		memcpy(prov->sa, buf + offset + 3, 4);
+		cs_debug("      prov %d, %06x, sa %08x", i + 1, prov->prov, b2i(4,
+				prov->sa));
 
-			ll_append(card->providers, prov);
-		}
+		ll_append(card->providers, prov);
+		offset+=7;
 	}
 
-	uint8 *ptr = buf + offset + i * 7;
+	uint8 *ptr = buf + offset;
 
     if (ext) {
         for (i = 0; i < nassign; i++) {
-            uint16_t sid = b2i(2, ptr + 2 * i);
+            uint16_t sid = b2i(2, ptr);
             cs_debug("      assigned sid = %04X, added to good sid list", sid);
 
             struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
             srvid->sid = sid;
             srvid->ecmlen = 0;
             ll_append(card->goodsids, srvid);
+            ptr+=2;
         }
 
-        ptr = ptr + 2 * i;
-
         for (i = 0; i < nreject; i++) {
-            uint16_t sid = b2i(2, ptr + 2 * i);
+            uint16_t sid = b2i(2, ptr);
             cs_debug("      rejected sid = %04X, added to sid block list", sid);
 
             struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
             srvid->sid = sid;
             srvid->ecmlen = 0;
             ll_append(card->badsids, srvid);
+            ptr+=2;
         }
-
-        ptr = ptr + 2 * i;
     }
 
 	int remote_count = ptr[0];
 	ptr++;
 	for (i = 0; i < remote_count; i++) {
 		uint8 *remote_node = malloc(8);
-		memcpy(remote_node, ptr + i * 8, 8);
+		memcpy(remote_node, ptr, 8);
 		ll_append(card->remote_nodes, remote_node);
+		ptr+=8;
 	}
 	return card;
 }
 
 #define READ_CARD_TIMEOUT 100
 
-int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own) {
+int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own, int ext) {
 	memset(buf, 0, CC_MAXMSGSIZE);
 	buf[0] = card->id >> 24;
 	buf[1] = card->id >> 16;
@@ -1501,7 +1499,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 	memcpy(buf + 12, card->hexserial, 8);
 
 	//with cccam 2.2.0 we have assigned and rejected sids:
-	int ofs = cc->cccam220?23:21;
+	int ofs = ext?23:21;
 
 	//write providers:
 	LL_ITER *it = ll_iter_create(card->providers);
@@ -1518,7 +1516,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 	ll_iter_release(it);
 	
 	//write sids only if cccam 2.2.0:
-	if (cc->cccam220) {
+	if (ext) {
 		//assigned sids:
 		it = ll_iter_create(card->goodsids);
 		struct cc_srvid *srvid;
@@ -2644,6 +2642,7 @@ int report_card(struct s_client *cl, struct cc_card *card, LLIST *new_reported_c
 {
 	int res = 0;
 	struct cc_data *cc = cl->cc;
+	int ext = cc->cccam220;
 	if (!find_reported_card(cl, card)) { //Add new card:
 		uint8 buf[CC_MAXMSGSIZE];
 		if (!cc->report_carddata_id)
@@ -2651,8 +2650,8 @@ int report_card(struct s_client *cl, struct cc_card *card, LLIST *new_reported_c
 		card->id = cc->report_carddata_id;
 		cc->report_carddata_id++;
 		
-		int len = write_card(cc, buf, card, TRUE);
-		res = cc_cmd_send(cl, buf, len, cc->cccam220?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD);
+		int len = write_card(cc, buf, card, TRUE, ext);
+		res = cc_cmd_send(cl, buf, len, ext?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD);
 		cc->card_added_count++;
 	}	
 	cc_add_reported_carddata(new_reported_carddatas, card);
