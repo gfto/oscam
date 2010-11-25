@@ -1699,7 +1699,7 @@ int chk_ident(FTAB *ftab, struct cc_card *card) {
 
 void addParam(char *param, char *value)
 {
-	if (strlen(param) == 1)
+	if (strlen(param) < 4)
 		strcat(param, value);
 	else {
 		strcat(param, ",");
