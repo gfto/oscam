@@ -663,7 +663,7 @@ void dvbapi_read_priority() {
 		char c_srvid[34];
 		c_srvid[0]='\0';
 		uint caid=0, provid=0, srvid=0, ecmpid=0, chid=0;
-		sscanf(str1, "%4x:%6x:%33s:%4x:%4x", &caid, &provid, c_srvid, &ecmpid, &chid);
+		sscanf(str1, "%4x:%6x:%33[^:s]:%4x:%4x", &caid, &provid, c_srvid, &ecmpid, &chid);
 
 		entry->caid=caid;
 		entry->provid=provid;
