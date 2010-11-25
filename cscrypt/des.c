@@ -481,10 +481,8 @@ static void des_key_parity_adjust(byte *key, byte len)
   }
 }
 
-static byte *des_key_spread(byte *normal)
+static byte *des_key_spread(byte *normal, byte *spread)
 {
-  static byte spread[16];
-
   spread[ 0] = normal[ 0] & 0xfe;
   spread[ 1] = ((normal[ 0] << 7) | (normal[ 1] >> 1)) & 0xfe;
   spread[ 2] = ((normal[ 1] << 6) | (normal[ 2] >> 2)) & 0xfe;
@@ -576,15 +574,14 @@ int des_decrypt(byte *buffer, int len, byte *deskey)
   return len;
 }
 
-byte *des_login_key_get(byte *key1, byte *key2, int len)
+byte *des_login_key_get(byte *key1, byte *key2, int len, byte *des16)
 {
   byte des14[14];
-  static byte *des16;
   int i;
 
   memcpy(des14, key1, sizeof(des14));
   for (i = 0; i < len; i++) des14[i%14] ^= key2[i];
-  des16 = des_key_spread(des14);
+  des16 = des_key_spread(des14, des16);
   doPC1(des16);
   doPC1(des16+8);
   return des16;

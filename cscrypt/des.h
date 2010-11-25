@@ -33,7 +33,7 @@ extern void EuroDes(byte key1[], byte key2[], byte DesMode, byte OperatingMode,
                     byte data[]);
 extern int des_encrypt(byte *buffer, int len, byte *deskey);
 extern int des_decrypt(byte *buffer, int len, byte *deskey);
-extern byte *des_login_key_get(byte *key1, byte *key2, int len);
+extern byte *des_login_key_get(byte *key1, byte *key2, int len, byte *des16);
 
 #ifdef __cplusplus
 }

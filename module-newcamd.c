@@ -261,7 +261,7 @@ static int connect_newcamd_server()
   int i;
   uint8 buf[CWS_NETMSGSIZE];
   uint8 keymod[14];
-  uint8 *key;
+  uint8 key[16];
   int handle=0;
 
   uint32 index;
@@ -286,7 +286,7 @@ static int connect_newcamd_server()
     return -2;
   }
   cs_ddump(keymod, 14, "server init sequence:");
-  key = des_login_key_get(keymod, cl->reader->ncd_key, 14);
+  des_login_key_get(keymod, cl->reader->ncd_key, 14, key);
 
   // 3. Send login info
   index = 3;
@@ -321,7 +321,7 @@ static int connect_newcamd_server()
   cl->reader->tcp_connected = 1;
 
   // 4. Send MSG_CARD_DATE_REQ
-  key = des_login_key_get(cl->reader->ncd_key, passwdcrypt, strlen((char *)passwdcrypt));
+  des_login_key_get(cl->reader->ncd_key, passwdcrypt, strlen((char *)passwdcrypt), key);
 
   network_cmd_no_data_send(handle, &cl->reader->ncd_msgid, MSG_CARD_DATA_REQ, 
                            key, COMMTYPE_CLIENT);
@@ -591,7 +591,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     char *client_name = NULL;
     struct s_auth *account;
     uchar buf[14];
-    uchar *key=0;
+    uchar key[16];
     uchar passwdcrypt[120];
     struct s_reader *aureader=first_reader; //FIXME strange enough au was initialized to 0 = first reader, and not to -1 = no reader
     struct s_ip *p_ip;
@@ -613,7 +613,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 
     // send init sequence
     send(cl->udp_fd, buf, 14, 0);
-    key = des_login_key_get(buf, deskey, 14);
+    des_login_key_get(buf, deskey, 14, key);
     memcpy(cl->ncd_skey, key, 16);
     cl->ncd_msgid = 0;
 
@@ -716,7 +716,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     {
       FILTER *pufilt = 0;
 
-      key = des_login_key_get(deskey, passwdcrypt, strlen((char *)passwdcrypt));
+      des_login_key_get(deskey, passwdcrypt, strlen((char *)passwdcrypt), key);
       memcpy(cl->ncd_skey, key, 16);
 
       i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);

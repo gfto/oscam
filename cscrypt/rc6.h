@@ -33,7 +33,7 @@
 #define R24     (2 * r + 4)
 #define lgw     5                               /* log2(w) -- wussed out */
    
-#define rc6keylen R24 - 1;                      /* Key schedule */
+#define rc6keylen R24 - 1                      /* Key schedule */
 
 typedef unsigned int RC6KEY[rc6keylen];
 
