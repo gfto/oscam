@@ -687,7 +687,7 @@ int get_UA_len(uint16 caid) {
 		len = 4;
 		break;
 	case 0x18: //NAGRA:
-		len = 6;
+		len = 4;
 		break;
 	case 0x05: //VIACCESS:
 		len = 5;
@@ -1091,16 +1091,17 @@ int cc_send_pending_emms(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
 
 	LL_ITER *it = ll_iter_create(cc->pending_emms);
-	;
 	uint8 *emmbuf;
+	int size = 0;
 	if ((emmbuf = ll_iter_next(it))) {
 		if (!cc->extended_mode) {
 			if (pthread_mutex_trylock(&cc->ecm_busy) == EBUSY) { //Unlock by NOK or ECM ACK
+				ll_iter_release(it);
 				return 0; //send later with cc_send_ecm
 			}
 			rdr->available = 0;
 		}
-		int size = emmbuf[11] + 12;
+		size = emmbuf[11] + 12;
 
 		cc->just_logged_in = 0;
 		cs_ftime(&cc->ecm_time);
@@ -1111,14 +1112,11 @@ int cc_send_pending_emms(struct s_client *cl) {
 		cc_cmd_send(cl, emmbuf, size, MSG_EMM_ACK); // send emm
 
 		ll_iter_remove_data(it);
-		ll_iter_release(it);
-
-		return size;
 	}
 	ll_iter_release(it);
 
 	cs_debug_mask(D_FUT, "cc_send_pending_emms out");
-	return 0;
+	return size;
 }
 
 /**
@@ -1129,15 +1127,13 @@ struct cc_card *get_card_by_hexserial(struct s_client *cl, uint8 *hexserial,
 		uint16 caid) {
 	struct cc_data *cc = cl->cc;
 	LL_ITER *it = ll_iter_create(cc->cards);
-	;
 	struct cc_card *card;
 	while ((card = ll_iter_next(it)))
 		if (card->caid == caid && memcmp(card->hexserial, hexserial, 8) == 0) { //found it!
-			ll_iter_release(it);
-			return card;
+			break;
 		}
 	ll_iter_release(it);
-	return NULL;
+	return card;
 }
 
 /**
@@ -1171,17 +1167,17 @@ int cc_send_emm(EMM_PACKET *ep) {
 	pthread_mutex_lock(&cc->cards_busy);
 	LL_ITER *it = ll_iter_create(cc->current_cards);
 	struct cc_current_card *current_card;
-	while ((current_card = ll_iter_next(it)) && current_card->card->caid
-			!= caid)
-		;
+	while ((current_card = ll_iter_next(it)))
+		if (current_card->card->caid == caid && cc_UA_valid(current_card->card->hexserial))
+			break; //found it
 	ll_iter_release(it);
 
 	struct cc_card *emm_card = (current_card != NULL) ? current_card->card
 			: NULL;
 
-	if (!emm_card || emm_card->caid != caid) {
+	if (!emm_card) {
 		uint8 hs[8];
-		cc_UA_oscam2cccam(ep->hexserial, hs, rdr->caid[0]);
+		cc_UA_oscam2cccam(ep->hexserial, hs, caid);
 		emm_card = get_card_by_hexserial(cl, hs, caid);
 	}
 
