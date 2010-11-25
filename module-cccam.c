@@ -2775,7 +2775,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 		if (rdr->typ != R_CCCAM && rdr->caid[0] && !flt && chk_ctab(rdr->caid[0], &cl->ctab)) {
 			//cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
 			ushort caid = rdr->caid[0];
-			struct cc_card *card = create_card2(rdr, j, caid, hop, reshare);
+			struct cc_card *card = create_card2(rdr, 0, caid, hop, reshare);
 			if (au_allowed)
 				cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
 			for (j = 0; j < rdr->nprov; j++) {
