@@ -2451,6 +2451,27 @@ ulong get_reader_prid(struct s_reader *rdr, int j) {
 	return prid;
 }
 
+void copy_sids(LLIST *dst, LLIST *src) {
+	LL_ITER *it_src = ll_iter_create(src);
+	LL_ITER *it_dst = ll_iter_create(dst);
+	struct cc_srvid *srvid_src;
+	struct cc_srvid *srvid_dst;
+	while ((srvid_src=ll_iter_next(it_src))) {
+		ll_iter_reset(it_dst);
+		while ((srvid_dst=ll_iter_next(it_dst))) {
+			if (sid_eq(srvid_src, srvid_dst))
+				break;
+		}	
+		if (!srvid_dst) {
+			srvid_dst = malloc(sizeof(struct cc_srvid));
+			memcpy(srvid_dst, srvid_src, sizeof(struct cc_srvid));
+			ll_append(dst, srvid_dst);
+		}
+	}
+	ll_iter_release(it_dst);
+	ll_iter_release(it_src);
+}
+
 int add_card_providers(struct cc_card *dest_card, struct cc_card *card,
 		int copy_remote_nodes) {
 	int modified = 0;
@@ -2474,7 +2495,7 @@ int add_card_providers(struct cc_card *dest_card, struct cc_card *card,
 		}
 	}
 	ll_iter_release(it_src);
-
+	
 	if (copy_remote_nodes) {
 		//2. Copy nonexisting remote_nodes, ignoring existing:
 		it_src = ll_iter_create(card->remote_nodes);
@@ -2509,6 +2530,12 @@ struct cc_card *create_card(struct cc_card *card) {
 	card2->badsids = ll_create();
 	card2->goodsids = ll_create();
 	card2->remote_nodes = ll_create();
+
+	if (card) {
+		copy_sids(card2->goodsids, card->goodsids);
+		copy_sids(card2->badsids, card->badsids);
+	}
+	
 	return card2;
 }
 
@@ -2624,10 +2651,7 @@ int find_reported_card(struct s_client * cl, struct cc_card *card1)
 	LL_ITER *it = ll_iter_create(cc->reported_carddatas);
 	struct cc_card *card2;
 	while ((card2 = ll_iter_next(it))) {
-		if (same_card(card1, card2) && 
-				card1->hop == card2->hop &&
-				ll_count(card1->remote_nodes) == ll_count(card2->remote_nodes) &&
-				ll_count(card1->providers) == ll_count(card2->providers)) {
+		if (same_card(card1, card2)) {
 			card1->id = card2->id; //Set old id !!
 			cc_free_card(card2);
 			ll_iter_remove(it);
@@ -2863,23 +2887,17 @@ int cc_srv_report_cards(struct s_client *cl) {
 	//cs_debug_mask(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
 	LL_ITER *it = ll_iter_create(server_cards);
 	struct cc_card *card;
-	while ((card = ll_iter_next(it))) {
+	while (ok && (card = ll_iter_next(it))) {
 		//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
 		
-		if (report_card(cl, card, new_reported_carddatas) < 0) {
-			ok = FALSE;
-			break;
-		}
+		ok =report_card(cl, card, new_reported_carddatas) >= 0;
 		ll_iter_remove(it);
 	}
 	ll_iter_release(it);
-	
-	
 	cc_free_cardlist(server_cards, TRUE);
 	
 	//remove unsed, remaining cards:
 	cc->card_removed_count += cc_free_reported_carddata(cl, cc->reported_carddatas, new_reported_carddatas, ok);
-	
 	cc->reported_carddatas = new_reported_carddatas;
 	
 	cs_log("%s reported/updated +%d/-%d/dup %d of %d cards to client", getprefix(), 
