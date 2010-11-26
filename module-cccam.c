@@ -198,6 +198,9 @@ void cc_cli_close(struct s_client *cl, int call_conclose) {
 	cs_debug_mask(D_FUT, "cc_cli_close in");
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
+	if (!rdr || !cc)
+		return;
+		
 	rdr->tcp_connected = 0;
 	rdr->card_status = NO_CARD;
 	rdr->available = 0;
@@ -205,7 +208,7 @@ void cc_cli_close(struct s_client *cl, int call_conclose) {
 	rdr->ncd_msgid = 0;
 	rdr->last_s = rdr->last_g = 0;
 
-	if (cc && cc->mode == CCCAM_MODE_NORMAL && call_conclose) 
+	if (cc->mode == CCCAM_MODE_NORMAL && call_conclose) 
 		network_tcp_connection_close(cl, cl->udp_fd); 
 	else {
 		if (cl->udp_fd)
@@ -214,10 +217,8 @@ void cc_cli_close(struct s_client *cl, int call_conclose) {
 		cl->pfd = 0;
 	}
 
-	if (cc) {
-		cc->just_logged_in = 0;
-		free_current_cards(cc->current_cards);
-	}
+	cc->just_logged_in = 0;
+	free_current_cards(cc->current_cards);
 	cs_debug_mask(D_FUT, "cc_cli_close out");
 }
 
@@ -865,8 +866,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 			struct timeb timeout;
 			timeout = cc->ecm_time;
-			unsigned int tt;
-			tt = cfg->ctimeout * 4;
+			unsigned int tt = cfg->ctimeout * 4;
 			timeout.time += tt / 1000;
 			timeout.millitm += tt % 1000;
 
@@ -875,9 +875,9 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			} else {
 				cs_debug_mask(D_TRACE,
 						"%s unlocked-cycleconnection! timeout %ds",
-						getprefix(), cfg->ctimeout * 4 / 1000);
+						getprefix(), tt / 1000);
 				//cc_cycle_connection();
-				cc_cli_close(cl, FALSE);
+				cc_cli_close(cl, TRUE);
 				cs_debug_mask(D_FUT, "cc_send_ecm out");
 				return 0;
 			}
@@ -1795,7 +1795,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		} else if (l == 0x23) {
 			cc->cmd05_mode = MODE_UNKNOWN;
 			//cycle_connection(); //Absolute unknown handling!
-			cc_cli_close(cl, FALSE);
+			cc_cli_close(cl, TRUE);
 			//
 			//44 bytes: set aes128 key, Key=16 bytes [Offset=len(password)]
 			//
@@ -2217,7 +2217,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		{
 			strcpy(cl->reader->cc_version, version[0]);
 			strcpy(cl->reader->cc_build, build[0]);
-			cc_cli_close(cl, FALSE);
+			cc_cli_close(cl, TRUE);
 		}
 		break;
 	}
@@ -2275,7 +2275,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		cs_log("%s max ecms (%d) reached, cycle connection!", getprefix(),
 				cc->max_ecms);
 		//cc_cycle_connection();
-		cc_cli_close(cl, FALSE);
+		cc_cli_close(cl, TRUE);
 		//cc_send_ecm(NULL, NULL);
 	}
 	cs_debug_mask(D_FUT, "cc_parse_msg out");
@@ -2726,7 +2726,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 						struct cc_provider *prov = malloc(sizeof(struct cc_provider));
 						memset(prov, 0, sizeof(struct cc_provider));
 						prov->prov = rdr->ftab.filts[j].prids[k];
-						if (!chk_srvid_by_caid_prov(cl, caid, prov->prov)) {
+						if (!chk_srvid_by_caid_prov(cl, caid, prov->prov, 0)) {
 							ignore = 1;
 						}
 						//cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
@@ -2828,8 +2828,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 							while ((prov = ll_iter_next(it2))) {
 								ulong prid = prov->prov;
 								if (!chk_srvid_by_caid_prov(cl, card->caid,
-										prid) || !chk_srvid_by_caid_prov(
-										rdr->client, card->caid, prid)) {
+										prid, 0) || !chk_srvid_by_caid_prov(
+										rdr->client, card->caid, prid, 0)) {
 									ignore = 1;
 									break;
 								}
@@ -3188,8 +3188,10 @@ int cc_cli_connect(struct s_client *cl) {
 	if (cc && cc->mode != CCCAM_MODE_NORMAL)
 		return -99;
 
-	if (!cl->udp_fd)
-		cc_cli_init_int(cl);
+	if (!cl->udp_fd) {
+		cc_cli_init_int(cl); 
+		return -1; // cc_cli_init_int calls cc_cli_connect, so exit here!
+	}
 		
 	if (is_connect_blocked(rdr)) {
 		cs_log("%s connection blocked, retrying later", rdr->label);
