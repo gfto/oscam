@@ -669,8 +669,15 @@ static void init_signal()
 
 static void init_shm()
 {
+  int i;
   cwidx=cwcache=malloc(sizeof(struct s_ecm));
-  cwcache->next = NULL;
+  for(i=0;i<5;i++) {
+	cwidx->next=malloc(sizeof(struct s_ecm));
+	cwidx=cwidx->next;
+	cwidx->next=NULL;
+  }
+  cwidx=cwcache;
+
   ecmidx=ecmcache=malloc(sizeof(struct s_ecm));
   ecmcache->next = NULL;
 
