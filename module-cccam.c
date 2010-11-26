@@ -5,6 +5,7 @@
 #include <time.h>
 #include "reader-common.h"
 #include <poll.h>
+#include "cscrypt/rc6.h"
 
 extern int pthread_mutexattr_settype(pthread_mutexattr_t *__attr, int __kind); //Needs extern defined???
 
