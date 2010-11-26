@@ -282,6 +282,7 @@ static int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   unsigned char ins40[] = { 0xc1,0x40,0x00,0x00,0x00 };
   int i,ins40data_offset;
   int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
+  char *prov_id_ptr;
 
   cs_ddump_mask (D_EMM, ep->emm, emm_length + 3, "EMM:");
   switch (ep->type) {
@@ -289,12 +290,14 @@ static int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			ins40[3]=ep->emm[9];
 			ins40[4]= emm_length - 0x07;
 			ins40data_offset = 10;
+			prov_id_ptr = (char *)ep->emm+3;
 			break;
 
 		case UNIQUE:	
 			ins40[3]=ep->emm[12];
 			ins40[4]= emm_length - 0x0A;
 			ins40data_offset = 13;
+			prov_id_ptr = (char *)ep->emm+9;
 			break;
 
 		default:
@@ -304,7 +307,7 @@ static int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 			return ERROR;
   }
 
-  i=get_prov_index(reader, (char *) ep->emm+3);
+  i=get_prov_index(reader, prov_id_ptr);
   if (i==-1) 
   {
       cs_log("[seca-reader] EMM: provider id not found.");
