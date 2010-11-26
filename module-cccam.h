@@ -181,5 +181,7 @@ void cc_rc4_crypt(struct cc_crypt_block *block, uint8 *data, int len,
 		cc_crypt_mode_t mode);
 void free_extended_ecm_idx(struct cc_data *cc);
 void cc_free_card(struct cc_card *card);
+int cc_UA_valid(uint8 *ua);
+void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid);
 
 #endif /* MODULECCCAM_H_ */

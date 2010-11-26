@@ -676,7 +676,7 @@ int get_UA_len(uint16 caid) {
 		len = 5;
 		break;
 	case 0x0B: //CONAX:
-		len = 4;
+		len = 6;
 		break;
 	case 0x06:
 	case 0x17: //IRDETO:

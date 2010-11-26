@@ -1689,15 +1689,20 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			struct s_client *rc = rdr->client;
 			struct cc_data *rcc = rc->cc;
 
-			if (rcc && rdr->tcp_connected == 2 && rcc->cards) {
+			if (rcc && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
 				char *buf = malloc(4000);
-
+				uint8 serbuf[8];
 
 				LL_ITER *it = ll_iter_create(rcc->cards);
 				while ((card = ll_iter_next(it))) {
 
 					tpl_printf(vars, 0, "HOST", "%s:%d", rdr->device, rdr->r_port);
+					if (cc_UA_valid(card->hexserial)) { //Add UA:
+						cc_UA_cccam2oscam(card->hexserial, serbuf, card->caid);
+						tpl_printf(vars, 1, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8));
+						tpl_printf(vars, 1, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8));
+					}
 					tpl_printf(vars, 0, "CAID", "%04X", card->caid);
 
 					int cs = get_cardsystem(card->caid);
@@ -1718,8 +1723,15 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					struct cc_provider *prov;
 					while ((prov = ll_iter_next(pit))) {
 						provider = get_provider(card->caid, prov->prov);
-						sprintf(p, "%s<BR>\n", provider);
+						sprintf(p, "%s", provider);
 						p = strend(p);
+						//add SA:
+						if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3]) {
+							sprintf(p, " SA:%02X%02X%02X%02X<BR>\n",
+								prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
+							p = strend(p);
+						}
+						sprintf(p, "<BR>\n");
 					}
 
 					tpl_printf(vars, 0, "PROVIDERS", buf);
