@@ -110,7 +110,7 @@ void rc6_block_decrypt(unsigned int *ct, unsigned int *pt, unsigned int *S)
 	pt[0] = A;
 	pt[1] = B;
 	pt[2] = C;
-	pt[3] = D;	
+	pt[3] = D;
 }
 
 /*
@@ -195,3 +195,4 @@ main()
 	return 0;
 }
 */
+
