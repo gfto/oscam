@@ -404,11 +404,17 @@ static void cleanup_thread(struct s_client *cl)
 	//decrease cwcache
 	pthread_mutex_lock(&cwcache_lock);
 	struct s_ecm *ecmc;
-	if (cwcache->next != NULL) { //keep it at least on one entry big
-		for (ecmc=cwcache; ecmc->next->next ; ecmc=ecmc->next) ; //find last element
-		if (cwidx==ecmc->next)
-			cwidx = cwcache;
-		NULLFREE(ecmc->next); //free last element
+	if (cwidx->next) {
+		if (cwidx->next->next) {
+			ecmc=cwidx->next->next;
+			NULLFREE(cwidx->next);
+			cwidx->next=ecmc;
+		} else
+			NULLFREE(cwidx->next);
+	} else {
+		ecmc=cwcache->next;
+		NULLFREE(cwcache);
+		cwcache=ecmc;
 	}
 	pthread_mutex_unlock(&cwcache_lock);
   //decrease ecmache
@@ -623,14 +629,14 @@ struct s_client * cs_fork(in_addr_t ip) {
 		for (ecmc=cwcache; ecmc->next ; ecmc=ecmc->next); //ends on last cwcache entry
 		ecmc->next = malloc(sizeof(struct s_ecm));
 		if (ecmc->next)
-			memset(ecmc, 0, sizeof(struct s_ecm));
+			memset(ecmc->next, 0, sizeof(struct s_ecm));
 		pthread_mutex_unlock(&cwcache_lock);
 
 		//increase ecmcache
 		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
 		ecmc->next = malloc(sizeof(struct s_ecm));
 		if (ecmc->next)
-			memset(ecmc, 0, sizeof(struct s_ecm));
+			memset(ecmc->next, 0, sizeof(struct s_ecm));
 	} else {
 		cs_log("max connections reached -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
