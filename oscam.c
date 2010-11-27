@@ -35,6 +35,7 @@ struct  s_ecm     *cwidx;
 //Cache for **requesting** ecms:
 struct  s_ecm     *ecmcache;
 struct  s_ecm     *ecmidx;
+pthread_mutex_t ecmcache_lock;
 
 #ifdef CS_WITH_GBOX
 struct  card_struct Cards[CS_MAXCARDS];
@@ -667,19 +668,27 @@ static void init_signal()
 	return;
 }
 
-static void init_shm()
+static struct s_ecm *generate_cache()
 {
   int i;
-  cwidx=cwcache=malloc(sizeof(struct s_ecm));
+  struct s_ecm *idx, *cache;
+  cache=idx=malloc(sizeof(struct s_ecm));
+  memset(idx, 0, sizeof(struct s_ecm));
   for(i=0;i<5;i++) {
-	cwidx->next=malloc(sizeof(struct s_ecm));
-	cwidx=cwidx->next;
-	cwidx->next=NULL;
+	idx->next=malloc(sizeof(struct s_ecm));
+	idx=idx->next;
+	memset(idx, 0, sizeof(struct s_ecm));
   }
-  cwidx=cwcache;
+  return cache;
+}
 
-  ecmidx=ecmcache=malloc(sizeof(struct s_ecm));
-  ecmcache->next = NULL;
+static void init_shm()
+{
+  //Generate 5 CW cache entries:
+  cwidx=cwcache=generate_cache();
+
+  //Generate 5 ECM cache entries:
+  ecmidx=ecmcache=generate_cache();
 
   first_client = malloc(sizeof(struct s_client));
 	if (!first_client) {
@@ -706,6 +715,7 @@ static void init_shm()
     strcpy(first_client->usr, "root");
 
   pthread_mutex_init(&gethostbyname_lock, NULL);
+  pthread_mutex_init(&ecmcache_lock, NULL);
 
 #ifdef CS_LOGHISTORY
   loghistidx=0;
@@ -1173,19 +1183,36 @@ void cs_disconnect_client(struct s_client * client)
 	cs_exit(0);
 }
 
+static void store_ecm(ECM_REQUEST *er, uint64 grp)
+{
+	if (ecmidx->next)
+		ecmidx=ecmidx->next;
+	else
+		ecmidx=ecmcache;
+	memcpy(ecmidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
+	ecmidx->caid = er->caid;
+	ecmidx->grp = grp;
+	ecmidx->reader = er->selected_reader;
+}
+
 /**
  * ecm cache
  **/
-int check_ecmcache(ECM_REQUEST *er, uint64 grp)
+static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 {
 	struct s_ecm *ecmc;
+        pthread_mutex_lock(&ecmcache_lock);
 	for (ecmc=ecmcache; ecmc ; ecmc=ecmc->next)
 		if ((grp & ecmc->grp) &&
 		     ecmc->caid==er->caid &&
 		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
 		{
+		        er->rc = 99;
+		        pthread_mutex_unlock(&ecmcache_lock);
 			return(1);
 		}
+        store_ecm(er, grp); //Only ECM, no CW!
+        pthread_mutex_unlock(&ecmcache_lock);
 	return(0);
 }
 
@@ -1241,18 +1268,6 @@ static void store_cw(ECM_REQUEST *er, uint64 grp)
 	cwidx->grp = grp;
 	cwidx->reader = er->selected_reader;
 	//cs_ddump(cwcache[*cwidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *cwidx);
-}
-
-static void store_ecm(ECM_REQUEST *er, uint64 grp)
-{
-	if (ecmidx->next)
-		ecmidx=ecmidx->next;
-	else
-		ecmidx=ecmcache;
-	memcpy(ecmidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
-	ecmidx->caid = er->caid;
-	ecmidx->grp = grp;
-	ecmidx->reader = er->selected_reader;
 }
 
 // only for debug
@@ -2250,12 +2265,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		// cache1
 		if (check_cwcache1(er, client->grp))
 			er->rc = 1;
-                else if (check_ecmcache(er, client->grp)) {
-                        er->rc = 99;
-                        return; //ecm already requested!
-                }
-                else
-                        store_ecm(er, client->grp); //Only ECM, no CW!
+                else if (check_and_store_ecmcache(er, client->grp))
+                        return;
 
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);
