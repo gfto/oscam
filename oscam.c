@@ -26,6 +26,7 @@ char  cs_confdir[128]=CS_CONFDIR;
 int cs_dblevel=0;   // Debug Level (TODO !!)
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
+pthread_mutex_t cwcache_lock;
 pthread_key_t getclient;
 
 //Cache for **found** cws:
@@ -400,14 +401,16 @@ static void cleanup_thread(struct s_client *cl)
 
 	NULLFREE (cl);
 
-  //decrease cwcache
+	//decrease cwcache
+	pthread_mutex_lock(&cwcache_lock);
 	struct s_ecm *ecmc;
 	if (cwcache->next != NULL) { //keep it at least on one entry big
 		for (ecmc=cwcache; ecmc->next->next ; ecmc=ecmc->next) ; //find last element
 		if (cwidx==ecmc->next)
-		  cwidx = cwcache;
+			cwidx = cwcache;
 		NULLFREE(ecmc->next); //free last element
 	}
+	pthread_mutex_unlock(&cwcache_lock);
   //decrease ecmache
 	if (ecmcache->next != NULL) { //keep it at least on one entry big
 		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next) ; //find last element
@@ -615,11 +618,14 @@ struct s_client * cs_fork(in_addr_t ip) {
 
 		cl->login=cl->last=time((time_t *)0);
 		//increase cwcache
+		pthread_mutex_lock(&cwcache_lock);
 		struct s_ecm *ecmc;
 		for (ecmc=cwcache; ecmc->next ; ecmc=ecmc->next); //ends on last cwcache entry
 		ecmc->next = malloc(sizeof(struct s_ecm));
 		if (ecmc->next)
 			memset(ecmc, 0, sizeof(struct s_ecm));
+		pthread_mutex_unlock(&cwcache_lock);
+
 		//increase ecmcache
 		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
 		ecmc->next = malloc(sizeof(struct s_ecm));
@@ -674,7 +680,7 @@ static struct s_ecm *generate_cache()
   struct s_ecm *idx, *cache;
   cache=idx=malloc(sizeof(struct s_ecm));
   memset(idx, 0, sizeof(struct s_ecm));
-  for(i=0;i<5;i++) {
+  for(i=0;i<10;i++) {
 	idx->next=malloc(sizeof(struct s_ecm));
 	idx=idx->next;
 	memset(idx, 0, sizeof(struct s_ecm));
@@ -715,6 +721,7 @@ static void init_shm()
     strcpy(first_client->usr, "root");
 
   pthread_mutex_init(&gethostbyname_lock, NULL);
+  pthread_mutex_init(&cwcache_lock, NULL);
   pthread_mutex_init(&ecmcache_lock, NULL);
 
 #ifdef CS_LOGHISTORY
@@ -1225,17 +1232,36 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
 	struct s_ecm *ecmc;
-	for (ecmc=cwcache; ecmc ; ecmc=ecmc->next)
-		if ((grp & ecmc->grp) &&
-		     ecmc->caid==er->caid &&
-		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
-		{
-			//cs_log("cache1 found: grp=%lX cgrp=%lX", grp, ecmc->grp);
-			memcpy(er->cw, ecmc->cw, 16);
-			er->selected_reader = ecmc->reader;
-			return(1);
-		}
-	return(0);
+	int count=0;
+
+	ushort lc=0, *lp;
+	if (cs_dblevel) {
+		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
+			lc^=*lp;
+	}
+
+	pthread_mutex_lock(&cwcache_lock);
+	for (ecmc=cwcache; ecmc ; ecmc=ecmc->next, count++) {
+		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+			continue;
+
+		cs_debug_mask(D_TRACE, "cache: ecm %04X found: caid=%04X grp=%lld cgrp=%lld", lc, ecmc->caid, grp, ecmc->grp);
+
+		if (!(grp & ecmc->grp))
+			continue;
+	
+		if (ecmc->caid != er->caid)
+			continue;
+		
+		cs_debug_mask(D_TRACE, "cache: found count=%d", count);
+		memcpy(er->cw, ecmc->cw, 16);
+		er->selected_reader = ecmc->reader;
+		pthread_mutex_unlock(&cwcache_lock);
+		return 1;
+	}
+	pthread_mutex_unlock(&cwcache_lock);
+	cs_debug_mask(D_TRACE, "cache: %04X not found count=%d", lc, count);
+	return 0;
 }
 
 /**
@@ -1257,17 +1283,26 @@ static void store_cw(ECM_REQUEST *er, uint64 grp)
 	if (cfg->double_check && er->checked < 2)
 		return;
 #endif
+	pthread_mutex_lock(&cwcache_lock);
 	if (cwidx->next)
 		cwidx=cwidx->next;
 	else
 		cwidx=cwcache;
 	//cs_log("store ecm from reader %d", er->selected_reader);
 	memcpy(cwidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
-        memcpy(cwidx->cw, er->cw, 16);
+	memcpy(cwidx->cw, er->cw, 16);
 	cwidx->caid = er->caid;
 	cwidx->grp = grp;
 	cwidx->reader = er->selected_reader;
+
+	if (cs_dblevel) {
+		ushort lc, *lp;
+		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
+			lc^=*lp;
+		cs_debug_mask(D_TRACE, "store_cw: ecm=%04X grp=%lld", lc, grp);
+	}
 	//cs_ddump(cwcache[*cwidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *cwidx);
+	pthread_mutex_unlock(&cwcache_lock);
 }
 
 // only for debug
@@ -2016,20 +2051,27 @@ void guess_cardsystem(ECM_REQUEST *er)
 
 void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 {
-  int i;
-  if ((reader_types == 0) || (reader_types == 2))
-    er->level=flag;
-  flag=(flag)?3:1;    // flag specifies with/without fallback-readers
+	int i;
+	if ((reader_types == 0) || (reader_types == 2))
+		er->level=flag;
+	flag=(flag)?3:1;    // flag specifies with/without fallback-readers
 	struct s_reader *rdr;
+
+	ushort lc=0, *lp;
+	if (cs_dblevel) {
+		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
+			lc^=*lp;
+	}
+
 	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
-      int status = 0;
-      switch (reader_types)
-      {
+		int status = 0;
+		switch (reader_types)
+		{
           // network and local cards
           default:
           case 0:
               if (er->matching_rdr[i]&flag){
-                  cs_debug_mask(D_TRACE, "request_cw1 to reader %s ridx=%d fd=%d", rdr->label, i, rdr->fd);
+                  cs_debug_mask(D_TRACE, "request_cw1 to reader %s ridx=%d fd=%d ecm=%04X", rdr->label, i, rdr->fd, lc);
                   status = write_ecm_request(rdr->fd, er);
               }
               break;
@@ -2037,7 +2079,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
           case 1:
               if (!(rdr->typ & R_IS_NETWORK))
                   if (er->matching_rdr[i]&flag) {
-                	  cs_debug_mask(D_TRACE, "request_cw2 to reader %s ridx=%d fd=%d", rdr->label, i, rdr->fd);
+                	  cs_debug_mask(D_TRACE, "request_cw2 to reader %s ridx=%d fd=%d ecm=%04X", rdr->label, i, rdr->fd, lc);
                     status = write_ecm_request(rdr->fd, er);
                   }
               break;
@@ -2046,7 +2088,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
         	  //cs_log("request_cw3 ridx=%d fd=%d", i, rdr->fd);
               if ((rdr->typ & R_IS_NETWORK))
                   if (er->matching_rdr[i]&flag) {
-                	  cs_debug_mask(D_TRACE, "request_cw3 to reader %s ridx=%d fd=%d", rdr->label, i, rdr->fd);
+                	  cs_debug_mask(D_TRACE, "request_cw3 to reader %s ridx=%d fd=%d ecm=%04X", rdr->label, i, rdr->fd, lc);
                     status = write_ecm_request(rdr->fd, er);
                   }
               break;
