@@ -1504,7 +1504,6 @@ void distribute_ecm(ECM_REQUEST *er)
         ecm = &cl->ecmtask[i];
         if (ecm->rc == 99 && ecm->ocaid==er->ocaid && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)==0) {
           er->cpti = ecm->cpti;
-          ecm->rc=2;
           //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
           write_ecm_request(cl->fd_m2c, er);
         }
