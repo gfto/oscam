@@ -98,7 +98,7 @@ static void print_devs(libusb_device **devs)
             busid=libusb_get_bus_number(dev);
             devid=libusb_get_device_address(dev);
             libusb_get_string_descriptor_ascii(handle,desc.iSerialNumber,iserialbuffer,sizeof(iserialbuffer));
-            printf("bus %03d, device %03d : %04x:%04x Smartreader (Device=%03d:%03d EndPoint=0x%2X Serial=%s)\n",
+            printf("bus %03d, device %03d : %04x:%04x Smartreader (Device=%03d:%03d EndPoint=0x%2X insert in oscam.server 'Device = Serial:%s')\n",
                             busid, devid,
                             desc.idVendor, desc.idProduct,
                             busid, devid, out_endpoint, iserialbuffer);
