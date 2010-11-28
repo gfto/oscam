@@ -46,9 +46,6 @@ static int smartreader_set_line_property2(S_READER *reader, enum smartreader_bit
 static int smartreader_set_line_property(S_READER *reader, enum smartreader_bits_type bits,
                            enum smartreader_stopbits_type sbit, enum smartreader_parity_type parity);
 static void smart_flush(S_READER *reader);
-static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, int timeout_sec);
-static int smartreader_write_data(S_READER *reader, unsigned char *buf, unsigned int size);
-static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size, int udelay);
 static int smartreader_set_latency_timer(S_READER *reader, unsigned short latency);
 static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T,unsigned char inv, int parity);
 static void *ReaderThread(void *p);
@@ -157,6 +154,39 @@ int SR_GetStatus (struct s_reader *reader, int * in)
 	return OK;
 }
 
+static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, int timeout_sec)
+{
+
+    int ret = 0;
+    unsigned int total_read = 0;
+    struct timeval start, now, dif = {0,0};
+    gettimeofday(&start,NULL);
+    
+    while(total_read < size && dif.tv_sec < timeout_sec) {
+        pthread_mutex_lock(&reader->sr_config->g_read_mutex);
+        
+        if(reader->sr_config->g_read_buffer_size > 0) {
+        
+            ret = reader->sr_config->g_read_buffer_size > size-total_read ? size-total_read : reader->sr_config->g_read_buffer_size;
+            memcpy(buff+total_read,reader->sr_config->g_read_buffer,ret);
+            reader->sr_config->g_read_buffer_size -= ret;
+
+	          if(reader->sr_config->g_read_buffer_size > 0)
+		          memcpy(reader->sr_config->g_read_buffer, reader->sr_config->g_read_buffer + ret, reader->sr_config->g_read_buffer_size);
+
+            total_read+=ret;
+        }
+        pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
+       
+        gettimeofday(&now,NULL);
+        timersub(&now, &start, &dif);
+				cs_sleepus(50);
+        sched_yield();
+    }
+		cs_ddump(buff, total_read, "SR IO: Receive: ");
+    return total_read;
+}
+
 int SR_Reset (struct s_reader *reader, ATR *atr)
 {
     unsigned char data[40];
@@ -252,11 +282,49 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
     return atr_ok;
 }
 
-int SR_Transmit (struct s_reader *reader, BYTE * buffer, unsigned size)
+static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size)
+{
 
+    unsigned int idx;
+
+    int write_size;
+    unsigned int offset = 0;
+    int total_written = 0;
+    int written;
+     
+    if(size<reader->sr_config->writebuffer_chunksize)
+        write_size=size;
+    else
+        write_size = reader->sr_config->writebuffer_chunksize;
+
+    while (offset < size)
+    {
+        if (offset+write_size > size)
+            write_size = size-offset;
+
+        int ret = libusb_bulk_transfer(reader->sr_config->usb_dev_handle,
+                                    reader->sr_config->in_ep, 
+                                    buff+offset, 
+                                    write_size,
+                                    &written,
+                                    reader->sr_config->usb_write_timeout);
+        if (ret < 0) {
+            cs_log("usb bulk write failed : ret = %d",ret);
+            sched_yield();
+            return(ret);
+        }
+        cs_ddump(buff+offset, written, "SR IO: Transmit: ");
+        total_written += written;
+        offset += write_size;
+    }
+    sched_yield();
+    return total_written;
+}
+
+int SR_Transmit (struct s_reader *reader, BYTE * buffer, unsigned size)
 { 
     unsigned int ret;
-    ret = smart_write(reader, buffer, size, 0);
+    ret = smart_write(reader, buffer, size);
     if (ret!=size)
         return ERROR;
         
@@ -376,7 +444,7 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
         FiDi[1]=HIBYTE(Fi);
         FiDi[2]=LOBYTE(Fi);
         FiDi[3]=Di;
-        ret = smart_write(reader,FiDi, sizeof (FiDi),0);
+        ret = smart_write(reader,FiDi, sizeof (FiDi));
     }
     else {
         cs_debug("Not setting F and D as we're in Irdeto mode");
@@ -389,13 +457,13 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     Freq[0]=0x02;
     Freq[1]=HIBYTE(freqk);
     Freq[2]=LOBYTE(freqk);
-    ret = smart_write(reader, Freq, sizeof (Freq),0);
+    ret = smart_write(reader, Freq, sizeof (Freq));
 
     // command 3, set paramter N
     cs_debug_mask (D_IFD,"IO:SR: sending N=%02X (%d) to smartreader",Ni,Ni);
     N[0]=0x03;
     N[1]=Ni;
-    ret = smart_write(reader, N, sizeof (N),0);
+    ret = smart_write(reader, N, sizeof (N));
 
     // command 4 , set parameter T
     temp_T=T;
@@ -412,13 +480,13 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     cs_debug_mask (D_IFD,"IO:SR: sending T=%02X (%d) to smartreader",T,T);
     Prot[0]=0x04;
     Prot[1]=T;
-    ret = smart_write(reader, Prot, sizeof (Prot),0);
+    ret = smart_write(reader, Prot, sizeof (Prot));
 
     // command 5, set invert y/n
     cs_debug_mask (D_IFD,"IO:SR: sending inv=%02X to smartreader",inv);
     Invert[0]=0x05;
     Invert[1]=inv;
-    ret = smart_write(reader, Invert, sizeof (Invert),0);
+    ret = smart_write(reader, Invert, sizeof (Invert));
 
     ret = smartreader_set_line_property2(reader, BITS_8, STOP_BIT_2, parity, BREAK_ON);
     //  send break for 350ms, also comes from JoePub debugging.
@@ -1122,79 +1190,6 @@ void smart_flush(S_READER *reader)
     sched_yield();
 }
 
-static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, int timeout_sec)
-{
-
-    int ret = 0;
-    unsigned int total_read = 0;
-    struct timeval start, now, dif = {0,0};
-    gettimeofday(&start,NULL);
-    
-    while(total_read < size && dif.tv_sec < timeout_sec) {
-        pthread_mutex_lock(&reader->sr_config->g_read_mutex);
-        
-        if(reader->sr_config->g_read_buffer_size > 0) {
-        
-            ret = reader->sr_config->g_read_buffer_size > size-total_read ? size-total_read : reader->sr_config->g_read_buffer_size;
-            memcpy(buff+total_read,reader->sr_config->g_read_buffer,ret);
-            reader->sr_config->g_read_buffer_size -= ret;
-
-	    if(reader->sr_config->g_read_buffer_size > 0){
-		memcpy(reader->sr_config->g_read_buffer, reader->sr_config->g_read_buffer + ret, reader->sr_config->g_read_buffer_size);
-	    }
-
-            total_read+=ret;
-        }
-        pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
-       
-        gettimeofday(&now,NULL);
-        timersub(&now, &start, &dif);
-				cs_sleepus(50);
-        sched_yield();
-    }
-		cs_ddump(buff, total_read, "SR IO: Receive: ");
-
-    
-    return total_read;
-}
-
-int smartreader_write_data(S_READER *reader, unsigned char *buf, unsigned int size)
-{
-    int ret;
-    int write_size;
-    unsigned int offset = 0;
-    int total_written = 0;
-    int written;
-     
-    if(size<reader->sr_config->writebuffer_chunksize)
-        write_size=size;
-    else
-        write_size = reader->sr_config->writebuffer_chunksize;
-
-    while (offset < size)
-    {
-
-        if (offset+write_size > size)
-            write_size = size-offset;
-
-        ret = libusb_bulk_transfer(reader->sr_config->usb_dev_handle,
-                                    reader->sr_config->in_ep, 
-                                    buf+offset, 
-                                    write_size,
-                                    &written,
-                                    reader->sr_config->usb_write_timeout);
-        if (ret < 0) {
-            cs_log("usb bulk write failed : ret = %d",ret);
-            return(ret);
-        }
-        cs_ddump(buf+offset, written, "SR IO: Transmit: ");
-        total_written += written;
-        offset += write_size;
-    }
-
-    return total_written;
-}
-
 static int smartreader_set_latency_timer(S_READER *reader, unsigned short latency)
 {
     unsigned short usb_val;
@@ -1218,30 +1213,6 @@ static int smartreader_set_latency_timer(S_READER *reader, unsigned short latenc
     }
 
     return 0;
-}
-
-static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size, int udelay)
-{
-
-    int ret = 0;
-    unsigned int idx;
-
-    if (udelay == 0) {
-        ret = smartreader_write_data(reader, buff, size);
-        if(ret<0) {
-            cs_debug_mask (D_IFD,"IO:SR: USB write error : %d",ret);
-        }
-    }
-    else {
-        for (idx = 0; idx < size; idx++) {
-            if ((ret = smartreader_write_data(reader, &buff[idx], 1)) < 0){
-                break;
-            }
-	          cs_sleepus(udelay);
-        }
-    }
-    sched_yield();
-    return ret;
 }
 
 #ifdef OS_CYGWIN32
