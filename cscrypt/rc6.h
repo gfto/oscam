@@ -20,7 +20,7 @@
  * r rounds.  The AES version of RC6 specifies b=16, 24, or 32;
  * w=32; and r=20.
  */
-   
+
 #define rc6keylen 43
 
 typedef unsigned int RC6KEY[rc6keylen];
@@ -36,4 +36,3 @@ typedef unsigned int RC6KEY[rc6keylen];
 void rc6_key_setup(unsigned char *K, int b, unsigned int *S);
 void rc6_block_encrypt(unsigned int *pt, unsigned int *ct, unsigned int *S);
 void rc6_block_decrypt(unsigned int *ct, unsigned int *pt, unsigned int *S);
-

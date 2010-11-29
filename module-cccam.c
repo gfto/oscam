@@ -5,13 +5,15 @@
 #include <time.h>
 #include "reader-common.h"
 #include <poll.h>
-#include "cscrypt/rc6.h"
 
 extern int pthread_mutexattr_settype(pthread_mutexattr_t *__attr, int __kind); //Needs extern defined???
 
 //Mode names for CMD_05 command:
 const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
 		"LEN=0" };
+
+//Mode names for CMD_0C command:
+const char *cmd0c_mode_name[] = { "NONE", "RC6", "RC4", "CC_CRYPT", "AES", "IDEA" };
 
 static uint8 cc_node_id[8];
 
@@ -102,6 +104,100 @@ void cc_cw_crypt(struct s_client *cl, uint8 *cws, uint32 cardid) {
 		if (i & 1)
 			tmp = ~tmp;
 		cws[i] = (cardid >> (2 * i)) ^ tmp;
+	}
+}
+
+void cc_cw_crypt_cmd0c(struct s_client *cl, uint8 *cws) {
+	struct cc_data *cc = cl->cc;
+	uint8 out[16];
+
+	switch (cc->cmd0c_mode) {
+		case MODE_CMD_0x0C_NONE: { // none additional encryption
+			break;
+		}
+		case MODE_CMD_0x0C_RC6 : { //RC6			
+			rc6_block_decrypt((unsigned int *) cws,
+				(unsigned int *) &out, cc->cmd0c_RC6_cryptkey);
+			memcpy(cws, &out, 16);
+			break;
+		}
+		case MODE_CMD_0x0C_RC4: { // RC4
+			cc_rc4_crypt(&cc->cmd0c_cryptkey, cws, 16, ENCRYPT);
+			break;
+		}
+		case MODE_CMD_0x0C_CC_CRYPT: { // cc_crypt
+			cc_crypt(&cc->cmd0c_cryptkey, cws, 16, DECRYPT);
+			cws[0] ^= 0xF0;
+			cws[15] ^= 0xF0;	
+			break;
+		}	
+		case MODE_CMD_0x0C_AES: { // AES
+			AES_decrypt((unsigned char *) cws,
+				(unsigned char *) &out, &cc->cmd0c_AES_key);
+			memcpy(cws, &out, 16);
+			break;
+		}
+		case MODE_CMD_0x0C_IDEA : { //IDEA
+			uint8 cws_in[8];
+			int i;
+
+			memcpy(&cws_in, cws, 8);			
+			idea_ecb_encrypt(cws_in, out, &cc->cmd0c_IDEA_dkey);
+			memcpy(&cws_in, cws + 8, 8);			
+			idea_ecb_encrypt(cws_in, out + 8, &cc->cmd0c_IDEA_dkey);
+
+			//final cws[8-15]:
+			for (i = 8; i < 16; i++)
+				out[i] ^= cws[i-8];
+
+			memcpy(cws, &out, 16);
+			break;
+		}		
+	}		
+}
+
+void set_cmd0c_cryptkey(struct s_client *cl, uint8 *key, uint8 len) {
+	struct cc_data *cc = cl->cc;
+	uint8 key_buf[32];
+
+	memset(&key_buf, 0, sizeof(key_buf));
+	
+	if (len > 32)
+		len = 32;
+
+	memcpy(key_buf, key, len);
+
+	switch (cc->cmd0c_mode) {
+					
+		case MODE_CMD_0x0C_NONE : { //NONE
+			break;
+		}
+			case MODE_CMD_0x0C_RC6 : { //RC6
+			rc6_key_setup(key_buf, 32, cc->cmd0c_RC6_cryptkey);
+			break;
+		}					
+						
+		case MODE_CMD_0x0C_RC4:  //RC4
+		case MODE_CMD_0x0C_CC_CRYPT: { //CC_CRYPT
+			cc_init_crypt(&cc->cmd0c_cryptkey, key_buf, 32);
+			break;
+		}
+					
+		case MODE_CMD_0x0C_AES: { //AES
+			memset(&cc->cmd0c_AES_key, 0, sizeof(cc->cmd0c_AES_key));			
+			AES_set_decrypt_key((unsigned char *) key_buf, 256, &cc->cmd0c_AES_key);				
+			break;
+		}	
+					
+		case MODE_CMD_0x0C_IDEA : { //IDEA
+			IDEA_KEY_SCHEDULE ekey; 
+			uint8 key_buf_IDEA[16];
+			memcpy(&key_buf_IDEA, &key_buf, 16);
+
+			idea_set_encrypt_key(key_buf_IDEA, &ekey);
+			idea_set_decrypt_key(&ekey,&cc->cmd0c_IDEA_dkey);
+			break;
+		}	
 	}
 }
 
@@ -2035,8 +2131,12 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				free(eei);
 
 				if (card) {
-					if (!cc->extended_mode)
-						cc_cw_crypt(cl, buf + 4, card->id);
+
+					if (!cc->extended_mode) {
+ 						cc_cw_crypt(cl, buf + 4, card->id);
+						cc_cw_crypt_cmd0c(cl, buf + 4);
+					}
+
 					memcpy(cc->dcw, buf + 4, 16);
 					//fix_dcw(cc->dcw);
 					if (!cc->extended_mode)
@@ -2147,8 +2247,9 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		break;
 	}
 
-	case MSG_CMD_0C: { //New CCCAM 2.2.0 Server fake check!
+	case MSG_CMD_0C: { //New CCCAM 2.2.0 Server/Client fake check!
 		int len = l-4;
+
 		if (cl->typ == 'c') { //Only im comming from "client"
 			cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
 			cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
@@ -2176,35 +2277,63 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cc_cmd_send(cl, bytes, 0x20, MSG_CMD_0C);	
 		}
 		else //reader
-		{
-			cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
-			cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
-			uint8 CMD_0x0C_CMD = data[0];
-			
-			cs_log("%s received MSG_CMD_0C from server! CMD_0x0C_CMD=%d, cycle connection!", getprefix(), CMD_0x0C_CMD);
-						
-			//Unkown commands...need workout algo
-			if (CMD_0x0C_CMD < 5)
-				cc_cli_close(cl, TRUE);
+		{			
+			// by Project:Keynation
+			uint8 CMD_0x0C_Command = data[0];
+
+			if (CMD_0x0C_Command > 4) {
+				cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
+				break;
+			}
+
+			switch (CMD_0x0C_Command) {
 				
-			//TODO
-			//    * CMD_0x0C_01
-			//     1. Set Mode to CMD_0x0C_01
-			//     2. cc_init_crypt(BlockCMD_0x0C, data) with $20 received Bytes
-			//     3. CW with cc_cw_crypt and cc_rc4_crypt(BlockCMD_0x0C, ENCRYPT)
-			//                      
-			//    * CMD_0x0C_02
-			//     1. Set Mode to CMD_0x0C_02
-		 	//     2. cc_init_crypt(BlockCMD_0x0C, data) with $20 received Bytes
-			//     3. CW with cc_cw_crypt and cc_crypt(BlockCMD_0x0C, DECRYPT)
-			//                                            
-			                            
-			                                            
+				case 0 : { //RC6
+					cc->cmd0c_mode = MODE_CMD_0x0C_RC6;
+					break;
+				}					
+							
+				case 1: { //RC4
+					cc->cmd0c_mode = MODE_CMD_0x0C_RC4;
+					break;
+				}
+					
+				case 2: { //CC_CRYPT
+					cc->cmd0c_mode = MODE_CMD_0x0C_CC_CRYPT;
+					break;
+				}		
+					
+				case 3: { //AES
+					cc->cmd0c_mode = MODE_CMD_0x0C_AES;
+					break;
+				}	
+					
+				case 4 : { //IDEA
+					cc->cmd0c_mode = MODE_CMD_0x0C_IDEA;
+					break;
+				}	
+			}	
+			
+			cs_log("%s received MSG_CMD_0C from server! CMD_0x0C_CMD=%d, MODE=%s! Message data: %s",
+				getprefix(), CMD_0x0C_Command, cmd0c_mode_name[cc->cmd0c_mode], cs_hexdump(0, data, len)); 
+
+			set_cmd0c_cryptkey(cl, data, len);                            			                                            
 		}
 		break;
 	}
+
+	case MSG_CMD_0D: { //key update for the active cmd0x0c algo
+		int len = l-4;
+		if (cc->cmd0c_mode == MODE_CMD_0x0C_NONE)
+			break;
+
+		set_cmd0c_cryptkey(cl, data, len); 
+
+		cs_log("%s received MSG_CMD_0D from server! MODE=%s! Message data: %s",
+			getprefix(), cmd0c_mode_name[cc->cmd0c_mode], cs_hexdump(0, data, len));
+		break;
+	}
 		
-	case MSG_CMD_0D:
 	case MSG_CMD_0E: {
 		cs_log("cccam 2.2.0 commands not implemented");
 		//Unkwon commands...need workout algo
