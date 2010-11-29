@@ -2708,6 +2708,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
+			ll_clear_data(card2->badsids);
 			ll_append(cardlist, card2);
 			modified = 1;
 
@@ -2734,6 +2735,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
+			ll_clear_data(card2->badsids);
 			ll_append(cardlist, card2);
 			modified = 1;
 		} else {
@@ -3128,6 +3130,7 @@ int cc_srv_connect(struct s_client *cl) {
 	}
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
+	cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
 
 	//Create checksum for "O" cccam:
 	for (i = 0; i < 12; i++) {
@@ -3197,7 +3200,12 @@ int cc_srv_connect(struct s_client *cl) {
 	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), DECRYPT);
 	if ((i = recv(cl->pfd, buf, 6, MSG_WAITALL)) == 6) {
 		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
-		cs_ddump(buf, 6, "cccam: pwd check '%s':", buf);
+		//cs_ddump(buf, 6, "cccam: pwd check '%s':", buf); //illegal buf-bytes could kill the logger!
+		if (memcmp(buf+1, "Ccam\0", 5) != 0) { //Don't know why - but first byte is always wrong!
+						       //So ignore first byte!
+			cs_log("account '%s' wrong password!", usr);
+			return -1;
+		}
 	} else
 		return -1;
 
