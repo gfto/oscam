@@ -414,7 +414,6 @@ typedef struct  {
     int inv;
     int parity;
     int irdeto;
-    int running;
 	libusb_device *usb_dev;
 	libusb_device_handle *usb_dev_handle;
     enum smartreader_chip_type type;
@@ -435,7 +434,6 @@ typedef struct  {
     unsigned int g_read_buffer_size;
     pthread_mutex_t g_read_mutex;
     pthread_mutex_t g_usb_mutex;
-    pthread_t rt;
     unsigned char modem_status;
 } SR_CONFIG;
 #endif

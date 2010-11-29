@@ -24,30 +24,31 @@
 //The number of concurrent bulk reads to queue onto the smartreader
 #define NUM_TXFERS 2
 
-typedef struct s_reader S_READER;
+static int number_of_smartreaders_running=0; //counts how many smartreaders are running, if 0 no libusbeventhandler needs to be called
+static pthread_t libusb_thread;
 
 static bool smartreader_check_endpoint(libusb_device *usb_dev, uint8_t out_endpoint);
 static struct libusb_device *find_smartreader(const char*busname,const char *devname, uint8_t out_endpoint);
-static void smartreader_init(S_READER *reader, uint8_t out_endpoint);
-static unsigned int smartreader_determine_max_packet_size(S_READER *reader);
-static int smartreader_usb_close_internal (S_READER *reader);
-static int smartreader_usb_reset(S_READER *reader);
-static int smartreader_usb_open_dev(S_READER *reader);
-static int smartreader_usb_purge_rx_buffer(S_READER *reader);
-static int smartreader_usb_purge_tx_buffer(S_READER *reader);
-static int smartreader_usb_purge_buffers(S_READER *reader);
-static int smartreader_convert_baudrate(int baudrate, S_READER *reader, unsigned short *value, unsigned short *index);
-static int smartreader_set_baudrate(S_READER *reader, int baudrate);
-static int smartreader_setdtr_rts(S_READER *reader, int dtr, int rts);
-static int smartreader_setflowctrl(S_READER *reader, int flowctrl);
-static int smartreader_set_line_property2(S_READER *reader, enum smartreader_bits_type bits,
+static void smartreader_init(struct s_reader *reader, uint8_t out_endpoint);
+static unsigned int smartreader_determine_max_packet_size(struct s_reader *reader);
+static int smartreader_usb_close_internal (struct s_reader *reader);
+static int smartreader_usb_reset(struct s_reader *reader);
+static int smartreader_usb_open_dev(struct s_reader *reader);
+static int smartreader_usb_purge_rx_buffer(struct s_reader *reader);
+static int smartreader_usb_purge_tx_buffer(struct s_reader *reader);
+static int smartreader_usb_purge_buffers(struct s_reader *reader);
+static int smartreader_convert_baudrate(int baudrate, struct s_reader *reader, unsigned short *value, unsigned short *index);
+static int smartreader_set_baudrate(struct s_reader *reader, int baudrate);
+static int smartreader_setdtr_rts(struct s_reader *reader, int dtr, int rts);
+static int smartreader_setflowctrl(struct s_reader *reader, int flowctrl);
+static int smartreader_set_line_property2(struct s_reader *reader, enum smartreader_bits_type bits,
                             enum smartreader_stopbits_type sbit, enum smartreader_parity_type parity,
                             enum smartreader_break_type break_type);
-static int smartreader_set_line_property(S_READER *reader, enum smartreader_bits_type bits,
+static int smartreader_set_line_property(struct s_reader *reader, enum smartreader_bits_type bits,
                            enum smartreader_stopbits_type sbit, enum smartreader_parity_type parity);
-static void smart_flush(S_READER *reader);
-static int smartreader_set_latency_timer(S_READER *reader, unsigned short latency);
-static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T,unsigned char inv, int parity);
+static void smart_flush(struct s_reader *reader);
+static int smartreader_set_latency_timer(struct s_reader *reader, unsigned short latency);
+static void EnableSmartReader(struct s_reader *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T,unsigned char inv, int parity);
 static void *ReaderThread(void *p);
 
 int SR_Init (struct s_reader *reader)
@@ -73,8 +74,8 @@ int SR_Init (struct s_reader *reader)
     }
     cs_debug_mask (D_IFD,"IO:SR: Looking for device %s on bus %s",devname,busname);
 
-   	ret = libusb_init(NULL);
-	if (ret < 0) {
+   	ret = libusb_init(NULL); //FIXME should we really init for every smartreader or only for first one?
+    if (ret < 0) {
         cs_log("Libusb init error : %d",ret);
         return ret;
     }
@@ -126,13 +127,14 @@ int SR_Init (struct s_reader *reader)
     reader->sr_config->modem_status = 0 ;
     pthread_mutex_init(&reader->sr_config->g_read_mutex,NULL);
     pthread_mutex_init(&reader->sr_config->g_usb_mutex,NULL);
-    ret = pthread_create(&reader->sr_config->rt, NULL, ReaderThread, (void *)(reader));
-    if (ret) {
+    if (number_of_smartreaders_running++ <= 1) { //first smartreader starting needs to start readerthread
+      ret = pthread_create(&libusb_thread, NULL, ReaderThread, (void *)(reader));
+      if (ret) {
         cs_log("ERROR; return code from pthread_create() is %d", ret);
         return ERROR;
+      }
     }
-
-	return OK;
+    return OK;
 }
 
 
@@ -154,7 +156,7 @@ int SR_GetStatus (struct s_reader *reader, int * in)
 	return OK;
 }
 
-static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, int timeout_sec)
+static int smart_read(struct s_reader *reader, unsigned char* buff, unsigned int size, int timeout_sec)
 {
 
     int ret = 0;
@@ -282,7 +284,7 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
     return atr_ok;
 }
 
-static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size)
+static int smart_write(struct s_reader *reader, unsigned char* buff, unsigned int size)
 {
 
     unsigned int idx;
@@ -389,12 +391,13 @@ int SR_SetParity (struct s_reader *reader, unsigned short parity)
 int SR_Close (struct s_reader *reader)
 {
 
-	cs_debug_mask(D_IFD,"IO:SR: Closing smarteader\n");
+    cs_debug_mask(D_IFD,"IO:SR: Closing smarteader\n");
 
-    reader->sr_config->running=FALSE;
-    pthread_join(reader->sr_config->rt,NULL);
     libusb_close(reader->sr_config->usb_dev_handle);
-    libusb_exit(NULL);
+    if (number_of_smartreaders_running-- <= 0) {//last reader is closed, thread must be closed also
+      pthread_join(libusb_thread,NULL);
+      libusb_exit(NULL);
+    }
     free(reader->sr_config);
     return OK;
 
@@ -421,7 +424,7 @@ int SR_FastReset(struct s_reader *reader, int delay)
     return 0;
 }
 
-static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T, unsigned char inv,int parity) {
+static void EnableSmartReader(struct s_reader *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T, unsigned char inv,int parity) {
 
     int ret = 0;
     unsigned char FiDi[4];
@@ -614,7 +617,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
     return dev;
 }
 
-void smartreader_init(S_READER *reader,uint8_t out_endpoint)
+void smartreader_init(struct s_reader *reader,uint8_t out_endpoint)
 {
     reader->sr_config->usb_dev = NULL;
     reader->sr_config->usb_dev_handle=NULL;
@@ -635,7 +638,7 @@ void smartreader_init(S_READER *reader,uint8_t out_endpoint)
 }
 
 
-static unsigned int smartreader_determine_max_packet_size(S_READER *reader)
+static unsigned int smartreader_determine_max_packet_size(struct s_reader *reader)
 {
     unsigned int packet_size;
     struct libusb_device_descriptor desc;
@@ -683,7 +686,7 @@ static unsigned int smartreader_determine_max_packet_size(S_READER *reader)
 }
 
 
-static int smartreader_usb_close_internal (S_READER *reader)
+static int smartreader_usb_close_internal (struct s_reader *reader)
 {
     int ret = 0;
 
@@ -697,7 +700,7 @@ static int smartreader_usb_close_internal (S_READER *reader)
 }
 
 
-int smartreader_usb_reset(S_READER *reader)
+int smartreader_usb_reset(struct s_reader *reader)
 {
     if (libusb_control_transfer(reader->sr_config->usb_dev_handle,
                                 FTDI_DEVICE_OUT_REQTYPE,
@@ -716,7 +719,7 @@ int smartreader_usb_reset(S_READER *reader)
 }
 
 
-int smartreader_usb_open_dev(S_READER *reader)
+int smartreader_usb_open_dev(struct s_reader *reader)
 {
     int detach_errno = 0;
     struct libusb_device_descriptor desc;
@@ -850,7 +853,7 @@ int smartreader_usb_open_dev(S_READER *reader)
 }
 
 
-int smartreader_usb_purge_rx_buffer(S_READER *reader)
+int smartreader_usb_purge_rx_buffer(struct s_reader *reader)
 {
     if (libusb_control_transfer(reader->sr_config->usb_dev_handle,
                                 FTDI_DEVICE_OUT_REQTYPE,
@@ -868,7 +871,7 @@ int smartreader_usb_purge_rx_buffer(S_READER *reader)
     return 0;
 }
 
-int smartreader_usb_purge_tx_buffer(S_READER *reader)
+int smartreader_usb_purge_tx_buffer(struct s_reader *reader)
 {
     if (libusb_control_transfer(reader->sr_config->usb_dev_handle,
                                 FTDI_DEVICE_OUT_REQTYPE,
@@ -885,7 +888,7 @@ int smartreader_usb_purge_tx_buffer(S_READER *reader)
     return 0;
 }
 
-int smartreader_usb_purge_buffers(S_READER *reader)
+int smartreader_usb_purge_buffers(struct s_reader *reader)
 {
     int result;
 
@@ -900,7 +903,7 @@ int smartreader_usb_purge_buffers(S_READER *reader)
     return 0;
 }
 
-static int smartreader_convert_baudrate(int baudrate, S_READER *reader, unsigned short *value, unsigned short *index)
+static int smartreader_convert_baudrate(int baudrate, struct s_reader *reader, unsigned short *value, unsigned short *index)
 {
     static const char am_adjust_up[8] = {0, 0, 0, 1, 0, 3, 2, 1};
     static const char am_adjust_dn[8] = {0, 0, 0, 1, 0, 1, 2, 3};
@@ -1020,7 +1023,7 @@ static int smartreader_convert_baudrate(int baudrate, S_READER *reader, unsigned
     return best_baud;
 }
 
-int smartreader_set_baudrate(S_READER *reader, int baudrate)
+int smartreader_set_baudrate(struct s_reader *reader, int baudrate)
 {
     unsigned short value, index;
     int actual_baudrate;
@@ -1061,7 +1064,7 @@ int smartreader_set_baudrate(S_READER *reader, int baudrate)
     return 0;
 }
 
-int smartreader_setdtr_rts(S_READER *reader, int dtr, int rts)
+int smartreader_setdtr_rts(struct s_reader *reader, int dtr, int rts)
 {
     unsigned short usb_val;
 
@@ -1090,7 +1093,7 @@ int smartreader_setdtr_rts(S_READER *reader, int dtr, int rts)
     return 0;
 }
 
-int smartreader_setflowctrl(S_READER *reader, int flowctrl)
+int smartreader_setflowctrl(struct s_reader *reader, int flowctrl)
 {
     if (libusb_control_transfer(reader->sr_config->usb_dev_handle,
                                 FTDI_DEVICE_OUT_REQTYPE,
@@ -1107,7 +1110,7 @@ int smartreader_setflowctrl(S_READER *reader, int flowctrl)
     return 0;
 }
 
-int smartreader_set_line_property2(S_READER *reader, enum smartreader_bits_type bits,
+int smartreader_set_line_property2(struct s_reader *reader, enum smartreader_bits_type bits,
                             enum smartreader_stopbits_type sbit, enum smartreader_parity_type parity,
                             enum smartreader_break_type break_type)
 {
@@ -1171,7 +1174,7 @@ int smartreader_set_line_property2(S_READER *reader, enum smartreader_bits_type 
 }
 
 
-int smartreader_set_line_property(S_READER *reader, enum smartreader_bits_type bits,
+int smartreader_set_line_property(struct s_reader *reader, enum smartreader_bits_type bits,
                            enum smartreader_stopbits_type sbit, enum smartreader_parity_type parity)
 {
     return smartreader_set_line_property2(reader, bits, sbit, parity, BREAK_OFF);
@@ -1179,7 +1182,7 @@ int smartreader_set_line_property(S_READER *reader, enum smartreader_bits_type b
 
 
 
-void smart_flush(S_READER *reader)
+void smart_flush(struct s_reader *reader)
 {
 
     smartreader_usb_purge_buffers(reader);
@@ -1190,7 +1193,7 @@ void smart_flush(S_READER *reader)
     sched_yield();
 }
 
-static int smartreader_set_latency_timer(S_READER *reader, unsigned short latency)
+static int smartreader_set_latency_timer(struct s_reader *reader, unsigned short latency)
 {
     unsigned short usb_val;
 
@@ -1276,7 +1279,6 @@ static void* ReaderThread(void *p)
     int ret,idx;
 	
     reader = (struct s_reader *)p;
-    reader->sr_config->running=TRUE;
 
     for(idx=0; idx<NUM_TXFERS; idx++) {
          usbt[idx] = libusb_alloc_transfer(0);
@@ -1293,7 +1295,7 @@ static void* ReaderThread(void *p)
          ret = libusb_submit_transfer(usbt[idx]);            
     }
 
-    while(reader->sr_config->running) {
+    while(number_of_smartreaders_running > 0) {
         ret = libusb_handle_events(NULL);
         if(ret!=0) 
             cs_log("libusb_handle_events returned with %d\n",ret);
