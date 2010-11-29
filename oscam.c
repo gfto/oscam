@@ -417,13 +417,16 @@ static void cleanup_thread(struct s_client *cl)
 		cwcache=ecmc;
 	}
 	pthread_mutex_unlock(&cwcache_lock);
-  //decrease ecmache
+
+	//decrease ecmache
+	pthread_mutex_lock(&ecmcache_lock);
 	if (ecmcache->next != NULL) { //keep it at least on one entry big
 		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next) ; //find last element
 		if (ecmidx==ecmc->next)
 		  ecmidx = ecmcache;
 		NULLFREE(ecmc->next); //free last element
 	}
+	pthread_mutex_unlock(&ecmcache_lock);
 }
 
 void cs_exit(int sig)
@@ -633,10 +636,12 @@ struct s_client * cs_fork(in_addr_t ip) {
 		pthread_mutex_unlock(&cwcache_lock);
 
 		//increase ecmcache
+		pthread_mutex_lock(&ecmcache_lock);
 		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
 		ecmc->next = malloc(sizeof(struct s_ecm));
 		if (ecmc->next)
 			memset(ecmc->next, 0, sizeof(struct s_ecm));
+		pthread_mutex_unlock(&ecmcache_lock);
 	} else {
 		cs_log("max connections reached -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
@@ -1196,8 +1201,24 @@ void cs_disconnect_client(struct s_client * client)
 	cs_exit(0);
 }
 
-static void store_ecm(ECM_REQUEST *er, uint64 grp)
+/**
+ * ecm cache
+ **/
+static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 {
+	struct s_ecm *ecmc;
+	pthread_mutex_lock(&ecmcache_lock);
+	for (ecmc=ecmcache; ecmc ; ecmc=ecmc->next) {
+		if ((grp & ecmc->grp) &&
+		     ecmc->caid==er->caid &&
+		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
+		{
+			er->rc = 99;
+			pthread_mutex_unlock(&ecmcache_lock);
+			return(1);
+		}
+	}
+	//store_ecm(er, grp); //Only ECM, no CW!
 	if (ecmidx->next)
 		ecmidx=ecmidx->next;
 	else
@@ -1206,26 +1227,8 @@ static void store_ecm(ECM_REQUEST *er, uint64 grp)
 	ecmidx->caid = er->caid;
 	ecmidx->grp = grp;
 	ecmidx->reader = er->selected_reader;
-}
 
-/**
- * ecm cache
- **/
-static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
-{
-	struct s_ecm *ecmc;
-        pthread_mutex_lock(&ecmcache_lock);
-	for (ecmc=ecmcache; ecmc ; ecmc=ecmc->next)
-		if ((grp & ecmc->grp) &&
-		     ecmc->caid==er->caid &&
-		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
-		{
-		        er->rc = 99;
-		        pthread_mutex_unlock(&ecmcache_lock);
-			return(1);
-		}
-        store_ecm(er, grp); //Only ECM, no CW!
-        pthread_mutex_unlock(&ecmcache_lock);
+	pthread_mutex_unlock(&ecmcache_lock);
 	return(0);
 }
 
@@ -1251,7 +1254,7 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
 
-		cs_debug_mask(D_TRACE, "cache: ecm %04X found: caid=%04X grp=%lld cgrp=%lld", lc, ecmc->caid, grp, ecmc->grp);
+		cs_debug_mask(D_TRACE, "cache: ecm %04X found: ccaid=%04X caid=%04X grp=%lld cgrp=%lld count=%d", lc, er->caid, ecmc->caid, grp, ecmc->grp, count);
 
 		if (!(grp & ecmc->grp))
 			continue;
@@ -1259,7 +1262,6 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 		if (ecmc->caid != er->caid)
 			continue;
 		
-		cs_debug_mask(D_TRACE, "cache: found count=%d", count);
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
 		pthread_mutex_unlock(&cwcache_lock);
@@ -1502,7 +1504,7 @@ void distribute_ecm(ECM_REQUEST *er)
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
-        if (ecm->rc == 99 && ecm->ocaid==er->ocaid && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)==0) {
+        if (ecm->rc == 99 && ecm->caid==er->caid && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)==0) {
           er->cpti = ecm->cpti;
           //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
           write_ecm_request(cl->fd_m2c, er);
