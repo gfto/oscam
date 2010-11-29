@@ -389,15 +389,18 @@ static void cleanup_thread(struct s_client *cl)
 	else
 		prev->next = cl2->next; //remove client from list
 
-	cs_sleepms(2000); //wait some time before cleanup to prevent segfaults
-	if(ph[cl->ctyp].cleanup) ph[cl->ctyp].cleanup(cl);
+	if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
+		ph[cl->ctyp].cleanup(cl);
+
+	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
+	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
+	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
+
+	cs_sleepms(1000); //wait some time before cleanup to prevent segfaults
 	NULLFREE(cl->ecmtask);
 	NULLFREE(cl->emmcache);
 	NULLFREE(cl->req);
 	NULLFREE(cl->cc);
-	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
-	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
-	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 
 	NULLFREE (cl);
 

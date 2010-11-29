@@ -282,15 +282,21 @@ int network_tcp_connection_open()
 
 void network_tcp_connection_close(struct s_client *cl, int fd)
 {
-  if(!cl) return;
-  struct s_reader *reader = cl->reader;
-  cs_debug("tcp_conn_close(): fd=%d, cl->typ == 'c'=%d", fd, cl->typ == 'c');
-  if (fd) {
-    close(fd);
-    if(reader)
-      clear_block_delay(reader);
-  }
-  cl->udp_fd = 0;
+	if(!cl) return;
+	struct s_reader *reader = cl->reader;
+	cs_debug("tcp_conn_close(): fd=%d, cl->typ == 'c'=%d", fd, cl->typ == 'c');
+
+	if (fd) {
+		close(fd);
+		if (fd == cl->udp_fd)
+			cl->udp_fd = 0;
+		if (fd == cl->pfd)
+			cl->pfd = 0;
+
+		if(reader)
+			clear_block_delay(reader);
+	}
+
 
   if (cl->typ != 'c')
   {
