@@ -3201,9 +3201,9 @@ int cc_srv_connect(struct s_client *cl) {
 	if ((i = recv(cl->pfd, buf, 6, MSG_WAITALL)) == 6) {
 		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
 		//cs_ddump(buf, 6, "cccam: pwd check '%s':", buf); //illegal buf-bytes could kill the logger!
-		if (memcmp(buf, "CCcam\0", 6) != 0) { //Don't know why - but first byte is always wrong!
-						       //So ignore first byte!
+		if (memcmp(buf, "CCcam\0", 6) != 0) { 
 			cs_log("account '%s' wrong password!", usr);
+			cs_add_violation((uint)cl->ip);
 			return -1;
 		}
 	} else
