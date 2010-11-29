@@ -3531,7 +3531,18 @@ int cc_cli_init_int(struct s_client *cl) {
 	struct protoent *ptrp;
 	int p_proto;
 
-	cl->pfd = 0;
+	if (cl->pfd) {
+		close(cl->pfd);
+		if (cl->pfd == cl->udp_fd)
+			cl->udp_fd = 0;
+		cl->pfd = 0;
+	}
+
+	if (cl->udp_fd) {
+		close(cl->udp_fd);
+		cl->udp_fd = 0;
+	}
+
 	if (rdr->r_port <= 0) {
 		cs_log("%s invalid port %d for server %s", rdr->label, rdr->r_port,
 				rdr->device);
@@ -3553,8 +3564,6 @@ int cc_cli_init_int(struct s_client *cl) {
 	//		loc_sa.sin_addr.s_addr = INADDR_ANY;
 	//		loc_sa.sin_port = htons(rdr->l_port);
 
-	if (cl->udp_fd)
-		cc_cli_close(cl, FALSE);
 		
 	if ((cl->udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) <= 0) {
 		cs_log("%s Socket creation failed (errno=%d, socket=%d)", rdr->label,

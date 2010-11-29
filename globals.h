@@ -1342,6 +1342,7 @@ extern void kill_thread(struct s_client *cl);
 extern int get_threadnum(struct s_client *client);
 extern int get_nr_of_readers(void);
 extern int get_ridx(struct s_reader *reader);
+extern void cs_add_violation(uint ip);
 
 extern void cs_card_info(void);
 extern void cs_debug_level(void);
