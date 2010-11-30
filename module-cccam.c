@@ -107,53 +107,50 @@ void cc_cw_crypt(struct s_client *cl, uint8 *cws, uint32 cardid) {
 	}
 }
 
-void cc_cw_crypt_cmd0c(struct s_client *cl, uint8 *cws) {
+void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 	struct cc_data *cc = cl->cc;
-	uint8 out[16];
+	uint8 *out = malloc(len);
 
 	switch (cc->cmd0c_mode) {
 		case MODE_CMD_0x0C_NONE: { // none additional encryption
+			memcpy(out, buf, len);
 			break;
 		}
 		case MODE_CMD_0x0C_RC6 : { //RC6			
-			rc6_block_decrypt((unsigned int *) cws,
-				(unsigned int *) &out, cc->cmd0c_RC6_cryptkey);
-			memcpy(cws, &out, 16);
+			//rc6_block_decrypt(buf, out, cc->cmd0c_RC6_cryptkey); // TODO RC6
 			break;
 		}
 		case MODE_CMD_0x0C_RC4: { // RC4
-			cc_rc4_crypt(&cc->cmd0c_cryptkey, cws, 16, ENCRYPT);
+			cc_rc4_crypt(&cc->cmd0c_cryptkey, buf, len, ENCRYPT);
+			memcpy(out, buf, len);
 			break;
 		}
 		case MODE_CMD_0x0C_CC_CRYPT: { // cc_crypt
-			cc_crypt(&cc->cmd0c_cryptkey, cws, 16, DECRYPT);
-			cws[0] ^= 0xF0;
-			cws[15] ^= 0xF0;	
+			cc_crypt(&cc->cmd0c_cryptkey, buf, len, DECRYPT);
+			memcpy(out, buf, len);
 			break;
 		}	
 		case MODE_CMD_0x0C_AES: { // AES
-			AES_decrypt((unsigned char *) cws,
-				(unsigned char *) &out, &cc->cmd0c_AES_key);
-			memcpy(cws, &out, 16);
+			int i;
+			for (i = 0; i<len / 16; i++)
+				AES_decrypt((unsigned char *) buf + i * 8,
+					    (unsigned char *) out + i * 8, &cc->cmd0c_AES_key);
 			break;
 		}
 		case MODE_CMD_0x0C_IDEA : { //IDEA
-			uint8 cws_in[8];
 			int i;
 
-			memcpy(&cws_in, cws, 8);			
-			idea_ecb_encrypt(cws_in, out, &cc->cmd0c_IDEA_dkey);
-			memcpy(&cws_in, cws + 8, 8);			
-			idea_ecb_encrypt(cws_in, out + 8, &cc->cmd0c_IDEA_dkey);
+			idea_ecb_encrypt(buf, out, &cc->cmd0c_IDEA_dkey);
+			idea_ecb_encrypt(buf + 8, out + 8, &cc->cmd0c_IDEA_dkey);
 
-			//final cws[8-15]:
 			for (i = 8; i < 16; i++)
-				out[i] ^= cws[i-8];
+				out[i] ^= buf[i-8];
 
-			memcpy(cws, &out, 16);
 			break;
-		}		
-	}		
+		}
+	}
+	memcpy(buf, out, len);
+	free(out);
 }
 
 void set_cmd0c_cryptkey(struct s_client *cl, uint8 *key, uint8 len) {
@@ -2134,7 +2131,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 					if (!cc->extended_mode) {
  						cc_cw_crypt(cl, buf + 4, card->id);
-						cc_cw_crypt_cmd0c(cl, buf + 4);
+						cc_crypt_cmd0c(cl, buf + 4, 16);
 					}
 
 					memcpy(cc->dcw, buf + 4, 16);
@@ -2278,7 +2275,9 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		}
 		else //reader
 		{			
-			// by Project:Keynation
+			// by Project:Keynation + Oscam team
+			cc_crypt_cmd0c(cl, data, len);
+
 			uint8 CMD_0x0C_Command = data[0];
 
 			if (CMD_0x0C_Command > 4) {
