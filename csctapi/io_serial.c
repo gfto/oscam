@@ -640,32 +640,33 @@ static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, u
    
    tv.tv_sec = timeout_ms/1000;
    tv.tv_usec = (timeout_ms % 1000) * 1000L;
-   select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
-   if(select_ret==-1)
-   {
-	cs_log("ERROR in IO_Serial_WaitToRead: select_ret=%i, errno=%d", select_ret, errno);
-	if (errno==4) {
-		//FIXME
-		// try again in case of Interrupted system call
+
+	while (1) {
 		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
-		if(select_ret==-1) {
-			cs_log("ERROR in IO_Serial_WaitToRead(2): select_ret=%i, errno=%d", select_ret, errno);
+		if (select_ret==-1) {
+			cs_log("ERROR in IO_Serial_WaitToRead: errno=%d", errno);
+			if (errno==EINTR) {
+				//try again in case of Interrupted system call
+				continue;
+			} else
+				return ERROR;
+		}
+		if (select_ret==0) {
+			cs_log("TIMEOUT in IO_Serial_WaitToRead");
 			return ERROR;
 		}
+		break;
+   	}
 
-	} else
+	if (FD_ISSET(in_fd, &erfds)) {
+		cs_log("ERROR in IO_Serial_WaitToRead: fd is in error fds, errno=%d", errno);
 		return ERROR;
-   }
+	}
 
-   if (FD_ISSET(in_fd, &erfds))
-   {
-			cs_log("ERROR in IO_Serial_WaitToRead: fd is in error fds, errno=%d", errno);
-      return ERROR;
-   }
-   if (FD_ISSET(in_fd,&rfds))
-		 return OK;
-	 else
-		 return ERROR;
+	if (FD_ISSET(in_fd,&rfds))
+		return OK;
+	else
+		return ERROR;
 }
 
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms)
