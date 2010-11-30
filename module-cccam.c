@@ -127,6 +127,10 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 		}
 		case MODE_CMD_0x0C_CC_CRYPT: { // cc_crypt
 			cc_crypt(&cc->cmd0c_cryptkey, buf, len, DECRYPT);
+            
+            buf[0] ^= 0xf0;
+            buf[15] ^= 0xf0;
+            
 			memcpy(out, buf, len);
 			break;
 		}	
