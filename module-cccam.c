@@ -188,10 +188,8 @@ void set_cmd0c_cryptkey(struct s_client *cl, uint8 *key, uint8 len) {
 					
 		case MODE_CMD_0x0C_IDEA : { //IDEA
 			IDEA_KEY_SCHEDULE ekey; 
-			uint8 key_buf_IDEA[16];
-			memcpy(&key_buf_IDEA, &key_buf, 16);
 
-			idea_set_encrypt_key(key_buf_IDEA, &ekey);
+			idea_set_encrypt_key(key_buf, &ekey);
 			idea_set_decrypt_key(&ekey,&cc->cmd0c_IDEA_dkey);
 			break;
 		}	
