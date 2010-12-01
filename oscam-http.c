@@ -2662,10 +2662,14 @@ int process_request(FILE *f, struct in_addr in) {
 	}
 
 	/*build page*/
-	send_headers(f, 200, "OK", NULL, "text/html");
-	if(pgidx == 8) send_css(f);
-	else if (pgidx == 17) send_js(f);
-	else {
+	if(pgidx == 8) {
+		send_headers(f, 200, "OK", NULL, "text/css");
+		send_css(f);
+	} else if (pgidx == 17) {
+		send_headers(f, 200, "OK", NULL, "text/javascript");
+		send_js(f);
+	} else {
+		send_headers(f, 200, "OK", NULL, "text/html");
 		time_t t;
 		struct templatevars *vars = tpl_create();
 		struct tm *lt;
