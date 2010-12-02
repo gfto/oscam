@@ -353,7 +353,8 @@ static void cs_master_alarm()
 
 static void cs_sigpipe()
 {
-  cs_log("Got sigpipe signal -> captured");
+	if (cs_dblevel & D_ALL_DUMP)
+		cs_log("Got sigpipe signal -> captured");
 }
 
 void cs_accounts_chk()
