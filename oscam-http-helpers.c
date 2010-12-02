@@ -449,7 +449,7 @@ void send_file(FILE *f, int fileno){
 		int read;
 
 		if((fp = fopen(filename, "r"))==NULL) return;
-		while((read = fread(buffer,sizeof(char), 1024, fp)) > 0) {
+		while((read = fread(buffer,sizeof(char), 1023, fp)) > 0) {
 			buffer[read] = '\0';
 			webif_write(buffer, f);
 		}
