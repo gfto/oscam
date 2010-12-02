@@ -1457,22 +1457,24 @@ void * dvbapi_main_local(void *cli) {
 		}
 	}
 
-	struct sigaction signal_action;
-	signal_action.sa_handler = event_handler;
-	sigemptyset(&signal_action.sa_mask);
-	signal_action.sa_flags = SA_RESTART;
-	sigaction(SIGRTMIN + 1, &signal_action, NULL);
+	if (cfg->dvbapi_pmtmode != 4) {
+		struct sigaction signal_action;
+		signal_action.sa_handler = event_handler;
+		sigemptyset(&signal_action.sa_mask);
+		signal_action.sa_flags = SA_RESTART;
+		sigaction(SIGRTMIN + 1, &signal_action, NULL);
 
-	pthread_mutexattr_t attr;
-	pthread_mutexattr_init(&attr);
-	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-	pthread_mutex_init(&event_handler_lock, &attr);
+		pthread_mutexattr_t attr;
+		pthread_mutexattr_init(&attr);
+		pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+		pthread_mutex_init(&event_handler_lock, &attr);
 
-	dir_fd = open(TMPDIR, O_RDONLY);
-	if (dir_fd >= 0) {
-		fcntl(dir_fd, F_SETSIG, SIGRTMIN + 1);
-		fcntl(dir_fd, F_NOTIFY, DN_MODIFY | DN_CREATE | DN_DELETE | DN_MULTISHOT);
-		event_handler(SIGRTMIN + 1);
+		dir_fd = open(TMPDIR, O_RDONLY);
+		if (dir_fd >= 0) {
+			fcntl(dir_fd, F_SETSIG, SIGRTMIN + 1);
+			fcntl(dir_fd, F_NOTIFY, DN_MODIFY | DN_CREATE | DN_DELETE | DN_MULTISHOT);
+			event_handler(SIGRTMIN + 1);
+		}
 	}
 
 	cs_ftime(&tp);
