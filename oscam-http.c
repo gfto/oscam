@@ -2664,10 +2664,10 @@ int process_request(FILE *f, struct in_addr in) {
 	/*build page*/
 	if(pgidx == 8) {
 		send_headers(f, 200, "OK", NULL, "text/css");
-		send_css(f);
+		send_file(f, 1);
 	} else if (pgidx == 17) {
 		send_headers(f, 200, "OK", NULL, "text/javascript");
-		send_js(f);
+		send_file(f, 2);
 	} else {
 		send_headers(f, 200, "OK", NULL, "text/html");
 		time_t t;

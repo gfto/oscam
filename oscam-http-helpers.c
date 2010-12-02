@@ -428,31 +428,35 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime){
 	webif_write(buf, f);
 }
 
-void send_css(FILE *f){
-	if(strlen(cfg->http_css) > 0 && file_exists(cfg->http_css) == 1){
+
+/*
+ * function for sending files. 1 = CSS, 2 = JS
+ */
+void send_file(FILE *f, int fileno){
+
+	char *filename;
+
+	if (fileno == 1)
+		filename = cfg->http_css;
+	else if (fileno == 2)
+		filename = cfg->http_jscript;
+	else
+		return;
+
+	if(strlen(filename) > 0 && file_exists(filename) == 1){
 		FILE *fp;
 		char buffer[1024];
+		int read;
 
-		if((fp = fopen(cfg->http_css,"r"))==NULL) return;
-		while(fgets(buffer, 1024, fp) != 0) webif_write(buffer, f);
+		if((fp = fopen(filename, "r"))==NULL) return;
+		while((read = fread(buffer,sizeof(char), 1024, fp)) > 0) {
+			buffer[read] = '\0';
+			webif_write(buffer, f);
+		}
 
 		fclose (fp);
 	} else {
 		webif_write(CSS, f);
-	}
-}
-
-void send_js(FILE *f){
-	if(strlen(cfg->http_jscript) > 0 && file_exists(cfg->http_jscript) == 1){
-		FILE *fp;
-		char buffer[1024];
-
-		if((fp = fopen(cfg->http_jscript,"r"))==NULL) return;
-		while(fgets(buffer, 1024, fp) != 0) webif_write(buffer, f);
-
-		fclose (fp);
-	} else {
-		webif_write(JSCRIPT, f);
 	}
 }
 
