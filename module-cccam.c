@@ -89,7 +89,7 @@ void cc_xor(uint8 *buf) {
 
 void cc_cw_crypt(struct s_client *cl, uint8 *cws, uint32 cardid) {
 	struct cc_data *cc = cl->cc;
-	uint64 node_id;
+	int64 node_id;
 	uint8 tmp;
 	int i;
 
@@ -2317,11 +2317,9 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 					cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
 				}
 			}	
-			
-			cs_log("%s received MSG_CMD_0C from server! CMD_0x0C_CMD=%d, MODE=%s! Message data: %s",
-				getprefix(), CMD_0x0C_Command, cmd0c_mode_name[cc->cmd0c_mode], cs_hexdump(0, data, len)); 
 
-			set_cmd0c_cryptkey(cl, data, len);                            			                                            
+			cs_log("%s received MSG_CMD_0C from server! CMD_0x0C_CMD=%d, MODE=%s",
+				getprefix(), CMD_0x0C_Command, cmd0c_mode_name[cc->cmd0c_mode]); 
 		}
 		break;
 	}
@@ -2334,9 +2332,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		cc_crypt_cmd0c(cl, data, len);
 		set_cmd0c_cryptkey(cl, data, len); 
 
-		cs_log("%s received MSG_CMD_0D from server! MODE=%s! Message data: %s",
-			getprefix(), cmd0c_mode_name[cc->cmd0c_mode], cs_hexdump(0, data, len));
-		break;
+		cs_log("%s received MSG_CMD_0D from server! MODE=%s",
+			getprefix(), cmd0c_mode_name[cc->cmd0c_mode]);
 	}
 		
 	case MSG_CMD_0E: {
@@ -3133,7 +3130,6 @@ int cc_srv_connect(struct s_client *cl) {
 	}
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
-	cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
 
 	//Create checksum for "O" cccam:
 	for (i = 0; i < 12; i++) {
@@ -3435,6 +3431,7 @@ int cc_cli_connect(struct s_client *cl) {
 	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
+	cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
 
 	cs_ddump(data, 16, "cccam: server init seed:");
 

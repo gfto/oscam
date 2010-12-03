@@ -269,6 +269,7 @@ typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
 typedef unsigned long long uint64;
+typedef long long int64;
 
 int server_pid; //alno: PID of server - set while startup
 
