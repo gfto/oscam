@@ -1709,10 +1709,6 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	send_reader_stat(er->selected_reader, er, er->rc);
 
-	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
-			uname, er->caid, er->prid, er->srvid, er->l, lc,
-			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
-
 #ifdef WEBIF
 	if(er->rc == 0)
 		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", sby);
@@ -1800,8 +1796,11 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	ac_chk(er, 1);
 #endif
 
-	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
-	if (er->rc==7) er->rc=0;
+	int is_fake = 0;
+	if (er->rc==7) {
+		is_fake = 1;
+		er->rc=0;
+	}
 
 #ifdef CS_WITH_DOUBLECHECK
 	if (cfg->double_check && er->rc < 4) {
@@ -1832,6 +1831,15 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 #endif
 
 	ph[client->ctyp].send_dcw(client, er);
+
+	if (is_fake)
+		er->rc=7;
+
+	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
+			uname, er->caid, er->prid, er->srvid, er->l, lc,
+			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
+
+	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
 #ifdef QBOXHD_LED
     if (er->rc < 4) {
@@ -2351,6 +2359,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				er->rc = 4;
 				if (!er->rcEx)
 					er->rcEx = E2_GROUP;
+				snprintf(er->msglog, MSGLOGSIZE, "no matching reader");
 				break;
 
 			// fallbacks only, switch them
