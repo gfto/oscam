@@ -2672,12 +2672,7 @@ struct cc_card *create_card(struct cc_card *card) {
 struct cc_card *create_card2(struct s_reader *rdr, int j, uint16 caid, uint8 hop, uint8 reshare) {
 
 	struct cc_card *card = create_card(NULL);
-	uint8 rid[4];
-	rid[3] = rdr->cc_id >> 24;
-	rid[2] = rdr->cc_id >> 16;
-	rid[1] = j >> 8;
-	rid[0] = j & 0xFF;
-	memcpy(&card->remote_id, rid, 4);
+	card->remote_id = rdr->cc_id>>24|rdr->cc_id>>16|j>>8|j&0xFF;
 	card->caid = caid;
 	card->hop = hop;
 	card->maxdown = reshare;
@@ -2849,7 +2844,9 @@ int cc_srv_report_cards(struct s_client *cl) {
 	int isau = (cl->aureader)?1:0;
 
 	struct s_reader *rdr;
+	int ridx = 0;
 	for (rdr = first_reader; rdr; rdr = rdr->next) {
+		ridx++;
 		if (!rdr->fd || !rdr->enable || rdr->deleted)
 			continue;
 		if (!(rdr->grp & cl->grp))
@@ -2861,7 +2858,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			continue;
 
 		if (!rdr->cc_id) {
-			int r = get_ridx(rdr) + 0x64;
+			int r = ridx + 0x64;
 			rdr->cc_id = r << 24 | r << 16 | fast_rnd() << 8 | fast_rnd();
 		}
 
@@ -2905,8 +2902,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			}
 		}
 
-		if (rdr->typ != R_CCCAM && !rdr->caid[0] && !flt) {
-			flt = 0;
+		if (rdr->typ != R_CCCAM && !flt) {
 			for (j = 0; j < CS_MAXCAIDTAB; j++) {
 				//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", rdr->ctab.caid[j], rdr->ctab.cmap[j]);
 				ushort lcaid = rdr->ctab.caid[j];
@@ -2914,15 +2910,12 @@ int cc_srv_report_cards(struct s_client *cl) {
 				if (!lcaid || (lcaid == 0xFFFF))
 					lcaid = rdr->ctab.cmap[j];
 
-				if (lcaid && (lcaid != 0xFFFF)) {
+				if (lcaid && (lcaid != 0xFFFF) && chk_ctab(lcaid, &cl->ctab)) {
 					struct cc_card *card = create_card2(rdr, j, lcaid, hop, reshare);
 					if (au_allowed)
 						cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, lcaid);
 					
-					if (chk_ctab(lcaid, &cl->ctab))
-						add_card_to_serverlist(rdr, cl, server_cards, card, reshare);
-					else
-						cc_free_card(card);
+					add_card_to_serverlist(rdr, cl, server_cards, card, reshare);
 					flt = 1;
 				}
 			}
@@ -2951,8 +2944,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				ll_append(card->providers, prov);
 				//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
 			}
-			if ((rdr->tcp_connected || rdr->card_status == CARD_INSERTED) /*&& !rdr->cc_id*/) {
-				//rdr->cc_id = b2i(3, buf + 5);
+			if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
 				add_card_to_serverlist(rdr, cl, server_cards, card, reshare);
 			}
 			else
@@ -3022,7 +3014,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 	while (ok && (card = ll_iter_next(it))) {
 		//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
 		
-		ok =report_card(cl, card, new_reported_carddatas) >= 0;
+		ok = report_card(cl, card, new_reported_carddatas) >= 0;
 		ll_iter_remove(it);
 	}
 	ll_iter_release(it);
