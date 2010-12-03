@@ -2672,7 +2672,7 @@ struct cc_card *create_card(struct cc_card *card) {
 struct cc_card *create_card2(struct s_reader *rdr, int j, uint16 caid, uint8 hop, uint8 reshare) {
 
 	struct cc_card *card = create_card(NULL);
-	card->remote_id = rdr->cc_id>>24|rdr->cc_id>>16|j>>8|j&0xFF;
+	card->remote_id = (rdr->cc_id>>24)|(rdr->cc_id>>16)|(j>>8)|(j&0xFF);
 	card->caid = caid;
 	card->hop = hop;
 	card->maxdown = reshare;
@@ -3249,24 +3249,22 @@ int cc_srv_connect(struct s_client *cl) {
 	// check for client timeout, if timeout occurs try to send keepalive
 	while (cl->pfd)
 	{
-		i = process_input(mbuf, sizeof(mbuf), 10); //cfg->cmaxidle);
+		i = process_input(mbuf, sizeof(mbuf), 10);
 		if (i == -9) {
 			cmi += 10;
-			if (cfg->cmaxidle && cmi >= cfg->cmaxidle) {
+			if (cmi >= cfg->cmaxidle) {
 				cmi = 0;
-				if (!cl->ncd_keepalive && !cfg->cc_keep_connected) {
-					cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached",
-							getprefix());
-					break; //Disconnect client
-				}
-				else if (cc->extended_mode) //special handling for "oscam"-cccam clients:
-				{
+				if (cfg->cc_keep_connected && cc->extended_mode && !wait_for_keepalive) { //special handling for "oscam"-cccam clients:
 					if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
 						break;
         		                cs_debug("cccam: keepalive");
         		                cc->answer_on_keepalive = time(NULL);
         		                wait_for_keepalive = 1;
         		                continue;
+				} else {
+					cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached",
+							getprefix());
+					break; //Disconnect client
 				}
 			}
 			if (wait_for_keepalive)
