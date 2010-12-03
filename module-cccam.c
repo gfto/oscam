@@ -117,7 +117,7 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 			break;
 		}
 		case MODE_CMD_0x0C_RC6 : { //RC6			
-			rc6_block_decrypt((unsigned int*)buf, (unsigned int*)out, cc->cmd0c_RC6_cryptkey); // TODO RC6
+			rc6_block_decrypt((unsigned int*)buf, (unsigned int*)out, len/4, cc->cmd0c_RC6_cryptkey);
 			break;
 		}
 		case MODE_CMD_0x0C_RC4: { // RC4
