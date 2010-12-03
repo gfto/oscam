@@ -117,7 +117,7 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 			break;
 		}
 		case MODE_CMD_0x0C_RC6 : { //RC6			
-			//rc6_block_decrypt(buf, out, cc->cmd0c_RC6_cryptkey); // TODO RC6
+			rc6_block_decrypt((unsigned int*)buf, (unsigned int*)out, cc->cmd0c_RC6_cryptkey); // TODO RC6
 			break;
 		}
 		case MODE_CMD_0x0C_RC4: { // RC4
@@ -127,10 +127,6 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 		}
 		case MODE_CMD_0x0C_CC_CRYPT: { // cc_crypt
 			cc_crypt(&cc->cmd0c_cryptkey, buf, len, DECRYPT);
-            
-            buf[0] ^= 0xf0;
-            buf[15] ^= 0xf0;
-            
 			memcpy(out, buf, len);
 			break;
 		}	
@@ -142,14 +138,21 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 			break;
 		}
 		case MODE_CMD_0x0C_IDEA : { //IDEA
-			int i;
+			int i=0;
+			int j;
 
-			idea_ecb_encrypt(buf, out, &cc->cmd0c_IDEA_dkey);
-			idea_ecb_encrypt(buf + 8, out + 8, &cc->cmd0c_IDEA_dkey);
-
-			for (i = 8; i < 16; i++)
-				out[i] ^= buf[i-8];
-
+			while (i < len) {
+				idea_ecb_encrypt(buf + i, out + i, &cc->cmd0c_IDEA_dkey);
+				i += 8;
+			}
+			
+			i = 8;
+			while (i < len) {
+				for (j=0; j < 8; j++)
+					out[j+i] ^= buf[j+i-8];	
+				i += 8;		
+			}
+			
 			break;
 		}
 	}
@@ -173,7 +176,8 @@ void set_cmd0c_cryptkey(struct s_client *cl, uint8 *key, uint8 len) {
 		case MODE_CMD_0x0C_NONE : { //NONE
 			break;
 		}
-			case MODE_CMD_0x0C_RC6 : { //RC6
+		
+		case MODE_CMD_0x0C_RC6 : { //RC6
 			rc6_key_setup(key_buf, 32, cc->cmd0c_RC6_cryptkey);
 			break;
 		}					
@@ -1934,9 +1938,9 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		//Check if this card is from us:
 		LL_ITER *it = ll_iter_create(card->remote_nodes);
-		uint8 *remote_id;
-		while ((remote_id = ll_iter_next(it))) {
-			if (memcmp(remote_id, cc_node_id, sizeof(cc_node_id)) == 0) { //this card is from us!
+		uint8 *node_id;
+		while ((node_id = ll_iter_next(it))) {
+			if (memcmp(node_id, cc_node_id, sizeof(cc_node_id)) == 0) { //this card is from us!
 				cs_debug_mask(D_TRACE, "filtered card because of recursive nodeid: id=%08X, caid=%04X", card->id, card->caid);
 				cc_free_card(card);
 				card=NULL;
@@ -2282,11 +2286,6 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 			uint8 CMD_0x0C_Command = data[0];
 
-			if (CMD_0x0C_Command > 4) {
-				cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
-				break;
-			}
-
 			switch (CMD_0x0C_Command) {
 				
 				case 0 : { //RC6
@@ -2313,6 +2312,10 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 					cc->cmd0c_mode = MODE_CMD_0x0C_IDEA;
 					break;
 				}	
+				
+				default: {
+					cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
+				}
 			}	
 			
 			cs_log("%s received MSG_CMD_0C from server! CMD_0x0C_CMD=%d, MODE=%s! Message data: %s",
@@ -2328,6 +2331,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		if (cc->cmd0c_mode == MODE_CMD_0x0C_NONE)
 			break;
 
+		cc_crypt_cmd0c(cl, data, len);
 		set_cmd0c_cryptkey(cl, data, len); 
 
 		cs_log("%s received MSG_CMD_0D from server! MODE=%s! Message data: %s",
@@ -2336,7 +2340,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	}
 		
 	case MSG_CMD_0E: {
-		cs_log("cccam 2.2.0 commands not implemented");
+		cs_log("cccam 2.2.x commands not implemented: 0x%02X", buf[1]);
 		//Unkwon commands...need workout algo
 		if (cl->typ == 'c') //client connection
 		{
@@ -2672,7 +2676,7 @@ struct cc_card *create_card(struct cc_card *card) {
 struct cc_card *create_card2(struct s_reader *rdr, int j, uint16 caid, uint8 hop, uint8 reshare) {
 
 	struct cc_card *card = create_card(NULL);
-	card->remote_id = (rdr->cc_id>>24)|(rdr->cc_id>>16)|(j>>8)|(j&0xFF);
+	card->remote_id = (rdr->cc_id << 16)|j;
 	card->caid = caid;
 	card->hop = hop;
 	card->maxdown = reshare;
@@ -2844,9 +2848,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 	int isau = (cl->aureader)?1:0;
 
 	struct s_reader *rdr;
-	int ridx = 0;
+	int r = 0;
 	for (rdr = first_reader; rdr; rdr = rdr->next) {
-		ridx++;
 		if (!rdr->fd || !rdr->enable || rdr->deleted)
 			continue;
 		if (!(rdr->grp & cl->grp))
@@ -2857,9 +2860,16 @@ int cc_srv_report_cards(struct s_client *cl) {
 		if (reshare < 0)
 			continue;
 
+		//Generate a uniq reader id:
 		if (!rdr->cc_id) {
-			int r = ridx + 0x64;
-			rdr->cc_id = r << 24 | r << 16 | fast_rnd() << 8 | fast_rnd();
+			rdr->cc_id = ++r;
+			struct s_reader *rdr2;
+			for (rdr2 = first_reader; rdr2; rdr2 = rdr2->next) {
+				if (rdr2 != rdr && rdr2->cc_id == rdr->cc_id) {
+					rdr2 = first_reader;
+					rdr->cc_id=++r;
+				}
+			}
 		}
 
 		int au_allowed = !rdr->audisabled && isau;

@@ -35,7 +35,7 @@
 #define ROTL(x,y) (((x)<<((y)&(w-1))) | ((x)>>(w-((y)&(w-1)))))
 #define ROTR(x,y) (((x)>>((y)&(w-1))) | ((x)<<(w-((y)&(w-1)))))
 
-void rc6_key_setup(unsigned char *K, int b, unsigned int *S)
+void rc6_key_setup(unsigned char *K, int b, RC6KEY S)
 {
 	int i, j, s, v;
 	unsigned int L[(32 + bytes - 1) / bytes]; /* Big enough for max b */
@@ -63,7 +63,7 @@ void rc6_key_setup(unsigned char *K, int b, unsigned int *S)
 	}
 }
 
-void rc6_block_encrypt(unsigned int *pt, unsigned int *ct, unsigned int *S)
+void rc6_block_encrypt(unsigned int *pt, unsigned int *ct, RC6KEY S)
 {
 	unsigned int A, B, C, D, t, u, x;
 	int i;
@@ -94,7 +94,7 @@ void rc6_block_encrypt(unsigned int *pt, unsigned int *ct, unsigned int *S)
 	ct[3] = D;
 }
 
-void rc6_block_decrypt(unsigned int *ct, unsigned int *pt, unsigned int *S)
+void rc6_block_decrypt(unsigned int *ct, unsigned int *pt, RC6KEY S)
 {
 	unsigned int A, B, C, D, t, u, x;
 	int i;
