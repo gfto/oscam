@@ -455,7 +455,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 			{
 				cs_ddump(data, count, "IO: Receiving:");
 				cs_log("ERROR in IO_Serial_Read errno=%d", errno);
-				tcflush (reader->handle, TCIFLUSH);
+				//tcflush (reader->handle, TCIFLUSH);
 				return ERROR;
 			}
 		}
@@ -463,7 +463,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 		{
 			cs_ddump(data, count, "IO: Receiving:");
 			cs_debug("TIMEOUT in IO_Serial_Read");
-			tcflush (reader->handle, TCIFLUSH);
+			//tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
 #endif
@@ -498,7 +498,7 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 				cs_log("ERROR in IO_Serial_Write u=%d to_send=%d errno=%d", u, to_send, errno);
 				if(reader->typ != R_INTERNAL)
 					reader->written += u;
-				tcflush (reader->handle, TCIFLUSH);
+				//tcflush (reader->handle, TCIFLUSH);
 				return ERROR;
 			}
 			
@@ -510,7 +510,7 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 		else
 		{
 			cs_log("TIMEOUT in IO_Serial_Write");
-			tcflush (reader->handle, TCIFLUSH);
+			//tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
 	}
@@ -652,7 +652,7 @@ static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, u
 				return ERROR;
 		}
 		if (select_ret==0) {
-			cs_log("TIMEOUT in IO_Serial_WaitToRead");
+			cs_debug("TIMEOUT in IO_Serial_WaitToRead");
 			return ERROR;
 		}
 		break;
