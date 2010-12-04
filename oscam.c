@@ -153,14 +153,14 @@ static void usage()
   fprintf(stderr, "\tinbuilt modules: ");
 #ifdef WEBIF
   #ifdef WITH_SSL
-  	fprintf(stderr, "webinterface with ssl ");
+  	fprintf(stderr, "webinterface-with-ssl ");
   #else
     fprintf(stderr, "webinterface ");
   #endif
 #endif
 #ifdef HAVE_DVBAPI
 #ifdef WITH_STAPI
-  fprintf(stderr, "dvbapi with stapi ");
+  fprintf(stderr, "dvbapi-with-stapi ");
 #else
   fprintf(stderr, "dvbapi ");
 #endif
@@ -181,7 +181,7 @@ static void usage()
   fprintf(stderr, "doublecheck ");
 #endif
 #ifdef QBOXHD_LED
-  fprintf(stderr, "QboxHD-led-trigger ");
+  fprintf(stderr, "qboxhd-led-trigger ");
 #endif
 #ifdef CS_LOGHISTORY
   fprintf(stderr, "loghistory ");
@@ -194,6 +194,62 @@ static void usage()
 #endif
 #ifdef CS_WITH_GBOX
   fprintf(stderr, "gbox ");
+#endif
+  fprintf(stderr, "\n\tinbuilt protocols: ");
+#ifdef MODULE_MONITOR
+  fprintf(stderr, "monitor ");
+#endif
+#ifdef MODULE_CAMD33
+  fprintf(stderr, "camd33 ");
+#endif
+#ifdef MODULE_CAMD35
+  fprintf(stderr, "camd35-udp ");
+#endif
+#ifdef MODULE_CAMD35_TCP
+  fprintf(stderr, "camd35-tcp ");
+#endif
+#ifdef MODULE_NEWCAMD
+  fprintf(stderr, "newcamd ");
+#endif
+#ifdef MODULE_CCCAM
+  fprintf(stderr, "cccam ");
+#endif
+#ifdef MODULE_RADEGAST
+  fprintf(stderr, "radegast ");
+#endif
+#ifdef MODULE_SERIAL
+  fprintf(stderr, "serial ");
+#endif
+#ifdef MODULE_CONSTCW
+  fprintf(stderr, "constcw ");
+#endif
+  fprintf(stderr, "\n\tinbuilt cardreader: ");
+#ifdef READER_NAGRA
+  fprintf(stderr, "nagra ");
+#endif
+#ifdef READER_IRDETO
+  fprintf(stderr, "irdeto ");
+#endif
+#ifdef READER_CONAX
+  fprintf(stderr, "conax ");
+#endif
+#ifdef READER_CRYPTOWORKS
+  fprintf(stderr, "cryptoworks ");
+#endif
+#ifdef READER_SECA
+  fprintf(stderr, "seca ");
+#endif
+#ifdef READER_VIACCESS
+  fprintf(stderr, "viaccess ");
+#endif
+#ifdef READER_VIDEOGUARD
+  fprintf(stderr, "videoguard ");
+#endif
+#ifdef READER_DRE
+  fprintf(stderr, "dre ");
+#endif
+#ifdef READER_TONGFANG
+  fprintf(stderr, "tongfang ");
 #endif
   fprintf(stderr, "\n\n");
   fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
@@ -1262,10 +1318,10 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 
 		if (!(grp & ecmc->grp))
 			continue;
-	
+
 		if (ecmc->caid != er->caid)
 			continue;
-		
+
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
 		pthread_mutex_unlock(&cwcache_lock);
@@ -1501,10 +1557,10 @@ void distribute_ecm(ECM_REQUEST *er)
   int n, i;
   if (er->rc==1) //found converted to cache...
     er->rc = 2; //cache
-  
+
   for (cl=first_client->next; cl ; cl=cl->next) {
     if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (er->selected_reader->grp & cl->grp)) {
-     
+
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
@@ -1514,7 +1570,7 @@ void distribute_ecm(ECM_REQUEST *er)
           write_ecm_request(cl->fd_m2c, er);
         }
         //else if (ecm->rc == 99)
-        //  cs_log("NO-distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));        
+        //  cs_log("NO-distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
       }
     }
   }
