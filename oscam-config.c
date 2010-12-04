@@ -4079,6 +4079,7 @@ int init_readerdb()
 	int tag = 0;
 	FILE *fp;
 	char *value;
+	int rcount=1;
 
 	sprintf(token, "%s%s", cs_confdir, cs_srvr);
 	if (!(fp=fopen(token, "r"))) {
@@ -4095,6 +4096,8 @@ int init_readerdb()
 			token[l-1] = 0;
 			tag = (!strcmp("reader", strtolower(token+1)));
 			if (rdr->label[0] && rdr->typ) {
+				rcount++;
+				if (rcount>=CS_MAXREADER) break;
 				struct s_reader *newreader = (struct s_reader*) malloc (sizeof(struct s_reader));
 				rdr->next = newreader; //add reader to list
 				rdr = newreader; //and advance to end of list

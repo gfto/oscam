@@ -120,9 +120,12 @@
 #define CS_MAXPORTS   32  // max server ports
 #define CS_MAXFILTERS   16
 
+#ifdef CS_WITH_GBOX
 #define CS_MAXCARDS       4096
 #define CS_MAXIGNORE      1024
 #define CS_MAXLOCALS      16
+#endif
+
 #define CS_ECMSTORESIZE   16  // use MD5()
 #define CS_EMMSTORESIZE   16  // use MD5()
 #define CS_CLIENT_TIMEOUT 5000
@@ -133,23 +136,16 @@
 #define CS_MAXLOGHIST     30
 #define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
 #define CS_MAXREADERCAID  16
+#define CS_MAXREADER      128
 
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
 #endif
 
 #ifdef  CS_EMBEDDED
-//#define CS_MAXPID   32
-//#define CS_MAXREADER    (CS_MAXPID>>1)
-#define CS_MAXREADER    16
-//#define CS_MAXPENDING   CS_MAXPID
 #define CS_MAXPENDING   16
 #define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+8000
 #else
-//#define CS_MAXPID   512
-//#define CS_MAXREADER    (CS_MAXPID<<2)
-#define CS_MAXREADER    256
-//#define CS_MAXPENDING   (CS_MAXPID<<1)
 #define CS_MAXPENDING   32
 #define PTHREAD_STACK_SIZE PTHREAD_STACK_MIN+10000
 #endif
