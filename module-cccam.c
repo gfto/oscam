@@ -117,7 +117,7 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 			break;
 		}
 		case MODE_CMD_0x0C_RC6 : { //RC6			
-			rc6_block_decrypt((unsigned int*)buf, (unsigned int*)out, len/4, cc->cmd0c_RC6_cryptkey);
+			rc6_block_decrypt((unsigned int*)buf, (unsigned int*)out, 1, cc->cmd0c_RC6_cryptkey);
 			break;
 		}
 		case MODE_CMD_0x0C_RC4: { // RC4
@@ -195,9 +195,11 @@ void set_cmd0c_cryptkey(struct s_client *cl, uint8 *key, uint8 len) {
 		}	
 					
 		case MODE_CMD_0x0C_IDEA : { //IDEA
+			uint8 key_buf_idea[16];
+			memcpy(key_buf_idea, key_buf, 16);
 			IDEA_KEY_SCHEDULE ekey; 
 
-			idea_set_encrypt_key(key_buf, &ekey);
+			idea_set_encrypt_key(key_buf_idea, &ekey);
 			idea_set_decrypt_key(&ekey,&cc->cmd0c_IDEA_dkey);
 			break;
 		}	
@@ -2317,6 +2319,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 					cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
 				}
 			}	
+			
+			set_cmd0c_cryptkey(cl, data, len);
 
 			cs_log("%s received MSG_CMD_0C from server! CMD_0x0C_CMD=%d, MODE=%s",
 				getprefix(), CMD_0x0C_Command, cmd0c_mode_name[cc->cmd0c_mode]); 
