@@ -893,7 +893,7 @@ void set_au_data(struct s_client *cl __attribute__((unused)), struct s_reader *r
 	struct cc_provider *provider;
 	int p = 0;
 	while ((provider = ll_iter_next(it2))) {
-		if (!cur_er || provider->prov == cur_er->prid) {
+		if (!cur_er || provider->prov == cur_er->prid || !provider->prov || !cur_er->prid) {
 			memcpy(&rdr->prid[p], &provider->prov, sizeof(provider->prov));
 			cc_SA_cccam2oscam(provider->sa, rdr->sa[p]);
 
