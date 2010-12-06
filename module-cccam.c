@@ -1321,8 +1321,9 @@ int cc_send_emm(EMM_PACKET *ep) {
 	ll_append(cc->pending_emms, emmbuf);
 	cc_send_pending_emms(cl);
 
+#ifdef WEBIF
 	rdr->emmwritten[ep->type]++;
-	
+#endif	
 	cs_debug_mask(D_FUT, "cc_send_emm out");
 	return 1;
 }
