@@ -2338,6 +2338,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		cs_log("%s received MSG_CMD_0D from server! MODE=%s",
 			getprefix(), cmd0c_mode_name[cc->cmd0c_mode]);
+		break;
 	}
 		
 	case MSG_CMD_0E: {
