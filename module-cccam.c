@@ -1318,6 +1318,8 @@ int cc_send_emm(EMM_PACKET *ep) {
 	ll_append(cc->pending_emms, emmbuf);
 	cc_send_pending_emms(cl);
 
+	rdr->emmwritten[ep->type]++;
+	
 	cs_debug_mask(D_FUT, "cc_send_emm out");
 	return 1;
 }
@@ -2576,7 +2578,7 @@ ulong get_reader_hexserial_crc(struct s_client *cl) {
 
 ulong get_reader_prid(struct s_reader *rdr, int j) {
 	ulong prid;
-	if (!(rdr->typ & R_IS_CASCADING)) { // Read cardreaders have 4-byte Providers
+	if (!(rdr->typ & R_IS_CASCADING)) { // Real cardreaders have 4-byte Providers
 		prid = (rdr->prid[j][0] << 24) | (rdr->prid[j][1] << 16)
 				| (rdr->prid[j][2] << 8) | (rdr->prid[j][3] & 0xFF);
 	} else { // Cascading/Network-reader 3-bytes Providers
@@ -2945,12 +2947,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 				prov->prov = prid;
 				//cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
 				if (au_allowed) {
-					int l; //Setting SA (Shared Addresses):
-					for (l = 0; l < rdr->nprov; l++) {
-						ulong rprid = get_reader_prid(rdr, l);
-						if (rprid == prid)
-							cc_SA_oscam2cccam(&rdr->sa[l][0], prov->sa);
-					}
+					//Setting SA (Shared Addresses):
+					cc_SA_oscam2cccam(&rdr->sa[j][0], prov->sa);
 				}
 				ll_append(card->providers, prov);
 				//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
@@ -3264,7 +3262,7 @@ int cc_srv_connect(struct s_client *cl) {
 			cmi += 10;
 			if (cmi >= cfg->cmaxidle) {
 				cmi = 0;
-				if (cfg->cc_keep_connected && cc->extended_mode && !wait_for_keepalive) { //special handling for "oscam"-cccam clients:
+				if (cfg->cc_keep_connected && !wait_for_keepalive) {
 					if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
 						break;
         		                cs_debug("cccam: keepalive");

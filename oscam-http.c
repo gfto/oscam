@@ -1727,11 +1727,12 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						p = strend(p);
 						//add SA:
 						if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3]) {
-							sprintf(p, " SA:%02X%02X%02X%02X<BR>\n",
+							sprintf(p, " SA:%02X%02X%02X%02X",
 								prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
 							p = strend(p);
 						}
 						sprintf(p, "<BR>\n");
+						p = strend(p);
 					}
 
 					tpl_printf(vars, 0, "PROVIDERS", buf);
