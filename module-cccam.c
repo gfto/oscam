@@ -1731,8 +1731,7 @@ int same_first_node(struct cc_card *card1, struct cc_card *card2) {
 int same_card(struct cc_card *card1, struct cc_card *card2) {
 	return (card1->caid == card2->caid && 
 		card1->remote_id == card2->remote_id && 
-		same_first_node(card1, card2) &&
-		memcmp(card1->hexserial, card2->hexserial, sizeof(card1->hexserial))==0);
+		same_first_node(card1, card2));
 }
 
 

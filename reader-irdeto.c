@@ -199,9 +199,9 @@ static int irdeto_card_init_provider(struct s_reader * reader)
 
 			// maps the provider id for Betacrypt from FFFFFF to 000000,
 			// fixes problems with cascading CCcam and OSCam
-			if ((reader->caid[0] >= 0x1700) && (reader->caid[0] <= 0x1799))
-				memset(&reader->prid[i][0], 0, 4);
-			else
+			//if ((reader->caid[0] >= 0x1700) && (reader->caid[0] <= 0x1799))
+			//	memset(&reader->prid[i][0], 0, 4);
+			//else
 				memcpy(&reader->prid[i][0], cta_res, 4);
 
 			sprintf((char *) buf+strlen((char *)buf), ",%06lx", b2i(3, &reader->prid[i][1]));
