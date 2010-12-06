@@ -899,8 +899,7 @@ void set_au_data(struct s_client *cl __attribute__((unused)), struct s_reader *r
 
 			cs_debug_mask(D_EMM, "%s au info: provider: %06lX:%02X%02X%02X%02X", getprefix(),
 				provider->prov,
-				provider->sa[0], provider->sa[1], provider->sa[2],
-				provider->sa[3]);
+				provider->sa[0], provider->sa[1], provider->sa[2], provider->sa[3]);
 
 			p++;
 			rdr->nprov = p;
@@ -908,6 +907,10 @@ void set_au_data(struct s_client *cl __attribute__((unused)), struct s_reader *r
 		}
 	}
 	ll_iter_release(it2);
+
+	rdr->caid[0] = card->caid;
+	if (cur_er)
+		rdr->auprovid = cur_er->prid;
 }
 
 /**
