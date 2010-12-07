@@ -2964,7 +2964,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				cc_free_card(card);
 		}
 
-		if (rdr->typ == R_CCCAM && !flt) {
+		if (rdr->typ == R_CCCAM && !rdr->caid[0] && !flt) {
 
 			cs_debug_mask(D_TRACE, "%s asking reader %s for cards...",
 					getprefix(), rdr->label);
