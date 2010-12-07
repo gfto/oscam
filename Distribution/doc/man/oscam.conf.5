@@ -70,9 +70,9 @@ usrfile logging mode:
 directory for CW logging, default:none
 .RE
 .PP
-\fBclienttimeout\fP = \fBmilli-seconds\fP
+\fBclienttimeout\fP = \fBmilli-seconds\fP|\fBseconds\fP
 .RS 3n
-value for client process to wait for key, default:5
+value (clienttimeout in seconds < 100, else milli-seconds) for client process to wait for key, default:5
 .RE
 .PP
 \fBfallbacktimeout\fP = \fBmilli-seconds\fP
