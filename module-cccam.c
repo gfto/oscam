@@ -920,7 +920,10 @@ void set_au_data(struct s_client *cl __attribute__((unused)), struct s_reader *r
 	int p = 0;
 	while ((provider = ll_iter_next(it2))) {
 		if (!cur_er || provider->prov == cur_er->prid || !provider->prov || !cur_er->prid) {
-			memcpy(&rdr->prid[p], &provider->prov, sizeof(provider->prov));
+			rdr->prid[p][0] = provider->prov >> 16;
+			rdr->prid[p][1] = provider->prov >> 8;
+			rdr->prid[p][2] = provider->prov & 0xFF;
+			rdr->prid[p][3] = 0x00;
 			cc_SA_cccam2oscam(provider->sa, rdr->sa[p]);
 
 			cs_debug_mask(D_EMM, "%s au info: provider: %06lX:%02X%02X%02X%02X", getprefix(),
@@ -2609,11 +2612,14 @@ ulong get_reader_hexserial_crc(struct s_client *cl) {
 ulong get_reader_prid(struct s_reader *rdr, int j) {
 	ulong prid;
 	if (!(rdr->typ & R_IS_CASCADING)) { // Real cardreaders have 4-byte Providers
-		prid = (rdr->prid[j][0] << 24) | (rdr->prid[j][1] << 16)
-				| (rdr->prid[j][2] << 8) | (rdr->prid[j][3] & 0xFF);
+		prid = b2i(4, &rdr->prid[j][0]);
+		//prid = (rdr->prid[j][0] << 24) | (rdr->prid[j][1] << 16)
+		//		| (rdr->prid[j][2] << 8) | (rdr->prid[j][3] & 0xFF);
 	} else { // Cascading/Network-reader 3-bytes Providers
-		prid = (rdr->prid[j][0] << 16) | (rdr->prid[j][1] << 8)
-				| (rdr->prid[j][2] & 0xFF);
+		prid = b2i(3, &rdr->prid[j][0]);
+		//prid = (rdr->prid[j][0] << 16) | (rdr->prid[j][1] << 8)
+		//		| (rdr->prid[j][2] & 0xFF);
+		
 	}
 	return prid;
 }
