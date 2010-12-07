@@ -410,6 +410,32 @@ void free_extended_ecm_idx(struct cc_data *cc) {
 	ll_iter_release(it);
 }
 
+int cc_recv_to(struct s_client *cl, uint8 *buf, int len) {
+	fd_set fds;
+	struct timeval timeout;
+	int rc;
+	
+	timeout.tv_sec = 2;
+	timeout.tv_usec = 0;
+	 
+	while (1) {       
+		FD_ZERO(&fds);
+		FD_SET(cl->udp_fd, &fds);
+	
+		rc=select(cl->udp_fd+1, &fds, 0, 0, &timeout);
+		if (rc<0) {
+			if (errno==EINTR) continue;
+		        else return(-1); //error!!
+		}
+	                                                                 
+		if(FD_ISSET(cl->udp_fd,&fds))
+			break;
+		else
+			return (-2); //timeout!!
+	}	
+	return recv(cl->udp_fd, buf, len, MSG_WAITALL);
+}
+
 /**
  * reader
  * closes the connection and reopens it.
@@ -2919,7 +2945,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			}
 		}
 
-		if (rdr->typ != R_CCCAM && !flt) {
+		if (rdr->typ != R_CCCAM && !rdr->caid[0] && !flt) {
 			for (j = 0; j < CS_MAXCAIDTAB; j++) {
 				//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", rdr->ctab.caid[j], rdr->ctab.cmap[j]);
 				ushort lcaid = rdr->ctab.caid[j];
@@ -2964,7 +2990,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				cc_free_card(card);
 		}
 
-		if (rdr->typ == R_CCCAM && !rdr->caid[0] && !flt) {
+		if (rdr->typ == R_CCCAM && !flt) {
 
 			cs_debug_mask(D_TRACE, "%s asking reader %s for cards...",
 					getprefix(), rdr->label);
@@ -3159,7 +3185,7 @@ int cc_srv_connect(struct s_client *cl) {
 	cc_init_crypt(&cc->block[DECRYPT], data, 16);
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
-	if ((i = recv(cl->pfd, buf, 20, MSG_WAITALL)) == 20) {
+	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
 		cs_ddump(buf, 20, "cccam: recv:");
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 		cs_ddump(buf, 20, "cccam: hash:");
@@ -3167,7 +3193,7 @@ int cc_srv_connect(struct s_client *cl) {
 		return -1;
 
 	// receive username
-	if ((i = recv(cl->pfd, buf, 20, MSG_WAITALL)) == 20) {
+	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
 		strncpy(usr, (char *) buf, sizeof(usr));
@@ -3203,7 +3229,7 @@ int cc_srv_connect(struct s_client *cl) {
 	
 	// receive passwd / 'CCcam'
 	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
-	if ((i = recv(cl->pfd, buf, 6, MSG_WAITALL)) == 6) {
+	if ((i = cc_recv_to(cl, buf, 6)) == 6) {
 		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
 		//cs_ddump(buf, 6, "cccam: pwd check '%s':", buf); //illegal buf-bytes could kill the logger!
 		if (memcmp(buf, "CCcam\0", 6) != 0) { 
