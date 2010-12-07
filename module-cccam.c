@@ -3300,12 +3300,14 @@ int cc_srv_connect(struct s_client *cl) {
 			cmi += 10;
 			if (cmi >= cfg->cmaxidle) {
 				cmi = 0;
-				if (cfg->cc_keep_connected && !wait_for_keepalive) {
-					if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
-						break;
-        		                cs_debug("cccam: keepalive");
-        		                cc->answer_on_keepalive = time(NULL);
-        		                wait_for_keepalive = 1;
+				if (cfg->cc_keep_connected) {
+					if (!wait_for_keepalive) {
+						if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
+							break;
+	        		                cs_debug("cccam: keepalive");
+        			                cc->answer_on_keepalive = time(NULL);
+        			                wait_for_keepalive = 1;
+					}
         		                continue;
 				} else {
 					cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached",
@@ -3313,8 +3315,6 @@ int cc_srv_connect(struct s_client *cl) {
 					break; //Disconnect client
 				}
 			}
-			if (wait_for_keepalive)
-				break; //got no answer  -> disconnect
 			
 		} else if (i <= 0)
 			break; //Disconnected by client
