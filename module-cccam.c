@@ -2610,19 +2610,22 @@ ulong get_reader_hexserial_crc(struct s_client *cl) {
 }
 
 ulong get_reader_prid(struct s_reader *rdr, int j) {
-	ulong prid;
-	if (!(rdr->typ & R_IS_CASCADING)) { // Real cardreaders have 4-byte Providers
-		prid = b2i(4, &rdr->prid[j][0]);
-		//prid = (rdr->prid[j][0] << 24) | (rdr->prid[j][1] << 16)
-		//		| (rdr->prid[j][2] << 8) | (rdr->prid[j][3] & 0xFF);
-	} else { // Cascading/Network-reader 3-bytes Providers
-		prid = b2i(3, &rdr->prid[j][0]);
-		//prid = (rdr->prid[j][0] << 16) | (rdr->prid[j][1] << 8)
-		//		| (rdr->prid[j][2] & 0xFF);
-		
-	}
-	return prid;
+	return b2i(4, rdr->prid[j]);
 }
+//ulong get_reader_prid(struct s_reader *rdr, int j) {
+//	ulong prid;
+//	if (!(rdr->typ & R_IS_CASCADING)) { // Real cardreaders have 4-byte Providers
+//		prid = b2i(4, &rdr->prid[j][0]);
+//		//prid = (rdr->prid[j][0] << 24) | (rdr->prid[j][1] << 16)
+//		//		| (rdr->prid[j][2] << 8) | (rdr->prid[j][3] & 0xFF);
+//	} else { // Cascading/Network-reader 3-bytes Providers
+//		prid = b2i(3, &rdr->prid[j][0]);
+//		//prid = (rdr->prid[j][0] << 16) | (rdr->prid[j][1] << 8)
+//		//		| (rdr->prid[j][2] & 0xFF);
+//		
+//	}
+//	return prid;
+//}
 
 void copy_sids(LLIST *dst, LLIST *src) {
 	LL_ITER *it_src = ll_iter_create(src);
