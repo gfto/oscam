@@ -3202,12 +3202,12 @@ int cc_srv_connect(struct s_client *cl) {
 		for (i = 0; i < 20; i++) {
 			if (usr[i] > 0 && usr[i] < 0x20) { //found nonprintable char
 				cs_debug("illegal username received");
-				return -1;
+				return -2;
 			}
 		}
 		cs_ddump(buf, 20, "cccam: username '%s':", usr);
-	} else
-		return -1;
+	} else 
+		return -2;
 
 	cl->crypted = 1;
 
@@ -3220,7 +3220,7 @@ int cc_srv_connect(struct s_client *cl) {
 
 	if (cs_auth_client(cl, account, NULL)) { //cs_auth_client returns 0 if account is valid/active/accessible
 		cs_log("account '%s' not found!", usr);
-		return -1;
+		return -2;
 	}
 
 	if (!cc->prefix)
@@ -3234,11 +3234,10 @@ int cc_srv_connect(struct s_client *cl) {
 		//cs_ddump(buf, 6, "cccam: pwd check '%s':", buf); //illegal buf-bytes could kill the logger!
 		if (memcmp(buf, "CCcam\0", 6) != 0) { 
 			cs_log("account '%s' wrong password!", usr);
-			cs_add_violation((uint)cl->ip);
-			return -1;
+			return -2;
 		}
 	} else
-		return -1;
+		return -2;
 
 	//Starting readers to get cards:
 	int wakeup = cc_srv_wakeup_readers(cl);
@@ -3356,9 +3355,13 @@ void * cc_srv_init(struct s_client *cl) {
 
 	cs_debug_mask(D_FUT, "cc_srv_init in");
 	cl->pfd = cl->udp_fd;
-	if (cc_srv_connect(cl) < 0)
+	int ret;
+	if ((ret=cc_srv_connect(cl)) < 0) {
 		cs_log("cccam: %d failed errno: %d (%s)", __LINE__, errno, strerror(
 				errno));
+		if (ret == -2)
+			cs_add_violation((uint)cl->ip);
+	}
 	cc_cleanup(cl);
 	cs_debug_mask(D_FUT, "cc_srv_init out");
 	cs_disconnect_client(cl);
@@ -3410,7 +3413,7 @@ int cc_cli_connect(struct s_client *cl) {
 	}
 
 	// get init seed
-	if ((n = recv(handle, data, 16, MSG_WAITALL)) != 16) {
+	if ((n = cc_recv_to(cl, data, 16)) != 16) {
 		int err = errno;
 		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, errno=%d)",
 				rdr->label, n, handle, cl->udp_fd, err);
@@ -3507,7 +3510,7 @@ int cc_cli_connect(struct s_client *cl) {
 	cc_crypt(&cc->block[ENCRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
 	cc_cmd_send(cl, buf, 6, MSG_NO_HEADER); // send 'CCcam' xor w/ pwd
 
-	if ((n = recv(handle, data, 20, MSG_WAITALL)) != 20) {
+	if ((n = cc_recv_to(cl, data, 20)) != 20) {
 		cs_log("%s login failed, pwd ack not received (n = %d)", getprefix(), n);
 		return -2;
 	}
