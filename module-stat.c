@@ -310,8 +310,12 @@ int get_best_reader(ECM_REQUEST *er)
 	
 	READER_STAT *stat = NULL;
 	struct s_reader *rdr;
+	
+	int nlocal_readers = 0;
+	
 	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 		if (er->matching_rdr[i]) {
+				
  			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 			stat = get_stat(rdr, er->caid, er->prid, er->srvid);
 			if (!stat) {
@@ -343,6 +347,9 @@ int get_best_reader(ECM_REQUEST *er)
 
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
 			if (stat->rc == 0) {
+				if (cfg->preferlocalcards && !(rdr->typ & R_IS_NETWORK))
+					nlocal_readers++; //Prefer local readers!
+			
 				switch (cfg->lb_mode) {
 				default:
 				case LB_NONE:
@@ -396,12 +403,17 @@ int get_best_reader(ECM_REQUEST *er)
 
 	int nbest_readers = cfg->lb_nbest_readers;
 	int nfb_readers = cfg->lb_nfb_readers;
+	if (nlocal_readers > nbest_readers) { //if we have local readers, we prefer them!
+		nlocal_readers = nbest_readers;
+		nbest_readers = 0;	
+	}
+	else
+		nbest_readers = nbest_readers-nlocal_readers;
+	
 	int best_ridx = -1;
 	struct s_reader *best_rdr = NULL;
 	struct s_reader *best_rdri = NULL;
 
-	nfb_readers += nbest_readers;
-	
 	int n=0;
 	while (1) {
 		int best_idx=-1;
@@ -409,6 +421,9 @@ int get_best_reader(ECM_REQUEST *er)
 		int j;
 		struct s_reader *rdr2;
 		for (j=0,rdr2=first_reader; rdr2 ; rdr2=rdr2->next, j++) {
+			if (nlocal_readers && (rdr2->typ & R_IS_NETWORK))
+				continue;
+						
 			if (re[j] && (!best || re[j] < best)) {
 				best_idx=j;
 				best=re[j];
@@ -418,9 +433,10 @@ int get_best_reader(ECM_REQUEST *er)
 		if (best_idx<0)
 			break;
 		else {
-			re[best_idx]=0;
 			n++;
-			if (n<=nbest_readers) {
+			re[best_idx]=0;
+			if (nlocal_readers) {
+				nlocal_readers--;
 				result[best_idx] = 1;
 				//OLDEST_READER:
 				cs_ftime(&best_rdri->lb_last);
@@ -429,7 +445,18 @@ int get_best_reader(ECM_REQUEST *er)
 					best_rdr = best_rdri;
 				}
 			}
-			else if (n<=nfb_readers) {
+			else if (nbest_readers) {
+				nbest_readers--;
+				result[best_idx] = 1;
+				//OLDEST_READER:
+				cs_ftime(&best_rdri->lb_last);
+				if (best_ridx <0) {
+					best_ridx = best_idx;
+					best_rdr = best_rdri;
+				}
+			}
+			else if (nfb_readers) {
+				nfb_readers--;
 				if (!result[best_idx])
 					result[best_idx] = 2;
 			}
