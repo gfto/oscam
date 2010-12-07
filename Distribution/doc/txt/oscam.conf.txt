@@ -1,4 +1,4 @@
-oscam.conf(5)												    oscam.conf(5)
+oscam.conf(5)															     oscam.conf(5)
 
 
 
@@ -6,9 +6,8 @@ NAME
        oscam.conf - main configuration file for OSCam
 
 SYNOPSIS
-       The  main  configuration  file for OSCam contains global parameters such as debugging, logging, monitor, protocols
-       and anti-cascading.  sections in oscam.conf are nonrecurring. The [global] section is required. All other sections
-       are optional.
+       The  main  configuration file for OSCam contains global parameters such as debugging, logging, monitor, protocols and anti-cascading.  sec‐
+       tions in oscam.conf are nonrecurring. The [global] section is required. All other sections are optional.
 
 DESCRIPTIONS
    The [global] section
@@ -57,7 +56,7 @@ DESCRIPTIONS
        cwlogdir = path
 	  directory for CW logging, default:none
 
-       clienttimeout = seconds
+       clienttimeout = milli-seconds
 	  value for client process to wait for key, default:5
 
        fallbacktimeout = milli-seconds
@@ -82,8 +81,8 @@ DESCRIPTIONS
 	  delay for DNS resolving, default:30
 
        clientdyndns = 0|1
-	  1 = enable DNS resolving of clients, if you have already defined a hostname for your clients the parameter must
-	  be 1, otherwise no authentication will be possible for this clients, default:0
+	  1 = enable DNS resolving of clients, if you have already defined a hostname for your clients the  parameter  must  be  1,  otherwise	no
+	  authentication will be possible for this clients, default:0
 
        failbantime = minutes
 	  time for IP based blocking for clients with an invalid login attempt, 0 = failban is disabled, default:0
@@ -116,8 +115,8 @@ DESCRIPTIONS
 	  1 = save SC init history to /tmp/.oscam/reader<number>, default:0
 
        double_check = 0|1 (only if CW double check enabled)
-	  1 = ECM will be send to two or more readers with the same SC and the CWs will be verified against  each  other,
-	  lb_nbest_readers must be set to 2 or higher, default:0
+	  1  =	ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, lb_nbest_readers must be
+	  set to 2 or higher, default:0
 
        lb_mode = mode
 	  loadbalance mode:
@@ -265,8 +264,7 @@ DESCRIPTIONS
 
    The [newcamd] section
        mgclient = 0|1 (for beta testing only)
-	  1 = enable mgcamd extended newcamd protocol,	allowing for a single connection to work with mutliple providers,
-	  default:0
+	  1 = enable mgcamd extended newcamd protocol,	allowing for a single connection to work with mutliple providers, default:0
 
        key = DES key
 	  default key for newcamd client encryption, default:none
@@ -278,8 +276,7 @@ DESCRIPTIONS
 
 	   example: port = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
 
-	  Each CAID requires a separate port. If you don't specify a DES key for a port, the  default  DES  Key  will  be
-	  used.
+	  Each CAID requires a separate port. If you don't specify a DES key for a port, the default DES Key will be used.
 
        serverip = IP address
 	  bind service to specified IP address, default:all
@@ -423,8 +420,7 @@ DESCRIPTIONS
        enabled = 0|1
 	  1 = DVB API enabled, default:0
 
-	  Create  file	/tmp/.pauseoscam  to  pause DVB API, e.g. if STB goes into standby and OSCam remains as SC server
-	  only.
+	  Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby and OSCam remains as SC server only.
 
        user = username
 	  user name for DVB API client, default:anonymous
@@ -518,8 +514,7 @@ MONITOR
 
        ·  reload
 
-	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please  restart
-	  newcamd client
+	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart newcamd client
 
 
        ·  details <PID>
@@ -553,14 +548,13 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The  web interface allows you to create your own template. For developing your own template request the orignal
-	  template with the non-linked page savetemplates.html. Store your own template in  the  directory  specified  by
-	  httptpl.
+	  The web interface allows you to create your own template. For developing your own template request the orignal template  with  the  non-
+	  linked page savetemplates.html. Store your own template in the directory specified by httptpl.
 
        ·  known issues
 
-	  Login  is  not possible by now with the Safari browser because of incorrect stale flag handling. Increasing the
-	  AUTHNONCEVALIDSECS in oscam-http.h would be a workaround, but also a small security risk.
+	  Login  is  not  possible  by	now with the Safari browser because of incorrect stale flag handling. Increasing the AUTHNONCEVALIDSECS in
+	  oscam-http.h would be a workaround, but also a small security risk.
 
 EXAMPLES
 	[global]
@@ -597,9 +591,9 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cert(5),   oscam.dvbapi(5),	 oscam.guess(5),    oscam.ird(5),
-       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
+       list_smargo(1), oscam(1), oscam.ac(5), oscam.cert(5),  oscam.dvbapi(5),	oscam.guess(5),  oscam.ird(5),	oscam.provid(5),  oscam.server(5),
+       oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
 
-													    oscam.conf(5)
+																     oscam.conf(5)
