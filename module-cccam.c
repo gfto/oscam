@@ -133,8 +133,8 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 		case MODE_CMD_0x0C_AES: { // AES
 			int i;
 			for (i = 0; i<len / 16; i++)
-				AES_decrypt((unsigned char *) buf + i * 8,
-					    (unsigned char *) out + i * 8, &cc->cmd0c_AES_key);
+				AES_decrypt((unsigned char *) buf + i * 16,
+					    (unsigned char *) out + i * 16, &cc->cmd0c_AES_key);
 			break;
 		}
 		case MODE_CMD_0x0C_IDEA : { //IDEA
@@ -946,6 +946,23 @@ void set_au_data(struct s_client *cl __attribute__((unused)), struct s_reader *r
 		rdr->auprovid = cur_er->prid;
 }
 
+int same_first_node(struct cc_card *card1, struct cc_card *card2) {
+	uint8 * node1 = ll_has_elements(card1->remote_nodes);
+	uint8 * node2 = ll_has_elements(card2->remote_nodes);
+
+	if (!node1 && !node2) return 1; //both NULL, same!
+	
+	if (!node1 || !node2) return 0; //one NULL, not same!
+	
+	return !memcmp(node1, node2, 8); //same?
+}
+
+int same_card(struct cc_card *card1, struct cc_card *card2) {
+	return (card1->caid == card2->caid && 
+		card1->remote_id == card2->remote_id && 
+		same_first_node(card1, card2));
+}
+
 /**
  * reader
  * sends a ecm request to the connected CCCam Server
@@ -960,8 +977,8 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	int n, h = -1;
 	struct cc_data *cc = cl->cc;
-	struct cc_card *card;
-	struct cc_current_card *current_card;
+	struct cc_card *card = NULL;
+	struct cc_current_card *current_card = NULL;
 	LL_ITER *it;
 	ECM_REQUEST *cur_er;
 	struct timeb cur_time;
@@ -1049,21 +1066,36 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	cur_srvid.ecmlen = cur_er->l;
 
 	pthread_mutex_lock(&cc->cards_busy);
-	//search cache:
-	current_card = cc_find_current_card_by_srvid(cc, cur_er->caid,
-			cur_er->prid, &cur_srvid);
-	if (current_card) {
-		if (!current_card->card || is_sid_blocked(current_card->card,
-				&cur_srvid)) {
-			cc_remove_current_card(cc, current_card);
-			current_card = NULL;
+	if (cur_er->preferred_card) { //card is defined by client, use this card!
+		it = ll_iter_create(cc->cards);
+		while ((card = ll_iter_next(it))) {
+			if (same_card(card, cur_er->preferred_card)) { //Found this card!
+				cs_debug_mask(D_TRACE, "%s found preferred card %d", getprefix(), card->id);
+				break;
+			}
 		}
+		ll_iter_release(it);
+		
 	}
-	if (current_card)
-		card = current_card->card;
-	else
-		card = NULL;
-
+	else card = NULL;
+	
+	if (!card) {
+		//search cache:
+		current_card = cc_find_current_card_by_srvid(cc, cur_er->caid,
+			cur_er->prid, &cur_srvid);
+		if (current_card) {
+			if (!current_card->card || is_sid_blocked(current_card->card,
+				&cur_srvid)) {
+				cc_remove_current_card(cc, current_card);
+				current_card = NULL;
+			}
+		}
+		if (current_card)
+			card = current_card->card;
+		else
+			card = NULL;
+	}
+	
 	//then check all other cards
 	if (!card) {
 		it = ll_iter_create(cc->cards);
@@ -1379,6 +1411,20 @@ void cc_free_card(struct cc_card *card) {
  */
 void cc_add_reported_carddata(LLIST *reported_carddatas, struct cc_card *card) {
 	ll_append(reported_carddatas, card);
+}
+
+struct cc_card *cc_get_card_by_id(uint32 card_id, LLIST *cards) {
+	if (!cards)
+		return NULL;
+	LL_ITER *it = ll_iter_create(cards);
+	struct cc_card *card;
+	while ((card=ll_iter_next(it))) {
+		if (card->id==card_id) {
+			break;
+		}
+	}
+	ll_iter_release(it);
+	return card;
 }
 
 int cc_clear_reported_carddata(struct s_client *cl, LLIST *reported_carddatas, LLIST *except,
@@ -1758,23 +1804,6 @@ void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
 	}
 }
 
-int same_first_node(struct cc_card *card1, struct cc_card *card2) {
-	uint8 * node1 = ll_has_elements(card1->remote_nodes);
-	uint8 * node2 = ll_has_elements(card2->remote_nodes);
-
-	if (!node1 && !node2) return 1; //both NULL, same!
-	
-	if (!node1 || !node2) return 0; //one NULL, not same!
-	
-	return !memcmp(node1, node2, 8); //same?
-}
-
-int same_card(struct cc_card *card1, struct cc_card *card2) {
-	return (card1->caid == card2->caid && 
-		card1->remote_id == card2->remote_id && 
-		same_first_node(card1, card2));
-}
-
 
 void check_peer_changed(struct cc_data *cc, uint8 *node_id, uint8 *version) {
 	if (memcmp(cc->peer_node_id, node_id, 8) != 0 || memcmp(cc->peer_version, version, 8) != 0) {
@@ -2140,6 +2169,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
 				er->idx = ++cc->server_ecm_idx;
+				
+				er->preferred_card = cc_get_card_by_id(server_card->id, cc->reported_carddatas);
 
 				cs_debug_mask(
 						D_TRACE,
@@ -2728,6 +2759,7 @@ struct cc_card *create_card2(struct s_reader *rdr, int j, uint16 caid, uint8 hop
 	card->caid = caid;
 	card->hop = hop;
 	card->maxdown = reshare;
+	card->origin_reader = rdr;
 	return card;
 }
 
@@ -2762,6 +2794,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
+			card2->origin_reader = rdr;
 			ll_clear_data(card2->badsids);
 			ll_append(cardlist, card2);
 			modified = 1;
@@ -2789,6 +2822,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
+			card2->origin_reader = rdr;
 			ll_clear_data(card2->badsids);
 			ll_append(cardlist, card2);
 			modified = 1;
@@ -2818,6 +2852,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
+			card2->origin_reader = rdr;
 			ll_append(cardlist, card2);
 			modified = 1;
 			if (add_card_providers(card2, card, 1))
