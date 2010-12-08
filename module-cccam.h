@@ -42,7 +42,7 @@ typedef enum {
 	MSG_SRV_DATA = 8,
 	MSG_CMD_0A = 0x0a,
 	MSG_CMD_0B = 0x0b,
-	MSG_CMD_0C = 0x0c, //Attacking Commands! Just logging the user
+	MSG_CMD_0C = 0x0c, // CCCam 2.2.x fake client checks
 	MSG_CMD_0D = 0x0d, // "
 	MSG_CMD_0E = 0x0e, // "
 	MSG_NEW_CARD_SIDINFO = 0x0f,
