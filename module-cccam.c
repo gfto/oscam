@@ -861,18 +861,17 @@ void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
 }
 
 void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
+	memset(out, 0, 8);
 	int len = get_UA_len(caid);
-	int ofs_oscam = get_UA_ofs(caid);
-	int ofs_cccam = 0;
+	out += get_UA_ofs(caid);
 	int i;
 	for (i=0;i<(8-len);i++) {
-		if (!in[ofs_cccam]) //ignore leading "00"
-			ofs_cccam++;
+		if (!(*in)) //ignore leading "00"
+			in++;
 		else
 			break;
 	}
-	memset(out, 0, 8);
-	memcpy(out+ofs_oscam, in+ofs_cccam, len);
+	memcpy(out, in, len);
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
