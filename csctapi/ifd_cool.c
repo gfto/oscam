@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #ifdef COOL
 /*
 		ifd_cool.c
