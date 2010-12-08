@@ -1577,6 +1577,8 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 	for (i = 0; i < nprov; i++) { // providers
 		struct cc_provider *prov = malloc(sizeof(struct cc_provider));
 		prov->prov = b2i(3, buf + offset);
+		if (prov == 0xFFFFFF && (caid >> 8) == 0x17)
+			prov = i;
 		memcpy(prov->sa, buf + offset + 3, 4);
 		cs_debug("      prov %d, %06x, sa %08x", i + 1, prov->prov, b2i(4,
 				prov->sa));
