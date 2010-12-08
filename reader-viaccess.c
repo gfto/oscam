@@ -291,6 +291,10 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   uchar DE04[256];
   int D2KeyID=0;
   int curnumber_ecm=0;
+  //nanoD2 d2 02 0d 02 -> D2 nano, len 2
+  // 0d -> post AES decrypt CW
+  // 0b -> pre AES decrypt CW
+  int nanoD2 = 0; //   0x0b = 1  0x0d = 2
 
   memset(DE04, 0, sizeof(DE04)); //fix dorcel de04 bug
 
@@ -318,6 +322,17 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     
     // d2 02 0d 02 -> D2 nano, len 2,  select the AES key to be used
     if(ecm88Data[0]==0xd2) {
+        // test if need post or pre AES decrypt
+        if(ecm88Data[2]==0x0b)
+        {
+            nanoD2 = 1;
+            cs_debug("[viaccess-reader] ECM: nano D2 0x0b");
+        }
+        if(ecm88Data[2]==0x0d)
+        {
+            nanoD2 = 2;
+            cs_debug("[viaccess-reader] ECM: nano D2 0x0d");
+        }
         // use the d2 arguments to get the key # to be used
         int len = ecm88Data[1] + 2;
         D2KeyID=ecm88Data[3];
@@ -406,6 +421,37 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
           reader->last_geo.geo[0]  = 0;
           write_cmd(insa4, ident); // set provider
         }
+        
+        //Nano D2 0x0b Pre AES decrypt CW        
+        if ( hasD2 && nanoD2 == 1) 
+        {
+            const uchar *ecm88DataCW = ecm88Data;
+            int cwStart = 0;
+            int cwStartRes = 0;
+            int exit = 0;
+            // find CW start
+            while(cwStart < curEcm88len -1 && !exit)
+            {
+                if(ecm88Data[cwStart] == 0xEA && ecm88Data[cwStart+1] == 0x10)
+                {
+                    ecm88DataCW = ecm88DataCW + cwStart + 2;
+                    exit = 1;
+                }
+                cwStart++;
+            } 
+            // use AES from list to decrypt CW
+            if(reader->aes_list) 
+            {
+                cs_debug("Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
+                rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) (provid & 0xFFFFF0), D2KeyID, &ecm88DataCW[0], 16);
+                if( rc == 0 )
+                    snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, (provid & 0xFFFFF0) );
+            }
+            else
+            {
+                aes_decrypt(&ecm88DataCW[0], 16);
+            }
+        }
 
         while(ecm88Len>0 && ecm88Data[0]<0xA0)
         {
@@ -474,7 +520,7 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     }
   }
 
-  if ( hasD2 && !check_crc(er->cw)) {
+  if ( hasD2 && !check_crc(er->cw) && nanoD2 == 2) {
     if(reader->aes_list) {
         cs_debug("Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
         rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) (provid & 0xFFFFF0), D2KeyID,er->cw, 16);
