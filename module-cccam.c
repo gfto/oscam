@@ -1759,8 +1759,8 @@ void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
 }
 
 int same_first_node(struct cc_card *card1, struct cc_card *card2) {
-	uint8 * node1 = card1->remote_nodes->obj;
-	uint8 * node2 = card2->remote_nodes->obj;
+	uint8 * node1 = ll_has_elements(card1->remote_nodes);
+	uint8 * node2 = ll_has_elements(card2->remote_nodes);
 
 	if (!node1 && !node2) return 1; //both NULL, same!
 	

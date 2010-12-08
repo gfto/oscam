@@ -216,3 +216,10 @@ void ll_insert_at(LLIST *l, void *obj, int pos)
     if (n) n->prv = new;
 }
 
+//Returns first object if there is one
+void *ll_has_elements(LLIST *l) {
+  if (!l || !l->initial)
+    return NULL;
+  return l->initial->obj;
+}
+

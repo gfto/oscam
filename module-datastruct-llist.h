@@ -44,5 +44,6 @@ void *ll_iter_remove(LL_ITER *it);              // remove llnode at iterator, re
 void ll_iter_remove_data(LL_ITER *it);          // remove llnode and free llnode obj
 
 int ll_count(LLIST *l);                 // return number of items in list
+void *ll_has_elements(LLIST *l);
 
 #endif
