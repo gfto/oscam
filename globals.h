@@ -546,6 +546,7 @@ typedef struct ecm_request_t
   ushort        pid;
   ushort        idx;
   ulong         prid;
+  void          *preferred_card;
   struct s_reader *selected_reader;
   int           matching_rdr[CS_MAXREADER];
   struct s_client *client; //contains pointer to 'c' client while running in 'r' client
