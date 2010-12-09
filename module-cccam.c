@@ -2794,7 +2794,6 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
-			card2->origin_reader = rdr;
 			ll_clear_data(card2->badsids);
 			ll_append(cardlist, card2);
 			modified = 1;
@@ -2822,7 +2821,6 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
-			card2->origin_reader = rdr;
 			ll_clear_data(card2->badsids);
 			ll_append(cardlist, card2);
 			modified = 1;
