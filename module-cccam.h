@@ -80,6 +80,7 @@ struct cc_card {
 	time_t time;
 	LLIST *goodsids; //sids that could decoded (struct cc_srvid)
 	LLIST *remote_nodes; //remote note id, 8 bytes
+	void  *origin_reader;
 };
 
 struct cc_auto_blocked {
