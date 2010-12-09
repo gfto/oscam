@@ -1,11 +1,14 @@
-//oscam-log runs in master thread so doesnt need to be threadsafe
 #include "globals.h"
 #include <syslog.h>
 #include <stdlib.h>
 
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
-static pthread_mutex_t switching_log;
+
+pthread_mutex_t switching_log;
+#ifdef CS_LOGHISTORY
+pthread_mutex_t loghistory_lock;
+#endif
 
 #ifdef CS_ANTICASC
 FILE *fpa=(FILE *)0;
@@ -79,6 +82,11 @@ void cs_write_log(char *txt)
 int cs_init_log(void)
 {
 	static char *head = ">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")";
+
+	pthread_mutex_init(&switching_log, NULL);
+#ifdef CS_LOGHISTORY
+	pthread_mutex_init(&loghistory_lock, NULL);
+#endif
 
 	if (!strcmp(cfg->logfile, "stdout")) {//log to stdout
 		fp = stdout;
@@ -158,7 +166,11 @@ static void write_to_log(int flag, char *txt)
 
 	cs_write_log(log_buf + 8);
 #ifdef CS_LOGHISTORY
+	pthread_mutex_lock(&loghistory_lock);
 	char *ptr=(char *)(loghist+(loghistidx*CS_LOGHISTSIZE));
+	loghistidx=(++loghistidx < CS_MAXLOGHIST)?loghistidx:0;
+	pthread_mutex_unlock(&loghistory_lock);
+
 	ptr[0]='\1';    // make username unusable
 	ptr[1]='\0';
 
@@ -170,7 +182,7 @@ static void write_to_log(int flag, char *txt)
 		cs_strncpy(ptr, "server", 31);
 
 	cs_strncpy(ptr+32, log_buf, CS_LOGHISTSIZE-33);
-	loghistidx=(++loghistidx < CS_MAXLOGHIST)?loghistidx:0;
+
 #endif
 	struct s_client *cl;
 	for (cl=first_client; cl ; cl=cl->next)
