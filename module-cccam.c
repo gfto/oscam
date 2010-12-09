@@ -796,82 +796,56 @@ void cc_remove_current_card(struct cc_data *cc,
 	ll_iter_release(it);
 }
 
-int get_UA_len(uint16 caid) {
-	int len = 0;
-	switch (caid >> 8) {
-	case 0x0D://CRYPTOWORKS:
-		len = 5;
-		break;
-	case 0x0B: //CONAX:
-		len = 6;
-		break;
-	case 0x06:
-	case 0x17: //IRDETO:
-		len = 8;
-		break;
-	case 0x4B: //TONGFANG:
-		len = 4;
-		break;
-	case 0x09: //VIDEOGUARD:
-		len = 4;
-		break;
-	case 0x18: //NAGRA:
-		len = 4;
-		break;
-	case 0x05: //VIACCESS:
-		len = 5;
-		break;
-	case 0x4A: //DRE:
-		len = 6;
-		break;
-	case 0x01: //SECA:
-		len = 6;
-		break;
-	default:
-		len = 8;
-		break;
-	}
-	return len;
-}
-
 int get_UA_ofs(uint16 caid) {
 	int ofs = 0;
 	switch (caid >> 8) {
+	case 0x05: //VIACCESS:
+		ofs = 1;
+		break;
 	case 0x4B: //TONGFANG:
-		ofs = 2;
-		break;
 	case 0x09: //VIDEOGUARD:
-		ofs = 2;
-		break;
+	case 0x0B: //CONAX:
 	case 0x18: //NAGRA:
-		ofs = 2;
-		break;
-	case 0x4A: //DRE:
 		ofs = 2;
 		break;
 	}
 	return ofs;
 }
 
-void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
-	int len = get_UA_len(caid);
-	int ofs = get_UA_ofs(caid);
-	memset(out, 0, 8);
-	memcpy(out+8-len, in+ofs, len); //set UA trailing/leading zeros
+/**
+ * cccam uses UA right justified
+ **/
+void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid __attribute__((unused))) {
+	int len=8;
+	while (len) {
+		memcpy(out, in, len);
+		if (out[len-1])
+			break;
+		out++;;
+		len--;
+	}
+	//int len = get_UA_len(caid);
+	//int ofs = get_UA_ofs(caid);
+	//memset(out, 0, 8);
+	//memcpy(out+8-len, in+ofs, len); //set UA trailing/leading zeros
 }
 
+/**
+ * oscam has a special format, depends on offset:
+ **/
 void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
 	memset(out, 0, 8);
-	int len = get_UA_len(caid);
-	out += get_UA_ofs(caid);
-	int i;
-	for (i=0;i<(8-len);i++) {
-		if (!(*in)) //ignore leading "00"
-			in++;
-		else
+	int ofs = get_UA_ofs(caid);
+	int len = 8;
+	out += ofs;
+	while (len) {
+		if (in[0]) //ignore leading "00"
 			break;
+		in++;
+		len--;
 	}
-	memcpy(out, in, len);
+	if (len>0)
+		memcpy(out, in, len);
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
