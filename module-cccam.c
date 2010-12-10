@@ -818,11 +818,13 @@ int get_UA_ofs(uint16 caid) {
  **/
 void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid __attribute__((unused))) {
 	int len=8;
+	int ofs=0;
 	while (len) {
-		memcpy(out, in, len);
-		if (out[len-1])
+		memset(out, 0, 8);
+		memcpy(out+ofs, in, len);
+		if (out[7])
 			break;
-		out++;;
+		ofs++;
 		len--;
 	}
 	//int len = get_UA_len(caid);
