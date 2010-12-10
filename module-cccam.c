@@ -873,10 +873,10 @@ void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
 		case 0x17: //IRDETO/Betacrypt:
 			//cccam: 00 00 00 00 DD AA BB CC
 			//oscam: AA BB CC DD 00 00 00 00
-			in[0]  = out[5];
-			in[1]  = out[6];
-			in[2]  = out[7];
-			in[3]  = out[4]; //Hexbase
+			out[0] = in[5];
+			out[1] = in[6];
+			out[2] = in[7];
+			out[3] = in[4]; //Hexbase
 			return;	
 			
 		//Place here your own adjustments!
