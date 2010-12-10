@@ -813,52 +813,77 @@ int get_UA_ofs(uint16 caid) {
 	return ofs;
 }
 
+int UA_len(uint8 *ua) {
+	int i, len=0;
+	for (i=0;i<8;i++)
+		if (ua[i]) len++;
+	return len;
+}
+
+void UA_left(uint8 *in, uint8 *out, int len) {
+	int ofs = 0;
+	while (len) {
+		memcpy(out, in+ofs, len);
+		if (out[0]) break;
+		ofs++;
+		len--;
+		out[len]=0;
+	}
+}
+
+void UA_right(uint8 *in, uint8 *out, int len) {
+	int ofs = 0;
+	while (len) {
+		memcpy(out+ofs, in, len);
+		len--;
+		if (out[len]) break;
+		ofs++;
+		out[0]=0;
+	}
+}
+
 /**
  * cccam uses UA right justified
  **/
 void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
+	//uint8 tmp[8];
+	
+	memset(out, 0, 8);
 	switch (caid>>8) {
 		case 0x17: //IRDETO/Betacrypt:
 			//oscam: AA BB CC DD 00 00 00 00
-			//cccam: 00 00 00 00 00 AA BB CC
-			memcpy(out+5, in, 3); 
+			//cccam: 00 00 00 00 DD AA BB CC
+			out[4] = in[3]; //Hexbase
+			out[5] = in[0];
+			out[6] = in[1];
+			out[7] = in[2];
 			return;	
 			
 		//Place here your own adjustments!
 	}
-	
-	int len=8;
-	int ofs=0;
-	while (len) {
-		memset(out, 0, 8);
-		memcpy(out+ofs, in, len);
-		if (out[7])
-			break;
-		ofs++;
-		len--;
-	}
-	//int len = get_UA_len(caid);
-	//int ofs = get_UA_ofs(caid);
-	//memset(out, 0, 8);
-	//memcpy(out+8-len, in+ofs, len); //set UA trailing/leading zeros
+	UA_right(in, out, 8);
 }
 
 /**
- * oscam has a special format, depends on offset:
+ * oscam has a special format, depends on offset or type:
  **/
 void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
 	memset(out, 0, 8);
-	int ofs = get_UA_ofs(caid);
-	int len = 8;
-	out += ofs;
-	while (len) {
-		if (in[0]) //ignore leading "00"
-			break;
-		in++;
-		len--;
+	switch(caid>>8) {
+		case 0x17: //IRDETO/Betacrypt:
+			//cccam: 00 00 00 00 DD AA BB CC
+			//oscam: AA BB CC DD 00 00 00 00
+			in[0]  = out[5];
+			in[1]  = out[6];
+			in[2]  = out[7];
+			in[3]  = out[4]; //Hexbase
+			return;	
+			
+		//Place here your own adjustments!
 	}
-	if (len>0)
-		memcpy(out, in, len);
+	int ofs = get_UA_ofs(caid);
+	int len = 8-ofs;
+	UA_left(in, out+ofs, len);
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
