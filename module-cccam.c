@@ -1078,7 +1078,9 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	cur_srvid.ecmlen = cur_er->l;
 
 	pthread_mutex_lock(&cc->cards_busy);
-	if (cur_er->preferred_card) { //card is defined by client, use this card!
+	if (cur_er->preferred_card && 
+		((struct cc_card)cur_er->preferred_card)->ordinal_reader == rdr) { 
+			//card is defined by client, use this card!
 		it = ll_iter_create(cc->cards);
 		while ((card = ll_iter_next(it))) {
 			if (same_card(card, cur_er->preferred_card)) { //Found this card!
