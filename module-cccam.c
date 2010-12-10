@@ -1079,7 +1079,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	pthread_mutex_lock(&cc->cards_busy);
 	if (cur_er->preferred_card && 
-		((struct cc_card)cur_er->preferred_card)->ordinal_reader == rdr) { 
+		((struct cc_card*)cur_er->preferred_card)->origin_reader == rdr) { 
 			//card is defined by client, use this card!
 		it = ll_iter_create(cc->cards);
 		while ((card = ll_iter_next(it))) {

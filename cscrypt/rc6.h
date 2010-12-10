@@ -21,7 +21,7 @@
  * w=32; and r=20.
  */
 
-#define rc6keylen 43
+#define rc6keylen 44
 
 typedef unsigned int RC6KEY[rc6keylen];
 
