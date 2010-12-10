@@ -386,6 +386,7 @@ void cc_reset_pending(struct s_client *cl, int ecm_idx) {
 	for (i = 0; i < CS_MAXPENDING; i++) {
 		if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc == 101)
 			cl->ecmtask[i].rc = 100; //Mark unused
+			cl->ecmtask[i].preferred_card = NULL;
 	}
 }
 
@@ -2105,11 +2106,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 					remove_good_sid(card, &srvid);
 
 				//retry ecm:
-				int i = 0;
-				for (i = 0; i < CS_MAXPENDING; i++) {
-					if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc == 101)
-						cl->ecmtask[i].rc = 100; //Mark unused
-				}
+				cc_reset_pending(cl, ecm_idx);
 			} else
 				cs_log("%S NOK: NO CARD!", getprefix());
 		}
@@ -2197,12 +2194,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 								srvid.sid, srvid.ecmlen);
 						add_sid_block(cl, card, &srvid);
 						//ecm retry:
-						int i = 0;
-						for (i = 0; i < CS_MAXPENDING; i++) {
-							if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc==101)
-								cl->ecmtask[i].rc = 100; //Mark unused
-						}
-
+						cc_reset_pending(cl, ecm_idx);
 						buf[1] = MSG_CW_NOK2; //So it's really handled like a nok!
 					} else {
 						cc->recv_ecmtask = ecm_idx;
