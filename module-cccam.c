@@ -816,7 +816,17 @@ int get_UA_ofs(uint16 caid) {
 /**
  * cccam uses UA right justified
  **/
-void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid __attribute__((unused))) {
+void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
+	switch (caid>>8) {
+		case 0x17: //IRDETO/Betacrypt:
+			//oscam: AA BB CC DD 00 00 00 00
+			//cccam: 00 00 00 00 00 AA BB CC
+			memcpy(out+5, in, 3); 
+			return;	
+			
+		//Place here your own adjustments!
+	}
+	
 	int len=8;
 	int ofs=0;
 	while (len) {
