@@ -569,7 +569,14 @@ void chk_t_global(const char *token, char *value)
 			cfg->lb_save = 0;
 			return;
 		} else {
-			cfg->lb_save = atoi(value);
+			int i = atoi(value);
+			if (i > 0 && i < 100) {
+				cfg->lb_save = 100;
+				fprintf(stderr, "Warning: '%s' corrected to the minimum -> 100\n", token);
+			}
+			else
+				cfg->lb_save = i;
+
 			return;
 		}
 	}

@@ -497,7 +497,16 @@ void send_oscam_config_monitor(struct templatevars *vars, FILE *f, struct uripar
 	tpl_printf(vars, 0, "HIDECLIENTTO", "%d", cfg->mon_hideclient_to);
 	if(cfg->mon_appendchaninfo)
 		tpl_addVar(vars, 0, "APPENDCHANINFO", "checked");
+
+#ifdef WITH_SSL
+	if(cfg->http_use_ssl)
+		tpl_printf(vars, 0, "HTTPPORT", "+%d", cfg->http_port);
+	else
+		tpl_printf(vars, 0, "HTTPPORT", "%d", cfg->http_port);
+#else
 	tpl_printf(vars, 0, "HTTPPORT", "%d", cfg->http_port);
+#endif
+
 	tpl_addVar(vars, 0, "HTTPUSER", cfg->http_user);
 	tpl_addVar(vars, 0, "HTTPPASSWORD", cfg->http_pwd);
 
