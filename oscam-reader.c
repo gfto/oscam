@@ -875,16 +875,10 @@ void * start_cardreader(void * rdr)
   else
   {
     reader->client->ip=cs_inet_addr("127.0.0.1");
-		if (reader->typ != R_SC8in1) {
-      cs_log("reader thread started (thread=%8X, label=%s, device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", pthread_self(), reader->label,
+    cs_log("reader thread started (thread=%8X, label=%s, device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", pthread_self(), reader->label,
         reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
-     	while (reader_device_init(reader)==2)
-      	cs_sleepms(60000); // wait 60 secs and try again
-		}
-		else {
-      cs_log("reader thread started (thread=%8X, label=%s, device=%s:%i, detect=%s%s, mhz=%d, cardmhz=%d)", pthread_self(), reader->label,
-        reader->device, reader->slot,reader->detect&0x80 ? "!" : "", RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
-		}
+   	while (reader_device_init(reader)==2)
+     	cs_sleepms(60000); // wait 60 secs and try again
   }
 
 #endif

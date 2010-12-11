@@ -188,16 +188,17 @@ int Sc8in1_Init(struct s_reader * reader)
 
 	tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
 
-	for (i=0; i<CS_MAXREADER; i++) //copy handle to other slots, FIXME change this if multiple sc8in1 readers 
-		if (reader[i].typ == R_SC8in1) {
-			if (reader[i].slot == 0) {//not initialized yet
-				pos = strlen(reader[i].device)-2; //this is where : should be located; is also valid length of physical device name
-				if (reader[i].device[pos] != 0x3a) //0x3a = ":"
-					cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader[i].device[pos], reader[i].device);
-				reader[i].slot=(int)reader[i].device[pos+1] - 0x30;//FIXME test boundaries
-				reader[i].device[pos]= 0; //slot 1 reader now gets correct physicalname
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next) //copy handle to other slots, FIXME change this if multiple sc8in1 readers 
+		if (rdr->typ == R_SC8in1) {
+			if (rdr->slot == 0) {//not initialized yet
+				pos = strlen(rdr->device)-2; //this is where : should be located; is also valid length of physical device name
+				if (rdr->device[pos] != 0x3a) //0x3a = ":"
+					cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", rdr->device[pos], rdr->device);
+				rdr->slot=(int)rdr->device[pos+1] - 0x30;//FIXME test boundaries
+				rdr->device[pos]= 0; //slot 1 reader now gets correct physicalname
 			}
-			reader[i].handle = fd;
+			rdr->handle = fd;
 		}
 
 	if (is_mcr) {
@@ -222,7 +223,7 @@ int Sc8in1_Init(struct s_reader * reader)
                 cs_log("ERROR Sc8in1, cannot set clockspeed to %i", reader->mhz);
                 break;
         }
-        sc8in1_clock |= (speed << (reader[i].slot - 1) * 2); 
+        sc8in1_clock |= (speed << (reader->slot - 1) * 2); 
 		buff[0] = 0x63; //MCR set clock
 		buff[1] = (sc8in1_clock >> 8) & 0xFF;
 		buff[2] = sc8in1_clock & 0xFF;
