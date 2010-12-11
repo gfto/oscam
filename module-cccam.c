@@ -1084,12 +1084,13 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		it = ll_iter_create(cc->cards);
 		while ((card = ll_iter_next(it))) {
 			if (same_card(card, cur_er->preferred_card)) { //Found this card!
-				cs_debug_mask(D_TRACE, "%s found preferred card %d", getprefix(), card->id);
-				break;
+				if (!is_sid_blocked(card, &cur_srvid)) {
+					cs_debug_mask(D_TRACE, "%s found preferred card %d", getprefix(), card->id);
+					break;
+				}
 			}
 		}
 		ll_iter_release(it);
-		
 	}
 	else card = NULL;
 	
