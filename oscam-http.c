@@ -1963,7 +1963,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 
 
-			if (isec < cfg->mon_hideclient_to) {
+			if (isec < cfg->mon_hideclient_to || cfg->mon_hideclient_to == 0) {
 				tpl_printf(vars, 0, "CLIENTCAID", "%04X", cl->last_caid);
 				tpl_printf(vars, 0, "CLIENTSRVID", "%04X", cl->last_srvid);
 
