@@ -135,6 +135,7 @@ DESCRIPTIONS
 
 		0 = saving of autoloadbalance statistics disabled (default)
 	   counts = save autoloadbalance statistics every counts ECMs
+		    (minimum 100)
 
 	  To save CPU power a minimum counts of 100 is recommended.
 
