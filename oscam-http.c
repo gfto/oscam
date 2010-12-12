@@ -1998,8 +1998,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				}
 
 			} else {
-				tpl_printf(vars, 0, "CLIENTCAID", "");
-				tpl_printf(vars, 0, "CLIENTSRVID", "");
+				tpl_printf(vars, 0, "CLIENTCAID", "0000");
+				tpl_printf(vars, 0, "CLIENTSRVID", "0000");
 				tpl_addVar(vars, 0, "CLIENTSRVPROVIDER","");
 				tpl_printf(vars, 0, "CLIENTSRVNAME","");
 				tpl_addVar(vars, 0, "CLIENTSRVTYPE","");
