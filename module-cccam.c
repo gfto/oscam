@@ -411,7 +411,6 @@ void cc_reset_pending(struct s_client *cl, int ecm_idx) {
 	for (i = 0; i < CS_MAXPENDING; i++) {
 		if (cl->ecmtask[i].idx == ecm_idx && cl->ecmtask[i].rc == 101)
 			cl->ecmtask[i].rc = 100; //Mark unused
-			cl->ecmtask[i].preferred_card = NULL;
 	}
 }
 
@@ -1103,38 +1102,20 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	cur_srvid.ecmlen = cur_er->l;
 
 	pthread_mutex_lock(&cc->cards_busy);
-	if (cur_er->preferred_card && 
-		((struct cc_card*)cur_er->preferred_card)->origin_reader == rdr) { 
-			//card is defined by client, use this card!
-		it = ll_iter_create(cc->cards);
-		while ((card = ll_iter_next(it))) {
-			if (same_card(card, cur_er->preferred_card)) { //Found this card!
-				if (!is_sid_blocked(card, &cur_srvid)) {
-					cs_debug_mask(D_TRACE, "%s found preferred card %d", getprefix(), card->id);
-					break;
-				}
-			}
+	//search cache:
+	current_card = cc_find_current_card_by_srvid(cc, cur_er->caid,
+		cur_er->prid, &cur_srvid);
+	if (current_card) {
+		if (!current_card->card || is_sid_blocked(current_card->card,
+			&cur_srvid)) {
+			cc_remove_current_card(cc, current_card);
+			current_card = NULL;
 		}
-		ll_iter_release(it);
 	}
-	else card = NULL;
-	
-	if (!card) {
-		//search cache:
-		current_card = cc_find_current_card_by_srvid(cc, cur_er->caid,
-			cur_er->prid, &cur_srvid);
-		if (current_card) {
-			if (!current_card->card || is_sid_blocked(current_card->card,
-				&cur_srvid)) {
-				cc_remove_current_card(cc, current_card);
-				current_card = NULL;
-			}
-		}
-		if (current_card)
-			card = current_card->card;
-		else
-			card = NULL;
-	}
+	if (current_card)
+		card = current_card->card;
+	else
+		card = NULL;
 	
 	//then check all other cards
 	if (!card) {
@@ -2206,8 +2187,6 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				cc->server_ecm_pending++;
 				er->idx = ++cc->server_ecm_idx;
 				
-				er->preferred_card = cc_get_card_by_id(server_card->id, cc->reported_carddatas);
-
 				cs_debug_mask(
 						D_TRACE,
 						"%s ECM request from client: caid %04x srvid %04x(%d) prid %06x",
@@ -3367,7 +3346,8 @@ int cc_srv_connect(struct s_client *cl) {
 	cs_ftime(&cc->ecm_time);
 
 	cmi = 0;
-	wait_for_keepalive = 0;
+	wait_for_keepalive = 100;
+	//some clients, e.g. mgcamd, does not support keepalive. So if not answered, keep connection
 	// check for client timeout, if timeout occurs try to send keepalive
 	while (cl->pfd)
 	{
@@ -3375,16 +3355,15 @@ int cc_srv_connect(struct s_client *cl) {
 		if (i == -9) {
 			cmi += 10;
 			if (cmi >= cfg->cmaxidle) {
-				cmi = 0;
 				if (cfg->cc_keep_connected) {
-					if (!wait_for_keepalive) {
+					if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
 						if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
 							break;
 	        		                cs_debug("cccam: keepalive");
         			                cc->answer_on_keepalive = time(NULL);
-        			                wait_for_keepalive = 1;
+        			                wait_for_keepalive++;
 					}
-        		                continue;
+					else if (wait_for_keepalive<100) break;
 				} else {
 					cs_debug_mask(D_TRACE, "%s keepalive after maxidle is reached",
 							getprefix());
@@ -3396,7 +3375,8 @@ int cc_srv_connect(struct s_client *cl) {
 			break; //Disconnected by client
 		else { //data is parsed!
 			cmi = 0;
-			wait_for_keepalive = 0;
+			if (i == MSG_KEEPALIVE)
+				wait_for_keepalive = 0;
 		}
 		if (cc->mode != CCCAM_MODE_NORMAL || cl->dup)
 			break; //mode wrong or duplicate user -->disconect

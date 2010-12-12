@@ -317,8 +317,6 @@ int get_best_reader(ECM_REQUEST *er)
 	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 		if (er->matching_rdr[i]) {
  			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
-			if (er->preferred_card && ((struct cc_card*)(er->preferred_card))->origin_reader==rdr)
-				weight*=2;
 				
 			stat = get_stat(rdr, er->caid, er->prid, er->srvid);
 			if (!stat) {
