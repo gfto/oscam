@@ -1,29 +1,24 @@
-This is OSCam: Open Source Cam.
+OSCam: Open Source CAM
+----------------------
 
-The base is MpCS version 0.9d. Thanks a lot to all the authors/contributors.
-
-Base code for videoguard2 support is from VDR-SC.
+based on MpCS version 0.9d. Thanks to all the authors/contributors.
 
 
 Pointers
 --------
 
-- svn repository:
-    svn co http://streamboard.gmc.to/svn/oscam/trunk
+- SVN repository:
+    http://streamboard.gmc.to/svn/oscam
 
 - trac instance:
-    http://streamboard.gmc.to:8001/oscam
-
-- wiki:
     http://streamboard.gmc.to/oscam
 
 
-Get sources from SVN
---------------------
+Get the lastest sources from SVN
+--------------------------------
 
-    svn co http://streamboard.gmc.to/svn/oscam/trunk oscam-svn
-    cd oscam
-^
+    svn co http://streamboard.gmc.to/svn/oscam/trunk oscam-trunk
+
 
 Compile options
 ---------------
@@ -32,25 +27,27 @@ DVBAPI support is automatically compiled in if the target platform supports it.
 
 Enable features:
 
-CS_ANTICASC         - enable anti-cascading (default)
-CS_LOGHISTORY       - enable log history (default)
-CS_WITH_DOUBLECHECK - enable CW double check
-CS_WITH_GBOX        - enable gbox support
-CS_LED              - enable LED trigger support (currently only working on NSLU2)
-DWEBIF              - enable web interface
-IRDETO_GUESSING     - enable irdeto guessing support
-WITH_STAPI          - enbale DVBAPI support for STAPI
+    CS_ANTICASC         - enable anti-cascading (default)
+    CS_LOGHISTORY       - enable log history (default)
+    CS_WITH_DOUBLECHECK - enable CW double check
+    CS_WITH_GBOX        - enable gbox support
+    CS_LED              - enable LED trigger support (currently only working on NSLU2)
+    DWEBIF              - enable web interface
+    IRDETO_GUESSING     - enable irdeto guessing support
+    WITH_STAPI          - enbale DVBAPI support for STAPI
 
 Enable features with cmake:
 
--DCS_ANTICASC=1         - enable anti-cascading (default)
--DCS_LOGHISTORY=1       - enable log history (default)
--DCS_WITH_DOUBLECHECK=1 - enable CW double check
--DCS_WITH_GBOX=1        - enable gbox support
--DCS_LED=1              - enable LED trigger support (currently only working on NSLU2)
--DWEBIF=1               - enable web interface
--DIRDETO_GUESSING=1     - enable irdeto guessing support
--DWITH_STAPI=1          - enbale DVBAPI support for STAPI
+    -DCS_ANTICASC=1         - enable anti-cascading (default)
+    -DCS_LOGHISTORY=1       - enable log history (default)
+    -DCS_WITH_DOUBLECHECK=1 - enable CW double check
+    -DCS_WITH_GBOX=1        - enable gbox support
+    -DCS_LED=1              - enable LED trigger support (currently only working on NSLU2)
+    -DWEBIF=1               - enable web interface
+    -DIRDETO_GUESSING=1     - enable irdeto guessing support
+    -DWITH_STAPI=1          - enbale DVBAPI support for STAPI
+
+Use config.sh to enable/disbale features.
 
 
 Build with CMake (new solution for building)
@@ -58,6 +55,7 @@ Build with CMake (new solution for building)
 
     mkdir build_dir
     cd build_dir
+    config.sh
     cmake ..
     make
 
