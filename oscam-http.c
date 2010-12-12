@@ -2355,6 +2355,10 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.provid");
 		writable = 1;
 	}
+	else if (strcmp(getParam(params, "part"), "tiers") == 0) {
+		snprintf(targetfile, 255,"%s%s", cs_confdir, "oscam.tiers");
+		writable = 1;
+	}
 	else if (strcmp(getParam(params, "part"), "logfile") == 0) {
 		snprintf(targetfile, 255,"%s", cfg->logfile);
 

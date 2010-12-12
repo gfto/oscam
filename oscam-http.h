@@ -300,6 +300,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=services\">oscam.services</TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=srvid\">oscam.srvid</TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=provid\">oscam.provid</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=tiers\">oscam.tiers</TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=logfile\">logfile</TD>\n\
 			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=userfile\">userfile</TD>\n\
 			##TPLFILEMENUANTICASC##\
