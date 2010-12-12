@@ -1898,7 +1898,7 @@ int write_config()
     	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg->usrfileflag);
 	if (cfg->ctimeout != CS_CLIENT_TIMEOUT || (cfg->ctimeout != CS_CLIENT_TIMEOUT && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg->ctimeout);
-	if (cfg->ftimeout || (!cfg->ftimeout && cfg->http_full_cfg))
+	if ((cfg->ftimeout && cfg->ftimeout != CS_CLIENT_TIMEOUT) || ((!cfg->ftimeout || cfg->ftimeout == CS_CLIENT_TIMEOUT) && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg->ftimeout);
 	if (cfg->cmaxidle != CS_CLIENT_MAXIDLE || (cfg->cmaxidle == CS_CLIENT_MAXIDLE && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
