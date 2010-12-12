@@ -107,6 +107,25 @@ void cc_cw_crypt(struct s_client *cl, uint8 *cws, uint32 cardid) {
 	}
 }
 
+/** swap endianness (int) */
+static void SwapLBi(unsigned char *buff, int len)
+{
+#if __BYTE_ORDER != __BIG_ENDIAN
+	return;
+#endif
+  
+	int i;
+	unsigned char swap[4];
+        for (i = 0; i < len / 4; i++) {
+        	memcpy(swap, buff, 4);
+        	buff[0] = swap[3];
+		buff[1] = swap[2];
+                buff[2] = swap[1];
+                buff[3] = swap[0];
+                buff += 4;
+	}
+}
+
 void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 	struct cc_data *cc = cl->cc;
 	uint8 *out = malloc(len);
@@ -118,6 +137,7 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 		}
 		case MODE_CMD_0x0C_RC6 : { //RC6			
 			int i;
+			SwapLBi(buf, len);
 			for (i = 0; i < len / 16; i++)
 				rc6_block_decrypt((unsigned int*)(buf+i*16), (unsigned int*)(out+i*16), 1, cc->cmd0c_RC6_cryptkey);
 			break;
@@ -161,6 +181,8 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 	memcpy(buf, out, len);
 	free(out);
 }
+
+
 
 void set_cmd0c_cryptkey(struct s_client *cl, uint8 *key, uint8 len) {
 	struct cc_data *cc = cl->cc;
