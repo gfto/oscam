@@ -660,17 +660,13 @@ void cs_card_info()
 struct s_client * cs_fork(in_addr_t ip) {
 	struct s_client *cl;
 
-	for (cl=first_client; cl->next != NULL; cl=cl->next); //ends with cl on last client
-	cl->next = malloc(sizeof(struct s_client));
-	if (cl->next) {
-		cl = cl->next; //move to next empty slot
+	cl = malloc(sizeof(struct s_client));
+	if (cl) {
 		memset(cl, 0, sizeof(struct s_client));
-		cl->next = NULL;
 		int fdp[2];
-		cl->aureader=NULL;
 		if (pipe(fdp)) {
 			cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
-			//cs_exit(1);
+			free(cl);
 			return NULL;
 		}
 		//client part
@@ -702,8 +698,13 @@ struct s_client * cs_fork(in_addr_t ip) {
 		if (ecmc->next)
 			memset(ecmc->next, 0, sizeof(struct s_ecm));
 		pthread_mutex_unlock(&ecmcache_lock);
+
+                //Now add new client to the list:
+		struct s_client *last;
+		for (last=first_client; last->next != NULL; last=last->next); //ends with cl on last client
+		last->next = cl;
 	} else {
-		cs_log("max connections reached -> reject client %s", cs_inet_ntoa(ip));
+		cs_log("max connections reached (out of memory) -> reject client %s", cs_inet_ntoa(ip));
 		return NULL;
 	}
 	return(cl);
