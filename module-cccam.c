@@ -3286,6 +3286,11 @@ int cc_srv_connect(struct s_client *cl) {
 		cs_log("account '%s' not found!", usr);
 		return -2;
 	}
+	if (cl->dup) {
+		cs_log("account '%s' duplicate login, disconnect!", usr);
+		return -2;
+	}
+	
 
 	if (!cc->prefix)
 		cc->prefix = malloc(strlen(cl->usr)+20);
@@ -3378,6 +3383,7 @@ int cc_srv_connect(struct s_client *cl) {
 			if (i == MSG_KEEPALIVE)
 				wait_for_keepalive = 0;
 		}
+
 		if (cc->mode != CCCAM_MODE_NORMAL || cl->dup)
 			break; //mode wrong or duplicate user -->disconect
 		                                                        

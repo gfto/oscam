@@ -1098,7 +1098,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
 	{
-		if ((cl->typ == 'c') && !cl->dup && !strcmp(cl->usr, usr)
+		if (cl != client && (cl->typ == 'c') && !cl->dup && !strcmp(cl->usr, usr)
 		   && (uniq < 5) && ((uniq % 2) || (cl->ip != ip)))
 		{
 			if (uniq  == 3 || uniq == 4)
