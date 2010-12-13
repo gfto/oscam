@@ -35,6 +35,9 @@ Enable features:
     DWEBIF              - enable web interface
     IRDETO_GUESSING     - enable irdeto guessing support
     WITH_STAPI          - enbale DVBAPI support for STAPI
+    DHAVE_PCSC          - enable PC SC support
+    DHAVE_LIBUSB        - enable USB library support
+    DWITH_SSL           - enbale SSL support for web interface
 
 Enable features with cmake:
 
@@ -46,6 +49,9 @@ Enable features with cmake:
     -DWEBIF=1               - enable web interface
     -DIRDETO_GUESSING=1     - enable irdeto guessing support
     -DWITH_STAPI=1          - enbale DVBAPI support for STAPI
+    -DHAVE_PCSC=1           - enable PC SC support
+    -DHAVE_LIBUSB=1         - enable USB library support
+    -DWITH_SSL=1            - enbale SSL support for web interface
 
 Use config.sh to enable/disbale features.
 
