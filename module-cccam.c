@@ -3065,44 +3065,44 @@ int cc_srv_report_cards(struct s_client *cl) {
 
 			int count = 0;
 			if (rcc && rcc->cards) {
-				pthread_mutex_lock(&rcc->cards_busy);
-
-				LL_ITER *it = ll_iter_create(rcc->cards);
-				while ((card = ll_iter_next(it))) {
-					if (card->hop <= maxhops && chk_ctab(card->caid, &cl->ctab)
-							&& chk_ctab(card->caid, &rdr->ctab)) {
-
-						if ((cfg->cc_ignore_reshare || card->maxdown > 0)) {
-							int ignore = 0;
-
-							LL_ITER *it2 = ll_iter_create(card->providers);
-							struct cc_provider *prov;
-							while ((prov = ll_iter_next(it2))) {
-								ulong prid = prov->prov;
-								if (!chk_srvid_by_caid_prov(cl, card->caid,
-										prid, 0) || !chk_srvid_by_caid_prov(
-										rdr->client, card->caid, prid, 0)) {
-									ignore = 1;
-									break;
-								}
-							}
-							ll_iter_release(it2);
+				if (pthread_mutex_trylock(&rcc->cards_busy) != EBUSY) {
+					LL_ITER *it = ll_iter_create(rcc->cards);
+					while ((card = ll_iter_next(it))) {
+						if (card->hop <= maxhops && chk_ctab(card->caid, &cl->ctab)
+								&& chk_ctab(card->caid, &rdr->ctab)) {
 							
-							if (!ignore) { //Filtered by service
-								int new_reshare =
-										cfg->cc_ignore_reshare ? reshare
-												: (card->maxdown - 1);
-								if (new_reshare > reshare)
-									new_reshare = reshare;
-								add_card_to_serverlist(rdr, cl, server_cards, card,
-										new_reshare);
-								count++;
+							if ((cfg->cc_ignore_reshare || card->maxdown > 0)) {
+								int ignore = 0;
+
+								LL_ITER *it2 = ll_iter_create(card->providers);
+								struct cc_provider *prov;
+								while ((prov = ll_iter_next(it2))) {
+									ulong prid = prov->prov;
+									if (!chk_srvid_by_caid_prov(cl, card->caid,
+											prid, 0) || !chk_srvid_by_caid_prov(
+											rdr->client, card->caid, prid, 0)) {
+										ignore = 1;
+										break;
+									}
+								}
+								ll_iter_release(it2);
+							
+								if (!ignore) { //Filtered by service
+									int new_reshare =
+											cfg->cc_ignore_reshare ? reshare
+													: (card->maxdown - 1);
+									if (new_reshare > reshare)
+										new_reshare = reshare;
+									add_card_to_serverlist(rdr, cl, server_cards, card,
+											new_reshare);
+									count++;
+								}
 							}
 						}
 					}
+					ll_iter_release(it);
+					pthread_mutex_unlock(&rcc->cards_busy);
 				}
-				ll_iter_release(it);
-				pthread_mutex_unlock(&rcc->cards_busy);
 			}
 			cs_debug_mask(D_TRACE, "%s got %d cards from %s", getprefix(),
 					count, rdr->label);
