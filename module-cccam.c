@@ -140,7 +140,7 @@ void cc_crypt_cmd0c(struct s_client *cl, uint8 *buf, int len) {
 			SwapLBi(buf, len);
 			for (i = 0; i < len / 16; i++)
 				rc6_block_decrypt((unsigned int*)(buf+i*16), (unsigned int*)(out+i*16), 1, cc->cmd0c_RC6_cryptkey);
-			SwapLBi(buf, len);
+			SwapLBi(out, len);
 			break;
 		}
 		case MODE_CMD_0x0C_RC4: { // RC4
