@@ -1916,7 +1916,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	case MSG_SRV_DATA:
 		l -= 4;
 		cs_log("%s MSG_SRV_DATA (payload=%d, hex=%02X)", getprefix(), l, l);
-		data = (uint8*) &cc->receive_buffer;
+		data = cc->receive_buffer;
 
 		if (l == 0x48) { //72 bytes: normal server data
 			check_peer_changed(cc, data, data+8);
@@ -3531,6 +3531,7 @@ int cc_cli_connect(struct s_client *cl) {
 	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
+	memset(&cc->receive_buffer, 0, sizeof(cc->receive_buffer));
 	cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
 
 	cs_ddump(data, 16, "cccam: server init seed:");
