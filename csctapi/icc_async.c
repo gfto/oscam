@@ -281,8 +281,8 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 				int ret = Phoenix_Reset(reader, atr);
 				UNLOCK_SC8IN1;
 				if (ret) {
-		cs_debug_mask(D_TRACE, "ERROR, function call Phoenix_Reset returns error.");
-				return ERROR;
+					cs_debug_mask(D_TRACE, "ERROR, function call Phoenix_Reset returns error.");
+					return ERROR;
 				}
 				break;
 #if defined(LIBUSB)
@@ -323,7 +323,9 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	reader->protocol_type = ATR_PROTOCOL_TYPE_T0;
 	
 	cur_client()->cs_ptyp=D_ATR;
+	LOCK_SC8IN1;
 	int ret = Parse_ATR(reader, atr, deprecated);
+	UNLOCK_SC8IN1; //Parse_ATR and InitCard need to be included in lock because they change parity of serial port
 	if (ret)
 		cs_log("ERROR: Parse_ATR returned error");
 	cur_client()->cs_ptyp=D_DEVICE;;
