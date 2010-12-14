@@ -280,14 +280,14 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   unsigned char insf8[] = { 0xca,0xf8,0x00,0x00,0x00 }; // set geographic info 
   static const unsigned char insc0[] = { 0xca,0xc0,0x00,0x00,0x12 }; // read dcw
 
-  const uchar *ecm88Data=er->ecm+4; //XXX what is the 4th byte for ??
+  uchar *ecm88Data=er->ecm+4; //XXX what is the 4th byte for ??
   int ecm88Len=SCT_LEN(er->ecm)-4;
   ulong provid=0;
   int rc=0;
   int hasD2 = 0;
   int curEcm88len=0;
   int nanoLen=0;
-  const uchar *nextEcm;
+  uchar *nextEcm;
   uchar DE04[256];
   int D2KeyID=0;
   int curnumber_ecm=0;
@@ -425,9 +425,9 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         //Nano D2 0x0b Pre AES decrypt CW        
         if ( hasD2 && nanoD2 == 1) 
         {
-            const uchar *ecm88DataCW = ecm88Data;
+            uchar *ecm88DataCW = ecm88Data;
             int cwStart = 0;
-            int cwStartRes = 0;
+            //int cwStartRes = 0;
             int exit = 0;
             // find CW start
             while(cwStart < curEcm88len -1 && !exit)
