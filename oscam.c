@@ -1106,12 +1106,18 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 				cl->dup = 1;
 				cl->aureader = NULL;
 				cs_log("client(%8X) duplicate user '%s' from %s set to fake (uniq=%d)", cl->thread, usr, cs_inet_ntoa(ip), uniq);
+				if (cl->failban & BAN_DUPLICATE) {
+					cs_add_violation(ip);
+				}
 			}
 			else
 			{
 				client->dup = 1;
 				client->aureader = NULL;
 				cs_log("client(%8X) duplicate user '%s' from %s set to fake (uniq=%d)", pthread_self(), usr, cs_inet_ntoa(ip), uniq);
+				if (cl->failban & BAN_DUPLICATE) {
+					cs_add_violation(ip);
+				}
 				break;
 			}
 

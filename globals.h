@@ -333,7 +333,7 @@ extern void qboxhd_led_blink(int color, int duration);
 #define BAN_UNKNOWN 1			//failban mask for anonymous/ unknown contact
 #define BAN_DISABLED 2			//failban mask for disabled user
 #define BAN_SLEEPING 4			//failban mask for sleeping user
-
+#define BAN_DUPLICATE 8			//failban mask for duplicate user
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {free(X); X = NULL; }}
