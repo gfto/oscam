@@ -2987,7 +2987,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 						struct cc_provider *prov = malloc(sizeof(struct cc_provider));
 						memset(prov, 0, sizeof(struct cc_provider));
 						prov->prov = rdr->ftab.filts[j].prids[k];
-						if (!chk_srvid_by_caid_prov(cl, caid, prov->prov, 0)) {
+
+						if (!chk_srvid_by_caid_prov(cl, caid, prov->prov)) {
 							ignore = 1;
 						}
 						//cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
@@ -3079,8 +3080,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 								while ((prov = ll_iter_next(it2))) {
 									ulong prid = prov->prov;
 									if (!chk_srvid_by_caid_prov(cl, card->caid,
-											prid, 0) || !chk_srvid_by_caid_prov(
-											rdr->client, card->caid, prid, 0)) {
+											prid) || !chk_srvid_by_caid_prov(
+											rdr->client, card->caid, prid)) {
 										ignore = 1;
 										break;
 									}

@@ -1334,7 +1334,7 @@ extern int process_client_pipe(struct s_client *cl, uchar *buf, int l);
 extern void update_reader_config(uchar *ptr);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab);
-extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid, int chk_neg);
+extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
 extern void kill_thread(struct s_client *cl);
 extern int get_threadnum(struct s_client *client);
 extern int get_nr_of_readers(void);
