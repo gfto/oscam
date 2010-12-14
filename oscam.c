@@ -1052,7 +1052,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 
 		rdr->fd=cl->fd_m2c;
 		cl->reader=rdr;
-		cs_log("creating thread for device %s slot %i", rdr->device, rdr->slot);
+		cs_log("creating thread for device %s", rdr->device);
 
 		cl->sidtabok=rdr->sidtabok;
 		cl->sidtabno=rdr->sidtabno;

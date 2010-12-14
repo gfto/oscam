@@ -80,12 +80,44 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 
 	switch(reader->typ) {
 		case R_SC8in1:
-			pthread_mutex_init(&sc8in1, NULL);
+			//pthread_mutex_init(&sc8in1, NULL);
+			pthread_mutex_lock(&sc8in1);
+			if (reader->handle != 0) {//this reader is already initialized
+				pthread_mutex_unlock(&sc8in1);
+				return OK;
+			}
+
+			//this reader is uninitialized, thus the first one, since the first one initializes all others
+
+			//get physical device name
 			int pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
 			if (reader->device[pos] != 0x3a) //0x3a = ":"
 				cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
 			reader->slot=(int)reader->device[pos+1] - 0x30;//FIXME test boundaries
 			reader->device[pos]= 0; //slot 1 reader now gets correct physicalname
+
+			//open physical device
+			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
+			if (reader->handle < 0) {
+				cs_log("ERROR opening device %s",reader->device);
+				pthread_mutex_unlock(&sc8in1);
+				return ERROR;
+			}
+
+			//copy physical device name and file handle to other slots
+			struct s_reader *rdr;
+			for (rdr=first_reader; rdr ; rdr=rdr->next) //copy handle to other slots, FIXME change this if multiple sc8in1 readers
+				if (rdr->typ == R_SC8in1 && rdr != reader) { //we have another sc8in1 reader
+					unsigned char save = rdr->device[pos];
+					rdr->device[pos]=0; //set to 0 so we can compare device names
+					if (!strcmp(reader->device, rdr->device)) {//we have a match to another slot with same device name
+						rdr->handle = reader->handle;
+						rdr->slot=(int)rdr->device[pos+1] - 0x30;//FIXME test boundaries
+					}
+					else
+						rdr->device[pos] = save; //restore character
+				}
+			break;
 		case R_MP35:
 		case R_MOUSE:
 			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
@@ -159,8 +191,10 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 				return ERROR;
 		}
 
-	if (reader->typ == R_SC8in1) 
+	if (reader->typ == R_SC8in1) { 
 		call(Sc8in1_Init(reader));
+		pthread_mutex_unlock(&sc8in1);
+	}
 
  cs_debug_mask (D_IFD, "IFD: Device %s succesfully opened\n", reader->device);
  return OK;

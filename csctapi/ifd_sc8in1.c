@@ -174,9 +174,9 @@ int Sc8in1_Init(struct s_reader * reader)
 	for (i=0; i<8; i++) {
 		//init all stored termios to default comm settings after device init, before ATR
 		memcpy(&stored_termio[i],&termio,sizeof(termio));
-    }
+	}
     
-    // check for a MCR device and how many slots it has.
+  // check for a MCR device and how many slots it has.
 	unsigned char buff[] = { 0x74 };
 	sc8in1_command(reader, buff, 1, 1);
 	if (buff[0] == 4 || buff[0] == 8) {
@@ -188,22 +188,14 @@ int Sc8in1_Init(struct s_reader * reader)
 
 	tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
 
-	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) //copy handle to other slots, FIXME change this if multiple sc8in1 readers 
-		if (rdr->typ == R_SC8in1) {
-			if (rdr->slot == 0) {//not initialized yet
-				pos = strlen(rdr->device)-2; //this is where : should be located; is also valid length of physical device name
-				if (rdr->device[pos] != 0x3a) //0x3a = ":"
-					cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", rdr->device[pos], rdr->device);
-				rdr->slot=(int)rdr->device[pos+1] - 0x30;//FIXME test boundaries
-				rdr->device[pos]= 0; //slot 1 reader now gets correct physicalname
-			}
-			rdr->handle = fd;
-		}
-
 	if (is_mcr) {
+		//determine clockspeeds for all slots
+		struct s_reader *rdr;
+		for (rdr=first_reader; rdr ; rdr=rdr->next)
+			if (rdr->handle == reader->handle) { //corresponding slot
+
         //if MCR set clock
-        switch (reader->mhz) {
+        switch (rdr->mhz) {
             case 357:
             case 358:
                 speed=0;
@@ -220,14 +212,27 @@ int Sc8in1_Init(struct s_reader * reader)
                 break;
             default:
                 speed = 0;
-                cs_log("ERROR Sc8in1, cannot set clockspeed to %i", reader->mhz);
+                cs_log("ERROR Sc8in1, cannot set clockspeed to %i", rdr->mhz);
                 break;
         }
-        sc8in1_clock |= (speed << (reader->slot - 1) * 2); 
+        sc8in1_clock |= (speed << (rdr->slot - 1) * 2); 
+			}
+		
+		//set clockspeeds for all slots
 		buff[0] = 0x63; //MCR set clock
 		buff[1] = (sc8in1_clock >> 8) & 0xFF;
 		buff[2] = sc8in1_clock & 0xFF;
-		sc8in1_command(reader,  buff, 3, 0);
+		sc8in1_command(reader, buff, 3, 0);
+
+/*		//DEBUG get clockspeeds
+		buff[0] = 0x67;
+		sc8in1_command(reader, buff, 1, 2);
+		static char * clock[] = { "3,57", "3,68", "6,00", "8,00" };
+		uint16 result = buff[0]<<8 | buff[1];
+		cs_log("Buff = %X %X, result = %02X",buff[0], buff[1], result);
+		for(i=0; i<8; i++) {
+		cs_log("Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
+		}*/
 	}
 	
 	//IO_Serial_Flush(reader); //FIXME somehow ATR is generated and must be flushed

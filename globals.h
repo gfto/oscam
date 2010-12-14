@@ -164,7 +164,7 @@
 
 #define R_DB2COM1   0x1 // Reader Dbox2 @ com1
 #define R_DB2COM2   0x2 // Reader Dbox2 @ com1
-#define R_SC8in1    0x3 // Reader smartcard mouse
+#define R_SC8in1    0x3 // Reader Sc8in1 or MCR
 #define R_MP35      0x4 // AD-Teknik Multiprogrammer 3.5 and 3.6 (only usb tested)
 #define R_MOUSE     0x5 // Reader smartcard mouse
 /////////////////// phoenix readers which need baudrate setting and timings need to be guarded by OSCam: BEFORE R_MOUSE
