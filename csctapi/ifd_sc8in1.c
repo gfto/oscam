@@ -1,4 +1,4 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
+//FIXME Only threadsafe for ONE sc8in1/MCR reader; two readers WILL go wrong !!!
 /*
  *
  * This program is free software; you can redistribute it and/or modify
