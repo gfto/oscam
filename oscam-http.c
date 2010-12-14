@@ -1894,9 +1894,6 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			if (((cl->typ=='r') || (cl->typ=='p')) && (con=get_ridx(cl->reader)>=0)) usr=cl->reader->label;
 
-			if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0]))
-				tpl_printf(vars, 0, "CLIENTLBVALUE", "%s", cl->lastreader);
-
 			if (cl->dup) con=2;
 			else if ((cl->tosleep) && (now-cl->lastswitch>cl->tosleep)) con=1;
 			else con=0;
@@ -1965,6 +1962,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 
 			if (isec < cfg->mon_hideclient_to || cfg->mon_hideclient_to == 0) {
+
+				if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0]))
+					tpl_printf(vars, 0, "CLIENTLBVALUE", "%s", cl->lastreader);
+
 				tpl_printf(vars, 0, "CLIENTCAID", "%04X", cl->last_caid);
 				tpl_printf(vars, 0, "CLIENTSRVID", "%04X", cl->last_srvid);
 
@@ -2005,6 +2006,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				tpl_printf(vars, 0, "CLIENTSRVNAME","");
 				tpl_addVar(vars, 0, "CLIENTSRVTYPE","");
 				tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION","");
+				tpl_printf(vars, 0, "CLIENTLBVALUE","");
+
 			}
 
 			secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
