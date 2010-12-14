@@ -3,7 +3,6 @@
 #include "defines.h"
 #include "atr.h"
 #include "icc_async_exports.h"
-#include "csctapi/ifd_sc8in1.h"
 #ifdef HAVE_PCSC
 #include "csctapi/ifd_pcsc.h"
 #endif
@@ -63,21 +62,8 @@ int reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int l, ucha
 #endif
 
 	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary 
-	int cs_ptyp_orig=cur_client()->cs_ptyp;
-	cur_client()->cs_ptyp=D_DEVICE;
-	if (reader->typ == R_SC8in1) {
-		pthread_mutex_lock(&sc8in1);
-		cs_debug("SC8in1: locked for CardWrite of slot %i", reader->slot);
-		Sc8in1_Selectslot(reader, reader->slot);
-	}
 	cs_ddump(buf, l, "write to cardreader %s:",reader->label);
 	rc=ICC_Async_CardWrite(reader, (uchar *)buf, (unsigned short)l, cta_res, p_cta_lr);
-	cs_ddump(cta_res, *p_cta_lr, "answer from cardreader %s:", reader->label);
-	if (reader->typ == R_SC8in1) {
-		cs_debug("SC8in1: unlocked for CardWrite of slot %i", reader->slot);
-		pthread_mutex_unlock(&sc8in1);
-	}
-	cur_client()->cs_ptyp=cs_ptyp_orig;
 	return rc;
 }
 
@@ -147,13 +133,6 @@ static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned sh
 		return 0;
 
   /* Activate card */
-	int cs_ptyp_orig=cur_client()->cs_ptyp;
-	cur_client()->cs_ptyp=D_DEVICE;
-	if (reader->typ == R_SC8in1) {
-		pthread_mutex_lock(&sc8in1);
-		cs_debug_mask(D_ATR, "SC8in1: locked for Activation of slot %i", reader->slot);
-		Sc8in1_Selectslot(reader, reader->slot);
-	}
   for (i=0; i<5; i++) {
 		if (!ICC_Async_Activate(reader, atr, deprecated)) {
 			i = 100;
@@ -162,11 +141,6 @@ static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned sh
 		cs_log("Error activating card.");
   	cs_sleepms(500);
 	}
-	if (reader->typ == R_SC8in1) {
-		cs_debug_mask(D_ATR, "SC8in1: unlocked for Activation of slot %i", reader->slot);
-		pthread_mutex_unlock(&sc8in1);
-	}
-	cur_client()->cs_ptyp=cs_ptyp_orig;
   if (i<100) return(0);
 
   reader->init_history_pos=0;

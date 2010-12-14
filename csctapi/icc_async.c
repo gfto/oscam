@@ -260,6 +260,8 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 
 int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short deprecated)
 {
+	int cs_ptyp_orig=cur_client()->cs_ptyp;
+	cur_client()->cs_ptyp=D_DEVICE;
 	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader->label);
 
 	reader->current_baudrate = DEFAULT_BAUDRATE; //this is needed for all readers to calculate work_etu for timings
@@ -275,7 +277,13 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 			case R_DB2COM2:
 			case R_SC8in1:
 			case R_MOUSE:
-				call (Phoenix_Reset(reader, atr));
+				LOCK_SC8IN1;
+				int ret = Phoenix_Reset(reader, atr);
+				UNLOCK_SC8IN1;
+				if (ret) {
+		cs_debug_mask(D_TRACE, "ERROR, function call Phoenix_Reset returns error.");
+				return ERROR;
+				}
 				break;
 #if defined(LIBUSB)
 			case R_SMART:
@@ -308,36 +316,44 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	if (ATR_GetConvention (atr, &(reader->convention)) != ATR_OK) {
 		cs_log("ERROR: Could not read reader->convention");
 		reader->convention = 0;
-	  reader->protocol_type = 0; 
+		reader->protocol_type = 0;
 		return ERROR;
 	}
 	
 	reader->protocol_type = ATR_PROTOCOL_TYPE_T0;
 	
-	unsigned short cs_ptyp_orig=cur_client()->cs_ptyp;
 	cur_client()->cs_ptyp=D_ATR;
 	int ret = Parse_ATR(reader, atr, deprecated);
 	if (ret)
 		cs_log("ERROR: Parse_ATR returned error");
-	cur_client()->cs_ptyp=cs_ptyp_orig;
+	cur_client()->cs_ptyp=D_DEVICE;;
 	if (ret)
-		return ERROR;		
+		return ERROR;
 	cs_debug_mask (D_IFD, "IFD: Card in reader %s succesfully activated\n", reader->label);
+
+	cur_client()->cs_ptyp=cs_ptyp_orig;
 	return OK;
 }
 
 int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsigned short command_len, unsigned char *rsp, unsigned short *lr)
 {
 	*lr = 0; //will be returned in case of error
+
+	int ret;
+	cur_client()->cs_ptyp=D_DEVICE;
+
+	LOCK_SC8IN1;
+
 	switch (reader->protocol_type) {
 		case ATR_PROTOCOL_TYPE_T0:
-			call (Protocol_T0_Command (reader, command, command_len, rsp, lr));
+			ret = Protocol_T0_Command (reader, command, command_len, rsp, lr); 
 			break;
 		case ATR_PROTOCOL_TYPE_T1:
 		 {
 			int try = 1;
 			do {
-				if (Protocol_T1_Command (reader, command, command_len, rsp, lr) == OK)
+				ret = Protocol_T1_Command (reader, command, command_len, rsp, lr);
+				if (ret == OK)
 					break;
 				try++;
 				//try to resync
@@ -348,12 +364,22 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsign
 			break;
 		 }
 		case ATR_PROTOCOL_TYPE_T14:
-			call (Protocol_T14_ExchangeTPDU (reader, command, command_len, rsp, lr));
+			ret = Protocol_T14_ExchangeTPDU (reader, command, command_len, rsp, lr);
 			break;
 		default:
 			cs_log("Error, unknown protocol type %i",reader->protocol_type);
-			return ERROR;
+			ret = ERROR;
 	}
+
+	UNLOCK_SC8IN1;
+
+	if (ret) {
+		cs_debug_mask(D_TRACE, "ERROR, function call Protocol_T0_Command returns error.");
+		return ERROR;
+	}
+
+	cs_ddump(rsp, *lr, "answer from cardreader %s:", reader->label);
+	cur_client()->cs_ptyp=D_READER;
 	return OK;
 }
 

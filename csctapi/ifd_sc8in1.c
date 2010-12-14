@@ -36,7 +36,6 @@ static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not
 
 static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsigned short lenwrite, unsigned short lenread)
 {
-  int init_phase = (buff[0] == 0x63); //FIXME UGLY
   struct termios termio, termiobackup;
 
   // backup data
@@ -76,9 +75,8 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
     cs_log("ERROR: SC8in1 Command error in restore RS232 attributes\n");
     return ERROR;
   }
-	if(!init_phase)
   // switch SC8in1 to normal mode
-  	IO_Serial_DTR_Clr(reader);
+ 	IO_Serial_DTR_Clr(reader);
   // give some time back to the system .. we're in a thread after all
   sched_yield();
 	return OK;
@@ -257,7 +255,7 @@ int Sc8in1_Card_Changed(struct s_reader * reader) {
 
 int Sc8in1_GetStatus (struct s_reader * reader, int * in)
 {
-	if (Sc8in1_Card_Changed(reader)|| *in == -1) { //FIXME what happens if slot 1 has no reader defined
+	if (Sc8in1_Card_Changed(reader)|| *in == -1) {
 		cs_debug("SC8in1: locking for Getstatus for slot %i",reader->slot);
 		pthread_mutex_lock(&sc8in1);
 		cs_debug("SC8in1: locked for Getstatus for slot %i",reader->slot);
