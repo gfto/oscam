@@ -3127,8 +3127,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 	cc->card_removed_count += cc_free_reported_carddata(cl, cc->reported_carddatas, new_reported_carddatas, ok);
 	cc->reported_carddatas = new_reported_carddatas;
 	
-	cs_log("%s reported/updated +%d/-%d/dup %d of %d cards to client", getprefix(), 
-		cc->card_added_count, cc->card_removed_count, cc->card_dup_count, ll_count(cc->reported_carddatas));
+	cs_log("%s reported/updated +%d/-%d/dup %d of %d cards to client (ext=%d)", getprefix(), 
+		cc->card_added_count, cc->card_removed_count, cc->card_dup_count, ll_count(cc->reported_carddatas), cc->cccam220);
 	return ok;
 }
 
@@ -3339,6 +3339,16 @@ int cc_srv_connect(struct s_client *cl) {
 		return -1;
 
 	cc->cccam220 = check_cccam_compat(cc);
+	
+	//Wait for Partner detection (NOK1 with data) before reporting cards
+	//When Partner is detected, cccam220=1 is set. then we can report extended card data
+	i = process_input(mbuf, sizeof(mbuf), 1);
+	if (i<=0 && i != -9)
+		return 0; //disconnected
+	if (cc->cccam220)
+		cs_debug_mask(D_TRACE, "%s extended sid mode activated", getprefix());
+	else
+		cs_debug_mask(D_TRACE, "%s 2.1.x compatibility mode", getprefix());
 
 	// report cards
 	ulong hexserial_crc = get_reader_hexserial_crc(cl);
