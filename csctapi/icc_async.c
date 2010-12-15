@@ -93,7 +93,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			int pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
 			if (reader->device[pos] != 0x3a) //0x3a = ":"
 				cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
-			reader->slot=(int)reader->device[pos+1] - 0x30;//FIXME test boundaries
+			reader->slot=(int)reader->device[pos+1] - 0x30;
 			reader->device[pos]= 0; //slot 1 reader now gets correct physicalname
 
 			//open physical device
@@ -106,13 +106,13 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 
 			//copy physical device name and file handle to other slots
 			struct s_reader *rdr;
-			for (rdr=first_reader; rdr ; rdr=rdr->next) //copy handle to other slots, FIXME change this if multiple sc8in1 readers
+			for (rdr=first_reader; rdr ; rdr=rdr->next) //copy handle to other slots
 				if (rdr->typ == R_SC8in1 && rdr != reader) { //we have another sc8in1 reader
 					unsigned char save = rdr->device[pos];
 					rdr->device[pos]=0; //set to 0 so we can compare device names
 					if (!strcmp(reader->device, rdr->device)) {//we have a match to another slot with same device name
 						rdr->handle = reader->handle;
-						rdr->slot=(int)rdr->device[pos+1] - 0x30;//FIXME test boundaries
+						rdr->slot=(int)rdr->device[pos+1] - 0x30;
 					}
 					else
 						rdr->device[pos] = save; //restore character

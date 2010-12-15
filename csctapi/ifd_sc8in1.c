@@ -118,7 +118,7 @@ int Sc8in1_Selectslot(struct s_reader * reader, int slot) {
   // backup rs232 data
   tcgetattr(reader->handle,&termio);
 	if (current_slot != 0)
-  	memcpy(&stored_termio[current_slot-1],&termio,sizeof(termio));
+  	memcpy(&stored_termio[current_slot-1],&termio,sizeof(termio)); //not if current_slot is undefine
 	//
   // switch SC8in1 to command mode
   IO_Serial_DTR_Set(reader);
@@ -186,12 +186,18 @@ int Sc8in1_Init(struct s_reader * reader)
 
 	tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
 
-	if (is_mcr) {
-		//determine clockspeeds for all slots
-		struct s_reader *rdr;
-		for (rdr=first_reader; rdr ; rdr=rdr->next)
-			if (rdr->handle == reader->handle) { //corresponding slot
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next)
+		if (rdr->handle == reader->handle) { //corresponding slot
 
+			//check slot boundaries
+			int upper_slot = (is_mcr)? is_mcr : 8; //set upper limit to 8 for non MCR readers
+			if (rdr->slot <= 0 || rdr->slot > upper_slot) {
+				cs_log("ERROR: device %s has invalid slot number %i", rdr->device, rdr->slot);
+				return ERROR;
+			}
+
+			if (is_mcr) {
 				//set RTS for every slot to 1 to prevent jitter/glitch detection problems  
 				Sc8in1_Selectslot(rdr, rdr->slot);
 				IO_Serial_RTS_Set(reader);
@@ -219,7 +225,9 @@ int Sc8in1_Init(struct s_reader * reader)
         }
         sc8in1_clock |= (speed << (rdr->slot - 1) * 2); 
 			}
+		}
 		
+	if (is_mcr) {
 		//set clockspeeds for all slots
 		buff[0] = 0x63; //MCR set clock
 		buff[1] = (sc8in1_clock >> 8) & 0xFF;
