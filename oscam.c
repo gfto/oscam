@@ -2935,6 +2935,9 @@ int accept_connection(int i, int j) {
 				return 0;
 			}
 
+			int flag = 1;
+			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+			
 			cl->ctyp=i;
 			cl->udp_fd=pfd3;
 			cl->port_idx=j;

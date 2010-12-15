@@ -223,6 +223,9 @@ int network_tcp_connection_open()
     return -1;
   }
   
+  int flag = 1;
+  setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+  
   int sd = cl->udp_fd;
   int fl = fcntl(sd, F_GETFL);
   fcntl(sd, F_SETFL, O_NONBLOCK); //set to nonblocking mode to avoid "endless" connecting loops and pipe-overflows:

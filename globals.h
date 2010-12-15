@@ -17,6 +17,7 @@
 #include <sys/timeb.h>
 #include <limits.h>
 #include <pwd.h>
+#include <netinet/tcp.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
