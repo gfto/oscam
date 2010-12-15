@@ -14,7 +14,7 @@ unsigned short openxcas_sid, openxcas_caid, openxcas_ecm_pid, openxcas_video_pid
 
 void azbox_openxcas_ecm_callback(int stream_id, unsigned int sequence, int cipher_index, unsigned int caid, unsigned char *ecm_data, int l, unsigned short pid);
 void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsigned int pid, unsigned char *ecm_data, int l);
-void azbox_send_dcw(ECM_REQUEST *er);
+void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er);
 void * azbox_main(void * cli);
 #endif
 
@@ -658,6 +658,14 @@ void dvbapi_read_priority() {
 			entry->disablefilter=disablefilter;
 
 			cs_debug("stapi prio: ret=%d | %c: %s %s | disable %d", ret, type, entry->devname, entry->pmtfile, disablefilter);
+
+			if (!dvbapi_priority) {
+				dvbapi_priority=entry;
+			} else {
+ 				struct s_dvbapi_priority *p;
+				for (p = dvbapi_priority; p->next != NULL; p = p->next);
+				p->next = entry;
+			}
 			continue;
 		}
 #endif
@@ -1438,14 +1446,13 @@ void * dvbapi_main_local(void *cli) {
 	memset(demux, 0, sizeof(struct demux_s) * MAX_DEMUX);
 	memset(ca_fd, 0, sizeof(ca_fd));
 
+	dvbapi_read_priority();
 	dvbapi_detect_api();
 
 	if (selected_box == -1 || selected_api==-1) {
 		cs_log("could not detect api version");
 		return NULL;
 	}
-
-	dvbapi_read_priority();
 
 	if (cfg->dvbapi_pmtmode == 1)
 		disable_pmt_files=1;

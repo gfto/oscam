@@ -165,7 +165,7 @@ int Sc8in1_Init(struct s_reader * reader)
 {
 	//additional init, Phoenix_Init is also called for Sc8in1 !
 	struct termios termio;
-	int i,pos, speed,fd = reader->handle;
+	int i, speed;
 	unsigned int is_mcr, sc8in1_clock = 0;
 	
 	tcgetattr(reader->handle,&termio);

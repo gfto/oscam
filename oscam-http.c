@@ -283,7 +283,7 @@ void send_oscam_config_camd35tcp(struct templatevars *vars, FILE *f, struct urip
 			tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
 
 	}
-	fputs(tpl_getTpl(vars, "CONFIGCAMD35TCP"), f);
+	webif_write(tpl_getTpl(vars, "CONFIGCAMD35TCP"), f);
 }
 
 void send_oscam_config_newcamd(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
