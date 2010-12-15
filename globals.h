@@ -1097,6 +1097,8 @@ struct s_config
 	char		cc_version[7];
 	int             cc_minimize_cards;
 	int             cc_keep_connected;
+	int		cc_stealth;
+	int		cc_reshare_services;
 	struct s_ip *rad_allowed;
 	char		rad_usr[32];
 	char		ser_device[512];

@@ -648,7 +648,14 @@ int cc_send_srv_data(struct s_client *cl) {
 	uint8 buf[CC_MAXMSGSIZE];
 	memset(buf, 0, CC_MAXMSGSIZE);
 
-	memcpy(buf, cc->node_id, 8);
+	if (cfg->cc_stealth)
+	{
+		int i;
+		for (i=0;i<8;i++)
+			buf[i] = fast_rnd();
+	}
+	else
+		memcpy(buf, cc->node_id, 8);
 	char cc_build[7];
 	cc_check_version((char *) cfg->cc_version, cc_build);
 	memcpy(buf + 8, cfg->cc_version, sizeof(cfg->cc_version)); // cccam version (ascii)
@@ -2915,6 +2922,10 @@ int report_card(struct s_client *cl, struct cc_card *card, LLIST *new_reported_c
  * Server:
  * Reports all caid/providers to the connected clients
  * returns 1=ok, 0=error
+ *
+ * cfg->cc_reshare_services=0 CCCAM reader reshares only received cards
+ *                         =1 CCCAM reader reshares received cards + defined services
+ *                         =2 CCCAM reader reshared only defined services as virtual cards
  */
 int cc_srv_report_cards(struct s_client *cl) {
 	int j;
@@ -2972,7 +2983,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 		int au_allowed = !rdr->audisabled && isau;
 
 		flt = 0;
-		if (rdr->typ != R_CCCAM && rdr->ftab.filts) {
+		if ((rdr->typ != R_CCCAM||cfg->cc_reshare_services) && rdr->ftab.filts) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
 				if (rdr->ftab.filts[j].caid && 
 						chk_ctab(rdr->ftab.filts[j].caid, &cl->ctab)) {
@@ -3010,7 +3021,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			}
 		}
 
-		if (rdr->typ != R_CCCAM && !rdr->caid[0] && !flt) {
+		if ((rdr->typ != R_CCCAM||cfg->cc_reshare_services) && !rdr->caid[0] && !flt) {
 			for (j = 0; j < CS_MAXCAIDTAB; j++) {
 				//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", rdr->ctab.caid[j], rdr->ctab.cmap[j]);
 				ushort lcaid = rdr->ctab.caid[j];
@@ -3029,7 +3040,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			}
 		}
 
-		if (rdr->typ != R_CCCAM && rdr->caid[0] && !flt && chk_ctab(rdr->caid[0], &cl->ctab)) {
+		if ((rdr->typ != R_CCCAM||cfg->cc_reshare_services) && rdr->caid[0] && !flt && chk_ctab(rdr->caid[0], &cl->ctab)) {
 			//cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
 			ushort caid = rdr->caid[0];
 			struct cc_card *card = create_card2(rdr, 0, caid, hop, reshare);
@@ -3055,7 +3066,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				cc_free_card(card);
 		}
 
-		if (rdr->typ == R_CCCAM && !flt) {
+		if (rdr->typ == R_CCCAM && cfg->cc_reshare_services<2) {
 
 			cs_debug_mask(D_TRACE, "%s asking reader %s for cards...",
 					getprefix(), rdr->label);

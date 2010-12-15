@@ -1097,25 +1097,35 @@ void chk_t_newcamd(char *token, char *value)
 void chk_t_cccam(char *token, char *value)
 {
 	if (!strcmp(token, "port")) {
-		if(strlen(value) == 0) {
+		if(strlen(value) == 0)
 			cfg->cc_port = 0;
-			return;
-		} else {
+		else
 			cfg->cc_port = atoi(value);
-			return;
-		}
 	}
 	//if (!strcmp(token, "serverip")) { cfg->cc_srvip=inet_addr(value); return; }
 
 	if (!strcmp(token, "reshare")) {
-		if(strlen(value) == 0) {
+		if(strlen(value) == 0)
 			cfg->cc_reshare = 0;
-			return;
-		} else {
+		else
 			cfg->cc_reshare=atoi(value);
-			return;
-		}
+		return;
 	}
+	
+	if (!strcmp(token, "stealth")) {
+		if(strlen(value) == 0)
+			cfg->cc_stealth = 1;
+		else
+			cfg->cc_stealth=atoi(value);
+	}
+	
+	if (!strcmp(token, "reshare_mode")) {
+		if(strlen(value) == 0)
+			cfg->cc_reshare_services = 0;
+		else
+			cfg->cc_reshare_services=atoi(value);
+	}
+	
 	if (!strcmp(token, "ignorereshare")) {
 		if(strlen(value) == 0)
 			cfg->cc_ignore_reshare = 0;
