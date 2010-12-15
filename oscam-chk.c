@@ -78,12 +78,12 @@ int chk_srvid_by_caid_prov(struct s_client *cl, ushort caid, ulong provid) {
     rc=1;
   }
   for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
-    if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
+    if (sidtab->num_caid | sidtab->num_provid)
     {
       if ((cl->sidtabno&((SIDTABBITS)1<<nr)) && !sidtab->num_srvid &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         return(0);
-      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) && !sidtab->num_srvid &&
+      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
           (chk_srvid_match_by_caid_prov(caid, provid, sidtab)))
         rc=1;
     }
