@@ -110,7 +110,8 @@ int Cool_SetClockrate (int mhz)
 
 int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT, unsigned long BGT)
 {
-	struct
+	//this code worked with old cnxt_lnx.ko, but prevented nagra cards from working with new cnxt_lnx.ko
+/*	struct
 	{
 		unsigned short  CardActTime;   //card activation time (in clock cycles = 1/54Mhz)
 		unsigned short  CardDeactTime; //card deactivation time (in clock cycles = 1/54Mhz)
@@ -126,7 +127,7 @@ int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT,
 	params.EGT = EGT;
 	params.BGT = BGT;
 	call (cnxt_smc_set_config_timeout(handle, params));
-	cs_debug("COOL WriteSettings OK");
+	cs_debug("COOL WriteSettings OK");*/ 
 	return OK;
 }
 
