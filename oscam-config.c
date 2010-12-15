@@ -1101,6 +1101,7 @@ void chk_t_cccam(char *token, char *value)
 			cfg->cc_port = 0;
 		else
 			cfg->cc_port = atoi(value);
+		return;
 	}
 	//if (!strcmp(token, "serverip")) { cfg->cc_srvip=inet_addr(value); return; }
 
@@ -1117,6 +1118,7 @@ void chk_t_cccam(char *token, char *value)
 			cfg->cc_stealth = 1;
 		else
 			cfg->cc_stealth=atoi(value);
+		return;
 	}
 	
 	if (!strcmp(token, "reshare_mode")) {
@@ -1124,6 +1126,7 @@ void chk_t_cccam(char *token, char *value)
 			cfg->cc_reshare_services = 0;
 		else
 			cfg->cc_reshare_services=atoi(value);
+		return;
 	}
 	
 	if (!strcmp(token, "ignorereshare")) {
