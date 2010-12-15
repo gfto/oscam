@@ -192,7 +192,11 @@ int Sc8in1_Init(struct s_reader * reader)
 		for (rdr=first_reader; rdr ; rdr=rdr->next)
 			if (rdr->handle == reader->handle) { //corresponding slot
 
-        //if MCR set clock
+				//set RTS for every slot to 1 to prevent jitter/glitch detection problems  
+				Sc8in1_Selectslot(rdr, rdr->slot);
+				IO_Serial_RTS_Set(reader);
+
+        //calculate clock-bits
         switch (rdr->mhz) {
             case 357:
             case 358:
