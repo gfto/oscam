@@ -2483,7 +2483,7 @@ void send_oscam_failban(struct templatevars *vars, FILE *f, struct uriparams *pa
 	V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
-		ip2delete = atoi(getParam(params, "intip"));
+		sscanf(getParam(params, "intip"), "%u", &ip2delete);
 		while (v_ban_entry) {
 			if (v_ban_entry->v_ip == ip2delete) {
 				free(v_ban_entry);
