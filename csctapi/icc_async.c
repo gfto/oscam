@@ -784,15 +784,13 @@ static int SetRightParity (struct s_reader * reader)
 
 static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, double n, unsigned short deprecated)
 {
-	double P,I;
+	double I;
 	double F;
     	unsigned long BGT, edc, EGT, CGT, WWT = 0;
     	unsigned int GT;
     	unsigned long gt_ms;
     
 	//set the amps and the volts according to ATR
-	if (ATR_GetParameter(atr, ATR_PARAMETER_P, &P) != ATR_OK)
-		P = 0;
 	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
 		I = 0;
 
