@@ -241,6 +241,9 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<H2 CLASS=\"headline1\">OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2>\
 		</DIV>"
 
+#define TPLAPIHEADER "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
+<oscam version=\"##CS_VERSION## build ###CS_SVN_VERSION##\" starttime=\"##STARTDATE## - ##STARTTIME##\">\n"
+
 #define TPLFOOTER "\
 		<BR><HR/><BR><DIV CLASS=\"footer\">\n\
 		<H4 CLASS=\"footline1\">OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4>\n\
@@ -249,6 +252,8 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		</DIV>\n\
 		</BODY>\
 		</HTML>"
+
+#define TPLAPIFOOTER "</oscam>"
 
 #define TPLREFRESH "\
 		\n<meta http-equiv=\"refresh\" content=\"##REFRESHTIME##; URL=##REFRESHURL##\" />\n"
@@ -409,6 +414,16 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		##SDEBUG##\
 		##TPLFOOTER##"
 
+#define TPLAPISTATUS "##TPLAPIHEADER##\n\
+   <status>\n\
+##APISTATUSBITS##\
+   </status>\n\
+   <log>\n\
+   ##LOGHISTORY##\
+   </log>\
+##TPLAPIFOOTER##"
+
+
 #define TPLCLIENTSTATUSBIT "\
 		<TR class=\"##CLIENTTYPE##\">\n\
 		<TD align=\"center\" WIDTH=\"10\"><A HREF =\"status.html?hide=##HIDEIDX##\" TITLE=\"Hide this client\"><IMG SRC=\"##HIDEICON##\" ALT=\"Hide\"></A></TD>\n\
@@ -429,6 +444,14 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TD align=\"center\">##CLIENTIDLESECS##</TD>\n\
 		<TD align=\"center\">##CLIENTCON##</TD>\n\
 		</TR>\n"
+
+
+#define TPLAPISTATUSBIT "      <client type=\"##CLIENTTYPE##\" name=\"##CLIENTUSER##\" protocol=\"##CLIENTPROTO##\" protocolext=\"##CLIENTPROTOTITLE##\">\n\
+         <request caid=\"##CLIENTCAID##\" srvid=\"##CLIENTSRVID##\">##CLIENTSRVPROVIDER####CLIENTSRVNAME##</request>\n\
+         <times login=\"##CLIENTLOGINDATE##\" last=\"##CLIENTLOGINSECS##\" idle=\"##CLIENTIDLESECS##\"></times>\n\
+         <connection ip=\"##CLIENTIP##\" port=\"##CLIENTPORT##\">##CLIENTCON##</connection>\n\
+      </client>\n"
+
 
 #define TPLUSERCONFIGLIST "\
 		##TPLHEADER##\
@@ -1333,11 +1356,15 @@ enum refreshtypes {REFR_ACCOUNTS, REFR_READERS, REFR_SERVER, REFR_ANTICASC, REFR
 
 char *tpl[]={
 	"HEADER",
+	"APIHEADER",
 	"FOOTER",
+	"APIFOOTER",
 	"MENU",
 	"REFRESH",
 	"STATUS",
+	"APISTATUS",
 	"CLIENTSTATUSBIT",
+	"APISTATUSBIT",
 	"USERCONFIGLIST",
 	"ADDNEWUSER",
 	"USERCONFIGLISTBIT",
@@ -1420,11 +1447,15 @@ char *tpl[]={
 
 char *tplmap[]={
 	TPLHEADER,
+	TPLAPIHEADER,
 	TPLFOOTER,
+	TPLAPIFOOTER,
 	TPLMENU,
 	TPLREFRESH,
 	TPLSTATUS,
+	TPLAPISTATUS,
 	TPLCLIENTSTATUSBIT,
+	TPLAPISTATUSBIT,
 	TPLUSERCONFIGLIST,
 	TPLADDNEWUSER,
 	TPLUSERCONFIGLISTBIT,
