@@ -18,13 +18,24 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er);
 void * azbox_main(void * cli);
 #endif
 
-const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd" };
+#ifdef COOL
+int coolapi_set_filter (int fd, int num, int pid, byte * flt, byte * mask);
+int coolapi_remove_filter (int fd, int num);
+int coolapi_open_device (int demux_index, int demux_id);
+int coolapi_close_device(int fd);
+int coolapi_write_cw(int mask, unsigned short *STREAMpids, int count, ca_descr_t * ca_descr);
+int coolapi_set_pid (int demux_id, int num, int index, int pid);
+void coolapi_close_all();
+void dvbapi_write_cw(int demux_id, uchar *cw, int index);
+#endif
+const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream" };
 
 const struct box_devices devices[BOX_COUNT] = {
 	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/", 	"ca%d",		"demux%d",			"/tmp/camd.socket" },
 	/* dreambox (dvb-api-3)*/	{ "/dev/dvb/adapter%d/",	"ca%d", 		"demux%d",			"/tmp/camd.socket" },
 	/* dreambox (dvb-api-1)*/	{ "/dev/dvb/card%d/",	"ca%d",		"demux%d",			"/tmp/camd.socket" },
-	/* sh4      (stapi)*/	{ "/dev/stapi/", 		"stpti4_ioctl",	"stpti4_ioctl",		"/tmp/camd.socket" }
+	/* sh4      (stapi)*/	{ "/dev/stapi/", 		"stpti4_ioctl",	"stpti4_ioctl",		"/tmp/camd.socket" },
+	/* coolstream)*/	{ "/dev/cnxt/", 		"null",	"null",		"/tmp/camd.socket" }
 };
 
 int selected_box=-1;
@@ -95,6 +106,13 @@ int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uc
 
 			break;
 #endif
+#ifdef COOL
+		case COOLAPI:
+			demux[demux_id].demux_fd[n].fd = coolapi_open_device(demux[demux_id].demux_index, demux_id);
+			if(demux[demux_id].demux_fd[n].fd > 0)
+				ret = coolapi_set_filter(demux[demux_id].demux_fd[n].fd, n, pid, filt, mask);
+			break;
+#endif
 		default:
 			break;
 	}
@@ -116,6 +134,13 @@ int dvbapi_check_array(unsigned short *array, int len, unsigned short match) {
 }
 
 int dvbapi_detect_api() {
+#ifdef COOL
+	selected_api=COOLAPI;
+	selected_box = 4;
+	disable_pmt_files = 1;
+	cs_debug("Detected coolstream Api");
+	return 1;
+#else
 	int num_apis=2, i,devnum=-1, dmx_fd=0, ret=-1;
 	uchar filter[32];
 	char device_path[128], device_path2[128];
@@ -167,11 +192,13 @@ int dvbapi_detect_api() {
 	if (ret < 0) return 0;
 
 	cs_debug("Detected %s Api: %d", device_path, selected_api);
+#endif
 
 	return 1;
 }
 
-int dvbapi_read_device(int dmx_fd, unsigned char *buf, int length) {
+int dvbapi_read_device(int dmx_fd, unsigned char *buf, int length) 
+{
 	int len, rc;
 	struct pollfd pfd[1];
 
@@ -236,21 +263,28 @@ int dvbapi_stop_filter(int demux_index, int type) {
 	return 1;
 }
 
-int dvbapi_stop_filternum(int demux_index, int num) {
+int dvbapi_stop_filternum(int demux_index, int num) 
+{
 	int ret=-1;
 	if (demux[demux_index].demux_fd[num].fd>0) {
+#ifdef COOL
+		ret=coolapi_remove_filter(demux[demux_index].demux_fd[num].fd, num);
+		coolapi_close_device(demux[demux_index].demux_fd[num].fd);
+#else
 #ifdef WITH_STAPI
 		ret=stapi_remove_filter(demux_index, num, demux[demux_index].pmt_file);
 #else
 		ret=ioctl(demux[demux_index].demux_fd[num].fd,DMX_STOP);
 		close(demux[demux_index].demux_fd[num].fd);
 #endif
+#endif
 		demux[demux_index].demux_fd[num].fd=0;
 	}
 	return ret;
 }
 
-void dvbapi_start_filter(int demux_id, int pidindex, unsigned short pid, uchar table, uchar mask, int timeout, int type) {
+void dvbapi_start_filter(int demux_id, int pidindex, unsigned short pid, uchar table, uchar mask, int timeout, int type) 
+{
 	uchar filter[32];
 
 	cs_debug("set filter pid: %04x", pid);
@@ -949,6 +983,22 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, c
 	for (i = 0; i < MAX_DEMUX; i++) {
 		if (connfd>0 && demux[i].socket_fd == connfd) {
 			//PMT Update
+#ifdef COOL
+			demux_id = i;
+			unsigned char lastcw[16];
+			int n;
+			for(n = 0; n < 2; n++) {
+				memcpy(&lastcw[n*8], demux[demux_id].lastcw[n], 8);
+				memset(demux[demux_id].lastcw[n], 0, 8);
+			}
+			demux[demux_id].ca_mask=ca_mask;
+			dvbapi_write_cw(demux_id, lastcw, 0);//FIXME
+			demux[demux_id].curindex = demux[demux_id].pidindex;
+			demux[demux_id].STREAMpidcount=0;
+			demux[demux_id].ECMpidcount=0;
+			demux[demux_id].EMMpidcount=0;
+			ca_pmt_list_management = 0x01;
+#else
 			if (ca_pmt_list_management == 0x05) {
 				demux_id = i;
 				demux[demux_id].curindex = demux[demux_id].pidindex;
@@ -960,6 +1010,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, c
 				dvbapi_stop_descrambling(i);
 			if (ca_pmt_list_management == 0x02)
 				demux_id=i;
+#endif
 		}
 	}
 
@@ -991,7 +1042,8 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, c
 	demux[demux_id].rdr=NULL;
 	demux[demux_id].pidindex=-1;
 
-	cs_debug("id: %d\tdemux_index: %d\tca_mask: %02x\tprogram_info_length: %d", demux_id, demux[demux_id].demux_index, demux[demux_id].ca_mask, program_info_length);
+	cs_debug("id: %d\tdemux_index: %d\tca_mask: %02x\tprogram_info_length: %d\tca_pmt_list_management %02x", 
+			demux_id, demux[demux_id].demux_index, demux[demux_id].ca_mask, program_info_length, ca_pmt_list_management);
 
 	if (pmtfile)
 		strcpy(demux[demux_id].pmt_file, pmtfile);
@@ -1335,6 +1387,9 @@ void *dvbapi_event_thread(void *cli) {
 void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) {
 	struct s_ecmpids *curpid = &demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex];
 
+#ifdef COOL
+	cs_debug("dvbapi_process_input: demux %d filter %d len %d buffer %x curtable %x curindex %d\n", demux_id, filter_num, len, buffer[0], curpid->table, demux[demux_id].curindex);
+#endif
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_ECM) {
 		if (len != (((buffer[1] & 0xf) << 8) | buffer[2]) + 3) //invaild CAT length
 			return;
@@ -1374,6 +1429,11 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 			return;
 
 		curpid->table = buffer[0];
+#ifdef COOL
+		int num = demux[demux_id].curindex;//FIXME or pidindex ?
+		dvbapi_stop_filternum(demux_id, filter_num);
+		dvbapi_start_filter(demux_id, num, demux[demux_id].ECMpids[num].ECM_PID, buffer[0] ^ 1, 0xFF, 3000, TYPE_ECM);
+#endif
 
 		struct s_dvbapi_priority *mapentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'm');
 
@@ -1525,7 +1585,7 @@ void * dvbapi_main_local(void *cli) {
 
 		for (i=0;i<MAX_DEMUX;i++) {
 			for (g=0;g<MAX_FILTER;g++) {
-				if (demux[i].demux_fd[g].fd>0 && selected_api != STAPI) {
+				if (demux[i].demux_fd[g].fd>0 && selected_api != STAPI && selected_api != COOLAPI) {
 					pfd2[pfdcount].fd = demux[i].demux_fd[g].fd;
 					pfd2[pfdcount].events = (POLLIN | POLLPRI);
 					ids[pfdcount]=i;
@@ -1638,12 +1698,14 @@ void dvbapi_write_cw(int demux_id, uchar *cw, int index) {
 			ca_descr.parity = n;
 			memcpy(demux[demux_id].lastcw[n],cw+(n*8),8);
 			memcpy(ca_descr.cw,cw+(n*8),8);
-
+#ifdef COOL
+			cs_debug("write cw%d index: %d (ca_mask %d)", n, ca_descr.index, demux[demux_id].ca_mask);
+			coolapi_write_cw(demux[demux_id].ca_mask, demux[demux_id].STREAMpids, demux[demux_id].STREAMpidcount, &ca_descr);
+#else
 			int i;
 			for (i=0;i<8;i++) {
 				if (demux[demux_id].ca_mask & (1 << i)) {
 					cs_debug("write cw%d index: %d (ca%d)", n, ca_descr.index, i);
-
 					if (ca_fd[i]<=0) {
 						ca_fd[i]=dvbapi_open_device(1, i, demux[demux_id].adapter_index);
 						if (ca_fd[i]<=0)
@@ -1654,11 +1716,13 @@ void dvbapi_write_cw(int demux_id, uchar *cw, int index) {
 						cs_debug("Error CA_SET_DESCR");
 				}
 			}
+#endif
 		}
 	}
 }
 
-void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) {
+void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er) 
+{
 #ifdef AZBOX
 	azbox_send_dcw(client, er);
 	return;

@@ -14,6 +14,7 @@
 #define DVBAPI_3	0
 #define DVBAPI_1	1
 #define STAPI		2
+#define COOLAPI		3
 
 
 #define T_UNIQUE 1
@@ -24,7 +25,11 @@
 #define STANDBY_FILE	"/tmp/.pauseoscam"
 #define ECMINFO_FILE	"/tmp/ecm.info"
 
+#ifdef COOL
+#define MAX_DEMUX 3
+#else
 #define MAX_DEMUX 5
+#endif
 #define MAX_CAID 50
 #define ECM_PIDS 20
 #define MAX_FILTER 10
@@ -33,7 +38,7 @@
 #define FALSE 0
 #endif
 
-#define BOX_COUNT 4
+#define BOX_COUNT 5
 
 struct box_devices
 {

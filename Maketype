@@ -67,7 +67,8 @@ OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(oscam-chk.o) \
 		  $(LIBFILE1)(oscam-http.o) \
 		  $(LIBFILE1)(oscam-http-helpers.o) \
-		  $(LIBFILE1)(oscam-ac.o)
+		  $(LIBFILE1)(oscam-ac.o) \
+		  $(LIBFILE1)(module-coolapi.o)
 
 ifneq ($(LIBUSB),)
 all:		prepare $(EXEFILE1) $(EXEFILE2)

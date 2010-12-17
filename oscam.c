@@ -10,6 +10,10 @@
 #else
 #  define CS_VERSION_X  CS_VERSION
 #endif
+#ifdef COOL
+void coolapi_close_all();
+extern int cooldebug;
+#endif
 
 extern void cs_statistics(struct s_client * client);
 
@@ -546,6 +550,9 @@ void cs_exit(int sig)
 	snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
 	if (unlink(targetfile) < 0)
 		cs_log("cannot remove oscam version file %s errno=(%d)", targetfile, errno);
+#endif
+#ifdef COOL
+	coolapi_close_all();
 #endif
 	break;
   }
@@ -1652,8 +1659,8 @@ ECM_REQUEST *get_ecmtask()
 {
 	int i, n;
 	ECM_REQUEST *er=0;
-  struct s_client *cl = cur_client();
-
+	struct s_client *cl = cur_client();
+	if(!cl) return NULL;
 	if (!cl->ecmtask)
 	{
 		n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
@@ -2999,7 +3006,6 @@ if (pthread_key_create(&getclient, NULL)) {
   fprintf(stderr, "Could not create getclient, exiting...");
   exit(1);
 }
-
 #ifdef CS_LED
   cs_switch_led(LED1A, LED_DEFAULT);
   cs_switch_led(LED1A, LED_ON);
@@ -3090,7 +3096,7 @@ if (pthread_key_create(&getclient, NULL)) {
 	0
   };
 
-  while ((i=getopt(argc, argv, "bc:t:d:hm:"))!=EOF)
+  while ((i=getopt(argc, argv, "bc:t:d:hm:x"))!=EOF)
   {
 	  switch(i) {
 		  case 'b':
@@ -3114,6 +3120,9 @@ if (pthread_key_create(&getclient, NULL)) {
 			  break;
 		  case 'm':
 				printf("WARNING: -m parameter is deprecated, ignoring it.\n");
+				break;
+		  case 'x':
+				cooldebug = 1;
 				break;
 		  case 'h':
 		  default :
