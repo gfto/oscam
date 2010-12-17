@@ -1320,6 +1320,18 @@ void event_handler(int signal) {
 	pthread_mutex_unlock(&event_handler_lock);
 }
 
+void *dvbapi_event_thread(void *cli) {
+	struct s_client * client = (struct s_client *) cli;
+	pthread_setspecific(getclient, client);
+
+	while(1) {
+		cs_sleepms(750);
+		event_handler(0);
+	}
+
+	return NULL;
+}
+
 void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) {
 	struct s_ecmpids *curpid = &demux[demux_id].ECMpids[demux[demux_id].demux_fd[filter_num].pidindex];
 
@@ -1484,6 +1496,10 @@ void * dvbapi_main_local(void *cli) {
 			fcntl(dir_fd, F_NOTIFY, DN_MODIFY | DN_CREATE | DN_DELETE | DN_MULTISHOT);
 			event_handler(SIGRTMIN + 1);
 		}
+	} else {
+		pthread_t event_thread;
+		pthread_create(&event_thread, NULL, dvbapi_event_thread, (void*) dvbapi_client);
+		pthread_detach(event_thread);
 	}
 
 	cs_ftime(&tp);
