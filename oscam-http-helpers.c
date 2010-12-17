@@ -389,15 +389,7 @@ int webif_read(char *buf, int num, FILE *f) {
 		return SSL_read((SSL*)f, buf, num);
 	} else
 #endif
-	{
-		buf[0]='\0';
-		int len=0;
-		while (fgets(buf+len, num-len-1, f)) {
-			if (buf[0+len] == '\r' && buf[1+len] == '\n') break;
-			len=strlen(buf);
-		}
-		return len;
-	}
+		return read(fileno(f), buf, num);
 }
 
 void send_headers(FILE *f, int status, char *title, char *extra, char *mime){

@@ -317,7 +317,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
   ##TPLMENU##\n\
   ##TPLFILEMENU##\n\
   <BR><BR>##SDEBUG####SLOG####SCLEAR##<BR>##FILTER##\n\
-  <FORM ACTION=\"files.html\" method=\"get\">\n\
+  <FORM ACTION=\"files.html\" method=\"post\">\n\
   <INPUT TYPE=\"hidden\" NAME=\"part\" VALUE=\"##PART##\">\n\
   <TEXTAREA NAME=\"filecontent\" CLASS=\"editor\">##FILECONTENT##</TEXTAREA><BR>##WRITEPROTECTION##<BR>\n\
   <INPUT TYPE=\"submit\" NAME=\"action\" VALUE=\"Save\" TITLE=\"Save file is not yet implemented\" ##BTNDISABLED##>\n\

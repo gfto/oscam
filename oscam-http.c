@@ -2558,6 +2558,37 @@ void send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params
 	}
 }
 
+void webif_parse_request(struct uriparams *params, char *pch) {
+	/* Parse url parameters; parsemode = 1 means parsing next param, parsemode = -1 parsing next
+	 value; pch2 points to the beginning of the currently parsed string, pch is the current position */
+
+	char *pch2;
+	int parsemode = 1;
+
+	pch2=pch;
+	while(pch[0] != '\0') {
+		if((parsemode == 1 && pch[0] == '=') || (parsemode == -1 && pch[0] == '&')) {
+			pch[0] = '\0';
+			urldecode(pch2);
+			if(parsemode == 1) {
+				if(params->paramcount >= MAXGETPARAMS) break;
+				++params->paramcount;
+				params->params[params->paramcount-1] = pch2;
+			} else {
+				params->values[params->paramcount-1] = pch2;
+			}
+			parsemode = -parsemode;
+			pch2 = pch + 1;
+		}
+		++pch;
+	}
+	/* last value wasn't processed in the loop yet... */
+	if(parsemode == -1 && params->paramcount <= MAXGETPARAMS) {
+		urldecode(pch2);
+		params->values[params->paramcount-1] = pch2;
+	}
+}
+
 int process_request(FILE *f, struct in_addr in) {
 
 	cur_client()->last = time((time_t)0); //reset last busy time
@@ -2620,7 +2651,7 @@ int process_request(FILE *f, struct in_addr in) {
 		return 0;
 	}
 
-	char buf[4096];
+	char buf[10240];
 	char *tmp;
 
 	int authok = 0;
@@ -2630,7 +2661,6 @@ int process_request(FILE *f, struct in_addr in) {
 	char *path;
 	char *protocol;
 	char *pch;
-	char *pch2;
 	/* List of possible pages */
 	char *pages[]= {
 		"/config.html",
@@ -2657,17 +2687,17 @@ int process_request(FILE *f, struct in_addr in) {
 
 	int pgidx = -1;
 	int i;
-	int parsemode = 1;
 	struct uriparams params;
 	params.paramcount = 0;
 
 	/* First line always includes the GET/POST request */
 	char *saveptr1=NULL;
 	int n;
-	if ((n=webif_read(buf, sizeof(buf), f)) <= 0) {
+	if ((n=webif_read(buf, sizeof(buf)-1, f)) <= 0) {
 		cs_debug("webif read error %d", n);
 		return -1;
 	}
+	buf[n]='\0';
 
 	method = strtok_r(buf, " ", &saveptr1);
 	path = strtok_r(NULL, " ", &saveptr1);
@@ -2688,38 +2718,21 @@ int process_request(FILE *f, struct in_addr in) {
 		if (!strcmp(path, pages[i])) pgidx = i;
 	}
 
-	/* Parse url parameters; parsemode = 1 means parsing next param, parsemode = -1 parsing next
-	 value; pch2 points to the beginning of the currently parsed string, pch is the current position */
-	pch2=pch;
-	while(pch[0] != '\0') {
-		if((parsemode == 1 && pch[0] == '=') || (parsemode == -1 && pch[0] == '&')) {
-			pch[0] = '\0';
-			urldecode(pch2);
-			if(parsemode == 1) {
-				if(params.paramcount >= MAXGETPARAMS) break;
-				++params.paramcount;
-				params.params[params.paramcount-1] = pch2;
-			} else {
-				params.values[params.paramcount-1] = pch2;
-			}
-			parsemode = -parsemode;
-			pch2 = pch + 1;
-		}
-		++pch;
-	}
-	/* last value wasn't processed in the loop yet... */
-	if(parsemode == -1 && params.paramcount <= MAXGETPARAMS) {
-		urldecode(pch2);
-		params.values[params.paramcount-1] = pch2;
-	}
+	webif_parse_request(&params, pch);
 
 	if(strlen(cfg->http_user) == 0 || strlen(cfg->http_pwd) == 0) authok = 1;
 	else calculate_nonce(expectednonce, sizeof(expectednonce)/sizeof(char));
 
 	char *str1, *saveptr=NULL;
+
 	for (str1=strtok_r(tmp, "\n", &saveptr); str1; str1=strtok_r(NULL, "\n", &saveptr)) {
-		if (str1[0] == '\r' && str1[1] == '\n') break;
-		else if(authok == 0 && strlen(str1) > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
+		if (strlen(str1)==1) {
+			if (strcmp(method, "POST")==0) {
+				webif_parse_request(&params, str1+2);
+			}
+			break;
+		}
+		if(authok == 0 && strlen(str1) > 50 && strncmp(str1, "Authorization:", 14) == 0 && strstr(str1, "Digest") != NULL) {
 			authok = check_auth(str1, method, path, expectednonce);
 		}
 	}

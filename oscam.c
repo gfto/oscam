@@ -3122,7 +3122,9 @@ if (pthread_key_create(&getclient, NULL)) {
 				printf("WARNING: -m parameter is deprecated, ignoring it.\n");
 				break;
 		  case 'x':
+#ifdef COOL
 				cooldebug = 1;
+#endif
 				break;
 		  case 'h':
 		  default :
