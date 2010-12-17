@@ -12,7 +12,7 @@
 
 #ifndef HAVE_DVBAPI
 #if !defined(OS_CYGWIN32) && !defined(OS_HPUX) && !defined(OS_FREEBSD) && !defined(OS_MACOSX)
-#define HAVE_DVBAPI
+//#define HAVE_DVBAPI
 #endif
 #endif
 
