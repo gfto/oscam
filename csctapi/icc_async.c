@@ -153,6 +153,8 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 		case R_INTERNAL:
 #ifdef COOL
 			return Cool_Init(reader->device);
+#elif WITH_STAPI
+			return STReader_Open(reader);
 #elif AZBOX
 			return Azbox_Init(reader);
 #elif SCI_DEV
@@ -239,6 +241,8 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 			call (Sci_GetStatus(reader, &in));
 #elif COOL
 			call (Cool_GetStatus(&in));
+#elif WITH_STAPI
+			call (STReader_GetStatus(reader, &in));
 #elif AZBOX
 			call(Azbox_GetStatus(reader, &in));
 #endif
@@ -296,6 +300,8 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 				call (Sci_Reset(reader, atr));
 #elif COOL
 				call (Cool_Reset(atr));
+#elif WITH_STAPI
+				call (STReader_Reset(reader->stsmart_handle, atr));
 #elif AZBOX
 				call (Azbox_Reset(reader, atr));
 #endif
@@ -422,6 +428,8 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 		case R_INTERNAL:
 #ifdef COOL
 			call (Cool_Transmit(sent, size));
+#elif WITH_STAPI
+			call (STReader_Transmit(reader->stsmart_handle, sent, size));
 #elif AZBOX
 			call (Azbox_Transmit(reader, sent, size));
 #elif SCI_DEV
@@ -457,6 +465,8 @@ int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
 		case R_INTERNAL:
 #ifdef COOL
 	    call (Cool_Receive(data, size));
+#elif WITH_STAPI
+	    call (STReader_Receive(reader->stsmart_handle, data, size));
 #elif AZBOX
 	    call (Azbox_Receive(reader, data, size));
 #elif SCI_DEV
@@ -498,6 +508,8 @@ int ICC_Async_Close (struct s_reader *reader)
 			/* Dectivate ICC */
 			call (Sci_Deactivate(reader));
 			call (Phoenix_Close(reader));
+#elif WITH_STAPI
+			call(STReader_Close(reader->stsmart_handle));
 #endif
 			break;
 		default:
@@ -682,6 +694,11 @@ static int PPS_Exchange (struct s_reader * reader, BYTE * params, unsigned *leng
 	params[len_request - 1] = PPS_GetPCK(params, len_request - 1);
 	cs_debug_mask (D_IFD,"PTS: Sending request: %s", cs_hexdump(1, params, len_request));
 
+#ifdef WITH_STAPI	
+	ret = STReader_SetProtocol(reader->stsmart_handle, params, length, len_request);
+	return ret;
+#endif
+
 	/* Send PPS request */
 	call (ICC_Async_Transmit (reader, len_request, params));
 
@@ -769,10 +786,7 @@ static int SetRightParity (struct s_reader * reader)
 	
 	call (ICC_Async_SetParity(reader, parity));
 
-#ifdef COOL
-	if (reader->typ != R_INTERNAL)
-#endif
-#ifdef AZBOX
+#if defined(COOL) || defined(WITH_STAPI) || defined(AZBOX)
 	if (reader->typ != R_INTERNAL)
 #endif
 #if defined(LIBUSB)
@@ -936,6 +950,8 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 #elif COOL
 		call (Cool_SetClockrate(reader->mhz));
 		call (Cool_WriteSettings (reader->BWT, reader->CWT, EGT, BGT));
+#elif WITH_STAPI
+		call (STReader_SetClockrate(reader->stsmart_handle));		
 #endif //COOL
 	}
 #if defined(LIBUSB)

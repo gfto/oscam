@@ -853,6 +853,9 @@ struct s_reader  //contains device info, reader info and card info
   uint8_t  device_endpoint; // usb endpoint for Infinity USB Smart in smartreader mode.
   SR_CONFIG *sr_config;
 #endif
+#ifdef WITH_STAPI
+  uint stsmart_handle;
+#endif
 #ifdef AZBOX
   int mode;
 #endif
