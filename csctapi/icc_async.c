@@ -106,7 +106,6 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 
 			//copy physical device name and file handle to other slots
 			struct s_reader *rdr;
-cs_log("DINGO: first_reader = %p", first_reader);
 			for (rdr=first_reader; rdr ; rdr=rdr->next) //copy handle to other slots
 				if (rdr->typ == R_SC8in1 && rdr != reader) { //we have another sc8in1 reader
 					unsigned char save = rdr->device[pos];
@@ -948,11 +947,11 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 	//IFS setting in case of T1
 	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC)) {
 		unsigned char rsp[CTA_RES_LEN];
-		unsigned short * lr = 0;
+		unsigned short lr=0;
 		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
 		tmp[3] = reader->ifsc; // Information Field size
 		tmp[4] = reader->ifsc ^ 0xE1;
-		Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp, lr);
+		Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp, &lr);
 	}
  return OK;
 }
