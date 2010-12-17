@@ -31,7 +31,6 @@
 /* Send a command and return a response */
 int Protocol_T0_Command (struct s_reader *reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr);
 int Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr);
-int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr);
 
 #endif /* _PROTOCOL_T0_ */
 

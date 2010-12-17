@@ -947,11 +947,11 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 	//IFS setting in case of T1
 	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC)) {
 		unsigned char rsp[CTA_RES_LEN];
-		unsigned short lr=0;
+		unsigned short * lr;
 		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
 		tmp[3] = reader->ifsc; // Information Field size
 		tmp[4] = reader->ifsc ^ 0xE1;
-		Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp, &lr);
+		Protocol_T1_Command (reader, tmp, sizeof(tmp), rsp, lr);
 	}
  return OK;
 }
