@@ -12,7 +12,7 @@
 
 #ifndef HAVE_DVBAPI
 #if !defined(OS_CYGWIN32) && !defined(OS_HPUX) && !defined(OS_FREEBSD) && !defined(OS_MACOSX)
-//#define HAVE_DVBAPI
+#define HAVE_DVBAPI
 #endif
 #endif
 
@@ -139,7 +139,7 @@
 #  endif
 #  define CS_EMBEDDED
 #  define NO_FTIME
-#  if !defined(COOL) && !defined(ST_LINUX)
+#  if !defined(COOL) && !defined(WITH_STAPI)
 #    define SCI_DEV 1
 #  endif
 #  ifndef HAVE_DVBAPI

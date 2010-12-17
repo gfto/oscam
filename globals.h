@@ -751,7 +751,7 @@ struct s_reader  //contains device info, reader info and card info
   ushort    slot;   //in case of multiple slots like sc8in1; first slot = 1
   int       handle;   //device handle
   int       fdmc;     //device handle for multicam
-#ifdef ST_LINUX
+#ifdef WITH_STAPI
   unsigned int stsmart_handle; //device handle for stsmart driver
 #endif
   char      pcsc_name[128];
@@ -852,9 +852,6 @@ struct s_reader  //contains device info, reader info and card info
 #ifdef LIBUSB
   uint8_t  device_endpoint; // usb endpoint for Infinity USB Smart in smartreader mode.
   SR_CONFIG *sr_config;
-#endif
-#ifdef WITH_STAPI
-  uint stsmart_handle;
 #endif
 #ifdef AZBOX
   int mode;
