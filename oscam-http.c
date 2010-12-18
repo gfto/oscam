@@ -2105,6 +2105,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		if (!apicall) {
 			if (p_txt[0]) tpl_printf(vars, 1, "LOGHISTORY", "<span class=\"%s\">%s</span><br>\n", p_usr, p_txt+8);
 		} else {
+			if (strcmp(getParam(params, "appendlog"), "1") == 0)
 			tpl_printf(vars, 1, "LOGHISTORY", "%s", p_txt+8);
 		}
 	}
@@ -2482,6 +2483,9 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	}
 
 	tpl_addVar(vars, 0, "PART", getParam(params, "part"));
+
+	// Set File section to writeprotected while it's under construction
+	writable = 0;	// <------- Remove before flight
 
 	if (!writable) {
 		tpl_addVar(vars, 0, "WRITEPROTECTION", "You cannot change content of this file");
