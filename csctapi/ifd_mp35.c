@@ -1,4 +1,3 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "../globals.h"
 #include "icc_async.h"
 #include "io_serial.h"

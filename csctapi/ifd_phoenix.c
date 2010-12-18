@@ -1,4 +1,3 @@
-//FIXME Not threadsafe when using multiple GPIO devices
 /*
 		ifd_phoenix.c
 		This module provides IFD handling functions for Smartmouse/Phoenix reader.
