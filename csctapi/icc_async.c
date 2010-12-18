@@ -235,7 +235,7 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 			break;
 #if defined(LIBUSB)
 		case R_SMART:
-			call (SR_GetStatus(reader->stsmart_handle, &in));
+			call (SR_GetStatus(reader, &in));
 			break;
 #endif
 		case R_INTERNAL:
@@ -244,7 +244,7 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 #elif defined(COOL)
 			call (Cool_GetStatus(&in));
 #elif defined(WITH_STAPI)
-			call (STReader_GetStatus(reader, &in));
+			call (STReader_GetStatus(reader->stsmart_handle, &in));
 #elif defined(AZBOX)
 			call(Azbox_GetStatus(reader, &in));
 #endif
