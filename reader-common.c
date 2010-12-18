@@ -321,7 +321,8 @@ void reader_post_process(struct s_reader * reader)
 {
   // some systems eg. nagra2/3 needs post process after receiving cw from card
   // To save ECM/CW time we added this function after writing ecm answer
-
+	if (!reader->card_system)
+		return;
 	if (cardsystem[reader->card_system-1].post_process) {
 		cardsystem[reader->card_system-1].post_process(reader);
 	}
