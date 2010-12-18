@@ -268,12 +268,7 @@ int Sc8in1_Card_Changed(struct s_reader * reader) {
 int Sc8in1_GetStatus (struct s_reader * reader, int * in)
 {
 	if (Sc8in1_Card_Changed(reader)|| *in == -1) {
-		cs_debug_mask(D_DEVICE, "SC8in1: locking for Getstatus for slot %i",reader->slot);
-		pthread_mutex_lock(&sc8in1);
-		cs_debug_mask(D_DEVICE, "SC8in1: locked for Getstatus for slot %i",reader->slot);
 		int i=readsc8in1(reader); //read cardstatus
-		pthread_mutex_unlock(&sc8in1);
-		cs_debug_mask(D_DEVICE, "SC8in1: unlocked for Getstatus for slot %i",reader->slot);
 		if (i < 0) {
             // give some time back to the system .. we're in a thread after all
             sched_yield();

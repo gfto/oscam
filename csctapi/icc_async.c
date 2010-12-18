@@ -225,7 +225,9 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 			break;
 #endif
 		case R_SC8in1:
+			LOCK_SC8IN1;
 			call (Sc8in1_GetStatus(reader, &in));
+			UNLOCK_SC8IN1;
 			break;
 		case R_MP35:
 		case R_MOUSE:
