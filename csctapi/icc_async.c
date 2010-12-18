@@ -151,13 +151,13 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			return ERROR;
 #endif
 		case R_INTERNAL:
-#ifdef COOL
+#if defined(COOL)
 			return Cool_Init(reader->device);
-#elif WITH_STAPI
-			return STReader_Open(reader);
-#elif AZBOX
+#elif defined(WITH_STAPI)
+			return STReader_Open(reader->device, &reader->stsmart_handle);
+#elif defined(AZBOX)
 			return Azbox_Init(reader);
-#elif SCI_DEV
+#elif defined(SCI_DEV)
 	#if defined(SH4) || defined(STB04SCI)
 			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 	#else
@@ -235,17 +235,17 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 			break;
 #if defined(LIBUSB)
 		case R_SMART:
-			call (SR_GetStatus(reader,&in));
+			call (SR_GetStatus(reader->stsmart_handle, &in));
 			break;
 #endif
 		case R_INTERNAL:
-#ifdef SCI_DEV
+#if defined(SCI_DEV)
 			call (Sci_GetStatus(reader, &in));
-#elif COOL
+#elif defined(COOL)
 			call (Cool_GetStatus(&in));
-#elif WITH_STAPI
+#elif defined(WITH_STAPI)
 			call (STReader_GetStatus(reader, &in));
-#elif AZBOX
+#elif defined(AZBOX)
 			call(Azbox_GetStatus(reader, &in));
 #endif
 			break;
@@ -295,14 +295,14 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 				break;
 #endif
 			case R_INTERNAL:
-#ifdef SCI_DEV
+#if defined(SCI_DEV)
 				call (Sci_Activate(reader));
 				call (Sci_Reset(reader, atr));
-#elif COOL
+#elif defined(COOL)
 				call (Cool_Reset(atr));
-#elif WITH_STAPI
+#elif defined(WITH_STAPI)
 				call (STReader_Reset(reader->stsmart_handle, atr));
-#elif AZBOX
+#elif defined(AZBOX)
 				call (Azbox_Reset(reader, atr));
 #endif
 				break;
@@ -421,13 +421,13 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 			break;
 #endif
 		case R_INTERNAL:
-#ifdef COOL
+#if defined(COOL)
 			call (Cool_Transmit(sent, size));
-#elif WITH_STAPI
+#elif defined(WITH_STAPI)
 			call (STReader_Transmit(reader->stsmart_handle, sent, size));
-#elif AZBOX
+#elif defined(AZBOX)
 			call (Azbox_Transmit(reader, sent, size));
-#elif SCI_DEV
+#elif defined(SCI_DEV)
 			call (Phoenix_Transmit (reader, sent, size, 0, 0)); //the internal reader will provide the delay
 #endif
 			break;
@@ -458,13 +458,13 @@ int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
 			break;
 #endif
 		case R_INTERNAL:
-#ifdef COOL
+#if defined(COOL)
 	    call (Cool_Receive(data, size));
-#elif WITH_STAPI
+#elif defined(WITH_STAPI)
 	    call (STReader_Receive(reader->stsmart_handle, data, size));
-#elif AZBOX
+#elif defined(AZBOX)
 	    call (Azbox_Receive(reader, data, size));
-#elif SCI_DEV
+#elif defined(SCI_DEV)
 			call (Phoenix_Receive (reader, data, size, reader->read_timeout));
 #endif
 			break;
@@ -499,11 +499,11 @@ int ICC_Async_Close (struct s_reader *reader)
 			break;
 #endif
 		case R_INTERNAL:
-#ifdef SCI_DEV
+#if defined(SCI_DEV)
 			/* Dectivate ICC */
 			call (Sci_Deactivate(reader));
 			call (Phoenix_Close(reader));
-#elif WITH_STAPI
+#elif defined(WITH_STAPI)
 			call(STReader_Close(reader->stsmart_handle));
 #endif
 			break;
@@ -935,17 +935,17 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 
   //write settings to internal device
 	if(reader->typ == R_INTERNAL) {
-#ifdef SCI_DEV
+#if defined(SCI_DEV)
 		double F =	(double) atr_f_table[FI];
 		unsigned long ETU = 0;
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
 		call (Sci_WriteSettings (reader, reader->protocol_type, reader->mhz / 100, ETU, WWT, reader->BWT, reader->CWT, EGT, 5, (unsigned char)I)); //P fixed at 5V since this is default class A card, and TB is deprecated
-#elif COOL
+#elif defined(COOL)
 		call (Cool_SetClockrate(reader->mhz));
 		call (Cool_WriteSettings (reader->BWT, reader->CWT, EGT, BGT));
-#elif WITH_STAPI
+#elif defined(WITH_STAPI)
 		call (STReader_SetClockrate(reader->stsmart_handle));		
 #endif //COOL
 	}
