@@ -1,5 +1,69 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
+
+#define CS_NANO_CLASS 0xE2
+
+static int find_nano(uchar *ecm, int l, uchar nano, int s)
+{
+  uchar *snano;
+
+  if( s >= l ) return 0;
+  if( !s ) s=(ecm[4]==0xD2) ? 12 : 9;	// tpsflag -> offset+3
+  snano = ecm + s;
+
+  while( (*snano!=nano) && (s<l) )
+  {
+    if( *snano == 0xEA ) return 0;
+    snano++;
+    s++;
+  }
+
+  return (s<l)?++s:0;
+}
+
+static int chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *D_USE(type), const char *D_USE(name))
+{
+  int i, j, an, cl_n, l;
+  uchar ecm_class;
+
+  if( er->caid!=0x0500 ) return 1;
+  if( !clstab->bn && !clstab->an ) return 1;
+
+  j=an=cl_n=l=0;
+  while( (j=find_nano(er->ecm, er->l, CS_NANO_CLASS, j)) > 0 )
+  {
+    l = er->ecm[j];
+    ecm_class = er->ecm[j+l];
+    cs_debug_mask(D_CLIENT, "ecm class=%02X", ecm_class);
+    for( i=0; i<clstab->bn; i++ )  // search in blocked
+      if( ecm_class==clstab->bclass[i] ) 
+      {
+        cs_debug_mask(D_CLIENT, "class %02X rejected by %s '%s' !%02X filter", 
+                 ecm_class, type, name, ecm_class);
+        return 0;
+      }
+
+    cl_n++;
+    for( i=0; i<clstab->an; i++ )  // search in allowed
+      if( ecm_class==clstab->aclass[i] ) 
+      {
+        an++;
+        break;
+      }
+    j+=l;
+  }
+
+  if( cl_n && clstab->an )
+  {
+    if( an ) 
+      cs_debug_mask(D_CLIENT, "ECM classes allowed by %s '%s' filter", type, name);
+    else {
+      cs_debug_mask(D_CLIENT, "ECM classes don't match %s '%s' filter, rejecting", type, name);
+      return 0;
+    }
+  }
+
+  return 1;
+}
 
 int chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
 {
@@ -49,7 +113,7 @@ int chk_srvid(struct s_client *cl, ECM_REQUEST *er)
   return(rc);
 }
 
-int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab)
+static int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab)
 {
   int i, rc=0;
 
@@ -261,7 +325,7 @@ int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
   return(rc);
 }
 
-int chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
+static int chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
 {
   int i, j, rc=1;
   ushort caid=0;
@@ -296,38 +360,6 @@ int chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
   }
 
   return(rc);
-}
-
-int chk_avail_reader(ECM_REQUEST *er, struct s_reader *rdr)
-{
-  if( !chk_rfilter(er, rdr) ) {
-    if( !er->rcEx ) er->rcEx=(E1_READER<<4)|E2_IDENT;
-    return 0;
-  }
-  if( !chk_class(er, &rdr->cltab, "reader", rdr->label) ) {
-    if( !er->rcEx ) er->rcEx=(E1_READER<<4)|E2_CLASS;
-    return 0;
-  }
-  if( !chk_chid(er, &rdr->fchid, "reader", rdr->label) ) {
-    if( !er->rcEx ) er->rcEx=(E1_READER<<4)|E2_CHID;
-    return 0;
-  }
-//fixme re-activated code for testing
-  if( rdr->typ=='r' )
-  {
-    if( rdr->qlen>=rdr->maxqlen )
-    {
-      cs_log("reader '%s' max. queue length(%d) reached, rejected", rdr->label, rdr->qlen);
-      if( !er->rcEx ) er->rcEx=(E1_READER<<4)|E2_QUEUE;
-      return 0;
-    }
-    else {
-      cs_log("reader '%s' qlen=%d", rdr->label, rdr->qlen);
-      rdr->qlen++;
-    }
-  }
-
-  return 1;
 }
 
 int chk_ctab(ushort caid, CAIDTAB *ctab) {
