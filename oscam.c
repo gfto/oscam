@@ -12,7 +12,6 @@
 #endif
 #ifdef COOL
 void coolapi_close_all();
-extern int cooldebug;
 #endif
 
 extern void cs_statistics(struct s_client * client);
@@ -502,7 +501,7 @@ void cs_exit(int sig)
 	set_signal_handler(SIGPIPE, 1, SIG_IGN);
 
 	if (sig==SIGALRM) {
-		cs_debug("thread %8X: SIGALRM, skipping", pthread_self());
+		cs_debug_mask(D_TRACE, "thread %8X: SIGALRM, skipping", pthread_self());
 		return;
 	}
 
@@ -622,7 +621,7 @@ void cs_reinit_clients()
 #endif
 			} else {
 				if (ph[cl->ctyp].type & MOD_CONN_NET) {
-					cs_debug("client '%s', thread=%8X not found in db (or password changed)", cl->usr, cl->thread);
+					cs_debug_mask(D_TRACE, "client '%s', thread=%8X not found in db (or password changed)", cl->usr, cl->thread);
 					kill_thread(cl);
 				}
 			}
@@ -637,7 +636,7 @@ void cs_debug_level()
 			case 0:
 				cs_dblevel = 1;
 				break;
-			case 64:
+			case 128:
 				cs_dblevel = 255;
 				break;
 			case 255:
@@ -680,7 +679,6 @@ struct s_client * cs_fork(in_addr_t ip) {
 
 		//make_non_blocking(fdp[0]);
 		//make_non_blocking(fdp[1]);
-		cl->cs_ptyp=D_CLIENT;
 		cl->fd_m2c_c = fdp[0]; //store client read fd
 		cl->fd_m2c = fdp[1]; //store client read fd
 		cl->ip=ip;
@@ -1042,7 +1040,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 			cs_log("Protocol Support missing. (typ=%d)", rdr->typ);
 			return;
 		}
-		cs_debug("reader %s protocol: %s", rdr->label, rdr->ph.desc);
+		cs_debug_mask(D_TRACE, "reader %s protocol: %s", rdr->label, rdr->ph.desc);
 	}
 
 	if (rdr->enable == 0)
@@ -1408,7 +1406,7 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 		return -1;
 	}
 
-	cs_debug("write to pipe %d (%s) thread: %8X to %8X", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd)->thread);
+	cs_debug_mask(D_TRACE, "write to pipe %d (%s) thread: %8X to %8X", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd)->thread);
 
 	uchar buf[3+sizeof(void*)];
 
@@ -1463,7 +1461,7 @@ int read_from_pipe(int fd, uchar **data, int redir)
 	memcpy(id, buf, 3);
 	id[3]='\0';
 
-	cs_debug("read from pipe %d (%s) thread: %8X", fd, id, (unsigned int)pthread_self());
+	cs_debug_mask(D_TRACE, "read from pipe %d (%s) thread: %8X", fd, id, (unsigned int)pthread_self());
 
 	int l;
 	for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)
@@ -1600,7 +1598,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
     c=((er->cw[i]+er->cw[i+1]+er->cw[i+2]) & 0xff);
     if (er->cw[i+3]!=c)
     {
-      cs_debug("notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, er->cw[i+3],c);
+      cs_debug_mask(D_TRACE, "notice: changed dcw checksum byte cw[%i] from %02x to %02x", i+3, er->cw[i+3],c);
       er->cw[i+3]=c;
     }
   }
@@ -2041,26 +2039,26 @@ void guess_irdeto(ECM_REQUEST *er)
   b3  = er->ecm[3];
   ptr = cfg->itab[b3];
   if( !ptr ) {
-    cs_debug("unknown irdeto byte 3: %02X", b3);
+    cs_debug_mask(D_TRACE, "unknown irdeto byte 3: %02X", b3);
     return;
   }
   b47  = b2i(4, er->ecm+4);
   //chid = b2i(2, er->ecm+6);
-  //cs_debug("ecm: b47=%08X, ptr->b47=%08X, ptr->caid=%04X", b47, ptr->b47, ptr->caid);
+  //cs_debug_mask(D_TRACE, "ecm: b47=%08X, ptr->b47=%08X, ptr->caid=%04X", b47, ptr->b47, ptr->caid);
   while( ptr )
   {
     if( b47==ptr->b47 )
     {
       if( er->srvid && (er->srvid!=ptr->sid) )
       {
-        cs_debug("sid mismatched (ecm: %04X, guess: %04X), wrong oscam.ird file?",
+        cs_debug_mask(D_TRACE, "sid mismatched (ecm: %04X, guess: %04X), wrong oscam.ird file?",
                   er->srvid, ptr->sid);
         return;
       }
       er->caid=ptr->caid;
       er->srvid=ptr->sid;
       er->chid=(ushort)ptr->b47;
-//      cs_debug("quess_irdeto() found caid=%04X, sid=%04X, chid=%04X",
+//      cs_debug_mask(D_TRACE, "quess_irdeto() found caid=%04X, sid=%04X, chid=%04X",
 //               er->caid, er->srvid, er->chid);
       return;
     }
@@ -2106,7 +2104,7 @@ void cs_betatunnel(ECM_REQUEST *er)
 			cl->cwtun++;
 			first_client->cwtun++;
 
-			cs_debug("ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
+			cs_debug_mask(D_TRACE, "ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
 				ttab->bt_caidfrom[n], ttab->bt_caidto[n], ttab->bt_srvid[n]);
 		}
 	}
@@ -2282,7 +2280,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		if(!((mintime <= maxtime && curtime > mintime && curtime < maxtime) || (mintime > maxtime && (curtime > mintime || curtime < maxtime)))) {
 			er->rc = 11;
 		}
-		cs_debug("Check Timeframe - result: %d, start: %d, current: %d, end: %d\n",er->rc, mintime, curtime, maxtime);
+		cs_debug_mask(D_TRACE, "Check Timeframe - result: %d, start: %d, current: %d, end: %d\n",er->rc, mintime, curtime, maxtime);
 	}
 
 	// user disabled
@@ -2371,7 +2369,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					// corrupt
 					if( (i = er->l - (er->ecm[2] + 3)) ) {
 						if (i > 0) {
-							cs_debug("warning: ecm size adjusted from 0x%X to 0x%X",
+							cs_debug_mask(D_TRACE, "warning: ecm size adjusted from 0x%X to 0x%X",
 							er->l, er->ecm[2] + 3);
 							er->l = (er->ecm[2] + 3);
 						}
@@ -3120,11 +3118,6 @@ if (pthread_key_create(&getclient, NULL)) {
 			  break;
 		  case 'm':
 				printf("WARNING: -m parameter is deprecated, ignoring it.\n");
-				break;
-		  case 'x':
-#ifdef COOL
-				cooldebug = 1;
-#endif
 				break;
 		  case 'h':
 		  default :

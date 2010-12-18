@@ -243,11 +243,11 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 
 	if(reader->has_rsa && !reader->force_irdeto) // we use rsa from config as camkey
 	{
-		cs_debug("[irdeto-reader] using camkey data from config");
+		cs_debug_mask(D_READER, "[irdeto-reader] using camkey data from config");
 		memcpy(&sc_GetCamKey383C[5], reader->rsa_mod, 0x40);
-		cs_debug("[irdeto-reader]      camkey: %s", cs_hexdump (0, reader->nagra_boxkey, 8));
-		cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[5], 32));
-		cs_debug("[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[37], 32));
+		cs_debug_mask(D_READER, "[irdeto-reader]      camkey: %s", cs_hexdump (0, reader->nagra_boxkey, 8));
+		cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[5], 32));
+		cs_debug_mask(D_READER, "[irdeto-reader] camkey-data: %s", cs_hexdump (0, &sc_GetCamKey383C[37], 32));
 	} else {
 		memcpy(reader->nagra_boxkey, "\x11\x22\x33\x44\x55\x66\x77\x88", 8);
 	}
@@ -294,7 +294,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 		}
 	}
 
-	cs_debug("[irdeto-reader] set camkey for type=%d", camkey);
+	cs_debug_mask(D_READER, "[irdeto-reader] set camkey for type=%d", camkey);
 
 	switch (camkey)
 	{
@@ -508,7 +508,7 @@ static int irdeto_card_info(struct s_reader * reader)
 
   if ((cta_lr>9) && !(cta_res[cta_lr-2]|cta_res[cta_lr-1]))
   {
-    cs_debug("[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6], cta_res[7], cta_res[8], cta_res[9]);
+    cs_debug_mask(D_READER, "[irdeto-reader] max chids: %d, %d, %d, %d", cta_res[6], cta_res[7], cta_res[8], cta_res[9]);
 
     /*
      * Provider 2

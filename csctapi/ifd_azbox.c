@@ -15,14 +15,14 @@ int _GetStatus(struct s_reader *reader, int *in)
 
 int Azbox_Init(struct s_reader *reader)
 {
-  cs_debug("openxcas sc: init");
+  cs_debug_mask(D_DEVICE, "openxcas sc: init");
 
   if ((reader->handle = openxcas_get_smartcard_device(0)) < 0) {
-    cs_debug("openxcas sc: init failed (%d)", reader->handle);
+    cs_debug_mask(D_DEVICE, "openxcas sc: init failed (%d)", reader->handle);
     return FALSE;
   }
 
-  cs_debug("openxcas sc: init succeeded");
+  cs_debug_mask(D_DEVICE, "openxcas sc: init succeeded");
 
   return OK;
 }
@@ -46,7 +46,7 @@ int Azbox_GetStatus(struct s_reader *reader, int *in)
     else
       *in = 1;
 
-    //cs_debug("openxcas sc: get status = %d", *in);
+    //cs_debug_mask(D_DEVICE, "openxcas sc: get status = %d", *in);
   }
 
   return OK;

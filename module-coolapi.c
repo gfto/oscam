@@ -21,23 +21,12 @@
 int cooldebug = 0;
 static bool dmx_opened = false;
 
-#define dprintf(fmt, args...)                           \
-do {                                                    \
-        if (cooldebug) {                                \
-                fprintf(stdout, "#### [%s:%s:%d] " fmt, \
-                                __FILE__, __FUNCTION__, \
-                                __LINE__ , ## args);    \
-		fflush(stdout);				\
-	}						\
-} while (0)
-
 #define check_error(label, ret) \
 { \
         if(ret != 0) { \
-                printf("[%s:%d] %s: API ERROR %d\n",	\
+                cs_log("[%s:%d] %s: API ERROR %d",	\
 		__FUNCTION__, __LINE__ ,		\
 		label, ret);				\
-		fflush(stdout);				\
 	}						\
 }
 
@@ -84,7 +73,7 @@ static dmx_t *find_demux(int fd, int dmx_dev_num)
 	int i, idx;
 
 	if(dmx_dev_num < 0 || dmx_dev_num >= MAX_DEMUX) {
-		printf("Invalid demux %d\n", dmx_dev_num);
+		cs_log("Invalid demux %d", dmx_dev_num);
 		return NULL;
 	}
 	idx = dmx_dev_num;
@@ -93,12 +82,12 @@ static dmx_t *find_demux(int fd, int dmx_dev_num)
 		for(i = 0; i < MAX_FILTER; i++) {
 			if (cdemuxes[idx][i].opened == false) {
 				cdemuxes[idx][i].fd = COOLDEMUX_FD(dmx_dev_num, i);
-				dprintf("opening new fd: %08x\n", cdemuxes[idx][i].fd);
+				cs_debug_mask(D_DVBAPI, "opening new fd: %08x", cdemuxes[idx][i].fd);
 				cdemuxes[idx][i].demux_index = dmx_dev_num;
 				return &cdemuxes[idx][i];
 			}
 		}
-		dprintf("ERROR: no free demux found\n");
+		cs_debug_mask(D_DVBAPI, "ERROR: no free demux found");
 		return NULL;
 	}
 
@@ -108,7 +97,7 @@ static dmx_t *find_demux(int fd, int dmx_dev_num)
 			return &cdemuxes[idx][i];
 	}
 
-	dprintf("ERROR: CANT FIND Demux %x\n", fd);
+	cs_debug_mask(D_DVBAPI, "ERROR: CANT FIND Demux %x", fd);
 
 	return NULL;
 }
@@ -120,7 +109,7 @@ void coolapi_read_data(int fd, int len)
 	dmx_t * dmx =  find_demux(fd, 0);
 
 	if(!dmx) {
-		dprintf("handle is NULL!\n");
+		cs_debug_mask(D_DVBAPI, "handle is NULL!");
 		return;
 	}
 
@@ -137,7 +126,7 @@ static void dmx_callback(void * unk, dmx_t * dmx, int type, void * data)
 	unk = unk;
 
 	if(!dmx) {
-		dprintf("wrong dmx pointer !!!\n");
+		cs_debug_mask(D_DVBAPI, "wrong dmx pointer !!!");
 		return;
 	}
 	if(cdata != NULL) {
@@ -146,7 +135,7 @@ static void dmx_callback(void * unk, dmx_t * dmx, int type, void * data)
 				if(cdata->type == 1) {
 					coolapi_read_data(dmx->fd, cdata->len);
 				} else
-					dprintf("unknown callback data %d len %d\n", cdata->type, cdata->len);
+					cs_debug_mask(D_DVBAPI, "unknown callback data %d len %d", cdata->type, cdata->len);
 				break;
 			default:
 				break;
@@ -163,12 +152,12 @@ int coolapi_set_filter (int fd, int num, int pid, unsigned char * flt, unsigned 
 	dmx_t * dmx =  find_demux(fd, 0);
 
 	if(!dmx) {
-		dprintf("dmx is NULL!\n");
+		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
 		return -1;
 	}
 
 	dmx->filter_num = num;
-	dprintf("fd %08x demux %d channel %x num %d pid %x flt %x mask %x\n", fd, dmx->demux_index, (int) dmx->channel, num, pid, flt[0], mask[0]);
+	cs_debug_mask(D_DVBAPI, "fd %08x demux %d channel %x num %d pid %x flt %x mask %x", fd, dmx->demux_index, (int) dmx->channel, num, pid, flt[0], mask[0]);
 
 	memset(&filter, 0, sizeof(filter));
 
@@ -213,14 +202,14 @@ int coolapi_remove_filter (int fd, int num)
 	int result;
 	dmx_t * dmx = find_demux(fd, 0);
 	if(!dmx) {
-		 dprintf("dmx is NULL!\n");
+		 cs_debug_mask(D_DVBAPI, "dmx is NULL!");
 		 return -1;
 	}
 
 	if(dmx->pid <= 0)
 		return -1;
 
-        dprintf("fd %08x channel %x num %d pid %x opened %s\n", fd, (int) dmx->channel, num, dmx->pid, dmx->opened ? "yes" : "no");
+        cs_debug_mask(D_DVBAPI, "fd %08x channel %x num %d pid %x opened %s", fd, (int) dmx->channel, num, dmx->pid, dmx->opened ? "yes" : "no");
 
 	pthread_mutex_lock(&dmx->mutex);
 	result = cnxt_dmx_channel_ctrl(dmx->channel, 0, 0);
@@ -251,7 +240,7 @@ int coolapi_open_device (int demux_index, int demux_id)
 
 	dmx = find_demux(0, demux_index);
 	if(dmx == 0) {
-		printf("no free demux found\n");
+		cs_log("no free demux found");
 		return 0;
 	}
 
@@ -296,7 +285,7 @@ int coolapi_open_device (int demux_index, int demux_id)
 	pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK_NP);
 	pthread_mutex_init(&dmx->mutex, &attr);
 
-	dprintf("fd %08x demux #%d demux_id %d channel %x\n", dmx->fd, demux_index, demux_id, (int) dmx->channel);
+	cs_debug_mask(D_DVBAPI, "fd %08x demux #%d demux_id %d channel %x", dmx->fd, demux_index, demux_id, (int) dmx->channel);
 	return dmx->fd;
 }
 
@@ -305,10 +294,10 @@ int coolapi_close_device(int fd)
 	int result;
 	dmx_t * dmx = find_demux(fd, 0);
 	if(!dmx) {
-		dprintf("dmx is NULL!\n");
+		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
 		return -1;
 	}
-  	dprintf("fd %08x channel %x pid %x\n", fd, (int) dmx->channel, dmx->pid);
+  	cs_debug_mask(D_DVBAPI, "fd %08x channel %x pid %x", fd, (int) dmx->channel, dmx->pid);
 
 	if(dmx->filter != NULL) {
 		result = cnxt_dmx_channel_detach_filter(dmx->channel, dmx->filter);
@@ -350,7 +339,7 @@ int coolapi_write_cw(int mask, unsigned short *STREAMpids, int count, ca_descr_t
         int result;
         void * channel;
 
-	dprintf("cw%d: mask %d index %d pid count %d\n", ca_descr->parity, mask, index, count);
+	cs_debug_mask(D_DVBAPI, "cw%d: mask %d index %d pid count %d", ca_descr->parity, mask, index, count);
 	for(i = 0; i < count; i++) {
 		int pid = STREAMpids[i]; 
 		int j;
@@ -359,11 +348,11 @@ int coolapi_write_cw(int mask, unsigned short *STREAMpids, int count, ca_descr_t
 			{
 				result = cnxt_dmx_get_channel_from_pid(dmx_device[j], pid, &channel);
 				if(result == 0) {
-					dprintf("Found demux %d channel %x for pid %x\n", j, (int) channel, pid);
+					cs_debug_mask(D_DVBAPI, "Found demux %d channel %x for pid %x", j, (int) channel, pid);
 					result = cnxt_dmx_set_channel_key(channel, 0, ca_descr->parity, ca_descr->cw, 8);
 					check_error ("cnxt_dmx_set_channel_key", result);
 					if(result != 0) {
-						printf("set_channel_key failed for demux %d pid 0x%x\n", j, pid);
+						cs_log("set_channel_key failed for demux %d pid 0x%x", j, pid);
 					}
 				}
 			}
@@ -380,10 +369,10 @@ int coolapi_read(int fd, unsigned char * buffer, unsigned int len)
 
 	dmx_t * dmx = find_demux(fd, 0);
 	if(!dmx) {
-		dprintf("dmx is NULL!\n");
+		cs_debug_mask(D_DVBAPI, "dmx is NULL!");
 		return 0;
 	}
-	dprintf("dmx channel %x pid %x len %d\n",  (int) dmx->channel, dmx->pid, len);
+	cs_debug_mask(D_DVBAPI, "dmx channel %x pid %x len %d",  (int) dmx->channel, dmx->pid, len);
 
 	result = cnxt_cbuf_read_data(dmx->buffer2, buff, 3, &done);
 	check_error ("cnxt_cbuf_read_data", result);
@@ -400,7 +389,7 @@ int coolapi_read(int fd, unsigned char * buffer, unsigned int len)
 		return 0;
 	done += 3;
 
-	dprintf ("bytes read %d\n", done);
+	cs_debug_mask(D_DVBAPI, "bytes read %d\n", done);
 	return done;
 }
 
@@ -412,7 +401,7 @@ void coolapi_open()
         if(!dmx_opened) { 
                 int i;
 
-		printf("Open coolstream dmx api\n");
+		cs_log("Open coolstream dmx api");
 
                 cnxt_kal_initialize();
                 cnxt_drv_init();
@@ -437,7 +426,6 @@ void coolapi_close_all()
 {
 	int result;
 	int i, j;
-	dprintf("\n");
 
 	if(!dmx_opened)
 		return;
@@ -455,10 +443,7 @@ void coolapi_close_all()
 		check_error ("cnxt_dmx_close", result);
 		dmx_device[i] = NULL;
 	}
-	dprintf("\n");
 	cnxt_kal_terminate();
-	dprintf("\n");
 	cnxt_drv_term();
-	dprintf("\n");
 }
 #endif

@@ -31,7 +31,7 @@ static int reader_device_type(struct s_reader * reader)
               case 0: rc=R_DB2COM1; break;
               case 1: rc=R_DB2COM2; break;
             }
-          cs_debug("device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, rc);
+          cs_debug_mask(D_READER, "device is major: %d, minor: %d, typ=%d", dev_major, dev_minor, rc);
         }
       }
   }
@@ -62,7 +62,7 @@ int reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int l, ucha
 #endif
 
 	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary 
-	cs_ddump(buf, l, "write to cardreader %s:",reader->label);
+	cs_ddump_mask(D_READER, buf, l, "write to cardreader %s:",reader->label);
 	rc=ICC_Async_CardWrite(reader, (uchar *)buf, (unsigned short)l, cta_res, p_cta_lr);
 	return rc;
 }
@@ -87,7 +87,7 @@ int check_sct_len(const uchar *data, int off)
 {
 	int l = SCT_LEN(data);
 	if (l+off > MAX_LEN) {
-		cs_debug("check_sct_len(): smartcard section too long %d > %d", l, MAX_LEN-off);
+		cs_debug_mask(D_READER, "check_sct_len(): smartcard section too long %d > %d", l, MAX_LEN-off);
 		l = -1;
 	}
 	return(l);
@@ -106,13 +106,10 @@ static int reader_card_inserted(struct s_reader * reader)
 	}
 #endif
 	int card;
-	int cs_ptyp_orig=cur_client()->cs_ptyp;
-	cur_client()->cs_ptyp=D_IFD;
 	if (ICC_Async_GetStatus (reader, &card)) {
 		cs_log("Error getting status of terminal.");
 		return 0; //corresponds with no card inside!!
 	}
-	cur_client()->cs_ptyp=cs_ptyp_orig;
 	return (card);
 }
 
@@ -271,8 +268,6 @@ int reader_device_init(struct s_reader * reader)
 #endif
  
 	int rc = -1; //FIXME
-	int cs_ptyp_orig=cur_client()->cs_ptyp;
-	cur_client()->cs_ptyp=D_DEVICE;
 #if defined(TUXBOX) && defined(PPC)
 	struct stat st;
 	if (!stat(DEV_MULTICAM, &st))
@@ -282,8 +277,7 @@ int reader_device_init(struct s_reader * reader)
 		cs_log("Cannot open device: %s", reader->device);
 	else
 		rc = OK;
-  cs_debug("ct_init on %s: %d", reader->device, rc);
-  cur_client()->cs_ptyp=cs_ptyp_orig;
+  cs_debug_mask(D_READER, "ct_init on %s: %d", reader->device, rc);
   return((rc!=OK) ? 2 : 0);
 }
 
@@ -358,7 +352,7 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs from calling reader!
 {
-	cs_debug_mask(D_EMM,"Entered reader_get_emm_type cardsystem %i",rdr->card_system);
+	cs_debug_mask(D_EMM, "Entered reader_get_emm_type cardsystem %i",rdr->card_system);
 	int rc;
 
 	if (rdr->card_system<1)

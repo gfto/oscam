@@ -183,11 +183,11 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
     // check that TA1, if pn==1 , has a valid value for FI
     if ( (atr->pn==1) && (atr->ib[pn][ATR_INTERFACE_BYTE_TA].present == TRUE)) {
         uchar FI;
-        cs_debug("TA1 = %02x",atr->ib[pn][ATR_INTERFACE_BYTE_TA].value);
+        cs_debug_mask(D_ATR, "TA1 = %02x",atr->ib[pn][ATR_INTERFACE_BYTE_TA].value);
         FI=(atr->ib[pn][ATR_INTERFACE_BYTE_TA].value & 0xF0)>>4;
-        cs_debug("FI = %02x",FI);
+        cs_debug_mask(D_ATR, "FI = %02x",FI);
         if(atr_fs_table[FI]==0) {
-            cs_debug("Invalid ATR as FI is not returning a valid frequency value");
+            cs_debug_mask(D_ATR, "Invalid ATR as FI is not returning a valid frequency value");
             return (ATR_MALFORMED);
         }
     }
@@ -195,7 +195,7 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
     // check that TB1 < 0x80
     if ( (atr->pn==1) && (atr->ib[pn][ATR_INTERFACE_BYTE_TB].present == TRUE)) {
         if(atr->ib[pn][ATR_INTERFACE_BYTE_TB].value > 0x80) {
-            cs_debug("Invalid ATR as TB1 has an invalid value");
+            cs_debug_mask(D_ATR, "Invalid ATR as TB1 has an invalid value");
             return (ATR_MALFORMED);
         }
     }

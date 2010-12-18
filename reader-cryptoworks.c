@@ -42,14 +42,14 @@ static int Output(unsigned char *out, int n, BIGNUM *r, int LE)
   if (s>n)
   {
     unsigned char buff[s];
-    cs_debug("[cryptoworks-reader] rsa: RSA len %d > %d, truncating", s, n);
+    cs_debug_mask(D_READER, "[cryptoworks-reader] rsa: RSA len %d > %d, truncating", s, n);
     BN_bn2bin(r,buff);
     memcpy(out,buff+s-n,n);
   }
   else if (s<n)
   {
     int l=n-s;
-    cs_debug("[cryptoworks-reader] rsa: RSA len %d < %d, padding", s, n);
+    cs_debug_mask(D_READER, "[cryptoworks-reader] rsa: RSA len %d < %d, padding", s, n);
     memset(out,0,l);
     BN_bn2bin(r,out+l);
   }
@@ -224,7 +224,7 @@ static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
       {
         cta_res[2]|=0x80;
         BN_bin2bn(cta_res+2, 0x40, &reader->ucpk);
-        cs_ddump(cta_res+2, 0x40, "IPK available -> session-key:");
+        cs_ddump_mask(D_READER, cta_res+2, 0x40, "IPK available -> session-key:");
       }
       else
       {
@@ -232,7 +232,7 @@ static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
         if (reader->ucpk_valid)
         {
           BN_bin2bn(keybuf, 0x40, &reader->ucpk);
-          cs_ddump(keybuf, 0x40, "session-key found:");
+          cs_ddump_mask(D_READER, keybuf, 0x40, "session-key found:");
         }
         else
           cs_log("[cryptoworks-reader] invalid IPK or session-key for CAID %04X !", reader->caid[0]);
@@ -304,16 +304,16 @@ static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         switch(cta_res[i])
 	{
           case 0x80:
-            cs_debug("[cryptoworks-reader] nano 80 (serial)");
+            cs_debug_mask(D_READER, "[cryptoworks-reader] nano 80 (serial)");
             break;
           case 0xD4:
-            cs_debug("[cryptoworks-reader] nano D4 (rand)");
+            cs_debug_mask(D_READER, "[cryptoworks-reader] nano D4 (rand)");
             if(n<8 || memcmp(&cta_res[i],nanoD4,sizeof(nanoD4))){
-              cs_debug("[cryptoworks-reader] random data check failed after decrypt");
+              cs_debug_mask(D_READER, "[cryptoworks-reader] random data check failed after decrypt");
             }
             break;
           case 0xDB: // CW
-            cs_debug("[cryptoworks-reader] nano DB (cw)");
+            cs_debug_mask(D_READER, "[cryptoworks-reader] nano DB (cw)");
             if(n==0x10)
             {
               memcpy(er->cw, &cta_res[i+2], 16);
@@ -321,7 +321,7 @@ static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             }
             break;
           case 0xDF: // signature
-            cs_debug("[cryptoworks-reader] nano DF %02x (sig)", n);
+            cs_debug_mask(D_READER, "[cryptoworks-reader] nano DF %02x (sig)", n);
             if (n==0x08)
             {
               if((cta_res[i+2]&0x50)==0x50 && !(cta_res[i+3]&0x01) && (cta_res[i+5]&0x80))
@@ -332,7 +332,7 @@ static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
               if(reader->ucpk_valid)
               {
                 cw_RSA(&cta_res[i+2],&cta_res[i+2], n, &reader->exp, &reader->ucpk, 0);
-                cs_debug("[cryptoworks-reader] after camcrypt ");
+                cs_debug_mask(D_READER, "[cryptoworks-reader] after camcrypt ");
                 r=0; secLen=n-4; n=4;
               }
               else
@@ -343,7 +343,7 @@ static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             }
             break;
           default:
-            cs_debug("[cryptoworks-reader] nano %02x (unhandled)",cta_res[i]);
+            cs_debug_mask(D_READER, "[cryptoworks-reader] nano %02x (unhandled)",cta_res[i]);
             break;
         }
         i+=n+2;
@@ -651,7 +651,7 @@ static void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int
             int l=src[j+1]+2;
             if(src[j]==c) {
                 if(w+l>len) {
-                    cs_debug("sortnanos: sanity check failed. Exceeding memory area. Probably corrupted nanos!");
+                    cs_debug_mask(D_READER, "sortnanos: sanity check failed. Exceeding memory area. Probably corrupted nanos!");
                     memset(dest,0,len); // zero out everything
                     return;
                 }
@@ -682,18 +682,18 @@ int cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
 	
 	switch (buffer[0]) {
 		case 0x82 : // emm-u
-			cs_debug("cryptoworks unique emm (EMM-U): %s" , cs_hexdump(1, buffer, *len));
+			cs_debug_mask(D_READER, "cryptoworks unique emm (EMM-U): %s" , cs_hexdump(1, buffer, *len));
 			break;
 
 		case 0x84: // emm-sh
-			cs_debug("cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(1, buffer, *len));
+			cs_debug_mask(D_READER, "cryptoworks shared emm (EMM-SH): %s" , cs_hexdump(1, buffer, *len));
 			if (!memcmp(emm_global, buffer, *len)) return 0;
 			memcpy(emm_global, buffer, *len);
 			emm_global_len=*len;
 			return 0;
 
 		case 0x86: // emm-sb
-			cs_debug("cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, *len));
+			cs_debug_mask(D_READER, "cryptoworks shared emm (EMM-SB): %s" , cs_hexdump(1, buffer, *len));
 			if (!emm_global_len) return 0;
 
 			// we keep the first 12 bytes of the 0x84 emm (EMM-SH)
@@ -725,17 +725,17 @@ int cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
 
 			emm_global_len=0;
 
-			cs_debug("cryptoworks shared emm (assembled): %s" , cs_hexdump(1, buffer, emm_len+12));
+			cs_debug_mask(D_READER, "cryptoworks shared emm (assembled): %s" , cs_hexdump(1, buffer, emm_len+12));
 			if(assembled_EMM[11]!=emm_len) { // sanity check
 				// error in emm assembly
-				cs_debug("Error assembling Cryptoworks EMM-S");
+				cs_debug_mask(D_READER, "Error assembling Cryptoworks EMM-S");
 				return 0;
 			}
 			break;
 				
 		case 0x88: // emm-g
 		case 0x89: // emm-g
-			cs_debug("cryptoworks global emm (EMM-G): %s" , cs_hexdump(1, buffer, *len));
+			cs_debug_mask(D_READER, "cryptoworks global emm (EMM-G): %s" , cs_hexdump(1, buffer, *len));
 			break;
 	}
 	return 1;

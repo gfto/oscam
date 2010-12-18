@@ -222,21 +222,6 @@ void cs_close_log(void)
 	fp=(FILE *)0;
 }
 #ifdef WITH_DEBUG
-void cs_debug(const char *fmt,...)
-{
-	//  cs_log("cs_debug called, cs_ptyp=%d, cs_dblevel=%d, %d", cs_ptyp, cs_dblevel ,cur_client()->cs_ptyp & cs_dblevel);
-	char log_txt[512];
-	if (cs_dblevel & cur_client()->cs_ptyp)
-	{
-		get_log_header(1, log_txt);
-		va_list params;
-		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
-		va_end(params);
-		write_to_log(-1, log_txt);
-	}
-}
-
 void cs_debug_mask(unsigned short mask, const char *fmt,...)
 {
 	char log_txt[512];
@@ -275,40 +260,11 @@ void cs_dump(const uchar *buf, int n, char *fmt, ...)
 	}
 }
 #ifdef WITH_DEBUG
-void cs_ddump(const uchar *buf, int n, char *fmt, ...)
-{
-	char log_txt[512];
-	int i;
-
-	//if (((cs_ptyp & cs_dblevel)==cs_ptyp) && (fmt))
-	if ((cur_client()->cs_ptyp & cs_dblevel) && (fmt))
-	{
-		get_log_header(1, log_txt);
-		va_list params;
-		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
-		va_end(params);
-		write_to_log(-1, log_txt);
-		//printf("LOG: %s\n", txt); fflush(stdout);
-	}
-	//if (((cur_client()->cs_ptyp | D_DUMP) & cs_dblevel)==(cs_ptyp | D_DUMP))
-	if (cur_client()->cs_ptyp & cs_dblevel)
-	{
-		for (i=0; i<n; i+=16)
-		{
-			get_log_header(0, log_txt);
-			sprintf(log_txt+11, "%s", cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i));
-			write_to_log(-1, log_txt);
-		}
-	}
-}
-
 void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 {
 
 	char log_txt[512];
 	int i;
-	//if (((cs_ptyp & cs_dblevel)==cs_ptyp) && (fmt))
 	if ((mask & cs_dblevel) && (fmt))
 	{
 		get_log_header(1, log_txt);
@@ -319,7 +275,6 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 		write_to_log(-1, log_txt);
 		//printf("LOG: %s\n", txt); fflush(stdout);
 	}
-	//if (((cs_ptyp | D_DUMP) & cs_dblevel)==(cs_ptyp | D_DUMP))
 	if (mask & cs_dblevel)
 	{
 		for (i=0; i<n; i+=16)

@@ -114,11 +114,11 @@ int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
         for( i=0; (!rc) && i<ptab->ports[pi].ftab.filts[j].nprids; i++ )
         {
           sprid=ptab->ports[pi].ftab.filts[j].prids[i];
-          cs_debug("trying server filter %04X:%06X", scaid, sprid);
+          cs_debug_mask(D_CLIENT, "trying server filter %04X:%06X", scaid, sprid);
           if (prid==sprid)
           {
             rc=1;
-            cs_debug("%04X:%06X allowed by server filter %04X:%06X",
+            cs_debug_mask(D_CLIENT, "%04X:%06X allowed by server filter %04X:%06X",
                      caid, prid, scaid, sprid);
           }
         }
@@ -126,7 +126,7 @@ int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
     }
     if(!rc)
     {
-      cs_debug("no match, %04X:%06X rejected by server filters", caid, prid);
+      cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by server filters", caid, prid);
       snprintf( er->msglog, MSGLOGSIZE, "no server match %04X:%06X",
         caid, (unsigned int) prid );
 
@@ -149,11 +149,11 @@ static int chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D_USE
     if( er->caid == fchid->filts[i].caid )
       for( j=0; (!rc) && j<fchid->filts[i].nprids; j++ )
       {
-        cs_debug("trying %s '%s' CHID filter %04X:%04X", 
+        cs_debug_mask(D_CLIENT, "trying %s '%s' CHID filter %04X:%04X", 
                  type, name, fchid->filts[i].caid, fchid->filts[i].prids[j]);
         if( er->chid == fchid->filts[i].prids[j] )
         {
-          cs_debug("%04X:%04X allowed by %s '%s' CHID filter %04X:%04X",
+          cs_debug_mask(D_CLIENT, "%04X:%04X allowed by %s '%s' CHID filter %04X:%04X",
                    er->caid, er->chid, type, name, fchid->filts[i].caid, 
                    fchid->filts[i].prids[j]);
           rc=1;
@@ -162,7 +162,7 @@ static int chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D_USE
 
   if( !rc )
   {
-    cs_debug("no match, %04X:%04X rejected by %s '%s' CHID filter(s)", 
+    cs_debug_mask(D_CLIENT, "no match, %04X:%04X rejected by %s '%s' CHID filter(s)", 
                       er->caid, er->chid, type, name);
   }
   return (rc);
@@ -186,19 +186,19 @@ int chk_ufilters(ECM_REQUEST *er)
         for( j=rc=0; (!rc) && (j<f->filts[i].nprids); j++ )
         {
           uprid = f->filts[i].prids[j];
-          cs_debug("trying user '%s' filter %04X:%06X",
+          cs_debug_mask(D_CLIENT, "trying user '%s' filter %04X:%06X",
                    cur_client()->usr, ucaid, uprid);
           if( er->prid == uprid )
           {
             rc=1;
-            cs_debug("%04X:%06X allowed by user '%s' filter %04X:%06X",
+            cs_debug_mask(D_CLIENT, "%04X:%06X allowed by user '%s' filter %04X:%06X",
                       er->caid, er->prid, cur_client()->usr, ucaid, uprid);
           }
         }
       }
     }
     if( !rc ) {
-      cs_debug("no match, %04X:%06X rejected by user '%s' filters",
+      cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by user '%s' filters",
                 er->caid, er->prid, cur_client()->usr);
         snprintf( er->msglog, MSGLOGSIZE, "no card support %04X:%06X",
                 er->caid, (unsigned int) er->prid );
@@ -227,7 +227,7 @@ int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
 
   if( reader->ncd_disable_server_filt )
   { 
-    cs_debug("%04X:%06X allowed - server filters disabled",
+    cs_debug_mask(D_CLIENT, "%04X:%06X allowed - server filters disabled",
               er->caid, er->prid);
     return 1;
   }
@@ -241,18 +241,18 @@ int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
       prid = (ulong)((reader->prid[i][0]<<16) |
                      (reader->prid[i][1]<<8) |
                      (reader->prid[i][2]));
-      cs_debug("trying server '%s' filter %04X:%06X", 
+      cs_debug_mask(D_CLIENT, "trying server '%s' filter %04X:%06X", 
                 reader->device, caid, prid);
       if( prid==er->prid )
       {
         rc=1;
-        cs_debug("%04X:%06X allowed by server '%s' filter %04X:%06X",
+        cs_debug_mask(D_CLIENT, "%04X:%06X allowed by server '%s' filter %04X:%06X",
                   er->caid, er->prid, reader->device, caid, prid);
       }
     }
   }
   if(!rc) {
-    cs_debug("no match, %04X:%06X rejected by server '%s' filters",
+    cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by server '%s' filters",
             er->caid, er->prid, reader->device);
     if( !er->rcEx ) er->rcEx=(E1_SERVER<<4)|E2_IDENT;
     return 0;
@@ -277,19 +277,19 @@ int chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
         for( j=0; (!rc) && (j<rdr->ftab.filts[i].nprids); j++)
         {
           prid = rdr->ftab.filts[i].prids[j];
-          cs_debug("trying reader '%s' filter %04X:%06X",
+          cs_debug_mask(D_CLIENT, "trying reader '%s' filter %04X:%06X",
                     rdr->label, caid, prid);
           if( prid==er->prid )
           {
             rc=1;
-            cs_debug("%04X:%06X allowed by reader '%s' filter %04X:%06X",
+            cs_debug_mask(D_CLIENT, "%04X:%06X allowed by reader '%s' filter %04X:%06X",
                     er->caid, er->prid, rdr->label, caid, prid);
           }
         }
       }
     }
     if(!rc) {
-      cs_debug("no match, %04X:%06X rejected by reader '%s' filters",
+      cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by reader '%s' filters",
                 er->caid, er->prid, rdr->label);
       return 0;
     }

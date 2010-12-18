@@ -95,7 +95,7 @@ static bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int * dtr, int * r
   {
     if (dtr)		// DTR
     {
-      cs_debug("IO: multicam.o DTR:%s\n", *dtr ? "set" : "clear"); fflush(stdout);
+      cs_debug_mask(D_DEVICE, "IO: multicam.o DTR:%s\n", *dtr ? "set" : "clear"); fflush(stdout);
       if (dtr_bits[mcport])
       {
         if (*dtr)
@@ -109,7 +109,7 @@ static bool IO_Serial_DTR_RTS_dbox2(struct s_reader * reader, int * dtr, int * r
     }
     if (rts)		// RTS
     {
-      cs_debug("IO: multicam.o RTS:%s\n", *rts ? "set" : "clear"); fflush(stdout);
+      cs_debug_mask(D_DEVICE, "IO: multicam.o RTS:%s\n", *rts ? "set" : "clear"); fflush(stdout);
       if (*rts)
         msr&=(unsigned short)(~rts_bits[mcport]);
       else
@@ -149,7 +149,7 @@ bool IO_Serial_DTR_RTS(struct s_reader * reader, int * dtr, int * rts)
     if (ioctl(reader->handle, TIOCMSET, &msr)<0)
       return ERROR;
 #endif
-    cs_debug("IO: Setting %s=%i","DTR", *dtr);
+    cs_debug_mask(D_DEVICE, "IO: Setting %s=%i", "DTR", *dtr);
   }  
 
   if(rts)
@@ -168,7 +168,7 @@ bool IO_Serial_DTR_RTS(struct s_reader * reader, int * dtr, int * rts)
     if (ioctl(reader->handle, TIOCMSET, &msr)<0)
       return ERROR;
 #endif
-    cs_debug("IO: Setting %s=%i","RTS", *rts);
+    cs_debug_mask(D_DEVICE, "IO: Setting %s=%i", "RTS", *rts);
   }  
 
 	return OK;
@@ -195,7 +195,7 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, unsigned long bitrate, stru
   { //no overclocking
     cfsetospeed(tio, IO_Serial_Bitrate(bitrate));
     cfsetispeed(tio, IO_Serial_Bitrate(bitrate));
-    cs_debug("standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %lu", reader->cardmhz, reader->mhz, bitrate);
+    cs_debug_mask(D_DEVICE, "standard baudrate: cardmhz=%d mhz=%d -> effective baudrate %lu", reader->cardmhz, reader->mhz, bitrate);
   }
 #ifdef OS_LINUX
   else
@@ -206,7 +206,7 @@ bool IO_Serial_SetBitrate (struct s_reader * reader, unsigned long bitrate, stru
     int custom_baud_asked = bitrate * reader->mhz / reader->cardmhz;
     nuts.custom_divisor = (nuts.baud_base + (custom_baud_asked/2))/ custom_baud_asked;
 		int custom_baud_delivered =  nuts.baud_base / nuts.custom_divisor;
-    cs_debug("custom baudrate: cardmhz=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
+    cs_debug_mask(D_DEVICE, "custom baudrate: cardmhz=%d mhz=%d custom_baud=%d baud_base=%d divisor=%d -> effective baudrate %d", 
 	                      reader->cardmhz, reader->mhz, custom_baud_asked, nuts.baud_base, nuts.custom_divisor, custom_baud_delivered);
 		int baud_diff = custom_baud_delivered - custom_baud_asked;
 		if (baud_diff < 0)
@@ -332,7 +332,7 @@ bool IO_Serial_SetProperties (struct s_reader * reader, struct termios newtio)
 	else
 		cs_log("WARNING: Failed to reset reader %s", reader->label);
 
-	cs_debug("IO: Setting properties\n");
+	cs_debug_mask(D_DEVICE, "IO: Setting properties\n");
 	return OK;
 }
 
@@ -362,7 +362,7 @@ int IO_Serial_SetParity (struct s_reader * reader, BYTE parity)
 		current_parity = PARITY_NONE;
 	}
 
-	cs_debug ("IFD: Setting parity from %s to %s\n",
+	cs_debug_mask(D_IFD, "IFD: Setting parity from %s to %s\n",
 		current_parity == PARITY_ODD ? "Odd" :
 		current_parity == PARITY_NONE ? "None" :
 		current_parity == PARITY_EVEN ? "Even" : "Invalid",
@@ -445,7 +445,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
  			gettimeofday(&tv_spent,0);
 		}
 		if(!readed) {
-			cs_ddump(data, count, "IO: Receiving:");
+			cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
 			return ERROR;
 		}
 #else
@@ -453,7 +453,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 		{
 			if (read (reader->handle, &c, 1) != 1)
 			{
-				cs_ddump(data, count, "IO: Receiving:");
+				cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
 				cs_log("ERROR in IO_Serial_Read errno=%d", errno);
 				//tcflush (reader->handle, TCIFLUSH);
 				return ERROR;
@@ -461,15 +461,15 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 		}
 		else
 		{
-			cs_ddump(data, count, "IO: Receiving:");
-			cs_debug("TIMEOUT in IO_Serial_Read");
+			cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
+			cs_debug_mask(D_DEVICE, "TIMEOUT in IO_Serial_Read");
 			//tcflush (reader->handle, TCIFLUSH);
 			return ERROR;
 		}
 #endif
 		data[count] = c;
 	}
-	cs_ddump(data, count, "IO: Receiving:");
+	cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
 	return OK;
 }
 
@@ -505,7 +505,7 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 			if(reader->typ != R_INTERNAL)
 				reader->written += to_send;
 			
-			cs_ddump (data_w+count, to_send, "IO: Sending: ");
+			cs_ddump_mask(D_DEVICE, data_w+count, to_send, "IO: Sending: ");
 		}
 		else
 		{
@@ -520,7 +520,7 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 bool IO_Serial_Close (struct s_reader * reader)
 {
 	
-	cs_debug ("IO: Closing serial port %s\n", reader->device);
+	cs_debug_mask(D_DEVICE, "IO: Closing serial port %s\n", reader->device);
 	
 #if defined(TUXBOX) && defined(PPC)
 	close(reader->fdmc);
@@ -652,7 +652,7 @@ static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, u
 				return ERROR;
 		}
 		if (select_ret==0) {
-			cs_debug("TIMEOUT in IO_Serial_WaitToRead");
+			cs_debug_mask(D_DEVICE, "TIMEOUT in IO_Serial_WaitToRead");
 			return ERROR;
 		}
 		break;

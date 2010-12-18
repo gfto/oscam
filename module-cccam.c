@@ -322,7 +322,7 @@ void free_current_cards(LLIST *current_cards) {
  * clears and frees values for reinit
  */
 void cc_cli_close(struct s_client *cl, int call_conclose) {
-	cs_debug_mask(D_FUT, "cc_cli_close in");
+	cs_debug_mask(D_CLIENT, "cc_cli_close in");
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	if (!rdr || !cc)
@@ -346,7 +346,7 @@ void cc_cli_close(struct s_client *cl, int call_conclose) {
 
 	cc->just_logged_in = 0;
 	free_current_cards(cc->current_cards);
-	cs_debug_mask(D_FUT, "cc_cli_close out");
+	cs_debug_mask(D_CLIENT, "cc_cli_close out");
 }
 
 struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl,
@@ -499,7 +499,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 	}
 
 	cc_crypt(&cc->block[DECRYPT], netbuf, 4, DECRYPT);
-	//cs_ddump(netbuf, 4, "cccam: decrypted header:");
+	//cs_ddump_mask(D_CLIENT, netbuf, 4, "cccam: decrypted header:");
 
 	cc->g_flag = netbuf[0];
 
@@ -527,7 +527,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 		len += 4;
 	}
 
-	cs_ddump(netbuf, len, "cccam: full decrypted msg, len=%d:", len);
+	cs_ddump_mask(D_CLIENT, netbuf, len, "cccam: full decrypted msg, len=%d:", len);
 
 	memcpy(buf, netbuf, len);
 	return len;
@@ -562,7 +562,7 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 		len += 4;
 	}
 
-	cs_ddump(netbuf, len, "cccam: send:");
+	cs_ddump_mask(D_CLIENT, netbuf, len, "cccam: send:");
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(cl->udp_fd, netbuf, len, 0);
@@ -590,7 +590,7 @@ void cc_check_version(char *cc_version, char *cc_build) {
 	for (i = 0; strlen(version[i]); i++) {
 		if (!memcmp(cc_version, version[i], strlen(version[i]))) {
 			memcpy(cc_build, build[i], strlen(build[i]) + 1);
-			cs_debug("cccam: auto build set for version: %s build: %s",
+			cs_debug_mask(D_CLIENT, "cccam: auto build set for version: %s build: %s",
 					cc_version, cc_build);
 			return;
 		}
@@ -600,7 +600,7 @@ void cc_check_version(char *cc_version, char *cc_build) {
 	memcpy(cc_build, build[CC_DEFAULT_VERSION], strlen(
 			build[CC_DEFAULT_VERSION]));
 
-	cs_debug("cccam: auto version set: %s build: %s", cc_version, cc_build);
+	cs_debug_mask(D_CLIENT, "cccam: auto version set: %s build: %s", cc_version, cc_build);
 }
 
 /**
@@ -613,7 +613,7 @@ int cc_send_cli_data(struct s_client *cl) {
 	int i;
 	struct cc_data *cc = cl->cc;
 
-	cs_debug("cccam: send client data");
+	cs_debug_mask(D_CLIENT, "cccam: send client data");
 
 	memcpy(cc->node_id, cc_node_id, sizeof(cc_node_id));
 
@@ -641,7 +641,7 @@ int cc_send_cli_data(struct s_client *cl) {
 int cc_send_srv_data(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
 
-	cs_debug("cccam: send server data");
+	cs_debug_mask(D_CLIENT, "cccam: send server data");
 
 	memcpy(cc->node_id, cc_node_id, sizeof(cc_node_id));
 
@@ -1011,7 +1011,7 @@ int same_card(struct cc_card *card1, struct cc_card *card2) {
  * sends a ecm request to the connected CCCam Server
  */
 int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
-	cs_debug_mask(D_FUT, "cc_send_ecm in");
+	cs_debug_mask(D_CLIENT, "cc_send_ecm in");
 	struct s_reader *rdr = cl->reader;
 
 	//cs_debug_mask(D_TRACE, "%s cc_send_ecm", getprefix());
@@ -1036,7 +1036,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			write_ecm_answer(rdr, er);
 		}
 		//cc_cli_close(cl);
-		cs_debug_mask(D_FUT, "cc_send_ecm out");
+		cs_debug_mask(D_CLIENT, "cc_send_ecm out");
 		return 0;
 	}
 
@@ -1076,11 +1076,11 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 						getprefix(), tt / 1000);
 				//cc_cycle_connection();
 				cc_cli_close(cl, TRUE);
-				cs_debug_mask(D_FUT, "cc_send_ecm out");
+				cs_debug_mask(D_CLIENT, "cc_send_ecm out");
 				return 0;
 			}
 		}
-		cs_debug("cccam: ecm trylock: got lock");
+		cs_debug_mask(D_CLIENT, "cccam: ecm trylock: got lock");
 	}
 	cc->ecm_time = cur_time;
 	rdr->available = cc->extended_mode;
@@ -1091,15 +1091,15 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			rdr->available = 1;
 			pthread_mutex_unlock(&cc->ecm_busy);
 		}
-		cs_debug("%s no ecm pending!", getprefix());
+		cs_debug_mask(D_CLIENT, "%s no ecm pending!", getprefix());
 		if (!cc_send_pending_emms(cl))
 			send_cmd05_answer(cl);
-		cs_debug_mask(D_FUT, "cc_send_ecm out");
+		cs_debug_mask(D_CLIENT, "cc_send_ecm out");
 		return 0; // no queued ecms
 	}
 	cur_er = &cl->ecmtask[n];
 	cur_er->rc = 101; //mark ECM as already send
-	cs_debug("cccam: ecm-task %d", cur_er->idx);
+	cs_debug_mask(D_CLIENT, "cccam: ecm-task %d", cur_er->idx);
 
 	if (buf)
 		memcpy(buf, cur_er->ecm, cur_er->l);
@@ -1214,7 +1214,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		//For EMM
 		set_au_data(cl, rdr, card, cur_er);
 		pthread_mutex_unlock(&cc->cards_busy);
-		cs_debug_mask(D_FUT, "cc_send_ecm out");
+		cs_debug_mask(D_CLIENT, "cc_send_ecm out");
 		return 0;
 	} else {
 		//When connecting, it could happen than ecm requests come before all cards are received.
@@ -1252,7 +1252,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		rdr->available = 1;
 		pthread_mutex_unlock(&cc->ecm_busy);
 	}
-	cs_debug_mask(D_FUT, "cc_send_ecm out");
+	cs_debug_mask(D_CLIENT, "cc_send_ecm out");
 	return -1;
 }
 
@@ -1284,7 +1284,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
  */
 
 int cc_send_pending_emms(struct s_client *cl) {
-	cs_debug_mask(D_FUT, "cc_send_pending_emms in");
+	cs_debug_mask(D_CLIENT, "cc_send_pending_emms in");
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 
@@ -1313,7 +1313,7 @@ int cc_send_pending_emms(struct s_client *cl) {
 	}
 	ll_iter_release(it);
 
-	cs_debug_mask(D_FUT, "cc_send_pending_emms out");
+	cs_debug_mask(D_CLIENT, "cc_send_pending_emms out");
 	return size;
 }
 
@@ -1340,7 +1340,7 @@ struct cc_card *get_card_by_hexserial(struct s_client *cl, uint8 *hexserial,
  * ProcessEmm
  * */
 int cc_send_emm(EMM_PACKET *ep) {
-	cs_debug_mask(D_FUT, "cc_send_emm in");
+	cs_debug_mask(D_CLIENT, "cc_send_emm in");
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
 
@@ -1417,7 +1417,7 @@ int cc_send_emm(EMM_PACKET *ep) {
 #ifdef WEBIF
 	rdr->emmwritten[ep->type]++;
 #endif	
-	cs_debug_mask(D_FUT, "cc_send_emm out");
+	cs_debug_mask(D_CLIENT, "cc_send_emm out");
 	return 1;
 }
 
@@ -1521,7 +1521,7 @@ void cc_free(struct s_client *cl) {
 	if (!cc)
 		return;
 
-	cs_debug_mask(D_FUT, "cc_free in");
+	cs_debug_mask(D_CLIENT, "cc_free in");
 	cc_free_cardlist(cc->cards, TRUE);
 	cc_free_reported_carddata(cl, cc->reported_carddatas, NULL, FALSE);
 	ll_destroy_data(cc->pending_emms);
@@ -1535,7 +1535,7 @@ void cc_free(struct s_client *cl) {
 	free(cc->prefix);
 	free(cc);
 	cl->cc=NULL;
-	cs_debug_mask(D_FUT, "cc_free out");
+	cs_debug_mask(D_CLIENT, "cc_free out");
 }
 
 int is_null_dcw(uint8 *dcw) {
@@ -1593,7 +1593,7 @@ int check_extended_mode(struct s_client *cl, char *msg) {
 }
 
 void cc_idle() {
-	cs_debug_mask(D_FUT, "cc_idle in");
+	cs_debug_mask(D_CLIENT, "cc_idle in");
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
@@ -1603,7 +1603,7 @@ void cc_idle() {
 	if (rdr->cc_keepalive) {
 		if (cc->answer_on_keepalive + 55 <= time(NULL)) {
 			cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
-			cs_debug("cccam: keepalive");
+			cs_debug_mask(D_CLIENT, "cccam: keepalive");
 			cc->answer_on_keepalive = time(NULL);
 		}
 	}
@@ -1613,7 +1613,7 @@ void cc_idle() {
 		if (rto >= (rdr->tcp_rto*60))
 			network_tcp_connection_close(cl, cl->udp_fd);
 	}
-	cs_debug_mask(D_FUT, "cc_idle out");
+	cs_debug_mask(D_CLIENT, "cc_idle out");
 }
 
 struct cc_card *read_card(uint8 *buf, int ext) {
@@ -1633,7 +1633,7 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 	card->maxdown = buf[11];
 	memcpy(card->hexserial, buf + 12, 8); //HEXSERIAL!!
 
-	//cs_debug("cccam: card %08x added, caid %04X, hop %d, key %s, count %d",
+	//cs_debug_mask(D_CLIENT, "cccam: card %08x added, caid %04X, hop %d, key %s, count %d",
 	//		card->id, card->caid, card->hop, cs_hexdump(0, card->hexserial, 8),
 	//		ll_count(cc->cards));
 
@@ -1653,7 +1653,7 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 		if (prov->prov == 0xFFFFFF && (card->caid >> 8) == 0x17)
 			prov->prov = i;
 		memcpy(prov->sa, buf + offset + 3, 4);
-		cs_debug("      prov %d, %06x, sa %08x", i + 1, prov->prov, b2i(4,
+		cs_debug_mask(D_CLIENT, "      prov %d, %06x, sa %08x", i + 1, prov->prov, b2i(4,
 				prov->sa));
 
 		ll_append(card->providers, prov);
@@ -1665,7 +1665,7 @@ struct cc_card *read_card(uint8 *buf, int ext) {
     if (ext) {
         for (i = 0; i < nassign; i++) {
             uint16_t sid = b2i(2, ptr);
-            cs_debug("      assigned sid = %04X, added to good sid list", sid);
+            cs_debug_mask(D_CLIENT, "      assigned sid = %04X, added to good sid list", sid);
 
             struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
             srvid->sid = sid;
@@ -1676,7 +1676,7 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 
         for (i = 0; i < nreject; i++) {
             uint16_t sid = b2i(2, ptr);
-            cs_debug("      rejected sid = %04X, added to sid block list", sid);
+            cs_debug_mask(D_CLIENT, "      rejected sid = %04X, added to sid block list", sid);
 
             struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
             srvid->sid = sid;
@@ -1783,7 +1783,7 @@ void cc_card_removed(struct s_client *cl, uint32 shareid) {
 
 	while ((card = ll_iter_next(it))) {
 		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
-			//cs_debug("cccam: card %08x removed, caid %04X, count %d",
+			//cs_debug_mask(D_CLIENT, "cccam: card %08x removed, caid %04X, count %d",
 			//		card->id, card->caid, ll_count(cc->cards));
 			struct cc_card *next_card = ll_iter_peek(it, 0);
 			ll_iter_remove(it);
@@ -1905,20 +1905,20 @@ void addParam(char *param, char *value)
 }
 
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
-	cs_debug_mask(D_FUT, "cc_parse_msg in %d", buf[1]);
+	cs_debug_mask(D_CLIENT, "cc_parse_msg in %d", buf[1]);
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 
 	int ret = buf[1];
 	struct cc_data *cc = cl->cc;
 
-	cs_debug("%s parse_msg=%d", getprefix(), buf[1]);
+	cs_debug_mask(D_CLIENT, "%s parse_msg=%d", getprefix(), buf[1]);
 
 	uint8 *data = buf + 4;
 	memcpy(&cc->receive_buffer, data, l - 4);
 	cc->last_msg = buf[1];
 	switch (buf[1]) {
 	case MSG_CLI_DATA:
-		cs_debug("cccam: client data ack");
+		cs_debug_mask(D_CLIENT, "cccam: client data ack");
 		break;
 	case MSG_SRV_DATA:
 		l -= 4;
@@ -2122,7 +2122,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				cc_cmd_send(cl, buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
 			} else if (cc->is_oscam_cccam)
 				check_extended_mode(cl, msg);
-			cs_debug_mask(D_FUT, "cc_parse_msg out");
+			cs_debug_mask(D_CLIENT, "cc_parse_msg out");
 			return ret;
 		}
 
@@ -2288,12 +2288,12 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	case MSG_KEEPALIVE:
 		cc->just_logged_in = 0;
 		if (cl->typ != 'c') {
-			cs_debug("cccam: keepalive ack");
+			cs_debug_mask(D_CLIENT, "cccam: keepalive ack");
 		} else {
 			//Checking if last answer is one minute ago:
 			if (cc->answer_on_keepalive + 55 <= time(NULL)) {
 				cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE);
-				cs_debug("cccam: keepalive");
+				cs_debug_mask(D_CLIENT, "cccam: keepalive");
 				cc->answer_on_keepalive = time(NULL);
 			}
 		}
@@ -2318,7 +2318,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		/*cs_log("%s MSG_CMD_0B received, cycle connection (payload=%d)!", getprefix(), l-4);*/
 		cs_debug_mask(D_TRACE, "%s MSG_CMD_0B received (payload=%d)!",
 				getprefix(), l - 4);
-		cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
+		cs_ddump_mask(D_CLIENT, buf, l, "%s content: len=%d", getprefix(), l);
 
 		AES_KEY key;
 		uint8 aeskey[16];
@@ -2327,14 +2327,14 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		memcpy(aeskey, cc->cmd0b_aeskey, 16);
 		memset(&key, 0, sizeof(key));
 
-		cs_ddump(aeskey, 16, "%s CMD_0B AES key:", getprefix());
-		cs_ddump(data, 16, "%s CMD_0B received data:", getprefix());
+		cs_ddump_mask(D_CLIENT, aeskey, 16, "%s CMD_0B AES key:", getprefix());
+		cs_ddump_mask(D_CLIENT, data, 16, "%s CMD_0B received data:", getprefix());
 
 		AES_set_encrypt_key((unsigned char *) &aeskey, 128, &key);
 		AES_encrypt((unsigned char *) data, (unsigned char *) &out, &key);
 
 		cs_debug_mask(D_TRACE, "%s sending CMD_0B! ", getprefix());
-		cs_ddump(out, 16, "%s CMD_0B out:", getprefix());
+		cs_ddump_mask(D_CLIENT, out, 16, "%s CMD_0B out:", getprefix());
 		cc_cmd_send(cl, out, 16, MSG_CMD_0B);
 
 		break;
@@ -2345,7 +2345,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		if (cl->typ == 'c') { //Only im comming from "client"
 			cs_debug_mask(D_TRACE, "%s MSG_CMD_0C received (payload=%d)!", getprefix(), len);
-			cs_ddump(buf, l, "%s content: len=%d", getprefix(), l);
+			cs_ddump_mask(D_CLIENT, buf, l, "%s content: len=%d", getprefix(), l);
 		
 			uint8 bytes[0x20];
 			if (len < 0x20) //if less then 0x20 bytes, clear others:
@@ -2366,7 +2366,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			memcpy(bytes, md5hash, 0x10);
 			
 			cs_debug_mask(D_TRACE, "%s sending CMD_0C! ", getprefix());
-			cs_ddump(bytes, 0x20, "%s CMD_0C out:", getprefix());
+			cs_ddump_mask(D_CLIENT, bytes, 0x20, "%s CMD_0C out:", getprefix());
 			cc_cmd_send(cl, bytes, 0x20, MSG_CMD_0C);	
 		}
 		else //reader
@@ -2492,7 +2492,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		break;
 	}
 	default:
-		cs_ddump(buf, l, "%s unhandled msg: %d len=%d", getprefix(), buf[1], l);
+		cs_ddump_mask(D_CLIENT, buf, l, "%s unhandled msg: %d len=%d", getprefix(), buf[1], l);
 		break;
 	}
 
@@ -2503,7 +2503,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		cc_cli_close(cl, TRUE);
 		//cc_send_ecm(NULL, NULL);
 	}
-	cs_debug_mask(D_FUT, "cc_parse_msg out");
+	cs_debug_mask(D_CLIENT, "cc_parse_msg out");
 	return ret;
 }
 
@@ -2511,22 +2511,22 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
  * Reader: write dcw to receive
  */
 int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf, int UNUSED(n)) {
-	cs_debug_mask(D_FUT, "cc_recv_chk in");
+	cs_debug_mask(D_CLIENT, "cc_recv_chk in");
 	struct cc_data *cc = cl->cc;
 
 	if (buf[1] == MSG_CW_ECM) {
 		memcpy(dcw, cc->dcw, 16);
-		cs_debug("cccam: recv chk - MSG_CW %d - %s", cc->recv_ecmtask,
+		cs_debug_mask(D_CLIENT, "cccam: recv chk - MSG_CW %d - %s", cc->recv_ecmtask,
 				cs_hexdump(0, dcw, 16));
 		*rc = 1;
-		cs_debug_mask(D_FUT, "cc_recv_chk out");
+		cs_debug_mask(D_CLIENT, "cc_recv_chk out");
 		return (cc->recv_ecmtask);
 	} else if ((buf[1] == (MSG_CW_NOK1)) || (buf[1] == (MSG_CW_NOK2))) {
-		cs_debug_mask(D_FUT, "cc_recv_chk out");
+		cs_debug_mask(D_CLIENT, "cc_recv_chk out");
 		return -1;
 	}
 
-	cs_debug_mask(D_FUT, "cc_recv_chk out");
+	cs_debug_mask(D_CLIENT, "cc_recv_chk out");
 	return (-1);
 }
 
@@ -2554,7 +2554,7 @@ int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf, int UNUSED
  * Server: send DCW to client
  */
 void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
-	cs_debug_mask(D_FUT, "cc_send_dcw in");
+	cs_debug_mask(D_CLIENT, "cc_send_dcw in");
 	uchar buf[16];
 	struct cc_data *cc = cl->cc;
 
@@ -2592,7 +2592,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	}
 	cc->server_ecm_pending--;
 	free(eei);
-	cs_debug_mask(D_FUT, "cc_send_dcw out");
+	cs_debug_mask(D_CLIENT, "cc_send_dcw out");
 }
 
 int cc_recv(struct s_client *cl, uchar *buf, int l) {
@@ -2609,7 +2609,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 
 	n = cc_msg_recv(cl, cbuf); // recv and decrypt msg
 
-	//cs_ddump(cbuf, n, "cccam: received %d bytes from %s", n, remote_txt());
+	//cs_ddump_mask(D_CLIENT, cbuf, n, "cccam: received %d bytes from %s", n, remote_txt());
 	cl->last = time((time_t *) 0);
 
 	if (n <= 0) {
@@ -3208,7 +3208,7 @@ int check_cccam_compat(struct cc_data *cc) {
 }
 
 int cc_srv_connect(struct s_client *cl) {
-	cs_debug_mask(D_FUT, "cc_srv_connect in");
+	cs_debug_mask(D_CLIENT, "cc_srv_connect in");
 	int i, wait_for_keepalive;
 	ulong cmi;
 	uint8 buf[CC_MAXMSGSIZE];
@@ -3262,9 +3262,9 @@ int cc_srv_connect(struct s_client *cl) {
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
 	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
-		cs_ddump(buf, 20, "cccam: recv:");
+		cs_ddump_mask(D_CLIENT, buf, 20, "cccam: recv:");
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
-		cs_ddump(buf, 20, "cccam: hash:");
+		cs_ddump_mask(D_CLIENT, buf, 20, "cccam: hash:");
 	} else
 		return -1;
 
@@ -3277,11 +3277,11 @@ int cc_srv_connect(struct s_client *cl) {
 		//test for nonprintable characters:
 		for (i = 0; i < 20; i++) {
 			if (usr[i] > 0 && usr[i] < 0x20) { //found nonprintable char
-				cs_debug("illegal username received");
+				cs_debug_mask(D_CLIENT, "illegal username received");
 				return -2;
 			}
 		}
-		cs_ddump(buf, 20, "cccam: username '%s':", usr);
+		cs_ddump_mask(D_CLIENT, buf, 20, "cccam: username '%s':", usr);
 	} else 
 		return -2;
 
@@ -3312,7 +3312,7 @@ int cc_srv_connect(struct s_client *cl) {
 	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
 	if ((i = cc_recv_to(cl, buf, 6)) == 6) {
 		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
-		//cs_ddump(buf, 6, "cccam: pwd check '%s':", buf); //illegal buf-bytes could kill the logger!
+		//cs_ddump_mask(D_CLIENT, buf, 6, "cccam: pwd check '%s':", buf); //illegal buf-bytes could kill the logger!
 		if (memcmp(buf, "CCcam\0", 6) != 0) { 
 			cs_log("account '%s' wrong password!", usr);
 			return -2;
@@ -3326,7 +3326,7 @@ int cc_srv_connect(struct s_client *cl) {
 	// send passwd ack
 	memset(buf, 0, 20);
 	memcpy(buf, "CCcam\0", 6);
-	cs_ddump(buf, 20, "cccam: send ack:");
+	cs_ddump_mask(D_CLIENT, buf, 20, "cccam: send ack:");
 	cc_crypt(&cc->block[ENCRYPT], buf, 20, ENCRYPT);
 	send(cl->pfd, buf, 20, 0);
 
@@ -3335,7 +3335,7 @@ int cc_srv_connect(struct s_client *cl) {
 	i = cc_msg_recv(cl, buf);
 	if (i < 0)
 		return -1;
-	cs_ddump(buf, i, "cccam: cli data:");
+	cs_ddump_mask(D_CLIENT, buf, i, "cccam: cli data:");
 	memcpy(cc->peer_node_id, buf + 24, 8);
 	
 	strncpy(cc->remote_version, (char*)buf+33, sizeof(cc->remote_version)-1);
@@ -3386,7 +3386,7 @@ int cc_srv_connect(struct s_client *cl) {
 					if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
 						if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
 							break;
-	        		                cs_debug("cccam: keepalive");
+	        		                cs_debug_mask(D_CLIENT, "cccam: keepalive");
         			                cc->answer_on_keepalive = time(NULL);
         			                wait_for_keepalive++;
 					}
@@ -3438,7 +3438,7 @@ int cc_srv_connect(struct s_client *cl) {
 		}
 	}
 
-	cs_debug_mask(D_FUT, "cc_srv_connect out");
+	cs_debug_mask(D_CLIENT, "cc_srv_connect out");
 	return 0;
 }
 
@@ -3446,7 +3446,7 @@ void * cc_srv_init(struct s_client *cl) {
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 
-	cs_debug_mask(D_FUT, "cc_srv_init in");
+	cs_debug_mask(D_CLIENT, "cc_srv_init in");
 	cl->pfd = cl->udp_fd;
 	int ret;
 	if ((ret=cc_srv_connect(cl)) < 0) {
@@ -3456,13 +3456,13 @@ void * cc_srv_init(struct s_client *cl) {
 			cs_add_violation((uint)cl->ip);
 	}
 	cc_cleanup(cl);
-	cs_debug_mask(D_FUT, "cc_srv_init out");
+	cs_debug_mask(D_CLIENT, "cc_srv_init out");
 	cs_disconnect_client(cl);
 	return NULL; //suppress compiler warning
 }
 
 int cc_cli_connect(struct s_client *cl) {
-	cs_debug_mask(D_FUT, "cc_cli_connect in");
+	cs_debug_mask(D_CLIENT, "cc_cli_connect in");
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
 	
@@ -3562,7 +3562,7 @@ int cc_cli_connect(struct s_client *cl) {
 	memset(&cc->receive_buffer, 0, sizeof(cc->receive_buffer));
 	cc->cmd0c_mode = MODE_CMD_0x0C_NONE;
 
-	cs_ddump(data, 16, "cccam: server init seed:");
+	cs_ddump_mask(D_CLIENT, data, 16, "cccam: server init seed:");
 
 	uint16 sum = 0x1234;
 	uint16 recv_sum = (data[14] << 8) | data[15];
@@ -3580,7 +3580,7 @@ int cc_cli_connect(struct s_client *cl) {
 	SHA1_Update(&ctx, data, 16);
 	SHA1_Final(hash, &ctx);
 
-	cs_ddump(hash, sizeof(hash), "cccam: sha1 hash:");
+	cs_ddump_mask(D_CLIENT, hash, sizeof(hash), "cccam: sha1 hash:");
 
 	//initialisate crypto states
 	cc_init_crypt(&cc->block[DECRYPT], hash, 20);
@@ -3592,13 +3592,13 @@ int cc_cli_connect(struct s_client *cl) {
 
 	memset(buf, 0, sizeof(buf));
 	memcpy(buf, rdr->r_usr, strlen(rdr->r_usr));
-	cs_ddump(buf, 20, "cccam: username '%s':", buf);
+	cs_ddump_mask(D_CLIENT, buf, 20, "cccam: username '%s':", buf);
 	cc_cmd_send(cl, buf, 20, MSG_NO_HEADER); // send usr '0' padded -> 20 bytes
 
 	memset(buf, 0, sizeof(buf));
 	memset(pwd, 0, sizeof(pwd));
 
-	cs_debug("cccam: 'CCcam' xor");
+	cs_debug_mask(D_CLIENT, "cccam: 'CCcam' xor");
 	memcpy(buf, "CCcam", 5);
 	strncpy(pwd, rdr->r_pwd, sizeof(pwd) - 1);
 	cc_crypt(&cc->block[ENCRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
@@ -3609,7 +3609,7 @@ int cc_cli_connect(struct s_client *cl) {
 		return -2;
 	}
 	cc_crypt(&cc->block[DECRYPT], data, 20, DECRYPT);
-	cs_ddump(data, 20, "cccam: pwd ack received:");
+	cs_ddump_mask(D_CLIENT, data, 20, "cccam: pwd ack received:");
 
 	if (memcmp(data, buf, 5)) { // check server response
 		cs_log("%s login failed, usr/pwd invalid", getprefix());
@@ -3618,10 +3618,10 @@ int cc_cli_connect(struct s_client *cl) {
 		cs_debug_mask(D_TRACE, "%s login succeeded", getprefix());
 	}
 
-	cs_debug("cccam: last_s=%d, last_g=%d", rdr->last_s, rdr->last_g);
+	cs_debug_mask(D_CLIENT, "cccam: last_s=%d, last_g=%d", rdr->last_s, rdr->last_g);
 
 	cl->pfd = cl->udp_fd;
-	cs_debug("cccam: pfd=%d", cl->pfd);
+	cs_debug_mask(D_CLIENT, "cccam: pfd=%d", cl->pfd);
 
 	if (cc_send_cli_data(cl) <= 0) {
 		cs_log("%s login failed, could not send client data", getprefix());
@@ -3645,12 +3645,12 @@ int cc_cli_connect(struct s_client *cl) {
 
 	cc->just_logged_in = 1;
 
-	cs_debug_mask(D_FUT, "cc_cli_connect out");
+	cs_debug_mask(D_CLIENT, "cc_cli_connect out");
 	return 0;
 }
 
 int cc_cli_init_int(struct s_client *cl) {
-	cs_debug_mask(D_FUT, "cc_cli_init_int");
+	cs_debug_mask(D_CLIENT, "cc_cli_init_int");
 	struct s_reader *rdr = cl->reader;
 	if (rdr->tcp_connected)
 		return 1;
@@ -3714,13 +3714,13 @@ int cc_cli_init_int(struct s_client *cl) {
 
 	if (rdr->tcp_rto <= 2)
 		rdr->tcp_rto = 2; // timeout to 120s
-	cs_debug("cccam: timeout set to: %d", rdr->tcp_rto);
+	cs_debug_mask(D_CLIENT, "cccam: timeout set to: %d", rdr->tcp_rto);
 	cc_check_version(rdr->cc_version, rdr->cc_build);
 	cs_log("proxy reader: %s (%s:%d) cccam v%s build %s, maxhop: %d",
 		rdr->label, rdr->device, rdr->r_port, rdr->cc_version,
 		rdr->cc_build, rdr->cc_maxhop);
 
-	cs_debug_mask(D_FUT, "cc_cli_init_int out");
+	cs_debug_mask(D_CLIENT, "cc_cli_init_int out");
 	return 0;
 }
 
@@ -3789,17 +3789,17 @@ int cc_available(struct s_reader *rdr, int checktype) {
  *
  **/
 void cc_card_info() {
-	cs_debug_mask(D_FUT, "cc_card_info in");
+	cs_debug_mask(D_CLIENT, "cc_card_info in");
 	struct s_client *cl = cur_client();
 	struct s_reader *rdr = cl->reader;
 
 	if (rdr && !rdr->tcp_connected)
 		cc_cli_connect(cl);
-	cs_debug_mask(D_FUT, "cc_card_info out");
+	cs_debug_mask(D_CLIENT, "cc_card_info out");
 }
 
 void cc_cleanup(struct s_client *cl) {
-	cs_debug_mask(D_FUT, "cc_cleanup in");
+	cs_debug_mask(D_CLIENT, "cc_cleanup in");
 	struct cc_data *cc = cl->cc;
 	if (cc) cc->mode = CCCAM_MODE_SHUTDOWN;
 	
@@ -3807,7 +3807,7 @@ void cc_cleanup(struct s_client *cl) {
 		cc_cli_close(cl, FALSE); // we need to close open fd's 
 	}
 	cc_free(cl);
-	cs_debug_mask(D_FUT, "cc_cleanup out");
+	cs_debug_mask(D_CLIENT, "cc_cleanup out");
 }
 
 void module_cccam(struct s_module *ph) {

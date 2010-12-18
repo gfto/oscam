@@ -136,7 +136,7 @@ int Protocol_T0_Command (struct s_reader * reader, unsigned char * command, unsi
 		case APDU_CASE_3S:
 			return Protocol_T0_ExchangeTPDU(reader, command, command_len, rsp, lr);
 		default:
-			cs_debug_mask (D_IFD,"Protocol: T=0: Invalid APDU");
+			cs_debug_mask (D_IFD, "Protocol: T=0: Invalid APDU");
 			return ERROR;
 	}
 }

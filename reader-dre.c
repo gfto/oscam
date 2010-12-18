@@ -30,7 +30,7 @@ static int dre_command (struct s_reader * reader, const uchar * cmd, int cmdlen,
   memcpy (command + headerlen, cmd, cmdlen);
 
   uchar checksum = ~xor (cmd, cmdlen);
-  //cs_debug ("[dre-reader] Checksum: %02x", checksum);
+  //cs_debug_mask(D_READER, "[dre-reader] Checksum: %02x", checksum);
   cmdlen += headerlen;
   command[cmdlen++] = checksum;
 
@@ -63,7 +63,7 @@ static int dre_command (struct s_reader * reader, const uchar * cmd, int cmdlen,
       cs_log ("[dre-reader] wrong signature: %s.", cs_hexdump (0, cta_res, *p_cta_lr));
       break;
     default:
-      cs_debug ("[dre-reader] unknown error: %s.", cs_hexdump (0, cta_res, *p_cta_lr));
+      cs_debug_mask(D_READER, "[dre-reader] unknown error: %s.", cs_hexdump (0, cta_res, *p_cta_lr));
       break;
     }
     return ERROR;			//error
@@ -98,7 +98,7 @@ static int dre_set_provider_info (struct s_reader * reader)
   if ((dre_cmd (cmd59))) {	//ask subscription packages, returns error on 0x11 card
     uchar pbm[32];
     memcpy (pbm, cta_res + 3, cta_lr - 6);
-    cs_debug ("[dre-reader] pbm: %s", cs_hexdump (0, pbm, 32));
+    cs_debug_mask(D_READER, "[dre-reader] pbm: %s", cs_hexdump (0, pbm, 32));
 
     if (pbm[0] == 0xff)
       cs_ri_log (reader, "[dre-reader] no active packages");
@@ -259,8 +259,8 @@ static int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
     memcpy (ecmcmd41 + 4, er->ecm + 8, 16);
     ecmcmd41[20] = er->ecm[6];	//keynumber
     ecmcmd41[21] = 0x58 + er->ecm[25];	//package number
-    cs_debug ("[dre-reader] unused ECM info front:%s", cs_hexdump (0, er->ecm, 8));
-    cs_debug ("[dre-reader] unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2] + 2 - 24));
+    cs_debug_mask(D_READER, "[dre-reader] unused ECM info front:%s", cs_hexdump (0, er->ecm, 8));
+    cs_debug_mask(D_READER, "[dre-reader] unused ECM info back:%s", cs_hexdump (0, er->ecm + 24, er->ecm[2] + 2 - 24));
     if ((dre_cmd (ecmcmd41))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
 				return ERROR;		//exit if response is not 90 00
@@ -280,8 +280,8 @@ static int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
       0x14			//provider
     };
     memcpy (ecmcmd51 + 1, er->ecm + 5, 0x21);
-    cs_debug ("[dre-reader] unused ECM info front:%s", cs_hexdump (0, er->ecm, 5));
-    cs_debug ("[dre-reader] unused ECM info back:%s", cs_hexdump (0, er->ecm + 37, 4));
+    cs_debug_mask(D_READER, "[dre-reader] unused ECM info front:%s", cs_hexdump (0, er->ecm, 5));
+    cs_debug_mask(D_READER, "[dre-reader] unused ECM info back:%s", cs_hexdump (0, er->ecm + 37, 4));
     ecmcmd51[33] = reader->provider;	//no part of sig
     if ((dre_cmd (ecmcmd51))) {	//ecm request
       if ((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00))
@@ -356,7 +356,7 @@ static int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
 {
   def_resp;
 
-  cs_ddump (ep->emm, ((ep->emm[1] & 0x0f) << 8) + ep->emm[2] + 3, "EMM:");
+  cs_ddump_mask(D_READER, ep->emm, ((ep->emm[1] & 0x0f) << 8) + ep->emm[2] + 3, "EMM:");
 
   if (reader->caid[0] == 0x4ae1) {
     if(ep->type == UNIQUE && ep->emm[39] == 0x3d)

@@ -14,7 +14,7 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
     pcsc_reader->hCard=0;
     pcsc_reader->hContext=0;
      
-    cs_debug("PCSC establish context for PCSC reader %s", device);
+    cs_debug_mask(D_DEVICE, "PCSC establish context for PCSC reader %s", device);
     rv = SCardEstablishContext(SCARD_SCOPE_SYSTEM, NULL, NULL, &pcsc_reader->hContext);
     if ( rv == SCARD_S_SUCCESS ) {
         // here we need to list the pcsc readers and get the name from there,
@@ -22,17 +22,17 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
         // and after the actual device name is copied in pcsc_reader->pcsc_name .
         rv = SCardListReaders(pcsc_reader->hContext, NULL, NULL, &dwReaders);
         if( rv != SCARD_S_SUCCESS ) {
-            cs_debug("PCSC failed listing readers [1] : (%lx)", rv);
+            cs_debug_mask(D_DEVICE, "PCSC failed listing readers [1] : (%lx)", rv);
             return  2;
         }
         mszReaders = malloc(sizeof(char)*dwReaders);
         if (mszReaders == NULL) {
-            cs_debug("PCSC failed malloc");
+            cs_debug_mask(D_DEVICE, "PCSC failed malloc");
             return  2;
         }
         rv = SCardListReaders(pcsc_reader->hContext, NULL, mszReaders, &dwReaders);
         if( rv != SCARD_S_SUCCESS ) {
-            cs_debug("PCSC failed listing readers [2]: (%lx)", rv);
+            cs_debug_mask(D_DEVICE, "PCSC failed listing readers [2]: (%lx)", rv);
             free(mszReaders);
             return  2;
         }
@@ -62,7 +62,7 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
         nbReaders = 0;
         ptr = mszReaders;
         while (*ptr != '\0') {
-            cs_debug("PCSC reader %d: %s", nbReaders, ptr);
+            cs_debug_mask(D_DEVICE, "PCSC reader %d: %s", nbReaders, ptr);
             readers[nbReaders] = ptr;
             ptr += strlen(ptr)+1;
             nbReaders++;
@@ -113,24 +113,24 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *ct
             dwSendLength = l;
         else
             dwSendLength = l-1;
-        cs_debug("sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
+        cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T0, (LPCBYTE) buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
         dwSendLength = l;
-        cs_debug("sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
+        cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
         rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T1, (LPCBYTE) buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
     else {
-        cs_debug("PCSC invalid protocol (T=%d)", pcsc_reader->dwActiveProtocol);
+        cs_debug_mask(D_DEVICE, "PCSC invalid protocol (T=%d)", pcsc_reader->dwActiveProtocol);
         return ERR_INVALID;
     }
 
-     cs_debug("received %d bytes from PCSC with rv=%lx : %s", *cta_lr, rv,cs_hexdump(1,cta_res,*cta_lr));
+     cs_debug_mask(D_DEVICE, "received %d bytes from PCSC with rv=%lx : %s", *cta_lr, rv,cs_hexdump(1,cta_res,*cta_lr));
 
-     cs_debug("PCSC doapi (%lx ) (T=%d), %d", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), *cta_lr );
+     cs_debug_mask(D_DEVICE, "PCSC doapi (%lx ) (T=%d), %d", rv, ( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1), *cta_lr );
 
      if ( rv  == SCARD_S_SUCCESS ){
          return OK;
@@ -147,25 +147,25 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
     DWORD dwState, dwAtrLen, dwReaderLen;
     BYTE pbAtr[64];
     
-    cs_debug("PCSC initializing card in (%s)", pcsc_reader->pcsc_name);
+    cs_debug_mask(D_DEVICE, "PCSC initializing card in (%s)", pcsc_reader->pcsc_name);
     dwAtrLen = sizeof(pbAtr);
     dwReaderLen=0;
     
-    cs_debug("PCSC resetting card in (%s) with handle %lu", pcsc_reader->pcsc_name,(SCARDHANDLE)(pcsc_reader->hCard));
+    cs_debug_mask(D_DEVICE, "PCSC resetting card in (%s) with handle %lu", pcsc_reader->pcsc_name,(SCARDHANDLE)(pcsc_reader->hCard));
     rv = SCardReconnect((SCARDHANDLE)(pcsc_reader->hCard), SCARD_SHARE_EXCLUSIVE, SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,  SCARD_RESET_CARD, &pcsc_reader->dwActiveProtocol);
 
     if ( rv != SCARD_S_SUCCESS )  {
-        cs_debug("Error PCSC failed to reset card (%lx)", rv);
+        cs_debug_mask(D_DEVICE, "Error PCSC failed to reset card (%lx)", rv);
         return(0);
     }
     
-    cs_debug("PCSC resetting done on card in (%s)", pcsc_reader->pcsc_name);
-    cs_debug("PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
+    cs_debug_mask(D_DEVICE, "PCSC resetting done on card in (%s)", pcsc_reader->pcsc_name);
+    cs_debug_mask(D_DEVICE, "PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
     
-    cs_debug("PCSC getting ATR for card in (%s)", pcsc_reader->pcsc_name);
+    cs_debug_mask(D_DEVICE, "PCSC getting ATR for card in (%s)", pcsc_reader->pcsc_name);
     rv = SCardStatus((SCARDHANDLE)(pcsc_reader->hCard),NULL, &dwReaderLen, &dwState, &pcsc_reader->dwActiveProtocol, pbAtr, &dwAtrLen);
     if ( rv == SCARD_S_SUCCESS ) {
-        cs_debug("PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
+        cs_debug_mask(D_DEVICE, "PCSC Protocol (T=%d)",( pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T0 ? 0 :  1));
         memcpy(atr, pbAtr, dwAtrLen);
         *atr_size=dwAtrLen;
         pcsc_reader->init_history_pos=0;
@@ -174,7 +174,7 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
         return(1);
     }
     else {
-        cs_debug("Error PCSC failed to get ATR for card (%lx)", rv);
+        cs_debug_mask(D_DEVICE, "Error PCSC failed to get ATR for card (%lx)", rv);
     }
 
     return(0);
@@ -203,7 +203,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
                 SCardDisconnect((SCARDHANDLE)(pcsc_reader->hCard),SCARD_RESET_CARD);
                 pcsc_reader->hCard=0;
             }
-            // cs_debug("PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
+            // cs_debug_mask(D_DEVICE, "PCSC card in %s removed / absent [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
             return 0;
         }
         else if( rv == SCARD_W_UNRESPONSIVE_CARD ) {
@@ -219,7 +219,7 @@ int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
         }
         else {
             // if we get here we have a bigger problem -> display status and debug
-            // cs_debug("PCSC reader %s status [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
+            // cs_debug_mask(D_DEVICE, "PCSC reader %s status [dwstate=%lx rv=(%lx)]", pcsc_reader->pcsc_name, dwState, rv );
             return 0;
         }
         

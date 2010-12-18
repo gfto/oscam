@@ -15,7 +15,7 @@ static int radegast_recv(struct s_client *client, uchar *buf, int l)
       client->last=time((time_t *) 0);
   } else {  // client code
     if ((n=recv(client->pfd, buf, l, 0))>0) {
-      cs_ddump(buf, n, "radegast: received %d bytes from %s", n, remote_txt());
+      cs_ddump_mask(D_CLIENT, buf, n, "radegast: received %d bytes from %s", n, remote_txt());
       client->last = time((time_t *) 0);
 
       if (buf[0] == 2) {  // dcw received
@@ -33,7 +33,7 @@ static int radegast_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar
 {
   if ((buf[0] == 2) && (buf[1] == 0x12)) {
     memcpy(dcw, buf+4, 16);
-    cs_debug("radegast: recv chk - %s", cs_hexdump(0, dcw, 16));
+    cs_debug_mask(D_CLIENT, "radegast: recv chk - %s", cs_hexdump(0, dcw, 16));
     *rc = 1;
     return(client->reader->msg_idx);
   }
@@ -81,7 +81,7 @@ static int get_request(uchar *buf)
   }
   if (n>0)
   {
-    cs_ddump(buf, n, "received %d bytes from client", n);
+    cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from client", n);
   }
   return(rc);
 }
@@ -211,7 +211,7 @@ static int radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UN
   n = send(client->pfd, ecmbuf, er->l + 30, 0);
 
   cs_log("radegast: sending ecm");
-  cs_ddump(ecmbuf, er->l + 30, "ecm:");
+  cs_ddump_mask(D_CLIENT, ecmbuf, er->l + 30, "ecm:");
 
   free(ecmbuf);
 
@@ -278,7 +278,7 @@ int radegast_cli_init(struct s_client *cl)
   cur_client()->reader->card_status = CARD_INSERTED;
   cur_client()->reader->last_g = cur_client()->reader->last_s = time((time_t *)0);
 
-  cs_debug("radegast: last_s=%d, last_g=%d", cur_client()->reader->last_s, cur_client()->reader->last_g);
+  cs_debug_mask(D_CLIENT, "radegast: last_s=%d, last_g=%d", cur_client()->reader->last_s, cur_client()->reader->last_g);
 
   cur_client()->pfd=cur_client()->udp_fd;
 

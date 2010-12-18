@@ -264,8 +264,6 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 
 int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short deprecated)
 {
-	int cs_ptyp_orig=cur_client()->cs_ptyp;
-	cur_client()->cs_ptyp=D_DEVICE;
 	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader->label);
 
 	reader->current_baudrate = DEFAULT_BAUDRATE; //this is needed for all readers to calculate work_etu for timings
@@ -328,18 +326,15 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	
 	reader->protocol_type = ATR_PROTOCOL_TYPE_T0;
 	
-	cur_client()->cs_ptyp=D_ATR;
 	LOCK_SC8IN1;
 	int ret = Parse_ATR(reader, atr, deprecated);
 	UNLOCK_SC8IN1; //Parse_ATR and InitCard need to be included in lock because they change parity of serial port
 	if (ret)
 		cs_log("ERROR: Parse_ATR returned error");
-	cur_client()->cs_ptyp=D_DEVICE;;
 	if (ret)
 		return ERROR;
 	cs_debug_mask (D_IFD, "IFD: Card in reader %s succesfully activated\n", reader->label);
 
-	cur_client()->cs_ptyp=cs_ptyp_orig;
 	return OK;
 }
 
@@ -348,7 +343,6 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsign
 	*lr = 0; //will be returned in case of error
 
 	int ret;
-	cur_client()->cs_ptyp=D_DEVICE;
 
 	LOCK_SC8IN1;
 
@@ -386,8 +380,7 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsign
 		return ERROR;
 	}
 
-	cs_ddump(rsp, *lr, "answer from cardreader %s:", reader->label);
-	cur_client()->cs_ptyp=D_READER;
+	cs_ddump_mask(D_READER, rsp, *lr, "answer from cardreader %s:", reader->label);
 	return OK;
 }
 
@@ -589,14 +582,14 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 				sprintf((char *)txt+point,"no TD%i means T0",i);
 				OffersT[0] = TRUE;
 			}
-			cs_debug("%s",txt);
+			cs_debug_mask(D_ATR, "%s",txt);
 		}
 		
 		int numprottype = 0;
 		for (i = 0; i <= 2; i++)
 			if (OffersT[i])
 				numprottype ++;
-		cs_debug("%i protocol types detected. Historical bytes: %s",numprottype, cs_hexdump(1,atr->hb,atr->hbn));
+		cs_debug_mask(D_ATR, "%i protocol types detected. Historical bytes: %s",numprottype, cs_hexdump(1,atr->hb,atr->hbn));
 
 		ATR_GetParameter (atr, ATR_PARAMETER_N, &(n));
 		ATR_GetProtocolType(atr,1,&(reader->protocol_type)); //get protocol from TD1
@@ -620,7 +613,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 				FI = ATR_DEFAULT_FI;
 				d = ATR_DEFAULT_D;
 			}
-			cs_debug("Specific mode: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
+			cs_debug_mask(D_ATR, "Specific mode: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
 		}
 		else { //negotiable mode
 
@@ -641,10 +634,10 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 					BYTE DI = req[2] & 0x0F;
 					d = (double) (atr_d_table[DI]);
 					PPS_success = TRUE;
-					cs_debug("PTS Succesfull, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
+					cs_debug_mask(D_ATR, "PTS Succesfull, selected protocol: T%i, F=%.0f, D=%.6f, N=%.0f\n", reader->protocol_type, (double) atr_f_table[FI], d, n);
 				}
 				else
-					cs_ddump(req,len,"PTS Failure, response:");
+					cs_ddump_mask(D_ATR, req, len,"PTS Failure, response:");
 			}
 
 			//When for SCI, T14 protocol, TA1 is obeyed, this goes OK for mosts devices, but somehow on DM7025 Sky S02 card goes wrong when setting ETU (ok on DM800/DM8000)
@@ -663,7 +656,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 						d = 0; // viaccess cards that fail PTS need this
 				}
 
-				cs_debug("No PTS %s, selected protocol T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", reader->protocol_type, (double) atr_f_table[FI], d, n);
+				cs_debug_mask(D_ATR, "No PTS %s, selected protocol T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", reader->protocol_type, (double) atr_f_table[FI], d, n);
 			}
 		}//end negotiable mode
 		
@@ -692,7 +685,7 @@ static int PPS_Exchange (struct s_reader * reader, BYTE * params, unsigned *leng
 
 	len_request = PPS_GetLength (params);
 	params[len_request - 1] = PPS_GetPCK(params, len_request - 1);
-	cs_debug_mask (D_IFD,"PTS: Sending request: %s", cs_hexdump(1, params, len_request));
+	cs_debug_mask (D_IFD, "PTS: Sending request: %s", cs_hexdump(1, params, len_request));
 
 #ifdef WITH_STAPI	
 	ret = STReader_SetProtocol(reader->stsmart_handle, params, length, len_request);
@@ -860,8 +853,8 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 			reader->read_timeout = ETU_to_ms(reader, WWT);
 			reader->block_delay = gt_ms;
 			reader->char_delay = gt_ms;
-			cs_debug("Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->read_timeout, reader->block_delay, reader->char_delay);
-			cs_debug_mask (D_IFD,"Protocol: T=%i: WWT=%d, Clockrate=%lu\n", reader->protocol_type, (int)(WWT), ICC_Async_GetClockRate(reader->cardmhz));
+			cs_debug_mask(D_ATR, "Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->read_timeout, reader->block_delay, reader->char_delay);
+			cs_debug_mask (D_IFD, "Protocol: T=%i: WWT=%d, Clockrate=%lu\n", reader->protocol_type, (int)(WWT), ICC_Async_GetClockRate(reader->cardmhz));
 			}
 			break;
 	 case ATR_PROTOCOL_TYPE_T1:
@@ -923,12 +916,12 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 				// Set initial send sequence (NS)
 				reader->ns = 1;
 
-				cs_debug ("Protocol: T=1: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", reader->ifsc, reader->CWT, reader->BWT, BGT, (edc == EDC_LRC) ? "LRC" : "CRC");
+				cs_debug_mask(D_ATR, "Protocol: T=1: IFSC=%d, CWT=%d etu, BWT=%d etu, BGT=%d etu, EDC=%s\n", reader->ifsc, reader->CWT, reader->BWT, BGT, (edc == EDC_LRC) ? "LRC" : "CRC");
 
 				reader->read_timeout = ETU_to_ms(reader, reader->BWT);
 				reader->block_delay = ETU_to_ms(reader, BGT);
 				reader->char_delay = ETU_to_ms(reader, CGT);
-				cs_debug("Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->read_timeout, reader->block_delay, reader->char_delay);
+				cs_debug_mask(D_ATR, "Setting timings: timeout=%u ms, block_delay=%u ms, char_delay=%u ms", reader->read_timeout, reader->block_delay, reader->char_delay);
 			}
 			break;
 	 default:

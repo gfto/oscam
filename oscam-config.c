@@ -201,14 +201,14 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char
 	}
 
 	if( ftab->nfilts ) {
-	    cs_debug("%s '%s' %s filter(s):", zType, zName, zFiltName);
+	    cs_debug_mask(D_CLIENT, "%s '%s' %s filter(s):", zType, zName, zFiltName);
 	}
 	for( i = 0; i < ftab->nfilts; i++ ) {
-		cs_debug("CAID #%d: %04X", i, ftab->filts[i].caid);
+		cs_debug_mask(D_CLIENT, "CAID #%d: %04X", i, ftab->filts[i].caid);
 		for( j = 0, ptr3 = strtok(ptr[i], ","); (j < CS_MAXPROV) && (ptr3); ptr3 = strtok(NULL, ","), j++ ) {
 			ftab->filts[i].prids[j] = a2i(ptr3,6);
 			ftab->filts[i].nprids++;
-			cs_debug("%s #%d: %06X", zFiltName, j, ftab->filts[i].prids[j]);
+			cs_debug_mask(D_CLIENT, "%s #%d: %06X", zFiltName, j, ftab->filts[i].prids[j]);
 		}
 	}
 }
@@ -3195,7 +3195,7 @@ int init_srvid()
 		for (i = 0, ptr1 = strtok(token, ","); (ptr1) && (i < 10) ; ptr1 = strtok(NULL, ","), i++){
 			srvid->caid[i] = dyn_word_atob(ptr1);
 			srvid->ncaid = i+1;
-			//cs_debug("ld caid: %04X srvid: %04X Prov: %s Chan: %s",srvid->caid[i],srvid->srvid,srvid->prov,srvid->name);
+			//cs_debug_mask(D_CLIENT, "ld caid: %04X srvid: %04X Prov: %s Chan: %s",srvid->caid[i],srvid->srvid,srvid->prov,srvid->name);
 		}
 		nr++;
 	}
@@ -4073,7 +4073,7 @@ int init_irdeto_guess_tab()
       }
       else
         cfg->itab[b3]=ird_row;
-        //cs_debug("%02X:%08X:%04X:%04X", b3, b47, caid, sid);
+        //cs_debug_mask(D_CLIENT, "%02X:%08X:%04X:%04X", b3, b47, caid, sid);
     }
   }
   fclose(fp);
@@ -4083,7 +4083,7 @@ int init_irdeto_guess_tab()
     head=cfg->itab[i];
     while(head)
     {
-      cs_debug("itab[%02X]: b47=%08X, caid=%04X, sid=%04X",
+      cs_debug_mask(D_CLIENT, "itab[%02X]: b47=%08X, caid=%04X, sid=%04X",
                i, head->b47, head->caid, head->sid);
       head=head->next;
     }
@@ -4241,7 +4241,7 @@ void init_ac()
       cpmap->dwtime = dwtime;
       cpmap->next   = 0;
 
-      cs_debug("nr=%d, caid=%04X, provid=%06X, sid=%04X, chid=%04X, dwtime=%d",
+      cs_debug_mask(D_CLIENT, "nr=%d, caid=%04X, provid=%06X, sid=%04X, chid=%04X, dwtime=%d",
                 nr, caid, provid, sid, chid, dwtime);
       nr++;
     }

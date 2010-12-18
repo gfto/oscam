@@ -35,11 +35,11 @@ int chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *D_USE(type), const 
   {
     l = er->ecm[j];
     ecm_class = er->ecm[j+l];
-    cs_debug("ecm class=%02X", ecm_class);
+    cs_debug_mask(D_CLIENT, "ecm class=%02X", ecm_class);
     for( i=0; i<clstab->bn; i++ )  // search in blocked
       if( ecm_class==clstab->bclass[i] ) 
       {
-        cs_debug("class %02X rejected by %s '%s' !%02X filter", 
+        cs_debug_mask(D_CLIENT, "class %02X rejected by %s '%s' !%02X filter", 
                  ecm_class, type, name, ecm_class);
         return 0;
       }
@@ -57,9 +57,9 @@ int chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *D_USE(type), const 
   if( cl_n && clstab->an )
   {
     if( an ) 
-      cs_debug("ECM classes allowed by %s '%s' filter", type, name);
+      cs_debug_mask(D_CLIENT, "ECM classes allowed by %s '%s' filter", type, name);
     else {
-      cs_debug("ECM classes don't match %s '%s' filter, rejecting", type, name);
+      cs_debug_mask(D_CLIENT, "ECM classes don't match %s '%s' filter, rejecting", type, name);
       return 0;
     }
   }

@@ -83,7 +83,7 @@ int Cool_Transmit (BYTE * sent, unsigned size)
 	cardbuflen = 256;//it needs to know max buffer size to respond?
 	call (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, 50, 0));
 	//call (cnxt_smc_read_write(handle, FALSE, sent, size, cardbuffer, &cardbuflen, read_timeout, 0));
-	cs_ddump(sent, size, "COOL IO: Transmit: ");
+	cs_ddump_mask(D_DEVICE, sent, size, "COOL IO: Transmit: ");
 	return OK;
 }
 
@@ -94,7 +94,7 @@ int Cool_Receive (BYTE * data, unsigned size)
 	memcpy(data,cardbuffer,size);
 	cardbuflen -= size;
 	memmove(cardbuffer,cardbuffer+size,cardbuflen);
-	cs_ddump(data, size, "COOL IO: Receive: ");
+	cs_ddump_mask(D_DEVICE, data, size, "COOL IO: Receive: ");
 	return OK;
 }	
 
@@ -104,7 +104,7 @@ int Cool_SetClockrate (int mhz)
 	u_int32 clk;
 	clk = mhz * 10000;
 	call (cnxt_smc_set_clock_freq (handle, clk));
-	cs_debug("COOL: Clock succesfully set to %i0 kHz", mhz);
+	cs_debug_mask(D_DEVICE, "COOL: Clock succesfully set to %i0 kHz", mhz);
 	return OK;
 }
 
@@ -127,7 +127,7 @@ int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT,
 	params.EGT = EGT;
 	params.BGT = BGT;
 	call (cnxt_smc_set_config_timeout(handle, params));
-	cs_debug("COOL WriteSettings OK");*/ 
+	cs_debug_mask(D_DEVICE, "COOL WriteSettings OK");*/ 
 	return OK;
 }
 

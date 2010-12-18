@@ -71,7 +71,7 @@ int SR_Init (struct s_reader *reader)
         cs_log("Couldn't allocate memory for Device=%s config",reader->device);
         return ERROR;
     }
-    cs_debug_mask (D_IFD,"IO:SR: Looking for device %s on bus %s",devname,busname);
+    cs_debug_mask (D_DEVICE, "IO:SR: Looking for device %s on bus %s",devname,busname);
 
    	ret = libusb_init(NULL);
 	if (ret < 0) {
@@ -100,14 +100,14 @@ int SR_Init (struct s_reader *reader)
     reader->sr_config->in_ep = 0x1;
     reader->sr_config->out_ep=out_endpoint;
 
-    cs_debug_mask (D_IFD,"IO:SR: Opening smartreader device %s on bus %s",devname,busname);
+    cs_debug_mask (D_DEVICE, "IO:SR: Opening smartreader device %s on bus %s",devname,busname);
 
     if ((ret=smartreader_usb_open_dev(reader))) {
         cs_log("unable to open smartreader device %s in bus %s (ret=%d)\n", devname,busname,ret);
         return ERROR;
     }
 
-    cs_debug_mask (D_IFD,"IO:SR: Setting smartreader latency timer to 1ms");
+    cs_debug_mask (D_DEVICE, "IO:SR: Setting smartreader latency timer to 1ms");
 
     //Set the FTDI latency timer to 1ms
     ret = smartreader_set_latency_timer(reader, 1);
@@ -183,7 +183,7 @@ static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, 
 				cs_sleepus(50);
         sched_yield();
     }
-		cs_ddump(buff, total_read, "SR IO: Receive: ");
+		cs_ddump_mask(D_DEVICE, buff, total_read, "SR IO: Receive: ");
     return total_read;
 }
 
@@ -215,12 +215,12 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         reader->sr_config->irdeto=FALSE;
         atr_ok=ERROR;
         memset(data,0,sizeof(data));
-        cs_debug_mask (D_IFD,"IO:SR: Trying with parity %s",parity_str[parity[i]]);
+        cs_debug_mask (D_DEVICE, "IO:SR: Trying with parity %s",parity_str[parity[i]]);
 
 
         // special irdeto case
         if(i==3) {
-            cs_debug_mask (D_IFD,"IO:SR: Trying irdeto");
+            cs_debug_mask (D_DEVICE, "IO:SR: Trying irdeto");
             reader->sr_config->F=618; /// magic smartreader value
             reader->sr_config->D=1;
             reader->sr_config->T=2; // will be set to T=1 in EnableSmartReader
@@ -248,9 +248,9 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
     
         //Read the ATR
         ret = smart_read(reader,data, 40,1);
-        cs_debug_mask (D_IFD,"IO:SR: get ATR ret = %d" , ret);
+        cs_debug_mask (D_DEVICE, "IO:SR: get ATR ret = %d" , ret);
         if(ret)
-            cs_ddump(data,ATR_MAX_SIZE*2,"IO:SR: ");
+            cs_ddump_mask(D_DEVICE, data,ATR_MAX_SIZE*2,"IO:SR: ");
 
         // this is to make sure we don't think this 03 FF 00 00 00 00 00 00 00 00 00 00 00 00 00 00  is a valid ATR.
         if((data[0]!=0x3B && data[0]!=0x03 && data[0]!=0x3F) || (data[1]==0xFF && data[2]==0x00)) {
@@ -259,17 +259,17 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
         }
             
         if(data[0]==0x03) {
-            cs_debug_mask (D_IFD,"IO:SR: Inverse convention detected, setting smartreader inv to 1");
+            cs_debug_mask (D_DEVICE, "IO:SR: Inverse convention detected, setting smartreader inv to 1");
 
             reader->sr_config->inv=1;
             EnableSmartReader(reader, reader->sr_config->fs/10000, reader->sr_config->F, (BYTE)reader->sr_config->D, reader->sr_config->N, reader->sr_config->T, reader->sr_config->inv,parity[i]);
         }
         // parse atr
         if(ATR_InitFromArray (atr, data, ret) == ATR_OK) {
-            cs_debug_mask (D_IFD,"IO:SR: ATR parsing OK");
+            cs_debug_mask (D_DEVICE, "IO:SR: ATR parsing OK");
             atr_ok=OK;
             if(i==3) {
-                cs_debug_mask (D_IFD,"IO:SR: Locking F and D for Irdeto mode");
+                cs_debug_mask (D_DEVICE, "IO:SR: Locking F and D for Irdeto mode");
                 reader->sr_config->irdeto=TRUE;
             }
         }
@@ -313,7 +313,7 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size)
             sched_yield();
             return(ret);
         }
-        cs_ddump(buff+offset, written, "SR IO: Transmit: ");
+        cs_ddump_mask(D_DEVICE, buff+offset, written, "SR IO: Transmit: ");
         total_written += written;
         offset += write_size;
     }
@@ -375,7 +375,7 @@ int SR_SetParity (struct s_reader *reader, unsigned short parity)
     int ret;
 
 		char *parity_str[5]={"NONE", "ODD", "EVEN", "MARK", "SPACE"};
-    cs_debug_mask (D_IFD,"IO:SR: Setting parity to %s",parity_str[parity]);
+    cs_debug_mask (D_DEVICE, "IO:SR: Setting parity to %s",parity_str[parity]);
 
     ret = smartreader_set_line_property(reader, (enum smartreader_bits_type) 8, STOP_BIT_2, parity);
     if(ret)
@@ -389,7 +389,7 @@ int SR_SetParity (struct s_reader *reader, unsigned short parity)
 int SR_Close (struct s_reader *reader)
 {
 
-	cs_debug_mask(D_IFD,"IO:SR: Closing smarteader\n");
+	cs_debug_mask(D_DEVICE, "IO:SR: Closing smarteader\n");
 
     reader->sr_config->running=FALSE;
     pthread_join(reader->sr_config->rt,NULL);
@@ -438,8 +438,8 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
 
     // command 1, set F and D parameter
     if(!reader->sr_config->irdeto) {
-        cs_debug_mask (D_IFD,"IO:SR: sending F=%04X (%d) to smartreader",Fi,Fi);
-        cs_debug_mask (D_IFD,"IO:SR: sending D=%02X (%d) to smartreader",Di,Di);
+        cs_debug_mask (D_DEVICE, "IO:SR: sending F=%04X (%d) to smartreader",Fi,Fi);
+        cs_debug_mask (D_DEVICE, "IO:SR: sending D=%02X (%d) to smartreader",Di,Di);
         FiDi[0]=0x01;
         FiDi[1]=HIBYTE(Fi);
         FiDi[2]=LOBYTE(Fi);
@@ -447,20 +447,20 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
         ret = smart_write(reader,FiDi, sizeof (FiDi));
     }
     else {
-        cs_debug("Not setting F and D as we're in Irdeto mode");
+        cs_debug_mask(D_ATR, "Not setting F and D as we're in Irdeto mode");
     }
 
     // command 2, set the frequency in KHz
     // direct from the source .. 4MHz is the best init frequency for T=0 card, but looks like it's causing issue with some nagra card, reveting to 3.69MHz
     freqk = clock * 10; //clock with type int couldnt hold freq in Hz on all platforms, so I reverted to 10khz units (like mhz) - dingo
-    cs_debug_mask (D_IFD,"IO:SR: sending Freq=%04X (%d) to smartreader",freqk,freqk);
+    cs_debug_mask (D_DEVICE, "IO:SR: sending Freq=%04X (%d) to smartreader",freqk,freqk);
     Freq[0]=0x02;
     Freq[1]=HIBYTE(freqk);
     Freq[2]=LOBYTE(freqk);
     ret = smart_write(reader, Freq, sizeof (Freq));
 
     // command 3, set paramter N
-    cs_debug_mask (D_IFD,"IO:SR: sending N=%02X (%d) to smartreader",Ni,Ni);
+    cs_debug_mask (D_DEVICE, "IO:SR: sending N=%02X (%d) to smartreader",Ni,Ni);
     N[0]=0x03;
     N[1]=Ni;
     ret = smart_write(reader, N, sizeof (N));
@@ -477,13 +477,13 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
     else if (T==1)
         T=0; // T=1 protocol is handled by oscam
         
-    cs_debug_mask (D_IFD,"IO:SR: sending T=%02X (%d) to smartreader",T,T);
+    cs_debug_mask (D_DEVICE, "IO:SR: sending T=%02X (%d) to smartreader",T,T);
     Prot[0]=0x04;
     Prot[1]=T;
     ret = smart_write(reader, Prot, sizeof (Prot));
 
     // command 5, set invert y/n
-    cs_debug_mask (D_IFD,"IO:SR: sending inv=%02X to smartreader",inv);
+    cs_debug_mask (D_DEVICE, "IO:SR: sending inv=%02X to smartreader",inv);
     Invert[0]=0x05;
     Invert[1]=inv;
     ret = smart_write(reader, Invert, sizeof (Invert));
@@ -592,7 +592,7 @@ static struct libusb_device* find_smartreader(const char *busname,const char *de
                 }
             }
             else if(libusb_get_bus_number(dev)==atoi(busname) && libusb_get_device_address(dev)==atoi(devname)) {
-                cs_debug_mask(D_IFD,"IO:SR: Checking FTDI device: %03d on bus %03d",libusb_get_device_address(dev),libusb_get_bus_number(dev));
+                cs_debug_mask(D_DEVICE, "IO:SR: Checking FTDI device: %03d on bus %03d",libusb_get_device_address(dev),libusb_get_bus_number(dev));
                 // check for smargo endpoints.
                 if(smartreader_check_endpoint(dev,out_endpoint))
                     dev_found=TRUE;

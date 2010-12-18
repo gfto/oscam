@@ -494,7 +494,7 @@ int read_cmd_len(struct s_reader * reader, const unsigned char *cmd)
   // some card reply with L 91 00 (L being the command length).
 
   if(!write_cmd_vg(cmd2,NULL) || !status_ok(cta_res+1)) {
-    cs_debug("[videoguard-reader] failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
+    cs_debug_mask(D_READER, "[videoguard-reader] failed to read %02x%02x cmd length (%02x %02x)",cmd[1],cmd[2],cta_res[1],cta_res[2]);
     return -1;
   }
   return cta_res[0];
@@ -703,7 +703,7 @@ void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
           }
           cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
           cw[7] = (cw[4] + cw[5] + cw[6]) & 0xFF;
-          cs_ddump(cw, 8, "Postprocessed Case 1 DW:");
+          cs_ddump_mask(D_READER, cw, 8, "Postprocessed Case 1 DW:");
           break;
         }
       case 3:
@@ -713,7 +713,7 @@ void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
           memcpy(buffer + 8, &ecm_header_data[ecmi + 3], ecm_header_data[ecmi] - 2);
           MD5(buffer, 8 + ecm_header_data[ecmi] - 2, md5_digest);
           memcpy(cw, md5_digest, 8);
-          cs_ddump(cw, 8, "Postprocessed Case 3 DW:");
+          cs_ddump_mask(D_READER, cw, 8, "Postprocessed Case 3 DW:");
           break;
         }
       case 2:

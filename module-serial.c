@@ -263,7 +263,7 @@ static int oscam_ser_send(struct s_client *client, uchar *buf, int l)
   tpe.millitm%=1000;
   n=oscam_ser_write(client, buf, l);
   cs_ftime(&tpe);
-  cs_ddump(buf, l, "send %d of %d bytes to %s in %d msec", n, l, remote_txt(),
+  cs_ddump_mask(D_CLIENT, buf, l, "send %d of %d bytes to %s in %d msec", n, l, remote_txt(),
                     1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
   if (n!=l)
     cs_log("transmit error. send %d of %d bytes only !", n, l);
@@ -418,7 +418,7 @@ static int oscam_ser_recv(struct s_client *client, uchar *xbuf, int l)
           int all = n+r;
           if( !oscam_ser_selrec(buf, r, l, &n) )
           {
-            cs_debug("not all data received, waiting another 50 ms");
+            cs_debug_mask(D_CLIENT, "not all data received, waiting another 50 ms");
             tpe.millitm+=50;
             if( !oscam_ser_selrec(buf, all-n, l, &n) )
               p=(-1);
@@ -494,7 +494,7 @@ static int oscam_ser_recv(struct s_client *client, uchar *xbuf, int l)
     serial_errors++;
   }
   cs_ftime(&tpe);
-  cs_ddump(buf, n, "received %d bytes from %s in %d msec", n, remote_txt(),
+  cs_ddump_mask(D_CLIENT, buf, n, "received %d bytes from %s in %d msec", n, remote_txt(),
                     1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
   client->last=tpe.time;
   switch(p)
@@ -507,7 +507,7 @@ static int oscam_ser_recv(struct s_client *client, uchar *xbuf, int l)
                else
                  cs_log(incomplete, n);
                break;
-    case (-2): cs_debug("unknown request or garbage"); 
+    case (-2): cs_debug_mask(D_CLIENT, "unknown request or garbage"); 
                break;
   }
   xbuf[0]=(uchar) ((job<<4) | p);
@@ -734,7 +734,7 @@ static int oscam_ser_check_ecm(ECM_REQUEST *er, uchar *buf, int l)
       for (i=0; (i<8) && (sssp_tab[i].pid!=er->pid); i++);
       if (i>=sssp_num)
       {
-        cs_debug("illegal request, unknown pid=%04X", er->pid);
+        cs_debug_mask(D_CLIENT, "illegal request, unknown pid=%04X", er->pid);
         return(2);
       }
       er->l    = l-5;

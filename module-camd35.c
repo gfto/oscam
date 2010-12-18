@@ -26,7 +26,7 @@ static int camd35_send(uchar *buf)
 	memset(sbuf + l, 0xff, 15);	// set unused space to 0xff for newer camd3's
 	memcpy(sbuf + 4, i2b(4, crc32(0L, sbuf+20, sbuf[1])), 4);
 	l = boundary(4, l);
-	cs_ddump(sbuf, l, "send %d bytes to %s", l, remote_txt());
+	cs_ddump_mask(D_CLIENT, sbuf, l, "send %d bytes to %s", l, remote_txt());
 	aes_encrypt(sbuf, l);
 
         int status;
@@ -99,17 +99,17 @@ static int camd35_recv(struct s_client *client, uchar *buf, int l)
       break;
     case 2:
       aes_decrypt(buf, rs);
-      cs_ddump(buf, rs, "received %d bytes from %s", rs, remote_txt());
+      cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s", rs, remote_txt());
       if (rs!=boundary(4, rs))
       {
-        cs_debug("WARNING: packet size has wrong decryption boundary");
+        cs_debug_mask(D_CLIENT, "WARNING: packet size has wrong decryption boundary");
       }
       //n=(buf[0]==3) ? n=0x34 : 0; this was original, but statement below seems more logical -- dingo35
       n=(buf[0]==3) ? 0x34 : 0;
       n=boundary(4, n+20+buf[1]);
       if (n<rs)
       {
-        cs_debug("ignoring %d bytes of garbage", rs-n);
+        cs_debug_mask(D_CLIENT, "ignoring %d bytes of garbage", rs-n);
       }
       else
         if (n>rs) rc=-3;
@@ -121,7 +121,7 @@ static int camd35_recv(struct s_client *client, uchar *buf, int l)
   }
   if ((rs>0) && ((rc==-1)||(rc==-2)))
   {
-    cs_ddump(buf, rs, "received %d bytes from %s (native)", rs, remote_txt);
+    cs_ddump_mask(D_CLIENT, buf, rs, "received %d bytes from %s (native)", rs, remote_txt);
   }
   client->last=time((time_t *) 0);
   switch(rc)

@@ -117,12 +117,12 @@ int network_select(int forRead, int timeout)
        int r=select(sd+1,forRead ? &fds:0,forRead ? 0:&fds,0,&tv); 
        if(r>0) return 1; 
        else if(r<0) { 
-         cs_debug("socket: select failed: %s",strerror(errno)); 
+         cs_debug_mask(D_READER, "socket: select failed: %s",strerror(errno)); 
          return -1; 
        } 
        else { 
          if(timeout>0) {
-           cs_debug("socket: select timed out (%d %s)",timeout&~MSTIMEOUT,(timeout&MSTIMEOUT)?"ms":"secs");
+           cs_debug_mask(D_READER, "socket: select timed out (%d %s)",timeout&~MSTIMEOUT,(timeout&MSTIMEOUT)?"ms":"secs");
          }
          errno=ETIMEDOUT;
          return 0; 
@@ -287,7 +287,7 @@ void network_tcp_connection_close(struct s_client *cl, int fd)
 {
 	if(!cl) return;
 	struct s_reader *reader = cl->reader;
-	cs_debug("tcp_conn_close(): fd=%d, cl->typ == 'c'=%d", fd, cl->typ == 'c');
+	cs_debug_mask(D_READER, "tcp_conn_close(): fd=%d, cl->typ == 'c'=%d", fd, cl->typ == 'c');
 
 	if (fd) {
 		close(fd);
@@ -320,7 +320,7 @@ void network_tcp_connection_close(struct s_client *cl, int fd)
         reader->last_s=reader->last_g=0;
         
         if (reader->ph.c_init(cl)) {
-            cs_debug("network_tcp_connection_close() exit(1);");
+            cs_debug_mask(D_READER, "network_tcp_connection_close() exit(1);");
             cs_exit(1);
         }
     }
@@ -366,7 +366,7 @@ static void casc_do_sock(struct s_reader * reader, int w)
       if (reader->ph.c_idle)
       	reader_do_idle(reader);
       else {
-        cs_debug("casc_do_sock: close connection");
+        cs_debug_mask(D_READER, "casc_do_sock: close connection");
         network_tcp_connection_close(reader->client, cl->udp_fd);
       }
       return;
@@ -450,7 +450,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   else
     cl->ecmtask[n].idx=cl->idx++;
   cl->ecmtask[n].rc=10;
-  cs_debug("---- ecm_task %d, idx %d, sflag=%d, level=%d", 
+  cs_debug_mask(D_READER, "---- ecm_task %d, idx %d, sflag=%d, level=%d", 
            n, cl->ecmtask[n].idx, sflag, er->level);
 
   if( reader->ph.type==MOD_CONN_TCP && reader->tcp_rto )
@@ -461,7 +461,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
       if (reader->ph.c_idle)
       	reader_do_idle(reader);
       else {
-        cs_debug("rto=%d", rto);
+        cs_debug_mask(D_READER, "rto=%d", rto);
         network_tcp_connection_close(reader->client, cl->udp_fd);
       }
     }
@@ -494,7 +494,7 @@ static int reader_store_emm(uchar *emm, uchar type)
   memcpy(cl->emmcache[cl->rotate].emmd5, MD5(emm, emm[2], cl->dump), CS_EMMSTORESIZE);
   cl->emmcache[cl->rotate].type=type;
   cl->emmcache[cl->rotate].count=1;
-//  cs_debug("EMM stored (index %d)", rotate);
+//  cs_debug_mask(D_READER, "EMM stored (index %d)", rotate);
   rc=cl->rotate;
   cl->rotate=(++cl->rotate < CS_EMMCACHESIZE)?cl->rotate:0;
   return(rc);
@@ -512,7 +512,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   er->ocaid=er->caid;
   if (!chk_bcaid(er, &reader->ctab))
   {
-    cs_debug("caid %04X filtered", er->caid);
+    cs_debug_mask(D_READER, "caid %04X filtered", er->caid);
     er->rcEx=E2_CAID;
     er->rc=0;
     write_ecm_answer(reader, er);
@@ -535,13 +535,13 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
 #ifdef WITH_CARDREADER
   if (reader->ratelimitecm) {
-	cs_debug("ratelimit idx:%d rc:%d caid:%04X srvid:%04X",er->idx,er->rc,er->caid,er->srvid);
+	cs_debug_mask(D_READER, "ratelimit idx:%d rc:%d caid:%04X srvid:%04X",er->idx,er->rc,er->caid,er->srvid);
 	int foundspace=-1;
 	int h;
 	for (h=0;h<reader->ratelimitecm;h++) {
 		if (reader->rlecmh[h].srvid == er->srvid) {
 			foundspace=h;
-			cs_debug("ratelimit found srvid in use at pos: %d",h);
+			cs_debug_mask(D_READER, "ratelimit found srvid in use at pos: %d",h);
 			break;
 		} 
 	}
@@ -549,14 +549,14 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		for (h=0;h<reader->ratelimitecm;h++) {
 			if ((reader->rlecmh[h].last ==- 1) || ((time(NULL)-reader->rlecmh[h].last) > reader->ratelimitseconds)) {
 				foundspace=h;
-				cs_debug("ratelimit found space at pos: %d old seconds %d",h,reader->rlecmh[h].last);
+				cs_debug_mask(D_READER, "ratelimit found space at pos: %d old seconds %d",h,reader->rlecmh[h].last);
 				break;
 			} 
 		}
 	}
 	if (foundspace<0) {
 		//drop
-		cs_debug("ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
+		cs_debug_mask(D_READER, "ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
 		er->rcEx=32;
 		er->rc=0;
 		int clcw;
@@ -617,16 +617,16 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   if ((rc=ecs)<2)
   {
           if (reader->typ & R_IS_CASCADING) {
-                  cs_debug("network emm reader: %s" ,reader->label);
+                  cs_debug_mask(D_READER, "network emm reader: %s" ,reader->label);
 
                   if (reader->ph.c_send_emm) {
                           rc=reader->ph.c_send_emm(ep);
                   } else {
-                          cs_debug("send_emm() support missing");
+                          cs_debug_mask(D_READER, "send_emm() support missing");
                           rc=0;
                   }
           } else {
-                  cs_debug("local emm reader: %s" ,reader->label);
+                  cs_debug_mask(D_READER, "local emm reader: %s" ,reader->label);
 #ifdef WITH_CARDREADER
                   rc=reader_emm(reader, ep);
 #else
@@ -725,13 +725,13 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
 
   if ((logfd) && (FD_ISSET(logfd, &fds)))
   {
-    cs_debug("select: log-socket ist set");
+    cs_debug_mask(D_READER, "select: log-socket ist set");
     return(3);
   }
 
   if ((fd2) && (FD_ISSET(fd2, &fds)))
   {
-    cs_debug("select: socket is set");
+    cs_debug_mask(D_READER, "select: socket is set");
     return(2);
   }
 
@@ -748,13 +748,13 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
         if (reader->ph.c_idle)
           reader_do_idle(reader);
         else {
-          cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
+          cs_debug_mask(D_READER, "%s inactive_timeout (%d), close connection (fd=%d)", 
                   reader->ph.desc, time_diff, fd2);
           network_tcp_connection_close(reader->client, fd2);
         }
       }
     }
-    cs_debug("select: pipe is set");
+    cs_debug_mask(D_READER, "select: pipe is set");
     return(1);
   }
 
@@ -763,7 +763,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
     if (reader->ph.c_idle)
       reader_do_idle(reader);
     else {
-      cs_debug("%s inactive_timeout (%d), close connection (fd=%d)", 
+      cs_debug_mask(D_READER, "%s inactive_timeout (%d), close connection (fd=%d)", 
              reader->ph.desc, tv.tv_sec, fd2);
       network_tcp_connection_close(reader->client, fd2);
     }
@@ -850,7 +850,6 @@ void * start_cardreader(void * rdr)
 
 	reader->client->thread=pthread_self();
 	pthread_setspecific(getclient, reader->client);
-	reader->client->cs_ptyp=D_READER;
 	strcpy(reader->client->usr, first_client->usr);
 
   if (reader->typ & R_IS_CASCADING)

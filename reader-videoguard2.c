@@ -6,8 +6,7 @@
 #define cs_log(x...)  cs_log("[videoguard2-reader] "x)
 #define cs_ri_log(x,y...)  cs_ri_log(x,"[videoguard2-reader] "y)
 #ifdef WITH_DEBUG
-  #define cs_debug(x...)  cs_debug("[videoguard2-reader] "x)
-  #define cs_debug_mask(x,y...) cs_debug_mask(x,"[videoguard2-reader] "y)
+  #define cs_debug_mask(x,y...) cs_debug_mask(x, "[videoguard2-reader] "y)
 #endif
 
 static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *rxbuff, unsigned char *cw)
@@ -200,7 +199,7 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
           }
           cw[3] = (cw[0] + cw[1] + cw[2]) & 0xFF;
           cw[7] = (cw[4] + cw[5] + cw[6]) & 0xFF;
-          cs_ddump(cw, 8, "[videoguard2-reader] Postprocessed Case 1 DW:");
+          cs_ddump_mask(D_READER, cw, 8, "[videoguard2-reader] Postprocessed Case 1 DW:");
           break;
         }
       case 3:
@@ -210,7 +209,7 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
           memcpy(buffer + 8, &ecm_header_data[ecmi + 3], ecm_header_data[ecmi] - 2);
           MD5(buffer, 8 + ecm_header_data[ecmi] - 2, md5_digest);
           memcpy(cw, md5_digest, 8);
-          cs_ddump(cw, 8, "[videoguard2-reader] Postprocessed Case 3 DW:");
+          cs_ddump_mask(D_READER, cw, 8, "[videoguard2-reader] Postprocessed Case 3 DW:");
           break;
         }
       case 2:
@@ -279,7 +278,7 @@ static void vg2_read_tiers(struct s_reader * reader)
       unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
       char *tier_name = get_tiername(tier_id, reader->caid[0]);
       if(!stopemptytier){
-        cs_debug("tier: %04x, tier-number: 0x%02x",tier_id,i);
+        cs_debug_mask(D_READER, "tier: %04x, tier-number: 0x%02x",tier_id,i);
       }
       cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s",tier_id,y,m,d,H,M,S,tier_name);
     }
@@ -290,10 +289,10 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 {
   get_hist;
   if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50)){
-    cs_debug("failed history check");
+    cs_debug_mask(D_READER, "failed history check");
     return ERROR;
   }
-  cs_debug("passed history check");
+  cs_debug_mask(D_READER, "passed history check");
 
   get_atr;
   def_resp;
@@ -309,9 +308,9 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
   }
 
-  cs_debug("type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
+  cs_debug_mask(D_READER, "type: %s, baseyear: %i", reader->card_desc, reader->card_baseyear);
   if(reader->ndsversion == NDS2){
-    cs_debug("forced to NDS2");
+    cs_debug_mask(D_READER, "forced to NDS2");
   }
 
   //a non videoguard2/NDS2 card will fail on read_cmd_len(ins7401)

@@ -2694,7 +2694,7 @@ int process_request(FILE *f, struct in_addr in) {
 	char *saveptr1=NULL;
 	int n;
 	if ((n=webif_read(buf, sizeof(buf)-1, f)) <= 0) {
-		cs_debug("webif read error %d", n);
+		cs_debug_mask(D_CLIENT, "webif read error %d", n);
 		return -1;
 	}
 	buf[n]='\0';

@@ -216,12 +216,12 @@ struct s_dvbapi_priority *dvbapi_check_prio_match(int demux_id, int pidindex, ch
 #ifdef WITH_STAPI
 	#define cs_log(x...)	cs_log("stapi: "x)
 	#ifdef WITH_DEBUG
-		#define cs_debug(x...)	cs_debug("stapi: "x)
+		#define cs_debug_mask(x,y...)	cs_debug_mask(x,"stapi: "y)
 	#endif
 #else
 	#define cs_log(x...)	cs_log("dvbapi: "x)
 	#ifdef WITH_DEBUG
-		#define cs_debug(x...)	cs_debug("dvbapi: "x)
+		#define cs_debug_mask(x,y...)	cs_debug_mask(x,"dvbapi: "y)
 	#endif
 #endif
 

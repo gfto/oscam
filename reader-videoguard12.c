@@ -6,8 +6,7 @@
 #define cs_log(x...)  cs_log("[videoguard12-reader] "x)
 #define cs_ri_log(x,y...)  cs_ri_log(x,"[videoguard12-reader] "y)
 #ifdef WITH_DEBUG
-  #define cs_debug(x...)  cs_debug("[videoguard12-reader] "x)
-  #define cs_debug_mask(x,y...) cs_debug_mask(x,"[videoguard12-reader] "y)
+  #define cs_debug_mask(x,y...) cs_debug_mask(x, "[videoguard12-reader] "y)
 #endif
 
 static int vg12_do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res)
@@ -90,10 +89,10 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
   get_hist;
 
   if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50)){
-    cs_debug("failed history check");
+    cs_debug_mask(D_READER, "failed history check");
     return ERROR;
   }
-  cs_debug("passed history check");
+  cs_debug_mask(D_READER, "passed history check");
 
   get_atr;
   def_resp;
@@ -234,7 +233,7 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
       }//while
     }//ele
 
-  cs_debug("calculated BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
+  cs_debug_mask(D_READER, "calculated BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
 */
 
   /* the boxid is specified in the config */
@@ -243,7 +242,7 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
     for (i = 0; i < 4; i++) {
       boxID[i] = (reader->boxid >> (8 * (3 - i))) % 0x100;
     }
-    cs_debug("oscam.server BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
+    cs_debug_mask(D_READER, "oscam.server BoxID: %02X%02X%02X%02X", boxID[0], boxID[1], boxID[2], boxID[3]);
   }
 
   if (!boxidOK) {

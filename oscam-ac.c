@@ -95,7 +95,7 @@ void ac_do_stat()
       //}
       
       if( cl_idx->ac_penalty==2 ) {// banned
-        cs_debug("user '%s' banned", cl_idx->usr);
+        cs_debug_mask(D_CLIENT, "user '%s' banned", cl_idx->usr);
         acasc->ac_deny=1;
       }
       else
@@ -109,10 +109,10 @@ void ac_do_stat()
         prev_deny=acasc->ac_deny;
         acasc->ac_deny = (exceeds >= cfg->ac_denysamples);
         
-        cs_debug("%s limit=%d, max=%d, samples=%d, dsamples=%d, ac[ci=%d][si=%d]:",
+        cs_debug_mask(D_CLIENT, "%s limit=%d, max=%d, samples=%d, dsamples=%d, ac[ci=%d][si=%d]:",
           cl_idx->usr, cl_idx->ac_limit, maxval, 
           cfg->ac_samples, cfg->ac_denysamples, i, idx);
-        cs_debug("%d %d %d %d %d %d %d %d %d %d ", ac_stat->stat[0],
+        cs_debug_mask(D_CLIENT, "%d %d %d %d %d %d %d %d %d %d ", ac_stat->stat[0],
           ac_stat->stat[1], ac_stat->stat[2], ac_stat->stat[3],
           ac_stat->stat[4], ac_stat->stat[5], ac_stat->stat[6],
           ac_stat->stat[7], ac_stat->stat[8], ac_stat->stat[9]);
@@ -156,13 +156,13 @@ void ac_init_client(struct s_auth *account)
     {
       cl->ac_limit = (account->ac_users*100+80)*cfg->ac_stime;
       cl->ac_penalty = account->ac_penalty;
-      cs_debug("login '%s', ac_idx=%d, users=%d, stime=%d min, dwlimit=%d per min, penalty=%d", 
+      cs_debug_mask(D_CLIENT, "login '%s', ac_idx=%d, users=%d, stime=%d min, dwlimit=%d per min, penalty=%d", 
               account->usr, account->ac_idx, account->ac_users, cfg->ac_stime, 
               account->ac_users*100+80, account->ac_penalty);
     }
     else
     {
-      cs_debug("anti-cascading not used for login '%s'", account->usr);
+      cs_debug_mask(D_CLIENT, "anti-cascading not used for login '%s'", account->usr);
     }
   }
 }
@@ -178,9 +178,9 @@ static int ac_dw_weight(ECM_REQUEST *er)
         (cpmap->chid  ==0 || cpmap->chid  ==er->chid) )
       return (cpmap->dwtime*100/60);
 
-  cs_debug("WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in oscam.ac", 
+  cs_debug_mask(D_CLIENT, "WARNING: CAID %04X, PROVID %06X, SID %04X, CHID %04X not found in oscam.ac", 
            er->caid, er->prid, er->srvid, er->chid);
-  cs_debug("set DW lifetime 10 sec");
+  cs_debug_mask(D_CLIENT, "set DW lifetime 10 sec");
   return 16; // 10*100/60
 }
 
@@ -223,7 +223,7 @@ void ac_chk(ECM_REQUEST *er, int level)
   if( acasc->ac_deny )
     if( cl->ac_penalty )
     {
-      cs_debug("send fake dw");
+      cs_debug_mask(D_CLIENT, "send fake dw");
       er->rc=7; // fake
       er->rcEx=0;
       cs_sleepms(cfg->ac_fakedelay);

@@ -160,7 +160,7 @@
 #define D_IFD       16  // Debug IFD+protocol
 #define D_DEVICE    32  // Debug Reader I/O
 #define D_EMM				64  // Dumps EMM
-#define D_FUT				128 // Reserved for future use
+#define D_DVBAPI		128 // Debug DVBAPI
 #define D_ALL_DUMP  255 // dumps all
 
 #define R_DB2COM1   0x1 // Reader Dbox2 @ com1
@@ -651,7 +651,6 @@ struct s_client
 
   int pfd;      // Primary FD, must be closed on exit
   struct s_reader *reader; //points to s_reader when cl->typ='r'
-  int cs_ptyp; // process-type
 
   ECM_REQUEST *ecmtask;
   struct s_emm *emmcache;
@@ -661,7 +660,6 @@ struct s_client
   //reader common
   int last_idx;
   ushort idx;
-  //int cs_ptyp_orig;
   int rotate;
 
   uchar	*req;
@@ -1445,9 +1443,7 @@ extern int  cs_init_log();
 extern void cs_write_log(char *);
 extern void cs_log(const char *,...);
 #ifdef WITH_DEBUG
-extern void cs_debug(const char *,...);
 extern void cs_debug_mask(unsigned short, const char *,...);
-extern void cs_ddump(const uchar *, int, char *, ...);
 extern void cs_ddump_mask(unsigned short, const uchar *, int, char *, ...);
 #else
 #define cs_debug(...)
