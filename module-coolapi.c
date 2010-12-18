@@ -12,6 +12,7 @@
 #include <sys/time.h>
 
 #include "module-coolapi.h"
+#include "globals.h"
 
 #define MAX_PIDS 20
 #define MAX_FILTER 10
