@@ -334,6 +334,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=16##CUSTOMPARAM##\" title=\"traffic to the reader-device on IFD layer\">16</A>&nbsp;\n\
 	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=32##CUSTOMPARAM##\" title=\"traffic to the reader-device on I/O layer\">32</A>&nbsp;\n\
 	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=64##CUSTOMPARAM##\" title=\"EMM logging\">64</A>&nbsp;\n\
+	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=128##CUSTOMPARAM##\" title=\"DVB Api\">128</A>&nbsp;\n\
 	<A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=255##CUSTOMPARAM##\" title=\"debug all\">255</A>\n"
 
 #define TPLFAILBAN "\
