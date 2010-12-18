@@ -275,7 +275,7 @@ static void usage()
   fprintf(stderr, "\t              16 = traffic to the reader-device on IFD layer\n");
   fprintf(stderr, "\t              32 = traffic to the reader-device on I/O layer\n");
   fprintf(stderr, "\t              64 = EMM logging\n");
-  fprintf(stderr, "\t             128 = dvbapi logging\n");
+  fprintf(stderr, "\t             128 = DVBAPI logging\n");
   fprintf(stderr, "\t             255 = debug all\n");
   fprintf(stderr, "\t-h         : show this help\n");
   fprintf(stderr, "\n");
