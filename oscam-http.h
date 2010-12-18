@@ -1326,7 +1326,8 @@ All users will become disconnected.<br>\
 You will not be able to restart oscam from the webinterface.<br>\
 The webinterface will try to connect to oscam once 30 seconds after shutdown.</b><br>\n\
 </DIV><br><form action=\"shutdown.html\" method=\"get\">\n\
-<input type=\"submit\" name=\"action\" value=\"Shutdown\" title=\"Save service and reload services\" ##BTNDISABLED##></TD>\n\
+<input type=\"submit\" name=\"action\" value=\"Shutdown\" title=\"Shutdown Oscam\" ##BTNDISABLED##>\
+<input type=\"submit\" name=\"action\" value=\"Restart\" title=\"Restart Oscam\" ##BTNDISABLED##></TD>\n\
 </form>\
 ##TPLFOOTER##"
 
