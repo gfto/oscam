@@ -2458,7 +2458,6 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 			if((strlen(targetfile) > 0) && (file_exists(targetfile) == 1)) {
 				FILE *fpsave;
 				char *fcontent = getParam(params, "filecontent");
-				urldecode(fcontent);
 
 				if((fpsave = fopen(targetfile,"w"))){
 					fprintf(fpsave,"%s",fcontent);
@@ -2492,9 +2491,6 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	}
 
 	tpl_addVar(vars, 0, "PART", getParam(params, "part"));
-
-	// Set File section to writeprotected while it's under construction
-	writable = 0;	// <------- Remove before flight
 
 	if (!writable) {
 		tpl_addVar(vars, 0, "WRITEPROTECTION", "You cannot change content of this file");
@@ -2675,16 +2671,11 @@ int process_request(FILE *f, struct in_addr in) {
 		return 0;
 	}
 
-	char buf[10240];
-	char *tmp;
-
 	int authok = 0;
 	char expectednonce[64];
 
-	char *method;
-	char *path;
-	char *protocol;
-	char *pch;
+	char *method, *path, *protocol;
+	char *pch, *tmp;
 	/* List of possible pages */
 	char *pages[]= {
 		"/config.html",
@@ -2716,12 +2707,63 @@ int process_request(FILE *f, struct in_addr in) {
 
 	/* First line always includes the GET/POST request */
 	char *saveptr1=NULL;
-	int n;
-	if ((n=webif_read(buf, sizeof(buf)-1, f)) <= 0) {
-		cs_debug_mask(D_CLIENT, "webif read error %d", n);
+	int n, bufsize=0;
+	char *filebuf = NULL;
+	char buf2[1024];
+	struct pollfd pfd2[1];
+
+	while (1) {
+		if ((n=webif_read(buf2, sizeof(buf2), f)) <= 0) {
+			cs_debug_mask(D_CLIENT, "webif read error %d", n);
+#ifdef WITH_SSL
+			if (cfg->http_use_ssl)
+				ERR_print_errors_fp(stderr);
+#endif
+			return -1;
+		}
+
+		filebuf = realloc(filebuf, bufsize+n+1);
+
+		memcpy(filebuf+bufsize, buf2, n);
+		bufsize+=n;
+
+		//max request size 100kb
+		if (bufsize>102400) {
+			cs_log("error: too much data received from %s", inet_ntoa(*(struct in_addr *)&in));
+			free(filebuf);
+			return -1;
+		}
+
+#ifdef WITH_SSL
+		if (cfg->http_use_ssl) {
+			int len = 0;
+			len = SSL_pending((SSL*)f);
+
+			if (len>0)
+				continue;
+
+			pfd2[0].fd = SSL_get_fd((SSL*)f);
+
+		} else
+#endif
+			pfd2[0].fd = fileno(f);
+
+		pfd2[0].events = (POLLIN | POLLPRI);
+
+		int rc = poll(pfd2, 1, 100);
+		if (rc>0)
+			continue;
+
+		break;
+	}
+
+	if (!filebuf) {
+		cs_log("error: no data received");
 		return -1;
 	}
-	buf[n]='\0';
+
+	filebuf[bufsize]='\0';
+	char *buf=filebuf;
 
 	method = strtok_r(buf, " ", &saveptr1);
 	path = strtok_r(NULL, " ", &saveptr1);
@@ -2769,6 +2811,7 @@ int process_request(FILE *f, struct in_addr in) {
 		strcat(tmp, "\"");
 		if(authok == 2) strcat(tmp, ", stale=true");
 		send_headers(f, 401, "Unauthorized", tmp, "text/html");
+		free(filebuf);
 		return 0;
 	}
 
@@ -2852,6 +2895,7 @@ int process_request(FILE *f, struct in_addr in) {
 		}
 		tpl_clear(vars);
 	}
+	free(filebuf);
 	return 0;
 }
 
@@ -2865,7 +2909,7 @@ SSL_CTX *webif_init_ssl() {
 
 	static const char *cs_cert="oscam.pem";
  
-	meth = SSLv3_method();
+	meth = SSLv23_server_method();
  
 	ctx = SSL_CTX_new(meth);
 

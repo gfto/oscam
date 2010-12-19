@@ -448,7 +448,11 @@ void send_file(FILE *f, int fileno){
 
 		fclose (fp);
 	} else {
-		webif_write(CSS, f);
+		if (fileno == 1)
+			webif_write(CSS, f);
+		else if (fileno == 2)
+			webif_write(JSCRIPT, f);
+		
 	}
 }
 

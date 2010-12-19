@@ -52,7 +52,7 @@ P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red
 H4.styleauthor:after {content:\"Eneen\";}\n"
 
 #define JSCRIPT "\
-	function do_nothing(){}"
+	function do_nothing(){}\n"
 
 #define ICMAI "data:image/x-icon;base64,\
 AAABAAEAEBAAAAEACABoBQAAFgAAACgAAAAQAAAAIAAAAAEACAAAAAAAQAEAAAAAAAAAAAAAAAAA\
