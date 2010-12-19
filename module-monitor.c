@@ -491,8 +491,8 @@ static void monitor_logsend(char *flag){
 }
 
 static void monitor_set_debuglevel(char *flag){
-	cfg->debuglvl = atoi(flag);
-	cs_debug_level();
+	if (flag)
+		cs_dblevel = atoi(flag);
 }
 
 static void monitor_get_account(){
