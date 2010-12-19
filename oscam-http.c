@@ -1832,8 +1832,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	}
 
 	char *debuglvl = getParam(params, "debug");
-	if(strlen(debuglvl) > 0)
+	if(strlen(debuglvl) > 0) {
 		cs_dblevel = atoi(debuglvl);
+		cs_log("%s debug_level=%d", "all", cs_dblevel);
+	}
 
 	if(getParamDef(params, "hide", NULL)) {
 		ulong clidx;
