@@ -1293,8 +1293,10 @@ extern FILE *fpa;
 extern pthread_mutex_t gethostbyname_lock;
 
 // oscam
+#ifdef WEBIF
 extern void cs_exit_oscam();
 extern void cs_restart_oscam();
+#endif
 extern int recv_from_udpipe(uchar *);
 extern char* username(struct s_client *);
 extern struct s_client * get_client_by_tid(unsigned long);
