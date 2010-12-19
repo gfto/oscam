@@ -19,6 +19,7 @@ extern void cs_statistics(struct s_client * client);
 /*****************************************************************************
         Globals
 *****************************************************************************/
+int exit_oscam=0;
 struct s_module ph[CS_MAX_MOD]; // Protocols
 struct s_cardsystem cardsystem[CS_MAX_MOD]; // Protocols
 struct s_client * first_client = NULL; //Pointer to clients list, first client is master
@@ -573,8 +574,6 @@ void cs_exit(int sig)
 	cs_close_log();
 
 	NULLFREE(cl);
-
-	exit(sig);  //clears all threads
 }
 
 void cs_reinit_clients()
@@ -2996,10 +2995,41 @@ char * get_tmp_dir()
   return cs_tmpdir;
 }
 
+#ifdef WEBIF
+static void restart_daemon()
+{
+  while (1) {
+  
+    //start client process:
+    pid_t pid = fork(); 
+    if (!pid)
+      return; //client process=oscam process
+    if (pid < 0)
+      exit(1);
+    
+    //restart control process:
+    int res=0;
+    int status=0;
+    do {
+      res = waitpid(pid, &status, 0);
+      if (res==-1) {
+        if (errno!=EINTR)
+          exit(1);
+      }
+    } while (res!=pid);
+
+    status = WEXITSTATUS(status);
+    
+    //status=99 restart oscam, all other->terminate
+    if (status!=99) {
+      exit(status);
+    }
+  }
+}
+#endif
 
 int main (int argc, char *argv[])
 {
-
 
 if (pthread_key_create(&getclient, NULL)) {
   fprintf(stderr, "Could not create getclient, exiting...");
@@ -3125,6 +3155,21 @@ if (pthread_key_create(&getclient, NULL)) {
 			  usage();
 	  }
   }
+
+#ifdef OS_MACOSX
+  if (bg && daemon_compat(1,0))
+#else
+  if (bg && daemon(1,0))
+#endif
+  {
+    cs_log("Error starting in background (errno=%d: %s)", errno, strerror(errno));
+    cs_exit(1);
+  }
+
+#ifdef WEBIF
+  restart_daemon();  
+#endif
+
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
   init_shm();
   init_config();
@@ -3171,16 +3216,6 @@ if (pthread_key_create(&getclient, NULL)) {
 
   first_client->fd_m2c=fd_c2m;
   first_client->fd_m2c_c=mfdr;
-
-#ifdef OS_MACOSX
-  if (bg && daemon_compat(1,0))
-#else
-  if (bg && daemon(1,0))
-#endif
-  {
-    cs_log("Error starting in background (errno=%d: %s)", errno, strerror(errno));
-    cs_exit(1);
-  }
 
   write_versionfile();
   server_pid = getpid();
@@ -3247,10 +3282,16 @@ if (pthread_key_create(&getclient, NULL)) {
 				ph[i].s_handler(i);
 
 	//cs_close_log();
-	while (1) {
+	while (!exit_oscam) {
 		fd_set fds;
 
 		do {
+		        //timeout value for checking exit_oscam:
+                        struct timeval timeout;
+                        timeout.tv_sec = 1;
+                        timeout.tv_usec = 0;
+                        
+                        //Wait for incoming data
 			FD_ZERO(&fds);
 			FD_SET(mfdr, &fds);
 			for (i=0; i<CS_MAX_MOD; i++)
@@ -3259,9 +3300,12 @@ if (pthread_key_create(&getclient, NULL)) {
 						if (ph[i].ptab->ports[j].fd)
 							FD_SET(ph[i].ptab->ports[j].fd, &fds);
 			errno=0;
-			select(gfd, &fds, 0, 0, 0);
-		} while (errno==EINTR);
-
+			select(gfd, &fds, 0, 0, &timeout);
+		} while (errno==EINTR && !exit_oscam); //if timeout accurs and exit_oscam is set, we break the loop
+		
+		if (exit_oscam)
+		        break;
+		  
 		first_client->last=time((time_t *)0);
 
 		if (FD_ISSET(mfdr, &fds)) {
@@ -3278,14 +3322,34 @@ if (pthread_key_create(&getclient, NULL)) {
 		}
 	}
 
+        //can't kill? running endless...
+	//struct s_client *cl;
+	//for (cl=first_client->next;cl;cl=cl->next)
+	//  kill_thread(cl);
+	  
 #ifdef AZBOX
   if (openxcas_close() < 0) {
     cs_log("openxcas: could not close");
   }
 #endif
 
-	cs_exit(1);
+	cs_exit(exit_oscam);
+	return exit_oscam;
 }
+
+#ifdef WEBIF
+void cs_exit_oscam()
+{
+  exit_oscam=1;
+  cs_log("exit oscam requested");
+}
+
+void cs_restart_oscam()
+{
+  exit_oscam=99;
+  cs_log("restart oscam requested");
+}
+#endif
 
 #ifdef CS_LED
 void cs_switch_led(int led, int action) {

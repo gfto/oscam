@@ -7,7 +7,7 @@
 #endif
 
 #ifndef WITH_SSL
-//#define WITH_SSL
+#define WITH_SSL
 #endif
 
 #ifndef HAVE_DVBAPI

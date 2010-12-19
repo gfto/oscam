@@ -2269,10 +2269,19 @@ void send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *p
 		webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
 
-		struct s_client *cl;
-		for (cl=first_client->next; cl ; cl=cl->next)
-			kill_thread(cl);
-		exit(SIGQUIT);
+		cs_exit_oscam();
+	}
+	else if (strcmp(getParam(params, "action"), "Restart") == 0) {
+		tpl_addVar(vars, 0, "STYLESHEET", CSS);
+		tpl_printf(vars, 0, "REFRESHTIME", "%d", 1);
+		tpl_addVar(vars, 0, "REFRESHURL", "status.html");
+		tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+		tpl_printf(vars, 0, "SECONDS", "%d", 1);
+		webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
+		running = 0;
+		
+		cs_restart_oscam();
+		
 	} else {
 		webif_write(tpl_getTpl(vars, "PRESHUTDOWN"), f);
 	}
@@ -2989,6 +2998,6 @@ void http_srv() {
 #endif
 	cs_log("HTTP Server: Shutdown requested from %s", inet_ntoa(*(struct in_addr *)&remote.sin_addr));
 	close(sock);
-	exit(SIGQUIT);
+	//exit(SIGQUIT);
 }
 #endif
