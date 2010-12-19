@@ -574,6 +574,7 @@ void cs_exit(int sig)
 	cs_close_log();
 
 	NULLFREE(cl);
+	exit_oscam = sig;
 }
 
 void cs_reinit_clients()
