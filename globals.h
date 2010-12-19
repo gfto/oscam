@@ -1017,7 +1017,6 @@ struct s_ip
 struct s_config
 {
 	int		nice;
-	int		debuglvl;
 	ulong		netprio;
 	ulong		ctimeout;
 	ulong		ftimeout;

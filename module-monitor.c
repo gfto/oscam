@@ -330,7 +330,7 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 	monitor_send_details(buf, pid);
 	sprintf(buf, "System=%s-%s-%s",  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "DebugLevel=%d", cfg->debuglvl);
+	sprintf(buf, "DebugLevel=%d", cs_dblevel);
 	monitor_send_details(buf, pid);
 	sprintf(buf, "MaxClients=UNLIMITED");
 	monitor_send_details(buf, pid);

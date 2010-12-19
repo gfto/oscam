@@ -631,25 +631,20 @@ void cs_reinit_clients()
 void cs_debug_level()
 {
 	//switch debuglevel forward one step if not set from outside
-	if(cfg->debuglvl == cs_dblevel) {
-		switch (cs_dblevel) {
-			case 0:
-				cs_dblevel = 1;
-				break;
-			case 128:
-				cs_dblevel = 255;
-				break;
-			case 255:
-				cs_dblevel = 0;
-				break;
-			default:
-				cs_dblevel <<= 1;
-		}
-	} else {
-		cs_dblevel = cfg->debuglvl;
+	switch (cs_dblevel) {
+		case 0:
+			cs_dblevel = 1;
+			break;
+		case 128:
+			cs_dblevel = 255;
+			break;
+		case 255:
+			cs_dblevel = 0;
+			break;
+		default:
+			cs_dblevel <<= 1;
 	}
 
-	cfg->debuglvl = cs_dblevel;
 	cs_log("%sdebug_level=%d", "all", cs_dblevel);
 }
 
@@ -3174,7 +3169,7 @@ if (pthread_key_create(&getclient, NULL)) {
   init_shm();
   init_config();
   init_stat();
-  cfg->debuglvl = cs_dblevel; // give static debuglevel to outer world
+
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {
     memset(&ph[i], 0, sizeof(struct s_module));
