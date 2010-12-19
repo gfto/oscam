@@ -244,6 +244,10 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 #define TPLAPIHEADER "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
 <oscam version=\"##CS_VERSION## build ###CS_SVN_VERSION##\" starttime=\"##STARTDATE## - ##STARTTIME##\">\n"
 
+#define TPLAPIERROR "##TPLAPIHEADER##\n\
+   <error>##APIERRORMESSAGE##</error>\n\
+##TPLAPIFOOTER##"
+
 #define TPLFOOTER "\
 		<BR><HR/><BR><DIV CLASS=\"footer\">\n\
 		<H4 CLASS=\"footline1\">OSCAM Webinterface developed by Streamboard Team - ##CURDATE## ##CURTIME## | Access from ##CURIP##</H4>\n\
@@ -1359,6 +1363,7 @@ enum refreshtypes {REFR_ACCOUNTS, REFR_READERS, REFR_SERVER, REFR_ANTICASC, REFR
 char *tpl[]={
 	"HEADER",
 	"APIHEADER",
+	"APIERROR",
 	"FOOTER",
 	"APIFOOTER",
 	"MENU",
@@ -1450,6 +1455,7 @@ char *tpl[]={
 char *tplmap[]={
 	TPLHEADER,
 	TPLAPIHEADER,
+	TPLAPIERROR,
 	TPLFOOTER,
 	TPLAPIFOOTER,
 	TPLMENU,

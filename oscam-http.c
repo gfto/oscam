@@ -1673,7 +1673,7 @@ char *strend(char *ch) {
 	return ch;
 }
 
-void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams *params) {
+void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in, int apicall) {
 	/* build entitlements from reader init history */
 	char *reader_ = getParam(params, "label");
 
@@ -2569,6 +2569,17 @@ void send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params
 	if (strcmp(getParam(params, "part"), "status") == 0) {
 		send_oscam_status(vars, f, params, in, 1);
 	}
+	else if (strcmp(getParam(params, "part"), "entitlement") == 0) {
+		//Send Errormessage while under construction
+		tpl_addVar(vars, 0, "APIERRORMESSAGE", "coming soon");
+		webif_write(tpl_getTpl(vars, "APIERROR"), f);
+
+		//send_oscam_entitlement(vars, f, params, in, 1);
+	}
+	else {
+		tpl_addVar(vars, 0, "APIERRORMESSAGE", "part not found");
+		webif_write(tpl_getTpl(vars, "APIERROR"), f);
+	}
 }
 
 void webif_parse_request(struct uriparams *params, char *pch) {
@@ -2820,7 +2831,7 @@ int process_request(FILE *f, struct in_addr in) {
 		switch(pgidx) {
 			case 0: send_oscam_config(vars, f, &params, in); break;
 			case 1: send_oscam_reader(vars, f, &params, in); break;
-			case 2: send_oscam_entitlement(vars, f, &params); break;
+			case 2: send_oscam_entitlement(vars, f, &params, in, 0); break;
 			case 3: send_oscam_status(vars, f, &params, in, 0); break;
 			case 4: send_oscam_user_config(vars, f, &params, in); break;
 			case 5: send_oscam_reader_config(vars, f, &params, in); break;
@@ -2835,7 +2846,7 @@ int process_request(FILE *f, struct in_addr in) {
 			case 14: send_oscam_files(vars, f, &params); break;
 			case 15: send_oscam_reader_stats(vars, f, &params); break;
 			case 16: send_oscam_failban(vars, f, &params); break;
-			//case  8: js file
+			//case  17: js file
 			case 18: send_oscam_api(vars, f, &params, in); break;
 			default: send_oscam_status(vars, f, &params, in, 0); break;
 		}
