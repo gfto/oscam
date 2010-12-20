@@ -100,20 +100,19 @@ static int reader_card_inserted(struct s_reader * reader)
 
 static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned short deprecated)
 {
-  int i;
+  int i,ret;
 	if (!reader_card_inserted(reader))
 		return 0;
 
   /* Activate card */
-  for (i=0; i<5; i++) {
-		if (!ICC_Async_Activate(reader, atr, deprecated)) {
-			i = 100;
+  for (i=0; i<3; i++) {
+		ret = ICC_Async_Activate(reader, atr, deprecated);
+		if (!ret)
 			break;
-		}
 		cs_log("Error activating card.");
   	cs_sleepms(500);
 	}
-  if (i<100) return(0);
+  if (ret) return(0);
 
   reader->init_history_pos=0;
 
