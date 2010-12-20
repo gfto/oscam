@@ -414,13 +414,3 @@ int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep)
 {
 	return (rdr->fd && (rdr->caid[0] == b2i(2,ep->caid) || rdr->typ == R_CCCAM));
 }
-
-void reader_device_close(struct s_reader * reader)
-{
-#ifdef HAVE_PCSC
-	if (reader->typ == R_PCSC)
-	   pcsc_close(reader);
-    else
-#endif
-	   ICC_Async_Close(reader);
-}

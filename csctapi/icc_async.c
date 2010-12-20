@@ -38,6 +38,9 @@
 #include "ifd_sci.h"
 #include "ifd_smartreader.h"
 #include "ifd_azbox.h"
+#ifdef HAVE_PCSC
+#include "csctapi/ifd_pcsc.h"
+#endif
 
 // Default T0/T14 settings
 #define DEFAULT_WI		10
@@ -507,6 +510,11 @@ int ICC_Async_Close (struct s_reader *reader)
 			call(STReader_Close(reader->stsmart_handle));
 #endif
 			break;
+#ifdef HAVE_PCSC
+		case R_PCSC:
+			call(pcsc_close(reader));
+			break;
+#endif
 		default:
 			cs_log("ERROR ICC_Async_Close: unknow reader type %i",reader->typ);
 			return ERROR;

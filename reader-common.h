@@ -11,7 +11,6 @@
 #include "atr.h"
 
 int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
-void reader_device_close(struct s_reader * reader);
 
 #define write_cmd(cmd, data) \
 { \

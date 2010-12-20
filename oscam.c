@@ -15,6 +15,7 @@ void coolapi_close_all();
 #endif
 
 extern void cs_statistics(struct s_client * client);
+extern int ICC_Async_Close (struct s_reader *reader);
 
 /*****************************************************************************
         Globals
@@ -537,7 +538,7 @@ void cs_exit(int sig)
             aes_clear_entries(cl->reader);
         }
         // close the device
-        reader_device_close(cl->reader);
+	      ICC_Async_Close(cl->reader);
         break;
 
     case 'h':
