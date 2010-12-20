@@ -319,12 +319,14 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 				break;
 #ifdef HAVE_PCSC
 			case R_PCSC:
+				 {
 					unsigned char atrarr[64];
 					ushort atr_size = 0;
 					if (pcsc_activate_card(reader, atrarr, &atr_size))
 						return (ATR_InitFromArray (atr, atrarr, atr_size) == ATR_OK);
 					else
 						return 0;
+				 }
 				break;
 #endif
 			default:
@@ -535,7 +537,7 @@ int ICC_Async_Close (struct s_reader *reader)
 			break;
 #ifdef HAVE_PCSC
 		case R_PCSC:
-			call(pcsc_close(reader));
+			pcsc_close(reader);
 			break;
 #endif
 		default:
