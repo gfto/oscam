@@ -584,7 +584,7 @@ void cs_exit(int sig)
 	cs_close_log();
 
 	NULLFREE(cl);
-	
+
 	if (!exit_oscam)
 	  exit_oscam = sig?sig:1;
 }
@@ -2950,7 +2950,7 @@ int accept_connection(int i, int j) {
 
 			int flag = 1;
 			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-			
+
 			cl->ctyp=i;
 			cl->udp_fd=pfd3;
 			cl->port_idx=j;
@@ -3007,14 +3007,14 @@ char * get_tmp_dir()
 static void restart_daemon()
 {
   while (1) {
-  
+
     //start client process:
-    pid_t pid = fork(); 
+    pid_t pid = fork();
     if (!pid)
       return; //client process=oscam process
     if (pid < 0)
       exit(1);
-    
+
     //restart control process:
     int res=0;
     int status=0;
@@ -3030,7 +3030,7 @@ static void restart_daemon()
       status=99; //restart on segfault!
     else
       status = WEXITSTATUS(status);
-    
+
     //status=99 restart oscam, all other->terminate
     if (status!=99) {
       exit(status);
@@ -3145,9 +3145,11 @@ if (pthread_key_create(&getclient, NULL)) {
 		  case 'd':
 			  cs_dblevel=atoi(optarg);
 			  break;
-                  case 'r': 
+#ifdef WEBIF
+                  case 'r':
                           cs_restart_mode=atoi(optarg);
                           break;
+#endif
 		  case 't':
 			  mkdir(optarg, S_IRWXU);
 			  j = open(optarg, O_RDONLY);
@@ -3179,7 +3181,7 @@ if (pthread_key_create(&getclient, NULL)) {
 
 #ifdef WEBIF
   if (cs_restart_mode)
-    restart_daemon();  
+    restart_daemon();
 #endif
 
   cfg = malloc(sizeof(struct s_config));
@@ -3305,7 +3307,7 @@ if (pthread_key_create(&getclient, NULL)) {
                         struct timeval timeout;
                         timeout.tv_sec = 1;
                         timeout.tv_usec = 0;
-                        
+
                         //Wait for incoming data
 			FD_ZERO(&fds);
 			FD_SET(mfdr, &fds);
@@ -3317,10 +3319,10 @@ if (pthread_key_create(&getclient, NULL)) {
 			errno=0;
 			select(gfd, &fds, 0, 0, &timeout);
 		} while (errno==EINTR && !exit_oscam); //if timeout accurs and exit_oscam is set, we break the loop
-		
+
 		if (exit_oscam)
 		        break;
-		  
+
 		first_client->last=time((time_t *)0);
 
 		if (FD_ISSET(mfdr, &fds)) {
@@ -3342,7 +3344,7 @@ if (pthread_key_create(&getclient, NULL)) {
 	  if (cl->next->typ != 's')
 	    kill_thread(cl->next);
         }
-	  
+
 #ifdef AZBOX
   if (openxcas_close() < 0) {
     cs_log("openxcas: could not close");
