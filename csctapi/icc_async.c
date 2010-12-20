@@ -317,6 +317,16 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 				call (Azbox_Reset(reader, atr));
 #endif
 				break;
+#ifdef HAVE_PCSC
+			case R_PCSC:
+					unsigned char atrarr[64];
+					ushort atr_size = 0;
+					if (pcsc_activate_card(reader, atrarr, &atr_size))
+						return (ATR_InitFromArray (atr, atrarr, atr_size) == ATR_OK);
+					else
+						return 0;
+				break;
+#endif
 			default:
 				cs_log("ERROR ICC_Async_Activate: unknow reader type %i",reader->typ);
 				return ERROR;

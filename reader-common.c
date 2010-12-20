@@ -3,9 +3,6 @@
 #include "defines.h"
 #include "atr.h"
 #include "icc_async_exports.h"
-#ifdef HAVE_PCSC
-#include "csctapi/ifd_pcsc.h"
-#endif
 #ifdef AZBOX
 #include "csctapi/ifd_azbox.h"
 #endif
@@ -103,17 +100,7 @@ static int reader_card_inserted(struct s_reader * reader)
 
 static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned short deprecated)
 {
-      int i;
-#ifdef HAVE_PCSC
-    unsigned char atrarr[64];
-    ushort atr_size = 0;
-    if (reader->typ == R_PCSC) {
-        if (pcsc_activate_card(reader, atrarr, &atr_size))
-            return (ATR_InitFromArray (atr, atrarr, atr_size) == ATR_OK);
-        else
-            return 0;
-    }
-#endif
+  int i;
 	if (!reader_card_inserted(reader))
 		return 0;
 
