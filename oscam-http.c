@@ -2275,10 +2275,10 @@ void send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *p
 	}
 	else if (strcmp(getParam(params, "action"), "Restart") == 0) {
 		tpl_addVar(vars, 0, "STYLESHEET", CSS);
-		tpl_printf(vars, 0, "REFRESHTIME", "%d", 10);
+		tpl_printf(vars, 0, "REFRESHTIME", "%d", 2);
 		tpl_addVar(vars, 0, "REFRESHURL", "status.html");
 		tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-		tpl_printf(vars, 0, "SECONDS", "%d", 10);
+		tpl_printf(vars, 0, "SECONDS", "%d", 2);
 		webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
 		

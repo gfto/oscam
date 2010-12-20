@@ -468,6 +468,9 @@ static void cleanup_thread(struct s_client *cl)
 	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
 	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 
+	if (exit_oscam > 0)
+	  return; //No more cleanup for faster restart
+	  
 	cs_sleepms(1000); //wait some time before cleanup to prevent segfaults
 	NULLFREE(cl->ecmtask);
 	NULLFREE(cl->emmcache);
