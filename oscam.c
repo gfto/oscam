@@ -28,6 +28,9 @@ struct s_reader * first_reader = NULL;
 ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
 int cs_dblevel=0;   // Debug Level (TODO !!)
+#ifdef WEBIF
+int cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
+#endif
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t cwcache_lock;
@@ -278,6 +281,12 @@ static void usage()
   fprintf(stderr, "\t              64 = EMM logging\n");
   fprintf(stderr, "\t             128 = DVBAPI logging\n");
   fprintf(stderr, "\t             255 = debug all\n");
+#ifdef WEBIF
+  fprintf(stderr, "\t-r         : restart-level\n");
+  fprintf(stderr, "\t               0 = disabled: restart request sets exitstatus=99\n");
+  fprintf(stderr, "\t               1 = restart activated: webif can restart oscam (default)\n");
+  fprintf(stderr, "\t               2 = like 1, but also restart on SEGFAULTS\n");
+#endif
   fprintf(stderr, "\t-h         : show this help\n");
   fprintf(stderr, "\n");
   exit(1);
@@ -574,7 +583,9 @@ void cs_exit(int sig)
 	cs_close_log();
 
 	NULLFREE(cl);
-	exit_oscam = sig;
+	
+	if (!exit_oscam)
+	  exit_oscam = sig?sig:1;
 }
 
 void cs_reinit_clients()
@@ -3014,7 +3025,10 @@ static void restart_daemon()
       }
     } while (res!=pid);
 
-    status = WEXITSTATUS(status);
+    if (cs_restart_mode==2 && WIFSIGNALED(status) && WTERMSIG(status)==SIGSEGV)
+      status=99; //restart on segfault!
+    else
+      status = WEXITSTATUS(status);
     
     //status=99 restart oscam, all other->terminate
     if (status!=99) {
@@ -3045,9 +3059,6 @@ if (pthread_key_create(&getclient, NULL)) {
   int      fdp[2];
   int      mfdr=0;     // Master FD (read)
   int      fd_c2m=0;
-
-	cfg = malloc(sizeof(struct s_config));
-	memset(cfg, 0, sizeof(struct s_config));
 
   void (*mod_def[])(struct s_module *)=
   {
@@ -3121,7 +3132,7 @@ if (pthread_key_create(&getclient, NULL)) {
 	0
   };
 
-  while ((i=getopt(argc, argv, "bc:t:d:hm:x"))!=EOF)
+  while ((i=getopt(argc, argv, "bc:t:d:r:hm:x"))!=EOF)
   {
 	  switch(i) {
 		  case 'b':
@@ -3133,6 +3144,9 @@ if (pthread_key_create(&getclient, NULL)) {
 		  case 'd':
 			  cs_dblevel=atoi(optarg);
 			  break;
+                  case 'r': 
+                          cs_restart_mode=atoi(optarg);
+                          break;
 		  case 't':
 			  mkdir(optarg, S_IRWXU);
 			  j = open(optarg, O_RDONLY);
@@ -3163,8 +3177,12 @@ if (pthread_key_create(&getclient, NULL)) {
   }
 
 #ifdef WEBIF
-  restart_daemon();  
+  if (cs_restart_mode)
+    restart_daemon();  
 #endif
+
+  cfg = malloc(sizeof(struct s_config));
+  memset(cfg, 0, sizeof(struct s_config));
 
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
   init_shm();
@@ -3318,10 +3336,11 @@ if (pthread_key_create(&getclient, NULL)) {
 		}
 	}
 
-        //can't kill? running endless...
-	//struct s_client *cl;
-	//for (cl=first_client->next;cl;cl=cl->next)
-	//  kill_thread(cl);
+	struct s_client *cl;
+	for (cl=first_client;cl->next;cl=cl->next) {
+	  if (cl->next->typ != 's')
+	    kill_thread(cl->next);
+        }
 	  
 #ifdef AZBOX
   if (openxcas_close() < 0) {
