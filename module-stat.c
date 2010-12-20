@@ -466,11 +466,13 @@ int get_best_reader(ECM_REQUEST *er)
 		}
 	}
 
-	if (n)
+	//if (n)
+	//Always copy result...so if we found NO reader->no requests! This helps blocking undecodeable channels
+	//and reduces ecm traffic!
 		memcpy(er->matching_rdr, result, sizeof(result));
 #ifdef WITH_DEBUG 
-	else
-		cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, trying all readers");
+	//else
+	//	cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, trying all readers");
 
 	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
 		username(er->client), er->caid, er->prid, er->srvid,
