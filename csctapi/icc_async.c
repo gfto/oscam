@@ -176,6 +176,11 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			return ERROR;
 #endif//SCI_DEV
 			break;
+#ifdef HAVE_PCSC
+		case R_PCSC:
+			return (pcsc_reader_init(reader, reader->device));
+			break;
+#endif
 		default:
 			cs_log("ERROR ICC_Device_Init: unknow reader type %i",reader->typ);
 			return ERROR;
@@ -252,6 +257,11 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 			call(Azbox_GetStatus(reader, &in));
 #endif
 			break;
+#ifdef HAVE_PCSC
+		case R_PCSC:
+			in =  pcsc_check_card_inserted(reader);
+			break;
+#endif
 		default:
 			cs_log("ERROR ICC_Get_Status: unknow reader type %i",reader->typ);
 			return ERROR;
@@ -261,8 +271,6 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 		*card = TRUE;
 	else
 		*card = FALSE;
-    // this debug is not really useful and polute the log in debug mode
-	// cs_debug_mask (D_IFD, "IFD: Status = %s", in ? "card": "no card");
 	
 	return OK;
 }
@@ -345,6 +353,10 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 
 int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsigned short command_len, unsigned char *rsp, unsigned short *lr)
 {
+#ifdef HAVE_PCSC
+	if (reader->typ == R_PCSC)
+ 	  return (pcsc_reader_do_api(reader, command, rsp, lr, command_len)); 
+#endif
 	*lr = 0; //will be returned in case of error
 
 	int ret;
