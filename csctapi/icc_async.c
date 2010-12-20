@@ -484,7 +484,7 @@ int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
 }
 
 int ICC_Async_Close (struct s_reader *reader)
-{ //FIXME this routine is never called!
+{
 	cs_debug_mask (D_IFD, "IFD: Closing device %s", reader->device);
 
 	switch(reader->typ) {
@@ -493,6 +493,7 @@ int ICC_Async_Close (struct s_reader *reader)
 			break;
 		case R_DB2COM1:
 		case R_DB2COM2:
+		case R_SC8in1:
 		case R_MOUSE:
 			call (Phoenix_Close(reader));
 			break;

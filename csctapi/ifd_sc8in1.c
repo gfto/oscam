@@ -32,8 +32,6 @@ static struct termios stored_termio[8];//FIXME no globals please
 static int current_slot; //FIXME should not be a global, but one per SC8in1
 static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not static, the threads dont share same cardstatus!
 
-#define MAX_TRANSMIT			255
-
 static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsigned short lenwrite, unsigned short lenread)
 {
   struct termios termio, termiobackup;
