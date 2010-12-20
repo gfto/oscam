@@ -2872,7 +2872,7 @@ void cs_waitforcardinit()
 	{
 		cs_log("waiting for local card init");
 		int card_init_done;
-		cs_sleepms(4000);  // short sleep for card detect to work proberly
+		cs_sleepms(3500);  // short sleep for card detect to work proberly
 		do {
 			card_init_done = 1;
 			struct s_reader *rdr;
