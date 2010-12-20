@@ -156,8 +156,6 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 		case R_INTERNAL:
 #if defined(COOL)
 			return Cool_Init(reader->device);
-#elif defined(WITH_STAPI)
-			return STReader_Open(reader->device, &reader->stsmart_handle);
 #elif defined(AZBOX)
 			return Azbox_Init(reader);
 #elif defined(SCI_DEV)
@@ -170,6 +168,8 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 				cs_log("ERROR opening device %s",reader->device);
 				return ERROR;
 			}
+#elif defined(WITH_STAPI)
+			return STReader_Open(reader->device, &reader->stsmart_handle);
 #else//SCI_DEV
 			cs_log("ERROR, you have specified 'protocol = internal' in oscam.server,");
 			cs_log("recompile with internal reader support.");
@@ -450,12 +450,12 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 		case R_INTERNAL:
 #if defined(COOL)
 			call (Cool_Transmit(sent, size));
-#elif defined(WITH_STAPI)
-			call (STReader_Transmit(reader->stsmart_handle, sent, size));
 #elif defined(AZBOX)
 			call (Azbox_Transmit(reader, sent, size));
 #elif defined(SCI_DEV)
 			call (Phoenix_Transmit (reader, sent, size, 0, 0)); //the internal reader will provide the delay
+#elif defined(WITH_STAPI)
+			call (STReader_Transmit(reader->stsmart_handle, sent, size));
 #endif
 			break;
 		default:
@@ -486,13 +486,13 @@ int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
 #endif
 		case R_INTERNAL:
 #if defined(COOL)
-	    call (Cool_Receive(data, size));
-#elif defined(WITH_STAPI)
-	    call (STReader_Receive(reader->stsmart_handle, data, size));
+			call (Cool_Receive(data, size));
 #elif defined(AZBOX)
-	    call (Azbox_Receive(reader, data, size));
+			call (Azbox_Receive(reader, data, size));
 #elif defined(SCI_DEV)
 			call (Phoenix_Receive (reader, data, size, reader->read_timeout));
+#elif defined(WITH_STAPI)
+			call (STReader_Receive(reader->stsmart_handle, data, size));
 #endif
 			break;
 		default:
@@ -722,7 +722,7 @@ static int PPS_Exchange (struct s_reader * reader, BYTE * params, unsigned *leng
 	params[len_request - 1] = PPS_GetPCK(params, len_request - 1);
 	cs_debug_mask (D_IFD, "PTS: Sending request: %s", cs_hexdump(1, params, len_request));
 
-#ifdef WITH_STAPI	
+#if defined(WITH_STAPI) && !defined(SCI_DEV)
 	ret = STReader_SetProtocol(reader->stsmart_handle, params, length, len_request);
 	return ret;
 #endif
