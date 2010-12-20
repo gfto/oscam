@@ -39,7 +39,7 @@
 #include "ifd_smartreader.h"
 #include "ifd_azbox.h"
 #ifdef HAVE_PCSC
-#include "csctapi/ifd_pcsc.h"
+#include "ifd_pcsc.h"
 #endif
 
 // Default T0/T14 settings
