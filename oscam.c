@@ -2872,7 +2872,7 @@ void cs_waitforcardinit()
 	{
 		cs_log("waiting for local card init");
 		int card_init_done;
-		cs_sleepms(3500);  // short sleep for card detect to work proberly
+		cs_sleepms(4000);  // sleep for card detect to work proberly NLSU2 / sc8in1 needs 4000 ms ...
 		do {
 			card_init_done = 1;
 			struct s_reader *rdr;
