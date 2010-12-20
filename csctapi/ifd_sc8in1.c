@@ -230,7 +230,7 @@ int Sc8in1_Init(struct s_reader * reader)
 		buff[0] = 0x63; //MCR set clock
 		buff[1] = (sc8in1_clock >> 8) & 0xFF;
 		buff[2] = sc8in1_clock & 0xFF;
-		sc8in1_command(reader, buff, 3, 0);
+//		sc8in1_command(reader, buff, 3, 0); //FIXME this doesnt work properly yet
 
 /*		//DEBUG get clockspeeds
 		buff[0] = 0x67;
