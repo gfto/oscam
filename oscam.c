@@ -2870,21 +2870,21 @@ void cs_waitforcardinit()
 {
 	if (cfg->waitforcards)
 	{
-  		cs_log("waiting for local card init");
+		cs_log("waiting for local card init");
 		int card_init_done;
-		cs_sleepms(3000);  // short sleep for card detect to work proberly
+		cs_sleepms(4000);  // short sleep for card detect to work proberly
 		do {
 			card_init_done = 1;
 			struct s_reader *rdr;
 			for (rdr=first_reader; rdr ; rdr=rdr->next)
-				if (!(rdr->typ & R_IS_CASCADING) && rdr->card_status == CARD_NEED_INIT) {
+				if (((rdr->typ & R_IS_CASCADING) == 0) && rdr->enable && rdr->card_status == CARD_NEED_INIT) {
 					card_init_done = 0;
 					break;
 				}
 			cs_sleepms(300); // wait a little bit
 			//alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
 		} while (!card_init_done);
-  		cs_log("init for all local cards done");
+		cs_log("init for all local cards done");
 	}
 }
 
