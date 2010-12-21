@@ -1674,6 +1674,12 @@ char *strend(char *ch) {
 }
 
 void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in, int apicall) {
+
+	//just to stop the guys open tedious tickets for warnings related to unused variables xD
+	tpl_printf(vars, 0, "CALLINGIP", "%s", inet_ntoa(*(struct in_addr *)&in));
+	tpl_printf(vars, 0, "ISAPICALL", "%d", apicall);
+	//**************
+
 	/* build entitlements from reader init history */
 	char *reader_ = getParam(params, "label");
 
