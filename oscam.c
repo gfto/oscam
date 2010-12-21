@@ -2414,8 +2414,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		// cache1
 		if (check_cwcache1(er, client->grp))
 			er->rc = 1;
-                else if (check_and_store_ecmcache(er, client->grp))
-                        return;
 
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);
@@ -2455,6 +2453,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					er->matching_rdr[i]>>=1;
 		}
 	}
+
+	if (er->rc > 99 && check_and_store_ecmcache(er, client->grp))
+                return;
+
 
 	if (er->rc < 100) {
 		if (cfg->delay)
