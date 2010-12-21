@@ -3269,6 +3269,7 @@ int cc_srv_connect(struct s_client *cl) {
 		return -1;
 
 	// receive username
+	memset(buf, 0, sizeof(buf));
 	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
