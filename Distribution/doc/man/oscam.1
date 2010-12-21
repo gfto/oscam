@@ -89,6 +89,14 @@ usage
 .RS 3n
 use <directory> for temporary data, default:temporary directory of OS
 .RE
+.PP
+\fB-r\fP <level> \fI(only if web interface module enabled)\fR
+.RS 3n
+restart level:
+   0 = disabled, restart request sets exit status to 99
+   1 = restart activated, web interface can restart oscam (default)
+   2 = like 1, but also restart on SEGFAULTS
+.RE
 .SH SIGNALS
 .PP
 \fBSIGHUP\fP

@@ -283,9 +283,9 @@ static void usage()
   fprintf(stderr, "\t             128 = DVBAPI logging\n");
   fprintf(stderr, "\t             255 = debug all\n");
 #ifdef WEBIF
-  fprintf(stderr, "\t-r         : restart-level\n");
-  fprintf(stderr, "\t               0 = disabled: restart request sets exitstatus=99\n");
-  fprintf(stderr, "\t               1 = restart activated: webif can restart oscam (default)\n");
+  fprintf(stderr, "\t-r         : restart level\n");
+  fprintf(stderr, "\t               0 = disabled, restart request sets exit status 99\n");
+  fprintf(stderr, "\t               1 = restart activated, web interface can restart oscam (default)\n");
   fprintf(stderr, "\t               2 = like 1, but also restart on SEGFAULTS\n");
 #endif
   fprintf(stderr, "\t-h         : show this help\n");
