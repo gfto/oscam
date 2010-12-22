@@ -468,9 +468,6 @@ static void cleanup_thread(struct s_client *cl)
 	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
 	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 
-	if (exit_oscam > 0)
-	  return; //No more cleanup for faster restart
-	  
 	cs_sleepms(1000); //wait some time before cleanup to prevent segfaults
 	NULLFREE(cl->ecmtask);
 	NULLFREE(cl->emmcache);
@@ -3343,12 +3340,6 @@ if (pthread_key_create(&getclient, NULL)) {
 			} // if (ph[i].type & MOD_CONN_NET)
 		}
 	}
-
-	struct s_client *cl;
-	for (cl=first_client;cl->next;cl=cl->next) {
-	  if (cl->next->typ != 's')
-	    kill_thread(cl->next);
-        }
 
 #ifdef AZBOX
   if (openxcas_close() < 0) {
