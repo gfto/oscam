@@ -160,11 +160,10 @@ static void usage()
   fprintf(stderr, "\tbased on streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n");
   fprintf(stderr, "\tinbuilt modules: ");
 #ifdef WEBIF
-  #ifdef WITH_SSL
-  	fprintf(stderr, "webinterface-with-ssl ");
-  #else
-    fprintf(stderr, "webinterface ");
-  #endif
+  fprintf(stderr, "webinterface ");
+#endif
+#ifdef WITH_SSL
+  fprintf(stderr, "openssl ");
 #endif
 #ifdef HAVE_DVBAPI
 #ifdef WITH_STAPI
@@ -585,8 +584,15 @@ void cs_exit(int sig)
 
 	NULLFREE(cl);
 
+#ifdef WEBIF
+	if (!cs_restart_mode)
+		exit(sig);
+
 	if (!exit_oscam)
 	  exit_oscam = sig?sig:1;
+#else
+	exit(sig);
+#endif
 }
 
 void cs_reinit_clients()
