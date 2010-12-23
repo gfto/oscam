@@ -1691,6 +1691,9 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			tpl_addVar(vars, 0, "READERNAME", rdr->label);
 
 			int caidcount = 0;
+			int providercount = 0;
+			int nodecount = 0;
+
 			char *provider = "";
 
 			struct cc_card *card;
@@ -1705,13 +1708,22 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				LL_ITER *it = ll_iter_create(rcc->cards);
 				while ((card = ll_iter_next(it))) {
 
-					tpl_printf(vars, 0, "HOST", "%s:%d", rdr->device, rdr->r_port);
+					if (!apicall) {
+						tpl_printf(vars, 0, "HOST", "%s:%d", rdr->device, rdr->r_port);
+						tpl_printf(vars, 0, "CAID", "%04X", card->caid);
+					} else {
+						tpl_printf(vars, 0, "APIHOST", "%s", rdr->device);
+						tpl_printf(vars, 0, "APIHOSTPORT", "%d", rdr->r_port);
+						tpl_printf(vars, 0, "APICARDNUMBER", "%d", caidcount);
+						tpl_printf(vars, 0, "APICAID", "%04X", card->caid);
+					}
+
 					if (cc_UA_valid(card->hexserial)) { //Add UA:
 						cc_UA_cccam2oscam(card->hexserial, serbuf, card->caid);
 						tpl_printf(vars, 1, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8));
 						tpl_printf(vars, 1, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8));
 					}
-					tpl_printf(vars, 0, "CAID", "%04X", card->caid);
+
 
 					int cs = get_cardsystem(card->caid);
 					
@@ -1729,49 +1741,90 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					char *p = buf;
 					*p = 0;
 					struct cc_provider *prov;
+
 					while ((prov = ll_iter_next(pit))) {
 						provider = get_provider(card->caid, prov->prov);
-						sprintf(p, "%s", provider);
-						p = strend(p);
-						//add SA:
-						if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3]) {
-							sprintf(p, " SA:%02X%02X%02X%02X",
-								prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
+
+						if (!apicall) {
+							sprintf(p, "%s", provider);
 							p = strend(p);
+							//add SA:
+							if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3]) {
+								sprintf(p, " SA:%02X%02X%02X%02X", prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
+								p = strend(p);
+							}
+							sprintf(p, "<BR>\n");
+							p = strend(p);
+
+						} else {
+							if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3])
+								tpl_printf(vars, 0, "APIPROVIDERSA", "%02X%02X%02X%02X", prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
+							else
+								tpl_addVar(vars, 0, "APIPROVIDERSA","");
+							tpl_printf(vars, 0, "APIPROVIDERCAID", "%04X", card->caid);
+							tpl_printf(vars, 0, "APIPROVIDERPROVID", "%08X", prov->prov);
+							tpl_printf(vars, 0, "APIPROVIDERNUMBER", "%d", providercount);
+							tpl_printf(vars, 0, "APIPROVIDERNAME", "%s", provider);
+							tpl_addVar(vars, 1, "PROVIDERLIST", tpl_getTpl(vars, "APICCCAMCARDPROVIDERBIT"));
 						}
-						sprintf(p, "<BR>\n");
-						p = strend(p);
+						providercount++;
+						tpl_printf(vars, 0, "APITOTALPROVIDERS", "%d", providercount);
 					}
 
-					tpl_printf(vars, 0, "PROVIDERS", buf);
+					if (!apicall) tpl_printf(vars, 0, "PROVIDERS", buf);
 
 					ll_iter_release(pit);
 					LL_ITER *nit = ll_iter_create(card->remote_nodes);
 					p = buf;
 					*p = 0;
 					uint8 *node;
+
 					while ((node = ll_iter_next(nit))) {
-						sprintf(p, "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
-								node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
-						p = strend(p);
+
+						if (!apicall) {
+							sprintf(p, "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
+									node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
+							p = strend(p);
+
+						} else {
+							tpl_printf(vars, 0, "APINODE", "%02X%02X%02X%02X%02X%02X%02X%02X", node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
+							tpl_printf(vars, 0, "APINODENUMBER", "%d", nodecount);
+							tpl_addVar(vars, 1, "NODELIST", tpl_getTpl(vars, "APICCCAMCARDNODEBIT"));
+						}
+						nodecount++;
+						tpl_printf(vars, 0, "APITOTALNODES", "%d", nodecount);
 					}
-					tpl_printf(vars, 0, "NODES", buf);
+
+					if (!apicall) tpl_printf(vars, 0, "NODES", buf);
 
 					ll_iter_release(nit);
 
-					tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
+					if (!apicall)
+						tpl_addVar(vars, 1, "CCCAMSTATSENTRY", tpl_getTpl(vars, "ENTITLEMENTCCCAMENTRYBIT"));
+					else
+						tpl_addVar(vars, 1, "CARDLIST", tpl_getTpl(vars, "APICCCAMCARDBIT"));
+
 					caidcount++;
 				}
+
 				ll_iter_release(it);
 				free(buf);
 				pthread_mutex_unlock(&rcc->cards_busy);
 
-				tpl_printf(vars, 0, "TOTALS", "card count=%d", caidcount);
-				tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
+				if (!apicall) {
+					tpl_printf(vars, 0, "TOTALS", "card count=%d", caidcount);
+					tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
+				} else {
+					tpl_printf(vars, 0, "APITOTALCARDS", "%d", caidcount);
+				}
 
 			} else {
-				tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
-				tpl_printf(vars, 0, "LOGHISTORY", "no cardfile found<BR>\n");
+				if (!apicall) {
+					tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
+					tpl_printf(vars, 0, "LOGHISTORY", "no cardfile found<BR>\n");
+				} else {
+					tpl_printf(vars, 0, "APITOTALCARDS", "%d", caidcount);
+				}
 			}
 
 		} else {
@@ -1803,7 +1856,10 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 		tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 	}
 
-	webif_write(tpl_getTpl(vars, "ENTITLEMENTS"), f);
+	if (!apicall)
+		webif_write(tpl_getTpl(vars, "ENTITLEMENTS"), f);
+	else
+		webif_write(tpl_getTpl(vars, "APICCCAMCARDLIST"), f);
 }
 
 void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in, int apicall) {
@@ -2574,11 +2630,15 @@ void send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params
 		send_oscam_status(vars, f, params, in, 1);
 	}
 	else if (strcmp(getParam(params, "part"), "entitlement") == 0) {
-		//Send Errormessage while under construction
-		tpl_addVar(vars, 0, "APIERRORMESSAGE", "coming soon");
-		webif_write(tpl_getTpl(vars, "APIERROR"), f);
 
-		//send_oscam_entitlement(vars, f, params, in, 1);
+		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
+		if (rdr->typ == R_CCCAM && rdr->enable == 1) {
+			send_oscam_entitlement(vars, f, params, in, 1);
+		} else {
+			//Send Errormessage
+			tpl_addVar(vars, 0, "APIERRORMESSAGE", "no cccam reader or disabled");
+			webif_write(tpl_getTpl(vars, "APIERROR"), f);
+		}
 	}
 	else {
 		tpl_addVar(vars, 0, "APIERRORMESSAGE", "part not found");

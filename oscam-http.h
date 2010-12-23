@@ -753,7 +753,31 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 
 #define TPLENTITLEMENTCCCAMENTRYBIT "\
     <TR><TD>##HOST##</TD><TD>##CAID##</TD><TD>##SYSTEM##</TD><TD>##SHAREID##</TD><TD>##REMOTEID##</TD><TD>##UPHOPS##</TD><TD>##MAXDOWN##</TD><TD>##PROVIDERS##</TD><TD>##NODES##</TD></TR>"
- 
+
+#define TPLAPICCCAMCARDLIST "##TPLAPIHEADER##\
+<reader label=\"##READERNAME##\">\n\
+   <cardlist totalcards=\"##APITOTALCARDS##\">\n##CARDLIST##\
+   </cardlist>\n\
+</reader>\n\
+##TPLAPIFOOTER##"
+
+#define TPLAPICCCAMCARDBIT "      <card number=\"##APICARDNUMBER##\" caid=\"##APICAID##\" system=\"##SYSTEM##\" \
+reshare=\"##MAXDOWN##\" hop=\"##UPHOPS##\">\n\
+         <hostaddress>##APIHOST##</host>\n\
+         <hostport>##APIHOSTPORT##</hostport>\n\
+         <shareid>##SHAREID##</shareid>\n\
+         <remoteid>##REMOTEID##</remoteid>\n\
+         <providers totalproviders=\"##APITOTALPROVIDERS##\">\n##PROVIDERLIST##\
+         </providers>\n\
+         <nodes totalnodes=\"##APITOTALNODES##\">\n##NODELIST##\
+         </nodes>\n\
+      </card>\n"
+
+#define TPLAPICCCAMCARDPROVIDERBIT "            <provider number =\"##APIPROVIDERNUMBER##\" sa=\"##APIPROVIDERSA##\"\
+ caid=\"##APIPROVIDERCAID##\" \
+provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
+
+#define TPLAPICCCAMCARDNODEBIT "            <node number=\"##APINODENUMBER##\">##APINODE##</node>\n"
 
 #define TPLREADERCONFIG "\
 ##TPLHEADER##\
@@ -1389,6 +1413,10 @@ char *tpl[]={
 	"ENTITLEMENTGENERICBIT",
 	"ENTITLEMENTCCCAMBIT",
 	"ENTITLEMENTCCCAMENTRYBIT",
+	"APICCCAMCARDLIST",
+	"APICCCAMCARDBIT",
+	"APICCCAMCARDNODEBIT",
+	"APICCCAMCARDPROVIDERBIT",
 	"READERCONFIG",
 	"READERCONFIGSIDOKBIT",
 	"READERCONFIGSIDNOBIT",
@@ -1481,6 +1509,10 @@ char *tplmap[]={
 	TPLENTITLEMENTGENERICBIT,
 	TPLENTITLEMENTCCCAMBIT,
 	TPLENTITLEMENTCCCAMENTRYBIT,
+	TPLAPICCCAMCARDLIST,
+	TPLAPICCCAMCARDBIT,
+	TPLAPICCCAMCARDNODEBIT,
+	TPLAPICCCAMCARDPROVIDERBIT,
 	TPLREADERCONFIG,
 	TPLREADERCONFIGSIDOKBIT,
 	TPLREADERCONFIGSIDNOBIT,
