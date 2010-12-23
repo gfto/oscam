@@ -1112,7 +1112,7 @@ void chk_t_cccam(char *token, char *value)
 			cfg->cc_reshare=atoi(value);
 		return;
 	}
-	
+
 	if (!strcmp(token, "stealth")) {
 		if(strlen(value) == 0)
 			cfg->cc_stealth = 1;
@@ -1120,7 +1120,7 @@ void chk_t_cccam(char *token, char *value)
 			cfg->cc_stealth=atoi(value);
 		return;
 	}
-	
+
 	if (!strcmp(token, "reshare_mode")) {
 		if(strlen(value) == 0)
 			cfg->cc_reshare_services = 0;
@@ -1128,7 +1128,7 @@ void chk_t_cccam(char *token, char *value)
 			cfg->cc_reshare_services=atoi(value);
 		return;
 	}
-	
+
 	if (!strcmp(token, "ignorereshare")) {
 		if(strlen(value) == 0)
 			cfg->cc_ignore_reshare = 0;
@@ -2683,13 +2683,13 @@ void write_versionfile() {
 
 #ifdef WEBIF
 	  fprintf(fp, "Webif support:             yes\n");
-#ifdef WITH_SSL
-	  fprintf(fp, "Webif with SSL support:    yes\n");
-#else
-	  fprintf(fp, "Webif with SSL support:    no\n");
-#endif
 #else
 	  fprintf(fp, "Webif support:             no\n");
+#endif
+#ifdef WITH_SSL
+	  fprintf(fp, "OpenSSL support:           yes\n");
+#else
+	  fprintf(fp, "OpenSSL support:           no\n");
 #endif
 #ifdef HAVE_DVBAPI
 	  fprintf(fp, "Dvbapi support:            yes\n");
