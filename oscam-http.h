@@ -773,7 +773,7 @@ reshare=\"##MAXDOWN##\" hop=\"##UPHOPS##\">\n\
          </nodes>\n\
       </card>\n"
 
-#define TPLAPICCCAMCARDPROVIDERBIT "            <provider number =\"##APIPROVIDERNUMBER##\" sa=\"##APIPROVIDERSA##\"\
+#define TPLAPICCCAMCARDPROVIDERBIT "            <provider number=\"##APIPROVIDERNUMBER##\" sa=\"##APIPROVIDERSA##\"\
  caid=\"##APIPROVIDERCAID##\" \
 provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 
