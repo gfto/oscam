@@ -1742,6 +1742,9 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					*p = 0;
 					struct cc_provider *prov;
 
+					providercount = 0;
+					tpl_addVar(vars, 0, "PROVIDERLIST", "");
+
 					while ((prov = ll_iter_next(pit))) {
 						provider = get_provider(card->caid, prov->prov);
 
@@ -1778,6 +1781,9 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					p = buf;
 					*p = 0;
 					uint8 *node;
+
+					nodecount = 0;
+					tpl_addVar(vars, 0, "NODELIST", "");
 
 					while ((node = ll_iter_next(nit))) {
 
