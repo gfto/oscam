@@ -1,7 +1,7 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #define CS_CORE
 #include "globals.h"
-#ifdef AZBOX
+#if defined(AZBOX) && defined(HAVE_DVBAPI)
 #  include "openxcas/openxcas_api.h"
 #endif
 #ifdef CS_WITH_GBOX
@@ -3253,10 +3253,14 @@ if (pthread_key_create(&getclient, NULL)) {
   write_versionfile();
   server_pid = getpid();
 
-#ifdef AZBOX
+#if defined(AZBOX) && defined(HAVE_DVBAPI)
   openxcas_debug_message_onoff(1);  // debug
 
+#ifdef WITH_CARDREADER
   if (openxcas_open_with_smartcard("oscamCAS") < 0) {
+#else
+  if (openxcas_open("oscamCAS") < 0) {
+#endif  
     cs_log("openxcas: could not init");
   }
 #endif
@@ -3355,7 +3359,7 @@ if (pthread_key_create(&getclient, NULL)) {
 		}
 	}
 
-#ifdef AZBOX
+#if defined(AZBOX) && defined(HAVE_DVBAPI)
   if (openxcas_close() < 0) {
     cs_log("openxcas: could not close");
   }
