@@ -283,7 +283,7 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 
 	if (reader->atr[0] != 0) {
 		cs_log("using ATR from reader config");
-		ATR_InitFromArray(atr, reader->atr, 33);
+		ATR_InitFromArray(atr, reader->atr, ATR_MAX_SIZE);
 	}
 	else {
 		switch(reader->typ) {
@@ -320,12 +320,17 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 #ifdef HAVE_PCSC
 			case R_PCSC:
 				 {
-					unsigned char atrarr[64];
+					unsigned char atrarr[ATR_MAX_SIZE];
 					ushort atr_size = 0;
 					if (pcsc_activate_card(reader, atrarr, &atr_size))
-						return (ATR_InitFromArray (atr, atrarr, atr_size) == ATR_OK);
+					{
+						if (ATR_InitFromArray (atr, atrarr, atr_size) == ATR_OK)
+							return OK;
+						else
+							return ERROR;
+					}
 					else
-						return 0;
+						return ERROR;
 				 }
 				break;
 #endif
@@ -335,7 +340,7 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 		}
 	}
 
-	unsigned char atrarr[64];
+	unsigned char atrarr[ATR_MAX_SIZE];
 	unsigned int atr_size;
 	ATR_GetRaw(atr, atrarr, &atr_size);
 	cs_ri_log(reader, "ATR: %s", cs_hexdump(1, atrarr, atr_size));
