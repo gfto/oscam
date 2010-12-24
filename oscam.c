@@ -106,10 +106,18 @@ int cs_check_violation(uint ip) {
 					free(v_ban_entry);
 					llist_itr_remove(&itr);
 					return 0;
+				} else {
+					if (v_ban_entry->v_count > cfg->failbancount) {
+						cs_debug_mask(D_TRACE, "failban: banned ip %s - %ld seconds left",
+								cs_inet_ntoa(v_ban_entry->v_ip),(cfg->failbantime * 60) - (now - v_ban_entry->v_time));
+						return 1;
+					} else {
+						cs_debug_mask(D_TRACE, "failban: ip %s chance %d of %d",
+								cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_count, cfg->failbancount);
+						v_ban_entry->v_count++;
+						return 0;
+					}
 				}
-				cs_debug_mask(D_TRACE, "failban: banned ip %s - %ld seconds left",
-						cs_inet_ntoa(v_ban_entry->v_ip),(cfg->failbantime * 60) - (now - v_ban_entry->v_time));
-				return 1;
 			}
 			v_ban_entry = llist_itr_next(&itr);
 		}

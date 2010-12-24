@@ -631,6 +631,16 @@ void chk_t_global(const char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "failbancount")) {
+		if(strlen(value) == 0) {
+			cfg->failbancount = 0;
+			return;
+		} else {
+			cfg->failbancount = atoi(value);
+			return;
+		}
+	}
+
 #ifdef CS_WITH_DOUBLECHECK
 	if (!strcmp(token, "double_check")) {
 		if (strlen(value) == 0) {
@@ -1915,6 +1925,8 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg->cmaxidle);
 	if (cfg->failbantime || (!cfg->failbantime && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "failbantime", "%d\n", cfg->failbantime);
+	if (cfg->failbancount || (!cfg->failbancount && cfg->http_full_cfg))
+		fprintf_conf(f, CONFVARWIDTH, "failbancount", "%d\n", cfg->failbancount);
 	if (cfg->delay != CS_DELAY || (cfg->delay == CS_DELAY && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg->delay); //deprecated
 	if (cfg->bindwait != CS_BIND_TIMEOUT || (cfg->bindwait != CS_BIND_TIMEOUT && cfg->http_full_cfg))

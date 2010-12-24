@@ -466,6 +466,7 @@ struct s_emm
 
 // failban listmember
 typedef struct v_ban {
+	int v_count;
 	uint v_ip;
 	time_t v_time;
 } GCC_PACK V_BAN;
@@ -1066,6 +1067,7 @@ struct s_config
 #endif
 	int			http_full_cfg;
 	int			failbantime;
+	int			failbancount;
 	LLIST_D_ 		*v_list; //failban list
 	int		c33_port;
 	in_addr_t	c33_srvip;
