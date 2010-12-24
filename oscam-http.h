@@ -986,6 +986,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##PORT##\"></TD></TR>\n\
 		<TR><TD>Reshare:</TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
 		<TR><TD>Ignore reshare:</TD><TD><SELECT NAME=\"ignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##IGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
+		<TR><TD>Stealth mode:</TD><TD><SELECT NAME=\"stealth\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##STEALTH##>ON</OPTION></SELECT></TD></TR>\n\
 		<TR><TD>Keep clients connected:</TD><TD><SELECT NAME=\"keepconnected\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPCONNECTED##>ON</OPTION></SELECT></TD></TR>\n\
 		<TR><TD>Version:</TD><TD><SELECT name=\"version\">\
 			<OPTION value=\"2.0.11\" ##VERSIONSELECTED0##>2.0.11</OPTION>\
@@ -1001,6 +1002,11 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<OPTION value=\"0\" ##MINIMIZECARDSELECTED0##>0 - legacy (default)</OPTION>\
 			<OPTION value=\"1\" ##MINIMIZECARDSELECTED1##>1 - smallest hop</OPTION>\
 			<OPTION value=\"2\" ##MINIMIZECARDSELECTED2##>2 - via caid</OPTION>\
+		</SELECT></TD></TR>\n\
+		<TR><TD>Reshare mode:</TD><TD><SELECT name=\"reshare_mode\">\
+			<OPTION value=\"0\" ##RESHAREMODE0##>0 - reshare cards only (default)</OPTION>\
+			<OPTION value=\"1\" ##RESHAREMODE1##>1 - reshare cards+services</OPTION>\
+			<OPTION value=\"2\" ##RESHAREMODE2##>2 - reshare services</OPTION>\
 		</SELECT></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
