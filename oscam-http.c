@@ -136,6 +136,7 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 		tpl_addVar(vars, 0, "RESOLVER0", "selected");
 
 	tpl_printf(vars, 0, "FAILBANTIME", "%d", cfg->failbantime);
+	tpl_printf(vars, 0, "FAILBANCOUNT", "%d", cfg->failbancount);
 
 
 #ifdef CS_WITH_DOUBLECHECK
