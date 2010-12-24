@@ -836,11 +836,12 @@ void fprintf_conf(FILE *f, int varnameWidth, const char *varname, const char *fm
 		++varlen;
 	}
 	strcpy(ptr, "= ");
-	fwrite(varnamebuf, sizeof(char), strlen(varnamebuf), f);
-	if(strlen(fmtstring) > 0){
-		va_start(argptr, fmtstring);
-		vfprintf(f, fmtstring, argptr);
-		va_end(argptr);
+	if (fwrite(varnamebuf, sizeof(char), strlen(varnamebuf), f)){
+		if(strlen(fmtstring) > 0){
+			va_start(argptr, fmtstring);
+			vfprintf(f, fmtstring, argptr);
+			va_end(argptr);
+		}
 	}
 }
 
@@ -978,16 +979,17 @@ char *monitor_get_proto(struct s_client *cl)
  */
 char *get_ncd_client_name(char *client_id)
 {
-        static const int max_id_idx = 29;
-        static const char *ncd_service_ids[] = { "0000", "5644", "4C43", "4333", "7264", "6762", "6D67", "7763", "6E73", "6378", "6B61",
+        static const int max_id_idx = 31;
+        static const char const *ncd_service_ids[] = { "0000", "5644", "4C43", "4333", "7264", "6762", "6D67", "7763", "6E73", "6378", "6B61",
                                            "6576", "4343", "5456", "414C", "0666", "0667", "9911", "434C", "4765", "5342",
-                                           "6E65", "4E58", "4453", "8888", "7363", "0669", "0665", "0769", "4543" };
+                                           "6E65", "4E58", "4453", "8888", "7363", "0669", "0665", "0769", "4543", "6D63",
+                                           "6B63" };
 
         static char *ncd_service_names[] = { "generic", "vdr-sc", "LCE", "camd3", "radegast", "gbox2CS", "mgcamd", //actually a const so threadsafe
                                              "WinCSC", "NewCS", "cx", "Kaffeine", "evocamd", "CCcam", "Tecview",
                                              "AlexCS", "rqcamd", "rq-echo-client", "ACamd", "Cardlink", "Octagon", "SBCL",
                                              "NextYE2k", "NextYE2k", "DiabloCam/UW", "OScam", "Scam", "rq-sssp-client/CW",
-                                             "rq-sssp-client/CS", "JlsRq", "eyetvCamd", "unknown - please report" };
+                                             "rq-sssp-client/CS", "JlsRq", "eyetvCamd", "mpcs", "kpcs", "unknown - please report" };
 
         int idx = 0;
         for (idx = 0; idx <= max_id_idx; idx++) {
