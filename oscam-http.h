@@ -348,7 +348,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
 	<TR><TH colspan=\"4\">List of banned IP Addresses</TH></TR>\n\
-	<TR><TH>IP Address</TH><TH>Violation date</TH><TH>left ban time</TH><TH>Action</TH></TR>\n\
+	<TR><TH>IP Address</TH><TH>Violation date</TH><TH>Violation count</TH><TH>left ban time</TH><TH>Action</TH></TR>\n\
     ##FAILBANROW##\n\
 	</TABLE><BR>\n\
 ##TPLFOOTER##"
@@ -356,6 +356,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 #define TPLFAILBANBIT "\
 	<TR><TD>##IPADDRESS##</TD>\
 	<TD>##VIOLATIONDATE##</TD>\
+	<TD>##VIOLATIONCOUNT##</TD>\
 	<TD align=\"center\">##LEFTTIME##</TD>\
 	<TD align=\"center\"><A HREF=\"failban.html?action=delete&intip=##INTIP##\" TITLE=\"Delete Entry\"><IMG SRC=\"##DELICO##\" BORDER=\"0\" ALT=\"Delete Entry\"/></A></TD></TR>\n"
 

@@ -2609,6 +2609,8 @@ void send_oscam_failban(struct templatevars *vars, FILE *f, struct uriparams *pa
 				st->tm_year%100, st->tm_hour,
 				st->tm_min, st->tm_sec);
 
+		tpl_printf(vars, 0, "VIOLATIONCOUNT", "%d", v_ban_entry->v_count);
+
 		int lsec = (cfg->failbantime * 60) - (now - v_ban_entry->v_time);
 		int secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
 		if(lsec > 0) {
