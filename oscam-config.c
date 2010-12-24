@@ -2171,6 +2171,8 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "updateinterval", "%d\n", cfg->cc_update_interval);
 		fprintf_conf(f, CONFVARWIDTH, "minimizecards", "%d\n", cfg->cc_minimize_cards);
 		fprintf_conf(f, CONFVARWIDTH, "keepconnected", "%d\n", cfg->cc_keep_connected);
+		fprintf_conf(f, CONFVARWIDTH, "stealth", "%d\n", cfg->cc_stealth);
+		fprintf_conf(f, CONFVARWIDTH, "reshare_mode", "%d\n", cfg->cc_reshare_service);
 		fprintf(f,"\n");
 	}
 
