@@ -14,6 +14,8 @@ pthread_mutex_t loghistory_lock;
 FILE *fpa=(FILE *)0;
 #endif
 
+#define LOG_BUF_SIZE (520+11) // should be aligned with s_client.dump from globals.h
+
 static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 {
 	if( cfg->max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
@@ -206,7 +208,7 @@ static void write_to_log(int flag, char *txt)
 
 void cs_log(const char *fmt,...)
 {
-	char log_txt[512];
+	char log_txt[LOG_BUF_SIZE];
 	get_log_header(1, log_txt);
 	va_list params;
 	va_start(params, fmt);
@@ -224,7 +226,7 @@ void cs_close_log(void)
 #ifdef WITH_DEBUG
 void cs_debug_mask(unsigned short mask, const char *fmt,...)
 {
-	char log_txt[512];
+	char log_txt[LOG_BUF_SIZE];
 	if (cs_dblevel & mask)
 	{
 		get_log_header(1, log_txt);
@@ -238,7 +240,7 @@ void cs_debug_mask(unsigned short mask, const char *fmt,...)
 #endif
 void cs_dump(const uchar *buf, int n, char *fmt, ...)
 {
-	char log_txt[512];
+	char log_txt[LOG_BUF_SIZE];
 	int i;
 
 	if( fmt )
@@ -263,7 +265,7 @@ void cs_dump(const uchar *buf, int n, char *fmt, ...)
 void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 {
 
-	char log_txt[512];
+	char log_txt[LOG_BUF_SIZE];
 	int i;
 	if ((mask & cs_dblevel) && (fmt))
 	{
@@ -304,7 +306,7 @@ void cs_statistics(struct s_client * client)
 	if (!cfg->disableuserfile){
 		time_t t;
 		struct tm *lt;
-		char buf[512];
+		char buf[LOG_BUF_SIZE];
 
 		float cwps;
 
