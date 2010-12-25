@@ -891,9 +891,19 @@ char *get_provider(int caid, ulong provid){
 	struct s_provid *this = cfg->provid;
 	static char name[83];
 
-	for (name[0] = 0; this && (!name[0]); this = this->next)
-		if (this->caid == caid && this->provid == provid)
-			snprintf(name, 83, "%s / %s / %s", this->prov, this->sat, this->lang);
+	for (name[0] = 0; this && (!name[0]); this = this->next) {
+		if (this->caid == caid && this->provid == provid) {
+			snprintf(name, 83, "%s", this->prov);
+			if (this->sat[0]) {
+				strcat(name, " / ");
+				strcat(name, this->sat);
+			}
+			if (this->lang[0]) {
+				strcat(name, " / ");
+				strcat(name, this->lang);
+			}
+		}
+	}
 
 	if (!name[0]) snprintf(name, 83, "%04X:%06lX unknown", caid, provid);
 	if (!caid) name[0] = '\0';
