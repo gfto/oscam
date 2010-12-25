@@ -534,10 +534,16 @@ reshare level for CCcam clients:
 .RS 3n
 CCcam reshare mode:
 
- 0 = reader reshares only received cards (default)
- 1 = reader reshares received cards and defined services
- 2 = reader reshares only defined reader services as virtual cards
- 3 = reader reshares only defined user services as virtual cards
+ 0 = reader reshares only received SCs for CCcam readers, 
+     defined filters/CAIDs/idents on other readers (default)
+ 1 = reader reshares received SCs (like=0) and defined services
+ 2 = reader reshares only defined reader services as virtual SCs
+ 3 = reader reshares only defined user services as virtual SCs
+
+Every server is shared as hop=0 and with defined reshare values. 
+
+Service reshare only works if positive services defined: no service - no reshare!
+
 .RE
 .PP
 \fBignorereshare\fP = \fB0\fP|\fB1\fP
@@ -550,7 +556,9 @@ CCcam reshare setting:
 .PP
 \fBstealth\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1= enable CCcam privacy mode, default:1
+1= behaviour like the original CCcam: no activate partner detection and 
+extended OSCam-CCcam protocol, prevent other OSCam to detect the server 
+as OSCam server, default:0
 .RE
 .PP
 \fBminimizecards\fP = \fBmode\fP

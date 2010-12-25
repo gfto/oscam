@@ -1,4 +1,4 @@
-oscam.conf(5)									    oscam.conf(5)
+oscam.conf(5)											      oscam.conf(5)
 
 
 
@@ -6,9 +6,9 @@ NAME
        oscam.conf - main configuration file for OSCam
 
 SYNOPSIS
-       The  main  configuration file for OSCam contains global parameters such as debugging, log‐
-       ging, monitor, protocols and anti-cascading.  sections in oscam.conf are nonrecurring. The
-       [global] section is required. All other sections are optional.
+       The main configuration file for OSCam contains global parameters such as debugging, logging, monitor, proto‐
+       cols and anti-cascading.  sections in oscam.conf are nonrecurring. The [global]	section  is  required.	All
+       other sections are optional.
 
 DESCRIPTIONS
    The [global] section
@@ -58,8 +58,7 @@ DESCRIPTIONS
 	  directory for CW logging, default:none
 
        clienttimeout = milli-seconds|seconds
-	  value  (clienttimeout  in seconds < 100, else milli-seconds) for client process to wait
-	  for key, default:5
+	  value (clienttimeout in seconds < 100, else milli-seconds) for client process to wait for key, default:5
 
        fallbacktimeout = milli-seconds
 	  time falling back to fallback reader, default:2500
@@ -83,21 +82,17 @@ DESCRIPTIONS
 	  delay for DNS resolving, default:30
 
        clientdyndns = 0|1
-	  1 = enable DNS resolving of clients, if you have already defined a  hostname	for  your
-	  clients  the parameter must be 1, otherwise no authentication will be possible for this
-	  clients, default:0
+	  1  = enable DNS resolving of clients, if you have already defined a hostname for your clients the parame‐
+	  ter must be 1, otherwise no authentication will be possible for this clients, default:0
 
        failbantime = minutes
-	  time for IP based blocking for clients with an invalid login attempt, 0  =  failban  is
-	  disabled, default:0
+	  time for IP based blocking for clients with an invalid login attempt, 0 = failban is disabled, default:0
 
        sleep = minutes
-	  time	waiting  for  inactive	users,	default:none,  can  be	overwritten  per  user in
-	  oscam.user
+	  time waiting for inactive users, default:none, can be overwritten per user in oscam.user
 
        unlockparental = 0|1
-	  1 = unlock parental mode option to disable Seca  pin	code  request  for  adult  movie,
-	  default:0
+	  1 = unlock parental mode option to disable Seca pin code request for adult movie, default:0
 
        nice = -20..+20
 	  system priority, default:99
@@ -121,8 +116,8 @@ DESCRIPTIONS
 	  1 = save SC init history to /tmp/.oscam/reader<number>, default:0
 
        double_check = 0|1 (only if CW double check enabled)
-	  1  = ECM will be send to two or more readers with the same SC and the CWs will be veri‐
-	  fied against each other, lb_nbest_readers must be set to 2 or higher, default:0
+	  1 = ECM will be send to two or more readers with the same SC and the CWs will be  verified  against  each
+	  other, lb_nbest_readers must be set to 2 or higher, default:0
 
        lb_mode = mode
 	  loadbalance mode:
@@ -271,23 +266,21 @@ DESCRIPTIONS
 
    The [newcamd] section
        mgclient = 0|1 (for beta testing only)
-	  1 = enable mgcamd extended newcamd protocol,	allowing for a single connection to  work
-	  with mutliple providers, default:0
+	  1  =	enable	mgcamd	extended  newcamd protocol,  allowing for a single connection to work with mutliple
+	  providers, default:0
 
        key = DES key
 	  default key for newcamd client encryption, default:none
 
 	   example key = 0102030405060708091011121314
 
-       port	       =	    port[{DES		 key}]@CAID[:ident][,ident]...[;port[{DES
-       key}]@CAID[:ident][,ident]...]...
+       port = port[{DES key}]@CAID[:ident][,ident]...[;port[{DES key}]@CAID[:ident][,ident]...]...
 	  TCP port/DES key/CAID/ident definitions, default:none
 
-	   example:				       port					=
-	  10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
+	   example: port = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
 
-	  Each	CAID  requires	a  separate  port. If you don't specify a DES key for a port, the
-	  default DES Key will be used.
+	  Each CAID requires a separate port. If you don't specify a DES key for a port, the default DES  Key  will
+	  be used.
 
        serverip = IP address
 	  bind service to specified IP address, default:all
@@ -380,10 +373,16 @@ DESCRIPTIONS
        reshare_mode = mode
 	  CCcam reshare mode:
 
-	   0 = reader reshares only received cards (default)
-	   1 = reader reshares received cards and defined services
-	   2 = reader reshares only defined reader services as virtual cards
-	   3 = reader reshares only defined user services as virtual cards
+	   0 = reader reshares only received SCs for CCcam readers,
+	       defined filters/CAIDs/idents on other readers (default)
+	   1 = reader reshares received SCs (like=0) and defined services
+	   2 = reader reshares only defined reader services as virtual SCs
+	   3 = reader reshares only defined user services as virtual SCs
+
+	  Every server is shared as hop=0 and with defined reshare values.
+
+	  Service reshare only works if positive services defined: no service - no reshare!
+
 
        ignorereshare = 0|1
 	  CCcam reshare setting:
@@ -392,7 +391,8 @@ DESCRIPTIONS
 	   1 = use reshare setting of reader or user
 
        stealth = 0|1
-	  1= enable CCcam privacy mode, default:1
+	  1=  behaviour  like  the original CCcam: no activate partner detection and extended OSCam-CCcam protocol,
+	  prevent other OSCam to detect the server as OSCam server, default:0
 
        minimizecards = mode
 	  mode how to provide CCcam servers to CCcam clients:
@@ -442,8 +442,8 @@ DESCRIPTIONS
        enabled = 0|1
 	  1 = DVB API enabled, default:0
 
-	  Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby and  OSCam
-	  remains as SC server only.
+	  Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby	and  OSCam  remains  as  SC
+	  server only.
 
        user = username
 	  user name for DVB API client, default:anonymous
@@ -452,8 +452,7 @@ DESCRIPTIONS
 	  CAIDs to be ignored, default:none
 
        priority = <CAID>:<provider ID>[,CAID:<provider ID>]...
-	  CAIDs  and  provider IDs to be prioritized, default:CAIDs and provider IDs of local SCs
-	  will be prioritized
+	  CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of local SCs will be prioritized
 
        au = 0|1
 	  1 = enable AU, default:0
@@ -468,11 +467,11 @@ DESCRIPTIONS
        boxtype = dbox2|dreambox|dm7000|duckbox|ufs910|ipbox|ipbox-pmt
 	  set boxtype, auto detection of DVB API will be aspired, default:dreambox
 
-	  ipbox with camd.socket support, currently only with PGI image  version  0.6  or  above,
-	  verified on HD models only
+	  ipbox with camd.socket support, currently only with PGI image version 0.6 or above, verified on HD models
+	  only
 
-	  ipbox-pmt  can  be  used on any DGS based images (with or without camd.socket support),
-	  verified on HD models only
+	  ipbox-pmt can be used on any DGS based images (with or without camd.socket support), verified on HD  mod‐
+	  els only
 
    The [anticasc] section (only if anti-cascading enabled)
        enabled = 0|1
@@ -540,8 +539,8 @@ MONITOR
 
        ·  reload
 
-	  reinit user db, clients and anti-cascading, for newcamd  connections:  after	reloading
-	  the ident, please restart newcamd client
+	  reinit  user	db,  clients and anti-cascading, for newcamd connections: after reloading the ident, please
+	  restart newcamd client
 
 
        ·  details <PID>
@@ -575,15 +574,14 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The  web interface allows you to create your own template. For developing your own tem‐
-	  plate request the orignal template with the non-linked page  savetemplates.html.  Store
-	  your own template in the directory specified by httptpl.
+	  The web interface allows you to create your own template. For developing your own  template  request	the
+	  orignal  template  with  the non-linked page savetemplates.html. Store your own template in the directory
+	  specified by httptpl.
 
        ·  known issues
 
-	  Login  is  not  possible by now with the Safari browser because of incorrect stale flag
-	  handling. Increasing the AUTHNONCEVALIDSECS in oscam-http.h would be a workaround,  but
-	  also a small security risk.
+	  Login is not possible by now with the Safari browser because of incorrect stale flag handling. Increasing
+	  the AUTHNONCEVALIDSECS in oscam-http.h would be a workaround, but also a small security risk.
 
 EXAMPLES
 	[global]
@@ -604,8 +602,7 @@ EXAMPLES
 
 	[newcamd]
 	key	     = 0102030405060708091011121314
-	port											=
-       10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
+	port	     = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
 
 	[radegast]
 	port	     = 30000
@@ -621,10 +618,9 @@ EXAMPLES
 	port	     = 50000@0300:600000
 
 SEE ALSO
-       list_smargo(1), oscam(1),  oscam.ac(5),	oscam.cert(5),	oscam.dvbapi(5),  oscam.guess(5),
-       oscam.ird(5),   oscam.provid(5),   oscam.server(5),   oscam.services(5),   oscam.srvid(5),
-       oscam.tiers(5), oscam.user(5)
+       list_smargo(1),	 oscam(1),   oscam.ac(5),  oscam.cert(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5),
+       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
 
-										    oscam.conf(5)
+												      oscam.conf(5)
