@@ -2886,13 +2886,14 @@ int process_request(FILE *f, struct in_addr in) {
 	}
 
 	if(authok != 1) {
-		strcpy(tmp, "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"");
-		strcat(tmp, AUTHREALM);
-		strcat(tmp, "\", qop=\"auth\", opaque=\"\", nonce=\"");
-		strcat(tmp, expectednonce);
-		strcat(tmp, "\"");
-		if(authok == 2) strcat(tmp, ", stale=true");
-		send_headers(f, 401, "Unauthorized", tmp, "text/html");
+		char temp[1024];
+		strcpy(temp, "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"");
+		strcat(temp, AUTHREALM);
+		strcat(temp, "\", qop=\"auth\", opaque=\"\", nonce=\"");
+		strcat(temp, expectednonce);
+		strcat(temp, "\"");
+		if(authok == 2) strcat(temp, ", stale=true");
+		send_headers(f, 401, "Unauthorized", temp, "text/html");
 		free(filebuf);
 		return 0;
 	}
@@ -2905,7 +2906,10 @@ int process_request(FILE *f, struct in_addr in) {
 		send_headers(f, 200, "OK", NULL, "text/javascript");
 		send_file(f, 2);
 	} else {
-		send_headers(f, 200, "OK", NULL, "text/html");
+		if (pgidx == 18)
+			send_headers(f, 200, "OK", NULL, "text/xml");
+		else
+			send_headers(f, 200, "OK", NULL, "text/html");
 		time_t t;
 		struct templatevars *vars = tpl_create();
 		struct tm *lt;

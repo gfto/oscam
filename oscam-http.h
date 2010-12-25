@@ -764,7 +764,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 
 #define TPLAPICCCAMCARDBIT "      <card number=\"##APICARDNUMBER##\" caid=\"##APICAID##\" system=\"##SYSTEM##\" \
 reshare=\"##MAXDOWN##\" hop=\"##UPHOPS##\">\n\
-         <hostaddress>##APIHOST##</host>\n\
+         <hostaddress>##APIHOST##</hostaddress>\n\
          <hostport>##APIHOSTPORT##</hostport>\n\
          <shareid>##SHAREID##</shareid>\n\
          <remoteid>##REMOTEID##</remoteid>\n\
