@@ -2772,7 +2772,7 @@ struct cc_card *create_card(struct cc_card *card) {
 struct cc_card *create_card2(struct s_reader *rdr, int j, uint16 caid, uint8 hop, uint8 reshare) {
 
 	struct cc_card *card = create_card(NULL);
-	card->remote_id = (rdr->cc_id << 16)|j;
+	card->remote_id = (rdr?(rdr->cc_id << 16):0x7F)|j;
 	card->caid = caid;
 	card->hop = hop;
 	card->maxdown = reshare;
@@ -2925,7 +2925,8 @@ int report_card(struct s_client *cl, struct cc_card *card, LLIST *new_reported_c
  *
  * cfg->cc_reshare_services=0 CCCAM reader reshares only received cards
  *                         =1 CCCAM reader reshares received cards + defined services
- *                         =2 CCCAM reader reshared only defined services as virtual cards
+ *                         =2 CCCAM reader reshares only defined reader-services as virtual cards
+ *                         =3 CCCAM reader reshares only defined user-services as virtual cards
  */
 int cc_srv_report_cards(struct s_client *cl) {
 	int j;
@@ -2955,6 +2956,29 @@ int cc_srv_report_cards(struct s_client *cl) {
 
 	int isau = (cl->aureader)?1:0;
 
+	//User-Services:
+	if (cfg->cc_reshare_services==3 && cfg->sidtab && cl->sidtabok) {
+		struct s_sidtab *ptr;
+		for (j=0,ptr=cfg->sidtab; ptr; j++) {
+			if (cl->sidtabok&((SIDTABBITS)1<<j)) {
+				int k;
+				for (k=0;k<ptr->num_caid;k++) {
+					struct cc_card *card = create_card2(NULL, (j<<8)|k, ptr->caid[k], hop, usr_reshare);
+					int l;
+					for (l=0;l<ptr->num_provid;l++) {
+						struct cc_provider *prov = malloc(sizeof(struct cc_provider));
+						memset(prov, 0, sizeof(struct cc_provider));
+						prov->prov = ptr->provid[l];
+						ll_append(card->providers, prov);						
+					}
+					add_card_to_serverlist(NULL, cl, server_cards, card, usr_reshare);
+				}
+				flt=1;
+			}
+			ptr=ptr->next;
+		}
+	}
+		
 	struct s_reader *rdr;
 	int r = 0;
 	for (rdr = first_reader; rdr; rdr = rdr->next) {
@@ -2983,7 +3007,32 @@ int cc_srv_report_cards(struct s_client *cl) {
 		int au_allowed = !rdr->audisabled && isau;
 
 		flt = 0;
-		if ((rdr->typ != R_CCCAM||cfg->cc_reshare_services) && rdr->ftab.filts) {
+		
+		//Reader-Services:
+		if (cfg->cc_reshare_services==2 && cfg->sidtab && rdr->sidtabok) {
+			struct s_sidtab *ptr;
+			for (j=0,ptr=cfg->sidtab; ptr; j++) {
+				if (rdr->sidtabok&((SIDTABBITS)1<<j)) {
+					int k;
+					for (k=0;k<ptr->num_caid;k++) {
+						struct cc_card *card = create_card2(rdr, (j<<8)|k, ptr->caid[k], hop, reshare);
+						int l;
+						for (l=0;l<ptr->num_provid;l++) {
+							struct cc_provider *prov = malloc(sizeof(struct cc_provider));
+							memset(prov, 0, sizeof(struct cc_provider));
+							prov->prov = ptr->provid[l];
+							ll_append(card->providers, prov);						
+						}
+						add_card_to_serverlist(rdr, cl, server_cards, card, reshare);
+					}
+					flt=1;
+				}
+				ptr=ptr->next;
+			}
+		}
+
+		//Filts by Hardware readers:
+		if ((rdr->typ != R_CCCAM||cfg->cc_reshare_services<3) && rdr->ftab.filts && !flt) {
 			for (j = 0; j < CS_MAXFILTERS; j++) {
 				if (rdr->ftab.filts[j].caid && 
 						chk_ctab(rdr->ftab.filts[j].caid, &cl->ctab)) {
@@ -3021,7 +3070,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			}
 		}
 
-		if ((rdr->typ != R_CCCAM||cfg->cc_reshare_services) && !rdr->caid[0] && !flt) {
+		if ((rdr->typ != R_CCCAM||cfg->cc_reshare_services<3) && !rdr->caid[0] && !flt) {
 			for (j = 0; j < CS_MAXCAIDTAB; j++) {
 				//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", rdr->ctab.caid[j], rdr->ctab.cmap[j]);
 				ushort lcaid = rdr->ctab.caid[j];
@@ -3040,7 +3089,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			}
 		}
 
-		if ((rdr->typ != R_CCCAM||cfg->cc_reshare_services) && rdr->caid[0] && !flt && chk_ctab(rdr->caid[0], &cl->ctab)) {
+		if ((rdr->typ != R_CCCAM||cfg->cc_reshare_services<3) && rdr->caid[0] && !flt && chk_ctab(rdr->caid[0], &cl->ctab)) {
 			//cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
 			ushort caid = rdr->caid[0];
 			struct cc_card *card = create_card2(rdr, 0, caid, hop, reshare);

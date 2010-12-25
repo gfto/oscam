@@ -1007,7 +1007,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<TR><TD>Reshare mode:</TD><TD><SELECT name=\"reshare_mode\">\
 			<OPTION value=\"0\" ##RESHAREMODE0##>0 - reshare cards only (default)</OPTION>\
 			<OPTION value=\"1\" ##RESHAREMODE1##>1 - reshare cards+services</OPTION>\
-			<OPTION value=\"2\" ##RESHAREMODE2##>2 - reshare services</OPTION>\
+			<OPTION value=\"2\" ##RESHAREMODE2##>2 - reshare reader-services</OPTION>\
+			<OPTION value=\"3\" ##RESHAREMODE2##>3 - reshare user-services</OPTION>\
 		</SELECT></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
