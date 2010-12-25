@@ -391,6 +391,9 @@ DESCRIPTIONS
 	   0 = use reshare setting of server (default)
 	   1 = use reshare setting of reader or user
 
+       stealth = 0|1
+	  1= enable CCcam privacy mode, default:1
+
        minimizecards = mode
 	  mode how to provide CCcam servers to CCcam clients:
 
