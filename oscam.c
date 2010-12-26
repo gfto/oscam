@@ -107,7 +107,7 @@ int cs_check_violation(uint ip) {
 					llist_itr_remove(&itr);
 					return 0;
 				} else {
-					if (v_ban_entry->v_count > cfg->failbancount) {
+					if (v_ban_entry->v_count >= cfg->failbancount) {
 						cs_debug_mask(D_TRACE, "failban: banned ip %s - %ld seconds left",
 								cs_inet_ntoa(v_ban_entry->v_ip),(cfg->failbantime * 60) - (now - v_ban_entry->v_time));
 						return 1;
