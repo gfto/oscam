@@ -3340,7 +3340,7 @@ int cc_srv_connect(struct s_client *cl) {
 	cl->crypted = 1;
 
 	for (account = cfg->account; account; account = account->next) {
-		if (strcmp(usr, account->usr) == 0) {
+		if (strncmp(usr, account->usr, sizeof(usr)) == 0) {
 			strncpy(pwd, account->pwd, sizeof(pwd));
 			break;
 		}
