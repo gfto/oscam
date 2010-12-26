@@ -218,7 +218,7 @@ maximum ECM count before resetting loadbalancing values, default:500
 .RS 3n
 time between retrying failed readers/CAIDs/providers/services, default:900
 .RE
-.SS "The [monitor] section"
+.SS "The [monitor] section" \fI(only if monitor module enabled)\fR
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
@@ -342,7 +342,7 @@ write config:
 .RS 3n
 1 = read only modus for web interface, default:0
 .RE
-.SS "The [camd33] section"
+.SS "The [camd33] section" \fI(only if camd33 module enabled)\fR
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
@@ -372,7 +372,7 @@ key for camd 3.3x client encryption, default:none
 
  example: key = 01020304050607080910111213141516
 .RE
-.SS "The [camd35] section"
+.SS "The [camd35] section" \fI(only if camd35 module enabled)\fR
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
@@ -383,7 +383,7 @@ UDP port for camd 3.5x clients, 0 = disabled, default:0
 .RS 3n
 bind service to specified IP address, default:all
 .RE
-.SS "The [newcamd] section"
+.SS "The [newcamd] section" \fI(only if newcamd module enabled)\fR
 .PP
 \fBmgclient\fP = \fB0\fP|\fB1\fP \fI(for beta testing only)\fR
 .RS 3n
@@ -422,7 +422,7 @@ client connections allowed from, default:none
 .RS 3n
 0 = disable keepalive, default:1
 .RE
-.SS "The [radegast] section"
+.SS "The [radegast] section" \fI(only if radegast module enabled)\fR
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
@@ -445,7 +445,7 @@ client connections allowed from, default:none
 .RS 3n
 user name for radegast client
 .RE
-.SS "The [serial] section"
+.SS "The [serial] section" \fI(only if serial module enabled)\fR
 .PP
 \fBdevice\fP = \fB<user>@<device>[:baud][?option1=value1[&option2=value2]]\fP
 .RS 3n
@@ -463,7 +463,7 @@ supported serial devices:
  bomba   (BOMBA firmware)
  dsr9500 (DSR 9500)
 .RE 
-.SS "The [cs357x] section"
+.SS "The [cs357x] section" \fI(only if camd35 module enabled)\fR
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
@@ -479,7 +479,7 @@ bind service to specified IP address, default:all
 .RS 3n
 0 = CMD08 enabled, 1 = CMD08 disabled, default:0
 .RE
-.SS "The [cs378x] section"
+.SS "The [cs378x] section" \fI(only if camd35 module enabled)\fR
 .PP
 \fBport\fP = \fB0\fP|\fBport@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
 .RS 3n
@@ -499,7 +499,7 @@ bind service to specified IP address, default:all
 .RS 3n
 0 = CMD08 enabled, 1 = CMD08 disabled, default:0
 .RE
-.SS "The [cccam] section"
+.SS "The [cccam] section" \fI(only if cccam module enabled)\fR
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
@@ -587,7 +587,7 @@ set CCcam keepalive modus:
   0 = disconnect client when max idle time is reached
   1 = keep client connected (default)
 .RE
-.SS "The [gbox] section"
+.SS "The [gbox] section" \fI(only if gbox module enabled)\fR
 .PP
 \fBpassword\fP = \fBpassword\fP
 .RS 3n
