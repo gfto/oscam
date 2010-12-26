@@ -780,6 +780,21 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 
 #define TPLAPICCCAMCARDNODEBIT "            <node number=\"##APINODENUMBER##\">##APINODE##</node>\n"
 
+#define TPLAPIREADERSTATS "##TPLAPIHEADER##\
+<reader label=\"##READERNAME##\">\n\
+   <emmstats totalwritten=\"##TOTALWRITTEN##\" totalskipped=\"##TOTALSKIPPED##\" \
+totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
+   </emmstats>\n\
+   <ecmstats totalecm=\"##TOTALECM##\" lastaccess=\"##LASTACCESS##\">\n##ECMSTATS##\
+   </ecmstats>\n\
+</reader>\n\
+##TPLAPIFOOTER##"
+
+#define TPLAPIREADERSTATSEMMBIT "      <emm type=\"##EMMTYPE##\" result=\"##EMMRESULT##\">##EMMCOUNT##</emm>\n"
+
+#define TPLAPIREADERSTATSECMBIT "      <ecm caid=\"##ECMCAID##\" provid=\"##ECMPROVID##\" srvid=\"##ECMSRVID##\"\
+ time=\"##ECMTIME##\" rc=\"##ECMRC##\" rcs=\"##ECMRCS##\" last=\"##ECMLAST##\">##ECMCOUNT##</ecm>\n"
+
 #define TPLREADERCONFIG "\
 ##TPLHEADER##\
 ##TPLMENU##\n\
@@ -1426,6 +1441,9 @@ char *tpl[]={
 	"APICCCAMCARDBIT",
 	"APICCCAMCARDNODEBIT",
 	"APICCCAMCARDPROVIDERBIT",
+	"APIREADERSTATS",
+	"APIREADERSTATSEMMBIT",
+	"APIREADERSTATSECMBIT",
 	"READERCONFIG",
 	"READERCONFIGSIDOKBIT",
 	"READERCONFIGSIDNOBIT",
@@ -1522,6 +1540,9 @@ char *tplmap[]={
 	TPLAPICCCAMCARDBIT,
 	TPLAPICCCAMCARDNODEBIT,
 	TPLAPICCCAMCARDPROVIDERBIT,
+	TPLAPIREADERSTATS,
+	TPLAPIREADERSTATSEMMBIT,
+	TPLAPIREADERSTATSECMBIT,
 	TPLREADERCONFIG,
 	TPLREADERCONFIGSIDOKBIT,
 	TPLREADERCONFIGSIDNOBIT,

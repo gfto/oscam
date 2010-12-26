@@ -1223,46 +1223,115 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	webif_write(tpl_getTpl(vars, "READERCONFIG"), f);
 }
 
-void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparams *params) {
+void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in, int apicall) {
+
+	tpl_printf(vars, 0, "CALLINGIP", "%s", inet_ntoa(*(struct in_addr *)&in));
 
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 
-	tpl_printf(vars, 0, "LABEL", "%s", rdr->label);
+	if (!apicall)
+		tpl_printf(vars, 0, "LABEL", "%s", rdr->label);
+	else
+		tpl_printf(vars, 0, "READERNAME", "%s", rdr->label);
 
 	char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
 			"fake", "invalid", "corrupt", "no card", "expdate",
 			"disabled", "stopped"};
 
+	if (apicall) {
+		int i, emmcount = 0;
+		char *ttxt[]={"unknown", "unique", "shared", "global"};
+
+		for (i=0; i<4; i++) {
+			tpl_addVar(vars, 0, "EMMRESULT", "error");
+			tpl_printf(vars, 0, "EMMTYPE", "%s", ttxt[i]);
+			tpl_printf(vars, 0, "EMMCOUNT", "%d", rdr->emmerror[i]);
+			tpl_addVar(vars, 1, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
+			emmcount += rdr->emmerror[i];
+			tpl_printf(vars, 0, "TOTALERROR", "%d", emmcount);
+		}
+		emmcount = 0;
+		for (i=0; i<4; i++) {
+			tpl_addVar(vars, 0, "EMMRESULT", "written");
+			tpl_printf(vars, 0, "EMMTYPE", "%s", ttxt[i]);
+			tpl_printf(vars, 0, "EMMCOUNT", "%d", rdr->emmwritten[i]);
+			tpl_addVar(vars, 1, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
+			emmcount += rdr->emmwritten[i];
+			tpl_printf(vars, 0, "TOTALWRITTEN", "%d", emmcount);
+		}
+		emmcount = 0;
+		for (i=0; i<4; i++) {
+			tpl_addVar(vars, 0, "EMMRESULT", "skipped");
+			tpl_printf(vars, 0, "EMMTYPE", "%s", ttxt[i]);
+			tpl_printf(vars, 0, "EMMCOUNT", "%d", rdr->emmskipped[i]);
+			tpl_addVar(vars, 1, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
+			emmcount += rdr->emmskipped[i];
+			tpl_printf(vars, 0, "TOTALSKIPPED", "%d", emmcount);
+		}
+		emmcount = 0;
+		for (i=0; i<4; i++) {
+			tpl_addVar(vars, 0, "EMMRESULT", "blocked");
+			tpl_printf(vars, 0, "EMMTYPE", "%s", ttxt[i]);
+			tpl_printf(vars, 0, "EMMCOUNT", "%d", rdr->emmblocked[i]);
+			tpl_addVar(vars, 1, "EMMSTATS", tpl_getTpl(vars, "APIREADERSTATSEMMBIT"));
+			emmcount += rdr->emmblocked[i];
+			tpl_printf(vars, 0, "TOTALBLOCKED", "%d", emmcount);
+		}
+	}
+
 	int rc2hide = (-1);
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
 
 	if (rdr->lb_stat) {
-
+		int ecmcount = 0;
+		int lastaccess = 0;
 		LL_ITER *it = ll_iter_create(rdr->lb_stat);
 		READER_STAT *stat = ll_iter_next(it);
 		while (stat) {
 
 			if (!(stat->rc == rc2hide)) {
-				tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
-				tpl_printf(vars, 0, "CHANNELNAME","%s", get_servicename(stat->srvid, stat->caid));
-				tpl_printf(vars, 0, "RC", "%s", stxt[stat->rc]);
-				tpl_printf(vars, 0, "TIME", "%dms", stat->time_avg);
-				tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
-				if(stat->last_received) {
-					struct tm *lt = localtime(&stat->last_received);
-					tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100, lt->tm_hour, lt->tm_min, lt->tm_sec);
+				if (!apicall) {
+					tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
+					tpl_printf(vars, 0, "CHANNELNAME","%s", get_servicename(stat->srvid, stat->caid));
+					tpl_printf(vars, 0, "RC", "%s", stxt[stat->rc]);
+					tpl_printf(vars, 0, "TIME", "%dms", stat->time_avg);
+					tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
+					if(stat->last_received) {
+						struct tm *lt = localtime(&stat->last_received);
+						tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100, lt->tm_hour, lt->tm_min, lt->tm_sec);
 
+					} else {
+						tpl_addVar(vars, 0, "LAST","never");
+					}
 				} else {
-					tpl_addVar(vars, 0, "LAST","never");
+					tpl_printf(vars, 0, "ECMCAID", "%04X", stat->caid);
+					tpl_printf(vars, 0, "ECMPROVID", "%06lX", stat->prid);
+					tpl_printf(vars, 0, "ECMSRVID", "%04X", stat->srvid);
+					tpl_printf(vars, 0, "ECMTIME", "%d", stat->time_avg);
+					tpl_printf(vars, 0, "ECMRC", "%d", stat->rc);
+					tpl_printf(vars, 0, "ECMRCS", "%s", stxt[stat->rc]);
+					tpl_printf(vars, 0, "ECMLAST", "%u", stat->last_received);
+					tpl_printf(vars, 0, "ECMCOUNT", "%d", stat->ecm_count);
+					ecmcount += stat->ecm_count;
+					if (stat->last_received > lastaccess)
+						lastaccess = stat->last_received;
 				}
-				if(stat->rc == 4) {
-					tpl_addVar(vars, 1, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
-					tpl_addVar(vars, 0, "READERSTATSNFHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"6\">Not found</TD></TR>\n");
+
+				if (!apicall) {
+					if (stat->rc == 4) {
+						tpl_addVar(vars, 1, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
+						tpl_addVar(vars, 0, "READERSTATSNFHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"6\">Not found</TD></TR>\n");
+					}
+					else
+						tpl_addVar(vars, 1, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
+				} else {
+					tpl_printf(vars, 0, "LASTACCESS", "%u", lastaccess);
+					tpl_printf(vars, 0, "TOTALECM", "%d", ecmcount);
+					tpl_addVar(vars, 1, "ECMSTATS", tpl_getTpl(vars, "APIREADERSTATSECMBIT"));
 				}
-				else
-					tpl_addVar(vars, 1, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
+
 			}
 
 		stat = ll_iter_next(it);
@@ -1274,7 +1343,10 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 		tpl_addVar(vars, 1, "READERSTATSROW","<TR><TD colspan=\"6\"> No statistics found </TD></TR>");
 	}
 
-	webif_write(tpl_getTpl(vars, "READERSTATS"), f);
+	if(!apicall)
+		webif_write(tpl_getTpl(vars, "READERSTATS"), f);
+	else
+		webif_write(tpl_getTpl(vars, "APIREADERSTATS"), f);
 }
 
 void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
@@ -2654,6 +2726,9 @@ void send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params
 			webif_write(tpl_getTpl(vars, "APIERROR"), f);
 		}
 	}
+	else if (strcmp(getParam(params, "part"), "readerstats") == 0) {
+		send_oscam_reader_stats(vars, f, params, in, 1);
+	}
 	else {
 		tpl_addVar(vars, 0, "APIERRORMESSAGE", "part not found");
 		webif_write(tpl_getTpl(vars, "APIERROR"), f);
@@ -2973,7 +3048,7 @@ int process_request(FILE *f, struct in_addr in) {
 			case 12: send_oscam_script(vars, f); break;
 			case 13: send_oscam_scanusb(vars, f); break;
 			case 14: send_oscam_files(vars, f, &params); break;
-			case 15: send_oscam_reader_stats(vars, f, &params); break;
+			case 15: send_oscam_reader_stats(vars, f, &params, in, 0); break;
 			case 16: send_oscam_failban(vars, f, &params); break;
 			//case  17: js file
 			case 18: send_oscam_api(vars, f, &params, in); break;
