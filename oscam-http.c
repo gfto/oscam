@@ -1284,9 +1284,9 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
 
+	int rowcount = 0, ecmcount = 0, lastaccess = 0;
 	if (rdr->lb_stat) {
-		int ecmcount = 0;
-		int lastaccess = 0;
+
 		LL_ITER *it = ll_iter_create(rdr->lb_stat);
 		READER_STAT *stat = ll_iter_next(it);
 		while (stat) {
@@ -1327,14 +1327,13 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 					else
 						tpl_addVar(vars, 1, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
 				} else {
-					tpl_printf(vars, 0, "LASTACCESS", "%u", lastaccess);
-					tpl_printf(vars, 0, "TOTALECM", "%d", ecmcount);
+
 					tpl_addVar(vars, 1, "ECMSTATS", tpl_getTpl(vars, "APIREADERSTATSECMBIT"));
 				}
-
 			}
 
 		stat = ll_iter_next(it);
+		rowcount++;
 		}
 
 		ll_iter_release(it);
@@ -1342,6 +1341,10 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	} else {
 		tpl_addVar(vars, 1, "READERSTATSROW","<TR><TD colspan=\"6\"> No statistics found </TD></TR>");
 	}
+
+	tpl_printf(vars, 0, "ROWCOUNT", "%d", ecmcount);
+	tpl_printf(vars, 0, "LASTACCESS", "%u", lastaccess);
+	tpl_printf(vars, 0, "TOTALECM", "%d", ecmcount);
 
 	if(!apicall)
 		webif_write(tpl_getTpl(vars, "READERSTATS"), f);

@@ -785,7 +785,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
    <emmstats totalwritten=\"##TOTALWRITTEN##\" totalskipped=\"##TOTALSKIPPED##\" \
 totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
    </emmstats>\n\
-   <ecmstats totalecm=\"##TOTALECM##\" lastaccess=\"##LASTACCESS##\">\n##ECMSTATS##\
+   <ecmstats count=\"##ROWCOUNT##\" totalecm=\"##TOTALECM##\" lastaccess=\"##LASTACCESS##\">\n##ECMSTATS##\
    </ecmstats>\n\
 </reader>\n\
 ##TPLAPIFOOTER##"
