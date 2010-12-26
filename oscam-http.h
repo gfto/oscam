@@ -424,9 +424,9 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
    <status>\n\
 ##APISTATUSBITS##\
    </status>\n\
-   <log>\n\
+   <log><![CDATA[ \n\
    ##LOGHISTORY##\
-   </log>\
+   ]]</log>\
 ##TPLAPIFOOTER##"
 
 
