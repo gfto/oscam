@@ -1719,7 +1719,7 @@ ECM_REQUEST *get_ecmtask()
 
 static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int rc)
 {
-	if (!cfg->lb_mode || rc == 100)
+	if (rc>=99)
 		return;
 	struct timeb tpe;
 	cs_ftime(&tpe);

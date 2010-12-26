@@ -377,10 +377,10 @@ int get_best_reader(ECM_REQUEST *er)
 #ifdef WEBIF
 				rdr->lbvalue = current;
 #endif
-				if (!rdr->ph.c_available
-						|| rdr->ph.c_available(rdr,
+				if (rdr->ph.c_available
+						&& !rdr->ph.c_available(rdr,
 								AVAIL_CHECK_LOADBALANCE)) {
-					current=current/2;
+					current=current*2;
 				}
 				if (current < 1)
 					re[i]=1;
@@ -483,20 +483,6 @@ int get_best_reader(ECM_REQUEST *er)
 		er->matching_rdr[12], er->matching_rdr[13], er->matching_rdr[14], er->matching_rdr[15]);
 #endif	
 
-	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
-		if (result[i] == 1) { //primary readers
-			stat = get_stat(rdr, er->caid, er->prid, er->srvid);
-			if (stat) {
-				stat->request_count++;
-				//algo for finding unanswered requests (newcamd reader for example:)
-				if (stat->request_count > cfg->lb_min_ecmcount) { //5 unanswered requests? 
-					add_stat(rdr, er->caid, er->prid, er->srvid, 1, 4); //reader marked as unuseable 
-					result[i] = 0;
-				}
-			}
-		}	
-	}
-	
 	if (new_nulltime.time)
 		nulltime = new_nulltime;
 		
