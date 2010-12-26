@@ -324,7 +324,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
   <FORM ACTION=\"files.html\" method=\"post\">\n\
   <INPUT TYPE=\"hidden\" NAME=\"part\" VALUE=\"##PART##\">\n\
   <TEXTAREA NAME=\"filecontent\" CLASS=\"editor\">##FILECONTENT##</TEXTAREA><BR>##WRITEPROTECTION##<BR>\n\
-  <INPUT TYPE=\"submit\" NAME=\"action\" VALUE=\"Save\" TITLE=\"Save file is not yet implemented\" ##BTNDISABLED##>\n\
+  <INPUT TYPE=\"submit\" NAME=\"action\" VALUE=\"Save\" TITLE=\"Save file\" ##BTNDISABLED##>\n\
   </FORM>\n\
   ##TPLFOOTER##"
 
