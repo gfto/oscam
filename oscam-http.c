@@ -1309,6 +1309,7 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 					tpl_printf(vars, 0, "ECMCAID", "%04X", stat->caid);
 					tpl_printf(vars, 0, "ECMPROVID", "%06lX", stat->prid);
 					tpl_printf(vars, 0, "ECMSRVID", "%04X", stat->srvid);
+					tpl_printf(vars, 0, "ECMCHANNELNAME","%s", get_servicename(stat->srvid, stat->caid));
 					tpl_printf(vars, 0, "ECMTIME", "%d", stat->time_avg);
 					tpl_printf(vars, 0, "ECMRC", "%d", stat->rc);
 					tpl_printf(vars, 0, "ECMRCS", "%s", stxt[stat->rc]);
