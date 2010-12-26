@@ -25,6 +25,7 @@ DESCRIPTIONS
 
 	   serial	serial number of Smartreader+
 			(get the serial number while starting OSCam)
+			(only if serial reader module enabled)
 
 	   lport:	remapping to local port
 
@@ -34,6 +35,7 @@ DESCRIPTIONS
 			reader 1
 
 	   constantcw:	constant CW file name
+			(only if constant CW module enabled)
 
 	  constant  CW	file  format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 dig‐
 	  its):key (16 Bytes seperated by spaces)
@@ -49,22 +51,22 @@ DESCRIPTIONS
        enable = 0|1
 	  0 = deactivate reader, default:1
 
-       key = DES key
+       key = DES key (only if newcamd module enabled)
 	  key for newcamd remote reader encryption
 
-       premium = ???
+       premium = ??? (only if gbox module enabled)
 	  for gbox reader
 
-       account = user,password (delimiter not allowed)
+       account = user,password (delimiter not allowed, CCcam: only the first 20 characters are relevant)
 	  user and password for remote reader, overrides password of password, first come first serve
 
-       password = password
+       password = password (CCcam: only the first 20 characters are relevant)
 	  password for remote reader, overrides password of account, first come first serve
 
        services = [!]services[,[!]<services>]...
 	  reader [de]assignment to service group, default=none
 
-       inactivitytimeout = minutes
+       inactivitytimeout = minutes (only if newcamd module enabled)
 	  inactivity timeout for newcamd reader, default:none
 
        reconnecttimeout = minutes
@@ -123,16 +125,16 @@ DESCRIPTIONS
 	   mp35
 	   smartreader
 	   internal
-	   serial
-	   camd35|cs357x
-	   cs378x
-	   gbox
-	   newcamd|newcamd525
-	   newcamd524
-	   cccam
-	   radegast
+	   serial (only if serial reader module enabled)
+	   camd35|cs357x (only if camd35 module enabled)
+	   cs378x (only if camd35 module enabled)
+	   gbox (only gbox module enabled)
+	   newcamd|newcamd525 (only if newcamd module enabled)
+	   newcamd524 (only if newcamd module enabled)
+	   cccam (only if cccam module enabled)
+	   radegast (only if radegast module enabled)
 	   pcsc
-	   constcw
+	   constcw (only if constand CW module enabled)
 
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader
@@ -214,56 +216,56 @@ DESCRIPTIONS
 
 	   It's an divider for the average responstime.
 
-       cccversion = <main version>.<version>.<sub version>
+       cccversion = <main version>.<version>.<sub version> (only if cccam module enabled)
 	  define CCcam version, default:none
 
 	  example: cccversion = 1.2.34
 
-       cccmaxhops = hops
+       cccmaxhops = hops (only if cccam module enabled)
 	  define CCcam maximum SC distance hops, default:10
 	   0 = local SCs only
 	   1 = local SCs and + 1 hop
 	   2 = local SCs and + 2 hops
 	   and so on
 
-       cccwantemu = 0|1
+       cccwantemu = 0|1 (only if cccam module enabled)
 	  1 = request to provide emu from CCCam server, too, default:0
 
-       ccckeepalive = 0|1
+       ccckeepalive = 0|1 (only if cccam module enabled)
 	  1 = send keepalive messages to keep connection to remote CCCam server up, default:0
 
        pincode = pincode
-	  pincode for Conax and Cryptoworks SCs
+	  pincode for Conax and Cryptoworks SCs (only if conax/cryptoworks module enabled)
 
-       chid = CAID:ChID
+       chid = CAID:ChID (only if irdeto module enabled)
 	  define Irdeto ChID for reader
 
 	  example: chid = 0100:12
 
-       force_irdeto = 0|1
+       force_irdeto = 0|1 (only if irdeto module enabled)
 	  1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
 
-       nagra_read = 0|1|2
+       nagra_read = 0|1|2 (only if nagra module enabled)
 	  read Nagravison records (on NCMED cards only):
 
 	    0 = disabled (default)
 	    1 = read all records with expired rights
 	    2 = read records with valid rights only
 
-       n3_rsakey|rsakey = RSA key
+       n3_rsakey|rsakey = RSA key (only if nagra/irdeto module enabled)
 	  RSA key for Nagravision SCs / CAM key data for Irdeto SCs
 
-       n3_boxkey|boxkey = box key
+       n3_boxkey|boxkey = box key (only if nagra/irdeto module enabled)
 	  box key for Nagravision SCs / CAM key for Irdeto SCs
 
-       tiger_rsakey = RSA key
+       tiger_rsakey = RSA key (only if nagra module enabled)
 	  RSA key for Tiger Nagravision SCs
 
-       aeskey = AES key
+       aeskey = AES key (only if viaccess module enabled)
 	  16 bytes AES key for Viaccess SCs
 
        aeskeys = CAID #0@ident:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID #1@ident:AES key #0  CAID  #1[,AES
-       key #1 CAID #1],...]...
+       key #1 CAID #1],...]... (only if viaccess module enabled)
 	  multiple 16 bytes AES keys for Viaccess SCs
 
 	  special AES keys:
@@ -275,13 +277,13 @@ DESCRIPTIONS
 
 	   aeskeys = 0100@012345:000102030405060708090a0b0c0d0e0f;0200@543210:0,0,0f0e0d0c0b0a090807060504030201
 
-       showcls = quantity
+       showcls = quantity (only if viaccess module enabled)
 	  number of classes subscriptions to show for Viaccess SCs, default=10
 
-       boxid = NDS box ID
+       boxid = NDS box ID (only if videoguard module enabled)
 	  NDS receiver box id
 
-       ndsversion = 0|1|12|2
+       ndsversion = 0|1|12|2 (only if videoguard module enabled)
 	  set NDS Videoguard version
 
 	    0 = autodetection (default)

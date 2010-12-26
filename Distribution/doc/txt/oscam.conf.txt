@@ -154,7 +154,7 @@ DESCRIPTIONS
        lb_reopen_seconds = seconds
 	  time between retrying failed readers/CAIDs/providers/services, default:900
 
-   The [monitor] section
+   The [monitor] section (only if monitor module enabled)
        port = 0|port
 	  UDP port for monitor, port=0 monitor disabled, default:0
 
@@ -237,7 +237,7 @@ DESCRIPTIONS
        httpreadonly = 0|1
 	  1 = read only modus for web interface, default:0
 
-   The [camd33] section
+   The [camd33] section (only if camd33 module enabled)
        port = 0|port
 	  TCP/IP port for camd 3.3x clients, 0 = disabled, default:0
 
@@ -257,14 +257,14 @@ DESCRIPTIONS
 
 	   example: key = 01020304050607080910111213141516
 
-   The [camd35] section
+   The [camd35] section (only if camd35 module enabled)
        port = 0|port
 	  UDP port for camd 3.5x clients, 0 = disabled, default:0
 
        serverip = IP address
 	  bind service to specified IP address, default:all
 
-   The [newcamd] section
+   The [newcamd] section (only if newcamd module enabled)
        mgclient = 0|1 (for beta testing only)
 	  1  =	enable	mgcamd	extended  newcamd protocol,  allowing for a single connection to work with mutliple
 	  providers, default:0
@@ -293,7 +293,7 @@ DESCRIPTIONS
        keepalive = 0|1
 	  0 = disable keepalive, default:1
 
-   The [radegast] section
+   The [radegast] section (only if radegast module enabled)
        port = 0|port
 	  TCP/IP port for radegast clients, 0=disabled, default:0
 
@@ -308,7 +308,7 @@ DESCRIPTIONS
        user = username
 	  user name for radegast client
 
-   The [serial] section
+   The [serial] section (only if serial module enabled)
        device = <user>@<device>[:baud][?option1=value1[&option2=value2]]
 	  parameters:
 	   user   = account
@@ -324,7 +324,7 @@ DESCRIPTIONS
 	   bomba   (BOMBA firmware)
 	   dsr9500 (DSR 9500)
 
-   The [cs357x] section
+   The [cs357x] section (only if camd35 module enabled)
        port = 0|port
 	  UDP port for camd 3.57x clients, 0 = disabled, default:0
 
@@ -334,7 +334,7 @@ DESCRIPTIONS
        suppresscmd08 = 0|1
 	  0 = CMD08 enabled, 1 = CMD08 disabled, default:0
 
-   The [cs378x] section
+   The [cs378x] section (only if camd35 module enabled)
        port = 0|port@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...
 	  TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled, default:0
 
@@ -348,7 +348,7 @@ DESCRIPTIONS
        suppresscmd08 = 0|1
 	  0 = CMD08 enabled, 1 = CMD08 disabled, default:0
 
-   The [cccam] section
+   The [cccam] section (only if cccam module enabled)
        port = 0|port
 	  TCP/IP port for CCcam clients, 0 = disabled, default:0
 
@@ -415,7 +415,7 @@ DESCRIPTIONS
 	    0 = disconnect client when max idle time is reached
 	    1 = keep client connected (default)
 
-   The [gbox] section
+   The [gbox] section (only if gbox module enabled)
        password = password
 	  password for gbox server
 

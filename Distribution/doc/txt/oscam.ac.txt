@@ -1,4 +1,4 @@
-oscam.ac(5)												   oscam.ac(5)
+oscam.ac(5)												oscam.ac(5)
 
 
 
@@ -9,20 +9,20 @@ SYNOPSIS
        anti-cascading table
 
 DESCRIPTIONS
-       <CAID>:<provider ID>=<seconds>
+       <CAID>:<provider ID>=<seconds> (only if anti-cascading module enabled)
 	  define time cycles between CWs changes relating to CAID and provider ID
 
-       *=<seconds>
-	  default time cycles between CWs changes, required
+       *=<seconds> (only if anti-cascading module enabled)
+	  default time cycles between CWs changes required
 
 EXAMPLES
 	0100:000000=10
 	*=7
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),   oscam.cert(5),   oscam.conf(5),  oscam.dvbapi(5),	oscam.guess(5),  oscam.ird(5),
+       list_smargo(1),	oscam(1),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5),
        oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
 
-													   oscam.ac(5)
+													oscam.ac(5)
