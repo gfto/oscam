@@ -1849,7 +1849,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 							tpl_printf(vars, 0, "APIPROVIDERCAID", "%04X", card->caid);
 							tpl_printf(vars, 0, "APIPROVIDERPROVID", "%06X", prov->prov);
 							tpl_printf(vars, 0, "APIPROVIDERNUMBER", "%d", providercount);
-							tpl_printf(vars, 0, "APIPROVIDERNAME", "%s", provider);
+							tpl_addVar(vars, 0, "APIPROVIDERNAME", xml_encode(vars, provider));
 							tpl_addVar(vars, 1, "PROVIDERLIST", tpl_getTpl(vars, "APICCCAMCARDPROVIDERBIT"));
 						}
 						providercount++;
