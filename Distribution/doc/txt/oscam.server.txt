@@ -54,10 +54,10 @@ DESCRIPTIONS
        premium = ???
 	  for gbox reader
 
-       account = user,password (delimiter not allowed, CCcam: only the first 20 characters are relevant)
+       account = user,password (delimiter not allowed)
 	  user and password for remote reader, overrides password of password, first come first serve
 
-       password = password (CCcam: only the first 20 characters are relevant)
+       password = password
 	  password for remote reader, overrides password of account, first come first serve
 
        services = [!]services[,[!]<services>]...
