@@ -164,7 +164,7 @@ static void usage()
 {
   fprintf(stderr, "%s\n\n", logo);
   fprintf(stderr, "OSCam cardserver v%s, build #%s (%s) - (w) 2009-2010 streamboard SVN\n", CS_VERSION_X, CS_SVN_VERSION, CS_OSTYPE);
-  fprintf(stderr, "\tsee http://streamboard.gmc.to:8001/wiki/ for more details\n");
+  fprintf(stderr, "\tsee http://streamboard.gmc.to/oscam/ for more details\n");
   fprintf(stderr, "\tbased on streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n");
   fprintf(stderr, "\tinbuilt modules: ");
 #ifdef WEBIF
@@ -1563,7 +1563,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	}
 	if (writeheader) {
 		/* no global macro for cardserver name :( */
-		fprintf(pfCWL, "# OSCam cardserver v%s - http://streamboard.gmc.to:8001/oscam/wiki\n", CS_VERSION_X);
+		fprintf(pfCWL, "# OSCam cardserver v%s - http://streamboard.gmc.to/oscam/\n", CS_VERSION_X);
 		fprintf(pfCWL, "# control word log file for use with tsdec offline decrypter\n");
 		strftime(buf, sizeof(buf),"DATE %Y-%m-%d, TIME %H:%M:%S, TZ %Z\n", timeinfo);
 		fprintf(pfCWL, "# %s", buf);
