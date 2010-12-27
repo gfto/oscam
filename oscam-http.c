@@ -1343,7 +1343,7 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 		tpl_addVar(vars, 1, "READERSTATSROW","<TR><TD colspan=\"6\"> No statistics found </TD></TR>");
 	}
 
-	tpl_printf(vars, 0, "ROWCOUNT", "%d", ecmcount);
+	tpl_printf(vars, 0, "ROWCOUNT", "%d", rowcount);
 	tpl_printf(vars, 0, "LASTACCESS", "%u", lastaccess);
 	tpl_printf(vars, 0, "TOTALECM", "%d", ecmcount);
 
