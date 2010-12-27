@@ -3339,12 +3339,38 @@ int cc_srv_connect(struct s_client *cl) {
 
 	cl->crypted = 1;
 
-	for (account = cfg->account; account; account = account->next) {
-		if (strncmp(usr, account->usr, sizeof(usr)) == 0) {
-			strncpy(pwd, account->pwd, sizeof(pwd));
-			break;
+	//CCCam only supports len=20 usr/pass. So we could have more than one user that matches the first 20 chars.
+	
+	//receive password-CCCam encrypted Hash:
+	if (cc_recv_to(cl, buf, 6) != 6)
+		return -2;
+	
+	account = cfg->account;
+	struct cc_crypt_block *save_block = malloc(sizeof(struct cc_crypt_block));
+	memcpy(save_block, cc->block, sizeof(struct cc_crypt_block));
+
+	while (1) {
+		while (account) {
+			if (strncmp(usr, account->usr, 20) == 0) {
+				memset(pwd, 0, sizeof(pwd));
+				strncpy(pwd, account->pwd, 20);
+				break;
+			}
+			account = account->next;
 		}
+
+		if (!account)
+			break;
+			
+		// receive passwd / 'CCcam'
+		memcpy(cc->block, save_block, sizeof(struct cc_crypt_block));
+		cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
+		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
+		//cs_ddump_mask(D_CLIENT, buf, 6, "cccam: pwd check '%s':", buf); //illegal buf-bytes could kill the logger!
+		if (memcmp(buf, "CCcam\0", 6) == 0) //Password Hash OK!
+			break; //account is set
 	}
+	free(save_block);
 
 	if (cs_auth_client(cl, account, NULL)) { //cs_auth_client returns 0 if account is valid/active/accessible
 		cs_log("account '%s' not found!", usr);
@@ -3360,17 +3386,6 @@ int cc_srv_connect(struct s_client *cl) {
 		cc->prefix = malloc(strlen(cl->usr)+20);
 	sprintf(cc->prefix, "cccam(s) %s: ", cl->usr);
 	
-	// receive passwd / 'CCcam'
-	cc_crypt(&cc->block[DECRYPT], (uint8 *) pwd, strlen(pwd), ENCRYPT);
-	if ((i = cc_recv_to(cl, buf, 6)) == 6) {
-		cc_crypt(&cc->block[DECRYPT], buf, 6, DECRYPT);
-		//cs_ddump_mask(D_CLIENT, buf, 6, "cccam: pwd check '%s':", buf); //illegal buf-bytes could kill the logger!
-		if (memcmp(buf, "CCcam\0", 6) != 0) { 
-			cs_log("account '%s' wrong password!", usr);
-			return -2;
-		}
-	} else
-		return -2;
 
 	//Starting readers to get cards:
 	int wakeup = cc_srv_wakeup_readers(cl);

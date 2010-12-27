@@ -550,7 +550,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
   <input name=\"user\" type=\"hidden\" value=\"##USERNAME##\">\n\
   <TABLE CLASS=\"config\">\n\
     <TR><TH>&nbsp;</TH> <TH>Edit User ##USERNAME##</TH></TR>\n\
-    <TR><TD>Password:</TD><TD><input name=\"pwd\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##PASSWORD##\"></TD></TR>\n\
+    <TR><TD>Password:</TD><TD><input name=\"pwd\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##PASSWORD##\"></TD></TR>\n\
     <TR><TD>Disabled:</TD><TD><SELECT NAME=\"disabled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DISABLEDCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
     <TR><TD>Exp. Date:</TD><TD><input name=\"expdate\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##EXPDATE##\"></TD></TR>\n\
     <TR><TD>Failban:</TD><TD><input name=\"failban\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##FAILBAN##\"></TD></TR>\n\
@@ -915,8 +915,8 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
     <TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
     <TR><TD>Disable server filter:</TD><TD><input name=\"disableserverfilter\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DISABLESERVERFILTER##\"></TD></TR>\n"
 #define TPLREADERCONFIGCCCAMBIT "\
-	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
-	<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
+	<TR><TD>Account:</TD><TD><input name=\"account\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##ACCOUNT##\"></TD></TR>\n\
+	<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##PASSWORD##\"></TD></TR>\n\
     <TR><TD>Version:</TD><TD><SELECT name=\"cccversion\">\
 			<OPTION value=\"2.0.11\" ##CCCVERSIONSELECTED0##>2.0.11</OPTION>\
 			<OPTION value=\"2.1.1\"##CCCVERSIONSELECTED1##>2.1.1</OPTION>\

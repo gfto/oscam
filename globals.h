@@ -610,7 +610,7 @@ struct s_client
   int		last_srvid;
   int		last_caid;
   int		tosleep;
-  char		usr[32];
+  char		usr[64];
   int		udp_fd;
   int		fd_m2c; //master writes to this fd
   int		fd_m2c_c; //client reads from this fd
@@ -943,8 +943,8 @@ struct s_cpmap
 
 struct s_auth
 {
-  char     usr[33];
-  char     pwd[33];
+  char     usr[64];
+  char     pwd[64];
   int      uniq;
   struct s_reader *aureader;
   int      autoau;
@@ -1141,7 +1141,7 @@ struct s_config
 #ifdef HAVE_DVBAPI
 	int		dvbapi_enabled;
 	int		dvbapi_au;
-	char		dvbapi_usr[33];
+	char		dvbapi_usr[64];
 	int		dvbapi_boxtype;
 	int		dvbapi_pmtmode;
 	SIDTABBITS    dvbapi_sidtabok;	// positiv services
