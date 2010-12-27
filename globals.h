@@ -363,7 +363,7 @@ typedef struct s_tuntab
 
 typedef struct s_sidtab
 {
-  char     label[33];
+  char     label[64];
   ushort   num_caid;
   ushort   num_provid;
   ushort   num_srvid;
@@ -745,7 +745,7 @@ struct s_reader  //contains device info, reader info and card info
   int       fallback;
   int       typ;
   int       card_system;
-  char      label[32];
+  char      label[64];
   char      device[128];
   ushort    slot;   //in case of multiple slots like sc8in1; first slot = 1
   int       handle;   //device handle

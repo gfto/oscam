@@ -1838,6 +1838,7 @@ int write_services()
 	char tmpfile[256];
 	char destfile[256];
 	char bakfile[256];
+	char *ptr;
 
 	snprintf(destfile, 255,"%s%s", cs_confdir, cs_sidt);
 	snprintf(tmpfile, 255, "%s%s.tmp", cs_confdir, cs_sidt);
@@ -1851,6 +1852,11 @@ int write_services()
 	fprintf(f,"# Read more: http://streamboard.gmc.to/oscam/browser/trunk/Distribution/doc/txt/oscam.services.txt\n\n");
 
 	while(sidtab != NULL){
+		ptr = sidtab->label;
+		while (*ptr) {
+			if (*ptr == ' ') *ptr = '_';
+			ptr++;
+		}
 		fprintf(f,"[%s]\n", sidtab->label);
 		fprintf_conf(f, CONFVARWIDTH, "caid", "");
 		for (i=0; i<sidtab->num_caid; i++){

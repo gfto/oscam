@@ -1362,7 +1362,7 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
   <input name=\"service\" type=\"hidden\" value=\"##LABELENC##\">\n\
   <TABLE CLASS=\"stats\">\n\
     <TR>\n<TH>&nbsp;</TH>\n<TH>Edit Service ##LABEL##</TH>\n</TR>\n\
-    <TR>\n<TD>caid: </TD><TD><input name=\"caid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##CAIDS##\"></TD></TR>\
+    <TR>\n<TD>caid: </TD><TD><input name=\"caid\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##CAIDS##\"></TD></TR>\
     <TR>\n<TD>provid: </TD><TD><input name=\"provid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##PROVIDS##\"></TD></TR>\
     <TR>\n<TD>srvid: </TD><TD><textarea name=\"srvid\" cols=\"80\" rows=\"5\">##SRVIDS##</textarea></TD></TR>\
     <TR>\n<TD>&nbsp;</TD><TD align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save service and reload services\" ##BTNDISABLED##></TD>\n\
