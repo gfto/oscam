@@ -22,7 +22,6 @@ define local or remote reader
 
  \fBserial\fP       serial number of Smartreader+
               (get the serial number while starting OSCam)
-              \fI(only if serial reader module enabled)\fR
 
  \fBlport\fP:       remapping to local port
 
@@ -32,7 +31,6 @@ define local or remote reader
               reader 1
 
  \fBconstantcw\fP:  constant CW file name
-              \fI(only if constant CW module enabled)\fR
 
 constant CW file format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 digits):key (16 Bytes seperated by spaces)
 
@@ -52,12 +50,12 @@ set endpoint address for FTDI chips,default:0x82
 0 = deactivate reader, default:1
 .RE
 .PP
-\fBkey\fP = \fBDES key\fP \fI(only if newcamd module enabled)\fR
+\fBkey\fP = \fBDES key\fP
 .RS 3n
 key for newcamd remote reader encryption
 .RE
 .PP
-\fBpremium\fP = \fB???\fP \fI(only if gbox module enabled)\fR
+\fBpremium\fP = \fB???\fP
 .RS 3n
 for gbox reader
 .RE
@@ -77,7 +75,7 @@ password for remote reader, overrides password of \fBaccount\fP, first come firs
 reader [de]assignment to service group, default=none
 .RE
 .PP
-\fBinactivitytimeout\fP = \fBminutes\fP \fI(only if newcamd module enabled)\fR
+\fBinactivitytimeout\fP = \fBminutes\fP
 .RS 3n
 inactivity timeout for newcamd reader, default:none
 .RE
@@ -163,16 +161,16 @@ reader protocol, \fIrequired\fR:
  \fBmp35\fP
  \fBsmartreader\fP
  \fBinternal\fP
- \fBserial\fP \fI(only if serial reader module enabled)\fR
- \fBcamd35\fP|\fBcs357x\fP \fI(only if camd35 module enabled)\fR
- \fBcs378x\fP \fI(only if camd35 module enabled)\fR
- \fBgbox\fP \fI(only gbox module enabled)\fR
- \fBnewcamd\fP|\fBnewcamd525\fP \fI(only if newcamd module enabled)\fR
- \fBnewcamd524\fP \fI(only if newcamd module enabled)\fR
- \fBcccam\fP \fI(only if cccam module enabled)\fR
- \fBradegast\fP \fI(only if radegast module enabled)\fR
+ \fBserial\fP
+ \fBcamd35\fP|\fBcs357x\fP
+ \fBcs378x\fP
+ \fBgbox\fP
+ \fBnewcamd\fP|\fBnewcamd525\fP
+ \fBnewcamd524\fP
+ \fBcccam\fP
+ \fBradegast\fP
  \fBpcsc\fP
- \fBconstcw\fP \fI(only if constand CW module enabled)\fR
+ \fBconstcw\fP
 .RE
 .PP
 \fBident\fP = \fB<CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...\fP
@@ -284,14 +282,14 @@ the higher the value the higher the probability for reader selection, default:10
  It's an divider for the average responstime.
 .RE
 .PP
-\fBcccversion\fP = \fB<main version>.<version>.<sub version>\fP \fI(only if cccam module enabled)\fR
+\fBcccversion\fP = \fB<main version>.<version>.<sub version>\fP
 .RS 3n
 define CCcam version, default:none
 
 example: cccversion = 1.2.34
 .RE
 .PP
-\fBcccmaxhops\fP = \fBhops\fP \fI(only if cccam module enabled)\fR
+\fBcccmaxhops\fP = \fBhops\fP
 .RS 3n
 define CCcam maximum SC distance hops, default:10
  \fB0\fP = local SCs only
@@ -300,34 +298,34 @@ define CCcam maximum SC distance hops, default:10
  and so on
 .RE
 .PP
-\fBcccwantemu\fP = \fB0\fP|\fB1\fP \fI(only if cccam module enabled)\fR
+\fBcccwantemu\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = request to provide emu from CCCam server, too, default:0
 .RE
 .PP
-\fBccckeepalive\fP = \fB0\fP|\fB1\fP \fI(only if cccam module enabled)\fR
+\fBccckeepalive\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = send keepalive messages to keep connection to remote CCCam server up, default:0
 .RE
 .PP
 \fBpincode\fP = \fBpincode\fP
 .RS 3n
-pincode for Conax and Cryptoworks SCs \fI(only if conax/cryptoworks module enabled)\fR
+pincode for Conax and Cryptoworks SCs
 .RE
 .PP
-\fBchid\fP = \fBCAID:ChID\fP \fI(only if irdeto module enabled)\fR
+\fBchid\fP = \fBCAID:ChID\fP
 .RS 3n
 define Irdeto ChID for reader
 
 example: chid = 0100:12
 .RE
 .PP
-\fBforce_irdeto\fP = \fB0\fP|\fB1\fP \fI(only if irdeto module enabled)\fR
+\fBforce_irdeto\fP = \fB0\fP|\fB1\fP
 .RS 3n
 1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
 .RE
 .PP
-\fBnagra_read\fP = \fB0\fP|\fB1\fP|\fB2\fP \fI(only if nagra module enabled)\fR
+\fBnagra_read\fP = \fB0\fP|\fB1\fP|\fB2\fP
 .RS 3n
 read Nagravison records (on NCMED cards only):
 
@@ -336,27 +334,27 @@ read Nagravison records (on NCMED cards only):
   2 = read records with valid rights only
 .RE
 .PP
-\fBn3_rsakey\fP|\fBrsakey\fP = \fBRSA key\fP \fI(only if nagra/irdeto module enabled)\fR
+\fBn3_rsakey\fP|\fBrsakey\fP = \fBRSA key\fP
 .RS 3n
 RSA key for Nagravision SCs / CAM key data for Irdeto SCs 
 .RE
 .PP
-\fBn3_boxkey\fP|\fBboxkey\fP = \fBbox key\fP \fI(only if nagra/irdeto module enabled)\fR
+\fBn3_boxkey\fP|\fBboxkey\fP = \fBbox key\fP
 .RS 3n
 box key for Nagravision SCs / CAM key for Irdeto SCs
 .RE
 .PP
-\fBtiger_rsakey\fP = \fBRSA key\fP \fI(only if nagra module enabled)\fR
+\fBtiger_rsakey\fP = \fBRSA key\fP
 .RS 3n
 RSA key for Tiger Nagravision SCs
 .RE
 .PP
-\fBaeskey\fP = \fBAES key\fP \fI(only if viaccess module enabled)\fR
+\fBaeskey\fP = \fBAES key\fP
 .RS 3n
 16 bytes AES key for Viaccess SCs
 .RE
 .PP
-\fBaeskeys\fP = \fBCAID #0\fP@\fBident\fP:\fBAES key #0 CAID #0\fP[,\fBAES key #1 CAID #0\fP],...[;\fBCAID #1\fP@\fBident\fP:\fBAES key #0 CAID #1\fP[,\fBAES key #1 CAID #1\fP],...]... \fI(only if viaccess module enabled)\fR
+\fBaeskeys\fP = \fBCAID #0\fP@\fBident\fP:\fBAES key #0 CAID #0\fP[,\fBAES key #1 CAID #0\fP],...[;\fBCAID #1\fP@\fBident\fP:\fBAES key #0 CAID #1\fP[,\fBAES key #1 CAID #1\fP],...]...
 .RS 3n
 multiple 16 bytes AES keys for Viaccess SCs
 
@@ -370,17 +368,17 @@ example:
  aeskeys = 0100@012345:000102030405060708090a0b0c0d0e0f;0200@543210:0,0,0f0e0d0c0b0a090807060504030201
 .RE
 .PP
-\fBshowcls\fP = \fBquantity\fP \fI(only if viaccess module enabled)\fR
+\fBshowcls\fP = \fBquantity\fP
 .RS 3n
 number of classes subscriptions to show for Viaccess SCs, default=10
 .RE
 .PP
-\fBboxid\fP = \fBNDS box ID\fP \fI(only if videoguard module enabled)\fR
+\fBboxid\fP = \fBNDS box ID\fP
 .RS 3n
 NDS receiver box id
 .RE
 .PP
-\fBndsversion\fP = \fB0\fP|\fB1\fP|\fB12\fP|\fB2\fP \fI(only if videoguard module enabled)\fR
+\fBndsversion\fP = \fB0\fP|\fB1\fP|\fB12\fP|\fB2\fP
 .RS 3n
 set NDS Videoguard version
 
