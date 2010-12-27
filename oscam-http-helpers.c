@@ -482,4 +482,37 @@ char *getParamDef(struct uriparams *params, char *name, char* def){
 	return def;
 }
 
+/* XML-Escapes a char array. The returned reference will be automatically cleaned through the templatevars-mechanism tpl_clear().
+   Do not call free() or realloc on the returned reference or you will get memory corruption! */
+char *xml_encode(struct templatevars *vars, char *chartoencode) {
+	int i, pos = 0, len = strlen(chartoencode);
+	/* In worst case, every character could get converted to 6 chars (we only support ASCII, for Unicode it would be 7)*/
+	char encoded[len * 6 + 1], buffer[7];
+	for (i = 0; i < len; ++i){
+		switch(chartoencode[i]) {
+			case '&': memcpy(encoded + pos, "&amp;", 5); pos+=5; break;
+			case '<': memcpy(encoded + pos, "&lt;", 4); pos+=4; break;
+			case '>': memcpy(encoded + pos, "&gt;", 4); pos+=4; break;
+			case '"': memcpy(encoded + pos, "&quot;", 6); pos+=6; break;
+			case '\'': memcpy(encoded + pos, "&apos;", 6); pos+=6; break;
+
+			default:
+				if ( (unsigned int)chartoencode[i] < 32 || (unsigned int)chartoencode[i] > 127 ) {
+					snprintf(buffer, 7, "&#%d;", chartoencode[i] + 256);
+					memcpy(encoded + pos, buffer, strlen(buffer));
+					pos+=strlen(buffer);
+
+				} else {
+					encoded[pos] = chartoencode[i];
+					++pos;
+				}
+
+		}
+	}
+	/* Allocate the needed memory size and store it in the templatevars */
+	char *result = (char *)malloc(pos + 1);
+	memcpy(result, encoded, pos);
+	result[pos] = '\0';
+	return tpl_addTmp(vars, result);
+}
 #endif
