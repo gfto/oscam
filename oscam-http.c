@@ -1849,7 +1849,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					tpl_addVar(vars, 0, "PROVIDERLIST", "");
 
 					while ((prov = ll_iter_next(pit))) {
-						provider = get_provider(card->caid, prov->prov);
+						provider = xml_encode(vars, get_provider(card->caid, prov->prov));
 
 						if (!apicall) {
 							sprintf(p, "%s", provider);
@@ -1877,7 +1877,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						tpl_printf(vars, 0, "APITOTALPROVIDERS", "%d", providercount);
 					}
 
-					if (!apicall) tpl_printf(vars, 0, "PROVIDERS", xml_encode(vars, buf));
+					if (!apicall) tpl_addVar(vars, 0, "PROVIDERS", provider);
 
 					ll_iter_release(pit);
 					LL_ITER *nit = ll_iter_create(card->remote_nodes);
