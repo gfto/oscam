@@ -225,7 +225,6 @@ DESCRIPTIONS
 	  http web interface connections allowed, default:none
 	   example: httpdyndns = my.dynexample.com
 
-
        httpsavefullcfg = 0|1
 	  write config:
 
@@ -236,6 +235,9 @@ DESCRIPTIONS
 
        httpreadonly = 0|1
 	  1 = read only modus for web interface, default:0
+
+       httpjsicons = 0|1
+	  1= use Javascript to set base64 icons, default:1
 
    The [camd33] section
        port = 0|port
