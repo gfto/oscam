@@ -1058,12 +1058,13 @@ struct s_config
 	char		http_script[128];
 	int			http_refresh;
 	int			http_hide_idle_clients;
-	struct 	s_ip *http_allowed;
+	struct s_ip *http_allowed;
 	int			http_readonly;
 	in_addr_t	http_dynip;
 	uchar		http_dyndns[64];
-	int		http_use_ssl;
+	int			http_use_ssl;
 	char		http_cert[128];
+	int			http_js_icons;
 #endif
 	int			http_full_cfg;
 	int			failbantime;

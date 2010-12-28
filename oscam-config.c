@@ -917,6 +917,16 @@ void chk_t_webif(char *token, char *value)
 		}
 	}
 
+	if (!strcmp(token, "httpjsicons")) {
+		if(strlen(value) == 0) {
+			cfg->http_js_icons = 0;
+			return;
+		} else {
+			cfg->http_js_icons = atoi(value);
+			return;
+		}
+	}
+
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in webif section not recognized\n",token);
 }
@@ -1522,6 +1532,7 @@ int init_config()
 	cfg->http_refresh = 0;
 	cfg->http_hide_idle_clients = 0;
 	strcpy(cfg->http_tpl, "");
+	cfg->http_js_icons = 1;
 #endif
 	cfg->ncd_keepalive = 1;
 #ifdef CS_ANTICASC
@@ -2234,6 +2245,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg->http_hide_idle_clients);
 		fprintf_conf(f, CONFVARWIDTH, "httpreadonly", "%d\n", cfg->http_readonly);
 		fprintf_conf(f, CONFVARWIDTH, "httpsavefullcfg", "%d\n", cfg->http_full_cfg);
+		fprintf_conf(f, CONFVARWIDTH, "httpjsicons", "%d\n", cfg->http_js_icons);
 
 		fputc((int)'\n', f);
 	}
