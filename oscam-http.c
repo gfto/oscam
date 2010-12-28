@@ -752,7 +752,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			else
 				tpl_addVar(vars, 0, "READERCLASS", "disabledreader");
 
-			tpl_addVar(vars, 0, "READERNAME", rdr->label);
+			tpl_addVar(vars, 0, "READERNAME", xml_encode(vars, rdr->label));
 			tpl_addVar(vars, 0, "READERNAMEENC", tpl_addTmp(vars, urlencode(rdr->label)));
 			tpl_printf(vars, 0, "EMMERRORUK", "%d", rdr->emmerror[UNKNOWN]);
 			tpl_printf(vars, 0, "EMMERRORG", "%d", rdr->emmerror[GLOBAL]);
@@ -1294,7 +1294,7 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 			if (!(stat->rc == rc2hide)) {
 				if (!apicall) {
 					tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
-					tpl_printf(vars, 0, "CHANNELNAME","%s", get_servicename(stat->srvid, stat->caid));
+					tpl_printf(vars, 0, "CHANNELNAME","%s", xml_encode(vars, get_servicename(stat->srvid, stat->caid)));
 					tpl_printf(vars, 0, "RC", "%s", stxt[stat->rc]);
 					tpl_printf(vars, 0, "TIME", "%dms", stat->time_avg);
 					tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
@@ -1711,7 +1711,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 			tpl_printf(vars, 0, "CWTUN", "%d", cwtun);
 			tpl_printf(vars, 0, "EMMOK", "%d", emmok);
 			tpl_printf(vars, 0, "EMMNOK", "%d", emmnok);
-			tpl_addVar(vars, 0, "LASTCHANNEL", lastchan);
+			tpl_addVar(vars, 0, "LASTCHANNEL", xml_encode(vars, lastchan));
 			tpl_printf(vars, 0, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, 0, "CLIENTPROTO", proto);
 			tpl_printf(vars, 0, "IDLESECS", "%02d:%02d:%02d", hours, mins, secs);
@@ -1719,7 +1719,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 		}
 
 		tpl_addVar(vars, 0, "CLASSNAME", classname);
-		tpl_addVar(vars, 0, "USER", account->usr);
+		tpl_addVar(vars, 0, "USER", xml_encode(vars, account->usr));
 		tpl_addVar(vars, 0, "USERENC", tpl_addTmp(vars, urlencode(account->usr)));
 		tpl_addVar(vars, 0, "STATUS", status);
 		tpl_addVar(vars, 0, "EXPIRED", expired);
@@ -1794,7 +1794,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						tpl_printf(vars, 0, "HOST", "%s:%d", rdr->device, rdr->r_port);
 						tpl_printf(vars, 0, "CAID", "%04X", card->caid);
 					} else {
-						tpl_printf(vars, 0, "APIHOST", "%s", rdr->device);
+						tpl_addVar(vars, 0, "APIHOST", rdr->device);
 						tpl_printf(vars, 0, "APIHOSTPORT", "%d", rdr->r_port);
 						tpl_printf(vars, 0, "APICARDNUMBER", "%d", caidcount);
 						tpl_printf(vars, 0, "APICAID", "%04X", card->caid);
@@ -1810,9 +1810,9 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					int cs = get_cardsystem(card->caid);
 					
 					if (cs)
-						tpl_printf(vars, 0, "SYSTEM", "%s", cardsystem[cs-1].desc);
+						tpl_addVar(vars, 0, "SYSTEM", cardsystem[cs-1].desc);
 					else
-						tpl_printf(vars, 0, "SYSTEM", "???");
+						tpl_addVar(vars, 0, "SYSTEM", "???");
 
                     tpl_printf(vars, 0, "SHAREID", "%08X", card->id);
                     tpl_printf(vars, 0, "REMOTEID", "%08X", card->remote_id);
@@ -1856,7 +1856,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						tpl_printf(vars, 0, "APITOTALPROVIDERS", "%d", providercount);
 					}
 
-					if (!apicall) tpl_printf(vars, 0, "PROVIDERS", buf);
+					if (!apicall) tpl_printf(vars, 0, "PROVIDERS", xml_encode(vars, buf));
 
 					ll_iter_release(pit);
 					LL_ITER *nit = ll_iter_create(card->remote_nodes);
@@ -1883,7 +1883,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						tpl_printf(vars, 0, "APITOTALNODES", "%d", nodecount);
 					}
 
-					if (!apicall) tpl_printf(vars, 0, "NODES", buf);
+					if (!apicall) tpl_addVar(vars, 0, "NODES", buf);
 
 					ll_iter_release(nit);
 
@@ -1909,7 +1909,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 			} else {
 				if (!apicall) {
 					tpl_addVar(vars, 0, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
-					tpl_printf(vars, 0, "LOGHISTORY", "no cardfile found<BR>\n");
+					tpl_addVar(vars, 0, "LOGHISTORY", "no cardfile found<BR>\n");
 				} else {
 					tpl_printf(vars, 0, "APITOTALCARDS", "%d", caidcount);
 				}
@@ -2070,10 +2070,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
 			tpl_printf(vars, 0, "CLIENTCNR", "%d", get_threadnum(cl));
-			tpl_addVar(vars, 0, "CLIENTUSER", usr);
+			tpl_addVar(vars, 0, "CLIENTUSER", xml_encode(vars, usr));
 			tpl_printf(vars, 0, "CLIENTCAU", "%d", cau);
 			tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", cl->crypted);
-			tpl_printf(vars, 0, "CLIENTIP", "%s", cs_inet_ntoa(cl->ip));
+			tpl_addVar(vars, 0, "CLIENTIP", cs_inet_ntoa(cl->ip));
 			tpl_printf(vars, 0, "CLIENTPORT", "%d", cl->port);
 			char *proto = monitor_get_proto(cl);
 
@@ -2085,13 +2085,13 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				if(cc) {
 					tpl_printf(vars, 0, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
 					if(strcmp(proto,"cccam ext") == 0)
-						tpl_printf(vars, 0, "CLIENTPROTOTITLE", "%s", cc->remote_oscam);
+						tpl_addVar(vars, 0, "CLIENTPROTOTITLE", cc->remote_oscam);
 					else
 						tpl_addVar(vars, 0, "CLIENTPROTOTITLE", ""); //unset tpl var
 				}
 			}
 			else
-				tpl_printf(vars, 0, "CLIENTPROTO","%s", proto);
+				tpl_addVar(vars, 0, "CLIENTPROTO", proto);
 
 			tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
 			tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
@@ -2118,7 +2118,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			if (isec < cfg->mon_hideclient_to || cfg->mon_hideclient_to == 0) {
 
 				if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0]))
-					tpl_printf(vars, 0, "CLIENTLBVALUE", "%s", cl->lastreader);
+					tpl_addVar(vars, 0, "CLIENTLBVALUE", cl->lastreader);
 
 				tpl_printf(vars, 0, "CLIENTCAID", "%04X", cl->last_caid);
 				tpl_printf(vars, 0, "CLIENTSRVID", "%04X", cl->last_srvid);
@@ -2142,25 +2142,25 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				}
 
 				if (found == 1) {
-					tpl_printf(vars, 0, "CLIENTSRVPROVIDER","%s: ", srvid->prov);
-					tpl_addVar(vars, 0, "CLIENTSRVNAME", srvid->name);
-					tpl_addVar(vars, 0, "CLIENTSRVTYPE", srvid->type);
-					tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION", srvid->desc);
+					tpl_printf(vars, 0, "CLIENTSRVPROVIDER","%s: ", xml_encode(vars, srvid->prov));
+					tpl_addVar(vars, 0, "CLIENTSRVNAME", xml_encode(vars, srvid->name));
+					tpl_addVar(vars, 0, "CLIENTSRVTYPE", xml_encode(vars, srvid->type));
+					tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION", xml_encode(vars, srvid->desc));
 				} else {
 					tpl_addVar(vars, 0, "CLIENTSRVPROVIDER","");
-					tpl_printf(vars, 0, "CLIENTSRVNAME","");
+					tpl_addVar(vars, 0, "CLIENTSRVNAME","");
 					tpl_addVar(vars, 0, "CLIENTSRVTYPE","");
 					tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION","");
 				}
 
 			} else {
-				tpl_printf(vars, 0, "CLIENTCAID", "0000");
-				tpl_printf(vars, 0, "CLIENTSRVID", "0000");
+				tpl_addVar(vars, 0, "CLIENTCAID", "0000");
+				tpl_addVar(vars, 0, "CLIENTSRVID", "0000");
 				tpl_addVar(vars, 0, "CLIENTSRVPROVIDER","");
-				tpl_printf(vars, 0, "CLIENTSRVNAME","");
+				tpl_addVar(vars, 0, "CLIENTSRVNAME","");
 				tpl_addVar(vars, 0, "CLIENTSRVTYPE","");
 				tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION","");
-				tpl_printf(vars, 0, "CLIENTLBVALUE","");
+				tpl_addVar(vars, 0, "CLIENTLBVALUE","");
 
 			}
 
@@ -2181,8 +2181,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				tpl_printf(vars, 0, "CLIENTIDLESECS", "%02d:%02d:%02d", hours, mins, secs);
 			else
 				tpl_printf(vars, 0, "CLIENTIDLESECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
-			if(con == 2) tpl_printf(vars, 0, "CLIENTCON", "Duplicate");
-			else if (con == 1) tpl_printf(vars, 0, "CLIENTCON", "Sleep");
+			if(con == 2) tpl_addVar(vars, 0, "CLIENTCON", "Duplicate");
+			else if (con == 1) tpl_addVar(vars, 0, "CLIENTCON", "Sleep");
 			else
 			{
 				char *txt = "OK";
@@ -2208,7 +2208,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 							default: txt = "UNDEF";
 							}
 				}
-				tpl_printf(vars, 0, "CLIENTCON", txt);
+				tpl_addVar(vars, 0, "CLIENTCON", txt);
 			}
 
 			if (!apicall){
@@ -2386,14 +2386,14 @@ void send_oscam_services(struct templatevars *vars, FILE *f, struct uriparams *p
 			tpl_printf(vars, 0, "SIDCLASS","sidlist");
 			tpl_printf(vars, 1, "SID", "<div style=\"float:right;background-color:red;color:white\"><A HREF=\"services.html\" style=\"color:white;text-decoration:none\">X</A></div>");
 			for (i=0; i<sidtab->num_srvid; i++) {
-				tpl_printf(vars, 1, "SID", "%04X : %s<BR>", sidtab->srvid[i], get_servicename(sidtab->srvid[i], sidtab->caid[0]));
+				tpl_printf(vars, 1, "SID", "%04X : %s<BR>", sidtab->srvid[i], xml_encode(vars, get_servicename(sidtab->srvid[i], sidtab->caid[0])));
 			}
 		} else {
 			tpl_printf(vars, 0, "SIDCLASS","");
 			tpl_printf(vars, 0, "SID","<A HREF=\"services.html?service=%s&action=list\">Show Services</A>",tpl_addTmp(vars, urlencode(sidtab->label)));
 		}
 		tpl_addVar(vars, 0, "LABELENC", tpl_addTmp(vars, urlencode(sidtab->label)));
-		tpl_addVar(vars, 0, "LABEL", sidtab->label);
+		tpl_addVar(vars, 0, "LABEL", xml_encode(vars, sidtab->label));
 		tpl_addVar(vars, 0, "SIDLIST", tpl_getTpl(vars, "SERVICECONFIGSIDBIT"));
 		tpl_addVar(vars, 0, "EDIICO", ICEDI);
 		tpl_addVar(vars, 0, "DELICO", ICDEL);
