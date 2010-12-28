@@ -2818,7 +2818,8 @@ int process_request(FILE *f, struct in_addr in) {
 				}
 				else {
 					cfg->http_dynip = cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
-					ok = v;
+					if (cfg->http_dynip == addr)
+						ok = v;
 				}
 				if (res) freeaddrinfo(res);
 
