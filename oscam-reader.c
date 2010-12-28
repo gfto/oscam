@@ -30,6 +30,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		FILE *fp;
 		char filename[256];
 		char *buffer;
+		int filelen = 0;
 		sprintf(filename, "%s/reader%d", get_tmp_dir(), get_ridx(reader));
 		int size = reader->init_history_pos+strlen(txt)+1;
 		buffer = malloc(size+1);
@@ -42,15 +43,15 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		fp = fopen(filename, "r");
 
 		if (fp) {
-			fread(buffer, 1, reader->init_history_pos, fp);
+			filelen = fread(buffer, 1, reader->init_history_pos, fp);
 			fclose(fp);
 		}
 
-		sprintf(buffer+reader->init_history_pos, "%s\n", txt);
+		sprintf(buffer + filelen, "%s\n", txt);
 
 		fp = fopen(filename, "w");
 		if (fp) {
-			fwrite(buffer, 1, reader->init_history_pos+strlen(txt)+1, fp);
+			fwrite(buffer, 1, filelen + strlen(txt)+1, fp);
 			fclose(fp);
 		}
 
