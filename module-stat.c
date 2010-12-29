@@ -226,7 +226,7 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 	if (stat->ecm_count < 0)
 		stat->ecm_count=0;
 		
-	if (rc == 0 || rc == 3) {
+	if (rc == 0) {
 		stat->rc = 0;
 		stat->ecm_count++;
 		stat->time_idx++;
@@ -253,17 +253,20 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 		if (ule == 0)
 			rdr->lb_usagelevel_time = time(NULL);
 		rdr->lb_usagelevel_ecmcount = ule+1;
+		
 	}
-	else if (rc == 4 || rc == 8 || rc == 9) { //not found+errors+etc
+	else if (rc == 4) { //not found
 		stat->rc = rc;
 		//stat->ecm_count = 0; Keep ecm_count!
 	}
 	else if (rc == 5) { //timeout
 		stat->request_count++;
 	}
-
-	//cs_debug_mask(D_TRACE, "adding stat for reader %s (%d): rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
-	//			rdr->label, ridx, rc, caid, prid, srvid, ecm_time, rdr->lb_usagelevel);
+	else
+		return;
+		
+	cs_debug_mask(D_TRACE, "adding stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
+				rdr->label, rc, caid, prid, srvid, ecm_time, rdr->lb_usagelevel);
 	
 	//debug only:
 	if (cfg->lb_save) {
