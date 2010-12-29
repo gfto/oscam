@@ -1329,6 +1329,7 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
 			<option value=\"1\" ##PMTMODESELECTED1##>1 - disable reading PMT file</option>\n\
 			<option value=\"2\" ##PMTMODESELECTED2##>2 - disable camd.socket</option>\n\
 			<option value=\"3\" ##PMTMODESELECTED3##>3 - read PMT file on startup only</option>\n\
+			<option value=\"4\" ##PMTMODESELECTED3##>4 - ufs922 with new libioctl.so</option>\n\
 		</SELECT></TD></TR>\n\
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
