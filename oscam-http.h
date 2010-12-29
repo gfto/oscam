@@ -678,7 +678,6 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 			<option>newcamd</option>\n\
 			<option>newcamd524</option>\n\
 			<option>cccam</option>\n\
-			<option>pcsc</option>\n\
 			<option>constcw</option>\n\
 			##ADDPROTOCOL##\n\
 		</select>\n</TD>\
