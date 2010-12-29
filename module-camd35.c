@@ -247,7 +247,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		 * on tests this don't work with native camd3
 		 */
 		buf[21] = client->c35_sleepsend;
-		cs_log("%s stop request send", client->usr);
+		cs_log("%s stop request send", client->account->usr);
 	}
 	else
 	{

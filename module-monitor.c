@@ -11,13 +11,14 @@ static void monitor_check_ip()
 {
 	int ok=0;
 	struct s_ip *p_ip;
-
-	if (cur_client()->auth) return;
+	struct s_client *cur_cl = cur_client();
+	
+	if (cur_cl->auth) return;
 	for (p_ip=cfg->mon_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
-		ok=((cur_client()->ip>=p_ip->ip[0]) && (cur_client()->ip<=p_ip->ip[1]));
+		ok=((cur_cl->ip>=p_ip->ip[0]) && (cur_cl->ip<=p_ip->ip[1]));
 	if (!ok)
 	{
-		cs_auth_client(cur_client(), (struct s_auth *)0, "invalid ip");
+		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid ip");
 		cs_exit(0);
 	}
 }
@@ -25,26 +26,27 @@ static void monitor_check_ip()
 static void monitor_auth_client(char *usr, char *pwd)
 {
 	struct s_auth *account;
-
-	if (cur_client()->auth) return;
+	struct s_client *cur_cl = cur_client();
+	
+	if (cur_cl->auth) return;
 	if ((!usr) || (!pwd))
 	{
-		cs_auth_client(cur_client(), (struct s_auth *)0, NULL);
+		cs_auth_client(cur_cl, (struct s_auth *)0, NULL);
 		cs_exit(0);
 	}
-	for (account=cfg->account, cur_client()->auth=0; (account) && (!cur_client()->auth);)
+	for (account=cfg->account, cur_cl->auth=0; (account) && (!cur_cl->auth);)
 	{
 		if (account->monlvl)
-			cur_client()->auth=!(strcmp(usr, account->usr) | strcmp(pwd, account->pwd));
-		if (!cur_client()->auth)
+			cur_cl->auth=!(strcmp(usr, account->usr) | strcmp(pwd, account->pwd));
+		if (!cur_cl->auth)
 			account=account->next;
 	}
-	if (!cur_client()->auth)
+	if (!cur_cl->auth)
 	{
-		cs_auth_client(cur_client(), (struct s_auth *)0, "invalid account");
+		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid account");
 		cs_exit(0);
 	}
-	if (cs_auth_client(cur_client(), account, NULL))
+	if (cs_auth_client(cur_cl, account, NULL))
 		cs_exit(0);
 }
 
@@ -52,32 +54,33 @@ static int secmon_auth_client(uchar *ucrc)
 {
 	ulong crc;
 	struct s_auth *account;
-
-	if (cur_client()->auth)
+	struct s_client *cur_cl = cur_client();
+	
+	if (cur_cl->auth)
 	{
-		int s=memcmp(cur_client()->ucrc, ucrc, 4);
+		int s=memcmp(cur_cl->ucrc, ucrc, 4);
 		if (s)
 			cs_log("wrong user-crc or garbage !?");
 		return(!s);
 	}
-	cur_client()->crypted=1;
+	cur_cl->crypted=1;
 	crc=(ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3];
-	for (account=cfg->account; (account) && (!cur_client()->auth); account=account->next)
+	for (account=cfg->account; (account) && (!cur_cl->auth); account=account->next)
 		if ((account->monlvl) &&
-				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cur_client()->dump), 16)))
+				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cur_cl->dump), 16)))
 		{
-			memcpy(cur_client()->ucrc, ucrc, 4);
-			aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), cur_client()->dump));
-			if (cs_auth_client(cur_client(), account, NULL))
+			memcpy(cur_cl->ucrc, ucrc, 4);
+			aes_set_key((char *)MD5((unsigned char *)account->pwd, strlen(account->pwd), cur_cl->dump));
+			if (cs_auth_client(cur_cl, account, NULL))
 				cs_exit(0);
-			cur_client()->auth=1;
+			cur_cl->auth=1;
 		}
-	if (!cur_client()->auth)
+	if (!cur_cl->auth)
 	{
-		cs_auth_client(cur_client(), (struct s_auth *)0, "invalid user");
+		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid user");
 		cs_exit(0);
 	}
-	return(cur_client()->auth);
+	return(cur_cl->auth);
 }
 
 int monitor_send_idx(struct s_client *cl, char *txt)
@@ -249,7 +252,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 		{
 			lsec=now-cl->login;
 			isec=now-cl->last;
-			usr=cl->usr;
+			usr=cl->account->usr;
 			if (((cl->typ == 'r') || (cl->typ == 'p')) && (con=get_ridx(cl->reader)) >= 0)
 				usr=cl->reader->label;
 			if (cl->dup)
@@ -290,14 +293,15 @@ static char *monitor_client_info(char id, struct s_client *cl){
 static void monitor_process_info(){
 	time_t now = time((time_t)0);
 
-	struct s_client *cl;
+	struct s_client *cl, *cur_cl = cur_client();
+	
 	for (cl=first_client; cl ; cl=cl->next) {
 		if	((cfg->mon_hideclient_to <= 0) ||
 				( now-cl->lastecm < cfg->mon_hideclient_to) ||
 				( now-cl->lastemm < cfg->mon_hideclient_to) ||
 				( cl->typ != 'c')){
-			if ((cur_client()->monlvl < 2) && (cl->typ != 's')) {
-					if 	((strcmp(cur_client()->usr, cl->usr)) ||
+			if ((cur_cl->monlvl < 2) && (cl->typ != 's')) {
+					if ((cur_cl->account && cl->account && strcmp(cur_cl->account->usr, cl->account->usr)) ||
 							((cl->typ != 'c') && (cl->typ != 'm')))
 						continue;
 			}
@@ -438,8 +442,9 @@ static void monitor_process_details(char *arg){
 
 static void monitor_send_login(void){
 	char buf[64];
-	if (cur_client()->auth)
-		sprintf(buf, "[A-0000]1|%s logged in\n", cur_client()->usr);
+	struct s_client *cur_cl = cur_client();
+	if (cur_cl->auth && cur_cl->account)
+		sprintf(buf, "[A-0000]1|%s logged in\n", cur_cl->account->usr);
 	else
 		strcpy(buf, "[A-0000]0|not logged in\n");
 	monitor_send_info(buf, 1);
@@ -462,14 +467,15 @@ static void monitor_logsend(char *flag){
 #endif
 	if (!flag) return; //no arg
 
+	struct s_client *cur_cl = cur_client();
 	if (strcmp(flag, "on")) {
 		if (strcmp(flag, "onwohist")) {
-			cur_client()->log=0;
+			cur_cl->log=0;
 			return;
 		}
 	}
 
-	if (cur_client()->log)	// already on
+	if (cur_cl->log)	// already on
 		return;
 #ifdef CS_LOGHISTORY
 	if (!strcmp(flag, "on")){
@@ -477,17 +483,17 @@ static void monitor_logsend(char *flag){
 			char *p_usr, *p_txt;
 			p_usr=(char *)(loghist+(i*CS_LOGHISTSIZE));
 			p_txt = p_usr + 32;
-			if ((p_txt[0]) && ((cur_client()->monlvl > 1) || (!strcmp(p_usr, cur_client()->usr)))) {
+			if ((p_txt[0]) && ((cur_cl->monlvl > 1) || (cur_cl->account && !strcmp(p_usr, cur_cl->account->usr)))) {
 				char sbuf[8];
-				sprintf(sbuf, "%03d", cur_client()->logcounter);
-				cur_client()->logcounter=(cur_client()->logcounter + 1) % 1000;
+				sprintf(sbuf, "%03d", cur_cl->logcounter);
+				cur_cl->logcounter=(cur_cl->logcounter + 1) % 1000;
 				memcpy(p_txt + 4, sbuf, 3);
 				monitor_send(p_txt);
 			}
 		}
 	}
 #endif
-	cur_client()->log=1;
+	cur_cl->log=1;
 }
 
 static void monitor_set_debuglevel(char *flag){
@@ -591,7 +597,7 @@ static void monitor_set_account(char *args){
 	}
 
 	if (write_userdb(cfg->account)==0)
-		cs_reinit_clients();
+		cs_reinit_clients(cfg->account);
 
 	sprintf(buf, "[S-0000]setuser: %s done - param %s set to %s\n", tmp, argarray[1], argarray[2]);
 	monitor_send_info(buf, 1);
@@ -674,10 +680,11 @@ static int monitor_process_request(char *req)
 	static const char *cmd[] = {"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug", "getuser", "setuser", "setserver", "commands", "keepalive", "reread"};
 	int cmdcnt = sizeof(cmd)/sizeof(char *);  // Calculate the amount of items in array
 	char *arg;
+	struct s_client *cur_cl = cur_client();
 
 	if( (arg = strchr(req, ' ')) ) { *arg++ = 0; trim(arg); }
 	//trim(req);
-	if ((!cur_client()->auth) && (strcmp(req, cmd[0])))	monitor_login(NULL);
+	if ((!cur_cl->auth) && (strcmp(req, cmd[0])))	monitor_login(NULL);
 
 	for (rc=1, i = 0; i < cmdcnt; i++)
 		if (!strcmp(req, cmd[i])) {
@@ -686,16 +693,16 @@ static int monitor_process_request(char *req)
 			case  1:	rc=0; break;	// exit
 			case  2:	monitor_logsend(arg); break;	// log
 			case  3:	monitor_process_info(); break;	// status
-			case  4:	if (cur_client()->monlvl > 3) cs_exit(SIGQUIT); break;	// shutdown
-			case  5:	if (cur_client()->monlvl > 2) cs_reinit_clients(); break;	// reload
+			case  4:	if (cur_cl->monlvl > 3) cs_exit(SIGQUIT); break;	// shutdown
+			case  5:	if (cur_cl->monlvl > 2) cs_reinit_clients(cfg->account); break;	// reload
 			case  6:	monitor_process_details(arg); break;	// details
 			case  7:	monitor_send_details_version(); break;	// version
-			case  8:	if (cur_client()->monlvl > 3) monitor_set_debuglevel(arg); break;	// debuglevel
-			case  9:	if (cur_client()->monlvl > 3) monitor_get_account(); break;	// getuser
-			case 10:	if (cur_client()->monlvl > 3) monitor_set_account(arg); break;	// setuser
-			case 11:	if (cur_client()->monlvl > 3) monitor_set_server(arg); break;	// setserver
-			case 12:	if (cur_client()->monlvl > 3) monitor_list_commands(cmd, cmdcnt); break;	// list commands
-			case 13:	if (cur_client()->monlvl > 3) monitor_send_keepalive_ack(); break;	// keepalive
+			case  8:	if (cur_cl->monlvl > 3) monitor_set_debuglevel(arg); break;	// debuglevel
+			case  9:	if (cur_cl->monlvl > 3) monitor_get_account(); break;	// getuser
+			case 10:	if (cur_cl->monlvl > 3) monitor_set_account(arg); break;	// setuser
+			case 11:	if (cur_cl->monlvl > 3) monitor_set_server(arg); break;	// setserver
+			case 12:	if (cur_cl->monlvl > 3) monitor_list_commands(cmd, cmdcnt); break;	// list commands
+			case 13:	if (cur_cl->monlvl > 3) monitor_send_keepalive_ack(); break;	// keepalive
 			case 14:	{ char buf[64];sprintf(buf, "[S-0000]reread\n");monitor_send_info(buf, 1); cs_card_info(); break; } // reread
 			default:	continue;
 			}

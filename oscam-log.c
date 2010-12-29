@@ -167,6 +167,7 @@ static void write_to_log(int flag, char *txt)
 	}
 
 	cs_write_log(log_buf + 8);
+	struct s_client *cur_cl = cur_client();
 #ifdef CS_LOGHISTORY
 	pthread_mutex_lock(&loghistory_lock);
 	char *ptr=(char *)(loghist+(loghistidx*CS_LOGHISTSIZE));
@@ -176,12 +177,12 @@ static void write_to_log(int flag, char *txt)
 	ptr[0]='\1';    // make username unusable
 	ptr[1]='\0';
 
-	if ((cur_client()->typ=='c') || (cur_client()->typ=='m'))
-		cs_strncpy(ptr, cur_client()->usr, 31);
-	else if ((cur_client()->typ=='p') || (cur_client()->typ=='r'))
-		cs_strncpy(ptr, cur_client()->reader->label, 31);
+	if ((cur_cl->typ=='c') || (cur_cl->typ=='m'))
+		cs_strncpy(ptr, cur_cl->account->usr, 63);
+	else if ((cur_cl->typ=='p') || (cur_cl->typ=='r'))
+		cs_strncpy(ptr, cur_cl->reader->label, 63);
 	else
-		cs_strncpy(ptr, "server", 31);
+		cs_strncpy(ptr, "server", 63);
 
 	cs_strncpy(ptr+32, log_buf, CS_LOGHISTSIZE-33);
 
@@ -193,9 +194,9 @@ static void write_to_log(int flag, char *txt)
 	  if (cl->log) //this variable is only initialized for cl->typ = 'm' 
 		{
 			if (cl->monlvl<2) {
-				if ((cur_client()->typ != 'c') && (cur_client()->typ != 'm'))
+				if ((cur_cl->typ != 'c') && (cur_cl->typ != 'm'))
 					continue;
-				if (strcmp(cur_client()->usr, cl->usr))
+				if (cur_cl->account && cl->account && strcmp(cur_cl->account->usr, cl->account->usr))
 					continue;
 			}
 			sprintf(sbuf, "%03d", cl->logcounter);
@@ -349,7 +350,7 @@ void cs_statistics(struct s_client * client)
 		sprintf(buf, "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %02d:%02d:%02d %s %04X:%04X %s\n",
 				lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
 				lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
-				client->usr[0] ? client->usr : "-",
+				client->account->usr,
 				cs_inet_ntoa(client->ip),
 				client->port,
 				client->cwfound,

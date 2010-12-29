@@ -2877,29 +2877,33 @@ void write_versionfile() {
 
 }
 
-int init_userdb(struct s_auth **authptr_org)
-{
-	struct s_auth *authptr = *authptr_org;
-	int tag = 0, nr, nro, expired, disabled;
-	//int first=1;
-	FILE *fp;
-	char *value;
-	struct s_auth *ptr;
-	/*static */struct s_auth *account=(struct s_auth *)0;
-
-	sprintf(token, "%s%s", cs_confdir, cs_user);
-	if (!(fp = fopen(token, "r"))) {
-		cs_log("Cannot open file \"%s\" (errno=%d)", token, errno);
-		return(1);
-	}
-
-	for (nro = 0, ptr = authptr; ptr; nro++) {
+int init_free_userdb(struct s_auth *ptr) {
+	int nro;
+	for (nro = 0; ptr; nro++) {
 		struct s_auth *ptr_next;
 		ptr_next = ptr->next;
 		free(ptr);
 		ptr = ptr_next;
 	}
-	nr = 0;
+	cs_log("userdb %d accounts freed", nro);
+	
+	return nro;
+}
+
+struct s_auth *init_userdb()
+{
+	struct s_auth *authptr = NULL;
+	int tag = 0, nr = 0, expired = 0, disabled = 0;
+	//int first=1;
+	FILE *fp;
+	char *value;
+	struct s_auth *account=NULL;
+
+	sprintf(token, "%s%s", cs_confdir, cs_user);
+	if (!(fp = fopen(token, "r"))) {
+		cs_log("Cannot open file \"%s\" (errno=%d)", token, errno);
+		return authptr;
+	}
 
 	while (fgets(token, sizeof(token), fp)) {
 		int i, l;
@@ -2914,7 +2918,7 @@ int init_userdb(struct s_auth **authptr_org)
 
 			if (!(ptr=malloc(sizeof(struct s_auth)))) {
 				cs_log("Error allocating memory (errno=%d)", errno);
-				return(1);
+				return authptr;
 			}
 
 			if (account)
@@ -2942,6 +2946,12 @@ int init_userdb(struct s_auth **authptr_org)
 			account->ac_penalty = cfg->ac_penalty;
 			account->ac_idx = nr;
 #endif
+			if(account->expirationdate && account->expirationdate < time(NULL))
+				expired++;
+
+			if(account->disabled)
+				disabled++;
+
 			continue;
 		}
 
@@ -2957,21 +2967,8 @@ int init_userdb(struct s_auth **authptr_org)
 
 	fclose(fp);
 
-	for (expired = 0, disabled = 0, ptr = authptr; ptr;) {
-
-		if(ptr->expirationdate && ptr->expirationdate < time(NULL))
-			expired++;
-
-		if(ptr->disabled != 0)
-			disabled++;
-
-		ptr = ptr->next;
-	}
-
-	*authptr_org = authptr;
-
-	cs_log("userdb reloaded: %d accounts freed, %d accounts loaded, %d expired, %d disabled", nro, nr, expired, disabled);
-	return(0);
+	cs_log("userdb reloaded: %d accounts loaded, %d expired, %d disabled", nr, expired, disabled);
+	return authptr;
 }
 
 static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)

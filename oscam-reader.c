@@ -861,13 +861,11 @@ void * start_cardreader(void * rdr)
 
 	reader->client->thread=pthread_self();
 	pthread_setspecific(getclient, reader->client);
-	strcpy(reader->client->usr, first_client->usr);
 
   if (reader->typ & R_IS_CASCADING)
   {
     reader->client->typ='p';
     reader->client->port=reader->r_port;
-    strcpy(reader->client->usr, reader->r_usr);
     cs_log("proxy thread started  (thread=%8X, label=%s, server=%s)",pthread_self(), reader->label, reader->device);
     
     if (!(reader->ph.c_init)) {

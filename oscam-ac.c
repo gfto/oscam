@@ -95,7 +95,7 @@ void ac_do_stat()
       //}
       
       if( cl_idx->ac_penalty==2 ) {// banned
-        cs_debug_mask(D_CLIENT, "user '%s' banned", cl_idx->usr);
+        cs_debug_mask(D_CLIENT, "user '%s' banned", cl_idx->account->usr);
         acasc->ac_deny=1;
       }
       else
@@ -110,17 +110,17 @@ void ac_do_stat()
         acasc->ac_deny = (exceeds >= cfg->ac_denysamples);
         
         cs_debug_mask(D_CLIENT, "%s limit=%d, max=%d, samples=%d, dsamples=%d, ac[ci=%d][si=%d]:",
-          cl_idx->usr, cl_idx->ac_limit, maxval, 
+          cl_idx->account->usr, cl_idx->ac_limit, maxval, 
           cfg->ac_samples, cfg->ac_denysamples, i, idx);
         cs_debug_mask(D_CLIENT, "%d %d %d %d %d %d %d %d %d %d ", ac_stat->stat[0],
           ac_stat->stat[1], ac_stat->stat[2], ac_stat->stat[3],
           ac_stat->stat[4], ac_stat->stat[5], ac_stat->stat[6],
           ac_stat->stat[7], ac_stat->stat[8], ac_stat->stat[9]);
         if( acasc->ac_deny ) {
-          cs_log("user '%s' exceeds limit", cl_idx->usr);
+          cs_log("user '%s' exceeds limit", cl_idx->account->usr);
           ac_stat->stat[idx] = 0;
         } else if( prev_deny )
-          cs_log("user '%s' restored access", cl_idx->usr);
+          cs_log("user '%s' restored access", cl_idx->account->usr);
       }
     }
     else if( acasc->ac_deny )
@@ -128,7 +128,7 @@ void ac_do_stat()
       prev_deny=1;
       acasc->ac_deny=0;
       if( cl_idx != NULL )
-        cs_log("restored access for inactive user '%s'", cl_idx->usr);
+        cs_log("restored access for inactive user '%s'", cl_idx->account->usr);
       else
         cs_log("restored access for unknown user (ac_idx=%d)", i);
     }

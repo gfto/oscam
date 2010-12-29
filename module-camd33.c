@@ -93,11 +93,12 @@ static void camd33_auth_client()
 static int get_request(uchar *buf, int n)
 {
   int rc, w;
+  struct s_client *cur_cl = cur_client();
 
-  if (cur_client()->camdbug[0])
+  if (cur_cl->camdbug[0])
   {
-    memcpy(buf, cur_client()->camdbug+1, rc=cur_client()->camdbug[0]);
-    cur_client()->camdbug[0]=0;
+    memcpy(buf, cur_cl->camdbug+1, rc=cur_cl->camdbug[0]);
+    cur_cl->camdbug[0]=0;
     return(rc);
   }
   for (rc=w=0; !rc;)
@@ -118,9 +119,9 @@ static int get_request(uchar *buf, int n)
       case -1:
         break;
       default:
-        if (!memcmp(buf+1, cur_client()->usr, strlen(cur_client()->usr)))
+        if (cur_cl->account && !memcmp(buf+1, cur_cl->account->usr, strlen(cur_cl->account->usr)))
         {
-          cs_log("%s still alive", cs_inet_ntoa(cur_client()->ip));
+          cs_log("%s still alive", cs_inet_ntoa(cur_cl->ip));
           rc=w=0;
         }
 	      else

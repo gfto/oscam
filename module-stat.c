@@ -38,12 +38,13 @@ void load_stat_from_file()
 	cs_debug_mask(D_TRACE, "loadbalancer load statistics from %s", buf);
 	
 	struct s_reader *rdr = NULL;
+	READER_STAT *stat, dup;
 		
 	int i=1;
 	int count=0;
 	do
 	{
-		READER_STAT *stat = malloc(sizeof(READER_STAT));
+		stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
 		i = fscanf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
 			buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
@@ -62,7 +63,13 @@ void load_stat_from_file()
 			if (rdr != NULL && strcmp(buf, rdr->label) == 0) {
 				if (!rdr->lb_stat)
 					rdr->lb_stat = ll_create();
-				ll_append(rdr->lb_stat, stat);
+					
+				//Duplicate check:
+				dup = get_stat(rdr, stat->caid, stat->prid, stat->srvid);
+				if (dup)
+					free(stat); //already loaded
+				else
+					ll_append(rdr->lb_stat, stat);
 				count++;
 			}
 			else 
@@ -71,12 +78,12 @@ void load_stat_from_file()
 				free(stat);
 			}
 		}
-		else 
+		else if (i!=EOF && i>0)
 		{
 			cs_debug_mask(D_TRACE, "loadbalancer statistics ERROR  %s rc=%d i=%d", buf, stat->rc, i);
 			free(stat);
 		}
-	} while(i != EOF && i > 0);
+	} while(i!=EOF && i>0);
 	fclose(file);
 	cs_debug_mask(D_TRACE, "loadbalancer statistic loaded %d records", count);
 }
@@ -85,8 +92,6 @@ void load_stat_from_file()
  */
 READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid)
 {
-	if (stat_load_save < 0 && cfg->lb_save)
-		load_stat_from_file();
 	if (!rdr->lb_stat)
 		rdr->lb_stat = ll_create();
 
@@ -296,9 +301,9 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
 int get_best_reader(ECM_REQUEST *er)
 {
 	int i;
-	int result[CS_MAXREADER];
+	uint8 result[CS_MAXREADER];
 	memset(result, 0, sizeof(result));
-	int re[CS_MAXREADER];
+	uint8 re[CS_MAXREADER];
 
 	//resulting values:
 	memset(re, 0, sizeof(re));
@@ -313,6 +318,18 @@ int get_best_reader(ECM_REQUEST *er)
 	struct s_reader *rdr;
 	
 	int nlocal_readers = 0;
+
+#ifdef WITH_DEBUG 
+	//else
+	//	cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, trying all readers");
+
+	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: valid readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
+		username(er->client), er->caid, er->prid, er->srvid,
+		er->matching_rdr[0], er->matching_rdr[1], er->matching_rdr[2], er->matching_rdr[3], 
+		er->matching_rdr[4], er->matching_rdr[5], er->matching_rdr[6], er->matching_rdr[7], 
+		er->matching_rdr[8], er->matching_rdr[9], er->matching_rdr[10], er->matching_rdr[11], 
+		er->matching_rdr[12], er->matching_rdr[13], er->matching_rdr[14], er->matching_rdr[15]);
+#endif	
 	
 	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 		if (er->matching_rdr[i]) {
@@ -340,6 +357,7 @@ int get_best_reader(ECM_REQUEST *er)
 			}
 			
 			if (stat->rc == 0 && stat->request_count > cfg->lb_min_ecmcount) { // 5 unanswered requests or timeouts?
+				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
 				add_stat(rdr, er->caid, er->prid, er->srvid, 1, 4); //reader marked as unuseable 
 				result[i] = 0;
 				continue;
@@ -486,13 +504,10 @@ int get_best_reader(ECM_REQUEST *er)
         for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) { 
         	if (result[i] == 1) { //primary readers 
         		stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
+       			//algo for finding unanswered requests (newcamd reader for example:) 
         		if (stat && current_time > stat->last_received+(time_t)(cfg->ctimeout/1000)) { 
         			stat->request_count++; 
-        			//algo for finding unanswered requests (newcamd reader for example:) 
-        			if (stat->request_count > cfg->lb_min_ecmcount) { //5 unanswered requests?  
-        				add_stat(rdr, er->caid, er->prid, er->srvid, 1, 4); //reader marked as unuseable  
-        				result[i] = 0; 
-				} 
+        			cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
 			} 
 		}        
         }

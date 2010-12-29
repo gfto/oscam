@@ -549,7 +549,7 @@ typedef struct ecm_request_t
   ushort        idx;
   ulong         prid;
   struct s_reader *selected_reader;
-  int           matching_rdr[CS_MAXREADER];
+  uint8         matching_rdr[CS_MAXREADER];
   struct s_client *client; //contains pointer to 'c' client while running in 'r' client
   int           cpti;   // client pending table index
   int           stage;    // processing stage in server module
@@ -610,7 +610,7 @@ struct s_client
   int		last_srvid;
   int		last_caid;
   int		tosleep;
-  char		usr[64];
+  struct s_auth *account;
   int		udp_fd;
   int		fd_m2c; //master writes to this fd
   int		fd_m2c_c; //client reads from this fd
@@ -976,6 +976,16 @@ struct s_auth
   int       cccreshare;
   int       disabled;
   int 		failban;
+  
+  int		cwfound;
+  int		cwcache;
+  int		cwnot;
+  int		cwtun;
+  int 		cwignored;
+  int		cwtout;
+  int		emmok;
+  int		emmnok;
+                                                                                                                             
   struct   s_auth *next;
 };
 
@@ -1336,7 +1346,7 @@ extern int matching_reader(ECM_REQUEST *, struct s_reader *);
 extern void set_signal_handler(int , int , void (*));
 extern void cs_log_config(void);
 extern void cs_waitforcardinit(void);
-extern void cs_reinit_clients(void);
+extern void cs_reinit_clients(struct s_auth *new_accounts);
 extern int process_client_pipe(struct s_client *cl, uchar *buf, int l);
 extern void update_reader_config(uchar *ptr);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
@@ -1363,7 +1373,8 @@ extern void ac_chk(ECM_REQUEST*, int);
 
 // oscam-config
 extern int  init_config(void);
-extern int  init_userdb(struct s_auth **authptr_org);
+extern int  init_free_userdb(struct s_auth *auth);
+extern struct s_auth *init_userdb();
 extern int  init_readerdb(void);
 extern int  init_sidtab(void);
 extern int  init_srvid(void);
@@ -1486,6 +1497,8 @@ extern void init_stat();
 extern int get_best_reader(ECM_REQUEST *er);
 extern void clear_reader_stat(struct s_reader *reader);
 extern void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int ecm_time, int rc);
+extern void load_stat_from_file();
+extern void save_stat_to_file();
 #ifdef HAVE_PCSC
 // reader-pcsc
 extern void pcsc_close(struct s_reader *pcsc_reader);

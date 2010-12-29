@@ -45,12 +45,8 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 	switch (refreshtype) {
 		case REFR_ACCOUNTS:
 		cs_log("Refresh Accounts requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
-		init_userdb(&cfg->account);
-		cs_reinit_clients();
 
-#ifdef CS_ANTICASC
-		kill_ac_client();
-#endif
+		cs_accounts_chk();
 		break;
 
 		case REFR_READERS:
@@ -67,7 +63,7 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 		case REFR_SERVICES:
 		cs_log("Refresh Services requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
 		//init_sidtab();
-		cs_reinit_clients();
+		cs_reinit_clients(cfg->account);
 		break;
 
 #ifdef CS_ANTICASC
@@ -1685,13 +1681,12 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 		}
 
 		//search account in active clients
-		int cwok = 0, cwnok = 0, cwign = 0, cwtout = 0, cwcache = 0, cwtun = 0, emmok = 0, emmnok = 0;
 		int secs = 0, fullmins =0, mins =0, hours =0, lastresponsetm = 0;
 		char *proto = "";
 
 		struct s_client *cl;
 		for (cl=first_client; cl ; cl=cl->next) {
-		 if (!strcmp(cl->usr, account->usr)) {
+		 if (cl->account && !strcmp(cl->account->usr, account->usr)) {
 			//set client to offline depending on hideclient_to
 			if ((now - cl->lastecm) < hideclient) {
 				status = "<b>online</b>"; classname="online";
@@ -1709,26 +1704,18 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 					}
 				}
 			}
-
-			cwok += cl->cwfound;
-			cwnok += cl->cwnot;
-			cwign += cl->cwignored;
-			cwtout += cl->cwtout;
-			cwcache += cl->cwcache;
-			cwtun += cl->cwtun;
-			emmok += cl->emmok;
-			emmnok += cl->emmnok;
 		 }
 		}
+		tpl_printf(vars, 0, "CWOK", "%d", account->cwfound);
+		tpl_printf(vars, 0, "CWNOK", "%d", account->cwnot);
+		tpl_printf(vars, 0, "CWIGN", "%d", account->cwignored);
+		tpl_printf(vars, 0, "CWTOUT", "%d", account->cwtout);
+		tpl_printf(vars, 0, "CWCACHE", "%d", account->cwcache);
+		tpl_printf(vars, 0, "CWTUN", "%d", account->cwtun);
+		tpl_printf(vars, 0, "EMMOK", "%d", account->emmok);
+		tpl_printf(vars, 0, "EMMNOK", "%d", account->emmnok);
+
 		if ( isonline > 0 || ((isonline == 0) && (!cfg->http_hide_idle_clients))) {
-			tpl_printf(vars, 0, "CWOK", "%d", cwok);
-			tpl_printf(vars, 0, "CWNOK", "%d", cwnok);
-			tpl_printf(vars, 0, "CWIGN", "%d", cwign);
-			tpl_printf(vars, 0, "CWTOUT", "%d", cwtout);
-			tpl_printf(vars, 0, "CWCACHE", "%d", cwcache);
-			tpl_printf(vars, 0, "CWTUN", "%d", cwtun);
-			tpl_printf(vars, 0, "EMMOK", "%d", emmok);
-			tpl_printf(vars, 0, "EMMNOK", "%d", emmnok);
 			tpl_addVar(vars, 0, "LASTCHANNEL", xml_encode(vars, lastchan));
 			tpl_printf(vars, 0, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, 0, "CLIENTPROTO", proto);
@@ -1982,7 +1969,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		struct s_client *cl = get_client_by_tid(atol(getParam(params, "threadid")));
 		if (cl) {
 			kill_thread(cl);
-			cs_log("Client %s killed by WebIF from %s", cl->usr, inet_ntoa(*(struct in_addr *)&in));
+			cs_log("Client %s killed by WebIF from %s", cl->account->usr, inet_ntoa(*(struct in_addr *)&in));
 		}
 	}
 
@@ -2063,7 +2050,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			
 			lsec=now-cl->login;
 			isec=now-cl->last;
-			usr=cl->usr;
+			usr=username(cl);
 
 			if (((cl->typ=='r') || (cl->typ=='p')) && (con=get_ridx(cl->reader)>=0)) usr=cl->reader->label;
 
@@ -3177,7 +3164,6 @@ void http_srv() {
 	if (cl == NULL) return;
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
-	strcpy(cl->usr, first_client->usr);
 	cl->typ = 'h';
 	int i,sock, reuse = 1;
 	struct sockaddr_in sin;

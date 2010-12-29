@@ -575,7 +575,7 @@ static void oscam_ser_auth_client(int proto)
   connected=proto;
   if( !account )
   {
-    cur_client()->usr[0]=0;
+    cur_client()->account=NULL;
     for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
       if( (ok=!strcmp(oscam_ser_usr, account->usr)) )
         break;
@@ -887,7 +887,7 @@ static void * oscam_ser_fork(void *url2)
   while(1)
   {
     cur_client()->aureader=NULL;
-    cur_client()->usr[0]='\0';
+    cur_client()->account=NULL;
     cur_client()->login=time((time_t *)0);
     cur_client()->pfd=init_oscam_ser_device(oscam_ser_device);
     if (cur_client()->pfd)

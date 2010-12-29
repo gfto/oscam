@@ -2636,16 +2636,6 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 	return n;
 }
 
-struct s_auth *get_account(char *usr) {
-	struct s_auth *account;
-	for (account = cfg->account; account; account = account->next) {
-		if (strcmp(usr, account->usr) == 0) {
-			return account;
-		}
-	}
-	return NULL;
-}
-
 /**
  * This function checks for hexserial changes on cards.
  * We update the share-list if a card has changed
@@ -2936,14 +2926,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 	
 	struct cc_data *cc = cl->cc;
 
-	struct s_auth *account = get_account(cl->usr);
-	if (account) {
-		maxhops = account->cccmaxhops;
-		usr_reshare = account->cccreshare;
-	} else {
-		maxhops = 10;
-		usr_reshare = cfg->cc_reshare;
-	}
+	maxhops = cl->account->cccmaxhops;
+	usr_reshare = cl->account->cccreshare;
 
 	LLIST *server_cards = ll_create();
 	if (!cc->reported_carddatas)
@@ -3383,8 +3367,8 @@ int cc_srv_connect(struct s_client *cl) {
 	
 
 	if (!cc->prefix)
-		cc->prefix = malloc(strlen(cl->usr)+20);
-	sprintf(cc->prefix, "cccam(s) %s: ", cl->usr);
+		cc->prefix = malloc(strlen(cl->account->usr)+20);
+	sprintf(cc->prefix, "cccam(s) %s: ", cl->account->usr);
 	
 
 	//Starting readers to get cards:

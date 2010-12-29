@@ -492,13 +492,13 @@ static FILTER mk_user_ftab()
   }
   if( c && !filt.caid )
   {
-    cs_log("no valid CAID found in CAID for user '%s'", cl->usr);
+    cs_log("no valid CAID found in CAID for user '%s'", cl->account->usr);
     return filt;
   }
 
   // search CAID in client IDENT
   cs_debug_mask(D_CLIENT, "client[%8X].%s nfilts=%d, filt.caid=%04X", pthread_self(),
-           cl->usr, cl->ftab.nfilts, filt.caid);
+           cl->account->usr, cl->ftab.nfilts, filt.caid);
 
   if( !filt.caid && cl->ftab.nfilts ) 
   {
@@ -515,7 +515,7 @@ static FILTER mk_user_ftab()
     }
     if( fcaids==cl->ftab.nfilts && !filt.caid ) 
     { 
-      cs_log("no valid CAID found in IDENT for user '%s'", cl->usr);
+      cs_log("no valid CAID found in IDENT for user '%s'", cl->account->usr);
       //cs_disconnect_client();
       return filt;
     }
@@ -577,7 +577,7 @@ static FILTER mk_user_ftab()
   
   if( !filt.nprids )
   {
-    cs_log("no valid PROVID(s) found in CAID for user '%s'", cl->usr);
+    cs_log("no valid PROVID(s) found in CAID for user '%s'", cl->account->usr);
     //cs_disconnect_client();
   }
 

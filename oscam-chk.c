@@ -163,10 +163,11 @@ int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
   ulong  prid, sprid;
 
   if (!ptab) return(1);
-
+  struct s_client *cur_cl = cur_client();
+  
   caid = er->caid;
   prid = er->prid;
-  pi = cur_client()->port_idx;
+  pi = cur_cl->port_idx;
 
   if (ptab->nports && ptab->ports[pi].ftab.nfilts)
   {
@@ -237,11 +238,12 @@ int chk_ufilters(ECM_REQUEST *er)
   int i, j, rc;
   ushort ucaid;
   ulong  uprid;
-
+  struct s_client *cur_cl = cur_client();
+  
   rc=1;
-  if( cur_client()->ftab.nfilts )
+  if( cur_cl->ftab.nfilts )
   {
-    FTAB *f = &cur_client()->ftab;
+    FTAB *f = &cur_cl->ftab;
     for( i=rc=0; (!rc) && (i<f->nfilts); i++ )
     {
       ucaid = f->filts[i].caid;
@@ -251,19 +253,19 @@ int chk_ufilters(ECM_REQUEST *er)
         {
           uprid = f->filts[i].prids[j];
           cs_debug_mask(D_CLIENT, "trying user '%s' filter %04X:%06X",
-                   cur_client()->usr, ucaid, uprid);
+                   cur_cl->account->usr, ucaid, uprid);
           if( er->prid == uprid )
           {
             rc=1;
             cs_debug_mask(D_CLIENT, "%04X:%06X allowed by user '%s' filter %04X:%06X",
-                      er->caid, er->prid, cur_client()->usr, ucaid, uprid);
+                      er->caid, er->prid, cur_cl->account->usr, ucaid, uprid);
           }
         }
       }
     }
     if( !rc ) {
       cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by user '%s' filters",
-                er->caid, er->prid, cur_client()->usr);
+                er->caid, er->prid, cur_cl->account->usr);
         snprintf( er->msglog, MSGLOGSIZE, "no card support %04X:%06X",
                 er->caid, (unsigned int) er->prid );
 
@@ -272,10 +274,10 @@ int chk_ufilters(ECM_REQUEST *er)
     }
   }
 
-  if( !(rc=chk_class(er, &cur_client()->cltab, "user", cur_client()->usr)) ) {
+  if( !(rc=chk_class(er, &cur_cl->cltab, "user", cur_cl->account->usr)) ) {
     if( !er->rcEx ) er->rcEx=(E1_USER<<4)|E2_CLASS;
   }
-  else if( !(rc=chk_chid(er, &cur_client()->fchid, "user", cur_client()->usr)) )
+  else if( !(rc=chk_chid(er, &cur_cl->fchid, "user", cur_cl->account->usr)) )
     if( !er->rcEx ) er->rcEx=(E1_USER<<4)|E2_CHID;
 
   if( rc ) er->rcEx=0;
@@ -380,7 +382,9 @@ int chk_ctab(ushort caid, CAIDTAB *ctab) {
 
 int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //Checking connected & group valid:
-  if (!((rdr->fd) && (rdr->grp&cur_client()->grp)))
+  struct s_client *cur_cl = cur_client();
+  
+  if (!((rdr->fd) && (rdr->grp&cur_cl->grp)))
     return(0);
 
   //Checking enabled and not deleted:
