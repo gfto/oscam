@@ -38,7 +38,7 @@ void load_stat_from_file()
 	cs_debug_mask(D_TRACE, "loadbalancer load statistics from %s", buf);
 	
 	struct s_reader *rdr = NULL;
-	READER_STAT *stat, dup;
+	READER_STAT *stat, *dup;
 		
 	int i=1;
 	int count=0;

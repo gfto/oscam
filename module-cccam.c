@@ -3353,6 +3353,8 @@ int cc_srv_connect(struct s_client *cl) {
 		//cs_ddump_mask(D_CLIENT, buf, 6, "cccam: pwd check '%s':", buf); //illegal buf-bytes could kill the logger!
 		if (memcmp(buf, "CCcam\0", 6) == 0) //Password Hash OK!
 			break; //account is set
+			
+		account = account->next;
 	}
 	free(save_block);
 
