@@ -797,11 +797,10 @@ struct cc_current_card *cc_find_current_card(struct cc_data *cc,
 	struct cc_current_card *c;
 	while ((c = ll_iter_next(it)))
 		if (c->card == card) {
-			ll_iter_release(it);
-			return c;
+			break;
 		}
 	ll_iter_release(it);
-	return NULL;
+	return c;
 }
 
 struct cc_current_card *cc_find_current_card_by_srvid(struct cc_data *cc,
@@ -811,11 +810,10 @@ struct cc_current_card *cc_find_current_card_by_srvid(struct cc_data *cc,
 	while ((c = ll_iter_next(it)))
 		if (c->card->caid == caid && c->prov == prov
 				&& sid_eq(&c->srvid, srvid)) {
-			ll_iter_release(it);
-			return c;
+			break;
 		}
 	ll_iter_release(it);
-	return NULL;
+	return c;
 }
 
 void cc_remove_current_card(struct cc_data *cc,
@@ -1046,7 +1044,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	}
 
 	//No Card? Waiting for shares
-	if (!ll_count(cc->cards)) {
+	if (!ll_has_elements(cc->cards)) {
 		rdr->fd_error++;
 		cs_debug_mask(D_TRACE, "%s NO CARDS!", getprefix());
 		return 0;
@@ -1732,7 +1730,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 	}
 	ll_iter_release(it);
 	
-	//write sids only if cccam 2.2.0:
+	//write sids only if cccam 2.2.x:
 	if (ext) {
 		//assigned sids:
 		it = ll_iter_create(card->goodsids);
@@ -1742,6 +1740,8 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 			buf[ofs+1] = srvid->sid & 0xFF;
 			ofs+=2;
 			buf[21]++; //nassign
+			if (buf[21] > 250)
+				break;
 		}
 		ll_iter_release(it);
 
@@ -1752,6 +1752,8 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 			buf[ofs+1] = srvid->sid & 0xFF;
 			ofs+=2;
 			buf[22]++; //nreject
+			if (buf[22] > 250)
+				break;
 		}
 		ll_iter_release(it);
 	}
@@ -1778,7 +1780,6 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 void cc_card_removed(struct s_client *cl, uint32 shareid) {
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card;
-	pthread_mutex_lock(&cc->cards_busy);
 	LL_ITER *it = ll_iter_create(cc->cards);
 
 	while ((card = ll_iter_next(it))) {
@@ -1801,7 +1802,6 @@ void cc_card_removed(struct s_client *cl, uint32 shareid) {
 		}
 	}
 	ll_iter_release(it);
-	pthread_mutex_unlock(&cc->cards_busy);
 }
 
 void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
@@ -2085,7 +2085,9 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	}
 
 	case MSG_CARD_REMOVED: {
+		pthread_mutex_lock(&cc->cards_busy);
 		cc_card_removed(cl, b2i(4, buf + 4));
+		pthread_mutex_unlock(&cc->cards_busy);
 		break;
 	}
 
@@ -2309,7 +2311,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cc->cmd05_active = 1;
 			cc->cmd05_data_len = l;
 			memcpy(&cc->cmd05_data, buf + 4, l);
-			if (rdr->available && ll_count(cc->cards))
+			if (rdr->available && ll_has_elements(cc->cards))
 				send_cmd05_answer(cl);
 		}
 		break;
@@ -2780,7 +2782,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 	if (rdr && !chk_ident(&rdr->client->ftab, card))
 		return 0;
 	
-	if (!ll_count(card->providers))	{ //No providers? Add null-provider:
+	if (!ll_has_elements(card->providers))	{ //No providers? Add null-provider:
 		struct cc_provider *prov = malloc(sizeof(struct cc_provider));
 		memset(prov, 0, sizeof(struct cc_provider));
 		ll_append(card->providers, prov);
@@ -2819,8 +2821,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 
 	} else if (cfg->cc_minimize_cards == MINIMIZE_HOPS) {
 		while ((card2 = ll_iter_next(it))) {
-			if (card2->caid == card->caid && ll_count(card2->providers)
-					< CS_MAXPROV)
+			if (card2->caid == card->caid && ll_count(card2->providers) < CS_MAXPROV)
 				break;
 		}
 		if (!card2) {
@@ -3111,7 +3112,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 
 				int count = 0;
 				if (rcc && rcc->cards) {
-					if (pthread_mutex_trylock(&rcc->cards_busy) != EBUSY) {
+					if (!pthread_mutex_trylock(&rcc->cards_busy)) {
 						LL_ITER *it = ll_iter_create(rcc->cards);
 						while ((card = ll_iter_next(it))) {
 							if (card->hop <= maxhops && chk_ctab(card->caid, &cl->ctab)
@@ -3180,16 +3181,9 @@ int cc_srv_report_cards(struct s_client *cl) {
 }
 
 void cc_init_cc(struct cc_data *cc) {
-	pthread_mutexattr_t mta;
-	pthread_mutexattr_init(&mta);
-#if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)  || defined(OS_MACOSX)
-	pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE);
-#else
-	pthread_mutexattr_settype(&mta, PTHREAD_MUTEX_RECURSIVE_NP);
-#endif                      		
 	pthread_mutex_init(&cc->lock, NULL); //No recursive lock
 	pthread_mutex_init(&cc->ecm_busy, NULL); //No recusive lock
-	pthread_mutex_init(&cc->cards_busy, &mta); //Recursive lock
+	pthread_mutex_init(&cc->cards_busy, NULL); //No (more) recursive lock
 }
 
 /**
@@ -3332,12 +3326,13 @@ int cc_srv_connect(struct s_client *cl) {
 	account = cfg->account;
 	struct cc_crypt_block *save_block = malloc(sizeof(struct cc_crypt_block));
 	memcpy(save_block, cc->block, sizeof(struct cc_crypt_block));
-
+	int found = 0;
 	while (1) {
 		while (account) {
 			if (strncmp(usr, account->usr, 20) == 0) {
 				memset(pwd, 0, sizeof(pwd));
 				strncpy(pwd, account->pwd, 20);
+				found=1;
 				break;
 			}
 			account = account->next;
@@ -3359,7 +3354,10 @@ int cc_srv_connect(struct s_client *cl) {
 	free(save_block);
 
 	if (cs_auth_client(cl, account, NULL)) { //cs_auth_client returns 0 if account is valid/active/accessible
-		cs_log("account '%s' not found!", usr);
+		if (!found)
+			cs_log("account '%s' not found!", usr);
+		else
+			cs_log("password for '%s' invalid!", usr);
 		return -2;
 	}
 	if (cl->dup) {

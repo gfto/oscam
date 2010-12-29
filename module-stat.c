@@ -306,7 +306,7 @@ int get_best_reader(ECM_REQUEST *er)
 	int i;
 	uint8 result[CS_MAXREADER];
 	memset(result, 0, sizeof(result));
-	uint8 re[CS_MAXREADER];
+	int re[CS_MAXREADER];
 
 	//resulting values:
 	memset(re, 0, sizeof(re));
