@@ -121,7 +121,7 @@ static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned sh
   return(1);
 }
 
-void do_emm_from_file(struct s_reader * reader)
+static void do_emm_from_file(struct s_reader * reader)
 {
   //now here check whether we have EMM's on file to load and write to card:
   if (reader->emmfile != NULL) {//readnano has something filled in
@@ -166,7 +166,6 @@ void reader_card_info(struct s_reader * reader)
   {
     cur_client()->last=time((time_t)0);
     cs_ri_brk(reader, 0);
-    do_emm_from_file(reader);
 
 	if (cardsystem[reader->card_system-1].card_info) {
 		cardsystem[reader->card_system-1].card_info(reader);
@@ -266,6 +265,7 @@ int reader_checkhealth(struct s_reader * reader)
         cur_client()->aureader = cur_client()->reader;
         reader_card_info(reader);
         reader->card_status = CARD_INSERTED;
+        do_emm_from_file(reader);
       }
     }
   }
