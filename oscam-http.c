@@ -1635,7 +1635,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 	char *status = "offline";
 	char *expired = "";
 	char *classname="offline";
-	char *lastchan="";
+	char *lastchan="&nbsp;";
 	time_t now = time((time_t)0);
 	int isec = 0, isonline = 0;
 
@@ -1692,7 +1692,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 				status = "<b>online</b>"; classname="online";
 				isonline = 1;
 				proto = monitor_get_proto(cl);
-				lastchan = get_servicename(cl->last_srvid, cl->last_caid);
+				lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
 				lastresponsetm = cl->cwlastresptime;
 				isec = now - cl->last;
 				if(isec > 0) {
@@ -1716,7 +1716,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 		tpl_printf(vars, 0, "EMMNOK", "%d", account->emmnok);
 
 		if ( isonline > 0 || ((isonline == 0) && (!cfg->http_hide_idle_clients))) {
-			tpl_addVar(vars, 0, "LASTCHANNEL", xml_encode(vars, lastchan));
+			tpl_addVar(vars, 0, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, 0, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, 0, "CLIENTPROTO", proto);
 			tpl_printf(vars, 0, "IDLESECS", "%02d:%02d:%02d", hours, mins, secs);
