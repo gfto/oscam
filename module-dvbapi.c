@@ -1509,8 +1509,6 @@ void * dvbapi_main_local(void *cli) {
 	for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
 		if( (ok=!strcmp(cfg->dvbapi_usr, account->usr)) )
 			break;
-	client->account = account;
-
 	cs_auth_client(client, ok ? account : (struct s_auth *)(-1), "dvbapi");
 
 	memset(demux, 0, sizeof(struct demux_s) * MAX_DEMUX);

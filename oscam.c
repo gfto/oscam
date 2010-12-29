@@ -1194,7 +1194,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 	memset(&client->grp, 0xff, sizeof(uint64));
 	//client->grp=0xffffffffffffff;
 	client->aureader=NULL;
-	client->account=account?account:first_client->account;
+	client->account=first_client->account;
 	switch((long)account)
 	{
 #ifdef CS_WITH_GBOX
