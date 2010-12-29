@@ -2750,11 +2750,17 @@ void send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params
 
 		if (strcmp(getParam(params, "label"),"")) {
 			struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-			if (rdr->typ == R_CCCAM && rdr->enable == 1) {
-				send_oscam_entitlement(vars, f, params, in, 1);
+			if (rdr) {
+				if (rdr->typ == R_CCCAM && rdr->enable == 1) {
+					send_oscam_entitlement(vars, f, params, in, 1);
+				} else {
+					//Send Errormessage
+					tpl_addVar(vars, 0, "APIERRORMESSAGE", "no cccam reader or disabled");
+					webif_write(tpl_getTpl(vars, "APIERROR"), f);
+				}
 			} else {
 				//Send Errormessage
-				tpl_addVar(vars, 0, "APIERRORMESSAGE", "no cccam reader or disabled");
+				tpl_addVar(vars, 0, "APIERRORMESSAGE", "reader not exist");
 				webif_write(tpl_getTpl(vars, "APIERROR"), f);
 			}
 		} else {
@@ -2765,7 +2771,14 @@ void send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params
 	}
 	else if (strcmp(getParam(params, "part"), "readerstats") == 0) {
 		if (strcmp(getParam(params, "label"),"")) {
-			send_oscam_reader_stats(vars, f, params, in, 1);
+			struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
+			if (rdr) {
+				send_oscam_reader_stats(vars, f, params, in, 1);
+			} else {
+				//Send Errormessage
+				tpl_addVar(vars, 0, "APIERRORMESSAGE", "reader not exist");
+				webif_write(tpl_getTpl(vars, "APIERROR"), f);
+			}
 		} else {
 			//Send Errormessage
 			tpl_addVar(vars, 0, "APIERRORMESSAGE", "no reader selected");
