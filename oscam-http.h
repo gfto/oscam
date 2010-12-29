@@ -1388,10 +1388,10 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
 #define TPLPRESHUTDOWN "\
 ##TPLHEADER##\
 ##TPLMENU##\n\
-<br><br><br><DIV class = \"warning\">Do you really want to shutdown oscam?<br>\
+<br><br><br><DIV class = \"warning\">Do you really want to shutdown&#47; restart oscam?<br>\
 All users will become disconnected.<br>\
-You will not be able to restart oscam from the webinterface.<br>\
-The webinterface will try to connect to oscam once 30 seconds after shutdown.</b><br>\n\
+If you use &#39;Shutdown&#39; you will not be able to restart oscam from webinterface.<br>\
+The webinterface will try to connect to oscam once a few seconds after shutdown&#47; restart.</b><br>\n\
 </DIV><br><form action=\"shutdown.html\" method=\"get\">\n\
 <input type=\"submit\" name=\"action\" value=\"Shutdown\" title=\"Shutdown Oscam\" ##BTNDISABLED##>\
 <input type=\"submit\" name=\"action\" value=\"Restart\" title=\"Restart Oscam\" ##BTNDISABLED##></TD>\n\
