@@ -886,6 +886,8 @@ struct s_reader  //contains device info, reader info and card info
  	unsigned char sessi[16];
  	unsigned char signature[8];
  	unsigned char cam_state[3];
+	////variables from reader-irdeto.c
+	int acs57; // A flag for the ACS57 ITA DVB-T
 	////variables from reader-cryptoworks.c
 	BIGNUM exp;
 	BIGNUM ucpk;
