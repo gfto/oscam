@@ -1635,7 +1635,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 	char *status = "offline";
 	char *expired = "";
 	char *classname="offline";
-	char *lastchan="&nbsp;";
+	char *lastchan="";
 	time_t now = time((time_t)0);
 	int isec = 0, isonline = 0;
 
