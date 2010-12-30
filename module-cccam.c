@@ -2099,31 +2099,32 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cs_log("%s %s", getprefix(), msg);
 
 			//Check for PARTNER connection:
-			if (!cc->is_oscam_cccam && strncmp(msg, "PARTNER:", 8) == 0) {
+			if (strncmp(msg, "PARTNER:", 8) == 0) {
 				//When Data starts with "PARTNER:" we have an Oscam-cccam-compatible client/server!
-				cc->is_oscam_cccam = 1;
+				
 				strncpy(cc->remote_oscam, msg+9, sizeof(cc->remote_oscam)-1);
-
 				int has_param = check_extended_mode(cl, msg);
+				if (!cc->is_oscam_cccam) {
+					cc->is_oscam_cccam = 1;
 
-				//send params back. At the moment there is only "EXT"
-				char param[14];
-				if (!has_param)
-					param[0] = 0;
-				else {
-					strcpy(param, " [");
-					if (cc->extended_mode)
-						addParam(param, "EXT");
-					if (cc->cccam220)
-						addParam(param, "SID");
-					strcat(param, "]");
-				}
+					//send params back. At the moment there is only "EXT"
+					char param[14];
+					if (!has_param)
+						param[0] = 0;
+					else {
+						strcpy(param, " [");
+						if (cc->extended_mode)
+							addParam(param, "EXT");
+						if (cc->cccam220)
+							addParam(param, "SID");
+						strcat(param, "]");
+					}
 
-				sprintf((char*) buf, "PARTNER: OSCam v%s, build #%s (%s)%s",
+					sprintf((char*) buf, "PARTNER: OSCam v%s, build #%s (%s)%s",
 						CS_VERSION, CS_SVN_VERSION, CS_OSTYPE, param);
-				cc_cmd_send(cl, buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
-			} else if (cc->is_oscam_cccam)
-				check_extended_mode(cl, msg);
+					cc_cmd_send(cl, buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
+				}
+			}
 			cs_debug_mask(D_CLIENT, "cc_parse_msg out");
 			return ret;
 		}

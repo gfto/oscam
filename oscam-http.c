@@ -816,7 +816,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 				tpl_addVar(vars, 0, "SWITCH", "disable");
 			}
 
-			tpl_addVar(vars, 0, "CTYP", reader_get_type_desc(rdr, 1));
+			tpl_addVar(vars, 0, "CTYP", reader_get_type_desc(rdr, 0));
 			tpl_addVar(vars, 1, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
 	}
@@ -2102,7 +2102,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			if ((strcmp(proto,"newcamd") == 0) && (cl->typ == 'c'))
 				tpl_printf(vars, 0, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(cl->ncd_client_id));
-			else if (((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0)) && (cl->typ == 'c')) {
+			else if (((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0))) {
 			//else if ((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0)) {
 				struct cc_data *cc = cl->cc;
 				if(cc) {

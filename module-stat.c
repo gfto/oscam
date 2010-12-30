@@ -267,7 +267,12 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 		stat->last_received = time(NULL);
 	}
 	else
+	{
+		cs_debug_mask(D_TRACE, "unhandled stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
+				rdr->label, rc, caid, prid, srvid, ecm_time, rdr->lb_usagelevel);
+	
 		return;
+	}
 		
 	cs_debug_mask(D_TRACE, "adding stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
 				rdr->label, rc, caid, prid, srvid, ecm_time, rdr->lb_usagelevel);
