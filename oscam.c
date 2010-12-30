@@ -622,8 +622,6 @@ void cs_exit(int sig)
 	cs_log("cardserver down");
 	cs_close_log();
 
-	NULLFREE(cl);
-
 #ifdef WEBIF
 	if (!cs_restart_mode)
 		exit(sig);
