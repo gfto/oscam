@@ -2340,7 +2340,7 @@ int write_userdb(struct s_auth *authptr)
 		if (account->tosleep || (!account->tosleep && cfg->http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", account->tosleep);
 
-		if (account->monlvl || (!account->monlvl && cfg->http_full_cfg))
+		if (account->monlvl != cfg->mon_level || (account->monlvl == cfg->mon_level && cfg->http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", account->monlvl);
 
 		if (account->aureader)
