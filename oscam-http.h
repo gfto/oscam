@@ -718,8 +718,8 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	</TABLE>\
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
-	<TR><TH colspan=\"6\"> Loadbalance statistics for reader ##LABEL##</TH></TR>\n\
-	<TR><TH>Channel</TH><TH>Channelname</TH><TH>Result</TH><TH>Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\
+	<TR><TH colspan=\"7\"> Loadbalance statistics for reader ##LABEL##</TH></TR>\n\
+	<TR><TH>Channel</TH><TH>Channelname</TH><TH>Result</TH><TH>Avg-Time</TH><TH>Last-Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\
     ##READERSTATSROWFOUND##\n\
     ##READERSTATSNFHEADLINE##\n\
     ##READERSTATSROWNOTFOUND##\n\
@@ -731,6 +731,7 @@ services(##SRVIDNUM##)=##SRVIDS##<BR><BR>\n"
 	<TD>##CHANNELNAME##</TD>\
 	<TD align=\"center\">##RC##</TD>\
 	<TD align=\"center\">##TIME##</TD>\
+	<TD align=\"center\">##TIMELAST##</TD>\
 	<TD align=\"center\">##COUNT##</TD>\
 	<TD align=\"center\">##LAST##</TD></TR>\n"
 
