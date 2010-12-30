@@ -228,7 +228,7 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 	if (stat->ecm_count < 0)
 		stat->ecm_count=0;
 		
-	if (rc == 0) {
+	if (rc == 0) { //found
 		stat->rc = 0;
 		stat->ecm_count++;
 		stat->time_idx++;
@@ -257,6 +257,11 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 		rdr->lb_usagelevel_ecmcount = ule+1;
 		
 	}
+	else if (rc == 1 || rc == 2) { //cache
+		//no increase of statistics here, cachetime is not real time
+		stat->last_received = time(NULL);
+		stat->request_count = 0;
+	}
 	else if (rc == 4) { //not found
 		stat->rc = rc;
 		stat->last_received = time(NULL);
@@ -268,7 +273,8 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 	}
 	else
 	{
-		cs_debug_mask(D_TRACE, "unhandled stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
+		if (rc >= 0)
+			cs_debug_mask(D_TRACE, "unhandled stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
 				rdr->label, rc, caid, prid, srvid, ecm_time, rdr->lb_usagelevel);
 	
 		return;
@@ -352,20 +358,18 @@ int get_best_reader(ECM_REQUEST *er)
 				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", rdr->label);
 				add_stat(rdr, er->caid,  er->prid, er->srvid, 1, -1);
 				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
-				continue; 
+				continue;
 			}
 			
 			if (stat->ecm_count < 0||(stat->ecm_count > cfg->lb_max_ecmcount && stat->time_avg > (int)cfg->ftimeout)) {
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg->lb_max_ecmcount, rdr->label);
 				reset_stat(er->caid, er->prid, er->srvid);
 				result[i] = 1;//max ecm reached, get new statistics
-				continue;
 			}
 				
 			if (stat->rc == 0 && stat->ecm_count < cfg->lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				result[i] = 1; //need more statistics!
-				continue;
 			}
 			
 			if (stat->rc == 0 && stat->request_count > cfg->lb_min_ecmcount) { // 5 unanswered requests or timeouts?
