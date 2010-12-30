@@ -807,7 +807,7 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
 #define TPLAPIREADERSTATSEMMBIT "      <emm type=\"##EMMTYPE##\" result=\"##EMMRESULT##\">##EMMCOUNT##</emm>\n"
 
 #define TPLAPIREADERSTATSECMBIT "      <ecm caid=\"##ECMCAID##\" provid=\"##ECMPROVID##\" srvid=\"##ECMSRVID##\"\
- channelname=\"##ECMCHANNELNAME##\" time=\"##ECMTIME##\" rc=\"##ECMRC##\" rcs=\"##ECMRCS##\" last=\"##ECMLAST##\">##ECMCOUNT##</ecm>\n"
+ channelname=\"##ECMCHANNELNAME##\" avgtime=\"##ECMTIME##\" lasttime=\"##ECMTIMELAST##\" rc=\"##ECMRC##\" rcs=\"##ECMRCS##\" lastrequest=\"##ECMLAST##\">##ECMCOUNT##</ecm>\n"
 
 #define TPLREADERCONFIG "\
 ##TPLHEADER##\
