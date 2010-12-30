@@ -68,9 +68,11 @@ void load_stat_from_file()
 				dup = get_stat(rdr, stat->caid, stat->prid, stat->srvid);
 				if (dup)
 					free(stat); //already loaded
-				else
+				else {
+				
 					ll_append(rdr->lb_stat, stat);
-				count++;
+					count++;
+				}
 			}
 			else 
 			{
@@ -257,10 +259,12 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 	}
 	else if (rc == 4) { //not found
 		stat->rc = rc;
+		stat->last_received = time(NULL);
 		//stat->ecm_count = 0; Keep ecm_count!
 	}
 	else if (rc == 5) { //timeout
 		stat->request_count++;
+		stat->last_received = time(NULL);
 	}
 	else
 		return;
@@ -457,7 +461,7 @@ int get_best_reader(ECM_REQUEST *er)
 		else {
 			n++;
 			re[best_idx]=0;
-			if (nlocal_readers) {
+			if (nlocal_readers) {//primary readers, local
 				nlocal_readers--;
 				result[best_idx] = 1;
 				//OLDEST_READER:
@@ -467,7 +471,7 @@ int get_best_reader(ECM_REQUEST *er)
 					best_rdr = best_rdri;
 				}
 			}
-			else if (nbest_readers) {
+			else if (nbest_readers) {//primary readers, other
 				nbest_readers--;
 				result[best_idx] = 1;
 				//OLDEST_READER:
@@ -477,7 +481,7 @@ int get_best_reader(ECM_REQUEST *er)
 					best_rdr = best_rdri;
 				}
 			}
-			else if (nfb_readers) {
+			else if (nfb_readers) { //fallbacks:
 				nfb_readers--;
 				if (!result[best_idx])
 					result[best_idx] = 2;
@@ -487,13 +491,8 @@ int get_best_reader(ECM_REQUEST *er)
 		}
 	}
 
-	//if (n)
-	//Always copy result...so if we found NO reader->no requests! This helps blocking undecodeable channels
-	//and reduces ecm traffic!
-		memcpy(er->matching_rdr, result, sizeof(result));
+	memcpy(er->matching_rdr, result, sizeof(result));
 #ifdef WITH_DEBUG 
-	//else
-	//	cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, trying all readers");
 
 	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
 		username(er->client), er->caid, er->prid, er->srvid,
@@ -510,6 +509,7 @@ int get_best_reader(ECM_REQUEST *er)
        			//algo for finding unanswered requests (newcamd reader for example:) 
         		if (stat && current_time > stat->last_received+(time_t)(cfg->ctimeout/1000)) { 
         			stat->request_count++; 
+        			stat->last_received = current_time;
         			cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
 			} 
 		}        
