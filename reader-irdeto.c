@@ -266,10 +266,9 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 		sc_Acs57_Cmd[]    = { ACS57GET, 0xFE, 0x00, 0x00, 0x00 };
 
 	int acspadd = 0;
-	if (!memcmp(atr+4, "IRDETO", 6)){
-		cs_ri_log(reader, "Hist. Bytes: %s",atr+4);
+	if (!memcmp(atr+4, "IRDETO", 6))
 		reader->acs57=0;
-	} else {
+	else {
 		if(!memcmp(atr+5, "IRDETO", 6)){
 			reader->acs57=1;
 			acspadd=8;
