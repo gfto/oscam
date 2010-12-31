@@ -493,6 +493,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<TR>\
 		<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</TD>\
 		<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</TD>\
+		<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</TD>\
 		</TR>\
 		</TABLE><BR>\
 		<TABLE CLASS=\"users\">\n\

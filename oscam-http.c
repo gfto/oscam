@@ -1652,6 +1652,10 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 		clear_system_stats();
 	}
 
+	if (strcmp(getParam(params, "action"), "resetalluserstats") == 0) {
+		clear_all_account_stats();
+	}
+
 	/* List accounts*/
 	char *status = "offline";
 	char *expired = "";
