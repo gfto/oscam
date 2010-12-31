@@ -32,10 +32,10 @@ void load_stat_from_file()
 	sprintf(buf, "%s/stat", get_tmp_dir());
 	FILE *file = fopen(buf, "r");
 	if (!file) {
-		cs_log("can't read from file %s", buf);
+		cs_log("loadbalancer: can't read from file %s", buf);
 		return;
 	}
-	cs_debug_mask(D_TRACE, "loadbalancer load statistics from %s", buf);
+	cs_debug_mask(D_TRACE, "loadbalancer: load statistics from %s", buf);
 	
 	struct s_reader *rdr = NULL;
 	READER_STAT *stat, *dup;
@@ -76,18 +76,18 @@ void load_stat_from_file()
 			}
 			else 
 			{
-				cs_log("loadbalancer statistics could not be loaded for %s", buf);
+				cs_log("loadbalancer: statistics could not be loaded for %s", buf);
 				free(stat);
 			}
 		}
 		else if (i!=EOF && i>0)
 		{
-			cs_debug_mask(D_TRACE, "loadbalancer statistics ERROR  %s rc=%d i=%d", buf, stat->rc, i);
+			cs_debug_mask(D_TRACE, "loadbalancer: statistics ERROR  %s rc=%d i=%d", buf, stat->rc, i);
 			free(stat);
 		}
 	} while(i!=EOF && i>0);
 	fclose(file);
-	cs_debug_mask(D_TRACE, "loadbalancer statistic loaded %d records", count);
+	cs_debug_mask(D_TRACE, "loadbalancer: statistic loaded %d records", count);
 }
 /**
  * get statistic values for reader ridx and caid/prid/srvid
@@ -183,7 +183,7 @@ void save_stat_to_file()
 	}
 	
 	fclose(file);
-	cs_log("loadbalacer statistic saved %d records", count);
+	cs_log("loadbalancer: statistic saved %d records", count);
 }
 
 /**
@@ -274,13 +274,13 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 	else
 	{
 		if (rc >= 0)
-			cs_debug_mask(D_TRACE, "unhandled stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
+			cs_debug_mask(D_TRACE, "loadbalancer: nhandled stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
 				rdr->label, rc, caid, prid, srvid, ecm_time, rdr->lb_usagelevel);
 	
 		return;
 	}
 		
-	cs_debug_mask(D_TRACE, "adding stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
+	cs_debug_mask(D_TRACE, "loadbalancer: adding stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
 				rdr->label, rc, caid, prid, srvid, ecm_time, rdr->lb_usagelevel);
 	
 	//debug only:
