@@ -1638,6 +1638,20 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 		} else tpl_addVar(vars, 1, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
 	}
 
+
+	if (strcmp(getParam(params, "action"), "resetstats") == 0) {
+		for (account=cfg->account; (account); account=account->next) {
+			if(strcmp(getParam(params, "user"), account->usr) == 0) {
+				clear_account_stats(account);
+			}
+		}
+	}
+
+
+	if (strcmp(getParam(params, "action"), "resetserverstats") == 0) {
+		clear_system_stats();
+	}
+
 	/* List accounts*/
 	char *status = "offline";
 	char *expired = "";
@@ -1739,6 +1753,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 		if (!cfg->http_js_icons) {
 			tpl_addVar(vars, 0, "DELICO", ICDEL);
 			tpl_addVar(vars, 0, "EDIICO", ICEDI);
+			tpl_addVar(vars, 0, "RESICO", ICRES);
 		}
 
 		tpl_addVar(vars, 1, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT"));
@@ -3076,6 +3091,7 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_printf(vars, 1, "ICONS", "var ICDIS =\"%s\";\n", ICDIS);
 			tpl_printf(vars, 1, "ICONS", "var ICENA =\"%s\";\n", ICENA);
 			tpl_printf(vars, 1, "ICONS", "var ICHID =\"%s\";\n", ICHID);
+			tpl_printf(vars, 1, "ICONS", "var ICRES =\"%s\";\n", ICRES);
 			tpl_addVar(vars, 0, "ONLOADSCRIPT", " onload=\"load_Icons()\"");
 		}
 

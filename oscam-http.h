@@ -65,6 +65,7 @@ H4.styleauthor:after {content:\"Eneen\";}\n"
     case \"ICKIL\": icons[i].src = ICKIL; break;\
     case \"ICENA\": icons[i].src = ICENA; break;\
     case \"ICHID\": icons[i].src = ICHID; break;\
+    case \"ICRES\": icons[i].src = ICRES; break;\
    }\
   }\
  }\n"
@@ -241,6 +242,16 @@ DT6tDN5SyRqYlWeDLZAg0H4JQ+Jt6M3atNLE10VSwQsN4Z6r0CBwqzXesHmV+BeoyAUri8EyMfi2\
 FowXS5dhd7doo2DVII0V5BAjigP89GEVAtda8b2ehodU4rNaAW+dGfzlFkyo89GTlcrHYCLpKD+V\
 7yeeHNzLjkp24Uu1Ed6G8/F8qjqGRzlbl2H2dzjpMg1KdwsHxOlmJ7GTeZC/nesXbeZ6c9OYnuxU\
 c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
+
+#define ICRES "data:image/png;base64,\
+iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAACXBI\
+WXMAAABIAAAASABGyWs+AAABVUlEQVQ4y6WSPUtCURjHf+d2vV5f0l5Mr0KQERbUYChJQ1D0FaKh\
+phra/QBOQY3NYV+guZagMVxysVGIhhLELDQRzLidBlG8qSDcB85wznOe33nO//kLicROqKMSnrRm\
+ITcv2mIsQLfQv6rj0jW8ut45R5PDIOr/YtWrEI77mXTqtKsmWstBeG6a1OHyUIja/6rucxBLGbiE\
+RuHhle/WD0jJi/5OJDTDycHuAKTXQSxpEDGm8Oke7m6f+DxvDrRrZPzyaH/HAlG6AhXzZaIBg4VA\
+kMRadEBEgPJpXVzf5NhMxHp5pf/CYjBEpfRFLl8cObb3s4Z4LDz39qLfB13qqJENC2HXSMKddgwY\
+JosYm6oCZNJ7VBo1Lq/ue4njjQmEyw2zYcT8EmJlHeJbkNwG1QlAVogOoFSv8lb7sJDbJmgSkBJ+\
+O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLHEADER "\
 <HTML>\n\
@@ -501,7 +512,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TH>LTIME</TH>\n\
 		<TH>EOK</TH>\n\
 		<TH>ENOK</TH>\n\
-		<TH colspan=\"2\" align=\"center\">Action</TH>\n\
+		<TH colspan=\"3\" align=\"center\">Action</TH>\n\
 		</TR>\n\
 		##USERCONFIGS##\
 		##NEWUSERFORM##\
@@ -515,14 +526,16 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TH>TOUT</TH>\n\
 		<TH>CACHE</TH>\n\
 		<TH>TUN</TH>\n\
-		</TR>\n\
+		<TH>Action</TH>\n\
+		</TR><TR>\n\
 		<TD align=\"center\">##TOTAL_CWOK##</TD>\n\
 		<TD align=\"center\">##TOTAL_CWNOK##</TD>\n\
 		<TD align=\"center\">##TOTAL_CWIGN##</TD>\n\
 		<TD align=\"center\">##TOTAL_CWTOUT##</TD>\n\
 		<TD align=\"center\">##TOTAL_CWCACHE##</TD>\n\
 		<TD align=\"center\">##TOTAL_CWTUN##</TD>\n\
-		</TABLE><BR>\n\
+		<TD align=\"center\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICRES\" SRC=\"##RESICO##\"BORDER=\"0\" ALT=\"Reset Server Stats\"/></A></TD>\n\
+		</TR></TABLE><BR>\n\
 		##TPLFOOTER##"
 
 #define TPLADDNEWUSER "\
@@ -552,6 +565,7 @@ c3fmBuFft/Ff8xMd0s65SXIb/gAAAABJRU5ErkJggg=="
 		<TD align=\"center\">##EMMOK##</TD>\n\
 		<TD align=\"center\">##EMMNOK##</TD>\n\
 		<TD align=\"center\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICEDI\" SRC=\"##EDIICO##\" BORDER=\"0\" ALT=\"Edit User\"/></A></TD>\n\
+		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICRES\" SRC=\"##RESICO##\"BORDER=\"0\" ALT=\"Reset Stats\"/></A></TD>\n\
 		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICDEL\" SRC=\"##DELICO##\"BORDER=\"0\" ALT=\"Delete User\"/></A></TD>\n\
 		</TR>\n"
 
