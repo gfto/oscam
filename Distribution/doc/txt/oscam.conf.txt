@@ -512,9 +512,19 @@ MONITOR
 	  login (for unencrypted connections only)
 
 
+       ·  getuser <user> <parameter>=<value>
+
+	  get parameter for user
+
+
        ·  setuser <user> <parameter>=<value>
 
 	  set parameter for user
+
+
+       ·  setserver <parameter>=<value>
+
+	  set parameter for server
 
 
        ·  exit
@@ -537,6 +547,16 @@ MONITOR
 	  shutdown OSCam
 
 
+       ·  restart
+
+	  restart OSCam
+
+
+       ·  keepalive
+
+	  send keepalive
+
+
        ·  reload
 
 	  reinit  user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart
@@ -546,6 +566,11 @@ MONITOR
        ·  details <PID>
 
 	  details about selected PID
+
+
+       ·  reread
+
+	  read again
 
 
        ·  debug <level>

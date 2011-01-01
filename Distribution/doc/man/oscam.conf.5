@@ -731,9 +731,21 @@ login (for unencrypted connections only)
 
 .TP 3n
 \(bu
+\fBgetuser <user> <parameter>=<value>\fP
+
+get parameter for user
+ 
+.TP 3n
+\(bu
 \fBsetuser <user> <parameter>=<value>\fP
 
 set parameter for user
+ 
+.TP 3n
+\(bu
+\fBsetserver <parameter>=<value>\fP
+
+set parameter for server
  
 .TP 3n
 \(bu
@@ -761,6 +773,18 @@ shutdown OSCam
  
 .TP 3n
 \(bu
+\fBrestart\fP
+
+restart OSCam
+ 
+.TP 3n
+\(bu
+\fBkeepalive\fP
+
+send keepalive
+ 
+.TP 3n
+\(bu
 \fBreload\fP
 
 reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart newcamd client
@@ -770,6 +794,12 @@ reinit user db, clients and anti-cascading, for newcamd connections: after reloa
 \fBdetails <PID>\fP
 
 details about selected PID
+
+.TP 3n
+\(bu
+\fBreread\fP
+
+read again
 
 .TP 3n
 \(bu
