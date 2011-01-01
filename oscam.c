@@ -3457,6 +3457,11 @@ void cs_restart_oscam()
   exit_oscam=99;
   cs_log("restart oscam requested");
 }
+
+int cs_get_restartmode() {
+	return cs_restart_mode;
+}
+
 #endif
 
 #ifdef CS_LED

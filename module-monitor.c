@@ -377,7 +377,7 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 	sprintf(buf, "Nice=%d", cfg->nice);
 	monitor_send_details(buf, pid);
 #ifdef WEBIF
-	sprintf(buf, "Restartmode=%s", "yes");
+	sprintf(buf, "Restartmode=%d", cs_get_restartmode());
 	monitor_send_details(buf, pid);
 #else
 	sprintf(buf, "Restartmode=%s", "no");
