@@ -376,6 +376,13 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 	monitor_send_details(buf, pid);
 	sprintf(buf, "Nice=%d", cfg->nice);
 	monitor_send_details(buf, pid);
+#ifdef WEBIF
+	sprintf(buf, "Restartmode=%s", "yes");
+	monitor_send_details(buf, pid);
+#else
+	sprintf(buf, "Restartmode=%s", "no");
+	monitor_send_details(buf, pid);
+#endif
 
 	//  monitor_send_details(buf, pid);
 }
@@ -662,6 +669,12 @@ static void monitor_set_server(char *args){
 	//kill(first_client->pid, SIGUSR1);
 }
 
+#ifdef WEBIF
+static void monitor_restart_server(){
+	cs_restart_oscam();
+}
+#endif
+
 static void monitor_list_commands(const char *args[], int cmdcnt){
 	int i;
 	for (i = 0; i < cmdcnt; i++) {
@@ -677,7 +690,26 @@ static void monitor_list_commands(const char *args[], int cmdcnt){
 static int monitor_process_request(char *req)
 {
 	int i, rc;
-	static const char *cmd[] = {"login", "exit", "log", "status", "shutdown", "reload", "details", "version", "debug", "getuser", "setuser", "setserver", "commands", "keepalive", "reread"};
+	static const char *cmd[] = {"login",
+								"exit",
+								"log",
+								"status",
+								"shutdown",
+								"reload",
+								"details",
+								"version",
+								"debug",
+								"getuser",
+								"setuser",
+								"setserver",
+								"commands",
+								"keepalive",
+								"reread"
+#ifdef WEBIF
+								,"restart"
+#endif
+								};
+
 	int cmdcnt = sizeof(cmd)/sizeof(char *);  // Calculate the amount of items in array
 	char *arg;
 	struct s_client *cur_cl = cur_client();
@@ -704,6 +736,9 @@ static int monitor_process_request(char *req)
 			case 12:	if (cur_cl->monlvl > 3) monitor_list_commands(cmd, cmdcnt); break;	// list commands
 			case 13:	if (cur_cl->monlvl > 3) monitor_send_keepalive_ack(); break;	// keepalive
 			case 14:	{ char buf[64];sprintf(buf, "[S-0000]reread\n");monitor_send_info(buf, 1); cs_card_info(); break; } // reread
+#ifdef WEBIF
+			case 15:	if (cur_cl->monlvl > 3) monitor_restart_server(); break;	// keepalive
+#endif
 			default:	continue;
 			}
 			break;
