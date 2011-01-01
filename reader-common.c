@@ -110,6 +110,9 @@ static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned sh
 		if (!ret)
 			break;
 		cs_log("Error activating card.");
+#ifdef QBOXHD_LED
+		qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
+#endif
   	cs_sleepms(500);
 	}
   if (ret) return(0);
@@ -181,13 +184,28 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 			if (cardsystem[i].card_init(reader, atr)) {
 				reader->card_system=i+1;
 				cs_log("found cardsystem");
+#ifdef QBOXHD_LED 
+				qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_MEDIUM);
+				qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_MEDIUM);
+				qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_MEDIUM);
+				qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_MEDIUM);
+#endif
 				break;
 			}
 		}
 	}
 
 	if (reader->card_system==0)
+#ifdef QBOXHD_LED 
+	{
 		cs_ri_log(reader, "card system not supported");
+		qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
+	}
+#else
+		cs_ri_log(reader, "card system not supported");
+#endif
+
+
 
 	cs_ri_brk(reader, 1);
 
@@ -254,11 +272,17 @@ int reader_checkhealth(struct s_reader * reader)
     if (reader->card_status == NO_CARD)
     {
       cs_log("%s card detected", reader->label);
+#ifdef QBOXHD_LED
+      qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
+#endif
       reader->card_status = CARD_NEED_INIT;
       if (!reader_reset(reader)) 
       {
         reader->card_status = CARD_FAILURE;
         cs_log("card initializing error");
+#ifdef QBOXHD_LED 
+        qboxhd_led_blink(QBOXHD_LED_COLOR_MAGENTA,QBOXHD_LED_BLINK_MEDIUM);
+#endif
       }
       else
       {
@@ -278,6 +302,9 @@ int reader_checkhealth(struct s_reader * reader)
       cur_client()->lastecm = 0;
       cur_client()->aureader = NULL;
       cs_log("card ejected slot = %i", reader->slot);
+#ifdef QBOXHD_LED 
+      qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
+#endif
     }
     reader->card_status = NO_CARD;
   }
