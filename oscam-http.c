@@ -2164,11 +2164,14 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			if (isec < cfg->mon_hideclient_to || cfg->mon_hideclient_to == 0) {
 
-				if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0]))
+				if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0])) {
 					tpl_addVar(vars, 0, "CLIENTLBVALUE", cl->lastreader);
+					tpl_printf(vars, 1, "CLIENTLBVALUE", "&nbsp;(%dms)", cl->cwlastresptime);
+				}
 
 				tpl_printf(vars, 0, "CLIENTCAID", "%04X", cl->last_caid);
 				tpl_printf(vars, 0, "CLIENTSRVID", "%04X", cl->last_srvid);
+				tpl_printf(vars, 0, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime);
 
 				int j, found = 0;
 				struct s_srvid *srvid = cfg->srvid;
