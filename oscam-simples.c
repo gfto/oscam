@@ -998,7 +998,7 @@ char *get_ncd_client_name(char *client_id)
         static char *ncd_service_names[] = { "generic", "vdr-sc", "LCE", "camd3", "radegast", "gbox2CS", "mgcamd", //actually a const so threadsafe
                                              "WinCSC", "NewCS", "cx", "Kaffeine", "evocamd", "CCcam", "Tecview",
                                              "AlexCS", "rqcamd", "rq-echo-client", "ACamd", "Cardlink", "Octagon", "SBCL",
-                                             "NextYE2k", "NextYE2k", "DiabloCam/UW", "OScam", "Scam", "rq-sssp-client/CW",
+                                             "NextYE2k", "NextYE2k", "DiabloCam/UW", "OSCam", "Scam", "rq-sssp-client/CW",
                                              "rq-sssp-client/CS", "JlsRq", "eyetvCamd", "mpcs", "kpcs", "unknown - please report" };
 
         int idx = 0;
