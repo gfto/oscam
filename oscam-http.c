@@ -2137,8 +2137,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 						tpl_addVar(vars, 0, "CLIENTPROTOTITLE", ""); //unset tpl var
 				}
 			}
-			else
+			else {
 				tpl_addVar(vars, 0, "CLIENTPROTO", proto);
+				tpl_addVar(vars, 0, "CLIENTPROTOTITLE", "");
+			}
 
 			tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
 			tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
