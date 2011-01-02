@@ -2149,27 +2149,34 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				tpl_addVar(vars, 0, "CLIENTPROTOTITLE", "");
 			}
 
-			tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
-			tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
-
 			int secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
-			if(lsec > 0) {
-				secs = lsec % 60;
-				if (lsec > 60) {
-					fullmins = lsec / 60;
-					mins = fullmins % 60;
-					if(fullmins > 60) {
-						fullhours = fullmins / 60;
-						hours = fullhours % 24;
-						days = fullhours / 24;
+			if (!apicall) {
+				tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
+				tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
+
+				if(lsec > 0) {
+					secs = lsec % 60;
+					if (lsec > 60) {
+						fullmins = lsec / 60;
+						mins = fullmins % 60;
+						if(fullmins > 60) {
+							fullhours = fullmins / 60;
+							hours = fullhours % 24;
+							days = fullhours / 24;
+						}
 					}
 				}
-			}
-			if(days == 0)
-				tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02d:%02d:%02d", hours, mins, secs);
-			else
-				tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+				if(days == 0)
+					tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02d:%02d:%02d", hours, mins, secs);
+				else
+					tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 
+			} else {
+				char tbuffer [30];
+				strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", lt);
+				tpl_printf(vars, 0, "CLIENTLOGINDATE", "%s", tbuffer);
+				tpl_printf(vars, 0, "CLIENTLOGINSECS", "%d", lsec);
+			}
 
 			if (isec < cfg->mon_hideclient_to || cfg->mon_hideclient_to == 0) {
 
@@ -2225,6 +2232,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			}
 
+			if (!apicall) {
 			secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
 			if(isec > 0) {
 				secs = isec % 60;
@@ -2242,6 +2250,11 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				tpl_printf(vars, 0, "CLIENTIDLESECS", "%02d:%02d:%02d", hours, mins, secs);
 			else
 				tpl_printf(vars, 0, "CLIENTIDLESECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+			} else {
+				tpl_printf(vars, 0, "CLIENTIDLESECS", "%d", isec);
+			}
+
+
 			if(con == 2) tpl_addVar(vars, 0, "CLIENTCON", "Duplicate");
 			else if (con == 1) tpl_addVar(vars, 0, "CLIENTCON", "Sleep");
 			else
@@ -3118,14 +3131,16 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, 0, "ONLOADSCRIPT", " onload=\"load_Icons()\"");
 		}
 
-		tpl_printf(vars, 0, "APISTARTTIME", "%u", first_client->login);// XMLAPI
-
 		tpl_printf(vars, 0, "CURDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
 		tpl_printf(vars, 0, "CURTIME", "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
 		st = localtime(&first_client->login);
 		tpl_printf(vars, 0, "STARTDATE", "%02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
 		tpl_printf(vars, 0, "STARTTIME", "%02d:%02d:%02d", st->tm_hour, st->tm_min, st->tm_sec);
 		tpl_printf(vars, 0, "PROCESSID", "%d", server_pid);
+
+		char tbuffer [30];
+		strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", st);
+		tpl_printf(vars, 0, "APISTARTTIME", "%s", tbuffer);// XMLAPI
 
 		time_t now = time((time_t)0);
 		tpl_printf(vars, 0, "APIUPTIME", "%u", now - first_client->login);// XMLAPI
