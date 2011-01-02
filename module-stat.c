@@ -499,6 +499,22 @@ int get_best_reader(ECM_REQUEST *er)
 				break;
 		}
 	}
+	
+	if (!n) //no best reader found? reopen if we have ecm_count>0
+	{
+		cs_debug_mask(D_TRACE, "loadbalancer: NO MATCHING READER FOUND, reopen last valid:");
+	        for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) { 
+        		if (er->matching_rdr[i]) { //primary readers 
+	        		stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
+	        		if (stat && stat->ecm_count>0) {
+	        			result[i] = 1;
+	        			n++;
+	        			cs_debug_mask(D_TRACE, "loadbalancer: reopened reader %s", rdr->label);
+				}
+			}
+		}
+		cs_debug_mask(D_TRACE, "loadbalancer: reopened %d readers", n);
+	}
 
 	memcpy(er->matching_rdr, result, sizeof(result));
 #ifdef WITH_DEBUG 
