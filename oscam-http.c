@@ -3118,6 +3118,8 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, 0, "ONLOADSCRIPT", " onload=\"load_Icons()\"");
 		}
 
+		tpl_printf(vars, 0, "APISTARTTIME", "%u", first_client->login);// XMLAPI
+
 		tpl_printf(vars, 0, "CURDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
 		tpl_printf(vars, 0, "CURTIME", "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
 		st = localtime(&first_client->login);
@@ -3126,6 +3128,8 @@ int process_request(FILE *f, struct in_addr in) {
 		tpl_printf(vars, 0, "PROCESSID", "%d", server_pid);
 
 		time_t now = time((time_t)0);
+		tpl_printf(vars, 0, "APIUPTIME", "%u", now - first_client->login);// XMLAPI
+
 		int lsec = now - first_client->login;
 		int secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0, days = 0;
 		if(lsec > 0) {

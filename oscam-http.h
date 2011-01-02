@@ -267,7 +267,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
       <DIV CLASS=\"header\"><H2 CLASS=\"headline1\">OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2></DIV>"
 
 #define TPLAPIHEADER "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
-<oscam version=\"##CS_VERSION## build ###CS_SVN_VERSION##\" starttime=\"##STARTDATE## - ##STARTTIME##\">\n"
+<oscam version=\"##CS_VERSION## build ###CS_SVN_VERSION##\" starttime=\"##APISTARTTIME##\" uptime=\"##APIUPTIME##\" >\n"
 
 #define TPLAPIERROR "##TPLAPIHEADER##\n\
    <error>##APIERRORMESSAGE##</error>\n\
