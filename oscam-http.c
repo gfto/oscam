@@ -2021,8 +2021,12 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0) {
+#ifndef WITH_DEBUG
+		cs_log("*** Warning: Debug Support not compiled in ***");
+#else
 		cs_dblevel = atoi(debuglvl);
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
+#endif
 	}
 
 	if(getParamDef(params, "hide", NULL)) {
@@ -2568,7 +2572,12 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0)
+#ifndef WITH_DEBUG
+		cs_log("*** Warning: Debug Support not compiled in ***");
+#else
 		cs_dblevel = atoi(debuglvl);
+		cs_log("%s debug_level=%d", "all", cs_dblevel);
+#endif
 
 	char targetfile[256];
 

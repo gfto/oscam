@@ -506,7 +506,11 @@ static void monitor_logsend(char *flag){
 static void monitor_set_debuglevel(char *flag){
 	if (flag) {
 		cs_dblevel = atoi(flag);
+#ifndef WITH_DEBUG
+		cs_log("*** Warning: Debug Support not compiled in ***");
+#else
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
+#endif
 	}
 }
 
