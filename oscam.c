@@ -1855,6 +1855,8 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	cs_ftime(&tpe);
 	client->cwlastresptime = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
+	if (er->selected_reader && er->selected_reader->client)
+	  er->selected_reader->client->cwlastresptime = client->cwlastresptime;
 
 #ifdef CS_LED
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
