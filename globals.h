@@ -947,6 +947,9 @@ struct s_auth
 {
   char     usr[64];
   char     pwd[64];
+#ifdef WEBIF
+  char     realname[64];
+#endif
   int      uniq;
   struct s_reader *aureader;
   int      autoau;

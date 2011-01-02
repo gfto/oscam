@@ -1613,6 +1613,12 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		cs_strncpy(account->pwd, value, sizeof(account->pwd));
 		return;
 	}
+#ifdef WEBIF
+	if (!strcmp(token, "realname")) {
+		cs_strncpy(account->realname, value, sizeof(account->realname));
+		return;
+	}
+#endif
 
 	if (!strcmp(token, "hostname")) {
 		cs_strncpy((char *)account->dyndns, value, sizeof(account->dyndns));
@@ -2298,7 +2304,9 @@ int write_userdb(struct s_auth *authptr)
 		fprintf(f,"[account]\n");
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", account->usr);
 		fprintf_conf(f, CONFVARWIDTH, "pwd", "%s\n", account->pwd);
-
+#ifdef WEBIF
+		fprintf_conf(f, CONFVARWIDTH, "realname", "%s\n", account->realname);
+#endif
 		if (account->disabled || (!account->disabled && cfg->http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "disabled", "%d\n", account->disabled);
 

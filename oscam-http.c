@@ -1455,6 +1455,7 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 
 	tpl_addVar(vars, 0, "USERNAME", account->usr);
 	tpl_addVar(vars, 0, "PASSWORD", account->pwd);
+	tpl_addVar(vars, 0, "REALNAME", account->realname);
 
 	//Disabled
 	if(account->disabled)
