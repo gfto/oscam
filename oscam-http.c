@@ -2058,8 +2058,11 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	
 	struct s_client *cl;
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
+
 		// Reset template variables
 		tpl_addVar(vars, 0, "CLIENTLBVALUE","");
+		tpl_addVar(vars, 0, "LASTREADER", "");
+
 		if (cl->typ=='c')
 			user_count_all++;
 		else if (cl->typ=='p')
@@ -2169,6 +2172,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0])) {
 					tpl_addVar(vars, 0, "CLIENTLBVALUE", cl->lastreader);
 					tpl_printf(vars, 1, "CLIENTLBVALUE", "&nbsp;(%dms)", cl->cwlastresptime);
+					if (apicall)
+						tpl_addVar(vars, 0, "LASTREADER", cl->lastreader);
 				}
 
 				tpl_printf(vars, 0, "CLIENTCAID", "%04X", cl->last_caid);
