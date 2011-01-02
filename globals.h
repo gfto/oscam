@@ -337,7 +337,7 @@ extern void qboxhd_led_blink(int color, int duration);
 #define BAN_DUPLICATE 8			//failban mask for duplicate user
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
-#define NULLFREE(X) {if (X) {free(X); X = NULL; }}
+#define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
 
 typedef struct s_classtab
 {

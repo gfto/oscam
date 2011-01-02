@@ -1364,18 +1364,18 @@ void cs_disconnect_client(struct s_client * client)
 static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 {
 	struct s_ecm *ecmc;
-	pthread_mutex_lock(&ecmcache_lock);
 	for (ecmc=ecmcache; ecmc ; ecmc=ecmc->next) {
 		if ((grp & ecmc->grp) &&
 		     ecmc->caid==er->caid &&
 		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
 		{
 			er->rc = 99;
-			pthread_mutex_unlock(&ecmcache_lock);
 			return(1);
 		}
 	}
-	//store_ecm(er, grp); //Only ECM, no CW!
+
+	//Add cache entry:
+	pthread_mutex_lock(&ecmcache_lock);
 	if (ecmidx->next)
 		ecmidx=ecmidx->next;
 	else
@@ -1406,7 +1406,6 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 			lc^=*lp;
 	}
 
-	pthread_mutex_lock(&cwcache_lock);
 	for (ecmc=cwcache; ecmc ; ecmc=ecmc->next, count++) {
 		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
@@ -1421,10 +1420,8 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
-		pthread_mutex_unlock(&cwcache_lock);
 		return 1;
 	}
-	pthread_mutex_unlock(&cwcache_lock);
 	cs_debug_mask(D_TRACE, "cache: %04X not found count=%d", lc, count);
 	return 0;
 }
