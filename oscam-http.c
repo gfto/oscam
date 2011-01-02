@@ -2170,7 +2170,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			if (isec < cfg->mon_hideclient_to || cfg->mon_hideclient_to == 0) {
 
 				if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0])) {
-					tpl_addVar(vars, 0, "CLIENTLBVALUE", cl->lastreader);
+					tpl_printf(vars, 0, "CLIENTLBVALUE", "by %s", cl->lastreader);
 					tpl_printf(vars, 1, "CLIENTLBVALUE", "&nbsp;(%dms)", cl->cwlastresptime);
 					if (apicall)
 						tpl_addVar(vars, 0, "LASTREADER", cl->lastreader);

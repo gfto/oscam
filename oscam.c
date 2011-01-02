@@ -1863,9 +1863,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 #ifdef WEBIF
 	if(er->rc == 0)
-		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", sby);
+		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", er->selected_reader->label);
 	else if ((er->rc == 1) || (er->rc == 2))
-		snprintf(client->lastreader, sizeof(client->lastreader)-1, "by %s (cache)", er->selected_reader->label);
+		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s (cache)", er->selected_reader->label);
 	else
 		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", stxt[er->rc]);
 #endif
