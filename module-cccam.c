@@ -851,12 +851,16 @@ int UA_len(uint8 *ua) {
 
 void UA_left(uint8 *in, uint8 *out, int len) {
 	int ofs = 0;
+	int maxlen = 8;
+	int orglen = len;
 	while (len) {
+		memset(out, 0, orglen);
 		memcpy(out, in+ofs, len);
 		if (out[0]) break;
 		ofs++;
-		len--;
-		out[len]=0;
+		maxlen--;
+		if (len>maxlen)
+			len=maxlen;
 	}
 }
 
