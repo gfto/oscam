@@ -16,8 +16,8 @@ DESCRIPTIONS
        pwd = password
 	  password for account, required
 
-       realname = name
-	  real name of user account
+       description = text
+	  description of user account
 
        hostname = hostname
 	  host from which user connection is allowed
