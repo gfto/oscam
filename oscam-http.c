@@ -2908,6 +2908,9 @@ int process_request(FILE *f, struct in_addr in) {
 				if (rht) {
 					memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
 					cfg->http_dynip = cs_inet_order(udp_sa.sin_addr.s_addr);
+					cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
+												inet_ntoa(*(struct in_addr *)&cfg->http_dynip),
+												inet_ntoa(*(struct in_addr *)&addr));
 					if (cfg->http_dynip == addr)
 						ok = v;
 				} else {
@@ -2929,6 +2932,9 @@ int process_request(FILE *f, struct in_addr in) {
 				}
 				else {
 					cfg->http_dynip = cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
+					cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
+							inet_ntoa(*(struct in_addr *)&cfg->http_dynip),
+							inet_ntoa(*(struct in_addr *)&addr));
 					if (cfg->http_dynip == addr)
 						ok = v;
 				}
@@ -2940,7 +2946,7 @@ int process_request(FILE *f, struct in_addr in) {
 
 	if (!ok) {
 		send_error(f, 403, "Forbidden", NULL, "Access denied.");
-		cs_log("unauthorized access from %s", inet_ntoa(*(struct in_addr *)&in));
+		cs_log("unauthorized access from %s flag %d", inet_ntoa(*(struct in_addr *)&in), v);
 		return 0;
 	}
 
