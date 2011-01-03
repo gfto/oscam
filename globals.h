@@ -657,6 +657,8 @@ struct s_client
   struct s_emm *emmcache;
 
   pthread_t thread;
+  
+  struct s_serial_client *serialdata;
 
   //reader common
   int last_idx;

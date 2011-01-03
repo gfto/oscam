@@ -547,6 +547,7 @@ static void cleanup_thread(struct s_client *cl)
 	NULLFREE(cl->emmcache);
 	NULLFREE(cl->req);
 	NULLFREE(cl->cc);
+	NULLFREE(cl->serialdata);
 
 	NULLFREE (cl);
 
