@@ -2305,7 +2305,8 @@ int write_userdb(struct s_auth *authptr)
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", account->usr);
 		fprintf_conf(f, CONFVARWIDTH, "pwd", "%s\n", account->pwd);
 #ifdef WEBIF
-		fprintf_conf(f, CONFVARWIDTH, "description", "%s\n", account->description);
+		if (account->description[0])
+			fprintf_conf(f, CONFVARWIDTH, "description", "%s\n", account->description);
 #endif
 		if (account->disabled || (!account->disabled && cfg->http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "disabled", "%d\n", account->disabled);
