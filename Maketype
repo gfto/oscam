@@ -37,6 +37,7 @@ OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(oscam-config.o) \
 		  $(LIBFILE1)(oscam-log.o) \
 		  $(LIBFILE1)(oscam-reader.o) \
+		  $(LIBFILE1)(oscam-garbage.o) \
 		  $(LIBFILE1)(reader-common.o) \
 		  $(LIBFILE1)(reader-irdeto.o) \
 		  $(LIBFILE1)(reader-viaccess.o) \
