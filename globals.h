@@ -137,7 +137,6 @@
 #define CS_MAXLOGHIST     30
 #define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
 #define CS_MAXREADERCAID  16
-#define CS_MAXREADER      128
 
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
@@ -549,7 +548,8 @@ typedef struct ecm_request_t
   ushort        idx;
   ulong         prid;
   struct s_reader *selected_reader;
-  uint8         matching_rdr[CS_MAXREADER];
+  int           rdr_count;
+  uint8         *matching_rdr;
   struct s_client *client; //contains pointer to 'c' client while running in 'r' client
   int           cpti;   // client pending table index
   int           stage;    // processing stage in server module
@@ -628,7 +628,7 @@ struct s_client
   int		emmnok;	     // count EMM nok
 #ifdef WEBIF
   int		wihidden;	// hidden in webinterface status
-  char      lastreader[32]; // last cw got from this reader
+  char      lastreader[64]; // last cw got from this reader
 #endif
   uchar		ucrc[4];    // needed by monitor and used by camd35
   ulong		pcrc;        // pwd crc
@@ -950,7 +950,7 @@ struct s_auth
   char     usr[64];
   char     pwd[64];
 #ifdef WEBIF
-  char     realname[64];
+  char     description[64];
 #endif
   int      uniq;
   struct s_reader *aureader;
@@ -1365,7 +1365,6 @@ extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
 extern void kill_thread(struct s_client *cl);
 extern int get_threadnum(struct s_client *client);
-extern int get_nr_of_readers(void);
 extern int get_ridx(struct s_reader *reader);
 extern void cs_add_violation(uint ip);
 
@@ -1551,5 +1550,9 @@ extern void module_dvbapi(struct s_module *);
 // oscam-http
 extern void http_srv();
 #endif
+
+// oscam-garbage
+extern void add_garbage(void *data);
+extern void start_garbage_collector();
 
 #endif  // CS_GLOBALS

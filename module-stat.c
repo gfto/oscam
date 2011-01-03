@@ -319,9 +319,10 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
 int get_best_reader(ECM_REQUEST *er)
 {
 	int i;
-	uint8 result[CS_MAXREADER];
+	int rdr_count = er->rdr_count;
+	uint8 result[rdr_count];
 	memset(result, 0, sizeof(result));
-	int re[CS_MAXREADER];
+	int re[rdr_count];
 
 	//resulting values:
 	memset(re, 0, sizeof(re));
@@ -341,15 +342,18 @@ int get_best_reader(ECM_REQUEST *er)
 	//else
 	//	cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, trying all readers");
 
-	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: valid readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
-		username(er->client), er->caid, er->prid, er->srvid,
-		er->matching_rdr[0], er->matching_rdr[1], er->matching_rdr[2], er->matching_rdr[3], 
-		er->matching_rdr[4], er->matching_rdr[5], er->matching_rdr[6], er->matching_rdr[7], 
-		er->matching_rdr[8], er->matching_rdr[9], er->matching_rdr[10], er->matching_rdr[11], 
-		er->matching_rdr[12], er->matching_rdr[13], er->matching_rdr[14], er->matching_rdr[15]);
+	char rdrs[rdr_count+1];
+	for (i=0;i<rdr_count;i++)
+		rdrs[i] = er->matching_rdr[i]+'0';
+	rdrs[rdr_count]=0;
+	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: valid readers: %s", 
+		username(er->client), er->caid, er->prid, er->srvid, rdrs);
 #endif	
 	
 	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
+		if (i >= rdr_count)
+			break;
+			
 		if (er->matching_rdr[i]) {
  			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 				
@@ -456,6 +460,8 @@ int get_best_reader(ECM_REQUEST *er)
 		int j;
 		struct s_reader *rdr2;
 		for (j=0,rdr2=first_reader; rdr2 ; rdr2=rdr2->next, j++) {
+			if (j>=rdr_count)
+				break;
 			if (nlocal_readers && (rdr2->typ & R_IS_NETWORK))
 				continue;
 						
@@ -504,6 +510,8 @@ int get_best_reader(ECM_REQUEST *er)
 	{
 		cs_debug_mask(D_TRACE, "loadbalancer: NO MATCHING READER FOUND, reopen last valid:");
 	        for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) { 
+	        	if (i>=rdr_count)
+	        		 break;
         		if (er->matching_rdr[i]) { //primary readers 
 	        		stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
 	        		if (stat && stat->ecm_count>0) {
@@ -519,16 +527,17 @@ int get_best_reader(ECM_REQUEST *er)
 	memcpy(er->matching_rdr, result, sizeof(result));
 #ifdef WITH_DEBUG 
 
-	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %d%d%d%d%d%d%d%d%d%d%d%d%d%d%d%d", 
+	for (i=0;i<rdr_count;i++)
+		rdrs[i] = er->matching_rdr[i]+'0';
+	rdrs[rdr_count]=0;
+	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %s", 
 		username(er->client), er->caid, er->prid, er->srvid,
-		best_rdr?best_rdr->label:"NONE",
-		er->matching_rdr[0], er->matching_rdr[1], er->matching_rdr[2], er->matching_rdr[3], 
-		er->matching_rdr[4], er->matching_rdr[5], er->matching_rdr[6], er->matching_rdr[7], 
-		er->matching_rdr[8], er->matching_rdr[9], er->matching_rdr[10], er->matching_rdr[11], 
-		er->matching_rdr[12], er->matching_rdr[13], er->matching_rdr[14], er->matching_rdr[15]);
+		best_rdr?best_rdr->label:"NONE", rdrs);
 #endif	
 
         for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) { 
+        	if (i>=rdr_count)
+        		break;
         	if (result[i] == 1) { //primary readers 
         		stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
        			//algo for finding unanswered requests (newcamd reader for example:) 
