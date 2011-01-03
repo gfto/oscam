@@ -1796,6 +1796,8 @@ static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int rc)
 	struct timeb tpe;
 	cs_ftime(&tpe);
 	int time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
+	if (time < 1)
+	        time = 1;
 
 	add_stat(rdr, er->caid, er->prid, er->srvid, time, rc);
 }
