@@ -3418,7 +3418,7 @@ if (pthread_key_create(&getclient, NULL)) {
 	}
 #endif
 
-        start_thread((void *) &start_garbage_collector, "garbage collector");
+        start_garbage_collector();
         
 	for (i=0; i<CS_MAX_MOD; i++)
 		if (ph[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only
