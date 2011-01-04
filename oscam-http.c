@@ -669,7 +669,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 
 	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
 		if(cfg->http_readonly) {
-			tpl_addVar(vars, 1, "MESSAGE", "<b>Webif is in readonly mode. No deletion will be made!</b><BR>");
+			tpl_addVar(vars, 1, "MESSAGE", "<b>Webif is in readonly mode. Enabling or disabling readers is not possible!</b><BR>");
 		} else {
 			rdr = get_reader_by_label(getParam(params, "label"));
 			if (strcmp(getParam(params, "action"), "enable") == 0)
