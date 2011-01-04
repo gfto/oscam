@@ -301,43 +301,20 @@ void send_oscam_config_newcamd(struct templatevars *vars, FILE *f, struct uripar
 		if(write_config()==0) refresh_oscam(REFR_SERVER, in);
 		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
-	int j;
-	char *dot1, *dot2;
+
 	if ((cfg->ncd_ptab.nports > 0) && (cfg->ncd_ptab.ports[0].s_port > 0)) {
-		dot1 = "";
-		for(i = 0; i < cfg->ncd_ptab.nports; ++i) {
-			tpl_printf(vars, 1, "PORT", "%s%d", dot1, cfg->ncd_ptab.ports[i].s_port);
 
-			// separate DES Key
-			if(cfg->ncd_ptab.ports[i].ncd_key_is_set){
-				int k;
-				tpl_printf(vars, 1, "PORT", "{");
-				for (k = 0; k < 14; k++)
-					tpl_printf(vars, 1, "PORT", "%02X", cfg->ncd_ptab.ports[i].ncd_key[k]);
-				tpl_printf(vars, 1, "PORT", "}");
-			}
-
-			tpl_printf(vars, 1, "PORT", "@%04X", cfg->ncd_ptab.ports[i].ftab.filts[0].caid);
-
-			if (cfg->ncd_ptab.ports[i].ftab.filts[0].nprids > 0) {
-				tpl_printf(vars, 1, "PORT", ":");
-				dot2 = "";
-				for (j = 0; j < cfg->ncd_ptab.ports[i].ftab.filts[0].nprids; ++j) {
-					tpl_printf(vars, 1, "PORT", "%s%06X", dot2, cfg->ncd_ptab.ports[i].ftab.filts[0].prids[j]);
-					dot2 = ",";
-				}
-			}
-			dot1=";";
-		}
-
+		char *value = mk_t_newcamd_port();
+		tpl_addVar(vars, 0, "PORT", value);
+		free(value);
 
 		if (cfg->ncd_srvip != 0)
 			tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->ncd_srvip));
 
-		for (i=0;i<14;i++) tpl_printf(vars, 1, "KEY", "%02X", cfg->ncd_key[i]);
+		for (i = 0; i < 14; i++) tpl_printf(vars, 1, "KEY", "%02X", cfg->ncd_key[i]);
 
 		struct s_ip *cip;
-		char *dot="";
+		char *dot = "";
 		for (cip = cfg->ncd_allowed; cip; cip = cip->next) {
 			tpl_printf(vars, 1, "ALLOWED", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
 			if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, 1, "ALLOWED", "-%s", cs_inet_ntoa(cip->ip[1]));

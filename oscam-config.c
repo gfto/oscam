@@ -1775,6 +1775,7 @@ int write_config()
 {
 	int i,j;
 	FILE *f;
+	char *value;
 	char *dot = "", *dot1 = "", *dot2 = ""; //flags for delimiters
 	char tmpfile[256];
 	char destfile[256];
@@ -1899,35 +1900,13 @@ int write_config()
 
 	/*newcamd*/
 	if ((cfg->ncd_ptab.nports > 0) && (cfg->ncd_ptab.ports[0].s_port > 0)){
+
 		fprintf(f,"[newcamd]\n");
-		fprintf_conf(f, CONFVARWIDTH, "port", "");
-		dot1 = "";
-		for(i = 0; i < cfg->ncd_ptab.nports; ++i){
-			fprintf(f,"%s%d", dot1, cfg->ncd_ptab.ports[i].s_port);
 
-			// separate DES Key
-			if(cfg->ncd_ptab.ports[i].ncd_key_is_set){
-				int k;
-				fprintf(f,"{");
-				for (k = 0; k < 14; k++)
-					fprintf(f,"%02X", cfg->ncd_ptab.ports[i].ncd_key[k]);
-				fprintf(f,"}");
-			}
+		value = mk_t_newcamd_port();
+		fprintf_conf(f, CONFVARWIDTH, "port", "%s\n", value);
+		free(value);
 
-			fprintf(f,"@%04X", cfg->ncd_ptab.ports[i].ftab.filts[0].caid);
-
-			if (cfg->ncd_ptab.ports[i].ftab.filts[0].nprids > 0){
-				fprintf(f,":");
-				dot2 = "";
-				for (j = 0; j < cfg->ncd_ptab.ports[i].ftab.filts[0].nprids; ++j){
-					fprintf(f,"%s%06X", dot2, (int)cfg->ncd_ptab.ports[i].ftab.filts[0].prids[j]);
-					dot2 = ",";
-				}
-			}
-			dot1=";";
-		}
-
-		fputc((int)'\n', f);
 		if (cfg->ncd_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->ncd_srvip));
 		fprintf_conf(f, CONFVARWIDTH, "key", "");
