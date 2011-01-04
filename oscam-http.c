@@ -2382,7 +2382,8 @@ void send_oscam_services_edit(struct templatevars *vars, FILE *f, struct uripara
 	}
 
 	tpl_addVar(vars, 0, "LABEL", sidtab->label);
-	tpl_addVar(vars, 0, "LABELENC", urlencode(sidtab->label));
+	tpl_addVar(vars, 0, "LABELENC", tpl_addTmp(vars, urlencode(sidtab->label)));
+
 
 	for (i=0; i<sidtab->num_caid; i++) {
 		if (i==0) tpl_printf(vars, 0, "CAIDS", "%04X", sidtab->caid[i]);
