@@ -2504,7 +2504,24 @@ int write_server()
 			if (rdr->lb_weight)
 				fprintf_conf(f, CONFVARWIDTH, "lb_weight", "%d\n", rdr->lb_weight);
 
-			//Todo: write savenano
+			//savenano
+			int i, all = 1;
+			dot="";
+			for(i = 0; i < 256; ++i) {
+				if(!(rdr->b_nano[i] & 0x02)) {
+					all = 0;
+					break;
+				}
+			}
+			if (all == 1) fprintf_conf(f, CONFVARWIDTH, "savenano", "%s\n", "all");
+			else {
+				fprintf_conf(f, CONFVARWIDTH, "savenano", "%s", "");
+				for(i = 0; i < 256; ++i) {
+					if(rdr->b_nano[i] & 0x02) fprintf(f, "%s%02x", dot, i);
+					dot=",";
+				}
+				fprintf(f, "\n");
+			}
 
 			if (rdr->typ == R_CCCAM) {
 				if (rdr->cc_version[0])
