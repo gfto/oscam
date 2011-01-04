@@ -22,7 +22,11 @@
 #include <sys/types.h>
 #include <string.h>
 
+#ifdef __FreeBSD__
+#include <libusb.h>
+#else
 #include <libusb-1.0/libusb.h>
+#endif
 #define FALSE 0
 #define TRUE 1
 

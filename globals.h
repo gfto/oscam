@@ -100,7 +100,11 @@
 #endif
 
 #if defined(LIBUSB)
+#ifdef __FreeBSD__
+#include <libusb.h>
+#else
 #include <libusb-1.0/libusb.h>
+#endif
 #include "csctapi/smartreader_types.h"
 #endif
 
