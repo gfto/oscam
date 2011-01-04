@@ -346,7 +346,7 @@ char *username(struct s_client * client)
 {
   if (!client)
     return "NULL";
-    
+
   if (client->typ == 's' || client->typ == 'h')
   {
     // get username master running under
@@ -356,7 +356,7 @@ char *username(struct s_client * client)
     else
       return "root";
   }
-  
+
   if (client->account->usr[0])
     return(client->account->usr);
   else

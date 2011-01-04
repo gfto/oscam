@@ -1441,6 +1441,9 @@ extern char *mk_t_caidtab(CAIDTAB *ctab);
 extern char *mk_t_tuntab(TUNTAB *ttab);
 extern char *mk_t_group(uint64 grp);
 extern char *mk_t_ftab(FTAB *ftab);
+extern char *mk_t_camd35tcp_port();
+extern char *mk_t_aeskeys(struct s_reader *rdr);
+
 //Todo #ifdef CCCAM
 extern int init_provid();
 extern char * get_tmp_dir();

@@ -314,23 +314,13 @@ void chk_t_global(const char *token, char *value)
 #endif
 
 	if (!strcmp(token, "disablelog")) {
-		if (strlen(value) == 0) {
-			cfg->disablelog = 0;
-			return;
-		} else {
-			cfg->disablelog = atoi(value);
-			return;
-		}
+		cfg->disablelog = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "disableuserfile")) {
-		if (strlen(value) == 0) {
-			cfg->disableuserfile = 0;
-			return;
-		} else {
-			cfg->disableuserfile = atoi(value);
-			return;
-		}
+		cfg->disableuserfile = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "serverip")) {
@@ -371,132 +361,67 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "usrfileflag")) {
-		if (strlen(value) == 0) {
-			cfg->usrfileflag = 0;
-			return;
-		} else {
-			cfg->usrfileflag = atoi(value);
-			return;
-		}
+		cfg->usrfileflag = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "clienttimeout")) {
-		if (strlen(value) == 0) {
-			cfg->ctimeout = CS_CLIENT_TIMEOUT;
-			return;
-		} else {
-			cfg->ctimeout = atoi(value);
-			if (cfg->ctimeout < 100)
-				cfg->ctimeout *= 1000;
-			return;
-		}
+		cfg->ctimeout = strToIntVal(value, CS_CLIENT_TIMEOUT);
+		if (cfg->ctimeout < 100) cfg->ctimeout *= 1000;
+		return;
 	}
 
 	if (!strcmp(token, "fallbacktimeout")) {
-		if (strlen(value) == 0) {
-			cfg->ftimeout = CS_CLIENT_TIMEOUT / 2;
-			return;
-		} else {
-			cfg->ftimeout = atoi(value);
-			if (cfg->ftimeout < 100)
-				cfg->ftimeout *= 1000;
-			return;
-		}
+		cfg->ftimeout = strToIntVal(value, (CS_CLIENT_TIMEOUT / 2));
+		if (cfg->ftimeout < 100) cfg->ftimeout *= 1000;
+		return;
 	}
 
 	if (!strcmp(token, "clientmaxidle")) {
-		if (strlen(value) == 0) {
-			cfg->cmaxidle = CS_CLIENT_MAXIDLE;
-			return;
-		} else {
-			cfg->cmaxidle = atoi(value);
-			return;
-		}
+		cfg->cmaxidle = strToIntVal(value, CS_CLIENT_MAXIDLE);
+		return;
 	}
 
 	if (!strcmp(token, "cachedelay")) {
-		if (strlen(value) == 0) {
-			cfg->delay = CS_DELAY;
-			return;
-		} else {
-			cfg->delay = atoi(value);
-			return;
-		}
-		/*cfg->delay = CS_DELAY;
-		fprintf(stderr, "Parameter %s is deprecated -> ignored\n", token);
-		return;*/
+		cfg->delay = strToIntVal(value, CS_DELAY);
+		return;
 	}
 
 	if (!strcmp(token, "bindwait")) {
-		if (strlen(value) == 0) {
-			cfg->bindwait = CS_BIND_TIMEOUT;
-			return;
-		} else {
-			cfg->bindwait = atoi(value);
-			return;
-		}
+		cfg->bindwait = strToIntVal(value, CS_BIND_TIMEOUT);
+		return;
 	}
 
 	if (!strcmp(token, "netprio")) {
-		if (strlen(value) == 0) {
-			cfg->netprio = 0;
-			return;
-		} else {
-			cfg->netprio = atoi(value);
-			return;
-		}
+		cfg->netprio = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "resolvedelay")) {
-		if (strlen(value) == 0) {
-			cfg->resolvedelay = CS_RESOLVE_DELAY;
-			return;
-		} else {
-			cfg->resolvedelay = atoi(value);
-			return;
-		}
+		cfg->resolvedelay = strToIntVal(value, CS_RESOLVE_DELAY);
+		return;
 	}
 
 	if (!strcmp(token, "clientdyndns")) {
-		if (strlen(value) == 0) {
-			cfg->clientdyndns = 0;
-			return;
-		} else {
-			cfg->clientdyndns = atoi(value);
-			return;
-		}
+		cfg->clientdyndns = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "sleep")) {
-		if (strlen(value) == 0) {
-			cfg->tosleep = 0;
-			return;
-		} else {
-			cfg->tosleep = atoi(value);
-			return;
-		}
+		cfg->tosleep = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "unlockparental")) {
-		if (strlen(value) == 0) {
-			cfg->ulparent = 0;
-			return;
-		} else {
-			cfg->ulparent = atoi(value);
-			return;
-		}
+		cfg->ulparent = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "nice")) {
-		if (strlen(value) == 0) {
-			cfg->nice = 99;
-			return;
-		} else {
-			cfg->nice = atoi(value);
-			if ((cfg->nice<-20) || (cfg->nice>20)) cfg->nice = 99;
-			if (cfg->nice != 99) cs_setpriority(cfg->nice);  // ignore errors
-			return;
-		}
+		cfg->nice = strToIntVal(value, 99);
+		if ((cfg->nice<-20) || (cfg->nice>20)) cfg->nice = 99;
+		if (cfg->nice != 99) cs_setpriority(cfg->nice);  // ignore errors
+		return;
 	}
 
 	if (!strcmp(token, "serialreadertimeout")) {
@@ -510,153 +435,89 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "maxlogsize")) {
-		if (strlen(value) == 0) {
-			cfg->max_log_size = 10;
-			return;
-		} else {
-			cfg->max_log_size = atoi(value);
-			if( cfg->max_log_size <= 10 )
-				cfg->max_log_size = 10;
-			return;
-		}
+		cfg->max_log_size = strToIntVal(value, 10);
+		if( cfg->max_log_size <= 10 ) cfg->max_log_size = 10;
+		return;
 	}
 
 	if( !strcmp(token, "waitforcards")) {
-		if (strlen(value) == 0) {
-			cfg->waitforcards = 1;
-			return;
-		} else {
-			cfg->waitforcards = atoi(value);
-			return;
-		}
+		cfg->waitforcards = strToIntVal(value, 0);
+		return;
 	}
 
 	if( !strcmp(token, "preferlocalcards")) {
-		if (strlen(value) == 0) {
-			cfg->preferlocalcards = 0;
-			return;
-		} else {
-			cfg->preferlocalcards = atoi(value);
-			return;
-		}
+		cfg->preferlocalcards = strToIntVal(value, 0);
+		return;
 	}
 
 	if( !strcmp(token, "saveinithistory")) {
-		if (strlen(value) == 0) {
-			cfg->saveinithistory = 0;
-			return;
-		} else {
-			cfg->saveinithistory = atoi(value);
-			return;
-		}
+		cfg->saveinithistory = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "readerrestartseconds")) {
-		if (strlen(value) == 0) {
-			cfg->reader_restart_seconds = 5;
-			return;
-		} else {
-			cfg->reader_restart_seconds = atoi(value);
-			return;
-		}
+		cfg->reader_restart_seconds = strToIntVal(value, 5);
+		return;
 	}
 
 	if (!strcmp(token, "readerautoloadbalance") || !strcmp(token, "lb_mode")) {
-		if (strlen(value) == 0) {
-			cfg->lb_mode = 0;
-			return;
-		} else {
-			cfg->lb_mode = atoi(value);
-			return;
-		}
+		cfg->lb_mode = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "readerautoloadbalance_save") || !strcmp(token, "lb_save")) {
-		if (strlen(value) == 0) {
-			cfg->lb_save = 0;
-			return;
-		} else {
-			int i = atoi(value);
-			if (i > 0 && i < 100) {
-				cfg->lb_save = 100;
-				fprintf(stderr, "Warning: '%s' corrected to the minimum -> 100\n", token);
-			}
-			else
-				cfg->lb_save = i;
-
-			return;
+		cfg->lb_save = strToIntVal(value, 0);
+		if (cfg->lb_save  > 0 && cfg->lb_save  < 100) {
+			cfg->lb_save = 100;
+			fprintf(stderr, "Warning: '%s' corrected to the minimum -> 100\n", token);
 		}
+		return;
 	}
 
 	if (!strcmp(token, "lb_nbest_readers")) {
-		if (strlen(value))
-			cfg->lb_nbest_readers = atoi(value);
+		cfg->lb_nbest_readers = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "lb_nfb_readers")) {
-		if (strlen(value))
-			cfg->lb_nfb_readers = atoi(value);
+		cfg->lb_nfb_readers = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "lb_min_ecmcount")) {
-		if (strlen(value))
-			cfg->lb_min_ecmcount = atoi(value);
+		cfg->lb_min_ecmcount = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "lb_max_ecmcount")) {
-		if (strlen(value))
-			cfg->lb_max_ecmcount = atoi(value);
+		cfg->lb_max_ecmcount = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "lb_reopen_seconds")) {
-		if (strlen(value))
-			cfg->lb_reopen_seconds = atoi(value);
+		cfg->lb_reopen_seconds = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "resolvegethostbyname")) {
-		if (strlen(value) == 0) {
-			cfg->resolve_gethostbyname = 0;
-			return;
-		} else {
-			cfg->resolve_gethostbyname = atoi(value);
-			return;
-		}
+		cfg->resolve_gethostbyname = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "failbantime")) {
-		if(strlen(value) == 0) {
-			cfg->failbantime = 0;
-			return;
-		} else {
-			cfg->failbantime = atoi(value);
-			return;
-		}
+		cfg->failbantime = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "failbancount")) {
-		if(strlen(value) == 0) {
-			cfg->failbancount = 0;
-			return;
-		} else {
-			cfg->failbancount = atoi(value);
-			return;
-		}
+		cfg->failbancount = strToIntVal(value, 0);
+		return;
 	}
 
 #ifdef CS_WITH_DOUBLECHECK
 	if (!strcmp(token, "double_check")) {
-		if (strlen(value) == 0) {
-			cfg->double_check = 0;
-			return;
-		} else {
-			cfg->double_check = atoi(value);
-			return;
-		}
+		cfg->double_check = strToIntVal(value, 0);
+		return;
 	}
 #endif
 
