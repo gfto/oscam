@@ -61,23 +61,19 @@ char *tpl_addTmp(struct templatevars *vars, char *value){
    varname, the printf-result will be added/appended to the varlist. You will always get a reference
    back which you may freely use (but you should not call free/realloc on this!)*/
 char *tpl_printf(struct templatevars *vars, int append, char *varname, char *fmtstring, ...){
-	unsigned int allocated = strlen(fmtstring) - (strlen(fmtstring)%16) + 16;
-	char *result, *tmp = (char *) malloc(allocated * sizeof(char));
+	unsigned int needed;
+	char test[1];
 	va_list argptr;
 
 	va_start(argptr,fmtstring);
-	vsnprintf(tmp ,allocated, fmtstring, argptr);
+	needed = vsnprintf(test, 1, fmtstring, argptr);
 	va_end(argptr);
-	while (strlen(tmp) + 1 == allocated){
-		allocated += 16;
-		tmp = (char *) realloc(tmp, allocated * sizeof(char));
-		va_start(argptr,fmtstring);
-		vsnprintf(tmp, allocated, fmtstring, argptr);
-		va_end(argptr);
-	}
-	result = (char *) malloc(strlen(tmp) + 1 * sizeof(char));
-	strcpy(result, tmp);
-	free(tmp);
+	
+	char *result = (char *) malloc((needed + 1) * sizeof(char));
+	va_start(argptr,fmtstring);
+	vsnprintf(result, needed + 1, fmtstring, argptr);
+	va_end(argptr);
+
 	if(varname == NULL) tpl_addTmp(vars, result);
 	else {
 		char *tmp = tpl_addVar(vars, append, varname, result);
@@ -275,36 +271,26 @@ char *parse_auth_value(char *value){
 
 /* Calculates the currently valid nonce value and copies it to result*/
 void calculate_nonce(char *result, int resultlen){
-	char *expectednonce, *noncetmp;
-  noncetmp = (char*) malloc (128*sizeof(char));
-  sprintf(noncetmp, "%d", (int)time(NULL)/AUTHNONCEVALIDSECS);
-  strcat(noncetmp, ":");
-  strcat(noncetmp, noncekey);
-  fflush(stdout);
-  expectednonce =char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
+  char noncetmp[128];
+  sprintf(noncetmp, "%d:%s", (int)time(NULL)/AUTHNONCEVALIDSECS, noncekey);
+  char *expectednonce = char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
   cs_strncpy(result, expectednonce, resultlen);
-  free(noncetmp);
 	free(expectednonce);
 }
 
 /* Checks if authentication is correct. Returns -1 if not correct, 1 if correct and 2 if nonce isn't valid anymore */
 int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 	int authok = 0, uriok = 0;
-	char *authnonce;
-	char *authnc;
-	char *authcnonce;
-	char *uri;
-	char *authresponse;
-	char *A1tmp, *A2tmp, *A3tmp;
-	char *A1, *A2, *A3;
-  char *pch, *pch2;
-
-	authnonce = "";
-	authnc = "";
-	authcnonce = "";
-	authresponse = "";
-	uri = "";
-	pch = authstring + 22;
+	char *authnonce = "";
+	char *authnc = "";
+	char *authcnonce = "";
+	char *authresponse = "";
+	char *uri = "";
+	char *username = "";
+	char *expectedPassword = cfg->http_pwd;
+	char *pch = authstring + 22;
+	char *pch2;
+	
 	pch = strtok (pch,",");
 	while (pch != NULL){
 		pch2 = pch;
@@ -319,9 +305,12 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 	  	authresponse=parse_auth_value(pch2);
 	  } else if (strncmp(pch2, "uri", 3) == 0){
 	  	uri=parse_auth_value(pch2);
+	  } else if (strncmp(pch2, "username", 8) == 0){
+	  	username=parse_auth_value(pch2);
 	  }
 	  pch = strtok (NULL, ",");
 	}
+
 	if(strncmp(uri, path, strlen(path)) == 0) uriok = 1;
 	else {
 		pch2 = uri;
@@ -330,37 +319,23 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 		}
 		if(strncmp(pch2, path, strlen(path)) == 0) uriok = 1;
 	}
-	if(uriok == 1){
-		A1tmp = (char*) malloc ((3 + strlen(cfg->http_user) + strlen(AUTHREALM) + strlen(cfg->http_pwd))*sizeof(char));
-		strcpy(A1tmp, cfg->http_user);
-		strcat(A1tmp, ":");
-		strcat(A1tmp, AUTHREALM);
-		strcat(A1tmp, ":");
-		strcat(A1tmp, cfg->http_pwd);
-		A2tmp = (char*) malloc ((2 + strlen(method) + strlen(uri))*sizeof(char));
-		strcpy(A2tmp, method);
-		strcat(A2tmp, ":");
-		strcat(A2tmp, uri);
-		A1=char_to_hex(MD5((unsigned char*)A1tmp, strlen(A1tmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
-		A2=char_to_hex(MD5((unsigned char*)A2tmp, strlen(A2tmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
-		A3tmp = (char*) malloc ((10 + strlen(A1) + strlen(A2) + strlen(authnonce) + strlen(authnc) + strlen(authcnonce))*sizeof(char));
-		strcpy(A3tmp, A1);
-		strcat(A3tmp, ":");
-		strcat(A3tmp, authnonce);
-		strcat(A3tmp, ":");
-		strcat(A3tmp, authnc);
-		strcat(A3tmp, ":");
-		strcat(A3tmp, authcnonce);
-		strcat(A3tmp, ":auth:");
-		strcat(A3tmp, A2);
-		A3=char_to_hex(MD5((unsigned char*)A3tmp, strlen(A3tmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
+	if(uriok == 1 && strcmp(username, cfg->http_user) == 0){
+		char A1tmp[3 + strlen(username) + strlen(AUTHREALM) + strlen(expectedPassword)];
+		sprintf(A1tmp, "%s:%s:%s", username, AUTHREALM, expectedPassword);
+		char *A1 = char_to_hex(MD5((unsigned char*)A1tmp, strlen(A1tmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
+		
+		char A2tmp[2 + strlen(method) + strlen(uri)];
+		sprintf(A2tmp, "%s:%s", method, uri);		
+		char *A2 = char_to_hex(MD5((unsigned char*)A2tmp, strlen(A2tmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
+		
+		char A3tmp[10 + strlen(A1) + strlen(A2) + strlen(authnonce) + strlen(authnc) + strlen(authcnonce)];
+		sprintf(A3tmp, "%s:%s:%s:%s:auth:%s", A1, authnonce, authnc, authcnonce, A2);
+		char *A3 = char_to_hex(MD5((unsigned char*)A3tmp, strlen(A3tmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
+		
 		if(strcmp(A3, authresponse) == 0) {
 			if(strcmp(expectednonce, authnonce) == 0) authok = 1;
 			else authok = 2;
 		}
-		free(A1tmp);
-		free(A2tmp);
-		free(A3tmp);
 		free(A1);
 		free(A2);
 		free(A3);
