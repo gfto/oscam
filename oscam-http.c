@@ -666,30 +666,31 @@ void send_oscam_config(struct templatevars *vars, FILE *f, struct uriparams *par
 void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
 	struct s_reader *rdr;
 	int i;
-	//uchar dummy[1]={0x00};
 
 	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
-		rdr = get_reader_by_label(getParam(params, "label"));
-		if (strcmp(getParam(params, "action"), "enable") == 0)
-			rdr->enable = 1;
-		else
-			rdr->enable = 0;
-		if(write_server()==0)
-			refresh_oscam(REFR_READERS, in);
+		if(cfg->http_readonly) {
+			tpl_addVar(vars, 1, "MESSAGE", "<b>Webif is in readonly mode. No deletion will be made!</b><BR>");
+		} else {
+			rdr = get_reader_by_label(getParam(params, "label"));
+			if (strcmp(getParam(params, "action"), "enable") == 0)
+				rdr->enable = 1;
+			else
+				rdr->enable = 0;
+			if(write_server()==0)	refresh_oscam(REFR_READERS, in);
+			else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+		}
 	}
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
-		rdr = get_reader_by_label(getParam(params, "label"));
-		rdr->deleted = 1;
-
-		if(write_server()==0) {
-			refresh_oscam(REFR_READERS, in);
-			//printf("would kill now PID %d\n", reader[atoi(getParam(params, "reader"))].pid);
-			//if(reader[atoi(getParam(params, "reader"))].pid)
-			//	kill(reader[atoi(getParam(params, "reader"))].pid, SIGQUIT);
+		if(cfg->http_readonly) {
+			tpl_addVar(vars, 1, "MESSAGE", "<b>Webif is in readonly mode. No deletion will be made!</b><BR>");
+		} else {
+			rdr = get_reader_by_label(getParam(params, "label"));
+			rdr->deleted = 1;
+	
+			if(write_server()==0) refresh_oscam(REFR_READERS, in);
+			else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 		}
-		else
-			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 
 	if (strcmp(getParam(params, "action"), "reread") == 0) {
