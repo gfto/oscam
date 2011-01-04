@@ -344,23 +344,30 @@ int recv_from_udpipe(uchar *buf)
 
 char *username(struct s_client * client)
 {
-  if (!client)
-    return "NULL";
+	if (!client)
+		return "NULL";
 
-  if (client->typ == 's' || client->typ == 'h')
-  {
-    // get username master running under
-    struct passwd *pwd;
-    if ((pwd = getpwuid(getuid())) != NULL)
-      return pwd->pw_name;
-    else
-      return "root";
-  }
+	if (client->typ == 's' || client->typ == 'h')
+	{
+		// get username master running under
+		struct passwd *pwd;
+		if ((pwd = getpwuid(getuid())) != NULL)
+			return pwd->pw_name;
+		else
+			return "root";
+	}
 
-  if (client->account->usr[0])
-    return(client->account->usr);
-  else
-    return("anonymous");
+	if(client->account)
+	{
+		if (client->account->usr[0])
+			return(client->account->usr);
+		else
+			return("anonymous");
+	}
+	else
+	{
+		return("NULL");
+	}
 }
 
 static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port)
