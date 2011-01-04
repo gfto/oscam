@@ -1329,9 +1329,9 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 					tpl_printf(vars, 0, "ECMRC", "%d", stat->rc);
 					tpl_printf(vars, 0, "ECMRCS", "%s", stxt[stat->rc]);
 					if(stat->last_received) {
-						char tbuffer [30];
-						strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", lt);
-						tpl_addVar(vars, 0, "ECMLAST", tbuffer);
+					char tbuffer [30];
+					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", lt);
+					tpl_addVar(vars, 0, "ECMLAST", tbuffer);
 					} else {
 						tpl_addVar(vars, 0, "ECMLAST", "");
 					}
@@ -1758,6 +1758,7 @@ void send_oscam_user_config(struct templatevars *vars, FILE *f, struct uriparams
 		tpl_addVar(vars, 0, "CLASSNAME", classname);
 		tpl_addVar(vars, 0, "USER", xml_encode(vars, account->usr));
 		tpl_addVar(vars, 0, "USERENC", tpl_addTmp(vars, urlencode(account->usr)));
+		tpl_addVar(vars, 0, "DESCRIPTION", xml_encode(vars, account->description));
 		tpl_addVar(vars, 0, "STATUS", status);
 		tpl_addVar(vars, 0, "EXPIRED", expired);
 
@@ -2132,6 +2133,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
 			tpl_printf(vars, 0, "CLIENTCNR", "%d", get_threadnum(cl));
 			tpl_addVar(vars, 0, "CLIENTUSER", xml_encode(vars, usr));
+			if (cl->typ == 'c')	tpl_addVar(vars, 0, "CLIENTDESCRIPTION", xml_encode(vars, cl->account->description));
 			tpl_printf(vars, 0, "CLIENTCAU", "%d", cau);
 			tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", cl->crypted);
 			tpl_addVar(vars, 0, "CLIENTIP", cs_inet_ntoa(cl->ip));

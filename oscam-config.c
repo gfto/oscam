@@ -50,6 +50,13 @@ typedef enum cs_proto_type
 static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", "radegast", "serial",
 		      "cs357x", "cs378x", "gbox", "cccam", "constcw", "dvbapi", "webif", "anticasc", NULL};
 
+
+/* Returns the default value if string length is zero, otherwise atoi is called*/
+int strToIntVal(char *value, int defaultvalue){
+	if (strlen(value) == 0) return defaultvalue;
+	else return atoi(value);
+}
+
 #ifdef DEBUG_SIDTAB
 static void show_sidtab(struct s_sidtab *sidtab)
 {
@@ -4423,3 +4430,91 @@ char *mk_t_ftab(FTAB *ftab){
 	return value;
 }
 
+char *mk_t_camd35tcp_port(){
+	int i, j, pos = 0, needed = 1;
+
+	/* Precheck to determine how long the resulting string will maximally be (might be a little bit smaller but that shouldn't hurt) */
+	for(i = 0; i < cfg->c35_tcp_ptab.nports; ++i) {
+		/* Port is maximally 5 chars long, plus the @caid, plus the ";" between ports */
+		needed += 11;
+		if (cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1){
+			needed += cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids * 7;
+		}
+	}
+	char *value = (char *) malloc(needed * sizeof(char));
+	char *dot1 = "", *dot2;
+	for(i = 0; i < cfg->c35_tcp_ptab.nports; ++i) {
+		pos += sprintf(value + pos, "%s%d@%04X", dot1, cfg->c35_tcp_ptab.ports[i].s_port, cfg->c35_tcp_ptab.ports[i].ftab.filts[0].caid);
+		if (cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1) {
+			dot2 = ":";
+			for (j = 0; j < cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids; ++j) {
+				pos += sprintf(value + pos, "%s%lX", dot2, cfg->c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
+				dot2 = ",";
+			}
+		}
+		dot1=";";
+	}
+	return value;
+}
+
+char *mk_t_aeskeys(struct s_reader *rdr){
+	AES_ENTRY *current = rdr->aes_list;
+	int i, pos = 0, needed = 1, prevKeyid = 0, prevCaid = 0;
+	uint32 prevIdent = 0;
+
+	/* Precheck for the approximate size that we will need; it's a bit overestimated but we correct that at the end of the function */
+	while(current) {
+		/* The caid, ident, "@" and the trailing ";" need to be output when they are changing */
+		if(prevCaid != current->caid || prevIdent != current->ident) needed += 12 + (current->keyid * 2);
+		/* "0" keys are not saved so we need to check for gaps */
+		else if(prevKeyid != current->keyid + 1) needed += (current->keyid - prevKeyid - 1) * 2;
+		/* The 32 byte key plus either the (heading) ":" or "," */
+		needed += 33;
+		prevCaid = current->caid;
+		prevIdent = current->ident;
+		prevKeyid = current->keyid;
+		current = current->next;
+	}
+
+	/* Set everything back and now create the string */
+	current = rdr->aes_list;
+	prevCaid = 0;
+	prevIdent = 0;
+	prevKeyid = 0;
+	char tmp[needed * sizeof(char)];
+	char dot;
+	if(needed == 1) tmp[0] = '\0';
+	char tmpkey[33];
+	while(current) {
+		/* A change in the ident or caid means that we need to output caid and ident */
+		if(prevCaid != current->caid || prevIdent != current->ident){
+			if(pos > 0) {
+				tmp[pos] = ';';
+				++pos;
+			}
+			pos += sprintf(tmp+pos, "%04X@%06X", current->caid, current->ident);
+			prevKeyid = -1;
+			dot = ':';
+		} else dot = ',';
+		/* "0" keys are not saved so we need to check for gaps and output them! */
+		for (i = prevKeyid + 1; i < current->keyid; ++i) {
+			pos += sprintf(tmp+pos, "%c0", dot);
+			dot = ',';
+		}
+		tmp[pos] = dot;
+		++pos;
+		for (i = 0; i < 16; ++i) sprintf(tmpkey + (i*2), "%02X", current->key.rd_key[i]);
+		/* A key consisting of only FFs has a special meaning (just return what the card outputted) and can be specified more compact */
+		if(strcmp(tmpkey, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF") == 0) pos += sprintf(tmp+pos, "FF");
+		else pos += sprintf(tmp+pos, "%s", tmpkey);
+		prevCaid = current->caid;
+		prevIdent = current->ident;
+		prevKeyid = current->keyid;
+		current = current->next;
+	}
+
+	/* copy to result array of correct size */
+	char *value = (char *) malloc((pos + 1) * sizeof(char));
+	memcpy(value, tmp, pos + 1);
+	return(value);
+}

@@ -551,7 +551,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLUSERCONFIGLISTBIT "\
 		<TR class=\"##CLASSNAME##\">\n\
 		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"##SWITCHICOID##\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"/></A></TD>\n\
-		<TD>##USER##</TD>\n\
+		<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN></TD>\n\
 		<TD>##STATUS####EXPIRED##</TD>\n\
 		<TD align=\"center\">##CLIENTPROTO##</TD>\n\
 		<TD>##LASTCHANNEL##</TD>\n\
