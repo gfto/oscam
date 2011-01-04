@@ -1773,10 +1773,10 @@ int write_services()
 
 int write_config()
 {
-	int i,j;
+	int i;
 	FILE *f;
 	char *value;
-	char *dot = "", *dot1 = "", *dot2 = ""; //flags for delimiters
+	char *dot = ""; //flag for delimiter
 	char tmpfile[256];
 	char destfile[256];
 	char bakfile[256];
@@ -1959,22 +1959,11 @@ int write_config()
 	/*camd3.5 TCP*/
 	if ((cfg->c35_tcp_ptab.nports > 0) && (cfg->c35_tcp_ptab.ports[0].s_port > 0)) {
 		fprintf(f,"[cs378x]\n");
-		fprintf_conf(f, CONFVARWIDTH, "port", "");
-		dot1 = "";
-		for(i = 0; i < cfg->c35_tcp_ptab.nports; ++i){
-			fprintf(f,"%s%d@%04X", dot1, cfg->c35_tcp_ptab.ports[i].s_port, cfg->c35_tcp_ptab.ports[i].ftab.filts[0].caid);
-			if (cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1){
-				fprintf(f,":");
-				dot2 = "";
-				for (j = 0; j < cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids; ++j){
-					fprintf(f,"%s%lX", dot2, cfg->c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
-					dot2 = ",";
-				}
-			}
-			dot1=";";
-		}
 
-		fputc((int)'\n', f);
+		value = mk_t_camd35tcp_port();
+		fprintf_conf(f, CONFVARWIDTH, "port", "%s\n", value);
+		free(value);
+
 		if (cfg->c35_tcp_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
 		fputc((int)'\n', f);
