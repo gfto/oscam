@@ -441,6 +441,7 @@ typedef struct aes_entry {
     ushort      keyid;
     ushort      caid;
     uint32      ident;
+    uchar		plainkey[16];
     AES_KEY     key;
     struct aes_entry   *next;
 } AES_ENTRY;

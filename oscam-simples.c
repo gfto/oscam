@@ -35,6 +35,7 @@ void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, u
             return;
     }
 
+    memcpy(new_entry->plainkey, aesKey, 16);
     new_entry->caid=caid;
     new_entry->ident=ident;
     new_entry->keyid=keyid;

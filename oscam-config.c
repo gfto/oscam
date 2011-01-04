@@ -2502,9 +2502,8 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
 			free(value);
 
-			value = mk_t_aeskeys(&rdr);
-			if(value[0])
-				fprintf_conf(f, CONFVARWIDTH, "aeskeys", "%s\n", value);
+			value = mk_t_aeskeys(rdr);
+			fprintf_conf(f, CONFVARWIDTH, "aeskeys", "%s\n", value);
 			free(value);
 
 			if (rdr->show_cls && !rdr->show_cls == 10)
@@ -4372,7 +4371,7 @@ char *mk_t_aeskeys(struct s_reader *rdr){
 		}
 		tmp[pos] = dot;
 		++pos;
-		for (i = 0; i < 16; ++i) sprintf(tmpkey + (i*2), "%02X", current->key.rd_key[i]);
+		for (i = 0; i < 16; ++i) sprintf(tmpkey + (i*2), "%02X", current->plainkey[i]);
 		/* A key consisting of only FFs has a special meaning (just return what the card outputted) and can be specified more compact */
 		if(strcmp(tmpkey, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF") == 0) pos += sprintf(tmp+pos, "FF");
 		else pos += sprintf(tmp+pos, "%s", tmpkey);
