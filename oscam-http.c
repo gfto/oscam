@@ -1034,6 +1034,11 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	tpl_addVar(vars, 0, "CAIDS", value);
 	free(value);
 
+	// AESkeys
+	value = mk_t_aeskeys(rdr);
+	tpl_addVar(vars, 0, "AESKEYS", value);
+	free(value);
+
 	//ident
 	value = mk_t_ftab(&rdr->ftab);
 	tpl_printf(vars, 0, "IDENTS", "%s", value);

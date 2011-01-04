@@ -54,7 +54,9 @@ static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", 
 /* Returns the default value if string length is zero, otherwise atoi is called*/
 int strToIntVal(char *value, int defaultvalue){
 	if (strlen(value) == 0) return defaultvalue;
-	else return atoi(value);
+	int i = atoi(value);
+	if (i < 0) return defaultvalue;
+	else return i;
 }
 
 #ifdef DEBUG_SIDTAB
@@ -418,10 +420,15 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "nice")) {
-		cfg->nice = strToIntVal(value, 99);
-		if ((cfg->nice<-20) || (cfg->nice>20)) cfg->nice = 99;
-		if (cfg->nice != 99) cs_setpriority(cfg->nice);  // ignore errors
-		return;
+		if (strlen(value) == 0) {
+			cfg->nice = 99;
+			return;
+		} else {
+			cfg->nice = atoi(value);
+			if ((cfg->nice<-20) || (cfg->nice>20)) cfg->nice = 99;
+			if (cfg->nice != 99) cs_setpriority(cfg->nice);  // ignore errors
+			return;
+		}
 	}
 
 	if (!strcmp(token, "serialreadertimeout")) {
@@ -530,18 +537,14 @@ void chk_t_global(const char *token, char *value)
 void chk_t_ac(char *token, char *value)
 {
 	if (!strcmp(token, "enabled")) {
-		cfg->ac_enabled = atoi(value);
-		if( cfg->ac_enabled <= 0 )
-			cfg->ac_enabled = 0;
-		else
+		cfg->ac_enabled = strToIntVal(value, 0);
+		if( cfg->ac_enabled > 0 )
 			cfg->ac_enabled = 1;
-	return;
+		return;
 	}
 
 	if (!strcmp(token, "numusers")) {
-		cfg->ac_users = atoi(value);
-		if( cfg->ac_users < 0 )
-			cfg->ac_users = 0;
+		cfg->ac_users = strToIntVal(value, 0);
 		return;
 	}
 
@@ -2497,6 +2500,11 @@ int write_server()
 			value = mk_t_ftab(&rdr->fchid);
 			if(value[0])
 				fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
+			free(value);
+
+			value = mk_t_aeskeys(&rdr);
+			if(value[0])
+				fprintf_conf(f, CONFVARWIDTH, "aeskeys", "%s\n", value);
 			free(value);
 
 			if (rdr->show_cls && !rdr->show_cls == 10)
