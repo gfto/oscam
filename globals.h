@@ -1443,6 +1443,7 @@ extern char *mk_t_group(uint64 grp);
 extern char *mk_t_ftab(FTAB *ftab);
 extern char *mk_t_camd35tcp_port();
 extern char *mk_t_aeskeys(struct s_reader *rdr);
+extern char *mk_t_newcamd_port();
 
 //Todo #ifdef CCCAM
 extern int init_provid();

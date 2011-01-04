@@ -441,7 +441,7 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if( !strcmp(token, "waitforcards")) {
-		cfg->waitforcards = strToIntVal(value, 0);
+		cfg->waitforcards = strToIntVal(value, 1);
 		return;
 	}
 
@@ -4379,3 +4379,44 @@ char *mk_t_aeskeys(struct s_reader *rdr){
 	memcpy(value, tmp, pos + 1);
 	return(value);
 }
+
+char *mk_t_newcamd_port(){
+	int i, j, k, pos = 0, needed = 1;
+
+	/* Precheck to determine how long the resulting string will maximally be (might be a little bit smaller but that shouldn't hurt) */
+	for(i = 0; i < cfg->ncd_ptab.nports; ++i){
+		/* Port is maximally 5 chars long, plus the @caid, plus the ";" between ports */
+		needed += 11;
+		if(cfg->ncd_ptab.ports[i].ncd_key_is_set) needed += 30;
+		if (cfg->ncd_ptab.ports[i].ftab.filts[0].nprids > 0){
+			needed += cfg->ncd_ptab.ports[i].ftab.filts[0].nprids * 7;
+		}
+	}
+	char *value = (char *) malloc(needed * sizeof(char));
+	char *dot1 = "", *dot2;
+
+	for(i = 0; i < cfg->ncd_ptab.nports; ++i){
+		pos += sprintf(value + pos, "%s%d", dot1, cfg->ncd_ptab.ports[i].s_port);
+
+		// separate DES Key for this port
+		if(cfg->ncd_ptab.ports[i].ncd_key_is_set){
+			pos += sprintf(value + pos, "{");
+			for (k = 0; k < 14; k++)
+				pos += sprintf(value + pos, "%02X", cfg->ncd_ptab.ports[i].ncd_key[k]);
+			pos += sprintf(value + pos, "}");
+		}
+
+		pos += sprintf(value + pos, "@%04X", cfg->ncd_ptab.ports[i].ftab.filts[0].caid);
+
+		if (cfg->ncd_ptab.ports[i].ftab.filts[0].nprids > 0){
+			dot2 = ":";
+			for (j = 0; j < cfg->ncd_ptab.ports[i].ftab.filts[0].nprids; ++j){
+				pos += sprintf(value + pos, "%s%06X", dot2, (int)cfg->ncd_ptab.ports[i].ftab.filts[0].prids[j]);
+				dot2 = ",";
+			}
+		}
+		dot1=";";
+	}
+	return value;
+}
+
