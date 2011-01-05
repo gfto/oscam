@@ -376,7 +376,9 @@ int get_best_reader(ECM_REQUEST *er)
 				result[i] = 1; //need more statistics!
 			}
 			
-			if (stat->rc == 0 && stat->request_count > cfg->lb_min_ecmcount) { // 5 unanswered requests or timeouts?
+			int hassrvid = has_srvid(rdr->client, er);
+			
+			if (!hassrvid && stat->rc == 0 && stat->request_count > cfg->lb_min_ecmcount) { // 5 unanswered requests or timeouts?
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
 				add_stat(rdr, er, 1, 4); //reader marked as unuseable 
 				result[i] = 0;
@@ -385,7 +387,7 @@ int get_best_reader(ECM_REQUEST *er)
 				
 
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
-			if (stat->rc == 0 || has_srvid(rdr->client, er)) {
+			if (stat->rc == 0 || hassrvid) {
 				if (cfg->preferlocalcards && !(rdr->typ & R_IS_NETWORK))
 					nlocal_readers++; //Prefer local readers!
 			
