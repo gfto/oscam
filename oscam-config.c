@@ -2487,8 +2487,6 @@ int write_server()
 			if (rdr->cachemm)
 				fprintf_conf(f, CONFVARWIDTH, "emmcache", "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 
-			//Todo: write blocknano
-
 			if (rdr->blockemm_unknown)
 				fprintf_conf(f, CONFVARWIDTH, "blockemm-unknown", "%d\n", rdr->blockemm_unknown);
 
@@ -2518,6 +2516,25 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "savenano", "%s", "");
 				for(i = 0; i < 256; ++i) {
 					if(rdr->b_nano[i] & 0x02) fprintf(f, "%s%02x", dot, i);
+					dot=",";
+				}
+				fprintf(f, "\n");
+			}
+			
+			//blocknano
+			all = 1;
+			dot="";
+			for(i = 0; i < 256; ++i) {
+				if(!(rdr->b_nano[i] & 0x01)) {
+					all = 0;
+					break;
+				}
+			}
+			if (all == 1) fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s\n", "all");
+			else {
+				fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s", "");
+				for(i = 0; i < 256; ++i) {
+					if(rdr->b_nano[i] & 0x01) fprintf(f, "%s%02x", dot, i);
 					dot=",";
 				}
 				fprintf(f, "\n");
