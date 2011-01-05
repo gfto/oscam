@@ -4429,3 +4429,28 @@ char *mk_t_newcamd_port(){
 	return value;
 }
 
+/*combine function blocknano or savenano
+ * flag 0x01 for blocknano or 0x02 for savenano */
+char *mk_t_nano(struct s_reader *rdr, char flag){
+
+	int i, needed = 0, pos = 0;
+	char *dot = "";
+
+	for(i = 0; i < 256; ++i)
+		if(!(rdr->b_nano[i] & flag))
+			needed++;
+
+	if (needed == 0) {
+		char *value = (char *) malloc(3 * sizeof(char));
+		sprintf(value, "all");
+		return value;
+	} else {
+		char *value = (char *) malloc(needed * 3 * sizeof(char));
+		for(i = 0; i < 256; ++i) {
+			if(rdr->b_nano[i] & flag)
+				pos += sprintf(value + pos, "%s%02x", dot, i);
+			dot=",";
+		}
+		return value;
+	}
+}
