@@ -3381,15 +3381,20 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "aeskey")) {
-		if (key_atob(value, rdr->aes_key)) {
-			fprintf(stderr, "Configuration reader: Error in AES Key\n");
-			exit(1);
+		if (strlen(value) != 32 ){
+			memset(rdr->aes_key, 0, 16);
+			return;
+		} else {
+			if (key_atob(value, rdr->aes_key)) {
+				fprintf(stderr, "Configuration reader: Error in AES Key\n");
+				exit(1);
+			}
+			return;
 		}
-		return;
 	}
 
 	if ((!strcmp(token, "n3_rsakey")) || (!strcmp(token, "rsakey"))) {
-		if(strlen(value) == 0) {
+		if(strlen(value) != 128 ) {
 			memset(rdr->rsa_mod, 0, 120);
 			rdr->has_rsa = 0;
 			return;
@@ -3404,7 +3409,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "tiger_rsakey")) {
-		if(strlen(value) == 0) {
+		if(strlen(value) != 240) {
 			memset(rdr->rsa_mod, 0, 120);
 			return;
 		} else {
@@ -3417,7 +3422,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if ((!strcmp(token, "n3_boxkey")) || (!strcmp(token, "boxkey"))) {
-		if(strlen(value) == 0) {
+		if(strlen(value) != 16 ) {
 			memset(rdr->nagra_boxkey, 0, 16);
 			return;
 		} else {
