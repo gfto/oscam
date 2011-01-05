@@ -263,8 +263,9 @@ void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int e
 		stat->request_count = 0;
 	}
 	else if (rc == 4) { //not found
-		stat->rc = rc;
-		stat->last_received = time(NULL);
+		if ((rdr->typ & R_IS_NETWORK) || (stat->rc == 0 && stat->request_count>1)) //Block only on second request on hardware readers
+			stat->rc = rc;
+		//stat->last_received = time(NULL); do not change time, this would prevent reopen
 		//stat->ecm_count = 0; Keep ecm_count!
 	}
 	else if (rc == 5) { //timeout
