@@ -240,12 +240,11 @@ int is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
 	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(it))) {
 		if (sid_eq(srvid, srvid_blocked)) {
-			ll_iter_release(it);
-			return 1;
+			break;
 		}
 	}
 	ll_iter_release(it);
-	return 0;
+	return (int)srvid;
 }
 
 int is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
@@ -253,12 +252,11 @@ int is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 	struct cc_srvid *srvid;
 	while ((srvid = ll_iter_next(it))) {
 		if (sid_eq(srvid, srvid_good)) {
-			ll_iter_release(it);
-			return 1;
+			break;
 		}
 	}
 	ll_iter_release(it);
-	return 0;
+	return (int)srvid;
 }
 
 void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *card,
@@ -1378,6 +1376,13 @@ int cc_send_emm(EMM_PACKET *ep) {
 	if (!emm_card) {
 		uint8 hs[8];
 		cc_UA_oscam2cccam(ep->hexserial, hs, caid);
+		cs_debug_mask(D_EMM,
+			"%s au info: searching card for caid %04X oscam-UA: %s",
+			getprefix(), b2i(2, ep->caid), cs_hexdump(0, ep->hexserial, 8));
+		cs_debug_mask(D_EMM,
+			"%s au info: searching card for caid %04X cccam-UA: %s",
+			getprefix(), b2i(2, ep->caid), cs_hexdump(0, hs, 8));
+
 		emm_card = get_card_by_hexserial(cl, hs, caid);
 	}
 
@@ -2949,7 +2954,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 	//User-Services:
 	if (cfg->cc_reshare_services==3 && cfg->sidtab && cl->sidtabok) {
 		struct s_sidtab *ptr;
-		for (j=0,ptr=cfg->sidtab; ptr; j++) {
+		for (j=0,ptr=cfg->sidtab; ptr; ptr=ptr->next,j++) {
 			if (cl->sidtabok&((SIDTABBITS)1<<j)) {
 				int k;
 				for (k=0;k<ptr->num_caid;k++) {
@@ -2965,7 +2970,6 @@ int cc_srv_report_cards(struct s_client *cl) {
 				}
 				flt=1;
 			}
-			ptr=ptr->next;
 		}
 	}
 	else
@@ -3002,7 +3006,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 			//Reader-Services:
 			if ((cfg->cc_reshare_services==1||cfg->cc_reshare_services==2) && cfg->sidtab && rdr->sidtabok) {
 				struct s_sidtab *ptr;
-				for (j=0,ptr=cfg->sidtab; ptr; j++) {
+				for (j=0,ptr=cfg->sidtab; ptr; ptr=ptr->next,j++) {
 					if (rdr->sidtabok&((SIDTABBITS)1<<j)) {
 						int k;
 						for (k=0;k<ptr->num_caid;k++) {
@@ -3018,7 +3022,6 @@ int cc_srv_report_cards(struct s_client *cl) {
 						}
 						flt=1;
 					}
-					ptr=ptr->next;
 				}
 			}
 

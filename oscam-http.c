@@ -1779,8 +1779,8 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 	/* build entitlements from reader init history */
 	char *reader_ = getParam(params, "label");
 
-	if (cfg->saveinithistory && strlen(reader_) > 0) {
-		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
+	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
+	if ((cfg->saveinithistory && strlen(reader_) > 0) || rdr->typ == R_CCCAM) {
 
 		if (rdr->typ == R_CCCAM && rdr->enable == 1) {
 
@@ -1874,7 +1874,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						tpl_printf(vars, 0, "APITOTALPROVIDERS", "%d", providercount);
 					}
 
-					if (!apicall) tpl_addVar(vars, 1, "PROVIDERS", provider);
+					if (!apicall) tpl_addVar(vars, 1, "PROVIDERS", buf);
 
 					ll_iter_release(pit);
 					LL_ITER *nit = ll_iter_create(card->remote_nodes);

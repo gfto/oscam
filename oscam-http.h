@@ -1041,8 +1041,8 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
 			<OPTION value=\"2.1.2\" ##VERSIONSELECTED2##>2.1.2</OPTION>\
 			<OPTION value=\"2.1.3\" ##VERSIONSELECTED3##>2.1.3</OPTION>\
 			<OPTION value=\"2.1.4\" ##VERSIONSELECTED4##>2.1.4</OPTION>\
-			<OPTION value=\"2.2.0\" ##VERSIONSELECTED5##>2.2.0 (experimental)</OPTION>\
-			<OPTION value=\"2.2.1\" ##VERSIONSELECTED6##>2.2.1 (experimental)</OPTION>\
+			<OPTION value=\"2.2.0\" ##VERSIONSELECTED5##>2.2.0</OPTION>\
+			<OPTION value=\"2.2.1\" ##VERSIONSELECTED6##>2.2.1</OPTION>\
 		</SELECT></TD></TR>\n\
 		<TR><TD>Update Interval:</TD><TD><input name=\"updateinterval\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##UPDATEINTERVAL##\"></TD></TR>\n\
 		<TR><TD>Minimize cards:</TD><TD><SELECT name=\"minimizecards\">\
