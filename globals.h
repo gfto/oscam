@@ -1445,6 +1445,7 @@ extern char *mk_t_ftab(FTAB *ftab);
 extern char *mk_t_camd35tcp_port();
 extern char *mk_t_aeskeys(struct s_reader *rdr);
 extern char *mk_t_newcamd_port();
+extern char *mk_t_nano(struct s_reader *rdr, uchar flag);
 
 //Todo #ifdef CCCAM
 extern int init_provid();

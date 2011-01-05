@@ -1036,37 +1036,14 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		tpl_printf(vars, 0, "EMMCACHE", "%d,%d,%d", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 
 	//savenano
-	int all = 1;
-	dot="";
-	for(i = 0; i < 256; ++i) {
-		if(!(rdr->b_nano[i] & 0x02)) {
-			all = 0;
-			break;
-		}
-	}
-	if (all == 1) tpl_addVar(vars, 0, "SAVENANO", "all");
-	else {
-		for(i = 0; i < 256; ++i) {
-			if(rdr->b_nano[i] & 0x02) tpl_printf(vars, 1, "SAVENANO", "%s%02x\n", dot, i);
-			dot=",";
-		}
-	}
+	value = mk_t_nano(rdr, 0x02);
+	tpl_addVar(vars, 0, "SAVENANO", value);
+	free(value);
 
 	//blocknano
-	dot="";
-	for(i = 0; i < 256; ++i) {
-		if(!(rdr->b_nano[i] & 0x01)) {
-			all = 0;
-			break;
-		}
-	}
-	if (all == 1) tpl_addVar(vars, 0, "BLOCKNANO", "all");
-	else {
-		for(i = 0; i < 256; ++i) {
-			if(rdr->b_nano[i] & 0x01) tpl_printf(vars, 1, "BLOCKNANO", "%s%02x\n", dot, i);
-			dot=",";
-		}
-	}
+	value = mk_t_nano(rdr, 0x01);
+	tpl_addVar(vars, 0, "BLOCKNANO", value);
+	free(value);
 
 	if (rdr->blockemm_unknown)
 		tpl_addVar(vars, 0, "BLOCKEMMUNKNOWNCHK", "checked");

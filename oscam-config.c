@@ -2503,42 +2503,14 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "lb_weight", "%d\n", rdr->lb_weight);
 
 			//savenano
-			int i, all = 1;
-			dot="";
-			for(i = 0; i < 256; ++i) {
-				if(!(rdr->b_nano[i] & 0x02)) {
-					all = 0;
-					break;
-				}
-			}
-			if (all == 1) fprintf_conf(f, CONFVARWIDTH, "savenano", "%s\n", "all");
-			else {
-				fprintf_conf(f, CONFVARWIDTH, "savenano", "%s", "");
-				for(i = 0; i < 256; ++i) {
-					if(rdr->b_nano[i] & 0x02) fprintf(f, "%s%02x", dot, i);
-					dot=",";
-				}
-				fprintf(f, "\n");
-			}
+			value = mk_t_nano(rdr, 0x02);
+			fprintf_conf(f, CONFVARWIDTH, "savenano", "%s\n", value);
+			free(value);
 			
 			//blocknano
-			all = 1;
-			dot="";
-			for(i = 0; i < 256; ++i) {
-				if(!(rdr->b_nano[i] & 0x01)) {
-					all = 0;
-					break;
-				}
-			}
-			if (all == 1) fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s\n", "all");
-			else {
-				fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s", "");
-				for(i = 0; i < 256; ++i) {
-					if(rdr->b_nano[i] & 0x01) fprintf(f, "%s%02x", dot, i);
-					dot=",";
-				}
-				fprintf(f, "\n");
-			}
+			value = mk_t_nano(rdr, 0x01);
+			fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s\n", value);
+			free(value);
 
 			if (rdr->typ == R_CCCAM) {
 				if (rdr->cc_version[0])
@@ -3696,16 +3668,21 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "blocknano")) {
-		//wildcard is used
-		if (!strcmp(value,"all")) {
-			for (i = 0 ; i < 256; i++) {
-				rdr->b_nano[i] |= 0x01; //set all lsb's to block all nanos
+		//reset
+		for (i = 0 ; i < 256; i++)
+			rdr->b_nano[i] &= ~0x01;
+		if (strlen(value) > 0) {
+			//wildcard is used
+			if (!strcmp(value,"all")) {
+				for (i = 0 ; i < 256; i++) {
+					rdr->b_nano[i] |= 0x01; //set all lsb's to block all nanos
+				}
 			}
-		}
-		else {
-			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
-				if ((i = byte_atob(ptr)) >= 0) {
-					rdr->b_nano[i] |= 0x01; //lsb is set when to block nano
+			else {
+				for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+					if ((i = byte_atob(ptr)) >= 0) {
+						rdr->b_nano[i] |= 0x01; //lsb is set when to block nano
+					}
 				}
 			}
 		}
@@ -3769,16 +3746,21 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "savenano")) {
-		//wildcard is used
-		if (!strcmp(value,"all")) {
-			for (i = 0 ; i < 256; i++) {
-				rdr->b_nano[i] |= 0x02; //set all lsb+1 to save all nanos to file
+		//reset
+		for (i = 0 ; i < 256; i++)
+			rdr->b_nano[i] &= ~0x02;
+		if (strlen(value) > 0) {
+			//wildcard is used
+			if (!strcmp(value,"all")) {
+				for (i = 0 ; i < 256; i++) {
+					rdr->b_nano[i] |= 0x02; //set all lsb+1 to save all nanos to file
+				}
 			}
-		}
-		else {
-			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
-				if ((i = byte_atob(ptr)) >= 0) {
-					rdr->b_nano[i] |= 0x02; //lsb+1 is set when to save nano to file
+			else {
+				for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+					if ((i = byte_atob(ptr)) >= 0) {
+						rdr->b_nano[i] |= 0x02; //lsb+1 is set when to save nano to file
+					}
 				}
 			}
 		}
@@ -4422,13 +4404,13 @@ char *mk_t_newcamd_port(){
 
 /*combine function blocknano or savenano
  * flag 0x01 for blocknano or 0x02 for savenano */
-char *mk_t_nano(struct s_reader *rdr, char flag){
+char *mk_t_nano(struct s_reader *rdr, uchar flag){
 
 	int i, needed = 0, pos = 0;
 	char *dot = "";
 
 	for(i = 0; i < 256; ++i)
-		if(!(rdr->b_nano[i] & flag))
+		if((rdr->b_nano[i] & flag))
 			needed++;
 
 	if (needed == 256) {
@@ -4439,9 +4421,10 @@ char *mk_t_nano(struct s_reader *rdr, char flag){
 		char *value = (char *) malloc((needed * 3 * sizeof(char)) + 1);
 		value[0] = '\0';
 		for(i = 0; i < 256; ++i) {
-			if(rdr->b_nano[i] & flag)
+			if(rdr->b_nano[i] & flag) {
 				pos += sprintf(value + pos, "%s%02x", dot, i);
-			dot=",";
+				dot=",";
+			}
 		}
 		return value;
 	}
