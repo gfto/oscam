@@ -2480,9 +2480,6 @@ int write_server()
 			if (rdr->show_cls && !rdr->show_cls == 10)
 				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
 
-			if (rdr->maxqlen && !rdr->maxqlen == CS_MAXQLEN)
-				fprintf_conf(f, CONFVARWIDTH, "maxqlen", "%d\n", rdr->maxqlen);
-
 			value = mk_t_group(rdr->grp);
 			fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
 			free(value);
@@ -3646,14 +3643,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "maxqlen")) {
-		rdr->maxqlen = atoi(value);
-		if( rdr->maxqlen < 0 || rdr->maxqlen > CS_MAXQLEN) {
-			rdr->maxqlen = CS_MAXQLEN;
-		}
-		return;
-	}
-
 	if (!strcmp(token, "group")) {
 		if(strlen(value) == 0) {
 			rdr->grp = 0;
@@ -4039,7 +4028,6 @@ int init_readerdb()
 			rdr->enable = 1;
 			rdr->tcp_rto = 30;
 			rdr->show_cls = 10;
-			rdr->maxqlen = CS_MAXQLEN;
 			rdr->nagra_read = 0;
 			rdr->mhz = 357;
 			rdr->cardmhz = 357;

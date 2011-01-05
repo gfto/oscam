@@ -118,7 +118,6 @@
 #define CS_LOGFILE    "/var/log/oscam.log"
 #endif
 #define CS_QLEN       128 // size of request queue
-#define CS_MAXQLEN    128 // size of request queue for cardreader
 #define CS_MAXCAIDTAB 32  // max. caid-defs/user
 #define CS_MAXTUNTAB  16  // max. betatunnel mappings
 #define CS_MAXPROV    32
@@ -825,8 +824,6 @@ struct s_reader  //contains device info, reader info and card info
   time_t    last_g;       // get (if last_s-last_g>tcp_rto - reconnect )
   time_t    last_s;       // send
   uchar     show_cls;     // number of classes subscription showed on kill -31
-  int       maxqlen;      // max queue length
-  int       qlen;         // current queue length
   FTAB      fchid;
   FTAB      ftab;
   CLASSTAB  cltab;

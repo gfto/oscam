@@ -145,9 +145,6 @@ DESCRIPTIONS
 
 	  example: class = 01,02,!1b,!2b
 
-       maxqlen = size
-	  size of request queue for reader, default:128
-
        group = groupname
 	  reader assingment to group, required
 

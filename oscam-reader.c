@@ -589,9 +589,6 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   write_ecm_answer(reader, er);
   reader_post_process(reader);
 #endif
-  //fixme re-activated code for testing
-  if(reader->typ=='r') reader->qlen--;
-  //printf("queue: %d\n",reader->qlen);
 }
 
 static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
