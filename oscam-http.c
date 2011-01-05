@@ -2046,6 +2046,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		// Reset template variables
 		tpl_addVar(vars, 0, "CLIENTLBVALUE","");
 		tpl_addVar(vars, 0, "LASTREADER", "");
+		tpl_addVar(vars, 0, "CLIENTPROTO", "");
+		tpl_addVar(vars, 0, "CLIENTDESCRIPTION", "");
 
 		if (cl->typ=='c')
 			user_count_all++;
@@ -2105,7 +2107,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
 			tpl_printf(vars, 0, "CLIENTCNR", "%d", get_threadnum(cl));
 			tpl_addVar(vars, 0, "CLIENTUSER", xml_encode(vars, usr));
-			if (cl->typ == 'c')	tpl_addVar(vars, 0, "CLIENTDESCRIPTION", xml_encode(vars, cl->account?cl->account->description:""));
+			if (cl->typ == 'c')
+				tpl_addVar(vars, 0, "CLIENTDESCRIPTION", xml_encode(vars, cl->account?cl->account->description:""));
 			tpl_printf(vars, 0, "CLIENTCAU", "%d", cau);
 			tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", cl->crypted);
 			tpl_addVar(vars, 0, "CLIENTIP", cs_inet_ntoa(cl->ip));
