@@ -113,6 +113,24 @@ int chk_srvid(struct s_client *cl, ECM_REQUEST *er)
   return(rc);
 }
 
+int has_srvid(struct s_client *cl, ECM_REQUEST *er) {
+  if (!cl->sidtabok)
+    return 0;
+
+  int nr;
+  SIDTAB *sidtab;
+      
+  for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
+    if (sidtab->num_srvid)
+    {
+      if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
+          (chk_srvid_match(er, sidtab)))
+        return 1;
+    }
+  return 0;
+}
+
+
 static int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab)
 {
   int i, rc=0;

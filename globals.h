@@ -1354,6 +1354,7 @@ extern ECM_REQUEST *get_ecmtask(void);
 extern void request_cw(ECM_REQUEST *, int, int);
 extern int send_dcw(struct s_client *, ECM_REQUEST *);
 extern int process_input(uchar *, int, int);
+extern int has_srvid(struct s_client *cl, ECM_REQUEST *er);
 extern int chk_srvid(struct s_client *, ECM_REQUEST *);
 extern int chk_srvid_match(ECM_REQUEST *, SIDTAB *);
 extern int chk_sfilter(ECM_REQUEST *, PTAB*);
@@ -1516,7 +1517,7 @@ extern void reader_device_close(struct s_reader * reader);
 extern void init_stat();
 extern int get_best_reader(ECM_REQUEST *er);
 extern void clear_reader_stat(struct s_reader *reader);
-extern void add_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, int ecm_time, int rc);
+extern void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc);
 extern void load_stat_from_file();
 extern void save_stat_to_file();
 #ifdef HAVE_PCSC

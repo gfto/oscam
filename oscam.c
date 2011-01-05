@@ -1806,7 +1806,7 @@ static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int rc)
 	if (time < 1)
 	        time = 1;
 
-	add_stat(rdr, er->caid, er->prid, er->srvid, time, rc);
+	add_stat(rdr, er, time, rc);
 }
 
 // rc codes:
