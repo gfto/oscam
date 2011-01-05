@@ -626,7 +626,8 @@ char to_hex(char code){
 
 /* Encode values in a http url. Note: Be sure to free() the returned string after use */
 char *urlencode(char *str){
-	char *pstr = str, *buf = (char *) malloc((strlen(str) * 3 + 1) * sizeof(char)), *pbuf = buf;
+	char buf[strlen(str) * 3 + 1];
+	char *pstr = str, *pbuf = buf;
 	while (*pstr) {
 		if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') *pbuf++ = *pstr;
 		else if (*pstr == ' ') *pbuf++ = '+';
@@ -640,7 +641,6 @@ char *urlencode(char *str){
 	*pbuf = '\0';
 	pbuf = (char *) malloc((strlen(buf) + 1) * sizeof(char));
 	strcpy(pbuf, buf);
-	free(buf);
 	return pbuf;
 }
 
@@ -671,57 +671,17 @@ void create_rand_str(char *dst, int size){
 }
 #endif
 
-/* Converts a long64 value to a char array in bitwise representation.
-   Note that the result array MUST be at least 65 bit large and that
-   this function assumes long values to hold only values up to 64bits and to be positive!
-   the result of e.g. long 7 is 1110000000000000000000000000000000000000000000000000000000000000 this means the array
-   is reversed */
-void sidtabbits2bitchar(SIDTABBITS value, char *result){
+/* Converts a uint64 value (you may also cast smaller types) to a char array in bitwise representation.
+   Note that the result array MUST be at least size+1 bit large and that this function assumes values
+   to be only positive! The result of e.g. uint64 7 is
+   11100000000000000000000000000000000000000000000000000000000000000 this means the array is reversed */
+void uint64ToBitchar(uint64 value, int size, char *result){
 	int pos;
-	for (pos=0;pos<MAX_SIDBITS;pos++) result[pos]='0';
+	for (pos=0;pos<size;pos++) result[pos]='0';
 	result[pos] = '\0';
 
 	pos=0;
-	while (value > 0 && pos < MAX_SIDBITS){
-		if(value % 2 == 1) result[pos]='1';
-		else result[pos]='0';
-		value=value / (SIDTABBITS)2;
-		pos++;
-	}
-}
-
-
-/* Converts a long value to a char array in bitwise representation.
-   Note that the result array MUST be at least 33 bit large and that
-   this function assumes long values to hold only values up to 32bits and to be positive!
-   the result of e.g. long 7 is 11100000000000000000000000000000 this means the array
-   is reversed */
-void long2bitchar(long value, char *result){
-	int pos;
-	for (pos=0;pos<32;pos++) result[pos]='0';
-	result[pos] = '\0';
-
-	pos=0;
-	while (value > 0 && pos < 32){
-		if(value % 2 == 1) result[pos]='1';
-		else result[pos]='0';
-		value=value / 2;
-		pos++;
-	}
-}
-
-/* Converts a uint64 value to a char array in bitwise representation.
-   Note that the result array MUST be at least 65 bit large and that
-   this function assumes long values to hold only values up to 64bits and to be positive!
-   the result of e.g. long 7 is 11100000000000000000000000000000000000000000000000000000000000000 this means the array
-   is reversed */
-void uint642bitchar(uint64 value, char *result){
-	int pos;
-	for (pos=0;pos<64;pos++) result[pos]='0';
-	result[pos] = '\0';
-
-	pos=0;
-	while (value > 0 && pos < 64){
+	while (value > 0 && pos < size){
 		if(value % 2 == 1) result[pos]='1';
 		else result[pos]='0';
 		value=value / (uint64)2;

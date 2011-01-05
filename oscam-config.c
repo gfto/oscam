@@ -2198,8 +2198,8 @@ int write_userdb(struct s_auth *authptr)
 
 		if ((account->sidtabok + account->sidtabno > 0) || ((account->sidtabok + account->sidtabno == 0) && cfg->http_full_cfg)) {
 			fprintf_conf(f, CONFVARWIDTH, "services", "");
-			char sidok[MAX_SIDBITS+1]; sidtabbits2bitchar(account->sidtabok,sidok);
-			char sidno[MAX_SIDBITS+1]; sidtabbits2bitchar(account->sidtabno,sidno);
+			char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64)account->sidtabok, MAX_SIDBITS, sidok);
+			char sidno[MAX_SIDBITS+1]; uint64ToBitchar((uint64)account->sidtabno, MAX_SIDBITS, sidno);
 			struct s_sidtab *sidtab = cfg->sidtab;
 			i=0; dot = "";
 			for (; sidtab; sidtab=sidtab->next){
@@ -2345,8 +2345,8 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", rdr->emmfile);
 
 			fprintf_conf(f, CONFVARWIDTH, "services", "");
-			char sidok[MAX_SIDBITS+1]; sidtabbits2bitchar(rdr->sidtabok, sidok);
-			char sidno[MAX_SIDBITS+1]; sidtabbits2bitchar(rdr->sidtabno, sidno);
+			char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64)rdr->sidtabok, MAX_SIDBITS, sidok);
+			char sidno[MAX_SIDBITS+1]; uint64ToBitchar((uint64)rdr->sidtabno, MAX_SIDBITS, sidno);
 			struct s_sidtab *sidtab = cfg->sidtab;
 			j=0; dot = "";
 			for (; sidtab; sidtab=sidtab->next){
@@ -4231,7 +4231,7 @@ char *mk_t_tuntab(TUNTAB *ttab){
 char *mk_t_group(uint64 grp){
 	int i = 0, needed = 1, pos = 0, dot = 0;
 	char grpbit[65];
-	uint642bitchar(grp, grpbit);
+	uint64ToBitchar(grp, 64, grpbit);
 
 	for(i = 0; i < 64; i++){
 		if (grpbit[i] == '1'){

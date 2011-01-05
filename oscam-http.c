@@ -978,9 +978,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 
 	//services
 	char sidok[MAX_SIDBITS+1];
-	sidtabbits2bitchar(rdr->sidtabok, sidok);
+	uint64ToBitchar((uint64)rdr->sidtabok, MAX_SIDBITS, sidok);
 	char sidno[MAX_SIDBITS+1];
-	sidtabbits2bitchar(rdr->sidtabno,sidno);
+	uint64ToBitchar((uint64)rdr->sidtabno,MAX_SIDBITS, sidno);
 	struct s_sidtab *sidtab = cfg->sidtab;
 	//build matrix
 	i = 0;
@@ -1487,9 +1487,9 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 	/* SERVICES */
 	//services - first we have to move the long sidtabok/sidtabno to a binary array
 	char sidok[MAX_SIDBITS+1];
-	sidtabbits2bitchar(account->sidtabok,sidok);
+	uint64ToBitchar((uint64)account->sidtabok, MAX_SIDBITS, sidok);
 	char sidno[MAX_SIDBITS+1];
-	sidtabbits2bitchar(account->sidtabno,sidno);
+	uint64ToBitchar((uint64)account->sidtabno, MAX_SIDBITS, sidno);
 	struct s_sidtab *sidtab = cfg->sidtab;
 	//build matrix
 	i=0;
@@ -1798,7 +1798,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 			if (rcc && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
-				char *buf = malloc(4000);
+				char buf[4000];
 				uint8 serbuf[8];
 
 				LL_ITER *it = ll_iter_create(rcc->cards);
@@ -1914,7 +1914,7 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 				}
 
 				ll_iter_release(it);
-				free(buf);
+				
 				pthread_mutex_unlock(&rcc->cards_busy);
 
 				if (!apicall) {

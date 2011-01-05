@@ -1263,9 +1263,7 @@ extern char *urlencode(char *str);
 extern char *char_to_hex(const unsigned char* p_array, unsigned int p_array_len, char hex2ascii[256][2]);
 extern void create_rand_str(char *dst, int size);
 #endif
-extern void sidtabbits2bitchar(SIDTABBITS value, char *result);
-extern void long2bitchar(long value, char *result);
-extern void uint642bitchar(uint64 value, char *result);
+extern void uint64ToBitchar(uint64 value, int size, char *result);
 extern int file_exists(const char * filename);
 extern void clear_sip(struct s_ip **sip);
 extern void clear_ptab(struct s_ptab *ptab);

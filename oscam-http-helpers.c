@@ -155,8 +155,8 @@ char *tpl_getUnparsedTpl(const char* name){
   }
 
   if(strlen(cfg->http_tpl) > 0){
-  	char path[200];
-  	if(strlen(tpl_getTplPath(name, cfg->http_tpl, path, 200)) > 0 && file_exists(path)){
+  	char path[255];
+  	if(strlen(tpl_getTplPath(name, cfg->http_tpl, path, 255)) > 0 && file_exists(path)){
 			FILE *fp;
 			char buffer[1024];
 			int read, allocated = 1025, size = 0;
