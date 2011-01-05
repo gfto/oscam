@@ -2675,7 +2675,7 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 	if (!strstr(targetfile, "/dev/")) {
 
 		if (strcmp(getParam(params, "action"), "Save") == 0) {
-			if((strlen(targetfile) > 0) && (file_exists(targetfile) == 1)) {
+			if((strlen(targetfile) > 0) /*&& (file_exists(targetfile) == 1)*/) {
 				FILE *fpsave;
 				char *fcontent = getParam(params, "filecontent");
 
