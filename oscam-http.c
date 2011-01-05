@@ -1029,7 +1029,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		dot=",";
 	}
 
-	tpl_printf(vars, 0, "SHOWCLS", "%d", rdr->show_cls);
+	if (rdr->show_cls)
+		tpl_addVar(vars, 0, "SHOWCLSCHECKED", "selected");
+
 	tpl_printf(vars, 0, "MAXQLEN", "%d", rdr->maxqlen);
 
 	if(rdr->cachemm)

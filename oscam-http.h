@@ -892,6 +892,7 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
     <TR><TD>Readnano:</TD><TD><input name=\"readnano\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##EMMFILE##\"></TD></TR>\n\
     <TR><TD>Blocknano:</TD><TD><input name=\"blocknano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##BLOCKNANO##\"></TD></TR>\n\
     <TR><TD>Savenano:</TD><TD><input name=\"savenano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##SAVENANO##\"></TD></TR>\n\
+    <TR><TD>Showcls:</TD><TD><SELECT NAME=\"showcls\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##SHOWCLSCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
     <TR><TD>Force NDS Version:</TD><TD><SELECT name=\"ndsversion\">\
                         <OPTION  value=\"0\" ##NDSVERSION0##>0 - AUTO</OPTION>\
                         <OPTION  value=\"1\" ##NDSVERSION1##>1 - NDS1 Forced</OPTION>\

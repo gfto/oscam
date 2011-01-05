@@ -2368,8 +2368,11 @@ int write_server()
 			if (rdr->smargopatch && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", rdr->smargopatch);
 
+			if (rdr->show_cls && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", rdr->smargopatch);
+
 			if (rdr->fallback)
-				fprintf_conf(f, CONFVARWIDTH, "fallback", "%d\n", rdr->fallback);
+				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
 
 			if (rdr->log_port)
 				fprintf_conf(f, CONFVARWIDTH, "logport", "%d\n", rdr->log_port);
