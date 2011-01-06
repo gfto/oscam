@@ -356,16 +356,16 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLDEBUGSELECT "\
 	<SPAN CLASS=\"debugt\"> Switch Debug from&nbsp;##ACTDEBUG## to&nbsp;</SPAN>\n\
-	<A CLASS=\"##DCLASS0##\" HREF=\"##NEXTPAGE##?debug=0##CUSTOMPARAM##\" title=\"no debugging (default)\">0</A>&nbsp;\n\
-	<A CLASS=\"##DCLASS1##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL1####CUSTOMPARAM##\" title=\"detailed error messages\">1</A>&nbsp;\n\
-	<A CLASS=\"##DCLASS2##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL2####CUSTOMPARAM##\" title=\"ATR parsing info, ECM dumps, CW dumps\">2</A>&nbsp;\n\
-	<A CLASS=\"##DCLASS4##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL4####CUSTOMPARAM##\" title=\"traffic from/to the reader\">4</A>&nbsp;\n\
-	<A CLASS=\"##DCLASS8##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL8####CUSTOMPARAM##\" title=\"traffic from/to the clients\">8</A>&nbsp;\n\
-	<A CLASS=\"##DCLASS16##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL16####CUSTOMPARAM##\" title=\"traffic to the reader-device on IFD layer\">16</A>&nbsp;\n\
-	<A CLASS=\"##DCLASS32##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL32####CUSTOMPARAM##\" title=\"traffic to the reader-device on I/O layer\">32</A>&nbsp;\n\
-	<A CLASS=\"##DCLASS64##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL64####CUSTOMPARAM##\" title=\"EMM logging\">64</A>&nbsp;\n\
-	<A CLASS=\"##DCLASS128##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL128####CUSTOMPARAM##\" title=\"DVBAPI logging\">128</A>&nbsp;\n\
-	<A CLASS=\"##DCLASS255##\" HREF=\"##NEXTPAGE##?debug=255##CUSTOMPARAM##\" title=\"debug all\">255</A>\n"
+	<SPAN CLASS=\"debugl\"><A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=0##CUSTOMPARAM##\" title=\"no debugging (default)\">&nbsp;0&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS1##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL1####CUSTOMPARAM##\" title=\"detailed error messages\">&nbsp;1&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS2##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL2####CUSTOMPARAM##\" title=\"ATR parsing info, ECM dumps, CW dumps\">&nbsp;2&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS4##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL4####CUSTOMPARAM##\" title=\"traffic from/to the reader\">&nbsp;4&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS8##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL8####CUSTOMPARAM##\" title=\"traffic from/to the clients\">&nbsp;8&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS16##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL16####CUSTOMPARAM##\" title=\"traffic to the reader-device on IFD layer\">&nbsp;16&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS32##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL32####CUSTOMPARAM##\" title=\"traffic to the reader-device on I/O layer\">&nbsp;32&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS64##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL64####CUSTOMPARAM##\" title=\"EMM logging\">&nbsp;64&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS128##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL128####CUSTOMPARAM##\" title=\"DVBAPI logging\">&nbsp;128&nbsp;</A></SPAN>\n\
+	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS255##\" HREF=\"##NEXTPAGE##?debug=255##CUSTOMPARAM##\" title=\"debug all\">&nbsp;255&nbsp;</A></SPAN>\n"
 
 #define TPLFAILBAN "\
 ##TPLHEADER##\

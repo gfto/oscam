@@ -2326,6 +2326,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 	if (cs_dblevel == 255)
 		tpl_addVar(vars, 0, "DCLASS255", "debugls");
+	else
+		tpl_addVar(vars, 0, "DCLASS255", "debugl");
 
 	tpl_addVar(vars, 0, "NEXTPAGE", "status.html");
 	tpl_addVar(vars, 0, "DCLASS", "debugl"); //default
@@ -2651,6 +2653,8 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 
 		if (cs_dblevel == 255)
 			tpl_addVar(vars, 0, "DCLASS255", "debugls");
+		else
+			tpl_addVar(vars, 0, "DCLASS255", "debugl");
 
 		tpl_addVar(vars, 0, "CUSTOMPARAM", "&part=logfile");
 		tpl_printf(vars, 0, "ACTDEBUG", "%d", cs_dblevel);
