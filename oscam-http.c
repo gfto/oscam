@@ -1229,7 +1229,9 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
 
-	int rowcount = 0, ecmcount = 0, lastaccess = 0;
+	int rowcount = 0, ecmcount = 0;
+	time_t lastaccess=0;
+
 	if (rdr->lb_stat) {
 
 		LL_ITER *it = ll_iter_create(rdr->lb_stat);
@@ -1300,7 +1302,16 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 	}
 
 	tpl_printf(vars, 0, "ROWCOUNT", "%d", rowcount);
-	tpl_printf(vars, 0, "LASTACCESS", "%u", lastaccess);
+
+	if (lastaccess > 0){
+		char tbuffer [30];
+		struct tm *lt = localtime(&lastaccess);
+		strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", lt);
+		tpl_addVar(vars, 0, "LASTACCESS", tbuffer);
+	} else {
+		tpl_addVar(vars, 0, "LASTACCESS", "");
+	}
+
 	tpl_printf(vars, 0, "TOTALECM", "%d", ecmcount);
 
 	if(!apicall)
