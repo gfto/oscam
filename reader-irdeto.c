@@ -315,7 +315,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 	reader->caid[0] = (cta_res[5+acspadd] << 8) | cta_res[6+acspadd];
 	memcpy(reader->country_code,cta_res + 13 + acspadd, 3);
 	cs_ri_log(reader, "caid: %04X, acs: %x.%02x, country code: %c%c%c",
-			reader->caid[0], cta_res[0], cta_res[1], cta_res[13], cta_res[14], cta_res[15]);
+			reader->caid[0], cta_res[0+acspadd], cta_res[1+acspadd], cta_res[13+acspadd], cta_res[14+acspadd], cta_res[15+acspadd]);
 
 	/*
 	 * Ascii/Hex-Serial
@@ -606,13 +606,22 @@ static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
  		l++;
  		if (l <= ADDRLEN) {
 			if(reader->acs57==1) {
-				const int dataLen=ep->emm[2];
-				sc_Acs57Emm[4]=ep->emm[2];
+				int dataLen=0;
+				if(ep->type==UNIQUE){
+					dataLen=ep->emm[2]-1;
+				}else{
+					dataLen=ep->emm[2];
+				}
 				int crc=63;
-				crc^=0x01;crc^=0x01;crc^=0x00;crc^=0x00;crc^=0x00;crc^=(ep->emm[2]-1);
-				memcpy(&cta_cmd, sc_Acs57Emm, sizeof(sc_Acs57Emm));
+				sc_Acs57Emm[4]=dataLen;
+                                memcpy(&cta_cmd, sc_Acs57Emm, sizeof(sc_Acs57Emm));
+				crc^=0x01;crc^=0x01;crc^=0x00;crc^=0x00;crc^=0x00;crc^=(dataLen-1);
 				memcpy(&cta_cmd[5],&ep->emm[3],7);
-				memcpy(&cta_cmd[10],&ep->emm[9],dataLen-6);
+				if(ep->type==UNIQUE){
+					memcpy(&cta_cmd[10],&ep->emm[10],dataLen-5);
+				}else{
+                                        memcpy(&cta_cmd[10],&ep->emm[9],dataLen-6);
+				}
 				int i=0;
 				for(i=5;i<dataLen+4;i++)
 					crc^=cta_cmd[i];
