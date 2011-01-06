@@ -907,12 +907,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if(rdr->force_irdeto)
 		tpl_addVar(vars, 0, "FORCEIRDETOCHECKED", "checked");
 
-	int len = check_filled(rdr->aes_key, 16);
-	if(len > 0) {
-		for (i = 0; i < 16; i++) tpl_printf(vars, 1, "AESKEY", "%02X", rdr->aes_key[i]);
-	}
-
-	len = check_filled(rdr->rsa_mod, 120);
+	int len = check_filled(rdr->rsa_mod, 120);
 	if(len > 0) {
 		if(len > 64) len = 120;
 		else len = 64;

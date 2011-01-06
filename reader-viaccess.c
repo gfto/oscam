@@ -246,10 +246,7 @@ cs_log("[viaccess-reader] name: %s", cta_res);
   }
   reader->nprov=i;
   cs_ri_log(reader, "providers: %d (%s)", reader->nprov, buf+1);
-
-    /* init the maybe existing aes key */
-    aes_set_key((char *)reader->aes_key);
-    
+   
     if (cfg->ulparent)
         unlock_parental(reader);
 
@@ -440,17 +437,10 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
                 cwStart++;
             } 
             // use AES from list to decrypt CW
-            if(reader->aes_list) 
-            {
-                cs_debug_mask(D_READER, "Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
-                rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) (provid & 0xFFFFF0), D2KeyID, &ecm88DataCW[0], 16);
-                if( rc == 0 )
-                    snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, (provid & 0xFFFFF0) );
-            }
-            else
-            {
-                aes_decrypt(&ecm88DataCW[0], 16);
-            }
+            cs_debug_mask(D_READER, "Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
+            rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) (provid & 0xFFFFF0), D2KeyID, &ecm88DataCW[0], 16);
+            if( rc == 0 )
+                snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, (provid & 0xFFFFF0) );
         }
 
         while(ecm88Len>0 && ecm88Data[0]<0xA0)
@@ -521,14 +511,10 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
 
   if ( hasD2 && !check_crc(er->cw) && nanoD2 == 2) {
-    if(reader->aes_list) {
-        cs_debug_mask(D_READER, "Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
-        rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) (provid & 0xFFFFF0), D2KeyID,er->cw, 16);
-        if( rc == 0 )
-            snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, (provid & 0xFFFFF0) );
-    }
-    else
-        aes_decrypt(er->cw, 16);
+    cs_debug_mask(D_READER, "Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
+    rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) (provid & 0xFFFFF0), D2KeyID,er->cw, 16);
+    if( rc == 0 )
+        snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, (provid & 0xFFFFF0) );
   }
 
   return(rc?OK:ERROR);

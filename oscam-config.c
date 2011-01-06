@@ -2253,9 +2253,6 @@ int write_server()
 			if (rdr->boxid && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", rdr->boxid);
 
-			if (check_filled(rdr->aes_key, 16) > 0 && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", cs_hexdump(0, rdr->aes_key, 16));
-
 			// rsakey
 			int len = check_filled(rdr->rsa_mod, 120);
 			if (len > 0 && isphysical) {
@@ -3179,19 +3176,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		} else {
 			rdr->boxid = a2i(value, 4);
-			return;
-		}
-	}
-
-	if (!strcmp(token, "aeskey")) {
-		if (strlen(value) != 32 ){
-			memset(rdr->aes_key, 0, 16);
-			return;
-		} else {
-			if (key_atob_l(value, rdr->aes_key, 32)) {
-				fprintf(stderr, "Configuration reader: Error in AES Key\n");
-				exit(1);
-			}
 			return;
 		}
 	}

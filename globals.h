@@ -776,7 +776,6 @@ struct s_reader  //contains device info, reader info and card info
   uchar	    nagra_boxkey[16]; //n3 boxkey 8byte  or tiger idea key 16byte
   char      country_code[3]; // irdeto country code.
   int       force_irdeto;
-  uchar     aes_key[16];
   uchar     rsa_mod[120]; //rsa modulus for nagra cards.
   uchar     atr[64];
   int		atrlen;
