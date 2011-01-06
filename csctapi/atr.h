@@ -76,7 +76,7 @@
  * Exported data types definition
  */
 
-typedef struct
+typedef struct s_ATR
 {
   unsigned length;
   BYTE TS;

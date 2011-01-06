@@ -21,8 +21,10 @@ extern int ICC_Async_Close (struct s_reader *reader);
         Globals
 *****************************************************************************/
 int exit_oscam=0;
-struct s_module ph[CS_MAX_MOD]; // Protocols
-struct s_cardsystem cardsystem[CS_MAX_MOD]; // Protocols
+struct s_module 	ph[CS_MAX_MOD]; // Protocols
+struct s_cardsystem	cardsystem[CS_MAX_MOD];
+struct s_cardreader	cardreader[CS_MAX_MOD];
+
 struct s_client * first_client = NULL; //Pointer to clients list, first client is master
 struct s_reader * first_reader = NULL;
 
@@ -3263,6 +3265,12 @@ if (pthread_key_create(&getclient, NULL)) {
 	0
   };
 
+  void (*cardreader_def[])(struct s_cardreader *)=
+  {
+	cardreader_mouse,
+	0
+  };
+
   while ((i=getopt(argc, argv, "bc:t:d:r:hm:x"))!=EOF)
   {
 	  switch(i) {
@@ -3331,6 +3339,12 @@ if (pthread_key_create(&getclient, NULL)) {
   {
     memset(&cardsystem[i], 0, sizeof(struct s_cardsystem));
     cardsystem_def[i](&cardsystem[i]);
+  }
+
+  memset(&cardreader, 0, sizeof(struct s_cardsystem) * CS_MAX_MOD);
+  for (i=0; cardreader_def[i]; i++)  // must be later BEFORE init_config()
+  {
+    cardreader_def[i](&cardreader[i]);
   }
 
 

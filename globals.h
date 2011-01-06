@@ -513,6 +513,24 @@ struct s_module
   int num;
 };
 
+struct s_ATR ;
+
+struct s_cardreader
+{
+	int	active;
+	char	desc[16];
+	int	(*reader_init)(struct s_reader*);
+	int	(*get_status)(struct s_reader*, int*);
+	int	(*activate)(struct s_reader*, struct s_ATR *);
+	int	(*transmit)(struct s_reader*, unsigned char *sent, unsigned int size);
+	int	(*receive)(struct s_reader*, unsigned char *data, unsigned int size);
+	int	(*close)(struct s_reader*);
+	int	(*set_parity)(struct s_reader*, uchar parity);
+	int	(*write_settings)(struct s_reader*, unsigned long ETU, unsigned long EGT, unsigned char P, unsigned char I);
+	int	(*set_protocol)(struct s_reader*, unsigned char * params, unsigned *length, uint len_request);
+	int	(*set_baudrate)(struct s_reader*, ulong baud); //set only for readers which need baudrate setting and timings need to be guarded by OSCam
+};
+
 struct s_cardsystem
 {
 	char *desc;
@@ -802,6 +820,7 @@ struct s_reader  //contains device info, reader info and card info
   int       card_status;
   int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
+  struct    s_cardreader crdr;
   uchar     ncd_key[16];
   uchar     ncd_skey[16];
   int       ncd_disable_server_filt;
@@ -1301,6 +1320,7 @@ extern char cs_confdir[];
 extern char loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];
 extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
+extern struct s_cardreader cardreader[CS_MAX_MOD];
 //extern ECM_REQUEST *ecmtask;
 
 #ifdef CS_ANTICASC
@@ -1530,6 +1550,8 @@ void reader_videoguard2();
 void reader_videoguard12();
 void reader_dre();
 void reader_tongfang();
+
+void cardreader_mouse();
 
 // protocol modules
 extern int  monitor_send_idx(struct s_client *, char *);

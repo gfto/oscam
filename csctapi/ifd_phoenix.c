@@ -282,3 +282,40 @@ int Phoenix_FastReset (struct s_reader * reader, int delay)
     return 0;
 
 }
+
+static int mouse_init(struct s_reader *reader) {
+	cs_log("mouse_test init");
+	reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
+	if (reader->handle < 0) {
+		cs_log("ERROR opening device %s",reader->device);
+		return ERROR;
+	}
+	if (Phoenix_Init(reader)) {
+		cs_log("ERROR: Phoenix_Init returns error");
+		Phoenix_Close (reader);
+		return ERROR;
+	}
+	return OK;
+}
+
+static int mouse_receive(struct s_reader *reader, unsigned char *data, unsigned int size) {
+	return Phoenix_Receive(reader, data, size, reader->read_timeout);
+}
+
+static int mouse_transmit(struct s_reader *reader, unsigned char *sent, unsigned int size) {
+	return Phoenix_Transmit(reader, sent, size, reader->block_delay, reader->char_delay);
+}
+
+void cardreader_mouse(struct s_cardreader *crdr) 
+{
+	strcpy(crdr->desc, "mouse_test");
+	crdr->reader_init	= mouse_init;
+	crdr->get_status	= Phoenix_GetStatus;
+	crdr->activate	= Phoenix_Reset;
+	crdr->transmit	= mouse_transmit;
+	crdr->receive		= mouse_receive;
+	crdr->close		= Phoenix_Close;
+	crdr->set_parity	= IO_Serial_SetParity;
+	crdr->set_baudrate	= Phoenix_SetBaudrate;
+}
+

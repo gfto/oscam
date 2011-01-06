@@ -3254,6 +3254,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	if (!strcmp(token, "protocol")) {
 
+		for (i=0; i<CS_MAX_MOD; i++) {
+			if (!strcmp(value, cardreader[i].desc)) {
+				rdr->crdr = cardreader[i];
+				rdr->crdr.active = 1;
+				rdr->typ = R_MOUSE; //FIXME
+				return;
+			}
+		}
+
 		if (!strcmp(value, "mp35")) {
 			rdr->typ = R_MP35;
 			return;
