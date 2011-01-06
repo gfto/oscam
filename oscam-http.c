@@ -885,7 +885,8 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	//tpl_addVar(vars, 0, "EMMFILE", (char *)rdr->emmfile);
 	tpl_printf(vars, 0, "INACTIVITYTIMEOUT", "%d", rdr->tcp_ito);
 	tpl_printf(vars, 0, "RECEIVETIMEOUT", "%d", rdr->tcp_rto);
-	tpl_printf(vars, 0, "DISABLESERVERFILTER", "%d", rdr->ncd_disable_server_filt);
+	if(rdr->ncd_disable_server_filt)
+		tpl_addVar(vars, 0, "DISABLESERVERFILTERCHECKED", "checked");
 
 	if(rdr->fallback)
 		tpl_addVar(vars, 0, "FALLBACKCHECKED", "checked");
@@ -1011,7 +1012,7 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	}
 
 	if (rdr->show_cls)
-		tpl_addVar(vars, 0, "SHOWCLSCHECKED", "selected");
+		tpl_printf(vars, 0, "SHOWCLS", "%d", rdr->show_cls);
 
 	if(rdr->cachemm)
 		tpl_printf(vars, 0, "EMMCACHE", "%d,%d,%d", rdr->cachemm, rdr->rewritemm, rdr->logemm);
