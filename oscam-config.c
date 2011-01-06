@@ -902,7 +902,7 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (!strcmp(token, "mgclient")) {
-		cfg->ncd_mgclient = strToIntVal(value, 1);
+		cfg->ncd_mgclient = strToIntVal(value, 0);
 		return;
 	}
 
@@ -924,7 +924,7 @@ void chk_t_cccam(char *token, char *value)
 	}
 
 	if (!strcmp(token, "stealth")) {
-		cfg->cc_stealth = strToIntVal(value, 0);
+		cfg->cc_stealth = strToIntVal(value, 1);
 		return;
 	}
 
