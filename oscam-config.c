@@ -949,7 +949,10 @@ void chk_t_cccam(char *token, char *value)
 	}
 	// cccam: Update cards interval
 	if (!strcmp(token, "updateinterval")) {
-		cfg->cc_update_interval = strToIntVal(value, (4*60));//4x60s = 4min
+		if (value[0] == '-')
+			cfg->cc_update_interval = (-1);
+		else
+			cfg->cc_update_interval = strToIntVal(value, (4*60));//4x60s = 4min
 		return;
 	}
 
