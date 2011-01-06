@@ -211,11 +211,11 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	// 2 = cache2      #
 	// 3 = emu         +
 	// 4 = not found   -
-	// 5 = timeout     #
+	// 5 = timeout     -2
 	// 6 = sleeping    #
 	// 7 = fake        #
-	// 8 = invalid     -
-	// 9 = corrupt     -
+	// 8 = invalid     #
+	// 9 = corrupt     #
 	// 10= no card     #
 	// 11= expdate     #
 	// 12= disabled    #
@@ -224,6 +224,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	//        + = adds statistic values
 	//        # = ignored because of duplicate values, temporary failures or softblocks
 	//        - = causes loadbalancer to block this reader for this caid/prov/sid
+	//        -2 = causes loadbalancer to block if happens too often
 	
 	if (stat->ecm_count < 0)
 		stat->ecm_count=0;

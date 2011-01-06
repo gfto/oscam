@@ -607,11 +607,12 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
                                 rdr->card_status = CARD_FAILURE;
                         }
 
-			ECM_REQUEST *er_failed = (ECM_REQUEST *)malloc(sizeof(ECM_REQUEST));
+			ECM_REQUEST *er_failed = malloc(sizeof(ECM_REQUEST));
+			memset(er_failed, 0, sizeof(ECM_REQUEST));
 			er_failed->srvid = b2i(2, buf + 8);
 			er_failed->caid = b2i(2, buf + 10);
 			er_failed->prid = b2i(4, buf + 12);
-			add_stat(rdr, er_failed, 80000, buf[22]);
+			add_stat(rdr, er_failed, -1, 4);
 			free(er_failed);
 		}
 
