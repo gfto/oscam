@@ -1444,6 +1444,7 @@ extern char *mk_t_camd35tcp_port();
 extern char *mk_t_aeskeys(struct s_reader *rdr);
 extern char *mk_t_newcamd_port();
 extern char *mk_t_nano(struct s_reader *rdr, uchar flag);
+extern char *mk_t_service( uint64 sidtabok, uint64 sidtabno);
 
 //Todo #ifdef CCCAM
 extern int init_provid();

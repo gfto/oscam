@@ -235,6 +235,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		buf[0] = 0x08;
 		buf[1] = 2;
 		memset(buf + 20, 0, buf[1]);
+		buf[22] = er->rc; //put rc in byte 22 - hopefully don't break legacy camd3
 	}
 	else if (er->rc == 13)
 	{
@@ -603,7 +604,15 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 		} else {
 			client->stopped = 1; // server says invalid
 			rdr->card_status = CARD_FAILURE;
+
+			ECM_REQUEST *er_failed = (ECM_REQUEST *)malloc(sizeof(ECM_REQUEST));
+			er_failed->srvid = b2i(2, buf + 8);
+			er_failed->caid = b2i(2, buf + 10);
+			er_failed->prid = b2i(4, buf + 12);
+			add_stat(rdr, er_failed, 80000, buf[22]);
+			free(er_failed);
 		}
+
 		cs_log("%s CMD08 (%02X - %d) stop request by server (%s)",
 				rdr->label, buf[21], buf[21], typtext[client->stopped]);
 	}

@@ -2005,11 +2005,9 @@ int write_config()
 
 int write_userdb(struct s_auth *authptr)
 {
-	int i;
 	FILE *f;
 	struct s_auth *account;
 	char *value;
-	char *dot = ""; //flag for comma
 	char tmpfile[256];
 	char destfile[256];
 	char bakfile[256];
@@ -2083,19 +2081,10 @@ int write_userdb(struct s_auth *authptr)
 		if (account->autoau == 1)
 			fprintf_conf(f, CONFVARWIDTH, "au", "1\n");
 
-		if ((account->sidtabok + account->sidtabno > 0) || ((account->sidtabok + account->sidtabno == 0) && cfg->http_full_cfg)) {
-			fprintf_conf(f, CONFVARWIDTH, "services", "");
-			char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64)account->sidtabok, MAX_SIDBITS, sidok);
-			char sidno[MAX_SIDBITS+1]; uint64ToBitchar((uint64)account->sidtabno, MAX_SIDBITS, sidno);
-			struct s_sidtab *sidtab = cfg->sidtab;
-			i=0; dot = "";
-			for (; sidtab; sidtab=sidtab->next){
-				if(sidok[i]=='1')	{fprintf(f,"%s%s", dot, sidtab->label); dot = ",";}
-				if(sidno[i]=='1') {fprintf(f,"%s!%s", dot, sidtab->label); dot = ",";}
-				i++;
-			}
-			fputc((int)'\n', f);
-		}
+		value = mk_t_service((uint64)account->sidtabok, (uint64)account->sidtabno);
+		if (strlen(value) > 0 || cfg->http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "services", "%s\n", value);
+		free(value);
 
 		//CAID
 		if (account->ctab.caid[0] || (!account->ctab.caid[0] && cfg->http_full_cfg)) {
@@ -2162,7 +2151,6 @@ int write_server()
 	char *value;
 	FILE *f;
 
-	char *dot = ""; //flag for comma
 	char tmpfile[256];
 	char destfile[256];
 	char bakfile[256];
@@ -2231,17 +2219,10 @@ int write_server()
 			if (rdr->emmfile && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", rdr->emmfile);
 
-			fprintf_conf(f, CONFVARWIDTH, "services", "");
-			char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64)rdr->sidtabok, MAX_SIDBITS, sidok);
-			char sidno[MAX_SIDBITS+1]; uint64ToBitchar((uint64)rdr->sidtabno, MAX_SIDBITS, sidno);
-			struct s_sidtab *sidtab = cfg->sidtab;
-			j=0; dot = "";
-			for (; sidtab; sidtab=sidtab->next){
-				if(sidok[j]=='1')	{fprintf(f,"%s%s", dot, sidtab->label); dot = ",";}
-				if(sidno[j]=='1') {fprintf(f,"%s!%s", dot, sidtab->label); dot = ",";}
-				j++;
-			}
-			fputc((int)'\n', f);
+			value = mk_t_service((uint64)rdr->sidtabok, (uint64)rdr->sidtabno);
+			if (strlen(value) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "services", "%s\n", value);
+			free(value);
 
 			if (rdr->tcp_ito && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "inactivitytimeout", "%d\n", rdr->tcp_ito);
@@ -2256,16 +2237,17 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", rdr->smargopatch);
 
 			if (rdr->show_cls && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", rdr->smargopatch);
+				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
 
 			if (rdr->fallback)
-				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
+				fprintf_conf(f, CONFVARWIDTH, "fallback", "%d\n", rdr->fallback);
 
 			if (rdr->log_port)
 				fprintf_conf(f, CONFVARWIDTH, "logport", "%d\n", rdr->log_port);
 
 			value = mk_t_caidtab(&rdr->ctab);
-			fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
+			if (strlen(value) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
 			free(value);
 
 			if (rdr->boxid && isphysical)
@@ -2350,25 +2332,28 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", rdr->cardmhz);
 
 			value = mk_t_ftab(&rdr->ftab);
-			fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
+			if (strlen(value) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
 			free(value);
 
 			//Todo: write reader class
 
 			value = mk_t_ftab(&rdr->fchid);
-			if(value[0])
+			if (strlen(value) > 0)
 				fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
 			free(value);
 
 			value = mk_t_aeskeys(rdr);
-			fprintf_conf(f, CONFVARWIDTH, "aeskeys", "%s\n", value);
+			if (strlen(value) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "aeskeys", "%s\n", value);
 			free(value);
 
 			if (rdr->show_cls && !rdr->show_cls == 10)
 				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
 
 			value = mk_t_group(rdr->grp);
-			fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
+			if (strlen(value) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
 			free(value);
 
 			if (rdr->cachemm)
@@ -2391,12 +2376,14 @@ int write_server()
 
 			//savenano
 			value = mk_t_nano(rdr, 0x02);
-			fprintf_conf(f, CONFVARWIDTH, "savenano", "%s\n", value);
+			if (strlen(value) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "savenano", "%s\n", value);
 			free(value);
 			
 			//blocknano
 			value = mk_t_nano(rdr, 0x01);
-			fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s\n", value);
+			if (strlen(value) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s\n", value);
 			free(value);
 
 			if (rdr->typ == R_CCCAM) {
@@ -4219,3 +4206,29 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
 		return value;
 	}
 }
+
+char *mk_t_service( uint64 sidtabok, uint64 sidtabno){
+	int i = 0, pos = 0;
+	char *dot = "";
+	char *value = (char *) malloc((256 * sizeof(char)));
+	value[0] = '\0';
+
+	char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64)sidtabok, MAX_SIDBITS, sidok);
+	char sidno[MAX_SIDBITS+1]; uint64ToBitchar((uint64)sidtabno, MAX_SIDBITS, sidno);
+	struct s_sidtab *sidtab = cfg->sidtab;
+
+	for (; sidtab; sidtab=sidtab->next){
+		if(sidok[i]=='1') {
+			pos += sprintf(value + pos, "%s%s", dot, sidtab->label);
+			dot = ",";
+		}
+		if(sidno[i]=='1') {
+			pos += sprintf(value + pos, "%s!%s", dot, sidtab->label);
+			dot = ",";
+		}
+		i++;
+	}
+	return value;
+}
+
+
