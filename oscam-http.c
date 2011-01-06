@@ -918,23 +918,9 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 		for (i = 0; i < 16; i++) tpl_printf(vars, 1, "AESKEY", "%02X", rdr->aes_key[i]);
 	}
 
-	//check for tiger
-	int tigerkey = 0;
-	for (i = 64; i < 120; i++) {
-		if(rdr->rsa_mod[i] > 0) {
-			tigerkey = 1;
-			break;
-		}
-	}
-
-	if(rdr->has_rsa) {
-		if (!tigerkey) {
-			for (i = 0; i < 64; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", rdr->rsa_mod[i]);
-			for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", rdr->nagra_boxkey[i]);
-		}
-	}
-	if (tigerkey) {
-		for (i = 0; i < 120; i++) tpl_printf(vars, 1, "TIGERRSAKEY", "%02X", rdr->rsa_mod[i]);
+	int len = check_filled(rdr->rsa_mod, 120);
+	if(len > 0) {
+		for (i = 0; i < len; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", rdr->rsa_mod[i]);
 		for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", rdr->nagra_boxkey[i]);
 	}
 

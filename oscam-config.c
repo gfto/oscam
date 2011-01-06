@@ -2256,43 +2256,14 @@ int write_server()
 			if (rdr->aes_key[0] && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", cs_hexdump(0, rdr->aes_key, 16));
 
-
-			//check for rsa
-			for (j=0;j<64;j++) {
-				if(rdr->rsa_mod[j] > 0) {
-					rdr->has_rsa = 1;
-					break;
+			// rsakey
+			int len = check_filled(rdr->rsa_mod, 120);
+			if (len > 0) {
+				fprintf_conf(f, CONFVARWIDTH, "rsakey", "");
+				for (j=0;j<len;j++) {
+					fprintf(f, "%02X", rdr->rsa_mod[j]);
 				}
-			}
-
-			//check for tiger
-			int tigerkey = 0;
-			for (j=64;j<120;j++) {
-				if(rdr->rsa_mod[j] > 0) {
-					tigerkey = 1;
-					break;
-				}
-			}
-
-			//n3_rsakey
-			if (rdr->has_rsa) {
-				if (!tigerkey) {
-					fprintf_conf(f, CONFVARWIDTH, "rsakey", "");
-					for (j=0;j<64;j++) {
-						fprintf(f, "%02X", rdr->rsa_mod[j]);
-					}
-					fprintf(f, "\n");
-				}
-				else  {
-					//tiger_rsakey
-					if (tigerkey) {
-						fprintf_conf(f, CONFVARWIDTH, "tiger_rsakey", "");
-						for (j=0;j<120;j++) {
-							fprintf(f, "%02X", rdr->rsa_mod[j]);
-						}
-						fprintf(f, "\n");
-					}
-				}
+				fprintf(f, "\n");
 			}
 
 			if (rdr->force_irdeto && isphysical) {
@@ -3232,14 +3203,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
-	if ((!strcmp(token, "n3_rsakey")) || (!strcmp(token, "rsakey"))) {
-		if(strlen(value) != 128 ) {
+	if (!strcmp(token, "rsakey")) {
+		int len = strlen(value);
+		if(len != 128 && len != 240) {
 			memset(rdr->rsa_mod, 0, 120);
-			rdr->has_rsa = 0;
 			return;
 		} else {
-			rdr->has_rsa = 1;
-			if (key_atob_l(value, rdr->rsa_mod, 128)) {
+			if (key_atob_l(value, rdr->rsa_mod, len)) {
 				fprintf(stderr, "Configuration reader: Error in rsakey\n");
 				exit(1);
 			}
@@ -3247,20 +3217,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
-	if (!strcmp(token, "tiger_rsakey")) {
-		if(strlen(value) != 240) {
-			memset(rdr->rsa_mod, 0, 120);
-			return;
-		} else {
-			if (key_atob_l(value, rdr->rsa_mod, 240)) {
-				fprintf(stderr, "Configuration reader: Error in tiger_rsakey\n");
-				exit(1);
-			}
-			return;
-		}
-	}
-
-	if ((!strcmp(token, "n3_boxkey")) || (!strcmp(token, "boxkey"))) {
+	if (!strcmp(token, "boxkey")) {
 		if(strlen(value) != 16 ) {
 			memset(rdr->nagra_boxkey, 0, 16);
 			return;

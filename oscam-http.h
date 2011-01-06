@@ -883,7 +883,6 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
     <TR><TD>AES Key:</TD><TD><input name=\"aeskey\" type=\"text\" size=\"35\" maxlength=\"32\" value=\"##AESKEY##\"></TD></TR>\n\
     <TR><TD>AES Keys:</TD><TD><textarea name=\"aeskeys\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##AESKEYS##</textarea></TD></TR>\n\
     <TR><TD>RSA key:</TD><TD><textarea name=\"rsakey\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##RSAKEY##</textarea></TD></TR>\n\
-    <TR><TD>Tiger RSA key:</TD><TD><textarea name=\"tiger_rsakey\" cols=\"98\" rows=\"6\" class=\"bt\" maxlength=\"240\">##TIGERRSAKEY##</textarea></TD></TR>\n\
     <TR><TD>Boxkey:</TD><TD><input name=\"boxkey\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##BOXKEY##\"></TD></TR>\n\
     <TR><TD>ATR:</TD><TD><input name=\"atr\" type=\"text\" size=\"100\" maxlength=\"54\" value=\"##ATR##\"></TD></TR>\n\
     <TR><TD>Detect:</TD><TD><input name=\"detect\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DETECT##\"></TD></TR>\n\

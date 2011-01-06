@@ -243,14 +243,11 @@ DESCRIPTIONS
 	    1 = read all records with expired rights
 	    2 = read records with valid rights only
 
-       n3_rsakey|rsakey = RSA key
-	  RSA key for Nagravision SCs / CAM key data for Irdeto SCs
+       rsakey = RSA key
+	  RSA key for Nagravision/Tiger SCs / CAM key data for Irdeto SCs
 
-       n3_boxkey|boxkey = box key
+       boxkey = box key
 	  box key for Nagravision SCs / CAM key for Irdeto SCs
-
-       tiger_rsakey = RSA key
-	  RSA key for Tiger Nagravision SCs
 
        aeskey = AES key
 	  16 bytes AES key for Viaccess SCs

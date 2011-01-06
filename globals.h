@@ -774,7 +774,6 @@ struct s_reader  //contains device info, reader info and card info
   ulong     boxid;
   int       nagra_read; // read nagra ncmed records: 0 disabled (default), 1 read all records, 2 read valid records only
   uchar	    nagra_boxkey[16]; //n3 boxkey 8byte  or tiger idea key 16byte
-  int       has_rsa;
   char      country_code[3]; // irdeto country code.
   int       force_irdeto;
   uchar     aes_key[16];
@@ -1253,6 +1252,7 @@ extern void cs_sleepus(unsigned int);
 extern int bytes_available(int);
 extern void cs_setpriority(int);
 extern struct s_auth *find_user(char *);
+extern int check_filled(uchar *value, int length);
 #ifdef WEBIF
 extern int x2i(int i);
 extern void urldecode(char *s);

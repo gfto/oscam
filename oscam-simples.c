@@ -563,6 +563,16 @@ void cs_setpriority(int prio)
 }
 #endif
 
+/* Checks an array if it is filled (a value > 0) and returns the last position (1...length) where something was found.
+   length specifies the maximum length to check for. */
+int check_filled(uchar *value, int length){
+	int i, j = 0;
+	for (i = 0; i < length; ++i){
+		if(value[j] > 0) j = i + 1;
+	}
+	return j;
+}
+
 #ifdef WEBIF
 /* Helper function for urldecode.*/
 int x2i(int i){
