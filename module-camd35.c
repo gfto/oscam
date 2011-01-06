@@ -602,8 +602,10 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 			client->stopped = 2; // server says sleep
 			rdr->card_status = NO_CARD;
 		} else {
-			client->stopped = 1; // server says invalid
-			rdr->card_status = CARD_FAILURE;
+		        if (!cfg->lb_mode) {
+			        client->stopped = 1; // server says invalid
+                                rdr->card_status = CARD_FAILURE;
+                        }
 
 			ECM_REQUEST *er_failed = (ECM_REQUEST *)malloc(sizeof(ECM_REQUEST));
 			er_failed->srvid = b2i(2, buf + 8);
