@@ -253,7 +253,7 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 			ptab->ports[i].ncd_key_is_set = 0;   //default to 0
 			if( (ptr3=strchr(trim(ptr1), '{')) ) {
 				*ptr3++='\0';
-				if (key_atob14(ptr3, ptab->ports[i].ncd_key))
+				if (key_atob_l(ptr3, ptab->ports[i].ncd_key, 28))
 					fprintf(stderr, "newcamd: error in DES Key for port %s -> ignored\n", ptr1);
 				else
 					ptab->ports[i].ncd_key_is_set = 1;
@@ -845,7 +845,7 @@ void chk_t_camd33(char *token, char *value)
 			cfg->c33_crypted = 0;
 			return;
 		}
-		if (key_atob(value, cfg->c33_key)) {
+		if (key_atob_l(value, cfg->c33_key, 32)) {
 			fprintf(stderr, "Configuration camd3.3x: Error in Key\n");
 			exit(1);
 		}
@@ -954,7 +954,7 @@ void chk_t_newcamd(char *token, char *value)
 	if (!strcmp(token, "key")) {
 		if(strlen(value) == 0)
 			return;
-		if (key_atob14(value, cfg->ncd_key)) {
+		if (key_atob_l(value, cfg->ncd_key, 28)) {
 			fprintf(stderr, "Configuration newcamd: Error in Key\n");
 			exit(1);
 		}
@@ -3203,7 +3203,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 #endif
 
 	if (!strcmp(token, "key")) {
-		if (key_atob14(value, rdr->ncd_key)) {
+		if (key_atob_l(value, rdr->ncd_key, 28)) {
 			fprintf(stderr, "Configuration newcamd: Error in Key\n");
 			exit(1);
 		}
@@ -3385,7 +3385,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			memset(rdr->aes_key, 0, 16);
 			return;
 		} else {
-			if (key_atob(value, rdr->aes_key)) {
+			if (key_atob_l(value, rdr->aes_key, 32)) {
 				fprintf(stderr, "Configuration reader: Error in AES Key\n");
 				exit(1);
 			}

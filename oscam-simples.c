@@ -106,7 +106,7 @@ void parse_aes_entry(struct s_reader *rdr,char *value) {
         if(dummy)
             memset(aes_key,0xFF,16);
         else
-            key_atob(tmp,aes_key);
+            key_atob_l(tmp,aes_key,32);
         // now add the key to the reader... TBD
         add_aes_entry(rdr,caid,ident,key_id,aes_key);
         key_id++;
@@ -335,30 +335,6 @@ long dyn_word_atob(char *asc)
 			rc = (-1);
 	}
 	return(rc);
-}
-
-int key_atob(char *asc, uchar *bin)
-{
-  int i, n1, n2, rc;
-  for (i=rc=0; i<32; i+=2)
-  {
-    if ((n1=gethexval(asc[i  ]))<0) rc=(-1);
-    if ((n2=gethexval(asc[i+1]))<0) rc=(-1);
-    bin[i>>1]=(n1<<4)+(n2&0xff);
-  }
-  return(rc);
-}
-
-int key_atob14(char *asc, uchar *bin)
-{
-  int i, n1, n2, rc;
-  for (i=rc=0; i<28; i+=2)
-  {
-    if ((n1=gethexval(asc[i  ]))<0) rc=(-1);
-    if ((n2=gethexval(asc[i+1]))<0) rc=(-1);
-    bin[i>>1]=(n1<<4)+(n2&0xff);
-  }
-  return(rc);
 }
 
 int key_atob_l(char *asc, uchar *bin, int l)

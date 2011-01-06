@@ -1236,8 +1236,6 @@ extern ulong cs_atoi(char *, int, int);
 extern int byte_atob(char *);
 extern long word_atob(char *);
 extern long dyn_word_atob(char *asc);
-extern int key_atob(char *, uchar *);
-extern int key_atob14(char *, uchar *);
 extern int key_atob_l(char *, uchar *, int);
 extern char *key_btoa(char *, uchar *);
 extern char *cs_hexdump(int, const uchar *, int);
