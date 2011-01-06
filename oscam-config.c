@@ -2230,7 +2230,7 @@ int write_server()
 			if (rdr->tcp_rto && !isphysical )
 				fprintf_conf(f, CONFVARWIDTH, "reconnecttimeout", "%d\n", rdr->tcp_rto);
 
-			if (rdr->ncd_disable_server_filt && !isphysical)
+			if (rdr->ncd_disable_server_filt && rdr->typ == R_NEWCAMD)
 				fprintf_conf(f, CONFVARWIDTH, "disableserverfilter", "%d\n", rdr->ncd_disable_server_filt);
 
 			if (rdr->smargopatch && isphysical)
