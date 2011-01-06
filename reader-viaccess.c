@@ -920,7 +920,8 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 	static uchar emm_global[512];
 	static int emm_global_len = 0;
 
-	int pos, emm_len = 0, k;
+	int pos, emm_len = 0;
+	uint k;
 	uchar emmbuf[512];
 
 	// Viaccess
@@ -933,8 +934,6 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 			if (!memcmp(emm_global, buffer, *len))
 				return 0;
 
-			//cs_log("viaccess global emm_provid: %06X provid: %06X", emm_provid, provider);
-
 			// copy first part of the emm-s
 			memcpy(emm_global, buffer, *len);
 			emm_global_len=*len;
@@ -944,45 +943,62 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 		case 0x8e:
 			// emm-s part 2
 			if (!emm_global_len) return 0;
-
-			if (buffer[6]!=0x00) return 0;
 					   
+			//copy emm-s header (including sa)
 			memcpy(emmbuf, buffer, 7);
 			pos=7;
 
-			for (k=3; k<emm_global[2]+2 && k<emm_global_len; k += emm_global[k+1]+2) {
-				if (emm_global[k]!=0x90) continue;
-				memcpy(emmbuf+pos, emm_global+k, emm_global[k+1]+2);
-				pos += emm_global[k+1]+2;
-			}
+			//copy emm-gh
+			memcpy(emmbuf+pos, emm_global+3, emm_global_len-3);
+			pos=pos+emm_global_len-3;
 
-			memcpy(emmbuf+pos, "\x9E\x20", 2);
-			memcpy(emmbuf+pos+2, buffer+7, 32);
-			pos+=34;
-
-			int found=0;
-			for (k=8; k<emm_global[2]+2 && k<emm_global_len; k += emm_global[k+1]+2) {
-				if (emm_global[k] == 0xA1 || emm_global[k] == 0xA8 || emm_global[k] == 0xA9 || emm_global[k] == 0xB6) {
-					memcpy(emmbuf+pos, emm_global+k, emm_global[k+1]+2);
-					pos += emm_global[k+1]+2;
-					found=1;
+			//determine whether fixed or variable length emm-s
+			//if no f0 08 nano is found it has fixed length
+			int fixed = 1;
+			for (k=0; k<(*len); k++) {
+				if (buffer[k]==0xf0 && (k+1) < *len && buffer[k+1] == 0x08) {
+					cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: found variable emm");
+					fixed = 0;
 				}
 			}
-			if (found==0) return 0;
 
-			memcpy(emmbuf+pos, "\xF0\x08", 2);
-			memcpy(emmbuf+pos+2, buffer+39, 8);
-			pos+=10;
+			//fixed emm-s
+			if (fixed) {
+				cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: found fixed emm");
+				//add 9E 20 nano + first 32 bytes of emm content
+				memcpy(emmbuf+pos, "\x9E\x20", 2);
+				memcpy(emmbuf+pos+2, buffer+7, 32);
+				pos+=34;
 
+				//add F0 08 nano + 8 subsequent bytes of emm content
+				memcpy(emmbuf+pos, "\xF0\x08", 2);
+				memcpy(emmbuf+pos+2, buffer+39, 8);
+				pos+=10;
+			}
+			//variable emm-s
+			else {
+				//copy emm-s as is
+				memcpy(emmbuf+pos, buffer+7, *len);
+				pos+=*len;
+			}
+
+			//calculate emm length and set it on position 2
 			emm_len=pos;
 			emmbuf[2]=emm_len-3;
-			cs_ddump_mask(D_READER, buffer, *len, "original emm:");
+
+			//cs_ddump_mask(D_READER, buffer, *len, "original emm:");
+			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: emm-gh ? %s", cs_hexdump(1, emm_global, emm_global_len));
+			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: emm-s ? %s", cs_hexdump(1, buffer, *len));
+			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: assembled emm ? %s", cs_hexdump(1, emmbuf, emm_len));
+
+			//place assembled emm
 			memcpy(buffer, emmbuf, emm_len);
 			*len=emm_len;
 			break;
 	}
 	return 1;
 }
+
 #endif
 
 void reader_viaccess(struct s_cardsystem *ph) 
