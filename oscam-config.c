@@ -596,13 +596,8 @@ void chk_t_ac(char *token, char *value)
 void chk_t_monitor(char *token, char *value)
 {
 	if (!strcmp(token, "port")) {
-		if(strlen(value) == 0) {
-			cfg->mon_port = 0;
-			return;
-		} else {
-			cfg->mon_port=atoi(value);
-			return;
-		}
+		cfg->mon_port = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "serverip")) {
@@ -626,43 +621,23 @@ void chk_t_monitor(char *token, char *value)
 	}
 
 	if (!strcmp(token, "aulow")) {
-		if(strlen(value) == 0) {
-			cfg->mon_aulow = 0;
-			return;
-		} else {
-			cfg->mon_aulow = atoi(value);
-			return;
-		}
+		cfg->mon_aulow = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "monlevel")) {
-		if(strlen(value) == 0) {
-			cfg->mon_level = 0;
-			return;
-		} else {
-			cfg->mon_level = atoi(value);
-			return;
-		}
+		cfg->mon_level = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "hideclient_to")) {
-		if(strlen(value) == 0) {
-			cfg->mon_hideclient_to = 0;
-			return;
-		} else {
-			cfg->mon_hideclient_to = atoi(value);
-			return;
-		}
+		cfg->mon_hideclient_to = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "appendchaninfo")) {
-		if(strlen(value) == 0) {
-			cfg->mon_appendchaninfo = 0;
-			return;
-		} else {
-			cfg->mon_appendchaninfo = atoi(value);
-			return;
-		}
+		cfg->mon_appendchaninfo = strToIntVal(value, 0);
+		return;
 	}
 
 	if (token[0] != '#')
@@ -734,23 +709,13 @@ void chk_t_webif(char *token, char *value)
 	}
 
 	if (!strcmp(token, "httprefresh")) {
-		if(strlen(value) == 0) {
-			cfg->http_refresh = 0;
-			return;
-		} else {
-			cfg->http_refresh = atoi(value);
-			return;
-		}
+		cfg->http_refresh = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "httphideidleclients")) {
-		if(strlen(value) == 0) {
-			cfg->http_hide_idle_clients = 0;
-			return;
-		} else {
-			cfg->http_hide_idle_clients = atoi(value);
-			return;
-		}
+		cfg->http_hide_idle_clients = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "httpallowed")) {
@@ -764,13 +729,8 @@ void chk_t_webif(char *token, char *value)
 	}
 
 	if (!strcmp(token, "httpreadonly")) {
-		if(strlen(value) == 0) {
-			cfg->http_readonly = 0;
-			return;
-		} else {
-			cfg->http_readonly = atoi(value);
-			return;
-		}
+		cfg->http_readonly = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "httpdyndns")) {
@@ -779,23 +739,13 @@ void chk_t_webif(char *token, char *value)
 	}
 
 	if (!strcmp(token, "httpsavefullcfg")) {
-		if(strlen(value) == 0) {
-			cfg->http_full_cfg = 0;
-			return;
-		} else {
-			cfg->http_full_cfg = atoi(value);
-			return;
-		}
+		cfg->http_full_cfg = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "httpjsicons")) {
-		if(strlen(value) == 0) {
-			cfg->http_js_icons = 0;
-			return;
-		} else {
-			cfg->http_js_icons = atoi(value);
-			return;
-		}
+		cfg->http_js_icons = strToIntVal(value, 0);
+		return;
 	}
 
 	if (token[0] != '#')
@@ -807,13 +757,8 @@ void chk_t_webif(char *token, char *value)
 void chk_t_camd33(char *token, char *value)
 {
 	if (!strcmp(token, "port")) {
-		if(strlen(value) == 0) {
-			cfg->c33_port = 0;
-			return;
-		} else {
-			cfg->c33_port = atoi(value);
-			return;
-		}
+		cfg->c33_port = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "serverip")) {
@@ -836,7 +781,7 @@ void chk_t_camd33(char *token, char *value)
 	}
 
 	if (!strcmp(token, "passive")) {
-		cfg->c33_passive = (value[0]!='0');
+		cfg->c33_passive = strToIntVal(value, 0);
 		return;
 	}
 
@@ -860,13 +805,8 @@ void chk_t_camd33(char *token, char *value)
 void chk_t_camd35(char *token, char *value)
 {
 	if (!strcmp(token, "port")) {
-		if(strlen(value) == 0) {
-			cfg->c35_port = 0;
-			return;
-		} else {
-			cfg->c35_port = atoi(value);
-			return;
-		}
+		cfg->c35_port = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "serverip")) {
@@ -880,13 +820,8 @@ void chk_t_camd35(char *token, char *value)
 	}
 
 	if (!strcmp(token, "suppresscmd08")) {
-		if(strlen(value) == 0) {
-			cfg->c35_suppresscmd08 = 0;
-			return;
-		} else {
-			cfg->c35_suppresscmd08=atoi(value);
-			return;
-		}
+		cfg->c35_suppresscmd08 = strToIntVal(value, 0);
+		return;
 	}
 
 	if (token[0] != '#')
@@ -962,23 +897,13 @@ void chk_t_newcamd(char *token, char *value)
 	}
 
 	if (!strcmp(token, "keepalive")) {
-		if(strlen(value) == 0) {
-			cfg->ncd_keepalive = 1;
-			return;
-		} else {
-			cfg->ncd_keepalive = atoi(value);
-			return;
-		}
+		cfg->ncd_keepalive = strToIntVal(value, 1);
+		return;
 	}
 
 	if (!strcmp(token, "mgclient")) {
-		if(strlen(value) == 0) {
-			cfg->ncd_mgclient = 0;
-			return;
-		} else {
-			cfg->ncd_mgclient = atoi(value);
-			return;
-		}
+		cfg->ncd_mgclient = strToIntVal(value, 1);
+		return;
 	}
 
 	if (token[0] != '#')
@@ -988,43 +913,28 @@ void chk_t_newcamd(char *token, char *value)
 void chk_t_cccam(char *token, char *value)
 {
 	if (!strcmp(token, "port")) {
-		if(strlen(value) == 0)
-			cfg->cc_port = 0;
-		else
-			cfg->cc_port = atoi(value);
+		cfg->cc_port = strToIntVal(value, 0);
 		return;
 	}
 	//if (!strcmp(token, "serverip")) { cfg->cc_srvip=inet_addr(value); return; }
 
 	if (!strcmp(token, "reshare")) {
-		if(strlen(value) == 0)
-			cfg->cc_reshare = 0;
-		else
-			cfg->cc_reshare=atoi(value);
+		cfg->cc_reshare = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "stealth")) {
-		if(strlen(value) == 0)
-			cfg->cc_stealth = 1;
-		else
-			cfg->cc_stealth=atoi(value);
+		cfg->cc_stealth = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "reshare_mode")) {
-		if(strlen(value) == 0)
-			cfg->cc_reshare_services = 0;
-		else
-			cfg->cc_reshare_services=atoi(value);
+		cfg->cc_reshare_services = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "ignorereshare")) {
-		if(strlen(value) == 0)
-			cfg->cc_ignore_reshare = 0;
-		else
-			cfg->cc_ignore_reshare=atoi(value);
+		cfg->cc_ignore_reshare = strToIntVal(value, 0);
 		return;
 	}
 	// cccam version
@@ -1039,29 +949,20 @@ void chk_t_cccam(char *token, char *value)
 	}
 	// cccam: Update cards interval
 	if (!strcmp(token, "updateinterval")) {
-	        if (strlen(value) == 0)
-	                cfg->cc_update_interval = 4*60; //4x60s = 4min
-                else
-                        cfg->cc_update_interval = atoi(value);
-                return;
+		cfg->cc_update_interval = strToIntVal(value, (4*60));//4x60s = 4min
+		return;
 	}
 
 	// cccam: Kind of card updates
 	if (!strcmp(token, "minimizecards")) {
-	        if (strlen(value) == 0)
-	                cfg->cc_minimize_cards = 0;
-                else
-                        cfg->cc_minimize_cards = atoi(value);
-                return;
+		cfg->cc_minimize_cards = strToIntVal(value, 0);
+		return;
 	}
 
 	// cccam: keep clients connected
 	if (!strcmp(token, "keepconnected")) {
-	        if (strlen(value) == 0)
-	                cfg->cc_keep_connected = 1;
-                else
-                        cfg->cc_keep_connected = atoi(value);
-                return;
+		cfg->cc_keep_connected = strToIntVal(value, 0);
+		return;
 	}
 
 
@@ -1072,13 +973,8 @@ void chk_t_cccam(char *token, char *value)
 void chk_t_radegast(char *token, char *value)
 {
 	if (!strcmp(token, "port")) {
-		if(strlen(value) == 0) {
-			cfg->rad_port = 0;
-			return;
-		} else {
-			cfg->rad_port = atoi(value);
-			return;
-		}
+		cfg->rad_port = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "serverip")) {
@@ -1134,7 +1030,7 @@ void chk_t_gbox(char *token, char *value)
 	}
 
 	if (!strcmp(token, "maxdist")) {
-		cfg->maxdist=atoi(value);
+		cfg->maxdist = strToIntVal(value, 0);
 		return;
 	}
 
@@ -1174,29 +1070,17 @@ void chk_t_gbox(char *token, char *value)
 void chk_t_dvbapi(char *token, char *value)
 {
 	if (!strcmp(token, "enabled")) {
-		if(strlen(value) == 0) {
-			cfg->dvbapi_enabled = 0;
-		} else {
-			cfg->dvbapi_enabled = atoi(value);
-		}
+		cfg->dvbapi_enabled = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "au")) {
-		if(strlen(value) == 0) {
-			cfg->dvbapi_au = 0;
-		} else {
-			cfg->dvbapi_au = atoi(value);
-		}
+		cfg->dvbapi_au = strToIntVal(value, 0);
 		return;
 	}
 
 	if (!strcmp(token, "pmt_mode")) {
-		if(strlen(value) == 0) {
-			cfg->dvbapi_pmtmode = 0;
-		} else {
-			cfg->dvbapi_pmtmode = atoi(value);
-		}
+		cfg->dvbapi_pmtmode = strToIntVal(value, 0);
 		return;
 	}
 
@@ -3261,17 +3145,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	/*
 	 *  case insensitive
-	*/
+	 */
 	strtolower(value);
 
 	if (!strcmp(token, "enable")) {
-		if(strlen(value) == 0) {
-			rdr->enable = 0;
-			return;
-		} else {
-			rdr->enable = atoi(value) ? 1 : 0;
-			return;
-		}
+		rdr->enable  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "services")) {
@@ -3286,44 +3165,24 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "inactivitytimeout")) {
-		if(strlen(value) == 0) {
-			rdr->tcp_ito = 0;
-			return;
-		} else {
-			rdr->tcp_ito = atoi(value);
-			return;
-		}
+		rdr->tcp_ito  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "reconnecttimeout")) {
-		if(strlen(value) == 0) {
-			rdr->tcp_rto = 0;
-			return;
-		} else {
-			rdr->tcp_rto = atoi(value);
-			return;
-		}
+		rdr->tcp_rto  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "disableserverfilter")) {
-		if(strlen(value) == 0) {
-			rdr->ncd_disable_server_filt = 0;
-			return;
-		} else {
-			rdr->ncd_disable_server_filt = atoi(value);
-			return;
-		}
+		rdr->ncd_disable_server_filt  = strToIntVal(value, 0);
+		return;
 	}
 
 	//FIXME workaround for Smargo until native mode works
 	if (!strcmp(token, "smargopatch")) {
-		if(strlen(value) == 0) {
-			rdr->smargopatch = 0;
-			return;
-		} else {
-			rdr->smargopatch = atoi(value);
-			return;
-		}
+		rdr->smargopatch  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "label")) {
@@ -3341,23 +3200,13 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "fallback")) {
-		if(strlen(value) == 0) {
-			rdr->fallback = 0;
-			return;
-		} else {
-			rdr->fallback = atoi(value) ? 1 : 0;
-			return;
-		}
+		rdr->fallback  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "logport")) {
-		if(strlen(value) == 0) {
-			rdr->log_port = 0;
-			return;
-		} else {
-			rdr->log_port = atoi(value);
-			return;
-		}
+		rdr->log_port  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "caid")) {
@@ -3435,13 +3284,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "force_irdeto")) {
-		if(strlen(value) == 0) {
-			rdr->force_irdeto = 0;
-			return;
-		} else {
-			rdr->force_irdeto = atoi(value);
-			return;
-		}
+		rdr->force_irdeto  = strToIntVal(value, 0);
+		return;
 	}
 
 
@@ -3470,33 +3314,18 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "nagra_read")) {
-		if(strlen(value) == 0) {
-			rdr->nagra_read = 0;
-			return;
-		} else {
-			rdr->nagra_read = atoi(value);
-			return;
-		}
+		rdr->nagra_read  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "mhz")) {
-		if(strlen(value) == 0) {
-			rdr->mhz = 0;
-			return;
-		} else {
-			rdr->mhz = atoi(value);
-			return;
-		}
+		rdr->mhz  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "cardmhz")) {
-		if(strlen(value) == 0) {
-			rdr->cardmhz = 0;
-			return;
-		} else {
-			rdr->cardmhz = atoi(value);
-			return;
-		}
+		rdr->cardmhz  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "protocol")) {
@@ -3616,7 +3445,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "showcls")) {
-		rdr->show_cls = atoi(value);
+		rdr->show_cls  = strToIntVal(value, 0);
 		return;
 	}
 
@@ -3655,15 +3484,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 						break;
 
 					case 2: rdr->logemm = atoi(ptr);
-						break;
+					break;
 				}
 			}
 
 			if (rdr->rewritemm <= 0) {
 				fprintf(stderr, "Notice: Setting EMMCACHE to %i,1,%i instead of %i,%i,%i. ",
-					rdr->cachemm, rdr->logemm,
-					rdr->cachemm, rdr->rewritemm,
-					rdr->logemm);
+						rdr->cachemm, rdr->logemm,
+						rdr->cachemm, rdr->rewritemm,
+						rdr->logemm);
 
 				fprintf(stderr, "Zero or negative number of rewrites is silly\n");
 				rdr->rewritemm = 1;
@@ -3695,47 +3524,23 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "blockemm-unknown")) {
-		if (strlen(value) == 0) {
-			rdr->blockemm_unknown = 0;
-			return;
-		}
-		else {
-			rdr->blockemm_unknown = atoi(value);
-			return;
-		}
+		rdr->blockemm_unknown  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "blockemm-u")) {
-		if (strlen(value) == 0) {
-			rdr->blockemm_u = 0;
-			return;
-		}
-		else {
-			rdr->blockemm_u = atoi(value);
-			return;
-		}
+		rdr->blockemm_u  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "blockemm-s")) {
-		if (strlen(value) == 0) {
-			rdr->blockemm_s = 0;
-			return;
-		}
-		else {
-			rdr->blockemm_s = atoi(value);
-			return;
-		}
+		rdr->blockemm_s  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "blockemm-g")) {
-		if (strlen(value) == 0) {
-			rdr->blockemm_g = 0;
-			return;
-		}
-		else {
-			rdr->blockemm_g = atoi(value);
-			return;
-		}
+		rdr->blockemm_g  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "lb_weight")) {
@@ -3785,41 +3590,23 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	if (!strcmp(token, "cccmaxhop") || !strcmp(token, "cccmaxhops")) { //Schlocke: cccmaxhops is better!
 		// cccam max card distance
-		if (!strlen(value))
-			rdr->cc_maxhop = 10;
-		else
-			rdr->cc_maxhop = atoi(value);
+		rdr->cc_maxhop  = strToIntVal(value, 10);
 		return;
 	}
 
 	if (!strcmp(token, "cccwantemu")) {
-		if (strlen(value) == 0) {
-			rdr->cc_want_emu = 0;
-			return;
-		} else {
-			rdr->cc_want_emu = atoi(value);
-			return;
-		}
+		rdr->cc_want_emu  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "ccckeepalive")) {
-		if (strlen(value) == 0) {
-			rdr->cc_keepalive = 0;
-			return;
-		} else {
-			rdr->cc_keepalive = atoi(value);
-			return;
-		}
+		rdr->cc_keepalive  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "deprecated")) {
-		if (strlen(value) == 0) {
-			rdr->deprecated = 0;
-			return;
-		} else {
-			rdr->deprecated = atoi(value);
-			return;
-		}
+		rdr->deprecated  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "ccchopsaway") || !strcmp(token, "cccreshar")  || !strcmp(token, "cccreshare")) {
@@ -3828,13 +3615,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "audisabled")) {
-		if (strlen(value) == 0) {
-			rdr->audisabled = 0;
-			return;
-		} else {
-			rdr->audisabled = atoi(value);
-			return;
-		}
+		rdr->audisabled  = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "auprovid")) {
@@ -3846,60 +3628,60 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 	}
-    // new code for multiple aes key per reader
+	// new code for multiple aes key per reader
 	if (!strcmp(token, "aeskeys")) {
-        parse_aes_keys(rdr,value);
+		parse_aes_keys(rdr,value);
 		return;
 	}
 
-        if (!strcmp(token, "ndsversion")) {
-                if (strlen(value) == 0) {
-                        rdr->ndsversion = 0;
-                        return;
-                } else {
-                        rdr->ndsversion = atoi(value);
-                        return;
-                }
-        }
+	if (!strcmp(token, "ndsversion")) {
+		if (strlen(value) == 0) {
+			rdr->ndsversion = 0;
+			return;
+		} else {
+			rdr->ndsversion = atoi(value);
+			return;
+		}
+	}
 
 
 #ifdef AZBOX
-  if (!strcmp(token, "mode")) {
-    if(strlen(value) == 0) {
-      rdr->mode = -1;
-      return;
-    } else {
-      rdr->mode = atoi(value);
-      return;
-    }
-  }
+	if (!strcmp(token, "mode")) {
+		if(strlen(value) == 0) {
+			rdr->mode = -1;
+			return;
+		} else {
+			rdr->mode = atoi(value);
+			return;
+		}
+	}
 #endif
 
 	//ratelimit
-        if (!strcmp(token, "ratelimitecm")) {
-                if (strlen(value) == 0) {
-                        rdr->ratelimitecm = 0;
-                        return;
-                } else {
-                        rdr->ratelimitecm = atoi(value);
+	if (!strcmp(token, "ratelimitecm")) {
+		if (strlen(value) == 0) {
+			rdr->ratelimitecm = 0;
+			return;
+		} else {
+			rdr->ratelimitecm = atoi(value);
 			int h;
 			for (h=0;h<rdr->ratelimitecm;h++) rdr->rlecmh[h].last=-1;
-                        return;
-                }
-        }
-        if (!strcmp(token, "ratelimitseconds")) {
-                if (strlen(value) == 0) {
+			return;
+		}
+	}
+	if (!strcmp(token, "ratelimitseconds")) {
+		if (strlen(value) == 0) {
 			if (rdr->ratelimitecm>0) {
-                        	rdr->ratelimitseconds = 10;
+				rdr->ratelimitseconds = 10;
 			} else {
-                        	rdr->ratelimitseconds = 0;
+				rdr->ratelimitseconds = 0;
 			}
-                        return;
-                } else {
-                        rdr->ratelimitseconds = atoi(value);
-                        return;
-                }
-        }
+			return;
+		} else {
+			rdr->ratelimitseconds = atoi(value);
+			return;
+		}
+	}
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in reader section not recognized\n",token);
 }
