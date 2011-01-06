@@ -1981,7 +1981,16 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 #ifndef WITH_DEBUG
 		cs_log("*** Warning: Debug Support not compiled in ***");
 #else
-		cs_dblevel = atoi(debuglvl);
+		int dblvl = atoi(debuglvl);
+		if(dblvl == 0) {
+			cs_dblevel = 0;
+		} else if (dblvl == 255) {
+			cs_dblevel = 255;
+		} else if (dblvl == (-255)) {
+			cs_dblevel = 0;
+		} else {
+			cs_dblevel += dblvl;
+		}
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
 #endif
 	}
@@ -2301,7 +2310,25 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 #endif
 
 	// Debuglevel Selector
+	int lvl;
+	for (i = 0; i < 8; i++) {
+		lvl = 1 << i;
+		tpl_printf(vars, 0, "TMPC", "DCLASS%d", lvl);
+		tpl_printf(vars, 0, "TMPV", "DEBUGVAL%d", lvl);
+		if (cs_dblevel & lvl) {
+			tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugls");
+			tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "-%d", lvl);
+		} else {
+			tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugl");
+			tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", lvl);
+		}
+	}
+
+	if (cs_dblevel == 255)
+		tpl_addVar(vars, 0, "DCLASS255", "debugls");
+
 	tpl_addVar(vars, 0, "NEXTPAGE", "status.html");
+	tpl_addVar(vars, 0, "DCLASS", "debugl"); //default
 	tpl_printf(vars, 0, "ACTDEBUG", "%d", cs_dblevel);
 	tpl_addVar(vars, 0, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
 
@@ -2546,13 +2573,24 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 		cfg->disableuserfile = atoi(stopusrlog);
 
 	char *debuglvl = getParam(params, "debug");
-	if(strlen(debuglvl) > 0)
+	if(strlen(debuglvl) > 0) {
 #ifndef WITH_DEBUG
 		cs_log("*** Warning: Debug Support not compiled in ***");
 #else
-		cs_dblevel = atoi(debuglvl);
+		int dblvl = atoi(debuglvl);
+		if(dblvl == 0) {
+			cs_dblevel = 0;
+		} else if (dblvl == 255) {
+			cs_dblevel = 255;
+		} else if (dblvl == (-255)) {
+			cs_dblevel = 0;
+		} else {
+			cs_dblevel += dblvl;
+		}
+
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
 #endif
+	}
 
 	char targetfile[256];
 
@@ -2597,10 +2635,27 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 		}
 
 		// Debuglevel Selector
-		tpl_addVar(vars, 0, "NEXTPAGE", "files.html");
+		int i, lvl;
+		for (i = 0; i < 8; i++) {
+			lvl = 1 << i;
+			tpl_printf(vars, 0, "TMPC", "DCLASS%d", lvl);
+			tpl_printf(vars, 0, "TMPV", "DEBUGVAL%d", lvl);
+			if (cs_dblevel & lvl) {
+				tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugls");
+				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "-%d", lvl);
+			} else {
+				tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugl");
+				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", lvl);
+			}
+		}
+
+		if (cs_dblevel == 255)
+			tpl_addVar(vars, 0, "DCLASS255", "debugls");
+
 		tpl_addVar(vars, 0, "CUSTOMPARAM", "&part=logfile");
 		tpl_printf(vars, 0, "ACTDEBUG", "%d", cs_dblevel);
 		tpl_addVar(vars, 0, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
+		tpl_addVar(vars, 0, "NEXTPAGE", "files.html");
 
 		if(!cfg->disablelog)
 			tpl_printf(vars, 0, "SLOG", "<BR><A CLASS=\"debugl\" HREF=\"files.html?part=logfile&stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");
