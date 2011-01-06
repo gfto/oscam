@@ -2253,30 +2253,23 @@ int write_server()
 			if (rdr->boxid && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", rdr->boxid);
 
-			if (rdr->aes_key[0] && isphysical)
+			if (check_filled(rdr->aes_key, 16) > 0 && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "aeskey", "%s\n", cs_hexdump(0, rdr->aes_key, 16));
 
 			// rsakey
 			int len = check_filled(rdr->rsa_mod, 120);
-			if (len > 0) {
-				fprintf_conf(f, CONFVARWIDTH, "rsakey", "");
-				for (j=0;j<len;j++) {
-					fprintf(f, "%02X", rdr->rsa_mod[j]);
-				}
-				fprintf(f, "\n");
+			if (len > 0 && isphysical) {
+				if(len > 64) len = 120;
+				else len = 64;
+				fprintf_conf(f, CONFVARWIDTH, "rsakey", "%s\n", cs_hexdump(0, rdr->rsa_mod, len));
 			}
 
 			if (rdr->force_irdeto && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
 
-			if (rdr->nagra_boxkey[0] && isphysical) {
-				fprintf_conf(f, CONFVARWIDTH, "boxkey", "");
-				for (j=0;j<8;j++) {
-					fprintf(f, "%02X", rdr->nagra_boxkey[j]);
-				}
-				fprintf(f, "\n");
-			}
+			if (rdr->nagra_boxkey[0] && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "boxkey", "%s\n", cs_hexdump(0, rdr->nagra_boxkey, 8));
 
 			if ( rdr->atr[0] && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "atr", "");

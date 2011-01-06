@@ -907,20 +907,20 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if(rdr->force_irdeto)
 		tpl_addVar(vars, 0, "FORCEIRDETOCHECKED", "checked");
 
-	//aeskey
-	int has_aeskey = 0;
-	for (i = 0; i < 16 ;i++) {
-		if(rdr->aes_key[i]) {
-			has_aeskey++;
-		}
-	}
-	if (has_aeskey) {
+	int len = check_filled(rdr->aes_key, 16);
+	if(len > 0) {
 		for (i = 0; i < 16; i++) tpl_printf(vars, 1, "AESKEY", "%02X", rdr->aes_key[i]);
 	}
 
-	int len = check_filled(rdr->rsa_mod, 120);
+	len = check_filled(rdr->rsa_mod, 120);
 	if(len > 0) {
+		if(len > 64) len = 120;
+		else len = 64;
 		for (i = 0; i < len; i++) tpl_printf(vars, 1, "RSAKEY", "%02X", rdr->rsa_mod[i]);
+	}
+	
+	len = check_filled(rdr->nagra_boxkey, 8);
+	if(len > 0) {
 		for (i = 0; i < 8 ; i++) tpl_printf(vars, 1, "BOXKEY", "%02X", rdr->nagra_boxkey[i]);
 	}
 
