@@ -44,6 +44,7 @@ textarea.editor {width:100%; height:450px;border:1px dotted #AAAAAA; background-
 input{font-family: Arial; font-size: 12px;}\n\
 A:link {color: #050840;}\n\
 A.debugls:link {color: white;background-color:red;}\n\
+A.debugls:visited {color: white;background-color:red;}\n\
 A:visited {color: #050840;}\n\
 A:active {color: #050840;}\n\
 A:hover {color: #ff9e5f;}\n\
