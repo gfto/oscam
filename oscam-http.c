@@ -2092,14 +2092,18 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			if ((strcmp(proto,"newcamd") == 0) && (cl->typ == 'c'))
 				tpl_printf(vars, 0, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(cl->ncd_client_id));
 			else if (((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0))) {
-			//else if ((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0)) {
 				struct cc_data *cc = cl->cc;
-				if(cc) {
+				if(cc && cc->remote_version && cc->remote_build) {
 					tpl_printf(vars, 0, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-					if(strcmp(proto,"cccam ext") == 0)
+					if(cc->extended_mode)
 						tpl_addVar(vars, 0, "CLIENTPROTOTITLE", cc->remote_oscam);
 					else
 						tpl_addVar(vars, 0, "CLIENTPROTOTITLE", ""); //unset tpl var
+				}
+				else
+				{
+					tpl_addVar(vars, 0, "CLIENTPROTO", proto);
+					tpl_addVar(vars, 0, "CLIENTPROTOTITLE", "");
 				}
 			}
 			else {

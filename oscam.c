@@ -789,17 +789,21 @@ struct s_client * cs_fork(in_addr_t ip) {
 
 		cl->login=cl->last=time((time_t *)0);
 		//increase cwcache
-		struct s_ecm *ecmc;
+		struct s_ecm *ecmc, *ecmn;
 		for (ecmc=cwcache; ecmc->next ; ecmc=ecmc->next); //ends on last cwcache entry
-		ecmc->next = malloc(sizeof(struct s_ecm));
-		if (ecmc->next)
-			memset(ecmc->next, 0, sizeof(struct s_ecm));
+		ecmn = malloc(sizeof(struct s_ecm));
+		if (ecmn) {
+			memset(ecmn, 0, sizeof(struct s_ecm));
+			ecmc->next = ecmn;
+                }
 
 		//increase ecmcache
 		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
-		ecmc->next = malloc(sizeof(struct s_ecm));
-		if (ecmc->next)
-			memset(ecmc->next, 0, sizeof(struct s_ecm));
+		ecmn = malloc(sizeof(struct s_ecm));
+		if (ecmn) {
+			memset(ecmn, 0, sizeof(struct s_ecm));
+			ecmc->next = ecmn;
+                }
 
                 //Now add new client to the list:
 		struct s_client *last;

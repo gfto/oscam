@@ -3831,7 +3831,8 @@ int cc_available(struct s_reader *rdr, int checktype) {
 		// 2. Keepalive OFF but not connected: Send requests to connect
 		//     pipe won't run full, because we are reading from pipe to
 		//     get the ecm request
-		return !rdr->cc_keepalive; //Not connected? Connect!
+		if (rdr->cc_keepalive)
+			return 0;
 	}
 
 	if (checktype == AVAIL_CHECK_LOADBALANCE && !rdr->available) {
