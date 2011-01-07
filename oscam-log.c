@@ -178,7 +178,7 @@ static void write_to_log(int flag, char *txt)
 	ptr[1]='\0';
 
 	if ((cur_cl->typ=='c') || (cur_cl->typ=='m'))
-		cs_strncpy(ptr, cur_cl->account->usr, 63);
+		cs_strncpy(ptr, cur_cl->account?cur_cl->account->usr:"", 63);
 	else if ((cur_cl->typ=='p') || (cur_cl->typ=='r'))
 		cs_strncpy(ptr, cur_cl->reader->label, 63);
 	else
