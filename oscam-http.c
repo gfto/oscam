@@ -2032,94 +2032,174 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 		if (cl->wihidden != 1) {
 
-			if((cfg->http_hide_idle_clients == 1) && (cl->typ == 'c') && ((now - cl->lastecm) > cfg->mon_hideclient_to)) continue;
+			if((cfg->http_hide_idle_clients != 1) || (cl->typ != 'c') || ((now - cl->lastecm) <= cfg->mon_hideclient_to)) {
 
-			if (cl->typ=='c')
-				user_count_active++;
-			else if (cl->typ=='r' && cl->reader->card_status==CARD_INSERTED)
-				reader_count_active++;
-			else if (cl->typ=='p' && (cl->reader->card_status==CARD_INSERTED ||cl->reader->tcp_connected))
-				proxy_count_active++;
+				if (cl->typ=='c')
+					user_count_active++;
+				else if (cl->typ=='r' && cl->reader->card_status==CARD_INSERTED)
+					reader_count_active++;
+				else if (cl->typ=='p' && (cl->reader->card_status==CARD_INSERTED ||cl->reader->tcp_connected))
+					proxy_count_active++;
 			
-			lsec=now-cl->login;
-			isec=now-cl->last;
-			usr=username(cl);
+				lsec=now-cl->login;
+				isec=now-cl->last;
+				usr=username(cl);
 
-			if (((cl->typ=='r') || (cl->typ=='p')) && (con=get_ridx(cl->reader)>=0)) usr=cl->reader->label;
+				if (((cl->typ=='r') || (cl->typ=='p')) && (con=get_ridx(cl->reader)>=0)) usr=cl->reader->label;
 
-			if (cl->dup) con=2;
-			else if ((cl->tosleep) && (now-cl->lastswitch>cl->tosleep)) con=1;
-			else con=0;
+				if (cl->dup) con=2;
+				else if ((cl->tosleep) && (now-cl->lastswitch>cl->tosleep)) con=1;
+				else con=0;
 
-			if( (cau=get_ridx(cl->aureader)+1) && (now-cl->lastemm)/60 > cfg->mon_aulow) cau=-cau;
+				if( (cau=get_ridx(cl->aureader)+1) && (now-cl->lastemm)/60 > cfg->mon_aulow) cau=-cau;
 
-			localtime_r(&cl->login, &lt);
+				localtime_r(&cl->login, &lt);
 
-			tpl_printf(vars, 0, "HIDEIDX", "%ld", cl->thread);
+				tpl_printf(vars, 0, "HIDEIDX", "%ld", cl->thread);
 
-			if(!cfg->http_js_icons)
-				tpl_addVar(vars, 0, "HIDEICON", ICHID);
+				if(!cfg->http_js_icons)
+					tpl_addVar(vars, 0, "HIDEICON", ICHID);
 
-			if(cl->typ == 'c' && !cfg->http_readonly) {
-				//tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", i);
-				if(cfg->http_js_icons)
-					tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"\" ALT=\"Kill\"></A>", cl->thread);
-				else
-					tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"%s\" ALT=\"Kill\"></A>", cl->thread, ICKIL);
-			}
-			else if((cl->typ == 'p') && !cfg->http_readonly) {
-				//tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", cl->ridx);
-				if(cfg->http_js_icons)
-					tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"\" ALT=\"Restart\"></A>", cl->reader->label);
-				else
-					tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"%s\" ALT=\"Restart\"></A>", cl->reader->label, ICKIL);
-			}
-			else {
-				tpl_printf(vars, 0, "CSIDX", "%8X&nbsp;", cl->thread);
-			}
-
-			tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
-			tpl_printf(vars, 0, "CLIENTCNR", "%d", get_threadnum(cl));
-			tpl_addVar(vars, 0, "CLIENTUSER", xml_encode(vars, usr));
-			if (cl->typ == 'c')
-				tpl_addVar(vars, 0, "CLIENTDESCRIPTION", xml_encode(vars, cl->account?cl->account->description:""));
-			tpl_printf(vars, 0, "CLIENTCAU", "%d", cau);
-			tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", cl->crypted);
-			tpl_addVar(vars, 0, "CLIENTIP", cs_inet_ntoa(cl->ip));
-			tpl_printf(vars, 0, "CLIENTPORT", "%d", cl->port);
-			char *proto = monitor_get_proto(cl);
-
-			if ((strcmp(proto,"newcamd") == 0) && (cl->typ == 'c'))
-				tpl_printf(vars, 0, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(cl->ncd_client_id));
-			else if (((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0))) {
-				struct cc_data *cc = cl->cc;
-				if(cc && cc->remote_version && cc->remote_build) {
-					tpl_printf(vars, 0, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
-					if(cc->extended_mode)
-						tpl_addVar(vars, 0, "CLIENTPROTOTITLE", cc->remote_oscam);
+				if(cl->typ == 'c' && !cfg->http_readonly) {
+					//tpl_printf(vars, 0, "CSIDX", "%d&nbsp;", i);
+					if(cfg->http_js_icons)
+						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"\" ALT=\"Kill\"></A>", cl->thread);
 					else
-						tpl_addVar(vars, 0, "CLIENTPROTOTITLE", ""); //unset tpl var
+						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"%s\" ALT=\"Kill\"></A>", cl->thread, ICKIL);
 				}
-				else
-				{
+				else if((cl->typ == 'p') && !cfg->http_readonly) {
+					//tpl_printf(vars, 0, "CLIENTPID", "%d&nbsp;", cl->ridx);
+					if(cfg->http_js_icons)
+						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"\" ALT=\"Restart\"></A>", cl->reader->label);
+					else
+						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"%s\" ALT=\"Restart\"></A>", cl->reader->label, ICKIL);
+				}
+				else {
+					tpl_printf(vars, 0, "CSIDX", "%8X&nbsp;", cl->thread);
+				}
+
+				tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
+				tpl_printf(vars, 0, "CLIENTCNR", "%d", get_threadnum(cl));
+				tpl_addVar(vars, 0, "CLIENTUSER", xml_encode(vars, usr));
+				if (cl->typ == 'c')
+					tpl_addVar(vars, 0, "CLIENTDESCRIPTION", xml_encode(vars, cl->account?cl->account->description:""));
+				tpl_printf(vars, 0, "CLIENTCAU", "%d", cau);
+				tpl_printf(vars, 0, "CLIENTCRYPTED", "%d", cl->crypted);
+				tpl_addVar(vars, 0, "CLIENTIP", cs_inet_ntoa(cl->ip));
+				tpl_printf(vars, 0, "CLIENTPORT", "%d", cl->port);
+				char *proto = monitor_get_proto(cl);
+
+				if ((strcmp(proto,"newcamd") == 0) && (cl->typ == 'c'))
+					tpl_printf(vars, 0, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(cl->ncd_client_id));
+				else if (((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0))) {
+					struct cc_data *cc = cl->cc;
+					if(cc && cc->remote_version && cc->remote_build) {
+						tpl_printf(vars, 0, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
+						if(cc->extended_mode)
+							tpl_addVar(vars, 0, "CLIENTPROTOTITLE", cc->remote_oscam);
+						else
+							tpl_addVar(vars, 0, "CLIENTPROTOTITLE", ""); //unset tpl var
+					}
+					else
+					{
+						tpl_addVar(vars, 0, "CLIENTPROTO", proto);
+						tpl_addVar(vars, 0, "CLIENTPROTOTITLE", "");
+					}
+				}
+				else {
 					tpl_addVar(vars, 0, "CLIENTPROTO", proto);
 					tpl_addVar(vars, 0, "CLIENTPROTOTITLE", "");
 				}
-			}
-			else {
-				tpl_addVar(vars, 0, "CLIENTPROTO", proto);
-				tpl_addVar(vars, 0, "CLIENTPROTOTITLE", "");
-			}
+				
+				int secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
+				if (!apicall) {
+					tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
+					tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
+					
+					if(lsec > 0) {
+						secs = lsec % 60;
+						if (lsec > 60) {
+							fullmins = lsec / 60;
+							mins = fullmins % 60;
+							if(fullmins > 60) {
+								fullhours = fullmins / 60;
+								hours = fullhours % 24;
+								days = fullhours / 24;
+							}
+						}
+					}
+					if(days == 0)
+						tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02d:%02d:%02d", hours, mins, secs);
+					else
+						tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+						
+				} else {	
+					char tbuffer [30];
+					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
+					tpl_printf(vars, 0, "CLIENTLOGINDATE", "%s", tbuffer);
+					tpl_printf(vars, 0, "CLIENTLOGINSECS", "%d", lsec);
+				}
+				
+				if (isec < cfg->mon_hideclient_to || cfg->mon_hideclient_to == 0) {
 
-			int secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
-			if (!apicall) {
-				tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
-				tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
+					if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0])) {
+						tpl_printf(vars, 0, "CLIENTLBVALUE", "by %s", cl->lastreader);
+						tpl_printf(vars, 1, "CLIENTLBVALUE", "&nbsp;(%dms)", cl->cwlastresptime);
+						if (apicall)
+							tpl_addVar(vars, 0, "LASTREADER", cl->lastreader);
+					}
 
-				if(lsec > 0) {
-					secs = lsec % 60;
-					if (lsec > 60) {
-						fullmins = lsec / 60;
+					tpl_printf(vars, 0, "CLIENTCAID", "%04X", cl->last_caid);
+					tpl_printf(vars, 0, "CLIENTSRVID", "%04X", cl->last_srvid);
+					tpl_printf(vars, 0, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime);
+
+					int j, found = 0;
+					struct s_srvid *srvid = cfg->srvid;
+
+					while (srvid != NULL) {
+						if (srvid->srvid == cl->last_srvid) {
+							for (j=0; j < srvid->ncaid; j++) {
+								if (srvid->caid[j] == cl->last_caid) {
+									found = 1;
+									break;
+								}
+							}
+						}
+						if (found == 1)
+							break;
+						else
+							srvid = srvid->next;
+					}
+					
+					if (found == 1) {
+						tpl_printf(vars, 0, "CLIENTSRVPROVIDER","%s: ", xml_encode(vars, srvid->prov));
+						tpl_addVar(vars, 0, "CLIENTSRVNAME", xml_encode(vars, srvid->name));
+						tpl_addVar(vars, 0, "CLIENTSRVTYPE", xml_encode(vars, srvid->type));
+						tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION", xml_encode(vars, srvid->desc));
+					} else {
+						tpl_addVar(vars, 0, "CLIENTSRVPROVIDER","");
+						tpl_addVar(vars, 0, "CLIENTSRVNAME","");
+						tpl_addVar(vars, 0, "CLIENTSRVTYPE","");
+						tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION","");
+					}
+					
+				} else {
+					tpl_addVar(vars, 0, "CLIENTCAID", "0000");
+					tpl_addVar(vars, 0, "CLIENTSRVID", "0000");
+					tpl_addVar(vars, 0, "CLIENTSRVPROVIDER","");
+					tpl_addVar(vars, 0, "CLIENTSRVNAME","");
+					tpl_addVar(vars, 0, "CLIENTSRVTYPE","");
+					tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION","");
+					tpl_addVar(vars, 0, "CLIENTLBVALUE","");
+					
+				}
+
+				if (!apicall) {
+				secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
+				if(isec > 0) {
+					secs = isec % 60;
+					if (isec > 60) {
+						fullmins = isec / 60;
 						mins = fullmins % 60;
 						if(fullmins > 60) {
 							fullhours = fullmins / 60;
@@ -2129,151 +2209,69 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 					}
 				}
 				if(days == 0)
-					tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02d:%02d:%02d", hours, mins, secs);
+					tpl_printf(vars, 0, "CLIENTIDLESECS", "%02d:%02d:%02d", hours, mins, secs);
 				else
-					tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
-
-			} else {
-				char tbuffer [30];
-				strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
-				tpl_printf(vars, 0, "CLIENTLOGINDATE", "%s", tbuffer);
-				tpl_printf(vars, 0, "CLIENTLOGINSECS", "%d", lsec);
-			}
-
-			if (isec < cfg->mon_hideclient_to || cfg->mon_hideclient_to == 0) {
-
-				if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0])) {
-					tpl_printf(vars, 0, "CLIENTLBVALUE", "by %s", cl->lastreader);
-					tpl_printf(vars, 1, "CLIENTLBVALUE", "&nbsp;(%dms)", cl->cwlastresptime);
-					if (apicall)
-						tpl_addVar(vars, 0, "LASTREADER", cl->lastreader);
-				}
-
-				tpl_printf(vars, 0, "CLIENTCAID", "%04X", cl->last_caid);
-				tpl_printf(vars, 0, "CLIENTSRVID", "%04X", cl->last_srvid);
-				tpl_printf(vars, 0, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime);
-
-				int j, found = 0;
-				struct s_srvid *srvid = cfg->srvid;
-
-				while (srvid != NULL) {
-					if (srvid->srvid == cl->last_srvid) {
-						for (j=0; j < srvid->ncaid; j++) {
-							if (srvid->caid[j] == cl->last_caid) {
-								found = 1;
-								break;
-							}
-						}
-					}
-					if (found == 1)
-						break;
-					else
-						srvid = srvid->next;
-				}
-
-				if (found == 1) {
-					tpl_printf(vars, 0, "CLIENTSRVPROVIDER","%s: ", xml_encode(vars, srvid->prov));
-					tpl_addVar(vars, 0, "CLIENTSRVNAME", xml_encode(vars, srvid->name));
-					tpl_addVar(vars, 0, "CLIENTSRVTYPE", xml_encode(vars, srvid->type));
-					tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION", xml_encode(vars, srvid->desc));
+					tpl_printf(vars, 0, "CLIENTIDLESECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 				} else {
-					tpl_addVar(vars, 0, "CLIENTSRVPROVIDER","");
-					tpl_addVar(vars, 0, "CLIENTSRVNAME","");
-					tpl_addVar(vars, 0, "CLIENTSRVTYPE","");
-					tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION","");
+					tpl_printf(vars, 0, "CLIENTIDLESECS", "%d", isec);
 				}
 
-			} else {
-				tpl_addVar(vars, 0, "CLIENTCAID", "0000");
-				tpl_addVar(vars, 0, "CLIENTSRVID", "0000");
-				tpl_addVar(vars, 0, "CLIENTSRVPROVIDER","");
-				tpl_addVar(vars, 0, "CLIENTSRVNAME","");
-				tpl_addVar(vars, 0, "CLIENTSRVTYPE","");
-				tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION","");
-				tpl_addVar(vars, 0, "CLIENTLBVALUE","");
 
-			}
-
-			if (!apicall) {
-			secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
-			if(isec > 0) {
-				secs = isec % 60;
-				if (isec > 60) {
-					fullmins = isec / 60;
-					mins = fullmins % 60;
-					if(fullmins > 60) {
-						fullhours = fullmins / 60;
-						hours = fullhours % 24;
-						days = fullhours / 24;
-					}
-				}
-			}
-			if(days == 0)
-				tpl_printf(vars, 0, "CLIENTIDLESECS", "%02d:%02d:%02d", hours, mins, secs);
-			else
-				tpl_printf(vars, 0, "CLIENTIDLESECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
-			} else {
-				tpl_printf(vars, 0, "CLIENTIDLESECS", "%d", isec);
-			}
-
-
-			if(con == 2) tpl_addVar(vars, 0, "CLIENTCON", "Duplicate");
-			else if (con == 1) tpl_addVar(vars, 0, "CLIENTCON", "Sleep");
-			else
-			{
-				char *txt = "OK";
-				if (cl->typ == 'r' || cl->typ == 'p') //reader or proxy
-				{
-					struct s_reader *rdr = cl->reader;
-							if (rdr->lbvalue)
-								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", rdr->label, rdr->lbvalue);
-							else
-								tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%s</A>", rdr->label, "no data");
-
-							switch(rdr->card_status)
-							{
-							case NO_CARD: txt = "OFF"; break;
-							case CARD_NEED_INIT: txt = "NEEDINIT"; break;
-							case CARD_INSERTED:
-								if (cl->typ=='p')
-									txt = "CONNECTED";
-								else
-									txt = "CARDOK";
-								break;
-							case CARD_FAILURE: txt = "ERROR"; break;
-							default: txt = "UNDEF";
-							}
-				}
-				tpl_addVar(vars, 0, "CLIENTCON", txt);
-			}
-
-			if (!apicall){
-				// select right suborder
-				if (cl->typ == 'c') {
-					tpl_addVar(vars, 1, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-					tpl_printf(vars, 0, "CLIENTHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
-							user_count_active, user_count_all);
-				}
-				else if (cl->typ == 'r') {
-					tpl_addVar(vars, 1, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-					tpl_printf(vars, 0, "READERHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Readers %d/%d</TD></TR>\n",
-							reader_count_active, reader_count_all);
-				}
-				else if (cl->typ == 'p') {
-					tpl_addVar(vars, 1, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-					tpl_printf(vars, 0, "PROXYHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Proxies %d/%d</TD></TR>\n",
-							proxy_count_active, proxy_count_all);
-				}
+				if(con == 2) tpl_addVar(vars, 0, "CLIENTCON", "Duplicate");
+				else if (con == 1) tpl_addVar(vars, 0, "CLIENTCON", "Sleep");
 				else
-					tpl_addVar(vars, 1, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-
-			} else {
-				tpl_addVar(vars, 1, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
+				{
+					char *txt = "OK";
+					if (cl->typ == 'r' || cl->typ == 'p') //reader or proxy
+					{
+						struct s_reader *rdr = cl->reader;
+								if (rdr->lbvalue)
+									tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", rdr->label, rdr->lbvalue);
+								else
+									tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%s</A>", rdr->label, "no data");
+									
+								switch(rdr->card_status)
+								{
+								case NO_CARD: txt = "OFF"; break;
+								case CARD_NEED_INIT: txt = "NEEDINIT"; break;
+								case CARD_INSERTED:
+									if (cl->typ=='p')
+										txt = "CONNECTED";
+									else
+										txt = "CARDOK";
+									break;
+								case CARD_FAILURE: txt = "ERROR"; break;
+								default: txt = "UNDEF";
+								}
+					}
+					tpl_addVar(vars, 0, "CLIENTCON", txt);
+				}
 			}
-
 		}
-		if (cl->next == NULL)
-			break;
+		
+		if (!apicall){
+			// select right suborder
+			if (cl->typ == 'c') {
+				tpl_addVar(vars, 1, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				tpl_printf(vars, 0, "CLIENTHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
+						user_count_active, user_count_all);
+			}
+			else if (cl->typ == 'r') {
+				tpl_addVar(vars, 1, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				tpl_printf(vars, 0, "READERHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Readers %d/%d</TD></TR>\n",
+						reader_count_active, reader_count_all);
+			}
+			else if (cl->typ == 'p') {
+				tpl_addVar(vars, 1, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				tpl_printf(vars, 0, "PROXYHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Proxies %d/%d</TD></TR>\n",
+						proxy_count_active, proxy_count_all);
+			}
+			else
+				tpl_addVar(vars, 1, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+
+		} else {
+			tpl_addVar(vars, 1, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
+		}
 	}
 	//tpl_printf(vars, 0, "USERCOUNTALL", "%d", user_count_all);
 	//tpl_printf(vars, 0, "USERCOUNTACTIVE", "%d", user_count_active);
