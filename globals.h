@@ -259,6 +259,7 @@ extern char *RDR_CD_TXT[];
 #define DEFAULT_MAX_ECM_COUNT 500
 #define DEFAULT_NBEST 1
 #define DEFAULT_NFB 1
+#define DEFAULT_RETRYLIMIT 2200
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
@@ -1154,7 +1155,7 @@ struct s_config
 	int		lb_min_ecmcount; // minimal ecm count to evaluate lbvalues
 	int     lb_max_ecmcount; // maximum ecm count before reseting lbvalues
 	int     lb_reopen_seconds; //time between retrying failed readers/caids/prov/srv
-
+	int	lb_retrylimit; //reopen only happens if reader response time > retrylimit
 	int             resolve_gethostbyname;
 
 #ifdef CS_WITH_DOUBLECHECK

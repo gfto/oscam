@@ -506,6 +506,11 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "lb_retrylimit")) {
+		cfg->lb_retrylimit = strToIntVal(value, 0);
+		return;
+	}
+
 	if (!strcmp(token, "resolvegethostbyname")) {
 		cfg->resolve_gethostbyname = strToIntVal(value, 0);
 		return;
@@ -1752,6 +1757,8 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "lb_max_ecmcount", "%d\n", cfg->lb_max_ecmcount);
 	if (cfg->lb_reopen_seconds != DEFAULT_REOPEN_SECONDS ||(cfg->lb_reopen_seconds == DEFAULT_REOPEN_SECONDS  && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "lb_reopen_seconds", "%d\n", cfg->lb_reopen_seconds);
+	if (cfg->lb_retrylimit != DEFAULT_RETRYLIMIT || cfg->http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "lb_retrylimit", "%d\n", cfg->lb_retrylimit);
 
 	if (cfg->resolve_gethostbyname ||(!cfg->resolve_gethostbyname && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg->resolve_gethostbyname);

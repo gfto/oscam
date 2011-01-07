@@ -23,6 +23,8 @@ void init_stat()
 		cfg->lb_max_ecmcount = DEFAULT_MAX_ECM_COUNT;
 	if (cfg->lb_reopen_seconds < 10)
 		cfg->lb_reopen_seconds = DEFAULT_REOPEN_SECONDS;
+	if (cfg->lb_retrylimit <= 0)
+		cfg->lb_retrylimit = DEFAULT_RETRYLIMIT;
 }
 
 void load_stat_from_file()
@@ -99,10 +101,16 @@ READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvi
 
 	LL_ITER *it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat = NULL;
+	int i = 0;
 	while ((stat = ll_iter_next(it))) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
+			if (i > 5) { //Move to first if not under top 5:
+				ll_iter_remove(it);
+				ll_insert_at(rdr->lb_stat, stat, 0); //move to first!
+			}
 			break;
 		}
+		i++;
 	}
 	ll_iter_release(it);
 	return stat;
@@ -232,11 +240,11 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	if (rc == 0) { //found
 		stat->rc = 0;
 		stat->ecm_count++;
-		stat->time_idx++;
 		stat->last_received = time(NULL);
 		stat->request_count = 0;
 		
 		//FASTEST READER:
+		stat->time_idx++;
 		if (stat->time_idx >= LB_MAX_STAT_TIME)
 			stat->time_idx = 0;
 		stat->time_stat[stat->time_idx] = ecm_time;
@@ -271,6 +279,15 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	else if (rc == 5) { //timeout
 		stat->request_count++;
 		stat->last_received = time(NULL);
+
+		//add timeout to stat:
+		if (ecm_time<=0)
+			ecm_time = cfg->ctimeout;
+		stat->time_idx++;
+		if (stat->time_idx >= LB_MAX_STAT_TIME)
+			stat->time_idx = 0;
+		stat->time_stat[stat->time_idx] = ecm_time;
+		calc_stat(stat);
 	}
 	else
 	{
@@ -352,10 +369,12 @@ int get_best_reader(ECM_REQUEST *er)
 	uint8 result[rdr_count];
 	memset(result, 0, sizeof(result));
 	int re[rdr_count];
-
+	int ti[rdr_count];
+	
 	//resulting values:
 	memset(re, 0, sizeof(re));
-
+	memset(ti, 0, sizeof(ti));
+	
 	struct timeb new_nulltime;
 	memset(&new_nulltime, 0, sizeof(new_nulltime));
 	time_t current_time = time(NULL);
@@ -368,9 +387,6 @@ int get_best_reader(ECM_REQUEST *er)
 	int nlocal_readers = 0;
 
 #ifdef WITH_DEBUG 
-	//else
-	//	cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, trying all readers");
-
 	char rdrs[rdr_count+1];
 	for (i=0;i<rdr_count;i++)
 		rdrs[i] = er->matching_rdr[i]+'0';
@@ -393,6 +409,8 @@ int get_best_reader(ECM_REQUEST *er)
 				result[i] = 1; //no statistics, this reader is active (now) but we need statistics first!
 				continue;
 			}
+			
+			ti[i] = stat->time_avg;
 			
 			if (stat->ecm_count < 0||(stat->ecm_count > cfg->lb_max_ecmcount && stat->time_avg > (int)cfg->ftimeout)) {
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg->lb_max_ecmcount, rdr->label);
@@ -455,18 +473,6 @@ int get_best_reader(ECM_REQUEST *er)
 					re[i]=1;
 				else
 					re[i] = current;
-			}
-			else 
-			{
-				int seconds = cfg->lb_reopen_seconds;
-				if (!rdr->audisabled && (er->client->autoau || er->client->aureader == rdr))
-					seconds = seconds/10;
-				
-				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
-					stat->last_received = current_time;
-					result[i] = 1;
-					cs_log("loadbalancer: retrying reader %s", rdr->label);
-				}
 			}
 		}
 	}
@@ -566,9 +572,18 @@ int get_best_reader(ECM_REQUEST *er)
 		best_rdr?best_rdr->label:"NONE", rdrs);
 #endif	
 
+	//reopen other reader only if responsetime>retrylimit:
+	int reopen = (best_ridx>=0 && ti[best_ridx] && (ti[best_ridx] > cfg->lb_retrylimit));
+	if (reopen)
+		cs_debug_mask(D_TRACE, "loadbalancer: reader %s reached retrylimit (%dms), reopening other readers", best_rdr->label, ti[best_ridx]);
+	
         for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) { 
         	if (i>=rdr_count)
         		break;
+        		
+		if (!er->matching_rdr[i]) 
+			continue;
+			
         	if (result[i] == 1) { //primary readers 
         		stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
        			//algo for finding unanswered requests (newcamd reader for example:) 
@@ -577,7 +592,20 @@ int get_best_reader(ECM_REQUEST *er)
         			stat->last_received = current_time;
         			cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
 			} 
-		}        
+		} else if (reopen) { //retrylimit reached:
+			stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
+			if (stat && stat->rc != 0) {
+				int seconds = cfg->lb_reopen_seconds;
+				if (!rdr->audisabled && (er->client->autoau || er->client->aureader == rdr))
+					seconds = seconds/10; //reopen faster if reader is a au reader
+				
+				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
+					stat->last_received = current_time;
+					result[i] = 1;
+					cs_log("loadbalancer: retrying reader %s", rdr->label);
+				}
+			}
+		}
         }
         
 	if (new_nulltime.time)
