@@ -1978,15 +1978,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		cs_log("*** Warning: Debug Support not compiled in ***");
 #else
 		int dblvl = atoi(debuglvl);
-		if(dblvl == 0) {
-			cs_dblevel = 0;
-		} else if (dblvl == 255) {
-			cs_dblevel = 255;
-		} else if (dblvl == (-255)) {
-			cs_dblevel = 0;
-		} else {
-			cs_dblevel += dblvl;
-		}
+		if(dblvl >= 0 && dblvl <= 255) cs_dblevel = dblvl;
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
 #endif
 	}
@@ -2313,10 +2305,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		tpl_printf(vars, 0, "TMPV", "DEBUGVAL%d", lvl);
 		if (cs_dblevel & lvl) {
 			tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugls");
-			tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "-%d", lvl);
+			tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel - lvl);
 		} else {
 			tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugl");
-			tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", lvl);
+			tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel + lvl);
 		}
 	}
 
@@ -2576,16 +2568,7 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 		cs_log("*** Warning: Debug Support not compiled in ***");
 #else
 		int dblvl = atoi(debuglvl);
-		if(dblvl == 0) {
-			cs_dblevel = 0;
-		} else if (dblvl == 255) {
-			cs_dblevel = 255;
-		} else if (dblvl == (-255)) {
-			cs_dblevel = 0;
-		} else {
-			cs_dblevel += dblvl;
-		}
-
+		if(dblvl >= 0 && dblvl <= 255) cs_dblevel = dblvl;
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
 #endif
 	}
@@ -2640,10 +2623,10 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 			tpl_printf(vars, 0, "TMPV", "DEBUGVAL%d", lvl);
 			if (cs_dblevel & lvl) {
 				tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugls");
-				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "-%d", lvl);
+				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", debuglvl - lvl);
 			} else {
 				tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugl");
-				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", lvl);
+				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", debuglvl + lvl);
 			}
 		}
 
