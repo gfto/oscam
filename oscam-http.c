@@ -2013,6 +2013,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	int user_count_all = 0, user_count_active = 0;
 	int reader_count_all = 0, reader_count_active = 0;
 	int proxy_count_all = 0, proxy_count_active = 0;
+	int shown;
 	
 	struct s_client *cl;
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
@@ -2030,6 +2031,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 		else if (cl->typ=='r')
 			reader_count_all++;
 
+		shown = 0;
 		if (cl->wihidden != 1) {
 
 			if((cfg->http_hide_idle_clients != 1) || (cl->typ != 'c') || ((now - cl->lastecm) <= cfg->mon_hideclient_to)) {
@@ -2041,6 +2043,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 				else if (cl->typ=='p' && (cl->reader->card_status==CARD_INSERTED ||cl->reader->tcp_connected))
 					proxy_count_active++;
 			
+				shown = 1;
 				lsec=now-cl->login;
 				isec=now-cl->last;
 				usr=username(cl);
@@ -2249,25 +2252,25 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			}
 		}
 		
-		if (!apicall){
+		if (!apicall) {
 			// select right suborder
 			if (cl->typ == 'c') {
-				tpl_addVar(vars, 1, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				if (shown) tpl_addVar(vars, 1, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 				tpl_printf(vars, 0, "CLIENTHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
 						user_count_active, user_count_all);
 			}
 			else if (cl->typ == 'r') {
-				tpl_addVar(vars, 1, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				if (shown) tpl_addVar(vars, 1, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 				tpl_printf(vars, 0, "READERHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Readers %d/%d</TD></TR>\n",
 						reader_count_active, reader_count_all);
 			}
 			else if (cl->typ == 'p') {
-				tpl_addVar(vars, 1, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				if (shown) tpl_addVar(vars, 1, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 				tpl_printf(vars, 0, "PROXYHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Proxies %d/%d</TD></TR>\n",
 						proxy_count_active, proxy_count_all);
 			}
 			else
-				tpl_addVar(vars, 1, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
+				if (shown) tpl_addVar(vars, 1, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 
 		} else {
 			tpl_addVar(vars, 1, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
