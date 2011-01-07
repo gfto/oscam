@@ -787,10 +787,10 @@ static int nagra2_card_info(struct s_reader * reader)
               int  euro=0;
               char *tier_name = NULL;
               time_t rawtime;
-              struct tm * timeinfo;
+              struct tm timeinfo;
               time ( &rawtime );
-              timeinfo = localtime ( &rawtime );
-              sprintf(currdate, "%02d/%02d/%04d", timeinfo->tm_mday, timeinfo->tm_mon+1, timeinfo->tm_year+1900);
+              localtime_r(&rawtime, &timeinfo);
+              sprintf(currdate, "%02d/%02d/%04d", timeinfo.tm_mday, timeinfo.tm_mon+1, timeinfo.tm_year+1900);
               
               for (i = 0; i < num_records; ++i)
               {  

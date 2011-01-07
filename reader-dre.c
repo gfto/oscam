@@ -114,16 +114,16 @@ static int dre_set_provider_info (struct s_reader * reader)
 	  start = (cta_res[3] << 24) | (cta_res[4] << 16) | (cta_res[5] << 8) | cta_res[6];
 	  end = (cta_res[7] << 24) | (cta_res[8] << 16) | (cta_res[9] << 8) | cta_res[10];
 
-	  struct tm *temp;
+	  struct tm temp;
 
-	  temp = localtime (&start);
-	  int startyear = temp->tm_year + 1900;
-	  int startmonth = temp->tm_mon + 1;
-	  int startday = temp->tm_mday;
-	  temp = localtime (&end);
-	  int endyear = temp->tm_year + 1900;
-	  int endmonth = temp->tm_mon + 1;
-	  int endday = temp->tm_mday;
+	  localtime_r (&start, &temp);
+	  int startyear = temp.tm_year + 1900;
+	  int startmonth = temp.tm_mon + 1;
+	  int startday = temp.tm_mday;
+	  localtime_r (&end, &temp);
+	  int endyear = temp.tm_year + 1900;
+	  int endmonth = temp.tm_mon + 1;
+	  int endday = temp.tm_mday;
 	  cs_ri_log (reader, "[dre-reader] active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
 		  endyear, endmonth, endday);
 	}

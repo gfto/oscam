@@ -1590,7 +1590,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	char date[7];
 	unsigned char  i, parity, writeheader = 0;
 	time_t t;
-	struct tm *timeinfo;
+	struct tm timeinfo;
 	struct s_srvid *this;
 
 	/*
@@ -1610,8 +1610,8 @@ void logCWtoFile(ECM_REQUEST *er)
 
 	/* calc log file name */
 	time(&t);
-	timeinfo = localtime(&t);
-	strftime(date, sizeof(date), "%Y%m%d", timeinfo);
+	localtime_r(&t, &timeinfo);
+	strftime(date, sizeof(date), "%Y%m%d", &timeinfo);
 	sprintf(buf, "%s/%s_I%04X_%s.cwl", cfg->cwlogdir, date, er->srvid, srvname);
 
 	/* open failed, assuming file does not exist, yet */
@@ -1632,7 +1632,7 @@ void logCWtoFile(ECM_REQUEST *er)
 		/* no global macro for cardserver name :( */
 		fprintf(pfCWL, "# OSCam cardserver v%s - http://streamboard.gmc.to/oscam/\n", CS_VERSION_X);
 		fprintf(pfCWL, "# control word log file for use with tsdec offline decrypter\n");
-		strftime(buf, sizeof(buf),"DATE %Y-%m-%d, TIME %H:%M:%S, TZ %Z\n", timeinfo);
+		strftime(buf, sizeof(buf),"DATE %Y-%m-%d, TIME %H:%M:%S, TZ %Z\n", &timeinfo);
 		fprintf(pfCWL, "# %s", buf);
 		fprintf(pfCWL, "# CAID 0x%04X, SID 0x%04X, SERVICE \"%s\"\n", er->caid, er->srvid, srvname);
 	}
@@ -1642,7 +1642,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	for (i = parity * 8; i < 8 + parity * 8; i++)
 		fprintf(pfCWL, "%02X ", er->cw[i]);
 	/* better use incoming time er->tps rather than current time? */
-	strftime(buf,sizeof(buf),"%H:%M:%S\n", timeinfo);
+	strftime(buf,sizeof(buf),"%H:%M:%S\n", &timeinfo);
 	fprintf(pfCWL, "# %s", buf);
 	fflush(pfCWL);
 	fclose(pfCWL);
@@ -2393,9 +2393,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	// out of timeframe
 	if(client->allowedtimeframe[0] && client->allowedtimeframe[1]) {
-		struct tm *acttm;
-		acttm = localtime(&now);
-		int curtime = (acttm->tm_hour * 60) + acttm->tm_min;
+		struct tm acttm;
+		localtime_r(&now, &acttm);
+		int curtime = (acttm.tm_hour * 60) + acttm.tm_min;
 		int mintime = client->allowedtimeframe[0];
 		int maxtime = client->allowedtimeframe[1];
 		if(!((mintime <= maxtime && curtime > mintime && curtime < maxtime) || (mintime > maxtime && (curtime > mintime || curtime < maxtime)))) {
@@ -2652,10 +2652,10 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		FILE *fp;
 		time_t rawtime;
 		time (&rawtime);
-		struct tm *timeinfo;
-		timeinfo = localtime (&rawtime);	/* to access LOCAL date/time info */
+		struct tm timeinfo;
+		localtime_r (&rawtime, &timeinfo);	/* to access LOCAL date/time info */
 		char buf[80];
-		strftime (buf, 80, "%Y/%m/%d %H:%M:%S", timeinfo);
+		strftime (buf, 80, "%Y/%m/%d %H:%M:%S", &timeinfo);
 		sprintf (token, "%s%s_emm.log", cs_confdir, aureader->label);
 		int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 

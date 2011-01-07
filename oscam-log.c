@@ -134,7 +134,7 @@ static void write_to_log(int flag, char *txt)
 	//flag = -1 is old behaviour, before implementation of debug_nolf (=debug no line feed)
 	//
 	time_t t;
-	struct tm *lt;
+	struct tm lt;
 	char sbuf[16];
 	char log_buf[700];
 
@@ -149,18 +149,18 @@ static void write_to_log(int flag, char *txt)
 		syslog(LOG_INFO, "%s", txt);
 
 	time(&t);
-	lt=localtime(&t);
+	localtime_r(&t, &lt);
 
 	switch(flag) {
 		case -1:
 		sprintf(log_buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
-				lt->tm_year+1900, lt->tm_mon+1, lt->tm_mday,
-				lt->tm_hour, lt->tm_min, lt->tm_sec, txt);
+				lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday,
+				lt.tm_hour, lt.tm_min, lt.tm_sec, txt);
 		break;
 		case 1:
 			sprintf(log_buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d            %s",
-					lt->tm_year+1900, lt->tm_mon+1, lt->tm_mday,
-					lt->tm_hour, lt->tm_min, lt->tm_sec, txt);
+					lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday,
+					lt.tm_hour, lt.tm_min, lt.tm_sec, txt);
 			break;
 		default:
 			sprintf(log_buf, "[LOG000]%s", txt);
@@ -306,13 +306,13 @@ void cs_statistics(struct s_client * client)
 {
 	if (!cfg->disableuserfile){
 		time_t t;
-		struct tm *lt;
+		struct tm lt;
 		char buf[LOG_BUF_SIZE];
 
 		float cwps;
 
 		time(&t);
-		lt=localtime(&t);
+		localtime_r(&t, &lt);
 		if (client->cwfound+client->cwnot>0)
 		{
 			cwps=client->last-client->login;
@@ -348,8 +348,8 @@ void cs_statistics(struct s_client * client)
 		 * so we can use the same Pipe as Log
 		 */
 		sprintf(buf, "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %02d:%02d:%02d %s %04X:%04X %s\n",
-				lt->tm_mday, lt->tm_mon+1, lt->tm_year%100,
-				lt->tm_hour, lt->tm_min, lt->tm_sec, cwps,
+				lt.tm_mday, lt.tm_mon+1, lt.tm_year%100,
+				lt.tm_hour, lt.tm_min, lt.tm_sec, cwps,
 				client->account->usr,
 				cs_inet_ntoa(client->ip),
 				client->port,

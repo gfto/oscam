@@ -242,7 +242,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 		char ldate[16], ltime[16], *usr;
 		int lsec, isec, con, cau, lrt;
 		time_t now;
-		struct tm *lt;
+		struct tm lt;
 		now=time((time_t)0);
 
 		if	((cfg->mon_hideclient_to <= 0) ||
@@ -274,10 +274,10 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			}
 			else
                 lrt = cl->cwlastresptime;
-			lt = localtime(&cl->login);
-			sprintf(ldate, "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year % 100);
+			localtime_r(&cl->login, &lt);
+			sprintf(ldate, "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year % 100);
 			int cnr=get_threadnum(cl);
-			sprintf(ltime, "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
+			sprintf(ltime, "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
                         sprintf(sbuf, "[%c--CCC]%8lX|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
 					id, (unsigned long)cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
 					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),

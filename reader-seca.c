@@ -7,7 +7,7 @@ static int set_provider_info(struct s_reader * reader, int i)
   def_resp;
   uchar ins12[] = { 0xc1, 0x12, 0x00, 0x00, 0x19 }; // get provider info
   int year, month, day;
-  struct tm *lt;
+  struct tm lt;
   time_t t;
   int valid=0;//0=false, 1=true
   char l_name[16+8+1]=", name: ";
@@ -24,13 +24,13 @@ static int set_provider_info(struct s_reader * reader, int i)
   month = ((cta_res[22]&0x1)<< 3) | (cta_res[23] >>5);
   day = (cta_res[23]&0x1f);
   t=time(NULL);
-  lt=localtime(&t);
-  if (lt->tm_year + 1900 != year)
-     valid = (lt->tm_year + 1900 < year);
-  else if (lt->tm_mon + 1 != month)
-     valid = (lt->tm_mon + 1 < month);
-  else if (lt->tm_mday != day)
-     valid = (lt->tm_mday < day);
+  localtime_r(&t, &lt);
+  if (lt.tm_year + 1900 != year)
+     valid = (lt.tm_year + 1900 < year);
+  else if (lt.tm_mon + 1 != month)
+     valid = (lt.tm_mon + 1 < month);
+  else if (lt.tm_mday != day)
+     valid = (lt.tm_mday < day);
 
   memcpy(l_name+8, cta_res+2, 16);
   l_name[sizeof(l_name)-1]=0;

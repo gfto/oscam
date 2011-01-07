@@ -1235,7 +1235,8 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 		while (stat) {
 
 			if (!(stat->rc == rc2hide)) {
-				struct tm *lt = localtime(&stat->last_received);
+				struct tm lt;
+				localtime_r(&stat->last_received, &lt);
 				if (!apicall) {
 					tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
 					tpl_printf(vars, 0, "CHANNELNAME","%s", xml_encode(vars, get_servicename(stat->srvid, stat->caid)));
@@ -1247,7 +1248,7 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 						tpl_printf(vars, 0, "TIMELAST", "");
 					tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
 					if(stat->last_received) {
-						tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100, lt->tm_hour, lt->tm_min, lt->tm_sec);
+						tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100, lt.tm_hour, lt.tm_min, lt.tm_sec);
 
 					} else {
 						tpl_addVar(vars, 0, "LAST","never");
@@ -1263,7 +1264,7 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 					tpl_printf(vars, 0, "ECMRCS", "%s", stxt[stat->rc]);
 					if(stat->last_received) {
 					char tbuffer [30];
-					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", lt);
+					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
 					tpl_addVar(vars, 0, "ECMLAST", tbuffer);
 					} else {
 						tpl_addVar(vars, 0, "ECMLAST", "");
@@ -1301,8 +1302,9 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 
 	if (lastaccess > 0){
 		char tbuffer [30];
-		struct tm *lt = localtime(&lastaccess);
-		strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", lt);
+		struct tm lt;
+		localtime_r(&lastaccess, &lt);
+		strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
 		tpl_addVar(vars, 0, "LASTACCESS", tbuffer);
 	} else {
 		tpl_addVar(vars, 0, "LASTACCESS", "");
@@ -1410,9 +1412,10 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 		tpl_addVar(vars, 0, "DISABLEDCHECKED", "selected");
 
 	//Expirationdate
-	struct tm * timeinfo = localtime (&account->expirationdate);
+	struct tm timeinfo;
+	localtime_r (&account->expirationdate, &timeinfo);
 	char buf [80];
-	strftime (buf,80,"%Y-%m-%d",timeinfo);
+	strftime (buf,80,"%Y-%m-%d",&timeinfo);
 	if(strcmp(buf,"1970-01-01")) tpl_addVar(vars, 0, "EXPDATE", buf);
 
 	if(account->allowedtimeframe[0] && account->allowedtimeframe[1]) {
@@ -1943,7 +1946,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	char *usr;
 	int lsec, isec, con, cau;
 	time_t now = time((time_t)0);
-	struct tm *lt;
+	struct tm lt;
 
 	if (strcmp(getParam(params, "action"), "kill") == 0) {
 		struct s_client *cl = get_client_by_tid(atol(getParam(params, "threadid")));
@@ -2058,7 +2061,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			if( (cau=get_ridx(cl->aureader)+1) && (now-cl->lastemm)/60 > cfg->mon_aulow) cau=-cau;
 
-			lt=localtime(&cl->login);
+			localtime_r(&cl->login, &lt);
 
 			tpl_printf(vars, 0, "HIDEIDX", "%ld", cl->thread);
 
@@ -2114,8 +2117,8 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			int secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
 			if (!apicall) {
-				tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
-				tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
+				tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
+				tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
 
 				if(lsec > 0) {
 					secs = lsec % 60;
@@ -2136,7 +2139,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			} else {
 				char tbuffer [30];
-				strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", lt);
+				strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
 				tpl_printf(vars, 0, "CLIENTLOGINDATE", "%s", tbuffer);
 				tpl_printf(vars, 0, "CLIENTLOGINSECS", "%d", lsec);
 			}
@@ -2777,13 +2780,13 @@ void send_oscam_failban(struct templatevars *vars, FILE *f, struct uriparams *pa
 			tpl_addVar(vars, 0, "DELICO", ICDEL);
 		tpl_printf(vars, 0, "IPADDRESS", "%s", cs_inet_ntoa(v_ban_entry->v_ip));
 
-		struct tm *st ;
-		st = localtime(&v_ban_entry->v_time);
+		struct tm st ;
+		localtime_r(&v_ban_entry->v_time, &st);
 
 		tpl_printf(vars, 0, "VIOLATIONDATE", "%02d.%02d.%02d %02d:%02d:%02d",
-				st->tm_mday, st->tm_mon+1,
-				st->tm_year%100, st->tm_hour,
-				st->tm_min, st->tm_sec);
+				st.tm_mday, st.tm_mon+1,
+				st.tm_year%100, st.tm_hour,
+				st.tm_min, st.tm_sec);
 
 		tpl_printf(vars, 0, "VIOLATIONCOUNT", "%d", v_ban_entry->v_count);
 
@@ -3122,11 +3125,10 @@ int process_request(FILE *f, struct in_addr in) {
 			send_headers(f, 200, "OK", NULL, "text/html");
 		time_t t;
 		struct templatevars *vars = tpl_create();
-		struct tm *lt;
-		struct tm *st;
+		struct tm lt, st;
 		time(&t);
 
-		lt = localtime(&t);
+		localtime_r(&t, &lt);
 
 		tpl_addVar(vars, 0, "CS_VERSION", CS_VERSION);
 		tpl_addVar(vars, 0, "CS_SVN_VERSION", CS_SVN_VERSION);
@@ -3151,15 +3153,15 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, 0, "ONLOADSCRIPT", " onload=\"load_Icons()\"");
 		}
 
-		tpl_printf(vars, 0, "CURDATE", "%02d.%02d.%02d", lt->tm_mday, lt->tm_mon+1, lt->tm_year%100);
-		tpl_printf(vars, 0, "CURTIME", "%02d:%02d:%02d", lt->tm_hour, lt->tm_min, lt->tm_sec);
-		st = localtime(&first_client->login);
-		tpl_printf(vars, 0, "STARTDATE", "%02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
-		tpl_printf(vars, 0, "STARTTIME", "%02d:%02d:%02d", st->tm_hour, st->tm_min, st->tm_sec);
+		tpl_printf(vars, 0, "CURDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
+		tpl_printf(vars, 0, "CURTIME", "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
+		localtime_r(&first_client->login, &st);
+		tpl_printf(vars, 0, "STARTDATE", "%02d.%02d.%02d", st.tm_mday, st.tm_mon+1, st.tm_year%100);
+		tpl_printf(vars, 0, "STARTTIME", "%02d:%02d:%02d", st.tm_hour, st.tm_min, st.tm_sec);
 		tpl_printf(vars, 0, "PROCESSID", "%d", server_pid);
 
 		char tbuffer [30];
-		strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", st);
+		strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
 		tpl_printf(vars, 0, "APISTARTTIME", "%s", tbuffer);// XMLAPI
 
 		time_t now = time((time_t)0);

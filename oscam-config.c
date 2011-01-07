@@ -2036,9 +2036,10 @@ int write_userdb(struct s_auth *authptr)
 			fprintf_conf(f, CONFVARWIDTH, "disabled", "%d\n", account->disabled);
 
 		if (account->expirationdate || (!account->expirationdate && cfg->http_full_cfg)) {
-			struct tm * timeinfo = localtime (&account->expirationdate);
+			struct tm timeinfo;
+			localtime_r(&account->expirationdate, &timeinfo);
 			char buf [80];
-			strftime (buf,80,"%Y-%m-%d",timeinfo);
+			strftime (buf,80,"%Y-%m-%d",&timeinfo);
 			if(strcmp(buf,"1970-01-01"))
 				fprintf_conf(f, CONFVARWIDTH, "expdate", "%s\n", buf);
 			else
@@ -2397,11 +2398,11 @@ void write_versionfile() {
 	  cs_log("Cannot open %s (errno=%d)", targetfile, errno);
   } else {
 	  time_t now = time((time_t)0);
-	  struct tm *st;
-	  st = localtime(&now);
+	  struct tm st;
+	  localtime_r(&now, &st);
 	  fprintf(fp, "Uxstarttime:    %d\n", (int)now);
-	  fprintf(fp, "Starttime:      %02d.%02d.%02d", st->tm_mday, st->tm_mon+1, st->tm_year%100);
-	  fprintf(fp, " %02d:%02d:%02d\n", st->tm_hour, st->tm_min, st->tm_sec);
+	  fprintf(fp, "Starttime:      %02d.%02d.%02d", st.tm_mday, st.tm_mon+1, st.tm_year%100);
+	  fprintf(fp, " %02d:%02d:%02d\n", st.tm_hour, st.tm_min, st.tm_sec);
 	  fprintf(fp, "Version:        %s  Rev. %s\n", CS_VERSION, CS_SVN_VERSION);
 	  fprintf(fp, "Maxpid:         UNLIMITED\n\n\n");
 	  fprintf(fp, "Active modules:\n");
