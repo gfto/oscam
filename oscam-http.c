@@ -2623,10 +2623,10 @@ void send_oscam_files(struct templatevars *vars, FILE *f, struct uriparams *para
 			tpl_printf(vars, 0, "TMPV", "DEBUGVAL%d", lvl);
 			if (cs_dblevel & lvl) {
 				tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugls");
-				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", debuglvl - lvl);
+				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel - lvl);
 			} else {
 				tpl_addVar(vars, 0, tpl_getVar(vars, "TMPC"), "debugl");
-				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", debuglvl + lvl);
+				tpl_printf(vars, 0, tpl_getVar(vars, "TMPV"), "%d", cs_dblevel + lvl);
 			}
 		}
 
