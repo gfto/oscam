@@ -310,6 +310,34 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
 	}
 }
 
+int has_ident(FTAB *ftab, ECM_REQUEST *er) {
+
+	if (!ftab || !ftab->filts)
+		return 0;
+		
+        int j, k;
+
+        for (j = 0; j < ftab->nfilts; j++) {
+		if (ftab->filts[j].caid) {
+			if (ftab->filts[j].caid==er->caid) { //caid matches!
+
+				int nprids = ftab->filts[j].nprids;
+                                if (!nprids) // No Provider ->Ok
+                                        return 1;
+
+				for (k = 0; k < nprids; k++) {
+					ulong prid = ftab->filts[j].prids[k];
+					if (prid == er->prid) { //Provider matches
+						return 1;
+                                        }
+                                }
+                        }
+                }
+        }
+        return 0; //No match!
+}
+
+
 
 /**	
  * Gets best reader for caid/prid/srvid.
@@ -377,7 +405,7 @@ int get_best_reader(ECM_REQUEST *er)
 				result[i] = 1; //need more statistics!
 			}
 			
-			int hassrvid = has_srvid(rdr->client, er);
+			int hassrvid = has_srvid(rdr->client, er) || has_ident(&rdr->ftab, er);
 			
 			if (!hassrvid && stat->rc == 0 && stat->request_count > cfg->lb_min_ecmcount) { // 5 unanswered requests or timeouts?
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
