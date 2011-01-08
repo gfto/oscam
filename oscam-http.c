@@ -2011,9 +2011,9 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 	if(cfg->http_hide_idle_clients > 0) tpl_addVar(vars, 0, "HIDEIDLECLIENTSSELECTED1", "selected");
 	else tpl_addVar(vars, 0, "HIDEIDLECLIENTSSELECTED0", "selected");
 
-	int user_count_all = 0, user_count_active = 0;
-	int reader_count_all = 0, reader_count_active = 0;
-	int proxy_count_all = 0, proxy_count_active = 0;
+	int user_count_all = 0, user_count_shown = 0, user_count_active = 0;
+	int reader_count_all = 0, reader_count_conn = 0;
+	int proxy_count_all = 0, proxy_count_conn = 0;
 	int shown;
 	
 	struct s_client *cl;
@@ -2037,12 +2037,19 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 			if((cfg->http_hide_idle_clients != 1) || (cl->typ != 'c') || ((now - cl->lastecm) <= cfg->mon_hideclient_to)) {
 
-				if (cl->typ=='c')
-					user_count_active++;
-				else if (cl->typ=='r' && cl->reader->card_status==CARD_INSERTED)
-					reader_count_active++;
-				else if (cl->typ=='p' && (cl->reader->card_status==CARD_INSERTED ||cl->reader->tcp_connected))
-					proxy_count_active++;
+				if (cl->typ=='c'){
+					user_count_shown++;
+					if (cfg->http_hide_idle_clients != 1 && cfg->mon_hideclient_to > 0 && (now - cl->lastecm) <= cfg->mon_hideclient_to){						
+						user_count_active++;
+						tpl_addVar(vars, 0, "CLIENTTYPE", "a");
+					} else tpl_addVar(vars, 0, "CLIENTTYPE", "c");
+				} else {
+					if (cl->typ=='r' && cl->reader->card_status==CARD_INSERTED)
+						reader_count_conn++;
+					else if (cl->typ=='p' && (cl->reader->card_status==CARD_INSERTED ||cl->reader->tcp_connected))
+						reader_count_conn++;
+					tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
+				}
 			
 				shown = 1;
 				lsec=now-cl->login;
@@ -2257,18 +2264,20 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 			// select right suborder
 			if (cl->typ == 'c') {
 				if (shown) tpl_addVar(vars, 1, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-				tpl_printf(vars, 0, "CLIENTHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
-						user_count_active, user_count_all);
+				if(cfg->http_hide_idle_clients == 1 || cfg->mon_hideclient_to < 1) tpl_printf(vars, 0, "CLIENTHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
+						user_count_shown, user_count_all);
+				else tpl_printf(vars, 0, "CLIENTHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d (%d with ECM within last %d seconds)</TD></TR>\n",
+						user_count_shown, user_count_all, user_count_active, cfg->mon_hideclient_to);
 			}
 			else if (cl->typ == 'r') {
 				if (shown) tpl_addVar(vars, 1, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 				tpl_printf(vars, 0, "READERHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Readers %d/%d</TD></TR>\n",
-						reader_count_active, reader_count_all);
+						reader_count_conn, reader_count_all);
 			}
 			else if (cl->typ == 'p') {
 				if (shown) tpl_addVar(vars, 1, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 				tpl_printf(vars, 0, "PROXYHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Proxies %d/%d</TD></TR>\n",
-						proxy_count_active, proxy_count_all);
+						proxy_count_conn, proxy_count_all);
 			}
 			else
 				if (shown) tpl_addVar(vars, 1, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));

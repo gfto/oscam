@@ -23,6 +23,7 @@ TR.h TD {background-color:#e1e1ef;}\n\
 TR.r TD {background-color:#fff3e7;}\n\
 TR.p TD {background-color:#fdfbe1;}\n\
 TR.c TD {background-color:#f1f5e6;}\n\
+TR.a TD {background-color:#33ff00;}\n\
 TR.online TD {background-color:#f1f5e6;}\n\
 TR.expired TD {background-color:#ffe2d4;}\n\
 TR.usrcfg_anticasc TD {background-color:#FEF9BF;}\n\
