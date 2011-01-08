@@ -2047,7 +2047,7 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 					if (cl->typ=='r' && cl->reader->card_status==CARD_INSERTED)
 						reader_count_conn++;
 					else if (cl->typ=='p' && (cl->reader->card_status==CARD_INSERTED ||cl->reader->tcp_connected))
-						reader_count_conn++;
+						proxy_count_conn++;
 					tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
 				}
 			
