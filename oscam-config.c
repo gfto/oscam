@@ -2583,7 +2583,8 @@ int init_free_userdb(struct s_auth *ptr) {
 	for (nro = 0; ptr; nro++) {
 		struct s_auth *ptr_next;
 		ptr_next = ptr->next;
-		free(ptr);
+		ptr->next = NULL;
+		add_garbage(ptr);
 		ptr = ptr_next;
 	}
 	cs_log("userdb %d accounts freed", nro);

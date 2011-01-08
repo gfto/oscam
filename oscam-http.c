@@ -1321,7 +1321,7 @@ void send_oscam_reader_stats(struct templatevars *vars, FILE *f, struct uriparam
 
 void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
 	struct s_auth *account, *ptr;
-	char user[128];
+	char user[sizeof(first_client->account->usr)];
 
 	if (strcmp(getParam(params, "action"), "Save As") == 0) cs_strncpy(user, getParam(params, "newuser"), sizeof(user)/sizeof(char));
 	else cs_strncpy(user, getParam(params, "user"), sizeof(user)/sizeof(char));
@@ -1401,8 +1401,9 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 			refresh_oscam(REFR_ACCOUNTS, in);
 		else
 			tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+		// need to reget account as writing to disk changes account!
+		for (account = cfg->account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 	}
-	for (account = cfg->account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 
 	tpl_addVar(vars, 0, "USERNAME", account->usr);
 	tpl_addVar(vars, 0, "PASSWORD", account->pwd);
