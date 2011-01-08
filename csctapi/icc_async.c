@@ -31,10 +31,10 @@
 #include "mc_global.h"
 #include "protocol_t0.h"
 #include "io_serial.h"
-#include "ifd_cool.h" 
-#include "ifd_mp35.h" 
-#include "ifd_phoenix.h" 
-#include "ifd_sc8in1.h" 
+#include "ifd_cool.h"
+#include "ifd_mp35.h"
+#include "ifd_phoenix.h"
+#include "ifd_sc8in1.h"
 #include "ifd_sci.h"
 #include "ifd_smartreader.h"
 #include "ifd_azbox.h"
@@ -189,7 +189,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			cs_log("ERROR ICC_Device_Init: unknow reader type %i",reader->typ);
 			return ERROR;
 	}
-	
+
 	if (reader->typ == R_MP35)
 	{
 		if (MP35_Init(reader)) {
@@ -205,7 +205,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 				return ERROR;
 		}
 
-	if (reader->typ == R_SC8in1) { 
+	if (reader->typ == R_SC8in1) {
 		call(Sc8in1_Init(reader));
 		pthread_mutex_unlock(&sc8in1);
 	}
@@ -284,7 +284,7 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 		*card = TRUE;
 	else
 		*card = FALSE;
-	
+
 	return OK;
 }
 
@@ -371,9 +371,9 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 		reader->protocol_type = 0;
 		return ERROR;
 	}
-	
+
 	reader->protocol_type = ATR_PROTOCOL_TYPE_T0;
-	
+
 	LOCK_SC8IN1;
 	int ret = Parse_ATR(reader, atr, deprecated);
 	UNLOCK_SC8IN1; //Parse_ATR and InitCard need to be included in lock because they change parity of serial port
@@ -390,7 +390,7 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsign
 {
 #ifdef HAVE_PCSC
 	if (reader->typ == R_PCSC)
- 	  return (pcsc_reader_do_api(reader, command, rsp, lr, command_len)); 
+ 	  return (pcsc_reader_do_api(reader, command, rsp, lr, command_len));
 #endif
 	*lr = 0; //will be returned in case of error
 
@@ -400,7 +400,7 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsign
 
 	switch (reader->protocol_type) {
 		case ATR_PROTOCOL_TYPE_T0:
-			ret = Protocol_T0_Command (reader, command, command_len, rsp, lr); 
+			ret = Protocol_T0_Command (reader, command, command_len, rsp, lr);
 			break;
 		case ATR_PROTOCOL_TYPE_T1:
 		 {
@@ -446,8 +446,8 @@ int ICC_Async_SetTimings (struct s_reader * reader, unsigned wait_etu)
 int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 {
 	cs_ddump_mask(D_IFD, data, size, "IFD Transmit: ");
-	BYTE *buffer = NULL, *sent; 
-	
+	BYTE *buffer = NULL, *sent;
+
 	if (reader->convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE) {
 		buffer = (BYTE *) calloc(sizeof (BYTE), size);
 		memcpy (buffer, data, size);
@@ -592,7 +592,7 @@ int ICC_Async_Close (struct s_reader *reader)
 			cs_log("ERROR ICC_Async_Close: unknow reader type %i",reader->typ);
 			return ERROR;
 	}
-	
+
 	cs_debug_mask (D_IFD, "IFD: Device %s succesfully closed", reader->device);
 	return OK;
 }
@@ -613,7 +613,7 @@ static unsigned long ICC_Async_GetClockRate (int cardmhz)
 static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer)
 {
 	uint i;
-	
+
 	for (i = 0; i < size; i++)
 		buffer[i] = ~(INVERT_BYTE (buffer[i]));
 }
@@ -667,7 +667,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 			}
 			cs_debug_mask(D_ATR, "%s",txt);
 		}
-		
+
 		int numprottype = 0;
 		for (i = 0; i <= 2; i++)
 			if (OffersT[i])
@@ -700,14 +700,14 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 		}
 		else { //negotiable mode
 
-			bool PPS_success = FALSE; 
+			bool PPS_success = FALSE;
 			bool NeedsPTS = ((reader->protocol_type != ATR_PROTOCOL_TYPE_T14) && (numprottype > 1 || (atr->ib[0][ATR_INTERFACE_BYTE_TA].present == TRUE && atr->ib[0][ATR_INTERFACE_BYTE_TA].value != 0x11) || n == 255)); //needs PTS according to old ISO 7816
 			if (NeedsPTS && deprecated == 0) {
 				//						 PTSS	PTS0	PTS1	PCK
-				BYTE req[6] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes or PTS3, 
+				BYTE req[6] = { 0xFF, 0x10, 0x00, 0x00 }; //we currently do not support PTS2, standard guardtimes or PTS3,
 																									//but spare 2 bytes in arrayif card responds with it
 				req[1]=0x10 | reader->protocol_type; //PTS0 always flags PTS1 to be sent always
-				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1 
+				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1
 					req[2] = 0x11; //defaults FI and DI to 1
 				unsigned int len = 0;
 				call (SetRightParity (reader));
@@ -734,7 +734,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 					FI = ATR_DEFAULT_FI;
 					d = ATR_DEFAULT_D;
 				}
-				if (NeedsPTS) { 
+				if (NeedsPTS) {
 					if ((d == 32) || (d == 12) || (d == 20)) //those values were RFU in old table
 						d = 0; // viaccess cards that fail PTS need this
 				}
@@ -742,7 +742,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 				cs_debug_mask(D_ATR, "No PTS %s, selected protocol T%i, F=%.0f, D=%.6f, N=%.0f\n", NeedsPTS?"happened":"needed", reader->protocol_type, (double) atr_f_table[FI], d, n);
 			}
 		}//end negotiable mode
-		
+
 	//make sure no zero values
 	double F =	(double) atr_f_table[FI];
 	if (!F) {
@@ -865,11 +865,6 @@ static int SetRightParity (struct s_reader * reader)
 	else if(reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 		parity = PARITY_NONE;
 
-#if defined(LIBUSB)
-	if (reader->typ == R_SMART)
-		reader->sr_config->parity = parity;
-#endif
-	
 	call (ICC_Async_SetParity(reader, parity));
 
 #if defined(COOL) || defined(WITH_STAPI) || defined(AZBOX)
@@ -889,7 +884,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
     	unsigned long BGT, edc, EGT, CGT, WWT = 0;
     	unsigned int GT;
     	unsigned long gt_ms;
-    
+
 	//set the amps and the volts according to ATR
 	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
 		I = 0;
@@ -947,7 +942,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 			WWT = (unsigned long) 960 * wi; //in ETU
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
-			
+
 			reader->read_timeout = ETU_to_ms(reader, WWT);
 			reader->block_delay = gt_ms;
 			reader->char_delay = gt_ms;
@@ -958,7 +953,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 	 case ATR_PROTOCOL_TYPE_T1:
 			{
 				BYTE ta, tb, tc, cwi, bwi;
-			
+
 				// Set IFSC
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TA, &ta) == ATR_NOT_FOUND)
 					reader->ifsc = DEFAULT_IFSC;
@@ -966,7 +961,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 					reader->ifsc = ta;
 				else
 					reader->ifsc = DEFAULT_IFSC;
-		
+
 				//FIXME workaround for Smargo until native mode works
 				if (reader->smargopatch == 1)
 					reader->ifsc = MIN (reader->ifsc, 28);
@@ -974,7 +969,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 					// Towitoko does not allow IFSC > 251
 					//FIXME not sure whether this limitation still exists
 					reader->ifsc = MIN (reader->ifsc, MAX_IFSC);
-			
+
 			#ifndef PROTOCOL_T1_USE_DEFAULT_TIMINGS
 				// Calculate CWI and BWI
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TB, &tb) == ATR_NOT_FOUND)
@@ -990,13 +985,13 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 						bwi = tb >> 4;
 					}
 			#endif
-			
+
 				// Set CWT = (2^CWI + 11) work etu
 				reader->CWT = (unsigned short) (((1<<cwi) + 11)); // in ETU
-			
+
 				// Set BWT = (2^BWI * 960 + 11) work etu
 				reader->BWT = (unsigned short)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
-			
+
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
 
@@ -1004,13 +999,13 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 					CGT = 11L; //in ETU
 				else
 					CGT = GT;
-			
+
 				// Set the error detection code type
 				if (ATR_GetInterfaceByte (atr, 3, ATR_INTERFACE_BYTE_TC, &tc) == ATR_NOT_FOUND)
 					edc = EDC_LRC;
 				else
 					edc = tc & 0x01;
-			
+
 				// Set initial send sequence (NS)
 				reader->ns = 1;
 
@@ -1050,7 +1045,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 		call (Cool_SetClockrate(reader->mhz));
 		call (Cool_WriteSettings (reader->BWT, reader->CWT, EGT, BGT));
 #elif defined(WITH_STAPI)
-		call (STReader_SetClockrate(reader->stsmart_handle));		
+		call (STReader_SetClockrate(reader->stsmart_handle));
 #endif //COOL
 	}
 #if defined(LIBUSB)

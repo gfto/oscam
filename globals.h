@@ -405,42 +405,6 @@ typedef struct s_ptab
   PORT   ports[CS_MAXPORTS];
 } GCC_PACK PTAB;
 
-#if defined(LIBUSB)
-typedef struct  {
-    int F;
-    float D;
-    int fs;
-    int N;
-    int T;
-    int inv;
-    int parity;
-    int irdeto;
-    int running;
-	libusb_device *usb_dev;
-	libusb_device_handle *usb_dev_handle;
-    enum smartreader_chip_type type;
-    uint8_t in_ep;  // 0x01
-    uint8_t out_ep; // 0x82
-    int index;
-    /** usb read timeout */
-    int usb_read_timeout;
-    /** usb write timeout */
-    int usb_write_timeout;
-    unsigned int writebuffer_chunksize;
-    unsigned char bitbang_enabled;
-    int baudrate;
-    int interface;   // 0 or 1
-    /** maximum packet size. Needed for filtering modem status bytes every n packets. */
-    unsigned int max_packet_size;
-    unsigned char g_read_buffer[4096];
-    unsigned int g_read_buffer_size;
-    pthread_mutex_t g_read_mutex;
-    pthread_mutex_t g_usb_mutex;
-    pthread_t rt;
-    unsigned char modem_status;
-} SR_CONFIG;
-#endif
-
 typedef struct aes_entry {
     ushort      keyid;
     ushort      caid;
@@ -872,7 +836,7 @@ struct s_reader  //contains device info, reader info and card info
 #endif
 #ifdef LIBUSB
   uint8_t  device_endpoint; // usb endpoint for Infinity USB Smart in smartreader mode.
-  SR_CONFIG *sr_config;
+  struct s_sr_config *sr_config;
 #endif
 #ifdef AZBOX
   int mode;
