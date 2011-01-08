@@ -155,7 +155,7 @@ DESCRIPTIONS
 	  time between retrying failed readers/CAIDs/providers/services, default:900
 
        lb_retrylimit = milli seconds
-	  reopen reader only if response time > lb_retrylimit, default:2200
+	  reopen reader only if response time > lb_retrylimit, default:800
 
    The [monitor] section
        port = 0|port
