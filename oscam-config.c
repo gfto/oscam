@@ -482,32 +482,32 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "lb_nbest_readers")) {
-		cfg->lb_nbest_readers = strToIntVal(value, 0);
+		cfg->lb_nbest_readers = strToIntVal(value, DEFAULT_NBEST);
 		return;
 	}
 
 	if (!strcmp(token, "lb_nfb_readers")) {
-		cfg->lb_nfb_readers = strToIntVal(value, 0);
+		cfg->lb_nfb_readers = strToIntVal(value, DEFAULT_NFB);
 		return;
 	}
 
 	if (!strcmp(token, "lb_min_ecmcount")) {
-		cfg->lb_min_ecmcount = strToIntVal(value, 0);
+		cfg->lb_min_ecmcount = strToIntVal(value, DEFAULT_MIN_ECM_COUNT);
 		return;
 	}
 
 	if (!strcmp(token, "lb_max_ecmcount")) {
-		cfg->lb_max_ecmcount = strToIntVal(value, 0);
+		cfg->lb_max_ecmcount = strToIntVal(value, DEFAULT_MAX_ECM_COUNT);
 		return;
 	}
 
 	if (!strcmp(token, "lb_reopen_seconds")) {
-		cfg->lb_reopen_seconds = strToIntVal(value, 0);
+		cfg->lb_reopen_seconds = strToIntVal(value, DEFAULT_REOPEN_SECONDS);
 		return;
 	}
 
 	if (!strcmp(token, "lb_retrylimit")) {
-		cfg->lb_retrylimit = strToIntVal(value, 0);
+		cfg->lb_retrylimit = strToIntVal(value, DEFAULT_RETRYLIMIT);
 		return;
 	}
 
