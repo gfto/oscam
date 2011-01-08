@@ -154,6 +154,9 @@ DESCRIPTIONS
        lb_reopen_seconds = seconds
 	  time between retrying failed readers/CAIDs/providers/services, default:900
 
+       lb_retrylimit = milli seconds
+	  reopen reader only if response time > lb_retrylimit, default:2200
+
    The [monitor] section
        port = 0|port
 	  UDP port for monitor, port=0 monitor disabled, default:0
