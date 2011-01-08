@@ -1230,6 +1230,7 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
 		<TR><TD>Number of fallback readers:</TD><TD><input name=\"lb_nfb_readers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBNFBREADERS##\"></TD></TR>\n\
 		<TR><TD>Min ECM count:</TD><TD><input name=\"lb_min_ecmcount\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBMINECMCOUNT##\"></TD></TR>\n\
 		<TR><TD>Max ECM count:</TD><TD><input name=\"lb_max_ecmcount\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBMAXECEMCOUNT##\"></TD></TR>\n\
+		<TR><TD>Retry Limit:</TD><TD><input name=\"lb_retrylimit\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBRETRYLIMIT##\"></TD></TR>\n\
 		<TR><TD>Time to reopen:</TD><TD><input name=\"lb_reopen_seconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBREOPENSECONDS##\"></TD></TR>\n\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\

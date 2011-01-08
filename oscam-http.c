@@ -172,6 +172,7 @@ void send_oscam_config_loadbalancer(struct templatevars *vars, FILE *f, struct u
 	tpl_printf(vars, 0, "LBNFBREADERS", "%d",cfg->lb_nfb_readers);
 	tpl_printf(vars, 0, "LBMINECMCOUNT", "%d",cfg->lb_min_ecmcount);
 	tpl_printf(vars, 0, "LBMAXECEMCOUNT", "%d",cfg->lb_max_ecmcount);
+	tpl_printf(vars, 0, "LBRETRYLIMIT", "%d",cfg->lb_retrylimit);
 	tpl_printf(vars, 0, "LBREOPENSECONDS", "%d",cfg->lb_reopen_seconds);
 
 	webif_write(tpl_getTpl(vars, "CONFIGLOADBALANCER"), f);
