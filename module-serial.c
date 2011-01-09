@@ -150,7 +150,7 @@ static int oscam_ser_parse_url(char *url, struct s_serial_client *serialdata, ch
       if (!strcmp(service, proto_txt[i]))
         serialdata->oscam_ser_proto=i;
   }
-  if ((cltype == 'c') && (serialdata->oscam_ser_proto==P_AUTO)) return(0);
+  if (!(cltype == 'c') && (serialdata->oscam_ser_proto==P_AUTO)) return(0);
   switch(serialdata->oscam_ser_proto)	// set the defaults
   {
     case P_GS:
@@ -611,13 +611,10 @@ static void oscam_ser_auth_client(int proto)
   if (serialdata->connected)
     oscam_ser_disconnect();
   serialdata->connected=proto;
-  if( !account )
-  {
-    cur_client()->account=NULL;
-    for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
-      if( (ok=!strcmp(serialdata->oscam_ser_usr, account->usr)) )
-        break;
-  }
+
+  for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
+    if( (ok=!strcmp(serialdata->oscam_ser_usr, account->usr)) )
+      break;
   cs_auth_client(cur_client(), ok ? account : (struct s_auth *)(-1), proto_txt[serialdata->connected]);
 }
 
@@ -948,11 +945,15 @@ static void * oscam_ser_fork(void *pthreadparam)
   cl->thread=pthread_self();
   cl->typ='c';  
   cl->ctyp = pparam->ctyp;
+  cl->account=first_client->account;
 
   if(!cl->serialdata)
     cl->serialdata = malloc(sizeof(struct s_serial_client));
   oscam_init_serialdata(cl->serialdata);  
   oscam_copy_serialdata(cl->serialdata, &pparam->serialdata);
+  cs_log("serial: initialized (%s@%s)", cl->serialdata->oscam_ser_proto>P_MAX ? 
+         "auto" : proto_txt[cl->serialdata->oscam_ser_proto], cl->serialdata->oscam_ser_device);
+
   pthread_mutex_lock(&mutex);
   bcopy_end = 1;
   pthread_mutex_unlock(&mutex);
@@ -961,7 +962,6 @@ static void * oscam_ser_fork(void *pthreadparam)
   while(1)
   {
     cl->aureader=NULL;
-    cl->account=NULL;
     cl->login=time((time_t *)0);
     cl->pfd=init_oscam_ser_device(cl->serialdata->oscam_ser_device, cl->serialdata->oscam_ser_baud);
     if (cl->pfd)
@@ -983,7 +983,7 @@ void * init_oscam_ser(int ctyp)
 	param.ctyp=ctyp;
 	char *p;
 	pthread_t temp;
-	char cltype = '\0'; //now auto should work
+	char cltype = 'c'; //now auto should work
 	if(bcopy_end == -1){ //mutex should be initialized only once
 		pthread_mutex_init(&mutex,NULL);
 		pthread_cond_init(&cond,NULL);
