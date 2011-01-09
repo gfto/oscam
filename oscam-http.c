@@ -676,7 +676,9 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 					restart_cardreader(rdr, 1);
 				} else {
 					rdr->enable = 0;
-					//kill_thread(rdr->client); // seems to cause problems (segfault) in reader_get_type_desc()
+					struct s_client *sav_cl = rdr->client;
+					rdr->client = NULL;
+					kill_thread(sav_cl);
 				}
 				if(write_server()==0)	refresh_oscam(REFR_READERS, in);
 				else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
