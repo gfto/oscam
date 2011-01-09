@@ -1461,10 +1461,11 @@ extern void cs_log(const char *,...);
 extern void cs_debug_mask(unsigned short, const char *,...);
 extern void cs_ddump_mask(unsigned short, const uchar *, int, char *, ...);
 #else
-#define cs_debug(...)
-#define cs_debug_mask(...)
-#define cs_ddump(...)
-#define cs_ddump_mask(...)
+#define nop() asm volatile("nop")
+#define cs_debug(...) nop()
+#define cs_debug_mask(...) nop()
+#define cs_ddump(...) nop()
+#define cs_ddump_mask(...) nop()
 #endif
 extern void cs_close_log(void);
 extern int  cs_init_statistics();

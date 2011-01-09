@@ -2549,7 +2549,11 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			}
                 }
 
-		if (cfg->lb_mode) {
+                //we have to go through matching_reader() to check services, then check ecm-cache:
+                if (er->reader_avail && check_and_store_ecmcache(er, client->grp))
+                  return; //Found in ecmcache - answer by distribute ecm
+
+		if (cfg->lb_mode && er->reader_avail) {
 			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X",
 				username(client), er->caid, er->prid, er->srvid);
 			get_best_reader(er);
@@ -2575,10 +2579,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
                                 }
 		}
 	}
-
-	if (er->rc > 99 && check_and_store_ecmcache(er, client->grp))
-                return;
-
 
 	if (er->rc < 100) {
 		if (cfg->delay)
