@@ -1654,22 +1654,5 @@ struct uriparams {
 static char hex2ascii[256][2];
 static char noncekey[33];
 
-
-char *tpl_addVar(struct templatevars *vars, int append, char *name, char *value);
-char *tpl_addTmp(struct templatevars *vars, char *value);
-char *tpl_printf(struct templatevars *vars, int append, char *varname, char *fmtstring, ...);
-char *tpl_getVar(struct templatevars *vars, char *name);
-struct templatevars *tpl_create();
-void tpl_clear(struct templatevars *vars);
-char *tpl_getUnparsedTpl(const char* name);
-char *tpl_getTpl(struct templatevars *vars, const char* name);
-char *parse_auth_value(char *value);
-void calculate_nonce(char *result, int resultlen);
-int check_auth(char *authstring, char *method, char *path, char *expectednonce);
-void send_headers(FILE *f, int status, char *title, char *extra, char *mime);
-void send_css(FILE *f);
-void send_js(FILE *f);
-char *getParam(struct uriparams *params, char *name);
-int tpl_saveIncludedTpls(const char *path);
 int cv(){return 91789605==crc32(0L,(unsigned char*)ICMAI,strlen(ICMAI))/2?1:0;}
 

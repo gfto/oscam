@@ -809,7 +809,10 @@ void send_oscam_reader_config(struct templatevars *vars, FILE *f, struct uripara
 	if(strcmp(getParam(params, "action"), "Add") == 0) {
 		// Add new reader
 		struct s_reader *newrdr;
-		newrdr = malloc(sizeof(struct s_reader));
+		if(!cs_malloc(&newrdr,sizeof(struct s_reader), -1)){
+			send_error500(f);
+			return;
+		}
 
 		if (newrdr) {
 			memset(newrdr, 0, sizeof(struct s_reader));
@@ -1339,8 +1342,8 @@ void send_oscam_user_config_edit(struct templatevars *vars, FILE *f, struct urip
 			if(account != NULL) user[0] = '\0';
 			++i;
 		}
-		if (!(account=malloc(sizeof(struct s_auth)))) {
-			cs_log("Error allocating memory (errno=%d)", errno);
+		if (!cs_malloc(&account, sizeof(struct s_auth), -1)) {
+			send_error500(f);
 			return;
 		}
 		if(cfg->account == NULL) cfg->account = account;
@@ -1773,7 +1776,6 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 
 			if (rcc && rcc->cards) {
 				pthread_mutex_lock(&rcc->cards_busy);
-				char buf[4000];
 				uint8 serbuf[8];
 
 				LL_ITER *it = ll_iter_create(rcc->cards);
@@ -1809,8 +1811,6 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					tpl_printf(vars, 0, "MAXDOWN", "%d", card->maxdown);
 
 					LL_ITER *pit = ll_iter_create(card->providers);
-					char *p = buf;
-					*p = 0;
 					struct cc_provider *prov;
 
 					providercount = 0;
@@ -1824,16 +1824,11 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						provider = xml_encode(vars, get_provider(card->caid, prov->prov));
 
 						if (!apicall) {
-							sprintf(p, "%s", provider);
-							p = strend(p);
-							//add SA:
 							if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3]) {
-								sprintf(p, " SA:%02X%02X%02X%02X", prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
-								p = strend(p);
+								tpl_printf(vars, 1, "PROVIDERS", "%s SA:%02X%02X%02X%02X<BR>\n", provider, prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
+							} else {
+								tpl_printf(vars, 1, "PROVIDERS", "%s<BR>\n", provider);
 							}
-							sprintf(p, "<BR>\n");
-							p = strend(p);
-
 						} else {
 							if (prov->sa[0] || prov->sa[1] || prov->sa[2] || prov->sa[3])
 								tpl_printf(vars, 0, "APIPROVIDERSA", "%02X%02X%02X%02X", prov->sa[0], prov->sa[1], prov->sa[2], prov->sa[3]);
@@ -1849,12 +1844,8 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						tpl_printf(vars, 0, "APITOTALPROVIDERS", "%d", providercount);
 					}
 
-					if (!apicall) tpl_addVar(vars, 1, "PROVIDERS", buf);
-
 					ll_iter_release(pit);
 					LL_ITER *nit = ll_iter_create(card->remote_nodes);
-					p = buf;
-					*p = 0;
 					uint8 *node;
 
 					nodecount = 0;
@@ -1863,10 +1854,8 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 					while ((node = ll_iter_next(nit))) {
 
 						if (!apicall) {
-							sprintf(p, "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
+							tpl_printf(vars, 1, "NODES", "%02X%02X%02X%02X%02X%02X%02X%02X<BR>\n",
 									node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
-							p = strend(p);
-
 						} else {
 							tpl_printf(vars, 0, "APINODE", "%02X%02X%02X%02X%02X%02X%02X%02X", node[0], node[1], node[2], node[3], node[4], node[5], node[6], node[7]);
 							tpl_printf(vars, 0, "APINODENUMBER", "%d", nodecount);
@@ -1875,8 +1864,6 @@ void send_oscam_entitlement(struct templatevars *vars, FILE *f, struct uriparams
 						nodecount++;
 						tpl_printf(vars, 0, "APITOTALNODES", "%d", nodecount);
 					}
-
-					if (!apicall) tpl_addVar(vars, 0, "NODES", buf);
 
 					ll_iter_release(nit);
 
@@ -2347,10 +2334,10 @@ void send_oscam_status(struct templatevars *vars, FILE *f, struct uriparams *par
 
 void send_oscam_services_edit(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
 	struct s_sidtab *sidtab,*ptr;
-	char label[128];
+	char label[sizeof(cfg->sidtab->label)];
 	int i;
 
-	cs_strncpy(label, strtolower(getParam(params, "service")), sizeof(label)/sizeof(char));
+	cs_strncpy(label, strtolower(getParam(params, "service")), sizeof(label));
 
 	for (sidtab = cfg->sidtab; sidtab != NULL && strcmp(label, sidtab->label) != 0; sidtab=sidtab->next);
 
@@ -2362,8 +2349,8 @@ void send_oscam_services_edit(struct templatevars *vars, FILE *f, struct uripara
 			if(sidtab != NULL) label[0] = '\0';
 			++i;
 		}
-		if (!(sidtab=malloc(sizeof(struct s_sidtab)))) {
-			cs_log("Error allocating memory (errno=%d)", errno);
+		if (!cs_malloc(&sidtab, sizeof(struct s_sidtab), -1)) {
+			send_error500(f);
 			return;
 		}
 
@@ -2966,7 +2953,7 @@ int process_request(FILE *f, struct in_addr in) {
 	}
 
 	int authok = 0;
-	char expectednonce[64];
+	char expectednonce[(MD5_DIGEST_LENGTH * 2) + 1];
 
 	char *method, *path, *protocol;
 	char *pch, *tmp;
@@ -3015,9 +3002,11 @@ int process_request(FILE *f, struct in_addr in) {
 #endif
 			return -1;
 		}
-
-		filebuf = realloc(filebuf, bufsize+n+1);
-
+		if(!cs_malloc(&filebuf, bufsize+n+1, -1)){
+			send_error500(f);
+			return -1;
+		}
+		
 		memcpy(filebuf+bufsize, buf2, n);
 		bufsize+=n;
 
@@ -3081,7 +3070,7 @@ int process_request(FILE *f, struct in_addr in) {
 	webif_parse_request(&params, pch);
 
 	if(strlen(cfg->http_user) == 0 || strlen(cfg->http_pwd) == 0) authok = 1;
-	else calculate_nonce(expectednonce, sizeof(expectednonce)/sizeof(char));
+	else calculate_nonce(expectednonce);
 
 	char *str1, *saveptr=NULL;
 
@@ -3098,13 +3087,9 @@ int process_request(FILE *f, struct in_addr in) {
 	}
 
 	if(authok != 1) {
-		char temp[1024];
-		strcpy(temp, "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"");
-		strcat(temp, AUTHREALM);
-		strcat(temp, "\", qop=\"auth\", opaque=\"\", nonce=\"");
-		strcat(temp, expectednonce);
-		strcat(temp, "\"");
-		if(authok == 2) strcat(temp, ", stale=true");
+		char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
+		snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
+		if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
 		send_headers(f, 401, "Unauthorized", temp, "text/html");
 		free(filebuf);
 		return 0;
@@ -3113,10 +3098,10 @@ int process_request(FILE *f, struct in_addr in) {
 	/*build page*/
 	if(pgidx == 8) {
 		send_headers(f, 200, "OK", NULL, "text/css");
-		send_file(f, 1);
+		send_file(f, "CSS");
 	} else if (pgidx == 17) {
 		send_headers(f, 200, "OK", NULL, "text/javascript");
-		send_file(f, 2);
+		send_file(f, "JS");
 	} else {
 		if (pgidx == 18)
 			send_headers(f, 200, "OK", NULL, "text/xml");
@@ -3124,6 +3109,11 @@ int process_request(FILE *f, struct in_addr in) {
 			send_headers(f, 200, "OK", NULL, "text/html");
 		time_t t;
 		struct templatevars *vars = tpl_create();
+		if(vars == NULL){
+			send_error500(f);
+			free(filebuf);
+			return 0;
+		}
 		struct tm lt, st;
 		time(&t);
 
@@ -3234,9 +3224,9 @@ SSL_CTX *webif_init_ssl() {
 	char path[128];
 
 	if (cfg->http_cert[0]==0)
-		sprintf(path, "%s%s", cs_confdir, cs_cert);
+		snprintf(path, sizeof(path), "%s%s", cs_confdir, cs_cert);
 	else
-		strcpy(path, cfg->http_cert);
+		cs_strncpy(path, cfg->http_cert, sizeof(path));
 
 	if (!ctx) {
 		ERR_print_errors_fp(stderr);
@@ -3272,15 +3262,14 @@ void http_srv() {
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
 	socklen_t len = sizeof(remote);
-	char *tmp;
 
 	/* Prepare lookup array for conversion between ascii and hex */
-	tmp = malloc(3 * sizeof(char));
+	char tmp[3];
 	for(i = 0; i < 256; i++) {
-		snprintf(tmp, 3,"%02x", i);
+		snprintf(tmp, sizeof(tmp),"%02x", i);
 		memcpy(hex2ascii[i], tmp, 2);
 	}
-	free(tmp);
+
 	/* Create random string for nonce value generation */
 	srand(time(NULL));
 	create_rand_str(noncekey,32);

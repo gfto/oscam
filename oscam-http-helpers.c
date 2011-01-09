@@ -16,14 +16,17 @@ char *tpl_addVar(struct templatevars *vars, int append, char *name, char *value)
 	}
 	if(result == NULL){
 		if((*vars).varsalloc <= (*vars).varscnt){
+			if(!cs_realloc(&(*vars).names, (*vars).varsalloc * 2 * sizeof(char**), -1)) return value;
+			if(!cs_realloc(&(*vars).values, (*vars).varsalloc * 2 * sizeof(char**), -1)) return value;
 			(*vars).varsalloc = (*vars).varscnt * 2;
-			(*vars).names = (char**) realloc ((*vars).names, (*vars).varsalloc * sizeof(char**));
-			(*vars).values = (char**) realloc ((*vars).values, (*vars).varsalloc * sizeof(char**));
 		}
-		tmp = (char *) malloc((strlen(name) + 1) * sizeof(char));
+		if(!cs_malloc(&tmp,(strlen(name) + 1) * sizeof(char), -1)) return value;
 		strcpy(tmp, name);
 		(*vars).names[(*vars).varscnt] = tmp;
-		tmp = (char *) malloc((strlen(value) + 1) * sizeof(char));
+		if(!cs_malloc(&tmp,(strlen(value) + 1) * sizeof(char), -1)){
+			free((*vars).names[(*vars).varscnt]);
+			return value;
+		}
 		strcpy(tmp, value);
 		(*vars).values[(*vars).varscnt] = tmp;
 		(*vars).varscnt = (*vars).varscnt + 1;
@@ -31,11 +34,11 @@ char *tpl_addVar(struct templatevars *vars, int append, char *name, char *value)
 		int newlen = strlen(value);
 		if(append == 1){
 			int oldlen = strlen((*vars).values[i]);
-			tmp = (char*) malloc ((oldlen + newlen + 1) * sizeof(char));
+			if(!cs_malloc(&tmp, (oldlen + newlen + 1) * sizeof(char), -1)) return value;
 			memcpy(tmp, (*vars).values[i], oldlen);
 			strcpy(tmp + oldlen, value);
 		} else {
-			tmp = (char*) malloc ((newlen + 1) * sizeof(char));
+			if(!cs_malloc(&tmp, (newlen + 1) * sizeof(char), -1)) return value;
 			strcpy(tmp, value);
 		}
 		free((*vars).values[i]);
@@ -48,12 +51,12 @@ char *tpl_addVar(struct templatevars *vars, int append, char *name, char *value)
   freed when calling tpl_clear(). Please do NOT free the memory yourself or realloc
   it after having added the array here! */
 char *tpl_addTmp(struct templatevars *vars, char *value){
-	if((*vars).tmpalloc <= (*vars).tmpcnt){
+	if((*vars).tmpalloc <= (*vars).tmpcnt){		
+		if(!cs_realloc (&(*vars).tmp, (*vars).tmpalloc * 2 * sizeof(char**), -1)) return value;
 		(*vars).tmpalloc = (*vars).tmpcnt * 2;
-		(*vars).tmp = (char**) realloc ((*vars).tmp, (*vars).tmpalloc * sizeof(char**));
 	}
 	(*vars).tmp[(*vars).tmpcnt] = value;
-	(*vars).tmpcnt = (*vars).tmpcnt + 1;
+	(*vars).tmpcnt++;
 	return value;
 }
 
@@ -69,7 +72,8 @@ char *tpl_printf(struct templatevars *vars, int append, char *varname, char *fmt
 	needed = vsnprintf(test, 1, fmtstring, argptr);
 	va_end(argptr);
 	
-	char *result = (char *) malloc((needed + 1) * sizeof(char));
+	char *result;
+	if(!cs_malloc(&result, (needed + 1) * sizeof(char), -1)) return "";
 	va_start(argptr,fmtstring);
 	vsnprintf(result, needed + 1, fmtstring, argptr);
 	va_end(argptr);
@@ -97,17 +101,30 @@ char *tpl_getVar(struct templatevars *vars, char *name){
 	else return result;
 }
 
-/* Initializes all variables vor a templatevar-structure and returns a pointer to it. Make
+/* Initializes all variables for a templatevar-structure and returns a pointer to it. Make
    sure to call tpl_clear() when you are finished or you'll run into a memory leak! */
 struct templatevars *tpl_create(){
-	struct templatevars *vars = (struct templatevars *) malloc(sizeof(struct templatevars));
-	(*vars).varsalloc = 16;
+	struct templatevars *vars;
+	if(!cs_malloc(&vars, sizeof(struct templatevars), -1)) return NULL;
+	(*vars).varsalloc = 64;
 	(*vars).varscnt = 0;
-	(*vars).tmpalloc = 16;
+	(*vars).tmpalloc = 64;
 	(*vars).tmpcnt = 0;
-	(*vars).names = (char**) malloc ((*vars).varsalloc * sizeof(char**));
-	(*vars).values = (char**) malloc ((*vars).varsalloc * sizeof(char**));
-	(*vars).tmp = (char**) malloc ((*vars).tmpalloc * sizeof(char**));
+	if(!cs_malloc(&(*vars).names, (*vars).varsalloc * sizeof(char**), -1)){
+		free(vars);
+		return NULL;
+	}
+	if(!cs_malloc(&(*vars).values, (*vars).varsalloc * sizeof(char**), -1)){
+		free((*vars).names);
+		free(vars);
+		return NULL;
+	};
+	if(!cs_malloc(&(*vars).tmp, (*vars).tmpalloc * sizeof(char**), -1)){
+		free((*vars).names);
+		free((*vars).values);
+		free(vars);
+		return NULL;
+	};
 	return vars;
 }
 
@@ -143,7 +160,7 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, unsigned 
 }
 
 /* Returns an unparsed template either from disk or from internal templates.
-   Note: You must free() the result after using it!*/
+   Note: You must free() the result after using it and you may get NULL if an error occured!*/
 char *tpl_getUnparsedTpl(const char* name){
   int i;
   int tplcnt = sizeof(tpl)/sizeof(char *);
@@ -160,12 +177,12 @@ char *tpl_getUnparsedTpl(const char* name){
 			FILE *fp;
 			char buffer[1024];
 			int read, allocated = 1025, size = 0;
-			result = (char *) malloc(allocated * sizeof(char));
+			if(!cs_malloc(&result, allocated * sizeof(char), -1)) return NULL;
 			if((fp = fopen(path,"r"))!=NULL){
 			while((read = fread(&buffer,sizeof(char),1024,fp)) > 0){
 				if(allocated < size + read + 1) {
 					allocated += size + 1024;
-					result = (char *) realloc(result, allocated * sizeof(char));
+					if(!cs_realloc(&result, allocated * sizeof(char), -1)) return NULL;
 				}
 				memcpy(result + size, buffer, read);
 				size += read;
@@ -178,26 +195,29 @@ char *tpl_getUnparsedTpl(const char* name){
   }
  	if(i >= 0 && i < tplmapcnt){
  		int len = (strlen(tplmap[i])) + 1;
- 		result = (char *) malloc(len * sizeof(char));
+ 		if(!cs_malloc(&result, len * sizeof(char), -1)) return NULL;
  		memcpy(result, tplmap[i], len);
  	} else {
- 		result = (char *) malloc(1 * sizeof(char));
+ 		if(!cs_malloc(&result, 1 * sizeof(char), -1)) return NULL;
  		result[0] = '\0';
   }
  	return result;
 }
 
 /* Returns the specified template with all variables/other templates replaced or an
-   empty string if the template doesn't exist*/
+   empty string if the template doesn't exist. Do not free the result yourself, it 
+   will get automatically cleaned up! */
 char *tpl_getTpl(struct templatevars *vars, const char* name){
 	char *tplorg = tpl_getUnparsedTpl(name);
+	if(!tplorg) return "";
 	char *tplend = tplorg + strlen(tplorg);
 	char *pch, *pch2, *tpl=tplorg;
 	char varname[33];
 
 	int tmp,respos = 0;
 	int allocated = 2 * strlen(tpl) + 1;
-	char *result = (char *) malloc(allocated * sizeof(char));
+	char *result;
+	if(!cs_malloc(&result, allocated * sizeof(char), -1)) return "";
 
 	while(tpl < tplend){
 		if(tpl[0] == '#' && tpl[1] == '#' && tpl[2] != '#'){
@@ -215,7 +235,7 @@ char *tpl_getTpl(struct templatevars *vars, const char* name){
 				tmp = strlen(pch2);
 				if(tmp + respos + 2 >= allocated){
 					allocated = tmp + respos + 256;
-					result = (char *) realloc(result, allocated * sizeof(char));
+					if(!cs_realloc(&result, allocated * sizeof(char), -1)) return "";
 				}
 				memcpy(result + respos, pch2, tmp);
 				respos += tmp;
@@ -224,7 +244,7 @@ char *tpl_getTpl(struct templatevars *vars, const char* name){
 		} else {
 			if(respos + 2 >= allocated){
 				allocated = respos + 256;
-				result = (char *) realloc(result, allocated * sizeof(char));
+				if(!cs_realloc(&result, allocated * sizeof(char), -1)) return "";
 			}
 			result[respos] = tpl[0];
 			++respos;
@@ -242,10 +262,10 @@ int tpl_saveIncludedTpls(const char *path){
 	int tplcnt = sizeof(tpl)/sizeof(char *);
   int tplmapcnt = sizeof(tplmap)/sizeof(char *);
   int i, cnt = 0;
-  char tmp[200];
+  char tmp[256];
   FILE *fp;
   for(i = 0; i < tplcnt && i < tplmapcnt; ++i){
-  	if(strlen(tpl_getTplPath(tpl[i], path, tmp, 200)) > 0 && (fp = fopen(tmp,"w")) != NULL){
+  	if(strlen(tpl_getTplPath(tpl[i], path, tmp, 256)) > 0 && (fp = fopen(tmp,"w")) != NULL){
 			fwrite(tplmap[i], sizeof(char), strlen(tplmap[i]), fp);
 			fclose (fp);
 			++cnt;
@@ -254,7 +274,7 @@ int tpl_saveIncludedTpls(const char *path){
 	return cnt;
 }
 
-/* Parses a value in an authentication string by removing all quotes/whitespace. Note that the original array is modified*/
+/* Parses a value in an authentication string by removing all quotes/whitespace. Note that the original array is modified. */
 char *parse_auth_value(char *value){
 	char *pch = value;
 	char *pch2;
@@ -269,16 +289,16 @@ char *parse_auth_value(char *value){
 	return pch;
 }
 
-/* Calculates the currently valid nonce value and copies it to result*/
-void calculate_nonce(char *result, int resultlen){
+/* Calculates the currently valid nonce value and copies it to result. Please note that result needs to be at least (MD5_DIGEST_LENGTH * 2) + 1 large. */
+void calculate_nonce(char *result){
   char noncetmp[128];
+  unsigned char md5tmp[MD5_DIGEST_LENGTH];
   sprintf(noncetmp, "%d:%s", (int)time(NULL)/AUTHNONCEVALIDSECS, noncekey);
-  char *expectednonce = char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
-  cs_strncpy(result, expectednonce, resultlen);
-	free(expectednonce);
+  char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)result, hex2ascii);
 }
 
-/* Checks if authentication is correct. Returns -1 if not correct, 1 if correct and 2 if nonce isn't valid anymore */
+/* Checks if authentication is correct. Returns -1 if not correct, 1 if correct and 2 if nonce isn't valid anymore.
+   Note that authstring will be modified. */
 int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 	int authok = 0, uriok = 0;
 	char *authnonce = "";
@@ -321,24 +341,23 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 	}
 	if(uriok == 1 && strcmp(username, cfg->http_user) == 0){
 		char A1tmp[3 + strlen(username) + strlen(AUTHREALM) + strlen(expectedPassword)];
+		char A1[(MD5_DIGEST_LENGTH * 2) + 1], A2[(MD5_DIGEST_LENGTH * 2) + 1], A3[(MD5_DIGEST_LENGTH * 2) + 1];
+		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		sprintf(A1tmp, "%s:%s:%s", username, AUTHREALM, expectedPassword);
-		char *A1 = char_to_hex(MD5((unsigned char*)A1tmp, strlen(A1tmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
+		char_to_hex(MD5((unsigned char*)A1tmp, strlen(A1tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A1, hex2ascii);
 		
 		char A2tmp[2 + strlen(method) + strlen(uri)];
 		sprintf(A2tmp, "%s:%s", method, uri);		
-		char *A2 = char_to_hex(MD5((unsigned char*)A2tmp, strlen(A2tmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
+		char_to_hex(MD5((unsigned char*)A2tmp, strlen(A2tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A2, hex2ascii);
 		
 		char A3tmp[10 + strlen(A1) + strlen(A2) + strlen(authnonce) + strlen(authnc) + strlen(authcnonce)];
 		sprintf(A3tmp, "%s:%s:%s:%s:auth:%s", A1, authnonce, authnc, authcnonce, A2);
-		char *A3 = char_to_hex(MD5((unsigned char*)A3tmp, strlen(A3tmp), NULL), MD5_DIGEST_LENGTH, hex2ascii);
+		char_to_hex(MD5((unsigned char*)A3tmp, strlen(A3tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A3, hex2ascii);
 		
 		if(strcmp(A3, authresponse) == 0) {
 			if(strcmp(expectednonce, authnonce) == 0) authok = 1;
 			else authok = 2;
 		}
-		free(A1);
-		free(A2);
-		free(A3);
 	}
 	return authok;
 }
@@ -370,45 +389,46 @@ int webif_read(char *buf, int num, FILE *f) {
 void send_headers(FILE *f, int status, char *title, char *extra, char *mime){
 
   time_t now;
-  char timebuf[128];
-  char buf[1024];
-
-  sprintf(buf, "%s %d %s\r\n", PROTOCOL, status, title);
-  sprintf(buf+strlen(buf), "Server: %s\r\n", SERVER);
+  char timebuf[32];
+  char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 256];
+	char *pos = buf;
+	
+  pos += sprintf(pos, "%s %d %s\r\n", PROTOCOL, status, title);
+  pos += sprintf(pos, "Server: %s\r\n", SERVER);
 
   now = time(NULL);
   strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&now));
-  sprintf(buf+strlen(buf), "Date: %s\r\n", timebuf);
+  pos += sprintf(pos, "Date: %s\r\n", timebuf);
 
 	if (extra)
-		sprintf(buf+strlen(buf), "%s\r\n", extra);
+		pos += sprintf(pos, "%s\r\n", extra);
 
 	if (mime)
-		sprintf(buf+strlen(buf), "Content-Type: %s\r\n", mime);
+		pos += sprintf(pos, "Content-Type: %s\r\n", mime);
 
-	strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&now));
-	sprintf(buf+strlen(buf), "Cache-Control: no-store, no-cache, must-revalidate\r\n");
-	sprintf(buf+strlen(buf), "Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
-	sprintf(buf+strlen(buf), "Last-Modified: %s\r\n", timebuf);
-	sprintf(buf+strlen(buf), "Connection: close\r\n");
-	sprintf(buf+strlen(buf), "\r\n");
+	pos += sprintf(pos, "Cache-Control: no-store, no-cache, must-revalidate\r\n");
+	pos += sprintf(pos, "Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
+	pos += sprintf(pos, "Last-Modified: %s\r\n", timebuf);
+	pos += sprintf(pos, "Connection: close\r\n");
+	pos += sprintf(pos, "\r\n");
 	webif_write(buf, f);
 }
 
 
+
 /*
- * function for sending files. 1 = CSS, 2 = JS
+ * function for sending files.
  */
-void send_file(FILE *f, int fileno){
+void send_file(FILE *f, char *filename){
+	int fileno = 0;
 
-	char *filename;
-
-	if (fileno == 1)
+	if (!strcmp(filename, "CSS")){
 		filename = cfg->http_css;
-	else if (fileno == 2)
+		fileno = 1;
+	} else if (!strcmp(filename, "JS")){
 		filename = cfg->http_jscript;
-	else
-		return;
+		fileno = 2;
+	}
 
 	if(strlen(filename) > 0 && file_exists(filename) == 1){
 		FILE *fp;
@@ -427,7 +447,6 @@ void send_file(FILE *f, int fileno){
 			webif_write(CSS, f);
 		else if (fileno == 2)
 			webif_write(JSCRIPT, f);
-		
 	}
 }
 
@@ -439,6 +458,10 @@ void send_error(FILE *f, int status, char *title, char *extra, char *text){
 	sprintf(buf+strlen(buf), "%s\r\n", text);
 	sprintf(buf+strlen(buf), "</BODY></HTML>\r\n");
 	webif_write(buf, f);
+}
+
+void send_error500(FILE *f){
+	send_error(f, 500, "Internal Server Error", NULL, "An internal error has occured.");
 }
 
 char *getParam(struct uriparams *params, char *name){
@@ -461,6 +484,7 @@ char *getParamDef(struct uriparams *params, char *name, char* def){
    Do not call free() or realloc on the returned reference or you will get memory corruption! */
 char *xml_encode(struct templatevars *vars, char *chartoencode) {
 	int i, pos = 0, len = strlen(chartoencode);
+	char *result;
 	/* In worst case, every character could get converted to 6 chars (we only support ASCII, for Unicode it would be 7)*/
 	char encoded[len * 6 + 1], buffer[7];
 	for (i = 0; i < len; ++i){
@@ -485,7 +509,7 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 		}
 	}
 	/* Allocate the needed memory size and store it in the templatevars */
-	char *result = (char *)malloc(pos + 1);
+	if(!cs_malloc(&result, pos + 1, -1)) return "";
 	memcpy(result, encoded, pos);
 	result[pos] = '\0';
 	return tpl_addTmp(vars, result);

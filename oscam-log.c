@@ -31,8 +31,8 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 
 		if( stlog.st_size >= cfg->max_log_size*1024 && *f != NULL) {
 			int rc;
-			char prev_log[128];
-			sprintf(prev_log, "%s-prev", file);
+			char prev_log[strlen(file) + 6];
+			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);
 			if ( pthread_mutex_trylock(&switching_log) == 0) { //I got the lock so I am the first thread detecting a switchlog is needed
 				fprintf(*f, "switch log file\n");
 				fflush(*f);
@@ -153,17 +153,17 @@ static void write_to_log(int flag, char *txt)
 
 	switch(flag) {
 		case -1:
-		sprintf(log_buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
+		snprintf(log_buf, sizeof(log_buf),  "[LOG000]%4d/%02d/%02d %2d:%02d:%02d %s\n",
 				lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday,
 				lt.tm_hour, lt.tm_min, lt.tm_sec, txt);
 		break;
 		case 1:
-			sprintf(log_buf, "[LOG000]%4d/%02d/%02d %2d:%02d:%02d            %s",
+			snprintf(log_buf, sizeof(log_buf), "[LOG000]%4d/%02d/%02d %2d:%02d:%02d            %s",
 					lt.tm_year+1900, lt.tm_mon+1, lt.tm_mday,
 					lt.tm_hour, lt.tm_min, lt.tm_sec, txt);
 			break;
 		default:
-			sprintf(log_buf, "[LOG000]%s", txt);
+			snprintf(log_buf, sizeof(log_buf), "[LOG000]%s", txt);
 	}
 
 	cs_write_log(log_buf + 8);
@@ -199,7 +199,7 @@ static void write_to_log(int flag, char *txt)
 				if (cur_cl->account && cl->account && strcmp(cur_cl->account->usr, cl->account->usr))
 					continue;
 			}
-			sprintf(sbuf, "%03d", cl->logcounter);
+			snprintf(sbuf, sizeof(sbuf), "%03d", cl->logcounter);
 			cl->logcounter = (cl->logcounter+1) % 1000;
 			memcpy(log_buf + 4, sbuf, 3);
 			monitor_send_idx(cl, log_buf);
@@ -213,7 +213,7 @@ void cs_log(const char *fmt,...)
 	get_log_header(1, log_txt);
 	va_list params;
 	va_start(params, fmt);
-	vsprintf(log_txt+11, fmt, params);
+	vsnprintf(log_txt+11, sizeof(log_txt) - 11, fmt, params);
 	va_end(params);
 	write_to_log(-1, log_txt);
 }
@@ -233,7 +233,7 @@ void cs_debug_mask(unsigned short mask, const char *fmt,...)
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
+		vsnprintf(log_txt+11, sizeof(log_txt) - 11, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
 	}
@@ -249,7 +249,7 @@ void cs_dump(const uchar *buf, int n, char *fmt, ...)
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
+		vsnprintf(log_txt+11, sizeof(log_txt) - 11, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
 		//printf("LOG: %s\n", txt); fflush(stdout);
@@ -258,7 +258,7 @@ void cs_dump(const uchar *buf, int n, char *fmt, ...)
 	for( i=0; i<n; i+=16 )
 	{
 		get_log_header(0, log_txt);
-		sprintf(log_txt+11, "%s", cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i));
+		snprintf(log_txt+11, sizeof(log_txt) - 11, "%s", cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i));
 		write_to_log(-1, log_txt);
 	}
 }
@@ -273,7 +273,7 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 		get_log_header(1, log_txt);
 		va_list params;
 		va_start(params, fmt);
-		vsprintf(log_txt+11, fmt, params);
+		vsnprintf(log_txt+11, sizeof(log_txt) - 11, fmt, params);
 		va_end(params);
 		write_to_log(-1, log_txt);
 		//printf("LOG: %s\n", txt); fflush(stdout);
@@ -283,7 +283,7 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 		for (i=0; i<n; i+=16)
 		{
 			get_log_header(0, log_txt);
-			sprintf(log_txt+11, "%s", cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i));
+			snprintf(log_txt+11, sizeof(log_txt) - 11, "%s", cs_hexdump(1, buf+i, (n-i>16) ? 16 : n-i));
 			write_to_log(-1, log_txt);
 		}
 	}
@@ -347,7 +347,7 @@ void cs_statistics(struct s_client * client)
 		/* statistics entry start with 's' to filter it out on other end of pipe
 		 * so we can use the same Pipe as Log
 		 */
-		sprintf(buf, "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %02d:%02d:%02d %s %04X:%04X %s\n",
+		snprintf(buf, sizeof(buf), "s%02d.%02d.%02d %02d:%02d:%02d %3.1f %s %s %d %d %d %d %d %d %d %ld %ld %02d:%02d:%02d %s %04X:%04X %s\n",
 				lt.tm_mday, lt.tm_mon+1, lt.tm_year%100,
 				lt.tm_hour, lt.tm_min, lt.tm_sec, cwps,
 				client->account->usr,

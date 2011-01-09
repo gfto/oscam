@@ -573,6 +573,33 @@ int check_filled(uchar *value, int length){
 	return j;
 }
 
+/* This function encapsulates malloc. It automatically adds an error message to the log if it failed and calls cs_exit(quiterror) if quiterror > -1. 
+   result will be automatically filled with the new memory position or NULL on failure. */
+void *cs_malloc(void *result, size_t size, int quiterror){
+	void **tmp = (void *)result;
+	*tmp = malloc (size);
+	if(*tmp == NULL){
+		cs_log("Couldn't allocate memory (errno=%d)!", errno);
+		if(quiterror > -1) cs_exit(quiterror);
+	}
+	return *tmp;
+}
+
+/* This function encapsulates realloc. It automatically adds an error message to the log if it failed and calls cs_exit(quiterror) if quiterror > -1.
+	result will be automatically filled with the new memory position or NULL on failure. If a failure occured, the existing memory in result will be freed. */
+void *cs_realloc(void *result, size_t size, int quiterror){
+	void **tmp = (void *)result, **tmp2 = (void *)result;
+	*tmp = realloc (*tmp, size);
+	//printf("reallocating\n");
+	//fflush(stdout);
+	if(*tmp == NULL){
+		cs_log("Couldn't allocate memory (errno=%d)!", errno);
+		free(*tmp2);
+		if(quiterror > -1) cs_exit(quiterror);
+	}
+	return *tmp;
+}
+
 #ifdef WEBIF
 /* Helper function for urldecode.*/
 int x2i(int i){
@@ -632,18 +659,16 @@ char *urlencode(char *str){
 
 /* Converts a char array to a char array with hex values (needed for example for md5). The hex2ascii
    array is a lookup table with the corresponding hex string on the array position of the integer representation
-   of the ascii value. Note that you need to "free" the resulting array after usage or you'll get a memory leak!*/
-char *char_to_hex(const unsigned char* p_array, unsigned int p_array_len, char hex2ascii[256][2]) {
-	unsigned char* str = (unsigned char*)malloc(p_array_len*2+1);
-	str[p_array_len*2] = '\0';
+   of the ascii value. Note that result needs to be at least (p_array_len * 2) + 1 large. */
+void char_to_hex(const unsigned char* p_array, unsigned int p_array_len, unsigned char *result, char hex2ascii[256][2]) {
+	result[p_array_len*2] = '\0';
 	const unsigned char* p_end = p_array + p_array_len;
 	size_t pos=0;
 	const unsigned char* p;
 	for( p = p_array; p != p_end; p++, pos+=2 ) {
-		str[pos] = hex2ascii[*p][0];
-		str[pos+1] = hex2ascii[*p][1];
+		result[pos] = hex2ascii[*p][0];
+		result[pos+1] = hex2ascii[*p][1];
 	}
-	return (char*)str;
 }
 
 /* Creates a random string with specified length. Note that dst must be one larger than size to hold the trailing \0*/
