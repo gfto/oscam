@@ -74,9 +74,9 @@ struct s_serial_client
 	int sssp_fix;
 };
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
-int bcopy_end = 0;
+pthread_mutex_t mutex;
+pthread_cond_t cond;
+int bcopy_end = -1;
 
 struct s_thread_param
 {
@@ -983,7 +983,12 @@ void * init_oscam_ser(int ctyp)
 	param.ctyp=ctyp;
 	char *p;
 	pthread_t temp;
-  	char cltype = '\0'; //now auto should work
+	char cltype = '\0'; //now auto should work
+	if(bcopy_end == -1){ //mutex should be initialized only once
+		pthread_mutex_init(&mutex,NULL);
+		pthread_cond_init(&cond,NULL);
+		bcopy_end = 0;
+	}
 	while( (p=strrchr(sdevice, 1)) )
 	{
 		*p = 0;
