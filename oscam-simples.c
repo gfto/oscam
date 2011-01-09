@@ -568,7 +568,7 @@ void cs_setpriority(int prio)
 int check_filled(uchar *value, int length){
 	int i, j = 0;
 	for (i = 0; i < length; ++i){
-		if(value[j] > 0) j = i + 1;
+		if(value[i] > 0) j = i + 1;
 	}
 	return j;
 }
