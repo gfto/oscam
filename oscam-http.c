@@ -93,7 +93,7 @@ void send_oscam_config_global(struct templatevars *vars, FILE *f, struct uripara
 		else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 	if (cfg->srvip != 0)
-	tpl_addVar(vars, 0, "SERVERIP", cs_inet_ntoa(cfg->srvip));
+	tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->srvip));
 	if(cfg->disableuserfile == 1)
 		tpl_addVar(vars, 0, "CHKDISABLEUSERFILE", "checked");
 	if (cfg->usrfile != NULL) tpl_addVar(vars, 0, "USERFILE", cfg->usrfile);
@@ -201,7 +201,7 @@ void send_oscam_config_camd33(struct templatevars *vars, FILE *f, struct uripara
 	if (cfg->c33_port) {
 		tpl_printf(vars, 0, "PORT", "%d", cfg->c33_port);
 		if (cfg->c33_srvip != 0)
-			tpl_addVar(vars, 0, "SERVERIP", cs_inet_ntoa(cfg->c33_srvip));
+			tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c33_srvip));
 		if (cfg->c33_passive == 1)
 			tpl_addVar(vars, 0, "PASSIVE", "checked");
 
@@ -236,7 +236,7 @@ void send_oscam_config_camd35(struct templatevars *vars, FILE *f, struct uripara
 	if (cfg->c35_port) {
 		tpl_printf(vars, 0, "PORT", "%d", cfg->c35_port);
 		if (cfg->c35_srvip != 0)
-			tpl_addVar(vars, 1, "SERVERIP", cs_inet_ntoa(cfg->c35_srvip));
+			tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_srvip));
 
 		if (cfg->c35_suppresscmd08)
 			tpl_addVar(vars, 0, "SUPPRESSCMD08", "checked");
@@ -267,7 +267,7 @@ void send_oscam_config_camd35tcp(struct templatevars *vars, FILE *f, struct urip
 		free(value);
 
 		if (cfg->c35_tcp_srvip != 0)
-			tpl_addVar(vars, 1, "SERVERIP", cs_inet_ntoa(cfg->c35_tcp_srvip));
+			tpl_addVar(vars, 1, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c35_tcp_srvip));
 
 	}
 	webif_write(tpl_getTpl(vars, "CONFIGCAMD35TCP"), f);
@@ -299,7 +299,7 @@ void send_oscam_config_newcamd(struct templatevars *vars, FILE *f, struct uripar
 		free(value);
 
 		if (cfg->ncd_srvip != 0)
-			tpl_addVar(vars, 0, "SERVERIP", cs_inet_ntoa(cfg->ncd_srvip));
+			tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->ncd_srvip));
 
 		for (i = 0; i < 14; i++) tpl_printf(vars, 1, "KEY", "%02X", cfg->ncd_key[i]);
 
@@ -338,7 +338,7 @@ void send_oscam_config_radegast(struct templatevars *vars, FILE *f, struct uripa
 	}
 	tpl_printf(vars, 0, "PORT", "%d", cfg->rad_port);
 	if (cfg->rad_srvip != 0)
-	tpl_addVar(vars, 0, "SERVERIP", cs_inet_ntoa(cfg->rad_srvip));
+	tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->rad_srvip));
 	tpl_addVar(vars, 0, "USER", cfg->rad_usr);
 
 	struct s_ip *cip;
