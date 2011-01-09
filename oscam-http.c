@@ -2460,6 +2460,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 		tpl_addVar(vars, 0, "REFRESHURL", "status.html");
 		tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 		tpl_printf(vars, 0, "SECONDS", "%d", SHUTDOWNREFRESH);
+		send_headers(f, 200, "OK", NULL, "text/html");
 		webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
 
@@ -2472,6 +2473,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 		tpl_addVar(vars, 0, "REFRESHURL", "status.html");
 		tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 		tpl_printf(vars, 0, "SECONDS", "%d", 2);
+		send_headers(f, 200, "OK", NULL, "text/html");
 		webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
 		
