@@ -2283,6 +2283,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 	tpl_addVar(vars, 0, "LOGHISTORY", "the flag CS_LOGHISTORY is not set in your binary<BR>\n");
 #endif
 
+#ifdef WITH_DEBUG
 	// Debuglevel Selector
 	int lvl;
 	for (i = 0; i < 8; i++) {
@@ -2307,6 +2308,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 	tpl_addVar(vars, 0, "DCLASS", "debugl"); //default
 	tpl_printf(vars, 0, "ACTDEBUG", "%d", cs_dblevel);
 	tpl_addVar(vars, 0, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
+#endif
 
 	if(!apicall)
 		return tpl_getTpl(vars, "STATUS");
@@ -2599,6 +2601,7 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 			}
 		}
 
+#ifdef WITH_DEBUG
 		// Debuglevel Selector
 		int i, lvl;
 		for (i = 0; i < 8; i++) {
@@ -2623,6 +2626,7 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 		tpl_printf(vars, 0, "ACTDEBUG", "%d", cs_dblevel);
 		tpl_addVar(vars, 0, "SDEBUG", tpl_getTpl(vars, "DEBUGSELECT"));
 		tpl_addVar(vars, 0, "NEXTPAGE", "files.html");
+#endif
 
 		if(!cfg->disablelog)
 			tpl_printf(vars, 0, "SLOG", "<BR><A CLASS=\"debugl\" HREF=\"files.html?part=logfile&stoplog=%d\">%s</A><SPAN CLASS=\"debugt\">&nbsp;&nbsp;|&nbsp;&nbsp;</SPAN>\n", 1, "Stop Log");

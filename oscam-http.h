@@ -356,6 +356,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
   </FORM>\n\
   ##TPLFOOTER##"
 
+#ifdef WITH_DEBUG
 #define TPLDEBUGSELECT "\
 	<SPAN CLASS=\"debugt\"> Switch Debug from&nbsp;##ACTDEBUG## to&nbsp;</SPAN>\n\
 	<SPAN CLASS=\"debugl\"><A CLASS=\"debugl\" HREF=\"##NEXTPAGE##?debug=0##CUSTOMPARAM##\" title=\"no debugging (default)\">&nbsp;0&nbsp;</A></SPAN>\n\
@@ -368,6 +369,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS64##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL64####CUSTOMPARAM##\" title=\"EMM logging\">&nbsp;64&nbsp;</A></SPAN>\n\
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS128##\" HREF=\"##NEXTPAGE##?debug=##DEBUGVAL128####CUSTOMPARAM##\" title=\"DVBAPI logging\">&nbsp;128&nbsp;</A></SPAN>\n\
 	<SPAN CLASS=\"debugl\"><A CLASS=\"##DCLASS255##\" HREF=\"##NEXTPAGE##?debug=255##CUSTOMPARAM##\" title=\"debug all\">&nbsp;255&nbsp;</A></SPAN>\n"
+#endif
 
 #define TPLFAILBAN "\
 ##TPLHEADER##\
@@ -1491,7 +1493,6 @@ char *tpl[]={
 	"CONFIGMENU",
 	"FILEMENU",
 	"FILE",
-	"DEBUGSELECT",
 	"FAILBAN",
 	"FAILBANBIT",
 	"CONFIGGBOX",
@@ -1533,6 +1534,9 @@ char *tpl[]={
 #endif
 #ifdef LIBUSB
 	,"READERCONFIGDEVICEEPBIT"
+#endif
+#ifdef WITH_DEBUG
+	,"DEBUGSELECT"
 #endif
 };
 
@@ -1590,7 +1594,6 @@ char *tplmap[]={
 	TPLCONFIGMENU,
 	TPLFILEMENU,
 	TPLFILE,
-	TPLDEBUGSELECT,
 	TPLFAILBAN,
 	TPLFAILBANBIT,
 	TPLCONFIGGBOX,
@@ -1632,6 +1635,9 @@ char *tplmap[]={
 #endif
 #ifdef LIBUSB
 	,TPLREADERCONFIGDEVICEEPBIT
+#endif
+#ifdef WITH_DEBUG
+	,TPLDEBUGSELECT
 #endif
 };
 
