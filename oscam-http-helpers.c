@@ -414,8 +414,6 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime){
 	webif_write(buf, f);
 }
 
-
-
 /*
  * function for sending files.
  */
@@ -451,17 +449,18 @@ void send_file(FILE *f, char *filename){
 }
 
 void send_error(FILE *f, int status, char *title, char *extra, char *text){
-	char buf[1024];
+	char buf[(2* strlen(title)) + strlen(text) + 128];
+	char *pos = buf;
 	send_headers(f, status, title, extra, "text/html");
-	sprintf(buf, "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
-	sprintf(buf+strlen(buf), "<BODY><H4>%d %s</H4>\r\n", status, title);
-	sprintf(buf+strlen(buf), "%s\r\n", text);
-	sprintf(buf+strlen(buf), "</BODY></HTML>\r\n");
+	pos += sprintf(pos, "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
+	pos += sprintf(pos, "<BODY><H4>%d %s</H4>\r\n", status, title);
+	pos += sprintf(pos, "%s\r\n", text);
+	pos += sprintf(pos, "</BODY></HTML>\r\n");
 	webif_write(buf, f);
 }
 
 void send_error500(FILE *f){
-	send_error(f, 500, "Internal Server Error", NULL, "An internal error has occured.");
+	send_error(f, 500, "Internal Server Error", NULL, "The server encountered an internal error that prevented it from fulfilling this request.");
 }
 
 char *getParam(struct uriparams *params, char *name){
