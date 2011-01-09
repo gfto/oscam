@@ -673,12 +673,17 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_addVar(vars, 1, "MESSAGE", "<b>Webif is in readonly mode. Enabling or disabling readers is not possible!</b><BR>");
 		} else {
 			rdr = get_reader_by_label(getParam(params, "label"));
-			if (strcmp(getParam(params, "action"), "enable") == 0)
-				rdr->enable = 1;
-			else
-				rdr->enable = 0;
-			if(write_server()==0)	refresh_oscam(REFR_READERS, in);
-			else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+			if (rdr) {
+				if (strcmp(getParam(params, "action"), "enable") == 0) {
+					rdr->enable = 1;
+					restart_cardreader(rdr, 1);
+				} else {
+					rdr->enable = 0;
+					//kill_thread(rdr->client); // seems to cause problems (segfault) in reader_get_type_desc()
+				}
+				if(write_server()==0)	refresh_oscam(REFR_READERS, in);
+				else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+			}
 		}
 	}
 
@@ -687,31 +692,35 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			tpl_addVar(vars, 1, "MESSAGE", "<b>Webif is in readonly mode. No deletion will be made!</b><BR>");
 		} else {
 			rdr = get_reader_by_label(getParam(params, "label"));
-			rdr->deleted = 1;
-	
-			if(write_server()==0) refresh_oscam(REFR_READERS, in);
-			else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+			if (rdr) {
+				rdr->deleted = 1;
+
+				if(write_server()==0) refresh_oscam(REFR_READERS, in);
+				else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+			}
 		}
 	}
 
 	if (strcmp(getParam(params, "action"), "reread") == 0) {
 		rdr = get_reader_by_label(getParam(params, "label"));
-
-		//reset the counters
-		for (i = 0; i < 4; i++) {
-			rdr->emmerror[i] = 0;
-			rdr->emmwritten[i] = 0;
-			rdr->emmskipped[i] = 0;
-			rdr->emmblocked[i] = 0;
+		if (rdr) {
+			//reset the counters
+			for (i = 0; i < 4; i++) {
+				rdr->emmerror[i] = 0;
+				rdr->emmwritten[i] = 0;
+				rdr->emmskipped[i] = 0;
+				rdr->emmblocked[i] = 0;
+			}
+			//write_to_pipe(client[reader[readeridx].cs_idx)].fd_m2c, PIP_ID_CIN, dummy, 1); // do not work for whatever reason
+			refresh_oscam(REFR_READERS, in); // refresh all reader because  write pipe seams not work from here
 		}
-		//write_to_pipe(client[reader[readeridx].cs_idx)].fd_m2c, PIP_ID_CIN, dummy, 1); // do not work for whatever reason
-		refresh_oscam(REFR_READERS, in); // refresh all reader because  write pipe seams not work from here
 	}
 
 	for (i = 0, rdr = first_reader; rdr && rdr->label[0]; rdr = rdr->next, i++);
 	tpl_printf(vars, 0, "NEXTREADER", "Reader-%d", i); //Next Readername
 
 	for (rdr = first_reader; rdr ; rdr = rdr->next) {
+
 		if(rdr->label[0] && rdr->typ && !rdr->deleted) {
 
 			if (rdr->enable)
@@ -767,7 +776,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 				}
 
 			}
-
+			//printf("checkpoint1 %s\n", rdr->label);
 			if(rdr->enable == 0) {
 				if (!cfg->http_js_icons)
 					tpl_addVar(vars, 0, "SWITCHICO", ICENA);
@@ -785,6 +794,7 @@ void send_oscam_reader(struct templatevars *vars, FILE *f, struct uriparams *par
 			}
 
 			tpl_addVar(vars, 0, "CTYP", reader_get_type_desc(rdr, 0));
+			//printf("checkpoint2 %s\n", rdr->label);
 			tpl_addVar(vars, 1, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
 	}

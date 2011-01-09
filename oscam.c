@@ -1119,7 +1119,8 @@ void start_anticascader()
 void restart_cardreader(struct s_reader *rdr, int restart) {
 	int i;
 	if (restart) //kill old thread, even when .deleted flag is set
-		kill_thread(rdr->client);
+		if (rdr->client)
+			kill_thread(rdr->client);
 
 	rdr->tcp_connected = 0;
 	rdr->card_status = NO_CARD;
