@@ -3002,7 +3002,7 @@ int process_request(FILE *f, struct in_addr in) {
 #endif
 			return -1;
 		}
-		if(!cs_malloc(&filebuf, bufsize+n+1, -1)){
+		if(!cs_realloc(&filebuf, bufsize+n+1, -1)){
 			send_error500(f);
 			return -1;
 		}
