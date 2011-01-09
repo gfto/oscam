@@ -461,7 +461,7 @@ void send_oscam_config_monitor(struct templatevars *vars, FILE *f, struct uripar
 	}
 	tpl_printf(vars, 0, "MONPORT", "%d", cfg->mon_port);
 	if (cfg->mon_srvip != 0)
-	tpl_addVar(vars, 0, "SERVERIP", cs_inet_ntoa(cfg->mon_srvip));
+	tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->mon_srvip));
 	tpl_printf(vars, 0, "AULOW", "%d", cfg->mon_aulow);
 	tpl_printf(vars, 0, "HIDECLIENTTO", "%d", cfg->mon_hideclient_to);
 	if(cfg->mon_appendchaninfo)
