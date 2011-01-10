@@ -338,8 +338,8 @@ void chk_t_global(const char *token, char *value)
 	if (!strcmp(token, "logfile")) {
 		NULLFREE(cfg->logfile);
 		if (strlen(value) > 0) {
-			if(asprintf(&(cfg->logfile), "%s", value) < 0)
-				fprintf(stderr, "Error allocating string for cfg->logfile\n");
+			cs_malloc(&(cfg->logfile), strlen(value) + 1, -1);
+			memcpy(cfg->logfile, value, strlen(value) + 1);
 		}
 		return;
 	}
@@ -347,8 +347,8 @@ void chk_t_global(const char *token, char *value)
 	if (!strcmp(token, "usrfile")) {
 		NULLFREE(cfg->usrfile);
 		if (strlen(value) > 0) {
-			if(asprintf(&(cfg->usrfile), "%s", value) < 0)
-				fprintf(stderr, "Error allocating string for cfg->usrfile\n");
+			cs_malloc(&(cfg->usrfile), strlen(value) + 1, -1);
+			memcpy(cfg->usrfile, value, strlen(value) + 1);
 		}
 		return;
 	}
@@ -356,8 +356,8 @@ void chk_t_global(const char *token, char *value)
 	if (!strcmp(token, "cwlogdir")) {
 		NULLFREE(cfg->cwlogdir);
 		if (strlen(value) > 0) {
-			if(asprintf(&(cfg->cwlogdir), "%s", value) < 0)
-				fprintf(stderr, "Error allocating string for cfg->cwlogdir\n");
+			cs_malloc(&(cfg->cwlogdir), strlen(value) + 1, -1);
+			memcpy(cfg->cwlogdir, value, strlen(value) + 1);
 		}
 		return;
 	}
@@ -1335,8 +1335,8 @@ int init_config()
 	fclose(fp);
 #ifdef CS_LOGFILE
 	if (cfg->logfile == NULL) {
-		if(asprintf(&(cfg->logfile), "%s", CS_LOGFILE) < 0)
-			fprintf(stderr, "Error allocating string for cfg->logfile\n");
+		cs_malloc(&(cfg->logfile), strlen(CS_LOGFILE) + 1, -1);
+		memcpy(cfg->logfile, value, strlen(CS_LOGFILE) + 1);
 	}
 #endif
 	cs_init_log();
@@ -3097,8 +3097,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (!strcmp(token, "readnano")) {
 		NULLFREE(rdr->emmfile);
 		if (strlen(value) > 0) {
-			if(asprintf(&(rdr->emmfile), "%s", value) < 0)
-				fprintf(stderr, "Error allocating string for rdr->emmfile\n");
+			cs_malloc(&(rdr->emmfile), strlen(value) + 1, -1);
+			memcpy(rdr->emmfile, value, strlen(value) + 1);
 		}
 		return;
 	}

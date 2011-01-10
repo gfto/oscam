@@ -890,7 +890,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		tpl_printf(vars, 1, "NCD_KEY", "%02X", rdr->ncd_key[i]);
 
 	tpl_addVar(vars, 0, "PINCODE", rdr->pincode);
-	//tpl_addVar(vars, 0, "EMMFILE", (char *)rdr->emmfile);
+	tpl_addVar(vars, 0, "EMMFILE", (char *)rdr->emmfile);
 	tpl_printf(vars, 0, "INACTIVITYTIMEOUT", "%d", rdr->tcp_ito);
 	tpl_printf(vars, 0, "RECEIVETIMEOUT", "%d", rdr->tcp_rto);
 	if(rdr->ncd_disable_server_filt)
