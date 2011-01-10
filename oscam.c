@@ -888,6 +888,7 @@ static void init_shm()
     fprintf(stderr, "Could not allocate memory for master client, exiting...");
   exit(1);
   }
+  memset(first_client, 0, sizeof(struct s_auth));
   first_client->next = NULL; //terminate clients list with NULL
   first_client->login=time((time_t *)0);
   first_client->ip=cs_inet_addr("127.0.0.1");

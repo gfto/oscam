@@ -2244,7 +2244,7 @@ int write_server()
 			if (rdr->smargopatch && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", rdr->smargopatch);
 
-			if (rdr->show_cls && isphysical)
+			if (rdr->show_cls != 10 && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
 
 			if (rdr->fallback)
