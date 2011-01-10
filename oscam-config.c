@@ -338,7 +338,7 @@ void chk_t_global(const char *token, char *value)
 	if (!strcmp(token, "logfile")) {
 		NULLFREE(cfg->logfile);
 		if (strlen(value) > 0) {
-			cs_malloc(&(cfg->logfile), strlen(value) + 1, -1);
+			if(!cs_malloc(&(cfg->logfile), strlen(value) + 1, -1)) return;
 			memcpy(cfg->logfile, value, strlen(value) + 1);
 		}
 		return;
@@ -347,7 +347,7 @@ void chk_t_global(const char *token, char *value)
 	if (!strcmp(token, "usrfile")) {
 		NULLFREE(cfg->usrfile);
 		if (strlen(value) > 0) {
-			cs_malloc(&(cfg->usrfile), strlen(value) + 1, -1);
+			if(!cs_malloc(&(cfg->usrfile), strlen(value) + 1, -1)) return;
 			memcpy(cfg->usrfile, value, strlen(value) + 1);
 		}
 		return;
@@ -356,7 +356,7 @@ void chk_t_global(const char *token, char *value)
 	if (!strcmp(token, "cwlogdir")) {
 		NULLFREE(cfg->cwlogdir);
 		if (strlen(value) > 0) {
-			cs_malloc(&(cfg->cwlogdir), strlen(value) + 1, -1);
+			if(!cs_malloc(&(cfg->cwlogdir), strlen(value) + 1, -1)) return;
 			memcpy(cfg->cwlogdir, value, strlen(value) + 1);
 		}
 		return;
@@ -1335,7 +1335,7 @@ int init_config()
 	fclose(fp);
 #ifdef CS_LOGFILE
 	if (cfg->logfile == NULL) {
-		cs_malloc(&(cfg->logfile), strlen(CS_LOGFILE) + 1, -1);
+		cs_malloc(&(cfg->logfile), strlen(CS_LOGFILE) + 1, 1);
 		memcpy(cfg->logfile, value, strlen(CS_LOGFILE) + 1);
 	}
 #endif
@@ -3097,7 +3097,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (!strcmp(token, "readnano")) {
 		NULLFREE(rdr->emmfile);
 		if (strlen(value) > 0) {
-			cs_malloc(&(rdr->emmfile), strlen(value) + 1, -1);
+			if(!cs_malloc(&(rdr->emmfile), strlen(value) + 1, -1)) return;
 			memcpy(rdr->emmfile, value, strlen(value) + 1);
 		}
 		return;
