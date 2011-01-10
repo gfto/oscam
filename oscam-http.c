@@ -728,7 +728,7 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 				tpl_addVar(vars, 0, "READERCLASS", "disabledreader");
 
 			tpl_addVar(vars, 0, "READERNAME", xml_encode(vars, rdr->label));
-			tpl_addVar(vars, 0, "READERNAMEENC", tpl_addTmp(vars, urlencode(rdr->label)));
+			tpl_addVar(vars, 0, "READERNAMEENC", urlencode(vars, rdr->label));
 			tpl_printf(vars, 0, "EMMERRORUK", "%d", rdr->emmerror[UNKNOWN]);
 			tpl_printf(vars, 0, "EMMERRORG", "%d", rdr->emmerror[GLOBAL]);
 			tpl_printf(vars, 0, "EMMERRORS", "%d", rdr->emmerror[SHARED]);
@@ -1707,7 +1707,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 
 		tpl_addVar(vars, 0, "CLASSNAME", classname);
 		tpl_addVar(vars, 0, "USER", xml_encode(vars, account->usr));
-		tpl_addVar(vars, 0, "USERENC", tpl_addTmp(vars, urlencode(account->usr)));
+		tpl_addVar(vars, 0, "USERENC", urlencode(vars, account->usr));
 		tpl_addVar(vars, 0, "DESCRIPTION", xml_encode(vars, account->description));
 		tpl_addVar(vars, 0, "STATUS", status);
 		tpl_addVar(vars, 0, "EXPIRED", expired);
@@ -1968,9 +1968,10 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 #endif
 	}
 
-	if(getParamDef(params, "hide", NULL)) {
+	char *hide = getParam(params, "hide");
+	if(strlen(hide) > 0) {
 		ulong clidx;
-		clidx = atol(getParamDef(params, "hide", NULL));
+		clidx = atol(hide);
 		struct s_client *hideidx = get_client_by_tid(clidx);
 		if(hideidx)
 			hideidx->wihidden = 1;
@@ -2063,9 +2064,9 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				}
 				else if((cl->typ == 'p') && !cfg->http_readonly) {
 					if(cfg->http_js_icons)
-						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"\" ALT=\"Restart\"></A>", cl->reader->label);
+						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
 					else
-						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"%s\" ALT=\"Restart\"></A>", cl->reader->label, ICKIL);
+						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"%s\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label), ICKIL);
 				}
 				else {
 					tpl_printf(vars, 0, "CSIDX", "%8X&nbsp;", cl->thread);
@@ -2219,9 +2220,9 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					{
 						struct s_reader *rdr = cl->reader;
 								if (rdr->lbvalue)
-									tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", rdr->label, rdr->lbvalue);
+									tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue);
 								else
-									tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%s</A>", rdr->label, "no data");
+									tpl_printf(vars, 0, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%s</A>", urlencode(vars, rdr->label), "no data");
 									
 								switch(rdr->card_status)
 								{
@@ -2368,7 +2369,7 @@ char *send_oscam_services_edit(struct templatevars *vars, struct uriparams *para
 	}
 
 	tpl_addVar(vars, 0, "LABEL", sidtab->label);
-	tpl_addVar(vars, 0, "LABELENC", tpl_addTmp(vars, urlencode(sidtab->label)));
+	tpl_addVar(vars, 0, "LABELENC", urlencode(vars, sidtab->label));
 
 
 	for (i=0; i<sidtab->num_caid; i++) {
@@ -2431,9 +2432,9 @@ char *send_oscam_services(struct templatevars *vars, struct uriparams *params, s
 			}
 		} else {
 			tpl_printf(vars, 0, "SIDCLASS","");
-			tpl_printf(vars, 0, "SID","<A HREF=\"services.html?service=%s&action=list\">Show Services</A>",tpl_addTmp(vars, urlencode(sidtab->label)));
+			tpl_printf(vars, 0, "SID","<A HREF=\"services.html?service=%s&action=list\">Show Services</A>", urlencode(vars, sidtab->label));
 		}
-		tpl_addVar(vars, 0, "LABELENC", tpl_addTmp(vars, urlencode(sidtab->label)));
+		tpl_addVar(vars, 0, "LABELENC", urlencode(vars, sidtab->label));
 		tpl_addVar(vars, 0, "LABEL", xml_encode(vars, sidtab->label));
 		tpl_addVar(vars, 0, "SIDLIST", tpl_getTpl(vars, "SERVICECONFIGSIDBIT"));
 
@@ -2463,7 +2464,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 		tpl_addVar(vars, 0, "REFRESHURL", "status.html");
 		tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 		tpl_printf(vars, 0, "SECONDS", "%d", SHUTDOWNREFRESH);
-		send_headers(f, 200, "OK", NULL, "text/html");
+		send_headers(f, 200, "OK", NULL, "text/html", 0);
 		webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
 
@@ -2476,7 +2477,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 		tpl_addVar(vars, 0, "REFRESHURL", "status.html");
 		tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 		tpl_printf(vars, 0, "SECONDS", "%d", 2);
-		send_headers(f, 200, "OK", NULL, "text/html");
+		send_headers(f, 200, "OK", NULL, "text/html", 0);
 		webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
 		running = 0;
 		
@@ -3079,17 +3080,17 @@ int process_request(FILE *f, struct in_addr in) {
 		char temp[sizeof(AUTHREALM) + sizeof(expectednonce) + 100];
 		snprintf(temp, sizeof(temp), "WWW-Authenticate: Digest algorithm=\"MD5\", realm=\"%s\", qop=\"auth\", opaque=\"\", nonce=\"%s\"", AUTHREALM, expectednonce);
 		if(authok == 2) strncat(temp, ", stale=true", sizeof(temp));
-		send_headers(f, 401, "Unauthorized", temp, "text/html");
+		send_headers(f, 401, "Unauthorized", temp, "text/html", 0);
 		free(filebuf);
 		return 0;
 	}
 
 	/*build page*/
 	if(pgidx == 8) {
-		send_headers(f, 200, "OK", NULL, "text/css");
+		send_headers(f, 200, "OK", NULL, "text/css", 1);
 		send_file(f, "CSS");
 	} else if (pgidx == 17) {
-		send_headers(f, 200, "OK", NULL, "text/javascript");
+		send_headers(f, 200, "OK", NULL, "text/javascript", 1);
 		send_file(f, "JS");
 	} else {
 		time_t t;
@@ -3191,9 +3192,9 @@ int process_request(FILE *f, struct in_addr in) {
 		if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
 		else if (strcmp(result, "1")) {
 			if (pgidx == 18)
-				send_headers(f, 200, "OK", NULL, "text/xml");
+				send_headers(f, 200, "OK", NULL, "text/xml", 0);
 			else
-				send_headers(f, 200, "OK", NULL, "text/html");
+				send_headers(f, 200, "OK", NULL, "text/html", 0);
 			webif_write(result, f);
 		}
 		tpl_clear(vars);
@@ -3253,20 +3254,12 @@ void http_srv() {
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 	cl->typ = 'h';
-	int i,sock, reuse = 1;
+	int sock, reuse = 1;
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
 	socklen_t len = sizeof(remote);
 
-	/* Prepare lookup array for conversion between ascii and hex */
-	char tmp[3];
-	for(i = 0; i < 256; i++) {
-		snprintf(tmp, sizeof(tmp),"%02x", i);
-		memcpy(hex2ascii[i], tmp, 2);
-	}
-
 	/* Create random string for nonce value generation */
-	srand(time(NULL));
 	create_rand_str(noncekey,32);
 
 	/* Startup server */

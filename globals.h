@@ -1239,11 +1239,8 @@ extern int check_filled(uchar *value, int length);
 extern void *cs_malloc(void *result, size_t size, int quiterror);
 extern void *cs_realloc(void *result, size_t size, int quiterror);
 #ifdef WEBIF
-extern int x2i(int i);
-extern void urldecode(char *s);
 extern char to_hex(char code);
-extern char *urlencode(char *str);
-extern void char_to_hex(const unsigned char* p_array, unsigned int p_array_len, unsigned char *result, char hex2ascii[256][2]);
+extern void char_to_hex(const unsigned char* p_array, unsigned int p_array_len, unsigned char *result);
 extern void create_rand_str(char *dst, int size);
 #endif
 extern void uint64ToBitchar(uint64 value, int size, char *result);

@@ -294,7 +294,7 @@ void calculate_nonce(char *result){
   char noncetmp[128];
   unsigned char md5tmp[MD5_DIGEST_LENGTH];
   sprintf(noncetmp, "%d:%s", (int)time(NULL)/AUTHNONCEVALIDSECS, noncekey);
-  char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)result, hex2ascii);
+  char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)result);
 }
 
 /* Checks if authentication is correct. Returns -1 if not correct, 1 if correct and 2 if nonce isn't valid anymore.
@@ -344,15 +344,15 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 		char A1[(MD5_DIGEST_LENGTH * 2) + 1], A2[(MD5_DIGEST_LENGTH * 2) + 1], A3[(MD5_DIGEST_LENGTH * 2) + 1];
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
 		sprintf(A1tmp, "%s:%s:%s", username, AUTHREALM, expectedPassword);
-		char_to_hex(MD5((unsigned char*)A1tmp, strlen(A1tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A1, hex2ascii);
+		char_to_hex(MD5((unsigned char*)A1tmp, strlen(A1tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A1);
 		
 		char A2tmp[2 + strlen(method) + strlen(uri)];
 		sprintf(A2tmp, "%s:%s", method, uri);		
-		char_to_hex(MD5((unsigned char*)A2tmp, strlen(A2tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A2, hex2ascii);
+		char_to_hex(MD5((unsigned char*)A2tmp, strlen(A2tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A2);
 		
 		char A3tmp[10 + strlen(A1) + strlen(A2) + strlen(authnonce) + strlen(authnc) + strlen(authcnonce)];
 		sprintf(A3tmp, "%s:%s:%s:%s:auth:%s", A1, authnonce, authnc, authcnonce, A2);
-		char_to_hex(MD5((unsigned char*)A3tmp, strlen(A3tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A3, hex2ascii);
+		char_to_hex(MD5((unsigned char*)A3tmp, strlen(A3tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A3);
 		
 		if(strcmp(A3, authresponse) == 0) {
 			if(strcmp(expectednonce, authnonce) == 0) authok = 1;
@@ -386,8 +386,7 @@ int webif_read(char *buf, int num, FILE *f) {
 		return read(fileno(f), buf, num);
 }
 
-void send_headers(FILE *f, int status, char *title, char *extra, char *mime){
-
+void send_headers(FILE *f, int status, char *title, char *extra, char *mime, int cache){
   time_t now;
   char timebuf[32];
   char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 256];
@@ -406,8 +405,12 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime){
 	if (mime)
 		pos += sprintf(pos, "Content-Type: %s\r\n", mime);
 
-	pos += sprintf(pos, "Cache-Control: no-store, no-cache, must-revalidate\r\n");
-	pos += sprintf(pos, "Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
+	if(!cache){
+		pos += sprintf(pos, "Cache-Control: no-store, no-cache, must-revalidate\r\n");
+		pos += sprintf(pos, "Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
+	} else {
+		pos += sprintf(pos, "Cache-Control: public, max-age=7200");
+	}
 	pos += sprintf(pos, "Last-Modified: %s\r\n", timebuf);
 	pos += sprintf(pos, "Connection: close\r\n");
 	pos += sprintf(pos, "\r\n");
@@ -451,7 +454,7 @@ void send_file(FILE *f, char *filename){
 void send_error(FILE *f, int status, char *title, char *extra, char *text){
 	char buf[(2* strlen(title)) + strlen(text) + 128];
 	char *pos = buf;
-	send_headers(f, status, title, extra, "text/html");
+	send_headers(f, status, title, extra, "text/html", 0);
 	pos += sprintf(pos, "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
 	pos += sprintf(pos, "<BODY><H4>%d %s</H4>\r\n", status, title);
 	pos += sprintf(pos, "%s\r\n", text);
@@ -471,12 +474,55 @@ char *getParam(struct uriparams *params, char *name){
 	return "";
 }
 
-char *getParamDef(struct uriparams *params, char *name, char* def){
-	int i;
-	for(i=(*params).paramcount-1; i>=0; --i){
-		if(strcmp((*params).params[i], name) == 0) return (*params).values[i];
+/* Helper function for urldecode.*/
+int x2i(int i){
+	i=toupper(i);
+	i = i - '0';
+	if(i > 9) i = i - 'A' + '9' + 1;
+	return i;
+}
+
+/* Decodes values in a http url. Note: The original value is modified! */
+void urldecode(char *s){
+	int c, c1, n;
+	char *s0,*t;
+	t = s0 = s;
+	n = strlen(s);
+	while(n >0){
+		c = *s++;
+		if(c == '+') c = ' ';
+		else if(c == '%' && n > 2){
+			c = *s++;
+			c1 = c;
+			c = *s++;
+			c = 16*x2i(c1) + x2i(c);
+			n -= 2;
+		}
+		*t++ = c;
+		n--;
 	}
-	return def;
+	*t = 0;
+}
+
+/* Encode values in a http url. Do not call free() or realloc on the returned reference or you will get memory corruption! */
+char *urlencode(struct templatevars *vars, char *str){
+	char buf[strlen(str) * 3 + 1];
+	char *pstr = str, *pbuf = buf;
+	while (*pstr) {
+		if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~') *pbuf++ = *pstr;
+		else if (*pstr == ' ') *pbuf++ = '+';
+		else {
+			*pbuf++ = '%';
+			*pbuf++ = to_hex(*pstr >> 4);
+			*pbuf++ = to_hex(*pstr & 15);
+		}
+		++pstr;
+	}
+	*pbuf = '\0';
+	/* Allocate the needed memory size and store it in the templatevars */
+	if(!cs_malloc(&pbuf, strlen(buf) + 1, -1)) return "";
+	memcpy(pbuf, buf, strlen(buf) + 1);
+	return tpl_addTmp(vars, pbuf);
 }
 
 /* XML-Escapes a char array. The returned reference will be automatically cleaned through the templatevars-mechanism tpl_clear().

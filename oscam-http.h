@@ -1657,7 +1657,6 @@ struct uriparams {
 	char *values[MAXGETPARAMS];
 };
 
-static char hex2ascii[256][2];
 static char noncekey[33];
 
 int cv(){return 91789605==crc32(0L,(unsigned char*)ICMAI,strlen(ICMAI))/2?1:0;}

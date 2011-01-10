@@ -3189,6 +3189,9 @@ static void restart_daemon()
 int main (int argc, char *argv[])
 {
 
+/* init random number generator with seed. */
+srand((unsigned int)time((time_t *)NULL));
+
 if (pthread_key_create(&getclient, NULL)) {
   fprintf(stderr, "Could not create getclient, exiting...");
   exit(1);
