@@ -148,19 +148,21 @@ static void do_emm_from_file(struct s_reader * reader)
 
       uchar old_b_nano = reader->b_nano[eptmp->emm[0]]; //save old b_nano value
       reader->b_nano[eptmp->emm[0]] &= 0xfc; //clear lsb and lsb+1, so no blocking, and no saving for this nano      
-          
-      //if (!reader_do_emm (eptmp))
-      if (!reader_emm (reader, eptmp))
-        cs_log ("ERROR: EMM read from file %s NOT processed correctly!", token);
 
-      reader->b_nano[eptmp->emm[0]] = old_b_nano; //restore old block/save settings
+			int rc = reader_emm(reader, eptmp);
+			if (rc == OK)
+				cs_log ("EMM from file %s was successful written.", token);
+			else
+				cs_log ("ERROR: EMM read from file %s NOT processed correctly! (rc=%d)", token, rc);
+
+			reader->b_nano[eptmp->emm[0]] = old_b_nano; //restore old block/save settings
 			free (reader->emmfile);
-      reader->emmfile = NULL; //clear emmfile, so no reading anymore
+			reader->emmfile = NULL; //clear emmfile, so no reading anymore
 
-      free(eptmp);
-      eptmp = NULL;
-    }
-  }
+			free(eptmp);
+			eptmp = NULL;
+		}
+	}
 }
 
 void reader_card_info(struct s_reader * reader)
