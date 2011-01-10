@@ -558,6 +558,14 @@ static void cleanup_thread(struct s_client *cl)
 	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
 	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 
+	if(cl->typ == 'r' && cl->reader){
+		if(cl->reader->aes_list) {
+			aes_clear_entries(cl->reader);
+		}
+		// Maybe we also need a "nullclose" mechanism here...
+		ICC_Async_Close(cl->reader);
+	}
+
 	cleanup_ecmtasks(cl);
 	add_garbage(cl->emmcache);
 	add_garbage(cl->req);

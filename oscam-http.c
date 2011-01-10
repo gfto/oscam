@@ -839,6 +839,9 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		clear_caidtab(&rdr->ctab);
 		clear_ftab(&rdr->ftab);
 		clear_ftab(&rdr->fchid);
+		if(rdr->aes_list) {
+			aes_clear_entries(rdr);
+		}
 
 		rdr->grp = 0;
 		rdr->auprovid = 0;
