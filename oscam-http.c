@@ -94,35 +94,40 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 	}
 	if (cfg->srvip != 0)
 	tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->srvip));
-	if(cfg->disableuserfile == 1)
-		tpl_addVar(vars, 0, "CHKDISABLEUSERFILE", "checked");
-	if (cfg->usrfile != NULL) tpl_addVar(vars, 0, "USERFILE", cfg->usrfile);
-	if(cfg->disablelog == 1)
-		tpl_addVar(vars, 0, "CHKDISABLELOG", "checked");
-	if (cfg->logfile != NULL) tpl_addVar(vars, 0, "LOGFILE", cfg->logfile);
-	if (cfg->cwlogdir != NULL) tpl_addVar(vars, 0, "CWLOGDIR", cfg->cwlogdir);
-	tpl_printf(vars, 0, "USERFILEFLAG", "%d", cfg->usrfileflag);
+	tpl_printf(vars, 0, "NICE", "%d", cfg->nice);
+	tpl_printf(vars, 0, "BINDWAIT", "%d", cfg->bindwait);
+	tpl_printf(vars, 0, "NETPRIO", "%ld", cfg->netprio);
+	if (cfg->clientdyndns)			tpl_addVar(vars, 0, "CLIENTDYNDNSCHECKED", "selected");
+
+
+	if (cfg->usrfile != NULL) 		tpl_addVar(vars, 0, "USERFILE", cfg->usrfile);
+	if (cfg->disableuserfile == 1)	tpl_addVar(vars, 0, "DISABLEUSERFILECHECKED", "selected");
+	if(cfg->usrfileflag == 1) 		tpl_addVar(vars, 0, "USERFILEFLAGCHECKED", "selected");
+
+	if (cfg->logfile != NULL) 		tpl_addVar(vars, 0, "LOGFILE", cfg->logfile);
+	if(cfg->disablelog == 1) 		tpl_addVar(vars, 0, "DISABLELOGCHECKED", "selected");
+	tpl_printf(vars, 0, "MAXLOGSIZE", "%d", cfg->max_log_size);
+
+	if (cfg->cwlogdir != NULL) 		tpl_addVar(vars, 0, "CWLOGDIR", cfg->cwlogdir);
+	if (cfg->saveinithistory == 1)	tpl_addVar(vars, 0, "SAVEINITHISTORYCHECKED", "selected");
+
 	tpl_printf(vars, 0, "CLIENTTIMEOUT", "%ld", cfg->ctimeout);
 	tpl_printf(vars, 0, "FALLBACKTIMEOUT", "%ld", cfg->ftimeout);
 	tpl_printf(vars, 0, "CLIENTMAXIDLE", "%d", cfg->cmaxidle);
 	tpl_printf(vars, 0, "CACHEDELAY", "%ld", cfg->delay);
-	tpl_printf(vars, 0, "BINDWAIT", "%d", cfg->bindwait);
-	tpl_printf(vars, 0, "NETPRIO", "%ld", cfg->netprio);
-	if (cfg->clientdyndns)
-		tpl_addVar(vars, 0, "CHKCLIENTDYNDNS", "checked");
+
 	tpl_printf(vars, 0, "RESOLVEDELAY", "%d", cfg->resolvedelay);
 	tpl_printf(vars, 0, "SLEEP", "%d", cfg->tosleep);
-	if (cfg->ulparent == 1)
-		tpl_addVar(vars, 0, "UNLOCKPARENTAL", "checked");
-	tpl_printf(vars, 0, "NICE", "%d", cfg->nice);
+	if (cfg->ulparent == 1)			tpl_addVar(vars, 0, "UNLOCKPARENTALCHECKED", "selected");
+
 	tpl_printf(vars, 0, "SERIALTIMEOUT", "%d", cfg->srtimeout);
-	tpl_printf(vars, 0, "MAXLOGSIZE", "%d", cfg->max_log_size);
-	if (cfg->waitforcards == 1)
-		tpl_addVar(vars, 0, "WAITFORCARDS", "checked");
-	if (cfg->preferlocalcards == 1)
-		tpl_addVar(vars, 0, "PREFERLOCALCARDS", "checked");
-	if (cfg->saveinithistory == 1)
-		tpl_addVar(vars, 0, "SAVEINITHISTORY", "checked");
+
+
+	if (cfg->waitforcards == 1)		tpl_addVar(vars, 0, "WAITFORCARDSCHECKED", "selected");
+	if (cfg->preferlocalcards == 1)	tpl_addVar(vars, 0, "PREFERLOCALCARDSCHECKED", "selected");
+
+
+
 	if (cfg->reader_restart_seconds)
 		tpl_printf(vars, 0, "READERRESTARTSECONDS", "%d", cfg->reader_restart_seconds);
 

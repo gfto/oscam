@@ -1159,46 +1159,42 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
 <form action=\"config.html\" method=\"get\">\n\
 	<input name=\"part\" type=\"hidden\" value=\"global\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-	<input name=\"disableuserfile\" type=\"hidden\" value=\"0\">\n\
-	<input name=\"disablelog\" type=\"hidden\" value=\"0\">\n\
-	<input name=\"clientdyndns\" type=\"hidden\" value=\"0\">\n\
-	<input name=\"unlockparental\" type=\"hidden\" value=\"0\">\n\
-	<input name=\"waitforcards\" type=\"hidden\" value=\"0\">\n\
-	<input name=\"preferlocalcards\" type=\"hidden\" value=\"0\">\n\
-	<input name=\"saveinithistory\" type=\"hidden\" value=\"0\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
 		<TR><TH>&nbsp;</TH><TH>Edit Global Config</TH></TR>\n\
 		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
-		<TR><TD>Disable userfile:</TD><TD><input name=\"disableuserfile\" type=\"checkbox\" value=\"1\" ##CHKDISABLEUSERFILE##></TD></TR>\n\
-		<TR><TD>Usr file:</TD><TD><input name=\"usrfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##USERFILE##\"></TD></TR>\n\
-		<TR><TD>Disable log:</TD><TD><input name=\"disablelog\" type=\"checkbox\" value=\"1\" ##CHKDISABLELOG##></TD></TR>\n\
-		<TR><TD>Log file:</TD><TD><input name=\"logfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##LOGFILE##\"></TD></TR>\n\
-		<TR><TD>Usr file flag:</TD><TD><input name=\"usrfileflag\" type=\"text\" size=\"5\" maxlength=\"1\" value=\"##USERFILEFLAG##\"></TD></TR>\n\
-		<TR><TD>CW log dir:</TD><TD><input name=\"cwlogdir\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##CWLOGDIR##\"></TD></TR>\n\
-		<TR><TD>Failban time:</TD><TD><input name=\"failbantime\" type=\"text\" size=\"7\" maxlength=\"6\" value=\"##FAILBANTIME##\"></TD></TR>\n\
-		<TR><TD>Failban count:</TD><TD><input name=\"failbancount\" type=\"text\" size=\"2\" maxlength=\"2\" value=\"##FAILBANCOUNT##\"></TD></TR>\n\
-		<TR><TD>Client timeout:</TD><TD><input name=\"clienttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTTIMEOUT##\"> ms</TD></TR>\n\
-		<TR><TD>Fallback timeout:</TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> ms</TD></TR>\n\
-		<TR><TD>Cache delay:</TD><TD><input name=\"cachedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms</TD></TR>\n\
-		<TR><TD>Client max idle:</TD><TD><input name=\"clientmaxidle\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTMAXIDLE##\"> s</TD></TR>\n\
-		<TR><TD>Bind wait:</TD><TD><input name=\"bindwait\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##BINDWAIT##\"> s</TD></TR>\n\
-		<TR><TD>Net prio:</TD><TD><input name=\"netprio\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NETPRIO##\"></TD></TR>\n\
-		<TR><TD>Client dyndns:</TD><TD><input name=\"clientdyndns\" type=\"checkbox\" value=\"1\" ##CHKCLIENTDYNDNS##></TD></TR>\n\
-		<TR><TD>Resolve delay:</TD><TD><input name=\"resolvedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RESOLVEDELAY##\"> s</TD></TR>\n\
-		<TR><TD>Sleep:</TD><TD><input name=\"sleep\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SLEEP##\"> min</TD></TR>\n\
-		<TR><TD>Unlock parental:</TD><TD><input name=\"unlockparental\" type=\"checkbox\" value=\"1\" ##UNLOCKPARENTAL##></TD></TR>\n\
 		<TR><TD>Nice:</TD><TD><input name=\"nice\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NICE##\"></TD></TR>\n\
-		<TR><TD>Serial reader timeout:</TD><TD><input name=\"serialreadertimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SERIALTIMEOUT##\"> ms</TD></TR>\n\
-		<TR><TD>Max log size:</TD><TD><input name=\"maxlogsize\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXLOGSIZE##\"> kB</TD></TR>\n\
-		<TR><TD>Wait for cards:</TD><TD><input name=\"waitforcards\" type=\"checkbox\" value=\"1\" ##WAITFORCARDS##></TD></TR>\n\
-		<TR><TD>Prefer local cards:</TD><TD><input name=\"preferlocalcards\" type=\"checkbox\" value=\"1\" ##PREFERLOCALCARDS##></TD></TR>\n\
-		<TR><TD>Save init history:</TD><TD><input name=\"saveinithistory\" type=\"checkbox\" value=\"1\" ##SAVEINITHISTORY##></TD></TR>\n\
-		<TR><TD>Reader restart seconds:</TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"></TD></TR>\n\
+		<TR><TD>Net prio:</TD><TD><input name=\"netprio\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NETPRIO##\"></TD></TR>\n\
+		<TR><TD>Bind wait:</TD><TD><input name=\"bindwait\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##BINDWAIT##\"> s</TD></TR>\n\
 		<TR><TD>Resolver:</TD>\n\
 		<TD><select name=\"resolvegethostbyname\">\n\
 			<option value=\"0\" ##RESOLVER0##>0 - getadressinfo()</option>\n\
 			<option value=\"1\" ##RESOLVER1##>1 - gethostbyname()</option>\n\
 		</select></TD></TR>\n\
+		<TR><TD>Client dyndns:</TD><TD><SELECT NAME=\"clientdyndns\"><OPTION VALUE=\"0\">0 - no client use dyndns</OPTION><OPTION VALUE=\"1\" ##CLIENTDYNDNSCHECKED##>1 - one or more clients use dyndns</OPTION></SELECT></TD></TR>\n\
+		<TR><TD>Wait for cards:</TD><TD><SELECT NAME=\"waitforcards\"><OPTION VALUE=\"0\">0 - enable clientlogins while init</OPTION><OPTION VALUE=\"1\" ##WAITFORCARDSCHECKED##>1 - disable clientlogins while init</OPTION></SELECT></TD></TR>\n\
+		<TR><TD>Prefer local cards:</TD><TD><SELECT NAME=\"preferlocalcards\"><OPTION VALUE=\"0\">0 - local cards like proxied</OPTION><OPTION VALUE=\"1\" ##PREFERLOCALCARDSCHECKED##>1 - prefer local cards</OPTION></SELECT></TD></TR>\n\
+		<TR><TD>Unlock parental:</TD><TD><SELECT NAME=\"unlockparental\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##UNLOCKPARENTALCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
+		<TR><TH>&nbsp;</TH><TH>Logging</TH></TR>\n\
+		<TR><TD>Usr file:</TD><TD><input name=\"usrfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##USERFILE##\">\
+		   &nbsp;<SELECT NAME=\"disableuserfile\"><OPTION VALUE=\"0\">0 - disabled</OPTION><OPTION VALUE=\"1\" ##DISABLEUSERFILECHECKED##>1 - enabled</OPTION></SELECT>\
+		   &nbsp;<SELECT NAME=\"usrfileflag\"><OPTION VALUE=\"0\">0 - just join/leave</OPTION><OPTION VALUE=\"1\" ##USERFILEFLAGCHECKED##>1 - each zap</OPTION></SELECT></TD></TR>\n\
+		<TR><TD>Log file / max size:</TD><TD><input name=\"logfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##LOGFILE##\">\
+			&nbsp;<SELECT NAME=\"disablelog\"><OPTION VALUE=\"0\">0 - disabled</OPTION><OPTION VALUE=\"1\" ##DISABLELOGCHECKED##>1 - enabled</OPTION></SELECT>\
+			&nbsp;<input name=\"maxlogsize\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXLOGSIZE##\"> kB</TD></TR>\n\
+		<TR><TD>CW log dir:</TD><TD><input name=\"cwlogdir\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##CWLOGDIR##\"></TD></TR>\n\
+		<TR><TD>Reader entitlements:</TD><TD><SELECT NAME=\"saveinithistory\"><OPTION VALUE=\"0\">0 - dismiss entitlements</OPTION><OPTION VALUE=\"1\" ##SAVEINITHISTORYCHECKED##>1 - save entitlements</OPTION></SELECT></TD></TR>\n\
+		<TR><TH>&nbsp;</TH><TH>Failban</TH></TR>\n\
+		<TR><TD>Failban time:</TD><TD><input name=\"failbantime\" type=\"text\" size=\"5\" maxlength=\"6\" value=\"##FAILBANTIME##\"> min blocking IP based</TD></TR>\n\
+		<TR><TD>Failban count:</TD><TD><input name=\"failbancount\" type=\"text\" size=\"5\" maxlength=\"2\" value=\"##FAILBANCOUNT##\"> chances with wrong credenticals</TD></TR>\n\
+		<TR><TH>&nbsp;</TH><TH>Timeouts / Times</TH></TR>\n\
+		<TR><TD>Client timeout:</TD><TD><input name=\"clienttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTTIMEOUT##\"> ms to give up and return timeout</TD></TR>\n\
+		<TR><TD>Fallback timeout:</TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> ms to switch to fallback reader</TD></TR>\n\
+		<TR><TD>Cache delay:</TD><TD><input name=\"cachedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms delaying answers from cache</TD></TR>\n\
+		<TR><TD>Client max idle:</TD><TD><input name=\"clientmaxidle\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTMAXIDLE##\"> s to disconnect idle clients</TD></TR>\n\
+		<TR><TD>Resolve delay:</TD><TD><input name=\"resolvedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RESOLVEDELAY##\"> s between resolving client dyndns addresses</TD></TR>\n\
+		<TR><TD>Global sleep:</TD><TD><input name=\"sleep\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SLEEP##\"> min to switch a client in sleepmode</TD></TR>\n\
+		<TR><TD>Serial reader timeout:</TD><TD><input name=\"serialreadertimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SERIALTIMEOUT##\"> ms</TD></TR>\n\
+		<TR><TD>Reader restart seconds:</TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"></TD> s waittime to restart a reader</TR>\n\
 		##TPLDOUBLECHECKBIT##\
 		<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"OK\" ##BTNDISABLED##>\n</TD></TR>\n\
 	</TABLE>\n\
