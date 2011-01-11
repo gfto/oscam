@@ -1650,17 +1650,11 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		if(account->disabled != 0) {
 			expired = " (disabled)";
 			classname = "disabled";
-			if (!cfg->http_js_icons)
-				tpl_addVar(vars, 0, "SWITCHICO", ICENA);
-			else
-				tpl_addVar(vars, 0, "SWITCHICOID", "ICENA");
+			tpl_addVar(vars, 0, "SWITCHICO", "image?i=ICENA");
 			tpl_addVar(vars, 0, "SWITCHTITLE", "enable this account");
 			tpl_addVar(vars, 0, "SWITCH", "enable");
 		} else {
-			if (!cfg->http_js_icons)
-				tpl_addVar(vars, 0, "SWITCHICO", ICDIS);
-			else
-				tpl_addVar(vars, 0, "SWITCHICOID", "ICDIS");
+			tpl_addVar(vars, 0, "SWITCHICO", "image?i=ICDIS");
 			tpl_addVar(vars, 0, "SWITCHTITLE", "disable this account");
 			tpl_addVar(vars, 0, "SWITCH", "disable");
 		}
@@ -3139,7 +3133,7 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 		}
 
-		if (cfg->http_js_icons && (pgidx == -1 || pgidx == 1 || pgidx == 3 || pgidx == 4 || pgidx == 6 || pgidx == 16)) {
+		if (cfg->http_js_icons && (pgidx == -1 || pgidx == 1 || pgidx == 3 || pgidx == 6 || pgidx == 16)) {
 			tpl_printf(vars, 0, "ICONS", "var ICSTA =\"%s\";\n", ICSTA);
 			tpl_printf(vars, 1, "ICONS", "var ICDEL =\"%s\";\n", ICDEL);
 			tpl_printf(vars, 1, "ICONS", "var ICEDI =\"%s\";\n", ICEDI);

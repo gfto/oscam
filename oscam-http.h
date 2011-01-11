@@ -540,7 +540,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<TD align=\"center\">##TOTAL_CWTOUT##</TD>\n\
 		<TD align=\"center\">##TOTAL_CWCACHE##</TD>\n\
 		<TD align=\"center\">##TOTAL_CWTUN##</TD>\n\
-		<TD align=\"center\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICRES\" SRC=\"##RESICO##\"BORDER=\"0\" ALT=\"Reset Server Stats\"/></A></TD>\n\
+		<TD align=\"center\"><A HREF=\"userconfig.html?action=resetserverstats\" TITLE=\"reset statistics for server\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Server Stats\"/></A></TD>\n\
 		</TR></TABLE><BR>\n\
 		##TPLFOOTER##"
 
@@ -555,7 +555,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLUSERCONFIGLISTBIT "\
 		<TR class=\"##CLASSNAME##\">\n\
-		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"##SWITCHICOID##\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"/></A></TD>\n\
+		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"/></A></TD>\n\
 		<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN></TD>\n\
 		<TD>##STATUS####EXPIRED##</TD>\n\
 		<TD align=\"center\">##CLIENTPROTO##</TD>\n\
@@ -570,9 +570,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<TD align=\"center\">##CWLASTRESPONSET##</TD>\n\
 		<TD align=\"center\">##EMMOK##</TD>\n\
 		<TD align=\"center\">##EMMNOK##</TD>\n\
-		<TD align=\"center\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICEDI\" SRC=\"##EDIICO##\" BORDER=\"0\" ALT=\"Edit User\"/></A></TD>\n\
-		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICRES\" SRC=\"##RESICO##\"BORDER=\"0\" ALT=\"Reset Stats\"/></A></TD>\n\
-		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICDEL\" SRC=\"##DELICO##\"BORDER=\"0\" ALT=\"Delete User\"/></A></TD>\n\
+		<TD align=\"center\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"/></A></TD>\n\
+		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Stats\"/></A></TD>\n\
+		<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"/></A></TD>\n\
 		</TR>\n"
 
 #define TPLUSEREDIT "\
