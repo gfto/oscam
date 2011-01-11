@@ -1160,7 +1160,7 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
 	<input name=\"part\" type=\"hidden\" value=\"global\">\n\
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 	<TABLE class=\"config\" cellspacing=\"0\">\n\
-		<TR><TH>&nbsp;</TH><TH>Edit Global Config</TH></TR>\n\
+		<TR><TH COLSPAN=\"2\">Edit Global Config</TH></TR>\n\
 		<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 		<TR><TD>Nice:</TD><TD><input name=\"nice\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NICE##\"></TD></TR>\n\
 		<TR><TD>Net prio:</TD><TD><input name=\"netprio\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NETPRIO##\"></TD></TR>\n\
@@ -1174,7 +1174,7 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
 		<TR><TD>Wait for cards:</TD><TD><SELECT NAME=\"waitforcards\"><OPTION VALUE=\"0\">0 - enable clientlogins while init</OPTION><OPTION VALUE=\"1\" ##WAITFORCARDSCHECKED##>1 - disable clientlogins while init</OPTION></SELECT></TD></TR>\n\
 		<TR><TD>Prefer local cards:</TD><TD><SELECT NAME=\"preferlocalcards\"><OPTION VALUE=\"0\">0 - local cards like proxied</OPTION><OPTION VALUE=\"1\" ##PREFERLOCALCARDSCHECKED##>1 - prefer local cards</OPTION></SELECT></TD></TR>\n\
 		<TR><TD>Unlock parental:</TD><TD><SELECT NAME=\"unlockparental\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##UNLOCKPARENTALCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
-		<TR><TH>&nbsp;</TH><TH>Logging</TH></TR>\n\
+		<TR><TH COLSPAN=\"2\">Logging</TH></TR>\n\
 		<TR><TD>Usr file:</TD><TD><input name=\"usrfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##USERFILE##\">\
 		   &nbsp;<SELECT NAME=\"disableuserfile\"><OPTION VALUE=\"0\">0 - disabled</OPTION><OPTION VALUE=\"1\" ##DISABLEUSERFILECHECKED##>1 - enabled</OPTION></SELECT>\
 		   &nbsp;<SELECT NAME=\"usrfileflag\"><OPTION VALUE=\"0\">0 - just join/leave</OPTION><OPTION VALUE=\"1\" ##USERFILEFLAGCHECKED##>1 - each zap</OPTION></SELECT></TD></TR>\n\
@@ -1183,10 +1183,10 @@ totalblocked=\"##TOTALBLOCKED##\" totalerror=\"##TOTALERROR##\">\n##EMMSTATS##\
 			&nbsp;<input name=\"maxlogsize\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXLOGSIZE##\"> kB</TD></TR>\n\
 		<TR><TD>CW log dir:</TD><TD><input name=\"cwlogdir\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##CWLOGDIR##\"></TD></TR>\n\
 		<TR><TD>Reader entitlements:</TD><TD><SELECT NAME=\"saveinithistory\"><OPTION VALUE=\"0\">0 - dismiss entitlements</OPTION><OPTION VALUE=\"1\" ##SAVEINITHISTORYCHECKED##>1 - save entitlements</OPTION></SELECT></TD></TR>\n\
-		<TR><TH>&nbsp;</TH><TH>Failban</TH></TR>\n\
+		<TR><TH COLSPAN=\"2\">Failban</TH></TR>\n\
 		<TR><TD>Failban time:</TD><TD><input name=\"failbantime\" type=\"text\" size=\"5\" maxlength=\"6\" value=\"##FAILBANTIME##\"> min blocking IP based</TD></TR>\n\
 		<TR><TD>Failban count:</TD><TD><input name=\"failbancount\" type=\"text\" size=\"5\" maxlength=\"2\" value=\"##FAILBANCOUNT##\"> chances with wrong credenticals</TD></TR>\n\
-		<TR><TH>&nbsp;</TH><TH>Timeouts / Times</TH></TR>\n\
+		<TR><TH COLSPAN=\"2\">Timeouts / Times</TH></TR>\n\
 		<TR><TD>Client timeout:</TD><TD><input name=\"clienttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTTIMEOUT##\"> ms to give up and return timeout</TD></TR>\n\
 		<TR><TD>Fallback timeout:</TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> ms to switch to fallback reader</TD></TR>\n\
 		<TR><TD>Cache delay:</TD><TD><input name=\"cachedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms delaying answers from cache</TD></TR>\n\
