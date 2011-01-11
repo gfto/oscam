@@ -2074,7 +2074,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 				tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
 				tpl_printf(vars, 0, "CLIENTCNR", "%d", get_threadnum(cl));
-				tpl_addVar(vars, 0, "CLIENTUSER", xml_encode(vars, usr));
+				tpl_printf(vars, 0, "CLIENTUSER", "%s %s", cs_hexdump(1, (uchar *)usr, 8), xml_encode(vars, usr));
 				if (cl->typ == 'c')
 					tpl_addVar(vars, 0, "CLIENTDESCRIPTION", xml_encode(vars, cl->account?cl->account->description:""));
 				tpl_printf(vars, 0, "CLIENTCAU", "%d", cau);
@@ -2842,6 +2842,29 @@ char *send_oscam_api(struct templatevars *vars, struct uriparams *params, struct
 	}
 }
 
+char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params) {
+	char *wanted = getParam(params, "i");
+	if(strlen(wanted) > 3 && wanted[0] == 'I' && wanted[1] == 'C'){
+		char *header = strstr(tpl_getTpl(vars, wanted), "data:");
+		if(header != NULL){
+			char *ptr = header + 5;
+			while (ptr[0] != ';' && ptr[0] != '\0') ++ptr;
+			if(ptr[0] != '\0' && ptr[1] != '\0') ptr[0] = '\0';
+			else return "0";
+			ptr = strstr(ptr + 1, "base64,");
+			if(ptr != NULL){
+				int len = b64decode((uchar *)ptr + 7);
+				if(len > 0){
+					send_headers(f, 200, "OK", NULL, header + 5, 1);
+					webif_write_raw(ptr + 7, f, len);
+					return "1";
+				}
+			}
+		}
+	}
+	return "0";
+}
+
 void webif_parse_request(struct uriparams *params, char *pch) {
 	/* Parse url parameters; parsemode = 1 means parsing next param, parsemode = -1 parsing next
 	 value; pch2 points to the beginning of the currently parsed string, pch is the current position */
@@ -2967,7 +2990,8 @@ int process_request(FILE *f, struct in_addr in) {
 		"/readerstats.html",
 		"/failban.html",
 		"/oscam.js",
-		"/oscamapi.html"};
+		"/oscamapi.html",
+		"/image"};
 
 	int pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 
@@ -3187,6 +3211,7 @@ int process_request(FILE *f, struct in_addr in) {
 			case 16: result = send_oscam_failban(vars, &params); break;
 			//case  17: js file
 			case 18: result = send_oscam_api(vars, &params, in); break;
+			case 19: result = send_oscam_image(vars, f, &params); break;
 			default: result = send_oscam_status(vars, &params, in, 0); break;
 		}
 		if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
@@ -3258,7 +3283,6 @@ void http_srv() {
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
 	socklen_t len = sizeof(remote);
-
 	/* Create random string for nonce value generation */
 	create_rand_str(noncekey,32);
 

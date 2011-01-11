@@ -368,13 +368,17 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 #include <openssl/err.h>
 #endif
 
-int webif_write(char *buf, FILE* f) {
+int webif_write_raw(char *buf, FILE* f, int len) {
 #ifdef WITH_SSL
 	if (cfg->http_use_ssl) {
-		return SSL_write((SSL*)f, buf, strlen(buf));
+		return SSL_write((SSL*)f, buf, len);
 	} else
 #endif
-		return fwrite(buf, 1, strlen(buf), f);
+		return fwrite(buf, 1, len, f);
+}
+
+int webif_write(char *buf, FILE* f) {
+	return webif_write_raw(buf, f, strlen(buf));
 }
 
 int webif_read(char *buf, int num, FILE *f) {
@@ -409,7 +413,7 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime, int
 		pos += sprintf(pos, "Cache-Control: no-store, no-cache, must-revalidate\r\n");
 		pos += sprintf(pos, "Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
 	} else {
-		pos += sprintf(pos, "Cache-Control: public, max-age=7200");
+		pos += sprintf(pos, "Cache-Control: public, max-age=7200\r\n");
 	}
 	pos += sprintf(pos, "Last-Modified: %s\r\n", timebuf);
 	pos += sprintf(pos, "Connection: close\r\n");
@@ -558,5 +562,53 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 	memcpy(result, encoded, pos);
 	result[pos] = '\0';
 	return tpl_addTmp(vars, result);
+}
+
+int b64decode(unsigned char *result){
+	char inalphabet[256], decoder[256];
+	unsigned char alphabet[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	int i, len = strlen((char *)result), j = 0, bits = 0, char_count = 0;
+	
+	for (i = sizeof(alphabet) - 1; i >= 0; --i) {
+		inalphabet[alphabet[i]] = 1;
+		decoder[alphabet[i]] = i;
+	}
+	for(i = 0; i < len; ++i){
+		if (result[i] == '=') break;
+		if (!inalphabet[result[i]]) continue;
+		bits += decoder[result[i]];
+		++char_count;
+		if (char_count == 4) {
+			result[j++] = bits >> 16;
+			result[j++] = (bits >> 8) & 0xff;
+			result[j++] = bits & 0xff;
+			bits = 0;
+			char_count = 0;
+		} else {
+			bits <<= 6;
+		}
+	}
+	if (i == len) {
+		if (char_count) {
+			result[j] = '\0';
+			return 0;
+		}
+	} else {
+		switch (char_count) {
+			case 1:
+				result[j] = '\0';
+				return 0;
+			case 2:
+				result[j++] = bits >> 10;
+				result[j] = '\0';
+				break;
+			case 3:
+				result[j++] = bits >> 16;
+				result[j++] = (bits >> 8) & 0xff;
+				result[j] = '\0';
+			break;
+		}
+	}
+	return j;
 }
 #endif

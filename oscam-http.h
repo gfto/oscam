@@ -1538,6 +1538,17 @@ char *tpl[]={
 #ifdef WITH_DEBUG
 	,"DEBUGSELECT"
 #endif
+	,"ICMAI"
+	,"ICSTA"
+	,"ICDEL"
+	,"ICEDI"
+	,"ICENT"
+	,"ICREF"
+	,"ICKIL"
+	,"ICDIS"
+	,"ICENA"
+	,"ICHID"
+	,"ICRES"
 };
 
 char *tplmap[]={
@@ -1639,6 +1650,17 @@ char *tplmap[]={
 #ifdef WITH_DEBUG
 	,TPLDEBUGSELECT
 #endif
+	,ICMAI
+	,ICSTA
+	,ICDEL
+	,ICEDI
+	,ICENT
+	,ICREF
+	,ICKIL
+	,ICDIS
+	,ICENA
+	,ICHID
+	,ICRES
 };
 
 struct templatevars {
