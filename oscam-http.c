@@ -752,51 +752,41 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 			tpl_printf(vars, 0, "EMMBLOCKEDS", "%d", rdr->emmblocked[SHARED]);
 			tpl_printf(vars, 0, "EMMBLOCKEDUQ", "%d", rdr->emmblocked[UNIQUE]);
 
-			if (!cfg->http_js_icons) {
-				tpl_addVar(vars, 0, "DELICO", ICDEL);
-				tpl_addVar(vars, 0, "STATICO", ICSTA);
-				tpl_addVar(vars, 0, "EDIICO", ICEDI);
-			}
+
+			tpl_addVar(vars, 0, "DELICO", "image?i=ICDEL");
+			tpl_addVar(vars, 0, "STATICO", "image?i=ICSTA");
+			tpl_addVar(vars, 0, "EDIICO", "image?i=ICEDI");
+
 
 			if (!(rdr->typ & R_IS_NETWORK)) { //reader is physical
-				if (!cfg->http_js_icons)
-					tpl_addVar(vars, 0, "REFRICO", ICREF);
+				tpl_addVar(vars, 0, "REFRICO", "image?i=ICREF");
 				tpl_addVar(vars, 0, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
-
-				if (!cfg->http_js_icons)
-					tpl_addVar(vars, 0, "ENTICO", ICENT);
+				tpl_addVar(vars, 0, "ENTICO", "image?i=ICENT");
 				tpl_addVar(vars, 0, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
 
 			} else {
 				tpl_addVar(vars, 0, "READERREFRESH","");
 				if (rdr->typ == R_CCCAM) {
-					if (!cfg->http_js_icons)
-						tpl_addVar(vars, 0, "ENTICO", ICENT);
+					tpl_addVar(vars, 0, "ENTICO", "image?i=ICENT");
 					tpl_addVar(vars, 0, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
 				} else {
 					tpl_addVar(vars, 0, "ENTITLEMENT","");
 				}
 
 			}
-			//printf("checkpoint1 %s\n", rdr->label);
+
 			if(rdr->enable == 0) {
-				if (!cfg->http_js_icons)
-					tpl_addVar(vars, 0, "SWITCHICO", ICENA);
-				else
-					tpl_addVar(vars, 0, "SWITCHICOID", "ICENA");
+				tpl_addVar(vars, 0, "SWITCHICO", "image?i=ICENA");
 				tpl_addVar(vars, 0, "SWITCHTITLE", "enable this reader");
 				tpl_addVar(vars, 0, "SWITCH", "enable");
 			} else {
-				if (!cfg->http_js_icons)
-					tpl_addVar(vars, 0, "SWITCHICO", ICDIS);
-				else
-					tpl_addVar(vars, 0, "SWITCHICOID", "ICDIS");
+				tpl_addVar(vars, 0, "SWITCHICO", "image?i=ICDIS");
 				tpl_addVar(vars, 0, "SWITCHTITLE", "disable this reader");
 				tpl_addVar(vars, 0, "SWITCH", "disable");
 			}
 
 			tpl_addVar(vars, 0, "CTYP", reader_get_type_desc(rdr, 0));
-			//printf("checkpoint2 %s\n", rdr->label);
+
 			tpl_addVar(vars, 1, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
 	}
@@ -3127,7 +3117,7 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 		}
 
-		if (cfg->http_js_icons && ( pgidx == 1 || pgidx == 6 || pgidx == 16)) {
+		if (cfg->http_js_icons && ( pgidx == 6 || pgidx == 16)) {
 			tpl_printf(vars, 0, "ICONS", "var ICSTA =\"%s\";\n", ICSTA);
 			tpl_printf(vars, 1, "ICONS", "var ICDEL =\"%s\";\n", ICDEL);
 			tpl_printf(vars, 1, "ICONS", "var ICEDI =\"%s\";\n", ICEDI);
