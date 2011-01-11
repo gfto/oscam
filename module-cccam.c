@@ -488,9 +488,9 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 
 	if (len != 4) { // invalid header length read
 		if (len <= 0)
-			cs_log("%s disconnected by remote server", getprefix());
+			cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s disconnected by remote server", getprefix());
 		else
-			cs_log("%s invalid header length (expected 4, read %d)", getprefix(), len);
+			cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s invalid header length (expected 4, read %d)", getprefix(), len);
 		return -1;
 	}
 
@@ -502,7 +502,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 	int size = (netbuf[2] << 8) | netbuf[3];
 	if (size) { // check if any data is expected in msg
 		if (size > CC_MAXMSGSIZE - 2) {
-			cs_log("%s message too big (size=%d)", getprefix(), size);
+			cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s message too big (size=%d)", getprefix(), size);
 			return 0;
 		}
 
@@ -512,9 +512,9 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 
 		if (len != size) {
 			if (len <= 0)
-				cs_log("%s disconnected by remote", getprefix());
+				cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s disconnected by remote", getprefix());
 			else
-				cs_log("%s invalid message length read (expected %d, read %d)",
+				cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s invalid message length read (expected %d, read %d)",
 					getprefix(), size, len);
 			return -1;
 		}
@@ -523,7 +523,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 		len += 4;
 	}
 
-	cs_ddump_mask(D_CLIENT, netbuf, len, "cccam: full decrypted msg, len=%d:", len);
+	cs_ddump_mask(cl->typ=='c'?D_CLIENT:D_READER, netbuf, len, "cccam: full decrypted msg, len=%d:", len);
 
 	memcpy(buf, netbuf, len);
 	return len;
@@ -3340,7 +3340,7 @@ int cc_srv_connect(struct s_client *cl) {
 	}
 	if (cl->dup) {
 		cs_log("account '%s' duplicate login, disconnect!", usr);
-		return -2;
+		return -3;
 	}
 	
 
@@ -3477,8 +3477,10 @@ void * cc_srv_init(struct s_client *cl) {
 	cl->pfd = cl->udp_fd;
 	int ret;
 	if ((ret=cc_srv_connect(cl)) < 0) {
-		cs_debug_mask(D_CLIENT, "cccam: %d failed errno: %d (%s)", __LINE__, errno, strerror(
-				errno));
+		if (errno != 0)
+			cs_debug_mask(D_CLIENT, "cccam: failed errno: %d (%s)", errno, strerror(errno));
+		else
+			cs_debug_mask(D_CLIENT, "cccam: failed ret: %d", ret);
 		if (ret == -2)
 			cs_add_violation((uint)cl->ip);
 	}
