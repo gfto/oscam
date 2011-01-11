@@ -2074,7 +2074,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 				tpl_printf(vars, 0, "CLIENTTYPE", "%c", cl->typ);
 				tpl_printf(vars, 0, "CLIENTCNR", "%d", get_threadnum(cl));
-				tpl_printf(vars, 0, "CLIENTUSER", "%s %s", cs_hexdump(1, (uchar *)usr, 8), xml_encode(vars, usr));
+				tpl_addVar(vars, 0, "CLIENTUSER", xml_encode(vars, usr));
 				if (cl->typ == 'c')
 					tpl_addVar(vars, 0, "CLIENTDESCRIPTION", xml_encode(vars, cl->account?cl->account->description:""));
 				tpl_printf(vars, 0, "CLIENTCAU", "%d", cau);
