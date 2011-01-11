@@ -135,25 +135,30 @@ void *ll_iter_peek(LL_ITER *it, int offset)
 
 void ll_iter_reset(LL_ITER *it)
 {
-    it->cur = it->l->initial;
+    if (it && it->l)
+      it->cur = it->l->initial;
 }
 
 void ll_iter_insert(LL_ITER *it, void *obj)
 {
-    if(obj) {
-        LL_NODE *n = calloc(1, sizeof(LL_NODE));
-        n->obj = obj;
-        n->nxt = it->cur;
-        n->prv = it->cur->prv;
+    if(it && obj) {
+        if (!it->cur)
+          ll_append(it->l, obj);
+        else {
+          LL_NODE *n = calloc(1, sizeof(LL_NODE));
+          n->obj = obj;
+          n->nxt = it->cur;
+          n->prv = it->cur->prv;
 
-        it->cur->prv->nxt = n;
-        it->cur->prv = n;
+          it->cur->prv->nxt = n;
+          it->cur->prv = n;
+        }
     }
 }
 
 void *ll_iter_remove(LL_ITER *it)
 {
-    if (it) {
+    if (it && it->l) {
         LL_NODE *n;
 
         // if is last node, handle differently
@@ -185,6 +190,9 @@ void ll_iter_remove_data(LL_ITER *it)
 
 int ll_count(LLIST *l)
 {
+    if (!l)
+      return 0;
+      
     void *obj;
     int c = 0;
 

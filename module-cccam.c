@@ -3524,6 +3524,7 @@ int cc_cli_connect(struct s_client *cl) {
 	cs_debug_mask(D_CLIENT, "cc_cli_connect in");
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
+	rdr->card_status = CARD_FAILURE;
 	
 	if (cc && cc->mode != CCCAM_MODE_NORMAL)
 		return -99;
@@ -3567,8 +3568,11 @@ int cc_cli_connect(struct s_client *cl) {
 	// get init seed
 	if ((n = cc_recv_to(cl, data, 16)) != 16) {
 		int err = errno;
-		cs_log("%s server does not return 16 bytes (n=%d, handle=%d, udp_fd=%d, errno=%d)",
-				rdr->label, n, handle, cl->udp_fd, err);
+		if (n <= 0)
+			cs_log("%s server blocked connection!", rdr->label);
+		else
+			cs_log("%s server does not return 16 bytes (n=%d, errno=%d)",
+				rdr->label, n, err);
 		block_connect(rdr);
 		return -2;
 	}

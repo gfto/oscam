@@ -29,7 +29,6 @@
 
 #include <pthread.h>
 
-#include "module-obj-llist.h"
 #include "module-datastruct-llist.h"
 
 //for reader-nagra variables in s_reader:
@@ -1070,7 +1069,7 @@ struct s_config
 	int			http_full_cfg;
 	int			failbantime;
 	int			failbancount;
-	LLIST_D_ 		*v_list; //failban list
+	LLIST 		*v_list; //failban list
 	int		c33_port;
 	in_addr_t	c33_srvip;
 	uchar		c33_key[16];

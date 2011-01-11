@@ -86,68 +86,68 @@ struct s_client * cur_client(void)
 	return (struct s_client *) pthread_getspecific(getclient);
 }
 
-int cs_check_violation(uint ip) {
-	if (cfg->failbantime) {
-
-		time_t now = time((time_t)0);
-		LLIST_D__ITR itr;
-		V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
-
-		while (v_ban_entry) {
-			if (ip == v_ban_entry->v_ip) {
-				if ((now - v_ban_entry->v_time) >= (cfg->failbantime * 60)) {
-					// housekeeping
-					free(v_ban_entry);
-					llist_itr_remove(&itr);
-					return 0;
-				} else {
-					if (v_ban_entry->v_count >= cfg->failbancount) {
-						cs_debug_mask(D_TRACE, "failban: banned ip %s - %ld seconds left",
-								cs_inet_ntoa(v_ban_entry->v_ip),(cfg->failbantime * 60) - (now - v_ban_entry->v_time));
-						return 1;
-					} else {
-						cs_debug_mask(D_TRACE, "failban: ip %s chance %d of %d",
-								cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_count, cfg->failbancount);
-						v_ban_entry->v_count++;
-						return 0;
-					}
-				}
-			}
-			v_ban_entry = llist_itr_next(&itr);
-		}
-		return 0;
-	}
-	return 0;
-}
-
-void cs_add_violation(uint ip) {
+int cs_check_v(uint ip, int add) {
+        int result = 0;
 	if (cfg->failbantime) {
 
 		if (!cfg->v_list)
-			cfg->v_list = llist_create();
+			cfg->v_list = ll_create();
 
-		LLIST_D__ITR itr;
-		V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
-		while (v_ban_entry) {
+		time_t now = time((time_t)0);
+		LL_ITER *itr = ll_iter_create(cfg->v_list);
+		V_BAN *v_ban_entry;
+		int ftime = cfg->failbantime*60;
+		
+		//run over all banned entries to do housekeeping:
+		while ((v_ban_entry=ll_iter_next(itr))) {
+		
+			// housekeeping:
+			if ((now - v_ban_entry->v_time) >= ftime) { // entry out of time->remove
+				ll_iter_remove_data(itr);
+				continue;
+                        }
+                        
 			if (ip == v_ban_entry->v_ip) {
-				cs_debug_mask(D_TRACE, "failban: banned ip %s - already exist in list", cs_inet_ntoa(v_ban_entry->v_ip));
-				return ;
+			        result=1;
+			        if (!add) {
+        				if (v_ban_entry->v_count >= cfg->failbancount) {
+        					cs_debug_mask(D_TRACE, "failban: banned ip %s - %ld seconds left",
+	        						cs_inet_ntoa(v_ban_entry->v_ip),ftime - (now - v_ban_entry->v_time));
+			        	} else {
+				        	cs_debug_mask(D_TRACE, "failban: ip %s chance %d of %d",
+					        		cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_count, cfg->failbancount);
+        					v_ban_entry->v_count++;
+	        			}
+                                }
+                                else {
+        				cs_debug_mask(D_TRACE, "failban: banned ip %s - already exist in list", cs_inet_ntoa(v_ban_entry->v_ip));
+                                }
+	        			
 			}
-			v_ban_entry = llist_itr_next(&itr);
 		}
+		if (add && !result) {
+  		        v_ban_entry = malloc(sizeof(V_BAN));
+  		        memset(v_ban_entry, 0, sizeof(V_BAN));
 
-		v_ban_entry = malloc(sizeof(V_BAN));
-		memset(v_ban_entry, 0, sizeof(V_BAN));
+        		v_ban_entry->v_time = time((time_t *)0);
+	        	v_ban_entry->v_ip = ip;
 
-		v_ban_entry->v_time = time((time_t *)0);
-		v_ban_entry->v_ip = ip;
+        		ll_iter_insert(itr, v_ban_entry);
 
-		llist_append(cfg->v_list, v_ban_entry);
-
-		cs_debug_mask(D_TRACE, "failban: ban ip %s with timestamp %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_time);
-
+        		cs_debug_mask(D_TRACE, "failban: ban ip %s with timestamp %d", cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_time);
+                }
+		ll_iter_release(itr);
 	}
+	return result;
 }
+
+int cs_check_violation(uint ip) {
+        return cs_check_v(ip, 0);
+}
+void cs_add_violation(uint ip) {
+        cs_check_v(ip, 1);
+}
+
 //Alno Test End
 /*****************************************************************************
         Statics
@@ -538,6 +538,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
                 add_garbage(ecm->matching_rdr);
         }
         add_garbage(cl->ecmtask);
+        cl->ecmtask = NULL;
 }
 
 static void cleanup_thread(struct s_client *cl)

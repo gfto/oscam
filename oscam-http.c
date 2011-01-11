@@ -890,7 +890,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		tpl_printf(vars, 1, "NCD_KEY", "%02X", rdr->ncd_key[i]);
 
 	tpl_addVar(vars, 0, "PINCODE", rdr->pincode);
-	tpl_addVar(vars, 0, "EMMFILE", (char *)rdr->emmfile);
+	if (rdr->emmfile) tpl_addVar(vars, 0, "EMMFILE", (char *)rdr->emmfile);
 	tpl_printf(vars, 0, "INACTIVITYTIMEOUT", "%d", rdr->tcp_ito);
 	tpl_printf(vars, 0, "RECEIVETIMEOUT", "%d", rdr->tcp_rto);
 	if(rdr->ncd_disable_server_filt)
@@ -2732,25 +2732,23 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 
 	uint ip2delete = 0;
-	LLIST_D__ITR itr;
-	V_BAN *v_ban_entry = llist_itr_init(cfg->v_list, &itr);
+	LL_ITER *itr = ll_iter_create(cfg->v_list);
+	V_BAN *v_ban_entry;
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
 		sscanf(getParam(params, "intip"), "%u", &ip2delete);
-		while (v_ban_entry) {
+		while ((v_ban_entry=ll_iter_next(itr))) {
 			if (v_ban_entry->v_ip == ip2delete) {
-				free(v_ban_entry);
-				llist_itr_remove(&itr);
+				ll_iter_remove_data(itr);
 				break;
 			}
-			v_ban_entry = llist_itr_next(&itr);
 		}
 	}
-
+	ll_iter_reset(itr);
+	
 	time_t now = time((time_t)0);
-	v_ban_entry = llist_itr_init(cfg->v_list, &itr);
 
-	while (v_ban_entry) {
+	while ((v_ban_entry=ll_iter_next(itr))) {
 
 		if (!cfg->http_js_icons)
 			tpl_addVar(vars, 0, "DELICO", ICDEL);
@@ -2787,9 +2785,9 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 
 		tpl_printf(vars, 0, "INTIP", "%u", v_ban_entry->v_ip);
 		tpl_addVar(vars, 1, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
-		v_ban_entry = llist_itr_next(&itr);
 	}
-
+	ll_iter_release(itr);
+	
 	return tpl_getTpl(vars, "FAILBAN");
 }
 

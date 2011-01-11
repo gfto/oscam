@@ -1259,7 +1259,7 @@ int init_config()
 {
 	int tag=TAG_GLOBAL;
 	FILE *fp;
-	char *value;
+	char *value=NULL;
 
 #ifndef CS_EMBEDDED
 #ifdef PRIO_PROCESS
