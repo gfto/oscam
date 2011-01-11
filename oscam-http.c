@@ -2054,16 +2054,10 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					tpl_addVar(vars, 0, "HIDEICON", ICHID);
 
 				if(cl->typ == 'c' && !cfg->http_readonly) {
-					if(cfg->http_js_icons)
-						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"\" ALT=\"Kill\"></A>", cl->thread);
-					else
-						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"%s\" ALT=\"Kill\"></A>", cl->thread, ICKIL);
+						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl->thread);
 				}
 				else if((cl->typ == 'p') && !cfg->http_readonly) {
-					if(cfg->http_js_icons)
-						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
-					else
-						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICKIL\" SRC=\"%s\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label), ICKIL);
+						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
 				}
 				else {
 					tpl_printf(vars, 0, "CSIDX", "%8X&nbsp;", cl->thread);
@@ -3133,7 +3127,7 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
 		}
 
-		if (cfg->http_js_icons && (pgidx == -1 || pgidx == 1 || pgidx == 3 || pgidx == 6 || pgidx == 16)) {
+		if (cfg->http_js_icons && ( pgidx == 1 || pgidx == 6 || pgidx == 16)) {
 			tpl_printf(vars, 0, "ICONS", "var ICSTA =\"%s\";\n", ICSTA);
 			tpl_printf(vars, 1, "ICONS", "var ICDEL =\"%s\";\n", ICDEL);
 			tpl_printf(vars, 1, "ICONS", "var ICEDI =\"%s\";\n", ICEDI);

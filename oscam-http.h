@@ -462,7 +462,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLCLIENTSTATUSBIT "\
 		<TR class=\"##CLIENTTYPE##\">\n\
-		<TD align=\"center\" WIDTH=\"10\"><A HREF =\"status.html?hide=##HIDEIDX##\" TITLE=\"Hide this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" ID=\"ICHID\" SRC=\"##HIDEICON##\" ALT=\"Hide\"></A></TD>\n\
+		<TD align=\"center\" WIDTH=\"10\"><A HREF =\"status.html?hide=##HIDEIDX##\" TITLE=\"Hide this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A></TD>\n\
 		<TD align=\"center\">##CSIDX##</TD>\n\
 		<TD align=\"center\">##CLIENTTYPE##</TD>\n\
 		<TD align=\"center\">##CLIENTCNR##</TD>\n\
