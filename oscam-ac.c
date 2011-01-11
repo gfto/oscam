@@ -6,8 +6,8 @@
 //static time_t ac_last_chk;
 static uchar  ac_ecmd5[CS_ECMSTORESIZE];
 
-LLIST_D_ *ac_stat_list = NULL; //struct s_acasc
-LLIST_D_ *acasc_list = NULL;   //struct  s_acasc_shm
+LLIST *ac_stat_list = NULL; //struct s_acasc
+LLIST *acasc_list = NULL;   //struct  s_acasc_shm
 
 int ac_init_log(void)
 {
@@ -27,15 +27,14 @@ int ac_init_log(void)
 
 void ac_clear()
 {
-	llist_clear(acasc_list);
-	llist_clear(ac_stat_list);
+	ll_clear_data(acasc_list);
+	ll_clear_data(ac_stat_list);
 }
 
 void ac_done_stat()
 {
-	ac_clear();
-	llist_destroy(acasc_list);
-	llist_destroy(ac_stat_list);
+	ll_destroy_data(acasc_list);
+	ll_destroy_data(ac_stat_list);
 }
 
 void ac_init_stat()
@@ -43,8 +42,8 @@ void ac_init_stat()
   if (acasc_list)
     ac_clear();
   else {
-    ac_stat_list = llist_create();
-    acasc_list = llist_create();
+    ac_stat_list = ll_create();
+    acasc_list = ll_create();
   }
 
   if( fpa )
@@ -68,17 +67,18 @@ void ac_do_stat()
   int i, j, idx, exceeds, maxval, prev_deny=0;
   struct s_client *cl_idx;
 
-  LLIST_D__ITR itr1, itr2;
+  LL_ITER *itr1 = ll_iter_create(ac_stat_list);
+  LL_ITER *itr2 = ll_iter_create(acasc_list);
   i = 1;
-  struct s_acasc *ac_stat = llist_itr_init(ac_stat_list, &itr1);
-  struct s_acasc_shm *acasc = llist_itr_init(acasc_list, &itr2);
-  while (acasc)
+  struct s_acasc *ac_stat = ll_iter_next(itr1);
+  struct s_acasc_shm *acasc;
+  while ((acasc=ll_iter_next(itr2)))
   {
 	int ac_stat_next = 1;
 	if (!ac_stat) {
 		ac_stat = malloc(sizeof(struct s_acasc));
 		memset(ac_stat, 0, sizeof(struct s_acasc));
-		llist_append(ac_stat_list, ac_stat);
+		ll_iter_insert(itr1, ac_stat);
 		ac_stat_next = 0;
 	}
 
@@ -137,12 +137,13 @@ void ac_do_stat()
       ac_stat->idx = (ac_stat->idx + 1) % cfg->ac_samples;
 
     if (ac_stat_next)
-    	ac_stat = llist_itr_next(&itr1);
+    	ac_stat = ll_iter_next(itr1);
     else
     	ac_stat = NULL;
-    acasc = llist_itr_next(&itr2);
     i++;
   }
+  ll_iter_release(itr2);
+  ll_iter_release(itr1);
 }
 
 void ac_init_client(struct s_auth *account)
@@ -186,18 +187,20 @@ static int ac_dw_weight(ECM_REQUEST *er)
 
 struct s_acasc_shm *get_acasc(ushort ac_idx) {
 	int i=1;
-	LLIST_D__ITR itr;
+	LL_ITER *itr = ll_iter_create(acasc_list);
 
-	struct s_acasc_shm *acasc = llist_itr_init(acasc_list, &itr);
-	while (acasc) {
-		if (i == ac_idx)
+	struct s_acasc_shm *acasc;
+	while ((acasc=ll_iter_next(itr))) {
+		if (i == ac_idx) {
+		        ll_iter_release(itr);
 			return acasc;
-		acasc = llist_itr_next(&itr);
+                }
 		i++;
 	}
 	acasc = malloc(sizeof(struct s_acasc_shm));
 	memset(acasc, 0, sizeof(struct s_acasc_shm));
-	llist_append(acasc_list, acasc);
+	ll_iter_insert(itr, acasc);
+	ll_iter_release(itr);
 	return acasc;
 }
 
