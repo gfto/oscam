@@ -562,6 +562,7 @@ void cs_setpriority(int prio)
 /* Checks an array if it is filled (a value > 0) and returns the last position (1...length) where something was found.
    length specifies the maximum length to check for. */
 int check_filled(uchar *value, int length){
+	if(value == NULL) return 0;
 	int i, j = 0;
 	for (i = 0; i < length; ++i){
 		if(value[i] > 0) j = i + 1;

@@ -2273,7 +2273,7 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
 
-			if (rdr->nagra_boxkey[0] && isphysical)
+			if (check_filled(rdr->nagra_boxkey, 8) > 0 && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxkey", "%s\n", cs_hexdump(0, rdr->nagra_boxkey, 8));
 
 			if ( rdr->atr[0] && isphysical) {

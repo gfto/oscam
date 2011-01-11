@@ -5,7 +5,8 @@
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
-char *tpl_addVar(struct templatevars *vars, int append, char *name, char *value){
+char *tpl_addVar(struct templatevars *vars, int append, char *name, char *value){	
+	if(name == NULL || value == NULL) return "";
 	int i;
 	char *tmp,*result = NULL;
 	for(i = (*vars).varscnt-1; i >= 0; --i){
@@ -51,6 +52,7 @@ char *tpl_addVar(struct templatevars *vars, int append, char *name, char *value)
   freed when calling tpl_clear(). Please do NOT free the memory yourself or realloc
   it after having added the array here! */
 char *tpl_addTmp(struct templatevars *vars, char *value){
+	if(value == NULL) return "";
 	if((*vars).tmpalloc <= (*vars).tmpcnt){		
 		if(!cs_realloc (&(*vars).tmp, (*vars).tmpalloc * 2 * sizeof(char**), -1)) return value;
 		(*vars).tmpalloc = (*vars).tmpcnt * 2;
@@ -61,8 +63,9 @@ char *tpl_addTmp(struct templatevars *vars, char *value){
 }
 
 /* Allows to do a dynamic printf without knowing and defining the needed memory size. If you specify
-   varname, the printf-result will be added/appended to the varlist. You will always get a reference
-   back which you may freely use (but you should not call free/realloc on this!)*/
+   varname, the printf-result will be added/appended to the varlist, if varname=NULL it will only be returned.
+   In either case you will always get a reference back which you may freely use (but you should not call 
+   free/realloc on this as it will be automatically cleaned!)*/
 char *tpl_printf(struct templatevars *vars, int append, char *varname, char *fmtstring, ...){
 	unsigned int needed;
 	char test[1];
@@ -148,10 +151,7 @@ void tpl_clear(struct templatevars *vars){
 char *tpl_getTplPath(const char *name, const char *path, char *result, unsigned int resultsize){
 	char *pch;
 	if((strlen(path) + strlen(name) + 6) <= resultsize){
-		strcpy(result, path);
-		strcat(result, name);
-		strcat(result, ".tpl");
-		result[resultsize - 1] = '\0';
+		snprintf(result, resultsize, "%s%s.tpl", path, name);
 		for(pch = result + strlen(path); pch[0] != '\0'; ++pch){
 			if(pch[0] == '/' || pch[0] == '\\') pch[0] = ' ';
 		}
