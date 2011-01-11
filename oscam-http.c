@@ -202,10 +202,8 @@ char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *para
 
 	if (cfg->c33_port) {
 		tpl_printf(vars, 0, "PORT", "%d", cfg->c33_port);
-		if (cfg->c33_srvip != 0)
-			tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c33_srvip));
-		if (cfg->c33_passive == 1)
-			tpl_addVar(vars, 0, "PASSIVE", "checked");
+		if (cfg->c33_srvip != 0)		tpl_addVar(vars, 0, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg->c33_srvip));
+		if (cfg->c33_passive == 1)		tpl_addVar(vars, 0, "PASSIVECHECKED", "selected");
 
 		for (i = 0; i < (int) sizeof(cfg->c33_key); ++i) tpl_printf(vars, 1, "KEY", "%02X",cfg->c33_key[i]);
 		struct s_ip *cip;
