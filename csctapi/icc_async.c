@@ -832,7 +832,8 @@ static int ICC_Async_SetParity (struct s_reader * reader, unsigned short parity)
 	if (reader->crdr.active && reader->crdr.set_parity) {
 		call(reader->crdr.set_parity(reader, parity));
 		return OK;
-	}
+	} else if(reader->crdr.active)
+		return OK;
 
 	switch(reader->typ) {
 		case R_MP35:
@@ -866,6 +867,12 @@ static int SetRightParity (struct s_reader * reader)
 		parity = PARITY_NONE;
 
 	call (ICC_Async_SetParity(reader, parity));
+
+	if (reader->crdr.active) {
+		if (reader->crdr.flush==1)
+			IO_Serial_Flush(reader);
+		return OK;
+	}
 
 #if defined(COOL) || defined(WITH_STAPI) || defined(AZBOX)
 	if (reader->typ != R_INTERNAL)

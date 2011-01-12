@@ -490,6 +490,7 @@ struct s_cardreader
 	int	(*write_settings)(struct s_reader*, unsigned long ETU, unsigned long EGT, unsigned char P, unsigned char I);
 	int	(*set_protocol)(struct s_reader*, unsigned char * params, unsigned *length, uint len_request);
 	int	(*set_baudrate)(struct s_reader*, ulong baud); //set only for readers which need baudrate setting and timings need to be guarded by OSCam
+	int	flush;
 };
 
 struct s_cardsystem
@@ -1511,7 +1512,10 @@ void reader_videoguard12();
 void reader_dre();
 void reader_tongfang();
 
-void cardreader_mouse();
+void cardreader_mouse(struct s_cardreader *crdr);
+#ifdef WITH_STAPI
+void cardreader_stapi(struct s_cardreader *crdr);
+#endif
 
 // protocol modules
 extern int  monitor_send_idx(struct s_client *, char *);

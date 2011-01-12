@@ -306,6 +306,53 @@ static int mouse_transmit(struct s_reader *reader, unsigned char *sent, unsigned
 	return Phoenix_Transmit(reader, sent, size, reader->block_delay, reader->char_delay);
 }
 
+#if defined(WITH_STAPI)
+static int stapi_init(struct s_reader *reader) {
+	return STReader_Open(reader->device, &reader->stsmart_handle);
+}
+
+static int stapi_getstatus(struct s_reader *reader, int *in) {
+	return STReader_GetStatus(reader->stsmart_handle, &in);
+}
+
+static int stapi_reset(struct s_reader *reader, ATR *atr) {
+	return STReader_Reset(reader->stsmart_handle, atr);
+}
+
+static int stapi_transmit(struct s_reader *reader, unsigned char *sent, unsigned int size) {
+	return STReader_Transmit(reader->stsmart_handle, sent, size);
+}
+
+static int stapi_receive(struct s_reader *reader, unsigned char *data, unsigned int size) {
+	return STReader_Receive(reader->stsmart_handle, data, size);
+}
+
+static int stapi_close(struct s_reader *reader) {
+	return STReader_Close(reader->stsmart_handle);
+}
+
+static int stapi_setprotocol(struct s_reader *reader, unsigned char *params, unsigned *length, uint len_request) {
+	return STReader_SetProtocol(reader->stsmart_handle, params, length, len_request);
+}
+
+static int stapi_writesettings(struct s_reader *reader, unsigned long ETU, unsigned long EGT, unsigned char P, unsigned char I) {
+	return STReader_SetClockrate(reader->stsmart_handle);
+}
+
+void cardreader_stapi(struct s_cardreader *crdr)
+{
+	strcpy(crdr->desc, "stapi");
+	crdr->reader_init	= stapi_init;
+	crdr->get_status	= stapi_getstatus;
+	crdr->activate	= stapi_reset;
+	crdr->transmit	= stapi_transmit;
+	crdr->receive		= stapi_receive;
+	crdr->close		= stapi_close;
+	crdr->set_protocol	= stapi_setprotocol;
+	crdr->write_settings = stapi_writesettings;
+}
+#endif
+
 void cardreader_mouse(struct s_cardreader *crdr) 
 {
 	strcpy(crdr->desc, "mouse_test");
@@ -317,5 +364,5 @@ void cardreader_mouse(struct s_cardreader *crdr)
 	crdr->close		= Phoenix_Close;
 	crdr->set_parity	= IO_Serial_SetParity;
 	crdr->set_baudrate	= Phoenix_SetBaudrate;
+	crdr->flush=1;
 }
-
