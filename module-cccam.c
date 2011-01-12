@@ -523,7 +523,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 		len += 4;
 	}
 
-	cs_ddump_mask(cl->typ=='c'?D_CLIENT:D_READER, netbuf, len, "cccam: full decrypted msg, len=%d:", len);
+	//cs_ddump_mask(cl->typ=='c'?D_CLIENT:D_READER, netbuf, len, "cccam: full decrypted msg, len=%d:", len);
 
 	memcpy(buf, netbuf, len);
 	return len;
@@ -558,7 +558,7 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 		len += 4;
 	}
 
-	cs_ddump_mask(D_CLIENT, netbuf, len, "cccam: send:");
+	//cs_ddump_mask(D_CLIENT, netbuf, len, "cccam: send:");
 	cc_crypt(&cc->block[ENCRYPT], netbuf, len, ENCRYPT);
 
 	n = send(cl->udp_fd, netbuf, len, 0);
@@ -2318,14 +2318,14 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		memcpy(aeskey, cc->cmd0b_aeskey, 16);
 		memset(&key, 0, sizeof(key));
 
-		cs_ddump_mask(D_READER, aeskey, 16, "%s CMD_0B AES key:", getprefix());
-		cs_ddump_mask(D_READER, data, 16, "%s CMD_0B received data:", getprefix());
+		//cs_ddump_mask(D_READER, aeskey, 16, "%s CMD_0B AES key:", getprefix());
+		//cs_ddump_mask(D_READER, data, 16, "%s CMD_0B received data:", getprefix());
 
 		AES_set_encrypt_key((unsigned char *) &aeskey, 128, &key);
 		AES_encrypt((unsigned char *) data, (unsigned char *) &out, &key);
 
 		cs_debug_mask(D_TRACE, "%s sending CMD_0B! ", getprefix());
-		cs_ddump_mask(D_READER, out, 16, "%s CMD_0B out:", getprefix());
+		//cs_ddump_mask(D_READER, out, 16, "%s CMD_0B out:", getprefix());
 		cc_cmd_send(cl, out, 16, MSG_CMD_0B);
 
 		break;
@@ -2356,7 +2356,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			memcpy(bytes, md5hash, 0x10);
 			
 			cs_debug_mask(D_CLIENT, "%s sending CMD_0C! ", getprefix());
-			cs_ddump_mask(D_CLIENT, bytes, 0x20, "%s CMD_0C out:", getprefix());
+			//cs_ddump_mask(D_CLIENT, bytes, 0x20, "%s CMD_0C out:", getprefix());
 			cc_cmd_send(cl, bytes, 0x20, MSG_CMD_0C);	
 		}
 		else //reader
@@ -2482,7 +2482,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		break;
 	}
 	default:
-		cs_ddump_mask(D_CLIENT, buf, l, "%s unhandled msg: %d len=%d", getprefix(), buf[1], l);
+		//cs_ddump_mask(D_CLIENT, buf, l, "%s unhandled msg: %d len=%d", getprefix(), buf[1], l);
 		break;
 	}
 
@@ -2668,7 +2668,7 @@ void copy_sids(LLIST *dst, LLIST *src) {
 		if (!srvid_dst) {
 			srvid_dst = malloc(sizeof(struct cc_srvid));
 			memcpy(srvid_dst, srvid_src, sizeof(struct cc_srvid));
-			ll_append(dst, srvid_dst);
+			ll_iter_insert(it_dst, srvid_dst);
 		}
 	}
 	ll_iter_release(it_dst);
@@ -2785,7 +2785,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
 			ll_clear_data(card2->badsids);
-			ll_append(cardlist, card2);
+			ll_iter_insert(it, card2);
 			modified = 1;
 
 			//Null-Provider for all Providers!
@@ -2811,7 +2811,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
 			ll_clear_data(card2->badsids);
-			ll_append(cardlist, card2);
+			ll_iter_insert(it, card2);
 			modified = 1;
 		} else {
 			if (card->hop < card2->hop) {
@@ -2840,7 +2840,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
 			card2->origin_reader = rdr;
-			ll_append(cardlist, card2);
+			ll_iter_insert(it, card2);
 			modified = 1;
 			if (add_card_providers(card2, card, 1))
 				modified = 1;
@@ -3269,9 +3269,9 @@ int cc_srv_connect(struct s_client *cl) {
 	cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
 
 	if ((i = cc_recv_to(cl, buf, 20)) == 20) {
-		cs_ddump_mask(D_CLIENT, buf, 20, "cccam: recv:");
+		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: recv:");
 		cc_crypt(&cc->block[DECRYPT], buf, 20, DECRYPT);
-		cs_ddump_mask(D_CLIENT, buf, 20, "cccam: hash:");
+		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: hash:");
 	} else
 		return -1;
 
@@ -3286,10 +3286,10 @@ int cc_srv_connect(struct s_client *cl) {
 		for (i = 0; i < 20; i++) {
 			if (usr[i] > 0 && usr[i] < 0x20) { //found nonprintable char
 				cs_log("illegal username received");
-				return -2;
+				return -3;
 			}
 		}
-		cs_ddump_mask(D_CLIENT, buf, 20, "cccam: username '%s':", usr);
+		//cs_ddump_mask(D_CLIENT, buf, 20, "cccam: username '%s':", usr);
 	} else 
 		return -2;
 

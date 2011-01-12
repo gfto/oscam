@@ -106,7 +106,7 @@ READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvi
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
 			if (i > 5) { //Move to first if not under top 5:
 				ll_iter_remove(it);
-				ll_insert_at(rdr->lb_stat, stat, 0); //move to first!
+				ll_insert_at_nolock(rdr->lb_stat, stat, 0); //move to first!
 			}
 			break;
 		}

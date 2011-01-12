@@ -12,14 +12,10 @@ void add_garbage(void *data) {
         if (!data)
                 return;
                 
-        pthread_mutex_lock(&garbage_list->lock);
-        
         struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
         garbage->time = time(NULL);
         garbage->data = data;
         ll_append(garbage_list, garbage);
-        
-        pthread_mutex_unlock(&garbage_list->lock);
 }
 
 void garbage_collector() {
