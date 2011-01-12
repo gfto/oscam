@@ -786,6 +786,12 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 #ifdef HAVE_PCSC
 	tpl_addVar(vars, 1, "ADDPROTOCOL", "<option>pcsc</option>\n");
 #endif
+
+	for (i=0; i<CS_MAX_MOD; i++) {
+		if (cardreader[i].desc[0]!=0)
+			tpl_printf(vars, 1, "ADDPROTOCOL", "<option>%s</option>\n", cardreader[i].desc);
+	}
+
 	return tpl_getTpl(vars, "READERS");
 }
 

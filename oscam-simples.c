@@ -866,6 +866,9 @@ char *reader_get_type_desc(struct s_reader * rdr, int extended)
 	static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
 	char *desc = typtxt[0];
 
+	if (rdr->crdr.active==1)
+		return rdr->crdr.desc;
+
 	if (rdr->typ & R_IS_NETWORK) {
 		if (rdr->ph.desc)
 			desc = rdr->ph.desc;
