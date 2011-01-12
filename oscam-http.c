@@ -2227,7 +2227,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				if (shown) tpl_addVar(vars, 1, "SERVERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 
 		} else {
-			tpl_addVar(vars, 1, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
+			if (shown) tpl_addVar(vars, 1, "APISTATUSBITS", tpl_getTpl(vars, "APISTATUSBIT"));
 		}
 	}
 
