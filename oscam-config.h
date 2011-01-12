@@ -153,7 +153,6 @@
 #endif
 
 #ifdef OS_CYGWIN32
-#  define CS_MMAPFILE "oscam.mem"
 #  define CS_LOGFILE "/dev/tty"
 #  define NO_ENDIAN_H
 #endif
