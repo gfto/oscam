@@ -2794,8 +2794,10 @@ char *send_oscam_api(struct templatevars *vars, struct uriparams *params, struct
 	}
 }
 
-char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params) {
-	char *wanted = getParam(params, "i");
+char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *params, char *image) {
+	char *wanted;
+	if(image == NULL) wanted = getParam(params, "i");
+	else wanted = image;
 	if(strlen(wanted) > 3 && wanted[0] == 'I' && wanted[1] == 'C'){
 		char *header = strstr(tpl_getTpl(vars, wanted), "data:");
 		if(header != NULL){
@@ -2943,7 +2945,8 @@ int process_request(FILE *f, struct in_addr in) {
 		"/failban.html",
 		"/oscam.js",
 		"/oscamapi.html",
-		"/image"};
+		"/image",
+		"/favicon.ico"};
 
 	int pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 
@@ -3083,7 +3086,6 @@ int process_request(FILE *f, struct in_addr in) {
 
 		tpl_addVar(vars, 0, "CS_VERSION", CS_VERSION);
 		tpl_addVar(vars, 0, "CS_SVN_VERSION", CS_SVN_VERSION);
-		tpl_addVar(vars, 0, "ICO", ICMAI);
 		if(cfg->http_refresh > 0 && (pgidx == 3 || pgidx == -1)) {
 			tpl_printf(vars, 0, "REFRESHTIME", "%d", cfg->http_refresh);
 			tpl_addVar(vars, 0, "REFRESHURL", "status.html");
@@ -3149,7 +3151,8 @@ int process_request(FILE *f, struct in_addr in) {
 			case 16: result = send_oscam_failban(vars, &params); break;
 			//case  17: js file
 			case 18: result = send_oscam_api(vars, &params, in); break;
-			case 19: result = send_oscam_image(vars, f, &params); break;
+			case 19: result = send_oscam_image(vars, f, &params, NULL); break;
+			case 20: result = send_oscam_image(vars, f, &params, "ICMAI"); break;
 			default: result = send_oscam_status(vars, &params, in, 0); break;
 		}
 		if(result == NULL || !strcmp(result, "0") || strlen(result) == 0) send_error500(f);
