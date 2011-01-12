@@ -1658,6 +1658,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 					proto = monitor_get_proto(cl);
 					lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
 					lastresponsetm = cl->cwlastresptime;
+					isec = now - cl->last;
 				}
 			}
 		}
@@ -1674,7 +1675,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			tpl_addVar(vars, 0, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, 0, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, 0, "CLIENTPROTO", proto);
-			tpl_addVar(vars, 0, "IDLESECS", sec2timeformat(vars, now - cl->last));
+			tpl_addVar(vars, 0, "IDLESECS", sec2timeformat(vars, isec));
 		}
 
 		tpl_addVar(vars, 0, "CLASSNAME", classname);
