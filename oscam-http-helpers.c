@@ -611,4 +611,29 @@ int b64decode(unsigned char *result){
 	}
 	return j;
 }
+
+/* Format a seconds integer to hh:mm:ss or dd hh:mm:ss depending hrs >24 */
+char *sec2timeformat(int seconds) {
+	char *value = (char *) malloc((12 * sizeof(char)));
+	value[0] = '\0';
+	int secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
+
+	if(seconds > 0) {
+		secs = seconds % 60;
+		if (seconds > 60) {
+			fullmins = seconds / 60;
+			mins = fullmins % 60;
+			if(fullmins > 60) {
+				fullhours = fullmins / 60;
+				hours = fullhours % 24;
+				days = fullhours / 24;
+			}
+		}
+	}
+	if(!days)	sprintf(value, "%02d:%02d:%02d", hours, mins, secs);
+	else			sprintf(value, "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+
+	return value;
+}
+
 #endif

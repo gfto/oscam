@@ -1644,31 +1644,22 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			tpl_addVar(vars, 0, "SWITCH", "disable");
 		}
 
-		//search account in active clients
-		int secs = 0, fullmins =0, mins =0, hours =0, lastresponsetm = 0;
+		int lastresponsetm = 0;
 		char *proto = "";
 
+		//search account in active clients
 		struct s_client *cl;
 		for (cl=first_client; cl ; cl=cl->next) {
-		 if (cl->account && !strcmp(cl->account->usr, account->usr)) {
-			//set client to offline depending on hideclient_to
-			if ((now - cl->lastecm) < hideclient) {
-				status = "<b>online</b>"; classname="online";
-				isonline = 1;
-				proto = monitor_get_proto(cl);
-				lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
-				lastresponsetm = cl->cwlastresptime;
-				isec = now - cl->last;
-				if(isec > 0) {
-					secs = isec % 60;
-					if (isec > 60) {
-						fullmins = isec / 60;
-						mins = fullmins % 60;
-						if(fullmins > 60) hours = fullmins / 60;
-					}
+			if (cl->account && !strcmp(cl->account->usr, account->usr)) {
+				//set client to offline depending on hideclient_to
+				if ((now - cl->lastecm) < hideclient) {
+					status = "<b>online</b>"; classname="online";
+					isonline = 1;
+					proto = monitor_get_proto(cl);
+					lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
+					lastresponsetm = cl->cwlastresptime;
 				}
 			}
-		 }
 		}
 		tpl_printf(vars, 0, "CWOK", "%d", account->cwfound);
 		tpl_printf(vars, 0, "CWNOK", "%d", account->cwnot);
@@ -1683,8 +1674,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			tpl_addVar(vars, 0, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, 0, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, 0, "CLIENTPROTO", proto);
-			tpl_printf(vars, 0, "IDLESECS", "%02d:%02d:%02d", hours, mins, secs);
-
+			tpl_addVar(vars, 0, "IDLESECS", sec2timeformat(now - cl->last));
 		}
 
 		tpl_addVar(vars, 0, "CLASSNAME", classname);
@@ -2072,28 +2062,10 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					tpl_addVar(vars, 0, "CLIENTPROTOTITLE", "");
 				}
 				
-				int secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
 				if (!apicall) {
 					tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
 					tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-					
-					if(lsec > 0) {
-						secs = lsec % 60;
-						if (lsec > 60) {
-							fullmins = lsec / 60;
-							mins = fullmins % 60;
-							if(fullmins > 60) {
-								fullhours = fullmins / 60;
-								hours = fullhours % 24;
-								days = fullhours / 24;
-							}
-						}
-					}
-					if(days == 0)
-						tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02d:%02d:%02d", hours, mins, secs);
-					else
-						tpl_printf(vars, 0, "CLIENTLOGINSECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
-						
+					tpl_addVar(vars, 0, "CLIENTLOGINSECS", sec2timeformat(lsec));
 				} else {	
 					char tbuffer [30];
 					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
@@ -2152,27 +2124,11 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					tpl_addVar(vars, 0, "CLIENTSRVTYPE","");
 					tpl_addVar(vars, 0, "CLIENTSRVDESCRIPTION","");
 					tpl_addVar(vars, 0, "CLIENTLBVALUE","");
-					
+
 				}
 
 				if (!apicall) {
-				secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
-				if(isec > 0) {
-					secs = isec % 60;
-					if (isec > 60) {
-						fullmins = isec / 60;
-						mins = fullmins % 60;
-						if(fullmins > 60) {
-							fullhours = fullmins / 60;
-							hours = fullhours % 24;
-							days = fullhours / 24;
-						}
-					}
-				}
-				if(days == 0)
-					tpl_printf(vars, 0, "CLIENTIDLESECS", "%02d:%02d:%02d", hours, mins, secs);
-				else
-					tpl_printf(vars, 0, "CLIENTIDLESECS", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+					tpl_addVar(vars, 0, "CLIENTIDLESECS", sec2timeformat(isec));
 				} else {
 					tpl_printf(vars, 0, "CLIENTIDLESECS", "%d", isec);
 				}
@@ -2723,26 +2679,7 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 				st.tm_min, st.tm_sec);
 
 		tpl_printf(vars, 0, "VIOLATIONCOUNT", "%d", v_ban_entry->v_count);
-
-		int lsec = (cfg->failbantime * 60) - (now - v_ban_entry->v_time);
-		int secs = 0, fullmins =0, mins =0, fullhours =0, hours =0, days =0;
-		if(lsec > 0) {
-			secs = lsec % 60;
-			if (lsec > 60) {
-				fullmins = lsec / 60;
-				mins = fullmins % 60;
-				if(fullmins > 60) {
-					fullhours = fullmins / 60;
-					hours = fullhours % 24;
-					days = fullhours / 24;
-				}
-			}
-		}
-		if(days == 0)
-			tpl_printf(vars, 0, "LEFTTIME", "%02d:%02d:%02d", hours, mins, secs);
-		else
-			tpl_printf(vars, 0, "LEFTTIME", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
-
+		tpl_addVar(vars, 0, "LEFTTIME", sec2timeformat((cfg->failbantime * 60) - (now - v_ban_entry->v_time)));
 		tpl_printf(vars, 0, "INTIP", "%u", v_ban_entry->v_ip);
 		tpl_addVar(vars, 1, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
 	}
@@ -3111,26 +3048,7 @@ int process_request(FILE *f, struct in_addr in) {
 
 		time_t now = time((time_t)0);
 		tpl_printf(vars, 0, "APIUPTIME", "%u", now - first_client->login);// XMLAPI
-
-		int lsec = now - first_client->login;
-		int secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0, days = 0;
-		if(lsec > 0) {
-			secs = lsec % 60;
-			if (lsec > 60) {
-				fullmins = lsec / 60;
-				mins = fullmins % 60;
-				if(fullmins > 60) {
-					fullhours = fullmins / 60;
-					hours = fullhours % 24;
-					days = fullhours / 24;
-				}
-			}
-		}
-		if(days == 0)
-			tpl_printf(vars, 0, "UPTIME", "%02d:%02d:%02d", hours, mins, secs);
-		else
-			tpl_printf(vars, 0, "UPTIME", "%02dd %02d:%02d:%02d", days, hours, mins, secs);
-
+		tpl_addVar(vars, 0, "UPTIME", sec2timeformat(now - first_client->login));
 		tpl_printf(vars, 0, "CURIP", "%s", inet_ntoa(*(struct in_addr *)&in));
 		if(cfg->http_readonly)
 			tpl_addVar(vars, 1, "BTNDISABLED", "DISABLED");
