@@ -1674,7 +1674,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			tpl_addVar(vars, 0, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, 0, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, 0, "CLIENTPROTO", proto);
-			tpl_addVar(vars, 0, "IDLESECS", sec2timeformat(now - cl->last));
+			tpl_addVar(vars, 0, "IDLESECS", sec2timeformat(vars, now - cl->last));
 		}
 
 		tpl_addVar(vars, 0, "CLASSNAME", classname);
@@ -2065,7 +2065,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				if (!apicall) {
 					tpl_printf(vars, 0, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
 					tpl_printf(vars, 1, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-					tpl_addVar(vars, 0, "CLIENTLOGINSECS", sec2timeformat(lsec));
+					tpl_addVar(vars, 0, "CLIENTLOGINSECS", sec2timeformat(vars, lsec));
 				} else {	
 					char tbuffer [30];
 					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
@@ -2128,7 +2128,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				}
 
 				if (!apicall) {
-					tpl_addVar(vars, 0, "CLIENTIDLESECS", sec2timeformat(isec));
+					tpl_addVar(vars, 0, "CLIENTIDLESECS", sec2timeformat(vars, isec));
 				} else {
 					tpl_printf(vars, 0, "CLIENTIDLESECS", "%d", isec);
 				}
@@ -2679,7 +2679,7 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 				st.tm_min, st.tm_sec);
 
 		tpl_printf(vars, 0, "VIOLATIONCOUNT", "%d", v_ban_entry->v_count);
-		tpl_addVar(vars, 0, "LEFTTIME", sec2timeformat((cfg->failbantime * 60) - (now - v_ban_entry->v_time)));
+		tpl_addVar(vars, 0, "LEFTTIME", sec2timeformat(vars, (cfg->failbantime * 60) - (now - v_ban_entry->v_time)));
 		tpl_printf(vars, 0, "INTIP", "%u", v_ban_entry->v_ip);
 		tpl_addVar(vars, 1, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
 	}
@@ -3048,7 +3048,7 @@ int process_request(FILE *f, struct in_addr in) {
 
 		time_t now = time((time_t)0);
 		tpl_printf(vars, 0, "APIUPTIME", "%u", now - first_client->login);// XMLAPI
-		tpl_addVar(vars, 0, "UPTIME", sec2timeformat(now - first_client->login));
+		tpl_addVar(vars, 0, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
 		tpl_printf(vars, 0, "CURIP", "%s", inet_ntoa(*(struct in_addr *)&in));
 		if(cfg->http_readonly)
 			tpl_addVar(vars, 1, "BTNDISABLED", "DISABLED");

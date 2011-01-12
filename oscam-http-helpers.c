@@ -613,9 +613,11 @@ int b64decode(unsigned char *result){
 }
 
 /* Format a seconds integer to hh:mm:ss or dd hh:mm:ss depending hrs >24 */
-char *sec2timeformat(int seconds) {
-	char *value = (char *) malloc((12 * sizeof(char)));
-	value[0] = '\0';
+char *sec2timeformat(struct templatevars *vars, int seconds) {
+	char *value;
+	if(!cs_malloc(&value, 12 * sizeof(char), -1))
+		return "";
+
 	int secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
 
 	if(seconds > 0) {
@@ -633,7 +635,7 @@ char *sec2timeformat(int seconds) {
 	if(!days)	sprintf(value, "%02d:%02d:%02d", hours, mins, secs);
 	else			sprintf(value, "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 
-	return value;
+	return tpl_addTmp(vars, value);
 }
 
 #endif
