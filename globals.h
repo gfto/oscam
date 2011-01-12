@@ -1064,7 +1064,6 @@ struct s_config
 	uchar		http_dyndns[64];
 	int			http_use_ssl;
 	char		http_cert[128];
-	int			http_js_icons;
 #endif
 	int			http_full_cfg;
 	int			failbantime;

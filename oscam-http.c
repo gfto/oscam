@@ -532,9 +532,6 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 	if (cfg->http_full_cfg)
 		tpl_addVar(vars, 0, "HTTPSAVEFULLSELECT", "selected");
 
-	if (cfg->http_js_icons)
-		tpl_addVar(vars, 0, "HTTPJSICONS", "selected");
-
 	return tpl_getTpl(vars, "CONFIGMONITOR");
 }
 
@@ -752,18 +749,11 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 			tpl_printf(vars, 0, "EMMBLOCKEDS", "%d", rdr->emmblocked[SHARED]);
 			tpl_printf(vars, 0, "EMMBLOCKEDUQ", "%d", rdr->emmblocked[UNIQUE]);
 
-
-			tpl_addVar(vars, 0, "DELICO", "image?i=ICDEL");
-			tpl_addVar(vars, 0, "STATICO", "image?i=ICSTA");
-			tpl_addVar(vars, 0, "EDIICO", "image?i=ICEDI");
-
-
 			if (!(rdr->typ & R_IS_NETWORK)) { //reader is physical
 				tpl_addVar(vars, 0, "REFRICO", "image?i=ICREF");
 				tpl_addVar(vars, 0, "READERREFRESH", tpl_getTpl(vars, "READERREFRESHBIT"));
 				tpl_addVar(vars, 0, "ENTICO", "image?i=ICENT");
 				tpl_addVar(vars, 0, "ENTITLEMENT", tpl_getTpl(vars, "READERENTITLEBIT"));
-
 			} else {
 				tpl_addVar(vars, 0, "READERREFRESH","");
 				if (rdr->typ == R_CCCAM) {
@@ -772,7 +762,6 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 				} else {
 					tpl_addVar(vars, 0, "ENTITLEMENT","");
 				}
-
 			}
 
 			if(rdr->enable == 0) {
@@ -1699,12 +1688,6 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		tpl_addVar(vars, 0, "STATUS", status);
 		tpl_addVar(vars, 0, "EXPIRED", expired);
 
-		if (!cfg->http_js_icons) {
-			tpl_addVar(vars, 0, "DELICO", ICDEL);
-			tpl_addVar(vars, 0, "EDIICO", ICEDI);
-			tpl_addVar(vars, 0, "RESICO", ICRES);
-		}
-
 		tpl_addVar(vars, 1, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT"));
 		isec = 0;
 		lastchan = "&nbsp;";
@@ -2040,14 +2023,11 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 				tpl_printf(vars, 0, "HIDEIDX", "%ld", cl->thread);
 
-				if(!cfg->http_js_icons)
-					tpl_addVar(vars, 0, "HIDEICON", ICHID);
-
 				if(cl->typ == 'c' && !cfg->http_readonly) {
-						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl->thread);
+					tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=kill&threadid=%ld\" TITLE=\"Kill this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Kill\"></A>", cl->thread);
 				}
 				else if((cl->typ == 'p') && !cfg->http_readonly) {
-						tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
+					tpl_printf(vars, 0, "CSIDX", "<A HREF=\"status.html?action=restart&label=%s\" TITLE=\"Restart this reader/ proxy\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICKIL\" ALT=\"Restart\"></A>", urlencode(vars, cl->reader->label));
 				}
 				else {
 					tpl_printf(vars, 0, "CSIDX", "%8X&nbsp;", cl->thread);
@@ -2419,11 +2399,6 @@ char *send_oscam_services(struct templatevars *vars, struct uriparams *params, s
 		tpl_addVar(vars, 0, "LABEL", xml_encode(vars, sidtab->label));
 		tpl_addVar(vars, 0, "SIDLIST", tpl_getTpl(vars, "SERVICECONFIGSIDBIT"));
 
-		if (!cfg->http_js_icons) {
-			tpl_addVar(vars, 0, "EDIICO", ICEDI);
-			tpl_addVar(vars, 0, "DELICO", ICDEL);
-		}
-
 		tpl_addVar(vars, 1, "SERVICETABS", tpl_getTpl(vars, "SERVICECONFIGLISTBIT"));
 		sidtab=sidtab->next;
 	}
@@ -2731,8 +2706,6 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 
 	while ((v_ban_entry=ll_iter_next(itr))) {
 
-		if (!cfg->http_js_icons)
-			tpl_addVar(vars, 0, "DELICO", ICDEL);
 		tpl_printf(vars, 0, "IPADDRESS", "%s", cs_inet_ntoa(v_ban_entry->v_ip));
 
 		struct tm st ;
@@ -3115,20 +3088,6 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_printf(vars, 0, "REFRESHTIME", "%d", cfg->http_refresh);
 			tpl_addVar(vars, 0, "REFRESHURL", "status.html");
 			tpl_addVar(vars, 0, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-		}
-
-		if (cfg->http_js_icons && ( pgidx == 6 || pgidx == 16)) {
-			tpl_printf(vars, 0, "ICONS", "var ICSTA =\"%s\";\n", ICSTA);
-			tpl_printf(vars, 1, "ICONS", "var ICDEL =\"%s\";\n", ICDEL);
-			tpl_printf(vars, 1, "ICONS", "var ICEDI =\"%s\";\n", ICEDI);
-			tpl_printf(vars, 1, "ICONS", "var ICENT =\"%s\";\n", ICENT);
-			tpl_printf(vars, 1, "ICONS", "var ICREF =\"%s\";\n", ICREF);
-			tpl_printf(vars, 1, "ICONS", "var ICKIL =\"%s\";\n", ICKIL);
-			tpl_printf(vars, 1, "ICONS", "var ICDIS =\"%s\";\n", ICDIS);
-			tpl_printf(vars, 1, "ICONS", "var ICENA =\"%s\";\n", ICENA);
-			tpl_printf(vars, 1, "ICONS", "var ICHID =\"%s\";\n", ICHID);
-			tpl_printf(vars, 1, "ICONS", "var ICRES =\"%s\";\n", ICRES);
-			tpl_addVar(vars, 0, "ONLOADSCRIPT", " onload=\"load_Icons()\"");
 		}
 
 		tpl_printf(vars, 0, "CURDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
