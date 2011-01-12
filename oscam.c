@@ -680,15 +680,8 @@ void cs_exit(int sig)
 	cs_log("cardserver down");
 	cs_close_log();
 
-#ifdef WEBIF
-	if (!cs_restart_mode)
-		exit(sig);
-
 	if (!exit_oscam)
 	  exit_oscam = sig?sig:1;
-#else
-	exit(sig);
-#endif
 }
 
 void cs_reinit_clients(struct s_auth *new_accounts)
@@ -3517,7 +3510,12 @@ if (pthread_key_create(&getclient, NULL)) {
   }
 #endif
 
-	cs_exit(exit_oscam);
+        //cleanup clients:
+        struct s_client *cl;
+        for (cl=first_client->next; cl; cl=cl->next) {
+                kill_thread(cl);
+        }
+        
 	return exit_oscam;
 }
 
