@@ -481,9 +481,9 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 
 	// css style selector
 	if(strlen(cfg->http_css) == 0) {
-		tpl_addVar(vars, 0, "CSSOPTIONS", "<option value=\"\" selected>embedded</option>\n");
+		tpl_addVar(vars, 0, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"\" selected>embedded</option>\n");
 	} else {
-		tpl_addVar(vars, 0, "CSSOPTIONS", "<option value=\"\">embedded</option>\n");
+		tpl_addVar(vars, 0, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"\">embedded</option>\n");
 	}
 
 	DIR *hdir;
@@ -493,9 +493,9 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 		entry = readdir(hdir);
 		if ((entry) && (strstr(entry->d_name, ".css"))) {
 			if (strstr(cfg->http_css, entry->d_name)) {
-				tpl_printf(vars, 1, "CSSOPTIONS", "<option value=\"%s%s\" selected>%s%s</option>\n",cs_confdir,entry->d_name,cs_confdir,entry->d_name);
+				tpl_printf(vars, 1, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\" selected>%s%s</option>\n",cs_confdir,entry->d_name,cs_confdir,entry->d_name);
 			} else {
-				tpl_printf(vars, 1, "CSSOPTIONS", "<option value=\"%s%s\">%s%s</option>\n",cs_confdir,entry->d_name,cs_confdir,entry->d_name);
+				tpl_printf(vars, 1, "CSSOPTIONS", "\t\t\t\t\t\t<option value=\"%s%s\">%s%s</option>\n",cs_confdir,entry->d_name,cs_confdir,entry->d_name);
 			}
 		}
 	} while (entry);
@@ -1273,7 +1273,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 				if (!apicall) {
 					if (stat->rc == 4) {
 						tpl_addVar(vars, 1, "READERSTATSROWNOTFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
-						tpl_addVar(vars, 0, "READERSTATSNFHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"7\">Not found</TD></TR>\n");
+						tpl_addVar(vars, 0, "READERSTATSNFHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"7\">Not found</TD></TR>\n");
 					}
 					else
 						tpl_addVar(vars, 1, "READERSTATSROWFOUND", tpl_getTpl(vars, "READERSTATSBIT"));
@@ -2171,19 +2171,19 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 			// select right suborder
 			if (cl->typ == 'c') {
 				if (shown) tpl_addVar(vars, 1, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-				if(cfg->http_hide_idle_clients == 1 || cfg->mon_hideclient_to < 1) tpl_printf(vars, 0, "CLIENTHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
+				if(cfg->http_hide_idle_clients == 1 || cfg->mon_hideclient_to < 1) tpl_printf(vars, 0, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
 						user_count_shown, user_count_all);
-				else tpl_printf(vars, 0, "CLIENTHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d (%d with ECM within last %d seconds)</TD></TR>\n",
+				else tpl_printf(vars, 0, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d (%d with ECM within last %d seconds)</TD></TR>\n",
 						user_count_shown, user_count_all, user_count_active, cfg->mon_hideclient_to);
 			}
 			else if (cl->typ == 'r') {
 				if (shown) tpl_addVar(vars, 1, "READERSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-				tpl_printf(vars, 0, "READERHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Readers %d/%d</TD></TR>\n",
+				tpl_printf(vars, 0, "READERHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Readers %d/%d</TD></TR>\n",
 						reader_count_conn, reader_count_all);
 			}
 			else if (cl->typ == 'p') {
 				if (shown) tpl_addVar(vars, 1, "PROXYSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
-				tpl_printf(vars, 0, "PROXYHEADLINE", "<TR><TD CLASS=\"subheadline\" colspan=\"17\">Proxies %d/%d</TD></TR>\n",
+				tpl_printf(vars, 0, "PROXYHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Proxies %d/%d</TD></TR>\n",
 						proxy_count_conn, proxy_count_all);
 			}
 			else
@@ -2201,7 +2201,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 		p_txt=p_usr+32;
 
 		if (!apicall) {
-			if (p_txt[0]) tpl_printf(vars, 1, "LOGHISTORY", "<span class=\"%s\">%s</span><br>\n", p_usr, p_txt+8);
+			if (p_txt[0]) tpl_printf(vars, 1, "LOGHISTORY", "\t\t<span class=\"%s\">%s\t\t</span><br>\n", p_usr, p_txt+8);
 		} else {
 			if (strcmp(getParam(params, "appendlog"), "1") == 0)
 				tpl_printf(vars, 1, "LOGHISTORY", "%s", p_txt+8);
