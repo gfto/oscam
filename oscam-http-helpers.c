@@ -614,9 +614,13 @@ int b64decode(unsigned char *result){
 
 /* Format a seconds integer to hh:mm:ss or dd hh:mm:ss depending hrs >24 */
 char *sec2timeformat(struct templatevars *vars, int seconds) {
+
 	char *value;
 	if(!cs_malloc(&value, 12 * sizeof(char), -1))
-		return "";
+		return "00:00:00";
+
+	if(!seconds)
+		return "00:00:00";
 
 	int secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
 
