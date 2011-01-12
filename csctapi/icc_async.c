@@ -56,6 +56,25 @@
 #define PPS_HAS_PPS2(block)       ((block[1] & 0x20) == 0x20)
 #define PPS_HAS_PPS3(block)       ((block[1] & 0x40) == 0x40)
 
+//declare locking stuff for sc8in1 reader
+static pthread_mutex_t sc8in1; //semaphore for SC8in1, FIXME should not be global, but one per SC8in1
+
+#define LOCK_SC8IN1 \
+{ \
+	if (reader->typ == R_SC8in1) { \
+		pthread_mutex_lock(&sc8in1); \
+		cs_debug_mask(D_ATR, "SC8in1: locked for access of slot %i", reader->slot); \
+		Sc8in1_Selectslot(reader, reader->slot); \
+	} \
+}
+
+#define UNLOCK_SC8IN1 \
+{	\
+	if (reader->typ == R_SC8in1) { \
+		cs_debug_mask(D_ATR, "SC8in1: unlocked for access of slot %i", reader->slot); \
+		pthread_mutex_unlock(&sc8in1); \
+	} \
+}
 
 /*
  * Not exported functions declaration
