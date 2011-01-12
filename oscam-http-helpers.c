@@ -616,7 +616,7 @@ int b64decode(unsigned char *result){
 char *sec2timeformat(struct templatevars *vars, int seconds) {
 
 	char *value;
-	if(!cs_malloc(&value, 12 * sizeof(char), -1))
+	if(!cs_malloc(&value, 13 * sizeof(char), -1))
 		return "00:00:00";
 
 	if(!seconds)
