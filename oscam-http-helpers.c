@@ -635,9 +635,14 @@ char *sec2timeformat(struct templatevars *vars, int seconds) {
 				days = fullhours / 24;
 			}
 		}
+	} else {
+		return "00:00:00";
 	}
-	if(!days)	snprintf(value, sizeof(value), "%02d:%02d:%02d", hours, mins, secs);
-	else		snprintf(value, sizeof(value), "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+
+	if(days == 0)
+		snprintf(value, 16, "%02d:%02d:%02d", hours, mins, secs);
+	else
+		snprintf(value, 16, "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 
 	return tpl_addTmp(vars, value);
 }
