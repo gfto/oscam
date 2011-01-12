@@ -477,14 +477,14 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\n\
 ##MESSAGE##\
-	<BR>\
-	<TABLE CLASS=\"configmenu\">\
-		<TR>\
-			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</TD>\
-			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</TD>\
-			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</TD>\
-		</TR>\
-	</TABLE><BR>\
+	<BR>\n\
+	<TABLE CLASS=\"configmenu\">\n\
+		<TR>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?part=adduser\">Add User</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=reinit\">Reinit User DB</TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"userconfig.html?action=resetalluserstats\">Reset Userstats</TD>\n\
+		</TR>\n\
+	</TABLE><BR>\n\
 	<TABLE CLASS=\"users\">\n\
 		<TR>\n\
 			<TH>Lock</TH>\n\
