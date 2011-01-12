@@ -3375,6 +3375,8 @@ if (pthread_key_create(&getclient, NULL)) {
   //Todo #ifdef CCCAM
   init_provid();
 
+  start_garbage_collector();        
+
   init_len4caid();
 #ifdef IRDETO_GUESSING
   init_irdeto_guess_tab();
@@ -3456,8 +3458,6 @@ if (pthread_key_create(&getclient, NULL)) {
 	}
 #endif
 
-        start_garbage_collector();
-        
 	for (i=0; i<CS_MAX_MOD; i++)
 		if (ph[i].type & MOD_CONN_SERIAL)   // for now: oscam_ser only
 			if (ph[i].s_handler)
@@ -3510,9 +3510,10 @@ if (pthread_key_create(&getclient, NULL)) {
   }
 #endif
 
-        //cleanup clients:
+        //cleanup clients, reverse cleaning!
         struct s_client *cl;
-        for (cl=first_client->next; cl; cl=cl->next) {
+        while (first_client->next) {
+                for (cl=first_client->next; cl->next; cl=cl->next) ; //find last
                 kill_thread(cl);
         }
         
