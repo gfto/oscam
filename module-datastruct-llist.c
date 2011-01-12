@@ -54,6 +54,7 @@ void ll_clear(LLIST *l)
 
 void ll_clear_data(LLIST *l)
 {
+		if (!l) return;
     void *obj;
 
     LL_ITER *it = ll_iter_create(l);
