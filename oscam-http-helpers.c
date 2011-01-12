@@ -636,8 +636,8 @@ char *sec2timeformat(struct templatevars *vars, int seconds) {
 			}
 		}
 	}
-	if(!days)	sprintf(value, "%02d:%02d:%02d", hours, mins, secs);
-	else			sprintf(value, "%02dd %02d:%02d:%02d", days, hours, mins, secs);
+	if(!days)	snprintf(value, sizeof(value), "%02d:%02d:%02d", hours, mins, secs);
+	else		snprintf(value, sizeof(value), "%02dd %02d:%02d:%02d", days, hours, mins, secs);
 
 	return tpl_addTmp(vars, value);
 }
