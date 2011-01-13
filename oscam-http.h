@@ -246,6 +246,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<link rel=\"stylesheet\" type=\"text/css\" href=\"site.css\">\n\
 	<link href=\"favicon.ico\" rel=\"icon\" type=\"image/x-icon\"/>\n\
 ##REFRESH##\
+	<script type=\"text/javascript\" src=\"oscam.js\"/>\n\
 </HEAD>\n\
 <BODY ##ONLOADSCRIPT##>\n\
 	<DIV CLASS=\"header\"><H2 CLASS=\"headline1\">OSCAM ##CS_VERSION## build ###CS_SVN_VERSION##</H2></DIV>\n"
@@ -270,7 +271,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLAPIFOOTER "</oscam>"
 
 #define TPLREFRESH "\
-	\n<meta http-equiv=\"refresh\" content=\"##REFRESHTIME##; URL=##REFRESHURL##\" />\n"
+	<meta http-equiv=\"refresh\" content=\"##REFRESHTIME##; URL=##REFRESHURL##\" />\n"
 
 #define TPLMENU "\
 	<TABLE border=0 class=\"menu\">\n\
