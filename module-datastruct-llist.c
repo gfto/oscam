@@ -9,18 +9,30 @@
 static void _destroy(LLIST *l)
 {
     if (!l) return;
-    pthread_mutex_unlock(&l->lock);
-    pthread_mutex_destroy(&l->lock);
+    
+    if (l->lock) {
+      pthread_mutex_unlock(l->lock);
+      pthread_mutex_destroy(l->lock);
+      add_garbage(l->lock);
+    }
 
-    NULLFREE(l);
+    add_garbage(l);
 }
 
 LLIST *ll_create()
 {
     LLIST *l = calloc(1, sizeof(LLIST));
     
-    pthread_mutex_init(&l->lock, NULL);
+    l->lock = malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_init(l->lock, NULL);
 
+    return l;
+}
+
+LLIST *ll_create_nolock()
+{
+    LLIST *l = calloc(1, sizeof(LLIST));
+    
     return l;
 }
 
@@ -85,9 +97,11 @@ void ll_append_nolock(LLIST *l, void *obj)
 void ll_append(LLIST *l, void *obj)
 {
     if (l && obj) {
-        pthread_mutex_lock(&l->lock);
+        if (l->lock)
+            pthread_mutex_lock(l->lock);
         ll_append_nolock(l, obj);
-        pthread_mutex_unlock(&l->lock);
+        if (l->lock)
+            pthread_mutex_unlock(l->lock);
     }
 }
 
@@ -97,8 +111,9 @@ LL_ITER *ll_iter_create(LLIST *l)
 
     it->l = l;
     if (l) {
-      pthread_mutex_lock(&l->lock);
-      it->cur = l->initial;
+        if (l->lock)
+          pthread_mutex_lock(l->lock);
+        it->cur = l->initial;
     }
     else
       it->cur = NULL;
@@ -108,10 +123,10 @@ LL_ITER *ll_iter_create(LLIST *l)
 
 void ll_iter_release(LL_ITER *it)
 {
-    if(it->l)
-      pthread_mutex_unlock(&it->l->lock);
+    if(it->l && it->l->lock)
+      pthread_mutex_unlock(it->l->lock);
 
-    NULLFREE(it);
+    add_garbage(it);
 }
 
 void *ll_iter_next(LL_ITER *it)
@@ -189,7 +204,7 @@ void *ll_iter_remove(LL_ITER *it)
             else it->l->initial = n->nxt;
 
             it->l->count--;
-            NULLFREE(n);
+            add_garbage(n);
             return obj;
         }
     }
@@ -200,7 +215,7 @@ void *ll_iter_remove(LL_ITER *it)
 void ll_iter_remove_data(LL_ITER *it)
 {
     void *obj = ll_iter_remove(it);
-    NULLFREE(obj);
+    add_garbage(obj);
 }
 
 int ll_count(LLIST *l)
@@ -241,9 +256,11 @@ void ll_insert_at(LLIST *l, void *obj, int pos)
     if (!l || !obj)
       return;
       
-    pthread_mutex_lock(&l->lock);
+    if (l->lock)
+      pthread_mutex_lock(l->lock);
     ll_insert_at_nolock(l, obj, pos);
-    pthread_mutex_unlock(&l->lock);
+    if (l->lock)
+      pthread_mutex_unlock(l->lock);
 }
 
 //Returns first object if there is one

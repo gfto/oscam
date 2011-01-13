@@ -16,7 +16,7 @@ typedef struct llist LLIST;
 struct llist {
     void *obj;
     LL_NODE *initial;
-    pthread_mutex_t lock;
+    pthread_mutex_t *lock;
     int count;
 };
 
@@ -27,6 +27,7 @@ struct lliter {
 };
 
 LLIST *ll_create();             // create llist, return ptr to llist
+LLIST *ll_create_nolock();             // create llist, return ptr to llist (disable locking)
 void ll_destroy(LLIST *l);      // same as ll_clear_abstract() but frees up LLIST mem as well
 void ll_destroy_data(LLIST *l); // same as ll_clear_data() but frees up obj allocations as well
 void ll_clear(LLIST *l);        // frees up all llnodes nodes but not data held in obj ptrs

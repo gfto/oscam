@@ -1,45 +1,66 @@
+#include <pthread.h>
+
 #include "globals.h"
 #include "module-datastruct-llist.h"
-
-LLIST *garbage_list;
 
 struct cs_garbage {
         time_t time;
         void * data;
+        struct cs_garbage *next;
 };
+
+struct cs_garbage *garbage_first;
+pthread_mutex_t garbage_lock;
 
 void add_garbage(void *data) {
         if (!data)
                 return;
                 
+        pthread_mutex_lock(&garbage_lock);
+
         struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
         garbage->time = time(NULL);
         garbage->data = data;
-        ll_append(garbage_list, garbage);
+        garbage->next = garbage_first;
+        garbage_first = garbage;
+
+        pthread_mutex_unlock(&garbage_lock);
 }
 
 void garbage_collector() {
-        LL_ITER *it;
         time_t now;
-        struct cs_garbage *garbage;
+        struct cs_garbage *garbage, *next, *prev = NULL;
+        
         while (1) {
                 cs_sleepms(1000);
                 
-                now = time(NULL);
-                it = ll_iter_create(garbage_list);
-                while ((garbage = ll_iter_next(it))) {
+                pthread_mutex_lock(&garbage_lock);
+              
+                garbage = garbage_first;  
+                while (garbage) {
+                        next = garbage->next;
                         if (now > garbage->time+5) { //5 seconds!
                                 free(garbage->data);
-                                ll_iter_remove_data(it);
+                                
+                                if (prev)
+                                        prev->next = next;
+                                else
+                                        garbage_first = next;
+                                free(garbage);
                         }
+                        else
+                                prev = garbage;
+                        garbage = next;
                 }
-                ll_iter_release(it);       
+                pthread_mutex_unlock(&garbage_lock);
         }
 }
 
 void start_garbage_collector() {
 
-        garbage_list = ll_create();
+        pthread_mutex_init(&garbage_lock, NULL);
+
+        garbage_first = NULL;
         pthread_t temp;
         pthread_attr_t attr;
         pthread_attr_init(&attr);
