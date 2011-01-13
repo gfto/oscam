@@ -3510,8 +3510,14 @@ if (pthread_key_create(&getclient, NULL)) {
   }
 #endif
 
-        //cleanup clients, reverse cleaning!
+        //cleanup clients:
         struct s_client *cl;
+        for (cl=first_client->next; cl; cl=cl->next) { //find last
+                if (cl->typ=='c')
+                        kill_thread(cl);
+        }
+        
+        //cleanup readers and all others, reverse order:
         while (first_client->next) {
                 for (cl=first_client->next; cl->next; cl=cl->next) ; //find last
                 kill_thread(cl);
