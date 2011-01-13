@@ -798,7 +798,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<TR><TD>##HOST##</TD><TD>##CAID##</TD><TD>##SYSTEM##</TD><TD>##SHAREID##</TD><TD>##REMOTEID##</TD><TD>##UPHOPS##</TD><TD>##MAXDOWN##</TD><TD>##PROVIDERS##</TD><TD>##NODES##</TD></TR>"
 
 #define TPLAPICCCAMCARDLIST "##TPLAPIHEADER##\
-	<reader label=\"##READERNAME##\">\n\
+	<reader label=\"##READERNAME##\" hostaddress=\"##APIHOST##\" hostport=\"##APIHOSTPORT##\">\n\
 		<cardlist totalcards=\"##APITOTALCARDS##\">\n\
 ##CARDLIST##\n\
 		</cardlist>\n\
@@ -807,8 +807,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLAPICCCAMCARDBIT "		<card number=\"##APICARDNUMBER##\" caid=\"##APICAID##\" system=\"##SYSTEM##\" \
 reshare=\"##MAXDOWN##\" hop=\"##UPHOPS##\">\n\
-			<hostaddress>##APIHOST##</hostaddress>\n\
-			<hostport>##APIHOSTPORT##</hostport>\n\
 			<shareid>##SHAREID##</shareid>\n\
 			<remoteid>##REMOTEID##</remoteid>\n\
 			<providers totalproviders=\"##APITOTALPROVIDERS##\">\n\

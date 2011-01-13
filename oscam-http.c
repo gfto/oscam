@@ -1725,6 +1725,8 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 		if (rdr->typ == R_CCCAM && rdr->enable == 1) {
 
 			tpl_addVar(vars, 0, "READERNAME", rdr->label);
+			tpl_addVar(vars, 0, "APIHOST", rdr->device);
+			tpl_printf(vars, 0, "APIHOSTPORT", "%d", rdr->r_port);
 
 			int caidcount = 0;
 			int providercount = 0;
@@ -1747,8 +1749,6 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 						tpl_printf(vars, 0, "HOST", "%s:%d", rdr->device, rdr->r_port);
 						tpl_printf(vars, 0, "CAID", "%04X", card->caid);
 					} else {
-						tpl_addVar(vars, 0, "APIHOST", rdr->device);
-						tpl_printf(vars, 0, "APIHOSTPORT", "%d", rdr->r_port);
 						tpl_printf(vars, 0, "APICARDNUMBER", "%d", caidcount);
 						tpl_printf(vars, 0, "APICAID", "%04X", card->caid);
 					}
