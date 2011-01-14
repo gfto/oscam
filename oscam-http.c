@@ -97,7 +97,6 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 	tpl_printf(vars, 0, "NICE", "%d", cfg->nice);
 	tpl_printf(vars, 0, "BINDWAIT", "%d", cfg->bindwait);
 	tpl_printf(vars, 0, "NETPRIO", "%ld", cfg->netprio);
-	if (cfg->clientdyndns)			tpl_addVar(vars, 0, "CLIENTDYNDNSCHECKED", "selected");
 
 
 	if (cfg->usrfile != NULL) 		tpl_addVar(vars, 0, "USERFILE", cfg->usrfile);
@@ -116,7 +115,6 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 	tpl_printf(vars, 0, "CLIENTMAXIDLE", "%d", cfg->cmaxidle);
 	tpl_printf(vars, 0, "CACHEDELAY", "%ld", cfg->delay);
 
-	tpl_printf(vars, 0, "RESOLVEDELAY", "%d", cfg->resolvedelay);
 	tpl_printf(vars, 0, "SLEEP", "%d", cfg->tosleep);
 	if (cfg->ulparent == 1)			tpl_addVar(vars, 0, "UNLOCKPARENTALCHECKED", "selected");
 

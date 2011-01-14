@@ -1226,7 +1226,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Client dyndns:</TD><TD><SELECT NAME=\"clientdyndns\"><OPTION VALUE=\"0\">0 - no client use dyndns</OPTION><OPTION VALUE=\"1\" ##CLIENTDYNDNSCHECKED##>1 - one or more clients use dyndns</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>Wait for cards:</TD><TD><SELECT NAME=\"waitforcards\"><OPTION VALUE=\"0\">0 - enable clientlogins while init</OPTION><OPTION VALUE=\"1\" ##WAITFORCARDSCHECKED##>1 - disable clientlogins while init</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>Prefer local cards:</TD><TD><SELECT NAME=\"preferlocalcards\"><OPTION VALUE=\"0\">0 - local cards like proxied</OPTION><OPTION VALUE=\"1\" ##PREFERLOCALCARDSCHECKED##>1 - prefer local cards</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>Unlock parental:</TD><TD><SELECT NAME=\"unlockparental\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##UNLOCKPARENTALCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
@@ -1255,7 +1254,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>Fallback timeout:</TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> ms to switch to fallback reader</TD></TR>\n\
 			<TR><TD>Cache delay:</TD><TD><input name=\"cachedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms delaying answers from cache</TD></TR>\n\
 			<TR><TD>Client max idle:</TD><TD><input name=\"clientmaxidle\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTMAXIDLE##\"> s to disconnect idle clients</TD></TR>\n\
-			<TR><TD>Resolve delay:</TD><TD><input name=\"resolvedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RESOLVEDELAY##\"> s between resolving client dyndns addresses</TD></TR>\n\
 			<TR><TD>Global sleep:</TD><TD><input name=\"sleep\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SLEEP##\"> min to switch a client in sleepmode</TD></TR>\n\
 			<TR><TD>Serial reader timeout:</TD><TD><input name=\"serialreadertimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SERIALTIMEOUT##\"> ms</TD></TR>\n\
 			<TR><TD>Reader restart seconds:</TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"> s waittime to restart a reader</TD></TR>\n\

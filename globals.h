@@ -132,7 +132,6 @@
 #define CS_CLIENT_MAXIDLE 120
 #define CS_BIND_TIMEOUT   120
 #define CS_DELAY          0
-#define CS_RESOLVE_DELAY  30
 #define CS_MAXLOGHIST     30
 #define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
 #define CS_MAXREADERCAID  16
@@ -1024,8 +1023,6 @@ struct s_config
 	int		ulparent;
 	ulong		delay;
 	int		bindwait;
-	int		resolvedelay;
-	int		clientdyndns;
 	int		tosleep;
 	in_addr_t	srvip;
 	char		*usrfile;

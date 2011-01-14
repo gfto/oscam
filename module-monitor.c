@@ -368,7 +368,6 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 	        sprintf(buf, "UsrFile=%s", cfg->usrfile);
 	        monitor_send_details(buf, pid);
         }
-	sprintf(buf, "ResolveDelay=%d", cfg->resolvedelay);
 	monitor_send_details(buf, pid);
 	sprintf(buf, "Sleep=%d", cfg->tosleep);
 	monitor_send_details(buf, pid);
@@ -619,7 +618,7 @@ static void monitor_set_server(char *args){
 	char *ptr;
 	int argidx, i, found;
 	char *argarray[3];
-	static const char *token[]={"clienttimeout", "fallbacktimeout", "clientmaxidle", "cachedelay", "bindwait", "netprio", "resolvedelay", "sleep", "unlockparental", "serialreadertimeout", "maxlogsize", "showecmdw", "waitforcards", "preferlocalcards"};
+	static const char *token[]={"clienttimeout", "fallbacktimeout", "clientmaxidle", "cachedelay", "bindwait", "netprio", "sleep", "unlockparental", "serialreadertimeout", "maxlogsize", "showecmdw", "waitforcards", "preferlocalcards"};
 	char buf[256];
 
 	argidx=0;	found=0;
@@ -642,10 +641,10 @@ static void monitor_set_server(char *args){
 	trim(argarray[1]);
 	strtolower(argarray[0]);
 
-	for (i = 0; i < 14; i++)
+	for (i = 0; i < 13; i++)
 		if (!strcmp(argarray[0], token[i]))	break;
 
-	if (i < 14){
+	if (i < 13){
 		chk_t_global(token[i],argarray[1]);
 		sprintf(buf, "[S-0000]setserver done - param %s set to %s\n", argarray[0], argarray[1]);
 		monitor_send_info(buf, 1);
