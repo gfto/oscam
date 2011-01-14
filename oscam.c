@@ -1126,7 +1126,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 			kill_thread(rdr->client);
 
 	rdr->tcp_connected = 0;
-	rdr->card_status = NO_CARD;
+	rdr->card_status = UNKNOWN;
 	rdr->tcp_block_delay = 100;
 	cs_ftime(&rdr->tcp_block_connect_till);
 
@@ -3010,20 +3010,16 @@ void cs_waitforcardinit()
 	{
 		cs_log("waiting for local card init");
 		int card_init_done;
-		cs_sleepms(4000);  // sleep for card detect to work proberly NLSU2 / sc8in1 needs 4000 ms ...
 		do {
 			card_init_done = 1;
 			struct s_reader *rdr;
 			for (rdr=first_reader; rdr ; rdr=rdr->next)
-                                if (!(rdr->typ & R_IS_CASCADING)) {
-                                        reader_checkhealth(rdr);
-                                                                                
-                                        if (rdr->enable && rdr->card_status == CARD_NEED_INIT) {
-					        card_init_done = 0;
-					        break;
-                                        }
+				if (((rdr->typ & R_IS_CASCADING) == 0) && rdr->enable && (rdr->card_status == CARD_NEED_INIT || rdr->card_status == UNKNOWN)) {
+					card_init_done = 0;
+					break;
 				}
-			cs_sleepms(300); // wait a little bit
+			if (!card_init_done)
+				cs_sleepms(300); // wait a little bit
 			//alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
 		} while (!card_init_done);
 		cs_log("init for all local cards done");

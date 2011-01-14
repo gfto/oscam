@@ -326,7 +326,6 @@ void cc_cli_close(struct s_client *cl, int call_conclose) {
 		return;
 		
 	rdr->tcp_connected = 0;
-	rdr->card_status = NO_CARD;
 	rdr->available = 0;
 	rdr->card_system = 0;
 	rdr->ncd_msgid = 0;
@@ -2021,7 +2020,6 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			break;
 			
 		rdr->tcp_connected = 2; //we have card
-		rdr->card_status = CARD_INSERTED;
 
 		pthread_mutex_lock(&cc->cards_busy);
 
@@ -3572,7 +3570,6 @@ void * cc_srv_init(struct s_client *cl) {
 int cc_cli_connect(struct s_client *cl) {
 	struct s_reader *rdr = cl->reader;
 	struct cc_data *cc = cl->cc;
-	rdr->card_status = CARD_FAILURE;
 	
 	if (cc && cc->mode != CCCAM_MODE_NORMAL)
 		return -99;
@@ -3749,7 +3746,6 @@ int cc_cli_connect(struct s_client *cl) {
 		rdr->prid[n][3] = rdr->ftab.filts[0].prids[n] & 0xff;
 	}
 
-	rdr->card_status = CARD_NEED_INIT;
 	rdr->last_g = rdr->last_s = time((time_t *) 0);
 	rdr->tcp_connected = 1;
 	rdr->available = 1;

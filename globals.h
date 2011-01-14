@@ -244,7 +244,8 @@ extern char *RDR_CD_TXT[];
 #define NCD_525     2
 
 // moved from reader-common.h
-#define NO_CARD        0
+#define UNKNOWN        0
+#define NO_CARD        4
 #define CARD_NEED_INIT 1
 #define CARD_INSERTED  2
 #define CARD_FAILURE   3

@@ -367,7 +367,6 @@ static int connect_newcamd_server()
 
   // 6. Set card inserted
   cl->reader->tcp_connected = 2;
-  cl->reader->card_status = CARD_INSERTED;
   cl->reader->last_g = cl->reader->last_s = time((time_t *)0);
 
   // Only after connect() on cl->udp_fd (Linux)
@@ -677,7 +676,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     struct s_reader *rdr;
     for (rdr=first_reader; rdr ; rdr=rdr->next) {
       if(rdr->caid[0]==cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid) {
-        if(rdr->card_status == CARD_NEED_INIT) {
+        if(rdr->card_status == CARD_NEED_INIT || rdr->card_status == UNKNOWN) {
           cs_log("init for reader %s not finished -> reject client", rdr->label);
           ok = 0;
         }

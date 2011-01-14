@@ -271,7 +271,7 @@ int reader_checkhealth(struct s_reader * reader)
 {
   if (reader_card_inserted(reader))
   {
-    if (reader->card_status == NO_CARD)
+    if (reader->card_status == NO_CARD || reader->card_status == UNKNOWN)
     {
       cs_log("%s card detected", reader->label);
 #ifdef QBOXHD_LED

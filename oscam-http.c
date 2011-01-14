@@ -2151,6 +2151,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 								switch(rdr->card_status)
 								{
 								case NO_CARD: txt = "OFF"; break;
+								case UNKNOWN: txt = "UNKNOWN"; break;
 								case CARD_NEED_INIT: txt = "NEEDINIT"; break;
 								case CARD_INSERTED:
 									if (cl->typ=='p')

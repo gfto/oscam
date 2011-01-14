@@ -92,10 +92,7 @@ int constcw_client_init(struct s_client *client)
     client->pfd = client->udp_fd;
     
     if (constcw_file_available())
-    {
-	client->reader->tcp_connected = 2;
-        client->reader->card_status = CARD_INSERTED;
-    }
+      client->reader->tcp_connected = 2;
 
     return(0);
 }
