@@ -29,7 +29,7 @@ void add_garbage(void *data) {
 
 void garbage_collector() {
         time_t now;
-        struct cs_garbage *garbage, *next, *prev = NULL;
+        struct cs_garbage *garbage, *next, *prev;
         
         while (1) {
                 cs_sleepms(1000);
@@ -37,7 +37,8 @@ void garbage_collector() {
                 pthread_mutex_lock(&garbage_lock);
               
                 now = time(NULL);
-                
+
+                prev = NULL;
                 garbage = garbage_first;  
                 while (garbage) {
                         next = garbage->next;
