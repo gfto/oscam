@@ -3538,6 +3538,17 @@ void cs_switch_led(int led, int action) {
 			case LED3:snprintf(ledfile, 255, "/sys/class/leds/dockstar:orange:misc/brightness");
 			break;
 			}
+		#elif WRT350NV2
+			switch(led){
+			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:orange:power/brightness");
+			break;
+			case LED1B:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:green:power/brightness");
+			break;
+			case LED2:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:green:wireless/brightness");
+			break;
+			case LED3:snprintf(ledfile, 255, "/sys/class/leds/wrt350nv2:green:security/brightness");
+			break;
+			}
 		#else
 			switch(led){
 			case LED1A:snprintf(ledfile, 255, "/sys/class/leds/nslu2:red:status/brightness");
