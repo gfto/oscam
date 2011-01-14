@@ -1,9 +1,5 @@
 #include "globals.h"
-#include <sys/time.h>
 
-#define CHECK_HEALTH_PERIOD 1000 //check health only every X milliseconds
-
-struct timeval last_time_health_checked = {0,0};
 int logfd=0;
 
 void reader_do_idle(struct s_reader * reader);
@@ -772,14 +768,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
   }
 
 #ifdef WITH_CARDREADER
-  if (!(reader->typ & R_IS_CASCADING)) {
-    struct timeval cur_time;
-    gettimeofday(&cur_time,0);
-    if ((((cur_time.tv_sec-last_time_health_checked.tv_sec)*1000) + ((cur_time.tv_usec-last_time_health_checked.tv_usec)/1000L)) >= CHECK_HEALTH_PERIOD) {
-      reader_checkhealth(reader);
-      gettimeofday(&last_time_health_checked,0);
-    }
-  }
+  if (!(reader->typ & R_IS_CASCADING)) reader_checkhealth(reader);
 #endif
   return(0);
 }
