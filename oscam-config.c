@@ -59,6 +59,28 @@ int strToIntVal(char *value, int defaultvalue){
 	else return i;
 }
 
+char* cfg_readline(char* buf, int buflen, FILE* fp){ 
+	int clen = 0, rlen = 0; 
+	char* str = buf, *sbuf = buf; 
+	
+	while ((buf = fgets(str, buflen - clen, fp))) { 
+		rlen = strlen(str); 
+		if (rlen > 1 && str[rlen - 1] == '\n' && str[rlen - 2] == '\\') { 
+			if (clen + rlen >= buflen - 1) { 
+				str[rlen - 3] = '\n'; 
+				str[rlen - 2] = '\0'; 
+				break; 
+			} 
+			rlen -= 2; 
+			str += rlen; 
+			clen += rlen; 
+		} 
+		else 
+		break; 
+	} 
+	return buf ? sbuf : buf; 
+} 
+
 #ifdef DEBUG_SIDTAB
 static void show_sidtab(struct s_sidtab *sidtab)
 {
@@ -1175,7 +1197,7 @@ void init_len4caid()
 	sprintf(token, "%s%s", cs_confdir, cs_l4ca);
 	if (!(fp = fopen(token, "r")))
 		return;
-	for(nr = 0; fgets(token, sizeof(token), fp);) {
+	for(nr = 0; cfg_readline(token, sizeof(token), fp);) {
 		int i, c;
 		char *ptr;
 		if (!(value=strchr(token, ':')))
@@ -1299,7 +1321,7 @@ int init_config()
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d)\n", token, errno);
 		exit(1);
 	}
-	while (fgets(token, sizeof(token), fp)) {
+	while (cfg_readline(token, sizeof(token), fp)) {
 		int i, l;
 		//void *ptr;
 		if ((l = strlen(trim(token))) < 3)
@@ -2585,7 +2607,7 @@ struct s_auth *init_userdb()
 		return authptr;
 	}
 
-	while (fgets(token, sizeof(token), fp)) {
+	while (cfg_readline(token, sizeof(token), fp)) {
 		int i, l;
 		void *ptr;
 
@@ -2730,7 +2752,7 @@ int init_sidtab()
     ptr=ptr_next;
   }
   nr=0;
-  while (fgets(token, sizeof(token), fp))
+  while (cfg_readline(token, sizeof(token), fp))
   {
     int l;
     void *ptr;
@@ -2780,7 +2802,7 @@ int init_provid() {
 		return(0);
 	}
 	nr=0;
-	while (fgets(token, sizeof(token), fp)) {
+	while (cfg_readline(token, sizeof(token), fp)) {
 
 		int l;
 		void *ptr;
@@ -2851,7 +2873,7 @@ int init_srvid()
 	}
 
 	nr=0;
-	while (fgets(token, sizeof(token), fp)) {
+	while (cfg_readline(token, sizeof(token), fp)) {
 
 		int l;
 		void *ptr;
@@ -2932,7 +2954,7 @@ int init_tierid()
 	}
 
 	nr=0;
-	while (fgets(token, sizeof(token), fp)) {
+	while (cfg_readline(token, sizeof(token), fp)) {
 
 		int l;
 		void *ptr;
@@ -3626,7 +3648,7 @@ int init_irdeto_guess_tab()
            token, errno);
     return(1);
   }
-  while (fgets(token, sizeof(token), fp))
+  while (cfg_readline(token, sizeof(token), fp))
   {
     if( strlen(token)<20 ) continue;
     for( i=b3=b47=caid=sid=skip=0, ptr=strtok(token, ":"); (i<4)&&(ptr); ptr=strtok(NULL, ":"), i++ )
@@ -3701,7 +3723,7 @@ int init_readerdb()
 	}
 	struct s_reader *rdr = first_reader = (struct s_reader*) malloc (sizeof(struct s_reader));
 	memset(rdr, 0, sizeof(struct s_reader));
-	while (fgets(token, sizeof(token), fp)) {
+	while (cfg_readline(token, sizeof(token), fp)) {
 		int i, l;
 		if ((l = strlen(trim(token))) < 3)
 			continue;
@@ -3757,7 +3779,7 @@ void init_ac()
     return;
   }
 
-  for(nr=0; fgets(token, sizeof(token), fp);)
+  for(nr=0; cfg_readline(token, sizeof(token), fp);)
   {
     int i, skip;
     ushort caid, sid, chid, dwtime;
