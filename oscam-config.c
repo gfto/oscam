@@ -399,16 +399,6 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
-	if (!strcmp(token, "resolvedelay")) {
-		cfg->resolvedelay = strToIntVal(value, CS_RESOLVE_DELAY);
-		return;
-	}
-
-	if (!strcmp(token, "clientdyndns")) {
-		cfg->clientdyndns = strToIntVal(value, 0);
-		return;
-	}
-
 	if (!strcmp(token, "sleep")) {
 		cfg->tosleep = strToIntVal(value, 0);
 		return;
@@ -1269,7 +1259,6 @@ int init_config()
 	cfg->cmaxidle = CS_CLIENT_MAXIDLE;
 	cfg->delay = CS_DELAY;
 	cfg->bindwait = CS_BIND_TIMEOUT;
-	cfg->resolvedelay = CS_RESOLVE_DELAY;
 	cfg->mon_level = 2;
 	cfg->mon_hideclient_to = 0;
 	cfg->srtimeout = 1500;
@@ -1714,10 +1703,6 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg->bindwait);
 	if (cfg->netprio || (!cfg->netprio && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg->netprio);
-	if (cfg->clientdyndns || (!cfg->clientdyndns && cfg->http_full_cfg))
-		fprintf_conf(f, CONFVARWIDTH, "clientdyndns", "%d\n", cfg->clientdyndns);
-	if (cfg->resolvedelay != CS_RESOLVE_DELAY || (cfg->resolvedelay == CS_RESOLVE_DELAY && cfg->http_full_cfg))
-		fprintf_conf(f, CONFVARWIDTH, "resolvedelay", "%d\n", cfg->resolvedelay);
 	if (cfg->tosleep ||(!cfg->tosleep && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", cfg->tosleep);
 	if (cfg->ulparent ||(!cfg->ulparent && cfg->http_full_cfg))
