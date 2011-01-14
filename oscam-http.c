@@ -1232,6 +1232,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 			if (!(stat->rc == rc2hide)) {
 				struct tm lt;
 				localtime_r(&stat->last_received, &lt);
+				ecmcount += stat->ecm_count;
 				if (!apicall) {
 					tpl_printf(vars, 0, "CHANNEL", "%04X:%06lX:%04X", stat->caid, stat->prid, stat->srvid);
 					tpl_printf(vars, 0, "CHANNELNAME","%s", xml_encode(vars, get_servicename(stat->srvid, stat->caid)));
@@ -1242,7 +1243,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 					else
 						tpl_printf(vars, 0, "TIMELAST", "");
 					tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
-					ecmcount += stat->ecm_count;
+
 					if(stat->last_received) {
 						tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100, lt.tm_hour, lt.tm_min, lt.tm_sec);
 
