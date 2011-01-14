@@ -2681,43 +2681,46 @@ int add_card_providers(struct cc_card *dest_card, struct cc_card *card,
 
 	//1. Copy nonexisting providers, ignore double:
 	struct cc_provider *prov_info;
-	LL_ITER *it_dst, *it_src = ll_iter_create(card->providers);
+	LL_ITER *it_src = ll_iter_create(card->providers);
+	LL_ITER *it_dst = ll_iter_create(dest_card->providers);
+	
 	struct cc_provider *provider;
 	while ((provider = ll_iter_next(it_src))) {
-		it_dst = ll_iter_create(dest_card->providers);
+		ll_iter_reset(it_dst);
 		while ((prov_info = ll_iter_next(it_dst))) {
 			if (prov_info->prov == provider->prov)
 				break;
 		}
-		ll_iter_release(it_dst);
 		if (!prov_info) {
 			struct cc_provider *prov_new = malloc(sizeof(struct cc_provider));
 			memcpy(prov_new, provider, sizeof(struct cc_provider));
-			ll_append(dest_card->providers, prov_new);
+			ll_iter_insert(it_dst, prov_new);
 			modified = 1;
 		}
 	}
+	ll_iter_release(it_dst);
 	ll_iter_release(it_src);
 	
 	if (copy_remote_nodes) {
 		//2. Copy nonexisting remote_nodes, ignoring existing:
 		it_src = ll_iter_create(card->remote_nodes);
+		it_dst = ll_iter_create(dest_card->remote_nodes);
 		uint8 *remote_node;
 		uint8 *remote_node2;
 		while ((remote_node = ll_iter_next(it_src))) {
-			it_dst = ll_iter_create(dest_card->remote_nodes);
+			ll_iter_reset(it_dst);
 			while ((remote_node2 = ll_iter_next(it_dst))) {
 				if (memcmp(remote_node, remote_node2, 8) == 0)
 					break;
 			}
-			ll_iter_release(it_dst);
 			if (!remote_node2) {
 				uint8* remote_node_new = malloc(8);
 				memcpy(remote_node_new, remote_node, 8);
-				ll_append(dest_card->remote_nodes, remote_node_new);
+				ll_iter_insert(it_dst, remote_node_new);
 				modified = 1;
 			}
 		}
+		ll_iter_release(it_dst);
 		ll_iter_release(it_src);
 	}
 	return modified;
@@ -2753,6 +2756,69 @@ struct cc_card *create_card2(struct s_reader *rdr, int j, uint16 caid, uint8 hop
 	return card;
 }
 
+/** 
+ * num_same_providers checks if card1 has exactly the same providers as card2
+ * returns same provider count
+ **/
+int num_same_providers(struct cc_card *card1, struct cc_card *card2) {
+
+	int found=0;
+	
+	LL_ITER *it1 = ll_iter_create(card1->providers);
+	LL_ITER *it2 = ll_iter_create(card2->providers);
+	
+	struct cc_provider *prov1, *prov2;
+	
+	while ((prov1=ll_iter_next(it1))) {
+	
+		ll_iter_reset(it2);
+		while ((prov2=ll_iter_next(it2))) {
+			if (prov1->prov==prov2->prov) {
+				found++;
+				break;
+			}
+			
+		}
+	}
+	
+	ll_iter_release(it2);
+	ll_iter_release(it1);
+	
+	return found;
+}
+
+/** 
+ * equal_providers checks if card1 has exactly the same providers as card2
+ * returns 1=equal 0=different
+ **/
+int equal_providers(struct cc_card *card1, struct cc_card *card2) {
+
+	if (ll_count(card1->providers) != ll_count(card2->providers))
+		return 0;
+		
+	LL_ITER *it1 = ll_iter_create(card1->providers);
+	LL_ITER *it2 = ll_iter_create(card2->providers);
+	
+	struct cc_provider *prov1, *prov2;
+	
+	while ((prov1=ll_iter_next(it1))) {
+	
+		ll_iter_reset(it2);
+		while ((prov2=ll_iter_next(it2))) {
+			if (prov1->prov==prov2->prov) {
+				break;
+			}
+			
+		}
+		if (!prov2) break;
+	}
+	
+	ll_iter_release(it2);
+	ll_iter_release(it1);
+	
+	return (prov1 == NULL);
+}
+
 /**
  * Adds a new card to a cardlist.
  */
@@ -2774,56 +2840,71 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 	LL_ITER *it = ll_iter_create(cardlist);
 	struct cc_card *card2;
 
-	//Minimize all, transmit just CAID
+	//Minimize all, transmit just CAID, merge providers:
 	if (cfg->cc_minimize_cards == MINIMIZE_CAID) {
 		while ((card2 = ll_iter_next(it)))
-			if (card2->caid == card->caid)
-				break;
+			if (card2->caid == card->caid && 
+					!memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial))) {
+	
+				//Merge cards only if resulting providercount is smaller than CS_MAXPROV
+				int nsame, ndiff, nnew;
+	
+				nsame = num_same_providers(card, card2); //count same cards
+				ndiff = ll_count(card->providers)-nsame; //cound different cards, this cound will be added
+				nnew = ndiff + ll_count(card2->providers); //new card count after add. because its limited to CS_MAXPROV, dont add it
+	
+				if (nnew <= CS_MAXPROV)
+					break;
+			}
 		if (!card2) {
 			card2 = create_card(card);
-			card2->hop = card->hop;
+			card2->hop = 0;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
 			ll_clear_data(card2->badsids);
 			ll_iter_insert(it, card2);
 			modified = 1;
-
-			//Null-Provider for all Providers!
-			struct cc_provider *prov_new = malloc(sizeof(struct cc_provider));
-			memset(prov_new, 0, sizeof(struct cc_provider));
-			ll_append(card2->providers, prov_new);
-		} else {
-			if (card->hop < card2->hop) {
-				card2->hop = card->hop;
-				modified = 1;
-			}
-			else cc->card_dup_count++;
-		}
-
-	} else if (cfg->cc_minimize_cards == MINIMIZE_HOPS) {
-		while ((card2 = ll_iter_next(it))) {
-			if (card2->caid == card->caid && ll_count(card2->providers) < CS_MAXPROV)
-				break;
-		}
-		if (!card2) {
-			card2 = create_card(card);
-			card2->hop = card->hop;
-			card2->remote_id = card->remote_id;
-			card2->maxdown = reshare;
-			ll_clear_data(card2->badsids);
-			ll_iter_insert(it, card2);
-			modified = 1;
-		} else {
-			if (card->hop < card2->hop) {
-				card2->hop = card->hop;
-				modified = 1;
-			}
-			else cc->card_dup_count++;
 			
+		} 
+		else cc->card_dup_count++;
+
+		add_card_providers(card2, card, 0); //merge all providers
+
+	} 
+	
+	//Removed duplicate cards, keeping card with lower hop:
+	else if (cfg->cc_minimize_cards == MINIMIZE_HOPS) { 
+		while ((card2 = ll_iter_next(it))) {
+			if (card2->caid == card->caid && 
+					!memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial)) && 
+					equal_providers(card, card2)) {
+				break;
+			}
 		}
-		if (add_card_providers(card2, card, 0))
+		
+		if (card2 && card2->hop > card->hop) { //hop is smaller, drop old card
+			cc_free_card(card2);
+			ll_iter_remove(it);
+			card2 = NULL;
+			cc->card_dup_count++;
+		}
+		
+		if (!card2) {
+			card2 = create_card(card);
+			card2->hop = card->hop;
+			card2->remote_id = card->remote_id;
+			card2->maxdown = reshare;
+			ll_clear_data(card2->badsids);
+			ll_iter_insert(it, card2);
+			add_card_providers(card2, card, 1);
 			modified = 1;
-	} else { //just remove duplicate cards
+		} 
+		else cc->card_dup_count++;
+		
+	} 
+
+	//like cccam:	
+	else { //just remove duplicate cards (same ids)
 		while ((card2 = ll_iter_next(it))) {
 			if (same_card(card, card2))
 				break;
@@ -2841,9 +2922,8 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			card2->maxdown = reshare;
 			card2->origin_reader = rdr;
 			ll_iter_insert(it, card2);
+			add_card_providers(card2, card, 1);
 			modified = 1;
-			if (add_card_providers(card2, card, 1))
-				modified = 1;
 		}
 		else cc->card_dup_count++;
 	}
