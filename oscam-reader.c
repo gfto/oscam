@@ -175,8 +175,9 @@ int hostResolve(struct s_reader *rdr)
      cl->udp_sa.sin_addr.s_addr = 0;
      cl->ip = 0;
    } else if (cl->ip != last_ip) {
-     uchar *ip = (uchar*) &cl->ip;
-     cs_log("%s: resolved ip=%d.%d.%d.%d", rdr->device, ip[3], ip[2], ip[1], ip[0]);
+     //uchar *ip = (uchar*) &cl->ip;
+     //cs_log("%s: resolved ip=%d.%d.%d.%d", rdr->device, ip[3], ip[2], ip[1], ip[0]);
+     cs_log("%s: resolved ip=%s", rdr->device, cs_inet_ntoa(cl->ip));
    }
 
    pthread_mutex_unlock(&gethostbyname_lock);
