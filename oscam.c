@@ -1063,8 +1063,6 @@ int cs_user_resolve(struct s_auth *account)
 			if (res) freeaddrinfo(res);
 		}
 		if (lastip != account->dynip)  {
-			//uchar *ip = (uchar*) &account->dynip;
-			//cs_log("%s: resolved ip=%d.%d.%d.%d", (char*)account->dyndns, ip[3], ip[2], ip[1], ip[0]);
 			cs_log("%s: resolved ip=%s", (char*)account->dyndns, cs_inet_ntoa(account->dynip));
 		}
 		pthread_mutex_unlock(&gethostbyname_lock);

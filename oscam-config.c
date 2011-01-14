@@ -2208,7 +2208,7 @@ int write_server()
 
 			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
 			if (rdr->r_usr[0] && !isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "account", "%s\n", rdr->r_usr);
+				fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", rdr->r_usr);
 
 #ifdef CS_WITH_GBOX
 			if (rdr->typ == R_GBOX) {
@@ -3062,6 +3062,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+	if (!strcmp(token, "user")) {
+		cs_strncpy(rdr->r_usr, value, sizeof(rdr->r_usr));
+		return;
+	}
+
+
 #ifdef CS_WITH_GBOX
 	if (!strcmp(token, "premium")) {
 		rdr->gbox_prem = 1;
@@ -3069,6 +3075,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 #endif
 
+	//legacy parameter containing account=user,pass
 	if (!strcmp(token, "account")) {
 		if (strstr(value, ",")) {
 			for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
