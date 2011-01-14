@@ -1313,7 +1313,6 @@ extern void cs_disconnect_client(struct s_client *);
 extern int check_cwcache2(ECM_REQUEST *, uint64);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);
-extern int write_ecm_request(int, ECM_REQUEST *);
 extern int write_ecm_answer(struct s_reader *, ECM_REQUEST *);
 extern void log_emm_request(struct s_reader *);
 extern ulong chk_provid(uchar *, ushort);

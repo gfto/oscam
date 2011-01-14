@@ -1579,7 +1579,7 @@ int read_from_pipe(int fd, uchar **data, int redir)
 /*
  * write_ecm_request():
  */
-int write_ecm_request(int fd, ECM_REQUEST *er)
+static int write_ecm_request(int fd, ECM_REQUEST *er)
 {
   return(write_to_pipe(fd, PIP_ID_ECM, (uchar *) er, sizeof(ECM_REQUEST)));
 }
@@ -2285,50 +2285,30 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 	}
 
 	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
-	        if (i>=er->rdr_count)
-                        break;
-                        
+		if (i>=er->rdr_count)
+			break;
+
 		int status = 0;
-		switch (reader_types)
-		{
-          // network and local cards
-          default:
-          case 0:
-              if (er->matching_rdr[i]&flag){
-                  cs_debug_mask(D_TRACE, "request_cw1 to reader %s ridx=%d fd=%d ecm=%04X", rdr->label, i, rdr->fd, lc);
-                  status = write_ecm_request(rdr->fd, er);
-              }
-              break;
-              // only local cards
-          case 1:
-              if (!(rdr->typ & R_IS_NETWORK))
-                  if (er->matching_rdr[i]&flag) {
-                	  cs_debug_mask(D_TRACE, "request_cw2 to reader %s ridx=%d fd=%d ecm=%04X", rdr->label, i, rdr->fd, lc);
-                    status = write_ecm_request(rdr->fd, er);
-                  }
-              break;
-              // only network
-          case 2:
-        	  //cs_log("request_cw3 ridx=%d fd=%d", i, rdr->fd);
-              if ((rdr->typ & R_IS_NETWORK))
-                  if (er->matching_rdr[i]&flag) {
-                	  cs_debug_mask(D_TRACE, "request_cw3 to reader %s ridx=%d fd=%d ecm=%04X", rdr->label, i, rdr->fd, lc);
-                    status = write_ecm_request(rdr->fd, er);
-                  }
-              break;
-      }
-      if (status == -1) {
-                cs_log("request_cw() failed on reader %s (%d) errno=%d, %s", rdr->label, i, errno, strerror(errno));
-      		if (rdr->fd) {
- 	     		rdr->fd_error++;
-      			if (rdr->fd_error > 5) {
-      				rdr->fd_error = 0;
-      				restart_cardreader(rdr, 1); //Schlocke: This restarts the reader!
-      			}
+		//reader_types:
+		//0 = network and local cards
+		//1 = only local cards
+		//2 = only network
+		if ((er->matching_rdr[i]&flag) && ((reader_types == 0) || ((reader_types == 1) && (!(rdr->typ & R_IS_NETWORK))) || ((reader_types == 2) && (rdr->typ & R_IS_NETWORK)))) {
+			cs_debug_mask(D_TRACE, "request_cw%i to reader %s ridx=%d fd=%d ecm=%04X", reader_types+1, rdr->label, i, rdr->fd, lc);
+			status = write_ecm_request(rdr->fd, er);
 		}
-      }
-      else
-      	rdr->fd_error = 0;
+		if (status == -1) {
+			cs_log("request_cw() failed on reader %s (%d) errno=%d, %s", rdr->label, i, errno, strerror(errno));
+			if (rdr->fd) {
+				rdr->fd_error++;
+				if (rdr->fd_error > 5) {
+					rdr->fd_error = 0;
+					restart_cardreader(rdr, 1); //Schlocke: This restarts the reader!
+				}
+			}
+		}
+		else
+			rdr->fd_error = 0;
   }
 }
 
@@ -2822,17 +2802,15 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					if (!inc_stage) {
 						request_cw(er, er->stage, 2);
 						tt = 1000 * (tpn.time - er->tps.time) + tpn.millitm - er->tps.millitm;
-						tpc.time += tt / 1000;
-						tpc.millitm += tt % 1000;
 					} else {
 						er->locals_done = 0;
 						er->stage++;
 						request_cw(er, er->stage, cfg->preferlocalcards ? 1 : 0);
 
 						tt = (cfg->ctimeout-cfg->ftimeout);
-						tpc.time += tt / 1000;
-						tpc.millitm += tt % 1000;
 					}
+					tpc.time += tt / 1000;
+					tpc.millitm += tt % 1000;
 				}
 			}
 			if (comp_timeb(&tpn, &tpc)>0) { // action needed
