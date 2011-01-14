@@ -1162,6 +1162,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 	tpl_printf(vars, 0, "CALLINGIP", "%s", inet_ntoa(*(struct in_addr *)&in));
 
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
+	if(!rdr) return "0";
 
 	if (!apicall)
 		tpl_printf(vars, 0, "LABEL", "%s", rdr->label);
@@ -1218,7 +1219,8 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
 
-	int rowcount = 0, ecmcount = 0;
+	int rowcount = 0;
+	uint64 ecmcount = 0;
 	time_t lastaccess=0;
 
 	if (rdr->lb_stat) {
@@ -1303,7 +1305,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 		tpl_addVar(vars, 0, "LASTACCESS", "");
 	}
 
-	tpl_printf(vars, 0, "TOTALECM", "%d", ecmcount);
+	tpl_printf(vars, 0, "TOTALECM", "%llu", ecmcount);
 
 	if(!apicall)
 		return tpl_getTpl(vars, "READERSTATS");
