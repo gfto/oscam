@@ -3416,7 +3416,7 @@ int cc_srv_connect(struct s_client *cl) {
 	
 
 	if (!cc->prefix)
-		cc->prefix = malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
+		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
 	sprintf(cc->prefix, "cccam(s) %s: ", cl->account->usr);
 	
 
