@@ -171,15 +171,31 @@ static int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   ins3c[2]=i;
   ins3c[3]=er->ecm[7]; //key nr
   ins3c[4]=(((er->ecm[1]&0x0f) << 8) | er->ecm[2])-0x05;
-  write_cmd(ins3c, er->ecm+8); //ecm request
-  unsigned char ins30[] = { 0xC1, 0x30, 0x00, 0x02, 0x09 };
-  unsigned char ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF };
-  /* We need to use a token */
-  if (cta_res[0] == 0x90 && cta_res[1] == 0x1a) {
-    write_cmd(ins30, ins30data);
+ 	int try = 1;
+ 	int ret;
+  do {
+    if (try > 1)
+      snprintf( er->msglog, MSGLOGSIZE, "ins3c try nr %i", try);
     write_cmd(ins3c, er->ecm+8); //ecm request
-  }
-  if ((cta_res[0] != 0x90) || (cta_res[1] != 0x00)) { snprintf( er->msglog, MSGLOGSIZE, "ins3c card response: %02x %02x", cta_res[0] , cta_res[1] ); return ERROR; }
+    unsigned char ins30[] = { 0xC1, 0x30, 0x00, 0x02, 0x09 };
+    unsigned char ins30data[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF };
+    /* We need to use a token */
+    if (cta_res[0] == 0x90 && cta_res[1] == 0x1a) {
+      write_cmd(ins30, ins30data);
+      write_cmd(ins3c, er->ecm+8); //ecm request
+    }
+    ret = ((cta_res[0] != 0x90) || (cta_res[1] != 0x00));
+    if ((cta_res[0] == 0x93) && (cta_res[1] == 0x02)) {
+      snprintf( er->msglog, MSGLOGSIZE, "%s unsubscribed", reader->label);
+      break;
+    }
+    if (ret)
+      snprintf( er->msglog, MSGLOGSIZE, "%s ins3c card response: %02x %02x", reader->label, cta_res[0] , cta_res[1] );
+    try++;
+  } while ((try < 3) && (ret));
+  if (ret)
+    return ERROR;
+  
   write_cmd(ins3a, NULL); //get cw's
   if ((cta_res[16] != 0x90) || (cta_res[17] != 0x00)) { snprintf( er->msglog, MSGLOGSIZE, "ins3a card response: %02x %02x", cta_res[16] , cta_res[17] ); return ERROR; };//exit if response is not 90 00 //TODO: if response is 9027 ppv mode is possible!
   memcpy(er->cw,cta_res,16);

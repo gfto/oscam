@@ -453,18 +453,19 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		cta_cmd[4] = (er->ecm[2]) - 3;
 		memcpy(cta_cmd + sizeof(sc_EcmCmd), &er->ecm[6], cta_cmd[4]);
 
-		if (irdeto_do_cmd(reader, cta_cmd, 0x9D00, cta_res, &cta_lr)) {
-			if(cta_lr >= 2)
-				snprintf( er->msglog, MSGLOGSIZE, "irdeto_do_cmd [%d] %02x %02x", cta_lr, cta_res[cta_lr - 2], cta_res[cta_lr - 1] );
-		else
-			snprintf( er->msglog, MSGLOGSIZE, "irdeto_do_cmd [%d]<2", cta_lr);
+		int try = 1;
+		int ret;
+		do {
+			if (try >1)
+				snprintf( er->msglog, MSGLOGSIZE, "%s irdeto_do_cmd try nr %i", reader->label, try);
+			ret = (irdeto_do_cmd(reader, cta_cmd, 0x9D00, cta_res, &cta_lr));
+			ret = ret || (cta_lr < 24);
+			if (ret)
+					snprintf( er->msglog, MSGLOGSIZE, "%s irdeto_do_cmd [%d] %02x %02x", reader->label, cta_lr, cta_res[cta_lr - 2], cta_res[cta_lr - 1] );
+			try++;
+		} while ((try < 3) && (ret));
+		if (ret)
 			return ERROR;
-		}
-
-		if (cta_lr < 24) {
-			snprintf( er->msglog, MSGLOGSIZE, "cta_lr (%d) < 24",cta_lr );
-			return ERROR;
-		}
 	}
 	ReverseSessionKeyCrypt(reader->nagra_boxkey, cta_res+6+acspadd);
 	ReverseSessionKeyCrypt(reader->nagra_boxkey, cta_res+14+acspadd);
