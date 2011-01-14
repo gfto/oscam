@@ -417,32 +417,32 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsign
 
 	LOCK_SC8IN1;
 
-	switch (reader->protocol_type) {
+	int try = 1;
+	do {
+	 switch (reader->protocol_type) {
+		if (try > 1)
+			cs_log("Warning: reader %s needed try nr %i, next ECM has some delay:", reader->label, try);
 		case ATR_PROTOCOL_TYPE_T0:
 			ret = Protocol_T0_Command (reader, command, command_len, rsp, lr);
 			break;
 		case ATR_PROTOCOL_TYPE_T1:
-		 {
-			int try = 1;
-			do {
-				ret = Protocol_T1_Command (reader, command, command_len, rsp, lr);
-				if (ret == OK)
-					break;
-				try++;
+			ret = Protocol_T1_Command (reader, command, command_len, rsp, lr);
+			if (ret != OK) {
 				//try to resync
 				unsigned char resync[] = { 0x21, 0xC0, 0x00, 0xE1 };
 				Protocol_T1_Command (reader, resync, sizeof(resync), rsp, lr);
 				reader->ifsc = DEFAULT_IFSC;
-			} while (try <= 3);
+			}
 			break;
-		 }
 		case ATR_PROTOCOL_TYPE_T14:
 			ret = Protocol_T14_ExchangeTPDU (reader, command, command_len, rsp, lr);
 			break;
 		default:
 			cs_log("Error, unknown protocol type %i",reader->protocol_type);
 			ret = ERROR;
-	}
+	 }
+	try++;
+	} while ((try < 3) && (ret != OK)); //always do one retry when failing
 
 	UNLOCK_SC8IN1;
 
