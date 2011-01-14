@@ -479,6 +479,7 @@ static int tcp_connect()
     if (handle<0) return(0);
 
     cl->reader->tcp_connected = 1;
+    cl->reader->card_status = CARD_INSERTED;
     cl->reader->last_s = cl->reader->last_g = time((time_t *)0);
     cl->pfd = cl->udp_fd = handle;
   }
@@ -512,6 +513,8 @@ static int camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
         else {
   	   if (!tcp_connect()) return -1;
         }
+	
+	client->reader->card_status = CARD_INSERTED; //for udp
 	
 	memset(buf, 0, 20);
 	memset(buf + 20, 0xff, er->l+15);
@@ -599,9 +602,11 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 	if (buf[0] == 0x08 && !cfg->c35_suppresscmd08) {
 		if(buf[21] == 0xFF) {
 			client->stopped = 2; // server says sleep
+			rdr->card_status = NO_CARD;
 		} else {
 		        if (!cfg->lb_mode) {
 			        client->stopped = 1; // server says invalid
+                                rdr->card_status = CARD_FAILURE;
                         }
 
 			ECM_REQUEST *er_failed = malloc(sizeof(ECM_REQUEST));
