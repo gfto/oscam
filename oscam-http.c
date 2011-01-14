@@ -1242,6 +1242,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 					else
 						tpl_printf(vars, 0, "TIMELAST", "");
 					tpl_printf(vars, 0, "COUNT", "%d", stat->ecm_count);
+					ecmcount += stat->ecm_count;
 					if(stat->last_received) {
 						tpl_printf(vars, 0, "LAST", "%02d.%02d.%02d %02d:%02d:%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100, lt.tm_hour, lt.tm_min, lt.tm_sec);
 
@@ -1265,7 +1266,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 						tpl_addVar(vars, 0, "ECMLAST", "");
 					}
 					tpl_printf(vars, 0, "ECMCOUNT", "%d", stat->ecm_count);
-					ecmcount += stat->ecm_count;
+
 					if (stat->last_received > lastaccess)
 						lastaccess = stat->last_received;
 				}
