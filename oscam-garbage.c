@@ -36,6 +36,8 @@ void garbage_collector() {
                 
                 pthread_mutex_lock(&garbage_lock);
               
+                now = time(NULL);
+                
                 garbage = garbage_first;  
                 while (garbage) {
                         next = garbage->next;

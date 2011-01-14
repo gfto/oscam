@@ -3015,9 +3015,13 @@ void cs_waitforcardinit()
 			card_init_done = 1;
 			struct s_reader *rdr;
 			for (rdr=first_reader; rdr ; rdr=rdr->next)
-				if (((rdr->typ & R_IS_CASCADING) == 0) && rdr->enable && rdr->card_status == CARD_NEED_INIT) {
-					card_init_done = 0;
-					break;
+                                if (!(rdr->typ & R_IS_CASCADING)) {
+                                        reader_checkhealth(rdr);
+                                                                                
+                                        if (rdr->enable && rdr->card_status == CARD_NEED_INIT) {
+					        card_init_done = 0;
+					        break;
+                                        }
 				}
 			cs_sleepms(300); // wait a little bit
 			//alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
