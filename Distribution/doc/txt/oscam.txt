@@ -1,4 +1,4 @@
-oscam(1)																  oscam(1)
+oscam(1)												   oscam(1)
 
 
 
@@ -6,7 +6,7 @@ NAME
        OSCam - SC server
 
 SYNOPSIS
-       oscam
+       To split long lines in OSCam configuration files add a '\' before the line break.
 
 DESCRIPTIONS
        The OSCam software is an open source multi-protocol/multi-plattform SC server.
@@ -48,8 +48,8 @@ OPTIONS
 	  starts in background, writing oscam.version with starttime and version info in temporary directory
 
        -c <directory>
-	  read configuration from <directory>, default:see CS_CONFDIR in globals.h, while starting OSCam prints warnings on invalid keywords, com‐
-	  ment lines start with # character.
+	  read	configuration  from  <directory>,  default:see CS_CONFDIR in globals.h, while starting OSCam prints
+	  warnings on invalid keywords, comment lines start with # character.
 
        -d <level>
 	  debug level mask:
@@ -77,7 +77,8 @@ OPTIONS
 
 SIGNALS
        SIGHUP
-	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart newcamd client
+	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading	the  ident,  please
+	  restart newcamd client
 
        SIGUSR1
 	  shift debug level to next level (see debug level mask above)
@@ -86,9 +87,9 @@ SIGNALS
 	  get reader SC info
 
 SEE ALSO
-       list_smargo(1), oscam.ac(5), oscam.cert(5), oscam.conf(5), oscam.dvbapi(5), oscam.guess(5), oscam.ird(5), oscam.provid(5), oscam.server(5),
-       oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
+       list_smargo(1),	oscam.ac(5),  oscam.cert(5),  oscam.conf(5), oscam.dvbapi(5), oscam.guess(5), oscam.ird(5),
+       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
 
-																	  oscam(1)
+													   oscam(1)
