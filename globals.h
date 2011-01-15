@@ -1313,7 +1313,6 @@ extern int read_from_pipe(int, uchar **, int);
 extern int write_ecm_answer(struct s_reader *, ECM_REQUEST *);
 extern void log_emm_request(struct s_reader *);
 extern ulong chk_provid(uchar *, ushort);
-extern void guess_cardsystem(ECM_REQUEST *);
 #ifdef IRDETO_GUESSING
 extern void guess_irdeto(ECM_REQUEST *);
 #endif

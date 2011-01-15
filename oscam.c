@@ -2230,7 +2230,7 @@ void cs_betatunnel(ECM_REQUEST *er)
 	}
 }
 
-void guess_cardsystem(ECM_REQUEST *er)
+static void guess_cardsystem(ECM_REQUEST *er)
 {
   ushort last_hope=0;
 
@@ -2298,6 +2298,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 				rdr->fd_error++;
 				if (rdr->fd_error > 5) {
 					rdr->fd_error = 0;
+					cs_log("Restarting reader %s", rdr->label);
 					restart_cardreader(rdr, 1); //Schlocke: This restarts the reader!
 				}
 			}
