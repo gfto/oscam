@@ -1978,6 +1978,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 		tpl_addVar(vars, 0, "LASTREADER", "");
 		tpl_addVar(vars, 0, "CLIENTPROTO", "");
 		tpl_addVar(vars, 0, "CLIENTDESCRIPTION", "");
+		tpl_addVar(vars, 0, "CLIENTLASTRESPONSETIME", "");
 
 		if (cl->typ=='c')
 			user_count_all++;
