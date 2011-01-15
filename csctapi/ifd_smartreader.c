@@ -445,6 +445,10 @@ int SR_Close (struct s_reader *reader)
     smart_fastpoll(reader, TRUE);
     pthread_join(reader->sr_config->rt,NULL);
     smart_fastpoll(reader, FALSE);
+    libusb_release_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+#if defined(OS_LINUX)
+    libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+#endif
     libusb_close(reader->sr_config->usb_dev_handle);
     libusb_exit(NULL);
     free(reader->sr_config);
@@ -828,6 +832,9 @@ int smartreader_usb_open_dev(S_READER *reader)
         if (libusb_set_configuration(reader->sr_config->usb_dev_handle, config) &&
             errno != EBUSY)
         {
+#if defined(OS_LINUX)
+        		if(detach_errno == 0) libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+#endif
             smartreader_usb_close_internal (reader);
             if (detach_errno == EPERM) {
                 cs_log("inappropriate permissions on device!");
@@ -844,6 +851,9 @@ int smartreader_usb_open_dev(S_READER *reader)
     ret=libusb_claim_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface) ;
     if (ret!= 0)
     {
+#if defined(OS_LINUX)
+    		if(detach_errno == 0) libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+#endif
         smartreader_usb_close_internal (reader);
         if (detach_errno == EPERM) {
             cs_log("inappropriate permissions on device!");
@@ -856,6 +866,10 @@ int smartreader_usb_open_dev(S_READER *reader)
     }
 
     if (smartreader_usb_reset (reader) != 0) {
+    		libusb_release_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+#if defined(OS_LINUX)
+    		if(detach_errno == 0) libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+#endif
         smartreader_usb_close_internal (reader);
         cs_log("smartreader_usb_reset failed");
         return (-6);
@@ -893,6 +907,10 @@ int smartreader_usb_open_dev(S_READER *reader)
     reader->sr_config->max_packet_size = smartreader_determine_max_packet_size(reader);
 
     if (smartreader_set_baudrate (reader, 9600) != 0) {
+    		libusb_release_interface(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+#if defined(OS_LINUX)
+    		if(detach_errno == 0) libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
+#endif
         smartreader_usb_close_internal (reader);
         cs_log("set baudrate failed");
         return (-7);
