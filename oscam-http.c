@@ -678,8 +678,8 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 					rdr->client = NULL;
 					kill_thread(sav_cl);
 				}
-				if(write_server()==0)	refresh_oscam(REFR_READERS, in);
-				else tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+				if(write_server() != 0)
+					tpl_addVar(vars, 1, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 			}
 		}
 	}
