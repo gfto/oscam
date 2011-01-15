@@ -38,7 +38,7 @@ char *tpl_addVar(struct templatevars *vars, uint8 addmode, char *name, char *val
 		(*vars).varscnt++;
 	} else {
 		int oldlen = 0, newlen = strlen(value);
-		if(addmode == TPLAPPEND) oldlen = strlen((*vars).values[i]);
+		if(addmode == TPLAPPEND || addmode == TPLAPPENDONCE) oldlen = strlen((*vars).values[i]);
 		if(!cs_realloc(&((*vars).values[i]), (oldlen + newlen + 1) * sizeof(char), -1)) return value;
 		memcpy((*vars).values[i] + oldlen, value, newlen + 1);
 		(*vars).vartypes[i] = addmode;
@@ -100,7 +100,7 @@ char *tpl_getVar(struct templatevars *vars, char *name){
 	}
 	if(result == NULL) return "";
 	else {
-		if((*vars).vartypes[i] == TPLADDONCE){
+		if((*vars).vartypes[i] == TPLADDONCE || (*vars).vartypes[i] == TPLAPPENDONCE){
 			// This is a one-time-use variable which gets cleaned up automatically after retrieving it
 			if(!cs_malloc(&(*vars).values[i], 1 * sizeof(char), -1)){
 				(*vars).values[i] = result;

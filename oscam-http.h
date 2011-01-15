@@ -1,14 +1,26 @@
-
+/* The server string in the http header */
 #define SERVER "webserver/1.0"
+/* The protocol that gets output. Currently only 1.0 is possible as 1.1 requires many features we don't have. */
 #define PROTOCOL "HTTP/1.0"
+/* The RFC1123 time format which is used in http headers. */
 #define RFC1123FMT "%a, %d %b %Y %H:%M:%S GMT"
+/* The realm for http digest authentication. Gets displayed to browser. */
 #define AUTHREALM "Forbidden"
+/* How long a nonce is valid in seconds. If it isn't valid anymore, the browser gets a "stale=true" message and must resubmit with the current nonce. */
 #define AUTHNONCEVALIDSECS 15
+/* The maximum amount of GET parameters the webserver will parse. */
 #define MAXGETPARAMS 100
+/* The refresh delay (in seconds) when stopping OSCam via http. */
 #define SHUTDOWNREFRESH 30
+/* Templates: Adds a variable. The variable can be used as often as wanted. */
 #define TPLADD 0
+/* Templates: Appends a variable or adds it if doesn't exist yet. The variable can be used as often as wanted. */
 #define TPLAPPEND 1
+/* Templates: Adds a variable which will be reset to "" after being used once, either through tpl_getVar or when used in a template.
+   tpl_addVar/tpl_printf don't do a reset and will overwrite the appendmode with a new value. */
 #define TPLADDONCE 2
+/* Templates: Appends a variable or adds it if doesn't exist yet. The variable will be reset to "" after being used once. See TPLADDONCE for details. */
+#define TPLAPPENDONCE 3
 
 #define CSS "\
 body {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
