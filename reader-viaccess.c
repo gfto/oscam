@@ -1029,9 +1029,9 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 			emmbuf[2]=pos-3;
 
 			//cs_ddump_mask(D_READER, buffer, *len, "original emm:");
-			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: emm-gh ? %s", cs_hexdump(1, emm_global, emm_global_len));
-			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: emm-s ? %s", cs_hexdump(1, buffer, *len));
-			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: assembled emm ? %s", cs_hexdump(1, emmbuf, pos));
+			cs_ddump_mask(D_DVBAPI, emm_global, emm_global_len, "viaccess_reassemble_emm: emm-gh");
+			cs_ddump_mask(D_DVBAPI, buffer, *len, "viaccess_reassemble_emm: emm-s");
+			cs_ddump_mask(D_DVBAPI, emmbuf, pos, "viaccess_reassemble_emm: assembled emm");
 
 			//place assembled emm
 			memcpy(buffer, emmbuf, pos);
