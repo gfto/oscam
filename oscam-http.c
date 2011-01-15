@@ -3143,7 +3143,7 @@ SSL_CTX *webif_init_ssl() {
 #endif
 
 void http_srv() {
-	struct s_client * cl = cs_fork(first_client->ip);
+	struct s_client * cl = create_client(first_client->ip);
 	if (cl == NULL) return;
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);

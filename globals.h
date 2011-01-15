@@ -1323,7 +1323,7 @@ extern struct s_client * get_client_by_tid(unsigned long);
 extern int chk_bcaid(ECM_REQUEST *, CAIDTAB *);
 extern void cs_exit(int sig);
 extern int comp_timeb(struct timeb *tpa, struct timeb *tpb);
-extern struct s_client * cs_fork(in_addr_t);
+extern struct s_client * create_client(in_addr_t);
 extern int cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
 extern int check_cwcache2(ECM_REQUEST *, uint64);

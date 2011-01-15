@@ -940,7 +940,7 @@ static void oscam_init_serialdata(struct s_serial_client *dest)
 static void * oscam_ser_fork(void *pthreadparam)
 {
   struct s_thread_param *pparam = (struct s_thread_param *) pthreadparam;
-  struct s_client *cl=cs_fork(0);
+  struct s_client *cl=create_client(0);
   pthread_setspecific(getclient, cl);
   cl->thread=pthread_self();
   cl->typ='c';  

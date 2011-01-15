@@ -766,7 +766,7 @@ void cs_card_info()
       //kill(client[i].pid, SIGUSR2);
 }
 
-struct s_client * cs_fork(in_addr_t ip) {
+struct s_client * create_client(in_addr_t ip) {
 	struct s_client *cl;
 
 	cl = malloc(sizeof(struct s_client));
@@ -821,8 +821,6 @@ struct s_client * cs_fork(in_addr_t ip) {
 
 static void init_signal()
 {
-//  for (i=1; i<NSIG; i++)
-//		set_signal_handler(i, 3, cs_exit); //not catching all signals simplifies debugging
 		set_signal_handler(SIGINT, 3, cs_exit);
 		set_signal_handler(SIGKILL, 3, cs_exit);
 #ifdef OS_MACOSX
@@ -869,7 +867,7 @@ static struct s_ecm *generate_cache()
   return cache;
 }
 
-static void init_shm()
+static void init_first_client()
 {
   //Generate 5 CW cache entries:
   cwidx=cwcache=generate_cache();
@@ -1102,7 +1100,7 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 #ifdef CS_ANTICASC
 void start_anticascader()
 {
-  struct s_client * cl = cs_fork(first_client->ip);
+  struct s_client * cl = create_client(first_client->ip);
   if (cl == NULL) return;
   cl->thread = pthread_self();
   pthread_setspecific(getclient, cl);
@@ -1149,7 +1147,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 			cs_log("restarting reader %s", rdr->label);
 		}
 
-		struct s_client * cl = cs_fork(first_client->ip);
+		struct s_client * cl = create_client(first_client->ip);
 		if (cl == NULL) return;
 
 
@@ -1452,7 +1450,7 @@ int check_cwcache2(ECM_REQUEST *er, uint64 grp)
 }
 
 
-static void store_cw(ECM_REQUEST *er, uint64 grp)
+static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp)
 {
 #ifdef CS_WITH_DOUBLECHECK
 	if (cfg->double_check && er->checked < 2)
@@ -1473,7 +1471,7 @@ static void store_cw(ECM_REQUEST *er, uint64 grp)
 		ushort lc, *lp;
 		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
 			lc^=*lp;
-		cs_debug_mask(D_TRACE, "store_cw: ecm=%04X grp=%lld", lc, grp);
+		cs_debug_mask(D_TRACE, "store_cw_in_cache: ecm=%04X grp=%lld", lc, grp);
 	}
 	//cs_ddump(cwcache[*cwidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *cwidx);
 }
@@ -1705,7 +1703,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 #else
   if (er->rc==E_CACHE1) {
 #endif
-    store_cw(er, reader->grp);
+    store_cw_in_cache(er, reader->grp);
 
     /* CWL logging only if cwlogdir is set in config */
     if (cfg->cwlogdir != NULL)
@@ -2000,7 +1998,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	    return 0;
 	  }
 
-	  store_cw(er, er->selected_reader->grp); //Store in cache!
+	  store_cw_in_cache(er, er->selected_reader->grp); //Store in cache!
 
 	}
 #endif
@@ -3001,7 +2999,7 @@ int accept_connection(int i, int j) {
 					return 0;
 				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
 
-				cl = cs_fork(cs_inet_order(cad.sin_addr.s_addr));
+				cl = create_client(cs_inet_order(cad.sin_addr.s_addr));
 				if (!cl) return 0;
 
 				cl->ctyp=i;
@@ -3036,7 +3034,7 @@ int accept_connection(int i, int j) {
 				return 0;
 			}
 
-			struct s_client * cl = cs_fork(cs_inet_order(cad.sin_addr.s_addr));
+			struct s_client * cl = create_client(cs_inet_order(cad.sin_addr.s_addr));
 			if (cl == NULL) {
 				close(pfd3);
 				return 0;
@@ -3294,7 +3292,7 @@ if (pthread_key_create(&getclient, NULL)) {
   memset(cfg, 0, sizeof(struct s_config));
 
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
-  init_shm();
+  init_first_client();
   init_config();
   init_stat();
 

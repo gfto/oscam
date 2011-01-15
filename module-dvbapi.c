@@ -1800,7 +1800,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 static void * dvbapi_handler(int ctyp) {
 	//cs_log("dvbapi loaded fd=%d", idx);
 	if (cfg->dvbapi_enabled == 1) {
-		struct s_client * cl = cs_fork(0);
+		struct s_client * cl = create_client(0);
 		cl->typ='c';
 		cl->ctyp=ctyp;
 #ifdef AZBOX
