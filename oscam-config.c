@@ -1099,6 +1099,11 @@ void chk_t_dvbapi(char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "request_mode")) {
+		cfg->dvbapi_requestmode = strToIntVal(value, 0);
+		return;
+	}
+
 	if (!strcmp(token, "boxtype")) {
 		int i;
 		for (i=1;i<=BOXTYPES;i++) {
@@ -1942,6 +1947,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", boxdesc[cfg->dvbapi_boxtype]);
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg->dvbapi_usr);
         	fprintf_conf(f, CONFVARWIDTH, "pmt_mode", "%d\n", cfg->dvbapi_pmtmode);
+        	fprintf_conf(f, CONFVARWIDTH, "request_mode", "%d\n", cfg->dvbapi_requestmode);
 
 		fputc((int)'\n', f);
 	}

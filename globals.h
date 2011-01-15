@@ -1159,6 +1159,7 @@ struct s_config
 	char		dvbapi_usr[64];
 	int		dvbapi_boxtype;
 	int		dvbapi_pmtmode;
+	int		dvbapi_requestmode;
 	SIDTABBITS    dvbapi_sidtabok;	// positiv services
 	SIDTABBITS    dvbapi_sidtabno;	// negative services
 #endif
