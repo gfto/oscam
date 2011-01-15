@@ -5,7 +5,7 @@
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
-char *tpl_addVar(struct templatevars *vars, int append, char *name, char *value){	
+char *tpl_addVar(struct templatevars *vars, uint8 addmode, char *name, char *value){	
 	if(name == NULL || value == NULL) return "";
 	int i;
 	char *tmp,*result = NULL;
@@ -17,33 +17,31 @@ char *tpl_addVar(struct templatevars *vars, int append, char *name, char *value)
 	}
 	if(result == NULL){
 		if((*vars).varsalloc <= (*vars).varscnt){
-			if(!cs_realloc(&(*vars).names, (*vars).varsalloc * 2 * sizeof(char**), -1)) return value;
-			if(!cs_realloc(&(*vars).values, (*vars).varsalloc * 2 * sizeof(char**), -1)) return value;
+			if(!cs_realloc(&(*vars).names, (*vars).varsalloc * 2 * sizeof(char**), -1)) return "";
+			if(!cs_realloc(&(*vars).values, (*vars).varsalloc * 2 * sizeof(char**), -1)) return "";
+			if(!cs_realloc(&(*vars).vartypes, (*vars).varsalloc * 2 * sizeof(uint8*), -1)) return "";
 			(*vars).varsalloc = (*vars).varscnt * 2;
 		}
-		if(!cs_malloc(&tmp,(strlen(name) + 1) * sizeof(char), -1)) return value;
-		strcpy(tmp, name);
+		int len = strlen(name) + 1;
+		if(!cs_malloc(&tmp, len * sizeof(char), -1)) return "";
+		memcpy(tmp, name, len);
 		(*vars).names[(*vars).varscnt] = tmp;
-		if(!cs_malloc(&tmp,(strlen(value) + 1) * sizeof(char), -1)){
+		
+		len = strlen(value) + 1;
+		if(!cs_malloc(&tmp, len * sizeof(char), -1)){
 			free((*vars).names[(*vars).varscnt]);
-			return value;
+			return "";
 		}
-		strcpy(tmp, value);
+		memcpy(tmp, value, len);
 		(*vars).values[(*vars).varscnt] = tmp;
-		(*vars).varscnt = (*vars).varscnt + 1;
+		(*vars).vartypes[(*vars).varscnt] = addmode;
+		(*vars).varscnt++;
 	} else {
-		int newlen = strlen(value);
-		if(append == 1){
-			int oldlen = strlen((*vars).values[i]);
-			if(!cs_malloc(&tmp, (oldlen + newlen + 1) * sizeof(char), -1)) return value;
-			memcpy(tmp, (*vars).values[i], oldlen);
-			strcpy(tmp + oldlen, value);
-		} else {
-			if(!cs_malloc(&tmp, (newlen + 1) * sizeof(char), -1)) return value;
-			strcpy(tmp, value);
-		}
-		free((*vars).values[i]);
-		(*vars).values[i] = tmp;
+		int oldlen = 0, newlen = strlen(value);
+		if(addmode == TPLAPPEND) oldlen = strlen((*vars).values[i]);
+		if(!cs_realloc(&((*vars).values[i]), (oldlen + newlen + 1) * sizeof(char), -1)) return value;
+		memcpy((*vars).values[i] + oldlen, value, newlen + 1);
+		(*vars).vartypes[i] = addmode;
 	}
 	return tmp;
 }
@@ -66,7 +64,7 @@ char *tpl_addTmp(struct templatevars *vars, char *value){
    varname, the printf-result will be added/appended to the varlist, if varname=NULL it will only be returned.
    In either case you will always get a reference back which you may freely use (but you should not call 
    free/realloc on this as it will be automatically cleaned!)*/
-char *tpl_printf(struct templatevars *vars, int append, char *varname, char *fmtstring, ...){
+char *tpl_printf(struct templatevars *vars, uint8 addmode, char *varname, char *fmtstring, ...){
 	unsigned int needed;
 	char test[1];
 	va_list argptr;
@@ -83,7 +81,7 @@ char *tpl_printf(struct templatevars *vars, int append, char *varname, char *fmt
 
 	if(varname == NULL) tpl_addTmp(vars, result);
 	else {
-		char *tmp = tpl_addVar(vars, append, varname, result);
+		char *tmp = tpl_addVar(vars, addmode, varname, result);
 		free(result);
 		result = tmp;
 	}
@@ -101,7 +99,19 @@ char *tpl_getVar(struct templatevars *vars, char *name){
 		}
 	}
 	if(result == NULL) return "";
-	else return result;
+	else {
+		if((*vars).vartypes[i] == TPLADDONCE){
+			// This is a one-time-use variable which gets cleaned up automatically after retrieving it
+			if(!cs_malloc(&(*vars).values[i], 1 * sizeof(char), -1)){
+				(*vars).values[i] = result;
+				result[0] = '\0';
+				return result;
+			} else {
+				(*vars).values[i][0] = '\0';
+				return tpl_addTmp(vars, result);
+			}
+		} else return result;
+	}
 }
 
 /* Initializes all variables for a templatevar-structure and returns a pointer to it. Make
@@ -122,9 +132,16 @@ struct templatevars *tpl_create(){
 		free(vars);
 		return NULL;
 	};
+	if(!cs_malloc(&(*vars).vartypes, (*vars).varsalloc * sizeof(uint8*), -1)){
+		free((*vars).names);
+		free((*vars).values);
+		free(vars);
+		return NULL;
+	};
 	if(!cs_malloc(&(*vars).tmp, (*vars).tmpalloc * sizeof(char**), -1)){
 		free((*vars).names);
 		free((*vars).values);
+		free((*vars).vartypes);
 		free(vars);
 		return NULL;
 	};

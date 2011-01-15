@@ -6,6 +6,9 @@
 #define AUTHNONCEVALIDSECS 15
 #define MAXGETPARAMS 100
 #define SHUTDOWNREFRESH 30
+#define TPLADD 0
+#define TPLAPPEND 1
+#define TPLADDONCE 2
 
 #define CSS "\
 body {background-color: white; font-family: Arial; font-size: 11px; text-align:center}\n\
@@ -1729,12 +1732,13 @@ char *tplmap[]={
 };
 
 struct templatevars {
-	int varscnt;
-	int varsalloc;
-	int tmpcnt;
-	int tmpalloc;
+	uint varscnt;
+	uint varsalloc;
+	uint tmpcnt;
+	uint tmpalloc;
 	char **names;
 	char **values;
+	uint8 *vartypes;
 	char **tmp;
 };
 

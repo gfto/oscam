@@ -587,8 +587,6 @@ void *cs_malloc(void *result, size_t size, int quiterror){
 void *cs_realloc(void *result, size_t size, int quiterror){
 	void **tmp = (void *)result, **tmp2 = (void *)result;
 	*tmp = realloc (*tmp, size);
-	//printf("reallocating\n");
-	//fflush(stdout);
 	if(*tmp == NULL){
 		cs_log("Couldn't allocate memory (errno=%d)!", errno);
 		free(*tmp2);
