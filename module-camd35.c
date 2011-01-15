@@ -232,14 +232,14 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	uchar *buf;
 	buf = client->req + (er->cpti * REQ_SIZE);	// get orig request
 
-	if (((er->rcEx > 0) || (er->rc == 8)) && !client->c35_suppresscmd08)
+	if (((er->rcEx > 0) || (er->rc == E_INVALID)) && !client->c35_suppresscmd08)
 	{
 		buf[0] = 0x08;
 		buf[1] = 2;
 		memset(buf + 20, 0, buf[1]);
 		buf[22] = er->rc; //put rc in byte 22 - hopefully don't break legacy camd3
 	}
-	else if (er->rc == 13)
+	else if (er->rc == E_STOPPED)
 	{
 		buf[0] = 0x08;
 		buf[1] = 2;
@@ -255,7 +255,7 @@ static void camd35_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	else
 	{
 		// Send CW
-		if ((er->rc < 4) || (er->rc == 7))
+		if ((er->rc < E_NOTFOUND) || (er->rc == E_FAKE))
 		{
 			if (buf[0]==3)
 				memmove(buf + 20 + 16, buf + 20 + buf[1], 0x34);

@@ -502,7 +502,7 @@ static int reader_store_emm(uchar *emm, uchar type)
 static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
-  if ((er->rc<10) )
+  if ((er->rc<E_NOCARD) ) //FIXME should this not be <= E_STOPPED?
     {
       send_dcw(reader->client, er);
       return;
@@ -513,14 +513,14 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   {
     cs_debug_mask(D_READER, "caid %04X filtered", er->caid);
     er->rcEx=E2_CAID;
-    er->rc=0;
+    er->rc = E_FOUND;
     write_ecm_answer(reader, er);
     return;
   }
   // cache2
   if (check_cwcache2(er, er->client->grp))
   {
-    er->rc=2;
+    er->rc = E_CACHE2;
     write_ecm_answer(reader, er);
     return;
   }
@@ -557,7 +557,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		//drop
 		cs_debug_mask(D_READER, "ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
 		er->rcEx=32;
-		er->rc=0;
+		er->rc = E_FOUND;
 		int clcw;
 		for (clcw=0;clcw<16;clcw++) er->cw[clcw]=(uchar)0;
 		snprintf( er->msglog, MSGLOGSIZE, "ECMratelimit no space for srvid" );

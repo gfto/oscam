@@ -213,8 +213,8 @@ void ac_chk(ECM_REQUEST *er, int level)
 
   if( level==1 ) 
   {
-    if( er->rc==7 ) acasc->ac_count++;
-    if( er->rc>3 ) return; // not found
+    if( er->rc==E_FAKE ) acasc->ac_count++;
+    if( er->rc>=E_NOTFOUND ) return; // not found
     if( memcmp(ac_ecmd5, er->ecmd5, CS_ECMSTORESIZE) != 0 )
     {
       acasc->ac_count+=ac_dw_weight(er);
@@ -227,7 +227,7 @@ void ac_chk(ECM_REQUEST *er, int level)
     if( cl->ac_penalty )
     {
       cs_debug_mask(D_CLIENT, "send fake dw");
-      er->rc=7; // fake
+      er->rc=E_FAKE; // fake
       er->rcEx=0;
       cs_sleepms(cfg->ac_fakedelay);
     }

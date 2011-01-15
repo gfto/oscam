@@ -1022,7 +1022,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	if (!cc || (cl->pfd < 1) || !rdr->tcp_connected) {
 		if (er) {
-			er->rc = 0;
+			er->rc = E_FOUND;
 			er->rcEx = 0x27;
 			cs_debug_mask(D_READER, "%s server not init! ccinit=%d pfd=%d",
 					rdr->label, cc ? 1 : 0, cl->pfd);
@@ -1213,7 +1213,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		if (cc->last_msg != MSG_NEW_CARD && cc->last_msg != MSG_NEW_CARD_SIDINFO && !cc->just_logged_in) {
 			cs_debug_mask(D_READER, "%s no suitable card on server", getprefix());
 
-			cur_er->rc = 0;
+			cur_er->rc = E_FOUND;
 			cur_er->rcEx = 0x27;
 			write_ecm_answer(rdr, cur_er);
 			//cur_er->rc = 1;
@@ -2543,7 +2543,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	struct cc_extended_ecm_idx *eei = get_extended_ecm_idx_by_idx(cl, er->idx,
 			TRUE);
 
-	if (er->rc <= 3 && eei && eei->card) {
+	if (er->rc < E_NOTFOUND && eei && eei->card) {
 		memcpy(buf, er->cw, sizeof(buf));
 		//fix_dcw(buf);
 		//cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),

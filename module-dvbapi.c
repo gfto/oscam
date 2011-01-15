@@ -1729,11 +1729,11 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 		if (demux[i].program_number==er->srvid) {
 			demux[i].rdr=er->selected_reader;
 
-			if (er->rc<=3 && demux[i].pidindex==-1 && er->caid!=0) {
+			if (er->rc < E_NOTFOUND && demux[i].pidindex==-1 && er->caid!=0) {
 				dvbapi_start_descrambling(i);
 			}
 
-			if (er->rc>3 && demux[i].pidindex==-1) {
+			if (er->rc >= E_NOTFOUND && demux[i].pidindex==-1) {
 				struct s_dvbapi_priority *forceentry=dvbapi_check_prio_match(i, demux[i].curindex, 'p');
 				if (forceentry) {
 					//not found -> maybe card need emm
@@ -1749,7 +1749,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 				}
 			}
 
-			if (er->rc>3) {
+			if (er->rc >= E_NOTFOUND) {
 				cs_debug_mask(D_DVBAPI, "cw not found");
 				return;
 			}
@@ -2049,7 +2049,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 
 	int i;
 	for (i=0; i < MAX_DEMUX; i++) {
-		if (er->rc > 3) {
+		if (er->rc >= E_NOTFOUND) {
 			cs_debug_mask(D_DVBAPI, "cw not found");
 
 			if (demux[i].pidindex==-1)

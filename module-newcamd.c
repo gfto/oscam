@@ -919,7 +919,7 @@ static void newcamd_send_dcw(struct s_client *client, ECM_REQUEST *er)
   }
   memcpy(&cl_msgid, client->req+(er->cpti*REQ_SIZE), 2);	// get client ncd_msgid + 0x8x
   mbuf[0] = er->ecm[0];
-  if( client->ftab.filts[0].nprids==0 || er->rc>3 /*not found*/) 
+  if( client->ftab.filts[0].nprids==0 || er->rc >= E_NOTFOUND /*not found*/) 
   {
     len=3;
     mbuf[1] = mbuf[2] = 0x00;

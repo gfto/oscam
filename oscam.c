@@ -1384,7 +1384,7 @@ static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 		     ecmc->caid==er->caid &&
 		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
 		{
-			er->rc = 99;
+			er->rc = E_99;
 			return(1);
 		}
 	}
@@ -1660,8 +1660,8 @@ void distribute_ecm(ECM_REQUEST *er)
   struct s_client *cl;
   ECM_REQUEST *ecm;
   int n, i;
-  if (er->rc==1) //found converted to cache...
-    er->rc = 2; //cache
+  if (er->rc == E_CACHE1) //found converted to cache...
+    er->rc = E_CACHE2; //cache
 
   for (cl=first_client->next; cl ; cl=cl->next) {
     if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (er->selected_reader->grp & cl->grp)) {
@@ -1669,7 +1669,7 @@ void distribute_ecm(ECM_REQUEST *er)
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
-        if (ecm->rc == 99 && ecm->caid==er->caid && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)==0) {
+        if (ecm->rc == E_99 && ecm->caid==er->caid && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)==0) {
           er->cpti = ecm->cpti;
           //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
           write_ecm_request(cl->fd_m2c, er);
@@ -1701,9 +1701,9 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   er->caid=er->ocaid;
 
 #ifdef CS_WITH_GBOX
-  if (er->rc==1||(er->gbxRidx&&er->rc==0)) {
+  if (er->rc==E_CACHE1||(er->gbxRidx&&er->rc==E_FOUND)) {
 #else
-  if (er->rc==1) {
+  if (er->rc==E_CACHE1) {
 #endif
     store_cw(er, reader->grp);
 
@@ -1783,7 +1783,7 @@ ECM_REQUEST *get_ecmtask()
                 uint8 * save_rdrs = er->matching_rdr;
                 
 		memset(er, 0, sizeof(ECM_REQUEST));
-		er->rc=100;
+		er->rc=E_UNHANDLED;
 		er->cpti=n;
 		er->client=cl;
 		cs_ftime(&er->tps);
@@ -1804,7 +1804,7 @@ ECM_REQUEST *get_ecmtask()
 
 static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int rc)
 {
-	if (rc>=99)
+	if (rc>=E_99)
 		return;
 	struct timeb tpe;
 	cs_ftime(&tpe);
@@ -1814,23 +1814,6 @@ static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int rc)
 
 	add_stat(rdr, er, time, rc);
 }
-
-// rc codes:
-// 0 = found
-// 1 = cache1
-// 2 = cache2
-// 3 = emu
-// 4 = not found
-// 5 = timeout
-// 6 = sleeping
-// 7 = fake
-// 8 = invalid
-// 9 = corrupt
-// 10= no card
-// 11= expdate
-// 12= disabled
-// 13= stopped
-// 100=unhandled
 
 int send_dcw(struct s_client * client, ECM_REQUEST *er)
 {
@@ -1853,7 +1836,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	else
 #endif
 		snprintf(uname,sizeof(uname)-1, "%s", username(client));
-	if (er->rc==0)
+	if (er->rc==E_FOUND)
 	{
 #ifdef CS_WITH_GBOX
 		if(er->selected_reader->typ==R_GBOX)
@@ -1866,7 +1849,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 			else
 				snprintf(sby, sizeof(sby)-1, " by %s", er->selected_reader->label);
 	}
-	if (er->rc<4) er->rcEx=0;
+	if (er->rc < E_NOTFOUND) er->rcEx=0;
 	if (er->rcEx)
 		snprintf(erEx, sizeof(erEx)-1, "rejected %s%s", stxtWh[er->rcEx>>4],
 				stxtEx[er->rcEx&0xf]);
@@ -1889,9 +1872,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	send_reader_stat(er->selected_reader, er, er->rc);
 
 #ifdef WEBIF
-	if(er->rc == 0)
+	if(er->rc == E_FOUND)
 		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", er->selected_reader->label);
-	else if ((er->rc == 1) || (er->rc == 2))
+	else if ((er->rc == E_CACHE1) || (er->rc == E_CACHE2))
 		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s (cache)", er->selected_reader->label);
 	else
 		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", stxt[er->rc]);
@@ -1989,13 +1972,13 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 #endif
 
 	int is_fake = 0;
-	if (er->rc==7) {
+	if (er->rc==E_FAKE) {
 		is_fake = 1;
-		er->rc=0;
+		er->rc=E_FOUND;
 	}
 
 #ifdef CS_WITH_DOUBLECHECK
-	if (cfg->double_check && er->rc < 4) {
+	if (cfg->double_check && er->rc < E_NOTFOUND) {
 	  if (er->checked == 0) {//First CW, save it and wait for next one
 	    er->checked = 1;
 	    er->origin_reader = er->selected_reader;
@@ -2013,7 +1996,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	  }
 
 	  if (er->checked < 2) { //less as two same cw? mark as pending!
-	    er->rc = 100;
+	    er->rc = E_UNHANDLED;
 	    return 0;
 	  }
 
@@ -2025,7 +2008,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	ph[client->ctyp].send_dcw(client, er);
 
 	if (is_fake)
-		er->rc=7;
+		er->rc = E_FAKE;
 
 	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, lc,
@@ -2034,9 +2017,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
 #ifdef QBOXHD_LED
-    if (er->rc < 4) {
+    if (er->rc < E_NOTFOUND) {
         qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN, QBOXHD_LED_BLINK_MEDIUM);
-    } else if (er->rc < 14) {
+    } else if (er->rc <= E_STOPPED) {
         qboxhd_led_blink(QBOXHD_LED_COLOR_RED, QBOXHD_LED_BLINK_MEDIUM);
     }
 #endif
@@ -2053,9 +2036,9 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 
   //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->selected_reader, er->cpti, er->rc);
   ert=&cl->ecmtask[er->cpti];
-  if (ert->rc<99) {
+  if (ert->rc<E_99) {
 	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, er->selected_reader->label);
-	send_reader_stat(er->selected_reader, er, (er->rc <= 0)?4:0);
+	send_reader_stat(er->selected_reader, er, (er->rc <= E_FOUND)?E_NOTFOUND:E_FOUND);
 	return; // already done
   }
   if( (er->caid!=ert->caid) || memcmp(er->ecmd5, ert->ecmd5, sizeof(er->ecmd5)) )
@@ -2065,24 +2048,20 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 	strcpy(ert->msglog, er->msglog);
 	ert->selected_reader=er->selected_reader;
 
-	// different er->rc codes:
-	// 0 error
-	// 1 found
-	// 2 cache 2
-	// 3 (emu?)
-  if (er->rc>0) // found
+  if (er->rc>E_FOUND)
   {
     switch(er->rc)
     {
-      case 2:
-        ert->rc=2;
+      case E_CACHE2:
+        ert->rc=E_CACHE2;
         break;
-      case 3:
-        ert->rc=3;
+      case E_EMU:
+        ert->rc=E_EMU;
         break;
       default:
-        ert->rc=0;
+        ert->rc=E_FOUND;
     }
+    
     ert->rcEx=0;
     memcpy(ert->cw , er->cw , sizeof(er->cw));
 #ifdef CS_WITH_GBOX
@@ -2103,8 +2082,8 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 			}
 		}
 
-		if (ert) ert->rc=4;
-		else send_reader_stat(er->selected_reader, er, 4);
+		if (ert) ert->rc=E_NOTFOUND;
+		else send_reader_stat(er->selected_reader, er, E_NOTFOUND);
 	}
 	if (ert) send_dcw(cl, ert);
 	return;
@@ -2367,14 +2346,14 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	// CAID not supported or found
 	if (!er->caid) {
-		er->rc = 8;
+		er->rc = E_INVALID;
 		er->rcEx = E2_CAID;
 		snprintf( er->msglog, MSGLOGSIZE, "CAID not supported or found" );
 	}
 
 	// user expired
 	if(client->expirationdate && client->expirationdate < client->lastecm)
-		er->rc = 11;
+		er->rc = E_EXPDATE;
 
 	// out of timeframe
 	if(client->allowedtimeframe[0] && client->allowedtimeframe[1]) {
@@ -2384,7 +2363,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		int mintime = client->allowedtimeframe[0];
 		int maxtime = client->allowedtimeframe[1];
 		if(!((mintime <= maxtime && curtime > mintime && curtime < maxtime) || (mintime > maxtime && (curtime > mintime || curtime < maxtime)))) {
-			er->rc = 11;
+			er->rc = E_EXPDATE;
 		}
 		cs_debug_mask(D_TRACE, "Check Timeframe - result: %d, start: %d, current: %d, end: %d\n",er->rc, mintime, curtime, maxtime);
 	}
@@ -2395,12 +2374,12 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			cs_add_violation(client->ip);
 			cs_exit(SIGQUIT); // don't know whether this is best way to kill the thread
 		}
-		er->rc = 12;
+		er->rc = E_DISABLED;
 	}
 
 
 	// rc<100 -> ecm error
-	if (er->rc > 99) {
+	if (er->rc >= E_UNHANDLED) {
 
 		m = er->caid;
 		er->ocaid = er->caid;
@@ -2421,29 +2400,29 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			}
 
 			if (client->c35_sleepsend != 0) {
-				er->rc = 13; // send stop command CMD08 {00 xx}
+				er->rc = E_STOPPED; // send stop command CMD08 {00 xx}
 			} else {
-				er->rc = 6;
+				er->rc = E_SLEEPING;
 			}
 		}
 
 		client->last_srvid = i;
 		client->last_caid = m;
 
-		for (j = 0; (j < 6) && (er->rc > 99); j++)
+		for (j = 0; (j < 6) && (er->rc >= E_UNHANDLED); j++)
 		{
 			switch(j) {
 
 				case 0:
 					// fake (uniq)
 					if (client->dup)
-						er->rc = 7;
+						er->rc = E_FAKE;
 					break;
 
 				case 1:
 					// invalid (caid)
 					if (!chk_bcaid(er, &client->ctab)) {
-						er->rc = 8;
+						er->rc = E_INVALID;
 						er->rcEx = E2_CAID;
 						snprintf( er->msglog, MSGLOGSIZE, "invalid caid %x",er->caid );
 						}
@@ -2453,7 +2432,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					// invalid (srvid)
 					if (!chk_srvid(client, er))
 					{
-						er->rc = 8;
+						er->rc = E_INVALID;
 					    snprintf( er->msglog, MSGLOGSIZE, "invalid SID" );
 					}
 
@@ -2462,13 +2441,13 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				case 3:
 					// invalid (ufilters)
 					if (!chk_ufilters(er))
-						er->rc = 8;
+						er->rc = E_INVALID;
 					break;
 
 				case 4:
 					// invalid (sfilter)
 					if (!chk_sfilter(er, ph[client->ctyp].ptab))
-						er->rc = 8;
+						er->rc = E_INVALID;
 					break;
 
 				case 5:
@@ -2480,7 +2459,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 							er->l = (er->ecm[2] + 3);
 						}
 						else
-							er->rc = 9;
+							er->rc = E_CORRUPT;
 					}
 					break;
 			}
@@ -2488,7 +2467,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	//Schlocke: above checks could change er->rc so
-	if (er->rc > 99) {
+	if (er->rc >= E_UNHANDLED) {
 		/*BetaCrypt tunneling
 		 *moved behind the check routines,
 		 *because newcamd ECM will fail
@@ -2508,14 +2487,14 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 		// cache1
 		if (check_cwcache1(er, client->grp))
-			er->rc = 1;
+			er->rc = E_CACHE1;
 
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);
 #endif
 	}
 
-	if(er->rc > 99) {
+	if(er->rc >= E_UNHANDLED) {
 		er->reader_avail=0;
 		struct s_reader *rdr;
 		for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
@@ -2543,7 +2522,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		switch(m) {
 			// no reader -> not found
 			case 0:
-				er->rc = 4;
+				er->rc = E_NOTFOUND;
 				if (!er->rcEx)
 					er->rcEx = E2_GROUP;
 				snprintf(er->msglog, MSGLOGSIZE, "no matching reader");
@@ -2559,7 +2538,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
-	if (er->rc < 100) {
+	if (er->rc < E_UNHANDLED) {
 		if (cfg->delay)
 			cs_sleepms(cfg->delay);
 
@@ -2764,7 +2743,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			tt = (er->stage) ? cfg->ctimeout : cfg->ftimeout;
 			tpc.time +=tt / 1000;
 			tpc.millitm += tt % 1000;
-			if (!er->stage && er->rc>=100) {
+			if (!er->stage && er->rc >= E_UNHANDLED) {
 				struct s_reader *rdr;
 				for (j=0, act=1, rdr=first_reader; (act) && rdr ; rdr=rdr->next, j++) {
 				        if (j>=er->rdr_count)
@@ -2813,7 +2792,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 				//cs_log("Action now %d.%03d", tpn.time, tpn.millitm);
 				//cs_log("           %d.%03d", tpc.time, tpc.millitm);
 				if (er->stage) {
-					er->rc=5; // timeout
+					er->rc = E_TIMEOUT;
 					if (cfg->lb_mode) {
 						int r;
 						struct s_reader *rdr;
@@ -2821,14 +2800,14 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 						        if (r>=er->rdr_count)
 						                break;
 							if (er->matching_rdr[r])
-								send_reader_stat(rdr, er, 5);
+								send_reader_stat(rdr, er, E_TIMEOUT);
                                                 }
 					}
 					send_dcw(cl, er);
 					continue;
 				} else {
 					er->stage++;
-					if (er->rc>=100) //do not request rc=99
+					if (er->rc >= E_UNHANDLED) //do not request rc=99
 					        request_cw(er, er->stage, 0);
 					unsigned int tt;
 					tt = (cfg->ctimeout-cfg->ftimeout);

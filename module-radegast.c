@@ -90,7 +90,7 @@ static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
   uchar mbuf[1024];
   mbuf[0]=0x02;		// DCW
-  if (er->rc<4)
+  if (er->rc < E_NOTFOUND)
   {
     mbuf[1]=0x12;	// len (overall)
     mbuf[2]=0x05;	// ACCESS

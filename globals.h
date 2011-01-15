@@ -187,6 +187,25 @@
 #define R_IS_NETWORK    0x60
 #define R_IS_CASCADING  0xE0
 
+//ECM rc codes:
+#define E_FOUND			0
+#define E_CACHE1		1
+#define E_CACHE2		2
+#define E_EMU				3
+///////above is all found
+#define E_NOTFOUND	4  //for selection of found, use < E_NOTFOUND
+#define E_TIMEOUT		5
+#define E_SLEEPING	6
+#define E_FAKE			7
+#define E_INVALID		8
+#define E_CORRUPT		9
+#define E_NOCARD		10
+#define E_EXPDATE		11
+#define	E_DISABLED	12
+#define	E_STOPPED		13 //for selection of error, use <= E_STOPPED and exclude selection of found
+///////above is all notfound, some error or problem
+#define E_99				99 //this code is undocumented
+#define E_UNHANDLED	100 //for selection of unhandled, use >= E_UNHANDLED
 
 #define CS_MAX_MOD 20
 #define MOD_CONN_TCP    1

@@ -114,7 +114,7 @@ static int constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msg
    
     if (constcw_analyse_file(er->caid, er->prid, er->srvid, er->cw)==0)
     {
-	er->rc = 0;
+        er->rc = E_FOUND;
         er->rcEx = E1_READER<<4 | E2_SID;
 	//cs_sleepms(100);
     }

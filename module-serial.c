@@ -624,7 +624,7 @@ static void oscam_ser_send_dcw(struct s_client *client, ECM_REQUEST *er)
   int i;
   uchar crc;
   struct s_serial_client *serialdata=cur_client()->serialdata;
-  if (er->rc<4)		// found
+  if (er->rc<E_NOTFOUND)		// found
     switch(serialdata->connected)
     {
       case P_HSIC:
@@ -838,8 +838,8 @@ static void oscam_ser_process_ecm(uchar *buf, int l)
 
   switch(oscam_ser_check_ecm(er, buf, l))
   {
-    case 2: er->rc=9; return;	// error without log
-    case 1: er->rc=9;		      // error with log
+    case 2: er->rc=E_CORRUPT; return;	// error without log
+    case 1: er->rc=E_CORRUPT;		      // error with log
   }
   get_cw(cur_client(), er);
 }
