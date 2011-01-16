@@ -527,6 +527,17 @@ void chk_t_global(const char *token, char *value)
 		cfg->lb_retrylimit = strToIntVal(value, DEFAULT_RETRYLIMIT);
 		return;
 	}
+	
+	if (!strcmp(token, "lb_savepath")) {
+		NULLFREE(cfg->lb_savepath);
+		cfg->lb_savepath = strnew(value);
+		return;
+	}
+	
+	if (!strcmp(token, "lb_stat_cleanup")) {
+		cfg->lb_stat_cleanup = strToIntVal(value, DEFAULT_LB_STAT_CLEANUP);
+		return;
+	}
 
 	if (!strcmp(token, "resolvegethostbyname")) {
 		cfg->resolve_gethostbyname = strToIntVal(value, 0);
@@ -1773,6 +1784,10 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "lb_reopen_seconds", "%d\n", cfg->lb_reopen_seconds);
 	if (cfg->lb_retrylimit != DEFAULT_RETRYLIMIT || cfg->http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_retrylimit", "%d\n", cfg->lb_retrylimit);
+	if (cfg->lb_savepath)
+		fprintf_conf(f, CONFVARWIDTH, "lb_savepath", "%s\n", cfg->lb_savepath);
+	if (cfg->lb_stat_cleanup != DEFAULT_LB_STAT_CLEANUP || cfg->http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "lb_stat_cleanup", "%d\n", cfg->lb_stat_cleanup);
 
 	if (cfg->resolve_gethostbyname ||(!cfg->resolve_gethostbyname && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg->resolve_gethostbyname);

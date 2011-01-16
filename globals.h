@@ -275,6 +275,7 @@ extern char *RDR_CD_TXT[];
 #define DEFAULT_NBEST 1
 #define DEFAULT_NFB 1
 #define DEFAULT_RETRYLIMIT 800
+#define DEFAULT_LB_STAT_CLEANUP 12 //12hours
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
@@ -1137,6 +1138,9 @@ struct s_config
 	int     lb_max_ecmcount; // maximum ecm count before reseting lbvalues
 	int     lb_reopen_seconds; //time between retrying failed readers/caids/prov/srv
 	int	lb_retrylimit; //reopen only happens if reader response time > retrylimit
+	char	*lb_savepath; //path where the stat file is save. Empty=default=/tmp/.oscam/stat
+	int	lb_stat_cleanup; //duration in hours for cleaning old statistics
+	
 	int             resolve_gethostbyname;
 
 #ifdef CS_WITH_DOUBLECHECK
@@ -1281,6 +1285,7 @@ extern int hexserialset(struct s_reader *rdr);
 extern char *monitor_get_proto(struct s_client *);
 extern char *reader_get_type_desc(struct s_reader * rdr, int extended);
 extern char *get_ncd_client_name(char *client_id);
+extern char *strnew(char *str);
 
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);
@@ -1361,6 +1366,7 @@ extern int process_client_pipe(struct s_client *cl, uchar *buf, int l);
 extern void update_reader_config(uchar *ptr);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
+extern void nullclose(int *fd);
 extern void kill_thread(struct s_client *cl);
 extern int get_threadnum(struct s_client *client);
 extern int get_ridx(struct s_reader *reader);

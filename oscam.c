@@ -517,7 +517,7 @@ void cs_accounts_chk()
 #endif
 }
 
-static void nullclose(int *fd)
+void nullclose(int *fd)
 {
 	//if closing an already closed pipe, we get a sigpipe signal, and this causes a cs_exit
 	//and this causes a close and this causes a sigpipe...and so on
@@ -566,13 +566,16 @@ static void cleanup_thread(struct s_client *cl)
 		// Maybe we also need a "nullclose" mechanism here...
 		ICC_Async_Close(cl->reader);
 	}
-
+	if (cl->reader)
+		cl->reader->client = NULL;
+	cl->reader = NULL;
+	
 	cleanup_ecmtasks(cl);
 	add_garbage(cl->emmcache);
 	add_garbage(cl->req);
 	add_garbage(cl->cc);
-	add_garbage(cl);
 	NULLFREE(cl->serialdata);
+	add_garbage(cl);
 
 	//decrease cwcache
 	struct s_ecm *ecmc;

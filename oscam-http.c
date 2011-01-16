@@ -187,6 +187,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 	tpl_printf(vars, TPLADD, "LBSAVE", "%d",cfg->lb_save);
+	tpl_printf(vars, TPLADD, "LBSAVEPATH", "%s", cfg->lb_savepath?cfg->lb_savepath:"");
 
 	tpl_printf(vars, TPLADD, "LBNBESTREADERS", "%d",cfg->lb_nbest_readers);
 	tpl_printf(vars, TPLADD, "LBNFBREADERS", "%d",cfg->lb_nfb_readers);
@@ -690,13 +691,23 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 			rdr = get_reader_by_label(getParam(params, "label"));
 			if (rdr) {
 				if (strcmp(getParam(params, "action"), "enable") == 0) {
-					rdr->enable = 1;
-					restart_cardreader(rdr, 1);
+					if (!rdr->enable) {
+						rdr->enable = 1;
+						restart_cardreader(rdr, 1);
+					}
 				} else {
-					rdr->enable = 0;
-					struct s_client *sav_cl = rdr->client;
-					rdr->client = NULL;
-					kill_thread(sav_cl);
+					if (rdr->enable) {
+						rdr->enable = 0;
+						if (rdr->client) {
+							cs_sleepms(200);
+							if(rdr->client->pfd) nullclose(&rdr->client->pfd); //Closing Network socket
+							if(rdr->client->fd_m2c_c) nullclose(&rdr->client->fd_m2c_c); //Closing client read fd
+							if(rdr->client->fd_m2c)  nullclose(&rdr->client->fd_m2c); //Closing client read fd
+					        	               
+							cs_sleepms(200);
+							kill_thread(rdr->client);
+						}
+					}
 				}
 				if(write_server() != 0)
 					tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");

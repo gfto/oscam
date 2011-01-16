@@ -6,6 +6,7 @@
 
 static int stat_load_save;
 static struct timeb nulltime;
+static time_t last_housekeeping = 0;
 
 void init_stat()
 {
@@ -25,19 +26,30 @@ void init_stat()
 		cfg->lb_reopen_seconds = DEFAULT_REOPEN_SECONDS;
 	if (cfg->lb_retrylimit <= 0)
 		cfg->lb_retrylimit = DEFAULT_RETRYLIMIT;
+	if (cfg->lb_stat_cleanup <= 0)
+		cfg->lb_stat_cleanup = DEFAULT_LB_STAT_CLEANUP;
 }
 
 void load_stat_from_file()
 {
 	stat_load_save = 0;
 	char buf[256];
-	sprintf(buf, "%s/stat", get_tmp_dir());
-	FILE *file = fopen(buf, "r");
+	char *fname;
+	FILE *file;
+	if (!cfg->lb_savepath || !cfg->lb_savepath[0]) {
+		sprintf(buf, "%s/stat", get_tmp_dir());
+		fname = buf;
+	}
+	else
+		fname = cfg->lb_savepath;
+		
+	file = fopen(fname, "r");
+		
 	if (!file) {
-		cs_log("loadbalancer: can't read from file %s", buf);
+		cs_log("loadbalancer: can't read from file %s", fname);
 		return;
 	}
-	cs_debug_mask(D_TRACE, "loadbalancer: load statistics from %s", buf);
+	cs_debug_mask(D_TRACE, "loadbalancer: load statistics from %s", fname);
 	
 	struct s_reader *rdr = NULL;
 	READER_STAT *stat, *dup;
@@ -164,11 +176,18 @@ void save_stat_to_file()
 {
 	stat_load_save = 0;
 	char buf[256];
-	sprintf(buf, "%s/stat", get_tmp_dir());
-
-	FILE *file = fopen(buf, "w");
+	char *fname;
+	if (!cfg->lb_savepath || !cfg->lb_savepath[0]) {
+		sprintf(buf, "%s/stat", get_tmp_dir());
+		fname = buf;
+	}
+	else
+		fname = cfg->lb_savepath;
+		
+	FILE *file = fopen(fname, "w");
+	
 	if (!file) {
-		cs_log("can't write to file %s", buf);
+		cs_log("can't write to file %s", fname);
 		return;
 	}
 
@@ -191,7 +210,7 @@ void save_stat_to_file()
 	}
 	
 	fclose(file);
-	cs_log("loadbalancer: statistic saved %d records", count);
+	cs_log("loadbalancer: statistic saved %d records to %s", count, fname);
 }
 
 /**
@@ -297,11 +316,12 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	
 		return;
 	}
+	
+	housekeeping_stat();
 		
 	cs_debug_mask(D_TRACE, "loadbalancer: adding stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
 				rdr->label, rc, er->caid, er->prid, er->srvid, ecm_time, rdr->lb_usagelevel);
 	
-	//debug only:
 	if (cfg->lb_save) {
 		stat_load_save++;
 		if (stat_load_save > cfg->lb_save) {
@@ -623,4 +643,38 @@ void clear_reader_stat(struct s_reader *rdr)
 		return;
 
 	ll_clear_data(rdr->lb_stat);
+}
+
+void clear_all_stat()
+{
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next) { 
+		clear_reader_stat(rdr);
+	}
+}
+
+void housekeeping_stat()
+{
+	time_t now = time(NULL);
+	if (now/60/60 == last_housekeeping/60/60) //only clean once in an hour
+		return;
+	
+	last_housekeeping = now;
+	
+	time_t cleanup_time = now - (cfg->lb_stat_cleanup*60*60);
+	
+	struct s_reader *rdr;
+	for (rdr=first_reader; rdr ; rdr=rdr->next) { 
+		if (rdr->lb_stat) {
+			LL_ITER *itr = ll_iter_create(rdr->lb_stat);
+			READER_STAT *stat;
+			while ((stat=ll_iter_next(itr))) {
+				
+				if (stat->last_received < cleanup_time)
+					ll_iter_remove_data(itr);
+			}
+			
+			ll_iter_release(itr);
+		}
+	}
 }

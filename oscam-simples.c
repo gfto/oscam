@@ -936,3 +936,15 @@ char *get_ncd_client_name(char *client_id)
 
         return ncd_service_names[max_id_idx+1];
 }
+
+char *strnew(char *str)
+{
+  if (!str)
+    return NULL;
+    
+  char *newstr = cs_malloc(&newstr, strlen(str)+1, 1);
+  strcpy(newstr, str);
+  
+  return newstr;
+}
+
