@@ -474,7 +474,7 @@ DESCRIPTIONS
 	   2 = disable camd.socket
 	   3 = read PMT file on startup only
 
-       boxtype = dbox2|dreambox|dm7000|duckbox|ufs910|ipbox|ipbox-pmt
+       boxtype = dbox2|dreambox|dm7000|duckbox|ufs910|ipbox|ipbox-pmt|qboxhd|coolstream|neumo
 	  set boxtype, auto detection of DVB API will be aspired, default:dreambox
 
 	  ipbox  with  camd.socket  support,  currently only with PGI image version 0.6 or above,
