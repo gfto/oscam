@@ -195,7 +195,8 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "LBMAXECEMCOUNT", "%d",cfg->lb_max_ecmcount);
 	tpl_printf(vars, TPLADD, "LBRETRYLIMIT", "%d",cfg->lb_retrylimit);
 	tpl_printf(vars, TPLADD, "LBREOPENSECONDS", "%d",cfg->lb_reopen_seconds);
-
+	tpl_printf(vars, TPLADD, "LBCLEANUP", "%d",cfg->lb_stat_cleanup);
+	
 	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
 
 }

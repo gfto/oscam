@@ -21,4 +21,4 @@ void clear_reader_stat(struct s_reader *rdr);
 
 void clear_all_stat();
 
-void housekeeping_stat();
+void housekeeping_stat(int force);

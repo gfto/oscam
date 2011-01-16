@@ -317,7 +317,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		return;
 	}
 	
-	housekeeping_stat();
+	housekeeping_stat(0);
 		
 	cs_debug_mask(D_TRACE, "loadbalancer: adding stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
 				rdr->label, rc, er->caid, er->prid, er->srvid, ecm_time, rdr->lb_usagelevel);
@@ -653,10 +653,10 @@ void clear_all_stat()
 	}
 }
 
-void housekeeping_stat()
+void housekeeping_stat(int force)
 {
 	time_t now = time(NULL);
-	if (now/60/60 == last_housekeeping/60/60) //only clean once in an hour
+	if (!force && now/60/60 == last_housekeeping/60/60) //only clean once in an hour
 		return;
 	
 	last_housekeeping = now;
