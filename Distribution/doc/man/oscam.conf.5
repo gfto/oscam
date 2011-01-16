@@ -218,6 +218,11 @@ time between retrying failed readers/CAIDs/providers/services, default:900
 .RS 3n
 retry next readers only if response time is higher then lb_retrylimit, default:800
 .RE
+.PP
+\fBlb_savepath\fP = \fBfilename\fP
+.RS 3n
+filenanme for saving loadbalancing statistics, default:/tmp/.oscam/stat
+.RE
 .SS "The [monitor] section"
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP

@@ -159,6 +159,9 @@ DESCRIPTIONS
        lb_retrylimit = milli seconds
 	  retry next readers only if response time is higher then lb_retrylimit, default:800
 
+       lb_savepath = filename
+	  filenanme for saving loadbalancing statistics, default:/tmp/.oscam/stat
+
    The [monitor] section
        port = 0|port
 	  UDP port for monitor, port=0 monitor disabled, default:0
