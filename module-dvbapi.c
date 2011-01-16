@@ -137,7 +137,7 @@ int dvbapi_check_array(unsigned short *array, int len, unsigned short match) {
 int dvbapi_detect_api() {
 #ifdef COOL
 	selected_api=COOLAPI;
-	selected_box = 4;
+	selected_box = 5;
 	disable_pmt_files = 1;
 	cs_debug_mask(D_DVBAPI, "Detected coolstream Api");
 	return 1;
@@ -163,14 +163,14 @@ int dvbapi_detect_api() {
 	selected_box = devnum;
 
 #ifdef WITH_STAPI
-	if (devnum==3) {
+	if (devnum==4) {
 		if (stapi_open()==FALSE) {
 			cs_log("stapi: setting up stapi failed.");
 			return 0;
 		}
 
 		selected_api=STAPI;
-		selected_box=3;
+		selected_box=4;
 		close(dmx_fd);
 		return 1;
 	}
