@@ -38,7 +38,7 @@
 #define FALSE 0
 #endif
 
-#define BOX_COUNT 5
+#define BOX_COUNT 6
 
 struct box_devices
 {

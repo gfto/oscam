@@ -227,7 +227,9 @@
 #define BOXTYPE_IPBOX_PMT	6
 #define BOXTYPE_DM7000	7
 #define BOXTYPE_QBOXHD	8
-#define BOXTYPES		8
+#define BOXTYPE_COOLSTREAM	9
+#define BOXTYPE_NEUMO	10
+#define BOXTYPES		10
 extern const char *boxdesc[];
 #endif
 

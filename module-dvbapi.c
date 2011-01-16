@@ -28,14 +28,15 @@ int coolapi_set_pid (int demux_id, int num, int index, int pid);
 void coolapi_close_all();
 void dvbapi_write_cw(int demux_id, uchar *cw, int index);
 #endif
-const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream" };
+const char *boxdesc[] = { "none", "dreambox", "duckbox", "ufs910", "dbox2", "ipbox", "ipbox-pmt", "dm7000", "qboxhd", "coolstream", "neumo" };
 
 const struct box_devices devices[BOX_COUNT] = {
 	/* QboxHD (dvb-api-3)*/	{ "/tmp/virtual_adapter/", 	"ca%d",		"demux%d",			"/tmp/camd.socket" },
 	/* dreambox (dvb-api-3)*/	{ "/dev/dvb/adapter%d/",	"ca%d", 		"demux%d",			"/tmp/camd.socket" },
 	/* dreambox (dvb-api-1)*/	{ "/dev/dvb/card%d/",	"ca%d",		"demux%d",			"/tmp/camd.socket" },
+	/* neumo (dvb-api-1)*/	{ "/dev/",			"demuxapi",		"demuxapi",			"/tmp/camd.socket" },
 	/* sh4      (stapi)*/	{ "/dev/stapi/", 		"stpti4_ioctl",	"stpti4_ioctl",		"/tmp/camd.socket" },
-	/* coolstream)*/	{ "/dev/cnxt/", 		"null",	"null",		"/tmp/camd.socket" }
+	/* coolstream*/		{ "/dev/cnxt/", 		"null",		"null",			"/tmp/camd.socket" }
 };
 
 int selected_box=-1;
@@ -174,6 +175,11 @@ int dvbapi_detect_api() {
 		return 1;
 	}
 #endif
+	if (cfg->dvbapi_boxtype == BOXTYPE_NEUMO) {
+		selected_api=DVBAPI_1;
+		return 1;
+	}
+
 	memset(filter,0,32);
 
 	filter[0]=0x01;
@@ -1754,7 +1760,7 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 			demux[i].rdr=er->selected_reader;
 
 			for (j=0; j<demux[i].ECMpidcount; j++)
-				if (demux[i].ECMpids[j].ECM_PID == er->pid)
+				if (demux[i].ECMpids[j].CAID == er->caid && demux[i].ECMpids[j].ECM_PID == er->pid)
 						break;
 			if (j==demux[i].ECMpidcount) continue;
 
@@ -1811,11 +1817,18 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					cs_sleepms(delayentry->delay);
 				}
 			}
+
+			switch (selected_api) {
 #ifdef WITH_STAPI
-			stapi_write_cw(i, er->cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file);
-#else
-			dvbapi_write_cw(i, er->cw, demux[i].ECMpids[j].index-1);
+				case STAPI:
+					stapi_write_cw(i, er->cw, demux[i].STREAMpids, demux[i].STREAMpidcount, demux[i].pmt_file);
+					break;
 #endif
+				default:
+					dvbapi_write_cw(i, er->cw, demux[i].ECMpids[j].index-1);
+					break;
+			}
+
 			// reset idle-Time
 			client->last=time((time_t)0);
 
