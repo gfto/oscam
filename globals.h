@@ -553,6 +553,8 @@ typedef struct ecm_request_t
   struct s_reader *selected_reader;
   int           rdr_count;
   uint8         *matching_rdr;
+  LLIST         *matching_rdr2; //list of matching readers, should replace *matching_rdr
+  LLIST         *matching_rdr2_fallback; //list of matching fallback readers; can be possible replaced by a pointer into the matching_rdr list, from which point on the readers will all be fallback
   struct s_client *client; //contains pointer to 'c' client while running in 'r' client
   int           cpti;   // client pending table index
   int           stage;    // processing stage in server module

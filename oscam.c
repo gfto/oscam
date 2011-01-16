@@ -1777,8 +1777,8 @@ ECM_REQUEST *get_ecmtask()
 		cs_log("WARNING: ecm pending table overflow !");
 	else
 	{
-                int save_rdr_count = er->rdr_count;
-                uint8 * save_rdrs = er->matching_rdr;
+		int save_rdr_count = er->rdr_count;
+		uint8 * save_rdrs = er->matching_rdr;
                 
 		memset(er, 0, sizeof(ECM_REQUEST));
 		er->rc=E_UNHANDLED;
@@ -1786,15 +1786,16 @@ ECM_REQUEST *get_ecmtask()
 		er->client=cl;
 		cs_ftime(&er->tps);
 
-                er->rdr_count=save_rdr_count;
-                er->matching_rdr=save_rdrs;
-        	if (er->rdr_count < rdr_count) {
-                        er->rdr_count = rdr_count;
-                        add_garbage(er->matching_rdr);
-                        er->matching_rdr = malloc(er->rdr_count);
-                }
-                memset(er->matching_rdr, 0, er->rdr_count);
-        }
+		er->rdr_count=save_rdr_count;
+		er->matching_rdr=save_rdrs;
+  	if (er->rdr_count < rdr_count) {
+			er->rdr_count = rdr_count;
+			add_garbage(er->matching_rdr);
+			er->matching_rdr = malloc(er->rdr_count);
+		}
+		memset(er->matching_rdr, 0, er->rdr_count);
+
+	}
 	
 	
 	return(er);
