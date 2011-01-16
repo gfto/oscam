@@ -113,10 +113,7 @@ void chk_iprange(char *value, struct s_ip **base)
 
 	for (cip=lip=*base; cip; cip=cip->next)
 		lip = cip;
-	if (!(cip=malloc(sizeof(struct s_ip)))) {
-		fprintf(stderr, "Error allocating memory (errno=%d)\n", errno);
-		exit(1);
-	}
+	cs_malloc(&cip, sizeof(struct s_ip), SIGINT);
 	if (*base)
 		lip->next = cip;
 	else
@@ -127,10 +124,7 @@ void chk_iprange(char *value, struct s_ip **base)
 			if (i == 0)
 				++i;
 		else {
-			if (!(cip=malloc(sizeof(struct s_ip)))) {
-				fprintf(stderr, "Error allocating memory (errno=%d)\n", errno);
-				exit(1);
-			}
+			cs_malloc(&cip, sizeof(struct s_ip), SIGINT);
 			lip->next = cip;
 			memset(cip, 0, sizeof(struct s_ip));
 		}
@@ -358,10 +352,21 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "logfile")) {
+		cfg->logtostdout = 0;
+		cfg->logtosyslog = 0;
 		NULLFREE(cfg->logfile);
 		if (strlen(value) > 0) {
-			if(!cs_malloc(&(cfg->logfile), strlen(value) + 1, -1)) return;
-			memcpy(cfg->logfile, value, strlen(value) + 1);
+			char *pch;
+			for(pch = strtok(value, ";"); pch != NULL; pch = strtok(NULL, ";")){
+				pch=trim(pch);
+				if(!strcmp(pch, "stdout")) cfg->logtostdout = 1;
+				else if(!strcmp(pch, "syslog")) cfg->logtosyslog = 1;
+				else {
+					NULLFREE(cfg->logfile);
+					if(!cs_malloc(&(cfg->logfile), strlen(pch) + 1, -1)) continue;
+					else memcpy(cfg->logfile, pch, strlen(pch) + 1);
+				}
+			}			
 		}
 		return;
 	}
@@ -1345,8 +1350,8 @@ int init_config()
 	fclose(fp);
 #ifdef CS_LOGFILE
 	if (cfg->logfile == NULL) {
-		cs_malloc(&(cfg->logfile), strlen(CS_LOGFILE) + 1, 1);
-		memcpy(cfg->logfile, value, strlen(CS_LOGFILE) + 1);
+		if(cs_malloc(&(cfg->logfile), strlen(CS_LOGFILE) + 1, SIGINT))
+			memcpy(cfg->logfile, value, strlen(CS_LOGFILE) + 1);
 	}
 #endif
 	cs_init_log();
@@ -1700,8 +1705,11 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg->srvip));
 	if (cfg->usrfile != NULL || (cfg->usrfile == NULL && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg->usrfile);
-	if (cfg->logfile != NULL || (cfg->logfile == NULL && cfg->http_full_cfg))
-		fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", cfg->logfile);
+	if (cfg->logfile != NULL || cfg->logtostdout == 1 || cfg->logtosyslog == 1 || (cfg->logfile == NULL && cfg->http_full_cfg)){
+		value = mk_t_logfile();
+		fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", value);
+		free(value);
+	}
 	if (cfg->cwlogdir != NULL || (cfg->cwlogdir == NULL && cfg->http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg->cwlogdir);
 #ifdef QBOXHD_LED
@@ -2624,11 +2632,7 @@ struct s_auth *init_userdb()
 			token[l - 1] = 0;
 			tag = (!strcmp("account", strtolower(token + 1)));
 
-			if (!(ptr=malloc(sizeof(struct s_auth)))) {
-				cs_log("Error allocating memory (errno=%d)", errno);
-				return authptr;
-			}
-
+			if(!cs_malloc(&ptr, sizeof(struct s_auth), -1)) return authptr;
 			if (account)
 				account->next = ptr;
 			else
@@ -2695,11 +2699,12 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
     if (!errno) i++;
   }
   //if (!i) return(0);
-  if (b==sizeof(ushort))
-    slist=malloc(i*sizeof(ushort));
-  else
-    llist=malloc(i*sizeof(ulong));
-  strcpy(value, buf);
+  if (b==sizeof(ushort)){
+    if(!cs_malloc(&slist, i*sizeof(ushort), -1)) return;
+  } else {
+  	if(!cs_malloc(&llist, i*sizeof(ulong), -1)) return;
+  }
+  cs_strncpy(value, buf, sizeof(buf));
   for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
   {
     caid=a2i(ptr, b);
@@ -2766,11 +2771,7 @@ int init_sidtab()
     if ((token[0]=='[') && (token[l-1]==']'))
     {
       token[l-1]=0;
-      if (!(ptr=malloc(sizeof(struct s_sidtab))))
-      {
-        cs_log("Error allocating memory (errno=%d)", errno);
-        return(1);
-      }
+      if (!cs_malloc(&ptr, sizeof(struct s_sidtab), -1)) return(1);
       if (sidtab)
         sidtab->next=ptr;
       else
@@ -2820,11 +2821,7 @@ int init_provid() {
 		if (!(payload = strchr(token, '|'))) continue;
 		*payload++ = '\0';
 
-		if (!(ptr = malloc(sizeof(struct s_provid)))) {
-			cs_log("Error allocating memory (errno=%d)", errno);
-			return(1);
-		}
-
+		if (!cs_malloc(&ptr, sizeof(struct s_provid), -1)) return(1);
 		if (provid)
 			provid->next = ptr;
 		else
@@ -2891,11 +2888,7 @@ int init_srvid()
 		if (!(payload=strchr(token, '|'))) continue;
 		*payload++ = '\0';
 
-		if (!(ptr = malloc(sizeof(struct s_srvid)))) {
-			cs_log("Error allocating memory (errno=%d)", errno);
-			return(1);
-		}
-
+		if (!cs_malloc(&ptr, sizeof(struct s_srvid), -1)) return(1);
 		if (srvid)
 			srvid->next = ptr;
 		else
@@ -2972,11 +2965,7 @@ int init_tierid()
 		if (!(payload=strchr(token, '|'))) continue;
 		*payload++ = '\0';
 
-		if (!(ptr = malloc(sizeof(struct s_tierid)))) {
-			cs_log("Error allocating memory (errno=%d)", errno);
-			return(1);
-		}
-
+		if (!cs_malloc(&ptr,sizeof(struct s_tierid), -1)) return(1);
 		if (tierid)
 			tierid->next = ptr;
 		else
@@ -3686,11 +3675,7 @@ int init_irdeto_guess_tab()
     }
     if( !skip )
     {
-      if (!(ird_row=(struct s_irdeto_quess*)malloc(sizeof(struct s_irdeto_quess))))
-      {
-        cs_log("Error allocating memory (errno=%d)", errno);
-        return(1);
-      }
+      if (!cs_malloc(&ird_row, sizeof(struct s_irdeto_quess), -1)) return(1);
       ird_row->b47  = b47;
       ird_row->caid = caid;
       ird_row->sid  = sid;
@@ -3734,8 +3719,9 @@ int init_readerdb()
 		cs_log("can't open file \"%s\" (errno=%d)\n", token, errno);
 		return(1);
 	}
-	struct s_reader *rdr = first_reader = (struct s_reader*) malloc (sizeof(struct s_reader));
-	memset(rdr, 0, sizeof(struct s_reader));
+	struct s_reader *rdr;
+	cs_malloc(&rdr, sizeof(struct s_reader), SIGINT);
+	first_reader = rdr;
 	while (cfg_readline(token, sizeof(token), fp)) {
 		int i, l;
 		if ((l = strlen(trim(token))) < 3)
@@ -3744,9 +3730,11 @@ int init_readerdb()
 			token[l-1] = 0;
 			tag = (!strcmp("reader", strtolower(token+1)));
 			if (rdr->label[0] && rdr->typ) {
-				struct s_reader *newreader = (struct s_reader*) malloc (sizeof(struct s_reader));
-				rdr->next = newreader; //add reader to list
-				rdr = newreader; //and advance to end of list
+				struct s_reader *newreader;
+				if(cs_malloc(&newreader, sizeof(struct s_reader), -1)){
+					rdr->next = newreader; //add reader to list
+					rdr = newreader; //and advance to end of list
+				}
 			}
 			memset(rdr, 0, sizeof(struct s_reader));
 			rdr->enable = 1;
@@ -3850,11 +3838,7 @@ void init_ac()
           break;
         }
       }
-      if (!(ptr_cpmap=(struct s_cpmap*)malloc(sizeof(struct s_cpmap))))
-      {
-        cs_log("Error allocating memory (errno=%d)", errno);
-        return;
-      }
+      if (!cs_malloc(&ptr_cpmap, sizeof(struct s_cpmap), -1)) return;
       if( cpmap )
         cpmap->next=ptr_cpmap;
       else
@@ -3890,7 +3874,8 @@ char *mk_t_caidtab(CAIDTAB *ctab){
 		if(ctab->cmap[i]) needed += 5;
 		++i;
 	}
-	char *value = (char *) malloc(needed * sizeof(char));
+	char *value;
+	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	i = 0;
 	while(ctab->caid[i]) {
 		if(i == 0) {
@@ -3925,7 +3910,8 @@ char *mk_t_tuntab(TUNTAB *ttab){
 		if(ttab->bt_caidto[i]) needed += 5;
 		++i;
 	}
-	char *value = (char *) malloc(needed * sizeof(char));
+	char *value;
+	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	i = 0;
 	while(ttab->bt_caidfrom[i]) {
 		if(i == 0) {
@@ -3963,7 +3949,8 @@ char *mk_t_group(uint64 grp){
 			if(i > 9) needed += 1;
 		}
 	}
-	char *value = (char *) malloc(needed * sizeof(char));
+	char *value;
+	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
 	for(i = 0; i < 64; i++){
 		if (grpbit[i] == '1'){
@@ -3995,7 +3982,8 @@ char *mk_t_ftab(FTAB *ftab){
 			needed += ftab->filts[i].nprids * 7;
 	}
 
-	char *value = (char *) malloc(needed * sizeof(char));
+	char *value;
+	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
 	char *dot="";
 	for (i = 0; i < ftab->nfilts; ++i){
@@ -4026,7 +4014,8 @@ char *mk_t_camd35tcp_port(){
 			needed += cfg->c35_tcp_ptab.ports[i].ftab.filts[0].nprids * 7;
 		}
 	}
-	char *value = (char *) malloc(needed * sizeof(char));
+	char *value;
+	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char *dot1 = "", *dot2;
 	for(i = 0; i < cfg->c35_tcp_ptab.nports; ++i) {
 		pos += sprintf(value + pos, "%s%d@%04X", dot1, cfg->c35_tcp_ptab.ports[i].s_port, cfg->c35_tcp_ptab.ports[i].ftab.filts[0].caid);
@@ -4099,7 +4088,8 @@ char *mk_t_aeskeys(struct s_reader *rdr){
 	}
 
 	/* copy to result array of correct size */
-	char *value = (char *) malloc((pos + 1) * sizeof(char));
+	char *value;
+	if(!cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
 	memcpy(value, tmp, pos + 1);
 	return(value);
 }
@@ -4116,7 +4106,8 @@ char *mk_t_newcamd_port(){
 			needed += cfg->ncd_ptab.ports[i].ftab.filts[0].nprids * 7;
 		}
 	}
-	char *value = (char *) malloc(needed * sizeof(char));
+	char *value;
+	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char *dot1 = "", *dot2;
 
 	for(i = 0; i < cfg->ncd_ptab.nports; ++i){
@@ -4154,13 +4145,14 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
 	for(i = 0; i < 256; ++i)
 		if((rdr->b_nano[i] & flag))
 			needed++;
-
+			
+	char *value;
 	if (needed == 256) {
-		char *value = (char *) malloc((3 * sizeof(char)) + 1);
+		if(!cs_malloc(&value, (3 * sizeof(char)) + 1, -1)) return "";
 		sprintf(value, "all");
 		return value;
 	} else {
-		char *value = (char *) malloc((needed * 3 * sizeof(char)) + 1);
+		if(!cs_malloc(&value, (needed * 3 * sizeof(char)) + 1, -1)) return "";
 		value[0] = '\0';
 		for(i = 0; i < 256; ++i) {
 			if(rdr->b_nano[i] & flag) {
@@ -4175,7 +4167,8 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
 char *mk_t_service( uint64 sidtabok, uint64 sidtabno){
 	int i = 0, pos = 0;
 	char *dot = "";
-	char *value = (char *) malloc((256 * sizeof(char)));
+	char *value;
+	if(!cs_malloc(&value, 256 * sizeof(char), -1)) return "";
 	value[0] = '\0';
 
 	char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64)sidtabok, MAX_SIDBITS, sidok);
@@ -4196,4 +4189,25 @@ char *mk_t_service( uint64 sidtabok, uint64 sidtabno){
 	return value;
 }
 
-
+char *mk_t_logfile(){
+	int pos = 0, needed = 1;
+	char *value, *dot = "";
+	
+	if(cfg->logtostdout == 1) needed += 7;
+	if(cfg->logtosyslog == 1) needed += 7;
+	if(cfg->logfile != NULL) needed += strlen(cfg->logfile);
+	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+		
+	if(cfg->logtostdout == 1){
+		pos += sprintf(value + pos, "stdout");
+		dot = ";";
+	}
+	if(cfg->logtosyslog == 1){
+		pos += sprintf(value + pos, "%ssyslog", dot);
+		dot = ";";
+	}
+	if(cfg->logfile != NULL){
+		pos += sprintf(value + pos, "%s%s", dot, cfg->logfile);
+	}
+	return value;
+}

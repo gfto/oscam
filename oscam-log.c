@@ -71,12 +71,16 @@ void cs_write_log(char *txt)
 				fflush(fps);
 			}
 		} else {
-			int use_stdout = (strcmp(cfg->logfile, "stdout"))?0:1;
-			if (fp && !use_stdout && strcmp(cfg->logfile, "syslog"))
+			if(!cfg->disablelog){
+				if (fp){
 					switch_log(cfg->logfile, &fp, cs_init_log);
-			if ((fp) && (!cfg->disablelog)){
 					fprintf(fp, "%s", txt);
 					fflush(fp);
+				}
+				if(cfg->logtostdout){
+					fprintf(stdout, "%s", txt);
+					fflush(fp);
+				}
 			}
 		}
 }
@@ -90,35 +94,26 @@ int cs_init_log(void)
 	pthread_mutex_init(&loghistory_lock, NULL);
 #endif
 
-	if (!strcmp(cfg->logfile, "stdout")) {//log to stdout
-		fp = stdout;
-		cs_log(head);
-		cs_log_config();
-		return(0);
-	}
-	if (strcmp(cfg->logfile, "syslog")) {//log to file
-		if (!fp) {
-			if ((fp = fopen(cfg->logfile, "a+")) <= (FILE *)0) {
-				fp = (FILE *)0;
-				fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", cfg->logfile, errno);
-			} else {
-				time_t t;
-				char line[80];
-				memset(line, '-', sizeof(line));
-				line[(sizeof(line)/sizeof(char)) - 1] = '\0';
-				time(&t);
-				if (!cfg->disablelog)
-					fprintf(fp, "\n%s\n>> OSCam <<  cardserver started at %s%s\n", line, ctime(&t), line);
-				cs_log_config();
-			}
+	if (!fp) {	//log to file
+		if ((fp = fopen(cfg->logfile, "a+")) <= (FILE *)0) {
+			fp = (FILE *)0;
+			fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", cfg->logfile, errno);
+		} else {
+			time_t t;
+			char line[80];
+			memset(line, '-', sizeof(line));
+			line[(sizeof(line)/sizeof(char)) - 1] = '\0';
+			time(&t);
+			if (!cfg->disablelog)
+				fprintf(fp, "\n%s\n>> OSCam <<  cardserver started at %s%s\n", line, ctime(&t), line);
 		}
-		return(fp <= (FILE *)0);
-	} else { //log to syslog
-		openlog("oscam", LOG_NDELAY, LOG_DAEMON);
-		cs_log(head);
-		cs_log_config();
-		return(0);
 	}
+	if (cfg->logtosyslog) { //log to syslog
+		openlog("oscam", LOG_NDELAY, LOG_DAEMON);
+	}
+	cs_log(head);
+	cs_log_config();
+	return(fp <= (FILE *)0);
 }
 
 static void get_log_header(int m, char *txt)
@@ -142,9 +137,9 @@ static void write_to_log(int flag, char *txt)
 	//  memcpy(txt, sbuf, 11);
 
 #ifdef CS_ANTICASC
-	if ((!strcmp(cfg->logfile, "syslog")) && cur_client()->typ != 'a') // system-logfile
+	if (cfg->logtosyslog && cur_client()->typ != 'a') // system-logfile
 #else
-	if (!strcmp(cfg->logfile, "syslog")) // system-logfile
+	if (cfg->logtosyslog) // system-logfile
 #endif
 		syslog(LOG_INFO, "%s", txt);
 
@@ -220,7 +215,7 @@ void cs_log(const char *fmt,...)
 
 void cs_close_log(void)
 {
-	if (!strcmp(cfg->logfile, "stdout") || (!strcmp(cfg->logfile, "syslog")) || !fp) return;
+	if (!fp) return;
 	fclose(fp);
 	fp=(FILE *)0;
 }

@@ -1047,6 +1047,8 @@ struct s_config
 	char		*usrfile;
 	char		*cwlogdir;
 	char		*logfile;
+	uint8	logtostdout;
+	uint8 logtosyslog;
 	int		disablelog;
 	int		disableuserfile;
 	int		usrfileflag;
@@ -1440,6 +1442,7 @@ extern char *mk_t_aeskeys(struct s_reader *rdr);
 extern char *mk_t_newcamd_port();
 extern char *mk_t_nano(struct s_reader *rdr, uchar flag);
 extern char *mk_t_service( uint64 sidtabok, uint64 sidtabno);
+extern char *mk_t_logfile();
 
 //Todo #ifdef CCCAM
 extern int init_provid();

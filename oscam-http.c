@@ -99,11 +99,13 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 	tpl_printf(vars, TPLADD, "NETPRIO", "%ld", cfg->netprio);
 
 
-	if (cfg->usrfile != NULL) 		tpl_addVar(vars, TPLADD, "USERFILE", cfg->usrfile);
-	if (cfg->disableuserfile == 1)	tpl_addVar(vars, TPLADD, "DISABLEUSERFILECHECKED", "selected");
-	if(cfg->usrfileflag == 1) 		tpl_addVar(vars, TPLADD, "USERFILEFLAGCHECKED", "selected");
+	if (cfg->usrfile != NULL) tpl_addVar(vars, TPLADD, "USERFILE", cfg->usrfile);
+	if (cfg->disableuserfile == 1) tpl_addVar(vars, TPLADD, "DISABLEUSERFILECHECKED", "selected");
+	if(cfg->usrfileflag == 1) tpl_addVar(vars, TPLADD, "USERFILEFLAGCHECKED", "selected");
 
-	if (cfg->logfile != NULL) 		tpl_addVar(vars, TPLADD, "LOGFILE", cfg->logfile);
+	char *value = mk_t_logfile();
+	tpl_addVar(vars, TPLADD, "LOGFILE", value);
+	free(value);
 	if(cfg->disablelog == 1) 		tpl_addVar(vars, TPLADD, "DISABLELOGCHECKED", "selected");
 	tpl_printf(vars, TPLADD, "MAXLOGSIZE", "%d", cfg->max_log_size);
 

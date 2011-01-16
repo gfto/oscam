@@ -578,6 +578,8 @@ void *cs_malloc(void *result, size_t size, int quiterror){
 	if(*tmp == NULL){
 		cs_log("Couldn't allocate memory (errno=%d)!", errno);
 		if(quiterror > -1) cs_exit(quiterror);
+	} else {
+		memset(*tmp, 0, size);
 	}
 	return *tmp;
 }
