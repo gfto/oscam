@@ -1747,13 +1747,12 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 	azbox_send_dcw(client, er);
 	return;
 #endif
-	int i;
+	int i,j;
 
 	for (i=0;i<MAX_DEMUX;i++) {
 		if (demux[i].program_number==er->srvid) {
 			demux[i].rdr=er->selected_reader;
 
-			int j=0;
 			for (j=0; j<demux[i].ECMpidcount; j++)
 				if (demux[i].ECMpids[j].ECM_PID == er->pid)
 						break;
@@ -1761,13 +1760,13 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 
 			if (er->rc < E_NOTFOUND && demux[i].pidindex==-1 && er->caid!=0) {
 				if (cfg->dvbapi_requestmode == 1) {
-					int j=0;
-					for (j=0; j<MAX_FILTER; j++) {
-						if (demux[i].demux_fd[j].fd > 0) {
-							if (demux[i].demux_fd[j].pid == er->pid)
-								demux[i].demux_fd[j].count=0;
+					int o=0;
+					for (o=0; o<MAX_FILTER; o++) {
+						if (demux[i].demux_fd[o].fd > 0) {
+							if (demux[i].demux_fd[o].pid == er->pid)
+								demux[i].demux_fd[o].count=0;
 							else
-								dvbapi_stop_filternum(i, j);
+								dvbapi_stop_filternum(i, o);
 						}
 					}
 					demux[i].curindex=j;	
