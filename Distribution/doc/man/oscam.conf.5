@@ -19,9 +19,9 @@ bind service to specified IP address, default:all
 value to delay cached requests, default:0
 .RE
 .PP
-\fBlogfile\fP = \fBfilename\fP|\fB/dev/null\fP|\fB/dev/tty\fP|\fBsyslog\fP
+\fBlogfile\fP = \fBfilename\fP[\fB;/dev/null\fP][\fB;/dev/tty\fP][\fB;syslog\fP]
 .RS 3n
-logging target, default: /var/log/oscam.log
+logging targets, default: /var/log/oscam.log
 .RE
 .PP
 \fBdisablelog\fP = \fB0\fP|\fB1\fP
