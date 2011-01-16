@@ -238,7 +238,7 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 	int in=0;
 
 	if (reader->crdr.active==1 && reader->crdr.get_status) {
-		reader->crdr.get_status(reader, &in);
+		call(reader->crdr.get_status(reader, &in));
 
 		if (in)
 			*card = TRUE;
@@ -318,7 +318,7 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 		ATR_InitFromArray(atr, reader->atr, ATR_MAX_SIZE);
 	}
 	else {
-		if (reader->crdr.active && reader->crdr.activate) {
+		if (reader->crdr.active==1 && reader->crdr.activate) {
 			call(reader->crdr.activate(reader, atr));
 		} else {
 

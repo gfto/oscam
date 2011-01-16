@@ -350,6 +350,7 @@ void cardreader_stapi(struct s_cardreader *crdr)
 	crdr->close		= stapi_close;
 	crdr->set_protocol	= stapi_setprotocol;
 	crdr->write_settings = stapi_writesettings;
+	crdr->typ		= R_INTERNAL;
 }
 #endif
 
@@ -364,5 +365,6 @@ void cardreader_mouse(struct s_cardreader *crdr)
 	crdr->close		= Phoenix_Close;
 	crdr->set_parity	= IO_Serial_SetParity;
 	crdr->set_baudrate	= Phoenix_SetBaudrate;
+	crdr->typ		= R_MOUSE;
 	crdr->flush=1;
 }

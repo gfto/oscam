@@ -513,6 +513,7 @@ struct s_cardreader
 	int	(*set_protocol)(struct s_reader*, unsigned char * params, unsigned *length, uint len_request);
 	int	(*set_baudrate)(struct s_reader*, ulong baud); //set only for readers which need baudrate setting and timings need to be guarded by OSCam
 	int	flush;
+	int	typ; //fixme: workaround, remove when all old code is converted
 };
 
 struct s_cardsystem

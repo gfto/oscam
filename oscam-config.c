@@ -3286,7 +3286,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			if (!strcmp(value, cardreader[i].desc)) {
 				rdr->crdr = cardreader[i];
 				rdr->crdr.active = 1;
-				rdr->typ = R_MOUSE; //FIXME
+				rdr->typ = cardreader[i].typ; //FIXME
 				return;
 			}
 		}
