@@ -2191,6 +2191,7 @@ int write_server()
 	struct s_reader *rdr;
 	for (rdr=first_reader; rdr ; rdr=rdr->next) {
 		if ( rdr->label[0] && !rdr->deleted) {
+			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
 			fprintf(f,"[reader]\n");
 
 			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", rdr->label);
@@ -2204,6 +2205,8 @@ int write_server()
 				fprintf(f, ",%d", rdr->r_port);
 			if (rdr->l_port)
 				fprintf(f, ",%d", rdr->l_port);
+			if (isphysical && rdr->slot)
+				fprintf(f, ":%d", rdr->slot);
 			fprintf(f, "\n");
 
 #ifdef LIBUSB
@@ -2220,7 +2223,6 @@ int write_server()
 				fprintf(f, "\n");
 			}
 
-			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
 			if (rdr->r_usr[0] && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", rdr->r_usr);
 

@@ -1618,7 +1618,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		//clear for next client
 		expired = ""; classname = "offline"; status = "offline";
 		isonline = 0;
-		tpl_addVar(vars, TPLADD, "CWOK", "");
+		/*tpl_addVar(vars, TPLADD, "CWOK", "");
 		tpl_addVar(vars, TPLADD, "CWNOK", "");
 		tpl_addVar(vars, TPLADD, "CWIGN", "");
 		tpl_addVar(vars, TPLADD, "CWTOUT", "");
@@ -1630,7 +1630,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		tpl_addVar(vars, TPLADD, "EMMOK","");
 		tpl_addVar(vars, TPLADD, "EMMNOK","");
 		tpl_addVar(vars, TPLADD, "CLIENTPROTO","");
-		tpl_addVar(vars, TPLADD, "LASTCHANNEL", "");
+		tpl_addVar(vars, TPLADD, "LASTCHANNEL", "");*/
 
 		if(account->expirationdate && account->expirationdate<time(NULL)) {
 			expired = " (expired)";
@@ -1639,13 +1639,13 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		if(account->disabled != 0) {
 			expired = " (disabled)";
 			classname = "disabled";
-			tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
-			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "enable this account");
-			tpl_addVar(vars, TPLADD, "SWITCH", "enable");
+			tpl_addVar(vars, TPLADDONCE, "SWITCHICO", "image?i=ICENA");
+			tpl_addVar(vars, TPLADDONCE, "SWITCHTITLE", "enable this account");
+			tpl_addVar(vars, TPLADDONCE, "SWITCH", "enable");
 		} else {
-			tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
-			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "disable this account");
-			tpl_addVar(vars, TPLADD, "SWITCH", "disable");
+			tpl_addVar(vars, TPLADDONCE, "SWITCHICO", "image?i=ICDIS");
+			tpl_addVar(vars, TPLADDONCE, "SWITCHTITLE", "disable this account");
+			tpl_addVar(vars, TPLADDONCE, "SWITCH", "disable");
 		}
 
 		int lastresponsetm = 0;
@@ -1666,28 +1666,28 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 				}
 			}
 		}
-		tpl_printf(vars, TPLADD, "CWOK", "%d", account->cwfound);
-		tpl_printf(vars, TPLADD, "CWNOK", "%d", account->cwnot);
-		tpl_printf(vars, TPLADD, "CWIGN", "%d", account->cwignored);
-		tpl_printf(vars, TPLADD, "CWTOUT", "%d", account->cwtout);
-		tpl_printf(vars, TPLADD, "CWCACHE", "%d", account->cwcache);
-		tpl_printf(vars, TPLADD, "CWTUN", "%d", account->cwtun);
-		tpl_printf(vars, TPLADD, "EMMOK", "%d", account->emmok);
-		tpl_printf(vars, TPLADD, "EMMNOK", "%d", account->emmnok);
+		tpl_printf(vars, TPLADDONCE, "CWOK", "%d", account->cwfound);
+		tpl_printf(vars, TPLADDONCE, "CWNOK", "%d", account->cwnot);
+		tpl_printf(vars, TPLADDONCE, "CWIGN", "%d", account->cwignored);
+		tpl_printf(vars, TPLADDONCE, "CWTOUT", "%d", account->cwtout);
+		tpl_printf(vars, TPLADDONCE, "CWCACHE", "%d", account->cwcache);
+		tpl_printf(vars, TPLADDONCE, "CWTUN", "%d", account->cwtun);
+		tpl_printf(vars, TPLADDONCE, "EMMOK", "%d", account->emmok);
+		tpl_printf(vars, TPLADDONCE, "EMMNOK", "%d", account->emmnok);
 
 		if ( isonline > 0 || ((isonline == 0) && (!cfg->http_hide_idle_clients))) {
-			tpl_addVar(vars, TPLADD, "LASTCHANNEL", lastchan);
-			tpl_printf(vars, TPLADD, "CWLASTRESPONSET", "%d", lastresponsetm);
-			tpl_addVar(vars, TPLADD, "CLIENTPROTO", proto);
-			tpl_addVar(vars, TPLADD, "IDLESECS", sec2timeformat(vars, isec));
+			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
+			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
+			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
+			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
 		}
 
-		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
-		tpl_addVar(vars, TPLADD, "USER", xml_encode(vars, account->usr));
-		tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, account->usr));
-		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description));
-		tpl_addVar(vars, TPLADD, "STATUS", status);
-		tpl_addVar(vars, TPLADD, "EXPIRED", expired);
+		tpl_addVar(vars, TPLADDONCE, "CLASSNAME", classname);
+		tpl_addVar(vars, TPLADDONCE, "USER", xml_encode(vars, account->usr));
+		tpl_addVar(vars, TPLADDONCE, "USERENC", urlencode(vars, account->usr));
+		tpl_addVar(vars, TPLADDONCE, "DESCRIPTION", xml_encode(vars, account->description));
+		tpl_addVar(vars, TPLADDONCE, "STATUS", status);
+		tpl_addVar(vars, TPLADDONCE, "EXPIRED", expired);
 
 		tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT"));
 		isec = 0;
