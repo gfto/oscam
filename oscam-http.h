@@ -1295,7 +1295,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input name=\"part\" type=\"hidden\" value=\"loadbalancer\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Loadbalancer Config</TH></TR>\n\
+			<TR><TH COLSPAN=\"2\">Edit Loadbalancer Config</TH></TR>\n\
 			<TR><TD>Loadbalance Mode:</TD>\n\
 				<TD>\n\
 					<select name=\"lb_mode\">\n\
@@ -1317,6 +1317,18 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>Hours to cleanup older than:</TD><TD><input name=\"lb_stat_cleanup\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBCLEANUP##\"></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
+	</form>\n\
+	<BR><BR>\
+	<form action=\"config.html\" method=\"get\">\n\
+	<input name=\"part\" type=\"hidden\" value=\"loadbalancer\">\n\
+	<TABLE class=\"config\" cellspacing=\"0\">\n\
+		<TR><TH COLSPAN=\"3\">Control</TH></TR>\n\
+		<TR>\n\
+			<TD STYLE=\"text-align:center;\"><input type=\"submit\" name=\"button\" value=\"Load Stats\" ##BTNDISABLED##></TD>\n\
+			<TD STYLE=\"text-align:center;\"><input type=\"submit\" name=\"button\" value=\"Save Stats\" ##BTNDISABLED##></TD>\n\
+			<TD STYLE=\"text-align:center;\"><input type=\"submit\" name=\"button\" value=\"Clear Stats\" ##BTNDISABLED##></TD>\n\
+		</TR>\n\
+	</TABLE>\n\
 	</form>\n\
 ##TPLFOOTER##"
 

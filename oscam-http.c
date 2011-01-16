@@ -167,6 +167,23 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 
 char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
 	int i;
+
+	if (strcmp(getParam(params, "button"), "Load Stats") == 0) {
+		clear_all_stat();
+		load_stat_from_file();
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Stats loades from file</B><BR><BR>");
+	}
+
+	if (strcmp(getParam(params, "button"), "Save Stats") == 0) {
+		save_stat_to_file();
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Stats saved to file</B><BR><BR>");
+	}
+
+	if (strcmp(getParam(params, "button"), "Clear Stats") == 0) {
+		clear_all_stat();
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Stats cleared completly</B><BR><BR>");
+	}
+
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 
 		memset(cfg->ser_device, 0, sizeof(cfg->ser_device));
