@@ -468,7 +468,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD align=\"center\">##CSIDX##</TD>\n\
 			<TD align=\"center\">##CLIENTTYPE##</TD>\n\
 			<TD align=\"center\">##CLIENTCNR##</TD>\n\
-			<TD><SPAN TITLE\"##CLIENTDESCRIPTION##\">##CLIENTUSER##</SPAN></TD>\n\
+			<TD><SPAN TITLE=\"##CLIENTDESCRIPTION##\">##CLIENTUSER##</SPAN></TD>\n\
 			<TD align=\"center\">##CLIENTCAU##</TD>\n\
 			<TD align=\"center\">##CLIENTCRYPTED##</TD>\n\
 			<TD align=\"center\">##CLIENTIP##</TD>\n\
