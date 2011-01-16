@@ -332,7 +332,7 @@ void dvbapi_start_emm_filter(int demux_index) {
 	if (demux[demux_index].rdr->card_system==0)
 		demux[demux_index].rdr->card_system=get_cardsystem(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
 
-	uchar dmx_filter[256];
+	uchar dmx_filter[342]; // 10 filter + 2 byte header
 	memset(dmx_filter, 0, sizeof(dmx_filter));
 
 	get_emm_filter(demux[demux_index].rdr, dmx_filter);
@@ -341,7 +341,7 @@ void dvbapi_start_emm_filter(int demux_index) {
 
 	cs_debug_mask(D_DVBAPI, "start %d emm filter for %s", filter_count, demux[demux_index].rdr->label);
 
-	for (j=1;j<=filter_count && j < 8;j++) {
+	for (j=1;j<=filter_count && j <= 10;j++) {
 		int startpos=2+(34*(j-1));
 
 		if (dmx_filter[startpos+1] != 0x00)
@@ -1825,6 +1825,12 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 					break;
 #endif
 				default:
+					if (cfg->dvbapi_boxtype == BOXTYPE_NEUMO) {
+						int idx=0;
+						sscanf(demux[i].pmt_file, "pmt%d.tmp", &idx);
+						dvbapi_write_cw(i, er->cw, idx);
+						break;
+					}
 					dvbapi_write_cw(i, er->cw, demux[i].ECMpids[j].index-1);
 					break;
 			}

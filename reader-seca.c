@@ -271,7 +271,7 @@ static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		filter[startpos+0]    = 0x84;
 		filter[startpos+0+16] = 0xFF;
 		
-		memcpy(filter+startpos+1, &rdr->prid[prov][1], 2);
+		memcpy(filter+startpos+1, &rdr->prid[prov][2], 2);
 		memset(filter+startpos+1+16, 0xFF, 2);
 
 		memcpy(filter+startpos+3, &rdr->sa[prov], 3);
@@ -279,7 +279,7 @@ static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 
 		numfilter++;
 		startpos+=32;
-		if (startpos>221) {
+		if (numfilter>=10) {
 			cs_log("seca_get_emm_filter: could not start all emm filter");
 			break;
 		}
