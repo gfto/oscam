@@ -757,7 +757,12 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 				rdr->emmskipped[i] = 0;
 				rdr->emmblocked[i] = 0;
 			}
-			//write_to_pipe(client[reader[readeridx].cs_idx)].fd_m2c, PIP_ID_CIN, dummy, 1); // do not work for whatever reason
+			/*
+			if( rdr->enable == 1 && rdr->client->typ == 'r' && rdr->client->fd_m2c ) {
+				uchar dummy[1]={0x00};
+				write_to_pipe(rdr->client->fd_m2c, PIP_ID_CIN, dummy, 1);
+			}*/
+
 			refresh_oscam(REFR_READERS, in); // refresh all reader because  write pipe seams not work from here
 		}
 	}
@@ -1711,7 +1716,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 
 		tpl_addVar(vars, TPLADDONCE, "CLASSNAME", classname);
 		tpl_addVar(vars, TPLADDONCE, "USER", xml_encode(vars, account->usr));
-		tpl_addVar(vars, TPLADDONCE, "USERENC", urlencode(vars, account->usr));
+		tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, account->usr));
 		tpl_addVar(vars, TPLADDONCE, "DESCRIPTION", xml_encode(vars, account->description));
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPENDONCE, "STATUS", expired);
@@ -1720,12 +1725,12 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 
 	}
 
-	tpl_printf(vars, TPLAPPEND, "TOTAL_CWOK", "%ld", first_client->cwfound);
-	tpl_printf(vars, TPLAPPEND, "TOTAL_CWNOK", "%ld", first_client->cwnot);
-	tpl_printf(vars, TPLAPPEND, "TOTAL_CWIGN", "%ld", first_client->cwignored);
-	tpl_printf(vars, TPLAPPEND, "TOTAL_CWTOUT", "%ld", first_client->cwtout);
-	tpl_printf(vars, TPLAPPEND, "TOTAL_CWCACHE", "%ld", first_client->cwcache);
-	tpl_printf(vars, TPLAPPEND, "TOTAL_CWTUN", "%ld", first_client->cwtun);
+	tpl_printf(vars, TPLADD, "TOTAL_CWOK", "%ld", first_client->cwfound);
+	tpl_printf(vars, TPLADD, "TOTAL_CWNOK", "%ld", first_client->cwnot);
+	tpl_printf(vars, TPLADD, "TOTAL_CWIGN", "%ld", first_client->cwignored);
+	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", "%ld", first_client->cwtout);
+	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%ld", first_client->cwcache);
+	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%ld", first_client->cwtun);
 	
 	return tpl_getTpl(vars, "USERCONFIGLIST");
 }
