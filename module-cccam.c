@@ -1519,6 +1519,7 @@ void cc_free(struct s_client *cl) {
 	ll_destroy(cc->current_cards);
 	if (cc->extended_ecm_idx)
 		free_extended_ecm_idx(cc);
+	ll_destroy_data(cc->extended_ecm_idx);
 	pthread_mutex_destroy(&cc->lock);
 	pthread_mutex_destroy(&cc->ecm_busy);
 	pthread_mutex_destroy(&cc->cards_busy);

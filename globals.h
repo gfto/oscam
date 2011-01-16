@@ -1577,5 +1577,6 @@ extern void http_srv();
 // oscam-garbage
 extern void add_garbage(void *data);
 extern void start_garbage_collector();
+extern void stop_garbage_collector();
 
 #endif  // CS_GLOBALS

@@ -1,4 +1,4 @@
-//FIXME Not checked on threadsafety yet; after checking please remove this line
+  //FIXME Not checked on threadsafety yet; after checking please remove this line
 #define CS_CORE
 #include "globals.h"
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
@@ -552,8 +552,10 @@ static void cleanup_thread(struct s_client *cl)
 	else
 		prev->next = cl2->next; //remove client from list
 
-	if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
+        if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
 		ph[cl->ctyp].cleanup(cl);
+        else if (cl->reader && cl->reader->ph.cleanup)
+                cl->reader->ph.cleanup(cl);
 
 	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
 	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
@@ -566,15 +568,17 @@ static void cleanup_thread(struct s_client *cl)
 		// Maybe we also need a "nullclose" mechanism here...
 		ICC_Async_Close(cl->reader);
 	}
-	if (cl->reader)
+	if (cl->reader) {
+	        ll_destroy_data(cl->reader->lb_stat);
+	        cl->reader->lb_stat = NULL;
 		cl->reader->client = NULL;
-	cl->reader = NULL;
-	
+		cl->reader = NULL;
+        }
 	cleanup_ecmtasks(cl);
 	add_garbage(cl->emmcache);
 	add_garbage(cl->req);
 	add_garbage(cl->cc);
-	NULLFREE(cl->serialdata);
+	add_garbage(cl->serialdata);
 	add_garbage(cl);
 
 	//decrease cwcache
@@ -1095,6 +1099,7 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 	if (pthread_equal(cl->thread, pthread_self())) return; //cant kill yourself
 
 	pthread_cancel(cl->thread);
+	cs_sleepms(30); //some sleep before cleanup! sometimes thread kill cancel needs some time!
 	cs_log("thread %8X killed!", cl->thread);
 	cleanup_thread(cl); //FIXME what about when cancellation was not granted immediately?
 	return;
@@ -3467,16 +3472,24 @@ if (pthread_key_create(&getclient, NULL)) {
 
         //cleanup clients:
         struct s_client *cl;
-        for (cl=first_client->next; cl; cl=cl->next) { //find last
+        for (cl=first_client->next; cl; cl=cl->next) { 
                 if (cl->typ=='c')
                         kill_thread(cl);
         }
         
-        //cleanup readers and all others, reverse order:
-        while (first_client->next) {
-                for (cl=first_client->next; cl->next; cl=cl->next) ; //find last
-                kill_thread(cl);
+        //cleanup readers:
+        struct s_reader *rdr;
+        for (rdr=first_reader; rdr ; rdr=rdr->next) {
+                cs_log("killing reader %s", rdr->label);
+                kill_thread(rdr->client);
         }
+                                                                
+        //cleaning all others:
+        while (first_client->next) {
+                kill_thread(first_client->next);
+        }
+
+        stop_garbage_collector();
         
 	return exit_oscam;
 }

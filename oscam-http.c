@@ -716,15 +716,8 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 				} else {
 					if (rdr->enable) {
 						rdr->enable = 0;
-						if (rdr->client) {
-							cs_sleepms(200);
-							if(rdr->client->pfd) nullclose(&rdr->client->pfd); //Closing Network socket
-							if(rdr->client->fd_m2c_c) nullclose(&rdr->client->fd_m2c_c); //Closing client read fd
-							if(rdr->client->fd_m2c)  nullclose(&rdr->client->fd_m2c); //Closing client read fd
-					        	               
-							cs_sleepms(200);
+						if (rdr->client)
 							kill_thread(rdr->client);
-						}
 					}
 				}
 				if(write_server() != 0)

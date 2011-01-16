@@ -99,6 +99,8 @@ void load_stat_from_file()
 			cs_debug_mask(D_TRACE, "loadbalancer: statistics ERROR  %s rc=%d i=%d", buf, stat->rc, i);
 			free(stat);
 		}
+		else
+			free(stat);
 	} while(i!=EOF && i>0);
 	fclose(file);
 	cs_debug_mask(D_TRACE, "loadbalancer: statistic loaded %d records", count);
