@@ -40,6 +40,24 @@ struct s_reader *get_reader_by_label(char *lbl){
 	return NULL;
 }
 
+struct s_client *get_client_by_name(char *name) {
+	struct s_client *cl;
+	for (cl = first_client; cl ; cl = cl->next) {
+		if (strcmp(name, cl->account->usr) == 0)
+			return cl;
+	}
+	return NULL;
+}
+
+struct s_auth *get_account_by_name(char *name) {
+	struct s_auth *account;
+	for (account=cfg->account; (account); account=account->next) {
+		if(strcmp(name, account->usr) == 0)
+			return account;
+	}
+	return NULL;
+}
+
 void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 
 	switch (refreshtype) {
@@ -1262,9 +1280,9 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 					tpl_printf(vars, TPLADD, "ECMRC", "%d", stat->rc);
 					tpl_printf(vars, TPLADD, "ECMRCS", "%s", stxt[stat->rc]);
 					if(stat->last_received) {
-					char tbuffer [30];
-					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
-					tpl_addVar(vars, TPLADD, "ECMLAST", tbuffer);
+						char tbuffer [30];
+						strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
+						tpl_addVar(vars, TPLADD, "ECMLAST", tbuffer);
 					} else {
 						tpl_addVar(vars, TPLADD, "ECMLAST", "");
 					}
@@ -1523,8 +1541,7 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
 	struct s_auth *account, *account2;
 	char *user = getParam(params, "user");
-	int found = 0;
-	int hideclient = 10;
+	int found = 0, hideclient = 10;
 
 	if (cfg->mon_hideclient_to > 10)
 	hideclient = cfg->mon_hideclient_to;
@@ -1552,12 +1569,10 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 						found = 1;
 						break;
 					}
-				}while ((account = account->next) && (account->next != NULL));
+				} while ((account = account->next) && (account->next != NULL));
 			}
 
 			if (found > 0) {
-				tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Account has been deleted!</b><BR>");
-
 				if (write_userdb(cfg->account)==0)
 					refresh_oscam(REFR_ACCOUNTS, in);
 				else
@@ -1567,35 +1582,24 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		}
 	}
 
-
-
 	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
-		for (account=cfg->account; (account); account=account->next) {
-			if(strcmp(getParam(params, "user"), account->usr) == 0) {
-				if(strcmp(getParam(params, "action"), "disable") == 0)
+		account = get_account_by_name(getParam(params, "user"));
+		if (account) {
+			if(strcmp(getParam(params, "action"), "disable") == 0)
 				account->disabled = 1;
-				else
+			else
 				account->disabled = 0;
-				found = 1;
-			}
-		}
-
-		if (found > 0) {
-			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Account has been switched!</b><BR>");
-			if (write_userdb(cfg->account)==0)
+			if (write_userdb(cfg->account) == 0)
 				refresh_oscam(REFR_ACCOUNTS, in);
-		} else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
+		} else {
+			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
+		}
 	}
-
 
 	if (strcmp(getParam(params, "action"), "resetstats") == 0) {
-		for (account=cfg->account; (account); account=account->next) {
-			if(strcmp(getParam(params, "user"), account->usr) == 0) {
-				clear_account_stats(account);
-			}
-		}
+		account = get_account_by_name(getParam(params, "user"));
+		if (account) clear_account_stats(account);
 	}
-
 
 	if (strcmp(getParam(params, "action"), "resetserverstats") == 0) {
 		clear_system_stats();
@@ -1605,40 +1609,35 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		clear_all_account_stats();
 	}
 
+	if ((strcmp(getParam(params, "part"), "adduser") == 0) && (!cfg->http_readonly)) {
+		tpl_addVar(vars, TPLAPPEND, "NEWUSERFORM", tpl_getTpl(vars, "ADDNEWUSER"));
+	} else {
+		if(cfg->http_refresh > 0) {
+			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg->http_refresh);
+			tpl_addVar(vars, TPLADD, "REFRESHURL", "userconfig.html");
+			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+		}
+	}
+
 	/* List accounts*/
-	char *status = "offline";
-	char *expired = "";
-	char *classname="offline";
-	char *lastchan="&nbsp;";
+	char *status, *expired, *classname, *lastchan;
 	time_t now = time((time_t)0);
 	int isec = 0, isonline = 0;
 
-	//for (account=cfg->account; (account); account=account->next) {
 	for (account=cfg->account; (account); account=account->next) {
 		//clear for next client
-		expired = ""; classname = "offline"; status = "offline";
-		isonline = 0;
-		/*tpl_addVar(vars, TPLADD, "CWOK", "");
-		tpl_addVar(vars, TPLADD, "CWNOK", "");
-		tpl_addVar(vars, TPLADD, "CWIGN", "");
-		tpl_addVar(vars, TPLADD, "CWTOUT", "");
-		tpl_addVar(vars, TPLADD, "CWCACHE", "");
-		tpl_addVar(vars, TPLADD, "CWTUN", "");
-		tpl_addVar(vars, TPLADD, "CLIENTPROTO","");
-		tpl_addVar(vars, TPLADD, "IDLESECS","");
-		tpl_addVar(vars, TPLADD, "CWLASTRESPONSET","");
-		tpl_addVar(vars, TPLADD, "EMMOK","");
-		tpl_addVar(vars, TPLADD, "EMMNOK","");
-		tpl_addVar(vars, TPLADD, "CLIENTPROTO","");
-		tpl_addVar(vars, TPLADD, "LASTCHANNEL", "");*/
+		status = "offline"; lastchan = "&nbsp;", expired = ""; classname = "offline";
+		isonline = 0; isec = 0;
 
-		if(account->expirationdate && account->expirationdate<time(NULL)) {
+		if(account->expirationdate && account->expirationdate < time(NULL)) {
 			expired = " (expired)";
 			classname = "expired";
+		} else {
+			expired = "";
 		}
+
 		if(account->disabled != 0) {
-			expired = " (disabled)";
-			classname = "disabled";
+			expired = " (disabled)"; classname = "disabled";
 			tpl_addVar(vars, TPLADDONCE, "SWITCHICO", "image?i=ICENA");
 			tpl_addVar(vars, TPLADDONCE, "SWITCHTITLE", "enable this account");
 			tpl_addVar(vars, TPLADDONCE, "SWITCH", "enable");
@@ -1652,20 +1651,19 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		char *proto = "";
 
 		//search account in active clients
-		struct s_client *cl;
-		for (cl=first_client; cl ; cl=cl->next) {
-			if (cl->account && !strcmp(cl->account->usr, account->usr)) {
-				//set client to offline depending on hideclient_to
-				if ((now - cl->lastecm) < hideclient) {
-					status = "<b>online</b>"; classname="online";
-					isonline = 1;
-					proto = monitor_get_proto(cl);
-					lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
-					lastresponsetm = cl->cwlastresptime;
-					isec = now - cl->last;
-				}
+		struct s_client *cl = get_client_by_name(account->usr);
+		if (cl) {
+			//set client to offline depending on hideclient_to
+			if ((now - cl->lastecm) < hideclient) {
+				status = "<b>online</b>"; classname = "online";
+				isonline = 1;
+				proto = monitor_get_proto(cl);
+				lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
+				lastresponsetm = cl->cwlastresptime;
+				isec = now - cl->last;
 			}
 		}
+
 		tpl_printf(vars, TPLADDONCE, "CWOK", "%d", account->cwfound);
 		tpl_printf(vars, TPLADDONCE, "CWNOK", "%d", account->cwnot);
 		tpl_printf(vars, TPLADDONCE, "CWIGN", "%d", account->cwignored);
@@ -1675,7 +1673,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		tpl_printf(vars, TPLADDONCE, "EMMOK", "%d", account->emmok);
 		tpl_printf(vars, TPLADDONCE, "EMMNOK", "%d", account->emmnok);
 
-		if ( isonline > 0 || ((isonline == 0) && (!cfg->http_hide_idle_clients))) {
+		if ( isonline > 0 || !cfg->http_hide_idle_clients) {
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
@@ -1686,23 +1684,13 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		tpl_addVar(vars, TPLADDONCE, "USER", xml_encode(vars, account->usr));
 		tpl_addVar(vars, TPLADDONCE, "USERENC", urlencode(vars, account->usr));
 		tpl_addVar(vars, TPLADDONCE, "DESCRIPTION", xml_encode(vars, account->description));
-		tpl_addVar(vars, TPLADDONCE, "STATUS", status);
-		tpl_addVar(vars, TPLADDONCE, "EXPIRED", expired);
-
+		tpl_addVar(vars, TPLADD, "STATUS", status);
+		tpl_addVar(vars, TPLAPPENDONCE, "STATUS", expired);
+		// append row to table template
 		tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT"));
-		isec = 0;
-		lastchan = "&nbsp;";
+
 	}
 
-	if ((strcmp(getParam(params, "part"), "adduser") == 0) && (!cfg->http_readonly)) {
-		tpl_addVar(vars, TPLAPPEND, "NEWUSERFORM", tpl_getTpl(vars, "ADDNEWUSER"));
-	} else {
-		if(cfg->http_refresh > 0) {
-			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg->http_refresh);
-			tpl_addVar(vars, TPLADD, "REFRESHURL", "userconfig.html");
-			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-		}
-	}
 	tpl_printf(vars, TPLAPPEND, "TOTAL_CWOK", "%ld", first_client->cwfound);
 	tpl_printf(vars, TPLAPPEND, "TOTAL_CWNOK", "%ld", first_client->cwnot);
 	tpl_printf(vars, TPLAPPEND, "TOTAL_CWIGN", "%ld", first_client->cwignored);
