@@ -53,7 +53,6 @@ unsigned long IgnoreList[CS_MAXIGNORE];
 #endif
 
 struct  s_config  *cfg;
-int rdr_count;
 #ifdef CS_LOGHISTORY
 int     loghistidx;  // ptr to current entry
 char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
@@ -535,7 +534,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
         ECM_REQUEST *ecm;
         for (i=0; i<n; i++) {
                 ecm = &cl->ecmtask[i];
-                ll_destroy(ecm->matching_rdr2); //no need to garbage this
+                ll_destroy(ecm->matching_rdr); //no need to garbage this
         }
         add_garbage(cl->ecmtask);
         cl->ecmtask = NULL;
@@ -1184,14 +1183,10 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 
 static void init_cardreader() {
 	struct s_reader *rdr;
-	int new_rdr_count = 0;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) {
-	        new_rdr_count++;
+	for (rdr=first_reader; rdr ; rdr=rdr->next)
 		if (rdr->device[0])
 			restart_cardreader(rdr, 0);
-        }
-        rdr_count = new_rdr_count;
-        load_stat_from_file();
+	load_stat_from_file();
 }
 
 static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr_t ip)
@@ -1785,7 +1780,7 @@ ECM_REQUEST *get_ecmtask()
 		cs_log("WARNING: ecm pending table overflow !");
 	else
 	{
-                LLIST *save = er->matching_rdr2;                
+                LLIST *save = er->matching_rdr;                
 		memset(er, 0, sizeof(ECM_REQUEST));
 		er->rc=E_UNHANDLED;
 		er->cpti=n;
@@ -1793,10 +1788,10 @@ ECM_REQUEST *get_ecmtask()
 		cs_ftime(&er->tps);
 		if (save) {
 		  ll_clear(save);
-		  er->matching_rdr2 = save;
+		  er->matching_rdr = save;
                 }
                 else
-                  er->matching_rdr2 = ll_create_nolock();
+                  er->matching_rdr = ll_create_nolock();
 	}
 	
 	
@@ -2063,7 +2058,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 	} else { // not found (from ONE of the readers !)
 		struct s_reader *rdr;
 		if (er->selected_reader) {
-			LL_ITER *itr = ll_iter_create(er->matching_rdr2);
+			LL_ITER *itr = ll_iter_create(er->matching_rdr);
 			while ((rdr = ll_iter_next(itr)))
 				if (rdr == er->selected_reader) {
 					ll_iter_remove(itr);
@@ -2073,7 +2068,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 		}
 
 		if (ert)
-			if (ll_has_elements(ert->matching_rdr2)) {//we have still another chance
+			if (ll_has_elements(ert->matching_rdr)) {//we have still another chance
 				ert->selected_reader=NULL;
 				ert=NULL;
 			}
@@ -2254,7 +2249,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 	}
 
 	LL_NODE *ptr;
-	for (ptr = er->matching_rdr2->initial; ptr && (!flag && (ptr != er->fallback)); ptr = ptr->nxt) {
+	for (ptr = er->matching_rdr->initial; ptr && (!flag && (ptr != er->fallback)); ptr = ptr->nxt) {
 		rdr = (struct s_reader*)ptr->obj;
 
 		int status = 0;
@@ -2482,24 +2477,19 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		for (rdr=first_reader; rdr ; rdr=rdr->next) {
 			if (matching_reader(er, rdr)) {
 				if (rdr->fallback) {
-//cs_log("Adding fallback reader %s to list", rdr->label);
 					if (er->fallback == NULL) //first fallbackreader to be added
-						er->fallback=ll_append_nolock(er->matching_rdr2, rdr);
+						er->fallback=ll_append_nolock(er->matching_rdr, rdr);
 					else
-						ll_append_nolock(er->matching_rdr2, rdr);
+						ll_append_nolock(er->matching_rdr, rdr);
 					
 				}
 				else {
-					ll_insert_at_nolock(er->matching_rdr2, rdr, 0);
-//					cs_log("Adding primary reader %s to list", rdr->label);
+					ll_insert_at_nolock(er->matching_rdr, rdr, 0);
 				}
-//				print_matches(er);
 				if (cfg->lb_mode || !rdr->fallback)
 					er->reader_avail++;
 			}
 		}
-//cs_log("DINGO we have made up the lists, now checking:"); //FIXME remove when migrated
-//print_matches(er);
 		//we have to go through matching_reader() to check services, then check ecm-cache:
 		if (er->reader_avail && check_and_store_ecmcache(er, client->grp))
 			return; //Found in ecmcache - answer by distribute ecm
@@ -2511,17 +2501,17 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 
 		LL_NODE *ptr;
-		for (ptr = er->matching_rdr2->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
+		for (ptr = er->matching_rdr->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
 			er->reader_count++;
 
-		if (!ll_has_elements(er->matching_rdr2)) { //no reader -> not found
+		if (!ll_has_elements(er->matching_rdr)) { //no reader -> not found
 				er->rc = E_NOTFOUND;
 				if (!er->rcEx)
 					er->rcEx = E2_GROUP;
 				snprintf(er->msglog, MSGLOGSIZE, "no matching reader");
 		}
 		else
-			if (er->matching_rdr2->initial == er->fallback) { //fallbacks only
+			if (er->matching_rdr->initial == er->fallback) { //fallbacks only
 					er->fallback = NULL; //switch them
 			}
 	}
@@ -2734,7 +2724,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			if (!er->stage && er->rc >= E_UNHANDLED) {
 
 				LL_NODE *ptr;
-				for (ptr = er->matching_rdr2->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
+				for (ptr = er->matching_rdr->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
 					if (!cfg->preferlocalcards || 
 								(cfg->preferlocalcards && !er->locals_done && (!(((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK))) || 
 								(cfg->preferlocalcards && er->locals_done && (((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK)))
@@ -2775,7 +2765,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					er->rc = E_TIMEOUT;
 					if (cfg->lb_mode) {
 						LL_NODE *ptr;
-						for (ptr = er->matching_rdr2->initial; ptr ; ptr = ptr->nxt)
+						for (ptr = er->matching_rdr->initial; ptr ; ptr = ptr->nxt)
 							send_reader_stat((struct s_reader *)ptr->obj, er, E_TIMEOUT);
 					}
 					send_dcw(cl, er);

@@ -420,7 +420,7 @@ int get_best_reader(ECM_REQUEST *er)
 //		username(er->client), er->caid, er->prid, er->srvid, rdrs);
 //#endif	
 	
-	LL_ITER *it = ll_iter_create(er->matching_rdr2);
+	LL_ITER *it = ll_iter_create(er->matching_rdr);
 	struct s_reader *rdr;
 	while ((rdr=ll_iter_next(it))) {
  			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
@@ -566,7 +566,7 @@ int get_best_reader(ECM_REQUEST *er)
 	if (!n) //no best reader found? reopen if we have ecm_count>0
 	{
 		cs_debug_mask(D_TRACE, "loadbalancer: NO MATCHING READER FOUND, reopen last valid:");
-		it = ll_iter_create(er->matching_rdr2);
+		it = ll_iter_create(er->matching_rdr);
 		while ((rdr=ll_iter_next(it))) {
         		stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
         		if (stat && stat->ecm_count>0) {
@@ -611,7 +611,7 @@ int get_best_reader(ECM_REQUEST *er)
 	if (reopen) {
 		cs_debug_mask(D_TRACE, "loadbalancer: reader %s reached retrylimit (%dms), reopening other readers", best_rdr->label, best_time);
 	
-		it = ll_iter_create(er->matching_rdr2);
+		it = ll_iter_create(er->matching_rdr);
 		while ((rdr=ll_iter_next(it))) {
 			if (it->cur == fallback) break;
 		
@@ -634,8 +634,8 @@ int get_best_reader(ECM_REQUEST *er)
         }
 
         //Setting return values:
-	ll_destroy(er->matching_rdr2);
-	er->matching_rdr2 = result;
+	ll_destroy(er->matching_rdr);
+	er->matching_rdr = result;
 	er->fallback = fallback;
         
 	if (new_nulltime.time)
