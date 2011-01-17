@@ -50,4 +50,8 @@ void ll_iter_remove_data(LL_ITER *it);          // remove llnode and free llnode
 int ll_count(LLIST *l);                 // return number of items in list
 void *ll_has_elements(LLIST *l);
 
+int ll_contains(LLIST *l, void *obj);
+void ll_remove(LLIST *l, void *obj);
+void ll_remove_data(LLIST *l, void *obj);
+                                                                        
 #endif

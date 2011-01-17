@@ -272,3 +272,36 @@ void *ll_has_elements(LLIST *l) {
   return l->initial->obj;
 }
 
+int ll_contains(LLIST *l, void *obj)
+{
+    LL_ITER *it = ll_iter_create(l);
+    void *data;
+    while ((data=ll_iter_next(it))) {
+      if (data==obj)
+        break;
+    }
+    ll_iter_release(it);
+    return (data==obj);
+}
+
+void ll_remove(LLIST *l, void *obj)
+{
+    LL_ITER *it = ll_iter_create(l);
+    void *data;
+    while ((data=ll_iter_next(it))) {
+      if (data==obj)
+        ll_iter_remove(it);
+    }
+    ll_iter_release(it);
+}
+
+void ll_remove_data(LLIST *l, void *obj)
+{
+    LL_ITER *it = ll_iter_create(l);
+    void *data;
+    while ((data=ll_iter_next(it))) {
+      if (data==obj)
+        ll_iter_remove_data(it);
+    }
+    ll_iter_release(it);
+}

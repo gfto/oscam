@@ -555,8 +555,6 @@ typedef struct ecm_request_t
   ushort        idx;
   ulong         prid;
   struct s_reader *selected_reader;
-  int           rdr_count;
-  uint8         *matching_rdr;
   LLIST         *matching_rdr2; //list of matching readers, should replace *matching_rdr
   LL_NODE       *fallback; // in *matching_rdr2, at position "fallback" the first fallback reader is in the list
   struct s_client *client; //contains pointer to 'c' client while running in 'r' client
