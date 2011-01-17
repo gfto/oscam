@@ -2264,25 +2264,12 @@ void print_matches(ECM_REQUEST *er) //temporary function, will be removed when e
 		cs_log("DINGOREPORT: in list is fallback reader %s", ((struct s_reader*)ptr->obj)->label);
 }
 
-void request_cw(ECM_REQUEST *er, int flag, int reader_types)
+void check_matching_rdr12(ECM_REQUEST *er)
 {
-	int i;
-	if ((reader_types == 0) || (reader_types == 2))
-		er->level=flag;
-//	flag=(flag)?3:1;    // flag specifies with/without fallback-readers
-	struct s_reader *rdr;
-
-	ushort lc=0, *lp;
-	if (cs_dblevel) {
-		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
-			lc^=*lp;
-	}
-
 	//check matching_rdr vs. matching_rdr2, can be removed when migrating
-/*	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
-		if (i>=er->rdr_count)
-			break;
-
+	int i;
+	struct s_reader * rdr;
+	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 		struct s_reader *rdr2;
 		int found = 0;
 		LL_ITER *itr = ll_iter_create(er->matching_rdr2);
@@ -2301,9 +2288,22 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 			cs_log("DINGO: rdr %s NOT in matching_rdr2 list, but matching_rdr[%i]=%i", rdr->label, i, er->matching_rdr[i]);
 			print_matches(er);
 		}
-  }*/
-	//end check matching_rdr vs. matching_rdr2, can be removed when migrating
+  }
+}
 
+void request_cw(ECM_REQUEST *er, int flag, int reader_types)
+{
+	if ((reader_types == 0) || (reader_types == 2))
+		er->level=flag;
+//	flag=(flag)?3:1;    // flag specifies with/without fallback-readers
+	struct s_reader *rdr;
+
+	ushort lc=0, *lp;
+	if (cs_dblevel) {
+		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
+			lc^=*lp;
+	}
+	check_matching_rdr12(er);
 	LL_NODE *ptr;
 	for (ptr = er->matching_rdr2->initial; ptr && (!flag && (ptr != er->fallback)); ptr = ptr->nxt) {
 		rdr = (struct s_reader*)ptr->obj;
@@ -2314,11 +2314,11 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 		//1 = only local cards
 		//2 = only network
 		if ((reader_types == 0) || ((reader_types == 1) && (!(rdr->typ & R_IS_NETWORK))) || ((reader_types == 2) && (rdr->typ & R_IS_NETWORK))) {
-			cs_debug_mask(D_TRACE, "request_cw%i to reader %s ridx=%d fd=%d ecm=%04X", reader_types+1, rdr->label, i, rdr->fd, lc);
+			cs_debug_mask(D_TRACE, "request_cw%i to reader %s fd=%d ecm=%04X", reader_types+1, rdr->label, rdr->fd, lc);
 			status = write_ecm_request(rdr->fd, er);
 		}
 		if (status == -1) {
-			cs_log("request_cw() failed on reader %s (%d) errno=%d, %s", rdr->label, i, errno, strerror(errno));
+			cs_log("request_cw() failed on reader %s errno=%d, %s", rdr->label, errno, strerror(errno));
 			if (rdr->fd) {
 				rdr->fd_error++;
 				if (rdr->fd_error > 5) {
@@ -2563,6 +2563,29 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				username(client), er->caid, er->prid, er->srvid);
 			get_best_reader(er);
 		}
+
+		///////////////temporary converting old matching->rdr to new matching_rdr2
+    ll_destroy(er->matching_rdr2); //no need to garbage this
+		for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
+		        if (i>=er->rdr_count)
+		                break;
+			if (matching_reader(er, rdr)) {
+				er->matching_rdr[i] = (rdr->fallback)? 2: 1; //FIXME remove when migrated
+				if (rdr->fallback) {
+//cs_log("Adding fallback reader %s to list", rdr->label);
+					if (er->fallback == NULL) //first fallbackreader to be added
+						er->fallback=ll_append_nolock(er->matching_rdr2, rdr);
+					else
+						ll_append_nolock(er->matching_rdr2, rdr);
+				}
+				else {
+					ll_insert_at_nolock(er->matching_rdr2, rdr, 0);
+//					cs_log("Adding primary reader %s to list", rdr->label);
+				}
+//				print_matches(er);
+			}
+		}
+		///////////////endtemporary converting old matching->rdr to new matching_rdr2
 
 		LL_NODE *ptr;
 		for (ptr = er->matching_rdr2->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
