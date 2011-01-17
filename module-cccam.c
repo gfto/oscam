@@ -244,7 +244,7 @@ int is_sid_blocked(struct cc_card *card, struct cc_srvid *srvid_blocked) {
 		}
 	}
 	ll_iter_release(it);
-	return (int)srvid;
+	return (srvid != 0);
 }
 
 int is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
@@ -256,7 +256,7 @@ int is_good_sid(struct cc_card *card, struct cc_srvid *srvid_good) {
 		}
 	}
 	ll_iter_release(it);
-	return (int)srvid;
+	return (srvid != 0);
 }
 
 void add_sid_block(struct s_client *cl __attribute__((unused)), struct cc_card *card,
@@ -1508,9 +1508,11 @@ void cc_free_cardlist(LLIST *card_list, int destroy_list) {
  */
 void cc_free(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
-	if (!cc)
-		return;
+	if (!cc) return;
 
+	cl->cc=NULL;
+	pthread_mutex_lock(&cc->cards_busy);
+	if (!cl->cc) return;
 	cc_free_cardlist(cc->cards, TRUE);
 	cc_free_reported_carddata(cl, cc->reported_carddatas, NULL, FALSE);
 	ll_destroy_data(cc->pending_emms);
@@ -1519,12 +1521,17 @@ void cc_free(struct s_client *cl) {
 	if (cc->extended_ecm_idx)
 		free_extended_ecm_idx(cc);
 	ll_destroy_data(cc->extended_ecm_idx);
+
+	pthread_mutex_unlock(&cc->lock);
 	pthread_mutex_destroy(&cc->lock);
+
+	pthread_mutex_unlock(&cc->ecm_busy);
 	pthread_mutex_destroy(&cc->ecm_busy);
+
+	pthread_mutex_unlock(&cc->cards_busy);
 	pthread_mutex_destroy(&cc->cards_busy);
 	free(cc->prefix);
 	free(cc);
-	cl->cc=NULL;
 }
 
 int is_null_dcw(uint8 *dcw) {
@@ -3164,7 +3171,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 
 				struct cc_card *card;
 				struct s_client *rc = rdr->client;
-				struct cc_data *rcc = rc->cc;
+				struct cc_data *rcc = rc?rc->cc:NULL;
 
 				int count = 0;
 				if (rcc && rcc->cards) {
@@ -3272,7 +3279,7 @@ int cc_cards_modified() {
 	for (rdr = first_reader; rdr; rdr = rdr->next) {
 		if (rdr->typ == R_CCCAM && rdr->fd && rdr->enable && !rdr->deleted) {
 			struct s_client *clr = rdr->client;
-			if (clr->cc) {
+			if (clr && clr->cc) {
 				struct cc_data *ccr = clr->cc;
 				modified += ccr->cards_modified;
 			}
@@ -3621,7 +3628,7 @@ int cc_cli_connect(struct s_client *cl) {
 		// init internals data struct
 		cc = cs_malloc(&cc, sizeof(struct cc_data), QUITERROR);
 		memset(cc, 0, sizeof(struct cc_data));
-		cc->cards = ll_create_nolock();
+		cc->cards = ll_create();
 		cl->cc = cc;
 		cc->pending_emms = ll_create_nolock();
 		cc->extended_ecm_idx = ll_create_nolock();
@@ -3859,8 +3866,9 @@ int cc_cli_init(struct s_client *cl) {
  *
  */
 int cc_available(struct s_reader *rdr, int checktype) {
+	if (!rdr || !rdr->client) return 0;
+	
 	struct s_client *cl = rdr->client;
-
 	//cs_debug_mask(D_TRACE, "checking reader %s availibility", rdr->label);
 	if (!cl->cc || rdr->tcp_connected != 2 || rdr->card_status != CARD_INSERTED) {
 		//Two cases: 
