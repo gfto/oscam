@@ -466,19 +466,18 @@ int cc_recv_to(struct s_client *cl, uint8 *buf, int len) {
  * reader+server:
  * receive a message
  */
-int cc_msg_recv(struct s_client *cl, uint8 *buf) {
+int cc_msg_recv(struct s_client *cl, uint8 *buf, int maxlen) {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 
 	int len;
-	uint8 netbuf[CC_MAXMSGSIZE + 4];
 	struct cc_data *cc = cl->cc;
 
 	int handle = cl->udp_fd;
 
-	if (handle <= 0)
+	if (handle <= 0 || maxlen < 4)
 		return -1;
 
-	len = recv(handle, netbuf, 4, MSG_WAITALL);
+	len = recv(handle, buf, 4, MSG_WAITALL);
 	if (cl->typ != 'c')
 		rdr->last_g = time(NULL);
 
@@ -490,19 +489,19 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 		return -1;
 	}
 
-	cc_crypt(&cc->block[DECRYPT], netbuf, 4, DECRYPT);
-	//cs_ddump_mask(D_CLIENT, netbuf, 4, "cccam: decrypted header:");
+	cc_crypt(&cc->block[DECRYPT], buf, 4, DECRYPT);
+	//cs_ddump_mask(D_CLIENT, buf, 4, "cccam: decrypted header:");
 
-	cc->g_flag = netbuf[0];
+	cc->g_flag = buf[0];
 
-	int size = (netbuf[2] << 8) | netbuf[3];
+	int size = (buf[2] << 8) | buf[3];
 	if (size) { // check if any data is expected in msg
-		if (size > CC_MAXMSGSIZE - 2) {
-			cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s message too big (size=%d)", getprefix(), size);
+		if (size > maxlen) {
+			cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s message too big (size=%d max=%d)", getprefix(), size, maxlen);
 			return 0;
 		}
 
-		len = recv(handle, netbuf + 4, size, MSG_WAITALL); // read rest of msg
+		len = recv(handle, buf + 4, size, MSG_WAITALL); // read rest of msg
 		if (cl->typ != 'c')
 			rdr->last_g = time(NULL);
 
@@ -515,13 +514,12 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf) {
 			return -1;
 		}
 
-		cc_crypt(&cc->block[DECRYPT], netbuf + 4, len, DECRYPT);
+		cc_crypt(&cc->block[DECRYPT], buf + 4, len, DECRYPT);
 		len += 4;
 	}
 
-	//cs_ddump_mask(cl->typ=='c'?D_CLIENT:D_READER, netbuf, len, "cccam: full decrypted msg, len=%d:", len);
+	//cs_ddump_mask(cl->typ=='c'?D_CLIENT:D_READER, buf, len, "cccam: full decrypted msg, len=%d:", len);
 
-	memcpy(buf, netbuf, len);
 	return len;
 }
 
@@ -604,13 +602,14 @@ int cc_send_cli_data(struct s_client *cl) {
 
 	int i;
 	struct cc_data *cc = cl->cc;
-
+	const int size = 20 + 8 + 6 + 26 + 4 + 28 + 1;
+	
 	cs_debug_mask(D_READER, "cccam: send client data");
 
 	memcpy(cc->node_id, cc_node_id, sizeof(cc_node_id));
 
-	uint8 buf[CC_MAXMSGSIZE];
-	memset(buf, 0, CC_MAXMSGSIZE);
+	uint8 buf[size];
+	memset(buf, 0, size);
 
 	memcpy(buf, rdr->r_usr, sizeof(rdr->r_usr));
 	memcpy(buf + 20, cc->node_id, 8);
@@ -621,7 +620,7 @@ int cc_send_cli_data(struct s_client *cl) {
 	cs_debug_mask(D_READER, "%s sending own version: %s, build: %s", getprefix(),
 			rdr->cc_version, rdr->cc_build);
 
-	i = cc_cmd_send(cl, buf, 20 + 8 + 6 + 26 + 4 + 28 + 1, MSG_CLI_DATA);
+	i = cc_cmd_send(cl, buf, size, MSG_CLI_DATA);
 
 	return i;
 }
@@ -637,8 +636,8 @@ int cc_send_srv_data(struct s_client *cl) {
 
 	memcpy(cc->node_id, cc_node_id, sizeof(cc_node_id));
 
-	uint8 buf[CC_MAXMSGSIZE];
-	memset(buf, 0, CC_MAXMSGSIZE);
+	uint8 buf[0x48];
+	memset(buf, 0, 0x48);
 
 	if (cfg->cc_stealth)
 	{
@@ -1163,8 +1162,8 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		}
 
 		card->time = time((time_t) 0);
-		uint8 ecmbuf[CC_MAXMSGSIZE];
-		memset(ecmbuf, 0, CC_MAXMSGSIZE);
+		uint8 ecmbuf[255+13];
+		memset(ecmbuf, 0, 255+13);
 
 		// build ecm message
 		ecmbuf[0] = card->caid >> 8;
@@ -2587,7 +2586,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 
 	pthread_mutex_lock(&cc->lock);
 
-	n = cc_msg_recv(cl, cbuf); // recv and decrypt msg
+	n = cc_msg_recv(cl, cbuf, l); // recv and decrypt msg
 
 	//cs_ddump_mask(D_CLIENT, cbuf, n, "cccam: received %d bytes from %s", n, remote_txt());
 	cl->last = time((time_t *) 0);
@@ -2953,7 +2952,7 @@ int report_card(struct s_client *cl, struct cc_card *card, LLIST *new_reported_c
 	struct cc_data *cc = cl->cc;
 	int ext = cc->cccam220;
 	if (!find_reported_card(cl, card)) { //Add new card:
-		uint8 buf[CC_MAXMSGSIZE];
+		uint8 *buf = cs_malloc(&buf, CC_MAXMSGSIZE, QUITERROR);
 		if (!cc->report_carddata_id)
 			cc->report_carddata_id = 0x64;
 		card->id = cc->report_carddata_id;
@@ -2962,6 +2961,7 @@ int report_card(struct s_client *cl, struct cc_card *card, LLIST *new_reported_c
 		int len = write_card(cc, buf, card, TRUE, ext);
 		res = cc_cmd_send(cl, buf, len, ext?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD);
 		cc->card_added_count++;
+		free(buf);
 	}	
 	cc_add_reported_carddata(new_reported_carddatas, card);
 	return res;
@@ -3433,7 +3433,7 @@ int cc_srv_connect(struct s_client *cl) {
 
 	// recv cli data
 	memset(buf, 0, sizeof(buf));
-	i = cc_msg_recv(cl, buf);
+	i = cc_msg_recv(cl, buf, sizeof(buf));
 	if (i < 0)
 		return -1;
 	cs_ddump_mask(D_CLIENT, buf, i, "cccam: cli data:");

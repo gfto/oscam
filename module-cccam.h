@@ -12,8 +12,8 @@
 #include "cscrypt/rc6.h"
 #include "cscrypt/idea.h"
 
-#define CC_MAXMSGSIZE 512
-#define CC_MAX_PROV   16
+#define CC_MAXMSGSIZE 2048
+#define CC_MAX_PROV   32
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 
 #if (defined(WIN32) || defined(OS_CYGWIN32)) && !defined(MSG_WAITALL)
