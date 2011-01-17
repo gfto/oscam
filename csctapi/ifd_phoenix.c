@@ -312,7 +312,7 @@ static int stapi_init(struct s_reader *reader) {
 }
 
 static int stapi_getstatus(struct s_reader *reader, int *in) {
-	return STReader_GetStatus(reader->stsmart_handle, &in);
+	return STReader_GetStatus(reader->stsmart_handle, in);
 }
 
 static int stapi_reset(struct s_reader *reader, ATR *atr) {
