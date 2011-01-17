@@ -34,7 +34,7 @@ void ll_clear(LLIST *l);        // frees up all llnodes nodes but not data held 
 void ll_clear_data(LLIST *l);   // same as ll_clear_data() but frees up obj allocations as well
 
 void ll_append(LLIST *l, void *obj);                // append obj to llist
-void ll_append_nolock(LLIST *l, void *obj);         // append obj to llist (no locking, use when iter)
+LL_NODE *ll_append_nolock(LLIST *l, void *obj);         // append obj to llist (no locking, use when iter), returns newly added node pointer
 void ll_insert_at(LLIST *l, void *obj, int pos)       ;    // insert at pos
 void ll_insert_at_nolock(LLIST *l, void *obj, int pos);    // insert at pos (no locking, use when iter)
 

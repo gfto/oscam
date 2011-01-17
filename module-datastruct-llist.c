@@ -76,7 +76,7 @@ void ll_clear_data(LLIST *l)
     ll_iter_release(it);
 }
 
-void ll_append_nolock(LLIST *l, void *obj)
+LL_NODE * ll_append_nolock(LLIST *l, void *obj)
 {
     if (l && obj) {
         LL_NODE *new = calloc(1, sizeof(LL_NODE));
@@ -91,7 +91,9 @@ void ll_append_nolock(LLIST *l, void *obj)
         } else
             l->initial = new;
         l->count++;
+        return new;
     }
+    return NULL;
 }
 
 void ll_append(LLIST *l, void *obj)
