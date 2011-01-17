@@ -303,7 +303,7 @@ int reader_checkhealth(struct s_reader * reader)
       cur_client()->lastemm = 0;
       cur_client()->lastecm = 0;
       cur_client()->aureader = NULL;
-      cs_log("card ejected slot = %i", reader->slot);
+      cs_log("card ejected");
 #ifdef QBOXHD_LED 
       qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_SLOW);
 #endif
