@@ -2279,7 +2279,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 	}
 
 	//check matching_rdr vs. matching_rdr2, can be removed when migrating
-	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
+/*	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++) {
 		if (i>=er->rdr_count)
 			break;
 
@@ -2301,7 +2301,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 			cs_log("DINGO: rdr %s NOT in matching_rdr2 list, but matching_rdr[%i]=%i", rdr->label, i, er->matching_rdr[i]);
 			print_matches(er);
 		}
-  }
+  }*/
 	//end check matching_rdr vs. matching_rdr2, can be removed when migrating
 
 	LL_NODE *ptr;
