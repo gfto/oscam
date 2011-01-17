@@ -1511,7 +1511,7 @@ void cc_free(struct s_client *cl) {
 	if (!cc) return;
 
 	cl->cc=NULL;
-	pthread_mutex_lock(&cc->cards_busy);
+	pthread_mutex_trylock(&cc->cards_busy);
 	if (!cl->cc) return;
 	cc_free_cardlist(cc->cards, TRUE);
 	cc_free_reported_carddata(cl, cc->reported_carddatas, NULL, FALSE);
@@ -3164,7 +3164,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 					cc_free_card(card);
 			}
 
-			if (rdr->typ == R_CCCAM && cfg->cc_reshare_services<2) {
+			if (rdr->typ == R_CCCAM && cfg->cc_reshare_services<2 && rdr->card_status != CARD_FAILURE) {
 
 				cs_debug_mask(D_CLIENT, "%s asking reader %s for cards...",
 					getprefix(), rdr->label);
@@ -3174,7 +3174,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				struct cc_data *rcc = rc?rc->cc:NULL;
 
 				int count = 0;
-				if (rcc && rcc->cards) {
+				if (rcc && rcc->cards && rcc->mode == CCCAM_MODE_NORMAL) {
 					if (!pthread_mutex_trylock(&rcc->cards_busy)) {
 						LL_ITER *it = ll_iter_create(rcc->cards);
 						while ((card = ll_iter_next(it))) {
