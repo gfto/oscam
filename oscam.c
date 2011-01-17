@@ -1929,30 +1929,23 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	er->caid = er->ocaid;
 	switch(er->rc) {
-		case 0:
-		case 3:
-			// 0 - found
-			// 3 - emu FIXME: obsolete ?
+		case E_FOUND:
+		case E_EMU: //FIXME obsolete ?
 					client->cwfound++;
 			                client->account->cwfound++;
 					first_client->cwfound++;
 					break;
 
-		case 1:
-		case 2:
-			// 1 - cache1
-			// 2 - cache2
+		case E_CACHE1:
+		case E_CACHE2:
 			client->cwcache++;
 			client->account->cwcache++;
 			first_client->cwcache++;
 			break;
 
-		case 4:
-		case 9:
-		case 10:
-			// 4 - not found
-			// 9 - corrupt
-			// 10 - no card
+		case E_NOTFOUND:
+		case E_CORRUPT:
+		case E_NOCARD:
 			if (er->rcEx) {
 				client->cwignored++;
 				client->account->cwignored++;
@@ -1964,8 +1957,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
                         }
 			break;
 
-		case 5:
-			// 5 - timeout
+		case E_TIMEOUT:
 			client->cwtout++;
 			client->account->cwtout++;
 			first_client->cwtout++;
