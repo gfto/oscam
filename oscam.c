@@ -1501,7 +1501,7 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
 		return -1;
 	}
 
-	cs_debug_mask(D_TRACE, "write to pipe %d (%s) thread: %8X to %8X", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd)->thread);
+	//cs_debug_mask(D_TRACE, "write to pipe %d (%s) thread: %8X to %8X", fd, PIP_ID_TXT[id], pthread_self(), get_thread_by_pipefd(fd)->thread);
 
 	uchar buf[3+sizeof(void*)];
 
@@ -1556,7 +1556,7 @@ int read_from_pipe(int fd, uchar **data, int redir)
 	memcpy(id, buf, 3);
 	id[3]='\0';
 
-	cs_debug_mask(D_TRACE, "read from pipe %d (%s) thread: %8X", fd, id, (unsigned int)pthread_self());
+	//cs_debug_mask(D_TRACE, "read from pipe %d (%s) thread: %8X", fd, id, (unsigned int)pthread_self());
 
 	int l;
 	for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)
@@ -1662,7 +1662,7 @@ void distribute_ecm(ECM_REQUEST *er)
   struct s_client *cl;
   ECM_REQUEST *ecm;
   int n, i;
-  if (er->rc == E_CACHE1) //found converted to cache...
+  if (er->rc == E_RDR_FOUND) //found converted to cache...
     er->rc = E_CACHE2; //cache
 
   for (cl=first_client->next; cl ; cl=cl->next) {
@@ -1703,9 +1703,9 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   er->caid=er->ocaid;
 
 #ifdef CS_WITH_GBOX
-  if (er->rc==E_CACHE1||(er->gbxRidx&&er->rc==E_FOUND)) {
+  if (er->rc==E_RDR_FOUND||(er->gbxRidx&&er->rc==E_RDR_NOTFOUND)) {
 #else
-  if (er->rc==E_CACHE1) {
+  if (er->rc==E_RDR_FOUND) {
 #endif
     store_cw_in_cache(er, reader->grp);
 
@@ -2027,7 +2027,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
   ert=&cl->ecmtask[er->cpti];
   if (ert->rc<E_99) {
 	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, er->selected_reader->label);
-	send_reader_stat(er->selected_reader, er, (er->rc <= E_FOUND)?E_NOTFOUND:E_FOUND);
+	send_reader_stat(er->selected_reader, er, (er->rc <= E_RDR_NOTFOUND)?E_NOTFOUND:E_FOUND);
 	return; // already done
   }
   if( (er->caid!=ert->caid) || memcmp(er->ecmd5, ert->ecmd5, sizeof(er->ecmd5)) )
@@ -2037,7 +2037,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 	strcpy(ert->msglog, er->msglog);
 	ert->selected_reader=er->selected_reader;
 
-  if (er->rc>E_FOUND)
+  if (er->rc>=E_RDR_FOUND)
   {
     switch(er->rc)
     {
@@ -2056,7 +2056,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 #ifdef CS_WITH_GBOX
     ert->gbxCWFrom=er->gbxCWFrom;
 #endif
-	} else { // not found (from ONE of the readers !)
+	} else { // not found (from ONE of the readers !) er->rc==E_RDR_NOTFOUND
 		struct s_reader *rdr;
 		if (er->selected_reader) {
 			LL_ITER *itr = ll_iter_create(er->matching_rdr);
@@ -2236,11 +2236,19 @@ static void guess_cardsystem(ECM_REQUEST *er)
     er->caid=last_hope;
 }
 
+/**
+ * sends the ecm request to the readers
+ * ECM_REQUEST er : the ecm
+ * int flag : 0=primary readers (no fallback) 
+ *            1=all readers (primary+fallback)
+ * int reader_types : 0=all readsers
+ *                    1=Hardware/local readers
+ *                    2=Proxy/network readers
+ **/
 void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 {
 	if ((reader_types == 0) || (reader_types == 2))
 		er->level=flag;
-//	flag=(flag)?3:1;    // flag specifies with/without fallback-readers
 	struct s_reader *rdr;
 
 	ushort lc=0, *lp;
@@ -2250,7 +2258,10 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 	}
 
 	LL_NODE *ptr;
-	for (ptr = er->matching_rdr->initial; ptr && (!flag && (ptr != er->fallback)); ptr = ptr->nxt) {
+	for (ptr = er->matching_rdr->initial; ptr; ptr = ptr->nxt) {
+	        if (!flag && ptr == er->fallback)
+	          break;
+	        
 		rdr = (struct s_reader*)ptr->obj;
 
 		int status = 0;

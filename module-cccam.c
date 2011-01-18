@@ -1021,7 +1021,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 	if (!cc || (cl->pfd < 1) || !rdr->tcp_connected) {
 		if (er) {
-			er->rc = E_FOUND;
+			er->rc = E_RDR_NOTFOUND;
 			er->rcEx = 0x27;
 			cs_debug_mask(D_READER, "%s server not init! ccinit=%d pfd=%d",
 					rdr->label, cc ? 1 : 0, cl->pfd);
@@ -1212,7 +1212,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		if (cc->last_msg != MSG_NEW_CARD && cc->last_msg != MSG_NEW_CARD_SIDINFO && !cc->just_logged_in) {
 			cs_debug_mask(D_READER, "%s no suitable card on server", getprefix());
 
-			cur_er->rc = E_FOUND;
+			cur_er->rc = E_RDR_NOTFOUND;
 			cur_er->rcEx = 0x27;
 			write_ecm_answer(rdr, cur_er);
 			//cur_er->rc = 1;

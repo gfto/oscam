@@ -187,6 +187,9 @@
 #define R_IS_NETWORK    0x60
 #define R_IS_CASCADING  0xE0
 
+//ECM rc codes, reader only:
+#define E_RDR_NOTFOUND          0
+#define E_RDR_FOUND             1
 //ECM rc codes:
 #define E_FOUND			0
 #define E_CACHE1		1
