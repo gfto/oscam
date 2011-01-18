@@ -2028,7 +2028,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				isec=now-cl->last;
 				usr=username(cl);
 
-				if (((cl->typ=='r') || (cl->typ=='p')) && (con=get_ridx(cl->reader)>=0)) usr=cl->reader->label;
+				if ((cl->typ=='r') || (cl->typ=='p')) usr=cl->reader->label;
 
 				if (cl->dup) con=2;
 				else if ((cl->tosleep) && (now-cl->lastswitch>cl->tosleep)) con=1;

@@ -253,7 +253,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			lsec=now-cl->login;
 			isec=now-cl->last;
 			usr=cl->account->usr;
-			if (((cl->typ == 'r') || (cl->typ == 'p')) && (con=get_ridx(cl->reader)) >= 0)
+			if ((cl->typ == 'r') || (cl->typ == 'p'))
 				usr=cl->reader->label;
 			if (cl->dup)
 				con=2;
