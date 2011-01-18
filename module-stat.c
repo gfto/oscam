@@ -390,6 +390,11 @@ static struct stat_value *crt_cur(struct s_reader *rdr, int value, int time) {
 	return v;
 }
 
+static char *strend(char *c) {
+	while (c && *c) c++;
+	return c;
+}
+
 /**	
  * Gets best reader for caid/prid/srvid.
  * Best reader is evaluated by lowest avg time but only if ecm_count > cfg->lb_min_ecmcount (5)
@@ -404,24 +409,50 @@ int get_best_reader(ECM_REQUEST *er)
 	struct timeb new_nulltime;
 	memset(&new_nulltime, 0, sizeof(new_nulltime));
 	time_t current_time = time(NULL);
-	
+	LL_ITER *it;
+	struct s_reader *rdr;
 	int current = -1;
-	
 	READER_STAT *stat = NULL;
-	
 	int nlocal_readers = 0;
 
-//#ifdef WITH_DEBUG 
-//	char rdrs[rdr_count+1];
-//	for (i=0;i<rdr_count;i++)
-//		rdrs[i] = er->matching_rdr[i]+'0';
-//	rdrs[rdr_count]=0;
-//	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: valid readers: %s", 
-//		username(er->client), er->caid, er->prid, er->srvid, rdrs);
-//#endif	
+#ifdef WITH_DEBUG 
+	if (cs_dblevel & 0x01) {
+		//loadbalancer debug output:
+		int size = 1;
+		int nr = 0;
+		it = ll_iter_create(er->matching_rdr);
+		while ((rdr=ll_iter_next(it))) {
+			if (nr > 5) {
+				size+=20;
+				break;
+			}
+			size += strlen(rdr->label)+1;
+			nr++;
+		}
+		ll_iter_reset(it);
+		char *rdrs = cs_malloc(&rdrs, size, 1);
+		char *rptr = rdrs;
+		*rptr = 0;
+		nr = 0;
+		while ((rdr=ll_iter_next(it))) {
+			if (nr > 5) {
+				sprintf(rptr, "...(%d more)", ll_count(er->matching_rdr)-nr);
+				break;
+			}
+			sprintf(rptr, "%s ", rdr->label);
+			rptr = strend(rptr);
+			nr++;
+		}
+		ll_iter_release(it);
 	
-	LL_ITER *it = ll_iter_create(er->matching_rdr);
-	struct s_reader *rdr;
+		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: n=%d valid readers: %s", 
+			username(er->client), er->caid, er->prid, er->srvid, ll_count(er->matching_rdr), rdrs);
+			
+		free(rdrs);
+	}
+#endif	
+	
+	it = ll_iter_create(er->matching_rdr);
 	while ((rdr=ll_iter_next(it))) {
  			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 				
@@ -580,16 +611,6 @@ int get_best_reader(ECM_REQUEST *er)
 		cs_debug_mask(D_TRACE, "loadbalancer: reopened %d readers", n);
 	}
 
-//#ifdef WITH_DEBUG 
-//
-//	for (i=0;i<rdr_count;i++)
-//		rdrs[i] = er->matching_rdr[i]+'0';
-//	rdrs[rdr_count]=0;
-//	cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: %s readers: %s", 
-//		username(er->client), er->caid, er->prid, er->srvid,
-//		best_rdr?best_rdr->label:"NONE", rdrs);
-//#endif	
-
 	//algo for finding unanswered requests (newcamd reader for example:)
 	it = ll_iter_create(result);
 	while ((rdr=ll_iter_next(it))) {
@@ -613,8 +634,6 @@ int get_best_reader(ECM_REQUEST *er)
 	
 		it = ll_iter_create(er->matching_rdr);
 		while ((rdr=ll_iter_next(it))) {
-			if (it->cur == fallback) break;
-		
 	        	stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
 
 			if (stat && stat->rc != 0) { //retrylimit reached:
@@ -640,6 +659,54 @@ int get_best_reader(ECM_REQUEST *er)
         
 	if (new_nulltime.time)
 		nulltime = new_nulltime;
+
+#ifdef WITH_DEBUG 
+	if (cs_dblevel & 0x01) {
+		//loadbalancer debug output:
+		int size = 3;
+		int nr = 0;
+		it = ll_iter_create(result);
+		while ((rdr=ll_iter_next(it))) {
+			if (nr > 5) { 
+				size+=20;
+				break;
+			}
+			size += strlen(rdr->label)+1;
+			nr++;
+		}
+		ll_iter_reset(it);
+		char *rdrs = cs_malloc(&rdrs, size, 1);
+		char *rptr = rdrs;
+		*rptr = 0;
+		nr = 0;
+		while ((rdr=ll_iter_next(it))) {
+			if (nr > 5) {
+				sprintf(rptr, "...(%d more)", ll_count(result)-nr);
+				rptr = strend(rptr);
+				break;
+			}
+			sprintf(rptr, "%s ", rdr->label);
+			rptr = strend(rptr);
+
+			if (fallback && it->cur == fallback) {
+				sprintf(rptr, "[");
+				rptr = strend(rptr);
+			}
+			nr++;
+		}
+		if (fallback) {
+			rptr--;
+			*rptr=']';
+		}
+		ll_iter_release(it);
+	
+		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: n=%d selected readers: %s", 
+			username(er->client), er->caid, er->prid, er->srvid, ll_count(result), rdrs);
+		
+		free(rdrs);
+	}
+#endif	
+
 		
 	return 1;
 }
