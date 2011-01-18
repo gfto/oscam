@@ -20,7 +20,7 @@ DESCRIPTIONS
 	   bus:device:	bus name and device name of the Smartreader+
 			(get the names with lsusb 'Bus' and 'Device')
 
-	   device:slot: device name and slot number
+	   device:slot: device name and slot number sc8in1 [1-8]
 			(only one SC8in1 reader supported)
 
 	   serial	serial number of Smartreader+
@@ -136,6 +136,7 @@ DESCRIPTIONS
 	   radegast
 	   pcsc
 	   constcw
+	   sc8in1
 
        ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader
@@ -407,6 +408,14 @@ EXAMPLES
 	   protocol = constcw
 	   device   = /var/keys/constant.cw
 	   group    = 9
+
+       ·  sc8in1 reader
+	   [reader]
+	   label    = mysc8in1reader
+	   protocol = sc8in1
+	   device   = /dev/ttyUSB0:1
+	   group    = 10
+	   caid     = 0900
 
 SEE ALSO
        list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),   oscam.guess(5),

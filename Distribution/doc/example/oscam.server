@@ -144,3 +144,13 @@ group    = 11
 emmcache = 1,3,2
 services = services11
 caid     = 1100
+
+# sc8in1 reader
+
+[reader]
+label = reader12
+protocol = sc8in1
+device = /dev/ttyUSB0:1
+group = 12
+caid = 1200
+
