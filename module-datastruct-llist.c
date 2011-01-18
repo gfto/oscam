@@ -114,7 +114,7 @@ LL_ITER *ll_iter_create(LLIST *l)
     it->l = l;
     if (l) {
         if (l->lock)
-          pthread_mutex_lock(l->lock);
+            pthread_mutex_lock(l->lock);
         it->cur = l->initial;
     }
     else
@@ -125,10 +125,12 @@ LL_ITER *ll_iter_create(LLIST *l)
 
 void ll_iter_release(LL_ITER *it)
 {
-    if(it->l && it->l->lock)
-      pthread_mutex_unlock(it->l->lock);
+    if (it) {
+        if (it->l && it->l->lock)
+            pthread_mutex_unlock(it->l->lock);
 
-    add_garbage(it);
+        add_garbage(it);
+    }
 }
 
 void *ll_iter_next(LL_ITER *it)
