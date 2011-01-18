@@ -614,8 +614,6 @@ int get_best_reader(ECM_REQUEST *er)
 	//algo for finding unanswered requests (newcamd reader for example:)
 	it = ll_iter_create(result);
 	while ((rdr=ll_iter_next(it))) {
-		if (it->cur == fallback) break;
-
         	//primary readers 
         	stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
        		
@@ -624,6 +622,8 @@ int get_best_reader(ECM_REQUEST *er)
         		stat->last_received = current_time;
         		cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
 		}
+
+		if (it->cur == fallback) break;
 	}
 	ll_iter_release(it);
 
