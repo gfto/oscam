@@ -65,6 +65,7 @@ void garbage_collector() {
 
                 cs_sleepms(1000);
         }
+        pthread_exit(NULL);
 }
 
 void start_garbage_collector() {
@@ -92,6 +93,7 @@ void stop_garbage_collector()
                 pthread_mutex_lock(&garbage_lock);
                 
                 pthread_cancel(garbage_thread);
+                cs_sleepms(100);
                 
                 while (garbage_first) {
                   struct cs_garbage *next = garbage_first->next;

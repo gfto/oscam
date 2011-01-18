@@ -535,6 +535,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
         for (i=0; i<n; i++) {
                 ecm = &cl->ecmtask[i];
                 ll_destroy(ecm->matching_rdr); //no need to garbage this
+                ecm->matching_rdr=NULL;
         }
         add_garbage(cl->ecmtask);
         cl->ecmtask = NULL;

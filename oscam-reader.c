@@ -444,6 +444,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
     return(-2);
   }
   memcpy(&cl->ecmtask[n], er, sizeof(ECM_REQUEST));
+  cl->ecmtask[n].matching_rdr = NULL; //This avoids double free of matching_rdr!
   if( reader->typ == R_NEWCAMD )
     cl->ecmtask[n].idx=(reader->ncd_msgid==0)?2:reader->ncd_msgid+1;
   else
