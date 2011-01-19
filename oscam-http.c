@@ -1682,12 +1682,14 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		if (cl) {
 			//set client to offline depending on hideclient_to
 			if ((now - cl->lastecm) < hideclient) {
-				status = "<b>online</b>"; classname = "online";
+				status = "<b>connected</b>"; classname = "online";
 				isonline = 1;
 				proto = monitor_get_proto(cl);
 				lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
 				lastresponsetm = cl->cwlastresptime;
 				isec = now - cl->last;
+				if(isec < cfg->mon_hideclient_to)
+					status = "<b>online</b>";
 			}
 		}
 
