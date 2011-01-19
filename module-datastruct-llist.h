@@ -9,34 +9,30 @@
 typedef struct llnode LL_NODE;
 struct llnode {
     void *obj;
-    LL_NODE *nxt, *prv;
+    LL_NODE *nxt;
 };
 
 typedef struct llist LLIST;
 struct llist {
     void *obj;
     LL_NODE *initial;
-    pthread_mutex_t *lock;
     int count;
 };
 
 typedef struct lliter LL_ITER;
 struct lliter {
     LLIST *l;
-    LL_NODE *cur;
+    LL_NODE *cur, *prv;
 };
 
 LLIST *ll_create();             // create llist, return ptr to llist
-LLIST *ll_create_nolock();             // create llist, return ptr to llist (disable locking)
 void ll_destroy(LLIST *l);      // same as ll_clear_abstract() but frees up LLIST mem as well
 void ll_destroy_data(LLIST *l); // same as ll_clear_data() but frees up obj allocations as well
 void ll_clear(LLIST *l);        // frees up all llnodes nodes but not data held in obj ptrs
 void ll_clear_data(LLIST *l);   // same as ll_clear_data() but frees up obj allocations as well
 
-void ll_append(LLIST *l, void *obj);                // append obj to llist
-LL_NODE *ll_append_nolock(LLIST *l, void *obj);         // append obj to llist (no locking, use when iter), returns newly added node pointer
-void ll_insert_at(LLIST *l, void *obj, int pos)       ;    // insert at pos
-void ll_insert_at_nolock(LLIST *l, void *obj, int pos);    // insert at pos (no locking, use when iter)
+LL_NODE *ll_append(LLIST *l, void *obj);                // append obj to llist
+LL_NODE *ll_prepend(LLIST *l, void *obj);               // prepend obj to llist
 
 LL_ITER *ll_iter_create(LLIST *l);              // return ptr to iterator obj
 void ll_iter_release(LL_ITER *it);              // free up the iterator obj
@@ -48,7 +44,7 @@ void *ll_iter_remove(LL_ITER *it);              // remove llnode at iterator, re
 void ll_iter_remove_data(LL_ITER *it);          // remove llnode and free llnode obj
 
 int ll_count(LLIST *l);                 // return number of items in list
-void *ll_has_elements(LLIST *l);
+void *ll_has_elements(LLIST *l);        // returns first obj if has one
 
 int ll_contains(LLIST *l, void *obj);
 void ll_remove(LLIST *l, void *obj);

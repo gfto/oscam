@@ -120,7 +120,7 @@ READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvi
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
 			if (i > 5) { //Move to first if not under top 5:
 				ll_iter_remove(it);
-				ll_insert_at_nolock(rdr->lb_stat, stat, 0); //move to first!
+				ll_prepend(rdr->lb_stat, stat); //move to first!
 			}
 			break;
 		}
@@ -403,8 +403,8 @@ static char *strend(char *c) {
  */
 int get_best_reader(ECM_REQUEST *er)
 {
-	LLIST * result = ll_create_nolock();
-	LLIST * selected = ll_create_nolock();
+	LLIST * result = ll_create();
+	LLIST * selected = ll_create();
 	
 	struct timeb new_nulltime;
 	memset(&new_nulltime, 0, sizeof(new_nulltime));
@@ -572,19 +572,19 @@ int get_best_reader(ECM_REQUEST *er)
 			
 		if (nlocal_readers) {//primary readers, local
 			nlocal_readers--;
-			ll_append_nolock(result, best_rdri);
+			ll_append(result, best_rdri);
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nbest_readers) {//primary readers, other
 			nbest_readers--;
-			ll_append_nolock(result, best_rdri);
+			ll_append(result, best_rdri);
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nfb_readers) { //fallbacks:
 			nfb_readers--;
-			LL_NODE *node = ll_append_nolock(result, best_rdri);
+			LL_NODE *node = ll_append(result, best_rdri);
 			if (!fallback)
 				fallback = node;
 		}
@@ -644,7 +644,7 @@ int get_best_reader(ECM_REQUEST *er)
 				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
 					stat->last_received = current_time;
 					ll_remove(result, rdr);
-					ll_insert_at(result, rdr, 0);
+					ll_prepend(result, rdr);
 					cs_log("loadbalancer: retrying reader %s", rdr->label);
 				}
 			}

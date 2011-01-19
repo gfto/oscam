@@ -1158,7 +1158,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			current_card->card = card;
 			current_card->prov = cur_er->prid;
 			current_card->srvid = cur_srvid;
-			ll_insert_at(cc->current_cards, current_card, 0);
+			ll_prepend(cc->current_cards, current_card);
 		}
 
 		card->time = time((time_t) 0);
@@ -1616,10 +1616,10 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 
     int nprov, nassign = 0, nreject = 0, offset = 21;
 
-	card->providers = ll_create_nolock();
-	card->badsids = ll_create_nolock();
-	card->goodsids = ll_create_nolock();
-	card->remote_nodes = ll_create_nolock();
+	card->providers = ll_create();
+	card->badsids = ll_create();
+	card->goodsids = ll_create();
+	card->remote_nodes = ll_create();
 	card->id = b2i(4, buf);
 	card->remote_id = b2i(4, buf + 4);
 	card->caid = b2i(2, buf + 8);
@@ -2735,10 +2735,10 @@ struct cc_card *create_card(struct cc_card *card) {
 		memcpy(card2, card, sizeof(struct cc_card));
 	else
 		memset(card2, 0, sizeof(struct cc_card));
-	card2->providers = ll_create_nolock();
-	card2->badsids = ll_create_nolock();
-	card2->goodsids = ll_create_nolock();
-	card2->remote_nodes = ll_create_nolock();
+	card2->providers = ll_create();
+	card2->badsids = ll_create();
+	card2->goodsids = ll_create();
+	card2->remote_nodes = ll_create();
 
 	if (card) {
 		copy_sids(card2->goodsids, card->goodsids);
@@ -2995,10 +2995,10 @@ int cc_srv_report_cards(struct s_client *cl) {
 	maxhops = cl->account->cccmaxhops;
 	usr_reshare = cl->account->cccreshare;
 
-	LLIST *server_cards = ll_create_nolock();
+	LLIST *server_cards = ll_create();
 	if (!cc->reported_carddatas)
-		cc->reported_carddatas = ll_create_nolock();
-	LLIST *new_reported_carddatas = ll_create_nolock();
+		cc->reported_carddatas = ll_create();
+	LLIST *new_reported_carddatas = ll_create();
 		
 	cc->card_added_count = 0;
 	cc->card_removed_count = 0;
@@ -3318,7 +3318,7 @@ int cc_srv_connect(struct s_client *cl) {
 		cc = cs_malloc(&cc, sizeof(struct cc_data), QUITERROR);
 		cl->cc = cc;
 		memset(cl->cc, 0, sizeof(struct cc_data));
-		cc->extended_ecm_idx = ll_create_nolock();
+		cc->extended_ecm_idx = ll_create();
 
 		cc_init_cc(cc);
 	}
@@ -3630,9 +3630,9 @@ int cc_cli_connect(struct s_client *cl) {
 		memset(cc, 0, sizeof(struct cc_data));
 		cc->cards = ll_create();
 		cl->cc = cc;
-		cc->pending_emms = ll_create_nolock();
-		cc->extended_ecm_idx = ll_create_nolock();
-		cc->current_cards = ll_create_nolock();
+		cc->pending_emms = ll_create();
+		cc->extended_ecm_idx = ll_create();
+		cc->current_cards = ll_create();
 		cc_init_cc(cc);
 	} else {
 		if (cc->cards) {

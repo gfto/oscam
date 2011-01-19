@@ -1794,7 +1794,7 @@ ECM_REQUEST *get_ecmtask()
 		  er->matching_rdr = save;
                 }
                 else
-                  er->matching_rdr = ll_create_nolock();
+                  er->matching_rdr = ll_create();
 	}
 	
 	
@@ -2492,13 +2492,13 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			if (matching_reader(er, rdr)) {
 				if (rdr->fallback) {
 					if (er->fallback == NULL) //first fallbackreader to be added
-						er->fallback=ll_append_nolock(er->matching_rdr, rdr);
+						er->fallback=ll_append(er->matching_rdr, rdr);
 					else
-						ll_append_nolock(er->matching_rdr, rdr);
+						ll_append(er->matching_rdr, rdr);
 					
 				}
 				else {
-					ll_insert_at_nolock(er->matching_rdr, rdr, 0);
+					ll_prepend(er->matching_rdr, rdr);
 				}
 				if (cfg->lb_mode || !rdr->fallback)
 					er->reader_avail++;
