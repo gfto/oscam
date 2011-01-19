@@ -89,6 +89,7 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
         new->nxt = l->initial;
 
         l->initial = new;
+        l->count++;
 
         return new;
     }
@@ -109,8 +110,7 @@ LL_ITER *ll_iter_create(LLIST *l)
 
 void ll_iter_release(LL_ITER *it)
 {
-    if (it)
-        add_garbage(it);
+    add_garbage(it);
 }
 
 void *ll_iter_next(LL_ITER *it)
@@ -178,18 +178,17 @@ void *ll_iter_remove(LL_ITER *it)
 
         if (del) {
             void *obj = del->obj;
-
-            if (it->prv)
-                it->prv->nxt = del->nxt;
+            LL_NODE *prv = it->prv;
+            
+            if (prv)
+                prv->nxt = del->nxt;
             else
                 it->l->initial = del->nxt;
-
-            LL_NODE *prv = it->prv;
 
             it->l->count--;
 
             ll_iter_reset(it);
-            while (ll_iter_next(it))
+            while (prv && ll_iter_next(it))
                 if (it->cur == prv)
                     break;
 

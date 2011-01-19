@@ -1789,12 +1789,15 @@ ECM_REQUEST *get_ecmtask()
 		er->cpti=n;
 		er->client=cl;
 		cs_ftime(&er->tps);
-		if (save) {
-		  ll_clear(save);
-		  er->matching_rdr = save;
+		
+		if (cl->typ=='c') { //for clients only! Not for readers!
+  		  if (save) {
+		    ll_clear(save);
+		    er->matching_rdr = save;
+                  }
+                  else
+                    er->matching_rdr = ll_create();
                 }
-                else
-                  er->matching_rdr = ll_create();
 	}
 	
 	
