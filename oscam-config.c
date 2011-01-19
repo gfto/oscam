@@ -1341,7 +1341,7 @@ int init_config()
 	if (cfg->logfile == NULL && cfg->logtostdout == 0 && cfg->logtosyslog == 0) {
 		if(cs_malloc(&(cfg->logfile), strlen(CS_LOGFILE) + 1, SIGINT))
 			memcpy(cfg->logfile, value, strlen(CS_LOGFILE) + 1);
-		else cfg->logtostdout == 1;
+		else cfg->logtostdout = 1;
 	}
 #endif
 	cs_init_log();
