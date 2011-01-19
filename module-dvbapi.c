@@ -1751,6 +1751,26 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
 #ifdef AZBOX
 	azbox_send_dcw(client, er);
+
+
+    FILE *ecmtxt;
+    ecmtxt = fopen(ECMINFO_FILE, "w");
+    if(ecmtxt != NULL) {
+        fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
+        fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
+        if (er->selected_reader->typ & R_IS_CASCADING)
+            fprintf(ecmtxt, "from: %s\n", er->selected_reader->device);
+        else
+            fprintf(ecmtxt, "from: local\n");
+        fprintf(ecmtxt, "protocol: %s\n", er->selected_reader->ph.desc);
+        fprintf(ecmtxt, "hops: %d\n", er->selected_reader->cc_currenthops);
+        fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
+        fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8));
+        fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8));
+        fclose(ecmtxt);
+        ecmtxt = NULL;
+    }
+
 	return;
 #endif
 	int i,j;
