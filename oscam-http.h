@@ -711,6 +711,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 						<option>mp35</option>\n\
 						<option>smartreader</option>\n\
 						<option>internal</option>\n\
+						<option>sc8in1</option>\n\
 						<option>serial</option>\n\
 						<option>camd35</option>\n\
 						<option>cs378x</option>\n\
