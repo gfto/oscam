@@ -5,9 +5,6 @@ oscam(1)												   oscam(1)
 NAME
        OSCam - SC server
 
-SYNOPSIS
-       To split long lines in OSCam configuration files add a '\' before the line break.
-
 DESCRIPTIONS
        The OSCam software is an open source multi-protocol/multi-plattform SC server.
 

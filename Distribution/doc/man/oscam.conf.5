@@ -19,9 +19,11 @@ bind service to specified IP address, default:all
 value to delay cached requests, default:0
 .RE
 .PP
-\fBlogfile\fP = \fBfilename\fP[\fB;/dev/null\fP][\fB;/dev/tty\fP][\fB;syslog\fP]
+\fBlogfile\fP = [\fBfilename\fB][\fB;syslog\fB][\fB;stdout\fB]
 .RS 3n
-logging targets, default: /var/log/oscam.log
+logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and 
+additionally to log to stdout or syslog (you can also only log to stdout or syslog and omit 
+the filename).
 .RE
 .PP
 \fBdisablelog\fP = \fB0\fP|\fB1\fP
