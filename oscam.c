@@ -1480,6 +1480,7 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp)
 	//cs_ddump(cwcache[*cwidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *cwidx);
 }
 
+/*
 // only for debug
 static struct s_client * get_thread_by_pipefd(int fd)
 {
@@ -1489,6 +1490,7 @@ static struct s_client * get_thread_by_pipefd(int fd)
 			return cl;
 	return first_client; //master process
 }
+*/
 
 /*
  * write_to_pipe():
