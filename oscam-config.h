@@ -142,6 +142,9 @@
 #  if !defined(COOL) && !defined(WITH_STAPI)
 #    define SCI_DEV 1
 #  endif
+#  ifndef HAVE_DVBAPI 
+#    define HAVE_DVBAPI 
+#  endif
 #endif
 
 #ifdef UCLIBC
