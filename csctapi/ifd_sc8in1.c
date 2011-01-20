@@ -186,7 +186,7 @@ int Sc8in1_Init(struct s_reader * reader)
 
 	struct s_reader *rdr;
 	LL_ITER *itr = ll_iter_create(configured_readers);
-	while(rdr = ll_iter_next(itr)) //also do this for disabled readers, so we configure the clocks right for all readers
+	while((rdr = ll_iter_next(itr))) //also do this for disabled readers, so we configure the clocks right for all readers
 		if (rdr->handle == reader->handle) { //corresponding slot
 
 			//check slot boundaries
