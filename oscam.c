@@ -584,21 +584,22 @@ static void cleanup_thread(struct s_client *cl)
 
 	//decrease cwcache
 	struct s_ecm *ecmc;
-	if (cwidx->next) {
-		for (ecmc=cwcache; ecmc->next->next; ecmc=ecmc->next) ; 
-		if (cwidx==ecmc->next)
-			cwidx = cwcache;					
-		add_garbage(ecmc->next);
-		ecmc->next = NULL;
+	if (cwcache->next) {
+		ecmc = cwcache;
+		cwcache = cwcache->next;
+		if (cwidx == ecmc)
+				cwidx = cwcache;
+		add_garbage(ecmc);
 	}
 
 	//decrease ecmache
 	if (ecmcache->next) { //keep it at least on one entry big
-		for (ecmc=ecmcache; ecmc->next->next; ecmc=ecmc->next) ; //find last element
-		if (ecmidx==ecmc->next)
-		  ecmidx = ecmcache;
-		add_garbage(ecmc->next); //free last element
-		ecmc->next = NULL;
+		//for (ecmc=ecmcache; ecmc->next->next; ecmc=ecmc->next) ; //find last element
+		ecmc = ecmcache;
+		ecmcache = ecmcache->next;
+		if (ecmidx == ecmc)
+				ecmidx = ecmcache;
+		add_garbage(ecmc);
 	}
 }
 
@@ -799,7 +800,7 @@ struct s_client * create_client(in_addr_t ip) {
 		if (ecmn) {
 			memset(ecmn, 0, sizeof(struct s_ecm));
 			ecmc->next = ecmn;
-                }
+		}
 
 		//increase ecmcache
 		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
@@ -807,9 +808,9 @@ struct s_client * create_client(in_addr_t ip) {
 		if (ecmn) {
 			memset(ecmn, 0, sizeof(struct s_ecm));
 			ecmc->next = ecmn;
-                }
+		}
 
-                //Now add new client to the list:
+        //Now add new client to the list:
 		struct s_client *last;
 		for (last=first_client; last->next != NULL; last=last->next); //ends with cl on last client
 		last->next = cl;
