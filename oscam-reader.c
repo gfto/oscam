@@ -245,7 +245,7 @@ int network_tcp_connection_open()
            if (r == 0) {
               fcntl(sd, F_SETFL, fl);
               clear_block_delay(rdr);
-              return sd; //tv we are connected
+              return sd; //now we are connected
            }
 	}
      }
@@ -771,7 +771,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
 
 #ifdef WITH_CARDREADER
   if (!(reader->typ & R_IS_CASCADING)) { 
-      struct timeval tv;    
+      struct timeval tv;
       
 #define CHECK_HEALTH_PERIOD 1000
       if (reader->card_status == CARD_INSERTED) {
@@ -782,6 +782,8 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
               reader->last_health_check = tv.tv_sec * 1000 + tv.tv_usec / 1000;
           }
       }
+      else
+      		reader_check_health(reader);
   }
 #endif
   return(0);
