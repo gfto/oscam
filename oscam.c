@@ -47,6 +47,8 @@ struct  s_ecm     *cwidx;
 struct  s_ecm     *ecmcache;
 struct  s_ecm     *ecmidx;
 
+//cachesize
+int cache_size = 0;
 #ifdef CS_WITH_GBOX
 struct  card_struct Cards[CS_MAXCARDS];
 //struct  idstore_struct  idstore[CS_MAXPID];
@@ -1442,9 +1444,9 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
  **/
 int check_cwcache2(ECM_REQUEST *er, uint64 grp)
 {
-	struct s_reader *save = er->selected_reader;
+	//struct s_reader *save = er->selected_reader;
 	int rc = check_cwcache1(er, grp);
-	er->selected_reader = save;
+	//er->selected_reader = save;
   return rc;
 }
 
@@ -2477,7 +2479,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		// cache1
 		if (check_cwcache1(er, client->grp))
 			er->rc = E_CACHE1;
-
+		else if (check_and_store_ecmcache(er, client->grp))
+				return;
+				
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);
 #endif
@@ -2503,8 +2507,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			}
 		}
 		//we have to go through matching_reader() to check services, then check ecm-cache:
-		if (er->reader_avail && check_and_store_ecmcache(er, client->grp))
-			return; //Found in ecmcache - answer by distribute ecm
+		//if (er->reader_avail && check_and_store_ecmcache(er, client->grp))
+		//	return; //Found in ecmcache - answer by distribute ecm
 
 		if (cfg->lb_mode && er->reader_avail) {
 			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X",

@@ -1510,9 +1510,9 @@ void cc_free(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
 	if (!cc) return;
 
-	cl->cc=NULL;
 	pthread_mutex_trylock(&cc->cards_busy);
 	if (!cl->cc) return;
+	cl->cc=NULL;
 	cc_free_cardlist(cc->cards, TRUE);
 	cc_free_reported_carddata(cl, cc->reported_carddatas, NULL, FALSE);
 	ll_destroy_data(cc->pending_emms);

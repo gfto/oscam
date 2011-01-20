@@ -58,8 +58,10 @@ void cs_write_log(char *txt)
 #ifdef CS_ANTICASC
 	if( cur_client()->typ == 'a' && fpa ) {
 		switch_log(cfg->ac_logfile, &fpa, ac_init_log);
-		fprintf(fpa, "%s", txt);
-		fflush(fpa);
+		if (fpa) {
+				fputs(txt, fpa);
+				fflush(fpa);
+		}
 	}
 	else
 #endif
@@ -67,18 +69,22 @@ void cs_write_log(char *txt)
 		if(txt[0] == 's') {
 			if (fps) {
 				switch_log(cfg->usrfile, &fps, cs_init_statistics);
-				fprintf(fps, "%s", txt + 1); // remove the leading 's' and write to file
-				fflush(fps);
+				if (fps) {
+						fputs(txt + 1, fps); // remove the leading 's' and write to file
+						fflush(fps);
+				}
 			}
 		} else {
 			if(!cfg->disablelog){
 				if (fp){
 					switch_log(cfg->logfile, &fp, cs_init_log);
-					fprintf(fp, "%s", txt);
-					fflush(fp);
+					if (fp) {
+							fputs(txt, fp);
+							fflush(fp);
+					}		
 				}
 				if(cfg->logtostdout){
-					fprintf(stdout, "%s", txt);
+					fputs(txt, stdout);
 					fflush(fp);
 				}
 			}
@@ -141,7 +147,7 @@ static void write_to_log(int flag, char *txt)
 #else
 	if (cfg->logtosyslog) // system-logfile
 #endif
-		syslog(LOG_INFO, "%s", txt);
+		syslog(LOG_INFO, txt);
 
 	time(&t);
 	localtime_r(&t, &lt);
