@@ -3216,6 +3216,7 @@ if (pthread_key_create(&getclient, NULL)) {
   void (*cardreader_def[])(struct s_cardreader *)=
   {
 	cardreader_mouse,
+	cardreader_smargo,
 #ifdef WITH_STAPI
 	cardreader_stapi,
 #endif

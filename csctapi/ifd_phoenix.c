@@ -335,7 +335,7 @@ static int stapi_setprotocol(struct s_reader *reader, unsigned char *params, uns
 	return STReader_SetProtocol(reader->stsmart_handle, params, length, len_request);
 }
 
-static int stapi_writesettings(struct s_reader *reader, unsigned long ETU, unsigned long EGT, unsigned char P, unsigned char I) {
+static int stapi_writesettings(struct s_reader *reader, unsigned long ETU, unsigned long EGT, unsigned char P, unsigned char I, unsigned short Fi, unsigned char Di, unsigned char Ni) {
 	return STReader_SetClockrate(reader->stsmart_handle);
 }
 
@@ -351,6 +351,7 @@ void cardreader_stapi(struct s_cardreader *crdr)
 	crdr->set_protocol	= stapi_setprotocol;
 	crdr->write_settings = stapi_writesettings;
 	crdr->typ		= R_INTERNAL;
+	int max_clock_speed	= 1;
 }
 #endif
 
@@ -366,5 +367,7 @@ void cardreader_mouse(struct s_cardreader *crdr)
 	crdr->set_parity	= IO_Serial_SetParity;
 	crdr->set_baudrate	= Phoenix_SetBaudrate;
 	crdr->typ		= R_MOUSE;
-	crdr->flush=1;
+	crdr->flush		= 1;
+	crdr->need_inverse	= 1;
+	crdr->read_written	= 1;
 }

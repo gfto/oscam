@@ -512,11 +512,16 @@ struct s_cardreader
 	int	(*receive)(struct s_reader*, unsigned char *data, unsigned int size);
 	int	(*close)(struct s_reader*);
 	int	(*set_parity)(struct s_reader*, uchar parity);
-	int	(*write_settings)(struct s_reader*, unsigned long ETU, unsigned long EGT, unsigned char P, unsigned char I);
+	int	(*write_settings)(struct s_reader*, unsigned long ETU, unsigned long EGT, unsigned char P, unsigned char I, unsigned short Fi, unsigned char Di, unsigned char Ni);
 	int	(*set_protocol)(struct s_reader*, unsigned char * params, unsigned *length, uint len_request);
 	int	(*set_baudrate)(struct s_reader*, ulong baud); //set only for readers which need baudrate setting and timings need to be guarded by OSCam
-	int	flush;
 	int	typ; //fixme: workaround, remove when all old code is converted
+
+	int	max_clock_speed; // 1 for reader->typ > R_MOUSE
+	int	need_inverse; //0 = reader does inversing; 1 = inversing done by oscam
+	//io_serial config
+	int	flush;
+	int	read_written; // 1 = written bytes has to read from device
 };
 
 struct s_cardsystem
@@ -1547,6 +1552,7 @@ void reader_dre();
 void reader_tongfang();
 
 void cardreader_mouse(struct s_cardreader *crdr);
+void cardreader_smargo(struct s_cardreader *crdr);
 #ifdef WITH_STAPI
 void cardreader_stapi(struct s_cardreader *crdr);
 #endif

@@ -469,6 +469,22 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 	cs_ddump_mask(D_IFD, data, size, "IFD Transmit: ");
 	BYTE *buffer = NULL, *sent;
 
+	if (reader->crdr.active==1) {
+		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse==1) {
+			buffer = (BYTE *) calloc(sizeof (BYTE), size);
+			memcpy (buffer, data, size);
+			ICC_Async_InvertBuffer (size, buffer);
+			sent = buffer;
+		} else
+			sent = data;
+
+		call(reader->crdr.transmit(reader, sent, size));
+		if (buffer)
+			free (buffer);
+		cs_debug_mask(D_IFD, "IFD Transmit succesful");
+		return OK;
+	}
+
 	if (reader->convention == ATR_CONVENTION_INVERSE && reader->typ <= R_MOUSE) {
 		buffer = (BYTE *) calloc(sizeof (BYTE), size);
 		memcpy (buffer, data, size);
@@ -477,14 +493,6 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 	}
 	else
 		sent = data;
-
-	if (reader->crdr.active==1 && reader->crdr.transmit) {
-		call(reader->crdr.transmit(reader, sent, size));
-		if (buffer)
-			free (buffer);
-		cs_debug_mask(D_IFD, "IFD Transmit succesful");
-		return OK;
-	}
 
 	switch(reader->typ) {
 		case R_MP35:
@@ -524,10 +532,10 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
 {
 
-	if (reader->crdr.active && reader->crdr.receive) {
+	if (reader->crdr.active==1) {
 		call(reader->crdr.receive(reader, data, size));
 
-		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.set_baudrate)
+		if (reader->convention == ATR_CONVENTION_INVERSE && reader->crdr.need_inverse==1)
 			ICC_Async_InvertBuffer (size, data);
 
 		cs_ddump_mask(D_IFD, data, size, "IFD Received: ");
@@ -918,7 +926,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 		I = 0;
 
 	//set clock speed to max if internal reader
-	if(reader->typ > R_MOUSE || (reader->crdr.active == 1 && reader->crdr.set_baudrate))
+	if((reader->typ > R_MOUSE && reader->crdr.active == 0) || (reader->crdr.active == 1 && reader->crdr.max_clock_speed==1))
 		if (reader->mhz == 357 || reader->mhz == 358) //no overclocking
 			reader->mhz = atr_fs_table[FI] / 10000; //we are going to clock the card to this nominal frequency
 
@@ -1052,12 +1060,12 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 
 	call (SetRightParity (reader));
 
-	if (reader->crdr.active && reader->crdr.write_settings) {
+	if (reader->crdr.active==1 && reader->crdr.write_settings) {
 		unsigned long ETU = 0;
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
-		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I));
+		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (unsigned short) atr_f_table[FI], (BYTE)d, n));
 	}
 
   //write settings to internal device

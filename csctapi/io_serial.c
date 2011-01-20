@@ -496,13 +496,13 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 			if (u != to_send)
 			{
 				cs_log("ERROR in IO_Serial_Write u=%d to_send=%d errno=%d", u, to_send, errno);
-				if(reader->typ != R_INTERNAL)
+				if ((reader->typ != R_INTERNAL && reader->crdr.active==0) || (reader->crdr.active==1 && reader->crdr.read_written==1))
 					reader->written += u;
 				//tcflush (reader->handle, TCIFLUSH);
 				return ERROR;
 			}
 			
-			if(reader->typ != R_INTERNAL)
+			if ((reader->typ != R_INTERNAL && reader->crdr.active==0) || (reader->crdr.active==1 && reader->crdr.read_written==1))
 				reader->written += to_send;
 			
 			cs_ddump_mask(D_DEVICE, data_w+count, to_send, "IO: Sending: ");
