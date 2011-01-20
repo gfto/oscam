@@ -288,6 +288,10 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLREFRESH "\
 	<meta http-equiv=\"refresh\" content=\"##REFRESHTIME##; URL=##REFRESHURL##\" />\n"
 
+#define TPLHELPPREFIX "<A HREF=\"http://streamboard.gmc.to/wiki/index.php/OSCam/##LANGUAGE##/Config/oscam."
+
+#define TPLHELPSUFFIX "\" TARGET=\"_blank\">"
+
 #define TPLMENU "\
 	<TABLE border=0 class=\"menu\">\n\
 		<TR>\n\
@@ -1232,7 +1236,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<TABLE class=\"config\" cellspacing=\"0\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Global Config</TH></TR>\n\
-			<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 			<TR><TD>Nice:</TD><TD><input name=\"nice\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NICE##\"></TD></TR>\n\
 			<TR><TD>Net prio:</TD><TD><input name=\"netprio\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NETPRIO##\"></TD></TR>\n\
 			<TR><TD>Bind wait:</TD><TD><input name=\"bindwait\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##BINDWAIT##\"> s</TD></TR>\n\
@@ -1543,6 +1547,8 @@ char *tpl[]={
 	"APIFOOTER",
 	"MENU",
 	"REFRESH",
+	"HELPPREFIX",
+	"HELPSUFFIX",
 	"STATUS",
 	"APISTATUS",
 	"CLIENTSTATUSBIT",
@@ -1655,6 +1661,8 @@ char *tplmap[]={
 	TPLAPIFOOTER,
 	TPLMENU,
 	TPLREFRESH,
+	TPLHELPPREFIX,
+	TPLHELPSUFFIX,
 	TPLSTATUS,
 	TPLAPISTATUS,
 	TPLCLIENTSTATUSBIT,

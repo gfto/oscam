@@ -3103,12 +3103,19 @@ int process_request(FILE *f, struct in_addr in) {
 		tpl_printf(vars, TPLADD, "STARTTIME", "%02d:%02d:%02d", st.tm_hour, st.tm_min, st.tm_sec);
 		tpl_printf(vars, TPLADD, "PROCESSID", "%d", server_pid);
 
-		char tbuffer [30];
-		strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
-		tpl_printf(vars, TPLADD, "APISTARTTIME", "%s", tbuffer);// XMLAPI
-
 		time_t now = time((time_t)0);
-		tpl_printf(vars, TPLADD, "APIUPTIME", "%u", now - first_client->login);// XMLAPI
+		// XMLAPI
+		if (pgidx == 18) {
+			char tbuffer [30];
+			strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
+			tpl_printf(vars, TPLADD, "APISTARTTIME", "%s", tbuffer);
+			tpl_printf(vars, TPLADD, "APIUPTIME", "%u", now - first_client->login);
+		}
+
+		//Placeholder for language code in helplink
+		//fixme: use a parameter for e.g. http_helplanguage=de|en|fr
+		tpl_addVar(vars, TPLADD, "LANGUAGE", "en");
+
 		tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
 		tpl_printf(vars, TPLADD, "CURIP", "%s", inet_ntoa(*(struct in_addr *)&in));
 		if(cfg->http_readonly)
