@@ -4,6 +4,7 @@
 
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
+static short logStarted = 0;
 
 pthread_mutex_t switching_log;
 #ifdef CS_LOGHISTORY
@@ -77,7 +78,7 @@ void cs_write_log(char *txt)
 		} else {
 			if(!cfg->disablelog){
 				if (fp){
-					switch_log(cfg->logfile, &fp, cs_init_log);
+					switch_log(cfg->logfile, &fp, cs_open_logfiles);
 					if (fp) {
 							fputs(txt, fp);
 							fflush(fp);
@@ -85,21 +86,14 @@ void cs_write_log(char *txt)
 				}
 				if(cfg->logtostdout){
 					fputs(txt, stdout);
-					fflush(fp);
+					fflush(stdout);
 				}
 			}
 		}
 }
 
-int cs_init_log(void)
+int cs_open_logfiles()
 {
-	static char *head = ">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")";
-
-	pthread_mutex_init(&switching_log, NULL);
-#ifdef CS_LOGHISTORY
-	pthread_mutex_init(&loghistory_lock, NULL);
-#endif
-
 	if (!fp) {	//log to file
 		if ((fp = fopen(cfg->logfile, "a+")) <= (FILE *)0) {
 			fp = (FILE *)0;
@@ -115,11 +109,25 @@ int cs_init_log(void)
 		}
 	}
 	if (cfg->logtosyslog) { //log to syslog
+		if(logStarted == 1) closelog();
 		openlog("oscam", LOG_NDELAY, LOG_DAEMON);
 	}
-	cs_log(head);
+	cs_log(">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")");
 	cs_log_config();
 	return(fp <= (FILE *)0);
+}
+
+int cs_init_log(void)
+{
+	if(logStarted == 0){
+		pthread_mutex_init(&switching_log, NULL);
+#ifdef CS_LOGHISTORY
+		pthread_mutex_init(&loghistory_lock, NULL);
+#endif
+	}
+	int rc = cs_open_logfiles();
+	logStarted = 1;
+	return rc;
 }
 
 static void get_log_header(int m, char *txt)

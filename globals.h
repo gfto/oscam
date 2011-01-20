@@ -1486,6 +1486,7 @@ extern int is_connect_blocked(struct s_reader *rdr);
             
 // oscam-log
 extern int  cs_init_log();
+extern int cs_open_logfiles();
 extern void cs_write_log(char *);
 extern void cs_log(const char *,...);
 #ifdef WITH_DEBUG
