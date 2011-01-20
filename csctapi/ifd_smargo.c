@@ -6,6 +6,13 @@
 #include "icc_async.h"
 #include "io_serial.h"
 
+#ifdef OS_CYGWIN32
+#undef OK
+#undef ERROR
+#undef LOBYTE
+#undef HIBYTE
+#endif
+
 #define OK 0
 #define ERROR 1
 #define LOBYTE(w) ((BYTE)((w) & 0xff))
@@ -27,7 +34,6 @@ static int smargo_set_settings(struct s_reader *reader, int freq, unsigned char 
 	cs_debug_mask(D_DEVICE, "Smargo: sending F=%04X (%d), D=%02X (%d), Freq=%04X (%d), N=%02X (%d), T=%02X (%d), inv=%02X (%d) to smartreader",Fi, Fi, Di, Di, freqk, freqk, Ni, Ni, T, T, inv, inv);
 
 	if (T!=14 || freq == 369) {
-		cs_debug_mask (D_DEVICE, "IO:SR: sending F=%04X (%d) and D=%02X (%d) to smartreader",Fi,Fi,Di,Di);
 		data[0]=0x01;
 		data[1]=HIBYTE(Fi);
 		data[2]=LOBYTE(Fi);
