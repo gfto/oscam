@@ -585,23 +585,16 @@ static void cleanup_thread(struct s_client *cl)
 	//decrease cwcache
 	struct s_ecm *ecmc;
 	if (cwidx->next) {
-		if (cwidx->next->next) {
-			ecmc=cwidx->next->next;
-			add_garbage(cwidx->next);
-			cwidx->next=ecmc;
-		} else {
-			add_garbage(cwidx->next);
-			cwidx->next = NULL;
-                }
-	} else {
-		ecmc=cwcache->next;
-		add_garbage(cwcache);
-		cwcache=ecmc;
+		for (ecmc=cwcache; ecmc->next->next; ecmc=ecmc->next) ; 
+		if (cwidx==ecmc->next)
+			cwidx = cwcache;					
+		add_garbage(ecmc->next);
+		ecmc->next = NULL;
 	}
 
 	//decrease ecmache
-	if (ecmcache->next != NULL) { //keep it at least on one entry big
-		for (ecmc=ecmcache; ecmc->next->next ; ecmc=ecmc->next) ; //find last element
+	if (ecmcache->next) { //keep it at least on one entry big
+		for (ecmc=ecmcache; ecmc->next->next; ecmc=ecmc->next) ; //find last element
 		if (ecmidx==ecmc->next)
 		  ecmidx = ecmcache;
 		add_garbage(ecmc->next); //free last element
