@@ -783,7 +783,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
           }
       }
       else
-      		reader_check_health(reader);
+      		reader_checkhealth(reader);
   }
 #endif
   return(0);
