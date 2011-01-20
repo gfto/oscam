@@ -163,7 +163,7 @@ int hostResolve(struct s_reader *rdr)
 
      int err = getaddrinfo(rdr->device, NULL, &hints, &res);
      if (err != 0 || !res || !res->ai_addr) {
-       cs_log("can't resolve %s, error: %s", rdr->device, err ? gai_strerror(err) : "unktvn");
+       cs_log("can't resolve %s, error: %s", rdr->device, err ? gai_strerror(err) : "unknown");
        result = 0;
      } else {
        cl->udp_sa.sin_addr.s_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
@@ -593,7 +593,7 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   int i, no, rc, ecs;
   char *rtxt[] = { "error", (reader->typ & R_IS_CASCADING) ? "sent" : "written", "skipped", "blocked" };
-  char *typedesc[]= { "unktvn", "unique", "shared", "global" };
+  char *typedesc[]= { "unknown", "unique", "shared", "global" };
   struct timeb tps, tpe;
   struct s_client *cl = reader->client;
 
