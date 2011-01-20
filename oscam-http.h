@@ -1,4 +1,5 @@
 /* The server string in the http header */
+/* The server string in the http header */
 #define SERVER "webserver/1.0"
 /* The protocol that gets output. Currently only 1.0 is possible as 1.1 requires many features we don't have. */
 #define PROTOCOL "HTTP/1.0"
@@ -422,7 +423,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		</select>\n\
 		<input type=\"submit\" value=\"Update\">\n\
 	</form>\n\
-	<TABLE WIDTH=\"100%\" cellspacing=\"0\" class=\"status\">\n\
+	<TABLE WIDTH=\"100%\" class=\"status\">\n\
 		<TR>\n\
 			<TH>hide</TH>\n\
 			<TH>Thread ID</TH>\n\
@@ -530,7 +531,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##NEWUSERFORM##\
 	</TABLE><BR>\n\
 	<TH>Totals for the server: </TH>\n\
-	<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+	<TABLE cellpadding=\"10\">\n\
 		<TR>\n\
 			<TH>OK</TH>\n\
 			<TH>NOK</TH>\n\
@@ -592,15 +593,15 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<input name=\"user\" type=\"hidden\" value=\"##USERNAME##\">\n\
 		<TABLE CLASS=\"config\">\n\
 			<TR><TH>&nbsp;</TH> <TH>Edit User ##USERNAME##</TH></TR>\n\
-			<TR><TD>Password:</TD><TD><input name=\"pwd\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>Description:</TD><TD><input name=\"description\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##DESCRIPTION##\"></TD></TR>\n\
-			<TR><TD>Disabled:</TD><TD><SELECT NAME=\"disabled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DISABLEDCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
-			<TR><TD>Exp. Date:</TD><TD><input name=\"expdate\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##EXPDATE##\"></TD></TR>\n\
-			<TR><TD>Failban:</TD><TD><input name=\"failban\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##FAILBAN##\"></TD></TR>\n\
-			<TR><TD>Allowed Timeframe:</TD><TD><input name=\"allowedtimeframe\" type=\"text\" size=\"15\" maxlength=\"11\" value=\"##ALLOWEDTIMEFRAME##\">&nbsp;(hh:mm-hh:mm)</TD></TR>\n\
-			<TR><TD>Group:</TD><TD><input name=\"group\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##GROUPS##\"></TD></TR>\n\
-			<TR><TD>Hostname:</TD><TD><input name=\"hostname\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##DYNDNS##\"></TD></TR>\n\
-			<TR><TD>Uniq:</TD>\n\
+			<TR><TD>Password:</A></TD><TD><input name=\"pwd\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##PASSWORD##\"></TD></TR>\n\
+			<TR><TD>Description:</A></TD><TD><input name=\"description\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##DESCRIPTION##\"></TD></TR>\n\
+			<TR><TD>Disabled:</A></TD><TD><SELECT NAME=\"disabled\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DISABLEDCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>Exp. Date:</A></TD><TD><input name=\"expdate\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##EXPDATE##\"></TD></TR>\n\
+			<TR><TD>Failban:</A></TD><TD><input name=\"failban\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##FAILBAN##\"></TD></TR>\n\
+			<TR><TD>Allowed Timeframe:</A></TD><TD><input name=\"allowedtimeframe\" type=\"text\" size=\"15\" maxlength=\"11\" value=\"##ALLOWEDTIMEFRAME##\">&nbsp;(hh:mm-hh:mm)</TD></TR>\n\
+			<TR><TD>Group:</A></TD><TD><input name=\"group\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##GROUPS##\"></TD></TR>\n\
+			<TR><TD>Hostname:</A></TD><TD><input name=\"hostname\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##DYNDNS##\"></TD></TR>\n\
+			<TR><TD>Uniq:</A></TD>\n\
 				<TD>\n\
 					<select name=\"uniq\">\n\
 						<option value=\"0\" ##UNIQSELECTED0##>0 - none</option>\n\
@@ -611,8 +612,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Sleep:</TD><TD><input name=\"sleep\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##SLEEP##\"></TD></TR>\n\
-			<TR><TD>Monlevel:</TD>\n\
+			<TR><TD>Sleep:</A></TD><TD><input name=\"sleep\" type=\"text\" size=\"4\" maxlength=\"4\" value=\"##SLEEP##\"></TD></TR>\n\
+			<TR><TD>Monlevel:</A></TD>\n\
 				<TD>\n\
 					<select name=\"monlevel\">\n\
 						<option value=\"0\" ##MONSELECTED0##>0 - no access to monitor</option>\n\
@@ -623,7 +624,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>AU:</TD>\n\
+			<TR><TD>AU:</A></TD>\n\
 				<TD>\n\
 					<select name=\"au\">\n\
 						<option value=\" \" ##AUSELECTED##>none</option>\n\
@@ -632,23 +633,23 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 						</select>\n\
 					</TD>\n\
 			</TR>\n\
-			<TR><TD>Services:</TD>\n\
+			<TR><TD>Services:</A></TD>\n\
 				<TD>\n\
-					<TABLE cellspacing=\"0\" class=\"invisible\">\n\
+					<TABLE class=\"invisible\">\n\
 ##SIDS##\
 					</TABLE>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>CAID:</TD><TD><input name=\"caid\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##CAIDS##\"></TD></TR>\n\
-			<TR><TD>Ident:</TD><TD><textarea name=\"ident\" cols=\"58\" rows=\"3\" class=\"bt\">##IDENTS##</textarea></TD></TR>\n\
-			<TR><TD>CHID:</TD><TD><textarea name=\"chid\" cols=\"58\" rows=\"3\" class=\"bt\">##CHIDS##</textarea></TD></TR>\n\
-			<TR><TD>Betatunnel:</TD><TD><textarea name=\"betatunnel\" cols=\"58\" rows=\"3\" class=\"bt\">##BETATUNNELS##</textarea></TD></TR>\n\
-			<TR><TD>Suppresscmd08:</TD><TD><SELECT NAME=\"suppresscmd08\"><OPTION VALUE=\"0\">CMD08 active</OPTION><OPTION VALUE=\"1\" ##SUPPRESSCMD08##>CMD08 suppressed</OPTION></SELECT></TD></TR>\n\
-			<TR><TD>Sleepsend:</TD><TD><input name=\"sleepsend\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##SLEEPSEND##\"> 0 or 255</TD></TR>\n\
+			<TR><TD>CAID:</A></TD><TD><input name=\"caid\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##CAIDS##\"></TD></TR>\n\
+			<TR><TD>Ident:</A></TD><TD><textarea name=\"ident\" cols=\"58\" rows=\"3\" class=\"bt\">##IDENTS##</textarea></TD></TR>\n\
+			<TR><TD>CHID:</A></TD><TD><textarea name=\"chid\" cols=\"58\" rows=\"3\" class=\"bt\">##CHIDS##</textarea></TD></TR>\n\
+			<TR><TD>Betatunnel:</A></TD><TD><textarea name=\"betatunnel\" cols=\"58\" rows=\"3\" class=\"bt\">##BETATUNNELS##</textarea></TD></TR>\n\
+			<TR><TD>Suppresscmd08:</A></TD><TD><SELECT NAME=\"suppresscmd08\"><OPTION VALUE=\"0\">CMD08 active</OPTION><OPTION VALUE=\"1\" ##SUPPRESSCMD08##>CMD08 suppressed</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>Sleepsend:</A></TD><TD><input name=\"sleepsend\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##SLEEPSEND##\"> 0 or 255</TD></TR>\n\
 ##TPLUSEREDITANTICASC##\
-			<TR class=\"usrcfg_cccam\"><TD>CCC Maxhops:</TD><TD><input name=\"cccmaxhops\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOPS##\"></TD></TR>\n\
-			<TR class=\"usrcfg_cccam\"><TD>CCC Reshare:</TD><TD><input name=\"cccreshare\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCRESHARE##\"></TD></TR>\n\
-			<TR><TD>Keepalive:</TD><TD><SELECT NAME=\"keepalive\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPALIVE##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR class=\"usrcfg_cccam\"><TD>CCC Maxhops:</A></TD><TD><input name=\"cccmaxhops\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOPS##\"></TD></TR>\n\
+			<TR class=\"usrcfg_cccam\"><TD>CCC Reshare:</A></TD><TD><input name=\"cccreshare\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCRESHARE##\"></TD></TR>\n\
+			<TR><TD>Keepalive:</A></TD><TD><SELECT NAME=\"keepalive\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPALIVE##>ON</OPTION></SELECT></TD></TR>\n\
 			<TR>\n\
 				<TD align=\"center\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save settings and reload users\" ##BTNDISABLED##></TD>\n\
 				<TD align=\"center\"><input name=\"newuser\" type=\"text\" size=\"20\" maxlength=\"20\" title=\"Enter new username if you want to clone this user\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" name=\"action\" value=\"Save As\" title=\"Save as new user and reload users\" ##BTNDISABLED##></TD>\n\
@@ -669,8 +670,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #ifdef CS_ANTICASC
 # define TPLUSEREDITANTICASC "\
-			<TR class=\"usrcfg_anticasc\"><TD>Anticascading numusers:</TD><TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\"></TD></TR>\n\
-			<TR class=\"usrcfg_anticasc\"><TD>Anticascading penalty:</TD><TD><input name=\"penalty\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_PENALTY##\"></TD></TR>\n"
+			<TR class=\"usrcfg_anticasc\"><TD>Anticascading numusers:</A></TD><TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\"></TD></TR>\n\
+			<TR class=\"usrcfg_anticasc\"><TD>Anticascading penalty:</A></TD><TD><input name=\"penalty\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_PENALTY##\"></TD></TR>\n"
 #endif
 
 #define TPLSIDTAB "\
@@ -788,7 +789,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 	<BR><BR>\n\
-	<TABLE cellspacing=\"0\" cellpadding=\"10\">\n\
+	<TABLE cellpadding=\"10\">\n\
 		<TR><TH>USB Devices</TH></TR>\n\
 ##USBBIT##\n\
 	</TABLE>\n\
@@ -872,27 +873,27 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<TABLE CLASS=\"config\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Reader ##READERNAME##</TH></TR>\n\
 			<TR><TH>&nbsp;</TH><TH>Reader general settings</TH></TR>\n\
-			<TR><TD>Enable:</TD><TD><input name=\"enable\" type=\"hidden\" value=\"0\"><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
-			<TR><TD>Device:</TD><TD><input name=\"device\" type=\"text\" size=\"60\" maxlength=\"150\" value=\"##DEVICE##\"></TD></TR>\n\
-			<TR><TD>Group:</TD><TD><input name=\"group\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##GRP##\"></TD></TR>\n\
-			<TR><TD>Fallback:</TD><TD><input name=\"fallback\" type=\"hidden\" value=\"0\"><input name=\"fallback\" type=\"checkbox\" value=\"1\" ##FALLBACKCHECKED##></TD></TR>\n\
-			<TR><TD>Loadbalance weight:</TD><TD><input name=\"lb_weight\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##LBWEIGHT##\"></TD></TR>\n\
-			<TR><TD>Caid:</TD><TD><input name=\"caid\" type=\"text\" size=\"60\" maxlength=\"100\" value=\"##CAIDS##\"></TD></TR>\n\
-			<TR><TD>Ident:</TD><TD><textarea name=\"ident\" cols=\"58\" rows=\"3\" class=\"bt\">##IDENTS##</textarea></TD></TR>\n\
-			<TR><TD>CHID:</TD><TD><textarea name=\"chid\" cols=\"58\" rows=\"3\" class=\"bt\">##CHIDS##</textarea></TD></TR>\n\
-			<TR><TD>Services:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##server#enable##TPLHELPSUFFIX##Enable:</A></TD><TD><input name=\"enable\" type=\"hidden\" value=\"0\"><input name=\"enable\" type=\"checkbox\" value=\"1\" ##ENABLED##></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#device##TPLHELPSUFFIX##Device:</A></TD><TD><input name=\"device\" type=\"text\" size=\"60\" maxlength=\"150\" value=\"##DEVICE##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#group##TPLHELPSUFFIX##Group:</A></TD><TD><input name=\"group\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##GRP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#fallback##TPLHELPSUFFIX##Fallback:</A></TD><TD><input name=\"fallback\" type=\"hidden\" value=\"0\"><input name=\"fallback\" type=\"checkbox\" value=\"1\" ##FALLBACKCHECKED##></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#lb_weight##TPLHELPSUFFIX##Loadbalance weight:</A></TD><TD><input name=\"lb_weight\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##LBWEIGHT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#caid##TPLHELPSUFFIX##Caid:</A></TD><TD><input name=\"caid\" type=\"text\" size=\"60\" maxlength=\"100\" value=\"##CAIDS##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#ident##TPLHELPSUFFIX##Ident:</A></TD><TD><textarea name=\"ident\" cols=\"58\" rows=\"3\" class=\"bt\">##IDENTS##</textarea></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#chid##TPLHELPSUFFIX##CHID:</A></TD><TD><textarea name=\"chid\" cols=\"58\" rows=\"3\" class=\"bt\">##CHIDS##</textarea></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#services##TPLHELPSUFFIX##Services:</A></TD>\n\
 				<TD>\n\
-					<TABLE cellspacing=\"0\" class=\"invisible\">\n\
+					<TABLE class=\"invisible\">\n\
 ##SIDS##\
 					</TABLE>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>AU disabled:</TD><TD><input name=\"audisabled\" type=\"hidden\" value=\"0\"><input name=\"audisabled\" type=\"checkbox\" value=\"1\" ##AUDISABLED##></TD></TR>\n\
-			<TR><TD>AU Provid:</TD><TD><input name=\"auprovid\" type=\"text\" size=\"10\" maxlength=\"6\" value=\"##AUPROVID##\"></TD></TR>\n\
-			<TR><TD>Emmcache:</TD><TD><input name=\"emmcache\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##EMMCACHE##\"></TD></TR>\n\
-			<TR><TD>Blockemm:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##server#audisabled##TPLHELPSUFFIX##AU disabled:</A></TD><TD><input name=\"audisabled\" type=\"hidden\" value=\"0\"><input name=\"audisabled\" type=\"checkbox\" value=\"1\" ##AUDISABLED##></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#auprovid##TPLHELPSUFFIX##AU Provid:</A></TD><TD><input name=\"auprovid\" type=\"text\" size=\"10\" maxlength=\"6\" value=\"##AUPROVID##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#emmcache##TPLHELPSUFFIX##Emmcache:</A></TD><TD><input name=\"emmcache\" type=\"text\" size=\"10\" maxlength=\"10\" value=\"##EMMCACHE##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#blockemm-u##TPLHELPSUFFIX##Blockemm:</A></TD>\n\
 			<TD>\n\
-				<TABLE cellspacing=\"0\" class=\"invisible\">\n\
+				<TABLE class=\"invisible\">\n\
 					<TR><TD align=\"center\">unknown</TD><TD align=\"center\">unique</TD><TD align=\"center\">shared</TD><TD align=\"center\">global</TD></TR>\n\
 					<TR>\n\
 						<TD align=\"center\"><input name=\"blockemm-unknown\" type=\"hidden\" value=\"0\"><input name=\"blockemm-unknown\" type=\"checkbox\" value=\"1\" ##BLOCKEMMUNKNOWNCHK##></TD>\n\
@@ -923,21 +924,21 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 						</TR>\n"
 
 #define TPLREADERCONFIGSTDHWREADERBIT "\
-				<TR><TD>Mhz:</TD><TD><input name=\"mhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MHZ##\"></TD></TR>\n\
-				<TR><TD>Cardmhz:</TD><TD><input name=\"cardmhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CARDMHZ##\"></TD></TR>\n\
-				<TR><TD>Pincode:</TD><TD><input name=\"pincode\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PINCODE##\"></TD></TR>\n\
-				<TR><TD>Detect:</TD><TD><input name=\"detect\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DETECT##\"></TD></TR>\n\
-				<TR><TD>Readnano:</TD><TD><input name=\"readnano\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##EMMFILE##\"></TD></TR>\n\
-				<TR><TD>Blocknano:</TD><TD><input name=\"blocknano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##BLOCKNANO##\"></TD></TR>\n\
-				<TR><TD>Savenano:</TD><TD><input name=\"savenano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##SAVENANO##\"></TD></TR>\n\
-				<TR><TD>ATR:</TD><TD><input name=\"atr\" type=\"text\" size=\"100\" maxlength=\"54\" value=\"##ATR##\"></TD></TR>\n\
-				<TR><TD>Boxid:</TD><TD><input name=\"boxid\" type=\"text\" size=\"15\" maxlength=\"8\" value=\"##BOXID##\"></TD></TR>\n\
-				<TR><TD>AES Keys:</TD><TD><textarea name=\"aeskeys\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##AESKEYS##</textarea></TD></TR>\n\
-				<TR><TD>RSA Key:</TD><TD><textarea name=\"rsakey\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##RSAKEY##</textarea></TD></TR>\n\
-				<TR><TD>Boxkey:</TD><TD><input name=\"boxkey\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##BOXKEY##\"></TD></TR>\n\
-				<TR><TD>Showcls:</TD><TD><input name=\"showcls\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SHOWCLS##\"></TD></TR>\n\
-				<TR><TD>Force Irdeto:<input name=\"force_irdeto\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"force_irdeto\" type=\"checkbox\" value=\"1\" ##FORCEIRDETOCHECKED##></TD></TR>\n\
-				<TR><TD>Force NDS Version:</TD>\n\
+				<TR><TD>##TPLHELPPREFIX##server#mhz##TPLHELPSUFFIX##Mhz:</A></TD><TD><input name=\"mhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MHZ##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#cardmzh##TPLHELPSUFFIX##Cardmhz:</A></TD><TD><input name=\"cardmhz\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CARDMHZ##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#pincode##TPLHELPSUFFIX##Pincode:</A></TD><TD><input name=\"pincode\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PINCODE##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#detect##TPLHELPSUFFIX##Detect:</A></TD><TD><input name=\"detect\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DETECT##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#readnano##TPLHELPSUFFIX##Readnano:</A></TD><TD><input name=\"readnano\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##EMMFILE##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#blocknano##TPLHELPSUFFIX##Blocknano:</A></TD><TD><input name=\"blocknano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##BLOCKNANO##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#savenano##TPLHELPSUFFIX##Savenano:</A></TD><TD><input name=\"savenano\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##SAVENANO##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#atr##TPLHELPSUFFIX##ATR:</A></TD><TD><input name=\"atr\" type=\"text\" size=\"100\" maxlength=\"54\" value=\"##ATR##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#boxid##TPLHELPSUFFIX##Boxid:</A></TD><TD><input name=\"boxid\" type=\"text\" size=\"15\" maxlength=\"8\" value=\"##BOXID##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#aeskeys##TPLHELPSUFFIX##AES Keys:</A></TD><TD><textarea name=\"aeskeys\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##AESKEYS##</textarea></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#rsakey##TPLHELPSUFFIX##RSA Key:</A></TD><TD><textarea name=\"rsakey\" cols=\"98\" rows=\"4\" class=\"bt\" maxlength=\"128\">##RSAKEY##</textarea></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#boxkey##TPLHELPSUFFIX##Boxkey:</A></TD><TD><input name=\"boxkey\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##BOXKEY##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#showcls##TPLHELPSUFFIX##Showcls:</A></TD><TD><input name=\"showcls\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SHOWCLS##\"></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#force_irdeto##TPLHELPSUFFIX##Force Irdeto:</A><input name=\"force_irdeto\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"force_irdeto\" type=\"checkbox\" value=\"1\" ##FORCEIRDETOCHECKED##></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#ndsversion##TPLHELPSUFFIX##Force NDS Version:</A></TD>\n\
 					<TD>\n\
 						<SELECT name=\"ndsversion\">\n\
 							<OPTION value=\"0\" ##NDSVERSION0##>0 - AUTO</OPTION>\n\
@@ -947,7 +948,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 						</SELECT>\n\
 					</TD>\n\
 				</TR>\n\
-				<TR><TD>Read Nagra Records:</TD>\n\
+				<TR><TD>##TPLHELPPREFIX##server#nagra_read##TPLHELPSUFFIX##Read Nagra Records:</A></TD>\n\
 					<TD>\n\
 						<SELECT name=\"nagra_read\">\n\
 							<OPTION value=\"0\" ##NAGRAREAD0##>0 - Disabled</OPTION>\n\
@@ -956,9 +957,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 						</SELECT>\n\
 					</TD>\n\
 				</TR>\n\
-				<TR><TD>Deprecated:<input name=\"deprecated\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"deprecated\" type=\"checkbox\" value=\"1\" ##DEPRECATEDCHCHECKED##></TD></TR>\n\
-				<TR><TD>Smargopatch:<input name=\"smargopatch\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"smargopatch\" type=\"checkbox\" value=\"1\" ##SMARGOPATCHCHECKED##></TD></TR>\n\
-				<TR><TD>Device Out Endpoint:</TD><TD>##DEVICEEP##</TD></TR>\n"
+				<TR><TD>##TPLHELPPREFIX##server#deprecated##TPLHELPSUFFIX##Deprecated:</A><input name=\"deprecated\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"deprecated\" type=\"checkbox\" value=\"1\" ##DEPRECATEDCHCHECKED##></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#smargopatch##TPLHELPSUFFIX##Smargopatch:</A><input name=\"smargopatch\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"smargopatch\" type=\"checkbox\" value=\"1\" ##SMARGOPATCHCHECKED##></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#device_out_endpoint##TPLHELPSUFFIX##Device Out Endpoint:</A></TD><TD>##DEVICEEP##</TD></TR>\n"
 
 #ifdef LIBUSB
 #define TPLREADERCONFIGDEVICEEPBIT "\
@@ -970,36 +971,36 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 #endif
 
 #define TPLREADERCONFIGCAMD35BIT "\
-			<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
-			<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n"
 #define TPLREADERCONFIGCS378XBIT "\
-			<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
-			<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n"
 #define TPLREADERCONFIGRADEGASTBIT "\
-			<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
-			<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>Inactivity timeout:</TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
-			<TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n"
 #define TPLREADERCONFIGNCD525BIT "\
-			<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
-			<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"40\" maxlength=\"28\" value=\"##NCD_KEY##\"></TD></TR>\n\
-			<TR><TD>Inactivity timeout:</TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
-			<TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
-			<TR><TD>Disable server Filter:<input name=\"disableserverfilter\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"disableserverfilter\" type=\"checkbox\" value=\"1\" ##DISABLESERVERFILTERCHECKED##></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#key##TPLHELPSUFFIX##Key:</A></TD><TD><input name=\"key\" type=\"text\" size=\"40\" maxlength=\"28\" value=\"##NCD_KEY##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#disableserverfilter##TPLHELPSUFFIX##Disable server Filter:</A><input name=\"disableserverfilter\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"disableserverfilter\" type=\"checkbox\" value=\"1\" ##DISABLESERVERFILTERCHECKED##></TD></TR>\n"
 #define TPLREADERCONFIGNCD524BIT "\
-			<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
-			<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"40\" maxlength=\"28\" value=\"##NCD_KEY##\"></TD></TR>\n\
-			<TR><TD>Inactivity timeout:</TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
-			<TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
-			<TR><TD>Disable server Filter:<input name=\"disableserverfilter\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"disableserverfilter\" type=\"checkbox\" value=\"1\" ##DISABLESERVERFILTERCHECKED##></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##PASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#key##TPLHELPSUFFIX##Key:</A></TD><TD><input name=\"key\" type=\"text\" size=\"40\" maxlength=\"28\" value=\"##NCD_KEY##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#disableserverfilter##TPLHELPSUFFIX##Disable server Filter:</A><input name=\"disableserverfilter\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"disableserverfilter\" type=\"checkbox\" value=\"1\" ##DISABLESERVERFILTERCHECKED##></TD></TR>\n"
 #define TPLREADERCONFIGCCCAMBIT "\
-			<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##ACCOUNT##\"></TD></TR>\n\
-			<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>Version:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##ACCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##PASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#cccversion##TPLHELPSUFFIX##Version:</A></TD>\n\
 				<TD>\n\
 					<SELECT name=\"cccversion\">\n\
 						<OPTION value=\"2.0.11\" ##CCCVERSIONSELECTED0##>2.0.11</OPTION>\n\
@@ -1012,16 +1013,16 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Maxhop:</TD><TD><input name=\"cccmaxhop\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOP##\"></TD></TR>\n\
-			<TR><TD>Want Emu:<input name=\"cccwantemu\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccwantemu\" type=\"checkbox\" value=\"1\" ##CCCWANTEMUCHECKED##></TD></TR>\n\
-			<TR><TD>Reconnect-timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
-			<TR><TD>Keep alive:</TD><TD><SELECT NAME=\"ccckeepalive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##KEEPALIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##server#cccmaxhops##TPLHELPSUFFIX##Maxhop:</A></TD><TD><input name=\"cccmaxhop\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##CCCMAXHOP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#cccwantemu##TPLHELPSUFFIX##Want Emu:</A><input name=\"cccwantemu\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccwantemu\" type=\"checkbox\" value=\"1\" ##CCCWANTEMUCHECKED##></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect-timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#ccckeepalive##TPLHELPSUFFIX##Keep alive:</A></TD><TD><SELECT NAME=\"ccckeepalive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##KEEPALIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n"
 #ifdef CS_WITH_GBOX
 #define TPLREADERCONFIGGBOXBIT "\
-			<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
-			<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"10\" maxlength=\"8\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>Inactivity timeout:</TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
-			<TR><TD>Reconnect timeout:</TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"10\" maxlength=\"8\" value=\"##PASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n"
 #endif
 
 #define TPLCONFIGGBOX "\
@@ -1033,8 +1034,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"gbox\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Gbox Config </TH></TR>\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Gbox Config </TH></TR>\n\
 			<TR><TD>Password:</TD><TD><input name=\"password\" type=\"text\" size=\"10\" maxlength=\"8\" value=\"##PASSWORD##\"></TD></TR>\n\
 			<TR><TD>Maxdist:</TD><TD><input name=\"maxdist\" type=\"text\" size=\"5\" maxlength=\"2\" value=\"##MAXDIST##\"></TD></TR>\n\
 			<TR><TD>Ignorelist:</TD><TD><input name=\"ignorelist\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##IGNORELIST##\"></TD></TR>\n\
@@ -1057,16 +1058,16 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input name=\"part\" type=\"hidden\" value=\"anticasc\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<input name=\"enabled\" type=\"hidden\" value=\"0\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Anticascading Config</TH></TR>\n\
-			<TR><TD>Enabled:</TD><TD><input name=\"enabled\" type=\"checkbox\" value=\"1\" ##CHECKED##>\n\
-			<TR><TD>Numusers:</TD><TD><input name=\"numusers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NUMUSERS##\"></TD></TR>\n\
-			<TR><TD>Sampletime:</TD><TD><input name=\"sampletime\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SAMPLETIME##\"></TD></TR>\n\
-			<TR><TD>Samples:</TD><TD><input name=\"samples\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SAMPLES##\"></TD></TR>\n\
-			<TR><TD>Penalty:</TD><TD><input name=\"penalty\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PENALTY##\"></TD></TR>\n\
-			<TR><TD>AClogfile:</TD><TD><input name=\"aclogfile\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##ACLOGFILE##\"></TD></TR>\n\
-			<TR><TD>Fakedelay:</TD><TD><input name=\"fakedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FAKEDELAY##\"></TD></TR>\n\
-			<TR><TD>Denysamples:</TD><TD><input name=\"denysamples\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DENYSAMPLES##\"></TD></TR>\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Anticascading Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#enabled_2##TPLHELPSUFFIX##Enabled:</A></TD><TD><input name=\"enabled\" type=\"checkbox\" value=\"1\" ##CHECKED##>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#numusers##TPLHELPSUFFIX##Numusers:</A></TD><TD><input name=\"numusers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NUMUSERS##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#sampletime##TPLHELPSUFFIX##Sampletime:</A></TD><TD><input name=\"sampletime\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SAMPLETIME##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#samples##TPLHELPSUFFIX##Samples:</A></TD><TD><input name=\"samples\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SAMPLES##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#penalty##TPLHELPSUFFIX##Penalty:</A></TD><TD><input name=\"penalty\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PENALTY##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#aclogfile##TPLHELPSUFFIX##AClogfile:</A></TD><TD><input name=\"aclogfile\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##ACLOGFILE##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#fakedelay##TPLHELPSUFFIX##Fakedelay:</A></TD><TD><input name=\"fakedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FAKEDELAY##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#denysamples##TPLHELPSUFFIX##Denysamples:</A></TD><TD><input name=\"denysamples\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DENYSAMPLES##\"></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1082,14 +1083,14 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"cccam\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Cccam Config</TH></TR>\n\
-			<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##PORT##\"></TD></TR>\n\
-			<TR><TD>Reshare:</TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
-			<TR><TD>Ignore reshare:</TD><TD><SELECT NAME=\"ignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##IGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
-			<TR><TD>Stealth mode:</TD><TD><SELECT NAME=\"stealth\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##STEALTH##>ON</OPTION></SELECT></TD></TR>\n\
-			<TR><TD>Keep clients connected:</TD><TD><SELECT NAME=\"keepconnected\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPCONNECTED##>ON</OPTION></SELECT></TD></TR>\n\
-			<TR><TD>Version:</TD>\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Cccam Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port_7##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##PORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#reshare##TPLHELPSUFFIX##Reshare:</A></TD><TD><input name=\"reshare\" type=\"text\" size=\"2\" maxlength=\"1\" value=\"##RESHARE##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#ignorereshare##TPLHELPSUFFIX##Ignore reshare:</A></TD><TD><SELECT NAME=\"ignorereshare\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##IGNORERESHARE##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#stealth##TPLHELPSUFFIX##Stealth mode:</A></TD><TD><SELECT NAME=\"stealth\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##STEALTH##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#keepconnected##TPLHELPSUFFIX##Keep clients connected:</A></TD><TD><SELECT NAME=\"keepconnected\"><OPTION VALUE=\"0\">OFF</OPTION><OPTION VALUE=\"1\" ##KEEPCONNECTED##>ON</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#version##TPLHELPSUFFIX##Version:</A></TD>\n\
 				<TD>\n\
 					<SELECT name=\"version\">\n\
 						<OPTION value=\"2.0.11\" ##VERSIONSELECTED0##>2.0.11</OPTION>\n\
@@ -1102,8 +1103,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Update Interval:</TD><TD><input name=\"updateinterval\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##UPDATEINTERVAL##\"></TD></TR>\n\
-			<TR><TD>Minimize cards:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#updateinterval##TPLHELPSUFFIX##Update Interval:</A></TD><TD><input name=\"updateinterval\" type=\"text\" size=\"5\" maxlength=\"4\" value=\"##UPDATEINTERVAL##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#minimizecards##TPLHELPSUFFIX##Minimize cards:</A></TD>\n\
 				<TD>\n\
 					<SELECT name=\"minimizecards\">\n\
 						<OPTION value=\"0\" ##MINIMIZECARDSELECTED0##>0 - legacy (default)</OPTION>\n\
@@ -1112,7 +1113,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Reshare mode:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#reshare_mode##TPLHELPSUFFIX##Reshare mode:</A></TD>\n\
 				<TD>\n\
 					<SELECT name=\"reshare_mode\">\n\
 						<OPTION value=\"0\" ##RESHAREMODE0##>0 - reshare cards only (default)</OPTION>\n\
@@ -1138,14 +1139,14 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<input name=\"httphideidleclients\" type=\"hidden\" value=\"0\">\n\
 		<input name=\"appendchaninfo\" type=\"hidden\" value=\"0\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Monitor Config</TH></TR>\n\
-			<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MONPORT##\"></TD></TR>\n\
-			<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>No crypt:</TD><TD><input name=\"nocrypt\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
-			<TR><TD>Au low:</TD><TD><input name=\"aulow\" type=\"text\" size=\"5\" maxlength=\"1\" value=\"##AULOW##\"> min</TD></TR>\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Monitor Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MONPORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip_2##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#nocrypt##TPLHELPSUFFIX##No crypt:</A></TD><TD><input name=\"nocrypt\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name=\"aulow\" type=\"text\" size=\"5\" maxlength=\"1\" value=\"##AULOW##\"> min</TD></TR>\n\
 			<TR>\n\
-				<TD>Monlevel:</TD>\n\
+				<TD>##TPLHELPPREFIX##conf#monlevel##TPLHELPSUFFIX##Monlevel:</A></TD>\n\
 				<TD><select name=\"monlevel\">\n\
 					<option value=\"0\" ##MONSELECTED0##>0 - no access to monitor</option>\n\
 					<option value=\"1\" ##MONSELECTED1##>1 - only server and own procs</option>\n\
@@ -1155,27 +1156,27 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Hide client to:</TD><TD><input name=\"hideclient_to\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HIDECLIENTTO##\"> s</TD></TR>\n\
-			<TR><TD>Append channel info:</TD><TD><input name=\"appendchaninfo\" type=\"checkbox\" value=\"1\" ##APPENDCHANINFO##></TD></TR>\n\
-			<TR><TH>&nbsp;</TH><TH>Webinterface Config</TH></TR>\n\
-			<TR><TD>Http port:</TD><TD><input name=\"httpport\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##HTTPPORT##\"></TD></TR>\n\
-			<TR><TD>Http user:</TD><TD><input name=\"httpuser\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##HTTPUSER##\"></TD></TR>\n\
-			<TR><TD>Http pwd:</TD><TD><input name=\"httppwd\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##HTTPPASSWORD##\"></TD></TR>\n\
-			<TR><TD>Http css:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#hideclient_to##TPLHELPSUFFIX##Hide client to:</A></TD><TD><input name=\"hideclient_to\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HIDECLIENTTO##\"> s</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#appendchaninfo##TPLHELPSUFFIX##Append channel info:</A></TD><TD><input name=\"appendchaninfo\" type=\"checkbox\" value=\"1\" ##APPENDCHANINFO##></TD></TR>\n\
+			<TR><TH COLSPAN=\"2\">Webinterface Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpport##TPLHELPSUFFIX##Http port:</A></TD><TD><input name=\"httpport\" type=\"text\" size=\"6\" maxlength=\"6\" value=\"##HTTPPORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpuser##TPLHELPSUFFIX##Http user:</A></TD><TD><input name=\"httpuser\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##HTTPUSER##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httppwd##TPLHELPSUFFIX##Http pwd:</A></TD><TD><input name=\"httppwd\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##HTTPPASSWORD##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpcss##TPLHELPSUFFIX##Http css:</A></TD>\n\
 				<TD>\n\
 					<SELECT name=\"httpcss\">\n\
 ##CSSOPTIONS##\
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Http javascript:</TD><TD><input name=\"httpjscript\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPJSCRIPT##\"></TD></TR>\n\
-			<TR><TD>Http refresh:</TD><TD><input name=\"httprefresh\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HTTPREFRESH##\"> s</TD></TR>\n\
-			<TR><TD>Http tpl:</TD><TD><input name=\"httptpl\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPTPL##\"></TD></TR>\n\
-			<TR><TD>Http script:</TD><TD><input name=\"httpscript\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPSCRIPT##\"></TD></TR>\n\
-			<TR><TD>Http Hide Idle Clients:</TD><TD><input name=\"httphideidleclients\" type=\"checkbox\" value=\"1\" ##CHECKED##>\n\
-			<TR><TD>Http allowed:</TD><TD><input name=\"httpallowed\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##HTTPALLOW##\"></TD></TR>\n\
-			<TR><TD>Http dyndns:</TD><TD><input name=\"httpdyndns\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##HTTPDYNDNS##\"></TD></TR>\n\
-			<TR><TD>Http save full config:</TD><TD><SELECT NAME=\"httpsavefullcfg\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPSAVEFULLSELECT##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpjscript##TPLHELPSUFFIX##Http javascript:</A></TD><TD><input name=\"httpjscript\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPJSCRIPT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httprefresh##TPLHELPSUFFIX##Http refresh:</A></TD><TD><input name=\"httprefresh\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HTTPREFRESH##\"> s</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httptpl##TPLHELPSUFFIX##Http tpl:</A></TD><TD><input name=\"httptpl\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPTPL##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpscript##TPLHELPSUFFIX##Http script:</A></TD><TD><input name=\"httpscript\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPSCRIPT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httphideidleclients##TPLHELPSUFFIX##Http Hide Idle Clients:</A></TD><TD><input name=\"httphideidleclients\" type=\"checkbox\" value=\"1\" ##CHECKED##>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpallowed##TPLHELPSUFFIX##Http allowed:</A></TD><TD><input name=\"httpallowed\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##HTTPALLOW##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpdyndns##TPLHELPSUFFIX##Http dyndns:</A></TD><TD><input name=\"httpdyndns\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##HTTPDYNDNS##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httpsavefullcfg##TPLHELPSUFFIX##Http save full config:</A></TD><TD><SELECT NAME=\"httpsavefullcfg\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##HTTPSAVEFULLSELECT##>YES</OPTION></SELECT></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1190,12 +1191,12 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"radegast\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Radegast Config</TH></TR>\n\
-			<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
-			<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>Allowed:</TD><TD><input name=\"allowed\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##ALLOWED##\"></TD></TR>\n\
-			<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##USER##\"></TD></TR>\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Radegast Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port_6##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip_7##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#allowed_2##TPLHELPSUFFIX##Allowed:</A></TD><TD><input name=\"allowed\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##ALLOWED##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##USER##\"></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1212,14 +1213,14 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<input name=\"keepalive\" type=\"hidden\" value=\"0\">\n\
 		<input name=\"mgclient\" type=\"hidden\" value=\"0\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Newcamd Config</TH></TR>\n\
-			<TR><TD>Port:</TD>     <TD><textarea name=\"port\"      cols=\"120\" rows=\"3\" class=\"bt\">##PORT##</textarea></TD></TR>\n\
-			<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"60\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"60\" maxlength=\"28\" value=\"##KEY##\"></TD></TR>\n\
-			<TR><TD>Allowed:</TD>     <TD><textarea name=\"allowed\"      cols=\"58\" rows=\"3\" class=\"bt\">##ALLOWED##</textarea></TD></TR>\n\
-			<TR><TD>Keepalive:</TD><TD><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\
-			<TR><TD>Mgclient:</TD><TD><input name=\"mgclient\" type=\"checkbox\" value=\"1\" ##MGCLIENTCHK##></TD></TR>\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Newcamd Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port_5##TPLHELPSUFFIX##Port:</A></TD>     <TD><textarea name=\"port\"      cols=\"120\" rows=\"3\" class=\"bt\">##PORT##</textarea></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip_6##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"60\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#key_2##TPLHELPSUFFIX##Key:</A></TD><TD><input name=\"key\" type=\"text\" size=\"60\" maxlength=\"28\" value=\"##KEY##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#allowed##TPLHELPSUFFIX##Allowed:</A></TD>     <TD><textarea name=\"allowed\"      cols=\"58\" rows=\"3\" class=\"bt\">##ALLOWED##</textarea></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#keepalive##TPLHELPSUFFIX##Keepalive:</A></TD><TD><input name=\"keepalive\" type=\"checkbox\" value=\"1\" ##KEEPALIVE##></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#mgclient##TPLHELPSUFFIX##Mgclient:</A></TD><TD><input name=\"mgclient\" type=\"checkbox\" value=\"1\" ##MGCLIENTCHK##></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1234,13 +1235,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"global\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
+		<TABLE class=\"config\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Global Config</TH></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#serverip##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>Nice:</TD><TD><input name=\"nice\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NICE##\"></TD></TR>\n\
-			<TR><TD>Net prio:</TD><TD><input name=\"netprio\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NETPRIO##\"></TD></TR>\n\
-			<TR><TD>Bind wait:</TD><TD><input name=\"bindwait\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##BINDWAIT##\"> s</TD></TR>\n\
-			<TR><TD>Resolver:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#nice##TPLHELPSUFFIX##Nice:</A></TD><TD><input name=\"nice\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NICE##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#netprio##TPLHELPSUFFIX##Net prio:</A></TD><TD><input name=\"netprio\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NETPRIO##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#bindwait##TPLHELPSUFFIX##Bind wait:</A></TD><TD><input name=\"bindwait\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##BINDWAIT##\"> s</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#resolvegethostbyname##TPLHELPSUFFIX##Resolver:</A></TD>\n\
 				<TD>\n\
 					<select name=\"resolvegethostbyname\">\n\
 						<option value=\"0\" ##RESOLVER0##>0 - getadressinfo()</option>\n\
@@ -1248,37 +1249,37 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Wait for cards:</TD><TD><SELECT NAME=\"waitforcards\"><OPTION VALUE=\"0\">0 - enable clientlogins while init</OPTION><OPTION VALUE=\"1\" ##WAITFORCARDSCHECKED##>1 - disable clientlogins while init</OPTION></SELECT></TD></TR>\n\
-			<TR><TD>Prefer local cards:</TD><TD><SELECT NAME=\"preferlocalcards\"><OPTION VALUE=\"0\">0 - local cards like proxied</OPTION><OPTION VALUE=\"1\" ##PREFERLOCALCARDSCHECKED##>1 - prefer local cards</OPTION></SELECT></TD></TR>\n\
-			<TR><TD>Unlock parental:</TD><TD><SELECT NAME=\"unlockparental\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##UNLOCKPARENTALCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#waitforcards##TPLHELPSUFFIX##Wait for cards:</A></TD><TD><SELECT NAME=\"waitforcards\"><OPTION VALUE=\"0\">0 - enable clientlogins while init</OPTION><OPTION VALUE=\"1\" ##WAITFORCARDSCHECKED##>1 - disable clientlogins while init</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#preferlocalcards##TPLHELPSUFFIX##Prefer local cards:</A></TD><TD><SELECT NAME=\"preferlocalcards\"><OPTION VALUE=\"0\">0 - local cards like proxied</OPTION><OPTION VALUE=\"1\" ##PREFERLOCALCARDSCHECKED##>1 - prefer local cards</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#unlockparental##TPLHELPSUFFIX##Unlock parental:</A></TD><TD><SELECT NAME=\"unlockparental\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##UNLOCKPARENTALCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">Logging</TH></TR>\n\
-			<TR><TD>Usr file:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#disableuserfile##TPLHELPSUFFIX##Usr file:</A></TD>\n\
 				<TD>\n\
 					<input name=\"usrfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##USERFILE##\">&nbsp;\n\
 					<SELECT NAME=\"disableuserfile\"><OPTION VALUE=\"0\">0 - enabled</OPTION><OPTION VALUE=\"1\" ##DISABLEUSERFILECHECKED##>1 - disabled</OPTION></SELECT>&nbsp;\n\
 					<SELECT NAME=\"usrfileflag\"><OPTION VALUE=\"0\">0 - just join/leave</OPTION><OPTION VALUE=\"1\" ##USERFILEFLAGCHECKED##>1 - each zap</OPTION></SELECT>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Log file / max size:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#logfile##TPLHELPSUFFIX##Log file / max size:</A></TD>\n\
 				<TD>\n\
 					<input name=\"logfile\" type=\"text\" size=\"30\" maxlength=\"128\" value=\"##LOGFILE##\">&nbsp;\n\
 					<SELECT NAME=\"disablelog\"><OPTION VALUE=\"0\">0 - enabled</OPTION><OPTION VALUE=\"1\" ##DISABLELOGCHECKED##>1 - disabled</OPTION></SELECT>&nbsp;\n\
 					<input name=\"maxlogsize\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MAXLOGSIZE##\"> kB\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>CW log dir:</TD><TD><input name=\"cwlogdir\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##CWLOGDIR##\"></TD></TR>\n\
-			<TR><TD>Reader entitlements:</TD><TD><SELECT NAME=\"saveinithistory\"><OPTION VALUE=\"0\">0 - dismiss entitlements</OPTION><OPTION VALUE=\"1\" ##SAVEINITHISTORYCHECKED##>1 - save entitlements</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#cwlogdir##TPLHELPSUFFIX##CW log dir:</A></TD><TD><input name=\"cwlogdir\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##CWLOGDIR##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#saveinithistory##TPLHELPSUFFIX##Reader entitlements:</A></TD><TD><SELECT NAME=\"saveinithistory\"><OPTION VALUE=\"0\">0 - dismiss entitlements</OPTION><OPTION VALUE=\"1\" ##SAVEINITHISTORYCHECKED##>1 - save entitlements</OPTION></SELECT></TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">Failban</TH></TR>\n\
-			<TR><TD>Failban time:</TD><TD><input name=\"failbantime\" type=\"text\" size=\"5\" maxlength=\"6\" value=\"##FAILBANTIME##\"> min blocking IP based</TD></TR>\n\
-			<TR><TD>Failban count:</TD><TD><input name=\"failbancount\" type=\"text\" size=\"5\" maxlength=\"2\" value=\"##FAILBANCOUNT##\"> chances with wrong credenticals</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#failbantime##TPLHELPSUFFIX##Failban time:</A></TD><TD><input name=\"failbantime\" type=\"text\" size=\"5\" maxlength=\"6\" value=\"##FAILBANTIME##\"> min blocking IP based</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#failbancount##TPLHELPSUFFIX##Failban count:</A></TD><TD><input name=\"failbancount\" type=\"text\" size=\"5\" maxlength=\"2\" value=\"##FAILBANCOUNT##\"> chances with wrong credenticals</TD></TR>\n\
 			<TR><TH COLSPAN=\"2\">Timeouts / Times</TH></TR>\n\
-			<TR><TD>Client timeout:</TD><TD><input name=\"clienttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTTIMEOUT##\"> ms to give up and return timeout</TD></TR>\n\
-			<TR><TD>Fallback timeout:</TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> ms to switch to fallback reader</TD></TR>\n\
-			<TR><TD>Cache delay:</TD><TD><input name=\"cachedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms delaying answers from cache</TD></TR>\n\
-			<TR><TD>Client max idle:</TD><TD><input name=\"clientmaxidle\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTMAXIDLE##\"> s to disconnect idle clients</TD></TR>\n\
-			<TR><TD>Global sleep:</TD><TD><input name=\"sleep\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SLEEP##\"> min to switch a client in sleepmode</TD></TR>\n\
-			<TR><TD>Serial reader timeout:</TD><TD><input name=\"serialreadertimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SERIALTIMEOUT##\"> ms</TD></TR>\n\
-			<TR><TD>Reader restart seconds:</TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"> s waittime to restart a reader</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#clienttimeout##TPLHELPSUFFIX##Client timeout:</A></TD><TD><input name=\"clienttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTTIMEOUT##\"> ms to give up and return timeout</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#fallbacktimeout##TPLHELPSUFFIX##Fallback timeout:</A></TD><TD><input name=\"fallbacktimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FALLBACKTIMEOUT##\"> ms to switch to fallback reader</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#cachedelay##TPLHELPSUFFIX##Cache delay:</A></TD><TD><input name=\"cachedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CACHEDELAY##\"> ms delaying answers from cache</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#clientmaxidle##TPLHELPSUFFIX##Client max idle:</A></TD><TD><input name=\"clientmaxidle\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##CLIENTMAXIDLE##\"> s to disconnect idle clients</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#sleep##TPLHELPSUFFIX##Global sleep:</A></TD><TD><input name=\"sleep\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SLEEP##\"> min to switch a client in sleepmode</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serialreadertimeout##TPLHELPSUFFIX##Serial reader timeout:</A></TD><TD><input name=\"serialreadertimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SERIALTIMEOUT##\"> ms</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#readerrestartseconds##TPLHELPSUFFIX##Reader restart seconds:</A></TD><TD><input name=\"readerrestartseconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##READERRESTARTSECONDS##\"> s waittime to restart a reader</TD></TR>\n\
 ##TPLDOUBLECHECKBIT##\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
@@ -1287,7 +1288,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 
 #ifdef CS_WITH_DOUBLECHECK
 #define TPLDOUBLECHECKBIT "\
-			<TR><TD>ECM Doublecheck:</TD><TD><SELECT NAME=\"double_check\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DCHECKCSELECTED##>YES</OPTION></SELECT></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##conf#double_check##TPLHELPSUFFIX##ECM Doublecheck:</A></TD><TD><SELECT NAME=\"double_check\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##DCHECKCSELECTED##>YES</OPTION></SELECT></TD></TR>\n"
 #endif
 
 #define TPLCONFIGLOADBALANCER "\
@@ -1299,9 +1300,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"loadbalancer\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
+		<TABLE class=\"config\">\n\
 			<TR><TH COLSPAN=\"2\">Edit Loadbalancer Config</TH></TR>\n\
-			<TR><TD>Loadbalance Mode:</TD>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_mode##TPLHELPSUFFIX##Loadbalance Mode:</A></TD>\n\
 				<TD>\n\
 					<select name=\"lb_mode\">\n\
 						<option value=\"0\" ##LBMODE0##>0 - Loadbalancer disabled (send to all readers)</option>\n\
@@ -1312,22 +1313,22 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>Loadbalance save every:</TD><TD><input name=\"lb_save\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBSAVE##\"></TD></TR>\n\
-			<TR><TD>Statistics save path:</TD><TD><input name=\"lb_savepath\" type=\"text\" size=\"50\" maxlength=\"255\" value=\"##LBSAVEPATH##\"></TD></TR>\n\
-			<TR><TD>Number of best readers:</TD><TD><input name=\"lb_nbest_readers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBNBESTREADERS##\"></TD></TR>\n\
-			<TR><TD>Number of fallback readers:</TD><TD><input name=\"lb_nfb_readers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBNFBREADERS##\"></TD></TR>\n\
-			<TR><TD>Min ECM count:</TD><TD><input name=\"lb_min_ecmcount\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBMINECMCOUNT##\"></TD></TR>\n\
-			<TR><TD>Max ECM count:</TD><TD><input name=\"lb_max_ecmcount\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBMAXECEMCOUNT##\"></TD></TR>\n\
-			<TR><TD>Retry Limit:</TD><TD><input name=\"lb_retrylimit\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBRETRYLIMIT##\"></TD></TR>\n\
-			<TR><TD>Time to reopen:</TD><TD><input name=\"lb_reopen_seconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBREOPENSECONDS##\"></TD></TR>\n\
-			<TR><TD>Hours to cleanup older than:</TD><TD><input name=\"lb_stat_cleanup\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBCLEANUP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_save##TPLHELPSUFFIX##Loadbalance save every:</A></TD><TD><input name=\"lb_save\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBSAVE##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_savepath##TPLHELPSUFFIX##Statistics save path:</A></TD><TD><input name=\"lb_savepath\" type=\"text\" size=\"50\" maxlength=\"255\" value=\"##LBSAVEPATH##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_nbest_readers##TPLHELPSUFFIX##Number of best readers:</A></TD><TD><input name=\"lb_nbest_readers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBNBESTREADERS##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_nfb_readers##TPLHELPSUFFIX##Number of fallback readers:</A></TD><TD><input name=\"lb_nfb_readers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBNFBREADERS##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_min_ecmcount##TPLHELPSUFFIX##Min ECM count:</A></TD><TD><input name=\"lb_min_ecmcount\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBMINECMCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_max_ecmcount##TPLHELPSUFFIX##Max ECM count:</A></TD><TD><input name=\"lb_max_ecmcount\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBMAXECEMCOUNT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_retrylimit##TPLHELPSUFFIX##Retry Limit:</A></TD><TD><input name=\"lb_retrylimit\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBRETRYLIMIT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_reopen_seconds##TPLHELPSUFFIX##Time to reopen:</A></TD><TD><input name=\"lb_reopen_seconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBREOPENSECONDS##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_stat_cleanup##TPLHELPSUFFIX##Hours to cleanup older than:</A></TD><TD><input name=\"lb_stat_cleanup\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBCLEANUP##\"></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
 	<BR><BR>\
 	<form action=\"config.html\" method=\"get\">\n\
 	<input name=\"part\" type=\"hidden\" value=\"loadbalancer\">\n\
-	<TABLE class=\"config\" cellspacing=\"0\">\n\
+	<TABLE class=\"config\">\n\
 		<TR><TH COLSPAN=\"3\">Control</TH></TR>\n\
 		<TR>\n\
 			<TD STYLE=\"text-align:center;\"><input type=\"submit\" name=\"button\" value=\"Load Stats\" ##BTNDISABLED##></TD>\n\
@@ -1347,13 +1348,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd33\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-		<TABLE CLASS=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Camd33 Config</TH></TR>\n\
-			<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
-			<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>Key:</TD><TD><input name=\"key\" type=\"text\" size=\"35\" maxlength=\"28\" value=\"##KEY##\"></TD></TR>\n\
-			<TR><TD>Passive:</TD><TD><SELECT NAME=\"passive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##PASSIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n\
-			<TR><TD>Nocrypt:</TD><TD><input name=\"nocrypt\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
+		<TABLE CLASS=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Camd33 Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port_2##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip_3##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#key##TPLHELPSUFFIX##Key:</A></TD><TD><input name=\"key\" type=\"text\" size=\"35\" maxlength=\"28\" value=\"##KEY##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#passive##TPLHELPSUFFIX##Passive:</A></TD><TD><SELECT NAME=\"passive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##PASSIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#nocrypt_2##TPLHELPSUFFIX##Nocrypt:</A></TD><TD><input name=\"nocrypt\" type=\"text\" size=\"100\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1369,11 +1370,11 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 		<input name=\"part\" type=\"hidden\" value=\"camd35\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 		<input name=\"suppresscmd08\" type=\"hidden\" value=\"0\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Camd35 Config</TH></TR>\n\
-			<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
-			<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
-			<TR><TD>Suppress cmd08:</TD><TD><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD></TR>\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Camd35 Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port_3##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip_4##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#suppresscmd08##TPLHELPSUFFIX##Suppress cmd08:</A></TD><TD><input name=\"suppresscmd08\" type=\"checkbox\" value=\"1\" ##SUPPRESSCMD08##></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1388,10 +1389,10 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"camd35tcp\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Camd35 TCP Config</TH></TR>\n\
-			<TR><TD>Port:</TD><TD><input name=\"port\" type=\"text\" size=\"50\" maxlength=\"100\" value=\"##PORT##\"></TD></TR>\n\
-			<TR><TD>Serverip:</TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Camd35 TCP Config</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#port_4##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"50\" maxlength=\"100\" value=\"##PORT##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#serverip_5##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
@@ -1406,8 +1407,8 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"config.html\" method=\"get\">\n\
 		<input name=\"part\" type=\"hidden\" value=\"serial\">\n\
 		<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
-		<TABLE class=\"config\" cellspacing=\"0\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Serial Config</TH></TR>\n\
+		<TABLE class=\"config\">\n\
+			<TR><TH COLSPAN=\"2\">Edit Serial Config</TH></TR>\n\
 ##DEVICES##\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
@@ -1416,7 +1417,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 ##TPLFOOTER##"
 
 #define TPLCONFIGSERIALDEVICEBIT "\
-			<TR><TD>Device:</TD><TD><input name=\"device\" type=\"text\" size=\"50\" maxlength=\"100\" value=\"##SERIALDEVICE##\"></TD></TR>\n"
+			<TR><TD>##TPLHELPPREFIX##conf#device##TPLHELPSUFFIX##Device:</A></TD><TD><input name=\"device\" type=\"text\" size=\"50\" maxlength=\"100\" value=\"##SERIALDEVICE##\"></TD></TR>\n"
 
 #ifdef HAVE_DVBAPI
 #define TPLCONFIGDVBAPI "\
@@ -1430,18 +1431,18 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<input name=\"action\" type=\"hidden\" value=\"execute\">\n\
 	<input name=\"enabled\" type=\"hidden\" value=\"0\">\n\
 	<input name=\"au\" type=\"hidden\" value=\"0\">\n\
-	<TABLE class=\"config\" cellspacing=\"0\">\n\
-		<TR><TH>&nbsp;</TH><TH>Edit DVB Api Config</TH></TR>\n\
-		<TR><TD>Enabled:</TD><TD><input name=\"enabled\" type=\"checkbox\" value=\"1\" ##ENABLEDCHECKED##>\n\
-		<TR><TD>AU:</TD><TD><input name=\"au\" type=\"checkbox\" value=\"1\" ##AUCHECKED##>\n\
-		<TR><TD>Boxtype:</TD><TD><SELECT name=\"boxtype\">##BOXTYPE##</select></TD></TR>\n\
-		<TR><TD>User:</TD><TD><input name=\"user\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##USER##\"></TD></TR>\n\
-		<TR><TD>PMT Mode:</TD><TD><select name=\"pmt_mode\">\n\
+	<TABLE class=\"config\">\n\
+		<TR><TH COLSPAN=\"2\">Edit DVB Api Config</TH></TR>\n\
+		<TR><TD>##TPLHELPPREFIX##conf#enabled##TPLHELPSUFFIX##Enabled:</A></TD><TD><input name=\"enabled\" type=\"checkbox\" value=\"1\" ##ENABLEDCHECKED##>\n\
+		<TR><TD>##TPLHELPPREFIX##conf#au##TPLHELPSUFFIX##AU:</A></TD><TD><input name=\"au\" type=\"checkbox\" value=\"1\" ##AUCHECKED##>\n\
+		<TR><TD>##TPLHELPPREFIX##conf#boxtype##TPLHELPSUFFIX##Boxtype:</A></TD><TD><SELECT name=\"boxtype\">##BOXTYPE##</select></TD></TR>\n\
+		<TR><TD>##TPLHELPPREFIX##conf#user_2##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"20\" maxlength=\"20\" value=\"##USER##\"></TD></TR>\n\
+		<TR><TD>##TPLHELPPREFIX##conf#pmt_mode##TPLHELPSUFFIX##PMT Mode:</A></TD><TD><select name=\"pmt_mode\">\n\
 			<option value=\"0\" ##PMTMODESELECTED0##>0 - use camd.socket and PMT file</option>\n\
 			<option value=\"1\" ##PMTMODESELECTED1##>1 - disable reading PMT file</option>\n\
 			<option value=\"2\" ##PMTMODESELECTED2##>2 - disable camd.socket</option>\n\
 			<option value=\"3\" ##PMTMODESELECTED3##>3 - read PMT file on startup only</option>\n\
-			<option value=\"4\" ##PMTMODESELECTED4##>4 - ufs922 with new libioctl.so</option>\n\
+			<option value=\"4\" ##PMTMODESELECTED4##>4 - ufs912, ufs922 with new libioctl.so</option>\n\
 		</SELECT></TD></TR>\n\
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 	</TABLE>\n\
@@ -1490,10 +1491,11 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<form action=\"services_edit.html\" method=\"get\">\n\
 		<input name=\"service\" type=\"hidden\" value=\"##LABELENC##\">\n\
 		<TABLE CLASS=\"stats\">\n\
-			<TR><TH>&nbsp;</TH><TH>Edit Service ##LABEL##</TH></TR>\n\
-			<TR><TD>caid: </TD><TD><input name=\"caid\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##CAIDS##\"></TD></TR>\n\
-			<TR><TD>provid: </TD><TD><input name=\"provid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##PROVIDS##\"></TD></TR>\n\
-			<TR><TD>srvid: </TD><TD><textarea name=\"srvid\" cols=\"80\" rows=\"5\">##SRVIDS##</textarea></TD></TR>\n\
+			<TR><TH COLSPAN=\"2\">Edit Service ##LABEL##</TH></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##services#caid##TPLHELPSUFFIX##caid: </A></TD><TD><input name=\"caid\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##CAIDS##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##services#provid##TPLHELPSUFFIX##provid: </A></TD><TD><input name=\"provid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##PROVIDS##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##services#srvid##TPLHELPSUFFIX##srvid: </A></TD><TD><textarea name=\"srvid\" cols=\"80\" rows=\"5\">##SRVIDS##</textarea></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##services#srvid##TPLHELPSUFFIX##srvid: </A></TD><TD><textarea name=\"srvid\" cols=\"80\" rows=\"5\">##SRVIDS##</textarea></TD></TR>\n\
 			<TR><TD>&nbsp;</TD><TD align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save service and reload services\" ##BTNDISABLED##></TD>\n\
 		</TABLE>\n\
 	</form>\n\
