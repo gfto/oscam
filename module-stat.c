@@ -220,7 +220,7 @@ void save_stat_to_file()
  */
 void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 {
-	if (!rdr || !er)
+	if (!rdr || !er || !cfg->lb_mode)
 		return;
 	READER_STAT *stat = get_stat(rdr, er->caid, er->prid, er->srvid);
 	if (!stat) {
@@ -403,6 +403,9 @@ static char *strend(char *c) {
  */
 int get_best_reader(ECM_REQUEST *er)
 {
+	if (!cfg->lb_mode || cfg->lb_mode==LB_LOG_ONLY)
+		return 0;
+		
 	LLIST * result = ll_create();
 	LLIST * selected = ll_create();
 	
@@ -493,6 +496,7 @@ int get_best_reader(ECM_REQUEST *er)
 				switch (cfg->lb_mode) {
 					default:
 					case LB_NONE:
+					case LB_LOG_ONLY:
 						//cs_debug_mask(D_TRACE, "loadbalance disabled");
 						ll_append(result, rdr);
 						continue;

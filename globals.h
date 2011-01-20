@@ -1202,6 +1202,8 @@ struct s_config
 #define LB_FASTEST_READER_FIRST 1
 #define LB_OLDEST_READER_FIRST 2
 #define LB_LOWEST_USAGELEVEL 3
+#define LB_LOG_ONLY 10
+
 #define LB_MAX_STAT_TIME 20
 
 typedef struct reader_stat_t

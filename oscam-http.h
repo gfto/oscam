@@ -1304,6 +1304,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 						<option value=\"1\" ##LBMODE1##>1 - Fastest reader first</option>\n\
 						<option value=\"2\" ##LBMODE2##>2 - Oldest reader first</option>\n\
 						<option value=\"3\" ##LBMODE3##>3 - Lowest usagelevel</option>\n\
+						<option value=\"10\" ##LBMODE10##>10 - Log statistics only</option>\n\
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
