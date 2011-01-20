@@ -1786,8 +1786,22 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 				pthread_mutex_lock(&rcc->cards_busy);
 				uint8 serbuf[8];
 
-				LL_ITER *it = ll_iter_create(rcc->cards);
-				while ((card = ll_iter_next(it))) {
+                // sort cards by hop
+                LL_ITER *it; 
+                int i;
+                for (i = 0; i < ll_count(rcc->cards); i++) {
+                    it  = ll_iter_create(rcc->cards);
+                    while ((card = ll_iter_next(it))) {
+                        if (it->cur->nxt && card->hop > ((struct cc_card *)ll_iter_peek(it, 1))->hop) {
+                            it->cur->obj = it->cur->nxt->obj;
+                            it->cur->nxt->obj = card;
+                        }
+                    }
+                    ll_iter_release(it);
+                }
+				
+                it = ll_iter_create(rcc->cards);
+                while ((card = ll_iter_next(it))) {
 
 					if (!apicall) {
 						tpl_printf(vars, TPLADD, "HOST", "%s:%d", rdr->device, rdr->r_port);
