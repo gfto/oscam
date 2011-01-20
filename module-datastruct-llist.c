@@ -108,6 +108,13 @@ LL_ITER *ll_iter_create(LLIST *l)
     return it;
 }
 
+LL_ITER *ll_iter_create_s(LLIST *l, LL_ITER *it)
+{
+    if (!l) return NULL;
+    it->l = l;
+    return it;
+}
+
 void ll_iter_release(LL_ITER *it)
 {
     add_garbage(it);

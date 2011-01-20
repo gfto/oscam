@@ -2632,8 +2632,8 @@ ulong get_reader_hexserial_crc(struct s_client *cl) {
 
 	ulong crc = 0;
 	struct s_reader *rdr;
-	for (rdr = first_reader; rdr; rdr = rdr->next) {
-		if (rdr->enable && !rdr->deleted && rdr->client && !rdr->audisabled)
+	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
+		if (rdr->client && !rdr->audisabled)
 			crc += crc32(0, rdr->hexserial, 8);
 	}
 	return crc;
@@ -3031,8 +3031,8 @@ int cc_srv_report_cards(struct s_client *cl) {
 	{
 		struct s_reader *rdr;
 		int r = 0;
-		for (rdr = first_reader; rdr; rdr = rdr->next) {
-			if (!rdr->fd || !rdr->enable || rdr->deleted)
+		for (rdr = first_active_reader; rdr; rdr = rdr->next) {
+			if (!rdr->fd)
 				continue;
 			if (!(rdr->grp & cl->grp))
 				continue;
@@ -3046,9 +3046,9 @@ int cc_srv_report_cards(struct s_client *cl) {
 			if (!rdr->cc_id) {
 				rdr->cc_id = ++r;
 				struct s_reader *rdr2;
-				for (rdr2 = first_reader; rdr2; rdr2 = rdr2->next) {
+				for (rdr2 = first_active_reader; rdr2; rdr2 = rdr2->next) {
 					if (rdr2 != rdr && rdr2->cc_id == rdr->cc_id) {
-						rdr2 = first_reader;
+						rdr2 = first_active_reader;
 						rdr->cc_id=++r;
 					}
 				}
@@ -3255,10 +3255,10 @@ void cc_init_cc(struct cc_data *cc) {
 int cc_srv_wakeup_readers(struct s_client *cl) {
 	int wakeup = 0;
 	struct s_reader *rdr;
-	for (rdr = first_reader; rdr; rdr = rdr->next) {
+	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
 		if (rdr->typ != R_CCCAM)
 			continue;
-		if (!rdr->fd || !rdr->enable || rdr->deleted || rdr->tcp_connected == 2)
+		if (!rdr->fd || rdr->tcp_connected == 2)
 			continue;
 		if (!(rdr->grp & cl->grp))
 			continue;
@@ -3276,8 +3276,8 @@ int cc_srv_wakeup_readers(struct s_client *cl) {
 int cc_cards_modified() {
 	int modified = 0;
 	struct s_reader *rdr;
-	for (rdr = first_reader; rdr; rdr = rdr->next) {
-		if (rdr->typ == R_CCCAM && rdr->fd && rdr->enable && !rdr->deleted) {
+	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
+		if (rdr->typ == R_CCCAM && rdr->fd) {
 			struct s_client *clr = rdr->client;
 			if (clr && clr->cc) {
 				struct cc_data *ccr = clr->cc;
@@ -3832,7 +3832,7 @@ int cc_cli_init(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
 	struct s_reader *reader = cl->reader;
 	
-	if ((cc && cc->mode == CCCAM_MODE_SHUTDOWN) || !cl->reader->enable || cl->reader->deleted)
+	if ((cc && cc->mode == CCCAM_MODE_SHUTDOWN))
 		return -1;
 		
 	int res = cc_cli_init_int(cl); //Create socket
@@ -3843,7 +3843,7 @@ int cc_cli_init(struct s_client *cl) {
 		
 		while (!reader->tcp_connected && reader->cc_keepalive && cfg->reader_restart_seconds > 0) {
 
-			if ((cc && cc->mode == CCCAM_MODE_SHUTDOWN) || !cl->reader->enable || cl->reader->deleted)
+			if ((cc && cc->mode == CCCAM_MODE_SHUTDOWN))
 				return -1;
 				
 			if (!reader->tcp_connected) {

@@ -531,7 +531,7 @@ static FILTER mk_user_ftab()
       // use server PROVID(s) (and only those which are in user's groups)
       add = 0;
       struct s_reader *rdr;
-      for (rdr=first_reader; rdr ; rdr=rdr->next)
+      for (rdr=first_active_reader; rdr ; rdr=rdr->next)
         if (rdr->grp & cl->grp) {
           if (!rdr->ftab.nfilts) {
             if (rdr->typ & R_IS_NETWORK) add = 1;
@@ -593,7 +593,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     uchar buf[14];
     uchar key[16];
     uchar passwdcrypt[120];
-    struct s_reader *aureader=first_reader; //FIXME strange enough au was initialized to 0 = first reader, and not to -1 = no reader
+    struct s_reader *aureader=first_active_reader; //FIXME strange enough au was initialized to 0 = first reader, and not to -1 = no reader
     struct s_ip *p_ip;
     struct s_client *cl = cur_client();
     uchar mbuf[1024];
@@ -675,7 +675,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 
     // check for non ready reader and reject client
     struct s_reader *rdr;
-    for (rdr=first_reader; rdr ; rdr=rdr->next) {
+    for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
       if(rdr->caid[0]==cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid) {
         if(rdr->card_status == CARD_NEED_INIT) {
           cs_log("init for reader %s not finished -> reject client", rdr->label);
@@ -1057,7 +1057,7 @@ static void * newcamd_server(void *cli)
 		buf[0] = MSG_SERVER_2_CLIENT_ADDCARD;
 
     struct s_reader *rdr;
-    for (rdr=first_reader; rdr ; rdr=rdr->next) {
+    for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 			int flt = 0;
 			if (!(rdr->grp & client->grp)) continue; //test - skip unaccesible readers
 			if (rdr->ftab.filts) {

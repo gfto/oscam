@@ -26,7 +26,8 @@ struct s_cardsystem	cardsystem[CS_MAX_MOD];
 struct s_cardreader	cardreader[CS_MAX_MOD];
 
 struct s_client * first_client = NULL; //Pointer to clients list, first client is master
-struct s_reader * first_reader = NULL;
+struct s_reader * first_active_reader = NULL; //list of active readers (enable=1 deleted = 0)
+LLIST * configured_readers = NULL; //list of all (configured) readers
 
 ushort  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
@@ -61,7 +62,7 @@ char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
 int get_ridx(struct s_reader *reader) {
 	int i;
 	struct s_reader *rdr;
-	for (i=0,rdr=first_reader; rdr ; rdr=rdr->next, i++)
+	for (i=0,rdr=first_active_reader; rdr ; rdr=rdr->next, i++)
 		if (reader == rdr)
 			return i;
 	return -1;
@@ -1126,7 +1127,7 @@ void start_anticascader()
 
 void restart_cardreader(struct s_reader *rdr, int restart) {
 	int i;
-	if (restart) //kill old thread, even when .deleted flag is set
+	if (restart) //kill old thread
 		if (rdr->client)
 			kill_thread(rdr->client);
 
@@ -1150,7 +1151,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 	if (rdr->enable == 0)
 		return;
 
-	if ((rdr->device[0]) && (!rdr->deleted)) {
+	if (rdr->device[0]) {
 		if (restart) {
 			cs_log("restarting reader %s", rdr->label);
 		}
@@ -1184,7 +1185,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 
 static void init_cardreader() {
 	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next)
+	for (rdr=first_active_reader; rdr ; rdr=rdr->next)
 		if (rdr->device[0])
 			restart_cardreader(rdr, 0);
 	load_stat_from_file();
@@ -1323,7 +1324,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				if(client->ncd_server)
 				{
 					struct s_reader *rdr;
-					for (rdr=first_reader; rdr ; rdr=rdr->next)
+					for (rdr=first_active_reader; rdr ; rdr=rdr->next)
 						if(rdr->caid[0]==cfg->ncd_ptab.ports[client->port_idx].ftab.filts[0].caid) {
 							client->aureader=rdr;
 							break;
@@ -1897,7 +1898,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 		else if((er->caid == cur->caid[0]) && (!cur->audisabled)) {
 			client->aureader = er->selected_reader; // First chance - check whether actual reader can AU
 		} else {
-			for (cur=first_reader; cur ; cur=cur->next) { //second chance loop through all readers to find an AU reader
+			for (cur=first_active_reader; cur ; cur=cur->next) { //second chance loop through all readers to find an AU reader
 				if (matching_reader(er, cur)) {
 					if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled &&
 						cur->card_system == get_cardsystem(er->caid) && hexserialset(cur))
@@ -2491,7 +2492,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if(er->rc >= E_UNHANDLED) {
 		er->reader_avail=0;
 		struct s_reader *rdr;
-		for (rdr=first_reader; rdr ; rdr=rdr->next) {
+		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 			if (matching_reader(er, rdr)) {
 				if (rdr->fallback) {
 					if (er->fallback == NULL) //first fallbackreader to be added
@@ -2562,7 +2563,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	//Unique Id matching for pay-per-view channels:
 	if (client->autoau) {
 		struct s_reader *rdr;
-		for (rdr=first_reader; rdr ; rdr=rdr->next)
+		for (rdr=first_active_reader; rdr ; rdr=rdr->next)
 			if (rdr->card_system>0 && !rdr->audisabled)
 				if (reader_get_emm_type(ep, rdr)) //decodes ep->type and ep->hexserial from the EMM
 					if (memcmp(ep->hexserial, rdr->hexserial, sizeof(ep->hexserial))==0) {
@@ -2756,7 +2757,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					if (cfg->preferlocalcards && !er->locals_done) {
 						er->locals_done = 1;
 						struct s_reader *rdr;
-						for (rdr=first_reader; rdr ; rdr=rdr->next)
+						for (rdr=first_active_reader; rdr ; rdr=rdr->next)
 							if (rdr->typ & R_IS_NETWORK)
 								inc_stage = 0;
 					}
@@ -2948,7 +2949,7 @@ void cs_waitforcardinit()
 		do {
 			card_init_done = 1;
 			struct s_reader *rdr;
-			for (rdr=first_reader; rdr ; rdr=rdr->next)
+			for (rdr=first_active_reader; rdr ; rdr=rdr->next)
 				if (((rdr->typ & R_IS_CASCADING) == 0) && rdr->enable && (rdr->card_status == CARD_NEED_INIT || rdr->card_status == UNKNOWN)) {
 					card_init_done = 0;
 					break;
@@ -3454,10 +3455,11 @@ if (pthread_key_create(&getclient, NULL)) {
         
         //cleanup readers:
         struct s_reader *rdr;
-        for (rdr=first_reader; rdr ; rdr=rdr->next) {
+        for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
                 cs_log("killing reader %s", rdr->label);
                 kill_thread(rdr->client);
         }
+        first_active_reader = NULL;
                                                                 
         //cleaning all others:
         while (first_client->next) {

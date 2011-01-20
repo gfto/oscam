@@ -132,7 +132,8 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 
 			//copy physical device name and file handle to other slots
 			struct s_reader *rdr;
-			for (rdr=first_reader; rdr ; rdr=rdr->next) //copy handle to other slots
+			LL_ITER *itr = ll_iter_create(configured_readers);
+			while(rdr = ll_iter_next(itr)) //copy handle to other slots
 				if (rdr->typ == R_SC8in1 && rdr != reader) { //we have another sc8in1 reader
 					unsigned char save = rdr->device[pos];
 					rdr->device[pos]=0; //set to 0 so we can compare device names
@@ -143,6 +144,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 					else
 						rdr->device[pos] = save; //restore character
 				}
+			ll_iter_release(itr);
 			break;
 		case R_MP35:
 		case R_MOUSE:

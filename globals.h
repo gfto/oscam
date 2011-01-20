@@ -746,7 +746,6 @@ struct s_reader  //contains device info, reader info and card info
 {
   ulong		auprovid; // AU only for this provid
   int		audisabled; // exclude reader from auto AU
-  int 		deleted; // if this flag is set the reader is not shown in webif and becomes not writte to oscam.server
   int		smargopatch;
   struct s_client * client; //pointer to 'r'client this reader is running in
   int       enable;
@@ -1294,7 +1293,8 @@ extern char *strnew(char *str);
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);
 extern struct s_client *first_client;
-extern struct s_reader *first_reader;
+extern struct s_reader *first_active_reader; //points to list of _active_ readers (enable = 1, deleted = 0)
+extern LLIST *configured_readers;
 
 // oscam variables
 

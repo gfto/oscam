@@ -33,11 +33,11 @@ static void kill_ac_client(void)
 
 struct s_reader *get_reader_by_label(char *lbl){
 	struct s_reader *rdr;
-	for (rdr = first_reader; rdr ; rdr = rdr->next) {
-		if (strcmp(lbl, rdr->label) == 0)
-			return rdr;
-	}
-	return NULL;
+	LL_ITER *itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(itr)))
+	  if (strcmp(lbl, rdr->label) == 0) break;
+	ll_iter_release(itr);
+	return rdr;
 }
 
 struct s_client *get_client_by_name(char *name) {
@@ -698,6 +698,20 @@ char *send_oscam_config(struct templatevars *vars, struct uriparams *params, str
 	else return send_oscam_config_global(vars, params, in);
 }
 
+void inactivate_reader(struct s_reader *rdr)
+{
+	if (rdr == first_active_reader)
+		first_active_reader = first_active_reader->next;
+	else {
+		struct s_reader *rdr2, *prev;
+		for (prev=first_active_reader, rdr2=first_active_reader->next; prev->next && rdr != rdr2 ; prev=prev->next, rdr2=rdr2->next); //find reader in active reader list, will not be found if first in list
+		if (rdr2 == rdr) //found
+			prev->next = rdr2->next; //remove from active reader list
+	}
+	if (rdr->client)
+		kill_thread(rdr->client);
+}
+
 char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
 	struct s_reader *rdr;
 	int i;
@@ -708,16 +722,19 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 		} else {
 			rdr = get_reader_by_label(getParam(params, "label"));
 			if (rdr) {
+				struct s_reader *rdr2;
 				if (strcmp(getParam(params, "action"), "enable") == 0) {
 					if (!rdr->enable) {
+						rdr->next = NULL; //terminate active reader list 
+						for (rdr2 = first_active_reader; rdr2->next ; rdr2 = rdr2->next); //find last reader in active reader list
+						rdr2->next = rdr; //add 
 						rdr->enable = 1;
 						restart_cardreader(rdr, 1);
 					}
 				} else {
 					if (rdr->enable) {
 						rdr->enable = 0;
-						if (rdr->client)
-							kill_thread(rdr->client);
+						inactivate_reader(rdr);
 					}
 				}
 				if(write_server() != 0)
@@ -732,7 +749,8 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 		} else {
 			rdr = get_reader_by_label(getParam(params, "label"));
 			if (rdr) {
-				rdr->deleted = 1;
+				inactivate_reader(rdr);
+				ll_remove(configured_readers, rdr);
 
 				if(write_server()==0) refresh_oscam(REFR_READERS, in);
 				else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
@@ -760,12 +778,14 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 		}
 	}
 
-	for (i = 0, rdr = first_reader; rdr && rdr->label[0]; rdr = rdr->next, i++);
+	LL_ITER *itr = ll_iter_create(configured_readers);
+	for (i = 0, rdr = ll_iter_next(itr); rdr && rdr->label[0]; rdr = ll_iter_next(itr), i++);
 	tpl_printf(vars, TPLADD, "NEXTREADER", "Reader-%d", i); //Next Readername
 
-	for (rdr = first_reader; rdr ; rdr = rdr->next) {
+	ll_iter_reset(itr); //going to iterate all configured readers
+	while ((rdr = ll_iter_next(itr))) {
 
-		if(rdr->label[0] && rdr->typ && !rdr->deleted) {
+		if(rdr->label[0] && rdr->typ) {
 
 			if (rdr->enable)
 				tpl_addVar(vars, TPLADD, "READERCLASS", "enabledreader");
@@ -824,6 +844,7 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 			tpl_addVar(vars, TPLAPPEND, "READERLIST", tpl_getTpl(vars, "READERSBIT"));
 		}
 	}
+	ll_iter_release(itr);
 
 #ifdef CS_WITH_GBOX
 	tpl_addVar(vars, TPLADD, "ADDPROTOCOL", "<option>gbox</option>\n");
@@ -852,8 +873,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		struct s_reader *newrdr;
 		if(!cs_malloc(&newrdr,sizeof(struct s_reader), -1)) return "0";
 		memset(newrdr, 0, sizeof(struct s_reader));
-		for (rdr = first_reader; rdr->next ; rdr = rdr->next); // get last rdr
-		rdr->next = newrdr;
+		ll_append(configured_readers, newrdr);
 		newrdr->next = NULL; // terminate list
 		newrdr->enable = 0; // do not start the reader because must configured before
 		strcpy(newrdr->pincode, "none");
@@ -900,7 +920,9 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 
-	for (ridx=0,rdr=first_reader; rdr  && strcmp(reader_, rdr->label); rdr=rdr->next, ++ridx);
+	rdr = get_reader_by_label(reader_);
+	ridx = get_ridx(rdr); //do we really need this index number, would like to get rid of get_ridx ...
+
 	tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 
 	if(rdr->enable)
@@ -1491,13 +1513,14 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	if (!account->aureader) tpl_addVar(vars, TPLADD, "AUSELECTED", "selected");
 	if (account->autoau == 1) tpl_addVar(vars, TPLADD, "AUTOAUSELECTED", "selected");
 	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) {
-		if(!rdr->device[0]) break;
+	LL_ITER *itr = ll_iter_create(configured_readers);
+	while((rdr = ll_iter_next(itr)) && (rdr->device[0])) {
 		tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 		if (account->aureader == rdr) tpl_addVar(vars, TPLADD, "SELECTED", "selected");
 		else tpl_addVar(vars, TPLADD, "SELECTED", "");
 		tpl_addVar(vars, TPLAPPEND, "RDROPTION", tpl_getTpl(vars, "USEREDITRDRSELECTED"));
 	}
+	ll_iter_release(itr);
 
 	/* SERVICES */
 	//services - first we have to move the long sidtabok/sidtabno to a binary array
@@ -1886,8 +1909,8 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 			char filename[256];
 			char buffer[128];
 
-			int ridx;
-			for (ridx=0,rdr=first_reader; rdr  && strcmp(reader_, rdr->label); rdr=rdr->next, ridx++);
+			rdr = get_reader_by_label(reader_);
+			int ridx = get_ridx(rdr);
 
 			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(), ridx);
 			fp = fopen(filename, "r");

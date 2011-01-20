@@ -406,7 +406,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     return(0);
 
   //Checking enabled and not deleted:
-  if (!rdr->enable || rdr->deleted) {
+  if (!rdr->enable) {
     //cs_debug_mask(D_TRACE, "reader disabled/deleted %s", rdr->label);
     return(0);
   }

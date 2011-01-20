@@ -67,7 +67,7 @@ void load_stat_from_file()
 		
 		if (i > 5) {
 			if (rdr == NULL || strcmp(buf, rdr->label) != 0) {
-				for (rdr=first_reader; rdr ; rdr=rdr->next) {
+				for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 					if (strcmp(rdr->label, buf) == 0) {
 						break;
 					}
@@ -195,7 +195,7 @@ void save_stat_to_file()
 
 	int count=0;
 	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 		
 		if (rdr->lb_stat) {
 			LL_ITER *it = ll_iter_create(rdr->lb_stat);
@@ -336,7 +336,7 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
 {
 	//cs_debug_mask(D_TRACE, "loadbalance: resetting ecm count");
 	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) {
+	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
 		if (rdr->lb_stat && rdr->client) {
 			READER_STAT *stat = get_stat(rdr, caid, prid, srvid);
 			if (stat) {
@@ -725,7 +725,7 @@ void clear_reader_stat(struct s_reader *rdr)
 void clear_all_stat()
 {
 	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) { 
+	for (rdr=first_active_reader; rdr ; rdr=rdr->next) { 
 		clear_reader_stat(rdr);
 	}
 }
@@ -741,7 +741,7 @@ void housekeeping_stat(int force)
 	time_t cleanup_time = now - (cfg->lb_stat_cleanup*60*60);
 	
 	struct s_reader *rdr;
-	for (rdr=first_reader; rdr ; rdr=rdr->next) { 
+	for (rdr=first_active_reader; rdr ; rdr=rdr->next) { 
 		if (rdr->lb_stat) {
 			LL_ITER *itr = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
