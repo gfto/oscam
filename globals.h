@@ -924,7 +924,6 @@ struct s_reader  //contains device info, reader info and card info
 	//ratelimit
 	int ratelimitecm;
 	int ratelimitseconds;
-    time_t last_health_check;
 	struct ecmrl    rlecmh[MAXECMRATELIMIT];
 	struct s_reader *next;
 };
