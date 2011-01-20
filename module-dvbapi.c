@@ -1476,6 +1476,13 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		if (cfg->dvbapi_au>0)
 			dvbapi_start_emm_filter(demux_id);
 
+        pthread_mutex_lock(&event_handler_lock);
+        if (pausecam) {
+            cs_debug_mask(D_DVBAPI, "paused, ignoring ecm");
+            return;
+        }
+        pthread_mutex_unlock(&event_handler_lock);
+
 		ECM_REQUEST *er;
 		if (!(er=get_ecmtask()))
 			return;
@@ -1486,7 +1493,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		er->prid  = provid;
 
 		if (mapentry) {
-			cs_debug_mask(D_DVBAPI, "Mapping ECM from %04X:%06X to %04X:%06X", er->caid, er->prid, mapentry->mapcaid, mapentry->mapprovid);
+			cs_debug_mask(D_DVBAPI, "mapping ECM from %04X:%06X to %04X:%06X", er->caid, er->prid, mapentry->mapcaid, mapentry->mapprovid);
 			er->caid = mapentry->mapcaid;
 			er->prid = mapentry->mapprovid;
 		}
