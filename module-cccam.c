@@ -3111,6 +3111,17 @@ int cc_srv_report_cards(struct s_client *cl) {
 							}
 							ll_append(card->providers, prov);
 						}
+						
+						//check remote node id, do not send if this card is from there:
+						if (!ignore) {
+							LL_ITER *it = ll_iter_create(card->remote_nodes);
+							uint8 * node;
+							while (!ignore && (node=ll_iter_next(it))) {
+								if (!memcmp(node, cc->peer_node_id, 8))
+									ignore = TRUE;
+							}
+							ll_iter_release(it);
+						}
 
 						if (!ignore) add_card_to_serverlist(rdr, cl, server_cards, card, reshare);
 						else cc_free_card(card);

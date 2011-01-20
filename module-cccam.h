@@ -12,7 +12,7 @@
 #include "cscrypt/rc6.h"
 #include "cscrypt/idea.h"
 
-#define CC_MAXMSGSIZE 2048
+#define CC_MAXMSGSIZE 0x400 //by Project::Keynation: Buffer size is limited on "O" CCCam to 1024 bytes
 #define CC_MAX_PROV   32
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 
