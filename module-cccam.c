@@ -1693,7 +1693,7 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 
 #define READ_CARD_TIMEOUT 100
 
-int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own, int ext) {
+int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own, int ext, int au_allowed) {
 	memset(buf, 0, CC_MAXMSGSIZE);
 	buf[0] = card->id >> 24;
 	buf[1] = card->id >> 16;
@@ -1707,7 +1707,8 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 	buf[9] = card->caid & 0xff;
 	buf[10] = card->hop;
 	buf[11] = card->maxdown;
-	memcpy(buf + 12, card->hexserial, 8);
+	if (au_allowed)
+			memcpy(buf + 12, card->hexserial, 8);
 
 	//with cccam 2.2.0 we have assigned and rejected sids:
 	int ofs = ext?23:21;
@@ -2825,7 +2826,7 @@ int equal_providers(struct cc_card *card1, struct cc_card *card2) {
 /**
  * Adds a new card to a cardlist.
  */
-int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *cardlist, struct cc_card *card, int reshare) {
+int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *cardlist, struct cc_card *card, int reshare, int au_allowed) {
 
 	if (!chk_ident(&cl->ftab, card))
 		return 0;
@@ -2861,6 +2862,8 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 			}
 		if (!card2) {
 			card2 = create_card(card);
+			if (!au_allowed)
+					memset(card2->hexserial, 0, 8);
 			card2->hop = 0;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
@@ -2894,6 +2897,8 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 		
 		if (!card2) {
 			card2 = create_card(card);
+			if (!au_allowed)
+					memset(card2->hexserial, 0, 8);
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
@@ -2920,6 +2925,8 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 		}
 		if (!card2) {
 			card2 = create_card(card);
+			if (!au_allowed)
+					memset(card2->hexserial, 0, 8);
 			card2->hop = card->hop;
 			card2->remote_id = card->remote_id;
 			card2->maxdown = reshare;
@@ -2953,7 +2960,7 @@ int find_reported_card(struct s_client * cl, struct cc_card *card1)
 	return 0; //Card not found
 }
 
-int report_card(struct s_client *cl, struct cc_card *card, LLIST *new_reported_carddatas)
+int report_card(struct s_client *cl, struct cc_card *card, LLIST *new_reported_carddatas, int au_allowed)
 {
 	int res = 0;
 	struct cc_data *cc = cl->cc;
@@ -2965,13 +2972,76 @@ int report_card(struct s_client *cl, struct cc_card *card, LLIST *new_reported_c
 		card->id = cc->report_carddata_id;
 		cc->report_carddata_id++;
 		
-		int len = write_card(cc, buf, card, TRUE, ext);
+		int len = write_card(cc, buf, card, TRUE, ext, au_allowed);
 		res = cc_cmd_send(cl, buf, len, ext?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD);
 		cc->card_added_count++;
 		free(buf);
 	}	
 	cc_add_reported_carddata(new_reported_carddatas, card);
 	return res;
+}
+
+void add_good_bad_sids(struct s_sidtab *ptr, struct s_client *cl, struct cc_card *card) {
+		struct cc_data *cc = cl->cc;
+		if (cc->cccam220) {
+				//good sids:
+				int l;
+				for (l=0;l<ptr->num_srvid;l++) {
+						struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
+						srvid->sid = ptr->srvid[l];
+						srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
+						ll_append(card->goodsids, srvid);
+				}
+							
+				//bad sids:
+				if (cl->sidtabno) {
+						struct s_sidtab *ptr_no;
+						int n;
+						for (n=0,ptr_no=cfg->sidtab; ptr_no; ptr_no=ptr_no->next,n++) {
+								if (cl->sidtabno&((SIDTABBITS)1<<n)) {
+										int m;
+										int ok_caid = FALSE;
+										for (m=0;m<ptr_no->num_caid;m++) { //search bad sids for this caid:
+												if (ptr_no->caid[m] == card->caid) {
+														ok_caid = TRUE;
+														break;
+												}
+										}
+										if (ok_caid) {
+												for (l=0;l<ptr_no->num_srvid;l++) {
+														struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
+														srvid->sid = ptr_no->srvid[l];
+														srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
+														ll_append(card->badsids, srvid);
+												}
+										}
+								}
+						}
+				}	
+		}		
+}
+
+void add_good_bad_sids_for_card(struct s_client *cl, struct cc_card *card) {
+		struct cc_data *cc = cl->cc;
+		if (cc->cccam220) {
+				struct s_sidtab *ptr;
+				int j;
+				for (j=0,ptr=cfg->sidtab; ptr; ptr=ptr->next,j++) {
+						if (cl->sidtabok&((SIDTABBITS)1<<j)) {
+								int m;
+								int ok_caid = FALSE;
+								for (m=0;m<ptr->num_caid;m++) { //search good sids for this caid:
+										if (ptr->caid[m] == card->caid) {
+												ok_caid = TRUE;
+												break;
+										}
+								}
+								if (ok_caid) {
+										add_good_bad_sids(ptr, cl, card);
+								}
+						}
+				}
+		}
 }
 
 /**
@@ -3021,7 +3091,11 @@ int cc_srv_report_cards(struct s_client *cl) {
 						prov->prov = ptr->provid[l];
 						ll_append(card->providers, prov);						
 					}
-					add_card_to_serverlist(NULL, cl, server_cards, card, usr_reshare);
+					
+					//CCcam 2.2.x proto can transfer good and bad sids:
+					add_good_bad_sids(ptr, cl, card);
+					
+					add_card_to_serverlist(NULL, cl, server_cards, card, usr_reshare, isau);
 				}
 				flt=1;
 			}
@@ -3073,7 +3147,11 @@ int cc_srv_report_cards(struct s_client *cl) {
 								prov->prov = ptr->provid[l];
 								ll_append(card->providers, prov);						
 							}
-							add_card_to_serverlist(rdr, cl, server_cards, card, reshare);
+							
+							//CCcam 2.2.x proto can transfer good and bad sids:
+							add_good_bad_sids(ptr, cl, card);
+							
+							add_card_to_serverlist(rdr, cl, server_cards, card, reshare, au_allowed);
 						}
 						flt=1;
 					}
@@ -3109,6 +3187,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 										cc_SA_oscam2cccam(&rdr->sa[l][0], prov->sa);
 								}
 							}
+							
 							ll_append(card->providers, prov);
 						}
 						
@@ -3123,7 +3202,12 @@ int cc_srv_report_cards(struct s_client *cl) {
 							ll_iter_release(it);
 						}
 
-						if (!ignore) add_card_to_serverlist(rdr, cl, server_cards, card, reshare);
+						if (!ignore) {
+								//CCcam 2.2.x proto can transfer good and bad sids:
+								add_good_bad_sids_for_card(cl, card);
+
+								add_card_to_serverlist(rdr, cl, server_cards, card, reshare, au_allowed);
+						}
 						else cc_free_card(card);
 						flt = 1;
 					}
@@ -3142,8 +3226,11 @@ int cc_srv_report_cards(struct s_client *cl) {
 						struct cc_card *card = create_card2(rdr, j, lcaid, hop, reshare);
 						if (au_allowed)
 							cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, lcaid);
-					
-						add_card_to_serverlist(rdr, cl, server_cards, card, reshare);
+
+						//CCcam 2.2.x proto can transfer good and bad sids:
+						add_good_bad_sids_for_card(cl, card);
+			
+						add_card_to_serverlist(rdr, cl, server_cards, card, reshare, au_allowed);
 						flt = 1;
 					}
 				}
@@ -3169,7 +3256,11 @@ int cc_srv_report_cards(struct s_client *cl) {
 					//cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
 				}
 				if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
-					add_card_to_serverlist(rdr, cl, server_cards, card, reshare);
+				
+					//CCcam 2.2.x proto can transfer good and bad sids:
+					add_good_bad_sids_for_card(cl, card);
+				
+					add_card_to_serverlist(rdr, cl, server_cards, card, reshare, au_allowed);
 				}
 				else
 					cc_free_card(card);
@@ -3215,7 +3306,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 										if (new_reshare > reshare)
 											new_reshare = reshare;
 										add_card_to_serverlist(rdr, cl, server_cards, card,
-												new_reshare);
+												new_reshare, au_allowed);
 										count++;
 									}
 								}
@@ -3239,7 +3330,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 	while (ok && (card = ll_iter_next(it))) {
 		//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
 		
-		ok = report_card(cl, card, new_reported_carddatas) >= 0;
+		ok = report_card(cl, card, new_reported_carddatas, isau) >= 0;
 		ll_iter_remove(it);
 	}
 	ll_iter_release(it);

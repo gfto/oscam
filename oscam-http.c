@@ -1816,7 +1816,27 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8));
 						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8));
 					}
-
+#ifdef WITH_DEBUG
+   					if (!apicall) {
+								int n;
+								LL_ITER *its = ll_iter_create(card->goodsids);
+								struct cc_srvid *srv;
+								n=0;
+								tpl_printf(vars, TPLADD, "SERVICESGOOD", "");
+								while ((srv=ll_iter_next(its))) {
+										tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X%s", srv->sid, ++n%10==0?"<BR>\n":" ");
+								}
+								ll_iter_release(its);
+								
+								its = ll_iter_create(card->badsids);
+								n=0;
+								tpl_printf(vars, TPLADD, "SERVICESBAD", "");
+								while ((srv=ll_iter_next(its))) {
+										tpl_printf(vars, TPLAPPEND, "SERVICESBAD", "%04X%s", srv->sid, ++n%10==0?"<BR>\n":" ");
+								}
+								ll_iter_release(its);
+					}
+#endif
 
 					int cs = get_cardsystem(card->caid);
 					
