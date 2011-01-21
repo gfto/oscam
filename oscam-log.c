@@ -44,8 +44,10 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 					fprintf(stderr, "rename(%s, %s) failed (errno=%d)\n", file, prev_log, errno);
 				}
 				else
-					if( pfinit())
-						fprintf(stderr, "Initialisation of log file failed, continuing without logging thread %8X.", (unsigned int)pthread_self());
+					if( pfinit()){
+						fprintf(stderr, "Initialisation of log file failed, continuing without logging thread %8X. Log will be output to stdout!", (unsigned int)pthread_self());
+						cfg->logtostdout = 1;
+					}
 			}
 			else //I am not the first to detect a switchlog is needed, so I need to wait for the first thread to complete
 				pthread_mutex_lock(&switching_log); //wait on 1st thread
@@ -108,10 +110,10 @@ int cs_open_logfiles()
 				fprintf(fp, "\n%s\n>> OSCam <<  cardserver started at %s%s\n", line, ctime(&t), line);
 		}
 	}
-	if (cfg->logtosyslog) { //log to syslog
-		if(logStarted == 1) closelog();
-		openlog("oscam", LOG_NDELAY, LOG_DAEMON);
-	}
+	// according to syslog docu: calling closelog is not necessary and calling openlog multiple times is safe
+	// We use openlog to set the default syslog settings so that it's possible to allow switching syslog on and off
+	openlog("oscam", LOG_NDELAY, LOG_DAEMON);
+	
 	cs_log(">> OSCam <<  cardserver started version " CS_VERSION ", build #" CS_SVN_VERSION " (" CS_OSTYPE ")");
 	cs_log_config();
 	return(fp <= (FILE *)0);
