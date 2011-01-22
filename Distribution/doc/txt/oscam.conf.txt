@@ -19,9 +19,9 @@ DESCRIPTIONS
 	  value to delay cached requests, default:0
 
        logfile = [filename][;syslog][;stdout]
-	  logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and 
-	  additionally to log to stdout or syslog (you can also only log to stdout or syslog and omit 
-	  the filename).
+	  logging  targets, default: /var/log/oscam.log. You can define a maximum of one filename
+	  and additionally to log to stdout or syslog (you can also only log to stdout or  syslog
+	  and omit the filename).
 
        disablelog = 0|1
 	  1 = disable log file, default:0
@@ -245,6 +245,9 @@ DESCRIPTIONS
 
        httpreadonly = 0|1
 	  1 = read only modus for web interface, default:0
+
+       httphelplang = en|de|fr|<available wiki languages>
+	  set right language for wiki entry point, default:en
 
    The [camd33] section
        port = 0|port
