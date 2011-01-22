@@ -467,7 +467,7 @@ int get_best_reader(ECM_REQUEST *er)
 				continue;
 			}
 			
-			if (stat->ecm_count < 0||(stat->ecm_count > cfg->lb_max_ecmcount && stat->time_avg > (int)cfg->ftimeout)) {
+			if (stat->ecm_count < 0||(stat->ecm_count > cfg->lb_max_ecmcount && stat->time_avg > cfg->lb_retrylimit)) {
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg->lb_max_ecmcount, rdr->label);
 				reset_stat(er->caid, er->prid, er->srvid);
 				ll_append(result, rdr); //max ecm reached, get new statistics

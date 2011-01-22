@@ -1396,7 +1396,6 @@ static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 	memcpy(ecmidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
 	ecmidx->caid = er->caid;
 	ecmidx->grp = grp;
-	ecmidx->reader = er->selected_reader;
 
 	return(0);
 }
@@ -1422,7 +1421,7 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
 
-		cs_debug_mask(D_TRACE, "cache: ecm %04X found: ccaid=%04X caid=%04X grp=%lld cgrp=%lld count=%d", lc, er->caid, ecmc->caid, grp, ecmc->grp, count);
+		//cs_debug_mask(D_TRACE, "cache: ecm %04X found: ccaid=%04X caid=%04X grp=%lld cgrp=%lld count=%d", lc, er->caid, ecmc->caid, grp, ecmc->grp, count);
 
 		if (!(grp & ecmc->grp))
 			continue;
@@ -1434,7 +1433,7 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 		er->selected_reader = ecmc->reader;
 		return 1;
 	}
-	cs_debug_mask(D_TRACE, "cache: %04X not found count=%d", lc, count);
+	//cs_debug_mask(D_TRACE, "cache: %04X not found count=%d", lc, count);
 	return 0;
 }
 
@@ -1472,7 +1471,7 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp)
 		ushort lc, *lp;
 		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
 			lc^=*lp;
-		cs_debug_mask(D_TRACE, "store_cw_in_cache: ecm=%04X grp=%lld", lc, grp);
+		//cs_debug_mask(D_TRACE, "store_cw_in_cache: ecm=%04X grp=%lld", lc, grp);
 	}
 	//cs_ddump(cwcache[*cwidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *cwidx);
 }
@@ -1670,7 +1669,7 @@ void distribute_ecm(ECM_REQUEST *er)
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
-        if (ecm->rc == E_99 && ecm->caid==er->caid && memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)==0) {
+        if (ecm->rc == E_99 && ecm->caid==er->caid && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)) {
           er->cpti = ecm->cpti;
           //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
           write_ecm_request(cl->fd_m2c, er);
@@ -1770,7 +1769,7 @@ ECM_REQUEST *get_ecmtask()
 		if (ph[cl->ctyp].multi)
 		{
 			for (i=0; (n<0) && (i<CS_MAXPENDING); i++)
-				if (cl->ecmtask[i].rc<99)
+				if (cl->ecmtask[i].rc<E_99)
 					er=&cl->ecmtask[n=i];
 		}
 		else
@@ -2025,56 +2024,49 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 
   ECM_REQUEST *ert;
 
-  //cs_log("dcw check from reader %d for idx %d (rc=%d)", er->selected_reader, er->cpti, er->rc);
+  //cs_log("dcw check from reader %s for idx %d (rc=%d)", er->selected_reader->label, er->cpti, er->rc);
   ert=&cl->ecmtask[er->cpti];
   if (ert->rc<E_99) {
 	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, er->selected_reader->label);
 	send_reader_stat(er->selected_reader, er, (er->rc <= E_RDR_NOTFOUND)?E_NOTFOUND:E_FOUND);
 	return; // already done
   }
-  if( (er->caid!=ert->caid) || memcmp(er->ecmd5, ert->ecmd5, sizeof(er->ecmd5)) )
+  if( (er->caid!=ert->caid) || memcmp(er->ecmd5, ert->ecmd5, sizeof(er->ecmd5)) ) {
+    //cs_debug_mask(D_TRACE, "OBSOLETE? %04X / %04X", er->caid, ert->caid);
     return; // obsolete
-
-	ert->rcEx=er->rcEx;
-	strcpy(ert->msglog, er->msglog);
-	ert->selected_reader=er->selected_reader;
+  }
 
   if (er->rc>=E_RDR_FOUND)
   {
-    switch(er->rc)
-    {
-      case E_CACHE2:
-        ert->rc=E_CACHE2;
-        break;
-      case E_EMU:
-        ert->rc=E_EMU;
-        break;
-      default:
-        ert->rc=E_FOUND;
-    }
-    
-    ert->rcEx=0;
-    memcpy(ert->cw , er->cw , sizeof(er->cw));
-#ifdef CS_WITH_GBOX
-    ert->gbxCWFrom=er->gbxCWFrom;
-#endif
-	} else { // not found (from ONE of the readers !) er->rc==E_RDR_NOTFOUND
-		struct s_reader *rdr;
-		if (er->selected_reader) {
-			LL_ITER *itr = ll_iter_create(er->matching_rdr);
-			while ((rdr = ll_iter_next(itr)))
-				if (rdr == er->selected_reader) {
-					ll_iter_remove(itr);
-					break;
-				}
-			ll_iter_release(itr);
+		ert->selected_reader=er->selected_reader;
+		
+		switch(er->rc)
+		{
+				case E_CACHE2:
+						ert->rc=E_CACHE2;
+						break;
+				case E_EMU:
+						ert->rc=E_EMU;
+						break;
+				default:
+						ert->rc=E_FOUND;
 		}
+    
+		ert->rcEx=0;
+		memcpy(ert->cw , er->cw , sizeof(er->cw));
+#ifdef CS_WITH_GBOX
+    	ert->gbxCWFrom=er->gbxCWFrom;
+#endif
+  } else { // not found (from ONE of the readers !) er->rc==E_RDR_NOTFOUND
+		ert->rcEx=er->rcEx;
+		strcpy(ert->msglog, er->msglog);
 
-		if (ert)
-			if (ll_has_elements(ert->matching_rdr)) {//we have still another chance
+		ll_remove(ert->matching_rdr, er->selected_reader);
+
+		if (ll_has_elements(ert->matching_rdr)) {//we have still another chance
 				ert->selected_reader=NULL;
 				ert=NULL;
-			}
+		}
 		//at this point ert is only not NULL when it has no matching readers...
 		if (ert) ert->rc=E_NOTFOUND; //so we set the return code
 		else send_reader_stat(er->selected_reader, er, E_NOTFOUND);
@@ -2478,7 +2470,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 		// cache1
 		if (check_cwcache1(er, client->grp))
-			er->rc = E_CACHE1;
+				er->rc = E_CACHE1;
 		else if (check_and_store_ecmcache(er, client->grp))
 				return;
 				
