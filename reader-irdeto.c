@@ -537,7 +537,8 @@ static int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
-	filter[1]=3;
+
+	int numfilter = 3;
 
 	int base = rdr->hexserial[3];
 	int emm_g = base * 8;
@@ -550,7 +551,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[4+0]    = 0x82;
 	filter[4+0+16] = 0xFF;
 	filter[4+1]    = emm_g;
-	filter[4+1+16] = 0x0F;
+	filter[4+1+16] = 0x0F; // why ignore base?, should be 0x07 for filter addrlen only
 
 	filter[36]=SHARED;
 	filter[37]=0;
@@ -569,6 +570,30 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[72+1+16] = 0xFF;
 	memcpy(filter+72+2, rdr->hexserial, 3);
 	memset(filter+72+2+16, 0xFF, 3);
+
+	int i, pos=104;
+
+	for(i = 0; i < rdr->nprov; i++) {
+		if (rdr->prid[i][1]==0xFF)
+			continue;
+
+		filter[pos]=SHARED;
+		filter[pos+1]=0;
+		filter[pos+2+0]    = 0x82;
+		filter[pos+2+0+16] = 0xFF;
+		filter[pos+2+1]    = 0x02; // base = 0, len = 2
+		filter[pos+2+1+16] = 0xFF;
+		memcpy(filter+pos+2+2, &rdr->prid[i][1], 2);
+		memset(filter+pos+2+2+16, 0xFF, 2);
+		pos+=34;
+		numfilter++;
+
+		if (numfilter>=10)
+			break;
+	}
+
+	filter[1]=numfilter;
+
 
 	return;
 }
