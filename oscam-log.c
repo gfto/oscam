@@ -96,7 +96,7 @@ void cs_write_log(char *txt)
 
 int cs_open_logfiles()
 {
-	if (!fp) {	//log to file
+	if (!fp && cfg->logfile != NULL) {	//log to file
 		if ((fp = fopen(cfg->logfile, "a+")) <= (FILE *)0) {
 			fp = (FILE *)0;
 			fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", cfg->logfile, errno);
