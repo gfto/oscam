@@ -1000,6 +1000,7 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 				//add F0 08 nano + 8 subsequent bytes of emm content
 				memcpy(&nano_buffer[nano_counter][0], "\xF0\x08", 2);
 				memcpy(&nano_buffer[nano_counter][2], buffer+39, 8);
+				nano_counter++;
 			}
 			else {
 				cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: found variable emm");
@@ -1012,6 +1013,8 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 				k=0;
 			}
 
+			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: nano_counter=%d", nano_counter);
+
 			//sort nanos according to ascending pi
 			qsort(&nano_buffer, nano_counter, sizeof(*nano_buffer), cmp_nanos);
 
@@ -1020,7 +1023,7 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 			pos=7;
 
 			//add nanos in sorted order to emmbuf
-			for (i=0; i<=nano_counter; i++) {
+			for (i=0; i<nano_counter; i++) {
 				memcpy(&emmbuf[pos], &nano_buffer[i][0], nano_buffer[i][1]+2);
 				pos+=nano_buffer[i][1]+2;
 			}
@@ -1036,6 +1039,7 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 			//place assembled emm
 			memcpy(buffer, emmbuf, pos);
 			*len=pos;
+			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: exit len=%d", pos);
 			break;
 	}
 	return 1;
