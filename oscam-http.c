@@ -538,6 +538,11 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 	} while (entry);
 	closedir(hdir);
 
+	if (cfg->http_help_lang[0])
+		tpl_addVar(vars, TPLADD, "HTTPHELPLANG", cfg->http_help_lang);
+	else
+		tpl_addVar(vars, TPLADD, "HTTPHELPLANG", "en");
+
 	tpl_printf(vars, TPLADD, "HTTPREFRESH", "%d", cfg->http_refresh);
 	tpl_addVar(vars, TPLADD, "HTTPTPL", cfg->http_tpl);
 	tpl_addVar(vars, TPLADD, "HTTPSCRIPT", cfg->http_script);
@@ -3137,9 +3142,11 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_printf(vars, TPLADD, "APIUPTIME", "%u", now - first_client->login);
 		}
 
-		//Placeholder for language code in helplink
-		//fixme: use a parameter for e.g. http_helplanguage=de|en|fr
-		tpl_addVar(vars, TPLADD, "LANGUAGE", "en");
+		// language code in helplink
+		if (cfg->http_help_lang[0])
+			tpl_addVar(vars, TPLADD, "LANGUAGE", cfg->http_help_lang);
+		else
+			tpl_addVar(vars, TPLADD, "LANGUAGE", "en");
 
 		tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
 		tpl_printf(vars, TPLADD, "CURIP", "%s", inet_ntoa(*(struct in_addr *)&in));

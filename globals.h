@@ -1092,6 +1092,7 @@ struct s_config
 	uchar		http_dyndns[64];
 	int			http_use_ssl;
 	char		http_cert[128];
+	char		http_help_lang[3];
 #endif
 	int			http_full_cfg;
 	int			failbantime;

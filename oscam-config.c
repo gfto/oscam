@@ -702,6 +702,11 @@ void chk_t_webif(char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "httphelplang")) {
+		cs_strncpy(cfg->http_help_lang, value, sizeof(cfg->http_help_lang));
+		return;
+	}
+
 	if (!strcmp(token, "httpcert")) {
 		cs_strncpy(cfg->http_cert, value, sizeof(cfg->http_cert));
 		return;
@@ -1966,6 +1971,9 @@ int write_config()
 		} else {
 			fprintf_conf(f, CONFVARWIDTH, "httpport", "%d\n", cfg->http_port);
 		}
+
+		if(strlen(cfg->http_help_lang) > 0)
+			fprintf_conf(f, CONFVARWIDTH, "httphelplang", "%s\n", cfg->http_help_lang);
 		if(strlen(cfg->http_user) > 0)
 			fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg->http_user);
 		if(strlen(cfg->http_pwd) > 0)
