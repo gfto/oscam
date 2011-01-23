@@ -680,20 +680,20 @@ int cc_get_nxt_ecm(struct s_client *cl) {
 			if (n < 0 || cl->ecmtask[n].tps.time - cl->ecmtask[i].tps.time < 0) {
 					
 				//check for already pending:
-				if (((struct cc_data*)cl->cc)->extended_mode) {
-					int j,found;
-					for (found=j=0;j<CS_MAXPENDING;j++) {
-						if (i!=j && cl->ecmtask[j].rc == 101 &&
-							cl->ecmtask[i].caid==cl->ecmtask[j].caid &&
-							cl->ecmtask[i].ecmd5==cl->ecmtask[j].ecmd5) {
-							found=1;
-							break;
-						}
-					}
-					if (!found)
-						n = i;
-				}
-				else
+				//if (((struct cc_data*)cl->cc)->extended_mode) {
+				//	int j,found;
+				//	for (found=j=0;j<CS_MAXPENDING;j++) {
+				//		if (i!=j && cl->ecmtask[j].rc == 101 &&
+				//			cl->ecmtask[i].caid==cl->ecmtask[j].caid &&
+				//			cl->ecmtask[i].ecmd5==cl->ecmtask[j].ecmd5) {
+				//			found=1;
+				//			break;
+				//		}
+				//	}
+				//	if (!found)
+				//		n = i;
+				//}
+				//else
 					n = i;
 			}
 		}
@@ -1072,6 +1072,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		}
 		cs_debug_mask(D_READER, "cccam: ecm trylock: got lock");
 	}
+	do {
 	cc->ecm_time = cur_time;
 	rdr->available = cc->extended_mode;
 
@@ -1203,6 +1204,9 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		//For EMM
 		set_au_data(cl, rdr, card, cur_er);
 		pthread_mutex_unlock(&cc->cards_busy);
+		
+		if (cc->extended_mode)
+				continue; //process next pending ecm!
 		return 0;
 	} else {
 		//When connecting, it could happen than ecm requests come before all cards are received.
@@ -1236,10 +1240,15 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 		}
 	}
 	pthread_mutex_unlock(&cc->cards_busy);
+
+	//process next pending ecm!
+	} while (cc->extended_mode);
+
 	if (!cc->extended_mode) {
 		rdr->available = 1;
 		pthread_mutex_unlock(&cc->ecm_busy);
 	}
+	
 	return -1;
 }
 
@@ -2517,7 +2526,10 @@ int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf, int UNUSED
 		return (cc->recv_ecmtask);
 	} else if ((buf[1] == (MSG_CW_NOK1)) || (buf[1] == (MSG_CW_NOK2))) {
 		*rc = 0;
-		return (cc->recv_ecmtask);
+		if (cc->is_oscam_cccam)
+				return (cc->recv_ecmtask);
+		else
+				return -1;
 	}
 
 	return (-1);
