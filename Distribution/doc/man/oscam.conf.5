@@ -657,18 +657,29 @@ CAIDs to be ignored, default:none
 CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of local SCs will be prioritized
 .RE
 .PP
-\fBau\fP = \fB0\fP|\fB1\fP
+\fBau\fP = \fB0\fP|\fB1\fP|\fB2\fP
 .RS 3n
-1 = enable AU, default:0
+AU mode:
+ 0 = disable AU, default
+ 1 = enable AU
+ 2 = enable AU, override AU settings of client, set answering reader as AU reader
 .RE
 .PP
-\fBpmt_mode\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP
+\fBpmt_mode\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP|\fB4\fP
 .RS 3n
 PMT mode:
  0 = use camd.socket and PMT file, default
  1 = disable reading PMT file
  2 = disable camd.socket
  3 = read PMT file on startup only
+ 4 = do not use signal handler for monitoring /tmp
+.RE
+.PP
+\fBrequest_mode\fP = \fB0\fP|\fB1\fP
+.RS 3n
+CAID request mode:
+ 0 = try all possible CAIDs one by one, default
+ 1 = try all CAIDs simultaneously
 .RE
 .PP
 \fBboxtype\fP = \fBdbox2\fP|\fBdreambox\fP|\fBdm7000\fP|\fBduckbox\fP|\fBufs910\fP|\fBipbox\fP|\fBipbox-pmt\fP|\fBqboxhd\fP|\fBcoolstream\fP|\fBneumo\fP
