@@ -1422,7 +1422,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 
 		if ((caid >> 8) == 0x06) {
 			//80 70 39 53 04 05 00 88
-			if (buffer[5]>10) return;
+			if (buffer[5]>20) return;
 			if (curpid->irdeto_numchids != buffer[5]+1) {
 				cs_log("Found %d IRDETO ECM CHIDs", buffer[5]+1);
 				curpid->irdeto_numchids = buffer[5]+1;
