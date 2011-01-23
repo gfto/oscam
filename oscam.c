@@ -790,7 +790,7 @@ struct s_client * create_client(in_addr_t ip) {
 		cl->fd_m2c = fdp[1]; //store client read fd
 		cl->ip=ip;
 		cl->account = first_client->account;
-
+		
 		//master part
 		cl->stat=1;
 
@@ -1660,8 +1660,6 @@ void distribute_ecm(ECM_REQUEST *er)
   struct s_client *cl;
   ECM_REQUEST *ecm;
   int n, i;
-  if (er->rc == E_RDR_FOUND) //found converted to cache...
-    er->rc = E_CACHE2; //cache
 
   for (cl=first_client->next; cl ; cl=cl->next) {
     if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (er->selected_reader->grp & cl->grp)) {
@@ -1721,7 +1719,6 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
     res = write_ecm_request(er->client->fd_m2c, er);
     //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
   }
-  distribute_ecm(er);
 
   return res;
 }
@@ -2081,7 +2078,10 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 		if (ert) ert->rc=E_NOTFOUND; //so we set the return code
 		else send_reader_stat(er->selected_reader, er, E_NOTFOUND);
 	}
-	if (ert) send_dcw(cl, ert);
+	if (ert) {
+			 send_dcw(cl, ert);
+			 distribute_ecm(er);
+    }
 	return;
 }
 

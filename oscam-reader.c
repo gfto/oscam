@@ -447,8 +447,11 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   cl->ecmtask[n].matching_rdr = NULL; //This avoids double free of matching_rdr!
   if( reader->typ == R_NEWCAMD )
     cl->ecmtask[n].idx=(reader->ncd_msgid==0)?2:reader->ncd_msgid+1;
-  else
+  else {
+    if (!cl->idx)
+    		cl->idx = 1;
     cl->ecmtask[n].idx=cl->idx++;
+  }
   cl->ecmtask[n].rc=10;
   cs_debug_mask(D_READER, "---- ecm_task %d, idx %d, sflag=%d, level=%d", 
            n, cl->ecmtask[n].idx, sflag, er->level);

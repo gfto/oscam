@@ -303,14 +303,6 @@ void add_good_sid(struct s_client *cl __attribute__((unused)), struct cc_card *c
 			getprefix(), srvid_good->sid, srvid_good->ecmlen, card->id);
 }
 
-void free_current_cards(LLIST *current_cards) {
-	LL_ITER *it = ll_iter_create(current_cards);
-	struct cc_current_card *c;
-	while ((c = ll_iter_next(it)))
-		c = ll_iter_remove(it);
-	ll_iter_release(it);
-}
-
 /**
  * reader
  * clears and frees values for reinit
@@ -338,7 +330,6 @@ void cc_cli_close(struct s_client *cl, int call_conclose) {
 	}
 
 	cc->just_logged_in = 0;
-	free_current_cards(cc->current_cards);
 }
 
 struct cc_extended_ecm_idx *add_extended_ecm_idx(struct s_client *cl,
@@ -782,41 +773,6 @@ int send_cmd05_answer(struct s_client *cl) {
 	return 1;
 }
 
-struct cc_current_card *cc_find_current_card(struct cc_data *cc,
-		struct cc_card *card) {
-	LL_ITER *it = ll_iter_create(cc->current_cards);
-	struct cc_current_card *c;
-	while ((c = ll_iter_next(it)))
-		if (c->card == card) {
-			break;
-		}
-	ll_iter_release(it);
-	return c;
-}
-
-struct cc_current_card *cc_find_current_card_by_srvid(struct cc_data *cc,
-		ushort caid, ulong prov, struct cc_srvid *srvid) {
-	LL_ITER *it = ll_iter_create(cc->current_cards);
-	struct cc_current_card *c;
-	while ((c = ll_iter_next(it)))
-		if (c->card->caid == caid && c->prov == prov
-				&& sid_eq(&c->srvid, srvid)) {
-			break;
-		}
-	ll_iter_release(it);
-	return c;
-}
-
-void cc_remove_current_card(struct cc_data *cc,
-		struct cc_current_card *current_card) {
-	LL_ITER *it = ll_iter_create(cc->current_cards);
-	struct cc_current_card *c;
-	while ((c = ll_iter_next(it)))
-		if (c == current_card)
-			ll_iter_remove_data(it);
-	ll_iter_release(it);
-}
-
 int get_UA_ofs(uint16 caid) {
 	int ofs = 0;
 	switch (caid >> 8) {
@@ -937,10 +893,13 @@ int cc_UA_valid(uint8 *ua) {
 /**
  * Updates AU Data: UA (Unique ID / Hexserial) und SA (Shared ID - Provider)
  */
-void set_au_data(struct s_client *cl __attribute__((unused)), struct s_reader *rdr, struct cc_card *card, ECM_REQUEST *cur_er) {
+void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card, ECM_REQUEST *cur_er) {
 	if (rdr->audisabled || !cc_UA_valid(card->hexserial))
 		return;
 		
+	struct cc_data *cc = cl->cc;	
+	cc->last_emm_card = card;
+
 	rdr->card_system = get_cardsystem(card->caid);
 	cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid[0]);
 
@@ -1013,7 +972,6 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	int n, h = -1;
 	struct cc_data *cc = cl->cc;
 	struct cc_card *card = NULL;
-	struct cc_current_card *current_card = NULL;
 	LL_ITER *it;
 	ECM_REQUEST *cur_er;
 	struct timeb cur_time;
@@ -1099,23 +1057,6 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	cur_srvid.ecmlen = cur_er->l;
 
 	pthread_mutex_lock(&cc->cards_busy);
-	//search cache:
-	current_card = cc_find_current_card_by_srvid(cc, cur_er->caid,
-		cur_er->prid, &cur_srvid);
-	if (current_card) {
-		if (!current_card->card || is_sid_blocked(current_card->card,
-			&cur_srvid)) {
-			cc_remove_current_card(cc, current_card);
-			current_card = NULL;
-		}
-	}
-	if (current_card)
-		card = current_card->card;
-	else
-		card = NULL;
-	
-	//then check all other cards
-	if (!card) {
 		it = ll_iter_create(cc->cards);
 		struct cc_card *ncard;
 		while ((ncard = ll_iter_next(it))) {
@@ -1151,17 +1092,8 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			}
 		}
 		ll_iter_release(it);
-	}
 
 	if (card) {
-		if (!current_card) {
-			current_card = cs_malloc(&current_card, sizeof(struct cc_current_card), QUITERROR);
-			current_card->card = card;
-			current_card->prov = cur_er->prid;
-			current_card->srvid = cur_srvid;
-			ll_prepend(cc->current_cards, current_card);
-		}
-
 		card->time = time((time_t) 0);
 		uint8 ecmbuf[255+13];
 		memset(ecmbuf, 0, 255+13);
@@ -1356,15 +1288,8 @@ int cc_send_emm(EMM_PACKET *ep) {
 
 	//Last used card is first card of current_cards:
 	pthread_mutex_lock(&cc->cards_busy);
-	LL_ITER *it = ll_iter_create(cc->current_cards);
-	struct cc_current_card *current_card;
-	while ((current_card = ll_iter_next(it)))
-		if (current_card->card->caid == caid && cc_UA_valid(current_card->card->hexserial))
-			break; //found it
-	ll_iter_release(it);
 
-	struct cc_card *emm_card = (current_card != NULL) ? current_card->card
-			: NULL;
+	struct cc_card *emm_card = cc->last_emm_card;
 
 	if (!emm_card) {
 		uint8 hs[8];
@@ -1525,8 +1450,6 @@ void cc_free(struct s_client *cl) {
 	cc_free_cardlist(cc->cards, TRUE);
 	cc_free_reported_carddata(cl, cc->reported_carddatas, NULL, FALSE);
 	ll_destroy_data(cc->pending_emms);
-	free_current_cards(cc->current_cards);
-	ll_destroy(cc->current_cards);
 	if (cc->extended_ecm_idx)
 		free_extended_ecm_idx(cc);
 	ll_destroy_data(cc->extended_ecm_idx);
@@ -1792,17 +1715,14 @@ void cc_card_removed(struct s_client *cl, uint32 shareid) {
 		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
 			//cs_debug_mask(D_CLIENT, "cccam: card %08x removed, caid %04X, count %d",
 			//		card->id, card->caid, ll_count(cc->cards));
-			struct cc_card *next_card = ll_iter_peek(it, 0);
 			ll_iter_remove(it);
-			struct cc_current_card *current_card;
-			while ((current_card = cc_find_current_card(cc, card))) {
+			if (cc->last_emm_card == card) {
+				cc->last_emm_card = NULL;
 				cs_debug_mask(D_READER, "%s current card %08x removed!",
 						getprefix(), card->id);
-				cc_remove_current_card(cc, current_card);
 			}		
 			free_extended_ecm_idx_by_card(cl, card);
 			cc_free_card(card);
-			card = next_card;
 			cc->cards_modified++;
 			//break;
 		}
@@ -1825,27 +1745,11 @@ void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
 	ll_iter_release(it);
 	if (card) {
 		cs_debug_mask(D_READER, "%s CMD05: Moving card %08X to the end...", getprefix(), card_to_move->id);
-		//cleaning current cards:
-		it = ll_iter_create(cc->cards);
-		struct cc_current_card *current_card;
-		while ((current_card = cc_find_current_card(cc, card))) {
-			cc_remove_current_card(cc, current_card);
-		}	
-		ll_iter_release(it);	
 		free_extended_ecm_idx_by_card(cl, card);
-
 		ll_append(cc->cards, card_to_move);
 	}
 }
 
-
-void check_peer_changed(struct cc_data *cc, uint8 *node_id, uint8 *version) {
-	if (memcmp(cc->peer_node_id, node_id, 8) != 0 || memcmp(cc->peer_version, version, 8) != 0) {
-		//Remote Id has changed, clear cached data:
-		cc_free_cardlist(cc->cards, FALSE);
-		free_current_cards(cc->current_cards);
-	}
-}
 
 /**
  * if idents defined on an cccam reader, the cards caid+provider are checked.
@@ -1931,8 +1835,11 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		data = cc->receive_buffer;
 
 		if (l == 0x48) { //72 bytes: normal server data
-			check_peer_changed(cc, data, data+8);
-			
+			pthread_mutex_lock(&cc->cards_busy);	
+			cc_free_cardlist(cc->cards, FALSE);
+			cc->last_emm_card = NULL;
+            pthread_mutex_unlock(&cc->cards_busy);
+                			
 			memcpy(cc->peer_node_id, data, 8);
 			memcpy(cc->peer_version, data + 8, 8);
 
@@ -2266,7 +2173,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 						struct timeb tpe;
 						cs_ftime(&tpe);
 						ulong cwlastresptime = 1000*(tpe.time-cc->ecm_time.time)+tpe.millitm-cc->ecm_time.millitm;
-						if (cwlastresptime > cfg->ftimeout) {
+						if (cwlastresptime > cfg->ftimeout && !cc->extended_mode) {
 							cs_debug_mask(D_READER, "%s card %04X is too slow, moving to the end...", getprefix(), card->id);
 							move_card_to_end(cl, card);
 						}
@@ -3750,7 +3657,6 @@ int cc_cli_connect(struct s_client *cl) {
 		cl->cc = cc;
 		cc->pending_emms = ll_create();
 		cc->extended_ecm_idx = ll_create();
-		cc->current_cards = ll_create();
 		cc_init_cc(cc);
 	} else {
 		if (cc->cards) {
@@ -3762,8 +3668,6 @@ int cc_cli_connect(struct s_client *cl) {
 			}
 			ll_iter_release(it);
 		}
-		if (cc->current_cards)
-			free_current_cards(cc->current_cards);
 		if (cc->extended_ecm_idx)
 			free_extended_ecm_idx(cc);
 
@@ -3782,6 +3686,8 @@ int cc_cli_connect(struct s_client *cl) {
 	cc->cmd05_data_len = 0;
 	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
+	cc->last_emm_card = NULL;
+	
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 	memset(&cc->receive_buffer, 0, sizeof(cc->receive_buffer));
 	cc->cmd0c_mode = MODE_CMD_0x0C_NONE;

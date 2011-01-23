@@ -168,7 +168,7 @@ struct cc_data {
 	
 	uint32 recv_ecmtask;
 
-	LLIST *current_cards; //reader: current card cache
+	struct cc_card *last_emm_card;
 	int server_ecm_pending;                    //initialized by server
 	ushort server_ecm_idx;
 	
