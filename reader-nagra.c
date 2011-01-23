@@ -691,7 +691,7 @@ typedef struct
    uint16_t price;
 } ncmed_rec;
 
-int reccmp(const void *r1, const void *r2)
+static int reccmp(const void *r1, const void *r2)
 {
    int v1, v2, y, m, d;
    sscanf(((ncmed_rec *)r1)->date1, "%02d/%02d/%04d", &d, &m, &y);
@@ -699,6 +699,21 @@ int reccmp(const void *r1, const void *r2)
    sscanf(((ncmed_rec *)r2)->date1, "%02d/%02d/%04d", &d, &m, &y);
    v2 = y * 372 + 1 + m * 31 + d;
    return (v1 == v2) ? 0 : (v1 < v2) ? -1 : 1;
+}
+
+static int reccmp2(const void *r1, const void *r2)
+{
+   char rec1[13], rec2[13];
+   sprintf(rec1, "%04X", ((ncmed_rec *)r1)->value);
+   memcpy(rec1+4, ((ncmed_rec *)r1)->date2+6, 4);
+   memcpy(rec1+8, ((ncmed_rec *)r1)->date2+3, 2);
+   memcpy(rec1+10, ((ncmed_rec *)r1)->date2, 2);
+   sprintf(rec2, "%04X", ((ncmed_rec *)r2)->value);
+   memcpy(rec2+4, ((ncmed_rec *)r2)->date2+6, 4);
+   memcpy(rec2+8, ((ncmed_rec *)r2)->date2+3, 2);
+   memcpy(rec2+10, ((ncmed_rec *)r2)->date2, 2);
+   rec1[12] = rec2[12] = 0;
+   return strcmp(rec2, rec1);
 }
 
 static int nagra2_card_info(struct s_reader * reader)
@@ -782,7 +797,10 @@ static int nagra2_card_info(struct s_reader * reader)
                     }
                  }
               }
-              qsort(records, num_records, sizeof(ncmed_rec), reccmp);
+              if (reader->nagra_read == 1)
+                 qsort(records, num_records, sizeof(ncmed_rec), reccmp);
+              else
+                 qsort(records, num_records, sizeof(ncmed_rec), reccmp2);
 
               int  euro=0;
               char *tier_name = NULL;
@@ -819,6 +837,11 @@ static int nagra2_card_info(struct s_reader * reader)
                                    records[i].value, records[i].date2, tier_name);
                        }
                        break;
+                 }
+                 if (reader->nagra_read == 2)
+                 {
+                    while (i < num_records - 1 && records[i].value == records[i+1].value)
+                       ++i;
                  }
               }  
 
@@ -1064,8 +1087,7 @@ static int nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	
 		//   emm_data: 82 70 8E 00 00 00 00 00 D3 87 8D 11 C0 F4 B1 27 2C 3D 25 94 ...
 		//serial_data: A0 CA 00 00 8C D3 8A 01 00 00 00 00 C0 F4 B1 27 2C 3D 25 94 ...
-		unsigned char emm_trim[150];
-		memset(emm_trim, 0, 150);
+		unsigned char emm_trim[150] = { 0x01, 0x00, 0x00, 0x00, 0x00 };
 		memcpy(&emm_trim[5], ep->emm+3+5+2+2, ep->emm[9]+2);
 		if(!do_cmd(reader, ep->emm[8],ep->emm[9]+5,0x53,0x16, emm_trim,cta_res,&cta_lr))
 		{
