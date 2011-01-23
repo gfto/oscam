@@ -101,11 +101,16 @@ static int smargo_reset(struct s_reader *reader, ATR *atr) {
 
 	int parity[4] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE, PARITY_EVEN};
 
+	int mhz = 369;
+
+	if(reader->mhz == reader->cardmhz && reader->cardmhz > 369)
+		mhz = reader->cardmhz;
+
 	for(i=0; i<4; i++) {
 		if (i==3) // hack for irdeto cards
 			smargo_set_settings(reader, 600, 1, 0, 618, 1, 0);
 		else
-			smargo_set_settings(reader, 357, 0, 0, 372, 1, 0);
+			smargo_set_settings(reader, mhz, 0, 0, 372, 1, 0);
 
 		call (IO_Serial_SetParity (reader, parity[i]));
 
