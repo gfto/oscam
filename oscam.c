@@ -1661,6 +1661,9 @@ void distribute_ecm(ECM_REQUEST *er)
   ECM_REQUEST *ecm;
   int n, i;
 
+  if (er->rc == E_RDR_FOUND) //found converted to cache...
+    er->rc = E_CACHE2; //cache
+
   for (cl=first_client->next; cl ; cl=cl->next) {
     if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (er->selected_reader->grp & cl->grp)) {
 
