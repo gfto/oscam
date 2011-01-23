@@ -2046,22 +2046,14 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
     return; // obsolete
   }
 
-  if (er->rc>=E_RDR_FOUND)
-  {
-		ert->selected_reader=er->selected_reader;
-		
-		switch(er->rc)
-		{
-				case E_CACHE2:
-						ert->rc=E_CACHE2;
-						break;
-				case E_EMU:
-						ert->rc=E_EMU;
-						break;
-				default:
-						ert->rc=E_FOUND;
-		}
-    
+	ert->selected_reader=er->selected_reader;
+
+	if (er->rc>=E_RDR_FOUND)
+	{
+		ert->rc=E_FOUND;
+		if (er->rc == E_CACHE2 || er->rc == E_EMU)
+			ert->rc=er->rc;
+
 		ert->rcEx=0;
 		memcpy(ert->cw , er->cw , sizeof(er->cw));
 #ifdef CS_WITH_GBOX

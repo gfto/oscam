@@ -1430,7 +1430,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 			}
 
 			if (demux[demux_id].pidindex==-1) {
-				curpid->irdeto_chid = buffer[7];
+				curpid->irdeto_chid = (buffer[6] << 8) | buffer[7];
 				struct s_dvbapi_priority *chidentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'i');
 				if (chidentry) {
 					cs_debug_mask(D_DVBAPI, "ignoring %04X:%06X:%02X", curpid->CAID, curpid->PROVID, curpid->irdeto_chid);
@@ -1501,7 +1501,7 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 		er->l=len;
 		memcpy(er->ecm, buffer, er->l);
 
-		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X chid %02X", er->caid, er->prid, er->srvid, er->pid, (caid >> 8) == 0x06 ? buffer[7] : 0);
+		cs_debug_mask(D_DVBAPI, "request cw for caid %04X provid %06X srvid %04X pid %04X chid %04X", er->caid, er->prid, er->srvid, er->pid, curpid->irdeto_chid);
 		get_cw(dvbapi_client, er);
 	}
 
