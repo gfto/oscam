@@ -1705,7 +1705,10 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 #else
   if (er->rc==E_RDR_FOUND) {
 #endif
+
+#ifndef CS_WITH_DOUBLECHECK
     store_cw_in_cache(er, reader->grp);
+#endif
 
     /* CWL logging only if cwlogdir is set in config */
     if (cfg->cwlogdir != NULL)
@@ -1847,10 +1850,17 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 			else
 				snprintf(sby, sizeof(sby)-1, " by %s", er->selected_reader->label);
 	}
+	else {
+			struct s_reader *err_reader = ll_has_elements(er->matching_rdr);
+			if (err_reader)
+					snprintf(sby, sizeof(sby)-1, " by %s", err_reader->label);
+	}
 	if (er->rc < E_NOTFOUND) er->rcEx=0;
 	if (er->rcEx)
 		snprintf(erEx, sizeof(erEx)-1, "rejected %s%s", stxtWh[er->rcEx>>4],
 				stxtEx[er->rcEx&0xf]);
+				
+
 
 	if(cfg->mon_appendchaninfo)
 		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(er->srvid, er->caid));
@@ -2721,7 +2731,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	//cs_log("num pend=%d", i);
 
 	for (--i; i>=0; i--) {
-		if (cl->ecmtask[i].rc>=99) { // check all pending ecm-requests
+		if (cl->ecmtask[i].rc>=E_99) { // check all pending ecm-requests
 			int act=1;
 			er=&cl->ecmtask[i];
 			tpc=er->tps;

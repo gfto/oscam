@@ -2126,6 +2126,8 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		if (cl->typ == 'c') //for reader only
 			return ret;
 
+		cc->recv_ecmtask = -1;
+		
 		if (cc->just_logged_in)
 			return -1; // reader restart needed
 
@@ -2139,6 +2141,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		else
 		{
 			ushort ecm_idx = eei->ecm_idx;
+			cc->recv_ecmtask = ecm_idx;
 			struct cc_card *card = eei->card;
 			struct cc_srvid srvid = eei->srvid;
 			free(eei);
@@ -2211,7 +2214,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		} else { //READER:
 			pthread_mutex_lock(&cc->cards_busy);
-
+			cc->recv_ecmtask = -1;
 			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
 					cc->extended_mode ? cc->g_flag : 1, TRUE);
 			if (eei == NULL) {
@@ -2221,6 +2224,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			else
 			{
 				ushort ecm_idx = eei->ecm_idx;
+				cc->recv_ecmtask = ecm_idx;
 				struct cc_card *card = eei->card;
 				struct cc_srvid srvid = eei->srvid;
 				free(eei);
@@ -2245,7 +2249,6 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 						cc_reset_pending(cl, ecm_idx);
 						buf[1] = MSG_CW_NOK2; //So it's really handled like a nok!
 					} else {
-						cc->recv_ecmtask = ecm_idx;
 						cs_debug_mask(D_READER, "%s cws: %d %s", getprefix(),
 								ecm_idx, cs_hexdump(0, cc->dcw, 16));
 						add_good_sid(cl, card, &srvid);
@@ -2513,7 +2516,8 @@ int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf, int UNUSED
 		*rc = 1;
 		return (cc->recv_ecmtask);
 	} else if ((buf[1] == (MSG_CW_NOK1)) || (buf[1] == (MSG_CW_NOK2))) {
-		return -1;
+		*rc = 0;
+		return (cc->recv_ecmtask);
 	}
 
 	return (-1);

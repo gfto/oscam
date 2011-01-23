@@ -649,7 +649,7 @@ int get_best_reader(ECM_REQUEST *er)
 					stat->last_received = current_time;
 					ll_remove(result, rdr);
 					ll_prepend(result, rdr);
-					cs_log("loadbalancer: retrying reader %s", rdr->label);
+					cs_debug_mask(D_TRACE, "loadbalancer: retrying reader %s", rdr->label);
 				}
 			}
 		}
