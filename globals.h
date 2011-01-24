@@ -555,7 +555,7 @@ typedef struct ecm_request_t
 //  uchar         l;
   short         l;
   ushort        caid;
-  ushort        ocaid;
+  ushort        ocaid; //original caid, used for betatunneling
   ushort        srvid;
   ushort        chid;
   ushort        pid;
