@@ -19,7 +19,7 @@ FILE *fpa=(FILE *)0;
 
 static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 {
-	if( cfg->max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
+	if( cfg.max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
 					//at the same time, it is ok to have the other logs switching 1 entry later
 	{
 		struct stat stlog;
@@ -30,7 +30,7 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 			return;
 		}
 
-		if( stlog.st_size >= cfg->max_log_size*1024 && *f != NULL) {
+		if( stlog.st_size >= cfg.max_log_size*1024 && *f != NULL) {
 			int rc;
 			char prev_log[strlen(file) + 6];
 			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);
@@ -46,7 +46,7 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 				else
 					if( pfinit()){
 						fprintf(stderr, "Initialisation of log file failed, continuing without logging thread %8X. Log will be output to stdout!", (unsigned int)pthread_self());
-						cfg->logtostdout = 1;
+						cfg.logtostdout = 1;
 					}
 			}
 			else //I am not the first to detect a switchlog is needed, so I need to wait for the first thread to complete
@@ -60,7 +60,7 @@ void cs_write_log(char *txt)
 {
 #ifdef CS_ANTICASC
 	if( cur_client()->typ == 'a' && fpa ) {
-		switch_log(cfg->ac_logfile, &fpa, ac_init_log);
+		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
 		if (fpa) {
 				fputs(txt, fpa);
 				fflush(fpa);
@@ -71,22 +71,22 @@ void cs_write_log(char *txt)
 		// filter out entries with leading 's' and forward to statistics
 		if(txt[0] == 's') {
 			if (fps) {
-				switch_log(cfg->usrfile, &fps, cs_init_statistics);
+				switch_log(cfg.usrfile, &fps, cs_init_statistics);
 				if (fps) {
 						fputs(txt + 1, fps); // remove the leading 's' and write to file
 						fflush(fps);
 				}
 			}
 		} else {
-			if(!cfg->disablelog){
+			if(!cfg.disablelog){
 				if (fp){
-					switch_log(cfg->logfile, &fp, cs_open_logfiles);
+					switch_log(cfg.logfile, &fp, cs_open_logfiles);
 					if (fp) {
 							fputs(txt, fp);
 							fflush(fp);
 					}		
 				}
-				if(cfg->logtostdout){
+				if(cfg.logtostdout){
 					fputs(txt, stdout);
 					fflush(stdout);
 				}
@@ -96,17 +96,17 @@ void cs_write_log(char *txt)
 
 int cs_open_logfiles()
 {
-	if (!fp && cfg->logfile != NULL) {	//log to file
-		if ((fp = fopen(cfg->logfile, "a+")) <= (FILE *)0) {
+	if (!fp && cfg.logfile != NULL) {	//log to file
+		if ((fp = fopen(cfg.logfile, "a+")) <= (FILE *)0) {
 			fp = (FILE *)0;
-			fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", cfg->logfile, errno);
+			fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", cfg.logfile, errno);
 		} else {
 			time_t t;
 			char line[80];
 			memset(line, '-', sizeof(line));
 			line[(sizeof(line)/sizeof(char)) - 1] = '\0';
 			time(&t);
-			if (!cfg->disablelog)
+			if (!cfg.disablelog)
 				fprintf(fp, "\n%s\n>> OSCam <<  cardserver started at %s%s\n", line, ctime(&t), line);
 		}
 	}
@@ -153,9 +153,9 @@ static void write_to_log(int flag, char *txt)
 	//  memcpy(txt, sbuf, 11);
 
 #ifdef CS_ANTICASC
-	if (cfg->logtosyslog && cur_client()->typ != 'a') // system-logfile
+	if (cfg.logtosyslog && cur_client()->typ != 'a') // system-logfile
 #else
-	if (cfg->logtosyslog) // system-logfile
+	if (cfg.logtosyslog) // system-logfile
 #endif
 		syslog(LOG_INFO, txt);
 
@@ -302,12 +302,12 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 #endif
 int cs_init_statistics(void) 
 {
-	if ((!fps) && (cfg->usrfile != NULL))
+	if ((!fps) && (cfg.usrfile != NULL))
 	{
-		if ((fps=fopen(cfg->usrfile, "a+"))<=(FILE *)0)
+		if ((fps=fopen(cfg.usrfile, "a+"))<=(FILE *)0)
 		{
 			fps=(FILE *)0;
-			cs_log("couldn't open statistics file: %s", cfg->usrfile);
+			cs_log("couldn't open statistics file: %s", cfg.usrfile);
 		}
 	}
 	return(fps<=(FILE *)0);
@@ -315,7 +315,7 @@ int cs_init_statistics(void)
 
 void cs_statistics(struct s_client * client)
 {
-	if (!cfg->disableuserfile){
+	if (!cfg.disableuserfile){
 		time_t t;
 		struct tm lt;
 		char buf[LOG_BUF_SIZE];
@@ -333,7 +333,7 @@ void cs_statistics(struct s_client * client)
 			cwps=0;
 
 		char *channel ="";
-		if(cfg->mon_appendchaninfo)
+		if(cfg.mon_appendchaninfo)
 			channel = get_servicename(client->last_srvid,client->last_caid);
 
 		int lsec;

@@ -132,7 +132,7 @@ static int seca_card_init(struct s_reader * reader, ATR newatr)
 
   cs_ri_log (reader, "providers: %d (%s)", reader->nprov, buf+1);
 // Unlock parental control
-  if( cfg->ulparent != 0 ){
+  if( cfg.ulparent != 0 ){
     unlock_parental(reader);
   }else {
 	  cs_ri_log (reader, "[seca-reader] parental locked");

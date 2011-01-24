@@ -14,7 +14,7 @@ static void monitor_check_ip()
 	struct s_client *cur_cl = cur_client();
 	
 	if (cur_cl->auth) return;
-	for (p_ip=cfg->mon_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
+	for (p_ip=cfg.mon_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
 		ok=((cur_cl->ip>=p_ip->ip[0]) && (cur_cl->ip<=p_ip->ip[1]));
 	if (!ok)
 	{
@@ -34,7 +34,7 @@ static void monitor_auth_client(char *usr, char *pwd)
 		cs_auth_client(cur_cl, (struct s_auth *)0, NULL);
 		cs_exit(0);
 	}
-	for (account=cfg->account, cur_cl->auth=0; (account) && (!cur_cl->auth);)
+	for (account=cfg.account, cur_cl->auth=0; (account) && (!cur_cl->auth);)
 	{
 		if (account->monlvl)
 			cur_cl->auth=!(strcmp(usr, account->usr) | strcmp(pwd, account->pwd));
@@ -65,7 +65,7 @@ static int secmon_auth_client(uchar *ucrc)
 	}
 	cur_cl->crypted=1;
 	crc=(ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3];
-	for (account=cfg->account; (account) && (!cur_cl->auth); account=account->next)
+	for (account=cfg.account; (account) && (!cur_cl->auth); account=account->next)
 		if ((account->monlvl) &&
 				(crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cur_cl->dump), 16)))
 		{
@@ -245,9 +245,9 @@ static char *monitor_client_info(char id, struct s_client *cl){
 		struct tm lt;
 		now=time((time_t)0);
 
-		if	((cfg->mon_hideclient_to <= 0) ||
-				(now-cl->lastecm < cfg->mon_hideclient_to) ||
-				(now-cl->lastemm < cfg->mon_hideclient_to) ||
+		if	((cfg.mon_hideclient_to <= 0) ||
+				(now-cl->lastecm < cfg.mon_hideclient_to) ||
+				(now-cl->lastemm < cfg.mon_hideclient_to) ||
 				(cl->typ != 'c'))
 		{
 			lsec=now-cl->login;
@@ -264,7 +264,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 					con = 0;
 			
 			if( (cau = get_ridx(cl->aureader) + 1) )
-				if ((now-cl->lastemm) /60 > cfg->mon_aulow)
+				if ((now-cl->lastemm) /60 > cfg.mon_aulow)
 					cau=-cau;
 			if( cl->typ == 'r')
 			{
@@ -296,9 +296,9 @@ static void monitor_process_info(){
 	struct s_client *cl, *cur_cl = cur_client();
 	
 	for (cl=first_client; cl ; cl=cl->next) {
-		if	((cfg->mon_hideclient_to <= 0) ||
-				( now-cl->lastecm < cfg->mon_hideclient_to) ||
-				( now-cl->lastemm < cfg->mon_hideclient_to) ||
+		if	((cfg.mon_hideclient_to <= 0) ||
+				( now-cl->lastecm < cfg.mon_hideclient_to) ||
+				( now-cl->lastemm < cfg.mon_hideclient_to) ||
 				( cl->typ != 'c')){
 			if ((cur_cl->monlvl < 2) && (cl->typ != 's')) {
 					if ((cur_cl->account && cl->account && strcmp(cur_cl->account->usr, cl->account->usr)) ||
@@ -338,42 +338,42 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 	monitor_send_details(buf, pid);
 	sprintf(buf, "MaxClients=UNLIMITED");
 	monitor_send_details(buf, pid);
-	sprintf(buf, "ClientMaxIdle=%ld sec", cfg->cmaxidle);
+	sprintf(buf, "ClientMaxIdle=%ld sec", cfg.cmaxidle);
 	monitor_send_details(buf, pid);
-	if( cfg->max_log_size )
-		sprintf(buf + 200, "%d Kb", cfg->max_log_size);
+	if( cfg.max_log_size )
+		sprintf(buf + 200, "%d Kb", cfg.max_log_size);
 	else
 		strcpy(buf + 200, "unlimited");
 	sprintf(buf, "MaxLogsize=%s", buf + 200);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "ClientTimeout=%lu ms", cfg->ctimeout);
+	sprintf(buf, "ClientTimeout=%lu ms", cfg.ctimeout);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "CacheDelay=%ld ms", cfg->delay);
+	sprintf(buf, "CacheDelay=%ld ms", cfg.delay);
 	monitor_send_details(buf, pid);
-	if( cfg->cwlogdir ) {
-                sprintf(buf, "CwlogDir=%s", cfg->cwlogdir);
+	if( cfg.cwlogdir ) {
+                sprintf(buf, "CwlogDir=%s", cfg.cwlogdir);
 	        monitor_send_details(buf, pid);
         }
-	if( cfg->preferlocalcards ) {
-	        sprintf(buf, "PreferlocalCards=%d", cfg->preferlocalcards);
+	if( cfg.preferlocalcards ) {
+	        sprintf(buf, "PreferlocalCards=%d", cfg.preferlocalcards);
 	        monitor_send_details(buf, pid);
         }
-	if( cfg->waitforcards ) {
-	        sprintf(buf, "WaitforCards=%d", cfg->waitforcards);
+	if( cfg.waitforcards ) {
+	        sprintf(buf, "WaitforCards=%d", cfg.waitforcards);
 	        monitor_send_details(buf, pid);
         }
-	sprintf(buf, "LogFile=%s", cfg->logfile);
+	sprintf(buf, "LogFile=%s", cfg.logfile);
 	monitor_send_details(buf, pid);
-	if( cfg->usrfile ) {
-	        sprintf(buf, "UsrFile=%s", cfg->usrfile);
+	if( cfg.usrfile ) {
+	        sprintf(buf, "UsrFile=%s", cfg.usrfile);
 	        monitor_send_details(buf, pid);
         }
 	monitor_send_details(buf, pid);
-	sprintf(buf, "Sleep=%d", cfg->tosleep);
+	sprintf(buf, "Sleep=%d", cfg.tosleep);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "Monitorport=%d", cfg->mon_port);
+	sprintf(buf, "Monitorport=%d", cfg.mon_port);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "Nice=%d", cfg->nice);
+	sprintf(buf, "Nice=%d", cfg.nice);
 	monitor_send_details(buf, pid);
 #ifdef WEBIF
 	sprintf(buf, "Restartmode=%d", cs_get_restartmode());
@@ -389,7 +389,7 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 
 static void monitor_process_details_reader(struct s_client *cl) {
 
-	if (cfg->saveinithistory) {
+	if (cfg.saveinithistory) {
 		FILE *fp;
 		char filename[32];
 		char buffer[128];
@@ -518,7 +518,7 @@ static void monitor_get_account(){
 	char buf[256];
         int count = 0;
 
-	for (account=cfg->account; (account); account=account->next){
+	for (account=cfg.account; (account); account=account->next){
                 count++;
 		snprintf(buf, 255, "[U-----]%s\n", account->usr);
 	        monitor_send_info(buf, 0);
@@ -563,7 +563,7 @@ static void monitor_set_account(char *args){
 	}
 
 	//search account
-	for (account=cfg->account; (account) ; account=account->next){
+	for (account=cfg.account; (account) ; account=account->next){
 		if (!strcmp(argarray[0], account->usr)){
 			found = 1;
 			break;
@@ -606,8 +606,8 @@ static void monitor_set_account(char *args){
 		chk_account(token[found], argarray[2], account);
 	}
 
-	if (write_userdb(cfg->account)==0)
-		cs_reinit_clients(cfg->account);
+	if (write_userdb(cfg.account)==0)
+		cs_reinit_clients(cfg.account);
 
 	sprintf(buf, "[S-0000]setuser: %s done - param %s set to %s\n", tmp, argarray[1], argarray[2]);
 	monitor_send_info(buf, 1);
@@ -654,19 +654,19 @@ static void monitor_set_server(char *args){
 		return;
 	}
 
-	if (cfg->ftimeout>=cfg->ctimeout) {
-		cfg->ftimeout = cfg->ctimeout - 100;
-		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg->ftimeout);
+	if (cfg.ftimeout>=cfg.ctimeout) {
+		cfg.ftimeout = cfg.ctimeout - 100;
+		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg.ftimeout);
 		monitor_send_info(buf, 1);
 	}
-	if(cfg->ftimeout < cfg->srtimeout) {
-		cfg->ftimeout = cfg->srtimeout + 100;
-		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg->ftimeout);
+	if(cfg.ftimeout < cfg.srtimeout) {
+		cfg.ftimeout = cfg.srtimeout + 100;
+		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg.ftimeout);
 		monitor_send_info(buf, 1);
 	}
-	if(cfg->ctimeout < cfg->srtimeout) {
-		cfg->ctimeout = cfg->srtimeout + 100;
-		sprintf(buf, "[S-0000]setserver WARNING: clienttimeout adjusted to %lu ms\n", cfg->ctimeout);
+	if(cfg.ctimeout < cfg.srtimeout) {
+		cfg.ctimeout = cfg.srtimeout + 100;
+		sprintf(buf, "[S-0000]setserver WARNING: clienttimeout adjusted to %lu ms\n", cfg.ctimeout);
 		monitor_send_info(buf, 1);
 	}
 	//kill(first_client->pid, SIGUSR1);
@@ -729,7 +729,7 @@ static int monitor_process_request(char *req)
 			case  2:	monitor_logsend(arg); break;	// log
 			case  3:	monitor_process_info(); break;	// status
 			case  4:	if (cur_cl->monlvl > 3) cs_exit(SIGQUIT); break;	// shutdown
-			case  5:	if (cur_cl->monlvl > 2) cs_reinit_clients(cfg->account); break;	// reload
+			case  5:	if (cur_cl->monlvl > 2) cs_reinit_clients(cfg.account); break;	// reload
 			case  6:	monitor_process_details(arg); break;	// details
 			case  7:	monitor_send_details_version(); break;	// version
 			case  8:	if (cur_cl->monlvl > 3) monitor_set_debuglevel(arg); break;	// debuglevel
@@ -757,24 +757,24 @@ static void * monitor_server(void *cli){
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
 	client->typ='m';
-	while (((n = process_input(mbuf, sizeof(mbuf), cfg->cmaxidle)) >= 0) && monitor_process_request((char *)mbuf));
+	while (((n = process_input(mbuf, sizeof(mbuf), cfg.cmaxidle)) >= 0) && monitor_process_request((char *)mbuf));
 	cs_disconnect_client(cli);
 	return NULL;
 }
 
 void module_monitor(struct s_module *ph){
 	static PTAB ptab; //since there is always only 1 monitor running, this is threadsafe
-	ptab.ports[0].s_port = cfg->mon_port;
+	ptab.ports[0].s_port = cfg.mon_port;
 	ph->ptab = &ptab;
 	ph->ptab->nports = 1;
 
-	if (cfg->mon_aulow < 1)
-		cfg->mon_aulow = 30;
+	if (cfg.mon_aulow < 1)
+		cfg.mon_aulow = 30;
 	strcpy(ph->desc, "monitor");
 	ph->type=MOD_CONN_UDP;
 	ph->multi = 0;
 	ph->watchdog = 1;
-	ph->s_ip = cfg->mon_srvip;
+	ph->s_ip = cfg.mon_srvip;
 	ph->s_handler = monitor_server;
 	ph->recv = monitor_recv;
 	//  ph->send_dcw=NULL;

@@ -55,7 +55,7 @@ struct  card_struct Cards[CS_MAXCARDS];
 unsigned long IgnoreList[CS_MAXIGNORE];
 #endif
 
-struct  s_config  *cfg;
+struct  s_config  cfg;
 #ifdef CS_LOGHISTORY
 int     loghistidx;  // ptr to current entry
 char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
@@ -90,15 +90,15 @@ struct s_client * cur_client(void)
 
 int cs_check_v(uint ip, int add) {
         int result = 0;
-	if (cfg->failbantime) {
+	if (cfg.failbantime) {
 
-		if (!cfg->v_list)
-			cfg->v_list = ll_create();
+		if (!cfg.v_list)
+			cfg.v_list = ll_create();
 
 		time_t now = time((time_t)0);
-		LL_ITER *itr = ll_iter_create(cfg->v_list);
+		LL_ITER *itr = ll_iter_create(cfg.v_list);
 		V_BAN *v_ban_entry;
-		int ftime = cfg->failbantime*60;
+		int ftime = cfg.failbantime*60;
 		
 		//run over all banned entries to do housekeeping:
 		while ((v_ban_entry=ll_iter_next(itr))) {
@@ -112,12 +112,12 @@ int cs_check_v(uint ip, int add) {
 			if (ip == v_ban_entry->v_ip) {
 			        result=1;
 			        if (!add) {
-        				if (v_ban_entry->v_count >= cfg->failbancount) {
+        				if (v_ban_entry->v_count >= cfg.failbancount) {
         					cs_debug_mask(D_TRACE, "failban: banned ip %s - %ld seconds left",
 	        						cs_inet_ntoa(v_ban_entry->v_ip),ftime - (now - v_ban_entry->v_time));
 			        	} else {
 				        	cs_debug_mask(D_TRACE, "failban: ip %s chance %d of %d",
-					        		cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_count, cfg->failbancount);
+					        		cs_inet_ntoa(v_ban_entry->v_ip), v_ban_entry->v_count, cfg.failbancount);
         					v_ban_entry->v_count++;
 	        			}
                                 }
@@ -467,7 +467,7 @@ void clear_account_stats(struct s_auth *account)
 
 void clear_all_account_stats()
 {
-  struct s_auth *account = cfg->account;
+  struct s_auth *account = cfg.account;
   while (account) {
     clear_account_stats(account);
     account = account->next;
@@ -489,10 +489,10 @@ void clear_system_stats()
                                 
 void cs_accounts_chk()
 {
-  struct s_auth *old_accounts = cfg->account;
+  struct s_auth *old_accounts = cfg.account;
   struct s_auth *new_accounts = init_userdb();
   struct s_auth *account1,*account2;
-  for (account1=cfg->account; account1; account1=account1->next) {
+  for (account1=cfg.account; account1; account1=account1->next) {
     for (account2=new_accounts; account2; account2=account2->next) {
       if (!strcmp(account1->usr, account2->usr)) {
         account2->cwfound = account1->cwfound;
@@ -507,7 +507,7 @@ void cs_accounts_chk()
     }
   }
   cs_reinit_clients(new_accounts);
-  cfg->account = new_accounts;
+  cfg.account = new_accounts;
   init_free_userdb(old_accounts);
   
 #ifdef CS_ANTICASC
@@ -729,7 +729,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 #ifdef CS_ANTICASC
 				cl->ac_idx	= account->ac_idx;
 				cl->ac_penalty= account->ac_penalty;
-				cl->ac_limit	= (account->ac_users * 100 + 80) * cfg->ac_stime;
+				cl->ac_limit	= (account->ac_users * 100 + 80) * cfg.ac_stime;
 #endif				
 			} else {
 				if (ph[cl->ctyp].type & MOD_CONN_NET) {
@@ -927,7 +927,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   memset((char  *)&sad,0,sizeof(sad)); /* clear sockaddr structure   */
   sad.sin_family = AF_INET;            /* set family to Internet     */
   if (!ph->s_ip)
-    ph->s_ip=cfg->srvip;
+    ph->s_ip=cfg.srvip;
   if (ph->s_ip)
   {
     sad.sin_addr.s_addr=ph->s_ip;
@@ -935,7 +935,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   }
   else
     sad.sin_addr.s_addr=INADDR_ANY;
-  timeout=cfg->bindwait;
+  timeout=cfg.bindwait;
   //ph->fd=0;
   ph->ptab->ports[port_idx].fd = 0;
 
@@ -973,9 +973,9 @@ static int start_listener(struct s_module *ph, int port_idx)
 #endif
 
 #ifdef SO_PRIORITY
-  if (cfg->netprio)
-    if (!setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg->netprio, sizeof(ulong)))
-      sprintf(ptxt[1], ", prio=%ld", cfg->netprio);
+  if (cfg.netprio)
+    if (!setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(ulong)))
+      sprintf(ptxt[1], ", prio=%ld", cfg.netprio);
 #endif
 
   if( !is_udp )
@@ -1037,7 +1037,7 @@ int cs_user_resolve(struct s_auth *account)
 		pthread_mutex_lock(&gethostbyname_lock);
 		in_addr_t lastip = account->dynip;
 		//Resolve with gethostbyname:
-		if (cfg->resolve_gethostbyname) {
+		if (cfg.resolve_gethostbyname) {
 			rht = gethostbyname((char*)account->dyndns);
 			if (!rht)
 				cs_log("can't resolve %s", account->dyndns);
@@ -1321,7 +1321,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				{
 					struct s_reader *rdr;
 					for (rdr=first_active_reader; rdr ; rdr=rdr->next)
-						if(rdr->caid==cfg->ncd_ptab.ports[client->port_idx].ftab.filts[0].caid) {
+						if(rdr->caid==cfg.ncd_ptab.ports[client->port_idx].ftab.filts[0].caid) {
 							client->aureader=rdr;
 							break;
 						}
@@ -1343,7 +1343,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 		cs_log("%s %s:%d-client %s%s (%s, %s)",
 				client->crypted ? t_crypt : t_plain,
 				e_txt ? e_txt : ph[client->ctyp].desc,
-				cfg->ncd_ptab.ports[client->port_idx].s_port,
+				cfg.ncd_ptab.ports[client->port_idx].s_port,
 				client->ip ? cs_inet_ntoa(client->ip) : "",
 				client->ip ? t_grant : t_grant+1,
 				username(client), t_msg[rc]);
@@ -1453,7 +1453,7 @@ int check_cwcache2(ECM_REQUEST *er, uint64 grp)
 static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp)
 {
 #ifdef CS_WITH_DOUBLECHECK
-	if (cfg->double_check && er->checked < 2)
+	if (cfg.double_check && er->checked < 2)
 		return;
 #endif
 	if (cwidx->next)
@@ -1602,7 +1602,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	* causing problems in file name
 	*/
 	srvname[0] = 0;
-	for (this=cfg->srvid; this; this = this->next) {
+	for (this=cfg.srvid; this; this = this->next) {
 		if (this->srvid == er->srvid) {
 			cs_strncpy(srvname, this->name, sizeof(srvname));
 			srvname[sizeof(srvname)-1] = 0;
@@ -1616,7 +1616,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	time(&t);
 	localtime_r(&t, &timeinfo);
 	strftime(date, sizeof(date), "%Y%m%d", &timeinfo);
-	sprintf(buf, "%s/%s_I%04X_%s.cwl", cfg->cwlogdir, date, er->srvid, srvname);
+	sprintf(buf, "%s/%s_I%04X_%s.cwl", cfg.cwlogdir, date, er->srvid, srvname);
 
 	/* open failed, assuming file does not exist, yet */
 	if((pfCWL = fopen(buf, "r")) == NULL) {
@@ -1712,7 +1712,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 #endif
 
     /* CWL logging only if cwlogdir is set in config */
-    if (cfg->cwlogdir != NULL)
+    if (cfg.cwlogdir != NULL)
       logCWtoFile(er);
   }
 
@@ -1862,7 +1862,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 				
 
 
-	if(cfg->mon_appendchaninfo)
+	if(cfg.mon_appendchaninfo)
 		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(er->srvid, er->caid));
 
 	if(er->msglog[0])
@@ -1978,7 +1978,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 #ifdef CS_WITH_DOUBLECHECK
-	if (cfg->double_check && er->rc < E_NOTFOUND) {
+	if (cfg.double_check && er->rc < E_NOTFOUND) {
 	  if (er->checked == 0) {//First CW, save it and wait for next one
 	    er->checked = 1;
 	    er->origin_reader = er->selected_reader;
@@ -2126,7 +2126,7 @@ void guess_irdeto(ECM_REQUEST *er)
   struct s_irdeto_quess *ptr;
 
   b3  = er->ecm[3];
-  ptr = cfg->itab[b3];
+  ptr = cfg.itab[b3];
   if( !ptr ) {
     cs_debug_mask(D_TRACE, "unknown irdeto byte 3: %02X", b3);
     return;
@@ -2328,8 +2328,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	// Set providerid for newcamd clients if none is given
 	if( (!er->prid) && client->ncd_server ) {
 		int pi = client->port_idx;
-		if( pi >= 0 && cfg->ncd_ptab.nports && cfg->ncd_ptab.nports >= pi )
-			er->prid = cfg->ncd_ptab.ports[pi].ftab.filts[0].prids[0];
+		if( pi >= 0 && cfg.ncd_ptab.nports && cfg.ncd_ptab.nports >= pi )
+			er->prid = cfg.ncd_ptab.ports[pi].ftab.filts[0].prids[0];
 	}
 
 	// CAID not supported or found
@@ -2374,7 +2374,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		i = er->srvid;
 
 		if ((i != client->last_srvid) || (!client->lastswitch)) {
-			if(cfg->usrfileflag)
+			if(cfg.usrfileflag)
 				cs_statistics(client);
 			client->lastswitch = now;
 		}
@@ -2499,7 +2499,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				else {
 					ll_prepend(er->matching_rdr, rdr);
 				}
-				if (cfg->lb_mode || !rdr->fallback)
+				if (cfg.lb_mode || !rdr->fallback)
 					er->reader_avail++;
 			}
 		}
@@ -2507,7 +2507,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		//if (er->reader_avail && check_and_store_ecmcache(er, client->grp))
 		//	return; //Found in ecmcache - answer by distribute ecm
 
-		if (cfg->lb_mode && er->reader_avail) {
+		if (cfg.lb_mode && er->reader_avail) {
 			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X",
 				username(client), er->caid, er->prid, er->srvid);
 			get_best_reader(er);
@@ -2530,15 +2530,15 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 	if (er->rc < E_UNHANDLED) {
-		if (cfg->delay)
-			cs_sleepms(cfg->delay);
+		if (cfg.delay)
+			cs_sleepms(cfg.delay);
 
 		send_dcw(client, er);
 		return;
 	}
 
 	er->rcEx = 0;
-	request_cw(er, 0, cfg->preferlocalcards ? 1 : 0);
+	request_cw(er, 0, cfg.preferlocalcards ? 1 : 0);
 }
 
 void log_emm_request(struct s_reader *rdr)
@@ -2731,16 +2731,16 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			er=&cl->ecmtask[i];
 			tpc=er->tps;
 			unsigned int tt;
-			tt = (er->stage) ? cfg->ctimeout : cfg->ftimeout;
+			tt = (er->stage) ? cfg.ctimeout : cfg.ftimeout;
 			tpc.time +=tt / 1000;
 			tpc.millitm += tt % 1000;
 			if (!er->stage && er->rc >= E_UNHANDLED) {
 
 				LL_NODE *ptr;
 				for (ptr = er->matching_rdr->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
-					if (!cfg->preferlocalcards || 
-								(cfg->preferlocalcards && !er->locals_done && (!(((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK))) || 
-								(cfg->preferlocalcards && er->locals_done && (((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK)))
+					if (!cfg.preferlocalcards || 
+								(cfg.preferlocalcards && !er->locals_done && (!(((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK))) || 
+								(cfg.preferlocalcards && er->locals_done && (((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK)))
 								act=0;
 
 				//cs_log("stage 0, act=%d r0=%d, r1=%d, r2=%d, r3=%d, r4=%d r5=%d", act,
@@ -2749,7 +2749,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 
 				if (act) {
 					int inc_stage = 1;
-					if (cfg->preferlocalcards && !er->locals_done) {
+					if (cfg.preferlocalcards && !er->locals_done) {
 						er->locals_done = 1;
 						struct s_reader *rdr;
 						for (rdr=first_active_reader; rdr ; rdr=rdr->next)
@@ -2763,9 +2763,9 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					} else {
 						er->locals_done = 0;
 						er->stage++;
-						request_cw(er, er->stage, cfg->preferlocalcards ? 1 : 0);
+						request_cw(er, er->stage, cfg.preferlocalcards ? 1 : 0);
 
-						tt = (cfg->ctimeout-cfg->ftimeout);
+						tt = (cfg.ctimeout-cfg.ftimeout);
 					}
 					tpc.time += tt / 1000;
 					tpc.millitm += tt % 1000;
@@ -2776,7 +2776,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 				//cs_log("           %d.%03d", tpc.time, tpc.millitm);
 				if (er->stage) {
 					er->rc = E_TIMEOUT;
-					if (cfg->lb_mode) {
+					if (cfg.lb_mode) {
 						LL_NODE *ptr;
 						for (ptr = er->matching_rdr->initial; ptr ; ptr = ptr->nxt)
 							send_reader_stat((struct s_reader *)ptr->obj, er, E_TIMEOUT);
@@ -2788,7 +2788,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					if (er->rc >= E_UNHANDLED) //do not request rc=99
 					        request_cw(er, er->stage, 0);
 					unsigned int tt;
-					tt = (cfg->ctimeout-cfg->ftimeout);
+					tt = (cfg.ctimeout-cfg.ftimeout);
 					tpc.time += tt / 1000;
 					tpc.millitm += tt % 1000;
 				}
@@ -2919,25 +2919,25 @@ void cs_log_config()
 {
   uchar buf[20];
 
-  if (cfg->nice!=99)
-    sprintf((char *)buf, ", nice=%d", cfg->nice);
+  if (cfg.nice!=99)
+    sprintf((char *)buf, ", nice=%d", cfg.nice);
   else
     buf[0]='\0';
   cs_log("version=%s, build #%s, system=%s-%s-%s%s", CS_VERSION_X, CS_SVN_VERSION, CS_OS_CPU, CS_OS_HW, CS_OS_SYS, buf);
-  cs_log("client max. idle=%d sec, debug level=%d", cfg->cmaxidle, cs_dblevel);
+  cs_log("client max. idle=%d sec, debug level=%d", cfg.cmaxidle, cs_dblevel);
 
-  if( cfg->max_log_size )
-    sprintf((char *)buf, "%d Kb", cfg->max_log_size);
+  if( cfg.max_log_size )
+    sprintf((char *)buf, "%d Kb", cfg.max_log_size);
   else
     strcpy((char *)buf, "unlimited");
   cs_log("max. logsize=%s", buf);
   cs_log("client timeout=%lu ms, fallback timeout=%lu ms, cache delay=%d ms",
-         cfg->ctimeout, cfg->ftimeout, cfg->delay);
+         cfg.ctimeout, cfg.ftimeout, cfg.delay);
 }
 
 void cs_waitforcardinit()
 {
-	if (cfg->waitforcards)
+	if (cfg.waitforcards)
 	{
 		cs_log("waiting for local card init");
 		int card_init_done;
@@ -2951,7 +2951,7 @@ void cs_waitforcardinit()
 				}
 			if (!card_init_done)
 				cs_sleepms(300); // wait a little bit
-			//alarm(cfg->cmaxidle + cfg->ctimeout / 1000 + 1);
+			//alarm(cfg.cmaxidle + cfg.ctimeout / 1000 + 1);
 		} while (!card_init_done);
 		cs_log("init for all local cards done");
 	}
@@ -3269,8 +3269,7 @@ if (pthread_key_create(&getclient, NULL)) {
     restart_daemon();
 #endif
 
-  cfg = malloc(sizeof(struct s_config));
-  memset(cfg, 0, sizeof(struct s_config));
+  memset(&cfg, 0, sizeof(struct s_config));
 
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
   init_first_client();
@@ -3300,7 +3299,7 @@ if (pthread_key_create(&getclient, NULL)) {
   init_rnd();
   init_sidtab();
   init_readerdb();
-  cfg->account = init_userdb();
+  cfg.account = init_userdb();
   init_signal();
   init_srvid();
   init_tierid();
@@ -3355,7 +3354,7 @@ if (pthread_key_create(&getclient, NULL)) {
 	first_client->last=time((time_t *)0);
 
 #ifdef WEBIF
-  if(cfg->http_port == 0)
+  if(cfg.http_port == 0)
     cs_log("http disabled");
   else
     start_thread((void *) &http_srv, "http");
@@ -3371,7 +3370,7 @@ if (pthread_key_create(&getclient, NULL)) {
 #endif
 
 #ifdef QBOXHD_LED
-	if(!cfg->disableqboxhdled)
+	if(!cfg.disableqboxhdled)
 		cs_log("QboxHD LED enabled");
     qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_FAST);
     qboxhd_led_blink(QBOXHD_LED_COLOR_RED,QBOXHD_LED_BLINK_FAST);
@@ -3381,7 +3380,7 @@ if (pthread_key_create(&getclient, NULL)) {
 #endif
 
 #ifdef CS_ANTICASC
-	if( !cfg->ac_enabled )
+	if( !cfg.ac_enabled )
 		cs_log("anti cascading disabled");
 	else {
 		init_ac();
@@ -3562,7 +3561,7 @@ void cs_switch_led(int led, int action) {
 void qboxhd_led_blink(int color, int duration) {
     int f;
 
-    if (cfg->disableqboxhdled) {
+    if (cfg.disableqboxhdled) {
         return;
     }
 

@@ -612,7 +612,7 @@ static void oscam_ser_auth_client(int proto)
     oscam_ser_disconnect();
   serialdata->connected=proto;
 
-  for (ok=0, account=cfg->account; (account) && (!ok); account=account->next)
+  for (ok=0, account=cfg.account; (account) && (!ok); account=account->next)
     if( (ok=!strcmp(serialdata->oscam_ser_usr, account->usr)) )
       break;
   cs_auth_client(cur_client(), ok ? account : (struct s_auth *)(-1), proto_txt[serialdata->connected]);
@@ -855,7 +855,7 @@ static void oscam_ser_server()
   cur_client()->serialdata->connected=0;
   oscam_ser_init_client();
 
-  while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>=0)
+  while ((n=process_input(mbuf, sizeof(mbuf), cfg.cmaxidle))>=0)
   {
     if ((*pserial_errors) > 3)
     {
@@ -979,7 +979,7 @@ void * init_oscam_ser(int ctyp)
 	char sdevice[512];
   	struct s_thread_param param;
   	oscam_init_serialdata(&param.serialdata);
-	cs_strncpy(sdevice, cfg->ser_device, sizeof(sdevice));
+	cs_strncpy(sdevice, cfg.ser_device, sizeof(sdevice));
 	param.ctyp=ctyp;
 	char *p;
 	pthread_t temp;

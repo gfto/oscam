@@ -462,7 +462,7 @@ static FILTER mk_user_ftab()
   memset(&filt.prids, 0, sizeof(filt.prids));
 
   port_idx = cl->port_idx;
-  psfilt = &cfg->ncd_ptab.ports[port_idx].ftab.filts[0];
+  psfilt = &cfg.ncd_ptab.ports[port_idx].ftab.filts[0];
 
   // 1. CAID
   // search server CAID in client CAID
@@ -586,8 +586,8 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     struct s_client *cl = cur_client();
     uchar mbuf[1024];
 
-    ok = cfg->ncd_allowed ? 0 : 1;
-    for (p_ip=cfg->ncd_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
+    ok = cfg.ncd_allowed ? 0 : 1;
+    for (p_ip=cfg.ncd_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
 	ok=((ip>=p_ip->ip[0]) && (ip<=p_ip->ip[1]));
 
     if (!ok)
@@ -605,7 +605,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     memcpy(cl->ncd_skey, key, 16);
     cl->ncd_msgid = 0;
 
-    i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
+    i=process_input(mbuf, sizeof(mbuf), cfg.cmaxidle);
     if ( i>0 )
     {
       if( mbuf[2] != MSG_CLIENT_2_SERVER_LOGIN )
@@ -628,7 +628,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     sprintf(cl->ncd_client_id, "%02X%02X", mbuf[0], mbuf[1]);
     client_name = get_ncd_client_name(cl->ncd_client_id);
 
-    for (ok=0, account=cfg->account; (usr) && (account) && (!ok); account=account->next) 
+    for (ok=0, account=cfg.account; (usr) && (account) && (!ok); account=account->next) 
     {
       cs_debug_mask(D_CLIENT, "account->usr=%s", account->usr);
       if (strcmp((char *)usr, account->usr) == 0)
@@ -664,7 +664,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     // check for non ready reader and reject client
     struct s_reader *rdr;
     for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-      if(rdr->caid==cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid) {
+      if(rdr->caid==cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid) {
         if(rdr->card_status == CARD_NEED_INIT) {
           cs_log("init for reader %s not finished -> reject client", rdr->label);
           ok = 0;
@@ -678,8 +678,8 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
       aureader = cl->aureader;
       if (aureader)
       {
-          if (cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != aureader->caid
-              &&  cfg->ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != aureader->ftab.filts[0].caid
+          if (cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != aureader->caid
+              &&  cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != aureader->ftab.filts[0].caid
               && aureader->typ != R_CCCAM) // disabling AU breaks cccam-au when cascading over newcamd, but with enabled au client was receiving wrong card data on faulty configured newcamd filters and when using betatunnel
           {
             cs_log("AU wont be used on this port -> disable AU");
@@ -707,7 +707,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
       des_login_key_get(deskey, passwdcrypt, strlen((char *)passwdcrypt), key);
       memcpy(cl->ncd_skey, key, 16);
 
-      i=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle);
+      i=process_input(mbuf, sizeof(mbuf), cfg.cmaxidle);
       if( i>0 )
       {
         int j,len=15;
@@ -905,8 +905,8 @@ static void newcamd_process_ecm(uchar *buf)
   er->srvid = (buf[0]<<8)|buf[1];
   er->caid = 0;
   pi = cl->port_idx;
-  if( cfg->ncd_ptab.nports && cfg->ncd_ptab.nports >= pi )
-    er->caid=cfg->ncd_ptab.ports[pi].ftab.filts[0].caid;
+  if( cfg.ncd_ptab.nports && cfg.ncd_ptab.nports >= pi )
+    er->caid=cfg.ncd_ptab.ports[pi].ftab.filts[0].caid;
   memcpy(er->ecm, buf+2, er->l);
   get_cw(cl, er);
 }
@@ -986,18 +986,18 @@ static void * newcamd_server(void *cli)
 
 	memset(client->req, 0, CS_MAXPENDING*REQ_SIZE);
 	client->ncd_server = 1;
-	cs_log("client connected to %d port", cfg->ncd_ptab.ports[client->port_idx].s_port);
+	cs_log("client connected to %d port", cfg.ncd_ptab.ports[client->port_idx].s_port);
 
-	if (cfg->ncd_ptab.ports[client->port_idx].ncd_key_is_set) {
+	if (cfg.ncd_ptab.ports[client->port_idx].ncd_key_is_set) {
 	    //port has a des key specified
-	    newcamd_auth_client(client->ip, cfg->ncd_ptab.ports[client->port_idx].ncd_key);
+	    newcamd_auth_client(client->ip, cfg.ncd_ptab.ports[client->port_idx].ncd_key);
 	} else {
 	    //default global des key
-	    newcamd_auth_client(client->ip, cfg->ncd_key);
+	    newcamd_auth_client(client->ip, cfg.ncd_key);
 	}
 
 	// report all cards if using extended mg proto
-	if (cfg->ncd_mgclient) {
+	if (cfg.ncd_mgclient) {
 		cs_debug_mask(D_CLIENT, "newcamd: extended: report all available cards");
 		int j, k;
 		uint8 buf[512];
@@ -1058,7 +1058,7 @@ static void * newcamd_server(void *cli)
 	{
 		if (!client->pfd) break;
 		// process_input returns -9 on clienttimeout
-		while ((rc=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
+		while ((rc=process_input(mbuf, sizeof(mbuf), cfg.cmaxidle))>0)
 		{
 			switch(mbuf[2])
 			{
@@ -1121,8 +1121,8 @@ int newcamd_client_init(struct s_client *client)
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
 #ifdef LALL
-  if (cfg->serverip[0])
-    loc_sa.sin_addr.s_addr = inet_addr(cfg->serverip);
+  if (cfg.serverip[0])
+    loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
   else
 #endif
     loc_sa.sin_addr.s_addr = INADDR_ANY;
@@ -1135,9 +1135,9 @@ int newcamd_client_init(struct s_client *client)
   }
 
 #ifdef SO_PRIORITY
-  if (cfg->netprio)
+  if (cfg.netprio)
     setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, 
-               (void *)&cfg->netprio, sizeof(ulong));
+               (void *)&cfg.netprio, sizeof(ulong));
 #endif
   if (!client->reader->tcp_ito) { 
     ulong keep_alive = client->reader->tcp_ito?1:0;
@@ -1217,11 +1217,11 @@ void module_newcamd(struct s_module *ph)
   ph->logtxt = ", crypted";
   ph->multi=1;
   ph->watchdog=1;
-  ph->s_ip=cfg->ncd_srvip;
+  ph->s_ip=cfg.ncd_srvip;
   ph->s_handler=newcamd_server;
   ph->recv=newcamd_recv;
   ph->send_dcw=newcamd_send_dcw;
-  ph->ptab=&cfg->ncd_ptab;
+  ph->ptab=&cfg.ncd_ptab;
   if( ph->ptab->nports==0 ) 
     ph->ptab->nports=1; // show disabled in log
   ph->c_multi=1;

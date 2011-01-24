@@ -188,9 +188,9 @@ char *tpl_getUnparsedTpl(const char* name){
   	if(strcmp(name, tpl[i]) == 0) break;
   }
 
-  if(strlen(cfg->http_tpl) > 0){
+  if(strlen(cfg.http_tpl) > 0){
   	char path[255];
-  	if(strlen(tpl_getTplPath(name, cfg->http_tpl, path, 255)) > 0 && file_exists(path)){
+  	if(strlen(tpl_getTplPath(name, cfg.http_tpl, path, 255)) > 0 && file_exists(path)){
 			FILE *fp;
 			char buffer[1024];
 			int read, allocated = 1025, size = 0;
@@ -324,7 +324,7 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 	char *authresponse = "";
 	char *uri = "";
 	char *username = "";
-	char *expectedPassword = cfg->http_pwd;
+	char *expectedPassword = cfg.http_pwd;
 	char *pch = authstring + 22;
 	char *pch2;
 	
@@ -356,7 +356,7 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 		}
 		if(strncmp(pch2, path, strlen(path)) == 0) uriok = 1;
 	}
-	if(uriok == 1 && strcmp(username, cfg->http_user) == 0){
+	if(uriok == 1 && strcmp(username, cfg.http_user) == 0){
 		char A1tmp[3 + strlen(username) + strlen(AUTHREALM) + strlen(expectedPassword)];
 		char A1[(MD5_DIGEST_LENGTH * 2) + 1], A2[(MD5_DIGEST_LENGTH * 2) + 1], A3[(MD5_DIGEST_LENGTH * 2) + 1];
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
@@ -387,7 +387,7 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 
 int webif_write_raw(char *buf, FILE* f, int len) {
 #ifdef WITH_SSL
-	if (cfg->http_use_ssl) {
+	if (cfg.http_use_ssl) {
 		return SSL_write((SSL*)f, buf, len);
 	} else
 #endif
@@ -400,7 +400,7 @@ int webif_write(char *buf, FILE* f) {
 
 int webif_read(char *buf, int num, FILE *f) {
 #ifdef WITH_SSL
-	if (cfg->http_use_ssl) {
+	if (cfg.http_use_ssl) {
 		return SSL_read((SSL*)f, buf, num);
 	} else
 #endif
@@ -445,10 +445,10 @@ void send_file(FILE *f, char *filename){
 	int fileno = 0;
 
 	if (!strcmp(filename, "CSS")){
-		filename = cfg->http_css;
+		filename = cfg.http_css;
 		fileno = 1;
 	} else if (!strcmp(filename, "JS")){
-		filename = cfg->http_jscript;
+		filename = cfg.http_jscript;
 		fileno = 2;
 	}
 

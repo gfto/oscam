@@ -1315,7 +1315,7 @@ extern struct card_struct *Cards;
 //extern struct idstore_struct *idstore;
 extern unsigned long *IgnoreList;
 
-extern struct s_config *cfg;
+extern struct s_config cfg;
 extern char cs_confdir[];
 extern char loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];
 extern struct s_module ph[CS_MAX_MOD];

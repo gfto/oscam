@@ -517,7 +517,7 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   /* disable parental lock */
   static const uchar ins2e[5] = {0xD0, 0x2E, 0x00, 0x00, 0x04};
   static const uchar payload2e[4] = {0xFF, 0xFF, 0xFF, 0xFF};
-  if(cfg->ulparent) {
+  if(cfg.ulparent) {
     if(cmd_exists(reader,ins74e) && write_cmd_vg(ins2e,payload2e) && status_ok(cta_res+l)) {
       cs_log("parental lock disabled");
     }else{

@@ -247,7 +247,7 @@ cs_log("[viaccess-reader] name: %s", cta_res);
   reader->nprov=i;
   cs_ri_log(reader, "providers: %d (%s)", reader->nprov, buf+1);
    
-    if (cfg->ulparent)
+    if (cfg.ulparent)
         unlock_parental(reader);
 
     cs_log("[viaccess-reader] ready for requests");

@@ -22,7 +22,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	va_end(params);
 	cs_log("%s", txt);
 
-	if (cfg->saveinithistory) {
+	if (cfg.saveinithistory) {
 		FILE *fp;
 		char filename[256];
 		char *buffer;
@@ -141,7 +141,7 @@ int hostResolve(struct s_reader *rdr)
    
    in_addr_t last_ip = cl->ip;
    
-   if (cfg->resolve_gethostbyname) { //Resolve with gethostbyname:
+   if (cfg.resolve_gethostbyname) { //Resolve with gethostbyname:
      struct hostent *rht = gethostbyname(rdr->device);
      if (!rht) {
        cs_log("can't resolve %s", rdr->device);
@@ -399,8 +399,8 @@ static void casc_get_dcw(struct s_reader * reader, int n)
   tpe=cl->ecmtask[n].tps;
   //tpe.millitm+=1500;    // TODO: timeout of 1500 should be config
 
-  tpe.time += cfg->srtimeout/1000;
-  tpe.millitm += cfg->srtimeout%1000;
+  tpe.time += cfg.srtimeout/1000;
+  tpe.millitm += cfg.srtimeout%1000;
   
   cs_ftime(&tps);
   while (((w=1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm)>0)
@@ -426,7 +426,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   t=time((time_t *)0);
   for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++)
   {
-    if ((t-(ulong)cl->ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
+    if ((t-(ulong)cl->ecmtask[i].tps.time > ((cfg.ctimeout + 500) / 1000) + 1) &&
         (cl->ecmtask[i].rc>=10))      // drop timeouts
         {
           cl->ecmtask[i].rc=0;
@@ -697,7 +697,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
     cs_ftime(&tpe);
     for(x=0;x<CS_MAXPENDING;x++){
       ms=1000*(tpe.time-cl->ecmtask[x].tps.time)+tpe.millitm-cl->ecmtask[x].tps.millitm;
-      if(cl->ecmtask[x].rc == 10 && ms > cfg->ctimeout && cl->ridx == cl->ecmtask[x].gbxRidx) {
+      if(cl->ecmtask[x].rc == 10 && ms > cfg.ctimeout && cl->ridx == cl->ecmtask[x].gbxRidx) {
         //cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",cl->ecmtask[x].rc,cl->ecmtask[x].idx,x,ridx,cl->ecmtask[x].gbxRidx);
         cl->ecmtask[x].rc=5;
         send_dcw(cl, &cl->ecmtask[x]);

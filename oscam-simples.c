@@ -774,7 +774,7 @@ void cs_strncpy(char * destination, const char * source, size_t num){
 
 char *get_servicename(int srvid, int caid){
 	int i;
-	struct s_srvid *this = cfg->srvid;
+	struct s_srvid *this = cfg.srvid;
 	static char name[83];
 
 	for (name[0] = 0; this && (!name[0]); this = this->next)
@@ -790,7 +790,7 @@ char *get_servicename(int srvid, int caid){
 
 char *get_tiername(int tierid, int caid){
 	int i;
-	struct s_tierid *this = cfg->tierid;
+	struct s_tierid *this = cfg.tierid;
 	static char name[83];
 
 	for (name[0] = 0; this && (!name[0]); this = this->next)
@@ -805,7 +805,7 @@ char *get_tiername(int tierid, int caid){
 }
 
 char *get_provider(int caid, ulong provid){
-	struct s_provid *this = cfg->provid;
+	struct s_provid *this = cfg.provid;
 	static char name[83];
 
 	for (name[0] = 0; this && (!name[0]); this = this->next) {

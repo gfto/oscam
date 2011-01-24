@@ -630,7 +630,7 @@ int cc_send_srv_data(struct s_client *cl) {
 	uint8 buf[0x48];
 	memset(buf, 0, 0x48);
 
-	if (cfg->cc_stealth)
+	if (cfg.cc_stealth)
 	{
 		int i;
 		for (i=0;i<8;i++)
@@ -639,12 +639,12 @@ int cc_send_srv_data(struct s_client *cl) {
 	else
 		memcpy(buf, cc->node_id, 8);
 	char cc_build[7];
-	cc_check_version((char *) cfg->cc_version, cc_build);
-	memcpy(buf + 8, cfg->cc_version, sizeof(cfg->cc_version)); // cccam version (ascii)
+	cc_check_version((char *) cfg.cc_version, cc_build);
+	memcpy(buf + 8, cfg.cc_version, sizeof(cfg.cc_version)); // cccam version (ascii)
 	memcpy(buf + 40, cc_build, sizeof(cc_build)); // build number (ascii)
 
 	cs_debug_mask(D_CLIENT, "%s version: %s, build: %s nodeid: %s", getprefix(),
-			cfg->cc_version, cc_build, cs_hexdump(0, cc->peer_node_id, 8));
+			cfg.cc_version, cc_build, cs_hexdump(0, cc->peer_node_id, 8));
 
 	return cc_cmd_send(cl, buf, 0x48, MSG_SRV_DATA);
 }
@@ -660,7 +660,7 @@ int cc_get_nxt_ecm(struct s_client *cl) {
 	t = time(NULL);
 	n = -1;
 	for (i = 0; i < CS_MAXPENDING; i++) {
-		if ((t - (ulong) cl->ecmtask[i].tps.time > ((cfg->ctimeout + 500)
+		if ((t - (ulong) cl->ecmtask[i].tps.time > ((cfg.ctimeout + 500)
 				/ 1000) + 1) && (cl->ecmtask[i].rc >= 10)) // drop timeouts
 		{
 			cl->ecmtask[i].rc = 0;
@@ -1015,7 +1015,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 
 			struct timeb timeout;
 			timeout = cc->ecm_time;
-			unsigned int tt = cfg->ctimeout * 4;
+			unsigned int tt = cfg.ctimeout * 4;
 			timeout.time += tt / 1000;
 			timeout.millitm += tt % 1000;
 
@@ -1195,7 +1195,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
  t=time((time_t *)0);
  for (i=1,n=1; i<CS_MAXPENDING; i++)
  {
- if ((t-cl->ecmtask[i].tps.time > ((cfg->ctimeout + 500) / 1000) + 1) &&
+ if ((t-cl->ecmtask[i].tps.time > ((cfg.ctimeout + 500) / 1000) + 1) &&
  (cl->ecmtask[i].rc>=10))      // drop timeouts
  {
  cl->ecmtask[i].rc=0;
@@ -2175,7 +2175,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 						struct timeb tpe;
 						cs_ftime(&tpe);
 						ulong cwlastresptime = 1000*(tpe.time-cc->ecm_time.time)+tpe.millitm-cc->ecm_time.millitm;
-						if (cwlastresptime > cfg->ftimeout && !cc->extended_mode) {
+						if (cwlastresptime > cfg.ftimeout && !cc->extended_mode) {
 							cs_debug_mask(D_READER, "%s card %04X is too slow, moving to the end...", getprefix(), card->id);
 							move_card_to_end(cl, card);
 						}
@@ -2350,7 +2350,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		if (cl->typ == 'c') //client connection
 		{
 			//switching to an oder version and then disconnect...
-			strcpy(cfg->cc_version, version[0]);
+			strcpy(cfg.cc_version, version[0]);
 			ret = -1;
 		}
 		else //reader connection
@@ -2770,7 +2770,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 	struct cc_card *card2;
 
 	//Minimize all, transmit just CAID, merge providers:
-	if (cfg->cc_minimize_cards == MINIMIZE_CAID) {
+	if (cfg.cc_minimize_cards == MINIMIZE_CAID) {
 		while ((card2 = ll_iter_next(it)))
 			if (card2->caid == card->caid && 
 					!memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial))) {
@@ -2804,7 +2804,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 	} 
 	
 	//Removed duplicate cards, keeping card with lower hop:
-	else if (cfg->cc_minimize_cards == MINIMIZE_HOPS) { 
+	else if (cfg.cc_minimize_cards == MINIMIZE_HOPS) { 
 		while ((card2 = ll_iter_next(it))) {
 			if (card2->caid == card->caid && 
 					!memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial)) && 
@@ -2922,7 +2922,7 @@ void add_good_bad_sids(struct s_sidtab *ptr, struct s_client *cl, struct cc_card
 				if (cl->sidtabno) {
 						struct s_sidtab *ptr_no;
 						int n;
-						for (n=0,ptr_no=cfg->sidtab; ptr_no; ptr_no=ptr_no->next,n++) {
+						for (n=0,ptr_no=cfg.sidtab; ptr_no; ptr_no=ptr_no->next,n++) {
 								if (cl->sidtabno&((SIDTABBITS)1<<n)) {
 										int m;
 										int ok_caid = FALSE;
@@ -2951,7 +2951,7 @@ void add_good_bad_sids_for_card(struct s_client *cl, struct cc_card *card) {
 		if (cc->cccam220) {
 				struct s_sidtab *ptr;
 				int j;
-				for (j=0,ptr=cfg->sidtab; ptr; ptr=ptr->next,j++) {
+				for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
 						if (cl->sidtabok&((SIDTABBITS)1<<j)) {
 								int m;
 								int ok_caid = FALSE;
@@ -2974,7 +2974,7 @@ void add_good_bad_sids_for_card(struct s_client *cl, struct cc_card *card) {
  * Reports all caid/providers to the connected clients
  * returns 1=ok, 0=error
  *
- * cfg->cc_reshare_services=0 CCCAM reader reshares only received cards
+ * cfg.cc_reshare_services=0 CCCAM reader reshares only received cards
  *                         =1 CCCAM reader reshares received cards + defined services
  *                         =2 CCCAM reader reshares only defined reader-services as virtual cards
  *                         =3 CCCAM reader reshares only defined user-services as virtual cards
@@ -3002,9 +3002,9 @@ int cc_srv_report_cards(struct s_client *cl) {
 	int isau = (cl->aureader)?1:0;
 
 	//User-Services:
-	if (cfg->cc_reshare_services==3 && cfg->sidtab && cl->sidtabok) {
+	if (cfg.cc_reshare_services==3 && cfg.sidtab && cl->sidtabok) {
 		struct s_sidtab *ptr;
-		for (j=0,ptr=cfg->sidtab; ptr; ptr=ptr->next,j++) {
+		for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
 			if (cl->sidtabok&((SIDTABBITS)1<<j)) {
 				int k;
 				for (k=0;k<ptr->num_caid;k++) {
@@ -3058,9 +3058,9 @@ int cc_srv_report_cards(struct s_client *cl) {
 			flt = 0;
 		
 			//Reader-Services:
-			if ((cfg->cc_reshare_services==1||cfg->cc_reshare_services==2) && cfg->sidtab && rdr->sidtabok) {
+			if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2) && cfg.sidtab && rdr->sidtabok) {
 				struct s_sidtab *ptr;
-				for (j=0,ptr=cfg->sidtab; ptr; ptr=ptr->next,j++) {
+				for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
 					if (rdr->sidtabok&((SIDTABBITS)1<<j)) {
 						int k;
 						for (k=0;k<ptr->num_caid;k++) {
@@ -3191,7 +3191,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 					cc_free_card(card);
 			}
 
-			if (rdr->typ == R_CCCAM && cfg->cc_reshare_services<2 && rdr->card_status != CARD_FAILURE) {
+			if (rdr->typ == R_CCCAM && cfg.cc_reshare_services<2 && rdr->card_status != CARD_FAILURE) {
 
 				cs_debug_mask(D_CLIENT, "%s asking reader %s for cards...",
 					getprefix(), rdr->label);
@@ -3208,7 +3208,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 							if (card->hop <= maxhops && chk_ctab(card->caid, &cl->ctab)
 									&& chk_ctab(card->caid, &rdr->ctab)) {
 							
-								if ((cfg->cc_ignore_reshare || card->maxdown > 0)) {
+								if ((cfg.cc_ignore_reshare || card->maxdown > 0)) {
 									int ignore = 0;
 
 									LL_ITER *it2 = ll_iter_create(card->providers);
@@ -3226,7 +3226,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 								
 									if (!ignore) { //Filtered by service
 										int new_reshare =
-												cfg->cc_ignore_reshare ? reshare
+												cfg.cc_ignore_reshare ? reshare
 													: (card->maxdown - 1);
 										if (new_reshare > reshare)
 											new_reshare = reshare;
@@ -3317,7 +3317,7 @@ int cc_cards_modified() {
 
 int check_cccam_compat(struct cc_data *cc) {
 	int res = 0;
-	if (strcmp(cfg->cc_version, "2.2.0") == 0 || strcmp(cfg->cc_version, "2.2.1") == 0) {
+	if (strcmp(cfg.cc_version, "2.2.0") == 0 || strcmp(cfg.cc_version, "2.2.1") == 0) {
 	
 		if (strcmp(cc->remote_version, "2.2.0") == 0 || strcmp(cc->remote_version, "2.2.1") == 0) {
 			res = 1;
@@ -3407,7 +3407,7 @@ int cc_srv_connect(struct s_client *cl) {
 	if (cc_recv_to(cl, buf, 6) != 6)
 		return -2;
 	
-	account = cfg->account;
+	account = cfg.account;
 	struct cc_crypt_block *save_block = cs_malloc(&save_block, sizeof(struct cc_crypt_block), QUITERROR);
 	memcpy(save_block, cc->block, sizeof(struct cc_crypt_block));
 	int found = 0;
@@ -3516,8 +3516,8 @@ int cc_srv_connect(struct s_client *cl) {
 		i = process_input(mbuf, sizeof(mbuf), 10);
 		if (i == -9) {
 			cmi += 10;
-			if (cmi >= cfg->cmaxidle) {
-				if (cfg->cc_keep_connected || cl->account->ncd_keepalive) {
+			if (cmi >= cfg.cmaxidle) {
+				if (cfg.cc_keep_connected || cl->account->ncd_keepalive) {
 					if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
 						if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
 							break;
@@ -3549,9 +3549,9 @@ int cc_srv_connect(struct s_client *cl) {
 			struct timeb cur_time;
 			cs_ftime(&cur_time);
 			timeout = cc->ecm_time;
-			timeout.time += cfg->cc_update_interval;
+			timeout.time += cfg.cc_update_interval;
 
-			int needs_card_updates = (cfg->cc_update_interval >= 0)
+			int needs_card_updates = (cfg.cc_update_interval >= 0)
 					&& comp_timeb(&cur_time, &timeout) > 0;
 
 			if (needs_card_updates) {
@@ -3815,8 +3815,8 @@ int cc_cli_init_int(struct s_client *cl) {
 	//		memset((char *) &loc_sa, 0, sizeof(loc_sa));
 	//		loc_sa.sin_family = AF_INET;
 	//#ifdef LALL
-	//		if (cfg->serverip[0])
-	//		loc_sa.sin_addr.s_addr = inet_addr(cfg->serverip);
+	//		if (cfg.serverip[0])
+	//		loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
 	//		else
 	//#endif
 	//		loc_sa.sin_addr.s_addr = INADDR_ANY;
@@ -3831,9 +3831,9 @@ int cc_cli_init_int(struct s_client *cl) {
 	//cs_log("%s 1 socket created: cs_idx=%d, fd=%d errno=%d", getprefix(), cs_idx, cl->udp_fd, errno);
 
 #ifdef SO_PRIORITY
-	if (cfg->netprio)
+	if (cfg.netprio)
 		setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY,
-			(void *)&cfg->netprio, sizeof(ulong));
+			(void *)&cfg.netprio, sizeof(ulong));
 #endif
 	rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
 	if (rdr->cc_maxhop <= 0)
@@ -3867,7 +3867,7 @@ int cc_cli_init(struct s_client *cl) {
 		
 		cc_cli_connect(cl); //connect to remote server
 		
-		while (!reader->tcp_connected && reader->cc_keepalive && cfg->reader_restart_seconds > 0) {
+		while (!reader->tcp_connected && reader->cc_keepalive && cfg.reader_restart_seconds > 0) {
 
 			if ((cc && cc->mode == CCCAM_MODE_SHUTDOWN))
 				return -1;
@@ -3878,8 +3878,8 @@ int cc_cli_init(struct s_client *cl) {
 				if (res)
 					return res;
 			}
-			cs_debug_mask(D_READER, "%s restarting reader in %d seconds", reader->label, cfg->reader_restart_seconds);
-			cs_sleepms(cfg->reader_restart_seconds*1000);
+			cs_debug_mask(D_READER, "%s restarting reader in %d seconds", reader->label, cfg.reader_restart_seconds);
+			cs_sleepms(cfg.reader_restart_seconds*1000);
 			cs_debug_mask(D_READER, "%s restarting reader...", reader->label);
 			cc_cli_connect(cl);
 		}
@@ -3951,13 +3951,13 @@ void module_cccam(struct s_module *ph) {
 	ph->c_recv_chk = cc_recv_chk;
 	ph->c_send_ecm = cc_send_ecm;
 	ph->c_send_emm = cc_send_emm;
-	ph->s_ip = cfg->cc_srvip;
+	ph->s_ip = cfg.cc_srvip;
 	ph->s_handler = cc_srv_init;
 	ph->send_dcw = cc_send_dcw;
 	ph->c_available = cc_available;
 	ph->c_card_info = cc_card_info;
 	static PTAB ptab; //since there is always only 1 cccam server running, this is threadsafe
-	ptab.ports[0].s_port = cfg->cc_port;
+	ptab.ports[0].s_port = cfg.cc_port;
 	ph->ptab = &ptab;
 	ph->ptab->nports = 1;
 	ph->num = R_CCCAM;

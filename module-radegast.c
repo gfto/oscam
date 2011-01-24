@@ -47,7 +47,7 @@ static void radegast_auth_client(in_addr_t ip)
   struct s_auth *account;
   struct s_ip *p_ip;
 
-  for (ok=0, p_ip=cfg->rad_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
+  for (ok=0, p_ip=cfg.rad_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
     ok=((ip>=p_ip->ip[0]) && (ip<=p_ip->ip[1]));
 
   if (!ok)
@@ -56,9 +56,9 @@ static void radegast_auth_client(in_addr_t ip)
     cs_exit(0);
   }
 
-  for (ok=0, account=cfg->account; (cfg->rad_usr[0]) && (account) && (!ok); account=account->next)
+  for (ok=0, account=cfg.account; (cfg.rad_usr[0]) && (account) && (!ok); account=account->next)
   {
-    ok=(!strcmp(cfg->rad_usr, account->usr));
+    ok=(!strcmp(cfg.rad_usr, account->usr));
     if (ok && cs_auth_client(cur_client(), account, NULL))
       cs_exit(0);
   }
@@ -70,7 +70,7 @@ static void radegast_auth_client(in_addr_t ip)
 static int get_request(uchar *buf)
 {
   int n, rc=0;
-  if ((n=process_input(buf, 2, cfg->cmaxidle))==2)
+  if ((n=process_input(buf, 2, cfg.cmaxidle))==2)
   {
     if ((n=process_input(buf+2, buf[1], 0))>=0)
       n+=2;
@@ -240,8 +240,8 @@ int radegast_cli_init(struct s_client *cl)
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
 #ifdef LALL
-  if (cfg->serverip[0])
-    loc_sa.sin_addr.s_addr = inet_addr(cfg->serverip);
+  if (cfg.serverip[0])
+    loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
   else
 #endif
     loc_sa.sin_addr.s_addr = INADDR_ANY;
@@ -254,9 +254,9 @@ int radegast_cli_init(struct s_client *cl)
   }
 
 #ifdef SO_PRIORITY
-  if (cfg->netprio)
+  if (cfg.netprio)
     setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_PRIORITY,
-               (void *)&cfg->netprio, sizeof(ulong));
+               (void *)&cfg.netprio, sizeof(ulong));
 #endif
   if (!cur_client()->reader->tcp_ito) {
     ulong keep_alive = cur_client()->reader->tcp_ito?1:0;
@@ -288,7 +288,7 @@ int radegast_cli_init(struct s_client *cl)
 void module_radegast(struct s_module *ph)
 {
   static PTAB ptab; //since there is always only 1 radegast server running, this is threadsafe
-  ptab.ports[0].s_port = cfg->rad_port;
+  ptab.ports[0].s_port = cfg.rad_port;
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
@@ -296,7 +296,7 @@ void module_radegast(struct s_module *ph)
   ph->type=MOD_CONN_TCP;
   ph->multi=0;
   ph->watchdog=1;
-  ph->s_ip=cfg->rad_srvip;
+  ph->s_ip=cfg.rad_srvip;
   ph->s_handler=radegast_server;
   ph->recv=radegast_recv;
   ph->send_dcw=radegast_send_dcw;

@@ -100,7 +100,7 @@ int chk_srvid(struct s_client *cl, ECM_REQUEST *er)
     if (!cl->sidtabno) return(1);
     rc=1;
   }
-  for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
+  for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid | sidtab->num_srvid)
     {
       if ((cl->sidtabno&((SIDTABBITS)1<<nr)) &&
@@ -120,7 +120,7 @@ int has_srvid(struct s_client *cl, ECM_REQUEST *er) {
   int nr;
   SIDTAB *sidtab;
       
-  for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
+  for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_srvid)
     {
       if ((cl->sidtabok&((SIDTABBITS)1<<nr)) &&
@@ -159,7 +159,7 @@ int chk_srvid_by_caid_prov(struct s_client *cl, ushort caid, ulong provid) {
     if (!cl->sidtabno) return(1);
     rc=1;
   }
-  for (nr=0, sidtab=cfg->sidtab; sidtab; sidtab=sidtab->next, nr++)
+  for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
     if (sidtab->num_caid | sidtab->num_provid)
     {
       if ((cl->sidtabno&((SIDTABBITS)1<<nr)) && !sidtab->num_srvid &&

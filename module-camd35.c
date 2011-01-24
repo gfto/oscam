@@ -54,7 +54,7 @@ static int camd35_auth_client(uchar *ucrc)
     return(memcmp(cl->ucrc, ucrc, 4) ? 1 : 0);
   cl->crypted=1;
   crc=(((ucrc[0]<<24) | (ucrc[1]<<16) | (ucrc[2]<<8) | ucrc[3]) & 0xffffffffL);
-  for (account=cfg->account; (account) && (!cl->upwd[0]); account=account->next)
+  for (account=cfg.account; (account) && (!cl->upwd[0]); account=account->next)
     if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cl->dump), 16))
     {
       memcpy(cl->ucrc, ucrc, 4);
@@ -320,7 +320,7 @@ static void * camd35_server(void *cli)
 
   client->is_udp = (ph[client->ctyp].type == MOD_CONN_UDP);
 
-  while ((n=process_input(mbuf, sizeof(mbuf), cfg->cmaxidle))>0)
+  while ((n=process_input(mbuf, sizeof(mbuf), cfg.cmaxidle))>0)
   {
     switch(mbuf[0])
     {
@@ -379,8 +379,8 @@ int camd35_client_init(struct s_client *client)
   memset((char *)&loc_sa,0,sizeof(loc_sa));
   loc_sa.sin_family = AF_INET;
 #ifdef LALL
-  if (cfg->serverip[0])
-    loc_sa.sin_addr.s_addr = inet_addr(cfg->serverip);
+  if (cfg.serverip[0])
+    loc_sa.sin_addr.s_addr = inet_addr(cfg.serverip);
   else
 #endif
     loc_sa.sin_addr.s_addr = INADDR_ANY;
@@ -393,8 +393,8 @@ int camd35_client_init(struct s_client *client)
   }
 
 #ifdef SO_PRIORITY
-  if (cfg->netprio)
-    setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg->netprio, sizeof(ulong));
+  if (cfg.netprio)
+    setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(ulong));
 #endif
 
   if (client->reader->l_port>0)
@@ -599,12 +599,12 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 				rdr->auprovid);
 	}
 
-	if (buf[0] == 0x08 && !cfg->c35_suppresscmd08) {
+	if (buf[0] == 0x08 && !cfg.c35_suppresscmd08) {
 		if(buf[21] == 0xFF) {
 			client->stopped = 2; // server says sleep
 			rdr->card_status = NO_CARD;
 		} else {
-		        if (!cfg->lb_mode) {
+		        if (!cfg.lb_mode) {
 			        client->stopped = 1; // server says invalid
                                 rdr->card_status = CARD_FAILURE;
                         }
@@ -672,7 +672,7 @@ static int camd35_recv_log(ushort *caid, ulong *provid, ushort *srvid)
 void module_camd35(struct s_module *ph)
 {
   static PTAB ptab; //since there is always only 1 camd35 server running, this is threadsafe
-  ptab.ports[0].s_port = cfg->c35_port;
+  ptab.ports[0].s_port = cfg.c35_port;
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
@@ -680,7 +680,7 @@ void module_camd35(struct s_module *ph)
   ph->type=MOD_CONN_UDP;
   ph->multi=1;
   ph->watchdog=1;
-  ph->s_ip=cfg->c35_srvip;
+  ph->s_ip=cfg.c35_srvip;
   ph->s_handler=camd35_server;
   ph->recv=camd35_recv;
   ph->send_dcw=camd35_send_dcw;
@@ -700,10 +700,10 @@ void module_camd35_tcp(struct s_module *ph)
   ph->type=MOD_CONN_TCP;
   ph->multi=1;
   ph->watchdog=1;
-  ph->ptab=&cfg->c35_tcp_ptab;
+  ph->ptab=&cfg.c35_tcp_ptab;
   if (ph->ptab->nports==0)
     ph->ptab->nports=1; // show disabled in log
-  ph->s_ip=cfg->c35_tcp_srvip;
+  ph->s_ip=cfg.c35_tcp_srvip;
   ph->s_handler=camd35_server;
   ph->recv=camd35_recv;
   ph->send_dcw=camd35_send_dcw;

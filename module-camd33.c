@@ -53,16 +53,16 @@ static void camd33_auth_client()
   struct s_auth *account;
   uchar mbuf[1024];
 
-  cur_client()->crypted=cfg->c33_crypted;
+  cur_client()->crypted=cfg.c33_crypted;
   if (cur_client()->crypted)
   {
     struct s_ip *p_ip;
-    for (p_ip=cfg->c33_plain; (p_ip) && (cur_client()->crypted); p_ip=p_ip->next)
+    for (p_ip=cfg.c33_plain; (p_ip) && (cur_client()->crypted); p_ip=p_ip->next)
       if ((cur_client()->ip>=p_ip->ip[0]) && (cur_client()->ip<=p_ip->ip[1]))
         cur_client()->crypted=0;
   }
   if (cur_client()->crypted)
-    aes_set_key((char *) cfg->c33_key);
+    aes_set_key((char *) cfg.c33_key);
 
   mbuf[0]=0;
   camd33_send(mbuf, 1);	// send login-request
@@ -78,7 +78,7 @@ static void camd33_auth_client()
     else
       memcpy(cur_client()->camdbug+1, mbuf, cur_client()->camdbug[0]=i);
   }
-  for (rc=-1, account=cfg->account; (usr) && (account) && (rc<0); account=account->next)
+  for (rc=-1, account=cfg.account; (usr) && (account) && (rc<0); account=account->next)
     if ((!strcmp((char *)usr, account->usr)) && (!strcmp((char *)pwd, account->pwd)))
       rc=cs_auth_client(cur_client(), account, NULL);
   if (!rc)
@@ -103,12 +103,12 @@ static int get_request(uchar *buf, int n)
   }
   for (rc=w=0; !rc;)
   {
-    switch (rc=process_input(buf, 16, (w) ? cfg->ctimeout : cfg->cmaxidle))
+    switch (rc=process_input(buf, 16, (w) ? cfg.ctimeout : cfg.cmaxidle))
     {
       case -9:
         rc=0;
       case  0:
-        if ((w) || cfg->c33_passive)
+        if ((w) || cfg.c33_passive)
           rc=-1;
         else
         {
@@ -148,7 +148,7 @@ static void camd33_send_dcw(struct s_client *client, ECM_REQUEST *er)
   memcpy(mbuf+1, client->req+(er->cpti*REQ_SIZE), 4);	// get pin
   memcpy(mbuf+5, er->cw, 16);
   camd33_send(mbuf, 21);
-  if (!cfg->c33_passive)
+  if (!cfg.c33_passive)
     camd33_request_emm();
 }
 
@@ -215,16 +215,16 @@ static void * camd33_server(void* cli)
 void module_camd33(struct s_module *ph)
 {
   static PTAB ptab; //since there is always only 1 camd33 server running, this is threadsafe
-  ptab.ports[0].s_port = cfg->c33_port;
+  ptab.ports[0].s_port = cfg.c33_port;
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
   strcpy(ph->desc, "camd33");
   ph->type=MOD_CONN_TCP;
-  ph->logtxt=cfg->c33_crypted ? ", crypted" : ", UNCRYPTED!";
+  ph->logtxt=cfg.c33_crypted ? ", crypted" : ", UNCRYPTED!";
   ph->multi=1;
   ph->watchdog=1;
-  ph->s_ip=cfg->c33_srvip;
+  ph->s_ip=cfg.c33_srvip;
   ph->s_handler=camd33_server;
   ph->recv=camd33_recv;
   ph->send_dcw=camd33_send_dcw;
