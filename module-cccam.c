@@ -773,54 +773,54 @@ int send_cmd05_answer(struct s_client *cl) {
 	return 1;
 }
 
-int get_UA_ofs(uint16 caid) {
-	int ofs = 0;
-	switch (caid >> 8) {
-	case 0x05: //VIACCESS:
-		ofs = 1;
-		break;
-	case 0x4B: //TONGFANG:
-	case 0x09: //VIDEOGUARD:
-	case 0x0B: //CONAX:
-	case 0x18: //NAGRA:
-		ofs = 2;
-		break;
-	}
-	return ofs;
-}
+//int get_UA_ofs(uint16 caid) {
+//	int ofs = 0;
+//	switch (caid >> 8) {
+//	case 0x05: //VIACCESS:
+//		ofs = 1;
+//		break;
+//	case 0x4B: //TONGFANG:
+//	case 0x09: //VIDEOGUARD:
+//	case 0x0B: //CONAX:
+//	case 0x18: //NAGRA:
+//		ofs = 2;
+//		break;
+//	}
+//	return ofs;
+//}
 
-int UA_len(uint8 *ua) {
-	int i, len=0;
-	for (i=0;i<8;i++)
-		if (ua[i]) len++;
-	return len;
-}
+//int UA_len(uint8 *ua) {
+//	int i, len=0;
+//	for (i=0;i<8;i++)
+//		if (ua[i]) len++;
+//	return len;
+//}
 
-void UA_left(uint8 *in, uint8 *out, int len) {
-	int ofs = 0;
-	int maxlen = 8;
-	int orglen = len;
-	while (len) {
-		memset(out, 0, orglen);
-		memcpy(out, in+ofs, len);
-		if (out[0]) break;
-		ofs++;
-		maxlen--;
-		if (len>maxlen)
-			len=maxlen;
-	}
-}
+//void UA_left(uint8 *in, uint8 *out, int len) {
+//	int ofs = 0;
+//	int maxlen = 8;
+//	int orglen = len;
+//	while (len) {
+//		memset(out, 0, orglen);
+//		memcpy(out, in+ofs, len);
+//		if (out[0]) break;
+//		ofs++;
+//		maxlen--;
+//		if (len>maxlen)
+//			len=maxlen;
+//	}
+//}
 
-void UA_right(uint8 *in, uint8 *out, int len) {
-	int ofs = 0;
-	while (len) {
-		memcpy(out+ofs, in, len);
-		len--;
-		if (out[len]) break;
-		ofs++;
-		out[0]=0;
-	}
-}
+//void UA_right(uint8 *in, uint8 *out, int len) {
+//	int ofs = 0;
+//	while (len) {
+//		memcpy(out+ofs, in, len);
+//		len--;
+//		if (out[len]) break;
+//		ofs++;
+//		out[0]=0;
+//	}
+//}
 
 /**
  * cccam uses UA right justified
@@ -829,19 +829,20 @@ void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
 	//uint8 tmp[8];
 	
 	memset(out, 0, 8);
-	switch (caid>>8) {
-		case 0x17: //IRDETO/Betacrypt:
-			//oscam: AA BB CC DD 00 00 00 00
-			//cccam: 00 00 00 00 DD AA BB CC
-			out[4] = in[3]; //Hexbase
-			out[5] = in[0];
-			out[6] = in[1];
-			out[7] = in[2];
-			return;	
-			
-		//Place here your own adjustments!
-	}
-	UA_right(in, out, 8);
+	//switch (caid>>8) {
+	//	case 0x17: //IRDETO/Betacrypt:
+	//		//oscam: AA BB CC DD 00 00 00 00
+	//		//cccam: 00 00 00 00 DD AA BB CC
+	//		out[4] = in[3]; //Hexbase
+	//		out[5] = in[0];
+	//		out[6] = in[1];
+	//		out[7] = in[2];
+	//		return;	
+	//		
+	//	//Place here your own adjustments!
+	//}
+	//UA_right(in, out, 8);
+	hexserial_to_newcamd(in, out+2, caid);
 }
 
 /**
@@ -849,21 +850,22 @@ void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
  **/
 void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
 	memset(out, 0, 8);
-	switch(caid>>8) {
-		case 0x17: //IRDETO/Betacrypt:
-			//cccam: 00 00 00 00 DD AA BB CC
-			//oscam: AA BB CC DD 00 00 00 00
-			out[0] = in[5];
-			out[1] = in[6];
-			out[2] = in[7];
-			out[3] = in[4]; //Hexbase
-			return;	
+	//switch(caid>>8) {
+	//	case 0x17: //IRDETO/Betacrypt:
+	//		//cccam: 00 00 00 00 DD AA BB CC
+	//		//oscam: AA BB CC DD 00 00 00 00
+	//		out[0] = in[5];
+	//		out[1] = in[6];
+	//		out[2] = in[7];
+	//		out[3] = in[4]; //Hexbase
+	//		return;	
 			
-		//Place here your own adjustments!
-	}
-	int ofs = get_UA_ofs(caid);
-	int len = 8-ofs;
-	UA_left(in, out+ofs, len);
+	//	//Place here your own adjustments!
+	//}
+	//int ofs = get_UA_ofs(caid);
+	//int len = 8-ofs;
+	//UA_left(in, out+ofs, len);
+	newcamd_to_hexserial(in+2, out, caid);
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
@@ -3515,7 +3517,7 @@ int cc_srv_connect(struct s_client *cl) {
 		if (i == -9) {
 			cmi += 10;
 			if (cmi >= cfg->cmaxidle) {
-				if (cfg->cc_keep_connected) {
+				if (cfg->cc_keep_connected || cl->account->ncd_keepalive) {
 					if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
 						if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
 							break;
