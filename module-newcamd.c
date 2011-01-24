@@ -335,22 +335,10 @@ static int connect_newcamd_server()
   }
 
   // 5. Parse CAID and PROVID(s)
-  cl->reader->caid = (ushort)((buf[4+2]<<8) | buf[5+2]);
+  cl->reader->caid = (ushort)((buf[6]<<8) | buf[7]);
 
   /* handle special serial format in newcamd. See newcamd_auth_client */
-  if (((cl->reader->caid >> 8) == 0x17) || ((cl->reader->caid >> 8) == 0x06)) {
-    memcpy(&cl->reader->hexserial, buf+10+2, 4);
-    int hexbase = cl->reader->hexserial[0];
-    cl->reader->hexserial[0] = cl->reader->hexserial[1];
-    cl->reader->hexserial[1] = cl->reader->hexserial[2];
-    cl->reader->hexserial[2] = cl->reader->hexserial[3];
-    cl->reader->hexserial[3] = hexbase;
-  }
-  else if (((cl->reader->caid >> 8) == 0x05) || ((cl->reader->caid >> 8) == 0x0D))
-    memcpy(&cl->reader->hexserial, buf+9+2, 5);
-  else
-    memcpy(&cl->reader->hexserial, buf+8+2, 6);
-
+  newcamd_to_hexserial(buf+10, cl->reader->hexserial, cl->reader->caid);
   cs_log("Newcamd Server: %s:%d - UserID: %i", cl->reader->device, cl->reader->r_port, buf[3+2]);
   cs_log("CAID: %04X - UA: %02X%02X%02X%02X%02X%02X%02X%02X - Provider # %i", cl->reader->caid, cl->reader->hexserial[0], cl->reader->hexserial[1], cl->reader->hexserial[2], cl->reader->hexserial[3], cl->reader->hexserial[4], cl->reader->hexserial[5], cl->reader->hexserial[6], cl->reader->hexserial[7], buf[14+2]);
   cl->reader->nprov = buf[14+2];
@@ -756,48 +744,11 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         mbuf[7] = 0x00;
 
         if (aureader)
-        {
-            if (((pufilt->caid >> 8) == 0x17) || ((pufilt->caid >> 8) == 0x06))    // Betacrypt or Irdeto
-            {
-              // only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
-              // first 2 Byte always 00
-              mbuf[8]=0x00; //serial only 4 bytes
-              mbuf[9]=0x00; //serial only 4 bytes
-              // 1 Byte Hex Base (see reader-irdeto.c how this is stored in "aureader->hexserial")
-              mbuf[10]=aureader->hexserial[3];
-              // 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "aureader->hexserial")
-              mbuf[11]=aureader->hexserial[0];
-              mbuf[12]=aureader->hexserial[1];
-              mbuf[13]=aureader->hexserial[2];
-            }
-            else if (((pufilt->caid >> 8) == 0x05) || ((pufilt->caid >> 8) == 0x0D))
-            {
-              mbuf[8] = 0x00;
-              mbuf[9] = aureader->hexserial[0];
-              mbuf[10] = aureader->hexserial[1];
-              mbuf[11] = aureader->hexserial[2];
-              mbuf[12] = aureader->hexserial[3];
-              mbuf[13] = aureader->hexserial[4];
-            }
-            else
-            {
-              mbuf[8] = aureader->hexserial[0];
-              mbuf[9] = aureader->hexserial[1];
-              mbuf[10] = aureader->hexserial[2];
-              mbuf[11] = aureader->hexserial[3];
-              mbuf[12] = aureader->hexserial[4];
-              mbuf[13] = aureader->hexserial[5];
-            }
-        } 
+          hexserial_to_newcamd(aureader->hexserial, mbuf+8, pufilt->caid);
         else 
         {
           cl->aureader = NULL;
-          mbuf[8] = 0x00;
-          mbuf[9] = 0x00;
-          mbuf[10] = 0x00;
-          mbuf[11] = 0x00;
-          mbuf[12] = 0x00;
-          mbuf[13] = 0x00;
+          memset(&mbuf[8], 0, 6); //mbuf[8] - mbuf[13]
         }
         mbuf[14] = pufilt->nprids;
         for( j=0; j<pufilt->nprids; j++) 

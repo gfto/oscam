@@ -1296,6 +1296,8 @@ extern char *monitor_get_proto(struct s_client *);
 extern char *reader_get_type_desc(struct s_reader * rdr, int extended);
 extern char *get_ncd_client_name(char *client_id);
 extern char *strnew(char *str);
+extern void hexserial_to_newcamd(uchar *source, uchar *dest, ushort caid);
+extern void newcamd_to_hexserial(uchar *source, uchar *dest, ushort caid);
 
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);

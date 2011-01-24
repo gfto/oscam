@@ -948,3 +948,44 @@ char *strnew(char *str)
   return newstr;
 }
 
+void hexserial_to_newcamd(uchar *source, uchar *dest, ushort caid)
+{
+  caid = caid >> 8;
+  if ((caid == 0x17) || (caid == 0x06))    // Betacrypt or Irdeto
+  {
+    // only 4 Bytes Hexserial for newcamd clients (Hex Base + Hex Serial)
+    // first 2 Byte always 00
+    dest[0]=0x00; //serial only 4 bytes
+    dest[1]=0x00; //serial only 4 bytes
+    // 1 Byte Hex Base (see reader-irdeto.c how this is stored in "source")
+    dest[2]=source[3];
+    // 3 Bytes Hex Serial (see reader-irdeto.c how this is stored in "source")
+    dest[3]=source[0];
+    dest[4]=source[1];
+    dest[5]=source[2];
+  }
+  else if ((caid == 0x05) || (caid == 0x0D))
+  {
+    dest[0] = 0x00;
+    memcpy(dest+1, source, 5);
+  }
+  else
+    memcpy(dest, source, 6);
+}
+
+void newcamd_to_hexserial(uchar *source, uchar *dest, ushort caid)
+{
+  caid = caid >> 8;
+  if ((caid == 0x17) || (caid == 0x06)) {
+    memcpy(dest, source+3, 3);
+    dest[3] = source[2];
+		dest[4] = 0;
+		dest[5] = 0;
+  }
+  else if ((caid == 0x05) || (caid == 0x0D)) {
+    memcpy(dest, source+1, 5);
+		dest[5] = 0;
+	}
+  else
+    memcpy(dest, source, 6);
+}
