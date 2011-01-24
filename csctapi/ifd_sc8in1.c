@@ -185,7 +185,6 @@ int Sc8in1_Init(struct s_reader * reader)
 		buff[1] = 0;
 		buff[2] = 0;
 		int ret = sc8in1_command(reader, buff, 1, 2);
-		cs_log("DINGO: Timeout is %X%X", buff[0], buff[1]);
 		if ((strstr(reader->device, "USB")) && (ret == ERROR || buff[0] != 0 || buff[1] != 0)) {//assuming we are connected thru USB and timeout is undetected or not zero
 			cs_log("DINGO: Detected Sc8in1 device connected with USB, setting timeout to 0 and writing to EEPROM");
 			buff[0] = 0x70; //enable write EEPROM
@@ -256,7 +255,6 @@ int Sc8in1_Init(struct s_reader * reader)
 		sc8in1_command(reader, buff, 1, 2);
 		static char * clock[] = { "3,57", "3,68", "6,00", "8,00" };
 		uint16 result = buff[0]<<8 | buff[1];
-		cs_log("Buff = %X %X, result = %02X",buff[0], buff[1], result);
 		for(i=0; i<8; i++) {
 		cs_log("Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
 		}
