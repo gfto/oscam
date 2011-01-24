@@ -2945,7 +2945,7 @@ void cs_waitforcardinit()
 			card_init_done = 1;
 			struct s_reader *rdr;
 			for (rdr=first_active_reader; rdr ; rdr=rdr->next)
-				if (((rdr->typ & R_IS_CASCADING) == 0) && rdr->enable && (rdr->card_status == CARD_NEED_INIT || rdr->card_status == UNKNOWN)) {
+				if (((rdr->typ & R_IS_CASCADING) == 0) && (rdr->card_status == CARD_NEED_INIT || rdr->card_status == UNKNOWN)) {
 					card_init_done = 0;
 					break;
 				}

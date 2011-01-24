@@ -405,12 +405,6 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   if (!((rdr->fd) && (rdr->grp&cur_cl->grp)))
     return(0);
 
-  //Checking enabled and not deleted:
-  if (!rdr->enable) {
-    //cs_debug_mask(D_TRACE, "reader disabled/deleted %s", rdr->label);
-    return(0);
-  }
-    
   //Schlocke reader-defined function, reader-self-check: 
   if (rdr->ph.c_available && !rdr->ph.c_available(rdr, AVAIL_CHECK_CONNECTED)) {
     //cs_debug_mask(D_TRACE, "reader unavailable %s", rdr->label);
