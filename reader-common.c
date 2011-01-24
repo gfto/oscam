@@ -329,8 +329,6 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
   int rc=-1;
   if( (rc=reader_checkhealth(reader)) )
   {
-    if((reader->caid[0] >> 8) == ((er->caid >> 8) & 0xFF))
-    {
       cur_client()->last_srvid=er->srvid;
       cur_client()->last_caid=er->caid;
       cur_client()->last=time((time_t)0);
@@ -339,10 +337,6 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		rc=cardsystem[reader->card_system-1].do_ecm(reader, er);
 	else
 		rc=0;
-
-    }
-    else
-      rc=0;
   }
   return(rc);
 }

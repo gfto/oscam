@@ -422,7 +422,9 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     //cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
     return 0;
   }
-    
+  if ((!(rdr->typ & R_IS_NETWORK)) && ((rdr->caid[0] >> 8) != ((er->caid >> 8) & 0xFF) || (rdr->caid[0] >> 8) != ((er->ocaid >> 8) & 0xFF)))
+    return 0;
+
   //Checking services:
   if (!chk_srvid(rdr->client, er)) {
     //cs_debug_mask(D_TRACE, "service %04X not matching  reader %s", er->srvid, rdr->label);
