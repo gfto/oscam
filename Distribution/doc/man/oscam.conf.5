@@ -225,6 +225,11 @@ retry next readers only if response time is higher then lb_retrylimit, default:8
 .RS 3n
 filenanme for saving loadbalancing statistics, default:/tmp/.oscam/stat
 .RE
+.PP
+\fBlb_stat_cleanup\fP = \fBhour\fP
+.RS 3n
+hours after the loadbalancing statistics will be deleted, default:336
+.RE
 .SS "The [monitor] section"
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
