@@ -164,23 +164,40 @@ int Sc8in1_Init(struct s_reader * reader)
 	//additional init, Phoenix_Init is also called for Sc8in1 !
 	struct termios termio;
 	int i, speed;
-	unsigned int is_mcr, sc8in1_clock = 0;
+	unsigned int is_mcr = 0, sc8in1_clock = 0;
+	unsigned char buff[3];
 	
 	tcgetattr(reader->handle,&termio);
 	for (i=0; i<8; i++) {
 		//init all stored termios to default comm settings after device init, before ATR
-		memcpy(&stored_termio[i],&termio,sizeof(termio));
+		memcpy(&stored_termio[i],&termio,sizeof(termio)); //FIXME overclocking factor not taken into account?
 	}
     
   // check for a MCR device and how many slots it has.
-	unsigned char buff[] = { 0x74 };
+	buff[0] = 0x74;
 	sc8in1_command(reader, buff, 1, 1);
 	if (buff[0] == 4 || buff[0] == 8) {
 		is_mcr = (unsigned short) buff[0];
 		cs_log("SC8in1: device MCR%i detected", is_mcr);
+
+		//now work-around the problem that timeout of MCR has to be 0 in case of USB
+		buff[0] = 0x72; //get timeout
+		buff[1] = 0;
+		buff[2] = 0;
+		int ret = sc8in1_command(reader, buff, 1, 2);
+		cs_log("DINGO: Timeout is %X%X", buff[0], buff[1]);
+		if ((strstr(reader->device, "USB")) && (ret == ERROR || buff[0] != 0 || buff[1] != 0)) {//assuming we are connected thru USB and timeout is undetected or not zero
+			cs_log("DINGO: Detected Sc8in1 device connected with USB, setting timeout to 0 and writing to EEPROM");
+			buff[0] = 0x70; //enable write EEPROM
+			buff[1] = 0xab;
+			buff[2] = 0xba;
+			sc8in1_command(reader, buff, 3, 0);
+			buff[0] = 0x6F; //set timeout
+			buff[1] = 0;
+			buff[2] = 0;
+			sc8in1_command(reader, buff, 3, 0);
+		}
 	}
-	else
-		is_mcr = 0;
 
 	tcflush(reader->handle, TCIOFLUSH); // a non MCR reader might give longer answer
 
@@ -232,9 +249,9 @@ int Sc8in1_Init(struct s_reader * reader)
 		buff[0] = 0x63; //MCR set clock
 		buff[1] = (sc8in1_clock >> 8) & 0xFF;
 		buff[2] = sc8in1_clock & 0xFF;
-//		sc8in1_command(reader, buff, 3, 0); //FIXME this doesnt work properly yet
+		sc8in1_command(reader, buff, 3, 0); //FIXME this doesnt work properly yet
 
-/*		//DEBUG get clockspeeds
+		//DEBUG get clockspeeds
 		buff[0] = 0x67;
 		sc8in1_command(reader, buff, 1, 2);
 		static char * clock[] = { "3,57", "3,68", "6,00", "8,00" };
@@ -242,7 +259,7 @@ int Sc8in1_Init(struct s_reader * reader)
 		cs_log("Buff = %X %X, result = %02X",buff[0], buff[1], result);
 		for(i=0; i<8; i++) {
 		cs_log("Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
-		}*/
+		}
 	}
 	
 	//IO_Serial_Flush(reader); //FIXME somehow ATR is generated and must be flushed
