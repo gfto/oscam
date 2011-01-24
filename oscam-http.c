@@ -62,31 +62,31 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 
 	switch (refreshtype) {
 		case REFR_ACCOUNTS:
-		cs_log("Refresh Accounts requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
+		cs_log("Refresh Accounts requested by WebIF from %s", inet_ntoa(in));
 
 		cs_accounts_chk();
 		break;
 
 		case REFR_READERS:
 		cs_card_info();
-		cs_log("Refresh Reader/Tiers requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
+		cs_log("Refresh Reader/Tiers requested by WebIF from %s", inet_ntoa(in));
 		break;
 
 		case REFR_SERVER:
-		cs_log("Refresh Server requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
+		cs_log("Refresh Server requested by WebIF from %s", inet_ntoa(in));
 		//kill(first_client->pid, SIGHUP);
 		//todo how I can refresh the server after global settings
 		break;
 
 		case REFR_SERVICES:
-		cs_log("Refresh Services requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
+		cs_log("Refresh Services requested by WebIF from %s", inet_ntoa(in));
 		//init_sidtab();
 		cs_reinit_clients(cfg.account);
 		break;
 
 #ifdef CS_ANTICASC
 		case REFR_ANTICASC:
-		cs_log("Refresh Anticascading requested by WebIF from %s", inet_ntoa(*(struct in_addr *)&in));
+		cs_log("Refresh Anticascading requested by WebIF from %s", inet_ntoa(in));
 		kill_ac_client();
 #endif
 		default:
@@ -111,7 +111,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 	if (cfg.srvip != 0)
-	tpl_addVar(vars, TPLADD, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg.srvip));
+	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.srvip));
 	tpl_printf(vars, TPLADD, "NICE", "%d", cfg.nice);
 	tpl_printf(vars, TPLADD, "BINDWAIT", "%d", cfg.bindwait);
 	tpl_printf(vars, TPLADD, "NETPRIO", "%ld", cfg.netprio);
@@ -239,7 +239,7 @@ char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *para
 
 	if (cfg.c33_port) {
 		tpl_printf(vars, TPLADD, "PORT", "%d", cfg.c33_port);
-		if (cfg.c33_srvip != 0)		tpl_addVar(vars, TPLADD, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg.c33_srvip));
+		if (cfg.c33_srvip != 0)		tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.c33_srvip));
 		if (cfg.c33_passive == 1)		tpl_addVar(vars, TPLADD, "PASSIVECHECKED", "selected");
 
 		for (i = 0; i < (int) sizeof(cfg.c33_key); ++i) tpl_printf(vars, TPLAPPEND, "KEY", "%02X",cfg.c33_key[i]);
@@ -273,7 +273,7 @@ char *send_oscam_config_camd35(struct templatevars *vars, struct uriparams *para
 	if (cfg.c35_port) {
 		tpl_printf(vars, TPLADD, "PORT", "%d", cfg.c35_port);
 		if (cfg.c35_srvip != 0)
-			tpl_addVar(vars, TPLAPPEND, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg.c35_srvip));
+			tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.c35_srvip));
 
 		if (cfg.c35_suppresscmd08)
 			tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "checked");
@@ -304,7 +304,7 @@ char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *p
 		free(value);
 
 		if (cfg.c35_tcp_srvip != 0)
-			tpl_addVar(vars, TPLAPPEND, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg.c35_tcp_srvip));
+			tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.c35_tcp_srvip));
 
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35TCP");
@@ -336,7 +336,7 @@ char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *par
 		free(value);
 
 		if (cfg.ncd_srvip != 0)
-			tpl_addVar(vars, TPLADD, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg.ncd_srvip));
+			tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.ncd_srvip));
 
 		for (i = 0; i < 14; i++) tpl_printf(vars, TPLAPPEND, "KEY", "%02X", cfg.ncd_key[i]);
 
@@ -375,7 +375,7 @@ char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *pa
 	}
 	tpl_printf(vars, TPLADD, "PORT", "%d", cfg.rad_port);
 	if (cfg.rad_srvip != 0)
-	tpl_addVar(vars, TPLADD, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg.rad_srvip));
+	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.rad_srvip));
 	tpl_addVar(vars, TPLADD, "USER", cfg.rad_usr);
 
 	struct s_ip *cip;
@@ -498,7 +498,7 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 	}
 	tpl_printf(vars, TPLADD, "MONPORT", "%d", cfg.mon_port);
 	if (cfg.mon_srvip != 0)
-	tpl_addVar(vars, TPLADD, "SERVERIP", inet_ntoa(*(struct in_addr *)&cfg.mon_srvip));
+	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.mon_srvip));
 	tpl_printf(vars, TPLADD, "AULOW", "%d", cfg.mon_aulow);
 	tpl_printf(vars, TPLADD, "HIDECLIENTTO", "%d", cfg.mon_hideclient_to);
 	if(cfg.mon_appendchaninfo)
@@ -1233,7 +1233,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
 
-	tpl_printf(vars, TPLADD, "CALLINGIP", "%s", inet_ntoa(*(struct in_addr *)&in));
+	tpl_printf(vars, TPLADD, "CALLINGIP", "%s", inet_ntoa(in));
 
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if(!rdr) return "0";
@@ -1766,7 +1766,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
 
 	//just to stop the guys open tedious tickets for warnings related to unused variables xD
-	tpl_printf(vars, TPLADD, "CALLINGIP", "%s", inet_ntoa(*(struct in_addr *)&in));
+	tpl_printf(vars, TPLADD, "CALLINGIP", "%s", inet_ntoa(in));
 	tpl_printf(vars, TPLADD, "ISAPICALL", "%d", apicall);
 	//**************
 
@@ -1992,7 +1992,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 		struct s_client *cl = get_client_by_tid(atol(getParam(params, "threadid")));
 		if (cl) {
 			kill_thread(cl);
-			cs_log("Client %s killed by WebIF from %s", cl->account->usr, inet_ntoa(*(struct in_addr *)&in));
+			cs_log("Client %s killed by WebIF from %s", cl->account->usr, inet_ntoa(in));
 		}
 	}
 
@@ -2000,7 +2000,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 		if(rdr)	{
 			restart_cardreader(rdr, 1);
-			cs_log("Reader %s restarted by WebIF from %s", rdr->label, inet_ntoa(*(struct in_addr *)&in));
+			cs_log("Reader %s restarted by WebIF from %s", rdr->label, inet_ntoa(in));
 		}
 	}
 
@@ -2008,7 +2008,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 		if(rdr) {
 			clear_reader_stat(rdr);
-			cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, inet_ntoa(*(struct in_addr *)&in));
+			cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, inet_ntoa(in));
 		}
 	}
 
@@ -2949,7 +2949,7 @@ int process_request(FILE *f, struct in_addr in) {
 
 	if (!ok) {
 		send_error(f, 403, "Forbidden", NULL, "Access denied.");
-		cs_log("unauthorized access from %s flag %d", inet_ntoa(*(struct in_addr *)&in), v);
+		cs_log("unauthorized access from %s flag %d", inet_ntoa(in), v);
 		return 0;
 	}
 
@@ -3015,7 +3015,7 @@ int process_request(FILE *f, struct in_addr in) {
 
 		//max request size 100kb
 		if (bufsize>102400) {
-			cs_log("error: too much data received from %s", inet_ntoa(*(struct in_addr *)&in));
+			cs_log("error: too much data received from %s", inet_ntoa(in));
 			free(filebuf);
 			return -1;
 		}
@@ -3149,7 +3149,7 @@ int process_request(FILE *f, struct in_addr in) {
 			tpl_addVar(vars, TPLADD, "LANGUAGE", "en");
 
 		tpl_addVar(vars, TPLADD, "UPTIME", sec2timeformat(vars, (now - first_client->login)));
-		tpl_printf(vars, TPLADD, "CURIP", "%s", inet_ntoa(*(struct in_addr *)&in));
+		tpl_printf(vars, TPLADD, "CURIP", "%s", inet_ntoa(in));
 		if(cfg.http_readonly)
 			tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
 		
@@ -3334,7 +3334,7 @@ void http_srv() {
 	if (cfg.http_use_ssl)
 		SSL_CTX_free(ctx);
 #endif
-	cs_log("HTTP Server: Shutdown requested from %s", inet_ntoa(*(struct in_addr *)&remote.sin_addr));
+	cs_log("HTTP Server: Shutdown requested from %s", inet_ntoa(remote.sin_addr));
 	close(sock);
 	//exit(SIGQUIT);
 }
