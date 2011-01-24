@@ -115,16 +115,10 @@ READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvi
 
 	LL_ITER *it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat = NULL;
-	int i = 0;
 	while ((stat = ll_iter_next(it))) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
-			if (i > 5) { //Move to first if not under top 5:
-				ll_iter_remove(it);
-				ll_prepend(rdr->lb_stat, stat); //move to first!
-			}
 			break;
 		}
-		i++;
 	}
 	ll_iter_release(it);
 	return stat;
