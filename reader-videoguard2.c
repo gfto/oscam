@@ -276,7 +276,7 @@ static void vg2_read_tiers(struct s_reader * reader)
       int y,m,d,H,M,S;
       rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
       unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
-      char *tier_name = get_tiername(tier_id, reader->caid[0]);
+      char *tier_name = get_tiername(tier_id, reader->caid);
       if(!stopemptytier){
         cs_debug_mask(D_READER, "tier: %04x, tier-number: 0x%02x",tier_id,i);
       }
@@ -448,7 +448,7 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   memset(reader->hexserial, 0, 8);
   memcpy(reader->hexserial+2, cta_res+3, 4);
   memcpy(reader->sa, cta_res+3, 3);
-  reader->caid[0] = cta_res[24]*0x100+cta_res[25];
+  reader->caid = cta_res[24]*0x100+cta_res[25];
 
   /* we have one provider, 0x0000 */
   reader->nprov = 1;
@@ -542,7 +542,7 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 
   cs_ri_log(reader, "type: %s, caid: %04X",
          reader->card_desc,
-         reader->caid[0]);
+         reader->caid);
   cs_ri_log(reader, "serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X, baseyear: %i",
          reader->hexserial[2],reader->hexserial[3],reader->hexserial[4],reader->hexserial[5],
          boxID[0],boxID[1],boxID[2],boxID[3],
@@ -580,7 +580,7 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   for (k = posECMpart2+1; k < lenECMpart2+posECMpart2+1-4; k++){
     if (er->ecm[k] == 0x03 && er->ecm[k+3] == 0x80) {
       unsigned short vtier_id = (er->ecm[k+1] << 8) | er->ecm[k+2];
-      char *vtier_name = get_tiername(vtier_id, reader->caid[0]);
+      char *vtier_name = get_tiername(vtier_id, reader->caid);
       cs_log("valid tier: %04x %s",vtier_id,vtier_name);
     }
   }

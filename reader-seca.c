@@ -109,13 +109,13 @@ static int seca_card_init(struct s_reader * reader, ATR newatr)
     case 0x7070: card="Canal+ NL"; break;
     default:     card="Unknown"; break;
   }
-  reader->caid[0]=0x0100;
+  reader->caid=0x0100;
   memset(reader->prid, 0xff, sizeof(reader->prid));
   write_cmd(ins0e, NULL); // read unique id
   memcpy(reader->hexserial, cta_res+2, 6);
   serial = b2ll(5, cta_res+3) ;
   cs_ri_log (reader, "type: SECA, caid: %04X, serial: %llu, card: %s v%d.%d",
-         reader->caid[0], serial, card, atr[9]&0x0F, atr[9]>>4);
+         reader->caid, serial, card, atr[9]&0x0F, atr[9]>>4);
   write_cmd(ins16, NULL); // read nr of providers
   pmap=cta_res[2]<<8|cta_res[3];
   for (reader->nprov=0, i=pmap; i; i>>=1)

@@ -45,7 +45,7 @@ static int tongfang_card_init(struct s_reader *reader, ATR newatr)
 
   if ((hist_size < 4) || (memcmp(hist, "NTIC",4))) return ERROR;
 
-  reader->caid[0] = 0x4A02;
+  reader->caid = 0x4A02;
   // For now, only one provider, 0000
   reader->nprov = 1;
   memset(reader->prid, 0x00, sizeof(reader->prid));
@@ -77,7 +77,7 @@ static int tongfang_card_init(struct s_reader *reader, ATR newatr)
   write_cmd(pairing_cmd, pairing_cmd + 5);
 
   cs_ri_log(reader, "type: Tongfang, caid: %04X, serial: %llu, hex serial: %02x%02x%02x%02x, BoxID: %02X%02X%02X%02X",
-            reader->caid[0], b2ll(6, reader->hexserial), reader->hexserial[2],
+            reader->caid, b2ll(6, reader->hexserial), reader->hexserial[2],
             reader->hexserial[3], reader->hexserial[4], reader->hexserial[5],
             boxID[0], boxID[1], boxID[2], boxID[3]);
 

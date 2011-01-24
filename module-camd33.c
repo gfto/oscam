@@ -37,8 +37,8 @@ static void camd33_request_emm()
   {
     log_emm_request(aureader);
     mbuf[0]=0;
-    mbuf[1]=aureader->caid[0]>>8;
-    mbuf[2]=aureader->caid[0]&0xff;
+    mbuf[1]=aureader->caid>>8;
+    mbuf[2]=aureader->caid&0xff;
     memcpy(mbuf+3, aureader->hexserial, 4);
     memcpy(mbuf+7, &aureader->prid[0][1], 3);
     memcpy(mbuf+10, &aureader->prid[2][1], 3);

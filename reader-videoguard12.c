@@ -78,7 +78,7 @@ static void read_tiers(struct s_reader *reader)
     int y, m, d, H, M, S;
     rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, reader->card_baseyear);
     unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
-    char *tier_name = get_tiername(tier_id, reader->caid[0]);
+    char *tier_name = get_tiername(tier_id, reader->caid);
     cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, tier_name);
   }
 }
@@ -268,7 +268,7 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
   memset(reader->hexserial, 0, 8);
   memcpy(reader->hexserial + 2, cta_res + 4, 4);
   memcpy(reader->sa, cta_res + 4, 3);
-  reader->caid[0] = cta_res[2] * 0x100 + cta_res[3];
+  reader->caid = cta_res[2] * 0x100 + cta_res[3];
 
   /* we have one provider, 0x0000 */
   reader->nprov = 1;
@@ -307,7 +307,7 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
 
   cs_ri_log(reader,
             "type: VideoGuard, caid: %04X, serial: %02X%02X%02X%02X, BoxID: %02X%02X%02X%02X",
-            reader->caid[0], reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], boxID[0], boxID[1], boxID[2], boxID[3]);
+            reader->caid, reader->hexserial[2], reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], boxID[0], boxID[1], boxID[2], boxID[3]);
   cs_log("ready for requests - this is in testing please send -d 255 logs to rebdog");
 
   return OK;

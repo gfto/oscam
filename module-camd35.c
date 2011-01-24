@@ -160,7 +160,7 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	memcpy(cl->lastserial, aureader->hexserial, 8);
 	cl->last = now;
 
-	if (aureader->caid[0])
+	if (aureader->caid)
 	{
 		cl->disable_counter = 0;
 		log_emm_request(aureader);
@@ -188,17 +188,17 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	memcpy(mbuf + 16, i2b(2, er->pid), 2);
 	mbuf[0] = 5;
 	mbuf[1] = 111;
-	if (aureader->caid[0])
+	if (aureader->caid)
 	{
 		mbuf[39] = 1;							// no. caids
-		mbuf[20] = aureader->caid[0]>>8;		// caid's (max 8)
-		mbuf[21] = aureader->caid[0]&0xff;
+		mbuf[20] = aureader->caid>>8;		// caid's (max 8)
+		mbuf[21] = aureader->caid&0xff;
 		memcpy(mbuf + 40, aureader->hexserial, 6);	// serial now 6 bytes
 		mbuf[47] = aureader->nprov;
 		for (i = 0; i < aureader->nprov; i++)
 		{
-			if (((aureader->caid[0] >= 0x1700) && (aureader->caid[0] <= 0x1799))  || // Betacrypt
-					((aureader->caid[0] >= 0x0600) && (aureader->caid[0] <= 0x0699)))    // Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
+			if (((aureader->caid >= 0x1700) && (aureader->caid <= 0x1799))  || // Betacrypt
+					((aureader->caid >= 0x0600) && (aureader->caid <= 0x0699)))    // Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
 			{
 				mbuf[48 + (i*5)] = aureader->prid[i][0];
 				memcpy(&mbuf[50 + (i*5)], &aureader->prid[i][1], 3);
@@ -568,13 +568,13 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 		//cs_log("CMD05: %s", cs_hexdump(1, buf, buf[1]));
 		rdr->nprov = 0; //reset if number changes on reader change
 		rdr->nprov = buf[47];
-		rdr->caid[0] = b2i(2, buf + 20);
+		rdr->caid = b2i(2, buf + 20);
 		rdr->auprovid = b2i(4, buf + 12);
 
 		int i;
 		for (i=0; i<rdr->nprov; i++) {
-			if (((rdr->caid[0] >= 0x1700) && (rdr->caid[0] <= 0x1799))  ||	// Betacrypt
-					((rdr->caid[0] >= 0x0600) && (rdr->caid[0] <= 0x0699)))	// Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
+			if (((rdr->caid >= 0x1700) && (rdr->caid <= 0x1799))  ||	// Betacrypt
+					((rdr->caid >= 0x0600) && (rdr->caid <= 0x0699)))	// Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
 			{
 				rdr->prid[i][0] = buf[48 + (i*5)];
 				memcpy(&rdr->prid[i][1], &buf[50 + (i * 5)], 3);
@@ -592,10 +592,10 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 		rdr->blockemm_g = (buf[128]==1) ? 0: 1;
 		rdr->blockemm_s = (buf[129]==1) ? 0: 1;
 		rdr->blockemm_u = (buf[130]==1) ? 0: 1;
-		rdr->card_system = get_cardsystem(rdr->caid[0]);
+		rdr->card_system = get_cardsystem(rdr->caid);
 		cs_log("%s CMD05 AU request for caid: %04X auprovid: %06lX",
 				rdr->label,
-				rdr->caid[0],
+				rdr->caid,
 				rdr->auprovid);
 	}
 

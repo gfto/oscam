@@ -174,7 +174,7 @@ static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
   cs_log("[cryptoworks-reader] card detected");
   cs_log("[cryptoworks-reader] type: CryptoWorks");
 
-  reader->caid[0]=0xD00;
+  reader->caid=0xD00;
   reader->nprov=0;
   reader->ucpk_valid = 0;
   memset(reader->prid, 0, sizeof(reader->prid));
@@ -201,18 +201,18 @@ static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
 
   select_file(reader, 0x2f, 0x01, cta_res, &cta_lr);		// read caid
   if (read_record(reader, 0xD1, cta_res)>=4)
-    reader->caid[0]=(cta_res[2]<<8)|cta_res[3];
+    reader->caid=(cta_res[2]<<8)|cta_res[3];
 
   if (read_record(reader, 0x80, cta_res)>=7)		// read serial
     memcpy(reader->hexserial, cta_res+2, 5);
   cs_ri_log (reader, "type: CryptoWorks, caid: %04X, ascii serial: %llu, hex serial: %s",
-            reader->caid[0], b2ll(5, reader->hexserial),cs_hexdump(0, reader->hexserial, 5));
+            reader->caid, b2ll(5, reader->hexserial),cs_hexdump(0, reader->hexserial, 5));
 
   if (read_record(reader, 0x9E, cta_res)>=66)	// read ISK
   {
     uchar keybuf[256];
     BIGNUM *ipk;
-    if (search_boxkey(reader->caid[0], (char *)keybuf))
+    if (search_boxkey(reader->caid, (char *)keybuf))
     {
       ipk=BN_new();
       BN_bin2bn(cwexp, sizeof(cwexp), &reader->exp);
@@ -235,7 +235,7 @@ static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
           cs_ddump_mask(D_READER, keybuf, 0x40, "session-key found:");
         }
         else
-          cs_log("[cryptoworks-reader] invalid IPK or session-key for CAID %04X !", reader->caid[0]);
+          cs_log("[cryptoworks-reader] invalid IPK or session-key for CAID %04X !", reader->caid);
       }
     }
   }

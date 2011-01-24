@@ -901,7 +901,7 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 	cc->last_emm_card = card;
 
 	rdr->card_system = get_cardsystem(card->caid);
-	cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid[0]);
+	cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid);
 
 	cs_debug_mask(D_EMM,
 			"%s au info: caid %04X card system: %d UA: %s",
@@ -936,7 +936,7 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 		rdr->nprov = 1;
 	}
 
-	rdr->caid[0] = card->caid;
+	rdr->caid = card->caid;
 	if (cur_er)
 		rdr->auprovid = cur_er->prid;
 }
@@ -3137,7 +3137,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				}
 			}
 
-			if ((rdr->typ != R_CCCAM) && !rdr->caid[0] && !flt) {
+			if ((rdr->typ != R_CCCAM) && !rdr->caid && !flt) {
 				for (j = 0; j < CS_MAXCAIDTAB; j++) {
 					//cs_log("CAID map CCcam card report caid: %04X cmap: %04X", rdr->ctab.caid[j], rdr->ctab.cmap[j]);
 					ushort lcaid = rdr->ctab.caid[j];
@@ -3159,9 +3159,9 @@ int cc_srv_report_cards(struct s_client *cl) {
 				}
 			}
 
-			if ((rdr->typ != R_CCCAM) && rdr->caid[0] && !flt && chk_ctab(rdr->caid[0], &cl->ctab)) {
+			if ((rdr->typ != R_CCCAM) && rdr->caid && !flt && chk_ctab(rdr->caid, &cl->ctab)) {
 				//cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
-				ushort caid = rdr->caid[0];
+				ushort caid = rdr->caid;
 				struct cc_card *card = create_card2(rdr, 0, caid, hop, reshare);
 				if (au_allowed)
 					cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
@@ -3758,7 +3758,7 @@ int cc_cli_connect(struct s_client *cl) {
 		return -3;
 	}
 
-	rdr->caid[0] = rdr->ftab.filts[0].caid;
+	rdr->caid = rdr->ftab.filts[0].caid;
 	rdr->nprov = rdr->ftab.filts[0].nprids;
 	for (n = 0; n < rdr->nprov; n++) {
 		rdr->availkeys[n][0] = 1;

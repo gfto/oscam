@@ -41,7 +41,7 @@ static int conax_card_init(struct s_reader * reader, ATR newatr)
   if ((hist_size < 4) || (memcmp(hist,"0B00",4)))
     return ERROR;
 
-  reader->caid[0]=0xB00;
+  reader->caid=0xB00;
 
   if ((n=read_record(reader, ins26, ins26+5, cta_res))<=0) return ERROR;   // read caid, card-version
 
@@ -49,12 +49,12 @@ static int conax_card_init(struct s_reader * reader, ATR newatr)
     switch(cta_res[i])
     {
       case 0x20: cardver=cta_res[i+2]; break;
-      case 0x28: reader->caid[0]=(cta_res[i+2]<<8)|cta_res[i+3];
+      case 0x28: reader->caid=(cta_res[i+2]<<8)|cta_res[i+3];
     }
 
   // Ins82 command needs to use the correct CAID reported in nano 0x28
-  ins82[17]=(reader->caid[0]>>8)&0xFF;
-  ins82[18]=(reader->caid[0])&0xFF;
+  ins82[17]=(reader->caid>>8)&0xFF;
+  ins82[18]=(reader->caid)&0xFF;
 
   if ((n=read_record(reader, ins82, ins82+5, cta_res))<=0) return ERROR; // read serial
 
@@ -77,7 +77,7 @@ static int conax_card_init(struct s_reader * reader, ATR newatr)
   memset(reader->prid, 0x00, sizeof(reader->prid));
 
   cs_ri_log(reader, "type: Conax, caid: %04X, serial: %llu, hex serial: %02x%02x%02x%02x, card: v%d",
-         reader->caid[0], b2ll(6, reader->hexserial), reader->hexserial[2], 
+         reader->caid, b2ll(6, reader->hexserial), reader->hexserial[2], 
          reader->hexserial[3], reader->hexserial[4], reader->hexserial[5], cardver);
 
   cs_ri_log(reader, "Providers: %d", reader->nprov);

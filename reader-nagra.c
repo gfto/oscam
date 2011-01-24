@@ -220,10 +220,10 @@ static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 	reader->prid[0][1]=0x00;
 	reader->prid[0][2]=parte_variable[73];
 	reader->prid[0][3]=parte_variable[74];
-	reader->caid[0] =(SYSTEM_NAGRA|parte_variable[76]);
+	reader->caid =(SYSTEM_NAGRA|parte_variable[76]);
 	memcpy(sk,&parte_variable[79],8);                                                                           
 	memcpy(sk+8,&parte_variable[79],8); 
-  	cs_ri_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid[0], cs_hexdump (1,reader->irdId,4));
+  	cs_ri_log(reader, "type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump (1,reader->irdId,4));
   	cs_ri_log(reader, "ProviderID: %s",cs_hexdump (1,reader->prid[0],4));
 
 	memset(random, 0, 88);
@@ -522,9 +522,9 @@ static int ParseDataType(struct s_reader * reader, unsigned char dt, unsigned ch
 			memcpy(reader->sa[1], reader->sa[0], 4);
  			reader->nprov+=1;
  					
-			reader->caid[0] =(SYSTEM_NAGRA|cta_res[11]);
+			reader->caid =(SYSTEM_NAGRA|cta_res[11]);
     				memcpy(reader->irdId,cta_res+14,4);
-    				cs_debug_mask(D_READER, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid[0], cs_hexdump (1,reader->irdId,4));
+    				cs_debug_mask(D_READER, "[nagra-reader] type: NAGRA, caid: %04X, IRD ID: %s",reader->caid, cs_hexdump (1,reader->irdId,4));
     				cs_debug_mask(D_READER, "[nagra-reader] ProviderID: %s",cs_hexdump (1,reader->prid[0],4));
     				return OK;
      		}
@@ -577,7 +577,7 @@ static int nagra2_card_init(struct s_reader * reader, ATR newatr)
  	reader->swapCW = 0; 
  	memset(reader->irdId, 0xff, 4);
 	memset(reader->hexserial, 0, 8); 
-	reader->caid[0]=SYSTEM_NAGRA;
+	reader->caid=SYSTEM_NAGRA;
 	
 	if(memcmp(atr+11,"DNASP240",8)==0 || memcmp(atr+11,"DNASP241", 8)==0) {
 		cs_ri_log(reader, "detect nagra 3 NA card");
@@ -723,7 +723,7 @@ static int nagra2_card_info(struct s_reader * reader)
 	cs_ri_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
 	cs_ri_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
 	cs_ri_log(reader, "SER:    %s", cs_hexdump (1, reader->hexserial+2, 4));
-	cs_ri_log(reader, "CAID:   %04X",reader->caid[0]);
+	cs_ri_log(reader, "CAID:   %04X",reader->caid);
 	cs_ri_log(reader, "Prv.ID: %s(sysid)",cs_hexdump (1,reader->prid[0],4));
 	for (i=1; i<reader->nprov; i++)
 	{
@@ -816,7 +816,7 @@ static int nagra2_card_info(struct s_reader * reader)
                  {
                     case 0x00:
                     case 0x01:  
-                       tier_name = get_tiername(records[i].value, reader->caid[0]);
+                       tier_name = get_tiername(records[i].value, reader->caid);
                        if( (reader->nagra_read == 2) && (reccmp(records[i].date2,currdate) >= 0) )
                          cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
                                    records[i].value, records[i].date2, tier_name);
@@ -832,7 +832,7 @@ static int nagra2_card_info(struct s_reader * reader)
                     case 0x21:
                        if( (reader->nagra_read == 2) && (reccmp(records[i].date2,currdate) >= 0) )
                        {
-                         tier_name = get_tiername(records[i].value, reader->caid[0]);
+                         tier_name = get_tiername(records[i].value, reader->caid);
                          cs_ri_log(reader, "Tier : %04X, expiry date: %s %s",
                                    records[i].value, records[i].date2, tier_name);
                        }
@@ -867,7 +867,7 @@ static int nagra2_card_info(struct s_reader * reader)
                        {
                          euro = records[i].price / 100;
                          credit -= euro;
-                         tier_name = get_tiername(records[i].value, reader->caid[0]);
+                         tier_name = get_tiername(records[i].value, reader->caid);
                          cs_ri_log(reader, "Subscription   : ( %04X ) from %s to %s  (%3d euro) %s",
                                    records[i].value, records[i].date1, records[i].date2, euro, tier_name);
                        }

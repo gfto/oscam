@@ -152,23 +152,23 @@ static int dre_card_init (struct s_reader * reader, ATR newatr)
   switch (atr[6]) {
   case 0x11:
     card = "Tricolor Centr";
-    reader->caid[0] = 0x4ae1;
+    reader->caid = 0x4ae1;
     break;			//59 type card = MSP (74 type = ATMEL)
   case 0x12:
     card = "Cable TV";
-    reader->caid[0] = 0x4ae1;	//TODO not sure about this one
+    reader->caid = 0x4ae1;	//TODO not sure about this one
     break;
   case 0x14:
     card = "Tricolor Syberia / Platforma HD new";
-    reader->caid[0] = 0x4ae1;
+    reader->caid = 0x4ae1;
     break;			//59 type card
   case 0x15:
     card = "Platforma HD / DW old";
-    reader->caid[0] = 0x4ae1;
+    reader->caid = 0x4ae1;
     break;			//59 type card
   default:
     card = "Unknown";
-    reader->caid[0] = 0x4ae1;
+    reader->caid = 0x4ae1;
     break;
   }
 
@@ -225,7 +225,7 @@ FE 48 */
 
   //cs_ri_log("[dre-reader] type: DRE Crypt, caid: %04X, serial: %llu, card: v%x",
   cs_ri_log (reader, "[dre-reader] type: DRE Crypt, caid: %04X, serial: %s, dre id: %i%i%i%08i, geocode %i, card: %s v%i.%i",
-	  reader->caid[0], cs_hexdump (0, reader->hexserial + 2, 4), dre_chksum, reader->provider - 16,
+	  reader->caid, cs_hexdump (0, reader->hexserial + 2, 4), dre_chksum, reader->provider - 16,
 	  major_version + 1, low_dre_id, geocode, card, major_version, minor_version);
   cs_ri_log (reader, "[dre-reader] Provider name:%s.", provname);
 
@@ -248,7 +248,7 @@ FE 48 */
 static int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
 {
   def_resp;
-  if (reader->caid[0] == 0x4ae0) {
+  if (reader->caid == 0x4ae0) {
     uchar ecmcmd41[] = { 0x41,
       0x58, 0x1f, 0x00,		//fixed part, dont change 
       0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,	//0x01 - 0x08: next key
@@ -304,7 +304,7 @@ static int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		case 0x89:
 			ep->type = SHARED;
 			// FIXME: Seems to be that SA is only used with caid 0x4ae1
-			if (rdr->caid[0] == 0x4ae1) {
+			if (rdr->caid == 0x4ae1) {
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 3, 4);
 				return (!memcmp(&rdr->sa[0][0], ep->emm + 3, 4));
@@ -336,7 +336,7 @@ void dre_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[38+0]    = 0x89;
 	filter[38+0+16] = 0xFF;
 	// FIXME: Seems to be that SA is only used with caid 0x4ae1
-	if (rdr->caid[0] == 0x4ae1) {
+	if (rdr->caid == 0x4ae1) {
 		memcpy(filter+38+1, &rdr->sa[0][0], 4);
 		memset(filter+38+1+16, 0xFF, 4);
 	}
@@ -358,7 +358,7 @@ static int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
 
   cs_ddump_mask(D_READER, ep->emm, ((ep->emm[1] & 0x0f) << 8) + ep->emm[2] + 3, "EMM:");
 
-  if (reader->caid[0] == 0x4ae1) {
+  if (reader->caid == 0x4ae1) {
     if(ep->type == UNIQUE && ep->emm[39] == 0x3d)
     { /* For new package activation. */
         uchar emmcmd58[26];

@@ -134,7 +134,6 @@
 #define CS_DELAY          0
 #define CS_MAXLOGHIST     30
 #define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
-#define CS_MAXREADERCAID  16
 
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
@@ -797,7 +796,7 @@ struct s_reader  //contains device info, reader info and card info
   uchar     availkeys[CS_MAXPROV][16];  // viaccess; misused in seca, if availkeys[PROV][0]=0 then expired, 1 then valid.
   uchar     sa[CS_MAXPROV][4];    // viaccess & seca
   ushort    acs;    // irdeto
-  ushort    caid[CS_MAXREADERCAID];
+  ushort    caid;
   uchar     b_nano[256];
   int       blockemm_unknown; //block EMMs that have unknown type
   int       blockemm_u;				//blcok Unique EMMs

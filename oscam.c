@@ -1321,7 +1321,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				{
 					struct s_reader *rdr;
 					for (rdr=first_active_reader; rdr ; rdr=rdr->next)
-						if(rdr->caid[0]==cfg->ncd_ptab.ports[client->port_idx].ftab.filts[0].caid) {
+						if(rdr->caid==cfg->ncd_ptab.ports[client->port_idx].ftab.filts[0].caid) {
 							client->aureader=rdr;
 							break;
 						}
@@ -1890,28 +1890,28 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	if(!client->ncd_server && client->autoau && er->rcEx==0 && er->selected_reader)
 	{
-		if(client->aureader && er->caid!=client->aureader->caid[0])
+		if(client->aureader && er->caid!=client->aureader->caid)
 		{
 			client->aureader=NULL;
 		}
 
 		struct s_reader *cur = er->selected_reader;
 
-		if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled &&
+		if (cur->typ == R_CCCAM && !cur->caid && !cur->audisabled &&
 				cur->card_system == get_cardsystem(er->caid) && hexserialset(er->selected_reader))
 			client->aureader= er->selected_reader;
-		else if((er->caid == cur->caid[0]) && (!cur->audisabled)) {
+		else if((er->caid == cur->caid) && (!cur->audisabled)) {
 			client->aureader = er->selected_reader; // First chance - check whether actual reader can AU
 		} else {
 			for (cur=first_active_reader; cur ; cur=cur->next) { //second chance loop through all readers to find an AU reader
 				if (matching_reader(er, cur)) {
-					if (cur->typ == R_CCCAM && !cur->caid[0] && !cur->audisabled &&
+					if (cur->typ == R_CCCAM && !cur->caid && !cur->audisabled &&
 						cur->card_system == get_cardsystem(er->caid) && hexserialset(cur))
 					{
 						client->aureader = cur;
 						break;
 					}
-					else if((er->caid == cur->caid[0]) && (er->prid == cur->auprovid) && (!cur->audisabled))
+					else if((er->caid == cur->caid) && (er->prid == cur->auprovid) && (!cur->audisabled))
 					{
 						client->aureader = cur;
 						break;
@@ -2544,7 +2544,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 void log_emm_request(struct s_reader *rdr)
 {
 	cs_log("%s emm-request sent (reader=%s, caid=%04X, auprovid=%06lX)",
-			username(cur_client()), rdr->label, rdr->caid[0],
+			username(cur_client()), rdr->label, rdr->caid,
 			rdr->auprovid ? rdr->auprovid : b2i(4, rdr->prid[0]));
 }
 

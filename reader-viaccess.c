@@ -205,14 +205,14 @@ static int viaccess_card_init(struct s_reader * reader, ATR newatr)
 //    default: ver="unknown"; break;
 //  }
       
-  reader->caid[0]=0x500;
+  reader->caid=0x500;
   memset(reader->prid, 0xff, sizeof(reader->prid));
   insac[2]=0xa4; write_cmd(insac, NULL); // request unique id
   insb8[4]=0x07; write_cmd(insb8, NULL); // read unique id
   memcpy(reader->hexserial, cta_res+2, 5);
 //  cs_log("[viaccess-reader] type: Viaccess, ver: %s serial: %llu", ver, b2ll(5, cta_res+2));
   cs_ri_log(reader, "type: Viaccess (%sstandard atr), caid: %04X, serial: %llu",
-        atr[9]==0x68?"":"non-",reader->caid[0], b2ll(5, cta_res+2));
+        atr[9]==0x68?"":"non-",reader->caid, b2ll(5, cta_res+2));
 
   i=0;
   insa4[2]=0x00; write_cmd(insa4, NULL); // select issuer 0
