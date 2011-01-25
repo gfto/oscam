@@ -37,7 +37,7 @@
 #  error you cannot use both LZO and miniLZO
 #endif
 #undef LZO_HAVE_CONFIG_H
-#include <lzoconf.h>
+#include "lzoconf.h"
 #define __MINILZO_H
 
 #define MINILZO_VERSION         0x1000
