@@ -3303,24 +3303,30 @@ void http_srv() {
 			if (cfg.http_use_ssl) {
 				SSL *ssl;
 				ssl = SSL_new(ctx);
-				SSL_set_fd(ssl, s);
-				if (SSL_accept(ssl) != -1)
-					process_request((FILE *)ssl, remote.sin_addr);
-				else {
-					FILE *f;
-					f = fdopen(s, "r+");
-					if(f != NULL) {
-						// Note: This is quite dirty and only works because webif is not multithreaded!
-						cfg.http_use_ssl=0;
-						send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.");
-						cfg.http_use_ssl=1;
-						fflush(f);
-						fclose(f);
-					} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d)", errno);					
+				if(ssl != NULL){
+					if(SSL_set_fd(ssl, s){
+						if (SSL_accept(ssl) != -1)
+							process_request((FILE *)ssl, remote.sin_addr);
+						else {
+							FILE *f;
+							f = fdopen(s, "r+");
+							if(f != NULL) {
+								// Note: This is quite dirty and only works because webif is not multithreaded!
+								cfg.http_use_ssl=0;
+								send_error(f, 200, "Bad Request", NULL, "This web server is running in SSL mode.");
+								cfg.http_use_ssl=1;
+								fflush(f);
+								fclose(f);
+							} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d)", errno);					
+						}
+					} else cs_log("WebIf: Error calling SSL_set_fd().");
+					SSL_shutdown(ssl);
+					close(s);
+					SSL_free(ssl);
+				} else {
+					close(s);
+					cs_log("WebIf: Error calling SSL_new().");
 				}
-				SSL_shutdown(ssl);
-				close(s);
-				SSL_free(ssl);
 			} else
 #endif
 			{
