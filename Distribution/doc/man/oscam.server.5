@@ -32,9 +32,10 @@ define local or remote reader
 
  \fBconstantcw\fP:  constant CW file name
 
-constant CW file format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 digits):key (16 Bytes seperated by spaces)
+constant CW file format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 digits)\fI::\fR
+key (16 Bytes seperated by spaces)
 
-example: 1234:123456:1234:1234:1234:00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
+example: 1234:123456:1234:1234:1234\fI::\fR00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 .RE
 .PP
 \fBdevice_out_endpoint\fP = \fBaddress\fP
