@@ -114,6 +114,8 @@ static int smargo_reset(struct s_reader *reader, ATR *atr) {
 
 		call (IO_Serial_SetParity (reader, parity[i]));
 
+		IO_Serial_Flush(reader);
+
 		IO_Serial_RTS_Set(reader);
 		cs_sleepms(150);
 		IO_Serial_RTS_Clr(reader);

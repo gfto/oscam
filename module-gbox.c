@@ -1,3 +1,4 @@
+#ifdef MODULE_GBOX
 #include <pthread.h>
 
 #include "globals.h"
@@ -692,3 +693,5 @@ void module_gbox(struct s_module *ph)
   ph->c_send_ecm=gbox_send_ecm;
   ph->c_send_emm=gbox_send_emm;
 }
+#endif
+
