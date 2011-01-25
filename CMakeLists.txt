@@ -114,40 +114,21 @@ set (OPTIONAL_LINK_DIR "" CACHE STRING "Some optional link directories")
 set (OPTIONAL_INCLUDE_DIR "" CACHE STRING "Some optional include directories")
 
 if (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-if(CS_WITH_GBOX)
-    include_directories (
-        ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
-        ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
-        ${CMAKE_CURRENT_SOURCE_DIR}/csgbox
-        ${CMAKE_CURRENT_SOURCE_DIR}/cygwin
-        /usr/include/w32api
-        ${OPTIONAL_INCLUDE_DIR}
+include_directories (
+    ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
+    ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
+    ${CMAKE_CURRENT_SOURCE_DIR}/algo
+    ${CMAKE_CURRENT_SOURCE_DIR}/cygwin
+    /usr/include/w32api
+    ${OPTIONAL_INCLUDE_DIR}
     )
-else(CS_WITH_GBOX)
-    include_directories (
-        ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
-        ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
-        ${CMAKE_CURRENT_SOURCE_DIR}/csgbox
-        ${CMAKE_CURRENT_SOURCE_DIR}/cygwin
-        /usr/include/w32api
-        ${OPTIONAL_INCLUDE_DIR}
-    )
-endif(CS_WITH_GBOX)
 else (OSCamOperatingSystem MATCHES "Windows/Cygwin")
-if(CS_WITH_GBOX)
-    include_directories (
-        ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
-        ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
-        ${CMAKE_CURRENT_SOURCE_DIR}/csgbox
-        ${OPTIONAL_INCLUDE_DIR}
-        )
-else(CS_WITH_GBOX)
-    include_directories (
-        ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
-        ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
-        ${OPTIONAL_INCLUDE_DIR}
-        )
-endif(CS_WITH_GBOX)
+include_directories (
+    ${CMAKE_CURRENT_SOURCE_DIR}/csctapi
+    ${CMAKE_CURRENT_SOURCE_DIR}/cscrypt
+    ${CMAKE_CURRENT_SOURCE_DIR}/algo
+    ${OPTIONAL_INCLUDE_DIR}
+    )
 endif (OSCamOperatingSystem MATCHES "Windows/Cygwin")
 
 if(OSCamOperatingSystem MATCHES "Windows/Cygwin")
@@ -275,10 +256,6 @@ ENDMACRO(GENERATE_OSCAM_CONFIG fullpath)
 include (CheckIncludeFile)
 GENERATE_OSCAM_CONFIG("${CMAKE_CURRENT_SOURCE_DIR}/oscam-config.h")
 
-if(CS_WITH_GBOX)
-    add_definitions ("-DCS_WITH_GBOX")
-endif(CS_WITH_GBOX)
-
 check_include_file ("pthread.h" HAVE_PTHREAD)
 if (HAVE_PTHREAD)
     message(STATUS "  pthread found. Adding pthread support ")
@@ -400,10 +377,8 @@ endif (HAVE_PCSC)
 #----------------------- subdirectories ------------------------------
 
 add_subdirectory (csctapi)
+add_subdirectory (algo)
 add_subdirectory (cscrypt)
-if(CS_WITH_GBOX)
-    add_subdirectory (csgbox)
-endif(CS_WITH_GBOX)
 if( HAVE_LIBRT OR HAVE_LIBRT_STATIC)
     if (HAVE_LIBUSB)
         add_subdirectory (utils)
@@ -441,11 +416,7 @@ add_library (${csoscam} STATIC ${csoscam_srcs} ${csoscam_hdrs})
 
 set (exe_name "oscam")
 add_executable (${exe_name} ${exe_srcs} ${exe_hdrs})
-if(CS_WITH_GBOX)
-    target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt csgbox)
-else(CS_WITHGBOX)
-    target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt)
-endif(CS_WITH_GBOX)
+target_link_libraries (${exe_name} ${csoscam} ${csmodules} ${csreaders} csctapi cscrypt algo)
 if(HAVE_LIBRT AND HAVE_LIBUSB)
     target_link_libraries (${exe_name} imp_libusb)
     if (NOT OSCamOperatingSystem MATCHES "Mac OS X")
@@ -692,8 +663,5 @@ endif (HAVE_PTHREAD)
 if (HAVE_LIBUSB)
     message (STATUS "  use system libusb functions")
 endif (HAVE_LIBUSB)
-if(CS_WITH_GBOX)
-    message (STATUS "  gbox protocol enabled")
-endif(CS_WITH_GBOX)
 
 message (STATUS "")
