@@ -1383,7 +1383,6 @@ static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 		     ecmc->caid==er->caid &&
 		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
 		{
-			er->rc = E_99;
 			return(1);
 		}
 	}
@@ -1675,7 +1674,7 @@ void distribute_ecm(ECM_REQUEST *er)
           //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
           write_ecm_request(cl->fd_m2c, er);
         }
-        //else if (ecm->rc == 99)
+        //else if (ecm->rc == E_99)
         //  cs_log("NO-distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
       }
     }
@@ -1720,7 +1719,6 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
   if( er->client && er->client->fd_m2c ) {
     //Wie got an ECM (or nok). Now we should check for another clients waiting for it:
     res = write_ecm_request(er->client->fd_m2c, er);
-    //return(write_ecm_request(first_client->fd_m2c, er)); //does this ever happen? Schlocke: should never happen!
   }
 
   return res;
@@ -1851,7 +1849,8 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 				snprintf(sby, sizeof(sby)-1, " by %s", er->selected_reader->label);
 	}
 	else {
-			struct s_reader *err_reader = ll_has_elements(er->matching_rdr);
+			struct s_reader *err_reader = er->selected_reader; 
+			if (!err_reader) err_reader = ll_has_elements(er->matching_rdr);
 			if (err_reader)
 					snprintf(sby, sizeof(sby)-1, " by %s", err_reader->label);
 	}
@@ -2050,9 +2049,10 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 
 	if (er->rc>=E_RDR_FOUND)
 	{
-		ert->rc=E_FOUND;
 		if (er->rc == E_CACHE2 || er->rc == E_EMU)
-			ert->rc=er->rc;
+				ert->rc=er->rc;
+		else
+				ert->rc=E_FOUND;
 
 		ert->rcEx=0;
 		memcpy(ert->cw , er->cw , sizeof(er->cw));
@@ -2477,14 +2477,14 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		if (check_cwcache1(er, client->grp))
 				er->rc = E_CACHE1;
 		else if (check_and_store_ecmcache(er, client->grp))
-				return;
+				er->rc = E_99;
 				
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);
 #endif
 	}
 
-	if(er->rc >= E_UNHANDLED) {
+	if(er->rc >= E_99) {
 		er->reader_avail=0;
 		struct s_reader *rdr;
 		for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
@@ -2503,9 +2503,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					er->reader_avail++;
 			}
 		}
-		//we have to go through matching_reader() to check services, then check ecm-cache:
-		//if (er->reader_avail && check_and_store_ecmcache(er, client->grp))
-		//	return; //Found in ecmcache - answer by distribute ecm
 
 		if (cfg.lb_mode && er->reader_avail) {
 			cs_debug_mask(D_TRACE, "requesting client %s best reader for %04X/%06X/%04X",
@@ -2528,6 +2525,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 					er->fallback = NULL; //switch them
 			}
 	}
+	
+	if (er->rc == E_99)
+			return; //ECM already requested / found in ECM cache
 
 	if (er->rc < E_UNHANDLED) {
 		if (cfg.delay)
@@ -2726,9 +2726,20 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	//cs_log("num pend=%d", i);
 
 	for (--i; i>=0; i--) {
+
 		if (cl->ecmtask[i].rc>=E_99) { // check all pending ecm-requests
 			int act=1;
 			er=&cl->ecmtask[i];
+
+			//additional cache check:			
+			if (check_cwcache2(er, cl->grp)) {
+					cs_log("found lost entry in cache! %s %04X&%06X/%04X", username(cl), er->caid, er->prid, er->srvid);
+					er->rc = E_CACHE2;
+					send_dcw(cl, er);
+					continue;
+			}
+
+
 			tpc=er->tps;
 			unsigned int tt;
 			tt = (er->stage) ? cfg.ctimeout : cfg.ftimeout;
@@ -2785,6 +2796,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					continue;
 				} else {
 					er->stage++;
+					cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X", username(cl), er->caid, er->prid, er->srvid);
 					if (er->rc >= E_UNHANDLED) //do not request rc=99
 					        request_cw(er, er->stage, 0);
 					unsigned int tt;
@@ -2793,6 +2805,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					tpc.millitm += tt % 1000;
 				}
 			}
+			
 			//build_delay(&tpe, &tpc);
 			if (comp_timeb(&tpe, &tpc)>0) {
 				tpe.time=tpc.time;

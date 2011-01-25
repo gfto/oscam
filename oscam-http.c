@@ -3304,7 +3304,7 @@ void http_srv() {
 				SSL *ssl;
 				ssl = SSL_new(ctx);
 				if(ssl != NULL){
-					if(SSL_set_fd(ssl, s){
+					if(SSL_set_fd(ssl, s)){
 						if (SSL_accept(ssl) != -1)
 							process_request((FILE *)ssl, remote.sin_addr);
 						else {
