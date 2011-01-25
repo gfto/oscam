@@ -1885,7 +1885,7 @@ int write_config()
 	}
 
 	/*gbox*/
-	if ( cfg.cc_port > 0) {
+	if ( cfg.gbox_port > 0) {
 		fprintf(f,"[gbox]\n");
 		fprintf_conf(f, CONFVARWIDTH, "hostname", "%s\n", cfg.gbox_hostname);
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.gbox_port);
@@ -3011,7 +3011,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "password")) {
-		if (strstr(value, ",")) {
+		if (rdr->typ!=R_GBOX)
+				cs_strncpy(rdr->r_pwd, value, sizeof(rdr->r_pwd));
+		else if (strstr(value, ",")) {
 			for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
 				trim(ptr);
 				switch(i) {

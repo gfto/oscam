@@ -2706,7 +2706,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 
 			//additional cache check:			
 			if (check_cwcache2(er, cl->grp)) {
-					cs_log("found lost entry in cache! %s %04X&%06X/%04X", username(cl), er->caid, er->prid, er->srvid);
+					//cs_log("found lost entry in cache! %s %04X&%06X/%04X", username(cl), er->caid, er->prid, er->srvid);
 					er->rc = E_CACHE2;
 					send_dcw(cl, er);
 					continue;
