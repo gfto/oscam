@@ -1034,51 +1034,28 @@ void chk_t_serial(char *token, char *value)
 		fprintf(stderr, "Warning: keyword '%s' in serial section not recognized\n", token);
 }
 
-#ifdef CS_WITH_GBOX
 void chk_t_gbox(char *token, char *value)
 {
-	//if (!strcmp(token, "password")) strncpy(cfg.gbox_pwd, i2b(4, a2i(value, 4)), 4);
+	if (!strcmp(token, "hostname")) {
+		memset(cfg.gbox_hostname, 0, sizeof(cfg.gbox_hostname));
+		strncpy(cfg.gbox_hostname, value, sizeof(cfg.gbox_hostname) - 1);
+		return;
+	}
+
 	if (!strcmp(token, "password")) {
-		cs_atob(cfg.gbox_pwd, value, 4);
+		memset(cfg.gbox_key, 0, sizeof(cfg.gbox_key));
+		strncpy(cfg.gbox_key, value, sizeof(cfg.gbox_key) - 1);
 		return;
 	}
 
-	if (!strcmp(token, "maxdist")) {
-		cfg.maxdist = strToIntVal(value, 0);
-		return;
-	}
-
-	if (!strcmp(token, "ignorelist")) {
-		cs_strncpy((char *)cfg.ignorefile, value, sizeof(cfg.ignorefile));
-		return;
-	}
-
-	if (!strcmp(token, "onlineinfos")) {
-		cs_strncpy((char *)cfg.gbxShareOnl, value, sizeof(cfg.gbxShareOnl));
-		return;
-	}
-
-	if (!strcmp(token, "cardinfos")) {
-		cs_strncpy((char *)cfg.cardfile, value, sizeof(cfg.cardfile));
-		return;
-	}
-
-	if (!strcmp(token, "locals"))
-	{
-		char *ptr1;
-		int n = 0, i;
-		for (i = 0, ptr1 = strtok(value, ","); (i < CS_MAXLOCALS) && (ptr1); ptr1 = strtok(NULL, ",")) {
-			cfg.locals[n++] = a2i(ptr1, 8);
-			//printf("%i %08X",n,cfg.locals[n-1]);
-		}
-		cfg.num_locals = n;
+	if (!strcmp(token, "port")) {
+		cfg.gbox_port = strToIntVal(value, 0);
 		return;
 	}
 
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in gbox section not recognized\n",token);
 }
-#endif
 
 #ifdef HAVE_DVBAPI
 void chk_t_dvbapi(char *token, char *value)
@@ -1160,13 +1137,7 @@ static void chk_token(char *token, char *value, int tag)
 		case TAG_SERIAL  : chk_t_serial(token, value); break;
 		case TAG_CS378X  : chk_t_camd35_tcp(token, value); break;
 		case TAG_CCCAM   : chk_t_cccam(token, value); break;
-
-#ifdef CS_WITH_GBOX
 		case TAG_GBOX    : chk_t_gbox(token, value); break;
-#else
-		case TAG_GBOX    : fprintf(stderr, "OSCam compiled without gbox support. Parameter %s ignored\n", token); break;
-#endif
-
 
 #ifdef HAVE_DVBAPI
 		case TAG_DVBAPI  : chk_t_dvbapi(token, value); break;
@@ -1699,7 +1670,7 @@ int write_config()
 	/*global settings*/
 	fprintf(f,"[global]\n");
 	if (cfg.srvip != 0 || (cfg.srvip == 0 && cfg.http_full_cfg))
-		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.srvip));
+		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg.srvip));
 	if (cfg.usrfile != NULL || (cfg.usrfile == NULL && cfg.http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg.usrfile);
 	if (cfg.logfile != NULL || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || (cfg.logfile == NULL && cfg.http_full_cfg)){
@@ -1790,7 +1761,7 @@ int write_config()
 		fprintf(f,"[monitor]\n");
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.mon_port);
 		if (cfg.mon_srvip != 0)
-			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.mon_srvip));
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg.mon_srvip));
 
 		fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
 		struct s_ip *cip;
@@ -1817,7 +1788,7 @@ int write_config()
 		free(value);
 
 		if (cfg.ncd_srvip != 0)
-			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.ncd_srvip));
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg.ncd_srvip));
 		fprintf_conf(f, CONFVARWIDTH, "key", "");
 		for (i = 0; i < 14; i++) fprintf(f,"%02X", cfg.ncd_key[i]);
 		fprintf(f,"\n");
@@ -1840,7 +1811,7 @@ int write_config()
 		fprintf(f,"[camd33]\n");
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.c33_port);
 		if (cfg.c33_srvip != 0)
-			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.c33_srvip));
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg.c33_srvip));
 		fprintf_conf(f, CONFVARWIDTH, "passive", "%d\n", cfg.c33_passive);
 		fprintf_conf(f, CONFVARWIDTH, "key", ""); for (i = 0; i < (int) sizeof(cfg.c33_key); ++i) fprintf(f,"%02X", cfg.c33_key[i]); fputc((int)'\n', f);
 		fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
@@ -1859,7 +1830,7 @@ int write_config()
 		fprintf(f,"[cs357x]\n");
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.c35_port);
 		if (cfg.c35_srvip != 0)
-			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.c35_srvip));
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg.c35_srvip));
 		if (cfg.c35_suppresscmd08)
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg.c35_suppresscmd08);
 		fprintf(f,"\n");
@@ -1874,7 +1845,7 @@ int write_config()
 		free(value);
 
 		if (cfg.c35_tcp_srvip != 0)
-			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.c35_tcp_srvip));
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg.c35_tcp_srvip));
 		fputc((int)'\n', f);
 	}
 
@@ -1883,7 +1854,7 @@ int write_config()
 		fprintf(f,"[radegast]\n");
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.rad_port);
 		if (cfg.rad_srvip != 0)
-			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.rad_srvip));
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", inet_ntoa(*(struct in_addr *)&cfg.rad_srvip));
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg.rad_usr);
 		fprintf_conf(f, CONFVARWIDTH, "allowed", "");
 		struct s_ip *cip;
@@ -1896,25 +1867,6 @@ int write_config()
 		}
 		fprintf(f,"\n\n");
 	}
-
-#ifdef CS_WITH_GBOX
-	/*Gbox*/
-	if ((cfg.gbox_pwd[0] > 0) || (cfg.gbox_pwd[1] > 0) || (cfg.gbox_pwd[2] > 0) || (cfg.gbox_pwd[3] > 0)){
-		fprintf(f,"[gbox]\n");
-		fprintf_conf(f, CONFVARWIDTH, "password", ""); for (i=0;i<4;i++) fprintf(f,"%02X", cfg.gbox_pwd[i]); fputc((int)'\n', f);;
-		fprintf_conf(f, CONFVARWIDTH, "maxdist", "%d\n", cfg.maxdist);
-		fprintf_conf(f, CONFVARWIDTH, "ignorelist", "%s\n", cfg.ignorefile);
-		fprintf_conf(f, CONFVARWIDTH, "onlineinfos", "%s\n", cfg.gbxShareOnl);
-		fprintf_conf(f, CONFVARWIDTH, "cardinfos", "%s\n", cfg.cardfile);
-		fprintf_conf(f, CONFVARWIDTH, "locals", "");
-		char *dot = "";
-		for (i = 0; i < cfg.num_locals; i++){
-			fprintf(f,"%s%06lX", dot, cfg.locals[i]);
-			dot=";";
-		}
-		fprintf(f,"\n\n");
-	}
-#endif
 
 	/*serial*/
 	if (cfg.ser_device[0]){
@@ -1929,6 +1881,15 @@ int write_config()
 			fprintf_conf(f, CONFVARWIDTH, "device", "%s\n", ptr);
 			ptr = strtok(NULL, delimiter);
 		}
+		fprintf(f,"\n");
+	}
+
+	/*gbox*/
+	if ( cfg.cc_port > 0) {
+		fprintf(f,"[gbox]\n");
+		fprintf_conf(f, CONFVARWIDTH, "hostname", "%s\n", cfg.gbox_hostname);
+		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.gbox_port);
+		fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", cfg.gbox_key);
 		fprintf(f,"\n");
 	}
 
@@ -2231,14 +2192,6 @@ int write_server()
 			if (rdr->r_usr[0] && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", rdr->r_usr);
 
-#ifdef CS_WITH_GBOX
-			if (rdr->typ == R_GBOX) {
-				if (strlen(rdr->gbox_pwd) > 0)
-					fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", rdr->gbox_pwd);
-				fprintf_conf(f, CONFVARWIDTH, "premium", "%d\n", rdr->gbox_prem);
-			}
-#endif
-
 			if (strlen(rdr->r_pwd) > 0)
 				fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", rdr->r_pwd);
 
@@ -2456,7 +2409,7 @@ void write_versionfile() {
 #else
 	  fprintf(fp, "Dvbapi support:            no\n");
 #endif
-#ifdef CS_WITH_GBOX
+#ifdef MODULE_GBOX
 	  fprintf(fp, "Gbox support:              yes\n");
 #else
 	  fprintf(fp, "Gbox support:              no\n");
@@ -3058,10 +3011,20 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "password")) {
-#ifdef CS_WITH_GBOX
-		cs_strncpy((char *)rdr->gbox_pwd, (const char *)i2b(4, a2i(value, 4)), 4);
-#endif
-		cs_strncpy(rdr->r_pwd, value, sizeof(rdr->r_pwd));
+		if (strstr(value, ",")) {
+			for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
+				trim(ptr);
+				switch(i) {
+					case 0:
+						cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd));
+						break;
+
+					case 1:
+						cs_strncpy(rdr->l_pwd, ptr, sizeof(rdr->l_pwd));
+						break;
+				}
+			}
+		}
 		return;
 	}
 
@@ -3069,14 +3032,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		cs_strncpy(rdr->r_usr, value, sizeof(rdr->r_usr));
 		return;
 	}
-
-
-#ifdef CS_WITH_GBOX
-	if (!strcmp(token, "premium")) {
-		rdr->gbox_prem = 1;
-		return;
-	}
-#endif
 
 	//legacy parameter containing account=user,pass
 	if (!strcmp(token, "account")) {
@@ -3334,12 +3289,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		}
 
-#ifdef CS_WITH_GBOX
 		if (!strcmp(value, "gbox")) {
 			rdr->typ = R_GBOX;
 			return;
 		}
-#endif
 
 		if (!strcmp(value, "cccam") || !strcmp(value, "cccam ext")) {
 			rdr->typ = R_CCCAM;

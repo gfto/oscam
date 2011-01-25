@@ -4,12 +4,7 @@
 #if defined(AZBOX) && defined(HAVE_DVBAPI)
 #  include "openxcas/openxcas_api.h"
 #endif
-#ifdef CS_WITH_GBOX
-#  include "csgbox/gbox.h"
-#  define CS_VERSION_X  CS_VERSION "-gbx-" GBXVERSION
-#else
-#  define CS_VERSION_X  CS_VERSION
-#endif
+#define CS_VERSION_X  CS_VERSION
 #ifdef COOL
 void coolapi_close_all();
 void coolapi_open_all();
@@ -50,11 +45,6 @@ struct  s_ecm     *ecmidx;
 
 //cachesize
 int cache_size = 0;
-#ifdef CS_WITH_GBOX
-struct  card_struct Cards[CS_MAXCARDS];
-//struct  idstore_struct  idstore[CS_MAXPID];
-unsigned long IgnoreList[CS_MAXIGNORE];
-#endif
 
 struct  s_config  cfg;
 #ifdef CS_LOGHISTORY
@@ -205,7 +195,7 @@ static void usage()
 #ifdef HAVE_PCSC
   fprintf(stderr, "pcsc ");
 #endif
-#ifdef CS_WITH_GBOX
+#ifdef MODULE_GBOX
   fprintf(stderr, "gbox ");
 #endif
   fprintf(stderr, "\n\tinbuilt protocols: ");
@@ -1253,11 +1243,6 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 	client->account=first_client->account;
 	switch((long)account)
 	{
-#ifdef CS_WITH_GBOX
-	case -2:            // gbx-dummy
-	client->dup=0;
-	break;
-#endif
 	case 0:           // reject access
 		rc=1;
 		cs_add_violation((uint)client->ip);
@@ -1705,11 +1690,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 //cs_log("answer from reader %d (rc=%d)", er->selected_reader, er->rc);
   er->caid=er->ocaid;
 
-#ifdef CS_WITH_GBOX
-  if (er->rc==E_RDR_FOUND||(er->gbxRidx&&er->rc==E_RDR_NOTFOUND)) {
-#else
   if (er->rc==E_RDR_FOUND) {
-#endif
 
 #ifndef CS_WITH_DOUBLECHECK
     store_cw_in_cache(er, reader->grp);
@@ -1834,19 +1815,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
 		lc^=*lp;
 
-#ifdef CS_WITH_GBOX
-	if(er->gbxFrom)
-		snprintf(uname,sizeof(uname)-1, "%s(%04X)", username(client), er->gbxFrom);
-	else
-#endif
 		snprintf(uname,sizeof(uname)-1, "%s", username(client));
 	if (er->rc==E_FOUND)
 	{
-#ifdef CS_WITH_GBOX
-		if(er->selected_reader->typ==R_GBOX)
-			snprintf(sby, sizeof(sby)-1, " by %s(%04X)", er->reader0->label,er->gbxCWFrom);
-		else
-#endif
 			// add marker to reader if ECM_REQUEST was betatunneled
 			if(er->btun)
 				snprintf(sby, sizeof(sby)-1, " by %s(btun)", er->selected_reader->label);
@@ -2061,9 +2032,6 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 
 		ert->rcEx=0;
 		memcpy(ert->cw , er->cw , sizeof(er->cw));
-#ifdef CS_WITH_GBOX
-    	ert->gbxCWFrom=er->gbxCWFrom;
-#endif
   } else { // not found (from ONE of the readers !) er->rc==E_RDR_NOTFOUND
 		ert->rcEx=er->rcEx;
 		strcpy(ert->msglog, er->msglog);
@@ -3174,11 +3142,11 @@ if (pthread_key_create(&getclient, NULL)) {
 #ifdef MODULE_CCCAM
            module_cccam,
 #endif
+#ifdef MODULE_GBOX
+           module_gbox,
+#endif
 #ifdef MODULE_CONSTCW
            module_constcw,
-#endif
-#ifdef CS_WITH_GBOX
-           module_gbox,
 #endif
 #ifdef MODULE_RADEGAST
            module_radegast,

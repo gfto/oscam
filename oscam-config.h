@@ -61,6 +61,10 @@
 #define MODULE_CCCAM
 #endif
 
+#ifndef MODULE_GBOX
+#define MODULE_GBOX
+#endif
+
 #ifndef MODULE_RADEGAST
 #define MODULE_RADEGAST
 #endif

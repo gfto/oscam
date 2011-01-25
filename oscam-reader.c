@@ -68,9 +68,6 @@ static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
       if (rc)
       {
         cl->ecmtask[i].rc=(i==idx) ? 1 : 2;
-#ifdef CS_WITH_GBOX
-        if(cl->ecmtask[i].gbxRidx)cl->ecmtask[i].rc=0;
-#endif
         memcpy(cl->ecmtask[i].cw, cw, 16);
       }
       else
@@ -688,23 +685,6 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
   int is_tcp=(reader->ph.type==MOD_CONN_TCP);
   fd_set fds;
   struct timeval tv;
-
-#ifdef CS_WITH_GBOX 
-  if(reader->typ==R_GBOX) {
-    struct timeb tpe;
-    int x;
-    ulong ms;
-    cs_ftime(&tpe);
-    for(x=0;x<CS_MAXPENDING;x++){
-      ms=1000*(tpe.time-cl->ecmtask[x].tps.time)+tpe.millitm-cl->ecmtask[x].tps.millitm;
-      if(cl->ecmtask[x].rc == 10 && ms > cfg.ctimeout && cl->ridx == cl->ecmtask[x].gbxRidx) {
-        //cs_log("hello rc=%d idx:%d x:%d ridx%d ridx:%d",cl->ecmtask[x].rc,cl->ecmtask[x].idx,x,ridx,cl->ecmtask[x].gbxRidx);
-        cl->ecmtask[x].rc=5;
-        send_dcw(cl, &cl->ecmtask[x]);
-      }
-    }
-  }
-#endif
 
   tcp_toflag=(fd2 && is_tcp && reader->tcp_ito && reader->tcp_connected);
   tv.tv_sec = 0;

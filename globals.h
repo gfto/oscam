@@ -120,12 +120,6 @@
 #define CS_MAXPORTS   32  // max server ports
 #define CS_MAXFILTERS   16
 
-#ifdef CS_WITH_GBOX
-#define CS_MAXCARDS       4096
-#define CS_MAXIGNORE      1024
-#define CS_MAXLOCALS      16
-#endif
-
 #define CS_ECMSTORESIZE   16  // use MD5()
 #define CS_EMMSTORESIZE   16  // use MD5()
 #define CS_CLIENT_TIMEOUT 5000
@@ -178,9 +172,7 @@
 #define R_CS378X    0x24  // Reader cascading camd 3.5x TCP
 #define R_CONSTCW   0x25  // Reader for Constant CW
 /////////////////// peer to peer proxy readers after R_CCCAM
-#ifdef CS_WITH_GBOX
 #define R_GBOX      0x30  // Reader cascading gbox
-#endif
 #define R_CCCAM     0x35  // Reader cascading cccam
 #define R_SERIAL    0x80  // Reader serial
 #define R_IS_NETWORK    0x60
@@ -582,13 +574,6 @@ typedef struct ecm_request_t
   struct s_reader *origin_reader;
 #endif
 
-#ifdef CS_WITH_GBOX
-  ushort	gbxCWFrom;
-  ushort	gbxFrom;
-  ushort	gbxTo;
-  uchar		gbxForward[16];
-  int		gbxRidx;
-#endif
   char msglog[MSGLOGSIZE];
 
 } GCC_PACK      ECM_REQUEST;
@@ -652,6 +637,7 @@ struct s_client
   char 		ncd_client_id[5];
   uchar		ncd_skey[16];
   void		*cc;
+  void		*gbox;
   int		port_idx;    // index in server ptab
   int		ncd_server;  // newcamd server
 #ifdef CS_ANTICASC
@@ -777,6 +763,7 @@ struct s_reader  //contains device info, reader info and card info
   int       r_port;
   char      r_usr[64];
   char      r_pwd[64];
+  char      l_pwd[64];
   int       r_crypted;
   int       l_port;
   int       log_port;
@@ -836,15 +823,6 @@ struct s_reader  //contains device info, reader info and card info
   FTAB      fchid;
   FTAB      ftab;
   CLASSTAB  cltab;
-#ifdef CS_WITH_GBOX
-  uchar     gbox_pwd[4];
-  uchar     gbox_timecode[7];
-  int       gbox_online;
-  uchar     gbox_vers;
-  uchar     gbox_prem;
-  int       gbox_fd;
-  struct timeb  gbox_lasthello;   // incoming time stamp
-#endif
 
   int       init_history_pos;
   int       brk_pos;
@@ -1128,6 +1106,9 @@ struct s_config
 	int             cc_keep_connected;
 	int		cc_stealth;
 	int		cc_reshare_services;
+	char	gbox_hostname[128];
+	char	gbox_key[9];
+	int		gbox_port;
 	struct s_ip *rad_allowed;
 	char		rad_usr[32];
 	char		ser_device[512];
@@ -1154,16 +1135,6 @@ struct s_config
 
 #ifdef CS_WITH_DOUBLECHECK
         int             double_check; //schlocke: Double checks each ecm+dcw from two (or more) readers
-#endif
-
-#ifdef CS_WITH_GBOX
-	uchar		gbox_pwd[8];
-	uchar		ignorefile[128];
-	uchar		cardfile[128];
-	uchar		gbxShareOnl[128];
-	int		maxdist;
-	int		num_locals;
-	unsigned long 	locals[CS_MAXLOCALS];
 #endif
 
 #ifdef IRDETO_GUESSING
@@ -1429,9 +1400,7 @@ extern void chk_t_camd35_tcp(char *token, char *value);
 extern void chk_t_newcamd(char *token, char *value);
 extern void chk_t_radegast(char *token, char *value);
 extern void chk_t_serial(char *token, char *value);
-#ifdef CS_WITH_GBOX
 extern void chk_t_gbox(char *token, char *value);
-#endif
 extern void chk_t_cccam(char *token, char *value);
 extern void chk_t_global(const char *token, char *value);
 extern void chk_t_monitor(char *token, char *value);
@@ -1573,11 +1542,9 @@ extern void module_newcamd(struct s_module *);
 extern void module_radegast(struct s_module *);
 extern void module_oscam_ser(struct s_module *);
 extern void module_cccam(struct s_module *);
+extern void module_gbox(struct s_module *);
 extern void module_constcw(struct s_module *);
 extern struct timeval *chk_pending(struct timeb tp_ctimeout);
-#ifdef CS_WITH_GBOX
-extern void module_gbox(struct s_module *);
-#endif
 #ifdef HAVE_DVBAPI
 extern void module_dvbapi(struct s_module *);
 #endif

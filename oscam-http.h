@@ -407,10 +407,6 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLFILEMENUDVBAPI "			<TD CLASS=\"configmenu\"><A HREF=\"files.html?part=dvbapi\">oscam.dvbapi</A></TD>\n"
 #endif
 
-#ifdef CS_WITH_GBOX
-#define TPLCONFIGMENUGBOX "			<TD CLASS=\"configmenu\"><A HREF=\"config.html?part=gbox\">Gbox</A></TD>\n"
-#endif
-
 #define TPLSTATUS "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -1017,13 +1013,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##server#cccwantemu##TPLHELPSUFFIX##Want Emu:</A><input name=\"cccwantemu\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"cccwantemu\" type=\"checkbox\" value=\"1\" ##CCCWANTEMUCHECKED##></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect-timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##server#ccckeepalive##TPLHELPSUFFIX##Keep alive:</A></TD><TD><SELECT NAME=\"ccckeepalive\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##KEEPALIVECHECKED##>YES</OPTION></SELECT></TD></TR>\n"
-#ifdef CS_WITH_GBOX
-#define TPLREADERCONFIGGBOXBIT "\
-			<TR><TD>##TPLHELPPREFIX##server#user##TPLHELPSUFFIX##User:</A></TD><TD><input name=\"user\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##ACCOUNT##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#password##TPLHELPSUFFIX##Password:</A></TD><TD><input name=\"password\" type=\"text\" size=\"10\" maxlength=\"8\" value=\"##PASSWORD##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#inactivitytimeout##TPLHELPSUFFIX##Inactivity timeout:</A></TD><TD><input name=\"inactivitytimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##INACTIVITYTIMEOUT##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##server#reconnecttimeout##TPLHELPSUFFIX##Reconnect timeout:</A></TD><TD><input name=\"reconnecttimeout\" type=\"text\" size=\"30\" maxlength=\"50\" value=\"##RECEIVETIMEOUT##\"></TD></TR>\n"
-#endif
 
 #define TPLCONFIGGBOX "\
 ##TPLHEADER##\
@@ -1630,10 +1619,6 @@ char *tpl[]={
 	,"CONFIGMENUANTICASC"
 	,"FILEMENUANTICASC"
 #endif
-#ifdef CS_WITH_GBOX
-	,"CONFIGMENUGBOX"
-	,"READERCONFIGGBOXBIT"
-#endif
 #ifdef CS_WITH_DOUBLECHECK
 	,"DOUBLECHECKBIT"
 #endif
@@ -1743,10 +1728,6 @@ char *tplmap[]={
 	,TPLCONFIGANTICASC
 	,TPLCONFIGMENUANTICASC
 	,TPLFILEMENUANTICASC
-#endif
-#ifdef CS_WITH_GBOX
-	,TPLCONFIGMENUGBOX
-	,TPLREADERCONFIGGBOXBIT
 #endif
 #ifdef CS_WITH_DOUBLECHECK
 	,TPLDOUBLECHECKBIT

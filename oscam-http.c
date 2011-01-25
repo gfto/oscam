@@ -443,35 +443,6 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 	return tpl_getTpl(vars, "CONFIGCCCAM");
 }
 
-#ifdef CS_WITH_GBOX
-char *send_oscam_config_gbox(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
-	if (strcmp(getParam(params, "action"),"execute") == 0) {
-		for(i = 0; i < (*params).paramcount; ++i) {
-			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
-				tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
-				//we use the same function as used for parsing the config tokens
-				chk_t_gbox((*params).params[i], (*params).values[i]);
-			}
-		}
-		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Gbox done. You should restart Oscam now.</B><BR><BR>");
-		if(write_config()==0) refresh_oscam(REFR_SERVER, in);
-		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
-	}
-	tpl_printf(vars, TPLADD, "MAXDIST", "%d", cfg.maxdist);
-	for (i=0;i<4;i++) tpl_printf(vars, TPLAPPEND, "PASSWORD", "%02X", cfg.gbox_pwd[i]);
-	tpl_addVar(vars, TPLADD, "IGNORELIST", (char *)cfg.ignorefile);
-	tpl_addVar(vars, TPLADD, "ONLINEINFOS", (char *)cfg.gbxShareOnl);
-	tpl_addVar(vars, TPLADD, "CARDINFOS", (char *)cfg.cardfile);
-	char *dot = "";
-	for (i = 0; i < cfg.num_locals; i++) {
-		tpl_printf(vars, TPLAPPEND, "LOCALS", "%s%06lX", dot, cfg.locals[i]);
-		dot=";";
-	}
-	return tpl_getTpl(vars, "CONFIGGBOX");
-}
-#endif
-
 char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
 	int i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
@@ -688,9 +659,6 @@ char *send_oscam_config(struct templatevars *vars, struct uriparams *params, str
 	else if (!strcmp(part,"newcamd")) return send_oscam_config_newcamd(vars, params, in);
 	else if (!strcmp(part,"radegast")) return send_oscam_config_radegast(vars, params, in);
 	else if (!strcmp(part,"cccam")) return send_oscam_config_cccam(vars, params, in);
-#ifdef CS_WITH_GBOX
-	else if (!strcmp(part,"gbox")) return send_oscam_config_gbox(vars, params, in);
-#endif
 #ifdef HAVE_DVBAPI
 	else if (!strcmp(part,"dvbapi")) return send_oscam_config_dvbapi(vars, params, in);
 #endif
@@ -851,9 +819,6 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 	}
 	ll_iter_release(itr);
 
-#ifdef CS_WITH_GBOX
-	tpl_addVar(vars, TPLADD, "ADDPROTOCOL", "<option>gbox</option>\n");
-#endif
 #ifdef HAVE_PCSC
 	tpl_addVar(vars, TPLAPPEND, "ADDPROTOCOL", "<option>pcsc</option>\n");
 #endif
@@ -935,17 +900,6 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	tpl_printf(vars, TPLADD, "ACCOUNT",  "%s", rdr->r_usr);
 
-#ifdef CS_WITH_GBOX
-	if (strlen(rdr->gbox_pwd) > 0)
-		tpl_printf(vars, TPLADD, "PASSWORD",  "%s", rdr->gbox_pwd);
-	else if (strlen(rdr->r_pwd) > 0)
-		tpl_printf(vars, TPLADD, "PASSWORD",  "%s", rdr->r_pwd);
-	else
-		tpl_printf(vars, TPLADD, "PASSWORD",  "%s", "");
-#else
-	tpl_printf(vars, TPLADD, "PASSWORD",  "%s", rdr->r_pwd);
-#endif
-
 	for (i=0; i<14; i++)
 		tpl_printf(vars, TPLAPPEND, "NCD_KEY", "%02X", rdr->ncd_key[i]);
 
@@ -1002,11 +956,6 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	tpl_printf(vars, TPLADD, "MHZ", "%d", rdr->mhz);
 	tpl_printf(vars, TPLADD, "CARDMHZ", "%d", rdr->cardmhz);
-
-#ifdef CS_WITH_GBOX
-	tpl_addVar(vars, TPLADD, "GBOXPWD", (char *)rdr->gbox_pwd);
-	tpl_addVar(vars, TPLADD, "PREMIUM", rdr->gbox_prem);
-#endif
 
 	tpl_printf(vars, TPLADD, "DEVICE", "%s", rdr->device);
 	if(rdr->r_port)
@@ -1210,12 +1159,6 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 			tpl_addVar(vars, TPLADD, "PROTOCOL", "cccam");
 			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGCCCAMBIT"));
 			break;
-#ifdef CS_WITH_GBOX
-		case R_GBOX :
-			tpl_addVar(vars, TPLADD, "PROTOCOL", "gbox");
-			tpl_addVar(vars, TPLAPPEND, "READERDEPENDINGCONFIG", tpl_getTpl(vars, "READERCONFIGGBOXBIT"));
-			break;
-#endif
 #ifdef HAVE_PCSC
 		case R_PCSC :
 			tpl_addVar(vars, TPLADD, "PROTOCOL", "pcsc");

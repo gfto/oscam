@@ -1,11 +1,6 @@
 #include "globals.h"
-#ifdef CS_WITH_GBOX
-#  include "csgbox/gbox.h"
-#  define CS_VERSION_X  CS_VERSION "-gbx-" GBXVERSION
-#else
-#  define CS_VERSION_X  CS_VERSION
-#endif
 
+#define CS_VERSION_X  CS_VERSION
 
 static void monitor_check_ip()
 {
