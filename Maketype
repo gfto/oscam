@@ -32,6 +32,7 @@ LIBDIR		= lib
 LIBFILE1	= $(LIBDIR)/libcs-$(TYP).a
 LIBFILE2	= $(LIBDIR)/libcscrypt-$(TYP).a
 LIBFILE3	= $(LIBDIR)/libcsctapi-$(TYP).a
+LIBFILE4	= $(LIBDIR)/libminilzo-$(TYP).a
 
 OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(oscam-config.o) \
@@ -96,9 +97,10 @@ endif
 
 		$(MAKE) -C cscrypt
 		$(MAKE) -C csctapi
+		$(MAKE) -C algo
 
-$(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(GENERAL)
-		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o "$@" $(LIBS)
+$(EXEFILE1):	oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(GENERAL)
+		$(CC) $(LDFLAGS) oscam.c $(LIBFILE1) $(LIBFILE2) $(LIBFILE3) $(LIBFILE4) $(LIBUSB) $(LIBPCSC) $(LIBRT) -o "$@" $(LIBS)
 		$(STRIP) $@
 
 $(EXEFILE2):	utils/list_smargo.c
