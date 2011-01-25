@@ -3447,6 +3447,9 @@ if (pthread_key_create(&getclient, NULL)) {
                 kill_thread(first_client->next);
         }
 
+        if (cfg.lb_mode && cfg.lb_save)
+				save_stat_to_file();        		
+
         stop_garbage_collector();
         
 	return exit_oscam;

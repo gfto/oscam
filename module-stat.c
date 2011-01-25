@@ -67,11 +67,13 @@ void load_stat_from_file()
 		
 		if (i > 5) {
 			if (rdr == NULL || strcmp(buf, rdr->label) != 0) {
-				for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+				LL_ITER *itr = ll_iter_create(configured_readers);
+				while ((rdr=ll_iter_next(itr))) {
 					if (strcmp(rdr->label, buf) == 0) {
 						break;
 					}
 				}
+				ll_iter_release(itr);
 			}
 			
 			if (rdr != NULL && strcmp(buf, rdr->label) == 0) {
@@ -189,7 +191,8 @@ void save_stat_to_file()
 
 	int count=0;
 	struct s_reader *rdr;
-	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+	LL_ITER *itr = ll_iter_create(configured_readers);
+	while ((rdr=ll_iter_next(itr))) {
 		
 		if (rdr->lb_stat) {
 			LL_ITER *it = ll_iter_create(rdr->lb_stat);
@@ -204,6 +207,7 @@ void save_stat_to_file()
 			ll_iter_release(it);
 		}
 	}
+	ll_iter_release(itr);
 	
 	fclose(file);
 	cs_log("loadbalancer: statistic saved %d records to %s", count, fname);
@@ -723,9 +727,11 @@ void clear_reader_stat(struct s_reader *rdr)
 void clear_all_stat()
 {
 	struct s_reader *rdr;
-	for (rdr=first_active_reader; rdr ; rdr=rdr->next) { 
+	LL_ITER *itr = ll_iter_create(configured_readers);
+	while ((rdr = ll_iter_next(itr))) { 
 		clear_reader_stat(rdr);
 	}
+	ll_iter_release(itr);
 }
 
 void housekeeping_stat(int force)
@@ -739,17 +745,19 @@ void housekeeping_stat(int force)
 	time_t cleanup_time = now - (cfg.lb_stat_cleanup*60*60);
 	
 	struct s_reader *rdr;
-	for (rdr=first_active_reader; rdr ; rdr=rdr->next) { 
+    LL_ITER *itr = ll_iter_create(configured_readers);
+    while ((rdr = ll_iter_next(itr))) {
 		if (rdr->lb_stat) {
-			LL_ITER *itr = ll_iter_create(rdr->lb_stat);
+			LL_ITER *it = ll_iter_create(rdr->lb_stat);
 			READER_STAT *stat;
-			while ((stat=ll_iter_next(itr))) {
+			while ((stat=ll_iter_next(it))) {
 				
 				if (stat->last_received < cleanup_time)
-					ll_iter_remove_data(itr);
+					ll_iter_remove_data(it);
 			}
 			
-			ll_iter_release(itr);
+			ll_iter_release(it);
 		}
 	}
+	ll_iter_release(itr);
 }
