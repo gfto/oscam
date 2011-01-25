@@ -610,6 +610,8 @@ int ICC_Async_Close (struct s_reader *reader)
 			call (Phoenix_Close(reader));
 #elif defined(WITH_STAPI)
 			call(STReader_Close(reader->stsmart_handle));
+#elif defined(COOL)
+			call (Cool_Close());
 #endif
 			break;
 #ifdef HAVE_PCSC

@@ -12,6 +12,7 @@
 #endif
 #ifdef COOL
 void coolapi_close_all();
+void coolapi_open_all();
 #endif
 
 extern void cs_statistics(struct s_client * client);
@@ -905,6 +906,10 @@ static void init_first_client()
 #ifdef CS_LOGHISTORY
   loghistidx=0;
   memset(loghist, 0, CS_MAXLOGHIST*CS_LOGHISTSIZE);
+#endif
+
+#ifdef COOL
+  coolapi_open_all();
 #endif
 }
 

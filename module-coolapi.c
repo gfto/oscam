@@ -394,6 +394,12 @@ int coolapi_read(int fd, unsigned char * buffer, unsigned int len)
 	return done;
 }
 
+void coolapi_open_all()
+{
+	cnxt_kal_initialize();
+	cnxt_drv_init();
+}
+
 void coolapi_open()
 {
 	int result = 0;
@@ -403,9 +409,6 @@ void coolapi_open()
                 int i;
 
 		cs_log("Open coolstream dmx api");
-
-                cnxt_kal_initialize();
-                cnxt_drv_init();
                 cnxt_cbuf_init(NULL);
                 cnxt_dmx_init(NULL);
 
