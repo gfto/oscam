@@ -50,13 +50,12 @@ DESCRIPTIONS
 
 	  example: caid = 0100&ffff:0200:0300&ff00
 
-       au = label of reader|1
+       au = label of reader[,label of reader]...|1
 	  AU setting:
 	    label of reader = sending EMMs to specified reader
-			      (security issue: client can see SC data!)
+			      (security issue: clients can see SC data!)
 	    1		    = auto AU is sending EMMs to all readers
-			      (security issue: client can see SC data!)
-	    default:none
+			      (security issue: clients can see SC data!)  default:none
 
        group = group[,<group>]...
 	  user assingment to reader group, default=none, required
