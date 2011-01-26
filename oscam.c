@@ -1667,9 +1667,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 
   if (er->rc==E_RDR_FOUND) {
 
-#ifndef CS_WITH_DOUBLECHECK
-    store_cw_in_cache(er, reader->grp);
-#endif
+	store_cw_in_cache(er, reader->grp);
 
     /* CWL logging only if cwlogdir is set in config */
     if (cfg.cwlogdir != NULL)
