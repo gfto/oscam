@@ -899,6 +899,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		tpl_addVar(vars, TPLADD, "ENABLED", "checked");
 
 	tpl_printf(vars, TPLADD, "ACCOUNT",  "%s", rdr->r_usr);
+	tpl_printf(vars, TPLADD, "PASSWORD",  "%s", rdr->r_pwd); 
 
 	for (i=0; i<14; i++)
 		tpl_printf(vars, TPLAPPEND, "NCD_KEY", "%02X", rdr->ncd_key[i]);
