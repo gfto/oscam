@@ -3040,22 +3040,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "password")) {
-		if (rdr->typ!=R_GBOX)
-				cs_strncpy(rdr->r_pwd, value, sizeof(rdr->r_pwd));
-		else if (strstr(value, ",")) {
-			for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
-				trim(ptr);
-				switch(i) {
-					case 0:
-						cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd));
-						break;
-
-					case 1:
-						cs_strncpy(rdr->l_pwd, ptr, sizeof(rdr->l_pwd));
-						break;
-				}
-			}
-		}
+		cs_strncpy(rdr->r_pwd, value, sizeof(rdr->r_pwd));
 		return;
 	}
 

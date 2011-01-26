@@ -1,5 +1,8 @@
-#ifdef MODULE_GBOX
+//#ifdef MODULE_GBOX
 #include <pthread.h>
+#define _XOPEN_SOURCE 600
+#include <semaphore.h>
+#include <time.h>
 
 #include "globals.h"
 #include "module-datastruct-llist.h"
@@ -9,10 +12,8 @@ enum {
   MSG_ECM = 0x445c,
   MSG_CW = 0x4844,
   MSG_CW_NOK = 0,	// todo
-  MSG_HELLO = 0xa0a1,
-  //0x4849
-  MSG_HELLOL = 0xddab,
-  MSG_CR = 0x41c0
+  MSG_HELLO = 0xddab,
+  MSG_CHECKCODE = 0x41c0
 };
 
 struct gbox_card {
@@ -30,13 +31,15 @@ struct gbox_peer {
   uchar ver;
   uchar type;
   LLIST *cards;
-  uchar checksum[7];
+  uchar checkcode[7];
   uchar *hostname;
+  int online;
+  int fail_count;
 };
 
 struct gbox_data {
   uint16 id;
-  uchar checksum[7];
+  uchar checkcode[7];
   uchar key[4];
   uchar ver;
   uchar type;
@@ -46,6 +49,7 @@ struct gbox_data {
   pthread_mutex_t lock;
   //char *hostname;
   uchar buf[1024];
+  sem_t sem;
 };
 
 static const uchar sbox[] = {
@@ -64,18 +68,18 @@ static int gbox_decode_cmd(uchar *buf)
   return buf[0] << 8 | buf[1];
 }
 
-static void gbox_calc_checksum(struct gbox_data *gbox)
+static void gbox_calc_checkcode(struct gbox_data *gbox)
 {
-  memcpy(gbox->checksum, "\x15\x30\x2\x4\x19\x19\x66", 7);	/* no local cards */
+  memcpy(gbox->checkcode, "\x15\x30\x2\x4\x19\x19\x66", 7);	/* no local cards */
   // for all local cards do:
   /*
-    gbox->checksum[0] ^= caid << 8;
-    gbox->checksum[1] ^= caid & 0xff;
-    gbox->checksum[2] ^= provid << 8;
-    gbox->checksum[3] ^= provid & 0xff;
-    gbox->checksum[4] ^= slot;  // reader number
-    gbox->checksum[5] ^= gbox->id << 8;
-    gbox->checksum[6] ^= gbox->id & 0xff;
+    gbox->checkcode[0] ^= caid << 8;
+    gbox->checkcode[1] ^= caid & 0xff;
+    gbox->checkcode[2] ^= provid << 8;
+    gbox->checkcode[3] ^= provid & 0xff;
+    gbox->checkcode[4] ^= slot;  // reader number
+    gbox->checkcode[5] ^= gbox->id << 8;
+    gbox->checkcode[6] ^= gbox->id & 0xff;
   */
 }
 
@@ -200,8 +204,8 @@ static void gbox_compress(struct gbox_data *gbox, uchar *buf, int unpacked_len, 
 
   lzo_init();
 
-  lzo_voidp wrkmem = malloc(0x40000);
-  cs_log("gbox: wrkmem = %p", wrkmem);
+  lzo_voidp wrkmem = malloc(unpacked_len * 0x1000);
+  cs_debug_mask(D_READER, "gbox: wrkmem = %p", wrkmem);
   lzo_uint pl = 0;
   if (lzo1x_1_compress(tmp2, unpacked_len, tmp, &pl, wrkmem) != LZO_E_OK)
     cs_log("gbox: compression failed!");
@@ -214,13 +218,6 @@ static void gbox_compress(struct gbox_data *gbox, uchar *buf, int unpacked_len, 
   free(wrkmem);
 
   *packed_len = pl;
-
-	/*
-	// debug - something weird is going on with the compression code!
-	*packed_len = unpacked_len + 4;
-	memcpy(buf + 13, buf + 12, unpacked_len - 12);
-	buf[12] = 0x20;
-	buf[unpacked_len + 1] = 0x11;*/
 }
 
 static void gbox_decompress(struct gbox_data *gbox, uchar *buf, int *unpacked_len)
@@ -237,6 +234,36 @@ static void gbox_decompress(struct gbox_data *gbox, uchar *buf, int *unpacked_le
   *unpacked_len += 12;
 }
 
+static void gbox_wait_for_response(struct s_client *cli)
+{
+	printf("gbox: enter gbox_wait_for_response()\n");
+	//cs_debug_mask(D_READER, "gbox: enter gbox_wait_for_response()");
+	struct gbox_data *gbox = cli->gbox;
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec += 5;
+
+	//sem_wait(&gbox->sem);
+	if (sem_timedwait(&gbox->sem, &ts) == -1) {
+		if (errno == ETIMEDOUT) {
+			gbox->peer.fail_count++;
+			printf("gbox: sem wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
+			if (gbox->peer.fail_count >= 5) {
+				gbox->peer.online = 0;
+				printf("gbox: fail_count >=5, peer is offline\n");
+			}
+			//cs_debug_mask(D_READER, "gbox: sem wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
+		}
+	} else {
+		gbox->peer.fail_count = 0;
+		printf("gbox: sem posted, peer is online\n");
+	}
+	//cs_debug_mask(D_READER, "gbox: sem posted, peer is online");
+
+	//cs_debug_mask(D_READER, "gbox: exit gbox_wait_for_response()");
+	printf("gbox: exit gbox_wait_for_response()\n");
+}
+
 static void gbox_send(struct s_client *cli, uchar *buf, int l)
 {
   struct gbox_data *gbox = cli->gbox;
@@ -249,6 +276,9 @@ static void gbox_send(struct s_client *cli, uchar *buf, int l)
 
   cs_ddump_mask(D_READER, gbox->key, 4, "gbox: key after encrypt:");
   cs_ddump_mask(D_READER, buf, l, "gbox: encrypted data sent (%d bytes):", l);
+
+  pthread_t t;
+  pthread_create(&t, NULL, (void *)gbox_wait_for_response, cli);
 }
 
 static void gbox_send_hello(struct s_client *cli)
@@ -264,15 +294,15 @@ static void gbox_send_hello(struct s_client *cli)
 
   memset(buf, 0, sizeof(buf));
 
-  gbox_calc_checksum(gbox);
+  gbox_calc_checkcode(gbox);
 
-  buf[0] = MSG_HELLOL >> 8;
-  buf[1] = MSG_HELLOL & 0xff;
+  buf[0] = MSG_HELLO >> 8;
+  buf[1] = MSG_HELLO & 0xff;
   memcpy(buf + 2, gbox->peer.key, 4);
   memcpy(buf + 6, gbox->key, 4);
-  buf[11] = 0x80;    // this needs adjusting if local card support is added
+  buf[11] = 0x80;    // todo this needs adjusting if local card support is added
 
-  memcpy(buf + 12, gbox->checksum, 7);
+  memcpy(buf + 12, gbox->checkcode, 7);
   buf[19] = 0x73;
   buf[20] = 0x10;
   memcpy(buf + 21, cfg.gbox_hostname, hostname_len);
@@ -296,6 +326,9 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
 
   uchar *data = gbox->buf;
   int n;
+
+  sem_post(&gbox->sem);
+  gbox->peer.online = 1;
 
   pthread_mutex_lock(&gbox->lock);
 
@@ -330,7 +363,7 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
   }
 
   switch (gbox_decode_cmd(data)) {
-    case MSG_HELLOL:
+    case MSG_HELLO:
       {
     	static int exp_seq = 0;
 
@@ -352,13 +385,13 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
           if (gbox->peer.cards) ll_destroy_data(gbox->peer.cards);
           gbox->peer.cards = ll_create();
 
-          int checksum_len = 7;
+          int checkcode_len = 7;
           int hostname_len = data[payload_len - 1];
           int footer_len = hostname_len + 2;
 
           // add cards to card list
           uchar *ptr = data + 12;
-          while (ptr < data + payload_len - footer_len - checksum_len - 1) {
+          while (ptr < data + payload_len - footer_len - checkcode_len - 1) {
             uint16 caid = ptr[0] << 8 | ptr[1];
             uint32 provid = ptr[2] << 8 | ptr[3];
             int ncards = ptr[4];
@@ -395,7 +428,7 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
           memcpy(gbox->peer.hostname, data + payload_len - 1 - hostname_len, hostname_len);
           gbox->peer.hostname[hostname_len] = '\0';
 
-          memcpy(gbox->peer.checksum, data + payload_len - footer_len - checksum_len - 1, checksum_len);
+          memcpy(gbox->peer.checkcode, data + payload_len - footer_len - checkcode_len - 1, checkcode_len);
           gbox->peer.ver = data[payload_len - footer_len - 1];
           gbox->peer.type = data[payload_len - footer_len];
         } else {
@@ -433,8 +466,8 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
 
         if (final) exp_seq = 0;
 
-        cs_log("gbox: received hello %d%s, %d providers from %s, version=2.%02X, checksum=%s",
-        		seqno, final ? " (final)" : "", ncards_in_msg, gbox->peer.hostname, gbox->peer.ver, cs_hexdump(0, gbox->peer.checksum, 7));
+        cs_log("gbox: received hello %d%s, %d providers from %s, version=2.%02X, checkcode=%s",
+        		seqno, final ? " (final)" : "", ncards_in_msg, gbox->peer.hostname, gbox->peer.ver, cs_hexdump(0, gbox->peer.checkcode, 7));
 
         if (!ll_count(gbox->peer.cards))
         	  cli->reader->tcp_connected = 1;
@@ -447,6 +480,10 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
 /*
         cs_log("gbox: received cws=%s, peer=%04x, ecm_pid=%d, sid=%d",
         		data[10] << 8 | data[11], data[6] << 8 | data[7], data[8] << 8 | data[9], cs_hexdump(0, gbox->cws, 16));*/
+    	break;
+    case MSG_CHECKCODE:
+    	memcpy(gbox->peer.checkcode, data + 10, 7);
+        cs_debug_mask(D_READER, "gbox: received checkcode=%s",  cs_hexdump(0, gbox->peer.checkcode, 7));
     	break;
     default:
       cs_ddump_mask(D_READER, data, n, "gbox: unknown data received (%d bytes):", n);
@@ -483,6 +520,8 @@ static int gbox_client_init(struct s_client *cli)
   struct gbox_data *gbox = cli->gbox;
   struct s_reader *rdr = cli->reader;
 
+  sem_init(&gbox->sem, 0 , 1);
+
   rdr->card_status = CARD_FAILURE;
   rdr->tcp_connected = 0;
 
@@ -492,8 +531,8 @@ static int gbox_client_init(struct s_client *cli)
   sscanf(rdr->r_pwd, "%02x%02x%02x%02x", &gbox->peer.key[0], &gbox->peer.key[1], &gbox->peer.key[2], &gbox->peer.key[3]);
   sscanf(cfg.gbox_key, "%02x%02x%02x%02x", &gbox->key[0], &gbox->key[1], &gbox->key[2], &gbox->key[3]);
 
-  cs_log("r_pwd: %s, 0x%02x%02x%02x%02x", rdr->r_pwd, gbox->peer.key[0], gbox->peer.key[1], gbox->peer.key[2], gbox->peer.key[3]);
-  cs_log("cfg.gbox_key: %s, 0x%02x%02x%02x%02x", rdr->l_pwd, gbox->key[0], gbox->key[1], gbox->key[2], gbox->key[3]);
+  cs_ddump_mask(D_READER, gbox->peer.key, 4, "r_pwd: %s:", rdr->r_pwd);
+  cs_ddump_mask(D_READER, gbox->key, 4, "cfg.gbox_key: %s:", cfg.gbox_key);
 
   gbox->peer.id = (gbox->peer.key[0] ^ gbox->peer.key[2]) << 8 | (gbox->peer.key[1] ^ gbox->peer.key[3]);
   gbox->id = (gbox->key[0] ^ gbox->key[2]) << 8 | (gbox->key[1] ^ gbox->key[3]);
@@ -533,7 +572,7 @@ static int gbox_client_init(struct s_client *cli)
     setsockopt(cli->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(ulong));
 #endif
 
-  if (rdr->l_port>0)
+  if (cfg.gbox_port>0)
   {
     if (bind(cli->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
     {
@@ -595,8 +634,18 @@ static int gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
 	}
 
 	if (!ll_count(gbox->peer.cards)) {
-		cli->reader->fd_error++;
+		er->rc = E_RDR_NOTFOUND;
+		er->rcEx = 0x27;
 		cs_debug_mask(D_READER, "gbox: %s NO CARDS!", cli->reader->label);
+		write_ecm_answer(cli->reader, er);
+		return 0;
+	}
+
+	if (!gbox->peer.online) {
+		er->rc = E_RDR_NOTFOUND;
+		er->rcEx = 0x27;
+		cs_debug_mask(D_READER, "gbox: peer is OFFLINE!");
+		write_ecm_answer(cli->reader, er);
 		return 0;
 	}
 
@@ -657,9 +706,9 @@ static int gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
 		return 0;
   }
 
-  memcpy(++ptr, gbox->checksum, 7);
+  memcpy(++ptr, gbox->checkcode, 7);
   ptr += 7;
-  memcpy(ptr, gbox->peer.checksum, 7);
+  memcpy(ptr, gbox->peer.checkcode, 7);
 
   len = ptr + 7 - send_buf;
 
@@ -693,5 +742,5 @@ void module_gbox(struct s_module *ph)
   ph->c_send_ecm=gbox_send_ecm;
   ph->c_send_emm=gbox_send_emm;
 }
-#endif
+//#endif
 
