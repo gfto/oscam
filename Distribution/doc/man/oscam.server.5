@@ -56,11 +56,6 @@ set endpoint address for FTDI chips,default:0x82
 key for newcamd remote reader encryption
 .RE
 .PP
-\fBpremium\fP = \fB???\fP
-.RS 3n
-for gbox reader
-.RE
-.PP
 \fBaccount\fP = \fBuser,password\fP \fI(delimiter not allowed, obsolete)\fR
 .RS 3n
 user and password for remote reader, overrides password of \fBpassword\fP, first come first serve
@@ -514,6 +509,7 @@ internal reader
 .TP 3n.
 \(bu
 sc8in1 reader
+
  [reader]
  label    = mysc8in1reader
  protocol = sc8in1
@@ -523,11 +519,22 @@ sc8in1 reader
 .TP 3n 
 \(bu
 constant CW
+
  [reader]
  label    = myconstantcw
  protocol = constcw
  device   = /var/keys/constant.cw
  group    = 10
+.TP 3n
+\(bu
+gbox reader
+
+ [reader]
+ label    = mygboxreader
+ protocol = gbox
+ device   = host.example.com
+ group    = 11
+ caid     = 1100
 .SH "SEE ALSO"
 \fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cert\fR(5), \fBoscam.conf\fR(5), \fBoscam.dvbapi\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.services\fR(5), \fBoscam.srvid\fR(5), \fBoscam.tiers\fR(5),
 \fBoscam.user\fR(5)

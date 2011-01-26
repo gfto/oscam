@@ -51,9 +51,6 @@ DESCRIPTIONS
        key = DES key
 	  key for newcamd remote reader encryption
 
-       premium = ???
-	  for gbox reader
-
        account = user,password (delimiter not allowed, obsolete)
 	  user and password for remote reader, overrides password of password, first come first serve
 
@@ -389,6 +386,7 @@ EXAMPLES
 	   caid     = 0800
 
        ·  sc8in1 reader
+
 	   [reader]
 	   label    = mysc8in1reader
 	   protocol = sc8in1
@@ -397,11 +395,21 @@ EXAMPLES
 	   caid     = 0900
 
        ·  constant CW
+
 	   [reader]
 	   label    = myconstantcw
 	   protocol = constcw
 	   device   = /var/keys/constant.cw
 	   group    = 10
+
+       ·  gbox reader
+
+	   [reader]
+	   label    = mygboxreader
+	   protocol = gbox
+	   device   = host.example.com
+	   group    = 11
+	   caid     = 1100
 
 SEE ALSO
        list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5), oscam.provid(5),

@@ -53,7 +53,7 @@ fallback = 1
 [reader]
 label    = remote3
 protocol = gbox
-device   = 192.168.0.4,34567,45678
+device   = 192.168.0.4,34567
 account  = login3,password3
 group    = 3
 caid     = 0300

@@ -336,7 +336,7 @@ http web interface connections allowed, default:none
 \fBhttpdyndns\fP = \fBhostname\fP
 .RS 3n
 http web interface connections allowed, default:none
- example: httpdyndns = my.dynexample.com
+ example: httpdyndns = host.example.com
 .RE
 .PP
 \fBhttpsavefullcfg\fP = \fB0\fP|\fB1\fP
@@ -605,38 +605,19 @@ set CCcam keepalive modus:
 .RE
 .SS "The [gbox] section"
 .PP
+\fBhostname\fP = \fBpassword\fP
+.RS 3n
+hostname for gbox server
+.RE
+.PP
+\fBport\fP = \fB0\fP|\fBport\fP
+.RS 3n
+UDP port for gbox clients, 0 = disabled, default:0
+.RE
+.PP
 \fBpassword\fP = \fBpassword\fP
 .RS 3n
 password for gbox server
-.RE
-.PP
-\fBmaxdist\fP = \fBdistance\fP
-.RS 3n
-maximum distance to gbox servers, default:5
-.RE
-.PP
-\fBignorelist\fP = \fBfilename\fP
-.RS 3n
-listing of providers to be ignored, format: G:{<CAID><provider ID>}, default:none
-
- example: G:{01001234}
-.RE
-.PP
-\fBonlineinfos\fP = \fBfilename\fP
-.RS 3n
-file to store online information, default:none
-.RE
-.PP
-\fBcardinfos\fP = \fBfilename\fP
-.RS 3n
-file to store card information, default:none
-.RE
-.PP
-\fBlocals\fP = \fB<CAID><provider ID>[,<CAID><provider ID>]\fP...
-.RS 3n
-backwards sharing of local cards,default:none
-
- example: locals = 01001234,02005678
 .RE
 .SS "The [dvbapi] section"
 .PP
@@ -896,8 +877,13 @@ be a workaround, but also a small security risk.
  port         = 40000
  serverip     = 192.168.0.1
  key          = 01020304050607080910111213141516
-    
+ 
  [cs378x]
  port         = 50000@0300:600000
+ 
+ [gbox]
+ hostname     = host.example.com
+ port         = 60000
+ password     = mypassword
 .SH "SEE ALSO"
 \fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cert\fR(5), \fBoscam.dvbapi\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.server\fR(5), \fBoscam.services\fR(5), \fBoscam.srvid\fR(5), \fBoscam.tiers\fR(5), \fBoscam.user\fR(5)
