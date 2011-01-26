@@ -2477,29 +2477,18 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 {
 	char *typtext[]={"unknown", "unique", "shared", "global"};
 
-	struct s_reader *aureader = NULL, *rdr = NULL;
+	struct s_reader *aureader = NULL;
 	cs_ddump_mask(D_EMM, ep->emm, ep->l, "emm:");
 
 	LL_ITER *itr = ll_iter_create(client->aureader_list);
-	while ((rdr = ll_iter_next(itr))) {
-		if (!rdr->enable)
+	while ((aureader = ll_iter_next(itr))) {
+		if (!aureader->enable)
 			continue;
 
-		aureader = rdr;
 		ushort caid = b2i(2, ep->caid);
 
 		if (aureader->audisabled) {
 			cs_debug_mask(D_EMM, "AU is disabled for reader %s", aureader->label);
-			continue;
-		}
-
-		if (!(rdr->typ & R_IS_CASCADING) && rdr->caid != caid) {
-			cs_debug_mask(D_EMM, "emm reader %s caid mismatch %04X != %04X", aureader->label, aureader->caid, caid);
-			continue;
-		}
-
-		if (aureader->typ == R_NEWCAMD && rdr->caid != caid) {
-			cs_debug_mask(D_EMM, "emm reader %s caid mismatch %04X != %04X", aureader->label, aureader->caid, caid);
 			continue;
 		}
 
@@ -2508,20 +2497,39 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			continue;
 		}
 
-		if (aureader->card_system>0) {
-			if (!reader_get_emm_type(ep, aureader)) { //decodes ep->type and ep->hexserial from the EMM
-				cs_debug_mask(D_EMM, "emm skipped reader %s", aureader->label);
+		if (aureader->typ & R_IS_CASCADING) { // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
+			if (!aureader->ph.c_send_emm) // no emm support
+				continue;
+
+			if (aureader->caid != caid || !hexserialset(aureader)) {
+				cs_debug_mask(D_EMM, "emm reader %s caid mismatch %04X != %04X", aureader->label, aureader->caid, caid);
 				continue;
 			}
-		} else {
-			cs_debug_mask(D_EMM, "emm skipped, reader %s has no cardsystem defined!", aureader->label);
-			continue;
-		}
 
-		//test: EMM becomes skipped if auprivid doesn't match with provid from EMM
-		if(aureader->auprovid && b2i(4, ep->provid)) {
-			if(aureader->auprovid != b2i(4, ep->provid)) {
-				cs_debug_mask(D_EMM, "emm skipped, reader %s auprovid doesn't match %06lX != %06lX!", aureader->label, aureader->auprovid, b2i(4, ep->provid));
+			//we need provider and shared addresses set for this
+			//function should check caid to make sure we have no false positive
+			int i;
+			for (i=0; i<CS_MAX_MOD; i++) {
+				if (cardsystem[i].get_emm_type) {
+					if (cardsystem[i].get_emm_type(ep, aureader))
+						break;
+				}
+			}
+		} else { // local reader
+			if (aureader->caid != caid) {
+				cs_debug_mask(D_EMM, "emm reader %s caid mismatch %04X != %04X", aureader->label, aureader->caid, caid);
+
+				//is this useful?
+				client->emmnok++;
+				if (client->account)
+					client->account->emmnok++;
+				first_client->emmnok++;
+
+				continue;
+			}
+
+			if (!reader_get_emm_type(ep, aureader)) { //decodes ep->type and ep->hexserial from the EMM
+				cs_debug_mask(D_EMM, "emm skipped, reader %s", aureader->label);
 				continue;
 			}
 		}
@@ -2595,22 +2603,13 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			continue;
 		}
 
-
 		client->lastemm = time((time_t)0);
 
-		if (aureader->card_system > 0) {
-			if (!check_emm_cardsystem(aureader, ep)) {   // wrong caid
-				client->emmnok++;
-				if (client->account)
-					client->account->emmnok++;
-				first_client->emmnok++;
-				continue;;
-			}
-			client->emmok++;
-			if (client->account)
-				client->account->emmok++;
-			first_client->emmok++;
-		}
+		client->emmok++;
+		if (client->account)
+			client->account->emmok++;
+		first_client->emmok++;
+
 		ep->client = cur_client();
 		cs_debug_mask(D_EMM, "emm is being sent to reader %s.", aureader->label);
 		write_to_pipe(aureader->fd, PIP_ID_EMM, (uchar *) ep, sizeof(EMM_PACKET));

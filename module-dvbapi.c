@@ -329,9 +329,6 @@ void dvbapi_start_emm_filter(int demux_index) {
 	if (memcmp(demux[demux_index].rdr->hexserial, demux[demux_index].hexserial, 8))
 		dvbapi_stop_filter(demux_index, TYPE_EMM);
 
-	if (demux[demux_index].rdr->card_system==0)
-		demux[demux_index].rdr->card_system=get_cardsystem(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
-
 	uchar dmx_filter[342]; // 10 filter + 2 byte header
 	memset(dmx_filter, 0, sizeof(dmx_filter));
 

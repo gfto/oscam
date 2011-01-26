@@ -897,7 +897,6 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 	struct cc_data *cc = cl->cc;	
 	cc->last_emm_card = card;
 
-	rdr->card_system = get_cardsystem(card->caid);
 	cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid);
 
 	cs_debug_mask(D_EMM,

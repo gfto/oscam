@@ -1321,7 +1321,7 @@ extern int comp_timeb(struct timeb *tpa, struct timeb *tpb);
 extern struct s_client * create_client(in_addr_t);
 extern int cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
-extern int check_cwcache2(ECM_REQUEST *, uint64);
+extern int check_cwcache2(ECM_REQUEST *);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);
 extern int write_ecm_answer(struct s_reader *, ECM_REQUEST *);
@@ -1495,7 +1495,6 @@ extern int reader_ecm(struct s_reader * reader, ECM_REQUEST *);
 extern int reader_emm(struct s_reader * reader, EMM_PACKET *);
 int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 void get_emm_filter(struct s_reader * rdr, uchar *filter);
-int get_cardsystem(ushort caid);
 extern int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 extern void reader_device_close(struct s_reader * reader);
 

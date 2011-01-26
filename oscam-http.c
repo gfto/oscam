@@ -1802,11 +1802,11 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					}
 #endif
 
-					int cs = get_cardsystem(card->caid);
-					
-					if (cs)
-						tpl_addVar(vars, TPLADD, "SYSTEM", cardsystem[cs-1].desc);
-					else
+					//int cs = get_cardsystem(card->caid);
+					//
+					//if (cs)
+					//	tpl_addVar(vars, TPLADD, "SYSTEM", cardsystem[cs-1].desc);
+					//else
 						tpl_addVar(vars, TPLADD, "SYSTEM", "???");
 
                     tpl_printf(vars, TPLADD, "SHAREID", "%08X", card->id);

@@ -1,10 +1,11 @@
-//#ifdef MODULE_GBOX
+#include "globals.h"
+#ifdef MODULE_GBOX
 #include <pthread.h>
 #define _XOPEN_SOURCE 600
 #include <semaphore.h>
 #include <time.h>
 
-#include "globals.h"
+
 #include "module-datastruct-llist.h"
 #include "algo/minilzo.h"
 
@@ -742,5 +743,5 @@ void module_gbox(struct s_module *ph)
   ph->c_send_ecm=gbox_send_ecm;
   ph->c_send_emm=gbox_send_emm;
 }
-//#endif
+#endif
 

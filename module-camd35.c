@@ -600,7 +600,6 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 		rdr->blockemm_g = (buf[128]==1) ? 0: 1;
 		rdr->blockemm_s = (buf[129]==1) ? 0: 1;
 		rdr->blockemm_u = (buf[130]==1) ? 0: 1;
-		rdr->card_system = get_cardsystem(rdr->caid);
 		cs_log("%s CMD05 AU request for caid: %04X auprovid: %06lX",
 				rdr->label,
 				rdr->caid,

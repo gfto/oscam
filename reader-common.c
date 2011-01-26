@@ -355,20 +355,6 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
 	return rc;
 }
 
-int get_cardsystem(ushort caid) {
-	int i,j;
-	for (i=0; i<CS_MAX_MOD; i++) {
-		if (cardsystem[i].caids) {
-			for (j=0;j<2;j++) {
-				if ((cardsystem[i].caids[j]==caid >> 8)) {
-					return i+1;
-				}
-			}
-		}
-	}
-	return 0;
-}
-
 void get_emm_filter(struct s_reader * rdr, uchar *filter) {
 	filter[0]=0xFF;
 	filter[1]=0;
