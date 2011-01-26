@@ -619,11 +619,6 @@ void dvbapi_process_emm (int demux_index, int filter_num, unsigned char *buffer,
 	epg.l=len;
 	memcpy(epg.emm, buffer, epg.l);
 
-	if(cfg.dvbapi_au==2 && demux[demux_index].rdr) {
-		dvbapi_client->autoau=0;
-		dvbapi_client->aureader=demux[demux_index].rdr;
-	}
-
 	do_emm(dvbapi_client, &epg);
 }
 

@@ -31,8 +31,18 @@ static int camd33_recv(struct s_client * client, uchar *buf, int l)
 static void camd33_request_emm()
 {
   uchar mbuf[20];
-  struct s_reader *aureader=cur_client()->aureader;
-  if (!aureader) return;  // TODO
+	struct s_reader *aureader = NULL, *rdr = NULL;
+
+	//TODO: just take the first reader in list
+	LL_ITER *itr = ll_iter_create(cur_client()->aureader_list);
+	while ((rdr = ll_iter_next(itr))) {
+		aureader=rdr;
+		break;
+	}
+	ll_iter_release(itr);
+
+	if (!aureader) return;
+
   if (aureader->hexserial[0])
   {
     log_emm_request(aureader);

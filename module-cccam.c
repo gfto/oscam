@@ -2364,7 +2364,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			if (l > 4) {
 				cs_debug_mask(D_EMM, "%s EMM Request received!", getprefix());
 
-				if (!cl->aureader) {
+				if (!ll_count(cl->aureader_list)) {
 						cs_debug_mask(
 							D_EMM,
 							"%s EMM Request discarded because au is not assigned to an reader!",
@@ -2548,9 +2548,6 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
  * We update the share-list if a card has changed
  */
 ulong get_reader_hexserial_crc(struct s_client *cl) {
-	if (!cl->aureader)
-		return 0;
-
 	ulong crc = 0;
 	struct s_reader *rdr;
 	for (rdr = first_active_reader; rdr; rdr = rdr->next) {
@@ -2994,7 +2991,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 	cc->card_removed_count = 0;
 	cc->card_dup_count = 0;
 
-	int isau = (cl->aureader)?1:0;
+	int isau = (ll_count(cl->aureader_list))?1:0;
 
 	//User-Services:
 	if (cfg.cc_reshare_services==3 && cfg.sidtab && cl->sidtabok) {

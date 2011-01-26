@@ -581,7 +581,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     uchar buf[14];
     uchar key[16];
     uchar passwdcrypt[120];
-    struct s_reader *aureader=first_active_reader; //FIXME strange enough au was initialized to 0 = first reader, and not to -1 = no reader
+    struct s_reader *aureader = NULL, *rdr = NULL;
     struct s_ip *p_ip;
     struct s_client *cl = cur_client();
     uchar mbuf[1024];
@@ -662,7 +662,6 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     }
 
     // check for non ready reader and reject client
-    struct s_reader *rdr;
     for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
       if(rdr->caid==cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid) {
         if(rdr->card_status == CARD_NEED_INIT) {
@@ -673,28 +672,22 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
       }
     }
 
-    if (ok)
-    {
-      aureader = cl->aureader;
-      if (aureader)
-      {
-          if (cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != aureader->caid
-              &&  cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid != aureader->ftab.filts[0].caid
-              && aureader->typ != R_CCCAM) // disabling AU breaks cccam-au when cascading over newcamd, but with enabled au client was receiving wrong card data on faulty configured newcamd filters and when using betatunnel
-          {
-            cs_log("AU wont be used on this port -> disable AU");
-            aureader = NULL;
-          }
-          else
-          {
-            cs_log("AU enabled for user %s on reader %s", usr, aureader->label);
-          }
-      }
-      else
-      {
-        cs_log("AU disabled for user %s", usr);
-      }
-    }
+	if (ok) {
+		LL_ITER *itr = ll_iter_create(cl->aureader_list);
+		while ((rdr = ll_iter_next(itr))) {
+			if (!(rdr->typ & R_IS_CASCADING) && rdr->caid == cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid) {
+				aureader=rdr;
+				break;
+			}
+		}
+		ll_iter_release(itr);
+
+		if (aureader) {
+			cs_log("AU enabled for user %s on reader %s", usr, aureader->label);
+      		} else {
+			cs_log("AU disabled for user %s", usr);
+		}
+	}
 
     network_cmd_no_data_send(cl->udp_fd, &cl->ncd_msgid, 
               (ok)?MSG_CLIENT_2_SERVER_LOGIN_ACK:MSG_CLIENT_2_SERVER_LOGIN_NAK,
@@ -746,10 +739,8 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
         if (aureader)
           hexserial_to_newcamd(aureader->hexserial, mbuf+8, pufilt->caid);
         else 
-        {
-          cl->aureader = NULL;
           memset(&mbuf[8], 0, 6); //mbuf[8] - mbuf[13]
-        }
+
         mbuf[14] = pufilt->nprids;
         for( j=0; j<pufilt->nprids; j++) 
         {
@@ -919,22 +910,18 @@ static void newcamd_process_emm(uchar *buf)
   EMM_PACKET epg;
 
   memset(&epg, 0, sizeof(epg));
-  struct s_reader *aureader=cl->aureader;
 
-  // if client is not allowed to do AU just send back the OK-answer to
-  // the client and do nothing else with the received data
-  if (aureader)
-  {
   epg.l=buf[2]+3;
   caid = cl->ftab.filts[0].caid;
   epg.caid[0] = (uchar)(caid>>8);
   epg.caid[1] = (uchar)(caid);
   
+/*
   epg.provid[0] = (uchar)(aureader->auprovid>>24);
   epg.provid[1] = (uchar)(aureader->auprovid>>16);
   epg.provid[2] = (uchar)(aureader->auprovid>>8);
   epg.provid[3] = (uchar)(aureader->auprovid);
-    
+*/    
 /*  if (caid == 0x0500)
   {
     ushort emm_head;
@@ -959,7 +946,6 @@ static void newcamd_process_emm(uchar *buf)
   memcpy(epg.emm, buf, epg.l);
   if( ok ) 
     do_emm(cl, &epg);
-  }
 
   // Should always send an answer to client (also if au is disabled),
   // some clients will disconnect if they get no answer

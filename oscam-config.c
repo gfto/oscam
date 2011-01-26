@@ -1487,16 +1487,26 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 
 	if (!strcmp(token, "au")) {
 		//set default values for usage during runtime from Webif
-		account->aureader = NULL;
 		account->autoau=0;
 
-		if(value && value[0] == '1')
-			account->autoau = 1;
-		LL_ITER *itr = ll_iter_create(configured_readers);
 		struct s_reader *rdr;
-		while ((rdr = ll_iter_next(itr)))
-			if ((rdr->label[0]) && (!strncmp(rdr->label, value, strlen(rdr->label))))
-				account->aureader = rdr;
+		char *pch;
+		account->aureader_list = ll_create();
+
+		if(value && value[0] == '1') {
+			account->autoau = 1;
+		}
+		LL_ITER *itr = ll_iter_create(configured_readers);
+
+		for (pch = strtok(value, ","); pch != NULL; pch = strtok(NULL, ",")) {
+			ll_iter_reset(itr);
+			while ((rdr = ll_iter_next(itr))) {
+				if (((rdr->label[0]) && (!strncmp(rdr->label, pch, strlen(rdr->label)))) || account->autoau) {
+					ll_append(account->aureader_list, rdr);
+				}
+			}
+		}
+
 		ll_iter_release(itr);
 		return;
 	}
@@ -2063,10 +2073,29 @@ int write_userdb(struct s_auth *authptr)
 		if (account->monlvl != cfg.mon_level || (account->monlvl == cfg.mon_level && cfg.http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", account->monlvl);
 
-		if (account->aureader)
-			fprintf_conf(f, CONFVARWIDTH, "au", "%s\n", account->aureader->label);
 		if (account->autoau == 1)
 			fprintf_conf(f, CONFVARWIDTH, "au", "1\n");
+		else if (account->aureader_list) {
+			char buf[512];
+			buf[0]='\0';
+
+			struct s_reader *rdr;
+
+			LL_ITER *itr = ll_iter_create(account->aureader_list);
+
+			int pos=0;
+			while ((rdr = ll_iter_next(itr))) {
+				if (pos==0)
+					sprintf(buf + pos, "%s", rdr->label);
+				else
+					sprintf(buf + pos, ",%s", rdr->label);
+				pos+=strlen(rdr->label);
+			}
+
+			ll_iter_release(itr);
+
+			fprintf_conf(f, CONFVARWIDTH, "au", "%s\n", buf);
+		}
 
 		value = mk_t_service((uint64)account->sidtabok, (uint64)account->sidtabno);
 		if (strlen(value) > 0 || cfg.http_full_cfg)
@@ -2603,7 +2632,7 @@ struct s_auth *init_userdb()
 			memset(account, 0, sizeof(struct s_auth));
 			account->allowedtimeframe[0] = 0;
 			account->allowedtimeframe[1] = 0;
-			account->aureader = NULL;
+			account->aureader_list = NULL;
 			account->monlvl = cfg.mon_level;
 			account->tosleep = cfg.tosleep;
 			account->c35_suppresscmd08 = cfg.c35_suppresscmd08;

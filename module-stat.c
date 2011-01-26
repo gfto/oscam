@@ -640,8 +640,8 @@ int get_best_reader(ECM_REQUEST *er)
 
 			if (stat && stat->rc != 0) { //retrylimit reached:
 				int seconds = cfg.lb_reopen_seconds;
-				if (!rdr->audisabled && (er->client->autoau || er->client->aureader == rdr))
-					seconds = seconds/10; //reopen faster if reader is a au reader
+				//if (!rdr->audisabled && (er->client->autoau || er->client->aureader == rdr))
+				//	seconds = seconds/10; //reopen faster if reader is a au reader
 				
 				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
 					stat->last_received = current_time;

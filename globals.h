@@ -596,7 +596,7 @@ struct s_client
   uint64	grp;
   int		crypted;
   int		dup;
-  struct s_reader *aureader; //the reader that needs EMMs from this client
+  LLIST	*aureader_list;
   int		autoau;
   int		monlvl;
   CAIDTAB	ctab;
@@ -942,7 +942,7 @@ struct s_auth
   char     description[64];
 #endif
   int      uniq;
-  struct s_reader *aureader;
+  LLIST    *aureader_list;
   int      autoau;
   int      monlvl;
   uint64   grp;

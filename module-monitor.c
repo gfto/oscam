@@ -258,9 +258,9 @@ static char *monitor_client_info(char id, struct s_client *cl){
 				else
 					con = 0;
 			
-			if( (cau = get_ridx(cl->aureader) + 1) )
-				if ((now-cl->lastemm) /60 > cfg.mon_aulow)
-					cau=-cau;
+			//if( (cau = get_ridx(cl->aureader) + 1) )
+			//	if ((now-cl->lastemm) /60 > cfg.mon_aulow)
+			//		cau=-cau;
 			if( cl->typ == 'r')
 			{
 			    lrt = get_ridx(cl->reader);

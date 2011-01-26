@@ -961,7 +961,6 @@ static void * oscam_ser_fork(void *pthreadparam)
 
   while(1)
   {
-    cl->aureader=NULL;
     cl->login=time((time_t *)0);
     cl->pfd=init_oscam_ser_device(cl->serialdata->oscam_ser_device, cl->serialdata->oscam_ser_baud);
     if (cl->pfd)

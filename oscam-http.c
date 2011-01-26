@@ -1361,7 +1361,6 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 		}
 		memset(account, 0, sizeof(struct s_auth));
 		cs_strncpy((char *)account->usr, user, sizeof(account->usr));
-		account->aureader=NULL;
 		account->monlvl=cfg.mon_level;
 		account->tosleep=cfg.tosleep;
 		for (i=1; i<CS_MAXCAIDTAB; account->ctab.mask[i++]=0xffff);
@@ -1458,18 +1457,29 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	tpl_printf(vars, TPLADD, "TMP", "MONSELECTED%d", account->monlvl);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
-	//AU Selector
-	if (!account->aureader) tpl_addVar(vars, TPLADD, "AUSELECTED", "selected");
-	if (account->autoau == 1) tpl_addVar(vars, TPLADD, "AUTOAUSELECTED", "selected");
-	struct s_reader *rdr;
-	LL_ITER *itr = ll_iter_create(configured_readers);
-	while((rdr = ll_iter_next(itr)) && (rdr->device[0])) {
-		tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
-		if (account->aureader == rdr) tpl_addVar(vars, TPLADD, "SELECTED", "selected");
-		else tpl_addVar(vars, TPLADD, "SELECTED", "");
-		tpl_addVar(vars, TPLAPPEND, "RDROPTION", tpl_getTpl(vars, "USEREDITRDRSELECTED"));
+	//Au
+	if (account->autoau == 1)
+		tpl_addVar(vars, TPLADD, "AUREADER", "1");
+	else if (account->aureader_list) {
+		char buf[512];
+		buf[0]='\0';
+
+		struct s_reader *rdr;
+
+		LL_ITER *itr = ll_iter_create(account->aureader_list);
+
+		int pos=0;
+		while ((rdr = ll_iter_next(itr))) {
+			if (pos==0)
+				sprintf(buf + pos, "%s", rdr->label);
+			else
+				sprintf(buf + pos, ",%s", rdr->label);
+			pos+=strlen(rdr->label);
+		}
+		ll_iter_release(itr);
+
+		tpl_addVar(vars, TPLADD, "AUREADER", buf);
 	}
-	ll_iter_release(itr);
 
 	/* SERVICES */
 	//services - first we have to move the long sidtabok/sidtabno to a binary array
@@ -2047,7 +2057,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				else if ((cl->tosleep) && (now-cl->lastswitch>cl->tosleep)) con=1;
 				else con=0;
 
-				if( (cau=get_ridx(cl->aureader)+1) && (now-cl->lastemm)/60 > cfg.mon_aulow) cau=-cau;
+				//if( (cau=get_ridx(cl->aureader)+1) && (now-cl->lastemm)/60 > cfg.mon_aulow) cau=-cau;
 
 				localtime_r(&cl->login, &lt);
 

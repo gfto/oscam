@@ -620,15 +620,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 					</select>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>##TPLHELPPREFIX##user#au##TPLHELPSUFFIX##AU:</A></TD>\n\
-				<TD>\n\
-					<select name=\"au\">\n\
-						<option value=\" \" ##AUSELECTED##>none</option>\n\
-						<option value=\"1\" ##AUTOAUSELECTED##>auto</option>\n\
-##RDROPTION##\n\
-						</select>\n\
-					</TD>\n\
-			</TR>\n\
+			<TR><TD>##TPLHELPPREFIX##user#au##TPLHELPSUFFIX##AU:</A></TD><TD><input name=\"au\" type=\"text\" size=\"60\" maxlength=\"50\" value=\"##AUREADER##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##user#services##TPLHELPSUFFIX##Services:</A></TD>\n\
 				<TD>\n\
 					<TABLE class=\"invisible\">\n\
