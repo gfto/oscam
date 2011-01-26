@@ -316,7 +316,6 @@ void cc_cli_close(struct s_client *cl, int call_conclose) {
 	rdr->tcp_connected = 0;
 	rdr->card_status = NO_CARD;
 	rdr->available = 0;
-	rdr->card_system = 0;
 	rdr->ncd_msgid = 0;
 	rdr->last_s = rdr->last_g = 0;
 
@@ -900,8 +899,8 @@ void set_au_data(struct s_client *cl, struct s_reader *rdr, struct cc_card *card
 	cc_UA_cccam2oscam(card->hexserial, rdr->hexserial, rdr->caid);
 
 	cs_debug_mask(D_EMM,
-			"%s au info: caid %04X card system: %d UA: %s",
-			getprefix(), card->caid, rdr->card_system, cs_hexdump(0,
+			"%s au info: caid %04X UA: %s",
+			getprefix(), card->caid, cs_hexdump(0,
 					rdr->hexserial, 8));
 
 	rdr->nprov = 0;

@@ -460,7 +460,7 @@ struct emm_packet_t ;
 
 struct s_module
 {
-  //int  fd;
+  int  active;
   int  multi;
   int  type;
   int  watchdog;
@@ -517,6 +517,7 @@ struct s_cardreader
 
 struct s_cardsystem
 {
+	int active;
 	char *desc;
 	int  (*card_init)();
 	int  (*card_info)();
@@ -745,7 +746,6 @@ struct s_reader  //contains device info, reader info and card info
   uint64    grp;
   int       fallback;
   int       typ;
-  int       card_system;
   char      label[64];
   char      device[128];
   void      *spec_dev;  //pointer to structure that contains specific device data
@@ -800,6 +800,7 @@ struct s_reader  //contains device info, reader info and card info
   int       deprecated; //if 0 ATR obeyed, if 1 default speed (9600) is chosen; for devices that cannot switch baudrate
   struct    s_module ph;
   struct    s_cardreader crdr;
+  struct    s_cardsystem csystem;
   uchar     ncd_key[16];
   uchar     ncd_skey[16];
   int       ncd_disable_server_filt;
@@ -1494,7 +1495,7 @@ extern void reader_post_process(struct s_reader * reader);
 extern int reader_ecm(struct s_reader * reader, ECM_REQUEST *);
 extern int reader_emm(struct s_reader * reader, EMM_PACKET *);
 int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
-void get_emm_filter(struct s_reader * rdr, uchar *filter);
+struct s_cardsystem *get_cardsystem_by_caid(ushort caid);
 extern int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 extern void reader_device_close(struct s_reader * reader);
 

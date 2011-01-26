@@ -39,7 +39,7 @@ static int reader_device_type(struct s_reader * reader)
 
 static void reader_nullcard(struct s_reader * reader)
 {
-  reader->card_system=0;
+  reader->csystem.active=0;
   memset(reader->hexserial, 0   , sizeof(reader->hexserial));
   memset(reader->prid     , 0xFF, sizeof(reader->prid     ));
   reader->caid=0;
@@ -172,8 +172,8 @@ void reader_card_info(struct s_reader * reader)
     cur_client()->last=time((time_t)0);
     cs_ri_brk(reader, 0);
 
-	if (cardsystem[reader->card_system-1].card_info) {
-		cardsystem[reader->card_system-1].card_info(reader);
+	if (reader->csystem.active && reader->csystem.card_info) {
+		reader->csystem.card_info(reader);
 	}
   }
 }
@@ -184,8 +184,9 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 	for (i=0; i<CS_MAX_MOD; i++) {
 		if (cardsystem[i].card_init) {
 			if (cardsystem[i].card_init(reader, atr)) {
-				reader->card_system=i+1;
-				cs_log("found cardsystem");
+				cs_log("found cardsystem %s", (cardsystem[i].desc) ? cardsystem[i].desc : "");
+				reader->csystem=cardsystem[i];
+				reader->csystem.active=1;
 #ifdef QBOXHD_LED 
 				qboxhd_led_blink(QBOXHD_LED_COLOR_YELLOW,QBOXHD_LED_BLINK_MEDIUM);
 				qboxhd_led_blink(QBOXHD_LED_COLOR_GREEN,QBOXHD_LED_BLINK_MEDIUM);
@@ -197,7 +198,7 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 		}
 	}
 
-	if (reader->card_system==0)
+	if (reader->csystem.active==0)
 #ifdef QBOXHD_LED 
 	{
 		cs_ri_log(reader, "card system not supported");
@@ -211,7 +212,7 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 
 	cs_ri_brk(reader, 1);
 
-	return(reader->card_system);
+	return(1);
 }
 
 static int reader_reset(struct s_reader * reader)
@@ -315,10 +316,8 @@ void reader_post_process(struct s_reader * reader)
 {
   // some systems eg. nagra2/3 needs post process after receiving cw from card
   // To save ECM/CW time we added this function after writing ecm answer
-	if (!reader->card_system)
-		return;
-	if (cardsystem[reader->card_system-1].post_process) {
-		cardsystem[reader->card_system-1].post_process(reader);
+	if (reader->csystem.active && reader->csystem.post_process) {
+		reader->csystem.post_process(reader);
 	}
 }
 
@@ -331,8 +330,8 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
       cur_client()->last_caid=er->caid;
       cur_client()->last=time((time_t)0);
 
-	if (cardsystem[reader->card_system-1].do_ecm) 
-		rc=cardsystem[reader->card_system-1].do_ecm(reader, er);
+	if (reader->csystem.active && reader->csystem.do_ecm) 
+		rc=reader->csystem.do_ecm(reader, er);
 	else
 		rc=0;
   }
@@ -341,30 +340,30 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs from calling reader!
 {
-	cs_debug_mask(D_EMM, "Entered reader_get_emm_type cardsystem %i",rdr->card_system);
+	cs_debug_mask(D_EMM, "Entered reader_get_emm_type cardsystem %s", rdr->csystem.desc ? rdr->csystem.desc : "");
 	int rc;
 
-	if (rdr->card_system<1)
-		return 0;
-
-	if (cardsystem[rdr->card_system-1].get_emm_type) 
-		rc=cardsystem[rdr->card_system-1].get_emm_type(ep, rdr);
+	if (rdr->csystem.active && rdr->csystem.get_emm_type) 
+		rc=rdr->csystem.get_emm_type(ep, rdr);
 	else
 		rc=0;
 
 	return rc;
 }
 
-void get_emm_filter(struct s_reader * rdr, uchar *filter) {
-	filter[0]=0xFF;
-	filter[1]=0;
-
-	if (cardsystem[rdr->card_system-1].get_emm_filter) {
-		cardsystem[rdr->card_system-1].get_emm_filter(rdr, filter);
-	}
-
-	return;
-}
+struct s_cardsystem *get_cardsystem_by_caid(ushort caid) {
+	int i,j; 
+	for (i=0; i<CS_MAX_MOD; i++) { 
+		if (cardsystem[i].caids) { 
+			for (j=0;j<2;j++) { 
+				if ((cardsystem[i].caids[j]==caid >> 8)) { 
+					return &cardsystem[i];
+				} 
+			} 
+		} 
+	} 
+	return NULL;
+} 
 
 int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
@@ -376,8 +375,8 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
     if (reader->b_nano[ep->emm[0]] & 0x01) //should this nano be blcoked?
       return 3;
 
-	if (cardsystem[reader->card_system-1].do_emm) 
-		rc=cardsystem[reader->card_system-1].do_emm(reader, ep);
+	if (reader->csystem.active && reader->csystem.do_emm) 
+		rc=reader->csystem.do_emm(reader, ep);
 	else
 		rc=0;
   }

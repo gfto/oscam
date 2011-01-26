@@ -1118,7 +1118,6 @@ void start_anticascader()
 #endif
 
 void restart_cardreader(struct s_reader *rdr, int restart) {
-	int i;
 	if (restart) //kill old thread
 		if (rdr->client)
 			kill_thread(rdr->client);
@@ -1129,10 +1128,6 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 	cs_ftime(&rdr->tcp_block_connect_till);
 
 	if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
-		for (i=0; i<CS_MAX_MOD; i++)
-			if (ph[i].num && rdr->typ==ph[i].num)
-				rdr->ph=ph[i];
-
 		if (!rdr->ph.num) {
 			cs_log("Protocol Support missing. (typ=%d)", rdr->typ);
 			return;

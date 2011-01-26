@@ -331,8 +331,17 @@ void dvbapi_start_emm_filter(int demux_index) {
 
 	uchar dmx_filter[342]; // 10 filter + 2 byte header
 	memset(dmx_filter, 0, sizeof(dmx_filter));
+	dmx_filter[0]=0xFF;
+	dmx_filter[1]=0;
 
-	get_emm_filter(demux[demux_index].rdr, dmx_filter);
+	struct s_cardsystem *cs = get_cardsystem_by_caid(demux[demux_index].ECMpids[demux[demux_index].pidindex].CAID);
+
+	if (cs)
+		cs->get_emm_filter(demux[demux_index].rdr, dmx_filter);
+	else {
+		cs_debug_mask(D_DVBAPI, "cardsystem for emm filter not found");
+		return;	
+	}
 
 	int filter_count=dmx_filter[1];
 
@@ -1750,26 +1759,6 @@ void dvbapi_send_dcw(struct s_client *client, ECM_REQUEST *er)
 {
 #ifdef AZBOX
 	azbox_send_dcw(client, er);
-
-
-    FILE *ecmtxt;
-    ecmtxt = fopen(ECMINFO_FILE, "w");
-    if(ecmtxt != NULL) {
-        fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
-        fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
-        if (er->selected_reader->typ & R_IS_CASCADING)
-            fprintf(ecmtxt, "from: %s\n", er->selected_reader->device);
-        else
-            fprintf(ecmtxt, "from: local\n");
-        fprintf(ecmtxt, "protocol: %s\n", er->selected_reader->ph.desc);
-        fprintf(ecmtxt, "hops: %d\n", er->selected_reader->cc_currenthops);
-        fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
-        fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[i].lastcw[0],8));
-        fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[i].lastcw[1],8));
-        fclose(ecmtxt);
-        ecmtxt = NULL;
-    }
-
 	return;
 #endif
 	int i,j;
@@ -2125,6 +2114,24 @@ void * azbox_main(void *cli) {
 
 void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 	cs_debug_mask(D_DVBAPI, "openxcas: send_dcw");
+
+    FILE *ecmtxt;
+    ecmtxt = fopen(ECMINFO_FILE, "w");
+    if(ecmtxt != NULL) {
+        fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
+        fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
+        if (er->selected_reader->typ & R_IS_CASCADING)
+            fprintf(ecmtxt, "from: %s\n", er->selected_reader->device);
+        else
+            fprintf(ecmtxt, "from: local\n");
+        fprintf(ecmtxt, "protocol: %s\n", er->selected_reader->ph.desc);
+        fprintf(ecmtxt, "hops: %d\n", er->selected_reader->cc_currenthops);
+        fprintf(ecmtxt, "ecm time: %.3f\n", (float) client->cwlastresptime/1000);
+        fprintf(ecmtxt, "cw0: %s\n", cs_hexdump(1,demux[0].lastcw[0],8));
+        fprintf(ecmtxt, "cw1: %s\n", cs_hexdump(1,demux[0].lastcw[1],8));
+        fclose(ecmtxt);
+        ecmtxt = NULL;
+    }
 
 	openxcas_busy = 0;
 
