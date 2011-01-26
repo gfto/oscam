@@ -2492,6 +2492,11 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			continue;
 		}
 
+		if (!(aureader->grp & client->grp)) {
+			cs_debug_mask(D_EMM, "skip emm reader %s group mismatch", aureader->label);
+			continue;
+		}
+
 		if (aureader->card_system>0) {
 			if (!reader_get_emm_type(ep, aureader)) { //decodes ep->type and ep->hexserial from the EMM
 				cs_debug_mask(D_EMM, "emm skipped reader %s", aureader->label);
