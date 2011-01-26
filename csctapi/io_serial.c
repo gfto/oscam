@@ -59,8 +59,6 @@
 
 static int IO_Serial_Bitrate(int bitrate);
 
-static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms);
-
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms);
 
 #if defined(TUXBOX) && defined(PPC)
@@ -298,9 +296,9 @@ bool IO_Serial_SetParams (struct s_reader * reader, unsigned long bitrate, unsig
 	/* Enable receiver, hang on close, ignore control line */
 	newtio.c_cflag |= CREAD | HUPCL | CLOCAL;
 	
-	/* Read 1 byte minimun, no timeout specified */
-	newtio.c_cc[VMIN] = 1;
-	newtio.c_cc[VTIME] = 0;
+	/* timeout 10 * 0.1 secs */
+	newtio.c_cc[VMIN] = 0;
+	newtio.c_cc[VTIME] = 10;
 
 	if (IO_Serial_SetProperties(reader, newtio))
 		return ERROR;
@@ -402,7 +400,7 @@ void IO_Serial_Flush (struct s_reader * reader)
 	BYTE b;
 
   tcflush(reader->handle, TCIOFLUSH);
-	while(!IO_Serial_Read(reader, 1000, 1, &b));
+//	while(!IO_Serial_Read(reader, 1000, 1, &b)); //keep reading until timeout of 1000ms
 }
 
 void IO_Serial_Sendbreak(struct s_reader * reader, int duration)
@@ -413,11 +411,7 @@ void IO_Serial_Sendbreak(struct s_reader * reader, int duration)
 bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, BYTE * data)
 {
 	BYTE c;
-	uint count = 0;
-#ifdef SH4
-	bool readed;
-	struct timeval tv, tv_spent;
-#endif
+	uint count = 0, ret;
 	
 	if((reader->typ != R_INTERNAL) && (reader->written>0))
 	{
@@ -431,46 +425,20 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 	
 	for (count = 0; count < size ; count++)
 	{
-#ifdef SH4
-		gettimeofday(&tv,0);
-		memcpy(&tv_spent,&tv,sizeof(struct timeval));
-		readed=FALSE;
-		while( (((tv_spent.tv_sec-tv.tv_sec)*1000) + ((tv_spent.tv_usec-tv.tv_usec)/1000L))<timeout )
- 		{
- 			if (read (reader->handle, &c, 1) == 1)
- 			{
- 				readed=TRUE;
-				break;
- 			}
- 			gettimeofday(&tv_spent,0);
-		}
-		if(!readed) {
-			cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
-			return ERROR;
-		}
-#else
-		if (!IO_Serial_WaitToRead (reader, 0, timeout))
-		{
-			if (read (reader->handle, &c, 1) != 1)
-			{
-				cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
-				cs_log("ERROR in IO_Serial_Read errno=%d", errno);
-				//tcflush (reader->handle, TCIFLUSH);
-				return ERROR;
-			}
-		}
-		else
-		{
-			cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
-			cs_debug_mask(D_DEVICE, "TIMEOUT in IO_Serial_Read");
-			//tcflush (reader->handle, TCIFLUSH);
-			return ERROR;
-		}
-#endif
+		ret = read (reader->handle, &c, 1);
+		if (ret != 1)
+			break;
 		data[count] = c;
 	}
 	cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
-	return OK;
+	if (ret == 1)
+		return OK;
+
+	if (ret == 0)
+		cs_debug_mask(D_DEVICE, "TIMEOUT in IO_Serial_Read");
+	else
+		cs_log("ERROR in IO_Serial_Read errno=%d (%s)", errno, strerror(errno));
+	return ERROR;
 }
 
 bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, const BYTE * data)
@@ -617,56 +585,6 @@ static int IO_Serial_Bitrate(int bitrate)
 		}
 	}
 	return B0;
-}
-
-static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms)
-{
-   fd_set rfds;
-   fd_set erfds;
-   struct timeval tv;
-   int select_ret;
-   int in_fd;
-   
-   if (delay_ms > 0)
-      cs_sleepms (delay_ms);
-   
-   in_fd=reader->handle;
-   
-   FD_ZERO(&rfds);
-   FD_SET(in_fd, &rfds);
-   
-   FD_ZERO(&erfds);
-   FD_SET(in_fd, &erfds);
-   
-   tv.tv_sec = timeout_ms/1000;
-   tv.tv_usec = (timeout_ms % 1000) * 1000L;
-
-	while (1) {
-		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
-		if (select_ret==-1) {
-			cs_log("ERROR in IO_Serial_WaitToRead: errno=%d", errno);
-			if (errno==EINTR) {
-				//try again in case of Interrupted system call
-				continue;
-			} else
-				return ERROR;
-		}
-		if (select_ret==0) {
-			cs_debug_mask(D_DEVICE, "TIMEOUT in IO_Serial_WaitToRead");
-			return ERROR;
-		}
-		break;
-   	}
-
-	if (FD_ISSET(in_fd, &erfds)) {
-		cs_log("ERROR in IO_Serial_WaitToRead: fd is in error fds, errno=%d", errno);
-		return ERROR;
-	}
-
-	if (FD_ISSET(in_fd,&rfds))
-		return OK;
-	else
-		return ERROR;
 }
 
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms)
