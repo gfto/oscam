@@ -448,7 +448,8 @@ camd 3.78x reader
  label    = mycamd378xreader
  protocol = cs378x
  device   = 192.168.0.1,1234
- account  = user,password
+ user     = user1
+ password = password1
  group    = 3
 .TP 3n
 \(bu
@@ -459,21 +460,23 @@ newcamd reader
  protocol = newcamd
  key      = 0102030405060708091011121314
  device   = 192.168.0.2,2345
- account  = user,password
+ user     = user2
+ password = password2
  group    = 4
 .TP 3n
 \(bu
 CCcam reader
  
  [reader]
- label = mycccamreader
- protocol = cccam
- device = 192.168.0.3,3456
- account = user,password
- group = 5
- caid = 0300,0400,0500
+ label      = mycccamreader
+ protocol   = cccam
+ device     = 192.168.0.3,3456
+ user       = user3
+ password   = password3
+ group      = 5
+ caid       = 0300,0400,0500
  cccversion = 1.2.3
- cccbuild = 4567
+ cccbuild   = 4567
 .TP 3n
 \(bu
 PCSC reader
