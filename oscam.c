@@ -33,6 +33,7 @@ int cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart
 #endif
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
+pthread_mutex_t get_cw_lock;
 pthread_key_t getclient;
 
 //Cache for **found** cws:
@@ -891,6 +892,7 @@ static void init_first_client()
 
 
   pthread_mutex_init(&gethostbyname_lock, NULL);
+  pthread_mutex_init(&get_cw_lock, NULL);
 
 #ifdef CS_LOGHISTORY
   loghistidx=0;
@@ -1390,7 +1392,7 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 
 		//cs_debug_mask(D_TRACE, "cache: ecm %04X found: ccaid=%04X caid=%04X grp=%lld cgrp=%lld count=%d", lc, er->caid, ecmc->caid, grp, ecmc->grp, count);
 
-		if (!(grp & ecmc->grp))
+		if (grp && !(grp & ecmc->grp))
 			continue;
 
 		if (ecmc->caid != er->caid)
@@ -1408,10 +1410,10 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
  * cache 2: reader-invoked
  * returns 1 if found in cache. cw is copied to er
  **/
-int check_cwcache2(ECM_REQUEST *er, uint64 grp)
+int check_cwcache2(ECM_REQUEST *er)
 {
 	//struct s_reader *save = er->selected_reader;
-	int rc = check_cwcache1(er, grp);
+	int rc = check_cwcache1(er, 0);
 	//er->selected_reader = save;
   return rc;
 }
@@ -1637,7 +1639,7 @@ void distribute_ecm(ECM_REQUEST *er)
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
-        if (ecm->rc == E_99 && (ecm->caid==er->caid || ecm->ocaid==er->ocaid) && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)) {
+        if (ecm->rc >= E_99 && (ecm->caid==er->caid || ecm->ocaid==er->ocaid) && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)) {
           er->cpti = ecm->cpti;
           //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
           write_ecm_request(cl->fd_m2c, er);
@@ -1744,6 +1746,7 @@ ECM_REQUEST *get_ecmtask()
 		cs_log("WARNING: ecm pending table overflow !");
 	else
 	{
+			
                 LLIST *save = er->matching_rdr;                
 		memset(er, 0, sizeof(ECM_REQUEST));
 		er->rc=E_UNHANDLED;
@@ -1758,6 +1761,8 @@ ECM_REQUEST *get_ecmtask()
                   }
                   else
                     er->matching_rdr = ll_create();
+                    
+                    //cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (ph[cl->ctyp].multi)?CS_MAXPENDING:1, cl->ctyp);
                 }
 	}
 	
@@ -2368,6 +2373,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
+	pthread_mutex_lock(&get_cw_lock);
+	
 	//Schlocke: above checks could change er->rc so
 	if (er->rc >= E_UNHANDLED) {
 		/*BetaCrypt tunneling
@@ -2390,8 +2397,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		// cache1
 		if (check_cwcache1(er, client->grp))
 				er->rc = E_CACHE1;
-		else if (check_and_store_ecmcache(er, client->grp))
-				er->rc = E_99;
 				
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);
@@ -2438,7 +2443,13 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			if (er->matching_rdr->initial == er->fallback) { //fallbacks only
 					er->fallback = NULL; //switch them
 			}
+		
+		//we have to go through matching_reader() to check services!
+		if (er->rc == E_UNHANDLED && check_and_store_ecmcache(er, client->grp))
+				er->rc = E_99;
 	}
+	
+	pthread_mutex_unlock(&get_cw_lock);
 	
 	if (er->rc == E_99)
 			return; //ECM already requested / found in ECM cache
@@ -2642,7 +2653,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			er=&cl->ecmtask[i];
 
 			//additional cache check:			
-			if (check_cwcache2(er, cl->grp)) {
+			if (check_cwcache2(er)) {
 					//cs_log("found lost entry in cache! %s %04X&%06X/%04X", username(cl), er->caid, er->prid, er->srvid);
 					er->rc = E_CACHE2;
 					send_dcw(cl, er);

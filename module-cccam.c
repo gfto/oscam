@@ -671,20 +671,20 @@ int cc_get_nxt_ecm(struct s_client *cl) {
 			if (n < 0 || cl->ecmtask[n].tps.time - cl->ecmtask[i].tps.time < 0) {
 					
 				//check for already pending:
-				//if (((struct cc_data*)cl->cc)->extended_mode) {
-				//	int j,found;
-				//	for (found=j=0;j<CS_MAXPENDING;j++) {
-				//		if (i!=j && cl->ecmtask[j].rc == 101 &&
-				//			cl->ecmtask[i].caid==cl->ecmtask[j].caid &&
-				//			cl->ecmtask[i].ecmd5==cl->ecmtask[j].ecmd5) {
-				//			found=1;
-				//			break;
-				//		}
-				//	}
-				//	if (!found)
-				//		n = i;
-				//}
-				//else
+				if (((struct cc_data*)cl->cc)->extended_mode) {
+					int j,found;
+					for (found=j=0;j<CS_MAXPENDING;j++) {
+						if (i!=j && cl->ecmtask[j].rc == 101 &&
+							cl->ecmtask[i].caid==cl->ecmtask[j].caid &&
+							cl->ecmtask[i].ecmd5==cl->ecmtask[j].ecmd5) {
+							found=1;
+							break;
+						}
+					}
+					if (!found)
+						n = i;
+				}
+				else
 					n = i;
 			}
 		}
@@ -2130,7 +2130,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			cc->recv_ecmtask = -1;
 			struct cc_extended_ecm_idx *eei = get_extended_ecm_idx(cl,
 					cc->extended_mode ? cc->g_flag : 1, TRUE);
-			if (eei == NULL) {
+			if (!eei) {
 				cs_debug_mask(D_READER, "%s received extended ecm id %d but not found!",
 						getprefix(), cc->g_flag);
 			}
@@ -3546,7 +3546,7 @@ int cc_srv_connect(struct s_client *cl) {
 			int needs_card_updates = (cfg.cc_update_interval >= 0)
 					&& comp_timeb(&cur_time, &timeout) > 0;
 
-			if (needs_card_updates) {
+			if (needs_card_updates || !cc->cards_modified) {
 				cc->ecm_time = cur_time;
 				ulong new_hexserial_crc = get_reader_hexserial_crc(cl);
 				int cards_modified = cc_cards_modified();
@@ -3937,6 +3937,7 @@ void module_cccam(struct s_module *ph) {
 	ph->watchdog = 1;
 	ph->recv = cc_recv;
 	ph->cleanup = cc_cleanup;
+	ph->multi = 1;
 	ph->c_multi = 1;
 	ph->c_init = cc_cli_init;
 	ph->c_idle = cc_idle;
