@@ -160,6 +160,9 @@ DESCRIPTIONS
        lb_stat_cleanup = hour
 	  hours after the loadbalancing statistics will be deleted, default:336
 
+       lb_use_locking = 0|1
+	  1 = disable parallel and identical ECM requests, default:0
+
    The [monitor] section
        port = 0|port
 	  UDP port for monitor, port=0 monitor disabled, default:0
