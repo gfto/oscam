@@ -1668,12 +1668,12 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 				if (!isactive)
 					status = "<b>connected</b>"; classname = "online";
 
+				isec = now - cl->last;
 				if(isec < cfg.mon_hideclient_to) {
 					proto = monitor_get_proto(cl);
 					status = "<b>online</b>";
 					lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
 					lastresponsetm = cl->cwlastresptime;
-					isec = now - cl->last;
 					isactive++;
 				}
 			}
@@ -1688,7 +1688,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		tpl_printf(vars, TPLADDONCE, "EMMOK", "%d", account->emmok);
 		tpl_printf(vars, TPLADDONCE, "EMMNOK", "%d", account->emmnok);
 
-		if ( isconnected > 0 || !cfg.http_hide_idle_clients) {
+		if ( isactive > 0 || !cfg.http_hide_idle_clients) {
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
