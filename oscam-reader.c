@@ -18,7 +18,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 
 	va_list params;
 	va_start(params, fmt);
-	vsnprintf(txt, sizeof(txt)-1, fmt, params);
+	vsnprintf(txt, sizeof(txt), fmt, params);
 	va_end(params);
 	cs_log("%s", txt);
 
@@ -30,10 +30,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 		if (!reader->init_history)
 			return;
 
-		memcpy(reader->init_history+reader->init_history_pos, txt, strlen(txt));
-
-		reader->init_history[size-2]='\n';
-		reader->init_history[size-1]='\0';
+		snprintf(reader->init_history+reader->init_history_pos, strlen(txt)+2, "%s\n", txt);
 		reader->init_history_pos+=strlen(txt)+1;
 	}
 }

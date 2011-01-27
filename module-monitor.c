@@ -394,7 +394,7 @@ static void monitor_process_details_reader(struct s_client *cl) {
 			char *ptr,*ptr1 = NULL;
 			for (ptr=strtok_r(cl->reader->init_history, "\n", &ptr1); ptr; ptr=strtok_r(NULL, "\n", &ptr1)) {
 				monitor_send_details(ptr, (unsigned long)(cl->thread));
-				ptr[-1]='\n';
+				ptr1[-1]='\n';
 			}
 		}
 	} else {

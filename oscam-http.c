@@ -1909,7 +1909,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 				char *ptr, *ptr1 = NULL;
 				for (ptr=strtok_r(rdr->init_history, "\n", &ptr1); ptr; ptr=strtok_r(NULL, "\n", &ptr1)) {
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%s<BR />", ptr);
-					ptr[-1]='\n';
+					ptr1[-1]='\n';	
 				}
 			}
 
