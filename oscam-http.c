@@ -213,9 +213,9 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "LBRETRYLIMIT", "%d",cfg.lb_retrylimit);
 	tpl_printf(vars, TPLADD, "LBREOPENSECONDS", "%d",cfg.lb_reopen_seconds);
 	tpl_printf(vars, TPLADD, "LBCLEANUP", "%d",cfg.lb_stat_cleanup);
-	
-	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
+	if (cfg.lb_use_locking) tpl_addVar(vars, TPLADD, "USELOCKINGCHECKED", "selected");
 
+	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
 }
 
 char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
@@ -2871,8 +2871,7 @@ int process_request(FILE *f, struct in_addr in) {
 					if (cfg.http_dynip == addr)
 						ok = v;
 				} else {
-					cs_log("can't resolve %s", cfg.http_dyndns);
-				}
+					cs_log("can't resolve %s", cfg.http_dyndns); }
 				pthread_mutex_unlock(&gethostbyname_lock);
 
 			} else {

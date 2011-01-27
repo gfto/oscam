@@ -2545,7 +2545,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
  * This function checks for hexserial changes on cards.
  * We update the share-list if a card has changed
  */
-ulong get_reader_hexserial_crc(struct s_client *cl) {
+ulong get_reader_hexserial_crc(struct s_client *UNUSED(cl)) {
 	ulong crc = 0;
 	struct s_reader *rdr;
 	for (rdr = first_active_reader; rdr; rdr = rdr->next) {

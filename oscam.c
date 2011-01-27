@@ -2366,7 +2366,15 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		}
 	}
 
-	pthread_mutex_lock(&get_cw_lock);
+    //Use locking - now default=FALSE, activate on problems!
+	int locked;
+	if (cfg.lb_mode && cfg.lb_use_locking) {
+			pthread_mutex_lock(&get_cw_lock);
+			locked=1;
+	}
+	else
+			locked=0;
+			
 	
 	//Schlocke: above checks could change er->rc so
 	if (er->rc >= E_UNHANDLED) {
@@ -2442,7 +2450,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 				er->rc = E_99;
 	}
 	
-	pthread_mutex_unlock(&get_cw_lock);
+	if (locked)
+		pthread_mutex_unlock(&get_cw_lock);
 	
 	if (er->rc == E_99)
 			return; //ECM already requested / found in ECM cache

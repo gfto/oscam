@@ -272,6 +272,7 @@ extern char *RDR_CD_TXT[];
 #define DEFAULT_NFB 1
 #define DEFAULT_RETRYLIMIT 800
 #define DEFAULT_LB_STAT_CLEANUP 336
+#define DEFAULT_LB_USE_LOCKING 0
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
@@ -1131,6 +1132,7 @@ struct s_config
 	int	lb_retrylimit; //reopen only happens if reader response time > retrylimit
 	char	*lb_savepath; //path where the stat file is save. Empty=default=/tmp/.oscam/stat
 	int	lb_stat_cleanup; //duration in hours for cleaning old statistics
+	int lb_use_locking; //use a mutex lock while searching for readers (get_cw())
 	
 	int             resolve_gethostbyname;
 
