@@ -1191,22 +1191,39 @@ static int newcamd_send_emm(EMM_PACKET *ep)
 
 static int newcamd_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int n)
 {
-	ushort idx;
+	ushort idx = -1;
 	*client = *client; //suppress compiler error, but recv_chk should comply to other recv_chk routines...
 
-	if (n==5) { //not found on server
-		*rc = 0;
-		idx = (buf[0] << 8) | buf[1];
-		memset(dcw, 0, 16);
-		return(idx);
-	}
+	if (n<5)
+		return -1;
 
-	if (n<21) // no cw, ignore others
-		return(-1);
-  
-	*rc = 1;
-	idx = (buf[0] << 8) | buf[1];
-	memcpy(dcw, buf+5, 16);
+	switch(buf[2]) {
+		case 0x80:
+		case 0x81:
+			idx = (buf[0] << 8) | buf[1];
+			if (n==5) { //not found on server
+				*rc = 0;
+				memset(dcw, 0, 16);
+				break;
+			}
+
+			if (n<21) {
+				cs_debug_mask(D_CLIENT, "invaild newcamd answer");
+				return(-1);
+			}
+
+			*rc = 1;
+			memcpy(dcw, buf+5, 16);
+			break;
+		case MSG_KEEPALIVE:
+			return -1;
+		default:
+			if (buf[2]>0x81 && buf[2]<0x90) { //answer to emm
+				return -1;
+			}
+			cs_debug_mask(D_CLIENT, "unknown newcamd command from server");
+			return -1;
+	}
 	return(idx);
 }
 
@@ -1216,7 +1233,6 @@ void module_newcamd(struct s_module *ph)
   ph->type=MOD_CONN_TCP;
   ph->logtxt = ", crypted";
   ph->multi=1;
-  ph->watchdog=1;
   ph->s_ip=cfg.ncd_srvip;
   ph->s_handler=newcamd_server;
   ph->recv=newcamd_recv;
