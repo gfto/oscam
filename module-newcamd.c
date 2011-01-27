@@ -1194,10 +1194,10 @@ static int newcamd_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar 
 	ushort idx;
 	*client = *client; //suppress compiler error, but recv_chk should comply to other recv_chk routines...
 
-	if (n==5) {
+	if (n==5) { //not found on server
 		*rc = 0;
 		idx = (buf[0] << 8) | buf[1];
-		memcpy(dcw, buf+5, 16);
+		memset(dcw, 0, 16);
 		return(idx);
 	}
 

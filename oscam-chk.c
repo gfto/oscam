@@ -468,6 +468,6 @@ int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
 		if (prid == provid)
 			return 1;
 	}
-	cs_debug_mask(D_EMM, "emm reader %s skip provider", reader->label, provid);
+	cs_debug_mask(D_EMM, "emm reader %s skip provider %06X", reader->label, provid);
 	return 0;
 }
