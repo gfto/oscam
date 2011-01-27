@@ -446,3 +446,28 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //All checks done, reader is matching!
   return(1);
 }
+
+int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
+	int i;
+
+	if (reader->caid != caid) {
+		cs_debug_mask(D_EMM, "emm reader %s caid mismatch %04X != %04X", reader->label, reader->caid, caid);
+		return 0;
+	}
+	
+	if (!hexserialset(reader)) {
+		cs_debug_mask(D_EMM, "emm reader %s has no serial set", reader->label);
+		return 0;
+	}
+
+	if (!provid || !reader->nprov)
+		return 1;
+
+	for (i=0; i<reader->nprov; i++) {
+		ulong prid = (ulong)((reader->prid[i][0]<<16) | (reader->prid[i][1]<<8) | (reader->prid[i][2]));
+		if (prid == provid)
+			return 1;
+	}
+	cs_debug_mask(D_EMM, "emm reader %s skip provider", reader->label, provid);
+	return 0;
+}

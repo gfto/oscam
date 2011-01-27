@@ -150,14 +150,18 @@ static void camd35_request_emm(ECM_REQUEST *er)
 	struct s_client *cl = cur_client();
 	struct s_reader *aureader = NULL, *rdr = NULL;
 
-	LL_ITER *itr = ll_iter_create(cl->aureader_list);
-	while ((rdr = ll_iter_next(itr))) {
-		if (!(rdr->typ & R_IS_CASCADING) && rdr->caid == er->caid) {
-			aureader=rdr;
-			break;
+	aureader = er->selected_reader;
+
+	if (!aureader) {
+		LL_ITER *itr = ll_iter_create(cl->aureader_list);
+		while ((rdr = ll_iter_next(itr))) {
+			if (emm_reader_match(rdr, er->caid, er->prid)) {
+				aureader=rdr;
+				break;
+			}
 		}
+		ll_iter_release(itr);
 	}
-	ll_iter_release(itr);
 
 	if (!aureader)
 		return;  // TODO

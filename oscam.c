@@ -2488,6 +2488,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			continue;
 
 		ushort caid = b2i(2, ep->caid);
+		ulong provid = (ulong)((ep->provid[0]<<16) | (ep->provid[1]<<8) | (ep->provid[2]));
 
 		if (aureader->audisabled) {
 			cs_debug_mask(D_EMM, "AU is disabled for reader %s", aureader->label);
@@ -2499,24 +2500,17 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			continue;
 		}
 
+		if (!emm_reader_match(aureader, caid, provid))
+			continue;
+
 		if (aureader->typ & R_IS_CASCADING) { // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
 			if (!aureader->ph.c_send_emm) // no emm support
 				continue;
 
-			if (aureader->caid != caid || !hexserialset(aureader)) {
-				cs_debug_mask(D_EMM, "emm reader %s caid mismatch %04X != %04X", aureader->label, aureader->caid, caid);
-				continue;
-			}
-
 			//we need provider and shared addresses set for this
-			//function should check caid to make sure we have no false positive
-			int i;
-			for (i=0; i<CS_MAX_MOD; i++) {
-				if (cardsystem[i].get_emm_type) {
-					if (cardsystem[i].get_emm_type(ep, aureader))
-						break;
-				}
-			}
+			struct s_cardsystem *cs = get_cardsystem_by_caid(caid);
+			if (cs)
+				cs->get_emm_type(ep, aureader);
 		} else { // local reader
 			if (aureader->caid != caid) {
 				cs_debug_mask(D_EMM, "emm reader %s caid mismatch %04X != %04X", aureader->label, aureader->caid, caid);

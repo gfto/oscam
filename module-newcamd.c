@@ -675,10 +675,15 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 	if (ok) {
 		LL_ITER *itr = ll_iter_create(cl->aureader_list);
 		while ((rdr = ll_iter_next(itr))) {
-			if (!(rdr->typ & R_IS_CASCADING) && rdr->caid == cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid) {
-				aureader=rdr;
-				break;
+			int n;
+			for (n=0;n<cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].nprids;n++) {
+				if (emm_reader_match(rdr, cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].caid, cfg.ncd_ptab.ports[cl->port_idx].ftab.filts[0].prids[n])) {
+					aureader=rdr;
+					break;
+				}
 			}
+			if (aureader)
+				break;
 		}
 		ll_iter_release(itr);
 
@@ -1186,14 +1191,23 @@ static int newcamd_send_emm(EMM_PACKET *ep)
 
 static int newcamd_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int n)
 {
-  ushort idx; 
-  *client = *client; //suppress compiler error, but recv_chk should comply to other recv_chk routines...
-  if( n<21 )	// no cw, ignore others
-    return(-1);
-  *rc = 1;
-  idx = (buf[0] << 8) | buf[1];
-  memcpy(dcw, buf+5, 16);
-  return(idx);
+	ushort idx;
+	*client = *client; //suppress compiler error, but recv_chk should comply to other recv_chk routines...
+
+	if (n==5) {
+		*rc = 0;
+		idx = (buf[0] << 8) | buf[1];
+		memcpy(dcw, buf+5, 16);
+		return(idx);
+	}
+
+	if (n<21) // no cw, ignore others
+		return(-1);
+  
+	*rc = 1;
+	idx = (buf[0] << 8) | buf[1];
+	memcpy(dcw, buf+5, 16);
+	return(idx);
 }
 
 void module_newcamd(struct s_module *ph)

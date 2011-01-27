@@ -1346,6 +1346,7 @@ extern int chk_sfilter(ECM_REQUEST *, PTAB*);
 extern int chk_ufilters(ECM_REQUEST *);
 extern int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *);
 extern int matching_reader(ECM_REQUEST *, struct s_reader *);
+extern int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid);
 extern void set_signal_handler(int , int , void (*));
 extern void cs_log_config(void);
 extern void cs_waitforcardinit(void);
