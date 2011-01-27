@@ -825,7 +825,7 @@ struct s_reader  //contains device info, reader info and card info
   FTAB      fchid;
   FTAB      ftab;
   CLASSTAB  cltab;
-
+  char      *init_history;
   int       init_history_pos;
   int       brk_pos;
   int       msg_idx;
@@ -1358,7 +1358,6 @@ extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
 extern void nullclose(int *fd);
 extern void kill_thread(struct s_client *cl);
 extern int get_threadnum(struct s_client *client);
-extern int get_ridx(struct s_reader *reader);
 extern void cs_add_violation(uint ip);
 
 extern void cs_card_info(void);

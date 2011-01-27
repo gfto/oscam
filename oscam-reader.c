@@ -18,42 +18,24 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 
 	va_list params;
 	va_start(params, fmt);
-	vsprintf(txt, fmt, params);
+	vsnprintf(txt, sizeof(txt)-1, fmt, params);
 	va_end(params);
 	cs_log("%s", txt);
 
 	if (cfg.saveinithistory) {
-		FILE *fp;
-		char filename[256];
-		char *buffer;
-		int filelen = 0;
-		sprintf(filename, "%s/reader%d", get_tmp_dir(), get_ridx(reader));
-		int size = reader->init_history_pos+strlen(txt)+1;
-		buffer = malloc(size+1);
+		int size = reader->init_history_pos+strlen(txt)+2;
 
-		if (buffer == NULL)
+		cs_realloc(&reader->init_history, size, -1);
+
+		if (!reader->init_history)
 			return;
 
-		memset(buffer, 32, size);
+		memcpy(reader->init_history+reader->init_history_pos, txt, strlen(txt));
 
-		fp = fopen(filename, "r");
-
-		if (fp) {
-			filelen = fread(buffer, 1, reader->init_history_pos, fp);
-			fclose(fp);
-		}
-
-		sprintf(buffer + filelen, "%s\n", txt);
-
-		fp = fopen(filename, "w");
-		if (fp) {
-			fwrite(buffer, 1, filelen + strlen(txt)+1, fp);
-			fclose(fp);
-		}
-
-		free(buffer);
+		reader->init_history[size-2]='\n';
+		reader->init_history[size-1]='\0';
+		reader->init_history_pos+=strlen(txt)+1;
 	}
-	reader->init_history_pos+=strlen(txt)+1;
 }
 
 static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)

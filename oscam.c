@@ -53,15 +53,6 @@ int     loghistidx;  // ptr to current entry
 char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
 #endif
 
-int get_ridx(struct s_reader *reader) {
-	int i;
-	struct s_reader *rdr;
-	for (i=0,rdr=first_active_reader; rdr ; rdr=rdr->next, i++)
-		if (reader == rdr)
-			return i;
-	return -1;
-}
-
 int get_threadnum(struct s_client *client) {
 	struct s_client *cl;
 	int count=0;

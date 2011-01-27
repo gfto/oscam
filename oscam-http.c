@@ -832,7 +832,7 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 }
 
 char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i, ridx=0;
+	int i;
 	char *reader_ = getParam(params, "label");
 	char *value;
 
@@ -891,7 +891,6 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	}
 
 	rdr = get_reader_by_label(reader_);
-	ridx = get_ridx(rdr); //do we really need this index number, would like to get rid of get_ridx ...
 
 	tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 
@@ -1168,7 +1167,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 #endif
 		default :
 			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Error: protocol not resolvable</b><BR>");
-			tpl_printf(vars, TPLAPPEND, "MESSAGE", "<b>Error: protocol number: %d readername: %s readeridx: %d</b><BR>", rdr->typ, rdr->label, ridx);
+			tpl_printf(vars, TPLAPPEND, "MESSAGE", "<b>Error: protocol number: %d readername: %s</b><BR>", rdr->typ, rdr->label);
 			break;
 
 	}
@@ -1903,22 +1902,17 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 		} else {
 			tpl_addVar(vars, TPLADD, "LOGHISTORY", "->");
 			// normal non-cccam reader
-			FILE *fp;
-			char filename[256];
-			char buffer[128];
 
 			rdr = get_reader_by_label(reader_);
-			int ridx = get_ridx(rdr);
 
-			snprintf(filename, sizeof(filename), "%s/reader%d", get_tmp_dir(), ridx);
-			fp = fopen(filename, "r");
-
-			if (fp) {
-				while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%s<BR>\n", buffer);
+			if (rdr->init_history) {
+				char *ptr, *ptr1 = NULL;
+				for (ptr=strtok_r(rdr->init_history, "\n", &ptr1); ptr; ptr=strtok_r(NULL, "\n", &ptr1)) {
+					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%s<BR />", ptr);
+					ptr[-1]='\n';
 				}
-				fclose(fp);
 			}
+
 			tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 			tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
 		}

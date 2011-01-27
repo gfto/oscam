@@ -235,7 +235,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 
 	if (cl){
 		char ldate[16], ltime[16], *usr;
-		int lsec, isec, con, cau, lrt;
+		int lsec, isec, con, cau, lrt =- 1;
 		time_t now;
 		struct tm lt;
 		now=time((time_t)0);
@@ -263,9 +263,14 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			//		cau=-cau;
 			if( cl->typ == 'r')
 			{
-			    lrt = get_ridx(cl->reader);
-			    if( lrt >= 0 )
-                    lrt = 10 + cl->reader->card_status;
+				int i;
+				struct s_reader *rdr;
+				for (i=0,rdr=first_active_reader; rdr ; rdr=rdr->next, i++)
+					if (cl->reader == rdr)
+						lrt=i;
+
+				if( lrt >= 0 )
+					lrt = 10 + cl->reader->card_status;
 			}
 			else
                 lrt = cl->cwlastresptime;
@@ -385,17 +390,12 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 static void monitor_process_details_reader(struct s_client *cl) {
 
 	if (cfg.saveinithistory) {
-		FILE *fp;
-		char filename[32];
-		char buffer[128];
-		sprintf(filename, "%s/reader%d", get_tmp_dir(), get_ridx(cl->reader));
-		fp = fopen(filename, "r");
-
-		if (fp) {
-			while(fgets(buffer, 128, fp) != NULL) {
-				monitor_send_details(buffer, (unsigned long)(cl->thread));
+		if (cl->reader->init_history) {
+			char *ptr,*ptr1 = NULL;
+			for (ptr=strtok_r(cl->reader->init_history, "\n", &ptr1); ptr; ptr=strtok_r(NULL, "\n", &ptr1)) {
+				monitor_send_details(ptr, (unsigned long)(cl->thread));
+				ptr[-1]='\n';
 			}
-			fclose(fp);
 		}
 	} else {
 		monitor_send_details("Missing reader index or entitlement not saved!", (unsigned long)(cl->thread));
