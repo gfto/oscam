@@ -464,7 +464,7 @@ int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
 		return 1;
 
 	for (i=0; i<reader->nprov; i++) {
-		ulong prid = (ulong)((reader->prid[i][0]<<16) | (reader->prid[i][1]<<8) | (reader->prid[i][2]));
+		ulong prid = b2i(4, reader->prid[i]);
 		if (prid == provid)
 			return 1;
 	}
