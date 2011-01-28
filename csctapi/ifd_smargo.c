@@ -71,8 +71,6 @@ static int smargo_set_settings(struct s_reader *reader, int freq, unsigned char 
 	tcgetattr(reader->handle, &term);
 	term.c_cflag &= ~CSIZE;
 	term.c_cflag |= CS8;
-	term.c_cc[VMIN] = 0;
-	term.c_cc[VTIME] = 10;
 	tcsetattr(reader->handle, TCSANOW, &term);
 
 	return OK;

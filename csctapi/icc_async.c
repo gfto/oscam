@@ -123,7 +123,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			reader->device[pos]= 0; //slot 1 reader now gets correct physicalname
 
 			//open physical device
-			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY);
+			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
 				cs_log("ERROR opening device %s",reader->device);
 				pthread_mutex_unlock(&sc8in1);
@@ -148,7 +148,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			break;
 		case R_MP35:
 		case R_MOUSE:
-			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY);
+			reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 			if (reader->handle < 0) {
 				cs_log("ERROR opening device %s",reader->device);
 				return ERROR;
@@ -185,7 +185,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			return Azbox_Init(reader);
 #elif defined(SCI_DEV)
 	#if defined(SH4) || defined(STB04SCI)
-			reader->handle = open (reader->device, O_RDWR|O_NOCTTY);
+			reader->handle = open (reader->device, O_RDWR|O_NONBLOCK|O_NOCTTY);
 	#else
 			reader->handle = open (reader->device, O_RDWR);
 	#endif
