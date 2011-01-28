@@ -1410,6 +1410,7 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 			refresh_oscam(REFR_ACCOUNTS, in);
 		else
 			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
+
 		// need to reget account as writing to disk changes account!
 		for (account = cfg.account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 	}
@@ -1460,24 +1461,14 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	if (account->autoau == 1)
 		tpl_addVar(vars, TPLADD, "AUREADER", "1");
 	else if (account->aureader_list) {
-		char buf[512];
-		buf[0]='\0';
-
 		struct s_reader *rdr;
-
 		LL_ITER *itr = ll_iter_create(account->aureader_list);
-
-		int pos=0;
+		char *dot = "";
 		while ((rdr = ll_iter_next(itr))) {
-			if (pos==0)
-				sprintf(buf + pos, "%s", rdr->label);
-			else
-				sprintf(buf + pos, ",%s", rdr->label);
-			pos+=strlen(rdr->label);
+			tpl_printf(vars, TPLAPPEND, "AUREADER", "%s%s", dot, rdr->label);
+			dot = ",";
 		}
 		ll_iter_release(itr);
-
-		tpl_addVar(vars, TPLADD, "AUREADER", buf);
 	}
 
 	/* SERVICES */
@@ -1666,12 +1657,13 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 				isconnected = 1;
 
 				if (!isactive)
-					status = "<b>connected</b>"; classname = "online";
+					status = "<b>connected</b>"; classname = "connected";
 
 				isec = now - cl->last;
 				if(isec < cfg.mon_hideclient_to) {
 					proto = monitor_get_proto(cl);
 					status = "<b>online</b>";
+					classname = "online";
 					lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
 					lastresponsetm = cl->cwlastresptime;
 					isactive++;
@@ -2122,7 +2114,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
-					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime);
+					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
 
 					int j, found = 0;
 					struct s_srvid *srvid = cfg.srvid;

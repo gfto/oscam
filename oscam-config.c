@@ -2083,25 +2083,16 @@ int write_userdb(struct s_auth *authptr)
 		if (account->autoau == 1)
 			fprintf_conf(f, CONFVARWIDTH, "au", "1\n");
 		else if (account->aureader_list) {
-			char buf[512];
-			buf[0]='\0';
-
 			struct s_reader *rdr;
-
 			LL_ITER *itr = ll_iter_create(account->aureader_list);
-
-			int pos=0;
+			char *dot = "";
+			fprintf_conf(f, CONFVARWIDTH, "au", "");
 			while ((rdr = ll_iter_next(itr))) {
-				if (pos==0)
-					sprintf(buf + pos, "%s", rdr->label);
-				else
-					sprintf(buf + pos, ",%s", rdr->label);
-				pos+=strlen(rdr->label);
+				fprintf(f, "%s%s", dot, rdr->label);
+				dot = ",";
 			}
-
 			ll_iter_release(itr);
-
-			fprintf_conf(f, CONFVARWIDTH, "au", "%s\n", buf);
+			fprintf(f, "\n");
 		}
 
 		value = mk_t_service((uint64)account->sidtabok, (uint64)account->sidtabno);
