@@ -363,12 +363,13 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             // we can't assume that if the nano len is 5 or more we have an ecm number
             // as some card don't support this
             if( reader->last_geo.number_ecm > 0 ) {
-                if(reader->last_geo.number_ecm ==curnumber_ecm && (hasD2 != 1 || ecm88Data[nanoLen-1] == 0x00)) { //ecm88Data[8] == 0x00 force use ECM nano 40 ending with 00
+                if(reader->last_geo.number_ecm ==curnumber_ecm && (ecm88Data[nanoLen-1] == 0x00)) { //ecm88Data[8] == 0x00 force use ECM nano 40 ending with 00
                     keynr=ecm88Data[5];
                     cs_debug_mask(D_READER, "keyToUse = %02x",ecm88Data[5]);
                 }
                 else
                 {
+					cs_debug_mask(D_READER, "Skip ECM ending with = %02x for ecm number (%x)",ecm88Data[nanoLen-1], curnumber_ecm);
                     ecm88Data=nextEcm;
                     ecm88Len-=curEcm88len;
                     continue; //loop to next ecm
