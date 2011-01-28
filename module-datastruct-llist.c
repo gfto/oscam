@@ -229,6 +229,8 @@ void *ll_has_elements(LLIST *l) {
 
 int ll_contains(LLIST *l, void *obj)
 {
+    if (!l || !obj)
+      return 0;
     LL_ITER *it = ll_iter_create(l);
     void *data;
     while ((data=ll_iter_next(it))) {
