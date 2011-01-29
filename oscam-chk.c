@@ -460,12 +460,12 @@ int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
 		return 0;
 	}
 
-	if (!provid || !reader->nprov)
+	if (!provid || !reader->nprov || reader->auprovid == provid)
 		return 1;
 
 	for (i=0; i<reader->nprov; i++) {
 		ulong prid = b2i(4, reader->prid[i]);
-		if (prid == provid)
+		if (prid == provid || ( (reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF) ))
 			return 1;
 	}
 	cs_debug_mask(D_EMM, "emm reader %s skip provider %06X", reader->label, provid);
