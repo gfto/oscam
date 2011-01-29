@@ -554,6 +554,9 @@ static int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   	 	break;  	
   }
 
+  if (!rc)
+    cs_debug_mask(D_EMM, "cryptoworks_do_emm(): type %d - %02X %02X", ep->type, cta_res[0], cta_res[1]);
+
   return(rc);
 }
 
