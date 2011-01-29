@@ -1924,7 +1924,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 char *send_oscam_status(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
 	int i;
 	char *usr;
-	int lsec, isec, con, cau;
+	int lsec, isec, con, cau = 0;
 	time_t now = time((time_t)0);
 	struct tm lt;
 
@@ -2044,6 +2044,15 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				else con=0;
 
 				//if( (cau=get_ridx(cl->aureader)+1) && (now-cl->lastemm)/60 > cfg.mon_aulow) cau=-cau;
+				// workaround: no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
+				if (!cl->aureader_list) {
+					cau = 0;
+				} else {
+					if ((now-cl->lastemm)/60 > cfg.mon_aulow)
+						cau = -1;
+					else
+						cau = 1;
+				}
 
 				localtime_r(&cl->login, &lt);
 
