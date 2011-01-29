@@ -2479,7 +2479,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			continue;
 
 		ushort caid = b2i(2, ep->caid);
-		ulong provid = (ulong)((ep->provid[0]<<16) | (ep->provid[1]<<8) | (ep->provid[2]));
+		ulong provid = b2i(4, ep->provid);
 
 		if (aureader->audisabled) {
 			cs_debug_mask(D_EMM, "AU is disabled for reader %s", aureader->label);
@@ -2491,32 +2491,33 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			continue;
 		}
 
+		//TODO: provider possibly not set yet, this is done in get_emm_type()
 		if (!emm_reader_match(aureader, caid, provid))
 			continue;
+
+		struct s_cardsystem *cs = NULL;
 
 		if (aureader->typ & R_IS_CASCADING) { // network reader (R_CAMD35 R_NEWCAMD R_CS378X R_CCCAM)
 			if (!aureader->ph.c_send_emm) // no emm support
 				continue;
 
-			//we need provider and shared addresses set for this
-			struct s_cardsystem *cs = get_cardsystem_by_caid(caid);
-			if (cs)
-				cs->get_emm_type(ep, aureader);
+			cs = get_cardsystem_by_caid(caid);
+			if (!cs) {
+				cs_debug_mask(D_EMM, "unable to find cardsystem for caid %04X, reader %s", caid, aureader->label);
+				continue;
+			}
 		} else { // local reader
-			if (aureader->caid != caid) {
-				cs_debug_mask(D_EMM, "emm reader %s caid mismatch %04X != %04X", aureader->label, aureader->caid, caid);
-
-				//is this useful?
+			if (aureader->csystem.active)
+				cs=&aureader->csystem;
+		}
+			
+		if (cs && cs->get_emm_type) {
+			if(!cs->get_emm_type(ep, aureader)) {
+				cs_debug_mask(D_EMM, "emm skipped, get_emm_type() returns error, reader %s", aureader->label);
 				client->emmnok++;
 				if (client->account)
 					client->account->emmnok++;
 				first_client->emmnok++;
-
-				continue;
-			}
-
-			if (!reader_get_emm_type(ep, aureader)) { //decodes ep->type and ep->hexserial from the EMM
-				cs_debug_mask(D_EMM, "emm skipped, reader %s", aureader->label);
 				continue;
 			}
 		}
