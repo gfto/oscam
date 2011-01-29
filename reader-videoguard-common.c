@@ -5,6 +5,11 @@
 #include "reader-common.h"
 #include "reader-videoguard-common.h"
 
+#define VG_EMMTYPE_MASK 0xC0
+#define VG_EMMTYPE_G 0
+#define VG_EMMTYPE_U 1
+#define VG_EMMTYPE_S 2
+
 void set_known_card_info(struct s_reader * reader, const unsigned char * atr, const unsigned int *atr_size)
 {
   /* Set to sensible default values */
@@ -831,30 +836,31 @@ const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, cons
   return ptr;
 }
 
-
-
 int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 
 /*
+Unique:
 82 30 ad 70 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 XX XX XX 00 00
 d3 02 00 22 90 20 44 02 4a 50 1d 88 ab 02 ac 79 16 6c df a1 b1 b7 77 00 ba eb 63 b5 c9 a9 30 2b 43 e9 16 a9 d5 14 00
 d3 02 00 22 90 20 44 02 13 e3 40 bd 29 e4 90 97 c3 aa 93 db 8d f5 6b e4 92 dd 00 9b 51 03 c9 3d d0 e2 37 44 d3 bf 00
 d3 02 00 22 90 20 44 02 97 79 5d 18 96 5f 3a 67 70 55 bb b9 d2 49 31 bd 18 17 2a e9 6f eb d8 76 ec c3 c9 cc 53 39 00
 d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10 76 aa 75 ef d6 82 27 2e 44 7b 00
+
+Unknown:
+82 00 1C 81 02 00 18 90 16 42 01 xx xx xx xx xx
+xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx
 */
 
-	int i, pos;
+	int i;
 	int serial_count = ((ep->emm[3] >> 4) & 3) + 1;
 	int serial_len = (ep->emm[3] & 0x80) ? 3 : 4;
 	uchar emmtype = (ep->emm[3] & VG_EMMTYPE_MASK) >> 6;
 
-	pos = 4 + (serial_len * serial_count) + 2;
-
 	switch(emmtype) {
 		case VG_EMMTYPE_G:
-			ep->type=GLOBAL;
 			cs_debug_mask(D_EMM, "EMM: GLOBAL");
+			ep->type=GLOBAL;
 			return TRUE;
 
 		case VG_EMMTYPE_U:
@@ -868,14 +874,14 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 					memcpy(ep->hexserial, ep->emm + (serial_len * i), serial_len);
 					return TRUE;
 				}
-
-				pos = pos + ep->emm[pos+5] + 5;
 			}
 			return FALSE; // if UNIQUE but no serial match return FALSE
 
 		case VG_EMMTYPE_S:
-			ep->type=SHARED;
 			cs_debug_mask(D_EMM, "EMM: SHARED");
+			ep->type=SHARED;
+			if (ep->emm[1] == 0) // detected SHARED EMM from cccam (there is no serial)
+				return TRUE;
 
 			for (i = 0; i < serial_count; i++) {
 				if (!memcmp(&ep->emm[i * 4 + 4], rdr->hexserial + 2, serial_len)) {
@@ -884,15 +890,13 @@ d2 02 00 21 90 1f 44 02 99 6d df 36 54 9c 7c 78 1b 21 54 d9 d4 9f c1 80 3c 46 10
 				}
 			}
 
-			return FALSE;
+			return FALSE; // if SHARED but no serial match return FALSE
 
 		default:
-			if (ep->emm[pos-2] != 0x00 && ep->emm[pos-1] != 0x00 && ep->emm[pos-1] != 0x01) {
-				//remote emm without serial
-				ep->type=UNKNOWN;
-				return TRUE;
-			}
-			return FALSE;
+			//remote emm without serial
+			cs_debug_mask(D_EMM, "EMM: UNKNOWN");
+			ep->type=UNKNOWN;
+			return TRUE;
 	}
 }
 

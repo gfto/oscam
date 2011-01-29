@@ -11,11 +11,6 @@
 
 #define write_cmd_vg(cmd, data) (card_write(reader, cmd, data, cta_res, &cta_lr) == 0)
 
-#define VG_EMMTYPE_MASK 0xC0
-#define VG_EMMTYPE_G 0
-#define VG_EMMTYPE_U 1
-#define VG_EMMTYPE_S 2
-
 #define NDSUNKNOWN    0
 #define NDSAUTO    0
 #define NDS1    1
