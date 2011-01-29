@@ -59,7 +59,7 @@
 
 static int IO_Serial_Bitrate(int bitrate);
 
-static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms);
+bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms);
 
 static bool IO_Serial_WaitToWrite (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms);
 
@@ -619,7 +619,7 @@ static int IO_Serial_Bitrate(int bitrate)
 	return B0;
 }
 
-static bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms)
+bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms)
 {
    fd_set rfds;
    fd_set erfds;

@@ -190,7 +190,10 @@ static int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 	cs_debug_mask(D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
 
 	for (i = 0; i < rdr->nprov; i++) {
-		ok = (!memcmp(&ep->emm[6], rdr->sa[i], 4));
+		if (rdr->typ == R_CAMD35 || rdr->typ == R_CS378X) // camd35 is only sending 3 bytes of sa
+			ok = (!memcmp(&ep->emm[6], rdr->sa[i], 3));
+		else
+			ok = (!memcmp(&ep->emm[6], rdr->sa[i], 4));
 		if (ok) break;
 	}
 
@@ -238,8 +241,13 @@ static void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[38+0+16] = 0xFF;
 	filter[38+8]    = 0x70;
 	filter[38+8+16] = 0xFF;
-	memcpy(filter+38+4, rdr->sa[0], 4);
-	memset(filter+38+4+16, 0xFF, 4);
+	if (rdr->typ == R_CAMD35 || rdr->typ == R_CS378X) {
+		memcpy(filter+38+4, rdr->sa[0], 3);
+		memset(filter+38+4+16, 0xFF, 3);
+	} else {
+		memcpy(filter+38+4, rdr->sa[0], 4);
+		memset(filter+38+4+16, 0xFF, 4);
+	}
 
 	filter[70]=UNIQUE;
 	filter[71]=0;

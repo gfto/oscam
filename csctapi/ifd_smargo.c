@@ -18,7 +18,7 @@
 #define LOBYTE(w) ((BYTE)((w) & 0xff))
 #define HIBYTE(w) ((BYTE)((w) >> 8))
 
-#define DELAY 50
+#define DELAY 150
 
 static int smargo_set_settings(struct s_reader *reader, int freq, unsigned char T, unsigned char inv, unsigned short Fi, unsigned char Di, unsigned char Ni) {
 	int ret = 0;
@@ -31,6 +31,8 @@ static int smargo_set_settings(struct s_reader *reader, int freq, unsigned char 
 	term.c_cflag |= CS5;
 	tcsetattr(reader->handle, TCSANOW, &term);
 
+	cs_sleepms(DELAY);
+
 	cs_debug_mask(D_DEVICE, "Smargo: sending F=%04X (%d), D=%02X (%d), Freq=%04X (%d), N=%02X (%d), T=%02X (%d), inv=%02X (%d) to smartreader",Fi, Fi, Di, Di, freqk, freqk, Ni, Ni, T, T, inv, inv);
 
 	if (T!=14 || freq == 369) {
@@ -39,8 +41,6 @@ static int smargo_set_settings(struct s_reader *reader, int freq, unsigned char 
 		data[2]=LOBYTE(Fi);
 		data[3]=Di;
 		ret = IO_Serial_Write(reader, 0, 4, data);
-
-		cs_sleepms(DELAY);
 	}
 
 	data[0]=0x02;
@@ -48,19 +48,13 @@ static int smargo_set_settings(struct s_reader *reader, int freq, unsigned char 
 	data[2]=LOBYTE(freqk);
 	ret = IO_Serial_Write(reader, 0, 3, data);
 
-	cs_sleepms(DELAY);
-
 	data[0]=0x03;
 	data[1]=Ni;
 	ret = IO_Serial_Write(reader, 0, 2, data);
 
-	cs_sleepms(DELAY);
-
 	data[0]=0x04;
 	data[1]=T;
 	ret = IO_Serial_Write(reader, 0, 2, data);
-
-	cs_sleepms(DELAY);
 
 	data[0]=0x05;
 	data[1]=0; //always done by oscam
@@ -93,6 +87,37 @@ static int smargo_init(struct s_reader *reader) {
 	return OK;
 }
 
+bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms);
+int smargo_Serial_Read(struct s_reader * reader, unsigned timeout, unsigned size, BYTE * data, int *read_bytes)
+{
+	BYTE c;
+	uint count = 0;
+	
+	for (count = 0; count < size ; count++)
+	{
+		if (!IO_Serial_WaitToRead (reader, 0, timeout))
+		{
+			if (read (reader->handle, &c, 1) != 1)
+			{
+				cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
+				cs_log("ERROR in smargo_Serial_Read errno=%d", errno);
+				return ERROR;
+			}
+		}
+		else
+		{
+			cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
+			cs_debug_mask(D_DEVICE, "TIMEOUT in IO_Serial_Read");
+			*read_bytes=count;
+			return ERROR;
+		}
+		data[count] = c;
+	}
+	cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
+	return OK;
+}
+
+
 static int smargo_reset(struct s_reader *reader, ATR *atr) {
 	cs_debug_mask(D_IFD, "Smargo: Resetting card:");
 	int ret=ERROR;
@@ -114,20 +139,24 @@ static int smargo_reset(struct s_reader *reader, ATR *atr) {
 
 		call (IO_Serial_SetParity (reader, parity[i]));
 
-		IO_Serial_Flush(reader);
+		//IO_Serial_Flush(reader);
+
+		IO_Serial_Read(reader, 500, ATR_MAX_SIZE, buf);
 
 		IO_Serial_RTS_Set(reader);
 		cs_sleepms(150);
 		IO_Serial_RTS_Clr(reader);
 
 		int n=0;
-		while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
-			n++;
+		//while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
+		//	n++;
+
+		smargo_Serial_Read(reader, ATR_TIMEOUT, ATR_MAX_SIZE, buf, &n);
 		
 		if(n==0 || buf[0]==0)
 			continue;
 
-		cs_ddump_mask(D_IFD, buf, n, "Smargo ATR:");
+		cs_ddump_mask(D_IFD, buf, n, "Smargo ATR: %d bytes", n);
 
 		if((buf[0]!=0x3B && buf[0]!=0x03 && buf[0]!=0x3F) || (buf[1]==0xFF && buf[2]==0x00))
 			continue; // this is not a valid ATR
