@@ -555,8 +555,6 @@ static void cleanup_thread(struct s_client *cl)
 		ICC_Async_Close(cl->reader);
 	}
 	if (cl->reader) {
-	        ll_destroy_data(cl->reader->lb_stat);
-	        cl->reader->lb_stat = NULL;
 		cl->reader->client = NULL;
 		cl->reader = NULL;
         }
