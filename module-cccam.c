@@ -783,6 +783,8 @@ int get_UA_ofs(uint16 caid) {
 	case 0x09: //VIDEOGUARD:
 	case 0x0B: //CONAX:
 	case 0x18: //NAGRA:
+	case 0x17: //BETACRYPT
+	case 0x06: //IRDETO:
 		ofs = 2;
 		break;
 	}
@@ -826,9 +828,9 @@ void UA_right(uint8 *in, uint8 *out, int len) {
  * cccam uses UA right justified
  **/
 void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
-	//uint8 tmp[8];
-	
+	uint8 tmp[8];
 	memset(out, 0, 8);
+	memset(tmp, 0, 8);
 	//switch (caid>>8) {
 	//	case 0x17: //IRDETO/Betacrypt:
 	//		//oscam: AA BB CC DD 00 00 00 00
@@ -841,8 +843,8 @@ void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid) {
 	//		
 	//	//Place here your own adjustments!
 	//}
-	hexserial_to_newcamd(in, out+2, caid);
-	UA_right(in, out, 8);
+	hexserial_to_newcamd(in, tmp+2, caid);
+	UA_right(tmp, out, 8);
 }
 
 /**
@@ -867,7 +869,7 @@ void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid) {
 	int ofs = get_UA_ofs(caid);
 	int len = 8-ofs;
 	UA_left(in, tmp+ofs, len);
-	newcamd_to_hexserial(tmp+2, out, caid);
+	newcamd_to_hexserial(tmp, out, caid);
 }
 
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out) {
