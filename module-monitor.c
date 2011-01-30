@@ -257,10 +257,21 @@ static char *monitor_client_info(char id, struct s_client *cl){
 					con = 1;
 				else
 					con = 0;
-			
+
 			//if( (cau = get_ridx(cl->aureader) + 1) )
 			//	if ((now-cl->lastemm) /60 > cfg.mon_aulow)
 			//		cau=-cau;
+			// workaround: no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
+			if (!cl->aureader_list) {
+				cau = 0;
+			} else {
+				if ((now-cl->lastemm)/60 > cfg.mon_aulow)
+					cau = -1;
+				else
+					cau = 1;
+			}
+
+
 			if( cl->typ == 'r')
 			{
 				int i;
