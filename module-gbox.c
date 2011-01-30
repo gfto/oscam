@@ -1,7 +1,7 @@
 #include "globals.h"
 #ifdef MODULE_GBOX
 #include <pthread.h>
-#define _XOPEN_SOURCE 600
+//#define _XOPEN_SOURCE 600
 #include <semaphore.h>
 #include <time.h>
 #include <sys/time.h>
@@ -534,8 +534,13 @@ static int gbox_client_init(struct s_client *cli)
   memset(gbox, 0, sizeof(struct gbox_data));
   memset(&gbox->peer, 0, sizeof(struct gbox_peer));
 
-  sscanf(rdr->r_pwd, "%02x%02x%02x%02x", &gbox->peer.key[0], &gbox->peer.key[1], &gbox->peer.key[2], &gbox->peer.key[3]);
-  sscanf(cfg.gbox_key, "%02x%02x%02x%02x", &gbox->key[0], &gbox->key[1], &gbox->key[2], &gbox->key[3]);
+  ulong r_pwd = a2i(rdr->r_pwd, 4);
+  ulong key = a2i(cfg.gbox_key, 4);
+  int i;
+  for (i = 3; i >= 0; i--) {
+	  gbox->peer.key[3 - i] = (r_pwd >> (8 * i)) & 0xff;
+	  gbox->key[3 - i] = (key >> (8 * i)) & 0xff;
+  }
 
   cs_ddump_mask(D_READER, gbox->peer.key, 4, "r_pwd: %s:", rdr->r_pwd);
   cs_ddump_mask(D_READER, gbox->key, 4, "cfg.gbox_key: %s:", cfg.gbox_key);
