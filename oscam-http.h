@@ -1478,7 +1478,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##services#caid##TPLHELPSUFFIX##caid: </A></TD><TD><input name=\"caid\" type=\"text\" size=\"63\" maxlength=\"63\" value=\"##CAIDS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##services#provid##TPLHELPSUFFIX##provid: </A></TD><TD><input name=\"provid\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##PROVIDS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##services#srvid##TPLHELPSUFFIX##srvid: </A></TD><TD><textarea name=\"srvid\" cols=\"80\" rows=\"5\">##SRVIDS##</textarea></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##services#srvid##TPLHELPSUFFIX##srvid: </A></TD><TD><textarea name=\"srvid\" cols=\"80\" rows=\"5\">##SRVIDS##</textarea></TD></TR>\n\
 			<TR><TD>&nbsp;</TD><TD align=\"right\"><input type=\"submit\" name=\"action\" value=\"Save\" title=\"Save service and reload services\" ##BTNDISABLED##></TD>\n\
 		</TABLE>\n\
 	</form>\n\
