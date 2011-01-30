@@ -241,7 +241,11 @@ static void gbox_wait_for_response(struct s_client *cli)
 	//cs_debug_mask(D_READER, "gbox: enter gbox_wait_for_response()");
 	struct gbox_data *gbox = cli->gbox;
 	struct timespec ts;
-	clock_gettime(CLOCK_REALTIME, &ts);
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	ts.tv_sec = tv.tv_sec;
+	ts.tv_nsec = tv.tv_usec * 1000;
+	//clock_gettime(CLOCK_REALTIME, &ts);
 	ts.tv_sec += 5;
 
 	//sem_wait(&gbox->sem);
