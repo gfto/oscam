@@ -4,6 +4,7 @@
 #define _XOPEN_SOURCE 600
 #include <semaphore.h>
 #include <time.h>
+#include <sys/time.h>
 
 
 #include "module-datastruct-llist.h"
