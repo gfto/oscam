@@ -86,6 +86,9 @@ DESCRIPTIONS
 	  clients  the parameter must be 1, otherwise no authentication will be possible for this
 	  clients, default:0
 
+       failbancount = count
+	  number of incorrect logins after an ip address will be blocked, default:0
+
        failbantime = minutes
 	  time for IP based blocking for clients with an invalid login attempt, 0  =  failban  is
 	  disabled, default:0
