@@ -997,9 +997,10 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 
 			pos=7;
 			//add nanos in sorted order to emmbuf
-			for (i=0; i<nano_counter, pos<500; i++) {
+			for (i=0; i<nano_counter; i++) {
 				memcpy(&buffer[pos], &nano_buffer[i][0], nano_buffer[i][1]+2);
 				pos+=nano_buffer[i][1]+2;
+				if (pos>500) break;
 			}
 
 			//calculate emm length and set it on position 2
