@@ -297,7 +297,16 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	}
 	else if (rc == 5) { //timeout
 		stat->request_count++;
-		stat->last_received = time(NULL);
+
+		time_t cur_time = time(NULL);
+		
+		//catch suddenly occuring timeouts and block reader:
+		if ((int)(cur_time-stat->last_received) < (int)(5*cfg.ctimeout) && 
+						stat->rc == 0 && 
+						stat->ecm_count > 0) 
+				stat->rc = 5;
+				
+		stat->last_received = cur_time;
 
 		//add timeout to stat:
 		if (ecm_time<=0)
