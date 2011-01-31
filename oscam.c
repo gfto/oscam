@@ -586,6 +586,34 @@ static void cleanup_thread(struct s_client *cl)
 	}
 }
 
+static void cs_cleanup()
+{
+		if (cfg.lb_mode && cfg.lb_save) {
+				save_stat_to_file();
+				cfg.lb_save = 0; //this is for avoiding duplicate saves
+		}
+
+        //cleanup clients:
+        struct s_client *cl;
+        for (cl=first_client->next; cl; cl=cl->next) { 
+                if (cl->typ=='c')
+                        kill_thread(cl);
+        }
+        
+        //cleanup readers:
+        struct s_reader *rdr;
+        for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+                cs_log("killing reader %s", rdr->label);
+                kill_thread(rdr->client);
+        }
+        first_active_reader = NULL;
+                                                                
+        //cleaning all others:
+        while (first_client->next) {
+                kill_thread(first_client->next);
+        }
+}
+
 void cs_exit(int sig)
 {
 	char targetfile[256];
@@ -664,7 +692,9 @@ void cs_exit(int sig)
 
 	cs_log("cardserver down");
 	cs_close_log();
-
+	
+	cs_cleanup();
+	
 	if (!exit_oscam)
 	  exit_oscam = sig?sig:1;
 }
@@ -3360,29 +3390,8 @@ if (pthread_key_create(&getclient, NULL)) {
   }
 #endif
 
-        //cleanup clients:
-        struct s_client *cl;
-        for (cl=first_client->next; cl; cl=cl->next) { 
-                if (cl->typ=='c')
-                        kill_thread(cl);
-        }
-        
-        //cleanup readers:
-        struct s_reader *rdr;
-        for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-                cs_log("killing reader %s", rdr->label);
-                kill_thread(rdr->client);
-        }
-        first_active_reader = NULL;
-                                                                
-        //cleaning all others:
-        while (first_client->next) {
-                kill_thread(first_client->next);
-        }
-
-        if (cfg.lb_mode && cfg.lb_save)
-				save_stat_to_file();        		
-
+		cs_cleanup();
+		
         stop_garbage_collector();
         
 	return exit_oscam;
