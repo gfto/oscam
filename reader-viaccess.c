@@ -917,23 +917,6 @@ static int viaccess_card_info(struct s_reader * reader)
 }
 
 #ifdef HAVE_DVBAPI
-int is_fixed_emm(uchar pi) {
-	//check whether pi is valid according to viaccess spec
-	//if pi is valid then we have a variable emm-s
-	if ( (pi >= 0x90 && pi <= 0x94) ||
-		 (pi == 0x9E) ||
-		 (pi >= 0xA0 && pi <= 0xAF) ||
-		 (pi == 0xB6) ||
-		 (pi >= 0xC1 && pi <= 0xCF) ||
-		 (pi >= 0xD0 && pi <= 0xD8) ||
-		 (pi >= 0xEE && pi <= 0xEF) ||
-		 (pi == 0xF0)
-	   )
-		return 0;
-	else
-		return 1;
-}
-
 //compare function for qsort in order to sort nanos
 int cmp_nanos(const void *n1, const void *n2) {
 	uchar nano1 = ((uchar*)n1)[0];
@@ -953,7 +936,6 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 	int pos, i;
 	const int NANO_LENGTH=64;
 	uint k;
-	uchar emmbuf[512];
 
 	// Viaccess
 	if (*len>500) return 0;
@@ -986,12 +968,8 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 				memcpy(&nano_buffer[nano_counter][0], emm_global+i, emm_global[i+1]+2);
 				nano_counter++;
 			}
-			k=0;
-
-			//extract from emm-s
-			//determine fixed or variable length emm-s
-			//it is fixed if no pi according to viaccess spec is found on buffer[7]
-			if (is_fixed_emm(buffer[7])) {
+			
+			if (buffer[2]==0x2c) { 
 				cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: found fixed emm");
 				//add 9E 20 nano + first 32 bytes of emm content
 				memcpy(&nano_buffer[nano_counter][0], "\x9E\x20", 2);
@@ -1002,8 +980,7 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 				memcpy(&nano_buffer[nano_counter][0], "\xF0\x08", 2);
 				memcpy(&nano_buffer[nano_counter][2], buffer+39, 8);
 				nano_counter++;
-			}
-			else {
+			} else {
 				cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: found variable emm");
 				//extract from variable emm-s
 				for (k=7; k<(*len); k+=buffer[k+1]+2) {
@@ -1011,34 +988,26 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 					memcpy(&nano_buffer[nano_counter][0], buffer+k, buffer[k+1]+2);
 					nano_counter++;
 				}
-				k=0;
 			}
 
-			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: nano_counter=%d", nano_counter);
+			cs_ddump_mask(D_DVBAPI, buffer, *len, "viaccess_reassemble_emm: emm-s");
 
 			//sort nanos according to ascending pi
 			qsort(&nano_buffer, nano_counter, sizeof(*nano_buffer), cmp_nanos);
 
-			//copy emm-s header (including sa)
-			memcpy(emmbuf, buffer, 7);
 			pos=7;
-
 			//add nanos in sorted order to emmbuf
-			for (i=0; i<nano_counter; i++) {
-				memcpy(&emmbuf[pos], &nano_buffer[i][0], nano_buffer[i][1]+2);
+			for (i=0; i<nano_counter, pos<500; i++) {
+				memcpy(&buffer[pos], &nano_buffer[i][0], nano_buffer[i][1]+2);
 				pos+=nano_buffer[i][1]+2;
 			}
 
 			//calculate emm length and set it on position 2
-			emmbuf[2]=pos-3;
+			buffer[2]=pos-3;
 
-			//cs_ddump_mask(D_READER, buffer, *len, "original emm:");
 			cs_ddump_mask(D_DVBAPI, emm_global, emm_global_len, "viaccess_reassemble_emm: emm-gh");
-			cs_ddump_mask(D_DVBAPI, buffer, *len, "viaccess_reassemble_emm: emm-s");
-			cs_ddump_mask(D_DVBAPI, emmbuf, pos, "viaccess_reassemble_emm: assembled emm");
+			cs_ddump_mask(D_DVBAPI, buffer, pos, "viaccess_reassemble_emm: assembled emm nano_counter=%d", nano_counter);
 
-			//place assembled emm
-			memcpy(buffer, emmbuf, pos);
 			*len=pos;
 			cs_debug_mask(D_DVBAPI, "viaccess_reassemble_emm: exit len=%d", pos);
 			break;
