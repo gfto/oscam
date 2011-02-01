@@ -324,7 +324,7 @@ void chk_t_global(const char *token, char *value)
 			cfg.srvip = 0;
 			return;
 		} else {
-			cfg.srvip=inet_addr(value);
+			cfg.srvip=cs_inet_addr(value);
 			return;
 		}
 	}
@@ -621,7 +621,7 @@ void chk_t_monitor(char *token, char *value)
 			cfg.mon_srvip = 0;
 			return;
 		} else {
-			cfg.mon_srvip=inet_addr(value);
+			cfg.mon_srvip=cs_inet_addr(value);
 			return;
 		}
 	}
@@ -782,7 +782,7 @@ void chk_t_camd33(char *token, char *value)
 			cfg.c33_srvip = 0;
 			return;
 		} else {
-			cfg.c33_srvip = inet_addr(value);
+			cfg.c33_srvip = cs_inet_addr(value);
 			return;
 		}
 	}
@@ -830,7 +830,7 @@ void chk_t_camd35(char *token, char *value)
 			cfg.c35_srvip = 0;
 			return;
 		} else {
-			cfg.c35_srvip = inet_addr(value);
+			cfg.c35_srvip = cs_inet_addr(value);
 			return;
 		}
 	}
@@ -861,7 +861,7 @@ void chk_t_camd35_tcp(char *token, char *value)
 			cfg.c35_tcp_srvip = 0;
 			return;
 		} else {
-			cfg.c35_tcp_srvip = inet_addr(value);
+			cfg.c35_tcp_srvip = cs_inet_addr(value);
 			return;
 		}
 	}
@@ -887,7 +887,7 @@ void chk_t_newcamd(char *token, char *value)
 			cfg.ncd_srvip = 0;
 			return;
 		} else {
-			cfg.ncd_srvip = inet_addr(value);
+			cfg.ncd_srvip = cs_inet_addr(value);
 			return;
 		}
 	}
@@ -932,7 +932,7 @@ void chk_t_cccam(char *token, char *value)
 		cfg.cc_port = strToIntVal(value, 0);
 		return;
 	}
-	//if (!strcmp(token, "serverip")) { cfg.cc_srvip=inet_addr(value); return; }
+	//if (!strcmp(token, "serverip")) { cfg.cc_srvip=cs_inet_addr(value); return; }
 
 	if (!strcmp(token, "reshare")) {
 		cfg.cc_reshare = strToIntVal(value, 0);
@@ -1001,7 +1001,7 @@ void chk_t_radegast(char *token, char *value)
 			cfg.rad_srvip = 0;
 			return;
 		} else {
-			cfg.rad_srvip = inet_addr(value);
+			cfg.rad_srvip = cs_inet_addr(value);
 			return;
 		}
 	}

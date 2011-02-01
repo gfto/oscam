@@ -381,8 +381,7 @@ in_addr_t cs_inet_order(in_addr_t n)
 char *cs_inet_ntoa(in_addr_t n)
 {
   struct in_addr in;
-  //in.s_addr=cs_inet_order(n);
-  in.s_addr = n;
+  in.s_addr=cs_inet_order(n);
   return((char *)inet_ntoa(in));
 }
 
