@@ -124,7 +124,7 @@ int hostResolve(struct s_reader *rdr)
        result = 0;
      } else {
        memcpy(&cl->udp_sa.sin_addr, rht->h_addr, sizeof(cl->udp_sa.sin_addr));
-       cl->ip=cs_inet_order(cl->udp_sa.sin_addr.s_addr);
+       cl->ip=cl->udp_sa.sin_addr.s_addr;
        result = 1;
      }
    }
@@ -141,7 +141,7 @@ int hostResolve(struct s_reader *rdr)
        result = 0;
      } else {
        cl->udp_sa.sin_addr.s_addr = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
-       cl->ip = cs_inet_order(cl->udp_sa.sin_addr.s_addr);
+       cl->ip = cl->udp_sa.sin_addr.s_addr;
        result = 1;
      }
      if (res) freeaddrinfo(res);

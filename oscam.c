@@ -1058,7 +1058,7 @@ int cs_user_resolve(struct s_auth *account)
 				cs_log("can't resolve %s", account->dyndns);
 			else {
 				memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-				account->dynip=cs_inet_order(udp_sa.sin_addr.s_addr);
+				account->dynip=udp_sa.sin_addr.s_addr;
 				result=1;
 			}
 		}
@@ -1074,7 +1074,7 @@ int cs_user_resolve(struct s_auth *account)
 				cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
 			}
 			else {
-				account->dynip=cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
+				account->dynip=((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
 				result=1;
 			}
 			if (res) freeaddrinfo(res);
@@ -2916,7 +2916,7 @@ int accept_connection(int i, int j) {
 
 		if ((n=recvfrom(ph[i].ptab->ports[j].fd, buf+3, sizeof(buf)-3, 0, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 			struct s_client *cl;
-			cl=idx_from_ip(cs_inet_order(cad.sin_addr.s_addr), ntohs(cad.sin_port));
+			cl=idx_from_ip(cad.sin_addr.s_addr, ntohs(cad.sin_port));
 
 			unsigned short rl;
 			rl=n;
@@ -2924,11 +2924,11 @@ int accept_connection(int i, int j) {
 			memcpy(buf+1, &rl, 2);
 
 			if (!cl) {
-				if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr)))
+				if (cs_check_violation((uint)cad.sin_addr.s_addr))
 					return 0;
 				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
 
-				cl = create_client(cs_inet_order(cad.sin_addr.s_addr));
+				cl = create_client(cad.sin_addr.s_addr);
 				if (!cl) return 0;
 
 				cl->ctyp=i;
@@ -2958,12 +2958,12 @@ int accept_connection(int i, int j) {
 		int pfd3;
 		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 
-			if (cs_check_violation((uint)cs_inet_order(cad.sin_addr.s_addr))) {
+			if (cs_check_violation((uint)cad.sin_addr.s_addr)) {
 				close(pfd3);
 				return 0;
 			}
 
-			struct s_client * cl = create_client(cs_inet_order(cad.sin_addr.s_addr));
+			struct s_client * cl = create_client(cad.sin_addr.s_addr);
 			if (cl == NULL) {
 				close(pfd3);
 				return 0;
