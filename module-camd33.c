@@ -64,13 +64,10 @@ static void camd33_auth_client()
   uchar mbuf[1024];
 
   cur_client()->crypted=cfg.c33_crypted;
+
   if (cur_client()->crypted)
-  {
-    struct s_ip *p_ip;
-    for (p_ip=cfg.c33_plain; (p_ip) && (cur_client()->crypted); p_ip=p_ip->next)
-      if ((cur_client()->ip>=p_ip->ip[0]) && (cur_client()->ip<=p_ip->ip[1]))
-        cur_client()->crypted=0;
-  }
+    cur_client()->crypted = check_ip(cfg.c33_plain, cur_client()->ip) ? 0 : 1;
+
   if (cur_client()->crypted)
     aes_set_key((char *) cfg.c33_key);
 

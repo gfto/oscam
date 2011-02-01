@@ -582,13 +582,10 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
     uchar key[16];
     uchar passwdcrypt[120];
     struct s_reader *aureader = NULL, *rdr = NULL;
-    struct s_ip *p_ip;
     struct s_client *cl = cur_client();
     uchar mbuf[1024];
 
-    ok = cfg.ncd_allowed ? 0 : 1;
-    for (p_ip=cfg.ncd_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
-	ok=((ip>=p_ip->ip[0]) && (ip<=p_ip->ip[1]));
+    ok = cfg.ncd_allowed ? check_ip(cfg.ncd_allowed, ip) : 1;
 
     if (!ok)
     {

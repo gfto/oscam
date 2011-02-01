@@ -45,10 +45,8 @@ static void radegast_auth_client(in_addr_t ip)
 {
   int ok;
   struct s_auth *account;
-  struct s_ip *p_ip;
 
-  for (ok=0, p_ip=cfg.rad_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
-    ok=((ip>=p_ip->ip[0]) && (ip<=p_ip->ip[1]));
+  ok = check_ip(cfg.rad_allowed, ip);
 
   if (!ok)
   {

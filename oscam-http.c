@@ -2838,11 +2838,9 @@ int process_request(FILE *f, struct in_addr in) {
 	cur_client()->last = time((time_t)0); //reset last busy time
 
 	int ok=0,v=cv();
-	struct s_ip *p_ip;
-	in_addr_t addr = cs_inet_order(in.s_addr);
+	in_addr_t addr = in.s_addr;
 
-	for (p_ip = cfg.http_allowed; (p_ip) && (!ok); p_ip = p_ip->next)
-		ok =((addr >= p_ip->ip[0]) && (addr <= p_ip->ip[1]))?v:0;
+	ok = check_ip(cfg.http_allowed, in.s_addr) ? v : 0;
 
 	if (!ok && cfg.http_dyndns[0]) {
 		if(cfg.http_dynip && cfg.http_dynip == addr) {
@@ -2859,7 +2857,7 @@ int process_request(FILE *f, struct in_addr in) {
 				rht = gethostbyname((const char *) cfg.http_dyndns);
 				if (rht) {
 					memcpy(&udp_sa.sin_addr, rht->h_addr, sizeof(udp_sa.sin_addr));
-					cfg.http_dynip = cs_inet_order(udp_sa.sin_addr.s_addr);
+					cfg.http_dynip = udp_sa.sin_addr.s_addr;
 					cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
 							cs_inet_ntoa(cfg.http_dynip),
 							cs_inet_ntoa(addr));
@@ -2882,7 +2880,7 @@ int process_request(FILE *f, struct in_addr in) {
 					cs_log("can't resolve %s, error: %s", cfg.http_dyndns, err ? gai_strerror(err) : "unknown");
 				}
 				else {
-					cfg.http_dynip = cs_inet_order(((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr);
+					cfg.http_dynip = ((struct sockaddr_in *)(res->ai_addr))->sin_addr.s_addr;
 					cs_debug_mask(D_TRACE, "WebIf: dynip resolved %s access from %s",
 							cs_inet_ntoa(cfg.http_dynip),
 							cs_inet_ntoa(addr));

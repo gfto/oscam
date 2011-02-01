@@ -1273,6 +1273,7 @@ extern char *get_ncd_client_name(char *client_id);
 extern char *strnew(char *str);
 extern void hexserial_to_newcamd(uchar *source, uchar *dest, ushort caid);
 extern void newcamd_to_hexserial(uchar *source, uchar *dest, ushort caid);
+extern int check_ip(struct s_ip *ip, in_addr_t n);
 
 extern pthread_key_t getclient;
 extern struct s_client * cur_client(void);

@@ -5,12 +5,10 @@
 static void monitor_check_ip()
 {
 	int ok=0;
-	struct s_ip *p_ip;
 	struct s_client *cur_cl = cur_client();
 	
 	if (cur_cl->auth) return;
-	for (p_ip=cfg.mon_allowed; (p_ip) && (!ok); p_ip=p_ip->next)
-		ok=((cur_cl->ip>=p_ip->ip[0]) && (cur_cl->ip<=p_ip->ip[1]));
+	ok = check_ip(cfg.mon_allowed, cur_cl->ip);
 	if (!ok)
 	{
 		cs_auth_client(cur_cl, (struct s_auth *)0, "invalid ip");

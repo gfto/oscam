@@ -390,6 +390,17 @@ in_addr_t cs_inet_addr(char *txt)
     return(inet_addr(txt));
 }
 
+
+int check_ip(struct s_ip *ip, in_addr_t n)
+{
+	struct s_ip *p_ip;
+	int ok = 0;
+	for (p_ip=ip; (p_ip) && (!ok); p_ip=p_ip->next)
+		ok=((cs_inet_order(n)>=cs_inet_order(p_ip->ip[0])) && (cs_inet_order(n)<=cs_inet_order(p_ip->ip[1])));
+
+	return ok;
+}
+
 ulong b2i(int n, uchar *b)
 {
   switch(n)
