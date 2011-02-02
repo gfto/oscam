@@ -966,6 +966,10 @@ int viaccess_reassemble_emm(uchar *buffer, uint *len) {
 			for (i=3; i<emm_global_len; i+=emm_global[i+1]+2) {
 				//copy nano (length determined by i+1)
 				memcpy(&nano_buffer[nano_counter][0], emm_global+i, emm_global[i+1]+2);
+#ifdef PPC
+				//ppc is crashing at end of function without additionally code in this loop (compiler bug?) 
+				nano_buffer[nano_counter][0] = nano_buffer[nano_counter][0];
+#endif
 				nano_counter++;
 			}
 			
