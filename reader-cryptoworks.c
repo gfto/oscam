@@ -645,30 +645,7 @@ static unsigned long cryptoworks_get_emm_provid(unsigned char *buffer, int len)
 }
 
 #ifdef HAVE_DVBAPI
-static void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int len)
-{
-    int w=0, c=-1, j=0;
-    while(1) {
-        int n=0x100;
-        for(j=0; j<len;) {
-            int l=src[j+1]+2;
-            if(src[j]==c) {
-                if(w+l>len) {
-                    cs_debug_mask(D_READER, "sortnanos: sanity check failed. Exceeding memory area. Probably corrupted nanos!");
-                    memset(dest,0,len); // zero out everything
-                    return;
-                }
-                memcpy(&dest[w],&src[j],l);
-                w+=l;
-            }
-            else if(src[j]>c && src[j]<n)
-                n=src[j];
-            j+=l;
-        }
-        if(n==0x100) break;
-        c=n;
-    }
-}
+void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int len);
 
 int cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
 	static uchar emm_global[512];
