@@ -1,4 +1,4 @@
-oscam.user(5)															    oscam.user(5)
+oscam.user(5)															     oscam.user(5)
 
 
 
@@ -120,6 +120,11 @@ DESCRIPTIONS
 
        cccmaxhops = hops
 	  maximum hops limit for CCcam clients, default:10
+	   0 = CCcam disabled for this user
+	   1 = local SCs only
+	   2 = local SCs + 1 hop
+	   3 = local SCs + 2 hops
+	   and so on
 
        cccreshare = level
 	  reshare level for CCcam clients, default:10
@@ -146,9 +151,9 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5), oscam.ird(5), oscam.provid(5),
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5), oscam.provid(5),
        oscam.server(5), oscam.services(5), oscam.tiers(5), oscam.srvid(5)
 
 
 
-																    oscam.user(5)
+																     oscam.user(5)
