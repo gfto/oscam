@@ -3441,8 +3441,8 @@ int cc_srv_connect(struct s_client *cl) {
 		cs_log("account '%s' duplicate login, disconnect!", usr);
 		return -3;
 	}
-	if (!account->cccmaxhops) {
-			cs_log("account '%s' has cccmaxhops=0, cccam can't handle this, disconnect!", usr);
+	if (account->cccmaxhops<0) {
+			cs_log("account '%s' has cccmaxhops<0, cccam can't handle this, disconnect!", usr);
 			return -3; 
 	}
 	
@@ -3833,7 +3833,7 @@ int cc_cli_init_int(struct s_client *cl) {
 			(void *)&cfg.netprio, sizeof(ulong));
 #endif
 	rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
-	if (rdr->cc_maxhop <= 0)
+	if (rdr->cc_maxhop < 0)
 		rdr->cc_maxhop = 10;
 
 	memset((char *) &cl->udp_sa, 0, sizeof(cl->udp_sa));
