@@ -2975,12 +2975,13 @@ int cc_srv_report_cards(struct s_client *cl) {
 	int j;
 	uint k;
 	uint8 hop = 0;
-	int reshare, usr_reshare, reader_reshare, maxhops, flt = 0;
+	int reshare, usr_reshare, usr_ignorereshare, reader_reshare, maxhops, flt = 0;
 	
 	struct cc_data *cc = cl->cc;
 
 	maxhops = cl->account->cccmaxhops;
 	usr_reshare = cl->account->cccreshare;
+	usr_ignorereshare = cl->account->cccignorereshare;
 
 	LLIST *server_cards = ll_create();
 	if (!cc->reported_carddatas)
@@ -3200,7 +3201,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 							if (card->hop <= maxhops && chk_ctab(card->caid, &cl->ctab)
 									&& chk_ctab(card->caid, &rdr->ctab)) {
 							
-								if ((cfg.cc_ignore_reshare || card->maxdown > 0)) {
+								if ((cfg.cc_ignore_reshare || usr_ignorereshare || card->maxdown > 0)) {
 									int ignore = 0;
 
 									LL_ITER *it2 = ll_iter_create(card->providers);
@@ -3218,7 +3219,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 								
 									if (!ignore) { //Filtered by service
 										int new_reshare =
-												cfg.cc_ignore_reshare ? reshare
+												( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare
 													: (card->maxdown - 1);
 										if (new_reshare > reshare)
 											new_reshare = reshare;

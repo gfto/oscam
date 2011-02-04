@@ -970,6 +970,7 @@ struct s_auth
   int       ncd_keepalive;
   int       cccmaxhops;
   int       cccreshare;
+  int       cccignorereshare;
   int       disabled;
   int 		failban;
   

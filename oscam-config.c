@@ -1476,6 +1476,16 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		}
 	}
 
+	if (!strcmp(token, "cccignorereshare")) {
+		if (strlen(value) == 0) {
+			account->cccignorereshare = 0;
+			return;
+		} else {
+			account->cccignorereshare = atoi(value);
+			return;
+		}
+	}
+
 	if (!strcmp(token, "keepalive")) {
 		if(strlen(value) == 0) {
 			account->ncd_keepalive = 1;
@@ -2137,6 +2147,9 @@ int write_userdb(struct s_auth *authptr)
 		if ((account->cccreshare != cfg.cc_reshare) || ((account->cccreshare == cfg.cc_reshare) && cfg.http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", account->cccreshare);
 
+//		if ((account->cccignorereshare != cfg.cc_reshare) || ((account->cccignorereshare == cfg.cc_reshare) && cfg.http_full_cfg))
+//			fprintf_conf(f, CONFVARWIDTH, "cccignorereshare", "%d\n", account->cccignorereshare);
+
 		if (account->c35_sleepsend || (!account->c35_sleepsend && cfg.http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%d\n", account->c35_sleepsend);
 
@@ -2636,6 +2649,7 @@ struct s_auth *init_userdb()
 			account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
 			account->cccmaxhops = 10;
 			account->cccreshare = cfg.cc_reshare;
+			account->cccignorereshare = cfg.cc_ignore_reshare;
 			account->ncd_keepalive = cfg.ncd_keepalive;
 			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
 			for (i = 1; i < CS_MAXTUNTAB; account->ttab.bt_srvid[i++] = 0x0000);
