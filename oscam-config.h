@@ -1,7 +1,10 @@
 #ifndef OSCAM_CONFIG_H_
 #define OSCAM_CONFIG_H_
 
+//
 // ADDONS
+//
+
 #ifndef WEBIF
 #define WEBIF
 #endif
@@ -36,7 +39,10 @@
 //#define CS_WITH_DOUBLECHECK
 #endif
 
-// MODULE
+//
+// MODULES
+//
+
 #ifndef MODULE_MONITOR
 #define MODULE_MONITOR
 #endif
@@ -77,12 +83,13 @@
 #define MODULE_CONSTCW
 #endif
 
-
+//
 // CARDREADER
+//
+
 #ifndef WITH_CARDREADER
 #define WITH_CARDREADER
 #endif
-
 
 #ifdef WITH_CARDREADER
 #ifndef READER_NAGRA
