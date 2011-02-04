@@ -3441,6 +3441,10 @@ int cc_srv_connect(struct s_client *cl) {
 		cs_log("account '%s' duplicate login, disconnect!", usr);
 		return -3;
 	}
+	if (!account->cccmaxhops) {
+			cs_log("account '%s' has cccmaxhops=0, cccam can't handle this, disconnect!", usr);
+			return -3; 
+	}
 	
 
 	if (!cc->prefix)
