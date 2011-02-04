@@ -1530,6 +1530,8 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 
 	tpl_printf(vars, TPLADD, "CCCMAXHOPS", "%d", account->cccmaxhops);
 	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", account->cccreshare);
+	if (account->cccignorereshare)
+		tpl_printf(vars, TPLADD, "CCCIGNORERESHARE", "selected");
 
 	//Failban
 	tpl_printf(vars, TPLADD, "FAILBAN", "%d", account->failban);

@@ -2147,8 +2147,8 @@ int write_userdb(struct s_auth *authptr)
 		if ((account->cccreshare != cfg.cc_reshare) || ((account->cccreshare == cfg.cc_reshare) && cfg.http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", account->cccreshare);
 
-//		if ((account->cccignorereshare != cfg.cc_reshare) || ((account->cccignorereshare == cfg.cc_reshare) && cfg.http_full_cfg))
-//			fprintf_conf(f, CONFVARWIDTH, "cccignorereshare", "%d\n", account->cccignorereshare);
+		if ((account->cccignorereshare != cfg.cc_ignore_reshare) || ((account->cccignorereshare == cfg.cc_ignore_reshare) && cfg.http_full_cfg))
+			fprintf_conf(f, CONFVARWIDTH, "cccignorereshare", "%d\n", account->cccignorereshare);
 
 		if (account->c35_sleepsend || (!account->c35_sleepsend && cfg.http_full_cfg))
 			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%d\n", account->c35_sleepsend);
