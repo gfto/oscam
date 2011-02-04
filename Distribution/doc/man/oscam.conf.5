@@ -101,8 +101,8 @@ network priority, default:system given
 .RS 3n
 set mode for DNS resolving:
 
-  0 = getadressinfo (default)
-  1 = gethostbyname
+  \fB0\fP = getadressinfo (default)
+  \fB1\fP = gethostbyname
 .RE
 .PP
 \fBclientdyndns\fP = \fB0\fP|\fB1\fP
@@ -176,11 +176,11 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 .RS 3n
 loadbalance mode:
 
- 0 = loadbalance disabled, ECMs go to all readers (default)
- 1 = fastest reader first, after 5 ECMs the reader with the fastest 
+ \fB0\fP = loadbalance disabled, ECMs go to all readers (default)
+ \fB1\fP = fastest reader first, after 5 ECMs the reader with the fastest 
      response time will be selected
- 2 = oldest reader first, reader with the longest no answer
- 3 = lowest usage level, the usage level will be calculated by the 
+ \fB2\fP = oldest reader first, reader with the longest no answer
+ \fB3\fP = lowest usage level, the usage level will be calculated by the 
      sum of 5 ECMS response times, the higher a reader is busy, the 
      higher is usage level
 .RE
@@ -189,8 +189,8 @@ loadbalance mode:
 .RS 3n
 save autoloadbalance statistics:
 
-      0 = saving of autoloadbalance statistics disabled (default)
- counts = save autoloadbalance statistics every \fBcounts\fP ECMs
+      \fB0\fP = saving of autoloadbalance statistics disabled (default)
+ \fBcounts\fP = save autoloadbalance statistics every \fBcounts\fP ECMs
           (minimum 100)
 
 To save CPU power a minimum counts of 100 is recommended.
@@ -268,11 +268,11 @@ time no EMM occurs so that client is set to low, default:30
 .RS 3n
 monitor level:
 
- 0 = no access to monitor
- 1 = only server and own procs
- 2 = all procs, but viewing only, default
- 3 = all procs, reload of \fBoscam.user\fR possible
- 4 = complete access
+ \fB0\fP = no access to monitor
+ \fB1\fP = only server and own procs
+ \fB2\fP = all procs, but viewing only, default
+ \fB3\fP = all procs, reload of \fBoscam.user\fR possible
+ \fB4\fP = complete access
 
 monlevel can be overwritten per user in \fBoscam.user\fR
 .RE
@@ -348,10 +348,10 @@ http web interface connections allowed, default:none
 .RS 3n
 write config:
 
- 0 = all not empty parameters, all not default parameters, all 
+ \fB0\fP = all not empty parameters, all not default parameters, all 
      parameters not containing the same value as the same 
      parameter in global configuration (default)
- 1 = all parameters
+ \fB1\fP = all parameters
 .RE
 .PP
 \fBhttpreadonly\fP = \fB0\fP|\fB1\fP
@@ -545,23 +545,23 @@ define CCcam build, default:none
 .RS 3n
 reshare level for CCcam clients:
 
- 0 = no resharing (default)
- 1 = resharing for direct peer only
- 2 = resharing for direct peer and next level
- x = resharing for direct peer and next x level
+ \fB0\fP = no resharing (default)
+ \fB1\fP = resharing for direct peer only
+ \fB2\fP = resharing for direct peer and next level
+ \fBx\fP = resharing for direct peer and next x level
 .RE
 .PP
 \fBreshare_mode\fP = \fBmode\fP
 .RS 3n
 CCcam reshare mode:
 
- 0 = reader reshares only received SCs for CCcam readers, 
+ \fB0\fP = reader reshares only received SCs for CCcam readers, 
      defined filters/CAIDs/idents on other readers (default)
- 1 = reader reshares received SCs (like=0) and defined services
- 2 = reader reshares only defined reader services as virtual SCs
- 3 = reader reshares only defined user services as virtual SCs
+ \fB1\fP = reader reshares received SCs (like=0) and defined services
+ \fB2\fP = reader reshares only defined reader services as virtual SCs
+ \fB3\fP = reader reshares only defined user services as virtual SCs
 
-Every server is shared as hop=0 and with defined reshare values. 
+Every server is shared as hop=0 and with defined reshare values.
 
 Service reshare only works if positive services defined: no service - no reshare!
 
@@ -571,8 +571,8 @@ Service reshare only works if positive services defined: no service - no reshare
 .RS 3n
 CCcam reshare setting:
 
- 0 = use reshare setting of server (default)
- 1 = use reshare setting of reader or user
+ \fB0\fP = use reshare setting of server (default)
+ \fB1\fP = use reshare setting of reader or user
 .RE
 .PP
 \fBstealth\fP = \fB0\fP|\fB1\fP
@@ -586,10 +586,10 @@ as OSCam server, default:0
 .RS 3n
 mode how to provide CCcam servers to CCcam clients:
 
- 0 = no aggregation, remove duplicates only (default)
- 1 = based on minimum hop: two SCs with different hops are 
+ \fB0\fP = no aggregation, remove duplicates only (default)
+ \fB1\fP = based on minimum hop: two SCs with different hops are 
      summarized, new SCs get a smaller hop
- 2 = aggregation based on CAIDs: all SCs with the same CAIDs 
+ \fB2\fP = aggregation based on CAIDs: all SCs with the same CAIDs 
      will be merged, provider will be removed
 .RE
 .PP
@@ -597,16 +597,16 @@ mode how to provide CCcam servers to CCcam clients:
 .RS 3n
 interval to provide share list update to CCcam clients, default:240:
 
-  0 = updates based on server updates
- -1 = disable
+  \fB0\fP = updates based on server updates
+ \fB-1\fP = disable
 .RE
 .PP
 \fBkeepconnected\fP = \fB0\fP|\fB1\fP
 .RS 3n
 set CCcam keepalive modus:
 
-  0 = disconnect client when max idle time is reached
-  1 = keep client connected (default)
+  \fB0\fP = disconnect client when max idle time is reached
+  \fB1\fP = keep client connected (default)
 .RE
 .SS "The [gbox] section"
 .PP
@@ -651,26 +651,26 @@ CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of loca
 \fBau\fP = \fB0\fP|\fB1\fP|\fB2\fP
 .RS 3n
 AU mode:
- 0 = disable AU, default
- 1 = enable AU
- 2 = enable AU, override AU settings of client, set answering reader as AU reader
+ \fB0\fP = disable AU, default
+ \fB1\fP = enable AU
+ \fB2\fP = enable AU, override AU settings of client, set answering reader as AU reader
 .RE
 .PP
 \fBpmt_mode\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP|\fB4\fP
 .RS 3n
 PMT mode:
- 0 = use camd.socket and PMT file, default
- 1 = disable reading PMT file
- 2 = disable camd.socket
- 3 = read PMT file on startup only
- 4 = do not use signal handler for monitoring /tmp
+ \fB0\fP = use camd.socket and PMT file, default
+ \fB1\fP = disable reading PMT file
+ \fB2\fP = disable camd.socket
+ \fB3\fP = read PMT file on startup only
+ \fB4\fP = do not use signal handler for monitoring /tmp
 .RE
 .PP
 \fBrequest_mode\fP = \fB0\fP|\fB1\fP
 .RS 3n
 CAID request mode:
- 0 = try all possible CAIDs one by one, default
- 1 = try all CAIDs simultaneously
+ \fB0\fP = try all possible CAIDs one by one, default
+ \fB1\fP = try all CAIDs simultaneously
 .RE
 .PP
 \fBboxtype\fP = \fBdbox2\fP|\fBdreambox\fP|\fBdm7000\fP|\fBduckbox\fP|\fBufs910\fP|\fBipbox\fP|\fBipbox-pmt\fP|\fBqboxhd\fP|\fBcoolstream\fP|\fBneumo\fP
@@ -709,9 +709,9 @@ quantity of samples over limit, default:10
 .RS 3n
 level of penalty:
 
- 0 = only logging
- 1 = send fake CWs
- 2 = disbable user temporary
+ \fB0\fP = only logging
+ \fB1\fP = send fake CWs
+ \fB2\fP = disbable user temporary
 
 default:0, penalty can be overwritten per user in \fBoscam.user\fR
 .RE
@@ -815,16 +815,16 @@ read again
 \fBdebug <level>\fP
 
 set debug level (\fBmonlevel\fP > 3 required)
-                            
+
 debug level mask:
-   0 = no debugging (default)
-   2 = ATR parsing info, ECM dumps, CW dumps
-   4 = traffic from/to the reader
-   8 = traffic from/to the clients
-  16 = traffic to the reader-device on IFD layer 
-  32 = traffic to the reader-device on I/O layer
-  64 = EMM logging 
- 255 = debug all
+   \fB0\fP = no debugging (default)
+   \fB2\fP = ATR parsing info, ECM dumps, CW dumps
+   \fB4\fP = traffic from/to the reader
+   \fB8\fP = traffic from/to the clients
+  \fB16\fP = traffic to the reader-device on IFD layer 
+  \fB32\fP = traffic to the reader-device on I/O layer
+  \fB64\fP = EMM logging 
+ \fB255\fP = debug all
 .TP 3n
 \(bu
 \fBversion\fP

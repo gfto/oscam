@@ -1,4 +1,4 @@
-oscam.server(5) 					       oscam.server(5)
+oscam.server(5) 														   oscam.server(5)
 
 
 
@@ -6,14 +6,12 @@ NAME
        oscam.server - reader configuration file for OSCam
 
 SYNOPSIS
-       The  server  configuration  file  for OSCam contains reader parameters.
-       sections in oscam.server are recurring (more than one reader possible).
-       At least one [reader] section is required.
+       The  server  configuration  file for OSCam contains reader parameters.  sections in oscam.server are recurring (more than one reader possi‐
+       ble).  At least one [reader] section is required.
 
 DESCRIPTIONS
    The [reader] section
-       device = <device|bus:device|device:slot>|Serial:Reader serial|<ip|host‐
-       name>,<port>[,<lport>]|pcsc|<0|1>|constantcw
+       device = <device|bus:device|device:slot>|Serial:Reader serial|<ip|hostname>,<port>[,<lport>]|pcsc|<0|1>|constantcw
 	  define local or remote reader
 
 	   device:	device name
@@ -36,12 +34,10 @@ DESCRIPTIONS
 
 	   constantcw:	constant CW file name
 
-	  constant CW file format: CA (4 digits):ID  (6  digits):SID  (4  dig‐
-	  its):PMT PID (4 digits):ECM PID (4 digits):: key (16 Bytes seperated
-	  by spaces)
+	  constant CW file format: CA (4 digits):ID (6 digits):SID (4 digits):PMT PID (4 digits):ECM PID (4 digits):: key (16 Bytes  seperated	by
+	  spaces)
 
-	  example: 1234:123456:1234:1234:1234::00 01 02 03 04 05 06 07	08  09
-	  0A 0B 0C 0D 0E 0F
+	  example: 1234:123456:1234:1234:1234::00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 
        device_out_endpoint = address
 	  set endpoint address for FTDI chips,default:0x82
@@ -56,16 +52,13 @@ DESCRIPTIONS
 	  key for newcamd remote reader encryption
 
        account = user,password (delimiter not allowed, obsolete)
-	  user and password for remote reader, overrides password of password,
-	  first come first serve
+	  user and password for remote reader, overrides password of password, first come first serve
 
        user = name
-	  user for remote reader, overrides user of account, first come  first
-	  serve
+	  user for remote reader, overrides user of account, first come first serve
 
        password = password
-	  password  for  remote  reader,  overrides password of account, first
-	  come first serve
+	  password for remote reader, overrides password of account, first come first serve
 
        services = [!]services[,[!]<services>]...
 	  reader [de]assignment to service group, default=none
@@ -77,23 +70,19 @@ DESCRIPTIONS
 	  TCP reconnect, if missing answers, default:none
 
        disableserverfilter = 0|1
-	  1 = ignore caid and ident settings of  reader  due  faulty  clients,
-	  default=0
+	  1 = ignore caid and ident settings of reader due faulty clients, default=0
 
        label = name
 	  name for reader, required
 
        fallback = 0|1
-	  1  =	define	reader	as fallback, standard and fallback reader must
-	  have the same group, default:0
+	  1 = define reader as fallback, standard and fallback reader must have the same group, default:0
 
        logport = 0|port
-	  camd3 reader logport, camd3 UDP must be  activated,  only  works  if
-	  there's no camd3 cascading, 0=disabled, default=0
+	  camd3 reader logport, camd3 UDP must be activated, only works if there's no camd3 cascading, 0=disabled, default=0
 
        caid = CAID[&<mask>][,CAID[&<mask>]]...
-	  define  CAID	for  reader,  some  protocols  only  support one CAID,
-	  default:mask=FFFF
+	  define CAID for reader, some protocols only support one CAID, default:mask=FFFF
 
 	  example: CAID = 0100,0200&FFDF
 
@@ -109,18 +98,14 @@ DESCRIPTIONS
 	  status detect of card (NONE = no detection), default:CD
 
        cardmhz = mhz
-	  set standard SC frequency in units of 10 kHz, for Irdeto SC  set  to
-	  600, refer to OVERCLOCKING, default:357
+	  set standard SC frequency in units of 10 kHz, for Irdeto SC set to 600, refer to OVERCLOCKING, default:357
 
        mhz = frequency
-	  set reader frequency in units of 10 kHz, if mhz > cardmhz you are in
-	  overclocking mode, refer to OVERCLOCKING, default:357
+	  set reader frequency in units of 10 kHz, if mhz > cardmhz you are in overclocking mode, refer to OVERCLOCKING, default:357
 
        deprecated = 0|1
-	  Frist the SC will be initialized in normal mode. If it fails, the SC
-	  will	be  automatically  reverted to deprecated mode, so that the SC
-	  speed will not be changed and the communication will remain on  nor‐
-	  mal ATR speed of 9600 baud.
+	  Frist  the  SC will be initialized in normal mode. If it fails, the SC will be automatically reverted to deprecated mode, so that the SC
+	  speed will not be changed and the communication will remain on normal ATR speed of 9600 baud.
 
 	  1 = use deprecated SC mode only, default:0
 
@@ -185,8 +170,7 @@ DESCRIPTIONS
 	  interval for rate limit, default:0
 
        blocknano = nano[,nano]...|all
-	  list	of  EMM-nanos  to block (in hex w/o 0x) or all EMM-nanos, only
-	  valid for physical readers, default:none
+	  list of EMM-nanos to block (in hex w/o 0x) or all EMM-nanos, only valid for physical readers, default:none
 
 	   example: blocknano = 45,93,7a,ff
 		    blocknano = all
@@ -204,24 +188,20 @@ DESCRIPTIONS
 	  1 = block unknown types of EMMs, default:0
 
        savenano = nano[,nano]....|all
-	  list of EMM-nanos to save (in hex w/o 0x)  or  all  EMM-nanos,  only
-	  valid for physical readers, default:none
+	  list of EMM-nanos to save (in hex w/o 0x) or all EMM-nanos, only valid for physical readers, default:none
 
 	   example: savenano = 45,93,7a,ff
 		    savenano = all
 
        readnano = [path]filename
-	  write  file  (usually  a  copy  of a file saved by savenano) to your
-	  smartcard, if no path is specified, the specified file  is  searched
-	  for in the configuration directory, only valid for physical readers,
-	  default:none
+	  write file (usually a copy of a file saved by savenano) to your smartcard, if no path is specified, the specified file is  searched  for
+	  in the configuration directory, only valid for physical readers, default:none
 
 	   example: readnano = write.emm
 		    readnano = /var/oscam/write.emm
 
        lb_weight = weight
-	  the higher the value the higher the probability  for	reader	selec‐
-	  tion, default:100
+	  the higher the value the higher the probability for reader selection, default:100
 
 	   It's an divider for the average responstime.
 
@@ -232,17 +212,18 @@ DESCRIPTIONS
 
        cccmaxhops = hops
 	  define CCcam maximum SC distance hops, default:10
-	   0 = local SCs only
-	   1 = local SCs and + 1 hop
-	   2 = local SCs and + 2 hops
+	   0 = remote local SCs only
+	   1 = remote local SCs and + 1 hop
+	   2 = remote local SCs and + 2 hops
 	   and so on
+
+	  After reading this SC hop will be incremented by one.
 
        cccwantemu = 0|1
 	  1 = request to provide emu from CCCam server, too, default:0
 
        ccckeepalive = 0|1
-	  1  =	send  keepalive  messages  to  keep connection to remote CCCam
-	  server up, default:0
+	  1 = send keepalive messages to keep connection to remote CCCam server up, default:0
 
        pincode = pincode
 	  pincode for Conax and Cryptoworks SCs
@@ -253,8 +234,7 @@ DESCRIPTIONS
 	  example: chid = 0100:12
 
        force_irdeto = 0|1
-	  1 = force Irdeto SC mode even if RSA key is set for  Irdeto  tunnled
-	  Nagravion SC, default:0
+	  1 = force Irdeto SC mode even if RSA key is set for Irdeto tunnled Nagravion SC, default:0
 
        nagra_read = 0|1|2
 	  read Nagravison records (on NCMED cards only):
@@ -269,10 +249,8 @@ DESCRIPTIONS
        boxkey = box key
 	  box key for Nagravision SCs / CAM key for Irdeto SCs
 
-       aeskeys	 =   CAID  #0@ident:AES  key  #0  CAID	#0[,AES  key  #1  CAID
-       #0],...[;CAID #1@ident:AES key #0 CAID #1[,AES key #1 CAID #1],...]...
-	  multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing
-	  AES key is specified through the D2 nano of the ECM)
+       aeskeys = CAID #0@ident:AES key #0 CAID #0[,AES key #1 CAID #0],...[;CAID #1@ident:AES key #0 CAID #1[,AES key #1 CAID #1],...]...
+	  multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is specified through the D2 nano of the ECM)
 
 	  special AES keys:
 
@@ -281,8 +259,7 @@ DESCRIPTIONS
 
 	  example:
 
-	   aeskeys							     =
-	  0500@012345:000102030405060708090a0b0c0d0e0f;0500@543210:000102030405060708090a0b0c0d0e0f,0,0f0e0d0c0b0a090807060504030201
+	   aeskeys = 0500@012345:000102030405060708090a0b0c0d0e0f;0500@543210:000102030405060708090a0b0c0d0e0f,0,0f0e0d0c0b0a090807060504030201
 
        showcls = quantity
 	  number of classes subscriptions to show for Viaccess SCs, default=10
@@ -301,43 +278,31 @@ DESCRIPTIONS
 OVERCLOCKING
        ·  Dreambox and other internal readers
 
-	  For  Dreambox and other internal readers the highest possible clock‐
-	  rate will be auto detected. The mhz parameter lets you override  the
-	  values  chosen by OSCam, if it differs from 357 and 358, but usually
-	  you will not set any value for mhz.
+	  For  Dreambox  and  other internal readers the highest possible clockrate will be auto detected. The mhz parameter lets you override the
+	  values chosen by OSCam, if it differs from 357 and 358, but usually you will not set any value for mhz.
 
-	  For certain Dreamboxes  (especially  PPC  clones)  the  default  mhz
-	  parameter  leads  to slow ECM times and/or "not found" ECMs. By set‐
-	  ting mhz to values like 200, 300, 400, ... 1600 you can find a value
-	  that	works  for  your  receiver  and  your card. The higher the mhz
-	  value, the slower the ECM time (strange enough).
+	  For certain Dreamboxes (especially PPC clones) the default mhz parameter leads to slow ECM times and/or "not found" ECMs. By setting mhz
+	  to  values  like  200, 300, 400, ... 1600 you can find a value that works for your receiver and your card. The higher the mhz value, the
+	  slower the ECM time (strange enough).
 
-	  If you choose the value too low, your card is not recognized (no ATR
-	  or  "card not supported"). If you choose the value too high, you get
-	  slow ECM times. Our experience is that either no mhz line, or a line
-	  mhz = 1000 works best.
+	  If you choose the value too low, your card is not recognized (no ATR or "card not supported"). If you choose the value too high, you get
+	  slow ECM times. Our experience is that either no mhz line, or a line mhz = 1000 works best.
 
        ·  Phoenix / Smartmouse reader
 
-	  Overclocking	does  not  work  with  Windows	and Mac OS X.  Set mhz
-	  equivalent to the frequency of the reader.  OSCam can  not  set  the
-	  frequency of the reader.
+	  Overclocking	does  not  work with Windows and Mac OS X.  Set mhz equivalent to the frequency of the reader.	OSCam can not set the fre‐
+	  quency of the reader.
 
        ·  Smargo Smartreader+
 
-	  Set  the  reader  frequency with the native Smargo Smartreader+ tool
-	  (srp_tools).	Do not set mhz and cardmhz.
+	  Set the reader frequency with the native Smargo Smartreader+ tool (srp_tools).  Do not set mhz and cardmhz.
 
-       OSCam tries to set the baudrate automatically.  A standard serial  port
-       has limited baudrate settings, so SC overclocking might not work.  When
-       using a serial reader the best way for overclocking is connecting it to
-       a FTDI based USB to serial port adapter.
+       OSCam tries to set the baudrate automatically.  A standard serial port has limited baudrate settings, so SC overclocking  might	not  work.
+       When using a serial reader the best way for overclocking is connecting it to a FTDI based USB to serial port adapter.
 
-       If  overclocking  does  not  work, verify the effective baudrate in the
-       logfile.  If it deviates too much from the requested baudrate,  the  SC
-       will  not  be  recognized  (no  ATR)  and  the  value for mhz should be
-       adjusted again.	The higher the baudrate, the more accurate the	effec‐
-       tive baudrate can be.
+       If  overclocking  does not work, verify the effective baudrate in the logfile.  If it deviates too much from the requested baudrate, the SC
+       will not be recognized (no ATR) and the value for mhz should be adjusted again.	The higher the baudrate, the more accurate  the  effective
+       baudrate can be.
 
 EXAMPLES
        ·  serial mouse compatible reader
@@ -452,10 +417,9 @@ EXAMPLES
 	   caid     = 1100
 
 SEE ALSO
-       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5), oscam.conf(5),
-       oscam.dvbapi(5),   oscam.guess(5),    oscam.ird(5),    oscam.provid(5),
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5), oscam.provid(5),
        oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
 
-							       oscam.server(5)
+																   oscam.server(5)

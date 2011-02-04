@@ -108,11 +108,11 @@ user assingment to Irdeto ChID, default:none
 .RS 3n
 monitor level:
 
- 0 = no access to monitor
- 1 = only server and own procs
- 2 = all procs, but viewing only, default
- 3 = all procs, reload of \fBoscam.user\fR possible
- 4 = complete access
+ \fB0\fP = no access to monitor
+ \fB1\fP = only server and own procs
+ \fB2\fP = all procs, but viewing only, default
+ \fB3\fP = all procs, reload of \fBoscam.user\fR possible
+ \fB4\fP = complete access
 .RE
 .PP
 \fBexpdate\fP = \fB<year>-<month>-<day>\fP|\fB<year>/<month>/<day>\fP
@@ -142,23 +142,23 @@ anti-cascading: user per account, 0 = anti-cascading disabled, default:0
 .RS 3n
 level of penalty:
 
- 0 = only logging (default)
- 1 = send fake CWs
- 2 = disbable user temporary
+ \fB0\fP = only logging (default)
+ \fB1\fP = send fake CWs
+ \fB2\fP = disbable user temporary
 .RE
 .PP
 \fBfailban\fP = \fB0\fP|\fB2\fP|\fB4\fP
 .RS 3n
 mask for IP based blocking:
 
- 0 = ignore (default)
- 2 = block IP of a disabled account on connecting
- 4 = block IP of a sleeping account while sleeping comes up
+ \fB0\fP = ignore (default)
+ \fB2\fP = block IP of a disabled account on connecting
+ \fB4\fP = block IP of a sleeping account while sleeping comes up
 .RE
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0 = CMD08 for camd3 3.57x/3.78x clients enabled, 1 = CMD08 for camd3 3.57x/3.78x clients disabled, default:0
+1 = CMD08 for camd3 3.57x/3.78x clients enabled, default:0
 .RE
 .PP
 \fBkeepalive\fP = \fB0\fP|\fB1\fP
@@ -169,10 +169,10 @@ mask for IP based blocking:
 \fBcccmaxhops\fP = \fBhops\fP
 .RS 3
 maximum hops limit for CCcam clients, default:10
- \fB0\fP = CCcam disabled for this user
- \fB1\fP = local SCs only
- \fB2\fP = local SCs + 1 hop
- \fB3\fP = local SCs + 2 hops
+ \fB-1\fP = CCcam disabled for this user
+  \fB0\fP = local SCs only
+  \fB1\fP = local SCs + 1 hop
+  \fB2\fP = local SCs + 2 hops
  and so on
 .RE
 .PP
@@ -180,16 +180,16 @@ maximum hops limit for CCcam clients, default:10
 .RS 3n
 reshare level for CCcam clients, default:10
 
--1 = no resharing
- x = resharing for direct peer and share level x
+ \fB-1\fP = no resharing
+  \fBx\fP = resharing for direct peer and share level x
 .RE
 .PP
 \fBcccignorereshare\fP = \fB0\fP|\fB1\fP
 .RS 3n
 CCcam reshare setting, default:\fBignorereshare\fR in \fBoscam.conf\fR
 
- 0 = use reshare setting of server
- 1 = use reshare setting of reader or user
+ \fB0\fP = use reshare setting of server
+ \fB1\fP = use reshare setting of reader or user
 .RE
 .SH EXAMPLES
  [account]

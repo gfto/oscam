@@ -113,24 +113,24 @@ DESCRIPTIONS
 	   4 = block IP of a sleeping account while sleeping comes up
 
        suppresscmd08 = 0|1
-	  0 = CMD08 for camd3 3.57x/3.78x clients enabled, 1 = CMD08 for camd3 3.57x/3.78x clients disabled, default:0
+	  1 = CMD08 for camd3 3.57x/3.78x clients enabled, default:0
 
        keepalive = 0|1
 	  0 = disable keepalive between server and client connection, default:1
 
        cccmaxhops = hops
 	  maximum hops limit for CCcam clients, default:10
-	   0 = CCcam disabled for this user
-	   1 = local SCs only
-	   2 = local SCs + 1 hop
-	   3 = local SCs + 2 hops
+	   -1 = CCcam disabled for this user
+	    0 = local SCs only
+	    1 = local SCs + 1 hop
+	    2 = local SCs + 2 hops
 	   and so on
 
        cccreshare = level
 	  reshare level for CCcam clients, default:10
 
-	  -1 = no resharing
-	   x = resharing for direct peer and share level x
+	   -1 = no resharing
+	    x = resharing for direct peer and share level x
 
        cccignorereshare = 0|1
 	  CCcam reshare setting, default:ignorereshare in oscam.conf

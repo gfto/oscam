@@ -42,8 +42,8 @@ example: 1234:123456:1234:1234:1234\fI::\fR00 01 02 03 04 05 06 07 08 09 0A 0B 0
 .RS 3n
 set endpoint address for FTDI chips,default:0x82
 
- 0x81: Infinity USB Smart
- 0x82: Smartreader+ (default)
+ \fB0x81\fP: Infinity USB Smart
+ \fB0x82\fP: Smartreader+ (default)
 .RE
 .PP
 \fBenable\fP = \fB0\fP|\fB1\fP
@@ -289,10 +289,12 @@ example: cccversion = 1.2.34
 \fBcccmaxhops\fP = \fBhops\fP
 .RS 3n
 define CCcam maximum SC distance hops, default:10
- \fB0\fP = local SCs only
- \fB1\fP = local SCs and + 1 hop
- \fB2\fP = local SCs and + 2 hops
+ \fB0\fP = remote local SCs only
+ \fB1\fP = remote local SCs and + 1 hop
+ \fB2\fP = remote local SCs and + 2 hops
  and so on
+
+After reading this SC hop will be incremented by one.
 .RE
 .PP
 \fBcccwantemu\fP = \fB0\fP|\fB1\fP
@@ -326,9 +328,9 @@ example: chid = 0100:12
 .RS 3n
 read Nagravison records (on NCMED cards only):
 
-  0 = disabled (default)
-  1 = read all records with expired rights
-  2 = read records with valid rights only
+  \fB0\fP = disabled (default)
+  \fB1\fP = read all records with expired rights
+  \fB2\fP = read records with valid rights only
 .RE
 .PP
 \fBrsakey\fP = \fBRSA key\fP
@@ -347,8 +349,8 @@ multiple 16 bytes AES keys for Viaccess SCs (the used postprocessing AES key is 
 
 special AES keys:
 
- 00 = do not return any CW, no AES key specified
- FF = return CW received from the S, no AES key specified
+ \fB00\fP = do not return any CW, no AES key specified
+ \fBFF\fP = return CW received from the S, no AES key specified
 
 example: 
 
@@ -369,10 +371,10 @@ NDS receiver box id
 .RS 3n
 set NDS Videoguard version
 
-  0 = autodetection (default)
-  1 = NDS Videoguard 1
- 12 = NDS Videoguard 1+
-  2 = NDS Videoguard 2
+  \fB0\fP = autodetection (default)
+  \fB1\fP = NDS Videoguard 1
+ \fB12\fP = NDS Videoguard 1+
+  \fB2\fP = NDS Videoguard 2
 .RE
 .SH OVERCLOCKING
 .TP 3n
