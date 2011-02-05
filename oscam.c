@@ -1316,33 +1316,31 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 	case -1:            // anonymous grant access
 		if (rc)
 			t_grant=t_reject;
-		else
+		else {
 			if (client->typ=='m')
 				sprintf(t_msg[0], "lvl=%d", client->monlvl);
-			else
-				sprintf(t_msg[0], "au=%d", ll_count(client->aureader_list));
+			else {
+				int rcount = ll_count(client->aureader_list);
+				sprintf(buf, "au=");
+				if (!rcount)
+					sprintf(buf+3, "off");
+				else {
+					if (client->autoau)
+						sprintf(buf+3, "auto (%d reader)", rcount);
+					else
+						sprintf(buf+3, "on (%d reader)", rcount);
+				}
+			}
+		}
 
-	if(client->ncd_server)
-	{
-		cs_log("%s %s:%d-client %s%s (%s, %s)",
-				client->crypted ? t_crypt : t_plain,
-				e_txt ? e_txt : ph[client->ctyp].desc,
-				cfg.ncd_ptab.ports[client->port_idx].s_port,
-				client->ip ? cs_inet_ntoa(client->ip) : "",
-				client->ip ? t_grant : t_grant+1,
-				username(client), t_msg[rc]);
-	}
-	else
-	{
 		cs_log("%s %s-client %s%s (%s, %s)",
-				client->crypted ? t_crypt : t_plain,
-				e_txt ? e_txt : ph[client->ctyp].desc,
-				client->ip ? cs_inet_ntoa(client->ip) : "",
-				client->ip ? t_grant : t_grant+1,
-				username(client), t_msg[rc]);
-	}
+			client->crypted ? t_crypt : t_plain,
+			e_txt ? e_txt : ph[client->ctyp].desc,
+			client->ip ? cs_inet_ntoa(client->ip) : "",
+			client->ip ? t_grant : t_grant+1,
+			username(client), t_msg[rc]);
 
-	break;
+		break;
 	}
 	return(rc);
 }

@@ -3046,6 +3046,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 				}
 			}
 
+			isau = ll_contains(cl->aureader_list, rdr);
 			int au_allowed = !rdr->audisabled && isau;
 
 			flt = 0;
