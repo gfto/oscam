@@ -521,7 +521,7 @@ bool IO_Serial_Close (struct s_reader * reader)
 {
 	
 	cs_debug_mask(D_DEVICE, "IO: Closing serial port %s\n", reader->device);
-	
+	cs_sleepms(100); // maybe a dirty fix for the restart problem posted by wonderdoc
 #if defined(TUXBOX) && defined(PPC)
 	close(reader->fdmc);
 #endif
