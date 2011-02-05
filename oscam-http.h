@@ -1151,7 +1151,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#httphelplang##TPLHELPSUFFIX##Http Help Language (en|de|fr):</A></TD><TD><input name=\"httphelplang\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##HTTPHELPLANG##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#httphelplang##TPLHELPSUFFIX##Http Help Language (en|de|fr|it):</A></TD><TD><input name=\"httphelplang\" type=\"text\" size=\"3\" maxlength=\"2\" value=\"##HTTPHELPLANG##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httpjscript##TPLHELPSUFFIX##Http javascript:</A></TD><TD><input name=\"httpjscript\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPJSCRIPT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httprefresh##TPLHELPSUFFIX##Http refresh:</A></TD><TD><input name=\"httprefresh\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##HTTPREFRESH##\"> s</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#httptpl##TPLHELPSUFFIX##Http tpl:</A></TD><TD><input name=\"httptpl\" type=\"text\" size=\"50\" maxlength=\"128\" value=\"##HTTPTPL##\"></TD></TR>\n\
