@@ -639,20 +639,20 @@ int get_best_reader(ECM_REQUEST *er)
 	ll_iter_release(it);
 
 	//algo for reopen other reader only if responsetime>retrylimit:
-	int reopen = (best_rdr && best_time && (best_time > cfg.lb_retrylimit));
+	int reopen = !best_rdr || (best_time && (best_time > cfg.lb_retrylimit));
 	if (reopen) {
-		cs_debug_mask(D_TRACE, "loadbalancer: reader %s reached retrylimit (%dms), reopening other readers", best_rdr->label, best_time);
-	
+#ifdef WITH_DEBUG 
+		if (best_rdr)
+			cs_debug_mask(D_TRACE, "loadbalancer: reader %s reached retrylimit (%dms), reopening other readers", best_rdr->label, best_time);
+		else
+			cs_debug_mask(D_TRACE, "loadbalancer: no best reader found, reopening other readers");	
+#endif	
 		it = ll_iter_create(er->matching_rdr);
 		while ((rdr=ll_iter_next(it))) {
 	        	stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
 
 			if (stat && stat->rc != 0) { //retrylimit reached:
-				int seconds = cfg.lb_reopen_seconds;
-				//if (!rdr->audisabled && (er->client->autoau || er->client->aureader == rdr))
-				//	seconds = seconds/10; //reopen faster if reader is a au reader
-				
-				if (stat->last_received+seconds < current_time) { //Retrying reader every (900/conf) seconds
+				if (stat->last_received+cfg.lb_reopen_seconds < current_time) { //Retrying reader every (900/conf) seconds
 					stat->last_received = current_time;
 					ll_remove(result, rdr);
 					ll_prepend(result, rdr);
@@ -661,7 +661,7 @@ int get_best_reader(ECM_REQUEST *er)
 			}
 		}
 		ll_iter_release(it);
-        }
+	}
 
         //Setting return values:
 	ll_destroy(er->matching_rdr);
