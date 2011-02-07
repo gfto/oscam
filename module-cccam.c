@@ -1931,7 +1931,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		break;
 	case MSG_NEW_CARD_SIDINFO: 
 	case MSG_NEW_CARD: {
-		if (buf[14] >= rdr->cc_maxhop)
+		if (buf[14] >= rdr->cc_maxhop+1)
 			break;
 
 		if (!chk_ctab(b2i(2, buf + 12), &rdr->ctab))
