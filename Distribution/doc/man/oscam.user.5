@@ -40,6 +40,7 @@ The ServiceID can also be used for wildcarded CAIDs.
 \fBuniq\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB4\fP
 .RS 3n
 unique level:
+
  \fB0\fP = disabled, default
  \fB1\fP = only one connection per user is allowed
  \fB2\fP = set user to fake if source ip is different 
@@ -70,6 +71,7 @@ example: caid = 0100&ffff:0200:0300&ff00
 \fBau\fP = \fBlabel of reader[,label of reader]...\fP|\fB1\fP
 .RS 3n
 AU setting:
+
   \fBlabel of reader\fP = sending EMMs to specified reader 
                     \fI(security issue: clients can see SC data!)\fR
   \fB1\fP               = auto AU is sending EMMs to \fIall\fR readers
@@ -169,6 +171,7 @@ mask for IP based blocking:
 \fBcccmaxhops\fP = \fBhops\fP
 .RS 3
 maximum hops limit for CCcam clients, default:10
+
  \fB-1\fP = CCcam disabled for this user
   \fB0\fP = local SCs only
   \fB1\fP = local SCs + 1 hop

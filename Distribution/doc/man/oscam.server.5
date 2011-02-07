@@ -202,9 +202,11 @@ reader assingment to group, \fIrequired\fR
 \fBemmcache\fP = \fBusecache,rewrite,logging\fP
 .RS 3n
 set EMM cache of local reader:
+
  \fBusecache\fP = \fB0\fP|\fB1\fP 1 = enable EMM caching, default:0
  \fBrewrite\fP  = determines how often one and the same EMM is written
  \fBlogging\fP  = EMM logging mask:
+
             \fB0\fP = EMM logging disabled
             \fB1\fP = logging EMM errors
             \fB2\fP = logging written EMMs
@@ -289,9 +291,11 @@ example: cccversion = 1.2.34
 \fBcccmaxhops\fP = \fBhops\fP
 .RS 3n
 define CCcam maximum SC distance hops, default:10
- \fB0\fP = remote local SCs only
- \fB1\fP = remote local SCs and + 1 hop
- \fB2\fP = remote local SCs and + 2 hops
+
+ \fB-1\fP = disabled
+  \fB0\fP = remote local SCs only
+  \fB1\fP = remote local SCs and + 1 hop
+  \fB2\fP = remote local SCs and + 2 hops
  and so on
 
 After reading this SC hop will be incremented by one.

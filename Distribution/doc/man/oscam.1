@@ -64,15 +64,16 @@ while starting OSCam prints warnings on invalid keywords, comment lines start wi
 \fB-d\fP <level>
 .RS 3n
 debug level mask:
-   0 = no debugging (default)
-   2 = ATR parsing info, ECM dumps, CW dumps
-   4 = traffic from/to the reader
-   8 = traffic from/to the clients
-  16 = traffic to the reader-device on IFD layer
-  32 = traffic to the reader-device on I/O layer
-  64 = EMM logging
- 128 = DVBAPI logging
- 255 = debug all
+
+   \fB0\fP = no debugging (default)
+   \fB2\fP = ATR parsing info, ECM dumps, CW dumps
+   \fB4\fP = traffic from/to the reader
+   \fB8\fP = traffic from/to the clients
+  \fB16\fP = traffic to the reader-device on IFD layer
+  \fB32\fP = traffic to the reader-device on I/O layer
+  \fB64\fP = EMM logging
+ \fB128\fP = DVBAPI logging
+ \fB255\fP = debug all
 .RE
 .PP
 \fB-h\fP
@@ -88,9 +89,10 @@ use <directory> for temporary data, default:temporary directory of OS
 \fB-r\fP <level>
 .RS 3n
 restart level:
-   0 = disabled, restart request sets exit status to 99
-   1 = restart activated, web interface can restart oscam (default)
-   2 = like 1, but also restart on SEGFAULTS
+
+   \fB0\fP = disabled, restart request sets exit status to 99
+   \fB1\fP = restart activated, web interface can restart oscam (default)
+   \fB2\fP = like 1, but also restart on SEGFAULTS
 .RE
 .SH SIGNALS
 .PP

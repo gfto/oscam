@@ -1,4 +1,4 @@
-oscam(1)												   oscam(1)
+oscam(1)												  oscam(1)
 
 
 
@@ -45,11 +45,12 @@ OPTIONS
 	  starts in background, writing oscam.version with starttime and version info in temporary directory
 
        -c <directory>
-	  read	configuration  from  <directory>,  default:see CS_CONFDIR in globals.h, while starting OSCam prints
+	  read	configuration  from  <directory>, default:see CS_CONFDIR in globals.h, while starting OSCam prints
 	  warnings on invalid keywords, comment lines start with # character.
 
        -d <level>
 	  debug level mask:
+
 	     0 = no debugging (default)
 	     2 = ATR parsing info, ECM dumps, CW dumps
 	     4 = traffic from/to the reader
@@ -68,13 +69,14 @@ OPTIONS
 
        -r <level>
 	  restart level:
+
 	     0 = disabled, restart request sets exit status to 99
 	     1 = restart activated, web interface can restart oscam (default)
 	     2 = like 1, but also restart on SEGFAULTS
 
 SIGNALS
        SIGHUP
-	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading	the  ident,  please
+	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading the  ident,  please
 	  restart newcamd client
 
        SIGUSR1
@@ -84,9 +86,9 @@ SIGNALS
 	  get reader SC info
 
 SEE ALSO
-       list_smargo(1),	oscam.ac(5),  oscam.cert(5),  oscam.conf(5), oscam.dvbapi(5), oscam.guess(5), oscam.ird(5),
+       list_smargo(1),	oscam.ac(5),  oscam.cert(5), oscam.conf(5), oscam.dvbapi(5), oscam.guess(5), oscam.ird(5),
        oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
 
-													   oscam(1)
+													  oscam(1)
