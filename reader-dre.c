@@ -1,21 +1,8 @@
-#include <openssl/des.h>
-
 #include "globals.h"
 #include "reader-common.h"
 
 #define OK_RESPONSE 0x61
 #define CMD_BYTE 0x59
-
-void DES_Decrypt(DES_cblock *data, const_DES_cblock *key)
-{
-  DES_cblock out;
-  DES_key_schedule schedule;
-
-  DES_set_key_unchecked(key, &schedule);
-  DES_ecb_encrypt(data, &out, &schedule, 0);
-
-  memcpy(data, &out, 8);
-}
 
 static uchar xor (const uchar * cmd, int cmdlen)
 {
@@ -280,17 +267,19 @@ static unsigned char DESkeys[16*8]=
 
 void DREover(unsigned char *ECMdata, unsigned char *DW)
 {
-  unsigned char i, data[8], key[8];
   if(ECMdata[2] >= (43+4) && ECMdata[40] == 0x3A && ECMdata[41] == 0x4B)
   {
+    int i;
+    byte data[8], key[8];
+
     for(i = 0; i < 8; i++) key[i] = DESkeys[(ECMdata[42] & 0x0F) * 8 + i];
 
     for(i = 0; i < 8; i++) data[i] = DW[i];
-    DES_Decrypt(&data, &key);                             // even DW post-process
+    des_decrypt(data, 8, key);                          // even DW post-process
     for(i = 0; i < 8; i++) DW[i] = data[i];
 
     for(i = 0; i < 8; i++) data[i] = DW[8+i];
-    DES_Decrypt(&data, &key);                             // odd DW post-process
+    des_decrypt(data, 8, key);                          // odd DW post-process
     for(i = 0; i < 8; i++) DW[8+i] = data[i];
   };
 };
