@@ -2958,7 +2958,7 @@ int init_tierid()
 	int nr;
 	FILE *fp;
 	char *payload;
-	static struct s_tierid *tierid=(struct s_tierid *)0;
+	static struct s_tierid *tierid=NULL, *new_cfg_tierid=NULL;
 	sprintf(token, "%s%s", cs_confdir, cs_trid);
 
 	if (!(fp=fopen(token, "r"))) {
@@ -2983,7 +2983,7 @@ int init_tierid()
 		if (tierid)
 			tierid->next = ptr;
 		else
-			cfg.tierid = ptr;
+			new_cfg_tierid = ptr;
 
 		tierid = ptr;
 		memset(tierid, 0, sizeof(struct s_tierid));
@@ -3013,6 +3013,17 @@ int init_tierid()
 	else{
 		cs_log("%s loading failed", cs_trid);
 	}
+	
+	//reload function:
+	tierid = cfg.tierid;
+	cfg.tierid = new_cfg_tierid;
+	struct s_tierid *ptr;
+	while (tierid) {
+		ptr = tierid->next;
+		free(tierid);
+		tierid = ptr;
+	}
+	
 	return(0);
 }
 

@@ -834,6 +834,21 @@ struct s_client * create_client(in_addr_t ip) {
 	return(cl);
 }
 
+/**
+ * called by signal SIGHUB
+ *
+ * reloads configs:
+ *  - useraccounts (oscom.user)
+ *  - services ids (oscam.srvid)
+ *  - tier ids     (oscam.tiers)
+ **/
+static void cs_reload_config()
+{
+		cs_accounts_chk();
+		init_srvid();
+		init_tierid();
+}
+
 static void init_signal()
 {
 		set_signal_handler(SIGINT, 3, cs_exit);
@@ -853,7 +868,7 @@ static void init_signal()
 		//  set_signal_handler(SIGALRM , 0, cs_alarm);
 		set_signal_handler(SIGALRM , 0, cs_master_alarm);
 		// set_signal_handler(SIGCHLD , 1, cs_child_chk);
-		set_signal_handler(SIGHUP  , 1, cs_accounts_chk);
+		set_signal_handler(SIGHUP  , 1, cs_reload_config);
 		//set_signal_handler(SIGHUP , 1, cs_sighup);
 		set_signal_handler(SIGUSR1, 1, cs_debug_level);
 		set_signal_handler(SIGUSR2, 1, cs_card_info);
