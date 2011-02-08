@@ -2869,8 +2869,9 @@ int init_srvid()
 	int nr;
 	FILE *fp;
 	char *payload;
-	static struct s_srvid *srvid=(struct s_srvid *)0;
+	struct s_srvid *srvid=NULL, *new_cfg_srvid=NULL;
 	sprintf(token, "%s%s", cs_confdir, cs_srid);
+	
 
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (err=%d), no service-id's loaded", token, errno);
@@ -2894,7 +2895,7 @@ int init_srvid()
 		if (srvid)
 			srvid->next = ptr;
 		else
-			cfg.srvid = ptr;
+			new_cfg_srvid = ptr;
 
 		srvid = ptr;
 		memset(srvid, 0, sizeof(struct s_srvid));
@@ -2938,6 +2939,17 @@ int init_srvid()
 	else{
 		cs_log("oscam.srvid loading failed, old format");
 	}
+	
+	//this allows reloading of srvids, so cleanup of old data is needed:
+	srvid = cfg.srvid; //old data
+	cfg.srvid = new_cfg_srvid; //assign after loading, so everything is in memory
+	struct s_srvid *ptr;
+	while (srvid) { //cleanup old data:
+		ptr = srvid->next;
+		free(srvid);
+		srvid = ptr;
+	}
+	
 	return(0);
 }
 
