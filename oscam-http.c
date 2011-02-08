@@ -2652,9 +2652,12 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 					fprintf(fpsave,"%s",fcontent);
 					fclose(fpsave);
 
+					if (strcmp(getParam(params, "part"), "srvid") == 0)
+						init_srvid();
+
 #ifdef HAVE_DVBAPI
-					 if (strcmp(getParam(params, "part"), "dvbapi") == 0)
-						 dvbapi_read_priority();
+					if (strcmp(getParam(params, "part"), "dvbapi") == 0)
+						dvbapi_read_priority();
 #endif
 				}
 			}
