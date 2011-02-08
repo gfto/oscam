@@ -212,7 +212,7 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 
 	cs_ri_brk(reader, 1);
 
-	return(1);
+	return(reader->csystem.active);
 }
 
 static int reader_reset(struct s_reader * reader)
@@ -381,9 +381,4 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
 		rc=0;
   }
   return(rc);
-}
-
-int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep)
-{
-	return (rdr->fd && (rdr->caid == b2i(2,ep->caid) || rdr->typ == R_CCCAM));
 }

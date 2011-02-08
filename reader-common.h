@@ -10,8 +10,6 @@
 
 #include "atr.h"
 
-int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
-
 #define write_cmd(cmd, data) \
 { \
         if (card_write(reader, cmd, data, cta_res, &cta_lr)) return ERROR; \

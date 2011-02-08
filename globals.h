@@ -1500,7 +1500,6 @@ extern int reader_ecm(struct s_reader * reader, ECM_REQUEST *);
 extern int reader_emm(struct s_reader * reader, EMM_PACKET *);
 int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * reader);
 struct s_cardsystem *get_cardsystem_by_caid(ushort caid);
-extern int check_emm_cardsystem(struct s_reader * rdr, EMM_PACKET *ep);
 extern void reader_device_close(struct s_reader * reader);
 
 //module-stat
