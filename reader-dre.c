@@ -267,21 +267,16 @@ static unsigned char DESkeys[16*8]=
 
 void DREover(unsigned char *ECMdata, unsigned char *DW)
 {
-  if(ECMdata[2] >= (43+4) && ECMdata[40] == 0x3A && ECMdata[41] == 0x4B)
-  {
-    int i;
-    byte data[8], key[8];
+	uchar key[8];
+	if(ECMdata[2] >= (43+4) && ECMdata[40] == 0x3A && ECMdata[41] == 0x4B)
+	{
+		memcpy(key, &DESkeys[(ECMdata[42] & 0x0F) * 8], 8);
 
-    for(i = 0; i < 8; i++) key[i] = DESkeys[(ECMdata[42] & 0x0F) * 8 + i];
+		doPC1(key);
 
-    for(i = 0; i < 8; i++) data[i] = DW[i];
-    des_decrypt(data, 8, key);                          // even DW post-process
-    for(i = 0; i < 8; i++) DW[i] = data[i];
-
-    for(i = 0; i < 8; i++) data[i] = DW[8+i];
-    des_decrypt(data, 8, key);                          // odd DW post-process
-    for(i = 0; i < 8; i++) DW[8+i] = data[i];
-  };
+		des(key, DES_ECS2_DECRYPT, DW); // even DW post-process
+		des(key, DES_ECS2_DECRYPT, DW+8); // odd DW post-process
+	};
 };
 
 static int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
