@@ -1280,6 +1280,7 @@ int init_config()
 	strcpy(cfg.http_css, "");
 	cfg.http_refresh = 0;
 	cfg.http_hide_idle_clients = 0;
+	cfg.mon_hideclient_to = 15;
 	strcpy(cfg.http_tpl, "");
 #endif
 	cfg.ncd_keepalive = 1;
