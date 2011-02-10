@@ -187,6 +187,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 
 		memset(cfg.ser_device, 0, sizeof(cfg.ser_device));
+		memset(&cfg.lb_retrylimittab, 0, sizeof(RETRYLIMITTAB));
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
@@ -211,6 +212,11 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "LBMINECMCOUNT", "%d",cfg.lb_min_ecmcount);
 	tpl_printf(vars, TPLADD, "LBMAXECEMCOUNT", "%d",cfg.lb_max_ecmcount);
 	tpl_printf(vars, TPLADD, "LBRETRYLIMIT", "%d",cfg.lb_retrylimit);
+	
+	char *value = mk_t_retrylimittab(&cfg.lb_retrylimittab);
+	tpl_printf(vars, TPLADD, "LBRETRYLIMITS", value);
+	free(value);
+	
 	tpl_printf(vars, TPLADD, "LBREOPENSECONDS", "%d",cfg.lb_reopen_seconds);
 	tpl_printf(vars, TPLADD, "LBCLEANUP", "%d",cfg.lb_stat_cleanup);
 	if (cfg.lb_use_locking) tpl_addVar(vars, TPLADD, "USELOCKINGCHECKED", "selected");

@@ -119,6 +119,7 @@
 #define CS_MAXPROV    32
 #define CS_MAXPORTS   32  // max server ports
 #define CS_MAXFILTERS   16
+#define CS_MAX_LB_RETRYLIMIT 16
 
 #define CS_ECMSTORESIZE   16  // use MD5()
 #define CS_EMMSTORESIZE   16  // use MD5()
@@ -354,6 +355,13 @@ extern void qboxhd_led_blink(int color, int duration);
 
 //checking if (X) free(X) unneccessary since freeing a null pointer doesnt do anything
 #define NULLFREE(X) {if (X) {void *tmpX=X; X=NULL; free(tmpX); }}
+
+typedef struct s_retrylimittab
+{
+  ushort n;
+  ushort caid[CS_MAX_LB_RETRYLIMIT];
+  ushort time[CS_MAX_LB_RETRYLIMIT];
+} GCC_PACK RETRYLIMITTAB;
 
 typedef struct s_classtab
 {
@@ -1132,6 +1140,7 @@ struct s_config
 	int     lb_max_ecmcount; // maximum ecm count before reseting lbvalues
 	int     lb_reopen_seconds; //time between retrying failed readers/caids/prov/srv
 	int	lb_retrylimit; //reopen only happens if reader response time > retrylimit
+	RETRYLIMITTAB lb_retrylimittab; 
 	char	*lb_savepath; //path where the stat file is save. Empty=default=/tmp/.oscam/stat
 	int	lb_stat_cleanup; //duration in hours for cleaning old statistics
 	int lb_use_locking; //use a mutex lock while searching for readers (get_cw())
@@ -1431,6 +1440,7 @@ extern int write_config();
 extern int write_server();
 extern void write_versionfile();
 extern char *mk_t_caidtab(CAIDTAB *ctab);
+extern char *mk_t_retrylimittab(RETRYLIMITTAB *tab);
 extern char *mk_t_tuntab(TUNTAB *ttab);
 extern char *mk_t_group(uint64 grp);
 extern char *mk_t_ftab(FTAB *ftab);

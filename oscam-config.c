@@ -143,6 +143,42 @@ void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 	}
 }
 
+void chk_retrylimittab(char *lbrlt, RETRYLIMITTAB *tab)
+{
+		int i;
+		char *ptr1, *ptr2;
+		
+		memset(tab, 0, sizeof(RETRYLIMITTAB));
+		
+		for (i = 0, ptr1 = strtok(lbrlt, ","); (i < CS_MAX_LB_RETRYLIMIT) && (ptr1); ptr1 = strtok(NULL, ",")) {
+				long caid, time;
+
+				if( (ptr2 = strchr(trim(ptr1), ':')) )
+						*ptr2++ = '\0';
+				else
+						ptr2 = "";
+
+				if (((caid = a2i(ptr1, 2)) < 0xFFFF) | ((time = atoi(ptr2)) < 10000)) {
+						tab->caid[i] = caid;
+						tab->time[i] = time;
+						tab->n = ++i;
+				}
+		}
+}
+
+char *mk_t_retrylimittab(RETRYLIMITTAB *tab)
+{
+		int i, size = 2 + tab->n * (4 + 1 + 5 + 1); //caid + ":" + time + ","
+		char *buf = cs_malloc(&buf, size, SIGINT);
+		char *ptr = buf;
+				
+		for (i = 0; i < tab->n; i++) {
+				ptr += sprintf(ptr, "%s%04X:%d", i?",":"", tab->caid[i], tab->time[i]);
+		}
+		*ptr = 0;
+		return buf;
+}
+
 void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
 	int i;
@@ -503,6 +539,11 @@ void chk_t_global(const char *token, char *value)
 
 	if (!strcmp(token, "lb_retrylimit")) {
 		cfg.lb_retrylimit = strToIntVal(value, DEFAULT_RETRYLIMIT);
+		return;
+	}
+	
+	if (!strcmp(token, "lb_retrylimits")) {
+		chk_retrylimittab(value, &cfg.lb_retrylimittab);
 		return;
 	}
 	
@@ -1773,6 +1814,11 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "lb_reopen_seconds", "%d\n", cfg.lb_reopen_seconds);
 	if (cfg.lb_retrylimit != DEFAULT_RETRYLIMIT || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_retrylimit", "%d\n", cfg.lb_retrylimit);
+    if (cfg.lb_retrylimittab.n > 0 || cfg.http_full_cfg) {
+    	char *value = mk_t_retrylimittab(&cfg.lb_retrylimittab);
+    	fprintf_conf(f, CONFVARWIDTH, "lb_retrylimits", "%s\n", value);
+    	free(value);
+    }
 	if (cfg.lb_savepath)
 		fprintf_conf(f, CONFVARWIDTH, "lb_savepath", "%s\n", cfg.lb_savepath);
 	if (cfg.lb_stat_cleanup != DEFAULT_LB_STAT_CLEANUP || cfg.http_full_cfg)

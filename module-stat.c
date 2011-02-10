@@ -402,6 +402,15 @@ static char *strend(char *c) {
 	return c;
 }
 
+static int get_retrylimit(ECM_REQUEST *er) {
+		int i;
+		for (i = 0; i < cfg.lb_retrylimittab.n; i++) {
+				if (cfg.lb_retrylimittab.caid[i] == er->caid)
+						return cfg.lb_retrylimittab.time[i];
+		}
+		return cfg.lb_retrylimit;
+}
+
 /**	
  * Gets best reader for caid/prid/srvid.
  * Best reader is evaluated by lowest avg time but only if ecm_count > cfg.lb_min_ecmcount (5)
@@ -424,6 +433,7 @@ int get_best_reader(ECM_REQUEST *er)
 	int current = -1;
 	READER_STAT *stat = NULL;
 	int nlocal_readers = 0;
+	int retrylimit = get_retrylimit(er);
 
 #ifdef WITH_DEBUG 
 	if (cs_dblevel & 0x01) {
@@ -474,7 +484,7 @@ int get_best_reader(ECM_REQUEST *er)
 				continue;
 			}
 			
-			if (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > cfg.lb_retrylimit)) {
+			if (stat->ecm_count < 0||(stat->ecm_count > cfg.lb_max_ecmcount && stat->time_avg > retrylimit)) {
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg.lb_max_ecmcount, rdr->label);
 				reset_stat(er->caid, er->prid, er->srvid);
 				ll_append(result, rdr); //max ecm reached, get new statistics
@@ -639,7 +649,7 @@ int get_best_reader(ECM_REQUEST *er)
 	ll_iter_release(it);
 
 	//algo for reopen other reader only if responsetime>retrylimit:
-	int reopen = !best_rdr || (best_time && (best_time > cfg.lb_retrylimit));
+	int reopen = !best_rdr || (best_time && (best_time > retrylimit));
 	if (reopen) {
 #ifdef WITH_DEBUG 
 		if (best_rdr)
