@@ -1041,6 +1041,12 @@ void chk_t_serial(char *token, char *value)
 
 void chk_t_gbox(char *token, char *value)
 {
+	if (!strcmp(token, "gsmsfile")) {
+		memset(cfg.gbox_gsms_path, 0, sizeof(cfg.gbox_gsms_path));
+		strncpy(cfg.gbox_gsms_path, value, sizeof(cfg.gbox_gsms_path) - 1);
+		return;
+	}
+
 	if (!strcmp(token, "hostname")) {
 		memset(cfg.gbox_hostname, 0, sizeof(cfg.gbox_hostname));
 		strncpy(cfg.gbox_hostname, value, sizeof(cfg.gbox_hostname) - 1);

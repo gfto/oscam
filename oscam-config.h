@@ -68,7 +68,7 @@
 #endif
 
 #ifndef MODULE_GBOX
-//#define MODULE_GBOX
+#define MODULE_GBOX
 #endif
 
 #ifndef MODULE_RADEGAST

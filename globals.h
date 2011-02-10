@@ -1111,6 +1111,7 @@ struct s_config
 	int		cc_reshare_services;
 	char	gbox_hostname[128];
 	char	gbox_key[9];
+	char	gbox_gsms_path[200];
 	int		gbox_port;
 	struct s_ip *rad_allowed;
 	char		rad_usr[32];
