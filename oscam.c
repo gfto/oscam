@@ -684,7 +684,7 @@ void cs_exit(int sig)
 		cleanup_thread(cl);
 		//Restore signals before exiting thread
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
-		set_signal_handler(SIGHUP  , 1, cs_accounts_chk);
+		set_signal_handler(SIGHUP  , 1, cs_reload_config);
 
 		pthread_exit(NULL);
 		return;
@@ -842,11 +842,14 @@ struct s_client * create_client(in_addr_t ip) {
  *  - services ids (oscam.srvid)
  *  - tier ids     (oscam.tiers)
  **/
-static void cs_reload_config()
+void cs_reload_config()
 {
 		cs_accounts_chk();
 		init_srvid();
 		init_tierid();
+		#ifdef CS_ANTICASC
+		ac_init_stat();
+		#endif
 }
 
 static void init_signal()
@@ -1141,7 +1144,7 @@ void start_anticascader()
   pthread_setspecific(getclient, cl);
   cl->typ = 'a';
 
-  set_signal_handler(SIGHUP, 1, ac_init_stat);
+  //set_signal_handler(SIGHUP, 1, ac_init_stat);
   ac_init_stat();
   while(1)
   {
