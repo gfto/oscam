@@ -218,12 +218,12 @@ maximum ECM count before resetting loadbalancing values, default:500
 .PP
 \fBlb_reopen_seconds\fP = \fBseconds\fP
 .RS 3n
-time between retrying failed readers/CAIDs/providers/services, default:900
+time between retrying failed loadbalanced readers/CAIDs/providers/services, default:900
 .RE
 .PP
 \fBlb_retrylimit\fP = \fBmilli seconds\fP
 .RS 3n
-retry next readers only if response time is higher then lb_retrylimit, default:800
+retry next loadbalanced reader only if response time is higher then lb_retrylimit, default:800
 .RE
 .PP
 \fBlb_savepath\fP = \fBfilename\fP
@@ -238,7 +238,12 @@ hours after the loadbalancing statistics will be deleted, default:336
 .PP
 \fBlb_use_locking\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = disable parallel and identical ECM requests, default:0
+1 = disable parallel and identical loadbalancing ECM requests, default:0
+.RE
+.PP
+\fBlb_retrylimits\fP = \fBCAID:time[,CAID:time]...\fP
+.RS 3n
+loadbalancing retry limit time per CAID, default:none
 .RE
 .SS "The [monitor] section"
 .PP
