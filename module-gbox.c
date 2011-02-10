@@ -239,6 +239,23 @@ static void gbox_decompress(struct gbox_data *gbox, uchar *buf, int *unpacked_le
   *unpacked_len += 12;
 }
 
+/*
+static void gbox_handle_gsms(ushort peerid, char *gsms)
+{
+	cs_log("gbox: gsms received from peer %04x: %s", peerid, gsms);
+
+	if (strnlen(cfg.gbox_gsms_path, sizeof(cfg.gbox_gsms_path))) {
+		FILE *f = fopen(cfg.gbox_gsms_path, "a");
+		if (f) {
+			fprintf(f, "FROM %04X: %s\n", peerid, gsms);
+			fclose(f);
+		}
+		else
+			cs_log("gbox: error writing to file! (path=%s)", cfg.gbox_gsms_path);
+	}
+}
+*/
+
 static void gbox_wait_for_response(struct s_client *cli)
 {
 	printf("gbox: enter gbox_wait_for_response()\n");
@@ -288,6 +305,28 @@ static void gbox_send(struct s_client *cli, uchar *buf, int l)
 
   pthread_t t;
   pthread_create(&t, NULL, (void *)gbox_wait_for_response, cli);
+}
+
+static void gbox_send_boxinfo(struct s_client *cli)
+{
+  struct gbox_data *gbox = cli->gbox;
+
+  int len;
+  uchar buf[4096];
+
+  int hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
+
+  buf[0] = 0xA0;
+  buf[1] = 0xA1;
+  memcpy(buf + 2, gbox->peer.key, 4);
+  memcpy(buf + 6, gbox->key, 4);
+  buf[10] = gbox->peer.ver;
+  buf[11] = 0x10;
+  memcpy(buf + 12, cfg.gbox_hostname, hostname_len);
+
+  len = 12 + hostname_len;
+
+  gbox_send(cli, buf, len);
 }
 
 static void gbox_send_hello(struct s_client *cli)
@@ -482,6 +521,7 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
         	  cli->reader->tcp_connected = 1;
 
         gbox_send_hello(cli);
+        gbox_send_boxinfo(cli);
       }
       break;
     case MSG_CW:
@@ -494,6 +534,10 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
     	memcpy(gbox->peer.checkcode, data + 10, 7);
         cs_debug_mask(D_READER, "gbox: received checkcode=%s",  cs_hexdump(0, gbox->peer.checkcode, 7));
     	break;
+    /*case MSG_GSMS:
+    	//gbox_handle_gsms(peerid, gsms);
+    	break;
+    	*/
     default:
       cs_ddump_mask(D_READER, data, n, "gbox: unknown data received (%d bytes):", n);
   }
