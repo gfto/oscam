@@ -13,18 +13,21 @@
 enum {
   MSG_ECM = 0x445c,
   MSG_CW = 0x4844,
-  MSG_CW_NOK = 0,	// todo
   MSG_HELLO = 0xddab,
-  MSG_CHECKCODE = 0x41c0
+  MSG_CHECKCODE = 0x41c0,
+  MSG_GOODBYE = 0x9091,
+  MSG_GSMS_ACK = 0x9098,
+  MSG_GSMS = 0xff0,
+  MSG_BOXINFO = 0xa0a1
 };
 
 struct gbox_card {
   uint16 peer_id;
   uint16 caid;
   uint32 provid;
-  uchar slot;
-  uchar dist;
-  uchar lvl;
+  int slot;
+  int dist;
+  int lvl;
 };
 
 struct gbox_peer {
@@ -411,8 +414,8 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
               card->caid = caid;
               card->provid = provid;
               card->slot = ptr[0];
-              card->lvl = ptr[1] & 0xf;
-              card->dist = (ptr[1] & 0xf0) >> 4;
+              card->dist = ptr[1] & 0xf;
+              card->lvl = ((ptr[1] & 0xf0) >> 4) - 1;
               card->peer_id = ptr[2] << 8 | ptr[3];
 
               ptr += 4;
@@ -454,8 +457,8 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
               card->caid = caid;
               card->provid = provid;
               card->slot = ptr[0];
-              card->lvl = ptr[1] & 0xf;
-              card->dist = (ptr[1] & 0xf0) >> 4;
+              card->dist = ptr[1] & 0xf;
+              card->lvl = ptr[1] >> 4;
               card->peer_id = ptr[2] << 8 | ptr[3];
 
               ptr += 4;
@@ -624,8 +627,6 @@ static int gbox_recv_chk(struct s_client *cli, uchar *dcw, int *rc, uchar *buf, 
 	  memcpy(dcw, gbox->cws, 16);
 
 	  return gbox->ecm_idx;
-  } else if (gbox_decode_cmd(buf) == MSG_CW_NOK) {
-	  *rc = 0;
   }
 
   return -1;
