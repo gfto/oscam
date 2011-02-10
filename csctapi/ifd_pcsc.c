@@ -90,7 +90,6 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *cta_res, ushort *cta_lr, int l)
 {
      LONG rv;
-     SCARD_IO_REQUEST pioRecvPci;
      DWORD dwSendLength, dwRecvLength;
 
     if(!l) {
@@ -114,13 +113,13 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *ct
         else
             dwSendLength = l-1;
         cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
-        rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T0, (LPCBYTE) buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
+        rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T0, (LPCBYTE) buf, dwSendLength, NULL, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
     else  if(pcsc_reader->dwActiveProtocol == SCARD_PROTOCOL_T1) {
         dwSendLength = l;
         cs_debug_mask(D_DEVICE, "sending %d bytes to PCSC : %s", dwSendLength,cs_hexdump(1,buf,l));
-        rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T1, (LPCBYTE) buf, dwSendLength, &pioRecvPci, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
+        rv = SCardTransmit((SCARDHANDLE)(pcsc_reader->hCard), SCARD_PCI_T1, (LPCBYTE) buf, dwSendLength, NULL, (LPBYTE) cta_res, (LPDWORD) &dwRecvLength);
         *cta_lr=dwRecvLength;
     }
     else {
