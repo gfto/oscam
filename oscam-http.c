@@ -3204,6 +3204,8 @@ void http_srv() {
 	int sock, reuse = 1;
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
+	struct timeval stimeout;
+	
 	socklen_t len = sizeof(remote);
 	/* Create random string for nonce value generation */
 	create_rand_str(noncekey,32);
@@ -3217,6 +3219,17 @@ void http_srv() {
 		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d)", errno);
 	}
 
+    stimeout.tv_sec = 30;
+    stimeout.tv_usec = 0;
+     
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &stimeout, sizeof(stimeout)) < 0) {
+     		cs_log("HTTP Server: Setting SO_RCVTIMEO via setsockopt failed! (errno=%d)", errno);
+    }
+     
+    if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &stimeout, sizeof(stimeout)) < 0) {
+     		cs_log("HTTP Server: Setting SO_SNDTIMEO via setsockopt failed! (errno=%d)", errno);
+    }
+    
 	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
