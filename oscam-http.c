@@ -2666,6 +2666,9 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 					if (strcmp(getParam(params, "part"), "srvid") == 0)
 						init_srvid();
 
+					if (strcmp(getParam(params, "part"), "user") == 0)
+						cs_accounts_chk();
+
 #ifdef HAVE_DVBAPI
 					if (strcmp(getParam(params, "part"), "dvbapi") == 0)
 						dvbapi_read_priority();
