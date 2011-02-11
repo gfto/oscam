@@ -1320,7 +1320,6 @@ extern pthread_mutex_t gethostbyname_lock;
 extern void cs_exit_oscam();
 extern void cs_restart_oscam();
 extern int cs_get_restartmode();
-extern void cs_reload_config();
 
 //reset stats for webif:
 extern void clear_account_stats(struct s_auth *account);
@@ -1328,6 +1327,7 @@ extern void clear_all_account_stats();
 extern void clear_system_stats();
                               
 #endif
+extern void cs_reload_config();
 extern int recv_from_udpipe(uchar *);
 extern char* username(struct s_client *);
 extern struct s_client * get_client_by_tid(unsigned long);
