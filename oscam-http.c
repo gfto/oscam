@@ -2480,6 +2480,8 @@ char *send_oscam_script(struct templatevars *vars) {
 }
 
 char *send_oscam_scanusb(struct templatevars *vars) {
+
+#ifndef OS_CYGWIN32
 	FILE *fp;
 	int err=0;
 	char path[1035];
@@ -2505,6 +2507,9 @@ char *send_oscam_scanusb(struct templatevars *vars) {
 		}
 	}
 	pclose(fp);
+#else
+	tpl_addVar(vars, TPLADD, "MESSAGE", "Function not supported in CYGWIN environment"));
+#endif
 	return tpl_getTpl(vars, "SCANUSB");
 }
 

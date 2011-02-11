@@ -777,6 +777,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLSCANUSB "\
 ##TPLHEADER##\
 ##TPLMENU##\
+	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
 	<BR><BR>\n\
 	<TABLE cellpadding=\"10\">\n\
 		<TR><TH>USB Devices</TH></TR>\n\
