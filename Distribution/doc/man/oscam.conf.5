@@ -613,6 +613,12 @@ set CCcam keepalive modus:
   \fB0\fP = disconnect client when max idle time is reached
   \fB1\fP = keep client connected (default)
 .RE
+.PP
+\fBforward_origin_card\fP = \fB0\fP|\fB1\fP
+.RS 3
+1 = forward ECM request to reader holding this card, 
+\fIloadbalancer, fallback and caching will be disabled\fR, default:0
+.RE
 .SS "The [gbox] section"
 .PP
 \fBhostname\fP = \fBpassword\fP
