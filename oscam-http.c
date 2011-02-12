@@ -442,6 +442,9 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 	if (cfg.cc_ignore_reshare)
 		tpl_printf(vars, TPLADD, "IGNORERESHARE", "selected");
 	
+	if (cfg.cc_forward_origin_card)
+		tpl_printf(vars, TPLADD, "FORWARDORIGINCARD", "selected");
+	
 	if (cfg.cc_keep_connected)
 		tpl_printf(vars, TPLADD, "KEEPCONNECTED", "selected");
 

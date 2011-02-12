@@ -277,7 +277,8 @@ extern char *RDR_CD_TXT[];
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
-      E2_EA_LEN, E2_F0_LEN, E2_OFFLINE, E2_SID};
+      E2_EA_LEN, E2_F0_LEN, E2_OFFLINE, E2_SID, 
+      E2_CCCAM_NOCARD=0x27, E2_CCCAM_NOK1=0x28, E2_CCCAM_NOK2=0x29};
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -583,6 +584,8 @@ typedef struct ecm_request_t
   uchar		cw_checked[16];
   struct s_reader *origin_reader;
 #endif
+
+  void * origin_card; //CCcam preferred card!
 
   char msglog[MSGLOGSIZE];
 
@@ -1117,6 +1120,7 @@ struct s_config
 	int             cc_keep_connected;
 	int		cc_stealth;
 	int		cc_reshare_services;
+	int     cc_forward_origin_card;
 	char	gbox_hostname[128];
 	char	gbox_key[9];
 	char	gbox_gsms_path[200];

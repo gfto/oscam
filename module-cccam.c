@@ -1,4 +1,4 @@
-#include <string.h>
+		#include <string.h>
 #include <stdlib.h>
 #include "globals.h"
 #include "module-cccam.h"
@@ -977,7 +977,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	if (!cc || (cl->pfd < 1) || !rdr->tcp_connected) {
 		if (er) {
 			er->rc = E_RDR_NOTFOUND;
-			er->rcEx = 0x27;
+			er->rcEx = E2_CCCAM_NOCARD;
 			cs_debug_mask(D_READER, "%s server not init! ccinit=%d pfd=%d",
 					rdr->label, cc ? 1 : 0, cl->pfd);
 			write_ecm_answer(rdr, er);
@@ -1146,7 +1146,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			cs_debug_mask(D_READER, "%s no suitable card on server", getprefix());
 
 			cur_er->rc = E_RDR_NOTFOUND;
-			cur_er->rcEx = 0x27;
+			cur_er->rcEx = E2_CCCAM_NOCARD;
 			write_ecm_answer(rdr, cur_er);
 			//cur_er->rc = 1;
 			//cur_er->rcEx = 0;
@@ -1351,7 +1351,7 @@ void cc_free_card(struct cc_card *card) {
 	ll_destroy_data(card->goodsids);
 	ll_destroy_data(card->remote_nodes);
 
-	free(card);
+	add_garbage(card);
 }
 
 /**
@@ -1943,6 +1943,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		pthread_mutex_lock(&cc->cards_busy);
 
 		struct cc_card *card = read_card(data, buf[1]==MSG_NEW_CARD_SIDINFO);
+		card->origin_reader = rdr;
 
 		//Check if this card is from us:
 		LL_ITER *it = ll_iter_create(card->remote_nodes);
@@ -2071,8 +2072,26 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				else
 					remove_good_sid(card, &srvid);
 
-				//retry ecm:
-				cc_reset_pending(cl, ecm_idx);
+				if (cfg.cc_forward_origin_card && card->origin_reader == rdr) { 
+						//this card is from us but it can't decode this ecm
+						//also origin card is only set on cccam clients
+						//so wie send back the nok to the client
+						int i = 0;
+						for (i=0;i<CS_MAXPENDING;i++) {
+								if (cl->ecmtask[i].idx == ecm_idx) {
+										cs_debug_mask(D_TRACE, "%s forward card: %s", getprefix(), (buf[1]==MSG_CW_NOK1)?"NOK1":"NOK2");
+										ECM_REQUEST *er = &cl->ecmtask[i];
+										er->rc = E_RDR_NOTFOUND;
+										er->rcEx = (buf[1] == MSG_CW_NOK1)?E2_CCCAM_NOK1:E2_CCCAM_NOK2;
+										write_ecm_answer(rdr, er);
+										break;
+								}
+						}		
+				}
+				else {
+						//retry ecm:
+						cc_reset_pending(cl, ecm_idx);
+				}
 			} else
 				cs_debug_mask(D_READER, "%S NOK: NO CARD!", getprefix());
 		}
@@ -2106,7 +2125,47 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
 				er->idx = ++cc->server_ecm_idx;
-				
+
+				if (cfg.cc_forward_origin_card) { //search my shares for this card:
+						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, server_card->id);
+						LL_ITER *itr = ll_iter_create(cc->reported_carddatas);
+						struct cc_card *card;
+						struct cc_card *rcard = NULL;
+						while ((card=ll_iter_next(itr))) {
+								if (card->id == server_card->id) { //found it
+										break;
+								}
+						}
+						ll_iter_release(itr);
+						cs_debug_mask(D_TRACE, "%s forward card: share %d found: %d", getprefix(), server_card->id, card?1:0);
+						if (card && card->origin_reader) { // found own card, now search reader card:
+								cs_debug_mask(D_TRACE, "%s forward card: share %d origin reader %s origin id %d", getprefix(), card->id, card->origin_reader->label, card->origin_id);
+								struct s_reader *rdr = card->origin_reader;
+								if (card->origin_id && rdr && rdr->client && rdr->client->cc) { //only if we have a origin from a cccam reader
+										struct cc_data *rcc = rdr->client->cc;
+										
+										itr = ll_iter_create(rcc->cards);
+										while ((rcard=ll_iter_next(itr))) {
+												if (rcard->id == card->origin_id) //found it!
+														break;
+										}
+										ll_iter_release(itr);
+								}
+								else
+										rcard = card;
+						}
+						
+						er->origin_card = rcard;
+						if (!rcard) {
+								cs_debug_mask(D_TRACE, "%s forward card: share %d not found!", getprefix(), server_card->id);
+								er->rc = E_NOTFOUND;
+								er->rcEx = E2_CCCAM_NOK1; //share not found!
+						}
+						else
+								cs_debug_mask(D_TRACE, "%s forward card: share %d forwarded to %s origin as id %d", getprefix(), 
+										card->id, card->origin_reader->label, rcard->id);
+				}
+						
 				cs_debug_mask(
 						D_CLIENT,
 						"%s ECM request from client: caid %04x srvid %04x(%d) prid %06x",
@@ -2430,7 +2489,8 @@ int cc_recv_chk(struct s_client *cl, uchar *dcw, int *rc, uchar *buf, int UNUSED
 		return (cc->recv_ecmtask);
 	} else if ((buf[1] == (MSG_CW_NOK1)) || (buf[1] == (MSG_CW_NOK2))) {
 		*rc = 0;
-		if (cc->is_oscam_cccam)
+		//if (cc->is_oscam_cccam)
+		if (cfg.cc_forward_origin_card)
 				return (cc->recv_ecmtask);
 		else
 				return -1;
@@ -2471,7 +2531,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 	struct cc_extended_ecm_idx *eei = get_extended_ecm_idx_by_idx(cl, er->idx,
 			TRUE);
 
-	if (er->rc < E_NOTFOUND && eei && eei->card) {
+	if (er->rc < E_NOTFOUND && eei && eei->card) { //found:
 		memcpy(buf, er->cw, sizeof(buf));
 		//fix_dcw(buf);
 		//cs_debug_mask(D_TRACE, "%s send cw: %s cpti: %d", getprefix(),
@@ -2484,7 +2544,7 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 		if (!cc->extended_mode)
 			cc_crypt(&cc->block[ENCRYPT], buf, 16, ENCRYPT); // additional crypto step
 		free(eei->card);
-	} else {
+	} else { //NOT found:
 		//cs_debug_mask(D_TRACE, "%s send cw: NOK cpti: %d", getprefix(),
 		//		er->cpti);
 
@@ -2494,8 +2554,12 @@ void cc_send_dcw(struct s_client *cl, ECM_REQUEST *er) {
 		int nok;
 		if (!eei || !eei->card)
 			nok = MSG_CW_NOK1; //share no more available
-		else
-			nok = MSG_CW_NOK2; //can't decode
+		else {
+			if (cfg.cc_forward_origin_card && er->origin_card == eei->card)
+				nok = (er->rcEx==E2_CCCAM_NOK1)?MSG_CW_NOK1:MSG_CW_NOK2;
+			else
+				nok = MSG_CW_NOK2; //can't decode
+		}
 		cc_cmd_send(cl, NULL, 0, nok);
 	}
 	cc->server_ecm_pending--;
@@ -2661,6 +2725,8 @@ struct cc_card *create_card(struct cc_card *card) {
 	if (card) {
 		copy_sids(card2->goodsids, card->goodsids);
 		copy_sids(card2->badsids, card->badsids);
+		card2->origin_reader = card->origin_reader;
+		card2->origin_id = card->id;
 	}
 	
 	return card2;
@@ -2762,7 +2828,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 	struct cc_card *card2;
 
 	//Minimize all, transmit just CAID, merge providers:
-	if (cfg.cc_minimize_cards == MINIMIZE_CAID) {
+	if (cfg.cc_minimize_cards == MINIMIZE_CAID && !cfg.cc_forward_origin_card) {
 		while ((card2 = ll_iter_next(it)))
 			if (card2->caid == card->caid && 
 					!memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial))) {
@@ -2796,7 +2862,7 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 	} 
 	
 	//Removed duplicate cards, keeping card with lower hop:
-	else if (cfg.cc_minimize_cards == MINIMIZE_HOPS) { 
+	else if (cfg.cc_minimize_cards == MINIMIZE_HOPS && !cfg.cc_forward_origin_card) { 
 		while ((card2 = ll_iter_next(it))) {
 			if (card2->caid == card->caid && 
 					!memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial)) && 

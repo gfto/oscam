@@ -8,6 +8,7 @@
 #define MODULECCCAM_H_
 
 #include "module-datastruct-llist.h"
+#include "globals.h"
 
 #include "cscrypt/rc6.h"
 #include "cscrypt/idea.h"
@@ -80,7 +81,8 @@ struct cc_card {
 	time_t time;
 	LLIST *goodsids; //sids that could decoded (struct cc_srvid)
 	LLIST *remote_nodes; //remote note id, 8 bytes
-	void  *origin_reader;
+	struct s_reader  *origin_reader;
+	uint32 origin_id;
 };
 
 struct cc_auto_blocked {

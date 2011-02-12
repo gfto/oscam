@@ -994,6 +994,12 @@ void chk_t_cccam(char *token, char *value)
 		cfg.cc_ignore_reshare = strToIntVal(value, 0);
 		return;
 	}
+	
+	if (!strcmp(token, "forward_origin_card")) {
+		cfg.cc_forward_origin_card = strToIntVal(value, 0);
+		return;
+	}
+	
 	// cccam version
 	if (!strcmp(token, "version")) {
 		if (strlen(value) > sizeof(cfg.cc_version) - 1) {
@@ -1979,6 +1985,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.cc_port);
 		fprintf_conf(f, CONFVARWIDTH, "reshare", "%d\n", cfg.cc_reshare);
 		fprintf_conf(f, CONFVARWIDTH, "ignorereshare", "%d\n", cfg.cc_ignore_reshare);
+		fprintf_conf(f, CONFVARWIDTH, "forward_origin_card", "%d\n", cfg.cc_forward_origin_card);
 		fprintf_conf(f, CONFVARWIDTH, "version", "%s\n", cfg.cc_version);
 		fprintf_conf(f, CONFVARWIDTH, "updateinterval", "%d\n", cfg.cc_update_interval);
 		fprintf_conf(f, CONFVARWIDTH, "minimizecards", "%d\n", cfg.cc_minimize_cards);

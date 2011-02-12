@@ -291,7 +291,8 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		stat->request_count = 0;
 	}
 	else if (rc == 4) { //not found
-		stat->rc = rc;
+		if (er->rcEx != 0x28 && er->rcEx != 0x29) //CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
+				stat->rc = rc;
 		//stat->last_received = time(NULL); do not change time, this would prevent reopen
 		//stat->ecm_count = 0; Keep ecm_count!
 	}
@@ -421,15 +422,35 @@ int get_best_reader(ECM_REQUEST *er)
 {
 	if (!cfg.lb_mode || cfg.lb_mode==LB_LOG_ONLY)
 		return 0;
-		
+
+	LL_ITER *it;
+	struct s_reader *rdr;
+
+	//preferred card forwarding (CCcam client):
+	if (cfg.cc_forward_origin_card && er->origin_card) {
+	
+			struct cc_card *card = er->origin_card;
+			
+			it = ll_iter_create(er->matching_rdr);
+			while ((rdr=ll_iter_next(it))) {
+					if (card->origin_reader == rdr)
+							break;				
+			}
+			if (rdr) {
+					cs_debug_mask(D_TRACE, "loadbalancer: forward card: forced by card %d to reader %s", card->id, rdr->label);
+					ll_clear(er->matching_rdr);
+					ll_append(er->matching_rdr, rdr);
+					return 1;
+			}
+	}
+	
+ 		
 	LLIST * result = ll_create();
 	LLIST * selected = ll_create();
 	
 	struct timeb new_nulltime;
 	memset(&new_nulltime, 0, sizeof(new_nulltime));
 	time_t current_time = time(NULL);
-	LL_ITER *it;
-	struct s_reader *rdr;
 	int current = -1;
 	READER_STAT *stat = NULL;
 	int nlocal_readers = 0;
@@ -474,7 +495,8 @@ int get_best_reader(ECM_REQUEST *er)
 	
 	it = ll_iter_create(er->matching_rdr);
 	while ((rdr=ll_iter_next(it))) {
- 			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
+	
+			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 				
 			stat = get_stat(rdr, er->caid, er->prid, er->srvid);
 			if (!stat) {
