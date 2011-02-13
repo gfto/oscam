@@ -58,8 +58,9 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 
 void cs_write_log(char *txt)
 {
+	struct s_client *cl = cur_client();
 #ifdef CS_ANTICASC
-	if( cur_client()->typ == 'a' && fpa ) {
+	if( cl && cl->typ == 'a' && fpa ) {
 		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
 		if (fpa) {
 				fputs(txt, fpa);
@@ -134,10 +135,12 @@ int cs_init_log(void)
 
 static void get_log_header(int m, char *txt)
 {
+	struct s_client *cl = cur_client();	
+	unsigned int thread = cl?cl->thread:0;
 	if(m)
-		sprintf(txt, "%8X %c ",(unsigned int) cur_client()->thread, cur_client()->typ);
+		sprintf(txt, "%8X %c ",(unsigned int) thread, cl?cl->typ:' ');
 	else
-		sprintf(txt, "%8X%-3.3s",(unsigned int) cur_client()->thread, "");
+		sprintf(txt, "%8X%-3.3s",(unsigned int) thread, "");
 }
 
 static void write_to_log(int flag, char *txt)
@@ -148,12 +151,13 @@ static void write_to_log(int flag, char *txt)
 	struct tm lt;
 	char sbuf[16];
 	char log_buf[700];
+	struct s_client *cur_cl = cur_client();
 
 	//  get_log_header(flag, sbuf);
 	//  memcpy(txt, sbuf, 11);
 
 #ifdef CS_ANTICASC
-	if (cfg.logtosyslog && cur_client()->typ != 'a') // system-logfile
+	if (cfg.logtosyslog && cur_cl && cur_cl->typ != 'a') // system-logfile
 #else
 	if (cfg.logtosyslog) // system-logfile
 #endif
@@ -178,7 +182,6 @@ static void write_to_log(int flag, char *txt)
 	}
 
 	cs_write_log(log_buf + 8);
-	struct s_client *cur_cl = cur_client();
 #ifdef CS_LOGHISTORY
 	pthread_mutex_lock(&loghistory_lock);
 	char *ptr=(char *)(loghist+(loghistidx*CS_LOGHISTSIZE));
@@ -188,7 +191,9 @@ static void write_to_log(int flag, char *txt)
 	ptr[0]='\1';    // make username unusable
 	ptr[1]='\0';
 
-	if ((cur_cl->typ=='c') || (cur_cl->typ=='m'))
+	if (!cur_cl)
+		cs_strncpy(ptr, "undef", 63);
+	else if ((cur_cl->typ=='c') || (cur_cl->typ=='m'))
 		cs_strncpy(ptr, cur_cl->account?cur_cl->account->usr:"", 63);
 	else if ((cur_cl->typ=='p') || (cur_cl->typ=='r'))
 		cs_strncpy(ptr, cur_cl->reader->label, 63);
@@ -205,9 +210,9 @@ static void write_to_log(int flag, char *txt)
 	  if (cl->log) //this variable is only initialized for cl->typ = 'm' 
 		{
 			if (cl->monlvl<2) {
-				if ((cur_cl->typ != 'c') && (cur_cl->typ != 'm'))
+				if (cur_cl && (cur_cl->typ != 'c') && (cur_cl->typ != 'm'))
 					continue;
-				if (cur_cl->account && cl->account && strcmp(cur_cl->account->usr, cl->account->usr))
+				if (cur_cl && cur_cl->account && cl->account && strcmp(cur_cl->account->usr, cl->account->usr))
 					continue;
 			}
 			snprintf(sbuf, sizeof(sbuf), "%03d", cl->logcounter);
