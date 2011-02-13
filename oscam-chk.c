@@ -416,7 +416,8 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
     //cs_debug_mask(D_TRACE, "caid %04X not found in caidlist reader %s", er->caid, rdr->label);
     return 0;
   }
-  if ((!(rdr->typ & R_IS_NETWORK)) && ((rdr->caid != er->caid) && (rdr->caid != er->ocaid)))
+
+  if ((!(rdr->typ & R_IS_NETWORK)) && ((rdr->caid >> 8) != ((er->caid >> 8) & 0xFF) && (rdr->caid >> 8) != ((er->ocaid >> 8) & 0xFF)))
     return 0;
 
   //Checking services:
@@ -450,7 +451,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
 	int i;
 
-	if (reader->caid != caid) {
+	if (reader->caid >> 8 != caid >> 8) {
 		cs_debug_mask(D_EMM, "emm reader %s caid mismatch %04X != %04X", reader->label, reader->caid, caid);
 		return 0;
 	}
@@ -460,8 +461,10 @@ int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
 		return 0;
 	}
 
-	if (!provid || !reader->nprov || reader->auprovid == provid)
+	if (!provid || !reader->nprov || reader->auprovid == provid) {
+		cs_debug_mask(D_EMM, "emm reader %s has no provider set", reader->label);
 		return 1;
+	}
 
 	for (i=0; i<reader->nprov; i++) {
 		ulong prid = b2i(4, reader->prid[i]);
