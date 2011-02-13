@@ -400,13 +400,13 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
 
   if (!memcmp(data + 2, gbox->key, 4)) {
 	  if (memcmp(data + 6, gbox->peer.key, 4) && gbox_decode_cmd(data) != MSG_CW) {
-		  cs_log("gbox: invalid password!");
+		  cs_log("gbox: INTRUDER ALERT (peer key)!");
 
 		  pthread_mutex_unlock(&gbox->lock);
 		  return -1;
 	  }
   } else {
-	  cs_log("gbox: invalid password!");
+    cs_log("gbox: INTRUDER ALERT!");
 	  return -1;
   }
 
