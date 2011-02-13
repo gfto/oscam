@@ -2713,16 +2713,16 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 						tpl_printf(vars, TPLAPPEND, "FILECONTENT", "%s", buffer);
 			fclose (fp);
 		} else {
-			tpl_addVar(vars, TPLAPPEND, "FILECONTENT", "File not exist");
+			tpl_addVar(vars, TPLAPPEND, "FILECONTENT", "File does not exist or no file selected!");
 		}
 	} else {
-		tpl_addVar(vars, TPLAPPEND, "FILECONTENT", "File not valid");
+		tpl_addVar(vars, TPLAPPEND, "FILECONTENT", "File not valid!");
 	}
 
 	tpl_addVar(vars, TPLADD, "PART", getParam(params, "part"));
 
 	if (!writable) {
-		tpl_addVar(vars, TPLADD, "WRITEPROTECTION", "You cannot change content of this file");
+		tpl_addVar(vars, TPLADD, "WRITEPROTECTION", "You cannot change the content of this file!");
 		tpl_addVar(vars, TPLADD, "BTNDISABLED", "DISABLED");
 	}
 
