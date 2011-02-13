@@ -2426,32 +2426,52 @@ char *send_oscam_savetpls(struct templatevars *vars) {
 	return tpl_getTpl(vars, "SAVETEMPLATES");
 }
 
-char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params) {
-	if (strcmp(getParam(params, "action"), "Shutdown") == 0) {
-		tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
-		tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", SHUTDOWNREFRESH);
-		tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
-		tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-		tpl_printf(vars, TPLADD, "SECONDS", "%d", SHUTDOWNREFRESH);
-		send_headers(f, 200, "OK", NULL, "text/html", 0);
-		webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
+char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in, int apicall) {
+	if (strcmp(strtolower(getParam(params, "action")), "shutdown") == 0) {
+		if(!apicall){
+			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
+			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", SHUTDOWNREFRESH);
+			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
+			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+			tpl_printf(vars, TPLADD, "SECONDS", "%d", SHUTDOWNREFRESH);
+			send_headers(f, 200, "OK", NULL, "text/html", 0);
+			webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
+			cs_log("Shutdown requested by WebIF from %s", inet_ntoa(in));
+		} else {
+			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "shutdown");
+			cs_log("Shutdown requested by XMLApi from %s", inet_ntoa(in));
+		}
 		running = 0;
-
 		cs_exit_oscam();
-		return "1";
+
+		if(!apicall)
+			return "1";
+		else
+			return tpl_getTpl(vars, "APICONFIRMATION");
+
 	}
-	else if (strcmp(getParam(params, "action"), "Restart") == 0) {
-		tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
-		tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", 2);
-		tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
-		tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
-		tpl_printf(vars, TPLADD, "SECONDS", "%d", 2);
-		send_headers(f, 200, "OK", NULL, "text/html", 0);
-		webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
+	else if (strcmp(strtolower(getParam(params, "action")), "restart") == 0) {
+		if(!apicall){
+			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
+			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", 2);
+			tpl_addVar(vars, TPLADD, "REFRESHURL", "status.html");
+			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+			tpl_printf(vars, TPLADD, "SECONDS", "%d", 2);
+			send_headers(f, 200, "OK", NULL, "text/html", 0);
+			webif_write(tpl_getTpl(vars, "SHUTDOWN"), f);
+			cs_log("Restart requested by WebIF from %s", inet_ntoa(in));
+		} else {
+			tpl_addVar(vars, TPLADD, "APICONFIRMMESSAGE", "restart");
+			cs_log("Restart requested by XMLApi from %s", inet_ntoa(in));
+		}
 		running = 0;
-		
 		cs_restart_oscam();
-		return "1";
+
+		if(!apicall)
+			return "1";
+		else
+			return tpl_getTpl(vars, "APICONFIRMATION");
+		
 	} else {
 		return tpl_getTpl(vars, "PRESHUTDOWN");
 	}
@@ -2750,7 +2770,7 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 	return tpl_getTpl(vars, "FAILBAN");
 }
 
-char *send_oscam_api(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
+char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in) {
 	if (strcmp(getParam(params, "part"), "status") == 0) {
 		return send_oscam_status(vars, params, in, 1);
 	}
@@ -2792,6 +2812,20 @@ char *send_oscam_api(struct templatevars *vars, struct uriparams *params, struct
 			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "no reader selected");
 			return tpl_getTpl(vars, "APIERROR");
 		}
+	} else if (strcmp(getParam(params, "part"), "shutdown") == 0) {
+		if ((strcmp(strtolower(getParam(params, "action")), "restart") == 0) ||
+				(strcmp(strtolower(getParam(params, "action")), "shutdown") == 0)){
+			if(!cfg.http_readonly) {
+				return send_oscam_shutdown(vars, f, params, in, 1);
+			} else {
+				tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "webif readonly mode");
+				return tpl_getTpl(vars, "APIERROR");
+			}
+		} else {
+			tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "missing parameter action");
+			return tpl_getTpl(vars, "APIERROR");
+		}
+
 	}
 	else {
 		tpl_addVar(vars, TPLADD, "APIERRORMESSAGE", "part not found");
@@ -3135,14 +3169,14 @@ int process_request(FILE *f, struct in_addr in) {
 			//case  8: css file
 			case 9: result = send_oscam_services_edit(vars, &params, in); break;
 			case 10: result = send_oscam_savetpls(vars); break;
-			case 11: result = send_oscam_shutdown(vars, f, &params); break;
+			case 11: result = send_oscam_shutdown(vars, f, &params, in, 0); break;
 			case 12: result = send_oscam_script(vars); break;
 			case 13: result = send_oscam_scanusb(vars); break;
 			case 14: result = send_oscam_files(vars, &params); break;
 			case 15: result = send_oscam_reader_stats(vars, &params, in, 0); break;
 			case 16: result = send_oscam_failban(vars, &params); break;
 			//case  17: js file
-			case 18: result = send_oscam_api(vars, &params, in); break;
+			case 18: result = send_oscam_api(vars, f, &params, in); break;
 			case 19: result = send_oscam_image(vars, f, &params, NULL); break;
 			case 20: result = send_oscam_image(vars, f, &params, "ICMAI"); break;
 			default: result = send_oscam_status(vars, &params, in, 0); break;
