@@ -412,6 +412,7 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
 
     cs_add_violation((uint)cli->ip);
 
+    pthread_mutex_unlock(&gbox->lock);
 	  return -1;
   }
 
