@@ -1436,6 +1436,10 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 #ifdef COOL
 	cs_debug_mask(D_DVBAPI, "dvbapi_process_input: demux %d filter %d len %d buffer %x curtable %x curindex %d\n", demux_id, filter_num, len, buffer[0], curpid->table, demux[demux_id].curindex);
 #endif
+
+	if (pausecam)
+		return;
+
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_ECM) {
 		if (len != (((buffer[1] & 0xf) << 8) | buffer[2]) + 3) //invaild CAT length
 			return;
@@ -1456,8 +1460,16 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 			}
 
 			if (demux[demux_id].pidindex==-1) {
-				curpid->irdeto_chid = (buffer[6] << 8) | buffer[7];
-				struct s_dvbapi_priority *chidentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'i');
+				int chid = (buffer[6] << 8) | buffer[7];
+				struct s_dvbapi_priority *chidentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'p');
+
+				if (chidentry && chidentry->chid && chidentry->chid != chid) {
+					cs_debug_mask(D_DVBAPI, "irdeto skipping %04X:%06X:%02X", curpid->CAID, curpid->PROVID, chid);
+					return;
+				}
+
+				curpid->irdeto_chid = chid;
+				chidentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'i');
 				if (chidentry) {
 					cs_debug_mask(D_DVBAPI, "ignoring %04X:%06X:%02X", curpid->CAID, curpid->PROVID, curpid->irdeto_chid);
 					if (cfg.dvbapi_requestmode!=1) {
@@ -1501,13 +1513,6 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 
 		if (cfg.dvbapi_au>0)
 			dvbapi_start_emm_filter(demux_id);
-
-        pthread_mutex_lock(&event_handler_lock);
-        if (pausecam) {
-            cs_debug_mask(D_DVBAPI, "paused, ignoring ecm");
-            return;
-        }
-        pthread_mutex_unlock(&event_handler_lock);
 
 		ECM_REQUEST *er;
 		if (!(er=get_ecmtask()))
@@ -1636,11 +1641,6 @@ void * dvbapi_main_local(void *cli) {
 		pfdcount = (listenfd > -1) ? 2 : 1;
 
 		chk_pending(tp);
-
-		if (pausecam==1) {
-			cs_sleepms(500);
-			continue;
-		}
 
 		for (i=0;i<MAX_DEMUX;i++) {
 			for (g=0;g<MAX_FILTER;g++) {
