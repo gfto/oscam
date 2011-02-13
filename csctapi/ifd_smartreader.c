@@ -88,6 +88,8 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
 static void *ReaderThread(void *p);
 static void smart_fastpoll(S_READER *reader, int on);
 
+static int init_count = 0;
+
 int SR_Init (struct s_reader *reader)
 {
     uint8_t out_endpoint;
@@ -111,11 +113,14 @@ int SR_Init (struct s_reader *reader)
     }
     cs_debug_mask (D_DEVICE, "IO:SR: Looking for device %s on bus %s",devname,busname);
 
+    if(!init_count) {
      ret = libusb_init(NULL);
   if (ret < 0) {
         cs_log("Libusb init error : %d",ret);
         return ret;
     }
+    }
+    init_count++;
 
     //Overwrite default endpoint if config has a value for it
     if(reader->device_endpoint != 0)
@@ -439,6 +444,8 @@ int SR_SetParity (struct s_reader *reader, unsigned short parity)
 
 int SR_Close (struct s_reader *reader)
 {
+  if (!reader->sr_config) return OK;
+  
   cs_debug_mask(D_DEVICE, "IO:SR: Closing smarteader\n");
 
     reader->sr_config->running=FALSE;
@@ -450,8 +457,11 @@ int SR_Close (struct s_reader *reader)
     libusb_attach_kernel_driver(reader->sr_config->usb_dev_handle, reader->sr_config->interface);
 #endif
     libusb_close(reader->sr_config->usb_dev_handle);
-    libusb_exit(NULL);
+    init_count--;
+    if (!init_count)
+    		libusb_exit(NULL);
     free(reader->sr_config);
+    reader->sr_config = NULL;
     return OK;
 }
 

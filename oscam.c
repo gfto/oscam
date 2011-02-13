@@ -607,11 +607,6 @@ static void cs_cleanup()
                 kill_thread(rdr->client);
         }
         first_active_reader = NULL;
-                                                                
-        //cleaning all others:
-        while (first_client->next) {
-                kill_thread(first_client->next);
-        }
 }
 
 void cs_exit(int sig)
@@ -642,14 +637,7 @@ void cs_exit(int sig)
     	break;
 
     case 'm': break;
-    case 'r':
-        // free AES entries allocated memory
-        if(cl->reader->aes_list) {
-            aes_clear_entries(cl->reader);
-        }
-        // close the device
-	      ICC_Async_Close(cl->reader);
-        break;
+    case 'r': break; //reader-cleanup now in cleanup_thread()
 
     case 'h':
     case 's':
