@@ -1497,12 +1497,13 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 	<br><br><br>\n\
 	<DIV class = \"warning\">Do you really want to shutdown&#47; restart oscam?<br>All users will become disconnected.<br>\n\
 		If you use &#39;Shutdown&#39; you will not be able to restart oscam from webinterface.<br>\n\
-		The webinterface will try to connect to oscam once a few seconds after shutdown&#47; restart.</b><br>\n\
+		The webinterface will try to connect to oscam once a few seconds after shutdown&#47; restart.\
+		The restart functionality is currently not avail because it not work properly.</b><br>\n\
 	</DIV>\n\
 	<br>\n\
 	<form action=\"shutdown.html\" method=\"get\">\n\
 		<input type=\"submit\" name=\"action\" value=\"Shutdown\" title=\"Shutdown Oscam\" ##BTNDISABLED##>\n\
-		<input type=\"submit\" name=\"action\" value=\"Restart\" title=\"Restart Oscam\" ##BTNDISABLED##>\n\
+		<input type=\"submit\" name=\"action\" value=\"Restart\" title=\"Restart Oscam\" disabled>\n\
 	</form>\n\
 ##TPLFOOTER##"
 
