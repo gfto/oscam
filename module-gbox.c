@@ -460,7 +460,7 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
               card->provid = provid;
               card->slot = ptr[0];
               card->dist = ptr[1] & 0xf;
-              card->lvl = ((ptr[1] & 0xf0) >> 4) - 1;
+              card->lvl = ptr[1] >> 4;
               card->peer_id = ptr[2] << 8 | ptr[3];
 
               ptr += 4;
