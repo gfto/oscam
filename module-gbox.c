@@ -49,7 +49,7 @@ struct gbox_data {
   uchar ver;
   uchar type;
   int ecm_idx;
-  int hello_not_expired;
+  int hello_expired;
   uchar cws[16];
   struct gbox_peer peer;
   pthread_mutex_t lock;
@@ -277,7 +277,7 @@ static void gbox_expire_hello(struct s_client *cli)
   if (sem_timedwait(&sem, &ts) == -1) {
     if (errno == ETIMEDOUT) {
       printf("gbox: hello expired!\n");
-      gbox->hello_not_expired = 0;
+      gbox->hello_expired = 0;
     }
   }
 
@@ -555,8 +555,8 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
         	  cli->reader->tcp_connected = 1;
 
         if (final) {
-          if (!gbox->hello_not_expired) {
-            gbox->hello_not_expired = 1;
+          if (gbox->hello_expired) {
+            gbox->hello_expired = 0;
             gbox_send_hello(cli);
 
             pthread_t t;
@@ -697,6 +697,8 @@ static int gbox_client_init(struct s_client *cli)
     cli->pfd=cli->udp_fd;
 
   pthread_mutex_init(&gbox->lock, NULL);
+
+  gbox->hello_expired = 1;
 
   gbox_send_hello(cli);
 
