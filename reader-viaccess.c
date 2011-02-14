@@ -176,7 +176,7 @@ static int viaccess_card_init(struct s_reader * reader, ATR newatr)
     static unsigned char ins8706[] = { 0x87, 0x06, 0x00, 0x00, 0x04 };
 
 
-    if ((atr[0]!=0x3f) || (atr[1]!=0x77) || ((atr[2]!=0x18) && (atr[2]!=0x11) && (atr[2]!=0x19)) || (atr[9]!=0x68)) 
+    if ((atr[1]!=0x77) || ((atr[2]!=0x18) && (atr[2]!=0x11) && (atr[2]!=0x19)) || (atr[9]!=0x68)) 
         return ERROR;
 
     write_cmd(insFAC, FacDat);
