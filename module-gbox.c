@@ -249,7 +249,7 @@ static void gbox_handle_gsms(ushort peerid, char *gsms)
 	if (strnlen(cfg.gbox_gsms_path, sizeof(cfg.gbox_gsms_path))) {
 		FILE *f = fopen(cfg.gbox_gsms_path, "a");
 		if (f) {
-			fprintf(f, "FROM %04X: %s\n", peerid, gsms);
+			f//printf(f, "FROM %04X: %s\n", peerid, gsms);
 			fclose(f);
 		}
 		else
@@ -260,7 +260,7 @@ static void gbox_handle_gsms(ushort peerid, char *gsms)
 
 static void gbox_expire_hello(struct s_client *cli)
 {
-  printf("gbox: enter gbox_expire_hello()\n");
+  //printf("gbox: enter gbox_expire_hello()\n");
   struct gbox_data *gbox = cli->gbox;
 
   sem_t sem;
@@ -276,17 +276,17 @@ static void gbox_expire_hello(struct s_client *cli)
   sem_wait(&sem);
   if (sem_timedwait(&sem, &ts) == -1) {
     if (errno == ETIMEDOUT) {
-      printf("gbox: hello expired!\n");
+      //printf("gbox: hello expired!\n");
       gbox->hello_expired = 0;
     }
   }
 
-  printf("gbox: exit gbox_expire_hello()\n");
+  //printf("gbox: exit gbox_expire_hello()\n");
 }
 
 static void gbox_wait_for_response(struct s_client *cli)
 {
-	printf("gbox: enter gbox_wait_for_response()\n");
+	//printf("gbox: enter gbox_wait_for_response()\n");
 	//cs_debug_mask(D_READER, "gbox: enter gbox_wait_for_response()");
 	struct gbox_data *gbox = cli->gbox;
 	struct timespec ts;
@@ -300,22 +300,22 @@ static void gbox_wait_for_response(struct s_client *cli)
 	if (sem_timedwait(&gbox->sem, &ts) == -1) {
 		if (errno == ETIMEDOUT) {
 			gbox->peer.fail_count++;
-			printf("gbox: sem wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
+			//printf("gbox: sem wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
 #define GBOX_FAIL_COUNT 1
 			if (gbox->peer.fail_count >= GBOX_FAIL_COUNT) {
 				gbox->peer.online = 0;
-				printf("gbox: fail_count >= %d, peer is offline\n", GBOX_FAIL_COUNT);
+				//printf("gbox: fail_count >= %d, peer is offline\n", GBOX_FAIL_COUNT);
 			}
 			//cs_debug_mask(D_READER, "gbox: sem wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
 		}
 	} else {
 		gbox->peer.fail_count = 0;
-		printf("gbox: sem posted, peer is online\n");
+		//printf("gbox: sem posted, peer is online\n");
 	}
 	//cs_debug_mask(D_READER, "gbox: sem posted, peer is online");
 
 	//cs_debug_mask(D_READER, "gbox: exit gbox_wait_for_response()");
-	printf("gbox: exit gbox_wait_for_response()\n");
+	//printf("gbox: exit gbox_wait_for_response()\n");
 }
 
 static void gbox_send(struct s_client *cli, uchar *buf, int l)
