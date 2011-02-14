@@ -49,6 +49,7 @@ struct gbox_data {
   uchar ver;
   uchar type;
   int ecm_idx;
+  int hello_not_expired;
   uchar cws[16];
   struct gbox_peer peer;
   pthread_mutex_t lock;
@@ -76,6 +77,7 @@ static int gbox_decode_cmd(uchar *buf)
 static void gbox_calc_checkcode(struct gbox_data *gbox)
 {
   memcpy(gbox->checkcode, "\x15\x30\x2\x4\x19\x19\x66", 7);	/* no local cards */
+
   // for all local cards do:
   /*
     gbox->checkcode[0] ^= caid << 8;
@@ -256,6 +258,32 @@ static void gbox_handle_gsms(ushort peerid, char *gsms)
 }
 */
 
+static void gbox_expire_hello(struct s_client *cli)
+{
+  printf("gbox: enter gbox_expire_hello()\n");
+  struct gbox_data *gbox = cli->gbox;
+
+  sem_t sem;
+  sem_init(&sem, 0 , 1);
+
+  struct timespec ts;
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  ts.tv_sec = tv.tv_sec;
+  ts.tv_nsec = tv.tv_usec * 1000;
+  ts.tv_sec += 30;
+
+  sem_wait(&sem);
+  if (sem_timedwait(&sem, &ts) == -1) {
+    if (errno == ETIMEDOUT) {
+      printf("gbox: hello expired!\n");
+      gbox->hello_not_expired = 0;
+    }
+  }
+
+  printf("gbox: exit gbox_expire_hello()\n");
+}
+
 static void gbox_wait_for_response(struct s_client *cli)
 {
 	printf("gbox: enter gbox_wait_for_response()\n");
@@ -266,7 +294,6 @@ static void gbox_wait_for_response(struct s_client *cli)
 	gettimeofday(&tv, NULL);
 	ts.tv_sec = tv.tv_sec;
 	ts.tv_nsec = tv.tv_usec * 1000;
-	//clock_gettime(CLOCK_REALTIME, &ts);
 	ts.tv_sec += 5;
 
 	//sem_wait(&gbox->sem);
@@ -527,7 +554,13 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
         	  cli->reader->tcp_connected = 1;
 
         if (final) {
-          gbox_send_hello(cli);
+          if (!gbox->hello_not_expired) {
+            gbox->hello_not_expired = 1;
+            gbox_send_hello(cli);
+
+            pthread_t t;
+            pthread_create(&t, NULL, (void *)gbox_expire_hello, cli);
+          }
           gbox_send_boxinfo(cli);
         }
       }
