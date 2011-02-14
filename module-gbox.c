@@ -227,13 +227,13 @@ static void gbox_compress(struct gbox_data *gbox, uchar *buf, int unpacked_len, 
 
 static void gbox_decompress(struct gbox_data *gbox, uchar *buf, int *unpacked_len)
 {
-  uchar tmp[1024];
+  uchar tmp[2048];
 
   int len = buf[12] - 13;
 
   lzo_init();
   if (lzo1x_decompress(buf + 12, len, tmp, (lzo_uint *)unpacked_len, NULL) != LZO_E_OK)
-    cs_log("gbox: decompression failed!");
+    cs_debug_mask(D_READER, "gbox: decompression failed!");
 
   memcpy(buf + 12, tmp, *unpacked_len);
   *unpacked_len += 12;
