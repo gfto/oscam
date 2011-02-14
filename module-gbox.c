@@ -526,8 +526,10 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
         if (!ll_count(gbox->peer.cards))
         	  cli->reader->tcp_connected = 1;
 
-        gbox_send_hello(cli);
-        gbox_send_boxinfo(cli);
+        if (final) {
+          gbox_send_hello(cli);
+          gbox_send_boxinfo(cli);
+        }
       }
       break;
     case MSG_CW:
