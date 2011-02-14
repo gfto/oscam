@@ -58,8 +58,8 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 
 void cs_write_log(char *txt)
 {
-	struct s_client *cl = cur_client();
 #ifdef CS_ANTICASC
+	struct s_client *cl = cur_client();
 	if( cl && cl->typ == 'a' && fpa ) {
 		switch_log(cfg.ac_logfile, &fpa, ac_init_log);
 		if (fpa) {
