@@ -301,9 +301,10 @@ static void gbox_wait_for_response(struct s_client *cli)
 		if (errno == ETIMEDOUT) {
 			gbox->peer.fail_count++;
 			printf("gbox: sem wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
-			if (gbox->peer.fail_count >= 5) {
+#define GBOX_FAIL_COUNT 1
+			if (gbox->peer.fail_count >= GBOX_FAIL_COUNT) {
 				gbox->peer.online = 0;
-				printf("gbox: fail_count >=5, peer is offline\n");
+				printf("gbox: fail_count >= %d, peer is offline\n", GBOX_FAIL_COUNT);
 			}
 			//cs_debug_mask(D_READER, "gbox: sem wait timed-out, fail_count=%d\n", gbox->peer.fail_count);
 		}
