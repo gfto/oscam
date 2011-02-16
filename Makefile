@@ -66,7 +66,7 @@ i386-pc-linux:
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
 		OS_LIBS="-lcrypto -lm" \
 		OS_CULI="-lncurses" \
-		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -pthread -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -pthread -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -81,7 +81,7 @@ i386-pc-linux-debug:
 		-f Maketype TYP=$(subst i386,$(shell uname --machine),$(subst cross-,,$@)) \
 		OS_LIBS="-lcrypto -lm -lrt" \
 		OS_CULI="-lncurses" \
-		DS_OPTS="-O0 -DHAVE_DVBAPI -ggdb -pthread -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O0 -DHAVE_DVBAPI -ggdb -pthread -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -100,7 +100,7 @@ i386-pc-linux-libusb:
         	LIBUSB="/usr/local/lib/libusb-1.0.a" \
 		OS_LIBS="-lcrypto -lm -lrt" \
 		OS_CULI="-lncurses" \
-		DS_OPTS="-O2 -DOS_LINUX -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -pthread -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
+		DS_OPTS="-O2 -DOS_LINUX -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -pthread -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -121,7 +121,7 @@ i386-pc-linux-pcsc:
 		OS_LIBS="-lcrypto -lm" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpcsclite" \
-		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -pthread -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
+		DS_OPTS="-O2 -DOS_LINUX -DCS_CONFDIR=${CS_CONFDIR} -pthread -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""'" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
@@ -143,7 +143,7 @@ i386-pc-linux-pcsc-libusb:
 		OS_LIBS="-lcrypto -lm -lrt" \
 		OS_CULI="-lncurses" \
 		OS_PTLI="-lpcsclite" \
-		DS_OPTS="-O2 -DOS_LINUX -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -pthread -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -finline-functions -fomit-frame-pointer -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
+		DS_OPTS="-O2 -DOS_LINUX -DLIBUSB -DCS_CONFDIR=${CS_CONFDIR} -pthread -DHAVE_PCSC=1 -I/usr/include/PCSC -Winline -Wall -Wextra -D'CS_SVN_VERSION="\"$(SVN_REV)\""' -I/usr/local/include" \
 		DS_CFLAGS="-c" \
 		DS_LDFLAGS="" \
 		DS_ARFLAGS="-rvsl" \
