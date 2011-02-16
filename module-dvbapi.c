@@ -812,16 +812,17 @@ void dvbapi_read_priority() {
 
 struct s_dvbapi_priority *dvbapi_check_prio_match(int demux_id, int pidindex, char type) {
 	struct s_dvbapi_priority *p;
+	struct s_ecmpids *ecmpid = &demux[demux_id].ECMpids[pidindex];
 	int i;
 
 	for (p=dvbapi_priority, i=0; p != NULL; p=p->next, i++) {
 		if (p->type != type) continue;
 
-		if (p->caid 	&& p->caid 	!= demux[demux_id].ECMpids[pidindex].CAID)	continue;
-		if (p->provid && p->provid 	!= demux[demux_id].ECMpids[pidindex].PROVID)	continue;
-		if (p->ecmpid	&& p->ecmpid 	!= demux[demux_id].ECMpids[pidindex].ECM_PID)	continue;
+		if (p->caid 	&& p->caid 	!= ecmpid->CAID)	continue;
+		if (p->provid && p->provid 	!= ecmpid->PROVID)	continue;
+		if (p->ecmpid	&& p->ecmpid 	!= ecmpid->ECM_PID)	continue;
 		if (p->srvid	&& p->srvid 	!= demux[demux_id].program_number)			continue;
-		if (p->chid	&& p->chid 	!= demux[demux_id].ECMpids[pidindex].irdeto_chid) continue;
+		if (p->chid	&& ecmpid->irdeto_chid	&& p->chid != ecmpid->irdeto_chid) continue;
 
 		return p;
 	}
@@ -1461,16 +1462,12 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 
 			if (demux[demux_id].pidindex==-1) {
 				int chid = (buffer[6] << 8) | buffer[7];
+				curpid->irdeto_chid = 0;
 				struct s_dvbapi_priority *chidentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'p');
 
-				if (chidentry && chidentry->chid && chidentry->chid != chid) {
-					cs_debug_mask(D_DVBAPI, "irdeto skipping %04X:%06X:%02X", curpid->CAID, curpid->PROVID, chid);
-					return;
-				}
-
 				curpid->irdeto_chid = chid;
-				chidentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'i');
-				if (chidentry) {
+				struct s_dvbapi_priority *chidentry_ignore = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'i');
+				if (chidentry_ignore || (chidentry && chidentry->chid && chidentry->chid != chid)) {
 					cs_debug_mask(D_DVBAPI, "ignoring %04X:%06X:%02X", curpid->CAID, curpid->PROVID, curpid->irdeto_chid);
 					if (cfg.dvbapi_requestmode!=1) {
 						dvbapi_try_next_caid(demux_id);
@@ -1482,8 +1479,6 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 						curpid->table=0;
 						cs_log("trying irdeto chid index: %d", curpid->irdeto_curchid);
 					}
-
-					return;
 				}
 			}
 
