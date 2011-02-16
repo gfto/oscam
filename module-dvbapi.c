@@ -2135,7 +2135,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 	cs_debug_mask(D_DVBAPI, "openxcas: send_dcw");
 
     FILE *ecmtxt;
-    if ((ecmtxt = fopen(ECMINFO_FILE, "w")) {
+    if (ecmtxt = fopen(ECMINFO_FILE, "w")) {
     	if(er->rc <= E_EMU) {
 			fprintf(ecmtxt, "caid: 0x%04X\npid: 0x%04X\nprov: 0x%06X\n", er->caid, er->pid, (uint) er->prid);
 			fprintf(ecmtxt, "reader: %s\n", er->selected_reader->label);
