@@ -150,12 +150,16 @@
 #  endif
 #  define CS_EMBEDDED
 #  define NO_FTIME
-#  if !defined(COOL) && !defined(WITH_STAPI)
+#  if !defined(COOL) && !defined(SCI_DEV)
 #    define SCI_DEV 1
 #  endif
 #  ifndef HAVE_DVBAPI 
 #    define HAVE_DVBAPI 
 #  endif
+#endif
+
+#if defined(WITH_SSL) && !defined(WITH_LIBCRYPTO)
+#  define WITH_LIBCRYPTO
 #endif
 
 #ifdef UCLIBC

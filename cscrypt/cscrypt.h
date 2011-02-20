@@ -1,24 +1,16 @@
 #include "../oscam-config.h"
 
-#if defined(HAVE_AES) || defined(WITH_SSL)
-#include <openssl/aes.h>
-#else
-#include "aes/aes.h"
-#endif
-
-#if defined(HAVE_SHA) || defined(WITH_SSL)
+#if defined(WITH_SSL) || defined(WITH_LIBCRYPTO)
+#  include <openssl/aes.h>
 #  include <openssl/sha.h>
+#  include <openssl/bn.h>
 #else
+#  include "aes/aes.h"
 #  include "sha/sha1.h"
+#  include "bn.h"
 #endif
 
 #include "des.h"
-
-#ifndef WITH_SSL
-#  include "bn.h"
-#else
-#  include <openssl/bn.h>
-#endif
 
 #ifndef HEADER_CSCRYPT_H
 #define HEADER_CSCRYPT_H

@@ -1,5 +1,5 @@
 #include "../oscam-config.h"
-#ifndef WITH_SSL
+#ifndef WITH_LIBCRYPTO
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 /* crypto/bn/bn_ctx.c */
 /* Written by Ulf Moeller for the OpenSSL project. */
