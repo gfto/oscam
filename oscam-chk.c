@@ -451,8 +451,7 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
 int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
 	int i;
 
-	if (!chk_ctab(caid, &reader->ctab) && reader->caid != caid) {
-		cs_debug_mask(D_EMM, "caid %04X not found in caidlist reader %s", caid, reader->label);
+	if (reader->caid != caid) {
 		return 0;
 	}
 
@@ -471,6 +470,6 @@ int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
 		if (prid == provid || ( (reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF) ))
 			return 1;
 	}
-	cs_debug_mask(D_EMM, "emm reader %s skip provider %06X", reader->label, provid);
+	cs_debug_mask(D_EMM, "emm reader %s skip provider %04X:%06X", reader->label, caid, provid);
 	return 0;
 }
