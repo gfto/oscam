@@ -2899,13 +2899,16 @@ int process_request(FILE *f, struct in_addr in) {
 	ok = check_ip(cfg.http_allowed, in.s_addr) ? v : 0;
 
 	if (!ok && cfg.http_dyndns[0]) {
+		cs_debug_mask(D_TRACE, "WebIf: IP not found in allowed range - test dyndns");
+
 		if(cfg.http_dynip && cfg.http_dynip == addr) {
 			ok = v;
+			cs_debug_mask(D_TRACE, "WebIf: dyndns address previously resolved and ok");
 
 		} else {
 
 			if (cfg.resolve_gethostbyname) {
-
+				cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'gethostbyname'");
 				pthread_mutex_lock(&gethostbyname_lock);
 				struct hostent *rht;
 				struct sockaddr_in udp_sa;
@@ -2924,7 +2927,7 @@ int process_request(FILE *f, struct in_addr in) {
 				pthread_mutex_unlock(&gethostbyname_lock);
 
 			} else {
-
+				cs_debug_mask(D_TRACE, "WebIf: try resolving IP with 'getaddrinfo'");
 				struct addrinfo hints, *res = NULL;
 				memset(&hints, 0, sizeof(hints));
 				hints.ai_socktype = SOCK_STREAM;
@@ -2947,6 +2950,8 @@ int process_request(FILE *f, struct in_addr in) {
 
 			}
 		}
+	} else {
+		cs_debug_mask(D_TRACE, "WebIf: IP found in allowed range - bypass dyndns");
 	}
 
 	if (!ok) {
