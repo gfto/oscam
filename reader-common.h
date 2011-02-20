@@ -28,4 +28,5 @@
 
 #define def_resp \
 		unsigned char cta_res[CTA_RES_LEN]; \
+		memset(cta_res, 0, CTA_RES_LEN); \
 		unsigned short cta_lr;
