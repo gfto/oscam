@@ -292,6 +292,7 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   // 0d -> post AES decrypt CW
   // 0b -> pre AES decrypt CW
   int nanoD2 = 0; //   0x0b = 1  0x0d = 2
+  int skipECM01 = 1;
 
   memset(DE04, 0, sizeof(DE04)); //fix dorcel de04 bug
 
@@ -363,13 +364,13 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             // we can't assume that if the nano len is 5 or more we have an ecm number
             // as some card don't support this
             if( reader->last_geo.number_ecm > 0 ) {
-                if(reader->last_geo.number_ecm ==curnumber_ecm && ( ecm88Data[nanoLen-1] == 0x00 || ecm88Data[nanoLen-1] == 0xFF)) { //ecm88Data[8] == 0x00 or 0xFF force use ECM nano 40 ending with 00 or FF (Orange)
+                if(reader->last_geo.number_ecm ==curnumber_ecm && ( ecm88Data[nanoLen-1] != 0x01 || skipECM01 == 0)) { //ecm88Data[8] != 0x01 try skip ECM 01 first pass
                     keynr=ecm88Data[5];
                     cs_debug_mask(D_READER, "keyToUse = %02x, ECM ending with %02x",ecm88Data[5], ecm88Data[nanoLen-1]);
                 }
                 else
                 {
-					cs_debug_mask(D_READER, "Skip ECM ending with = %02x for ecm number (%x)",ecm88Data[nanoLen-1], curnumber_ecm);
+                    cs_debug_mask(D_READER, "Skip ECM ending with = %02x for ecm number (%x)",ecm88Data[nanoLen-1], curnumber_ecm);
                     ecm88Data=nextEcm;
                     ecm88Len-=curEcm88len;
                     continue; //loop to next ecm
@@ -508,6 +509,15 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         ecm88Len-=curEcm88len;
         cs_debug_mask(D_READER, "[viaccess-reader] ECM: Unknown ECM type");
         snprintf( er->msglog, MSGLOGSIZE, "Unknown ECM type" );
+    }
+    
+    //Try to parse again ECM without skiping ECM ending with 01
+    if( !(ecm88Len && !rc) && skipECM01 == 1)
+    {
+        skipECM01 = 0;
+        ecm88Data=er->ecm+4;
+        ecm88Len=SCT_LEN(er->ecm)-4;
+        nextEcm=ecm88Data;
     }
   }
 
