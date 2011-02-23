@@ -24,6 +24,7 @@
 #define MINIMIZE_NONE 0
 #define MINIMIZE_HOPS 1
 #define MINIMIZE_CAID 2
+#define MINIMIZE_TRANSPARENT 3
 
 #define CCCAM_MODE_NORMAL 0
 #define CCCAM_MODE_SHUTDOWN 0xFF
@@ -70,6 +71,7 @@ struct cc_provider {
 };
 
 struct cc_card {
+	uint32 internal_id;	
 	uint32 id; // cccam card (share) id
 	uint32 remote_id;
 	uint16 caid;

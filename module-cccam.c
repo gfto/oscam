@@ -1,4 +1,4 @@
-		#include <string.h>
+#include <string.h>
 #include <stdlib.h>
 #include "globals.h"
 #include "module-cccam.h"
@@ -16,6 +16,7 @@ const char *cmd05_mode_name[] = { "UNKNOWN", "PLAIN", "AES", "CC_CRYPT", "RC4",
 const char *cmd0c_mode_name[] = { "NONE", "RC6", "RC4", "CC_CRYPT", "AES", "IDEA" };
 
 static uint8 cc_node_id[8];
+static uint32 cc_share_id = 0x64;
 
 #define getprefix() ((struct cc_data *)(cl->cc))->prefix
 #define QUITERROR 1
@@ -1703,51 +1704,6 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 	return ofs;
 }
 
-void cc_card_removed(struct s_client *cl, uint32 shareid) {
-	struct cc_data *cc = cl->cc;
-	struct cc_card *card;
-	LL_ITER *it = ll_iter_create(cc->cards);
-
-	while ((card = ll_iter_next(it))) {
-		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
-			//cs_debug_mask(D_CLIENT, "cccam: card %08x removed, caid %04X, count %d",
-			//		card->id, card->caid, ll_count(cc->cards));
-			ll_iter_remove(it);
-			if (cc->last_emm_card == card) {
-				cc->last_emm_card = NULL;
-				cs_debug_mask(D_READER, "%s current card %08x removed!",
-						getprefix(), card->id);
-			}		
-			free_extended_ecm_idx_by_card(cl, card);
-			cc_free_card(card);
-			cc->cards_modified++;
-			//break;
-		}
-	}
-	ll_iter_release(it);
-}
-
-void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
-
-	struct cc_data *cc = cl->cc;
-
-	LL_ITER *it = ll_iter_create(cc->cards);
-	struct cc_card *card;
-	while ((card = ll_iter_next(it))) {
-		if (card == card_to_move) {
-			ll_iter_remove(it);
-			break;
-		}
-	}
-	ll_iter_release(it);
-	if (card) {
-		cs_debug_mask(D_READER, "%s CMD05: Moving card %08X to the end...", getprefix(), card_to_move->id);
-		free_extended_ecm_idx_by_card(cl, card);
-		ll_append(cc->cards, card_to_move);
-	}
-}
-
-
 /**
  * if idents defined on an cccam reader, the cards caid+provider are checked.
  * return 1 a) if no ident defined b) card is in identlist
@@ -1790,6 +1746,157 @@ int chk_ident(FTAB *ftab, struct cc_card *card) {
 	}
 	return res;
 }
+
+
+int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
+
+		struct s_reader *rdr = card->origin_reader;
+		//Check group:
+		if (!(rdr->grp & cl->grp))
+				return 0;
+				
+		 if (!chk_ident(&cl->ftab, card) || (rdr && !chk_ident(&rdr->ftab, card)))
+		 		return 0;
+		 		
+		//Check caids:
+		if (!chk_ctab(card->caid, &cl->ctab) || (rdr && !chk_ctab(card->caid, &rdr->ctab)))
+ 				return 0;
+
+		//Check reshare/maxdown:
+ 		if ((cfg.cc_ignore_reshare || cl->account->cccignorereshare || card->maxdown > 0)) {
+				int ignore = 0;
+
+				//Check Services:
+				LL_ITER *it2 = ll_iter_create(card->providers);
+				struct cc_provider *prov;
+				while ((prov = ll_iter_next(it2))) {
+						ulong prid = prov->prov;
+						if (!chk_srvid_by_caid_prov(cl, card->caid, prid) || 
+										!chk_srvid_by_caid_prov(rdr->client, card->caid, prid)) {
+								ignore = 1;
+								break;
+						}
+				}
+				ll_iter_release(it2);
+				return !ignore;
+		}
+		
+		return 0;
+}
+
+int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
+		int count = 0;
+		if (!one_client)
+				cs_debug_mask(D_TRACE, "forwarding new card: %08X caid %04X", card->id, card->caid);
+				
+		if (cfg.cc_minimize_cards == MINIMIZE_TRANSPARENT) { //TRANSPARENT MODE
+				uint8 buf[CC_MAXMSGSIZE];
+
+				struct s_client *cl;
+				for (cl = one_client?one_client:first_client; cl; cl=one_client?NULL:cl->next) {
+						struct cc_data *cc = cl->cc;
+						if (ph[cl->ctyp].num == R_CCCAM && cc) { //CCCam-Client! 
+								if (card_valid_for_client(cl, card)) {
+								
+								 		int usr_reshare = cl->account->cccreshare;
+								 		int usr_ignorereshare = cl->account->cccignorereshare;
+								
+										int reader_reshare = card->origin_reader->cc_reshare;
+										int reshare = (reader_reshare < usr_reshare) ? reader_reshare : usr_reshare;
+										if (reshare < 0)
+												continue;
+
+										int new_reshare =
+												( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare
+													: (card->maxdown - 1);
+										if (new_reshare > reshare)
+											new_reshare = reshare;
+							
+										int len = write_card(cc, buf, card, 1,  cc->cccam220, ll_count(cl->aureader_list));
+										if (!card->internal_id)
+												card->internal_id = cc_share_id++;
+										
+										buf[0] = card->internal_id >> 24;
+										buf[1] = card->internal_id >> 16;
+										buf[2] = card->internal_id >> 8;
+										buf[3] = card->internal_id & 0xFF;
+										//buf[10] = card->hop-1;
+										buf[11] = new_reshare;
+
+										cc_cmd_send(cl, buf, len, cc->cccam220?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD);
+										count++;
+								}
+						}
+				}
+		}
+		return count;
+}
+
+void send_remove_card_to_clients(struct cc_card *card) {
+		if (cfg.cc_minimize_cards == MINIMIZE_TRANSPARENT) { //TRANSPARENT MODE
+				uint8 buf[4];
+				buf[0] = card->internal_id >> 24;
+				buf[1] = card->internal_id >> 16;
+				buf[2] = card->internal_id >> 8;
+				buf[3] = card->internal_id & 0xFF;
+				
+				struct s_client *cl;
+				for (cl = first_client; cl; cl=cl->next) {
+						if (cl->ctyp == R_CCCAM && cl->cc) { //CCCam-Client! 
+								if (card_valid_for_client(cl, card)) {
+										cc_cmd_send(cl, buf, 4, MSG_CARD_REMOVED);
+								}
+						}
+				}
+		}
+}
+
+
+void cc_card_removed(struct s_client *cl, uint32 shareid) {
+	struct cc_data *cc = cl->cc;
+	struct cc_card *card;
+	LL_ITER *it = ll_iter_create(cc->cards);
+
+	while ((card = ll_iter_next(it))) {
+		if (card->id == shareid) {// && card->sub_id == b2i (3, buf + 9)) {
+			//cs_debug_mask(D_CLIENT, "cccam: card %08x removed, caid %04X, count %d",
+			//		card->id, card->caid, ll_count(cc->cards));
+			ll_iter_remove(it);
+			if (cc->last_emm_card == card) {
+				cc->last_emm_card = NULL;
+				cs_debug_mask(D_READER, "%s current card %08x removed!",
+						getprefix(), card->id);
+			}		
+			free_extended_ecm_idx_by_card(cl, card);
+			send_remove_card_to_clients(card);
+			cc_free_card(card);
+			cc->cards_modified++;
+			//break;
+		}
+	}
+	ll_iter_release(it);
+}
+
+void move_card_to_end(struct s_client * cl, struct cc_card *card_to_move) {
+
+	struct cc_data *cc = cl->cc;
+
+	LL_ITER *it = ll_iter_create(cc->cards);
+	struct cc_card *card;
+	while ((card = ll_iter_next(it))) {
+		if (card == card_to_move) {
+			ll_iter_remove(it);
+			break;
+		}
+	}
+	ll_iter_release(it);
+	if (card) {
+		cs_debug_mask(D_READER, "%s CMD05: Moving card %08X to the end...", getprefix(), card_to_move->id);
+		free_extended_ecm_idx_by_card(cl, card);
+		ll_append(cc->cards, card_to_move);
+	}
+}
+
 
 
 /*void fix_dcw(uchar *dcw)
@@ -1944,6 +2051,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 		struct cc_card *card = read_card(data, buf[1]==MSG_NEW_CARD_SIDINFO);
 		card->origin_reader = rdr;
+		card->origin_id = card->id;
 
 		//Check if this card is from us:
 		LL_ITER *it = ll_iter_create(card->remote_nodes);
@@ -1982,10 +2090,12 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 			card->time = time((time_t) 0);
 			if (!old_card) {
+				card->internal_id = cc_share_id++;
 				card->hop++; //inkrementing hop
 				ll_append(cc->cards, card);
 				set_au_data(cl, rdr, card, NULL);
 				cc->cards_modified++;
+				send_card_to_clients(card, NULL);
 			}
 		}
 
@@ -2811,6 +2921,10 @@ int equal_providers(struct cc_card *card1, struct cc_card *card2) {
  */
 int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *cardlist, struct cc_card *card, int reshare, int au_allowed) {
 
+	if (cfg.cc_minimize_cards == MINIMIZE_TRANSPARENT) {
+			return send_card_to_clients(card, cl);
+	}
+		
 	if (!chk_ident(&cl->ftab, card))
 		return 0;
 	if (rdr && !chk_ident(&rdr->client->ftab, card))
@@ -2893,7 +3007,6 @@ int add_card_to_serverlist(struct s_reader *rdr, struct s_client *cl, LLIST *car
 		else cc->card_dup_count++;
 		
 	} 
-
 	//like cccam:	
 	else { //just remove duplicate cards (same ids)
 		while ((card2 = ll_iter_next(it))) {
@@ -3061,7 +3174,7 @@ int cc_srv_report_cards(struct s_client *cl) {
 	int isau = (ll_count(cl->aureader_list))?1:0;
 
 	//User-Services:
-	if (cfg.cc_reshare_services==3 && cfg.sidtab && cl->sidtabok) {
+	if (cfg.cc_reshare_services==3 && cfg.cc_minimize_cards != MINIMIZE_TRANSPARENT && cfg.sidtab && cl->sidtabok) {
 		struct s_sidtab *ptr;
 		for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
 			if (cl->sidtabok&((SIDTABBITS)1<<j)) {
@@ -3308,25 +3421,32 @@ int cc_srv_report_cards(struct s_client *cl) {
 	}
 	
 	int ok = TRUE;
-	//report reshare cards:
-	//cs_debug_mask(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
-	LL_ITER *it = ll_iter_create(server_cards);
-	struct cc_card *card;
-	while (ok && (card = ll_iter_next(it))) {
-		//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
-		
-		ok = report_card(cl, card, new_reported_carddatas, isau) >= 0;
-		ll_iter_remove(it);
+	if (cfg.cc_minimize_cards == MINIMIZE_TRANSPARENT) { //add_to_server_list alread reported the cards!
+			//so just clean up:
+			cc_free_cardlist(server_cards, TRUE);
+			cc_free_cardlist(new_reported_carddatas, TRUE);
 	}
-	ll_iter_release(it);
-	cc_free_cardlist(server_cards, TRUE);
+	else {
+			//report reshare cards:
+			//cs_debug_mask(D_TRACE, "%s reporting %d cards", getprefix(), ll_count(server_cards));
+			LL_ITER *it = ll_iter_create(server_cards);
+			struct cc_card *card;
+			while (ok && (card = ll_iter_next(it))) {
+					//cs_debug_mask(D_TRACE, "%s card %d caid %04X hop %d", getprefix(), card->id, card->caid, card->hop);
+		
+					ok = report_card(cl, card, new_reported_carddatas, isau) >= 0;
+					ll_iter_remove(it);
+			}
+			ll_iter_release(it);
+			cc_free_cardlist(server_cards, TRUE);
 	
-	//remove unsed, remaining cards:
-	cc->card_removed_count += cc_free_reported_carddata(cl, cc->reported_carddatas, new_reported_carddatas, ok);
-	cc->reported_carddatas = new_reported_carddatas;
+			//remove unsed, remaining cards:
+			cc->card_removed_count += cc_free_reported_carddata(cl, cc->reported_carddatas, new_reported_carddatas, ok);
+			cc->reported_carddatas = new_reported_carddatas;
 	
-	cs_debug_mask(D_CLIENT, "%s reported/updated +%d/-%d/dup %d of %d cards to client (ext=%d)", getprefix(), 
-		cc->card_added_count, cc->card_removed_count, cc->card_dup_count, ll_count(cc->reported_carddatas), cc->cccam220);
+			cs_debug_mask(D_CLIENT, "%s reported/updated +%d/-%d/dup %d of %d cards to client (ext=%d)", getprefix(), 
+					cc->card_added_count, cc->card_removed_count, cc->card_dup_count, ll_count(cc->reported_carddatas), cc->cccam220);
+	}
 	return ok;
 }
 
