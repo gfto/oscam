@@ -24,7 +24,7 @@ enum {
 struct gbox_card {
   uint16 peer_id;
   uint16 caid;
-  uint32 provid;
+  uint16 provid;
   int slot;
   int dist;
   int lvl;
@@ -786,7 +786,8 @@ static int gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
   LL_ITER *it = ll_iter_create(gbox->peer.cards);
   struct gbox_card *card;
   while ((card = ll_iter_next(it))) {
-    if (card->caid == er->caid && card->provid == er->prid) {
+    //if (card->caid == er->caid && card->provid == er->prid) {
+    if (card->caid >> 8 == er->caid >> 8 && card->provid == (er->prid & 0xffff)) {
       *(++ptr) = card->peer_id >> 8;
       *(++ptr) = card->peer_id;
       *(++ptr) = card->slot;
