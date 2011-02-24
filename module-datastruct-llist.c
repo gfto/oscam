@@ -262,3 +262,28 @@ void ll_remove_data(LLIST *l, void *obj)
     }
     ll_iter_release(it);
 }
+
+// removes all elements from l where elements are in elements_to_remove 
+int ll_remove_all(LLIST *l, LLIST *elements_to_remove)
+{
+		int count = 0;
+		LL_ITER *it1 = ll_iter_create(l);
+		LL_ITER *it2 = ll_iter_create(elements_to_remove);
+		
+		void *data1, *data2;
+		while ((data1=ll_iter_next(it1))) {
+				ll_iter_reset(it2);
+				while ((data2=ll_iter_next(it2))) {
+						if (data1 == data2) {
+								ll_iter_remove(it1);
+								count++;
+								break;
+						}
+				}
+		}
+
+		ll_iter_release(it2);
+		ll_iter_release(it1);
+		
+		return count;
+}

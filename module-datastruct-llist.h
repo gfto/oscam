@@ -49,5 +49,5 @@ void *ll_has_elements(LLIST *l);        // returns first obj if has one
 int ll_contains(LLIST *l, void *obj);
 void ll_remove(LLIST *l, void *obj);
 void ll_remove_data(LLIST *l, void *obj);
-                                                                        
+int ll_remove_all(LLIST *l, LLIST *elements_to_remove); // removes all elements from l where elements are in elements_to_remove
 #endif

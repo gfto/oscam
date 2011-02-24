@@ -2951,7 +2951,8 @@ int process_request(FILE *f, struct in_addr in) {
 			}
 		}
 	} else {
-		cs_debug_mask(D_TRACE, "WebIf: IP found in allowed range - bypass dyndns");
+		if (cfg.http_dyndns[0])
+			cs_debug_mask(D_TRACE, "WebIf: IP found in allowed range - bypass dyndns");
 	}
 
 	if (!ok) {

@@ -1013,9 +1013,9 @@ void chk_t_cccam(char *token, char *value)
 	// cccam: Update cards interval
 	if (!strcmp(token, "updateinterval")) {
 		if (value[0] == '-')
-			cfg.cc_update_interval = (-1);
+			cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
 		else
-			cfg.cc_update_interval = strToIntVal(value, (4*60));//4x60s = 4min
+			cfg.cc_update_interval = strToIntVal(value, DEFAULT_UPDATEINTERVAL);
 		return;
 	}
 
@@ -1347,7 +1347,7 @@ int init_config()
 	strcpy(cfg.ac_logfile, "./oscam_ac.log");
 #endif
 #ifdef MODULE_CCCAM
-	cfg.cc_update_interval = 240;
+	cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
 	cfg.cc_keep_connected = 1;
 #endif
 	sprintf(token, "%s%s", cs_confdir, cs_conf);

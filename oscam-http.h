@@ -1098,7 +1098,6 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 						<OPTION value=\"0\" ##MINIMIZECARDSELECTED0##>0 - legacy (default)</OPTION>\n\
 						<OPTION value=\"1\" ##MINIMIZECARDSELECTED1##>1 - smallest hop</OPTION>\n\
 						<OPTION value=\"2\" ##MINIMIZECARDSELECTED2##>2 - via caid</OPTION>\n\
-						<OPTION value=\"3\" ##MINIMIZECARDSELECTED3##>3 - transparent</OPTION>\n\
 					</SELECT>\n\
 				</TD>\n\
 			</TR>\n\
