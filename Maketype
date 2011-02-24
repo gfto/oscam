@@ -60,6 +60,7 @@ OBJECTS1	= $(LIBFILE1)(oscam-simples.o) \
 		  $(LIBFILE1)(module-monitor.o) \
 		  $(LIBFILE1)(module-newcamd.o) \
 		  $(LIBFILE1)(module-cccam.o) \
+		  $(LIBFILE1)(module-cccshare.o) \
 		  $(LIBFILE1)(module-gbox.o) \
 		  $(LIBFILE1)(module-constcw.o) \
 		  $(LIBFILE1)(module-dvbapi.o) \
