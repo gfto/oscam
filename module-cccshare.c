@@ -387,10 +387,8 @@ struct cc_card *create_card(struct cc_card *card) {
     if (card) {
         copy_sids(card2->goodsids, card->goodsids);
         copy_sids(card2->badsids, card->badsids);
-        card2->origin_reader = card->origin_reader;
         card2->origin_id = card->id;
-        card2->card_type = card->card_type;
-        card2->remote_id = card->remote_id;
+        card2->id = 0;
     }
 
     return card2;
