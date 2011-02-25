@@ -39,7 +39,8 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
         buf[ofs+0] = prid >> 16;
         buf[ofs+1] = prid >> 8;
         buf[ofs+2] = prid & 0xFF;
-        memcpy(buf + ofs + 3, prov->sa, 4);
+        if (au_allowed)
+        		memcpy(buf + ofs + 3, prov->sa, 4);
         buf[20]++;
         ofs+=7;
     }
@@ -397,7 +398,7 @@ struct cc_card *create_card(struct cc_card *card) {
 struct cc_card *create_card2(struct s_reader *rdr, int j, uint16 caid, uint8 hop, uint8 reshare) {
 
     struct cc_card *card = create_card(NULL);
-    card->remote_id = (rdr?(rdr->cc_id << 16):0x7F0000)|j;
+    card->remote_id = (rdr?(rdr->cc_id << 16):0x7F7F8000)|j;
     card->caid = caid;
     card->hop = hop;
     card->maxdown = reshare;
