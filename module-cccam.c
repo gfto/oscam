@@ -2800,6 +2800,7 @@ int cc_cli_connect(struct s_client *cl) {
 		cc_init_cc(cc);
 	} else {
 		if (cc->cards) {
+			pthread_mutex_lock(&cc->cards_busy);	
 			LL_ITER *it = ll_iter_create(cc->cards);
 			struct cc_card *card;
 			while ((card = ll_iter_next(it))) {
@@ -2807,6 +2808,7 @@ int cc_cli_connect(struct s_client *cl) {
 				ll_iter_remove(it);
 			}
 			ll_iter_release(it);
+			pthread_mutex_unlock(&cc->cards_busy);
 		}
 		if (cc->extended_ecm_idx)
 			free_extended_ecm_idx(cc);

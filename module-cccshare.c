@@ -116,14 +116,10 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
 								if (new_reshare > reshare)
 										new_reshare = reshare;
 
-								int len = write_card(cc, buf, card, 1,  cc->cccam220, ll_count(cl->aureader_list));
-								if (!card->internal_id)
-										card->internal_id = cc_share_id++;
+								if (!card->id)
+										card->id = cc_share_id++;
 
-								buf[0] = card->internal_id >> 24;
-								buf[1] = card->internal_id >> 16;
-								buf[2] = card->internal_id >> 8;
-								buf[3] = card->internal_id & 0xFF;
+								int len = write_card(cc, buf, card, 1,  cc->cccam220, ll_count(cl->aureader_list));
 								//buf[10] = card->hop-1;
 								buf[11] = new_reshare;
 
@@ -136,11 +132,14 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
 }
 
 void send_remove_card_to_clients(struct cc_card *card) {
+		if (!card || !card->id)
+				return;
+				
 		uint8 buf[4];
-		buf[0] = card->internal_id >> 24;
-		buf[1] = card->internal_id >> 16;
-		buf[2] = card->internal_id >> 8;
-		buf[3] = card->internal_id & 0xFF;
+		buf[0] = card->id >> 24;
+		buf[1] = card->id >> 16;
+		buf[2] = card->id >> 8;
+		buf[3] = card->id & 0xFF;
 
 		struct s_client *cl;
 		for (cl = first_client; cl; cl=cl->next) {
@@ -390,8 +389,8 @@ struct cc_card *create_card(struct cc_card *card) {
         copy_sids(card2->badsids, card->badsids);
         card2->origin_reader = card->origin_reader;
         card2->origin_id = card->id;
-        card2->internal_id = card->id;
         card2->card_type = card->card_type;
+        card2->remote_id = card->remote_id;
     }
 
     return card2;
@@ -400,7 +399,7 @@ struct cc_card *create_card(struct cc_card *card) {
 struct cc_card *create_card2(struct s_reader *rdr, int j, uint16 caid, uint8 hop, uint8 reshare) {
 
     struct cc_card *card = create_card(NULL);
-    card->remote_id = (rdr?(rdr->cc_id << 16):0x7F)|j;
+    card->remote_id = (rdr?(rdr->cc_id << 16):0x7F0000)|j;
     card->caid = caid;
     card->hop = hop;
     card->maxdown = reshare;
@@ -506,7 +505,6 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
         if (!card2) {
             card2 = create_card(card);
             card2->hop = 0;
-            card2->remote_id = card->remote_id;
             ll_clear_data(card2->badsids);
             ll_iter_insert(it, card2);
             modified = 1;
@@ -538,7 +536,6 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
         if (!card2) {
             card2 = create_card(card);
             card2->hop = card->hop;
-            card2->remote_id = card->remote_id;
             ll_clear_data(card2->badsids);
             ll_iter_insert(it, card2);
             add_card_providers(card2, card, 1);
@@ -562,7 +559,6 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
         if (!card2) {
             card2 = create_card(card);
             card2->hop = card->hop;
-            card2->remote_id = card->remote_id;
             ll_iter_insert(it, card2);
             add_card_providers(card2, card, 1);
             modified = 1;
@@ -580,7 +576,6 @@ int find_reported_card(struct cc_card *card1)
     while ((card2 = ll_iter_next(it))) {
         if (same_card(card1, card2)) {
             card1->id = card2->id; //Set old id !!
-            card1->internal_id = card2->internal_id;
             cc_free_card(card2);
             ll_iter_remove(it);
             ll_iter_release(it);
@@ -603,12 +598,6 @@ int report_card(struct cc_card *card, LLIST *new_reported_carddatas)
 {
     int res = 0;
     if (!find_reported_card(card)) { //Add new card:
-        if (!card->id)
-                card->id = card->internal_id;
-        if (!card->id) {
-                card->internal_id = cc_share_id++;
-                card->id = card->internal_id;
-        }
 
         send_card_to_clients(card, NULL);
 
@@ -807,7 +796,7 @@ void update_card_list() {
             if ((rdr->typ != R_CCCAM) && rdr->caid && !flt) {
                 //cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
                 ushort caid = rdr->caid;
-                struct cc_card *card = create_card2(rdr, 0, caid, 0, rdr->cc_reshare);
+                struct cc_card *card = create_card2(rdr, 1, caid, 0, rdr->cc_reshare);
                 card->card_type = CT_CARD_BY_CAID;
                 
                 if (!rdr->audisabled)

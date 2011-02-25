@@ -81,7 +81,6 @@ typedef enum {
 } cc_card_type;
 
 struct cc_card {
-	uint32 internal_id;	
 	uint32 id; // cccam card (share) id - reader
 	uint32 remote_id;
 	uint16 caid;
