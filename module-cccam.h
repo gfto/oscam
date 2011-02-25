@@ -186,6 +186,7 @@ struct cc_data {
 	ushort server_ecm_idx;
 	
 	pthread_mutex_t lock;
+	pthread_mutex_t lockcmd;
 	pthread_mutex_t ecm_busy;
 	pthread_mutex_t cards_busy;
 	struct timeb ecm_time;
