@@ -477,6 +477,8 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf, int maxlen) {
 		return -1;
 	}
 
+	pthread_mutex_lock(&cc->lockcmd);
+	
 	cc_crypt(&cc->block[DECRYPT], buf, 4, DECRYPT);
 	//cs_ddump_mask(D_CLIENT, buf, 4, "cccam: decrypted header:");
 
@@ -485,6 +487,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf, int maxlen) {
 	int size = (buf[2] << 8) | buf[3];
 	if (size) { // check if any data is expected in msg
 		if (size > maxlen) {
+			pthread_mutex_unlock(&cc->lockcmd);
 			cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s message too big (size=%d max=%d)", getprefix(), size, maxlen);
 			return 0;
 		}
@@ -494,6 +497,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf, int maxlen) {
 			rdr->last_g = time(NULL);
 
 		if (len != size) {
+			pthread_mutex_unlock(&cc->lockcmd);
 			if (len <= 0)
 				cs_debug_mask(cl->typ=='c'?D_CLIENT:D_READER, "%s disconnected by remote", getprefix());
 			else
@@ -505,6 +509,8 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf, int maxlen) {
 		cc_crypt(&cc->block[DECRYPT], buf + 4, len, DECRYPT);
 		len += 4;
 	}
+	
+	pthread_mutex_unlock(&cc->lockcmd);
 
 	//cs_ddump_mask(cl->typ=='c'?D_CLIENT:D_READER, buf, len, "cccam: full decrypted msg, len=%d:", len);
 
@@ -525,6 +531,8 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 	uint8 netbuf[len + 4];
 	struct cc_data *cc = cl->cc;
 
+	pthread_mutex_lock(&cc->lockcmd); //We need this because cc_cmd_send is called from cccshare
+	
 	memset(netbuf, 0, len + 4);
 
 	if (cmd == MSG_NO_HEADER) {
@@ -547,6 +555,8 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 	if (rdr)
 		rdr->last_s = time(NULL);
 
+	pthread_mutex_unlock(&cc->lockcmd);
+		
 	if (n != len) {
 		if (rdr)
 			cc_cli_close(cl, TRUE);
@@ -1399,6 +1409,9 @@ void cc_free(struct s_client *cl) {
 
 	pthread_mutex_unlock(&cc->lock);
 	pthread_mutex_destroy(&cc->lock);
+
+	pthread_mutex_unlock(&cc->lockcmd);
+	pthread_mutex_destroy(&cc->lockcmd);
 
 	pthread_mutex_unlock(&cc->ecm_busy);
 	pthread_mutex_destroy(&cc->ecm_busy);
@@ -2429,6 +2442,7 @@ int cc_recv(struct s_client *cl, uchar *buf, int l) {
 
 void cc_init_cc(struct cc_data *cc) {
 	pthread_mutex_init(&cc->lock, NULL); //No recursive lock
+	pthread_mutex_init(&cc->lockcmd, NULL); //No recursive lock
 	pthread_mutex_init(&cc->ecm_busy, NULL); //No recusive lock
 	pthread_mutex_init(&cc->cards_busy, NULL); //No (more) recursive lock
 }
@@ -2724,7 +2738,7 @@ int cc_cli_connect(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
 	rdr->card_status = CARD_FAILURE;
 	
-	if (cc && cc->mode != CCCAM_MODE_NOTINIT)
+	if (cc && cc->mode == CCCAM_MODE_SHUTDOWN)
 		return -99;
 
 	if (!cl->udp_fd) {

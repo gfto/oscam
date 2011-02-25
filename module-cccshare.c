@@ -870,6 +870,8 @@ void update_card_list() {
                         pthread_mutex_unlock(&rcc->cards_busy);
                     }
                 }
+                else
+                		cs_debug_mask(D_TRACE, "reader %s not active! (mode=%d)", rdr->label, rcc?rcc->mode:-1);
                 cs_debug_mask(D_TRACE, "got %d cards from %s", count, rdr->label);
             }
         }
