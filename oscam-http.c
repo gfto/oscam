@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include "oscam-http-helpers.c"
 #include "module-cccam.h"
+#include "module-cccshare.h"
 #include "module-stat.h"
 
 extern void restart_cardreader(struct s_reader *rdr, int restart);
@@ -1732,15 +1733,23 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 
 	/* build entitlements from reader init history */
 	char *reader_ = getParam(params, "label");
+	char *sharelist_ = getParam(params, "globallist");
+	int show_global_list = sharelist_ && sharelist_[0]=='1';
 
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-	if ((cfg.saveinithistory && strlen(reader_) > 0) || rdr->typ == R_CCCAM) {
+	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || rdr->typ == R_CCCAM) {
 
-		if (rdr->typ == R_CCCAM && rdr->enable == 1) {
+		if (show_global_list || (rdr->typ == R_CCCAM && rdr->enable == 1)) {
 
-			tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
-			tpl_addVar(vars, TPLADD, "APIHOST", rdr->device);
-			tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
+			if (show_global_list) {
+					tpl_addVar(vars, TPLADD, "READERNAME", "");
+					tpl_addVar(vars, TPLADD, "APIHOST", "");
+					tpl_printf(vars, TPLADD, "APIHOSTPORT", "");
+			} else {	
+					tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
+					tpl_addVar(vars, TPLADD, "APIHOST", rdr->device);
+					tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
+			}	
 
 			int caidcount = 0;
 			int providercount = 0;
@@ -1749,18 +1758,32 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 			char *provider = "";
 
 			struct cc_card *card;
-			struct s_client *rc = rdr->client;
-			struct cc_data *rcc = (rc)?rc->cc:NULL;
+			
+			LLIST *cards = NULL;
+			pthread_mutex_t *lock = NULL;
+			
+			if (show_global_list) {
+					struct s_client *rc = rdr->client;
+					struct cc_data *rcc = (rc)?rc->cc:NULL;
 
-			if (rcc && rcc->cards) {
-				pthread_mutex_lock(&rcc->cards_busy);
+					if (rcc && rcc->cards) {
+							cards = rcc->cards;
+							lock = &rcc->cards_busy;
+							pthread_mutex_lock(lock);
+					}
+			} else {
+					cards = get_and_lock_sharelist();
+			}
+			
+			if (cards) {	
+							
 				uint8 serbuf[8];
 
                 // sort cards by hop
                 LL_ITER *it; 
                 int i;
-                for (i = 0; i < ll_count(rcc->cards); i++) {
-                    it  = ll_iter_create(rcc->cards);
+                for (i = 0; i < ll_count(cards); i++) {
+                    it  = ll_iter_create(cards);
                     while ((card = ll_iter_next(it))) {
                         if (it->cur->nxt && card->hop > ((struct cc_card *)ll_iter_peek(it, 1))->hop) {
                             it->cur->obj = it->cur->nxt->obj;
@@ -1770,7 +1793,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
                     ll_iter_release(it);
                 }
 				
-                it = ll_iter_create(rcc->cards);
+                it = ll_iter_create(cards);
                 while ((card = ll_iter_next(it))) {
 
 					if (!apicall) {
@@ -1888,8 +1911,6 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 
 				ll_iter_release(it);
 				
-				pthread_mutex_unlock(&rcc->cards_busy);
-
 				if (!apicall) {
 					tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", caidcount);
 					tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
@@ -1905,6 +1926,11 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", caidcount);
 				}
 			}
+
+			if (show_global_list)
+					unlock_sharelist();
+			else if (lock)
+					pthread_mutex_unlock(lock);
 
 		} else {
 			tpl_addVar(vars, TPLADD, "LOGHISTORY", "->");

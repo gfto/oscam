@@ -250,15 +250,23 @@ int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 
         struct s_reader *rdr = card->origin_reader;
         //Check group:
-        if (!(rdr->grp & cl->grp))
+        if (rdr && !(rdr->grp & cl->grp))
                 return 0;
 
-         if (!chk_ident(&cl->ftab, card) || (rdr && !chk_ident(&rdr->ftab, card)))
+        if (!chk_ident(&cl->ftab, card))
                 return 0;
 
         //Check caids:
-        if (!chk_ctab(card->caid, &cl->ctab) || (rdr && !chk_ctab(card->caid, &rdr->ctab)))
+        if (!chk_ctab(card->caid, &cl->ctab))
                 return 0;
+
+        //Check reshare/maxdown:
+        if (!cfg.cc_ignore_reshare && !cl->account->cccignorereshare && !card->maxdown > 0)
+        		return 0;
+        		
+		//Check account maxhops:
+		if (cl->account->cccmaxhops > card->hop)
+				return 0;
 
 		//Check remote node id, if card is from there, ignore it!
         LL_ITER *it = ll_iter_create(card->remote_nodes);
@@ -272,26 +280,19 @@ int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 		}
 		ll_iter_release(it);
 
-        //Check reshare/maxdown:
-        if ((cfg.cc_ignore_reshare || cl->account->cccignorereshare || card->maxdown > 0)) {
-                int ignore = 0;
-
-                //Check Services:
-                LL_ITER *it2 = ll_iter_create(card->providers);
-                struct cc_provider *prov;
-                while ((prov = ll_iter_next(it2))) {
-                        ulong prid = prov->prov;
-                        if (!chk_srvid_by_caid_prov(cl, card->caid, prid) ||
-                                        !chk_srvid_by_caid_prov(rdr->client, card->caid, prid)) {
-                                ignore = 1;
-                                break;
-                        }
-                }
-                ll_iter_release(it2);
-                return !ignore;
-        }
-
-        return 0;
+        //Check Services:
+        it = ll_iter_create(card->providers);
+        struct cc_provider *prov;
+        while ((prov = ll_iter_next(it))) {
+        		ulong prid = prov->prov;
+                if (!chk_srvid_by_caid_prov(cl, card->caid, prid)) {
+                		ll_iter_release(it);
+                		return 0;
+				}
+		}
+		ll_iter_release(it);
+				
+        return 1;
 }
 
 ulong get_reader_prid(struct s_reader *rdr, int j) {
@@ -916,10 +917,10 @@ void refresh_shares()
 
 void share_updater()
 {
-		int i = 10;
+		int i = 20;
 		while (TRUE) {
 				refresh_shares();
-								
+					
 				if (i>0) {
 						cs_sleepms(1000);
 						i--;
