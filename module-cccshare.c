@@ -11,6 +11,17 @@ static int card_added_count = 0;
 static int card_removed_count = 0;
 static int card_dup_count = 0;
 
+LLIST *get_and_lock_sharelist()
+{
+		pthread_mutex_lock(&cc_shares_lock);
+		return reported_carddatas;
+}
+
+void unlock_sharelist()
+{
+		pthread_mutex_unlock(&cc_shares_lock);
+}
+
 int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own, int ext, int au_allowed) {
     memset(buf, 0, CC_MAXMSGSIZE);
     buf[0] = card->id >> 24;
@@ -900,14 +911,19 @@ int cc_srv_report_cards(struct s_client *cl) {
 		return 1;
 }
 
+void refresh_shares()
+{
+		pthread_mutex_lock(&cc_shares_lock);
+		update_card_list();
+		pthread_mutex_unlock(&cc_shares_lock);
+}
+
 void share_updater()
 {
 		int i = 10;
 		while (TRUE) {
-				pthread_mutex_lock(&cc_shares_lock);
-				update_card_list();
-				pthread_mutex_unlock(&cc_shares_lock);
-				
+				refresh_shares();
+								
 				if (i>0) {
 						cs_sleepms(1000);
 						i--;
