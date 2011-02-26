@@ -707,9 +707,13 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 				struct s_reader *rdr2;
 				if (strcmp(getParam(params, "action"), "enable") == 0) {
 					if (!rdr->enable) {
-						rdr->next = NULL; //terminate active reader list 
-						for (rdr2 = first_active_reader; rdr2->next ; rdr2 = rdr2->next); //find last reader in active reader list
-						rdr2->next = rdr; //add 
+						rdr->next = NULL; //terminate active reader list
+						if (!first_active_reader) {
+							first_active_reader = rdr;
+						} else {
+							for (rdr2 = first_active_reader; rdr2->next ; rdr2 = rdr2->next); //find last reader in active reader list
+							rdr2->next = rdr; //add 
+						}
 						rdr->enable = 1;
 						restart_cardreader(rdr, 1);
 					}
