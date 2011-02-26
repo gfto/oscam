@@ -455,7 +455,9 @@ int num_same_providers(struct cc_card *card1, struct cc_card *card2) {
 int equal_providers(struct cc_card *card1, struct cc_card *card2) {
 
     if (ll_count(card1->providers) != ll_count(card2->providers))
-        return 0;
+    	return 0;
+    if (ll_count(card1->providers) == 0)
+       return 1;
 
     LL_ITER *it1 = ll_iter_create(card1->providers);
     LL_ITER *it2 = ll_iter_create(card2->providers);
@@ -485,12 +487,6 @@ int equal_providers(struct cc_card *card1, struct cc_card *card2) {
  * Adds a new card to a cardlist.
  */
 int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
-
-    if (!ll_has_elements(card->providers))  { //No providers? Add null-provider:
-        struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
-        memset(prov, 0, sizeof(struct cc_provider));
-        ll_append(card->providers, prov);
-    }
 
     int modified = 0;
     LL_ITER *it = ll_iter_create(cardlist);

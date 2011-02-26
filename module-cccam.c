@@ -3130,5 +3130,6 @@ void module_cccam(struct s_module *ph) {
 	cc_node_id[6] = sum >> 8;
 	cc_node_id[7] = sum & 0xff;
 
-	init_share();		
+	if (cfg.cc_port)
+			init_share();		
 }
