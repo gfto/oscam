@@ -583,9 +583,9 @@ typedef struct ecm_request_t
 #ifdef CS_WITH_DOUBLECHECK
   int		checked;
   uchar		cw_checked[16];
-  struct s_reader *origin_reader;
 #endif
 
+  struct s_reader *origin_reader;
   void * origin_card; //CCcam preferred card!
 
   char msglog[MSGLOGSIZE];

@@ -1062,6 +1062,20 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	cur_srvid.ecmlen = cur_er->l;
 
 	pthread_mutex_lock(&cc->cards_busy);
+	//forward_origin:
+	if (cfg.cc_forward_origin_card && cur_er->origin_reader == rdr && cur_er->origin_card) {
+		it = ll_iter_create(cc->cards);
+		struct cc_card *ncard;
+		while ((ncard = ll_iter_next(it))) {
+				if (ncard == cur_er->origin_card) { //Search the origin card
+						card = ncard; //found it, use it!
+						break;
+				}
+		}
+		ll_iter_release(it);
+	}
+	
+	if (!card) {
 		it = ll_iter_create(cc->cards);
 		struct cc_card *ncard;
 		while ((ncard = ll_iter_next(it))) {
@@ -1069,7 +1083,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 				if (is_sid_blocked(ncard, &cur_srvid))
 					continue;
 				
-				if (!ncard->providers || !ncard->providers->initial) { //card has no providers:
+				if (!cur_er->prid && !ll_count(ncard->providers)) { //card has no providers:
 					if (h < 0 || ncard->hop < h || (ncard->hop == h
 							&& cc_UA_valid(ncard->hexserial))) {
 						// ncard is closer
@@ -1082,8 +1096,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 					LL_ITER *it2 = ll_iter_create(ncard->providers);
 					struct cc_provider *provider;
 					while ((provider = ll_iter_next(it2))) {
-						if (!cur_er->prid || !provider->prov || provider->prov
-								== cur_er->prid) { // provid matches
+						if (provider->prov	== cur_er->prid) { // provid matches
 							if (h < 0 || ncard->hop < h || (ncard->hop == h
 									&& cc_UA_valid(ncard->hexserial))) {
 								// ncard is closer
@@ -1097,6 +1110,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			}
 		}
 		ll_iter_release(it);
+	}	
 
 	if (card) {
 		card->time = time((time_t) 0);
@@ -1763,10 +1777,11 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		break;
 	case MSG_NEW_CARD_SIDINFO: 
 	case MSG_NEW_CARD: {
-		if (buf[14] >= rdr->cc_maxhop+1)
+		uint16 caid = b2i(2, buf + 12);
+		if (!caid || buf[14] >= rdr->cc_maxhop+1)
 			break;
 
-		if (!chk_ctab(b2i(2, buf + 12), &rdr->ctab))
+		if (!chk_ctab(caid, &rdr->ctab))
 			break;
 			
 		rdr->tcp_connected = 2; //we have card
