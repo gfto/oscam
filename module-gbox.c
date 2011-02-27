@@ -6,7 +6,6 @@
 #include <time.h>
 #include <sys/time.h>
 
-
 #include "module-datastruct-llist.h"
 #include "algo/minilzo.h"
 
@@ -79,8 +78,8 @@ static void gbox_calc_checkcode(struct gbox_data *gbox)
 
   // for all local cards do:
   /*
-    gbox->checkcode[0] ^= caid << 8;
-    gbox->checkcode[1] ^= caid & 0xff;
+    gbox->checkcode[0] ^= provid << 24;
+    gbox->checkcode[1] ^= provid << 16;
     gbox->checkcode[2] ^= provid << 8;
     gbox->checkcode[3] ^= provid & 0xff;
     gbox->checkcode[4] ^= slot;  // reader number
@@ -807,7 +806,7 @@ static int gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
   struct gbox_card *card;
   while ((card = ll_iter_next(it))) {
     //if (card->caid == er->caid && card->provid == er->prid) {
-    if (card->provid >> 24 == er->caid >> 8 && card->provid & 0xffffff == er->prid) {
+    if (card->provid >> 24 == er->caid >> 8 && (card->provid & 0xffffff) == er->prid) {
       *(++ptr) = card->peer_id >> 8;
       *(++ptr) = card->peer_id;
       *(++ptr) = card->slot;
