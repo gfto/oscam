@@ -1763,6 +1763,8 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 			pthread_mutex_t *lock = NULL;
 			
 			if (show_global_list) {
+					cards = get_and_lock_sharelist();
+			} else {		
 					struct s_client *rc = rdr->client;
 					struct cc_data *rcc = (rc)?rc->cc:NULL;
 
@@ -1771,8 +1773,6 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 							lock = &rcc->cards_busy;
 							pthread_mutex_lock(lock);
 					}
-			} else {
-					cards = get_and_lock_sharelist();
 			}
 			
 			if (cards) {	
