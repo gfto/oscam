@@ -1396,31 +1396,21 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
 	struct s_ecm *ecmc;
-	int count=0;
 
-	ushort lc=0, *lp;
-	if (cs_dblevel) {
-		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
-			lc^=*lp;
-	}
-
-	for (ecmc=cwcache; ecmc ; ecmc=ecmc->next, count++) {
-		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+	for (ecmc=cwcache; ecmc ; ecmc=ecmc->next) {
+		if (ecmc->caid != er->caid)
 			continue;
-
-		//cs_debug_mask(D_TRACE, "cache: ecm %04X found: ccaid=%04X caid=%04X grp=%lld cgrp=%lld count=%d", lc, er->caid, ecmc->caid, grp, ecmc->grp, count);
 
 		if (grp && !(grp & ecmc->grp))
 			continue;
 
-		if (ecmc->caid != er->caid)
+		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
 
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
 		return 1;
 	}
-	//cs_debug_mask(D_TRACE, "cache: %04X not found count=%d", lc, count);
 	return 0;
 }
 
@@ -1454,12 +1444,6 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp)
 	cwidx->grp = grp;
 	cwidx->reader = er->selected_reader;
 
-	if (cs_dblevel) {
-		ushort lc, *lp;
-		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
-			lc^=*lp;
-		//cs_debug_mask(D_TRACE, "store_cw_in_cache: ecm=%04X grp=%lld", lc, grp);
-	}
 	//cs_ddump(cwcache[*cwidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *cwidx);
 }
 

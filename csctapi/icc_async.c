@@ -1071,7 +1071,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 	}
 
   //write settings to internal device
-	if(reader->typ == R_INTERNAL) {
+	if(reader->typ == R_INTERNAL && reader->crdr.active==0) {
 #if defined(SCI_DEV)
 		double F =	(double) atr_f_table[FI];
 		unsigned long ETU = 0;
