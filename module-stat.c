@@ -515,7 +515,7 @@ int get_best_reader(ECM_REQUEST *er)
 				
 			int hassrvid = has_srvid(rdr->client, er) || has_ident(&rdr->ftab, er);
 			
-			if (!hassrvid && stat->rc == 0 && stat->request_count > cfg.lb_min_ecmcount) { // 5 unanswered requests or timeouts?
+			if (!hassrvid && stat->rc == 0 && stat->request_count >= cfg.lb_min_ecmcount-1) { // 4 unanswered requests or timeouts?
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
 				add_stat(rdr, er, 1, 4); //reader marked as unuseable
 				continue;
