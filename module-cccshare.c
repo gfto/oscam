@@ -265,7 +265,7 @@ int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         		return 0;
         		
 		//Check account maxhops:
-		if (cl->account->cccmaxhops > card->hop)
+		if (cl->account->cccmaxhops < card->hop)
 				return 0;
 
 		//Check remote node id, if card is from there, ignore it!
