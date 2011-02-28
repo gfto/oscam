@@ -474,6 +474,10 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
       {
         static int exp_seq = 0;
 
+        int ip_clien_gbox = cs_inet_addr(cli->reader->device);
+        cli->ip = ip_clien_gbox;
+        gbox->peer.online = 1;
+
         int payload_len = n;
 
         gbox_decompress(gbox, data, &payload_len);
@@ -566,6 +570,7 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
         }
 
         if (final) exp_seq = 0;
+        // write_sahre_info() // TODO
 
         cs_log("gbox: received hello %d%s, %d providers from %s, version=2.%02X, checkcode=%s",
         		seqno, final ? " (final)" : "", ncards_in_msg, gbox->peer.hostname, gbox->peer.ver, cs_hexdump(0, gbox->peer.checkcode, 7));
@@ -812,7 +817,6 @@ static int gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
       *(++ptr) = card->slot;
       send_buf[16]++;
     }
-    break;
   }
   ll_iter_release(it);
 
