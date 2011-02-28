@@ -586,7 +586,14 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
 */
 
-  ins40[4]=lenECMpart2;
+  int new_len = lenECMpart2;
+  if (reader->fix_9993 && reader->caid == 0x919 && tbuff[1] == 0x7F)
+  {
+     tbuff[1] = 0x47; tbuff[2] = 0x08;
+     memcpy(tbuff+11, tbuff+13, new_len-11);
+     new_len -= 2;
+  }
+  ins40[4]=new_len;
   int l;
 
   l = do_cmd(reader,ins40,tbuff,NULL,cta_res);
@@ -624,6 +631,11 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
         }
       }
 
+      if (new_len != lenECMpart2)
+      {
+         memcpy(er->cw, er->cw+8, 8);
+         memset(er->cw+8, 0, 8);
+      }
       // fix for 09ac cards
       dimeno_PostProcess_Decrypt(reader, rbuff, er->cw);
 

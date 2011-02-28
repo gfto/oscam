@@ -922,6 +922,7 @@ struct s_reader  //contains device info, reader info and card info
 	int ratelimitecm;
 	int ratelimitseconds;
 	struct ecmrl    rlecmh[MAXECMRATELIMIT];
+	int fix_9993;
 	struct s_reader *next;
 };
 
@@ -1149,7 +1150,6 @@ struct s_config
 	char	*lb_savepath; //path where the stat file is save. Empty=default=/tmp/.oscam/stat
 	int	lb_stat_cleanup; //duration in hours for cleaning old statistics
 	int lb_use_locking; //use a mutex lock while searching for readers (get_cw())
-	
 	int             resolve_gethostbyname;
 
 #ifdef CS_WITH_DOUBLECHECK

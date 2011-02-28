@@ -2261,7 +2261,7 @@ int write_server()
 			fprintf(f,"[reader]\n");
 
 			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", rdr->label);
-			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", rdr->enable);
+      fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", rdr->enable);
 			char *ctyp = reader_get_type_desc(rdr, 0);
 
 			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s\n", ctyp);
@@ -2334,6 +2334,8 @@ int write_server()
 
 			if (rdr->boxid && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", rdr->boxid);
+
+      fprintf_conf(f, CONFVARWIDTH, "fix9993", "%d\n", rdr->fix_9993);
 
 			// rsakey
 			int len = check_filled(rdr->rsa_mod, 120);
