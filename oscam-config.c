@@ -3269,6 +3269,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
   if (!strcmp(token, "fix9993")) {
     rdr->fix_9993 = strToIntVal(value, 0);
+    return;
   }
 
 	if (!strcmp(token, "rsakey")) {
