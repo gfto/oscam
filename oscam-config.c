@@ -3257,15 +3257,19 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		}
 	}
 
-	if (!strcmp(token, "boxid")) {
-		if(strlen(value) == 0) {
-			rdr->boxid = 0;
-			return;
-		} else {
-			rdr->boxid = a2i(value, 4);
-			return;
-		}
-	}
+  if (!strcmp(token, "boxid")) {
+    if(strlen(value) == 0) {
+      rdr->boxid = 0;
+      return;
+    } else {
+      rdr->boxid = a2i(value, 4);
+      return;
+    }
+  }
+
+  if (!strcmp(token, "fix9993")) {
+    rdr->fix_9993 = strToIntVal(value, 0);
+  }
 
 	if (!strcmp(token, "rsakey")) {
 		int len = strlen(value);
