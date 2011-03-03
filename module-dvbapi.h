@@ -38,6 +38,10 @@
 #define FALSE 0
 #endif
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+
 #define BOX_COUNT 6
 
 struct box_devices
@@ -72,6 +76,11 @@ typedef struct filter_s
 	int pid;
 	ushort type;
 	int count;
+#ifdef WITH_STAPI
+	int NumSlots;
+	uint	SlotHandle[10];
+	uint  	BufferHandle[10];
+#endif
 } FILTERTYPE;
 
 struct s_emmpids
@@ -81,6 +90,32 @@ struct s_emmpids
 	ushort PID;
 	uint8 type;
 };
+
+#ifdef WITH_STAPI
+struct STDEVICE
+{
+	char name[20];
+	uint 	SessionHandle;
+	uint	SignalHandle;
+	pthread_t thread;
+	struct filter_s demux_fd[MAX_DEMUX][MAX_FILTER];
+};
+
+struct read_thread_param
+{
+	int id;
+	struct s_client *cli;
+};
+
+#define BUFFLEN	1024
+#define PROCDIR	"/proc/stpti4_core/"
+#define PTINUM 10
+#define SLOTNUM 20
+
+pthread_mutex_t filter_lock;
+
+struct STDEVICE dev_list[PTINUM];
+#endif
 
 typedef struct demux_s
 {
@@ -106,6 +141,11 @@ typedef struct demux_s
 	struct s_reader *rdr;
 	char pmt_file[30];
 	int pmt_time;
+#ifdef WITH_STAPI
+	uint DescramblerHandle[PTINUM];
+	int desc_pidcount;
+	uint slot_assc[PTINUM][SLOTNUM];
+#endif
 } DEMUXTYPE;
 
 struct s_dvbapi_priority
@@ -198,12 +238,65 @@ typedef struct ca_pid {
 #define CA_SET_PID		_IOW('o', 135, ca_pid_t)
 // --------------------------------------------------------------------
 
+#ifdef AZBOX
+#include "openxcas/openxcas_api.h"
+#include "openxcas/openxcas_message.h"
+
+int openxcas_provid, openxcas_seq, openxcas_filter_idx, openxcas_stream_id, openxcas_cipher_idx, openxcas_busy;
+unsigned char openxcas_cw[16];
+unsigned short openxcas_sid, openxcas_caid, openxcas_ecm_pid, openxcas_video_pid, openxcas_audio_pid, openxcas_data_pid;
+
+void azbox_openxcas_ecm_callback(int stream_id, unsigned int sequence, int cipher_index, unsigned int caid, unsigned char *ecm_data, int l, unsigned short pid);
+void azbox_openxcas_ex_callback(int stream_id, unsigned int seq, int idx, unsigned int pid, unsigned char *ecm_data, int l);
+void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er);
+void * azbox_main(void * cli);
+#endif
+
+#ifdef COOL
+int coolapi_set_filter (int fd, int num, int pid, byte * flt, byte * mask);
+int coolapi_remove_filter (int fd, int num);
+int coolapi_open_device (int demux_index, int demux_id);
+int coolapi_close_device(int fd);
+int coolapi_write_cw(int mask, unsigned short *STREAMpids, int count, ca_descr_t * ca_descr);
+int coolapi_set_pid (int demux_id, int num, int index, int pid);
+void coolapi_close_all();
+void dvbapi_write_cw(int demux_id, uchar *cw, int index);
+#endif
+
 #ifdef WITH_STAPI
-int stapi_open();
-int stapi_set_filter(int demux_id, ushort pid, uchar *filter, uchar *mask, int num, char *pmtfile);
-int stapi_remove_filter(int demux_id, int num, char *pmtfile);
-int stapi_set_pid(int demux_id, int num, int index, ushort pid, char *pmtfile);
-int stapi_write_cw(int demux_id, uchar *cw, ushort *, int, char *pmtfile);
+static int stapi_open();
+static int stapi_set_filter(int demux_id, ushort pid, uchar *filter, uchar *mask, int num, char *pmtfile);
+static int stapi_remove_filter(int demux_id, int num, char *pmtfile);
+static int stapi_set_pid(int demux_id, int num, int index, ushort pid, char *pmtfile);
+static int stapi_write_cw(int demux_id, uchar *cw, ushort *, int, char *pmtfile);
+static int stapi_do_set_filter(int demux_id, FILTERTYPE *filter, ushort *pids, int pidcount, uchar *filt, uchar *mask, int dev_id);
+static int stapi_do_remove_filter(int demux_id, FILTERTYPE *filter, int dev_id);
+static void *stapi_read_thread(void *);
+
+uint oscam_stapi_Capability(char *name);
+char *oscam_stapi_LibVersion(void);
+uint oscam_stapi_Open(char *name, uint *sessionhandle);
+uint oscam_stapi_SignalAllocate(uint sessionhandle, uint *signalhandle);
+uint oscam_stapi_FilterAllocate(uint sessionhandle, uint *filterhandle);
+uint oscam_stapi_SlotInit(uint sessionhandle, uint signalhandle, uint *bufferhandle, uint *slothandle, ushort pid);
+uint oscam_stapi_FilterSet(uint filterhandle, uchar *filt, uchar *mask);
+uint oscam_stapi_FilterAssociate(uint filterhandle, uint slothandle);
+uint oscam_stapi_SlotDeallocate(uint slothandle);
+uint oscam_stapi_BufferDeallocate(uint bufferhandle);
+uint oscam_stapi_FilterDeallocate(uint filterhandle);
+uint oscam_stapi_Close(uint sessionhandle);
+uint oscam_stapi_CheckVersion();
+uint oscam_stapi_DescramblerAssociate(uint deschandle, uint slot);
+uint oscam_stapi_DescramblerDisassociate(uint deschandle, uint slot);
+uint oscam_stapi_DescramblerAllocate(uint sessionhandle, uint *deschandle);
+uint oscam_stapi_DescramblerDeallocate(uint deschandle);
+uint oscam_stapi_DescramblerSet(uint deschandle, int parity, uchar *cw);
+uint oscam_stapi_SignalWaitBuffer(uint signalhandle, uint *qbuffer, int timeout);
+uint oscam_stapi_BufferReadSection(uint bufferhandle, uint *filterlist, int maxfilter, uint *filtercount, int *crc, uchar *buf, int bufsize, uint *size);
+uint oscam_stapi_SignalAbort(uint signalhandle);
+uint oscam_stapi_PidQuery(char *name, ushort pid);
+uint oscam_stapi_BufferFlush(uint bufferhandle);
+uint oscam_stapi_SlotClearPid(uint slot);
 #endif
 
 void dvbapi_stop_descrambling(int);
