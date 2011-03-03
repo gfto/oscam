@@ -2435,7 +2435,7 @@ int write_server()
 				if (rdr->cc_version[0])
 					fprintf_conf(f, CONFVARWIDTH, "cccversion", "%s\n", rdr->cc_version);
 
-				if (rdr->cc_maxhop)
+				if (rdr->cc_maxhop >= 0)
 					fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", rdr->cc_maxhop);
 
 				if (rdr->cc_want_emu)
