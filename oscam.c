@@ -1636,7 +1636,7 @@ void distribute_ecm(ECM_REQUEST *er)
     er->rc = E_CACHE2; //cache
 
   for (cl=first_client->next; cl ; cl=cl->next) {
-    if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (er->selected_reader->grp & cl->grp)) {
+    if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask) {
 
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {

@@ -18,9 +18,9 @@ void init_stat()
 		cfg.lb_nbest_readers = DEFAULT_NBEST;
 	if (cfg.lb_nfb_readers < 2)
 		cfg.lb_nfb_readers = DEFAULT_NFB;
-	if (cfg.lb_min_ecmcount < 1)
+	if (cfg.lb_min_ecmcount < 2)
 		cfg.lb_min_ecmcount = DEFAULT_MIN_ECM_COUNT;
-	if (cfg.lb_max_ecmcount < 2)
+	if (cfg.lb_max_ecmcount < 3)
 		cfg.lb_max_ecmcount = DEFAULT_MAX_ECM_COUNT;
 	if (cfg.lb_reopen_seconds < 10)
 		cfg.lb_reopen_seconds = DEFAULT_REOPEN_SECONDS;
