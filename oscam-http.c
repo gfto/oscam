@@ -15,6 +15,7 @@
 #include "module-cccam.h"
 #include "module-cccshare.h"
 #include "module-stat.h"
+#include "module-cccshare.h"
 
 extern void restart_cardreader(struct s_reader *rdr, int restart);
 
@@ -398,6 +399,15 @@ char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *pa
 }
 
 char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
+
+
+	if (strcmp(getParam(params, "button"), "Refresh global list") == 0) {
+		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares start");
+		refresh_shares();
+		cs_debug_mask(D_TRACE, "Entitlements: Refresh Shares finished");
+		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Refresh Shares started</B><BR><BR>");
+	}
+
 	int i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {

@@ -794,6 +794,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #define TPLENTITLEMENTS "\
 ##TPLHEADER##\
 ##TPLMENU##\
+	<DIV CLASS=\"message\">##MESSAGE##</DIV>\
 	<BR><BR>Entitlements for ##READERNAME##<BR><BR>\n\
 ##ENTITLEMENTCONTENT##\
 ##TPLFOOTER##"
@@ -1114,6 +1115,22 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\
 	</form>\n\
+	<BR><BR>\
+	<TABLE class=\"config\">\n\
+		<TR><TH COLSPAN=\"2\">Control</TH></TR>\n\
+		<TR>\n\
+			<TD STYLE=\"text-align:center;\">\
+				<form action=\"config.html\" method=\"get\">\n\
+				<input name=\"part\" type=\"hidden\" value=\"cccam\">\n\
+				<input type=\"submit\" name=\"button\" value=\"Refresh global list\" ##BTNDISABLED##>\n\
+				</form></TD>\n\
+			<TD STYLE=\"text-align:center;\">\
+				<form action=\"entitlements.html\" method=\"get\">\n\
+				<input name=\"globallist\" type=\"hidden\" value=\"1\">\n\
+				<input type=\"submit\" name=\"button\" value=\"Show global list\" ##BTNDISABLED##>\n\
+				</form></TD>\n\
+		</TR>\n\
+	</TABLE>\n\
 ##TPLFOOTER##"
 
 #define TPLCONFIGMONITOR "\
