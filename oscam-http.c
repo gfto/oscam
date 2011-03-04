@@ -15,7 +15,6 @@
 #include "module-cccam.h"
 #include "module-cccshare.h"
 #include "module-stat.h"
-#include "module-cccshare.h"
 
 extern void restart_cardreader(struct s_reader *rdr, int restart);
 
@@ -1807,7 +1806,10 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
                 while ((card = ll_iter_next(it))) {
 
 					if (!apicall) {
-						tpl_printf(vars, TPLADD, "HOST", "%s:%d", rdr->device, rdr->r_port);
+						if (show_global_list)
+							rdr = card->origin_reader;
+						if (rdr)
+							tpl_printf(vars, TPLADD, "HOST", "%s:%d", rdr->device, rdr->r_port);
 						tpl_printf(vars, TPLADD, "CAID", "%04X", card->caid);
 					} else {
 						tpl_printf(vars, TPLADD, "APICARDNUMBER", "%d", cardcount);
