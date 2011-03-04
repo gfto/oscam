@@ -1127,6 +1127,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 	tpl_printf(vars, TPLADD, "CCCMAXHOP", "%d", rdr->cc_maxhop);
+	tpl_printf(vars, TPLADD, "CCCMINDOWN", "%d", rdr->cc_mindown);
 	if(rdr->cc_want_emu)
 		tpl_addVar(vars, TPLADD, "CCCWANTEMUCHECKED", "checked");
 
@@ -1863,7 +1864,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
                     tpl_printf(vars, TPLADD, "SHAREID", "%08X", card->id);
                     tpl_printf(vars, TPLADD, "REMOTEID", "%08X", card->remote_id);
 					tpl_printf(vars, TPLADD, "UPHOPS", "%d", card->hop);
-					tpl_printf(vars, TPLADD, "MAXDOWN", "%d", card->maxdown);
+					tpl_printf(vars, TPLADD, "MAXDOWN", "%d", card->reshare);
 
 					LL_ITER *pit = ll_iter_create(card->providers);
 					struct cc_provider *prov;

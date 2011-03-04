@@ -2443,6 +2443,9 @@ int write_server()
 
 				if (rdr->cc_maxhop >= 0)
 					fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", rdr->cc_maxhop);
+					
+				if (rdr->cc_mindown >= 0)
+					fprintf_conf(f, CONFVARWIDTH, "cccmindown", "%d\n", rdr->cc_mindown);
 
 				if (rdr->cc_want_emu)
 					fprintf_conf(f, CONFVARWIDTH, "cccwantemu", "%d\n", rdr->cc_want_emu);
@@ -3623,6 +3626,12 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
+	if (!strcmp(token, "cccmindown") ) { 
+		// cccam min downhops
+		rdr->cc_mindown  = strToIntVal(value, 0);
+		return;
+	}
+
 	if (!strcmp(token, "cccwantemu")) {
 		rdr->cc_want_emu  = strToIntVal(value, 0);
 		return;
@@ -3833,6 +3842,7 @@ int init_readerdb()
 			rdr->force_irdeto = 0;
 			rdr->cc_reshare = cfg.cc_reshare; //set global value as init value
 			rdr->cc_maxhop = 10;
+			rdr->cc_mindown = 0;
 			rdr->lb_weight = 100;
 			strcpy(rdr->pincode, "none");
 			rdr->ndsversion = 0;

@@ -85,7 +85,7 @@ struct cc_card {
 	uint32 remote_id;
 	uint16 caid;
 	uint8 hop;
-	uint8 maxdown;
+	uint8 reshare;
 	uint8 hexserial[8]; // card serial (for au)
 	LLIST *providers; // providers (struct cc_provider)
 	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)

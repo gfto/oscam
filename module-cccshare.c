@@ -35,7 +35,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
     buf[8] = card->caid >> 8;
     buf[9] = card->caid & 0xff;
     buf[10] = card->hop;
-    buf[11] = card->maxdown;
+    buf[11] = card->reshare;
     if (au_allowed)
             memcpy(buf + 12, card->hexserial, 8);
 
@@ -123,7 +123,7 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
                                 		continue;
                                 		
 								int new_reshare =
-                                		( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare : card->maxdown;
+                                		( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare : card->reshare;
 								if (new_reshare > reshare)
 										new_reshare = reshare;
 
@@ -259,8 +259,8 @@ int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
         if (!chk_ctab(card->caid, &cl->ctab))
                 return 0;
 
-        //Check reshare/maxdown:
-        if (!cfg.cc_ignore_reshare && !cl->account->cccignorereshare && !card->maxdown)
+        //Check reshare
+        if (!cfg.cc_ignore_reshare && !cl->account->cccignorereshare && !card->reshare)
         		return 0;
         		
 		//Check account maxhops:
@@ -412,7 +412,7 @@ struct cc_card *create_card2(struct s_reader *rdr, int j, uint16 caid, uint8 hop
     card->remote_id = (rdr?(rdr->cc_id << 16):0x7F7F8000)|j;
     card->caid = caid;
     card->hop = hop;
-    card->maxdown = reshare;
+    card->reshare = reshare;
     card->origin_reader = rdr;
     return card;
 }

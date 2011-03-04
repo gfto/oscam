@@ -1526,7 +1526,7 @@ struct cc_card *read_card(uint8 *buf, int ext) {
 	card->remote_id = b2i(4, buf + 4);
 	card->caid = b2i(2, buf + 8);
 	card->hop = buf[10];
-	card->maxdown = buf[11];
+	card->reshare = buf[11];
 	memcpy(card->hexserial, buf + 12, 8); //HEXSERIAL!!
 
 	//cs_debug_mask(D_CLIENT, "cccam: card %08x added, caid %04X, hop %d, key %s, count %d",
@@ -1778,9 +1778,14 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	case MSG_NEW_CARD_SIDINFO: 
 	case MSG_NEW_CARD: {
 		uint16 caid = b2i(2, buf + 12);
+		//filter caid==0 and maxhop:
 		if (!caid || buf[14] >= rdr->cc_maxhop+1)
 			break;
 
+		//filter mindown:
+		if (buf[15] < rdr->cc_mindown)
+			break;
+			
 		//caid check
 		if (!chk_ctab(caid, &rdr->ctab))
 			break;
