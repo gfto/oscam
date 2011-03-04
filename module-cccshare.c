@@ -121,9 +121,13 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
                                 int reshare = (reader_reshare < usr_reshare) ? reader_reshare : usr_reshare;
                                 if (reshare < 0)
                                 		continue;
+                                		
+								int card_reshare = card->maxdown;
+								if (card->card_type == CT_REMOTECARD)
+										card_reshare--;
 
 								int new_reshare =
-                                		( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare : card->maxdown;
+                                		( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare : card_reshare;
 								if (new_reshare > reshare)
 										new_reshare = reshare;
 

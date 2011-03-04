@@ -1833,8 +1833,6 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			if (!old_card) {
 			    card->card_type = CT_REMOTECARD;
 				card->hop++; //inkrementing hop
-				if (card->maxdown > 0) //dekrementing reshare:
-						card->maxdown--;
 				ll_append(cc->cards, card);
 				set_au_data(cl, rdr, card, NULL);
 			}
