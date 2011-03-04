@@ -122,12 +122,8 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
                                 if (reshare < 0)
                                 		continue;
                                 		
-								int card_reshare = card->maxdown;
-								if (card->card_type == CT_REMOTECARD)
-										card_reshare--;
-
 								int new_reshare =
-                                		( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare : card_reshare;
+                                		( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare : card->maxdown;
 								if (new_reshare > reshare)
 										new_reshare = reshare;
 
@@ -944,9 +940,9 @@ void init_share() {
 		pthread_t temp;
         pthread_attr_t attr;
         pthread_attr_init(&attr);
-        #ifndef TUXBOX
+#ifndef TUXBOX
         pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
-        #endif
+#endif
         if (pthread_create(&temp, &attr, (void*)&share_updater, NULL))
         		cs_log("ERROR: can't create share updater thread!");
 		else {

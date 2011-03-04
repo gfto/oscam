@@ -2763,7 +2763,11 @@ int cc_cli_connect(struct s_client *cl) {
 	}
 		
 	if (is_connect_blocked(rdr)) {
-		cs_log("%s connection blocked, retrying later", rdr->label);
+		struct timeb cur_time;
+		cs_ftime(&cur_time);
+		int time = 1000*(rdr->tcp_block_connect_till.time-cur_time.time)
+				+rdr->tcp_block_connect_till.millitm-cur_time.millitm;
+		cs_log("%s connection blocked, retrying in %ds", rdr->label, time/1000);
 		return -1;
 	}
 	

@@ -1742,16 +1742,16 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 		if (show_global_list || (rdr->typ == R_CCCAM && rdr->enable == 1)) {
 
 			if (show_global_list) {
-					tpl_addVar(vars, TPLADD, "READERNAME", "");
-					tpl_addVar(vars, TPLADD, "APIHOST", "");
-					tpl_printf(vars, TPLADD, "APIHOSTPORT", "");
+					tpl_addVar(vars, TPLADD, "READERNAME", "GLOBAL");
+					tpl_addVar(vars, TPLADD, "APIHOST", "GLOBAL");
+					tpl_printf(vars, TPLADD, "APIHOSTPORT", "GLOBAL");
 			} else {	
 					tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 					tpl_addVar(vars, TPLADD, "APIHOST", rdr->device);
 					tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
 			}	
 
-			int caidcount = 0;
+			int cardcount = 0;
 			int providercount = 0;
 			int nodecount = 0;
 
@@ -1800,7 +1800,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 						tpl_printf(vars, TPLADD, "HOST", "%s:%d", rdr->device, rdr->r_port);
 						tpl_printf(vars, TPLADD, "CAID", "%04X", card->caid);
 					} else {
-						tpl_printf(vars, TPLADD, "APICARDNUMBER", "%d", caidcount);
+						tpl_printf(vars, TPLADD, "APICARDNUMBER", "%d", cardcount);
 						tpl_printf(vars, TPLADD, "APICAID", "%04X", card->caid);
 					}
 
@@ -1906,24 +1906,24 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					else
 						tpl_addVar(vars, TPLAPPEND, "CARDLIST", tpl_getTpl(vars, "APICCCAMCARDBIT"));
 
-					caidcount++;
+					cardcount++;
 				}
 
 				ll_iter_release(it);
 				
 				if (!apicall) {
-					tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", caidcount);
+					tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", cardcount);
 					tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
 				} else {
-					tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", caidcount);
+					tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", cardcount);
 				}
 
 			} else {
 				if (!apicall) {
 					tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTGENERICBIT"));
-					tpl_addVar(vars, TPLADD, "LOGHISTORY", "no cardfile found<BR>\n");
+					tpl_addVar(vars, TPLADD, "LOGHISTORY", "no cards found<BR>\n");
 				} else {
-					tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", caidcount);
+					tpl_printf(vars, TPLADD, "APITOTALCARDS", "%d", cardcount);
 				}
 			}
 

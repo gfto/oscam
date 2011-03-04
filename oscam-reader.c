@@ -160,7 +160,7 @@ int hostResolve(struct s_reader *rdr)
 }
 
 void clear_block_delay(struct s_reader *rdr) {
-   rdr->tcp_block_delay = 100;
+   rdr->tcp_block_delay = 0;
    cs_ftime(&rdr->tcp_block_connect_till);
 }
 
@@ -178,7 +178,7 @@ void block_connect(struct s_reader *rdr) {
 int is_connect_blocked(struct s_reader *rdr) {
   struct timeb cur_time;
   cs_ftime(&cur_time);
-  return (comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0);
+  return (rdr->tcp_block_delay && comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0);
 }
                 
 int network_tcp_connection_open()
@@ -218,7 +218,6 @@ int network_tcp_connection_open()
         if (getsockopt(sd, SOL_SOCKET, SO_ERROR, &r, (socklen_t*)&l) == 0) {
            if (r == 0) {
               fcntl(sd, F_SETFL, fl);
-              clear_block_delay(rdr);
               return sd; //now we are connected
            }
 	}
@@ -270,9 +269,6 @@ void network_tcp_connection_close(struct s_client *cl, int fd)
 			cl->udp_fd = 0;
 		if (fd == cl->pfd)
 			cl->pfd = 0;
-
-		if(reader)
-			clear_block_delay(reader);
 	}
 
 
