@@ -188,7 +188,8 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 
 		memset(cfg.ser_device, 0, sizeof(cfg.ser_device));
-		memset(&cfg.lb_retrylimittab, 0, sizeof(RETRYLIMITTAB));
+		memset(&cfg.lb_retrylimittab, 0, sizeof(CAIDVALUETAB));
+		memset(&cfg.lb_nbest_readers_tab, 0, sizeof(CAIDVALUETAB));
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);
@@ -209,12 +210,15 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "LBSAVEPATH", "%s", cfg.lb_savepath?cfg.lb_savepath:"");
 
 	tpl_printf(vars, TPLADD, "LBNBESTREADERS", "%d",cfg.lb_nbest_readers);
+	char *value = mk_t_caidvaluetab(&cfg.lb_nbest_readers_tab);
+	tpl_printf(vars, TPLADD, "LBNBESTPERCAID", value);
+	free(value);
 	tpl_printf(vars, TPLADD, "LBNFBREADERS", "%d",cfg.lb_nfb_readers);
 	tpl_printf(vars, TPLADD, "LBMINECMCOUNT", "%d",cfg.lb_min_ecmcount);
 	tpl_printf(vars, TPLADD, "LBMAXECEMCOUNT", "%d",cfg.lb_max_ecmcount);
 	tpl_printf(vars, TPLADD, "LBRETRYLIMIT", "%d",cfg.lb_retrylimit);
 	
-	char *value = mk_t_retrylimittab(&cfg.lb_retrylimittab);
+	value = mk_t_caidvaluetab(&cfg.lb_retrylimittab);
 	tpl_printf(vars, TPLADD, "LBRETRYLIMITS", value);
 	free(value);
 	

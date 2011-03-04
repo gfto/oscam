@@ -407,9 +407,18 @@ static int get_retrylimit(ECM_REQUEST *er) {
 		int i;
 		for (i = 0; i < cfg.lb_retrylimittab.n; i++) {
 				if (cfg.lb_retrylimittab.caid[i] == er->caid)
-						return cfg.lb_retrylimittab.time[i];
+						return cfg.lb_retrylimittab.value[i];
 		}
 		return cfg.lb_retrylimit;
+}
+
+static int get_nbest_readers(ECM_REQUEST *er) {
+		int i;
+		for (i = 0; i < cfg.lb_nbest_readers_tab.n; i++) {
+				if (cfg.lb_nbest_readers_tab.caid[i] == er->caid)
+						return cfg.lb_nbest_readers_tab.value[i];
+		}
+		return cfg.lb_nbest_readers;
 }
 
 /**	
@@ -573,7 +582,7 @@ int get_best_reader(ECM_REQUEST *er)
 	}
 	ll_iter_release(it);
 
-	int nbest_readers = cfg.lb_nbest_readers;
+	int nbest_readers = get_nbest_readers(er);
 	int nfb_readers = cfg.lb_nfb_readers;
 	if (nlocal_readers > nbest_readers) { //if we have local readers, we prefer them!
 		nlocal_readers = nbest_readers;
