@@ -1794,9 +1794,13 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
                 for (i = 0; i < ll_count(cards); i++) {
                     it  = ll_iter_create(cards);
                     while ((card = ll_iter_next(it))) {
-                        if (it->cur->nxt && card->hop > ((struct cc_card *)ll_iter_peek(it, 1))->hop) {
-                            it->cur->obj = it->cur->nxt->obj;
-                            it->cur->nxt->obj = card;
+                        if (it->cur->nxt) {
+							struct cc_card *card2 = ll_iter_peek(it, 1);
+							if (card->caid > card2->caid ||
+                        		(card->caid==card2->caid && card->hop > card2->hop)) {
+                        		it->cur->obj = it->cur->nxt->obj;
+                        		it->cur->nxt->obj = card;
+                        	}
                         }
                     }
                     ll_iter_release(it);
