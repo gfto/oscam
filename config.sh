@@ -62,17 +62,17 @@ print_components() {
 
 menu_addons() {
 	${DIALOG} --checklist "\nChoose add-ons:\n " $height $width $listheight \
-		WEBIF			"Web Interface"		$(check_test "WEBIF") \
-		HAVE_DVBAPI		"DVBAPI"		$(check_test "HAVE_DVBAPI") \
+		WEBIF				"Web Interface"		$(check_test "WEBIF") \
+		HAVE_DVBAPI			"DVBAPI"			$(check_test "HAVE_DVBAPI") \
 		IRDETO_GUESSING		"Irdeto Guessing"	$(check_test "IRDETO_GUESSING") \
-		CS_ANTICASC		"Anti Cascading"	$(check_test "CS_ANTICASC") \
-		WITH_DEBUG		"Debug Messages"	$(check_test "WITH_DEBUG") \
+		CS_ANTICASC			"Anti Cascading"	$(check_test "CS_ANTICASC") \
+		WITH_DEBUG			"Debug Messages"	$(check_test "WITH_DEBUG") \
 		CS_WITH_DOUBLECHECK	"ECM Doublecheck"	$(check_test "CS_WITH_DOUBLECHECK") \
-		CS_LED			"LED"			$(check_test "CS_LED") \
-		QBOXHD_LED		"QboxHD LED"		$(check_test "QBOXHD_LED") \
+		CS_LED				"LED"				$(check_test "CS_LED") \
+		QBOXHD_LED			"QboxHD LED"		$(check_test "QBOXHD_LED") \
 		CS_LOGHISTORY		"Log History"		$(check_test "CS_LOGHISTORY") \
-		MODULE_MONITOR		"Monitor"		$(check_test "MODULE_MONITOR") \
-		WITH_SSL		"OpenSSL Support"	$(check_test "WITH_SSL") \
+		MODULE_MONITOR		"Monitor"			$(check_test "MODULE_MONITOR") \
+		WITH_SSL			"OpenSSL Support"	$(check_test "WITH_SSL") \
 		2> ${tempfile}
 
 	opt=${?}
@@ -84,14 +84,14 @@ menu_addons() {
 
 menu_protocols() {
 	${DIALOG} --checklist "\nChoose protocols:\n " $height $width $listheight \
-		MODULE_CAMD33		"Camd 3.3"	$(check_test "MODULE_CAMD33") \
+		MODULE_CAMD33		"Camd 3.3"		$(check_test "MODULE_CAMD33") \
 		MODULE_CAMD35		"Camd 3.5 UDP"	$(check_test "MODULE_CAMD35") \
 		MODULE_CAMD35_TCP	"Camd 3.5 TCP"	$(check_test "MODULE_CAMD35_TCP") \
-		MODULE_NEWCAMD		"Newcamd"	$(check_test "MODULE_NEWCAMD") \
-		MODULE_CCCAM		"CCcam"		$(check_test "MODULE_CCCAM") \
-		MODULE_GBOX		"Qbox"		$(check_test "MODULE_GBOX") \
-		MODULE_RADEGAST		"Radegast"	$(check_test "MODULE_RADEGAST") \
-		MODULE_SERIAL		"Serial"	$(check_test "MODULE_SERIAL") \
+		MODULE_NEWCAMD		"Newcamd"		$(check_test "MODULE_NEWCAMD") \
+		MODULE_CCCAM		"CCcam"			$(check_test "MODULE_CCCAM") \
+		MODULE_GBOX			"Gbox"			$(check_test "MODULE_GBOX") \
+		MODULE_RADEGAST		"Radegast"		$(check_test "MODULE_RADEGAST") \
+		MODULE_SERIAL		"Serial"		$(check_test "MODULE_SERIAL") \
 		MODULE_CONSTCW		"Constant CW"	$(check_test "MODULE_CONSTCW") \
 		2> ${tempfile}
 
@@ -105,14 +105,14 @@ menu_protocols() {
 menu_reader() {
 	${DIALOG} --checklist "\nChoose reader:\n " $height $width $listheight \
 		READER_NAGRA		"Nagravision"		$(check_test "READER_NAGRA") \
-		READER_IRDETO		"Irdeto"		$(check_test "READER_IRDETO") \
-		READER_CONAX		"Conax"			$(check_test "READER_CONAX") \
+		READER_IRDETO		"Irdeto"			$(check_test "READER_IRDETO") \
+		READER_CONAX		"Conax"				$(check_test "READER_CONAX") \
 		READER_CRYPTOWORKS	"Cryptoworks"		$(check_test "READER_CRYPTOWORKS") \
-		READER_SECA		"Seca"			$(check_test "READER_SECA") \
-		READER_VIACCESS		"Viaccess"		$(check_test "READER_VIACCESS") \
+		READER_SECA			"Seca"				$(check_test "READER_SECA") \
+		READER_VIACCESS		"Viaccess"			$(check_test "READER_VIACCESS") \
 		READER_VIDEOGUARD	"NDS Videoguard"	$(check_test "READER_VIDEOGUARD") \
-		READER_DRE		"DRE Crypt"		$(check_test "READER_DRE") \
-		READER_TONGFANG		"Tongfang"		$(check_test "READER_TONGFANG") \
+		READER_DRE			"DRE Crypt"			$(check_test "READER_DRE") \
+		READER_TONGFANG		"Tongfang"			$(check_test "READER_TONGFANG") \
 		2> ${tempfile}
 
 	opt=${?}

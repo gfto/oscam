@@ -147,9 +147,9 @@ void chk_retrylimittab(char *lbrlt, RETRYLIMITTAB *tab)
 {
 		int i;
 		char *ptr1, *ptr2;
-		
+
 		memset(tab, 0, sizeof(RETRYLIMITTAB));
-		
+
 		for (i = 0, ptr1 = strtok(lbrlt, ","); (i < CS_MAX_LB_RETRYLIMIT) && (ptr1); ptr1 = strtok(NULL, ",")) {
 				long caid, time;
 
@@ -171,7 +171,7 @@ char *mk_t_retrylimittab(RETRYLIMITTAB *tab)
 		int i, size = 2 + tab->n * (4 + 1 + 5 + 1); //caid + ":" + time + ","
 		char *buf = cs_malloc(&buf, size, SIGINT);
 		char *ptr = buf;
-				
+
 		for (i = 0; i < tab->n; i++) {
 				ptr += sprintf(ptr, "%s%04X:%d", i?",":"", tab->caid[i], tab->time[i]);
 		}
@@ -380,7 +380,7 @@ void chk_t_global(const char *token, char *value)
 					if(!cs_malloc(&(cfg.logfile), strlen(pch) + 1, -1)) continue;
 					else memcpy(cfg.logfile, pch, strlen(pch) + 1);
 				}
-			}			
+			}
 		}
 		return;
 	}
@@ -541,18 +541,18 @@ void chk_t_global(const char *token, char *value)
 		cfg.lb_retrylimit = strToIntVal(value, DEFAULT_RETRYLIMIT);
 		return;
 	}
-	
+
 	if (!strcmp(token, "lb_retrylimits")) {
 		chk_retrylimittab(value, &cfg.lb_retrylimittab);
 		return;
 	}
-	
+
 	if (!strcmp(token, "lb_savepath")) {
 		NULLFREE(cfg.lb_savepath);
 		cfg.lb_savepath = strnew(value);
 		return;
 	}
-	
+
 	if (!strcmp(token, "lb_stat_cleanup")) {
 		cfg.lb_stat_cleanup = strToIntVal(value, DEFAULT_LB_STAT_CLEANUP);
 		return;
@@ -994,12 +994,12 @@ void chk_t_cccam(char *token, char *value)
 		cfg.cc_ignore_reshare = strToIntVal(value, 0);
 		return;
 	}
-	
+
 	if (!strcmp(token, "forward_origin_card")) {
 		cfg.cc_forward_origin_card = strToIntVal(value, 0);
 		return;
 	}
-	
+
 	// cccam version
 	if (!strcmp(token, "version")) {
 		if (strlen(value) > sizeof(cfg.cc_version) - 1) {
@@ -2424,7 +2424,7 @@ int write_server()
 			if (strlen(value) > 0)
 				fprintf_conf(f, CONFVARWIDTH, "savenano", "%s\n", value);
 			free(value);
-			
+
 			//blocknano
 			value = mk_t_nano(rdr, 0x01);
 			if (strlen(value) > 0)
@@ -2511,11 +2511,6 @@ void write_versionfile() {
 #else
 	  fprintf(fp, "Dvbapi support:            no\n");
 #endif
-#ifdef MODULE_GBOX
-	  fprintf(fp, "Gbox support:              yes\n");
-#else
-	  fprintf(fp, "Gbox support:              no\n");
-#endif
 #ifdef CS_ANTICASC
 	  fprintf(fp, "Anticasc support:          yes\n");
 #else
@@ -2580,6 +2575,11 @@ void write_versionfile() {
 	  fprintf(fp, "Cccam:                     yes\n");
 #else
 	  fprintf(fp, "Cccam:                     no\n");
+#endif
+#ifdef MODULE_GBOX
+	  fprintf(fp, "Gbox:                      yes\n");
+#else
+	  fprintf(fp, "Gbox:                      no\n");
 #endif
 #ifdef MODULE_RADEGAST
 	  fprintf(fp, "Radegast:                  yes\n");
@@ -2665,7 +2665,7 @@ int init_free_userdb(struct s_auth *ptr) {
 		ptr = ptr_next;
 	}
 	cs_log("userdb %d accounts freed", nro);
-	
+
 	return nro;
 }
 
@@ -2933,7 +2933,7 @@ int init_srvid()
 	char *payload;
 	struct s_srvid *srvid=NULL, *new_cfg_srvid=NULL;
 	sprintf(token, "%s%s", cs_confdir, cs_srid);
-	
+
 
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (err=%d), no service-id's loaded", token, errno);
@@ -3001,7 +3001,7 @@ int init_srvid()
 	else{
 		cs_log("oscam.srvid loading failed, old format");
 	}
-	
+
 	//this allows reloading of srvids, so cleanup of old data is needed:
 	srvid = cfg.srvid; //old data
 	cfg.srvid = new_cfg_srvid; //assign after loading, so everything is in memory
@@ -3011,7 +3011,7 @@ int init_srvid()
 		free(srvid);
 		srvid = ptr;
 	}
-	
+
 	return(0);
 }
 
@@ -3075,7 +3075,7 @@ int init_tierid()
 	else{
 		cs_log("%s loading failed", cs_trid);
 	}
-	
+
 	//reload function:
 	tierid = cfg.tierid;
 	cfg.tierid = new_cfg_tierid;
@@ -3085,7 +3085,7 @@ int init_tierid()
 		free(tierid);
 		tierid = ptr;
 	}
-	
+
 	return(0);
 }
 
@@ -3866,7 +3866,7 @@ int init_readerdb()
 		}
 	}
 	ll_iter_release(itr);
-	
+
 	fclose(fp);
 	return(0);
 }
@@ -4251,7 +4251,7 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
 	for(i = 0; i < 256; ++i)
 		if((rdr->b_nano[i] & flag))
 			needed++;
-			
+
 	char *value;
 	if (needed == 256) {
 		if(!cs_malloc(&value, (3 * sizeof(char)) + 1, -1)) return "";
@@ -4298,12 +4298,12 @@ char *mk_t_service( uint64 sidtabok, uint64 sidtabno){
 char *mk_t_logfile(){
 	int pos = 0, needed = 1;
 	char *value, *dot = "";
-	
+
 	if(cfg.logtostdout == 1) needed += 7;
 	if(cfg.logtosyslog == 1) needed += 7;
 	if(cfg.logfile != NULL) needed += strlen(cfg.logfile);
 	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
-		
+
 	if(cfg.logtostdout == 1){
 		pos += sprintf(value + pos, "stdout");
 		dot = ";";
