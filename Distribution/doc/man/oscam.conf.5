@@ -662,24 +662,30 @@ CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of loca
 \fBau\fP = \fB0\fP|\fB1\fP|\fB2\fP
 .RS 3n
 AU mode:
+
  \fB0\fP = disable AU, default
  \fB1\fP = enable AU
- \fB2\fP = enable AU, override AU settings of client, set answering reader as AU reader
+ \fB2\fP = enable AU, override AU settings of client, 
+     set answering reader as AU reader
 .RE
 .PP
-\fBpmt_mode\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP|\fB4\fP
+\fBpmt_mode\fP = \fB0\fP|\fB1\fP|\fB2\fP|\fB3\fP|\fB4\fP|\fB5\fP
 .RS 3n
 PMT mode:
+
  \fB0\fP = use camd.socket and PMT file, default
  \fB1\fP = disable reading PMT file
  \fB2\fP = disable camd.socket
  \fB3\fP = read PMT file on startup only
  \fB4\fP = do not use signal handler for monitoring /tmp
+ \fB5\fP = do not use signal handler for monitoring /tmp, 
+     disable camd.socket
 .RE
 .PP
 \fBrequest_mode\fP = \fB0\fP|\fB1\fP
 .RS 3n
 CAID request mode:
+
  \fB0\fP = try all possible CAIDs one by one, default
  \fB1\fP = try all CAIDs simultaneously
 .RE
