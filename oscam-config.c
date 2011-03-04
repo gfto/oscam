@@ -2153,16 +2153,12 @@ int write_userdb(struct s_auth *authptr)
 		if (account->autoau == 1)
 			fprintf_conf(f, CONFVARWIDTH, "au", "1\n");
 		else if (account->aureader_list) {
-			struct s_reader *rdr;
-			LL_ITER *itr = ll_iter_create(account->aureader_list);
-			char *dot = "";
-			fprintf_conf(f, CONFVARWIDTH, "au", "");
-			while ((rdr = ll_iter_next(itr))) {
-				fprintf(f, "%s%s", dot, rdr->label);
-				dot = ",";
-			}
-			ll_iter_release(itr);
-			fprintf(f, "\n");
+
+			value = mk_t_aureader(account);
+			if (strlen(value) > 0)
+				fprintf_conf(f, CONFVARWIDTH, "au", "%s\n", value);
+			free(value);
+
 		}
 
 		value = mk_t_service((uint64)account->sidtabok, (uint64)account->sidtabno);
@@ -4228,6 +4224,25 @@ char *mk_t_newcamd_port(){
 		}
 		dot1=";";
 	}
+	return value;
+}
+
+char *mk_t_aureader(struct s_auth *account){
+	int pos = 0;
+	char *dot = "";
+
+	char *value;
+	if(!cs_malloc(&value, 256 * sizeof(char), -1)) return "";
+	value[0] = '\0';
+
+	struct s_reader *rdr;
+	LL_ITER *itr = ll_iter_create(account->aureader_list);
+	while ((rdr = ll_iter_next(itr))) {
+		pos += sprintf(value + pos, "%s%s", dot, rdr->label);
+		dot = ",";
+	}
+	ll_iter_release(itr);
+
 	return value;
 }
 

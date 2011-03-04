@@ -1484,14 +1484,9 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	if (account->autoau == 1)
 		tpl_addVar(vars, TPLADD, "AUREADER", "1");
 	else if (account->aureader_list) {
-		struct s_reader *rdr;
-		LL_ITER *itr = ll_iter_create(account->aureader_list);
-		char *dot = "";
-		while ((rdr = ll_iter_next(itr))) {
-			tpl_printf(vars, TPLAPPEND, "AUREADER", "%s%s", dot, rdr->label);
-			dot = ",";
-		}
-		ll_iter_release(itr);
+		value = mk_t_aureader(account);
+		tpl_addVar(vars, TPLADD, "AUREADER", value);
+		free(value);
 	}
 
 	/* SERVICES */
