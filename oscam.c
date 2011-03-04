@@ -146,7 +146,7 @@ static void usage()
   fprintf(stderr, "\tsee http://streamboard.gmc.to/oscam/ for more details\n");
   fprintf(stderr, "\tbased on Streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n");
   fprintf(stderr, "\tThis program is distributed under GPL.\n");
-  fprintf(stderr, "\tinbuilt addons: ");
+  fprintf(stderr, "\tinbuilt add-ons: ");
 #ifdef WEBIF
   fprintf(stderr, "webinterface ");
 #endif
@@ -218,7 +218,7 @@ static void usage()
 #ifdef MODULE_CONSTCW
   fprintf(stderr, "constcw ");
 #endif
-  fprintf(stderr, "\n\tinbuilt cardreader: ");
+  fprintf(stderr, "\n\tinbuilt cardreaders: ");
 #ifdef READER_NAGRA
   fprintf(stderr, "nagra ");
 #endif
