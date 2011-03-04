@@ -117,14 +117,13 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
 								int usr_reshare = cl->account->cccreshare;
                                 int usr_ignorereshare = cl->account->cccignorereshare;
                                 
-                                int reader_reshare = card->origin_reader->cc_reshare;
+                                int reader_reshare = card->origin_reader?card->origin_reader->cc_reshare:cfg.cc_reshare;
                                 int reshare = (reader_reshare < usr_reshare) ? reader_reshare : usr_reshare;
                                 if (reshare < 0)
                                 		continue;
 
 								int new_reshare =
-                                		( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare
-                                                    : (card->maxdown - 1);
+                                		( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare : card->maxdown;
 								if (new_reshare > reshare)
 										new_reshare = reshare;
 
@@ -261,7 +260,7 @@ int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
                 return 0;
 
         //Check reshare/maxdown:
-        if (!cfg.cc_ignore_reshare && !cl->account->cccignorereshare && !card->maxdown > 0)
+        if (!cfg.cc_ignore_reshare && !cl->account->cccignorereshare && !card->maxdown)
         		return 0;
         		
 		//Check account maxhops:
