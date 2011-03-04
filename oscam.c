@@ -82,16 +82,16 @@ int cs_check_v(uint ip, int add) {
 		LL_ITER *itr = ll_iter_create(cfg.v_list);
 		V_BAN *v_ban_entry;
 		int ftime = cfg.failbantime*60;
-		
+
 		//run over all banned entries to do housekeeping:
 		while ((v_ban_entry=ll_iter_next(itr))) {
-		
+
 			// housekeeping:
 			if ((now - v_ban_entry->v_time) >= ftime) { // entry out of time->remove
 				ll_iter_remove_data(itr);
 				continue;
                         }
-                        
+
 			if (ip == v_ban_entry->v_ip) {
 			        result=1;
 			        if (!add) {
@@ -107,7 +107,7 @@ int cs_check_v(uint ip, int add) {
                                 else {
         				cs_debug_mask(D_TRACE, "failban: banned ip %s - already exist in list", cs_inet_ntoa(v_ban_entry->v_ip));
                                 }
-	        			
+
 			}
 		}
 		if (add && !result) {
@@ -146,9 +146,12 @@ static void usage()
   fprintf(stderr, "\tsee http://streamboard.gmc.to/oscam/ for more details\n");
   fprintf(stderr, "\tbased on Streamboard mp-cardserver v0.9d - (w) 2004-2007 by dukat\n");
   fprintf(stderr, "\tThis program is distributed under GPL.\n");
-  fprintf(stderr, "\tinbuilt modules: ");
+  fprintf(stderr, "\tinbuilt addons: ");
 #ifdef WEBIF
   fprintf(stderr, "webinterface ");
+#endif
+#ifdef MODULE_MONITOR
+  fprintf(stderr, "monitor ");
 #endif
 #ifdef WITH_SSL
   fprintf(stderr, "openssl ");
@@ -187,13 +190,7 @@ static void usage()
 #ifdef HAVE_PCSC
   fprintf(stderr, "pcsc ");
 #endif
-#ifdef MODULE_GBOX
-  fprintf(stderr, "gbox ");
-#endif
   fprintf(stderr, "\n\tinbuilt protocols: ");
-#ifdef MODULE_MONITOR
-  fprintf(stderr, "monitor ");
-#endif
 #ifdef MODULE_CAMD33
   fprintf(stderr, "camd33 ");
 #endif
@@ -208,6 +205,9 @@ static void usage()
 #endif
 #ifdef MODULE_CCCAM
   fprintf(stderr, "cccam ");
+#endif
+#ifdef MODULE_GBOX
+  fprintf(stderr, "gbox ");
 #endif
 #ifdef MODULE_RADEGAST
   fprintf(stderr, "radegast ");
@@ -468,8 +468,8 @@ void clear_system_stats()
   first_client->emmok = 0;
   first_client->emmnok = 0;
 }
-#endif                    
-                                
+#endif
+
 void cs_accounts_chk()
 {
   struct s_auth *old_accounts = cfg.account;
@@ -492,7 +492,7 @@ void cs_accounts_chk()
   cs_reinit_clients(new_accounts);
   cfg.account = new_accounts;
   init_free_userdb(old_accounts);
-  
+
 #ifdef CS_ANTICASC
 //	struct s_client *cl;
 //	for (cl=first_client->next; cl ; cl=cl->next)
@@ -511,11 +511,11 @@ void nullclose(int *fd)
 	close(f); //then close fd
 }
 
-static void cleanup_ecmtasks(struct s_client *cl) 
+static void cleanup_ecmtasks(struct s_client *cl)
 {
         if (!cl->ecmtask)
                 return;
-                
+
         int i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
         ECM_REQUEST *ecm;
         for (i=0; i<n; i++) {
@@ -595,11 +595,11 @@ static void cs_cleanup()
 
         //cleanup clients:
         struct s_client *cl;
-        for (cl=first_client->next; cl; cl=cl->next) { 
+        for (cl=first_client->next; cl; cl=cl->next) {
                 if (cl->typ=='c')
                         kill_thread(cl);
         }
-        
+
         //cleanup readers:
         struct s_reader *rdr;
         for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
@@ -680,9 +680,9 @@ void cs_exit(int sig)
 
 	cs_log("cardserver down");
 	cs_close_log();
-	
+
 	cs_cleanup();
-	
+
 	if (!exit_oscam)
 	  exit_oscam = sig?sig:1;
 }
@@ -729,7 +729,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 				cl->ac_idx	= account->ac_idx;
 				cl->ac_penalty= account->ac_penalty;
 				cl->ac_limit	= (account->ac_users * 100 + 80) * cfg.ac_stime;
-#endif				
+#endif
 			} else {
 				if (ph[cl->ctyp].type & MOD_CONN_NET) {
 					cs_debug_mask(D_TRACE, "client '%s', thread=%8X not found in db (or password changed)", cl->account->usr, cl->thread);
@@ -789,7 +789,7 @@ struct s_client * create_client(in_addr_t ip) {
 		cl->fd_m2c = fdp[1]; //store client read fd
 		cl->ip=ip;
 		cl->account = first_client->account;
-		
+
 		//master part
 		cl->stat=1;
 
@@ -1746,14 +1746,14 @@ ECM_REQUEST *get_ecmtask()
 		cs_log("WARNING: ecm pending table overflow !");
 	else
 	{
-			
-                LLIST *save = er->matching_rdr;                
+
+                LLIST *save = er->matching_rdr;
 		memset(er, 0, sizeof(ECM_REQUEST));
 		er->rc=E_UNHANDLED;
 		er->cpti=n;
 		er->client=cl;
 		cs_ftime(&er->tps);
-		
+
 		if (cl->typ=='c') { //for clients only! Not for readers!
   		  if (save) {
 		    ll_clear(save);
@@ -1761,12 +1761,12 @@ ECM_REQUEST *get_ecmtask()
                   }
                   else
                     er->matching_rdr = ll_create();
-                    
+
                     //cs_log("client %s ECMTASK %d multi %d ctyp %d", username(cl), n, (ph[cl->ctyp].multi)?CS_MAXPENDING:1, cl->ctyp);
                 }
 	}
-	
-	
+
+
 	return(er);
 }
 
@@ -1808,7 +1808,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 				snprintf(sby, sizeof(sby)-1, " by %s", er->selected_reader->label);
 	}
 	else {
-			struct s_reader *err_reader = er->selected_reader; 
+			struct s_reader *err_reader = er->selected_reader;
 			if (!err_reader) err_reader = ll_has_elements(er->matching_rdr);
 			if (err_reader)
 					snprintf(sby, sizeof(sby)-1, " by %s", err_reader->label);
@@ -1817,7 +1817,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	if (er->rcEx)
 		snprintf(erEx, sizeof(erEx)-1, "rejected %s%s", stxtWh[er->rcEx>>4],
 				stxtEx[er->rcEx&0xf]);
-				
+
 
 
 	if(cfg.mon_appendchaninfo)
@@ -2157,7 +2157,7 @@ static void guess_cardsystem(ECM_REQUEST *er)
 /**
  * sends the ecm request to the readers
  * ECM_REQUEST er : the ecm
- * int flag : 0=primary readers (no fallback) 
+ * int flag : 0=primary readers (no fallback)
  *            1=all readers (primary+fallback)
  * int reader_types : 0=all readsers
  *                    1=Hardware/local readers
@@ -2179,7 +2179,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 	for (ptr = er->matching_rdr->initial; ptr; ptr = ptr->nxt) {
 	        if (!flag && ptr == er->fallback)
 	          break;
-	        
+
 		rdr = (struct s_reader*)ptr->obj;
 
 		int status = 0;
@@ -2381,8 +2381,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 	else
 			locked=0;
-			
-	
+
+
 	//Schlocke: above checks could change er->rc so
 	if (er->rc >= E_UNHANDLED) {
 		/*BetaCrypt tunneling
@@ -2405,7 +2405,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		// cache1
 		if (check_cwcache1(er, client->grp))
 				er->rc = E_CACHE1;
-				
+
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);
 #endif
@@ -2421,7 +2421,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 						er->fallback=ll_append(er->matching_rdr, rdr);
 					else
 						ll_append(er->matching_rdr, rdr);
-					
+
 				}
 				else {
 					ll_prepend(er->matching_rdr, rdr);
@@ -2451,15 +2451,15 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			if (er->matching_rdr->initial == er->fallback) { //fallbacks only
 					er->fallback = NULL; //switch them
 			}
-		
+
 		//we have to go through matching_reader() to check services!
 		if (er->rc == E_UNHANDLED && check_and_store_ecmcache(er, client->grp))
 				er->rc = E_99;
 	}
-	
+
 	if (locked)
 		pthread_mutex_unlock(&get_cw_lock);
-	
+
 	if (er->rc == E_99)
 			return; //ECM already requested / found in ECM cache
 
@@ -2526,7 +2526,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			if (aureader->csystem.active)
 				cs=&aureader->csystem;
 		}
-			
+
 		if (cs && cs->get_emm_type) {
 			if(!cs->get_emm_type(ep, aureader)) {
 				cs_debug_mask(D_EMM, "emm skipped, get_emm_type() returns error, reader %s", aureader->label);
@@ -2655,7 +2655,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			int act=1;
 			er=&cl->ecmtask[i];
 
-			//additional cache check:			
+			//additional cache check:
 			if (check_cwcache2(er)) {
 					//cs_log("found lost entry in cache! %s %04X&%06X/%04X", username(cl), er->caid, er->prid, er->srvid);
 					er->rc = E_CACHE2;
@@ -2673,8 +2673,8 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 
 				LL_NODE *ptr;
 				for (ptr = er->matching_rdr->initial; ptr && ptr != er->fallback; ptr = ptr->nxt)
-					if (!cfg.preferlocalcards || 
-								(cfg.preferlocalcards && !er->locals_done && (!(((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK))) || 
+					if (!cfg.preferlocalcards ||
+								(cfg.preferlocalcards && !er->locals_done && (!(((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK))) ||
 								(cfg.preferlocalcards && er->locals_done && (((struct s_reader*)ptr->obj)->typ & R_IS_NETWORK)))
 								act=0;
 
@@ -2729,7 +2729,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					tpc.millitm += tt % 1000;
 				}
 			}
-			
+
 			//build_delay(&tpe, &tpc);
 			if (comp_timeb(&tpe, &tpc)>0) {
 				tpe.time=tpc.time;
@@ -3243,7 +3243,7 @@ if (pthread_key_create(&getclient, NULL)) {
   //Todo #ifdef CCCAM
   init_provid();
 
-  start_garbage_collector();        
+  start_garbage_collector();
 
   init_len4caid();
 #ifdef IRDETO_GUESSING
@@ -3273,7 +3273,7 @@ if (pthread_key_create(&getclient, NULL)) {
   if (openxcas_open_with_smartcard("oscamCAS") < 0) {
 #else
   if (openxcas_open("oscamCAS") < 0) {
-#endif  
+#endif
     cs_log("openxcas: could not init");
   }
 #endif
@@ -3379,9 +3379,9 @@ if (pthread_key_create(&getclient, NULL)) {
 #endif
 
 		cs_cleanup();
-		
+
         stop_garbage_collector();
-        
+
 	return exit_oscam;
 }
 
