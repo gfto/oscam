@@ -875,8 +875,15 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 			if (strcmp((*params).params[i], "action"))
 				chk_reader((*params).params[i], (*params).values[i], newrdr);
 		}
+		if (newrdr->typ & R_IS_CASCADING) {
+			for (i=0; i<CS_MAX_MOD; i++) {
+				if (ph[i].num && newrdr->typ==ph[i].num) {
+					newrdr->ph=ph[i];
+					newrdr->ph.active=1;
+				}
+			}
+		}
 		reader_ = newrdr->label;
-
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
 		rdr = get_reader_by_label(getParam(params, "label"));
