@@ -146,6 +146,9 @@ DESCRIPTIONS
        lb_nfb_readers = counts
 	  set count of fallback readers for loadbalancing, default:1
 
+       lb_nbest_percaid = CAID1:count1[,CAID2:count2]...
+	  set count of best readers per CAIDs for loadbalancing, default:none
+
        lb_min_ecmcount = counts
 	  minimal ECM count to evaluate loadbalancing values, default:5
 
@@ -167,7 +170,7 @@ DESCRIPTIONS
        lb_use_locking = 0|1
 	  1 = disable parallel and identical loadbalancing ECM requests, default:0
 
-       lb_retrylimits = CAID:time[,CAID:time]...
+       lb_retrylimits = CAID1:time1[,CAID2:time2]...
 	  loadbalancing retry limit time per CAID, default:none
 
    The [monitor] section

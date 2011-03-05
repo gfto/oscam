@@ -185,7 +185,7 @@ loadbalance mode:
      higher is usage level
 .RE
 .PP
-\fBlb_save\fP = \fB0\fP|\fBcounts\fP 
+\fBlb_save\fP = \fB0\fP|\fBcounts\fP
 .RS 3n
 save autoloadbalance statistics:
 
@@ -204,6 +204,11 @@ set count of best readers for loadbalancing, default:1
 \fBlb_nfb_readers\fP = \fBcounts\fP
 .RS 3n
 set count of fallback readers for loadbalancing, default:1
+.RE
+.PP
+\fBlb_nbest_percaid\fP = \fBCAID1:count1[,CAID2:count2]...\fP
+.RS 3n
+set count of best readers per CAIDs for loadbalancing, default:none
 .RE
 .PP
 \fBlb_min_ecmcount\fP = \fBcounts\fP
@@ -241,7 +246,7 @@ hours after the loadbalancing statistics will be deleted, default:336
 1 = disable parallel and identical loadbalancing ECM requests, default:0
 .RE
 .PP
-\fBlb_retrylimits\fP = \fBCAID:time[,CAID:time]...\fP
+\fBlb_retrylimits\fP = \fBCAID1:time1[,CAID2:time2]...\fP
 .RS 3n
 loadbalancing retry limit time per CAID, default:none
 .RE
