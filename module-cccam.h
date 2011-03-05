@@ -169,7 +169,6 @@ struct cc_data {
 
 	int max_ecms;
 	int ecm_counter;
-	LLIST *reported_carddatas; //struct cc_reported_carddata //struct cc_reported_carddata
 	int card_added_count;
 	int card_removed_count;
 	int card_dup_count;

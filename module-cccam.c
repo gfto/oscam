@@ -1415,7 +1415,6 @@ void cc_free(struct s_client *cl) {
 	if (!cl->cc) return;
 	cl->cc=NULL;
 	cc_free_cardlist(cc->cards, TRUE);
-	cc_free_reported_carddata(cc->reported_carddatas, NULL, FALSE);
 	ll_destroy_data(cc->pending_emms);
 	if (cc->extended_ecm_idx)
 		free_extended_ecm_idx(cc);
@@ -1982,7 +1981,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 
 				if (cfg.cc_forward_origin_card) { //search my shares for this card:
 						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, server_card->id);
-						LL_ITER *itr = ll_iter_create(cc->reported_carddatas);
+						LL_ITER *itr = ll_iter_create(get_and_lock_sharelist());
 						struct cc_card *card;
 						struct cc_card *rcard = NULL;
 						while ((card=ll_iter_next(itr))) {
@@ -2007,6 +2006,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 								}
 								else
 										rcard = card;
+								er->origin_reader = rdr;
 						}
 						
 						er->origin_card = rcard;
@@ -2018,6 +2018,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 						else
 								cs_debug_mask(D_TRACE, "%s forward card: share %d forwarded to %s origin as id %d", getprefix(), 
 										card->id, card->origin_reader->label, rcard->id);
+						unlock_sharelist();
 				}
 						
 				cs_debug_mask(
