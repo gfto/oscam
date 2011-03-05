@@ -308,13 +308,18 @@ void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int len)
 
 int dvbapi_find_emmpid(int demux_id, uint8 type) {
 	int k;
+	int bck = -1;
 	for (k=0; k<demux[demux_id].EMMpidcount; k++) {
 		if (demux[demux_id].EMMpids[k].CAID == demux[demux_id].ECMpids[demux[demux_id].pidindex].CAID
-		 && (demux[demux_id].EMMpids[k].PROVID == demux[demux_id].ECMpids[demux[demux_id].pidindex].PROVID || !demux[demux_id].ECMpids[demux[demux_id].pidindex].PROVID || !demux[demux_id].EMMpids[k].PROVID)
+		 && demux[demux_id].EMMpids[k].PROVID == demux[demux_id].ECMpids[demux[demux_id].pidindex].PROVID
 		 && demux[demux_id].EMMpids[k].type & type)
 			return k;
+		else if (demux[demux_id].EMMpids[k].CAID == demux[demux_id].ECMpids[demux[demux_id].pidindex].CAID
+		 && (!demux[demux_id].EMMpids[k].PROVID || !demux[demux_id].ECMpids[demux[demux_id].pidindex].PROVID)
+		 && (demux[demux_id].EMMpids[k].type & type) && bck == -1)
+			bck = k;
 	}
-	return -1;
+	return bck;
 }
 
 void dvbapi_start_emm_filter(int demux_index) {

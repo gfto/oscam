@@ -2316,6 +2316,8 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		client->last_srvid = i;
 		client->last_caid = m;
 
+		int ecm_len = (((er->ecm[1] & 0x0F) << 8) | er->ecm[2]) + 3;
+
 		for (j = 0; (j < 6) && (er->rc >= E_UNHANDLED); j++)
 		{
 			switch(j) {
@@ -2359,11 +2361,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 				case 5:
 					// corrupt
-					if( (i = er->l - (er->ecm[2] + 3)) ) {
+					if( (i = er->l - ecm_len) ) {
 						if (i > 0) {
-							cs_debug_mask(D_TRACE, "warning: ecm size adjusted from 0x%X to 0x%X",
-							er->l, er->ecm[2] + 3);
-							er->l = (er->ecm[2] + 3);
+							cs_debug_mask(D_TRACE, "warning: ecm size adjusted from 0x%X to 0x%X", er->l, ecm_len);
+							er->l = ecm_len;
 						}
 						else
 							er->rc = E_CORRUPT;
