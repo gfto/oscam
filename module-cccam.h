@@ -171,7 +171,6 @@ struct cc_data {
 	int ecm_counter;
 	int card_added_count;
 	int card_removed_count;
-	int card_dup_count;
 	uint8 just_logged_in; //true for checking NOK direct after login
 	uint8 key_table; //key for CMD 0B
 

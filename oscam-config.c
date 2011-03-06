@@ -1015,14 +1015,6 @@ void chk_t_cccam(char *token, char *value)
 		strncpy((char*)cfg.cc_version, value, sizeof(cfg.cc_version) - 1);
 		return;
 	}
-	// cccam: Update cards interval
-	if (!strcmp(token, "updateinterval")) {
-		if (value[0] == '-')
-			cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
-		else
-			cfg.cc_update_interval = strToIntVal(value, DEFAULT_UPDATEINTERVAL);
-		return;
-	}
 
 	// cccam: Kind of card updates
 	if (!strcmp(token, "minimizecards")) {
@@ -1352,7 +1344,6 @@ int init_config()
 	strcpy(cfg.ac_logfile, "./oscam_ac.log");
 #endif
 #ifdef MODULE_CCCAM
-	cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
 	cfg.cc_keep_connected = 1;
 #endif
 	sprintf(token, "%s%s", cs_confdir, cs_conf);
@@ -1997,7 +1988,6 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "ignorereshare", "%d\n", cfg.cc_ignore_reshare);
 		fprintf_conf(f, CONFVARWIDTH, "forward_origin_card", "%d\n", cfg.cc_forward_origin_card);
 		fprintf_conf(f, CONFVARWIDTH, "version", "%s\n", cfg.cc_version);
-		fprintf_conf(f, CONFVARWIDTH, "updateinterval", "%d\n", cfg.cc_update_interval);
 		fprintf_conf(f, CONFVARWIDTH, "minimizecards", "%d\n", cfg.cc_minimize_cards);
 		fprintf_conf(f, CONFVARWIDTH, "keepconnected", "%d\n", cfg.cc_keep_connected);
 		fprintf_conf(f, CONFVARWIDTH, "stealth", "%d\n", cfg.cc_stealth);

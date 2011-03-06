@@ -18,6 +18,7 @@
 
 
 void init_share();
+void done_share();
 void add_share(struct cc_card *card);
 void remove_share(struct cc_card *card);
 

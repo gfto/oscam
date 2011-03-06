@@ -1609,6 +1609,7 @@ void cc_card_removed(struct s_client *cl, uint32 shareid) {
 			}		
 			free_extended_ecm_idx_by_card(cl, card);
 			cc_free_card(card);
+			cc->card_removed_count++;
 			//break;
 		}
 	}
@@ -1839,6 +1840,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				card->hop++; //inkrementing hop
 				ll_append(cc->cards, card);
 				set_au_data(cl, rdr, card, NULL);
+				cc->card_added_count++;
 			}
 		}
 
@@ -2698,12 +2700,15 @@ int cc_srv_connect(struct s_client *cl) {
 	cc->mode = CCCAM_MODE_NORMAL;
 	//some clients, e.g. mgcamd, does not support keepalive. So if not answered, keep connection
 	// check for client timeout, if timeout occurs try to send keepalive
-	while (cl->pfd)
+	while (cl->pfd && cl->udp_fd)
 	{
 		i = process_input(mbuf, sizeof(mbuf), 10);
 		if (i == -9) {
 			cmi += 10;
-			if (cmi >= cfg.cmaxidle) {
+			ulong cmaxidle = cfg.cmaxidle;
+			if (cmaxidle < 300)//300s=5min "O" CCcam idle time
+					cmaxidle = 300;
+			if (cmi >= cmaxidle) {
 				if (cfg.cc_keep_connected || cl->account->ncd_keepalive) {
 					if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
 						if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
