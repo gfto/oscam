@@ -330,10 +330,13 @@ static int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     return ERROR;
   }
 
-  ins40[2]=i;
+  ins40[2]=(ep->emm[ins40data_offset-2] & 0xF0) | (i & 0x0F);
   write_cmd(ins40, ep->emm + ins40data_offset); //emm request
   if (cta_res[0] == 0x97) {
-	 cs_log("[seca-reader] EMM: Update not necessary.");
+	 if (!(cta_res[1] & 4)) // date updated
+	 	set_provider_info(reader, i);
+	 else
+	 	cs_log("[seca-reader] EMM: Update not necessary.");
 	 return OK; //Update not necessary
   }
   if ((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19)))
