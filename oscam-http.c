@@ -890,7 +890,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
 		rdr = get_reader_by_label(getParam(params, "label"));
-		char servicelabels[255]="";
+		char servicelabels[512]="";
 
 		clear_caidtab(&rdr->ctab);
 		clear_ftab(&rdr->ftab);
@@ -1415,7 +1415,7 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	}
 
 	if((strcmp(getParam(params, "action"), "Save") == 0) || (strcmp(getParam(params, "action"), "Save As") == 0)) {
-		char servicelabels[255]="";
+		char servicelabels[512]="";
 		//clear group
 		account->grp = 0;
 		//clear caidtab before it re-readed by chk_t
