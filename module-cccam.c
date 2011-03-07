@@ -1431,8 +1431,8 @@ void cc_free(struct s_client *cl) {
 
 	pthread_mutex_unlock(&cc->cards_busy);
 	pthread_mutex_destroy(&cc->cards_busy);
-	free(cc->prefix);
-	free(cc);
+	add_garbage(cc->prefix);
+	add_garbage(cc);
 }
 
 int is_null_dcw(uint8 *dcw) {
