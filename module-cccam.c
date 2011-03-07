@@ -2626,6 +2626,15 @@ int cc_srv_connect(struct s_client *cl) {
 			cs_log("password for '%s' invalid!", usr);
 		return -2;
 	}
+	if (cl->dup) { //Dup login kills existing client!
+		struct s_client *cls;
+		for (cls=first_client; cls; cls=cls->next) {
+				if (cls != cl && cls->account == account) {
+						kill_thread(cls);
+						cl->dup = 0;
+				}
+		}
+	}
 	if (cl->dup) {
 		cs_log("account '%s' duplicate login, disconnect!", usr);
 		return -3;
