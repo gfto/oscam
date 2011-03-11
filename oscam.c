@@ -538,10 +538,10 @@ static void cleanup_thread(struct s_client *cl)
 	else
 		prev->next = cl2->next; //remove client from list
 
-        if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
+	if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
 		ph[cl->ctyp].cleanup(cl);
-        else if (cl->reader && cl->reader->ph.cleanup)
-                cl->reader->ph.cleanup(cl);
+    else if (cl->reader && cl->reader->ph.cleanup)
+        cl->reader->ph.cleanup(cl);
 
 	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
 	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
@@ -557,7 +557,7 @@ static void cleanup_thread(struct s_client *cl)
 	if (cl->reader) {
 		cl->reader->client = NULL;
 		cl->reader = NULL;
-        }
+    }
 	cleanup_ecmtasks(cl);
 	add_garbage(cl->emmcache);
 	add_garbage(cl->req);
@@ -674,6 +674,8 @@ void cs_exit(int sig)
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
 		set_signal_handler(SIGHUP  , 1, cs_reload_config);
 
+		cs_log("thread %8X exit!", pthread_self());
+		cs_sleepms(2000);
 		pthread_exit(NULL);
 		return;
 	}
@@ -1228,17 +1230,19 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 			{
 				cl->dup = 1;
 				cl->aureader_list = NULL;
-				cs_log("client(%8X) duplicate user '%s' from %s set to fake (uniq=%d)", cl->thread, usr, cs_inet_ntoa(ip), uniq);
+				cs_log("client(%8X) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)", 
+					cl->thread, usr, cs_inet_ntoa(ip), cs_inet_ntoa(cl->ip), uniq);
 				if (cl->failban & BAN_DUPLICATE) {
-					cs_add_violation(ip);
+					cs_add_violation(cl->ip);
 				}
 			}
 			else
 			{
 				client->dup = 1;
 				client->aureader_list = NULL;
-				cs_log("client(%8X) duplicate user '%s' from %s set to fake (uniq=%d)", pthread_self(), usr, cs_inet_ntoa(ip), uniq);
-				if (cl->failban & BAN_DUPLICATE) {
+				cs_log("client(%8X) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)", 
+					pthread_self(), usr, cs_inet_ntoa(cl->ip), cs_inet_ntoa(ip), uniq);
+				if (client->failban & BAN_DUPLICATE) {
 					cs_add_violation(ip);
 				}
 				break;

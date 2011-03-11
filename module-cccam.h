@@ -182,7 +182,6 @@ struct cc_data {
 	int server_ecm_pending;                    //initialized by server
 	ushort server_ecm_idx;
 	
-	pthread_mutex_t lock;
 	pthread_mutex_t lockcmd;
 	pthread_mutex_t ecm_busy;
 	pthread_mutex_t cards_busy;

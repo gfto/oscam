@@ -896,8 +896,6 @@ void update_card_list() {
 }
 
 int cc_srv_report_cards(struct s_client *cl) {
-		pthread_mutex_lock(&cc_shares_lock);
-
 		LL_ITER *it = ll_iter_create(reported_carddatas);
 		struct cc_card *card;
 		while ((card = ll_iter_next(it))) {
@@ -905,7 +903,6 @@ int cc_srv_report_cards(struct s_client *cl) {
 		}
 		ll_iter_release(it);
 
-		pthread_mutex_unlock(&cc_shares_lock);
 		return 1;
 }
 
@@ -916,21 +913,33 @@ void refresh_shares()
 		pthread_mutex_unlock(&cc_shares_lock);
 }
 
+#define DEFAULT_SHORT_INTERVAL 30
+
 void share_updater()
 {
+		int i = DEFAULT_SHORT_INTERVAL;
 		ulong last_check = 0;
+		ulong last_card_check = 0;
 		while (TRUE) {
-				cs_sleepms(1000);
+				if (i > 0 || cfg.cc_forward_origin_card) {
+						cs_sleepms(1000);
+						i--;
+				}
+				else
+				{
+						cs_sleepms(60*1000);
+				}
 				
 				ulong cur_check = 0;
+				ulong cur_card_check = 0;
 				struct s_reader *rdr;
 				for (rdr=first_active_reader; rdr; rdr=rdr->next) {
 						if (rdr->client && rdr->client->cc) { //check cccam-cardlist:
 								struct cc_data *cc = rdr->client->cc;
-								cur_check += cc->card_added_count;
-								cur_check += cc->card_removed_count;
+								cur_card_check += cc->card_added_count;
+								cur_card_check += cc->card_removed_count;
 						}
-						cur_check += crc32(0L, rdr->hexserial, 16); //check hexserial
+						cur_check += crc32(0L, rdr->hexserial, 8); //check hexserial
 						cur_check += crc32(0L, (uint8*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers
 						cur_check += crc32(0L, (uint8*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
 						cur_check += crc32(0L, (uint8*)&rdr->ftab, sizeof(rdr->ftab)); //check reader 
@@ -945,11 +954,19 @@ void share_updater()
 		        		cur_check += crc32(0L, (uint8*)ptr, sizeof(struct s_sidtab));
 				}
 				
-				//only update cardlist if something has changed:
+				//update cardlist if reader config has changed, also set interval to 1s / 30times
 				if (cur_check != last_check) {
-						cs_debug_mask(D_TRACE, "share-update %lu %lu", &cur_check, &last_check); 
+						i = DEFAULT_SHORT_INTERVAL;
+						cs_debug_mask(D_TRACE, "share-update [1] %u %u", cur_check, last_check); 
 						refresh_shares();
 						last_check = cur_check;
+						last_card_check = cur_card_check;
+				}
+				//update cardlist if cccam cards has changed:
+				else if (cur_card_check != last_card_check) {
+						cs_debug_mask(D_TRACE, "share-update [2] %u %u", cur_check, last_check); 
+						refresh_shares();
+						last_card_check = cur_card_check;
 				}
 		}
 }
