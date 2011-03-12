@@ -144,6 +144,8 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
                             {0x0627, 0x0608, "EGY", 946598400L},    // 30.12.1999, 16:00
                             {0x0662, 0x0608, "ITA", 944110500L},    // 01.12.1999, 23.55
                             {0x0664, 0x0608, "TUR", 946598400L},    // 31.12.1999, 00:00
+                            {0x0624, 0x0006, "CZE", 946598400L},    // 30.12.1999, 16:00 	//skyklink irdeto
+                            {0x0624, 0x0006, "SVK", 946598400L},    // 30.12.1999, 16:00	//skyklink irdeto
                             // {0x1702, 0x0384, "AUT", XXXXXXXXXL},     // -> we need the base date for this
                             // {0x1702, 0x0384, "GER", 888883200L},     // 02.03.1998, 16:00 -> this fixes some card but break others (S02).
                             {0x0, 0x0, "", 0L}
@@ -269,7 +271,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 	if (!memcmp(atr+4, "IRDETO", 6))
 		reader->acs57=0;
 	else {
-		if(!memcmp(atr+5, "IRDETO", 6)){
+		if((!memcmp(atr+5, "IRDETO", 6 ) || (atr[6]==0xC4 && atr[9]==0x8F && atr[10]==0xF1)) && reader->force_irdeto) {
 			reader->acs57=1;
 			acspadd=8;
 			cs_ri_log(reader, "Hist. Bytes: %s",atr+5);
@@ -278,9 +280,8 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 		}
 	}
 	cs_ri_log(reader, "detect irdeto card");
-
- 	if(check_filled(reader->rsa_mod, 64) > 0 && !reader->force_irdeto) // we use rsa from config as camkey
- 	{
+	if(check_filled(reader->rsa_mod, 64) > 0 && (!reader->force_irdeto || reader->acs57)) // we use rsa from config as camkey
+	{
 		cs_debug_mask(D_READER, "[irdeto-reader] using camkey data from config");
 		cs_debug_mask(D_READER, "[irdeto-reader]      camkey: %s", cs_hexdump (0, reader->nagra_boxkey, 8));
 		if (reader->acs57==1) {
@@ -338,10 +339,16 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 	} else {
 		reader_chk_cmd(sc_GetHEXSerial, 18);
 	}
-	memcpy(reader->hexserial, cta_res+12+acspadd, 8);
 	reader->nprov = cta_res[10+acspadd];
-	cs_ri_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+	if (reader->caid==0x0624) {
+		memcpy(reader->hexserial, cta_res+12+acspadd, 4);
+		cs_ri_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
+			reader->nprov, buf, cta_res[20], cta_res[21], cta_res[22], cta_res[23]);
+	} else {
+		memcpy(reader->hexserial, cta_res+12+acspadd, 8);
+		cs_ri_log(reader, "providers: %d, ascii serial: %s, hex serial: %02X%02X%02X, hex base: %02X",
 			reader->nprov, buf, cta_res[12], cta_res[13], cta_res[14], cta_res[15]);
+	}
 
 	/*
 	 * CardFile
@@ -373,7 +380,8 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 		case 0x1702: camkey = 1; break;
 		case 0x1722: camkey = 2; break;
 		case 0x1762: camkey = 3; break;
-		default    : camkey = 4; break;
+		case 0x0624: camkey = 4; break;
+		default    : camkey = 5; break;
 		}
 	}
 
@@ -389,6 +397,20 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 		break;
 	case 3:
 		reader_chk_cmd(sc_GetCamKey384FZ, 10);
+		break;
+	case 4:
+		{
+			int i,crc=61;
+			crc^=0x01, crc^=0x02, crc^=0x09;
+			crc^=sc_Acs57CamKey[2], crc^=sc_Acs57CamKey[3], crc^=(sc_Acs57CamKey[4]+1);
+			for(i=5;i<(int)sizeof(sc_Acs57CamKey);i++)
+				crc^=sc_Acs57CamKey[i];
+			sc_Acs57CamKey[69]=crc;
+			irdeto_do_cmd(reader, sc_Acs57CamKey, 0x9012, cta_res, &cta_lr);
+			int acslength=cta_res[cta_lr-1];
+			sc_Acs57_Cmd[4]=acslength;
+			reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
+		}
 		break;
 	default:
 		if(reader->acs57==1) {
@@ -438,7 +460,7 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 				case 0x09:
 					cs_log("[reader-irdeto] Maybe you don't have the entitlements for this channel");
 					break;
-				case 0x1F:
+				default:
 					cs_log("[reader-irdeto] Maybe you have a bad Cam Key set it from config file");
 					break;
 			}
@@ -538,7 +560,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
 	filter[0]=0xFF;
 
-	int numfilter = 3;
+	int numfilter = 4;
 
 	int base = rdr->hexserial[3];
 	int emm_g = base * 8;
@@ -547,11 +569,10 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 
 	filter[2]=GLOBAL;
 	filter[3]=0;
-	
 	filter[4+0]    = 0x82;
 	filter[4+0+16] = 0xFF;
 	filter[4+1]    = emm_g;
-	filter[4+1+16] = 0x0F; // why ignore base?, should be 0x07 for filter addrlen only
+	filter[4+1+16] = 0xFF;
 
 	filter[36]=SHARED;
 	filter[37]=0;
@@ -571,8 +592,16 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memcpy(filter+72+2, rdr->hexserial, 3);
 	memset(filter+72+2+16, 0xFF, 3);
 
-	int i, pos=104;
+	filter[104]=GLOBAL;
+	filter[105]=0;
+	filter[106+0]    = 0x82;
+	filter[106+16]   = 0xFF;
+	filter[106+1]    = 0x81;
+	filter[106+1+16] = 0xFF;
+	memcpy(filter+106+2, rdr->hexserial, 1);
+	memset(filter+106+2+16, 0xFF, 1);
 
+	int i, pos=138;
 	for(i = 0; i < rdr->nprov; i++) {
 		if (rdr->prid[i][1]==0xFF)
 			continue;
@@ -581,8 +610,8 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 		filter[pos+1]=0;
 		filter[pos+2+0]    = 0x82;
 		filter[pos+2+0+16] = 0xFF;
-		filter[pos+2+1]    = 0x02; // base = 0, len = 2
-		filter[pos+2+1+16] = 0xFF;
+		// filter[pos+2+1]    = 0x02; // base = 0, len = 2
+		// filter[pos+2+1+16] = 0xFF;
 		memcpy(filter+pos+2+2, &rdr->prid[i][1], 2);
 		memset(filter+pos+2+2+16, 0xFF, 2);
 		pos+=34;
@@ -638,15 +667,22 @@ static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 				}else{
 					dataLen=ep->emm[2];
 				}
+				if (ep->type==GLOBAL && reader->caid==0x0624) dataLen+=2;
 				int crc=63;
 				sc_Acs57Emm[4]=dataLen;
-                                memcpy(&cta_cmd, sc_Acs57Emm, sizeof(sc_Acs57Emm));
+				memcpy(&cta_cmd, sc_Acs57Emm, sizeof(sc_Acs57Emm));
 				crc^=0x01;crc^=0x01;crc^=0x00;crc^=0x00;crc^=0x00;crc^=(dataLen-1);
-				memcpy(&cta_cmd[5],&ep->emm[3],7);
-				if(ep->type==UNIQUE){
-					memcpy(&cta_cmd[10],&ep->emm[10],dataLen-5);
-				}else{
-                                        memcpy(&cta_cmd[10],&ep->emm[9],dataLen-6);
+				memcpy(&cta_cmd[5],&ep->emm[3],10);
+				if (ep->type==UNIQUE) {
+					memcpy(&cta_cmd[9],&ep->emm[9],dataLen-4);
+				} else {
+					if (ep->type==GLOBAL && reader->caid==0x0624) {
+						memcpy(&cta_cmd[9],&ep->emm[6],1);
+						memcpy(&cta_cmd[10],&ep->emm[7],dataLen-6);					
+//						cta_cmd[9]=0x00;
+					} else {
+						memcpy(&cta_cmd[10],&ep->emm[9],dataLen-6);
+					}
 				}
 				int i=0;
 				for(i=5;i<dataLen+4;i++)
