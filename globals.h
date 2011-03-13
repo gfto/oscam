@@ -443,8 +443,8 @@ struct s_ecm
   ushort 	caid;
   uint64  	grp;
   struct s_reader *reader;
-  struct s_ecm *next;
-  //int level;
+  int  rc;
+  time_t time;
 };
 
 struct s_emm
@@ -586,6 +586,7 @@ typedef struct ecm_request_t
 
   struct s_reader *origin_reader;
   void * origin_card; //CCcam preferred card!
+  struct s_ecm *ecmcacheptr;
 
   char msglog[MSGLOGSIZE];
 

@@ -36,13 +36,8 @@ pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
 pthread_key_t getclient;
 
-//Cache for **found** cws:
-struct  s_ecm     *cwcache;
-struct  s_ecm     *cwidx;
-
-//Cache for **requesting** ecms:
-struct  s_ecm     *ecmcache;
-struct  s_ecm     *ecmidx;
+//Cache for  ecms, cws and rcs:
+LLIST *ecmcache;
 
 //cachesize
 int cache_size = 0;
@@ -511,6 +506,21 @@ void nullclose(int *fd)
 	close(f); //then close fd
 }
 
+static void housekeeping_ecmcache()
+{
+	time_t timeout = time(NULL)-(time_t)(cfg.ctimeout/1000)-5;
+	struct s_ecm *ecmc;	
+	LL_ITER *it = ll_iter_create(ecmcache);
+	while ((ecmc=ll_iter_next(it))) {
+		if (ecmc->time < timeout) {
+			ll_iter_remove_data(it);
+			continue;
+		}
+	}
+	ll_iter_release(it);
+}
+
+
 static void cleanup_ecmtasks(struct s_client *cl)
 {
         if (!cl->ecmtask)
@@ -525,6 +535,8 @@ static void cleanup_ecmtasks(struct s_client *cl)
         }
         add_garbage(cl->ecmtask);
         cl->ecmtask = NULL;
+        
+        housekeeping_ecmcache();
 }
 
 static void cleanup_thread(struct s_client *cl)
@@ -564,26 +576,6 @@ static void cleanup_thread(struct s_client *cl)
 	add_garbage(cl->cc);
 	add_garbage(cl->serialdata);
 	add_garbage(cl);
-
-	//decrease cwcache
-	struct s_ecm *ecmc;
-	if (cwcache->next) {
-		ecmc = cwcache;
-		cwcache = cwcache->next;
-		if (cwidx == ecmc)
-				cwidx = cwcache;
-		add_garbage(ecmc);
-	}
-
-	//decrease ecmache
-	if (ecmcache->next) { //keep it at least on one entry big
-		//for (ecmc=ecmcache; ecmc->next->next; ecmc=ecmc->next) ; //find last element
-		ecmc = ecmcache;
-		ecmcache = ecmcache->next;
-		if (ecmidx == ecmc)
-				ecmidx = ecmcache;
-		add_garbage(ecmc);
-	}
 }
 
 static void cs_cleanup()
@@ -796,22 +788,6 @@ struct s_client * create_client(in_addr_t ip) {
 		cl->stat=1;
 
 		cl->login=cl->last=time((time_t *)0);
-		//increase cwcache
-		struct s_ecm *ecmc, *ecmn;
-		for (ecmc=cwcache; ecmc->next ; ecmc=ecmc->next); //ends on last cwcache entry
-		ecmn = malloc(sizeof(struct s_ecm));
-		if (ecmn) {
-			memset(ecmn, 0, sizeof(struct s_ecm));
-			ecmc->next = ecmn;
-		}
-
-		//increase ecmcache
-		for (ecmc=ecmcache; ecmc->next ; ecmc=ecmc->next); //ends on last ecmcache entry
-		ecmn = malloc(sizeof(struct s_ecm));
-		if (ecmn) {
-			memset(ecmn, 0, sizeof(struct s_ecm));
-			ecmc->next = ecmn;
-		}
 
         //Now add new client to the list:
 		struct s_client *last;
@@ -876,27 +852,10 @@ static void init_signal()
 	return;
 }
 
-static struct s_ecm *generate_cache()
-{
-  int i;
-  struct s_ecm *idx, *cache;
-  cache=idx=malloc(sizeof(struct s_ecm));
-  memset(idx, 0, sizeof(struct s_ecm));
-  for(i=0;i<10;i++) {
-	idx->next=malloc(sizeof(struct s_ecm));
-	idx=idx->next;
-	memset(idx, 0, sizeof(struct s_ecm));
-  }
-  return cache;
-}
-
 static void init_first_client()
 {
-  //Generate 5 CW cache entries:
-  cwidx=cwcache=generate_cache();
-
   //Generate 5 ECM cache entries:
-  ecmidx=ecmcache=generate_cache();
+  ecmcache = ll_create();
 
   first_client = malloc(sizeof(struct s_client));
 	if (!first_client) {
@@ -1372,26 +1331,42 @@ void cs_disconnect_client(struct s_client * client)
  **/
 static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 {
+	time_t now = time(NULL);
+	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-5;
 	struct s_ecm *ecmc;
-	for (ecmc=ecmcache; ecmc ; ecmc=ecmc->next) {
-		if ((grp & ecmc->grp) &&
-		     ecmc->caid==er->caid &&
-		     (!memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))
-		{
-			return(1);
+	LL_ITER *it = ll_iter_create(ecmcache);
+	while ((ecmc=ll_iter_next(it))) {
+		if (ecmc->time < timeout) {
+			ll_iter_remove_data(it);
+			continue;
 		}
+		
+		if (grp && !(grp & ecmc->grp))
+			continue;
+			
+		if (ecmc->caid!=er->caid)
+			continue;
+			
+		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
+			continue;
+				
+		ll_iter_release(it);
+		cs_debug_mask(D_TRACE, "cachehit! (ecm)");
+		return ecmc->rc;
 	}
+	ll_iter_release(it);
 
 	//Add cache entry:
-	if (ecmidx->next)
-		ecmidx=ecmidx->next;
-	else
-		ecmidx=ecmcache;
-	memcpy(ecmidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
-	ecmidx->caid = er->caid;
-	ecmidx->grp = grp;
+	ecmc = cs_malloc(&ecmc, sizeof(struct s_ecm), 0);
+	memcpy(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
+	ecmc->caid = er->caid;
+	ecmc->grp = grp;
+	ecmc->rc = E_99;
+	ecmc->time = now;
+	ll_prepend(ecmcache, ecmc);
+	er->ecmcacheptr = ecmc;
 
-	return(0);
+	return E_UNHANDLED;
 }
 
 /**
@@ -1402,9 +1377,22 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 {
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
+
+	cs_debug_mask(D_TRACE, "cachesize %d", ll_count(ecmcache));
+	time_t now = time(NULL);
+	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-5;
 	struct s_ecm *ecmc;
 
-	for (ecmc=cwcache; ecmc ; ecmc=ecmc->next) {
+    LL_ITER *it = ll_iter_create(ecmcache);
+    while ((ecmc=ll_iter_next(it))) {
+        if (ecmc->time < timeout) {
+			ll_iter_remove_data(it);
+			continue;
+		}
+                     
+   		if (ecmc->rc != E_FOUND)
+			continue;
+				
 		if (ecmc->caid != er->caid)
 			continue;
 
@@ -1416,8 +1404,11 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
+		ll_iter_release(it);
+		cs_debug_mask(D_TRACE, "cachehit!");
 		return 1;
 	}
+	ll_iter_release(it);
 	return 0;
 }
 
@@ -1427,29 +1418,30 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
  **/
 int check_cwcache2(ECM_REQUEST *er)
 {
-	//struct s_reader *save = er->selected_reader;
 	int rc = check_cwcache1(er, 0);
-	//er->selected_reader = save;
-  return rc;
+	return rc;
 }
 
 
-static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp)
+static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp, int rc)
 {
 #ifdef CS_WITH_DOUBLECHECK
 	if (cfg.double_check && er->checked < 2)
 		return;
 #endif
-	if (cwidx->next)
-		cwidx=cwidx->next;
-	else
-		cwidx=cwcache;
+	if (!er->ecmcacheptr) {
+		cs_debug_mask(D_TRACE, "NO CACHEPTR?");	
+		return;
+	}
+		
+	struct s_ecm *ecm = er->ecmcacheptr;
 	//cs_log("store ecm from reader %d", er->selected_reader);
-	memcpy(cwidx->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
-	memcpy(cwidx->cw, er->cw, 16);
-	cwidx->caid = er->caid;
-	cwidx->grp = grp;
-	cwidx->reader = er->selected_reader;
+	memcpy(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
+	memcpy(ecm->cw, er->cw, 16);
+	ecm->caid = er->caid;
+	ecm->grp = grp;
+	ecm->reader = er->selected_reader;
+	ecm->rc = rc;
 
 	//cs_ddump(cwcache[*cwidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *cwidx);
 }
@@ -1681,7 +1673,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 
   if (er->rc==E_RDR_FOUND) {
 
-	store_cw_in_cache(er, reader->grp);
+	store_cw_in_cache(er, reader->grp, E_FOUND);
 
     /* CWL logging only if cwlogdir is set in config */
     if (cfg.cwlogdir != NULL)
@@ -1928,7 +1920,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	    return 0;
 	  }
 
-	  store_cw_in_cache(er, er->selected_reader->grp); //Store in cache!
+	  store_cw_in_cache(er, er->selected_reader->grp, E_FOUND); //Store in cache!
 
 	}
 #endif
@@ -1996,12 +1988,15 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 				ert=NULL;
 		}
 		//at this point ert is only not NULL when it has no matching readers...
-		if (ert) ert->rc=E_NOTFOUND; //so we set the return code
+		if (ert) {
+				ert->rc=E_NOTFOUND; //so we set the return code
+				store_cw_in_cache(ert, er->selected_reader->grp, E_NOTFOUND);
+		}
 		else send_reader_stat(er->selected_reader, er, E_NOTFOUND);
 	}
 	if (ert) {
-			 send_dcw(cl, ert);
-			 distribute_ecm(er);
+			send_dcw(cl, ert);
+			distribute_ecm(er);
     }
 	return;
 }
@@ -2461,8 +2456,10 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			}
 
 		//we have to go through matching_reader() to check services!
-		if (er->rc == E_UNHANDLED && check_and_store_ecmcache(er, client->grp))
-				er->rc = E_99;
+		if (er->rc == E_UNHANDLED)
+				er->rc = check_and_store_ecmcache(er, client->grp);
+		else
+				store_cw_in_cache(er, client->grp, er->rc);
 	}
 
 	if (locked)
@@ -2724,6 +2721,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 						for (ptr = er->matching_rdr->initial; ptr ; ptr = ptr->nxt)
 							send_reader_stat((struct s_reader *)ptr->obj, er, E_TIMEOUT);
 					}
+					store_cw_in_cache(er, cl->grp, E_TIMEOUT);
 					send_dcw(cl, er);
 					continue;
 				} else {
@@ -2750,6 +2748,9 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	cl->tv.tv_sec = td/1000;
 	cl->tv.tv_usec = (td%1000)*1000;
 	//cs_log("delay %d.%06d", tv.tv_sec, tv.tv_usec);
+	
+	housekeeping_ecmcache();
+	
 	return(&cl->tv);
 }
 
