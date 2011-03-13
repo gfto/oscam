@@ -2617,15 +2617,6 @@ int cc_srv_connect(struct s_client *cl) {
 			cs_log("password for '%s' invalid!", usr);
 		return -2;
 	}
-/*	if (cl->dup) { //Dup login kills existing client!
-		struct s_client *cls;
-		for (cls=first_client; cls; cls=cls->next) {
-				if (cls != cl && cls->account == account) {
-						kill_thread(cls);
-						cl->dup = 0;
-				}
-		}
-	}*/
 	if (cl->dup) {
 		cs_log("account '%s' duplicate login, disconnect!", usr);
 		return -3;
@@ -2646,7 +2637,7 @@ int cc_srv_connect(struct s_client *cl) {
 	
 
 	//Starting readers to get cards:
-	int wakeup = cc_srv_wakeup_readers(cl);
+	cc_srv_wakeup_readers(cl);
 
 	// send passwd ack
 	memset(buf, 0, 20);
@@ -2688,10 +2679,6 @@ int cc_srv_connect(struct s_client *cl) {
 		cs_debug_mask(D_CLIENT, "%s extended sid mode activated", getprefix());
 	else
 		cs_debug_mask(D_CLIENT, "%s 2.1.x compatibility mode", getprefix());
-
-	// report cards
-	if (wakeup > 0) //give readers time to get cards:
-		cs_sleepms(500);
 
 	if (!cc_srv_report_cards(cl))
 		return -1;
