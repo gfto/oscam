@@ -1,5 +1,7 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 
+#include <net/if.h>
+
 #include "globals.h"
 #ifdef CS_WITH_BOXKEYS
 #  include "oscam-boxkeys.np"
@@ -3144,6 +3146,50 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		cs_strncpy(rdr->r_usr, value, sizeof(rdr->r_usr));
 		return;
 	}
+
+  if (!strcmp(token, "mg-encrypted")) {
+    // decrypt encrypted mgcamd gbox line
+    uchar key[16];
+    uchar *buf;
+
+    int len = strlen(value) / 2 + (16 - (strlen(value) / 2) % 16);
+    cs_log("len: %d",len);
+    buf = calloc(1, len);
+    key_atob_l(value, buf, strlen(value));
+
+    memset(&key, 0, 16);
+
+    int fd = socket(PF_INET, SOCK_STREAM, 0);
+
+    struct ifreq ifreq;
+    memset(&ifreq, 0, sizeof(ifreq));
+    sprintf(ifreq.ifr_name, "eth0");
+
+    ioctl(fd, SIOCGIFHWADDR, &ifreq);
+
+    int i;
+    for (i = 0; i < 6; i++)
+      key[i * 2] = ifreq.ifr_ifru.ifru_hwaddr.sa_data[i];
+    AES_KEY aeskey;
+    AES_set_decrypt_key(key, 128, &aeskey);
+    for (i = 0; i < len; i+=16)
+      AES_decrypt(buf + i,buf + i, &aeskey);
+
+    // parse d-line
+    char *token;
+    strtok((char *)buf, " {");                              // ignore 'D:'
+    token = strtok(NULL, " {");                             // hostname
+    cs_strncpy(rdr->device, token, sizeof(rdr->device));
+    token = strtok(NULL, " {");                             // local port
+    cfg.gbox_port = atoi(token);                            // ***WARNING CHANGE OF GBLOBAL LISTEN PORT FROM WITHIN READER!!!***
+    token = strtok(NULL, " {");                             // port
+    rdr->r_port = atoi(token);
+    token = strtok(NULL, " {");                             // password
+    cs_strncpy(rdr->r_pwd, token, sizeof(rdr->r_pwd));
+
+    free(buf);
+    return;
+  }
 
 	//legacy parameter containing account=user,pass
 	if (!strcmp(token, "account")) {
