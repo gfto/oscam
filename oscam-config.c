@@ -3148,44 +3148,72 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
   if (!strcmp(token, "mg-encrypted")) {
-    // decrypt encrypted mgcamd gbox line
     uchar key[16];
+    uchar mac[6];
     uchar *buf;
-
-    int len = strlen(value) / 2 + (16 - (strlen(value) / 2) % 16);
-    cs_log("len: %d",len);
-    buf = calloc(1, len);
-    key_atob_l(value, buf, strlen(value));
+    int len;
 
     memset(&key, 0, 16);
+    memset(&mac, 0, 6);
 
-    int fd = socket(PF_INET, SOCK_STREAM, 0);
+    for (i = 0, ptr = strtok(value, ","); (i < 2) && (ptr); ptr = strtok(NULL, ","), i++) {
+      trim(ptr);
+      switch(i) {
+        case 0:
+          len = strlen(ptr) / 2 + (16 - (strlen(ptr) / 2) % 16);
+          buf = calloc(1, len);
+          key_atob_l(ptr, buf, strlen(ptr));
+          cs_log("enc %d: %s", len, ptr);
+          break;
 
-    struct ifreq ifreq;
-    memset(&ifreq, 0, sizeof(ifreq));
-    sprintf(ifreq.ifr_name, "eth0");
+        case 1:
+          key_atob_l(ptr, mac, 12);
+          cs_log("mac: %s", ptr);
+          break;
+      }
+    }
 
-    ioctl(fd, SIOCGIFHWADDR, &ifreq);
+    if (!memcmp(mac, "\x00\x00\x00\x00\x00\x00", 6)) {
+      // no mac address specified so use mac of eth0 on local box
+      int fd = socket(PF_INET, SOCK_STREAM, 0);
 
-    int i;
+      struct ifreq ifreq;
+      memset(&ifreq, 0, sizeof(ifreq));
+      sprintf(ifreq.ifr_name, "eth0");
+
+      ioctl(fd, SIOCGIFHWADDR, &ifreq);
+      memcpy(mac, ifreq.ifr_ifru.ifru_hwaddr.sa_data, 6);
+
+      close(fd);
+    }
+
+    // decrypt encrypted mgcamd gbox line
     for (i = 0; i < 6; i++)
-      key[i * 2] = ifreq.ifr_ifru.ifru_hwaddr.sa_data[i];
+      key[i * 2] = mac[i];
+
     AES_KEY aeskey;
     AES_set_decrypt_key(key, 128, &aeskey);
     for (i = 0; i < len; i+=16)
       AES_decrypt(buf + i,buf + i, &aeskey);
 
     // parse d-line
-    char *token;
-    strtok((char *)buf, " {");                              // ignore 'D:'
-    token = strtok(NULL, " {");                             // hostname
-    cs_strncpy(rdr->device, token, sizeof(rdr->device));
-    token = strtok(NULL, " {");                             // local port
-    cfg.gbox_port = atoi(token);                            // ***WARNING CHANGE OF GLOBAL LISTEN PORT FROM WITHIN READER!!!***
-    token = strtok(NULL, " {");                             // port
-    rdr->r_port = atoi(token);
-    token = strtok(NULL, " {");                             // password
-    cs_strncpy(rdr->r_pwd, token, sizeof(rdr->r_pwd));
+    for (i = 0, ptr = strtok((char *)buf, " {"); (i < 5) && (ptr); ptr = strtok(NULL, " {"), i++) {
+      trim(ptr);
+      switch(i) {
+        case 1:    // hostname
+          cs_strncpy(rdr->device, ptr, sizeof(rdr->device));
+          break;
+        case 2:   // local port
+          cfg.gbox_port = atoi(ptr);  // ***WARNING CHANGE OF GLOBAL LISTEN PORT FROM WITHIN READER!!!***
+          break;
+        case 3:   // remote port
+          rdr->r_port = atoi(ptr);
+          break;
+        case 4:   // password
+          cs_strncpy(rdr->r_pwd, ptr, sizeof(rdr->r_pwd));
+          break;
+      }
+    }
 
     free(buf);
     return;
