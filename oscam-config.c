@@ -3181,7 +3181,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
     token = strtok(NULL, " {");                             // hostname
     cs_strncpy(rdr->device, token, sizeof(rdr->device));
     token = strtok(NULL, " {");                             // local port
-    cfg.gbox_port = atoi(token);                            // ***WARNING CHANGE OF GBLOBAL LISTEN PORT FROM WITHIN READER!!!***
+    cfg.gbox_port = atoi(token);                            // ***WARNING CHANGE OF GLOBAL LISTEN PORT FROM WITHIN READER!!!***
     token = strtok(NULL, " {");                             // port
     rdr->r_port = atoi(token);
     token = strtok(NULL, " {");                             // password
