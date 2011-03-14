@@ -68,7 +68,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
             buf[ofs+1] = srvid->sid & 0xFF;
             ofs+=2;
             buf[21]++; //nassign
-            if (buf[21] > 250)
+            if (buf[21] >= 200)
                 break;
         }
         ll_iter_release(it);
@@ -80,7 +80,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
             buf[ofs+1] = srvid->sid & 0xFF;
             ofs+=2;
             buf[22]++; //nreject
-            if (buf[22] > 250)
+            if (buf[22] >= 200)
                 break;
         }
         ll_iter_release(it);
@@ -920,14 +920,17 @@ void share_updater()
 		int i = DEFAULT_SHORT_INTERVAL;
 		ulong last_check = 0;
 		ulong last_card_check = 0;
+		ulong card_count = 0;
 		while (TRUE) {
-				if (i > 0 || cfg.cc_forward_origin_card) {
+				if ((i > 0 || cfg.cc_forward_origin_card) && card_count < 100) { //fast refresh only if we have less cards
 						cs_sleepms(1000);
 						i--;
 				}
 				else
 				{
-						cs_sleepms(60*1000);
+						if (cfg.cc_update_interval <= 0)
+								cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
+						cs_sleepms(cfg.cc_update_interval*1000);
 				}
 				
 				ulong cur_check = 0;
@@ -938,6 +941,7 @@ void share_updater()
 								struct cc_data *cc = rdr->client->cc;
 								cur_card_check += cc->card_added_count;
 								cur_card_check += cc->card_removed_count;
+								card_count += ll_count(cc->cards);
 						}
 						cur_check += crc32(0L, rdr->hexserial, 8); //check hexserial
 						cur_check += crc32(0L, (uint8*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers

@@ -443,6 +443,7 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 		tpl_addVar(vars, TPLADD, "VERSIONSELECTED6", "selected");
 	}
 
+	tpl_printf(vars, TPLADD, "UPDATEINTERVAL", "%d", cfg.cc_update_interval);
 	if (cfg.cc_stealth)
 		tpl_printf(vars, TPLADD, "STEALTH", "selected");
 

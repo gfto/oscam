@@ -274,6 +274,7 @@ extern char *RDR_CD_TXT[];
 #define DEFAULT_RETRYLIMIT 800
 #define DEFAULT_LB_STAT_CLEANUP 336
 #define DEFAULT_LB_USE_LOCKING 0
+#define DEFAULT_UPDATEINTERVAL 240
 
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
@@ -586,7 +587,8 @@ typedef struct ecm_request_t
 
   struct s_reader *origin_reader;
   void * origin_card; //CCcam preferred card!
-  struct s_ecm *ecmcacheptr;
+  
+  struct s_ecm *ecmcacheptr; //Pointer to ecm-cw-rc-cache!
 
   char msglog[MSGLOGSIZE];
 
@@ -1116,6 +1118,7 @@ struct s_config
 	int		cc_port;
 	int		cc_reshare;
 	int		cc_ignore_reshare;
+	int		cc_update_interval;
 	in_addr_t	cc_srvip;
 	char		cc_version[7];
 	int             cc_minimize_cards;
