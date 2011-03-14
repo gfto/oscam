@@ -956,7 +956,6 @@ static int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 			retry++;
 	                cs_sleepms(10);
 		}
-		if (RENEW_SESSIONKEY()) NegotiateSessionKey(reader);
 		if (HAS_CW() && (do_cmd(reader, 0x1C,0x02,0x9C,0x36,NULL,cta_res,&cta_lr)))
 		{
 			unsigned char v[8];
