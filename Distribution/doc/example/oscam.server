@@ -53,13 +53,11 @@ fallback = 1
 # remote gbox reader
 
 [reader]
-label    = remote3
-protocol = gbox
-device   = 192.168.0.4,34567
-user     = user3
-password = password3
-group    = 3
-caid     = 0300
+label        = remote3
+protocol     = gbox
+mg-encrypted = D: { 192.168.0.4 { 12345 34567 { ABCD1234 { 9 9 }}}}
+group        = 3
+caid         = 0300
 
 # remote CCcam reader
 
