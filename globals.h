@@ -130,6 +130,7 @@
 #define CS_MAXLOGHIST     30
 #define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
 
+#define CS_CACHE_TIMEOUT  60
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 64000
 #endif
@@ -279,7 +280,7 @@ extern char *RDR_CD_TXT[];
 enum {E1_GLOBAL=0, E1_USER, E1_READER, E1_SERVER, E1_LSERVER};
 enum {E2_GLOBAL=0, E2_GROUP, E2_CAID, E2_IDENT, E2_CLASS, E2_CHID, E2_QUEUE,
       E2_EA_LEN, E2_F0_LEN, E2_OFFLINE, E2_SID, 
-      E2_CCCAM_NOCARD=0x27, E2_CCCAM_NOK1=0x28, E2_CCCAM_NOK2=0x29};
+      E2_CCCAM_NOCARD=0x27, E2_CCCAM_NOK1=0x28, E2_CCCAM_NOK2=0x29, E2_CCCAM_LOOP=0x30};
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;
@@ -591,7 +592,7 @@ typedef struct ecm_request_t
   struct s_ecm *ecmcacheptr; //Pointer to ecm-cw-rc-cache!
 
   char msglog[MSGLOGSIZE];
-
+  uint8 origin_node_id[8]; //origin node id for avoiding requests client to reader
 } GCC_PACK      ECM_REQUEST;
 
 struct s_client
@@ -1581,7 +1582,7 @@ extern void http_srv();
 
 // oscam-garbage
 extern void add_garbage(void *data);
-extern void start_garbage_collector();
+extern void start_garbage_collector(int);
 extern void stop_garbage_collector();
 
 #endif  // CS_GLOBALS

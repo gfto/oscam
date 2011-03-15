@@ -95,6 +95,7 @@ struct cc_card {
 	struct s_reader  *origin_reader;
 	uint32 origin_id;
 	cc_card_type card_type;
+	struct s_sidtab *sidtab; //pointer to sidtab entry if card_type = CT_CARD_BY_SERVICE
 };
 
 struct cc_auto_blocked {

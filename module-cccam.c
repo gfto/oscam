@@ -661,38 +661,55 @@ int cc_send_srv_data(struct s_client *cl) {
  * retrieves the next waiting ecm request
  */
 int cc_get_nxt_ecm(struct s_client *cl) {
+	struct cc_data *cc = cl->cc;	
+	ECM_REQUEST *er, *ern;
 	int n, i;
 	time_t t;
 
 	t = time(NULL);
 	n = -1;
 	for (i = 0; i < CS_MAXPENDING; i++) {
-		if ((t - (ulong) cl->ecmtask[i].tps.time > ((cfg.ctimeout + 500)
-				/ 1000) + 1) && (cl->ecmtask[i].rc >= 10)) // drop timeouts
+		er = &cl->ecmtask[i];	
+		if ((t - (ulong) er->tps.time > ((cfg.ctimeout + 500)
+				/ 1000) + 1) && (er->rc >= 10)) // drop timeouts
 		{
-			cl->ecmtask[i].rc = 0;
+			er->rc = 0;
 		}
 
-		if (cl->ecmtask[i].rc >= 10 && cl->ecmtask[i].rc != 101) { // stil active and waiting
+		else if (er->rc >= 10 && er->rc != 101) { // stil active and waiting
+			if (!memcmp(er->origin_node_id, cc->peer_node_id, sizeof(cc->peer_node_id))) { // same nodeid? ignore
+				er->rc = E_RDR_NOTFOUND;
+				er->rcEx = E2_CCCAM_LOOP;
+				cs_debug_mask(D_READER, "%s ecm loop detected! client %s (%s)", 
+						getprefix(), er->client->account->usr, er->client->thread);
+				write_ecm_answer(cl->reader, &cl->ecmtask[i]);
+			}
+			else 		
 			// search for the ecm with the lowest time, this should be the next to go
-			if (n < 0 || cl->ecmtask[n].tps.time - cl->ecmtask[i].tps.time < 0) {
+			if (n < 0 || (ern->tps.time - er->tps.time < 0)) {
 					
 				//check for already pending:
-				if (((struct cc_data*)cl->cc)->extended_mode) {
+				if (cc->extended_mode) {
 					int j,found;
+					ECM_REQUEST *erx;
 					for (found=j=0;j<CS_MAXPENDING;j++) {
-						if (i!=j && cl->ecmtask[j].rc == 101 &&
-							cl->ecmtask[i].caid==cl->ecmtask[j].caid &&
-							cl->ecmtask[i].ecmd5==cl->ecmtask[j].ecmd5) {
-							found=1;
-							break;
+						erx = &cl->ecmtask[j];	
+						if (i!=j && erx->rc == 101 &&
+							er->caid==erx->caid &&
+							er->ecmd5==erx->ecmd5) {
+									found=1;
+									break;
 						}
 					}
-					if (!found)
+					if (!found) {
 						n = i;
+						ern = er;
+					}
 				}
-				else
+				else {
 					n = i;
+					ern = er;
+				}
 			}
 		}
 	}
@@ -1977,6 +1994,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
 				er->idx = ++cc->server_ecm_idx;
+				memcpy(er->origin_node_id, cc->peer_node_id, sizeof(cc->peer_node_id));
 
 				if (cfg.cc_forward_origin_card) { //search my shares for this card:
 						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, server_card->id);

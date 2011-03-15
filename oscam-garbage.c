@@ -13,12 +13,13 @@ struct cs_garbage *garbage_first = NULL;
 pthread_mutex_t garbage_lock;
 pthread_t garbage_thread;
 int garbage_collector_active = 0;
+int garbage_debug = 0;
 
 void add_garbage(void *data) {
         if (!data)
                 return;
                 
-        if (!garbage_collector_active) {
+        if (!garbage_collector_active || garbage_debug) {
           free(data);
           return;
         }
@@ -68,8 +69,9 @@ void garbage_collector() {
         pthread_exit(NULL);
 }
 
-void start_garbage_collector() {
+void start_garbage_collector(int debug) {
 
+		garbage_debug = debug;
         pthread_mutex_init(&garbage_lock, NULL);
 
         garbage_first = NULL;

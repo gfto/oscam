@@ -124,10 +124,14 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
                                 if (reshare < 0)
                                 		continue;
                                 		
-								int new_reshare =
-                                		( cfg.cc_ignore_reshare || usr_ignorereshare ) ? reshare : card->reshare;
-								if (new_reshare > reshare)
-										new_reshare = reshare;
+								int new_reshare;
+								if (cfg.cc_ignore_reshare || usr_ignorereshare)
+										new_reshare = cfg.cc_reshare;
+								else {
+										new_reshare = card->reshare;
+										if (new_reshare > reshare)
+												new_reshare = reshare;
+								}
 
 								if (!card->id)
 										card->id = cc_share_id++;
@@ -292,7 +296,25 @@ int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 				}
 		}
 		ll_iter_release(it);
-				
+		
+        //Check Card created by Service:
+        if (card->card_type == CT_CARD_BY_SERVICE) {
+        		struct s_sidtab *ptr;
+        		int j;
+        		int ok = 0;
+        		for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
+        				if (ptr == card->sidtab) {
+        						ok = 1;
+								if (cl->account->sidtabno&((SIDTABBITS)1<<j))
+        								return 0;
+								if (cl->account->sidtabok&((SIDTABBITS)1<<j))
+        								break;
+						}
+                }
+                if (!ok)
+                		return 0;
+		}
+                        				
         return 1;
 }
 
@@ -679,6 +701,7 @@ void update_card_list() {
                 for (k=0;k<ptr->num_caid;k++) {
                     struct cc_card *card = create_card2(NULL, (j<<8)|k, ptr->caid[k], 0, cfg.cc_reshare);
                     card->card_type = CT_CARD_BY_SERVICE;
+                    card->sidtab = ptr;
                     int l;
                     for (l=0;l<ptr->num_provid;l++) {
                         struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
@@ -726,6 +749,7 @@ void update_card_list() {
                         for (k=0;k<ptr->num_caid;k++) {
                             struct cc_card *card = create_card2(rdr, (j<<8)|k, ptr->caid[k], 0, rdr->cc_reshare);
                             card->card_type = CT_CARD_BY_SERVICE;
+                            card->sidtab = ptr;
                             int l;
                             for (l=0;l<ptr->num_provid;l++) {
                                 struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);

@@ -508,7 +508,7 @@ void nullclose(int *fd)
 
 static void housekeeping_ecmcache()
 {
-	time_t timeout = time(NULL)-(time_t)(cfg.ctimeout/1000)-5;
+	time_t timeout = time(NULL)-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct s_ecm *ecmc;	
 	LL_ITER *it = ll_iter_create(ecmcache);
 	while ((ecmc=ll_iter_next(it))) {
@@ -1332,7 +1332,7 @@ void cs_disconnect_client(struct s_client * client)
 static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 {
 	time_t now = time(NULL);
-	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-5;
+	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct s_ecm *ecmc;
 	LL_ITER *it = ll_iter_create(ecmcache);
 	while ((ecmc=ll_iter_next(it))) {
@@ -1351,7 +1351,7 @@ static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 			continue;
 				
 		ll_iter_release(it);
-		cs_debug_mask(D_TRACE, "cachehit! (ecm)");
+		//cs_debug_mask(D_TRACE, "cachehit! (ecm)");
 		return ecmc->rc;
 	}
 	ll_iter_release(it);
@@ -1378,9 +1378,9 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
 
-	cs_debug_mask(D_TRACE, "cachesize %d", ll_count(ecmcache));
+	//cs_debug_mask(D_TRACE, "cachesize %d", ll_count(ecmcache));
 	time_t now = time(NULL);
-	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-5;
+	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct s_ecm *ecmc;
 
     LL_ITER *it = ll_iter_create(ecmcache);
@@ -1405,7 +1405,7 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
 		ll_iter_release(it);
-		cs_debug_mask(D_TRACE, "cachehit!");
+		//cs_debug_mask(D_TRACE, "cachehit!");
 		return 1;
 	}
 	ll_iter_release(it);
@@ -3077,6 +3077,7 @@ if (pthread_key_create(&getclient, NULL)) {
   //int      fd;                  /* socket descriptors */
   int      i, j;
   int      bg=0;
+  int      gbdb=0;
   int      gfd; //nph,
   int      fdp[2];
   int      mfdr=0;     // Master FD (read)
@@ -3164,9 +3165,12 @@ if (pthread_key_create(&getclient, NULL)) {
 	0
   };
 
-  while ((i=getopt(argc, argv, "bc:t:d:r:hm:x"))!=EOF)
+  while ((i=getopt(argc, argv, "gbc:t:d:r:hm:x"))!=EOF)
   {
-	  switch(i) {
+	  switch(i) {	
+	  	  case 'g':
+		      gbdb=1;
+		      break;
 		  case 'b':
 			  bg=1;
 			  break;
@@ -3252,7 +3256,7 @@ if (pthread_key_create(&getclient, NULL)) {
   //Todo #ifdef CCCAM
   init_provid();
 
-  start_garbage_collector();
+  start_garbage_collector(gbdb);
 
   init_len4caid();
 #ifdef IRDETO_GUESSING
