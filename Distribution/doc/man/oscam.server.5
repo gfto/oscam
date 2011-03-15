@@ -71,6 +71,11 @@ user for remote reader, overrides user of \fBaccount\fP, first come first serve
 password for remote reader, overrides password of \fBaccount\fP, first come first serve
 .RE
 .PP
+\fBmg-encrypted\fP = D: { \fB<IP|hostname>\fP { \fB<local port>\fP \fB<remote port>\fP { \fB<password>\fP { \fB<level>\fP \fB<level>\fP }}}}[,\fB<local MAC address>\fP]
+.RS 3n
+mgcamd encrypted gbox line, default MAC address=eth0
+.RE
+.PP
 \fBservices\fP = \fB[!]services[,[!]<services>]...\fP
 .RS 3n
 reader [de]assignment to service group, default=none
@@ -549,11 +554,11 @@ constant CW
 gbox reader
 
  [reader]
- label    = mygboxreader
- protocol = gbox
- device   = host.example.com,4567
- group    = 11
- caid     = 1100
+ label        = mygboxreader
+ protocol     = gbox
+ mg-encrypted = D: { hostname { 1234 5678 { ABCD1234 { 9 9 }}}}
+ group        = 11
+ caid         = 1100
 .SH "SEE ALSO"
 \fBlist_smargo\fR(1), \fBoscam\fR(1), \fBoscam.ac\fR(5), \fBoscam.cert\fR(5), \fBoscam.conf\fR(5), \fBoscam.dvbapi\fR(5), \fBoscam.guess\fR(5), \fBoscam.ird\fR(5), \fBoscam.provid\fR(5), \fBoscam.services\fR(5), \fBoscam.srvid\fR(5), \fBoscam.tiers\fR(5),
 \fBoscam.user\fR(5)
