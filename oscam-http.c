@@ -2192,13 +2192,22 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 					int k;
 					char *dot = "";
-					for(k = 0; k < cl->cwlastresptimes_last; k++){
-						tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
-						dot=",";
-					}
-					for(k = cl->cwlastresptimes_last; k < CS_ECM_RINGBUFFER_MAX; k++){
-						tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
-						dot=",";
+
+					if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
+						for(k = 0; k < CS_ECM_RINGBUFFER_MAX ; k++){
+							tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
+							dot=",";
+						}
+					} else {
+						for(k = cl->cwlastresptimes_last + 1; k < CS_ECM_RINGBUFFER_MAX; k++){
+							tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
+							dot=",";
+						}
+
+						for(k = 0; k < cl->cwlastresptimes_last + 1 ; k++){
+							tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
+							dot=",";
+						}
 					}
 
 					int j, found = 0;
