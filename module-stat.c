@@ -291,7 +291,8 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		stat->request_count = 0;
 	}
 	else if (rc == 4) { //not found
-		if (er->rcEx != 0x28 && er->rcEx != 0x29) //CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
+		if (er->rcEx != E2_CCCAM_NOK1 && er->rcEx != E2_CCCAM_NOK2 && er->rcEx != E2_CCCAM_LOOP) 
+		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
 				stat->rc = rc;
 		//stat->last_received = time(NULL); do not change time, this would prevent reopen
 		//stat->ecm_count = 0; Keep ecm_count!

@@ -581,6 +581,9 @@ static void cleanup_thread(struct s_client *cl)
 		cl->reader = NULL;
     }
 	cleanup_ecmtasks(cl);
+	if (cl->thread == pthread_self())
+			pthread_setspecific(getclient, NULL);
+	cl->thread = 0;
 	add_garbage(cl->emmcache);
 	add_garbage(cl->req);
 	add_garbage(cl->cc);
@@ -676,8 +679,6 @@ void cs_exit(int sig)
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
 		set_signal_handler(SIGHUP  , 1, cs_reload_config);
 
-		cs_log("thread %8X exit!", pthread_self());
-		cs_sleepms(2000);
 		pthread_exit(NULL);
 		return;
 	}
