@@ -128,6 +128,16 @@ void cs_add_violation(uint ip) {
         cs_check_v(ip, 1);
 }
 
+void cs_add_lastresponsetime(struct s_client *cl, int ltime){
+
+	if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
+		cl->cwlastresptimes_last = 0;
+	} else {
+		cl->cwlastresptimes_last++;
+	}
+	cl->cwlastresptimes[cl->cwlastresptimes_last] = ltime;
+}
+
 //Alno Test End
 /*****************************************************************************
         Statics
@@ -718,6 +728,11 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 
 				memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
 				memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
+
+				int i;
+				for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++)
+					cl->cwlastresptimes[i] = 0;
+				cl->cwlastresptimes_last = 0;
 
 #ifdef CS_ANTICASC
 				cl->ac_idx	= account->ac_idx;
@@ -1826,7 +1841,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
 
 	cs_ftime(&tpe);
-	client->cwlastresptime = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
+	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
+	cs_add_lastresponsetime(client, client->cwlastresptime); // add to ringbuffer
+
 	if (er->selected_reader && er->selected_reader->client)
 	  er->selected_reader->client->cwlastresptime = client->cwlastresptime;
 

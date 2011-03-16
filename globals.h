@@ -129,6 +129,7 @@
 #define CS_DELAY          0
 #define CS_MAXLOGHIST     30
 #define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
+#define CS_ECM_RINGBUFFER_MAX 20 // max size for ECM last responsetimes ringbuffer
 
 #define CS_CACHE_TIMEOUT  60
 #ifndef PTHREAD_STACK_MIN
@@ -640,6 +641,8 @@ struct s_client
   int		cwignored;   // count ignored  ECMs per client
   int		cwtout;      // count timeouted ECMs per client
   int		cwlastresptime; //last Responsetime (ms)
+  int		cwlastresptimes[CS_ECM_RINGBUFFER_MAX]; //ringbuffer for last 20 times
+  int		cwlastresptimes_last; // ringbuffer pointer
   int		emmok;       // count EMM ok
   int		emmnok;	     // count EMM nok
 #ifdef WEBIF

@@ -2069,6 +2069,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 		tpl_addVar(vars, TPLADD, "CLIENTPROTO", "");
 		tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", "");
 		tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIME", "");
+		tpl_addVar(vars, TPLADD, "CLIENTLASTRESPONSETIMEHIST", "");
 
 		if (cl->typ=='c')
 			user_count_all++;
@@ -2188,6 +2189,17 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					tpl_printf(vars, TPLADD, "CLIENTCAID", "%04X", cl->last_caid);
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
+
+					int k;
+					char *dot = "";
+					for(k = cl->cwlastresptimes_last; k < CS_ECM_RINGBUFFER_MAX; k++){
+						tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
+						dot=",";
+					}
+					for(k = 0; k < cl->cwlastresptimes_last; k++){
+						tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
+						dot=",";
+					}
 
 					int j, found = 0;
 					struct s_srvid *srvid = cfg.srvid;
