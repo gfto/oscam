@@ -741,7 +741,7 @@ void update_card_list() {
             flt = 0;
 
             //Reader-Services:
-            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2) && cfg.sidtab && rdr->sidtabok) {
+            if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||!rdr->caid) && cfg.sidtab && rdr->sidtabok) {
                 struct s_sidtab *ptr;
                 for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
                     if (rdr->sidtabok&((SIDTABBITS)1<<j)) {
@@ -948,6 +948,10 @@ void share_updater()
 		while (TRUE) {
 				if ((i > 0 || cfg.cc_forward_origin_card) && card_count < 100) { //fast refresh only if we have less cards
 						cs_sleepms(1000);
+						i--;
+				}
+				else if (i > 0) {
+						cs_sleepms(6000); //1s later than garbage collector because this list uses much space
 						i--;
 				}
 				else
