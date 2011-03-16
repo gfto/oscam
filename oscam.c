@@ -1844,8 +1844,10 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
 	cs_add_lastresponsetime(client, client->cwlastresptime); // add to ringbuffer
 
-	if (er->selected_reader && er->selected_reader->client)
+	if (er->selected_reader && er->selected_reader->client){
 	  er->selected_reader->client->cwlastresptime = client->cwlastresptime;
+	  cs_add_lastresponsetime(er->selected_reader->client, client->cwlastresptime);
+	}
 
 #ifdef CS_LED
 	if(!er->rc) cs_switch_led(LED2, LED_BLINK_OFF);
