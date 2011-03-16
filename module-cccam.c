@@ -560,6 +560,7 @@ int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd) {
 	if (n != len) {
 		if (rdr)
 			cc_cli_close(cl, TRUE);
+		n = -1;
 	}
 
 	return n;
@@ -2707,7 +2708,7 @@ int cc_srv_connect(struct s_client *cl) {
 	cc->mode = CCCAM_MODE_NORMAL;
 	//some clients, e.g. mgcamd, does not support keepalive. So if not answered, keep connection
 	// check for client timeout, if timeout occurs try to send keepalive
-	while (cl->pfd && cl->udp_fd)
+	while (cl->pfd && cl->udp_fd && cc->mode == CCCAM_MODE_NORMAL && !cl->dup)
 	{
 		i = process_input(mbuf, sizeof(mbuf), 10);
 		if (i == -9) {
@@ -2739,10 +2740,6 @@ int cc_srv_connect(struct s_client *cl) {
 			if (i == MSG_KEEPALIVE)
 				wait_for_keepalive = 0;
 		}
-
-		if (cc->mode != CCCAM_MODE_NORMAL || cl->dup)
-			break; //mode wrong or duplicate user -->disconect
-		                                                        
 	}
 
 	return 0;

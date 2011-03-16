@@ -113,7 +113,7 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
         struct s_client *cl;
         for (cl = one_client?one_client:first_client; cl; cl=one_client?NULL:cl->next) {
                 struct cc_data *cc = cl->cc;
-                if (cl->typ=='c' && cc && (one_client || (ph[cl->ctyp].num == R_CCCAM && cc->mode == CCCAM_MODE_NORMAL))) { //CCCam-Client!
+                if (cl->typ=='c' && cc && ((one_client && cc->mode != CCCAM_MODE_SHUTDOWN) || (ph[cl->ctyp].num == R_CCCAM && cc->mode == CCCAM_MODE_NORMAL))) { //CCCam-Client!
                 		int ext = cc->cccam220?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD;
                         if (card_valid_for_client(cl, card)) {
 								int usr_reshare = cl->account->cccreshare;
@@ -140,7 +140,8 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
 								//buf[10] = card->hop-1;
 								buf[11] = new_reshare;
 
-								cc_cmd_send(cl, buf, len, ext);
+								if (cc_cmd_send(cl, buf, len, ext) < 0)
+										cc->mode = CCCAM_MODE_SHUTDOWN;
 								count++;
                         }
                 }
