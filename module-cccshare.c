@@ -230,13 +230,14 @@ int cc_clear_reported_carddata(LLIST *reported_carddatas, LLIST *except,
                         ll_iter_release(it2);
                 }
 
+                ll_iter_remove(it);
+                
                 if (!card2) {
                         if (send_removed)
                         		send_remove_card_to_clients(card);
                         cc_free_card(card);
                         i++;
                 }
-                ll_iter_remove(it);
         }
         ll_iter_release(it);
         return i;
@@ -686,8 +687,6 @@ void update_card_list() {
     int j, flt;
 
     LLIST *server_cards = ll_create();
-    if (!reported_carddatas)
-        reported_carddatas = ll_create();
     LLIST *new_reported_carddatas = ll_create();
 
     card_added_count = 0;
@@ -921,12 +920,14 @@ void update_card_list() {
 }
 
 int cc_srv_report_cards(struct s_client *cl) {
+		pthread_mutex_lock(&cc_shares_lock);
 		LL_ITER *it = ll_iter_create(reported_carddatas);
 		struct cc_card *card;
 		while ((card = ll_iter_next(it))) {
 				send_card_to_clients(card, cl);
 		}
 		ll_iter_release(it);
+		pthread_mutex_unlock(&cc_shares_lock);
 
 		return 1;
 }
