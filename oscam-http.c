@@ -2192,11 +2192,11 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 					int k;
 					char *dot = "";
-					for(k = cl->cwlastresptimes_last; k < CS_ECM_RINGBUFFER_MAX; k++){
+					for(k = 0; k < cl->cwlastresptimes_last; k++){
 						tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
 						dot=",";
 					}
-					for(k = 0; k < cl->cwlastresptimes_last; k++){
+					for(k = cl->cwlastresptimes_last; k < CS_ECM_RINGBUFFER_MAX; k++){
 						tpl_printf(vars, TPLAPPEND, "CLIENTLASTRESPONSETIMEHIST", "%s%d", dot, cl->cwlastresptimes[k]);
 						dot=",";
 					}
