@@ -1368,6 +1368,8 @@ static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 				
 		ll_iter_release(it);
 		//cs_debug_mask(D_TRACE, "cachehit! (ecm)");
+		memcpy(er->cw, ecmc->cw, 16);
+		er->selected_reader = ecmc->reader;
 		return ecmc->rc;
 	}
 	ll_iter_release(it);
