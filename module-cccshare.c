@@ -126,7 +126,7 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
                                 		
 								int new_reshare;
 								if (cfg.cc_ignore_reshare || usr_ignorereshare)
-										new_reshare = cfg.cc_reshare;
+										new_reshare = reshare;
 								else {
 										new_reshare = card->reshare;
 										if (new_reshare > reshare)
