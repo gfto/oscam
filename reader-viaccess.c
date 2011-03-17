@@ -363,7 +363,7 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             // we can't assume that if the nano len is 5 or more we have an ecm number
             // as some card don't support this
             if( reader->last_geo.number_ecm > 0 ) {
-                if (reader->last_geo.number_ecm == curnumber_ecm) {
+                if (reader->last_geo.number_ecm == curnumber_ecm && ( ecm88Data[nanoLen-1] != 0x01)) {
                     keynr=ecm88Data[5];
                     cs_debug_mask(D_READER, "keyToUse = %02x, ECM ending with %02x",ecm88Data[5], ecm88Data[nanoLen-1]);
                 } else {
@@ -437,7 +437,8 @@ static int viaccess_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
             } 
             // use AES from list to decrypt CW
             cs_debug_mask(D_READER, "Decoding CW : using AES key id %d for provider %06x",D2KeyID, (provid & 0xFFFFF0));
-            if (aes_decrypt_from_list(reader->aes_list,0x500, (uint32) (provid & 0xFFFFF0), D2KeyID, &ecm88DataCW[0], 16) == 0)
+            rc=aes_decrypt_from_list(reader->aes_list,0x500, (uint32) (provid & 0xFFFFF0), D2KeyID, &ecm88DataCW[0], 16);
+            if( rc == 0 )
                 snprintf( er->msglog, MSGLOGSIZE, "AES Decrypt : key id %d not found for CAID %04X , provider %06lx", D2KeyID, 0x500, (provid & 0xFFFFF0) );
         }
 
