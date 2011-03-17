@@ -2454,6 +2454,9 @@ int write_server()
 
 				if (rdr->cc_keepalive)
 					fprintf_conf(f, CONFVARWIDTH, "ccckeepalive", "%d\n", rdr->cc_keepalive);
+					
+				if (rdr->cc_reshare != cfg.cc_reshare)
+					fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", rdr->cc_reshare);	
 			}
 
 			if (rdr->deprecated && isphysical)

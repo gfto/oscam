@@ -1128,6 +1128,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	tpl_printf(vars, TPLADD, "CCCMAXHOP", "%d", rdr->cc_maxhop);
 	tpl_printf(vars, TPLADD, "CCCMINDOWN", "%d", rdr->cc_mindown);
+	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", rdr->cc_reshare);
 	if(rdr->cc_want_emu)
 		tpl_addVar(vars, TPLADD, "CCCWANTEMUCHECKED", "checked");
 
