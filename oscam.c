@@ -515,21 +515,6 @@ void nullclose(int *fd)
 	close(f); //then close fd
 }
 
-static void housekeeping_ecmcache()
-{
-	time_t timeout = time(NULL)-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
-	struct s_ecm *ecmc;
-	LL_ITER *it = ll_iter_create(ecmcache);
-	while ((ecmc=ll_iter_next(it))) {
-		if (ecmc->time < timeout) {
-			ll_iter_remove_data(it);
-			continue;
-		}
-	}
-	ll_iter_release(it);
-}
-
-
 static void cleanup_ecmtasks(struct s_client *cl)
 {
         if (!cl->ecmtask)
@@ -544,8 +529,6 @@ static void cleanup_ecmtasks(struct s_client *cl)
         }
         add_garbage(cl->ecmtask);
         cl->ecmtask = NULL;
-
-        housekeeping_ecmcache();
 }
 
 static void cleanup_thread(struct s_client *cl)
@@ -1380,8 +1363,8 @@ static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 	ecmc->grp = grp;
 	ecmc->rc = E_99;
 	ecmc->time = now;
-	ll_prepend(ecmcache, ecmc);
 	er->ecmcacheptr = ecmc;
+	ll_prepend(ecmcache, ecmc);
 
 	return E_UNHANDLED;
 }
@@ -1395,7 +1378,7 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
 
-	//cs_debug_mask(D_TRACE, "cachesize %d", ll_count(ecmcache));
+	cs_debug_mask(D_TRACE, "cachesize %d", ll_count(ecmcache));
 	time_t now = time(NULL);
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct s_ecm *ecmc;
@@ -1446,12 +1429,9 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp, int rc)
 	if (cfg.double_check && er->checked < 2)
 		return;
 #endif
-	if (!er->ecmcacheptr) {
-		cs_debug_mask(D_TRACE, "NO CACHEPTR?");
-		return;
-	}
-
 	struct s_ecm *ecm = er->ecmcacheptr;
+	if (!ecm) return;
+
 	//cs_log("store ecm from reader %d", er->selected_reader);
 	memcpy(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
 	memcpy(ecm->cw, er->cw, 16);
@@ -1459,6 +1439,7 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp, int rc)
 	ecm->grp = grp;
 	ecm->reader = er->selected_reader;
 	ecm->rc = rc;
+	ecm->time = time(NULL);
 
 	//cs_ddump(cwcache[*cwidx].ecmd5, CS_ECMSTORESIZE, "ECM stored (idx=%d)", *cwidx);
 }
@@ -2769,8 +2750,6 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	cl->tv.tv_sec = td/1000;
 	cl->tv.tv_usec = (td%1000)*1000;
 	//cs_log("delay %d.%06d", tv.tv_sec, tv.tv_usec);
-
-	housekeeping_ecmcache();
 
 	return(&cl->tv);
 }

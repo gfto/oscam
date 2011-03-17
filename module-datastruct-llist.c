@@ -183,7 +183,7 @@ void *ll_iter_remove(LL_ITER *it)
     if (it) {
         LL_NODE *del = it->cur;
 
-        if (del) {
+        if (del && !del->flag++) { //preventing duplicate free because of multiple threads
             void *obj = del->obj;
             LL_NODE *prv = it->prv;
             
@@ -191,7 +191,6 @@ void *ll_iter_remove(LL_ITER *it)
                 prv->nxt = del->nxt;
             else
                 it->l->initial = del->nxt;
-
             it->l->count--;
 
             ll_iter_reset(it);

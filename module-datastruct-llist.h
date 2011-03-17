@@ -10,6 +10,7 @@ typedef struct llnode LL_NODE;
 struct llnode {
     void *obj;
     LL_NODE *nxt;
+    unsigned char flag;
 };
 
 typedef struct llist LLIST;
