@@ -2348,8 +2348,8 @@ static int stapi_set_pid(int demux_id, int num, int index, ushort pid, char *pmt
 
 			cs_debug_mask(D_DVBAPI, "stop descrambling PTI: %s", dev_list[n].name);
 			stapi_startdescrambler(demux_id, n, DE_STOP);
+			memset(demux[demux_id].slot_assc[n], 0, sizeof(demux[demux_id].slot_assc[n]));
 		}
-		memset(demux[demux_id].slot_assc[n], 0, SLOTNUM);
 	}
 	
 	return TRUE;
