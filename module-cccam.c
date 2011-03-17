@@ -663,7 +663,7 @@ int cc_send_srv_data(struct s_client *cl) {
  */
 int cc_get_nxt_ecm(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;	
-	ECM_REQUEST *er, *ern;
+	ECM_REQUEST *er, *ern = NULL;
 	int n, i;
 	time_t t;
 

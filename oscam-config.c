@@ -3163,8 +3163,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
   if (!strcmp(token, "mg-encrypted")) {
     uchar key[16];
     uchar mac[6];
-    uchar *buf;
-    int len;
+    uchar *buf = NULL;
+    int len = 0;
 
     memset(&key, 0, 16);
     memset(&mac, 0, 6);
