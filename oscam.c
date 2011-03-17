@@ -252,8 +252,7 @@ static void usage()
   fprintf(stderr, "tongfang ");
 #endif
   fprintf(stderr, "\n\n");
-  fprintf(stderr, "oscam [-b] [-c config-dir] [-d]");
-  fprintf(stderr, " [-h]");
+  fprintf(stderr, "oscam [-b] [-c <config dir>] [-t <tmp dir>] [-d <level>] [-r <level>] [-h]");
   fprintf(stderr, "\n\n\t-b         : start in background\n");
   fprintf(stderr, "\t-c <dir>   : read configuration from <dir>\n");
   fprintf(stderr, "\t             default = %s\n", CS_CONFDIR);
@@ -275,7 +274,7 @@ static void usage()
   fprintf(stderr, "\t             128 = DVBAPI logging\n");
   fprintf(stderr, "\t             255 = debug all\n");
 #ifdef WEBIF
-  fprintf(stderr, "\t-r         : restart level\n");
+  fprintf(stderr, "\t-r <level> : restart level\n");
   fprintf(stderr, "\t               0 = disabled, restart request sets exit status 99\n");
   fprintf(stderr, "\t               1 = restart activated, web interface can restart oscam (default)\n");
   fprintf(stderr, "\t               2 = like 1, but also restart on SEGFAULTS\n");
@@ -519,7 +518,7 @@ void nullclose(int *fd)
 static void housekeeping_ecmcache()
 {
 	time_t timeout = time(NULL)-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
-	struct s_ecm *ecmc;	
+	struct s_ecm *ecmc;
 	LL_ITER *it = ll_iter_create(ecmcache);
 	while ((ecmc=ll_iter_next(it))) {
 		if (ecmc->time < timeout) {
@@ -545,7 +544,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
         }
         add_garbage(cl->ecmtask);
         cl->ecmtask = NULL;
-        
+
         housekeeping_ecmcache();
 }
 
@@ -1207,7 +1206,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 				cl->dup = 1;
 				cl->aureader_list = NULL;
 				strcpy(buf, cs_inet_ntoa(cl->ip));
-				cs_log("client(%8X) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)", 
+				cs_log("client(%8X) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)",
 					cl->thread, usr, cs_inet_ntoa(ip), buf, uniq);
 				if (cl->failban & BAN_DUPLICATE) {
 					cs_add_violation(cl->ip);
@@ -1218,7 +1217,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 				client->dup = 1;
 				client->aureader_list = NULL;
 				strcpy(buf, cs_inet_ntoa(ip));
-				cs_log("client(%8X) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)", 
+				cs_log("client(%8X) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
 					pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
 				if (client->failban & BAN_DUPLICATE) {
 					cs_add_violation(ip);
@@ -1356,16 +1355,16 @@ static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 			ll_iter_remove_data(it);
 			continue;
 		}
-		
+
 		if (grp && !(grp & ecmc->grp))
 			continue;
-			
+
 		if (ecmc->caid!=er->caid)
 			continue;
-			
+
 		if (memcmp(ecmc->ecmd5, er->ecmd5, CS_ECMSTORESIZE))
 			continue;
-				
+
 		ll_iter_release(it);
 		//cs_debug_mask(D_TRACE, "cachehit! (ecm)");
 		memcpy(er->cw, ecmc->cw, 16);
@@ -1407,10 +1406,10 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 			ll_iter_remove_data(it);
 			continue;
 		}
-                     
+
    		if (ecmc->rc != E_FOUND)
 			continue;
-				
+
 		if (ecmc->caid != er->caid)
 			continue;
 
@@ -1448,10 +1447,10 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp, int rc)
 		return;
 #endif
 	if (!er->ecmcacheptr) {
-		cs_debug_mask(D_TRACE, "NO CACHEPTR?");	
+		cs_debug_mask(D_TRACE, "NO CACHEPTR?");
 		return;
 	}
-		
+
 	struct s_ecm *ecm = er->ecmcacheptr;
 	//cs_log("store ecm from reader %d", er->selected_reader);
 	memcpy(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
@@ -2770,9 +2769,9 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	cl->tv.tv_sec = td/1000;
 	cl->tv.tv_usec = (td%1000)*1000;
 	//cs_log("delay %d.%06d", tv.tv_sec, tv.tv_usec);
-	
+
 	housekeeping_ecmcache();
-	
+
 	return(&cl->tv);
 }
 
@@ -3189,7 +3188,7 @@ if (pthread_key_create(&getclient, NULL)) {
 
   while ((i=getopt(argc, argv, "gbc:t:d:r:hm:x"))!=EOF)
   {
-	  switch(i) {	
+	  switch(i) {
 	  	  case 'g':
 		      gbdb=1;
 		      break;
