@@ -39,9 +39,6 @@ pthread_key_t getclient;
 //Cache for  ecms, cws and rcs:
 LLIST *ecmcache;
 
-//cachesize
-int cache_size = 0;
-
 struct  s_config  cfg;
 #ifdef CS_LOGHISTORY
 int     loghistidx;  // ptr to current entry
@@ -563,8 +560,6 @@ static void cleanup_thread(struct s_client *cl)
 		cl->reader = NULL;
     }
 	cleanup_ecmtasks(cl);
-	if (cl->thread == pthread_self())
-			pthread_setspecific(getclient, NULL);
 	cl->thread = 0;
 	add_garbage(cl->emmcache);
 	add_garbage(cl->req);
@@ -1378,7 +1373,7 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
 
-	cs_debug_mask(D_TRACE, "cachesize %d", ll_count(ecmcache));
+	//cs_debug_mask(D_TRACE, "cachesize %d", ll_count(ecmcache));
 	time_t now = time(NULL);
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
 	struct s_ecm *ecmc;
@@ -1430,7 +1425,7 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp, int rc)
 		return;
 #endif
 	struct s_ecm *ecm = er->ecmcacheptr;
-	if (!ecm) return;
+	if (!ecm || ecm->rc < rc) return;
 
 	//cs_log("store ecm from reader %d", er->selected_reader);
 	memcpy(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
