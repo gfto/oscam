@@ -322,9 +322,9 @@ int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
   {
     for( i=0; (!rc) && (i<reader->nprov); i++ )
     {
-      prid = (ulong)((reader->prid[i][0]<<16) |
-                     (reader->prid[i][1]<<8) |
-                     (reader->prid[i][2]));
+      prid = (ulong)((reader->prid[i][1]<<16) |
+                     (reader->prid[i][2]<<8) |
+                     (reader->prid[i][3]));
       cs_debug_mask(D_CLIENT, "trying server '%s' filter %04X:%06X", 
                 reader->device, caid, prid);
       if( prid==er->prid )
@@ -460,15 +460,27 @@ int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
 		return 0;
 	}
 
-	if (!provid || !reader->nprov || reader->auprovid == provid) {
+	if (!provid) {
+		cs_debug_mask(D_EMM, "emm for reader %s (%04X) has no provider", reader->label, caid);
+		return 1;
+	}
+
+	if (reader->auprovid && reader->auprovid == provid) {
+		cs_debug_mask(D_EMM, "emm provider match reader %s auprovid %06X", reader->label, reader->auprovid);
+		return 1;
+	}
+
+	if (!reader->nprov) {
 		cs_debug_mask(D_EMM, "emm reader %s has no provider set", reader->label);
 		return 1;
 	}
 
 	for (i=0; i<reader->nprov; i++) {
 		ulong prid = b2i(4, reader->prid[i]);
-		if (prid == provid || ( (reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF) ))
+		if (prid == provid || ( (reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF) )) {
+			cs_debug_mask(D_EMM, "emm reader %s provider match %04X:%06X", reader->label, caid, provid);
 			return 1;
+		}
 	}
 	cs_debug_mask(D_EMM, "emm reader %s skip provider %04X:%06X", reader->label, caid, provid);
 	return 0;
