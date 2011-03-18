@@ -60,9 +60,9 @@ void load_stat_from_file()
 	{
 		stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
-		i = fscanf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
+		i = fscanf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld fail %d\n",
 			buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
-			&stat->time_avg, &stat->ecm_count, &stat->last_received);
+			&stat->time_avg, &stat->ecm_count, &stat->last_received, &stat->fail_factor);
 			
 		
 		if (i > 5) {
@@ -199,9 +199,9 @@ void save_stat_to_file()
 			READER_STAT *stat;
 			while ((stat = ll_iter_next(it))) {
 				
-				fprintf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld\n",
+				fprintf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld fail %d\n",
 					rdr->label, stat->rc, stat->caid, stat->prid, 
-					stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received);
+					stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor);
 				count++;
 			}
 			ll_iter_release(it);
@@ -261,6 +261,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		stat->ecm_count++;
 		stat->last_received = time(NULL);
 		stat->request_count = 0;
+		stat->fail_factor = 0;
 		
 		//FASTEST READER:
 		stat->time_idx++;
@@ -283,7 +284,6 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		if (ule == 0)
 			rdr->lb_usagelevel_time = time(NULL);
 		rdr->lb_usagelevel_ecmcount = ule+1;
-		
 	}
 	else if (rc == 1 || rc == 2) { //cache
 		//no increase of statistics here, cachetime is not real time
@@ -291,9 +291,12 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		stat->request_count = 0;
 	}
 	else if (rc == 4) { //not found
-		if (er->rcEx != E2_CCCAM_NOK1 && er->rcEx != E2_CCCAM_NOK2 && er->rcEx != E2_CCCAM_LOOP) 
 		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
+		//CCcam loop detection = E2_CCCAM_LOOP
+		if (er->rcEx != E2_CCCAM_NOK1 && er->rcEx != E2_CCCAM_NOK2 && er->rcEx != E2_CCCAM_LOOP) {
 				stat->rc = rc;
+				stat->fail_factor++;
+		}
 		//stat->last_received = time(NULL); do not change time, this would prevent reopen
 		//stat->ecm_count = 0; Keep ecm_count!
 	}
@@ -305,8 +308,10 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		//catch suddenly occuring timeouts and block reader:
 		if ((int)(cur_time-stat->last_received) < (int)(5*cfg.ctimeout) && 
 						stat->rc == 0 && 
-						stat->ecm_count > 0) 
+						stat->ecm_count > 0) {
 				stat->rc = 5;
+				stat->fail_factor++;
+		}
 				
 		stat->last_received = cur_time;
 
@@ -353,6 +358,7 @@ void reset_stat(ushort caid, ulong prid, ushort srvid)
 					stat->ecm_count = 1; //not zero, so we know it's decodeable
 				stat->rc = 0;
 				stat->request_count = 0;
+				stat->fail_factor = 0;
 			}
 		}
 	}
@@ -420,6 +426,14 @@ static int get_nbest_readers(ECM_REQUEST *er) {
 						return cfg.lb_nbest_readers_tab.value[i];
 		}
 		return cfg.lb_nbest_readers;
+}
+
+static int get_reopen_seconds(READER_STAT *stat)
+{
+		int max = (INT_MAX / cfg.lb_reopen_seconds) - 1;
+		if (stat->fail_factor > max)
+				stat->fail_factor = max;
+		return (stat->fail_factor+1) * cfg.lb_reopen_seconds;
 }
 
 /**	
@@ -694,7 +708,7 @@ int get_best_reader(ECM_REQUEST *er)
 	        	stat = get_stat(rdr, er->caid, er->prid, er->srvid); 
 
 			if (stat && stat->rc != 0) { //retrylimit reached:
-				if (stat->last_received+cfg.lb_reopen_seconds < current_time) { //Retrying reader every (900/conf) seconds
+				if (stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
 					stat->last_received = current_time;
 					ll_remove(result, rdr);
 					ll_prepend(result, rdr);

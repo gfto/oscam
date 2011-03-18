@@ -1220,6 +1220,7 @@ typedef struct reader_stat_t
   int           time_idx;
 
   int           request_count;
+  int			fail_factor;
 } GCC_PACK      READER_STAT;
 
 typedef struct emm_packet_t

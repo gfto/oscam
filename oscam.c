@@ -560,7 +560,6 @@ static void cleanup_thread(struct s_client *cl)
 		cl->reader = NULL;
     }
 	cleanup_ecmtasks(cl);
-	cl->thread = 0;
 	add_garbage(cl->emmcache);
 	add_garbage(cl->req);
 	add_garbage(cl->cc);
