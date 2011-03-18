@@ -9,14 +9,14 @@
 static void _destroy(LLIST *l)
 {
     if (!l) return;
-    
+    pthread_mutex_destroy(&l->lock);
     add_garbage(l);
 }
 
 LLIST *ll_create()
 {
     LLIST *l = calloc(1, sizeof(LLIST));
-    
+    pthread_mutex_init(&l->lock, NULL);
     return l;
 }
 
@@ -62,6 +62,7 @@ LL_NODE* ll_append(LLIST *l, void *obj)
 {
     if (l && obj) {
         LL_NODE *new = calloc(1, sizeof(LL_NODE));
+        pthread_mutex_lock(&l->lock);
         LL_NODE *n = l->initial;
 
         new->obj = obj;
@@ -73,6 +74,7 @@ LL_NODE* ll_append(LLIST *l, void *obj)
             l->initial = new;
     
         l->count++;
+        pthread_mutex_unlock(&l->lock);
 
         return new;
     }
@@ -85,11 +87,13 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
     if (l && obj) {
         LL_NODE *new = calloc(1, sizeof(LL_NODE));
 
+        pthread_mutex_lock(&l->lock);
         new->obj = obj;
         new->nxt = l->initial;
 
         l->initial = new;
         l->count++;
+        pthread_mutex_unlock(&l->lock);
 
         return new;
     }
@@ -167,6 +171,7 @@ void ll_iter_insert(LL_ITER *it, void *obj)
         if (!it->cur || !it->cur->nxt)
             ll_append(it->l, obj);
         else {
+		   	pthread_mutex_lock(&it->l->lock);
             LL_NODE *n = calloc(1, sizeof(LL_NODE));
 
             n->obj = obj;
@@ -174,17 +179,19 @@ void ll_iter_insert(LL_ITER *it, void *obj)
             it->cur->nxt = n;
 
             it->l->count++;
+            pthread_mutex_unlock(&it->l->lock);
         }
     }
 }
 
 void *ll_iter_remove(LL_ITER *it)
 {
+   	void *obj = NULL;
     if (it) {
+    	pthread_mutex_lock(&it->l->lock);
         LL_NODE *del = it->cur;
-
         if (del && !del->flag++) { //preventing duplicate free because of multiple threads
-            void *obj = del->obj;
+            obj = del->obj;
             LL_NODE *prv = it->prv;
             
             if (prv)
@@ -199,11 +206,11 @@ void *ll_iter_remove(LL_ITER *it)
                     break;
 
             add_garbage(del);
-            return obj;
         }
+        pthread_mutex_unlock(&it->l->lock);
     }
 
-    return NULL;
+    return obj;
 }
 
 void ll_iter_remove_data(LL_ITER *it)
