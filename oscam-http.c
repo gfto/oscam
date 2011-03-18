@@ -1713,7 +1713,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 
 				if (cl->cwfound + cl->cwnot > 0) {
 					cwrate = cl->last - cl->login;
-					cwrate /= cl->cwfound + cl->cwnot;
+					cwrate /= (cl->cwfound + cl->cwnot + cl->cwcache);
 				}
 			}
 		}
