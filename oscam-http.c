@@ -1570,7 +1570,7 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	return tpl_getTpl(vars, "USEREDIT");
 }
 
-char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
+char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
 	struct s_auth *account, *account2;
 	char *user = getParam(params, "user");
 	int found = 0, hideclient = 10;
@@ -1578,76 +1578,78 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 	if (cfg.mon_hideclient_to > 10)
 	hideclient = cfg.mon_hideclient_to;
 
-	if (strcmp(getParam(params, "action"), "reinit") == 0) {
-		if(!cfg.http_readonly)
-			refresh_oscam(REFR_ACCOUNTS, in);
-	}
-
-	if (strcmp(getParam(params, "action"), "delete") == 0) {
-		if(cfg.http_readonly) {
-			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Webif is in readonly mode. No deletion will be made!</b><BR>");
-		} else {
-			account = cfg.account;
-			if(strcmp(account->usr, user) == 0) {
-				cfg.account = account->next;
-				free(account);
-				found = 1;
-			} else if (account->next != NULL) {
-				do {
-					if(strcmp(account->next->usr, user) == 0) {
-						account2 = account->next;
-						account->next = account2->next;
-						free(account2);
-						found = 1;
-						break;
-					}
-				} while ((account = account->next) && (account->next != NULL));
-			}
-
-			if (found > 0) {
-				if (write_userdb(cfg.account)==0)
-					refresh_oscam(REFR_ACCOUNTS, in);
-				else
-					tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
-
-			} else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
-		}
-	}
-
-	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
-		account = get_account_by_name(getParam(params, "user"));
-		if (account) {
-			if(strcmp(getParam(params, "action"), "disable") == 0)
-				account->disabled = 1;
-			else
-				account->disabled = 0;
-			if (write_userdb(cfg.account) == 0)
+	if (!apicall) {
+		if (strcmp(getParam(params, "action"), "reinit") == 0) {
+			if(!cfg.http_readonly)
 				refresh_oscam(REFR_ACCOUNTS, in);
-		} else {
-			tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
 		}
-	}
 
-	if (strcmp(getParam(params, "action"), "resetstats") == 0) {
-		account = get_account_by_name(getParam(params, "user"));
-		if (account) clear_account_stats(account);
-	}
+		if (strcmp(getParam(params, "action"), "delete") == 0) {
+			if(cfg.http_readonly) {
+				tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Webif is in readonly mode. No deletion will be made!</b><BR>");
+			} else {
+				account = cfg.account;
+				if(strcmp(account->usr, user) == 0) {
+					cfg.account = account->next;
+					free(account);
+					found = 1;
+				} else if (account->next != NULL) {
+					do {
+						if(strcmp(account->next->usr, user) == 0) {
+							account2 = account->next;
+							account->next = account2->next;
+							free(account2);
+							found = 1;
+							break;
+						}
+					} while ((account = account->next) && (account->next != NULL));
+				}
 
-	if (strcmp(getParam(params, "action"), "resetserverstats") == 0) {
-		clear_system_stats();
-	}
+				if (found > 0) {
+					if (write_userdb(cfg.account)==0)
+						refresh_oscam(REFR_ACCOUNTS, in);
+					else
+						tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 
-	if (strcmp(getParam(params, "action"), "resetalluserstats") == 0) {
-		clear_all_account_stats();
-	}
+				} else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
+			}
+		}
 
-	if ((strcmp(getParam(params, "part"), "adduser") == 0) && (!cfg.http_readonly)) {
-		tpl_addVar(vars, TPLAPPEND, "NEWUSERFORM", tpl_getTpl(vars, "ADDNEWUSER"));
-	} else {
-		if(cfg.http_refresh > 0) {
-			tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
-			tpl_addVar(vars, TPLADD, "REFRESHURL", "userconfig.html");
-			tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+		if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
+			account = get_account_by_name(getParam(params, "user"));
+			if (account) {
+				if(strcmp(getParam(params, "action"), "disable") == 0)
+					account->disabled = 1;
+				else
+					account->disabled = 0;
+				if (write_userdb(cfg.account) == 0)
+					refresh_oscam(REFR_ACCOUNTS, in);
+			} else {
+				tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>Sorry but the specified user doesn't exist. No deletion will be made!</b><BR>");
+			}
+		}
+
+		if (strcmp(getParam(params, "action"), "resetstats") == 0) {
+			account = get_account_by_name(getParam(params, "user"));
+			if (account) clear_account_stats(account);
+		}
+
+		if (strcmp(getParam(params, "action"), "resetserverstats") == 0) {
+			clear_system_stats();
+		}
+
+		if (strcmp(getParam(params, "action"), "resetalluserstats") == 0) {
+			clear_all_account_stats();
+		}
+
+		if ((strcmp(getParam(params, "part"), "adduser") == 0) && (!cfg.http_readonly)) {
+			tpl_addVar(vars, TPLAPPEND, "NEWUSERFORM", tpl_getTpl(vars, "ADDNEWUSER"));
+		} else {
+			if(cfg.http_refresh > 0) {
+				tpl_printf(vars, TPLADD, "REFRESHTIME", "%d", cfg.http_refresh);
+				tpl_addVar(vars, TPLADD, "REFRESHURL", "userconfig.html");
+				tpl_addVar(vars, TPLADD, "REFRESH", tpl_getTpl(vars, "REFRESH"));
+			}
 		}
 	}
 
@@ -1655,6 +1657,12 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 	char *status, *expired, *classname, *lastchan;
 	time_t now = time((time_t)0);
 	int isec = 0, isconnected = 0;
+
+	char *filter = NULL;
+	int clientcount = 0;
+	if (apicall) {
+		filter = getParam(params, "label");
+	}
 
 	for (account=cfg.account; (account); account=account->next) {
 		//clear for next client
@@ -1681,6 +1689,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 
 		int lastresponsetm = 0;
 		char *proto = "";
+		float cwrate = 0;
 
 		//search account in active clients
 		int isactive = 0;
@@ -1701,6 +1710,11 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 					lastresponsetm = cl->cwlastresptime;
 					isactive++;
 				}
+
+				if (cl->cwfound + cl->cwnot > 0) {
+					cwrate = cl->last - cl->login;
+					cwrate /= cl->cwfound + cl->cwnot;
+				}
 			}
 		}
 
@@ -1712,6 +1726,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		tpl_printf(vars, TPLADDONCE, "CWTUN", "%d", account->cwtun);
 		tpl_printf(vars, TPLADDONCE, "EMMOK", "%d", account->emmok);
 		tpl_printf(vars, TPLADDONCE, "EMMNOK", "%d", account->emmnok);
+		tpl_printf(vars, TPLADDONCE, "CWRATE", "%.2f", cwrate);
 
 		if ( isactive > 0 || !cfg.http_hide_idle_clients) {
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
@@ -1727,8 +1742,13 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		tpl_addVar(vars, TPLADD, "STATUS", status);
 		tpl_addVar(vars, TPLAPPENDONCE, "STATUS", expired);
 		// append row to table template
-		tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT"));
-
+		if (!apicall)
+			tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT"));
+		else
+			if (!filter || strcmp(filter, account->usr) == 0 || strcmp(filter, "all") == 0 || strlen(filter) == 0) {
+				tpl_addVar(vars, TPLAPPEND, "APIUSERCONFIGS", tpl_getTpl(vars, "APIUSERCONFIGLISTBIT"));
+				++clientcount;
+			}
 	}
 
 	tpl_printf(vars, TPLADD, "TOTAL_CWOK", "%ld", first_client->cwfound);
@@ -1738,7 +1758,17 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%ld", first_client->cwcache);
 	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%ld", first_client->cwtun);
 	
-	return tpl_getTpl(vars, "USERCONFIGLIST");
+	if (!apicall)
+		return tpl_getTpl(vars, "USERCONFIGLIST");
+	else {
+		if (!filter || clientcount > 0) {
+			return tpl_getTpl(vars, "APIUSERCONFIGLIST");
+		} else {
+			tpl_printf(vars, TPLADD, "APIERRORMESSAGE", "Invalid client %s", filter);
+			return tpl_getTpl(vars, "APIERROR");
+		}
+	}
+
 }
 
 char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
@@ -2849,6 +2879,9 @@ char *send_oscam_api(struct templatevars *vars, FILE *f, struct uriparams *param
 	if (strcmp(getParam(params, "part"), "status") == 0) {
 		return send_oscam_status(vars, params, in, 1);
 	}
+	else if (strcmp(getParam(params, "part"), "userstats") == 0) {
+		return send_oscam_user_config(vars, params, in, 1);
+	}
 	else if (strcmp(getParam(params, "part"), "entitlement") == 0) {
 
 		if (strcmp(getParam(params, "label"),"")) {
@@ -3243,7 +3276,7 @@ int process_request(FILE *f, struct in_addr in) {
 			case 1: result = send_oscam_reader(vars, &params, in); break;
 			case 2: result = send_oscam_entitlement(vars, &params, in, 0); break;
 			case 3: result = send_oscam_status(vars, &params, in, 0); break;
-			case 4: result = send_oscam_user_config(vars, &params, in); break;
+			case 4: result = send_oscam_user_config(vars, &params, in, 0); break;
 			case 5: result = send_oscam_reader_config(vars, &params, in); break;
 			case 6: result = send_oscam_services(vars, &params, in); break;
 			case 7: result = send_oscam_user_config_edit(vars, &params, in); break;

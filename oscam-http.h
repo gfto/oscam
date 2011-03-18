@@ -496,6 +496,36 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
       </client>\n"
 
 
+#define TPLAPIUSERCONFIGLIST "##TPLAPIHEADER##\n\
+    <users>\n\
+##APIUSERCONFIGS##\
+    </users>\n\
+    <totals>\n\
+        <cwok>##TOTAL_CWOK##</cwok>\n\
+        <cwnok>##TOTAL_CWNOK##</cwnok>\n\
+        <cwignore>##TOTAL_CWIGN##</cwignore>\n\
+        <cwtimeout>##TOTAL_CWTOUT##</cwtimeout>\n\
+        <cwcache>##TOTAL_CWCACHE##</cwcache>\n\
+        <cwtun>##TOTAL_CWTUN##</cwtun>\n\
+    </totals>\n\
+##TPLAPIFOOTER##"
+
+#define TPLAPIUSERCONFIGLISTBIT "        <user name=\"##USER##\">\n\
+            <stats>\n\
+                <cwok>##CWOK##</cwok>\n\
+                <cwnok>##CWNOK##</cwnok>\n\
+                <cwignore>##CWIGN##</cwignore>\n\
+                <cwtimeout>##CWTOUT##</cwtimeout>\n\
+                <cwcache>##CWCACHE##</cwcache>\n\
+                <cwtun>##CWTUN##</cwtun>\n\
+                <cwlastresptime>##CWLASTRESPONSET##</cwlastresptime>\n\
+                <emmok>##EMMOK##</emmok>\n\
+                <emmnok>##EMMNOK##</emmnok>\n\
+                <cwrate>##CWRATE##</cwrate>\n\
+            </stats>\n\
+        </user>\n"
+
+
 #define TPLUSERCONFIGLIST "\
 ##TPLHEADER##\
 ##TPLMENU##\
@@ -525,6 +555,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH>LTIME</TH>\n\
 			<TH>EOK</TH>\n\
 			<TH>ENOK</TH>\n\
+			<TH>CW Rate</TH>\n\
 			<TH colspan=\"3\" align=\"center\">Action</TH>\n\
 		</TR>\n\
 ##USERCONFIGS##\
@@ -579,6 +610,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD align=\"center\">##CWLASTRESPONSET##</TD>\n\
 			<TD align=\"center\">##EMMOK##</TD>\n\
 			<TD align=\"center\">##EMMNOK##</TD>\n\
+			<TD align=\"center\">##CWRATE##</TD>\n\
 			<TD align=\"center\"><A HREF=\"user_edit.html?user=##USERENC##\" TITLE=\"edit this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICEDI\" BORDER=\"0\" ALT=\"Edit User\"/></A></TD>\n\
 			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=resetstats\" TITLE=\"reset statistics for this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICRES\"BORDER=\"0\" ALT=\"Reset Stats\"/></A></TD>\n\
 			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=delete\" TITLE=\"delete this user\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICDEL\"BORDER=\"0\" ALT=\"Delete User\"/></A></TD>\n\
@@ -1570,6 +1602,8 @@ char *tpl[]={
 	"USERCONFIGLIST",
 	"ADDNEWUSER",
 	"USERCONFIGLISTBIT",
+	"APIUSERCONFIGLIST",
+	"APIUSERCONFIGLISTBIT",
 	"SIDTAB",
 	"SIDTABBIT",
 	"READERS",
@@ -1681,6 +1715,8 @@ char *tplmap[]={
 	TPLUSERCONFIGLIST,
 	TPLADDNEWUSER,
 	TPLUSERCONFIGLISTBIT,
+	TPLAPIUSERCONFIGLIST,
+	TPLAPIUSERCONFIGLISTBIT,
 	TPLSIDTAB,
 	TPLSIDTABBIT,
 	TPLREADERS,
