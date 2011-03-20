@@ -546,7 +546,7 @@ if (OSCamOperatingSystem MATCHES "Mac OS X")
     set (CMAKE_C_FLAGS_DEBUG "-O0 -g -m32")
     set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g -m32")
 elseif (OSCAM_SYSTEM_NAME MATCHES "NSLU2")
-    add_definitions ("-O2 -Winline -Wall -finline-functions -fomit-frame-pointer")
+    add_definitions ("-O2 -Winline -Wall")
 elseif (OSCAM_SYSTEM_NAME MATCHES "WRT350NV2")
 #    add_definitions ("-O2 -Winline -Wall -finline-functions -fomit-frame-pointer")
 # Definitions above temp. disabled for wrt350nv2 - produces much bigger binary-file in size. -O2 is enough and results in a smaller binary
