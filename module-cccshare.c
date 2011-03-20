@@ -640,7 +640,7 @@ int report_card(struct cc_card *card, LLIST *new_reported_carddatas)
     return res;
 }
 
-void add_good_bad_sids(struct s_sidtab *ptr, struct cc_card *card) {
+void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card *card) {
         //good sids:
         int l;
         for (l=0;l<ptr->num_srvid;l++) {
@@ -654,6 +654,7 @@ void add_good_bad_sids(struct s_sidtab *ptr, struct cc_card *card) {
         struct s_sidtab *ptr_no;
         int n;
         for (n=0,ptr_no=cfg.sidtab; ptr_no; ptr_no=ptr_no->next,n++) {
+				if (sidtabno&((SIDTABBITS)1<<n)) {
                 		int m;
                         int ok_caid = FALSE;
                         for (m=0;m<ptr_no->num_caid;m++) { //search bad sids for this caid:
@@ -670,6 +671,7 @@ void add_good_bad_sids(struct s_sidtab *ptr, struct cc_card *card) {
                                         ll_append(card->badsids, srvid);
                                 }
                         }
+				}
         }
 }
 
@@ -710,9 +712,6 @@ void update_card_list() {
                         prov->prov = ptr->provid[l];
                         ll_append(card->providers, prov);
                     }
-
-                    //CCcam 2.2.x proto can transfer good and bad sids:
-                    add_good_bad_sids(ptr, card);
 
                     add_card_to_serverlist(server_cards, card);
                 }
@@ -760,7 +759,7 @@ void update_card_list() {
                             }
 
                             //CCcam 2.2.x proto can transfer good and bad sids:
-                            add_good_bad_sids(ptr, card);
+                            add_good_bad_sids(ptr, rdr->sidtabno, card);
 
                             add_card_to_serverlist(server_cards, card);
                         }
