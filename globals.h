@@ -1470,6 +1470,8 @@ extern char *mk_t_logfile();
 //Todo #ifdef CCCAM
 extern int init_provid();
 extern char * get_tmp_dir();
+extern void init_share();
+extern void done_share();
 
 // oscam-reader
 extern int logfd;

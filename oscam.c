@@ -573,6 +573,8 @@ static void cs_cleanup()
 				save_stat_to_file();
 				cfg.lb_save = 0; //this is for avoiding duplicate saves
 		}
+		
+		done_share();
 
         //cleanup clients:
         struct s_client *cl;

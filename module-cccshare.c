@@ -1031,5 +1031,9 @@ void done_share() {
 		if (share_updater_thread) {
 				pthread_cancel(share_updater_thread);
 				share_updater_thread = 0;
+				
+				cc_free_reported_carddata(reported_carddatas, NULL, 0);
+				pthread_mutex_unlock(&cc_shares_lock);
+				pthread_mutex_destroy(&cc_shares_lock);
 		}
 }
