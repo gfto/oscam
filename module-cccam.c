@@ -1095,12 +1095,17 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 	
 	if (!card) {
 		it = ll_iter_create(cc->cards);
-		struct cc_card *ncard;
+		struct cc_card *ncard, *xcard = NULL;
 		while ((ncard = ll_iter_next(it))) {
 			if (ncard->caid == cur_er->caid) { // caid matches
 				if (is_sid_blocked(ncard, &cur_srvid))
 					continue;
 				
+				if (!cur_er->prid) {
+						if (!xcard || ncard->hop < xcard->hop)
+								xcard = ncard; //remember card (D+ / 1810 fix) if request has no provider, but card has
+				}
+						
 				if (!cur_er->prid && !ll_count(ncard->providers)) { //card has no providers:
 					if (h < 0 || ncard->hop < h || (ncard->hop == h
 							&& cc_UA_valid(ncard->hexserial))) {
@@ -1128,6 +1133,8 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 			}
 		}
 		ll_iter_release(it);
+		if (!card)
+				card = xcard; //if request has no provider and we have no card, we try this card
 	}	
 
 	if (card) {
