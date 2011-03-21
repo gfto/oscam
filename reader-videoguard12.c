@@ -351,40 +351,7 @@ static int videoguard12_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
 
 static int videoguard12_do_emm(struct s_reader *reader, EMM_PACKET * ep)
 {
-  unsigned char cta_res[CTA_RES_LEN];
-  unsigned char ins42[5] = { 0x49, 0x42, 0x00, 0x00, 0xFF  };
-  int rc = ERROR;
-  const unsigned char *payload = payload_addr(ep->type, ep->emm, reader->hexserial);
-  while (payload) {
-    ins42[4] = *payload;
-    int l = vg12_do_cmd(reader, ins42, payload + 1, NULL, cta_res);
-    if (l > 0 && status_ok(cta_res)) {
-      rc = OK;
-    }
-
-    cs_debug_mask(D_EMM, "EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
-    //cs_dump(ep->emm, 64, "EMM:");
-    if (status_ok(cta_res) && (cta_res[1] & 0x01)) {
-      read_tiers(reader);
-    }
-
-    if (num_addr(ep->emm) == 1 && (int) (&payload[1] - &ep->emm[0]) + *payload + 1 < ep->l) {
-      payload += *payload + 1;
-      if (*payload == 0x00) {
-        ++payload;
-      }
-      ++payload;
-      if (*payload != 0x02) {
-        break;
-      }
-      payload += 2 + payload[1];
-    } else {
-      payload = 0;
-    }
-
-  }
-
-  return (rc);
+   return videoguard_do_emm(reader, ep, 0x49, read_tiers);
 }
 
 static int videoguard12_card_info(struct s_reader *reader)

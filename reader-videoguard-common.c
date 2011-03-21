@@ -735,110 +735,6 @@ void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
   }
 }
 
-int num_addr(const unsigned char *data)
-{
-  return ((data[3] & 0x30) >> 4) + 1;
-}
-
-/*
-Example of GLOBAL EMM's
-This one has IRD-EMM + Card-EMM
-82 70 20 00 02 06 02 7D 0E 89 53 71 16 90 14 40
-01 ED 17 7D 9E 1F 28 CF 09 97 54 F1 8E 72 06 E7
-51 AF F5
-This one has only IRD-EMM
-82 70 6D 00 07 69 01 30 07 14 5E 0F FF FF 00 06
-00 0D 01 00 03 01 00 00 00 0F 00 00 00 5E 01 00
-01 0C 2E 70 E4 55 B6 D2 34 F7 44 86 9E 5C 91 14
-81 FC DF CB D0 86 65 77 DF A9 E1 6B A8 9F 9B DE
-90 92 B9 AA 6C B3 4E 87 D2 EC 92 DA FC 71 EF 27
-B3 C3 D0 17 CF 0B D6 5E 8C DB EB B3 37 55 6E 09
-7F 27 3C F1 85 29 C9 4E 0B EE DF 68 BE 00 C9 00
-*/
-const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a)
-{
-  int s;
-  int l;
-  const unsigned char *ptr = NULL;
-  int position = -1;
-  int numAddrs = 0;
-  switch (emmtype) {
-  case SHARED:
-    {
-      s = 3;
-      break;
-    }
-  case UNIQUE:
-    {
-      s = 4;
-      break;
-    }
-  default:
-    {
-      s = 0;
-    }
-  }
-
-  numAddrs = num_addr(data);
-  if (s > 0) {
-    for (l = 0; l < numAddrs; l++) {
-      if (!memcmp(&data[l * 4 + 4], a + 2, s)) {
-        position = l;
-        break;
-      }
-    }
-  }
-
-  int num_filter = (position == -1) ? 0 : numAddrs;
-  /* skip header and the filter list */
-  ptr = data + 4 + 4 * num_filter;
-  if (*ptr != 0x02 && *ptr != 0x07)	// some clients omit 00 00 separator */
-  {
-    ptr += 2;			// skip 00 00 separator
-    if (*ptr == 0x00)
-      ptr++;			// skip optional 00
-    ptr++;			// skip the 1st bitmap len
-  }
-
-  /* check for IRD-EMM */
-  if (*ptr != 0x02 && *ptr != 0x07) {
-    return NULL;
-  }
-
-  /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */
-  ptr += 2 + ptr[1];
-  /* check for EMM boundaries - ptr should not exceed EMM length */
-  if ((int) (ptr - (data + 3)) >= data[2]) {
-    return NULL;
-  }
-
-  for (l = 0; l < position; l++) {
-    /* skip the payload of the previous sub-EMM */
-    ptr += 1 + ptr[0];
-    /* check for EMM boundaries - ptr should not exceed EMM length */
-    if ((int) (ptr - (data + 3)) >= data[2]) {
-      return NULL;
-    }
-
-    /* skip optional 00 */
-    if (*ptr == 0x00) {
-      ptr++;
-    }
-
-    /* skip the bitmap len */
-    ptr++;
-    /* check for IRD-EMM */
-    if (*ptr != 0x02 && *ptr != 0x07) {
-      return NULL;
-    }
-
-    /* skip IRD-EMM part, 02 00 or 02 06 xx aabbccdd yy */
-    ptr += 2 + ptr[1];
-  }
-
-  return ptr;
-}
-
 int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
 
@@ -901,6 +797,85 @@ xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx
 			ep->type=UNKNOWN;
 			return TRUE;
 	}
+}
+
+int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA, void (*read_tiers)(struct s_reader *))
+{
+   unsigned char cta_res[CTA_RES_LEN];
+   unsigned char ins42[5] = { CLA, 0x42, 0x00, 0x00, 0xFF };
+   int rc = ERROR;
+   int nsubs = ((ep->emm[3] & 0x30) >> 4) + 1;
+   int offs = 4;
+   int emmv2 = 0;
+   int position, ua_position = -1;
+   int serial_len = (ep->type == SHARED) ? 3: 4;
+   int vdrsc_fix = 0;
+
+   if (ep->type == UNIQUE || ep->type == SHARED)
+   {
+      if (ep->emm[1] == 0x00)  // cccam sends emm-u without UA
+      {
+         nsubs = 1;
+         ua_position = 0;
+      }
+      else
+      {
+         int i;
+         for (i = 0; i < nsubs; ++i)
+         {
+            if (memcmp(&ep->emm[4+i*4], &reader->hexserial[2], serial_len) == 0)
+            {
+               ua_position = i;
+               break;
+            }
+         }
+         offs += nsubs * 4;
+      }
+      if (ua_position == -1)
+         return ERROR;
+   }
+   // if (ep->type == GLOBAL && memcmp(&ep->emm[4], &reader->hexserial[2], 4) == 0)  //workaround for vdr-sc client
+   // {
+   //    ep->type = UNIQUE;
+   //    vdrsc_fix = 1;
+   //    offs += 4;
+   // }
+   if (ep->emm[offs] == 0x00 && (ep->emm[offs+1] == 0x00 || ep->emm[offs+1] == 0x01))  // unmodified emm from dvbapi
+   {
+      emmv2 = ep->emm[offs+1];
+      offs += 2 + 1 + emmv2;  // skip sub-emm len (2 bytes sub-emm len if 0x01);
+   }
+   for (position = 0; position < nsubs && offs < ep->l; ++position)
+   {
+      if (ep->emm[offs] > 0x07)  //workaround for mgcamd and emmv2
+         ++offs;
+      if (ep->emm[offs] == 0x02 || ep->emm[offs] == 0x07)
+      {
+         if (offs + ep->emm[offs] > ep->l)
+            return rc;
+         ++offs;
+         offs += ep->emm[offs] + 1;
+         if (ep->emm[offs] != 0)
+         {
+            if (ep->type == GLOBAL || vdrsc_fix || position == ua_position)
+            {
+               ins42[4] = ep->emm[offs];
+               int l = do_cmd(reader, ins42, &ep->emm[offs+1], NULL, cta_res);
+               if (l > 0 && status_ok(cta_res))
+                  rc = OK;
+               cs_debug_mask(D_EMM, "EMM request return code : %02X%02X", cta_res[0], cta_res[1]);
+               if (status_ok(cta_res) && (cta_res[1] & 0x01))
+                  (*read_tiers)(reader);
+            }
+            offs += ep->emm[offs] + 1;
+         }
+         offs += 2;
+         if (vdrsc_fix) --position;
+      }
+      else
+         return rc;
+   }
+   return rc;
 }
 
 void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)

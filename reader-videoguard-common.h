@@ -49,6 +49,7 @@ extern const unsigned char *payload_addr(uchar emmtype, const unsigned char *dat
 
 int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr);
 void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter);
+int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA, void (*read_tiers)(struct s_reader *));
 
 #endif // __NDS_COMMON__
 
