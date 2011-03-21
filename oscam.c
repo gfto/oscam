@@ -1994,7 +1994,9 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 	}
 	if (ert) {
 			send_dcw(cl, ert);
-			distribute_ecm(er);
+
+			if (cfg.lb_mode)
+			  distribute_ecm(er);
     }
 	return;
 }
