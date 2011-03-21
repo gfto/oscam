@@ -1098,6 +1098,20 @@ void start_anticascader()
 #endif
 
 void restart_cardreader(struct s_reader *rdr, int restart) {
+
+	if (restart) {
+		//remove from list:	
+		struct s_reader *rdr2, *prv = NULL;
+		for (rdr2=first_active_reader; rdr2 ; rdr2=rdr2->next) {
+			if (rdr2==rdr) {
+				if (prv) prv->next = rdr2->next;
+				else first_active_reader = rdr2->next;
+				break;
+			}
+			prv = rdr2;
+		}
+	}
+
 	if (restart) //kill old thread
 		if (rdr->client)
 			kill_thread(rdr->client);
@@ -1147,6 +1161,14 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 		pthread_create(&cl->thread, &attr, start_cardreader, (void *)rdr);
 		pthread_detach(cl->thread);
 		pthread_attr_destroy(&attr);
+		
+		if (restart) {
+			//add to list
+			struct s_reader *rdr2;
+			for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
+			if (rdr2) rdr2->next = rdr;
+			else first_active_reader = rdr;
+		}
 	}
 }
 

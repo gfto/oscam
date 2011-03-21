@@ -657,6 +657,17 @@ int cc_send_srv_data(struct s_client *cl) {
 	return cc_cmd_send(cl, buf, 0x48, MSG_SRV_DATA);
 }
 
+int loop_check(uint8 *myid, struct s_client *cl) {
+		if (!cl)
+				return 0;
+				
+		struct cc_data *cc = cl->cc;
+		if (!cc)
+				return 0;
+				
+		return !memcmp(myid, cc->peer_node_id, sizeof(cc->peer_node_id)); // same nodeid? ignore
+}
+
 /**
  * reader
  * retrieves the next waiting ecm request
@@ -678,7 +689,7 @@ int cc_get_nxt_ecm(struct s_client *cl) {
 		}
 
 		else if (er->rc >= 10 && er->rc != 101) { // stil active and waiting
-			if (!memcmp(er->origin_node_id, cc->peer_node_id, sizeof(cc->peer_node_id))) { // same nodeid? ignore
+			if (loop_check(cc->peer_node_id, er->client)) {
 				er->rc = E_RDR_NOTFOUND;
 				er->rcEx = E2_CCCAM_LOOP;
 				cs_debug_mask(D_READER, "%s ecm loop detected! client %s (%s)", 
@@ -2002,7 +2013,6 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 				er->prid = b2i(4, buf + 6);
 				cc->server_ecm_pending++;
 				er->idx = ++cc->server_ecm_idx;
-				memcpy(er->origin_node_id, cc->peer_node_id, sizeof(cc->peer_node_id));
 
 				if (cfg.cc_forward_origin_card) { //search my shares for this card:
 						cs_debug_mask(D_TRACE, "%s forward card: %04X:%04x search share %d", getprefix(), er->caid, er->srvid, server_card->id);

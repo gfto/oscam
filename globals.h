@@ -593,7 +593,6 @@ typedef struct ecm_request_t
   struct s_ecm *ecmcacheptr; //Pointer to ecm-cw-rc-cache!
 
   char msglog[MSGLOGSIZE];
-  uint8 origin_node_id[8]; //origin node id for avoiding requests client to reader
 } GCC_PACK      ECM_REQUEST;
 
 struct s_client
