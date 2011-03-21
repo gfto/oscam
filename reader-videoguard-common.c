@@ -799,7 +799,7 @@ xx xx xx xx xx xx xx xx xx xx xx xx xx xx xx
 	}
 }
 
-int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA, void (*read_tiers)(struct s_reader *))
+int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA, void (*read_tiers)(), int (*docmd)())
 {
    unsigned char cta_res[CTA_RES_LEN];
    unsigned char ins42[5] = { CLA, 0x42, 0x00, 0x00, 0xFF };
@@ -860,7 +860,7 @@ int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CL
             if (ep->type == GLOBAL || vdrsc_fix || position == ua_position)
             {
                ins42[4] = ep->emm[offs];
-               int l = do_cmd(reader, ins42, &ep->emm[offs+1], NULL, cta_res);
+               int l = (*docmd)(reader, ins42, &ep->emm[offs+1], NULL, cta_res);
                if (l > 0 && status_ok(cta_res))
                   rc = OK;
                cs_debug_mask(D_EMM, "EMM request return code : %02X%02X", cta_res[0], cta_res[1]);

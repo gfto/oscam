@@ -351,7 +351,7 @@ static int videoguard12_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
 
 static int videoguard12_do_emm(struct s_reader *reader, EMM_PACKET * ep)
 {
-   return videoguard_do_emm(reader, ep, 0x49, read_tiers);
+   return videoguard_do_emm(reader, ep, 0x49, read_tiers, vg12_do_cmd);
 }
 
 static int videoguard12_card_info(struct s_reader *reader)
