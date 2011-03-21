@@ -3256,6 +3256,7 @@ int process_request(FILE *f, struct in_addr in) {
 			strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &st);
 			tpl_printf(vars, TPLADD, "APISTARTTIME", "%s", tbuffer);
 			tpl_printf(vars, TPLADD, "APIUPTIME", "%u", now - first_client->login);
+			tpl_printf(vars, TPLADD, "APIREADONLY", "%d", cfg->http_readonly);
 		}
 
 		// language code in helplink
