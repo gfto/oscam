@@ -157,6 +157,7 @@ void tpl_clear(struct templatevars *vars){
 	}
 	free((*vars).names);
 	free((*vars).values);
+	free((*vars).vartypes);
 	for(i = (*vars).tmpcnt-1; i >= 0; --i){
 		free((*vars).tmp[i]);
 	}
