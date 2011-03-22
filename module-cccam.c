@@ -692,7 +692,7 @@ int cc_get_nxt_ecm(struct s_client *cl) {
 			if (loop_check(cc->peer_node_id, er->client)) {
 				er->rc = E_RDR_NOTFOUND;
 				er->rcEx = E2_CCCAM_LOOP;
-				cs_debug_mask(D_READER, "%s ecm loop detected! client %s (%s)", 
+				cs_debug_mask(D_READER, "%s ecm loop detected! client %s (%8X)", 
 						getprefix(), er->client->account->usr, er->client->thread);
 				write_ecm_answer(cl->reader, &cl->ecmtask[i]);
 			}
