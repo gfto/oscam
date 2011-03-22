@@ -1485,8 +1485,12 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<option value=\"1\" ##PMTMODESELECTED1##>1 - disable reading PMT file</option>\n\
 			<option value=\"2\" ##PMTMODESELECTED2##>2 - disable camd.socket</option>\n\
 			<option value=\"3\" ##PMTMODESELECTED3##>3 - read PMT file on startup only</option>\n\
-			<option value=\"4\" ##PMTMODESELECTED4##>4 - ufs912, ufs922 with new libioctl.so</option>\n\
-			<option value=\"5\" ##PMTMODESELECTED5##>5 - ufs912, ufs922 with new libioctl.so & disable camd.socket</option>\n\
+			<option value=\"4\" ##PMTMODESELECTED4##>4 - do not use signal handler to monitor /tmp</option>\n\
+			<option value=\"5\" ##PMTMODESELECTED5##>5 - do not use signal handler to monitor /tmp & disable camd.socket</option>\n\
+		</SELECT></TD></TR>\n\
+		<TR><TD>##TPLHELPPREFIX##conf#request_mode##TPLHELPSUFFIX##Request Mode:</A></TD><TD><select name=\"request_mode\">\n\
+			<option value=\"0\" ##REQMODESELECTED0##>0 - try all possible CAIDs one by one</option>\n\
+			<option value=\"1\" ##REQMODESELECTED1##>1 - try all CAIDs simultaneously</option>\n\
 		</SELECT></TD></TR>\n\
     <TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 	</TABLE>\n\

@@ -61,7 +61,7 @@ struct cc_crypt_block {
 	uint8 state;
 	uint8 counter;
 	uint8 sum;
-} GCC_PACK;
+};
 
 struct cc_srvid {
 	uint16 sid;
@@ -71,7 +71,7 @@ struct cc_srvid {
 struct cc_provider {
 	ulong prov;  //provider
 	uint8 sa[4]; //shared address
-} GCC_PACK;
+};
 
 typedef enum {
 		CT_LOCALCARD,
@@ -96,14 +96,14 @@ struct cc_card {
 	uint32 origin_id;
 	cc_card_type card_type;
 	struct s_sidtab *sidtab; //pointer to sidtab entry if card_type = CT_CARD_BY_SERVICE
-} GCC_PACK;
+};
 
 struct cc_auto_blocked {
 	uint16 caid;
 	uint32 prov;
 	struct cc_srvid srvid;
 	time_t time;
-} GCC_PACK;
+};
 
 struct cc_current_card {
 	struct cc_card *card;
@@ -135,7 +135,7 @@ struct cc_extended_ecm_idx {
 	ushort ecm_idx;
 	struct cc_card *card;
 	struct cc_srvid srvid;
-} GCC_PACK EXTENDED_ECM_IDX;
+} EXTENDED_ECM_IDX;
 
 struct cc_data {
 	uint8 g_flag;
@@ -201,7 +201,7 @@ struct cc_data {
 	//Extended Mode for SPECIAL clients:
 	uint8 extended_mode;
 	LLIST *extended_ecm_idx;
-} GCC_PACK;
+};
 
 int cc_cli_init();
 int cc_cli_init_int(struct s_client *cl);

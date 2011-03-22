@@ -41,12 +41,6 @@
 #	define CS_SVN_VERSION "test"
 #endif
 
-#if defined(__GNUC__)  && !defined(__arm__)
-#  define GCC_PACK __attribute__((packed))
-#else
-#  define GCC_PACK
-#endif
-
 #include "oscam-config.h"
 
 #ifdef UNUSED
@@ -365,7 +359,7 @@ typedef struct s_caidvaluetab
   ushort n;
   ushort caid[CS_MAX_CAIDVALUETAB];
   ushort value[CS_MAX_CAIDVALUETAB];
-} GCC_PACK CAIDVALUETAB;
+} CAIDVALUETAB;
 
 typedef struct s_classtab
 {
@@ -373,21 +367,21 @@ typedef struct s_classtab
   uchar bn;
   uchar aclass[31];
   uchar bclass[31];
-} GCC_PACK CLASSTAB;
+} CLASSTAB;
 
 typedef struct s_caidtab
 {
   ushort caid[CS_MAXCAIDTAB];
   ushort mask[CS_MAXCAIDTAB];
   ushort cmap[CS_MAXCAIDTAB];
-} GCC_PACK CAIDTAB;
+} CAIDTAB;
 
 typedef struct s_tuntab
 {
   ushort bt_caidfrom[CS_MAXTUNTAB];
   ushort bt_caidto[CS_MAXTUNTAB];
   ushort bt_srvid[CS_MAXTUNTAB];
-} GCC_PACK TUNTAB;
+} TUNTAB;
 
 typedef struct s_sidtab
 {
@@ -399,7 +393,7 @@ typedef struct s_sidtab
   ulong    *provid;
   ushort   *srvid;
   struct   s_sidtab *next;
-} GCC_PACK SIDTAB;
+} SIDTAB;
 
 
 typedef struct s_filter
@@ -407,13 +401,13 @@ typedef struct s_filter
   ushort caid;
   uchar  nprids;
   ulong  prids[CS_MAXPROV];
-} GCC_PACK FILTER;
+} FILTER;
 
 typedef struct s_ftab
 {
   int    nfilts;
   FILTER filts[CS_MAXFILTERS];
-} GCC_PACK FTAB;
+} FTAB;
 
 typedef struct s_port
 {
@@ -422,13 +416,13 @@ typedef struct s_port
   int    ncd_key_is_set;    //0 or 1
   uchar  ncd_key[16];
   FTAB   ftab;
-} GCC_PACK PORT;
+} PORT;
 
 typedef struct s_ptab
 {
   int    nports;
   PORT   ports[CS_MAXPORTS];
-} GCC_PACK PTAB;
+} PTAB;
 
 typedef struct aes_entry {
     ushort      keyid;
@@ -462,7 +456,7 @@ typedef struct v_ban {
 	int v_count;
 	uint v_ip;
 	time_t v_time;
-} GCC_PACK V_BAN;
+} V_BAN;
 
 #define AVAIL_CHECK_CONNECTED 0
 #define AVAIL_CHECK_LOADBALANCE 1
@@ -593,7 +587,7 @@ typedef struct ecm_request_t
   struct s_ecm *ecmcacheptr; //Pointer to ecm-cw-rc-cache!
 
   char msglog[MSGLOGSIZE];
-} GCC_PACK      ECM_REQUEST;
+} ECM_REQUEST;
 
 struct s_client
 {
@@ -1220,7 +1214,7 @@ typedef struct reader_stat_t
 
   int           request_count;
   int			fail_factor;
-} GCC_PACK      READER_STAT;
+} READER_STAT;
 
 typedef struct emm_packet_t
 {
@@ -1231,7 +1225,7 @@ typedef struct emm_packet_t
   uchar hexserial[8];					 //contains hexserial or SA of EMM
   uchar type;
   struct s_client *client;
-} GCC_PACK EMM_PACKET;
+} EMM_PACKET;
 
 //EMM types:
 #define UNKNOWN 0

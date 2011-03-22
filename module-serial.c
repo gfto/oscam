@@ -41,14 +41,14 @@ typedef struct s_gbox
   int cat_len;
   int pmt_len;
   int ecm_len;
-} GCC_PACK GBOX_LENS;
+} GBOX_LENS;
 
 typedef struct s_sssp
 {
   ushort caid;
   ushort pid;
   ulong  prid;
-} GCC_PACK SSSP_TAB;
+} SSSP_TAB;
 
 //added to support multiple instances with thread
 struct s_serial_client

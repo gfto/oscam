@@ -642,6 +642,10 @@ char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparams *para
 	tpl_printf(vars, TPLADD, "TMP", "PMTMODESELECTED%d", cfg.dvbapi_pmtmode);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
+	//Request Mode
+	tpl_printf(vars, TPLADD, "TMP", "REQMODESELECTED%d", cfg.dvbapi_requestmode);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+
 	return tpl_getTpl(vars, "CONFIGDVBAPI");
 }
 #endif
