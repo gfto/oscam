@@ -1344,7 +1344,7 @@ extern int comp_timeb(struct timeb *tpa, struct timeb *tpb);
 extern struct s_client * create_client(in_addr_t);
 extern int cs_auth_client(struct s_client *, struct s_auth *, const char*);
 extern void cs_disconnect_client(struct s_client *);
-extern int check_cwcache2(ECM_REQUEST *);
+extern int check_cwcache2(ECM_REQUEST *, uint64 grp);
 extern int write_to_pipe(int, int, uchar *, int);
 extern int read_from_pipe(int, uchar **, int);
 extern int write_ecm_answer(struct s_reader *, ECM_REQUEST *);

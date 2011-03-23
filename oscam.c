@@ -1370,6 +1370,9 @@ static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
 		//cs_debug_mask(D_TRACE, "cachehit! (ecm)");
 		memcpy(er->cw, ecmc->cw, 16);
 		er->selected_reader = ecmc->reader;
+		if (ecmc->rc == E_FOUND)
+				return E_CACHE1;
+		er->ecmcacheptr = ecmc;
 		return ecmc->rc;
 	}
 	ll_iter_release(it);
@@ -1434,9 +1437,9 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
  * cache 2: reader-invoked
  * returns 1 if found in cache. cw is copied to er
  **/
-int check_cwcache2(ECM_REQUEST *er)
+int check_cwcache2(ECM_REQUEST *er, uint64 grp)
 {
-	int rc = check_cwcache1(er, 0);
+	int rc = check_cwcache1(er, grp);
 	return rc;
 }
 
@@ -1641,7 +1644,7 @@ void logCWtoFile(ECM_REQUEST *er)
 /**
  * distributes found ecm-request to all clients with rc=99
  **/
-void distribute_ecm(ECM_REQUEST *er)
+void distribute_ecm(ECM_REQUEST *er, uint64 grp)
 {
   struct s_client *cl;
   ECM_REQUEST *ecm;
@@ -1651,12 +1654,14 @@ void distribute_ecm(ECM_REQUEST *er)
     er->rc = E_CACHE2; //cache
 
   for (cl=first_client->next; cl ; cl=cl->next) {
-    if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask) {
+    if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (cl->grp&grp)) {
 
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
-        if (ecm->rc >= E_99 && (ecm->caid==er->caid || ecm->ocaid==er->ocaid) && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)) {
+        if (ecm->rc >= E_99 && 
+        		(ecm->ecmcacheptr == er->ecmcacheptr ||
+        		((ecm->caid==er->caid || ecm->ocaid==er->ocaid) && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))) {
           er->cpti = ecm->cpti;
           //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
           write_ecm_request(cl->fd_m2c, er);
@@ -2015,10 +2020,9 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 		else send_reader_stat(er->selected_reader, er, E_NOTFOUND);
 	}
 	if (ert) {
-			send_dcw(cl, ert);
+		send_dcw(cl, ert);
 
-			if (cfg.lb_mode)
-			  distribute_ecm(er);
+		distribute_ecm(er, ert->selected_reader->grp);
     }
 	return;
 }
@@ -2428,8 +2432,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		memcpy(er->ecmd5, MD5(er->ecm+offset, er->l-offset, client->dump), CS_ECMSTORESIZE);
 
 		// cache1
-		if (check_cwcache1(er, client->grp))
-				er->rc = E_CACHE1;
+		//cache check now done by check_and_store_ecmcache() !!
+		//if (check_cwcache1(er, client->grp))
+		//		er->rc = E_CACHE1;
 
 #ifdef CS_ANTICASC
 		ac_chk(er, 0);
@@ -2480,8 +2485,6 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		//we have to go through matching_reader() to check services!
 		if (er->rc == E_UNHANDLED)
 				er->rc = check_and_store_ecmcache(er, client->grp);
-		else
-				store_cw_in_cache(er, client->grp, er->rc);
 	}
 
 	if (locked)
@@ -2683,7 +2686,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 			er=&cl->ecmtask[i];
 
 			//additional cache check:
-			if (check_cwcache2(er)) {
+			if (check_cwcache2(er, cl->grp)) {
 					//cs_log("found lost entry in cache! %s %04X&%06X/%04X", username(cl), er->caid, er->prid, er->srvid);
 					er->rc = E_CACHE2;
 					send_dcw(cl, er);
