@@ -1659,9 +1659,9 @@ void distribute_ecm(ECM_REQUEST *er, uint64 grp)
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
-        if (ecm->rc >= E_99 && 
-        		(ecm->ecmcacheptr == er->ecmcacheptr ||
-        		((ecm->caid==er->caid || ecm->ocaid==er->ocaid) && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))) {
+        if (ecm->rc >= E_99 && (ecm->ecmcacheptr == er->ecmcacheptr)) {
+        		// ||
+        		//((ecm->caid==er->caid || ecm->ocaid==er->ocaid) && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))) {
           er->cpti = ecm->cpti;
           //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
           write_ecm_request(cl->fd_m2c, er);
