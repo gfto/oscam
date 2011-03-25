@@ -1327,6 +1327,7 @@ extern pthread_mutex_t gethostbyname_lock;
 extern void cs_exit_oscam();
 extern void cs_restart_oscam();
 extern int cs_get_restartmode();
+extern void start_thread(void * startroutine, char * nameroutine);
 
 //reset stats for webif:
 extern void clear_account_stats(struct s_auth *account);

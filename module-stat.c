@@ -170,7 +170,7 @@ void calc_stat(READER_STAT *stat)
 /**
  * Saves statistik to /tmp/.oscam/stat.n where n is reader-index
  */
-void save_stat_to_file()
+static void save_stat_to_file_thread()
 {
 	stat_load_save = 0;
 	char buf[256];
@@ -211,6 +211,13 @@ void save_stat_to_file()
 	
 	fclose(file);
 	cs_log("loadbalancer: statistic saved %d records to %s", count, fname);
+	pthread_exit(NULL);
+}
+
+void save_stat_to_file()
+{
+	stat_load_save = 0;
+	start_thread((void*)&save_stat_to_file_thread, "save lb stats");
 }
 
 /**
@@ -340,9 +347,8 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	
 	if (cfg.lb_save) {
 		stat_load_save++;
-		if (stat_load_save > cfg.lb_save) {
-			save_stat_to_file();
-		}
+		if (stat_load_save > cfg.lb_save)
+			save_stat_to_file();	
 	}
 }
 
@@ -799,16 +805,10 @@ void clear_all_stat()
 	ll_iter_release(itr);
 }
 
-void housekeeping_stat(int force)
-{
-	time_t now = time(NULL);
-	if (!force && now/60/60 == last_housekeeping/60/60) //only clean once in an hour
-		return;
-	
-	last_housekeeping = now;
-	
-	time_t cleanup_time = now - (cfg.lb_stat_cleanup*60*60);
-	
+static void housekeeping_stat_thread()
+{	
+	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup*60*60);
+	int cleaned = 0;
 	struct s_reader *rdr;
     LL_ITER *itr = ll_iter_create(configured_readers);
     while ((rdr = ll_iter_next(itr))) {
@@ -817,12 +817,26 @@ void housekeeping_stat(int force)
 			READER_STAT *stat;
 			while ((stat=ll_iter_next(it))) {
 				
-				if (stat->last_received < cleanup_time)
+				if (stat->last_received < cleanup_time) {
 					ll_iter_remove_data(it);
+					cleaned++;
+				}
 			}
 			
 			ll_iter_release(it);
 		}
 	}
 	ll_iter_release(itr);
+	cs_debug_mask(D_TRACE, "loadbalancer cleanup: removed %d entries", cleaned);
+	pthread_exit(NULL);
+}
+
+void housekeeping_stat(int force)
+{
+	time_t now = time(NULL);
+	if (!force && now/60/60 == last_housekeeping/60/60) //only clean once in an hour
+		return;
+	
+	last_housekeeping = now;
+	start_thread((void*)&housekeeping_stat_thread, "housekeeping lb stats");
 }

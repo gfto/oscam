@@ -1049,8 +1049,8 @@ int cs_user_resolve(struct s_auth *account)
 		account->dynip=0;
 	return result;
 }
-#if defined(CS_ANTICASC) || defined(WEBIF)
-static void start_thread(void * startroutine, char * nameroutine) {
+
+void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
@@ -1065,7 +1065,7 @@ static void start_thread(void * startroutine, char * nameroutine) {
 	}
 	pthread_attr_destroy(&attr);
 }
-#endif
+
 void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
 
 	if (!cl) return;
@@ -1158,13 +1158,19 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
         /* pcsc doesn't like this either; segfaults on x86, x86_64 */
 		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-		pthread_create(&cl->thread, &attr, start_cardreader, (void *)rdr);
-		pthread_detach(cl->thread);
+		if (pthread_create(&cl->thread, &attr, start_cardreader, (void *)rdr)) {
+			cs_log("ERROR: can't create thread for %s", rdr->label);
+			cleanup_thread(cl);
+			restart = 0;
+		}
+		else
+			pthread_detach(cl->thread);
 		pthread_attr_destroy(&attr);
 		
 		if (restart) {
 			//add to list
 			struct s_reader *rdr2;
+			rdr->next = NULL;
 			for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
 			if (rdr2) rdr2->next = rdr;
 			else first_active_reader = rdr;
@@ -2966,8 +2972,12 @@ int accept_connection(int i, int j) {
 #ifndef TUXBOX
 				pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-				pthread_create(&cl->thread, &attr, ph[i].s_handler, (void *) cl);
-				pthread_detach(cl->thread);
+				if (pthread_create(&cl->thread, &attr, ph[i].s_handler, (void *) cl)) {
+					cs_log("ERROR: can't create thread for UDP client from %s", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr));
+					cleanup_thread(cl);
+				}
+				else
+					pthread_detach(cl->thread);
 				pthread_attr_destroy(&attr);
 			} else {
 				write_to_pipe(cl->fd_m2c, PIP_ID_UDP, (uchar*)&buf, n+3);
@@ -3005,8 +3015,12 @@ int accept_connection(int i, int j) {
 #ifndef TUXBOX
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-			pthread_create(&cl->thread, &attr, ph[i].s_handler, (void*) cl);
-			pthread_detach(cl->thread);
+			if (pthread_create(&cl->thread, &attr, ph[i].s_handler, (void*) cl)) {
+				cs_log("ERROR: can't create thread for TCP client from %s", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr));
+				cleanup_thread(cl);
+			}
+			else
+				pthread_detach(cl->thread);
 			pthread_attr_destroy(&attr);
 		}
 	}
