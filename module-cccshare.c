@@ -1015,19 +1015,21 @@ void share_updater()
 								cur_card_check += cc->card_removed_count;
 								card_count += ll_count(cc->cards);
 						}
-						cur_check += crc32(0L, rdr->hexserial, 8); //check hexserial
-						cur_check += crc32(0L, (uint8*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers
-						cur_check += crc32(0L, (uint8*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
-						cur_check += crc32(0L, (uint8*)&rdr->ftab, sizeof(rdr->ftab)); //check reader 
-						cur_check += crc32(0L, (uint8*)&rdr->ctab, sizeof(rdr->ctab)); //check caidtab
-						cur_check += crc32(0L, (uint8*)&rdr->sidtabok, sizeof(rdr->sidtabok)); //check assigned ok services
-						cur_check += crc32(0L, (uint8*)&rdr->sidtabno, sizeof(rdr->sidtabno)); //check assigned no services
+						cur_check = crc32(cur_check, (uint8*)&rdr->tcp_connected, sizeof(rdr->tcp_connected));
+						cur_check = crc32(cur_check, (uint8*)&rdr->card_status, sizeof(rdr->card_status));
+						cur_check = crc32(cur_check, (uint8*)&rdr->hexserial, 8); //check hexserial
+						cur_check = crc32(cur_check, (uint8*)&rdr->prid, rdr->nprov * sizeof(rdr->prid[0])); //check providers
+						cur_check = crc32(cur_check, (uint8*)&rdr->sa, rdr->nprov * sizeof(rdr->sa[0])); //check provider-SA
+						cur_check = crc32(cur_check, (uint8*)&rdr->ftab, sizeof(FTAB)); //check reader 
+						cur_check = crc32(cur_check, (uint8*)&rdr->ctab, sizeof(CAIDTAB)); //check caidtab
+						cur_check = crc32(cur_check, (uint8*)&rdr->sidtabok, sizeof(rdr->sidtabok)); //check assigned ok services
+						cur_check = crc32(cur_check, (uint8*)&rdr->sidtabno, sizeof(rdr->sidtabno)); //check assigned no services
 				}
 				
 				//check defined services:
 				struct s_sidtab *ptr;
 		        for (ptr=cfg.sidtab; ptr; ptr=ptr->next) {
-		        		cur_check += crc32(0L, (uint8*)ptr, sizeof(struct s_sidtab));
+		        		cur_check = crc32(cur_check, (uint8*)ptr, sizeof(struct s_sidtab));
 				}
 				
 				//update cardlist if reader config has changed, also set interval to 1s / 30times
@@ -1040,7 +1042,7 @@ void share_updater()
 				}
 				//update cardlist if cccam cards has changed:
 				else if (cur_card_check != last_card_check) {
-						cs_debug_mask(D_TRACE, "share-update [2] %u %u", cur_check, last_check); 
+						cs_debug_mask(D_TRACE, "share-update [2] %u %u", cur_card_check, last_card_check); 
 						refresh_shares();
 						last_card_check = cur_card_check;
 				}
