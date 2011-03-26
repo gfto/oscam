@@ -5,7 +5,7 @@
 
 static uint32 cc_share_id = 0x64;
 static LLIST *reported_carddatas;
-static pthread_mutex_t cc_shares_lock;
+//static pthread_mutex_t cc_shares_lock;
 
 static int card_added_count = 0;
 static int card_removed_count = 0;
@@ -14,16 +14,51 @@ static pthread_t share_updater_thread = 0;
 
 LLIST *get_and_lock_sharelist()
 {
-		pthread_mutex_lock(&cc_shares_lock);
+		//pthread_mutex_lock(&cc_shares_lock);
 		return reported_carddatas;
 }
 
 void unlock_sharelist()
 {
-		pthread_mutex_unlock(&cc_shares_lock);
+		//pthread_mutex_unlock(&cc_shares_lock);
 }
 
-int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own, int ext, int au_allowed) {
+void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card *card) {
+        //good sids:
+        int l;
+        for (l=0;l<ptr->num_srvid;l++) {
+				struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
+                srvid->sid = ptr->srvid[l];
+                srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
+                ll_append(card->goodsids, srvid);
+        }
+
+        //bad sids:
+        struct s_sidtab *ptr_no;
+        int n;
+        for (n=0,ptr_no=cfg.sidtab; ptr_no; ptr_no=ptr_no->next,n++) {
+				if (sidtabno&((SIDTABBITS)1<<n)) {
+                		int m;
+                        int ok_caid = FALSE;
+                        for (m=0;m<ptr_no->num_caid;m++) { //search bad sids for this caid:
+                        		if (ptr_no->caid[m] == card->caid) {
+                                		ok_caid = TRUE;
+                                        break;
+                                }
+                        }
+                        if (ok_caid) {
+                        		for (l=0;l<ptr_no->num_srvid;l++) {
+                                		struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
+                                        srvid->sid = ptr_no->srvid[l];
+                                        srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
+                                        ll_append(card->badsids, srvid);
+                                }
+                        }
+				}
+        }
+}
+
+int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own, int ext, int au_allowed, struct s_client *cl) {
     memset(buf, 0, CC_MAXMSGSIZE);
     buf[0] = card->id >> 24;
     buf[1] = card->id >> 16;
@@ -60,30 +95,69 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
 
     //write sids only if cccam 2.2.x:
     if (ext) {
-        //assigned sids:
-        it = ll_iter_create(card->goodsids);
-        struct cc_srvid *srvid;
-        while ((srvid = ll_iter_next(it))) {
-            buf[ofs+0] = srvid->sid >> 8;
-            buf[ofs+1] = srvid->sid & 0xFF;
-            ofs+=2;
-            buf[21]++; //nassign
-            if (buf[21] >= 200)
-                break;
-        }
-        ll_iter_release(it);
+    	if (card->card_type == CT_CARD_BY_SERVICE_USER) {
+		        //good sids:
+		        struct s_sidtab *ptr = card->sidtab;
+		        int l;
+		        for (l=0;l<ptr->num_srvid;l++) {
+		            buf[ofs+0] = ptr->srvid[l] >> 8;
+		            buf[ofs+1] = ptr->srvid[l] & 0xFF;
+		            ofs+=2;
+		            buf[21]++; //nassign
+		            if (buf[21] >= 200)
+		                break;
+				}
 
-        //reject sids:
-        it = ll_iter_create(card->badsids);
-        while ((srvid = ll_iter_next(it))) {
-            buf[ofs+0] = srvid->sid >> 8;
-            buf[ofs+1] = srvid->sid & 0xFF;
-            ofs+=2;
-            buf[22]++; //nreject
-            if (buf[22] >= 200)
-                break;
-        }
-        ll_iter_release(it);
+		        //bad sids:
+		        int n;
+		        for (n=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,n++) {
+						if (cl->sidtabno&((SIDTABBITS)1<<n)) {
+                				int m;
+                				int ok_caid = FALSE;
+                				for (m=0;m<ptr->num_caid;m++) { //search bad sids for this caid:
+                        				if (ptr->caid[m] == card->caid) {
+                                				ok_caid = TRUE;
+                                				break;
+                                		}
+								}
+								if (ok_caid) {
+                        				for (l=0;l<ptr->num_srvid;l++) {
+                        						buf[ofs+0] = ptr->srvid[l] >> 8;
+                        						buf[ofs+1] = ptr->srvid[l] & 0xFF;
+                        						ofs+=2;
+                        						buf[22]++; //nreject
+                        						if (buf[22] >= 200)
+														break;
+		                                }
+        		                }
+						}
+				}
+    	} else {
+		        //assigned sids:
+		        it = ll_iter_create(card->goodsids);
+		        struct cc_srvid *srvid;
+		        while ((srvid = ll_iter_next(it))) {
+		            buf[ofs+0] = srvid->sid >> 8;
+		            buf[ofs+1] = srvid->sid & 0xFF;
+		            ofs+=2;
+		            buf[21]++; //nassign
+		            if (buf[21] >= 200)
+		                break;
+		        }
+		        ll_iter_release(it);
+		
+		        //reject sids:
+		        it = ll_iter_create(card->badsids);
+		        while ((srvid = ll_iter_next(it))) {
+		            buf[ofs+0] = srvid->sid >> 8;
+		            buf[ofs+1] = srvid->sid & 0xFF;
+		            ofs+=2;
+		            buf[22]++; //nreject
+		            if (buf[22] >= 200)
+		                break;
+		        }
+		        ll_iter_release(it);
+		}
     }
 
     //write remote nodes
@@ -104,6 +178,7 @@ int write_card(struct cc_data *cc, uint8 *buf, struct cc_card *card, int add_own
     }
     return ofs;
 }
+
 
 int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
         int count = 0;
@@ -137,7 +212,7 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
 								if (!card->id)
 										card->id = cc_share_id++;
 
-								int len = write_card(cc, buf, card, 1,  cc->cccam220, ll_count(cl->aureader_list));
+								int len = write_card(cc, buf, card, 1,  ext, ll_count(cl->aureader_list), cl);
 								//buf[10] = card->hop-1;
 								buf[11] = new_reshare;
 
@@ -301,17 +376,19 @@ int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 		ll_iter_release(it);
 		
         //Check Card created by Service:
-        if (card->card_type == CT_CARD_BY_SERVICE) {
+        if (card->card_type == CT_CARD_BY_SERVICE_READER || card->card_type == CT_CARD_BY_SERVICE_USER) {
         		struct s_sidtab *ptr;
         		int j;
-        		int ok = 0;
-        		for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
-        				if (ptr == card->sidtab) {
-        						ok = 1;
-								if (cl->account->sidtabno&((SIDTABBITS)1<<j))
-        								return 0;
-								if (cl->account->sidtabok&((SIDTABBITS)1<<j))
-        								break;
+        		int ok = !cl->sidtabok && !cl->sidtabno; //default valid if no positive services and no negative services
+        		if (!ok) {
+		        		for (j=0,ptr=cfg.sidtab; ptr; ptr=ptr->next,j++) {
+        						if (ptr == card->sidtab) {
+										if (cl->account->sidtabno&((SIDTABBITS)1<<j))
+        										return 0;
+										if (cl->account->sidtabok&((SIDTABBITS)1<<j))
+        										ok = 1;
+										break;
+								}
 						}
                 }
                 if (!ok)
@@ -640,41 +717,6 @@ int report_card(struct cc_card *card, LLIST *new_reported_carddatas)
     return res;
 }
 
-void add_good_bad_sids(struct s_sidtab *ptr, SIDTABBITS sidtabno, struct cc_card *card) {
-        //good sids:
-        int l;
-        for (l=0;l<ptr->num_srvid;l++) {
-				struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
-                srvid->sid = ptr->srvid[l];
-                srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
-                ll_append(card->goodsids, srvid);
-        }
-
-        //bad sids:
-        struct s_sidtab *ptr_no;
-        int n;
-        for (n=0,ptr_no=cfg.sidtab; ptr_no; ptr_no=ptr_no->next,n++) {
-				if (sidtabno&((SIDTABBITS)1<<n)) {
-                		int m;
-                        int ok_caid = FALSE;
-                        for (m=0;m<ptr_no->num_caid;m++) { //search bad sids for this caid:
-                        		if (ptr_no->caid[m] == card->caid) {
-                                		ok_caid = TRUE;
-                                        break;
-                                }
-                        }
-                        if (ok_caid) {
-                        		for (l=0;l<ptr_no->num_srvid;l++) {
-                                		struct cc_srvid *srvid = malloc(sizeof(struct cc_srvid));
-                                        srvid->sid = ptr_no->srvid[l];
-                                        srvid->ecmlen = 0; //0=undefined, also not used with "O" CCcam
-                                        ll_append(card->badsids, srvid);
-                                }
-                        }
-				}
-        }
-}
-
 
 /**
  * Server:
@@ -703,7 +745,7 @@ void update_card_list() {
                 int k;
                 for (k=0;k<ptr->num_caid;k++) {
                     struct cc_card *card = create_card2(NULL, (j<<8)|k, ptr->caid[k], 0, cfg.cc_reshare);
-                    card->card_type = CT_CARD_BY_SERVICE;
+                    card->card_type = CT_CARD_BY_SERVICE_USER;
                     card->sidtab = ptr;
                     int l;
                     for (l=0;l<ptr->num_provid;l++) {
@@ -748,7 +790,7 @@ void update_card_list() {
                         int k;
                         for (k=0;k<ptr->num_caid;k++) {
                             struct cc_card *card = create_card2(rdr, (j<<8)|k, ptr->caid[k], 0, rdr->cc_reshare);
-                            card->card_type = CT_CARD_BY_SERVICE;
+                            card->card_type = CT_CARD_BY_SERVICE_READER;
                             card->sidtab = ptr;
                             int l;
                             for (l=0;l<ptr->num_provid;l++) {
@@ -920,23 +962,23 @@ void update_card_list() {
 }
 
 int cc_srv_report_cards(struct s_client *cl) {
-		pthread_mutex_lock(&cc_shares_lock);
+		//pthread_mutex_lock(&cc_shares_lock);
 		LL_ITER *it = ll_iter_create(reported_carddatas);
 		struct cc_card *card;
 		while ((card = ll_iter_next(it))) {
 				send_card_to_clients(card, cl);
 		}
 		ll_iter_release(it);
-		pthread_mutex_unlock(&cc_shares_lock);
+		//pthread_mutex_unlock(&cc_shares_lock);
 
 		return 1;
 }
 
 void refresh_shares()
 {
-		pthread_mutex_lock(&cc_shares_lock);
+		//pthread_mutex_lock(&cc_shares_lock);
 		update_card_list();
-		pthread_mutex_unlock(&cc_shares_lock);
+		//pthread_mutex_unlock(&cc_shares_lock);
 }
 
 #define DEFAULT_SHORT_INTERVAL 30
@@ -1008,7 +1050,7 @@ void share_updater()
 void init_share() {
 
 		reported_carddatas = ll_create();
-		pthread_mutex_init(&cc_shares_lock, NULL);
+		//pthread_mutex_init(&cc_shares_lock, NULL);
 
 		share_updater_thread = 0;
 		pthread_t temp;
@@ -1033,7 +1075,7 @@ void done_share() {
 				share_updater_thread = 0;
 				
 				cc_free_reported_carddata(reported_carddatas, NULL, 0);
-				pthread_mutex_unlock(&cc_shares_lock);
-				pthread_mutex_destroy(&cc_shares_lock);
+				//pthread_mutex_unlock(&cc_shares_lock);
+				//pthread_mutex_destroy(&cc_shares_lock);
 		}
 }

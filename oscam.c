@@ -1457,7 +1457,7 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp, int rc)
 		return;
 #endif
 	struct s_ecm *ecm = er->ecmcacheptr;
-	if (!ecm || ecm->rc < rc) return;
+	if (!ecm || rc >= ecm->rc) return;
 
 	//cs_log("store ecm from reader %d", er->selected_reader);
 	memcpy(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE);
@@ -1665,8 +1665,8 @@ void distribute_ecm(ECM_REQUEST *er, uint64 grp)
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
-        if (ecm->rc >= E_99 && (ecm->ecmcacheptr == er->ecmcacheptr)) {
-        		// ||
+        if (ecm->rc >= E_99 && (ecm->ecmcacheptr == er->ecmcacheptr)) { //
+        		 //||
         		//((ecm->caid==er->caid || ecm->ocaid==er->ocaid) && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))) {
           er->cpti = ecm->cpti;
           //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));

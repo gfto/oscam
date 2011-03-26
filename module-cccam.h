@@ -75,7 +75,8 @@ struct cc_provider {
 
 typedef enum {
 		CT_LOCALCARD,
-		CT_CARD_BY_SERVICE,
+		CT_CARD_BY_SERVICE_READER,
+		CT_CARD_BY_SERVICE_USER,
 		CT_CARD_BY_CAID,
 		CT_REMOTECARD
 } cc_card_type;

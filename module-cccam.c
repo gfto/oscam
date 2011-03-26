@@ -2725,9 +2725,9 @@ int cc_srv_connect(struct s_client *cl) {
 	// check for client timeout, if timeout occurs try to send keepalive
 	while (cl->pfd && cl->udp_fd && cc->mode == CCCAM_MODE_NORMAL && !cl->dup)
 	{
-		i = process_input(mbuf, sizeof(mbuf), 10);
+		i = process_input(mbuf, sizeof(mbuf), 1);
 		if (i == -9) {
-			cmi += 10;
+			cmi++;
 			ulong cmaxidle = cfg.cmaxidle;
 			if (cmaxidle < 300)//300s=5min "O" CCcam idle time
 					cmaxidle = 300;
