@@ -1401,6 +1401,8 @@ extern int  init_free_userdb(struct s_auth *auth);
 extern struct s_auth *init_userdb();
 extern int  init_readerdb(void);
 extern int  init_sidtab(void);
+extern void free_sidtab(struct s_sidtab *sidtab);
+extern void init_free_sidtab();
 extern int  init_srvid(void);
 extern int  init_tierid(void);
 extern int  search_boxkey(ushort, char *);

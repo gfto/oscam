@@ -634,27 +634,23 @@ int b64decode(unsigned char *result){
 char *sec2timeformat(struct templatevars *vars, int seconds) {
 
 	char *value;
-	if(!cs_malloc(&value, 16 * sizeof(char), -1))
+	if(seconds <= 0)
 		return "00:00:00";
 
-	if(!seconds)
+	if(!cs_malloc(&value, 16 * sizeof(char), -1))
 		return "00:00:00";
 
 	int secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
 
-	if(seconds > 0) {
-		secs = seconds % 60;
-		if (seconds > 60) {
-			fullmins = seconds / 60;
-			mins = fullmins % 60;
-			if(fullmins > 60) {
-				fullhours = fullmins / 60;
-				hours = fullhours % 24;
-				days = fullhours / 24;
-			}
+	secs = seconds % 60;
+	if (seconds > 60) {
+		fullmins = seconds / 60;
+		mins = fullmins % 60;
+		if(fullmins > 60) {
+			fullhours = fullmins / 60;
+			hours = fullhours % 24;
+			days = fullhours / 24;
 		}
-	} else {
-		return "00:00:00";
 	}
 
 	if(days == 0)

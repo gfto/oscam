@@ -1567,7 +1567,8 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 
 		struct s_reader *rdr;
 		char *pch;
-		account->aureader_list = ll_create();
+		if (!account->aureader_list)
+			account->aureader_list = ll_create();
 
 		if(value && value[0] == '1') {
 			account->autoau = 1;
@@ -2674,6 +2675,7 @@ int init_free_userdb(struct s_auth *ptr) {
 	for (nro = 0; ptr; nro++) {
 		struct s_auth *ptr_next;
 		ptr_next = ptr->next;
+		ll_destroy(ptr->aureader_list);
 		ptr->next = NULL;
 		add_garbage(ptr);
 		ptr = ptr_next;
@@ -2761,6 +2763,15 @@ struct s_auth *init_userdb()
 	return authptr;
 }
 
+void free_sidtab(struct s_sidtab *ptr)
+{
+		if (!ptr) return;
+		add_garbage(ptr->caid); //no need to check on NULL first, freeing NULL doesnt do anything
+		add_garbage(ptr->provid);
+		add_garbage(ptr->srvid);
+		add_garbage(ptr);
+}
+
 static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
 {
   int i, b;
@@ -2794,13 +2805,16 @@ static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
   }
   switch (what)
   {
-    case 0: sidtab->caid=slist;
+    case 0: add_garbage(sidtab->caid);
+    		sidtab->caid=slist;
             sidtab->num_caid=i;
             break;
-    case 1: sidtab->provid=llist;
+    case 1: add_garbage(sidtab->provid);
+    		sidtab->provid=llist;
             sidtab->num_provid=i;
             break;
-    case 2: sidtab->srvid=slist;
+    case 2: add_garbage(sidtab->srvid);
+    		sidtab->srvid=slist;
             sidtab->num_srvid=i;
             break;
   }
@@ -2816,8 +2830,17 @@ void chk_sidtab(char *token, char *value, struct s_sidtab *sidtab)
     fprintf(stderr, "Warning: keyword '%s' in sidtab section not recognized\n",token);
 }
 
-int init_sidtab()
-{
+void init_free_sidtab() {
+		struct s_sidtab *nxt, *ptr = cfg.sidtab;
+		while (ptr) {
+				nxt = ptr->next;
+				free_sidtab(ptr);
+				ptr = nxt;		
+		}
+		cfg.sidtab = NULL;
+}
+
+int init_sidtab() {
   int nr, nro;
   FILE *fp;
   char *value;
@@ -2834,10 +2857,7 @@ int init_sidtab()
   {
     struct s_sidtab *ptr_next;
     ptr_next=ptr->next;
-    free(ptr->caid); //no need to check on NULL first, freeing NULL doesnt do anything
-    free(ptr->provid);
-    free(ptr->srvid);
-    free(ptr);
+    free_sidtab(ptr);
     ptr=ptr_next;
   }
   nr=0;

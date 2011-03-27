@@ -590,6 +590,10 @@ static void cs_cleanup()
                 kill_thread(rdr->client);
         }
         first_active_reader = NULL;
+        
+        init_free_userdb(cfg.account);
+        cfg.account = NULL;
+        init_free_sidtab();
 }
 
 void cs_exit(int sig)

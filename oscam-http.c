@@ -2482,14 +2482,14 @@ char *send_oscam_services(struct templatevars *vars, struct uriparams *params, s
 			sidtab=cfg.sidtab;
 			if(strcmp(sidtab->label, service) == 0) {
 				cfg.sidtab = sidtab->next;
-				free(sidtab);
+				free_sidtab(sidtab);
 				found = 1;
 			} else if (sidtab->next != NULL) {
 				do {
 					if(strcmp(sidtab->next->label, service) == 0) {
 						sidtab2 = sidtab->next;
 						sidtab->next = sidtab2->next;
-						free(sidtab2);
+						free_sidtab(sidtab2);
 						found = 1;
 						break;
 					}
