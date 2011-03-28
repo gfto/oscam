@@ -867,6 +867,42 @@ void update_card_list() {
                 }
             }
 
+            if ((rdr->typ != R_CCCAM) && rdr->ctab.caid[0] && !flt) {
+                //cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
+                int c;
+                for (c=0;c<CS_MAXCAIDTAB;c++) 
+                {
+						ushort caid = rdr->ctab.caid[c];
+						if (!caid) continue;
+						
+						struct cc_card *card = create_card2(rdr, 1, caid, 0, rdr->cc_reshare);
+        		        card->card_type = CT_CARD_BY_CAID;
+                
+        		        if (!rdr->audisabled)
+        		        		cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, caid);
+		                for (j = 0; j < rdr->nprov; j++) {
+        		            ulong prid = get_reader_prid(rdr, j);
+                		    struct cc_provider *prov = cs_malloc(&prov, sizeof(struct cc_provider), QUITERROR);
+		                    memset(prov, 0, sizeof(struct cc_provider));
+		                    prov->prov = prid;
+		                    //cs_log("Ident CCcam card report provider: %02X%02X%02X", buf[21 + (k*7)]<<16, buf[22 + (k*7)], buf[23 + (k*7)]);
+		                    if (!rdr->audisabled) {
+		                        //Setting SA (Shared Addresses):
+		                        cc_SA_oscam2cccam(rdr->sa[j], prov->sa);
+		                    }
+		                    ll_append(card->providers, prov);
+		                    //cs_log("Main CCcam card report provider: %02X%02X%02X%02X", buf[21+(j*7)], buf[22+(j*7)], buf[23+(j*7)], buf[24+(j*7)]);
+		                }
+        		        if (rdr->tcp_connected || rdr->card_status == CARD_INSERTED) {
+		                    add_card_to_serverlist(server_cards, card);
+		                }
+		                else
+		                    cc_free_card(card);
+		                flt = 1;
+				}
+            }
+
+
             if ((rdr->typ != R_CCCAM) && rdr->caid && !flt) {
                 //cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
                 ushort caid = rdr->caid;
