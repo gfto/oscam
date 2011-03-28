@@ -1,4 +1,4 @@
-oscam.conf(5)												    oscam.conf(5)
+oscam.conf(5)															     oscam.conf(5)
 
 
 
@@ -6,9 +6,8 @@ NAME
        oscam.conf - main configuration file for OSCam
 
 SYNOPSIS
-       The  main  configuration  file for OSCam contains global parameters such as debugging, logging, monitor, protocols
-       and anti-cascading.  sections in oscam.conf are nonrecurring. The [global] section is required. All other sections
-       are optional.
+       The  main  configuration file for OSCam contains global parameters such as debugging, logging, monitor, protocols and anti-cascading.  sec‐
+       tions in oscam.conf are nonrecurring. The [global] section is required. All other sections are optional.
 
 DESCRIPTIONS
    The [global] section
@@ -19,8 +18,8 @@ DESCRIPTIONS
 	  value to delay cached requests, default:0
 
        logfile = [filename][;syslog][;stdout]
-	  logging  targets, default: /var/log/oscam.log. You can define a maximum of one filename and additionally to log
-	  to stdout or syslog (you can also only log to stdout or syslog and omit the filename).
+	  logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and additionally to log to stdout or syslog  (you
+	  can also only log to stdout or syslog and omit the filename).
 
        disablelog = 0|1
 	  1 = disable log file, default:0
@@ -80,8 +79,8 @@ DESCRIPTIONS
 	    1 = gethostbyname
 
        clientdyndns = 0|1
-	  1 = enable DNS resolving of clients, if you have already defined a hostname for your clients the parameter must
-	  be 1, otherwise no authentication will be possible for this clients, default:0
+	  1  =	enable	DNS  resolving	of  clients, if you have already defined a hostname for your clients the parameter must be 1, otherwise no
+	  authentication will be possible for this clients, default:0
 
        failbancount = count
 	  number of incorrect logins after an ip address will be blocked, default:0
@@ -117,8 +116,8 @@ DESCRIPTIONS
 	  1 = save SC init history to /tmp/.oscam/reader<number>, default:0
 
        double_check = 0|1
-	  1  =	ECM will be send to two or more readers with the same SC and the CWs will be verified against each other,
-	  lb_nbest_readers must be set to 2 or higher, default:0
+	  1 = ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, lb_nbest_readers  must	be
+	  set to 2 or higher, default:0
 
        lb_mode = mode
 	  loadbalance mode:
@@ -284,8 +283,7 @@ DESCRIPTIONS
 
    The [newcamd] section
        mgclient = 0|1
-	  1 = enable mgcamd extended newcamd protocol,	allowing for a single connection to work with mutliple providers,
-	  default:0
+	  1 = enable mgcamd extended newcamd protocol,	allowing for a single connection to work with mutliple providers, default:0
 
        key = DES key
 	  default key for newcamd client encryption, default:none
@@ -297,8 +295,7 @@ DESCRIPTIONS
 
 	   example: port = 10000@0100:100000;20000{0102030405060708091011121314}@0200:200000,300000,400000
 
-	  Each	CAID  requires	a  separate  port. If you don't specify a DES key for a port, the default DES Key will be
-	  used.
+	  Each CAID requires a separate port. If you don't specify a DES key for a port, the default DES Key will be used.
 
        serverip = IP address
 	  bind service to specified IP address, default:all
@@ -409,8 +406,8 @@ DESCRIPTIONS
 	   1 = use reshare setting of reader or user
 
        stealth = 0|1
-	  1= behaviour like the original CCcam: no activate partner detection and extended OSCam-CCcam protocol,  prevent
-	  other OSCam to detect the server as OSCam server, default:0
+	  1= behaviour like the original CCcam: no activate partner detection and extended OSCam-CCcam protocol, prevent other OSCam to detect the
+	  server as OSCam server, default:0
 
        minimizecards = mode
 	  mode how to provide CCcam servers to CCcam clients:
@@ -428,8 +425,7 @@ DESCRIPTIONS
 	    1 = keep client connected (default)
 
        forward_origin_card = 0|1
-	  1  =	forward  ECM  request  to  reader holding this card, loadbalancer, fallback and caching will be disabled,
-	  default:0
+	  1 = forward ECM request to reader holding this card, loadbalancer, fallback and caching will be disabled, default:0
 
    The [gbox] section
        hostname = password
@@ -445,8 +441,7 @@ DESCRIPTIONS
        enabled = 0|1
 	  1 = DVB API enabled, default:0
 
-	  Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby and OSCam  remains  as  SC  server
-	  only.
+	  Create file /tmp/.pauseoscam to pause DVB API, e.g. if STB goes into standby and OSCam remains as SC server only.
 
        user = username
 	  user name for DVB API client, default:anonymous
@@ -575,8 +570,7 @@ MONITOR
 
        ·  reload
 
-	  reinit  user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart
-	  newcamd client
+	  reinit user db, clients and anti-cascading, for newcamd connections: after reloading the ident, please restart newcamd client
 
 
        ·  details <PID>
@@ -615,14 +609,24 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The web interface allows you to create your own template. For developing your own template request the  orignal
-	  template  with  the  non-linked  page savetemplates.html. Store your own template in the directory specified by
-	  httptpl.
+	  The web interface allows you to create your own template. For developing your own template request the orignal template  with  the  non-
+	  linked page savetemplates.html. Store your own template in the directory specified by httptpl.
 
        ·  known issues
 
-	  Login is not possible by now with the Safari browser because of incorrect stale flag handling.  Increasing  the
-	  AUTHNONCEVALIDSECS in oscam-http.h would be a workaround, but also a small security risk.
+	  Login  is  not  possible  by	now with the Safari browser because of incorrect stale flag handling. Increasing the AUTHNONCEVALIDSECS in
+	  oscam-http.h would be a workaround, but also a small security risk.
+
+CACHING
+       types of ECM caching:
+
+       ·  cache1
+
+	  ECM and CW in cache already
+
+       ·  cache2
+
+	  ECM and checksum in cache already
 
 EXAMPLES
 	[global]
@@ -664,9 +668,9 @@ EXAMPLES
 	password     = mypassword
 
 SEE ALSO
-       list_smargo(1),	  oscam(1),    oscam.ac(5),   oscam.cert(5),   oscam.dvbapi(5),   oscam.guess(5),   oscam.ird(5),
-       oscam.provid(5), oscam.server(5), oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
+       list_smargo(1), oscam(1), oscam.ac(5), oscam.cert(5),  oscam.dvbapi(5),	oscam.guess(5),  oscam.ird(5),	oscam.provid(5),  oscam.server(5),
+       oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 
 
-													    oscam.conf(5)
+																     oscam.conf(5)

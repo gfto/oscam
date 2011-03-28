@@ -866,6 +866,18 @@ known issues
 Login is not possible by now with the Safari browser because of incorrect 
 stale flag handling. Increasing the AUTHNONCEVALIDSECS in oscam-http.h would 
 be a workaround, but also a small security risk.
+.SH CACHING
+types of ECM caching:
+.TP 3n.
+\(bu
+\fBcache1\fP
+
+ECM and CW in cache already
+.TP 3n.
+\(bu
+\fBcache2\fP
+
+ECM and checksum in cache already
 .SH EXAMPLES
  [global]
  logfile      = /var/log/oscam/oscam.log
