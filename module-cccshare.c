@@ -189,7 +189,8 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
         for (cl = one_client?one_client:first_client; cl; cl=one_client?NULL:cl->next) {
                 struct cc_data *cc = cl->cc;
                 if (cl->typ=='c' && cc && ((one_client && cc->mode != CCCAM_MODE_SHUTDOWN) || (ph[cl->ctyp].num == R_CCCAM && cc->mode == CCCAM_MODE_NORMAL))) { //CCCam-Client!
-                		int ext = cc->cccam220?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD;
+                		int is_ext = cc->cccam220;
+                		int msg = is_ext?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD;
                         if (card_valid_for_client(cl, card)) {
 								int usr_reshare = cl->account->cccreshare;
                                 int usr_ignorereshare = cl->account->cccignorereshare;
@@ -212,11 +213,11 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
 								if (!card->id)
 										card->id = cc_share_id++;
 
-								int len = write_card(cc, buf, card, 1,  ext, ll_count(cl->aureader_list), cl);
+								int len = write_card(cc, buf, card, 1, is_ext, ll_count(cl->aureader_list), cl);
 								//buf[10] = card->hop-1;
 								buf[11] = new_reshare;
 
-								if (cc_cmd_send(cl, buf, len, ext) < 0)
+								if (cc_cmd_send(cl, buf, len, msg) < 0)
 										cc->mode = CCCAM_MODE_SHUTDOWN;
 								count++;
                         }
@@ -399,7 +400,7 @@ int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 }
 
 ulong get_reader_prid(struct s_reader *rdr, int j) {
-    return b2i(4, rdr->prid[j]);
+    return b2i(3, &rdr->prid[j][1]);
 }
 //ulong get_reader_prid(struct s_reader *rdr, int j) {
 //  ulong prid;
