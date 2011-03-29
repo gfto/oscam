@@ -2725,17 +2725,15 @@ int cc_srv_connect(struct s_client *cl) {
 	// check for client timeout, if timeout occurs try to send keepalive
 	while (cl->pfd && cl->udp_fd && cc->mode == CCCAM_MODE_NORMAL && !cl->dup)
 	{
-		i = process_input(mbuf, sizeof(mbuf), 1);
-		if (i == -9) {
-			cmi++;
-			ulong cmaxidle = cfg.cmaxidle;
-			if (cmaxidle < 300)//300s=5min "O" CCcam idle time
-					cmaxidle = 300;
-			if (cmi >= cmaxidle) {
+		i = process_input(mbuf, sizeof(mbuf), 10);
+		if (i == -9) { //timeout 10s
+			cmi+=10;
+			if (cmi >= cfg.cmaxidle) {
+				cs_debug_mask(D_TRACE, "client timeout user %s", usr);
 				if (cfg.cc_keep_connected || cl->account->ncd_keepalive) {
+					if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
+						break;
 					if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
-						if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
-							break;
 						cs_debug_mask(D_CLIENT, "cccam: keepalive");
         			    cc->answer_on_keepalive = time(NULL);
         			    wait_for_keepalive++;
@@ -2774,7 +2772,6 @@ void * cc_srv_init(struct s_client *cl) {
 		if (ret == -2)
 			cs_add_violation((uint)cl->ip);
 	}
-	cc_cleanup(cl);
 	cs_disconnect_client(cl);
 	return NULL; //suppress compiler warning
 }

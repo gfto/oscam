@@ -876,7 +876,7 @@ void update_card_list() {
 						ushort caid = rdr->ctab.caid[c];
 						if (!caid) continue;
 						
-						struct cc_card *card = create_card2(rdr, 1, caid, 0, rdr->cc_reshare);
+						struct cc_card *card = create_card2(rdr, c, caid, 0, rdr->cc_reshare);
         		        card->card_type = CT_CARD_BY_CAID;
                 
         		        if (!rdr->audisabled)
