@@ -1151,6 +1151,9 @@ int newcamd_client_init(struct s_client *client)
           client->reader->device, client->reader->r_port,
           (client->reader->ncd_proto==NCD_525)?5:4, client->udp_fd, ptxt);
 
+  if(!newcamd_connect())
+    return (-1);
+
   return(0);
 }
 
