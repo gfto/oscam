@@ -960,9 +960,9 @@ static int start_listener(struct s_module *ph, int port_idx)
 
   if( !is_udp )
   {
-    ulong keep_alive = 1;
+    int keep_alive = 1;
     setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_KEEPALIVE,
-               (void *)&keep_alive, sizeof(ulong));
+               (void *)&keep_alive, sizeof(keep_alive));
   }
 
   while (timeout--)

@@ -1356,6 +1356,7 @@ int init_config()
 #ifdef MODULE_CCCAM
 	cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
 	cfg.cc_keep_connected = 1;
+	cfg.cc_reshare = 10;
 #endif
 	sprintf(token, "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {

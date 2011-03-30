@@ -2559,6 +2559,10 @@ int cc_srv_connect(struct s_client *cl) {
 	cc->server_ecm_pending = 0;
 	cc->extended_mode = 0;
 
+    int keep_alive = 1;
+    setsockopt(cl->udp_fd, SOL_SOCKET, SO_KEEPALIVE,
+        (void *)&keep_alive, sizeof(keep_alive));
+                       
 	//Create checksum for "O" cccam:
 	for (i = 0; i < 12; i++) {
 		data[i] = fast_rnd();
@@ -2749,12 +2753,15 @@ int cc_srv_connect(struct s_client *cl) {
 		} else if (i <= 0)
 			break; //Disconnected by client
 		else { //data is parsed!
-			cmi = 0;
-			if (i == MSG_KEEPALIVE)
+			if (i == MSG_CW_ECM)
+				cmi = 0;
+			else if (i == MSG_KEEPALIVE) {
 				wait_for_keepalive = 0;
+				cmi = 0;
+			}
 		}
 	}
-
+	cc->mode = CCCAM_MODE_SHUTDOWN;
 	return 0;
 }
 
@@ -3023,6 +3030,10 @@ int cc_cli_init_int(struct s_client *cl) {
 		setsockopt(cl->udp_fd, SOL_SOCKET, SO_PRIORITY,
 			(void *)&cfg.netprio, sizeof(ulong));
 #endif
+    int keep_alive = 1;
+    setsockopt(cl->udp_fd, SOL_SOCKET, SO_KEEPALIVE,
+		(void *)&keep_alive, sizeof(keep_alive));
+                	
 	rdr->tcp_ito = 1; //60sec...This now invokes ph_idle()
 	if (rdr->cc_maxhop < 0)
 		rdr->cc_maxhop = 10;
