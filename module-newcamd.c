@@ -1151,8 +1151,20 @@ int newcamd_client_init(struct s_client *client)
           client->reader->device, client->reader->r_port,
           (client->reader->ncd_proto==NCD_525)?5:4, client->udp_fd, ptxt);
 
-  if(!newcamd_connect())
+
+  if (is_connect_blocked(client->reader)) {
+    struct timeb cur_time;
+    cs_ftime(&cur_time);
+    int time = 1000*(client->reader->tcp_block_connect_till.time-cur_time.time)
+        +client->reader->tcp_block_connect_till.millitm-cur_time.millitm;
+    cs_log("%s connection blocked, retrying in %ds", client->reader->label, time/1000);
+    return -1;
+  }
+
+  if(!newcamd_connect()) {
+    block_connect(client->reader);
     return (-1);
+  }
 
   return(0);
 }
