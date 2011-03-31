@@ -115,6 +115,16 @@ READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvi
 	if (!rdr->lb_stat)
 		rdr->lb_stat = ll_create();
 
+	int i;
+	for (i=0;i<CS_MAXCAIDTAB;i++) {
+		ushort tcaid = cfg.lb_noproviderforcaid.caid[i];
+		if (!tcaid) break;
+		if (tcaid == caid) {
+			prid = 0;
+			break;
+		}
+	}
+	
 	LL_ITER *it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat = NULL;
 	while ((stat = ll_iter_next(it))) {

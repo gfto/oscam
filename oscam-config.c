@@ -558,6 +558,14 @@ void chk_t_global(const char *token, char *value)
 		chk_caidvaluetab(value, &cfg.lb_nbest_readers_tab);
 		return;
 	}
+	
+	if (!strcmp(token, "lb_noproviderforcaid")) {
+		if(strlen(value) == 0)
+        	clear_caidtab(&cfg.lb_noproviderforcaid);
+    	else
+			chk_caidtab(value, &cfg.lb_noproviderforcaid);
+        return;
+    }
 
 	if (!strcmp(token, "lb_savepath")) {
 		NULLFREE(cfg.lb_savepath);
@@ -1817,7 +1825,7 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "saveinithistory", "%d\n", cfg.saveinithistory);
 	if (cfg.reader_restart_seconds != 5 ||(cfg.reader_restart_seconds == 5 && cfg.http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "readerrestartseconds", "%d\n", cfg.reader_restart_seconds);
-	if (cfg.dropdups != 0 || cfg.http_full_cfg)
+	if (cfg.dropdups || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "dropdups", "%d\n", cfg.dropdups);
 
 	if (cfg.lb_mode ||(!cfg.lb_mode && cfg.http_full_cfg))
@@ -1846,6 +1854,13 @@ int write_config()
     	fprintf_conf(f, CONFVARWIDTH, "lb_nbest_percaid", "%s\n", value);
     	free(value);
     }
+    
+    if (cfg.lb_noproviderforcaid.caid[0] || cfg.http_full_cfg) {
+    	value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
+    	fprintf_conf(f, CONFVARWIDTH, "lb_noproviderforcaid", "%s\n", value);
+    	free(value);
+    }
+                
 	if (cfg.lb_savepath)
 		fprintf_conf(f, CONFVARWIDTH, "lb_savepath", "%s\n", cfg.lb_savepath);
 	if (cfg.lb_stat_cleanup != DEFAULT_LB_STAT_CLEANUP || cfg.http_full_cfg)

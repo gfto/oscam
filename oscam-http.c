@@ -210,7 +210,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
 	tpl_printf(vars, TPLADD, "LBSAVE", "%d",cfg.lb_save);
-	tpl_printf(vars, TPLADD, "LBSAVEPATH", "%s", cfg.lb_savepath?cfg.lb_savepath:"");
+	tpl_printf(vars, TPLADD, "LBSAVEPATH", cfg.lb_savepath?cfg.lb_savepath:"");
 
 	tpl_printf(vars, TPLADD, "LBNBESTREADERS", "%d",cfg.lb_nbest_readers);
 	char *value = mk_t_caidvaluetab(&cfg.lb_nbest_readers_tab);
@@ -228,6 +228,10 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "LBREOPENSECONDS", "%d",cfg.lb_reopen_seconds);
 	tpl_printf(vars, TPLADD, "LBCLEANUP", "%d",cfg.lb_stat_cleanup);
 	if (cfg.lb_use_locking) tpl_addVar(vars, TPLADD, "USELOCKINGCHECKED", "selected");
+	
+	value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
+	tpl_addVar(vars, TPLADD, "LBNOPROVIDERFORCAID", value);
+	free(value);
 
 	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
 }

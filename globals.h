@@ -1149,6 +1149,7 @@ struct s_config
 	int	lb_retrylimit; //reopen only happens if reader response time > retrylimit
 	CAIDVALUETAB lb_retrylimittab; 
 	CAIDVALUETAB lb_nbest_readers_tab; //like nbest_readers, but for special caids
+	CAIDTAB lb_noproviderforcaid; //do not store loadbalancer stats with providers for this caid
 	char	*lb_savepath; //path where the stat file is save. Empty=default=/tmp/.oscam/stat
 	int	lb_stat_cleanup; //duration in hours for cleaning old statistics
 	int lb_use_locking; //use a mutex lock while searching for readers (get_cw())
