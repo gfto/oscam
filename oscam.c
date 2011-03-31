@@ -1222,6 +1222,8 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 				if (cl->failban & BAN_DUPLICATE) {
 					cs_add_violation(cl->ip);
 				}
+				if (cfg.dropdups)
+					kill_thread(cl);
 			}
 			else
 			{
@@ -1233,6 +1235,8 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 				if (client->failban & BAN_DUPLICATE) {
 					cs_add_violation(ip);
 				}
+				if (cfg.dropdups)
+					cs_disconnect_client(client);	
 				break;
 			}
 

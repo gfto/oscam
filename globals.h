@@ -1136,6 +1136,7 @@ struct s_config
 	int		preferlocalcards;
 	int		saveinithistory;
 	int     reader_restart_seconds; //schlocke: reader restart auf x seconds, disable = 0
+	int		dropdups; //drop duplicate logins
 
 //Loadbalancer-Config:
 	int     lb_mode; //schlocke: reader loadbalancing mode

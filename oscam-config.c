@@ -499,6 +499,11 @@ void chk_t_global(const char *token, char *value)
 		cfg.reader_restart_seconds = strToIntVal(value, 5);
 		return;
 	}
+	
+	if (!strcmp(token, "dropdups")) {
+		cfg.dropdups = strToIntVal(value, 0);
+		return;
+	}
 
 	if (!strcmp(token, "readerautoloadbalance") || !strcmp(token, "lb_mode")) {
 		cfg.lb_mode = strToIntVal(value, 0);
@@ -1812,6 +1817,8 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "saveinithistory", "%d\n", cfg.saveinithistory);
 	if (cfg.reader_restart_seconds != 5 ||(cfg.reader_restart_seconds == 5 && cfg.http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "readerrestartseconds", "%d\n", cfg.reader_restart_seconds);
+	if (cfg.dropdups != 0 || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "dropdups", "%d\n", cfg.dropdups);
 
 	if (cfg.lb_mode ||(!cfg.lb_mode && cfg.http_full_cfg))
 		fprintf_conf(f, CONFVARWIDTH, "lb_mode", "%d\n", cfg.lb_mode);

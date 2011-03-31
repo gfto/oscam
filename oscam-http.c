@@ -149,6 +149,9 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 
 	if (cfg.reader_restart_seconds)
 		tpl_printf(vars, TPLADD, "READERRESTARTSECONDS", "%d", cfg.reader_restart_seconds);
+		
+	if (cfg.dropdups)
+		tpl_addVar(vars, TPLADD, "DROPDUPSCHECKED", "selected");
 
 	if (cfg.resolve_gethostbyname == 1)
 		tpl_addVar(vars, TPLADD, "RESOLVER1", "selected");
