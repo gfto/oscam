@@ -378,9 +378,9 @@ DESCRIPTIONS
 	   example: build = 5678
 
        reshare = level
-	  reshare level for CCcam clients:
+	  reshare level for CCcam clients (default:10):
 
-	   0 = no resharing (default)
+	   0 = no resharing
 	   1 = resharing for direct peer only
 	   2 = resharing for direct peer and next level
 	   x = resharing for direct peer and next x level
