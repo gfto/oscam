@@ -221,7 +221,7 @@ static void save_stat_to_file_thread()
 	
 	fclose(file);
 	cs_log("loadbalancer: statistic saved %d records to %s", count, fname);
-	pthread_exit(NULL);
+	//pthread_exit(NULL);
 }
 
 void save_stat_to_file()
