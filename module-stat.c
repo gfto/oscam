@@ -180,7 +180,7 @@ void calc_stat(READER_STAT *stat)
 /**
  * Saves statistik to /tmp/.oscam/stat.n where n is reader-index
  */
-static void save_stat_to_file_thread()
+void save_stat_to_file_thread()
 {
 	stat_load_save = 0;
 	char buf[256];
@@ -221,7 +221,6 @@ static void save_stat_to_file_thread()
 	
 	fclose(file);
 	cs_log("loadbalancer: statistic saved %d records to %s", count, fname);
-	//pthread_exit(NULL);
 }
 
 void save_stat_to_file()
