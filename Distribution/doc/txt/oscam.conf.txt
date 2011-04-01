@@ -89,7 +89,7 @@ DESCRIPTIONS
 	  time for IP based blocking for clients with an invalid login attempt, 0 = failban is disabled, default:0
 
        dropdups = 0|1
-	  mode for duplicate client connections:
+	  mode for duplicate client connections (requirement: uniq > 0):
 
 	    0 = mark client as duplicate, but don't disconnect them (default)
 	    1 = drop duplicate connections instead of marking as duplicate
@@ -177,6 +177,8 @@ DESCRIPTIONS
 
        lb_retrylimits = CAID1:time1[,CAID2:time2]...
 	  loadbalancing retry limit time per CAID, default:none
+       lb_noproviderforcaid = CAID1[,CAID2]...
+	  ignore provider information for CAIDs to reduce statistic data, default:none
 
    The [monitor] section
        port = 0|port

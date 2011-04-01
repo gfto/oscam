@@ -124,7 +124,7 @@ time for IP based blocking for clients with an invalid login attempt, 0 = failba
 .PP
 \fBdropdups\fP = \fB0\fP|\fB1\fP
 .RS 3n
-mode for duplicate client connections:
+mode for duplicate client connections (requirement: uniq > 0):
 
   \fB0\fP = mark client as duplicate, but don't disconnect them (default)
   \fB1\fP = drop duplicate connections instead of marking as duplicate
@@ -257,6 +257,10 @@ hours after the loadbalancing statistics will be deleted, default:336
 \fBlb_retrylimits\fP = \fBCAID1:time1[,CAID2:time2]...\fP
 .RS 3n
 loadbalancing retry limit time per CAID, default:none
+.RE
+\fBlb_noproviderforcaid\fP = \fBCAID1[,CAID2]...\fP
+.RS 3n
+ignore provider information for CAIDs to reduce statistic data, default:none
 .RE
 .SS "The [monitor] section"
 .PP
