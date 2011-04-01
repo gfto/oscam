@@ -41,7 +41,7 @@ the filename).
 log file for user logging, default:none
 
 log file format:
- 
+
  date
  time
  CWs per second
@@ -56,7 +56,7 @@ log file format:
  CWs tunneled
  login time in unix/POSIX format
  logout time in unix/POSIX format
- protocol  
+ protocol
 .RE
 .PP
 \fBusrfileflag\fP = \fB0\fP|\fB1\fP
@@ -120,6 +120,14 @@ number of incorrect logins after an ip address will be blocked, default:0
 \fBfailbantime\fP = \fBminutes\fP
 .RS 3n
 time for IP based blocking for clients with an invalid login attempt, 0 = failban is disabled, default:0
+.RE
+.PP
+\fBdropdups\fP = \fB0\fP|\fB1\fP
+.RS 3n
+mode for duplicate client connections:
+
+  \fB0\fP = mark client as duplicate, but don't disconnect them (default)
+  \fB1\fP = drop duplicate connections instead of marking as duplicate
 .RE
 .PP
 \fBsleep\fP = \fBminutes\fP

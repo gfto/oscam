@@ -88,6 +88,12 @@ DESCRIPTIONS
        failbantime = minutes
 	  time for IP based blocking for clients with an invalid login attempt, 0 = failban is disabled, default:0
 
+       dropdups = 0|1
+	  mode for duplicate client connections:
+
+	    0 = mark client as duplicate, but don't disconnect them (default)
+	    1 = drop duplicate connections instead of marking as duplicate
+
        sleep = minutes
 	  time waiting for inactive users, default:none, can be overwritten per user in oscam.user
 
