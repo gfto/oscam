@@ -384,6 +384,11 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 ##TPLHEADER##\
 ##TPLMENU##\
 	<BR><BR>\n\
+		<TABLE border=0 class=\"configmenu\">\n\
+		<TR>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"failban.html?action=delete&intip=all\">Clear all</TD>\n\
+		</TR>\n\
+	</TABLE>\
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
 		<TR><TH colspan=\"5\">List of banned IP Addresses</TH></TR>\n\
