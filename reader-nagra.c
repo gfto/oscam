@@ -1032,39 +1032,51 @@ int nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if
 
 static void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
+	int idx = 2;
+
 	filter[0]=0xFF;
-	filter[1]=3;
+	filter[1]=0;
 	
 
-	filter[2]=GLOBAL;
-	filter[3]=0;
+	if ((!rdr->blockemm_g && !(rdr->b_nano[0x82] & 0x01)) || (rdr->b_nano[0x82] & 0x02)) // not blocked or to be saved
+	{
+		filter[idx++]=GLOBAL;
+		filter[idx++]=0;
+		filter[idx+0]    = 0x82;
+		filter[idx+0+16] = 0xFF;
+		++filter[1];
+		idx += 32;
+	}
 	
-	filter[4+0]    = 0x82;
-	filter[4+0+16] = 0xFF;
-	
+	if ((!rdr->blockemm_s && !(rdr->b_nano[0x83] & 0x01)) || (rdr->b_nano[0x83] & 0x02)) // not blocked or to be saved
+	{
+		filter[idx++]=SHARED;
+		filter[idx++]=0;
+		filter[idx+0]    = 0x83;
+		filter[idx+1]    = rdr->hexserial[4];
+		filter[idx+2]    = rdr->hexserial[3];
+		filter[idx+3]    = rdr->hexserial[2];
+		filter[idx+4]    = 0x00;
+		filter[idx+5]    = 0x10;
+		memset(filter+idx+0+16, 0xFF, 6);
+		++filter[1];
+		idx += 32;
+	}
 
-	filter[36]=SHARED;
-	filter[37]=0;
-
-	filter[38+0]    = 0x83;
-	filter[38+1]    = rdr->hexserial[4];
-	filter[38+2]    = rdr->hexserial[3];
-	filter[38+3]    = rdr->hexserial[2];
-	filter[38+4]    = 0x00;
-	filter[38+5]    = 0x10;
-	memset(filter+38+0+16, 0xFF, 6);
-
-
-	filter[70]=UNIQUE;
-	filter[71]=0;
-
-	filter[72+0]    = 0x83;
-	filter[72+1]    = rdr->hexserial[4];
-	filter[72+2]    = rdr->hexserial[3];
-	filter[72+3]    = rdr->hexserial[2];
-	filter[72+4]    = rdr->hexserial[5];
-	filter[72+5]    = 0x00;
-	memset(filter+72+0+16, 0xFF, 6);
+	if ((!rdr->blockemm_u && !(rdr->b_nano[0x83] & 0x01)) || (rdr->b_nano[0x83] & 0x02)) // not blocked or to be saved
+	{
+		filter[idx++]=UNIQUE;
+		filter[idx++]=0;
+		filter[idx+0]    = 0x83;
+		filter[idx+1]    = rdr->hexserial[4];
+		filter[idx+2]    = rdr->hexserial[3];
+		filter[idx+3]    = rdr->hexserial[2];
+		filter[idx+4]    = rdr->hexserial[5];
+		filter[idx+5]    = 0x00;
+		memset(filter+idx+0+16, 0xFF, 6);
+		++filter[1];
+		idx += 32;
+	}
 	
 	return;
 }

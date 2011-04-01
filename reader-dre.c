@@ -354,35 +354,47 @@ static int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 void dre_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
+	int idx = 2;
+
 	filter[0]=0xFF;
-	filter[1]=3;
+	filter[1]=0;
 
-	filter[2]=GLOBAL;
-	filter[3]=1; //not active
-
-	//FIXME: Dont now how to filter GLOBAL EMM's
-	filter[4+0]    = 0xFF; //dummy
-	filter[4+0+16] = 0xFF;
-
-
-	filter[36]=SHARED;
-	filter[37]=0;
-
-	filter[38+0]    = 0x89;
-	filter[38+0+16] = 0xFF;
-	// FIXME: Seems to be that SA is only used with caid 0x4ae1
-	if (rdr->caid == 0x4ae1) {
-		memcpy(filter+38+1, &rdr->sa[0][0], 4);
-		memset(filter+38+1+16, 0xFF, 4);
+	if ((!rdr->blockemm_g && !(rdr->b_nano[0xFF] & 0x01)) || (rdr->b_nano[0xFF] & 0x02)) // not blocked or to be saved
+	{
+		filter[idx++]=GLOBAL;
+		filter[idx++]=1; //not active
+		//FIXME: Dont now how to filter GLOBAL EMM's
+		filter[idx+0]    = 0xFF; //dummy
+		filter[idx+0+16] = 0xFF;
+		++filter[1];
+		idx += 32;
 	}
 
+	if ((!rdr->blockemm_s && !(rdr->b_nano[0x89] & 0x01)) || (rdr->b_nano[0x89] & 0x02)) // not blocked or to be saved
+	{
+		filter[idx++]=SHARED;
+		filter[idx++]=0;
+		filter[idx+0]    = 0x89;
+		filter[idx+0+16] = 0xFF;
+		// FIXME: Seems to be that SA is only used with caid 0x4ae1
+		if (rdr->caid == 0x4ae1) {
+			memcpy(filter+idx+1, &rdr->sa[0][0], 4);
+			memset(filter+idx+1+16, 0xFF, 4);
+		}
+		++filter[1];
+		idx += 32;
+	}
 
-	//FIXME: No filter for hexserial
-	filter[70]=UNIQUE;
-	filter[71]=0;
-
-	filter[72+0]    = 0x87;
-       filter[72+0+16] = 0xFF;
+	if ((!rdr->blockemm_u && !(rdr->b_nano[0x87] & 0x01)) || (rdr->b_nano[0x87] & 0x02)) // not blocked or to be saved
+	{
+		filter[70]=UNIQUE;
+		filter[71]=0;
+		filter[72+0]    = 0x87;
+		filter[72+0+16] = 0xFF;
+		//FIXME: No filter for hexserial
+		++filter[1];
+		idx += 32;
+	}
 	
 	return;
 }
