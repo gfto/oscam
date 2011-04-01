@@ -2852,11 +2852,21 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 	V_BAN *v_ban_entry;
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
-		sscanf(getParam(params, "intip"), "%u", &ip2delete);
-		while ((v_ban_entry=ll_iter_next(itr))) {
-			if (v_ban_entry->v_ip == ip2delete) {
+
+		if(strcmp(getParam(params, "intip"), "all") == 0){
+			// clear whole list
+			while ((v_ban_entry=ll_iter_next(itr))) {
 				ll_iter_remove_data(itr);
-				break;
+			}
+
+		} else {
+			//we have a single IP
+			sscanf(getParam(params, "intip"), "%u", &ip2delete);
+			while ((v_ban_entry=ll_iter_next(itr))) {
+				if (v_ban_entry->v_ip == ip2delete) {
+					ll_iter_remove_data(itr);
+					break;
+				}
 			}
 		}
 	}
