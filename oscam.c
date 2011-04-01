@@ -1971,7 +1971,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 
 	cs_log("%s (%04X&%06X/%04X/%02X:%04X): %s (%d ms)%s (of %d avail %d)%s%s",
 			uname, er->caid, er->prid, er->srvid, er->l, lc,
-			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime > 100?client->cwlastresptime-=100:client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
+			er->rcEx?erEx:stxt[er->rc], client->cwlastresptime > 100?client->cwlastresptime-100:client->cwlastresptime, sby, er->reader_count, er->reader_avail, schaninfo, sreason);
 
 	cs_ddump_mask (D_ATR, er->cw, 16, "cw:");
 
