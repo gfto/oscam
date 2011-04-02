@@ -68,8 +68,8 @@ A:hover {color: #ff9e5f;}\n\
 DIV.message {float:right}\n\
 IMG{border:0px solid;}\n\
 P.blinking {text-decoration: blink; font-weight:bold; font-size:large; color:red;}\n\
-a.tooltip {position: relative; text-decoration: none;}\n\
-a.tooltip span {display: none;}\n\
+a.tooltip {position: relative; text-decoration: none; cursor:default;}\n\
+a.tooltip span {display: none; z-index:99;}\n\
 a:hover span{display: block;position: absolute;top: 2em; left: 1em;margin: 0px;padding: 10px;color: #335500;font-weight: normal;background: #ffffdd;text-align: left;border: 1px solid #666;}\n\
 H4.styleauthor:after {content:\"Eneen\";}"
 
