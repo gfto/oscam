@@ -2150,17 +2150,35 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				else if ((cl->tosleep) && (now-cl->lastswitch>cl->tosleep)) con=1;
 				else con=0;
 
-				//if( (cau=get_ridx(cl->aureader)+1) && (now-cl->lastemm)/60 > cfg.mon_aulow) cau=-cau;
-				// workaround: no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
-				if (!cl->aureader_list) {
-					cau = 0;
-				} else {
-					if ((now-cl->lastemm)/60 > cfg.mon_aulow)
-						cau = -1;
-					else
-						cau = 1;
-				}
+				// no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
+				if(cl->typ == 'c' || cl->typ == 'p'){
+					if ((cl->typ == 'c' && !cl->aureader_list) || (cl->typ == 'p' && cl->reader->audisabled)) cau = 0;
+					else if ((now-cl->lastemm)/60 > cfg.mon_aulow) cau = -1;
+					else cau = 1;
 
+					if (!apicall){
+						if (cau == 0) {
+							tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "OFF");
+						} else {
+							if (cau == -1) tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ON");
+							else tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ACTIVE");								
+							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "<span>");
+							if (cl->typ == 'c'){
+								struct s_reader *rdr;
+								LL_ITER *itr = ll_iter_create(cl->aureader_list);
+								while ((rdr = ll_iter_next(itr))) {
+									tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<br>", rdr->label);
+								}
+								ll_iter_release(itr);
+							} else tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", cl->reader->label);
+							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "</span>");
+						}
+					}
+				} else {
+					cau = 0;
+					tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "");
+				}
+				
 				localtime_r(&cl->login, &lt);
 
 				tpl_printf(vars, TPLADD, "HIDEIDX", "%ld", cl->thread);
@@ -2334,7 +2352,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 		}
 		
 		if (!apicall) {
-			// select right suborder
+			// select right suborder 
 			if (cl->typ == 'c') {
 				if (shown) tpl_addVar(vars, TPLAPPEND, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 				if(cfg.http_hide_idle_clients == 1 || cfg.mon_hideclient_to < 1) tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
