@@ -715,7 +715,7 @@ void clear_tuntab(struct s_tuntab *ttab){
 /* Copies a file from srcfile to destfile. If an error occured before writing, -1 is returned, else -2. On success, 0 is returned.*/
 int file_copy(char *srcfile, char *destfile){
 	FILE *src, *dest;
-  char ch;
+  int ch;
   if((src = fopen(srcfile, "r"))==NULL) {
   	cs_log("Error opening file %s for reading (errno=%d)!", srcfile, errno);
     return(-1);

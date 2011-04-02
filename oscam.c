@@ -1175,9 +1175,10 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 			//add to list
 			struct s_reader *rdr2;
 			rdr->next = NULL;
-			for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
-			if (rdr2) rdr2->next = rdr;
-			else first_active_reader = rdr;
+			if (first_active_reader) {
+				for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
+				rdr2->next = rdr;
+			} else first_active_reader = rdr;
 		}
 	}
 }
