@@ -1540,6 +1540,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 			account->autoau = 1;
 		}
 		LL_ITER *itr = ll_iter_create(configured_readers);
+		ll_clear(account->aureader_list);
 
 		for (pch = strtok(value, ","); pch != NULL; pch = strtok(NULL, ",")) {
 			ll_iter_reset(itr);
