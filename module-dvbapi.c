@@ -1388,7 +1388,7 @@ void event_handler(int signal) {
 		pmt_id = dvbapi_parse_capmt((uchar*)dest, 7 + len - 12 - 4, -1, dp->d_name);
 #endif
 		if (pmt_id>=0) {
-			cs_strncpy(demux[pmt_id].pmt_file, dp->d_name, 30));
+			cs_strncpy(demux[pmt_id].pmt_file, dp->d_name, 30);
 			demux[pmt_id].pmt_time = pmt_info.st_mtime;
 		}
 
