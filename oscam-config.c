@@ -2003,7 +2003,7 @@ int write_config()
 			fprintf_conf(f, CONFVARWIDTH, "au", "%d\n", cfg.dvbapi_au);
 		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", boxdesc[cfg.dvbapi_boxtype]);
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg.dvbapi_usr);
-		if(cfg.pmt_mode != 0 || cfg.http_full_cfg)
+		if(cfg.dvbapi_pmtmode != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "pmt_mode", "%d\n", cfg.dvbapi_pmtmode);
 		if(cfg.dvbapi_requestmode != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "request_mode", "%d\n", cfg.dvbapi_requestmode);
