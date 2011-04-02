@@ -343,13 +343,8 @@ void chk_t_global(const char *token, char *value)
 
 #ifdef QBOXHD_LED
 	if (!strcmp(token, "disableqboxhdled")) {
-		if (strlen(value) == 0) {
-			cfg.disableqboxhdled = 0;
-			return;
-		} else {
-			cfg.disableqboxhdled = atoi(value);
-			return;
-		}
+		cfg.disableqboxhdled = strToIntVal(value, 0);
+		return;
 	}
 #endif
 
@@ -1354,13 +1349,14 @@ int init_config()
 #endif
 
 #ifdef WEBIF
-	strcpy(cfg.http_user, "");
-	strcpy(cfg.http_pwd, "");
-	strcpy(cfg.http_css, "");
+	cs_strncpy(cfg.http_user, "", sizeof(cfg.http_user));
+	cs_strncpy(cfg.http_pwd, "", sizeof(cfg.http_pwd));
+	cs_strncpy(cfg.http_css, "", sizeof(cfg.http_css));
+	cs_strncpy(cfg.http_help_lang, "en", sizeof(cfg.http_help_lang));
 	cfg.http_refresh = 0;
 	cfg.http_hide_idle_clients = 0;
 	cfg.mon_hideclient_to = 15;
-	strcpy(cfg.http_tpl, "");
+	cs_strncpy(cfg.http_tpl, "", sizeof(cfg.http_tpl));
 #endif
 	cfg.ncd_keepalive = 1;
 #ifdef CS_ANTICASC
@@ -1370,7 +1366,7 @@ int init_config()
 	cfg.ac_samples = 10;
 	cfg.ac_denysamples = 8;
 	cfg.ac_fakedelay = 1000;
-	strcpy(cfg.ac_logfile, "./oscam_ac.log");
+	cs_strncpy(cfg.ac_logfile, "./oscam_ac.log", sizeof(cfg.ac_logfile));
 #endif
 #ifdef MODULE_CCCAM
 	cfg.cc_update_interval = DEFAULT_UPDATEINTERVAL;
@@ -1466,45 +1462,25 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 	}
 
 	if (!strcmp(token, "uniq")) {
-		if(strlen(value) == 0) {
-			account->uniq = 0;
-			return;
-		} else {
-			account->uniq = atoi(value);
-			return;
-		}
+		account->uniq = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "sleep")) {
-		if(strlen(value) == 0) {
-			account->tosleep = 0;
-			return;
-		} else {
-			account->tosleep = atoi(value);
-			return;
-		}
+		account->tosleep = strToIntVal(value, cfg.tosleep);
+		return;
 	}
 
 	if (!strcmp(token, "sleepsend")) {
-		if(strlen(value) == 0) {
-			account->c35_sleepsend = 0;
-			return;
-		} else {
-			account->c35_sleepsend = atoi(value);
-			if (account->c35_sleepsend > 0xFF)
-				account->c35_sleepsend = 0xFF;
-			return;
-		}
+		account->c35_sleepsend = strToIntVal(value, 0);
+		if (account->c35_sleepsend > 0xFF)
+			account->c35_sleepsend = 0xFF;
+		return;
 	}
 
 	if (!strcmp(token, "monlevel")) {
-		if(strlen(value) == 0) {
-			account->monlvl = 0;
-			return;
-		} else {
-			account->monlvl = atoi(value);
-			return;
-		}
+		account->monlvl = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "caid")) {
@@ -1518,63 +1494,33 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 	}
 
 	if (!strcmp(token, "disabled")) {
-		if(strlen(value) == 0) {
-			account->disabled = 0;
-			return;
-		} else {
-			account->disabled = atoi(value);
-			return;
-		}
+		account->disabled = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "suppresscmd08")) {
-		if(strlen(value) == 0) {
-			account->c35_suppresscmd08 = 0;
-			return;
-		} else {
-			account->c35_suppresscmd08=atoi(value);
-			return;
-		}
+		account->c35_suppresscmd08 = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "cccmaxhops")) {
-		if (strlen(value) == 0) {
-			account->cccmaxhops = 10;
-			return;
-		} else {
-			account->cccmaxhops = atoi(value);
-			return;
-		}
+		account->cccmaxhops = strToIntVal(value, 10);
+		return;
 	}
 
 	if (!strcmp(token, "cccreshare")) {
-		if (strlen(value) == 0) {
-			account->cccreshare = 0;
-			return;
-		} else {
-			account->cccreshare = atoi(value);
-			return;
-		}
+		account->cccreshare = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "cccignorereshare")) {
-		if (strlen(value) == 0) {
-			account->cccignorereshare = 0;
-			return;
-		} else {
-			account->cccignorereshare = atoi(value);
-			return;
-		}
+		account->cccignorereshare = strToIntVal(value, 0);
+		return;
 	}
 
 	if (!strcmp(token, "keepalive")) {
-		if(strlen(value) == 0) {
-			account->ncd_keepalive = 1;
-			return;
-		} else {
-			account->ncd_keepalive = atoi(value);
-			return;
-		}
+		account->ncd_keepalive = strToIntVal(value, 1);
+		return;
 	}
 	/*
 	*  case insensitive
@@ -1675,23 +1621,18 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 	}
 
 	if (!strcmp(token, "failban")) {
-		if(strlen(value) == 0) {
-			account->failban = 0;
-			return;
-		} else {
-			account->failban = atoi(value);
-			return;
-		}
+		account->failban = strToIntVal(value, 0);
+		return;
 	}
 
 #ifdef CS_ANTICASC
 	if( !strcmp(token, "numusers") ) {
-		account->ac_users = atoi(value);
+		account->ac_users = strToIntVal(value, 0);
 		return;
 	}
 
 	if( !strcmp(token, "penalty") ) {
-		account->ac_penalty = atoi(value);
+		account->ac_penalty = strToIntVal(value, 0);
 		return;
 	}
 #endif
@@ -1776,105 +1717,105 @@ int write_config()
 
 	/*global settings*/
 	fprintf(f,"[global]\n");
-	if (cfg.srvip != 0 || (cfg.srvip == 0 && cfg.http_full_cfg))
+	if (cfg.srvip != 0 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.srvip));
-	if (cfg.usrfile != NULL || (cfg.usrfile == NULL && cfg.http_full_cfg))
+	if (cfg.usrfile != NULL || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg.usrfile);
-	if (cfg.logfile != NULL || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || (cfg.logfile == NULL && cfg.http_full_cfg)){
+	if (cfg.logfile != NULL || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
 		value = mk_t_logfile();
 		fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", value);
 		free(value);
 	}
-	if (cfg.cwlogdir != NULL || (cfg.cwlogdir == NULL && cfg.http_full_cfg))
+	if (cfg.cwlogdir != NULL || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg.cwlogdir);
 #ifdef QBOXHD_LED
-	if (cfg.disableqboxhdled || (!cfg.disableqboxhdled && cfg.http_full_cfg))
+	if (cfg.disableqboxhdled || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "disableqboxhdled", "%d\n", cfg.disableqboxhdled);
 #endif
-    if (cfg.disablelog || (!cfg.disablelog && cfg.http_full_cfg))
+    if (cfg.disablelog || cfg.http_full_cfg)
     	fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg.disablelog);
-    if (cfg.disableuserfile || (!cfg.disableuserfile && cfg.http_full_cfg))
+    if (cfg.disableuserfile || cfg.http_full_cfg)
     	fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg.disableuserfile);
-    if (cfg.usrfileflag || (!cfg.usrfileflag && cfg.http_full_cfg))
+    if (cfg.usrfileflag || cfg.http_full_cfg)
     	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg.usrfileflag);
-	if (cfg.ctimeout != CS_CLIENT_TIMEOUT || (cfg.ctimeout != CS_CLIENT_TIMEOUT && cfg.http_full_cfg))
+	if (cfg.ctimeout != CS_CLIENT_TIMEOUT || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg.ctimeout);
-	if ((cfg.ftimeout && cfg.ftimeout != (CS_CLIENT_TIMEOUT /2)) || ((!cfg.ftimeout || cfg.ftimeout == (CS_CLIENT_TIMEOUT /2)) && cfg.http_full_cfg))
+	if ((cfg.ftimeout && cfg.ftimeout != (CS_CLIENT_TIMEOUT /2)) || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "fallbacktimeout", "%ld\n", cfg.ftimeout);
-	if (cfg.cmaxidle != CS_CLIENT_MAXIDLE || (cfg.cmaxidle == CS_CLIENT_MAXIDLE && cfg.http_full_cfg))
+	if (cfg.cmaxidle != CS_CLIENT_MAXIDLE || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "clientmaxidle", "%d\n", cfg.cmaxidle);
-	if (cfg.failbantime || (!cfg.failbantime && cfg.http_full_cfg))
+	if (cfg.failbantime || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "failbantime", "%d\n", cfg.failbantime);
-	if (cfg.failbancount || (!cfg.failbancount && cfg.http_full_cfg))
+	if (cfg.failbancount || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "failbancount", "%d\n", cfg.failbancount);
-	if (cfg.delay != CS_DELAY || (cfg.delay == CS_DELAY && cfg.http_full_cfg))
+	if (cfg.delay != CS_DELAY || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "cachedelay", "%ld\n", cfg.delay); //deprecated
-	if (cfg.bindwait != CS_BIND_TIMEOUT || (cfg.bindwait != CS_BIND_TIMEOUT && cfg.http_full_cfg))
+	if (cfg.bindwait != CS_BIND_TIMEOUT || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "bindwait", "%d\n", cfg.bindwait);
-	if (cfg.netprio || (!cfg.netprio && cfg.http_full_cfg))
+	if (cfg.netprio || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "netprio", "%ld\n", cfg.netprio);
-	if (cfg.tosleep ||(!cfg.tosleep && cfg.http_full_cfg))
+	if (cfg.tosleep || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", cfg.tosleep);
-	if (cfg.ulparent ||(!cfg.ulparent && cfg.http_full_cfg))
+	if (cfg.ulparent || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "unlockparental", "%d\n", cfg.ulparent);
-	if (cfg.nice != 99 || (cfg.nice == 99 && cfg.http_full_cfg))
+	if (cfg.nice != 99 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "nice", "%d\n", cfg.nice);
-	if (cfg.srtimeout != 1500 || (cfg.srtimeout == 1500 && cfg.http_full_cfg))
+	if (cfg.srtimeout != 1500 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "serialreadertimeout", "%d\n", cfg.srtimeout);
-	if (cfg.max_log_size != 10 || (cfg.max_log_size == 10 && cfg.http_full_cfg))
+	if (cfg.max_log_size != 10 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "maxlogsize", "%d\n", cfg.max_log_size);
-	if (!cfg.waitforcards ||(cfg.waitforcards && cfg.http_full_cfg))
+	if (!cfg.waitforcards || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "waitforcards", "%d\n", cfg.waitforcards);
-	if (cfg.preferlocalcards ||(!cfg.preferlocalcards && cfg.http_full_cfg))
+	if (cfg.preferlocalcards || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "preferlocalcards", "%d\n", cfg.preferlocalcards);
-	if (cfg.saveinithistory ||(!cfg.saveinithistory && cfg.http_full_cfg))
+	if (cfg.saveinithistory || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "saveinithistory", "%d\n", cfg.saveinithistory);
-	if (cfg.reader_restart_seconds != 5 ||(cfg.reader_restart_seconds == 5 && cfg.http_full_cfg))
+	if (cfg.reader_restart_seconds != 5 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "readerrestartseconds", "%d\n", cfg.reader_restart_seconds);
 	if (cfg.dropdups || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "dropdups", "%d\n", cfg.dropdups);
 
-	if (cfg.lb_mode ||(!cfg.lb_mode && cfg.http_full_cfg))
+	if (cfg.lb_mode || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_mode", "%d\n", cfg.lb_mode);
-	if (cfg.lb_save ||(!cfg.lb_save && cfg.http_full_cfg))
+	if (cfg.lb_save || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_save", "%d\n", cfg.lb_save);
-	if (cfg.lb_nbest_readers != DEFAULT_NBEST ||(cfg.lb_nbest_readers == DEFAULT_NBEST && cfg.http_full_cfg))
+	if (cfg.lb_nbest_readers != DEFAULT_NBEST || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_nbest_readers", "%d\n", cfg.lb_nbest_readers);
-	if (cfg.lb_nfb_readers != DEFAULT_NFB ||(cfg.lb_nfb_readers == DEFAULT_NFB  && cfg.http_full_cfg))
+	if (cfg.lb_nfb_readers != DEFAULT_NFB || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_nfb_readers", "%d\n", cfg.lb_nfb_readers);
-	if (cfg.lb_min_ecmcount != DEFAULT_MIN_ECM_COUNT ||(cfg.lb_min_ecmcount == DEFAULT_MIN_ECM_COUNT  && cfg.http_full_cfg))
+	if (cfg.lb_min_ecmcount != DEFAULT_MIN_ECM_COUNT || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_min_ecmcount", "%d\n", cfg.lb_min_ecmcount);
-	if (cfg.lb_max_ecmcount != DEFAULT_MAX_ECM_COUNT ||(cfg.lb_max_ecmcount == DEFAULT_MAX_ECM_COUNT  && cfg.http_full_cfg))
+	if (cfg.lb_max_ecmcount != DEFAULT_MAX_ECM_COUNT || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_max_ecmcount", "%d\n", cfg.lb_max_ecmcount);
-	if (cfg.lb_reopen_seconds != DEFAULT_REOPEN_SECONDS ||(cfg.lb_reopen_seconds == DEFAULT_REOPEN_SECONDS  && cfg.http_full_cfg))
+	if (cfg.lb_reopen_seconds != DEFAULT_REOPEN_SECONDS || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_reopen_seconds", "%d\n", cfg.lb_reopen_seconds);
 	if (cfg.lb_retrylimit != DEFAULT_RETRYLIMIT || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_retrylimit", "%d\n", cfg.lb_retrylimit);
-    if (cfg.lb_retrylimittab.n > 0 || cfg.http_full_cfg) {
-    	char *value = mk_t_caidvaluetab(&cfg.lb_retrylimittab);
-    	fprintf_conf(f, CONFVARWIDTH, "lb_retrylimits", "%s\n", value);
-    	free(value);
-    }
-    if (cfg.lb_nbest_readers_tab.n > 0 || cfg.http_full_cfg) {
-    	char *value = mk_t_caidvaluetab(&cfg.lb_nbest_readers_tab);
-    	fprintf_conf(f, CONFVARWIDTH, "lb_nbest_percaid", "%s\n", value);
-    	free(value);
-    }
-    
-    if (cfg.lb_noproviderforcaid.caid[0] || cfg.http_full_cfg) {
-    	value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
-    	fprintf_conf(f, CONFVARWIDTH, "lb_noproviderforcaid", "%s\n", value);
-    	free(value);
-    }
+	if (cfg.lb_retrylimittab.n > 0 || cfg.http_full_cfg) {
+		char *value = mk_t_caidvaluetab(&cfg.lb_retrylimittab);
+		fprintf_conf(f, CONFVARWIDTH, "lb_retrylimits", "%s\n", value);
+		free(value);
+	}
+	if (cfg.lb_nbest_readers_tab.n > 0 || cfg.http_full_cfg) {
+		char *value = mk_t_caidvaluetab(&cfg.lb_nbest_readers_tab);
+		fprintf_conf(f, CONFVARWIDTH, "lb_nbest_percaid", "%s\n", value);
+		free(value);
+	}
+	
+	if (cfg.lb_noproviderforcaid.caid[0] || cfg.http_full_cfg) {
+		value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
+		fprintf_conf(f, CONFVARWIDTH, "lb_noproviderforcaid", "%s\n", value);
+		free(value);
+	}
                 
-	if (cfg.lb_savepath)
+	if (cfg.lb_savepath || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_savepath", "%s\n", cfg.lb_savepath);
 	if (cfg.lb_stat_cleanup != DEFAULT_LB_STAT_CLEANUP || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_stat_cleanup", "%d\n", cfg.lb_stat_cleanup);
 	if (cfg.lb_use_locking != DEFAULT_LB_USE_LOCKING || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_use_locking", "%d\n", cfg.lb_use_locking);
 
-	if (cfg.resolve_gethostbyname ||(!cfg.resolve_gethostbyname && cfg.http_full_cfg))
+	if (cfg.resolve_gethostbyname || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg.resolve_gethostbyname);
 
 #ifdef CS_WITH_DOUBLECHECK
@@ -1885,7 +1826,7 @@ int write_config()
 	fputc((int)'\n', f);
 
 	/*monitor settings*/
-	if(cfg.mon_port || cfg.mon_appendchaninfo || cfg.mon_hideclient_to) {
+	if(cfg.mon_port || cfg.mon_appendchaninfo || cfg.mon_hideclient_to != 0 || cfg.mon_aulow != 30) {
 		fprintf(f,"[monitor]\n");
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.mon_port);
 		if (cfg.mon_srvip != 0)
@@ -1899,10 +1840,14 @@ int write_config()
 			dot=",";
 		}
 		fputc((int)'\n', f);
-		fprintf_conf(f, CONFVARWIDTH, "aulow", "%d\n", cfg.mon_aulow);
-		fprintf_conf(f, CONFVARWIDTH, "hideclient_to", "%d\n", cfg.mon_hideclient_to);
-		fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", cfg.mon_level);
-		fprintf_conf(f, CONFVARWIDTH, "appendchaninfo", "%d\n", cfg.mon_appendchaninfo);
+		if(cfg.mon_aulow != 30 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "aulow", "%d\n", cfg.mon_aulow);
+		if(cfg.mon_hideclient_to != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "hideclient_to", "%d\n", cfg.mon_hideclient_to);
+		if(cfg.mon_level != 2 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", cfg.mon_level);
+		if(cfg.mon_appendchaninfo != 2 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "appendchaninfo", "%d\n", cfg.mon_appendchaninfo);
 		fputc((int)'\n', f);
 	}
 
@@ -1929,8 +1874,10 @@ int write_config()
 			dot=",";
 		}
 		fprintf(f,"\n");
-		fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", cfg.ncd_keepalive);
-		fprintf_conf(f, CONFVARWIDTH, "mgclient", "%d\n", cfg.ncd_mgclient);
+		if(cfg.ncd_keepalive != 1 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", cfg.ncd_keepalive);
+		if(cfg.ncd_mgclient != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "mgclient", "%d\n", cfg.ncd_mgclient);
 		fprintf(f,"\n");
 	}
 
@@ -1940,7 +1887,8 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.c33_port);
 		if (cfg.c33_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.c33_srvip));
-		fprintf_conf(f, CONFVARWIDTH, "passive", "%d\n", cfg.c33_passive);
+		if(cfg.c33_passive != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "passive", "%d\n", cfg.c33_passive);
 		fprintf_conf(f, CONFVARWIDTH, "key", ""); for (i = 0; i < (int) sizeof(cfg.c33_key); ++i) fprintf(f,"%02X", cfg.c33_key[i]); fputc((int)'\n', f);
 		fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
 		struct s_ip *cip;
@@ -2025,15 +1973,24 @@ int write_config()
 	if ( cfg.cc_port > 0) {
 		fprintf(f,"[cccam]\n");
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.cc_port);
-		fprintf_conf(f, CONFVARWIDTH, "reshare", "%d\n", cfg.cc_reshare);
-		fprintf_conf(f, CONFVARWIDTH, "ignorereshare", "%d\n", cfg.cc_ignore_reshare);
-		fprintf_conf(f, CONFVARWIDTH, "forward_origin_card", "%d\n", cfg.cc_forward_origin_card);
-		fprintf_conf(f, CONFVARWIDTH, "version", "%s\n", cfg.cc_version);
-		fprintf_conf(f, CONFVARWIDTH, "updateinterval", "%d\n", cfg.cc_update_interval);
-		fprintf_conf(f, CONFVARWIDTH, "minimizecards", "%d\n", cfg.cc_minimize_cards);
-		fprintf_conf(f, CONFVARWIDTH, "keepconnected", "%d\n", cfg.cc_keep_connected);
-		fprintf_conf(f, CONFVARWIDTH, "stealth", "%d\n", cfg.cc_stealth);
-		fprintf_conf(f, CONFVARWIDTH, "reshare_mode", "%d\n", cfg.cc_reshare_services);
+		if(cfg.cc_reshare != 10 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "reshare", "%d\n", cfg.cc_reshare);
+		if(cfg.cc_ignore_reshare != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "ignorereshare", "%d\n", cfg.cc_ignore_reshare);
+		if(cfg.cc_forward_origin_card != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "forward_origin_card", "%d\n", cfg.cc_forward_origin_card);
+		if(cfg.cc_version || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "version", "%s\n", cfg.cc_version);
+		if(cfg.cc_update_interval != DEFAULT_UPDATEINTERVAL || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "updateinterval", "%d\n", cfg.cc_update_interval);
+		if(cfg.cc_minimize_cards != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "minimizecards", "%d\n", cfg.cc_minimize_cards);
+		if(cfg.cc_keep_connected != 1 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "keepconnected", "%d\n", cfg.cc_keep_connected);
+		if(cfg.cc_stealth != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "stealth", "%d\n", cfg.cc_stealth);
+		if(cfg.cc_reshare_services != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "reshare_mode", "%d\n", cfg.cc_reshare_services);
 		fprintf(f,"\n");
 	}
 
@@ -2042,11 +1999,14 @@ int write_config()
 	if (cfg.dvbapi_enabled > 0) {
 		fprintf(f,"[dvbapi]\n");
 		fprintf_conf(f, CONFVARWIDTH, "enabled", "%d\n", cfg.dvbapi_enabled);
-		fprintf_conf(f, CONFVARWIDTH, "au", "%d\n", cfg.dvbapi_au);
+		if(cfg.dvbapi_au != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "au", "%d\n", cfg.dvbapi_au);
 		fprintf_conf(f, CONFVARWIDTH, "boxtype", "%s\n", boxdesc[cfg.dvbapi_boxtype]);
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg.dvbapi_usr);
-        	fprintf_conf(f, CONFVARWIDTH, "pmt_mode", "%d\n", cfg.dvbapi_pmtmode);
-        	fprintf_conf(f, CONFVARWIDTH, "request_mode", "%d\n", cfg.dvbapi_requestmode);
+		if(cfg.pmt_mode != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "pmt_mode", "%d\n", cfg.dvbapi_pmtmode);
+		if(cfg.dvbapi_requestmode != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "request_mode", "%d\n", cfg.dvbapi_requestmode);
 
 		fputc((int)'\n', f);
 	}
@@ -2062,23 +2022,24 @@ int write_config()
 			fprintf_conf(f, CONFVARWIDTH, "httpport", "%d\n", cfg.http_port);
 		}
 
-		if(strlen(cfg.http_help_lang) > 0)
+		if(strcmp(cfg.http_help_lang, "en") != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httphelplang", "%s\n", cfg.http_help_lang);
-		if(strlen(cfg.http_user) > 0)
+		if(strlen(cfg.http_user) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpuser", "%s\n", cfg.http_user);
-		if(strlen(cfg.http_pwd) > 0)
+		if(strlen(cfg.http_pwd) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httppwd", "%s\n", cfg.http_pwd);
-		if(strlen(cfg.http_cert) > 0)
+		if(strlen(cfg.http_cert) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpcert", "%s\n", cfg.http_cert);
-		if(strlen(cfg.http_css) > 0)
+		if(strlen(cfg.http_css) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpcss", "%s\n", cfg.http_css);
-		if(strlen(cfg.http_jscript) > 0)
+		if(strlen(cfg.http_jscript) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpjscript", "%s\n", cfg.http_jscript);
-		if(strlen(cfg.http_tpl) > 0)
+		if(strlen(cfg.http_tpl) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httptpl", "%s\n", cfg.http_tpl);
-		if(strlen(cfg.http_script) > 0)
+		if(strlen(cfg.http_script) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg.http_script);
-		fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg.http_refresh);
+		if(cfg.http_refresh > 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg.http_refresh);
 		fprintf_conf(f, CONFVARWIDTH, "httpallowed", "");
 		struct s_ip *cip;
 		dot = "";
@@ -2088,11 +2049,14 @@ int write_config()
 			dot = ",";
 		}
 		fputc((int)'\n', f);
-		if(strlen((const char *) (cfg.http_dyndns)) > 0)
+		if(strlen((const char *) (cfg.http_dyndns)) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpdyndns", "%s\n", cfg.http_dyndns);
-		fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg.http_hide_idle_clients);
-		fprintf_conf(f, CONFVARWIDTH, "httpreadonly", "%d\n", cfg.http_readonly);
-		fprintf_conf(f, CONFVARWIDTH, "httpsavefullcfg", "%d\n", cfg.http_full_cfg);
+		if(cfg.http_hide_idle_clients || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg.http_hide_idle_clients);
+		if(cfg.http_readonly || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "httpreadonly", "%d\n", cfg.http_readonly);
+		if(cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "httpsavefullcfg", "%d\n", cfg.http_full_cfg);
 
 		fputc((int)'\n', f);
 	}
@@ -2102,13 +2066,20 @@ int write_config()
 	if(cfg.ac_enabled) {
 		fprintf(f,"[anticasc]\n");
 		fprintf_conf(f, CONFVARWIDTH, "enabled", "%d\n", cfg.ac_enabled);
-		fprintf_conf(f, CONFVARWIDTH, "numusers", "%d\n", cfg.ac_users);
-		fprintf_conf(f, CONFVARWIDTH, "sampletime", "%d\n", cfg.ac_stime);
-		fprintf_conf(f, CONFVARWIDTH, "samples", "%d\n", cfg.ac_samples);
-		fprintf_conf(f, CONFVARWIDTH, "penalty", "%d\n", cfg.ac_penalty);
-		fprintf_conf(f, CONFVARWIDTH, "aclogfile", "%s\n", cfg.ac_logfile);
-		fprintf_conf(f, CONFVARWIDTH, "denysamples", "%d\n", cfg.ac_denysamples);
-		fprintf_conf(f, CONFVARWIDTH, "fakedelay", "%d\n", cfg.ac_fakedelay);
+		if(cfg.ac_users != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "numusers", "%d\n", cfg.ac_users);
+		if(cfg.ac_stime != 2 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "sampletime", "%d\n", cfg.ac_stime);
+		if(cfg.ac_samples != 10 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "samples", "%d\n", cfg.ac_samples);
+		if(cfg.ac_penalty != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "penalty", "%d\n", cfg.ac_penalty);
+		if(cfg.ac_logfile || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "aclogfile", "%s\n", cfg.ac_logfile);
+		if(cfg.ac_denysamples != 8 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "denysamples", "%d\n", cfg.ac_denysamples);
+		if(cfg.ac_fakedelay != 1000 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "fakedelay", "%d\n", cfg.ac_fakedelay);
 		fputc((int)'\n', f);
 	}
 #endif
@@ -2144,13 +2115,13 @@ int write_userdb(struct s_auth *authptr)
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", account->usr);
 		fprintf_conf(f, CONFVARWIDTH, "pwd", "%s\n", account->pwd);
 #ifdef WEBIF
-		if (account->description[0])
+		if (account->description[0] || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "description", "%s\n", account->description);
 #endif
-		if (account->disabled || (!account->disabled && cfg.http_full_cfg))
+		if (account->disabled || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "disabled", "%d\n", account->disabled);
 
-		if (account->expirationdate || (!account->expirationdate && cfg.http_full_cfg)) {
+		if (account->expirationdate || cfg.http_full_cfg) {
 			struct tm timeinfo;
 			localtime_r(&account->expirationdate, &timeinfo);
 			char buf [80];
@@ -2174,22 +2145,22 @@ int write_userdb(struct s_auth *authptr)
 		}
 
 		//group
-		if (account->grp || (!account->grp && cfg.http_full_cfg)) {
+		if (account->grp || cfg.http_full_cfg) {
 			value = mk_t_group(account->grp);
 			fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
 			free(value);
 		}
 
-		if (account->dyndns[0] || (!account->dyndns[0] && cfg.http_full_cfg))
+		if (account->dyndns[0] || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "hostname", "%s\n", account->dyndns);
 
-		if (account->uniq || (!account->uniq && cfg.http_full_cfg))
+		if (account->uniq || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "uniq", "%d\n", account->uniq);
 
-		if (account->tosleep || (!account->tosleep && cfg.http_full_cfg))
+		if (account->tosleep != cfg.tosleep || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "sleep", "%d\n", account->tosleep);
 
-		if (account->monlvl != cfg.mon_level || (account->monlvl == cfg.mon_level && cfg.http_full_cfg))
+		if (account->monlvl != cfg.mon_level || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "monlevel", "%d\n", account->monlvl);
 
 		if (account->autoau == 1)
@@ -2201,7 +2172,7 @@ int write_userdb(struct s_auth *authptr)
 				fprintf_conf(f, CONFVARWIDTH, "au", "%s\n", value);
 			free(value);
 
-		}
+		} else if (cfg.http_full_cfg) fprintf_conf(f, CONFVARWIDTH, "au", "\n");
 
 		value = mk_t_service((uint64)account->sidtabok, (uint64)account->sidtabno);
 		if (strlen(value) > 0 || cfg.http_full_cfg)
@@ -2209,58 +2180,58 @@ int write_userdb(struct s_auth *authptr)
 		free(value);
 
 		//CAID
-		if (account->ctab.caid[0] || (!account->ctab.caid[0] && cfg.http_full_cfg)) {
+		if (account->ctab.caid[0] || cfg.http_full_cfg) {
 			value = mk_t_caidtab(&account->ctab);
 			fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
 			free(value);
 		}
 
 		//betatunnel
-		if (account->ttab.bt_caidfrom[0] || (!account->ttab.bt_caidfrom[0] && cfg.http_full_cfg)) {
+		if (account->ttab.bt_caidfrom[0] || cfg.http_full_cfg) {
 			value = mk_t_tuntab(&account->ttab);
 			fprintf_conf(f, CONFVARWIDTH, "betatunnel", "%s\n", value);
 			free(value);
 		}
 
 		//ident
-		if (account->ftab.nfilts || (!account->ftab.nfilts && cfg.http_full_cfg)) {
+		if (account->ftab.nfilts || cfg.http_full_cfg) {
 			value = mk_t_ftab(&account->ftab);
 			fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
 			free(value);
 		}
 
 		//CHID
-		if (account->fchid.nfilts || (!account->fchid.nfilts && cfg.http_full_cfg)) {
+		if (account->fchid.nfilts || cfg.http_full_cfg) {
 			value = mk_t_ftab(&account->fchid);
 			fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
 			free(value);
 		}
 
-		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || ((account->c35_suppresscmd08 == cfg.c35_suppresscmd08) && cfg.http_full_cfg))
+		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 
-		if (account->cccmaxhops != 10 || ((account->cccmaxhops == 10) && cfg.http_full_cfg))
+		if (account->cccmaxhops != 10 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", account->cccmaxhops);
 
-		if ((account->cccreshare != cfg.cc_reshare) || ((account->cccreshare == cfg.cc_reshare) && cfg.http_full_cfg))
+		if ((account->cccreshare != cfg.cc_reshare) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", account->cccreshare);
 
-		if ((account->cccignorereshare != cfg.cc_ignore_reshare) || ((account->cccignorereshare == cfg.cc_ignore_reshare) && cfg.http_full_cfg))
+		if ((account->cccignorereshare != cfg.cc_ignore_reshare) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "cccignorereshare", "%d\n", account->cccignorereshare);
 
-		if (account->c35_sleepsend || (!account->c35_sleepsend && cfg.http_full_cfg))
+		if (account->c35_sleepsend || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%d\n", account->c35_sleepsend);
 
-		if (account->failban || (!account->failban && cfg.http_full_cfg))
+		if (account->failban || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "failban", "%d\n", account->failban);
 
-		if ((account->ncd_keepalive != cfg.ncd_keepalive) || ((account->ncd_keepalive == cfg.ncd_keepalive) && cfg.http_full_cfg))
+		if ((account->ncd_keepalive != cfg.ncd_keepalive) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", account->ncd_keepalive);
 
 #ifdef CS_ANTICASC
-		if (account->ac_users || (!account->ac_users && cfg.http_full_cfg))
+		if (account->ac_users || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "numusers", "%d\n", account->ac_users);
-		if (account->ac_penalty || (!account->ac_penalty && cfg.http_full_cfg))
+		if (account->ac_penalty || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "penalty", "%d\n", account->ac_penalty);
 #endif
 		fputc((int)'\n', f);
@@ -2305,21 +2276,21 @@ int write_server()
 			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s\n", ctyp);
 
 			fprintf_conf(f, CONFVARWIDTH, "device", "%s", rdr->device);
-			if (rdr->r_port)
+			if (rdr->r_port || cfg.http_full_cfg)
 				fprintf(f, ",%d", rdr->r_port);
-			if (rdr->l_port)
+			if (rdr->l_port || cfg.http_full_cfg)
 				fprintf(f, ",%d", rdr->l_port);
-			if (isphysical && rdr->slot)
+			if ((rdr->slot || cfg.http_full_cfg) && isphysical)
 				fprintf(f, ":%d", rdr->slot);
 			fprintf(f, "\n");
 
 #ifdef LIBUSB
 			if (!(rdr->typ & R_IS_NETWORK))
-				if (rdr->device_endpoint)
+				if (rdr->device_endpoint || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "device_out_endpoint", "0x%2X\n", rdr->device_endpoint);
 #endif
 
-			if (rdr->ncd_key[0] || rdr->ncd_key[13]) {
+			if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
 				fprintf_conf(f, CONFVARWIDTH, "key", "");
 				for (j = 0; j < 14; j++) {
 					fprintf(f, "%02X", rdr->ncd_key[j]);
@@ -2327,71 +2298,71 @@ int write_server()
 				fprintf(f, "\n");
 			}
 
-			if (rdr->r_usr[0] && !isphysical)
+			if ((rdr->r_usr[0] || cfg.http_full_cfg) && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", rdr->r_usr);
 
-			if (strlen(rdr->r_pwd) > 0)
+			if (strlen(rdr->r_pwd) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "password", "%s\n", rdr->r_pwd);
 
-			if(strcmp(rdr->pincode, "none"))
+			if(strcmp(rdr->pincode, "none") || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "pincode", "%s\n", rdr->pincode);
 
-			if (rdr->emmfile && isphysical)
+			if ((rdr->emmfile || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", rdr->emmfile);
 
 			value = mk_t_service((uint64)rdr->sidtabok, (uint64)rdr->sidtabno);
-			if (strlen(value) > 0)
+			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "services", "%s\n", value);
 			free(value);
 
-			if (rdr->tcp_ito && !isphysical && rdr->typ != R_CCCAM)
+			if ((rdr->tcp_ito || cfg.http_full_cfg) && !isphysical && rdr->typ != R_CCCAM)
 				fprintf_conf(f, CONFVARWIDTH, "inactivitytimeout", "%d\n", rdr->tcp_ito);
 
-			if (rdr->tcp_rto != 30 && !isphysical)
+			if ((rdr->tcp_rto != 30 || cfg.http_full_cfg) && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "reconnecttimeout", "%d\n", rdr->tcp_rto);
 
-			if (rdr->ncd_disable_server_filt && rdr->typ == R_NEWCAMD)
+			if ((rdr->ncd_disable_server_filt || cfg.http_full_cfg) && rdr->typ == R_NEWCAMD)
 				fprintf_conf(f, CONFVARWIDTH, "disableserverfilter", "%d\n", rdr->ncd_disable_server_filt);
 
-			if (rdr->smargopatch && isphysical)
+			if ((rdr->smargopatch || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "smargopatch", "%d\n", rdr->smargopatch);
 
-			if (rdr->show_cls != 10 && isphysical)
+			if ((rdr->show_cls != 10 || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
 
-			if (rdr->fallback)
+			if (rdr->fallback || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "fallback", "%d\n", rdr->fallback);
 
-			if (rdr->log_port)
+			if (rdr->log_port || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "logport", "%d\n", rdr->log_port);
 
 			value = mk_t_caidtab(&rdr->ctab);
-			if (strlen(value) > 0)
+			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
 			free(value);
 
-			if (rdr->boxid && isphysical)
+			if ((rdr->boxid || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", rdr->boxid);
 
-      if(rdr->fix_9993 && isphysical)
+      if((rdr->fix_9993 || cfg.http_full_cfg) && isphysical)
       	fprintf_conf(f, CONFVARWIDTH, "fix9993", "%d\n", rdr->fix_9993);
 
 			// rsakey
 			int len = check_filled(rdr->rsa_mod, 120);
-			if (len > 0 && isphysical) {
+			if ((len > 0 || cfg.http_full_cfg) && isphysical) {
 				if(len > 64) len = 120;
 				else len = 64;
 				fprintf_conf(f, CONFVARWIDTH, "rsakey", "%s\n", cs_hexdump(0, rdr->rsa_mod, len));
 			}
 
-			if (rdr->force_irdeto && isphysical) {
+			if ((rdr->force_irdeto || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
 
-			if (check_filled(rdr->nagra_boxkey, 8) > 0 && isphysical)
+			if ((check_filled(rdr->nagra_boxkey, 8) > 0 || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxkey", "%s\n", cs_hexdump(0, rdr->nagra_boxkey, 8));
 
-			if ( rdr->atr[0] && isphysical) {
+			if ((rdr->atr[0] || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "atr", "");
 				for (j=0; j < rdr->atrlen/2; j++) {
 					fprintf(f, "%02X", rdr->atr[j]);
@@ -2406,105 +2377,105 @@ int write_server()
 					fprintf_conf(f, CONFVARWIDTH, "detect", "%s\n", RDR_CD_TXT[rdr->detect&0x7f]);
 			}
 
-			if (rdr->nagra_read && isphysical)
+			if ((rdr->nagra_read || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "nagra_read", "%d\n", rdr->nagra_read);
 
-			if (rdr->mhz && isphysical)
+			if ((rdr->mhz || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", rdr->mhz);
 
-			if (rdr->cardmhz && isphysical)
+			if ((rdr->cardmhz || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", rdr->cardmhz);
 
 			value = mk_t_ftab(&rdr->ftab);
-			if (strlen(value) > 0)
+			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
 			free(value);
 
 			//Todo: write reader class
 
 			value = mk_t_ftab(&rdr->fchid);
-			if (strlen(value) > 0)
+			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
 			free(value);
 
 			value = mk_t_aeskeys(rdr);
-			if (strlen(value) > 0)
+			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "aeskeys", "%s\n", value);
 			free(value);
 
-			if (rdr->show_cls && !rdr->show_cls == 10)
+			if ((rdr->show_cls && !rdr->show_cls == 10) || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
 
 			value = mk_t_group(rdr->grp);
-			if (strlen(value) > 0)
+			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
 			free(value);
 
-			if (rdr->cachemm)
+			if (rdr->cachemm || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "emmcache", "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 
-			if (rdr->blockemm_unknown)
+			if (rdr->blockemm_unknown || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "blockemm-unknown", "%d\n", rdr->blockemm_unknown);
 
-			if (rdr->blockemm_u)
+			if (rdr->blockemm_u || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "blockemm-u", "%d\n", rdr->blockemm_u);
 
-			if (rdr->blockemm_s)
+			if (rdr->blockemm_s || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "blockemm-s", "%d\n", rdr->blockemm_s);
 
-			if (rdr->blockemm_g)
+			if (rdr->blockemm_g || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "blockemm-g", "%d\n", rdr->blockemm_g);
 
-			if (rdr->lb_weight != 100)
+			if (rdr->lb_weight != 100 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "lb_weight", "%d\n", rdr->lb_weight);
 
 			//savenano
 			value = mk_t_nano(rdr, 0x02);
-			if (strlen(value) > 0)
+			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "savenano", "%s\n", value);
 			free(value);
 
 			//blocknano
 			value = mk_t_nano(rdr, 0x01);
-			if (strlen(value) > 0)
+			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s\n", value);
 			free(value);
 
 			if (rdr->typ == R_CCCAM) {
-				if (rdr->cc_version[0])
+				if (rdr->cc_version[0] || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccversion", "%s\n", rdr->cc_version);
 
-				if (rdr->cc_maxhop != 10)
+				if (rdr->cc_maxhop != 10 || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", rdr->cc_maxhop);
 					
-				if (rdr->cc_mindown > 0)
+				if (rdr->cc_mindown > 0 || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccmindown", "%d\n", rdr->cc_mindown);
 
-				if (rdr->cc_want_emu)
+				if (rdr->cc_want_emu || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccwantemu", "%d\n", rdr->cc_want_emu);
 
-				if (rdr->cc_keepalive)
+				if (rdr->cc_keepalive || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "ccckeepalive", "%d\n", rdr->cc_keepalive);
 					
-				if (rdr->cc_reshare != cfg.cc_reshare)
+				if (rdr->cc_reshare != cfg.cc_reshare || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", rdr->cc_reshare);	
 			}
 
-			if (rdr->deprecated && isphysical)
+			if ((rdr->deprecated || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "deprecated", "%d\n", rdr->deprecated);
 
-			if (rdr->audisabled)
+			if (rdr->audisabled || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "audisabled", "%d\n", rdr->audisabled);
 
-			if (rdr->auprovid)
+			if (rdr->auprovid || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "auprovid", "%06lX", rdr->auprovid);
 
-                        if (rdr->ndsversion && isphysical)
-                                fprintf_conf(f, CONFVARWIDTH, "ndsversion", "%d\n", rdr->ndsversion);
-
-                        if (rdr->ratelimitecm && isphysical) {
-                                fprintf_conf(f, CONFVARWIDTH, "ratelimitecm", "%d\n", rdr->ratelimitecm);
-                                fprintf_conf(f, CONFVARWIDTH, "ratelimitseconds", "%d\n", rdr->ratelimitseconds);
+			if ((rdr->ndsversion || cfg.http_full_cfg) && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "ndsversion", "%d\n", rdr->ndsversion);
+			
+			if ((rdr->ratelimitecm || cfg.http_full_cfg) && isphysical) {
+				fprintf_conf(f, CONFVARWIDTH, "ratelimitecm", "%d\n", rdr->ratelimitecm);
+				fprintf_conf(f, CONFVARWIDTH, "ratelimitseconds", "%d\n", rdr->ratelimitseconds);
 			}
 			fprintf(f, "\n\n");
 		}
@@ -3819,25 +3790,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "ndsversion")) {
-		if (strlen(value) == 0) {
-			rdr->ndsversion = 0;
-			return;
-		} else {
-			rdr->ndsversion = atoi(value);
-			return;
-		}
+		rdr->ndsversion = strToIntVal(value, 0);
+		return;
 	}
 
 
 #ifdef AZBOX
 	if (!strcmp(token, "mode")) {
-		if(strlen(value) == 0) {
-			rdr->mode = -1;
-			return;
-		} else {
-			rdr->mode = atoi(value);
-			return;
-		}
+		rdr->mode = strToIntVal(value, -1);
+		return;
 	}
 #endif
 
@@ -3990,7 +3951,7 @@ int init_readerdb()
 			rdr->cc_maxhop = 10;
 			rdr->cc_mindown = 0;
 			rdr->lb_weight = 100;
-			strcpy(rdr->pincode, "none");
+			cs_strncpy(rdr->pincode, "none", sizeof(rdr->pincode));
 			rdr->ndsversion = 0;
 			for (i=1; i<CS_MAXCAIDTAB; rdr->ctab.mask[i++]=0xffff);
 			continue;
