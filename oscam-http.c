@@ -962,6 +962,9 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	if(rdr->boxid)
 		tpl_printf(vars, TPLADD, "BOXID", "%08X", rdr->boxid);
+		
+	if(rdr->fix_9993)
+		tpl_addVar(vars, TPLADD, "FIX9993CHECKED", "checked");
 
 	tpl_addVar(vars, TPLADD, "USER", rdr->r_usr);
 	tpl_addVar(vars, TPLADD, "PASS", rdr->r_pwd);

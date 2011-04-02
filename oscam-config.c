@@ -2373,7 +2373,8 @@ int write_server()
 			if (rdr->boxid && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", rdr->boxid);
 
-      fprintf_conf(f, CONFVARWIDTH, "fix9993", "%d\n", rdr->fix_9993);
+      if(rdr->fix_9993 && isphysical)
+      	fprintf_conf(f, CONFVARWIDTH, "fix9993", "%d\n", rdr->fix_9993);
 
 			// rsakey
 			int len = check_filled(rdr->rsa_mod, 120);

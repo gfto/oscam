@@ -973,6 +973,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 				<TR><TD>##TPLHELPPREFIX##server#boxkey##TPLHELPSUFFIX##Boxkey:</A></TD><TD><input name=\"boxkey\" type=\"text\" size=\"20\" maxlength=\"16\" value=\"##BOXKEY##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#showcls##TPLHELPSUFFIX##Showcls:</A></TD><TD><input name=\"showcls\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SHOWCLS##\"></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#force_irdeto##TPLHELPSUFFIX##Force Irdeto:</A><input name=\"force_irdeto\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"force_irdeto\" type=\"checkbox\" value=\"1\" ##FORCEIRDETOCHECKED##></TD></TR>\n\
+				<TR><TD>##TPLHELPPREFIX##server#fix9993##TPLHELPSUFFIX##Fix 9993 for CAID 0919:</A><input name=\"fix9993\" type=\"hidden\" value=\"0\"></TD><TD><input name=\"fix9993\" type=\"checkbox\" value=\"1\" ##FIX9993CHECKED##></TD></TR>\n\
 				<TR><TD>##TPLHELPPREFIX##server#ndsversion##TPLHELPSUFFIX##Force NDS Version:</A></TD>\n\
 					<TD>\n\
 						<SELECT name=\"ndsversion\">\n\
@@ -1191,7 +1192,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#port##TPLHELPSUFFIX##Port:</A></TD><TD><input name=\"port\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##MONPORT##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#serverip_2##TPLHELPSUFFIX##Serverip:</A></TD><TD><input name=\"serverip\" type=\"text\" size=\"30\" maxlength=\"30\" value=\"##SERVERIP##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#nocrypt##TPLHELPSUFFIX##No crypt:</A></TD><TD><input name=\"nocrypt\" type=\"text\" size=\"50\" maxlength=\"200\" value=\"##NOCRYPT##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name=\"aulow\" type=\"text\" size=\"5\" maxlength=\"1\" value=\"##AULOW##\"> min</TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#aulow##TPLHELPSUFFIX##Au low:</A></TD><TD><input name=\"aulow\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##AULOW##\"> min</TD></TR>\n\
 			<TR>\n\
 				<TD>##TPLHELPPREFIX##conf#monlevel##TPLHELPSUFFIX##Monlevel:</A></TD>\n\
 				<TD><select name=\"monlevel\">\n\
