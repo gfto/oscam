@@ -2171,7 +2171,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 								}
 								ll_iter_release(itr);
 							} else tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", cl->reader->label);
-							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "</span>");
+							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "</span></a>");
 						}
 					}
 				} else {
