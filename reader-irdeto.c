@@ -226,7 +226,7 @@ static int irdeto_card_init_provider(struct s_reader * reader)
 			else
 				memcpy(&reader->prid[i][0], cta_res+acspadd, 4);
 
-			sprintf((char *) buf+strlen((char *)buf), ",%06lx", b2i(3, &reader->prid[i][1]));
+			snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%06lx", b2i(3, &reader->prid[i][1]));
 		}
 		else
 			reader->prid[i][0] = 0xf;
@@ -516,7 +516,7 @@ static int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			ep->type = SHARED;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
-			strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l));
+			cs_strncpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l), sizeof(dumprdrserial));
 			cs_debug_mask(D_EMM, "IRDETO EMM: SHARED l = %d ep = %s rdr = %s base = %02x", l, 
 					cs_hexdump(1, ep->hexserial, l), dumprdrserial, base);
 
@@ -542,7 +542,7 @@ static int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 			ep->type = UNIQUE;
 			memset(ep->hexserial, 0, 8);
 			memcpy(ep->hexserial, ep->emm + 4, l);
-			strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l));
+			cs_strncpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, l), sizeof(dumprdrserial));
 			cs_debug_mask(D_EMM, "IRDETO EMM: UNIQUE l = %d ep = %s rdr = %s", l, 
 					cs_hexdump(1, ep->hexserial, l), dumprdrserial);
 

@@ -34,6 +34,10 @@
 //for reader-nagra variables in s_reader:
 #include "cscrypt/idea.h"
 
+// Prevent use of unsafe functions
+#define strcpy(a,b) UNSAFE_STRCPY_USE_CS_STRNCPY_INSTEAD()
+#define sprintf(a,...) UNSAFE_SPRINTF_USE_SNPRINTF_INSTEAD()
+
 #ifndef CS_GLOBALS
 #define CS_GLOBALS
 #define CS_VERSION    "1.00-unstable_svn"

@@ -689,7 +689,7 @@ static char *tiger_date(uint8_t *ndays, int offset, char *result)
    tms.tm_year = 92 - year_offset;
    tms.tm_mday = days + 1;
    mktime(&tms);
-   sprintf(result, "%02d/%02d/%04d", tms.tm_mday, tms.tm_mon + 1, tms.tm_year + 1900 + year_offset);
+   snprintf(result, 11, "%02d/%02d/%04d", tms.tm_mday, tms.tm_mon + 1, tms.tm_year + 1900 + year_offset);
    return result;
 }
 
@@ -715,11 +715,11 @@ static int reccmp(const void *r1, const void *r2)
 static int reccmp2(const void *r1, const void *r2)
 {
    char rec1[13], rec2[13];
-   sprintf(rec1, "%04X", ((ncmed_rec *)r1)->value);
+   snprintf(rec1, sizeof(rec1), "%04X", ((ncmed_rec *)r1)->value);
    memcpy(rec1+4, ((ncmed_rec *)r1)->date2+6, 4);
    memcpy(rec1+8, ((ncmed_rec *)r1)->date2+3, 2);
    memcpy(rec1+10, ((ncmed_rec *)r1)->date2, 2);
-   sprintf(rec2, "%04X", ((ncmed_rec *)r2)->value);
+   snprintf(rec2, sizeof(rec2), "%04X", ((ncmed_rec *)r2)->value);
    memcpy(rec2+4, ((ncmed_rec *)r2)->date2+6, 4);
    memcpy(rec2+8, ((ncmed_rec *)r2)->date2+3, 2);
    memcpy(rec2+10, ((ncmed_rec *)r2)->date2, 2);
@@ -819,7 +819,7 @@ static int nagra2_card_info(struct s_reader * reader)
               struct tm timeinfo;
               time ( &rawtime );
               localtime_r(&rawtime, &timeinfo);
-              sprintf(currdate, "%02d/%02d/%04d", timeinfo.tm_mday, timeinfo.tm_mon+1, timeinfo.tm_year+1900);
+              snprintf(currdate, sizeof(currdate), "%02d/%02d/%04d", timeinfo.tm_mday, timeinfo.tm_mon+1, timeinfo.tm_year+1900);
               
               for (i = 0; i < num_records; ++i)
               {  

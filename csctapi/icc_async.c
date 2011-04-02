@@ -671,29 +671,29 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 		for (i=1; i<= numprot; i++) {
 			point = 0;
 			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TA, &tx) == ATR_OK) {
-				sprintf((char *)txt+point,"TA%i=%02X ",i,tx);
+				snprintf((char *)txt+point,sizeof(txt)-point,"TA%i=%02X ",i,tx);
 				point +=7;
 			}
 			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TB, &tx) == ATR_OK) {
-				sprintf((char *)txt+point,"TB%i=%02X ",i,tx);
+				snprintf((char *)txt+point,sizeof(txt)-point,"TB%i=%02X ",i,tx);
 				point +=7;
 			}
 			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TC, &tx) == ATR_OK) {
-				sprintf((char *)txt+point,"TC%i=%02X ",i,tx);
+				snprintf((char *)txt+point,sizeof(txt)-point,"TC%i=%02X ",i,tx);
 				point +=7;
 			}
 			if (ATR_GetInterfaceByte (atr, i, ATR_INTERFACE_BYTE_TD, &tx) == ATR_OK) {
-				sprintf((char *)txt+point,"TD%i=%02X ",i,tx);
+				snprintf((char *)txt+point,sizeof(txt)-point,"TD%i=%02X ",i,tx);
 				point +=7;
 				tx &= 0X0F;
-				sprintf((char *)txt+point,"(T%i)",tx);
+				snprintf((char *)txt+point,sizeof(txt)-point,"(T%i)",tx);
 				if (tx == 14)
 					OffersT[2] = TRUE;
 				else
 					OffersT[tx] = TRUE;
 			}
 			else {
-				sprintf((char *)txt+point,"no TD%i means T0",i);
+				snprintf((char *)txt+point,sizeof(txt)-point,"no TD%i means T0",i);
 				OffersT[0] = TRUE;
 			}
 			cs_debug_mask(D_ATR, "%s",txt);

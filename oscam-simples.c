@@ -354,8 +354,10 @@ char *cs_hexdump(int m, const uchar *buf, int n)
   dump[i=0]='\0';
   m=(m)?3:2;
   if (m*n>=(int)sizeof(cur_client()->dump)) n=(sizeof(cur_client()->dump)/m)-1;
-  while (i<n)
-    sprintf(dump+(m*i++), "%02X%s", *buf++, (m>2)?" ":"");
+  while (i<n){
+    snprintf(dump+(m*i), sizeof(cur_client()->dump)-(m*i), "%02X%s", *buf++, (m>2)?" ":"");
+    ++i;
+  }
   return(dump);
 }
 
@@ -776,13 +778,13 @@ void fprintf_conf(FILE *f, int varnameWidth, const char *varname, const char *fm
 	char *ptr = varnamebuf + varlen;
 	va_list argptr;
 
-	strcpy(varnamebuf, varname);
+	cs_strncpy(varnamebuf, varname, sizeof(varnamebuf));
 	while(varlen < varnameWidth){
 		ptr[0] = ' ';
 		++ptr;
 		++varlen;
 	}
-	strcpy(ptr, "= ");
+	cs_strncpy(ptr, "= ", sizeof(varnamebuf)-(ptr-varnamebuf));
 	if (fwrite(varnamebuf, sizeof(char), strlen(varnamebuf), f)){
 		if(strlen(fmtstring) > 0){
 			va_start(argptr, fmtstring);
@@ -813,7 +815,7 @@ char *get_servicename(int srvid, int caid){
 				if (this->caid[i] == caid)
 					cs_strncpy(name, this->name, 32);
 
-	if (!name[0]) sprintf(name, "%04X:%04X unknown", caid, srvid);
+	if (!name[0]) snprintf(name, sizeof(name), "%04X:%04X unknown", caid, srvid);
 	if (!srvid) name[0] = '\0';
 	return(name);
 }
@@ -973,7 +975,7 @@ char *strnew(char *str)
     return NULL;
     
   char *newstr = cs_malloc(&newstr, strlen(str)+1, 1);
-  strcpy(newstr, str);
+  cs_strncpy(newstr, str, strlen(str)+1);
   
   return newstr;
 }

@@ -37,7 +37,7 @@ void load_stat_from_file()
 	char *fname;
 	FILE *file;
 	if (!cfg.lb_savepath || !cfg.lb_savepath[0]) {
-		sprintf(buf, "%s/stat", get_tmp_dir());
+		snprintf(buf, sizeof(buf), "%s/stat", get_tmp_dir());
 		fname = buf;
 	}
 	else
@@ -186,7 +186,7 @@ void save_stat_to_file_thread()
 	char buf[256];
 	char *fname;
 	if (!cfg.lb_savepath || !cfg.lb_savepath[0]) {
-		sprintf(buf, "%s/stat", get_tmp_dir());
+		snprintf(buf, sizeof(buf), "%s/stat", get_tmp_dir());
 		fname = buf;
 	}
 	else
@@ -516,10 +516,10 @@ int get_best_reader(ECM_REQUEST *er)
 		nr = 0;
 		while ((rdr=ll_iter_next(it))) {
 			if (nr > 5) {
-				sprintf(rptr, "...(%d more)", ll_count(er->matching_rdr)-nr);
+				snprintf(rptr, size, "...(%d more)", ll_count(er->matching_rdr)-nr);
 				break;
 			}
-			sprintf(rptr, "%s ", rdr->label);
+			snprintf(rptr, size, "%s ", rdr->label);
 			rptr = strend(rptr);
 			nr++;
 		}
@@ -763,15 +763,15 @@ int get_best_reader(ECM_REQUEST *er)
 		nr = 0;
 		while ((rdr=ll_iter_next(it))) {
 			if (fallback && it->cur == fallback) {
-				sprintf(rptr, "[");
+				snprintf(rptr, size, "[");
 				rptr = strend(rptr);
 			}
 			if (nr > 5) {
-				sprintf(rptr, "...(%d more)", ll_count(result)-nr);
+				snprintf(rptr, size, "...(%d more)", ll_count(result)-nr);
 				rptr = strend(rptr);
 				break;
 			}
-			sprintf(rptr, "%s ", rdr->label);
+			snprintf(rptr, size, "%s ", rdr->label);
 			rptr = strend(rptr);
 
 			nr++;

@@ -138,9 +138,9 @@ static void get_log_header(int m, char *txt)
 	struct s_client *cl = cur_client();	
 	unsigned int thread = cl?cl->thread:0;
 	if(m)
-		sprintf(txt, "%8X %c ",(unsigned int) thread, cl?cl->typ:' ');
+		snprintf(txt, LOG_BUF_SIZE, "%8X %c ",(unsigned int) thread, cl?cl->typ:' ');
 	else
-		sprintf(txt, "%8X%-3.3s",(unsigned int) thread, "");
+		snprintf(txt, LOG_BUF_SIZE, "%8X%-3.3s",(unsigned int) thread, "");
 }
 
 static void write_to_log(int flag, char *txt)

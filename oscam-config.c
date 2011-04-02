@@ -74,18 +74,19 @@ static void show_sidtab(struct s_sidtab *sidtab)
   {
     int i;
     char buf[1024];
+    char *saveptr = buf;
     cs_log("label=%s", sidtab->label);
-    sprintf(buf, "caid(%d)=", sidtab->num_caid);
+    snprintf(buf, sizeof(buf), "caid(%d)=", sidtab->num_caid);
     for (i=0; i<sidtab->num_caid; i++)
-      sprintf(buf+strlen(buf), "%04X ", sidtab->caid[i]);
+      snprintf(buf+strlen(buf), 1024-(buf-saveptr), "%04X ", sidtab->caid[i]);
     cs_log("%s", buf);
-    sprintf(buf, "provider(%d)=", sidtab->num_provid);
+    snprintf(buf, sizeof(buf), "provider(%d)=", sidtab->num_provid);
     for (i=0; i<sidtab->num_provid; i++)
-      sprintf(buf+strlen(buf), "%08X ", sidtab->provid[i]);
+      snprintf(buf+strlen(buf), 1024-(buf-saveptr), "%08X ", sidtab->provid[i]);
     cs_log("%s", buf);
-    sprintf(buf, "services(%d)=", sidtab->num_srvid);
+    snprintf(buf, sizeof(buf), "services(%d)=", sidtab->num_srvid);
     for (i=0; i<sidtab->num_srvid; i++)
-      sprintf(buf+strlen(buf), "%04X ", sidtab->srvid[i]);
+      snprintf(buf+strlen(buf), 1024-(buf-saveptr), "%04X ", sidtab->srvid[i]);
     cs_log("%s", buf);
   }
 }
@@ -181,7 +182,7 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 		char *ptr = buf;
 
 		for (i = 0; i < tab->n; i++) {
-				ptr += sprintf(ptr, "%s%04X:%d", i?",":"", tab->caid[i], tab->value[i]);
+				ptr += snprintf(ptr, size-(ptr-buf), "%s%04X:%d", i?",":"", tab->caid[i], tab->value[i]);
 		}
 		*ptr = 0;
 		return buf;
@@ -1248,7 +1249,7 @@ void init_len4caid()
 	char *value;
 
 	memset(len4caid, 0, sizeof(ushort)<<8);
-	sprintf(token, "%s%s", cs_confdir, cs_l4ca);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_l4ca);
 	if (!(fp = fopen(token, "r")))
 		return;
 	for(nr = 0; fgets(token, sizeof(token), fp);) {
@@ -1281,7 +1282,7 @@ int search_boxkey(ushort caid, char *key)
 	FILE *fp;
 	char c_caid[512];
 
-	sprintf(c_caid, "%s%s", cs_confdir, cs_cert);
+	snprintf(c_caid, sizeof(c_caid), "%s%s", cs_confdir, cs_cert);
 	fp = fopen(c_caid, "r");
 	if (fp) {
 		for (; (!rc) && fgets(c_caid, sizeof(c_caid), fp);) {
@@ -1373,7 +1374,7 @@ int init_config()
 	cfg.cc_keep_connected = 1;
 	cfg.cc_reshare = 10;
 #endif
-	sprintf(token, "%s%s", cs_confdir, cs_conf);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
 		fprintf(stderr, "Cannot open config file '%s' (errno=%d)\n", token, errno);
 		exit(1);
@@ -1652,9 +1653,9 @@ int write_services()
 	char bakfile[256];
 	char *ptr;
 
-	snprintf(destfile, 255,"%s%s", cs_confdir, cs_sidt);
-	snprintf(tmpfile, 255, "%s%s.tmp", cs_confdir, cs_sidt);
-	snprintf(bakfile, 255,"%s%s.bak", cs_confdir, cs_sidt);
+	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_sidt);
+	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_sidt);
+	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_sidt);
 
 	if (!(f=fopen(tmpfile, "w"))){
 		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
@@ -1705,9 +1706,9 @@ int write_config()
 	char destfile[256];
 	char bakfile[256];
 
-	snprintf(destfile, 255,"%s%s", cs_confdir, cs_conf);
-	snprintf(tmpfile, 255, "%s%s.tmp", cs_confdir, cs_conf);
-	snprintf(bakfile, 255,"%s%s.bak", cs_confdir, cs_conf);
+	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_conf);
+	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_conf);
+	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_conf);
 
 	if (!(f=fopen(tmpfile, "w"))){
 		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
@@ -2099,9 +2100,9 @@ int write_userdb(struct s_auth *authptr)
 	char destfile[256];
 	char bakfile[256];
 
-	snprintf(destfile, 255,"%s%s", cs_confdir, cs_user);
-	snprintf(tmpfile, 255, "%s%s.tmp", cs_confdir, cs_user);
-	snprintf(bakfile, 255,"%s%s.bak", cs_confdir, cs_user);
+	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_user);
+	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_user);
+	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_user);
 
   if (!(f=fopen(tmpfile, "w"))){
     cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
@@ -2252,9 +2253,9 @@ int write_server()
 	char destfile[256];
 	char bakfile[256];
 
-	snprintf(destfile, 255,"%s%s", cs_confdir, cs_srvr);
-	snprintf(tmpfile, 255, "%s%s.tmp", cs_confdir, cs_srvr);
-	snprintf(bakfile, 255,"%s%s.bak", cs_confdir, cs_srvr);
+	snprintf(destfile, sizeof(destfile),"%s%s", cs_confdir, cs_srvr);
+	snprintf(tmpfile, sizeof(tmpfile), "%s%s.tmp", cs_confdir, cs_srvr);
+	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_srvr);
 
 	if (!(f=fopen(tmpfile, "w"))){
 		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
@@ -2492,7 +2493,7 @@ void write_versionfile() {
 #ifndef OS_CYGWIN32
   // /tmp/oscam.version file (Uptime + Version)
   char targetfile[256];
-  snprintf(targetfile, 255,"%s%s", get_tmp_dir(), "/oscam.version");
+  snprintf(targetfile, sizeof(targetfile),"%s%s", get_tmp_dir(), "/oscam.version");
   FILE *fp;
 
   if (!(fp=fopen(targetfile, "w"))) {
@@ -2696,7 +2697,7 @@ struct s_auth *init_userdb()
 	char *value;
 	struct s_auth *account=NULL;
 
-	sprintf(token, "%s%s", cs_confdir, cs_user);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_user);
 	if (!(fp = fopen(token, "r"))) {
 		cs_log("Cannot open file \"%s\" (errno=%d)", token, errno);
 		return authptr;
@@ -2849,7 +2850,7 @@ int init_sidtab() {
   struct s_sidtab *ptr;
   struct s_sidtab *sidtab=(struct s_sidtab *)0;
 
-  sprintf(token, "%s%s", cs_confdir, cs_sidt);
+  snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_sidt);
   if (!(fp=fopen(token, "r")))
   {
     cs_log("Cannot open file \"%s\" (errno=%d)", token, errno);
@@ -2902,7 +2903,7 @@ int init_provid() {
 	FILE *fp;
 	char *payload;
 	static struct s_provid *provid=(struct s_provid *)0;
-	sprintf(token, "%s%s", cs_confdir, cs_provid);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_provid);
 
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (err=%d), no provids's loaded", token, errno);
@@ -2968,7 +2969,7 @@ int init_srvid()
 	FILE *fp;
 	char *payload;
 	struct s_srvid *srvid=NULL, *new_cfg_srvid=NULL;
-	sprintf(token, "%s%s", cs_confdir, cs_srid);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srid);
 
 
 	if (!(fp=fopen(token, "r"))) {
@@ -3057,7 +3058,7 @@ int init_tierid()
 	FILE *fp;
 	char *payload;
 	static struct s_tierid *tierid=NULL, *new_cfg_tierid=NULL;
-	sprintf(token, "%s%s", cs_confdir, cs_trid);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_trid);
 
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (err=%d), no tier-id's loaded", token, errno);
@@ -3232,7 +3233,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
       struct ifreq ifreq;
       memset(&ifreq, 0, sizeof(ifreq));
-      sprintf(ifreq.ifr_name, "eth0");
+      snprintf(ifreq.ifr_name, sizeof(ifreq.ifr_name), "eth0");
 
       ioctl(fd, SIOCGIFHWADDR, &ifreq);
       memcpy(mac, ifreq.ifr_ifru.ifru_hwaddr.sa_data, 6);
@@ -3845,7 +3846,7 @@ int init_irdeto_guess_tab()
   struct s_irdeto_quess *ird_row, *head;
 
   memset(cfg.itab, 0, sizeof(cfg.itab));
-  sprintf(token, "%s%s", cs_confdir, cs_ird);
+  snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_ird);
   if (!(fp=fopen(token, "r")))
   {
     cs_log("can't open file \"%s\" (errno=%d) irdeto guessing not loaded",
@@ -3916,7 +3917,7 @@ int init_readerdb()
 	FILE *fp;
 	char *value;
 
-	sprintf(token, "%s%s", cs_confdir, cs_srvr);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srvr);
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (errno=%d)\n", token, errno);
 		return(1);
@@ -4002,7 +4003,7 @@ void init_ac()
   FILE *fp;
   //char *value;
 
-  sprintf(token, "%s%s", cs_confdir, cs_ac);
+  snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_ac);
   if (!(fp=fopen(token, "r")))
   {
     cs_log("can't open file \"%s\" (errno=%d) anti-cascading table not loaded",
@@ -4106,21 +4107,22 @@ char *mk_t_caidtab(CAIDTAB *ctab){
 	}
 	char *value;
 	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	char *saveptr = value;
 	i = 0;
 	while(ctab->caid[i]) {
 		if(i == 0) {
-			sprintf(value + pos, "%04X", ctab->caid[i]);
+			snprintf(value + pos, needed-(value-saveptr), "%04X", ctab->caid[i]);
 			pos += 4;
 		} else {
-			sprintf(value + pos, ",%04X", ctab->caid[i]);
+			snprintf(value + pos, needed-(value-saveptr), ",%04X", ctab->caid[i]);
 			pos += 5;
 		}
 		if((ctab->mask[i]) && (ctab->mask[i] != 0xFFFF)){
-			sprintf(value + pos, "&%04X", ctab->mask[i]);
+			snprintf(value + pos, needed-(value-saveptr), "&%04X", ctab->mask[i]);
 			pos += 5;
 		}
 		if(ctab->cmap[i]){
-			sprintf(value + pos, ":%04X", ctab->cmap[i]);
+			snprintf(value + pos, needed-(value-saveptr), ":%04X", ctab->cmap[i]);
 			pos += 5;
 		}
 		++i;
@@ -4142,21 +4144,22 @@ char *mk_t_tuntab(TUNTAB *ttab){
 	}
 	char *value;
 	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	char *saveptr = value;
 	i = 0;
 	while(ttab->bt_caidfrom[i]) {
 		if(i == 0) {
-			sprintf(value + pos, "%04X", ttab->bt_caidfrom[i]);
+			snprintf(value + pos, needed-(value-saveptr), "%04X", ttab->bt_caidfrom[i]);
 			pos += 4;
 		} else {
-			sprintf(value + pos, ",%04X", ttab->bt_caidfrom[i]);
+			snprintf(value + pos, needed-(value-saveptr), ",%04X", ttab->bt_caidfrom[i]);
 			pos += 5;
 		}
 		if(ttab->bt_srvid[i]){
-			sprintf(value + pos, ".%04X", ttab->bt_srvid[i]);
+			snprintf(value + pos, needed-(value-saveptr), ".%04X", ttab->bt_srvid[i]);
 			pos += 5;
 		}
 		if(ttab->bt_caidto[i]){
-			sprintf(value + pos, ":%04X", ttab->bt_caidto[i]);
+			snprintf(value + pos, needed-(value-saveptr), ":%04X", ttab->bt_caidto[i]);
 			pos += 5;
 		}
 		++i;
@@ -4181,16 +4184,16 @@ char *mk_t_group(uint64 grp){
 	}
 	char *value;
 	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
-
+	char * saveptr = value;
 	for(i = 0; i < 64; i++){
 		if (grpbit[i] == '1'){
 			if (dot == 0){
-				sprintf(value + pos, "%d", i+1);
+				snprintf(value + pos, needed-(value-saveptr), "%d", i+1);
 				if (i > 8)pos += 2;
 				else pos += 1;
 				dot = 1;
 			} else {
-				sprintf(value + pos, ",%d", i+1);
+				snprintf(value + pos, needed-(value-saveptr), ",%d", i+1);
 				if (i > 8)pos += 3;
 				else pos += 2;
 			}
@@ -4214,15 +4217,15 @@ char *mk_t_ftab(FTAB *ftab){
 
 	char *value;
 	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
-
+	char *saveptr = value;
 	char *dot="";
 	for (i = 0; i < ftab->nfilts; ++i){
-		sprintf(value + pos, "%s%04X", dot, ftab->filts[i].caid);
+		snprintf(value + pos, needed-(value-saveptr), "%s%04X", dot, ftab->filts[i].caid);
 		pos += 4;
 		if (i > 0) pos += 1;
 		dot=":";
 		for (j = 0; j < ftab->filts[i].nprids; ++j) {
-			sprintf(value + pos, "%s%06lX", dot, ftab->filts[i].prids[j]);
+			snprintf(value + pos, needed-(value-saveptr), "%s%06lX", dot, ftab->filts[i].prids[j]);
 			pos += 7;
 			dot=",";
 		}
@@ -4246,13 +4249,14 @@ char *mk_t_camd35tcp_port(){
 	}
 	char *value;
 	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	char *saveptr = value;
 	char *dot1 = "", *dot2;
 	for(i = 0; i < cfg.c35_tcp_ptab.nports; ++i) {
-		pos += sprintf(value + pos, "%s%d@%04X", dot1, cfg.c35_tcp_ptab.ports[i].s_port, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].caid);
+		pos += snprintf(value + pos, needed-(value-saveptr), "%s%d@%04X", dot1, cfg.c35_tcp_ptab.ports[i].s_port, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].caid);
 		if (cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1) {
 			dot2 = ":";
 			for (j = 0; j < cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids; ++j) {
-				pos += sprintf(value + pos, "%s%lX", dot2, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
+				pos += snprintf(value + pos, needed-(value-saveptr), "%s%lX", dot2, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
 				dot2 = ",";
 			}
 		}
@@ -4296,21 +4300,21 @@ char *mk_t_aeskeys(struct s_reader *rdr){
 				tmp[pos] = ';';
 				++pos;
 			}
-			pos += sprintf(tmp+pos, "%04X@%06X", current->caid, current->ident);
+			pos += snprintf(tmp+pos, sizeof(tmp)-pos, "%04X@%06X", current->caid, current->ident);
 			prevKeyid = -1;
 			dot = ':';
 		} else dot = ',';
 		/* "0" keys are not saved so we need to check for gaps and output them! */
 		for (i = prevKeyid + 1; i < current->keyid; ++i) {
-			pos += sprintf(tmp+pos, "%c0", dot);
+			pos += snprintf(tmp+pos, sizeof(tmp)-pos, "%c0", dot);
 			dot = ',';
 		}
 		tmp[pos] = dot;
 		++pos;
-		for (i = 0; i < 16; ++i) sprintf(tmpkey + (i*2), "%02X", current->plainkey[i]);
+		for (i = 0; i < 16; ++i) snprintf(tmpkey + (i*2), sizeof(tmpkey) - (i*2), "%02X", current->plainkey[i]);
 		/* A key consisting of only FFs has a special meaning (just return what the card outputted) and can be specified more compact */
-		if(strcmp(tmpkey, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF") == 0) pos += sprintf(tmp+pos, "FF");
-		else pos += sprintf(tmp+pos, "%s", tmpkey);
+		if(strcmp(tmpkey, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF") == 0) pos += snprintf(tmp+pos, sizeof(tmp)-pos, "FF");
+		else pos += snprintf(tmp+pos, sizeof(tmp)-pos, "%s", tmpkey);
 		prevCaid = current->caid;
 		prevIdent = current->ident;
 		prevKeyid = current->keyid;
@@ -4341,22 +4345,22 @@ char *mk_t_newcamd_port(){
 	char *dot1 = "", *dot2;
 
 	for(i = 0; i < cfg.ncd_ptab.nports; ++i){
-		pos += sprintf(value + pos, "%s%d", dot1, cfg.ncd_ptab.ports[i].s_port);
+		pos += snprintf(value + pos, needed-pos,  "%s%d", dot1, cfg.ncd_ptab.ports[i].s_port);
 
 		// separate DES Key for this port
 		if(cfg.ncd_ptab.ports[i].ncd_key_is_set){
-			pos += sprintf(value + pos, "{");
+			pos += snprintf(value + pos, needed-pos, "{");
 			for (k = 0; k < 14; k++)
-				pos += sprintf(value + pos, "%02X", cfg.ncd_ptab.ports[i].ncd_key[k]);
-			pos += sprintf(value + pos, "}");
+				pos += snprintf(value + pos, needed-pos, "%02X", cfg.ncd_ptab.ports[i].ncd_key[k]);
+			pos += snprintf(value + pos, needed-pos, "}");
 		}
 
-		pos += sprintf(value + pos, "@%04X", cfg.ncd_ptab.ports[i].ftab.filts[0].caid);
+		pos += snprintf(value + pos, needed-pos, "@%04X", cfg.ncd_ptab.ports[i].ftab.filts[0].caid);
 
 		if (cfg.ncd_ptab.ports[i].ftab.filts[0].nprids > 0){
 			dot2 = ":";
 			for (j = 0; j < cfg.ncd_ptab.ports[i].ftab.filts[0].nprids; ++j){
-				pos += sprintf(value + pos, "%s%06X", dot2, (int)cfg.ncd_ptab.ports[i].ftab.filts[0].prids[j]);
+				pos += snprintf(value + pos, needed-pos, "%s%06X", dot2, (int)cfg.ncd_ptab.ports[i].ftab.filts[0].prids[j]);
 				dot2 = ",";
 			}
 		}
@@ -4376,7 +4380,7 @@ char *mk_t_aureader(struct s_auth *account){
 	struct s_reader *rdr;
 	LL_ITER *itr = ll_iter_create(account->aureader_list);
 	while ((rdr = ll_iter_next(itr))) {
-		pos += sprintf(value + pos, "%s%s", dot, rdr->label);
+		pos += snprintf(value + pos, 256-pos, "%s%s", dot, rdr->label);
 		dot = ",";
 	}
 	ll_iter_release(itr);
@@ -4398,14 +4402,14 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
 	char *value;
 	if (needed == 256) {
 		if(!cs_malloc(&value, (3 * sizeof(char)) + 1, -1)) return "";
-		sprintf(value, "all");
+		snprintf(value, 4, "all");
 		return value;
 	} else {
 		if(!cs_malloc(&value, (needed * 3 * sizeof(char)) + 1, -1)) return "";
 		value[0] = '\0';
 		for(i = 0; i < 256; ++i) {
 			if(rdr->b_nano[i] & flag) {
-				pos += sprintf(value + pos, "%s%02x", dot, i);
+				pos += snprintf(value + pos, (needed*3)+1-pos, "%s%02x", dot, i);
 				dot=",";
 			}
 		}
@@ -4426,11 +4430,11 @@ char *mk_t_service( uint64 sidtabok, uint64 sidtabno){
 
 	for (; sidtab; sidtab=sidtab->next){
 		if(sidok[i]=='1') {
-			pos += sprintf(value + pos, "%s%s", dot, sidtab->label);
+			pos += snprintf(value + pos, 256 - pos, "%s%s", dot, sidtab->label);
 			dot = ",";
 		}
 		if(sidno[i]=='1') {
-			pos += sprintf(value + pos, "%s!%s", dot, sidtab->label);
+			pos += snprintf(value + pos, 256 - pos, "%s!%s", dot, sidtab->label);
 			dot = ",";
 		}
 		i++;
@@ -4448,15 +4452,15 @@ char *mk_t_logfile(){
 	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
 	if(cfg.logtostdout == 1){
-		pos += sprintf(value + pos, "stdout");
+		pos += snprintf(value + pos, needed - pos, "stdout");
 		dot = ";";
 	}
 	if(cfg.logtosyslog == 1){
-		pos += sprintf(value + pos, "%ssyslog", dot);
+		pos += snprintf(value + pos, needed - pos, "%ssyslog", dot);
 		dot = ";";
 	}
 	if(cfg.logfile != NULL){
-		pos += sprintf(value + pos, "%s%s", dot, cfg.logfile);
+		pos += snprintf(value + pos, needed - pos, "%s%s", dot, cfg.logfile);
 	}
 	return value;
 }

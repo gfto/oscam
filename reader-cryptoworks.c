@@ -191,7 +191,7 @@ static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
     if (cta_res[0]!=0xdf) break;
     if (((cta_res[4]&0x1f)==0x1f) && (reader->nprov<CS_MAXPROV))
     {
-      sprintf(ptxt+strlen(ptxt), ",%02X", cta_res[5]);
+      snprintf(ptxt+strlen(ptxt), sizeof(ptxt)-strlen(ptxt), ",%02X", cta_res[5]);
       reader->prid[reader->nprov++][3]=cta_res[5];
     }
     insB8[2]=insB8[3]=0xff;	// next
@@ -247,7 +247,7 @@ static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
     trim(issuer);
   }
   else
-    strcpy(issuer, unknown);
+    cs_strncpy(issuer, unknown, sizeof(issuer));
 
   select_file(reader, 0x3f, 0x20, cta_res, &cta_lr);
   select_file(reader, 0x2f, 0x11, cta_res, &cta_lr);		// read pin
@@ -383,7 +383,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				ep->type = UNIQUE;
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 5);
-				strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 5));
+				cs_strncpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 5), sizeof(dumprdrserial));
 				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: UNIQUE, ep = %s rdr = %s", 
 					      cs_hexdump(1, ep->hexserial, 5), dumprdrserial);
@@ -395,7 +395,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 				ep->type = SHARED;
 				memset(ep->hexserial, 0, 8);
 				memcpy(ep->hexserial, ep->emm + 5, 4);
-				strcpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 4));
+				cs_strncpy(dumprdrserial, cs_hexdump(1, rdr->hexserial, 4), sizeof(dumprdrserial));
 				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+12, ep->l-12)), 4);
 				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: SHARED, ep = %s rdr = %s", 
 					      cs_hexdump(1, ep->hexserial, 4), dumprdrserial);

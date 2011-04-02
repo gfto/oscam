@@ -1042,13 +1042,13 @@ static int oscam_ser_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *b
     case P_DSR95:
       if( client->serialdata->dsr9500type==P_DSR_WITHSID )
       {
-        sprintf((char *)buf, "%c%08lX%04X%s%04X\n\r",
+        snprintf((char *)buf, 512, "%c%08lX%04X%s%04X\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l), er->srvid);
         oscam_ser_send(client, buf, (er->l<<1)+19); // 1 + 8 + 4 + l*2 + 4 + 2
       }
       else
       {
-        sprintf((char *)buf, "%c%08lX%04X%s\n\r",
+        snprintf((char *)buf, 512, "%c%08lX%04X%s\n\r",
           3, er->prid, er->caid, cs_hexdump(0, er->ecm, er->l));
         oscam_ser_send(client, buf, (er->l<<1)+15); // 1 + 8 + 4 + l*2 + 2
       }
@@ -1124,7 +1124,7 @@ static int oscam_ser_recv_chk(struct s_client *client, uchar *dcw, int *rc, ucha
 
 void module_oscam_ser(struct s_module *ph)
 {
-  strcpy(ph->desc, "serial");
+  cs_strncpy(ph->desc, "serial", sizeof(ph->desc));
   ph->type=MOD_CONN_SERIAL;
   ph->multi=1;
   ph->watchdog=0;

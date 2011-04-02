@@ -292,10 +292,10 @@ static int connect_newcamd_server()
   index = 3;
   buf[0] = MSG_CLIENT_2_SERVER_LOGIN;
   buf[1] = 0;
-  strcpy((char *)buf+index, cl->reader->r_usr);
+  cs_strncpy((char *)buf+index, cl->reader->r_usr, sizeof(buf)-index);
   __md5_crypt(cl->reader->r_pwd, "$1$abcdefgh$", (char *)passwdcrypt);
   index += strlen(cl->reader->r_usr)+1;
-  strcpy((char *)buf+index, (const char *)passwdcrypt);
+  cs_strncpy((char *)buf+index, (const char *)passwdcrypt, sizeof(buf)-index);
 
   network_message_send(handle, 0, buf, index+strlen((char *)passwdcrypt)+1, key, 
                        COMMTYPE_CLIENT, NCD_CLIENT_ID, NULL);
@@ -622,7 +622,7 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
       cs_exit(0);
     }
 
-    sprintf(cl->ncd_client_id, "%02X%02X", mbuf[0], mbuf[1]);
+    snprintf(cl->ncd_client_id, sizeof(cl->ncd_client_id), "%02X%02X", mbuf[0], mbuf[1]);
     client_name = get_ncd_client_name(cl->ncd_client_id);
 
     for (ok=0, account=cfg.account; (usr) && (account) && (!ok); account=account->next) 
@@ -1136,7 +1136,7 @@ int newcamd_client_init(struct s_client *client)
       close(client->udp_fd);
       return(1);
     }
-    sprintf(ptxt, ", port=%d", client->reader->l_port);
+    snprintf(ptxt, sizeof(ptxt), ", port=%d", client->reader->l_port);
   }
   else
     ptxt[0]='\0';
@@ -1172,7 +1172,7 @@ static int newcamd_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf
 
 static int newcamd_send_emm(EMM_PACKET *ep)
 {
-  uchar buf[200];
+  uchar buf[ep->l];
 
   if(!newcamd_connect())
     return (-1);
@@ -1221,7 +1221,7 @@ static int newcamd_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar 
 
 void module_newcamd(struct s_module *ph)
 {
-  strcpy(ph->desc, "newcamd");
+  cs_strncpy(ph->desc, "newcamd", sizeof(ph->desc));
   ph->type=MOD_CONN_TCP;
   ph->logtxt = ", crypted";
   ph->multi=1;

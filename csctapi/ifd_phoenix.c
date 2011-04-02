@@ -341,7 +341,7 @@ static int stapi_writesettings(struct s_reader *reader, unsigned long ETU, unsig
 
 void cardreader_stapi(struct s_cardreader *crdr)
 {
-	strcpy(crdr->desc, "stapi");
+	cs_strncpy(crdr->desc, "stapi", sizeof(crdr->desc));
 	crdr->reader_init	= stapi_init;
 	crdr->get_status	= stapi_getstatus;
 	crdr->activate	= stapi_reset;
@@ -357,7 +357,7 @@ void cardreader_stapi(struct s_cardreader *crdr)
 
 void cardreader_mouse(struct s_cardreader *crdr) 
 {
-	strcpy(crdr->desc, "mouse_test");
+	cs_strncpy(crdr->desc, "mouse_test", sizeof(crdr->desc));
 	crdr->reader_init	= mouse_init;
 	crdr->get_status	= Phoenix_GetStatus;
 	crdr->activate	= Phoenix_Reset;

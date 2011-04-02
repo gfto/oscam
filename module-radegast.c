@@ -186,7 +186,7 @@ static int radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UN
   ecmbuf[1] = er->l + 30 - 2;
   memcpy(ecmbuf + 2, header, sizeof(header));
   for(n = 0; n < 4; n++) {
-    sprintf((char*)provid_buf+(n*2), "%02X", ((uchar *)(&er->prid))[4 - 1 - n]);
+    snprintf((char*)provid_buf+(n*2), sizeof(provid_buf)-(n*2), "%02X", ((uchar *)(&er->prid))[4 - 1 - n]);
   }
   ecmbuf[7] = provid_buf[0];
   ecmbuf[8] = provid_buf[1];
@@ -290,7 +290,7 @@ void module_radegast(struct s_module *ph)
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
-  strcpy(ph->desc, "radegast");
+  cs_strncpy(ph->desc, "radegast", sizeof(ph->desc));
   ph->type=MOD_CONN_TCP;
   ph->multi=0;
   ph->watchdog=1;

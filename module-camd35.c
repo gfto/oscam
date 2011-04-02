@@ -58,7 +58,7 @@ static int camd35_auth_client(uchar *ucrc)
     if (crc==crc32(0L, MD5((unsigned char *)account->usr, strlen(account->usr), cl->dump), 16))
     {
       memcpy(cl->ucrc, ucrc, 4);
-      strcpy((char *)cl->upwd, account->pwd);
+      cs_strncpy((char *)cl->upwd, account->pwd, sizeof(cl->upwd));
       aes_set_key((char *) MD5(cl->upwd, strlen((char *)cl->upwd), cl->dump));
       rc=cs_auth_client(cl, account, NULL);
     }
@@ -363,7 +363,7 @@ static void * camd35_server(void *cli)
 static void casc_set_account()
 {
   struct s_client *cl = cur_client();
-  strcpy((char *)cl->upwd, cl->reader->r_pwd);
+  cs_strncpy((char *)cl->upwd, cl->reader->r_pwd, sizeof(cl->upwd));
   memcpy(cl->ucrc, i2b(4, crc32(0L, MD5((unsigned char *)cl->reader->r_usr, strlen(cl->reader->r_usr), cl->dump), 16)), 4);
   aes_set_key((char *)MD5(cl->upwd, strlen((char *)cl->upwd), cl->dump));
   cl->crypted=1;
@@ -418,7 +418,7 @@ int camd35_client_init(struct s_client *client)
       close(client->udp_fd);
       return(1);
     }
-    sprintf(ptxt, ", port=%d", client->reader->l_port);
+    snprintf(ptxt, sizeof(ptxt), ", port=%d", client->reader->l_port);
   }
   else
     ptxt[0]='\0';
@@ -688,7 +688,7 @@ void module_camd35(struct s_module *ph)
   ph->ptab = &ptab;
   ph->ptab->nports = 1;
 
-  strcpy(ph->desc, "camd35");
+  cs_strncpy(ph->desc, "camd35", sizeof(ph->desc));
   ph->type=MOD_CONN_UDP;
   ph->multi=1;
   ph->watchdog=1;
@@ -708,7 +708,7 @@ void module_camd35(struct s_module *ph)
 
 void module_camd35_tcp(struct s_module *ph)
 {
-  strcpy(ph->desc, "cs378x");
+  cs_strncpy(ph->desc, "cs378x", sizeof(ph->desc));
   ph->type=MOD_CONN_TCP;
   ph->multi=1;
   ph->watchdog=1;

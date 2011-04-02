@@ -1690,7 +1690,7 @@ void addParam(char *param, char *value)
 
 int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
-
+	uint8 token[256];
 	int ret = buf[1];
 	struct cc_data *cc = cl->cc;
 
@@ -1739,10 +1739,10 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			}
 			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
 			if (cc->is_oscam_cccam) {
-				sprintf((char*) buf,
+				snprintf((char *)token, sizeof((char *)token),
 						"PARTNER: OSCam v%s, build #%s (%s) [EXT,SID]", CS_VERSION,
 						CS_SVN_VERSION, CS_OSTYPE);
-				cc_cmd_send(cl, buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
+				cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 			}
 
 			cc->cmd05_mode = MODE_PLAIN;
@@ -1907,7 +1907,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 					if (!has_param)
 						param[0] = 0;
 					else {
-						strcpy(param, " [");
+						cs_strncpy(param, " [", sizeof(param));
 						if (cc->extended_mode)
 							addParam(param, "EXT");
 						if (cc->cccam220)
@@ -1915,9 +1915,10 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 						strcat(param, "]");
 					}
 
-					sprintf((char*) buf, "PARTNER: OSCam v%s, build #%s (%s)%s",
+					snprintf((char *)token, sizeof((char *)token),
+						"PARTNER: OSCam v%s, build #%s (%s)%s",
 						CS_VERSION, CS_SVN_VERSION, CS_OSTYPE, param);
-					cc_cmd_send(cl, buf, strlen((char*) buf) + 1, MSG_CW_NOK1);
+					cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
 				}
 			}
 			return ret;
@@ -2292,13 +2293,13 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 		if (cl->typ == 'c') //client connection
 		{
 			//switching to an oder version and then disconnect...
-			strcpy(cfg.cc_version, version[0]);
+			cs_strncpy(cfg.cc_version, version[0], sizeof(cfg.cc_version));
 			ret = -1;
 		}
 		else //reader connection
 		{
-			strcpy(cl->reader->cc_version, version[0]);
-			strcpy(cl->reader->cc_build, build[0]);
+			cs_strncpy(cl->reader->cc_version, version[0], sizeof(cl->reader->cc_version));
+			cs_strncpy(cl->reader->cc_build, build[0], sizeof(cl->reader->cc_build));
 			cc_cli_close(cl, TRUE);
 		}
 		break;
@@ -2671,7 +2672,7 @@ int cc_srv_connect(struct s_client *cl) {
 
 	if (!cc->prefix)
 		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
-	sprintf(cc->prefix, "cccam(s) %s: ", cl->account->usr);
+	snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s: ", cl->account->usr);
 	
 
 	//Starting readers to get cards:
@@ -2872,7 +2873,7 @@ int cc_cli_connect(struct s_client *cl) {
 	}
 	if (!cc->prefix)
 		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->reader->label)+20, QUITERROR);
-	sprintf(cc->prefix, "cccam(r) %s: ", cl->reader->label);
+	snprintf(cc->prefix, strlen(cl->reader->label)+20, "cccam(r) %s: ", cl->reader->label);
 
 	cc->ecm_counter = 0;
 	cc->max_ecms = 0;
@@ -3138,7 +3139,7 @@ void cc_cleanup(struct s_client *cl) {
 }
 
 void module_cccam(struct s_module *ph) {
-	strcpy(ph->desc, "cccam");
+	cs_strncpy(ph->desc, "cccam", sizeof(ph->desc));
 	ph->type = MOD_CONN_TCP;
 	ph->logtxt = ", crypted";
 	ph->watchdog = 1;

@@ -311,7 +311,7 @@ char *parse_auth_value(char *value){
 void calculate_nonce(char *result){
   char noncetmp[128];
   unsigned char md5tmp[MD5_DIGEST_LENGTH];
-  sprintf(noncetmp, "%d:%s", (int)time(NULL)/AUTHNONCEVALIDSECS, noncekey);
+  snprintf(noncetmp, sizeof(noncetmp), "%d:%s", (int)time(NULL)/AUTHNONCEVALIDSECS, noncekey);
   char_to_hex(MD5((unsigned char*)noncetmp, strlen(noncetmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)result);
 }
 
@@ -361,15 +361,15 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 		char A1tmp[3 + strlen(username) + strlen(AUTHREALM) + strlen(expectedPassword)];
 		char A1[(MD5_DIGEST_LENGTH * 2) + 1], A2[(MD5_DIGEST_LENGTH * 2) + 1], A3[(MD5_DIGEST_LENGTH * 2) + 1];
 		unsigned char md5tmp[MD5_DIGEST_LENGTH];
-		sprintf(A1tmp, "%s:%s:%s", username, AUTHREALM, expectedPassword);
+		snprintf(A1tmp, sizeof(A1tmp), "%s:%s:%s", username, AUTHREALM, expectedPassword);
 		char_to_hex(MD5((unsigned char*)A1tmp, strlen(A1tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A1);
 		
 		char A2tmp[2 + strlen(method) + strlen(uri)];
-		sprintf(A2tmp, "%s:%s", method, uri);		
+		snprintf(A2tmp, sizeof(A2tmp), "%s:%s", method, uri);		
 		char_to_hex(MD5((unsigned char*)A2tmp, strlen(A2tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A2);
 		
 		char A3tmp[10 + strlen(A1) + strlen(A2) + strlen(authnonce) + strlen(authnc) + strlen(authcnonce)];
-		sprintf(A3tmp, "%s:%s:%s:%s:auth:%s", A1, authnonce, authnc, authcnonce, A2);
+		snprintf(A3tmp, sizeof(A3tmp), "%s:%s:%s:%s:auth:%s", A1, authnonce, authnc, authcnonce, A2);
 		char_to_hex(MD5((unsigned char*)A3tmp, strlen(A3tmp), md5tmp), MD5_DIGEST_LENGTH, (unsigned char*)A3);
 		
 		if(strcmp(A3, authresponse) == 0) {
@@ -414,28 +414,28 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime, int
   char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 256];
 	char *pos = buf;
 	
-  pos += sprintf(pos, "%s %d %s\r\n", PROTOCOL, status, title);
-  pos += sprintf(pos, "Server: %s\r\n", SERVER);
+  pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s %d %s\r\n", PROTOCOL, status, title);
+  pos += snprintf(pos, sizeof(buf)-(pos-buf), "Server: %s\r\n", SERVER);
 
   now = time(NULL);
   strftime(timebuf, sizeof(timebuf), RFC1123FMT, gmtime(&now));
-  pos += sprintf(pos, "Date: %s\r\n", timebuf);
+  pos += snprintf(pos, sizeof(buf)-(pos-buf), "Date: %s\r\n", timebuf);
 
 	if (extra)
-		pos += sprintf(pos, "%s\r\n", extra);
+		pos += snprintf(pos, sizeof(buf)-(pos-buf),"%s\r\n", extra);
 
 	if (mime)
-		pos += sprintf(pos, "Content-Type: %s\r\n", mime);
+		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Content-Type: %s\r\n", mime);
 
 	if(!cache){
-		pos += sprintf(pos, "Cache-Control: no-store, no-cache, must-revalidate\r\n");
-		pos += sprintf(pos, "Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
+		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Cache-Control: no-store, no-cache, must-revalidate\r\n");
+		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Expires: Sat, 26 Jul 1997 05:00:00 GMT\r\n");
 	} else {
-		pos += sprintf(pos, "Cache-Control: public, max-age=7200\r\n");
+		pos += snprintf(pos, sizeof(buf)-(pos-buf),"Cache-Control: public, max-age=7200\r\n");
 	}
-	pos += sprintf(pos, "Last-Modified: %s\r\n", timebuf);
-	pos += sprintf(pos, "Connection: close\r\n");
-	pos += sprintf(pos, "\r\n");
+	pos += snprintf(pos, sizeof(buf)-(pos-buf),"Last-Modified: %s\r\n", timebuf);
+	pos += snprintf(pos, sizeof(buf)-(pos-buf), "Connection: close\r\n");
+	pos += snprintf(pos, sizeof(buf)-(pos-buf),"\r\n");
 	webif_write(buf, f);
 }
 
@@ -477,10 +477,10 @@ void send_error(FILE *f, int status, char *title, char *extra, char *text){
 	char buf[(2* strlen(title)) + strlen(text) + 128];
 	char *pos = buf;
 	send_headers(f, status, title, extra, "text/html", 0);
-	pos += sprintf(pos, "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
-	pos += sprintf(pos, "<BODY><H4>%d %s</H4>\r\n", status, title);
-	pos += sprintf(pos, "%s\r\n", text);
-	pos += sprintf(pos, "</BODY></HTML>\r\n");
+	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<HTML><HEAD><TITLE>%d %s</TITLE></HEAD>\r\n", status, title);
+	pos += snprintf(pos, sizeof(buf)-(pos-buf), "<BODY><H4>%d %s</H4>\r\n", status, title);
+	pos += snprintf(pos, sizeof(buf)-(pos-buf), "%s\r\n", text);
+	pos += snprintf(pos, sizeof(buf)-(pos-buf), "</BODY></HTML>\r\n");
 	webif_write(buf, f);
 }
 

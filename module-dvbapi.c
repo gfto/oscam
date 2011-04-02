@@ -125,10 +125,10 @@ int dvbapi_detect_api() {
 	char device_path[128], device_path2[128];
 
 	for (i=0;i<BOX_COUNT;i++) {
-		sprintf(device_path2, devices[i].demux_device, 0);
-		sprintf(device_path, devices[i].path, 0);
+		snprintf(device_path2, sizeof(device_path2), devices[i].demux_device, 0);
+		snprintf(device_path, sizeof(device_path), devices[i].path, 0);
 
-		sprintf(device_path, "%s%s", device_path, device_path2);
+		snprintf(device_path, sizeof(device_path), "%s%s", device_path, device_path2);
 
 		if ((dmx_fd = open(device_path, O_RDWR)) > 0) {
 			devnum=i;
@@ -209,10 +209,10 @@ int dvbapi_open_device(int type, int num, int adapter) {
 	char device_path[128], device_path2[128];
 
 	if (type==0) {
-		sprintf(device_path2, devices[selected_box].demux_device, num);
-		sprintf(device_path, devices[selected_box].path, adapter);
+		snprintf(device_path2, sizeof(device_path2), devices[selected_box].demux_device, num);
+		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
 
-		sprintf(device_path, "%s%s", device_path, device_path2);
+		snprintf(device_path, sizeof(device_path), "%s%s", device_path, device_path2);
 	} else {
 		if (cfg.dvbapi_boxtype==BOXTYPE_DUCKBOX || cfg.dvbapi_boxtype==BOXTYPE_DBOX2 || cfg.dvbapi_boxtype==BOXTYPE_UFS910)
 			ca_offset=1;
@@ -220,10 +220,10 @@ int dvbapi_open_device(int type, int num, int adapter) {
 		if (cfg.dvbapi_boxtype==BOXTYPE_QBOXHD)
 			num=0;
 
-		sprintf(device_path2, devices[selected_box].ca_device, num+ca_offset);
-		sprintf(device_path, devices[selected_box].path, adapter);
+		snprintf(device_path2, sizeof(device_path2), devices[selected_box].ca_device, num+ca_offset);
+		snprintf(device_path, sizeof(device_path), devices[selected_box].path, adapter);
 
-		sprintf(device_path, "%s%s", device_path, device_path2);
+		snprintf(device_path, sizeof(device_path), "%s%s", device_path, device_path2);
 	}
 
 	if ((dmx_fd = open(device_path, O_RDWR)) < 0) {
@@ -644,7 +644,7 @@ void dvbapi_read_priority() {
 
 	const char *cs_prio="oscam.dvbapi";
 
-	snprintf(token, 127, "%s%s", cs_confdir, cs_prio);
+	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_prio);
 	fp=fopen(token, "r");
 
 	if (!fp) {
@@ -1071,7 +1071,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, c
 			demux_id, demux[demux_id].demux_index, demux[demux_id].ca_mask, program_info_length, ca_pmt_list_management);
 
 	if (pmtfile)
-		strcpy(demux[demux_id].pmt_file, pmtfile);
+		cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
 
 	if (program_info_length > 1 && program_info_length < length)
 		dvbapi_parse_descriptor(demux_id, program_info_length-1, buffer+7);
@@ -1191,7 +1191,7 @@ int dvbapi_init_listenfd() {
 
 	memset(&servaddr, 0, sizeof(struct sockaddr_un));
 	servaddr.sun_family = AF_UNIX;
-	strcpy(servaddr.sun_path, devices[selected_box].cam_socket_path);
+	cs_strncpy(servaddr.sun_path, devices[selected_box].cam_socket_path, sizeof(servaddr.sun_path));
 	clilen = sizeof(servaddr.sun_family) + strlen(servaddr.sun_path);
 
 	if ((unlink(devices[selected_box].cam_socket_path) < 0) && (errno != ENOENT))
@@ -1229,7 +1229,7 @@ void dvbapi_chk_caidtab(char *caidasc, char type) {
 
 			if (type=='d') {
 				char tmp1[5];
-				sprintf(tmp1, "%04X", (uint)prov);
+				snprintf(tmp1, sizeof(tmp1), "%04X", (uint)prov);
 				int cw_delay = strtol(tmp1, '\0', 10);
 				entry->delay=cw_delay;
 			} else
@@ -1277,7 +1277,7 @@ void event_handler(int signal) {
 
 	for (i=0;i<MAX_DEMUX;i++) {
 		if (demux[i].pmt_file[0] != 0) {
-			sprintf(dest, "%s%s", TMPDIR, demux[i].pmt_file);
+			snprintf(dest, sizeof(dest), "%s%s", TMPDIR, demux[i].pmt_file);
 			pmt_fd = open(dest, O_RDONLY);
 			if(pmt_fd>0) {
 				if (fstat(pmt_fd, &pmt_info) != 0) {
@@ -1317,7 +1317,7 @@ void event_handler(int signal) {
 		if (strncmp(dp->d_name, "pmt", 3)!=0 || strncmp(dp->d_name+strlen(dp->d_name)-4, ".tmp", 4)!=0)
 			continue;
 
-		sprintf(dest, "%s%s", TMPDIR, dp->d_name);
+		snprintf(dest, sizeof(dest), "%s%s", TMPDIR, dp->d_name);
 		pmt_fd = open(dest, O_RDONLY);
 		if (pmt_fd < 0)
 			continue;
@@ -1388,7 +1388,7 @@ void event_handler(int signal) {
 		pmt_id = dvbapi_parse_capmt((uchar*)dest, 7 + len - 12 - 4, -1, dp->d_name);
 #endif
 		if (pmt_id>=0) {
-			strcpy(demux[pmt_id].pmt_file, dp->d_name);
+			cs_strncpy(demux[pmt_id].pmt_file, dp->d_name, sizeof(demux[pmt_id].pmt_file));
 			demux[pmt_id].pmt_time = pmt_info.st_mtime;
 		}
 
@@ -1951,7 +1951,7 @@ static int stapi_open() {
 
 	i=0;
 	while ((dp = readdir(dirp))) {
-		sprintf(pfad, "%s%s", PROCDIR, dp->d_name);
+		snprintf(pfad, sizeof(pfad), "%s%s", PROCDIR, dp->d_name);
 		if (stat(pfad,&buf) != 0)
 			continue;
 
@@ -1983,7 +1983,7 @@ static int stapi_open() {
 		//debug
 		//oscam_stapi_Capability(dp->d_name);
 
-		strcpy(dev_list[i].name,dp->d_name);
+		cs_strncpy(dev_list[i].name,dp->d_name, sizeof(dev_list[i].name));
 		cs_log("PTI: %s open %d", dp->d_name, i);
 
 		ErrorCode = oscam_stapi_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
@@ -2719,7 +2719,7 @@ void azbox_send_dcw(struct s_client *client, ECM_REQUEST *er) {
 
 void module_dvbapi(struct s_module *ph)
 {
-	strcpy(ph->desc, "dvbapi");
+	cs_strncpy(ph->desc, "dvbapi", sizeof(ph->desc));
 	ph->type=MOD_CONN_SERIAL;
 	ph->multi=1;
 	ph->watchdog=0;

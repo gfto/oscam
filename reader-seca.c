@@ -127,7 +127,7 @@ static int seca_card_init(struct s_reader * reader, ATR newatr)
       if (set_provider_info(reader, i) == ERROR)
         return ERROR;
       else
-	sprintf((char *) buf+strlen((char *)buf), ",%04lX", b2i(2, &reader->prid[i][2])); 
+	snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%04lX", b2i(2, &reader->prid[i][2])); 
     }
 
   cs_ri_log (reader, "providers: %d (%s)", reader->nprov, buf+1);

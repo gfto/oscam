@@ -134,9 +134,9 @@ static void do_emm_from_file(struct s_reader * reader)
     FILE *fp;
     size_t result;
     if ((reader->emmfile[0] == '/'))
-      sprintf (token, "%s", reader->emmfile); //pathname included
+      snprintf (token, sizeof(token), "%s", reader->emmfile); //pathname included
     else
-      sprintf (token, "%s%s", cs_confdir, reader->emmfile); //only file specified, look in confdir for this file
+      snprintf (token, sizeof(token), "%s%s", cs_confdir, reader->emmfile); //only file specified, look in confdir for this file
     
     if (!(fp = fopen (token, "rb")))
       cs_log ("ERROR: Cannot open EMM file '%s' (errno=%d)\n", token, errno);

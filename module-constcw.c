@@ -141,7 +141,7 @@ static int constcw_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar 
 
 void module_constcw(struct s_module *ph)
 {
-  strcpy(ph->desc, "constcw");
+  cs_strncpy(ph->desc, "constcw", sizeof(ph->desc));
   ph->type = MOD_NO_CONN;
   ph->multi = 0;
   ph->watchdog = 1;

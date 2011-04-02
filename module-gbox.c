@@ -847,7 +847,7 @@ static int gbox_send_emm(EMM_PACKET *ep)
 
 void module_gbox(struct s_module *ph)
 {
-  strcpy(ph->desc, "gbox");
+  cs_strncpy(ph->desc, "gbox", sizeof(ph->desc));
   ph->num=R_GBOX;
   ph->type=MOD_CONN_UDP;
   ph->logtxt = ", crypted";

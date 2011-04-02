@@ -181,7 +181,7 @@ static int smargo_transmit(struct s_reader *reader, unsigned char *sent, unsigne
 
 void cardreader_smargo(struct s_cardreader *crdr) 
 {
-	strcpy(crdr->desc, "smargo");
+	cs_strncpy(crdr->desc, "smargo", sizeof(crdr->desc));
 	crdr->reader_init	= smargo_init;
 	crdr->get_status	= Phoenix_GetStatus;
 	crdr->activate	= smargo_reset;

@@ -191,7 +191,7 @@ static void monitor_send_info(char *txt, int last)
 		}
 		else
 			counter++;
-		sprintf(buf, "%03d", counter);
+		snprintf(buf, sizeof(buf), "%03d", counter);
 		memcpy(txt+4, buf, 3);
 		txt[3]='0'+seq;
 	}
@@ -284,10 +284,10 @@ static char *monitor_client_info(char id, struct s_client *cl){
 			else
                 lrt = cl->cwlastresptime;
 			localtime_r(&cl->login, &lt);
-			sprintf(ldate, "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year % 100);
+			snprintf(ldate, sizeof(ldate), "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year % 100);
 			int cnr=get_threadnum(cl);
-			sprintf(ltime, "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-                        sprintf(sbuf, "[%c--CCC]%8lX|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
+			snprintf(ltime, sizeof(ldate), "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
+			snprintf(sbuf, sizeof(sbuf), "[%c--CCC]%8lX|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
 					id, (unsigned long)cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
 					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),
 					ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
@@ -328,67 +328,67 @@ static void monitor_send_details(char *txt, unsigned int tid){
 
 static void monitor_send_details_version(){
 	char buf[256];
-	sprintf(buf, "[V-0000]version=%s, build=%s, system=%s-%s-%s\n", CS_VERSION_X, CS_SVN_VERSION,  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
+	snprintf(buf, sizeof(buf), "[V-0000]version=%s, build=%s, system=%s-%s-%s\n", CS_VERSION_X, CS_SVN_VERSION,  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
 	monitor_send_info(buf, 1);
 }
 
 static void monitor_send_keepalive_ack(){
 	char buf[32];
-	sprintf(buf, "[K-0000]keepalive_ack\n");
+	snprintf(buf, sizeof(buf), "[K-0000]keepalive_ack\n");
 	monitor_send_info(buf, 1);
 }
 
 static void monitor_process_details_master(char *buf, unsigned long pid){
-	sprintf(buf, "Version=%s#%s", CS_VERSION_X, CS_SVN_VERSION);
+	snprintf(buf, 256, "Version=%s#%s", CS_VERSION_X, CS_SVN_VERSION);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "System=%s-%s-%s",  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
+	snprintf(buf, 256, "System=%s-%s-%s",  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "DebugLevel=%d", cs_dblevel);
+	snprintf(buf, 256, "DebugLevel=%d", cs_dblevel);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "MaxClients=UNLIMITED");
+	snprintf(buf, 256, "MaxClients=UNLIMITED");
 	monitor_send_details(buf, pid);
-	sprintf(buf, "ClientMaxIdle=%ld sec", cfg.cmaxidle);
+	snprintf(buf, 256, "ClientMaxIdle=%ld sec", cfg.cmaxidle);
 	monitor_send_details(buf, pid);
 	if( cfg.max_log_size )
-		sprintf(buf + 200, "%d Kb", cfg.max_log_size);
+		snprintf(buf + 200, 56, "%d Kb", cfg.max_log_size);
 	else
-		strcpy(buf + 200, "unlimited");
-	sprintf(buf, "MaxLogsize=%s", buf + 200);
+		cs_strncpy(buf + 200, "unlimited", 56);
+	snprintf(buf, 256, "MaxLogsize=%s", buf + 200);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "ClientTimeout=%lu ms", cfg.ctimeout);
+	snprintf(buf, 256, "ClientTimeout=%lu ms", cfg.ctimeout);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "CacheDelay=%ld ms", cfg.delay);
+	snprintf(buf, 256, "CacheDelay=%ld ms", cfg.delay);
 	monitor_send_details(buf, pid);
 	if( cfg.cwlogdir ) {
-                sprintf(buf, "CwlogDir=%s", cfg.cwlogdir);
+                snprintf(buf, 256, "CwlogDir=%s", cfg.cwlogdir);
 	        monitor_send_details(buf, pid);
         }
 	if( cfg.preferlocalcards ) {
-	        sprintf(buf, "PreferlocalCards=%d", cfg.preferlocalcards);
+	        snprintf(buf, 256, "PreferlocalCards=%d", cfg.preferlocalcards);
 	        monitor_send_details(buf, pid);
         }
 	if( cfg.waitforcards ) {
-	        sprintf(buf, "WaitforCards=%d", cfg.waitforcards);
+	        snprintf(buf, 256, "WaitforCards=%d", cfg.waitforcards);
 	        monitor_send_details(buf, pid);
         }
-	sprintf(buf, "LogFile=%s", cfg.logfile);
+	snprintf(buf, 256, "LogFile=%s", cfg.logfile);
 	monitor_send_details(buf, pid);
 	if( cfg.usrfile ) {
-	        sprintf(buf, "UsrFile=%s", cfg.usrfile);
+	        snprintf(buf, 256, "UsrFile=%s", cfg.usrfile);
 	        monitor_send_details(buf, pid);
         }
 	monitor_send_details(buf, pid);
-	sprintf(buf, "Sleep=%d", cfg.tosleep);
+	snprintf(buf, 256, "Sleep=%d", cfg.tosleep);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "Monitorport=%d", cfg.mon_port);
+	snprintf(buf, 256, "Monitorport=%d", cfg.mon_port);
 	monitor_send_details(buf, pid);
-	sprintf(buf, "Nice=%d", cfg.nice);
+	snprintf(buf, 256, "Nice=%d", cfg.nice);
 	monitor_send_details(buf, pid);
 #ifdef WEBIF
-	sprintf(buf, "Restartmode=%d", cs_get_restartmode());
+	snprintf(buf, 256, "Restartmode=%d", cs_get_restartmode());
 	monitor_send_details(buf, pid);
 #else
-	sprintf(buf, "Restartmode=%s", "no");
+	snprintf(buf, 256, "Restartmode=%s", "no");
 	monitor_send_details(buf, pid);
 #endif
 
@@ -454,9 +454,9 @@ static void monitor_send_login(void){
 	char buf[64];
 	struct s_client *cur_cl = cur_client();
 	if (cur_cl->auth && cur_cl->account)
-		sprintf(buf, "[A-0000]1|%s logged in\n", cur_cl->account->usr);
+		snprintf(buf, sizeof(buf), "[A-0000]1|%s logged in\n", cur_cl->account->usr);
 	else
-		strcpy(buf, "[A-0000]0|not logged in\n");
+		cs_strncpy(buf, "[A-0000]0|not logged in\n", sizeof(buf));
 	monitor_send_info(buf, 1);
 }
 
@@ -495,7 +495,7 @@ static void monitor_logsend(char *flag){
 			p_txt = p_usr + 32;
 			if ((p_txt[0]) && ((cur_cl->monlvl > 1) || (cur_cl->account && !strcmp(p_usr, cur_cl->account->usr)))) {
 				char sbuf[8];
-				sprintf(sbuf, "%03d", cur_cl->logcounter);
+				snprintf(sbuf, sizeof(sbuf), "%03d", cur_cl->logcounter);
 				cur_cl->logcounter=(cur_cl->logcounter + 1) % 1000;
 				memcpy(p_txt + 4, sbuf, 3);
 				monitor_send(p_txt);
@@ -523,11 +523,11 @@ static void monitor_get_account(){
         int count = 0;
 
 	for (account=cfg.account; (account); account=account->next){
-                count++;
-		snprintf(buf, 255, "[U-----]%s\n", account->usr);
-	        monitor_send_info(buf, 0);
+		count++;
+		snprintf(buf, sizeof(buf), "[U-----]%s\n", account->usr);
+		monitor_send_info(buf, 0);
 	}
-	sprintf(buf, "[U-----] %i User registered\n", count);
+	snprintf(buf, sizeof(buf), "[U-----] %i User registered\n", count);
 	monitor_send_info(buf, 1);
         return;
 }
@@ -545,8 +545,8 @@ static void monitor_set_account(char *args){
 	argidx = 0;
 	found = 0;
 
-	sprintf(tmp, "%s",args);
-	sprintf(buf, "[S-0000]setuser: %s check\n", tmp);
+	snprintf(tmp, sizeof(tmp), "%s",args);
+	snprintf(buf, sizeof(buf), "[S-0000]setuser: %s check\n", tmp);
 	monitor_send_info(buf, 0);
 
 	ptr = strtok(args, delimiter);
@@ -559,9 +559,9 @@ static void monitor_set_account(char *args){
 	}
 
 	if(argidx != 3) {
-		sprintf(buf, "[S-0000]setuser: %s failed - wrong number of parameters (%d)\n",tmp,  argidx);
+		snprintf(buf, sizeof(buf), "[S-0000]setuser: %s failed - wrong number of parameters (%d)\n",tmp,  argidx);
 		monitor_send_info(buf, 0);
-		sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
+		snprintf(buf, sizeof(buf), "[S-0000]setuser: %s end\n", tmp);
 		monitor_send_info(buf, 1);
 		return;
 	}
@@ -575,9 +575,9 @@ static void monitor_set_account(char *args){
 	}
 
 	if (found != 1){
-		sprintf(buf, "[S-0000]setuser: %s failed - user %s not found\n",tmp , argarray[0]);
+		snprintf(buf, sizeof(buf), "[S-0000]setuser: %s failed - user %s not found\n",tmp , argarray[0]);
 		monitor_send_info(buf, 0);
-		sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
+		snprintf(buf, sizeof(buf), "[S-0000]setuser: %s end\n", tmp);
 		monitor_send_info(buf, 1);
 		return;
 	}
@@ -597,13 +597,13 @@ static void monitor_set_account(char *args){
 	}
 
 	if (found < 0){
-		sprintf(buf, "[S-0000]setuser: parameter %s not exist. possible values:\n", argarray[1]);
+		snprintf(buf, sizeof(buf), "[S-0000]setuser: parameter %s not exist. possible values:\n", argarray[1]);
 		monitor_send_info(buf, 0);
 	        for (i = 0; i < tokencnt; i++){
-		        sprintf(buf, "[S-0000]%s\n", token[i]);
+		        snprintf(buf, sizeof(buf), "[S-0000]%s\n", token[i]);
 		        monitor_send_info(buf, 0);
                 }
-		sprintf(buf, "[S-0000]setuser: %s end\n", tmp);
+		snprintf(buf, sizeof(buf),"[S-0000]setuser: %s end\n", tmp);
 		monitor_send_info(buf, 1);
 		return;
 	} else {
@@ -613,7 +613,7 @@ static void monitor_set_account(char *args){
 	if (write_userdb(cfg.account)==0)
 		cs_reinit_clients(cfg.account);
 
-	sprintf(buf, "[S-0000]setuser: %s done - param %s set to %s\n", tmp, argarray[1], argarray[2]);
+	snprintf(buf, sizeof(buf),"[S-0000]setuser: %s done - param %s set to %s\n", tmp, argarray[1], argarray[2]);
 	monitor_send_info(buf, 1);
 }
 
@@ -636,7 +636,7 @@ static void monitor_set_server(char *args){
 	}
 
 	if(argidx != 2) {
-		sprintf(buf, "[S-0000]setserver failed - wrong number of parameters (%d)\n", argidx);
+		snprintf(buf, sizeof(buf),"[S-0000]setserver failed - wrong number of parameters (%d)\n", argidx);
 		monitor_send_info(buf, 1);
 		return;
 	}
@@ -650,27 +650,27 @@ static void monitor_set_server(char *args){
 
 	if (i < 13){
 		chk_t_global(token[i],argarray[1]);
-		sprintf(buf, "[S-0000]setserver done - param %s set to %s\n", argarray[0], argarray[1]);
+		snprintf(buf, sizeof(buf), "[S-0000]setserver done - param %s set to %s\n", argarray[0], argarray[1]);
 		monitor_send_info(buf, 1);
 	} else {
-		sprintf(buf, "[S-0000]setserver failed - parameter %s not exist\n", argarray[0]);
+		snprintf(buf, sizeof(buf), "[S-0000]setserver failed - parameter %s not exist\n", argarray[0]);
 		monitor_send_info(buf, 1);
 		return;
 	}
 
 	if (cfg.ftimeout>=cfg.ctimeout) {
 		cfg.ftimeout = cfg.ctimeout - 100;
-		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg.ftimeout);
+		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg.ftimeout);
 		monitor_send_info(buf, 1);
 	}
 	if(cfg.ftimeout < cfg.srtimeout) {
 		cfg.ftimeout = cfg.srtimeout + 100;
-		sprintf(buf, "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg.ftimeout);
+		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg.ftimeout);
 		monitor_send_info(buf, 1);
 	}
 	if(cfg.ctimeout < cfg.srtimeout) {
 		cfg.ctimeout = cfg.srtimeout + 100;
-		sprintf(buf, "[S-0000]setserver WARNING: clienttimeout adjusted to %lu ms\n", cfg.ctimeout);
+		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: clienttimeout adjusted to %lu ms\n", cfg.ctimeout);
 		monitor_send_info(buf, 1);
 	}
 	//kill(first_client->pid, SIGUSR1);
@@ -686,7 +686,7 @@ static void monitor_list_commands(const char *args[], int cmdcnt){
 	int i;
 	for (i = 0; i < cmdcnt; i++) {
 		char buf[64];
-		sprintf(buf, "[S-0000]commands: %s\n", args[i]);
+		snprintf(buf, sizeof(buf), "[S-0000]commands: %s\n", args[i]);
 		if(i < cmdcnt-1)
 			monitor_send_info(buf, 0);
 		else
@@ -742,7 +742,7 @@ static int monitor_process_request(char *req)
 			case 11:	if (cur_cl->monlvl > 3) monitor_set_server(arg); break;	// setserver
 			case 12:	if (cur_cl->monlvl > 3) monitor_list_commands(cmd, cmdcnt); break;	// list commands
 			case 13:	if (cur_cl->monlvl > 3) monitor_send_keepalive_ack(); break;	// keepalive
-			case 14:	{ char buf[64];sprintf(buf, "[S-0000]reread\n");monitor_send_info(buf, 1); cs_card_info(); break; } // reread
+			case 14:	{ char buf[64];snprintf(buf, sizeof(buf), "[S-0000]reread\n");monitor_send_info(buf, 1); cs_card_info(); break; } // reread
 #ifdef WEBIF
 			case 15:	if (cur_cl->monlvl > 3) monitor_restart_server(); break;	// keepalive
 #endif
@@ -774,7 +774,7 @@ void module_monitor(struct s_module *ph){
 
 	if (cfg.mon_aulow < 1)
 		cfg.mon_aulow = 30;
-	strcpy(ph->desc, "monitor");
+	cs_strncpy(ph->desc, "monitor", sizeof(ph->desc));
 	ph->type=MOD_CONN_UDP;
 	ph->multi = 0;
 	ph->watchdog = 1;

@@ -911,7 +911,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   if (ph->s_ip)
   {
     sad.sin_addr.s_addr=ph->s_ip;
-    sprintf(ptxt[0], ", ip=%s", inet_ntoa(sad.sin_addr));
+    snprintf(ptxt[0], sizeof(ptxt[0]), ", ip=%s", inet_ntoa(sad.sin_addr));
   }
   else
     sad.sin_addr.s_addr=INADDR_ANY;
@@ -955,7 +955,7 @@ static int start_listener(struct s_module *ph, int port_idx)
 #ifdef SO_PRIORITY
   if (cfg.netprio)
     if (!setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(ulong)))
-      sprintf(ptxt[1], ", prio=%ld", cfg.netprio);
+      snprintf(ptxt[1], sizeof(ptxt[1]), ", prio=%ld", cfg.netprio);
 #endif
 
   if( !is_udp )
@@ -1217,7 +1217,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 			{
 				cl->dup = 1;
 				cl->aureader_list = NULL;
-				strcpy(buf, cs_inet_ntoa(cl->ip));
+				cs_strncpy(buf, cs_inet_ntoa(cl->ip), sizeof(buf));
 				cs_log("client(%8X) duplicate user '%s' from %s (prev %s) set to fake (uniq=%d)",
 					cl->thread, usr, cs_inet_ntoa(ip), buf, uniq);
 				if (cl->failban & BAN_DUPLICATE) {
@@ -1230,7 +1230,7 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 			{
 				client->dup = 1;
 				client->aureader_list = NULL;
-				strcpy(buf, cs_inet_ntoa(ip));
+				cs_strncpy(buf, cs_inet_ntoa(ip), sizeof(buf));
 				cs_log("client(%8X) duplicate user '%s' from %s (current %s) set to fake (uniq=%d)",
 					pthread_self(), usr, cs_inet_ntoa(cl->ip), buf, uniq);
 				if (client->failban & BAN_DUPLICATE) {
@@ -1321,17 +1321,17 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 			t_grant=t_reject;
 		else {
 			if (client->typ=='m')
-				sprintf(t_msg[0], "lvl=%d", client->monlvl);
+				snprintf(t_msg[0], sizeof(buf), "lvl=%d", client->monlvl);
 			else {
 				int rcount = ll_count(client->aureader_list);
-				sprintf(buf, "au=");
+				snprintf(buf, sizeof(buf), "au=");
 				if (!rcount)
-					sprintf(buf+3, "off");
+					snprintf(buf+3, sizeof(buf)-3, "off");
 				else {
 					if (client->autoau)
-						sprintf(buf+3, "auto (%d reader)", rcount);
+						snprintf(buf+3, sizeof(buf)-3, "auto (%d reader)", rcount);
 					else
-						sprintf(buf+3, "on (%d reader)", rcount);
+						snprintf(buf+3, sizeof(buf)-3, "on (%d reader)", rcount);
 				}
 			}
 		}
@@ -1352,7 +1352,7 @@ void cs_disconnect_client(struct s_client * client)
 {
 	char buf[32]={0};
 	if (client->ip)
-		sprintf(buf, " from %s", cs_inet_ntoa(client->ip));
+		snprintf(buf, sizeof(buf), " from %s", cs_inet_ntoa(client->ip));
 	cs_log("%s disconnected %s", username(client), buf);
 	cs_exit(0);
 }
@@ -1620,7 +1620,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	time(&t);
 	localtime_r(&t, &timeinfo);
 	strftime(date, sizeof(date), "%Y%m%d", &timeinfo);
-	sprintf(buf, "%s/%s_I%04X_%s.cwl", cfg.cwlogdir, date, er->srvid, srvname);
+	snprintf(buf, sizeof(buf), "%s/%s_I%04X_%s.cwl", cfg.cwlogdir, date, er->srvid, srvname);
 
 	/* open failed, assuming file does not exist, yet */
 	if((pfCWL = fopen(buf, "r")) == NULL) {
@@ -2019,7 +2019,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 		memcpy(ert->cw , er->cw , sizeof(er->cw));
   } else { // not found (from ONE of the readers !) er->rc==E_RDR_NOTFOUND
 		ert->rcEx=er->rcEx;
-		strcpy(ert->msglog, er->msglog);
+		cs_strncpy(ert->msglog, er->msglog, sizeof(ert->msglog));
 
 		ll_remove(ert->matching_rdr, er->selected_reader);
 
@@ -2596,7 +2596,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			localtime_r (&rawtime, &timeinfo);	/* to access LOCAL date/time info */
 			char buf[80];
 			strftime (buf, 80, "%Y/%m/%d %H:%M:%S", &timeinfo);
-			sprintf (token, "%s%s_emm.log", cs_confdir, aureader->label);
+			snprintf (token, sizeof(token), "%s%s_emm.log", cs_confdir, aureader->label);
 			int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 
 			if (!(fp = fopen (token, "a"))) {
@@ -2608,7 +2608,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 				cs_log ("Succesfully added EMM to %s.", token);
 			}
 
-			sprintf (token, "%s%s_emm.bin", cs_confdir, aureader->label);
+			snprintf (token, sizeof(token), "%s%s_emm.bin", cs_confdir, aureader->label);
 			if (!(fp = fopen (token, "ab"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
 			} else {
@@ -2904,16 +2904,16 @@ void cs_log_config()
   uchar buf[20];
 
   if (cfg.nice!=99)
-    sprintf((char *)buf, ", nice=%d", cfg.nice);
+    snprintf((char *)buf, sizeof(buf), ", nice=%d", cfg.nice);
   else
     buf[0]='\0';
   cs_log("version=%s, build #%s, system=%s-%s-%s%s", CS_VERSION_X, CS_SVN_VERSION, CS_OS_CPU, CS_OS_HW, CS_OS_SYS, buf);
   cs_log("client max. idle=%d sec, debug level=%d", cfg.cmaxidle, cs_dblevel);
 
   if( cfg.max_log_size )
-    sprintf((char *)buf, "%d Kb", cfg.max_log_size);
+    snprintf((char *)buf, sizeof(buf), "%d Kb", cfg.max_log_size);
   else
-    strcpy((char *)buf, "unlimited");
+    cs_strncpy((char *)buf, "unlimited", sizeof(buf));
   cs_log("max. logsize=%s", buf);
   cs_log("client timeout=%lu ms, fallback timeout=%lu ms, cache delay=%d ms",
          cfg.ctimeout, cfg.ftimeout, cfg.delay);
@@ -3053,7 +3053,7 @@ char * get_tmp_dir()
   if (!d || !d[0])
     getcwd(cs_tmpdir, sizeof(cs_tmpdir)-1);
 
-  strcpy(cs_tmpdir, d);
+  cs_strncpy(cs_tmpdir, d, sizeof(cs_tmpdir));
   char *p = cs_tmpdir;
   while(*p) p++;
   p--;
@@ -3061,7 +3061,7 @@ char * get_tmp_dir()
     strcat(cs_tmpdir, "/");
   strcat(cs_tmpdir, "_oscam");
 #else
-  strcpy(cs_tmpdir, "/tmp/.oscam");
+  cs_strncpy(cs_tmpdir, "/tmp/.oscam", sizeof(cs_tmpdir));
 #endif
   mkdir(cs_tmpdir, S_IRWXU);
   return cs_tmpdir;

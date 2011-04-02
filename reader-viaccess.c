@@ -224,7 +224,7 @@ static int viaccess_card_init(struct s_reader * reader, ATR newatr)
     reader->prid[i][0]=0;
     memcpy(&reader->prid[i][1], cta_res, 3);
     memcpy(&reader->availkeys[i][0], cta_res+10, 16);
-    sprintf((char *)buf+strlen((char *)buf), ",%06lX", b2i(3, &reader->prid[i][1]));
+    snprintf((char *)buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%06lX", b2i(3, &reader->prid[i][1]));
 //cs_log("[viaccess-reader] buf: %s", buf);
 
     insac[2]=0xa5; write_cmd(insac, NULL); // request sa

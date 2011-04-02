@@ -884,7 +884,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		ll_append(configured_readers, newrdr);
 		newrdr->next = NULL; // terminate list
 		newrdr->enable = 0; // do not start the reader because must configured before
-		strcpy(newrdr->pincode, "none");
+		cs_strncpy(newrdr->pincode, "none", sizeof(newrdr->pincode));
 		for (i = 1; i < CS_MAXCAIDTAB; newrdr->ctab.mask[i++] = 0xffff);
 		for (i = 0; i < (*params).paramcount; ++i) {
 			if (strcmp((*params).params[i], "action"))
