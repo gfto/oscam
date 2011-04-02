@@ -1,8 +1,14 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 
-#include <net/if.h>
-
 #include "globals.h"
+
+#ifdef OS_MACOSX
+#include <net/if_dl.h>
+#include <ifaddrs.h>
+#else
+#include <net/if.h>
+#endif
+
 #ifdef CS_WITH_BOXKEYS
 #  include "oscam-boxkeys.np"
 #endif
@@ -3230,6 +3236,24 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
 
     if (!memcmp(mac, "\x00\x00\x00\x00\x00\x00", 6)) {
+#ifdef OS_MACOSX
+      // no mac address specified so use mac of en0 on local box
+      struct ifaddrs *ifs, *current;
+
+      if (getifaddrs(&ifs) == 0)
+      {
+         for (current = ifs; current != 0; current = current->ifa_next)
+         {
+            if (current->ifa_addr->sa_family == AF_LINK && strcmp(current->ifa_name, "en0") == 0)
+            {
+               struct sockaddr_dl *sdl = (struct sockaddr_dl *)current->ifa_addr;
+               memcpy(mac, LLADDR(sdl), sdl->sdl_alen);
+               break;
+            }
+         }
+         freeifaddrs(ifs);
+      }
+#else
       // no mac address specified so use mac of eth0 on local box
       int fd = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -3241,6 +3265,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
       memcpy(mac, ifreq.ifr_ifru.ifru_hwaddr.sa_data, 6);
 
       close(fd);
+#endif
     }
 
     // decrypt encrypted mgcamd gbox line
