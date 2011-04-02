@@ -1071,7 +1071,7 @@ int dvbapi_parse_capmt(unsigned char *buffer, unsigned int length, int connfd, c
 			demux_id, demux[demux_id].demux_index, demux[demux_id].ca_mask, program_info_length, ca_pmt_list_management);
 
 	if (pmtfile)
-		cs_strncpy(demux[demux_id].pmt_file, pmtfile, sizeof(demux[demux_id].pmt_file));
+		cs_strncpy(demux[demux_id].pmt_file, pmtfile, 30);
 
 	if (program_info_length > 1 && program_info_length < length)
 		dvbapi_parse_descriptor(demux_id, program_info_length-1, buffer+7);
@@ -1388,7 +1388,7 @@ void event_handler(int signal) {
 		pmt_id = dvbapi_parse_capmt((uchar*)dest, 7 + len - 12 - 4, -1, dp->d_name);
 #endif
 		if (pmt_id>=0) {
-			cs_strncpy(demux[pmt_id].pmt_file, dp->d_name, sizeof(demux[pmt_id].pmt_file));
+			cs_strncpy(demux[pmt_id].pmt_file, dp->d_name, 30));
 			demux[pmt_id].pmt_time = pmt_info.st_mtime;
 		}
 
@@ -1983,7 +1983,7 @@ static int stapi_open() {
 		//debug
 		//oscam_stapi_Capability(dp->d_name);
 
-		cs_strncpy(dev_list[i].name,dp->d_name, sizeof(dev_list[i].name));
+		cs_strncpy(dev_list[i].name,dp->d_name, 20);
 		cs_log("PTI: %s open %d", dp->d_name, i);
 
 		ErrorCode = oscam_stapi_SignalAllocate(dev_list[i].SessionHandle, &dev_list[i].SignalHandle);
