@@ -2151,8 +2151,8 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				else con=0;
 
 				// no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
-				if(cl->typ == 'c' || cl->typ == 'p'){
-					if ((cl->typ == 'c' && !cl->aureader_list) || (cl->typ == 'p' && cl->reader->audisabled)) cau = 0;
+				if(cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r'){
+					if ((cl->typ == 'c' && !cl->aureader_list) || ((cl->typ == 'p' || cl->typ == 'r') && cl->reader->audisabled)) cau = 0;
 					else if ((now-cl->lastemm)/60 > cfg.mon_aulow) cau = -1;
 					else cau = 1;
 
