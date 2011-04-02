@@ -83,12 +83,12 @@ reader [de]assignment to service group, default=none
 .PP
 \fBinactivitytimeout\fP = \fBminutes\fP
 .RS 3n
-inactivity timeout for newcamd reader, default:none
+inactivity timeout (for all TCP based remote readers except CCCam), default:none
 .RE
 .PP
 \fBreconnecttimeout\fP = \fBminutes\fP
 .RS 3n
-TCP reconnect, if missing answers, default:none
+reconnect if missing answers (for all TCP based remote readers), default:30
 .RE
 .PP
 \fBdisableserverfilter\fP = \fB0\fP|\fB1\fP

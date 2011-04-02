@@ -1,14 +1,8 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 
-#include "globals.h"
-
-#ifdef OS_MACOSX
-#include <net/if_dl.h>
-#include <ifaddrs.h>
-#else
 #include <net/if.h>
-#endif
 
+#include "globals.h"
 #ifdef CS_WITH_BOXKEYS
 #  include "oscam-boxkeys.np"
 #endif
@@ -2344,10 +2338,10 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "services", "%s\n", value);
 			free(value);
 
-			if (rdr->tcp_ito && !isphysical)
+			if (rdr->tcp_ito && !isphysical && rdr->typ != R_CCCAM)
 				fprintf_conf(f, CONFVARWIDTH, "inactivitytimeout", "%d\n", rdr->tcp_ito);
 
-			if (rdr->tcp_rto && !isphysical )
+			if (rdr->tcp_rto != 30 && !isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "reconnecttimeout", "%d\n", rdr->tcp_rto);
 
 			if (rdr->ncd_disable_server_filt && rdr->typ == R_NEWCAMD)
@@ -2455,7 +2449,7 @@ int write_server()
 			if (rdr->blockemm_g)
 				fprintf_conf(f, CONFVARWIDTH, "blockemm-g", "%d\n", rdr->blockemm_g);
 
-			if (rdr->lb_weight)
+			if (rdr->lb_weight != 100)
 				fprintf_conf(f, CONFVARWIDTH, "lb_weight", "%d\n", rdr->lb_weight);
 
 			//savenano
@@ -2474,10 +2468,10 @@ int write_server()
 				if (rdr->cc_version[0])
 					fprintf_conf(f, CONFVARWIDTH, "cccversion", "%s\n", rdr->cc_version);
 
-				if (rdr->cc_maxhop >= 0)
+				if (rdr->cc_maxhop != 10)
 					fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", rdr->cc_maxhop);
 					
-				if (rdr->cc_mindown >= 0)
+				if (rdr->cc_mindown > 0)
 					fprintf_conf(f, CONFVARWIDTH, "cccmindown", "%d\n", rdr->cc_mindown);
 
 				if (rdr->cc_want_emu)
@@ -3237,24 +3231,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
     }
 
     if (!memcmp(mac, "\x00\x00\x00\x00\x00\x00", 6)) {
-#ifdef OS_MACOSX
-      // no mac address specified so use mac of en0 on local box
-      struct ifaddrs *ifs, *current;
-
-      if (getifaddrs(&ifs) == 0)
-      {
-         for (current = ifs; current != 0; current = current->ifa_next)
-         {
-            if (current->ifa_addr->sa_family == AF_LINK && strcmp(current->ifa_name, "en0") == 0)
-            {
-               struct sockaddr_dl *sdl = (struct sockaddr_dl *)current->ifa_addr;
-               memcpy(mac, LLADDR(sdl), sdl->sdl_alen);
-               break;
-            }
-         }
-         freeifaddrs(ifs);
-      }
-#else
       // no mac address specified so use mac of eth0 on local box
       int fd = socket(PF_INET, SOCK_STREAM, 0);
 
@@ -3266,7 +3242,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
       memcpy(mac, ifreq.ifr_ifru.ifru_hwaddr.sa_data, 6);
 
       close(fd);
-#endif
     }
 
     // decrypt encrypted mgcamd gbox line
@@ -3363,7 +3338,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "reconnecttimeout")) {
-		rdr->tcp_rto  = strToIntVal(value, 0);
+		rdr->tcp_rto  = strToIntVal(value, 30);
 		return;
 	}
 

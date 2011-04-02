@@ -67,10 +67,10 @@ DESCRIPTIONS
 	  reader [de]assignment to service group, default=none
 
        inactivitytimeout = minutes
-	  inactivity timeout for newcamd reader, default:none
+	  inactivity timeout (for all TCP based remote readers except CCCam), default:none
 
        reconnecttimeout = minutes
-	  TCP reconnect, if missing answers, default:none
+	  reconnect if missing answers (for all TCP based remote readers), default:30
 
        disableserverfilter = 0|1
 	  1 = ignore caid and ident settings of reader due faulty clients, default=0
