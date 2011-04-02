@@ -2199,7 +2199,12 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				if (cl->typ == 'c')
 					tpl_addVar(vars, TPLADD, "CLIENTDESCRIPTION", xml_encode(vars, cl->account?cl->account->description:""));
 				tpl_printf(vars, TPLADD, "CLIENTCAU", "%d", cau);
-				tpl_printf(vars, TPLADD, "CLIENTCRYPTED", "%d", cl->crypted);
+				if(!apicall){
+					if(cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r'){
+						if(cl->crypted) tpl_addVar(vars, TPLADD, "CLIENTCRYPTED", "ON");
+						else tpl_addVar(vars, TPLADD, "CLIENTCRYPTED", "OFF");
+					} else tpl_addVar(vars, TPLADD, "CLIENTCRYPTED", "");
+				} else tpl_printf(vars, TPLADD, "CLIENTCRYPTED", "%d", cl->crypted);
 				tpl_addVar(vars, TPLADD, "CLIENTIP", cs_inet_ntoa(cl->ip));
 				tpl_printf(vars, TPLADD, "CLIENTPORT", "%d", cl->port);
 				char *proto = monitor_get_proto(cl);
