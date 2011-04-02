@@ -711,35 +711,59 @@ void clear_tuntab(struct s_tuntab *ttab){
 		ttab->bt_srvid[i] = 0;
 	}
 }
-/* Overwrites destfile with tmpfile. If forceBakOverWrite = 0, the bakfile will not be overwritten if it exists, else it will be.*/
-int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int forceBakOverWrite){
-	if (file_exists(destfile)) {
-		if(forceBakOverWrite != 0 && file_exists(bakfile)){
-			if(remove(bakfile) < 0) cs_log("Error removing backup conf file %s (errno=%d)! Will try to proceed nonetheless...", bakfile, errno);
-		}
-		if(file_exists(bakfile)){
-			if(remove(destfile) < 0) {
-				cs_log("Error removing original conf file %s (errno=%d). Will maintain original one!", destfile, errno);
-				if(remove(tmpfile) < 0) cs_log("Error removing temp conf file %s (errno=%d)!", tmpfile, errno);
-				return(1);
+
+/* Copies a file from srcfile to destfile. If an error occured before writing, -1 is returned, else -2. On success, 0 is returned.*/
+int file_copy(char *srcfile, char *destfile){
+	FILE *src, *dest;
+  char ch;
+  if((src = fopen(srcfile, "r"))==NULL) {
+  	cs_log("Error opening file %s for reading (errno=%d)!", srcfile, errno);
+    return(-1);
+  }
+  if((dest = fopen(destfile, "w"))==NULL) {
+  	cs_log("Error opening file %s for writing (errno=%d)!", destfile, errno);
+  	fclose(src);
+    return(-1);
+  }
+
+	while(1){
+		ch = fgetc(src);
+		if(ch==EOF){
+			break;
+		}	else {
+			fputc(ch, dest);
+			if(ferror(dest)) {
+				cs_log("Error while writing to file %s (errno=%d)!", destfile, errno);
+				fclose(src);
+				fclose(dest);
+				return(-2);
 			}
-		} else {
-			if(rename(destfile, bakfile) < 0){
-				cs_log("Error renaming original conf file %s to %s (errno=%d). Will maintain original one!", destfile, bakfile, errno);
-				if(remove(tmpfile) < 0) cs_log("Error removing temp conf file %s (errno=%d)!", tmpfile, errno);
-				return(1);
-			}
-		}
-		if(rename(tmpfile, destfile) < 0){
-			cs_log("Error renaming new conf file %s to %s (errno=%d). The config will be missing upon next startup as this is non-recoverable!", tmpfile, destfile, errno);
-			return(1);
-		}
-	} else {
-		if(rename(tmpfile, destfile) < 0){
-			cs_log("Error renaming new conf file %s to %s (errno=%d). The config will be missing upon next startup as this is non-recoverable!", tmpfile, destfile, errno);
-			return(1);
 		}
 	}
+	fclose(src);
+	fclose(dest);
+	return(0);
+}
+
+/* Overwrites destfile with tmpfile. If forceBakOverWrite = 0, the bakfile will not be overwritten if it exists, else it will be.*/
+int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int forceBakOverWrite){
+	int rc;
+	if (file_exists(destfile)) {
+		if(forceBakOverWrite != 0 || !file_exists(bakfile)){
+			if(file_copy(destfile, bakfile) < 0){
+				cs_log("Error copying original config file %s to %s. The original config will be left untouched!", destfile, bakfile);
+				if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d)!", tmpfile, errno);
+				return(1);
+			}
+		}
+	}
+	if((rc = file_copy(tmpfile, destfile)) < 0){
+		cs_log("An error occured while writing the new config file %s.", destfile);
+		if(rc == -2) cs_log("The config will be missing or only partly filled upon next startup as this is a non-recoverable error! Please restore from backup or try again.", destfile);
+		if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d)!", tmpfile, errno);
+		return(1);
+	}
+	if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d)!", tmpfile, errno);
 	return(0);
 }
 
