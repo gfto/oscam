@@ -885,7 +885,7 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[0]=0xFF;
 	filter[1]=0;
 
-	filter[idx++]=UNIQUE;
+	filter[idx++]=EMM_UNIQUE;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
 	filter[idx+0+16] = 0xFF;
@@ -895,7 +895,7 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memset(filter+idx+2+16, 0xFF, 4);
 	idx +=32;
 
-	filter[idx++]=UNIQUE;
+	filter[idx++]=EMM_UNIQUE;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
 	filter[idx+0+16] = 0xFF;
@@ -905,7 +905,7 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	memset(filter+idx+6+16, 0xFF, 4);
 	idx +=32;
 
-	filter[idx++]=UNIQUE;
+	filter[idx++]=EMM_UNIQUE;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
 	filter[idx+0+16] = 0xFF;
@@ -917,7 +917,7 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1] += 3;
 	// fourth serial position does not fit within the 16bytes demux filter
 
-	filter[idx++]=SHARED;
+	filter[idx++]=EMM_SHARED;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
 	filter[idx+0+16] = 0xFF;
@@ -928,7 +928,7 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]++;
 	idx += 32;
 
-	filter[idx++]=GLOBAL;
+	filter[idx++]=EMM_GLOBAL;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x82;
 	filter[idx+0+16] = 0xFF;

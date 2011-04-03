@@ -324,6 +324,7 @@ int dvbapi_find_emmpid(int demux_id, uint8 type) {
 
 void dvbapi_start_emm_filter(int demux_index) {
 	int j;
+	const char *typtext[] = { "UNIQUE", "SHARED", "GLOBAL", "UNKNOWN" };
 
 	if (demux[demux_index].pidindex==-1) return;
 
@@ -375,7 +376,10 @@ void dvbapi_start_emm_filter(int demux_index) {
 		l = dvbapi_find_emmpid(demux_index, emmtype);
 
 		if (l>-1) {
-			cs_ddump_mask(D_DVBAPI, filter, 32, "starting emm filter type %d, pid: 0x%04X", emmtype, demux[demux_index].EMMpids[l].PID);
+			unsigned int typtext_idx = 0;
+			while (((emmtype >> typtext_idx) & 0x01) == 0 && typtext_idx < sizeof(typtext) / sizeof(const char *))
+                           ++typtext_idx;
+			cs_ddump_mask(D_DVBAPI, filter, 32, "starting emm filter type %s, pid: 0x%04X", typtext[typtext_idx], demux[demux_index].EMMpids[l].PID);
 			dvbapi_set_filter(demux_index, selected_api, demux[demux_index].EMMpids[l].PID, filter, filter+16, 0, demux[demux_index].pidindex, count, TYPE_EMM);
 		} else {
 			cs_debug_mask(D_DVBAPI, "no emm pid found");
