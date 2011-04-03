@@ -1092,13 +1092,13 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	tpl_addVar(vars, TPLADD, "BLOCKNANO", value);
 	free(value);
 
-	if (rdr->blockemm_unknown)
+	if (rdr->blockemm & EMM_UNKNOWN)
 		tpl_addVar(vars, TPLADD, "BLOCKEMMUNKNOWNCHK", "checked");
-	if (rdr->blockemm_u)
+	if (rdr->blockemm & EMM_UNIQUE)
 		tpl_addVar(vars, TPLADD, "BLOCKEMMUNIQCHK", "checked");
-	if (rdr->blockemm_s)
+	if (rdr->blockemm & EMM_SHARED)
 		tpl_addVar(vars, TPLADD, "BLOCKEMMSHAREDCHK", "checked");
-	if (rdr->blockemm_g)
+	if (rdr->blockemm & EMM_GLOBAL)
 		tpl_addVar(vars, TPLADD, "BLOCKEMMGLOBALCHK", "checked");
 
 	if (rdr->deprecated)

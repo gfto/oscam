@@ -225,45 +225,36 @@ static void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[0]=0xFF;	//header
 	filter[1]=0;		//filter count
 
-	if ((!rdr->blockemm_g && !(rdr->b_nano[0x82] & 0x01)) || (rdr->b_nano[0x82] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=GLOBAL;
-		filter[idx++]=1; // FIXME: dont see any conax global EMM yet
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+8]    = 0x70;
-		filter[idx+8+16] = 0xFF;
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_GLOBAL;
+	filter[idx++]=1; // FIXME: dont see any conax global EMM yet
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[idx+8]    = 0x70;
+	filter[idx+8+16] = 0xFF;
+	filter[1]++;
+	idx += 32;
 
-	if ((!rdr->blockemm_s && !(rdr->b_nano[0x82] & 0x01)) || (rdr->b_nano[0x82] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=SHARED;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+8]    = 0x70;
-		filter[idx+8+16] = 0xFF;
-		memcpy(filter+idx+4, rdr->sa[0], 4);
-		memset(filter+idx+4+16, 0xFF, 4);
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_SHARED;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[idx+8]    = 0x70;
+	filter[idx+8+16] = 0xFF;
+	memcpy(filter+idx+4, rdr->sa[0], 4);
+	memset(filter+idx+4+16, 0xFF, 4);
+	filter[1]++;
+	idx += 32;
 
-	if ((!rdr->blockemm_u && !(rdr->b_nano[0x82] & 0x01)) || (rdr->b_nano[0x82] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=UNIQUE;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+8]    = 0x70;
-		filter[idx+8+16] = 0xFF;
-		memcpy(filter+idx+4, rdr->hexserial + 2, 4);
-		memset(filter+idx+4+16, 0xFF, 4);
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_UNIQUE;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[idx+8]    = 0x70;
+	filter[idx+8+16] = 0xFF;
+	memcpy(filter+idx+4, rdr->hexserial + 2, 4);
+	memset(filter+idx+4+16, 0xFF, 4);
+	filter[1]++;
+	idx += 32;
 
 	return;
 }

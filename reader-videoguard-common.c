@@ -885,67 +885,57 @@ void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[0]=0xFF;
 	filter[1]=0;
 
-	//ToDo videoguard_get_emm_filter basic construction
-	if ((!rdr->blockemm_u && !(rdr->b_nano[0x82] & 0x01)) || (rdr->b_nano[0x82] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=UNIQUE;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x40;
-		filter[idx+1+16] = 0xC0;
-		memcpy(filter+idx+2, rdr->hexserial+2, 4);
-		memset(filter+idx+2+16, 0xFF, 4);
-                idx +=32;
+	filter[idx++]=UNIQUE;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[idx+1]    = 0x40;
+	filter[idx+1+16] = 0xC0;
+	memcpy(filter+idx+2, rdr->hexserial+2, 4);
+	memset(filter+idx+2+16, 0xFF, 4);
+	idx +=32;
 
-		filter[idx++]=UNIQUE;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x40;
-		filter[idx+1+16] = 0xC0;
-		memcpy(filter+idx+6, rdr->hexserial+2, 4);
-		memset(filter+idx+6+16, 0xFF, 4);
-                idx +=32;
+	filter[idx++]=UNIQUE;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[idx+1]    = 0x40;
+	filter[idx+1+16] = 0xC0;
+	memcpy(filter+idx+6, rdr->hexserial+2, 4);
+	memset(filter+idx+6+16, 0xFF, 4);
+	idx +=32;
 
-		filter[idx++]=UNIQUE;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x40;
-		filter[idx+1+16] = 0xC0;
-		memcpy(filter+idx+10, rdr->hexserial+2, 4);
-		memset(filter+idx+10+16, 0xFF, 4);
-                idx +=32;
-		filter[1] += 3;
-		// fourth serial position does not fit within the 16bytes demux filter
-	}
+	filter[idx++]=UNIQUE;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[idx+1]    = 0x40;
+	filter[idx+1+16] = 0xC0;
+	memcpy(filter+idx+10, rdr->hexserial+2, 4);
+	memset(filter+idx+10+16, 0xFF, 4);
+	idx +=32;
+	filter[1] += 3;
+	// fourth serial position does not fit within the 16bytes demux filter
 
-	if ((!rdr->blockemm_s && !(rdr->b_nano[0x82] & 0x01)) || (rdr->b_nano[0x82] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=SHARED;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x80;
-		filter[idx+1+16] = 0xC0;
-		memcpy(filter+idx+2, rdr->hexserial+2, 3);
-		memset(filter+idx+2+16, 0xFF, 3);
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=SHARED;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[idx+1]    = 0x80;
+	filter[idx+1+16] = 0xC0;
+	memcpy(filter+idx+2, rdr->hexserial+2, 3);
+	memset(filter+idx+2+16, 0xFF, 3);
+	filter[1]++;
+	idx += 32;
 
-	if ((!rdr->blockemm_g && !(rdr->b_nano[0x82] & 0x01)) || (rdr->b_nano[0x82] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=GLOBAL;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		filter[idx+1]    = 0x00;
-		filter[idx+1+16] = 0xC0;
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=GLOBAL;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[idx+1]    = 0x00;
+	filter[idx+1+16] = 0xC0;
+	filter[1]++;
+	idx += 32;
 
 	return;
 }

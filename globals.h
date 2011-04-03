@@ -230,6 +230,11 @@
 extern const char *boxdesc[];
 #endif
 
+#define EMM_UNIQUE 1
+#define EMM_SHARED 2
+#define EMM_GLOBAL 4
+#define EMM_UNKNOWN 8
+
 #ifdef CS_CORE
 char *PIP_ID_TXT[] = { "ECM", "EMM", "CIN", "KCL", "UDP", NULL  };
 char *RDR_CD_TXT[] = { "cd", "dsr", "cts", "ring", "none",
@@ -804,10 +809,7 @@ struct s_reader  //contains device info, reader info and card info
   ushort    acs;    // irdeto
   ushort    caid;
   uchar     b_nano[256];
-  int       blockemm_unknown; //block EMMs that have unknown type
-  int       blockemm_u;				//blcok Unique EMMs
-  int       blockemm_s;				//block Shared EMMS
-  int       blockemm_g;				//block Global EMMs
+  int       blockemm;
   char      * emmfile;
   char      pincode[5];
   int		ucpk_valid;

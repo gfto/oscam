@@ -2416,17 +2416,17 @@ int write_server()
 			if (rdr->cachemm || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "emmcache", "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
 
-			if (rdr->blockemm_unknown || cfg.http_full_cfg)
-				fprintf_conf(f, CONFVARWIDTH, "blockemm-unknown", "%d\n", rdr->blockemm_unknown);
+			if ((rdr->blockemm & EMM_UNKNOWN) || cfg.http_full_cfg)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-unknown", "%d\n", (rdr->blockemm & EMM_UNKNOWN) ? 1: 0);
 
-			if (rdr->blockemm_u || cfg.http_full_cfg)
-				fprintf_conf(f, CONFVARWIDTH, "blockemm-u", "%d\n", rdr->blockemm_u);
+			if ((rdr->blockemm & EMM_UNIQUE) || cfg.http_full_cfg)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-u", "%d\n", (rdr->blockemm & EMM_UNIQUE) ? 1: 0);
 
-			if (rdr->blockemm_s || cfg.http_full_cfg)
-				fprintf_conf(f, CONFVARWIDTH, "blockemm-s", "%d\n", rdr->blockemm_s);
+			if ((rdr->blockemm & EMM_SHARED) || cfg.http_full_cfg)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-s", "%d\n", (rdr->blockemm & EMM_SHARED) ? 1: 0);
 
-			if (rdr->blockemm_g || cfg.http_full_cfg)
-				fprintf_conf(f, CONFVARWIDTH, "blockemm-g", "%d\n", rdr->blockemm_g);
+			if ((rdr->blockemm & EMM_GLOBAL) || cfg.http_full_cfg)
+				fprintf_conf(f, CONFVARWIDTH, "blockemm-g", "%d\n", (rdr->blockemm & EMM_GLOBAL) ? 1: 0);
 
 			if (rdr->lb_weight != 100 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "lb_weight", "%d\n", rdr->lb_weight);
@@ -3675,22 +3675,38 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "blockemm-unknown")) {
-		rdr->blockemm_unknown  = strToIntVal(value, 0);
+		i=atoi(value);
+		if (!i && (rdr->blockemm & EMM_UNKNOWN))
+			rdr->blockemm -= EMM_UNKNOWN;
+		if (i)
+			rdr->blockemm |= EMM_UNKNOWN;
 		return;
 	}
 
 	if (!strcmp(token, "blockemm-u")) {
-		rdr->blockemm_u  = strToIntVal(value, 0);
+		i=atoi(value);
+		if (!i && (rdr->blockemm & EMM_UNIQUE))
+			rdr->blockemm -= EMM_UNIQUE;
+		if (i)
+			rdr->blockemm |= EMM_UNIQUE;
 		return;
 	}
 
 	if (!strcmp(token, "blockemm-s")) {
-		rdr->blockemm_s  = strToIntVal(value, 0);
+		i=atoi(value);
+		if (!i && (rdr->blockemm & EMM_SHARED))
+			rdr->blockemm -= EMM_SHARED;
+		if (i)
+			rdr->blockemm |= EMM_SHARED;
 		return;
 	}
 
 	if (!strcmp(token, "blockemm-g")) {
-		rdr->blockemm_g  = strToIntVal(value, 0);
+		i=atoi(value);
+		if (!i && (rdr->blockemm & EMM_GLOBAL))
+			rdr->blockemm -= EMM_GLOBAL;
+		if (i)
+			rdr->blockemm |= EMM_GLOBAL;
 		return;
 	}
 

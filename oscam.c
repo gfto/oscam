@@ -2624,13 +2624,13 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 
 		int is_blocked = 0;
 		switch (ep->type) {
-			case UNKNOWN: is_blocked = aureader->blockemm_unknown;
+			case UNKNOWN: is_blocked = (aureader->blockemm & EMM_UNKNOWN) ? 1 : 0;
 				break;
-			case UNIQUE: is_blocked = aureader->blockemm_u;
+			case UNIQUE: is_blocked = (aureader->blockemm & EMM_UNIQUE) ? 1 : 0;
 				break;
-			case SHARED: is_blocked = aureader->blockemm_s;
+			case SHARED: is_blocked = (aureader->blockemm & EMM_SHARED) ? 1 : 0;
 				break;
-			case GLOBAL: is_blocked = aureader->blockemm_g;
+			case GLOBAL: is_blocked = (aureader->blockemm & EMM_GLOBAL) ? 1 : 0;
 				break;
 		}
 

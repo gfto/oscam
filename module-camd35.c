@@ -225,9 +225,9 @@ static void camd35_request_emm(ECM_REQUEST *er)
 			}
 		}
 		//we think client/server protocols should deliver all information, and only readers should discard EMM
-		mbuf[128] = (aureader->blockemm_g == 1) ? 0: 1;
-		mbuf[129] = (aureader->blockemm_s == 1) ? 0: 1;
-		mbuf[130] = (aureader->blockemm_u == 1) ? 0: 1;
+		mbuf[128] = (aureader->blockemm & EMM_GLOBAL) ? 0: 1;
+		mbuf[129] = (aureader->blockemm & EMM_SHARED) ? 0: 1;
+		mbuf[130] = (aureader->blockemm & EMM_UNIQUE) ? 0: 1;
 		//mbuf[131] = aureader->card_system; //Cardsystem for Oscam client
 	}
 	else		// disable emm
@@ -602,9 +602,10 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 		rdr->hexserial[6] = 0;
 		rdr->hexserial[7] = 0;
 
-		rdr->blockemm_g = (buf[128]==1) ? 0: 1;
-		rdr->blockemm_s = (buf[129]==1) ? 0: 1;
-		rdr->blockemm_u = (buf[130]==1) ? 0: 1;
+		rdr->blockemm = 0;
+		rdr->blockemm |= (buf[128]==1) ? 0 : EMM_GLOBAL;
+		rdr->blockemm |= (buf[129]==1) ? 0 : EMM_SHARED;
+		rdr->blockemm |= (buf[130]==1) ? 0 : EMM_UNIQUE;
 		cs_log("%s CMD05 AU request for caid: %04X auprovid: %06lX",
 				rdr->label,
 				rdr->caid,

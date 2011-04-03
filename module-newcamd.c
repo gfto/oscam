@@ -828,11 +828,11 @@ static void newcamd_auth_client(in_addr_t ip, uint8 *deskey)
 
         if (aureader)
         {
-          if (aureader->blockemm_g)
+          if (aureader->blockemm & EMM_GLOBAL)
             cd.sid |= 4;
-          if (aureader->blockemm_s)
+          if (aureader->blockemm & EMM_SHARED)
             cd.sid |= 2;
-          if (aureader->blockemm_u)
+          if (aureader->blockemm & EMM_UNIQUE)
             cd.sid |= 1;
         }
 

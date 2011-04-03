@@ -16,11 +16,6 @@
 #define STAPI		2
 #define COOLAPI		3
 
-
-#define T_UNIQUE 1
-#define T_SHARED 2
-#define T_GLOBAL 4
-
 #define TMPDIR	"/tmp/"
 #define STANDBY_FILE	"/tmp/.pauseoscam"
 #define ECMINFO_FILE	"/tmp/ecm.info"

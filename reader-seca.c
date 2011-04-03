@@ -258,36 +258,30 @@ static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[0]=0xFF;
 	filter[1]=0;
 
-	if ((!rdr->blockemm_u && !(rdr->b_nano[0x82] & 0x01)) || (rdr->b_nano[0x82] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=UNIQUE;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		memcpy(filter+idx+1, rdr->hexserial, 6);
-		memset(filter+idx+1+16, 0xFF, 6);
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_UNIQUE;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	memcpy(filter+idx+1, rdr->hexserial, 6);
+	memset(filter+idx+1+16, 0xFF, 6);
+	filter[1]++;
+	idx += 32;
 
-	if ((!rdr->blockemm_s && !(rdr->b_nano[0x84] & 0x01)) || (rdr->b_nano[0x84] & 0x02)) // not blocked or to be saved
-	{
-		int prov;
-		for (prov=0; prov<rdr->nprov; prov++) {
-			filter[idx++]=SHARED;
-			filter[idx++]=0;
-			filter[idx+0]    = 0x84;
-			filter[idx+0+16] = 0xFF;
-			memcpy(filter+idx+1, &rdr->prid[prov][2], 2);
-			memset(filter+idx+1+16, 0xFF, 2);
-			memcpy(filter+idx+3, &rdr->sa[prov], 3);
-			memset(filter+idx+3+16, 0xFF, 3);
-			++filter[1];
-			idx += 32;
-			if (filter[1]>=10) {
-				cs_log("seca_get_emm_filter: could not start all emm filter");
-				break;
-			}
+	int prov;
+	for (prov=0; prov<rdr->nprov; prov++) {
+		filter[idx++]=EMM_SHARED;
+		filter[idx++]=0;
+		filter[idx+0]    = 0x84;
+		filter[idx+0+16] = 0xFF;
+		memcpy(filter+idx+1, &rdr->prid[prov][2], 2);
+		memset(filter+idx+1+16, 0xFF, 2);
+		memcpy(filter+idx+3, &rdr->sa[prov], 3);
+		memset(filter+idx+3+16, 0xFF, 3);
+		filter[1]++;
+		idx += 32;
+		if (filter[1]>=10) {
+			cs_log("seca_get_emm_filter: could not start all emm filter");
+			break;
 		}
 	}
 

@@ -569,41 +569,32 @@ static void viaccess_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[0]=0xFF;
 	filter[1]=0;
 
-	if ((!rdr->blockemm_g && !(rdr->b_nano[0x8D] & 0x01)) || (rdr->b_nano[0x8D] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=GLOBAL;
-		filter[idx++]=0;
-		filter[idx+0]     = 0x8D;
-		filter[idx+0+16]  = 0xFE;
-		//filter[idx+6]     = 0xA0; // FIXME: dummy, flood client with EMM's
-		//filter[idx+6+16]  = 0xF0;
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_GLOBAL;
+	filter[idx++]=0;
+	filter[idx+0]     = 0x8D;
+	filter[idx+0+16]  = 0xFE;
+	//filter[idx+6]     = 0xA0; // FIXME: dummy, flood client with EMM's
+	//filter[idx+6+16]  = 0xF0;
+	filter[1]++;
+	idx += 32;
 
-	if ((!rdr->blockemm_s && !(rdr->b_nano[0x8E] & 0x01)) || (rdr->b_nano[0x8E] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=SHARED;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x8E;
-		filter[idx+0+16] = 0xFF;
-		memcpy(filter+idx+1, &rdr->sa[0][0], 3);
-		memset(filter+idx+1+16, 0xFF, 3);
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_SHARED;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x8E;
+	filter[idx+0+16] = 0xFF;
+	memcpy(filter+idx+1, &rdr->sa[0][0], 3);
+	memset(filter+idx+1+16, 0xFF, 3);
+	filter[1]++;
+	idx += 32;
 
-	if ((!rdr->blockemm_u && !(rdr->b_nano[0x88] & 0x01)) || (rdr->b_nano[0x88] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=UNIQUE;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x88;
-		filter[idx+0+16] = 0xFF;
-		memcpy(filter+idx+1, rdr->hexserial + 1, 4);
-		memset(filter+idx+1+16, 0xFF, 4);
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_UNIQUE;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x88;
+	filter[idx+0+16] = 0xFF;
+	memcpy(filter+idx+1, rdr->hexserial + 1, 4);
+	memset(filter+idx+1+16, 0xFF, 4);
+	filter[1]++;
+	idx += 32;
 
 	return;
 }

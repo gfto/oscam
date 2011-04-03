@@ -1037,46 +1037,36 @@ static void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[0]=0xFF;
 	filter[1]=0;
 	
-
-	if ((!rdr->blockemm_g && !(rdr->b_nano[0x82] & 0x01)) || (rdr->b_nano[0x82] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=GLOBAL;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x82;
-		filter[idx+0+16] = 0xFF;
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_GLOBAL;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x82;
+	filter[idx+0+16] = 0xFF;
+	filter[1]++;
+	idx += 32;
 	
-	if ((!rdr->blockemm_s && !(rdr->b_nano[0x83] & 0x01)) || (rdr->b_nano[0x83] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=SHARED;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x83;
-		filter[idx+1]    = rdr->hexserial[4];
-		filter[idx+2]    = rdr->hexserial[3];
-		filter[idx+3]    = rdr->hexserial[2];
-		filter[idx+4]    = 0x00;
-		filter[idx+5]    = 0x10;
-		memset(filter+idx+0+16, 0xFF, 6);
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_SHARED;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x83;
+	filter[idx+1]    = rdr->hexserial[4];
+	filter[idx+2]    = rdr->hexserial[3];
+	filter[idx+3]    = rdr->hexserial[2];
+	filter[idx+4]    = 0x00;
+	filter[idx+5]    = 0x10;
+	memset(filter+idx+0+16, 0xFF, 6);
+	filter[1]++;
+	idx += 32;
 
-	if ((!rdr->blockemm_u && !(rdr->b_nano[0x83] & 0x01)) || (rdr->b_nano[0x83] & 0x02)) // not blocked or to be saved
-	{
-		filter[idx++]=UNIQUE;
-		filter[idx++]=0;
-		filter[idx+0]    = 0x83;
-		filter[idx+1]    = rdr->hexserial[4];
-		filter[idx+2]    = rdr->hexserial[3];
-		filter[idx+3]    = rdr->hexserial[2];
-		filter[idx+4]    = rdr->hexserial[5];
-		filter[idx+5]    = 0x00;
-		memset(filter+idx+0+16, 0xFF, 6);
-		++filter[1];
-		idx += 32;
-	}
+	filter[idx++]=EMM_UNIQUE;
+	filter[idx++]=0;
+	filter[idx+0]    = 0x83;
+	filter[idx+1]    = rdr->hexserial[4];
+	filter[idx+2]    = rdr->hexserial[3];
+	filter[idx+3]    = rdr->hexserial[2];
+	filter[idx+4]    = rdr->hexserial[5];
+	filter[idx+5]    = 0x00;
+	memset(filter+idx+0+16, 0xFF, 6);
+	filter[1]++;
+	idx += 32;
 	
 	return;
 }
