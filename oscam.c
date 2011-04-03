@@ -1291,6 +1291,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				client->disabled = account->disabled;
 				client->allowedtimeframe[0] = account->allowedtimeframe[0];
 				client->allowedtimeframe[1] = account->allowedtimeframe[1];
+				if(account->firstlogin == 0) account->firstlogin = time((time_t)0);
 				client->failban = account->failban;
 				client->c35_suppresscmd08 = account->c35_suppresscmd08;
 				client->ncd_keepalive = account->ncd_keepalive;

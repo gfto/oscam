@@ -1692,18 +1692,18 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 
 		if(account->disabled != 0) {
 			expired = " (disabled)"; classname = "disabled";
-			tpl_addVar(vars, TPLADDONCE, "SWITCHICO", "image?i=ICENA");
-			tpl_addVar(vars, TPLADDONCE, "SWITCHTITLE", "enable this account");
-			tpl_addVar(vars, TPLADDONCE, "SWITCH", "enable");
+			tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICENA");
+			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "enable this account");
+			tpl_addVar(vars, TPLADD, "SWITCH", "enable");
 		} else {
-			tpl_addVar(vars, TPLADDONCE, "SWITCHICO", "image?i=ICDIS");
-			tpl_addVar(vars, TPLADDONCE, "SWITCHTITLE", "disable this account");
-			tpl_addVar(vars, TPLADDONCE, "SWITCH", "disable");
+			tpl_addVar(vars, TPLADD, "SWITCHICO", "image?i=ICDIS");
+			tpl_addVar(vars, TPLADD, "SWITCHTITLE", "disable this account");
+			tpl_addVar(vars, TPLADD, "SWITCH", "disable");
 		}
 
-		int lastresponsetm = 0, latestactivity=0, earliestlogin=now;
+		int lastresponsetm = 0, latestactivity=0;
 		char *proto = "";
-		double cwrate = 0.0;
+		double cwrate = 0.0, cwrate2 = 0.0;
 
 		//search account in active clients
 		int isactive = 0;
@@ -1714,53 +1714,78 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 					if(cl->lastecm > cl->login) latestactivity = cl->lastecm;
 					else latestactivity = cl->login;
 					latestclient = cl;
-				}				
-				if(cl->login < earliestlogin) earliestlogin = cl->login;		
+				}
 			}
 		}
-		
+		if (account->cwfound + account->cwnot + account->cwcache > 0) {
+			cwrate = now - account->firstlogin;
+			cwrate /= (account->cwfound + account->cwnot + account->cwcache);
+		}
+		if(latestclient != NULL) {
+			status = "<b>connected</b>";
+			classname = "connected";
+			proto = monitor_get_proto(latestclient);
+			lastchan = xml_encode(vars, get_servicename(latestclient->last_srvid, latestclient->last_caid));
+			lastresponsetm = latestclient->cwlastresptime;
+		}
 		if(latestactivity > 0){
 			isec = now - latestactivity;				
 			if(isec < cfg.mon_hideclient_to) {
-				proto = monitor_get_proto(latestclient);
+				isactive = 1;				
 				status = "<b>online</b>";
 				classname = "online";
-				lastchan = xml_encode(vars, get_servicename(latestclient->last_srvid, latestclient->last_caid));
-				lastresponsetm = latestclient->cwlastresptime;
-			} else if(latestclient != NULL) {
-				status = "<b>connected</b>";
-				classname = "connected";
+				if (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache > 0) {
+					cwrate2 = now - latestclient->login;
+					cwrate2 /= (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache);
+					tpl_printf(vars, TPLADDONCE, "CWRATE2", " (%.2f)", cwrate2);
+				}		
 			}
-		}
-		
-		if (account->cwfound + account->cwnot + account->cwcache > 0) {
-			cwrate = now - earliestlogin;
-			cwrate /= (account->cwfound + account->cwnot + account->cwcache);
-		}
+		}		
 
-		tpl_printf(vars, TPLADDONCE, "CWOK", "%d", account->cwfound);
-		tpl_printf(vars, TPLADDONCE, "CWNOK", "%d", account->cwnot);
-		tpl_printf(vars, TPLADDONCE, "CWIGN", "%d", account->cwignored);
-		tpl_printf(vars, TPLADDONCE, "CWTOUT", "%d", account->cwtout);
-		tpl_printf(vars, TPLADDONCE, "CWCACHE", "%d", account->cwcache);
-		tpl_printf(vars, TPLADDONCE, "CWTUN", "%d", account->cwtun);
-		tpl_printf(vars, TPLADDONCE, "EMMOK", "%d", account->emmok);
-		tpl_printf(vars, TPLADDONCE, "EMMNOK", "%d", account->emmnok);
-		tpl_printf(vars, TPLADDONCE, "CWRATE", "%.2f", cwrate);
+		tpl_printf(vars, TPLADD, "CWOK", "%d", account->cwfound);
+		tpl_printf(vars, TPLADD, "CWNOK", "%d", account->cwnot);
+		tpl_printf(vars, TPLADD, "CWIGN", "%d", account->cwignored);
+		tpl_printf(vars, TPLADD, "CWTOUT", "%d", account->cwtout);
+		tpl_printf(vars, TPLADD, "CWCACHE", "%d", account->cwcache);
+		tpl_printf(vars, TPLADD, "CWTUN", "%d", account->cwtun);
+		tpl_printf(vars, TPLADD, "EMMOK", "%d", account->emmok);
+		tpl_printf(vars, TPLADD, "EMMNOK", "%d", account->emmnok);
+		tpl_printf(vars, TPLADD, "CWRATE", "%.2f", cwrate);
 
 		if ( isactive > 0 || !cfg.http_hide_idle_clients) {
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
-			tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
 			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
+			
+			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
+				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(latestclient->ncd_client_id));
+			else if (((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0))) {
+				struct cc_data *cc = latestclient->cc;
+				if(cc && cc->remote_version && cc->remote_build) {
+					tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
+					if(cc->extended_mode)
+						tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", cc->remote_oscam);
+					else
+						tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", ""); //unset tpl var
+				}
+				else
+				{
+					tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
+					tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
+				}
+			}
+			else {
+				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
+				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
+			}			
 		}
 
-		tpl_addVar(vars, TPLADDONCE, "CLASSNAME", classname);
-		tpl_addVar(vars, TPLADDONCE, "USER", xml_encode(vars, account->usr));
+		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
+		tpl_addVar(vars, TPLADD, "USER", xml_encode(vars, account->usr));
 		tpl_addVar(vars, TPLADD, "USERENC", urlencode(vars, account->usr));
-		tpl_addVar(vars, TPLADDONCE, "DESCRIPTION", xml_encode(vars, account->description));
+		tpl_addVar(vars, TPLADD, "DESCRIPTION", xml_encode(vars, account->description));
 		tpl_addVar(vars, TPLADD, "STATUS", status);
-		tpl_addVar(vars, TPLAPPENDONCE, "STATUS", expired);
+		tpl_addVar(vars, TPLAPPEND, "STATUS", expired);
 		// append row to table template
 		if (!apicall)
 			tpl_addVar(vars, TPLAPPEND, "USERCONFIGS", tpl_getTpl(vars, "USERCONFIGLISTBIT"));

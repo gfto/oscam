@@ -983,6 +983,7 @@ struct s_auth
   in_addr_t dynip;
   uchar     dyndns[64];
   time_t    expirationdate;
+  time_t    firstlogin;
   int		allowedtimeframe[2];
   int       c35_suppresscmd08;
   int       c35_sleepsend;
