@@ -1739,7 +1739,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 			}
 			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
 			if (cc->is_oscam_cccam) {
-				snprintf((char *)token, sizeof((char *)token),
+				snprintf((char *)token, sizeof(token),
 						"PARTNER: OSCam v%s, build #%s (%s) [EXT,SID]", CS_VERSION,
 						CS_SVN_VERSION, CS_OSTYPE);
 				cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);
@@ -1915,7 +1915,7 @@ int cc_parse_msg(struct s_client *cl, uint8 *buf, int l) {
 						strcat(param, "]");
 					}
 
-					snprintf((char *)token, sizeof((char *)token),
+					snprintf((char *)token, sizeof(token),
 						"PARTNER: OSCam v%s, build #%s (%s)%s",
 						CS_VERSION, CS_SVN_VERSION, CS_OSTYPE, param);
 					cc_cmd_send(cl, token, strlen((char *)token) + 1, MSG_CW_NOK1);

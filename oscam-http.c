@@ -1670,7 +1670,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 	/* List accounts*/
 	char *status, *expired, *classname, *lastchan;
 	time_t now = time((time_t)0);
-	int isec = 0, isconnected = 0;
+	int isec = 0;
 
 	char *filter = NULL;
 	int clientcount = 0;
@@ -1681,7 +1681,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 	for (account=cfg.account; (account); account=account->next) {
 		//clear for next client
 		status = "offline"; lastchan = "&nbsp;", expired = ""; classname = "offline";
-		isconnected = 0; isec = 0;
+		isec = 0;
 
 		if(account->expirationdate && account->expirationdate < time(NULL)) {
 			expired = " (expired)";
@@ -1701,35 +1701,41 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			tpl_addVar(vars, TPLADDONCE, "SWITCH", "disable");
 		}
 
-		int lastresponsetm = 0;
+		int lastresponsetm = 0, latestactivity=0, earliestlogin=now;
 		char *proto = "";
-		float cwrate = 0;
+		double cwrate = 0.0;
 
 		//search account in active clients
 		int isactive = 0;
-		struct s_client *cl;
+		struct s_client *cl, *latestclient=NULL;
 		for (cl=first_client; cl ; cl=cl->next) {
-			if (cl->account && !strcmp(cl->account->usr, account->usr)) {
-				isconnected = 1;
-
-				if (!isactive)
-					status = "<b>connected</b>"; classname = "connected";
-
-				isec = now - cl->last;
-				if(isec < cfg.mon_hideclient_to) {
-					proto = monitor_get_proto(cl);
-					status = "<b>online</b>";
-					classname = "online";
-					lastchan = xml_encode(vars, get_servicename(cl->last_srvid, cl->last_caid));
-					lastresponsetm = cl->cwlastresptime;
-					isactive++;
-				}
-
-				if (cl->cwfound + cl->cwnot > 0) {
-					cwrate = cl->last - cl->login;
-					cwrate /= (cl->cwfound + cl->cwnot + cl->cwcache);
-				}
+			if (cl->account && !strcmp(cl->account->usr, account->usr)) {				
+				if(cl->lastecm > latestactivity || cl->login > latestactivity){
+					if(cl->lastecm > cl->login) latestactivity = cl->lastecm;
+					else latestactivity = cl->login;
+					latestclient = cl;
+				}				
+				if(cl->login < earliestlogin) earliestlogin = cl->login;		
 			}
+		}
+		
+		if(latestactivity > 0){
+			isec = now - latestactivity;				
+			if(isec < cfg.mon_hideclient_to) {
+				proto = monitor_get_proto(latestclient);
+				status = "<b>online</b>";
+				classname = "online";
+				lastchan = xml_encode(vars, get_servicename(latestclient->last_srvid, latestclient->last_caid));
+				lastresponsetm = latestclient->cwlastresptime;
+			} else if(latestclient != NULL) {
+				status = "<b>connected</b>";
+				classname = "connected";
+			}
+		}
+		
+		if (account->cwfound + account->cwnot + account->cwcache > 0) {
+			cwrate = now - earliestlogin;
+			cwrate /= (account->cwfound + account->cwnot + account->cwcache);
 		}
 
 		tpl_printf(vars, TPLADDONCE, "CWOK", "%d", account->cwfound);
@@ -2134,17 +2140,19 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 						user_count_active++;
 						tpl_addVar(vars, TPLADD, "CLIENTTYPE", "a");
 					} else tpl_addVar(vars, TPLADD, "CLIENTTYPE", "c");
+					if(cl->lastecm > cl->login) isec = now - cl->lastecm;
+					else isec = now - cl->login;
 				} else {
 					if (cl->typ=='r' && cl->reader->card_status==CARD_INSERTED)
 						reader_count_conn++;
 					else if (cl->typ=='p' && (cl->reader->card_status==CARD_INSERTED ||cl->reader->tcp_connected))
 						proxy_count_conn++;
 					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
+					isec = now - cl->last;
 				}
 			
 				shown = 1;
 				lsec=now-cl->login;
-				isec=now-cl->last;
 				usr=username(cl);
 
 				if ((cl->typ=='r') || (cl->typ=='p')) usr=cl->reader->label;
