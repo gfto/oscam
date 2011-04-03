@@ -328,6 +328,10 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 				stat->rc = 5;
 				stat->fail_factor++;
 		}
+		else if (stat->request_count >= cfg.lb_min_ecmcount) {
+				stat->rc = 5;
+				stat->fail_factor++;
+		}
 				
 		stat->last_received = cur_time;
 
@@ -556,7 +560,7 @@ int get_best_reader(ECM_REQUEST *er)
 			
 			if (!hassrvid && stat->rc == 0 && stat->request_count >= cfg.lb_min_ecmcount-1) { // 4 unanswered requests or timeouts?
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
-				add_stat(rdr, er, 1, 4); //reader marked as unuseable
+				add_stat(rdr, er, 1, 5); //reader marked as unuseable
 				continue;
 			}
 
@@ -814,7 +818,7 @@ void clear_all_stat()
 	ll_iter_release(itr);
 }
 
-static void housekeeping_stat_thread()
+void housekeeping_stat_thread()
 {	
 	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup*60*60);
 	int cleaned = 0;
@@ -837,7 +841,6 @@ static void housekeeping_stat_thread()
 	}
 	ll_iter_release(itr);
 	cs_debug_mask(D_TRACE, "loadbalancer cleanup: removed %d entries", cleaned);
-	pthread_exit(NULL);
 }
 
 void housekeeping_stat(int force)

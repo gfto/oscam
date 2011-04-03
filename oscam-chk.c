@@ -399,6 +399,10 @@ int chk_ctab(ushort caid, CAIDTAB *ctab) {
 }
 
 int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
+  //simple checks first:
+  if (!er || !rdr ||!rdr->client)
+    return(0);
+
   //Checking connected & group valid:
   struct s_client *cur_cl = cur_client();
   

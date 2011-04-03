@@ -4002,7 +4002,7 @@ int init_readerdb()
 			}
 			else {
 				cur->next = rdr; //add to end of list
-				cur = cur->next; //advance list
+				cur = rdr; //advance list
 			}
 		}
 	}

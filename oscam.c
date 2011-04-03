@@ -1101,19 +1101,32 @@ void start_anticascader()
 }
 #endif
 
-void restart_cardreader(struct s_reader *rdr, int restart) {
+static void remove_reader_from_active(struct s_reader *rdr) {
+  struct s_reader *rdr2, *prv = NULL;
+  for (rdr2=first_active_reader; rdr2 ; rdr2=rdr2->next) {
+    if (rdr2==rdr) {
+	  if (prv) prv->next = rdr2->next;
+	  else first_active_reader = rdr2->next;
+	  break;
+	}
+	prv = rdr2;
+  }
+}
+
+static void add_reader_to_active(struct s_reader *rdr) {
+  struct s_reader *rdr2;
+  rdr->next = NULL;
+  if (first_active_reader) {
+    for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
+	rdr2->next = rdr;
+  } else first_active_reader = rdr;
+}
+
+int restart_cardreader(struct s_reader *rdr, int restart) {
 
 	if (restart) {
 		//remove from list:	
-		struct s_reader *rdr2, *prv = NULL;
-		for (rdr2=first_active_reader; rdr2 ; rdr2=rdr2->next) {
-			if (rdr2==rdr) {
-				if (prv) prv->next = rdr2->next;
-				else first_active_reader = rdr2->next;
-				break;
-			}
-			prv = rdr2;
-		}
+		remove_reader_from_active(rdr);
 	}
 
 	if (restart) //kill old thread
@@ -1128,13 +1141,13 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 	if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
 		if (!rdr->ph.num) {
 			cs_log("Protocol Support missing. (typ=%d)", rdr->typ);
-			return;
+			return 0;
 		}
 		cs_debug_mask(D_TRACE, "reader %s protocol: %s", rdr->label, rdr->ph.desc);
 	}
 
 	if (rdr->enable == 0)
-		return;
+		return 0;
 
 	if (rdr->device[0]) {
 		if (restart) {
@@ -1142,7 +1155,7 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 		}
 
 		struct s_client * cl = create_client(first_client->ip);
-		if (cl == NULL) return;
+		if (cl == NULL) return 0;
 
 
 		rdr->fd=cl->fd_m2c;
@@ -1173,21 +1186,20 @@ void restart_cardreader(struct s_reader *rdr, int restart) {
 		
 		if (restart) {
 			//add to list
-			struct s_reader *rdr2;
-			rdr->next = NULL;
-			if (first_active_reader) {
-				for (rdr2=first_active_reader; rdr2->next ; rdr2=rdr2->next) ; //search last element
-				rdr2->next = rdr;
-			} else first_active_reader = rdr;
+			add_reader_to_active(rdr);
 		}
+		return 1;
 	}
+	return 0;
 }
 
 static void init_cardreader() {
+
 	struct s_reader *rdr;
-	for (rdr=first_active_reader; rdr ; rdr=rdr->next)
-		if (rdr->device[0])
-			restart_cardreader(rdr, 0);
+	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+		if (!restart_cardreader(rdr, 0))
+			remove_reader_from_active(rdr);
+	}
 	load_stat_from_file();
 }
 
