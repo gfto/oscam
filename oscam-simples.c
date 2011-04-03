@@ -430,7 +430,16 @@ ullong b2ll(int n, uchar *b)
 
 uchar *i2b(int n, ulong i)
 {
-  uchar *b = cur_client()->dump;
+  return i2b_buf(n, i, cur_client()->dump);
+}
+
+uchar *i2b_cl(int n, ulong i, struct s_client *cl)
+{
+  return i2b_buf(n, i, cl->dump);
+}
+
+uchar *i2b_buf(int n, ulong i, uchar *b)
+{
   switch(n)
   {
     case 2:

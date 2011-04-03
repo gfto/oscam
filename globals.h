@@ -1263,6 +1263,9 @@ extern in_addr_t cs_inet_addr(char *txt);
 extern ulong b2i(int, uchar *);
 extern ullong b2ll(int, uchar *);
 extern uchar *i2b(int, ulong);
+extern uchar *i2b_cl(int n, ulong i, struct s_client *cl);
+extern uchar *i2b_buf(int n, ulong i, uchar *b);
+  
 extern ulong a2i(char *, int);
 extern int boundary(int, int);
 extern void cs_ftime(struct timeb *);

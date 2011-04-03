@@ -95,7 +95,8 @@ int monitor_send_idx(struct s_client *cl, char *txt)
 	l=boundary(4, l+5)+5;
 	memcpy(buf+1, cl->ucrc, 4);
 	cs_strncpy((char *)buf+10, txt, sizeof(buf)-10);
-	memcpy(buf+5, i2b(4, crc32(0L, buf+10, l-10)), 4);
+	uchar tmp[10];
+	memcpy(buf+5, i2b_buf(4, crc32(0L, buf+10, l-10), tmp), 4);
 	aes_encrypt_idx(cl, buf+5, l-5);
 	return(sendto(cl->udp_fd, buf, l, 0,
 			(struct sockaddr *)&cl->udp_sa,
@@ -151,7 +152,8 @@ static int monitor_recv(struct s_client * client, uchar *buf, int l)
 			return(buf[0]=0);
 		}
 		aes_decrypt(buf+21, n-21);
-		if (memcmp(buf+5, i2b(4, crc32(0L, buf+10, n-10)), 4))
+		uchar tmp[10];
+		if (memcmp(buf+5, i2b_buf(4, crc32(0L, buf+10, n-10), tmp), 4))
 		{
 			cs_log("CRC error ! wrong password ?");
 			return(buf[0]=0);
