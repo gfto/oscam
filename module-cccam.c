@@ -466,7 +466,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf, int maxlen) {
 		return -1;
 
 	len = recv(handle, buf, 4, MSG_WAITALL);
-	if (cl->typ != 'c')
+	if (rdr)
 		rdr->last_g = time(NULL);
 
 	if (len != 4) { // invalid header length read
@@ -493,7 +493,7 @@ int cc_msg_recv(struct s_client *cl, uint8 *buf, int maxlen) {
 		}
 
 		len = recv(handle, buf + 4, size, MSG_WAITALL); // read rest of msg
-		if (cl->typ != 'c')
+		if (rdr)
 			rdr->last_g = time(NULL);
 
 		if (len != size) {
@@ -2734,7 +2734,7 @@ int cc_srv_connect(struct s_client *cl) {
 		if (i == -9) { //timeout 10s
 			cmi+=10;
 			if (cmi >= cfg.cmaxidle) {
-				cs_debug_mask(D_TRACE, "client timeout user %s", usr);
+				//cs_debug_mask(D_TRACE, "client timeout user %s idle=%d client max idle=%d", usr, cmi, cfg.cmaxidle);
 				if (cfg.cc_keep_connected || cl->account->ncd_keepalive) {
 					if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
 						break;
@@ -2744,6 +2744,7 @@ int cc_srv_connect(struct s_client *cl) {
         			    wait_for_keepalive++;
 					}
 					else if (wait_for_keepalive<100) break;
+					cmi = 0;
 				} else {
 					cs_debug_mask(D_CLIENT, "%s keepalive after maxidle is reached",
 							getprefix());
