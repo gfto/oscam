@@ -1528,7 +1528,9 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 	*/
 	strtolower(value);
 
-	if ((!strcmp(token, "au")) && (strlen(value)>0) && (value[0] != '0')) {
+	if (!strcmp(token, "au")) {
+		if ((strlen(value) == 0) && (value[0] == '0'))
+			return;
 		//set default values for usage during runtime from Webif
 		account->autoau=0;
 
