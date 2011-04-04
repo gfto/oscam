@@ -389,7 +389,7 @@ set right language for wiki entry point, default:en
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
-TCP/IP port for camd 3.3x clients, 0 = disabled, default:0
+TCP port for camd 3.3x clients, 0 = disabled, default:0
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
@@ -420,6 +420,42 @@ key for camd 3.3x client encryption, default:none
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
 UDP port for camd 3.5x clients, 0 = disabled, default:0
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
+.RE
+.PP
+\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, default:0
+.RE
+.SS "The [cs357x] section"
+.PP
+\fBport\fP = \fB0\fP|\fBport\fP
+.RS 3n
+UDP port for camd 3.57x clients, 0 = disabled, default:0
+.RE
+.PP
+\fBserverip\fP = \fBIP address\fP
+.RS 3n
+bind service to specified IP address, default:all
+.RE
+.PP
+\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1= tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, default:0
+.RE
+.SS "The [cs378x] section"
+.PP
+\fBport\fP = \fB0\fP|\fBport@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
+.RS 3n
+TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled, default:0
+
+ example: port = 10000@0100:100000;20000@0200:200000,300000,400000
+
+ Each CAID requires a separate port.
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
@@ -505,42 +541,6 @@ supported serial devices:
  SSSP    (simple serial sharing protocol)
  bomba   (BOMBA firmware)
  dsr9500 (DSR 9500)
-.RE 
-.SS "The [cs357x] section"
-.PP
-\fBport\fP = \fB0\fP|\fBport\fP
-.RS 3n
-UDP port for camd 3.57x clients, 0 = disabled, default:0
-.RE
-.PP
-\fBserverip\fP = \fBIP address\fP
-.RS 3n
-bind service to specified IP address, default:all
-.RE
-.PP
-\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
-.RS 3n
-0 = CMD08 enabled, 1 = CMD08 disabled, default:0
-.RE
-.SS "The [cs378x] section"
-.PP
-\fBport\fP = \fB0\fP|\fBport@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
-.RS 3n
-TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled, default:0
-
- example: port = 10000@0100:100000;20000@0200:200000,300000,400000
-
- Each CAID requires a separate port.
-.RE
-.PP
-\fBserverip\fP = \fBIP address\fP
-.RS 3n
-bind service to specified IP address, default:all
-.RE
-.PP
-\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
-.RS 3n
-0 = CMD08 enabled, 1 = CMD08 disabled, default:0
 .RE
 .SS "The [cccam] section"
 .PP
