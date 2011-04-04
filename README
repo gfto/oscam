@@ -2,6 +2,7 @@
                              OSCam: Open Source CAM
                              ======================
 
+
 1. Compiling OSCam from source
 ------------------------------
 
@@ -34,9 +35,12 @@
 5. Install:
       make install
 
+
 2. Build with a different toolchain (cross-compilation)
 -------------------------------------------------------
-In short, you need to define the toolchain file on the command line, for example:
+In short, you need to define the toolchain file on the command line, for 
+example:
+
       cmake -DCMAKE_TOOLCHAIN_FILE=../toolchains/toolchain-powerpc-tuxbox.cmake ..
 
 For current toolchains and more detailed instructions see
@@ -64,6 +68,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 http://www.gnu.org/licenses/gpl-3.0.html
 
+
 4. Copyright
 ------------
 OSCam is based on the Streamboard mp-cardserver 0.9d by dukat and has 
@@ -71,13 +76,15 @@ been extended and worked on by many more since then.
 You are free to use it under the terms of the GNU General Public 
 License, as described in the LICENSE file.
 
+
 5. Version History
 ------------------
 See the file VERSION which should come with your distribution for details.
 
-You may also have a look at the trac timeline
+You may also have a look at the Trac timeline
 http://streamboard.gmc.to/oscam/timeline/
 for more detailed and up-to-date changes.
+
 
 6. Web Links
 ------------
@@ -90,17 +97,19 @@ svn co http://oscam.ump2002.net/svn/oscam/trunk oscam-mirror
 Build server for automated builds:
 http://www.ump2002.net/index.php?direction=0&order=mod&directory=OSCam
 
-Configuration wiki (german):
+Configuration wiki:
 http://streamboard.gmc.to/wiki/index.php/OSCam/
+
 
 7. Help and Support
 -------------------
-If you experience any problems with OSCam, feel free to post in our support forum
-under
+If you experience any problems with OSCam, feel free to post in our support 
+forum under (mainly German and English language)
 http://streamboard.gmc.to/wbb2/portal.php
 
-Support for italian users can be found on
+Support for international (mainly French and Italian language) users can be 
+found on
 http://oscam.ump2002.net/board/hmportal.php
 
-You may also visit our trac system for tracking and filing bug reports:
+You may also visit our Trac system for tracking and filing bug reports:
 http://streamboard.gmc.to/oscam
