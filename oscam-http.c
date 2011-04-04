@@ -1759,7 +1759,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			
 			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(latestclient->ncd_client_id));
-			else if (((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0))) {
+			else if ((strncmp(proto,"cccam", 5) == 0)) {
 				struct cc_data *cc = latestclient->cc;
 				if(cc && cc->remote_version && cc->remote_build) {
 					tpl_printf(vars, TPLADDONCE, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
@@ -2248,7 +2248,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 				if ((strcmp(proto,"newcamd") == 0) && (cl->typ == 'c'))
 					tpl_printf(vars, TPLADD, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(cl->ncd_client_id));
-				else if (((strcmp(proto,"cccam") == 0) || (strcmp(proto,"cccam ext") == 0))) {
+				else if ((strncmp(proto,"cccam", 5) == 0)) {
 					struct cc_data *cc = cl->cc;
 					if(cc && cc->remote_version && cc->remote_build) {
 						tpl_printf(vars, TPLADD, "CLIENTPROTO", "%s (%s-%s)", proto, cc->remote_version, cc->remote_build);
@@ -2389,6 +2389,17 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 								}
 					}
 					tpl_addVar(vars, TPLADD, "CLIENTCON", txt);
+					if((cl->typ == 'r' || cl->typ == 'p') && strncmp(proto,"cccam", 5) == 0){
+						struct cc_data *rcc = cl->cc;
+						if(cl->cc){
+							LLIST *cards = rcc->cards;					
+							if (cards) {
+								int cnt = ll_count(cards);
+								if(cnt == 1) tpl_addVar(vars, TPLAPPEND, "CLIENTCON", " (1 card)");
+								else if(cnt > 1) tpl_printf(vars, TPLAPPEND, "CLIENTCON", " (%d cards)", cnt);
+							}
+						}
+					}
 				}
 			}
 		}
