@@ -319,6 +319,7 @@ static int connect_newcamd_server()
 
   // 3.2 Set connection info
   cl->reader->tcp_connected = 1;
+  cl->crypted = 1;
 
   // 4. Send MSG_CARD_DATE_REQ
   des_login_key_get(cl->reader->ncd_key, passwdcrypt, strlen((char *)passwdcrypt), key);

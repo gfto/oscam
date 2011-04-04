@@ -2203,7 +2203,8 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 								struct s_reader *rdr;
 								LL_ITER *itr = ll_iter_create(cl->aureader_list);
 								while ((rdr = ll_iter_next(itr))) {
-									tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<br>", rdr->label);
+									if(rdr->audisabled) tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "%s<br>", rdr->label);
+									else tpl_printf(vars, TPLAPPEND, "CLIENTCAUHTTP", "(%s)<br>", rdr->label);
 								}
 								ll_iter_release(itr);
 							} else tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", cl->reader->label);
