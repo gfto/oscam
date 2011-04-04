@@ -306,12 +306,11 @@ DESCRIPTIONS
 	  default:0
 
    The [cs378x] section
-       port = 0|port@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...
+       port = 0|port@[CAID][:ident][,ident]...[;port@CAID[:ident][,ident]...]...
 	  TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled, default:0
 
-	   example: port = 10000@0100:100000;20000@0200:200000,300000,400000
-
-	   Each CAID requires a separate port.
+	   examples: port = 10000@0100:100000;20000@0200:200000,300000,400000
+		     port = 30000
 
        serverip = IP address
 	  bind service to specified IP address, default:all

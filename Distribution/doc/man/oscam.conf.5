@@ -449,13 +449,12 @@ bind service to specified IP address, default:all
 .RE
 .SS "The [cs378x] section"
 .PP
-\fBport\fP = \fB0\fP|\fBport@CAID[:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
+\fBport\fP = \fB0\fP|\fBport@[CAID][:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
 .RS 3n
 TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled, default:0
 
- example: port = 10000@0100:100000;20000@0200:200000,300000,400000
-
- Each CAID requires a separate port.
+ examples: port = 10000@0100:100000;20000@0200:200000,300000,400000
+           port = 30000
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
