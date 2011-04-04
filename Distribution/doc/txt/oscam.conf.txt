@@ -318,8 +318,8 @@ DESCRIPTIONS
 
    The [newcamd] section
        mgclient = 0|1
-	  1 = enable mgcamd extended newcamd protocol,	allowing for a single connection to work with mutliple providers,
-	  default:0
+	  1 = report share information of all available CAIDs and provider IDs to allow CWS_MULTIPLE newcamd  definitions
+	  (one user with a TCP port range) with mgcamd clients, default:0
 
        key = DES key
 	  default key for newcamd client encryption, default:none
