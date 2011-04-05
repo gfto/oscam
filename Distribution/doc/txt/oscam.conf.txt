@@ -453,10 +453,10 @@ DESCRIPTIONS
        user = username
 	  user name for DVB API client, default:anonymous
 
-       ignore = <CAID>[,<CAID>]...
+       ignore = <CAID>[,<CAID>]... (detached by oscam.dvbapi, obsolete)
 	  CAIDs to be ignored, default:none
 
-       priority = <CAID>:<provider ID>[,CAID:<provider ID>]...
+       priority = <CAID>:<provider ID>[,CAID:<provider ID>]... (detached by oscam.dvbapi, obsolete)
 	  CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of local SCs will be prioritized
 
        au = 0|1|2
