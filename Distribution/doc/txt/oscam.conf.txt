@@ -312,6 +312,9 @@ DESCRIPTIONS
        serverip = IP address
 	  bind service to specified IP address, default:all
 
+       suppresscmd08 = 0|1
+	  1= tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, default:0
+
    The [newcamd] section
        mgclient = 0|1
 	  1 = provide share information of all available CAIDs and provider IDs to mgcamd clients, default:0
