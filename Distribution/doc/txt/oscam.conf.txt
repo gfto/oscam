@@ -290,7 +290,7 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  1= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, default:0
+	  0= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 
    The [cs357x] section
        port = 0|port
@@ -300,7 +300,7 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  1= tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, default:0
+	  0= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 
    The [cs378x] section
        port = 0|port[@CAID][:ident][,ident]...[;port@CAID[:ident][,ident]...]...
@@ -313,7 +313,7 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  1= tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, default:0
+	  0= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 
    The [newcamd] section
        mgclient = 0|1
