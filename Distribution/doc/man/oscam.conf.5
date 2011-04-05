@@ -461,6 +461,11 @@ TCP port/CAID/ident definitions for camd 3.78x clients, 0 = disabled, default:0
 .RS 3n
 bind service to specified IP address, default:all
 .RE
+.PP
+\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1= tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, default:0
+.RE
 .SS "The [newcamd] section"
 .PP
 \fBmgclient\fP = \fB0\fP|\fB1\fP
