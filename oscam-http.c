@@ -920,7 +920,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "reader")) && (strcmp((*params).params[i], "action"))) {
 				if (!strcmp((*params).params[i], "services"))
-					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels), "%s,", (*params).values[i]);
+					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels) - strlen(servicelabels), "%s,", (*params).values[i]);
 				else
 					/*if(strlen((*params).values[i]) > 0)*/
 						chk_reader((*params).params[i], (*params).values[i], rdr);
@@ -1452,7 +1452,7 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 				if (!strcmp((*params).params[i], "expdate"))
 					account->expirationdate=(time_t)NULL;
 				if (!strcmp((*params).params[i], "services"))
-					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels), "%s,", (*params).values[i]);
+					snprintf(servicelabels + strlen(servicelabels), sizeof(servicelabels) - strlen(servicelabels), "%s,", (*params).values[i]);
 				else
 					chk_account((*params).params[i], (*params).values[i], account);
 			}
