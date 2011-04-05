@@ -149,7 +149,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 
 	if (cfg.reader_restart_seconds)
 		tpl_printf(vars, TPLADD, "READERRESTARTSECONDS", "%d", cfg.reader_restart_seconds);
-		
+
 	if (cfg.dropdups)
 		tpl_addVar(vars, TPLADD, "DROPDUPSCHECKED", "selected");
 
@@ -220,15 +220,15 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "LBMINECMCOUNT", "%d",cfg.lb_min_ecmcount);
 	tpl_printf(vars, TPLADD, "LBMAXECEMCOUNT", "%d",cfg.lb_max_ecmcount);
 	tpl_printf(vars, TPLADD, "LBRETRYLIMIT", "%d",cfg.lb_retrylimit);
-	
+
 	value = mk_t_caidvaluetab(&cfg.lb_retrylimittab);
 	tpl_printf(vars, TPLADD, "LBRETRYLIMITS", value);
 	free(value);
-	
+
 	tpl_printf(vars, TPLADD, "LBREOPENSECONDS", "%d",cfg.lb_reopen_seconds);
 	tpl_printf(vars, TPLADD, "LBCLEANUP", "%d",cfg.lb_stat_cleanup);
 	if (cfg.lb_use_locking) tpl_addVar(vars, TPLADD, "USELOCKINGCHECKED", "selected");
-	
+
 	value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
 	tpl_addVar(vars, TPLADD, "LBNOPROVIDERFORCAID", value);
 	free(value);
@@ -324,6 +324,8 @@ char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *p
 		if (cfg.c35_tcp_srvip != 0)
 			tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.c35_tcp_srvip));
 
+		if (cfg.c35_suppresscmd08)
+			tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "checked");
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35TCP");
 }
@@ -462,10 +464,10 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 
 	if (cfg.cc_ignore_reshare)
 		tpl_printf(vars, TPLADD, "IGNORERESHARE", "selected");
-	
+
 	if (cfg.cc_forward_origin_card)
 		tpl_printf(vars, TPLADD, "FORWARDORIGINCARD", "selected");
-	
+
 	if (cfg.cc_keep_connected)
 		tpl_printf(vars, TPLADD, "KEEPCONNECTED", "selected");
 
@@ -737,7 +739,7 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 							first_active_reader = rdr;
 						} else {
 							for (rdr2 = first_active_reader; rdr2->next ; rdr2 = rdr2->next); //find last reader in active reader list
-							rdr2->next = rdr; //add 
+							rdr2->next = rdr; //add
 						}
 						rdr->enable = 1;
 						restart_cardreader(rdr, 1);
@@ -943,7 +945,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		tpl_addVar(vars, TPLADD, "ENABLED", "checked");
 
 	tpl_printf(vars, TPLADD, "ACCOUNT",  "%s", rdr->r_usr);
-	tpl_printf(vars, TPLADD, "PASSWORD",  "%s", rdr->r_pwd); 
+	tpl_printf(vars, TPLADD, "PASSWORD",  "%s", rdr->r_pwd);
 
 	for (i=0; i<14; i++)
 		tpl_printf(vars, TPLAPPEND, "NCD_KEY", "%02X", rdr->ncd_key[i]);
@@ -962,7 +964,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	if(rdr->boxid)
 		tpl_printf(vars, TPLADD, "BOXID", "%08X", rdr->boxid);
-		
+
 	if(rdr->fix_9993)
 		tpl_addVar(vars, TPLADD, "FIX9993CHECKED", "checked");
 
@@ -984,7 +986,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		else len = 64;
 		for (i = 0; i < len; i++) tpl_printf(vars, TPLAPPEND, "RSAKEY", "%02X", rdr->rsa_mod[i]);
 	}
-	
+
 	len = check_filled(rdr->nagra_boxkey, 8);
 	if(len > 0) {
 		for (i = 0; i < 8 ; i++) tpl_printf(vars, TPLAPPEND, "BOXKEY", "%02X", rdr->nagra_boxkey[i]);
@@ -1709,7 +1711,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 		int isactive = 0;
 		struct s_client *cl, *latestclient=NULL;
 		for (cl=first_client; cl ; cl=cl->next) {
-			if (cl->account && !strcmp(cl->account->usr, account->usr)) {				
+			if (cl->account && !strcmp(cl->account->usr, account->usr)) {
 				if(cl->lastecm > latestactivity || cl->login > latestactivity){
 					if(cl->lastecm > cl->login) latestactivity = cl->lastecm;
 					else latestactivity = cl->login;
@@ -1729,18 +1731,18 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			lastresponsetm = latestclient->cwlastresptime;
 		}
 		if(latestactivity > 0){
-			isec = now - latestactivity;				
+			isec = now - latestactivity;
 			if(isec < cfg.mon_hideclient_to) {
-				isactive = 1;				
+				isactive = 1;
 				status = "<b>online</b>";
 				classname = "online";
 				if (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache > 0) {
 					cwrate2 = now - latestclient->login;
 					cwrate2 /= (latestclient->cwfound + latestclient->cwnot + latestclient->cwcache);
 					tpl_printf(vars, TPLADDONCE, "CWRATE2", " (%.2f)", cwrate2);
-				}		
+				}
 			}
-		}		
+		}
 
 		tpl_printf(vars, TPLADD, "CWOK", "%d", account->cwfound);
 		tpl_printf(vars, TPLADD, "CWNOK", "%d", account->cwnot);
@@ -1756,7 +1758,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			tpl_addVar(vars, TPLADDONCE, "LASTCHANNEL", lastchan);
 			tpl_printf(vars, TPLADDONCE, "CWLASTRESPONSET", "%d", lastresponsetm);
 			tpl_addVar(vars, TPLADDONCE, "IDLESECS", sec2timeformat(vars, isec));
-			
+
 			if ((strcmp(proto,"newcamd") == 0) && (latestclient->typ == 'c'))
 				tpl_printf(vars, TPLADDONCE, "CLIENTPROTO","%s (%s)", proto, get_ncd_client_name(latestclient->ncd_client_id));
 			else if ((strncmp(proto,"cccam", 5) == 0)) {
@@ -1777,7 +1779,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			else {
 				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTO", proto);
 				tpl_addVar(vars, TPLADDONCE, "CLIENTPROTOTITLE", "");
-			}			
+			}
 		}
 
 		tpl_addVar(vars, TPLADD, "CLASSNAME", classname);
@@ -1802,7 +1804,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 	tpl_printf(vars, TPLADD, "TOTAL_CWTOUT", "%ld", first_client->cwtout);
 	tpl_printf(vars, TPLADD, "TOTAL_CWCACHE", "%ld", first_client->cwcache);
 	tpl_printf(vars, TPLADD, "TOTAL_CWTUN", "%ld", first_client->cwtun);
-	
+
 	if (!apicall)
 		return tpl_getTpl(vars, "USERCONFIGLIST");
 	else {
@@ -1837,11 +1839,11 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					tpl_addVar(vars, TPLADD, "READERNAME", "GLOBAL");
 					tpl_addVar(vars, TPLADD, "APIHOST", "GLOBAL");
 					tpl_printf(vars, TPLADD, "APIHOSTPORT", "GLOBAL");
-			} else {	
+			} else {
 					tpl_addVar(vars, TPLADD, "READERNAME", rdr->label);
 					tpl_addVar(vars, TPLADD, "APIHOST", rdr->device);
 					tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
-			}	
+			}
 
 			int cardcount = 0;
 			int providercount = 0;
@@ -1850,13 +1852,13 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 			char *provider = "";
 
 			struct cc_card *card;
-			
+
 			LLIST *cards = NULL;
 			pthread_mutex_t *lock = NULL;
-			
+
 			if (show_global_list) {
 					cards = get_and_lock_sharelist();
-			} else {		
+			} else {
 					struct s_client *rc = rdr->client;
 					struct cc_data *rcc = (rc)?rc->cc:NULL;
 
@@ -1866,13 +1868,13 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 							pthread_mutex_lock(lock);
 					}
 			}
-			
-			if (cards) {	
-							
+
+			if (cards) {
+
 				uint8 serbuf[8];
 
                 // sort cards by hop
-                LL_ITER *it; 
+                LL_ITER *it;
                 int i;
                 for (i = 0; i < ll_count(cards); i++) {
                     it  = ll_iter_create(cards);
@@ -1888,7 +1890,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
                     }
                     ll_iter_release(it);
                 }
-				
+
                 it = ll_iter_create(cards);
                 while ((card = ll_iter_next(it))) {
 
@@ -1919,7 +1921,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 										tpl_printf(vars, TPLAPPEND, "SERVICESGOOD", "%04X%s", srv->sid, ++n%10==0?"<BR>\n":" ");
 								}
 								ll_iter_release(its);
-								
+
 								its = ll_iter_create(card->badsids);
 								n=0;
 								tpl_printf(vars, TPLADD, "SERVICESBAD", "");
@@ -1931,7 +1933,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 #endif
 
 					struct s_cardsystem *cs = get_cardsystem_by_caid(card->caid);
-					
+
 					if (cs)
 						tpl_addVar(vars, TPLADD, "SYSTEM", cs->desc ? cs->desc : "");
 					else
@@ -2009,7 +2011,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 				}
 
 				ll_iter_release(it);
-				
+
 				if (!apicall) {
 					tpl_printf(vars, TPLADD, "TOTALS", "card count=%d", cardcount);
 					tpl_addVar(vars, TPLADD, "ENTITLEMENTCONTENT", tpl_getTpl(vars, "ENTITLEMENTCCCAMBIT"));
@@ -2041,7 +2043,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 				char *ptr, *ptr1 = NULL;
 				for (ptr=strtok_r(rdr->init_history, "\n", &ptr1); ptr; ptr=strtok_r(NULL, "\n", &ptr1)) {
 					tpl_printf(vars, TPLAPPEND, "LOGHISTORY", "%s<BR />", ptr);
-					ptr1[-1]='\n';	
+					ptr1[-1]='\n';
 				}
 			}
 
@@ -2135,7 +2137,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 	int reader_count_all = 0, reader_count_conn = 0;
 	int proxy_count_all = 0, proxy_count_conn = 0;
 	int shown;
-	
+
 	struct s_client *cl;
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
 
@@ -2161,7 +2163,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 				if (cl->typ=='c'){
 					user_count_shown++;
-					if (cfg.http_hide_idle_clients != 1 && cfg.mon_hideclient_to > 0 && (now - cl->lastecm) <= cfg.mon_hideclient_to){						
+					if (cfg.http_hide_idle_clients != 1 && cfg.mon_hideclient_to > 0 && (now - cl->lastecm) <= cfg.mon_hideclient_to){
 						user_count_active++;
 						tpl_addVar(vars, TPLADD, "CLIENTTYPE", "a");
 					} else tpl_addVar(vars, TPLADD, "CLIENTTYPE", "c");
@@ -2175,7 +2177,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					tpl_printf(vars, TPLADD, "CLIENTTYPE", "%c", cl->typ);
 					isec = now - cl->last;
 				}
-			
+
 				shown = 1;
 				lsec=now-cl->login;
 				usr=username(cl);
@@ -2197,7 +2199,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 							tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "OFF");
 						} else {
 							if (cau == -1) tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ON");
-							else tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ACTIVE");								
+							else tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "<a href=\"#\" class=\"tooltip\">ACTIVE");
 							tpl_addVar(vars, TPLAPPEND, "CLIENTCAUHTTP", "<span>");
 							if (cl->typ == 'c'){
 								struct s_reader *rdr;
@@ -2215,7 +2217,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					cau = 0;
 					tpl_addVar(vars, TPLADD, "CLIENTCAUHTTP", "");
 				}
-				
+
 				localtime_r(&cl->login, &lt);
 
 				tpl_printf(vars, TPLADD, "HIDEIDX", "%ld", cl->thread);
@@ -2267,18 +2269,18 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					tpl_addVar(vars, TPLADD, "CLIENTPROTO", proto);
 					tpl_addVar(vars, TPLADD, "CLIENTPROTOTITLE", "");
 				}
-				
+
 				if (!apicall) {
 					tpl_printf(vars, TPLADD, "CLIENTLOGINDATE", "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year%100);
 					tpl_printf(vars, TPLAPPEND, "CLIENTLOGINDATE", " %02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
 					tpl_addVar(vars, TPLADD, "CLIENTLOGINSECS", sec2timeformat(vars, lsec));
-				} else {	
+				} else {
 					char tbuffer [30];
 					strftime(tbuffer, 30, "%Y-%m-%dT%H:%M:%S%z", &lt);
 					tpl_printf(vars, TPLADD, "CLIENTLOGINDATE", "%s", tbuffer);
 					tpl_printf(vars, TPLADD, "CLIENTLOGINSECS", "%d", lsec);
 				}
-				
+
 				if (isec < cfg.mon_hideclient_to || cfg.mon_hideclient_to == 0) {
 
 					if (((cl->typ!='r') || (cl->typ!='p')) && (cl->lastreader[0])) {
@@ -2329,7 +2331,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 						else
 							srvid = srvid->next;
 					}
-					
+
 					if (found == 1) {
 						tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER","%s: ", xml_encode(vars, srvid->prov));
 						tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", xml_encode(vars, srvid->name));
@@ -2341,7 +2343,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 						tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE","");
 						tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION","");
 					}
-					
+
 				} else {
 					tpl_addVar(vars, TPLADD, "CLIENTCAID", "0000");
 					tpl_addVar(vars, TPLADD, "CLIENTSRVID", "0000");
@@ -2372,7 +2374,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue);
 								else
 									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%s</A>", urlencode(vars, rdr->label), "no data");
-									
+
 								switch(rdr->card_status)
 								{
 								case NO_CARD: txt = "OFF"; break;
@@ -2392,7 +2394,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					if((cl->typ == 'r' || cl->typ == 'p') && strncmp(proto,"cccam", 5) == 0){
 						struct cc_data *rcc = cl->cc;
 						if(cl->cc){
-							LLIST *cards = rcc->cards;					
+							LLIST *cards = rcc->cards;
 							if (cards) {
 								int cnt = ll_count(cards);
 								if(cnt == 1) tpl_addVar(vars, TPLAPPEND, "CLIENTCON", " (1 card)");
@@ -2403,9 +2405,9 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				}
 			}
 		}
-		
+
 		if (!apicall) {
-			// select right suborder 
+			// select right suborder
 			if (cl->typ == 'c') {
 				if (shown) tpl_addVar(vars, TPLAPPEND, "CLIENTSTATUS", tpl_getTpl(vars, "CLIENTSTATUSBIT"));
 				if(cfg.http_hide_idle_clients == 1 || cfg.mon_hideclient_to < 1) tpl_printf(vars, TPLADD, "CLIENTHEADLINE", "\t\t<TR><TD CLASS=\"subheadline\" colspan=\"17\">Clients %d/%d</TD></TR>\n",
@@ -2658,7 +2660,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 			return "1";
 		else
 			return tpl_getTpl(vars, "APICONFIRMATION");
-		
+
 	} else {
 		return tpl_getTpl(vars, "PRESHUTDOWN");
 	}
@@ -2942,7 +2944,7 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 		}
 	}
 	ll_iter_reset(itr);
-	
+
 	time_t now = time((time_t)0);
 
 	while ((v_ban_entry=ll_iter_next(itr))) {
@@ -2963,7 +2965,7 @@ char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 		tpl_addVar(vars, TPLAPPEND, "FAILBANROW", tpl_getTpl(vars, "FAILBANBIT"));
 	}
 	ll_iter_release(itr);
-	
+
 	return tpl_getTpl(vars, "FAILBAN");
 }
 
@@ -3217,7 +3219,7 @@ int process_request(FILE *f, struct in_addr in) {
 			send_error500(f);
 			return -1;
 		}
-		
+
 		memcpy(filebuf+bufsize, buf2, n);
 		bufsize+=n;
 
@@ -3361,9 +3363,9 @@ int process_request(FILE *f, struct in_addr in) {
 		tpl_printf(vars, TPLADD, "CURIP", "%s", inet_ntoa(in));
 		if(cfg.http_readonly)
 			tpl_addVar(vars, TPLAPPEND, "BTNDISABLED", "DISABLED");
-		
+
 		char *result = NULL;
-		
+
 		switch(pgidx) {
 			case 0: result = send_oscam_config(vars, &params, in); break;
 			case 1: result = send_oscam_reader(vars, &params, in); break;
@@ -3411,9 +3413,9 @@ SSL_CTX *webif_init_ssl() {
 	SSL_CTX *ctx;
 
 	static const char *cs_cert="oscam.pem";
- 
+
 	meth = SSLv23_server_method();
- 
+
 	ctx = SSL_CTX_new(meth);
 
 	char path[128];
@@ -3432,12 +3434,12 @@ SSL_CTX *webif_init_ssl() {
 		ERR_print_errors_fp(stderr);
 		return NULL;
 	}
- 
+
 	if (SSL_CTX_use_PrivateKey_file(ctx, path, SSL_FILETYPE_PEM) <= 0) {
 		ERR_print_errors_fp(stderr);
 		return NULL;
 	}
- 
+
        if (!SSL_CTX_check_private_key(ctx)) {
 		cs_log("SSL: Private key does not match the certificate public key");
 		return NULL;
@@ -3457,7 +3459,7 @@ void http_srv() {
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
 	struct timeval stimeout;
-	
+
 	socklen_t len = sizeof(remote);
 	/* Create random string for nonce value generation */
 	create_rand_str(noncekey,32);
@@ -3473,15 +3475,15 @@ void http_srv() {
 
     stimeout.tv_sec = 30;
     stimeout.tv_usec = 0;
-     
+
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &stimeout, sizeof(stimeout)) < 0) {
      		cs_log("HTTP Server: Setting SO_RCVTIMEO via setsockopt failed! (errno=%d)", errno);
     }
-     
+
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &stimeout, sizeof(stimeout)) < 0) {
      		cs_log("HTTP Server: Setting SO_SNDTIMEO via setsockopt failed! (errno=%d)", errno);
     }
-    
+
 	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
@@ -3539,7 +3541,7 @@ void http_srv() {
 								cfg.http_use_ssl=1;
 								fflush(f);
 								fclose(f);
-							} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d)", errno);					
+							} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d)", errno);
 						}
 					} else cs_log("WebIf: Error calling SSL_set_fd().");
 					SSL_shutdown(ssl);

@@ -501,7 +501,7 @@ void chk_t_global(const char *token, char *value)
 		cfg.reader_restart_seconds = strToIntVal(value, 5);
 		return;
 	}
-	
+
 	if (!strcmp(token, "dropdups")) {
 		cfg.dropdups = strToIntVal(value, 0);
 		return;
@@ -555,12 +555,12 @@ void chk_t_global(const char *token, char *value)
 		chk_caidvaluetab(value, &cfg.lb_retrylimittab);
 		return;
 	}
-	
+
 	if (!strcmp(token, "lb_nbest_percaid")) {
 		chk_caidvaluetab(value, &cfg.lb_nbest_readers_tab);
 		return;
 	}
-	
+
 	if (!strcmp(token, "lb_noproviderforcaid")) {
 		if(strlen(value) == 0)
         	clear_caidtab(&cfg.lb_noproviderforcaid);
@@ -1813,13 +1813,13 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "lb_nbest_percaid", "%s\n", value);
 		free(value);
 	}
-	
+
 	if (cfg.lb_noproviderforcaid.caid[0] || cfg.http_full_cfg) {
 		value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
 		fprintf_conf(f, CONFVARWIDTH, "lb_noproviderforcaid", "%s\n", value);
 		free(value);
 	}
-                
+
 	if (cfg.lb_savepath || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_savepath", "%s\n", cfg.lb_savepath);
 	if (cfg.lb_stat_cleanup != DEFAULT_LB_STAT_CLEANUP || cfg.http_full_cfg)
@@ -1934,6 +1934,8 @@ int write_config()
 
 		if (cfg.c35_tcp_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.c35_tcp_srvip));
+		if (cfg.c35_suppresscmd08)
+			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg.c35_suppresscmd08);
 		fputc((int)'\n', f);
 	}
 
@@ -2459,7 +2461,7 @@ int write_server()
 
 				if (rdr->cc_maxhop != 10 || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", rdr->cc_maxhop);
-					
+
 				if (rdr->cc_mindown > 0 || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccmindown", "%d\n", rdr->cc_mindown);
 
@@ -2468,9 +2470,9 @@ int write_server()
 
 				if (rdr->cc_keepalive || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "ccckeepalive", "%d\n", rdr->cc_keepalive);
-					
+
 				if (rdr->cc_reshare != cfg.cc_reshare || cfg.http_full_cfg)
-					fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", rdr->cc_reshare);	
+					fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", rdr->cc_reshare);
 			}
 
 			if ((rdr->deprecated || cfg.http_full_cfg) && isphysical)
@@ -2484,7 +2486,7 @@ int write_server()
 
 			if ((rdr->ndsversion || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "ndsversion", "%d\n", rdr->ndsversion);
-			
+
 			if ((rdr->ratelimitecm || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "ratelimitecm", "%d\n", rdr->ratelimitecm);
 				fprintf_conf(f, CONFVARWIDTH, "ratelimitseconds", "%d\n", rdr->ratelimitseconds);
@@ -2848,7 +2850,7 @@ void init_free_sidtab() {
 		while (ptr) {
 				nxt = ptr->next;
 				free_sidtab(ptr);
-				ptr = nxt;		
+				ptr = nxt;
 		}
 		cfg.sidtab = NULL;
 }
@@ -3771,7 +3773,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 		return;
 	}
 
-	if (!strcmp(token, "cccmindown") ) { 
+	if (!strcmp(token, "cccmindown") ) {
 		// cccam min downhops
 		rdr->cc_mindown  = strToIntVal(value, 0);
 		return;
