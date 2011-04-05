@@ -612,7 +612,7 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 				rdr->auprovid);
 	}
 
-	if (buf[0] == 0x08 && !cfg.c35_suppresscmd08) {
+	if (buf[0] == 0x08 && ((rdr->ph.type == MOD_CONN_TCP && !cfg.c35_tcp_suppresscmd08) || (rdr->ph.type == MOD_CONN_UDP && !cfg.c35_udp_suppresscmd08))) {
 		if(buf[21] == 0xFF) {
 			client->stopped = 2; // server says sleep
 			rdr->card_status = NO_CARD;

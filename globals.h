@@ -1110,6 +1110,8 @@ struct s_config
 	int		c35_port;
 	in_addr_t	c35_srvip;
 	int		c35_suppresscmd08;
+	int		c35_tcp_suppresscmd08;
+	int		c35_udp_suppresscmd08;
 	PTAB		c35_tcp_ptab;
 	in_addr_t	c35_tcp_srvip;
 	PTAB		ncd_ptab;

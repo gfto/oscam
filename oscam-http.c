@@ -145,7 +145,8 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 	if (cfg.waitforcards == 1)	tpl_addVar(vars, TPLADD, "WAITFORCARDSCHECKED", "selected");
 	if (cfg.preferlocalcards == 1)	tpl_addVar(vars, TPLADD, "PREFERLOCALCARDSCHECKED", "selected");
 
-
+	if (cfg.c35_suppresscmd08)
+		tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "checked");
 
 	if (cfg.reader_restart_seconds)
 		tpl_printf(vars, TPLADD, "READERRESTARTSECONDS", "%d", cfg.reader_restart_seconds);
@@ -293,8 +294,9 @@ char *send_oscam_config_camd35(struct templatevars *vars, struct uriparams *para
 		if (cfg.c35_srvip != 0)
 			tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.c35_srvip));
 
-		if (cfg.c35_suppresscmd08)
-			tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "checked");
+		if (cfg.c35_udp_suppresscmd08)
+			tpl_addVar(vars, TPLADD, "SUPPRESSCMD08UDP", "checked");
+
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35");
 }
@@ -324,8 +326,8 @@ char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *p
 		if (cfg.c35_tcp_srvip != 0)
 			tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.c35_tcp_srvip));
 
-		if (cfg.c35_suppresscmd08)
-			tpl_addVar(vars, TPLADD, "SUPPRESSCMD08", "checked");
+		if (cfg.c35_tcp_suppresscmd08)
+			tpl_addVar(vars, TPLADD, "SUPPRESSCMD08TCP", "checked");
 	}
 	return tpl_getTpl(vars, "CONFIGCAMD35TCP");
 }

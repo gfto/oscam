@@ -600,6 +600,11 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "suppresscmd08")) {
+		cfg.c35_suppresscmd08 = strToIntVal(value, 0);
+		return;
+	}
+
 #ifdef CS_WITH_DOUBLECHECK
 	if (!strcmp(token, "double_check")) {
 		cfg.double_check = strToIntVal(value, 0);
@@ -899,7 +904,7 @@ void chk_t_camd35(char *token, char *value)
 	}
 
 	if (!strcmp(token, "suppresscmd08")) {
-		cfg.c35_suppresscmd08 = strToIntVal(value, 0);
+		cfg.c35_udp_suppresscmd08 = strToIntVal(value, 0);
 		return;
 	}
 
@@ -930,7 +935,7 @@ void chk_t_camd35_tcp(char *token, char *value)
 	}
 
 	if (!strcmp(token, "suppresscmd08")) {
-		cfg.c35_suppresscmd08 = strToIntVal(value, 0);
+		cfg.c35_tcp_suppresscmd08 = strToIntVal(value, 0);
 		return;
 	}
 
@@ -1774,6 +1779,8 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "nice", "%d\n", cfg.nice);
 	if (cfg.srtimeout != 1500 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "serialreadertimeout", "%d\n", cfg.srtimeout);
+	if (cfg.c35_suppresscmd08 || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg.c35_suppresscmd08);
 	if (cfg.max_log_size != 10 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "maxlogsize", "%d\n", cfg.max_log_size);
 	if (!cfg.waitforcards || cfg.http_full_cfg)
@@ -1919,8 +1926,8 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.c35_port);
 		if (cfg.c35_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.c35_srvip));
-		if (cfg.c35_suppresscmd08)
-			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg.c35_suppresscmd08);
+		if (cfg.c35_udp_suppresscmd08 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg.c35_udp_suppresscmd08);
 		fprintf(f,"\n");
 	}
 
@@ -1934,8 +1941,8 @@ int write_config()
 
 		if (cfg.c35_tcp_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.c35_tcp_srvip));
-		if (cfg.c35_suppresscmd08)
-			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg.c35_suppresscmd08);
+		if (cfg.c35_tcp_suppresscmd08 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", cfg.c35_tcp_suppresscmd08);
 		fputc((int)'\n', f);
 	}
 
@@ -2221,7 +2228,7 @@ int write_userdb(struct s_auth *authptr)
 			free(value);
 		}
 
-		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || cfg.http_full_cfg)
+		if ((account->c35_suppresscmd08 != cfg.c35_udp_suppresscmd08) || (account->c35_suppresscmd08 != cfg.c35_tcp_suppresscmd08) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 
 		if (account->cccmaxhops != 10 || cfg.http_full_cfg)
