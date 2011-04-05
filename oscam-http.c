@@ -3468,22 +3468,22 @@ void http_srv() {
 
 	/* Startup server */
 	if((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-		cs_log("HTTP Server: Creating socket failed! (errno=%d)", errno);
+		cs_log("HTTP Server: Creating socket failed! (errno=%d %s)", errno, strerror(errno));
 		return;
 	}
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d)", errno);
+		cs_log("HTTP Server: Setting SO_REUSEADDR via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
 	}
 
     stimeout.tv_sec = 30;
     stimeout.tv_usec = 0;
 
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &stimeout, sizeof(stimeout)) < 0) {
-     		cs_log("HTTP Server: Setting SO_RCVTIMEO via setsockopt failed! (errno=%d)", errno);
+     		cs_log("HTTP Server: Setting SO_RCVTIMEO via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
     }
 
     if (setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &stimeout, sizeof(stimeout)) < 0) {
-     		cs_log("HTTP Server: Setting SO_SNDTIMEO via setsockopt failed! (errno=%d)", errno);
+     		cs_log("HTTP Server: Setting SO_SNDTIMEO via setsockopt failed! (errno=%d %s)", errno, strerror(errno));
     }
 
 	memset(&sin, 0, sizeof sin);
@@ -3491,12 +3491,12 @@ void http_srv() {
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = htons(cfg.http_port);
 	if((bind(sock, (struct sockaddr *) &sin, sizeof(sin))) < 0) {
-		cs_log("HTTP Server couldn't bind on port %d (errno=%d). Not starting HTTP!", cfg.http_port, errno);
+		cs_log("HTTP Server couldn't bind on port %d (errno=%d %s). Not starting HTTP!", cfg.http_port, errno, strerror(errno));
 		close(sock);
 		return;
 	}
 	if (listen(sock, SOMAXCONN) < 0) {
-		cs_log("HTTP Server: Call to listen() failed! (errno=%d)", errno);
+		cs_log("HTTP Server: Call to listen() failed! (errno=%d %s)", errno, strerror(errno));
 		close(sock);
 		return;
 	}
@@ -3522,7 +3522,7 @@ void http_srv() {
 
 		if (rc > 0) {
 			if((s = accept(sock, (struct sockaddr *) &remote, &len)) < 0) {
-				cs_log("HTTP Server: Error calling accept() (errno=%d).", errno);
+				cs_log("HTTP Server: Error calling accept() (errno=%d %s)", errno, strerror(errno));
 				break;
 			}
 #ifdef WITH_SSL
@@ -3543,7 +3543,11 @@ void http_srv() {
 								cfg.http_use_ssl=1;
 								fflush(f);
 								fclose(f);
+<<<<<<< .mine
+							} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
+=======
 							} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d)", errno);
+>>>>>>> .r4933
 						}
 					} else cs_log("WebIf: Error calling SSL_set_fd().");
 					SSL_shutdown(ssl);
@@ -3562,7 +3566,7 @@ void http_srv() {
 					process_request(f, remote.sin_addr);
 					fflush(f);
 					fclose(f);
-				} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d)", errno);
+				} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
 				shutdown(s, SHUT_WR);
 				close(s);
 			}

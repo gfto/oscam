@@ -454,7 +454,7 @@ bool IO_Serial_Read (struct s_reader * reader, unsigned timeout, unsigned size, 
 			if (read (reader->handle, &c, 1) != 1)
 			{
 				cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
-				cs_log("ERROR in IO_Serial_Read errno=%d", errno);
+				cs_log("ERROR in IO_Serial_Read (errno=%d %s)", errno, strerror(errno));
 				//tcflush (reader->handle, TCIFLUSH);
 				return ERROR;
 			}
@@ -495,7 +495,7 @@ bool IO_Serial_Write (struct s_reader * reader, unsigned delay, unsigned size, c
 			unsigned int u = write (reader->handle, data_w, to_send);
 			if (u != to_send)
 			{
-				cs_log("ERROR in IO_Serial_Write u=%d to_send=%d errno=%d", u, to_send, errno);
+				cs_log("ERROR in IO_Serial_Write u=%d to_send=%d (errno=%d %s)", u, to_send, errno, strerror(errno));
 				if ((reader->typ != R_INTERNAL && reader->crdr.active==0) || (reader->crdr.active==1 && reader->crdr.read_written==1))
 					reader->written += u;
 				//tcflush (reader->handle, TCIFLUSH);
@@ -644,7 +644,7 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned
 	while (1) {
 		select_ret = select(in_fd+1, &rfds, NULL,  &erfds, &tv);
 		if (select_ret==-1) {
-			cs_log("ERROR in IO_Serial_WaitToRead: errno=%d", errno);
+			cs_log("ERROR in IO_Serial_WaitToRead: (errno=%d %s)", errno, strerror(errno));
 			if (errno==EINTR) {
 				//try again in case of Interrupted system call
 				continue;
@@ -659,7 +659,7 @@ bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned
    	}
 
 	if (FD_ISSET(in_fd, &erfds)) {
-		cs_log("ERROR in IO_Serial_WaitToRead: fd is in error fds, errno=%d", errno);
+		cs_log("ERROR in IO_Serial_WaitToRead: fd is in error fds, (errno=%d %s)", errno, strerror(errno));
 		return ERROR;
 	}
 
@@ -706,7 +706,7 @@ static bool IO_Serial_WaitToWrite (struct s_reader * reader, unsigned delay_ms, 
 
    if (FD_ISSET(out_fd, &ewfds))
    {
-	cs_log("ERROR in IO_Serial_WaitToWrite: fd is in error fds, errno=%d", errno);
+	cs_log("ERROR in IO_Serial_WaitToWrite: fd is in error fds, (errno=%d %s)", errno, strerror(errno));
 	return ERROR;
    }
 

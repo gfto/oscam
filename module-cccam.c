@@ -2839,8 +2839,8 @@ int cc_cli_connect(struct s_client *cl) {
 		if (n <= 0)
 			cs_log("%s server blocked connection!", rdr->label);
 		else
-			cs_log("%s server does not return 16 bytes (n=%d, errno=%d)",
-				rdr->label, n, err);
+			cs_log("%s server does not return 16 bytes (n=%d, errno=%d %s)",
+				rdr->label, n, err, strerror(errno));
 		block_connect(rdr);
 		return -2;
 	}
@@ -3021,8 +3021,8 @@ int cc_cli_init_int(struct s_client *cl) {
 
 		
 	if ((cl->udp_fd = socket(PF_INET, SOCK_STREAM, p_proto)) <= 0) {
-		cs_log("%s Socket creation failed (errno=%d, socket=%d)", rdr->label,
-				errno, cl->udp_fd);
+		cs_log("%s Socket creation failed (socket=%d, errno=%d %s)", rdr->label,
+				cl->udp_fd, errno, strerror(errno));
 		return 1;
 	}
 	//cs_log("%s 1 socket created: cs_idx=%d, fd=%d errno=%d", getprefix(), cs_idx, cl->udp_fd, errno);

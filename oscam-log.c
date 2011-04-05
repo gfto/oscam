@@ -26,7 +26,7 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 
 		if( stat(file, &stlog)!=0 )
 		{
-			fprintf(stderr, "stat('%s',..) failed (errno=%d)\n", file, errno);
+			fprintf(stderr, "stat('%s',..) failed (errno=%d %s)\n", file, errno, strerror(errno));
 			return;
 		}
 
@@ -41,7 +41,7 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 				*f = (FILE *)0;
 				rc = rename(file, prev_log);
 				if( rc!=0 ) {
-					fprintf(stderr, "rename(%s, %s) failed (errno=%d)\n", file, prev_log, errno);
+					fprintf(stderr, "rename(%s, %s) failed (errno=%d %s)\n", file, prev_log, errno, strerror(errno));
 				}
 				else
 					if( pfinit()){
@@ -100,7 +100,7 @@ int cs_open_logfiles()
 	if (!fp && cfg.logfile != NULL) {	//log to file
 		if ((fp = fopen(cfg.logfile, "a+")) <= (FILE *)0) {
 			fp = (FILE *)0;
-			fprintf(stderr, "couldn't open logfile: %s (errno %d)\n", cfg.logfile, errno);
+			fprintf(stderr, "couldn't open logfile: %s (errno %d %s)\n", cfg.logfile, errno, strerror(errno));
 		} else {
 			time_t t;
 			char line[80];

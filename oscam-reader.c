@@ -93,7 +93,7 @@ int network_select(int forRead, int timeout)
        int r=select(sd+1,forRead ? &fds:0,forRead ? 0:&fds,0,&tv); 
        if(r>0) return 1; 
        else if(r<0) { 
-         cs_debug_mask(D_READER, "socket: select failed: %s",strerror(errno)); 
+         cs_debug_mask(D_READER, "socket: select failed (errno=%d %s)", errno, strerror(errno)); 
          return -1; 
        } 
        else { 
@@ -247,7 +247,7 @@ int network_tcp_connection_open()
     cs_log("connect failed: address in use!");
   }
   else                                                 
-    cs_log("connect(fd=%d) failed: (errno=%d: %s)", sd, errno, strerror(errno));
+    cs_log("connect(fd=%d) failed: (errno=%d %s)", sd, errno, strerror(errno));
 
   fcntl(sd, F_SETFL, fl); //restore blocking mode
   
@@ -840,7 +840,7 @@ void * start_cardreader(void * rdr)
   reader->client->emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));
   if (!reader->client->emmcache)
   {
-    cs_log("Cannot allocate memory (errno=%d)", errno);
+    cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
   }
   memset(reader->client->emmcache, 0, CS_EMMCACHESIZE*(sizeof(struct s_emm)));
@@ -848,7 +848,7 @@ void * start_cardreader(void * rdr)
   reader->client->ecmtask=(ECM_REQUEST *)malloc(CS_MAXPENDING*(sizeof(ECM_REQUEST)));
   if (!reader->client->ecmtask)
   {
-    cs_log("Cannot allocate memory (errno=%d)", errno);
+    cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
   }
   memset(reader->client->ecmtask, 0, CS_MAXPENDING*(sizeof(ECM_REQUEST)));

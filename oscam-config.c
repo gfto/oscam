@@ -1386,7 +1386,7 @@ int init_config()
 #endif
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_conf);
 	if (!(fp = fopen(token, "r"))) {
-		fprintf(stderr, "Cannot open config file '%s' (errno=%d)\n", token, errno);
+		fprintf(stderr, "Cannot open config file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
 		exit(1);
 	}
 	while (fgets(token, sizeof(token), fp)) {
@@ -1673,7 +1673,7 @@ int write_services()
 	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_sidt);
 
 	if (!(f=fopen(tmpfile, "w"))){
-		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
+		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
 		return(1);
 	}
 	fprintf(f,"# oscam.services generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
@@ -1726,7 +1726,7 @@ int write_config()
 	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_conf);
 
 	if (!(f=fopen(tmpfile, "w"))){
-		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
+		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
 		return(1);
 	}
 	fprintf(f,"# oscam.conf generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
@@ -2124,7 +2124,7 @@ int write_userdb(struct s_auth *authptr)
 	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_user);
 
   if (!(f=fopen(tmpfile, "w"))){
-    cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
+    cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
     return(1);
   }
   fprintf(f,"# oscam.user generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
@@ -2277,7 +2277,7 @@ int write_server()
 	snprintf(bakfile, sizeof(bakfile),"%s%s.bak", cs_confdir, cs_srvr);
 
 	if (!(f=fopen(tmpfile, "w"))){
-		cs_log("Cannot open file \"%s\" (errno=%d)", tmpfile, errno);
+		cs_log("Cannot open file \"%s\" (errno=%d %s)", tmpfile, errno, strerror(errno));
 		return(1);
 	}
 	fprintf(f,"# oscam.server generated automatically by Streamboard OSCAM %s build #%s\n", CS_VERSION, CS_SVN_VERSION);
@@ -2516,7 +2516,7 @@ void write_versionfile() {
   FILE *fp;
 
   if (!(fp=fopen(targetfile, "w"))) {
-	  cs_log("Cannot open %s (errno=%d)", targetfile, errno);
+	  cs_log("Cannot open %s (errno=%d %s)", targetfile, errno, strerror(errno));
   } else {
 	  time_t now = time((time_t)0);
 	  struct tm st;
@@ -2718,7 +2718,7 @@ struct s_auth *init_userdb()
 
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_user);
 	if (!(fp = fopen(token, "r"))) {
-		cs_log("Cannot open file \"%s\" (errno=%d)", token, errno);
+		cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
 		return authptr;
 	}
 
@@ -2872,7 +2872,7 @@ int init_sidtab() {
   snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_sidt);
   if (!(fp=fopen(token, "r")))
   {
-    cs_log("Cannot open file \"%s\" (errno=%d)", token, errno);
+    cs_log("Cannot open file \"%s\" (errno=%d %s)", token, errno, strerror(errno));
     return(1);
   }
   for (nro=0, ptr=cfg.sidtab; ptr; nro++)
@@ -2925,7 +2925,7 @@ int init_provid() {
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_provid);
 
 	if (!(fp=fopen(token, "r"))) {
-		cs_log("can't open file \"%s\" (err=%d), no provids's loaded", token, errno);
+		cs_log("can't open file \"%s\" (err=%d %s), no provids's loaded", token, errno, strerror(errno));
 		return(0);
 	}
 	nr=0;
@@ -2992,7 +2992,7 @@ int init_srvid()
 
 
 	if (!(fp=fopen(token, "r"))) {
-		cs_log("can't open file \"%s\" (err=%d), no service-id's loaded", token, errno);
+		cs_log("can't open file \"%s\" (err=%d %s), no service-id's loaded", token, errno, strerror(errno));
 		return(0);
 	}
 
@@ -3080,7 +3080,7 @@ int init_tierid()
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_trid);
 
 	if (!(fp=fopen(token, "r"))) {
-		cs_log("can't open file \"%s\" (err=%d), no tier-id's loaded", token, errno);
+		cs_log("can't open file \"%s\" (err=%d %s), no tier-id's loaded", token, errno, strerror(errno));
 		return(0);
 	}
 
@@ -3884,8 +3884,8 @@ int init_irdeto_guess_tab()
   snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_ird);
   if (!(fp=fopen(token, "r")))
   {
-    cs_log("can't open file \"%s\" (errno=%d) irdeto guessing not loaded",
-           token, errno);
+    cs_log("can't open file \"%s\" (errno=%d %s) irdeto guessing not loaded",
+           token, errno, strerror(errno));
     return(1);
   }
   while (fgets(token, sizeof(token), fp))
@@ -3954,7 +3954,7 @@ int init_readerdb()
 
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srvr);
 	if (!(fp=fopen(token, "r"))) {
-		cs_log("can't open file \"%s\" (errno=%d)\n", token, errno);
+		cs_log("can't open file \"%s\" (errno=%d %s)\n", token, errno, strerror(errno));
 		return(1);
 	}
 	struct s_reader *rdr;
@@ -4041,8 +4041,8 @@ void init_ac()
   snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_ac);
   if (!(fp=fopen(token, "r")))
   {
-    cs_log("can't open file \"%s\" (errno=%d) anti-cascading table not loaded",
-            token, errno);
+    cs_log("can't open file \"%s\" (errno=%d %s) anti-cascading table not loaded",
+            token, errno, strerror(errno));
     return;
   }
 

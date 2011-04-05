@@ -100,7 +100,7 @@ int smargo_Serial_Read(struct s_reader * reader, unsigned timeout, unsigned size
 			if (read (reader->handle, &c, 1) != 1)
 			{
 				cs_ddump_mask(D_DEVICE, data, count, "IO: Receiving:");
-				cs_log("ERROR in smargo_Serial_Read errno=%d", errno);
+				cs_log("ERROR in smargo_Serial_Read (errno=%d %s)", errno, strerror(errno));
 				return ERROR;
 			}
 		}

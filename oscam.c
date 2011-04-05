@@ -645,7 +645,7 @@ void cs_exit(int sig)
 #ifndef OS_CYGWIN32
 	snprintf(targetfile, 255, "%s%s", get_tmp_dir(), "/oscam.version");
 	if (unlink(targetfile) < 0)
-		cs_log("cannot remove oscam version file %s errno=(%d)", targetfile, errno);
+		cs_log("cannot remove oscam version file %s (errno=%d %s)", targetfile, errno, strerror(errno));
 #endif
 #ifdef COOL
 	coolapi_close_all();
@@ -1646,7 +1646,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	if ((pfCWL = fopen(buf, "a+")) == NULL) {
 		/* maybe this fails because the subdir does not exist. Is there a common function to create it?
 			for the moment do not print to log on every ecm
-			cs_log(""error opening cw logfile for writing: %s (errno %d)", buf, errno); */
+			cs_log(""error opening cw logfile for writing: %s (errno=%d %s)", buf, errno, strerror(errno)); */
 		return;
 	}
 	if (writeheader) {
@@ -1777,7 +1777,7 @@ ECM_REQUEST *get_ecmtask()
 	n=(-1);
 	if (!cl->ecmtask)
 	{
-		cs_log("Cannot allocate memory (errno=%d)", errno);
+		cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
 		n=(-2);
 	}
 	else
@@ -3520,7 +3520,7 @@ void cs_switch_led(int led, int action) {
 
 		if (!(f=fopen(ledfile, "w"))){
 			// FIXME: sometimes cs_log was not available when calling cs_switch_led -> signal 11
-			//cs_log("Cannot open file \"%s\" (errno=%d)", ledfile, errno);
+			//cs_log("Cannot open file \"%s\" (errno=%d %s)", ledfile, errno, strerror(errno));
 			return;
 		}
 		fprintf(f,"%d", action);

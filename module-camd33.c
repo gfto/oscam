@@ -194,7 +194,7 @@ static void * camd33_server(void* cli)
   client->req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
   if (!client->req)
   {
-    cs_log("Cannot allocate memory (errno=%d)", errno);
+    cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
   }
   memset(client->req, 0, CS_MAXPENDING*REQ_SIZE);

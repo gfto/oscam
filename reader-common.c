@@ -139,7 +139,7 @@ static void do_emm_from_file(struct s_reader * reader)
       snprintf (token, sizeof(token), "%s%s", cs_confdir, reader->emmfile); //only file specified, look in confdir for this file
     
     if (!(fp = fopen (token, "rb")))
-      cs_log ("ERROR: Cannot open EMM file '%s' (errno=%d)\n", token, errno);
+      cs_log ("ERROR: Cannot open EMM file '%s' (errno=%d %s)\n", token, errno, strerror(errno));
     else {
       EMM_PACKET *eptmp;
       eptmp = malloc (sizeof(EMM_PACKET));

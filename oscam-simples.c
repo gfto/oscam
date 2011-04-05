@@ -535,13 +535,13 @@ int bytes_available(int fd)
    select_ret = select(in_fd+1, &rfds, NULL, &erfds, NULL);
    if (select_ret==-1)
    {
-     cs_log("ERROR reading from fd %d select_ret=%i, errno=%d",in_fd, select_ret, errno);
+     cs_log("ERROR reading from fd %d select_ret=%i (errno=%d %s)",in_fd, select_ret, errno, strerror(errno));
      return 0;
    }
       
    if (FD_ISSET(in_fd, &erfds))
    {
-    cs_log("ERROR reading from fd %d select_ret=%i, errno=%d",in_fd, select_ret, errno);
+    cs_log("ERROR reading from fd %d select_ret=%i (errno=%d %s)",in_fd, select_ret, errno, strerror(errno));
     return 0;
    }
    if (FD_ISSET(in_fd,&rfds))
@@ -593,7 +593,7 @@ void *cs_malloc(void *result, size_t size, int quiterror){
 	void **tmp = (void *)result;
 	*tmp = malloc (size);
 	if(*tmp == NULL){
-		cs_log("Couldn't allocate memory (errno=%d)!", errno);
+		cs_log("Couldn't allocate memory (errno=%d %s)!", errno, strerror(errno));
 		if(quiterror > -1) cs_exit(quiterror);
 	} else {
 		memset(*tmp, 0, size);
@@ -607,7 +607,7 @@ void *cs_realloc(void *result, size_t size, int quiterror){
 	void **tmp = (void *)result, **tmp2 = (void *)result;
 	*tmp = realloc (*tmp, size);
 	if(*tmp == NULL){
-		cs_log("Couldn't allocate memory (errno=%d)!", errno);
+		cs_log("Couldn't allocate memory (errno=%d %s)!", errno, strerror(errno));
 		free(*tmp2);
 		if(quiterror > -1) cs_exit(quiterror);
 	}
@@ -728,11 +728,11 @@ int file_copy(char *srcfile, char *destfile){
 	FILE *src, *dest;
   int ch;
   if((src = fopen(srcfile, "r"))==NULL) {
-  	cs_log("Error opening file %s for reading (errno=%d)!", srcfile, errno);
+  	cs_log("Error opening file %s for reading (errno=%d %s)!", srcfile, errno, strerror(errno));
     return(-1);
   }
   if((dest = fopen(destfile, "w"))==NULL) {
-  	cs_log("Error opening file %s for writing (errno=%d)!", destfile, errno);
+  	cs_log("Error opening file %s for writing (errno=%d %s)!", destfile, errno, strerror(errno));
   	fclose(src);
     return(-1);
   }
@@ -744,7 +744,7 @@ int file_copy(char *srcfile, char *destfile){
 		}	else {
 			fputc(ch, dest);
 			if(ferror(dest)) {
-				cs_log("Error while writing to file %s (errno=%d)!", destfile, errno);
+				cs_log("Error while writing to file %s (errno=%d %s)!", destfile, errno, strerror(errno));
 				fclose(src);
 				fclose(dest);
 				return(-2);
@@ -763,7 +763,7 @@ int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int fo
 		if(forceBakOverWrite != 0 || !file_exists(bakfile)){
 			if(file_copy(destfile, bakfile) < 0){
 				cs_log("Error copying original config file %s to %s. The original config will be left untouched!", destfile, bakfile);
-				if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d)!", tmpfile, errno);
+				if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
 				return(1);
 			}
 		}
@@ -771,10 +771,10 @@ int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int fo
 	if((rc = file_copy(tmpfile, destfile)) < 0){
 		cs_log("An error occured while writing the new config file %s.", destfile);
 		if(rc == -2) cs_log("The config will be missing or only partly filled upon next startup as this is a non-recoverable error! Please restore from backup or try again.", destfile);
-		if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d)!", tmpfile, errno);
+		if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
 		return(1);
 	}
-	if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d)!", tmpfile, errno);
+	if(remove(tmpfile) < 0) cs_log("Error removing temp config file %s (errno=%d %s)!", tmpfile, errno, strerror(errno));
 	return(0);
 }
 

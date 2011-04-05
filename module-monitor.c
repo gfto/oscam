@@ -113,12 +113,7 @@ static int monitor_recv(struct s_client * client, uchar *buf, int l)
 	static uchar *bbuf=NULL;
 	if (!bbuf)
 	{
-		bbuf=(uchar *)malloc(l);
-		if (!bbuf)
-		{
-			cs_log("Cannot allocate memory (errno=%d)", errno);
-			cs_exit(1);
-		}
+		bbuf = cs_malloc(&bbuf, l, 1);
 	}
 	if (bpos)
 		memcpy(buf, bbuf, n=bpos);

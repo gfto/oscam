@@ -247,7 +247,7 @@ int radegast_cli_init(struct s_client *cl)
 
   if ((cur_client()->udp_fd=socket(PF_INET, SOCK_STREAM, p_proto))<0)
   {
-    cs_log("radegast: Socket creation failed (errno=%d)", errno);
+    cs_log("radegast: Socket creation failed (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
   }
 

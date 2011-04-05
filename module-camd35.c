@@ -326,7 +326,7 @@ static void * camd35_server(void *cli)
   client->req=(uchar *)malloc(CS_MAXPENDING*REQ_SIZE);
   if (!client->req)
   {
-    cs_log("Cannot allocate memory (errno=%d)", errno);
+    cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
   }
   memset(client->req, 0, CS_MAXPENDING*REQ_SIZE);
@@ -401,7 +401,7 @@ int camd35_client_init(struct s_client *client)
 
   if ((client->udp_fd=socket(PF_INET, client->is_udp ? SOCK_DGRAM : SOCK_STREAM, p_proto))<0)
   {
-    cs_log("Socket creation failed (errno=%d)", errno);
+    cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
   }
 
@@ -414,7 +414,7 @@ int camd35_client_init(struct s_client *client)
   {
     if (bind(client->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
     {
-      cs_log("bind failed (errno=%d)", errno);
+      cs_log("bind failed (errno=%d %s)", errno, strerror(errno));
       close(client->udp_fd);
       return(1);
     }
@@ -465,13 +465,13 @@ int camd35_client_init_log()
 
   if ((logfd=socket(PF_INET, SOCK_DGRAM, p_proto))<0)
   {
-    cs_log("Socket creation failed (errno=%d)", errno);
+    cs_log("Socket creation failed (errno=%d %s)", errno, strerror(errno));
     return(1);
   }
 
   if (bind(logfd, (struct sockaddr *)&loc_sa, sizeof(loc_sa))<0)
   {
-    cs_log("bind failed (errno=%d)", errno);
+    cs_log("bind failed (errno=%d %s)", errno, strerror(errno));
     close(logfd);
     return(1);
   }

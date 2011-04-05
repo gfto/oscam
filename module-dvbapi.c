@@ -97,7 +97,7 @@ int dvbapi_set_filter(int demux_id, int api, unsigned short pid, uchar *filt, uc
 	}
 
 	if (ret < 0)
-		cs_debug_mask(D_DVBAPI, "could not start demux filter (Errno: %d)", errno);
+		cs_debug_mask(D_DVBAPI, "could not start demux filter (errno=%d %s)", errno, strerror(errno));
 
 	return ret;
 }
@@ -198,7 +198,7 @@ int dvbapi_read_device(int dmx_fd, unsigned char *buf, int length)
 	len = read(dmx_fd, buf, length);
 
 	if (len==-1)
-		cs_log("read error %d on fd %d", errno, dmx_fd);
+		cs_log("read error on fd %d (errno=%d %s)", dmx_fd, errno, strerror(errno));
 
 	return len;
 }
@@ -227,7 +227,7 @@ int dvbapi_open_device(int type, int num, int adapter) {
 	}
 
 	if ((dmx_fd = open(device_path, O_RDWR)) < 0) {
-		cs_debug_mask(D_DVBAPI, "error opening device %s (Errno: %d)", device_path, errno);
+		cs_debug_mask(D_DVBAPI, "error opening device %s (errno=%d %s)", device_path, errno, strerror(errno));
 		return -1;
 	}
 
@@ -515,7 +515,7 @@ void dvbapi_set_pid(int demux_id, int num, int index) {
 						ca_pid2.pid = demux[demux_id].STREAMpids[num];
 						ca_pid2.index = index;
 						if (ioctl(ca_fd[i], CA_SET_PID, &ca_pid2)==-1)
-							cs_debug_mask(D_DVBAPI, "Error CA_SET_PID pid=0x%04x index=%d errno=%d", ca_pid2.pid, ca_pid2.index, errno);
+							cs_debug_mask(D_DVBAPI, "Error CA_SET_PID pid=0x%04x index=%d (errno=%d %s)", ca_pid2.pid, ca_pid2.index, errno, strerror(errno));
 						else
 							cs_debug_mask(D_DVBAPI, "CA_SET_PID pid=0x%04x index=%d", ca_pid2.pid, ca_pid2.index);
 					}
@@ -1310,7 +1310,7 @@ void event_handler(int signal) {
 
 	dirp = opendir(TMPDIR);
 	if (!dirp) {
-		cs_log("opendir errno %d", errno);
+		cs_log("opendir failed (errno=%d %s)", errno, strerror(errno));
 		pthread_mutex_unlock(&event_handler_lock);
 		return;
 	}
@@ -1688,7 +1688,7 @@ void * dvbapi_main_local(void *cli) {
 						disable_pmt_files=1;
 
 						if (connfd <= 0) {
-							cs_log("accept() returns error %d, fd event %d", errno, pfd2[i].revents);
+							cs_log("accept() returns error on fd event %d (errno=%d %s)", pfd2[i].revents, errno, strerror(errno));
 							continue;
 						}
 					} else {
@@ -1930,7 +1930,7 @@ static int stapi_open() {
 
 	dirp = opendir(PROCDIR);
 	if (!dirp) {
-		cs_log("opendir errno %d", errno);
+		cs_log("opendir failed (errno=%d %s)", errno, strerror(errno));
 		return FALSE;
 	}
 

@@ -686,7 +686,7 @@ static int gbox_client_init(struct s_client *cli)
 
   if ((cli->udp_fd=socket(PF_INET, SOCK_DGRAM, p_proto))<0)
    {
-        cs_log("socket creation failed (errno=%d)", errno);
+        cs_log("socket creation failed (errno=%d %s)", errno, strerror(errno));
         cs_exit(1);
   }
 
@@ -702,7 +702,7 @@ static int gbox_client_init(struct s_client *cli)
   {
     if (bind(cli->udp_fd, (struct sockaddr *)&loc_sa, sizeof (loc_sa))<0)
     {
-      cs_log("bind failed (port=%d, errno=%d)", rdr->l_port, errno);
+      cs_log("bind failed (port=%d, errno=%d %s)", rdr->l_port, errno, strerror(errno));
       close(cli->udp_fd);
         return 1;
     }
