@@ -449,9 +449,9 @@ bind service to specified IP address, default:all
 .RE
 .SS "The [cs378x] section"
 .PP
-\fBport\fP = \fB0\fP|\fBport@[CAID][:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
+\fBport\fP = \fB0\fP|\fBport[@CAID][:ident][,ident]...[;port@CAID[:ident][,ident]...]...\fP
 .RS 3n
-TCP port/CAID/ident definitions for camd 3.78x clients,0 = disabled, default:0
+TCP port/CAID/ident definitions for camd 3.78x clients, 0 = disabled, default:0
 
  examples: port = 10000@0100:100000;20000@0200:200000,300000,400000
            port = 30000
@@ -465,7 +465,7 @@ bind service to specified IP address, default:all
 .PP
 \fBmgclient\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1 = report share information of all available CAIDs and provider IDs to allow CWS_MULTIPLE newcamd definitions (one user with a TCP port range) with mgcamd clients, default:0
+1 = provide share information of all available CAIDs and provider IDs to mgcamd clients, default:0
 .RE
 .PP
 \fBkey\fP = \fBDES key\fP
