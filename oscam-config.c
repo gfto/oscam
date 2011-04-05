@@ -2228,7 +2228,7 @@ int write_userdb(struct s_auth *authptr)
 			free(value);
 		}
 
-		if ((account->c35_suppresscmd08 != cfg.c35_udp_suppresscmd08) || (account->c35_suppresscmd08 != cfg.c35_tcp_suppresscmd08) || cfg.http_full_cfg)
+		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "suppresscmd08", "%d\n", account->c35_suppresscmd08);
 
 		if (account->cccmaxhops != 10 || cfg.http_full_cfg)
