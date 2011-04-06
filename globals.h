@@ -1202,6 +1202,12 @@ struct s_config
 #endif
 };
 
+struct s_clientinit
+{
+	void *(*handler)(struct s_client*);
+	struct s_client * client;
+};
+
 //Loadbalance constants:
 #define LB_NONE 0
 #define LB_FASTEST_READER_FIRST 1
@@ -1394,6 +1400,8 @@ extern void update_reader_config(uchar *ptr);
 extern int chk_ctab(ushort caid, CAIDTAB *ctab);
 extern int chk_srvid_by_caid_prov(struct s_client *, ushort caid, ulong provid);
 extern void nullclose(int *fd);
+extern void *clientthread_init(void * init);
+extern void cleanup_thread(void *var);
 extern void kill_thread(struct s_client *cl);
 extern int get_threadnum(struct s_client *client);
 extern void cs_add_violation(uint ip);

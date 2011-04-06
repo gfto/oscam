@@ -529,43 +529,52 @@ static void cleanup_ecmtasks(struct s_client *cl)
         cl->ecmtask = NULL;
 }
 
-static void cleanup_thread(struct s_client *cl)
+void cleanup_thread(void *var)
 {
-	struct s_client *prev, *cl2;
-	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
-		if (cl == cl2)
-			break;
-	if (cl != cl2)
-		cs_log("FATAL ERROR: could not find client to remove from list.");
-	else
-		prev->next = cl2->next; //remove client from list
-
-	if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
-		ph[cl->ctyp].cleanup(cl);
-    else if (cl->reader && cl->reader->ph.cleanup)
-        cl->reader->ph.cleanup(cl);
-
-	if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
-	if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
-	if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
-
-	if(cl->typ == 'r' && cl->reader){
-		if(cl->reader->aes_list) {
-			aes_clear_entries(cl->reader);
+	struct s_client *cl = var;
+	if(cl){
+		struct s_client *prev, *cl2;
+		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
+			if (cl == cl2)
+				break;
+		if (cl != cl2)
+			cs_log("FATAL ERROR: could not find client to remove from list.");
+		else
+			prev->next = cl2->next; //remove client from list
+	
+		if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
+			ph[cl->ctyp].cleanup(cl);
+	    else if (cl->reader && cl->reader->ph.cleanup)
+	        cl->reader->ph.cleanup(cl);
+	  if(cl->typ == 'c'){
+	    cs_statistics(cl);
+	    cl->last_caid = 0xFFFF;
+	    cl->last_srvid = 0xFFFF;
+	    cs_statistics(cl);
+	  }
+	
+		if(cl->pfd)		nullclose(&cl->pfd); //Closing Network socket
+		if(cl->fd_m2c_c)	nullclose(&cl->fd_m2c_c); //Closing client read fd
+		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
+	
+		if(cl->typ == 'r' && cl->reader){
+			if(cl->reader->aes_list) {
+				aes_clear_entries(cl->reader);
+			}
+			// Maybe we also need a "nullclose" mechanism here...
+			ICC_Async_Close(cl->reader);
 		}
-		// Maybe we also need a "nullclose" mechanism here...
-		ICC_Async_Close(cl->reader);
+		if (cl->reader) {
+			cl->reader->client = NULL;
+			cl->reader = NULL;
+	    }
+		cleanup_ecmtasks(cl);
+		add_garbage(cl->emmcache);
+		add_garbage(cl->req);
+		add_garbage(cl->cc);
+		add_garbage(cl->serialdata);
+		add_garbage(cl);
 	}
-	if (cl->reader) {
-		cl->reader->client = NULL;
-		cl->reader = NULL;
-    }
-	cleanup_ecmtasks(cl);
-	add_garbage(cl->emmcache);
-	add_garbage(cl->req);
-	add_garbage(cl->cc);
-	add_garbage(cl->serialdata);
-	add_garbage(cl);
 }
 
 static void cs_cleanup()
@@ -1063,6 +1072,15 @@ int cs_user_resolve(struct s_auth *account)
 	return result;
 }
 
+void *clientthread_init(void * init){
+	struct s_clientinit * clientinit = (struct s_clientinit *)init;
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_cleanup_push(cleanup_thread, (void *) clientinit->client);
+	clientinit->handler(clientinit->client);
+	pthread_cleanup_pop(0);
+	return NULL;
+}
+
 void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
 	pthread_attr_t attr;
@@ -1085,9 +1103,7 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 	if (pthread_equal(cl->thread, pthread_self())) return; //cant kill yourself
 
 	pthread_cancel(cl->thread);
-	cs_sleepms(30); //some sleep before cleanup! sometimes thread kill cancel needs some time!
 	cs_log("thread %8X killed!", cl->thread);
-	cleanup_thread(cl); //FIXME what about when cancellation was not granted immediately?
 	return;
 }
 
@@ -1184,6 +1200,7 @@ int restart_cardreader(struct s_reader *rdr, int restart) {
         /* pcsc doesn't like this either; segfaults on x86, x86_64 */
 		pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
+	
 		if (pthread_create(&cl->thread, &attr, start_cardreader, (void *)rdr)) {
 			cs_log("ERROR: can't create thread for %s", rdr->label);
 			cleanup_thread(cl);
@@ -3003,7 +3020,10 @@ int accept_connection(int i, int j) {
 #ifndef TUXBOX
 				pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-				if (pthread_create(&cl->thread, &attr, ph[i].s_handler, (void *) cl)) {
+				struct s_clientinit init;
+				init.handler = ph[i].s_handler;
+				init.client = cl;
+				if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) &init)) {
 					cs_log("ERROR: can't create thread for UDP client from %s", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr));
 					cleanup_thread(cl);
 				}
@@ -3046,7 +3066,10 @@ int accept_connection(int i, int j) {
 #ifndef TUXBOX
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-			if (pthread_create(&cl->thread, &attr, ph[i].s_handler, (void*) cl)) {
+			struct s_clientinit init;
+			init.handler = ph[i].s_handler;
+			init.client = cl;			
+			if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) &init)) {
 				cs_log("ERROR: can't create thread for TCP client from %s", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr));
 				cleanup_thread(cl);
 			}

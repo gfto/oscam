@@ -808,7 +808,9 @@ static void reader_main(struct s_reader * reader)
 void * start_cardreader(void * rdr)
 {
 	struct s_reader * reader = (struct s_reader *) rdr;
-
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_cleanup_push(cleanup_thread, (void *)reader->client);
+	
 	reader->client->thread=pthread_self();
 	pthread_setspecific(getclient, reader->client);
 
@@ -859,7 +861,7 @@ void * start_cardreader(void * rdr)
   }
   memset(reader->client->ecmtask, 0, CS_MAXPENDING*(sizeof(ECM_REQUEST)));
   reader_main(reader);
-  cs_exit(0);
+  pthread_cleanup_pop(0);
 	return NULL; //dummy to prevent compiler error
 }
 
