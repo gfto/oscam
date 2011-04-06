@@ -106,14 +106,12 @@ void chk_iprange(char *value, struct s_ip **base)
 	else
 		*base = cip;
 
-	memset(cip, 0, sizeof(struct s_ip));
 	for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ",")) {
 			if (i == 0)
 				++i;
 		else {
 			cs_malloc(&cip, sizeof(struct s_ip), SIGINT);
 			lip->next = cip;
-			memset(cip, 0, sizeof(struct s_ip));
 		}
 
 		if( (ptr2=strchr(trim(ptr1), '-')) ) {
@@ -1122,19 +1120,19 @@ void chk_t_gbox(char *token, char *value)
 {
 	if (!strcmp(token, "gsmsfile")) {
 		memset(cfg.gbox_gsms_path, 0, sizeof(cfg.gbox_gsms_path));
-		strncpy(cfg.gbox_gsms_path, value, sizeof(cfg.gbox_gsms_path) - 1);
+		cs_strncpy(cfg.gbox_gsms_path, value, sizeof(cfg.gbox_gsms_path) - 1);
 		return;
 	}
 
 	if (!strcmp(token, "hostname")) {
 		memset(cfg.gbox_hostname, 0, sizeof(cfg.gbox_hostname));
-		strncpy(cfg.gbox_hostname, value, sizeof(cfg.gbox_hostname) - 1);
+		cs_strncpy(cfg.gbox_hostname, value, sizeof(cfg.gbox_hostname) - 1);
 		return;
 	}
 
 	if (!strcmp(token, "password")) {
 		memset(cfg.gbox_key, 0, sizeof(cfg.gbox_key));
-		strncpy(cfg.gbox_key, value, sizeof(cfg.gbox_key) - 1);
+		cs_strncpy(cfg.gbox_key, value, sizeof(cfg.gbox_key) - 1);
 		return;
 	}
 
@@ -2740,7 +2738,6 @@ struct s_auth *init_userdb()
 				authptr = ptr;
 
 			account = ptr;
-			memset(account, 0, sizeof(struct s_auth));
 			account->allowedtimeframe[0] = 0;
 			account->allowedtimeframe[1] = 0;
 			account->aureader_list = NULL;
@@ -2751,6 +2748,7 @@ struct s_auth *init_userdb()
 			account->cccreshare = cfg.cc_reshare;
 			account->cccignorereshare = cfg.cc_ignore_reshare;
 			account->ncd_keepalive = cfg.ncd_keepalive;
+			account->firstlogin = 0;
 			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
 			for (i = 1; i < CS_MAXTUNTAB; account->ttab.bt_srvid[i++] = 0x0000);
 			nr++;

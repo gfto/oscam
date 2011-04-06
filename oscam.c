@@ -487,6 +487,7 @@ void cs_accounts_chk()
         account2->cwtout = account1->cwtout;
         account2->emmok = account1->emmok;
         account2->emmnok = account1->emmnok;
+        account2->firstlogin = account1->firstlogin;
       }
     }
   }
