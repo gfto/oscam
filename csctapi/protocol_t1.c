@@ -79,7 +79,6 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
           }
       }
 
-    T1_Block_Delete (block);
     return ret;
   }
 
@@ -106,7 +105,6 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
 				}
       }
 
-    T1_Block_Delete (block);
     return ret;
   }
 
@@ -252,7 +250,6 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
   if (buffer != NULL)
     free (buffer);
   
-  T1_Block_Delete (block);  
   return ret;
 }
 
