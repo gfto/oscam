@@ -77,6 +77,7 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
             inf = (*T1_Block_GetInf (block));
             cs_debug_mask (D_IFD, "Protocol: Received block S(IFS response, %d)", inf);
           }
+        T1_Block_Delete (block);
       }
 
     return ret;
@@ -103,6 +104,7 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
             cs_debug_mask (D_IFD, "Protocol: Received block S(RESYNCH response)");
 						reader->ns = 0;
 				}
+		T1_Block_Delete (block);
       }
 
     return ret;
