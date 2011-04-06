@@ -666,7 +666,6 @@ void cs_exit(int sig)
 	// this is very important - do not remove
 	if (cl->typ != 's') {
 		cs_log("thread %8X ended!", pthread_self());
-		cleanup_thread(cl);
 		//Restore signals before exiting thread
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
 		set_signal_handler(SIGHUP  , 1, cs_reload_config);
