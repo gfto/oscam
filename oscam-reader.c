@@ -65,6 +65,12 @@ int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec)
   struct s_client *cl = reader->client;
 
   if (!cl->pfd) return(-1);
+  
+  if (!reader->ph.recv) {
+    cs_log("reader %s: unsupported protocol!", reader->label);
+    return(-1);        
+  }
+            
   tv.tv_sec = msec/1000;
   tv.tv_usec = (msec%1000)*1000;
   FD_ZERO(&fds);
