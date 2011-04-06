@@ -316,12 +316,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		stat->last_received = time(NULL);
 		
 		//reduce ecm_count step by step
-		if (stat->ecm_count >= 100)
-			stat->ecm_count = 10;
-		else if (stat->ecm_count >= 10)
-			stat->ecm_count = 1;
-		else if (stat->ecm_count > 0)
-			stat->ecm_count = 0;
+		stat->ecm_count /= 10;
 	}
 	else if (rc == 5) { //timeout
 		stat->request_count++;
@@ -342,6 +337,8 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 				
 		stat->last_received = cur_time;
 
+		stat->ecm_count /= 10;
+		
 		//add timeout to stat:
 		if (ecm_time<=0)
 			ecm_time = cfg.ctimeout;
