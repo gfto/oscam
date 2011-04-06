@@ -560,7 +560,7 @@ int get_best_reader(ECM_REQUEST *er)
 			
 			if (!hassrvid && stat->rc == 0 && stat->request_count >= cfg.lb_min_ecmcount-1) { // 4 unanswered requests or timeouts?
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
-				add_stat(rdr, er, 1, 5); //reader marked as unuseable
+				add_stat(rdr, er, 1, 4); //reader marked as unuseable
 				continue;
 			}
 
@@ -697,7 +697,7 @@ int get_best_reader(ECM_REQUEST *er)
 		cs_debug_mask(D_TRACE, "loadbalancer: reopened %d readers", n);
 	}
 
-	//algo for finding unanswered requests (newcamd reader for example:)
+	//algo for finding unanswered requests (newcamd reader or disconnected camd35 UDP for example:)
 	it = ll_iter_create(result);
 	while ((rdr=ll_iter_next(it))) {
 		if (it->cur == fallback) break;
@@ -707,7 +707,13 @@ int get_best_reader(ECM_REQUEST *er)
        		if (stat && current_time > stat->last_received+(time_t)(cfg.ctimeout/1000)) { 
         		stat->request_count++; 
         		stat->last_received = current_time;
-        		cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
+        		
+        		if (stat->request_count >= cfg.lb_min_ecmcount) {
+        			add_stat(rdr, er, 1, 4); //reader marked as unuseable
+        			cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
+        		}
+        		else
+        			cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
 		}
 
 	}
