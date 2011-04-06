@@ -4,6 +4,9 @@
 #define UNDEF_AVG_TIME 80000
 #define MAX_ECM_SEND_CACHE 16
 
+#define LB_REOPEN_MODE_STANDARD 0
+#define LB_REOPEN_MODE_FAST 1
+
 static int stat_load_save;
 static struct timeb nulltime;
 static time_t last_housekeeping = 0;
@@ -316,7 +319,8 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		stat->last_received = time(NULL);
 		
 		//reduce ecm_count step by step
-		stat->ecm_count /= 10;
+		if (!cfg.lb_reopen_mode)
+			stat->ecm_count /= 10;
 	}
 	else if (rc == 5) { //timeout
 		stat->request_count++;
@@ -337,7 +341,8 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 				
 		stat->last_received = cur_time;
 
-		stat->ecm_count /= 10;
+		if (!cfg.lb_reopen_mode)
+			stat->ecm_count /= 10;
 		
 		//add timeout to stat:
 		if (ecm_time<=0)

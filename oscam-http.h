@@ -1414,6 +1414,7 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#lb_reopen_seconds##TPLHELPSUFFIX##Time to reopen:</A></TD><TD><input name=\"lb_reopen_seconds\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBREOPENSECONDS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lb_stat_cleanup##TPLHELPSUFFIX##Hours to cleanup older than:</A></TD><TD><input name=\"lb_stat_cleanup\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##LBCLEANUP##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lb_use_locking##TPLHELPSUFFIX##Use locking:</A></TD><TD><SELECT NAME=\"lb_use_locking\"><OPTION VALUE=\"0\">NO</OPTION><OPTION VALUE=\"1\" ##USELOCKINGCHECKED##>YES</OPTION></SELECT></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#lb_reopen_mode##TPLHELPSUFFIX##Reopen mode:</A></TD><TD><SELECT NAME=\"lb_reopen_mode\"><OPTION VALUE=\"0\">0 - reopen after time</OPTION><OPTION VALUE=\"1\" ##REOPENMODE##>1 - reopen fast</OPTION></SELECT></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#lb_noproviderforcaid##TPLHELPSUFFIX##Ignore provider for:</A></TD><TD><input name=\"lb_noproviderforcaid\" type=\"text\" size=\"50\" maxlength=\"255\" value=\"##LBNOPROVIDERFORCAID##\"></TD></TR>\n\
 			<TR><TD colspan=\"2\" align=\"right\"><input type=\"submit\" value=\"Save\" ##BTNDISABLED##></TD></TR>\n\
 		</TABLE>\n\

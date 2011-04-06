@@ -229,6 +229,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "LBREOPENSECONDS", "%d",cfg.lb_reopen_seconds);
 	tpl_printf(vars, TPLADD, "LBCLEANUP", "%d",cfg.lb_stat_cleanup);
 	if (cfg.lb_use_locking) tpl_addVar(vars, TPLADD, "USELOCKINGCHECKED", "selected");
+	if (cfg.lb_reopen_mode) tpl_addVar(vars, TPLADD, "REOPENMODE", "selected");
 
 	value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
 	tpl_addVar(vars, TPLADD, "LBNOPROVIDERFORCAID", value);

@@ -583,6 +583,11 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "lb_reopen_mode")) {
+		cfg.lb_reopen_mode = strToIntVal(value, DEFAULT_LB_REOPEN_MODE);
+		return;
+	}
+
 	if (!strcmp(token, "resolvegethostbyname")) {
 		cfg.resolve_gethostbyname = strToIntVal(value, 0);
 		return;
@@ -1831,6 +1836,8 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "lb_stat_cleanup", "%d\n", cfg.lb_stat_cleanup);
 	if (cfg.lb_use_locking != DEFAULT_LB_USE_LOCKING || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_use_locking", "%d\n", cfg.lb_use_locking);
+	if (cfg.lb_reopen_mode != DEFAULT_LB_REOPEN_MODE || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "lb_reopen_mode", "%d\n", cfg.lb_reopen_mode);
 
 	if (cfg.resolve_gethostbyname || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg.resolve_gethostbyname);
