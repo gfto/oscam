@@ -313,8 +313,15 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 				stat->rc = rc;
 				stat->fail_factor++;
 		}
-		//stat->last_received = time(NULL); do not change time, this would prevent reopen
-		//stat->ecm_count = 0; Keep ecm_count!
+		stat->last_received = time(NULL);
+		
+		//reduce ecm_count step by step
+		if (stat->ecm_count >= 100)
+			stat->ecm_count = 10;
+		else if (stat->ecm_count >= 10)
+			stat->ecm_count = 1;
+		else if (stat->ecm_count > 0)
+			stat->ecm_count = 0;
 	}
 	else if (rc == 5) { //timeout
 		stat->request_count++;
