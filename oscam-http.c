@@ -2399,8 +2399,8 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 							LLIST *cards = rcc->cards;
 							if (cards) {
 								int cnt = ll_count(cards);
-								if(cnt == 1) tpl_addVar(vars, TPLAPPEND, "CLIENTCON", " (1 card)");
-								else if(cnt > 1) tpl_printf(vars, TPLAPPEND, "CLIENTCON", " (%d cards)", cnt);
+								if(cnt == 1) tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards\">(1 card)</A>", urlencode(vars, cl->reader->label));
+								else if(cnt > 1) tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards\">(%d cards)</A>", urlencode(vars, cl->reader->label), cnt);
 							}
 						}
 					}

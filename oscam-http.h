@@ -63,8 +63,10 @@ TD.statuscol11 {text-align:center;}\n\
 TD.statuscol12 {text-align:center;}\n\
 TD.statuscol13 {}\n\
 TD.statuscol14 {text-align:center;}\n\
+TD.statuscol14 A {text-decoration: none;}\n\
 TD.statuscol15 {text-align:center;}\n\
 TD.statuscol16 {text-align:center;}\n\
+TD.statuscol16 A {text-decoration: none;}\n\
 HR {height:1px; border-width:0; color:white; background-color:#AAAAAA}\n\
 TR.s TD {background-color:#e1e1ef;}\n\
 TR.l TD {background-color:#e1e1ef;}\n\
