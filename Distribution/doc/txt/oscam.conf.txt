@@ -125,6 +125,10 @@ DESCRIPTIONS
 	  1 = ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, lb_nbest_readers  must	be
 	  set to 2 or higher, default:0
 
+       suppresscmd08 = 0|1
+	  0=  tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable,
+	  default:0
+
        lb_mode = mode
 	  loadbalance mode:
 
@@ -300,7 +304,7 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  0= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
+	  0= tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 
    The [cs378x] section
        port = 0|port[@CAID][:ident][,ident]...[;port@CAID[:ident][,ident]...]...
@@ -313,7 +317,7 @@ DESCRIPTIONS
 	  bind service to specified IP address, default:all
 
        suppresscmd08 = 0|1
-	  0= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
+	  0= tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 
    The [newcamd] section
        mgclient = 0|1
@@ -619,12 +623,12 @@ MONITOR
 WEB INTERFACE
        ·  template system
 
-	  The web interface allows you to create your own template. For developing your own template request the orignal template  with  the  non-
+	  The  web  interface  allows you to create your own template. For developing your own template request the orignal template with the non-
 	  linked page savetemplates.html. Store your own template in the directory specified by httptpl.
 
        ·  known issues
 
-	  Login  is  not  possible  by	now with the Safari browser because of incorrect stale flag handling. Increasing the AUTHNONCEVALIDSECS in
+	  Login is not possible by now with the Safari browser because of incorrect stale flag	handling.  Increasing  the  AUTHNONCEVALIDSECS	in
 	  oscam-http.h would be a workaround, but also a small security risk.
 
 CACHING
@@ -678,7 +682,7 @@ EXAMPLES
 	password     = mypassword
 
 SEE ALSO
-       list_smargo(1), oscam(1), oscam.ac(5), oscam.cert(5),  oscam.dvbapi(5),	oscam.guess(5),  oscam.ird(5),	oscam.provid(5),  oscam.server(5),
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.dvbapi(5),  oscam.guess(5), oscam.ird(5), oscam.provid(5), oscam.server(5),
        oscam.services(5), oscam.srvid(5), oscam.tiers(5), oscam.user(5)
 
 

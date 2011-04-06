@@ -180,6 +180,11 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 1 = ECM will be send to two or more readers with the same SC and the CWs will be verified against each other, \fBlb_nbest_readers\fP must be set to 2 or higher, default:0
 .RE
 .PP
+\fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
+.RS 3n
+0= tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
+.RE
+.PP
 \fBlb_mode\fP = \fBmode\fP 
 .RS 3n
 loadbalance mode:
@@ -445,7 +450,7 @@ bind service to specified IP address, default:all
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
+0= tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 .RE
 .SS "The [cs378x] section"
 .PP
@@ -464,7 +469,7 @@ bind service to specified IP address, default:all
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
+0= tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 .RE
 .SS "The [newcamd] section"
 .PP
