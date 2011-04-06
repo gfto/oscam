@@ -30,7 +30,41 @@ h2 {color: #F7F7F7; font-family: Arial; font-size: 50px; line-height: 50px; text
 h4 {color: #AAAAAA; font-family: Arial; font-size: 12px; line-height: 9px; text-align:center}\n\
 TABLE {border-spacing:1px; border:0px; padding:0px; margin-left:auto; margin-right:auto;}\n\
 TH {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#CCCCCC; color:black;}\n\
+TH.statuscol0 {text-align:center;width:10px;}\n\
+TH.statuscol1 {text-align:center;}\n\
+TH.statuscol2 {text-align:center;}\n\
+TH.statuscol3 {text-align:center;}\n\
+TH.statuscol4 {text-align:center;}\n\
+TH.statuscol5 {text-align:center;}\n\
+TH.statuscol6 {text-align:center;}\n\
+TH.statuscol7 {text-align:center;}\n\
+TH.statuscol8 {text-align:center;}\n\
+TH.statuscol9 {text-align:center;}\n\
+TH.statuscol10 {text-align:center;}\n\
+TH.statuscol11 {text-align:center;}\n\
+TH.statuscol12 {text-align:center;}\n\
+TH.statuscol13 {text-align:center;}\n\
+TH.statuscol14 {text-align:center;}\n\
+TH.statuscol15 {text-align:center;}\n\
+TH.statuscol16 {text-align:center;}\n\
 TD {height:10px; border:0px; font-family: Arial; font-size: 11px; padding:5px; background-color:#EEEEEE; color:black;}\n\
+TD.statuscol0 {text-align:center;width:10px;}\n\
+TD.statuscol1 {text-align:center;}\n\
+TD.statuscol2 {text-align:center;}\n\
+TD.statuscol3 {text-align:center;}\n\
+TD.statuscol4 {}\n\
+TD.statuscol5 {text-align:center;}\n\
+TD.statuscol6 {text-align:center;}\n\
+TD.statuscol7 {text-align:center;}\n\
+TD.statuscol8 {text-align:center;}\n\
+TD.statuscol9 {}\n\
+TD.statuscol10 {text-align:center;}\n\
+TD.statuscol11 {text-align:center;}\n\
+TD.statuscol12 {text-align:center;}\n\
+TD.statuscol13 {}\n\
+TD.statuscol14 {text-align:center;}\n\
+TD.statuscol15 {text-align:center;}\n\
+TD.statuscol16 {text-align:center;}\n\
 HR {height:1px; border-width:0; color:white; background-color:#AAAAAA}\n\
 TR.s TD {background-color:#e1e1ef;}\n\
 TR.l TD {background-color:#e1e1ef;}\n\
@@ -433,23 +467,23 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	</form>\n\
 	<TABLE WIDTH=\"100%\" class=\"status\">\n\
 		<TR>\n\
-			<TH>hide</TH>\n\
-			<TH>Thread ID</TH>\n\
-			<TH>Type</TH>\n\
-			<TH>ID</TH>\n\
-			<TH>Label</TH>\n\
-			<TH>AU</TH>\n\
-			<TH>Crypted</TH>\n\
-			<TH>Address</TH>\n\
-			<TH>Port</TH>\n\
-			<TH>Protocol</TH>\n\
-			<TH>Login</TH>\n\
-			<TH>Online</TH>\n\
-			<TH>CAID:SRVID</TH>\n\
-			<TH>Current Channel</TH>\n\
-			<TH>LB Value/ Reader</TH>\n\
-			<TH>Idle</TH>\n\
-			<TH>Status</TH>\n\
+			<TH class=\"statuscol0\">hide</TH>\n\
+			<TH class=\"statuscol1\">Thread ID</TH>\n\
+			<TH class=\"statuscol2\">Type</TH>\n\
+			<TH class=\"statuscol3\">ID</TH>\n\
+			<TH class=\"statuscol4\">Label</TH>\n\
+			<TH class=\"statuscol5\">AU</TH>\n\
+			<TH class=\"statuscol6\">Crypted</TH>\n\
+			<TH class=\"statuscol7\">Address</TH>\n\
+			<TH class=\"statuscol8\">Port</TH>\n\
+			<TH class=\"statuscol9\">Protocol</TH>\n\
+			<TH class=\"statuscol10\">Login</TH>\n\
+			<TH class=\"statuscol11\">Online</TH>\n\
+			<TH class=\"statuscol12\">CAID:SRVID</TH>\n\
+			<TH class=\"statuscol13\">Current Channel</TH>\n\
+			<TH class=\"statuscol14\">LB Value/ Reader</TH>\n\
+			<TH class=\"statuscol15\">Idle</TH>\n\
+			<TH class=\"statuscol16\">Status</TH>\n\
 		</TR>\n\
 ##SERVERSTATUS##\n\
 ##READERHEADLINE##\n\
@@ -477,23 +511,23 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 
 #define TPLCLIENTSTATUSBIT "\
 		<TR class=\"##CLIENTTYPE##\">\n\
-			<TD align=\"center\" WIDTH=\"10\"><A HREF =\"status.html?hide=##HIDEIDX##\" TITLE=\"Hide this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A></TD>\n\
-			<TD align=\"center\">##CSIDX##</TD>\n\
-			<TD align=\"center\">##CLIENTTYPE##</TD>\n\
-			<TD align=\"center\">##CLIENTCNR##</TD>\n\
-			<TD><SPAN TITLE=\"##CLIENTDESCRIPTION##\">##CLIENTUSER##</SPAN></TD>\n\
-			<TD align=\"center\">##CLIENTCAUHTTP##</TD>\n\
-			<TD align=\"center\">##CLIENTCRYPTED##</TD>\n\
-			<TD align=\"center\">##CLIENTIP##</TD>\n\
-			<TD align=\"center\">##CLIENTPORT##</TD>\n\
-			<TD><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
-			<TD align=\"center\">##CLIENTLOGINDATE##</TD>\n\
-			<TD align=\"center\">##CLIENTLOGINSECS##</TD>\n\
-			<TD align=\"center\">##CLIENTCAID##:##CLIENTSRVID##</TD>\n\
-			<TD>##CLIENTSRVPROVIDER####CLIENTSRVNAME##</TD>\n\
-			<TD align=\"center\">##CLIENTLBVALUE##</TD>\n\
-			<TD align=\"center\">##CLIENTIDLESECS##</TD>\n\
-			<TD align=\"center\">##CLIENTCON##</TD>\n\
+			<TD class=\"statuscol0\"><A HREF =\"status.html?hide=##HIDEIDX##\" TITLE=\"Hide this client\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"image?i=ICHID\" ALT=\"Hide\"></A></TD>\n\
+			<TD class=\"statuscol1\">##CSIDX##</TD>\n\
+			<TD class=\"statuscol2\">##CLIENTTYPE##</TD>\n\
+			<TD class=\"statuscol3\">##CLIENTCNR##</TD>\n\
+			<TD class=\"statuscol4\"><SPAN TITLE=\"##CLIENTDESCRIPTION##\">##CLIENTUSER##</SPAN></TD>\n\
+			<TD class=\"statuscol5\">##CLIENTCAUHTTP##</TD>\n\
+			<TD class=\"statuscol6\">##CLIENTCRYPTED##</TD>\n\
+			<TD class=\"statuscol7\">##CLIENTIP##</TD>\n\
+			<TD class=\"statuscol8\">##CLIENTPORT##</TD>\n\
+			<TD class=\"statuscol9\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
+			<TD class=\"statuscol10\">##CLIENTLOGINDATE##</TD>\n\
+			<TD class=\"statuscol11\">##CLIENTLOGINSECS##</TD>\n\
+			<TD class=\"statuscol12\">##CLIENTCAID##:##CLIENTSRVID##</TD>\n\
+			<TD class=\"statuscol13\">##CLIENTSRVPROVIDER####CLIENTSRVNAME##</TD>\n\
+			<TD class=\"statuscol14\">##CLIENTLBVALUE##</TD>\n\
+			<TD class=\"statuscol15\">##CLIENTIDLESECS##</TD>\n\
+			<TD class=\"statuscol16\">##CLIENTCON##</TD>\n\
 		</TR>\n"
 
 
