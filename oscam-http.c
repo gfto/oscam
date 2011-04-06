@@ -3543,11 +3543,7 @@ void http_srv() {
 								cfg.http_use_ssl=1;
 								fflush(f);
 								fclose(f);
-<<<<<<< .mine
 							} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d %s)", errno, strerror(errno));
-=======
-							} else cs_log("WebIf: Error opening file descriptor using fdopen() (errno=%d)", errno);
->>>>>>> .r4933
 						}
 					} else cs_log("WebIf: Error calling SSL_set_fd().");
 					SSL_shutdown(ssl);

@@ -816,6 +816,14 @@ void cs_reload_config()
 		#endif
 }
 
+static void init_signal_pre()
+{
+		set_signal_handler(SIGPIPE , 1, SIG_IGN);
+		set_signal_handler(SIGWINCH, 1, SIG_IGN);
+		set_signal_handler(SIGALRM , 1, SIG_IGN);
+		set_signal_handler(SIGHUP  , 1, SIG_IGN);
+}
+
 static void init_signal()
 {
 		set_signal_handler(SIGINT, 3, cs_exit);
@@ -3282,6 +3290,7 @@ if (pthread_key_create(&getclient, NULL)) {
   memset(&cfg, 0, sizeof(struct s_config));
 
   if (cs_confdir[strlen(cs_confdir)]!='/') strcat(cs_confdir, "/");
+  init_signal_pre(); // because log could cause SIGPIPE errors, init a signal handler first
   init_first_client();
   init_config();
   init_stat();
