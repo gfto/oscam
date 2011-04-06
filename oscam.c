@@ -3263,13 +3263,14 @@ if (pthread_key_create(&getclient, NULL)) {
 	  }
   }
 
+
 #ifdef OS_MACOSX
   if (bg && daemon_compat(1,0))
 #else
   if (bg && daemon(1,0))
 #endif
   {
-    cs_log("Error starting in background (errno=%d: %s)", errno, strerror(errno));
+    printf("Error starting in background (errno=%d: %s)", errno, strerror(errno));
     cs_exit(1);
   }
 
@@ -3284,6 +3285,22 @@ if (pthread_key_create(&getclient, NULL)) {
   init_first_client();
   init_config();
   init_stat();
+  
+  struct tm timeinfo;
+  memset(&timeinfo, 0x00, sizeof(timeinfo));
+  if(strptime(__DATE__, "%b %e %Y", &timeinfo)){
+	  time_t builddate = mktime(&timeinfo) - 86400;
+	  int i = 0;
+	  while(time((time_t)0) < builddate){
+	  	cs_log("The current system time is smaller than the build date (%s). Waiting 5s for time to correct... %s", __DATE__);
+	  	cs_sleepms(5000);
+	  	++i;
+	  	if(i > 12){
+	  		cs_log("Waiting was not successful. OSCam will be started but is UNSUPPORTED this way. Do not report any errors with this version.");
+				break;
+	  	}
+	  }
+	}
 
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {
