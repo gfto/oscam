@@ -905,6 +905,34 @@ static void init_first_client()
 #endif
 }
 
+static void init_check(){
+	char *ptr = __DATE__;
+	int month, year = atoi(ptr + strlen(ptr) - 4), day = atoi(ptr + 4);
+	if(day > 0 && day < 32 && year > 2010 && year < 9999){
+		struct tm timeinfo;
+		char months[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+		for(month = 0; month < 12; ++month){
+			if(!strncmp(ptr, months[month], 3)) break;
+		}
+		if(month > 11) month = 0;		
+		memset(&timeinfo, 0, sizeof(timeinfo));
+		timeinfo.tm_mday = day;
+		timeinfo.tm_mon = month;
+		timeinfo.tm_year = year - 1900;
+		time_t builddate = mktime(&timeinfo) - 86400;
+	  int i = 0;
+	  while(time((time_t)0) < builddate){
+	  	cs_log("The current system time is smaller than the build date (%s). Waiting 5s for time to correct...", ptr);
+	  	cs_sleepms(5000);
+	  	++i;
+	  	if(i > 12){
+	  		cs_log("Waiting was not successful. OSCam will be started but is UNSUPPORTED this way. Do not report any errors with this version.");
+				break;
+	  	}
+	  }
+	}
+}
+
 static int start_listener(struct s_module *ph, int port_idx)
 {
   int ov=1, timeout, is_udp, i;
@@ -3331,23 +3359,8 @@ if (pthread_key_create(&getclient, NULL)) {
   init_signal_pre(); // because log could cause SIGPIPE errors, init a signal handler first
   init_first_client();
   init_config();
+  init_check();
   init_stat();
-  
-  struct tm timeinfo;
-  memset(&timeinfo, 0x00, sizeof(timeinfo));
-  if(strptime(__DATE__, "%b %e %Y", &timeinfo)){
-	  time_t builddate = mktime(&timeinfo) - 86400;
-	  int i = 0;
-	  while(time((time_t)0) < builddate){
-	  	cs_log("The current system time is smaller than the build date (%s). Waiting 5s for time to correct... %s", __DATE__);
-	  	cs_sleepms(5000);
-	  	++i;
-	  	if(i > 12){
-	  		cs_log("Waiting was not successful. OSCam will be started but is UNSUPPORTED this way. Do not report any errors with this version.");
-				break;
-	  	}
-	  }
-	}
 
   for (i=0; mod_def[i]; i++)  // must be later BEFORE init_config()
   {
