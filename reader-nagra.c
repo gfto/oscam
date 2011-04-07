@@ -484,6 +484,11 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
 		reader->has_dt08=0;
 		cs_debug_mask(D_READER, "[nagra-reader] DT08 signature check nok");
 	}  	
+	
+	BN_free( bn_mod );
+	BN_free( bn_exp );
+	BN_free( bn_data );
+	BN_free( bn_res );
 }
 
 static void addProvider(struct s_reader * reader, unsigned char * cta_res)
