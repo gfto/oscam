@@ -830,8 +830,9 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	<BR><BR>\n\
 	<TABLE border=0 class=\"configmenu\">\n\
 		<TR>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##LABEL##&hide=-1\">show all</A></TD>\n\
-			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##LABEL##&hide=4\">hide 'not found'</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&hide=-1\">show all</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&hide=4\">hide 'not found'</A></TD>\n\
+			<TD CLASS=\"configmenu\"><A HREF=\"readerstats.html?label=##ENCODEDLABEL##&action=resetstat\">reset statistics</A>\
 		</TR>\n\
 	</TABLE>\n\
 	<BR><BR>\n\

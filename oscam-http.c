@@ -1236,10 +1236,19 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if(!rdr) return "0";
 
-	if (!apicall)
+	if (strcmp(getParam(params, "action"), "resetstat") == 0) {
+		if(rdr) {
+			clear_reader_stat(rdr);
+			cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, inet_ntoa(in));
+		}
+	}
+
+	if (!apicall){
 		tpl_printf(vars, TPLADD, "LABEL", "%s", rdr->label);
-	else
+		tpl_printf(vars, TPLADD, "ENCODEDLABEL", "%s", urlencode(vars, rdr->label));
+	} else {
 		tpl_printf(vars, TPLADD, "READERNAME", "%s", rdr->label);
+	}
 
 	char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
@@ -2089,14 +2098,6 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 		}
 	}
 
-	if (strcmp(getParam(params, "action"), "resetstat") == 0) {
-		struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
-		if(rdr) {
-			clear_reader_stat(rdr);
-			cs_log("Reader %s stats resetted by WebIF from %s", rdr->label, inet_ntoa(in));
-		}
-	}
-
 	char *debuglvl = getParam(params, "debug");
 	if(strlen(debuglvl) > 0) {
 #ifndef WITH_DEBUG
@@ -2374,9 +2375,9 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					{
 						struct s_reader *rdr = cl->reader;
 								if (rdr->lbvalue)
-									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue);
+									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%d</A>", urlencode(vars, rdr->label), rdr->lbvalue);
 								else
-									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"status.html?action=resetstat&label=%s\" TITLE=\"Reset statistics for this reader/ proxy\">%s</A>", urlencode(vars, rdr->label), "no data");
+									tpl_printf(vars, TPLADD, "CLIENTLBVALUE", "<A HREF=\"readerstats.html?label=%s&hide=4\" TITLE=\"Show statistics for this reader/ proxy\">%s</A>", urlencode(vars, rdr->label), "no data");
 
 								switch(rdr->card_status)
 								{
