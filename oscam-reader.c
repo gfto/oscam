@@ -805,6 +805,7 @@ static void reader_main(struct s_reader * reader)
   }
 }
 
+#pragma GCC diagnostic ignored "-Wempty-body" 
 void * start_cardreader(void * rdr)
 {
 	struct s_reader * reader = (struct s_reader *) rdr;
@@ -864,4 +865,5 @@ void * start_cardreader(void * rdr)
   pthread_cleanup_pop(0);
 	return NULL; //dummy to prevent compiler error
 }
+#pragma GCC diagnostic warning "-Wempty-body"
 

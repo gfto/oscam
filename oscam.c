@@ -836,7 +836,7 @@ static void init_signal_pre()
 static void init_signal()
 {
 		set_signal_handler(SIGINT, 3, cs_exit);
-		set_signal_handler(SIGKILL, 3, cs_exit);
+		//set_signal_handler(SIGKILL, 3, cs_exit);
 #ifdef OS_MACOSX
 		set_signal_handler(SIGEMT, 3, cs_exit);
 #else
@@ -1071,14 +1071,20 @@ int cs_user_resolve(struct s_auth *account)
 	return result;
 }
 
+#pragma GCC diagnostic ignored "-Wempty-body" 
 void *clientthread_init(void * init){
-	struct s_clientinit * clientinit = (struct s_clientinit *)init;
+	struct s_clientinit clientinit;
+	memcpy(&clientinit, init, sizeof(struct s_clientinit)); //copy to stack to free init pointer
+	free(init);
+	
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	pthread_cleanup_push(cleanup_thread, (void *) clientinit->client);
-	clientinit->handler(clientinit->client);
+	pthread_setspecific(getclient, clientinit.client);
+	pthread_cleanup_push(cleanup_thread, (void *) clientinit.client);
+	clientinit.handler(clientinit.client);
 	pthread_cleanup_pop(0);
 	return NULL;
 }
+#pragma GCC diagnostic warning "-Wempty-body" 
 
 void start_thread(void * startroutine, char * nameroutine) {
 	pthread_t temp;
@@ -3019,12 +3025,16 @@ int accept_connection(int i, int j) {
 #ifndef TUXBOX
 				pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-				struct s_clientinit init;
-				init.handler = ph[i].s_handler;
-				init.client = cl;
-				if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) &init)) {
+				//We need memory here, because when on stack and we leave the function, stack is overwritten, 
+				//but assigned to the thread
+				//So alloc memory for the init data and free them in clientthread_init:
+				struct s_clientinit *init = cs_malloc(&init, sizeof(struct s_clientinit), 0); 
+				init->handler = ph[i].s_handler;
+				init->client = cl;
+				if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) init)) {
 					cs_log("ERROR: can't create thread for UDP client from %s", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr));
 					cleanup_thread(cl);
+					free(init);
 				}
 				else
 					pthread_detach(cl->thread);
@@ -3065,12 +3075,17 @@ int accept_connection(int i, int j) {
 #ifndef TUXBOX
 			pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
-			struct s_clientinit init;
-			init.handler = ph[i].s_handler;
-			init.client = cl;			
-			if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) &init)) {
+
+			//We need memory here, because when on stack and we leave the function, stack is overwritten, 
+			//but assigned to the thread
+			//So alloc memory for the init data and free them in clientthread_init:
+			struct s_clientinit *init = cs_malloc(&init, sizeof(struct s_clientinit), 0);
+			init->handler = ph[i].s_handler;
+			init->client = cl;			
+			if (pthread_create(&cl->thread, &attr, clientthread_init, (void*) init)) {
 				cs_log("ERROR: can't create thread for TCP client from %s", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr));
 				cleanup_thread(cl);
+				free(init);
 			}
 			else
 				pthread_detach(cl->thread);

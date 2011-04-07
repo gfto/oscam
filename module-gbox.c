@@ -112,6 +112,7 @@ uint32_t ecm_getcrc(ECM_REQUEST *er, int ecmlen)
   return checksum[3] << 24 | checksum[2]<<16 | checksum[1]<<8 | checksum[0];
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter" 
 static void gbox_encrypt_stage1(uchar *buf, int l, uchar *key)
 {
   int i;
