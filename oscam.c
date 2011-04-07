@@ -532,7 +532,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
 void cleanup_thread(void *var)
 {
 	struct s_client *cl = var;
-	if(cl){
+	if(cl && !cl->cleaned){
 		struct s_client *prev, *cl2;
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 			if (cl == cl2)
@@ -574,6 +574,7 @@ void cleanup_thread(void *var)
 		add_garbage(cl->cc);
 		add_garbage(cl->serialdata);
 		add_garbage(cl);
+		cl->cleaned++;
 	}
 }
 
@@ -1109,7 +1110,7 @@ void *clientthread_init(void * init){
 	pthread_setspecific(getclient, clientinit.client);
 	pthread_cleanup_push(cleanup_thread, (void *) clientinit.client);
 	clientinit.handler(clientinit.client);
-	pthread_cleanup_pop(0);
+	pthread_cleanup_pop(1);
 	return NULL;
 }
 #pragma GCC diagnostic warning "-Wempty-body" 
@@ -1133,10 +1134,14 @@ void start_thread(void * startroutine, char * nameroutine) {
 void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
 
 	if (!cl) return;
-	if (pthread_equal(cl->thread, pthread_self())) return; //cant kill yourself
+	pthread_t thread = cl->thread;
+	if (pthread_equal(thread, pthread_self())) return; //cant kill yourself
 
-	pthread_cancel(cl->thread);
-	cs_log("thread %8X killed!", cl->thread);
+	pthread_cancel(thread);
+	pthread_join(thread, NULL);
+	while(!cl->cleaned)
+		cs_sleepms(50);
+	cs_log("thread %8X killed!", thread);
 	return;
 }
 
@@ -1188,8 +1193,10 @@ int restart_cardreader(struct s_reader *rdr, int restart) {
 	}
 
 	if (restart) //kill old thread
-		if (rdr->client)
+		if (rdr->client) {
 			kill_thread(rdr->client);
+			rdr->client = NULL;
+		}
 
 	rdr->tcp_connected = 0;
 	rdr->card_status = UNKNOWN;

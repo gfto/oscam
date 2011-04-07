@@ -809,16 +809,19 @@ static void reader_main(struct s_reader * reader)
 void * start_cardreader(void * rdr)
 {
 	struct s_reader * reader = (struct s_reader *) rdr;
+	struct s_client * client = reader->client;
+	cs_log("start_cardreader1");
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	pthread_cleanup_push(cleanup_thread, (void *)reader->client);
+	pthread_cleanup_push(cleanup_thread, (void *)client);
 	
-	reader->client->thread=pthread_self();
-	pthread_setspecific(getclient, reader->client);
+	client->thread=pthread_self();
+	pthread_setspecific(getclient, client);
 
+	cs_log("start_cardreader2");
   if (reader->typ & R_IS_CASCADING)
   {
-    reader->client->typ='p';
-    reader->client->port=reader->r_port;
+    client->typ='p';
+    client->port=reader->r_port;
     cs_log("proxy thread started  (thread=%8X, label=%s, server=%s)",pthread_self(), reader->label, reader->device);
     
     if (!(reader->ph.c_init)) {
@@ -827,7 +830,7 @@ void * start_cardreader(void * rdr)
       cs_exit(1);
     }
     
-	if (reader->ph.c_init(reader->client)) {
+	if (reader->ph.c_init(client)) {
 		//proxy reader start failed
 		cs_exit(1);
 	}
@@ -838,7 +841,7 @@ void * start_cardreader(void * rdr)
 #ifdef WITH_CARDREADER
   else
   {
-    reader->client->ip=cs_inet_addr("127.0.0.1");
+    client->ip=cs_inet_addr("127.0.0.1");
     cs_log("reader thread started (thread=%8X, label=%s, device=%s, detect=%s%s, mhz=%d, cardmhz=%d)", pthread_self(), reader->label,
         reader->device, reader->detect&0x80 ? "!" : "",RDR_CD_TXT[reader->detect&0x7f], reader->mhz,reader->cardmhz);
    	while (reader_device_init(reader)==2)
@@ -846,23 +849,24 @@ void * start_cardreader(void * rdr)
   }
 
 #endif
-  reader->client->emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));
-  if (!reader->client->emmcache)
+  client->emmcache=(struct s_emm *)malloc(CS_EMMCACHESIZE*(sizeof(struct s_emm)));
+  if (!client->emmcache)
   {
     cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
   }
-  memset(reader->client->emmcache, 0, CS_EMMCACHESIZE*(sizeof(struct s_emm)));
+  memset(client->emmcache, 0, CS_EMMCACHESIZE*(sizeof(struct s_emm)));
 
-  reader->client->ecmtask=(ECM_REQUEST *)malloc(CS_MAXPENDING*(sizeof(ECM_REQUEST)));
-  if (!reader->client->ecmtask)
+  client->ecmtask=(ECM_REQUEST *)malloc(CS_MAXPENDING*(sizeof(ECM_REQUEST)));
+  if (!client->ecmtask)
   {
     cs_log("Cannot allocate memory (errno=%d %s)", errno, strerror(errno));
     cs_exit(1);
   }
-  memset(reader->client->ecmtask, 0, CS_MAXPENDING*(sizeof(ECM_REQUEST)));
+  memset(client->ecmtask, 0, CS_MAXPENDING*(sizeof(ECM_REQUEST)));
+  cs_log("start_cardreader3");
   reader_main(reader);
-  pthread_cleanup_pop(0);
+  pthread_cleanup_pop(1);
 	return NULL; //dummy to prevent compiler error
 }
 #pragma GCC diagnostic warning "-Wempty-body"

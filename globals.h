@@ -723,6 +723,7 @@ struct s_client
 
   //failban value set bitwise - compared with BAN_
   int failban;
+  int cleaned;
   struct s_client *next; //make client a linked list
 };
 
