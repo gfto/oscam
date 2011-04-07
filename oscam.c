@@ -558,9 +558,6 @@ void cleanup_thread(void *var)
 		if(cl->fd_m2c)	nullclose(&cl->fd_m2c); //Closing client read fd
 	
 		if(cl->typ == 'r' && cl->reader){
-			if(cl->reader->aes_list) {
-				aes_clear_entries(cl->reader);
-			}
 			// Maybe we also need a "nullclose" mechanism here...
 			ICC_Async_Close(cl->reader);
 		}
