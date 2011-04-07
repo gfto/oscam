@@ -133,7 +133,7 @@ DESCRIPTIONS
 	   constcw
 	   sc8in1
 
-       ident = <CAID>:<ident>[,ident]...[,<CAID>:<ident>[,ident]...]...
+       ident = <CAID>:<ident>[,ident]...[;<CAID>:<ident>[,ident]...]...
 	  define CAID and ident for reader
 
 	  example: ident = 0100:123456,234567;0200:345678,456789
