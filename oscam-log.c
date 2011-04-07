@@ -136,7 +136,7 @@ int cs_init_log(void)
 static void get_log_header(int m, char *txt)
 {
 	struct s_client *cl = cur_client();	
-	unsigned int thread = cl?cl->thread:0;
+	pthread_t thread = cl?cl->thread:0;
 	if(m)
 		snprintf(txt, LOG_BUF_SIZE, "%8X %c ",(unsigned int) thread, cl?cl->typ:' ');
 	else
@@ -161,7 +161,7 @@ static void write_to_log(int flag, char *txt)
 #else
 	if (cfg.logtosyslog) // system-logfile
 #endif
-		syslog(LOG_INFO, txt);
+		syslog(LOG_INFO, "%s", txt);
 
 	time(&t);
 	localtime_r(&t, &lt);
