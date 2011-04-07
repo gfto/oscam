@@ -810,14 +810,12 @@ void * start_cardreader(void * rdr)
 {
 	struct s_reader * reader = (struct s_reader *) rdr;
 	struct s_client * client = reader->client;
-	cs_log("start_cardreader1");
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_cleanup_push(cleanup_thread, (void *)client);
 	
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, client);
 
-	cs_log("start_cardreader2");
   if (reader->typ & R_IS_CASCADING)
   {
     client->typ='p';
@@ -864,7 +862,6 @@ void * start_cardreader(void * rdr)
     cs_exit(1);
   }
   memset(client->ecmtask, 0, CS_MAXPENDING*(sizeof(ECM_REQUEST)));
-  cs_log("start_cardreader3");
   reader_main(reader);
   pthread_cleanup_pop(1);
 	return NULL; //dummy to prevent compiler error
