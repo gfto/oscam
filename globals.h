@@ -1227,6 +1227,7 @@ typedef struct reader_stat_t
   ushort        caid;
   ulong         prid;
   ushort        srvid;
+  short			ecmlen;
 
   time_t        last_received;
 

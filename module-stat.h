@@ -7,7 +7,7 @@ void load_stat_from_file();
 
 void save_stat_to_file();
 
-READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid);
+READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, short ecmlen);
 
 int remove_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid);
 

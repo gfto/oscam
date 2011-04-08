@@ -1910,26 +1910,22 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 		lc^=*lp;
 
 		snprintf(uname,sizeof(uname)-1, "%s", username(client));
-	if (er->rc==E_FOUND)
+		
+	struct s_reader *er_reader = er->selected_reader; //responding reader
+	if (!er_reader) er_reader = ll_has_elements(er->matching_rdr); //no reader? use first reader
+		
+	if (er_reader)
 	{
 			// add marker to reader if ECM_REQUEST was betatunneled
 			if(er->btun)
-				snprintf(sby, sizeof(sby)-1, " by %s(btun)", er->selected_reader->label);
+				snprintf(sby, sizeof(sby)-1, " by %s(btun)", er_reader->label);
 			else
-				snprintf(sby, sizeof(sby)-1, " by %s", er->selected_reader->label);
-	}
-	else {
-			struct s_reader *err_reader = er->selected_reader;
-			if (!err_reader) err_reader = ll_has_elements(er->matching_rdr);
-			if (err_reader)
-					snprintf(sby, sizeof(sby)-1, " by %s", err_reader->label);
+				snprintf(sby, sizeof(sby)-1, " by %s", er_reader->label);
 	}
 	if (er->rc < E_NOTFOUND) er->rcEx=0;
 	if (er->rcEx)
 		snprintf(erEx, sizeof(erEx)-1, "rejected %s%s", stxtWh[er->rcEx>>4],
 				stxtEx[er->rcEx&0xf]);
-
-
 
 	if(cfg.mon_appendchaninfo)
 		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(er->srvid, er->caid));
@@ -1941,9 +1937,9 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	client->cwlastresptime = 1000 * (tpe.time-er->tps.time) + tpe.millitm-er->tps.millitm;
 	cs_add_lastresponsetime(client, client->cwlastresptime); // add to ringbuffer
 
-	if (er->selected_reader && er->selected_reader->client){
-	  er->selected_reader->client->cwlastresptime = client->cwlastresptime;
-	  cs_add_lastresponsetime(er->selected_reader->client, client->cwlastresptime);
+	if (er_reader && er_reader->client){
+	  er_reader->client->cwlastresptime = client->cwlastresptime;
+	  cs_add_lastresponsetime(er_reader->client, client->cwlastresptime);
 	}
 
 #ifdef CS_LED
@@ -1953,12 +1949,14 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	send_reader_stat(er->selected_reader, er, er->rc);
 
 #ifdef WEBIF
-	if(er->rc == E_FOUND)
-		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", er->selected_reader->label);
-	else if ((er->rc == E_CACHE1) || (er->rc == E_CACHE2))
-		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s (cache)", er->selected_reader->label);
-	else
-		snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", stxt[er->rc]);
+	if (er_reader) {
+		if(er->rc == E_FOUND)
+			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", er_reader->label);
+		else if ((er->rc == E_CACHE1) || (er->rc == E_CACHE2))
+			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s (cache)", er_reader->label);
+		else
+			snprintf(client->lastreader, sizeof(client->lastreader)-1, "%s", stxt[er->rc]);
+	}
 #endif
 
 	er->caid = er->ocaid;
