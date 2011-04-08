@@ -63,7 +63,7 @@ void load_stat_from_file()
 	{
 		stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
-		i = fscanf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld fail %d len %04hX\n",
+		i = fscanf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
 			buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
 			&stat->time_avg, &stat->ecm_count, &stat->last_received, &stat->fail_factor, &stat->ecmlen);
 			
@@ -219,7 +219,7 @@ void save_stat_to_file_thread()
 			READER_STAT *stat;
 			while ((stat = ll_iter_next(it))) {
 				
-				fprintf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld fail %d %04hX\n",
+				fprintf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
 					rdr->label, stat->rc, stat->caid, stat->prid, 
 					stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
 				count++;
@@ -809,8 +809,8 @@ int get_best_reader(ECM_REQUEST *er)
 		}
 		ll_iter_release(it);
 	
-		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: n=%d selected readers: %s", 
-			username(er->client), er->caid, er->prid, er->srvid, ll_count(result), rdrs);
+		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X&%06X/%04X:%02hX: n=%d selected readers: %s", 
+			username(er->client), er->caid, er->prid, er->srvid, er->l, ll_count(result), rdrs);
 		
 		free(rdrs);
 	}
