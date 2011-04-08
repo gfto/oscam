@@ -111,7 +111,7 @@ void load_stat_from_file()
 	cs_debug_mask(D_TRACE, "loadbalancer: statistic loaded %d records", count);
 }
 /**
- * get statistic values for reader ridx and caid/prid/srvid
+ * get statistic values for reader ridx and caid/prid/srvid/ecmlen
  */
 READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, short ecmlen)
 {
@@ -145,9 +145,9 @@ READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvi
 }
 
 /**
- * removes caid/prid/srvid from stat-list of reader ridx
+ * removes caid/prid/srvid/ecmlen from stat-list of reader ridx
  */
-int remove_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid)
+int remove_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, short ecmlen)
 {
 	if (!rdr->lb_stat)
 		return 0;
@@ -157,8 +157,10 @@ int remove_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid)
 	READER_STAT *stat;
 	while ((stat = ll_iter_next(it))) {
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
-			ll_iter_remove_data(it);
-			c++;
+			if (!stat->ecmlen || stat->ecmlen == ecmlen) {
+				ll_iter_remove_data(it);
+				c++;
+			}
 		}
 	}
 	ll_iter_release(it);
@@ -238,7 +240,7 @@ void save_stat_to_file()
 }
 
 /**
- * Adds caid/prid/srvid to stat-list for reader ridx with time/rc
+ * Adds caid/prid/srvid/ecmlen to stat-list for reader ridx with time/rc
  */
 void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 {
@@ -251,6 +253,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		stat->caid = er->caid;
 		stat->prid = er->prid;
 		stat->srvid = er->srvid;
+		stat->ecmlen = er->l;
 		stat->time_avg = UNDEF_AVG_TIME; //dummy placeholder
 		ll_append(rdr->lb_stat, stat);
 	}
@@ -361,16 +364,16 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	else
 	{
 		if (rc >= 0)
-			cs_debug_mask(D_TRACE, "loadbalancer: not handled stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
-				rdr->label, rc, er->caid, er->prid, er->srvid, ecm_time, rdr->lb_usagelevel);
+			cs_debug_mask(D_TRACE, "loadbalancer: not handled stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms usagelevel %d",
+				rdr->label, rc, er->caid, er->prid, er->srvid, er->l, ecm_time, rdr->lb_usagelevel);
 	
 		return;
 	}
 	
 	housekeeping_stat(0);
 		
-	cs_debug_mask(D_TRACE, "loadbalancer: adding stat for reader %s: rc %d caid %04hX prid %06lX srvid %04hX time %dms usagelevel %d",
-				rdr->label, rc, er->caid, er->prid, er->srvid, ecm_time, rdr->lb_usagelevel);
+	cs_debug_mask(D_TRACE, "loadbalancer: adding stat for reader %s: rc %d %04hX&%06lX/%04hX/%02hX time %dms usagelevel %d",
+				rdr->label, rc, er->caid, er->prid, er->srvid, er->l, ecm_time, rdr->lb_usagelevel);
 	
 	if (cfg.lb_save) {
 		stat_load_save++;
@@ -470,7 +473,7 @@ static int get_reopen_seconds(READER_STAT *stat)
 }
 
 /**	
- * Gets best reader for caid/prid/srvid.
+ * Gets best reader for caid/prid/srvid/ecmlen.
  * Best reader is evaluated by lowest avg time but only if ecm_count > cfg.lb_min_ecmcount (5)
  * Also the reader is asked if he is "available"
  * returns ridx when found or -1 when not found
@@ -543,8 +546,8 @@ int get_best_reader(ECM_REQUEST *er)
 		}
 		ll_iter_release(it);
 	
-		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X/%06X/%04X: n=%d valid readers: %s", 
-			username(er->client), er->caid, er->prid, er->srvid, ll_count(er->matching_rdr), rdrs);
+		cs_debug_mask(D_TRACE, "loadbalancer: client %s for %04X&%06X/%04X/%02hX: n=%d valid readers: %s", 
+			username(er->client), er->caid, er->prid, er->srvid, er->l, ll_count(er->matching_rdr), rdrs);
 			
 		free(rdrs);
 	}
