@@ -107,6 +107,11 @@
 #include "csctapi/smartreader_types.h"
 #endif
 
+// DM500 and Dbox2 have toolchains which don't match their plattform. Therefore pthread_cleanup_push can't be used (binaries compile but only work on DM 7020)
+#if defined(TUXBOX) && defined(PPC)
+#define NO_PTHREAD_CLEANUP_PUSH
+#endif
+
 #ifndef CS_CONFDIR
 #define CS_CONFDIR    "/usr/local/etc"
 #endif

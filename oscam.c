@@ -135,7 +135,6 @@ void cs_add_lastresponsetime(struct s_client *cl, int ltime){
 	cl->cwlastresptimes[cl->cwlastresptimes_last] = ltime;
 }
 
-//Alno Test End
 /*****************************************************************************
         Statics
 *****************************************************************************/
@@ -664,6 +663,9 @@ void cs_exit(int sig)
 	// this is very important - do not remove
 	if (cl->typ != 's') {
 		cs_log("thread %8X ended!", pthread_self());
+		#ifdef NO_PTHREAD_CLEANUP_PUSH
+		cleanup_thread(cl);
+		#endif
 		//Restore signals before exiting thread
 		set_signal_handler(SIGPIPE , 0, cs_sigpipe);
 		set_signal_handler(SIGHUP  , 1, cs_reload_config);
@@ -1101,13 +1103,17 @@ int cs_user_resolve(struct s_auth *account)
 void *clientthread_init(void * init){
 	struct s_clientinit clientinit;
 	memcpy(&clientinit, init, sizeof(struct s_clientinit)); //copy to stack to free init pointer
-	free(init);
-	
+	free(init);	
+	#ifndef NO_PTHREAD_CLEANUP_PUSH
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_setspecific(getclient, clientinit.client);
 	pthread_cleanup_push(cleanup_thread, (void *) clientinit.client);
 	clientinit.handler(clientinit.client);
 	pthread_cleanup_pop(1);
+	#else
+	clientinit.handler(clientinit.client);
+	cs_exit(0);
+	#endif
 	return NULL;
 }
 #pragma GCC diagnostic warning "-Wempty-body" 
@@ -1136,8 +1142,13 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 
 	pthread_cancel(thread);
 	pthread_join(thread, NULL);
+	#ifndef NO_PTHREAD_CLEANUP_PUSH
 	while(!cl->cleaned)
 		cs_sleepms(50);
+	#else
+	cs_sleepms(50);
+	cleanup_thread(cl);
+	#endif
 	cs_log("thread %8X killed!", thread);
 	return;
 }
