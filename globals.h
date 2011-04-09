@@ -1618,7 +1618,12 @@ extern void http_srv();
 #endif
 
 // oscam-garbage
+#ifdef WITH_DEBUG
+extern void add_garbage_debug(void *data, char *file, int line);
+#define add_garbage(x)	add_garbage_debug(x,__FILE__, __LINE__)
+#else
 extern void add_garbage(void *data);
+#endif
 extern void start_garbage_collector(int);
 extern void stop_garbage_collector();
 

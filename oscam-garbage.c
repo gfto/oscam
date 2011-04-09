@@ -6,6 +6,10 @@
 struct cs_garbage {
         time_t time;
         void * data;
+        #ifdef WITH_DEBUG
+        char *file;
+        int line;
+        #endif
         struct cs_garbage *next;
 };
 
@@ -15,7 +19,11 @@ pthread_t garbage_thread;
 int garbage_collector_active = 0;
 int garbage_debug = 0;
 
+#ifdef WITH_DEBUG
+void add_garbage_debug(void *data, char *file, int line) {
+#else
 void add_garbage(void *data) {
+#endif
         if (!data)
                 return;
                 
@@ -23,14 +31,34 @@ void add_garbage(void *data) {
           free(data);
           return;
         }
-                
-        pthread_mutex_lock(&garbage_lock);
 
-        struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
-        garbage->time = time(NULL);
-        garbage->data = data;
-        garbage->next = garbage_first;
-        garbage_first = garbage;
+        pthread_mutex_lock(&garbage_lock);
+        
+        struct cs_garbage *garbagecheck = garbage_first;
+        while(garbagecheck){
+        	if(garbagecheck->data == data){     			
+      			cs_log("Found a try to add garbage twice. Not adding the element to garbage list...");
+      			#ifdef WITH_DEBUG
+      			cs_log("Current garbage addition: %s, line %d.", file, line);
+      			cs_log("Original garbage addition: %s, line %d.", garbagecheck->file, garbagecheck->line);
+      			#else
+      			cs_log("Please compile with debug for exact info.");
+      			#endif
+        		break;
+        	}
+        	garbagecheck = garbagecheck->next;
+        }
+				if(garbagecheck == NULL){
+	        struct cs_garbage *garbage = malloc(sizeof(struct cs_garbage));
+	        garbage->time = time(NULL);
+	        garbage->data = data;
+	        garbage->next = garbage_first;
+	        #ifdef WITH_DEBUG
+	        garbage->file = file;
+	        garbage->line = line;
+	        #endif
+	        garbage_first = garbage;
+	      }
 
         pthread_mutex_unlock(&garbage_lock);
 }
