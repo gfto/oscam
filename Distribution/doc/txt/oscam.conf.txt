@@ -78,10 +78,6 @@ DESCRIPTIONS
 	    0 = getadressinfo (default)
 	    1 = gethostbyname
 
-       clientdyndns = 0|1
-	  1  =	enable	DNS  resolving	of  clients, if you have already defined a hostname for your clients the parameter must be 1, otherwise no
-	  authentication will be possible for this clients, default:0
-
        failbancount = count
 	  number of incorrect logins after an ip address will be blocked, default:0
 
