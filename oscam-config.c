@@ -1740,14 +1740,14 @@ int write_config()
 	if (cfg.srvip != 0 || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.srvip));
 	if (cfg.usrfile != NULL || cfg.http_full_cfg)
-		fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg.usrfile);
+		fprintf_conf(f, CONFVARWIDTH, "usrfile", "%s\n", cfg.usrfile?cfg.usrfile:"");
 	if (cfg.logfile != NULL || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
 		value = mk_t_logfile();
 		fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", value);
 		free(value);
 	}
 	if (cfg.cwlogdir != NULL || cfg.http_full_cfg)
-		fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg.cwlogdir);
+		fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg.cwlogdir?cfg.cwlogdir:"");
 #ifdef QBOXHD_LED
 	if (cfg.disableqboxhdled || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "disableqboxhdled", "%d\n", cfg.disableqboxhdled);
@@ -1831,7 +1831,7 @@ int write_config()
 	}
 
 	if (cfg.lb_savepath || cfg.http_full_cfg)
-		fprintf_conf(f, CONFVARWIDTH, "lb_savepath", "%s\n", cfg.lb_savepath);
+		fprintf_conf(f, CONFVARWIDTH, "lb_savepath", "%s\n", cfg.lb_savepath?cfg.lb_savepath:"");
 	if (cfg.lb_stat_cleanup != DEFAULT_LB_STAT_CLEANUP || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_stat_cleanup", "%d\n", cfg.lb_stat_cleanup);
 	if (cfg.lb_use_locking != DEFAULT_LB_USE_LOCKING || cfg.http_full_cfg)
@@ -2318,8 +2318,10 @@ int write_server()
 
 			if (rdr->ncd_key[0] || rdr->ncd_key[13] || cfg.http_full_cfg) {
 				fprintf_conf(f, CONFVARWIDTH, "key", "");
-				for (j = 0; j < 14; j++) {
-					fprintf(f, "%02X", rdr->ncd_key[j]);
+				if(rdr->ncd_key[0] || rdr->ncd_key[13]){
+					for (j = 0; j < 14; j++) {
+						fprintf(f, "%02X", rdr->ncd_key[j]);
+					}
 				}
 				fprintf(f, "\n");
 			}
@@ -2334,7 +2336,7 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "pincode", "%s\n", rdr->pincode);
 
 			if ((rdr->emmfile || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", rdr->emmfile);
+				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", rdr->emmfile?rdr->emmfile:"");
 
 			value = mk_t_service((uint64)rdr->sidtabok, (uint64)rdr->sidtabno);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
@@ -2367,31 +2369,37 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
 			free(value);
 
-			if ((rdr->boxid || cfg.http_full_cfg) && isphysical)
+			if (rdr->boxid && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", rdr->boxid);
+			else if (cfg.http_full_cfg && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "boxid", "\n");
 
       if((rdr->fix_9993 || cfg.http_full_cfg) && isphysical)
       	fprintf_conf(f, CONFVARWIDTH, "fix9993", "%d\n", rdr->fix_9993);
 
 			// rsakey
 			int len = check_filled(rdr->rsa_mod, 120);
-			if ((len > 0 || cfg.http_full_cfg) && isphysical) {
+			if (len > 0 && isphysical) {
 				if(len > 64) len = 120;
 				else len = 64;
 				fprintf_conf(f, CONFVARWIDTH, "rsakey", "%s\n", cs_hexdump(0, rdr->rsa_mod, len));
-			}
+			} else if(cfg.http_full_cfg && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "rsakey", "\n");
 
 			if ((rdr->force_irdeto || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "force_irdeto", "%d\n", rdr->force_irdeto);
 			}
-
-			if ((check_filled(rdr->nagra_boxkey, 8) > 0 || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "boxkey", "%s\n", cs_hexdump(0, rdr->nagra_boxkey, 8));
+			
+			len = check_filled(rdr->nagra_boxkey, 8);
+			if ((len > 0 || cfg.http_full_cfg) && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "boxkey", "%s\n", len>0?cs_hexdump(0, rdr->nagra_boxkey, 8):"");
 
 			if ((rdr->atr[0] || cfg.http_full_cfg) && isphysical) {
 				fprintf_conf(f, CONFVARWIDTH, "atr", "");
-				for (j=0; j < rdr->atrlen/2; j++) {
-					fprintf(f, "%02X", rdr->atr[j]);
+				if(rdr->atr[0]){
+					for (j=0; j < rdr->atrlen/2; j++) {
+						fprintf(f, "%02X", rdr->atr[j]);
+					}
 				}
 				fprintf(f, "\n");
 			}
@@ -2493,8 +2501,10 @@ int write_server()
 			if (rdr->audisabled || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "audisabled", "%d\n", rdr->audisabled);
 
-			if (rdr->auprovid || cfg.http_full_cfg)
-				fprintf_conf(f, CONFVARWIDTH, "auprovid", "%06lX", rdr->auprovid);
+			if (rdr->auprovid)
+				fprintf_conf(f, CONFVARWIDTH, "auprovid", "%06lX\n", rdr->auprovid);
+			else if (cfg.http_full_cfg)
+				fprintf_conf(f, CONFVARWIDTH, "auprovid", "\n");
 
 			if ((rdr->ndsversion || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "ndsversion", "%d\n", rdr->ndsversion);
@@ -3190,9 +3200,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 #endif
 
 	if (!strcmp(token, "key")) {
-		if (key_atob_l(value, rdr->ncd_key, 28)) {
+		if (strlen(value) == 0){
+			return;
+		} else if (key_atob_l(value, rdr->ncd_key, 28)) {
 			fprintf(stderr, "Configuration newcamd: Error in Key\n");
-			exit(1);
 		}
 		return;
 	}
@@ -3320,7 +3331,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "pincode")) {
-		strncpy(rdr->pincode, value, sizeof(rdr->pincode) - 1);
+		cs_strncpy(rdr->pincode, value, sizeof(rdr->pincode));
 		return;
 	}
 
