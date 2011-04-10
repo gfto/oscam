@@ -181,18 +181,30 @@ maximum hops limit for CCcam clients, default:10
 .PP
 \fBcccreshare\fP = \fBlevel\fP
 .RS 3n
-reshare level for CCcam clients, default:0
+reshare level for CCcam clients
 
- \fB-1\fP = no resharing
+ \fB-1\fP = use reshare level of \fBoscam.conf\fR (default)
   \fBx\fP = resharing for direct peer and share level x
 .RE
 .PP
-\fBcccignorereshare\fP = \fB0\fP|\fB1\fP
+\fBcccignorereshare\fP = \fB-1\fP|\fB0\fP|\fB1\fP
 .RS 3n
-CCcam reshare setting, default:\fBignorereshare\fR in \fBoscam.conf\fR
+CCcam ignore reshare setting:
 
- \fB0\fP = use reshare setting of server
- \fB1\fP = use reshare setting of reader or user
+ \fB-1\fP = use ingore reshare level of \fBoscam.conf\fR (default)
+  \fB0\fP = use ignore reshare setting of server
+  \fB1\fP = use ignore reshare setting of reader or user
+.RE
+.PP
+\fBcccstealth\fP = \fB-1\fP|\fB1\fP
+.RS 3n
+CCcam stealth:
+
+ \fB-1\fP = use CCcam stealth of \fBoscam.conf\fR (default)
+  \fB0\fP = use extended OSCam-CCcam protocol
+  \fB1\fP = behaviour like the original CCcam: no activate partner 
+      detection and extended OSCam-CCcam protocol, prevent 
+      other OSCam to detect the server as OSCam server
 .RE
 .SH EXAMPLES
  [account]
