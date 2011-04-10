@@ -138,7 +138,8 @@ LL_ITER *ll_iter_create_s(LLIST *l, LL_ITER *it)
 
 void ll_iter_release(LL_ITER *it)
 {
-    add_garbage(it);
+	// We don't need add_garbage here as iterators aren't shared across threads
+    free(it);
 }
 
 void *ll_iter_next_nolock(LL_ITER *it)
