@@ -722,6 +722,10 @@ struct s_client
 
   //cs_hexdump buffer
   uchar dump[520];
+  
+  //an iterator to be used across OSCam; threadspecific
+  LL_ITER it;
+  int itused;
 
   //oscam.c
   struct timeval tv;

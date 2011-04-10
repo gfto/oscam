@@ -121,11 +121,16 @@ LL_NODE *ll_prepend(LLIST *l, void *obj)
 LL_ITER *ll_iter_create(LLIST *l)
 {
     if (!l) return NULL;
-
-    LL_ITER *it = calloc(1, sizeof(LL_ITER));
-
+    LL_ITER *it;
+		struct s_client *cl = cur_client();
+    if(cl && !cl->itused){
+    	it = &(cl->it);
+    	it->prv = NULL;
+      it->cur = NULL;
+    	cl->itused = 1;
+    } else
+    	if(!cs_malloc(&it, sizeof(LL_ITER), -1)) return NULL;
     it->l = l;
-
     return it;
 }
 
@@ -137,9 +142,12 @@ LL_ITER *ll_iter_create_s(LLIST *l, LL_ITER *it)
 }
 
 void ll_iter_release(LL_ITER *it)
-{
-	// We don't need add_garbage here as iterators aren't shared across threads
-    free(it);
+{	
+	struct s_client *cl = cur_client();
+  if(cl && cl->itused && it == &(cl->it)){
+  	cl->itused = 0;
+  // We don't need add_garbage here as iterators aren't shared across threads
+  } else free(it);
 }
 
 void *ll_iter_next_nolock(LL_ITER *it)

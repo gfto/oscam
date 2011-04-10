@@ -32,7 +32,7 @@ void add_garbage(void *data) {
           free(data);
           return;
         }
-				int bucket = (uint64)data/16 % HASH_BUCKETS;
+				int bucket = (unsigned long)data/16 % HASH_BUCKETS;
         pthread_mutex_lock(&garbage_lock[bucket]);
         
         struct cs_garbage *garbagecheck = garbage_first[bucket];
