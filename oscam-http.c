@@ -1147,15 +1147,12 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	tpl_printf(vars, TPLADD, "CCCMAXHOP", "%d", rdr->cc_maxhop);
 	tpl_printf(vars, TPLADD, "CCCMINDOWN", "%d", rdr->cc_mindown);
-	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", rdr->cc_reshare);
+	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", (rdr->cc_reshare==-1)?cfg.cc_reshare:rdr->cc_reshare);
 	if(rdr->cc_want_emu)
 		tpl_addVar(vars, TPLADD, "CCCWANTEMUCHECKED", "checked");
 
 	if(rdr->cc_keepalive)
 		tpl_addVar(vars, TPLADD, "KEEPALIVECHECKED", "selected");
-
-	if(rdr->cc_reshare)
-		tpl_printf(vars, TPLADD, "RESHARE", "%d", rdr->cc_reshare);
 
 	// Show only parameters which needed for the reader
 	switch (rdr->typ) {
@@ -1590,9 +1587,11 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 #endif
 
 	tpl_printf(vars, TPLADD, "CCCMAXHOPS", "%d", account->cccmaxhops);
-	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", account->cccreshare);
-	if (account->cccignorereshare)
+	tpl_printf(vars, TPLADD, "CCCRESHARE", "%d", (account->cccreshare==-1)?cfg.cc_reshare:account->cccreshare);
+	if ((account->cccignorereshare==-1)?cfg.cc_ignore_reshare:account->cccignorereshare)
 		tpl_printf(vars, TPLADD, "CCCIGNORERESHARE", "selected");
+	if ((account->cccstealth==-1)?cfg.cc_stealth:account->cccstealth)
+		tpl_printf(vars, TPLADD, "CCCSTEALTH", "selected");
 
 	//Failban
 	tpl_printf(vars, TPLADD, "FAILBAN", "%d", account->failban);

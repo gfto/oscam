@@ -193,19 +193,24 @@ int send_card_to_clients(struct cc_card *card, struct s_client *one_client) {
                 		int msg = is_ext?MSG_NEW_CARD_SIDINFO:MSG_NEW_CARD;
                         if (card_valid_for_client(cl, card)) {
 								int usr_reshare = cl->account->cccreshare;
+								if (usr_reshare == -1) usr_reshare = cfg.cc_reshare;
                                 int usr_ignorereshare = cl->account->cccignorereshare;
+                                if (usr_ignorereshare == -1) usr_ignorereshare = cfg.cc_ignore_reshare;
                                 
-                                int reader_reshare = card->origin_reader?card->origin_reader->cc_reshare:cfg.cc_reshare;
+                                int reader_reshare = card->origin_reader?card->origin_reader->cc_reshare:usr_reshare;
+                                if (reader_reshare == -1) reader_reshare = cfg.cc_reshare;
                                 int reshare = (reader_reshare < usr_reshare) ? reader_reshare : usr_reshare;
 								int new_reshare;
-								if (cfg.cc_ignore_reshare || usr_ignorereshare)
-										new_reshare = reshare;
+								if (card->card_type == CT_CARD_BY_SERVICE_USER)
+									new_reshare = usr_reshare;
+								else if (cfg.cc_ignore_reshare || usr_ignorereshare)
+									new_reshare = reshare;
 								else {
-										new_reshare = card->reshare;
-										if (card->card_type == CT_REMOTECARD)
-												new_reshare--;
-										if (new_reshare > reshare)
-												new_reshare = reshare;
+									new_reshare = card->reshare;
+									if (card->card_type == CT_REMOTECARD)
+										new_reshare--;
+									if (new_reshare > reshare)
+										new_reshare = reshare;
 								}
                                 if (new_reshare < 0)
                                 		continue;
@@ -345,7 +350,9 @@ int card_valid_for_client(struct s_client *cl, struct cc_card *card) {
                 return 0;
 
         //Check reshare
-        if (!cfg.cc_ignore_reshare && !cl->account->cccignorereshare && !card->reshare)
+        int usr_ignorereshare = cl->account->cccignorereshare;
+        if (usr_ignorereshare == -1) usr_ignorereshare = cfg.cc_ignore_reshare;
+        if (!cfg.cc_ignore_reshare && !usr_ignorereshare && !card->reshare)
         		return 0;
         		
 		//Check account maxhops:
@@ -506,6 +513,8 @@ struct cc_card *create_card(struct cc_card *card) {
         copy_sids(card2->badsids, card->badsids);
         card2->origin_id = card->id;
         card2->id = 0;
+        card2->card_type = card->card_type;
+        card2->sidtab = card->sidtab;
     }
 
     return card2;
@@ -600,7 +609,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
     //Minimize all, transmit just CAID, merge providers:
     if (cfg.cc_minimize_cards == MINIMIZE_CAID && !cfg.cc_forward_origin_card) {
         while ((card2 = ll_iter_next(it)))
-            if (card2->caid == card->caid &&
+            if (card2->caid == card->caid && card2->card_type == card->card_type &&
                     !memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial))) {
 
                 //Merge cards only if resulting providercount is smaller than CS_MAXPROV
@@ -630,7 +639,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
     //Removed duplicate cards, keeping card with lower hop:
     else if (cfg.cc_minimize_cards == MINIMIZE_HOPS && !cfg.cc_forward_origin_card) {
         while ((card2 = ll_iter_next(it))) {
-            if (card2->caid == card->caid &&
+            if (card2->caid == card->caid && card2->card_type == card->card_type &&
                     !memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial)) &&
                     equal_providers(card, card2)) {
                 break;
@@ -783,6 +792,9 @@ void update_card_list() {
 
             flt = 0;
 
+            int reshare = rdr->cc_reshare;
+            if (reshare == -1) reshare = cfg.cc_reshare;
+            
             //Reader-Services:
             if ((cfg.cc_reshare_services==1||cfg.cc_reshare_services==2||!rdr->caid) && cfg.sidtab && rdr->sidtabok) {
                 struct s_sidtab *ptr;
@@ -790,7 +802,7 @@ void update_card_list() {
                     if (rdr->sidtabok&((SIDTABBITS)1<<j)) {
                         int k;
                         for (k=0;k<ptr->num_caid;k++) {
-                            struct cc_card *card = create_card2(rdr, (j<<8)|k, ptr->caid[k], 0, rdr->cc_reshare);
+                            struct cc_card *card = create_card2(rdr, (j<<8)|k, ptr->caid[k], 0, reshare);
                             card->card_type = CT_CARD_BY_SERVICE_READER;
                             card->sidtab = ptr;
                             int l;
@@ -816,7 +828,7 @@ void update_card_list() {
                 for (j = 0; j < CS_MAXFILTERS; j++) {
                     if (rdr->ftab.filts[j].caid) {
                         ushort caid = rdr->ftab.filts[j].caid;
-                        struct cc_card *card = create_card2(rdr, j, caid, 0, rdr->cc_reshare);
+                        struct cc_card *card = create_card2(rdr, j, caid, 0, reshare);
                         card->card_type = CT_LOCALCARD;
                         
                         //Setting UA: (Unique Address):
@@ -857,7 +869,7 @@ void update_card_list() {
                         lcaid = rdr->ctab.cmap[j];
 
                     if (lcaid && (lcaid != 0xFFFF)) {
-                        struct cc_card *card = create_card2(rdr, j, lcaid, 0, rdr->cc_reshare);
+                        struct cc_card *card = create_card2(rdr, j, lcaid, 0, reshare);
                         card->card_type = CT_CARD_BY_CAID;
                         if (!rdr->audisabled)
                             cc_UA_oscam2cccam(rdr->hexserial, card->hexserial, lcaid);
@@ -876,7 +888,7 @@ void update_card_list() {
 						ushort caid = rdr->ctab.caid[c];
 						if (!caid) continue;
 						
-						struct cc_card *card = create_card2(rdr, c, caid, 0, rdr->cc_reshare);
+						struct cc_card *card = create_card2(rdr, c, caid, 0, reshare);
         		        card->card_type = CT_CARD_BY_CAID;
                 
         		        if (!rdr->audisabled)
@@ -907,7 +919,7 @@ void update_card_list() {
             if ((rdr->typ != R_CCCAM) && rdr->caid && !flt) {
                 //cs_log("tcp_connected: %d card_status: %d ", rdr->tcp_connected, rdr->card_status);
                 ushort caid = rdr->caid;
-                struct cc_card *card = create_card2(rdr, 1, caid, 0, rdr->cc_reshare);
+                struct cc_card *card = create_card2(rdr, 1, caid, 0, reshare);
                 card->card_type = CT_CARD_BY_CAID;
                 
                 if (!rdr->audisabled)

@@ -1523,12 +1523,23 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 	}
 
 	if (!strcmp(token, "cccreshare")) {
-		account->cccreshare = strToIntVal(value, 0);
+		account->cccreshare = strToIntVal(value, -1);
+		if (account->cccreshare == cfg.cc_reshare)
+			account->cccreshare = -1;
 		return;
 	}
 
 	if (!strcmp(token, "cccignorereshare")) {
-		account->cccignorereshare = strToIntVal(value, 0);
+		account->cccignorereshare = strToIntVal(value, -1);
+		if (account->cccignorereshare == cfg.cc_ignore_reshare)
+			account->cccignorereshare = -1;
+		return;
+	}
+
+	if (!strcmp(token, "cccstealth")) {
+		account->cccstealth = strToIntVal(value, -1);
+		if (account->cccstealth == cfg.cc_stealth)
+			account->cccstealth = -1;
 		return;
 	}
 
@@ -2239,11 +2250,14 @@ int write_userdb(struct s_auth *authptr)
 		if (account->cccmaxhops != 10 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "cccmaxhops", "%d\n", account->cccmaxhops);
 
-		if ((account->cccreshare != cfg.cc_reshare) || cfg.http_full_cfg)
+		if ((account->cccreshare != cfg.cc_reshare && account->cccreshare != -1) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", account->cccreshare);
 
-		if ((account->cccignorereshare != cfg.cc_ignore_reshare) || cfg.http_full_cfg)
+		if ((account->cccignorereshare != cfg.cc_ignore_reshare && account->cccignorereshare != -1) || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "cccignorereshare", "%d\n", account->cccignorereshare);
+
+		if ((account->cccstealth != cfg.cc_stealth && account->cccstealth != -1 ) || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "cccstealth", "%d\n", account->cccstealth);
 
 		if (account->c35_sleepsend || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "sleepsend", "%d\n", account->c35_sleepsend);
@@ -2491,7 +2505,7 @@ int write_server()
 				if (rdr->cc_keepalive || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "ccckeepalive", "%d\n", rdr->cc_keepalive);
 
-				if (rdr->cc_reshare != cfg.cc_reshare || cfg.http_full_cfg)
+				if ((rdr->cc_reshare != cfg.cc_reshare && rdr->cc_reshare != -1) || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "cccreshare", "%d\n", rdr->cc_reshare);
 			}
 
@@ -2762,8 +2776,9 @@ struct s_auth *init_userdb()
 			account->tosleep = cfg.tosleep;
 			account->c35_suppresscmd08 = cfg.c35_suppresscmd08;
 			account->cccmaxhops = 10;
-			account->cccreshare = cfg.cc_reshare;
-			account->cccignorereshare = cfg.cc_ignore_reshare;
+			account->cccreshare = -1; //-1 = use cfg.
+			account->cccignorereshare = -1;
+			account->cccstealth = -1;
 			account->ncd_keepalive = cfg.ncd_keepalive;
 			account->firstlogin = 0;
 			for (i = 1; i < CS_MAXCAIDTAB; account->ctab.mask[i++] = 0xffff);
@@ -3819,6 +3834,8 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 
 	if (!strcmp(token, "ccchopsaway") || !strcmp(token, "cccreshar")  || !strcmp(token, "cccreshare")) {
 		rdr->cc_reshare = atoi(value);
+		if (rdr->cc_reshare == cfg.cc_reshare)
+			rdr->cc_reshare = -1;
 		return;
 	}
 
@@ -4000,7 +4017,7 @@ int init_readerdb()
 			rdr->cardmhz = 357;
 			rdr->deprecated = 0;
 			rdr->force_irdeto = 0;
-			rdr->cc_reshare = cfg.cc_reshare; //set global value as init value
+			rdr->cc_reshare = -1;
 			rdr->cc_maxhop = 10;
 			rdr->cc_mindown = 0;
 			rdr->lb_weight = 100;

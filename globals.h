@@ -1004,6 +1004,7 @@ struct s_auth
   int       cccmaxhops;
   int       cccreshare;
   int       cccignorereshare;
+  int		cccstealth;
   int       disabled;
   int 		failban;
   

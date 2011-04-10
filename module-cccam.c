@@ -638,7 +638,10 @@ int cc_send_srv_data(struct s_client *cl) {
 	uint8 buf[0x48];
 	memset(buf, 0, 0x48);
 
-	if (cfg.cc_stealth)
+	int stealth = cl->account->cccstealth;
+	if (stealth == -1)
+		stealth = cfg.cc_stealth;
+	if (stealth)
 	{
 		int i;
 		for (i=0;i<8;i++)
@@ -989,6 +992,7 @@ int same_first_node(struct cc_card *card1, struct cc_card *card2) {
 int same_card(struct cc_card *card1, struct cc_card *card2) {
 	return (card1->caid == card2->caid && 
 		card1->remote_id == card2->remote_id && 
+		card1->card_type == card2->card_type &&
 		same_first_node(card1, card2));
 }
 
