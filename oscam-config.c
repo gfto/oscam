@@ -2310,7 +2310,7 @@ int write_server()
 			fprintf(f,"[reader]\n");
 
 			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", rdr->label);
-      fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", rdr->enable);
+			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", rdr->enable);
 			char *ctyp = reader_get_type_desc(rdr, 0);
 
 			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s\n", ctyp);
@@ -2388,8 +2388,8 @@ int write_server()
 			else if (cfg.http_full_cfg && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "\n");
 
-      if((rdr->fix_9993 || cfg.http_full_cfg) && isphysical)
-      	fprintf_conf(f, CONFVARWIDTH, "fix9993", "%d\n", rdr->fix_9993);
+			if((rdr->fix_9993 || cfg.http_full_cfg) && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "fix9993", "%d\n", rdr->fix_9993);
 
 			// rsakey
 			int len = check_filled(rdr->rsa_mod, 120);
@@ -2428,11 +2428,14 @@ int write_server()
 			if ((rdr->nagra_read || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "nagra_read", "%d\n", rdr->nagra_read);
 
-			if ((rdr->mhz || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", rdr->mhz);
+			if (rdr->typ != R_SMART) { //frequencies not needed on smartreader
 
-			if ((rdr->cardmhz || cfg.http_full_cfg) && isphysical)
-				fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", rdr->cardmhz);
+				if ((rdr->mhz || cfg.http_full_cfg) && isphysical)
+					fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", rdr->mhz);
+
+				if ((rdr->cardmhz || cfg.http_full_cfg) && isphysical)
+					fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", rdr->cardmhz);
+			}
 
 			value = mk_t_ftab(&rdr->ftab);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
