@@ -6,9 +6,6 @@
 //static time_t ac_last_chk;
 static uchar  ac_ecmd5[CS_ECMSTORESIZE];
 
-LLIST *ac_stat_list = NULL; //struct s_acasc
-LLIST *acasc_list = NULL;   //struct  s_acasc_shm
-
 int ac_init_log(void)
 {
   if( (!fpa)  && (cfg.ac_logfile[0]))
@@ -27,24 +24,26 @@ int ac_init_log(void)
 
 void ac_clear()
 {
-	ll_clear_data(acasc_list);
-	ll_clear_data(ac_stat_list);
+	struct s_client *client;
+	struct s_auth *account;
+	
+	for (client=first_client;client;client=client->next)
+	{
+  		if (client->typ != 'c') continue;
+  		memset(&client->acasc, 0, sizeof(client->acasc));
+	}
+  	
+	for (account=cfg.account;account;account=account->next)
+		memset(&account->ac_stat, 0, sizeof(account->ac_stat));
 }
 
 void ac_done_stat()
 {
-	ll_destroy_data(acasc_list);
-	ll_destroy_data(ac_stat_list);
 }
 
 void ac_init_stat()
 {
-  if (acasc_list)
-    ac_clear();
-  else {
-    ac_stat_list = ll_create();
-    acasc_list = ll_create();
-  }
+  ac_clear();
 
   if( fpa )
     fclose(fpa);
@@ -53,112 +52,75 @@ void ac_init_stat()
     cs_exit(0);
 }
 
-static struct s_client *idx_from_ac_idx(int ac_idx)
-{
-	struct s_client *cl;
-	for (cl=first_client; cl ; cl=cl->next)
-    if( cl->ac_idx==ac_idx )
-      return cl;
-  return NULL;
-}
-
 void ac_do_stat()
 {
-  int i, j, idx, exceeds, maxval, prev_deny=0;
-  struct s_client *cl_idx;
+  int j, idx, exceeds, maxval, prev_deny=0;
 
-  LL_ITER *itr1 = ll_iter_create(ac_stat_list);
-  LL_ITER *itr2 = ll_iter_create(acasc_list);
-  i = 1;
-  struct s_acasc *ac_stat = ll_iter_next(itr1);
-  struct s_acasc_shm *acasc;
-  while ((acasc=ll_iter_next(itr2)))
+  struct s_client *client;
+  for (client=first_client;client;client=client->next)
   {
-	int ac_stat_next = 1;
-	if (!ac_stat) {
-		ac_stat = malloc(sizeof(struct s_acasc));
-		memset(ac_stat, 0, sizeof(struct s_acasc));
-		ll_iter_insert(itr1, ac_stat);
-		ac_stat_next = 0;
-	}
+  	if (client->typ != 'c') continue;
+  	
+  	struct s_acasc *ac_stat = &client->account->ac_stat;
+  	struct s_acasc_shm *acasc = &client->acasc;
 
     idx = ac_stat->idx;
     ac_stat->stat[idx] = acasc->ac_count;
     acasc->ac_count=0;
-    cl_idx = idx_from_ac_idx(i);
 
-    if( ac_stat->stat[idx] && cl_idx)
+    if( ac_stat->stat[idx])
     {
-      //if( cl_idx == NULL ) {
-        //cs_log("ERROR: can't find client with ac_idx=%d", i);
-        //client is no longer connected
-      //}
-      
-      if( cl_idx->ac_penalty==2 ) {// banned
-        cs_debug_mask(D_CLIENT, "user '%s' banned", cl_idx->account->usr);
+      if( client->account->ac_penalty==2 ) {// banned
+        cs_debug_mask(D_CLIENT, "user '%s' banned", client->account->usr);
         acasc->ac_deny=1;
       }
       else
       {
-        for( j=exceeds=maxval=0; j<cfg.ac_samples; j++ ) 
+        for(j=exceeds=maxval=0; j<cfg.ac_samples; j++) 
         {
-          if( ac_stat->stat[j] > maxval )
+          if (ac_stat->stat[j] > maxval)
             maxval=ac_stat->stat[j];
-          exceeds+=(ac_stat->stat[j]>cl_idx->ac_limit);
+          exceeds+=(ac_stat->stat[j] > client->ac_limit);
         }
         prev_deny=acasc->ac_deny;
         acasc->ac_deny = (exceeds >= cfg.ac_denysamples);
         
-        cs_debug_mask(D_CLIENT, "%s limit=%d, max=%d, samples=%d, dsamples=%d, ac[ci=%d][si=%d]:",
-          cl_idx->account->usr, cl_idx->ac_limit, maxval, 
-          cfg.ac_samples, cfg.ac_denysamples, i, idx);
+        cs_debug_mask(D_CLIENT, "%s limit=%d, max=%d, samples=%d, dsamples=%d, [idx=%d]:",
+          client->account->usr, client->ac_limit, maxval, 
+          cfg.ac_samples, cfg.ac_denysamples, idx);
         cs_debug_mask(D_CLIENT, "%d %d %d %d %d %d %d %d %d %d ", ac_stat->stat[0],
           ac_stat->stat[1], ac_stat->stat[2], ac_stat->stat[3],
           ac_stat->stat[4], ac_stat->stat[5], ac_stat->stat[6],
           ac_stat->stat[7], ac_stat->stat[8], ac_stat->stat[9]);
         if( acasc->ac_deny ) {
-          cs_log("user '%s' exceeds limit", cl_idx->account->usr);
+          cs_log("user '%s' exceeds limit", client->account->usr);
           ac_stat->stat[idx] = 0;
         } else if( prev_deny )
-          cs_log("user '%s' restored access", cl_idx->account->usr);
+          cs_log("user '%s' restored access", client->account->usr);
       }
     }
-    else if( acasc->ac_deny )
+    else if (acasc->ac_deny)
     {
       prev_deny=1;
       acasc->ac_deny=0;
-      if( cl_idx != NULL )
-        cs_log("restored access for inactive user '%s'", cl_idx->account->usr);
-      else
-        cs_log("restored access for unknown user (ac_idx=%d)", i);
+      cs_log("restored access for inactive user '%s'", client->account->usr);
     }
 
-    if( !acasc->ac_deny && !prev_deny )
+    if (!acasc->ac_deny && !prev_deny)
       ac_stat->idx = (ac_stat->idx + 1) % cfg.ac_samples;
-
-    if (ac_stat_next)
-    	ac_stat = ll_iter_next(itr1);
-    else
-    	ac_stat = NULL;
-    i++;
   }
-  ll_iter_release(itr2);
-  ll_iter_release(itr1);
 }
 
-void ac_init_client(struct s_auth *account)
+void ac_init_client(struct s_client *client, struct s_auth *account)
 {
-  struct s_client *cl = cur_client();
-  cl->ac_idx = account->ac_idx;
-  cl->ac_limit = 0;
+  client->ac_limit = 0;
   if( cfg.ac_enabled )
   {
     if( account->ac_users )
     {
-      cl->ac_limit = (account->ac_users*100+80)*cfg.ac_stime;
-      cl->ac_penalty = account->ac_penalty;
-      cs_debug_mask(D_CLIENT, "login '%s', ac_idx=%d, users=%d, stime=%d min, dwlimit=%d per min, penalty=%d", 
-              account->usr, account->ac_idx, account->ac_users, cfg.ac_stime, 
+      client->ac_limit = (account->ac_users*100+80)*cfg.ac_stime;
+      cs_debug_mask(D_CLIENT, "login '%s', users=%d, stime=%d min, dwlimit=%d per min, penalty=%d", 
+              account->usr, account->ac_users, cfg.ac_stime, 
               account->ac_users*100+80, account->ac_penalty);
     }
     else
@@ -185,31 +147,11 @@ static int ac_dw_weight(ECM_REQUEST *er)
   return 16; // 10*100/60
 }
 
-struct s_acasc_shm *get_acasc(ushort ac_idx) {
-	int i=1;
-	LL_ITER *itr = ll_iter_create(acasc_list);
-
-	struct s_acasc_shm *acasc;
-	while ((acasc=ll_iter_next(itr))) {
-		if (i == ac_idx) {
-		        ll_iter_release(itr);
-			return acasc;
-                }
-		i++;
-	}
-	acasc = malloc(sizeof(struct s_acasc_shm));
-	memset(acasc, 0, sizeof(struct s_acasc_shm));
-	ll_iter_insert(itr, acasc);
-	ll_iter_release(itr);
-	return acasc;
-}
-
-void ac_chk(ECM_REQUEST *er, int level)
+void ac_chk(struct s_client *cl, ECM_REQUEST *er, int level)
 {
-  struct s_client *cl = cur_client();
-  if (!cl->ac_limit || !cfg.ac_enabled ||!acasc_list) return;
+  if (!cl->ac_limit || !cfg.ac_enabled) return;
 
-  struct s_acasc_shm *acasc = get_acasc(cl->ac_idx);
+  struct s_acasc_shm *acasc = &cl->acasc;
 
   if( level==1 ) 
   {
@@ -224,11 +166,16 @@ void ac_chk(ECM_REQUEST *er, int level)
   }
 
   if( acasc->ac_deny )
-    if( cl->ac_penalty )
+    if( cl->account->ac_penalty )
     {
-      cs_debug_mask(D_CLIENT, "send fake dw");
-      er->rc=E_FAKE; // fake
-      er->rcEx=0;
+	  if (cl->account->ac_penalty == 3)
+      	cs_debug_mask(D_CLIENT, "fake delay %dms", cfg.ac_fakedelay);
+	  else 
+	  {
+      	cs_debug_mask(D_CLIENT, "send fake dw");
+      	er->rc=E_FAKE; // fake
+      	er->rcEx=0;
+	  }
       cs_sleepms(cfg.ac_fakedelay);
     }
 }

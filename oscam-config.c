@@ -2794,7 +2794,6 @@ struct s_auth *init_userdb()
 #ifdef CS_ANTICASC
 			account->ac_users = cfg.ac_users;
 			account->ac_penalty = cfg.ac_penalty;
-			account->ac_idx = nr;
 #endif
 			if(account->expirationdate && account->expirationdate < time(NULL))
 				expired++;

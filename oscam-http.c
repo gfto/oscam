@@ -1431,7 +1431,6 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 #ifdef CS_ANTICASC
 		account->ac_users=cfg.ac_users;
 		account->ac_penalty=cfg.ac_penalty;
-		account->ac_idx = account->ac_idx + 1;
 #endif
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<b>New user has been added with default settings</b><BR>");
 

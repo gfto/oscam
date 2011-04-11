@@ -606,6 +606,18 @@ typedef struct ecm_request_t
   char msglog[MSGLOGSIZE];
 } ECM_REQUEST;
 
+#ifdef CS_ANTICASC
+struct s_acasc_shm {
+  ushort ac_count : 15;
+  ushort ac_deny  : 1;
+};
+
+struct s_acasc {
+  ushort stat[10];
+  uchar  idx;    // current active index in stat[]
+};
+#endif
+
 struct s_client
 {
   in_addr_t	ip;
@@ -671,9 +683,8 @@ struct s_client
   int		port_idx;    // index in server ptab
   int		ncd_server;  // newcamd server
 #ifdef CS_ANTICASC
-  ushort	ac_idx;
   ushort	ac_limit;
-  uchar		ac_penalty;
+  struct	s_acasc_shm acasc;
 #endif
   FTAB		fchid;
   FTAB		ftab;        // user [caid] and ident filter
@@ -946,17 +957,6 @@ struct s_reader  //contains device info, reader info and card info
 };
 
 #ifdef CS_ANTICASC
-
-struct s_acasc_shm {
-  ushort ac_count : 15;
-  ushort ac_deny  : 1;
-};
-
-struct s_acasc {
-  ushort stat[10];
-  uchar  idx;    // current active index in stat[]
-};
-
 struct s_cpmap
 {
   ushort caid;
@@ -989,9 +989,9 @@ struct s_auth
   CLASSTAB cltab;
   TUNTAB   ttab;
 #ifdef CS_ANTICASC
-  int      ac_idx;
-  int      ac_users;   // 0 - unlimited
-  uchar    ac_penalty; // 0 - log, >0 - fake dw
+  int		ac_users;   // 0 - unlimited
+  uchar		ac_penalty; // 0 - log, >0 - fake dw
+  struct s_acasc ac_stat;
 #endif
   in_addr_t dynip;
   uchar     dyndns[64];
@@ -1431,8 +1431,8 @@ extern void ac_clear();
 extern void ac_done_stat();
 extern int  ac_init_log();
 extern void ac_do_stat(void);
-extern void ac_init_client(struct s_auth *);
-extern void ac_chk(ECM_REQUEST*, int);
+extern void ac_init_client(struct s_client *, struct s_auth *);
+extern void ac_chk(struct s_client *,ECM_REQUEST*, int);
 #endif
 
 // oscam-config

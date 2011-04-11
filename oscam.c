@@ -487,6 +487,11 @@ void cs_accounts_chk()
         account2->emmok = account1->emmok;
         account2->emmnok = account1->emmnok;
         account2->firstlogin = account1->firstlogin;
+#ifdef CS_ANTICASC
+		account2->ac_users = account1->ac_users;
+		account2->ac_penalty = account1->ac_penalty;
+		account2->ac_stat = account1->ac_stat;
+#endif
       }
     }
   }
@@ -494,13 +499,7 @@ void cs_accounts_chk()
   cfg.account = new_accounts;
   init_free_userdb(old_accounts);
 
-#ifdef CS_ANTICASC
-//	struct s_client *cl;
-//	for (cl=first_client->next; cl ; cl=cl->next)
-//    if (cl->typ=='a')
-//      break;
   ac_clear();
-#endif
 }
 
 void nullclose(int *fd)
@@ -727,8 +726,6 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 				cl->cwlastresptimes_last = 0;
 
 #ifdef CS_ANTICASC
-				cl->ac_idx	= account->ac_idx;
-				cl->ac_penalty= account->ac_penalty;
 				cl->ac_limit	= (account->ac_users * 100 + 80) * cfg.ac_stime;
 #endif
 			} else {
@@ -1397,7 +1394,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				client->pcrc  = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), client->dump), 16);
 				memcpy(&client->ttab, &account->ttab, sizeof(client->ttab));
 #ifdef CS_ANTICASC
-				ac_init_client(account);
+				ac_init_client(client, account);
 #endif
 			}
 		}
@@ -2013,7 +2010,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	}
 
 #ifdef CS_ANTICASC
-	ac_chk(er, 1);
+	ac_chk(client, er, 1);
 #endif
 
 	int is_fake = 0;
@@ -2537,7 +2534,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		//		er->rc = E_CACHE1;
 
 #ifdef CS_ANTICASC
-		ac_chk(er, 0);
+		ac_chk(client, er, 0);
 #endif
 	}
 
