@@ -405,7 +405,7 @@ void dvbapi_add_ecmpid(int demux_id, ushort caid, ushort ecmpid, ulong provid) {
 				continue;
 			}
 			added=1;
-			demux[demux_id].ECMpids[demux[demux_id].ECMpidcount].streams |= (1 << stream);
+			demux[demux_id].ECMpids[n].streams |= (1 << stream);
 			cs_debug_mask(D_DVBAPI, "[ADD STREAM %d] CAID: %04X\tECM_PID: %04X\tPROVID: %06X", n, caid, ecmpid, provid);
 		}
 	}
