@@ -1502,6 +1502,7 @@ extern char *mk_t_aureader(struct s_auth *account);
 extern char *mk_t_nano(struct s_reader *rdr, uchar flag);
 extern char *mk_t_service( uint64 sidtabok, uint64 sidtabno);
 extern char *mk_t_logfile();
+extern char *mk_t_iprange(struct s_ip *range);
 
 //Todo #ifdef CCCAM
 extern int init_provid();

@@ -263,13 +263,9 @@ char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *para
 		if (cfg.c33_passive == 1)		tpl_addVar(vars, TPLADD, "PASSIVECHECKED", "selected");
 
 		for (i = 0; i < (int) sizeof(cfg.c33_key); ++i) tpl_printf(vars, TPLAPPEND, "KEY", "%02X",cfg.c33_key[i]);
-		struct s_ip *cip;
-		char *dot="";
-		for (cip = cfg.c33_plain; cip; cip = cip->next) {
-			tpl_printf(vars, TPLAPPEND, "NOCRYPT", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-			if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, TPLAPPEND, "NOCRYPT", "-%s", cs_inet_ntoa(cip->ip[1]));
-			dot=",";
-		}
+		char *value = mk_t_iprange(cfg.c33_plain);
+		tpl_addVar(vars, TPLADD, "NOCRYPT", value);
+		free(value);
 	}
 
 	return tpl_getTpl(vars, "CONFIGCAMD33");
@@ -363,13 +359,9 @@ char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *par
 
 		for (i = 0; i < 14; i++) tpl_printf(vars, TPLAPPEND, "KEY", "%02X", cfg.ncd_key[i]);
 
-		struct s_ip *cip;
-		char *dot = "";
-		for (cip = cfg.ncd_allowed; cip; cip = cip->next) {
-			tpl_printf(vars, TPLAPPEND, "ALLOWED", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-			if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, TPLAPPEND, "ALLOWED", "-%s", cs_inet_ntoa(cip->ip[1]));
-			dot=",";
-		}
+		value = mk_t_iprange(cfg.ncd_allowed);
+		tpl_addVar(vars, TPLADD, "ALLOWED", value);
+		free(value);
 
 		if (cfg.ncd_keepalive)
 			tpl_addVar(vars, TPLADD, "KEEPALIVE", "checked");
@@ -401,14 +393,9 @@ char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *pa
 	tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.rad_srvip));
 	tpl_addVar(vars, TPLADD, "USER", cfg.rad_usr);
 
-	struct s_ip *cip;
-	char *dot="";
-	for (cip=cfg.rad_allowed; cip; cip=cip->next) {
-		tpl_printf(vars, TPLAPPEND, "ALLOWED", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-		if (cip->ip[0] != cip->ip[1])
-			tpl_printf(vars, TPLAPPEND, "ALLOWED", "-%s", cs_inet_ntoa(cip->ip[1]));
-		dot=",";
-	}
+	char *value = mk_t_iprange(cfg.rad_allowed);
+	tpl_addVar(vars, TPLADD, "ALLOWED", value);
+	free(value);
 
 	return tpl_getTpl(vars, "CONFIGRADEGAST");
 }
@@ -556,20 +543,13 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 
 	if (cfg.http_hide_idle_clients > 0) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 
-	struct s_ip *cip;
-	char *dot="";
-	for (cip = cfg.mon_allowed; cip; cip = cip->next) {
-		tpl_printf(vars, TPLAPPEND, "NOCRYPT", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-		if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, TPLAPPEND, "NOCRYPT", "-%s", cs_inet_ntoa(cip->ip[1]));
-		dot=",";
-	}
-
-	dot="";
-	for (cip = cfg.http_allowed; cip; cip = cip->next) {
-		tpl_printf(vars, TPLAPPEND, "HTTPALLOW", "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-		if (cip->ip[0] != cip->ip[1]) tpl_printf(vars, TPLAPPEND, "HTTPALLOW", "-%s", cs_inet_ntoa(cip->ip[1]));
-		dot=",";
-	}
+	char *value = mk_t_iprange(cfg.mon_allowed);
+	tpl_addVar(vars, TPLADD, "NOCRYPT", value);
+	free(value);
+	
+	value = mk_t_iprange(cfg.http_allowed);
+	tpl_addVar(vars, TPLADD, "HTTPALLOW", value);
+	free(value);
 
 	tpl_printf(vars, TPLADD, "HTTPDYNDNS", "%s", cfg.http_dyndns);
 

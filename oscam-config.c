@@ -1730,7 +1730,6 @@ int write_config()
 	int i;
 	FILE *f;
 	char *value;
-	char *dot = ""; //flag for delimiter
 	char tmpfile[256];
 	char destfile[256];
 	char bakfile[256];
@@ -1865,16 +1864,11 @@ int write_config()
 		fprintf(f,"[monitor]\n");
 		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.mon_port);
 		if (cfg.mon_srvip != 0)
-			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.mon_srvip));
-
-		fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
-		struct s_ip *cip;
-		for (cip = cfg.mon_allowed; cip; cip = cip->next){
-			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-			if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
-			dot=",";
-		}
-		fputc((int)'\n', f);
+			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.mon_srvip));		
+		value = mk_t_iprange(cfg.mon_allowed);
+		if(strlen(value) > 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "nocrypt", "%s\n", value);
+		free(value);
 		if(cfg.mon_aulow != 30 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "aulow", "%d\n", cfg.mon_aulow);
 		if(cfg.mon_hideclient_to != 0 || cfg.http_full_cfg)
@@ -1899,16 +1893,11 @@ int write_config()
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.ncd_srvip));
 		fprintf_conf(f, CONFVARWIDTH, "key", "");
 		for (i = 0; i < 14; i++) fprintf(f,"%02X", cfg.ncd_key[i]);
-		fprintf(f,"\n");
-		fprintf_conf(f, CONFVARWIDTH, "allowed", "");
-		struct s_ip *cip;
-		dot="";
-		for (cip = cfg.ncd_allowed; cip; cip = cip->next){
-			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-			if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
-			dot=",";
-		}
-		fprintf(f,"\n");
+		fprintf(f,"\n");		
+		value = mk_t_iprange(cfg.ncd_allowed);
+		if(strlen(value) > 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "allowed", "%s\n", value);
+		free(value);
 		if(cfg.ncd_keepalive != 1 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", cfg.ncd_keepalive);
 		if(cfg.ncd_mgclient != 0 || cfg.http_full_cfg)
@@ -1925,15 +1914,11 @@ int write_config()
 		if(cfg.c33_passive != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "passive", "%d\n", cfg.c33_passive);
 		fprintf_conf(f, CONFVARWIDTH, "key", ""); for (i = 0; i < (int) sizeof(cfg.c33_key); ++i) fprintf(f,"%02X", cfg.c33_key[i]); fputc((int)'\n', f);
-		fprintf_conf(f, CONFVARWIDTH, "nocrypt", "");
-		struct s_ip *cip;
-		dot="";
-		for (cip = cfg.c33_plain; cip; cip = cip->next){
-			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-			if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
-			dot=",";
-	  }
-		fprintf(f,"\n\n");
+		value = mk_t_iprange(cfg.c33_plain);
+		if(strlen(value) > 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "nocrypt", "%s\n", value);
+		free(value);
+		fprintf(f,"\n");
 	}
 
 	/*camd3.5*/
@@ -1969,16 +1954,11 @@ int write_config()
 		if (cfg.rad_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.rad_srvip));
 		fprintf_conf(f, CONFVARWIDTH, "user", "%s\n", cfg.rad_usr);
-		fprintf_conf(f, CONFVARWIDTH, "allowed", "");
-		struct s_ip *cip;
-		dot="";
-		for (cip = cfg.rad_allowed; cip; cip = cip->next){
-			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-			if (cip->ip[0] != cip->ip[1])
-				fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
-			dot=",";
-		}
-		fprintf(f,"\n\n");
+		value = mk_t_iprange(cfg.rad_allowed);
+		if(strlen(value) > 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "allowed", "%s\n", value);
+		free(value);
+		fprintf(f,"\n");
 	}
 
 	/*serial*/
@@ -2077,15 +2057,10 @@ int write_config()
 			fprintf_conf(f, CONFVARWIDTH, "httpscript", "%s\n", cfg.http_script);
 		if(cfg.http_refresh > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httprefresh", "%d\n", cfg.http_refresh);
-		fprintf_conf(f, CONFVARWIDTH, "httpallowed", "");
-		struct s_ip *cip;
-		dot = "";
-		for (cip = cfg.http_allowed; cip; cip = cip->next){
-			fprintf(f,"%s%s", dot, cs_inet_ntoa(cip->ip[0]));
-			if (cip->ip[0] != cip->ip[1])	fprintf(f,"-%s", cs_inet_ntoa(cip->ip[1]));
-			dot = ",";
-		}
-		fputc((int)'\n', f);
+		value = mk_t_iprange(cfg.http_allowed);
+		if(strlen(value) > 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "httpallowed", "%s\n", value);
+		free(value);
 		if(strlen((const char *) (cfg.http_dyndns)) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpdyndns", "%s\n", cfg.http_dyndns);
 		if(cfg.http_hide_idle_clients || cfg.http_full_cfg)
@@ -4535,5 +4510,23 @@ char *mk_t_logfile(){
 	if(cfg.logfile != NULL){
 		pos += snprintf(value + pos, needed - pos, "%s%s", dot, cfg.logfile);
 	}
+	return value;
+}
+
+char *mk_t_iprange(struct s_ip *range){
+	struct s_ip *cip;
+	char *value, *tmp, *dot = "";
+	int needed = 1, pos = 0;
+	for (cip = range; cip; cip = cip->next) needed += 32;
+
+	if(!cs_malloc(&tmp, needed * sizeof(char), -1)) return "";
+
+	for (cip = range; cip; cip = cip->next){
+		pos += snprintf(tmp + pos, needed - pos, "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
+		if (cip->ip[0] != cip->ip[1])	pos += snprintf(tmp + pos, needed - pos, "-%s", cs_inet_ntoa(cip->ip[1]));
+		dot=",";
+	}
+	if(!cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	memcpy(value, tmp, pos + 1);
 	return value;
 }
