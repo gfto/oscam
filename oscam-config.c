@@ -2307,15 +2307,18 @@ int write_server()
 	while((rdr = ll_iter_next(itr))) {
 		if ( rdr->label[0]) {
 			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
+			char *ctyp = reader_get_type_desc(rdr, 0);
+
 			fprintf(f,"[reader]\n");
 
 			fprintf_conf(f, CONFVARWIDTH, "label", "%s\n", rdr->label);
-			fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", rdr->enable);
-			char *ctyp = reader_get_type_desc(rdr, 0);
+
+			if (rdr->enable == 0 || cfg.http_full_cfg)
+				fprintf_conf(f, CONFVARWIDTH, "enable", "%d\n", rdr->enable);
 
 			fprintf_conf(f, CONFVARWIDTH, "protocol", "%s\n", ctyp);
-
 			fprintf_conf(f, CONFVARWIDTH, "device", "%s", rdr->device);
+
 			if (rdr->r_port || cfg.http_full_cfg)
 				fprintf(f, ",%d", rdr->r_port);
 			if (rdr->l_port || cfg.http_full_cfg)
