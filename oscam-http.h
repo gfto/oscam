@@ -838,7 +838,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 	</TABLE>\n\
 	<BR><BR>\n\
 	<TABLE CLASS=\"stats\">\n\
-	<TR><TH colspan=\"7\"> Loadbalance statistics for reader ##LABEL##</TH></TR>\n\
+	<TR><TH colspan=\"8\"> Loadbalance statistics for reader ##LABEL##</TH></TR>\n\
 	<TR><TH>Channel</TH><TH>Channelname</TH><TH>ECM Length</TH><TH>Result</TH><TH>Avg-Time</TH><TH>Last-Time</TH><TH>Count</TH><TH>Last checked/ found</TH></TR>\n\
 ##READERSTATSROWFOUND##\
 ##READERSTATSNFHEADLINE##\
