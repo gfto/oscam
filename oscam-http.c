@@ -180,7 +180,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	}
 
 	if (strcmp(getParam(params, "button"), "Save Stats") == 0) {
-		save_stat_to_file();
+		save_stat_to_file(1);
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Stats saved to file</B><BR><BR>");
 	}
 

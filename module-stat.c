@@ -233,10 +233,13 @@ void save_stat_to_file_thread()
 	cs_log("loadbalancer: statistic saved %d records to %s", count, fname);
 }
 
-void save_stat_to_file()
+void save_stat_to_file(int thread)
 {
 	stat_load_save = 0;
-	start_thread((void*)&save_stat_to_file_thread, "save lb stats");
+	if (thread)
+		start_thread((void*)&save_stat_to_file_thread, "save lb stats");
+	else
+		save_stat_to_file_thread();
 }
 
 /**
@@ -378,7 +381,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	if (cfg.lb_save) {
 		stat_load_save++;
 		if (stat_load_save > cfg.lb_save)
-			save_stat_to_file();	
+			save_stat_to_file(1);	
 	}
 }
 

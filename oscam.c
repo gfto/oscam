@@ -576,7 +576,7 @@ void cleanup_thread(void *var)
 static void cs_cleanup()
 {
 		if (cfg.lb_mode && cfg.lb_save) {
-				save_stat_to_file();
+				save_stat_to_file(0);
 				cfg.lb_save = 0; //this is for avoiding duplicate saves
 		}
 		

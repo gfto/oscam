@@ -1573,7 +1573,7 @@ extern int get_best_reader(ECM_REQUEST *er);
 extern void clear_reader_stat(struct s_reader *reader);
 extern void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc);
 extern void load_stat_from_file();
-extern void save_stat_to_file();
+extern void save_stat_to_file(int);
 extern void clear_all_stat();
 extern void housekeeping_stat(int force);
 
