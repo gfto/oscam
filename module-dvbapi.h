@@ -60,8 +60,7 @@ struct s_ecmpids
 	int status;
 	unsigned char table;
 	int index;
-	unsigned char slen;
-	char stream[8];
+	uint32_t streams;
 };
 
 typedef struct filter_s
