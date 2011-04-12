@@ -124,7 +124,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 
 	char *value = mk_t_logfile();
 	tpl_addVar(vars, TPLADD, "LOGFILE", value);
-	free(value);
+	free_mk_t(value);
 	if(cfg.disablelog == 1) 		tpl_addVar(vars, TPLADD, "DISABLELOGCHECKED", "selected");
 	tpl_printf(vars, TPLADD, "MAXLOGSIZE", "%d", cfg.max_log_size);
 
@@ -216,7 +216,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 	tpl_printf(vars, TPLADD, "LBNBESTREADERS", "%d",cfg.lb_nbest_readers);
 	char *value = mk_t_caidvaluetab(&cfg.lb_nbest_readers_tab);
 	tpl_printf(vars, TPLADD, "LBNBESTPERCAID", value);
-	free(value);
+	free_mk_t(value);
 	tpl_printf(vars, TPLADD, "LBNFBREADERS", "%d",cfg.lb_nfb_readers);
 	tpl_printf(vars, TPLADD, "LBMINECMCOUNT", "%d",cfg.lb_min_ecmcount);
 	tpl_printf(vars, TPLADD, "LBMAXECEMCOUNT", "%d",cfg.lb_max_ecmcount);
@@ -224,7 +224,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 
 	value = mk_t_caidvaluetab(&cfg.lb_retrylimittab);
 	tpl_printf(vars, TPLADD, "LBRETRYLIMITS", value);
-	free(value);
+	free_mk_t(value);
 
 	tpl_printf(vars, TPLADD, "LBREOPENSECONDS", "%d",cfg.lb_reopen_seconds);
 	tpl_printf(vars, TPLADD, "LBCLEANUP", "%d",cfg.lb_stat_cleanup);
@@ -233,7 +233,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 
 	value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
 	tpl_addVar(vars, TPLADD, "LBNOPROVIDERFORCAID", value);
-	free(value);
+	free_mk_t(value);
 
 	return tpl_getTpl(vars, "CONFIGLOADBALANCER");
 }
@@ -265,7 +265,7 @@ char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *para
 		for (i = 0; i < (int) sizeof(cfg.c33_key); ++i) tpl_printf(vars, TPLAPPEND, "KEY", "%02X",cfg.c33_key[i]);
 		char *value = mk_t_iprange(cfg.c33_plain);
 		tpl_addVar(vars, TPLADD, "NOCRYPT", value);
-		free(value);
+		free_mk_t(value);
 	}
 
 	return tpl_getTpl(vars, "CONFIGCAMD33");
@@ -318,7 +318,7 @@ char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *p
 
 		char *value = mk_t_camd35tcp_port();
 		tpl_addVar(vars, TPLADD, "PORT", value);
-		free(value);
+		free_mk_t(value);
 
 		if (cfg.c35_tcp_srvip != 0)
 			tpl_addVar(vars, TPLAPPEND, "SERVERIP", cs_inet_ntoa(cfg.c35_tcp_srvip));
@@ -352,7 +352,7 @@ char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *par
 
 		char *value = mk_t_newcamd_port();
 		tpl_addVar(vars, TPLADD, "PORT", value);
-		free(value);
+		free_mk_t(value);
 
 		if (cfg.ncd_srvip != 0)
 			tpl_addVar(vars, TPLADD, "SERVERIP", cs_inet_ntoa(cfg.ncd_srvip));
@@ -361,7 +361,7 @@ char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *par
 
 		value = mk_t_iprange(cfg.ncd_allowed);
 		tpl_addVar(vars, TPLADD, "ALLOWED", value);
-		free(value);
+		free_mk_t(value);
 
 		if (cfg.ncd_keepalive)
 			tpl_addVar(vars, TPLADD, "KEEPALIVE", "checked");
@@ -395,7 +395,7 @@ char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *pa
 
 	char *value = mk_t_iprange(cfg.rad_allowed);
 	tpl_addVar(vars, TPLADD, "ALLOWED", value);
-	free(value);
+	free_mk_t(value);
 
 	return tpl_getTpl(vars, "CONFIGRADEGAST");
 }
@@ -545,11 +545,11 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 
 	char *value = mk_t_iprange(cfg.mon_allowed);
 	tpl_addVar(vars, TPLADD, "NOCRYPT", value);
-	free(value);
+	free_mk_t(value);
 	
 	value = mk_t_iprange(cfg.http_allowed);
 	tpl_addVar(vars, TPLADD, "HTTPALLOW", value);
-	free(value);
+	free_mk_t(value);
 
 	tpl_printf(vars, TPLADD, "HTTPDYNDNS", "%s", cfg.http_dyndns);
 
@@ -1003,7 +1003,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	//group
 	value = mk_t_group(rdr->grp);
 	tpl_printf(vars, TPLADD, "GRP", "%s", value);
-	free(value);
+	free_mk_t(value);
 
 	if(rdr->lb_weight)
 		tpl_printf(vars, TPLADD, "LBWEIGHT", "%d", rdr->lb_weight);
@@ -1031,22 +1031,22 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	// CAID
 	value = mk_t_caidtab(&rdr->ctab);
 	tpl_addVar(vars, TPLADD, "CAIDS", value);
-	free(value);
+	free_mk_t(value);
 
 	// AESkeys
 	value = mk_t_aeskeys(rdr);
 	tpl_addVar(vars, TPLADD, "AESKEYS", value);
-	free(value);
+	free_mk_t(value);
 
 	//ident
 	value = mk_t_ftab(&rdr->ftab);
 	tpl_printf(vars, TPLADD, "IDENTS", "%s", value);
-	free(value);
+	free_mk_t(value);
 
 	//CHID
 	value = mk_t_ftab(&rdr->fchid);
 	tpl_printf(vars, TPLADD, "CHIDS", "%s", value);
-	free(value);
+	free_mk_t(value);
 
 	//class
 	CLASSTAB *clstab = &rdr->cltab;
@@ -1070,12 +1070,12 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	//savenano
 	value = mk_t_nano(rdr, 0x02);
 	tpl_addVar(vars, TPLADD, "SAVENANO", value);
-	free(value);
+	free_mk_t(value);
 
 	//blocknano
 	value = mk_t_nano(rdr, 0x01);
 	tpl_addVar(vars, TPLADD, "BLOCKNANO", value);
-	free(value);
+	free_mk_t(value);
 
 	if (rdr->blockemm & EMM_UNKNOWN)
 		tpl_addVar(vars, TPLADD, "BLOCKEMMUNKNOWNCHK", "checked");
@@ -1483,7 +1483,7 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	//Group
 	char *value = mk_t_group(account->grp);
 	tpl_addVar(vars, TPLADD, "GROUPS", value);
-	free(value);
+	free_mk_t(value);
 
 	//Hostname
 	tpl_addVar(vars, TPLADD, "DYNDNS", (char *)account->dyndns);
@@ -1505,7 +1505,7 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	else if (account->aureader_list) {
 		value = mk_t_aureader(account);
 		tpl_addVar(vars, TPLADD, "AUREADER", value);
-		free(value);
+		free_mk_t(value);
 	}
 
 	/* SERVICES */
@@ -1532,22 +1532,22 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	// CAID
 	value = mk_t_caidtab(&account->ctab);
 	tpl_addVar(vars, TPLADD, "CAIDS", value);
-	free(value);
+	free_mk_t(value);
 
 	//ident
 	value = mk_t_ftab(&account->ftab);
 	tpl_printf(vars, TPLADD, "IDENTS", "%s", value);
-	free(value);
+	free_mk_t(value);
 
 	//CHID
 	value = mk_t_ftab(&account->fchid);
 	tpl_printf(vars, TPLADD, "CHIDS", "%s", value);
-	free(value);
+	free_mk_t(value);
 
 	//Betatunnel
 	value = mk_t_tuntab(&account->ttab);
 	tpl_addVar(vars, TPLADD, "BETATUNNELS", value);
-	free(value);
+	free_mk_t(value);
 
 	//SUPPRESSCMD08
 	if (account->c35_suppresscmd08)

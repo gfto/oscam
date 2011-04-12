@@ -1754,7 +1754,7 @@ int write_config()
 	if (cfg.logfile != NULL || cfg.logtostdout == 1 || cfg.logtosyslog == 1 || cfg.http_full_cfg){
 		value = mk_t_logfile();
 		fprintf_conf(f, CONFVARWIDTH, "logfile", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 	}
 	if (cfg.cwlogdir != NULL || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "cwlogdir", "%s\n", cfg.cwlogdir?cfg.cwlogdir:"");
@@ -1826,18 +1826,18 @@ int write_config()
 	if (cfg.lb_retrylimittab.n > 0 || cfg.http_full_cfg) {
 		char *value = mk_t_caidvaluetab(&cfg.lb_retrylimittab);
 		fprintf_conf(f, CONFVARWIDTH, "lb_retrylimits", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 	}
 	if (cfg.lb_nbest_readers_tab.n > 0 || cfg.http_full_cfg) {
 		char *value = mk_t_caidvaluetab(&cfg.lb_nbest_readers_tab);
 		fprintf_conf(f, CONFVARWIDTH, "lb_nbest_percaid", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 	}
 
 	if (cfg.lb_noproviderforcaid.caid[0] || cfg.http_full_cfg) {
 		value = mk_t_caidtab(&cfg.lb_noproviderforcaid);
 		fprintf_conf(f, CONFVARWIDTH, "lb_noproviderforcaid", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 	}
 
 	if (cfg.lb_savepath || cfg.http_full_cfg)
@@ -1868,7 +1868,7 @@ int write_config()
 		value = mk_t_iprange(cfg.mon_allowed);
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "nocrypt", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 		if(cfg.mon_aulow != 30 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "aulow", "%d\n", cfg.mon_aulow);
 		if(cfg.mon_hideclient_to != 0 || cfg.http_full_cfg)
@@ -1887,7 +1887,7 @@ int write_config()
 
 		value = mk_t_newcamd_port();
 		fprintf_conf(f, CONFVARWIDTH, "port", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 
 		if (cfg.ncd_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.ncd_srvip));
@@ -1897,7 +1897,7 @@ int write_config()
 		value = mk_t_iprange(cfg.ncd_allowed);
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "allowed", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 		if(cfg.ncd_keepalive != 1 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "keepalive", "%d\n", cfg.ncd_keepalive);
 		if(cfg.ncd_mgclient != 0 || cfg.http_full_cfg)
@@ -1917,7 +1917,7 @@ int write_config()
 		value = mk_t_iprange(cfg.c33_plain);
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "nocrypt", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 		fprintf(f,"\n");
 	}
 
@@ -1938,7 +1938,7 @@ int write_config()
 
 		value = mk_t_camd35tcp_port();
 		fprintf_conf(f, CONFVARWIDTH, "port", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 
 		if (cfg.c35_tcp_srvip != 0)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.c35_tcp_srvip));
@@ -1957,7 +1957,7 @@ int write_config()
 		value = mk_t_iprange(cfg.rad_allowed);
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "allowed", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 		fprintf(f,"\n");
 	}
 
@@ -2060,7 +2060,7 @@ int write_config()
 		value = mk_t_iprange(cfg.http_allowed);
 		if(strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpallowed", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 		if(strlen((const char *) (cfg.http_dyndns)) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpdyndns", "%s\n", cfg.http_dyndns);
 		if(cfg.http_hide_idle_clients || cfg.http_full_cfg)
@@ -2160,7 +2160,7 @@ int write_userdb(struct s_auth *authptr)
 		if (account->grp || cfg.http_full_cfg) {
 			value = mk_t_group(account->grp);
 			fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 		}
 
 		if (account->dyndns[0] || cfg.http_full_cfg)
@@ -2182,41 +2182,41 @@ int write_userdb(struct s_auth *authptr)
 			value = mk_t_aureader(account);
 			if (strlen(value) > 0)
 				fprintf_conf(f, CONFVARWIDTH, "au", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 
 		} else if (cfg.http_full_cfg) fprintf_conf(f, CONFVARWIDTH, "au", "\n");
 
 		value = mk_t_service((uint64)account->sidtabok, (uint64)account->sidtabno);
 		if (strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "services", "%s\n", value);
-		free(value);
+		free_mk_t(value);
 
 		//CAID
 		if (account->ctab.caid[0] || cfg.http_full_cfg) {
 			value = mk_t_caidtab(&account->ctab);
 			fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 		}
 
 		//betatunnel
 		if (account->ttab.bt_caidfrom[0] || cfg.http_full_cfg) {
 			value = mk_t_tuntab(&account->ttab);
 			fprintf_conf(f, CONFVARWIDTH, "betatunnel", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 		}
 
 		//ident
 		if (account->ftab.nfilts || cfg.http_full_cfg) {
 			value = mk_t_ftab(&account->ftab);
 			fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 		}
 
 		//CHID
 		if (account->fchid.nfilts || cfg.http_full_cfg) {
 			value = mk_t_ftab(&account->fchid);
 			fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 		}
 
 		if ((account->c35_suppresscmd08 != cfg.c35_suppresscmd08) || cfg.http_full_cfg)
@@ -2333,7 +2333,7 @@ int write_server()
 			value = mk_t_service((uint64)rdr->sidtabok, (uint64)rdr->sidtabno);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "services", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 
 			if ((rdr->tcp_ito || cfg.http_full_cfg) && !isphysical && rdr->typ != R_CCCAM)
 				fprintf_conf(f, CONFVARWIDTH, "inactivitytimeout", "%d\n", rdr->tcp_ito);
@@ -2359,7 +2359,7 @@ int write_server()
 			value = mk_t_caidtab(&rdr->ctab);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "caid", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 
 			if (rdr->boxid && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "boxid", "%08X\n", rdr->boxid);
@@ -2418,19 +2418,19 @@ int write_server()
 			value = mk_t_ftab(&rdr->ftab);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "ident", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 
 			//Todo: write reader class
 
 			value = mk_t_ftab(&rdr->fchid);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "chid", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 
 			value = mk_t_aeskeys(rdr);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "aeskeys", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 
 			if ((rdr->show_cls && !rdr->show_cls == 10) || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "showcls", "%d\n", rdr->show_cls);
@@ -2438,7 +2438,7 @@ int write_server()
 			value = mk_t_group(rdr->grp);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "group", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 
 			if (rdr->cachemm || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "emmcache", "%d,%d,%d\n", rdr->cachemm, rdr->rewritemm, rdr->logemm);
@@ -2462,13 +2462,13 @@ int write_server()
 			value = mk_t_nano(rdr, 0x02);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "savenano", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 
 			//blocknano
 			value = mk_t_nano(rdr, 0x01);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "blocknano", "%s\n", value);
-			free(value);
+			free_mk_t(value);
 
 			if (rdr->typ == R_CCCAM) {
 				if (rdr->cc_version[0] || cfg.http_full_cfg)
@@ -4143,7 +4143,7 @@ void init_ac()
 #endif
 
 /*
- * makes a char ready to write a token into config or webIf
+ * Creates a string ready to write as a token into config or WebIf for CAIDs. You must free the returned value through free_mk_t().
  */
 char *mk_t_caidtab(CAIDTAB *ctab){
 	int i = 0, needed = 1, pos = 0;
@@ -4154,7 +4154,7 @@ char *mk_t_caidtab(CAIDTAB *ctab){
 		++i;
 	}
 	char *value;
-	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char *saveptr = value;
 	i = 0;
 	while(ctab->caid[i]) {
@@ -4180,7 +4180,7 @@ char *mk_t_caidtab(CAIDTAB *ctab){
 }
 
 /*
- * makes a char ready to write a token into config or webIf
+ * Creates a string ready to write as a token into config or WebIf for TunTabs. You must free the returned value through free_mk_t().
  */
 char *mk_t_tuntab(TUNTAB *ttab){
 	int i = 0, needed = 1, pos = 0;
@@ -4191,7 +4191,7 @@ char *mk_t_tuntab(TUNTAB *ttab){
 		++i;
 	}
 	char *value;
-	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char *saveptr = value;
 	i = 0;
 	while(ttab->bt_caidfrom[i]) {
@@ -4217,7 +4217,7 @@ char *mk_t_tuntab(TUNTAB *ttab){
 }
 
 /*
- * makes a char ready to write a token into config or webIf
+ * Creates a string ready to write as a token into config or WebIf for groups. You must free the returned value through free_mk_t().
  */
 char *mk_t_group(uint64 grp){
 	int i = 0, needed = 1, pos = 0, dot = 0;
@@ -4231,7 +4231,7 @@ char *mk_t_group(uint64 grp){
 		}
 	}
 	char *value;
-	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char * saveptr = value;
 	for(i = 0; i < 64; i++){
 		if (grpbit[i] == '1'){
@@ -4252,7 +4252,7 @@ char *mk_t_group(uint64 grp){
 }
 
 /*
- * makes a char ready to write a token into config or webIf
+ * Creates a string ready to write as a token into config or WebIf for FTabs (CHID, Ident). You must free the returned value through free_mk_t().
  */
 char *mk_t_ftab(FTAB *ftab){
 	int i = 0, j = 0, needed = 1, pos = 0;
@@ -4264,7 +4264,7 @@ char *mk_t_ftab(FTAB *ftab){
 	}
 
 	char *value;
-	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char *saveptr = value;
 	char *dot="";
 	for (i = 0; i < ftab->nfilts; ++i){
@@ -4284,6 +4284,9 @@ char *mk_t_ftab(FTAB *ftab){
 	return value;
 }
 
+/*
+ * Creates a string ready to write as a token into config or WebIf for the camd35 tcp ports. You must free the returned value through free_mk_t().
+ */
 char *mk_t_camd35tcp_port(){
 	int i, j, pos = 0, needed = 1;
 
@@ -4296,7 +4299,7 @@ char *mk_t_camd35tcp_port(){
 		}
 	}
 	char *value;
-	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char *saveptr = value;
 	char *dot1 = "", *dot2;
 	for(i = 0; i < cfg.c35_tcp_ptab.nports; ++i) {
@@ -4313,6 +4316,9 @@ char *mk_t_camd35tcp_port(){
 	return value;
 }
 
+/*
+ * Creates a string ready to write as a token into config or WebIf for AESKeys. You must free the returned value through free_mk_t().
+ */
 char *mk_t_aeskeys(struct s_reader *rdr){
 	AES_ENTRY *current = rdr->aes_list;
 	int i, pos = 0, needed = 1, prevKeyid = 0, prevCaid = 0;
@@ -4337,7 +4343,7 @@ char *mk_t_aeskeys(struct s_reader *rdr){
 	prevCaid = 0;
 	prevIdent = 0;
 	prevKeyid = 0;
-	char tmp[needed * sizeof(char)];
+	char tmp[needed];
 	char dot;
 	if(needed == 1) tmp[0] = '\0';
 	char tmpkey[33];
@@ -4371,11 +4377,14 @@ char *mk_t_aeskeys(struct s_reader *rdr){
 
 	/* copy to result array of correct size */
 	char *value;
-	if(!cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
 	memcpy(value, tmp, pos + 1);
 	return(value);
 }
 
+/*
+ * Creates a string ready to write as a token into config or WebIf for the Newcamd Port. You must free the returned value through free_mk_t().
+ */
 char *mk_t_newcamd_port(){
 	int i, j, k, pos = 0, needed = 1;
 
@@ -4389,7 +4398,7 @@ char *mk_t_newcamd_port(){
 		}
 	}
 	char *value;
-	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char *dot1 = "", *dot2;
 
 	for(i = 0; i < cfg.ncd_ptab.nports; ++i){
@@ -4417,12 +4426,15 @@ char *mk_t_newcamd_port(){
 	return value;
 }
 
+/*
+ * Creates a string ready to write as a token into config or WebIf for au readers. You must free the returned value through free_mk_t().
+ */
 char *mk_t_aureader(struct s_auth *account){
 	int pos = 0;
 	char *dot = "";
 
 	char *value;
-	if(!cs_malloc(&value, 256 * sizeof(char), -1)) return "";
+	if(ll_count(account->aureader_list) == 0 || !cs_malloc(&value, 256 * sizeof(char), -1)) return "";
 	value[0] = '\0';
 
 	struct s_reader *rdr;
@@ -4436,8 +4448,10 @@ char *mk_t_aureader(struct s_auth *account){
 	return value;
 }
 
-/*combine function blocknano or savenano
- * flag 0x01 for blocknano or 0x02 for savenano */
+/*
+ * Creates a string ready to write as a token into config or WebIf for blocknano and savenano. You must free the returned value through free_mk_t().
+ * flag 0x01 for blocknano or 0x02 for savenano
+ */
 char *mk_t_nano(struct s_reader *rdr, uchar flag){
 
 	int i, needed = 0, pos = 0;
@@ -4453,7 +4467,7 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
 		snprintf(value, 4, "all");
 		return value;
 	} else {
-		if(!cs_malloc(&value, (needed * 3 * sizeof(char)) + 1, -1)) return "";
+		if(needed == 0 || !cs_malloc(&value, (needed * 3 * sizeof(char)) + 1, -1)) return "";
 		value[0] = '\0';
 		for(i = 0; i < 256; ++i) {
 			if(rdr->b_nano[i] & flag) {
@@ -4465,17 +4479,20 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
 	}
 }
 
+/*
+ * Creates a string ready to write as a token into config or WebIf for the sidtab. You must free the returned value through free_mk_t().
+ */
 char *mk_t_service( uint64 sidtabok, uint64 sidtabno){
 	int i = 0, pos = 0;
 	char *dot = "";
 	char *value;
-	if(!cs_malloc(&value, 256 * sizeof(char), -1)) return "";
+	struct s_sidtab *sidtab = cfg.sidtab;
+	if(!sidtab || !cs_malloc(&value, 256 * sizeof(char), -1)) return "";
 	value[0] = '\0';
 
 	char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64)sidtabok, MAX_SIDBITS, sidok);
 	char sidno[MAX_SIDBITS+1]; uint64ToBitchar((uint64)sidtabno, MAX_SIDBITS, sidno);
-	struct s_sidtab *sidtab = cfg.sidtab;
-
+	
 	for (; sidtab; sidtab=sidtab->next){
 		if(sidok[i]=='1') {
 			pos += snprintf(value + pos, 256 - pos, "%s%s", dot, sidtab->label);
@@ -4490,6 +4507,9 @@ char *mk_t_service( uint64 sidtabok, uint64 sidtabno){
 	return value;
 }
 
+/*
+ * Creates a string ready to write as a token into config or WebIf for the logfile parameter. You must free the returned value through free_mk_t().
+ */
 char *mk_t_logfile(){
 	int pos = 0, needed = 1;
 	char *value, *dot = "";
@@ -4497,7 +4517,7 @@ char *mk_t_logfile(){
 	if(cfg.logtostdout == 1) needed += 7;
 	if(cfg.logtosyslog == 1) needed += 7;
 	if(cfg.logfile != NULL) needed += strlen(cfg.logfile);
-	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 
 	if(cfg.logtostdout == 1){
 		pos += snprintf(value + pos, needed - pos, "stdout");
@@ -4513,20 +4533,31 @@ char *mk_t_logfile(){
 	return value;
 }
 
+/*
+ * Creates a string ready to write as a token into config or WebIf for an iprange. You must free the returned value through free_mk_t().
+ */
 char *mk_t_iprange(struct s_ip *range){
 	struct s_ip *cip;
-	char *value, *tmp, *dot = "";
+	char *value, *dot = "";
 	int needed = 1, pos = 0;
 	for (cip = range; cip; cip = cip->next) needed += 32;
-
-	if(!cs_malloc(&tmp, needed * sizeof(char), -1)) return "";
+	
+	char tmp[needed];
 
 	for (cip = range; cip; cip = cip->next){
 		pos += snprintf(tmp + pos, needed - pos, "%s%s", dot, cs_inet_ntoa(cip->ip[0]));
 		if (cip->ip[0] != cip->ip[1])	pos += snprintf(tmp + pos, needed - pos, "-%s", cs_inet_ntoa(cip->ip[1]));
 		dot=",";
 	}
-	if(!cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
+	if(pos == 0 || !cs_malloc(&value, (pos + 1) * sizeof(char), -1)) return "";
 	memcpy(value, tmp, pos + 1);
 	return value;
+}
+
+/*
+ * mk_t-functions give back a constant empty string when allocation fails or when the result is an empty string.
+ * This function thus checks the stringlength and only frees if necessary.
+ */
+void free_mk_t(char *value){
+	if(strlen(value) > 0) free(value);
 }
