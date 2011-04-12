@@ -499,7 +499,9 @@ void cs_accounts_chk()
   cfg.account = new_accounts;
   init_free_userdb(old_accounts);
 
+#ifdef CS_ANTICASC
   ac_clear();
+#endif
 }
 
 void nullclose(int *fd)
