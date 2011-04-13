@@ -254,7 +254,7 @@ int Sc8in1_Init(struct s_reader * reader)
 		buff[0] = 0x67;
 		sc8in1_command(reader, buff, 1, 2);
 		static char * clock[] = { "3,57", "3,68", "6,00", "8,00" };
-		uint16 result = buff[0]<<8 | buff[1];
+		uint16_t result = buff[0]<<8 | buff[1];
 		for(i=0; i<8; i++) {
 		cs_log("Slot %i is clocked with %s mhz", i+1, clock[(result>>(i*2))&0X0003]);
 		}

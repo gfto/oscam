@@ -4,7 +4,7 @@
 
 static void monitor_check_ip()
 {
-	int ok=0;
+	int32_t ok=0;
 	struct s_client *cur_cl = cur_client();
 	
 	if (cur_cl->auth) return;
@@ -43,15 +43,15 @@ static void monitor_auth_client(char *usr, char *pwd)
 		cs_exit(0);
 }
 
-static int secmon_auth_client(uchar *ucrc)
+static int32_t secmon_auth_client(uchar *ucrc)
 {
-	ulong crc;
+	uint32_t crc;
 	struct s_auth *account;
 	struct s_client *cur_cl = cur_client();
 	
 	if (cur_cl->auth)
 	{
-		int s=memcmp(cur_cl->ucrc, ucrc, 4);
+		int32_t s=memcmp(cur_cl->ucrc, ucrc, 4);
 		if (s)
 			cs_log("wrong user-crc or garbage !?");
 		return(!s);
@@ -76,9 +76,9 @@ static int secmon_auth_client(uchar *ucrc)
 	return(cur_cl->auth);
 }
 
-int monitor_send_idx(struct s_client *cl, char *txt)
+int32_t monitor_send_idx(struct s_client *cl, char *txt)
 {
-	int l;
+	int32_t l;
 	unsigned char buf[256+32];
 	if (!cl->udp_fd)
 		return(-1);
@@ -105,11 +105,11 @@ int monitor_send_idx(struct s_client *cl, char *txt)
 
 #define monitor_send(t) monitor_send_idx(cur_client(), t)
 
-static int monitor_recv(struct s_client * client, uchar *buf, int l)
+static int32_t monitor_recv(struct s_client * client, uchar *buf, int32_t l)
 {
-	int n;
+	int32_t n;
 	uchar nbuf[3] = { 'U', 0, 0 };
-	static int bpos=0;
+	static int32_t bpos=0;
 	static uchar *bbuf=NULL;
 	if (!bbuf)
 	{
@@ -123,10 +123,10 @@ static int monitor_recv(struct s_client * client, uchar *buf, int l)
 	if (!n) return(buf[0]=0);
 	if (buf[0]=='&')
 	{
-		int bsize;
+		int32_t bsize;
 		if (n<21)	// 5+16 is minimum
 		{
-			cs_log("packet to short !");
+			cs_log("packet to int16_t !");
 			return(buf[0]=0);
 		}
 		if (!secmon_auth_client(buf+1))
@@ -174,9 +174,9 @@ static int monitor_recv(struct s_client * client, uchar *buf, int l)
 	return(n);
 }
 
-static void monitor_send_info(char *txt, int last)
+static void monitor_send_info(char *txt, int32_t last)
 {
-	static int seq=0, counter=0;
+	static int32_t seq=0, counter=0;
 	static char btxt[256] = {0};
 	char buf[8];
 	if (txt)
@@ -230,7 +230,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 
 	if (cl){
 		char ldate[16], ltime[16], *usr;
-		int lsec, isec, con, cau, lrt =- 1;
+		int32_t lsec, isec, con, cau, lrt =- 1;
 		time_t now;
 		struct tm lt;
 		now=time((time_t)0);
@@ -269,7 +269,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 
 			if( cl->typ == 'r')
 			{
-				int i;
+				int32_t i;
 				struct s_reader *rdr;
 				for (i=0,rdr=first_active_reader; rdr ; rdr=rdr->next, i++)
 					if (cl->reader == rdr)
@@ -282,10 +282,10 @@ static char *monitor_client_info(char id, struct s_client *cl){
                 lrt = cl->cwlastresptime;
 			localtime_r(&cl->login, &lt);
 			snprintf(ldate, sizeof(ldate), "%02d.%02d.%02d", lt.tm_mday, lt.tm_mon+1, lt.tm_year % 100);
-			int cnr=get_threadnum(cl);
+			int32_t cnr=get_threadnum(cl);
 			snprintf(ltime, sizeof(ldate), "%02d:%02d:%02d", lt.tm_hour, lt.tm_min, lt.tm_sec);
-			snprintf(sbuf, sizeof(sbuf), "[%c--CCC]%8lX|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
-					id, (unsigned long)cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
+			snprintf(sbuf, sizeof(sbuf), "[%c--CCC]%8X|%c|%d|%s|%d|%d|%s|%d|%s|%s|%s|%d|%04X:%04X|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d\n",
+					id, (uint32_t)cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
 					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),
 					ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
 					get_servicename(cl->last_srvid, cl->last_caid), isec, con,
@@ -317,7 +317,7 @@ static void monitor_process_info(){
 	monitor_send_info(NULL, 1);
 }
 
-static void monitor_send_details(char *txt, unsigned int tid){
+static void monitor_send_details(char *txt, uint32_t tid){
 	char buf[256];
 	snprintf(buf, 255, "[D-----]%8X|%s\n", tid, txt);
 	monitor_send_info(buf, 0);
@@ -335,7 +335,7 @@ static void monitor_send_keepalive_ack(){
 	monitor_send_info(buf, 1);
 }
 
-static void monitor_process_details_master(char *buf, unsigned long pid){
+static void monitor_process_details_master(char *buf, uint32_t pid){
 	snprintf(buf, 256, "Version=%s#%s", CS_VERSION_X, CS_SVN_VERSION);
 	monitor_send_details(buf, pid);
 	snprintf(buf, 256, "System=%s-%s-%s",  CS_OS_CPU, CS_OS_HW, CS_OS_SYS);
@@ -344,7 +344,7 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 	monitor_send_details(buf, pid);
 	snprintf(buf, 256, "MaxClients=UNLIMITED");
 	monitor_send_details(buf, pid);
-	snprintf(buf, 256, "ClientMaxIdle=%ld sec", cfg.cmaxidle);
+	snprintf(buf, 256, "ClientMaxIdle=%d sec", cfg.cmaxidle);
 	monitor_send_details(buf, pid);
 	if( cfg.max_log_size )
 		snprintf(buf + 200, 56, "%d Kb", cfg.max_log_size);
@@ -352,9 +352,9 @@ static void monitor_process_details_master(char *buf, unsigned long pid){
 		cs_strncpy(buf + 200, "unlimited", 56);
 	snprintf(buf, 256, "MaxLogsize=%s", buf + 200);
 	monitor_send_details(buf, pid);
-	snprintf(buf, 256, "ClientTimeout=%lu ms", cfg.ctimeout);
+	snprintf(buf, 256, "ClientTimeout=%u ms", cfg.ctimeout);
 	monitor_send_details(buf, pid);
-	snprintf(buf, 256, "CacheDelay=%ld ms", cfg.delay);
+	snprintf(buf, 256, "CacheDelay=%d ms", cfg.delay);
 	monitor_send_details(buf, pid);
 	if( cfg.cwlogdir ) {
                 snprintf(buf, 256, "CwlogDir=%s", cfg.cwlogdir);
@@ -399,26 +399,26 @@ static void monitor_process_details_reader(struct s_client *cl) {
 		if (cl->reader->init_history) {
 			char *ptr,*ptr1 = NULL;
 			for (ptr=strtok_r(cl->reader->init_history, "\n", &ptr1); ptr; ptr=strtok_r(NULL, "\n", &ptr1)) {
-				monitor_send_details(ptr, (unsigned long)(cl->thread));
+				monitor_send_details(ptr, (uint32_t)(cl->thread));
 				ptr1[-1]='\n';
 			}
 		}
 	} else {
-		monitor_send_details("Missing reader index or entitlement not saved!", (unsigned long)(cl->thread));
+		monitor_send_details("Missing reader index or entitlement not saved!", (uint32_t)(cl->thread));
 	}
 
 }
 
 
 static void monitor_process_details(char *arg){
-	unsigned long tid = 0; //using threadid 8 positions hex see oscam-log.c //FIXME untested but pid isnt working anyway with threading
+	uint32_t tid = 0; //using threadid 8 positions hex see oscam-log.c //FIXME untested but pid isnt working anyway with threading
 	struct s_client *cl;
 	char sbuf[256];
 
 	if (!arg)
 		cl = first_client; // no arg - show master
 	else
-		if (sscanf(arg,"%lX",&tid) == 1)
+		if (sscanf(arg,"%X",&tid) == 1)
 			cl = get_client_by_tid(tid);
 		else
 			cl = NULL;
@@ -431,16 +431,16 @@ static void monitor_process_details(char *arg){
 		switch(cl->typ)
 		{
 		case 's':
-			monitor_process_details_master(sbuf, (unsigned long)(cl->thread));
+			monitor_process_details_master(sbuf, (uint32_t)(cl->thread));
 			break;
 		case 'c': case 'm':
-			monitor_send_details(monitor_client_info(1, cl), (unsigned long)(cl->thread));
+			monitor_send_details(monitor_client_info(1, cl), (uint32_t)(cl->thread));
 			break;
 		case 'r':
 			monitor_process_details_reader(cl);//with client->typ='r' client->ridx is always filled and valid, so no need checking
 			break;
 		case 'p':
-			monitor_send_details(monitor_client_info(1, cl), (unsigned long)(cl->thread));
+			monitor_send_details(monitor_client_info(1, cl), (uint32_t)(cl->thread));
 			break;
 		}
 	}
@@ -470,7 +470,7 @@ static void monitor_login(char *usr){
 
 static void monitor_logsend(char *flag){
 #ifdef CS_LOGHISTORY
-	int i;
+	int32_t i;
 #endif
 	if (!flag) return; //no arg
 
@@ -517,7 +517,7 @@ static void monitor_set_debuglevel(char *flag){
 static void monitor_get_account(){
 	struct s_auth *account;
 	char buf[256];
-        int count = 0;
+        int32_t count = 0;
 
 	for (account=cfg.account; (account); account=account->next){
 		count++;
@@ -533,10 +533,10 @@ static void monitor_set_account(char *args){
 	struct s_auth *account;
 	char delimiter[] = " =";
 	char *ptr;
-	int argidx, i, found;
+	int32_t argidx, i, found;
 	char *argarray[3];
 	static const char *token[]={"au", "sleep", "uniq", "monlevel", "group", "services", "betatunnel", "ident", "caid", "chid", "class", "hostname", "expdate", "keepalive", "disabled"};
-	int tokencnt = sizeof(token)/sizeof(char *);
+	int32_t tokencnt = sizeof(token)/sizeof(char *);
 	char buf[256], tmp[64];
 
 	argidx = 0;
@@ -617,7 +617,7 @@ static void monitor_set_account(char *args){
 static void monitor_set_server(char *args){
 	char delimiter[] = "=";
 	char *ptr;
-	int argidx, i, found;
+	int32_t argidx, i, found;
 	char *argarray[3];
 	static const char *token[]={"clienttimeout", "fallbacktimeout", "clientmaxidle", "cachedelay", "bindwait", "netprio", "sleep", "unlockparental", "serialreadertimeout", "maxlogsize", "showecmdw", "waitforcards", "preferlocalcards"};
 	char buf[256];
@@ -657,17 +657,17 @@ static void monitor_set_server(char *args){
 
 	if (cfg.ftimeout>=cfg.ctimeout) {
 		cfg.ftimeout = cfg.ctimeout - 100;
-		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg.ftimeout);
+		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: fallbacktimeout adjusted to %u ms\n", cfg.ftimeout);
 		monitor_send_info(buf, 1);
 	}
 	if(cfg.ftimeout < cfg.srtimeout) {
 		cfg.ftimeout = cfg.srtimeout + 100;
-		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: fallbacktimeout adjusted to %lu ms\n", cfg.ftimeout);
+		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: fallbacktimeout adjusted to %u ms\n", cfg.ftimeout);
 		monitor_send_info(buf, 1);
 	}
 	if(cfg.ctimeout < cfg.srtimeout) {
 		cfg.ctimeout = cfg.srtimeout + 100;
-		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: clienttimeout adjusted to %lu ms\n", cfg.ctimeout);
+		snprintf(buf, sizeof(buf), "[S-0000]setserver WARNING: clienttimeout adjusted to %u ms\n", cfg.ctimeout);
 		monitor_send_info(buf, 1);
 	}
 	//kill(first_client->pid, SIGUSR1);
@@ -679,8 +679,8 @@ static void monitor_restart_server(){
 }
 #endif
 
-static void monitor_list_commands(const char *args[], int cmdcnt){
-	int i;
+static void monitor_list_commands(const char *args[], int32_t cmdcnt){
+	int32_t i;
 	for (i = 0; i < cmdcnt; i++) {
 		char buf[64];
 		snprintf(buf, sizeof(buf), "[S-0000]commands: %s\n", args[i]);
@@ -691,9 +691,9 @@ static void monitor_list_commands(const char *args[], int cmdcnt){
 	}
 }
 
-static int monitor_process_request(char *req)
+static int32_t monitor_process_request(char *req)
 {
-	int i, rc;
+	int32_t i, rc;
 	static const char *cmd[] = {"login",
 								"exit",
 								"log",
@@ -714,7 +714,7 @@ static int monitor_process_request(char *req)
 #endif
 								};
 
-	int cmdcnt = sizeof(cmd)/sizeof(char *);  // Calculate the amount of items in array
+	int32_t cmdcnt = sizeof(cmd)/sizeof(char *);  // Calculate the amount of items in array
 	char *arg;
 	struct s_client *cur_cl = cur_client();
 
@@ -751,7 +751,7 @@ static int monitor_process_request(char *req)
 }
 
 static void * monitor_server(void *cli){
-	int n;
+	int32_t n;
 	uchar mbuf[1024];
 
 	struct s_client * client = (struct s_client *) cli;

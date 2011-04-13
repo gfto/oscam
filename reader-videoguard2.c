@@ -15,7 +15,7 @@ static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *
   bool valid_0x55=FALSE;
   unsigned char *body;
   unsigned char buffer[0x10];
-  int a=0x13;
+  int32_t a=0x13;
   len2=rxbuff[4];
   while(a<len2+5-9)  //  +5 for 5 ins bytes, -9 (body=8 len=1) to prevent memcpy(buffer+8,body,8) from reading past rxbuff
   {
@@ -44,12 +44,12 @@ static void dimeno_PostProcess_Decrypt(struct s_reader * reader, unsigned char *
 
 static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
 {
-  int i, ecmi, ecm_header_count;
+  int32_t i, ecmi, ecm_header_count;
   unsigned char buffer[0x80];
   unsigned char md5_digest[0x10];
-  static const unsigned short Hash3[] = {0x0123,0x4567,0x89AB,0xCDEF,0xF861,0xCB52};
+  static const uint16_t Hash3[] = {0x0123,0x4567,0x89AB,0xCDEF,0xF861,0xCB52};
   static const unsigned char Hash4[] = {0x0B,0x04,0x07,0x08,0x05,0x09,0x0B,0x0A,0x07,0x02,0x0A,0x05,0x04,0x08,0x0D,0x0F};
-  static const unsigned short NdTabB001[0x15][0x20] = {
+  static const uint16_t NdTabB001[0x15][0x20] = {
     {0xEAF1, 0x0237, 0x29D0, 0xBAD2, 0xE9D3, 0x8BAE, 0x2D6D, 0xCD1B,
      0x538D, 0xDE6B, 0xA634, 0xF81A, 0x18B5, 0x5087, 0x14EA, 0x672E,
      0xF0FC, 0x055E, 0x62E5, 0xB78F, 0x5D09, 0x0003, 0xE4E8, 0x2DCE,
@@ -155,7 +155,7 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
       {                         //b0 01
       case 1:
         {
-          unsigned short hk[8], i, j, m = 0;
+          uint16_t hk[8], i, j, m = 0;
           for (i = 0; i < 6; i++)
             hk[2 + i] = Hash3[i];
           for (i = 0; i < 2; i++)
@@ -227,7 +227,7 @@ static void do_post_dw_hash(unsigned char *cw, unsigned char *ecm_header_data)
 static void vg2_read_tiers(struct s_reader * reader)
 {
   def_resp;
-  int l;
+  int32_t l;
 
   /* ins2a is not needed and causes an error on some cards eg Sky Italy 09CD
      check if ins2a is in command table before running it
@@ -246,14 +246,14 @@ static void vg2_read_tiers(struct s_reader * reader)
     cs_log("classD0 ins76007f: failed");
     return;
   }
-  int num=cta_res[1];
+  int32_t num=cta_res[1];
 
-  int i;
+  int32_t i;
   unsigned char ins76[5] = { 0xD0,0x76,0x00,0x00,0x00 };
 
   // some cards start real tiers info in middle of tier info
   // and have blank tiers between old tiers and real tiers eg 09AC
-  int starttier;
+  int32_t starttier;
   bool stopemptytier = TRUE;
   if((starttier = reader->card_tierstart) == -1){
     stopemptytier = FALSE;
@@ -273,9 +273,9 @@ static void vg2_read_tiers(struct s_reader * reader)
     if(l<0 || !status_ok(cta_res+l)) return;
     if(cta_res[2]==0 && cta_res[3]==0 && stopemptytier) return;
     if(cta_res[2]!=0 || cta_res[3]!=0) {
-      int y,m,d,H,M,S;
+      int32_t y,m,d,H,M,S;
       rev_date_calc(&cta_res[4],&y,&m,&d,&H,&M,&S,reader->card_baseyear);
-      unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
+      uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
       char *tier_name = get_tiername(tier_id, reader->caid);
       if(!stopemptytier){
         cs_debug_mask(D_READER, "tier: %04x, tier-number: 0x%02x",tier_id,i);
@@ -285,7 +285,7 @@ static void vg2_read_tiers(struct s_reader * reader)
   }
 }
 
-static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
+static int32_t videoguard2_card_init(struct s_reader * reader, ATR newatr)
 {
   get_hist;
   if ((hist_size < 7) || (hist[1] != 0xB0) || (hist[4] != 0xFF) || (hist[5] != 0x4A) || (hist[6] != 0x50)){
@@ -317,7 +317,7 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   //this way unknown videoguard2/NDS2 cards will also pass this check
 
   unsigned char ins7401[5] = { 0xD0,0x74,0x01,0x00,0x00 };
-  int l;
+  int32_t l;
   ins7401[3]=0x80;  // from newcs log
   ins7401[4]=0x01;
   if((l=read_cmd_len(reader,ins7401))<0){ //not a videoguard2/NDS card or communication error
@@ -346,13 +346,13 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 
   if (reader->boxid > 0) {
     /* the boxid is specified in the config */
-    int i;
+    int32_t i;
     for (i=0; i < 4; i++) {
         boxID[i] = (reader->boxid >> (8 * (3 - i))) % 0x100;
     }
   } else {
     /* we can try to get the boxid from the card */
-    int boxidOK=0;
+    int32_t boxidOK=0;
     if((ins36[4]=read_cmd_len(reader,ins36))==0 && cmd_exists(reader,ins5e)) {
         if(!write_cmd_vg(ins5e,NULL) || !status_ok(cta_res+2)){
           cs_log("classD0 ins5e: failed");
@@ -370,13 +370,13 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     memcpy(buff+5,cta_res,l);
     memcpy(buff+5+l,cta_res+l,2);
     if(l<13)
-      cs_log("classD0 ins36: answer too short");
+      cs_log("classD0 ins36: answer too int16");
     else if (buff[7] > 0x0F)
       cs_log("classD0 ins36: encrypted - can't parse");
     else {
       /* skipping the initial fixed fields: cmdecho (4) + length (1) + encr/rev++ (4) */
-      int i=9;
-      int gotUA=0;
+      int32_t i=9;
+      int32_t gotUA=0;
       while (i<l) {
         if (!gotUA && buff[i]<0xF0) { /* then we guess that the next 4 bytes is the UA */
           gotUA=1;
@@ -438,7 +438,7 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
     return ERROR;
     }
 
-  //short int SWIRDstatus = cta_res[1];
+  //int16_t int32_t SWIRDstatus = cta_res[1];
   static const unsigned char ins58[5] = { 0xD0,0x58,0x00,0x00,0x00 };
   l=do_cmd(reader,ins58,NULL,NULL,cta_res);
   if(l<0) {
@@ -535,7 +535,7 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
 
   // fix for 09ac cards
   unsigned char dimeno_magic[0x10]={0xF9,0xFB,0xCD,0x5A,0x76,0xB5,0xC4,0x5C,0xC8,0x2E,0x1D,0xE1,0xCC,0x5B,0x6B,0x02};
-  int a;
+  int32_t a;
   for(a=0; a<4; a++)
     dimeno_magic[a]=dimeno_magic[a]^boxID[a];
   AES_set_decrypt_key(dimeno_magic,128,&(reader->astrokey));
@@ -552,13 +552,13 @@ static int videoguard2_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0xD1,0x40,0x00,0x80,0xFF };
   static const unsigned char ins54[5] = { 0xD3,0x54,0x00,0x00,0x00};
-  int posECMpart2=er->ecm[6]+7;
-  int lenECMpart2=er->ecm[posECMpart2]+1;
+  int32_t posECMpart2=er->ecm[6]+7;
+  int32_t lenECMpart2=er->ecm[posECMpart2]+1;
   unsigned char tbuff[264], rbuff[264];
   tbuff[0]=0;
 
@@ -567,7 +567,7 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
 /*
   //log parental lock byte
-  int j;
+  int32_t j;
   for (j = posECMpart2+1; j < lenECMpart2+posECMpart2+1-4; j++){
     if (er->ecm[j] == 0x02 && er->ecm[j+3] == 0x02) {
       cs_log("channel parental lock mask: %02X%02X, channel parental lock byte: %02X",er->ecm[j+1],er->ecm[j+2],er->ecm[j+4]);
@@ -576,17 +576,17 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
 
   //log tiers
-  int k;
+  int32_t k;
   for (k = posECMpart2+1; k < lenECMpart2+posECMpart2+1-4; k++){
     if (er->ecm[k] == 0x03 && er->ecm[k+3] == 0x80) {
-      unsigned short vtier_id = (er->ecm[k+1] << 8) | er->ecm[k+2];
+      uint16_t vtier_id = (er->ecm[k+1] << 8) | er->ecm[k+2];
       char *vtier_name = get_tiername(vtier_id, reader->caid);
       cs_log("valid tier: %04x %s",vtier_id,vtier_name);
     }
   }
 */
 
-  int new_len = lenECMpart2;
+  int32_t new_len = lenECMpart2;
   if (reader->fix_9993 && reader->caid == 0x919 && tbuff[1] == 0x7F)
   {
      tbuff[1] = 0x47; tbuff[2] = 0x08;
@@ -594,7 +594,7 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
      new_len -= 2;
   }
   ins40[4]=new_len;
-  int l;
+  int32_t l;
 
   l = do_cmd(reader,ins40,tbuff,NULL,cta_res);
   if(l<0 || !status_ok(cta_res)) {
@@ -620,7 +620,7 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
       memcpy(er->cw+0,rbuff+5,8);
 
       // process cw2
-      int ind;
+      int32_t ind;
       for(ind=15; ind<l+5-10; ind++) {   // +5 for 5 ins bytes, -10 to prevent memcpy ind+3,8 from reading past
                                          // rxbuffer we start searching at 15 because start at 13 goes wrong
                                          // with 090F 090b and 096a
@@ -640,8 +640,8 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
       dimeno_PostProcess_Decrypt(reader, rbuff, er->cw);
 
       //test for postprocessing marker
-      int posB0 = -1;
-      int i;
+      int32_t posB0 = -1;
+      int32_t i;
       for (i = 6; i < posECMpart2; i++){
         if (er->ecm[i-3] == 0x80 && er->ecm[i] == 0xB0 && ((er->ecm[i+1] == 0x01) ||(er->ecm[i+1] == 0x02)||(er->ecm[i+1] == 0x03) ) ) {
           posB0 = i;
@@ -673,12 +673,12 @@ static int videoguard2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   }
 }
 
-static int videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int32_t videoguard2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
    return videoguard_do_emm(reader, ep, 0xD1, vg2_read_tiers, do_cmd);
 }
 
-static int videoguard2_card_info(struct s_reader * reader)
+static int32_t videoguard2_card_info(struct s_reader * reader)
 {
   /* info is displayed in init, or when processing info */
   cs_log("%s card detected", reader->label);

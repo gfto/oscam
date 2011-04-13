@@ -3,7 +3,7 @@
 
 #define CMD_LEN 5
 
-static void RotateBytes1(unsigned char *out, unsigned char *in, int n)
+static void RotateBytes1(unsigned char *out, unsigned char *in, int32_t n)
 {
   // loop is executed atleast once, so it's not a good idea to
   // call with n=0 !!
@@ -11,7 +11,7 @@ static void RotateBytes1(unsigned char *out, unsigned char *in, int n)
   do { *(--out)=*(in++); } while(--n);
 }
 
-static void RotateBytes2(unsigned char *in, int n)
+static void RotateBytes2(unsigned char *in, int32_t n)
 {
   // loop is executed atleast once, so it's not a good idea to
   // call with n=0 !!
@@ -24,7 +24,7 @@ static void RotateBytes2(unsigned char *in, int n)
   } while(in<e);
 }
 
-static int Input(BIGNUM *d, unsigned char *in, int n, int LE)
+static int32_t Input(BIGNUM *d, unsigned char *in, int32_t n, int32_t LE)
 {
   if (LE)
   {
@@ -36,9 +36,9 @@ static int Input(BIGNUM *d, unsigned char *in, int n, int LE)
     return(BN_bin2bn(in,n,d)!=0);
 }
 
-static int Output(unsigned char *out, int n, BIGNUM *r, int LE)
+static int32_t Output(unsigned char *out, int32_t n, BIGNUM *r, int32_t LE)
 {
-  int s=BN_num_bytes(r);
+  int32_t s=BN_num_bytes(r);
   if (s>n)
   {
     unsigned char buff[s];
@@ -48,7 +48,7 @@ static int Output(unsigned char *out, int n, BIGNUM *r, int LE)
   }
   else if (s<n)
   {
-    int l=n-s;
+    int32_t l=n-s;
     cs_debug_mask(D_READER, "[cryptoworks-reader] rsa: RSA len %d < %d, padding", s, n);
     memset(out,0,l);
     BN_bn2bin(r,out+l);
@@ -60,9 +60,9 @@ static int Output(unsigned char *out, int n, BIGNUM *r, int LE)
   return(s);
 }
 
-static int cw_RSA(unsigned char *out, unsigned char *in, int n, BIGNUM *exp, BIGNUM *mod, int LE)
+static int32_t cw_RSA(unsigned char *out, unsigned char *in, int32_t n, BIGNUM *exp, BIGNUM *mod, int32_t LE)
 {
-  int rc=0;
+  int32_t rc=0;
   BN_CTX *ctx;
   BIGNUM *r, *d;
   ctx=BN_CTX_new();
@@ -81,7 +81,7 @@ static int cw_RSA(unsigned char *out, unsigned char *in, int n, BIGNUM *exp, BIG
   return(rc);
 }
 
-static char *chid_date(uchar *ptr, char *buf, int l)
+static char *chid_date(uchar *ptr, char *buf, int32_t l)
 {
   if (buf)
   {
@@ -91,9 +91,9 @@ static char *chid_date(uchar *ptr, char *buf, int l)
   return(buf);
 }
 
-static int select_file(struct s_reader * reader, uchar f1, uchar f2, uchar * cta_res, ushort * p_cta_lr)
+static int32_t select_file(struct s_reader * reader, uchar f1, uchar f2, uchar * cta_res, uint16_t * p_cta_lr)
 {
-  ushort cta_lr;
+  uint16_t cta_lr;
   uchar insA4[] = {0xA4, 0xA4, 0x00, 0x00, 0x02, 0x00, 0x00};
   insA4[5]=f1;
   insA4[6]=f2;
@@ -102,9 +102,9 @@ static int select_file(struct s_reader * reader, uchar f1, uchar f2, uchar * cta
   return((cta_res[0]==0x9f)&&(cta_res[1]==0x11));
 }
 
-static int read_record(struct s_reader * reader, uchar rec, uchar * cta_res)
+static int32_t read_record(struct s_reader * reader, uchar rec, uchar * cta_res)
 {
-  ushort cta_lr;
+  uint16_t cta_lr;
   uchar insA2[] = {0xA4, 0xA2, 0x00, 0x00, 0x01, 0x00};
   uchar insB2[] = {0xA4, 0xB2, 0x00, 0x00, 0x00};
 
@@ -120,7 +120,7 @@ static int read_record(struct s_reader * reader, uchar rec, uchar * cta_res)
 }
 
 /*
-int cryptoworks_send_pin(struct s_reader * reader)
+int32_t cryptoworks_send_pin(struct s_reader * reader)
 {
   unsigned char insPIN[] = { 0xA4, 0x20, 0x00, 0x00, 0x04, 0x00,0x00,0x00,0x00 }; //Verify PIN  
   
@@ -139,7 +139,7 @@ int cryptoworks_send_pin(struct s_reader * reader)
 }
 */
 
-static int cryptoworks_disable_pin(struct s_reader * reader)
+static int32_t cryptoworks_disable_pin(struct s_reader * reader)
 {
   def_resp;
   unsigned char insPIN[] = { 0xA4, 0x26, 0x00, 0x00, 0x04, 0x00,0x00,0x00,0x00 }; //disable PIN  
@@ -156,12 +156,12 @@ static int cryptoworks_disable_pin(struct s_reader * reader)
   return OK;
 }
 
-static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
+static int32_t cryptoworks_card_init(struct s_reader * reader, ATR newatr)
 {
   get_atr;
   def_resp;
-  int i;
-  unsigned int mfid=0x3F20;
+  int32_t i;
+  uint32_t mfid=0x3F20;
   static const uchar cwexp[] = { 1, 0 , 1};
   uchar insA4C[]= {0xA4, 0xC0, 0x00, 0x00, 0x11};
   uchar insB8[] = {0xA4, 0xB8, 0x00, 0x00, 0x0c};
@@ -264,18 +264,18 @@ static int cryptoworks_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
-	int r=0;
+	int32_t r=0;
   unsigned char ins4C[] = { 0xA4,0x4C,0x00,0x00,0x00 };
   unsigned char insC0[] = { 0xA4,0xC0,0x00,0x00,0x1C };
   unsigned char nanoD4[10];
-  int secLen=check_sct_len(er->ecm,-5+(reader->ucpk_valid ? sizeof(nanoD4):0));
+  int32_t secLen=check_sct_len(er->ecm,-5+(reader->ucpk_valid ? sizeof(nanoD4):0));
 
   if(secLen>5)
   {
-    int i;
+    int32_t i;
     uchar *ecm=er->ecm;
     uchar buff[MAX_LEN];
 
@@ -300,7 +300,7 @@ static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
       write_cmd(insC0, NULL);
       for(i=0; i<secLen && r<2; )
       {
-        int n=cta_res[i+1];
+        int32_t n=cta_res[i+1];
         switch(cta_res[i])
 	{
           case 0x80:
@@ -370,9 +370,9 @@ static int cryptoworks_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return((r==3) ? 1 : 0);
 }
 
-static unsigned long cryptoworks_get_emm_provid(unsigned char *buffer, int len);
+static uint32_t cryptoworks_get_emm_provid(unsigned char *buffer, int32_t len);
 
-static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
   char dumprdrserial[18];
 
@@ -450,7 +450,7 @@ static int cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	int idx = 2;
+	int32_t idx = 2;
 
 	filter[0]=0xFF;
 	filter[1]=0;
@@ -506,13 +506,13 @@ static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-static int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int32_t cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
   uchar insEMM_GA[] = {0xA4, 0x44, 0x00, 0x00, 0x00};
   uchar insEMM_SA[] = {0xA4, 0x48, 0x00, 0x00, 0x00};
   uchar insEMM_UA[] = {0xA4, 0x42, 0x00, 0x00, 0x00};
-  int rc=0;
+  int32_t rc=0;
   uchar *emm=ep->emm;
   
 	if(emm[0]==0x8f && emm[3]==0xA4) {
@@ -563,10 +563,10 @@ static int cryptoworks_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   return(rc);
 }
 
-static int cryptoworks_card_info(struct s_reader * reader)
+static int32_t cryptoworks_card_info(struct s_reader * reader)
 {
   def_resp;
-	int i;
+	int32_t i;
   uchar insA21[]= {0xA4, 0xA2, 0x01, 0x00, 0x05, 0x8C, 0x00, 0x00, 0x00, 0x00};
   uchar insB2[] = {0xA4, 0xB2, 0x00, 0x00, 0x00};
   char l_name[20+8]=", name: ";
@@ -627,10 +627,10 @@ static int cryptoworks_card_info(struct s_reader * reader)
   return OK;
 }
 
-static unsigned long cryptoworks_get_emm_provid(unsigned char *buffer, int len)
+static uint32_t cryptoworks_get_emm_provid(unsigned char *buffer, int32_t len)
 {
-    unsigned long provid=0;
-    int i=0;
+    uint32_t provid=0;
+    int32_t i=0;
     
     for(i=0; i<len;) {
         switch (buffer[i]) {
@@ -648,12 +648,12 @@ static unsigned long cryptoworks_get_emm_provid(unsigned char *buffer, int len)
 }
 
 #ifdef HAVE_DVBAPI
-void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int len);
+void dvbapi_sort_nanos(unsigned char *dest, const unsigned char *src, int32_t len);
 
-int cryptoworks_reassemble_emm(uchar *buffer, uint *len) {
+int32_t cryptoworks_reassemble_emm(uchar *buffer, uint32_t *len) {
 	static uchar emm_global[512];
-	static int emm_global_len = 0;
-	int emm_len = 0;
+	static int32_t emm_global_len = 0;
+	int32_t emm_len = 0;
 
 	// Cryptoworks
 	//   Cryptoworks EMM-S have to be assembled by the client from an EMM-SH with table

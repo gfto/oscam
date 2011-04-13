@@ -20,7 +20,7 @@
 #define SYSTEM_MASK 0xFF00
 
 
-static time_t tier_date(ulong date, char *buf, int l)
+static time_t tier_date(uint32_t date, char *buf, int32_t l)
 {
   time_t ut=870393600L+date*(24*3600);
   if (buf)
@@ -32,7 +32,7 @@ static time_t tier_date(ulong date, char *buf, int l)
   return(ut);
 }
 
-static int do_cmd(struct s_reader * reader, unsigned char cmd, int ilen, unsigned char res, int rlen, unsigned char *data, unsigned char * cta_res, unsigned short * p_cta_lr)
+static int32_t do_cmd(struct s_reader * reader, unsigned char cmd, int32_t ilen, unsigned char res, int32_t rlen, unsigned char *data, unsigned char * cta_res, uint16_t * p_cta_lr)
 {
 	/*
 	here we build the command related to the protocol T1 for ROM142 or T14 for ROM181
@@ -41,7 +41,7 @@ static int do_cmd(struct s_reader * reader, unsigned char cmd, int ilen, unsigne
 	T14 protocol:       01 A0 CA 00 00 03 C0 00 06 91
 	T1  protocol: 21 00 08 A0 CA 00 00 02 C0 00 06 87
 	*/
-	int msglen=ilen+6;
+	int32_t msglen=ilen+6;
 	unsigned char msg[msglen];
 	static const char nagra_head[] = {0xA0, 0xCA, 0x00, 0x00};
 
@@ -49,7 +49,7 @@ static int do_cmd(struct s_reader * reader, unsigned char cmd, int ilen, unsigne
 	memcpy(msg,nagra_head,4);
 	msg[4] = ilen;
 	msg[5] = cmd;
-	int dlen=ilen-2;
+	int32_t dlen=ilen-2;
 	msg[6] = dlen;
 	if(data && dlen>0) memcpy(msg+7,data,dlen);
 	msg[dlen+7] = rlen;
@@ -80,10 +80,10 @@ static int do_cmd(struct s_reader * reader, unsigned char cmd, int ilen, unsigne
     	return ERROR;
 }
 
-static void ReverseMem(unsigned char *vIn, int len)
+static void ReverseMem(unsigned char *vIn, int32_t len)
 {
 	unsigned char temp;
-	int i;
+	int32_t i;
 	for(i=0; i < (len/2); i++)
 	{
 		temp = vIn[i];
@@ -92,15 +92,15 @@ static void ReverseMem(unsigned char *vIn, int len)
 	}
 }
 
-static void Signature(unsigned char *sig, const unsigned char *vkey,const unsigned char *msg, int len) 
+static void Signature(unsigned char *sig, const unsigned char *vkey,const unsigned char *msg, int32_t len) 
 {
 	IDEA_KEY_SCHEDULE ks;
 	unsigned char v[8];
 	unsigned char b200[16];
 	unsigned char b0f0[8];
 	memcpy(b200,vkey,sizeof(b200));
-	int i;
-	int j;
+	int32_t i;
+	int32_t j;
 	for(i=0; i<len; i+=8)
 	{
 		idea_set_encrypt_key(b200,&ks);
@@ -114,7 +114,7 @@ static void Signature(unsigned char *sig, const unsigned char *vkey,const unsign
 	return;
 }
 
-static int CamStateRequest(struct s_reader * reader)
+static int32_t CamStateRequest(struct s_reader * reader)
 {
 	def_resp;
 	if(do_cmd(reader, 0xC0,0x02,0xB0,0x06,NULL,cta_res,&cta_lr))
@@ -140,7 +140,7 @@ static void DateTimeCMD(struct s_reader * reader)
 		
 }
 
-static int NegotiateSessionKey_Tiger(struct s_reader * reader)
+static int32_t NegotiateSessionKey_Tiger(struct s_reader * reader)
 {
 	def_resp;
 	unsigned char vFixed[] = {0,1,2,3,0x11};
@@ -274,7 +274,7 @@ static int NegotiateSessionKey_Tiger(struct s_reader * reader)
 		
 }
 
-static int NegotiateSessionKey(struct s_reader * reader)
+static int32_t NegotiateSessionKey(struct s_reader * reader)
 {
 	def_resp;
 	unsigned char negot[64];
@@ -414,7 +414,7 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
 	unsigned char sign2[8];
 	unsigned char static_dt08[73];
 	unsigned char camid[4];
-	int i, n;
+	int32_t i, n;
 	BN_CTX *ctx;
 	BIGNUM *bn_mod, *bn_exp, *bn_data, *bn_res;
 	
@@ -493,8 +493,8 @@ static void decryptDT08(struct s_reader * reader, unsigned char * cta_res)
 
 static void addProvider(struct s_reader * reader, unsigned char * cta_res)
 {
-	int i;
-	int toadd=1;
+	int32_t i;
+	int32_t toadd=1;
 	for (i=0; i<reader->nprov; i++)
 	{
 		if ((cta_res[7]==reader->prid[i][2]) && (cta_res[8]==reader->prid[i][3]))
@@ -513,10 +513,10 @@ static void addProvider(struct s_reader * reader, unsigned char * cta_res)
 	}
 }			
 
-static int ParseDataType(struct s_reader * reader, unsigned char dt, unsigned char * cta_res, unsigned short cta_lr)
+static int32_t ParseDataType(struct s_reader * reader, unsigned char dt, unsigned char * cta_res, uint16_t cta_lr)
 {
 	char ds[16], de[16];
-      	ushort chid;
+      	uint16_t chid;
 	switch(dt) 
 	{
 		case IRDINFO:
@@ -547,7 +547,7 @@ static int ParseDataType(struct s_reader * reader, unsigned char dt, unsigned ch
    		case TIERS:
    			if ((cta_lr>33) && (chid=b2i(2, cta_res+11)))
       			{
-      				int id=(cta_res[7]*256)|cta_res[8];
+      				int32_t id=(cta_res[7]*256)|cta_res[8];
         			tier_date(b2i(2, cta_res+20)-0x7f7, ds, 15);
         			tier_date(b2i(2, cta_res+13)-0x7f7, de, 15);
         			cs_ri_log(reader, "|%04X|%04X    |%s  |%s  |", id,chid, ds, de);
@@ -561,10 +561,10 @@ static int ParseDataType(struct s_reader * reader, unsigned char dt, unsigned ch
   	return ERROR;
 }
 
-static int GetDataType(struct s_reader * reader, unsigned char dt, int len, int shots)
+static int32_t GetDataType(struct s_reader * reader, unsigned char dt, int32_t len, int32_t shots)
 {
 	def_resp;
-	int i;
+	int32_t i;
   	for(i=0; i<shots; i++)
   	{
   		if(!do_cmd(reader, 0x22,0x03,0xA2,len,&dt,cta_res,&cta_lr))
@@ -580,7 +580,7 @@ static int GetDataType(struct s_reader * reader, unsigned char dt, int len, int 
   	return OK;
 }
 
-static int nagra2_card_init(struct s_reader * reader, ATR newatr)
+static int32_t nagra2_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
 	def_resp;
@@ -684,12 +684,12 @@ static int nagra2_card_init(struct s_reader * reader, ATR newatr)
 	return OK;
 }
 
-static char *tiger_date(uint8_t *ndays, int offset, char *result)
+static char *tiger_date(uint8_t *ndays, int32_t offset, char *result)
 {
    struct tm tms;
    memset(&tms, 0, sizeof(tms));
-   int days = (ndays[0] << 8 | ndays[1]) + offset;
-   int year_offset = 0;
+   int32_t days = (ndays[0] << 8 | ndays[1]) + offset;
+   int32_t year_offset = 0;
    if (days > 0x41B4) year_offset = 68; // to overcome 32-bit systems limitations
    tms.tm_year = 92 - year_offset;
    tms.tm_mday = days + 1;
@@ -707,9 +707,9 @@ typedef struct
    uint16_t price;
 } ncmed_rec;
 
-static int reccmp(const void *r1, const void *r2)
+static int32_t reccmp(const void *r1, const void *r2)
 {
-   int v1, v2, y, m, d;
+   int32_t v1, v2, y, m, d;
    sscanf(((ncmed_rec *)r1)->date1, "%02d/%02d/%04d", &d, &m, &y);
    v1 = y * 372 + 1 + m * 31 + d;
    sscanf(((ncmed_rec *)r2)->date1, "%02d/%02d/%04d", &d, &m, &y);
@@ -717,7 +717,7 @@ static int reccmp(const void *r1, const void *r2)
    return (v1 == v2) ? 0 : (v1 < v2) ? -1 : 1;
 }
 
-static int reccmp2(const void *r1, const void *r2)
+static int32_t reccmp2(const void *r1, const void *r2)
 {
    char rec1[13], rec2[13];
    snprintf(rec1, sizeof(rec1), "%04X", ((ncmed_rec *)r1)->value);
@@ -732,9 +732,9 @@ static int reccmp2(const void *r1, const void *r2)
    return strcmp(rec2, rec1);
 }
 
-static int nagra2_card_info(struct s_reader * reader)
+static int32_t nagra2_card_info(struct s_reader * reader)
 {
-	int i;
+	int32_t i;
         char currdate[11];
 	cs_ri_log(reader, "ROM:    %c %c %c %c %c %c %c %c", reader->rom[0], reader->rom[1], reader->rom[2],reader->rom[3], reader->rom[4], reader->rom[5], reader->rom[6], reader->rom[7]);
 	cs_ri_log(reader, "REV:    %c %c %c %c %c %c", reader->rom[9], reader->rom[10], reader->rom[11], reader->rom[12], reader->rom[13], reader->rom[14]);
@@ -753,17 +753,17 @@ static int nagra2_card_info(struct s_reader * reader)
         if (reader->nagra_read && reader->is_tiger && memcmp(reader->rom, "NCMED", 5) == 0)
         {
            ncmed_rec records[255];
-           int num_records = 0;
+           int32_t num_records = 0;
            uint8_t tier_cmd1[] = { 0x00, 0x00 };
            uint8_t tier_cmd2[] = { 0x01, 0x00 };
            def_resp;
-           int j;
+           int32_t j;
            do_cmd(reader, 0xD0, 0x04, 0x50, 0x0A, tier_cmd1, cta_res, &cta_lr);
            if (cta_lr == 0x0C)
            {
-              int prepaid = 0;
-              int credit = 0;
-              int balance = 0;
+              int32_t prepaid = 0;
+              int32_t credit = 0;
+              int32_t balance = 0;
 
               uint16_t credit_in = cta_res[8] << 8 | cta_res[9];
               uint16_t credit_out = cta_res[5] << 8 | cta_res[6]; 
@@ -780,7 +780,7 @@ static int nagra2_card_info(struct s_reader * reader)
                     {
                        if (cta_res[j] == 0x80 && cta_res[j+6] != 0x00)
                        {
-                          int val_offs = 0;
+                          int32_t val_offs = 0;
                           tiger_date(&cta_res[j+6], 0, records[num_records].date2);
 
                           switch (cta_res[j+1])
@@ -818,7 +818,7 @@ static int nagra2_card_info(struct s_reader * reader)
               else
                  qsort(records, num_records, sizeof(ncmed_rec), reccmp2);
 
-              int  euro=0;
+              int32_t  euro=0;
               char *tier_name = NULL;
               time_t rawtime;
               struct tm timeinfo;
@@ -917,12 +917,12 @@ void nagra2_post_process(struct s_reader * reader)
 	}
 }
 
-static int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
 	def_resp;
 	if (!reader->is_tiger)
 	{
-		int retry=0;
+		int32_t retry=0;
 		if (reader->is_n3_na) {
 			unsigned char ecm_pkt[256+16];
 			memset(ecm_pkt, 0, sizeof(ecm_pkt));
@@ -1009,7 +1009,7 @@ static int nagra2_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	return ERROR;
 }
 
-int nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+int32_t nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
 	switch (ep->emm[0]) {
 		case 0x83:
@@ -1037,7 +1037,7 @@ int nagra2_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if
 
 static void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	int idx = 2;
+	int32_t idx = 2;
 
 	filter[0]=0xFF;
 	filter[1]=0;
@@ -1076,7 +1076,7 @@ static void nagra2_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-static int nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int32_t nagra2_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
 	def_resp;
 	if (!reader->is_tiger)

@@ -4,7 +4,7 @@
 
 static FILE *fp=(FILE *)0;
 static FILE *fps=(FILE *)0;
-static short logStarted = 0;
+static int16_t logStarted = 0;
 
 pthread_mutex_t switching_log;
 #ifdef CS_LOGHISTORY
@@ -17,7 +17,7 @@ FILE *fpa=(FILE *)0;
 
 #define LOG_BUF_SIZE (520+11) // should be aligned with s_client.dump from globals.h
 
-static void switch_log(char* file, FILE **f, int (*pfinit)(void))
+static void switch_log(char* file, FILE **f, int32_t (*pfinit)(void))
 {
 	if( cfg.max_log_size)	//only 1 thread needs to switch the log; even if anticasc, statistics and normal log are running
 					//at the same time, it is ok to have the other logs switching 1 entry later
@@ -31,7 +31,7 @@ static void switch_log(char* file, FILE **f, int (*pfinit)(void))
 		}
 
 		if( stlog.st_size >= cfg.max_log_size*1024 && *f != NULL) {
-			int rc;
+			int32_t rc;
 			char prev_log[strlen(file) + 6];
 			snprintf(prev_log, sizeof(prev_log), "%s-prev", file);
 			if ( pthread_mutex_trylock(&switching_log) == 0) { //I got the lock so I am the first thread detecting a switchlog is needed
@@ -95,7 +95,7 @@ void cs_write_log(char *txt)
 		}
 }
 
-int cs_open_logfiles()
+int32_t cs_open_logfiles()
 {
 	if (!fp && cfg.logfile != NULL) {	//log to file
 		if ((fp = fopen(cfg.logfile, "a+")) <= (FILE *)0) {
@@ -120,7 +120,7 @@ int cs_open_logfiles()
 	return(fp <= (FILE *)0);
 }
 
-int cs_init_log(void)
+int32_t cs_init_log(void)
 {
 	if(logStarted == 0){
 		pthread_mutex_init(&switching_log, NULL);
@@ -128,12 +128,12 @@ int cs_init_log(void)
 		pthread_mutex_init(&loghistory_lock, NULL);
 #endif
 	}
-	int rc = cs_open_logfiles();
+	int32_t rc = cs_open_logfiles();
 	logStarted = 1;
 	return rc;
 }
 
-static void get_log_header(int m, char *txt)
+static void get_log_header(int32_t m, char *txt)
 {
 	struct s_client *cl = cur_client();	
 	pthread_t thread = cl?cl->thread:0;
@@ -143,7 +143,7 @@ static void get_log_header(int m, char *txt)
 		snprintf(txt, LOG_BUF_SIZE, "%8X%-3.3s",(unsigned int) thread, "");
 }
 
-static void write_to_log(int flag, char *txt)
+static void write_to_log(int32_t flag, char *txt)
 {
 	//flag = -1 is old behaviour, before implementation of debug_nolf (=debug no line feed)
 	//
@@ -241,7 +241,7 @@ void cs_close_log(void)
 	fp=(FILE *)0;
 }
 #ifdef WITH_DEBUG
-void cs_debug_mask(unsigned short mask, const char *fmt,...)
+void cs_debug_mask(uint16_t mask, const char *fmt,...)
 {
 	char log_txt[LOG_BUF_SIZE];
 	if (cs_dblevel & mask)
@@ -255,10 +255,10 @@ void cs_debug_mask(unsigned short mask, const char *fmt,...)
 	}
 }
 #endif
-void cs_dump(const uchar *buf, int n, char *fmt, ...)
+void cs_dump(const uchar *buf, int32_t n, char *fmt, ...)
 {
 	char log_txt[LOG_BUF_SIZE];
-	int i;
+	int32_t i;
 
 	if( fmt )
 	{
@@ -279,11 +279,11 @@ void cs_dump(const uchar *buf, int n, char *fmt, ...)
 	}
 }
 #ifdef WITH_DEBUG
-void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
+void cs_ddump_mask(uint16_t mask, const uchar *buf, int32_t n, char *fmt, ...)
 {
 
 	char log_txt[LOG_BUF_SIZE];
-	int i;
+	int32_t i;
 	if ((mask & cs_dblevel) && (fmt))
 	{
 		get_log_header(1, log_txt);
@@ -305,7 +305,7 @@ void cs_ddump_mask(unsigned short mask, const uchar *buf, int n, char *fmt, ...)
 	}
 }
 #endif
-int cs_init_statistics(void) 
+int32_t cs_init_statistics(void) 
 {
 	if ((!fps) && (cfg.usrfile != NULL))
 	{
@@ -341,13 +341,13 @@ void cs_statistics(struct s_client * client)
 		if(cfg.mon_appendchaninfo)
 			channel = get_servicename(client->last_srvid,client->last_caid);
 
-		int lsec;
+		int32_t lsec;
 		if ((client->last_caid == 0xFFFF) && (client->last_srvid == 0xFFFF))
 			lsec = client->last - client->login; //client leave calc total duration
 		else
 			lsec = client->last - client->lastswitch;
 
-		int secs = 0, fullmins = 0, mins = 0, fullhours = 0;
+		int32_t secs = 0, fullmins = 0, mins = 0, fullhours = 0;
 
 		if((lsec > 0) && (lsec < 1000000)) {
 			secs = lsec % 60;

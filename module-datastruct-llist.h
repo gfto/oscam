@@ -17,7 +17,7 @@ typedef struct llist LLIST;
 struct llist {
     void *obj;
     LL_NODE *initial;
-    int count;
+    int32_t count;
     pthread_mutex_t lock;
 };
 
@@ -39,18 +39,18 @@ LL_NODE *ll_prepend(LLIST *l, void *obj);               // prepend obj to llist
 LL_ITER *ll_iter_create(LLIST *l);              // return ptr to iterator obj
 void ll_iter_release(LL_ITER *it);              // free up the iterator obj
 void *ll_iter_next(LL_ITER *it);                // iterate to and return next llnode obj, returns NULL at end
-void *ll_iter_peek(LL_ITER *it, int offset);    // return obj at offset from iterator but do not iterate
+void *ll_iter_peek(LL_ITER *it, int32_t offset);    // return obj at offset from iterator but do not iterate
 void ll_iter_reset(LL_ITER *it);                // reset itrerator to first llnode
 void ll_iter_insert(LL_ITER *it, void *obj);    // insert obj at iterator node
 void *ll_iter_remove(LL_ITER *it);              // remove llnode at iterator, returns ptr to the llnode obj removed
 void ll_iter_remove_data(LL_ITER *it);          // remove llnode and free llnode obj
 void *ll_iter_move(LL_ITER *it, int offset);
 
-int ll_count(LLIST *l);                 // return number of items in list
+int32_t ll_count(LLIST *l);                 // return number of items in list
 void *ll_has_elements(LLIST *l);        // returns first obj if has one
 
-int ll_contains(LLIST *l, void *obj);
+int32_t ll_contains(LLIST *l, void *obj);
 void ll_remove(LLIST *l, void *obj);
 void ll_remove_data(LLIST *l, void *obj);
-int ll_remove_all(LLIST *l, LLIST *elements_to_remove); // removes all elements from l where elements are in elements_to_remove
+int32_t ll_remove_all(LLIST *l, LLIST *elements_to_remove); // removes all elements from l where elements are in elements_to_remove
 #endif

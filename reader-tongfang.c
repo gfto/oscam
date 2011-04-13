@@ -1,9 +1,9 @@
 #include "globals.h"
 #include "reader-common.h"
 
-static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 if cw is all zeros
+static int32_t cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 if cw is all zeros
 {
-  int i;
+  int32_t i;
 
   for (i = 0; i < 8; i++)
   {
@@ -15,10 +15,10 @@ static int cw_is_valid(unsigned char *cw) //returns 1 if cw_is_valid, returns 0 
   return ERROR;
 }
 
-static int tongfang_read_data(struct s_reader *reader, uchar size, uchar *cta_res, ushort *status)
+static int32_t tongfang_read_data(struct s_reader *reader, uchar size, uchar *cta_res, uint16_t *status)
 {
   uchar read_data_cmd[]={0x00,0xc0,0x00,0x00,0xff};
-  ushort cta_lr;
+  uint16_t cta_lr;
 
   read_data_cmd[4] = size;
   write_cmd(read_data_cmd, NULL);
@@ -28,17 +28,17 @@ static int tongfang_read_data(struct s_reader *reader, uchar size, uchar *cta_re
   return(cta_lr - 2);
 }
 
-static int tongfang_card_init(struct s_reader *reader, ATR newatr)
+static int32_t tongfang_card_init(struct s_reader *reader, ATR newatr)
 {
   static const uchar begin_cmd[] = {0x00,0xa4,0x04,0x00,0x05,0xf9,0x5a,0x54,0x00,0x06};
   static const uchar get_serial_cmd[] = {0x80,0x46,0x00,0x00,0x04,0x01,0x00,0x00,0x04};
   uchar pairing_cmd[] = {0x80,0x4c,0x00,0x00,0x04,0xFF,0xFF,0xFF,0xFF};
 
   uchar data[257];
-  int data_len = 0;
-  ushort status = 0;
+  int32_t data_len = 0;
+  uint16_t status = 0;
   uchar boxID[] = {0xFF, 0xFF, 0xFF, 0xFF};
-  int i;
+  int32_t i;
 
   def_resp;
   get_hist;
@@ -94,18 +94,18 @@ Example ecm:
 A5 1B 8B CA A8 95 E0 D1 24 7D 36 8C F6 89 4A F7
 B2 3A 74 3D D1 D4
 */
-static int tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
+static int32_t tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
 {
   uchar ecm_cmd[200];
-  int ecm_len;
+  int32_t ecm_len;
   uchar* pbuf = er->ecm;
-  int i = 0;
-  int write_len = 0;
+  int32_t i = 0;
+  int32_t write_len = 0;
   def_resp;
-  int read_size = 0;
+  int32_t read_size = 0;
   uchar data[100];
-  int data_len = 0;
-  ushort status = 0;
+  int32_t data_len = 0;
+  uint16_t status = 0;
   
   if((ecm_len = check_sct_len(er->ecm, 3)) < 0) return ERROR;
 
@@ -161,17 +161,17 @@ static int tongfang_do_ecm(struct s_reader *reader, ECM_REQUEST *er)
   return OK;
 }
 
-static int tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *UNUSED(reader))
+static int32_t tongfang_get_emm_type(EMM_PACKET *ep, struct s_reader *UNUSED(reader))
 {
   ep->type = UNKNOWN;
   return TRUE;
 }
 
-static int tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)
+static int32_t tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)
 {
   uchar emm_cmd[200];
   def_resp;
-  int write_len;
+  int32_t write_len;
 
   if(ep->emm[2] < 5) return ERROR;
 
@@ -183,11 +183,11 @@ static int tongfang_do_emm(struct s_reader *reader, EMM_PACKET *ep)
   return OK;
 }
 
-static int tongfang_card_info(struct s_reader * reader)
+static int32_t tongfang_card_info(struct s_reader * reader)
 {
   static const uchar get_provider_cmd[] = {0x80,0x44,0x00,0x00,0x08};
   def_resp;
-  int i;
+  int32_t i;
 
   write_cmd(get_provider_cmd, NULL);
   if((cta_res[cta_lr - 2] != 0x90) || (cta_res[cta_lr - 1] != 0x00)) return ERROR;

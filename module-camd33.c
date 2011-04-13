@@ -2,9 +2,9 @@
 
 #define REQ_SIZE	4
 
-static int camd33_send(uchar *buf, int ml)
+static int32_t camd33_send(uchar *buf, int32_t ml)
 {
-  int l;
+  int32_t l;
   if (!cur_client()->pfd) return(-1);
   l=boundary(4, ml);
   memset(buf+ml, 0, l-ml);
@@ -14,9 +14,9 @@ static int camd33_send(uchar *buf, int ml)
   return(send(cur_client()->pfd, buf, l, 0));
 }
 
-static int camd33_recv(struct s_client * client, uchar *buf, int l)
+static int32_t camd33_recv(struct s_client * client, uchar *buf, int32_t l)
 {
-  int n;
+  int32_t n;
   if (!client->pfd) return(-1);
   if ((n=recv(client->pfd, buf, l, 0))>0)
   {
@@ -58,7 +58,7 @@ static void camd33_request_emm()
 
 static void camd33_auth_client(uchar *camdbug)
 {
-  int i, rc;
+  int32_t i, rc;
   uchar *usr=NULL, *pwd=NULL;
   struct s_auth *account;
   uchar mbuf[1024];
@@ -97,9 +97,9 @@ static void camd33_auth_client(uchar *camdbug)
   }
 }
 
-static int get_request(uchar *buf, int n, uchar *camdbug)
+static int32_t get_request(uchar *buf, int32_t n, uchar *camdbug)
 {
-  int rc, w;
+  int32_t rc, w;
   struct s_client *cur_cl = cur_client();
 
   if (camdbug[0])
@@ -159,7 +159,7 @@ static void camd33_send_dcw(struct s_client *client, ECM_REQUEST *er)
     camd33_request_emm();
 }
 
-static void camd33_process_ecm(uchar *buf, int l)
+static void camd33_process_ecm(uchar *buf, int32_t l)
 {
   ECM_REQUEST *er;
   if (!(er=get_ecmtask()))
@@ -171,7 +171,7 @@ static void camd33_process_ecm(uchar *buf, int l)
   get_cw(cur_client(), er);
 }
 
-static void camd33_process_emm(uchar *buf, int l)
+static void camd33_process_emm(uchar *buf, int32_t l)
 {
   EMM_PACKET epg;
   memset(&epg, 0, sizeof(epg));
@@ -184,7 +184,7 @@ static void camd33_process_emm(uchar *buf, int l)
 
 static void * camd33_server(void* cli)
 {
-  int n;
+  int32_t n;
   uchar mbuf[1024];
   uchar camdbug[256];
 

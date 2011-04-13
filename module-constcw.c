@@ -1,9 +1,9 @@
 //FIXME Not checked on threadsafety yet; after checking please remove this line
 #include "globals.h"
 
-int pserver = 0;
+int32_t pserver = 0;
 
-int constcw_file_available(void)
+int32_t constcw_file_available(void)
 {
     FILE *fp;
     
@@ -13,13 +13,13 @@ int constcw_file_available(void)
     return (1);
 }
 
-int constcw_analyse_file(ushort c_caid, uint c_prid, ushort c_sid, uchar *dcw)
+int32_t constcw_analyse_file(uint16_t c_caid, uint32_t c_prid, uint16_t c_sid, uchar *dcw)
 {
     //CAID:PROVIDER:SID:PMT:PID:: XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX XX
     
     FILE *fp;
     char token[4096];
-    uint caid, provid, sid, pmt, pid;
+    uint32_t caid, provid, sid, pmt, pid;
     uchar cw[16];
 
     // FIXME
@@ -54,9 +54,9 @@ int constcw_analyse_file(ushort c_caid, uint c_prid, ushort c_sid, uchar *dcw)
 //************************************************************************************************************************
 //* client/server common functions
 //************************************************************************************************************************
-static int constcw_recv(struct s_client *client, uchar *buf, int l)
+static int32_t constcw_recv(struct s_client *client, uchar *buf, int32_t l)
 {
-    int ret;
+    int32_t ret;
 
     if (!client->udp_fd) return(-9);
     ret = read(client->udp_fd, buf, l);
@@ -68,9 +68,9 @@ static int constcw_recv(struct s_client *client, uchar *buf, int l)
 //************************************************************************************************************************
 //*       client functions
 //************************************************************************************************************************
-int constcw_client_init(struct s_client *client)
+int32_t constcw_client_init(struct s_client *client)
 {
-    int fdp[2];
+    int32_t fdp[2];
     
     client->pfd = 0;
     if (socketpair(PF_LOCAL, SOCK_STREAM, 0, fdp))
@@ -100,7 +100,7 @@ int constcw_client_init(struct s_client *client)
     return(0);
 }
 
-static int constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msgbuf)
+static int32_t constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msgbuf)
 {
     time_t t;
     struct s_reader *rdr = client->reader;
@@ -127,7 +127,7 @@ static int constcw_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *msg
     return(0);
 }
 
-static int constcw_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int n)
+static int32_t constcw_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t n)
 {
     // FIXME
     *client = *client;

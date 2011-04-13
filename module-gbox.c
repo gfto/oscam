@@ -21,34 +21,34 @@ enum {
 };
 
 struct gbox_card {
-  uint16 peer_id;
-  uint16 provid;
-  int slot;
-  int dist;
-  int lvl;
+  uint16_t peer_id;
+  uint16_t provid;
+  int32_t slot;
+  int32_t dist;
+  int32_t lvl;
 };
 
 struct gbox_peer {
-  uint16 id;
+  uint16_t id;
   uchar key[4];
   uchar ver;
   uchar type;
   LLIST *cards;
   uchar checkcode[7];
   uchar *hostname;
-  int online;
-  int fail_count;
-  int hello_count;
+  int32_t online;
+  int32_t fail_count;
+  int32_t hello_count;
 };
 
 struct gbox_data {
-  uint16 id;
+  uint16_t id;
   uchar checkcode[7];
   uchar key[4];
   uchar ver;
   uchar type;
-  int ecm_idx;
-  int hello_expired;
+  int32_t ecm_idx;
+  int32_t hello_expired;
   uchar cws[16];
   struct gbox_peer peer;
   pthread_mutex_t lock;
@@ -67,7 +67,7 @@ static const uchar sbox[] = {
   0x4d, 0x41, 0x0c, 0x5e, 0xde, 0xe4, 0x90, 0xae
 };
 
-static int gbox_decode_cmd(uchar *buf)
+static int32_t gbox_decode_cmd(uchar *buf)
 {
   return buf[0] << 8 | buf[1];
 }
@@ -88,11 +88,11 @@ static void gbox_calc_checkcode(struct gbox_data *gbox)
   */
 }
 
-uint32_t ecm_getcrc(ECM_REQUEST *er, int ecmlen)
+uint32_t ecm_getcrc(ECM_REQUEST *er, int32_t ecmlen)
 {
 
-  uint8 checksum[4];
-  int counter;
+  uint8_t checksum[4];
+  int32_t counter;
 
   uchar ecm[0xFF];
   memcpy(ecm, er->ecm, er->l);
@@ -113,15 +113,15 @@ uint32_t ecm_getcrc(ECM_REQUEST *er, int ecmlen)
 }
 
 #pragma GCC diagnostic ignored "-Wunused-parameter" 
-static void gbox_encrypt_stage1(uchar *buf, int l, uchar *key)
+static void gbox_encrypt_stage1(uchar *buf, int32_t l, uchar *key)
 {
-  int i;
+  int32_t i;
 
   for (i = 31; i >= 0; i--) {
     uchar tmp;
 
     tmp = key[3];
-    int j;
+    int32_t j;
     for (j = 3; j > 0; j--)
       key[j] = (key[j - 1] << 7) + (key[j] >> 1);
     key[0] = (tmp << 7) + (key[0] >> 1);
@@ -132,16 +132,16 @@ static void gbox_encrypt_stage1(uchar *buf, int l, uchar *key)
   }
 }
 
-static void gbox_encrypt_stage2(uchar *buf, int l, uchar *key)
+static void gbox_encrypt_stage2(uchar *buf, int32_t l, uchar *key)
 {
-  int i, j;
+  int32_t i, j;
 
   for (i = 0; i < 4; i++)
     for (j = 7; j >= 0; j--) {
       uchar tmp;
 
       tmp = key[3];
-      int k;
+      int32_t k;
       for (k = 3; k > 0; k--)
         key[k] = (key[k - 1] << 7) + (key[k] >> 1);
       key[0] = (tmp << 7) + (key[0] >> 1);
@@ -152,9 +152,9 @@ static void gbox_encrypt_stage2(uchar *buf, int l, uchar *key)
     }
 }
 
-static void gbox_decrypt_stage1(uchar *buf, int l, uchar *key)
+static void gbox_decrypt_stage1(uchar *buf, int32_t l, uchar *key)
 {
-  int i;
+  int32_t i;
 
   for (i = 0; i < 32; i++) {
     uchar tmp;
@@ -164,16 +164,16 @@ static void gbox_decrypt_stage1(uchar *buf, int l, uchar *key)
     buf[i + 1 - ((i + 1) & 0xf8)] -= sbox[((key[i + 1 - ((i + 1) & 0xfc)] ^ buf[i - (i & 0xf8)]) >> 2) & 0x3f] * 2;
 
     tmp = key[0];
-    int j;
+    int32_t j;
     for (j = 0; j < 3; j++)
       key[j] = ((key[j + 1] & 0x80) >> 7) + (key[j] * 2);
     key[3] = ((tmp & 0x80) >> 7) + (key[3] * 2);
   }
 }
 
-static void gbox_decrypt_stage2(uchar *buf, int l, uchar *key)
+static void gbox_decrypt_stage2(uchar *buf, int32_t l, uchar *key)
 {
-  int i, j;
+  int32_t i, j;
 
   for (i = 3; i >= 0; i--)
     for (j = 0; j < 8; j++) {
@@ -184,16 +184,16 @@ static void gbox_decrypt_stage2(uchar *buf, int l, uchar *key)
       buf[(j + 1) & 7] += sbox[(buf[j] >> 2) & 0x3f];
 
       tmp = key[0];
-      int k;
+      int32_t k;
       for (k = 0; k < 3; k++)
         key[k] = ((key[k + 1] & 0x80) >> 7) + (key[k] * 2);
       key[3] = ((tmp & 0x80) >> 7) + (key[3] * 2);
     }
 }
 
-static void gbox_encrypt(uchar *buf, int l, uchar *key)
+static void gbox_encrypt(uchar *buf, int32_t l, uchar *key)
 {
-  int i;
+  int32_t i;
   uchar tmp_key[4];
 
   memcpy(tmp_key, key, 4);
@@ -207,7 +207,7 @@ static void gbox_encrypt(uchar *buf, int l, uchar *key)
   gbox_decrypt_stage2(buf + l - 9, 9, tmp_key);
 }
 
-static void gbox_decrypt(uchar *buf, int l, uchar *key)
+static void gbox_decrypt(uchar *buf, int32_t l, uchar *key)
 {
   uchar tmp_key[4];
 
@@ -216,7 +216,7 @@ static void gbox_decrypt(uchar *buf, int l, uchar *key)
   gbox_encrypt_stage2(buf + l - 9, 9, tmp_key);
   gbox_decrypt_stage2(buf, l, tmp_key);
 
-  int i;
+  int32_t i;
   for (i = l - 2; i >= 0; i--) {
     buf[i] ^= buf[i + 1];
 }
@@ -224,7 +224,7 @@ static void gbox_decrypt(uchar *buf, int l, uchar *key)
   gbox_decrypt_stage1(buf, l, tmp_key);
 }
 
-static void gbox_compress(struct gbox_data *gbox, uchar *buf, int unpacked_len, int *packed_len)
+static void gbox_compress(struct gbox_data *gbox, uchar *buf, int32_t unpacked_len, int32_t *packed_len)
 {
   unsigned char *tmp = malloc(0x40000);
   unsigned char *tmp2 = malloc(0x40000);
@@ -250,11 +250,11 @@ static void gbox_compress(struct gbox_data *gbox, uchar *buf, int unpacked_len, 
   *packed_len = pl;
 }
 
-static void gbox_decompress(struct gbox_data *gbox, uchar *buf, int *unpacked_len)
+static void gbox_decompress(struct gbox_data *gbox, uchar *buf, int32_t *unpacked_len)
 {
   uchar tmp[2048];
 
-  int len = buf[12] - 13;
+  int32_t len = buf[12] - 13;
 
   lzo_init();
   if (lzo1x_decompress(buf + 12, len, tmp, (lzo_uint *)unpacked_len, NULL) != LZO_E_OK)
@@ -265,7 +265,7 @@ static void gbox_decompress(struct gbox_data *gbox, uchar *buf, int *unpacked_le
 }
 
 /*
-static void gbox_handle_gsms(ushort peerid, char *gsms)
+static void gbox_handle_gsms(uint16_t peerid, char *gsms)
 {
 	cs_log("gbox: gsms received from peer %04x: %s", peerid, gsms);
 
@@ -341,7 +341,7 @@ static void gbox_wait_for_response(struct s_client *cli)
 	//printf("gbox: exit gbox_wait_for_response()\n");
 }
 
-static void gbox_send(struct s_client *cli, uchar *buf, int l)
+static void gbox_send(struct s_client *cli, uchar *buf, int32_t l)
 {
   struct gbox_data *gbox = cli->gbox;
 
@@ -362,10 +362,10 @@ static void gbox_send_boxinfo(struct s_client *cli)
 {
   struct gbox_data *gbox = cli->gbox;
 
-  int len;
+  int32_t len;
   uchar buf[4096];
 
-  int hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
+  int32_t hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
 
   buf[0] = 0xA0;
   buf[1] = 0xA1;
@@ -384,10 +384,10 @@ static void gbox_send_hello(struct s_client *cli)
 {
   struct gbox_data *gbox = cli->gbox;
 
-  int len;
+  int32_t len;
   uchar buf[4096];
 
-  int hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
+  int32_t hostname_len = strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1);
 
   len = 22 + hostname_len;
 
@@ -419,7 +419,7 @@ static void gbox_send_hello(struct s_client *cli)
   gbox_send(cli, buf, len);
 }
 
-static int gbox_recv(struct s_client *cli, uchar *b, int l)
+static int32_t gbox_recv(struct s_client *cli, uchar *b, int32_t l)
 {
   struct gbox_data *gbox = cli->gbox;
 
@@ -427,14 +427,14 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
 	  return -1;
 
   uchar *data = gbox->buf;
-  int n;
+  int32_t n;
 
   sem_post(&gbox->sem);
   gbox->peer.online = 1;
 
   pthread_mutex_lock(&gbox->lock);
 
-  unsigned int r_addr_len = 0;
+  uint32_t r_addr_len = 0;
   struct sockaddr_in r_addr;
   if ((n = recvfrom(cli->udp_fd, data, sizeof(gbox->buf), 0, (struct sockaddr *)&r_addr, &r_addr_len)) < 8) {
 	  cs_log("gbox: invalid recvfrom!!!");
@@ -473,21 +473,21 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
   switch (gbox_decode_cmd(data)) {
     case MSG_HELLO:
       {
-        static int exp_seq = 0;
+        static int32_t exp_seq = 0;
 
-        int ip_clien_gbox = cs_inet_addr(cli->reader->device);
+        int32_t ip_clien_gbox = cs_inet_addr(cli->reader->device);
         cli->ip = ip_clien_gbox;
         gbox->peer.online = 1;
 
-        int payload_len = n;
+        int32_t payload_len = n;
 
         gbox_decompress(gbox, data, &payload_len);
         cs_ddump_mask(D_READER, data, payload_len, "gbox: decompressed data (%d bytes):", payload_len);
 
-        int seqno = data[11] & 0x7f;
-        int final = data[11] & 0x80;
+        int32_t seqno = data[11] & 0x7f;
+        int32_t final = data[11] & 0x80;
 
-        int ncards_in_msg = 0;
+        int32_t ncards_in_msg = 0;
 
         if (seqno != exp_seq) return -1;
 
@@ -497,19 +497,19 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
           if (gbox->peer.cards) ll_destroy_data(gbox->peer.cards);
           gbox->peer.cards = ll_create();
 
-          int checkcode_len = 7;
-          int hostname_len = data[payload_len - 1];
-          int footer_len = hostname_len + 2;
+          int32_t checkcode_len = 7;
+          int32_t hostname_len = data[payload_len - 1];
+          int32_t footer_len = hostname_len + 2;
 
           // add cards to card list
           uchar *ptr = data + 12;
           while (ptr < data + payload_len - footer_len - checkcode_len - 1) {
-            uint32 provid = ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
-            int ncards = ptr[4];
+            uint32_t provid = ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
+            int32_t ncards = ptr[4];
 
             ptr += 5;
 
-            int i;
+            int32_t i;
             for (i = 0; i < ncards; i++) {
               struct gbox_card *card = malloc(sizeof(struct gbox_card));
 
@@ -544,12 +544,12 @@ static int gbox_recv(struct s_client *cli, uchar *b, int l)
           // add cards to card list
           uchar *ptr = data + 12;
           while (ptr < data + payload_len - 1) {
-            uint32 provid = ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
-            int ncards = ptr[4];
+            uint32_t provid = ptr[0] << 24 | ptr[1] << 16 | ptr[2] << 8 | ptr[3];
+            int32_t ncards = ptr[4];
 
             ptr += 5;
 
-            int i;
+            int32_t i;
             for (i = 0; i < ncards; i++) {
               struct gbox_card *card = malloc(sizeof(struct gbox_card));
 
@@ -620,7 +620,7 @@ static void gbox_send_dcw(struct s_client *cli, ECM_REQUEST *er)
   // TODO
 }
 
-static int gbox_client_init(struct s_client *cli)
+static int32_t gbox_client_init(struct s_client *cli)
 {
 	if (!strnlen(cfg.gbox_hostname, sizeof(cfg.gbox_hostname) - 1)) {
 		cs_log("gbox: error, no hostname configured in oscam.conf!");
@@ -650,9 +650,9 @@ static int gbox_client_init(struct s_client *cli)
   memset(gbox, 0, sizeof(struct gbox_data));
   memset(&gbox->peer, 0, sizeof(struct gbox_peer));
 
-  ulong r_pwd = a2i(rdr->r_pwd, 4);
-  ulong key = a2i(cfg.gbox_key, 4);
-  int i;
+  uint32_t r_pwd = a2i(rdr->r_pwd, 4);
+  uint32_t key = a2i(cfg.gbox_key, 4);
+  int32_t i;
   for (i = 3; i >= 0; i--) {
 	  gbox->peer.key[3 - i] = (r_pwd >> (8 * i)) & 0xff;
 	  gbox->key[3 - i] = (key >> (8 * i)) & 0xff;
@@ -668,7 +668,7 @@ static int gbox_client_init(struct s_client *cli)
 
   struct sockaddr_in loc_sa;
   struct protoent *ptrp;
-  int p_proto;
+  int32_t p_proto;
 
   cli->pfd=0;
 
@@ -691,12 +691,12 @@ static int gbox_client_init(struct s_client *cli)
         cs_exit(1);
   }
 
-  int opt = 1;
+  int32_t opt = 1;
   setsockopt(cli->udp_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof (opt));
 
 #ifdef SO_PRIORITY
   if (cfg.netprio)
-    setsockopt(cli->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(ulong));
+    setsockopt(cli->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(uintptr_t));
 #endif
 
   if (cfg.gbox_port>0)
@@ -716,7 +716,7 @@ static int gbox_client_init(struct s_client *cli)
   memcpy((char *)&cli->udp_sa.sin_addr, (char *)hp->h_addr, hp->h_length);
 
   cli->udp_sa.sin_family=AF_INET;
-  cli->udp_sa.sin_port=htons((u_short)rdr->r_port);
+  cli->udp_sa.sin_port=htons((uint16_t)rdr->r_port);
 
   cs_log("proxy %s:%d (fd=%d, peer id=%04x, my id=%04x, my hostname=%s, listen port=%d)",
     rdr->device, rdr->r_port, cli->udp_fd, gbox->peer.id, gbox->id, cfg.gbox_hostname, cfg.gbox_port);
@@ -732,7 +732,7 @@ static int gbox_client_init(struct s_client *cli)
   return 0;
 }
 
-static int gbox_recv_chk(struct s_client *cli, uchar *dcw, int *rc, uchar *buf, int UNUSED(n))
+static int32_t gbox_recv_chk(struct s_client *cli, uchar *dcw, int32_t *rc, uchar *buf, int32_t UNUSED(n))
 {
   struct gbox_data *gbox = cli->gbox;
 
@@ -747,7 +747,7 @@ static int gbox_recv_chk(struct s_client *cli, uchar *dcw, int *rc, uchar *buf, 
   return -1;
 }
 
-static int gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
+static int32_t gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
 {
   struct gbox_data *gbox = cli->gbox;
 
@@ -839,7 +839,7 @@ static int gbox_send_ecm(struct s_client *cli, ECM_REQUEST *er, uchar *buf)
   return 0;
 }
 
-static int gbox_send_emm(EMM_PACKET *ep)
+static int32_t gbox_send_emm(EMM_PACKET *ep)
 {
   // emms not yet supported
 

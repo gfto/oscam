@@ -1889,23 +1889,23 @@ char *tplmap[]={
 };
 
 struct templatevars {
-	uint varscnt;
-	uint varsalloc;
-	uint tmpcnt;
-	uint tmpalloc;
+	uint32_t varscnt;
+	uint32_t varsalloc;
+	uint32_t tmpcnt;
+	uint32_t tmpalloc;
 	char **names;
 	char **values;
-	uint8 *vartypes;
+	uint8_t *vartypes;
 	char **tmp;
 };
 
 struct uriparams {
-	int paramcount;
+	int32_t paramcount;
 	char *params[MAXGETPARAMS];
 	char *values[MAXGETPARAMS];
 };
 
 static char noncekey[33];
 
-int cv(){return 91789605==crc32(0L,(unsigned char*)ICMAI,strlen(ICMAI))/2?1:0;}
+int32_t cv(){return 91789605==crc32(0L,(unsigned char*)ICMAI,strlen(ICMAI))/2?1:0;}
 

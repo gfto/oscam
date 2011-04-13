@@ -9,21 +9,21 @@ void aes_set_key(char *key)
   AES_set_encrypt_key((const unsigned char *)key, 128, &cur_client()->aeskey);
 }
 
-void aes_decrypt(uchar *buf, int n)
+void aes_decrypt(uchar *buf, int32_t n)
 {
-  int i;
+  int32_t i;
   for(i=0; i<n; i+=16)
     AES_decrypt(buf+i, buf+i, &cur_client()->aeskey_decrypt);
 }
 
-void aes_encrypt_idx(struct s_client *cl, uchar *buf, int n)
+void aes_encrypt_idx(struct s_client *cl, uchar *buf, int32_t n)
 {
-  int i;
+  int32_t i;
   for(i=0; i<n; i+=16)
     AES_encrypt(buf+i, buf+i, &cl->aeskey);
 }
 
-void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, uchar *aesKey)
+void add_aes_entry(struct s_reader *rdr, uint16_t caid, uint32_t ident, int32_t keyid, uchar *aesKey)
 {
     AES_ENTRY *new_entry;
     AES_ENTRY *next,*current;
@@ -64,12 +64,12 @@ void add_aes_entry(struct s_reader *rdr, ushort caid, uint32 ident, int keyid, u
 }
 
 void parse_aes_entry(struct s_reader *rdr,char *value) {
-    ushort caid;
-    ushort dummy;
-    uint32 ident;
-    int len;
+    uint16_t caid;
+    uint16_t dummy;
+    uint32_t ident;
+    int32_t len;
     char *tmp;
-    int nb_keys,key_id;
+    int32_t nb_keys,key_id;
     uchar aes_key[16];
     char *save=NULL;
 
@@ -138,13 +138,13 @@ void parse_aes_keys(struct s_reader *rdr,char *value)
     */
 }
 
-int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid, uchar *buf, int n)
+int32_t aes_decrypt_from_list(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid, uchar *buf, int32_t n)
 {
     AES_ENTRY *current;
     AES_KEY   dummy;
-    int i;
-    int ok=1;
-    int error=0;
+    int32_t i;
+    int32_t ok=1;
+    int32_t error=0;
 
     current=list;
     while(current) {
@@ -170,11 +170,11 @@ int aes_decrypt_from_list(AES_ENTRY *list, ushort caid, uint32 provid,int keyid,
     return ok; // all ok, key decoded.
 }
 
-int aes_present(AES_ENTRY *list, ushort caid, uint32 provid,int keyid)
+int32_t aes_present(AES_ENTRY *list, uint16_t caid, uint32_t provid,int32_t keyid)
 {
     AES_ENTRY *current;
-    int ok=1;
-    int error=0;
+    int32_t ok=1;
+    int32_t error=0;
 
     current=list;
     while(current) {
@@ -218,7 +218,7 @@ char *remote_txt(void)
 char *trim(txt)
 char *txt;
 {
-  register int l;
+  register int32_t l;
   register char *p1, *p2;
 
   if (*txt==' ')
@@ -246,7 +246,7 @@ char *strtolower(char *txt)
   return(txt);
 }
 
-int gethexval(char c)
+int32_t gethexval(char c)
 {
   if ((c>='0') && (c<='9')) return(c-'0');
   if ((c>='A') && (c<='F')) return(c-'A'+10);
@@ -254,9 +254,9 @@ int gethexval(char c)
   return(-1);
 }
 
-int cs_atob(uchar *buf, char *asc, int n)
+int32_t cs_atob(uchar *buf, char *asc, int32_t n)
 {
-  int i, rc;
+  int32_t i, rc;
   for (i=0; i<n; i++)
   {
     if ((rc=(gethexval(asc[i<<1])<<4)|gethexval(asc[(i<<1)+1]))&0x100)
@@ -266,13 +266,13 @@ int cs_atob(uchar *buf, char *asc, int n)
   return(n);
 }
 
-ulong cs_atoi(char *asc, int l, int val_on_err)
+uint32_t cs_atoi(char *asc, int32_t l, int32_t val_on_err)
 {
-  int i, n=0;
-  ulong rc=0;
+  int32_t i, n=0;
+  uint32_t rc=0;
   for (i=((l-1)<<1), errno=0; (i>=0) && (n<4); i-=2)
   {
-    int b;
+    int32_t b;
     b=(gethexval(asc[i])<<4) | gethexval(asc[i+1]);
     if (b<0)
     {
@@ -286,9 +286,9 @@ ulong cs_atoi(char *asc, int l, int val_on_err)
   return(rc);
 }
 
-int byte_atob(char *asc)
+int32_t byte_atob(char *asc)
 {
-  int rc;
+  int32_t rc;
 
   if (strlen(trim(asc))!=2)
     rc=(-1);
@@ -298,9 +298,9 @@ int byte_atob(char *asc)
   return(rc);
 }
 
-long word_atob(char *asc)
+int32_t word_atob(char *asc)
 {
-  long rc;
+  int32_t rc;
 
   if (strlen(trim(asc))!=4)
     rc=(-1);
@@ -318,10 +318,10 @@ long word_atob(char *asc)
  * dynamic word_atob
  * converts an 1-4 digit asc hexstring
  */
-long dyn_word_atob(char *asc)
+int32_t dyn_word_atob(char *asc)
 {
-	long rc = (-1);
-	int i, len = strlen(trim(asc));
+	int32_t rc = (-1);
+	int32_t i, len = strlen(trim(asc));
 
 	if (len <= 4 && len > 0) {
 		for(i = 0, rc = 0; i < len; i++)
@@ -333,9 +333,9 @@ long dyn_word_atob(char *asc)
 	return(rc);
 }
 
-int key_atob_l(char *asc, uchar *bin, int l)
+int32_t key_atob_l(char *asc, uchar *bin, int32_t l)
 {
-  int i, n1, n2, rc;
+  int32_t i, n1, n2, rc;
   for (i=rc=0; i<l; i+=2)
   {
     if ((n1=gethexval(asc[i  ]))<0) rc=(-1);
@@ -345,10 +345,10 @@ int key_atob_l(char *asc, uchar *bin, int l)
   return(rc);
 }
 
-char *cs_hexdump(int m, const uchar *buf, int n)
+char *cs_hexdump(int32_t m, const uchar *buf, int32_t n)
 {
   //TODO: not threadsafe
-  int i;
+  int32_t i;
   char *dump = (char *)cur_client()->dump;
 
   dump[i=0]='\0';
@@ -361,7 +361,7 @@ char *cs_hexdump(int m, const uchar *buf, int n)
   return(dump);
 }
 
-static int inet_byteorder=0;
+static int32_t inet_byteorder=0;
 in_addr_t cs_inet_order(in_addr_t n)
 {
   if (!inet_byteorder)
@@ -393,17 +393,17 @@ in_addr_t cs_inet_addr(char *txt)
 }
 
 
-int check_ip(struct s_ip *ip, in_addr_t n)
+int32_t check_ip(struct s_ip *ip, in_addr_t n)
 {
 	struct s_ip *p_ip;
-	int ok = 0;
+	int32_t ok = 0;
 	for (p_ip=ip; (p_ip) && (!ok); p_ip=p_ip->next)
 		ok=((cs_inet_order(n)>=cs_inet_order(p_ip->ip[0])) && (cs_inet_order(n)<=cs_inet_order(p_ip->ip[1])));
 
 	return ok;
 }
 
-ulong b2i(int n, uchar *b)
+uint32_t b2i(int32_t n, uchar *b)
 {
   switch(n)
   {
@@ -419,26 +419,26 @@ ulong b2i(int n, uchar *b)
   return 0;
 }
 
-ullong b2ll(int n, uchar *b)
+uint64_t b2ll(int32_t n, uchar *b)
 {
-  int i;
-  ullong k=0;
+  int32_t i;
+  uint64_t k=0;
   for(i=0; i<n; k+=b[i++])
     k<<=8;
   return(k);
 }
 
-uchar *i2b(int n, ulong i)
+uchar *i2b(int32_t n, uint32_t i)
 {
   return i2b_buf(n, i, cur_client()->dump);
 }
 
-uchar *i2b_cl(int n, ulong i, struct s_client *cl)
+uchar *i2b_cl(int32_t n, uint32_t i, struct s_client *cl)
 {
   return i2b_buf(n, i, cl->dump);
 }
 
-uchar *i2b_buf(int n, ulong i, uchar *b)
+uchar *i2b_buf(int32_t n, uint32_t i, uchar *b)
 {
   switch(n)
   {
@@ -460,14 +460,14 @@ uchar *i2b_buf(int n, ulong i, uchar *b)
   return(b);
 }
 
-ulong a2i(char *asc, int bytes)
+uint32_t a2i(char *asc, int32_t bytes)
 {
-  int i, n;
-  ulong rc;
+  int32_t i, n;
+  uint32_t rc;
   for (rc=i=0, n=strlen(trim(asc))-1; i<(abs(bytes)<<1); n--, i++)
     if (n>=0)
     {
-      int rcl;
+      int32_t rcl;
       if ((rcl=gethexval(asc[n]))<0)
       {
         errno=EINVAL;
@@ -482,7 +482,7 @@ ulong a2i(char *asc, int bytes)
   return(rc);
 }
 
-int boundary(int exp, int n)
+int32_t boundary(int32_t exp, int32_t n)
 {
   return((((n-1)>>exp)+1)<<exp);
 }
@@ -499,7 +499,7 @@ void cs_ftime(struct timeb *tp)
 #endif
 }
 
-void cs_sleepms(unsigned int msec)
+void cs_sleepms(uint32_t msec)
 {
 	//does not interfere with signals like sleep and usleep do
 	struct timespec req_ts;
@@ -508,7 +508,7 @@ void cs_sleepms(unsigned int msec)
 	nanosleep (&req_ts, NULL);
 }
 
-void cs_sleepus(unsigned int usec)
+void cs_sleepus(uint32_t usec)
 {
 	//does not interfere with signals like sleep and usleep do
 	struct timespec req_ts;
@@ -517,12 +517,12 @@ void cs_sleepus(unsigned int usec)
 	nanosleep (&req_ts, NULL);
 }
 
-int bytes_available(int fd)
+int32_t bytes_available(int32_t fd)
 {
    fd_set rfds;
    fd_set erfds;
-   int select_ret;
-   int in_fd;
+   int32_t select_ret;
+   int32_t in_fd;
 
    in_fd=fd;
    
@@ -553,10 +553,10 @@ int bytes_available(int fd)
 
 #ifdef OS_CYGWIN32
 #include <windows.h>
-void cs_setpriority(int prio)
+void cs_setpriority(int32_t prio)
 {
   HANDLE WinId;
-  ulong wprio;
+  uint32_t wprio;
   switch((prio+20)/10)
   {
     case  0: wprio=REALTIME_PRIORITY_CLASS;	break;
@@ -568,7 +568,7 @@ void cs_setpriority(int prio)
   SetPriorityClass(WinId, wprio);
 }
 #else
-void cs_setpriority(int prio)
+void cs_setpriority(int32_t prio)
 {
 #ifdef PRIO_PROCESS
   setpriority(PRIO_PROCESS, 0, prio);  // ignore errors
@@ -578,9 +578,9 @@ void cs_setpriority(int prio)
 
 /* Checks an array if it is filled (a value > 0) and returns the last position (1...length) where something was found.
    length specifies the maximum length to check for. */
-int check_filled(uchar *value, int length){
+int32_t check_filled(uchar *value, int32_t length){
 	if(value == NULL) return 0;
-	int i, j = 0;
+	int32_t i, j = 0;
 	for (i = 0; i < length; ++i){
 		if(value[i] > 0) j = i + 1;
 	}
@@ -589,7 +589,7 @@ int check_filled(uchar *value, int length){
 
 /* This function encapsulates malloc. It automatically adds an error message to the log if it failed and calls cs_exit(quiterror) if quiterror > -1. 
    result will be automatically filled with the new memory position or NULL on failure. */
-void *cs_malloc(void *result, size_t size, int quiterror){
+void *cs_malloc(void *result, size_t size, int32_t quiterror){
 	void **tmp = (void *)result;
 	*tmp = malloc (size);
 	if(*tmp == NULL){
@@ -603,7 +603,7 @@ void *cs_malloc(void *result, size_t size, int quiterror){
 
 /* This function encapsulates realloc. It automatically adds an error message to the log if it failed and calls cs_exit(quiterror) if quiterror > -1.
 	result will be automatically filled with the new memory position or NULL on failure. If a failure occured, the existing memory in result will be freed. */
-void *cs_realloc(void *result, size_t size, int quiterror){
+void *cs_realloc(void *result, size_t size, int32_t quiterror){
 	void **tmp = (void *)result, **tmp2 = (void *)result;
 	*tmp = realloc (*tmp, size);
 	if(*tmp == NULL){
@@ -623,7 +623,7 @@ char to_hex(char code){
 
 /* Converts a char array to a char array with hex values (needed for example for md5).
 	Note that result needs to be at least (p_array_len * 2) + 1 large. */
-void char_to_hex(const unsigned char* p_array, unsigned int p_array_len, unsigned char *result) {
+void char_to_hex(const unsigned char* p_array, uint32_t p_array_len, unsigned char *result) {
 	result[p_array_len*2] = '\0';
 	const unsigned char* p_end = p_array + p_array_len;
 	size_t pos=0;
@@ -635,8 +635,8 @@ void char_to_hex(const unsigned char* p_array, unsigned int p_array_len, unsigne
 }
 
 /* Creates a random string with specified length. Note that dst must be one larger than size to hold the trailing \0*/
-void create_rand_str(char *dst, int size){
-	int i;
+void create_rand_str(char *dst, int32_t size){
+	int32_t i;
 	for (i = 0; i < size; ++i){
 		dst[i] = (rand() % 94) + 32;
 	}
@@ -644,12 +644,12 @@ void create_rand_str(char *dst, int size){
 }
 #endif
 
-/* Converts a uint64 value (you may also cast smaller types) to a char array in bitwise representation.
+/* Converts a uint64_t value (you may also cast smaller types) to a char array in bitwise representation.
    Note that the result array MUST be at least size+1 bit large and that this function assumes values
-   to be only positive! The result of e.g. uint64 7 is
+   to be only positive! The result of e.g. uint64_t 7 is
    11100000000000000000000000000000000000000000000000000000000000000 this means the array is reversed */
-void uint64ToBitchar(uint64 value, int size, char *result){
-	int pos;
+void uint64ToBitchar(uint64_t value, int32_t size, char *result){
+	int32_t pos;
 	for (pos=0;pos<size;pos++) result[pos]='0';
 	result[pos] = '\0';
 
@@ -657,13 +657,13 @@ void uint64ToBitchar(uint64 value, int size, char *result){
 	while (value > 0 && pos < size){
 		if(value % 2 == 1) result[pos]='1';
 		else result[pos]='0';
-		value=value / (uint64)2;
+		value=value / (uint64_t)2;
 		pos++;
 	}
 }
 
 /* Return 1 if the file exists, else 0 */
-int file_exists(const char * filename){
+int32_t file_exists(const char * filename){
 	FILE *file;
 	if ((file = fopen(filename, "r"))){
 		fclose(file);
@@ -683,7 +683,7 @@ void clear_sip(struct s_ip **sip){
 
 /* Clears the s_ftab struct provided by setting nfilts and nprids to zero. */
 void clear_ftab(struct s_ftab *ftab){
-	int i, j;
+	int32_t i, j;
 	for (i = 0; i < CS_MAXFILTERS; i++) {
 		ftab->filts[i].caid = 0;
 		for (j = 0; j < CS_MAXPROV; j++)
@@ -695,7 +695,7 @@ void clear_ftab(struct s_ftab *ftab){
 
 /* Clears the s_ptab struct provided by setting nfilts and nprids to zero. */
 void clear_ptab(struct s_ptab *ptab){
-	int i;
+	int32_t i;
 	for (i = 0; i < ptab->nports; i++) {
 		ptab->ports[i].ftab.nfilts = 0;
 		ptab->ports[i].ftab.filts[0].nprids = 0;
@@ -705,7 +705,7 @@ void clear_ptab(struct s_ptab *ptab){
 
 /* Clears given caidtab */
 void clear_caidtab(struct s_caidtab *ctab){
-	int i;
+	int32_t i;
 	for (i = 0; i < CS_MAXCAIDTAB; i++) {
 		ctab->caid[i] = 0;
 		ctab->mask[i] = 0;
@@ -715,7 +715,7 @@ void clear_caidtab(struct s_caidtab *ctab){
 
 /* Clears given tuntab */
 void clear_tuntab(struct s_tuntab *ttab){
-	int i;
+	int32_t i;
 	for (i = 0; i < CS_MAXTUNTAB; i++) {
 		ttab->bt_caidfrom[i] = 0;
 		ttab->bt_caidto[i] = 0;
@@ -724,9 +724,9 @@ void clear_tuntab(struct s_tuntab *ttab){
 }
 
 /* Copies a file from srcfile to destfile. If an error occured before writing, -1 is returned, else -2. On success, 0 is returned.*/
-int file_copy(char *srcfile, char *destfile){
+int32_t file_copy(char *srcfile, char *destfile){
 	FILE *src, *dest;
-  int ch;
+  int32_t ch;
   if((src = fopen(srcfile, "r"))==NULL) {
   	cs_log("Error opening file %s for reading (errno=%d %s)!", srcfile, errno, strerror(errno));
     return(-1);
@@ -757,8 +757,8 @@ int file_copy(char *srcfile, char *destfile){
 }
 
 /* Overwrites destfile with tmpfile. If forceBakOverWrite = 0, the bakfile will not be overwritten if it exists, else it will be.*/
-int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int forceBakOverWrite){
-	int rc;
+int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int32_t forceBakOverWrite){
+	int32_t rc;
 	if (file_exists(destfile)) {
 		if(forceBakOverWrite != 0 || !file_exists(bakfile)){
 			if(file_copy(destfile, bakfile) < 0){
@@ -780,9 +780,9 @@ int safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int fo
 
 /* Replacement of fprintf which adds necessary whitespace to fill up the varname to a fixed width.
    If varname is longer than varnameWidth, no whitespace is added*/
-void fprintf_conf(FILE *f, int varnameWidth, const char *varname, const char *fmtstring, ...){
-	int varlen = strlen(varname);
-	int max = (varlen > varnameWidth) ? varlen : varnameWidth;
+void fprintf_conf(FILE *f, int32_t varnameWidth, const char *varname, const char *fmtstring, ...){
+	int32_t varlen = strlen(varname);
+	int32_t max = (varlen > varnameWidth) ? varlen : varnameWidth;
 	char varnamebuf[max + 3];
 	char *ptr = varnamebuf + varlen;
 	va_list argptr;
@@ -806,15 +806,15 @@ void fprintf_conf(FILE *f, int varnameWidth, const char *varname, const char *fm
 /* Ordinary strncpy does not terminate the string if the source is exactly as long or longer as the specified size. This can raise security issues.
    This function is a replacement which makes sure that a \0 is always added. num should be the real size of char array (do not subtract -1). */
 void cs_strncpy(char * destination, const char * source, size_t num){
-	uint32 l, size = strlen(source);
+	uint32_t l, size = strlen(source);
 	if(size > num - 1) l = num - 1;
 	else l = size;
 	memcpy(destination, source, l);
 	destination[l] = '\0';
 }
 
-char *get_servicename(int srvid, int caid){
-	int i;
+char *get_servicename(int32_t srvid, int32_t caid){
+	int32_t i;
 	struct s_srvid *this = cfg.srvid;
 	static char name[83];
 
@@ -829,8 +829,8 @@ char *get_servicename(int srvid, int caid){
 	return(name);
 }
 
-char *get_tiername(int tierid, int caid){
-	int i;
+char *get_tiername(int32_t tierid, int32_t caid){
+	int32_t i;
 	struct s_tierid *this = cfg.tierid;
 	static char name[83];
 
@@ -845,7 +845,7 @@ char *get_tiername(int tierid, int caid){
 	return(name);
 }
 
-char *get_provider(int caid, ulong provid){
+char *get_provider(int32_t caid, uint32_t provid){
 	struct s_provid *this = cfg.provid;
 	static char name[83];
 
@@ -863,34 +863,34 @@ char *get_provider(int caid, ulong provid){
 		}
 	}
 
-	if (!name[0]) snprintf(name, 83, "%04X:%06lX unknown", caid, provid);
+	if (!name[0]) snprintf(name, 83, "%04X:%06X unknown", caid, provid);
 	if (!caid) name[0] = '\0';
 	return(name);
 }
 
-void make_non_blocking(int fd) {
-    int fl;
+void make_non_blocking(int32_t fd) {
+    int32_t fl;
     fl=fcntl(fd, F_GETFL);
     fcntl(fd, F_SETFL, fl | O_NONBLOCK | O_NDELAY);
 }
 
-unsigned int seed;
+uint32_t seed;
 
 uchar fast_rnd() {
-	unsigned int offset = 12923;
-	unsigned int multiplier = 4079;
+	uint32_t offset = 12923;
+	uint32_t multiplier = 4079;
 
 	seed = seed * multiplier + offset;
 	return (uchar) (seed % 0xFF);
 }
 
 void init_rnd() {
-	 seed = (unsigned int) time((time_t*)0);
+	 seed = (uint32_t) time((time_t*)0);
 }
 
-int hexserialset(struct s_reader *rdr)
+int32_t hexserialset(struct s_reader *rdr)
 {
-	int i;
+	int32_t i;
 
 	if (!rdr) return 0;
 
@@ -902,7 +902,7 @@ int hexserialset(struct s_reader *rdr)
 
 static char *netw_ext_prot[] = { "cccam", "cccam ext", "newcamd524" };
 
-char *reader_get_type_desc(struct s_reader * rdr, int extended)
+char *reader_get_type_desc(struct s_reader * rdr, int32_t extended)
 {
 	static char *typtxt[] = { "unknown", "mouse", "mouse", "sc8in1", "mp35", "mouse", "internal", "smartreader", "pcsc" };
 	char *desc = typtxt[0];
@@ -956,7 +956,7 @@ char *monitor_get_proto(struct s_client *cl)
  */
 char *get_ncd_client_name(char *client_id)
 {
-        static const int max_id_idx = 31;
+        static const int32_t max_id_idx = 31;
         static const char const *ncd_service_ids[] = { "0000", "5644", "4C43", "4333", "7264", "6762", "6D67", "7763", "6E73", "6378", "6B61",
                                            "6576", "4343", "5456", "414C", "0666", "0667", "9911", "434C", "4765", "5342",
                                            "6E65", "4E58", "4453", "8888", "7363", "0669", "0665", "0769", "4543", "6D63",
@@ -968,7 +968,7 @@ char *get_ncd_client_name(char *client_id)
                                              "NextYE2k", "NextYE2k", "DiabloCam/UW", "OSCam", "Scam", "rq-sssp-client/CW",
                                              "rq-sssp-client/CS", "JlsRq", "eyetvCamd", "mpcs", "kpcs", "unknown - please report" };
 
-        int idx = 0;
+        int32_t idx = 0;
         for (idx = 0; idx <= max_id_idx; idx++) {
 		if(!memcmp(ncd_service_ids[idx], client_id, 4))
                         return ncd_service_names[idx];
@@ -989,7 +989,7 @@ char *strnew(char *str)
   return newstr;
 }
 
-void hexserial_to_newcamd(uchar *source, uchar *dest, ushort caid)
+void hexserial_to_newcamd(uchar *source, uchar *dest, uint16_t caid)
 {
   caid = caid >> 8;
   if ((caid == 0x17) || (caid == 0x06))    // Betacrypt or Irdeto
@@ -1014,7 +1014,7 @@ void hexserial_to_newcamd(uchar *source, uchar *dest, ushort caid)
     memcpy(dest, source, 6);
 }
 
-void newcamd_to_hexserial(uchar *source, uchar *dest, ushort caid)
+void newcamd_to_hexserial(uchar *source, uchar *dest, uint16_t caid)
 {
   caid = caid >> 8;
   if ((caid == 0x17) || (caid == 0x06)) {

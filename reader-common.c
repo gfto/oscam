@@ -9,9 +9,9 @@
 
 #if defined(TUXBOX) && defined(PPC) //dbox2 only
 #include "csctapi/mc_global.h"
-static int reader_device_type(struct s_reader * reader)
+static int32_t reader_device_type(struct s_reader * reader)
 {
-  int rc=reader->typ;
+  int32_t rc=reader->typ;
   struct stat sb;
   if (reader->typ == R_MOUSE)
   {
@@ -19,7 +19,7 @@ static int reader_device_type(struct s_reader * reader)
       {
         if (S_ISCHR(sb.st_mode))
         {
-          int dev_major, dev_minor;
+          int32_t dev_major, dev_minor;
           dev_major=major(sb.st_rdev);
           dev_minor=minor(sb.st_rdev);
           if (((dev_major==4) || (dev_major==5)))
@@ -48,18 +48,18 @@ static void reader_nullcard(struct s_reader * reader)
   reader->nprov=0;
 }
 
-int reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int l, uchar * cta_res, ushort * p_cta_lr)
+int32_t reader_cmd2icc(struct s_reader * reader, const uchar *buf, const int32_t l, uchar * cta_res, uint16_t * p_cta_lr)
 {
-	int rc;
+	int32_t rc;
 	*p_cta_lr=CTA_RES_LEN-1; //FIXME not sure whether this one is necessary 
 	cs_ddump_mask(D_READER, buf, l, "write to cardreader %s:",reader->label);
-	rc=ICC_Async_CardWrite(reader, (uchar *)buf, (unsigned short)l, cta_res, p_cta_lr);
+	rc=ICC_Async_CardWrite(reader, (uchar *)buf, (uint16_t)l, cta_res, p_cta_lr);
 	return rc;
 }
 
 #define CMD_LEN 5
 
-int card_write(struct s_reader * reader, const uchar *cmd, const uchar *data, uchar *response, ushort * response_length)
+int32_t card_write(struct s_reader * reader, const uchar *cmd, const uchar *data, uchar *response, uint16_t * response_length)
 {
   uchar buf[260];
   // always copy to be able to be able to use const buffer without changing all code  
@@ -73,9 +73,9 @@ int card_write(struct s_reader * reader, const uchar *cmd, const uchar *data, uc
     return(reader_cmd2icc(reader, buf, CMD_LEN, response, response_length));
 }
 
-int check_sct_len(const uchar *data, int off)
+int32_t check_sct_len(const uchar *data, int32_t off)
 {
-	int l = SCT_LEN(data);
+	int32_t l = SCT_LEN(data);
 	if (l+off > MAX_LEN) {
 		cs_debug_mask(D_READER, "check_sct_len(): smartcard section too long %d > %d", l, MAX_LEN-off);
 		l = -1;
@@ -84,13 +84,13 @@ int check_sct_len(const uchar *data, int off)
 }
 
 
-static int reader_card_inserted(struct s_reader * reader)
+static int32_t reader_card_inserted(struct s_reader * reader)
 {
 #ifndef USE_GPIO
 	if ((reader->detect&0x7f) > 3)
 		return 1;
 #endif
-	int card;
+	int32_t card;
 	if (ICC_Async_GetStatus (reader, &card)) {
 		cs_log("Error getting status of terminal.");
 		return 0; //corresponds with no card inside!!
@@ -98,9 +98,9 @@ static int reader_card_inserted(struct s_reader * reader)
 	return (card);
 }
 
-static int reader_activate_card(struct s_reader * reader, ATR * atr, unsigned short deprecated)
+static int32_t reader_activate_card(struct s_reader * reader, ATR * atr, uint16_t deprecated)
 {
-  int i,ret;
+  int32_t i,ret;
 	if (!reader_card_inserted(reader))
 		return 0;
 
@@ -151,7 +151,7 @@ static void do_emm_from_file(struct s_reader * reader)
 			uint16_t save_s_nano = reader->s_nano;
 			uint16_t save_b_nano = reader->b_nano;
 
-			int rc = reader_emm(reader, eptmp);
+			int32_t rc = reader_emm(reader, eptmp);
 			if (rc == OK)
 				cs_log ("EMM from file %s was successful written.", token);
 			else
@@ -183,9 +183,9 @@ void reader_card_info(struct s_reader * reader)
   }
 }
 
-static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
+static int32_t reader_get_cardsystem(struct s_reader * reader, ATR atr)
 {
-	int i;
+	int32_t i;
 	for (i=0; i<CS_MAX_MOD; i++) {
 		if (cardsystem[i].card_init) {
 			if (cardsystem[i].card_init(reader, atr)) {
@@ -220,13 +220,13 @@ static int reader_get_cardsystem(struct s_reader * reader, ATR atr)
 	return(reader->csystem.active);
 }
 
-static int reader_reset(struct s_reader * reader)
+static int32_t reader_reset(struct s_reader * reader)
 {
   reader_nullcard(reader);
   ATR atr;
-  unsigned short int ret = 0;
+  uint16_t ret = 0;
 #ifdef AZBOX
-  int i;
+  int32_t i;
   if (reader->typ == R_INTERNAL) {
     if (reader->mode != -1) {
       Azbox_SetMode(reader->mode);
@@ -243,7 +243,7 @@ static int reader_reset(struct s_reader * reader)
     }
   } else {
 #endif
-  unsigned short int deprecated;
+  uint16_t deprecated;
 	for (deprecated = reader->deprecated; deprecated < 2; deprecated++) {
 		if (!reader_activate_card(reader, &atr, deprecated)) return(0);
 		ret = reader_get_cardsystem(reader, atr);
@@ -258,9 +258,9 @@ static int reader_reset(struct s_reader * reader)
 	return(ret);
 }
 
-int reader_device_init(struct s_reader * reader)
+int32_t reader_device_init(struct s_reader * reader)
 {
-	int rc = -1; //FIXME
+	int32_t rc = -1; //FIXME
 #if defined(TUXBOX) && defined(PPC)
 	struct stat st;
 	if (!stat(DEV_MULTICAM, &st))
@@ -273,7 +273,7 @@ int reader_device_init(struct s_reader * reader)
   return((rc!=OK) ? 2 : 0); //exit code 2 means keep retrying, exit code 0 means all OK
 }
 
-int reader_checkhealth(struct s_reader * reader)
+int32_t reader_checkhealth(struct s_reader * reader)
 {
   if (reader_card_inserted(reader))
   {
@@ -326,9 +326,9 @@ void reader_post_process(struct s_reader * reader)
 	}
 }
 
-int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
+int32_t reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
-  int rc=-1;
+  int32_t rc=-1;
   if( (rc=reader_checkhealth(reader)) )
   {
       cur_client()->last_srvid=er->srvid;
@@ -343,10 +343,10 @@ int reader_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return(rc);
 }
 
-int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs from calling reader!
+int32_t reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs from calling reader!
 {
 	cs_debug_mask(D_EMM, "Entered reader_get_emm_type cardsystem %s", rdr->csystem.desc ? rdr->csystem.desc : "");
-	int rc;
+	int32_t rc;
 
 	if (rdr->csystem.active && rdr->csystem.get_emm_type) 
 		rc=rdr->csystem.get_emm_type(ep, rdr);
@@ -356,8 +356,8 @@ int reader_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //rdr differs fro
 	return rc;
 }
 
-struct s_cardsystem *get_cardsystem_by_caid(ushort caid) {
-	int i,j; 
+struct s_cardsystem *get_cardsystem_by_caid(uint16_t caid) {
+	int32_t i,j; 
 	for (i=0; i<CS_MAX_MOD; i++) { 
 		if (cardsystem[i].caids) { 
 			for (j=0;j<2;j++) { 
@@ -370,9 +370,9 @@ struct s_cardsystem *get_cardsystem_by_caid(ushort caid) {
 	return NULL;
 } 
 
-int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
+int32_t reader_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
-  int rc=-1;
+  int32_t rc=-1;
 
   rc=reader_checkhealth(reader);
   if (rc) {

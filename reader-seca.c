@@ -2,14 +2,14 @@
 #include "reader-common.h"
 #include <stdlib.h>
 
-static int set_provider_info(struct s_reader * reader, int i)
+static int32_t set_provider_info(struct s_reader * reader, int32_t i)
 {
   def_resp;
   uchar ins12[] = { 0xc1, 0x12, 0x00, 0x00, 0x19 }; // get provider info
-  int year, month, day;
+  int32_t year, month, day;
   struct tm lt;
   time_t t;
-  int valid=0;//0=false, 1=true
+  int32_t valid=0;//0=false, 1=true
   char l_name[16+8+1]=", name: ";
 
   ins12[2]=i;//select provider
@@ -45,7 +45,7 @@ static int set_provider_info(struct s_reader * reader, int i)
   return OK;
 }
 
-static int unlock_parental(struct s_reader * reader)
+static int32_t unlock_parental(struct s_reader * reader)
 {
     // Unlock parental control
     // c1 30 00 01 09
@@ -81,17 +81,17 @@ static int unlock_parental(struct s_reader * reader)
     return 0;
 }
 
-static int seca_card_init(struct s_reader * reader, ATR newatr)
+static int32_t seca_card_init(struct s_reader * reader, ATR newatr)
 {
 	get_atr;
 	def_resp;
 	char *card;
-	unsigned short pmap=0;	// provider-maptable
-	unsigned long long serial ;
+	uint16_t pmap=0;	// provider-maptable
+	uint64_t serial ;
   uchar buf[256];
   static const uchar ins0e[] = { 0xc1, 0x0e, 0x00, 0x00, 0x08 }; // get serial number (UA)
   static const uchar ins16[] = { 0xc1, 0x16, 0x00, 0x00, 0x07 }; // get nr. of prividers
-  int i;
+  int32_t i;
 
 
   buf[0]=0x00;
@@ -127,7 +127,7 @@ static int seca_card_init(struct s_reader * reader, ATR newatr)
       if (set_provider_info(reader, i) == ERROR)
         return ERROR;
       else
-	snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%04lX", b2i(2, &reader->prid[i][2])); 
+	snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%04X", b2i(2, &reader->prid[i][2])); 
     }
 
   cs_ri_log (reader, "providers: %d (%s)", reader->nprov, buf+1);
@@ -141,9 +141,9 @@ static int seca_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-static int get_prov_index(struct s_reader * rdr, char *provid)	//returns provider id or -1 if not found
+static int32_t get_prov_index(struct s_reader * rdr, char *provid)	//returns provider id or -1 if not found
 {
-  int prov;
+  int32_t prov;
   for (prov=0; prov<rdr->nprov; prov++) //search for provider index
     if (!memcmp(provid, &rdr->prid[prov][2], 2))
       return(prov);
@@ -151,12 +151,12 @@ static int get_prov_index(struct s_reader * rdr, char *provid)	//returns provide
 }
 	
 
-static int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
   unsigned char ins3c[] = { 0xc1,0x3c,0x00,0x00,0x00 }; // coding cw
   unsigned char ins3a[] = { 0xc1,0x3a,0x00,0x00,0x10 }; // decoding cw
-  int i;
+  int32_t i;
   i=get_prov_index(reader, (char *) er->ecm+3);
   if ((i == -1) || (reader->availkeys[i][0] == 0)) //if provider not found or expired
   {
@@ -171,8 +171,8 @@ static int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   ins3c[2]=i;
   ins3c[3]=er->ecm[7]; //key nr
   ins3c[4]=(((er->ecm[1]&0x0f) << 8) | er->ecm[2])-0x05;
- 	int try = 1;
- 	int ret;
+ 	int32_t try = 1;
+ 	int32_t ret;
   do {
     if (try > 1)
       snprintf( er->msglog, MSGLOGSIZE, "ins3c try nr %i", try);
@@ -202,10 +202,10 @@ static int seca_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return OK;
 }
 
-static int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
+static int32_t seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TRUE if shared emm matches SA, unique emm matches serial, or global or unknown
 {
 	cs_debug_mask(D_EMM, "Entered seca_get_emm_type ep->emm[0]=%i",ep->emm[0]);
-	int i;
+	int32_t i;
 	switch (ep->emm[0]) {
 		case 0x82:
 			ep->type = UNIQUE;
@@ -253,7 +253,7 @@ static int seca_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) //returns TR
 
 static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	int idx = 2;
+	int32_t idx = 2;
 
 	filter[0]=0xFF;
 	filter[1]=0;
@@ -267,7 +267,7 @@ static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]++;
 	idx += 32;
 
-	int prov;
+	int32_t prov;
 	for (prov=0; prov<rdr->nprov; prov++) {
 		filter[idx++]=EMM_SHARED;
 		filter[idx++]=0;
@@ -289,12 +289,12 @@ static void seca_get_emm_filter(struct s_reader * rdr, uchar *filter)
 }
 
 	
-static int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int32_t seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
   unsigned char ins40[] = { 0xc1,0x40,0x00,0x00,0x00 };
-  int i,ins40data_offset;
-  int emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
+  int32_t i,ins40data_offset;
+  int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) + ep->emm[2];
   char *prov_id_ptr;
 
   cs_ddump_mask (D_EMM, ep->emm, emm_length + 3, "EMM:");
@@ -337,12 +337,12 @@ static int seca_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 	 return OK; //Update not necessary
   }
   if ((cta_res[0] == 0x90) && ((cta_res[1] == 0x00) || (cta_res[1] == 0x19)))
-  	if (set_provider_info(reader, i) == OK) //after successfull EMM, print new provider info
+  	if (set_provider_info(reader, i) == OK) //after successfull EMM, print32_t new provider info
 	  return OK;
   return ERROR;
 }
 
-static int seca_card_info (struct s_reader * reader)
+static int32_t seca_card_info (struct s_reader * reader)
 {
 //SECA Package BitMap records (PBM) can be used to determine whether the channel is part of the package that the SECA card can decrypt. This module reads the PBM
 //from the SECA card. It cannot be used to check the channel, because this information seems to reside in the CA-descriptor, which seems not to be passed on through servers like camd, newcamd, radegast etc.
@@ -352,7 +352,7 @@ static int seca_card_info (struct s_reader * reader)
   def_resp;
   static const unsigned char ins34[] = { 0xc1, 0x34, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00 };				//data following is provider Package Bitmap Records
   unsigned char ins32[] = { 0xc1, 0x32, 0x00, 0x00, 0x20 };				// get PBM
-  int prov;
+  int32_t prov;
 
   for (prov = 0; prov < reader->nprov; prov++) {
     ins32[2] = prov;

@@ -9,9 +9,9 @@
   #define cs_debug_mask(x,y...) cs_debug_mask(x, "[videoguard12-reader] "y)
 #endif
 
-static int vg12_do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res)
+static int32_t vg12_do_cmd(struct s_reader *reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff, unsigned char *cta_res)
 {
-  ushort cta_lr;
+  uint16_t cta_lr;
   unsigned char ins2[5];
   memcpy(ins2, ins, 5);
   unsigned char len = 0;
@@ -45,7 +45,7 @@ static void read_tiers(struct s_reader *reader)
   def_resp;
 
   static const unsigned char ins2A[5] = {  0x48, 0x2A, 0x00, 0x00, 0x90  };
-  int l;
+  int32_t l;
 
   if (!write_cmd_vg(ins2A,NULL) || !status_ok(cta_res+cta_lr-2)) {
     cs_log("class48 ins2A: failed");
@@ -63,8 +63,8 @@ static void read_tiers(struct s_reader *reader)
   }
   ins76[3] = 0;
   ins76[4] = 0x0a;
-  int num = cta_res[1];
-  int i;
+  int32_t num = cta_res[1];
+  int32_t i;
 
   for (i = 0; i < num; i++) {
     ins76[2] = i;
@@ -75,15 +75,15 @@ static void read_tiers(struct s_reader *reader)
     if (cta_res[2] == 0 && cta_res[3] == 0) {
       break;
     }
-    int y, m, d, H, M, S;
+    int32_t y, m, d, H, M, S;
     rev_date_calc(&cta_res[4], &y, &m, &d, &H, &M, &S, reader->card_baseyear);
-    unsigned short tier_id = (cta_res[2] << 8) | cta_res[3];
+    uint16_t tier_id = (cta_res[2] << 8) | cta_res[3];
     char *tier_name = get_tiername(tier_id, reader->caid);
     cs_ri_log(reader, "tier: %04x, expiry date: %04d/%02d/%02d-%02d:%02d:%02d %s", tier_id, y, m, d, H, M, S, tier_name);
   }
 }
 
-static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
+static int32_t videoguard12_card_init(struct s_reader *reader, ATR newatr)
 {
 
   get_hist;
@@ -130,7 +130,7 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
   }
 
   unsigned char boxID[4];
-  int boxidOK = 0;
+  int32_t boxidOK = 0;
 
 /*
   // Try to get the boxid from the card, even if BoxID specified in the config file 
@@ -157,8 +157,8 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
     // return ERROR;
   } else {
     // skipping the initial fixed fields: encr/rev++ (4)
-    int i = 4;
-    int gotUA = 0;
+    int32_t i = 4;
+    int32_t gotUA = 0;
     while (i < (cta_lr-2)) {
       if (!gotUA && cta_res[i] < 0xF0) {	// then we guess that the next 4 bytes is the UA
         gotUA = 1;
@@ -238,7 +238,7 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
 
   /* the boxid is specified in the config */
   if (reader->boxid > 0) {
-    int i;
+    int32_t i;
     for (i = 0; i < 4; i++) {
       boxID[i] = (reader->boxid >> (8 * (3 - i))) % 0x100;
     }
@@ -313,18 +313,18 @@ static int videoguard12_card_init(struct s_reader *reader, ATR newatr)
   return OK;
 }
 
-static int videoguard12_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
+static int32_t videoguard12_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
 {
   unsigned char cta_res[CTA_RES_LEN];
   unsigned char ins40[5] = { 0x49, 0x40, 0x40, 0x80, 0xFF };
   static const unsigned char ins54[5] = { 0x4B, 0x54, 0x00, 0x00, 0x17 };
-  int posECMpart2 = er->ecm[6] + 7;
-  int lenECMpart2 = er->ecm[posECMpart2];
+  int32_t posECMpart2 = er->ecm[6] + 7;
+  int32_t lenECMpart2 = er->ecm[posECMpart2];
   unsigned char tbuff[264];
   unsigned char rbuff[264];
   memcpy(&tbuff[0], &(er->ecm[posECMpart2 + 1]), lenECMpart2 - 1);
   ins40[4] = lenECMpart2;
-  int l;
+  int32_t l;
   l = vg12_do_cmd(reader, ins40, tbuff, NULL, cta_res);
   if (l > 0 && status_ok(cta_res)) {
     l = vg12_do_cmd(reader, ins54, NULL, rbuff, cta_res);
@@ -349,12 +349,12 @@ static int videoguard12_do_ecm(struct s_reader *reader, ECM_REQUEST * er)
   return ERROR;
 }
 
-static int videoguard12_do_emm(struct s_reader *reader, EMM_PACKET * ep)
+static int32_t videoguard12_do_emm(struct s_reader *reader, EMM_PACKET * ep)
 {
    return videoguard_do_emm(reader, ep, 0x49, read_tiers, vg12_do_cmd);
 }
 
-static int videoguard12_card_info(struct s_reader *reader)
+static int32_t videoguard12_card_info(struct s_reader *reader)
 {
   /* info is displayed in init, or when processing info */
   cs_log("%s card detected", reader->label);

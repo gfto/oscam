@@ -4,16 +4,16 @@
 #define OK_RESPONSE 0x61
 #define CMD_BYTE 0x59
 
-static uchar xor (const uchar * cmd, int cmdlen)
+static uchar xor (const uchar * cmd, int32_t cmdlen)
 {
-  int i;
+  int32_t i;
   uchar checksum = 0x00;
   for (i = 0; i < cmdlen; i++)
     checksum ^= cmd[i];
   return checksum;
 }
 
-static int dre_command (struct s_reader * reader, const uchar * cmd, int cmdlen, unsigned char * cta_res, unsigned short * p_cta_lr)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return ERROR = err
+static int32_t dre_command (struct s_reader * reader, const uchar * cmd, int32_t cmdlen, unsigned char * cta_res, uint16_t * p_cta_lr)	//attention: inputcommand will be changed!!!! answer will be in cta_res, length cta_lr ; returning 1 = no error, return ERROR = err
 {
   uchar startcmd[] = { 0x80, 0xFF, 0x10, 0x01, 0x05 };	//any command starts with this, 
   //last byte is nr of bytes of the command that will be sent
@@ -22,7 +22,7 @@ static int dre_command (struct s_reader * reader, const uchar * cmd, int cmdlen,
   uchar reqans[] = { 0x00, 0xC0, 0x00, 0x00, 0x08 };	//after command answer has to be requested, 
   //last byte must be nr. of bytes that card has reported to send
   uchar command[256];
-  int headerlen = sizeof (startcmd);
+  int32_t headerlen = sizeof (startcmd);
   startcmd[4] = cmdlen + 3;	//commandlength + type + len + checksum bytes
   memcpy (command, startcmd, headerlen);
   command[headerlen++] = CMD_BYTE;	//type
@@ -68,7 +68,7 @@ static int dre_command (struct s_reader * reader, const uchar * cmd, int cmdlen,
     }
     return ERROR;			//error
   }
-  int length_excl_leader = *p_cta_lr;
+  int32_t length_excl_leader = *p_cta_lr;
   if ((cta_res[*p_cta_lr - 2] == 0x90) && (cta_res[*p_cta_lr - 1] == 0x00))
     length_excl_leader -= 2;
 
@@ -87,10 +87,10 @@ static int dre_command (struct s_reader * reader, const uchar * cmd, int cmdlen,
   	dre_command(reader, cmd, sizeof(cmd),cta_res,&cta_lr); \
 }
 
-static int dre_set_provider_info (struct s_reader * reader)
+static int32_t dre_set_provider_info (struct s_reader * reader)
 {
   def_resp;
-  int i;
+  int32_t i;
   uchar cmd59[] = { 0x59, 0x14 };	// subscriptions
   uchar cmd5b[] = { 0x5b, 0x00, 0x14 };	//validity dates
 
@@ -117,13 +117,13 @@ static int dre_set_provider_info (struct s_reader * reader)
 	  struct tm temp;
 
 	  localtime_r (&start, &temp);
-	  int startyear = temp.tm_year + 1900;
-	  int startmonth = temp.tm_mon + 1;
-	  int startday = temp.tm_mday;
+	  int32_t startyear = temp.tm_year + 1900;
+	  int32_t startmonth = temp.tm_mon + 1;
+	  int32_t startday = temp.tm_mday;
 	  localtime_r (&end, &temp);
-	  int endyear = temp.tm_year + 1900;
-	  int endmonth = temp.tm_mon + 1;
-	  int endday = temp.tm_mday;
+	  int32_t endyear = temp.tm_year + 1900;
+	  int32_t endmonth = temp.tm_mon + 1;
+	  int32_t endday = temp.tm_mday;
 	  cs_ri_log (reader, "[dre-reader] active package %i valid from %04i/%02i/%02i to %04i/%02i/%02i", i, startyear, startmonth, startday,
 		  endyear, endmonth, endday);
 	}
@@ -131,13 +131,13 @@ static int dre_set_provider_info (struct s_reader * reader)
   return OK;
 }
 
-static int dre_card_init (struct s_reader * reader, ATR newatr)
+static int32_t dre_card_init (struct s_reader * reader, ATR newatr)
 {
 	get_atr;
   def_resp;
   uchar ua[] = { 0x43, 0x15 };	// get serial number (UA)
   uchar providers[] = { 0x49, 0x15 };	// get providers
-  int i;
+  int32_t i;
 	char *card;
 
   if ((atr[0] != 0x3b) || (atr[1] != 0x15) || (atr[2] != 0x11) || (atr[3] != 0x12 || atr[4] != 0xca || atr[5] != 0x07))
@@ -201,20 +201,20 @@ FE 48 */
     if (provname[i] == 0x00)
       break;
   }
-  int major_version = cta_res[3];
-  int minor_version = cta_res[4];
+  int32_t major_version = cta_res[3];
+  int32_t minor_version = cta_res[4];
 
   ua[1] = reader->provider;
   dre_cmd (ua);			//error would not be fatal
 
-  int hexlength = cta_res[1] - 2;	//discard first and last byte, last byte is always checksum, first is answer code
+  int32_t hexlength = cta_res[1] - 2;	//discard first and last byte, last byte is always checksum, first is answer code
 
   reader->hexserial[0] = 0;
   reader->hexserial[1] = 0;
   memcpy (reader->hexserial + 2, cta_res + 3, hexlength);
 
-  int low_dre_id = ((cta_res[4] << 16) | (cta_res[5] << 8) | cta_res[6]) - 48608;
-  int dre_chksum = 0;
+  int32_t low_dre_id = ((cta_res[4] << 16) | (cta_res[5] << 8) | cta_res[6]) - 48608;
+  int32_t dre_chksum = 0;
   uchar buf[32];
   snprintf ((char *)buf, sizeof(buf), "%i%i%08i", reader->provider - 16, major_version + 1, low_dre_id);
   for (i = 0; i < 32; i++) {
@@ -279,7 +279,7 @@ void DREover(unsigned char *ECMdata, unsigned char *DW)
 	};
 };
 
-static int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
+static int32_t dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
 {
   def_resp;
   if (reader->caid == 0x4ae0) {
@@ -329,7 +329,7 @@ static int dre_do_ecm (struct s_reader * reader, ECM_REQUEST * er)
   return ERROR;
 }
 
-static int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+static int32_t dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
   switch (ep->emm[0]) {
 		case 0x87:
@@ -354,7 +354,7 @@ static int dre_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 void dre_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	int idx = 2;
+	int32_t idx = 2;
 
 	filter[0]=0xFF;
 	filter[1]=0;
@@ -390,7 +390,7 @@ void dre_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-static int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
+static int32_t dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
 {
   def_resp;
 
@@ -411,7 +411,7 @@ static int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
     {
         uchar emmcmd52[0x3a];
         emmcmd52[0] = 0x52;
-        int i;
+        int32_t i;
         for (i = 0; i < 2; i++) {
             memcpy (emmcmd52 + 1, ep->emm + 5 + 32 + i * 56, 56);
             // check for shared address
@@ -432,7 +432,7 @@ static int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
       0x91,
       0x56, 0x58, 0x11
     };
-		int i;
+		int32_t i;
 		switch (ep->type) {
 			case UNIQUE: 
 	    	for (i = 0; i < 2; i++) {
@@ -477,7 +477,7 @@ static int dre_do_emm (struct s_reader * reader, EMM_PACKET * ep)
   return OK;			//success
 }
 
-static int dre_card_info (void)
+static int32_t dre_card_info (void)
 {
   return OK;
 }

@@ -9,7 +9,7 @@ struct cs_garbage {
         void * data;
         #ifdef WITH_DEBUG
         char *file;
-        int line;
+        int32_t line;
         #endif
         struct cs_garbage *next;
 };
@@ -17,11 +17,11 @@ struct cs_garbage {
 struct cs_garbage *garbage_first[HASH_BUCKETS];
 pthread_mutex_t garbage_lock[HASH_BUCKETS];
 pthread_t garbage_thread;
-int garbage_collector_active = 0;
-int garbage_debug = 0;
+int32_t garbage_collector_active = 0;
+int32_t garbage_debug = 0;
 
 #ifdef WITH_DEBUG
-void add_garbage_debug(void *data, char *file, int line) {
+void add_garbage_debug(void *data, char *file, int32_t line) {
 #else
 void add_garbage(void *data) {
 #endif
@@ -32,7 +32,7 @@ void add_garbage(void *data) {
           free(data);
           return;
         }
-				int bucket = (unsigned long)data/16 % HASH_BUCKETS;
+				int32_t bucket = (uintptr_t)data/16 % HASH_BUCKETS;
         pthread_mutex_lock(&garbage_lock[bucket]);
         
         struct cs_garbage *garbagecheck = garbage_first[bucket];
@@ -66,7 +66,7 @@ void add_garbage(void *data) {
 
 void garbage_collector() {
         time_t now;
-        int i;
+        int32_t i;
         struct cs_garbage *garbage, *next, *prev;
         
         while (garbage_collector_active) {
@@ -100,10 +100,10 @@ void garbage_collector() {
         pthread_exit(NULL);
 }
 
-void start_garbage_collector(int debug) {
+void start_garbage_collector(int32_t debug) {
 
 		garbage_debug = debug;
-		int i;
+		int32_t i;
 		for(i = 0; i < HASH_BUCKETS; ++i){
         pthread_mutex_init(&garbage_lock[i], NULL);
 
@@ -125,7 +125,7 @@ void start_garbage_collector(int debug) {
 void stop_garbage_collector()
 {
         if (garbage_collector_active) {
-                int i;
+                int32_t i;
                 
                 garbage_collector_active = 0;
                 for(i = 0; i < HASH_BUCKETS; ++i)

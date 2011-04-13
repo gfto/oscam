@@ -1,10 +1,10 @@
 #include "globals.h"
 
-int logfd=0;
+int32_t logfd=0;
 
 void reader_do_idle(struct s_reader * reader);
 
-void cs_ri_brk(struct s_reader * reader, int flag)
+void cs_ri_brk(struct s_reader * reader, int32_t flag)
 {
   if (flag)
     reader->brk_pos=reader->init_history_pos;
@@ -23,7 +23,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	cs_log("%s", txt);
 
 	if (cfg.saveinithistory) {
-		int size = reader->init_history_pos+strlen(txt)+2;
+		int32_t size = reader->init_history_pos+strlen(txt)+2;
 
 		cs_realloc(&reader->init_history, size, -1);
 
@@ -35,9 +35,9 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 	}
 }
 
-static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
+static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw)
 {
-  int i;
+  int32_t i;
   struct s_client *cl = reader->client;
   for (i=0; i<CS_MAXPENDING; i++)
   {
@@ -57,11 +57,11 @@ static void casc_check_dcw(struct s_reader * reader, int idx, int rc, uchar *cw)
   }
 }
 
-int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec)
+int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t msec)
 {
   struct timeval tv;
   fd_set fds;
-  int rc;
+  int32_t rc;
   struct s_client *cl = reader->client;
 
   if (!cl->pfd) return(-1);
@@ -87,16 +87,16 @@ int casc_recv_timer(struct s_reader * reader, uchar *buf, int l, int msec)
 #define MSTIMEOUT                 0x800000 
 #define DEFAULT_CONNECT_TIMEOUT   500
   
-int network_select(int forRead, int timeout) 
+int32_t network_select(int32_t forRead, int32_t timeout) 
 { 
-   int sd = cur_client()->udp_fd; 
+   int32_t sd = cur_client()->udp_fd; 
    if(sd>=0) { 
        fd_set fds; 
        FD_ZERO(&fds); FD_SET(sd,&fds); 
        struct timeval tv; 
        if(timeout&MSTIMEOUT) { tv.tv_sec=0; tv.tv_usec=(timeout&~MSTIMEOUT)*1000; } 
        else { tv.tv_sec=0; tv.tv_usec=timeout*1000; } 
-       int r=select(sd+1,forRead ? &fds:0,forRead ? 0:&fds,0,&tv); 
+       int32_t r=select(sd+1,forRead ? &fds:0,forRead ? 0:&fds,0,&tv); 
        if(r>0) return 1; 
        else if(r<0) { 
          cs_debug_mask(D_READER, "socket: select failed (errno=%d %s)", errno, strerror(errno)); 
@@ -114,9 +114,9 @@ int network_select(int forRead, int timeout)
 } 
 
 // according to documentation getaddrinfo() is thread safe
-int hostResolve(struct s_reader *rdr)
+int32_t hostResolve(struct s_reader *rdr)
 {
-   int result = 0;
+   int32_t result = 0;
    struct s_client *cl = rdr->client;
    
    pthread_mutex_lock(&gethostbyname_lock);
@@ -141,7 +141,7 @@ int hostResolve(struct s_reader *rdr)
      hints.ai_family = cl->udp_sa.sin_family;
      hints.ai_protocol = IPPROTO_TCP;
 
-     int err = getaddrinfo(rdr->device, NULL, &hints, &res);
+     int32_t err = getaddrinfo(rdr->device, NULL, &hints, &res);
      if (err != 0 || !res || !res->ai_addr) {
        cs_log("can't resolve %s, error: %s", rdr->device, err ? gai_strerror(err) : "unknown");
        result = 0;
@@ -181,13 +181,13 @@ void block_connect(struct s_reader *rdr) {
   cs_debug_mask(D_TRACE, "tcp connect blocking delay for %s set to %d", rdr->label, rdr->tcp_block_delay);
 }
 
-int is_connect_blocked(struct s_reader *rdr) {
+int32_t is_connect_blocked(struct s_reader *rdr) {
   struct timeb cur_time;
   cs_ftime(&cur_time);
   return (rdr->tcp_block_delay && comp_timeb(&cur_time, &rdr->tcp_block_connect_till) < 0);
 }
                 
-int network_tcp_connection_open()
+int32_t network_tcp_connection_open()
 {
   struct s_client *cl = cur_client();
   struct s_reader *rdr = cl->reader;
@@ -204,13 +204,13 @@ int network_tcp_connection_open()
     return -1;
   }
   
-  int flag = 1;
+  int32_t flag = 1;
   setsockopt(cl->udp_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
   
-  int sd = cl->udp_fd;
-  int fl = fcntl(sd, F_GETFL);
+  int32_t sd = cl->udp_fd;
+  int32_t fl = fcntl(sd, F_GETFL);
   fcntl(sd, F_SETFL, O_NONBLOCK); //set to nonblocking mode to avoid "endless" connecting loops and pipe-overflows:
-  int res =connect(sd, (struct sockaddr *)&cl->udp_sa, sizeof(cl->udp_sa));
+  int32_t res =connect(sd, (struct sockaddr *)&cl->udp_sa, sizeof(cl->udp_sa));
   if (res == 0) { 
      fcntl(sd, F_SETFL, fl); //connect sucessfull, restore blocking mode
      clear_block_delay(rdr);
@@ -219,8 +219,8 @@ int network_tcp_connection_open()
 
   if (errno == EINPROGRESS || errno == EALREADY) {
      if (network_select(0, DEFAULT_CONNECT_TIMEOUT) > 0) { //if connect is in progress, wait apr. 500ms
-        int r = -1;
-        uint l = sizeof(r);
+        int32_t r = -1;
+        uint32_t l = sizeof(r);
         if (getsockopt(sd, SOL_SOCKET, SO_ERROR, &r, (socklen_t*)&l) == 0) {
            if (r == 0) {
               fcntl(sd, F_SETFL, fl);
@@ -263,7 +263,7 @@ int network_tcp_connection_open()
   return -1; 
 }
 
-void network_tcp_connection_close(struct s_client *cl, int fd)
+void network_tcp_connection_close(struct s_client *cl, int32_t fd)
 {
 	if(!cl) return;
 	struct s_reader *reader = cl->reader;
@@ -280,7 +280,7 @@ void network_tcp_connection_close(struct s_client *cl, int fd)
 
   if (cl->typ != 'c')
   {
-    int i;
+    int32_t i;
     //cl->pfd = 0;
     if(reader)
         reader->tcp_connected = 0;
@@ -306,9 +306,9 @@ void network_tcp_connection_close(struct s_client *cl, int fd)
 
 static void casc_do_sock_log(struct s_reader * reader)
 {
-  int i, idx;
-  ushort caid, srvid;
-  ulong provid;
+  int32_t i, idx;
+  uint16_t caid, srvid;
+  uint32_t provid;
   struct s_client *cl = reader->client;
 
   idx=reader->ph.c_recv_log(&caid, &provid, &srvid);
@@ -329,9 +329,9 @@ static void casc_do_sock_log(struct s_reader * reader)
   }
 }
 
-static void casc_do_sock(struct s_reader * reader, int w)
+static void casc_do_sock(struct s_reader * reader, int32_t w)
 {
-  int i, n, idx, rc, j;
+  int32_t i, n, idx, rc, j;
   uchar buf[1024];
   uchar dcw[16];
   struct s_client *cl = reader->client; 
@@ -369,9 +369,9 @@ static void casc_do_sock(struct s_reader * reader, int w)
   }
 }
 
-static void casc_get_dcw(struct s_reader * reader, int n)
+static void casc_get_dcw(struct s_reader * reader, int32_t n)
 {
-  int w;
+  int32_t w;
   struct timeb tps, tpe;
   struct s_client *cl = reader->client;
   tpe=cl->ecmtask[n].tps;
@@ -393,9 +393,9 @@ static void casc_get_dcw(struct s_reader * reader, int n)
 
 
 
-int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
+int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
-  int rc, n, i, sflag;
+  int32_t rc, n, i, sflag;
   time_t t;//, tls;
   struct s_client *cl = reader->client;
   
@@ -404,7 +404,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   t=time((time_t *)0);
   for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++)
   {
-    if ((t-(ulong)cl->ecmtask[i].tps.time > ((cfg.ctimeout + 500) / 1000) + 1) &&
+    if ((t-(uint32_t)cl->ecmtask[i].tps.time > ((cfg.ctimeout + 500) / 1000) + 1) &&
         (cl->ecmtask[i].rc>=10))      // drop timeouts
         {
           cl->ecmtask[i].rc=0;
@@ -436,7 +436,7 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 
   if( reader->ph.type==MOD_CONN_TCP && reader->tcp_rto )
   {
-    int rto = abs(reader->last_s - reader->last_g);
+    int32_t rto = abs(reader->last_s - reader->last_g);
     if (rto >= (reader->tcp_rto*60))
     {
       if (reader->ph.c_idle)
@@ -468,9 +468,9 @@ int casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   return(rc);
 }
 
-static int reader_store_emm(uchar *emm, uchar type)
+static int32_t reader_store_emm(uchar *emm, uchar type)
 {
-  int rc;
+  int32_t rc;
   struct s_client *cl = cur_client();
   memcpy(cl->emmcache[cl->rotate].emmd5, MD5(emm, emm[2], cl->dump), CS_EMMSTORESIZE);
   cl->emmcache[cl->rotate].type=type;
@@ -517,8 +517,8 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 #ifdef WITH_CARDREADER
   if (reader->ratelimitecm) {
 	cs_debug_mask(D_READER, "ratelimit idx:%d rc:%d caid:%04X srvid:%04X",er->idx,er->rc,er->caid,er->srvid);
-	int foundspace=-1;
-	int h;
+	int32_t foundspace=-1;
+	int32_t h;
 	for (h=0;h<reader->ratelimitecm;h++) {
 		if (reader->rlecmh[h].srvid == er->srvid) {
 			foundspace=h;
@@ -540,7 +540,7 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		cs_debug_mask(D_READER, "ratelimit could not find space for srvid %04X. Dropping.",er->srvid);
 		er->rcEx=32;
 		er->rc = E_RDR_NOTFOUND;
-		int clcw;
+		int32_t clcw;
 		for (clcw=0;clcw<16;clcw++) er->cw[clcw]=(uchar)0;
 		snprintf( er->msglog, MSGLOGSIZE, "ECMratelimit no space for srvid" );
 		write_ecm_answer(reader, er);
@@ -558,8 +558,8 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
   er->rc=reader_ecm(reader, er);
   cs_ftime(&tpe);
   if (cs_dblevel) {
-	ushort lc, *lp;
-	for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
+	uint16_t lc, *lp;
+	for (lp=(uint16_t *)er->ecm+(er->l>>2), lc=0; lp>=(uint16_t *)er->ecm; lp--)
 		lc^=*lp;
 	cs_debug_mask(D_TRACE, "reader: %s ecm: %04X real time: %d ms", reader->label, lc, 1000*(tpe.time-tps.time)+tpe.millitm-tps.millitm);
   }
@@ -568,9 +568,9 @@ static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 #endif
 }
 
-static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int32_t reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
-  int i, no, rc, ecs;
+  int32_t i, no, rc, ecs;
   char *rtxt[] = { "error", (reader->typ & R_IS_CASCADING) ? "sent" : "written", "skipped", "blocked" };
   char *typedesc[]= { "unknown", "unique", "shared", "global" };
   struct timeb tps, tpe;
@@ -660,10 +660,10 @@ static int reader_do_emm(struct s_reader * reader, EMM_PACKET *ep)
   return(rc);
 }
 
-static int reader_listen(struct s_reader * reader, int fd1, int fd2)
+static int32_t reader_listen(struct s_reader * reader, int32_t fd1, int32_t fd2)
 {
-  int fdmax, tcp_toflag, use_tv=(!(reader->typ & R_IS_CASCADING));
-  int is_tcp=(reader->ph.type==MOD_CONN_TCP);
+  int32_t fdmax, tcp_toflag, use_tv=(!(reader->typ & R_IS_CASCADING));
+  int32_t is_tcp=(reader->ph.type==MOD_CONN_TCP);
   fd_set fds;
   struct timeval tv;
 
@@ -701,7 +701,7 @@ static int reader_listen(struct s_reader * reader, int fd1, int fd2)
     if (tcp_toflag)
     {
       time_t now;
-      int time_diff;
+      int32_t time_diff;
       time(&now);
       time_diff = abs(now-reader->last_s);
       if (time_diff>(reader->tcp_ito*60))
@@ -749,7 +749,7 @@ void reader_do_card_info(struct s_reader * reader)
 void clear_reader_pipe(struct s_reader * reader)
 {
 	uchar *ptr;
-	int pipeCmd;
+	int32_t pipeCmd;
 	while (reader && reader->client && reader->client->fd_m2c_c)
 	{
 		pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr, 0);
@@ -762,7 +762,7 @@ void clear_reader_pipe(struct s_reader * reader)
 static void reader_do_pipe(struct s_reader * reader)
 {
   uchar *ptr;
-  int pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr, 0);
+  int32_t pipeCmd = read_from_pipe(reader->client->fd_m2c_c, &ptr, 0);
 
   switch(pipeCmd)
   {

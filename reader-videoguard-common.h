@@ -19,37 +19,37 @@
 
 typedef struct nds_atr {
     uchar atr[MAX_ATR_LEN];
-    ushort atr_len;
-    int base_year;
-    int tier_start;
-    int nds_version;
+    uint16_t atr_len;
+    int32_t base_year;
+    int32_t tier_start;
+    int32_t nds_version;
     const char *desc;
 } NDS_ATR_ENTRY;
 
-extern int cw_is_valid(unsigned char *cw, int start);
+extern int32_t cw_is_valid(unsigned char *cw, int32_t start);
 extern void cAES_SetKey(struct s_reader * reader, const unsigned char *key);
 
-extern void __xxor(unsigned char *data, int len, const unsigned char *v1, const unsigned char *v2);
+extern void __xxor(unsigned char *data, int32_t len, const unsigned char *v1, const unsigned char *v2);
 #define xor16(v1,v2,d) __xxor((d),16,(v1),(v2))
-#define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point *2/3
+#define val_by2on3(x)  ((0xaaab*(x))>>16) //fixed point32_t *2/3
 
 extern void cCamCryptVG_SetSeed(struct s_reader * reader);
 extern void cCamCryptVG_GetCamKey(struct s_reader * reader, unsigned char *buff);
-extern int status_ok(const unsigned char *status);
-extern void memorize_cmd_table (struct s_reader * reader, const unsigned char *mem, int size);
-extern int cmd_table_get_info(struct s_reader * reader, const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode);
-extern int cmd_exists(struct s_reader * reader, const unsigned char *cmd);
-extern int read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
-extern int do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
+extern int32_t status_ok(const unsigned char *status);
+extern void memorize_cmd_table (struct s_reader * reader, const unsigned char *mem, int32_t size);
+extern int32_t cmd_table_get_info(struct s_reader * reader, const unsigned char *cmd, unsigned char *rlen, unsigned char *rmode);
+extern int32_t cmd_exists(struct s_reader * reader, const unsigned char *cmd);
+extern int32_t read_cmd_len(struct s_reader * reader, const unsigned char *cmd);
+extern int32_t do_cmd(struct s_reader * reader, const unsigned char *ins, const unsigned char *txbuff, unsigned char *rxbuff,
                   unsigned char * cta_res);
-extern void rev_date_calc(const unsigned char *Date, int *year, int *mon, int *day, int *hh, int *mm, int *ss, int base_year);
-extern void set_known_card_info(struct s_reader * reader, const unsigned char *atr, const unsigned int *atr_size);
-extern int num_addr(const unsigned char *data);
+extern void rev_date_calc(const unsigned char *Date, int32_t *year, int32_t *mon, int32_t *day, int32_t *hh, int32_t *mm, int32_t *ss, int32_t base_year);
+extern void set_known_card_info(struct s_reader * reader, const unsigned char *atr, const uint32_t *atr_size);
+extern int32_t num_addr(const unsigned char *data);
 extern const unsigned char *payload_addr(uchar emmtype, const unsigned char *data, const unsigned char *a);
 
-int videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr);
+int32_t videoguard_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr);
 void videoguard_get_emm_filter(struct s_reader * rdr, uchar *filter);
-int videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA, void (*read_tiers)(), int (*docmd)());
+int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned char CLA, void (*read_tiers)(), int32_t (*docmd)());
 
 #endif // __NDS_COMMON__
 

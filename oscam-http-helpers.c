@@ -5,9 +5,9 @@
 
 /* Adds a name->value-mapping or appends to it. You will get a reference back which you may freely
    use (but you should not call free/realloc on this!)*/
-char *tpl_addVar(struct templatevars *vars, uint8 addmode, char *name, char *value){	
+char *tpl_addVar(struct templatevars *vars, uint8_t addmode, char *name, char *value){	
 	if(name == NULL || value == NULL) return "";
-	int i;
+	int32_t i;
 	char *tmp,*result = NULL;
 	for(i = (*vars).varscnt-1; i >= 0; --i){
 		if(strcmp((*vars).names[i], name) == 0){
@@ -19,10 +19,10 @@ char *tpl_addVar(struct templatevars *vars, uint8 addmode, char *name, char *val
 		if((*vars).varsalloc <= (*vars).varscnt){
 			if(!cs_realloc(&(*vars).names, (*vars).varsalloc * 2 * sizeof(char**), -1)) return "";
 			if(!cs_realloc(&(*vars).values, (*vars).varsalloc * 2 * sizeof(char**), -1)) return "";
-			if(!cs_realloc(&(*vars).vartypes, (*vars).varsalloc * 2 * sizeof(uint8*), -1)) return "";
+			if(!cs_realloc(&(*vars).vartypes, (*vars).varsalloc * 2 * sizeof(uint8_t*), -1)) return "";
 			(*vars).varsalloc = (*vars).varscnt * 2;
 		}
-		int len = strlen(name) + 1;
+		int32_t len = strlen(name) + 1;
 		if(!cs_malloc(&tmp, len * sizeof(char), -1)) return "";
 		memcpy(tmp, name, len);
 		(*vars).names[(*vars).varscnt] = tmp;
@@ -37,7 +37,7 @@ char *tpl_addVar(struct templatevars *vars, uint8 addmode, char *name, char *val
 		(*vars).vartypes[(*vars).varscnt] = addmode;
 		(*vars).varscnt++;
 	} else {
-		int oldlen = 0, newlen = strlen(value);
+		int32_t oldlen = 0, newlen = strlen(value);
 		if(addmode == TPLAPPEND || addmode == TPLAPPENDONCE) oldlen = strlen((*vars).values[i]);
 		if(!cs_realloc(&((*vars).values[i]), (oldlen + newlen + 1) * sizeof(char), -1)) return value;
 		memcpy((*vars).values[i] + oldlen, value, newlen + 1);
@@ -64,8 +64,8 @@ char *tpl_addTmp(struct templatevars *vars, char *value){
    varname, the printf-result will be added/appended to the varlist, if varname=NULL it will only be returned.
    In either case you will always get a reference back which you may freely use (but you should not call 
    free/realloc on this as it will be automatically cleaned!)*/
-char *tpl_printf(struct templatevars *vars, uint8 addmode, char *varname, char *fmtstring, ...){
-	unsigned int needed;
+char *tpl_printf(struct templatevars *vars, uint8_t addmode, char *varname, char *fmtstring, ...){
+	uint32_t needed;
 	char test[1];
 	va_list argptr;
 
@@ -90,7 +90,7 @@ char *tpl_printf(struct templatevars *vars, uint8 addmode, char *varname, char *
 
 /* Returns the value for a name or an empty string if nothing was found. */
 char *tpl_getVar(struct templatevars *vars, char *name){
-	int i;
+	int32_t i;
 	char *result = NULL;
 	for(i = (*vars).varscnt-1; i >= 0; --i){
 		if(strcmp((*vars).names[i], name) == 0){
@@ -132,7 +132,7 @@ struct templatevars *tpl_create(){
 		free(vars);
 		return NULL;
 	};
-	if(!cs_malloc(&(*vars).vartypes, (*vars).varsalloc * sizeof(uint8*), -1)){
+	if(!cs_malloc(&(*vars).vartypes, (*vars).varsalloc * sizeof(uint8_t*), -1)){
 		free((*vars).names);
 		free((*vars).values);
 		free(vars);
@@ -150,7 +150,7 @@ struct templatevars *tpl_create(){
 
 /* Clears all allocated memory for the specified templatevar-structure. */
 void tpl_clear(struct templatevars *vars){
-	int i;
+	int32_t i;
 	for(i = (*vars).varscnt-1; i >= 0; --i){
 		free((*vars).names[i]);
 		free((*vars).values[i]);
@@ -166,7 +166,7 @@ void tpl_clear(struct templatevars *vars){
 }
 
 /* Creates a path to a template file. You need to set the resultsize to the correct size of result. */
-char *tpl_getTplPath(const char *name, const char *path, char *result, unsigned int resultsize){
+char *tpl_getTplPath(const char *name, const char *path, char *result, uint32_t resultsize){
 	char *pch;
 	if((strlen(path) + strlen(name) + 6) <= resultsize){
 		snprintf(result, resultsize, "%s%s.tpl", path, name);
@@ -180,9 +180,9 @@ char *tpl_getTplPath(const char *name, const char *path, char *result, unsigned 
 /* Returns an unparsed template either from disk or from internal templates.
    Note: You must free() the result after using it and you may get NULL if an error occured!*/
 char *tpl_getUnparsedTpl(const char* name){
-  int i;
-  int tplcnt = sizeof(tpl)/sizeof(char *);
-  int tplmapcnt = sizeof(tplmap)/sizeof(char *);
+  int32_t i;
+  int32_t tplcnt = sizeof(tpl)/sizeof(char *);
+  int32_t tplmapcnt = sizeof(tplmap)/sizeof(char *);
   char *result;
 
   for(i = 0; i < tplcnt; ++i){
@@ -194,7 +194,7 @@ char *tpl_getUnparsedTpl(const char* name){
   	if(strlen(tpl_getTplPath(name, cfg.http_tpl, path, 255)) > 0 && file_exists(path)){
 			FILE *fp;
 			char buffer[1024];
-			int read, allocated = 1025, size = 0;
+			int32_t read, allocated = 1025, size = 0;
 			if(!cs_malloc(&result, allocated * sizeof(char), -1)) return NULL;
 			if((fp = fopen(path,"r"))!=NULL){
 			while((read = fread(&buffer,sizeof(char),1024,fp)) > 0){
@@ -212,7 +212,7 @@ char *tpl_getUnparsedTpl(const char* name){
 	  }
   }
  	if(i >= 0 && i < tplmapcnt){
- 		int len = (strlen(tplmap[i])) + 1;
+ 		int32_t len = (strlen(tplmap[i])) + 1;
  		if(!cs_malloc(&result, len * sizeof(char), -1)) return NULL;
  		memcpy(result, tplmap[i], len);
  	} else {
@@ -232,8 +232,8 @@ char *tpl_getTpl(struct templatevars *vars, const char* name){
 	char *pch, *pch2, *tpl=tplorg;
 	char varname[33];
 
-	int tmp,respos = 0;
-	int allocated = 2 * strlen(tpl) + 1;
+	int32_t tmp,respos = 0;
+	int32_t allocated = 2 * strlen(tpl) + 1;
 	char *result;
 	if(!cs_malloc(&result, allocated * sizeof(char), -1)) return "";
 
@@ -276,10 +276,10 @@ char *tpl_getTpl(struct templatevars *vars, const char* name){
 }
 
 /* Saves all templates to the specified paths. Existing files will be overwritten! */
-int tpl_saveIncludedTpls(const char *path){
-	int tplcnt = sizeof(tpl)/sizeof(char *);
-  int tplmapcnt = sizeof(tplmap)/sizeof(char *);
-  int i, cnt = 0;
+int32_t tpl_saveIncludedTpls(const char *path){
+	int32_t tplcnt = sizeof(tpl)/sizeof(char *);
+  int32_t tplmapcnt = sizeof(tplmap)/sizeof(char *);
+  int32_t i, cnt = 0;
   char tmp[256];
   FILE *fp;
   for(i = 0; i < tplcnt && i < tplmapcnt; ++i){
@@ -317,8 +317,8 @@ void calculate_nonce(char *result){
 
 /* Checks if authentication is correct. Returns -1 if not correct, 1 if correct and 2 if nonce isn't valid anymore.
    Note that authstring will be modified. */
-int check_auth(char *authstring, char *method, char *path, char *expectednonce){
-	int authok = 0, uriok = 0;
+int32_t check_auth(char *authstring, char *method, char *path, char *expectednonce){
+	int32_t authok = 0, uriok = 0;
 	char *authnonce = "";
 	char *authnc = "";
 	char *authcnonce = "";
@@ -386,7 +386,7 @@ int check_auth(char *authstring, char *method, char *path, char *expectednonce){
 #include <openssl/err.h>
 #endif
 
-int webif_write_raw(char *buf, FILE* f, int len) {
+int32_t webif_write_raw(char *buf, FILE* f, int32_t len) {
 #ifdef WITH_SSL
 	if (cfg.http_use_ssl) {
 		return SSL_write((SSL*)f, buf, len);
@@ -395,11 +395,11 @@ int webif_write_raw(char *buf, FILE* f, int len) {
 		return fwrite(buf, 1, len, f);
 }
 
-int webif_write(char *buf, FILE* f) {
+int32_t webif_write(char *buf, FILE* f) {
 	return webif_write_raw(buf, f, strlen(buf));
 }
 
-int webif_read(char *buf, int num, FILE *f) {
+int32_t webif_read(char *buf, int32_t num, FILE *f) {
 #ifdef WITH_SSL
 	if (cfg.http_use_ssl) {
 		return SSL_read((SSL*)f, buf, num);
@@ -408,7 +408,7 @@ int webif_read(char *buf, int num, FILE *f) {
 		return read(fileno(f), buf, num);
 }
 
-void send_headers(FILE *f, int status, char *title, char *extra, char *mime, int cache){
+void send_headers(FILE *f, int32_t status, char *title, char *extra, char *mime, int32_t cache){
   time_t now;
   char timebuf[32];
   char buf[sizeof(PROTOCOL) + sizeof(SERVER) + strlen(title) + (extra == NULL?0:strlen(extra)+2) + (mime == NULL?0:strlen(mime)+2) + 256];
@@ -443,7 +443,7 @@ void send_headers(FILE *f, int status, char *title, char *extra, char *mime, int
  * function for sending files.
  */
 void send_file(FILE *f, char *filename){
-	int fileno = 0;
+	int32_t fileno = 0;
 
 	if (!strcmp(filename, "CSS")){
 		filename = cfg.http_css;
@@ -456,7 +456,7 @@ void send_file(FILE *f, char *filename){
 	if(strlen(filename) > 0 && file_exists(filename) == 1){
 		FILE *fp;
 		char buffer[1024];
-		int read;
+		int32_t read;
 
 		if((fp = fopen(filename, "r"))==NULL) return;
 		while((read = fread(buffer,sizeof(char), 1023, fp)) > 0) {
@@ -473,7 +473,7 @@ void send_file(FILE *f, char *filename){
 	}
 }
 
-void send_error(FILE *f, int status, char *title, char *extra, char *text){
+void send_error(FILE *f, int32_t status, char *title, char *extra, char *text){
 	char buf[(2* strlen(title)) + strlen(text) + 128];
 	char *pos = buf;
 	send_headers(f, status, title, extra, "text/html", 0);
@@ -489,7 +489,7 @@ void send_error500(FILE *f){
 }
 
 char *getParam(struct uriparams *params, char *name){
-	int i;
+	int32_t i;
 	for(i=(*params).paramcount-1; i>=0; --i){
 		if(strcmp((*params).params[i], name) == 0) return (*params).values[i];
 	}
@@ -497,7 +497,7 @@ char *getParam(struct uriparams *params, char *name){
 }
 
 /* Helper function for urldecode.*/
-int x2i(int i){
+int32_t x2i(int32_t i){
 	i=toupper(i);
 	i = i - '0';
 	if(i > 9) i = i - 'A' + '9' + 1;
@@ -506,7 +506,7 @@ int x2i(int i){
 
 /* Decodes values in a http url. Note: The original value is modified! */
 void urldecode(char *s){
-	int c, c1, n;
+	int32_t c, c1, n;
 	char *s0,*t;
 	t = s0 = s;
 	n = strlen(s);
@@ -550,7 +550,7 @@ char *urlencode(struct templatevars *vars, char *str){
 /* XML-Escapes a char array. The returned reference will be automatically cleaned through the templatevars-mechanism tpl_clear().
    Do not call free() or realloc on the returned reference or you will get memory corruption! */
 char *xml_encode(struct templatevars *vars, char *chartoencode) {
-	int i, pos = 0, len = strlen(chartoencode);
+	int32_t i, pos = 0, len = strlen(chartoencode);
 	char *result;
 	/* In worst case, every character could get converted to 6 chars (we only support ASCII, for Unicode it would be 7)*/
 	char encoded[len * 6 + 1], buffer[7];
@@ -582,10 +582,10 @@ char *xml_encode(struct templatevars *vars, char *chartoencode) {
 	return tpl_addTmp(vars, result);
 }
 
-int b64decode(unsigned char *result){
+int32_t b64decode(unsigned char *result){
 	char inalphabet[256], decoder[256];
 	unsigned char alphabet[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	int i, len = strlen((char *)result), j = 0, bits = 0, char_count = 0;
+	int32_t i, len = strlen((char *)result), j = 0, bits = 0, char_count = 0;
 	
 	for (i = sizeof(alphabet) - 1; i >= 0; --i) {
 		inalphabet[alphabet[i]] = 1;
@@ -631,7 +631,7 @@ int b64decode(unsigned char *result){
 }
 
 /* Format a seconds integer to hh:mm:ss or dd hh:mm:ss depending hrs >24 */
-char *sec2timeformat(struct templatevars *vars, int seconds) {
+char *sec2timeformat(struct templatevars *vars, int32_t seconds) {
 
 	char *value;
 	if(seconds <= 0)
@@ -640,7 +640,7 @@ char *sec2timeformat(struct templatevars *vars, int seconds) {
 	if(!cs_malloc(&value, 16 * sizeof(char), -1))
 		return "00:00:00";
 
-	int secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
+	int32_t secs = 0, fullmins = 0, mins = 0, fullhours = 0, hours = 0,	days = 0;
 
 	secs = seconds % 60;
 	if (seconds > 60) {

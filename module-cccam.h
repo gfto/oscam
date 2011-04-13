@@ -57,20 +57,20 @@ typedef enum {
 } cc_msg_type_t;
 
 struct cc_crypt_block {
-	uint8 keytable[256];
-	uint8 state;
-	uint8 counter;
-	uint8 sum;
+	uint8_t keytable[256];
+	uint8_t state;
+	uint8_t counter;
+	uint8_t sum;
 };
 
 struct cc_srvid {
-	uint16 sid;
-	uint8 ecmlen;
+	uint16_t sid;
+	uint8_t ecmlen;
 };
 
 struct cc_provider {
-	ulong prov;  //provider
-	uint8 sa[4]; //shared address
+	uint32_t prov;  //provider
+	uint8_t sa[4]; //shared address
 };
 
 typedef enum {
@@ -82,33 +82,33 @@ typedef enum {
 } cc_card_type;
 
 struct cc_card {
-	uint32 id; // cccam card (share) id - reader
-	uint32 remote_id;
-	uint16 caid;
-	uint8 hop;
-	uint8 reshare;
-	uint8 hexserial[8]; // card serial (for au)
+	uint32_t id; // cccam card (share) id - reader
+	uint32_t remote_id;
+	uint16_t caid;
+	uint8_t hop;
+	uint8_t reshare;
+	uint8_t hexserial[8]; // card serial (for au)
 	LLIST *providers; // providers (struct cc_provider)
 	LLIST *badsids; // sids that have failed to decode (struct cc_srvid)
 	time_t time;
 	LLIST *goodsids; //sids that could decoded (struct cc_srvid)
 	LLIST *remote_nodes; //remote note id, 8 bytes
 	struct s_reader  *origin_reader;
-	uint32 origin_id;
+	uint32_t origin_id;
 	cc_card_type card_type;
 	struct s_sidtab *sidtab; //pointer to sidtab entry if card_type = CT_CARD_BY_SERVICE
 };
 
 struct cc_auto_blocked {
-	uint16 caid;
-	uint32 prov;
+	uint16_t caid;
+	uint32_t prov;
 	struct cc_srvid srvid;
 	time_t time;
 };
 
 struct cc_current_card {
 	struct cc_card *card;
-	uint32 prov;
+	uint32_t prov;
 	struct cc_srvid srvid;
 };
 
@@ -132,32 +132,32 @@ typedef enum {
 
 
 struct cc_extended_ecm_idx {
-	uint8 send_idx;
-	ushort ecm_idx;
+	uint8_t send_idx;
+	uint16_t ecm_idx;
 	struct cc_card *card;
 	struct cc_srvid srvid;
 } EXTENDED_ECM_IDX;
 
 struct cc_data {
-	uint8 g_flag;
+	uint8_t g_flag;
 	char *prefix;
 
 	struct cc_crypt_block block[2]; // crypto state blocks
 	
-	uint8 node_id[8], // client node id
+	uint8_t node_id[8], // client node id
 		peer_node_id[8], // server node id
 		peer_version[8], // server version
 		dcw[16]; // control words
-	uint8 cmd0b_aeskey[16];
-	uint8 cmd05_aeskey[16];
+	uint8_t cmd0b_aeskey[16];
+	uint8_t cmd05_aeskey[16];
 	struct cc_crypt_block cmd05_cryptkey;
 
-	uint8 is_oscam_cccam;
-	uint8 cmd05_active;
-	int cmd05_data_len;
-	uint8 cmd05_data[256];
+	uint8_t is_oscam_cccam;
+	uint8_t cmd05_active;
+	int32_t cmd05_data_len;
+	uint8_t cmd05_data[256];
 	cc_cmd05_mode cmd05_mode;
-	int cmd05_offset;
+	int32_t cmd05_offset;
 
 	cc_cmd0c_mode cmd0c_mode;
 	struct cc_crypt_block cmd0c_cryptkey;
@@ -165,63 +165,63 @@ struct cc_data {
 	AES_KEY cmd0c_AES_key;
 	IDEA_KEY_SCHEDULE cmd0c_IDEA_dkey;
 
-	uint8 receive_buffer[CC_MAXMSGSIZE];
+	uint8_t receive_buffer[CC_MAXMSGSIZE];
 	
 	LLIST *cards; // cards list
 
-	int max_ecms;
-	int ecm_counter;
-	int card_added_count;
-	int card_removed_count;
-	uint8 just_logged_in; //true for checking NOK direct after login
-	uint8 key_table; //key for CMD 0B
+	int32_t max_ecms;
+	int32_t ecm_counter;
+	int32_t card_added_count;
+	int32_t card_removed_count;
+	uint8_t just_logged_in; //true for checking NOK direct after login
+	uint8_t key_table; //key for CMD 0B
 
 	LLIST *pending_emms; //pending emm list
 	
-	uint32 recv_ecmtask;
+	uint32_t recv_ecmtask;
 
 	struct cc_card *last_emm_card;
-	int server_ecm_pending;                    //initialized by server
-	ushort server_ecm_idx;
+	int32_t server_ecm_pending;                    //initialized by server
+	uint16_t server_ecm_idx;
 	
 	pthread_mutex_t lockcmd;
 	pthread_mutex_t ecm_busy;
 	pthread_mutex_t cards_busy;
 	struct timeb ecm_time;
 	time_t answer_on_keepalive;
-	uint8 last_msg;
-	uint8 cmd05NOK;
+	uint8_t last_msg;
+	uint8_t cmd05NOK;
 
 	char remote_version[7];
 	char remote_build[7];
 	char remote_oscam[200];
-	uint8 cccam220;
+	uint8_t cccam220;
 
-	uint8 mode;
+	uint8_t mode;
 		
 	//Extended Mode for SPECIAL clients:
-	uint8 extended_mode;
+	uint8_t extended_mode;
 	LLIST *extended_ecm_idx;
 };
 
-int cc_cli_init();
-int cc_cli_init_int(struct s_client *cl);
+int32_t cc_cli_init();
+int32_t cc_cli_init_int(struct s_client *cl);
 void cc_cleanup(struct s_client *cl);
-int cc_cli_connect(struct s_client *cl);
-int cc_get_nxt_ecm(struct s_client *cl);
-int cc_send_pending_emms(struct s_client *cl);
-void cc_rc4_crypt(struct cc_crypt_block *block, uint8 *data, int len,
+int32_t cc_cli_connect(struct s_client *cl);
+int32_t cc_get_nxt_ecm(struct s_client *cl);
+int32_t cc_send_pending_emms(struct s_client *cl);
+void cc_rc4_crypt(struct cc_crypt_block *block, uint8_t *data, int32_t len,
 		cc_crypt_mode_t mode);
 void free_extended_ecm_idx(struct cc_data *cc);
 void cc_free_card(struct cc_card *card);
-int cc_UA_valid(uint8 *ua);
-void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid);
-int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd);
-int sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2);
-int same_card(struct cc_card *card1, struct cc_card *card2);
-int same_card2(struct cc_card *card1, struct cc_card *card2);
-void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid);
-void cc_SA_oscam2cccam(uint8 *in, uint8 *out);
-void cc_free_cardlist(LLIST *card_list, int destroy_list);
+int32_t cc_UA_valid(uint8_t *ua);
+void cc_UA_cccam2oscam(uint8_t *in, uint8_t *out, uint16_t caid);
+int32_t cc_cmd_send(struct s_client *cl, uint8_t *buf, int32_t len, cc_msg_type_t cmd);
+int32_t sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2);
+int32_t same_card(struct cc_card *card1, struct cc_card *card2);
+int32_t same_card2(struct cc_card *card1, struct cc_card *card2);
+void cc_UA_oscam2cccam(uint8_t *in, uint8_t *out, uint16_t caid);
+void cc_SA_oscam2cccam(uint8_t *in, uint8_t *out);
+void cc_free_cardlist(LLIST *card_list, int32_t destroy_list);
 
 #endif /* MODULECCCAM_H_ */

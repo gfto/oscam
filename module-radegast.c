@@ -1,14 +1,14 @@
 #include "globals.h"
 
-static int radegast_send(struct s_client * client, uchar *buf)
+static int32_t radegast_send(struct s_client * client, uchar *buf)
 {
-  int l=buf[1]+2;
+  int32_t l=buf[1]+2;
   return(send(client->pfd, buf, l, 0));
 }
 
-static int radegast_recv(struct s_client *client, uchar *buf, int l)
+static int32_t radegast_recv(struct s_client *client, uchar *buf, int32_t l)
 {
-  int n;
+  int32_t n;
   if (!client->pfd) return(-1);
   if (client->typ == 'c') {  // server code
     if ((n=recv(client->pfd, buf, l, 0))>0)
@@ -29,7 +29,7 @@ static int radegast_recv(struct s_client *client, uchar *buf, int l)
   return(n);
 }
 
-static int radegast_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int UNUSED(n))
+static int32_t radegast_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t UNUSED(n))
 {
   if ((buf[0] == 2) && (buf[1] == 0x12)) {
     memcpy(dcw, buf+4, 16);
@@ -43,7 +43,7 @@ static int radegast_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar
 
 static void radegast_auth_client(in_addr_t ip)
 {
-  int ok;
+  int32_t ok;
   struct s_auth *account;
 
   ok = check_ip(cfg.rad_allowed, ip);
@@ -65,9 +65,9 @@ static void radegast_auth_client(in_addr_t ip)
     cs_auth_client(cur_client(), (struct s_auth *)(-1), NULL);
 }
 
-static int get_request(uchar *buf)
+static int32_t get_request(uchar *buf)
 {
-  int n, rc=0;
+  int32_t n, rc=0;
   if ((n=process_input(buf, 2, cfg.cmaxidle))==2)
   {
     if ((n=process_input(buf+2, buf[1], 0))>=0)
@@ -104,9 +104,9 @@ static void radegast_send_dcw(struct s_client *client, ECM_REQUEST *er)
   radegast_send(client, mbuf);
 }
 
-static void radegast_process_ecm(uchar *buf, int l)
+static void radegast_process_ecm(uchar *buf, int32_t l)
 {
-  int i, n, sl;
+  int32_t i, n, sl;
   ECM_REQUEST *er;
 
   if (!(er=get_ecmtask()))
@@ -151,7 +151,7 @@ static void radegast_process_unknown(uchar *buf)
 
 static void * radegast_server(void *cli)
 {
-  int n;
+  int32_t n;
   uchar mbuf[1024];
 
 	struct s_client * client = (struct s_client *) cli;
@@ -174,9 +174,9 @@ static void * radegast_server(void *cli)
   return NULL;
 }
 
-static int radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(buf))
+static int32_t radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UNUSED(buf))
 {
-  int n;
+  int32_t n;
   uchar provid_buf[8];
   uchar header[22] = "\x02\x01\x00\x06\x08\x30\x30\x30\x30\x30\x30\x30\x30\x07\x04\x30\x30\x30\x38\x08\x01\x02";
   uchar *ecmbuf = malloc(er->l + 30);
@@ -216,12 +216,12 @@ static int radegast_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *UN
   return 0;
 }
 
-int radegast_cli_init(struct s_client *cl)
+int32_t radegast_cli_init(struct s_client *cl)
 {
   *cl = *cl; //prevent compiler warning
   struct sockaddr_in loc_sa;
   struct protoent *ptrp;
-  int p_proto, handle;
+  int32_t p_proto, handle;
 
   cur_client()->pfd=0;
   if (cur_client()->reader->r_port<=0)
@@ -254,17 +254,17 @@ int radegast_cli_init(struct s_client *cl)
 #ifdef SO_PRIORITY
   if (cfg.netprio)
     setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_PRIORITY,
-               (void *)&cfg.netprio, sizeof(ulong));
+               (void *)&cfg.netprio, sizeof(uintptr_t));
 #endif
   if (!cur_client()->reader->tcp_ito) {
-    ulong keep_alive = cur_client()->reader->tcp_ito?1:0;
+    uint32_t keep_alive = cur_client()->reader->tcp_ito?1:0;
     setsockopt(cur_client()->udp_fd, SOL_SOCKET, SO_KEEPALIVE,
-    (void *)&keep_alive, sizeof(ulong));
+    (void *)&keep_alive, sizeof(uintptr_t));
   }
 
   memset((char *)&cur_client()->udp_sa,0,sizeof(cur_client()->udp_sa));
   cur_client()->udp_sa.sin_family = AF_INET;
-  cur_client()->udp_sa.sin_port = htons((u_short)cur_client()->reader->r_port);
+  cur_client()->udp_sa.sin_port = htons((uint16_t)cur_client()->reader->r_port);
 
   cs_log("radegast: proxy %s:%d (fd=%d)",
   cur_client()->reader->device, cur_client()->reader->r_port, cur_client()->udp_fd);

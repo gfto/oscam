@@ -11,12 +11,12 @@ void coolapi_open_all();
 #endif
 
 extern void cs_statistics(struct s_client * client);
-extern int ICC_Async_Close (struct s_reader *reader);
+extern int32_t ICC_Async_Close (struct s_reader *reader);
 
 /*****************************************************************************
         Globals
 *****************************************************************************/
-int exit_oscam=0;
+int32_t exit_oscam=0;
 struct s_module 	ph[CS_MAX_MOD]; // Protocols
 struct s_cardsystem	cardsystem[CS_MAX_MOD];
 struct s_cardreader	cardreader[CS_MAX_MOD];
@@ -25,11 +25,11 @@ struct s_client * first_client = NULL; //Pointer to clients list, first client i
 struct s_reader * first_active_reader = NULL; //list of active readers (enable=1 deleted = 0)
 LLIST * configured_readers = NULL; //list of all (configured) readers
 
-ushort  len4caid[256];    // table for guessing caid (by len)
+uint16_t  len4caid[256];    // table for guessing caid (by len)
 char  cs_confdir[128]=CS_CONFDIR;
-int cs_dblevel=0;   // Debug Level (TODO !!)
+int32_t cs_dblevel=0;   // Debug Level (TODO !!)
 #ifdef WEBIF
-int cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
+int32_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)restart fork, restart by webif, 2=like=1, but also restart on segfaults
 #endif
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
@@ -41,13 +41,13 @@ LLIST *ecmcache;
 
 struct  s_config  cfg;
 #ifdef CS_LOGHISTORY
-int     loghistidx;  // ptr to current entry
+int32_t     loghistidx;  // ptr to current entry
 char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
 #endif
 
-int get_threadnum(struct s_client *client) {
+int32_t get_threadnum(struct s_client *client) {
 	struct s_client *cl;
-	int count=0;
+	int32_t count=0;
 
 	for (cl=first_client->next; cl ; cl=cl->next) {
 		if (cl->typ==client->typ)
@@ -63,8 +63,8 @@ struct s_client * cur_client(void)
 	return (struct s_client *) pthread_getspecific(getclient);
 }
 
-int cs_check_v(uint ip, int add) {
-        int result = 0;
+int32_t cs_check_v(uint32_t ip, int32_t add) {
+        int32_t result = 0;
 	if (cfg.failbantime) {
 
 		if (!cfg.v_list)
@@ -73,7 +73,7 @@ int cs_check_v(uint ip, int add) {
 		time_t now = time((time_t)0);
 		LL_ITER *itr = ll_iter_create(cfg.v_list);
 		V_BAN *v_ban_entry;
-		int ftime = cfg.failbantime*60;
+		int32_t ftime = cfg.failbantime*60;
 
 		//run over all banned entries to do housekeeping:
 		while ((v_ban_entry=ll_iter_next(itr))) {
@@ -118,14 +118,14 @@ int cs_check_v(uint ip, int add) {
 	return result;
 }
 
-int cs_check_violation(uint ip) {
+int32_t cs_check_violation(uint32_t ip) {
         return cs_check_v(ip, 0);
 }
-void cs_add_violation(uint ip) {
+void cs_add_violation(uint32_t ip) {
         cs_check_v(ip, 1);
 }
 
-void cs_add_lastresponsetime(struct s_client *cl, int ltime){
+void cs_add_lastresponsetime(struct s_client *cl, int32_t ltime){
 
 	if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
 		cl->cwlastresptimes_last = 0;
@@ -283,12 +283,12 @@ static void usage()
 #ifdef NEED_DAEMON
 #ifdef OS_MACOSX
 // this is done because daemon is being deprecated starting with 10.5 and -Werror will always trigger an error
-static int daemon_compat(int nochdir, int noclose)
+static int32_t daemon_compat(int32_t nochdir, int32_t noclose)
 #else
-static int daemon(int nochdir, int noclose)
+static int32_t daemon(int32_t nochdir, int32_t noclose)
 #endif
 {
-  int fd;
+  int32_t fd;
 
   switch (fork())
   {
@@ -315,9 +315,9 @@ static int daemon(int nochdir, int noclose)
 }
 #endif
 
-int recv_from_udpipe(uchar *buf)
+int32_t recv_from_udpipe(uchar *buf)
 {
-  unsigned short n;
+  uint16_t n;
   if (buf[0]!='U')
   {
     cs_log("INTERNAL PIPE-ERROR");
@@ -367,28 +367,28 @@ static struct s_client * idx_from_ip(in_addr_t ip, in_port_t port)
   return NULL;
 }
 
-struct s_client * get_client_by_tid(unsigned long tid) //FIXME untested!! no longer pid in output...
+struct s_client * get_client_by_tid(uint32_t tid) //FIXME untested!! no longer pid in output...
 {
   struct s_client *cl;
   for (cl=first_client; cl ; cl=cl->next)
-    if ((unsigned long)(cl->thread)==tid)
+    if ((uint32_t)(cl->thread)==tid)
       return cl;
   return NULL;
 }
 
-static long chk_caid(ushort caid, CAIDTAB *ctab)
+static int32_t chk_caid(uint16_t caid, CAIDTAB *ctab)
 {
-  int n;
-  long rc;
+  int32_t n;
+  int32_t rc;
   for (rc=(-1), n=0; (n<CS_MAXCAIDTAB) && (rc<0); n++)
     if ((caid & ctab->mask[n]) == ctab->caid[n])
       rc=ctab->cmap[n] ? ctab->cmap[n] : caid;
   return(rc);
 }
 
-int chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
+int32_t chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
 {
-  long caid;
+  int32_t caid;
   if ((caid=chk_caid(er->caid, ctab))<0)
     return(0);
   er->caid=caid;
@@ -396,10 +396,10 @@ int chk_bcaid(ECM_REQUEST *er, CAIDTAB *ctab)
 }
 
 /*
- * void set_signal_handler(int sig, int flags, void (*sighandler)(int))
+ * void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler)(int))
  * flags: 1 = restart, 2 = don't modify if SIG_IGN, may be combined
  */
-void set_signal_handler(int sig, int flags, void (*sighandler))
+void set_signal_handler(int32_t sig, int32_t flags, void (*sighandler))
 {
 #ifdef CS_SIGBSD
   if ((signal(sig, sighandler)==SIG_IGN) && (flags & 2))
@@ -504,11 +504,11 @@ void cs_accounts_chk()
 #endif
 }
 
-void nullclose(int *fd)
+void nullclose(int32_t *fd)
 {
 	//if closing an already closed pipe, we get a sigpipe signal, and this causes a cs_exit
 	//and this causes a close and this causes a sigpipe...and so on
-	int f = *fd;
+	int32_t f = *fd;
 	*fd = 0; //so first null client-fd
 	close(f); //then close fd
 }
@@ -518,7 +518,7 @@ static void cleanup_ecmtasks(struct s_client *cl)
         if (!cl->ecmtask)
                 return;
 
-        int i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
+        int32_t i, n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
         ECM_REQUEST *ecm;
         for (i=0; i<n; i++) {
                 ecm = &cl->ecmtask[i];
@@ -604,7 +604,7 @@ static void cs_cleanup()
         init_free_sidtab();
 }
 
-void cs_exit(int sig)
+void cs_exit(int32_t sig)
 {
 	char targetfile[256];
 
@@ -723,7 +723,7 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
 					memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
 	
-					int i;
+					int32_t i;
 					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++)
 						cl->cwlastresptimes[i] = 0;
 					cl->cwlastresptimes_last = 0;
@@ -777,7 +777,7 @@ struct s_client * create_client(in_addr_t ip) {
 	cl = malloc(sizeof(struct s_client));
 	if (cl) {
 		memset(cl, 0, sizeof(struct s_client));
-		int fdp[2];
+		int32_t fdp[2];
 		if (pipe(fdp)) {
 			cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
 			free(cl);
@@ -908,7 +908,7 @@ static void init_first_client()
 
 static void init_check(){
 	char *ptr = __DATE__;
-	int month, year = atoi(ptr + strlen(ptr) - 4), day = atoi(ptr + 4);
+	int32_t month, year = atoi(ptr + strlen(ptr) - 4), day = atoi(ptr + 4);
 	if(day > 0 && day < 32 && year > 2010 && year < 9999){
 		struct tm timeinfo;
 		char months[12][4] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
@@ -921,7 +921,7 @@ static void init_check(){
 		timeinfo.tm_mon = month;
 		timeinfo.tm_year = year - 1900;
 		time_t builddate = mktime(&timeinfo) - 86400;
-	  int i = 0;
+	  int32_t i = 0;
 	  while(time((time_t)0) < builddate){
 	  	cs_log("The current system time is smaller than the build date (%s). Waiting 5s for time to correct...", ptr);
 	  	cs_sleepms(5000);
@@ -934,9 +934,9 @@ static void init_check(){
 	}
 }
 
-static int start_listener(struct s_module *ph, int port_idx)
+static int32_t start_listener(struct s_module *ph, int32_t port_idx)
 {
-  int ov=1, timeout, is_udp, i;
+  int32_t ov=1, timeout, is_udp, i;
   char ptxt[2][32];
   //struct   hostent   *ptrh;     /* pointer to a host table entry */
   struct   protoent  *ptrp;     /* pointer to a protocol table entry */
@@ -966,7 +966,7 @@ static int start_listener(struct s_module *ph, int port_idx)
   ph->ptab->ports[port_idx].fd = 0;
 
   if (ph->ptab->ports[port_idx].s_port > 0)   /* test for illegal value    */
-    sad.sin_port = htons((u_short)ph->ptab->ports[port_idx].s_port);
+    sad.sin_port = htons((uint16_t)ph->ptab->ports[port_idx].s_port);
   else
   {
     cs_log("%s: Bad port %d", ph->desc, ph->ptab->ports[port_idx].s_port);
@@ -1000,13 +1000,13 @@ static int start_listener(struct s_module *ph, int port_idx)
 
 #ifdef SO_PRIORITY
   if (cfg.netprio)
-    if (!setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(ulong)))
-      snprintf(ptxt[1], sizeof(ptxt[1]), ", prio=%ld", cfg.netprio);
+    if (!setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(uint32_t)))
+      snprintf(ptxt[1], sizeof(ptxt[1]), ", prio=%d", cfg.netprio);
 #endif
 
   if( !is_udp )
   {
-    int keep_alive = 1;
+    int32_t keep_alive = 1;
     setsockopt(ph->ptab->ports[port_idx].fd, SOL_SOCKET, SO_KEEPALIVE,
                (void *)&keep_alive, sizeof(keep_alive));
   }
@@ -1045,7 +1045,7 @@ static int start_listener(struct s_module *ph, int port_idx)
          ptxt[0], ptxt[1], ph->logtxt ? ph->logtxt : "");
 
   for( i=0; i<ph->ptab->ports[port_idx].ftab.nfilts; i++ ) {
-    int j;
+    int32_t j;
     cs_log("CAID: %04X", ph->ptab->ports[port_idx].ftab.filts[i].caid );
     for( j=0; j<ph->ptab->ports[port_idx].ftab.filts[i].nprids; j++ )
       cs_log("provid #%d: %06X", j, ph->ptab->ports[port_idx].ftab.filts[i].prids[j]);
@@ -1053,11 +1053,11 @@ static int start_listener(struct s_module *ph, int port_idx)
   return(ph->ptab->ports[port_idx].fd);
 }
 
-int cs_user_resolve(struct s_auth *account)
+int32_t cs_user_resolve(struct s_auth *account)
 {
 	struct hostent *rht;
 	struct sockaddr_in udp_sa;
-	int result=0;
+	int32_t result=0;
 	if (account->dyndns[0])
 	{
 		pthread_mutex_lock(&gethostbyname_lock);
@@ -1080,7 +1080,7 @@ int cs_user_resolve(struct s_auth *account)
 			hints.ai_family = AF_INET;
 			hints.ai_protocol = IPPROTO_TCP;
 
-			int err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
+			int32_t err = getaddrinfo((const char*)account->dyndns, NULL, &hints, &res);
 			if (err != 0 || !res || !res->ai_addr) {
 				cs_log("can't resolve %s, error: %s", account->dyndns, err ? gai_strerror(err) : "unknown");
 			}
@@ -1194,7 +1194,7 @@ static void add_reader_to_active(struct s_reader *rdr) {
   } else first_active_reader = rdr;
 }
 
-int restart_cardreader(struct s_reader *rdr, int restart) {
+int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
 
 	if (restart) {
 		//remove from list:	
@@ -1278,7 +1278,7 @@ static void init_cardreader() {
 	load_stat_from_file();
 }
 
-static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr_t ip)
+static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip)
 {
     /* Uniq = 1: only one connection per user
      *
@@ -1333,22 +1333,22 @@ static void cs_fake_client(struct s_client *client, char *usr, int uniq, in_addr
 
 }
 
-int cs_auth_client(struct s_client * client, struct s_auth *account, const char *e_txt)
+int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const char *e_txt)
 {
-	int rc=0;
+	int32_t rc=0;
 	char buf[32];
 	char *t_crypt="encrypted";
 	char *t_plain="plain";
 	char *t_grant=" granted";
 	char *t_reject=" rejected";
 	char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason" };
-	memset(&client->grp, 0xff, sizeof(uint64));
+	memset(&client->grp, 0xff, sizeof(uint64_t));
 	//client->grp=0xffffffffffffff;
 	if (account && account->disabled){
 		account = NULL;
 	}
 	client->account=first_client->account;
-	switch((long)account)
+	switch((intptr_t)account)
 	{
 	case 0:           // reject access
 		rc=1;
@@ -1415,7 +1415,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 			if (client->typ=='m')
 				snprintf(t_msg[0], sizeof(buf), "lvl=%d", client->monlvl);
 			else {
-				int rcount = ll_count(client->aureader_list);
+				int32_t rcount = ll_count(client->aureader_list);
 				snprintf(buf, sizeof(buf), "au=");
 				if (!rcount)
 					snprintf(buf+3, sizeof(buf)-3, "off");
@@ -1452,7 +1452,7 @@ void cs_disconnect_client(struct s_client * client)
 /**
  * ecm cache
  **/
-static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
+static int32_t check_and_store_ecmcache(ECM_REQUEST *er, uint64_t grp)
 {
 	time_t now = time(NULL);
 	time_t timeout = now-(time_t)(cfg.ctimeout/1000)-CS_CACHE_TIMEOUT;
@@ -1501,7 +1501,7 @@ static int check_and_store_ecmcache(ECM_REQUEST *er, uint64 grp)
  * cache 1: client-invoked
  * returns found ecm task index
  **/
-static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
+static int32_t check_cwcache1(ECM_REQUEST *er, uint64_t grp)
 {
 	//cs_ddump(ecmd5, CS_ECMSTORESIZE, "ECM search");
 	//cs_log("cache1 CHECK: grp=%lX", grp);
@@ -1544,14 +1544,14 @@ static int check_cwcache1(ECM_REQUEST *er, uint64 grp)
  * cache 2: reader-invoked
  * returns 1 if found in cache. cw is copied to er
  **/
-int check_cwcache2(ECM_REQUEST *er, uint64 grp)
+int32_t check_cwcache2(ECM_REQUEST *er, uint64_t grp)
 {
-	int rc = check_cwcache1(er, grp);
+	int32_t rc = check_cwcache1(er, grp);
 	return rc;
 }
 
 
-static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp, int rc)
+static void store_cw_in_cache(ECM_REQUEST *er, uint64_t grp, int32_t rc)
 {
 #ifdef CS_WITH_DOUBLECHECK
 	if (cfg.double_check && er->checked < 2)
@@ -1574,7 +1574,7 @@ static void store_cw_in_cache(ECM_REQUEST *er, uint64 grp, int rc)
 
 /*
 // only for debug
-static struct s_client * get_thread_by_pipefd(int fd)
+static struct s_client * get_thread_by_pipefd(int32_t fd)
 {
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
@@ -1588,7 +1588,7 @@ static struct s_client * get_thread_by_pipefd(int fd)
  * write_to_pipe():
  * write all kind of data to pipe specified by fd
  */
-int write_to_pipe(int fd, int id, uchar *data, int n)
+int32_t write_to_pipe(int32_t fd, int32_t id, uchar *data, int32_t n)
 {
 	if (!fd) {
 		cs_log("write_to_pipe: fd==0 id: %d", id);
@@ -1623,10 +1623,10 @@ int write_to_pipe(int fd, int id, uchar *data, int n)
  * read all kind of data from pipe specified by fd
  * special-flag redir: if set AND data is ECM: this will redirected to appr. client
  */
-int read_from_pipe(int fd, uchar **data, int redir)
+int32_t read_from_pipe(int32_t fd, uchar **data, int32_t redir)
 {
-	int rc;
-	long hdr=0;
+	int32_t rc;
+	intptr_t hdr=0;
 	uchar buf[3+sizeof(void*)];
 	memset(buf, 0, sizeof(buf));
 
@@ -1650,9 +1650,9 @@ int read_from_pipe(int fd, uchar **data, int redir)
 	memcpy(id, buf, 3);
 	id[3]='\0';
 
-	//cs_debug_mask(D_TRACE, "read from pipe %d (%s) thread: %8X", fd, id, (unsigned int)pthread_self());
+	//cs_debug_mask(D_TRACE, "read from pipe %d (%s) thread: %8X", fd, id, (uint32_t)pthread_self());
 
-	int l;
+	int32_t l;
 	for (l=0; (rc<0) && (PIP_ID_TXT[l]); l++)
 		if (!memcmp(buf, PIP_ID_TXT[l], 3))
 			rc=l;
@@ -1670,7 +1670,7 @@ int read_from_pipe(int fd, uchar **data, int redir)
 /*
  * write_ecm_request():
  */
-static int write_ecm_request(int fd, ECM_REQUEST *er)
+static int32_t write_ecm_request(int32_t fd, ECM_REQUEST *er)
 {
   return(write_to_pipe(fd, PIP_ID_ECM, (uchar *) er, sizeof(ECM_REQUEST)));
 }
@@ -1724,7 +1724,7 @@ void logCWtoFile(ECM_REQUEST *er)
 
 	if ((pfCWL = fopen(buf, "a+")) == NULL) {
 		/* maybe this fails because the subdir does not exist. Is there a common function to create it?
-			for the moment do not print to log on every ecm
+			for the moment do not print32_t to log on every ecm
 			cs_log(""error opening cw logfile for writing: %s (errno=%d %s)", buf, errno, strerror(errno)); */
 		return;
 	}
@@ -1751,11 +1751,11 @@ void logCWtoFile(ECM_REQUEST *er)
 /**
  * distributes found ecm-request to all clients with rc=99
  **/
-void distribute_ecm(ECM_REQUEST *er, uint64 grp)
+void distribute_ecm(ECM_REQUEST *er, uint64_t grp)
 {
   struct s_client *cl;
   ECM_REQUEST *ecm;
-  int n, i;
+  int32_t n, i;
 
   if (er->rc == E_RDR_FOUND) //found converted to cache...
     er->rc = E_CACHE2; //cache
@@ -1781,9 +1781,9 @@ void distribute_ecm(ECM_REQUEST *er, uint64 grp)
 }
 
 
-int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
+int32_t write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 {
-  int i;
+  int32_t i;
   uchar c;
   for (i=0; i<16; i+=4)
   {
@@ -1808,7 +1808,7 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
       logCWtoFile(er);
   }
 
-  int res=0;
+  int32_t res=0;
   if( er->client && er->client->fd_m2c ) {
     //Wie got an ECM (or nok). Now we should check for another clients waiting for it:
     res = write_ecm_request(er->client->fd_m2c, er);
@@ -1818,11 +1818,11 @@ int write_ecm_answer(struct s_reader * reader, ECM_REQUEST *er)
 }
 
   /*
-static int cs_read_timer(int fd, uchar *buf, int l, int msec)
+static int32_t cs_read_timer(int32_t fd, uchar *buf, int32_t l, int32_t msec)
 {
   struct timeval tv;
   fd_set fds;
-  int rc;
+  int32_t rc;
 
   if (!fd) return(-1);
   tv.tv_sec = msec / 1000;
@@ -1842,7 +1842,7 @@ static int cs_read_timer(int fd, uchar *buf, int l, int msec)
 
 ECM_REQUEST *get_ecmtask()
 {
-	int i, n;
+	int32_t i, n;
 	ECM_REQUEST *er=0;
 	struct s_client *cl = cur_client();
 	if(!cl) return NULL;
@@ -1897,20 +1897,20 @@ ECM_REQUEST *get_ecmtask()
 	return(er);
 }
 
-static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int rc)
+static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 {
 	if (rc>=E_99)
 		return;
 	struct timeb tpe;
 	cs_ftime(&tpe);
-	int time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
+	int32_t time = 1000*(tpe.time-er->tps.time)+tpe.millitm-er->tps.millitm;
 	if (time < 1)
 	        time = 1;
 
 	add_stat(rdr, er, time, rc);
 }
 
-int send_dcw(struct s_client * client, ECM_REQUEST *er)
+int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 {
 	static const char *stxt[]={"found", "cache1", "cache2", "emu",
 			"not found", "timeout", "sleeping",
@@ -1921,8 +1921,8 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	char erEx[32]="";
 	char uname[38]="";
 	struct timeb tpe;
-	ushort lc, *lp;
-	for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
+	uint16_t lc, *lp;
+	for (lp=(uint16_t *)er->ecm+(er->l>>2), lc=0; lp>=(uint16_t *)er->ecm; lp--)
 		lc^=*lp;
 
 		snprintf(uname,sizeof(uname)-1, "%s", username(client));
@@ -2021,7 +2021,7 @@ int send_dcw(struct s_client * client, ECM_REQUEST *er)
 	ac_chk(client, er, 1);
 #endif
 
-	int is_fake = 0;
+	int32_t is_fake = 0;
 	if (er->rc==E_FAKE) {
 		is_fake = 1;
 		er->rc=E_FOUND;
@@ -2117,7 +2117,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 				ert->selected_reader=NULL;
 				ert=NULL;
 		}
-		//at this point ert is only not NULL when it has no matching readers...
+		//at this point32_t ert is only not NULL when it has no matching readers...
 		if (ert) {
 				ert->rc=E_NOTFOUND; //so we set the return code
 				store_cw_in_cache(ert, er->selected_reader->grp, E_NOTFOUND);
@@ -2132,9 +2132,9 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
 	return;
 }
 
-ulong chk_provid(uchar *ecm, ushort caid) {
-	int i, len, descriptor_length = 0;
-	ulong provid = 0;
+uint32_t chk_provid(uchar *ecm, uint16_t caid) {
+	int32_t i, len, descriptor_length = 0;
+	uint32_t provid = 0;
 
 	switch(caid >> 8) {
 		case 0x01:
@@ -2160,7 +2160,7 @@ ulong chk_provid(uchar *ecm, ushort caid) {
 			for(i=8; i<len; i+=descriptor_length+2) {
 				descriptor_length = ecm[i+1];
 				if (ecm[i] == 0x83) {
-					provid = (ulong)ecm[i+2] & 0xFE;
+					provid = (uint32_t)ecm[i+2] & 0xFE;
 					break;
 				}
 			}
@@ -2173,8 +2173,8 @@ ulong chk_provid(uchar *ecm, ushort caid) {
 void guess_irdeto(ECM_REQUEST *er)
 {
   uchar  b3;
-  int    b47;
-  //ushort chid;
+  int32_t    b47;
+  //uint16_t chid;
   struct s_irdeto_quess *ptr;
 
   b3  = er->ecm[3];
@@ -2198,7 +2198,7 @@ void guess_irdeto(ECM_REQUEST *er)
       }
       er->caid=ptr->caid;
       er->srvid=ptr->sid;
-      er->chid=(ushort)ptr->b47;
+      er->chid=(uint16_t)ptr->b47;
 //      cs_debug_mask(D_TRACE, "quess_irdeto() found caid=%04X, sid=%04X, chid=%04X",
 //               er->caid, er->srvid, er->chid);
       return;
@@ -2210,9 +2210,9 @@ void guess_irdeto(ECM_REQUEST *er)
 
 void cs_betatunnel(ECM_REQUEST *er)
 {
-	int n;
+	int32_t n;
 	struct s_client *cl = cur_client();
-	ulong mask_all = 0xFFFF;
+	uint32_t mask_all = 0xFFFF;
 	uchar headerN3[10] = {0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12};
 	uchar headerN2[10] = {0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12};
 	TUNTAB *ttab;
@@ -2254,7 +2254,7 @@ void cs_betatunnel(ECM_REQUEST *er)
 
 static void guess_cardsystem(ECM_REQUEST *er)
 {
-  ushort last_hope=0;
+  uint16_t last_hope=0;
 
   // viaccess - check by provid-search
   if( (er->prid=chk_provid(er->ecm, 0x500)) )
@@ -2290,21 +2290,21 @@ static void guess_cardsystem(ECM_REQUEST *er)
 /**
  * sends the ecm request to the readers
  * ECM_REQUEST er : the ecm
- * int flag : 0=primary readers (no fallback)
+ * int32_t flag : 0=primary readers (no fallback)
  *            1=all readers (primary+fallback)
- * int reader_types : 0=all readsers
+ * int32_t reader_types : 0=all readsers
  *                    1=Hardware/local readers
  *                    2=Proxy/network readers
  **/
-void request_cw(ECM_REQUEST *er, int flag, int reader_types)
+void request_cw(ECM_REQUEST *er, int32_t flag, int32_t reader_types)
 {
 	if ((reader_types == 0) || (reader_types == 2))
 		er->level=flag;
 	struct s_reader *rdr;
 
-	ushort lc=0, *lp;
+	uint16_t lc=0, *lp;
 	if (cs_dblevel) {
-		for (lp=(ushort *)er->ecm+(er->l>>2), lc=0; lp>=(ushort *)er->ecm; lp--)
+		for (lp=(uint16_t *)er->ecm+(er->l>>2), lc=0; lp>=(uint16_t *)er->ecm; lp--)
 			lc^=*lp;
 	}
 
@@ -2315,7 +2315,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 
 		rdr = (struct s_reader*)ptr->obj;
 
-		int status = 0;
+		int32_t status = 0;
 		//reader_types:
 		//0 = network and local cards
 		//1 = only local cards
@@ -2342,7 +2342,7 @@ void request_cw(ECM_REQUEST *er, int flag, int reader_types)
 
 void get_cw(struct s_client * client, ECM_REQUEST *er)
 {
-	int i, j, m;
+	int32_t i, j, m;
 	time_t now = time((time_t)0);
 
 	client->lastecm = now;
@@ -2379,7 +2379,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 
 	// Set providerid for newcamd clients if none is given
 	if( (!er->prid) && client->ncd_server ) {
-		int pi = client->port_idx;
+		int32_t pi = client->port_idx;
 		if( pi >= 0 && cfg.ncd_ptab.nports && cfg.ncd_ptab.nports >= pi )
 			er->prid = cfg.ncd_ptab.ports[pi].ftab.filts[0].prids[0];
 	}
@@ -2399,9 +2399,9 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	if(client->allowedtimeframe[0] && client->allowedtimeframe[1]) {
 		struct tm acttm;
 		localtime_r(&now, &acttm);
-		int curtime = (acttm.tm_hour * 60) + acttm.tm_min;
-		int mintime = client->allowedtimeframe[0];
-		int maxtime = client->allowedtimeframe[1];
+		int32_t curtime = (acttm.tm_hour * 60) + acttm.tm_min;
+		int32_t mintime = client->allowedtimeframe[0];
+		int32_t maxtime = client->allowedtimeframe[1];
 		if(!((mintime <= maxtime && curtime > mintime && curtime < maxtime) || (mintime > maxtime && (curtime > mintime || curtime < maxtime)))) {
 			er->rc = E_EXPDATE;
 		}
@@ -2449,7 +2449,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		client->last_srvid = i;
 		client->last_caid = m;
 
-		int ecm_len = (((er->ecm[1] & 0x0F) << 8) | er->ecm[2]) + 3;
+		int32_t ecm_len = (((er->ecm[1] & 0x0F) << 8) | er->ecm[2]) + 3;
 
 		for (j = 0; (j < 6) && (er->rc >= E_UNHANDLED); j++)
 		{
@@ -2508,7 +2508,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 	}
 
     //Use locking - now default=FALSE, activate on problems!
-	int locked;
+	int32_t locked;
 	if (cfg.lb_mode && cfg.lb_use_locking) {
 			pthread_mutex_lock(&get_cw_lock);
 			locked=1;
@@ -2528,7 +2528,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 			cs_betatunnel(er);
 
 		// ignore ecm ...
-		int offset = 3;
+		int32_t offset = 3;
 		// ... and betacrypt header for cache md5 calculation
 		if ((er->caid >> 8) == 0x17)
 			offset = 13;
@@ -2629,8 +2629,8 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		if (!aureader->enable)
 			continue;
 
-		ushort caid = b2i(2, ep->caid);
-		ulong provid = b2i(4, ep->provid);
+		uint16_t caid = b2i(2, ep->caid);
+		uint32_t provid = b2i(4, ep->provid);
 
 		if (aureader->audisabled) {
 			cs_debug_mask(D_EMM, "AU is disabled for reader %s", aureader->label);
@@ -2687,7 +2687,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			char buf[80];
 			strftime (buf, 80, "%Y/%m/%d %H:%M:%S", &timeinfo);
 			snprintf (token, sizeof(token), "%s%s_emm.log", cs_confdir, aureader->label);
-			int emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
+			int32_t emm_length = ((ep->emm[1] & 0x0f) << 8) | ep->emm[2];
 
 			if (!(fp = fopen (token, "a"))) {
 				cs_log ("ERROR: Cannot open file '%s' (errno=%d: %s)\n", token, errno, strerror(errno));
@@ -2711,7 +2711,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 			}
 		}
 
-		int is_blocked = 0;
+		int32_t is_blocked = 0;
 		switch (ep->type) {
 			case UNKNOWN: is_blocked = (aureader->blockemm & EMM_UNKNOWN) ? 1 : 0;
 				break;
@@ -2756,7 +2756,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 	ll_iter_release(itr);
 }
 
-int comp_timeb(struct timeb *tpa, struct timeb *tpb)
+int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
 {
   if (tpa->time>tpb->time) return(1);
   if (tpa->time<tpb->time) return(-1);
@@ -2767,8 +2767,8 @@ int comp_timeb(struct timeb *tpa, struct timeb *tpb)
 
 struct timeval *chk_pending(struct timeb tp_ctimeout)
 {
-	int i;
-	ulong td;
+	int32_t i;
+	uint32_t td;
 	struct timeb tpn, tpe, tpc; // <n>ow, <e>nd, <c>heck
 
 	ECM_REQUEST *er;
@@ -2787,7 +2787,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	for (--i; i>=0; i--) {
 
 		if (cl->ecmtask[i].rc>=E_99) { // check all pending ecm-requests
-			int act=1;
+			int32_t act=1;
 			er=&cl->ecmtask[i];
 
 			//additional cache check:
@@ -2800,7 +2800,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 
 
 			tpc=er->tps;
-			unsigned int tt;
+			uint32_t tt;
 			tt = (er->stage) ? cfg.ctimeout : cfg.ftimeout;
 			tpc.time +=tt / 1000;
 			tpc.millitm += tt % 1000;
@@ -2818,7 +2818,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 				//    er->matching_rdr[3], er->matching_rdr[4], er->matching_rdr[5]);
 
 				if (act) {
-					int inc_stage = 1;
+					int32_t inc_stage = 1;
 					if (cfg.preferlocalcards && !er->locals_done) {
 						er->locals_done = 1;
 						struct s_reader *rdr;
@@ -2826,7 +2826,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 							if (rdr->typ & R_IS_NETWORK)
 								inc_stage = 0;
 					}
-					unsigned int tt;
+					uint32_t tt;
 					if (!inc_stage) {
 						request_cw(er, er->stage, 2);
 						tt = 1000 * (tpn.time - er->tps.time) + tpn.millitm - er->tps.millitm;
@@ -2859,7 +2859,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 					cs_debug_mask(D_TRACE, "fallback for %s %04X&%06X/%04X", username(cl), er->caid, er->prid, er->srvid);
 					if (er->rc >= E_UNHANDLED) //do not request rc=99
 					        request_cw(er, er->stage, 0);
-					unsigned int tt;
+					uint32_t tt;
 					tt = (cfg.ctimeout-cfg.ftimeout);
 					tpc.time += tt / 1000;
 					tpc.millitm += tt % 1000;
@@ -2882,9 +2882,9 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	return(&cl->tv);
 }
 
-int process_input(uchar *buf, int l, int timeout)
+int32_t process_input(uchar *buf, int32_t l, int32_t timeout)
 {
-	int rc;
+	int32_t rc;
 	fd_set fds;
 	struct timeb tp;
 
@@ -2934,14 +2934,14 @@ static void restart_clients()
 	for (cl=first_client->next; cl ; cl=cl->next)
 		if (cl->typ=='c' && ph[cl->ctyp].type & MOD_CONN_NET) {
 			kill_thread(cl);
-			cs_log("killing client c %8X", (unsigned long)(cl->thread));
+			cs_log("killing client c %8X", (uintptr_t)(cl->thread));
 		}
 }
 
 
-static void process_master_pipe(int mfdr)
+static void process_master_pipe(int32_t mfdr)
 {
-  int n;
+  int32_t n;
   uchar *ptr;
 
   switch(n=read_from_pipe(mfdr, &ptr, 1))
@@ -2960,10 +2960,10 @@ static void process_master_pipe(int mfdr)
 }
 
 
-int process_client_pipe(struct s_client *cl, uchar *buf, int l) {
+int32_t process_client_pipe(struct s_client *cl, uchar *buf, int32_t l) {
 	uchar *ptr;
-	unsigned short n;
-	int pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr, 0);
+	uint16_t n;
+	int32_t pipeCmd = read_from_pipe(cl->fd_m2c_c, &ptr, 0);
 
 	switch(pipeCmd) {
 		case PIP_ID_ECM:
@@ -3014,7 +3014,7 @@ void cs_waitforcardinit()
 	if (cfg.waitforcards)
 	{
 		cs_log("waiting for local card init");
-		int card_init_done;
+		int32_t card_init_done;
 		do {
 			card_init_done = 1;
 			struct s_reader *rdr;
@@ -3033,9 +3033,9 @@ void cs_waitforcardinit()
 	}
 }
 
-int accept_connection(int i, int j) {
+int32_t accept_connection(int32_t i, int32_t j) {
 	struct   sockaddr_in cad;
-	int scad,n;
+	int32_t scad,n;
 	scad = sizeof(cad);
 	uchar    buf[2048];
 
@@ -3045,7 +3045,7 @@ int accept_connection(int i, int j) {
 			struct s_client *cl;
 			cl=idx_from_ip(cad.sin_addr.s_addr, ntohs(cad.sin_port));
 
-			unsigned short rl;
+			uint16_t rl;
 			rl=n;
 			buf[0]='U';
 			memcpy(buf+1, &rl, 2);
@@ -3093,7 +3093,7 @@ int accept_connection(int i, int j) {
 		}
 	} else { //TCP
 
-		int pfd3;
+		int32_t pfd3;
 		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 
 			if (cs_check_violation((uint)cad.sin_addr.s_addr)) {
@@ -3107,7 +3107,7 @@ int accept_connection(int i, int j) {
 				return 0;
 			}
 
-			int flag = 1;
+			int32_t flag = 1;
 			setsockopt(pfd3, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
 
 			cl->ctyp=i;
@@ -3187,8 +3187,8 @@ static void restart_daemon()
       exit(1);
 
     //restart control process:
-    int res=0;
-    int status=0;
+    int32_t res=0;
+    int32_t status=0;
     do {
       res = waitpid(pid, &status, 0);
       if (res==-1) {
@@ -3210,11 +3210,11 @@ static void restart_daemon()
 }
 #endif
 
-int main (int argc, char *argv[])
+int32_t main (int32_t argc, char *argv[])
 {
 
 /* init random number generator with seed. */
-srand((unsigned int)time((time_t *)NULL));
+srand((uint32_t)time((time_t *)NULL));
 
 if (pthread_key_create(&getclient, NULL)) {
   fprintf(stderr, "Could not create getclient, exiting...");
@@ -3226,15 +3226,15 @@ if (pthread_key_create(&getclient, NULL)) {
 #endif
 
   //struct   sockaddr_in cad;     /* structure to hold client's address */
-  //int      scad;                /* length of address */
-  //int      fd;                  /* socket descriptors */
-  int      i, j;
-  int      bg=0;
-  int      gbdb=0;
-  int      gfd; //nph,
-  int      fdp[2];
-  int      mfdr=0;     // Master FD (read)
-  int      fd_c2m=0;
+  //int32_t      scad;                /* length of address */
+  //int32_t      fd;                  /* socket descriptors */
+  int32_t      i, j;
+  int32_t      bg=0;
+  int32_t      gbdb=0;
+  int32_t      gfd; //nph,
+  int32_t      fdp[2];
+  int32_t      mfdr=0;     // Master FD (read)
+  int32_t      fd_c2m=0;
 
   void (*mod_def[])(struct s_module *)=
   {
@@ -3567,14 +3567,14 @@ void cs_restart_oscam()
   cs_log("restart oscam requested");
 }
 
-int cs_get_restartmode() {
+int32_t cs_get_restartmode() {
 	return cs_restart_mode;
 }
 
 #endif
 
 #ifdef CS_LED
-void cs_switch_led(int led, int action) {
+void cs_switch_led(int32_t led, int32_t action) {
 
 	if(action < 2) { // only LED_ON and LED_OFF
 		char ledfile[256];
@@ -3646,8 +3646,8 @@ void cs_switch_led(int led, int action) {
 #endif
 
 #ifdef QBOXHD_LED
-void qboxhd_led_blink(int color, int duration) {
-    int f;
+void qboxhd_led_blink(int32_t color, int32_t duration) {
+    int32_t f;
 
     if (cfg.disableqboxhdled) {
         return;
@@ -3656,7 +3656,7 @@ void qboxhd_led_blink(int color, int duration) {
     // try QboxHD-MINI first
     if ( (f = open ( QBOXHDMINI_LED_DEVICE,  O_RDWR |O_NONBLOCK )) > -1 ) {
         qboxhdmini_led_color_struct qbminiled;
-        ulong qboxhdmini_color = 0x000000;
+        uint32_t qboxhdmini_color = 0x000000;
 
         if (color != QBOXHD_LED_COLOR_OFF) {
             switch(color) {

@@ -60,9 +60,9 @@ static const char *cctag[]={"global", "monitor", "camd33", "camd35", "newcamd", 
 
 
 /* Returns the default value if string length is zero, otherwise atoi is called*/
-int strToIntVal(char *value, int defaultvalue){
+int32_t strToIntVal(char *value, int32_t defaultvalue){
 	if (strlen(value) == 0) return defaultvalue;
-	int i = atoi(value);
+	int32_t i = atoi(value);
 	if (i < 0) return defaultvalue;
 	else return i;
 }
@@ -72,7 +72,7 @@ static void show_sidtab(struct s_sidtab *sidtab)
 {
   for (; sidtab; sidtab=sidtab->next)
   {
-    int i;
+    int32_t i;
     char buf[1024];
     char *saveptr = buf;
     cs_log("label=%s", sidtab->label);
@@ -94,7 +94,7 @@ static void show_sidtab(struct s_sidtab *sidtab)
 
 void chk_iprange(char *value, struct s_ip **base)
 {
-	int i = 0;
+	int32_t i = 0;
 	char *ptr1, *ptr2;
 	struct s_ip *lip, *cip;
 
@@ -127,11 +127,11 @@ void chk_iprange(char *value, struct s_ip **base)
 
 void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 {
-	int i;
+	int32_t i;
 	char *ptr1, *ptr2, *ptr3;
 
 	for (i = 0, ptr1 = strtok(caidasc, ","); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok(NULL, ",")) {
-		ulong caid, mask, cmap;
+		uint32_t caid, mask, cmap;
 		if( (ptr3 = strchr(trim(ptr1), ':')) )
 			*ptr3++ = '\0';
 		else
@@ -152,13 +152,13 @@ void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 
 void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab)
 {
-		int i;
+		int32_t i;
 		char *ptr1, *ptr2;
 
 		memset(tab, 0, sizeof(CAIDVALUETAB));
 
 		for (i = 0, ptr1 = strtok(lbrlt, ","); (i < CS_MAX_CAIDVALUETAB) && (ptr1); ptr1 = strtok(NULL, ",")) {
-				long caid, value;
+				int32_t caid, value;
 
 				if( (ptr2 = strchr(trim(ptr1), ':')) )
 						*ptr2++ = '\0';
@@ -175,7 +175,7 @@ void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab)
 
 char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 {
-		int i, size = 2 + tab->n * (4 + 1 + 5 + 1); //caid + ":" + time + ","
+		int32_t i, size = 2 + tab->n * (4 + 1 + 5 + 1); //caid + ":" + time + ","
 		char *buf = cs_malloc(&buf, size, SIGINT);
 		char *ptr = buf;
 
@@ -188,11 +188,11 @@ char *mk_t_caidvaluetab(CAIDVALUETAB *tab)
 
 void chk_tuntab(char *tunasc, TUNTAB *ttab)
 {
-	int i;
+	int32_t i;
 	char *ptr1, *ptr2, *ptr3;
 
 	for (i = 0, ptr1 = strtok(tunasc, ","); (i < CS_MAXTUNTAB) && (ptr1); ptr1 = strtok(NULL, ",")) {
-		ulong bt_caidfrom, bt_caidto, bt_srvid;
+		uint32_t bt_caidfrom, bt_caidto, bt_srvid;
 		if( (ptr3 = strchr(trim(ptr1), ':')) )
 			*ptr3++ = '\0';
 		else
@@ -213,7 +213,7 @@ void chk_tuntab(char *tunasc, TUNTAB *ttab)
 
 void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
 {
-	int i;
+	int32_t i;
 	char *ptr;
 	SIDTAB *sidtab;
 	*sidok = *sidno = 0;
@@ -227,7 +227,7 @@ void chk_services(char *labels, SIDTABBITS *sidok, SIDTABBITS *sidno)
 
 void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char *D_USE(zName), const char *zFiltName)
 {
-	int i, j;
+	int32_t i, j;
 	char *ptr1, *ptr2, *ptr3;
 	char *ptr[CS_MAXFILTERS] = {0};
 
@@ -236,7 +236,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char
 		ptr[i] = ptr1;
 		if( (ptr2 = strchr(trim(ptr1), ':')) ) {
 			*ptr2++ ='\0';
-			ftab->filts[i].caid = (ushort)a2i(ptr1, 4);
+			ftab->filts[i].caid = (uint16_t)a2i(ptr1, 4);
 			ptr[i] = ptr2;
 		}
 		else if (zFiltName && zFiltName[0] == 'c') {
@@ -261,7 +261,7 @@ void chk_ftab(char *zFilterAsc, FTAB *ftab, const char *D_USE(zType), const char
 
 void chk_cltab(char *classasc, CLASSTAB *clstab)
 {
-	int i;
+	int32_t i;
 	char *ptr1;
 	for( i = 0, ptr1 = strtok(classasc, ","); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok(NULL, ",") ) {
 		ptr1 = trim(ptr1);
@@ -274,11 +274,11 @@ void chk_cltab(char *classasc, CLASSTAB *clstab)
 
 void chk_port_tab(char *portasc, PTAB *ptab)
 {
-	int i, j, nfilts, ifilt, iport;
+	int32_t i, j, nfilts, ifilt, iport;
 	char *ptr1, *ptr2, *ptr3;
 	char *ptr[CS_MAXPORTS] = {0};
-	int  port[CS_MAXPORTS] = {0};
-	int previous_nports = ptab->nports;
+	int32_t  port[CS_MAXPORTS] = {0};
+	int32_t previous_nports = ptab->nports;
 
 	for (nfilts = i = previous_nports, ptr1 = strtok(portasc, ";"); (i < CS_MAXCAIDTAB) && (ptr1); ptr1 = strtok(NULL, ";"), i++) {
 		ptr[i] = ptr1;
@@ -317,7 +317,7 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 				*ptr2++='\0';
 				ptab->ports[iport].ftab.nfilts++;
 				ifilt = ptab->ports[iport].ftab.nfilts-1;
-				ptab->ports[iport].ftab.filts[ifilt].caid = (ushort)a2i(ptr3, 4);
+				ptab->ports[iport].ftab.filts[ifilt].caid = (uint16_t)a2i(ptr3, 4);
 				ptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr2, 6);
 			} else {
 				ptab->ports[iport].ftab.filts[ifilt].prids[j] = a2i(ptr3, 6);
@@ -330,7 +330,7 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 #ifdef NOTUSED
 static void chk_srvip(char *value, in_addr_t *ip)
 {
-	int i;
+	int32_t i;
 	char *ptr;
 	for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
 		if (i<8) ip[i++] = inet_addr(ptr);
@@ -1115,7 +1115,7 @@ void chk_t_radegast(char *token, char *value)
 void chk_t_serial(char *token, char *value)
 {
 	if (!strcmp(token, "device")) {
-		int l;
+		int32_t l;
 		l = strlen(cfg.ser_device);
 		if (l)
 			cfg.ser_device[l++]=1;  // use ctrl-a as delimiter
@@ -1179,7 +1179,7 @@ void chk_t_dvbapi(char *token, char *value)
 	}
 
 	if (!strcmp(token, "boxtype")) {
-		int i;
+		int32_t i;
 		for (i=1;i<=BOXTYPES;i++) {
 			if (strcmp(value, boxdesc[i])==0) {
 				cfg.dvbapi_boxtype=i;
@@ -1222,7 +1222,7 @@ void chk_t_dvbapi(char *token, char *value)
 }
 #endif
 
-static void chk_token(char *token, char *value, int tag)
+static void chk_token(char *token, char *value, int32_t tag)
 {
 	switch(tag) {
 		case TAG_GLOBAL  : chk_t_global(token, value); break;
@@ -1262,16 +1262,16 @@ static void chk_token(char *token, char *value, int tag)
 
 void init_len4caid()
 {
-	int nr;
+	int32_t nr;
 	FILE *fp;
 	char *value;
 
-	memset(len4caid, 0, sizeof(ushort)<<8);
+	memset(len4caid, 0, sizeof(uint16_t)<<8);
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_l4ca);
 	if (!(fp = fopen(token, "r")))
 		return;
 	for(nr = 0; fgets(token, sizeof(token), fp);) {
-		int i, c;
+		int32_t i, c;
 		char *ptr;
 		if (!(value=strchr(token, ':')))
 			continue;
@@ -1294,9 +1294,9 @@ void init_len4caid()
 	return;
 }
 
-int search_boxkey(ushort caid, char *key)
+int32_t search_boxkey(uint16_t caid, char *key)
 {
-	int i, rc = 0;
+	int32_t i, rc = 0;
 	FILE *fp;
 	char c_caid[512];
 
@@ -1335,9 +1335,9 @@ int search_boxkey(ushort caid, char *key)
 	return(rc);
 }
 
-int init_config()
+int32_t init_config()
 {
-	int tag=TAG_GLOBAL;
+	int32_t tag=TAG_GLOBAL;
 	FILE *fp;
 	char *value=NULL;
 
@@ -1399,7 +1399,7 @@ int init_config()
 		exit(1);
 	}
 	while (fgets(token, sizeof(token), fp)) {
-		int i, l;
+		int32_t i, l;
 		//void *ptr;
 		if ((l = strlen(trim(token))) < 3)
 			continue;
@@ -1447,7 +1447,7 @@ int init_config()
 
 void chk_account(const char *token, char *value, struct s_auth *account)
 {
-	int i;
+	int32_t i;
 	char *ptr1;
 
 	if (!strcmp(token, "user")) {
@@ -1594,9 +1594,9 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 	if (!strcmp(token, "group")) {
 		account->grp = 0;
 		for (ptr1=strtok(value, ","); ptr1; ptr1=strtok(NULL, ",")) {
-			int g;
+			int32_t g;
 			g = atoi(ptr1);
-			if ((g>0) && (g < 65)) account->grp|=(((uint64)1)<<(g-1));
+			if ((g>0) && (g < 65)) account->grp|=(((uint64_t)1)<<(g-1));
 		}
 		return;
 	}
@@ -1644,7 +1644,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 			account->allowedtimeframe[0] = 0;
 			account->allowedtimeframe[1] = 0;
 		} else {
-			int allowed[4];
+			int32_t allowed[4];
 			if (sscanf(value, "%d:%d-%d:%d", &allowed[0], &allowed[1], &allowed[2], &allowed[3]) != 4) {
 				account->allowedtimeframe[0] = 0;
 				account->allowedtimeframe[1] = 0;
@@ -1678,9 +1678,9 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		fprintf(stderr, "Warning: keyword '%s' in account section not recognized\n",token);
 }
 
-int write_services()
+int32_t write_services()
 {
-	int i;
+	int32_t i;
 	FILE *f;
 	struct s_sidtab *sidtab = cfg.sidtab;
 	char tmpfile[256];
@@ -1714,8 +1714,8 @@ int write_services()
 		fputc((int)'\n', f);
 		fprintf_conf(f, CONFVARWIDTH, "provid", "");
 		for (i=0; i<sidtab->num_provid; i++){
-			if (i==0) fprintf(f,"%06lX", sidtab->provid[i]);
-			else fprintf(f,",%06lX", sidtab->provid[i]);
+			if (i==0) fprintf(f,"%06X", sidtab->provid[i]);
+			else fprintf(f,",%06X", sidtab->provid[i]);
 		}
 		fputc((int)'\n', f);
 		fprintf_conf(f, CONFVARWIDTH, "srvid", "");
@@ -1731,9 +1731,9 @@ int write_services()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int write_config()
+int32_t write_config()
 {
-	int i;
+	int32_t i;
 	FILE *f;
 	char *value;
 	char tmpfile[256];
@@ -2109,7 +2109,7 @@ int write_config()
 	return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int write_userdb(struct s_auth *authptr)
+int32_t write_userdb(struct s_auth *authptr)
 {
 	FILE *f;
 	struct s_auth *account;
@@ -2194,7 +2194,7 @@ int write_userdb(struct s_auth *authptr)
 
 		} else if (cfg.http_full_cfg) fprintf_conf(f, CONFVARWIDTH, "au", "\n");
 
-		value = mk_t_service((uint64)account->sidtabok, (uint64)account->sidtabno);
+		value = mk_t_service((uint64_t)account->sidtabok, (uint64_t)account->sidtabno);
 		if (strlen(value) > 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "services", "%s\n", value);
 		free_mk_t(value);
@@ -2264,9 +2264,9 @@ int write_userdb(struct s_auth *authptr)
   return(safe_overwrite_with_bak(destfile, tmpfile, bakfile, 0));
 }
 
-int write_server()
+int32_t write_server()
 {
-	int j;
+	int32_t j;
 	char *value;
 	FILE *f;
 
@@ -2289,7 +2289,7 @@ int write_server()
 	LL_ITER *itr = ll_iter_create(configured_readers);
 	while((rdr = ll_iter_next(itr))) {
 		if ( rdr->label[0]) {
-			int isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
+			int32_t isphysical = (rdr->typ & R_IS_NETWORK)?0:1;
 			char *ctyp = reader_get_type_desc(rdr, 0);
 
 			fprintf(f,"[reader]\n");
@@ -2312,7 +2312,7 @@ int write_server()
 
 #ifdef LIBUSB
 			if (!(rdr->typ & R_IS_NETWORK))
-				if (rdr->device_endpoint || cfg.http_full_cfg)
+				if (rdr->device_endpoint32_t || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "device_out_endpoint", "0x%2X\n", rdr->device_endpoint);
 #endif
 
@@ -2338,7 +2338,7 @@ int write_server()
 			if ((rdr->emmfile || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "readnano", "%s\n", rdr->emmfile?rdr->emmfile:"");
 
-			value = mk_t_service((uint64)rdr->sidtabok, (uint64)rdr->sidtabno);
+			value = mk_t_service((uint64_t)rdr->sidtabok, (uint64_t)rdr->sidtabno);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
 				fprintf_conf(f, CONFVARWIDTH, "services", "%s\n", value);
 			free_mk_t(value);
@@ -2378,7 +2378,7 @@ int write_server()
 				fprintf_conf(f, CONFVARWIDTH, "fix9993", "%d\n", rdr->fix_9993);
 
 			// rsakey
-			int len = check_filled(rdr->rsa_mod, 120);
+			int32_t len = check_filled(rdr->rsa_mod, 120);
 			if (len > 0 && isphysical) {
 				if(len > 64) len = 120;
 				else len = 64;
@@ -2710,8 +2710,8 @@ void write_versionfile() {
 
 }
 
-int init_free_userdb(struct s_auth *ptr) {
-	int nro;
+int32_t init_free_userdb(struct s_auth *ptr) {
+	int32_t nro;
 	for (nro = 0; ptr; nro++) {
 		struct s_auth *ptr_next;
 		ptr_next = ptr->next;
@@ -2728,8 +2728,8 @@ int init_free_userdb(struct s_auth *ptr) {
 struct s_auth *init_userdb()
 {
 	struct s_auth *authptr = NULL;
-	int tag = 0, nr = 0, expired = 0, disabled = 0;
-	//int first=1;
+	int32_t tag = 0, nr = 0, expired = 0, disabled = 0;
+	//int32_t first=1;
 	FILE *fp;
 	char *value;
 	struct s_auth *account=NULL;
@@ -2741,7 +2741,7 @@ struct s_auth *init_userdb()
 	}
 
 	while (fgets(token, sizeof(token), fp)) {
-		int i, l;
+		int32_t i, l;
 		void *ptr;
 
 		if ((l=strlen(trim(token))) < 3)
@@ -2812,34 +2812,34 @@ void free_sidtab(struct s_sidtab *ptr)
 		add_garbage(ptr);
 }
 
-static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int what)
+static void chk_entry4sidtab(char *value, struct s_sidtab *sidtab, int32_t what)
 {
-  int i, b;
+  int32_t i, b;
   char *ptr;
-  ushort *slist=(ushort *) 0;
-  ulong *llist=(ulong *) 0;
-  ulong caid;
+  uint16_t *slist=(uint16_t *) 0;
+  uint32_t *llist=(uint32_t *) 0;
+  uint32_t caid;
   char buf[strlen(value) + 1];
   cs_strncpy(buf, value, sizeof(buf));
-  b=(what==1) ? sizeof(ulong) : sizeof(ushort);
+  b=(what==1) ? sizeof(uint32_t) : sizeof(uint16_t);
   for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
   {
     caid=a2i(ptr, b);
     if (!errno) i++;
   }
   //if (!i) return(0);
-  if (b==sizeof(ushort)){
-    if(!cs_malloc(&slist, i*sizeof(ushort), -1)) return;
+  if (b==sizeof(uint16_t)){
+    if(!cs_malloc(&slist, i*sizeof(uint16_t), -1)) return;
   } else {
-  	if(!cs_malloc(&llist, i*sizeof(ulong), -1)) return;
+  	if(!cs_malloc(&llist, i*sizeof(uint32_t), -1)) return;
   }
   cs_strncpy(value, buf, sizeof(buf));
   for (i=0, ptr=strtok(value, ","); ptr; ptr=strtok(NULL, ","))
   {
     caid=a2i(ptr, b);
     if (errno) continue;
-    if (b==sizeof(ushort))
-      slist[i++]=(ushort) caid;
+    if (b==sizeof(uint16_t))
+      slist[i++]=(uint16_t) caid;
     else
       llist[i++]=caid;
   }
@@ -2880,8 +2880,8 @@ void init_free_sidtab() {
 		cfg.sidtab = NULL;
 }
 
-int init_sidtab() {
-  int nr, nro;
+int32_t init_sidtab() {
+  int32_t nr, nro;
   FILE *fp;
   char *value;
   struct s_sidtab *ptr;
@@ -2903,7 +2903,7 @@ int init_sidtab() {
   nr=0;
   while (fgets(token, sizeof(token), fp))
   {
-    int l;
+    int32_t l;
     void *ptr;
     if ((l=strlen(trim(token)))<3) continue;
     if ((token[0]=='[') && (token[l-1]==']'))
@@ -2935,8 +2935,8 @@ int init_sidtab() {
 }
 
 //Todo #ifdef CCCAM
-int init_provid() {
-	int nr;
+int32_t init_provid() {
+	int32_t nr;
 	FILE *fp;
 	char *payload;
 	static struct s_provid *provid=(struct s_provid *)0;
@@ -2949,7 +2949,7 @@ int init_provid() {
 	nr=0;
 	while (fgets(token, sizeof(token), fp)) {
 
-		int l;
+		int32_t l;
 		void *ptr;
 		char *tmp;
 		tmp = trim(token);
@@ -2968,7 +2968,7 @@ int init_provid() {
 		provid = ptr;
 		memset(provid, 0, sizeof(struct s_provid));
 
-		int i;
+		int32_t i;
 		char *ptr1;
 		for (i = 0, ptr1 = strtok(payload, "|"); ptr1; ptr1 = strtok(NULL, "|"), i++){
 			switch(i){
@@ -3000,9 +3000,9 @@ int init_provid() {
 	return(0);
 }
 
-int init_srvid()
+int32_t init_srvid()
 {
-	int nr;
+	int32_t nr;
 	FILE *fp;
 	char *payload;
 	struct s_srvid *srvid=NULL, *new_cfg_srvid=NULL;
@@ -3017,7 +3017,7 @@ int init_srvid()
 	nr=0;
 	while (fgets(token, sizeof(token), fp)) {
 
-		int l;
+		int32_t l;
 		void *ptr;
 		char *tmp;
 		tmp = trim(token);
@@ -3035,11 +3035,11 @@ int init_srvid()
 
 		srvid = ptr;
 
-		int i, len=0;
+		int32_t i, len=0;
 		char tmptxt[128];
 		struct s_srvid *srvptr;
 
-		int offset[4] = { -1, -1, -1, -1 };
+		int32_t offset[4] = { -1, -1, -1, -1 };
 		char *ptr1, *searchptr[4] = { NULL, NULL, NULL, NULL };
 		char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
 		
@@ -3108,9 +3108,9 @@ int init_srvid()
 	return(0);
 }
 
-int init_tierid()
+int32_t init_tierid()
 {
-	int nr;
+	int32_t nr;
 	FILE *fp;
 	char *payload;
 	static struct s_tierid *tierid=NULL, *new_cfg_tierid=NULL;
@@ -3124,7 +3124,7 @@ int init_tierid()
 	nr=0;
 	while (fgets(token, sizeof(token), fp)) {
 
-		int l;
+		int32_t l;
 		void *ptr;
 		char *tmp;
 		tmp = trim(token);
@@ -3143,7 +3143,7 @@ int init_tierid()
 		tierid = ptr;
 		memset(tierid, 0, sizeof(struct s_tierid));
 
-		int i;
+		int32_t i;
 		char *ptr1 = strtok(payload, "|");
 		if (ptr1)
 			cs_strncpy(tierid->name, trim(ptr1), sizeof(tierid->name));
@@ -3184,7 +3184,7 @@ int init_tierid()
 
 void chk_reader(char *token, char *value, struct s_reader *rdr)
 {
-	int i;
+	int32_t i;
 	char *ptr;
 	/*
 	 *  case sensitive first
@@ -3213,9 +3213,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (!strcmp(token, "device_out_endpoint")) {
 		if (strlen(value) > 0) {
 			sscanf(value, "0x%2X", &i);
-			rdr->device_endpoint = i;
+			rdr->device_endpoint32_t = i;
 		} else {
-			rdr->device_endpoint = 0;
+			rdr->device_endpoint32_t = 0;
 		}
 		return;
 	}
@@ -3244,7 +3244,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
     uchar key[16];
     uchar mac[6];
     uchar *buf = NULL;
-    int len = 0;
+    int32_t len = 0;
 
     memset(&key, 0, 16);
     memset(&mac, 0, 6);
@@ -3286,7 +3286,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
       }
 #else
       // no mac address specified so use mac of eth0 on local box
-      int fd = socket(PF_INET, SOCK_STREAM, 0);
+      int32_t fd = socket(PF_INET, SOCK_STREAM, 0);
 
       struct ifreq ifreq;
       memset(&ifreq, 0, sizeof(ifreq));
@@ -3409,7 +3409,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "label")) {
-		int found = 0;
+		int32_t found = 0;
 		for(i = 0; i < (int)strlen(value); i++) {
 			if (value[i] == ' ') {
 				value[i] = '_';
@@ -3458,7 +3458,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
   }
 
 	if (!strcmp(token, "rsakey")) {
-		int len = strlen(value);
+		int32_t len = strlen(value);
 		if(len != 128 && len != 240) {
 			memset(rdr->rsa_mod, 0, 120);
 			return;
@@ -3663,10 +3663,10 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		} else {
 			for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
-				int g;
+				int32_t g;
 				g = atoi(ptr);
 				if ((g>0) && (g<65)) {
-					rdr->grp |= (((uint64)1)<<(g-1));
+					rdr->grp |= (((uint64_t)1)<<(g-1));
 				}
 			}
 			return;
@@ -3874,7 +3874,7 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			return;
 		} else {
 			rdr->ratelimitecm = atoi(value);
-			int h;
+			int32_t h;
 			for (h=0;h<rdr->ratelimitecm;h++) rdr->rlecmh[h].last=-1;
 			return;
 		}
@@ -3897,15 +3897,15 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 }
 
 #ifdef IRDETO_GUESSING
-int init_irdeto_guess_tab()
+int32_t init_irdeto_guess_tab()
 {
-  int i, j, skip;
-  int b47;
+  int32_t i, j, skip;
+  int32_t b47;
   FILE *fp;
   char token[128], *ptr;
   char zSid[5];
   uchar b3;
-  ushort caid, sid;
+  uint16_t caid, sid;
   struct s_irdeto_quess *ird_row, *head;
 
   memset(cfg.itab, 0, sizeof(cfg.itab));
@@ -3974,9 +3974,9 @@ int init_irdeto_guess_tab()
 }
 #endif
 
-int init_readerdb()
+int32_t init_readerdb()
 {
-	int tag = 0;
+	int32_t tag = 0;
 	FILE *fp;
 	char *value;
 
@@ -3990,7 +3990,7 @@ int init_readerdb()
 	configured_readers = ll_create();
 	ll_append(configured_readers, rdr);
 	while (fgets(token, sizeof(token), fp)) {
-		int i, l;
+		int32_t i, l;
 		if ((l = strlen(trim(token))) < 3)
 			continue;
 		if ((token[0] == '[') && (token[l-1] == ']')) {
@@ -4032,7 +4032,7 @@ int init_readerdb()
 	LL_ITER *itr = ll_iter_create(configured_readers);
 	struct s_reader *cur=NULL;
 	while((rdr = ll_iter_next(itr))) { //build active readers list
-		int i;
+		int32_t i;
 		if (rdr->device[0] && (rdr->typ & R_IS_CASCADING)) {
 			for (i=0; i<CS_MAX_MOD; i++) {
 				if (ph[i].num && rdr->typ==ph[i].num) {
@@ -4062,7 +4062,7 @@ int init_readerdb()
 #ifdef CS_ANTICASC
 void init_ac()
 {
-  int nr;
+  int32_t nr;
   FILE *fp;
   //char *value;
 
@@ -4076,9 +4076,9 @@ void init_ac()
 
   for(nr=0; fgets(token, sizeof(token), fp);)
   {
-    int i, skip;
-    ushort caid, sid, chid, dwtime;
-    ulong  provid;
+    int32_t i, skip;
+    uint16_t caid, sid, chid, dwtime;
+    uint32_t  provid;
     char *ptr, *ptr1;
     struct s_cpmap *ptr_cpmap;
     static struct s_cpmap *cpmap=(struct s_cpmap *)0;
@@ -4161,7 +4161,7 @@ void init_ac()
  * Creates a string ready to write as a token into config or WebIf for CAIDs. You must free the returned value through free_mk_t().
  */
 char *mk_t_caidtab(CAIDTAB *ctab){
-	int i = 0, needed = 1, pos = 0;
+	int32_t i = 0, needed = 1, pos = 0;
 	while(ctab->caid[i]){
 		if(ctab->mask[i]) needed += 10;
 		else needed += 5;
@@ -4198,7 +4198,7 @@ char *mk_t_caidtab(CAIDTAB *ctab){
  * Creates a string ready to write as a token into config or WebIf for TunTabs. You must free the returned value through free_mk_t().
  */
 char *mk_t_tuntab(TUNTAB *ttab){
-	int i = 0, needed = 1, pos = 0;
+	int32_t i = 0, needed = 1, pos = 0;
 	while(ttab->bt_caidfrom[i]){
 		if(ttab->bt_srvid[i]) needed += 10;
 		else needed += 5;
@@ -4234,8 +4234,8 @@ char *mk_t_tuntab(TUNTAB *ttab){
 /*
  * Creates a string ready to write as a token into config or WebIf for groups. You must free the returned value through free_mk_t().
  */
-char *mk_t_group(uint64 grp){
-	int i = 0, needed = 1, pos = 0, dot = 0;
+char *mk_t_group(uint64_t grp){
+	int32_t i = 0, needed = 1, pos = 0, dot = 0;
 	char grpbit[65];
 	uint64ToBitchar(grp, 64, grpbit);
 
@@ -4270,7 +4270,7 @@ char *mk_t_group(uint64 grp){
  * Creates a string ready to write as a token into config or WebIf for FTabs (CHID, Ident). You must free the returned value through free_mk_t().
  */
 char *mk_t_ftab(FTAB *ftab){
-	int i = 0, j = 0, needed = 1, pos = 0;
+	int32_t i = 0, j = 0, needed = 1, pos = 0;
 
 	if (ftab->nfilts != 0) {
 		needed = ftab->nfilts * 5;
@@ -4288,7 +4288,7 @@ char *mk_t_ftab(FTAB *ftab){
 		if (i > 0) pos += 1;
 		dot=":";
 		for (j = 0; j < ftab->filts[i].nprids; ++j) {
-			snprintf(value + pos, needed-(value-saveptr), "%s%06lX", dot, ftab->filts[i].prids[j]);
+			snprintf(value + pos, needed-(value-saveptr), "%s%06X", dot, ftab->filts[i].prids[j]);
 			pos += 7;
 			dot=",";
 		}
@@ -4303,7 +4303,7 @@ char *mk_t_ftab(FTAB *ftab){
  * Creates a string ready to write as a token into config or WebIf for the camd35 tcp ports. You must free the returned value through free_mk_t().
  */
 char *mk_t_camd35tcp_port(){
-	int i, j, pos = 0, needed = 1;
+	int32_t i, j, pos = 0, needed = 1;
 
 	/* Precheck to determine how long the resulting string will maximally be (might be a little bit smaller but that shouldn't hurt) */
 	for(i = 0; i < cfg.c35_tcp_ptab.nports; ++i) {
@@ -4322,7 +4322,7 @@ char *mk_t_camd35tcp_port(){
 		if (cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids > 1) {
 			dot2 = ":";
 			for (j = 0; j < cfg.c35_tcp_ptab.ports[i].ftab.filts[0].nprids; ++j) {
-				pos += snprintf(value + pos, needed-(value-saveptr), "%s%lX", dot2, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
+				pos += snprintf(value + pos, needed-(value-saveptr), "%s%X", dot2, cfg.c35_tcp_ptab.ports[i].ftab.filts[0].prids[j]);
 				dot2 = ",";
 			}
 		}
@@ -4336,8 +4336,8 @@ char *mk_t_camd35tcp_port(){
  */
 char *mk_t_aeskeys(struct s_reader *rdr){
 	AES_ENTRY *current = rdr->aes_list;
-	int i, pos = 0, needed = 1, prevKeyid = 0, prevCaid = 0;
-	uint32 prevIdent = 0;
+	int32_t i, pos = 0, needed = 1, prevKeyid = 0, prevCaid = 0;
+	uint32_t prevIdent = 0;
 
 	/* Precheck for the approximate size that we will need; it's a bit overestimated but we correct that at the end of the function */
 	while(current) {
@@ -4401,7 +4401,7 @@ char *mk_t_aeskeys(struct s_reader *rdr){
  * Creates a string ready to write as a token into config or WebIf for the Newcamd Port. You must free the returned value through free_mk_t().
  */
 char *mk_t_newcamd_port(){
-	int i, j, k, pos = 0, needed = 1;
+	int32_t i, j, k, pos = 0, needed = 1;
 
 	/* Precheck to determine how long the resulting string will maximally be (might be a little bit smaller but that shouldn't hurt) */
 	for(i = 0; i < cfg.ncd_ptab.nports; ++i){
@@ -4445,7 +4445,7 @@ char *mk_t_newcamd_port(){
  * Creates a string ready to write as a token into config or WebIf for au readers. You must free the returned value through free_mk_t().
  */
 char *mk_t_aureader(struct s_auth *account){
-	int pos = 0;
+	int32_t pos = 0;
 	char *dot = "";
 
 	char *value;
@@ -4468,7 +4468,7 @@ char *mk_t_aureader(struct s_auth *account){
  * flag 0x01 for blocknano or 0x02 for savenano
  */
 char *mk_t_nano(struct s_reader *rdr, uchar flag){
-	int i, pos = 0, needed = 0;
+	int32_t i, pos = 0, needed = 0;
 	uint16_t nano = 0;
 
 	if (flag==0x01)
@@ -4498,16 +4498,16 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
 /*
  * Creates a string ready to write as a token into config or WebIf for the sidtab. You must free the returned value through free_mk_t().
  */
-char *mk_t_service( uint64 sidtabok, uint64 sidtabno){
-	int i = 0, pos = 0;
+char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno){
+	int32_t i = 0, pos = 0;
 	char *dot = "";
 	char *value;
 	struct s_sidtab *sidtab = cfg.sidtab;
 	if(!sidtab || !cs_malloc(&value, 256 * sizeof(char), -1)) return "";
 	value[0] = '\0';
 
-	char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64)sidtabok, MAX_SIDBITS, sidok);
-	char sidno[MAX_SIDBITS+1]; uint64ToBitchar((uint64)sidtabno, MAX_SIDBITS, sidno);
+	char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64_t)sidtabok, MAX_SIDBITS, sidok);
+	char sidno[MAX_SIDBITS+1]; uint64ToBitchar((uint64_t)sidtabno, MAX_SIDBITS, sidno);
 	
 	for (; sidtab; sidtab=sidtab->next){
 		if(sidok[i]=='1') {
@@ -4527,7 +4527,7 @@ char *mk_t_service( uint64 sidtabok, uint64 sidtabno){
  * Creates a string ready to write as a token into config or WebIf for the logfile parameter. You must free the returned value through free_mk_t().
  */
 char *mk_t_logfile(){
-	int pos = 0, needed = 1;
+	int32_t pos = 0, needed = 1;
 	char *value, *dot = "";
 
 	if(cfg.logtostdout == 1) needed += 7;
@@ -4555,7 +4555,7 @@ char *mk_t_logfile(){
 char *mk_t_iprange(struct s_ip *range){
 	struct s_ip *cip;
 	char *value, *dot = "";
-	int needed = 1, pos = 0;
+	int32_t needed = 1, pos = 0;
 	for (cip = range; cip; cip = cip->next) needed += 32;
 	
 	char tmp[needed];

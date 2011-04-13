@@ -2,7 +2,7 @@
 
 #define CS_NANO_CLASS 0xE2
 
-static int find_nano(uchar *ecm, int l, uchar nano, int s)
+static int32_t find_nano(uchar *ecm, int32_t l, uchar nano, int32_t s)
 {
   uchar *snano;
 
@@ -20,9 +20,9 @@ static int find_nano(uchar *ecm, int l, uchar nano, int s)
   return (s<l)?++s:0;
 }
 
-static int chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *D_USE(type), const char *D_USE(name))
+static int32_t chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *D_USE(type), const char *D_USE(name))
 {
-  int i, j, an, cl_n, l;
+  int32_t i, j, an, cl_n, l;
   uchar ecm_class;
 
   if( er->caid!=0x0500 ) return 1;
@@ -65,9 +65,9 @@ static int chk_class(ECM_REQUEST *er, CLASSTAB *clstab, const char *D_USE(type),
   return 1;
 }
 
-int chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
+int32_t chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
 {
-  int i, rc=0;
+  int32_t i, rc=0;
 
   if (!sidtab->num_caid)
     rc|=1;
@@ -90,9 +90,9 @@ int chk_srvid_match(ECM_REQUEST *er, SIDTAB *sidtab)
   return(rc==7);
 }
 
-int chk_srvid(struct s_client *cl, ECM_REQUEST *er)
+int32_t chk_srvid(struct s_client *cl, ECM_REQUEST *er)
 {
-  int nr, rc=0;
+  int32_t nr, rc=0;
   SIDTAB *sidtab;
 
   if (!cl->sidtabok)
@@ -113,11 +113,11 @@ int chk_srvid(struct s_client *cl, ECM_REQUEST *er)
   return(rc);
 }
 
-int has_srvid(struct s_client *cl, ECM_REQUEST *er) {
+int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er) {
   if (!cl->sidtabok)
     return 0;
 
-  int nr;
+  int32_t nr;
   SIDTAB *sidtab;
       
   for (nr=0, sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next, nr++)
@@ -131,9 +131,9 @@ int has_srvid(struct s_client *cl, ECM_REQUEST *er) {
 }
 
 
-static int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidtab)
+static int32_t chk_srvid_match_by_caid_prov(uint16_t caid, uint32_t provid, SIDTAB *sidtab)
 {
-  int i, rc=0;
+  int32_t i, rc=0;
 
   if (!sidtab->num_caid)
     rc|=1;
@@ -150,8 +150,8 @@ static int chk_srvid_match_by_caid_prov(ushort caid, ulong provid, SIDTAB *sidta
   return(rc==3);
 }
 
-int chk_srvid_by_caid_prov(struct s_client *cl, ushort caid, ulong provid) {
-  int nr, rc=0;
+int32_t chk_srvid_by_caid_prov(struct s_client *cl, uint16_t caid, uint32_t provid) {
+  int32_t nr, rc=0;
   SIDTAB *sidtab;
 
   if (!cl->sidtabok)
@@ -174,11 +174,11 @@ int chk_srvid_by_caid_prov(struct s_client *cl, ushort caid, ulong provid) {
 }
 
 // server filter for newcamd
-int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
+int32_t chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
 {
-  int i, j, pi, rc=1;
-  ushort caid, scaid;
-  ulong  prid, sprid;
+  int32_t i, j, pi, rc=1;
+  uint16_t caid, scaid;
+  uint32_t  prid, sprid;
 
   if (!ptab) return(1);
   struct s_client *cur_cl = cur_client();
@@ -211,7 +211,7 @@ int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
     {
       cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by server filters", caid, prid);
       snprintf( er->msglog, MSGLOGSIZE, "no server match %04X:%06X",
-        caid, (unsigned int) prid );
+        caid, (uint32_t) prid );
 
       if (!er->rcEx) er->rcEx=(E1_LSERVER<<4)|E2_IDENT;
       return(rc);
@@ -220,9 +220,9 @@ int chk_sfilter(ECM_REQUEST *er, PTAB *ptab)
   return (rc);
 }
 
-static int chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D_USE(name))
+static int32_t chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D_USE(name))
 {
-  int rc=1, i, j;
+  int32_t rc=1, i, j;
 
   if( (er->caid & 0xFF00)!=0x600 ) return 1;
   if( !er->chid ) return 1;
@@ -251,11 +251,11 @@ static int chk_chid(ECM_REQUEST *er, FTAB *fchid, char *D_USE(type), char *D_USE
   return (rc);
 }
 
-int chk_ufilters(ECM_REQUEST *er)
+int32_t chk_ufilters(ECM_REQUEST *er)
 {
-  int i, j, rc;
-  ushort ucaid;
-  ulong  uprid;
+  int32_t i, j, rc;
+  uint16_t ucaid;
+  uint32_t  uprid;
   struct s_client *cur_cl = cur_client();
   
   rc=1;
@@ -285,7 +285,7 @@ int chk_ufilters(ECM_REQUEST *er)
       cs_debug_mask(D_CLIENT, "no match, %04X:%06X rejected by user '%s' filters",
                 er->caid, er->prid, cur_cl->account->usr);
         snprintf( er->msglog, MSGLOGSIZE, "no card support %04X:%06X",
-                er->caid, (unsigned int) er->prid );
+                er->caid, (uint32_t) er->prid );
 
       if( !er->rcEx ) er->rcEx=(E1_USER<<4)|E2_IDENT;
       return (rc);
@@ -303,11 +303,11 @@ int chk_ufilters(ECM_REQUEST *er)
   return (rc);
 }
 
-int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
+int32_t chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
 {
-  int i, rc=1;
-  ushort caid;
-  ulong prid;
+  int32_t i, rc=1;
+  uint16_t caid;
+  uint32_t prid;
 
   if( reader->ncd_disable_server_filt )
   { 
@@ -322,7 +322,7 @@ int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
   {
     for( i=0; (!rc) && (i<reader->nprov); i++ )
     {
-      prid = (ulong)((reader->prid[i][1]<<16) |
+      prid = (uint32_t)((reader->prid[i][1]<<16) |
                      (reader->prid[i][2]<<8) |
                      (reader->prid[i][3]));
       cs_debug_mask(D_CLIENT, "trying server '%s' filter %04X:%06X", 
@@ -345,11 +345,11 @@ int chk_rsfilter(struct s_reader * reader, ECM_REQUEST *er)
   return(rc);
 }
 
-static int chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
+static int32_t chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
 {
-  int i, j, rc=1;
-  ushort caid=0;
-  ulong prid=0;
+  int32_t i, j, rc=1;
+  uint16_t caid=0;
+  uint32_t prid=0;
 
   if( rdr->ftab.nfilts )
   { 
@@ -382,11 +382,11 @@ static int chk_rfilter(ECM_REQUEST *er, struct s_reader *rdr)
   return(rc);
 }
 
-int chk_ctab(ushort caid, CAIDTAB *ctab) {
+int32_t chk_ctab(uint16_t caid, CAIDTAB *ctab) {
   if (!caid || !ctab->caid[0])
     return 1;
     
-  int i;
+  int32_t i;
   for (i=0;i<CS_MAXCAIDTAB;i++)
   {
     if (!ctab->caid[i]) {
@@ -398,7 +398,7 @@ int chk_ctab(ushort caid, CAIDTAB *ctab) {
   return 0;
 }
 
-int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
+int32_t matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   //simple checks first:
   if (!er || !rdr ||!rdr->client)
     return(0);
@@ -452,8 +452,8 @@ int matching_reader(ECM_REQUEST *er, struct s_reader *rdr) {
   return(1);
 }
 
-int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
-	int i;
+int32_t emm_reader_match(struct s_reader *reader, uint16_t caid, uint32_t provid) {
+	int32_t i;
 
 	if (reader->caid != caid) {
 		return 0;
@@ -480,7 +480,7 @@ int emm_reader_match(struct s_reader *reader, ushort caid, ulong provid) {
 	}
 
 	for (i=0; i<reader->nprov; i++) {
-		ulong prid = b2i(4, reader->prid[i]);
+		uint32_t prid = b2i(4, reader->prid[i]);
 		if (prid == provid || ( (reader->typ == R_CAMD35 || reader->typ == R_CS378X) && (prid & 0xFFFF) == (provid & 0xFFFF) )) {
 			cs_debug_mask(D_EMM, "emm reader %s provider match %04X:%06X", reader->label, caid, provid);
 			return 1;

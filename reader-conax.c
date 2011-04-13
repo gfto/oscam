@@ -1,7 +1,7 @@
 #include "globals.h"
 #include "reader-common.h"
 
-static char *chid_date(const uchar *ptr, char *buf, int l)
+static char *chid_date(const uchar *ptr, char *buf, int32_t l)
 {
   if (buf)
   {
@@ -11,9 +11,9 @@ static char *chid_date(const uchar *ptr, char *buf, int l)
   return(buf);
 }
 
-static int read_record(struct s_reader * reader, const uchar *cmd, const uchar *data, uchar * cta_res)
+static int32_t read_record(struct s_reader * reader, const uchar *cmd, const uchar *data, uchar * cta_res)
 {
-  ushort cta_lr;
+  uint16_t cta_lr;
   uchar insCA[] = {0xDD, 0xCA, 0x00, 0x00, 0x00};
 
   write_cmd(cmd, data);		// select record
@@ -27,10 +27,10 @@ static int read_record(struct s_reader * reader, const uchar *cmd, const uchar *
   return(cta_lr-2);
 }
 
-static int conax_card_init(struct s_reader * reader, ATR newatr)
+static int32_t conax_card_init(struct s_reader * reader, ATR newatr)
 {
   unsigned char cta_res[CTA_RES_LEN];
-  int i, j, n;
+  int32_t i, j, n;
   static const uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x10, 0x01, 0x40};
   uchar ins82[] = {0xDD, 0x82, 0x00, 0x00, 0x11, 0x11, 0x0f, 0x01, 0xb0, 0x0f, 0xff, \
                    0xff, 0xfb, 0x00, 0x00, 0x09, 0x04, 0x0b, 0x00, 0xe0, 0x30, 0x2b };
@@ -91,7 +91,7 @@ static int conax_card_init(struct s_reader * reader, ATR newatr)
   return OK;
 }
 
-static int conax_send_pin(struct s_reader * reader)
+static int32_t conax_send_pin(struct s_reader * reader)
 {
   def_resp;
   unsigned char insPIN[] = { 0xDD,0xC8,0x00,0x00,0x07,0x1D,0x05,0x01,0x00,0x00,0x00,0x00 }; //Last four are the Pin-Code
@@ -104,10 +104,10 @@ static int conax_send_pin(struct s_reader * reader)
 }
 
 
-static int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+static int32_t conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   def_resp;
-  int i,j,n, rc=0;
+  int32_t i,j,n, rc=0;
   unsigned char insA2[]  = { 0xDD,0xA2,0x00,0x00,0x00 };
   unsigned char insCA[]  = { 0xDD,0xCA,0x00,0x00,0x00 };
 
@@ -183,9 +183,9 @@ static int conax_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
     return ERROR;
 }
 
-static int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
+static int32_t conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 {
-	int i, ok = 0;
+	int32_t i, ok = 0;
 
 	cs_debug_mask(D_EMM, "Entered conax_get_emm_type ep->emm[2]=%02x", ep->emm[2]);
 
@@ -220,7 +220,7 @@ static int conax_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 
 static void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	int idx = 2;
+	int32_t idx = 2;
 
 	filter[0]=0xFF;	//header
 	filter[1]=0;		//filter count
@@ -259,14 +259,14 @@ static void conax_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-static int conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int32_t conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
   def_resp;
   unsigned char insEMM[] = { 0xDD,0x84,0x00,0x00,0x00 };
   unsigned char buf[255];
-  int rc=0;
+  int32_t rc=0;
 
-  const int l = ep->emm[2];
+  const int32_t l = ep->emm[2];
 
   insEMM[4]=l+5;
   buf[0]=0x12;
@@ -282,11 +282,11 @@ static int conax_do_emm(struct s_reader * reader, EMM_PACKET *ep)
     return ERROR;
 }
 
-static int conax_card_info(struct s_reader * reader)
+static int32_t conax_card_info(struct s_reader * reader)
 {
   def_resp;
-  int type, i, j, k, n=0;
-  ushort provid;
+  int32_t type, i, j, k, n=0;
+  uint16_t provid;
   char provname[32], pdate[32];
   static const uchar insC6[] = {0xDD, 0xC6, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x00};
   static const uchar ins26[] = {0xDD, 0x26, 0x00, 0x00, 0x03, 0x1C, 0x01, 0x01};
@@ -309,7 +309,7 @@ static int conax_card_info(struct s_reader * reader)
           provid=(cta_res[j+2+type]<<8) | cta_res[j+3+type];
           for (k=0, i=j+4+type; (i<j+cta_res[j+1]) && (k<2); i+=cta_res[i+1]+2)
           {
-            int l;
+            int32_t l;
             switch(cta_res[i])
             {
               case 0x01: l=(cta_res[i+1]<(sizeof(provname)-1)) ?

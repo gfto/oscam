@@ -5,15 +5,6 @@
 typedef unsigned char uchar;
 #endif
 
-
-
-#if defined(OS_CYGWIN32) || defined(OS_HPUX) || defined(OS_FREEBSD)  || defined(OS_MACOSX)
-typedef unsigned long ulong;
-typedef unsigned short ushort;
-#endif
-
-typedef unsigned long long ullong;
-
 #endif // _TYPES_H_
 
 #ifndef NO_ENDIAN_H

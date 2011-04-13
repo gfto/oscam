@@ -16,9 +16,9 @@
 #include "module-cccshare.h"
 #include "module-stat.h"
 
-extern void restart_cardreader(struct s_reader *rdr, int restart);
+extern void restart_cardreader(struct s_reader *rdr, int32_t restart);
 
-static int running = 1;
+static int32_t running = 1;
 
 #ifdef CS_ANTICASC
 static void kill_ac_client(void)
@@ -96,7 +96,7 @@ void refresh_oscam(enum refreshtypes refreshtype, struct in_addr in) {
 }
 
 char *send_oscam_config_global(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 
 	if (strcmp(getParam(params, "action"), "execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
@@ -172,7 +172,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 }
 
 char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 
 	if (strcmp(getParam(params, "button"), "Load Stats") == 0) {
 		clear_all_stat();
@@ -240,7 +240,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 }
 
 char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 
 	if (strcmp(getParam(params, "action"), "execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
@@ -273,7 +273,7 @@ char *send_oscam_config_camd33(struct templatevars *vars, struct uriparams *para
 }
 
 char *send_oscam_config_camd35(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -300,7 +300,7 @@ char *send_oscam_config_camd35(struct templatevars *vars, struct uriparams *para
 }
 
 char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 	if ((strcmp(getParam(params, "action"),"execute") == 0) && (getParam(params, "port"))[0]) {
 		clear_ptab(&cfg.c35_tcp_ptab); /*clear Porttab*/
 		for(i = 0; i < (*params).paramcount; ++i) {
@@ -331,7 +331,7 @@ char *send_oscam_config_camd35tcp(struct templatevars *vars, struct uriparams *p
 }
 
 char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		clear_ptab(&cfg.ncd_ptab); /*clear Porttab*/
 		for(i = 0; i < (*params).paramcount; ++i) {
@@ -373,7 +373,7 @@ char *send_oscam_config_newcamd(struct templatevars *vars, struct uriparams *par
 }
 
 char *send_oscam_config_radegast(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -411,7 +411,7 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Refresh Shares started</B><BR><BR>");
 	}
 
-	int i;
+	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -467,7 +467,7 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 }
 
 char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 
 		//cleanup
@@ -565,7 +565,7 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 }
 
 char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		//cfg.ser_device[0]='\0';
 		memset(cfg.ser_device, 0, sizeof(cfg.ser_device));
@@ -603,7 +603,7 @@ char *send_oscam_config_serial(struct templatevars *vars, struct uriparams *para
 
 #ifdef HAVE_DVBAPI
 char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -645,7 +645,7 @@ char *send_oscam_config_dvbapi(struct templatevars *vars, struct uriparams *para
 
 #ifdef CS_ANTICASC
 char *send_oscam_config_anticasc(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 	if (strcmp(getParam(params, "action"),"execute") == 0) {
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
@@ -710,7 +710,7 @@ void inactivate_reader(struct s_reader *rdr)
 
 char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
 	struct s_reader *rdr;
-	int i;
+	int32_t i;
 
 	if ((strcmp(getParam(params, "action"), "disable") == 0) || (strcmp(getParam(params, "action"), "enable") == 0)) {
 		if(cfg.http_readonly) {
@@ -859,7 +859,7 @@ char *send_oscam_reader(struct templatevars *vars, struct uriparams *params, str
 }
 
 char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
-	int i;
+	int32_t i;
 	char *reader_ = getParam(params, "label");
 	char *value;
 
@@ -967,7 +967,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	if(rdr->force_irdeto)
 		tpl_addVar(vars, TPLADD, "FORCEIRDETOCHECKED", "checked");
 
-	int len = check_filled(rdr->rsa_mod, 120);
+	int32_t len = check_filled(rdr->rsa_mod, 120);
 	if(len > 0) {
 		if(len > 64) len = 120;
 		else len = 64;
@@ -1014,9 +1014,9 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	//services
 	char sidok[MAX_SIDBITS+1];
-	uint64ToBitchar((uint64)rdr->sidtabok, MAX_SIDBITS, sidok);
+	uint64ToBitchar((uint64_t)rdr->sidtabok, MAX_SIDBITS, sidok);
 	char sidno[MAX_SIDBITS+1];
-	uint64ToBitchar((uint64)rdr->sidtabno,MAX_SIDBITS, sidno);
+	uint64ToBitchar((uint64_t)rdr->sidtabno,MAX_SIDBITS, sidno);
 	struct s_sidtab *sidtab = cfg.sidtab;
 	//build matrix
 	i = 0;
@@ -1114,9 +1114,9 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	if(!rdr->device_endpoint) {
 		tpl_addVar(vars, TPLADD, "DEVICEOUTEP0", "selected");
-	} else if (rdr->device_endpoint == 0x82) {
+	} else if (rdr->device_endpoint32_t == 0x82) {
 		tpl_addVar(vars, TPLADD, "DEVICEOUTEP1", "selected");
-	} else if (rdr->device_endpoint == 0x81) {
+	} else if (rdr->device_endpoint32_t == 0x81) {
 		tpl_addVar(vars, TPLADD, "DEVICEOUTEP2", "selected");
 	}
 #else
@@ -1210,7 +1210,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	return tpl_getTpl(vars, "READERCONFIG");
 }
 
-char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
+char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *params, struct in_addr in, int32_t apicall) {
 
 	tpl_printf(vars, TPLADD, "CALLINGIP", "%s", inet_ntoa(in));
 
@@ -1237,7 +1237,7 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 			"disabled", "stopped"};
 
 	if (apicall) {
-		int i, emmcount = 0;
+		int32_t i, emmcount = 0;
 		char *ttxt[]={"unknown", "unique", "shared", "global"};
 
 		for (i=0; i<4; i++) {
@@ -1277,12 +1277,12 @@ char *send_oscam_reader_stats(struct templatevars *vars, struct uriparams *param
 		}
 	}
 
-	int rc2hide = (-1);
+	int32_t rc2hide = (-1);
 	if (strlen(getParam(params, "hide")) > 0)
 			rc2hide = atoi(getParam(params, "hide"));
 
-	int rowcount = 0;
-	uint64 ecmcount = 0;
+	int32_t rowcount = 0;
+	uint64_t ecmcount = 0;
 	time_t lastaccess=0;
 
 	if (rdr->lb_stat) {
@@ -1386,7 +1386,7 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	if (strcmp(getParam(params, "action"), "Save As") == 0) cs_strncpy(user, getParam(params, "newuser"), sizeof(user)/sizeof(char));
 	else cs_strncpy(user, getParam(params, "user"), sizeof(user)/sizeof(char));
 
-	int i;
+	int32_t i;
 
 	for (account = cfg.account; account != NULL && strcmp(user, account->usr) != 0; account = account->next);
 
@@ -1515,9 +1515,9 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	/* SERVICES */
 	//services - first we have to move the long sidtabok/sidtabno to a binary array
 	char sidok[MAX_SIDBITS+1];
-	uint64ToBitchar((uint64)account->sidtabok, MAX_SIDBITS, sidok);
+	uint64ToBitchar((uint64_t)account->sidtabok, MAX_SIDBITS, sidok);
 	char sidno[MAX_SIDBITS+1];
-	uint64ToBitchar((uint64)account->sidtabno, MAX_SIDBITS, sidno);
+	uint64ToBitchar((uint64_t)account->sidtabno, MAX_SIDBITS, sidno);
 	struct s_sidtab *sidtab = cfg.sidtab;
 	//build matrix
 	i=0;
@@ -1583,10 +1583,10 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	return tpl_getTpl(vars, "USEREDIT");
 }
 
-char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
+char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params, struct in_addr in, int32_t apicall) {
 	struct s_auth *account, *account2;
 	char *user = getParam(params, "user");
-	int found = 0, hideclient = 10;
+	int32_t found = 0, hideclient = 10;
 
 	if (cfg.mon_hideclient_to > 10)
 	hideclient = cfg.mon_hideclient_to;
@@ -1669,10 +1669,10 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 	/* List accounts*/
 	char *status, *expired, *classname, *lastchan;
 	time_t now = time((time_t)0);
-	int isec = 0;
+	int32_t isec = 0;
 
 	char *filter = NULL;
-	int clientcount = 0;
+	int32_t clientcount = 0;
 	if (apicall) {
 		filter = getParam(params, "label");
 	}
@@ -1700,12 +1700,12 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			tpl_addVar(vars, TPLADD, "SWITCH", "disable");
 		}
 
-		int lastresponsetm = 0, latestactivity=0;
+		int32_t lastresponsetm = 0, latestactivity=0;
 		char *proto = "";
 		double cwrate = 0.0, cwrate2 = 0.0;
 
 		//search account in active clients
-		int isactive = 0;
+		int32_t isactive = 0;
 		struct s_client *cl, *latestclient=NULL;
 		for (cl=first_client; cl ; cl=cl->next) {
 			if (cl->account && !strcmp(cl->account->usr, account->usr)) {
@@ -1817,7 +1817,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 
 #define ENTITLEMENT_PAGE_SIZE 500
 
-char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
+char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, struct in_addr in, int32_t apicall) {
 
 	//just to stop the guys open tedious tickets for warnings related to unused variables xD
 	tpl_printf(vars, TPLADD, "CALLINGIP", "%s", inet_ntoa(in));
@@ -1827,7 +1827,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 	/* build entitlements from reader init history */
 	char *reader_ = getParam(params, "label");
 	char *sharelist_ = getParam(params, "globallist");
-	int show_global_list = sharelist_ && sharelist_[0]=='1';
+	int32_t show_global_list = sharelist_ && sharelist_[0]=='1';
 
 	int offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
 	
@@ -1846,9 +1846,9 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					tpl_printf(vars, TPLADD, "APIHOSTPORT", "%d", rdr->r_port);
 			}
 
-			int cardcount = 0;
-			int providercount = 0;
-			int nodecount = 0;
+			int32_t cardcount = 0;
+			int32_t providercount = 0;
+			int32_t nodecount = 0;
 
 			char *provider = "";
 
@@ -1872,11 +1872,11 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 
 			if (cards) {
 
-				uint8 serbuf[8];
+				uint8_t serbuf[8];
 
                 // sort cards by hop
                 LL_ITER *it;
-                int i;
+                int32_t i;
                 for (i = 0; i < ll_count(cards); i++) {
                     it  = ll_iter_create(cards);
                     while ((card = ll_iter_next(it))) {
@@ -1918,7 +1918,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8));
 					}
    					if (!apicall) {
-								int n;
+								int32_t n;
 								LL_ITER *its = ll_iter_create(card->goodsids);
 								struct cc_srvid *srv;
 								n=0;
@@ -1985,7 +1985,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 
 					ll_iter_release(pit);
 					LL_ITER *nit = ll_iter_create(card->remote_nodes);
-					uint8 *node;
+					uint8_t *node;
 
 					nodecount = 0;
 					if (!apicall) tpl_addVar(vars, TPLADD, "NODES", "");
@@ -2089,10 +2089,10 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 		return tpl_getTpl(vars, "APICCCAMCARDLIST");
 }
 
-char *send_oscam_status(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
-	int i;
+char *send_oscam_status(struct templatevars *vars, struct uriparams *params, struct in_addr in, int32_t apicall) {
+	int32_t i;
 	char *usr;
-	int lsec, isec, con, cau = 0;
+	int32_t lsec, isec, con, cau = 0;
 	time_t now = time((time_t)0);
 	struct tm lt;
 
@@ -2117,7 +2117,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 #ifndef WITH_DEBUG
 		cs_log("*** Warning: Debug Support not compiled in ***");
 #else
-		int dblvl = atoi(debuglvl);
+		int32_t dblvl = atoi(debuglvl);
 		if(dblvl >= 0 && dblvl <= 255) cs_dblevel = dblvl;
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
 #endif
@@ -2125,7 +2125,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 	char *hide = getParam(params, "hide");
 	if(strlen(hide) > 0) {
-		ulong clidx;
+		uint32_t clidx;
 		clidx = atol(hide);
 		struct s_client *hideidx = get_client_by_tid(clidx);
 		if(hideidx)
@@ -2140,7 +2140,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 				cl->wihidden = 0;
 		}
 		else {
-			int oldval = cfg.http_hide_idle_clients;
+			int32_t oldval = cfg.http_hide_idle_clients;
 			chk_t_webif("httphideidleclients", hideidle);
 			if(oldval != cfg.http_hide_idle_clients) {
 				refresh_oscam(REFR_SERVER, in);
@@ -2151,10 +2151,10 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 	if(cfg.http_hide_idle_clients > 0) tpl_addVar(vars, TPLADD, "HIDEIDLECLIENTSSELECTED1", "selected");
 	else tpl_addVar(vars, TPLADD, "HIDEIDLECLIENTSSELECTED0", "selected");
 
-	int user_count_all = 0, user_count_shown = 0, user_count_active = 0;
-	int reader_count_all = 0, reader_count_conn = 0;
-	int proxy_count_all = 0, proxy_count_conn = 0;
-	int shown;
+	int32_t user_count_all = 0, user_count_shown = 0, user_count_active = 0;
+	int32_t reader_count_all = 0, reader_count_conn = 0;
+	int32_t proxy_count_all = 0, proxy_count_conn = 0;
+	int32_t shown;
 
 	struct s_client *cl;
 	for (i=0, cl=first_client; cl ; cl=cl->next, i++) {
@@ -2312,7 +2312,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					tpl_printf(vars, TPLADD, "CLIENTSRVID", "%04X", cl->last_srvid);
 					tpl_printf(vars, TPLADD, "CLIENTLASTRESPONSETIME", "%d", cl->cwlastresptime?cl->cwlastresptime:1);
 
-					int k;
+					int32_t k;
 					char *dot = "";
 
 					if(cl->cwlastresptimes_last == CS_ECM_RINGBUFFER_MAX - 1){
@@ -2332,7 +2332,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 						}
 					}
 
-					int j, found = 0;
+					int32_t j, found = 0;
 					struct s_srvid *srvid = cfg.srvid;
 
 					while (srvid != NULL) {
@@ -2414,7 +2414,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 						if(cl->cc){
 							LLIST *cards = rcc->cards;
 							if (cards) {
-								int cnt = ll_count(cards);
+								int32_t cnt = ll_count(cards);
 								if(cnt == 1) tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards\">(1 card)</A>", urlencode(vars, cl->reader->label));
 								else if(cnt > 1) tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards\">(%d cards)</A>", urlencode(vars, cl->reader->label), cnt);
 							}
@@ -2470,7 +2470,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 
 #ifdef WITH_DEBUG
 	// Debuglevel Selector
-	int lvl;
+	int32_t lvl;
 	for (i = 0; i < 8; i++) {
 		lvl = 1 << i;
 		tpl_printf(vars, TPLADD, "TMPC", "DCLASS%d", lvl);
@@ -2505,7 +2505,7 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 char *send_oscam_services_edit(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
 	struct s_sidtab *sidtab,*ptr;
 	char label[sizeof(cfg.sidtab->label)];
-	int i;
+	int32_t i;
 
 	cs_strncpy(label, strtolower(getParam(params, "service")), sizeof(label));
 
@@ -2571,7 +2571,7 @@ char *send_oscam_services_edit(struct templatevars *vars, struct uriparams *para
 char *send_oscam_services(struct templatevars *vars, struct uriparams *params, struct in_addr in) {
 	struct s_sidtab *sidtab, *sidtab2;
 	char *service = getParam(params, "service");
-	int i, found = 0;
+	int32_t i, found = 0;
 
 	if (strcmp(getParam(params, "action"), "delete") == 0) {
 		if(cfg.http_readonly) {
@@ -2633,7 +2633,7 @@ char *send_oscam_savetpls(struct templatevars *vars) {
 	return tpl_getTpl(vars, "SAVETEMPLATES");
 }
 
-char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in, int apicall) {
+char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *params, struct in_addr in, int32_t apicall) {
 	if (strcmp(strtolower(getParam(params, "action")), "shutdown") == 0) {
 		if(!apicall){
 			tpl_addVar(vars, TPLADD, "STYLESHEET", CSS);
@@ -2687,7 +2687,7 @@ char *send_oscam_shutdown(struct templatevars *vars, FILE *f, struct uriparams *
 char *send_oscam_script(struct templatevars *vars) {
 
 	char *result = "not found";
-	int rc = 0;
+	int32_t rc = 0;
 	if(!cfg.http_readonly) {
 		if(cfg.http_script[0]) {
 			tpl_addVar(vars, TPLADD, "SCRIPTNAME",cfg.http_script);
@@ -2713,7 +2713,7 @@ char *send_oscam_scanusb(struct templatevars *vars) {
 
 #ifndef OS_CYGWIN32
 	FILE *fp;
-	int err=0;
+	int32_t err=0;
 	char path[1035];
 
 	fp = popen("lsusb -v | egrep '^Bus|^ *iSerial|^ *iProduct'", "r");
@@ -2745,7 +2745,7 @@ char *send_oscam_scanusb(struct templatevars *vars) {
 
 char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 
-	int writable=0;
+	int32_t writable=0;
 
 	char *stoplog = getParam(params, "stoplog");
 	if(strlen(stoplog) > 0)
@@ -2760,7 +2760,7 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 #ifndef WITH_DEBUG
 		cs_log("*** Warning: Debug Support not compiled in ***");
 #else
-		int dblvl = atoi(debuglvl);
+		int32_t dblvl = atoi(debuglvl);
 		if(dblvl >= 0 && dblvl <= 255) cs_dblevel = dblvl;
 		cs_log("%s debug_level=%d", "all", cs_dblevel);
 #endif
@@ -2810,7 +2810,7 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 
 #ifdef WITH_DEBUG
 		// Debuglevel Selector
-		int i, lvl;
+		int32_t i, lvl;
 		for (i = 0; i < 8; i++) {
 			lvl = 1 << i;
 			tpl_printf(vars, TPLADD, "TMPC", "DCLASS%d", lvl);
@@ -2938,7 +2938,7 @@ char *send_oscam_files(struct templatevars *vars, struct uriparams *params) {
 
 char *send_oscam_failban(struct templatevars *vars, struct uriparams *params) {
 
-	uint ip2delete = 0;
+	uint32_t ip2delete = 0;
 	LL_ITER *itr = ll_iter_create(cfg.v_list);
 	V_BAN *v_ban_entry;
 
@@ -3066,7 +3066,7 @@ char *send_oscam_image(struct templatevars *vars, FILE *f, struct uriparams *par
 			else return "0";
 			ptr = strstr(ptr + 1, "base64,");
 			if(ptr != NULL){
-				int len = b64decode((uchar *)ptr + 7);
+				int32_t len = b64decode((uchar *)ptr + 7);
 				if(len > 0){
 					send_headers(f, 200, "OK", NULL, header + 5, 1);
 					webif_write_raw(ptr + 7, f, len);
@@ -3083,7 +3083,7 @@ void webif_parse_request(struct uriparams *params, char *pch) {
 	 value; pch2 points to the beginning of the currently parsed string, pch is the current position */
 
 	char *pch2;
-	int parsemode = 1;
+	int32_t parsemode = 1;
 
 	pch2=pch;
 	while(pch[0] != '\0') {
@@ -3109,11 +3109,11 @@ void webif_parse_request(struct uriparams *params, char *pch) {
 	}
 }
 
-int process_request(FILE *f, struct in_addr in) {
+int32_t process_request(FILE *f, struct in_addr in) {
 
 	cur_client()->last = time((time_t)0); //reset last busy time
 
-	int ok=0,v=cv();
+	int32_t ok=0,v=cv();
 	in_addr_t addr = in.s_addr;
 
 	ok = check_ip(cfg.http_allowed, in.s_addr) ? v : 0;
@@ -3154,7 +3154,7 @@ int process_request(FILE *f, struct in_addr in) {
 				hints.ai_family = AF_INET;
 				hints.ai_protocol = IPPROTO_TCP;
 
-				int err = getaddrinfo((const char*)cfg.http_dyndns, NULL, &hints, &res);
+				int32_t err = getaddrinfo((const char*)cfg.http_dyndns, NULL, &hints, &res);
 				if (err != 0 || !res || !res->ai_addr) {
 					cs_log("can't resolve %s, error: %s", cfg.http_dyndns, err ? gai_strerror(err) : "unknown");
 				}
@@ -3181,7 +3181,7 @@ int process_request(FILE *f, struct in_addr in) {
 		return 0;
 	}
 
-	int authok = 0;
+	int32_t authok = 0;
 	char expectednonce[(MD5_DIGEST_LENGTH * 2) + 1];
 
 	char *method, *path, *protocol;
@@ -3210,16 +3210,16 @@ int process_request(FILE *f, struct in_addr in) {
 		"/image",
 		"/favicon.ico"};
 
-	int pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
+	int32_t pagescnt = sizeof(pages)/sizeof(char *); // Calculate the amount of items in array
 
-	int pgidx = -1;
-	int i;
+	int32_t pgidx = -1;
+	int32_t i;
 	struct uriparams params;
 	params.paramcount = 0;
 
 	/* First line always includes the GET/POST request */
 	char *saveptr1=NULL;
-	int n, bufsize=0;
+	int32_t n, bufsize=0;
 	char *filebuf = NULL;
 	char buf2[1024];
 	struct pollfd pfd2[1];
@@ -3250,7 +3250,7 @@ int process_request(FILE *f, struct in_addr in) {
 
 #ifdef WITH_SSL
 		if (cfg.http_use_ssl) {
-			int len = 0;
+			int32_t len = 0;
 			len = SSL_pending((SSL*)f);
 
 			if (len>0)
@@ -3264,7 +3264,7 @@ int process_request(FILE *f, struct in_addr in) {
 
 		pfd2[0].events = (POLLIN | POLLPRI);
 
-		int rc = poll(pfd2, 1, 100);
+		int32_t rc = poll(pfd2, 1, 100);
 		if (rc>0)
 			continue;
 
@@ -3473,7 +3473,7 @@ void http_srv() {
 	cl->thread = pthread_self();
 	pthread_setspecific(getclient, cl);
 	cl->typ = 'h';
-	int sock, reuse = 1;
+	int32_t sock, reuse = 1;
 	struct sockaddr_in sin;
 	struct sockaddr_in remote;
 	struct timeval stimeout;
@@ -3518,7 +3518,7 @@ void http_srv() {
 	}
 	cs_log("HTTP Server listening on port %d%s", cfg.http_port, cfg.http_use_ssl ? " (SSL)" : "");
 	struct pollfd pfd2[1];
-	int rc;
+	int32_t rc;
 	pfd2[0].fd = sock;
 	pfd2[0].events = (POLLIN | POLLPRI);
 
@@ -3532,7 +3532,7 @@ void http_srv() {
 #endif
 
 	while (running) {
-		int s;
+		int32_t s;
 
 		rc = poll(pfd2, 1, 1000);
 

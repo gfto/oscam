@@ -77,15 +77,15 @@ static const uchar
 /* end define */
 
 typedef struct chid_base_date {
-    ushort caid;
-    ushort acs;
+    uint16_t caid;
+    uint16_t acs;
     char c_code[4];
-    long base;
+    uint32_t base;
 } CHID_BASE_DATE;
 
 static void XRotateLeft8Byte(uchar *buf)
 {
-  int k;
+  int32_t k;
   uchar t1=buf[7];
   uchar t2=0;
   for(k=0; k<=7; k++)
@@ -99,7 +99,7 @@ static void XRotateLeft8Byte(uchar *buf)
 static void ReverseSessionKeyCrypt(const uchar *camkey, uchar *key)
 {
   uchar localkey[8], tmp1, tmp2;
-  int idx1,idx2;
+  int32_t idx1,idx2;
 
   memcpy(localkey, camkey, 8) ;
   for(idx1=0; idx1<8; idx1++)
@@ -121,7 +121,7 @@ static void ReverseSessionKeyCrypt(const uchar *camkey, uchar *key)
   } 
 }
 
-static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
+static time_t chid_date(struct s_reader * reader, uint32_t date, char *buf, int32_t l)
 {
 
     // Irdeto date starts 01.08.1997 which is
@@ -132,7 +132,7 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
     // like we did for NDS
     // 
     // this is the known default value.
-    long date_base=870393600L; // this is actually 31.07.1997, 17:00
+    uint32_t date_base=870393600L; // this is actually 31.07.1997, 17:00
                                 // CAID, ACS, Country, base date       D . M.   Y, h : m
     CHID_BASE_DATE table[] = { {0x0604, 0x1541, "GRC", 977817600L}, // 26.12.2000, 00:00
                             {0x0604, 0x1542, "GRC", 977817600L},    // 26.12.2000, 00:00
@@ -152,7 +152,7 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
                             };
 
     // now check for specific providers base date
-    int i=0;
+    int32_t i=0;
     while(table[i].caid) {
         if(reader->caid==table[i].caid && reader->acs==table[i].acs && !memcmp(reader->country_code,table[i].c_code,3) ) {
             date_base = table[i].base;
@@ -170,9 +170,9 @@ static time_t chid_date(struct s_reader * reader, ulong date, char *buf, int l)
     return(ut);
 }
 
-static int irdeto_do_cmd(struct s_reader * reader, uchar *buf, ushort good, uchar * cta_res, ushort * p_cta_lr)
+static int32_t irdeto_do_cmd(struct s_reader * reader, uchar *buf, uint16_t good, uchar * cta_res, uint16_t * p_cta_lr)
 {
-	int rc;
+	int32_t rc;
 	if( (rc = reader_cmd2icc(reader, buf, buf[4] + 5, cta_res, p_cta_lr)) )
 		return(rc);			// result may be 0 (success) or negative
 	if (*p_cta_lr < 2)
@@ -185,10 +185,10 @@ static int irdeto_do_cmd(struct s_reader * reader, uchar *buf, ushort good, ucha
         if (reader_cmd2icc(reader, cmd, sizeof(cmd), cta_res, &cta_lr)) return ERROR; \
   if (l && (cta_lr!=l)) return ERROR; }
 
-static int irdeto_card_init_provider(struct s_reader * reader)
+static int32_t irdeto_card_init_provider(struct s_reader * reader)
 {
 	def_resp;
-	int i, p;
+	int32_t i, p;
 	uchar buf[256] = {0};
 
 	uchar sc_GetProvider[]    = { 0x02, 0x03, 0x03, 0x00, 0x00 };
@@ -200,12 +200,12 @@ static int irdeto_card_init_provider(struct s_reader * reader)
 	memset(reader->prid, 0xff, sizeof(reader->prid));
 	for (buf[0] = i = p = 0; i<reader->nprov; i++)
 	{
-		int acspadd = 0;
+		int32_t acspadd = 0;
 		if(reader->acs57==1){
           		acspadd=8;
           		sc_Acs57Prov[3]=i;
           		irdeto_do_cmd(reader, sc_Acs57Prov, 0x9021, cta_res, &cta_lr);
-          		int acslength = cta_res[cta_lr-1];
+          		int32_t acslength = cta_res[cta_lr-1];
 	  		sc_Acs57_Cmd[4]=acslength;	 
           		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
           		sc_Acs57Prov[5]++;
@@ -226,7 +226,7 @@ static int irdeto_card_init_provider(struct s_reader * reader)
 			else
 				memcpy(&reader->prid[i][0], cta_res+acspadd, 4);
 
-			snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%06lx", b2i(3, &reader->prid[i][1]));
+			snprintf((char *) buf+strlen((char *)buf), sizeof(buf)-strlen((char *)buf), ",%06x", b2i(3, &reader->prid[i][1]));
 		}
 		else
 			reader->prid[i][0] = 0xf;
@@ -239,11 +239,11 @@ static int irdeto_card_init_provider(struct s_reader * reader)
 
 
 
-static int irdeto_card_init(struct s_reader * reader, ATR newatr)
+static int32_t irdeto_card_init(struct s_reader * reader, ATR newatr)
 {
 	def_resp;
 	get_atr;
-	int camkey = 0;
+	int32_t camkey = 0;
 	uchar buf[256] = {0};
 	uchar sc_GetCamKey383C[]  = { 0x02, 0x09, 0x03, 0x00, 0x40,
                           0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
@@ -267,7 +267,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 		sc_Acs57CFile[]   = { 0xD2, 0x1C, 0x02, 0x00, 0x01, 0x30 },
 		sc_Acs57_Cmd[]    = { ACS57GET, 0xFE, 0x00, 0x00, 0x00 };
 
-	int acspadd = 0;
+	int32_t acspadd = 0;
 	if (!memcmp(atr+4, "IRDETO", 6))
 		reader->acs57=0;
 	else {
@@ -306,7 +306,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 	 */
 	if(reader->acs57==1) {
 		irdeto_do_cmd(reader, sc_Acs57Country, 0x9019, cta_res, &cta_lr);
-		int acslength=cta_res[cta_lr-1];
+		int32_t acslength=cta_res[cta_lr-1];
 		sc_Acs57_Cmd[4]=acslength;
 		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 	} else {
@@ -323,7 +323,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 	 */
 	if(reader->acs57==1) {
 		irdeto_do_cmd(reader, sc_Acs57Ascii, 0x901D, cta_res, &cta_lr);
-		int acslength=cta_res[cta_lr-1];
+		int32_t acslength=cta_res[cta_lr-1];
 		sc_Acs57_Cmd[4]=acslength;
 		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);   
 	} else {
@@ -333,7 +333,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 	buf[10] = 0;
 	if(reader->acs57==1) {
 		irdeto_do_cmd(reader, sc_Acs57Hex, 0x903E, cta_res, &cta_lr);
-		int acslength=cta_res[cta_lr-1];
+		int32_t acslength=cta_res[cta_lr-1];
 		sc_Acs57_Cmd[4]=acslength;
 		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);   
 	} else {
@@ -355,7 +355,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 	 */
 	if(reader->acs57==1) {
 		irdeto_do_cmd(reader, sc_Acs57CFile, 0x9049, cta_res, &cta_lr);
-		int acslength=cta_res[cta_lr-1];
+		int32_t acslength=cta_res[cta_lr-1];
 		sc_Acs57_Cmd[4]=acslength;
 		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 		sc_Acs57CFile[2]=0x03;sc_Acs57CFile[5]++;
@@ -400,26 +400,26 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 		break;
 	case 4:
 		{
-			int i,crc=61;
+			int32_t i,crc=61;
 			crc^=0x01, crc^=0x02, crc^=0x09;
 			crc^=sc_Acs57CamKey[2], crc^=sc_Acs57CamKey[3], crc^=(sc_Acs57CamKey[4]+1);
 			for(i=5;i<(int)sizeof(sc_Acs57CamKey);i++)
 				crc^=sc_Acs57CamKey[i];
 			sc_Acs57CamKey[69]=crc;
 			irdeto_do_cmd(reader, sc_Acs57CamKey, 0x9012, cta_res, &cta_lr);
-			int acslength=cta_res[cta_lr-1];
+			int32_t acslength=cta_res[cta_lr-1];
 			sc_Acs57_Cmd[4]=acslength;
 			reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 		}
 		break;
 	default:
 		if(reader->acs57==1) {
-			int i, crc=0x76;
+			int32_t i, crc=0x76;
 			for(i=6;i<(int)sizeof(sc_Acs57CamKey)-1;i++)
 				crc^=sc_Acs57CamKey[i];
 			sc_Acs57CamKey[69]=crc;
 			irdeto_do_cmd(reader, sc_Acs57CamKey, 0x9012, cta_res, &cta_lr);
-			int acslength=cta_res[cta_lr-1];
+			int32_t acslength=cta_res[cta_lr-1];
 			sc_Acs57_Cmd[4]=acslength;
 			reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 		} else {
@@ -433,7 +433,7 @@ static int irdeto_card_init(struct s_reader * reader, ATR newatr)
 	return irdeto_card_init_provider(reader);
 }
 
-int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
+int32_t irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
 	def_resp; cta_lr = 0; //suppress compiler error
 	static const uchar sc_EcmCmd[] = { 0x05, 0x00, 0x00, 0x02, 0x00 };
@@ -441,9 +441,9 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	uchar sc_Acs57_Cmd[]={ ACS57ECM, 0xFE, 0x00, 0x00, 0x00 };
 	uchar cta_cmd[272];
 
-	int i=0, acspadd=0; 
+	int32_t i=0, acspadd=0; 
 	if(reader->acs57==1) {
-		int crc=63;
+		int32_t crc=63;
 		sc_Acs57Ecm[4]=er->ecm[2]-2;
 		sc_Acs57Ecm[2]=er->ecm[6];
 		crc^=0x01;crc^=0x05;crc^=sc_Acs57Ecm[2];crc^=sc_Acs57Ecm[3];crc^=(sc_Acs57Ecm[4]-1);
@@ -453,7 +453,7 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		memcpy(cta_cmd+5,er->ecm+6,er->ecm[2]-1); 
 		cta_cmd[er->ecm[2]+2]=crc;
 		irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr);
-		int acslength=cta_res[cta_lr-1];
+		int32_t acslength=cta_res[cta_lr-1];
 		// If acslength != 0x1F you don't have the entitlements or you camkey is bad
 		if(acslength!=0x1F){
 			switch(acslength){
@@ -475,8 +475,8 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 		cta_cmd[4] = (er->ecm[2]) - 3;
 		memcpy(cta_cmd + sizeof(sc_EcmCmd), &er->ecm[6], cta_cmd[4]);
 
-		int try = 1;
-		int ret;
+		int32_t try = 1;
+		int32_t ret;
 		do {
 			if (try >1)
 				snprintf( er->msglog, MSGLOGSIZE, "%s irdeto_do_cmd try nr %i", reader->label, try);
@@ -495,10 +495,10 @@ int irdeto_do_ecm(struct s_reader * reader, ECM_REQUEST *er)
 	return OK;
 }
 
-static int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
+static int32_t irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
-	int i, l = (ep->emm[3]&0x07);
-	int base = (ep->emm[3]>>3);
+	int32_t i, l = (ep->emm[3]&0x07);
+	int32_t base = (ep->emm[3]>>3);
 	char dumprdrserial[l*3];
 
 	cs_debug_mask(D_EMM, "Entered irdeto_get_emm_type ep->emm[3]=%02x",ep->emm[3]);
@@ -558,15 +558,15 @@ static int irdeto_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr) {
 
 static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 {
-	int idx = 2;
+	int32_t idx = 2;
 
 	filter[0]=0xFF;
 	filter[1]=0;		//filter count
 
-	int base = rdr->hexserial[3];
-	int emm_g = base * 8;
-	int emm_s = emm_g + 2;
-	int emm_u = emm_g + 3;
+	int32_t base = rdr->hexserial[3];
+	int32_t emm_g = base * 8;
+	int32_t emm_s = emm_g + 2;
+	int32_t emm_u = emm_g + 3;
 
 
 	filter[idx++]=EMM_GLOBAL;
@@ -611,7 +611,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]++;
 	idx += 32;
 
-	int i;
+	int32_t i;
 	for(i = 0; i < rdr->nprov; i++) {
 		if (rdr->prid[i][1]==0xFF)
 			continue;
@@ -636,7 +636,7 @@ static void irdeto_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	return;
 }
 
-static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
+static int32_t irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 {
 	def_resp;
 	static const uchar sc_EmmCmd[] = { 0x01,0x00,0x00,0x00,0x00 };
@@ -645,8 +645,8 @@ static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 
 	uchar cta_cmd[272];
 
-	int i, l = (ep->emm[3] & 0x07), ok = 0;
-	int mode = (ep->emm[3] >> 3);
+	int32_t i, l = (ep->emm[3] & 0x07), ok = 0;
+	int32_t mode = (ep->emm[3] >> 3);
 	uchar *emm = ep->emm;
 
 	if (mode & 0x10) {
@@ -670,14 +670,14 @@ static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
  		l++;
  		if (l <= ADDRLEN) {
 			if(reader->acs57==1) {
-				int dataLen=0;
+				int32_t dataLen=0;
 				if(ep->type==UNIQUE){
 					dataLen=ep->emm[2]-1;
 				}else{
 					dataLen=ep->emm[2];
 				}
 				if (ep->type==GLOBAL && reader->caid==0x0624) dataLen+=2;
-				int crc=63;
+				int32_t crc=63;
 				sc_Acs57Emm[4]=dataLen;
 				memcpy(&cta_cmd, sc_Acs57Emm, sizeof(sc_Acs57Emm));
 				crc^=0x01;crc^=0x01;crc^=0x00;crc^=0x00;crc^=0x00;crc^=(dataLen-1);
@@ -693,17 +693,17 @@ static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
 						memcpy(&cta_cmd[10],&ep->emm[9],dataLen-6);
 					}
 				}
-				int i=0;
+				int32_t i=0;
 				for(i=5;i<dataLen+4;i++)
 					crc^=cta_cmd[i];
 				cta_cmd[dataLen-1+5]=crc;
 				irdeto_do_cmd(reader, cta_cmd, 0, cta_res, &cta_lr);
-				int acslength=cta_res[cta_lr-1];
+				int32_t acslength=cta_res[cta_lr-1];
 				sc_Acs57_Cmd[4]=acslength;
 				reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 				return OK;
 			} else {
-				const int dataLen = SCT_LEN(emm) - 5 - l;		// sizeof of emm bytes (nanos)
+				const int32_t dataLen = SCT_LEN(emm) - 5 - l;		// sizeof of emm bytes (nanos)
 				uchar *ptr = cta_cmd;
 				memcpy(ptr, sc_EmmCmd, sizeof(sc_EmmCmd));		// copy card command
 				ptr[4] = dataLen + ADDRLEN;						// set card command emm size
@@ -720,10 +720,10 @@ static int irdeto_do_emm(struct s_reader * reader, EMM_PACKET *ep)
  	return ERROR;
 }
 
-static int irdeto_card_info(struct s_reader * reader)
+static int32_t irdeto_card_info(struct s_reader * reader)
 {
   def_resp;
-  int i, p;
+  int32_t i, p;
 
 	uchar	sc_GetChanelIds[] = { 0x02, 0x04, 0x00, 0x00, 0x01, 0x00 };
 	uchar	sc_Acs57Code[]    = { 0xD2, 0x16, 0x00, 0x00, 0x01 ,0x37},
@@ -733,11 +733,11 @@ static int irdeto_card_info(struct s_reader * reader)
   /*
    * ContryCode2
    */
-	int acspadd=0;
+	int32_t acspadd=0;
 	if(reader->acs57==1){
 		acspadd=8;
 		reader_chk_cmd(sc_Acs57Code,0);
-		int acslength=cta_res[cta_lr-1];
+		int32_t acslength=cta_res[cta_lr-1];
 		sc_Acs57_Cmd[4]=acslength;
 		reader_chk_cmd(sc_Acs57_Cmd, acslength+2);
 	} else {
@@ -753,7 +753,7 @@ static int irdeto_card_info(struct s_reader * reader)
      */
     for (i=p=0; i<reader->nprov; i++)
     {
-      int j, k, chid, first=1;
+      int32_t j, k, chid, first=1;
       char t[32];
       if (reader->prid[i][4]!=0xff)
       {
@@ -766,13 +766,13 @@ static int irdeto_card_info(struct s_reader * reader)
         while(1) // will exit if cta_lr < 61 .. which is the correct break condition.
         {
           if(reader->acs57==1) {
-	  	int crc=63;
+	  	int32_t crc=63;
             	sc_Acs57Prid[5]=j;
             	crc^=0x01;crc^=0x02;crc^=0x04;
             	crc^=sc_Acs57Prid[2];crc^=sc_Acs57Prid[3];crc^=(sc_Acs57Prid[4]-1);crc^=sc_Acs57Prid[5];
             	sc_Acs57Prid[6]=crc;
             	irdeto_do_cmd(reader, sc_Acs57Prid, 0x903C, cta_res, &cta_lr);
-            	int acslength=cta_res[cta_lr-1];
+            	int32_t acslength=cta_res[cta_lr-1];
   	    	if (acslength==0x09) break;
             	sc_Acs57_Cmd[4]=acslength;
   	    	reader_chk_cmd(sc_Acs57_Cmd, acslength+2);

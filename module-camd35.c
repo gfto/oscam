@@ -13,9 +13,9 @@
 
 #define REQ_SIZE	328		// 256 + 20 + 0x34
 
-static int camd35_send(uchar *buf)
+static int32_t camd35_send(uchar *buf)
 {
-	int l;
+	int32_t l;
 	unsigned char rbuf[REQ_SIZE+15+4], *sbuf = rbuf + 4;
 	struct s_client *cl = cur_client();
 
@@ -29,7 +29,7 @@ static int camd35_send(uchar *buf)
 	cs_ddump_mask(D_CLIENT, sbuf, l, "send %d bytes to %s", l, remote_txt());
 	aes_encrypt(sbuf, l);
 
-        int status;
+        int32_t status;
 	if (cl->is_udp) {
 	   status = sendto(cl->udp_fd, rbuf, l+4, 0,
 				           (struct sockaddr *)&cl->udp_sa,
@@ -43,10 +43,10 @@ static int camd35_send(uchar *buf)
 	return status;		
 }
 
-static int camd35_auth_client(uchar *ucrc)
+static int32_t camd35_auth_client(uchar *ucrc)
 {
-  int rc=1;
-  ulong crc;
+  int32_t rc=1;
+  uint32_t crc;
   struct s_auth *account;
   struct s_client *cl = cur_client();
 
@@ -65,9 +65,9 @@ static int camd35_auth_client(uchar *ucrc)
   return(rc);
 }
 
-static int camd35_recv(struct s_client *client, uchar *buf, int l)
+static int32_t camd35_recv(struct s_client *client, uchar *buf, int32_t l)
 {
-  int rc, s, rs, n=0;
+  int32_t rc, s, rs, n=0;
   unsigned char recrc[4];
   for (rc=rs=s=0; !rc; s++) switch(s)
   {
@@ -144,7 +144,7 @@ static int camd35_recv(struct s_client *client, uchar *buf, int l)
 
 static void camd35_request_emm(ECM_REQUEST *er)
 {
-	int i;
+	int32_t i;
 	time_t now;
 	uchar mbuf[1024];
 	struct s_client *cl = cur_client();
@@ -316,7 +316,7 @@ static void camd35_process_emm(uchar *buf)
 
 static void * camd35_server(void *cli)
 {
-  int n;
+  int32_t n;
   uchar mbuf[1024];
 
 	struct s_client * client = (struct s_client *) cli;
@@ -369,11 +369,11 @@ static void casc_set_account()
   cl->crypted=1;
 }
 
-int camd35_client_init(struct s_client *client)
+int32_t camd35_client_init(struct s_client *client)
 {
   struct sockaddr_in loc_sa;
   struct protoent *ptrp;
-  int p_proto;//, sock_type;
+  int32_t p_proto;//, sock_type;
   char ptxt[16];
 
   client->pfd=0;
@@ -407,7 +407,7 @@ int camd35_client_init(struct s_client *client)
 
 #ifdef SO_PRIORITY
   if (cfg.netprio)
-    setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(ulong));
+    setsockopt(client->udp_fd, SOL_SOCKET, SO_PRIORITY, (void *)&cfg.netprio, sizeof(uintptr_t));
 #endif
 
   if (client->reader->l_port>0)
@@ -426,7 +426,7 @@ int camd35_client_init(struct s_client *client)
   casc_set_account();
   memset((char *)&client->udp_sa, 0, sizeof(client->udp_sa));
   client->udp_sa.sin_family=AF_INET;
-  client->udp_sa.sin_port=htons((u_short)client->reader->r_port);
+  client->udp_sa.sin_port=htons((uint16_t)client->reader->r_port);
 
   cs_log("proxy %s:%d (fd=%d%s)",
          client->reader->device, client->reader->r_port,
@@ -439,11 +439,11 @@ int camd35_client_init(struct s_client *client)
   return(0);
 }
 
-int camd35_client_init_log()
+int32_t camd35_client_init_log()
 {
   struct sockaddr_in loc_sa;
   struct protoent *ptrp;
-  int p_proto;
+  int32_t p_proto;
   struct s_client *cl = cur_client();
 
   if (cl->reader->log_port<=0)
@@ -482,12 +482,12 @@ int camd35_client_init_log()
   return(0);
 }
 
-static int tcp_connect()
+static int32_t tcp_connect()
 {
   struct s_client *cl = cur_client();
   if (!cl->reader->tcp_connected)
   {
-    int handle=0;
+    int32_t handle=0;
     handle = network_tcp_connection_open();
     if (handle<0) return(0);
 
@@ -500,7 +500,7 @@ static int tcp_connect()
   return(1);
 }
 
-static int camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
+static int32_t camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 {
 	static const char *typtext[]={"ok", "invalid", "sleeping"};
 
@@ -544,7 +544,7 @@ static int camd35_send_ecm(struct s_client *client, ECM_REQUEST *er, uchar *buf)
 	return((camd35_send(buf) < 1) ? (-1) : 0);
 }
 
-static int camd35_send_emm(EMM_PACKET *ep)
+static int32_t camd35_send_emm(EMM_PACKET *ep)
 {
 	uchar buf[512];
   struct s_client *cl = cur_client();
@@ -569,9 +569,9 @@ static int camd35_send_emm(EMM_PACKET *ep)
 	return((camd35_send(buf)<1) ? 0 : 1);
 }
 
-static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *buf, int UNUSED(n))
+static int32_t camd35_recv_chk(struct s_client *client, uchar *dcw, int32_t *rc, uchar *buf, int32_t UNUSED(n))
 {
-	ushort idx;
+	uint16_t idx;
 	static const char *typtext[]={"ok", "invalid", "sleeping"};
   struct s_reader *rdr = client->reader;
 
@@ -584,7 +584,7 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 		rdr->caid = b2i(2, buf + 20);
 		rdr->auprovid = b2i(4, buf + 12);
 
-		int i;
+		int32_t i;
 		for (i=0; i<rdr->nprov; i++) {
 			if (((rdr->caid >= 0x1700) && (rdr->caid <= 0x1799))  ||	// Betacrypt
 					((rdr->caid >= 0x0600) && (rdr->caid <= 0x0699)))	// Irdeto (don't know if this is correct, cause I don't own a IRDETO-Card)
@@ -648,11 +648,11 @@ static int camd35_recv_chk(struct s_client *client, uchar *dcw, int *rc, uchar *
 	return(idx);
 }
 
-static int camd35_recv_log(ushort *caid, ulong *provid, ushort *srvid)
+static int32_t camd35_recv_log(uint16_t *caid, uint32_t *provid, uint16_t *srvid)
 {
-  int i;
+  int32_t i;
   uchar buf[512], *ptr, *ptr2;
-  ushort idx=0;
+  uint16_t idx=0;
   if (!logfd) return(-1);
   if ((i=recv(logfd, buf, sizeof(buf), 0))<=0) return(-1);
   buf[i]=0;

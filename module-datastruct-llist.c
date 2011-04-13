@@ -177,11 +177,11 @@ void *ll_iter_next(LL_ITER *it)
     return NULL;
 }
 
-void *ll_iter_move(LL_ITER *it, int offset)
+void *ll_iter_move(LL_ITER *it, int32_t offset)
 {
     if (it && it->l) {
     	pthread_mutex_lock(&it->l->lock);
-    	int i;
+    	int32_t i;
     	void *res = NULL;
     	for (i=0; i<offset; i++) {
     		res = ll_iter_next_nolock(it);
@@ -193,12 +193,12 @@ void *ll_iter_move(LL_ITER *it, int offset)
     return NULL;
 }
 
-void *ll_iter_peek(LL_ITER *it, int offset)
+void *ll_iter_peek(LL_ITER *it, int32_t offset)
 {
 	if (it && it->l) {
 		pthread_mutex_lock(&it->l->lock);
 	    LL_NODE *n = it->cur;
-	    int i;
+	    int32_t i;
 
 	    for (i = 0; i < offset; i++) {
 	    	if (n)
@@ -277,7 +277,7 @@ void ll_iter_remove_data(LL_ITER *it)
     add_garbage(obj);
 }
 
-int ll_count(LLIST *l)
+int32_t ll_count(LLIST *l)
 {
     if (!l)
       return 0;
@@ -291,7 +291,7 @@ void *ll_has_elements(LLIST *l) {
   return l->initial->obj;
 }
 
-int ll_contains(LLIST *l, void *obj)
+int32_t ll_contains(LLIST *l, void *obj)
 {
     if (!l || !obj)
       return 0;
@@ -328,9 +328,9 @@ void ll_remove_data(LLIST *l, void *obj)
 }
 
 // removes all elements from l where elements are in elements_to_remove 
-int ll_remove_all(LLIST *l, LLIST *elements_to_remove)
+int32_t ll_remove_all(LLIST *l, LLIST *elements_to_remove)
 {
-		int count = 0;
+		int32_t count = 0;
 		LL_ITER *it1 = ll_iter_create(l);
 		LL_ITER *it2 = ll_iter_create(elements_to_remove);
 		

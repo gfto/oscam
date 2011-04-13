@@ -211,7 +211,7 @@ int Phoenix_Receive (struct s_reader * reader, BYTE * buffer, unsigned size, uns
 	return OK;
 }
 
-int Phoenix_SetBaudrate (struct s_reader * reader, unsigned long baudrate)
+int Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 {
 	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %lu\n", baudrate);
 

@@ -70,7 +70,7 @@ static int smargo_set_settings(struct s_reader *reader, int freq, unsigned char 
 	return OK;
 }
 
-static int smargo_writesettings(struct s_reader *reader, unsigned long UNUSED(ETU), unsigned long UNUSED(EGT), unsigned char UNUSED(P), unsigned char UNUSED(I), unsigned short Fi, unsigned char Di, unsigned char Ni) {
+static int smargo_writesettings(struct s_reader *reader, uint32_t UNUSED(ETU), uint32_t UNUSED(EGT), unsigned char UNUSED(P), unsigned char UNUSED(I), unsigned short Fi, unsigned char Di, unsigned char Ni) {
 	smargo_set_settings(reader, reader->mhz, reader->protocol_type == 1 ? 0 : reader->protocol_type , reader->convention, Fi, Di, Ni);
 	return OK;
 }

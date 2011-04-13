@@ -7,7 +7,7 @@
 #define LB_REOPEN_MODE_STANDARD 0
 #define LB_REOPEN_MODE_FAST 1
 
-static int stat_load_save;
+static int32_t stat_load_save;
 static struct timeb nulltime;
 static time_t last_housekeeping = 0;
 
@@ -57,13 +57,13 @@ void load_stat_from_file()
 	struct s_reader *rdr = NULL;
 	READER_STAT *stat, *dup;
 		
-	int i=1;
-	int count=0;
+	int32_t i=1;
+	int32_t count=0;
 	do
 	{
 		stat = malloc(sizeof(READER_STAT));
 		memset(stat, 0, sizeof(READER_STAT));
-		i = fscanf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
+		i = fscanf(file, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
 			buf, &stat->rc, &stat->caid, &stat->prid, &stat->srvid, 
 			&stat->time_avg, &stat->ecm_count, &stat->last_received, &stat->fail_factor, &stat->ecmlen);
 			
@@ -113,14 +113,14 @@ void load_stat_from_file()
 /**
  * get statistic values for reader ridx and caid/prid/srvid/ecmlen
  */
-READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, short ecmlen)
+READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen)
 {
 	if (!rdr->lb_stat)
 		rdr->lb_stat = ll_create();
 
-	int i;
+	int32_t i;
 	for (i=0;i<CS_MAXCAIDTAB;i++) {
-		ushort tcaid = cfg.lb_noproviderforcaid.caid[i];
+		uint16_t tcaid = cfg.lb_noproviderforcaid.caid[i];
 		if (!tcaid) break;
 		if (tcaid == caid) {
 			prid = 0;
@@ -157,12 +157,12 @@ READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvi
 /**
  * removes caid/prid/srvid/ecmlen from stat-list of reader ridx
  */
-int remove_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, short ecmlen)
+int32_t remove_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen)
 {
 	if (!rdr->lb_stat)
 		return 0;
 
-	int c = 0;
+	int32_t c = 0;
 	LL_ITER *it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat;
 	while ((stat = ll_iter_next(it))) {
@@ -182,12 +182,12 @@ int remove_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvid, sho
  */
 void calc_stat(READER_STAT *stat)
 {
-	int i;
-	int c=0;
-	long t = 0;
+	int32_t i;
+	int32_t c=0;
+	int32_t t = 0;
 	for (i = 0; i < LB_MAX_STAT_TIME; i++) {
 		if (stat->time_stat[i] > 0) {
-			t += (long)stat->time_stat[i];
+			t += (int32_t)stat->time_stat[i];
 			c++;
 		}
 	}
@@ -219,7 +219,7 @@ void save_stat_to_file_thread()
 		return;
 	}
 
-	int count=0;
+	int32_t count=0;
 	struct s_reader *rdr;
 	LL_ITER *itr = ll_iter_create(configured_readers);
 	while ((rdr=ll_iter_next(itr))) {
@@ -229,7 +229,7 @@ void save_stat_to_file_thread()
 			READER_STAT *stat;
 			while ((stat = ll_iter_next(it))) {
 				
-				fprintf(file, "%s rc %d caid %04hX prid %06lX srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
+				fprintf(file, "%s rc %d caid %04hX prid %06X srvid %04hX time avg %dms ecms %d last %ld fail %d len %02hX\n",
 					rdr->label, stat->rc, stat->caid, stat->prid, 
 					stat->srvid, stat->time_avg, stat->ecm_count, stat->last_received, stat->fail_factor, stat->ecmlen);
 				count++;
@@ -243,7 +243,7 @@ void save_stat_to_file_thread()
 	cs_log("loadbalancer: statistic saved %d records to %s", count, fname);
 }
 
-void save_stat_to_file(int thread)
+void save_stat_to_file(int32_t thread)
 {
 	stat_load_save = 0;
 	if (thread)
@@ -255,7 +255,7 @@ void save_stat_to_file(int thread)
 /**
  * Adds caid/prid/srvid/ecmlen to stat-list for reader ridx with time/rc
  */
-void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
+void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t rc)
 {
 	if (!rdr || !er || !cfg.lb_mode)
 		return;
@@ -314,7 +314,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 		
 		
 		//USAGELEVEL:
-		int ule = rdr->lb_usagelevel_ecmcount;
+		int32_t ule = rdr->lb_usagelevel_ecmcount;
 		if (ule > 0 && ((ule / cfg.lb_min_ecmcount) > 0)) //update every MIN_ECM_COUNT usagelevel:
 		{
 			time_t t = (time(NULL)-rdr->lb_usagelevel_time);
@@ -395,7 +395,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int ecm_time, int rc)
 	}
 }
 
-void reset_stat(ushort caid, ulong prid, ushort srvid, short ecmlen)
+void reset_stat(uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen)
 {
 	//cs_debug_mask(D_TRACE, "loadbalance: resetting ecm count");
 	struct s_reader *rdr;
@@ -413,23 +413,23 @@ void reset_stat(ushort caid, ulong prid, ushort srvid, short ecmlen)
 	}
 }
 
-int has_ident(FTAB *ftab, ECM_REQUEST *er) {
+int32_t has_ident(FTAB *ftab, ECM_REQUEST *er) {
 
 	if (!ftab || !ftab->filts)
 		return 0;
 		
-        int j, k;
+        int32_t j, k;
 
         for (j = 0; j < ftab->nfilts; j++) {
 		if (ftab->filts[j].caid) {
 			if (ftab->filts[j].caid==er->caid) { //caid matches!
 
-				int nprids = ftab->filts[j].nprids;
+				int32_t nprids = ftab->filts[j].nprids;
                                 if (!nprids) // No Provider ->Ok
                                         return 1;
 
 				for (k = 0; k < nprids; k++) {
-					ulong prid = ftab->filts[j].prids[k];
+					uint32_t prid = ftab->filts[j].prids[k];
 					if (prid == er->prid) { //Provider matches
 						return 1;
                                         }
@@ -442,11 +442,11 @@ int has_ident(FTAB *ftab, ECM_REQUEST *er) {
 
 struct stat_value {
 	struct s_reader *rdr;
-	int value;
-	int time;
+	int32_t value;
+	int32_t time;
 };
 
-static struct stat_value *crt_cur(struct s_reader *rdr, int value, int time) {
+static struct stat_value *crt_cur(struct s_reader *rdr, int32_t value, int32_t time) {
 	struct stat_value *v = malloc(sizeof(struct stat_value));
 	v->rdr = rdr;
 	v->value = value;
@@ -459,8 +459,8 @@ static char *strend(char *c) {
 	return c;
 }
 
-static int get_retrylimit(ECM_REQUEST *er) {
-		int i;
+static int32_t get_retrylimit(ECM_REQUEST *er) {
+		int32_t i;
 		for (i = 0; i < cfg.lb_retrylimittab.n; i++) {
 				if (cfg.lb_retrylimittab.caid[i] == er->caid)
 						return cfg.lb_retrylimittab.value[i];
@@ -468,8 +468,8 @@ static int get_retrylimit(ECM_REQUEST *er) {
 		return cfg.lb_retrylimit;
 }
 
-static int get_nbest_readers(ECM_REQUEST *er) {
-		int i;
+static int32_t get_nbest_readers(ECM_REQUEST *er) {
+		int32_t i;
 		for (i = 0; i < cfg.lb_nbest_readers_tab.n; i++) {
 				if (cfg.lb_nbest_readers_tab.caid[i] == er->caid)
 						return cfg.lb_nbest_readers_tab.value[i];
@@ -477,9 +477,9 @@ static int get_nbest_readers(ECM_REQUEST *er) {
 		return cfg.lb_nbest_readers;
 }
 
-static int get_reopen_seconds(READER_STAT *stat)
+static int32_t get_reopen_seconds(READER_STAT *stat)
 {
-		int max = (INT_MAX / cfg.lb_reopen_seconds) - 1;
+		int32_t max = (INT_MAX / cfg.lb_reopen_seconds) - 1;
 		if (stat->fail_factor > max)
 				stat->fail_factor = max;
 		return (stat->fail_factor+1) * cfg.lb_reopen_seconds;
@@ -491,7 +491,7 @@ static int get_reopen_seconds(READER_STAT *stat)
  * Also the reader is asked if he is "available"
  * returns ridx when found or -1 when not found
  */
-int get_best_reader(ECM_REQUEST *er)
+int32_t get_best_reader(ECM_REQUEST *er)
 {
 	if (!cfg.lb_mode || cfg.lb_mode==LB_LOG_ONLY)
 		return 0;
@@ -524,16 +524,16 @@ int get_best_reader(ECM_REQUEST *er)
 	struct timeb new_nulltime;
 	memset(&new_nulltime, 0, sizeof(new_nulltime));
 	time_t current_time = time(NULL);
-	int current = -1;
+	int32_t current = -1;
 	READER_STAT *stat = NULL;
-	int nlocal_readers = 0;
-	int retrylimit = get_retrylimit(er);
+	int32_t nlocal_readers = 0;
+	int32_t retrylimit = get_retrylimit(er);
 
 #ifdef WITH_DEBUG 
 	if (cs_dblevel & 0x01) {
 		//loadbalancer debug output:
-		int size = 1;
-		int nr = 0;
+		int32_t size = 1;
+		int32_t nr = 0;
 		it = ll_iter_create(er->matching_rdr);
 		while ((rdr=ll_iter_next(it))) {
 			if (nr > 5) {
@@ -569,7 +569,7 @@ int get_best_reader(ECM_REQUEST *er)
 	it = ll_iter_create(er->matching_rdr);
 	while ((rdr=ll_iter_next(it))) {
 	
-			int weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
+			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 				
 			stat = get_stat(rdr, er->caid, er->prid, er->srvid, er->l);
 			if (!stat) {
@@ -586,7 +586,7 @@ int get_best_reader(ECM_REQUEST *er)
 				continue;
 			}
 				
-			int hassrvid = has_srvid(rdr->client, er) || has_ident(&rdr->ftab, er);
+			int32_t hassrvid = has_srvid(rdr->client, er) || has_ident(&rdr->ftab, er);
 			
 			if (!hassrvid && stat->rc == 0 && stat->request_count >= cfg.lb_min_ecmcount-1) { // 4 unanswered requests or timeouts?
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
@@ -646,8 +646,8 @@ int get_best_reader(ECM_REQUEST *er)
 	}
 	ll_iter_release(it);
 
-	int nbest_readers = get_nbest_readers(er);
-	int nfb_readers = cfg.lb_nfb_readers;
+	int32_t nbest_readers = get_nbest_readers(er);
+	int32_t nfb_readers = cfg.lb_nfb_readers;
 	if (nlocal_readers > nbest_readers) { //if we have local readers, we prefer them!
 		nlocal_readers = nbest_readers;
 		nbest_readers = 0;	
@@ -660,10 +660,10 @@ int get_best_reader(ECM_REQUEST *er)
 	
 	struct s_reader *best_rdr = NULL;
 	struct s_reader *best_rdri = NULL;
-	int best_time = 0;
+	int32_t best_time = 0;
 	LL_NODE *fallback = NULL;
 
-	int n=0;
+	int32_t n=0;
 	while (1) {
 		struct stat_value *best = NULL;
 
@@ -750,7 +750,7 @@ int get_best_reader(ECM_REQUEST *er)
 	ll_iter_release(it);
 
 	//algo for reopen other reader only if responsetime>retrylimit:
-	int reopen = !best_rdr || (best_time && (best_time > retrylimit));
+	int32_t reopen = !best_rdr || (best_time && (best_time > retrylimit));
 	if (reopen) {
 #ifdef WITH_DEBUG 
 		if (best_rdr)
@@ -785,8 +785,8 @@ int get_best_reader(ECM_REQUEST *er)
 #ifdef WITH_DEBUG 
 	if (cs_dblevel & 0x01) {
 		//loadbalancer debug output:
-		int size = 3;
-		int nr = 0;
+		int32_t size = 3;
+		int32_t nr = 0;
 		it = ll_iter_create(result);
 		while ((rdr=ll_iter_next(it))) {
 			if (nr > 5) { 
@@ -857,7 +857,7 @@ void clear_all_stat()
 void housekeeping_stat_thread()
 {	
 	time_t cleanup_time = time(NULL) - (cfg.lb_stat_cleanup*60*60);
-	int cleaned = 0;
+	int32_t cleaned = 0;
 	struct s_reader *rdr;
     LL_ITER *itr = ll_iter_create(configured_readers);
     while ((rdr = ll_iter_next(itr))) {
@@ -879,7 +879,7 @@ void housekeeping_stat_thread()
 	cs_debug_mask(D_TRACE, "loadbalancer cleanup: removed %d entries", cleaned);
 }
 
-void housekeeping_stat(int force)
+void housekeeping_stat(int32_t force)
 {
 	time_t now = time(NULL);
 	if (!force && now/60/60 == last_housekeeping/60/60) //only clean once in an hour
