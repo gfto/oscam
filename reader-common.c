@@ -145,9 +145,11 @@ static void do_emm_from_file(struct s_reader * reader)
       eptmp = malloc (sizeof(EMM_PACKET));
       result = fread (eptmp, sizeof(EMM_PACKET), 1, fp);      
       fclose (fp);
-
-      uchar old_b_nano = reader->b_nano[eptmp->emm[0]]; //save old b_nano value
-      reader->b_nano[eptmp->emm[0]] &= 0xfc; //clear lsb and lsb+1, so no blocking, and no saving for this nano      
+   
+			//save old b_nano value
+			//clear lsb and lsb+1, so no blocking, and no saving for this nano  
+			uint16_t save_s_nano = reader->s_nano;
+			uint16_t save_b_nano = reader->b_nano;
 
 			int rc = reader_emm(reader, eptmp);
 			if (rc == OK)
@@ -155,7 +157,10 @@ static void do_emm_from_file(struct s_reader * reader)
 			else
 				cs_log ("ERROR: EMM read from file %s NOT processed correctly! (rc=%d)", token, rc);
 
-			reader->b_nano[eptmp->emm[0]] = old_b_nano; //restore old block/save settings
+			//restore old block/save settings
+			reader->s_nano = save_s_nano; 
+			reader->b_nano = save_b_nano;
+
 			free (reader->emmfile);
 			reader->emmfile = NULL; //clear emmfile, so no reading anymore
 
@@ -370,10 +375,9 @@ int reader_emm(struct s_reader * reader, EMM_PACKET *ep)
   int rc=-1;
 
   rc=reader_checkhealth(reader);
-  if (rc)
-  {
-    if (reader->b_nano[ep->emm[0]] & 0x01) //should this nano be blcoked?
-      return 3;
+  if (rc) {
+	if ((1<<(ep->emm[0] % 0x80)) & reader->b_nano)
+		return 3;
 
 	if (reader->csystem.active && reader->csystem.do_emm) 
 		rc=reader->csystem.do_emm(reader, ep);

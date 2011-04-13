@@ -367,10 +367,10 @@ void dvbapi_start_emm_filter(int demux_index) {
 		int count=dmx_filter[startpos+1];
 		int l=-1;
 
-		if ( (filter[0] && ((demux[demux_index].rdr->b_nano[filter[0]] & 0x01) && !(demux[demux_index].rdr->b_nano[filter[0]] & 0x02))) )
+		if ( (filter[0] && (((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->b_nano) && !((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->s_nano))) )
 			continue;
 
-		if ((demux[demux_index].rdr->blockemm & emmtype) && !(demux[demux_index].rdr->b_nano[filter[0]] & 0x02))
+		if ((demux[demux_index].rdr->blockemm & emmtype) && !((1<<(filter[0] % 0x80)) & demux[demux_index].rdr->s_nano))
 			continue;
 
 		l = dvbapi_find_emmpid(demux_index, emmtype);

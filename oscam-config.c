@@ -3702,21 +3702,31 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	}
 
 	if (!strcmp(token, "blocknano")) {
-		//reset
-		for (i = 0 ; i < 256; i++)
-			rdr->b_nano[i] &= ~0x01;
+		rdr->b_nano = 0;
 		if (strlen(value) > 0) {
-			//wildcard is used
 			if (!strcmp(value,"all")) {
-				for (i = 0 ; i < 256; i++) {
-					rdr->b_nano[i] |= 0x01; //set all lsb's to block all nanos
+				rdr->b_nano = 0xFFFF;
+			} else {
+				for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
+					i = (byte_atob(ptr) % 0x80);
+					if (i >= 0 && i <= 16)
+						rdr->b_nano |= (1 << i);
 				}
 			}
-			else {
+		}
+		return;
+	}
+
+	if (!strcmp(token, "savenano")) {
+		rdr->s_nano = 0;
+		if (strlen(value) > 0) {
+			if (!strcmp(value,"all")) {
+				rdr->s_nano = 0xFFFF;
+			} else {
 				for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
-					if ((i = byte_atob(ptr)) >= 0) {
-						rdr->b_nano[i] |= 0x01; //lsb is set when to block nano
-					}
+					i = (byte_atob(ptr) % 0x80);
+					if (i >= 0 && i <= 16)
+						rdr->s_nano |= (1 << i);
 				}
 			}
 		}
@@ -3769,28 +3779,6 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 			else if (rdr->lb_weight <= 0) rdr->lb_weight = 100;
 			return;
 		}
-	}
-
-	if (!strcmp(token, "savenano")) {
-		//reset
-		for (i = 0 ; i < 256; i++)
-			rdr->b_nano[i] &= ~0x02;
-		if (strlen(value) > 0) {
-			//wildcard is used
-			if (!strcmp(value,"all")) {
-				for (i = 0 ; i < 256; i++) {
-					rdr->b_nano[i] |= 0x02; //set all lsb+1 to save all nanos to file
-				}
-			}
-			else {
-				for (ptr = strtok(value, ","); ptr; ptr = strtok(NULL, ",")) {
-					if ((i = byte_atob(ptr)) >= 0) {
-						rdr->b_nano[i] |= 0x02; //lsb+1 is set when to save nano to file
-					}
-				}
-			}
-		}
-		return;
 	}
 
 	if (!strcmp(token, "cccversion")) {
@@ -4472,30 +4460,31 @@ char *mk_t_aureader(struct s_auth *account){
  * flag 0x01 for blocknano or 0x02 for savenano
  */
 char *mk_t_nano(struct s_reader *rdr, uchar flag){
+	int i, pos = 0, needed = 0;
+	uint16_t nano = 0;
 
-	int i, needed = 0, pos = 0;
-	char *dot = "";
+	if (flag==0x01)
+		nano=rdr->b_nano;
+	else
+		nano=rdr->s_nano;
 
-	for(i = 0; i < 256; ++i)
-		if((rdr->b_nano[i] & flag))
+	for (i=0; i<16; i++)
+		if ((1 << i) & nano)
 			needed++;
 
 	char *value;
-	if (needed == 256) {
+	if (nano == 0xFFFF) {
 		if(!cs_malloc(&value, (3 * sizeof(char)) + 1, -1)) return "";
 		snprintf(value, 4, "all");
-		return value;
 	} else {
 		if(needed == 0 || !cs_malloc(&value, (needed * 3 * sizeof(char)) + 1, -1)) return "";
 		value[0] = '\0';
-		for(i = 0; i < 256; ++i) {
-			if(rdr->b_nano[i] & flag) {
-				pos += snprintf(value + pos, (needed*3)+1-pos, "%s%02x", dot, i);
-				dot=",";
-			}
+		for (i=0; i<16; i++) {
+			if ((1 << i) & nano) 
+				pos += snprintf(value + pos, (needed*3)+1-pos, "%s%02x", pos ? "," : "", (i+0x80));
 		}
-		return value;
 	}
+	return value;
 }
 
 /*

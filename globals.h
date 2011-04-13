@@ -708,9 +708,6 @@ struct s_client
 
   uchar	*req;
 
-  //camd33
-  uchar	camdbug[256];
-
   int       ncd_proto;
 
   //camd35
@@ -830,7 +827,8 @@ struct s_reader  //contains device info, reader info and card info
   uchar     sa[CS_MAXPROV][4];    // viaccess & seca
   ushort    acs;    // irdeto
   ushort    caid;
-  uchar     b_nano[256];
+  uint16_t  b_nano;
+  uint16_t  s_nano;
   int       blockemm;
   char      * emmfile;
   char      pincode[5];

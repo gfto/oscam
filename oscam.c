@@ -2677,7 +2677,7 @@ void do_emm(struct s_client * client, EMM_PACKET *ep)
 		cs_ddump_mask(D_EMM, ep->hexserial, 8, "emm UA/SA:");
 
 		client->last=time((time_t)0);
-		if (aureader->b_nano[ep->emm[0]] & 0x02) { //should this nano be saved?
+		if ((1<<(ep->emm[0] % 0x80)) & aureader->s_nano) { //should this nano be saved?
 			char token[256];
 			FILE *fp;
 			time_t rawtime;

@@ -56,7 +56,7 @@ static void camd33_request_emm()
   }
 }
 
-static void camd33_auth_client()
+static void camd33_auth_client(uchar *camdbug)
 {
   int i, rc;
   uchar *usr=NULL, *pwd=NULL;
@@ -74,7 +74,7 @@ static void camd33_auth_client()
   mbuf[0]=0;
   camd33_send(mbuf, 1);	// send login-request
 
-  for (rc=0, cur_client()->camdbug[0]=0, mbuf[0]=1; (rc<2) && (mbuf[0]); rc++)
+  for (rc=0, camdbug[0]=0, mbuf[0]=1; (rc<2) && (mbuf[0]); rc++)
   {
     i=process_input(mbuf, sizeof(mbuf), 1);
     if ((i>0) && (!mbuf[0]))
@@ -83,7 +83,7 @@ static void camd33_auth_client()
       pwd=usr+strlen((char *)usr)+2;
     }
     else
-      memcpy(cur_client()->camdbug+1, mbuf, cur_client()->camdbug[0]=i);
+      memcpy(camdbug+1, mbuf, camdbug[0]=i);
   }
   for (rc=-1, account=cfg.account; (usr) && (account) && (rc<0); account=account->next)
     if ((!strcmp((char *)usr, account->usr)) && (!strcmp((char *)pwd, account->pwd)))
@@ -97,15 +97,15 @@ static void camd33_auth_client()
   }
 }
 
-static int get_request(uchar *buf, int n)
+static int get_request(uchar *buf, int n, uchar *camdbug)
 {
   int rc, w;
   struct s_client *cur_cl = cur_client();
 
-  if (cur_cl->camdbug[0])
+  if (camdbug[0])
   {
-    memcpy(buf, cur_cl->camdbug+1, rc=cur_cl->camdbug[0]);
-    cur_cl->camdbug[0]=0;
+    memcpy(buf, camdbug+1, rc=camdbug[0]);
+    camdbug[0]=0;
     return(rc);
   }
   for (rc=w=0; !rc;)
@@ -186,6 +186,7 @@ static void * camd33_server(void* cli)
 {
   int n;
   uchar mbuf[1024];
+  uchar camdbug[256];
 
   struct s_client * client = (struct s_client *) cli;
   client->thread=pthread_self();
@@ -199,9 +200,9 @@ static void * camd33_server(void* cli)
   }
   memset(client->req, 0, CS_MAXPENDING*REQ_SIZE);
 
-  camd33_auth_client();
+  camd33_auth_client(camdbug);
 
-  while ((n=get_request(mbuf, sizeof(mbuf)))>0)
+  while ((n=get_request(mbuf, sizeof(mbuf), camdbug))>0)
   {
     switch(mbuf[0])
     {
