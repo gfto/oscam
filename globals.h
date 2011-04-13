@@ -1155,6 +1155,7 @@ struct s_config
 	ulong		srtimeout;  // SerialReaderTimeount in millisec
 	int		max_log_size;
 	int		waitforcards;
+	int		waitforcards_extra_delay;
 	int		preferlocalcards;
 	int		saveinithistory;
 	int     reader_restart_seconds; //schlocke: reader restart auf x seconds, disable = 0

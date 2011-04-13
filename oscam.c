@@ -3027,6 +3027,8 @@ void cs_waitforcardinit()
 				cs_sleepms(300); // wait a little bit
 			//alarm(cfg.cmaxidle + cfg.ctimeout / 1000 + 1);
 		} while (!card_init_done);
+		if (cfg.waitforcards_extra_delay>0)
+			cs_sleepms(cfg.waitforcards_extra_delay);
 		cs_log("init for all local cards done");
 	}
 }

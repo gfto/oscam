@@ -609,9 +609,8 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
     //Minimize all, transmit just CAID, merge providers:
     if (cfg.cc_minimize_cards == MINIMIZE_CAID && !cfg.cc_forward_origin_card) {
         while ((card2 = ll_iter_next(it)))
-            if (card2->caid == card->caid && card2->card_type == card->card_type &&
-                    !memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial))) {
-
+        	//compare caid, hexserial, cardtype and sidtab (if any):
+            if (same_card2(card, card2)) {
                 //Merge cards only if resulting providercount is smaller than CS_MAXPROV
                 int nsame, ndiff, nnew;
 
@@ -639,9 +638,8 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
     //Removed duplicate cards, keeping card with lower hop:
     else if (cfg.cc_minimize_cards == MINIMIZE_HOPS && !cfg.cc_forward_origin_card) {
         while ((card2 = ll_iter_next(it))) {
-            if (card2->caid == card->caid && card2->card_type == card->card_type &&
-                    !memcmp(card->hexserial, card2->hexserial, sizeof(card->hexserial)) &&
-                    equal_providers(card, card2)) {
+        	//compare caid, hexserial, cardtype, sidtab (if any), providers:
+            if (same_card2(card, card2) && equal_providers(card, card2)) {
                 break;
             }
         }
@@ -667,6 +665,7 @@ int add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
     //like cccam:
     else { //just remove duplicate cards (same ids)
         while ((card2 = ll_iter_next(it))) {
+        	//compare remote_id, first_node, caid, hexserial, cardtype, sidtab (if any), providers:
             if (same_card(card, card2))
                 break;
         }

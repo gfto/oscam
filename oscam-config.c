@@ -485,6 +485,11 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+	if( !strcmp(token, "waitforcards_extra_delay")) {
+		cfg.waitforcards_extra_delay = strToIntVal(value, 0);
+		return;
+	}
+
 	if( !strcmp(token, "preferlocalcards")) {
 		cfg.preferlocalcards = strToIntVal(value, 0);
 		return;
@@ -1358,6 +1363,7 @@ int init_config()
 	cfg.cwlogdir = NULL;
 	cfg.reader_restart_seconds = 5;
 	cfg.waitforcards = 1;
+	cfg.waitforcards_extra_delay = 500;
 #ifdef QBOXHD_LED
     cfg.disableqboxhdled = 1;
 #endif
@@ -1798,6 +1804,8 @@ int write_config()
 		fprintf_conf(f, CONFVARWIDTH, "maxlogsize", "%d\n", cfg.max_log_size);
 	if (!cfg.waitforcards || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "waitforcards", "%d\n", cfg.waitforcards);
+	if (cfg.waitforcards_extra_delay != 500 || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "waitforcards_extra_delay", "%d\n", cfg.waitforcards_extra_delay);
 	if (cfg.preferlocalcards || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "preferlocalcards", "%d\n", cfg.preferlocalcards);
 	if (cfg.saveinithistory || cfg.http_full_cfg)

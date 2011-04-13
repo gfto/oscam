@@ -219,6 +219,7 @@ void cc_UA_cccam2oscam(uint8 *in, uint8 *out, uint16 caid);
 int cc_cmd_send(struct s_client *cl, uint8 *buf, int len, cc_msg_type_t cmd);
 int sid_eq(struct cc_srvid *srvid1, struct cc_srvid *srvid2);
 int same_card(struct cc_card *card1, struct cc_card *card2);
+int same_card2(struct cc_card *card1, struct cc_card *card2);
 void cc_UA_oscam2cccam(uint8 *in, uint8 *out, uint16 caid);
 void cc_SA_oscam2cccam(uint8 *in, uint8 *out);
 void cc_free_cardlist(LLIST *card_list, int destroy_list);

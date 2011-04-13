@@ -989,10 +989,16 @@ int same_first_node(struct cc_card *card1, struct cc_card *card2) {
 	return !memcmp(node1, node2, 8); //same?
 }
 
-int same_card(struct cc_card *card1, struct cc_card *card2) {
+int same_card2(struct cc_card *card1, struct cc_card *card2) {
 	return (card1->caid == card2->caid && 
-		card1->remote_id == card2->remote_id && 
 		card1->card_type == card2->card_type &&
+		card1->sidtab == card2->sidtab &&
+		!memcmp(card1->hexserial, card2->hexserial, sizeof(card1->hexserial)));
+}
+
+int same_card(struct cc_card *card1, struct cc_card *card2) {
+	return (card1->remote_id == card2->remote_id && 
+		same_card2(card1, card2) &&
 		same_first_node(card1, card2));
 }
 

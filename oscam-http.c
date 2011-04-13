@@ -143,6 +143,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 
 
 	if (cfg.waitforcards == 1)	tpl_addVar(vars, TPLADD, "WAITFORCARDSCHECKED", "selected");
+	tpl_printf(vars, TPLADD, "EXTRADELAY", "%d", cfg.waitforcards_extra_delay);
 	if (cfg.preferlocalcards == 1)	tpl_addVar(vars, TPLADD, "PREFERLOCALCARDSCHECKED", "selected");
 
 	if (cfg.c35_suppresscmd08)
