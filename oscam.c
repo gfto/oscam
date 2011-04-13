@@ -1699,7 +1699,7 @@ void logCWtoFile(ECM_REQUEST *er)
 	*/
 	srvname[0] = 0;
 	for (this=cfg.srvid; this; this = this->next) {
-		if (this->srvid == er->srvid) {
+		if (this->srvid == er->srvid && this->name) {
 			cs_strncpy(srvname, this->name, sizeof(srvname));
 			srvname[sizeof(srvname)-1] = 0;
 			for (i = 0; srvname[i]; i++)

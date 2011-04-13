@@ -821,7 +821,7 @@ char *get_servicename(int srvid, int caid){
 	for (name[0] = 0; this && (!name[0]); this = this->next)
 		if (this->srvid == srvid)
 			for (i=0; i<this->ncaid; i++)
-				if (this->caid[i] == caid)
+				if (this->caid[i] == caid && this->name)
 					cs_strncpy(name, this->name, 32);
 
 	if (!name[0]) snprintf(name, sizeof(name), "%04X:%04X unknown", caid, srvid);

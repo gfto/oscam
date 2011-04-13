@@ -3026,25 +3026,43 @@ int init_srvid()
 			new_cfg_srvid = ptr;
 
 		srvid = ptr;
-		memset(srvid, 0, sizeof(struct s_srvid));
 
-		int i;
-		char *ptr1;
-		for (i = 0, ptr1 = strtok(payload, "|"); ptr1; ptr1 = strtok(NULL, "|"), i++){
-			switch(i){
-			case 0:
-				cs_strncpy(srvid->prov, trim(ptr1), sizeof(srvid->prov));
-				break;
-			case 1:
-				cs_strncpy(srvid->name, trim(ptr1), sizeof(srvid->name));
-				break;
-			case 2:
-				cs_strncpy(srvid->type, trim(ptr1), sizeof(srvid->type));
-				break;
-			case 3:
-				cs_strncpy(srvid->desc, trim(ptr1), sizeof(srvid->desc));
-				break;
+		int i, len=0;
+		char tmptxt[128];
+		struct s_srvid *srvptr;
+
+		int offset[4] = { -1, -1, -1, -1 };
+		char *ptr1, *searchptr[4] = { NULL, NULL, NULL, NULL };
+		char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
+		
+		for (i = 0, ptr1 = strtok(payload, "|"); ptr1 && (i < 4) ; ptr1 = strtok(NULL, "|"), i++){
+			for (srvptr = new_cfg_srvid; srvptr && !searchptr[i]; srvptr=srvptr->next) {
+				char *srv_ptrs[4] = { srvptr->prov, srvptr->name, srvptr->type, srvptr->desc };
+				if (srv_ptrs[i] && !strncmp(srv_ptrs[i], ptr1, strlen(ptr1)))
+					searchptr[i]=srv_ptrs[i];
 			}
+			if (searchptr[i]) continue;
+
+			offset[i]=len;
+			cs_strncpy(tmptxt+len, trim(ptr1), sizeof(tmptxt)-len);
+			len+=strlen(ptr1)+1;
+		}
+
+		char *tmpptr;
+		if (!cs_malloc(&tmpptr, len, 0))
+			continue;
+
+		srvid->data=tmpptr;
+
+		memcpy(tmpptr, tmptxt, len);
+
+		for (i=0;i<4;i++) {
+			if (searchptr[i]) {
+				*ptrs[i] = searchptr[i];
+				continue;
+			}
+			if (offset[i]>-1)
+				*ptrs[i] = tmpptr + offset[i];
 		}
 
 		char *srvidasc = strchr(token, ':');
@@ -3074,6 +3092,7 @@ int init_srvid()
 	struct s_srvid *ptr;
 	while (srvid) { //cleanup old data:
 		ptr = srvid->next;
+		free(srvid->data);
 		free(srvid);
 		srvid = ptr;
 	}

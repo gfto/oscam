@@ -1025,10 +1025,11 @@ struct s_srvid
   int     srvid;
   int     ncaid;
   int     caid[10];
-  char    prov[33];
-  char    name[33];
-  char    type[33];
-  char    desc[33];
+  char    *data;
+  char    *prov;
+  char    *name;
+  char    *type;
+  char    *desc;
   struct  s_srvid *next;
 };
 

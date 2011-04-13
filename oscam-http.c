@@ -2317,10 +2317,10 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					}
 
 					if (found == 1) {
-						tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER","%s: ", xml_encode(vars, srvid->prov));
-						tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", xml_encode(vars, srvid->name));
-						tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", xml_encode(vars, srvid->type));
-						tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", xml_encode(vars, srvid->desc));
+						tpl_printf(vars, TPLADD, "CLIENTSRVPROVIDER","%s: ", srvid->prov ? xml_encode(vars, srvid->prov) : "");
+						tpl_addVar(vars, TPLADD, "CLIENTSRVNAME", srvid->name ? xml_encode(vars, srvid->name) : "");
+						tpl_addVar(vars, TPLADD, "CLIENTSRVTYPE", srvid->type ? xml_encode(vars, srvid->type) : "");
+						tpl_addVar(vars, TPLADD, "CLIENTSRVDESCRIPTION", srvid->desc ? xml_encode(vars, srvid->desc) : "");
 					} else {
 						tpl_addVar(vars, TPLADD, "CLIENTSRVPROVIDER","");
 						tpl_addVar(vars, TPLADD, "CLIENTSRVNAME","");
