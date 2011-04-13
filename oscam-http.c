@@ -1830,6 +1830,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 	int32_t show_global_list = sharelist_ && sharelist_[0]=='1';
 
 	int offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
+	if (!offset) offset = 1; //todo: Schlocke offset == 0 doesn't start was this planned?
 	
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || rdr->typ == R_CCCAM) {
