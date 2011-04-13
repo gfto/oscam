@@ -1114,9 +1114,9 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 
 	if(!rdr->device_endpoint) {
 		tpl_addVar(vars, TPLADD, "DEVICEOUTEP0", "selected");
-	} else if (rdr->device_endpoint32_t == 0x82) {
+	} else if (rdr->device_endpoint == 0x82) {
 		tpl_addVar(vars, TPLADD, "DEVICEOUTEP1", "selected");
-	} else if (rdr->device_endpoint32_t == 0x81) {
+	} else if (rdr->device_endpoint == 0x81) {
 		tpl_addVar(vars, TPLADD, "DEVICEOUTEP2", "selected");
 	}
 #else

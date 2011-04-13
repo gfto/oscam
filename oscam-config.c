@@ -2312,7 +2312,7 @@ int32_t write_server()
 
 #ifdef LIBUSB
 			if (!(rdr->typ & R_IS_NETWORK))
-				if (rdr->device_endpoint32_t || cfg.http_full_cfg)
+				if (rdr->device_endpoint || cfg.http_full_cfg)
 					fprintf_conf(f, CONFVARWIDTH, "device_out_endpoint", "0x%2X\n", rdr->device_endpoint);
 #endif
 
@@ -3213,9 +3213,9 @@ void chk_reader(char *token, char *value, struct s_reader *rdr)
 	if (!strcmp(token, "device_out_endpoint")) {
 		if (strlen(value) > 0) {
 			sscanf(value, "0x%2X", &i);
-			rdr->device_endpoint32_t = i;
+			rdr->device_endpoint = i;
 		} else {
-			rdr->device_endpoint32_t = 0;
+			rdr->device_endpoint = 0;
 		}
 		return;
 	}
