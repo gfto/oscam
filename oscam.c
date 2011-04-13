@@ -690,46 +690,48 @@ void cs_reinit_clients(struct s_auth *new_accounts)
 
 	struct s_client *cl;
 	for (cl=first_client->next; cl ; cl=cl->next)
-		if( cl->typ == 'c' && cl->account ) {
+		if( (cl->typ == 'c' || cl->typ == 'm') && cl->account ) {
 			for (account = new_accounts; (account) ; account = account->next)
 				if (!strcmp(cl->account->usr, account->usr))
 					break;
 
-			if (account && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16)) {
-                                cl->account = account;
-				cl->grp		= account->grp;
-				cl->aureader_list		= account->aureader_list;
-				cl->autoau	= account->autoau;
-				cl->expirationdate = account->expirationdate;
-				cl->allowedtimeframe[0] = account->allowedtimeframe[0];
-				cl->allowedtimeframe[1] = account->allowedtimeframe[1];
-				cl->ncd_keepalive = account->ncd_keepalive;
-				cl->c35_suppresscmd08 = account->c35_suppresscmd08;
-				cl->tosleep	= (60*account->tosleep);
-				cl->c35_sleepsend = account->c35_sleepsend;
-				cl->monlvl	= account->monlvl;
-				cl->disabled	= account->disabled;
-				cl->fchid		= account->fchid;  // CHID filters
-				cl->cltab		= account->cltab;  // Class
-				// newcamd module dosent like ident reloading
-				if(!cl->ncd_server)
-					cl->ftab	= account->ftab;   // Ident
-
-				cl->sidtabok	= account->sidtabok;   // services
-				cl->sidtabno	= account->sidtabno;   // services
-				cl->failban	= account->failban;
-
-				memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
-				memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
-
-				int i;
-				for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++)
-					cl->cwlastresptimes[i] = 0;
-				cl->cwlastresptimes_last = 0;
+			if (!account->disabled && (account && cl->pcrc == crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), cur_client()->dump), 16))) {
+				cl->account = account;
+				if(cl->typ == 'c'){
+					cl->grp	= account->grp;
+					cl->aureader_list	= account->aureader_list;
+					cl->autoau = account->autoau;
+					cl->expirationdate = account->expirationdate;
+					cl->allowedtimeframe[0] = account->allowedtimeframe[0];
+					cl->allowedtimeframe[1] = account->allowedtimeframe[1];
+					cl->ncd_keepalive = account->ncd_keepalive;
+					cl->c35_suppresscmd08 = account->c35_suppresscmd08;
+					cl->tosleep	= (60*account->tosleep);
+					cl->c35_sleepsend = account->c35_sleepsend;
+					cl->monlvl = account->monlvl;
+					cl->disabled	= account->disabled;
+					cl->fchid	= account->fchid;  // CHID filters
+					cl->cltab	= account->cltab;  // Class
+					// newcamd module doesn't like ident reloading
+					if(!cl->ncd_server)
+						cl->ftab = account->ftab;   // Ident
+	
+					cl->sidtabok = account->sidtabok;   // services
+					cl->sidtabno = account->sidtabno;   // services
+					cl->failban = account->failban;
+	
+					memcpy(&cl->ctab, &account->ctab, sizeof(cl->ctab));
+					memcpy(&cl->ttab, &account->ttab, sizeof(cl->ttab));
+	
+					int i;
+					for(i = 0; i < CS_ECM_RINGBUFFER_MAX; i++)
+						cl->cwlastresptimes[i] = 0;
+					cl->cwlastresptimes_last = 0;
 
 #ifdef CS_ANTICASC
-				cl->ac_limit	= (account->ac_users * 100 + 80) * cfg.ac_stime;
+					cl->ac_limit	= (account->ac_users * 100 + 80) * cfg.ac_stime;
 #endif
+				}
 			} else {
 				if (ph[cl->ctyp].type & MOD_CONN_NET) {
 					cs_debug_mask(D_TRACE, "client '%s', thread=%8X not found in db (or password changed)", cl->account->usr, cl->thread);
@@ -1342,6 +1344,9 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 	char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason" };
 	memset(&client->grp, 0xff, sizeof(uint64));
 	//client->grp=0xffffffffffffff;
+	if (account && account->disabled){
+		account = NULL;
+	}
 	client->account=first_client->account;
 	switch((long)account)
 	{
@@ -1368,6 +1373,8 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 		if (!rc)
 		{
 			client->dup=0;
+			if (client->typ=='c' || client->typ=='m')
+				client->pcrc = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), client->dump), 16);
 			if (client->typ=='c')
 			{
 				client->last_caid = 0xFFFE;
@@ -1392,8 +1399,7 @@ int cs_auth_client(struct s_client * client, struct s_auth *account, const char 
 				client->cltab = account->cltab;  // CLASS filter
 				client->fchid = account->fchid;  // CHID filter
 				client->sidtabok= account->sidtabok;   // services
-				client->sidtabno= account->sidtabno;   // services
-				client->pcrc  = crc32(0L, MD5((uchar *)account->pwd, strlen(account->pwd), client->dump), 16);
+				client->sidtabno= account->sidtabno;   // services	
 				memcpy(&client->ttab, &account->ttab, sizeof(client->ttab));
 #ifdef CS_ANTICASC
 				ac_init_client(client, account);
