@@ -1829,7 +1829,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 	char *sharelist_ = getParam(params, "globallist");
 	int show_global_list = sharelist_ && sharelist_[0]=='1';
 
-	int offset = 0; //todo alno: offset-startparameter 
+	int offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
 	
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || rdr->typ == R_CCCAM) {
@@ -2015,7 +2015,23 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					cardcount++;
 				}
 				
-				int has_more = (card != NULL); //todo alno: next/prev page
+				int has_more = (card != NULL); //next/prev page
+
+				// set previous Link if needed
+				if (offset > ENTITLEMENT_PAGE_SIZE) {
+					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&label=%s\"> << PREVIOUS < </A>",
+							offset - ENTITLEMENT_PAGE_SIZE,
+							getParam(params, "globallist"),
+							getParam(params, "label"));
+				}
+
+				// set next link if needed
+				if (has_more) {
+					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&label=%s\"> > NEXT >> </A>",
+							offset + ENTITLEMENT_PAGE_SIZE,
+							getParam(params, "globallist"),
+							getParam(params, "label"));
+				}
 				//todo alno: offset=ENTITLEMENT_PAGE_SIZE on the first page, 2*ENTITLEMENT_PAGE_SIZE on the second and so on
 				//todo alno: if has_mode: next_btn(offset+ENTITLEMENT_PAGE_SIZE);
 				//todo alno: if offset > ENTITLEMENT_PAGE_SIZE: prev_btn(offset-ENTITLEMENT_PAGE_SIZE);

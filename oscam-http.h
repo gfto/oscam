@@ -897,7 +897,8 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 		<TR><TH>Host</TH><TH>Caid</TH><TH>System</TH><TH>share id</TH><TH>remote id</TH><TH>Uphops</TH><TH>Reshare</TH><TH>Providers</TH><TH>Nodes</TH><TH>Good sids</TH><TH>Bad sids</TH></TR>\
 ##CCCAMSTATSENTRY##\
 	</TABLE>\n\
-	<BR><DIV CLASS=\"cccamentitlementtotals\">##TOTALS##</DIV>"
+	<BR><DIV CLASS=\"cccamentitlementtotals\">##TOTALS##</DIV>\
+	<BR><DIV CLASS=\"cccamentitlementcontrols\">##CONTROLS##</DIV>"
 
 #define TPLENTITLEMENTCCCAMENTRYBIT "\
 		<TR><TD>##HOST##</TD><TD>##CAID##</TD><TD>##SYSTEM##</TD><TD>##SHAREID##</TD><TD>##REMOTEID##</TD><TD>##UPHOPS##</TD><TD>##MAXDOWN##</TD><TD>##PROVIDERS##</TD><TD>##NODES##</TD><TD>##SERVICESGOOD##</TD><TD>##SERVICESBAD##</TD></TR>"
