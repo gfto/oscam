@@ -130,7 +130,9 @@ READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvi
 	
 	LL_ITER *it = ll_iter_create(rdr->lb_stat);
 	READER_STAT *stat = NULL;
+	i = 0;
 	while ((stat = ll_iter_next(it))) {
+		i++;
 		if (stat->caid==caid && stat->prid==prid && stat->srvid==srvid) {
 			if (stat->ecmlen == ecmlen)
 				break;
@@ -140,7 +142,15 @@ READER_STAT *get_stat(struct s_reader *rdr, ushort caid, ulong prid, ushort srvi
 			}
 		}
 	}
+	
+	//Move stat to list start for faster access:
+	if (i > 10 && stat)
+	{
+		if (ll_iter_remove(it)) 
+			ll_prepend(rdr->lb_stat, stat);
+	}
 	ll_iter_release(it);
+	
 	return stat;
 }
 
