@@ -182,7 +182,7 @@ void *ll_iter_move(LL_ITER *it, int offset)
     if (it && it->l) {
     	pthread_mutex_lock(&it->l->lock);
     	int i;
-    	void *res;
+    	void *res = NULL;
     	for (i=0; i<offset; i++) {
     		res = ll_iter_next_nolock(it);
     		if (!res) break;
