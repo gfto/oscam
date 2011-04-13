@@ -691,7 +691,7 @@ void dvbapi_read_priority() {
 #endif
 		type = tolower(type);
 
-		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's'))
+		if (ret<1 || (type != 'p' && type != 'i' && type != 'm' && type != 'd' && type != 's' && type != 'l'))
 			continue;
 
 		struct s_dvbapi_priority *entry = malloc(sizeof(struct s_dvbapi_priority));
@@ -735,6 +735,7 @@ void dvbapi_read_priority() {
 		uint delay=0, force=0, mapcaid=0, mapprovid=0;
 		switch (type) {
 			case 'd':
+			case 'l':
 				sscanf(str1+64, "%4d", &delay);
 				entry->delay=delay;
 				break;
@@ -1425,6 +1426,17 @@ void dvbapi_process_input(int demux_id, int filter_num, uchar *buffer, int len) 
 
 	if (pausecam)
 		return;
+
+	struct s_dvbapi_priority *lentry = dvbapi_check_prio_match(demux_id, demux[demux_id].demux_fd[filter_num].pidindex, 'l');
+	if (lentry) {
+		if (lentry->delay == len && lentry->force < 6) {
+			cs_debug_mask(D_DVBAPI, "skip ecm with len %d (%04X)", len, len);
+			lentry->force++;
+			return;
+		}
+		if (lentry->delay != len)
+			lentry->force=0;
+	}
 
 	if (demux[demux_id].demux_fd[filter_num].type==TYPE_ECM) {
 		if (len != (((buffer[1] & 0xf) << 8) | buffer[2]) + 3) //invaild CAT length
