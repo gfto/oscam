@@ -1345,7 +1345,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	memset(&client->grp, 0xff, sizeof(uint64_t));
 	//client->grp=0xffffffffffffff;
 	if (account && account->disabled){
-		account = NULL;
+		account = (struct s_auth *)(0);
 	}
 	client->account=first_client->account;
 	switch((intptr_t)account)
