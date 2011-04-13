@@ -1814,6 +1814,8 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 
 }
 
+#define ENTITLEMENT_PAGE_SIZE 500
+
 char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params, struct in_addr in, int apicall) {
 
 	//just to stop the guys open tedious tickets for warnings related to unused variables xD
@@ -1826,6 +1828,8 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 	char *sharelist_ = getParam(params, "globallist");
 	int show_global_list = sharelist_ && sharelist_[0]=='1';
 
+	int offset = 0; //todo alno: offset-startparameter 
+	
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || rdr->typ == R_CCCAM) {
 
@@ -1888,8 +1892,14 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
                 }
 
                 it = ll_iter_create(cards);
-                while ((card = ll_iter_next(it))) {
-
+                int offset2 = offset;
+                int count = 0;
+                while ((card = ll_iter_move(it, offset2))) {
+                	offset2 = 1;
+                	if (count == ENTITLEMENT_PAGE_SIZE)
+                		break;
+                	count++;
+                	
 					if (!apicall) {
 						if (show_global_list)
 							rdr = card->origin_reader;
@@ -1906,7 +1916,6 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_Oscam:%s", cs_hexdump(0, serbuf, 8));
 						tpl_printf(vars, TPLAPPEND, "HOST", "<BR>\nUA_CCcam:%s", cs_hexdump(0, card->hexserial, 8));
 					}
-#ifdef WITH_DEBUG
    					if (!apicall) {
 								int n;
 								LL_ITER *its = ll_iter_create(card->goodsids);
@@ -1926,7 +1935,6 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 								}
 								ll_iter_release(its);
 					}
-#endif
 
 					struct s_cardsystem *cs = get_cardsystem_by_caid(card->caid);
 
@@ -2005,6 +2013,11 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 
 					cardcount++;
 				}
+				
+				int has_more = (card != NULL); //todo alno: next/prev page
+				//todo alno: offset=ENTITLEMENT_PAGE_SIZE on the first page, 2*ENTITLEMENT_PAGE_SIZE on the second and so on
+				//todo alno: if has_mode: next_btn(offset+ENTITLEMENT_PAGE_SIZE);
+				//todo alno: if offset > ENTITLEMENT_PAGE_SIZE: prev_btn(offset-ENTITLEMENT_PAGE_SIZE);
 
 				ll_iter_release(it);
 

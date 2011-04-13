@@ -44,6 +44,7 @@ void ll_iter_reset(LL_ITER *it);                // reset itrerator to first llno
 void ll_iter_insert(LL_ITER *it, void *obj);    // insert obj at iterator node
 void *ll_iter_remove(LL_ITER *it);              // remove llnode at iterator, returns ptr to the llnode obj removed
 void ll_iter_remove_data(LL_ITER *it);          // remove llnode and free llnode obj
+void *ll_iter_move(LL_ITER *it, int offset);
 
 int ll_count(LLIST *l);                 // return number of items in list
 void *ll_has_elements(LLIST *l);        // returns first obj if has one

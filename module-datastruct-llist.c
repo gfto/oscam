@@ -177,6 +177,22 @@ void *ll_iter_next(LL_ITER *it)
     return NULL;
 }
 
+void *ll_iter_move(LL_ITER *it, int offset)
+{
+    if (it && it->l) {
+    	pthread_mutex_lock(&it->l->lock);
+    	int i;
+    	void *res;
+    	for (i=0; i<offset; i++) {
+    		res = ll_iter_next_nolock(it);
+    		if (!res) break;
+		}
+		pthread_mutex_unlock(&it->l->lock);
+		return res;
+    }
+    return NULL;
+}
+
 void *ll_iter_peek(LL_ITER *it, int offset)
 {
 	if (it && it->l) {
