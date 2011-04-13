@@ -662,7 +662,10 @@ char *send_oscam_config_anticasc(struct templatevars *vars, struct uriparams *pa
 	tpl_printf(vars, TPLADD, "NUMUSERS", "%d", cfg.ac_users);
 	tpl_printf(vars, TPLADD, "SAMPLETIME", "%d", cfg.ac_stime);
 	tpl_printf(vars, TPLADD, "SAMPLES", "%d", cfg.ac_samples);
-	tpl_printf(vars, TPLADD, "PENALTY", "%d", cfg.ac_penalty);
+
+	tpl_printf(vars, TPLADD, "TMP", "PENALTY%d", cfg.ac_penalty);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
+
 	tpl_addVar(vars, TPLADD, "ACLOGFILE", cfg.ac_logfile);
 	tpl_printf(vars, TPLADD, "FAKEDELAY", "%d", cfg.ac_fakedelay);
 	tpl_printf(vars, TPLADD, "DENYSAMPLES", "%d", cfg.ac_denysamples);
@@ -1562,7 +1565,8 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 
 #ifdef CS_ANTICASC
 	tpl_printf(vars, TPLADD, "AC_USERS", "%d", account->ac_users);
-	tpl_printf(vars, TPLADD, "AC_PENALTY", "%d", account->ac_penalty);
+	tpl_printf(vars, TPLADD, "TMP", "PENALTY%d", account->ac_penalty);
+	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 #endif
 
 	tpl_printf(vars, TPLADD, "CCCMAXHOPS", "%d", account->cccmaxhops);

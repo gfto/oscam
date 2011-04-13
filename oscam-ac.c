@@ -149,34 +149,35 @@ static int ac_dw_weight(ECM_REQUEST *er)
 
 void ac_chk(struct s_client *cl, ECM_REQUEST *er, int level)
 {
-  if (!cl->ac_limit || !cfg.ac_enabled) return;
+	if (!cl->ac_limit || !cfg.ac_enabled) return;
 
-  struct s_acasc_shm *acasc = &cl->acasc;
+	struct s_acasc_shm *acasc = &cl->acasc;
 
-  if( level==1 ) 
-  {
-    if( er->rc==E_FAKE ) acasc->ac_count++;
-    if( er->rc>=E_NOTFOUND ) return; // not found
-    if( memcmp(ac_ecmd5, er->ecmd5, CS_ECMSTORESIZE) != 0 )
-    {
-      acasc->ac_count+=ac_dw_weight(er);
-      memcpy(ac_ecmd5, er->ecmd5, CS_ECMSTORESIZE);
-    }
-    return;
-  }
+	if( level == 1 ) {
+		if( er->rc == E_FAKE )
+			acasc->ac_count++;
 
-  if( acasc->ac_deny )
-    if( cl->account->ac_penalty )
-    {
-	  if (cl->account->ac_penalty == 3)
-      	cs_debug_mask(D_CLIENT, "fake delay %dms", cfg.ac_fakedelay);
-	  else 
-	  {
-      	cs_debug_mask(D_CLIENT, "send fake dw");
-      	er->rc=E_FAKE; // fake
-      	er->rcEx=0;
-	  }
-      cs_sleepms(cfg.ac_fakedelay);
-    }
+		if( er->rc >= E_NOTFOUND )
+			return; // not found
+
+		if( memcmp(ac_ecmd5, er->ecmd5, CS_ECMSTORESIZE) != 0 )	{
+			acasc->ac_count += ac_dw_weight(er);
+			memcpy(ac_ecmd5, er->ecmd5, CS_ECMSTORESIZE);
+		}
+		return;
+	}
+
+	if( acasc->ac_deny ) {
+		if( cl->account->ac_penalty ) {
+			if (cl->account->ac_penalty == 3) {
+				cs_debug_mask(D_CLIENT, "fake delay %dms", cfg.ac_fakedelay);
+			} else {
+				cs_debug_mask(D_CLIENT, "send fake dw");
+				er->rc = E_FAKE; // fake
+				er->rcEx = 0;
+			}
+			cs_sleepms(cfg.ac_fakedelay);
+		}
+	}
 }
 #endif

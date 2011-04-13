@@ -741,7 +741,15 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 #ifdef CS_ANTICASC
 # define TPLUSEREDITANTICASC "\
 			<TR class=\"usrcfg_anticasc\"><TD>##TPLHELPPREFIX##user#numusers##TPLHELPSUFFIX##Anticascading numusers:</A></TD><TD><input name=\"numusers\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_USERS##\"></TD></TR>\n\
-			<TR class=\"usrcfg_anticasc\"><TD>##TPLHELPPREFIX##user#penalty##TPLHELPSUFFIX##Anticascading penalty:</A></TD><TD><input name=\"penalty\" type=\"text\" size=\"3\" maxlength=\"3\" value=\"##AC_PENALTY##\"></TD></TR>\n"
+			<TR class=\"usrcfg_anticasc\"><TD>##TPLHELPPREFIX##user#penalty##TPLHELPSUFFIX##Anticascading penalty:</A></TD>\
+			<TD>\
+			<select name=\"penalty\">\n\
+					<option value=\"0\" ##PENALTY0##>0 - Only write to log</option>\n\
+					<option value=\"1\" ##PENALTY1##>1 - Fake DW</option>\n\
+					<option value=\"2\" ##PENALTY2##>2 - Ban</option>\n\
+					<option value=\"3\" ##PENALTY3##>3 - Fake DW delayed</option>\n\
+				</select>\n\
+			</TD></TR>\n"
 #endif
 
 #define TPLSIDTAB "\
@@ -1135,7 +1143,15 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TR><TD>##TPLHELPPREFIX##conf#numusers##TPLHELPSUFFIX##Numusers:</A></TD><TD><input name=\"numusers\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##NUMUSERS##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#sampletime##TPLHELPSUFFIX##Sampletime:</A></TD><TD><input name=\"sampletime\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SAMPLETIME##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#samples##TPLHELPSUFFIX##Samples:</A></TD><TD><input name=\"samples\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##SAMPLES##\"></TD></TR>\n\
-			<TR><TD>##TPLHELPPREFIX##conf#penalty##TPLHELPSUFFIX##Penalty:</A></TD><TD><input name=\"penalty\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##PENALTY##\"></TD></TR>\n\
+			<TR><TD>##TPLHELPPREFIX##conf#penalty##TPLHELPSUFFIX##Penalty:</A></TD>\
+			<TD>\
+				<select name=\"penalty\">\n\
+					<option value=\"0\" ##PENALTY0##>0 - Only write to log</option>\n\
+					<option value=\"1\" ##PENALTY1##>1 - Fake DW</option>\n\
+					<option value=\"2\" ##PENALTY2##>2 - Ban</option>\n\
+					<option value=\"3\" ##PENALTY3##>3 - Fake DW delayed</option>\n\
+				</select>\n\
+			</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#aclogfile##TPLHELPSUFFIX##AClogfile:</A></TD><TD><input name=\"aclogfile\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##ACLOGFILE##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#fakedelay##TPLHELPSUFFIX##Fakedelay:</A></TD><TD><input name=\"fakedelay\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##FAKEDELAY##\"></TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#denysamples##TPLHELPSUFFIX##Denysamples:</A></TD><TD><input name=\"denysamples\" type=\"text\" size=\"5\" maxlength=\"5\" value=\"##DENYSAMPLES##\"></TD></TR>\n\
