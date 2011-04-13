@@ -1220,7 +1220,7 @@ int cc_send_ecm(struct s_client *cl, ECM_REQUEST *er, uchar *buf) {
 					LL_ITER *it2 = ll_iter_create(card->badsids);
 					struct cc_srvid *srvid;
 					while ((srvid = ll_iter_next(it2)))
-						if (sid_eq(srvid, &cur_srvid))
+						if (srvid->ecmlen > 0 && sid_eq(srvid, &cur_srvid)) //ecmlen==0: From remote peer, so do not remove
 							ll_iter_remove_data(it2);
 					ll_iter_release(it2);
 				}
