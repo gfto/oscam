@@ -1830,7 +1830,6 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 	int32_t show_global_list = sharelist_ && sharelist_[0]=='1';
 
 	int32_t offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
-	if (!offset) offset = 1; //todo: Schlocke offset == 0 doesn't start was this planned?
 	
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
 	if (show_global_list || (cfg.saveinithistory && strlen(reader_) > 0) || rdr->typ == R_CCCAM) {
@@ -1894,7 +1893,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
                 }
 
                 it = ll_iter_create(cards);
-                int32_t offset2 = offset;
+                int32_t offset2 = offset+1;
                 int32_t count = 0;
                 while ((card = ll_iter_move(it, offset2))) {
                 	offset2 = 1;
@@ -2016,10 +2015,8 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					cardcount++;
 				}
 				
-				int32_t has_more = (card != NULL); //next/prev page
-
 				// set previous Link if needed
-				if (offset > ENTITLEMENT_PAGE_SIZE) {
+				if (offset >= ENTITLEMENT_PAGE_SIZE) {
 					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&label=%s\"> << PREVIOUS < </A>",
 							offset - ENTITLEMENT_PAGE_SIZE,
 							getParam(params, "globallist"),
@@ -2027,15 +2024,12 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 				}
 
 				// set next link if needed
-				if (has_more) {
+				if (card) {
 					tpl_printf(vars, TPLAPPEND, "CONTROLS", "<A HREF=\"entitlements.html?offset=%d&globallist=%s&label=%s\"> > NEXT >> </A>",
 							offset + ENTITLEMENT_PAGE_SIZE,
 							getParam(params, "globallist"),
 							getParam(params, "label"));
 				}
-				//todo alno: offset=ENTITLEMENT_PAGE_SIZE on the first page, 2*ENTITLEMENT_PAGE_SIZE on the second and so on
-				//todo alno: if has_mode: next_btn(offset+ENTITLEMENT_PAGE_SIZE);
-				//todo alno: if offset > ENTITLEMENT_PAGE_SIZE: prev_btn(offset-ENTITLEMENT_PAGE_SIZE);
 
 				ll_iter_release(it);
 
