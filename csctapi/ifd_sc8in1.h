@@ -18,8 +18,8 @@
 
 #include <pthread.h>
 
-int Sc8in1_Init (struct s_reader * reader);
-int Sc8in1_GetStatus (struct s_reader * reader, int * status);
-int Sc8in1_Card_Changed (struct s_reader * reader);
-int Sc8in1_Selectslot(struct s_reader * reader, int slot);
+int32_t Sc8in1_Init (struct s_reader * reader);
+int32_t Sc8in1_GetStatus (struct s_reader * reader, int32_t * status);
+int32_t Sc8in1_Card_Changed (struct s_reader * reader);
+int32_t Sc8in1_Selectslot(struct s_reader * reader, int32_t slot);
 

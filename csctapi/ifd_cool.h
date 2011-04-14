@@ -5,11 +5,11 @@
 #ifdef COOL
 
 #include "atr.h"
-int Cool_Init (char *device);
-int Cool_Reset (ATR * atr);
-int Cool_Transmit (BYTE * buffer, unsigned size);
-int Cool_Receive (BYTE * buffer, unsigned size);
-int Cool_SetClockrate (int mhz);
-int Cool_FastReset (void);
+int32_t Cool_Init (char *device);
+int32_t Cool_Reset (ATR * atr);
+int32_t Cool_Transmit (BYTE * buffer, uint32_t size);
+int32_t Cool_Receive (BYTE * buffer, uint32_t size);
+int32_t Cool_SetClockrate (int32_t mhz);
+int32_t Cool_FastReset (void);
 void * handle;
 #endif

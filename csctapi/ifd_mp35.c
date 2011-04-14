@@ -11,7 +11,7 @@
 typedef struct
 {
   BYTE current_product;
-  ushort product_fw_version;
+  uint16_t product_fw_version;
 } MP35_info;
 
 // Common command for AD-Teknik readers
@@ -42,9 +42,9 @@ static const struct product { BYTE code; const char* product_name; } product_cod
 
 static BYTE current_product;
 
-static int MP35_product_info(BYTE high, BYTE low, BYTE code, MP35_info* info)
+static int32_t MP35_product_info(BYTE high, BYTE low, BYTE code, MP35_info* info)
 {
-  int i;
+  int32_t i;
 
   for(i = 0; i < (int)(sizeof(product_codes) / sizeof(struct product)); i++)
   {
@@ -60,12 +60,12 @@ static int MP35_product_info(BYTE high, BYTE low, BYTE code, MP35_info* info)
   return ERROR;
 }
 
-int MP35_Init(struct s_reader * reader)
+int32_t MP35_Init(struct s_reader * reader)
 {
   MP35_info reader_info;
   BYTE rec_buf[32];
   BYTE parameter;
-  int original_mhz;
+  int32_t original_mhz;
 
   cs_debug_mask (D_IFD, "IFD: Initializing MP35 reader %s",  reader->label);
 
@@ -143,7 +143,7 @@ int MP35_Init(struct s_reader * reader)
   {
     if(reader_info.product_fw_version >= 0x0500)
     {
-      int info_len;
+      int32_t info_len;
       char info[sizeof(rec_buf) - 2];
 
       memset(rec_buf, 0x00, sizeof(rec_buf));
@@ -188,7 +188,7 @@ int MP35_Init(struct s_reader * reader)
   return OK;
 }
 
-int MP35_Close(struct s_reader * reader)
+int32_t MP35_Close(struct s_reader * reader)
 {
 	cs_debug_mask (D_IFD, "IFD: Closing MP35 device %s", reader->device);
 

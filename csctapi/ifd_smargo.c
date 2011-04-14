@@ -20,9 +20,9 @@
 
 #define DELAY 150
 
-static int smargo_set_settings(struct s_reader *reader, int freq, unsigned char T, unsigned char inv, unsigned short Fi, unsigned char Di, unsigned char Ni) {
-	int ret = 0;
-	unsigned short freqk = (freq * 10);
+static int32_t smargo_set_settings(struct s_reader *reader, int32_t freq, unsigned char T, unsigned char inv, uint16_t Fi, unsigned char Di, unsigned char Ni) {
+	int32_t ret = 0;
+	uint16_t  freqk = (freq * 10);
 	uchar data[4];
 	struct termios term;
 
@@ -70,13 +70,13 @@ static int smargo_set_settings(struct s_reader *reader, int freq, unsigned char 
 	return OK;
 }
 
-static int smargo_writesettings(struct s_reader *reader, uint32_t UNUSED(ETU), uint32_t UNUSED(EGT), unsigned char UNUSED(P), unsigned char UNUSED(I), unsigned short Fi, unsigned char Di, unsigned char Ni) {
+static int32_t smargo_writesettings(struct s_reader *reader, uint32_t UNUSED(ETU), uint32_t UNUSED(EGT), unsigned char UNUSED(P), unsigned char UNUSED(I), uint16_t Fi, unsigned char Di, unsigned char Ni) {
 	smargo_set_settings(reader, reader->mhz, reader->protocol_type == 1 ? 0 : reader->protocol_type , reader->convention, Fi, Di, Ni);
 	return OK;
 }
 
 
-static int smargo_init(struct s_reader *reader) {
+static int32_t smargo_init(struct s_reader *reader) {
 	cs_log("smargo init");
 	reader->handle = open (reader->device,  O_RDWR);
 	if (reader->handle < 0) {
@@ -87,11 +87,11 @@ static int smargo_init(struct s_reader *reader) {
 	return OK;
 }
 
-bool IO_Serial_WaitToRead (struct s_reader * reader, unsigned delay_ms, unsigned timeout_ms);
-int smargo_Serial_Read(struct s_reader * reader, unsigned timeout, unsigned size, BYTE * data, int *read_bytes)
+bool IO_Serial_WaitToRead (struct s_reader * reader, uint32_t delay_ms, uint32_t timeout_ms);
+int32_t smargo_Serial_Read(struct s_reader * reader, uint32_t timeout, uint32_t size, BYTE * data, int32_t *read_bytes)
 {
 	BYTE c;
-	uint count = 0;
+	uint32_t count = 0;
 	
 	for (count = 0; count < size ; count++)
 	{
@@ -118,15 +118,15 @@ int smargo_Serial_Read(struct s_reader * reader, unsigned timeout, unsigned size
 }
 
 
-static int smargo_reset(struct s_reader *reader, ATR *atr) {
+static int32_t smargo_reset(struct s_reader *reader, ATR *atr) {
 	cs_debug_mask(D_IFD, "Smargo: Resetting card:");
-	int ret=ERROR;
-	int i;
+	int32_t ret=ERROR;
+	int32_t i;
 	unsigned char buf[ATR_MAX_SIZE];
 
-	int parity[4] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE, PARITY_EVEN};
+	int32_t parity[4] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE, PARITY_EVEN};
 
-	int mhz = 369;
+	int32_t mhz = 369;
 
 	if(reader->mhz == reader->cardmhz && reader->cardmhz > 369)
 		mhz = reader->cardmhz;
@@ -147,7 +147,7 @@ static int smargo_reset(struct s_reader *reader, ATR *atr) {
 		cs_sleepms(150);
 		IO_Serial_RTS_Clr(reader);
 
-		int n=0;
+		int32_t n=0;
 		//while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
 		//	n++;
 
@@ -171,11 +171,11 @@ static int smargo_reset(struct s_reader *reader, ATR *atr) {
 	return ret;
 }
 
-static int smargo_receive(struct s_reader *reader, unsigned char *data, unsigned int size) {
+static int32_t smargo_receive(struct s_reader *reader, unsigned char *data, uint32_t size) {
 	return Phoenix_Receive(reader, data, size, reader->read_timeout);
 }
 
-static int smargo_transmit(struct s_reader *reader, unsigned char *sent, unsigned int size) {
+static int32_t smargo_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size) {
 	return Phoenix_Transmit(reader, sent, size, 0, 0);
 }
 

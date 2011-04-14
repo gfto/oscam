@@ -25,38 +25,38 @@
 #define NUM_TXFERS 2
 
 struct s_sr_config {
-    int F;
+    int32_t F;
     float D;
-    int fs;
-    int N;
-    int T;
-    int inv;
-    int parity;
-    int irdeto;
-    int running;
+    int32_t fs;
+    int32_t N;
+    int32_t T;
+    int32_t inv;
+    int32_t parity;
+    int32_t irdeto;
+    int32_t running;
 	libusb_device *usb_dev;
 	libusb_device_handle *usb_dev_handle;
     enum smartreader_chip_type type;
     uint8_t in_ep;  // 0x01
     uint8_t out_ep; // 0x82
-    int index;
+    int32_t index;
     /** usb read timeout */
-    int usb_read_timeout;
+    int32_t usb_read_timeout;
     /** usb write timeout */
-    int usb_write_timeout;
-    unsigned int writebuffer_chunksize;
+    int32_t usb_write_timeout;
+    uint32_t  writebuffer_chunksize;
     unsigned char bitbang_enabled;
-    int baudrate;
-    int interface;   // 0 or 1
+    int32_t baudrate;
+    int32_t interface;   // 0 or 1
     /** maximum packet size. Needed for filtering modem status bytes every n packets. */
-    unsigned int max_packet_size;
+    uint32_t  max_packet_size;
     unsigned char g_read_buffer[4096];
-    unsigned int g_read_buffer_size;
+    uint32_t  g_read_buffer_size;
     pthread_mutex_t g_read_mutex;
     pthread_cond_t g_read_cond;
     pthread_mutex_t g_usb_mutex;
     pthread_cond_t g_usb_cond;
-    int poll;
+    int32_t poll;
     pthread_t rt;
     unsigned char modem_status;
 };
@@ -66,34 +66,34 @@ typedef struct s_reader S_READER;
 static bool smartreader_check_endpoint(libusb_device *usb_dev, uint8_t out_endpoint);
 static struct libusb_device *find_smartreader(const char*busname,const char *devname, uint8_t out_endpoint);
 static void smartreader_init(S_READER *reader, uint8_t out_endpoint);
-static unsigned int smartreader_determine_max_packet_size(S_READER *reader);
-static int smartreader_usb_close_internal (S_READER *reader);
-static int smartreader_usb_reset(S_READER *reader);
-static int smartreader_usb_open_dev(S_READER *reader);
-static int smartreader_usb_purge_rx_buffer(S_READER *reader);
-static int smartreader_usb_purge_tx_buffer(S_READER *reader);
-static int smartreader_usb_purge_buffers(S_READER *reader);
-static int smartreader_convert_baudrate(int baudrate, S_READER *reader, unsigned short *value, unsigned short *index);
-static int smartreader_set_baudrate(S_READER *reader, int baudrate);
-static int smartreader_setdtr_rts(S_READER *reader, int dtr, int rts);
-static int smartreader_setflowctrl(S_READER *reader, int flowctrl);
-static int smartreader_set_line_property2(S_READER *reader, enum smartreader_bits_type bits,
+static uint32_t  smartreader_determine_max_packet_size(S_READER *reader);
+static int32_t smartreader_usb_close_internal (S_READER *reader);
+static int32_t smartreader_usb_reset(S_READER *reader);
+static int32_t smartreader_usb_open_dev(S_READER *reader);
+static int32_t smartreader_usb_purge_rx_buffer(S_READER *reader);
+static int32_t smartreader_usb_purge_tx_buffer(S_READER *reader);
+static int32_t smartreader_usb_purge_buffers(S_READER *reader);
+static int32_t smartreader_convert_baudrate(int32_t baudrate, S_READER *reader, uint16_t  *value, uint16_t  *index);
+static int32_t smartreader_set_baudrate(S_READER *reader, int32_t baudrate);
+static int32_t smartreader_setdtr_rts(S_READER *reader, int32_t dtr, int32_t rts);
+static int32_t smartreader_setflowctrl(S_READER *reader, int32_t flowctrl);
+static int32_t smartreader_set_line_property2(S_READER *reader, enum smartreader_bits_type bits,
                             enum smartreader_stopbits_type sbit, enum smartreader_parity_type parity,
                             enum smartreader_break_type break_type);
-static int smartreader_set_line_property(S_READER *reader, enum smartreader_bits_type bits,
+static int32_t smartreader_set_line_property(S_READER *reader, enum smartreader_bits_type bits,
                            enum smartreader_stopbits_type sbit, enum smartreader_parity_type parity);
 static void smart_flush(S_READER *reader);
-static int smartreader_set_latency_timer(S_READER *reader, unsigned short latency);
-static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T,unsigned char inv, int parity);
+static int32_t smartreader_set_latency_timer(S_READER *reader, uint16_t  latency);
+static void EnableSmartReader(S_READER *reader, int32_t clock, uint16_t  Fi, unsigned char Di, unsigned char Ni, unsigned char T,unsigned char inv, int32_t parity);
 static void *ReaderThread(void *p);
-static void smart_fastpoll(S_READER *reader, int on);
+static void smart_fastpoll(S_READER *reader, int32_t on);
 
-static int init_count = 0;
+static int32_t init_count = 0;
 
-int SR_Init (struct s_reader *reader)
+int32_t SR_Init (struct s_reader *reader)
 {
     uint8_t out_endpoint;
-    int ret;
+    int32_t ret;
     char device[128];
     char *busname;
     char *devname;
@@ -181,9 +181,9 @@ int SR_Init (struct s_reader *reader)
 }
 
 
-int SR_GetStatus (struct s_reader *reader, int * in)
+int32_t SR_GetStatus (struct s_reader *reader, int32_t * in)
 {
-  int state;
+  int32_t state;
 
     smart_fastpoll(reader, TRUE);
     pthread_mutex_lock(&reader->sr_config->g_read_mutex);
@@ -200,10 +200,10 @@ int SR_GetStatus (struct s_reader *reader, int * in)
   return OK;
 }
 
-static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, int timeout_sec)
+static int32_t smart_read(S_READER *reader, unsigned char* buff, uint32_t  size, int32_t timeout_sec)
 {
-    int ret = 0;
-    unsigned int total_read = 0;
+    int32_t ret = 0;
+    uint32_t  total_read = 0;
     struct timeval start, now, dif = {0};
     struct timespec timeout = {0};
 
@@ -239,13 +239,13 @@ static int smart_read(S_READER *reader, unsigned char* buff, unsigned int size, 
     return total_read;
 }
 
-int SR_Reset (struct s_reader *reader, ATR *atr)
+int32_t SR_Reset (struct s_reader *reader, ATR *atr)
 {
     unsigned char data[ATR_MAX_SIZE];
-    int ret;
-    int atr_ok;
-    unsigned int i;
-    int parity[4] = {EVEN, ODD, NONE, EVEN};    // the last EVEN is to try with different F, D values for irdeto card.
+    int32_t ret;
+    int32_t atr_ok;
+    uint32_t  i;
+    int32_t parity[4] = {EVEN, ODD, NONE, EVEN};    // the last EVEN is to try with different F, D values for irdeto card.
     static const char * const parity_str[5] = {"NONE", "ODD", "EVEN", "MARK", "SPACE"};
 
     if(reader->mhz == reader->cardmhz && reader->cardmhz * 10000 > 3690000)
@@ -330,15 +330,15 @@ int SR_Reset (struct s_reader *reader, ATR *atr)
     return atr_ok;
 }
 
-static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size)
+static int32_t smart_write(S_READER *reader, unsigned char* buff, uint32_t  size)
 {
 
-    unsigned int idx;
+    uint32_t  idx;
 
-    int write_size;
-    unsigned int offset = 0;
-    int total_written = 0;
-    int written;
+    int32_t write_size;
+    uint32_t  offset = 0;
+    int32_t total_written = 0;
+    int32_t written;
 
     if(size<reader->sr_config->writebuffer_chunksize)
         write_size=size;
@@ -350,7 +350,7 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size)
         if (offset+write_size > size)
             write_size = size-offset;
 
-        int ret = libusb_bulk_transfer(reader->sr_config->usb_dev_handle,
+        int32_t ret = libusb_bulk_transfer(reader->sr_config->usb_dev_handle,
                                     reader->sr_config->in_ep,
                                     buff+offset,
                                     write_size,
@@ -368,9 +368,9 @@ static int smart_write(S_READER *reader, unsigned char* buff, unsigned int size)
     return total_written;
 }
 
-int SR_Transmit (struct s_reader *reader, BYTE * buffer, unsigned size)
+int32_t SR_Transmit (struct s_reader *reader, BYTE * buffer, uint32_t size)
 {
-    unsigned int ret;
+    uint32_t  ret;
 
     smart_fastpoll(reader, TRUE);
     ret = smart_write(reader, buffer, size);
@@ -381,9 +381,9 @@ int SR_Transmit (struct s_reader *reader, BYTE * buffer, unsigned size)
   return OK;
 }
 
-int SR_Receive (struct s_reader *reader, BYTE * buffer, unsigned size)
+int32_t SR_Receive (struct s_reader *reader, BYTE * buffer, uint32_t size)
 {
-    unsigned int ret;
+    uint32_t  ret;
 
     smart_fastpoll(reader, TRUE);
     ret = smart_read(reader, buffer, size, 1);
@@ -394,7 +394,7 @@ int SR_Receive (struct s_reader *reader, BYTE * buffer, unsigned size)
   return OK;
 }
 
-int SR_WriteSettings (struct s_reader *reader, unsigned short F, BYTE D, BYTE N, BYTE T, unsigned short convention)
+int32_t SR_WriteSettings (struct s_reader *reader, uint16_t  F, BYTE D, BYTE N, BYTE T, uint16_t  convention)
 {
     // smartreader supports 3.20, 3.43, 3.69, 4.00, 4.36, 4.80, 5.34, 6.00, 6.86, 8.00, 9.61, 12.0, 16.0 Mhz
     reader->sr_config->inv = convention;//FIXME this one is set by icc_async and local smartreader reset routine
@@ -425,9 +425,9 @@ int SR_WriteSettings (struct s_reader *reader, unsigned short F, BYTE D, BYTE N,
   return OK;
 }
 
-int SR_SetParity (struct s_reader *reader, unsigned short parity)
+int32_t SR_SetParity (struct s_reader *reader, uint16_t  parity)
 {
-    int ret;
+    int32_t ret;
 
     static const char * const parity_str[5]={"NONE", "ODD", "EVEN", "MARK", "SPACE"};
     cs_debug_mask (D_DEVICE, "IO:SR: Setting parity to %s",parity_str[parity]);
@@ -442,7 +442,7 @@ int SR_SetParity (struct s_reader *reader, unsigned short parity)
   return OK;
 }
 
-int SR_Close (struct s_reader *reader)
+int32_t SR_Close (struct s_reader *reader)
 {
   if (!reader->sr_config) return OK;
   
@@ -465,10 +465,10 @@ int SR_Close (struct s_reader *reader)
     return OK;
 }
 
-int SR_FastReset(struct s_reader *reader, int delay)
+int32_t SR_FastReset(struct s_reader *reader, int32_t delay)
 {
     unsigned char data[ATR_MAX_SIZE];
-    int ret;
+    int32_t ret;
 
     smart_fastpoll(reader, TRUE);
     //Set the DTR HIGH and RTS HIGH
@@ -487,11 +487,11 @@ int SR_FastReset(struct s_reader *reader, int delay)
     return 0;
 }
 
-static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, unsigned char Di, unsigned char Ni, unsigned char T, unsigned char inv,int parity) {
+static void EnableSmartReader(S_READER *reader, int32_t clock, uint16_t  Fi, unsigned char Di, unsigned char Ni, unsigned char T, unsigned char inv,int32_t parity) {
 
-    int ret = 0;
+    int32_t ret = 0;
     unsigned char FiDi[4];
-    unsigned short freqk;
+    uint16_t  freqk;
     unsigned char Freq[3];
     unsigned char N[2];
     unsigned char Prot[2];
@@ -518,7 +518,7 @@ static void EnableSmartReader(S_READER *reader, int clock, unsigned short Fi, un
 
     // command 2, set the frequency in KHz
     // direct from the source .. 4MHz is the best init frequency for T=0 card, but looks like it's causing issue with some nagra card, reveting to 3.69MHz
-    freqk = clock * 10; //clock with type int couldnt hold freq in Hz on all platforms, so I reverted to 10khz units (like mhz) - dingo
+    freqk = clock * 10; //clock with type int32_t couldnt hold freq in Hz on all platforms, so I reverted to 10khz units (like mhz) - dingo
     cs_debug_mask (D_DEVICE, "IO:SR: sending Freq=%04X (%d) to smartreader",freqk,freqk);
     Freq[0]=0x02;
     Freq[1]=HIBYTE(freqk);
@@ -569,10 +569,10 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev,uint8_t out_endpoi
 {
     struct libusb_device_descriptor desc;
     struct libusb_config_descriptor *configDesc;
-    int ret;
-    int j,k,l;
+    int32_t ret;
+    int32_t j,k,l;
     uint8_t tmpEndpointAddress;
-    int nb_endpoint_ok;
+    int32_t nb_endpoint_ok;
 
 
     nb_endpoint_ok=0;
@@ -604,13 +604,13 @@ static bool smartreader_check_endpoint(libusb_device *usb_dev,uint8_t out_endpoi
 
 static struct libusb_device* find_smartreader(const char *busname,const char *devname, uint8_t out_endpoint)
 {
-    int dev_found;
+    int32_t dev_found;
   libusb_device *dev;
   libusb_device_handle *usb_dev_handle;
   libusb_device **devs;
     ssize_t cnt;
-  int i = 0;
-  int ret;
+  int32_t i = 0;
+  int32_t ret;
     struct libusb_device_descriptor desc;
 
   cnt = libusb_get_device_list(NULL, &devs);
@@ -701,15 +701,15 @@ void smartreader_init(S_READER *reader,uint8_t out_endpoint)
 }
 
 
-static unsigned int smartreader_determine_max_packet_size(S_READER *reader)
+static uint32_t  smartreader_determine_max_packet_size(S_READER *reader)
 {
-    unsigned int packet_size;
+    uint32_t  packet_size;
     struct libusb_device_descriptor desc;
     struct libusb_config_descriptor *configDesc;
     struct libusb_interface interface;
     struct libusb_interface_descriptor intDesc;
 
-    int ret;
+    int32_t ret;
     // Determine maximum packet size. Init with default value.
     // New hi-speed devices from FTDI use a packet size of 512 bytes
     // but could be connected to a normal speed USB hub -> 64 bytes packet size.
@@ -749,9 +749,9 @@ static unsigned int smartreader_determine_max_packet_size(S_READER *reader)
 }
 
 
-static int smartreader_usb_close_internal (S_READER *reader)
+static int32_t smartreader_usb_close_internal (S_READER *reader)
 {
-    int ret = 0;
+    int32_t ret = 0;
 
     if (reader->sr_config->usb_dev_handle)
     {
@@ -763,7 +763,7 @@ static int smartreader_usb_close_internal (S_READER *reader)
 }
 
 
-int smartreader_usb_reset(S_READER *reader)
+int32_t smartreader_usb_reset(S_READER *reader)
 {
     if (libusb_control_transfer(reader->sr_config->usb_dev_handle,
                                 FTDI_DEVICE_OUT_REQTYPE,
@@ -782,15 +782,15 @@ int smartreader_usb_reset(S_READER *reader)
 }
 
 
-int smartreader_usb_open_dev(S_READER *reader)
+int32_t smartreader_usb_open_dev(S_READER *reader)
 {
-    int detach_errno = 0;
+    int32_t detach_errno = 0;
     struct libusb_device_descriptor desc;
-    int ret;
+    int32_t ret;
 
 #ifdef __WIN32__
-    int config;
-    int config_val = 1;
+    int32_t config;
+    int32_t config_val = 1;
 #endif
 
     ret=libusb_open(reader->sr_config->usb_dev,&reader->sr_config->usb_dev_handle);
@@ -930,7 +930,7 @@ int smartreader_usb_open_dev(S_READER *reader)
 }
 
 
-int smartreader_usb_purge_rx_buffer(S_READER *reader)
+int32_t smartreader_usb_purge_rx_buffer(S_READER *reader)
 {
     if (libusb_control_transfer(reader->sr_config->usb_dev_handle,
                                 FTDI_DEVICE_OUT_REQTYPE,
@@ -948,7 +948,7 @@ int smartreader_usb_purge_rx_buffer(S_READER *reader)
     return 0;
 }
 
-int smartreader_usb_purge_tx_buffer(S_READER *reader)
+int32_t smartreader_usb_purge_tx_buffer(S_READER *reader)
 {
     if (libusb_control_transfer(reader->sr_config->usb_dev_handle,
                                 FTDI_DEVICE_OUT_REQTYPE,
@@ -965,9 +965,9 @@ int smartreader_usb_purge_tx_buffer(S_READER *reader)
     return 0;
 }
 
-int smartreader_usb_purge_buffers(S_READER *reader)
+int32_t smartreader_usb_purge_buffers(S_READER *reader)
 {
-    int result;
+    int32_t result;
 
     result = smartreader_usb_purge_rx_buffer(reader);
     if (result < 0)
@@ -980,14 +980,14 @@ int smartreader_usb_purge_buffers(S_READER *reader)
     return 0;
 }
 
-static int smartreader_convert_baudrate(int baudrate, S_READER *reader, unsigned short *value, unsigned short *index)
+static int32_t smartreader_convert_baudrate(int32_t baudrate, S_READER *reader, uint16_t  *value, uint16_t  *index)
 {
     static const char am_adjust_up[8] = {0, 0, 0, 1, 0, 3, 2, 1};
     static const char am_adjust_dn[8] = {0, 0, 0, 1, 0, 1, 2, 3};
     static const char frac_code[8] = {0, 3, 2, 4, 1, 5, 6, 7};
-    int divisor, best_divisor, best_baud, best_baud_diff;
-    unsigned long encoded_divisor;
-    int i;
+    int32_t divisor, best_divisor, best_baud, best_baud_diff;
+    uint32_t encoded_divisor;
+    int32_t i;
 
     if (baudrate <= 0)
     {
@@ -1009,9 +1009,9 @@ static int smartreader_convert_baudrate(int baudrate, S_READER *reader, unsigned
     best_baud_diff = 0;
     for (i = 0; i < 2; i++)
     {
-        int try_divisor = divisor + i;
-        int baud_estimate;
-        int baud_diff;
+        int32_t try_divisor = divisor + i;
+        int32_t baud_estimate;
+        int32_t baud_diff;
 
         // Round up to supported divisor value
         if (try_divisor <= 8)
@@ -1086,24 +1086,24 @@ static int smartreader_convert_baudrate(int baudrate, S_READER *reader, unsigned
         encoded_divisor = 1;    // 2000000 baud (BM only)
     }
     // Split into "value" and "index" values
-    *value = (unsigned short)(encoded_divisor & 0xFFFF);
+    *value = (uint16_t )(encoded_divisor & 0xFFFF);
     if (reader->sr_config->type == TYPE_2232C || reader->sr_config->type == TYPE_2232H || reader->sr_config->type == TYPE_4232H)
     {
-        *index = (unsigned short)(encoded_divisor >> 8);
+        *index = (uint16_t )(encoded_divisor >> 8);
         *index &= 0xFF00;
         *index |= reader->sr_config->index;
     }
     else
-        *index = (unsigned short)(encoded_divisor >> 16);
+        *index = (uint16_t )(encoded_divisor >> 16);
 
     // Return the nearest baud rate
     return best_baud;
 }
 
-int smartreader_set_baudrate(S_READER *reader, int baudrate)
+int32_t smartreader_set_baudrate(S_READER *reader, int32_t baudrate)
 {
-    unsigned short value, index;
-    int actual_baudrate;
+    uint16_t  value, index;
+    int32_t actual_baudrate;
 
     if (reader->sr_config->bitbang_enabled)
     {
@@ -1141,9 +1141,9 @@ int smartreader_set_baudrate(S_READER *reader, int baudrate)
     return 0;
 }
 
-int smartreader_setdtr_rts(S_READER *reader, int dtr, int rts)
+int32_t smartreader_setdtr_rts(S_READER *reader, int32_t dtr, int32_t rts)
 {
-    unsigned short usb_val;
+    uint16_t  usb_val;
 
     if (dtr)
         usb_val = SIO_SET_DTR_HIGH;
@@ -1170,7 +1170,7 @@ int smartreader_setdtr_rts(S_READER *reader, int dtr, int rts)
     return 0;
 }
 
-int smartreader_setflowctrl(S_READER *reader, int flowctrl)
+int32_t smartreader_setflowctrl(S_READER *reader, int32_t flowctrl)
 {
     if (libusb_control_transfer(reader->sr_config->usb_dev_handle,
                                 FTDI_DEVICE_OUT_REQTYPE,
@@ -1187,11 +1187,11 @@ int smartreader_setflowctrl(S_READER *reader, int flowctrl)
     return 0;
 }
 
-int smartreader_set_line_property2(S_READER *reader, enum smartreader_bits_type bits,
+int32_t smartreader_set_line_property2(S_READER *reader, enum smartreader_bits_type bits,
                             enum smartreader_stopbits_type sbit, enum smartreader_parity_type parity,
                             enum smartreader_break_type break_type)
 {
-    unsigned short value = bits;
+    uint16_t  value = bits;
 
     switch (parity)
     {
@@ -1251,7 +1251,7 @@ int smartreader_set_line_property2(S_READER *reader, enum smartreader_bits_type 
 }
 
 
-int smartreader_set_line_property(S_READER *reader, enum smartreader_bits_type bits,
+int32_t smartreader_set_line_property(S_READER *reader, enum smartreader_bits_type bits,
                            enum smartreader_stopbits_type sbit, enum smartreader_parity_type parity)
 {
     return smartreader_set_line_property2(reader, bits, sbit, parity, BREAK_OFF);
@@ -1268,9 +1268,9 @@ void smart_flush(S_READER *reader)
     pthread_mutex_unlock(&reader->sr_config->g_read_mutex);
 }
 
-static int smartreader_set_latency_timer(S_READER *reader, unsigned short latency)
+static int32_t smartreader_set_latency_timer(S_READER *reader, uint16_t  latency)
 {
-    unsigned short usb_val;
+    uint16_t  usb_val;
 
     if (latency < 1) {
         cs_log("latency out of range. Only valid for 1-255");
@@ -1299,8 +1299,8 @@ static WINAPI read_callback(struct libusb_transfer *transfer){
 static void read_callback(struct libusb_transfer *transfer){
 #endif
     struct s_reader *reader = (struct s_reader*)transfer->user_data;
-    int copy_size;
-    int ret;
+    int32_t copy_size;
+    int32_t ret;
 
     if(transfer->status == LIBUSB_TRANSFER_COMPLETED) {
         if(transfer->actual_length > 2) {  //FTDI always sends modem status bytes as first 2 chars with the 232BM
@@ -1319,7 +1319,7 @@ static void read_callback(struct libusb_transfer *transfer){
             }
             reader->sr_config->modem_status = transfer->buffer[0];
 
-            copy_size = sizeof(reader->sr_config->g_read_buffer) - reader->sr_config->g_read_buffer_size > (unsigned int)transfer->actual_length-2 ? (unsigned int)transfer->actual_length-2: sizeof(reader->sr_config->g_read_buffer) - reader->sr_config->g_read_buffer_size;
+            copy_size = sizeof(reader->sr_config->g_read_buffer) - reader->sr_config->g_read_buffer_size > (uint32_t )transfer->actual_length-2 ? (uint32_t )transfer->actual_length-2: sizeof(reader->sr_config->g_read_buffer) - reader->sr_config->g_read_buffer_size;
             memcpy(reader->sr_config->g_read_buffer+reader->sr_config->g_read_buffer_size,transfer->buffer+2,copy_size);
             reader->sr_config->g_read_buffer_size += copy_size;
 
@@ -1350,7 +1350,7 @@ static void* ReaderThread(void *p)
     struct libusb_transfer* usbt[NUM_TXFERS];
     unsigned char usb_buffers[NUM_TXFERS][64];
     struct s_reader *reader;
-    int ret,idx;
+    int32_t ret,idx;
 
     reader = (struct s_reader *)p;
     reader->sr_config->running=TRUE;
@@ -1392,7 +1392,7 @@ static void* ReaderThread(void *p)
     pthread_exit(NULL);
 }
 
-static void smart_fastpoll(S_READER *reader, int on)
+static void smart_fastpoll(S_READER *reader, int32_t on)
 {
     pthread_mutex_lock(&reader->sr_config->g_usb_mutex);
     //printf("poll stat: %d\n", on);

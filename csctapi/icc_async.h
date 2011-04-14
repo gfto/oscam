@@ -50,19 +50,19 @@
 
 
 /* Initialization and Deactivation */
-int ICC_Async_Activate (struct s_reader *reader, ATR * newatr, unsigned short deprecated);
-int ICC_Async_Close (struct s_reader *reader);
-int ICC_Async_Device_Init (struct s_reader *reader);
+int32_t ICC_Async_Activate (struct s_reader *reader, ATR * newatr, uint16_t deprecated);
+int32_t ICC_Async_Close (struct s_reader *reader);
+int32_t ICC_Async_Device_Init (struct s_reader *reader);
 
 /* Attributes */
-int ICC_Async_SetTimings (struct s_reader * reader, unsigned wait_etu);
-int ICC_Async_GetStatus (struct s_reader *reader, int * has_card);
+int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu);
+int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * has_card);
 
 
 /* Operations */
-int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *cmd, unsigned short lc, unsigned char *rsp, unsigned short *lr);
-int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * buffer);
-int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * buffer);
+int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *cmd, uint16_t lc, unsigned char *rsp, uint16_t *lr);
+int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * buffer);
+int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * buffer);
 
 #endif /* _ICC_ASYNC_ */
 

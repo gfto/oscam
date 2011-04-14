@@ -14,16 +14,16 @@
 struct s_coolstream_reader {
 	void      *handle; //device handle for coolstream
 	char      cardbuffer[256];
-	int				cardbuflen;
+	int32_t		cardbuflen;
 };
 
 #define specdev() \
  ((struct s_coolstream_reader *)cur_client()->reader->spec_dev)
 
-int Cool_Init (char *device)
+int32_t Cool_Init (char *device)
 {
 	cnxt_smc_init (NULL); //not sure whether this should be in coolapi_open_all
-	int reader_nb = 0;
+	int32_t reader_nb = 0;
 	// this is to stay compatible with older config.
 	if(strlen(device))
 		reader_nb=atoi((const char *)device);
@@ -40,10 +40,10 @@ int Cool_Init (char *device)
 }
 
 
-int Cool_GetStatus (int * in)
+int32_t Cool_GetStatus (int32_t * in)
 {
-	int state;
-	int ret = cnxt_smc_get_state(specdev()->handle, &state);
+	int32_t state;
+	int32_t ret = cnxt_smc_get_state(specdev()->handle, &state);
 	if (ret) {
 		cs_log("COOLSTREAM return code = %i", ret);
 		return ERROR;
@@ -56,15 +56,15 @@ int Cool_GetStatus (int * in)
 	return OK;
 }
 
-int Cool_Reset (ATR * atr)
+int32_t Cool_Reset (ATR * atr)
 {
 	call (Cool_SetClockrate(357));
 
 	//reset card
-	int timeout = 5000; // Timout in ms?
+	int32_t timeout = 5000; // Timout in ms?
 	call (cnxt_smc_reset_card (specdev()->handle, ATR_TIMEOUT, NULL, NULL));
 	cs_sleepms(50);
-	int n = 40;
+	int32_t n = 40;
 	unsigned char buf[40];
 	call (cnxt_smc_get_atr (specdev()->handle, buf, &n));
 		
@@ -75,7 +75,7 @@ int Cool_Reset (ATR * atr)
 	}
 }
 
-int Cool_Transmit (BYTE * sent, unsigned size)
+int32_t Cool_Transmit (BYTE * sent, uint32_t size)
 { 
 	specdev()->cardbuflen = 256;//it needs to know max buffer size to respond?
 	call (cnxt_smc_read_write(specdev()->handle, FALSE, sent, size, specdev()->cardbuffer, &specdev()->cardbuflen, 50, 0));
@@ -84,7 +84,7 @@ int Cool_Transmit (BYTE * sent, unsigned size)
 	return OK;
 }
 
-int Cool_Receive (BYTE * data, unsigned size)
+int32_t Cool_Receive (BYTE * data, uint32_t size)
 { 
 	if (size > specdev()->cardbuflen)
 		size = specdev()->cardbuflen; //never read past end of buffer
@@ -95,17 +95,16 @@ int Cool_Receive (BYTE * data, unsigned size)
 	return OK;
 }	
 
-int Cool_SetClockrate (int mhz)
+int32_t Cool_SetClockrate (int32_t mhz)
 {
-	typedef unsigned long u_int32;
-	u_int32 clk;
+	uint32_t clk;
 	clk = mhz * 10000;
 	call (cnxt_smc_set_clock_freq (specdev()->handle, clk));
 	cs_debug_mask(D_DEVICE, "COOL: Clock succesfully set to %i0 kHz", mhz);
 	return OK;
 }
 
-int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT, unsigned long BGT)
+int32_t Cool_WriteSettings (uint32_t BWT, uint32_t CWT, uint32_t EGT, uint32_t BGT)
 {
 	//this code worked with old cnxt_lnx.ko, but prevented nagra cards from working with new cnxt_lnx.ko
 /*	struct
@@ -128,9 +127,9 @@ int Cool_WriteSettings (unsigned long BWT, unsigned long CWT, unsigned long EGT,
 	return OK;
 }
 
-int Cool_FastReset ()
+int32_t Cool_FastReset ()
 {
-	int n = 40;
+	int32_t n = 40;
 	unsigned char buf[40];
 
 	//reset card
@@ -141,7 +140,7 @@ int Cool_FastReset ()
     return 0;
 }
 
-int Cool_Close (void)
+int32_t Cool_Close (void)
 {
 	call(cnxt_smc_close (specdev()->handle));
 	NULLFREE(cur_client()->reader->spec_dev);

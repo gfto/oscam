@@ -14,10 +14,10 @@
 
 #ifdef USE_GPIO	//felix: definition of gpio functions
 #define pin (1<<(reader->detect-4))
-int gpio_outen,gpio_out,gpio_in;
-unsigned int gpio;
+int32_t gpio_outen,gpio_out,gpio_in;
+unsigned int32_t gpio;
 
-static void set_gpio(struct s_reader * reader, int level)
+static void set_gpio(struct s_reader * reader, int32_t level)
 {		
 	read(gpio_outen, &gpio, sizeof(gpio));
 	gpio |= pin;
@@ -38,7 +38,7 @@ static void set_gpio_input(struct s_reader * reader)
 	write(gpio_outen, &gpio, sizeof(gpio));
 }
 
-static int get_gpio(struct s_reader * reader)
+static int32_t get_gpio(struct s_reader * reader)
 {
 	set_gpio_input(reader);
 	read(gpio_in, &gpio, sizeof(gpio));
@@ -50,7 +50,7 @@ static int get_gpio(struct s_reader * reader)
 #endif
 
 
-int Phoenix_Init (struct s_reader * reader)
+int32_t Phoenix_Init (struct s_reader * reader)
 {
 		call (IO_Serial_InitPnP (reader));
 		IO_Serial_Flush(reader);
@@ -75,7 +75,7 @@ int Phoenix_Init (struct s_reader * reader)
 	return OK;
 }
 
-int Phoenix_GetStatus (struct s_reader * reader, int * status)
+int32_t Phoenix_GetStatus (struct s_reader * reader, int32_t * status)
 {
 #ifdef USE_GPIO  //felix: detect card via defined gpio
 	if (reader->detect>4)
@@ -83,7 +83,7 @@ int Phoenix_GetStatus (struct s_reader * reader, int * status)
 	else
 #endif
 	{
-		unsigned int modembits=0;
+		uint32_t modembits=0;
 	        if (ioctl(reader->handle, TIOCMGET, &modembits) < 0) {
 	                cs_log("ERROR Phoenix_GetStatus: ioctl error in card detection for %s", reader->label);
 	                return ERROR;
@@ -102,13 +102,13 @@ int Phoenix_GetStatus (struct s_reader * reader, int * status)
 	return OK;
 }
 
-int Phoenix_Reset (struct s_reader * reader, ATR * atr)
+int32_t Phoenix_Reset (struct s_reader * reader, ATR * atr)
 {	
 		cs_debug_mask (D_IFD, "IFD: Resetting card:\n");
-		int ret;
-		int i;
+		int32_t ret;
+		int32_t i;
 		unsigned char buf[ATR_MAX_SIZE];
-		int parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
+		int32_t parity[3] = {PARITY_EVEN, PARITY_ODD, PARITY_NONE};
 
 		call (Phoenix_SetBaudrate (reader, DEFAULT_BAUDRATE));
 
@@ -153,7 +153,7 @@ int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 			cs_sleepms(50);
 			IO_Serial_Ioctl_Lock(reader, 0);
 
-			int n=0;
+			int32_t n=0;
 			while(n<ATR_MAX_SIZE && !IO_Serial_Read(reader, ATR_TIMEOUT, 1, buf+n))
 				n++;
 			if(n==0)
@@ -181,9 +181,9 @@ int Phoenix_Reset (struct s_reader * reader, ATR * atr)
 		return ret;
 }
 
-int Phoenix_Transmit (struct s_reader * reader, BYTE * buffer, unsigned size, unsigned int block_delay, unsigned int char_delay)
+int32_t Phoenix_Transmit (struct s_reader * reader, BYTE * buffer, uint32_t size, uint32_t block_delay, uint32_t char_delay)
 {
-	unsigned sent=0, to_send = 0;
+	uint32_t sent=0, to_send = 0;
 
 	for (sent = 0; sent < size; sent = sent + to_send)
 	{
@@ -202,7 +202,7 @@ int Phoenix_Transmit (struct s_reader * reader, BYTE * buffer, unsigned size, un
 	return OK;
 }
 
-int Phoenix_Receive (struct s_reader * reader, BYTE * buffer, unsigned size, unsigned int timeout)
+int32_t Phoenix_Receive (struct s_reader * reader, BYTE * buffer, uint32_t size, uint32_t timeout)
 {
 #define IFD_TOWITOKO_TIMEOUT             1000
 
@@ -211,7 +211,7 @@ int Phoenix_Receive (struct s_reader * reader, BYTE * buffer, unsigned size, uns
 	return OK;
 }
 
-int Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
+int32_t Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 {
 	cs_debug_mask (D_IFD, "IFD: Phoenix Setting baudrate to %lu\n", baudrate);
 
@@ -238,7 +238,7 @@ int Phoenix_SetBaudrate (struct s_reader * reader, uint32_t baudrate)
 	return OK;
 }
 
-int Phoenix_Close (struct s_reader * reader)
+int32_t Phoenix_Close (struct s_reader * reader)
 {
 	cs_debug_mask (D_IFD, "IFD: Closing phoenix device %s", reader->device);
 #ifdef USE_GPIO //felix: close dev if card detected
@@ -254,7 +254,7 @@ int Phoenix_Close (struct s_reader * reader)
 }
 
 
-int Phoenix_FastReset (struct s_reader * reader, int delay)
+int32_t Phoenix_FastReset (struct s_reader * reader, int32_t delay)
 {
     IO_Serial_Ioctl_Lock(reader, 1);
 #ifdef USE_GPIO
@@ -283,7 +283,7 @@ int Phoenix_FastReset (struct s_reader * reader, int delay)
 
 }
 
-static int mouse_init(struct s_reader *reader) {
+static int32_t mouse_init(struct s_reader *reader) {
 	cs_log("mouse_test init");
 	reader->handle = open (reader->device,  O_RDWR | O_NOCTTY| O_NONBLOCK);
 	if (reader->handle < 0) {
@@ -298,44 +298,44 @@ static int mouse_init(struct s_reader *reader) {
 	return OK;
 }
 
-static int mouse_receive(struct s_reader *reader, unsigned char *data, unsigned int size) {
+static int32_t mouse_receive(struct s_reader *reader, unsigned char *data, uint32_t size) {
 	return Phoenix_Receive(reader, data, size, reader->read_timeout);
 }
 
-static int mouse_transmit(struct s_reader *reader, unsigned char *sent, unsigned int size) {
+static int32_t mouse_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size) {
 	return Phoenix_Transmit(reader, sent, size, reader->block_delay, reader->char_delay);
 }
 
 #if defined(WITH_STAPI)
-static int stapi_init(struct s_reader *reader) {
+static int32_t stapi_init(struct s_reader *reader) {
 	return STReader_Open(reader->device, &reader->stsmart_handle);
 }
 
-static int stapi_getstatus(struct s_reader *reader, int *in) {
+static int32_t stapi_getstatus(struct s_reader *reader, int32_t *in) {
 	return STReader_GetStatus(reader->stsmart_handle, in);
 }
 
-static int stapi_reset(struct s_reader *reader, ATR *atr) {
+static int32_t stapi_reset(struct s_reader *reader, ATR *atr) {
 	return STReader_Reset(reader->stsmart_handle, atr);
 }
 
-static int stapi_transmit(struct s_reader *reader, unsigned char *sent, unsigned int size) {
+static int32_t stapi_transmit(struct s_reader *reader, unsigned char *sent, uint32_t size) {
 	return STReader_Transmit(reader->stsmart_handle, sent, size);
 }
 
-static int stapi_receive(struct s_reader *reader, unsigned char *data, unsigned int size) {
+static int32_t stapi_receive(struct s_reader *reader, unsigned char *data, uint32_t size) {
 	return STReader_Receive(reader->stsmart_handle, data, size);
 }
 
-static int stapi_close(struct s_reader *reader) {
+static int32_t stapi_close(struct s_reader *reader) {
 	return STReader_Close(reader->stsmart_handle);
 }
 
-static int stapi_setprotocol(struct s_reader *reader, unsigned char *params, unsigned *length, uint len_request) {
+static int32_t stapi_setprotocol(struct s_reader *reader, unsigned char *params, unsigned *length, uint32_t len_request) {
 	return STReader_SetProtocol(reader->stsmart_handle, params, length, len_request);
 }
 
-static int stapi_writesettings(struct s_reader *reader, unsigned long ETU, unsigned long EGT, unsigned char P, unsigned char I, unsigned short Fi, unsigned char Di, unsigned char Ni) {
+static int32_t stapi_writesettings(struct s_reader *reader, uint32_t ETU, uint32_t EGT, unsigned char P, unsigned char I, uint16_t Fi, unsigned char Di, unsigned char Ni) {
 	return STReader_SetClockrate(reader->stsmart_handle);
 }
 
@@ -351,7 +351,7 @@ void cardreader_stapi(struct s_cardreader *crdr)
 	crdr->set_protocol	= stapi_setprotocol;
 	crdr->write_settings = stapi_writesettings;
 	crdr->typ		= R_INTERNAL;
-	int max_clock_speed	= 1;
+	int32_t max_clock_speed	= 1;
 }
 #endif
 

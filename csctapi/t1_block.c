@@ -35,13 +35,13 @@
 /*
  * Not exported functions declaration
  */
-static unsigned char T1_Block_LRC (unsigned char * data, unsigned length);
+static unsigned char T1_Block_LRC (unsigned char * data, uint32_t length);
  
 /*
  * Exported functions definition
  */
 
-T1_Block * T1_Block_New (unsigned char * buffer, unsigned length)
+T1_Block * T1_Block_New (unsigned char * buffer, uint32_t length)
 {
   T1_Block * block;
   
@@ -67,7 +67,7 @@ T1_Block * T1_Block_New (unsigned char * buffer, unsigned length)
   return block;
 }
 
-T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned char ns, int more)
+T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned char ns, int32_t more)
 {
   T1_Block * block;
   block = (T1_Block *) malloc (sizeof (T1_Block));
@@ -148,7 +148,7 @@ unsigned char T1_Block_GetNS (T1_Block * block)
   return ((block->data[1] >> 6)& 0x01);
 }
 
-int T1_Block_GetMore (T1_Block * block)
+int32_t T1_Block_GetMore (T1_Block * block)
 {
   return ((block->data[1] >> 5) & 0x01);
 }
@@ -180,10 +180,10 @@ void T1_Block_Delete (T1_Block * block)
  * Not exported functions definition
  */
 
-static unsigned char T1_Block_LRC (unsigned char * data, unsigned length)
+static unsigned char T1_Block_LRC (unsigned char * data, uint32_t length)
 {
   unsigned char lrc;
-  unsigned i;
+  uint32_t i;
   lrc = 0x00;
   for (i = 0; i < length; i++)
       lrc ^= data[i];

@@ -80,20 +80,20 @@ static pthread_mutex_t sc8in1; //semaphore for SC8in1, FIXME should not be globa
  * Not exported functions declaration
  */
 
-static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer);
-static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprecated);
-static int PPS_Exchange (struct s_reader * reader, BYTE * params, unsigned *length);
-static unsigned PPS_GetLength (BYTE * block);
-static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, double n, unsigned short deprecated);
-static unsigned int ETU_to_ms(struct s_reader * reader, unsigned long WWT);
-static BYTE PPS_GetPCK (BYTE * block, unsigned length);
-static int SetRightParity (struct s_reader * reader);
+static void ICC_Async_InvertBuffer (uint32_t size, BYTE * buffer);
+static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecated);
+static int32_t PPS_Exchange (struct s_reader * reader, BYTE * params, uint32_t *length);
+static uint32_t PPS_GetLength (BYTE * block);
+static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, double n, uint16_t deprecated);
+static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT);
+static BYTE PPS_GetPCK (BYTE * block, uint32_t length);
+static int32_t SetRightParity (struct s_reader * reader);
 
 /*
  * Exported functions definition
  */
 
-int ICC_Async_Device_Init (struct s_reader *reader)
+int32_t ICC_Async_Device_Init (struct s_reader *reader)
 {
 	reader->fdmc=-1;
 	cs_debug_mask (D_IFD, "IFD: Opening device %s\n", reader->device);
@@ -116,7 +116,7 @@ int ICC_Async_Device_Init (struct s_reader *reader)
 			//this reader is uninitialized, thus the first one, since the first one initializes all others
 
 			//get physical device name
-			int pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
+			int32_t pos = strlen(reader->device)-2; //this is where : should be located; is also valid length of physical device name
 			if (reader->device[pos] != 0x3a) //0x3a = ":"
 				cs_log("ERROR: '%c' detected instead of slot separator `:` at second to last position of device %s", reader->device[pos], reader->device);
 			reader->slot=(int)reader->device[pos+1] - 0x30;
@@ -235,9 +235,9 @@ int ICC_Async_Device_Init (struct s_reader *reader)
  return OK;
 }
 
-int ICC_Async_GetStatus (struct s_reader *reader, int * card)
+int32_t ICC_Async_GetStatus (struct s_reader *reader, int32_t * card)
 {
-	int in=0;
+	int32_t in=0;
 
 	if (reader->crdr.active==1 && reader->crdr.get_status) {
 		call(reader->crdr.get_status(reader, &in));
@@ -255,7 +255,7 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 		case R_DB2COM2:
 #if defined(TUXBOX) && defined(PPC)
 			{
-			ushort msr=1;
+			uint16_t msr=1;
 			IO_Serial_Ioctl_Lock(reader, 1);
 			ioctl(reader->fdmc, GET_PCDAT, &msr);
 			if (reader->typ == R_DB2COM2)
@@ -309,7 +309,7 @@ int ICC_Async_GetStatus (struct s_reader *reader, int * card)
 	return OK;
 }
 
-int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short deprecated)
+int32_t ICC_Async_Activate (struct s_reader *reader, ATR * atr, uint16_t deprecated)
 {
 	cs_debug_mask (D_IFD, "IFD: Activating card in reader %s\n", reader->label);
 
@@ -331,7 +331,7 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 			case R_SC8in1:
 			case R_MOUSE:
 				LOCK_SC8IN1;
-				int ret = Phoenix_Reset(reader, atr);
+				int32_t ret = Phoenix_Reset(reader, atr);
 				UNLOCK_SC8IN1;
 				if (ret) {
 					cs_debug_mask(D_TRACE, "ERROR, function call Phoenix_Reset returns error.");
@@ -359,7 +359,7 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 			case R_PCSC:
 				 {
 					unsigned char atrarr[ATR_MAX_SIZE];
-					ushort atr_size = 0;
+					uint16_t atr_size = 0;
 					if (pcsc_activate_card(reader, atrarr, &atr_size))
 					{
 						if (ATR_InitFromArray (atr, atrarr, atr_size) == ATR_OK)
@@ -380,7 +380,7 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	}
 
 	unsigned char atrarr[ATR_MAX_SIZE];
-	unsigned int atr_size;
+	uint32_t atr_size;
 	ATR_GetRaw(atr, atrarr, &atr_size);
 	cs_ri_log(reader, "ATR: %s", cs_hexdump(1, atrarr, atr_size));
 
@@ -396,7 +396,7 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	reader->protocol_type = ATR_PROTOCOL_TYPE_T0;
 
 	LOCK_SC8IN1;
-	int ret = Parse_ATR(reader, atr, deprecated);
+	int32_t ret = Parse_ATR(reader, atr, deprecated);
 	UNLOCK_SC8IN1; //Parse_ATR and InitCard need to be included in lock because they change parity of serial port
 	if (ret)
 		cs_log("ERROR: Parse_ATR returned error");
@@ -407,7 +407,7 @@ int ICC_Async_Activate (struct s_reader *reader, ATR * atr, unsigned short depre
 	return OK;
 }
 
-int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsigned short command_len, unsigned char *rsp, unsigned short *lr)
+int32_t ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, uint16_t command_len, unsigned char *rsp, uint16_t *lr)
 {
 #ifdef HAVE_PCSC
 	if (reader->typ == R_PCSC)
@@ -415,11 +415,11 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsign
 #endif
 	*lr = 0; //will be returned in case of error
 
-	int ret;
+	int32_t ret;
 
 	LOCK_SC8IN1;
 
-	int try = 1;
+	int32_t try = 1;
 	do {
 	 switch (reader->protocol_type) {
 		if (try > 1)
@@ -457,14 +457,14 @@ int ICC_Async_CardWrite (struct s_reader *reader, unsigned char *command, unsign
 	return OK;
 }
 
-int ICC_Async_SetTimings (struct s_reader * reader, unsigned wait_etu)
+int32_t ICC_Async_SetTimings (struct s_reader * reader, uint32_t wait_etu)
 {
 	reader->read_timeout = ETU_to_ms(reader, wait_etu);
 	cs_debug_mask(D_IFD, "Setting timeout to %i", wait_etu);
 	return OK;
 }
 
-int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
+int32_t ICC_Async_Transmit (struct s_reader *reader, uint32_t size, BYTE * data)
 {
 	cs_ddump_mask(D_IFD, data, size, "IFD Transmit: ");
 	BYTE *buffer = NULL, *sent;
@@ -529,7 +529,7 @@ int ICC_Async_Transmit (struct s_reader *reader, unsigned size, BYTE * data)
 	return OK;
 }
 
-int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
+int32_t ICC_Async_Receive (struct s_reader *reader, uint32_t size, BYTE * data)
 {
 
 	if (reader->crdr.active==1) {
@@ -578,7 +578,7 @@ int ICC_Async_Receive (struct s_reader *reader, unsigned size, BYTE * data)
 	return OK;
 }
 
-int ICC_Async_Close (struct s_reader *reader)
+int32_t ICC_Async_Close (struct s_reader *reader)
 {
 	cs_debug_mask (D_IFD, "IFD: Closing device %s", reader->device);
 
@@ -628,7 +628,7 @@ int ICC_Async_Close (struct s_reader *reader)
 	return OK;
 }
 
-static unsigned long ICC_Async_GetClockRate (int cardmhz)
+static uint32_t ICC_Async_GetClockRate (int32_t cardmhz)
 {
 	switch (cardmhz) {
 		case 357:
@@ -641,29 +641,29 @@ static unsigned long ICC_Async_GetClockRate (int cardmhz)
 	}
 }
 
-static void ICC_Async_InvertBuffer (unsigned size, BYTE * buffer)
+static void ICC_Async_InvertBuffer (uint32_t size, BYTE * buffer)
 {
-	uint i;
+	uint32_t i;
 
 	for (i = 0; i < size; i++)
 		buffer[i] = ~(INVERT_BYTE (buffer[i]));
 }
 
-static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprecated)
+static int32_t Parse_ATR (struct s_reader * reader, ATR * atr, uint16_t deprecated)
 {
 	BYTE FI = ATR_DEFAULT_FI;
 	//BYTE t = ATR_PROTOCOL_TYPE_T0;
 	double d = ATR_DEFAULT_D;
 	double n = ATR_DEFAULT_N;
-	int ret;
+	int32_t ret;
 
-		int numprot = atr->pn;
+		int32_t numprot = atr->pn;
 		//if there is a trailing TD, this number is one too high
 		BYTE tx;
 		if (ATR_GetInterfaceByte (atr, numprot-1, ATR_INTERFACE_BYTE_TD, &tx) == ATR_OK)
 			if ((tx & 0xF0) == 0)
 				numprot--;
-		int i,point;
+		int32_t i,point;
 		char txt[50];
 		bool OffersT[3]; //T14 stored as T2
 		for (i = 0; i <= 2; i++)
@@ -699,7 +699,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 			cs_debug_mask(D_ATR, "%s",txt);
 		}
 
-		int numprottype = 0;
+		int32_t numprottype = 0;
 		for (i = 0; i <= 2; i++)
 			if (OffersT[i])
 				numprottype ++;
@@ -740,7 +740,7 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 				req[1]=0x10 | reader->protocol_type; //PTS0 always flags PTS1 to be sent always
 				if (ATR_GetInterfaceByte (atr, 1, ATR_INTERFACE_BYTE_TA, &req[2]) != ATR_OK)	//PTS1
 					req[2] = 0x11; //defaults FI and DI to 1
-				unsigned int len = 0;
+				uint32_t len = 0;
 				call (SetRightParity (reader));
 				ret = PPS_Exchange (reader, req, &len);
 				if (ret == OK) {
@@ -791,11 +791,11 @@ static int Parse_ATR (struct s_reader * reader, ATR * atr, unsigned short deprec
 		return InitCard (reader, atr, ATR_DEFAULT_FI, ATR_DEFAULT_D, n, deprecated);
 }
 
-static int PPS_Exchange (struct s_reader * reader, BYTE * params, unsigned *length)
+static int32_t PPS_Exchange (struct s_reader * reader, BYTE * params, uint32_t *length)
 {
 	BYTE confirm[PPS_MAX_LENGTH];
-	unsigned len_request, len_confirm;
-	int ret;
+	uint32_t len_request, len_confirm;
+	int32_t ret;
 
 	len_request = PPS_GetLength (params);
 	params[len_request - 1] = PPS_GetPCK(params, len_request - 1);
@@ -831,9 +831,9 @@ static int PPS_Exchange (struct s_reader * reader, BYTE * params, unsigned *leng
 	return ret;
 }
 
-static unsigned PPS_GetLength (BYTE * block)
+static uint32_t PPS_GetLength (BYTE * block)
 {
-	unsigned length = 3;
+	uint32_t length = 3;
 
 	if (PPS_HAS_PPS1 (block))
 	length++;
@@ -847,7 +847,7 @@ static unsigned PPS_GetLength (BYTE * block)
 	return length;
 }
 
-static unsigned int ETU_to_ms(struct s_reader * reader, unsigned long WWT)
+static uint32_t ETU_to_ms(struct s_reader * reader, uint32_t WWT)
 {
 #define CHAR_LEN 10L //character length in ETU, perhaps should be 9 when parity = none?
 	if (WWT > CHAR_LEN)
@@ -855,10 +855,10 @@ static unsigned int ETU_to_ms(struct s_reader * reader, unsigned long WWT)
 	else
 		WWT = 0;
 	double work_etu = 1000 / (double)reader->current_baudrate;//FIXME sometimes work_etu should be used, sometimes initial etu
-	return (unsigned int) WWT * work_etu * reader->cardmhz / reader->mhz;
+	return (uint32_t) WWT * work_etu * reader->cardmhz / reader->mhz;
 }
 
-static int ICC_Async_SetParity (struct s_reader * reader, unsigned short parity)
+static int32_t ICC_Async_SetParity (struct s_reader * reader, uint16_t parity)
 {
 	if (reader->crdr.active && reader->crdr.set_parity) {
 		call(reader->crdr.set_parity(reader, parity));
@@ -888,10 +888,10 @@ static int ICC_Async_SetParity (struct s_reader * reader, unsigned short parity)
 	return OK;
 }
 
-static int SetRightParity (struct s_reader * reader)
+static int32_t SetRightParity (struct s_reader * reader)
 {
 	//set right parity
-	unsigned short parity = PARITY_EVEN;
+	uint16_t parity = PARITY_EVEN;
 	if (reader->convention == ATR_CONVENTION_INVERSE)
 		parity = PARITY_ODD;
 	else if(reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
@@ -915,13 +915,13 @@ static int SetRightParity (struct s_reader * reader)
 	return OK;
 }
 
-static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, double n, unsigned short deprecated)
+static int32_t InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, double n, uint16_t deprecated)
 {
 	double I;
 	double F;
-    	unsigned long BGT, edc, EGT, CGT, WWT = 0;
-    	unsigned int GT;
-    	unsigned long gt_ms;
+	uint32_t BGT, edc, EGT, CGT, WWT = 0;
+	uint32_t GT;
+	uint32_t gt_ms;
 
 	//set the amps and the volts according to ATR
 	if (ATR_GetParameter(atr, ATR_PARAMETER_I, &I) != ATR_OK)
@@ -940,7 +940,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 
 	if (deprecated == 0) {
 		if (reader->protocol_type != ATR_PROTOCOL_TYPE_T14) { //dont switch for T14
-			unsigned long baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
+			uint32_t baud_temp = d * ICC_Async_GetClockRate (reader->cardmhz) / F;
 			if (reader->crdr.active == 1) {
 				if (reader->crdr.set_baudrate)
 					call (reader->crdr.set_baudrate(reader, baud_temp));
@@ -977,7 +977,7 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 			wi = DEFAULT_WI;
 
 			// WWT = 960 * WI * (Fi / f) * 1000 milliseconds
-			WWT = (unsigned long) 960 * wi; //in ETU
+			WWT = (uint32_t) 960 * wi; //in ETU
 			if (reader->protocol_type == ATR_PROTOCOL_TYPE_T14)
 				WWT >>= 1; //is this correct?
 
@@ -1025,10 +1025,10 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 			#endif
 
 				// Set CWT = (2^CWI + 11) work etu
-				reader->CWT = (unsigned short) (((1<<cwi) + 11)); // in ETU
+				reader->CWT = (uint16_t) (((1<<cwi) + 11)); // in ETU
 
 				// Set BWT = (2^BWI * 960 + 11) work etu
-				reader->BWT = (unsigned short)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
+				reader->BWT = (uint16_t)((1<<bwi) * 960 * 372 * 9600 / ICC_Async_GetClockRate(reader->cardmhz))	+ 11 ;
 
 				// Set BGT = 22 * work etu
 				BGT = 22L; //in ETU
@@ -1063,18 +1063,18 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 	call (SetRightParity (reader));
 
 	if (reader->crdr.active==1 && reader->crdr.write_settings) {
-		unsigned long ETU = 0;
+		uint32_t ETU = 0;
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
-		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (unsigned short) atr_f_table[FI], (BYTE)d, n));
+		call(reader->crdr.write_settings(reader, ETU, EGT, 5, I, (uint16_t) atr_f_table[FI], (BYTE)d, n));
 	}
 
   //write settings to internal device
 	if(reader->typ == R_INTERNAL && reader->crdr.active==0) {
 #if defined(SCI_DEV)
 		double F =	(double) atr_f_table[FI];
-		unsigned long ETU = 0;
+		uint32_t ETU = 0;
 		//for Irdeto T14 cards, do not set ETU
 		if (!(atr->hbn >= 6 && !memcmp(atr->hb, "IRDETO", 6) && reader->protocol_type == ATR_PROTOCOL_TYPE_T14))
 			ETU = F / d;
@@ -1088,14 +1088,14 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
 	}
 #if defined(LIBUSB)
 	if (reader->typ == R_SMART)
-		SR_WriteSettings(reader, (unsigned short) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)reader->protocol_type, reader->convention);
+		SR_WriteSettings(reader, (uint16_t) atr_f_table[FI], (BYTE)d, (BYTE)EGT, (BYTE)reader->protocol_type, reader->convention);
 #endif
 	cs_log("Maximum frequency for this card is formally %i Mhz, clocking it to %.2f Mhz", atr_fs_table[FI] / 1000000, (float) reader->mhz / 100);
 
 	//IFS setting in case of T1
 	if ((reader->protocol_type == ATR_PROTOCOL_TYPE_T1) && (reader->ifsc != DEFAULT_IFSC)) {
 		unsigned char rsp[CTA_RES_LEN];
-		unsigned short lr=0;
+		uint16_t lr=0;
 		unsigned char tmp[] = { 0x21, 0xC1, 0x01, 0x00, 0x00 };
 		tmp[3] = reader->ifsc; // Information Field size
 		tmp[4] = reader->ifsc ^ 0xE1;
@@ -1104,10 +1104,10 @@ static int InitCard (struct s_reader * reader, ATR * atr, BYTE FI, double d, dou
  return OK;
 }
 
-static BYTE PPS_GetPCK (BYTE * block, unsigned length)
+static BYTE PPS_GetPCK (BYTE * block, uint32_t length)
 {
 	BYTE pck;
-	unsigned i;
+	uint32_t i;
 
 	pck = block[0];
 	for (i = 1; i < length; i++)

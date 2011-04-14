@@ -57,10 +57,10 @@ typedef int bool;
 #endif
 typedef char *STR;
 #ifndef HAVE_PCSC
-typedef unsigned short USHORT;
+typedef uint16_t USHORT;
 typedef unsigned char UCHAR;
 typedef unsigned char *PUCHAR;
-typedef unsigned long ULONG;
+typedef uint32_t ULONG;
 typedef ULONG RESPONSECODE;
 typedef ULONG *PULONG;
 typedef ULONG DWORD;

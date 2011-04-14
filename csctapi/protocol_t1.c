@@ -37,20 +37,20 @@
  * Not exported functions declaration
  */
 
-static int Protocol_T1_SendBlock (struct s_reader *reader, T1_Block * block);
+static int32_t Protocol_T1_SendBlock (struct s_reader *reader, T1_Block * block);
 
-static int Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block);
+static int32_t Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block);
 
 /*
  * Exproted funtions definition
  */
 
-int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr)
+int32_t Protocol_T1_Command (struct s_reader *reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
   T1_Block *block;
   BYTE *buffer, rsp_type, bytes, nr, wtx;
-  unsigned short counter;
-  int ret;
+  uint16_t counter;
+  int32_t ret;
   bool more;
   if (command[1] == T1_BLOCK_S_IFS_REQ)
   {
@@ -259,18 +259,18 @@ int Protocol_T1_Command (struct s_reader *reader, unsigned char * command, unsig
  * Not exported functions definition
  */
 
-static int Protocol_T1_SendBlock (struct s_reader *reader, T1_Block * block)
+static int32_t Protocol_T1_SendBlock (struct s_reader *reader, T1_Block * block)
 {
-	int ret;
+	int32_t ret;
   ret = ICC_Async_Transmit (reader, block->length, block->data);
 	T1_Block_Delete(block);
   return ret;
 }
 
-static int Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block)
+static int32_t Protocol_T1_ReceiveBlock (struct s_reader *reader, T1_Block ** block)
 {
   BYTE buffer[T1_BLOCK_MAX_SIZE];
-  int ret;
+  int32_t ret;
 
   /* Receive four mandatory bytes */
   if (ICC_Async_Receive (reader, 4, buffer))

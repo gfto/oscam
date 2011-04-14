@@ -29,10 +29,10 @@
 #include "icc_async.h"
 
 static struct termios stored_termio[8];//FIXME no globals please
-static int current_slot; //FIXME should not be a global, but one per SC8in1
+static int32_t current_slot; //FIXME should not be a global, but one per SC8in1
 static unsigned char cardstatus; //FIXME not global but one per SC8in1  //if not static, the threads dont share same cardstatus!
 
-static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsigned short lenwrite, unsigned short lenread)
+static int32_t sc8in1_command(struct s_reader * reader, unsigned char * buff, uint16_t lenwrite, uint16_t lenread)
 {
   struct termios termio, termiobackup;
 
@@ -80,7 +80,7 @@ static int sc8in1_command(struct s_reader * reader, unsigned char * buff, unsign
 	return OK;
 }
 
-static int readsc8in1(struct s_reader * reader)
+static int32_t readsc8in1(struct s_reader * reader)
 {
   // Reads the card status
   //
@@ -103,13 +103,13 @@ static int readsc8in1(struct s_reader * reader)
   return(buf[2]);
 }
 
-int Sc8in1_Selectslot(struct s_reader * reader, int slot) {
+int32_t Sc8in1_Selectslot(struct s_reader * reader, int32_t slot) {
   // selects the Smartcard Socket "slot"
   //
 	if (slot == current_slot)
 		return OK;
 	cs_debug_mask(D_DEVICE, "SC8in1: select slot %i", slot);
-  int res;
+  int32_t res;
   unsigned char tmp[128];
   struct termios termio;
 	//cs_sleepms(10); //FIXME do I need this?
@@ -159,12 +159,12 @@ int Sc8in1_Selectslot(struct s_reader * reader, int slot) {
   return OK;
 }
 
-int Sc8in1_Init(struct s_reader * reader)
+int32_t Sc8in1_Init(struct s_reader * reader)
 {
 	//additional init, Phoenix_Init is also called for Sc8in1 !
 	struct termios termio;
-	int i, speed;
-	unsigned int is_mcr = 0, sc8in1_clock = 0;
+	int32_t i, speed;
+	uint32_t is_mcr = 0, sc8in1_clock = 0;
 	unsigned char buff[3];
 	
 	tcgetattr(reader->handle,&termio);
@@ -177,14 +177,14 @@ int Sc8in1_Init(struct s_reader * reader)
 	buff[0] = 0x74;
 	sc8in1_command(reader, buff, 1, 1);
 	if (buff[0] == 4 || buff[0] == 8) {
-		is_mcr = (unsigned short) buff[0];
+		is_mcr = (uint16_t) buff[0];
 		cs_log("SC8in1: device MCR%i detected", is_mcr);
 
 		//now work-around the problem that timeout of MCR has to be 0 in case of USB
 		buff[0] = 0x72; //get timeout
 		buff[1] = 0;
 		buff[2] = 0;
-		int ret = sc8in1_command(reader, buff, 1, 2);
+		int32_t ret = sc8in1_command(reader, buff, 1, 2);
 		if ((strstr(reader->device, "USB")) && (ret == ERROR || buff[0] != 0 || buff[1] != 0)) {//assuming we are connected thru USB and timeout is undetected or not zero
 			cs_log("DINGO: Detected Sc8in1 device connected with USB, setting timeout to 0 and writing to EEPROM");
 			buff[0] = 0x70; //enable write EEPROM
@@ -206,7 +206,7 @@ int Sc8in1_Init(struct s_reader * reader)
 		if (rdr->handle == reader->handle) { //corresponding slot
 
 			//check slot boundaries
-			int upper_slot = (is_mcr)? is_mcr : 8; //set upper limit to 8 for non MCR readers
+			int32_t upper_slot = (is_mcr)? is_mcr : 8; //set upper limit to 8 for non MCR readers
 			if (rdr->slot <= 0 || rdr->slot > upper_slot) {
 				cs_log("ERROR: device %s has invalid slot number %i", rdr->device, rdr->slot);
 				return ERROR;
@@ -267,12 +267,12 @@ int Sc8in1_Init(struct s_reader * reader)
 	return OK;
 }
 
-int Sc8in1_Card_Changed(struct s_reader * reader) {
+int32_t Sc8in1_Card_Changed(struct s_reader * reader) {
   // returns the SC8in1 Status
   // 0= no card was changed (inserted or removed)
   // -1= one ore more cards were changed (inserted or removed)
-  int result;
-  int lineData;
+  int32_t result;
+  int32_t lineData;
   ioctl(reader->handle, TIOCMGET, &lineData);
   result= (lineData & TIOCM_CTS) / TIOCM_CTS;
   // give some time back to the system .. we're in a thread after all
@@ -280,10 +280,10 @@ int Sc8in1_Card_Changed(struct s_reader * reader) {
   return(result-1);
 }
 
-int Sc8in1_GetStatus (struct s_reader * reader, int * in)
+int32_t Sc8in1_GetStatus (struct s_reader * reader, int32_t * in)
 {
 	if (Sc8in1_Card_Changed(reader)|| *in == -1) {
-		int i=readsc8in1(reader); //read cardstatus
+		int32_t i=readsc8in1(reader); //read cardstatus
 		if (i < 0) {
             // give some time back to the system .. we're in a thread after all
             sched_yield();

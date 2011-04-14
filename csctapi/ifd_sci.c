@@ -22,16 +22,16 @@
 #define OK 		0 
 #define ERROR 1
 
-int Sci_GetStatus (struct s_reader * reader, int * status)
+int32_t Sci_GetStatus (struct s_reader * reader, int32_t * status)
 {
 	call (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, status)<0);
 	return OK;
 }
 
-int Sci_Reset (struct s_reader * reader, ATR * atr)
+int32_t Sci_Reset (struct s_reader * reader, ATR * atr)
 {
 	unsigned char buf[SCI_MAX_ATR_SIZE];
-	int n = 0;
+	int32_t n = 0;
 	SCI_PARAMETERS params;
 	
 	memset(&params,0,sizeof(SCI_PARAMETERS));
@@ -68,9 +68,9 @@ int Sci_Reset (struct s_reader * reader, ATR * atr)
 	}
 }
 
-int Sci_WriteSettings (struct s_reader * reader, BYTE T, unsigned long fs, unsigned long ETU, unsigned long WWT, unsigned long BWT, unsigned long CWT, unsigned long EGT, unsigned char P, unsigned char I)
+int32_t Sci_WriteSettings (struct s_reader * reader, BYTE T, uint32_t fs, uint32_t ETU, uint32_t WWT, uint32_t BWT, uint32_t CWT, uint32_t EGT, unsigned char P, unsigned char I)
 {
-	//int n;
+	//int32_t n;
 	SCI_PARAMETERS params;
 	//memset(&params,0,sizeof(SCI_PARAMETERS));
 	call (ioctl(reader->handle, IOCTL_GET_PARAMETERS, &params) < 0 );
@@ -96,10 +96,10 @@ int Sci_WriteSettings (struct s_reader * reader, BYTE T, unsigned long fs, unsig
 	return OK;
 }
 
-int Sci_Activate (struct s_reader * reader)
+int32_t Sci_Activate (struct s_reader * reader)
 {
 	cs_debug_mask(D_IFD, "IFD: Activating card");
-		int in;
+		int32_t in;
 
 #if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
 		call (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0);
@@ -114,10 +114,10 @@ int Sci_Activate (struct s_reader * reader)
 		return OK;
 }
 
-int Sci_Deactivate (struct s_reader * reader)
+int32_t Sci_Deactivate (struct s_reader * reader)
 {
 	cs_debug_mask(D_IFD, "IFD: Deactivating card");
-	int in;
+	int32_t in;
 		
 #if defined(TUXBOX) && (defined(MIPSEL) || defined(PPC) || defined(SH4))
 	call (ioctl(reader->handle, IOCTL_GET_IS_CARD_PRESENT, &in)<0);
@@ -131,10 +131,10 @@ int Sci_Deactivate (struct s_reader * reader)
 }
 
 
-int Sci_FastReset (struct s_reader *reader)
+int32_t Sci_FastReset (struct s_reader *reader)
 {
 	unsigned char buf[SCI_MAX_ATR_SIZE];
-	int n = 0;
+	int32_t n = 0;
 
 	call (ioctl(reader->handle, IOCTL_SET_RESET)<0);
 

@@ -1,14 +1,14 @@
 #ifdef HAVE_PCSC
 
 #include "ifd_pcsc.h"
-int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
+int32_t pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
 {
     ULONG rv;
     DWORD dwReaders;
     LPSTR mszReaders = NULL;
     char *ptr, **readers = NULL;
-    int nbReaders;
-    int reader_nb;
+    int32_t nbReaders;
+    int32_t reader_nb;
 
     pcsc_reader->pcsc_has_card=0;
     pcsc_reader->hCard=0;
@@ -87,7 +87,7 @@ int pcsc_reader_init(struct s_reader *pcsc_reader, char *device)
     return 0;
 }
 
-int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *cta_res, ushort *cta_lr, int l)
+int32_t pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *cta_res, uint16_t *cta_lr, int32_t l)
 {
      LONG rv;
      DWORD dwSendLength, dwRecvLength;
@@ -140,7 +140,7 @@ int pcsc_reader_do_api(struct s_reader *pcsc_reader, const uchar *buf, uchar *ct
 
 }
 
-int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_size)
+int32_t pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, uint16_t *atr_size)
 {
     LONG rv;
     DWORD dwState, dwAtrLen, dwReaderLen;
@@ -180,7 +180,7 @@ int pcsc_activate_card(struct s_reader *pcsc_reader, uchar *atr, ushort *atr_siz
 }
 
 
-int pcsc_check_card_inserted(struct s_reader *pcsc_reader)
+int32_t pcsc_check_card_inserted(struct s_reader *pcsc_reader)
 {
     DWORD dwState, dwAtrLen, dwReaderLen;
     BYTE pbAtr[64];

@@ -97,33 +97,33 @@ ATR;
  * Exported variables declaration
  */
 
-extern const unsigned long atr_fs_table[16];
-extern const unsigned atr_f_table[16];
+extern const uint32_t atr_fs_table[16];
+extern const uint32_t atr_f_table[16];
 extern const double atr_d_table[16];
-extern const unsigned atr_i_table[4];
+extern const uint32_t atr_i_table[4];
 
 /*
  * Exported functions declaraton
  */
 
 /* Initialization */
-int ATR_InitFromArray (ATR * atr, BYTE buffer[ATR_MAX_SIZE], unsigned length);
+int32_t ATR_InitFromArray (ATR * atr, BYTE buffer[ATR_MAX_SIZE], uint32_t length);
 
 /* General smartcard characteristics */
-int ATR_GetConvention (ATR * atr, int *convention);
-int ATR_GetNumberOfProtocols (ATR * atr, unsigned *number_protocols);
-int ATR_GetProtocolType (ATR * atr, unsigned number_protocol, BYTE *protocol_type);
+int32_t ATR_GetConvention (ATR * atr, int32_t *convention);
+int32_t ATR_GetNumberOfProtocols (ATR * atr, uint32_t *number_protocols);
+int32_t ATR_GetProtocolType (ATR * atr, uint32_t number_protocol, BYTE *protocol_type);
 
 /* ATR parameters and integer values */
-int ATR_GetInterfaceByte (ATR * atr, unsigned number, int character, BYTE * ib);
-int ATR_GetIntegerValue (ATR * atr, int name, BYTE * value);
-int ATR_GetParameter (ATR * atr, int name, double *parameter);
-int ATR_GetHistoricalBytes (ATR * atr, BYTE * hist, unsigned *length);
-int ATR_GetCheckByte (ATR * atr, BYTE * check_byte);
-int ATR_GetFsMax (ATR * atr, unsigned long *fsmax);
+int32_t ATR_GetInterfaceByte (ATR * atr, uint32_t number, int32_t character, BYTE * ib);
+int32_t ATR_GetIntegerValue (ATR * atr, int32_t name, BYTE * value);
+int32_t ATR_GetParameter (ATR * atr, int32_t name, double *parameter);
+int32_t ATR_GetHistoricalBytes (ATR * atr, BYTE * hist, uint32_t *length);
+int32_t ATR_GetCheckByte (ATR * atr, BYTE * check_byte);
+int32_t ATR_GetFsMax (ATR * atr, uint32_t *fsmax);
 
 /* Raw ATR retrieving */
-int ATR_GetRaw (ATR * atr, BYTE * buffer, unsigned *lenght);
-int ATR_GetSize (ATR * atr, unsigned *size);
+int32_t ATR_GetRaw (ATR * atr, BYTE * buffer, uint32_t *lenght);
+int32_t ATR_GetSize (ATR * atr, uint32_t *size);
 
 #endif /* _ATR_ */

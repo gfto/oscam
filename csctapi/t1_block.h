@@ -21,7 +21,7 @@
     License along with this library; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
-
+#include <stdint.h> 
 #ifndef _T1_BLOCK_
 #define _T1_BLOCK_
 
@@ -55,7 +55,7 @@
 typedef struct
 {
   unsigned char * data;
-  unsigned length;
+  uint32_t length;
 }
 T1_Block;
  
@@ -63,9 +63,9 @@ T1_Block;
  * Exported functions declaration
  */
 
-T1_Block * T1_Block_New (unsigned char * buffer, unsigned length);
+T1_Block * T1_Block_New (unsigned char * buffer, uint32_t length);
 
-T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned char ns, int more);
+T1_Block * T1_Block_NewIBlock (unsigned char len, unsigned char * inf, unsigned char ns, int32_t more);
 
 T1_Block * T1_Block_NewRBlock (unsigned char type, unsigned char nr);
 
@@ -75,7 +75,7 @@ unsigned char T1_Block_GetType (T1_Block * block);
 
 unsigned char T1_Block_GetNS (T1_Block * block);
 
-int T1_Block_GetMore (T1_Block * block);
+int32_t T1_Block_GetMore (T1_Block * block);
 
 unsigned char T1_Block_GetNR (T1_Block * block);
 

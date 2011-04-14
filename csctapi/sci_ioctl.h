@@ -4,8 +4,6 @@
 /* constants */
 #define DEVICE_NAME			"sci_dev"
 
-//#define ULONG (unsigned long)
-
 #define SCI_IOW_MAGIC			's'
 
 #ifdef STB04SCI
@@ -45,19 +43,19 @@
 #define IOCTL_GET_ATR_STATUS				12
 #define IOCTL_DUMP_REGS							13
 #else
-#define IOCTL_SET_RESET							_IOW(SCI_IOW_MAGIC, 1,	unsigned long)
+#define IOCTL_SET_RESET							_IOW(SCI_IOW_MAGIC, 1,	uint32_t)
 #define IOCTL_SET_MODES							_IOW(SCI_IOW_MAGIC, 2,	SCI_MODES)
 #define IOCTL_GET_MODES							_IOW(SCI_IOW_MAGIC, 3,	SCI_MODES)
 #define IOCTL_SET_PARAMETERS				_IOW(SCI_IOW_MAGIC, 4,	SCI_PARAMETERS)
 #define IOCTL_GET_PARAMETERS				_IOW(SCI_IOW_MAGIC, 5,	SCI_PARAMETERS)
-#define IOCTL_SET_CLOCK_START				_IOW(SCI_IOW_MAGIC, 6,	unsigned long)
-#define IOCTL_SET_CLOCK_STOP				_IOW(SCI_IOW_MAGIC, 7,	unsigned long)
-#define IOCTL_GET_IS_CARD_PRESENT		_IOW(SCI_IOW_MAGIC, 8,	unsigned long)
-#define IOCTL_GET_IS_CARD_ACTIVATED	_IOW(SCI_IOW_MAGIC, 9,	unsigned long)
-#define IOCTL_SET_DEACTIVATE				_IOW(SCI_IOW_MAGIC, 10, unsigned long)
-#define IOCTL_SET_ATR_READY					_IOW(SCI_IOW_MAGIC, 11, unsigned long)
-#define IOCTL_GET_ATR_STATUS				_IOW(SCI_IOW_MAGIC, 12, unsigned long)
-#define IOCTL_DUMP_REGS							_IOW(SCI_IOW_MAGIC, 20, unsigned long)
+#define IOCTL_SET_CLOCK_START				_IOW(SCI_IOW_MAGIC, 6,	uint32_t)
+#define IOCTL_SET_CLOCK_STOP				_IOW(SCI_IOW_MAGIC, 7,	uint32_t)
+#define IOCTL_GET_IS_CARD_PRESENT		_IOW(SCI_IOW_MAGIC, 8,	uint32_t)
+#define IOCTL_GET_IS_CARD_ACTIVATED	_IOW(SCI_IOW_MAGIC, 9,	uint32_t)
+#define IOCTL_SET_DEACTIVATE				_IOW(SCI_IOW_MAGIC, 10, uint32_t)
+#define IOCTL_SET_ATR_READY					_IOW(SCI_IOW_MAGIC, 11, uint32_t)
+#define IOCTL_GET_ATR_STATUS				_IOW(SCI_IOW_MAGIC, 12, uint32_t)
+#define IOCTL_DUMP_REGS							_IOW(SCI_IOW_MAGIC, 20, uint32_t)
 #endif
 
 /* MAJOR NUM OF DEVICE DRVIER */

@@ -30,16 +30,16 @@
 #define FALSE 0
 #define TRUE 1
 
-int out_endpoint;
+int32_t out_endpoint;
 
-static int smartreader_check_endpoint(libusb_device *usb_dev)
+static int32_t smartreader_check_endpoint(libusb_device *usb_dev)
 {
     struct libusb_device_descriptor desc;
     struct libusb_config_descriptor *configDesc;
-    int ret;
-    int j,k,l;
-    u_int8_t tmpEndpointAddress;  
-    int nb_endpoint_ok;
+    int32_t ret;
+    int32_t j,k,l;
+    uint8_t tmpEndpointAddress;  
+    int32_t nb_endpoint_ok;
 
     nb_endpoint_ok=0;
     
@@ -78,14 +78,14 @@ static void print_devs(libusb_device **devs)
 {
 	libusb_device *dev;
 	libusb_device_handle *handle;
-	int i = 0;
-	int ret;
-    int busid, devid;
+	int32_t i = 0;
+	int32_t ret;
+    int32_t busid, devid;
     unsigned char iserialbuffer[128];
     
 	while ((dev = devs[i++]) != NULL) {
 		struct libusb_device_descriptor desc;
-		int r = libusb_get_device_descriptor(dev, &desc);
+		int32_t r = libusb_get_device_descriptor(dev, &desc);
 		if (r < 0) {
 			fprintf(stderr, "failed to get device descriptor");
 			return;
@@ -114,10 +114,10 @@ static void print_devs(libusb_device **devs)
 	}
 }
 
-int main(int argc, char **argv)
+int32_t main(int32_t argc, char **argv)
 {
 	libusb_device **devs;
-	int r;
+	int32_t r;
 	ssize_t cnt;
 
 	r = libusb_init(NULL);
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
     
 	cnt = libusb_get_device_list(NULL, &devs);
 	if (cnt < 0) 
-		return (int) cnt;
+		return (int32_t) cnt;
     
 
     print_devs(devs);

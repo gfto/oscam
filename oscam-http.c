@@ -1829,7 +1829,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 	char *sharelist_ = getParam(params, "globallist");
 	int32_t show_global_list = sharelist_ && sharelist_[0]=='1';
 
-	int offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
+	int32_t offset = atoi(getParam(params, "offset")); //should be 0 if parameter is missed on very first call
 	if (!offset) offset = 1; //todo: Schlocke offset == 0 doesn't start was this planned?
 	
 	struct s_reader *rdr = get_reader_by_label(getParam(params, "label"));
@@ -1894,8 +1894,8 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
                 }
 
                 it = ll_iter_create(cards);
-                int offset2 = offset;
-                int count = 0;
+                int32_t offset2 = offset;
+                int32_t count = 0;
                 while ((card = ll_iter_move(it, offset2))) {
                 	offset2 = 1;
                 	if (count == ENTITLEMENT_PAGE_SIZE)
@@ -2016,7 +2016,7 @@ char *send_oscam_entitlement(struct templatevars *vars, struct uriparams *params
 					cardcount++;
 				}
 				
-				int has_more = (card != NULL); //next/prev page
+				int32_t has_more = (card != NULL); //next/prev page
 
 				// set previous Link if needed
 				if (offset > ENTITLEMENT_PAGE_SIZE) {

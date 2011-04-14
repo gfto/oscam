@@ -32,31 +32,31 @@
  * Not exported variables definition
  */
 
-const unsigned long atr_fs_table[16] = {4000000L, 5000000L, 6000000L, 8000000L, 12000000L, 16000000L, 20000000L, 0, 0, 5000000L, 7500000L, 10000000L, 15000000L, 20000000L, 0, 0};
+const uint32_t atr_fs_table[16] = {4000000L, 5000000L, 6000000L, 8000000L, 12000000L, 16000000L, 20000000L, 0, 0, 5000000L, 7500000L, 10000000L, 15000000L, 20000000L, 0, 0};
 
-static const unsigned atr_num_ib_table[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
+static const uint32_t atr_num_ib_table[16] = {0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4};
 
 /*
  * Exported variables definition
  */
 
-const unsigned atr_f_table[16] = {372, 372, 558, 744, 1116, 1488, 1860, 0, 0, 512, 768, 1024, 1536, 2048, 0, 0};
+const uint32_t atr_f_table[16] = {372, 372, 558, 744, 1116, 1488, 1860, 0, 0, 512, 768, 1024, 1536, 2048, 0, 0};
 
 const double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 32, 64, 12, 20, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625};
 //old table has 0 for RFU:
 //double atr_d_table[16] = {0, 1, 2, 4, 8, 16, 0, 0, 0, 0, 0.5, 0.25, 125, 0.0625, 0.03125, 0.015625};
 
-const unsigned atr_i_table[4] = {25, 50, 100, 0};
+const uint32_t atr_i_table[4] = {25, 50, 100, 0};
 
 /* 
  * Exported funcions definition
  */
 
-int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length)
+int32_t ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], uint32_t length)
 {
 	BYTE TDi;
 	BYTE buffer[ATR_MAX_SIZE];
-	unsigned pointer = 0, pn = 0;
+	uint32_t pointer = 0, pn = 0;
 	
 	/* Check size of buffer */
 	if (length < 2)
@@ -202,7 +202,7 @@ int ATR_InitFromArray (ATR * atr, BYTE atr_buffer[ATR_MAX_SIZE], unsigned length
 	return (ATR_OK);
 }
 
-int ATR_GetConvention (ATR * atr, int *convention)
+int32_t ATR_GetConvention (ATR * atr, int32_t *convention)
 {
 	if (atr->TS == 0x3B)
 		(*convention) = ATR_CONVENTION_DIRECT;
@@ -214,19 +214,19 @@ int ATR_GetConvention (ATR * atr, int *convention)
 	return (ATR_OK);
 }
 
-int ATR_GetSize (ATR * atr, unsigned *size)
+int32_t ATR_GetSize (ATR * atr, uint32_t *size)
 {
 	(*size) = atr->length;
 	return (ATR_OK);
 }
 
-int ATR_GetNumberOfProtocols (ATR * atr, unsigned *number_protocols)
+int32_t ATR_GetNumberOfProtocols (ATR * atr, uint32_t *number_protocols)
 {
 	(*number_protocols) = atr->pn;
 	return (ATR_OK);
 }
 
-int ATR_GetProtocolType (ATR * atr, unsigned number_protocol, BYTE *protocol_type)
+int32_t ATR_GetProtocolType (ATR * atr, uint32_t number_protocol, BYTE *protocol_type)
 {
 	if ((number_protocol > atr->pn) || number_protocol < 1)
 		return ATR_NOT_FOUND;
@@ -239,7 +239,7 @@ int ATR_GetProtocolType (ATR * atr, unsigned number_protocol, BYTE *protocol_typ
 	return (ATR_OK);
 }
 
-int ATR_GetInterfaceByte (ATR * atr, unsigned number, int character, BYTE * value)
+int32_t ATR_GetInterfaceByte (ATR * atr, uint32_t number, int32_t character, BYTE * value)
 {
 	if (number > atr->pn || number < 1)
 		return (ATR_NOT_FOUND);
@@ -252,9 +252,9 @@ int ATR_GetInterfaceByte (ATR * atr, unsigned number, int character, BYTE * valu
 	return (ATR_OK);
 }
 
-int ATR_GetIntegerValue (ATR * atr, int name, BYTE * value)
+int32_t ATR_GetIntegerValue (ATR * atr, int32_t name, BYTE * value)
 {
-	int ret;
+	int32_t ret;
 	
 	if (name == ATR_INTEGER_VALUE_FI)
 	{
@@ -336,7 +336,7 @@ int ATR_GetIntegerValue (ATR * atr, int name, BYTE * value)
 	return ret;
 }
 
-int ATR_GetParameter (ATR * atr, int name, double *parameter)
+int32_t ATR_GetParameter (ATR * atr, int32_t name, double *parameter)
 {
 	BYTE FI, DI, II, PI1, PI2, N;
 	
@@ -385,7 +385,7 @@ int ATR_GetParameter (ATR * atr, int name, double *parameter)
 	return (ATR_NOT_FOUND);
 }
 
-int ATR_GetHistoricalBytes (ATR * atr, BYTE hist[ATR_MAX_HISTORICAL], unsigned *length)
+int32_t ATR_GetHistoricalBytes (ATR * atr, BYTE hist[ATR_MAX_HISTORICAL], uint32_t *length)
 {
 	if (atr->hbn == 0)
 		return (ATR_NOT_FOUND);
@@ -395,9 +395,9 @@ int ATR_GetHistoricalBytes (ATR * atr, BYTE hist[ATR_MAX_HISTORICAL], unsigned *
 	return (ATR_OK);
 }
 
-int ATR_GetRaw (ATR * atr, BYTE buffer[ATR_MAX_SIZE], unsigned *length)
+int32_t ATR_GetRaw (ATR * atr, BYTE buffer[ATR_MAX_SIZE], uint32_t *length)
 {
-	unsigned i, j;
+	uint32_t i, j;
 	
 	buffer[0] = atr->TS;
 	buffer[1] = atr->T0;
@@ -433,7 +433,7 @@ int ATR_GetRaw (ATR * atr, BYTE buffer[ATR_MAX_SIZE], unsigned *length)
 	return ATR_OK;
 }
 
-int ATR_GetCheckByte (ATR * atr, BYTE * check_byte)
+int32_t ATR_GetCheckByte (ATR * atr, BYTE * check_byte)
 {
 	if (!((atr->TCK).present))
 		return (ATR_NOT_FOUND);
@@ -442,7 +442,7 @@ int ATR_GetCheckByte (ATR * atr, BYTE * check_byte)
 	return (ATR_OK);
 }
 
-int ATR_GetFsMax (ATR * atr, unsigned long *fsmax)
+int32_t ATR_GetFsMax (ATR * atr, uint32_t *fsmax)
 {
 	BYTE FI;
 	

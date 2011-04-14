@@ -26,15 +26,15 @@
 
 #include "smartreader_types.h"
 
-int SR_Init (struct s_reader *reader);
-int SR_GetStatus (struct s_reader *reader,int * in);
-int SR_Reset (struct s_reader *reader, ATR * atr);
-int SR_Transmit (struct s_reader *reader, BYTE * buffer, unsigned size);
-int SR_Receive (struct s_reader *reader, BYTE * buffer, unsigned size);
-int SR_SetBaudrate (struct s_reader *reader);
-int SR_SetParity (struct s_reader *reader, unsigned short parity);
-int SR_Close (struct s_reader *reader);
-int SR_FastReset(struct s_reader *reader, int delay);
+int32_t SR_Init (struct s_reader *reader);
+int32_t SR_GetStatus (struct s_reader *reader,int32_t * in);
+int32_t SR_Reset (struct s_reader *reader, ATR * atr);
+int32_t SR_Transmit (struct s_reader *reader, BYTE * buffer, uint32_t size);
+int32_t SR_Receive (struct s_reader *reader, BYTE * buffer, uint32_t size);
+int32_t SR_SetBaudrate (struct s_reader *reader);
+int32_t SR_SetParity (struct s_reader *reader, uint16_t parity);
+int32_t SR_Close (struct s_reader *reader);
+int32_t SR_FastReset(struct s_reader *reader, int32_t delay);
 
 #endif // __SMARTREADER__
 #endif // HAVE_LIBUSB

@@ -63,20 +63,20 @@
  * Not exported functions declaration
  */
 
-static int Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr);
+static int32_t Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr);
 
-static int Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command, unsigned char * rsp, unsigned short * lr);
+static int32_t Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command, unsigned char * rsp, uint16_t * lr);
 
-static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr);
+static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr);
 
-static int Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr);
+static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr);
 
-static int APDU_Cmd_Case (unsigned char * command, unsigned short command_len)
+static int32_t APDU_Cmd_Case (unsigned char * command, uint16_t command_len)
 {
 	BYTE B1;
-	ushort B2B3;
-	ulong L;
-	int res;
+	uint16_t B2B3;
+	uint32_t L;
+	int32_t res;
 	
 	/* Calculate length of body */
 	L = MAX(command_len - 4, 0);
@@ -88,21 +88,21 @@ static int APDU_Cmd_Case (unsigned char * command, unsigned short command_len)
 		/* Get first byte of body */
 		B1 = command[4];
 		
-		if ((B1 != 0) && (L == (ulong)B1 + 1))
+		if ((B1 != 0) && (L == (uint32_t)B1 + 1))
 			res = APDU_CASE_2S;
 		else if (L == 1)
 			res = APDU_CASE_3S;
-		else if ((B1 != 0) && (L == (ulong)B1 + 2))
+		else if ((B1 != 0) && (L == (uint32_t)B1 + 2))
 			res = APDU_CASE_4S;
 		else if ((B1 == 0) && (L>2)) {
 			/* Get second and third byte of body */
-			B2B3 = (((ushort)(command[5]) << 8) | command[6]);
+			B2B3 = (((uint16_t)(command[5]) << 8) | command[6]);
 			
-			if ((B2B3 != 0) && (L == (ulong)B2B3 + 3))
+			if ((B2B3 != 0) && (L == (uint32_t)B2B3 + 3))
 				res = APDU_CASE_2E;
 			else if (L == 3)
 				res = APDU_CASE_3E;
-			else if ((B2B3 != 0) && (L == (ulong)B2B3 + 5))
+			else if ((B2B3 != 0) && (L == (uint32_t)B2B3 + 5))
 				res = APDU_CASE_4E;
 			else
 				res = APDU_MALFORMED;
@@ -117,12 +117,12 @@ static int APDU_Cmd_Case (unsigned char * command, unsigned short command_len)
  * Exported funtions definition
  */
 
-int Protocol_T0_Command (struct s_reader * reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr)
+int32_t Protocol_T0_Command (struct s_reader * reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
 	*lr = 0; //will be returned in case of error
 	if (command_len < 5) //APDU_CASE_1 or malformed
 		return ERROR;
-	int cmd_case = APDU_Cmd_Case (command, command_len);
+	int32_t cmd_case = APDU_Cmd_Case (command, command_len);
 	switch (cmd_case) {
 		case APDU_CASE_2E:
 			return Protocol_T0_Case2E (reader, command, command_len, rsp, lr);
@@ -146,14 +146,14 @@ int Protocol_T0_Command (struct s_reader * reader, unsigned char * command, unsi
  */
 
 
-static int Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr)
+static int32_t Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
-	unsigned short tpdu_lr = 0;
-	ulong i;
+	uint16_t tpdu_lr = 0;
+	uint32_t i;
 	
-	unsigned long Lc = (((unsigned long)(command[5]) << 8) | command[6]);
+	uint32_t Lc = (((uint32_t)(command[5]) << 8) | command[6]);
 	if (Lc < 256)
 	{
 		/* MAP APDU onto command TPDU */
@@ -197,15 +197,15 @@ static int Protocol_T0_Case2E (struct s_reader * reader, unsigned char * command
 }
 
 
-static int Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command, unsigned char * rsp, unsigned short * lr)
+static int32_t Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command, unsigned char * rsp, uint16_t * lr)
 {
-	int ret;
+	int32_t ret;
 	BYTE buffer[5];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
-	unsigned short tpdu_lr = 0;
-	long Lm, Lx;
+	uint16_t tpdu_lr = 0;
+	int32_t Lm, Lx;
 
-	unsigned long Le = ((((unsigned long)(command[5]) << 8) | command[6]) == 0 ? 65536 : (((unsigned long)(command[5]) << 8) | command[6]));
+	uint32_t Le = ((((uint32_t)(command[5]) << 8) | command[6]) == 0 ? 65536 : (((uint32_t)(command[5]) << 8) | command[6]));
 	memcpy(buffer, command, 4);//Map APDU command onto TPDU
 
 	if (Le <= 256)
@@ -265,15 +265,15 @@ static int Protocol_T0_Case3E (struct s_reader * reader, unsigned char * command
 }
 
 
-static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr)
+static int32_t Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
-	int ret;
+	int32_t ret;
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_COMMAND];
 	unsigned char tpdu_rsp[CTA_RES_LEN];
-	unsigned short tpdu_lr = 0;
-	long Le;
+	uint16_t tpdu_lr = 0;
+	int32_t Le;
 	
-	unsigned long Lc = (((unsigned long)(command[5]) << 8) | command[6]);
+	uint32_t Lc = (((uint32_t)(command[5]) << 8) | command[6]);
 	/* 4E1 */
 	if (Lc < 256) {
 		/* Map APDU onto command TPDU */
@@ -288,7 +288,7 @@ static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command
 	/* 4E1 a) b) and c) */
 	if (ret == OK)
 	{
-		Le = ((((unsigned long)(command[command_len - 2]) << 8) | command[command_len - 1]) == 0 ? 65536 : (((unsigned long)(command[command_len - 2]) << 8) | command[command_len - 1]));
+		Le = ((((uint32_t)(command[command_len - 2]) << 8) | command[command_len - 1]) == 0 ? 65536 : (((uint32_t)(command[command_len - 2]) << 8) | command[command_len - 1]));
 		if (tpdu_rsp[tpdu_lr - 2] == 0x61)
 		{
 			/* Lm == (Le - APDU_Rsp_RawLen (tpdu_rsp)) == 0 */
@@ -334,12 +334,12 @@ static int Protocol_T0_Case4E (struct s_reader * reader, unsigned char * command
 }
 
 
-static int Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char * command, unsigned short command_len, unsigned char * rsp, unsigned short * lr)
+static int32_t Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char * command, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
 	BYTE buffer[PROTOCOL_T0_MAX_SHORT_RESPONSE];
 	BYTE *data;
-	long Lc, Le, sent, recv;
-	int ret = OK, nulls, cmd_case;
+	int32_t Lc, Le, sent, recv;
+	int32_t ret = OK, nulls, cmd_case;
 	*lr = 0; //in case of error this will be returned
 	
 	cmd_case = APDU_Cmd_Case (command, command_len);
@@ -462,16 +462,16 @@ static int Protocol_T0_ExchangeTPDU (struct s_reader *reader, unsigned char * co
 	return OK;
 }
 
-int Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_raw, unsigned short command_len, unsigned char * rsp, unsigned short * lr)
+int32_t Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_raw, uint16_t command_len, unsigned char * rsp, uint16_t * lr)
 {
 	BYTE buffer[PROTOCOL_T14_MAX_SHORT_RESPONSE];
-	long recv;
-	int cmd_case;
+	int32_t recv;
+	int32_t cmd_case;
 	BYTE ixor = 0x3E;
 	BYTE ixor1 = 0x3F;
 	BYTE b1 = 0x01;
-	int i;
-	long cmd_len = (long) command_len;
+	int32_t i;
+	int32_t cmd_len = (int32_t) command_len;
 	*lr = 0; //in case of error this is returned
 	
 	/* Parse APDU */
@@ -502,7 +502,7 @@ int Protocol_T14_ExchangeTPDU (struct s_reader *reader, unsigned char * cmd_raw,
 	if(cmd_raw[0] == 0x02 && cmd_raw[1] == 0x09)
 		cs_sleepms(2500); //FIXME why wait?
 	call (ICC_Async_Receive (reader, 8, buffer));				//Read one procedure byte
-	recv = (long)buffer[7];
+	recv = (int32_t)buffer[7];
 	if(recv)
 		call (ICC_Async_Receive (reader, recv, buffer + 8));
 	call (ICC_Async_Receive (reader, 1, &ixor));
