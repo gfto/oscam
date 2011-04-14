@@ -107,6 +107,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 				chk_t_global((*params).params[i], (*params).values[i]);
 			}
 		}
+		if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
 		tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<BR><BR><B>Configuration Global done. You should restart Oscam now.</B><BR><BR>");
 		if(write_config()==0) refresh_oscam(REFR_SERVER, in);
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");

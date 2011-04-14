@@ -353,7 +353,7 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "disableuserfile")) {
-		cfg.disableuserfile = strToIntVal(value, 0);
+		cfg.disableuserfile = strToIntVal(value, 1);
 		return;
 	}
 
@@ -396,7 +396,7 @@ void chk_t_global(const char *token, char *value)
 		if (strlen(value) > 0) {
 			if(!cs_malloc(&(cfg.usrfile), strlen(value) + 1, -1)) return;
 			memcpy(cfg.usrfile, value, strlen(value) + 1);
-		}
+		} else cfg.disableuserfile = 1;
 		return;
 	}
 
@@ -1375,6 +1375,7 @@ int32_t init_config()
 	cfg.ulparent = 0;
 	cfg.logfile = NULL;
 	cfg.usrfile = NULL;
+	cfg.disableuserfile = 1;
 	cfg.cwlogdir = NULL;
 	cfg.reader_restart_seconds = 5;
 	cfg.waitforcards = 1;
@@ -1436,6 +1437,7 @@ int32_t init_config()
 			memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
 		else cfg.logtostdout = 1;
 	}
+	if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
 
 	cs_init_log();
 	cs_init_statistics();
@@ -1785,8 +1787,8 @@ int32_t write_config()
 #endif
     if (cfg.disablelog || cfg.http_full_cfg)
     	fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg.disablelog);
-    if (cfg.disableuserfile || cfg.http_full_cfg)
-    	fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg.disableuserfile);
+    if ((cfg.usrfile && cfg.disableuserfile == 0) || cfg.http_full_cfg)
+    	fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg.usrfile?cfg.disableuserfile:1);
     if (cfg.usrfileflag || cfg.http_full_cfg)
     	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg.usrfileflag);
 	if (cfg.ctimeout != CS_CLIENT_TIMEOUT || cfg.http_full_cfg)

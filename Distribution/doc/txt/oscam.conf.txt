@@ -24,9 +24,6 @@ DESCRIPTIONS
        disablelog = 0|1
 	  1 = disable log file, default:0
 
-       disableuserfile = 0|1
-	  1 = avoid logging although logfile is set, default:0
-
        usrfile = filename
 	  log file for user logging, default:none
 
@@ -47,6 +44,9 @@ DESCRIPTIONS
 	   login time in unix/POSIX format
 	   logout time in unix/POSIX format
 	   protocol
+	   
+       disableuserfile = 0|1
+	  1 = avoid logging although usrfile is set, default:1 (also set automatically if usrfile is empty)
 
        usrfileflag = 0|1
 	  usrfile logging mode:

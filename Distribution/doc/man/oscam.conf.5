@@ -31,11 +31,6 @@ the filename).
 1 = disable log file, default:0
 .RE
 .PP
-\fBdisableuserfile\fP = \fB0\fP|\fB1\fP
-.RS 3n
-1 = avoid logging although \fBlogfile\fP is set, default:0
-.RE
-.PP
 \fBusrfile\fP = \fBfilename\fP
 .RS 3n
 log file for user logging, default:none
@@ -57,6 +52,11 @@ log file format:
  login time in unix/POSIX format
  logout time in unix/POSIX format
  protocol
+.RE
+.PP
+\fBdisableuserfile\fP = \fB0\fP|\fB1\fP
+.RS 3n
+1 = avoid logging although \fBuserfile\fP is set, default:1 (also set automatically if userfile is empty)
 .RE
 .PP
 \fBusrfileflag\fP = \fB0\fP|\fB1\fP
