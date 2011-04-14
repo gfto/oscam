@@ -1167,7 +1167,9 @@ void start_anticascader()
   ac_init_stat();
   while(1)
   {
-    cs_sleepms(1000); //FIXME this is a cpu-killer!
+  	int i;
+  	for( i=0; i<cfg.ac_stime*60; i++ )
+  		cs_sleepms(1000); //FIXME this is a cpu-killer!
     ac_do_stat();
   }
 }
