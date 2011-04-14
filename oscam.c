@@ -1344,7 +1344,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	char *t_msg[]= { buf, "invalid access", "invalid ip", "unknown reason" };
 	memset(&client->grp, 0xff, sizeof(uint64_t));
 	//client->grp=0xffffffffffffff;
-	if (account && account->disabled){
+	if ((intptr_t)account != 0 && (intptr_t)account != -1 && account->disabled){
 		account = (struct s_auth *)(0);
 	}
 	client->account=first_client->account;

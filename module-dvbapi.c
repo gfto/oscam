@@ -1413,7 +1413,7 @@ void *dvbapi_event_thread(void *cli) {
 		cs_sleepms(750);
 		event_handler(0);
 	}
-
+	
 	return NULL;
 }
 
@@ -1548,10 +1548,15 @@ void dvbapi_process_input(int32_t demux_id, int32_t filter_num, uchar *buffer, i
 	}
 }
 
+#pragma GCC diagnostic ignored "-Wempty-body"
 void * dvbapi_main_local(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
+	#ifndef NO_PTHREAD_CLEANUP_PUSH
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_cleanup_push(cleanup_thread, (void *) client);
+	#endif
 
 	dvbapi_client=cli;
 
@@ -1733,6 +1738,11 @@ void * dvbapi_main_local(void *cli) {
 			}
 		}
 	}
+	#ifndef NO_PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_pop(1);
+	#else
+	cs_exit(0);
+	#endif
 	return NULL;
 }
 
@@ -2526,11 +2536,16 @@ void azbox_openxcas_ex_callback(int32_t stream_id, uint32_t seq, int32_t idx, ui
 		cs_debug_mask(D_DVBAPI, "openxcas: ex filter started, pid = %x", openxcas_ecm_pid);
 }
 
+#pragma GCC diagnostic ignored "-Wempty-body"
 void * azbox_main(void *cli) {
 	struct s_client * client = (struct s_client *) cli;
 	client->thread=pthread_self();
 	pthread_setspecific(getclient, cli);
 	dvbapi_client=cli;
+	#ifndef NO_PTHREAD_CLEANUP_PUSH
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_cleanup_push(cleanup_thread, (void *) client);
+	#endif
 
 	struct timeb tp;
 	cs_ftime(&tp);
@@ -2644,6 +2659,11 @@ void * azbox_main(void *cli) {
 		}
 	}
 	cs_log("openxcas: invalid message");
+	#ifndef NO_PTHREAD_CLEANUP_PUSH
+	pthread_cleanup_pop(1);
+	#else
+	cs_exit(0);
+	#endif
 	return NULL;
 }
 
