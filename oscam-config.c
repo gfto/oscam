@@ -1870,8 +1870,9 @@ int32_t write_config()
 	/*monitor settings*/
 	if(cfg.mon_port || cfg.mon_appendchaninfo || cfg.mon_hideclient_to != 0 || cfg.mon_aulow != 30) {
 		fprintf(f,"[monitor]\n");
-		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.mon_port);
-		if (cfg.mon_srvip != 0)
+		if (cfg.mon_port != 0 || cfg.http_full_cfg)
+			fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.mon_port);
+		if (cfg.mon_srvip != 0 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "serverip", "%s\n", cs_inet_ntoa(cfg.mon_srvip));		
 		value = mk_t_iprange(cfg.mon_allowed);
 		if(strlen(value) > 0 || cfg.http_full_cfg)
