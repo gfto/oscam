@@ -834,7 +834,7 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
       if (ua_position == -1)
          return ERROR;
    }
-   // if (ep->type == GLOBAL && memcmp(&ep->emm[4], &reader->hexserial[2], 4) == 0)  //workaround for vdr-sc client
+   // if (ep->type == GLOBAL && memcmp(&ep->emm[4], &reader->hexserial[2], 4) == 0)  // workaround for vdr-sc client
    // {
    //    ep->type = UNIQUE;
    //    vdrsc_fix = 1;
@@ -845,16 +845,15 @@ int32_t videoguard_do_emm(struct s_reader * reader, EMM_PACKET *ep, unsigned cha
       emmv2 = ep->emm[offs+1];
       offs += 2 + 1 + emmv2;  // skip sub-emm len (2 bytes sub-emm len if 0x01);
    }
-   for (position = 0; position < nsubs && offs < ep->l; ++position)
+   for (position = 0; position < nsubs && offs+2 < ep->l; ++position)
    {
-      if (ep->emm[offs] > 0x07)  //workaround for mgcamd and emmv2
+      if (ep->emm[offs] > 0x07)  // workaround for mgcamd and emmv2
          ++offs;
-      if (ep->emm[offs] == 0x02 || ep->emm[offs] == 0x07)
+      if (ep->emm[offs] == 0x02 || ep->emm[offs] == 0x03 || ep->emm[offs] == 0x07)
       {
-         if (offs + ep->emm[offs] > ep->l)
+         offs += ep->emm[offs+1] + 2;
+         if (!(offs < ep->l))
             return rc;
-         ++offs;
-         offs += ep->emm[offs] + 1;
          if (ep->emm[offs] != 0)
          {
             if (ep->type == GLOBAL || vdrsc_fix || position == ua_position)

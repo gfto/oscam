@@ -3,7 +3,7 @@
 
 #define INT int32_t
 #define UCHAR unsigned char
-#define ULONG uint_32t
+#define ULONG uint32_t
 
 #define SCI_CLASS_A                 1   /* only 5V Vcc to Smart Card */
 #define SCI_CLASS_B                 2   /* only 3V Vcc to Smart Card */
