@@ -587,6 +587,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TH>Lock</TH>\n\
 			<TH>Label</TH>\n\
 			<TH>Status</TH>\n\
+			<TH>Address</TH>\n\
 			<TH>Protocol</TH>\n\
 			<TH>Last Channel</TH>\n\
 			<TH>Idle</TH>\n\
@@ -642,6 +643,7 @@ O0uYJpimxX62v2BbRMVWNfAHT997IDXV+VUAAAAASUVORK5CYII="
 			<TD align=\"center\"><A HREF=\"userconfig.html?user=##USERENC##&action=##SWITCH##\" TITLE=\"##SWITCHTITLE##\"><IMG HEIGHT=\"16\" WIDTH=\"16\" SRC=\"##SWITCHICO##\"BORDER=\"0\" ALT=\"##SWITCHTITLE##\"/></A></TD>\n\
 			<TD><SPAN TITLE=\"##DESCRIPTION##\">##USER##</SPAN></TD>\n\
 			<TD>##STATUS##</TD>\n\
+			<TD>##CLIENTIP##</TD>\n\
 			<TD align=\"center\"><SPAN TITLE=\"##CLIENTPROTOTITLE##\">##CLIENTPROTO##</SPAN></TD>\n\
 			<TD>##LASTCHANNEL##</TD>\n\
 			<TD align=\"center\">##IDLESECS##</TD>\n\

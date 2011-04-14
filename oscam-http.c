@@ -1729,6 +1729,7 @@ char *send_oscam_user_config(struct templatevars *vars, struct uriparams *params
 			proto = monitor_get_proto(latestclient);
 			lastchan = xml_encode(vars, get_servicename(latestclient->last_srvid, latestclient->last_caid));
 			lastresponsetm = latestclient->cwlastresptime;
+			tpl_addVar(vars, TPLADDONCE, "CLIENTIP", cs_inet_ntoa(latestclient->ip));
 		}
 		if(latestactivity > 0){
 			isec = now - latestactivity;
