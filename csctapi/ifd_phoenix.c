@@ -15,7 +15,7 @@
 #ifdef USE_GPIO	//felix: definition of gpio functions
 #define pin (1<<(reader->detect-4))
 int32_t gpio_outen,gpio_out,gpio_in;
-unsigned int32_t gpio;
+uint32_t gpio;
 
 static void set_gpio(struct s_reader * reader, int32_t level)
 {		
