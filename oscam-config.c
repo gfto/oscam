@@ -383,6 +383,10 @@ void chk_t_global(const char *token, char *value)
 					else memcpy(cfg.logfile, pch, strlen(pch) + 1);
 				}
 			}
+		} else {
+			if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, SIGINT))
+				memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
+			else cfg.logtostdout = 1;
 		}
 		return;
 	}
@@ -843,8 +847,8 @@ void chk_t_webif(char *token, char *value)
 	if (!strcmp(token, "httpenhancedstatuscccam")) {
 		cfg.http_enhancedstatus_cccam = strToIntVal(value, 0);
 		if (cfg.http_enhancedstatus_cccam){
-			fprintf(stderr, "Warning: httpenhancedstatuscccam = 1 impact's main performance\n",token);
-			cs_log("Warning: httpenhancedstatuscccam = 1 impact's main performance");
+			fprintf(stderr, "Warning: httpenhancedstatuscccam = 1 impacts main performance\n");
+			cs_log("Warning: httpenhancedstatuscccam = 1 impacts main performance");
 		}
 		return;
 	}
@@ -1426,13 +1430,13 @@ int32_t init_config()
 		chk_token(trim(strtolower(token)), trim(value), tag);
 	}
 	fclose(fp);
-#ifdef CS_LOGFILE
+
 	if (cfg.logfile == NULL && cfg.logtostdout == 0 && cfg.logtosyslog == 0) {
 		if(cs_malloc(&(cfg.logfile), strlen(CS_LOGFILE) + 1, SIGINT))
-			memcpy(cfg.logfile, value, strlen(CS_LOGFILE) + 1);
+			memcpy(cfg.logfile, CS_LOGFILE, strlen(CS_LOGFILE) + 1);
 		else cfg.logtostdout = 1;
 	}
-#endif
+
 	cs_init_log();
 	cs_init_statistics();
 	if (cfg.ftimeout >= cfg.ctimeout) {
