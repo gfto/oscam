@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <stdint.h>
 #include"ifd_cool.h"
 #include"../globals.h"
 #include"icc_async.h"
