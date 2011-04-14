@@ -19,7 +19,7 @@ bind service to specified IP address, default:all
 value to delay cached requests, default:0
 .RE
 .PP
-\fBlogfile\fP = [\fBfilename\fB][\fB;syslog\fB][\fB;stdout\fB]
+\fBlogfile\fP = [\fBfilename\fP][\fB;syslog\fP][\fB;stdout\fP]
 .RS 3n
 logging targets, default: /var/log/oscam.log. You can define a maximum of one filename and 
 additionally to log to stdout or syslog (you can also only log to stdout or syslog and omit 
@@ -175,7 +175,7 @@ seconds beetween restarts, 0 = disable reader restart, default:5
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0= tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
+0 = tell camd 3.5x, 3.57x and 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 .RE
 .PP
 \fBlb_mode\fP = \fBmode\fP 
@@ -264,7 +264,7 @@ ignore provider information for CAIDs to reduce statistic data, default:none
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
-UDP port for monitor, port=0 monitor disabled, default:0
+UDP port for monitor, 0 = monitor disabled, default:0
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
@@ -290,7 +290,7 @@ monitor level:
 
  \fB0\fP = no access to monitor
  \fB1\fP = only server and own procs
- \fB2\fP = all procs, but viewing only, default
+ \fB2\fP = all procs, but viewing only (default)
  \fB3\fP = all procs, reload of \fBoscam.user\fR possible
  \fB4\fP = complete access
 
@@ -404,7 +404,7 @@ unsecured camd 3.3x client connection, default:none
 .PP
 \fBpassive\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1=force passive camd 3.3x client, default:0
+1 = force passive camd 3.3x client, default:0
 .RE
 .PP
 \fBkey\fP = \fB128 bit key\fP
@@ -427,7 +427,7 @@ bind service to specified IP address, default:all
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0= tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
+0 = tell camd 3.5x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 .RE
 .SS "The [cs357x] section"
 .PP
@@ -443,7 +443,7 @@ bind service to specified IP address, default:all
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0= tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
+0 = tell camd 3.57x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 .RE
 .SS "The [cs378x] section"
 .PP
@@ -462,7 +462,7 @@ bind service to specified IP address, default:all
 .PP
 \fBsuppresscmd08\fP = \fB0\fP|\fB1\fP
 .RS 3n
-0= tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
+0 = tell camd 3.78x clients not to request again for rejected CAID, service ID and provider ID combination, 1 = disable, default:0
 .RE
 .SS "The [newcamd] section"
 .PP
@@ -475,7 +475,7 @@ bind service to specified IP address, default:all
 .RS 3n
 default key for newcamd client encryption, default:none
 
- example key = 0102030405060708091011121314
+ example: key = 0102030405060708091011121314
 .RE
 .PP
 \fBport\fP = \fBport[{DES key}]@CAID[:ident][,ident]...[;port[{DES key}]@CAID[:ident][,ident]...]...\fP
@@ -507,7 +507,7 @@ client connections allowed from, default:none
 .PP
 \fBport\fP = \fB0\fP|\fBport\fP
 .RS 3n
-TCP/IP port for radegast clients, 0=disabled, default:0
+TCP/IP port for radegast clients, 0 = disabled, default:0
 .RE
 .PP
 \fBserverip\fP = \fBIP address\fP
@@ -585,7 +585,7 @@ CCcam reshare mode:
  \fB2\fP = reader reshares only defined reader services as virtual SCs
  \fB3\fP = reader reshares only defined user services as virtual SCs
 
-Every server is shared as hop=0 and with defined reshare values.
+Every server is shared as hop = 0 and with defined reshare values.
 
 Service reshare only works if positive services defined: no service - no reshare!
 
@@ -601,7 +601,7 @@ CCcam reshare setting:
 .PP
 \fBstealth\fP = \fB0\fP|\fB1\fP
 .RS 3n
-1= behaviour like the original CCcam: no activate partner detection and 
+1 = behaviour like the original CCcam: no activate partner detection and 
 extended OSCam-CCcam protocol, prevent other OSCam to detect the server 
 as OSCam server, default:0
 .RE
@@ -674,7 +674,7 @@ CAIDs and provider IDs to be prioritized, default:CAIDs and provider IDs of loca
 .RS 3n
 AU mode:
 
- \fB0\fP = disable AU, default
+ \fB0\fP = disable AU (default)
  \fB1\fP = enable AU
  \fB2\fP = enable AU, override AU settings of client, 
      set answering reader as AU reader
@@ -697,7 +697,7 @@ PMT mode:
 .RS 3n
 CAID request mode:
 
- \fB0\fP = try all possible CAIDs one by one, default
+ \fB0\fP = try all possible CAIDs one by one (default)
  \fB1\fP = try all CAIDs simultaneously
 .RE
 .PP
@@ -737,11 +737,11 @@ quantity of samples over limit, default:10
 .RS 3n
 level of penalty:
 
- \fB0\fP = only logging
+ \fB0\fP = only logging (default)
  \fB1\fP = send fake CWs
  \fB2\fP = disbable user temporary
 
-default:0, penalty can be overwritten per user in \fBoscam.user\fR
+penalty can be overwritten per user in \fBoscam.user\fR
 .RE
 .PP
 \fBaclogfile\fP = \fBfilename\fP
@@ -756,7 +756,7 @@ fake delay time, default:1000
 .PP
 \fBdenysamples\fP = \fBquantity\fP
 .RS 3n
-How many samples should be penalized?, default:8
+how many samples should be penalized, default:8
 .RE
 .SH MONITOR
 monitor commands:
@@ -886,12 +886,12 @@ types of ECM caching:
 \(bu
 \fBcache1\fP
 
-ECM and CW in cache already
+ECM and CW in cache already.
 .TP 3n.
 \(bu
 \fBcache2\fP
 
-ECM and checksum in cache already
+ECM and checksum in cache already.
 .SH EXAMPLES
  [global]
  logfile      = /var/log/oscam/oscam.log

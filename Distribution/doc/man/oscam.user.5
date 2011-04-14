@@ -41,12 +41,12 @@ The ServiceID can also be used for wildcarded CAIDs.
 .RS 3n
 unique level:
 
- \fB0\fP = disabled, default
+ \fB0\fP = disabled (default)
  \fB1\fP = only one connection per user is allowed
  \fB2\fP = set user to fake if source ip is different 
      (e.g. for newcamd clients with different CAIDs and ports)
  \fB3\fP = only one connection per user, but only the last login 
-     will survive (old mpcs behavior)
+     will survive (old MpCS behavior)
  \fB4\fP = set user only to fake if source ip is different, 
      but only the last login will survive
 .RE
@@ -58,7 +58,7 @@ time waiting for inactive user, default:none
 .PP
 \fBsleepsend\fP = \fB0\fP|\fB255\fP
 .RS 3n
-255 = \fIOSCam client only\fR: stopping requests until next zap, 255 = \fIcamd3 only\fR: stopping requests until restart of camd3 client, default:0
+255 = \fIOSCam client only\fR: stopping requests until next zap, 255 = \fIcamd 3.x only\fR: stopping requests until restart of camd 3.x client, default:0
 .RE
 .PP
 \fBcaid\fP = \fB<CAID>[&<mask>][:<CAID>[&<mask>]...\fP
@@ -70,13 +70,12 @@ example: caid = 0100&ffff:0200:0300&ff00
 .PP
 \fBau\fP = \fBlabel of reader[,label of reader]...\fP|\fB1\fP
 .RS 3n
-AU setting:
+AU setting, default:none:
 
   \fBlabel of reader\fP = sending EMMs to specified reader 
                     \fI(security issue: clients can see SC data!)\fR
   \fB1\fP               = auto AU is sending EMMs to \fIall\fR readers
                     \fI(security issue: clients can see SC data!)\fR
-default:none
 .RE
 .PP
 \fBgroup\fP = \fBgroup[,<group>]...\fP
@@ -112,7 +111,7 @@ monitor level:
 
  \fB0\fP = no access to monitor
  \fB1\fP = only server and own procs
- \fB2\fP = all procs, but viewing only, default
+ \fB2\fP = all procs, but viewing only (default)
  \fB3\fP = all procs, reload of \fBoscam.user\fR possible
  \fB4\fP = complete access
 .RE

@@ -1,4 +1,4 @@
-oscam.user(5)												    oscam.user(5)
+oscam.user(5)																				    oscam.user(5)
 
 
 
@@ -6,8 +6,7 @@ NAME
        oscam.user - user configuration file for OSCam
 
 SYNOPSIS
-       The  user  configuration  file for OSCam contains user definitions. [account] sections in oscam.user are recurring
-       (more than one account).
+       The user configuration file for OSCam contains user definitions. [account] sections in oscam.user are recurring (more than one account).
 
 DESCRIPTIONS
    The [account] section
@@ -24,8 +23,7 @@ DESCRIPTIONS
 	  host from which user connection is allowed
 
        betatunnel = <CAID>.<ServiceID>:<target CAID>[,<CAID>.<ServiceID>: <target CAID>]...
-	  define Betacrypt tunneling (max. see CS_MAXTUNTAB in globals.h).  The ServiceID can also be used for wildcarded
-	  CAIDs.
+	  define Betacrypt tunneling (max. see CS_MAXTUNTAB in globals.h).  The ServiceID can also be used for wildcarded CAIDs.
 
 	   example: betatunnel = 0100.0001:0200,0300.0004:0500
 		    betatunnel = 0600.FFFF:0700
@@ -33,12 +31,12 @@ DESCRIPTIONS
        uniq = 0|1|2|4
 	  unique level:
 
-	   0 = disabled, default
+	   0 = disabled (default)
 	   1 = only one connection per user is allowed
 	   2 = set user to fake if source ip is different
 	       (e.g. for newcamd clients with different CAIDs and ports)
 	   3 = only one connection per user, but only the last login
-	       will survive (old mpcs behavior)
+	       will survive (old MpCS behavior)
 	   4 = set user only to fake if source ip is different,
 	       but only the last login will survive
 
@@ -46,8 +44,7 @@ DESCRIPTIONS
 	  time waiting for inactive user, default:none
 
        sleepsend = 0|255
-	  255 = OSCam client only: stopping requests until next zap, 255 = camd3 only: stopping requests until restart of
-	  camd3 client, default:0
+	  255 = OSCam client only: stopping requests until next zap, 255 = camd 3.x only: stopping requests until restart of camd 3.x client, default:0
 
        caid = <CAID>[&<mask>][:<CAID>[&<mask>]...
 	  limit CAIDs, default:all CAIDs, required
@@ -55,12 +52,12 @@ DESCRIPTIONS
 	  example: caid = 0100&ffff:0200:0300&ff00
 
        au = label of reader[,label of reader]...|1
-	  AU setting:
+	  AU setting, default:none:
 
 	    label of reader = sending EMMs to specified reader
 			      (security issue: clients can see SC data!)
 	    1		    = auto AU is sending EMMs to all readers
-			      (security issue: clients can see SC data!)  default:none
+			      (security issue: clients can see SC data!)
 
        group = group[,<group>]...
 	  user assingment to reader group, default=none, required
@@ -84,7 +81,7 @@ DESCRIPTIONS
 
 	   0 = no access to monitor
 	   1 = only server and own procs
-	   2 = all procs, but viewing only, default
+	   2 = all procs, but viewing only (default)
 	   3 = all procs, reload of oscam.user possible
 	   4 = complete access
 
@@ -167,9 +164,9 @@ EXAMPLES
 	uniq	   = 1
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cert(5),   oscam.conf(5),   oscam.dvbapi(5),	  oscam.guess(5),
-       oscam.ird(5), oscam.provid(5), oscam.server(5), oscam.services(5), oscam.tiers(5), oscam.srvid(5)
+       list_smargo(1),	oscam(1),  oscam.ac(5),  oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),  oscam.ird(5),  oscam.provid(5),  oscam.server(5),  oscam.services(5),
+       oscam.tiers(5), oscam.srvid(5)
 
 
 
-													    oscam.user(5)
+																					    oscam.user(5)
