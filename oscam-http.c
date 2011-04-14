@@ -558,6 +558,9 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 	tpl_printf(vars, TPLADD, "TMP", "MONSELECTED%d", cfg.mon_level);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
+	if (cfg.http_enhancedstatus_cccam)
+		tpl_addVar(vars, TPLADD, "HTTPENHANCEDSTATUSCCCAM", "selected");
+
 	if (cfg.http_full_cfg)
 		tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", "selected");
 
