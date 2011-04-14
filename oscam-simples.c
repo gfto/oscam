@@ -939,6 +939,7 @@ char *monitor_get_proto(struct s_client *cl)
 	char *ctyp;
 	switch(cl->typ) {
 		case 's'	: ctyp = "server"; break;
+		case 'h'	: ctyp = "http"; break;
 		case 'p'	:
 		case 'r'	: ctyp = reader_get_type_desc(cl->reader, 1); break;
 		case 'c'	:
