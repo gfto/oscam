@@ -1144,7 +1144,6 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 	pthread_cancel(thread);
 	pthread_join(thread, NULL);
 #ifndef NO_PTHREAD_CLEANUP_PUSH
-	cleanup_thread(cl);
 	while(!cl->cleaned)
 		cs_sleepms(50);
 #else
