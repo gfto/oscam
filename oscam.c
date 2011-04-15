@@ -577,31 +577,34 @@ void cleanup_thread(void *var)
 
 static void cs_cleanup()
 {
-		if (cfg.lb_mode && cfg.lb_save) {
-				save_stat_to_file(0);
-				cfg.lb_save = 0; //this is for avoiding duplicate saves
+	if (cfg.lb_mode && cfg.lb_save) {
+		save_stat_to_file(0);
+		cfg.lb_save = 0; //this is for avoiding duplicate saves
+	}
+	
+	done_share();
+	
+	//cleanup clients:
+	struct s_client *cl;
+	for (cl=first_client->next; cl; cl=cl->next) {
+		if (cl->typ=='c'){
+			if(cl->account && cl->account->usr)
+				cs_log("killing client %s", cl->account->usr);
+			kill_thread(cl);
 		}
-		
-		done_share();
-
-        //cleanup clients:
-        struct s_client *cl;
-        for (cl=first_client->next; cl; cl=cl->next) {
-                if (cl->typ=='c')
-                        kill_thread(cl);
-        }
-
-        //cleanup readers:
-        struct s_reader *rdr;
-        for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-                cs_log("killing reader %s", rdr->label);
-                kill_thread(rdr->client);
-        }
-        first_active_reader = NULL;
-        
-        init_free_userdb(cfg.account);
-        cfg.account = NULL;
-        init_free_sidtab();
+	}
+	
+	//cleanup readers:
+	struct s_reader *rdr;
+	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
+		cs_log("killing reader %s", rdr->label);
+		kill_thread(rdr->client);
+	}
+	first_active_reader = NULL;
+	
+	init_free_userdb(cfg.account);
+	cfg.account = NULL;
+	init_free_sidtab();
 }
 
 void cs_exit(int32_t sig)
@@ -1144,8 +1147,15 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 	pthread_cancel(thread);
 	pthread_join(thread, NULL);
 #ifndef NO_PTHREAD_CLEANUP_PUSH
-	while(!cl->cleaned)
+	int32_t cnt = 0;
+	while(cnt < 10 && cl && !cl->cleaned){
 		cs_sleepms(50);
+		++cnt;
+	}
+	if(cl && !cl->cleaned){
+		cs_log("A thread didn't cleanup itself. Forcing cleanup for type %c (%s,%s)", cl->typ, cl->reader?cl->reader->label : cl->account?cl->account->usr?cl->account->usr: "" : "", cl->ip ? cs_inet_ntoa(cl->ip) : "");
+		cleanup_thread(cl);
+	}
 #else
 	cs_sleepms(50);
 	cleanup_thread(cl);
@@ -1347,14 +1357,21 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	memset(&client->grp, 0xff, sizeof(uint64_t));
 	//client->grp=0xffffffffffffff;
 	if ((intptr_t)account != 0 && (intptr_t)account != -1 && account->disabled){
-		account = (struct s_auth *)(0);
+		cs_add_violation((uint32_t)client->ip);
+		cs_log("%s %s-client %s%s (%s)",
+				client->crypted ? t_crypt : t_plain,
+				ph[client->ctyp].desc,
+				client->ip ? cs_inet_ntoa(client->ip) : "",
+				client->ip ? t_reject : t_reject+1,
+				e_txt ? e_txt : "disabled user");
+		return(1);
 	}
 	client->account=first_client->account;
 	switch((intptr_t)account)
 	{
 	case 0:           // reject access
 		rc=1;
-		cs_add_violation((uint)client->ip);
+		cs_add_violation((uint32_t)client->ip);
 		cs_log("%s %s-client %s%s (%s)",
 				client->crypted ? t_crypt : t_plain,
 				ph[client->ctyp].desc,
@@ -1367,7 +1384,7 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 			if (client->ip != account->dynip)
 				cs_user_resolve(account);
 			if (client->ip != account->dynip) {
-				cs_add_violation((uint)client->ip);
+				cs_add_violation((uint32_t)client->ip);
 				rc=2;
 			}
 		}
@@ -3053,7 +3070,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 			memcpy(buf+1, &rl, 2);
 
 			if (!cl) {
-				if (cs_check_violation((uint)cad.sin_addr.s_addr))
+				if (cs_check_violation((uint32_t)cad.sin_addr.s_addr))
 					return 0;
 				//printf("IP: %s - %d\n", inet_ntoa(*(struct in_addr *)&cad.sin_addr.s_addr), cad.sin_addr.s_addr);
 
@@ -3098,7 +3115,7 @@ int32_t accept_connection(int32_t i, int32_t j) {
 		int32_t pfd3;
 		if ((pfd3=accept(ph[i].ptab->ports[j].fd, (struct sockaddr *)&cad, (socklen_t *)&scad))>0) {
 
-			if (cs_check_violation((uint)cad.sin_addr.s_addr)) {
+			if (cs_check_violation((uint32_t)cad.sin_addr.s_addr)) {
 				close(pfd3);
 				return 0;
 			}
