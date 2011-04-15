@@ -575,7 +575,7 @@ static FILTER mk_user_ftab()
 
 static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
 {
-    int32_t i, ok;
+    int32_t i, ok, rc;
     uchar *usr = NULL, *pwd = NULL;
     char *client_name = NULL;
     struct s_auth *account;
@@ -638,8 +638,13 @@ static void newcamd_auth_client(in_addr_t ip, uint8_t *deskey)
           cl->crypted=1;
           char e_txt[20];
      snprintf(e_txt, 20, "%s:%d", ph[cl->ctyp].desc, cfg.ncd_ptab.ports[cl->port_idx].s_port);
-          if(cs_auth_client(cl, account, e_txt) == 2) {
+          if((rc = cs_auth_client(cl, account, e_txt)) == 2) {
             cs_log("hostname or ip mismatch for user %s (%s)", usr, client_name);
+            break;
+          }
+          else if (rc != 0)
+          {
+            cs_log("account is invalid for user %s (%s)", usr, client_name);
             break;
           }
           else 

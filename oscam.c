@@ -1359,12 +1359,13 @@ int32_t cs_auth_client(struct s_client * client, struct s_auth *account, const c
 	//client->grp=0xffffffffffffff;
 	if ((intptr_t)account != 0 && (intptr_t)account != -1 && account->disabled){
 		cs_add_violation((uint32_t)client->ip);
-		cs_log("%s %s-client %s%s (%s)",
+		cs_log("%s %s-client %s%s (%s%sdisabled account)",
 				client->crypted ? t_crypt : t_plain,
 				ph[client->ctyp].desc,
 				client->ip ? cs_inet_ntoa(client->ip) : "",
 				client->ip ? t_reject : t_reject+1,
-				e_txt ? e_txt : "disabled user");
+				e_txt ? e_txt : "",
+				e_txt ? " " : "");
 		return(1);
 	}
 	client->account=first_client->account;
