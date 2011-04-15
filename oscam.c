@@ -532,7 +532,8 @@ static void cleanup_ecmtasks(struct s_client *cl)
 void cleanup_thread(void *var)
 {
 	struct s_client *cl = var;
-	if(cl && !cl->cleaned){
+	if(cl && !cl->cleaned){ //cleaned=0
+		cl->cleaned++; //cleaned=1
 		struct s_client *prev, *cl2;
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 			if (cl == cl2)
@@ -571,7 +572,7 @@ void cleanup_thread(void *var)
 		add_garbage(cl->cc);
 		add_garbage(cl->serialdata);
 		add_garbage(cl);
-		cl->cleaned++;
+		cl->cleaned++;//cleaned=2
 	}
 }
 
