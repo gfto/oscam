@@ -1,4 +1,4 @@
-oscam.srvid(5)												oscam.srvid(5)
+oscam.srvid(5)											       oscam.srvid(5)
 
 
 
@@ -16,8 +16,8 @@ DESCRIPTIONS
 ANNONTATIONS
        Please use Unix text file format only.
 
-       You  only need the oscam.srvid when using the monitor or the web interface.  For saving memory consumption only
-       insert the service IDs you really need. Some external programs use their own oscam.srvid and do	not  need  the
+       You only need the oscam.srvid when using the monitor or the web interface.  For saving memory consumption only
+       insert the service IDs you really need. Some external programs use their own oscam.srvid and do not  need  the
        oscam.srvid of OSCam.
 
 EXAMPLES
@@ -26,9 +26,9 @@ EXAMPLES
 	0006:000b|my provider 3|tv name 3|
 
 SEE ALSO
-       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cert(5),   oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),
+       list_smargo(1),	 oscam(1),   oscam.ac(5),   oscam.cert(5),  oscam.conf(5),  oscam.dvbapi(5),  oscam.guess(5),
        oscam.ird(5), oscam.provid(5), oscam.server(5), oscam.services(5), oscam.tiers(5), oscam.user(5)
 
 
 
-													oscam.srvid(5)
+												       oscam.srvid(5)
