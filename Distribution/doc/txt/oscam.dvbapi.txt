@@ -10,7 +10,7 @@ SYNOPSIS
 
 DESCRIPTIONS
        P: CAID:[provider ID]:[service ID]:[ECM PID] [continue]
-	   set priority, continue = 1: proceed with priority, default:none
+	   set priority, continue = 1: proceed with priority, recommended for pay-per-view services, default:none
 
        I: CAID:[provider ID]:[service ID]:[ECM PID]
 	   set ignore
