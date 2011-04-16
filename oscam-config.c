@@ -2798,12 +2798,6 @@ struct s_auth *init_userdb()
 			account->ac_users = cfg.ac_users;
 			account->ac_penalty = cfg.ac_penalty;
 #endif
-			if(account->expirationdate && account->expirationdate < time(NULL))
-				expired++;
-
-			if(account->disabled)
-				disabled++;
-
 			continue;
 		}
 
@@ -2818,6 +2812,14 @@ struct s_auth *init_userdb()
 	}
 
 	fclose(fp);
+	
+	for(account = authptr; account; account = account->next){
+		if(account->expirationdate && account->expirationdate < time(NULL))
+			++expired;
+	
+		if(account->disabled)
+			++disabled;
+	}
 
 	cs_log("userdb reloaded: %d accounts loaded, %d expired, %d disabled", nr, expired, disabled);
 	return authptr;
