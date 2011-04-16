@@ -3279,10 +3279,13 @@ int32_t process_request(FILE *f, struct in_addr in) {
 	filebuf[bufsize]='\0';
 	char *buf=filebuf;
 
-	method = strtok_r(buf, " ", &saveptr1);
-	path = strtok_r(NULL, " ", &saveptr1);
-	protocol = strtok_r(NULL, "\r", &saveptr1);
-	if(method == NULL || path == NULL || protocol == NULL) return -1;
+	if((method = strtok_r(buf, " ", &saveptr1)) != NULL){
+		if((path = strtok_r(NULL, " ", &saveptr1)) != NULL){
+			if((protocol = strtok_r(NULL, "\r", &saveptr1)) == NULL){
+				return -1;
+			}
+		} else return -1;
+	} else return -1;
 	tmp=protocol+strlen(protocol)+2;
 
 	pch=path;
