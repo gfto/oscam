@@ -240,32 +240,35 @@ static char *monitor_client_info(char id, struct s_client *cl){
 				(now-cl->lastemm < cfg.mon_hideclient_to) ||
 				(cl->typ != 'c'))
 		{
-			lsec=now-cl->login;
-			isec=now-cl->last;
-			usr=cl->account->usr;
+			lsec = now - cl->login;
+			isec = now - cl->last;
+			usr = cl->account->usr;
 			if ((cl->typ == 'r') || (cl->typ == 'p'))
-				usr=cl->reader->label;
+				usr = cl->reader->label;
 			if (cl->dup)
-				con=2;
+				con = 2;
 			else
 				if ((cl->tosleep) && (now-cl->lastswitch>cl->tosleep))
 					con = 1;
 				else
 					con = 0;
 
-			//if( (cau = get_ridx(cl->aureader) + 1) )
-			//	if ((now-cl->lastemm) /60 > cfg.mon_aulow)
-			//		cau=-cau;
-			// workaround: no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
-			if (!cl->aureader_list) {
-				cau = 0;
-			} else {
-				if ((now-cl->lastemm)/60 > cfg.mon_aulow)
-					cau = -1;
+			// no AU reader == 0 / AU ok == 1 / Last EMM > aulow == -1
+			if(cl->typ == 'c' || cl->typ == 'p' || cl->typ == 'r') {
+
+				if ((cl->typ == 'c' && !cl->aureader_list) ||
+						((cl->typ == 'p' || cl->typ == 'r') && cl->reader->audisabled))
+					cau = 0;
+
+				else if ((now-cl->lastemm) / 60 > cfg.mon_aulow)
+					cau = (-1);
+
 				else
 					cau = 1;
-			}
 
+			} else {
+				cau = 0;
+			}
 
 			if( cl->typ == 'r')
 			{
