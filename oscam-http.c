@@ -2392,8 +2392,26 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 							LLIST *cards = rcc->cards;
 							if (cards) {
 								int32_t cnt = ll_count(cards);
-								if(cnt == 1) tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards\">(1 card)</A>", urlencode(vars, cl->reader->label));
-								else if(cnt > 1) tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards\">(%d cards)</A>", urlencode(vars, cl->reader->label), cnt);
+
+								if (cfg.http_enhancedstatus_cccam && !apicall) {
+									int32_t locals = 0;
+									LL_ITER *it = ll_iter_create(cards);
+									struct cc_card *card;
+
+									while ((card = ll_iter_next(it))) {
+										if (card->hop <= 1)
+											locals++;
+									}
+
+									ll_iter_release(it);
+									tpl_printf(vars, TPLADD, "TMP", "(%d of %d card%s)",locals, cnt, cnt > 1? "s": "");
+
+								} else {
+									tpl_printf(vars, TPLADD, "TMP", "(%d card%s)", cnt, cnt > 1? "s": "");
+								}
+
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards\">%s</A>", urlencode(vars, cl->reader->label), tpl_getVar(vars, "TMP"));
+
 							}
 						}
 					}
