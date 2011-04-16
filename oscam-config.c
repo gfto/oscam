@@ -3027,9 +3027,11 @@ int32_t init_srvid()
 	int32_t nr;
 	FILE *fp;
 	char *payload;
-	struct s_srvid *srvid=NULL, *new_cfg_srvid=NULL;
+	struct s_srvid *srvid=NULL, *new_cfg_srvid[16], *last_srvid[16];
 	snprintf(token, sizeof(token), "%s%s", cs_confdir, cs_srid);
 
+	memset(last_srvid, 0, sizeof(last_srvid));
+	memset(new_cfg_srvid, 0, sizeof(new_cfg_srvid));
 
 	if (!(fp=fopen(token, "r"))) {
 		cs_log("can't open file \"%s\" (err=%d %s), no service-id's loaded", token, errno, strerror(errno));
@@ -3038,9 +3040,7 @@ int32_t init_srvid()
 
 	nr=0;
 	while (fgets(token, sizeof(token), fp)) {
-
-		int32_t l;
-		void *ptr;
+		int32_t l, i, j, len=0;
 		char *tmp;
 		tmp = trim(token);
 
@@ -3049,27 +3049,22 @@ int32_t init_srvid()
 		if (!(payload=strchr(token, '|'))) continue;
 		*payload++ = '\0';
 
-		if (!cs_malloc(&ptr, sizeof(struct s_srvid), -1)) return(1);
-		if (srvid)
-			srvid->next = ptr;
-		else
-			new_cfg_srvid = ptr;
+		if (!cs_malloc(&srvid, sizeof(struct s_srvid), -1)) return(1);
 
-		srvid = ptr;
-
-		int32_t i, len=0;
 		char tmptxt[128];
 		struct s_srvid *srvptr;
 
 		int32_t offset[4] = { -1, -1, -1, -1 };
 		char *ptr1, *searchptr[4] = { NULL, NULL, NULL, NULL };
 		char **ptrs[4] = { &srvid->prov, &srvid->name, &srvid->type, &srvid->desc };
-		
+
 		for (i = 0, ptr1 = strtok(payload, "|"); ptr1 && (i < 4) ; ptr1 = strtok(NULL, "|"), i++){
-			for (srvptr = new_cfg_srvid; srvptr && !searchptr[i]; srvptr=srvptr->next) {
-				char *srv_ptrs[4] = { srvptr->prov, srvptr->name, srvptr->type, srvptr->desc };
-				if (srv_ptrs[i] && !strcmp(srv_ptrs[i], ptr1))
-					searchptr[i]=srv_ptrs[i];
+			for (j=0; j<16 && !searchptr[i]; j++) {
+				for (srvptr = new_cfg_srvid[j]; srvptr && !searchptr[i]; srvptr=srvptr->next) {
+					char *srv_ptrs[4] = { srvptr->prov, srvptr->name, srvptr->type, srvptr->desc };
+					if (srv_ptrs[i] && !strcmp(srv_ptrs[i], ptr1))
+						searchptr[i]=srv_ptrs[i];
+				}
 			}
 			if (searchptr[i]) continue;
 
@@ -3083,7 +3078,6 @@ int32_t init_srvid()
 			continue;
 
 		srvid->data=tmpptr;
-
 		memcpy(tmpptr, tmptxt, len);
 
 		for (i=0;i<4;i++) {
@@ -3107,6 +3101,13 @@ int32_t init_srvid()
 			//cs_debug_mask(D_CLIENT, "ld caid: %04X srvid: %04X Prov: %s Chan: %s",srvid->caid[i],srvid->srvid,srvid->prov,srvid->name);
 		}
 		nr++;
+
+		if (new_cfg_srvid[srvid->srvid>>12])
+			last_srvid[srvid->srvid>>12]->next = srvid;
+		else
+			new_cfg_srvid[srvid->srvid>>12] = srvid;
+
+		last_srvid[srvid->srvid>>12] = srvid;
 	}
 
 	fclose(fp);
@@ -3121,14 +3122,22 @@ int32_t init_srvid()
 	}
 
 	//this allows reloading of srvids, so cleanup of old data is needed:
-	srvid = cfg.srvid; //old data
-	cfg.srvid = new_cfg_srvid; //assign after loading, so everything is in memory
+	memcpy(last_srvid, cfg.srvid, sizeof(last_srvid));	//old data
+	memcpy(cfg.srvid, new_cfg_srvid, sizeof(last_srvid));	//assign after loading, so everything is in memory
+
+	struct s_client *cl;
+	for (cl=first_client->next; cl ; cl=cl->next)
+		cl->last_srvidptr=NULL;
+
 	struct s_srvid *ptr;
-	while (srvid) { //cleanup old data:
-		ptr = srvid->next;
-		free(srvid->data);
-		free(srvid);
-		srvid = ptr;
+	int8_t i;
+	for (i=0; i<16; i++) {
+		while (last_srvid[i]) { //cleanup old data:
+			ptr = last_srvid[i]->next;
+			free(last_srvid[i]->data);
+			free(last_srvid[i]);
+			last_srvid[i] = ptr;
+		}
 	}
 
 	return(0);

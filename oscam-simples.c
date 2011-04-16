@@ -813,19 +813,31 @@ void cs_strncpy(char * destination, const char * source, size_t num){
 	destination[l] = '\0';
 }
 
-char *get_servicename(int32_t srvid, int32_t caid){
+char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid){
 	int32_t i;
-	struct s_srvid *this = cfg.srvid;
-	static char name[83];
+	struct s_srvid *this;
+	char *name = (char*)cl->dump;
+	name[0] = 0;
 
-	for (name[0] = 0; this && (!name[0]); this = this->next)
+	if (!srvid) {
+		name[0]='\0';
+		return(name);
+	}
+
+	if (cl && cl->last_srvidptr && cl->last_srvidptr->srvid==srvid)
+		for (i=0; i < cl->last_srvidptr->ncaid; i++)
+			if (cl->last_srvidptr->caid[i] == caid) 
+				cs_strncpy(name, cl->last_srvidptr->name, 32);
+
+	for (this = cfg.srvid[srvid>>12]; this && (!name[0]); this = this->next)
 		if (this->srvid == srvid)
 			for (i=0; i<this->ncaid; i++)
-				if (this->caid[i] == caid && this->name)
+				if (this->caid[i] == caid && this->name) {
 					cs_strncpy(name, this->name, 32);
+					cl->last_srvidptr = this;
+				}
 
 	if (!name[0]) snprintf(name, sizeof(name), "%04X:%04X unknown", caid, srvid);
-	if (!srvid) name[0] = '\0';
 	return(name);
 }
 

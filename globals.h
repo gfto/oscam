@@ -642,6 +642,7 @@ struct s_client
   int32_t		stat;
   int32_t		last_srvid;
   int32_t		last_caid;
+  struct s_srvid *last_srvidptr;
   int32_t		tosleep;
   struct s_auth *account;
   int32_t		udp_fd;
@@ -1072,7 +1073,7 @@ struct s_config
 	int32_t		disableuserfile;
 	int32_t		usrfileflag;
 	struct s_auth 	*account;
-	struct s_srvid 	*srvid;
+	struct s_srvid 	*srvid[16];
         struct s_tierid *tierid;
 	//Todo #ifdef CCCAM
 	struct s_provid *provid;
@@ -1312,7 +1313,7 @@ extern int32_t file_copy(char *srcfile, char *destfile);
 extern int32_t safe_overwrite_with_bak(char *destfile, char *tmpfile, char *bakfile, int32_t forceBakOverWrite);
 extern void fprintf_conf(FILE *f, int32_t varnameWidth, const char *varname, const char *fmtstring, ...);
 extern void cs_strncpy(char * destination, const char * source, size_t num);
-extern char *get_servicename(int32_t srvid, int32_t caid);
+extern char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid);
 extern char *get_tiername(int32_t tierid, int32_t caid);
 extern char *get_provider(int32_t caid, uint32_t provid);
 extern void make_non_blocking(int32_t fd);

@@ -1712,23 +1712,19 @@ void logCWtoFile(ECM_REQUEST *er)
 	unsigned char  i, parity, writeheader = 0;
 	time_t t;
 	struct tm timeinfo;
-	struct s_srvid *this;
 
 	/*
 	* search service name for that id and change characters
 	* causing problems in file name
 	*/
-	srvname[0] = 0;
-	for (this=cfg.srvid; this; this = this->next) {
-		if (this->srvid == er->srvid && this->name) {
-			cs_strncpy(srvname, this->name, sizeof(srvname));
-			srvname[sizeof(srvname)-1] = 0;
-			for (i = 0; srvname[i]; i++)
-				if (srvname[i] == ' ') srvname[i] = '_';
-			break;
-		}
-	}
+	
+	char *name=get_servicename(cur_client(), er->srvid, er->caid);
+	cs_strncpy(srvname, name, sizeof(srvname));
 
+	srvname[sizeof(srvname)-1] = 0;
+	for (i = 0; srvname[i]; i++)
+		if (srvname[i] == ' ') srvname[i] = '_';
+	
 	/* calc log file name */
 	time(&t);
 	localtime_r(&t, &timeinfo);
@@ -1965,7 +1961,7 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 				stxtEx[er->rcEx&0xf]);
 
 	if(cfg.mon_appendchaninfo)
-		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(er->srvid, er->caid));
+		snprintf(schaninfo, sizeof(schaninfo)-1, " - %s", get_servicename(client, er->srvid, er->caid));
 
 	if(er->msglog[0])
 		snprintf(sreason, sizeof(sreason)-1, " (%s)", er->msglog);
@@ -1975,8 +1971,9 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 	cs_add_lastresponsetime(client, client->cwlastresptime); // add to ringbuffer
 
 	if (er_reader && er_reader->client){
-	  er_reader->client->cwlastresptime = client->cwlastresptime;
-	  cs_add_lastresponsetime(er_reader->client, client->cwlastresptime);
+		er_reader->client->cwlastresptime = client->cwlastresptime;
+		cs_add_lastresponsetime(er_reader->client, client->cwlastresptime);
+		er_reader->client->last_srvidptr=client->last_srvidptr;
 	}
 
 #ifdef CS_LED

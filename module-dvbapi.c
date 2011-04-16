@@ -753,7 +753,8 @@ void dvbapi_read_priority() {
 		if (c_srvid[0]=='=') {
 			struct s_srvid *this;
 
-			for (this = cfg.srvid; this; this = this->next) {
+			for (i=0;i<16;i++)
+			for (this = cfg.srvid[i]; this; this = this->next) {
 				if (strcmp(this->prov, c_srvid+1)==0) {
 					struct s_dvbapi_priority *entry2 = malloc(sizeof(struct s_dvbapi_priority));
 					memcpy(entry2, entry, sizeof(struct s_dvbapi_priority));
@@ -1099,7 +1100,7 @@ int32_t dvbapi_parse_capmt(unsigned char *buffer, uint32_t length, int32_t connf
 	}
 	cs_debug_mask(D_DVBAPI, "Found %d ECMpids and %d STREAMpids in PMT", demux[demux_id].ECMpidcount, demux[demux_id].STREAMpidcount);
 
-	char *name = get_servicename(demux[demux_id].program_number, demux[demux_id].ECMpidcount>0 ? demux[demux_id].ECMpids[0].CAID : 0);
+	char *name = get_servicename(dvbapi_client, demux[demux_id].program_number, demux[demux_id].ECMpidcount>0 ? demux[demux_id].ECMpids[0].CAID : 0);
 	cs_log("new program number: %04X (%s)", program_number, name);
 
 #ifdef AZBOX

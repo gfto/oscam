@@ -288,7 +288,7 @@ static char *monitor_client_info(char id, struct s_client *cl){
 					id, (uint32_t)cl->thread, cl->typ, cnr, usr, cau, cl->crypted,
 					cs_inet_ntoa(cl->ip), cl->port, monitor_get_proto(cl),
 					ldate, ltime, lsec, cl->last_caid, cl->last_srvid,
-					get_servicename(cl->last_srvid, cl->last_caid), isec, con,
+					get_servicename(cl, cl->last_srvid, cl->last_caid), isec, con,
                                         cl->cwfound, cl->cwnot, cl->cwcache, cl->cwignored,
                                         cl->cwtout, cl->emmok, cl->emmnok, lrt);
 		}
