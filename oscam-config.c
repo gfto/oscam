@@ -480,7 +480,7 @@ void chk_t_global(const char *token, char *value)
 
 	if (!strcmp(token, "maxlogsize")) {
 		cfg.max_log_size = strToIntVal(value, 10);
-		if( cfg.max_log_size <= 10 ) cfg.max_log_size = 10;
+		if(cfg.max_log_size != 0 && cfg.max_log_size <= 10) cfg.max_log_size = 10;
 		return;
 	}
 
