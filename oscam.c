@@ -778,9 +778,7 @@ void cs_card_info()
 struct s_client * create_client(in_addr_t ip) {
 	struct s_client *cl;
 
-	cl = malloc(sizeof(struct s_client));
-	if (cl) {
-		memset(cl, 0, sizeof(struct s_client));
+	if(cs_malloc(&cl, sizeof(struct s_client), -1)){
 		int32_t fdp[2];
 		if (pipe(fdp)) {
 			cs_log("Cannot create pipe (errno=%d: %s)", errno, strerror(errno));
@@ -795,6 +793,7 @@ struct s_client * create_client(in_addr_t ip) {
 		cl->fd_m2c = fdp[1]; //store client read fd
 		cl->ip=ip;
 		cl->account = first_client->account;
+		cl->itused = 0;
 
 		//master part
 		cl->stat=1;
@@ -877,23 +876,26 @@ static void init_first_client()
   //Generate 5 ECM cache entries:
   ecmcache = ll_create();
 
-  first_client = malloc(sizeof(struct s_client));
-	if (!first_client) {
+  if(!cs_malloc(&first_client, sizeof(struct s_client), -1)){
     fprintf(stderr, "Could not allocate memory for master client, exiting...");
-  exit(1);
+    exit(1);
   }
   memset(first_client, 0, sizeof(struct s_auth));
   first_client->next = NULL; //terminate clients list with NULL
   first_client->login=time((time_t *)0);
   first_client->ip=cs_inet_addr("127.0.0.1");
   first_client->typ='s';
+  first_client->itused = 0;
   first_client->thread=pthread_self();
-  struct s_auth *null_account = malloc(sizeof(struct s_auth));
-  memset(null_account, 0, sizeof(struct s_auth));
+  struct s_auth *null_account;
+  if(!cs_malloc(&null_account, sizeof(struct s_auth), -1)){
+  	fprintf(stderr, "Could not allocate memory for master account, exiting...");
+    exit(1);
+  }
   first_client->account = null_account;
   if (pthread_setspecific(getclient, first_client)) {
     fprintf(stderr, "Could not setspecific getclient in master process, exiting...");
-  exit(1);
+    exit(1);
   }
 
 
