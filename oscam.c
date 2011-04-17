@@ -1929,6 +1929,18 @@ static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 	add_stat(rdr, er, time, rc);
 }
 
+/**
+ * Check for NULL CWs
+ * Return them as "NOT FOUND"
+ **/
+static void checkCW(ECM_REQUEST *er)
+{
+	int i;
+	for (i=0;i<16;i++)
+		if (er->cw[i]) return;
+	er->rc = E_NOTFOUND;
+}
+
 int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 {
 	static const char *stxt[]={"found", "cache1", "cache2", "emu",
@@ -1945,6 +1957,9 @@ int32_t send_dcw(struct s_client * client, ECM_REQUEST *er)
 		lc^=*lp;
 
 		snprintf(uname,sizeof(uname)-1, "%s", username(client));
+		
+	if (er->rc == E_FOUND||er->rc == E_CACHE1||er->rc == E_CACHE2)
+		checkCW(er);
 		
 	struct s_reader *er_reader = er->selected_reader; //responding reader
 	if (!er_reader) er_reader = ll_has_elements(er->matching_rdr); //no reader? use first reader

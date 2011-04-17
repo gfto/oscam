@@ -511,10 +511,7 @@ struct cc_card *create_card(struct cc_card *card) {
     if (card) {
         copy_sids(card2->goodsids, card->goodsids);
         copy_sids(card2->badsids, card->badsids);
-        card2->origin_id = card->id;
         card2->id = 0;
-        card2->card_type = card->card_type;
-        card2->sidtab = card->sidtab;
     }
 
     return card2;
@@ -653,7 +650,6 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
 
         if (!card2) {
             card2 = create_card(card);
-            card2->hop = card->hop;
             ll_clear_data(card2->badsids);
             ll_iter_insert(it, card2);
             add_card_providers(card2, card, 1);
@@ -677,7 +673,6 @@ int32_t add_card_to_serverlist(LLIST *cardlist, struct cc_card *card) {
         }
         if (!card2) {
             card2 = create_card(card);
-            card2->hop = card->hop;
             ll_iter_insert(it, card2);
             add_card_providers(card2, card, 1);
             modified = 1;

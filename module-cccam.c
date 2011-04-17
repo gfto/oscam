@@ -1649,6 +1649,11 @@ void cc_card_removed(struct s_client *cl, uint32_t shareid) {
 						getprefix(), card->id);
 			}		
 			free_extended_ecm_idx_by_card(cl, card);
+			
+			if (card->hop == 1) cc->num_hop1--;
+			else if (card->hop == 2) cc->num_hop2--;
+			else cc->num_hopx--;
+
 			cc_free_card(card);
 			cc->card_removed_count++;
 			//break;
@@ -1722,6 +1727,9 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			pthread_mutex_lock(&cc->cards_busy);	
 			cc_free_cardlist(cc->cards, FALSE);
 			cc->last_emm_card = NULL;
+			cc->num_hop1 = 0;
+			cc->num_hop2 = 0;
+			cc->num_hopx = 0;
             pthread_mutex_unlock(&cc->cards_busy);
                 			
 			memcpy(cc->peer_node_id, data, 8);
@@ -1882,6 +1890,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				ll_append(cc->cards, card);
 				set_au_data(cl, rdr, card, NULL);
 				cc->card_added_count++;
+				
+				if (card->hop == 1) cc->num_hop1++;
+				else if (card->hop == 2) cc->num_hop2++;
+				else cc->num_hopx++;
 			}
 		}
 
@@ -2895,6 +2907,9 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	cc->answer_on_keepalive = time(NULL);
 	cc->extended_mode = 0;
 	cc->last_emm_card = NULL;
+	cc->num_hop1 = 0;
+	cc->num_hop2 = 0;
+	cc->num_hopx = 0;
 	
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 	memset(&cc->receive_buffer, 0, sizeof(cc->receive_buffer));
