@@ -844,17 +844,6 @@ void chk_t_webif(char *token, char *value)
 		return;
 	}
 
-	if (!strcmp(token, "httpenhancedstatuscccam")) {
-		cfg.http_enhancedstatus_cccam = strToIntVal(value, 0);
-		if (cfg.http_enhancedstatus_cccam){
-			fprintf(stderr, "Warning: httpenhancedstatuscccam = 1 impacts main performance\n");
-			cs_log("Warning: httpenhancedstatuscccam = 1 impacts main performance");
-		}
-		return;
-	}
-
-
-
 	if (token[0] != '#')
 		fprintf(stderr, "Warning: keyword '%s' in webif section not recognized\n",token);
 }
@@ -2093,8 +2082,6 @@ int32_t write_config()
 			fprintf_conf(f, CONFVARWIDTH, "httphideidleclients", "%d\n", cfg.http_hide_idle_clients);
 		if(cfg.http_readonly || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpreadonly", "%d\n", cfg.http_readonly);
-		if(cfg.http_enhancedstatus_cccam || cfg.http_full_cfg)
-			fprintf_conf(f, CONFVARWIDTH, "httpenhancedstatuscccam", "%d\n", cfg.http_enhancedstatus_cccam);
 		if(cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "httpsavefullcfg", "%d\n", cfg.http_full_cfg);
 

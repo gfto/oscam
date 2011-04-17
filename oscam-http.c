@@ -559,9 +559,6 @@ char *send_oscam_config_monitor(struct templatevars *vars, struct uriparams *par
 	tpl_printf(vars, TPLADD, "TMP", "MONSELECTED%d", cfg.mon_level);
 	tpl_addVar(vars, TPLADD, tpl_getVar(vars, "TMP"), "selected");
 
-	if (cfg.http_enhancedstatus_cccam)
-		tpl_addVar(vars, TPLADD, "HTTPENHANCEDSTATUSCCCAM", "selected");
-
 	if (cfg.http_full_cfg)
 		tpl_addVar(vars, TPLADD, "HTTPSAVEFULLSELECT", "selected");
 
@@ -2388,30 +2385,15 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 					tpl_addVar(vars, TPLADD, "CLIENTCON", txt);
 					if((cl->typ == 'r' || cl->typ == 'p') && strncmp(proto,"cccam", 5) == 0){
 						struct cc_data *rcc = cl->cc;
-						if(cl->cc){
+						if(rcc){
 							LLIST *cards = rcc->cards;
 							if (cards) {
 								int32_t cnt = ll_count(cards);
+								int32_t locals = rcc->num_hop1;
+								tpl_printf(vars, TPLADD, "TMP", "(%d of %d card%s)", locals, cnt, (cnt > 1)? "s": "");
 
-								if (cfg.http_enhancedstatus_cccam && !apicall) {
-									int32_t locals = 0;
-									LL_ITER *it = ll_iter_create(cards);
-									struct cc_card *card;
-
-									while ((card = ll_iter_next(it))) {
-										if (card->hop <= 1)
-											locals++;
-									}
-
-									ll_iter_release(it);
-									tpl_printf(vars, TPLADD, "TMP", "(%d of %d card%s)",locals, cnt, cnt > 1? "s": "");
-
-								} else {
-									tpl_printf(vars, TPLADD, "TMP", "(%d card%s)", cnt, cnt > 1? "s": "");
-								}
-
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards\">%s</A>", urlencode(vars, cl->reader->label), tpl_getVar(vars, "TMP"));
-
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards - card count=%d hop1=%d hop2=%d hopx=%d currenthops=%d\">%s</A>", 
+									urlencode(vars, cl->reader->label), cnt, rcc->num_hop1, rcc->num_hop2, rcc->num_hopx, cl->reader->cc_currenthops, tpl_getVar(vars, "TMP"));
 							}
 						}
 					}

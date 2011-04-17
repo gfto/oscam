@@ -1102,7 +1102,6 @@ struct s_config
 	int32_t			http_use_ssl;
 	char		http_cert[128];
 	char		http_help_lang[3];
-	int			http_enhancedstatus_cccam;
 #endif
 	int32_t			http_full_cfg;
 	int32_t			failbantime;
