@@ -1598,7 +1598,7 @@ void chk_account(const char *token, char *value, struct s_auth *account)
 		for (pch = strtok(value, ","); pch != NULL; pch = strtok(NULL, ",")) {
 			ll_iter_reset(itr);
 			while ((rdr = ll_iter_next(itr))) {
-				if (((rdr->label[0]) && (!strncmp(rdr->label, pch, strlen(rdr->label)))) || account->autoau) {
+				if (((rdr->label[0]) && (!strcmp(rdr->label, pch))) || account->autoau) {
 					ll_append(account->aureader_list, rdr);
 				}
 			}
