@@ -2391,9 +2391,17 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 								int32_t cnt = ll_count(cards);
 								int32_t locals = rcc->num_hop1;
 								tpl_printf(vars, TPLADD, "TMP", "(%d of %d card%s)", locals, cnt, (cnt > 1)? "s": "");
+								tpl_printf(vars, TPLADD, "TMPSPAN","<SPAN>card count = %d<BR>hop1 = %d<BR>hop2 = %d<BR>hopx = %d<BR>currenthops = %d</SPAN>",
+										cnt,
+										rcc->num_hop1,
+										rcc->num_hop2,
+										rcc->num_hopx,
+										cl->reader->cc_currenthops);
 
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" title=\"Show cards - card count=%d hop1=%d hop2=%d hopx=%d currenthops=%d\">%s</A>", 
-									urlencode(vars, cl->reader->label), cnt, rcc->num_hop1, rcc->num_hop2, rcc->num_hopx, cl->reader->cc_currenthops, tpl_getVar(vars, "TMP"));
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip\" title=\"Show cards\">%s%s</A>",
+										urlencode(vars, cl->reader->label),
+										tpl_getVar(vars, "TMP"),
+										tpl_getVar(vars, "TMPSPAN"));
 							}
 						}
 					}
