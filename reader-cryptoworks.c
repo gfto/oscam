@@ -405,10 +405,10 @@ static int32_t cryptoworks_get_emm_type(EMM_PACKET *ep, struct s_reader * rdr)
 		case 0x86:
 			if(ep->emm[3]==0xA9 && ep->emm[4]==0xFF && ep->emm[5]==0x83 
 			   && ep->emm[6]==0x01 && ep->emm[8]==0x85) {
-				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: GLOBAL");
-				ep->type = GLOBAL;
+				cs_debug_mask(D_EMM, "CRYPTOWORKS EMM: SHARED (Header)");
+				ep->type = SHARED;
 				memcpy(ep->provid, i2b(4, cryptoworks_get_emm_provid(ep->emm+8, ep->l-8)), 4);
-				return TRUE;
+				return FALSE;
 			}
 			break;
 		case 0x88:
@@ -466,7 +466,7 @@ static void cryptoworks_get_emm_filter(struct s_reader * rdr, uchar *filter)
 	filter[1]++;
 	idx += 32;
 
-	filter[idx++]=EMM_GLOBAL;
+	filter[idx++]=EMM_SHARED;
 	filter[idx++]=0;
 	filter[idx+0]    = 0x86;
 	filter[idx+16]   = 0xFF;

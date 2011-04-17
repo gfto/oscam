@@ -837,7 +837,10 @@ char *get_servicename(struct s_client *cl, int32_t srvid, int32_t caid){
 					cl->last_srvidptr = this;
 				}
 
-	if (!name[0]) snprintf(name, sizeof(cl->dump), "%04X:%04X unknown", caid, srvid);
+	if (!name[0]) {
+		snprintf(name, sizeof(cl->dump), "%04X:%04X unknown", caid, srvid);
+		cl->last_srvidptr = NULL;
+	}
 	return(name);
 }
 
