@@ -255,10 +255,19 @@ hours after the loadbalancing statistics will be deleted, default:336
 \fBlb_retrylimits\fP = \fBCAID1:time1[,CAID2:time2]...\fP
 .RS 3n
 loadbalancing retry limit time per CAID, default:none
+.PP
 .RE
 \fBlb_noproviderforcaid\fP = \fBCAID1[,CAID2]...\fP
 .RS 3n
 ignore provider information for CAIDs to reduce statistic data, default:none
+.PP
+.RE
+\fBlb_max_readers\fP = \fBlimit\fP
+.RS 3n
+restrict the reader count to limit during learning:
+
+     \fB0\fP = unlimited (default)
+ \fBlimit\fP = restrict loadbalancer readers to limit
 .RE
 .SS "The [monitor] section"
 .PP

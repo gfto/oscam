@@ -178,8 +178,15 @@ DESCRIPTIONS
 
        lb_retrylimits = CAID1:time1[,CAID2:time2]...
 	  loadbalancing retry limit time per CAID, default:none
+
        lb_noproviderforcaid = CAID1[,CAID2]...
 	  ignore provider information for CAIDs to reduce statistic data, default:none
+
+       lb_max_readers = limit
+	  restrict the reader count to limit during learning:
+
+	       0 = unlimited (default)
+	   limit = restrict loadbalancer readers to limit
 
    The [monitor] section
        port = 0|port
