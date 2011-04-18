@@ -596,6 +596,11 @@ void chk_t_global(const char *token, char *value)
 		cfg.lb_reopen_mode = strToIntVal(value, DEFAULT_LB_REOPEN_MODE);
 		return;
 	}
+	
+	if (!strcmp(token, "lb_max_readers")) {
+		cfg.lb_max_readers = strToIntVal(value, 0);
+		return;
+	}
 
 	if (!strcmp(token, "resolvegethostbyname")) {
 		cfg.resolve_gethostbyname = strToIntVal(value, 0);
@@ -1862,6 +1867,8 @@ int32_t write_config()
 		fprintf_conf(f, CONFVARWIDTH, "lb_use_locking", "%d\n", cfg.lb_use_locking);
 	if (cfg.lb_reopen_mode != DEFAULT_LB_REOPEN_MODE || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "lb_reopen_mode", "%d\n", cfg.lb_reopen_mode);
+	if (cfg.lb_max_readers || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "lb_max_readers", "%d\n", cfg.lb_max_readers);
 
 	if (cfg.resolve_gethostbyname || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "resolvegethostbyname", "%d\n", cfg.resolve_gethostbyname);

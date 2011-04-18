@@ -538,6 +538,9 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t nlocal_readers = 0;
 	int32_t retrylimit = get_retrylimit(er);
 	uint32_t prid = get_prid(er->caid, er->prid);
+	
+	int32_t nreaders = cfg.lb_max_readers;
+	if (!nreaders) nreaders = -1;
 
 #ifdef WITH_DEBUG 
 	if (cs_dblevel & 0x01) {
@@ -577,7 +580,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 #endif	
 	
 	it = ll_iter_create(er->matching_rdr);
-	while ((rdr=ll_iter_next(it))) {
+	while ((rdr=ll_iter_next(it)) && nreaders) {
 	
 			int32_t weight = rdr->lb_weight <= 0?100:rdr->lb_weight;
 				
@@ -586,6 +589,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				cs_debug_mask(D_TRACE, "loadbalancer: starting statistics for reader %s", rdr->label);
 				add_stat(rdr, er, 1, -1);
 				ll_append(result, rdr); //no statistics, this reader is active (now) but we need statistics first!
+				nreaders--;
 				continue;
 			}
 			
@@ -593,6 +597,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				cs_debug_mask(D_TRACE, "loadbalancer: max ecms (%d) reached by reader %s, resetting statistics", cfg.lb_max_ecmcount, rdr->label);
 				reset_stat(er->caid, prid, er->srvid, er->l);
 				ll_append(result, rdr); //max ecm reached, get new statistics
+				nreaders--;
 				continue;
 			}
 				
@@ -607,6 +612,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (stat->rc == 0 && stat->ecm_count < cfg.lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				ll_append(result, rdr); //need more statistics!
+				nreaders--;
 				continue;
 			}
 			
@@ -621,6 +627,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 					case LB_LOG_ONLY:
 						//cs_debug_mask(D_TRACE, "loadbalance disabled");
 						ll_append(result, rdr);
+						nreaders--;
 						continue;
 						
 					case LB_FASTEST_READER_FIRST:
@@ -673,8 +680,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t best_time = 0;
 	LL_NODE *fallback = NULL;
 
-	int32_t n=0;
-	while (1) {
+	int32_t n=ll_count(result);
+	while (nreaders) {
 		struct stat_value *best = NULL;
 
 		ll_iter_reset(it);
@@ -699,12 +706,14 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		if (nlocal_readers) {//primary readers, local
 			nlocal_readers--;
 			ll_append(result, best_rdri);
+			nreaders--;
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
 		else if (nbest_readers) {//primary readers, other
 			nbest_readers--;
 			ll_append(result, best_rdri);
+			nreaders--;
 			//OLDEST_READER:
 			cs_ftime(&best_rdri->lb_last);
 		}
@@ -727,8 +736,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		while ((rdr=ll_iter_next(it))) {
         		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
         		if (stat && stat->ecm_count>0) {
-        			if (!ll_contains(result, rdr))
+        			if (!ll_contains(result, rdr)) {
         				ll_append(result, rdr);
+        				nreaders--;
+					}
         			n++;
         			cs_debug_mask(D_TRACE, "loadbalancer: reopened reader %s", rdr->label);
 			}

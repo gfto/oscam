@@ -1173,6 +1173,7 @@ struct s_config
 	int32_t	lb_stat_cleanup; //duration in hours for cleaning old statistics
 	int32_t lb_use_locking; //use a mutex lock while searching for readers (get_cw())
 	int32_t lb_reopen_mode; //reopen readers mode
+	int32_t lb_max_readers; //limit the amount of readers during learning
 	
 	int32_t             resolve_gethostbyname;
 
