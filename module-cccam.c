@@ -1454,24 +1454,26 @@ void cc_free_cardlist(LLIST *card_list, int32_t destroy_list) {
 void cc_free(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;
 	if (!cc) return;
-
-	pthread_mutex_trylock(&cc->cards_busy);
-	if (!cl->cc) return;
 	cl->cc=NULL;
+	
 	cc_free_cardlist(cc->cards, TRUE);
 	ll_destroy_data(cc->pending_emms);
 	if (cc->extended_ecm_idx)
 		free_extended_ecm_idx(cc);
 	ll_destroy_data(cc->extended_ecm_idx);
 
-	pthread_mutex_unlock(&cc->lockcmd);
+	if (!pthread_mutex_trylock(&cc->lockcmd))
+		pthread_mutex_unlock(&cc->lockcmd);
 	pthread_mutex_destroy(&cc->lockcmd);
 
-	pthread_mutex_unlock(&cc->ecm_busy);
+	if (!pthread_mutex_trylock(&cc->ecm_busy))
+		pthread_mutex_unlock(&cc->ecm_busy);
 	pthread_mutex_destroy(&cc->ecm_busy);
 
-	pthread_mutex_unlock(&cc->cards_busy);
+	if (!pthread_mutex_trylock(&cc->cards_busy))
+		pthread_mutex_unlock(&cc->cards_busy);
 	pthread_mutex_destroy(&cc->cards_busy);
+	
 	add_garbage(cc->prefix);
 	add_garbage(cc);
 }

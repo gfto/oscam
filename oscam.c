@@ -34,6 +34,7 @@ int32_t cs_restart_mode=1; //Restartmode: 0=off, no restart fork, 1=(default)res
 char  cs_tmpdir[200]={0x00};
 pthread_mutex_t gethostbyname_lock;
 pthread_mutex_t get_cw_lock;
+pthread_mutex_t system_lock;
 pthread_key_t getclient;
 
 //Cache for  ecms, cws and rcs:
@@ -571,8 +572,8 @@ void cleanup_thread(void *var)
 		add_garbage(cl->req);
 		add_garbage(cl->cc);
 		add_garbage(cl->serialdata);
-		add_garbage(cl);
 		cl->cleaned++;//cleaned=2
+		add_garbage(cl);
 	}
 }
 
@@ -901,6 +902,7 @@ static void init_first_client()
 
   pthread_mutex_init(&gethostbyname_lock, NULL);
   pthread_mutex_init(&get_cw_lock, NULL);
+  pthread_mutex_init(&system_lock, NULL);
 
 #ifdef CS_LOGHISTORY
   loghistidx=0;
@@ -1132,6 +1134,7 @@ void start_thread(void * startroutine, char * nameroutine) {
 #ifndef TUXBOX
 	pthread_attr_setstacksize(&attr, PTHREAD_STACK_SIZE);
 #endif
+	pthread_mutex_lock(&system_lock);
 	if (pthread_create(&temp, &attr, startroutine, NULL))
 		cs_log("ERROR: can't create %s thread", nameroutine);
 	else {
@@ -1139,9 +1142,10 @@ void start_thread(void * startroutine, char * nameroutine) {
 		pthread_detach(temp);
 	}
 	pthread_attr_destroy(&attr);
+	pthread_mutex_unlock(&system_lock);
 }
 
-void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
+static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
 
 	if (!cl) return;
 	pthread_t thread = cl->thread;
@@ -1151,11 +1155,11 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 	pthread_join(thread, NULL);
 #ifndef NO_PTHREAD_CLEANUP_PUSH
 	int32_t cnt = 0;
-	while(cnt < 10 && cl && !cl->cleaned){
+	while(cnt < 10 && cl && cl->cleaned < 2){
 		cs_sleepms(50);
 		++cnt;
 	}
-	if(cl && !cl->cleaned){
+	if(!exit_oscam && cl && !cl->cleaned){
 		cs_log("A thread didn't cleanup itself. Forcing cleanup for type %c (%s,%s)", cl->typ, cl->reader?cl->reader->label : cl->account?cl->account->usr?cl->account->usr: "" : "", cl->ip ? cs_inet_ntoa(cl->ip) : "");
 		cleanup_thread(cl);
 	}
@@ -1167,6 +1171,11 @@ void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill its
 	return;
 }
 
+void kill_thread(struct s_client *cl) { //cs_exit is used to let thread kill itself, this routine is for a thread to kill other thread
+	pthread_mutex_lock(&system_lock);
+	kill_thread_int(cl);	
+	pthread_mutex_unlock(&system_lock);
+}
 #ifdef CS_ANTICASC
 void start_anticascader()
 {
@@ -1209,7 +1218,7 @@ static void add_reader_to_active(struct s_reader *rdr) {
   } else first_active_reader = rdr;
 }
 
-int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
+static int32_t restart_cardreader_int(struct s_reader *rdr, int32_t restart) {
 
 	if (restart) {
 		//remove from list:	
@@ -1218,7 +1227,7 @@ int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
 
 	if (restart) //kill old thread
 		if (rdr->client) {
-			kill_thread(rdr->client);
+			kill_thread_int(rdr->client);
 			rdr->client = NULL;
 		}
 
@@ -1283,14 +1292,23 @@ int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
 	return 0;
 }
 
+int32_t restart_cardreader(struct s_reader *rdr, int32_t restart) {
+	pthread_mutex_lock(&system_lock);
+	int32_t result = restart_cardreader_int(rdr, restart);
+	pthread_mutex_unlock(&system_lock);
+	return result;
+}
+
 static void init_cardreader() {
 
+	pthread_mutex_lock(&system_lock);
 	struct s_reader *rdr;
 	for (rdr=first_active_reader; rdr ; rdr=rdr->next) {
-		if (!restart_cardreader(rdr, 0))
+		if (!restart_cardreader_int(rdr, 0))
 			remove_reader_from_active(rdr);
 	}
 	load_stat_from_file();
+	pthread_mutex_unlock(&system_lock);
 }
 
 static void cs_fake_client(struct s_client *client, char *usr, int32_t uniq, in_addr_t ip)
