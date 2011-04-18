@@ -196,6 +196,7 @@ char *send_oscam_config_loadbalancer(struct templatevars *vars, struct uriparams
 		memset(cfg.ser_device, 0, sizeof(cfg.ser_device));
 		memset(&cfg.lb_retrylimittab, 0, sizeof(CAIDVALUETAB));
 		memset(&cfg.lb_nbest_readers_tab, 0, sizeof(CAIDVALUETAB));
+		memset(&cfg.lb_noproviderforcaid, 0, sizeof(CAIDTAB));
 		for(i = 0; i < (*params).paramcount; ++i) {
 			if ((strcmp((*params).params[i], "part")) && (strcmp((*params).params[i], "action"))) {
 				//tpl_printf(vars, TPLAPPEND, "MESSAGE", "Parameter: %s set to Value: %s<BR>\n", (*params).params[i], (*params).values[i]);

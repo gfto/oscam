@@ -305,15 +305,19 @@ int32_t ll_contains(LLIST *l, void *obj)
     return (data==obj);
 }
 
-void ll_remove(LLIST *l, void *obj)
+int32_t ll_remove(LLIST *l, void *obj)
 {
+	int n = 0;
     LL_ITER *it = ll_iter_create(l);
     void *data;
     while ((data=ll_iter_next(it))) {
-      if (data==obj)
-        ll_iter_remove(it);
+      	if (data==obj) {
+        	ll_iter_remove(it);
+        	n++;
+        }
     }
     ll_iter_release(it);
+    return n;
 }
 
 void ll_remove_data(LLIST *l, void *obj)

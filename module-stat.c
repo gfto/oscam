@@ -121,6 +121,11 @@ static uint32_t get_prid(uint16_t caid, uint32_t prid)
 			prid = 0;
 			break;
 		}
+		if (tcaid < 0x0100 && (caid >> 8) == tcaid) {
+			prid = 0;
+			break;
+		}
+		
 	}
 	return prid;
 }
@@ -736,7 +741,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		while ((rdr=ll_iter_next(it))) {
         		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
         		if (stat && stat->ecm_count>0) {
-        			if (!ll_contains(result, rdr)) {
+        			if (!ll_contains(result, rdr) && nreaders) {
         				ll_append(result, rdr);
         				nreaders--;
 					}
@@ -781,13 +786,15 @@ int32_t get_best_reader(ECM_REQUEST *er)
 #endif	
 		it = ll_iter_create(er->matching_rdr);
 		while ((rdr=ll_iter_next(it))) {
-	        	stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
+			stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
 
-			if (stat && stat->rc != 0) { //retrylimit reached:
+			if (stat && stat->rc != 0 && stat->request_count < cfg.lb_min_ecmcount) { //retrylimit reached:
 				if (stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
 					stat->last_received = current_time;
-					ll_remove(result, rdr);
+					stat->request_count++;
+					nreaders += ll_remove(result, rdr);
 					ll_prepend(result, rdr);
+					nreaders--;
 					cs_debug_mask(D_TRACE, "loadbalancer: retrying reader %s", rdr->label);
 				}
 			}
