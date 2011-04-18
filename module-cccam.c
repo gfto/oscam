@@ -1653,6 +1653,11 @@ void cc_card_removed(struct s_client *cl, uint32_t shareid) {
 			if (card->hop == 1) cc->num_hop1--;
 			else if (card->hop == 2) cc->num_hop2--;
 			else cc->num_hopx--;
+			
+			if (card->reshare == 0) cc->num_reshare0--;
+			else if (card->reshare == 1) cc->num_reshare1--;
+			else if (card->reshare == 2) cc->num_reshare2--;
+			else cc->num_resharex--;
 
 			cc_free_card(card);
 			cc->card_removed_count++;
@@ -1730,6 +1735,10 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			cc->num_hop1 = 0;
 			cc->num_hop2 = 0;
 			cc->num_hopx = 0;
+			cc->num_reshare0 = 0;
+			cc->num_reshare1 = 0;
+			cc->num_reshare2 = 0;
+			cc->num_resharex = 0;
             pthread_mutex_unlock(&cc->cards_busy);
                 			
 			memcpy(cc->peer_node_id, data, 8);
@@ -1894,6 +1903,11 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 				if (card->hop == 1) cc->num_hop1++;
 				else if (card->hop == 2) cc->num_hop2++;
 				else cc->num_hopx++;
+				
+				if (card->reshare == 0) cc->num_reshare0++;
+				else if (card->reshare == 1) cc->num_reshare1++;
+				else if (card->reshare == 2) cc->num_reshare2++;
+				else cc->num_resharex++;
 			}
 		}
 
@@ -2910,7 +2924,10 @@ int32_t cc_cli_connect(struct s_client *cl) {
 	cc->num_hop1 = 0;
 	cc->num_hop2 = 0;
 	cc->num_hopx = 0;
-	
+	cc->num_reshare0 = 0;
+	cc->num_reshare1 = 0;
+	cc->num_reshare2 = 0;
+	cc->num_resharex = 0;	
 	memset(&cc->cmd05_data, 0, sizeof(cc->cmd05_data));
 	memset(&cc->receive_buffer, 0, sizeof(cc->receive_buffer));
 	cc->cmd0c_mode = MODE_CMD_0x0C_NONE;

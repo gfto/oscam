@@ -2393,14 +2393,18 @@ char *send_oscam_status(struct templatevars *vars, struct uriparams *params, str
 								int32_t cnt = ll_count(cards);
 								int32_t locals = rcc->num_hop1;
 								tpl_printf(vars, TPLADD, "TMP", "(%d of %d card%s)", locals, cnt, (cnt > 1)? "s": "");
-								tpl_printf(vars, TPLADD, "TMPSPAN","<SPAN>card count = %d<BR>hop1 = %d<BR>hop2 = %d<BR>hopx = %d<BR>currenthops = %d</SPAN>",
+								tpl_printf(vars, TPLADD, "TMPSPAN","<SPAN>card count=%d<BR>hop1=%d<BR>hop2=%d<BR>hopx=%d<BR>currenthops=%d<BR><BR>reshare0=%d<BR>reshare1=%d<BR>reshare2=%d<BR>resharex=%d</SPAN>",
 										cnt,
 										rcc->num_hop1,
 										rcc->num_hop2,
 										rcc->num_hopx,
-										cl->reader->cc_currenthops);
+										cl->reader->cc_currenthops,
+										rcc->num_reshare0,
+										rcc->num_reshare1,
+										rcc->num_reshare2,
+										rcc->num_resharex);
 
-								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip\" title=\"Show cards\">%s%s</A>",
+								tpl_printf(vars, TPLAPPEND, "CLIENTCON", " <A HREF=\"entitlements.html?label=%s\" class=\"tooltip\">%s%s</A>",
 										urlencode(vars, cl->reader->label),
 										tpl_getVar(vars, "TMP"),
 										tpl_getVar(vars, "TMPSPAN"));
