@@ -3114,7 +3114,7 @@ int32_t init_srvid()
 	if (nr > 0) {
 		cs_log("%d service-id's loaded", nr);
 		if (nr > 2000) {
-			cs_log("WARNING: %d service-id's is far too much! You risk high CPU load and high ECM times.", nr);
+			cs_log("WARNING: You risk high CPU load and high ECM times with more than 2000 service-id´s!", nr);
 			cs_log("HINT: --> use optimized lists from http://streamboard.gmc.to/wiki/index.php/Srvid");
 		}
 	} else {
