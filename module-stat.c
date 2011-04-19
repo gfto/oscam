@@ -318,6 +318,19 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		stat->request_count = 0;
 		stat->fail_factor = 0;
 		
+		//If answering reader is a fallback reader, decrement answer time by fallback timeout:
+		struct s_reader *r;
+		LL_ITER *it = ll_iter_create(er->matching_rdr);
+		int is_fallback = 0;
+		while ((r=ll_iter_next(it))) {
+			if (it->cur == er->fallback) is_fallback = 1;
+			if (r == rdr) {
+				if (is_fallback && (uint32_t)ecm_time >= cfg.ftimeout)
+					ecm_time -= cfg.ftimeout;
+				break;
+			}
+		}
+		
 		//FASTEST READER:
 		stat->time_idx++;
 		if (stat->time_idx >= LB_MAX_STAT_TIME)
@@ -621,17 +634,18 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				continue;
 			}
 			
-			if (stat->rc != 0 && hassrvid) {
-				ll_append(result, rdr); //need more statistics!
-				nreaders--;
-				continue;
-			}
-			
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
 			if (stat->rc == 0 || hassrvid) {
 				if (cfg.preferlocalcards && !(rdr->typ & R_IS_NETWORK))
 					nlocal_readers++; //Prefer local readers!
-			
+
+				//reduce weight to force other readers:
+				if (stat->rc > 0) {
+					weight = 100 / (1+stat->fail_factor+stat->request_count);
+					if (weight <= 0)
+						weight = 1;
+				}
+					
 				switch (cfg.lb_mode) {
 					default:
 					case LB_NONE:
