@@ -621,6 +621,12 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				continue;
 			}
 			
+			if (stat->rc != 0 && hassrvid) {
+				ll_append(result, rdr); //need more statistics!
+				nreaders--;
+				continue;
+			}
+			
 			//Reader can decode this service (rc==0) and has lb_min_ecmcount ecms:
 			if (stat->rc == 0 || hassrvid) {
 				if (cfg.preferlocalcards && !(rdr->typ & R_IS_NETWORK))
@@ -685,7 +691,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	int32_t best_time = 0;
 	LL_NODE *fallback = NULL;
 
-	int32_t n=ll_count(result);
+	int32_t n=0;
 	while (nreaders) {
 		struct stat_value *best = NULL;
 
@@ -739,7 +745,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		cs_debug_mask(D_TRACE, "loadbalancer: NO MATCHING READER FOUND, reopen last valid:");
 		it = ll_iter_create(er->matching_rdr);
 		while ((rdr=ll_iter_next(it))) {
-        		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
+        		stat = get_stat(rdr, er->caid, prid, er->srvid, er->l);
         		if (stat && stat->ecm_count>0) {
         			if (!ll_contains(result, rdr) && nreaders) {
         				ll_append(result, rdr);
@@ -759,22 +765,13 @@ int32_t get_best_reader(ECM_REQUEST *er)
        	//primary readers 
        	stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
        		
-   		if (stat && stat->rc == 0 && current_time > stat->last_received+(time_t)(cfg.ctimeout/1000)) { 
+   		if (stat && current_time > stat->last_received+(time_t)(cfg.ctimeout/1000)) { 
        		stat->request_count++; 
        		stat->last_received = current_time;
         		
 	   		if (stat->request_count >= cfg.lb_min_ecmcount) {
    				add_stat(rdr, er, 0, 5); //reader marked as unuseable
    				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
-   				
-	   			if (it->cur == fallback)
-	   				fallback = it->cur->nxt;
-	   			ll_iter_remove(it);
-	   			nreaders++;
-	   			if (rdr == best_rdr) {
-	   				best_rdr = NULL;
-	   				best_time = 0;	
-	   			}
 	   		}
 	   		else
 	   			cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
