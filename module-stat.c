@@ -311,12 +311,12 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	if (stat->ecm_count < 0)
 		stat->ecm_count=0;
 		
-	time_t time = time(NULL);
+	time_t ctime = time(NULL);
 	
 	if (rc == 0) { //found
 		stat->rc = 0;
 		stat->ecm_count++;
-		stat->last_received = time;
+		stat->last_received = ctime;
 		stat->request_count = 0;
 		stat->fail_factor = 0;
 		
@@ -347,17 +347,17 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		int32_t ule = rdr->lb_usagelevel_ecmcount;
 		if (ule > 0 && ((ule / cfg.lb_min_ecmcount) > 0)) //update every MIN_ECM_COUNT usagelevel:
 		{
-			time_t t = (time-rdr->lb_usagelevel_time);
+			time_t t = (ctime-rdr->lb_usagelevel_time);
 			rdr->lb_usagelevel = 1000/(t<1?1:t);
 			ule = 0;
 		}
 		if (ule == 0)
-			rdr->lb_usagelevel_time = time;
+			rdr->lb_usagelevel_time = ctime;
 		rdr->lb_usagelevel_ecmcount = ule+1;
 	}
 	else if (rc == 1 || rc == 2) { //cache
 		//no increase of statistics here, cachetime is not real time
-		stat->last_received = time;
+		stat->last_received = ctime;
 		stat->request_count = 0;
 	}
 	else if (rc == 4) { //not found
@@ -367,7 +367,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 				stat->rc = rc;
 				stat->fail_factor++;
 		}
-		stat->last_received = time;
+		stat->last_received = ctime;
 		
 		//reduce ecm_count step by step
 		if (!cfg.lb_reopen_mode)
@@ -376,10 +376,8 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	else if (rc == 5) { //timeout
 		stat->request_count++;
 
-		time_t cur_time = time;
-		
 		//catch suddenly occuring timeouts and block reader:
-		if ((int)(cur_time-stat->last_received) < (int)(5*cfg.ctimeout) && 
+		if ((int)(ctime-stat->last_received) < (int)(5*cfg.ctimeout) && 
 						stat->rc == 0 && 
 						stat->ecm_count > 0) {
 				stat->rc = 5;
@@ -390,7 +388,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 				stat->fail_factor++;
 		}
 				
-		stat->last_received = cur_time;
+		stat->last_received = ctime;
 
 		if (!cfg.lb_reopen_mode)
 			stat->ecm_count /= 10;
