@@ -596,6 +596,15 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		free(rdrs);
 	}
 #endif	
+
+	int32_t nbest_readers = get_nbest_readers(er);
+	int32_t nfb_readers = cfg.lb_nfb_readers;
+	if (nlocal_readers > nbest_readers) { //if we have local readers, we prefer them!
+		nlocal_readers = nbest_readers;
+		nbest_readers = 0;	
+	}
+	else
+		nbest_readers = nbest_readers-nlocal_readers;
 	
 	it = ll_iter_create(er->matching_rdr);
 	while ((rdr=ll_iter_next(it)) && nreaders) {
@@ -639,12 +648,8 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				if (cfg.preferlocalcards && !(rdr->typ & R_IS_NETWORK))
 					nlocal_readers++; //Prefer local readers!
 
-				//reduce weight to force other readers:
-				if (stat->rc > 0) {
-					weight = 100 / (1+stat->fail_factor+stat->request_count);
-					if (weight <= 0)
-						weight = 1;
-				}
+				if (stat->rc != 0)
+					nbest_readers++; //just add another reader if best reader is nonresponding but has services
 					
 				switch (cfg.lb_mode) {
 					default:
@@ -688,15 +693,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	}
 	ll_iter_release(it);
 
-	int32_t nbest_readers = get_nbest_readers(er);
-	int32_t nfb_readers = cfg.lb_nfb_readers;
-	if (nlocal_readers > nbest_readers) { //if we have local readers, we prefer them!
-		nlocal_readers = nbest_readers;
-		nbest_readers = 0;	
-	}
-	else
-		nbest_readers = nbest_readers-nlocal_readers;
-	
 	struct stat_value *stv;
 	it = ll_iter_create(selected);
 	
