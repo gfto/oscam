@@ -1005,16 +1005,15 @@ void update_card_list() {
 }
 
 int32_t cc_srv_report_cards(struct s_client *cl) {
-		//pthread_mutex_lock(&cc_shares_lock);
-		LL_ITER *it = ll_iter_create(reported_carddatas);
-		struct cc_card *card;
-		while ((card = ll_iter_next(it))) {
-				send_card_to_clients(card, cl);
-		}
-		ll_iter_release(it);
-		//pthread_mutex_unlock(&cc_shares_lock);
+	struct cc_data *cc = cl->cc;
+	LL_ITER *it = ll_iter_create(reported_carddatas);
+	struct cc_card *card;
+	while ((card = ll_iter_next(it)) && cc->mode != CCCAM_MODE_SHUTDOWN) {
+		send_card_to_clients(card, cl);
+	}
+	ll_iter_release(it);
 
-		return 1;
+	return cc->mode != CCCAM_MODE_SHUTDOWN;
 }
 
 void refresh_shares()

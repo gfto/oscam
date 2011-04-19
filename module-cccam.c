@@ -1710,6 +1710,21 @@ void addParam(char *param, char *value)
 	}
 }
 
+static void chk_peer_node_for_oscam(struct cc_data *cc)
+{
+	if (!cc->is_oscam_cccam) {//Allready discovered oscam-cccam:
+		uint16_t sum = 0x1234;
+		uint16_t recv_sum = (cc->peer_node_id[6] << 8)
+				| cc->peer_node_id[7];
+		int32_t i;
+		for (i = 0; i < 6; i++) {
+			sum += cc->peer_node_id[i];
+		}
+		//Create special data to detect oscam-cccam:
+		cc->is_oscam_cccam = sum == recv_sum;
+	}
+}
+
 int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 	struct s_reader *rdr = (cl->typ == 'c') ? NULL : cl->reader;
 	uint8_t token[256];
@@ -1755,17 +1770,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 			cs_debug_mask(D_READER, "%s remove server %s running v%s (%s)", getprefix(), cs_hexdump(0,
 					cc->peer_node_id, 8), cc->remote_version, cc->remote_build);
 
-			if (!cc->is_oscam_cccam) {//Allready discovered oscam-cccam:
-				uint16_t sum = 0x1234;
-				uint16_t recv_sum = (cc->peer_node_id[6] << 8)
-						| cc->peer_node_id[7];
-				int32_t i;
-				for (i = 0; i < 6; i++) {
-					sum += cc->peer_node_id[i];
-				}
-				//Create special data to detect oscam-cccam:
-				cc->is_oscam_cccam = sum == recv_sum;
-			}
+			chk_peer_node_for_oscam(cc);
 			//Trick: when discovered partner is an Oscam Client, then we send him our version string:
 			if (cc->is_oscam_cccam) {
 				snprintf((char *)token, sizeof(token),
@@ -2552,7 +2557,7 @@ int32_t cc_srv_wakeup_readers(struct s_client *cl) {
 			continue;
 		
 		//This wakeups the reader:
-		uchar dummy;
+		uchar dummy = 0;
 		write_to_pipe(rdr->fd, PIP_ID_CIN, &dummy, sizeof(dummy));
 		wakeup++;
 	}
@@ -2573,7 +2578,6 @@ int32_t check_cccam_compat(struct cc_data *cc) {
 
 int32_t cc_srv_connect(struct s_client *cl) {
 	int32_t i, wait_for_keepalive;
-	uint32_t cmi;
 	uint8_t buf[CC_MAXMSGSIZE];
 	uint8_t data[16];
 	char usr[21], pwd[65];
@@ -2708,9 +2712,10 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	}
 	
 
-	if (!cc->prefix)
+	if (!cc->prefix) {
 		cc->prefix = cs_malloc(&cc->prefix, strlen(cl->account->usr)+20, QUITERROR);
-	snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s: ", cl->account->usr);
+		snprintf(cc->prefix, strlen(cl->account->usr)+20, "cccam(s) %s: ", cl->account->usr);
+	}
 	
 
 	//Starting readers to get cards:
@@ -2730,6 +2735,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		return -1;
 	cs_ddump_mask(D_CLIENT, buf, i, "cccam: cli data:");
 	memcpy(cc->peer_node_id, buf + 24, 8);
+	chk_peer_node_for_oscam(cc);
 	
 	strncpy(cc->remote_version, (char*)buf+33, sizeof(cc->remote_version)-1);
 	strncpy(cc->remote_build, (char*)buf+65, sizeof(cc->remote_build)-1);
@@ -2749,9 +2755,12 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	
 	//Wait for Partner detection (NOK1 with data) before reporting cards
 	//When Partner is detected, cccam220=1 is set. then we can report extended card data
-	i = process_input(mbuf, sizeof(mbuf), 1);
-	if (i<=0 && i != -9)
-		return 0; //disconnected
+	if (cc->is_oscam_cccam) {
+		i = process_input(mbuf, sizeof(mbuf), 1);
+		if (i<=0 && i != -9)
+			return 0; //disconnected
+	}
+	
 	if (cc->cccam220)
 		cs_debug_mask(D_CLIENT, "%s extended sid mode activated", getprefix());
 	else
@@ -2761,7 +2770,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		return -1;
 	cs_ftime(&cc->ecm_time);
 
-	cmi = 0;
+	time_t timeout = time(NULL);
 	wait_for_keepalive = 100;
 	cc->mode = CCCAM_MODE_NORMAL;
 	//some clients, e.g. mgcamd, does not support keepalive. So if not answered, keep connection
@@ -2769,35 +2778,34 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	while (cl->pfd && cl->udp_fd && cc->mode == CCCAM_MODE_NORMAL && !cl->dup)
 	{
 		i = process_input(mbuf, sizeof(mbuf), 10);
-		if (i == -9) { //timeout 10s
-			cmi+=10;
-			if (cmi >= cfg.cmaxidle) {
-				//cs_debug_mask(D_TRACE, "client timeout user %s idle=%d client max idle=%d", usr, cmi, cfg.cmaxidle);
-				if (cfg.cc_keep_connected || cl->account->ncd_keepalive) {
-					if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
-						break;
-					if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
-						cs_debug_mask(D_CLIENT, "cccam: keepalive");
-        			    cc->answer_on_keepalive = time(NULL);
-        			    wait_for_keepalive++;
-					}
-					else if (wait_for_keepalive<100) break;
-					cmi = 0;
-				} else {
-					cs_debug_mask(D_CLIENT, "%s keepalive after maxidle is reached",
-							getprefix());
-					break; //Disconnect client
-				}
-			}
+		if (i <= 0 && i != -9)
+			break; //Disconnected by client		
 			
-		} else if (i <= 0)
-			break; //Disconnected by client
-		else { //data is parsed!
-			if (i == MSG_CW_ECM)
-				cmi = 0;
-			else if (i == MSG_KEEPALIVE) {
-				wait_for_keepalive = 0;
-				cmi = 0;
+		//data is parsed!
+		if (i == MSG_CW_ECM)
+			timeout = time(NULL);
+		else if (i == MSG_KEEPALIVE) {
+			wait_for_keepalive = 0;
+			timeout = time(NULL);
+		}
+		
+		//new timeout check:
+		if (time(NULL)-timeout > (time_t)cfg.cmaxidle) {
+			//cs_debug_mask(D_TRACE, "client timeout user %s idle=%d client max idle=%d", usr, cmi, cfg.cmaxidle);
+			if (cfg.cc_keep_connected || cl->account->ncd_keepalive) {
+				if (cc_cmd_send(cl, NULL, 0, MSG_KEEPALIVE) < 0)
+					break;
+				if (wait_for_keepalive<3 || wait_for_keepalive == 100) {
+					cs_debug_mask(D_CLIENT, "cccam: keepalive");
+       			    cc->answer_on_keepalive = time(NULL);
+       			    wait_for_keepalive++;
+				}
+				else if (wait_for_keepalive<100) break;
+				timeout = time(NULL);
+			} else {
+				cs_debug_mask(D_CLIENT, "%s keepalive after maxidle is reached",
+					getprefix());
+				break; //Disconnect client
 			}
 		}
 	}

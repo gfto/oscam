@@ -527,7 +527,6 @@ static void cleanup_ecmtasks(struct s_client *cl)
                 ecm->matching_rdr=NULL;
         }
         add_garbage(cl->ecmtask);
-        cl->ecmtask = NULL;
 }
 
 void cleanup_thread(void *var)
