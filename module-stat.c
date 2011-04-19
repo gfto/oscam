@@ -772,6 +772,7 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	//algo for finding unanswered requests (newcamd reader or disconnected camd35 UDP for example:)
 	it = ll_iter_create(result);
 	while ((rdr=ll_iter_next(it))) {
+		if (it->cur == fallback) break;
        	//primary readers 
        	stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
        		
