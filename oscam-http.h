@@ -1150,9 +1150,9 @@ provid=\"##APIPROVIDERPROVID##\">##APIPROVIDERNAME##</provider>\n"
 			<TD>\
 				<select name=\"penalty\">\n\
 					<option value=\"0\" ##PENALTY0##>0 - Only write to log</option>\n\
-					<option value=\"1\" ##PENALTY1##>1 - Fake DW</option>\n\
+					<option value=\"1\" ##PENALTY1##>1 - Fake DW delayed</option>\n\
 					<option value=\"2\" ##PENALTY2##>2 - Ban</option>\n\
-					<option value=\"3\" ##PENALTY3##>3 - Fake DW delayed</option>\n\
+					<option value=\"3\" ##PENALTY3##>3 - Real DW delayed</option>\n\
 				</select>\n\
 			</TD></TR>\n\
 			<TR><TD>##TPLHELPPREFIX##conf#aclogfile##TPLHELPSUFFIX##AClogfile:</A></TD><TD><input name=\"aclogfile\" type=\"text\" size=\"50\" maxlength=\"50\" value=\"##ACLOGFILE##\"></TD></TR>\n\

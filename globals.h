@@ -1226,7 +1226,7 @@ struct s_clientinit
 #define LB_LOWEST_USAGELEVEL 3
 #define LB_LOG_ONLY 10
 
-#define LB_MAX_STAT_TIME 20
+#define LB_MAX_STAT_TIME 10
 
 typedef struct reader_stat_t
 {
