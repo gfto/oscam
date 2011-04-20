@@ -69,13 +69,14 @@ static void ll_clear_int(LLIST *l, int clear_data)
     LL_ITER *it = ll_iter_create(l);
     while (ll_iter_next_nolock(it)) {
     	if (it->cur && !it->cur->flag++) {
-    		add_garbage(it->cur);
     		if (clear_data)
     			add_garbage(it->cur->obj);
+    		add_garbage(it->cur);
 		}
     }
     ll_iter_release(it);
     l->count = 0;
+    l->initial = 0;
     pthread_mutex_unlock(&l->lock);
 }
 

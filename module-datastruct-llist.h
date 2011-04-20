@@ -15,7 +15,7 @@ struct llnode {
 
 typedef struct llist LLIST;
 struct llist {
-    void *obj;
+//    void *obj;
     LL_NODE *initial;
     int32_t count;
     pthread_mutex_t lock;
