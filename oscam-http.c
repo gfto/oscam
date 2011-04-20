@@ -131,6 +131,7 @@ char *send_oscam_config_global(struct templatevars *vars, struct uriparams *para
 
 	if (cfg.cwlogdir != NULL) 		tpl_addVar(vars, TPLADD, "CWLOGDIR", cfg.cwlogdir);
 	if (cfg.saveinithistory == 1)	tpl_addVar(vars, TPLADD, "SAVEINITHISTORYCHECKED", "selected");
+	tpl_printf(vars, TPLADD, "LOGHISTORYSIZE", "%d", cfg.loghistorysize);
 
 	tpl_printf(vars, TPLADD, "CLIENTTIMEOUT", "%ld", cfg.ctimeout);
 	tpl_printf(vars, TPLADD, "FALLBACKTIMEOUT", "%ld", cfg.ftimeout);
