@@ -478,10 +478,12 @@ static struct stat_value *crt_cur(struct s_reader *rdr, int32_t value, int32_t t
 	return v;
 }
 
+#ifdef WITH_DEBUG 
 static char *strend(char *c) {
 	while (c && *c) c++;
 	return c;
 }
+#endif
 
 static int32_t get_retrylimit(ECM_REQUEST *er) {
 		int32_t i;

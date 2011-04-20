@@ -4534,26 +4534,22 @@ char *mk_t_nano(struct s_reader *rdr, uchar flag){
  * Creates a string ready to write as a token into config or WebIf for the sidtab. You must free the returned value through free_mk_t().
  */
 char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno){
-	int32_t i = 0, pos = 0;
-	char *dot = "";
+	int32_t i, pos;
+	char *dot;
 	char *value;
-	struct s_sidtab *sidtab = cfg.sidtab;
-	if(!sidtab || !cs_malloc(&value, 256 * sizeof(char), -1)) return "";
+	struct s_sidtab *sidtab;
+	if(!sidtab || !cs_malloc(&value, 512, -1)) return "";
 	value[0] = '\0';
 
-	char sidok[MAX_SIDBITS+1]; uint64ToBitchar((uint64_t)sidtabok, MAX_SIDBITS, sidok);
-	char sidno[MAX_SIDBITS+1]; uint64ToBitchar((uint64_t)sidtabno, MAX_SIDBITS, sidno);
-	
-	for (; sidtab; sidtab=sidtab->next){
-		if(sidok[i]=='1') {
-			pos += snprintf(value + pos, 256 - pos, "%s%s", dot, sidtab->label);
+	for (i=pos=0,dot="",sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next,i++){
+		if (sidtabok&((SIDTABBITS)1<<i)) {
+			pos += snprintf(value + pos, 512 - pos, "%s%s", dot, sidtab->label);
 			dot = ",";
 		}
-		if(sidno[i]=='1') {
-			pos += snprintf(value + pos, 256 - pos, "%s!%s", dot, sidtab->label);
+		if (sidtabno&((SIDTABBITS)1<<i)) {
+			pos += snprintf(value + pos, 512 - pos, "%s!%s", dot, sidtab->label);
 			dot = ",";
 		}
-		i++;
 	}
 	return value;
 }
