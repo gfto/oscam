@@ -2444,14 +2444,11 @@ int32_t write_server()
 			if ((rdr->nagra_read || cfg.http_full_cfg) && isphysical)
 				fprintf_conf(f, CONFVARWIDTH, "nagra_read", "%d\n", rdr->nagra_read);
 
-			if (rdr->typ != R_SMART) { //frequencies not needed on smartreader
+			if ((rdr->mhz || cfg.http_full_cfg) && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", rdr->mhz);
 
-				if ((rdr->mhz || cfg.http_full_cfg) && isphysical)
-					fprintf_conf(f, CONFVARWIDTH, "mhz", "%d\n", rdr->mhz);
-
-				if ((rdr->cardmhz || cfg.http_full_cfg) && isphysical)
-					fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", rdr->cardmhz);
-			}
+			if ((rdr->cardmhz || cfg.http_full_cfg) && isphysical)
+				fprintf_conf(f, CONFVARWIDTH, "cardmhz", "%d\n", rdr->cardmhz);
 
 			value = mk_t_ftab(&rdr->ftab);
 			if (strlen(value) > 0 || cfg.http_full_cfg)
