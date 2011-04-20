@@ -427,7 +427,10 @@ char *send_oscam_config_cccam(struct templatevars *vars, struct uriparams *param
 		else tpl_addVar(vars, TPLAPPEND, "MESSAGE", "<B>Write Config failed</B><BR><BR>");
 	}
 
-	tpl_printf(vars, TPLAPPEND, "PORT", "%d", cfg.cc_port);
+	char *value = mk_t_cccam_port();
+	tpl_printf(vars, TPLAPPEND, "PORT", "%s", value);
+	free_mk_t(value);
+	
 	tpl_printf(vars, TPLADD, "RESHARE", "%d", cfg.cc_reshare);
 
 	if (!strcmp((char*)cfg.cc_version,"2.0.11")) {

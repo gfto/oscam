@@ -327,6 +327,19 @@ void chk_port_tab(char *portasc, PTAB *ptab)
 	}
 }
 
+void chk_cccam_ports(char *value)
+{
+	int32_t i;
+	char *ptr;
+
+	memset(cfg.cc_port, 0, sizeof(cfg.cc_port));
+
+	for (i=0, ptr=strtok(value, ","); ptr && i<CS_MAXPORTS; ptr=strtok(NULL, ",")) {
+		cfg.cc_port[i] = atoi(ptr);
+		if (cfg.cc_port[i]) i++;
+	}
+}
+
 #ifdef NOTUSED
 static void chk_srvip(char *value, in_addr_t *ip)
 {
@@ -1019,7 +1032,7 @@ void chk_t_newcamd(char *token, char *value)
 void chk_t_cccam(char *token, char *value)
 {
 	if (!strcmp(token, "port")) {
-		cfg.cc_port = strToIntVal(value, 0);
+		chk_cccam_ports(value);
 		return;
 	}
 	//if (!strcmp(token, "serverip")) { cfg.cc_srvip=cs_inet_addr(value); return; }
@@ -2009,9 +2022,12 @@ int32_t write_config()
 	}
 
 	/*cccam*/
-	if ( cfg.cc_port > 0) {
+	if ( cfg.cc_port[0] > 0) {
 		fprintf(f,"[cccam]\n");
-		fprintf_conf(f, CONFVARWIDTH, "port", "%d\n", cfg.cc_port);
+		value = mk_t_cccam_port();
+		fprintf_conf(f, CONFVARWIDTH, "port", "%s\n", value);
+		free_mk_t(value);
+		
 		if(cfg.cc_reshare != 10 || cfg.http_full_cfg)
 			fprintf_conf(f, CONFVARWIDTH, "reshare", "%d\n", cfg.cc_reshare);
 		if(cfg.cc_ignore_reshare != 0 || cfg.http_full_cfg)
@@ -4365,6 +4381,25 @@ char *mk_t_camd35tcp_port(){
 	}
 	return value;
 }
+
+/*
+ * Creates a string ready to write as a token into config or WebIf for the cccam tcp ports. You must free the returned value through free_mk_t().
+ */
+char *mk_t_cccam_port(){
+	int32_t i, pos = 0, needed = CS_MAXPORTS*6+8;
+
+	char *value;
+	if(!cs_malloc(&value, needed * sizeof(char), -1)) return "";
+	char *dot = "";
+	for(i = 0; i < CS_MAXPORTS; i++) {
+		if (!cfg.cc_port[i]) break;
+		
+		pos += snprintf(value + pos, needed-pos, "%s%d", dot, cfg.cc_port[i]);
+		dot=",";
+	}
+	return value;
+}
+
 
 /*
  * Creates a string ready to write as a token into config or WebIf for AESKeys. You must free the returned value through free_mk_t().

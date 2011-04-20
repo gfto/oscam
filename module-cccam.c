@@ -3221,15 +3221,20 @@ void module_cccam(struct s_module *ph) {
 	ph->c_available = cc_available;
 	ph->c_card_info = cc_card_info;
 	static PTAB ptab; //since there is always only 1 cccam server running, this is threadsafe
-	ptab.ports[0].s_port = cfg.cc_port;
+	memset(&ptab, 0, sizeof(PTAB));
+	int32_t i;
+	for (i=0;i<CS_MAXPORTS;i++) {
+		if (!cfg.cc_port[i]) break;
+		ptab.ports[i].s_port = cfg.cc_port[i];
+		ptab.nports++;
+	}
+			
 	ph->ptab = &ptab;
-	ph->ptab->nports = 1;
 	ph->num = R_CCCAM;
 
 	//Partner Detection:
 	init_rnd();
 	uint16_t sum = 0x1234; //This is our checksum 
-	int32_t i;
 	for (i = 0; i < 6; i++) {
 		cc_node_id[i] = fast_rnd();
 		sum += cc_node_id[i];

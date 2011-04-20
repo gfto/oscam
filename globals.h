@@ -1129,7 +1129,7 @@ struct s_config
 	PTAB		cc_ptab;
 	int32_t		rad_port;
 	in_addr_t	rad_srvip;
-	int32_t		cc_port;
+	int32_t		cc_port[CS_MAXPORTS];
 	int32_t		cc_reshare;
 	int32_t		cc_ignore_reshare;
 	int32_t		cc_update_interval;
@@ -1493,6 +1493,7 @@ extern char *mk_t_tuntab(TUNTAB *ttab);
 extern char *mk_t_group(uint64_t grp);
 extern char *mk_t_ftab(FTAB *ftab);
 extern char *mk_t_camd35tcp_port();
+extern char *mk_t_cccam_port();
 extern char *mk_t_aeskeys(struct s_reader *rdr);
 extern char *mk_t_newcamd_port();
 extern char *mk_t_aureader(struct s_auth *account);
