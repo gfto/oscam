@@ -45,12 +45,29 @@ void ll_destroy_data(LLIST *l)
     _destroy(l);
 }
 
+void *ll_iter_next_nolock(LL_ITER *it)
+{
+    if (it && it->l) {
+        if (it->cur) {
+            it->prv = it->cur;
+            it->cur = it->cur->nxt;
+        } else if (it->l->initial && !it->prv)
+            it->cur = it->l->initial;
+        
+        if (it->cur)
+            return it->cur->obj;
+    }
+
+    return NULL;
+}
+
 static void ll_clear_int(LLIST *l, int clear_data)
 {
     if (!l) return;
 
+    pthread_mutex_lock(&l->lock);
     LL_ITER *it = ll_iter_create(l);
-    while (ll_iter_next(it)) {
+    while (ll_iter_next_nolock(it)) {
     	if (it->cur && !it->cur->flag++) {
     		add_garbage(it->cur);
     		if (clear_data)
@@ -59,6 +76,7 @@ static void ll_clear_int(LLIST *l, int clear_data)
     }
     ll_iter_release(it);
     l->count = 0;
+    pthread_mutex_unlock(&l->lock);
 }
 
 void ll_clear(LLIST *l)
@@ -153,22 +171,6 @@ void ll_iter_release(LL_ITER *it)
   	cl->itused = 0;
   // We don't need add_garbage here as iterators aren't shared across threads
   } else free(it);
-}
-
-void *ll_iter_next_nolock(LL_ITER *it)
-{
-    if (it && it->l) {
-        if (it->cur) {
-            it->prv = it->cur;
-            it->cur = it->cur->nxt;
-        } else if (it->l->initial && !it->prv)
-            it->cur = it->l->initial;
-        
-        if (it->cur)
-            return it->cur->obj;
-    }
-
-    return NULL;
 }
 
 void *ll_iter_next(LL_ITER *it)
