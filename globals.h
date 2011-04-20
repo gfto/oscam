@@ -132,8 +132,6 @@
 #define CS_CLIENT_MAXIDLE 120
 #define CS_BIND_TIMEOUT   120
 #define CS_DELAY          0
-#define CS_MAXLOGHIST     30
-#define CS_LOGHISTSIZE    193 // 32+128+33: username + logline + channelname
 #define CS_ECM_RINGBUFFER_MAX 20 // max size for ECM last responsetimes ringbuffer
 
 #define CS_CACHE_TIMEOUT  60
@@ -1068,7 +1066,8 @@ struct s_config
 	char		*cwlogdir;
 	char		*logfile;
 	uint8_t	logtostdout;
-	uint8_t logtosyslog;
+	uint8_t 	logtosyslog;
+	uint32_t	loghistorysize;
 	int32_t		disablelog;
 	int32_t		disableuserfile;
 	int32_t		usrfileflag;
@@ -1336,7 +1335,7 @@ extern LLIST *configured_readers;
 
 // oscam variables
 
-extern int32_t cs_dblevel, loghistidx;
+extern int32_t cs_dblevel;
 
 extern uint16_t len4caid[256];
 
@@ -1346,7 +1345,7 @@ extern uint32_t *IgnoreList;
 
 extern struct s_config cfg;
 extern char cs_confdir[];
-extern char loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];
+extern char *loghist, *loghistptr;
 extern struct s_module ph[CS_MAX_MOD];
 extern struct s_cardsystem cardsystem[CS_MAX_MOD];
 extern struct s_cardreader cardreader[CS_MAX_MOD];

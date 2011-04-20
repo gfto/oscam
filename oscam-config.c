@@ -370,6 +370,11 @@ void chk_t_global(const char *token, char *value)
 		return;
 	}
 
+	if (!strcmp(token, "loghistorysize")) {
+		cfg.loghistorysize = strToIntVal(value, 4096);
+		return;
+	}
+
 	if (!strcmp(token, "serverip")) {
 		if (strlen(value) == 0) {
 			cfg.srvip = 0;
@@ -1383,6 +1388,9 @@ int32_t init_config()
 	cfg.logfile = NULL;
 	cfg.usrfile = NULL;
 	cfg.disableuserfile = 1;
+#ifdef CS_LOGHISTORY
+	cfg.loghistorysize = 4096;
+#endif
 	cfg.cwlogdir = NULL;
 	cfg.reader_restart_seconds = 5;
 	cfg.waitforcards = 1;
@@ -1445,6 +1453,14 @@ int32_t init_config()
 		else cfg.logtostdout = 1;
 	}
 	if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
+
+	if (cfg.loghistorysize) {
+		if (cfg.loghistorysize < 1000) {
+			fprintf(stderr, "WARNING: loghistorysize is too small, adjusted to 1024\n");
+			cfg.loghistorysize = 1024;
+		}
+		cs_malloc(&loghist, cfg.loghistorysize, 0);
+	}
 
 	cs_init_log();
 	cs_init_statistics();
@@ -1792,12 +1808,14 @@ int32_t write_config()
 	if (cfg.disableqboxhdled || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "disableqboxhdled", "%d\n", cfg.disableqboxhdled);
 #endif
-    if (cfg.disablelog || cfg.http_full_cfg)
-    	fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg.disablelog);
-    if ((cfg.usrfile && cfg.disableuserfile == 0) || cfg.http_full_cfg)
-    	fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg.usrfile?cfg.disableuserfile:1);
-    if (cfg.usrfileflag || cfg.http_full_cfg)
-    	fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg.usrfileflag);
+	if (cfg.disablelog || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "disablelog", "%d\n", cfg.disablelog);
+	if ((cfg.usrfile && cfg.disableuserfile == 0) || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "disableuserfile", "%d\n", cfg.usrfile?cfg.disableuserfile:1);
+	if ((cfg.loghistorysize != 4096) || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "loghistorysize", "%d\n", cfg.loghistorysize);
+	if (cfg.usrfileflag || cfg.http_full_cfg)
+		fprintf_conf(f, CONFVARWIDTH, "usrfileflag", "%d\n", cfg.usrfileflag);
 	if (cfg.ctimeout != CS_CLIENT_TIMEOUT || cfg.http_full_cfg)
 		fprintf_conf(f, CONFVARWIDTH, "clienttimeout", "%ld\n", cfg.ctimeout);
 	if ((cfg.ftimeout && cfg.ftimeout != (CS_CLIENT_TIMEOUT /2)) || cfg.http_full_cfg)

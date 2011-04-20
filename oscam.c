@@ -41,10 +41,9 @@ pthread_key_t getclient;
 LLIST *ecmcache;
 
 struct  s_config  cfg;
-#ifdef CS_LOGHISTORY
-int32_t     loghistidx;  // ptr to current entry
-char    loghist[CS_MAXLOGHIST*CS_LOGHISTSIZE];     // ptr of log-history
-#endif
+
+char    *loghist = NULL;     // ptr of log-history
+char    *loghistptr = NULL;
 
 int32_t get_threadnum(struct s_client *client) {
 	struct s_client *cl;
@@ -898,15 +897,9 @@ static void init_first_client()
     exit(1);
   }
 
-
   pthread_mutex_init(&gethostbyname_lock, NULL);
   pthread_mutex_init(&get_cw_lock, NULL);
   pthread_mutex_init(&system_lock, NULL);
-
-#ifdef CS_LOGHISTORY
-  loghistidx=0;
-  memset(loghist, 0, CS_MAXLOGHIST*CS_LOGHISTSIZE);
-#endif
 
 #ifdef COOL
   coolapi_open_all();
@@ -3056,7 +3049,7 @@ void cs_log_config()
     snprintf((char *)buf, sizeof(buf), "%d Kb", cfg.max_log_size);
   else
     cs_strncpy((char *)buf, "unlimited", sizeof(buf));
-  cs_log("max. logsize=%s", buf);
+  cs_log("max. logsize=%s, loghistorysize=%d bytes", buf, cfg.loghistorysize);
   cs_log("client timeout=%lu ms, fallback timeout=%lu ms, cache delay=%d ms",
          cfg.ctimeout, cfg.ftimeout, cfg.delay);
 }
@@ -3450,9 +3443,6 @@ if (pthread_key_create(&getclient, NULL)) {
   {
     cardreader_def[i](&cardreader[i]);
   }
-
-
-  cs_log("auth size=%d", sizeof(struct s_auth));
 
   init_rnd();
   init_sidtab();
