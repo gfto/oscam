@@ -894,6 +894,7 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 	} else if(strcmp(getParam(params, "action"), "Save") == 0) {
 
 		rdr = get_reader_by_label(getParam(params, "label"));
+		kill_thread(rdr->client); //Stop reader before reinitialization
 		char servicelabels[1024]="";
 
 		clear_caidtab(&rdr->ctab);

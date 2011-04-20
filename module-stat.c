@@ -157,10 +157,7 @@ READER_STAT *get_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16
 	
 	//Move stat to list start for faster access:
 	if (i > 10 && stat)
-	{
-		if (ll_iter_remove(it)) 
-			ll_prepend(rdr->lb_stat, stat);
-	}
+		ll_iter_move_first(it);
 	ll_iter_release(it);
 	
 	return stat;

@@ -271,6 +271,31 @@ void *ll_iter_remove(LL_ITER *it)
     return obj;
 }
 
+int ll_iter_move_first(LL_ITER *it) 
+{
+	int moved = 0;
+    if (it) {
+    	pthread_mutex_lock(&it->l->lock);
+        LL_NODE *move = it->cur;
+        if (move && !move->flag++) { //preventing duplicate free because of multiple threads
+            LL_NODE *prv = it->prv;
+            
+            if (prv)
+                prv->nxt = move->nxt;
+            else
+                it->l->initial = move->nxt;
+					        	
+			move->nxt = it->l->initial;
+			it->l->initial = move;
+			moved = 1;
+			
+			ll_iter_reset(it);
+        }
+        pthread_mutex_unlock(&it->l->lock);
+    }
+    return moved;
+}
+
 void ll_iter_remove_data(LL_ITER *it)
 {
     void *obj = ll_iter_remove(it);
