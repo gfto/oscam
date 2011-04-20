@@ -4537,17 +4537,17 @@ char *mk_t_service( uint64_t sidtabok, uint64_t sidtabno){
 	int32_t i, pos;
 	char *dot;
 	char *value;
-	struct s_sidtab *sidtab;
-	if(!sidtab || !cs_malloc(&value, 512, -1)) return "";
+	struct s_sidtab *sidtab = cfg.sidtab;
+	if(!sidtab || !cs_malloc(&value, 1024, -1)) return "";
 	value[0] = '\0';
 
-	for (i=pos=0,dot="",sidtab=cfg.sidtab; sidtab; sidtab=sidtab->next,i++){
+	for (i=pos=0,dot=""; sidtab; sidtab=sidtab->next,i++){
 		if (sidtabok&((SIDTABBITS)1<<i)) {
-			pos += snprintf(value + pos, 512 - pos, "%s%s", dot, sidtab->label);
+			pos += snprintf(value + pos, 1024 - pos, "%s%s", dot, sidtab->label);
 			dot = ",";
 		}
 		if (sidtabno&((SIDTABBITS)1<<i)) {
-			pos += snprintf(value + pos, 512 - pos, "%s!%s", dot, sidtab->label);
+			pos += snprintf(value + pos, 1024 - pos, "%s!%s", dot, sidtab->label);
 			dot = ",";
 		}
 	}
