@@ -2745,7 +2745,7 @@ int32_t cc_srv_connect(struct s_client *cl) {
 		return -1;
 	cs_ddump_mask(D_CLIENT, buf, i, "cccam: cli data:");
 	memcpy(cc->peer_node_id, buf + 24, 8);
-	chk_peer_node_for_oscam(cc);
+	//chk_peer_node_for_oscam(cc);
 	
 	strncpy(cc->remote_version, (char*)buf+33, sizeof(cc->remote_version)-1);
 	strncpy(cc->remote_build, (char*)buf+65, sizeof(cc->remote_build)-1);
@@ -2765,11 +2765,9 @@ int32_t cc_srv_connect(struct s_client *cl) {
 	
 	//Wait for Partner detection (NOK1 with data) before reporting cards
 	//When Partner is detected, cccam220=1 is set. then we can report extended card data
-	if (cc->is_oscam_cccam) {
-		i = process_input(mbuf, sizeof(mbuf), 1);
-		if (i<=0 && i != -9)
-			return 0; //disconnected
-	}
+	i = process_input(mbuf, sizeof(mbuf), 1);
+	if (i<=0 && i != -9)
+		return 0; //disconnected
 	
 	if (cc->cccam220)
 		cs_debug_mask(D_CLIENT, "%s extended sid mode activated", getprefix());

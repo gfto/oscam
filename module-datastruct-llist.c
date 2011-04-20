@@ -45,26 +45,31 @@ void ll_destroy_data(LLIST *l)
     _destroy(l);
 }
 
-void ll_clear(LLIST *l)
+static void ll_clear_int(LLIST *l, int clear_data)
 {
     if (!l) return;
 
     LL_ITER *it = ll_iter_create(l);
-    while (ll_iter_next(it))
-        ll_iter_remove(it);
+    while (ll_iter_next(it)) {
+    	if (it->cur && !it->cur->flag++) {
+    		add_garbage(it->cur);
+    		if (clear_data)
+    			add_garbage(it->cur->obj);
+		}
+    }
     ll_iter_release(it);
     l->count = 0;
 }
 
+void ll_clear(LLIST *l)
+{
+	ll_clear_int(l, 0);
+}
+
+
 void ll_clear_data(LLIST *l)
 {
-    if (!l) return;
-
-    LL_ITER *it = ll_iter_create(l);
-    while (ll_iter_next(it))
-        ll_iter_remove_data(it);
-    ll_iter_release(it);
-    l->count = 0;
+	ll_clear_int(l, 1);
 }
 
 LL_NODE* ll_append_nolock(LLIST *l, void *obj)
