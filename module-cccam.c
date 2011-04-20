@@ -2068,11 +2068,20 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 						}
 						ll_iter_release(itr);
 						cs_debug_mask(D_TRACE, "%s forward card: share %d found: %d", getprefix(), server_card->id, card?1:0);
+						
+						struct s_reader *ordr = NULL;
 						if (card && card->origin_reader) { // found own card, now search reader card:
-								cs_debug_mask(D_TRACE, "%s forward card: share %d origin reader %s origin id %d", getprefix(), card->id, card->origin_reader->label, card->origin_id);
-								struct s_reader *rdr = card->origin_reader;
-								if (card->origin_id && rdr && rdr->client && rdr->client->cc) { //only if we have a origin from a cccam reader
-										struct cc_data *rcc = rdr->client->cc;
+								//Search reader in list, because it is maybe offline?
+								for (ordr=first_active_reader; ordr; ordr=ordr->next) {
+									if (ordr == card->origin_reader) break;
+								}
+									
+								if (!ordr)
+									cs_debug_mask(D_TRACE, "%s origin reader not found!", getprefix());
+								else {
+									cs_debug_mask(D_TRACE, "%s forward card: share %d origin reader %s origin id %d", getprefix(), card->id, ordr->label, card->origin_id);
+									if (card->origin_id && ordr && ordr->client && ordr->client->cc) { //only if we have a origin from a cccam reader
+										struct cc_data *rcc = ordr->client->cc;
 										
 										itr = ll_iter_create(rcc->cards);
 										while ((rcard=ll_iter_next(itr))) {
@@ -2080,21 +2089,22 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 														break;
 										}
 										ll_iter_release(itr);
-								}
-								else
+									}
+									else
 										rcard = card;
-								er->origin_reader = rdr;
+								}
+								er->origin_reader = ordr;
 						}
 						
 						er->origin_card = rcard;
-						if (!rcard) {
+						if (!rcard || !ordr) {
 								cs_debug_mask(D_TRACE, "%s forward card: share %d not found!", getprefix(), server_card->id);
 								er->rc = E_NOTFOUND;
 								er->rcEx = E2_CCCAM_NOK1; //share not found!
 						}
 						else
 								cs_debug_mask(D_TRACE, "%s forward card: share %d forwarded to %s origin as id %d", getprefix(), 
-										card->id, card->origin_reader->label, rcard->id);
+										card->id, ordr->label, rcard->id);
 						unlock_sharelist();
 				}
 						

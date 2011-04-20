@@ -197,7 +197,7 @@ int32_t send_card_to_clients(struct cc_card *card, struct s_client *one_client) 
                                 int32_t usr_ignorereshare = cl->account->cccignorereshare;
                                 if (usr_ignorereshare == -1) usr_ignorereshare = cfg.cc_ignore_reshare;
                                 
-                                int32_t reader_reshare = card->origin_reader?card->origin_reader->cc_reshare:usr_reshare;
+                                int32_t reader_reshare = card->origin_reader?card->rdr_reshare:usr_reshare;
                                 if (reader_reshare == -1) reader_reshare = cfg.cc_reshare;
                                 int32_t reshare = (reader_reshare < usr_reshare) ? reader_reshare : usr_reshare;
 								int32_t new_reshare;
@@ -337,9 +337,8 @@ int32_t cc_free_reported_carddata(LLIST *reported_carddatas, LLIST *except,
 
 int32_t card_valid_for_client(struct s_client *cl, struct cc_card *card) {
 
-        struct s_reader *rdr = card->origin_reader;
         //Check group:
-        if (rdr && !(rdr->grp & cl->grp))
+        if (card->grp && !(card->grp & cl->grp))
                 return 0;
 
         if (!chk_ident(&cl->ftab, card))
@@ -525,6 +524,10 @@ struct cc_card *create_card2(struct s_reader *rdr, int32_t j, uint16_t caid, uin
     card->hop = hop;
     card->reshare = reshare;
     card->origin_reader = rdr;
+    if (rdr) {
+    	card->grp = rdr->grp;
+    	card->rdr_reshare = rdr->cc_reshare; //copy reshare because reader could go offline
+	}
     return card;
 }
 
