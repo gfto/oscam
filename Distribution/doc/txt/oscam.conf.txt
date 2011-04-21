@@ -22,6 +22,9 @@ DESCRIPTIONS
 	  logging  targets,  default: /var/log/oscam.log. You can define a maximum of one filename and additionally to log
 	  to stdout or syslog (you can also only log to stdout or syslog and omit the filename).
 
+       loghistorysize = bytes
+	  size of log message history in web interface or monitor, 0 = disabled , default:4096
+
        disablelog = 0|1
 	  1 = disable log file, default:0
 
