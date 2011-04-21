@@ -533,13 +533,13 @@ void cleanup_thread(void *var)
 	struct s_client *cl = var;
 	if(cl && !cl->cleaned){ //cleaned=0
 		cl->cleaned++; //cleaned=1
+		
+		//kill_thread also removes this client, so here just to get sure client is removed:
 		struct s_client *prev, *cl2;
 		for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
 			if (cl == cl2)
 				break;
-		if (cl != cl2)
-			cs_log("FATAL ERROR: could not find client to remove from list.");
-		else
+		if (cl == cl2)
 			prev->next = cl2->next; //remove client from list
 	
 		if(cl->typ == 'c' && ph[cl->ctyp].cleanup)
@@ -1142,6 +1142,15 @@ static void kill_thread_int(struct s_client *cl) { //cs_exit is used to let thre
 	if (!cl) return;
 	pthread_t thread = cl->thread;
 	if (pthread_equal(thread, pthread_self())) return; //cant kill yourself
+
+	struct s_client *prev, *cl2;
+	for (prev=first_client, cl2=first_client->next; prev->next != NULL; prev=prev->next, cl2=cl2->next)
+		if (cl == cl2)
+			break;
+	if (cl != cl2)
+		cs_log("FATAL ERROR: could not find client to remove from list.");
+	else
+		prev->next = cl2->next; //remove client from list
 
 	pthread_cancel(thread);
 	pthread_join(thread, NULL);
@@ -2133,7 +2142,7 @@ void chk_dcw(struct s_client *cl, ECM_REQUEST *er)
   ert=&cl->ecmtask[er->cpti];
   if (ert->rc<E_99) {
 	//cs_debug_mask(D_TRACE, "chk_dcw: already done rc=%d %s", er->rc, er->selected_reader->label);
-	send_reader_stat(er->selected_reader, er, (er->rc <= E_RDR_NOTFOUND)?E_NOTFOUND:E_FOUND);
+	send_reader_stat(er->selected_reader, ert, (er->rc <= E_RDR_NOTFOUND)?E_NOTFOUND:E_FOUND);
 	return; // already done
   }
   if( (er->caid!=ert->caid && er->ocaid!=ert->ocaid) || memcmp(er->ecmd5, ert->ecmd5, sizeof(er->ecmd5)) ) {
