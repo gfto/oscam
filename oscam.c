@@ -2262,48 +2262,83 @@ void guess_irdeto(ECM_REQUEST *er)
 }
 #endif
 
+static void convert_to_beta(struct s_client *cl, ECM_REQUEST *er, uint16_t caidto)
+{
+	static uchar headerN3[10] = {0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12};
+	static uchar headerN2[10] = {0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12};
+
+#ifdef WITH_DEBUG
+	uint16_t caidfrom = er->caid;
+#endif
+	er->caid = caidto;
+	er->prid = 0;
+	er->l = er->ecm[2] + 3;
+
+	memmove(er->ecm + 13, er->ecm + 3, er->l - 3);
+
+	if (er->l > 0x88) {
+		memcpy(er->ecm + 3, headerN3, 10);
+
+		if (er->ecm[0] == 0x81)
+			er->ecm[12] += 1;
+
+		er->ecm[1]=0x70;
+	}
+	else
+		memcpy(er->ecm + 3, headerN2, 10);
+
+    er->l += 10;
+	er->ecm[2] = er->l - 3;
+	er->btun = 1;
+
+	cl->cwtun++;
+	cl->account->cwtun++;
+	first_client->cwtun++;
+	
+	cs_debug_mask(D_TRACE, "ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
+					caidfrom, caidto, er->srvid);
+}
+
+
 void cs_betatunnel(ECM_REQUEST *er)
 {
 	int32_t n;
 	struct s_client *cl = cur_client();
 	uint32_t mask_all = 0xFFFF;
-	uchar headerN3[10] = {0xc7, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x87, 0x12};
-	uchar headerN2[10] = {0xc9, 0x00, 0x00, 0x00, 0x01, 0x10, 0x10, 0x00, 0x48, 0x12};
+//	static uchar nagra0[6] = {0x80, 0x30, 0x86, 0x07, 0x84, 0x00};
+//	static uchar nagra1[6] = {0x81, 0x30, 0x86, 0x07, 0x84, 0x00};
+	
 	TUNTAB *ttab;
 	ttab = &cl->ttab;
 
 	for (n = 0; (n < CS_MAXTUNTAB); n++) {
 		if ((er->caid==ttab->bt_caidfrom[n]) && ((er->srvid==ttab->bt_srvid[n]) || (ttab->bt_srvid[n])==mask_all)) {
-
-			er->caid = ttab->bt_caidto[n];
-			er->prid = 0;
-			er->l = er->ecm[2] + 3;
-
-			memmove(er->ecm + 13, er->ecm + 3, er->l - 3);
-
-			if (er->l > 0x88) {
-				memcpy(er->ecm + 3, headerN3, 10);
-
-				if (er->ecm[0] == 0x81)
-					er->ecm[12] += 1;
-
-				er->ecm[1]=0x70;
-			}
-			else
-				memcpy(er->ecm + 3, headerN2, 10);
-
-                        er->l += 10;
-			er->ecm[2] = er->l - 3;
-			er->btun = 1;
-
-			cl->cwtun++;
-			cl->account->cwtun++;
-			first_client->cwtun++;
-
-			cs_debug_mask(D_TRACE, "ECM converted from: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
-				ttab->bt_caidfrom[n], ttab->bt_caidto[n], ttab->bt_srvid[n]);
+			
+			//if (!memcmp(er->ecm, nagra0, 6) || !memcmp(er->ecm, nagra1, 6)) { //No nagra header?
+				convert_to_beta(cl, er, ttab->bt_caidto[n]);
+			//}
+			//else
+			//	cs_debug_mask(D_TRACE, "No nagra header, betatunnel wrong configured? From: 0x%X to BetaCrypt: 0x%X for service id:0x%X",
+			//		ttab->bt_caidfrom[n], ttab->bt_caidto[n], ttab->bt_srvid[n]);
+			
+			return;
 		}
 	}
+
+	cs_ddump_mask(D_TRACE, er->ecm, 12, "betatunnel?");
+		
+	//if (cl->account->betatunnel_auto)
+	//{
+	//	if (!memcmp(er->ecm, nagra0, 6) || !memcmp(er->ecm, nagra1, 6)) //nagra header
+	//	{
+	//		if (er->caid == 0x1833) { 
+	//			convert_to_beta(cl, er, 0x1702);
+	//		}
+	//		else if (er->caid == 0x1834) {
+	//			convert_to_beta(cl, er, 0x1722);
+	//		}
+	//	}		
+	//}
 }
 
 static void guess_cardsystem(ECM_REQUEST *er)
@@ -2900,6 +2935,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 				//cs_log("           %d.%03d", tpc.time, tpc.millitm);
 				if (er->stage) {
 					er->rc = E_TIMEOUT;
+					er->rcEx = 0;
 					if (cfg.lb_mode) {
 						LL_NODE *ptr;
 						for (ptr = er->matching_rdr->initial; ptr ; ptr = ptr->nxt)
