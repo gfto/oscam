@@ -329,6 +329,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 				break;
 			}
 		}
+		ll_iter_release(it);
 		
 		//FASTEST READER:
 		stat->time_idx++;
