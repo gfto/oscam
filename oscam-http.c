@@ -1022,19 +1022,15 @@ char *send_oscam_reader_config(struct templatevars *vars, struct uriparams *para
 		tpl_printf(vars, TPLADD, "LBWEIGHT", "%d", rdr->lb_weight);
 
 	//services
-	char sidok[MAX_SIDBITS+1];
-	uint64ToBitchar((uint64_t)rdr->sidtabok, MAX_SIDBITS, sidok);
-	char sidno[MAX_SIDBITS+1];
-	uint64ToBitchar((uint64_t)rdr->sidtabno,MAX_SIDBITS, sidno);
 	struct s_sidtab *sidtab = cfg.sidtab;
 	//build matrix
 	i = 0;
 	while(sidtab != NULL) {
 		tpl_addVar(vars, TPLADD, "SIDLABEL", sidtab->label);
-		if(sidok[i]=='1') tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+		if(rdr->sidtabok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 		else tpl_addVar(vars, TPLADD, "CHECKED", "");
 		tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "READERCONFIGSIDOKBIT"));
-		if(sidno[i]=='1') tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+		if(rdr->sidtabno&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 		else tpl_addVar(vars, TPLADD, "CHECKED", "");
 		tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "READERCONFIGSIDNOBIT"));
 		sidtab=sidtab->next;
@@ -1522,20 +1518,15 @@ char *send_oscam_user_config_edit(struct templatevars *vars, struct uriparams *p
 	}
 
 	/* SERVICES */
-	//services - first we have to move the long sidtabok/sidtabno to a binary array
-	char sidok[MAX_SIDBITS+1];
-	uint64ToBitchar((uint64_t)account->sidtabok, MAX_SIDBITS, sidok);
-	char sidno[MAX_SIDBITS+1];
-	uint64ToBitchar((uint64_t)account->sidtabno, MAX_SIDBITS, sidno);
 	struct s_sidtab *sidtab = cfg.sidtab;
 	//build matrix
 	i=0;
 	while(sidtab != NULL) {
 		tpl_addVar(vars, TPLADD, "SIDLABEL", sidtab->label);
-		if(sidok[i]=='1') tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+		if(account->sidtabok&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 		else tpl_addVar(vars, TPLADD, "CHECKED", "");
 		tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDOKBIT"));
-		if(sidno[i]=='1') tpl_addVar(vars, TPLADD, "CHECKED", "checked");
+		if(account->sidtabno&((SIDTABBITS)1<<i)) tpl_addVar(vars, TPLADD, "CHECKED", "checked");
 		else tpl_addVar(vars, TPLADD, "CHECKED", "");
 		tpl_addVar(vars, TPLAPPEND, "SIDS", tpl_getTpl(vars, "USEREDITSIDNOBIT"));
 		sidtab=sidtab->next;

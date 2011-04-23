@@ -1301,7 +1301,6 @@ extern char to_hex(char code);
 extern void char_to_hex(const unsigned char* p_array, uint32_t p_array_len, unsigned char *result);
 extern void create_rand_str(char *dst, int32_t size);
 #endif
-extern void uint64ToBitchar(uint64_t value, int32_t size, char *result);
 extern int32_t file_exists(const char * filename);
 extern void clear_sip(struct s_ip **sip);
 extern void clear_ptab(struct s_ptab *ptab);

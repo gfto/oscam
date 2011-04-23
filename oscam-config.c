@@ -4302,11 +4302,9 @@ char *mk_t_tuntab(TUNTAB *ttab){
  */
 char *mk_t_group(uint64_t grp){
 	int32_t i = 0, needed = 1, pos = 0, dot = 0;
-	char grpbit[65];
-	uint64ToBitchar(grp, 64, grpbit);
 
 	for(i = 0; i < 64; i++){
-		if (grpbit[i] == '1'){
+		if (grp&((uint64_t)1<<i)){
 			needed += 2;
 			if(i > 9) needed += 1;
 		}
@@ -4315,7 +4313,7 @@ char *mk_t_group(uint64_t grp){
 	if(needed == 1 || !cs_malloc(&value, needed * sizeof(char), -1)) return "";
 	char * saveptr = value;
 	for(i = 0; i < 64; i++){
-		if (grpbit[i] == '1'){
+		if (grp&((uint64_t)1<<i)){
 			if (dot == 0){
 				snprintf(value + pos, needed-(value-saveptr), "%d", i+1);
 				if (i > 8)pos += 2;

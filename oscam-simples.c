@@ -644,24 +644,6 @@ void create_rand_str(char *dst, int32_t size){
 }
 #endif
 
-/* Converts a uint64_t value (you may also cast smaller types) to a char array in bitwise representation.
-   Note that the result array MUST be at least size+1 bit large and that this function assumes values
-   to be only positive! The result of e.g. uint64_t 7 is
-   11100000000000000000000000000000000000000000000000000000000000000 this means the array is reversed */
-void uint64ToBitchar(uint64_t value, int32_t size, char *result){
-	int32_t pos;
-	for (pos=0;pos<size;pos++) result[pos]='0';
-	result[pos] = '\0';
-
-	pos=0;
-	while (value > 0 && pos < size){
-		if(value % 2 == 1) result[pos]='1';
-		else result[pos]='0';
-		value=value / (uint64_t)2;
-		pos++;
-	}
-}
-
 /* Return 1 if the file exists, else 0 */
 int32_t file_exists(const char * filename){
 	FILE *file;
