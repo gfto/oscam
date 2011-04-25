@@ -1793,7 +1793,7 @@ void distribute_ecm(ECM_REQUEST *er, uint64_t grp)
 {
   struct s_client *cl;
   ECM_REQUEST *ecm;
-  int32_t n, i;
+  int32_t n, i, pending;
 
   if (er->rc == E_RDR_FOUND) //found converted to cache...
     er->rc = E_CACHE2; //cache
@@ -1802,18 +1802,23 @@ void distribute_ecm(ECM_REQUEST *er, uint64_t grp)
     if (cl->fd_m2c && cl->typ=='c' && cl->ecmtask && (cl->grp&grp)) {
 
       n=(ph[cl->ctyp].multi)?CS_MAXPENDING:1;
+      pending=0;
       for (i=0; i<n; i++) {
         ecm = &cl->ecmtask[i];
-        if (ecm->rc >= E_99 && (ecm->ecmcacheptr == er->ecmcacheptr)) { //
+        if (ecm->rc >= E_99) {
+        	pending++;
+        	if (ecm->ecmcacheptr == er->ecmcacheptr) { //
         		 //||
         		//((ecm->caid==er->caid || ecm->ocaid==er->ocaid) && !memcmp(ecm->ecmd5, er->ecmd5, CS_ECMSTORESIZE)))) {
-          er->cpti = ecm->cpti;
-          //cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
-          write_ecm_request(cl->fd_m2c, er);
+        		er->cpti = ecm->cpti;
+        		//cs_log("distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
+        		write_ecm_request(cl->fd_m2c, er);
+			}
         }
         //else if (ecm->rc == E_99)
         //  cs_log("NO-distribute %04X:%06X:%04X cpti %d to client %s", ecm->caid, ecm->prid, ecm->srvid, ecm->cpti, username(cl));
       }
+      cl->pending=pending;
     }
   }
 }
@@ -1880,7 +1885,7 @@ static int32_t cs_read_timer(int32_t fd, uchar *buf, int32_t l, int32_t msec)
 
 ECM_REQUEST *get_ecmtask()
 {
-	int32_t i, n;
+	int32_t i, n, pending=0;
 	ECM_REQUEST *er=0;
 	struct s_client *cl = cur_client();
 	if(!cl) return NULL;
@@ -1903,6 +1908,8 @@ ECM_REQUEST *get_ecmtask()
 			for (i=0; (n<0) && (i<CS_MAXPENDING); i++)
 				if (cl->ecmtask[i].rc<E_99)
 					er=&cl->ecmtask[n=i];
+				else
+					pending++;
 		}
 		else
 			er=&cl->ecmtask[n=0];
@@ -1911,8 +1918,7 @@ ECM_REQUEST *get_ecmtask()
 		cs_log("WARNING: ecm pending table overflow !");
 	else
 	{
-
-                LLIST *save = er->matching_rdr;
+		LLIST *save = er->matching_rdr;
 		memset(er, 0, sizeof(ECM_REQUEST));
 		er->rc=E_UNHANDLED;
 		er->cpti=n;
@@ -1931,11 +1937,11 @@ ECM_REQUEST *get_ecmtask()
                 }
 	}
 
-
+	cl->pending=pending+1;
 	return(er);
 }
 
-static void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
+void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc)
 {
 	if (rc>=E_99)
 		return;
@@ -2219,6 +2225,20 @@ uint32_t chk_provid(uchar *ecm, uint16_t caid) {
 				}
 			}
 			break;
+		
+		default:
+			for (i=0;i<CS_MAXCAIDTAB;i++) {
+            	uint16_t tcaid = cfg.lb_noproviderforcaid.caid[i];
+            	if (!tcaid) break;
+                if (tcaid == caid) {
+                	provid = 0;
+                    break;
+				}
+                if (tcaid < 0x0100 && (caid >> 8) == tcaid) {
+                	provid = 0;
+                    break;
+				}
+			}
 	}
 	return(provid);
 }
@@ -2325,7 +2345,7 @@ void cs_betatunnel(ECM_REQUEST *er)
 		}
 	}
 
-	cs_ddump_mask(D_TRACE, er->ecm, 12, "betatunnel?");
+	cs_ddump_mask(D_TRACE, er->ecm, 12, "betatunnel? ecmlen=%d", er->l);
 		
 	//if (cl->account->betatunnel_auto)
 	//{
@@ -2674,6 +2694,7 @@ void get_cw(struct s_client * client, ECM_REQUEST *er)
 		else
 			if (er->matching_rdr->initial == er->fallback) { //fallbacks only
 					er->fallback = NULL; //switch them
+					er->reader_count = er->reader_avail;
 			}
 
 		//we have to go through matching_reader() to check services!
@@ -2856,7 +2877,7 @@ int32_t comp_timeb(struct timeb *tpa, struct timeb *tpb)
 
 struct timeval *chk_pending(struct timeb tp_ctimeout)
 {
-	int32_t i;
+	int32_t i, pending=0;
 	uint32_t td;
 	struct timeb tpn, tpe, tpc; // <n>ow, <e>nd, <c>heck
 
@@ -2878,6 +2899,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 		if (cl->ecmtask[i].rc>=E_99) { // check all pending ecm-requests
 			int32_t act=1;
 			er=&cl->ecmtask[i];
+			pending++;
 
 			//additional cache check:
 			if (check_cwcache2(er, cl->grp)) {
@@ -2968,7 +2990,7 @@ struct timeval *chk_pending(struct timeb tp_ctimeout)
 	cl->tv.tv_sec = td/1000;
 	cl->tv.tv_usec = (td%1000)*1000;
 	//cs_log("delay %d.%06d", tv.tv_sec, tv.tv_usec);
-
+	cl->pending=pending;
 	return(&cl->tv);
 }
 

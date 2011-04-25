@@ -660,6 +660,7 @@ struct s_client
   int32_t		cwlastresptimes_last; // ringbuffer pointer
   int32_t		emmok;       // count EMM ok
   int32_t		emmnok;	     // count EMM nok
+  int32_t		pending;     // number of ECMs pending
 #ifdef WEBIF
   int32_t		wihidden;	// hidden in webinterface status
   char      lastreader[64]; // last cw got from this reader
@@ -1391,6 +1392,7 @@ extern void get_cw(struct s_client *, ECM_REQUEST *);
 extern void do_emm(struct s_client *, EMM_PACKET *);
 extern ECM_REQUEST *get_ecmtask(void);
 extern void request_cw(ECM_REQUEST *, int, int);
+extern void send_reader_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t rc);
 extern int32_t send_dcw(struct s_client *, ECM_REQUEST *);
 extern int32_t process_input(uchar *, int, int);
 extern int32_t has_srvid(struct s_client *cl, ECM_REQUEST *er);

@@ -678,7 +678,7 @@ int32_t loop_check(uint8_t *myid, struct s_client *cl) {
 int32_t cc_get_nxt_ecm(struct s_client *cl) {
 	struct cc_data *cc = cl->cc;	
 	ECM_REQUEST *er, *ern = NULL;
-	int32_t n, i;
+	int32_t n, i, pending=0;
 	time_t t;
 
 	t = time(NULL);
@@ -689,9 +689,11 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 				/ 1000) + 1) && (er->rc >= 10)) // drop timeouts
 		{
 			er->rc = 0;
+			send_reader_stat(cl->reader, er, E_TIMEOUT);
 		}
 
 		else if (er->rc >= 10 && er->rc != 101) { // stil active and waiting
+			pending++;
 			if (loop_check(cc->peer_node_id, er->client)) {
 				er->rc = E_RDR_NOTFOUND;
 				er->rcEx = E2_CCCAM_LOOP;
@@ -728,6 +730,7 @@ int32_t cc_get_nxt_ecm(struct s_client *cl) {
 			}
 		}
 	}
+	cl->pending=pending;
 	return n;
 }
 
@@ -2013,6 +2016,7 @@ int32_t cc_parse_msg(struct s_client *cl, uint8_t *buf, int32_t l) {
 										ECM_REQUEST *er = &cl->ecmtask[i];
 										er->rc = E_RDR_NOTFOUND;
 										er->rcEx = (buf[1] == MSG_CW_NOK1)?E2_CCCAM_NOK1:E2_CCCAM_NOK2;
+										cl->pending--;
 										write_ecm_answer(rdr, er);
 										break;
 								}

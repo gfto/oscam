@@ -679,6 +679,10 @@ int32_t get_best_reader(ECM_REQUEST *er)
 								AVAIL_CHECK_LOADBALANCE)) {
 					current=current*2;
 				}
+				
+				if (rdr->client->pending)
+					current=current*rdr->client->pending;
+					
 				if (current < 1)
 					current=1;
 				ll_append(selected, crt_cur(rdr, current, stat->time_avg));
@@ -770,25 +774,25 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	}
 
 	//algo for finding unanswered requests (newcamd reader or disconnected camd35 UDP for example:)
-	it = ll_iter_create(result);
-	while ((rdr=ll_iter_next(it))) {
-		if (it->cur == fallback) break;
-       	//primary readers 
-       	stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
-       		
-   		if (stat && current_time > stat->last_received+(time_t)(cfg.ctimeout/1000)) { 
-       		stat->request_count++; 
-       		stat->last_received = current_time;
-        		
-	   		if (stat->request_count >= cfg.lb_min_ecmcount) {
-   				add_stat(rdr, er, 0, 5); //reader marked as unuseable
-   				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
-	   		}
-	   		else
-	   			cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
-		}
-	}
-	ll_iter_release(it);
+	//it = ll_iter_create(result);
+	//while ((rdr=ll_iter_next(it))) {
+	//	if (it->cur == fallback) break;
+    //   	//primary readers 
+    //   	stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
+    //   		
+   	//	if (stat && current_time > stat->last_received+(time_t)(cfg.ctimeout/1000)) { 
+    //   		stat->request_count++; 
+    //   		stat->last_received = current_time;
+    //    		
+	//   		if (stat->request_count >= cfg.lb_min_ecmcount) {
+   	//			add_stat(rdr, er, 0, 5); //reader marked as unuseable
+   	//			cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
+	//   		}
+	//   		else
+	//   			cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
+	//	}
+	//}
+	//ll_iter_release(it);
 
 	//algo for reopen other reader only if responsetime>retrylimit:
 	int32_t reopen = !best_rdr || (best_time && (best_time > retrylimit));

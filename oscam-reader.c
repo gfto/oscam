@@ -37,7 +37,7 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 
 static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw)
 {
-  int32_t i;
+  int32_t i, pending=0;
   struct s_client *cl = reader->client;
   for (i=0; i<CS_MAXPENDING; i++)
   {
@@ -54,7 +54,10 @@ static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uc
       write_ecm_answer(reader, &cl->ecmtask[i]);
       cl->ecmtask[i].idx=0;
     }
+  	if (cl->ecmtask[i].rc >= E_99)
+  		pending++;
   }
+  cl->pending=pending;
 }
 
 int32_t casc_recv_timer(struct s_reader * reader, uchar *buf, int32_t l, int32_t msec)
@@ -343,7 +346,7 @@ static void casc_do_sock(struct s_reader * reader, int32_t w)
       if (reader->ph.c_idle)
       	reader_do_idle(reader);
       else {
-        cs_debug_mask(D_READER, "casc_do_sock: close connection");
+        cs_debug_mask(D_READER, "casc_do_sock: closed connection by remote");
         network_tcp_connection_close(reader->client, cl->udp_fd);
       }
       return;
@@ -359,9 +362,9 @@ static void casc_do_sock(struct s_reader * reader, int32_t w)
   j=0;
   for (i=0; i<CS_MAXPENDING; i++)
   {
-
-   if (cl->ecmtask[i].idx==idx)
+    if (cl->ecmtask[i].idx==idx)
     {
+	  cl->pending--;
       casc_check_dcw(reader, i, rc, dcw);
       j=1;
       break;
@@ -395,27 +398,34 @@ static void casc_get_dcw(struct s_reader * reader, int32_t n)
 
 int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
-  int32_t rc, n, i, sflag;
+  int32_t rc, n, i, sflag, pending=0;
   time_t t;//, tls;
   struct s_client *cl = reader->client;
   
   uchar buf[512];
 
   t=time((time_t *)0);
+  ECM_REQUEST *ecm;
   for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++)
   {
-    if ((t-(uint32_t)cl->ecmtask[i].tps.time > ((cfg.ctimeout + 500) / 1000) + 1) &&
-        (cl->ecmtask[i].rc>=10))      // drop timeouts
+  	ecm = &cl->ecmtask[i];
+    if ((t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1) &&
+        (ecm->rc>=10))      // drop timeouts
         {
-          cl->ecmtask[i].rc=0;
+          ecm->rc=0;
+          send_reader_stat(reader, ecm, E_TIMEOUT);
         }
-    if (n<0 && (cl->ecmtask[i].rc<10))   // free slot found
+    if (n<0 && (ecm->rc<10))   // free slot found
       n=i;
-    if ((cl->ecmtask[i].rc>=10) &&      // ecm already pending
-        (!memcmp(er->ecmd5, cl->ecmtask[i].ecmd5, CS_ECMSTORESIZE)) &&
-        (er->level<=cl->ecmtask[i].level))    // ... this level at least
+    if ((ecm->rc>=10) &&      // ecm already pending
+        (!memcmp(er->ecmd5, ecm->ecmd5, CS_ECMSTORESIZE)) &&
+        (er->level<=ecm->level))    // ... this level at least
       sflag=0;
+      
+    if (ecm->rc >=E_99) 
+    	pending++;
   }
+  cl->pending=pending;
   if (n<0)
   {
     cs_log("WARNING: ecm pending table overflow !!");
@@ -484,7 +494,7 @@ static int32_t reader_store_emm(uchar *emm, uchar type)
 static void reader_get_ecm(struct s_reader * reader, ECM_REQUEST *er)
 {
   //cs_log("hallo idx:%d rc:%d caid:%04X",er->idx,er->rc,er->caid);
-  if ((er->rc<E_NOCARD) ) //FIXME should this not be <= E_STOPPED?
+  if (er->rc<=E_STOPPED)
     {
       send_dcw(reader->client, er);
       return;

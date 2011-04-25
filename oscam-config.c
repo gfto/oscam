@@ -150,7 +150,7 @@ void chk_caidtab(char *caidasc, CAIDTAB *ctab)
 	}
 }
 
-void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab)
+void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab, int minvalue)
 {
 		int32_t i;
 		char *ptr1, *ptr2;
@@ -167,6 +167,7 @@ void chk_caidvaluetab(char *lbrlt, CAIDVALUETAB *tab)
 
 				if (((caid = a2i(ptr1, 2)) < 0xFFFF) | ((value = atoi(ptr2)) < 10000)) {
 						tab->caid[i] = caid;
+						if (value < minvalue) value = minvalue;
 						tab->value[i] = value;
 						tab->n = ++i;
 				}
@@ -548,6 +549,8 @@ void chk_t_global(const char *token, char *value)
 
 	if (!strcmp(token, "lb_nbest_readers")) {
 		cfg.lb_nbest_readers = strToIntVal(value, DEFAULT_NBEST);
+		if (cfg.lb_nbest_readers < 2)
+			cfg.lb_nbest_readers = DEFAULT_NBEST;
 		return;
 	}
 
@@ -577,12 +580,12 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "lb_retrylimits")) {
-		chk_caidvaluetab(value, &cfg.lb_retrylimittab);
+		chk_caidvaluetab(value, &cfg.lb_retrylimittab, 50);
 		return;
 	}
 
 	if (!strcmp(token, "lb_nbest_percaid")) {
-		chk_caidvaluetab(value, &cfg.lb_nbest_readers_tab);
+		chk_caidvaluetab(value, &cfg.lb_nbest_readers_tab, 1);
 		return;
 	}
 
