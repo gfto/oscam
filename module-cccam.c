@@ -3237,10 +3237,22 @@ void module_cccam(struct s_module *ph) {
 	//Partner Detection:
 	init_rnd();
 	uint16_t sum = 0x1234; //This is our checksum 
-	for (i = 0; i < 6; i++) {
+	for (i = 0; i < 4; i++) {
 		cc_node_id[i] = fast_rnd();
 		sum += cc_node_id[i];
 	}
+	
+	// Partner ID:
+	cc_node_id[4] = 0x10; // (Oscam 0x10, vPlugServer 0x11, Hadu 0x12,...)
+	sum += cc_node_id[4];
+					
+	// generate checksum for Partner ID:
+	cc_node_id[5] = 0xAA;
+	for (i = 0; i < 5; i++) {
+      cc_node_id[5] ^= cc_node_id[i];
+    }
+    sum += cc_node_id[5];		
+    
 	cc_node_id[6] = sum >> 8;
 	cc_node_id[7] = sum & 0xff;
 

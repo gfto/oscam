@@ -38,23 +38,34 @@ void cs_ri_log(struct s_reader * reader, char *fmt,...)
 static void casc_check_dcw(struct s_reader * reader, int32_t idx, int32_t rc, uchar *cw)
 {
   int32_t i, pending=0;
+  time_t t = time(NULL);
+  ECM_REQUEST *ecm;
   struct s_client *cl = reader->client;
+  
   for (i=0; i<CS_MAXPENDING; i++)
   {
-    if ((cl->ecmtask[i].rc>=10) &&
-        (!memcmp(cl->ecmtask[i].ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE)))
+  	ecm = &cl->ecmtask[i];
+    if ((ecm->rc>=10) &&
+        (!memcmp(ecm->ecmd5, cl->ecmtask[idx].ecmd5, CS_ECMSTORESIZE)))
     {
       if (rc)
       {
-        cl->ecmtask[i].rc=(i==idx) ? 1 : 2;
-        memcpy(cl->ecmtask[i].cw, cw, 16);
+        ecm->rc=(i==idx) ? 1 : 2;
+        memcpy(ecm->cw, cw, 16);
       }
       else
-        cl->ecmtask[i].rc=0;    
-      write_ecm_answer(reader, &cl->ecmtask[i]);
-      cl->ecmtask[i].idx=0;
+        ecm->rc=0;    
+      write_ecm_answer(reader, ecm);
+      ecm->idx=0;
     }
-  	if (cl->ecmtask[i].rc >= E_99)
+
+    if (ecm->rc>=10 && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) // drop timeouts
+	{
+    	ecm->rc=0;
+        send_reader_stat(reader, ecm, E_TIMEOUT);
+	}
+
+  	if (ecm->rc >= 10)
   		pending++;
   }
   cl->pending=pending;
@@ -409,12 +420,11 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
   for (n=-1, i=0, sflag=1; i<CS_MAXPENDING; i++)
   {
   	ecm = &cl->ecmtask[i];
-    if ((t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1) &&
-        (ecm->rc>=10))      // drop timeouts
-        {
-          ecm->rc=0;
-          send_reader_stat(reader, ecm, E_TIMEOUT);
-        }
+    if ((ecm->rc>=10) && (t-(uint32_t)ecm->tps.time > ((cfg.ctimeout + 500) / 1000) + 1)) // drop timeouts
+	{
+    	ecm->rc=0;
+        send_reader_stat(reader, ecm, E_TIMEOUT);
+	}
     if (n<0 && (ecm->rc<10))   // free slot found
       n=i;
     if ((ecm->rc>=10) &&      // ecm already pending
@@ -422,7 +432,7 @@ int32_t casc_process_ecm(struct s_reader * reader, ECM_REQUEST *er)
         (er->level<=ecm->level))    // ... this level at least
       sflag=0;
       
-    if (ecm->rc >=E_99) 
+    if (ecm->rc >=10) 
     	pending++;
   }
   cl->pending=pending;

@@ -1243,7 +1243,6 @@ typedef struct reader_stat_t
   int32_t           time_stat[LB_MAX_STAT_TIME];
   int32_t           time_idx;
 
-  int32_t           request_count;
   int32_t			fail_factor;
 } READER_STAT;
 

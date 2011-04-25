@@ -191,9 +191,7 @@ int32_t remove_stat(struct s_reader *rdr, uint16_t caid, uint32_t prid, uint16_t
  */
 void calc_stat(READER_STAT *stat)
 {
-	int32_t i;
-	int32_t c=0;
-	int32_t t = 0;
+	int32_t i, c=0, t = 0;
 	for (i = 0; i < LB_MAX_STAT_TIME; i++) {
 		if (stat->time_stat[i] > 0) {
 			t += (int32_t)stat->time_stat[i];
@@ -314,7 +312,6 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 		stat->rc = 0;
 		stat->ecm_count++;
 		stat->last_received = ctime;
-		stat->request_count = 0;
 		stat->fail_factor = 0;
 		
 		//If answering reader is a fallback reader, decrement answer time by fallback timeout:
@@ -356,24 +353,21 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 	else if (rc == 1 || rc == 2) { //cache
 		//no increase of statistics here, cachetime is not real time
 		stat->last_received = ctime;
-		stat->request_count = 0;
 	}
 	else if (rc == 4) { //not found
 		//CCcam card can't decode, 0x28=NOK1, 0x29=NOK2
 		//CCcam loop detection = E2_CCCAM_LOOP
 		if (er->rcEx != E2_CCCAM_NOK1 && er->rcEx != E2_CCCAM_NOK2 && er->rcEx != E2_CCCAM_LOOP) {
-				stat->rc = rc;
-				stat->fail_factor++;
-		}
-		stat->last_received = ctime;
+			stat->rc = rc;
+			stat->fail_factor++;
+			stat->last_received = ctime;
 		
-		//reduce ecm_count step by step
-		if (!cfg.lb_reopen_mode)
-			stat->ecm_count /= 10;
+			//reduce ecm_count step by step
+			if (!cfg.lb_reopen_mode)
+				stat->ecm_count /= 10;
+		}
 	}
 	else if (rc == 5) { //timeout
-		stat->request_count++;
-
 		//catch suddenly occuring timeouts and block reader:
 		if ((int)(ctime-stat->last_received) < (int)(5*cfg.ctimeout) && 
 						stat->rc == 0 && 
@@ -381,7 +375,7 @@ void add_stat(struct s_reader *rdr, ECM_REQUEST *er, int32_t ecm_time, int32_t r
 				stat->rc = 5;
 				stat->fail_factor++;
 		}
-		else if (stat->request_count >= cfg.lb_min_ecmcount) {
+		else if ((rdr->client->login+(int)(2*cfg.ctimeout/1000)) < ctime && rdr->client->pending < 5) { //reader is longer than 5s connected && not more then 5 pending ecms
 				stat->rc = 5;
 				stat->fail_factor++;
 		}
@@ -432,7 +426,6 @@ void reset_stat(uint16_t caid, uint32_t prid, uint16_t srvid, int16_t ecmlen)
 				if (stat->ecm_count > 0)
 					stat->ecm_count = 1; //not zero, so we know it's decodeable
 				stat->rc = 0;
-				stat->request_count = 0;
 				stat->fail_factor = 0;
 			}
 		}
@@ -623,12 +616,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 				
 			int32_t hassrvid = has_srvid(rdr->client, er) || has_ident(&rdr->ftab, er);
 			
-			if (!hassrvid && stat->rc == 0 && stat->request_count >= cfg.lb_min_ecmcount-1) { // 4 unanswered requests or timeouts?
-				cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
-				add_stat(rdr, er, 0, 5); //reader marked as unuseable
-				continue;
-			}
-
 			if (stat->rc == 0 && stat->ecm_count < cfg.lb_min_ecmcount) {
 				cs_debug_mask(D_TRACE, "loadbalancer: reader %s needs more statistics", rdr->label);
 				ll_append(result, rdr); //need more statistics!
@@ -773,27 +760,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		cs_debug_mask(D_TRACE, "loadbalancer: reopened %d readers", n);
 	}
 
-	//algo for finding unanswered requests (newcamd reader or disconnected camd35 UDP for example:)
-	//it = ll_iter_create(result);
-	//while ((rdr=ll_iter_next(it))) {
-	//	if (it->cur == fallback) break;
-    //   	//primary readers 
-    //   	stat = get_stat(rdr, er->caid, prid, er->srvid, er->l); 
-    //   		
-   	//	if (stat && current_time > stat->last_received+(time_t)(cfg.ctimeout/1000)) { 
-    //   		stat->request_count++; 
-    //   		stat->last_received = current_time;
-    //    		
-	//   		if (stat->request_count >= cfg.lb_min_ecmcount) {
-   	//			add_stat(rdr, er, 0, 5); //reader marked as unuseable
-   	//			cs_debug_mask(D_TRACE, "loadbalancer: reader %s does not answer, blocking", rdr->label);
-	//   		}
-	//   		else
-	//   			cs_debug_mask(D_TRACE, "loadbalancer: reader %s increment request count to %d", rdr->label, stat->request_count);
-	//	}
-	//}
-	//ll_iter_release(it);
-
 	//algo for reopen other reader only if responsetime>retrylimit:
 	int32_t reopen = !best_rdr || (best_time && (best_time > retrylimit));
 	if (reopen) {
@@ -810,7 +776,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 			if (stat && stat->rc != 0) { //retrylimit reached:
 				if (stat->last_received+get_reopen_seconds(stat) < current_time) { //Retrying reader every (900/conf) seconds
 					stat->last_received = current_time;
-					stat->request_count++;
 					nreaders += ll_remove(result, rdr);
 					ll_prepend(result, rdr);
 					nreaders--;
