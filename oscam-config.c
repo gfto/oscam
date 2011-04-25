@@ -372,7 +372,12 @@ void chk_t_global(const char *token, char *value)
 	}
 
 	if (!strcmp(token, "loghistorysize")) {
-		cfg.loghistorysize = strToIntVal(value, 4096);
+		uint32_t newsize = strToIntVal(value, 4096);
+		if (newsize < 1024) {
+			fprintf(stderr, "WARNING: loghistorysize is too small, adjusted to 1024\n");
+			newsize = 1024;
+		}
+		cs_reinit_loghist(newsize);
 		return;
 	}
 
@@ -1392,7 +1397,8 @@ int32_t init_config()
 	cfg.usrfile = NULL;
 	cfg.disableuserfile = 1;
 #ifdef CS_LOGHISTORY
-	cfg.loghistorysize = 4096;
+	cfg.loghistorysize = 0;
+	cs_reinit_loghist(4096);
 #endif
 	cfg.cwlogdir = NULL;
 	cfg.reader_restart_seconds = 5;
@@ -1456,14 +1462,6 @@ int32_t init_config()
 		else cfg.logtostdout = 1;
 	}
 	if(cfg.usrfile == NULL) cfg.disableuserfile = 1;
-
-	if (cfg.loghistorysize) {
-		if (cfg.loghistorysize < 1000) {
-			fprintf(stderr, "WARNING: loghistorysize is too small, adjusted to 1024\n");
-			cfg.loghistorysize = 1024;
-		}
-		cs_malloc(&loghist, cfg.loghistorysize, 0);
-	}
 
 	cs_init_log();
 	cs_init_statistics();

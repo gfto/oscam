@@ -129,6 +129,38 @@ int32_t cs_init_log(void)
 	return rc;
 }
 
+/* 
+ This function allows to reinit the in-memory loghistory with a new size.
+*/
+void cs_reinit_loghist(uint32_t size)
+{
+	char *tmp, *tmp2;
+	if(size != cfg.loghistorysize){
+		if(cs_malloc(&tmp, size, -1)){
+			pthread_mutex_lock(&loghistory_lock);
+			tmp2 = loghist;
+			// On shrinking, the log is not copied and the order is reversed
+			if(size < cfg.loghistorysize){
+				cfg.loghistorysize = size;
+				cs_sleepms(20);	// Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
+				loghistptr = tmp;
+				loghist = tmp;
+			} else {
+				if(loghist){
+					memcpy(tmp, loghist, cfg.loghistorysize);
+					loghistptr = tmp + (loghistptr - loghist);
+				} else loghistptr = tmp;
+				loghistptr = tmp;
+				loghist = tmp;
+				cs_sleepms(20);	// Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
+				cfg.loghistorysize = size;						
+			}
+			pthread_mutex_unlock(&loghistory_lock);
+			//if(tmp2 != NULL) add_garbage(tmp2);			
+		}
+	}
+}
+
 static void get_log_header(int32_t m, char *txt)
 {
 	struct s_client *cl = cur_client();	
@@ -190,9 +222,9 @@ static void write_to_log(char *txt)
 
 		char *target_ptr = NULL;
 		int target_len = strlen(usrtxt) + (strlen(log_buf) - 8) + 1;
-		char *lastpos = loghist + (cfg.loghistorysize) - 1;
-
+		
 		pthread_mutex_lock(&loghistory_lock);
+		char *lastpos = loghist + (cfg.loghistorysize) - 1;		
 		if (!loghistptr)
 			loghistptr = loghist;
 

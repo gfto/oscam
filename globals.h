@@ -1528,6 +1528,7 @@ extern int32_t is_connect_blocked(struct s_reader *rdr);
             
 // oscam-log
 extern int32_t  cs_init_log();
+extern void cs_reinit_loghist(uint32_t size);
 extern int32_t cs_open_logfiles();
 extern void cs_write_log(char *);
 extern void cs_log(const char *,...);
