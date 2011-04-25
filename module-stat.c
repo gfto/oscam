@@ -553,10 +553,12 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	time_t current_time = time(NULL);
 	int32_t current = -1;
 	READER_STAT *stat = NULL;
-	int32_t nlocal_readers = 0;
 	int32_t retrylimit = get_retrylimit(er);
 	uint32_t prid = get_prid(er->caid, er->prid);
 	
+	int32_t nlocal_readers = 0;
+	int32_t nbest_readers = get_nbest_readers(er);
+	int32_t nfb_readers = cfg.lb_nfb_readers;
 	int32_t nreaders = cfg.lb_max_readers;
 	if (!nreaders) nreaders = -1;
 
@@ -597,15 +599,6 @@ int32_t get_best_reader(ECM_REQUEST *er)
 	}
 #endif	
 
-	int32_t nbest_readers = get_nbest_readers(er);
-	int32_t nfb_readers = cfg.lb_nfb_readers;
-	if (nlocal_readers > nbest_readers) { //if we have local readers, we prefer them!
-		nlocal_readers = nbest_readers;
-		nbest_readers = 0;	
-	}
-	else
-		nbest_readers = nbest_readers-nlocal_readers;
-	
 	it = ll_iter_create(er->matching_rdr);
 	while ((rdr=ll_iter_next(it)) && nreaders) {
 	
@@ -692,6 +685,13 @@ int32_t get_best_reader(ECM_REQUEST *er)
 		}
 	}
 	ll_iter_release(it);
+
+	if (nlocal_readers > nbest_readers) { //if we have local readers, we prefer them!
+		nlocal_readers = nbest_readers;
+		nbest_readers = 0;	
+	}
+	else
+		nbest_readers = nbest_readers-nlocal_readers;
 
 	struct stat_value *stv;
 	it = ll_iter_create(selected);
