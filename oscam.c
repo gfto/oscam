@@ -931,6 +931,8 @@ static void init_check(){
 				break;
 	  	}
 	  }
+	  // adjust login time of first client
+	  if(i > 0) first_client->login=time((time_t *)0);
 	}
 }
 
