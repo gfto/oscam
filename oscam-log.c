@@ -155,7 +155,7 @@ void cs_reinit_loghist(uint32_t size)
 				cfg.loghistorysize = size;						
 			}
 			pthread_mutex_unlock(&loghistory_lock);
-			//if(tmp2 != NULL) add_garbage(tmp2);			
+			if(tmp2 != NULL) add_garbage(tmp2);			
 		}
 	}
 }
