@@ -150,7 +150,6 @@ void cs_reinit_loghist(uint32_t size)
 					memcpy(tmp, loghist, cfg.loghistorysize);
 					loghistptr = tmp + (loghistptr - loghist);
 				} else loghistptr = tmp;
-				loghistptr = tmp;
 				loghist = tmp;
 				cs_sleepms(20);	// Monitor or webif may be currently outputting the loghistory but don't use locking so we sleep a bit...
 				cfg.loghistorysize = size;						
